@@ -1,0 +1,18 @@
+
+ This is the ssl.prm/ directory of Apache/mod_ssl
+ where public DSA Parameter Files for SSL are stored.
+
+ Per default the following files are provided:
+
+ o snakeoil-ca-dsa.prm:
+   This is the DSA parameter file of the _DEMONSTRATION ONLY_ `Snake Oil' CA.
+
+ o snakeoil-dsa.prm:
+   This is the DSA parameter file of the _DEMONSTRATION ONLY_ `Snake Oil'
+   server.
+
+ You can view the ingredients of a particular parameter file in plain text
+ by running the command:
+
+   $ openssl dsaparam -noout -text -in <name>.prm
+

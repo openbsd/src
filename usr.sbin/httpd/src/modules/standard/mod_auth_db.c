@@ -226,6 +226,7 @@ static int db_authenticate_basic_user(request_rec *r)
     conn_rec *c = r->connection;
     const char *sent_pw;
     char *real_pw, *colon_pw;
+    char *invalid_pw;
     int res;
 
     if ((res = ap_get_basic_auth_pw(r, &sent_pw)))
@@ -244,12 +245,14 @@ static int db_authenticate_basic_user(request_rec *r)
     }
     /* Password is up to first : if exists */
     colon_pw = strchr(real_pw, ':');
-    if (colon_pw)
+    if (colon_pw) {
 	*colon_pw = '\0';
-    /* anyone know where the prototype for crypt is? */
-    if (strcmp(real_pw, (char *) crypt(sent_pw, real_pw))) {
+    }
+    invalid_pw = ap_validate_password(sent_pw, real_pw);
+    if (invalid_pw != NULL) {
 	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-		    "DB user %s: password mismatch: %s", c->user, r->uri);
+		      "DB user %s: authentication failure for \"%s\": %s",
+		      c->user, r->uri, invalid_pw);
 	ap_note_basic_auth_failure(r);
 	return AUTH_REQUIRED;
     }

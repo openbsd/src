@@ -74,9 +74,6 @@
 #include "http_core.h"
 #include "http_log.h"
 #include "http_protocol.h"
-#if defined(HAVE_CRYPT_H)
-#include <crypt.h>
-#endif
 
 typedef struct auth_config_struct {
     char *auth_pwfile;
@@ -203,6 +200,7 @@ static int authenticate_basic_user(request_rec *r)
     conn_rec *c = r->connection;
     const char *sent_pw;
     char *real_pw;
+    char *invalid_pw;
     int res;
 
     if ((res = ap_get_basic_auth_pw(r, &sent_pw)))
@@ -219,10 +217,11 @@ static int authenticate_basic_user(request_rec *r)
 	ap_note_basic_auth_failure(r);
 	return AUTH_REQUIRED;
     }
-    /* anyone know where the prototype for crypt is? */
-    if (strcmp(real_pw, (char *) crypt(sent_pw, real_pw))) {
+    invalid_pw = ap_validate_password(sent_pw, real_pw);
+    if (invalid_pw != NULL) {
 	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-		    "user %s: password mismatch: %s", c->user, r->uri);
+		      "user %s: authentication failure for \"%s\": %s",
+		      c->user, r->uri, invalid_pw);
 	ap_note_basic_auth_failure(r);
 	return AUTH_REQUIRED;
     }

@@ -147,6 +147,9 @@ static int get_rfc1413(int sock, const struct sockaddr_in *our_sin,
 		ntohs(our_sin->sin_port));
 
     /* send query to server. Handle short write. */
+#ifdef CHARSET_EBCDIC
+    ebcdic2ascii(&buffer, &buffer, buflen);
+#endif
     i = 0;
     while(i < strlen(buffer)) {
         int j;
@@ -168,8 +171,12 @@ static int get_rfc1413(int sock, const struct sockaddr_in *our_sin,
      */
 
     i = 0;
-    memset(buffer, 0, sizeof(buffer));
-    while((cp = strchr(buffer, '\n')) == NULL && i < sizeof(buffer) - 1) {
+    memset(buffer, '\0', sizeof(buffer));
+    /*
+     * Note that the strchr function below checks for 10 instead of '\n'
+     * this allows it to work on both ASCII and EBCDIC machines.
+     */
+    while((cp = strchr(buffer, '\012')) == NULL && i < sizeof(buffer) - 1) {
         int j;
 	j = read(sock, buffer+i, (sizeof(buffer) - 1) - i);
 	if (j < 0 && errno != EINTR) {
@@ -183,6 +190,9 @@ static int get_rfc1413(int sock, const struct sockaddr_in *our_sin,
     }
 
 /* RFC1413_USERLEN = 512 */
+#ifdef CHARSET_EBCDIC
+    ascii2ebcdic(&buffer, &buffer, (size_t)i);
+#endif
     if (sscanf(buffer, "%u , %u : USERID :%*[^:]:%512s", &rmt_port, &our_port,
 	       user) != 3 || ntohs(rmt_sin->sin_port) != rmt_port
 	|| ntohs(our_sin->sin_port) != our_port)

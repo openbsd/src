@@ -1,3 +1,6 @@
+#if 0
+=cut
+#endif
 /* ====================================================================
  * Copyright (c) 1998 The Apache Group.  All rights reserved.
  *
@@ -56,182 +59,20 @@
  */
 
 /*
-**  Generic Hook Interface for Apache
+**  Implementation of a Generic Hook Interface for Apache
 **  Written by Ralf S. Engelschall <rse@engelschall.com> 
 **
-**  SYNOPSIS
+**  See POD document at end of this file for description.
+**  View it with the command ``pod2man ap_hook.h | nroff -man | more''
 **
-**    Main Setup:
-**      void ap_hook_init (void);
-**      void ap_hook_kill (void);
-**
-**    Hook Configuration and Registration:
-**      int  ap_hook_configure (char *hook, int sig, int modeid, ap_hook_value modeval);
-**      int  ap_hook_register  (char *hook, void *func, void *ctx);
-**      int  ap_hook_unregister(char *hook, void *func);
-**
-**    Hook Usage:
-**      int  ap_hook_configured(char *hook);
-**      int  ap_hook_registered(char *hook);
-**      int  ap_hook_call      (char *hook, ...);
-**
-**  DESCRIPTION
-**
-**    This implements a generic hook interface for Apache which can be used
-**    for loosely couple code through arbitrary hooks. There are two use cases
-**    for this mechanism:
-**
-**    1. Inside a specific code section you want to perform a specific
-**       function call. But you want to allow one or even more modules to
-**       override this function call by registering hook functions.  Those
-**       functions are registered on a stack and can be configured to have a
-**       `decline' return value. As long as there are functions which return
-**       the `decline' value the next function on the stack is tried.  When a
-**       function doesn't return the `decline' value the hook call stops.  The
-**       intent of this usage is to not hard-code function calls.
-**
-**    2. Inside a specific code you have a function you want to export.
-**       But you first want to allow other code to override this function.
-**       And second you want to export this function without real linker
-**       symbol references. Instead you want to register the function and let
-**       the users call this function via name. The intent of this usage is to
-**       allow inter-module communication without direct symbol references,
-**       which are a big NO-NO for the DSO situation.
-**
-**    And we have one major design goal: The hook call should be very similar
-**    to the corresponding direct function call while still providing maximum
-**    flexiblity, i.e. any function signature (the set of types for the return
-**    value and the arguments) should be supported.  And it should be possible
-**    to register always a context (ctx) variable with a function which is
-**    passed to the corresponding function when the hook call is performed.
-**
-**    Using this hook interface is always a four-step process:
-**
-**    1. Initialize or destroy the hook mechanism inside your main program:
-**
-**       ap_hook_init();
-**           :
-**       ap_hook_kill();
-**
-**    2. Configure a particular hook by specifing its name, signature
-**       and return type semantic:
-**
-**       ap_hook_configure("lookup", AP_HOOK_SIG2(ptr,ptr,ctx), AP_HOOK_DECLINE(NULL));
-**       ap_hook_configure("echo", AP_HOOK_SIG2(int,ptr), AP_HOOK_TOPMOST);
-**
-**       This configures two hooks:
-**       - A hook named "lookup" with the signature "void *lookup(void *)"
-**         and a return code semantic which says: As long as a registered hook
-**         function returns NULL and more registered functions exists we we
-**         proceed.
-**       - A hook named "echo" with the signature "int echo(void *)" and a
-**         return code semantic which says: Only the top most function on the
-**         registered function stack is tried, independed what value it
-**         returns.
-**
-**    3. Register the actual functions which should be used by the hook:
-**
-**       ap_hook_register("lookup", mylookup, mycontext);
-**       ap_hook_register("echo", myecho);
-**
-**       This registers the function mylookup() under the "lookup" hook with
-**       the context given by the variable mycontext. And it registers the
-**       function myecho() under the "echo" hook without any context.
-**
-**    4. Finally use the hook, i.e. instead of using direct function calls
-**       like
-**          
-**          vp = mylookup("foo", mycontext);
-**          n  = myecho("bar");
-**
-**       you now can use:
-**
-**          ap_hook_call("lookup", &vp, "foo");
-**          ap_hook_call("echo", &n, "bar");
-**
-**       Notice two things: First the context for the mylookup() function is
-**       automatically added by the hook mechanism. And it is a different and
-**       not fixed context for each registered function, of course.  Second,
-**       return values always have to be pushed into variables and they a
-**       pointer to them has to be given as the second argument (except for
-**       functions which have a void return type, of course).
-**
-**       BTW, the return value of ap_hook_call() is TRUE or FALSE.  TRUE when
-**       at least one function call was successful (always the case for
-**       AP_HOOK_TOPMOST).  FALSE when all functions returned the decline
-**       value or no functions are registered at all.
-**
-**  RESTRICTIONS
-**
-**    To make the hook implementation efficient and to not bloat up the code a
-**    few restrictions have to make:
-**
-**    1. Only function calls with up to 4 arguments are supported.
-**       When more are needed you can either extend the hook implementation by
-**       using more bits for the signature configuration or you can do a
-**       workaround when the functions is your own one: Put the remaining
-**       (N-5) arguments into a structure and pass only a pointer (one
-**       argument) as the forth argument.
-**
-**    2. Only the following types are supported:
-**       - For the return value: 
-**         void (= none), char, int, float, double, ptr (= void*)
-**       - For the arguments:
-**         ctx  (= context), char, int, float, double, ptr (= void*)
-**       This means in theory there are 6^5 (=7776) signature combinations are
-**       possible. But because we don't need all of them inside Apache and it
-**       would bloat up the code dramatically we implement only a subset of
-**       those combinations. The to be implemented signatures can be specified
-**       inside ap_hook.c and the corresponding code can be automatically
-**       generated by running `perl ap_hook.c' (yeah, no joke ;-).  So when
-**       you need a hook with a different still not implemented signature you
-**       either have to again use a workaround as above (i.e. use a structure)
-**       or just add the signature to the ap_hook.c file.
-**
-**  EXAMPLE
-** 
-**    We want to call `ssize_t read(int, void *, size_t)' through hooks in
-**    order to allow modules to override this call.  So, somewhere we have a
-**    replacement function for read() defined:
-**
-**      ssize_t my_read(int, void *, size_t);
-**
-**    We now configure a `read' hook.  Here the AP_HOOK_SIGx() macro defines
-**    the signature of the read()-like callback functions and has to match the
-**    prototype of read().  But we have to replace typedefs with the physical
-**    types.  And AP_HOOK_DECLINE() sets the return value of the read()-like
-**    functions which forces the next hook to be called (here -1).  And we
-**    register the original read function.
-**
-**      ap_hook_configure("read", AP_HOOK_SIG4(int,int,ptr,int), 
-**                                AP_HOOK_DECLINE(-1));
-**      ap_hook_register("read", read);
-**
-**    Now a module wants to override the read() call and registers one more
-**    function (which has to match the same prototype as read() of course):
-**
-**      ap_hook_register("read", my_read);
-**
-**    The function logically gets pushed onto a stack, so the execution order
-**    is the reverse register order, i.e. last registered - first called. Now
-**    we can replace the standard read() call
-**
-**      bytes = read(fd, buf, bufsize);
-**      if (bytes == -1)
-**         ...error...
-**
-**    with the hook-call:
-**
-**       rc = ap_hook_call("read", &bytes, fd, buf, bufsize);
-**       if (rc == FALSE)
-**          ...error...
-**
-**    Now internally the following is done: The call "bytes = my_read(fd, buf,
-**    bufsize)" is done. When it returns not -1 (the decline value) nothing
-**    more is done. But when my_read() returned -1 the next function is tried:
-**    "bytes = read(fd, buf, bufsize)". When this one returns -1 again you get
-**    rc == FALSE. When it finally returns not -1 you get rc == TRUE.
+**  Attention: This header file is a little bit tricky.
+**             It's a combination of a C source and an embedded POD document
+**             The purpose of this is to have both things together at one
+**             place. So you can both pass this file to the C compiler and 
+**             the pod2man translater.
 */
+
+#ifdef EAPI
 
 #ifndef AP_HOOK_H
 #define AP_HOOK_H
@@ -414,11 +255,13 @@ typedef unsigned int ap_hook_mode;
 #define AP_HOOK_MODE_UNKNOWN  0
 #define AP_HOOK_MODE_TOPMOST  1
 #define AP_HOOK_MODE_DECLINE  2
-#define AP_HOOK_MODE_ALL      3
+#define AP_HOOK_MODE_DECLTMP  3
+#define AP_HOOK_MODE_ALL      4
 
 /* the constructors for the return value modes */
 #define AP_HOOK_TOPMOST       AP_HOOK_MODE_TOPMOST
 #define AP_HOOK_DECLINE(val)  AP_HOOK_MODE_DECLINE, (val)   
+#define AP_HOOK_DECLTMP(val)  AP_HOOK_MODE_DECLTMP, (val)   
 #define AP_HOOK_ALL           AP_HOOK_MODE_ALL
 
 /*
@@ -543,3 +386,325 @@ API_EXPORT(int)           ap_hook_use          (char *hook, ap_hook_sig sig, ap_
 API_EXPORT(int)           ap_hook_call         (char *hook, ...);
 
 #endif /* AP_HOOK_H */
+
+#endif /* EAPI */
+/*
+=pod
+##
+##  Embedded POD document
+##
+
+=head1 NAME
+
+B<ap_hook> - B<Generic Hook Interface for Apache>
+
+=head1 SYNOPSIS
+
+B<Hook Library Setup:>
+
+ void ap_hook_init(void);
+ void ap_hook_kill(void);
+
+B<Hook Configuration and Registration:>
+
+ int ap_hook_configure(char *hook, ap_hook_sig sig, ap_hook_mode mode);
+ int ap_hook_register(char *hook, void *func, void *ctx);
+ int ap_hook_unregister(char *hook, void *func);
+
+B<Hook Usage:>
+
+ ap_hook_state ap_hook_status(char *hook);
+ int ap_hook_use(char *hook, ap_hook_sig sig, ap_hook_mode mode, ...);
+ int ap_hook_call(char *hook, ...);
+
+B<Hook Signature Constructors> (ap_hook_sig):
+
+ AP_HOOK_SIG1(rc)
+ AP_HOOK_SIG2(rc,a1)
+ AP_HOOK_SIG3(rc,a1,a2)
+ AP_HOOK_SIG4(rc,a1,a2,a3)
+ AP_HOOK_SIG5(rc,a1,a2,a3,a4)
+ AP_HOOK_SIG6(rc,a1,a2,a3,a4,a5)
+ AP_HOOK_SIG7(rc,a1,a2,a3,a4,a5,a6)
+ AP_HOOK_SIG8(rc,a1,a2,a3,a4,a5,a6,a7)
+
+B<Hook Modes Constructors> (ap_hook_mode):
+
+ AP_HOOK_TOPMOST
+ AP_HOOK_DECLINE(value)
+ AP_HOOK_DECLTMP(value)
+ AP_HOOK_ALL
+
+B<Hook States> (ap_hook_state):
+
+ AP_HOOK_STATE_UNDEF
+ AP_HOOK_STATE_NOTEXISTANT
+ AP_HOOK_STATE_ESTABLISHED
+ AP_HOOK_STATE_CONFIGURED 
+ AP_HOOK_STATE_REGISTERED
+
+=head1 DESCRIPTION
+
+This library implements a generic hook interface for Apache which can be used
+to loosely couple code through arbitrary hooks. There are two use cases for
+this mechanism:
+
+=over 3
+
+=item B<1. Extension and Overrides>
+
+Inside a specific code section you want to perform a specific function call
+for extension reasons.  But you want to allow one or more modules to implement
+this function by registering hooks. Those hooks are registered on a stack and
+can be even configured to have a I<decline> return value. As long as there are
+functions which return the decline value the next function on the stack is
+tried. When the first function doesn't return the decline value the hook call
+stops. 
+
+The original intent of this use case is to provide a flexible extension
+mechanism where modules can override functionality.
+
+=item B<2. Intercommunication>
+
+Inside a specific code you have a function you want to export. But you first
+want to allow other code to override this function.  And second you want to
+export this function without real object file symbol references. Instead you
+want to register the function and let the users call this function by name. 
+
+The original intent of this use case is to allow inter-module communication
+without direct symbol references, which are a big I<no-no> for the I<Dynamic
+Shared Object> (DSO) situation.
+
+=back
+
+And the following design goals existed:
+
+=over 3
+
+=item B<1. Minimum code changes>
+
+The hook calls should look very similar to the corresponding direct function
+call to allow one to easily translate it. And the total amount of changes for
+the hook registration, hook configuration and hook usage should be as small as
+possible to minimize the total code changes. Additionally a shorthand API
+function (ap_hook_use) should be provided which lets one trivially add a hook
+by just changing the code at a single location.
+
+=item B<2. The hook call has to be maximum flexible>
+
+In order to avoid nasty hacks, maximum flexiblity for the hook calls is
+needed, i.e. any function signature (the set of types for the return value and
+the arguments) should be supported.  And it should be possible to
+register always a context (ctx) variable with a function which is passed to
+the corresponding function when the hook call is performed.
+
+=back
+
+The implementation of this library directly followed these two design goals.
+
+=head1 USAGE
+
+Using this hook API is a four-step process:
+
+=over 3
+
+=item B<1. Initialization>
+
+Initialize or destroy the hook mechanism inside your application program:
+
+ ap_hook_init();
+    :
+ ap_hook_kill();
+
+=item B<2. Configuration>
+
+Configure a particular hook by specifing its name, signature and return type
+semantic:
+
+ ap_hook_configure("lookup", AP_HOOK_SIG2(ptr,ptr,ctx), AP_HOOK_DECLINE(NULL));
+ ap_hook_configure("setup", AP_HOOK_SIG2(int,ptr,char), AP_HOOK_DECLTMP(FALSE));
+ ap_hook_configure("read", AP_HOOK_SIG2(void,ptr), AP_HOOK_TOPMOST);
+ ap_hook_configure("logit", AP_HOOK_SIG2(void,ptr), AP_HOOK_ALL);
+
+This configures four hooks: 
+
+A hook named C<lookup> with the signature C<void *lookup(void *, void *)>
+(where the second argument is C<NULL> or the private context pointer of the
+hook function which can be optionally provided at the registration step
+later) and a return code semantic which says: Proceed as long as the
+registered lookup functions return C<NULL> or no more registered functions
+exists. A call for this hook has to provide 2 argument only (a pointer to the
+return variable and the first argument), because the context is
+implicitly provided by the hook mechanism. Sample idea: I<The first function
+who was successful in looking up a variable provides the value>.
+
+A hook named C<setup> with the signature C<int setup(void *, char)" and a
+return code semantic equal to the one of the C<lookup> hook. But the decline
+return value is implemented by a temporay variable of the hook mechanism and
+only used for the decline decision. So a call to this hook has to provide 2
+arguments only (the first and second argument, but no address to a return
+value). Sample idea: I<Any function can handle the setup and when one
+function handled it stops the processing by indicating this with the return
+value>.
+
+A hook named C<read> with the signature C<void read(void *)> and a return code
+semantic which says: Only the top most function on the registered function
+stack is tried (and independet of a possible return value in non-void
+context). A call to this hook has to provide exactly 1 argument (the
+single argument to the hook function). Sample idea: I<We want to
+use a read function and allow others to override it, but independent how much
+registered functions exists, only top most (= last registered) function
+overrides and is used>.
+
+A hook named C<logit> with the signature C<void logit(void *)> and a return
+code semantic which says: All registered functions on the hook functioin stack
+are tried. Sample idea: I<We pass a FILE pointer to the logging functions and
+any function can log whatever it wants>.
+
+=item B<3. Registration>
+
+Register the actual functions which should be used by the hook:
+
+ ap_hook_register("lookup", mylookup, mycontext);
+ ap_hook_register("setup", mysetup);
+ ap_hook_register("read", myread);
+ ap_hook_register("logit", mylogit);
+
+This registers the function C<mylookup()> under the C<lookup> hook with the
+private context given by the variable C<mycontext>. And it registers the
+function C<mysetup()> under the C<setup> hook without any context. Same for
+C<myread> and C<mylogit>.
+
+=item B<4. Usage>
+
+Finally use the hooks, i.e. instead of using direct function calls like
+        
+ rc = mylookup(a1, a2);
+ rc = mysetup(a1, a2);
+ myread(a1);
+ mylogit(a1);
+
+you now use:
+
+ ap_hook_call("lookup", &rc, a1, a2);
+ ap_hook_call("setup", &rc, a1, a2);
+ ap_hook_call("read", a1);
+ ap_hook_call("logit", a1);
+
+which are internally translated to:
+
+ rc = mylookup(a1, a2, mycontext);
+ rc = mysetup(a1, a2);
+ myread(a1);
+ mylogit(a1);
+
+Notice two things here: First the context (C<mycontext>) for the C<mylookup()>
+function is automatically added by the hook mechanism. And it is a different
+(and not fixed) context for each registered function, of course.  Second,
+return values always have to be pushed into variables and a pointer to them
+has to be given as the second argument to C<ap_hook_call> (except for
+functions which have a void return type, of course).
+
+BTW, the return value of C<ap_hook_call()> is always C<TRUE> or C<FALSE>.
+C<TRUE> when at least one function call was successful (always the case for
+C<AP_HOOK_TOPMOST> and C<AP_HOOK_ALL>). C<FALSE> when all functions
+returned the decline value or no functions are registered at all.
+
+=back
+
+=head1 RESTRICTIONS
+
+To make the hook implementation efficient and to not bloat up the code too
+much a few restrictions have to make:
+
+=over 3
+
+=item 1.
+
+Only function calls with up to 4 arguments are implemented. When more are
+needed you can either extend the hook implementation by using more bits for
+the signature configuration or you can do a workaround when the function is
+your own one: Put the remaining (N-4-1) arguments into a structure and pass
+only a pointer (one argument) as the forth argument.
+
+=item 2.
+
+Only the following ANSI C variable types are supported:
+
+ - For the return value: 
+   void (= none), char, int, float, double, ptr (= void *)
+ - For the arguments:
+   ctx  (= context), char, int, float, double, ptr (= void *)
+
+This means in theory that 6^5 (=7776) signature combinations are possible. But
+because we don't need all of them inside Apache and it would bloat up the code
+too dramatically we implement only a subset of those combinations. The
+implemented signatures can be specified inside C<ap_hook.c> and the
+corresponding code can be automatically generated by running ``C<perl
+ap_hook.c>'' (yeah, no joke ;-).  So when you need a hook with a different
+still not implemented signature you either have to again use a workaround as
+above (i.e. use a structure) or just add the signature to the C<ap_hook.c>
+file.
+
+=head1 EXAMPLE
+
+We want to call `C<ssize_t read(int, void *, size_t)>' through hooks in order
+to allow modules to override this call.  So, somewhere we have a replacement
+function for C<read()> defined (same signature, of course):
+
+ ssize_t my_read(int, void *, size_t);
+
+We now configure a C<read> hook. Here the C<AP_HOOK_SIGx()> macro defines the
+signature of the C<read()>-like callback functions and has to match the
+prototype of C<read()>. But we have to replace typedefs with the physical
+underlaying ANSI C types. And C<AP_HOOK_DECLINE()> sets the return value of
+the read()-like functions which forces the next hook to be called (here -1).
+And we register the original C<read()> function as the default hook.
+
+ ap_hook_configure("read", 
+                   AP_HOOK_SIG4(int,int,ptr,int), 
+                   AP_HOOK_DECLINE(-1));
+ ap_hook_register("read", read);
+
+Now a module wants to override the C<read()> call and registers the
+C<my_read()> function:
+
+ ap_hook_register("read", my_read);
+
+The function logically gets pushed onto a stack, so the execution order is the
+reverse registering order, i.e. I<last registered - first called>. Now we can
+replace the standard C<read()> call
+
+ bytes = read(fd, buf, bufsize);
+ if (bytes == -1)
+    ...error...
+
+with the hook based call:
+
+  rc = ap_hook_call("read", &bytes, fd, buf, bufsize);
+  if (rc == FALSE)
+     ...error...
+
+Now internally the following is done: The call `C<bytes = my_read(fd, buf,
+bufsize)>' is done. When it returns not -1 (the decline value) nothing
+more is done. But when C<my_read()> returns -1 the next function is tried:
+`C<bytes = read(fd, buf, bufsize)>'. When this one also returns -1 you get
+`rc == FALSE'. When it finally returns not -1 you get `rc == TRUE'.
+
+=head1 SEE ALSO
+
+ap_ctx(3)
+
+=head1 HISTORY
+
+The ap_hook(3) interface was originally designed and implemented in October
+1998 by Ralf S. Engelschall as part of the mod_ssl project.
+
+=head1 AUTHOR
+
+ Ralf S. Engelschall
+ rse@engelschall.com
+ www.engelschall.com
+
+=cut
+*/

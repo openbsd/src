@@ -2,7 +2,7 @@
 ##
 ##  mkshadow.sh -- create a shadow tree
 ##
-##  Written by Ralf S. Engelschall <rse@apache.org>
+##  Initially written by Ralf S. Engelschall <rse@apache.org>
 ##  for the shadow tree generation option (--shadow) of 
 ##  Apache's Autoconf-style Interface (APACI) 
 ##
@@ -37,7 +37,7 @@ esac
 
 #   determine reverse directory for destination directory
 dstrevdir=''
-if [ $oneisabs = 0 ]; then
+if [ "x$oneisabs" = "x0" ]; then
     #   (inlined fp2rp)
     OIFS2="$IFS"; IFS='/'
     for pe in $dst; do
@@ -52,7 +52,7 @@ fi
 if [ ! -d $dst ]; then
     mkdir $dst
 fi
-DIRS="`cd $src
+DIRS="`cd $src; \
        find . -type d -print |\
        sed -e '/\/CVS/d' \
            -e '/^\.$/d' \
@@ -64,7 +64,7 @@ done
 IFS="$OIFS"
 
 #   fill directory tree with symlinks to files
-FILES="`cd $src
+FILES="`cd $src; \
         find . -depth -print |\
         sed -e '/\.o$/d' \
             -e '/\.a$/d' \
@@ -81,15 +81,15 @@ FILES="`cd $src
 OIFS="$IFS" IFS="$DIFS"
 for file in $FILES; do
      #  don't use `-type f' above for find because of symlinks
-     if [ -d $file ]; then
+     if [ -d "$src/$file" ]; then
          continue
      fi
      basename=`echo $file | sed -e 's:^.*/::'`
      dir=`echo $file | sed -e 's:[^/]*$::' -e 's:/$::' -e 's:$:/:' -e 's:^/$::'`
      from="$src/$file"
      to="$dst/$dir$basename"
-     if [ $oneisabs = 0 ]; then
-         if [ ".$dir" != . ]; then
+     if [ "x$oneisabs" = "x0" ]; then
+         if [ "x$dir" != "x" ]; then
              subdir=`echo $dir | sed -e 's:/$::'`
              #   (inlined fp2rp)
              revdir=''

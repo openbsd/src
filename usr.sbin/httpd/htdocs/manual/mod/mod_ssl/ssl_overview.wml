@@ -4,8 +4,7 @@
 <page_prev name="Cover" url="index.html">
 <page_next name="Introduction" url="ssl_intro.html">
 
-<quotation width=300 
-           author="Tim J. Hudson, SSLeay co-author">
+<quotation width=300 author="Tim J. Hudson, SSLeay F.A.Q.">
 ``Ralf Engelschall has released an
 excellent module that integrates
 Apache and SSLeay.''
@@ -21,8 +20,8 @@ HREF="http://www.apache.org/">Apache</A> (v1.3) webserver via the <A
 HREF="http://www.netscape.com/newsref/std/SSL.html">Secure Socket Layer</A>
 (SSL v2/v3) and <A HREF="http://www.consensus.com/ietf-tls/">Transport Layer
 Security</A> (TLS v1) protocols by the help of the excellent SSL/TLS
-implementation library <A HREF="http://www.ssleay.org/">SSLeay</A> from <A
-HREF="mailto:eay@cryptsoft.com">Eric A. Young</A> and <A
+implementation library <A HREF="http://www.openssl.org/">OpenSSL</A> from <A
+HREF="mailto:eay@aus.rsa.com">Eric A. Young</A> and <A
 HREF="mailto:tjh@cryptsoft.com">Tim Hudson</A>. 
 
 </td>
@@ -65,7 +64,7 @@ HREF="mailto:tjh@cryptsoft.com">Tim Hudson</A>.
 </table>
 
 <p>
-The <A HREF="http://www.engelschall.com/sw/mod_ssl/">mod_ssl</A> package was
+The <A HREF="http://www.modssl.org/">mod_ssl</A> package was
 created in April 1998 by <A HREF="mailto:rse@engelschall.com">Ralf S.
 Engelschall</A> and was originally derived from the <A
 HREF="http://www.apache-ssl.org/">Apache-SSL</A> package developed by <A
@@ -78,13 +77,13 @@ notices and give the proper credit.
 
 <h2>Legalese</h2>
 
-Although the above conditions also apply to Apache and SSLeay in general (both
+Although the above conditions also apply to Apache and OpenSSL in general (both
 are freely available and useable software packages), you should be aware that
-especially the cryptographic algorithms used inside SSLeay stay under
+especially the cryptographic algorithms used inside OpenSSL stay under
 certain patents and perhaps import/export/use restrictions in some countries
 of the world. So whether you can actually use the combination
-Apache+mod_ssl+SSLeay in your country depends mainly on your local state laws.
-The authors of neither Apache nor mod_ssl nor SSLeay are liable for any
+Apache+mod_ssl+OpenSSL in your country depends mainly on your local state laws.
+The authors of neither Apache nor mod_ssl nor OpenSSL are liable for any
 violations you make here. 
 
 <p>
@@ -94,9 +93,9 @@ module. A lot of hints you can find in the <a
 href="http://cwis.kub.nl/~frw/people/koops/lawsurvy.htm">International Law
 Crypto Survey</a> which is a really comprehensive resource on this topic.  At
 least two countries with heavy cryptography restrictions are well known:
-In the Unisted States (USA) first it's not allowed to (re-)export mod_ssl
-or SSLeay and second it's not allowed to use Apache+mod_ssl+SSLeay (because of
-patent issues on the RSA and RC4 algorithms) unless SSLeay is built with RSA
+In the United States (USA) first it's not allowed to (re-)export mod_ssl
+or OpenSSL and second it's not allowed to use Apache+mod_ssl+OpenSSL (because of
+patent issues on the RSA and RC4 algorithms) unless OpenSSL is built with RSA
 DSI's RSAref package and used for non-commercial purposes only. And inside
 France it's not allowed to use any cryptography at all when keys with more
 than 40 bits are used.
@@ -125,7 +124,7 @@ CREDIT INFORMATION:
 This product includes software developed by Ben Laurie for use in the
 Apache-SSL HTTP server project, software developed by Larry Wall and David
 MacKenzie for use in the GNU project of the FSF and software developed by Dr.
-Stephen N. Henson as a companion to SSLeay.
+Stephen N. Henson as a companion to OpenSSL.
 </font>
 </box>
 
@@ -158,7 +157,7 @@ Usually this is done by using the APACI command
 <blockquote>
 <pre>
 $ cd apache_1.3.x/
-$ SSL_BASE=/path/to/ssleay ./configure ... --enable-module=ssl
+$ SSL_BASE=/path/to/openssl ./configure ... --enable-module=ssl
 </pre>
 </blockquote>
 
@@ -196,6 +195,6 @@ Building mod_ssl as a DSO is especially interesting to achieve more run-time
 flexibility, i.e. you can decide whether to use SSL or not at run-time instead
 of build-time.  But notice that building mod_ssl as a DSO requires that your
 OS/compiler supports building DSOs in the first place, and additionally that
-they support linking of a DSO against a static library (SSLeay/libdb). Not all
-platform support this.
+they support linking of a DSO against a static library (libssl.a, libcrypo.a).
+Not all platform support this.
 

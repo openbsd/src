@@ -67,6 +67,11 @@
 #include "util_script.h"
 #include "util_date.h"		/* For parseHTTPdate() */
 
+#ifdef OS2
+#define INCL_DOS
+#include <os2.h>
+#endif
+
 /*
  * Various utility functions which are common to a whole lot of
  * script-type extensions mechanisms, and might as well be gathered
@@ -265,6 +270,7 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
     ap_table_addn(e, "SERVER_SIGNATURE", ap_psignature("", r));
     ap_table_addn(e, "SERVER_SOFTWARE", ap_get_server_version());
     ap_table_addn(e, "SERVER_NAME", ap_get_server_name(r));
+    ap_table_addn(e, "SERVER_ADDR", r->connection->local_ip);	/* Apache */
     ap_table_addn(e, "SERVER_PORT",
 		  ap_psprintf(r->pool, "%u", ap_get_server_port(r)));
     host = ap_get_remote_host(c, r->per_dir_config, REMOTE_HOST);
@@ -496,6 +502,8 @@ API_EXPORT(int) ap_scan_script_header_err_core(request_rec *r, char *buffer,
 	    ap_overlap_tables(r->err_headers_out, merge,
 		AP_OVERLAP_TABLES_MERGE);
 	    if (!ap_is_empty_table(cookie_table)) {
+		/* the cookies have already been copied to the cookie_table */
+		ap_table_unset(r->err_headers_out, "Set-Cookie");
 		r->err_headers_out = ap_overlay_tables(r->pool,
 		    r->err_headers_out, cookie_table);
 	    }
@@ -693,7 +701,7 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 
 #endif
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(OS2)
     /* the fd on r->server->error_log is closed, but we need somewhere to
      * put the error messages from the log_* functions. So, we use stderr,
      * since that is better than allowing errors to go unnoticed.  Don't do
@@ -747,174 +755,222 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 #ifdef OS2
     {
 	/* Additions by Alec Kloss, to allow exec'ing of scripts under OS/2 */
-	int is_script;
+	int is_script = 0;
 	char interpreter[2048];	/* hope it's enough for the interpreter path */
+	char error_object[260];
 	FILE *program;
+        char *cmdline = r->filename, *cmdline_pos;
+        int cmdlen;
+	char *args = "", *args_end;
+	ULONG rc;
+        RESULTCODES rescodes;
+        int env_len, e;
+        char *env_block, *env_block_pos;
 
+	if (r->args && r->args[0] && !strchr(r->args, '='))
+	    args = r->args;
+	    
 	program = fopen(r->filename, "rt");
+	
 	if (!program) {
 	    ap_log_rerror(APLOG_MARK, APLOG_ERR, r, "fopen(%s) failed",
 			 r->filename);
 	    return (pid);
 	}
+	
 	fgets(interpreter, sizeof(interpreter), program);
 	fclose(program);
+	
 	if (!strncmp(interpreter, "#!", 2)) {
 	    is_script = 1;
-	    interpreter[strlen(interpreter) - 1] = '\0';
+            interpreter[strlen(interpreter) - 1] = '\0';
+            if (interpreter[2] != '/' && interpreter[2] != '\\' && interpreter[3] != ':') {
+                char buffer[300];
+                if (DosSearchPath(SEARCH_ENVIRONMENT, "PATH", interpreter+2, buffer, sizeof(buffer)) == 0) {
+                    strcpy(interpreter+2, buffer);
+                } else {
+                    strcat(interpreter, ".exe");
+                    if (DosSearchPath(SEARCH_ENVIRONMENT, "PATH", interpreter+2, buffer, sizeof(buffer)) == 0) {
+                        strcpy(interpreter+2, buffer);
+                    }
+                }
+            }
 	}
-	else {
-	    is_script = 0;
+
+        if (is_script) {
+            cmdline = ap_pstrcat(r->pool, interpreter+2, " ", r->filename, NULL);
+        }
+        else if (strstr(strupr(r->filename), ".CMD") > 0) {
+            /* Special case to allow use of REXX commands as scripts. */
+            os2pathname(r->filename);
+            cmdline = ap_pstrcat(r->pool, SHELL_PATH, " /C ", r->filename, NULL);
+        }
+        else {
+            cmdline = r->filename;
+	}
+	
+        args = ap_pstrdup(r->pool, args);
+        ap_unescape_url(args);
+        args = ap_double_quotes(r->pool, args);
+        args_end = args + strlen(args);
+
+        if (args_end - args > 4000) { /* cmd.exe won't handle lines longer than 4k */
+            args_end = args + 4000;
+            *args_end = 0;
+        }
+
+        /* +4 = 1 space between progname and args, 2 for double null at end, 2 for possible quote on first arg */
+        cmdlen = strlen(cmdline) + strlen(args) + 4; 
+        cmdline_pos = cmdline;
+
+        while (*cmdline_pos) {
+            cmdlen += 2 * (*cmdline_pos == '+');  /* Allow space for each arg to be quoted */
+            cmdline_pos++;
+        }
+
+        cmdline = ap_pstrndup(r->pool, cmdline, cmdlen);
+        cmdline_pos = cmdline + strlen(cmdline);
+
+	while (args < args_end) {
+            char *arg;
+	    
+            arg = ap_getword_nc(r->pool, &args, '+');
+
+            if (strpbrk(arg, "&|<> "))
+                arg = ap_pstrcat(r->pool, "\"", arg, "\"", NULL);
+
+            *(cmdline_pos++) = ' ';
+            strcpy(cmdline_pos, arg);
+            cmdline_pos += strlen(cmdline_pos);
+        }
+
+        *(++cmdline_pos) = 0; /* Add required second terminator */
+	args = strchr(cmdline, ' ');
+	
+	if (args) {
+	    *args = 0;
+	    args++;
 	}
 
-	if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) {
-	    int emxloop;
-	    char *emxtemp;
+        /* Create environment block from list of envariables */
+        for (env_len=1, e=0; env[e]; e++)
+            env_len += strlen(env[e]) + 1;
 
-	    /* For OS/2 place the variables in the current
-	     * environment then it will be inherited. This way
-	     * the program will also get all of OS/2's other SETs.
-	     */
-	    for (emxloop = 0; ((emxtemp = env[emxloop]) != NULL); emxloop++) {
-		putenv(emxtemp);
-	    }
+        env_block = ap_palloc(r->pool, env_len);
+        env_block_pos = env_block;
 
-	    /* More additions by Alec Kloss for OS/2 */
-	    if (is_script) {
-		/* here's the stuff to run the interpreter */
-		execl(interpreter + 2, interpreter + 2, r->filename, NULL);
-	    }
-	    else if (strstr(strupr(r->filename), ".CMD") > 0) {
-		/* Special case to allow use of REXX commands as scripts. */
-		os2pathname(r->filename);
-		execl(SHELL_PATH, SHELL_PATH, "/C", r->filename, NULL);
-	    }
-	    else {
-		execl(r->filename, argv0, NULL);
-	    }
+        for (e=0; env[e]; e++) {
+            strcpy(env_block_pos, env[e]);
+            env_block_pos += strlen(env_block_pos) + 1;
+        }
+
+        *env_block_pos = 0; /* environment block is terminated by a double null */
+
+	rc = DosExecPgm(error_object, sizeof(error_object), EXEC_ASYNC, cmdline, env_block, &rescodes, cmdline);
+	
+	if (rc) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, r, "DosExecPgm(%s %s) failed, %s - %s",
+                          cmdline, args ? args : "", ap_os_error_message(rc), error_object );
+	    return -1;
 	}
-	else {
-	    int emxloop;
-	    char *emxtemp;
-
-	    /* For OS/2 place the variables in the current
-	     * environment so that they will be inherited. This way
-	     * the program will also get all of OS/2's other SETs.
-	     */
-	    for (emxloop = 0; ((emxtemp = env[emxloop]) != NULL); emxloop++) {
-		putenv(emxtemp);
-	    }
-
-	    if (strstr(strupr(r->filename), ".CMD") > 0) {
-		/* Special case to allow use of REXX commands as scripts. */
-		os2pathname(r->filename);
-		execv(SHELL_PATH, create_argv_cmd(r->pool, argv0, r->args,
-						  r->filename));
-	    }
-	    else {
-		execv(r->filename,
-		      create_argv(r->pool, NULL, NULL, NULL, argv0, r->args));
-	    }
-	}
-	return (pid);
+	
+	return rescodes.codeTerminate;
     }
 #elif defined(WIN32)
     {
-	/* Adapted from Alec Kloss' work for OS/2 */
-	int is_script = 0;
-	int is_binary = 0;
-	char interpreter[2048];	/* hope it's enough for the interpreter path */
-	FILE *program;
-	int i, sz;
-	char *dot;
-	char *exename;
+        /* Adapted from Alec Kloss' work for OS/2 */
+        char *interpreter = NULL;
+        char *arguments = NULL;
+        char *ext = NULL;
+        char *exename = NULL;
+        char *s = NULL;
         char *quoted_filename;
-	int is_exe = 0;
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
         char *pCommand;
         char *pEnvBlock, *pNext;
+
+        int i;
         int iEnvBlockLen;
 
-	memset(&si, 0, sizeof(si));
-	memset(&pi, 0, sizeof(pi));
+        file_type_e fileType;
 
-	interpreter[0] = 0;
-	pid = -1;
+        STARTUPINFO si;
+        PROCESS_INFORMATION pi;
 
-        quoted_filename = ap_pstrcat(r->pool, "\"", r->filename, "\"", NULL);
+        memset(&si, 0, sizeof(si));
+        memset(&pi, 0, sizeof(pi));
+
+        pid = -1;
 
         if (!shellcmd) {
-            exename = strrchr(r->filename, '/');
-            if (!exename) {
-                exename = strrchr(r->filename, '\\');
-            }
-            if (!exename) {
-                exename = r->filename;
-            }
-            else {
-                exename++;
-            }
-            dot = strrchr(exename, '.');
-            if (dot) {
-                if (!strcasecmp(dot, ".BAT")
-                    || !strcasecmp(dot, ".CMD")
-                    || !strcasecmp(dot, ".EXE")
-                    ||  !strcasecmp(dot, ".COM")) {
-                    is_exe = 1;
-                }
-            }
 
-            if (!is_exe) {
-                program = fopen(r->filename, "rb");
-                if (!program) {
-                    ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
-                                 "fopen(%s) failed", r->filename);
-                    return (pid);
-                }
-                sz = fread(interpreter, 1, sizeof(interpreter) - 1, program);
-                if (sz < 0) {
-                    ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
-                                 "fread of %s failed", r->filename);
-                    fclose(program);
-                    return (pid);
-                }
-                interpreter[sz] = 0;
-                fclose(program);
-                if (!strncmp(interpreter, "#!", 2)) {
-                    is_script = 1;
-                    for (i = 2; i < sizeof(interpreter); i++) {
-                        if ((interpreter[i] == '\r')
-                            || (interpreter[i] == '\n')) {
-                            break;
-                        }
-                    }
-                    interpreter[i] = 0;
-                    for (i = 2; interpreter[i] == ' '; ++i)
-                        ;
-                    memmove(interpreter+2,interpreter+i,strlen(interpreter+i)+1);
-                }
-                else {
-                    /* Check to see if it's a executable */
-                    IMAGE_DOS_HEADER *hdr = (IMAGE_DOS_HEADER*)interpreter;
-                    if (hdr->e_magic == IMAGE_DOS_SIGNATURE && hdr->e_cblp < 512) {
-                        is_binary = 1;
-                    }
-                }
-            }
-            /* Bail out if we haven't figured out what kind of
-             * file this is by now..
-             */
-            if (!is_exe && !is_script && !is_binary) {
+            fileType = ap_get_win32_interpreter(r, &interpreter);
+
+            if (fileType == eFileTypeUNKNOWN) {
                 ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r,
-                             "%s is not executable; ensure interpreted scripts have "
-                             "\"#!\" first line", 
-                             r->filename);
+                              "%s is not executable; ensure interpreted scripts have "
+                              "\"#!\" first line", 
+                              r->filename);
                 return (pid);
             }
-        }
 
-        if (shellcmd) {
+            /*
+             * Look at the arguments...
+             */
+            arguments = "";
+            if ((r->args) && (r->args[0]) && !strchr(r->args, '=')) { 
+                /* If we are in this leg, there are some other arguments
+                 * that we must include in the execution of the CGI.
+                 * Because CreateProcess is the way it is, we have to
+                 * create a command line like format for the execution
+                 * of the CGI.  This means we need to create on long
+                 * string with the executable and arguments.
+                 *
+                 * The arguments string comes in the request structure,
+                 * and each argument is separated by a '+'.  We'll replace
+                 * these pluses with spaces.
+                 */
+
+                int iStringSize = 0;
+                int x;
+	    
+                /*
+                 *  Duplicate the request structure string so we don't change it.
+                 */                                   
+                arguments = ap_pstrdup(r->pool, r->args);
+                
+                /*
+                 *  Change the '+' to ' '
+                 */
+                for (x=0; arguments[x]; x++) {
+                    if ('+' == arguments[x]) {
+                        arguments[x] = ' ';
+                    }
+                }
+       
+                /*
+                 * We need to unescape any characters that are 
+                 * in the arguments list.
+                 */
+                ap_unescape_url(arguments);
+                arguments = ap_escape_shell_cmd(r->pool, arguments);
+            }
+
+            /*
+             * We have the interpreter (if there is one) and we have 
+             * the arguments (if there are any).
+             * Build the command string to pass to CreateProcess. 
+             */
+            quoted_filename = ap_pstrcat(r->pool, "\"", r->filename, "\"", NULL);
+            if (interpreter && *interpreter) {
+                pCommand = ap_pstrcat(r->pool, interpreter, " ", 
+                                      quoted_filename, " ", arguments, NULL);
+            }
+            else {
+                pCommand = ap_pstrcat(r->pool, quoted_filename, " ", arguments, NULL);
+            }
+
+         } else {
+
             char *shell_cmd = "CMD.EXE /C ";
             OSVERSIONINFO osver;
             osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -929,96 +985,17 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
             }       
             pCommand = ap_pstrcat(r->pool, shell_cmd, argv0, NULL);
         }
- 	else if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) { 
-	    if (is_exe || is_binary) {
-	        /*
-	         * When the CGI is a straight binary executable, 
-		 * we can run it as is
-	         */
-	        pCommand = quoted_filename;
-	    }
-	    else if (is_script) {
-                /* When an interpreter is needed, we need to create 
-                 * a command line that has the interpreter name
-                 * followed by the CGI script name.  
-		 */
-	        pCommand = ap_pstrcat(r->pool, interpreter + 2, " ", 
-				      quoted_filename, NULL);
-	    }
-	    else {
-	        /* If not an executable or script, just execute it
-                 * from a command prompt.  
-                 */
-	        pCommand = ap_pstrcat(r->pool, SHELL_PATH, " /C ", 
-				      quoted_filename, NULL);
-	    }
-	}
-	else {
 
-            /* If we are in this leg, there are some other arguments
-             * that we must include in the execution of the CGI.
-             * Because CreateProcess is the way it is, we have to
-             * create a command line like format for the execution
-             * of the CGI.  This means we need to create on long
-             * string with the executable and arguments.
-             *
-             * The arguments string comes in the request structure,
-             * and each argument is separated by a '+'.  We'll replace
-             * these pluses with spaces.
-	     */
-	    char *arguments=NULL;
-	    int iStringSize = 0;
-	    int x;
-	    
-	    /*
-	     *  Duplicate the request structure string so we don't change it.
-	     */                                   
-	    arguments = ap_pstrdup(r->pool, r->args);
-       
-	    /*
-	     *  Change the '+' to ' '
-	     */
-	    for (x=0; arguments[x]; x++) {
-	        if ('+' == arguments[x]) {
-		  arguments[x] = ' ';
-		}
-	    }
-       
-	    /*
-	     * We need to unescape any characters that are 
-             * in the arguments list.
-	     */
-	    ap_unescape_url(arguments);
-	    arguments = ap_escape_shell_cmd(r->pool, arguments);
-           
-	    /*
-	     * The argument list should now be good to use, 
-	     * so now build the command line.
-	     */
-	    if (is_exe || is_binary) {
-	        pCommand = ap_pstrcat(r->pool, quoted_filename, " ", 
-				      arguments, NULL);
-	    }
-	    else if (is_script) {
-	        pCommand = ap_pstrcat(r->pool, interpreter + 2, " ", 
-				      quoted_filename, " ", arguments, NULL);
-	    }
-	    else {
-	        pCommand = ap_pstrcat(r->pool, SHELL_PATH, " /C ", 
-				      quoted_filename, " ", arguments, NULL);
-	    }
-	}
-
-	/*
-	 * Make child process use hPipeOutputWrite as standard out,
-	 * and make sure it does not show on screen.
-	 */
-	si.cb = sizeof(si);
-	si.dwFlags     = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-	si.wShowWindow = SW_HIDE;
-	si.hStdInput   = pinfo->hPipeInputRead;
-	si.hStdOutput  = pinfo->hPipeOutputWrite;
-	si.hStdError   = pinfo->hPipeErrorWrite;
+        /*
+         * Make child process use hPipeOutputWrite as standard out,
+         * and make sure it does not show on screen.
+         */
+        si.cb = sizeof(si);
+        si.dwFlags     = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+        si.wShowWindow = SW_HIDE;
+        si.hStdInput   = pinfo->hPipeInputRead;
+        si.hStdOutput  = pinfo->hPipeOutputWrite;
+        si.hStdError   = pinfo->hPipeErrorWrite;
   
         /*
          * Win32's CreateProcess call requires that the environment
@@ -1042,60 +1019,31 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
             i++;
         }
 
-        if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, 0, pEnvBlock,
+        if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, DETACHED_PROCESS, pEnvBlock,
                           ap_make_dirstr_parent(r->pool, r->filename),
                           &si, &pi)) {
-            pid = pi.dwProcessId;
-            /*
-             * We must close the handles to the new process and its main thread
-             * to prevent handle and memory leaks.
-             */ 
-            CloseHandle(pi.hProcess);
-            CloseHandle(pi.hThread);
-        } else {
-	    if (is_script) {
-		/* since we are doing magic to find what we are executing
-		 * if running a script, log what we think we should have
-		 * executed
-		 */
-		ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_WIN32ERROR, r,
-			     "could not run script interpreter: %s", pCommand);
-	    }
-	}
-#if 0
-	if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) {
-	    if (is_exe || is_binary) {
-		pid = spawnle(_P_NOWAIT, r->filename, r->filename, NULL, env);
-	    }
-	    else if (is_script) {
-		pid = spawnle(_P_NOWAIT, interpreter + 2, interpreter + 2,
-			      r->filename, NULL, env);
-	    }
-	    else {
-		pid = spawnle(_P_NOWAIT, SHELL_PATH, SHELL_PATH, "/C",
-			      r->filename, NULL, env);
-	    }
-	}
-	else {
-	    if (is_exe || is_binary) {
-		pid = spawnve(_P_NOWAIT, r->filename,
-			      create_argv(r->pool, NULL, NULL, NULL, argv0, 
-					  r->args), env);
-	    }
-	    else if (is_script) {
-		pid = spawnve(_P_NOWAIT, interpreter + 2,
-			      create_argv(r->pool, interpreter + 2, NULL, NULL,
-					  r->filename, r->args), env);
-	    }
-	    else {
-		pid = spawnve(_P_NOWAIT, SHELL_PATH,
-			      create_argv_cmd(r->pool, argv0, r->args,
-					      r->filename), env);
-	    }
-	}
-#endif
-	return (pid);
+            if (fileType == eFileTypeEXE16) {
+                /* Hack to get 16-bit CGI's working. It works for all the 
+                 * standard modules shipped with Apache. pi.dwProcessId is 0 
+                 * for 16-bit CGIs and all the Unix specific code that calls 
+                 * ap_call_exec interprets this as a failure case. And we can't 
+                 * use -1 either because it is mapped to 0 by the caller.
+                 */
+                pid = -2;
+            }
+            else {
+                pid = pi.dwProcessId;
+                /*
+                 * We must close the handles to the new process and its main thread
+                 * to prevent handle and memory leaks.
+                 */ 
+                CloseHandle(pi.hProcess);
+                CloseHandle(pi.hThread);
+            }
+        }
+        return (pid);
     }
+
 #else
     if (ap_suexec_enabled
 	&& ((r->server->server_uid != ap_user_id)

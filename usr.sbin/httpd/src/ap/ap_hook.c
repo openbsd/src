@@ -62,7 +62,8 @@
 **  Implementation of a Generic Hook Interface for Apache
 **  Written by Ralf S. Engelschall <rse@engelschall.com> 
 **
-**  See ap_hook.h for documentation.
+**  See POD document at end of ap_hook.h for description.
+**  View it with the command ``pod2man ap_hook.h | nroff -man | more''
 **
 **  Attention: This source file is a little bit tricky.
 **             It's a combination of a C source and an embedded Perl script
@@ -76,6 +77,8 @@
                                        * the root of all evil.
                                        *       -- D. E. Knuth
                                        */
+
+#ifdef EAPI
 
 #include "httpd.h"
 #include "http_log.h"
@@ -208,7 +211,7 @@ API_EXPORT(int) ap_hook_configure(char *hook, ap_hook_sig sig, ap_hook_mode mode
     else {
         he->he_sig = sig;
         he->he_modeid = modeid;
-        if (modeid == AP_HOOK_MODE_DECLINE) {
+        if (modeid == AP_HOOK_MODE_DECLINE || modeid == AP_HOOK_MODE_DECLTMP) {
             if (AP_HOOK_SIG_HAS(sig, RC, char))
                 he->he_modeval.v_char = va_arg(ap, va_type(char));
             else if (AP_HOOK_SIG_HAS(sig, RC, int))
@@ -313,7 +316,7 @@ API_EXPORT(int) ap_hook_use(char *hook, ap_hook_sig sig, ap_hook_mode modeid, ..
 
     va_start(ap, modeid);
 
-    if (modeid == AP_HOOK_MODE_DECLINE) {
+    if (modeid == AP_HOOK_MODE_DECLINE || modeid == AP_HOOK_MODE_DECLTMP) {
         if (AP_HOOK_SIG_HAS(sig, RC, char))
             modeval.v_char = va_arg(ap, va_type(char));
         else if (AP_HOOK_SIG_HAS(sig, RC, int))
@@ -393,6 +396,7 @@ API_EXPORT(int) ap_hook_call(char *hook, ...)
 static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
 {
     void *v_rc;
+    ap_hook_value v_tmp;
     int rc;
 
     /*
@@ -444,21 +448,20 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
      *
      * 3. Actually currently used hooks.
      *
-     *    int   func(ptr,ptr,int)              e.g. ap::buff::read [http_main.c]
-     *    int   func(ptr,ptr,int)              e.g. ap::buff::write [http_main.c]
-     *    int   func(ptr,ptr,int)              e.g. ap::buff::writev [http_main.c]
-     *    int   func(ptr,ptr,int)              e.g. ap::buff::sendwithtimeout [http_main.c]
-     *    int   func(ptr,ptr,int)              e.g. ap::buff::recvwithtimeout [http_main.c]
-     *    int   func(ptr,ptr)                  e.g. ap::mod_proxy::canon [mod_proxy.c]
-     *    int   func(ptr,ptr,ptr,int)          e.g. ap::mod_proxy::http::canon [mod_proxy.c]
-     *    int   func(ptr,ptr,ptr,ptr,int)      e.g. ap::mod_proxy::http::handler [mod_proxy.c]
-     *    int   func(ptr,ptr)                  e.g. ap::mod_proxy::error [mod_proxy.c]
-     *    int   func(ptr,ptr,ptr,ptr,int,ptr)  e.g. ap::mod_proxy::handler [mod_proxy.c]
-     *    int   func(ptr)                      e.g. ap::mod_proxy::http::handler::set_destport [proxy_http.c]
-     *    ptr   func(ptr,ptr)                  e.g. ap::mod_proxy::http::handler::new_connection [proxy_http.c]
-     *    int   func(ptr,ptr,ptr,int,ptr)      e.g. ap::mod_proxy::http::handler::write_host_header [proxy_http.c]
-     *    ptr   func(ptr,ptr,ptr,ptr,ptr)      e.g. ap::mod_ssl::var_lookup [ssl_engine_vars.c]
-     *    ptr   func(ptr,ptr)                  e.g. ap::mod_rewrite::lookup_variable [mod_rewrite.c]
+     *    int   func(ptr)                          [2x]
+     *    int   func(ptr,ptr)                      [2x]
+     *    int   func(ptr,ptr,int)                  [5x]
+     *    int   func(ptr,ptr,ptr,int)              [1x]
+     *    int   func(ptr,ptr,ptr,int,ptr)          [1x]
+     *    int   func(ptr,ptr,ptr,ptr,int)          [1x]
+     *    int   func(ptr,ptr,ptr,ptr,int,ptr)      [1x]
+     *    ptr   func(ptr,ptr)                      [3x]
+     *    ptr   func(ptr,ptr,ptr,ptr,ptr)          [1x]
+     *    void  func(ptr)                          [2x]
+     *    void  func(ptr,int,int)                  [1x]
+     *    void  func(ptr,ptr)                      [5x]
+     *    void  func(ptr,ptr,ptr)                  [3x]
+     *    void  func(ptr,ptr,ptr,ptr)              [2x]
      *
      * To simplify the programming task we generate the actual dispatch code
      * for these calls via the embedded Perl script at the end of this source
@@ -473,8 +476,27 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
 
     rc = TRUE;
     v_rc = NULL;
-    if (!AP_HOOK_SIG_HAS(he->he_sig, RC, void))
-        v_rc = va_arg(ap, void *);
+    if (!AP_HOOK_SIG_HAS(he->he_sig, RC, void)) {
+        if (he->he_modeid == AP_HOOK_MODE_DECLTMP) {
+            /* the return variable is a temporary one */ 
+            if (AP_HOOK_SIG_HAS(he->he_sig, RC, char))
+                v_rc = &v_tmp.v_char;
+            else if (AP_HOOK_SIG_HAS(he->he_sig, RC, int))
+                v_rc = &v_tmp.v_int;
+            else if (AP_HOOK_SIG_HAS(he->he_sig, RC, long))
+                v_rc = &v_tmp.v_long;
+            else if (AP_HOOK_SIG_HAS(he->he_sig, RC, float))
+                v_rc = &v_tmp.v_float;
+            else if (AP_HOOK_SIG_HAS(he->he_sig, RC, double))
+                v_rc = &v_tmp.v_double;
+            else if (AP_HOOK_SIG_HAS(he->he_sig, RC, ptr))
+                v_rc = &v_tmp.v_ptr;
+        }
+        else {
+            /* the return variable is provided by caller */ 
+            v_rc = va_arg(ap, void *);
+        }
+    }
 
     /* ----BEGIN GENERATED SECTION-------- */
     if (he->he_sig == AP_HOOK_SIG1(void)) {
@@ -708,6 +730,16 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
         *((int *)v_rc) = ((int(*)(void *, void *, void *, int))(hf->hf_ptr))(v1, v2, v3, v4);
         rc = (*((int *)v_rc) != he->he_modeval.v_int);
     }
+    else if (he->he_sig == AP_HOOK_SIG6(int, ptr, ptr, ptr, int, ptr)) {
+        /* Call: int func(ptr,ptr,ptr,int,ptr) */
+        void *v1 = va_arg(ap, va_type(ptr));
+        void *v2 = va_arg(ap, va_type(ptr));
+        void *v3 = va_arg(ap, va_type(ptr));
+        int   v4 = va_arg(ap, va_type(int));
+        void *v5 = va_arg(ap, va_type(ptr));
+        *((int *)v_rc) = ((int(*)(void *, void *, void *, int, void *))(hf->hf_ptr))(v1, v2, v3, v4, v5);
+        rc = (*((int *)v_rc) != he->he_modeval.v_int);
+    }
     else if (he->he_sig == AP_HOOK_SIG6(int, ptr, ptr, ptr, ptr, int)) {
         /* Call: int func(ptr,ptr,ptr,ptr,int) */
         void *v1 = va_arg(ap, va_type(ptr));
@@ -729,16 +761,6 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
         *((int *)v_rc) = ((int(*)(void *, void *, void *, void *, int, void *))(hf->hf_ptr))(v1, v2, v3, v4, v5, v6);
         rc = (*((int *)v_rc) != he->he_modeval.v_int);
     }
-    else if (he->he_sig == AP_HOOK_SIG6(int, ptr, ptr, ptr, int, ptr)) {
-        /* Call: int func(ptr,ptr,ptr,int,ptr) */
-        void *v1 = va_arg(ap, va_type(ptr));
-        void *v2 = va_arg(ap, va_type(ptr));
-        void *v3 = va_arg(ap, va_type(ptr));
-        int   v4 = va_arg(ap, va_type(int));
-        void *v5 = va_arg(ap, va_type(ptr));
-        *((int *)v_rc) = ((int(*)(void *, void *, void *, int, void *))(hf->hf_ptr))(v1, v2, v3, v4, v5);
-        rc = (*((int *)v_rc) != he->he_modeval.v_int);
-    }
     else if (he->he_sig == AP_HOOK_SIG6(ptr, ptr, ptr, ptr, ptr, ptr)) {
         /* Call: ptr func(ptr,ptr,ptr,ptr,ptr) */
         void *v1 = va_arg(ap, va_type(ptr));
@@ -749,11 +771,38 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
         *((void * *)v_rc) = ((void *(*)(void *, void *, void *, void *, void *))(hf->hf_ptr))(v1, v2, v3, v4, v5);
         rc = (*((void * *)v_rc) != he->he_modeval.v_ptr);
     }
-    else if (he->he_sig == AP_HOOK_SIG2(ptr, char)) {
-        /* Call: ptr func(char) */
-        char  v1 = va_arg(ap, va_type(char));
-        *((void * *)v_rc) = ((void *(*)(char))(hf->hf_ptr))(v1);
-        rc = (*((void * *)v_rc) != he->he_modeval.v_ptr);
+    else if (he->he_sig == AP_HOOK_SIG2(void, ptr)) {
+        /* Call: void func(ptr) */
+        void *v1 = va_arg(ap, va_type(ptr));
+        ((void(*)(void *))(hf->hf_ptr))(v1);
+    }
+    else if (he->he_sig == AP_HOOK_SIG4(void, ptr, int, int)) {
+        /* Call: void func(ptr,int,int) */
+        void *v1 = va_arg(ap, va_type(ptr));
+        int   v2 = va_arg(ap, va_type(int));
+        int   v3 = va_arg(ap, va_type(int));
+        ((void(*)(void *, int, int))(hf->hf_ptr))(v1, v2, v3);
+    }
+    else if (he->he_sig == AP_HOOK_SIG3(void, ptr, ptr)) {
+        /* Call: void func(ptr,ptr) */
+        void *v1 = va_arg(ap, va_type(ptr));
+        void *v2 = va_arg(ap, va_type(ptr));
+        ((void(*)(void *, void *))(hf->hf_ptr))(v1, v2);
+    }
+    else if (he->he_sig == AP_HOOK_SIG4(void, ptr, ptr, ptr)) {
+        /* Call: void func(ptr,ptr,ptr) */
+        void *v1 = va_arg(ap, va_type(ptr));
+        void *v2 = va_arg(ap, va_type(ptr));
+        void *v3 = va_arg(ap, va_type(ptr));
+        ((void(*)(void *, void *, void *))(hf->hf_ptr))(v1, v2, v3);
+    }
+    else if (he->he_sig == AP_HOOK_SIG5(void, ptr, ptr, ptr, ptr)) {
+        /* Call: void func(ptr,ptr,ptr,ptr) */
+        void *v1 = va_arg(ap, va_type(ptr));
+        void *v2 = va_arg(ap, va_type(ptr));
+        void *v3 = va_arg(ap, va_type(ptr));
+        void *v4 = va_arg(ap, va_type(ptr));
+        ((void(*)(void *, void *, void *, void *))(hf->hf_ptr))(v1, v2, v3, v4);
     }
     /* ----END GENERATED SECTION---------- */
     else
@@ -766,6 +815,8 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
 
     return rc;
 }
+
+#endif /* EAPI */
 
 /*
 =cut
@@ -785,6 +836,7 @@ my $end   = '----END GENERATED SECTION----------';
 if ($ARGV[0] eq 'used') {
     my @S = `find .. -type f -name "*.c" -print`;
     my $s;
+    my %T = ();
     foreach $s (@S) {
         $s =~ s|\n$||;
         open(FP, "<$s") || die;
@@ -799,9 +851,14 @@ if ($ARGV[0] eq 'used') {
             my ($rc, $args) = ($sig =~ m|^([^,]+)(.*)$|);
             $args =~ s|^,||;
             $src =~ s|^.+/||;
-            printf("     *    %-6s%-30s e.g. %s [%s]\n", $rc, "func($args)", $hook, $src);
+            my $sig = sprintf("%-6sfunc(%s)", $rc, $args);
+            $T{$sig}++; 
         }
         $source =~ s|\("([^"]+)",\s*AP_HOOK_SIG[0-9]\((.+?)\)|&printme($s, $1, $2), ''|sge;
+    }
+    my $t;
+    foreach $t (sort(keys(%T))) {
+        printf("     *    %-40s [%dx]\n", $t, $T{$t});
     }
     exit(0);
 }

@@ -34,9 +34,10 @@ chgrpcmd=""
 stripcmd=""
 rmcmd="$rmprog -f"
 mvcmd="$mvprog"
+ext=""
 src=""
 dst=""
-while [ ".$1" != . ]; do
+while [ "x$1" != "x" ]; do
     case $1 in
         -c) instcmd="$cpprog"
             shift; continue
@@ -51,8 +52,15 @@ while [ ".$1" != . ]; do
             shift; shift; continue
             ;;
         -s) stripcmd="$stripprog"
-            shift; continue;;
-        *)  if [ ".$src" = . ]; then
+            shift; continue
+            ;;
+        -S) stripcmd="$stripprog $2"
+            shift; shift; continue
+            ;;
+        -e) ext="$2"
+            shift; shift; continue
+            ;;
+        *)  if [ "x$src" = "x" ]; then
                 src=$1
             else
                 dst=$1
@@ -61,11 +69,11 @@ while [ ".$1" != . ]; do
             ;;
     esac
 done
-if [ ".$src" = . ]; then
+if [ "x$src" = "x" ]; then
      echo "install.sh: no input file specified"
      exit 1
 fi
-if [ ".$dst" = . ]; then
+if [ "x$dst" = "x" ]; then
      echo "install.sh: no destination specified"
      exit 1
 fi
@@ -79,6 +87,10 @@ if [ -d $dst ]; then
     dst="$dst/`basename $src`"
 fi
 
+#  Add a possible extension (such as ".exe") to src and dst
+src="$src$ext"
+dst="$dst$ext"
+
 #  Make a temp file name in the proper directory.
 dstdir=`dirname $dst`
 dsttmp=$dstdir/#inst.$$#
@@ -87,10 +99,10 @@ dsttmp=$dstdir/#inst.$$#
 $instcmd $src $dsttmp
 
 #  And set any options; do chmod last to preserve setuid bits
-if [ ".$chowncmd" != . ]; then $chowncmd $dsttmp; fi
-if [ ".$chgrpcmd" != . ]; then $chgrpcmd $dsttmp; fi
-if [ ".$stripcmd" != . ]; then $stripcmd $dsttmp; fi
-if [ ".$chmodcmd" != . ]; then $chmodcmd $dsttmp; fi
+if [ "x$chowncmd" != "x" ]; then $chowncmd $dsttmp; fi
+if [ "x$chgrpcmd" != "x" ]; then $chgrpcmd $dsttmp; fi
+if [ "x$stripcmd" != "x" ]; then $stripcmd $dsttmp; fi
+if [ "x$chmodcmd" != "x" ]; then $chmodcmd $dsttmp; fi
 
 #  Now rename the file to the real destination.
 $rmcmd $dst

@@ -104,10 +104,21 @@ typedef struct {
     unsigned char buffer[64];	/* input buffer */
 } AP_MD5_CTX;
 
-API_EXPORT(void) ap_MD5Init(AP_MD5_CTX * context);
-API_EXPORT(void) ap_MD5Update(AP_MD5_CTX * context, const unsigned char *input,
-			   unsigned int inputLen);
-API_EXPORT(void) ap_MD5Final(unsigned char digest[16], AP_MD5_CTX * context);
+/*
+ * Define the Magic String prefix that identifies a password as being
+ * hashed using our algorithm.
+ */
+#define AP_MD5PW_ID "$apr1$"
+#define AP_MD5PW_IDLEN 6
+
+API_EXPORT(void) ap_MD5Init(AP_MD5_CTX *context);
+API_EXPORT(void) ap_MD5Update(AP_MD5_CTX *context, const unsigned char *input,
+			      unsigned int inputLen);
+API_EXPORT(void) ap_MD5Final(unsigned char digest[16], AP_MD5_CTX *context);
+API_EXPORT(void) ap_MD5Encode(const unsigned char *password,
+			      const unsigned char *salt,
+			      char *result, size_t nbytes);
+API_EXPORT(void) ap_to64(char *s, unsigned long v, int n);
 
 #ifdef __cplusplus
 }

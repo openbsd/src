@@ -67,6 +67,8 @@ extern "C" {
  */
 
 extern int ap_standalone;
+extern int ap_configtestonly;
+extern int ap_docrootcheck;
 extern uid_t ap_user_id;
 extern char *ap_user_name;
 extern gid_t ap_group_id;

@@ -102,7 +102,7 @@ provide.
 <tr id=D><td colspan=3><b>Sioux 1.x compatibility:</b></td></tr>
 <tr id=H><td><code>SSL_CertFile</code> <em>file</em></td><td><code>SSLCertificateFile</code> <em>file</em></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_KeyFile</code> <em>file</em></td><td><code>SSLCertificateKeyFile</code> <em>file</em></td><td>renamed</td></tr>
-<tr id=H><td><code>SSL_CipherSuite</code> <em>arg</em></td><td><code>SSLCipherList</code> <em>arg</em></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_CipherSuite</code> <em>arg</em></td><td><code>SSLCipherSuite</code> <em>arg</em></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_X509VerifyDir</code> <em>arg</em></td><td><code>SSLCACertificatePath</code> <em>arg</em></td><td>renamed</td></tr>
 <tr id=H><td><code>SSL_Log</code> <em>file</em></td><td><code>SSLLogFile</code> <em>file</em></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_Connect</code> <em>flag</em></td><td><code>SSLEngine</code> <em>flag</em></td><td>renamed</td></tr>
@@ -117,6 +117,9 @@ provide.
 <tr id=H><td><code>SSL_LogX509Attributes</code> <em>arg</em></td><td>-</td><td>functionality not supported</td></tr>
 
 <tr id=D><td colspan=3><b>Stronghold 2.x compatibility:</b></td></tr>
+<tr id=H><td><code>StrongholdAccelerator</code> <em>dir</em></td><td>-</td><td>functionality not supported</td></tr>
+<tr id=H><td><code>StrongholdKey</code> <em>dir</em></td><td>-</td><td>functionality not supported</td></tr>
+<tr id=H><td><code>StrongholdLicenseFile</code> <em>dir</em></td><td>-</td><td>functionality not supported</td></tr>
 <tr id=H><td><code>SSLFlag</code> <em>flag</em></td><td><code>SSLEngine</code> <em>flag</em></td><td>renamed</td></tr>
 <tr id=D><td><code>SSLSessionLockFile</code> <em>file</em></td><td><code>SSLMutex</code> <em>file</em></td><td>renamed</td></tr>
 <tr id=H><td><code>SSLCipherList</code> <em>spec</em></td><td><code>SSLCipherSuite</code> <em>spec</em></td><td>renamed</td></tr>
@@ -162,6 +165,8 @@ href="#table2">Table 2</a>.
 <tr id=D><td><code>SSL_SERVER_CERTIFICATE</code></td><td><code>SSL_SERVER_CERT</code></td><td>renamed</td></tr>
 <tr id=H><td><code>SSL_SERVER_CERT_START</code></td><td><code>SSL_SERVER_V_START</code></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_SERVER_CERT_END</code></td><td><code>SSL_SERVER_V_END</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_SERVER_CERT_SERIAL</code></td><td><code>SSL_SERVER_M_SERIAL</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_SERVER_SIGNATURE_ALGORITHM</code></td><td><code>SSL_SERVER_A_SIG</code></td><td>renamed</td></tr>
 <tr id=H><td><code>SSL_SERVER_DN</code></td><td><code>SSL_SERVER_S_DN</code></td><td>renamed</td></tr>
 <tr id=H><td><code>SSL_SERVER_CN</code></td><td><code>SSL_SERVER_S_DN_CN</code></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_SERVER_EMAIL</code></td><td><code>SSL_SERVER_S_DN_Email</code></td><td>renamed</td></tr>
@@ -181,6 +186,8 @@ href="#table2">Table 2</a>.
 <tr id=H><td><code>SSL_CLIENT_CERTIFICATE</code></td><td><code>SSL_CLIENT_CERT</code></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_CLIENT_CERT_START</code></td><td><code>SSL_CLIENT_V_START</code></td><td>renamed</td></tr>
 <tr id=H><td><code>SSL_CLIENT_CERT_END</code></td><td><code>SSL_CLIENT_V_END</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_CLIENT_CERT_SERIAL</code></td><td><code>SSL_CLIENT_M_SERIAL</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_CLIENT_SIGNATURE_ALGORITHM</code></td><td><code>SSL_CLIENT_A_SIG</code></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_CLIENT_DN</code></td><td><code>SSL_CLIENT_S_DN</code></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_CLIENT_CN</code></td><td><code>SSL_CLIENT_S_DN_CN</code></td><td>renamed</td></tr>
 <tr id=H><td><code>SSL_CLIENT_EMAIL</code></td><td><code>SSL_CLIENT_S_DN_Email</code></td><td>renamed</td></tr>
@@ -197,9 +204,14 @@ href="#table2">Table 2</a>.
 <tr id=H><td><code>SSL_CLIENT_IC</code></td><td><code>SSL_CLIENT_I_DN_C</code></td><td>renamed</td></tr>
 <tr id=D><td><code>SSL_CLIENT_ISP</code></td><td><code>SSL_CLIENT_I_DN_SP</code></td><td>renamed</td></tr>
 <tr id=H><td><code>SSL_CLIENT_IL</code></td><td><code>SSL_CLIENT_I_DN_L</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_EXPORT</code></td><td><code>SSL_CIPHER_EXPORT</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_KEYSIZE</code></td><td><code>SSL_CIPHER_ALGKEYSIZE</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_SECKEYSIZE</code></td><td><code>SSL_CIPHER_USEKEYSIZE</code></td><td>renamed</td></tr>
+<tr id=H><td><code>SSL_SSLEAY_VERSION</code></td><td><code>SSL_VERSION_LIBRARY</code></td><td>renamed</td></tr>
+<tr id=D><td><code>SSL_STRONG_CRYPTO</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 <tr id=D><td><code>SSL_SERVER_KEY_EXP</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 <tr id=H><td><code>SSL_SERVER_KEY_ALGORITHM</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
-<tr id=D><td><code>SSL_SERVER_SIGNATURE_ALGORITHM</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
+<tr id=D><td><code>SSL_SERVER_KEY_SIZE</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 <tr id=H><td><code>SSL_SERVER_SESSIONDIR</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 <tr id=D><td><code>SSL_SERVER_CERTIFICATELOGDIR</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 <tr id=H><td><code>SSL_SERVER_CERTFILE</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
@@ -208,7 +220,6 @@ href="#table2">Table 2</a>.
 <tr id=D><td><code>SSL_CLIENT_KEY_EXP</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 <tr id=H><td><code>SSL_CLIENT_KEY_ALGORITHM</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 <tr id=D><td><code>SSL_CLIENT_KEY_SIZE</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
-<tr id=H><td><code>SSL_CLIENT_SIGNATURE_ALGORITHM</code></td><td><code>-</code></td><td>Not supported by mod_ssl</td></tr>
 </table>
 </float>
 

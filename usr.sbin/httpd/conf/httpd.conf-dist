@@ -86,7 +86,7 @@ PidFile logs/httpd.pid
 ScoreBoardFile logs/apache_runtime_status
 
 #
-# In the standard configuration, the server will process httpd.conf,
+# In the standard configuration, the server will process this file,
 # srm.conf, and access.conf in that order.  The latter two files are
 # now distributed empty, as it is recommended that all directives
 # be kept in a single file for simplicity.  The commented-out values
@@ -132,8 +132,7 @@ KeepAliveTimeout 15
 # It does this by periodically checking how many servers are waiting
 # for a request.  If there are fewer than MinSpareServers, it creates
 # a new spare.  If there are more than MaxSpareServers, some of the
-# spares die off.  The default values in httpd.conf-dist are probably OK
-# for most sites.
+# spares die off.  The default values are probably OK for most sites.
 #
 MinSpareServers 5
 MaxSpareServers 10
@@ -159,9 +158,15 @@ MaxClients 150
 # as to avoid problems after prolonged use when Apache (and maybe the
 # libraries it uses) leak memory or other resources.  On most systems, this
 # isn't really needed, but a few (such as Solaris) do have notable leaks
-# in the libraries.
+# in the libraries. For these platforms, set to something like 10000
+# or so; a setting of 0 means unlimited.
 #
-MaxRequestsPerChild 30
+# NOTE: This value does not include keepalive requests after the initial
+#       request per connection. For example, if a child process handles
+#       an initial request and 10 subsequent "keptalive" requests, it
+#       would only count as 1 request towards this limit.
+#
+MaxRequestsPerChild 0
 
 #
 # Listen: Allows you to bind Apache to specific IP addresses and/or
@@ -340,7 +345,7 @@ UserDir public_html
 # Control access to UserDir directories.  The following is an example
 # for a site where these directories are restricted to read-only.
 #
-#<Directory /*/public_html>
+#<Directory /home/*/public_html>
 #    AllowOverride FileInfo AuthConfig Limit
 #    Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
 #    <Limit GET POST OPTIONS PROPFIND>
@@ -373,7 +378,10 @@ AccessFileName .htaccess
 # .htaccess files.  If you change the AccessFileName directive above,
 # be sure to make the corresponding changes here.
 #
-<Files .htaccess>
+# Also, folks tend to use names such as .htpasswd for password
+# files, so this will protect those as well.
+#
+<Files ~ "^\.ht">
     Order allow,deny
     Deny from all
 </Files>
@@ -625,7 +633,7 @@ IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t
 # to do with the FancyIndexing customization directives above.
 #
 AddEncoding x-compress Z
-AddEncoding x-gzip gz
+AddEncoding x-gzip gz tgz
 
 #
 # AddLanguage allows you to specify the language of a document. You can
@@ -653,11 +661,13 @@ LanguagePriority en fr de
 # AddType allows you to tweak mime.types without actually editing it, or to
 # make certain files to be certain types.
 #
-# For example, the PHP3 module (not part of the Apache distribution)
-# will typically use:
+# For example, the PHP3 module (not part of the Apache distribution - see
+# http://www.php.net) will typically use:
 #
-#AddType application/x-httpd-php3 .phtml
+#AddType application/x-httpd-php3 .php3
 #AddType application/x-httpd-php3-source .phps
+
+AddType application/x-tar .tgz
 
 #
 # AddHandler allows you to map certain file extensions to "handlers",
@@ -881,6 +891,8 @@ SSLPassPhraseDialog  builtin
 #   Configure the SSL Session Cache: First either `none'
 #   or `dbm:/path/to/file' for the mechanism to use and
 #   second the expiring timeout (in seconds).
+#SSLSessionCache        none
+#SSLSessionCache        shm:logs/ssl_scache(512000)
 SSLSessionCache         dbm:logs/ssl_scache
 SSLSessionCacheTimeout  300
 
@@ -920,7 +932,7 @@ SSLLogLevel info
 <VirtualHost _default_:443>
 
 #  General setup for the virtual host
-DocumentRoot @@ServerRoot@@/htdocs
+DocumentRoot "@@ServerRoot@@/htdocs"
 ServerName new.host.name
 ServerAdmin you@your.address
 ErrorLog logs/error_log
@@ -933,7 +945,7 @@ SSLEngine on
 #   SSL Cipher Suite:
 #   List the ciphers that the client is permitted to negotiate.
 #   See the mod_ssl documentation for a complete list.
-#SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP
+#SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 
 #   Server Certificate:
 #   Point SSLCertificateFile at a PEM encoded certificate.  If
@@ -941,12 +953,21 @@ SSLEngine on
 #   pass phrase.  Note that a kill -HUP will prompt again. A test
 #   certificate can be generated with `make certificate' under
 #   built time.
-SSLCertificateFile    @@ServerRoot@@/conf/ssl.crt/server.crt
+SSLCertificateFile @@ServerRoot@@/conf/ssl.crt/server.crt
 
 #   Server Private Key:
 #   If the key is not combined with the certificate, use this
 #   directive to point at the key file.
 SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
+
+#   Server Certificate Chain:
+#   Point SSLCertificateChainFile at a file containing the
+#   concatenation of PEM encoded CA certificates which form the
+#   certificate chain for the server certificate. Alternatively
+#   the referenced file can be the same as SSLCertificateFile
+#   when the CA certificates are directly appended to the server
+#   certificate for convinience.
+#SSLCertificateChainFile @@ServerRoot@@/conf/ssl.crt/ca.crt
 
 #   Certificate Authority (CA):
 #   Set the CA certificate verification path where to find CA
@@ -955,8 +976,18 @@ SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
 #   Note: Inside SSLCACertificatePath you need hash symlinks
 #         to point to the certificate files. Use the provided
 #         Makefile to update the hash symlinks after changes.
-#SSLCACertificatePath    @@ServerRoot@@/conf/ssl.crt
-#SSLCACertificateFile    @@ServerRoot@@/conf/ssl.crt/ca-bundle.crt
+#SSLCACertificatePath @@ServerRoot@@/conf/ssl.crt
+#SSLCACertificateFile @@ServerRoot@@/conf/ssl.crt/ca-bundle.crt
+
+#   Certificate Revocation Lists (CRL):
+#   Set the CA revocation path where to find CA CRLs for client
+#   authentication or alternatively one huge file containing all
+#   of them (file must be PEM encoded)
+#   Note: Inside SSLCARevocationPath you need hash symlinks
+#         to point to the certificate files. Use the provided
+#         Makefile to update the hash symlinks after changes.
+#SSLCARevocationPath @@ServerRoot@@/conf/ssl.crl
+#SSLCARevocationFile @@ServerRoot@@/conf/ssl.crl/ca-bundle.crl
 
 #   Client Authentication (Type):
 #   Client certificate verification type and depth.  Types are
@@ -999,7 +1030,37 @@ SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
 #     This exports obsolete environment variables for backward compatibility
 #     to Apache-SSL 1.x, mod_ssl 2.0.x, Sioux 1.0 and Stronghold 2.x. Use this
 #     to provide compatibility to existing CGI scripts.
-#SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars
+#   StrictRequire:
+#     This denies access when "SSLRequireSSL" or "SSLRequire" applied even
+#     under a "Satisfy any" situation, i.e. when it applies access is denied
+#     and no other module can change it.
+#   OptRenegotiate:
+#     This enables optimized SSL connection renegotiation handling when SSL
+#     directives are used in per-directory context. 
+#SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
+
+#   SSL Protocol Adjustments:
+#   The safe and default but still SSL/TLS standard compliant shutdown
+#   approach is that mod_ssl sends the close notify alert but doesn't wait for
+#   the close notify alert from client. When you need a different shutdown
+#   approach you can use one of the following variables:
+#   ssl-unclean-shutdown:
+#     This forces an unclean shutdown when the connection is closed, i.e. no
+#     SSL close notify alert is send or allowed to received.  This violates
+#     the SSL/TLS standard but is needed for some brain-dead browsers. Use
+#     this when you receive I/O errors because of the standard approach where
+#     mod_ssl sends the close notify alert.
+#   ssl-accurate-shutdown:
+#     This forces an accurate shutdown when the connection is closed, i.e. a
+#     SSL close notify alert is send and mod_ssl waits for the close notify
+#     alert of the client. This is 100% SSL/TLS standard compliant, but in
+#     practice often causes hanging connections with brain-dead browsers. Use
+#     this only for browsers where you know that their SSL implementation
+#     works correctly. 
+#   Notice: Most problems of broken clients are also related to the HTTP
+#   keep-alive facility, so you usually additionally want to disable
+#   keep-alive for those clients, too. Use variable "nokeepalive" for this.
+SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown
 
 #   Per-Server Logging:
 #   The home of a custom SSL log file. Use this when you want a

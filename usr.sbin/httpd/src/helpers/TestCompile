@@ -22,6 +22,14 @@ trap 'rm -f Makefile dummy dummy.exe testfunc.c testfunc testfunc.exe; exit $exs
 # ./helpers/TestCompile sanity
 #    Which does a simple sanity check/test compile
 #
+# ./helpers/TestCompile sizeof <type>
+#    Which prints out the sizeof <type> (sure would be nice
+#    if sizeof could be use in preprocessor if's)
+#
+# ./helpers/TestCompile byteorder
+#    Which prints out the byte order of the machine
+#    (12: little endian, 21: big endian)
+#
 # It does these by creating a small mini-makefile, based on
 # ../Makefile.config and trying to compile a small dummy
 # program. If the compilation succeeds, we assume the test
@@ -32,6 +40,8 @@ trap 'rm -f Makefile dummy dummy.exe testfunc.c testfunc testfunc.exe; exit $exs
 # located) if you want to test it out. Configure must
 # also call it as './helpers/TestCompile'
 #
+# Initially written by Jim Jagielski for the Apache configuration mechanism
+#
 # This script falls under the Apache License.
 # See http://www.apache.org/docs/LICENSE
 
@@ -39,8 +49,15 @@ trap 'rm -f Makefile dummy dummy.exe testfunc.c testfunc testfunc.exe; exit $exs
 cd ./helpers
 
 #
-# Handle "verbose" and "silent" flags
+# Handle "verbose", "silent" and "runit" flags. Allow for them
+# to be set via the environment
 #
+if [ "x$VERBOSE" = "x" ]; then
+    VERBOSE="no"
+fi
+if [ "x$TCRUNIT" = "x" ]; then
+    TCRUNIT="no";
+fi
 case "$1" in
     "-v")
         VERBOSE="yes"
@@ -48,6 +65,10 @@ case "$1" in
 	;;
     "-s")
         VERBOSE="no"
+	shift
+	;;
+    "-r")
+        TCRUNIT="yes"
 	shift
 	;;
 esac
@@ -61,8 +82,8 @@ case "$1" in
 	if [ "x$2" = "x" ]; then
 	    exit
 	fi
-	TLIB="-l$2"
-	if [ "$VERBOSE" = "yes" ]; then
+	TLIB="-l$2 $TLIB"
+	if [ "x$VERBOSE" = "xyes" ]; then
 	    ERRDIR=""
 	else
 	    ERRDIR='2>/dev/null'
@@ -74,9 +95,52 @@ case "$1" in
 	    echo "int main(void) { $3(); return(0); }" > testfunc.c
 	fi
 	;;
+    "sizeof")
+	if [ "x$2" = "x" ]; then
+	    exit
+	fi
+	TLIB=""
+	if [ "x$VERBOSE" = "xyes" ]; then
+	    ERRDIR=""
+	else
+	    ERRDIR='2>/dev/null'
+	fi
+	TARGET='testfunc'
+	cat <<EOF >testfunc.c
+#include <stdio.h>
+#include <sys/types.h>
+int main(void) {
+    printf("%d\n", sizeof($2));
+    return(0);
+}
+EOF
+	;;
+    "byteorder")
+	TLIB=""
+	if [ "x$VERBOSE" = "xyes" ]; then
+	    ERRDIR=""
+	else
+	    ERRDIR='2>/dev/null'
+	fi
+	TARGET='testfunc'
+	cat <<EOF >testfunc.c
+#include <stdio.h>
+#include <sys/types.h>
+int main(void) {
+    /* Are we little or big endian? From Harbison & Steele */
+    union {
+        long l;
+        char c[sizeof(long)];
+    } u;
+    u.l = 1;
+    printf("%s\n", u.c[sizeof(long)-1] == 1 ? "21" : "12");
+    return(0);
+}
+EOF
+	;;
     "sanity")
 	TLIB=""
-	if [ "$VERBOSE" = "no" ]; then
+	if [ "x$VERBOSE" = "xno" ]; then
 	    ERRDIR='2>/dev/null'
 	else
 	    ERRDIR=""
@@ -88,7 +152,7 @@ case "$1" in
 	    exit
 	fi
 	TLIB=""
-	if [ "$VERBOSE" = "yes" ]; then
+	if [ "x$VERBOSE" = "xyes" ]; then
 	    ERRDIR=""
 	else
 	    ERRDIR='2>/dev/null'
@@ -106,7 +170,7 @@ EOF
 	    exit
 	fi
 	TLIB=""
-	if [ "$VERBOSE" = "yes" ]; then
+	if [ "x$VERBOSE" = "xyes" ]; then
 	    ERRDIR=""
 	else
 	    ERRDIR='2>/dev/null'
@@ -143,7 +207,7 @@ testfunc:
 EOF
 
 # Now run that Makefile
-eval "${MAKE} ${TARGET} >/dev/null $ERRDIR"
+eval "${MAKE-make} ${TARGET} $ERRDIR >&2"
 
 # And see if dummy exists and is executable, if so, then we
 # assume the condition we are testing for is good
@@ -152,5 +216,8 @@ eval "${MAKE} ${TARGET} >/dev/null $ERRDIR"
 # have PrintPath just search this directory.
 
 if ./PrintPath -s -p`pwd` $TARGET ; then
+    if [ "x$TCRUNIT" = "xyes" ]; then
+	`pwd`/$TARGET
+    fi
     exstat=0
 fi

@@ -389,7 +389,7 @@ a protocol session.
 <td>First SSL protocol for which implementations exists</td>
 <td>- NS Navigator 1.x/2.x<br> 
     - MS IE 3.x<br>
-    - Lynx/2.8+SSLeay 
+    - Lynx/2.8+OpenSSL 
 </td>
 </tr>
 <tr valign=top>
@@ -398,7 +398,7 @@ a protocol session.
 <td>Revisions to prevent specific security attacks, add non-RSA ciphers, and support for certificate chains</td>
 <td>- NS Navigator 2.x/3.x/4.x<br> 
     - MS IE 3.x/4.x<br>
-    - Lynx/2.8+SSLeay 
+    - Lynx/2.8+OpenSSL 
 </td>
 </tr>
 <tr valign=top>
@@ -407,7 +407,7 @@ a protocol session.
 <td>Revision of SSL 3.0 to update the MAC layer to HMAC, add block padding for
     block ciphers, message order standardization and more alert messages.
 </td>
-<td>- Lynx/2.8+SSLeay</td>
+<td>- Lynx/2.8+OpenSSL</td>
 </table>
 </float>
 

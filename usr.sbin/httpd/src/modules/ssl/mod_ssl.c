@@ -1,8 +1,8 @@
 /*                      _             _
-**  _ __ ___   ___   __| |    ___ ___| |
-** | '_ ` _ \ / _ \ / _` |   / __/ __| |
-** | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-** |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+**  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+** | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+** |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 **                      |_____|
 **  mod_ssl.c
 **  Apache API interface structures
@@ -27,7 +27,7 @@
  *    software must display the following acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * 4. The names "mod_ssl" must not be used to endorse or promote
  *    products derived from this software without prior written
@@ -42,7 +42,7 @@
  *    acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -74,7 +74,7 @@
  *  identify the module to SCCS `what' and RCS `ident' commands
  */
 static char const sccsid[] = "@(#) mod_ssl/" MOD_SSL_VERSION " >";
-static char const rcsid[]  = "$Id: mod_ssl.c,v 1.1 1999/03/01 04:28:50 beck Exp $";
+static char const rcsid[]  = "$Id: mod_ssl.c,v 1.2 1999/09/29 06:29:45 beck Exp $";
 
 /*
  *  the table of configuration directives we provide
@@ -107,9 +107,12 @@ static command_rec ssl_config_cmds[] = {
                "(`XXX:...:XXX' - see manual)")
     AP_SRV_CMD(CertificateFile, TAKE1,
                "SSL Server Certificate file "
-               "(`/path/to/file' - PEM encoded)")
+               "(`/path/to/file' - PEM or DER encoded)")
     AP_SRV_CMD(CertificateKeyFile, TAKE1,
                "SSL Server Private Key file "
+               "(`/path/to/file' - PEM or DER encoded)")
+    AP_SRV_CMD(CertificateChainFile, TAKE1,
+               "SSL Server CA Certificate Chain file "
                "(`/path/to/file' - PEM encoded)")
 #ifdef SSL_EXPERIMENTAL
     AP_ALL_CMD(CACertificatePath, TAKE1,
@@ -126,12 +129,18 @@ static command_rec ssl_config_cmds[] = {
                "SSL CA Certificate file "
                "(`/path/to/file' - PEM encoded)")
 #endif
+    AP_SRV_CMD(CARevocationPath, TAKE1,
+               "SSL CA Certificate Revocation List (CRL) path "
+               "(`/path/to/dir' - contains PEM encoded files)")
+    AP_SRV_CMD(CARevocationFile, TAKE1,
+               "SSL CA Certificate Revocation List (CRL) file "
+               "(`/path/to/file' - PEM encoded)")
     AP_ALL_CMD(VerifyClient, TAKE1,
                "SSL Client verify type "
                "(`none', `optional', `require', `optional_no_ca')")
     AP_ALL_CMD(VerifyDepth, TAKE1,
                "SSL Client verify depth "
-               "(`N' - number of intermediate certifcates)")
+               "(`N' - number of intermediate certificates)")
     AP_SRV_CMD(SessionCacheTimeout, TAKE1,
                "SSL Session Cache object lifetime "
                "(`N' - number of seconds)")
@@ -181,9 +190,9 @@ module MODULE_VAR_EXPORT ssl_module = {
     ssl_config_server_merge,  /* merge  per-server config structures */
     ssl_config_cmds,          /* table of config file commands       */
     ssl_config_handler,       /* [#8] MIME-typed-dispatched handlers */
-    NULL,                     /* [#1] URI to filename translation    */
+    ssl_hook_Translate,       /* [#1] URI to filename translation    */
     ssl_hook_Auth,            /* [#4] validate user id from request  */
-    NULL,                     /* [#5] check if the user is ok _here_ */
+    ssl_hook_UserCheck,       /* [#5] check if the user is ok _here_ */
     ssl_hook_Access,          /* [#3] check access by host address   */
     NULL,                     /* [#6] determine MIME type            */
     ssl_hook_Fixup,           /* [#7] pre-run fixups                 */
@@ -198,7 +207,7 @@ module MODULE_VAR_EXPORT ssl_module = {
     ssl_hook_AddModule,       /* after modules was added to core     */
     ssl_hook_RemoveModule,    /* before module is removed from core  */
     ssl_hook_RewriteCommand,  /* configuration command rewriting     */
-    ssl_hook_NewConnection    /* configuration command rewriting     */
+    ssl_hook_NewConnection,   /* socket connection open              */
+    ssl_hook_CloseConnection  /* socket connection close             */
 };
-
 

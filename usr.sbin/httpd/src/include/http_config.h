@@ -170,6 +170,8 @@ typedef struct {
 				 */
     const command_rec *cmd;	/* configuration command */
     const char *end_token;	/* end token required to end a nested section */
+    void *context;		/* per_dir_config vector passed 
+				 * to handle_command */
 } cmd_parms;
 
 /* This structure records the existence of handlers in a module... */
@@ -309,17 +311,27 @@ typedef struct module_struct {
      *     ap_read_request().  It is mainly intended to be used to setup/run
      *     connection dependent things like sending start headers for
      *     on-the-fly compression, etc.
+     *
+     * close_connection:
+     *     Called from within the Apache dispatching loop just before any
+     *     ap_bclose() is performed on the socket connection, but a long time
+     *     before any pool cleanups are done for the connection (which can be
+     *     too late for some applications).  It is mainly intended to be used
+     *     to close/finalize connection dependent things like sending end
+     *     headers for on-the-fly compression, etc.
      */
 #ifdef ULTRIX_BRAIN_DEATH
     void  (*add_module) ();
     void  (*remove_module) ();
     char *(*rewrite_command) ();
     void  (*new_connection) ();
+    void  (*close_connection) ();
 #else
     void  (*add_module) (struct module_struct *);
     void  (*remove_module) (struct module_struct *);
     char *(*rewrite_command) (cmd_parms *, void *config, const char *);
     void  (*new_connection) (conn_rec *);
+    void  (*close_connection) (conn_rec *);
 #endif
 #endif /* EAPI */
 } module;
@@ -393,7 +405,6 @@ extern API_VAR_EXPORT module **ap_loaded_modules;
 /* For mod_so.c... */
 
 void ap_single_module_configure(pool *p, server_rec *s, module *m);
-void ap_single_module_init(pool *p, server_rec *s, module *m);
 
 /* For http_main.c... */
 
@@ -450,6 +461,7 @@ int ap_run_post_read_request(request_rec *);
 
 CORE_EXPORT(const command_rec *) ap_find_command(const char *name, const command_rec *cmds);
 CORE_EXPORT(const command_rec *) ap_find_command_in_modules(const char *cmd_name, module **mod);
+CORE_EXPORT(void *) ap_set_config_vectors(cmd_parms *parms, void *config, module *mod);
 CORE_EXPORT(const char *) ap_handle_command(cmd_parms *parms, void *config, const char *l);
 
 #endif

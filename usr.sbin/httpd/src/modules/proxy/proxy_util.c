@@ -178,7 +178,7 @@ char *
 	}
 /* decode it if not already done */
 	if (isenc && ch == '%') {
-	    if (!isxdigit(x[i + 1]) || !isxdigit(x[i + 2]))
+	    if (!ap_isxdigit(x[i + 1]) || !ap_isxdigit(x[i + 2]))
 		return NULL;
 	    ch = ap_proxy_hex2c(&x[i + 1]);
 	    i += 2;
@@ -491,15 +491,15 @@ table *ap_proxy_read_headers(request_rec *r, char *buffer, int size, BUFF *f)
 
 long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c)
 {
-    int  ok = 1;
+    int  ok;
     char buf[IOBUFSIZE];
-    long total_bytes_rcv;
+    long total_bytes_rcvd;
     register int n, o, w;
     conn_rec *con = r->connection;
-    int alt_to = 1;
+    int alternate_timeouts = 1;	/* 1 if we alternate between soft & hard timeouts */
 
-    total_bytes_rcv = 0;
-    if (c)
+    total_bytes_rcvd = 0;
+    if (c != NULL)
         c->written = 0;
 
 #ifdef CHARSET_EBCDIC
@@ -520,65 +520,71 @@ long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c)
 #ifdef WIN32
     /* works fine under win32, so leave it */
     ap_hard_timeout("proxy send body", r);
-    alt_to = 0;
+    alternate_timeouts = 0;
 #else
     /* CHECKME! Since hard_timeout won't work in unix on sends with partial
      * cache completion, we have to alternate between hard_timeout
      * for reads, and soft_timeout for send.  This is because we need
      * to get a return from ap_bwrite to be able to continue caching.
      * BUT, if we *can't* continue anyway, just use hard_timeout.
+     * (Also, if no cache file is written, use hard timeouts)
      */
 
-    if (c) {
-        if (c->len <= 0 || c->cache_completion == 1) {
-            ap_hard_timeout("proxy send body", r);
-            alt_to = 0;
-        }
-    } else {
+    if (c == NULL || c->len <= 0 || c->cache_completion == 1.0) {
         ap_hard_timeout("proxy send body", r);
-        alt_to = 0;
+        alternate_timeouts = 0;
     }
 #endif
 
-    while (ok) {
-        if (alt_to)
-            ap_hard_timeout("proxy send body", r);
+    /* Loop and ap_bread() while we can successfully read and write,
+     * or (after the client aborted) while we can successfully
+     * read and finish the configured cache_completion.
+     */
+    for (ok = 1; ok; ) {
+        if (alternate_timeouts)
+            ap_hard_timeout("proxy recv body from upstream server", r);
 
 	/* Read block from server */
 	n = ap_bread(f, buf, IOBUFSIZE);
 
-        if (alt_to)
+        if (alternate_timeouts)
             ap_kill_timeout(r);
         else
             ap_reset_timeout(r);
 
 	if (n == -1) {		/* input error */
-	    if (c != NULL)
+	    if (c != NULL) {
+		ap_log_rerror(APLOG_MARK, APLOG_ERR, c->req,
+		    "proxy: error reading from %s", c->url);
 		c = ap_proxy_cache_error(c);
+	    }
 	    break;
 	}
 	if (n == 0)
 	    break;		/* EOF */
 	o = 0;
-	total_bytes_rcv += n;
+	total_bytes_rcvd += n;
 
 	/* Write to cache first. */
+	/*@@@ XXX FIXME: Assuming that writing the cache file won't time out?!!? */
         if (c != NULL && c->fp != NULL) {
             if (ap_bwrite(c->fp, &buf[0], n) != n) {
-                c = ap_proxy_cache_error(c);
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, c->req,
+		    "proxy: error writing to %s", c->tempfile);
+		c = ap_proxy_cache_error(c);
             } else {
                 c->written += n;
             }
         }
 
 	/* Write the block to the client, detect aborted transfers */
-        while (n && !con->aborted) {
-            if (alt_to)
+        while (!con->aborted && n > 0) {
+            if (alternate_timeouts)
                 ap_soft_timeout("proxy send body", r);
 
             w = ap_bwrite(con->client, &buf[o], n);
 
-            if (alt_to)
+            if (alternate_timeouts)
                 ap_kill_timeout(r);
             else
                 ap_reset_timeout(r);
@@ -591,7 +597,7 @@ long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c)
                      */
                     ok = (c->len > 0) &&
                          (c->cache_completion > 0) &&
-                         (c->len * c->cache_completion < total_bytes_rcv);
+                         (c->len * c->cache_completion < total_bytes_rcvd);
 
                     if (! ok) {
                         ap_pclosef(c->req->pool, c->fp->fd);
@@ -605,14 +611,14 @@ long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c)
             }
             n -= w;
             o += w;
-        }
-    }
+        } /* while client alive and more data to send */
+    } /* loop and ap_bread while "ok" */
 
     if (!con->aborted)
 	ap_bflush(con->client);
 
     ap_kill_timeout(r);
-    return total_bytes_rcv;
+    return total_bytes_rcvd;
 }
 
 /*
@@ -628,14 +634,11 @@ void ap_proxy_send_headers(request_rec *r, const char *respline, table *t)
     BUFF *fp = r->connection->client;
     table_entry *elts = (table_entry *) ap_table_elts(t)->elts;
 
-    ap_bputs(respline, fp);
-    ap_bputs(CRLF, fp);
+    ap_bvputs(fp, respline, CRLF, NULL);
 
     for (i = 0; i < ap_table_elts(t)->nelts; ++i) {
 	if (elts[i].key != NULL) {
 	    ap_bvputs(fp, elts[i].key, ": ", elts[i].val, CRLF, NULL);
-	    /* FIXME: @@@ This used to be ap_table_set(), but I think
-	     * ap_table_addn() is correct. MnKr */
 	    ap_table_addn(r->headers_out, elts[i].key, elts[i].val);
 	}
     }
@@ -826,15 +829,17 @@ void ap_proxy_sec2hex(int t, char *y)
 
 cache_req *ap_proxy_cache_error(cache_req *c)
 {
-    ap_log_rerror(APLOG_MARK, APLOG_ERR, c->req,
-		 "proxy: error writing to cache file %s", c->tempfile);
-    ap_pclosef(c->req->pool, c->fp->fd);
-    c->fp = NULL;
-    unlink(c->tempfile);
+    if (c != NULL) {
+	if (c->fp != NULL) {
+	    ap_pclosef(c->req->pool, c->fp->fd);
+	    c->fp = NULL;
+	}
+	if (c->tempfile) unlink(c->tempfile);
+    }
     return NULL;
 }
 
-int ap_proxyerror(request_rec *r, const char *message)
+int ap_proxyerror(request_rec *r, int statuscode, const char *message)
 {
     ap_table_setn(r->notes, "error-notes",
 		  ap_pstrcat(r->pool, 
@@ -842,8 +847,12 @@ int ap_proxyerror(request_rec *r, const char *message)
 			     "<EM><A HREF=\"", r->uri, "\">",
 			     r->method, "&nbsp;", r->uri, "</A></EM>.<P>\n"
 			     "Reason: <STRONG>", message, "</STRONG>", NULL));
-    r->status_line = "500 Proxy Error";
-    return HTTP_INTERNAL_SERVER_ERROR;
+
+    /* Allow the "error-notes" string to be printed by ap_send_error_response() */
+    ap_table_setn(r->notes, "verbose-error-to", ap_pstrdup(r->pool, "*"));
+
+    r->status_line = ap_psprintf(r->pool, "%3.3u Proxy Error", statuscode);
+    return statuscode;
 }
 
 /*
@@ -1260,8 +1269,11 @@ int ap_proxy_send_hdr_line(void *p, const char *key, const char *value)
     if (!parm->req->assbackwards)
 	ap_rvputs(parm->req, key, ": ", value, CRLF, NULL);
     if (parm->cache != NULL && parm->cache->fp != NULL &&
-	ap_bvputs(parm->cache->fp, key, ": ", value, CRLF, NULL) == -1)
+	ap_bvputs(parm->cache->fp, key, ": ", value, CRLF, NULL) == -1) {
+	    ap_log_rerror(APLOG_MARK, APLOG_ERR, parm->cache->req,
+		    "proxy: error writing header to %s", parm->cache->tempfile);
 	    parm->cache = ap_proxy_cache_error(parm->cache);
+    }
     return 1; /* tell ap_table_do() to continue calling us for more headers */
 }
 

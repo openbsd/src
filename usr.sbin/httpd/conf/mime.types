@@ -117,7 +117,7 @@ application/vnd.minisoft-hp3000-save
 application/vnd.mitsubishi.misty-guard.trustweb
 application/vnd.ms-artgalry
 application/vnd.ms-asf
-application/vnd.ms-excel
+application/vnd.ms-excel	xls
 application/vnd.ms-powerpoint	ppt
 application/vnd.ms-project
 application/vnd.ms-tnef
@@ -197,6 +197,7 @@ audio/x-pn-realaudio-plugin	rpm
 audio/x-realaudio		ra
 audio/x-wav			wav
 chemical/x-pdb			pdb xyz
+image/bmp			bmp
 image/cgm
 image/g3fax
 image/gif			gif

@@ -90,6 +90,9 @@
 #endif
 #endif
 #endif
+#ifndef MMAP_LIMIT
+#define MMAP_LIMIT              (4*1024*1024)
+#endif
 
 /* Server core module... This module provides support for really basic
  * server operations, including options and commands which control the
@@ -127,7 +130,7 @@ static void *create_core_dir_config(pool *a, char *dir)
 
     conf->content_md5 = 2;
 
-    conf->use_canonical_name = 1 | 2;	/* 2 = unset, default on */
+    conf->use_canonical_name = USE_CANONICAL_NAME_UNSET;
 
     conf->hostname_lookups = HOSTNAME_LOOKUP_UNSET;
     conf->do_rfc1413 = DEFAULT_RFC1413 | 2; /* set bit 1 to indicate default */
@@ -145,6 +148,11 @@ static void *create_core_dir_config(pool *a, char *dir)
 
     conf->limit_req_body = 0;
     conf->sec = ap_make_array(a, 2, sizeof(void *));
+#ifdef WIN32
+    conf->script_interpreter_source = INTERPRETER_SOURCE_UNSET;
+#endif
+
+    conf->server_signature = srv_sig_unset;
 
     return (void *)conf;
 }
@@ -234,7 +242,7 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
     if ((new->content_md5 & 2) == 0) {
         conf->content_md5 = new->content_md5;
     }
-    if ((new->use_canonical_name & 2) == 0) {
+    if (new->use_canonical_name != USE_CANONICAL_NAME_UNSET) {
 	conf->use_canonical_name = new->use_canonical_name;
     }
 
@@ -262,6 +270,17 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
     if (new->satisfy != SATISFY_NOSPEC) {
         conf->satisfy = new->satisfy;
     }
+
+#ifdef WIN32
+    if (new->script_interpreter_source != INTERPRETER_SOURCE_UNSET) {
+        conf->script_interpreter_source = new->script_interpreter_source;
+    }
+#endif
+
+    if (new->server_signature != srv_sig_unset) {
+	conf->server_signature = new->server_signature;
+    }
+
     return (void*)conf;
 }
 
@@ -324,7 +343,7 @@ CORE_EXPORT(void) ap_add_per_url_conf(server_rec *s, void *url_config)
     *new_space = url_config;
 }
 
-static void add_file_conf(core_dir_config *conf, void *url_config)
+CORE_EXPORT(void) ap_add_file_conf(core_dir_config *conf, void *url_config)
 {
     void **new_space = (void **)ap_push_array(conf->sec);
     
@@ -339,7 +358,7 @@ static void add_file_conf(core_dir_config *conf, void *url_config)
  * See directory_walk().
  */
 
-#if defined(OS2) || defined(WIN32)
+#ifdef HAVE_DRIVE_LETTERS
 #define IS_SPECIAL(entry_core)	\
     ((entry_core)->r != NULL \
 	|| ((entry_core)->d[0] != '/' && (entry_core)->d[1] != ':'))
@@ -398,18 +417,16 @@ void ap_core_reorder_directories(pool *p, server_rec *s)
     int nelts;
     void **elts;
     int i;
+    pool *tmp;
 
-    /* XXX: we are about to waste some ram ... we will build a new array
-     * and we need some scratch space to do it.  The old array and the
-     * scratch space are never freed.
-     */
     sconf = ap_get_module_config(s->module_config, &core_module);
     sec = sconf->sec;
     nelts = sec->nelts;
     elts = (void **)sec->elts;
 
-    /* build our sorting space */
-    sortbin = ap_palloc(p, sec->nelts * sizeof(*sortbin));
+    /* we have to allocate tmp space to do a stable sort */
+    tmp = ap_make_sub_pool(p);
+    sortbin = ap_palloc(tmp, sec->nelts * sizeof(*sortbin));
     for (i = 0; i < nelts; ++i) {
 	sortbin[i].orig_index = i;
 	sortbin[i].elt = elts[i];
@@ -417,15 +434,12 @@ void ap_core_reorder_directories(pool *p, server_rec *s)
 
     qsort(sortbin, nelts, sizeof(*sortbin), reorder_sorter);
 
-    /* and now build a new array */
-    /* XXX: uh I don't see why we can't reuse the old array, what
-     * was I thinking? -djg */
-    sec = ap_make_array(p, nelts, sizeof(void *));
+    /* and now copy back to the original array */
     for (i = 0; i < nelts; ++i) {
-	*(void **)ap_push_array(sec) = sortbin[i].elt;
+      elts[i] = sortbin[i].elt;
     }
 
-    sconf->sec = sec;
+    ap_destroy_pool(tmp);
 }
 
 /*****************************************************************
@@ -658,17 +672,50 @@ API_EXPORT(const char *) ap_get_remote_logname(request_rec *r)
  * name" as supplied by a possible Host: header or full URI.  We never
  * trust the port passed in the client's headers, we always use the
  * port of the actual socket.
+ *
+ * The DNS option to UseCanonicalName causes this routine to do a
+ * reverse lookup on the local IP address of the connectiona and use
+ * that for the ServerName. This makes its value more reliable while
+ * at the same time allowing Demon's magic virtual hosting to work.
+ * The assumption is that DNS lookups are sufficiently quick...
+ * -- fanf 1998-10-03
  */
-API_EXPORT(const char *) ap_get_server_name(const request_rec *r)
+API_EXPORT(const char *) ap_get_server_name(request_rec *r)
 {
+    conn_rec *conn = r->connection;
     core_dir_config *d;
 
     d = (core_dir_config *)ap_get_module_config(r->per_dir_config,
 						&core_module);
-    if (d->use_canonical_name & 1) {
-	return r->server->server_hostname;
+
+    if (d->use_canonical_name == USE_CANONICAL_NAME_OFF) {
+        return r->hostname ? r->hostname : r->server->server_hostname;
     }
-    return r->hostname ? r->hostname : r->server->server_hostname;
+    if (d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
+        if (conn->local_host == NULL) {
+	    struct in_addr *iaddr;
+	    struct hostent *hptr;
+            int old_stat;
+	    old_stat = ap_update_child_status(conn->child_num,
+					      SERVER_BUSY_DNS, r);
+	    iaddr = &(conn->local_addr.sin_addr);
+	    hptr = gethostbyaddr((char *)iaddr, sizeof(struct in_addr),
+				 AF_INET);
+	    if (hptr != NULL) {
+	        conn->local_host = ap_pstrdup(conn->pool,
+					      (void *)hptr->h_name);
+		ap_str_tolower(conn->local_host);
+	    }
+	    else {
+	        conn->local_host = ap_pstrdup(conn->pool,
+					      r->server->server_hostname);
+	    }
+	    (void) ap_update_child_status(conn->child_num, old_stat, r);
+	}
+	return conn->local_host;
+    }
+    /* default */
+    return r->server->server_hostname;
 }
 
 API_EXPORT(unsigned) ap_get_server_port(const request_rec *r)
@@ -679,38 +726,21 @@ API_EXPORT(unsigned) ap_get_server_port(const request_rec *r)
     
     port = r->server->port ? r->server->port : ap_default_port(r);
 
-    if (d->use_canonical_name & 1) {
-	return port;
+    if (d->use_canonical_name == USE_CANONICAL_NAME_OFF
+	|| d->use_canonical_name == USE_CANONICAL_NAME_DNS) {
+        return r->hostname ? ntohs(r->connection->local_addr.sin_port)
+			   : port;
     }
-    return r->hostname ? ntohs(r->connection->local_addr.sin_port)
-		       : port;
+    /* default */
+    return port;
 }
 
 API_EXPORT(char *) ap_construct_url(pool *p, const char *uri,
-				    const request_rec *r)
+				    request_rec *r)
 {
-    unsigned port;
-    const char *host;
-    core_dir_config *d =
-      (core_dir_config *)ap_get_module_config(r->per_dir_config, &core_module);
+    unsigned port = ap_get_server_port(r);
+    const char *host = ap_get_server_name(r);
 
-    if (d->use_canonical_name & 1) {
-	port = r->server->port ? r->server->port : ap_default_port(r);
-	host = r->server->server_hostname;
-    }
-    else {
-        if (r->hostname) {
-            port = ntohs(r->connection->local_addr.sin_port);
-	}
-        else if (r->server->port) {
-            port = r->server->port;
-	}
-        else {
-            port = ap_default_port(r);
-	}
-
-	host = r->hostname ? r->hostname : r->server->server_hostname;
-    }
     if (ap_is_default_port(port, r)) {
 	return ap_pstrcat(p, ap_http_method(r), "://", host, uri, NULL);
     }
@@ -724,6 +754,196 @@ API_EXPORT(unsigned long) ap_get_limit_req_body(const request_rec *r)
     
     return d->limit_req_body;
 }
+
+#ifdef WIN32
+static char* get_interpreter_from_win32_registry(pool *p, const char* ext) 
+{
+    char extension_path[] = "SOFTWARE\\Classes\\";
+    char executable_path[] = "\\SHELL\\OPEN\\COMMAND";
+
+    HKEY hkeyOpen;
+    DWORD type;
+    int size;
+    int result;
+    char *keyName;
+    char *buffer;
+    char *s;
+
+    if (!ext)
+        return NULL;
+    /* 
+     * Future optimization:
+     * When the registry is successfully searched, store the interpreter
+     * string in a table to make subsequent look-ups faster
+     */
+
+    /* Open the key associated with the script extension */
+    keyName = ap_pstrcat(p, extension_path, ext, NULL);
+
+    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE, 
+                          &hkeyOpen);
+
+    if (result != ERROR_SUCCESS) 
+        return NULL;
+
+    /* Read to NULL buffer to find value size */
+    size = 0;
+    result = RegQueryValueEx(hkeyOpen, "", NULL, &type, NULL, &size);
+
+    if (result == ERROR_SUCCESS) {
+        buffer = ap_palloc(p, size);
+        result = RegQueryValueEx(hkeyOpen, "", NULL, &type, buffer, &size);
+    }
+
+    RegCloseKey(hkeyOpen);
+
+    if (result != ERROR_SUCCESS)
+        return NULL;
+
+    /* Open the key associated with the interpreter path */
+    keyName = ap_pstrcat(p, extension_path, buffer, executable_path, NULL);
+
+    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE, 
+                          &hkeyOpen);
+
+    if (result != ERROR_SUCCESS)
+        return NULL;
+
+    /* Read to NULL buffer to find value size */
+    size = 0;
+    result = RegQueryValueEx(hkeyOpen, "", 0, &type, NULL, &size);
+
+    if (result == ERROR_SUCCESS) {
+        buffer = ap_palloc(p, size);
+        result = RegQueryValueEx(hkeyOpen, "", 0, &type, buffer, &size);
+    }
+
+    RegCloseKey(hkeyOpen);
+
+    if (result != ERROR_SUCCESS)
+        return NULL;
+
+    /*
+     * The canonical way shell command entries are entered in the Win32 
+     * registry is as follows:
+     *   shell [options] "%1"
+     * where
+     *   shell - full path name to interpreter or shell to run.
+     *           E.g., c:\usr\local\ntreskit\perl\bin\perl.exe
+     *   options - optional switches
+     *              E.g., \C
+     *   "%1" - Place holder for file to run the shell against. 
+     *          Typically quoted.
+     *
+     * If we find a %1 or a quoted %1, lop it off. 
+     */
+    if (buffer && *buffer) {
+        if ((s = strstr(buffer, "\"%1")))
+            *s = '\0';
+        else if ((s = strstr(buffer, "%1"))) 
+            *s = '\0';
+    }
+
+    return buffer;
+}
+
+API_EXPORT (file_type_e) ap_get_win32_interpreter(const  request_rec *r, 
+                                                  char** interpreter )
+{
+    HANDLE hFile;
+    DWORD nBytesRead;
+    BOOLEAN bResult;
+    char buffer[1024];
+    core_dir_config *d;
+    int i;
+    file_type_e fileType = eFileTypeUNKNOWN;
+    char *ext = NULL;
+    char *exename = NULL;
+
+    d = (core_dir_config *)ap_get_module_config(r->per_dir_config, 
+                                                &core_module);
+
+    /* Find the file extension */
+    exename = strrchr(r->filename, '/');
+    if (!exename) {
+        exename = strrchr(r->filename, '\\');
+    }
+    if (!exename) {
+        exename = r->filename;
+    }
+    else {
+        exename++;
+    }
+    ext = strrchr(exename, '.');
+
+    if (ext && (!strcasecmp(ext,".bat") || !strcasecmp(ext,".cmd"))) {
+        return eFileTypeEXE32;
+    }
+
+    /* If the file has an extension and it is not .com and not .exe and
+     * we've been instructed to search the registry, then do it!
+     */
+    if (ext && strcasecmp(ext,".exe") && strcasecmp(ext,".com") &&
+        d->script_interpreter_source == INTERPRETER_SOURCE_REGISTRY) {
+         /* Check the registry */
+        *interpreter = get_interpreter_from_win32_registry(r->pool, ext);
+        if (*interpreter)
+            return eFileTypeSCRIPT;
+        else {
+            ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, r->server,
+             "ScriptInterpreterSource config directive set to \"registry\".\n\t"
+             "Registry was searched but interpreter not found. Trying the shebang line.");
+        }
+    }        
+
+    /* Need to peek into the file figure out what it really is... */
+    hFile = CreateFile(r->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return eFileTypeUNKNOWN;
+    }
+    bResult = ReadFile(hFile, (void*) &buffer, sizeof(buffer) - 1, 
+                       &nBytesRead, NULL);
+    if (!bResult || (nBytesRead == 0)) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
+                      "ReadFile(%s) failed", r->filename);
+        CloseHandle(hFile);
+        return eFileTypeUNKNOWN;
+    }
+    CloseHandle(hFile);
+    buffer[nBytesRead] = '\0';
+
+    /* Script or executable, that is the question... */
+    if ((buffer[0] == '#') && (buffer[1] == '!')) {
+        /* Assuming file is a script since it starts with a shebang */
+        fileType = eFileTypeSCRIPT;
+        for (i = 2; i < sizeof(buffer); i++) {
+            if ((buffer[i] == '\r')
+                || (buffer[i] == '\n')) {
+                break;
+            }
+        }
+        buffer[i] = '\0';
+        for (i = 2; buffer[i] == ' ' ; ++i)
+            ;
+        *interpreter = ap_pstrdup(r->pool, buffer + i ); 
+    }
+    else {
+        /* Not a script, is it an executable? */
+        IMAGE_DOS_HEADER *hdr = (IMAGE_DOS_HEADER*)buffer;    
+        if ((nBytesRead >= sizeof(IMAGE_DOS_HEADER)) && (hdr->e_magic == IMAGE_DOS_SIGNATURE)) {
+            if (hdr->e_lfarlc < 0x40)
+                fileType = eFileTypeEXE16;
+            else
+                fileType = eFileTypeEXE32;
+        }
+        else
+            fileType = eFileTypeUNKNOWN;
+    }
+
+    return fileType;
+}
+#endif
 
 /*****************************************************************
  *
@@ -827,7 +1047,7 @@ static const char *set_document_root(cmd_parms *cmd, void *dummy, char *arg)
     }
 
     arg = ap_os_canonical_filename(cmd->pool, arg);
-    if (!ap_is_directory(arg)) {
+    if (ap_configtestonly && ap_docrootcheck && !ap_is_directory(arg)) {
 	if (cmd->server->is_virtual) {
 	    fprintf(stderr, "Warning: DocumentRoot [%s] does not exist\n",
 		    arg);
@@ -893,7 +1113,7 @@ static const char *set_error_document(cmd_parms *cmd, core_dir_config *conf,
 
     if (error_number == 401 &&
 	line[0] != '/' && line[0] != '"') { /* Ignore it... */
-	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, NULL,
+	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, cmd->server,
 		     "cannot use a full URL in a 401 ErrorDocument "
 		     "directive --- ignoring!");
     }
@@ -1064,6 +1284,7 @@ CORE_EXPORT_NONSTD(const char *) ap_limit_section(cmd_parms *cmd, void *dummy,
 						  const char *arg)
 {
     const char *limited_methods = ap_getword(cmd->pool, &arg, '>');
+    void *tog = cmd->cmd->cmd_data;
     int limited = 0;
   
     const char *err = ap_check_cmd_context(cmd, NOT_IN_LIMIT);
@@ -1072,7 +1293,7 @@ CORE_EXPORT_NONSTD(const char *) ap_limit_section(cmd_parms *cmd, void *dummy,
     }
 
     /* XXX: NB: Currently, we have no way of checking
-     * whether <Limit> sections are closed properly.
+     * whether <Limit> or <LimitExcept> sections are closed properly.
      * (If we would add a srm_command_loop() here we might...)
      */
     
@@ -1080,26 +1301,31 @@ CORE_EXPORT_NONSTD(const char *) ap_limit_section(cmd_parms *cmd, void *dummy,
         char *method = ap_getword_conf(cmd->pool, &limited_methods);
         int  methnum = ap_method_number_of(method);
 
-        if (methnum == M_TRACE) {
+        if (methnum == M_TRACE && !tog) {
             return "TRACE cannot be controlled by <Limit>";
         }
         else if (methnum == M_INVALID) {
-            return ap_pstrcat(cmd->pool, "unknown method \"",
-                              method, "\" in <Limit>", NULL);
+            return ap_pstrcat(cmd->pool, "unknown method \"", method,
+                              "\" in <Limit", tog ? "Except>" : ">", NULL);
         }
         else {
             limited |= (1 << methnum);
         }
     }
 
-    cmd->limited = limited;
+    /* Killing two features with one function,
+     * if (tog == NULL) <Limit>, else <LimitExcept>
+     */
+    cmd->limited = tog ? ~limited : limited;
     return NULL;
 }
 
 static const char *endlimit_section(cmd_parms *cmd, void *dummy, void *dummy2)
 {
+    void *tog = cmd->cmd->cmd_data;
+
     if (cmd->limited == -1) {
-        return "</Limit> unexpected";
+        return tog ? "</LimitExcept> unexpected" : "</Limit> unexpected";
     }
     
     cmd->limited = -1;
@@ -1183,10 +1409,6 @@ static const char *dirsection(cmd_parms *cmd, void *dummy, const char *arg)
     *endp = '\0';
 
     cmd->path = ap_getword_conf(cmd->pool, &arg);
-#ifdef OS2
-    /* Fix OS/2 HPFS filename case problem. */
-    cmd->path = strlwr(cmd->path);
-#endif    
     cmd->override = OR_ALL|ACCESS_CONF;
 
     if (thiscmd->cmd_data) { /* <DirectoryMatch> */
@@ -1360,7 +1582,7 @@ static const char *filesection(cmd_parms *cmd, core_dir_config *c,
     conf->d_is_fnmatch = ap_is_fnmatch(conf->d) != 0;
     conf->r = r;
 
-    add_file_conf(c, new_file_conf);
+    ap_add_file_conf(c, new_file_conf);
 
     if (*arg != '\0') {
 	return ap_pstrcat(cmd->pool, "Multiple ", thiscmd->name,
@@ -1719,7 +1941,7 @@ static const char *set_user(cmd_parms *cmd, void *dummy, char *arg)
 		"Error:\tApache has not been designed to serve pages while\n"
 		"\trunning as root.  There are known race conditions that\n"
 		"\twill allow any local user to read any file on the system.\n"
-		"\tShould you still desire to serve pages as root then\n"
+		"\tIf you still desire to serve pages as root then\n"
 		"\tadd -DBIG_SECURITY_HOLE to the EXTRA_CFLAGS line in your\n"
 		"\tsrc/Configuration file and rebuild the server.  It is\n"
 		"\tstrongly suggested that you instead modify the User\n"
@@ -1923,15 +2145,25 @@ static const char *set_content_md5(cmd_parms *cmd, core_dir_config *d, int arg)
 }
 
 static const char *set_use_canonical_name(cmd_parms *cmd, core_dir_config *d, 
-					  int arg)
+					  char *arg)
 {
     const char *err = ap_check_cmd_context(cmd, NOT_IN_LIMIT);
-
     if (err != NULL) {
 	return err;
     }
-    
-    d->use_canonical_name = arg != 0;
+
+    if (strcasecmp(arg, "on") == 0) {
+        d->use_canonical_name = USE_CANONICAL_NAME_ON;
+    }
+    else if (strcasecmp(arg, "off") == 0) {
+        d->use_canonical_name = USE_CANONICAL_NAME_OFF;
+    }
+    else if (strcasecmp(arg, "dns") == 0) {
+        d->use_canonical_name = USE_CANONICAL_NAME_DNS;
+    }
+    else {
+        return "parameter must be 'on', 'off', or 'dns'";
+    }
     return NULL;
 }
 
@@ -2300,7 +2532,8 @@ API_EXPORT(const char *) ap_psignature(const char *prefix, request_rec *r)
 
     conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
 						   &core_module);
-    if (conf->server_signature == srv_sig_off) {
+    if ((conf->server_signature == srv_sig_off)
+	    || (conf->server_signature == srv_sig_unset)) {
 	return "";
     }
 
@@ -2452,6 +2685,21 @@ static const char *set_limit_req_body(cmd_parms *cmd, core_dir_config *conf,
     return NULL;
 }
 
+#ifdef WIN32
+static const char *set_interpreter_source(cmd_parms *cmd, core_dir_config *d,
+                                                char *arg)
+{
+    if (!strcasecmp(arg, "registry")) {
+        d->script_interpreter_source = INTERPRETER_SOURCE_REGISTRY;
+    } else if (!strcasecmp(arg, "script")) {
+        d->script_interpreter_source = INTERPRETER_SOURCE_SHEBANG;
+    } else {
+        d->script_interpreter_source = INTERPRETER_SOURCE_SHEBANG;
+    }
+    return NULL;
+}
+#endif
+
 /* Note --- ErrorDocument will now work from .htaccess files.  
  * The AllowOverride of Fileinfo allows webmasters to turn it off
  */
@@ -2483,6 +2731,11 @@ static const command_rec core_cmds[] = {
   "authentication directives when accessed using specified HTTP methods" },
 { "</Limit>", endlimit_section, NULL, OR_ALL, NO_ARGS,
   "Marks end of <Limit>" },
+{ "<LimitExcept", ap_limit_section, (void*)1, OR_ALL, RAW_ARGS,
+  "Container for authentication directives to be applied when any HTTP "
+  "method other than those specified is used to access the resource" },
+{ "</LimitExcept>", endlimit_section, (void*)1, OR_ALL, NO_ARGS,
+  "Marks end of <LimitExcept>" },
 { "<IfModule", start_ifmod, NULL, OR_ALL, TAKE1,
   "Container for directives based on existance of specified modules" },
 { end_ifmodule_section, end_ifmod, NULL, OR_ALL, NO_ARGS,
@@ -2554,7 +2807,7 @@ static const command_rec core_cmds[] = {
 { "ServerName", set_server_string_slot,
   (void *)XtOffsetOf (server_rec, server_hostname), RSRC_CONF, TAKE1,
   "The hostname of the server" },
-{ "ServerSignature", set_signature_flag, NULL, ACCESS_CONF|RSRC_CONF, TAKE1,
+{ "ServerSignature", set_signature_flag, NULL, OR_ALL, TAKE1,
   "En-/disable server signature (on|off|email)" },
 { "ServerRoot", set_server_root, NULL, RSRC_CONF, TAKE1,
   "Common directory of server-related files (logs, confs, etc.)" },
@@ -2589,9 +2842,8 @@ static const command_rec core_cmds[] = {
 { "ContentDigest", set_content_md5, NULL, OR_OPTIONS,
   FLAG, "whether or not to send a Content-MD5 header with each request" },
 { "UseCanonicalName", set_use_canonical_name, NULL,
-  OR_OPTIONS, FLAG,
-  "Whether or not to always use the canonical ServerName : Port when "
-  "constructing URLs" },
+  RSRC_CONF, TAKE1,
+  "How to work out the ServerName : Port when constructing URLs" },
 { "StartServers", set_daemons_to_start, NULL, RSRC_CONF, TAKE1,
   "Number of child processes launched at server startup" },
 { "MinSpareServers", set_min_free_servers, NULL, RSRC_CONF, TAKE1,
@@ -2656,6 +2908,10 @@ static const command_rec core_cmds[] = {
 { "BS2000Account", set_bs2000_account, NULL, RSRC_CONF, TAKE1,
   "Name of server User's bs2000 logon account name" },
 #endif
+#ifdef WIN32
+{ "ScriptInterpreterSource", set_interpreter_source, NULL, OR_FILEINFO, TAKE1,
+  "Where to find interpreter to run Win32 scripts (Registry or script shebang line)" },
+#endif
 { "ServerTokens", set_serv_tokens, NULL, RSRC_CONF, TAKE1,
   "Determine tokens displayed in the Server: header - Min(imal), OS or Full" },
 { "LimitRequestLine", set_limit_req_line, NULL, RSRC_CONF, TAKE1,
@@ -2668,7 +2924,7 @@ static const command_rec core_cmds[] = {
   (void*)XtOffsetOf(core_dir_config, limit_req_body),
   OR_ALL, TAKE1,
   "Limit (in bytes) on maximum size of request message body" },
-{ NULL },
+{ NULL }
 };
 
 /*****************************************************************
@@ -2721,16 +2977,20 @@ static int core_translate(request_rec *r)
 static int do_nothing(request_rec *r) { return OK; }
 
 #ifdef USE_MMAP_FILES
-struct mmap {
+struct mmap_rec {
     void *mm;
     size_t length;
 };
 
 static void mmap_cleanup(void *mmv)
 {
-    struct mmap *mmd = mmv;
+    struct mmap_rec *mmd = mmv;
 
-    munmap(mmd->mm, mmd->length);
+    if (munmap(mmd->mm, mmd->length) == -1) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, NULL,
+                     "Failed to munmap memory of length %ld at 0x%lx",
+                     (long) mmd->length, (long) mmd->mm);
+    }
 }
 #endif
 
@@ -2750,6 +3010,9 @@ static int default_handler(request_rec *r)
     FILE *f;
 #ifdef USE_MMAP_FILES
     caddr_t mm;
+#endif
+#ifdef CHARSET_EBCDIC
+    int convert_flag;
 #endif
 
     /* This handler has no use for a request body (yet), but we still
@@ -2815,6 +3078,7 @@ static int default_handler(request_rec *r)
 #ifdef USE_MMAP_FILES
     ap_block_alarms();
     if ((r->finfo.st_size >= MMAP_THRESHOLD)
+	&& (r->finfo.st_size < MMAP_LIMIT)
 	&& (!r->header_only || (d->content_md5 & 1))) {
 	/* we need to protect ourselves in case we die while we've got the
  	 * file mmapped */
@@ -2833,22 +3097,27 @@ static int default_handler(request_rec *r)
 	ap_unblock_alarms();
 #endif
 
-	if (d->content_md5 & 1) {
-	    ap_table_setn(r->headers_out, "Content-MD5",
-			  ap_md5digest(r->pool, f));
-	}
-
-	rangestatus = ap_set_byterange(r);
 #ifdef CHARSET_EBCDIC
-	/* To make serving of "raw ASCII text" files easy (they serve faster 
+	/* To make serving of "raw ASCII text" files easy (they serve faster
 	 * since they don't have to be converted from EBCDIC), a new
 	 * "magic" type prefix was invented: text/x-ascii-{plain,html,...}
 	 * If we detect one of these content types here, we simply correct
 	 * the type to the real text/{plain,html,...} type. Otherwise, we
 	 * set a flag that translation is required later on.
 	 */
-        ap_checkconv(r);
-#endif /*CHARSET_EBCDIC*/
+	convert_flag = ap_checkconv(r);
+	if (d->content_md5 & 1) {
+	    ap_table_setn(r->headers_out, "Content-MD5",
+			  ap_md5digest(r->pool, f, convert_flag));
+	}
+#else
+	if (d->content_md5 & 1) {
+	    ap_table_setn(r->headers_out, "Content-MD5",
+			  ap_md5digest(r->pool, f));
+	}
+#endif /* CHARSET_EBCDIC */
+
+	rangestatus = ap_set_byterange(r);
 
 	ap_send_http_header(r);
 	
@@ -2859,8 +3128,18 @@ static int default_handler(request_rec *r)
 	    else {
 		long offset, length;
 		while (ap_each_byterange(r, &offset, &length)) {
-		    fseek(f, offset, SEEK_SET);
-		    ap_send_fd_length(f, r, length);
+		    /*
+		     * Non zero returns are more portable than checking
+		     * for a return of -1.
+		     */
+		    if (fseek(f, offset, SEEK_SET)) {
+			ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
+			      "Failed to fseek for byterange (%ld, %ld)",
+			      offset, length);
+		    }
+		    else {
+			ap_send_fd_length(f, r, length);
+		    }
 		}
 	    }
 	}
@@ -2868,7 +3147,7 @@ static int default_handler(request_rec *r)
 #ifdef USE_MMAP_FILES
     }
     else {
-	struct mmap *mmd;
+	struct mmap_rec *mmd;
 
 	mmd = ap_palloc(r->pool, sizeof(*mmd));
 	mmd->mm = mm;
@@ -2880,7 +3159,7 @@ static int default_handler(request_rec *r)
 	    AP_MD5_CTX context;
 	    
 	    ap_MD5Init(&context);
-	    ap_MD5Update(&context, (void *)mm, r->finfo.st_size);
+	    ap_MD5Update(&context, (void *)mm, (unsigned int)r->finfo.st_size);
 	    ap_table_setn(r->headers_out, "Content-MD5",
 			  ap_md5contextTo64(r->pool, &context));
 	}
@@ -2909,7 +3188,7 @@ static int default_handler(request_rec *r)
 static const handler_rec core_handlers[] = {
 { "*/*", default_handler },
 { "default-handler", default_handler },
-{ NULL }
+{ NULL, NULL }
 };
 
 API_VAR_EXPORT module core_module = {

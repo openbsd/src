@@ -22,7 +22,7 @@
      software must display the following acknowledgment: 
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   4. The name "mod_ssl" must not be used to endorse or promote
      products derived from this software without prior written
@@ -32,7 +32,7 @@
      following acknowledgment:
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
   EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -103,6 +103,14 @@ H4 {
     background-color: #f0f0f0;
 }
 #faq {
+    font-weight: bold;
+    font-size: 16pt;
+    line-height: 16pt;
+    font-family: arial,helvetica;
+    font-variant: normal;
+    font-style: normal;
+}
+#howto {
     font-weight: bold;
     font-size: 16pt;
     line-height: 16pt;
@@ -298,6 +306,10 @@ Unknown
 <dd>A hash of a message, which can be used to verify that the contents of
     the message have not been altered in transit.
 <p>
+<dt><DIV id="term">OpenSSL</div>
+<dd>The Open Source toolkit for SSL/TLS;
+    see <a href="http://www.openssl.org/">http://www.openssl.org/</a>
+<p>
 <dt><DIV id="term">Pass Phrase</div>
 <dd>The word or phrase that protects private key files.
     It prevents unauthorized users from encrypting them. Usually it's just
@@ -330,7 +342,9 @@ Unknown
 <dd>The context information of an SSL communication.
 <p>
 <dt><DIV id="term">SSLeay</div>
-<dd>The SSL/TLS implementation library developed by Eric A. Young &lt;eay@cryptsoft.com&gt;.
+<dd>The original SSL/TLS implementation library developed by
+    Eric A. Young &lt;eay@aus.rsa.com&gt;;
+    see <a href="http://www.ssleay.org/">http://www.ssleay.org/</a>
 <p>
 <dt><DIV id="term">Symmetric Cryptography</div>
 <dd>The study and application of <em>Ciphers</em> that use a single secret key
@@ -392,8 +406,8 @@ if (document.images) {
         <td>        <table width="598">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
-        <a href="http://www.engelschall.com/sw/mod_ssl/">mod_ssl</a> 2.2, User Manual<br>
-        The Apache Interface to SSLeay
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.4, User Manual<br>
+        The Apache Interface to OpenSSL
         </font>
         </td>
         <td align="right"><font face="Arial,Helvetica">

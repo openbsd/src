@@ -63,7 +63,7 @@ coherences.
     <a name="<get-var ref>"></a>
     <strong id="howto">%body</strong>\
     &nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#<get-var ref>"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#<get-var ref>"><b>L</b></a>]
     <p>
 <restore toc>
 <restore ref>
@@ -132,7 +132,7 @@ to keep the export ciphers. The following does the trick:
 <config>
 \#   allow all ciphers for the inital handshake,
 \#   so export browsers can upgrade via SGC facility
-SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP
+SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 &lt;Directory /usr/local/apache/htdocs&gt;
 \#   but finally deny all browsers which haven't upgraded
 SSLRequire %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
@@ -153,7 +153,7 @@ solution is:
 <p>
 <config>
 \#   be liberal in general
-SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP
+SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 &lt;Location /strong/area&gt;
 \#   but https://hostname/string/area/ and below requires strong ciphers
 SSLCipherSuite HIGH:MEDIUM
@@ -232,6 +232,7 @@ SSLCACertificateFile conf/ssl.crt/ca.crt
 SSLCACertificatePath conf/ssl.crt
 SSLOptions           +FakeBasicAuth
 SSLRequireSSL
+AuthName             "Snake Oil Authentication"
 AuthType             Basic
 AuthUserFile         /usr/local/apache/conf/httpd.passwd
 require              valid-user
@@ -240,9 +241,9 @@ require              valid-user
 
 <p>
 <config file="/usr/local/apache/conf/httpd.passwd">
-/C=DE/L=Munich/O=Snake Oild, Ltd./OU=Staff/CN=Foo:xxj31ZMTZzkVA
-/C=US/L=S.F./O=Snake Oild, Ltd./OU=CA/CN=Bar:xxj31ZMTZzkVA
-/C=US/L=L.A./O=Snake Oild, Ltd./OU=Dev/CN=Quux:xxj31ZMTZzkVA
+/C=DE/L=Munich/O=Snake Oil, Ltd./OU=Staff/CN=Foo:xxj31ZMTZzkVA
+/C=US/L=S.F./O=Snake Oil, Ltd./OU=CA/CN=Bar:xxj31ZMTZzkVA
+/C=US/L=L.A./O=Snake Oil, Ltd./OU=Dev/CN=Quux:xxj31ZMTZzkVA
 </config>
 
 <p>
@@ -260,6 +261,62 @@ SSLOptions           +FakeBasicAuth
 SSLRequireSSL
 SSLRequire           %{SSL_CLIENT_S_DN_O}  eq "Snake Oil, Ltd." and \\
                      %{SSL_CLIENT_S_DN_OU} in {"Staff", "CA", "Dev"} 
+&lt;/Directory&gt;
+</config>
+
+<howto ref="auth-intranet" toc="intranet vs. internet authentication"> How can
+I require HTTPS with strong ciphers and either basic authentication or client
+certificates for access to a subarea on the Intranet website for clients
+coming from the Internet but still allow plain HTTP access for clients on the
+Intranet?
+</howto>
+
+Let us assume the Intranet can be distinguished through the IP network
+192.160.1.0/24 and the subarea on the Intranet website has the URL
+<tt>/subarea</tt>. Then configure the following outside your HTTPS virtual
+host (so it applies to both HTTPS and HTTP):
+
+<p>
+<config>
+&lt;Directory /usr/local/apache/htdocs&gt;
+\#   Outside the subarea only Intranet access is granted
+Order                deny,allow
+Deny                 all
+Allow                192.160.1.0/24
+&lt;/Directory&gt;
+
+&lt;Directory /usr/local/apache/htdocs/subarea&gt;
+\#   Inside the subarea any Intranet access is allowed
+\#   but from the Internet only HTTPS + Strong-Cipher + Password
+\#   or the alternative HTTPS + Strong-Cipher + Client-Certificate
+
+\#   If HTTPS is used, make sure a strong cipher is used.
+\#   Additionally allow client certs as alternative to basic auth.
+SSLVerifyClient      optional
+SSLVerifyDepth       1
+SSLCACertificateFile conf/ssl.crt/company-ca.crt
+SSLOptions           +FakeBasicAuth +StrictRequire
+SSLRequire           %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
+
+\#   Force clients from the Internet to use HTTPS
+RewriteEngine        on
+RewriteCond          %{REMOTE_ADDR} !^192\.168\.1\.[0-9]+$
+RewriteCond          %{HTTPS} !=on
+RewriteRule          .* - [F]
+
+\#   Allow Network Access and/or Basic Auth
+Satisfy              any
+
+\#   Network Access Control
+Order                deny,allow
+Deny                 all
+Allow                192.160.1.0/24
+
+\#   HTTP Basic Authentication
+AuthType             basic
+AuthName             "Protected Intranet Area"
+AuthUserFile         conf/protected.passwd
+Require              valid-user
 &lt;/Directory&gt;
 </config>
 

@@ -22,7 +22,7 @@
      software must display the following acknowledgment: 
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   4. The name "mod_ssl" must not be used to endorse or promote
      products derived from this software without prior written
@@ -32,7 +32,7 @@
      following acknowledgment:
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
   EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -110,6 +110,14 @@ H4 {
     font-variant: normal;
     font-style: normal;
 }
+#howto {
+    font-weight: bold;
+    font-size: 16pt;
+    line-height: 16pt;
+    font-family: arial,helvetica;
+    font-variant: normal;
+    font-style: normal;
+}
 #term {
     font-weight: bold;
     font-size: 16pt;
@@ -129,21 +137,33 @@ H4 {
 <table cellspacing="0" cellpadding="0" border="0">
 <tr>
     <td>
+        <table cellspacing="0" cellpadding="0" border="0">
+        <tr>
+        <td>
         <img
-           src="ssl_cover_title.gif"
+           src="ssl_cover_title.jpg"
            alt="User Manual"
-         width="377" height="56">
+         width="421" height="73">
+        </td>
+        </tr>
+        <tr>
+        <td align="right">
+        <font face="Arial,Helvetica">mod_ssl version 2.4</font> &nbsp;&nbsp;
+        </td>
+        </tr>
+        </table>
+        <br>
     </td>
 </tr>
 <tr>
     <td>
         <a
-           href="http://www.engelschall.com"
+           href="http://www.modssl.org/"
 ><img
            src="ssl_cover_logo.jpg"
-           alt="mod_ssl - The Apache Interface to SSLeay"
+           alt="mod_ssl - The Apache Interface to OpenSSL"
            border="0"
-         width="546" height="294"></a>
+         width="504" height="231"></a>
     </td>
 </tr>
 <tr>
@@ -151,9 +171,9 @@ H4 {
         <table>
         <tr>
             <td>
-                Ralf S. Engelschall<br>
-                <font size="-1">rse@engelschall.com</font><br>
-                <font size="-1">www.engelschall.com</font><br>
+                <tt>Ralf S. Engelschall</tt><br>
+                <tt>rse@engelschall.com</tt><br>
+                <tt>www.engelschall.com</tt><br>
             </td>
             <td>
                 &nbsp;&nbsp;&nbsp;&nbsp;
@@ -195,6 +215,9 @@ if (document.images) {
    width="70" height="18"
    border="0"
 ></a><br>Overview
+            </td>
+            <td>
+            <img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="30" height="1" align="bottom" border="0">
             </td>
         </tr>
         </table>

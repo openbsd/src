@@ -320,21 +320,56 @@ EXPORTS
 	ap_method_number_of   @313
 	ap_exists_config_define   @314
 	ap_single_module_configure   @315
-	ap_single_module_init   @316
 	ap_make_etag   @317
 	ap_array_pstrcat   @318
 	ap_os_is_filename_valid   @319
-	ap_add_config_define   @320
-	ap_global_ctx   @321
-	ap_ctx_new   @322
-	ap_ctx_get   @323
-	ap_ctx_set   @324
-	ap_hook_init   @325
-	ap_hook_kill   @326
-	ap_hook_configure   @327
-	ap_hook_register_I   @328
-	ap_hook_unregister_I   @329
-	ap_hook_status   @330
-	ap_hook_use   @331
-	ap_hook_call   @332
+	ap_find_list_item   @320
+	ap_MD5Encode   @321
+	ap_validate_password   @322
+	ap_size_list_item   @323
+	ap_get_list_item   @324
+	ap_scoreboard_fname   @325
+	ap_pid_fname   @326
+	ap_excess_requests_per_child   @327
+	ap_threads_per_child   @328
+	ap_max_requests_per_child   @329
+	ap_daemons_to_start   @330
+	ap_daemons_min_free   @331
+	ap_daemons_max_free   @332
+	ap_daemons_limit   @333
+	ap_user_name   @334
+	ap_user_id   @335
+	ap_group_id   @336
+	ap_standalone   @337
+	ap_server_confname   @338
+	ap_sub_req_method_uri   @339
+	ap_regerror   @341
+	ap_regexec   @342
+	ap_field_noparam   @343
+	ap_pbase64decode   @344
+	ap_pbase64encode   @345
+	ap_base64encode   @346
+	ap_base64encode_binary   @347
+	ap_base64encode_len   @348
+	ap_base64decode   @349
+	ap_base64decode_binary   @350
+	ap_base64decode_len   @351
+	ap_SHA1Init   @352
+	ap_SHA1Update_binary   @353
+	ap_SHA1Update   @354
+	ap_SHA1Final   @355
+	ap_sha1_base64   @356
+	ap_add_config_define   @357
+	ap_global_ctx   @358
+	ap_ctx_new   @359
+	ap_ctx_get   @360
+	ap_ctx_set   @361
+	ap_hook_init   @362
+	ap_hook_kill   @363
+	ap_hook_configure   @364
+	ap_hook_register_I   @365
+	ap_hook_unregister_I   @366
+	ap_hook_status   @367
+	ap_hook_use   @368
+	ap_hook_call   @369
 

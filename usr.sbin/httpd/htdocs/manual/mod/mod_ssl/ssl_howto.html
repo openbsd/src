@@ -22,7 +22,7 @@
      software must display the following acknowledgment: 
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   4. The name "mod_ssl" must not be used to endorse or promote
      products derived from this software without prior written
@@ -32,7 +32,7 @@
      following acknowledgment:
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
   EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -282,6 +282,7 @@ coherences.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC7"><strong>simple certificate-based client authentication</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC8"><strong>selective certificate-based client authentication</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC9"><strong>particular certificate-based client authentication</strong></a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC10"><strong>intranet vs. internet authentication</strong></a><br>
 </font>
 </td>
 </tr>
@@ -296,7 +297,7 @@ coherences.
 <li><a name="ToC2"></a>
     <a name="cipher-sslv2"></a>
     <strong id="howto">How can I create a real SSLv2-only server?</strong>&nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#cipher-sslv2"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#cipher-sslv2"><b>L</b></a>]
     <p>
 The following creates an SSL server which speaks only the SSLv2 protocol and
 it's ciphers.
@@ -339,7 +340,7 @@ SSLCipherSuite SSLv2:+HIGH:+MEDIUM:+LOW:+EXP
 <li><a name="ToC3"></a>
     <a name="cipher-strong"></a>
     <strong id="howto">How can I create an SSL server which accepts strong encryption only?</strong>&nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#cipher-strong"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#cipher-strong"><b>L</b></a>]
     <p>
 The following enables only the seven strongest ciphers:
 <p>
@@ -382,7 +383,7 @@ SSLCipherSuite HIGH:MEDIUM
     <a name="cipher-sgc"></a>
     <strong id="howto">How can I create an SSL server which accepts strong encryption only,
 but allows export browsers to upgrade to stronger encryption?</strong>&nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#cipher-sgc"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#cipher-sgc"><b>L</b></a>]
     <p>
 This facility is called Server Gated Cryptography (SGC) and details you can
 find in the <code>README.GlobalID</code> document in the mod_ssl distribution.
@@ -420,7 +421,7 @@ to keep the export ciphers. The following does the trick:
                      <td><pre>
 #   allow all ciphers for the inital handshake,
 #   so export browsers can upgrade via SGC facility
-SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP
+SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 &lt;Directory /usr/local/apache/htdocs&gt;
 #   but finally deny all browsers which haven't upgraded
 SSLRequire %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
@@ -440,7 +441,7 @@ SSLRequire %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
     <a name="cipher-perdir"></a>
     <strong id="howto">How can I create an SSL server which accepts all types of ciphers in general,
 but requires a strong ciphers for access to a particular URL?</strong>&nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#cipher-perdir"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#cipher-perdir"><b>L</b></a>]
     <p>
 Obviously you cannot just use a server-wide <code>SSLCipherSuite</code> which
 restricts the ciphers to the strong variants. But mod_ssl allows you to
@@ -471,7 +472,7 @@ solution is:
                  <tr>
                      <td><pre>
 #   be liberal in general
-SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP
+SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 &lt;Location /strong/area&gt;
 #   but https://hostname/string/area/ and below requires strong ciphers
 SSLCipherSuite HIGH:MEDIUM
@@ -494,7 +495,7 @@ SSLCipherSuite HIGH:MEDIUM
     <a name="auth-simple"></a>
     <strong id="howto">How can I authenticate clients based on certificates when I know all my
 clients?</strong>&nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#auth-simple"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#auth-simple"><b>L</b></a>]
     <p>
 When you know your user community (i.e. a closed user group situation), as
 it's the case for instance in an Intranet, you can use plain certificate
@@ -544,7 +545,7 @@ SSLCACertificateFile conf/ssl.crt/ca.crt
     <a name="auth-selective"></a>
     <strong id="howto">How can I authenticate my clients for a particular URL based on certificates
 but still allow arbitrary clients to access the remaining parts of the server?</strong>&nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#auth-selective"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#auth-selective"><b>L</b></a>]
     <p>
 For this we again use the per-directory reconfiguration feature of mod_ssl:
 <p>
@@ -592,7 +593,7 @@ SSLVerifyDepth 1
     <strong id="howto">How can I authenticate only particular clients for a some URLs based
 on certificates but still allow arbitrary clients to access the remaining
 parts of the server?</strong>&nbsp;&nbsp;
-    [<a href="http://www.engelschall.com/sw/mod_ssl/docs/2.2/ssl_howto.html#auth-particular"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#auth-particular"><b>L</b></a>]
     <p>
 The key is to check for various ingredients of the client certficate. Usually
 this means to check the whole or part of the Distinguished Name (DN) of the
@@ -636,6 +637,7 @@ SSLCACertificateFile conf/ssl.crt/ca.crt
 SSLCACertificatePath conf/ssl.crt
 SSLOptions           +FakeBasicAuth
 SSLRequireSSL
+AuthName             "Snake Oil Authentication"
 AuthType             Basic
 AuthUserFile         /usr/local/apache/conf/httpd.passwd
 require              valid-user
@@ -673,9 +675,9 @@ require              valid-user
              <table border="0" cellspacing="4">
                  <tr>
                      <td><pre>
-/C=DE/L=Munich/O=Snake Oild, Ltd./OU=Staff/CN=Foo:xxj31ZMTZzkVA
-/C=US/L=S.F./O=Snake Oild, Ltd./OU=CA/CN=Bar:xxj31ZMTZzkVA
-/C=US/L=L.A./O=Snake Oild, Ltd./OU=Dev/CN=Quux:xxj31ZMTZzkVA
+/C=DE/L=Munich/O=Snake Oil, Ltd./OU=Staff/CN=Foo:xxj31ZMTZzkVA
+/C=US/L=S.F./O=Snake Oil, Ltd./OU=CA/CN=Bar:xxj31ZMTZzkVA
+/C=US/L=L.A./O=Snake Oil, Ltd./OU=Dev/CN=Quux:xxj31ZMTZzkVA
 </pre></td>
                  </tr>
              </table>
@@ -721,6 +723,93 @@ SSLOptions           +FakeBasicAuth
 SSLRequireSSL
 SSLRequire           %{SSL_CLIENT_S_DN_O}  eq "Snake Oil, Ltd." and \
                      %{SSL_CLIENT_S_DN_OU} in {"Staff", "CA", "Dev"}
+&lt;/Directory&gt;
+</pre></td>
+                 </tr>
+             </table>
+         </td>
+         <td bgcolor="#cccccc"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="1" align="bottom" border="0"></td>
+    </tr>
+    <tr>
+         <td colspan="5" bgcolor="#cccccc"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="1" align="bottom" border="0"></td>
+    </tr>
+</table>
+<p>
+<li><a name="ToC10"></a>
+    <a name="auth-intranet"></a>
+    <strong id="howto"> How can
+I require HTTPS with strong ciphers and either basic authentication or client
+certificates for access to a subarea on the Intranet website for clients
+coming from the Internet but still allow plain HTTP access for clients on the
+Intranet?</strong>&nbsp;&nbsp;
+    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#auth-intranet"><b>L</b></a>]
+    <p>
+Let us assume the Intranet can be distinguished through the IP network
+192.160.1.0/24 and the subarea on the Intranet website has the URL
+<tt>/subarea</tt>. Then configure the following outside your HTTPS virtual
+host (so it applies to both HTTPS and HTTP):
+<p>
+<table border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td colspan="2"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="8" align="bottom" border="0"></td>
+        <td rowspan="3">&nbsp;&nbsp;<font face="Arial,Helvetica" color="#999999">httpd.conf</font>&nbsp;&nbsp;</td>
+        <td colspan="2"> </td>
+    </tr>
+    <tr>
+        <td bgcolor="#cccccc" colspan="2"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="1" align="bottom" border="0"></td>
+        <td bgcolor="#cccccc" colspan="2"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="1" align="bottom" border="0"></td>
+    </tr>
+    <tr>
+         <td bgcolor="#cccccc"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="5" align="bottom" border="0"></td>
+         <td bgcolor="#ffffff"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="40" height="1" align="bottom" border="0"></td>
+         <td bgcolor="#ffffff"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="300" height="1" align="bottom" border="0"></td>
+         <td bgcolor="#cccccc"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="5" align="bottom" border="0"></td>
+    </tr>
+    <tr>
+         <td bgcolor="#cccccc"><img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="1" height="1" align="bottom" border="0"></td>
+         <td colspan="3" bgcolor="#ffffff">
+             <table border="0" cellspacing="4">
+                 <tr>
+                     <td><pre>
+&lt;Directory /usr/local/apache/htdocs&gt;
+#   Outside the subarea only Intranet access is granted
+Order                deny,allow
+Deny                 all
+Allow                192.160.1.0/24
+&lt;/Directory&gt;
+
+&lt;Directory /usr/local/apache/htdocs/subarea&gt;
+#   Inside the subarea any Intranet access is allowed
+#   but from the Internet only HTTPS + Strong-Cipher + Password
+#   or the alternative HTTPS + Strong-Cipher + Client-Certificate
+
+#   If HTTPS is used, make sure a strong cipher is used.
+#   Additionally allow client certs as alternative to basic auth.
+SSLVerifyClient      optional
+SSLVerifyDepth       1
+SSLCACertificateFile conf/ssl.crt/company-ca.crt
+SSLOptions           +FakeBasicAuth +StrictRequire
+SSLRequire           %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
+
+#   Force clients from the Internet to use HTTPS
+RewriteEngine        on
+RewriteCond          %{REMOTE_ADDR} !^192\.168\.1\.[0-9]+$
+RewriteCond          %{HTTPS} !=on
+RewriteRule          .* - [F]
+
+#   Allow Network Access and/or Basic Auth
+Satisfy              any
+
+#   Network Access Control
+Order                deny,allow
+Deny                 all
+Allow                192.160.1.0/24
+
+#   HTTP Basic Authentication
+AuthType             basic
+AuthName             "Protected Intranet Area"
+AuthUserFile         conf/protected.passwd
+Require              valid-user
 &lt;/Directory&gt;
 </pre></td>
                  </tr>
@@ -795,8 +884,8 @@ if (document.images) {
         <td>        <table width="598">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
-        <a href="http://www.engelschall.com/sw/mod_ssl/">mod_ssl</a> 2.2, User Manual<br>
-        The Apache Interface to SSLeay
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.4, User Manual<br>
+        The Apache Interface to OpenSSL
         </font>
         </td>
         <td align="right"><font face="Arial,Helvetica">

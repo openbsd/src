@@ -6,19 +6,31 @@
 <table cellspacing=0 cellpadding=0 border=0>
 <tr>
     <td>
+        <table cellspacing=0 cellpadding=0 border=0>
+        <tr>
+        <td>
         <img 
-           src="ssl_cover_title.gif"
+           src="ssl_cover_title.jpg"
            alt="User Manual" 
         >
+        </td>
+        </tr>
+        <tr>
+        <td align=right>
+        <font face="Arial,Helvetica">mod_ssl version 2.4</font> &nbsp;&nbsp;
+        </td>
+        </tr>
+        </table>
+        <br>
     </td>
 </tr>
 <tr>
     <td>
         <a 
-           href="http://www.engelschall.com"
+           href="http://www.modssl.org/"
         ><img 
            src="ssl_cover_logo.jpg"
-           alt="mod_ssl - The Apache Interface to SSLeay" 
+           alt="mod_ssl - The Apache Interface to OpenSSL" 
            border=0
         ></a>
     </td>
@@ -28,9 +40,9 @@
         <table>
         <tr>
             <td>
-                Ralf S. Engelschall<br>
-                <font size=-1>rse@engelschall.com</font><br>
-                <font size=-1>www.engelschall.com</font><br>
+                <tt>Ralf S. Engelschall</tt><br>
+                <tt>rse@engelschall.com</tt><br>
+                <tt>www.engelschall.com</tt><br>
             </td>
             <td>
                 &nbsp;&nbsp;&nbsp;&nbsp;
@@ -42,6 +54,9 @@
                     oversrc="ssl_template.navbut-next-s.gif" 
                     alt="next page"
                 ><br>Overview
+            </td>
+            <td>
+            <space width=30>
             </td>
         </tr>
         </table>

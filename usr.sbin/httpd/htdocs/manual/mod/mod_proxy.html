@@ -266,7 +266,7 @@ redirected by him to <SAMP>http://foo.com/quux</SAMP> Apache adjusts this to
 <SAMP>http://wibble.org/mirror/foo/quux</SAMP> before forwarding the HTTP
 redirect response to the client. 
 <P>
-Note that this <SAMP>ProxyPassReverse</SAMP> directive can also by used in
+Note that this <SAMP>ProxyPassReverse</SAMP> directive can also be used in
 conjunction with the proxy pass-through feature ("<SAMP>RewriteRule ...
 [P]</SAMP>") from
 <A
@@ -350,10 +350,11 @@ listed ports only.
 Apache 1.2 and later.<P>
 
 The ProxyBlock directive specifies a list of words, hosts and/or domains,
-separated by spaces. HTTP, HTTPS, and FTP document requests to matched words,
-hosts or domains are <EM>blocked</EM> by the proxy server. The proxy module
-will also attempt to determine IP addresses of list items which may be
-hostnames during startup, and cache them for match test as well. Example:
+separated by spaces.  HTTP, HTTPS, and FTP document requests to sites whose
+names contain matched words, hosts or domains are <EM>blocked</EM> by the
+proxy server. The proxy module will also attempt to determine IP addresses of
+list items which may be hostnames during startup, and cache them for match
+test as well. Example:
 
 <PRE>
   ProxyBlock joes-garage.com some-host.co.uk rocky.wotsamattau.edu

@@ -83,7 +83,7 @@ want to compile mod_rewrite into your server.
 
 <P>Here's how to redirect all requests to a script... In the server
 configuration file,
-<BLOCKQUOTE><PRE>ScriptAlias / /usr/local/httpd/cgi-bin/redirect_script</PRE>
+<BLOCKQUOTE><PRE>ScriptAlias / /usr/local/httpd/cgi-bin/redirect_script/</PRE>
 </BLOCKQUOTE>
 
 and here's a simple perl script to redirect requests:
@@ -91,8 +91,9 @@ and here's a simple perl script to redirect requests:
 <BLOCKQUOTE><PRE>
 #!/usr/local/bin/perl
 
-print "Status: 302 Moved Temporarily\r
-Location: http://www.some.where.else.com/\r\n\r\n";
+print "Status: 302 Moved Temporarily\r\n" .
+      "Location: http://www.some.where.else.com/\r\n" .
+      "\r\n";
 
 </PRE></BLOCKQUOTE></P>
 

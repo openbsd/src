@@ -7,14 +7,21 @@
 # See http://www.apache.org/docs/LICENSE
 
 
-APDIR=$(basename $(pwd))
-VER=$(echo $APDIR |sed s/apache-//)
-OS=$(src/helpers/GuessOS)
-USER="$(src/helpers/buildinfo.sh -n %u@%h%d)"
-TAR="$(src/helpers/findprg.sh tar)"
-GTAR="$(src/helpers/findprg.sh gtar)"
-GZIP="$(src/helpers/findprg.sh gzip)"
 CONFIGPARAM="--with-layout=BinaryDistribution --enable-module=most --enable-shared=max"
+APDIR=`pwd`
+APDIR=`basename $APDIR`
+VER=`echo $APDIR |sed s/apache_//`
+OS=`src/helpers/GuessOS`
+TAR="`src/helpers/PrintPath tar`"
+GTAR="`src/helpers/PrintPath gtar`"
+GZIP="`src/helpers/PrintPath gzip`"
+
+if [ x$1 != x ]
+then
+  USER=$1
+else
+  USER="`src/helpers/buildinfo.sh -n %u@%h%d`"
+fi
 
 if [ ! -f ./ABOUT_APACHE ]
 then
@@ -58,7 +65,10 @@ then
   exit 1;
 fi
 
-echo "Binary images successfully created..."
+echo "Binary image successfully created..."
+
+./bindist/bin/httpd -v
+
 echo "Creating supplementary files..."
 
 ( echo " " && \
@@ -89,7 +99,7 @@ echo "Creating supplementary files..."
   ./bindist/bin/httpd -V && \
   echo "----------------------------------------------------------------------" \
 ) > README.bindist
-cp README.bindist ../apache-$VER-$OS.README
+cp README.bindist ../apache_$VER-$OS.README
 
 ( echo " " && \
   echo "Apache $VER binary installation" && \
@@ -119,6 +129,64 @@ cp README.bindist ../apache-$VER-$OS.README
   echo "# This script installs the Apache binary distribution and" && \
   echo "# was automatically created by binbuild.sh." && \
   echo " " && \
+  echo "lmkdir()" && \
+  echo "{" && \
+  echo "  path=\"\"" && \
+  echo "  dirs=\`echo \$1 | sed -e 's%/% %g'\`" && \
+  echo "  mode=\$2" && \
+  echo " " && \
+  echo "  set -- \${dirs}" && \
+  echo " " && \
+  echo "  for d in \${dirs}" && \
+  echo "  do" && \
+  echo "    path=\"\${path}/\$d\"" && \
+  echo "    if test ! -d \"\${path}\" ; then" && \
+  echo "      mkdir \${path}" && \
+  echo "      if test \$? -ne 0 ; then" && \
+  echo "        echo \"Failed to create directory: \${path}\"" && \
+  echo "        exit 1" && \
+  echo "      fi" && \
+  echo "      chmod \${mode} \${path}" && \
+  echo "    fi" && \
+  echo "  done" && \
+  echo "}" && \
+  echo " " && \
+  echo "lcopy()" && \
+  echo "{" && \
+  echo "  from=\$1" && \
+  echo "  to=\$2" && \
+  echo "  dmode=\$3" && \
+  echo "  fmode=\$4" && \
+  echo " " && \
+  echo "  test -d \${to} || lmkdir \${to} \${dmode}" && \
+  echo "  (cd \${from} && tar -cf - *) | (cd \${to} && tar -xf -)" && \
+  echo " " && \
+  echo "  if test \"X\${fmode}\" != X ; then" && \
+  echo "    find \${to} -type f -print | xargs chmod \${fmode}" && \
+  echo "  fi" && \
+  echo "  if test \"X\${dmode}\" != X ; then" && \
+  echo "    find \${to} -type d -print | xargs chmod \${dmode}" && \
+  echo "  fi" && \
+  echo "}" && \
+  echo " " && \
+  echo "##" && \
+  echo "##  determine path to (optional) Perl interpreter" && \
+  echo "##" && \
+  echo "PERL=no-perl5-on-this-system" && \
+  echo "perls='perl5 perl'" && \
+  echo "path=\`echo \$PATH | sed -e 's/:/ /g'\`" && \
+  echo " " && \
+  echo "for dir in \${path} ;  do" && \
+  echo "  for pperl in \${perls} ; do" && \
+  echo "    if test -f \"\${dir}/\${pperl}\" ; then" && \
+  echo "      if \`\${dir}/\${pperl} -v | grep 'version 5\.' >/dev/null 2>&1\` ; then" && \
+  echo "        PERL=\"\${dir}/\${pperl}\"" && \
+  echo "        break" && \
+  echo "      fi" && \
+  echo "    fi" && \
+  echo "  done" && \
+  echo "done" && \
+  echo " " && \
   echo "if [ .\$1 = . ]" && \
   echo "then" && \
   echo "  SR=/usr/local/apache" && \
@@ -127,41 +195,46 @@ cp README.bindist ../apache-$VER-$OS.README
   echo "fi" && \
   echo "echo \"Installing binary distribution for platform $OS\"" && \
   echo "echo \"into directory \$SR ...\"" && \
-  echo "./src/helpers/mkdir.sh \$SR" && \
-  echo "cp -r bindist/proxy \$SR/proxy" && \
-  echo "cp -r bindist/man \$SR/man" && \
-  echo "cp -r bindist/logs \$SR/logs" && \
-  echo "cp -r bindist/libexec \$SR/libexec" && \
-  echo "cp -r bindist/include \$SR/include" && \
-  echo "cp -r bindist/icons \$SR/icons" && \
-  echo "cp -r bindist/cgi-bin \$SR/cgi-bin" && \
-  echo "cp -r bindist/bin \$SR/bin" && \
+  echo "lmkdir \$SR 755" && \
+  echo "lmkdir \$SR/proxy 750" && \
+  echo "lmkdir \$SR/logs 750" && \
+  echo "lcopy bindist/man \$SR/man 755 644" && \
+  echo "lcopy bindist/libexec \$SR/libexec 750 644" && \
+  echo "lcopy bindist/include \$SR/include 755 644" && \
+  echo "lcopy bindist/icons \$SR/icons 755 644" && \
+  echo "lcopy bindist/cgi-bin \$SR/cgi-bin 750 750" && \
+  echo "lcopy bindist/bin \$SR/bin 750 750" && \
   echo "if [ -d \$SR/conf ]" && \
   echo "then" && \
   echo "  echo \"[Preserving existing configuration files.]\"" && \
-  echo "  cp -r bindist/conf/*.default \$SR/conf/" && \
+  echo "  cp bindist/conf/*.default \$SR/conf/" && \
   echo "else" && \
-  echo "  cp -r bindist/conf \$SR/conf" && \
+  echo "  lcopy bindist/conf \$SR/conf 750 640" && \
   echo "fi" && \
   echo "if [ -d \$SR/htdocs ]" && \
   echo "then" && \
   echo "  echo \"[Preserving existing htdocs directory.]\"" && \
   echo "else" && \
-  echo "  cp -r bindist/htdocs \$SR/htdocs" && \
+  echo "  lcopy bindist/htdocs \$SR/htdocs 755 644" && \
   echo "fi" && \
-  echo "sed -e s%/usr/local/apache%\$SR/% \$SR/conf/httpd.conf.default > \$SR/conf/httpd.conf" && \
-  echo "sed -e s%PIDFILE=%PIDFILE=\$SR/% -e s%HTTPD=%HTTPD=\\\"\$SR/% -e \"s%/httpd$%/httpd -d \$SR\\\"%\" bindist/bin/apachectl > \$SR/bin/apachectl" && \
+  echo " " && \
+  echo "sed -e \"s;^#!/.*;#!\$PERL;\" -e \"s;\@prefix\@;\$SR;\" -e \"s;\@sbindir\@;\$SR/bin;\" \\" && \
+  echo "	-e \"s;\@libexecdir\@;\$SR/libexec;\" -e \"s;\@includedir\@;\$SR/include;\" \\" && \
+  echo "	-e \"s;\@sysconfdir\@;\$SR/conf;\" bindist/bin/apxs > \$SR/bin/apxs" && \
+  echo "sed -e \"s;^#!/.*;#!\$PERL;\" bindist/bin/dbmmanage > \$SR/bin/dbmmanage" && \
+  echo "sed -e \"s%/usr/local/apache%\$SR%\" \$SR/conf/httpd.conf.default > \$SR/conf/httpd.conf" && \
+  echo "sed -e \"s%PIDFILE=%PIDFILE=\$SR/%\" -e \"s%HTTPD=%HTTPD=\\\"\$SR/%\" -e \"s%httpd\$%httpd -d \$SR -R \$SR/libexec\\\"%\" bindist/bin/apachectl > \$SR/bin/apachectl" && \
   echo " " && \
   echo "echo \"Ready.\"" && \
   echo "echo \" +--------------------------------------------------------+\"" && \
   echo "echo \" | You now have successfully installed the Apache $VER   |\"" && \
   echo "echo \" | HTTP server. To verify that Apache actually works      |\"" && \
-  echo "echo \" | correctly you now should first check the (initially    |\"" && \
-  echo "echo \" | created or preserved) configuration files              |\"" && \
+  echo "echo \" | correctly you should first check the (initially        |\"" && \
+  echo "echo \" | created or preserved) configuration files:             |\"" && \
   echo "echo \" |                                                        |\"" && \
   echo "echo \" |   \$SR/conf/httpd.conf\"" && \
   echo "echo \" |                                                        |\"" && \
-  echo "echo \" | and then you should be able to immediately fire up     |\"" && \
+  echo "echo \" | You should then be able to immediately fire up         |\"" && \
   echo "echo \" | Apache the first time by running:                      |\"" && \
   echo "echo \" |                                                        |\"" && \
   echo "echo \" |   \$SR/bin/apachectl start \"" &&\
@@ -173,9 +246,10 @@ cp README.bindist ../apache-$VER-$OS.README
 ) > install-bindist.sh
 chmod 755 install-bindist.sh
 
-sed -e "s%\"/htdocs%\"/usr/local/apache/htdocs%" \
-    -e "s%\"/icons%\"/usr/local/apache/icons%" \
-    -e "s%\"/cgi-bin%\"/usr/local/apache/cgi-bin%" \
+sed -e "s%\"htdocs%\"/usr/local/apache/htdocs%" \
+    -e "s%\"icons%\"/usr/local/apache/icons%" \
+    -e "s%\"cgi-bin%\"/usr/local/apache/cgi-bin%" \
+    -e "s%\"proxy%\"/usr/local/apache/proxy%" \
     -e "s%^ServerAdmin.*%ServerAdmin you@your.address%" \
     -e "s%#ServerName.*%#ServerName localhost%" \
     -e "s%Port 8080%Port 80%" \
@@ -189,30 +263,30 @@ then
   echo "ERROR: Failed to build Apache. See \"build.log\" for details."
   exit 1;
 else
-  if [ ".$GTAR" != . ]
+  if [ "x$GTAR" != "x" ]
   then
-    $GTAR -zcf ../apache-$VER-$OS.tar.gz -C .. --owner=root --group=root apache-$VER
+    $GTAR -zcf ../apache_$VER-$OS.tar.gz -C .. apache_$VER
   else
-    if [ ".$TAR" != . ]
+    if [ "x$TAR" != "x" ]
     then
-      $TAR -cf ../apache-$VER-$OS.tar -C .. apache-$VER
-      if [ ".$GZIP" != . ]
+      $TAR -cf ../apache_$VER-$OS.tar -C .. apache_$VER
+      if [ "x$GZIP" != "x" ]
       then
-        $GZIP ../apache-$VER-$OS.tar
+        $GZIP ../apache_$VER-$OS.tar
       fi
     else
       echo "ERROR: Could not find a 'tar' program!"
       echo "       Please execute the following commands manually:"
-      echo "         tar -cf ../apache-$VER-$OS.tar ."
-      echo "         gzip ../apache-$VER-$OS.tar"
+      echo "         tar -cf ../apache_$VER-$OS.tar ."
+      echo "         gzip ../apache_$VER-$OS.tar"
     fi
   fi
 
-  if [ -f ../apache-$VER-$OS.tar.gz ] && [ -f ../apache-$VER-$OS.README ]
+  if [ -f ../apache_$VER-$OS.tar.gz ] && [ -f ../apache_$VER-$OS.README ]
   then
     echo "Ready."
-    echo "You can find the binary archive (apache-$VER-$OS.tar.gz)"
-    echo "and the readme file (apache-$VER-$OS.README) in the"
+    echo "You can find the binary archive (apache_$VER-$OS.tar.gz)"
+    echo "and the readme file (apache_$VER-$OS.README) in the"
     echo "parent directory."
     exit 0;
   else

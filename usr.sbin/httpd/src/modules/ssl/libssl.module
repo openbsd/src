@@ -1,8 +1,8 @@
 ##                      _             _ 
-##  _ __ ___   ___   __| |    ___ ___| |  
-## | '_ ` _ \ / _ \ / _` |   / __/ __| |  
-## | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-## |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+##  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+## | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+## | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+## |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 ##                      |_____|         
 ##  libssl.module
 ##  Apache 1.3 Configuration mechanism module stub
@@ -28,7 +28,7 @@
 ##     software must display the following acknowledgment:
 ##     "This product includes software developed by 
 ##      Ralf S. Engelschall <rse@engelschall.com> for use in the
-##      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+##      mod_ssl project (http://www.modssl.org/)."
 ## 
 ##  4. The names "mod_ssl" must not be used to endorse or promote
 ##     products derived from this software without prior written
@@ -43,7 +43,7 @@
 ##     acknowledgment:
 ##     "This product includes software developed by 
 ##      Ralf S. Engelschall <rse@engelschall.com> for use in the
-##      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+##      mod_ssl project (http://www.modssl.org/)."
 ## 
 ##  THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
 ##  EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -139,10 +139,12 @@ ConfigStart
         my_rule_SSL_COMPAT=$SSL_COMPAT
         my_rule_SSL_SDBM=$SSL_SDBM
         my_rule_SSL_EXPERIMENTAL=$SSL_EXPERIMENTAL
+        my_rule_SSL_VENDOR=$SSL_VENDOR
     else
         my_rule_SSL_COMPAT=`./helpers/CutRule SSL_COMPAT $file`
         my_rule_SSL_SDBM=`./helpers/CutRule SSL_SDBM $file`
         my_rule_SSL_EXPERIMENTAL=`./helpers/CutRule SSL_EXPERIMENTAL $file`
+        my_rule_SSL_VENDOR=`./helpers/CutRule SSL_VENDOR $file`
     fi
 
     #
@@ -163,6 +165,25 @@ ConfigStart
         SSL_CFLAGS="$SSL_CFLAGS -DSSL_EXPERIMENTAL"
     else
         echo "$my_prefix SSL interface experimental code: disabled"
+    fi
+
+    # 
+    #   determine vendor mode
+    #
+    SSL_VENDOR_OBJS=''
+    SSL_VENDOR_OBJS_PIC=''
+    if [ ".$my_rule_SSL_VENDOR" = .yes ]; then
+        echo "$my_prefix SSL interface vendor extensions: enabled"
+        SSL_CFLAGS="$SSL_CFLAGS -DSSL_VENDOR"
+        my_src="`cd $my_dir && echo ssl_vendor*.c`"
+        if [ ".$my_src" != . -a ".$my_src" != ".ssl_vendor*.c" ]; then
+            SSL_CFLAGS="$SSL_CFLAGS -DSSL_VENDOR_OBJS"
+            SSL_VENDOR_OBJS="`echo $my_src | sed -e 's;\.c;.o;g'`"
+            SSL_VENDOR_OBJS_PIC="`echo $my_src | sed -e 's;\.c;.lo;g'`"
+            echo "$my_prefix SSL interface vendor objects: $SSL_VENDOR_OBJS"
+        fi
+    else
+        echo "$my_prefix SSL interface vendor extensions: disabled"
     fi
 
     #
@@ -242,7 +263,7 @@ ConfigStart
     else
         if [ ! -d "$SSL_BASE" ]; then
             echo "Error: Cannot find SSL installation in $SSL_BASE" 1>&2  
-            echo "Hint:  Please provide us with the location of SSLeay" 1>&2
+            echo "Hint:  Please provide us with the location of OpenSSL" 1>&2
             echo "       via the environment variable SSL_BASE." 1>&2
             exit 1
         fi
@@ -250,7 +271,9 @@ ConfigStart
     fi
 
     #
-    #   determine location of SSLeay binaries
+    #   determine location of OpenSSL binaries
+    #   (we still search also for `ssleay' to allow us to
+    #   better complain about the actually installed version)
     #
     SSL_BINDIR=""
     if [ ".$SSL_BASE" = .SYSTEM ]; then
@@ -267,8 +290,12 @@ ConfigStart
             fi
         done
         if [ ".$SSL_BINDIR" = . ]; then
-            echo "Error: Cannot find SSL binaries in $PATH" 1>&2
-            exit 1
+#            echo "Error: Cannot find SSL binaries in $PATH" 1>&2
+#            exit 1
+# 	     Kludge for OpenBSD - Make sure we work even if the stuff
+# isn't there yet. 
+             SSL_BINDIR="/usr/sbin"
+	     SSL_PROGRAM="/usr/sbin/openssl"
         fi
     else
         for name in openssl ssleay; do
@@ -290,12 +317,28 @@ ConfigStart
     fi
 
     #
-    #   determine location of SSLeay headers
+    #   SSL version
+    #
+# kludged for OpenBSD - Don't want this retarded shit breaking make build
+# when openssl isn't there yet. 
+#    SSL_VERSION_ID="`$SSL_PROGRAM version`"
+#    echo "$my_prefix SSL library version: $SSL_VERSION_ID"
+#    case $SSL_VERSION_ID in
+#        *0.[5678].*|*0.9.[012]* )
+#            echo "Error: OpenSSL VERSIONS BELOW 0.9.3 ARE NO LONGER SUPPORTED."
+#            echo "Hint:  Use OpenSSL version 0.9.3 or higher!"
+#            exit 1
+#            ;;
+#    esac
+    SSL_VERSION_ID=0.9.4
+
+    #
+    #   determine location of OpenSSL headers
     #
     if [ ".$SSL_BASE" = .SYSTEM ]; then
         SSL_INCDIR=""
         for p in . /usr/include /usr/include/ssl/ /usr/local/include /usr/local/include/ssl; do
-            if [ -f "$p/ssl.h" ]; then
+            if [ -f "$p/openssl/ssl.h" ]; then
                 SSL_INCDIR="$p"
                 break
             fi
@@ -306,21 +349,17 @@ ConfigStart
             exit 1
         fi
     else
-        if [ -f "$SSL_BASE/include/ssl.h" ]; then
+        if [ -f "$SSL_BASE/include/openssl/ssl.h" ]; then
             SSL_INCDIR='$(SSL_BASE)/include'
         else
-            if [ -f "$SSL_BASE/ssl.h" ]; then
-                SSL_INCDIR='$(SSL_BASE)'
-            else
-                echo "Error: Cannot find SSL header files under $SSL_BASE" 1>&2
-                exit 1
-            fi
+            echo "Error: Cannot find SSL header files under $SSL_BASE" 1>&2
+            exit 1
         fi
     fi
     SSL_CFLAGS="$SSL_CFLAGS -I\$(SSL_INCDIR)"
 
     #
-    #  determine location of SSLeay libraries
+    #  determine location of OpenSSL libraries
     #
     if [ ".$SSL_BASE" = .SYSTEM ]; then
         SSL_LIBDIR=""
@@ -337,17 +376,15 @@ ConfigStart
             exit 1
         fi
     else
-        if [ -f "$SSL_BASE/lib/libssl.a" ]; then
+        if [ -f "$SSL_BASE/libssl.a" ]; then
+            SSL_LIBDIR='$(SSL_BASE)'
+            my_real_ssl_libdir="$SSL_BASE"
+        elif [ -f "$SSL_BASE/lib/libssl.a" ]; then
             SSL_LIBDIR='$(SSL_BASE)/lib'
             my_real_ssl_libdir="$SSL_BASE/lib"
         else
-            if [ -f "$SSL_BASE/libssl.a" ]; then
-                SSL_LIBDIR='$(SSL_BASE)'
-                my_real_ssl_libdir="$SSL_BASE"
-            else
-                echo "Error: Cannot find SSL library files under $SSL_BASE" 1>&2
-                exit 1
-            fi
+            echo "Error: Cannot find SSL library files under $SSL_BASE" 1>&2
+            exit 1
         fi
     fi
     SSL_LDFLAGS="$SSL_LDFLAGS -L\$(SSL_LIBDIR)"
@@ -367,19 +404,6 @@ ConfigStart
     echo "$my_prefix SSL library type: $my_type $my_note"
 
     #
-    #   SSL version
-    #
-    SSLEAY_VERSION="`$SSL_PROGRAM version`"
-    echo "$my_prefix SSL library version: $SSLEAY_VERSION"
-    case $SSLEAY_VERSION in
-        *0.[5678].* )
-            echo "$my_prefixe WARNING: THE SSLeay VERSIONS BELOW 0.9.0 ARE NO LONGER SUPPORTED."
-            echo "$my_prefixe Hint: Use SSLeay version 0.9.0b or any OpenSSL version."
-            exit 1
-            ;;
-    esac
-
-    #
     #   support for RSAref library
     #
     if [ ".$RSA_BASE" = . ]; then
@@ -387,7 +411,7 @@ ConfigStart
     fi
     if [ ".$RSA_BASE" != . ]; then
         if [ ! -f "$my_real_ssl_libdir/libRSAglue.a" ]; then
-            echo "Error: Cannot find SSLeay's RSAglue library under $my_real_ssl_libdir" 1>&2
+            echo "Error: Cannot find OpenSSL's RSAglue library under $my_real_ssl_libdir" 1>&2
             exit 1
         else
             SSL_LIBS="$SSL_LIBS -lRSAglue"
@@ -443,18 +467,16 @@ ConfigStart
                 SSL_LIBS="$SSL_LIBS -lrsaref"
                 echo "$my_prefix SSL library plugin path: $RSA_BASE/librsaref.a"
                 my_found=yes
+            elif [ -f "$RSA_BASE/rsaref.a" ]; then
+                SSL_LIBS="$SSL_LIBS $RSA_BASE/rsaref.a"
+                echo "$my_prefix SSL library plugin path: $RSA_BASE/rsaref.a"
+                my_found=yes
             else
-                if [ -f "$RSA_BASE/rsaref.a" ]; then
-                    SSL_LIBS="$SSL_LIBS $RSA_BASE/rsaref.a"
-                    echo "$my_prefix SSL library plugin path: $RSA_BASE/rsaref.a"
+                wild="`echo $RSA_BASE/*/rsaref.a`"
+                if [ -f "$wild" ]; then
+                    SSL_LIBS="$SSL_LIBS $wild"
+                    echo "$my_prefix SSL library plugin path: $wild"
                     my_found=yes
-                else
-                    wild="`echo $RSA_BASE/*/rsaref.a`"
-                    if [ -f "$wild" ]; then
-                        SSL_LIBS="$SSL_LIBS $wild"
-                        echo "$my_prefix SSL library plugin path: $wild"
-                        my_found=yes
-                    fi
                 fi
             fi
             if [ .$my_found = .no ]; then
@@ -494,6 +516,8 @@ ConfigStart
     echo "SSL_PROGRAM=$SSL_PROGRAM" >>$my_outfile
     echo "SSL_VERSION=$SSL_VERSION" >>$my_outfile
     echo "SSL_CFLAGS=$SSL_CFLAGS" >>$my_outfile
+    echo "SSL_VENDOR_OBJS=$SSL_VENDOR_OBJS" >>$my_outfile
+    echo "SSL_VENDOR_OBJS_PIC=$SSL_VENDOR_OBJS_PIC" >>$my_outfile
     if [ ".$my_buildtype" = .DSO ]; then
         #   under DSO we link ourself
         echo "SSL_LIBS=$SSL_LIBS" >>$my_outfile

@@ -22,7 +22,7 @@
      software must display the following acknowledgment: 
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   4. The name "mod_ssl" must not be used to endorse or promote
      products derived from this software without prior written
@@ -32,7 +32,7 @@
      following acknowledgment:
      "This product includes software developed by 
       Ralf S. Engelschall <rse@engelschall.com> for use in the
-      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+      mod_ssl project (http://www.modssl.org/)."
  
   THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
   EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -103,6 +103,14 @@ H4 {
     background-color: #f0f0f0;
 }
 #faq {
+    font-weight: bold;
+    font-size: 16pt;
+    line-height: 16pt;
+    font-family: arial,helvetica;
+    font-variant: normal;
+    font-style: normal;
+}
+#howto {
     font-weight: bold;
     font-size: 16pt;
     line-height: 16pt;
@@ -606,7 +614,7 @@ a protocol session.
 <td>First SSL protocol for which implementations exists</td>
 <td>- NS Navigator 1.x/2.x<br>
     - MS IE 3.x<br>
-    - Lynx/2.8+SSLeay
+    - Lynx/2.8+OpenSSL
 </td>
 </tr>
 <tr valign="top">
@@ -615,7 +623,7 @@ a protocol session.
 <td>Revisions to prevent specific security attacks, add non-RSA ciphers, and support for certificate chains</td>
 <td>- NS Navigator 2.x/3.x/4.x<br>
     - MS IE 3.x/4.x<br>
-    - Lynx/2.8+SSLeay
+    - Lynx/2.8+OpenSSL
 </td>
 </tr>
 <tr valign="top">
@@ -624,7 +632,7 @@ a protocol session.
 <td>Revision of SSL 3.0 to update the MAC layer to HMAC, add block padding for
     block ciphers, message order standardization and more alert messages.
 </td>
-<td>- Lynx/2.8+SSLeay</td>
+<td>- Lynx/2.8+OpenSSL</td>
 </table></td>
 </tr></table>
 </td></tr></table>
@@ -908,8 +916,8 @@ if (document.images) {
         <td>        <table width="598">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
-        <a href="http://www.engelschall.com/sw/mod_ssl/">mod_ssl</a> 2.2, User Manual<br>
-        The Apache Interface to SSLeay
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.4, User Manual<br>
+        The Apache Interface to OpenSSL
         </font>
         </td>
         <td align="right"><font face="Arial,Helvetica">

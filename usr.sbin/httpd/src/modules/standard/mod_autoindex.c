@@ -72,6 +72,7 @@
 #include "http_log.h"
 #include "http_main.h"
 #include "util_script.h"
+#include "fnmatch.h"
 
 module MODULE_VAR_EXPORT autoindex_module;
 
@@ -131,6 +132,13 @@ struct item {
     char *data;
 };
 
+typedef struct ai_desc_t {
+    char *pattern;
+    char *description;
+    int full_path;
+    int wildcards;
+} ai_desc_t;
+
 typedef struct autoindex_config_struct {
 
     char *default_icon;
@@ -143,8 +151,12 @@ typedef struct autoindex_config_struct {
     int icon_height;
     char *default_order;
 
-    array_header *icon_list, *alt_list, *desc_list, *ign_list;
-    array_header *hdr_list, *rdme_list;
+    array_header *icon_list;
+    array_header *alt_list;
+    array_header *desc_list;
+    array_header *ign_list;
+    array_header *hdr_list;
+    array_header *rdme_list;
 
 } autoindex_config_rec;
 
@@ -180,7 +192,7 @@ static ap_inline int is_parent(const char *name)
  */
 static void emit_preamble(request_rec *r, char *title)
 {
-    ap_rvputs(r, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n",
+    ap_rvputs(r, DOCTYPE_HTML_3_2,
 	      "<HTML>\n <HEAD>\n  <TITLE>Index of ", title,
 	      "</TITLE>\n </HEAD>\n <BODY>\n", NULL);
 }
@@ -257,10 +269,48 @@ static const char *add_icon(cmd_parms *cmd, void *d, char *icon, char *to)
     return NULL;
 }
 
+/*
+ * Add description text for a filename pattern.  If the pattern has
+ * wildcards already (or we need to add them), add leading and
+ * trailing wildcards to it to ensure substring processing.  If the
+ * pattern contains a '/' anywhere, force wildcard matching mode,
+ * add a slash to the prefix so that "bar/bletch" won't be matched
+ * by "foobar/bletch", and make a note that there's a delimiter;
+ * the matching routine simplifies to just the actual filename
+ * whenever it can.  This allows definitions in parent directories
+ * to be made for files in subordinate ones using relative paths.
+ */
+
+/*
+ * Absent a strcasestr() function, we have to force wildcards on
+ * systems for which "AAA" and "aaa" mean the same file.
+ */
+#ifdef CASE_BLIND_FILESYSTEM
+#define WILDCARDS_REQUIRED 1
+#else
+#define WILDCARDS_REQUIRED 0
+#endif
+
 static const char *add_desc(cmd_parms *cmd, void *d, char *desc, char *to)
 {
-    push_item(((autoindex_config_rec *) d)->desc_list, cmd->info, to,
-	      cmd->path, desc);
+    autoindex_config_rec *dcfg = (autoindex_config_rec *) d;
+    ai_desc_t *desc_entry;
+    char *prefix = "";
+
+    desc_entry = (ai_desc_t *) ap_push_array(dcfg->desc_list);
+    desc_entry->full_path = (strchr(to, '/') == NULL) ? 0 : 1;
+    desc_entry->wildcards = (WILDCARDS_REQUIRED
+			     || desc_entry->full_path
+			     || ap_is_fnmatch(to));
+    if (desc_entry->wildcards) {
+	prefix = desc_entry->full_path ? "*/" : "*";
+	desc_entry->pattern = ap_pstrcat(dcfg->desc_list->pool,
+					 prefix, to, "*", NULL);
+    }
+    else {
+	desc_entry->pattern = ap_pstrdup(dcfg->desc_list->pool, to);
+    }
+    desc_entry->description = ap_pstrdup(dcfg->desc_list->pool, desc);
     return NULL;
 }
 
@@ -272,9 +322,6 @@ static const char *add_ignore(cmd_parms *cmd, void *d, char *ext)
 
 static const char *add_header(cmd_parms *cmd, void *d, char *name)
 {
-    if (strchr(name, '/')) {
-	return "HeaderName cannot contain a /";
-    }
     push_item(((autoindex_config_rec *) d)->hdr_list, 0, NULL, cmd->path,
 	      name);
     return NULL;
@@ -282,9 +329,6 @@ static const char *add_header(cmd_parms *cmd, void *d, char *name)
 
 static const char *add_readme(cmd_parms *cmd, void *d, char *name)
 {
-    if (strchr(name, '/')) {
-	return "ReadmeName cannot contain a /";
-    }
     push_item(((autoindex_config_rec *) d)->rdme_list, 0, NULL, cmd->path,
 	      name);
     return NULL;
@@ -410,8 +454,8 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
 	    else {
 		int width = atoi(&w[10]);
 
-		if (width < 1) {
-		    return "NameWidth value must be greater than 1";
+		if (width < 5) {
+		    return "NameWidth value must be greater than 5";
 		}
 		d_cfg->name_width = width;
 		d_cfg->name_adjust = K_NOADJUST;
@@ -530,7 +574,7 @@ static void *create_autoindex_config(pool *p, char *dummy)
     new->name_adjust = K_UNSET;
     new->icon_list = ap_make_array(p, 4, sizeof(struct item));
     new->alt_list = ap_make_array(p, 4, sizeof(struct item));
-    new->desc_list = ap_make_array(p, 4, sizeof(struct item));
+    new->desc_list = ap_make_array(p, 4, sizeof(ai_desc_t));
     new->ign_list = ap_make_array(p, 4, sizeof(struct item));
     new->hdr_list = ap_make_array(p, 4, sizeof(struct item));
     new->rdme_list = ap_make_array(p, 4, sizeof(struct item));
@@ -688,7 +732,6 @@ static char *find_item(request_rec *r, array_header *list, int path_only)
 
 #define find_icon(d,p,t) find_item(p,d->icon_list,t)
 #define find_alt(d,p,t) find_item(p,d->alt_list,t)
-#define find_desc(d,p) find_item(p,d->desc_list,0)
 #define find_header(d,p) find_item(p,d->hdr_list,0)
 #define find_readme(d,p) find_item(p,d->rdme_list,0)
 
@@ -705,6 +748,63 @@ static char *find_default_icon(autoindex_config_rec *d, char *bogus_name)
     r.content_type = r.content_encoding = NULL;
 
     return find_item(&r, d->icon_list, 1);
+}
+
+/*
+ * Look through the list of pattern/description pairs and return the first one
+ * if any) that matches the filename in the request.  If multiple patterns
+ * match, only the first one is used; since the order in the array is the
+ * same as the order in which directives were processed, earlier matching
+ * directives will dominate.
+ */
+
+#ifdef CASE_BLIND_FILESYSTEM
+#define MATCH_FLAGS FNM_CASE_BLIND
+#else
+#define MATCH_FLAGS 0
+#endif
+
+static char *find_desc(autoindex_config_rec *dcfg, request_rec *r)
+{
+    int i;
+    ai_desc_t *list = (ai_desc_t *) dcfg->desc_list->elts;
+    const char *filename_full = r->filename;
+    const char *filename_only;
+    const char *filename;
+
+    /*
+     * If the filename includes a path, extract just the name itself
+     * for the simple matches.
+     */
+    if ((filename_only = strrchr(filename_full, '/')) == NULL) {
+	filename_only = filename_full;
+    }
+    else {
+	filename_only++;
+    }
+    for (i = 0; i < dcfg->desc_list->nelts; ++i) {
+	ai_desc_t *tuple = &list[i];
+	int found;
+
+	/*
+	 * Only use the full-path filename if the pattern contains '/'s.
+	 */
+	filename = (tuple->full_path) ? filename_full : filename_only;
+	/*
+	 * Make the comparison using the cheapest method; only do
+	 * wildcard checking if we must.
+	 */
+	if (tuple->wildcards) {
+	    found = (ap_fnmatch(tuple->pattern, filename, MATCH_FLAGS) == 0);
+	}
+	else {
+	    found = (strstr(filename, tuple->pattern) != NULL);
+	}
+	if (found) {
+	    return tuple->description;
+	}
+    }
+    return NULL;
 }
 
 static int ignore_entry(autoindex_config_rec *d, char *path)
@@ -758,99 +858,217 @@ static int ignore_entry(autoindex_config_rec *d, char *path)
  */
 
 /*
- * Look for the specified file, and pump it into the response stream if we
- * find it.
+ * Elements of the emitted document:
+ *	Preamble
+ *		Emitted unless SUPPRESS_PREAMBLE is set AND ap_run_sub_req
+ *		succeeds for the (content_type == text/html) header file.
+ *	Header file
+ *		Emitted if found (and able).
+ *	H1 tag line
+ *		Emitted if a header file is NOT emitted.
+ *	Directory stuff
+ *		Always emitted.
+ *	HR
+ *		Emitted if FANCY_INDEXING is set.
+ *	Readme file
+ *		Emitted if found (and able).
+ *	ServerSig
+ *		Emitted if ServerSignature is not Off AND a readme file
+ *		is NOT emitted.
+ *	Postamble
+ *		Emitted unless SUPPRESS_PREAMBLE is set AND ap_run_sub_req
+ *		succeeds for the (content_type == text/html) readme file.
  */
-static int insert_readme(char *name, char *readme_fname, char *title,
-			 int hrule, int whichend, request_rec *r)
-{
-    char *fn;
-    FILE *f;
-    struct stat finfo;
-    int plaintext = 0;
-    request_rec *rr;
-    autoindex_config_rec *cfg;
-    int autoindex_opts;
 
-    cfg = (autoindex_config_rec *) ap_get_module_config(r->per_dir_config,
-							&autoindex_module);
-    autoindex_opts = cfg->opts;
-    /* XXX: this is a load of crap, it needs to do a full sub_req_lookup_uri */
-    fn = ap_make_full_path(r->pool, name, readme_fname);
-    fn = ap_pstrcat(r->pool, fn, ".html", NULL);
-    if (stat(fn, &finfo) == -1) {
-	/* A brief fake multiviews search for README.html */
-	fn[strlen(fn) - 5] = '\0';
-	if (stat(fn, &finfo) == -1) {
-	    return 0;
+
+/*
+ * emit a plain text file
+ */
+static void do_emit_plain(request_rec *r, FILE *f)
+{
+    char buf[IOBUFSIZE + 1];
+    int i, n, c, ch;
+
+    ap_rputs("<PRE>\n", r);
+    while (!feof(f)) {
+	do {
+	    n = fread(buf, sizeof(char), IOBUFSIZE, f);
 	}
-	plaintext = 1;
-	if (hrule) {
-	    ap_rputs("<HR>\n", r);
+	while (n == -1 && ferror(f) && errno == EINTR);
+	if (n == -1 || n == 0) {
+	    break;
+	}
+	buf[n] = '\0';
+	c = 0;
+	while (c < n) {
+	    for (i = c; i < n; i++) {
+		if (buf[i] == '<' || buf[i] == '>' || buf[i] == '&') {
+		    break;
+		}
+	    }
+	    ch = buf[i];
+	    buf[i] = '\0';
+	    ap_rputs(&buf[c], r);
+	    if (ch == '<') {
+		ap_rputs("&lt;", r);
+	    }
+	    else if (ch == '>') {
+		ap_rputs("&gt;", r);
+	    }
+	    else if (ch == '&') {
+		ap_rputs("&amp;", r);
+	    }
+	    c = i + 1;
 	}
     }
-    else if (hrule) {
-	ap_rputs("<HR>\n", r);
+    ap_rputs("</PRE>\n", r);
+}
+
+/*
+ * Handle the preamble through the H1 tag line, inclusive.  Locate
+ * the file with a subrequests.  Process text/html documents by actually
+ * running the subrequest; text/xxx documents get copied verbatim,
+ * and any other content type is ignored.  This means that a non-text
+ * document (such as HEADER.gif) might get multiviewed as the result
+ * instead of a text document, meaning nothing will be displayed, but
+ * oh well.
+ */
+static void emit_head(request_rec *r, char *header_fname, int suppress_amble,
+		      char *title)
+{
+    FILE *f;
+    request_rec *rr = NULL;
+    int emit_amble = 1;
+    int emit_H1 = 1;
+
+    /*
+     * If there's a header file, send a subrequest to look for it.  If it's
+     * found and a text file, handle it -- otherwise fall through and
+     * pretend there's nothing there.
+     */
+    if ((header_fname != NULL)
+	&& (rr = ap_sub_req_lookup_uri(header_fname, r))
+	&& (rr->status == HTTP_OK)
+	&& (rr->filename != NULL)
+	&& S_ISREG(rr->finfo.st_mode)) {
+	/*
+	 * Check for the two specific cases we allow: text/html and
+	 * text/anything-else.  The former is allowed to be processed for
+	 * SSIs.
+	 */
+	if (rr->content_type != NULL) {
+	    if (!strcasecmp(ap_field_noparam(r->pool, rr->content_type),
+			    "text/html")) {
+		/* Hope everything will work... */
+		emit_amble = 0;
+		emit_H1 = 0;
+
+		if (! suppress_amble) {
+		    emit_preamble(r, title);
+		}
+		/*
+		 * If there's a problem running the subrequest, display the
+		 * preamble if we didn't do it before -- the header file
+		 * didn't get displayed.
+		 */
+		if (ap_run_sub_req(rr) != OK) {
+		    /* It didn't work */
+		    emit_amble = suppress_amble;
+		    emit_H1 = 1;
+		}
+	    }
+	    else if (!strncasecmp("text/", rr->content_type, 5)) {
+		/*
+		 * If we can open the file, prefix it with the preamble
+		 * regardless; since we'll be sending a <PRE> block around
+		 * the file's contents, any HTML header it had won't end up
+		 * where it belongs.
+		 */
+		if ((f = ap_pfopen(r->pool, rr->filename, "r")) != 0) {
+		    emit_preamble(r, title);
+		    emit_amble = 0;
+		    do_emit_plain(r, f);
+		    ap_pfclose(r->pool, f);
+		    emit_H1 = 0;
+		}
+	    }
+	}
     }
-    /* XXX: when the above is rewritten properly, this necessary security
-     * check will be redundant. -djg */
-    rr = ap_sub_req_lookup_file(fn, r);
-    if (rr->status != HTTP_OK) {
-	ap_destroy_sub_req(rr);
-	return 0;
-    }
-    ap_destroy_sub_req(rr);
-    if (!(f = ap_pfopen(r->pool, fn, "r"))) {
-        return 0;
-    }
-    if ((whichend == FRONT_MATTER)
-	&& (!(autoindex_opts & SUPPRESS_PREAMBLE))) {
+
+    if (emit_amble) {
 	emit_preamble(r, title);
     }
-    if (!plaintext) {
-	ap_send_fd(f, r);
+    if (emit_H1) {
+	ap_rvputs(r, "<H1>Index of ", title, "</H1>\n", NULL);
     }
-    else {
-	char buf[IOBUFSIZE + 1];
-	int i, n, c, ch;
-	ap_rputs("<PRE>\n", r);
-	while (!feof(f)) {
-	    do {
-		n = fread(buf, sizeof(char), IOBUFSIZE, f);
+    if (rr != NULL) {
+	ap_destroy_sub_req(rr);
+    }
+}
+
+
+/*
+ * Handle the Readme file through the postamble, inclusive.  Locate
+ * the file with a subrequests.  Process text/html documents by actually
+ * running the subrequest; text/xxx documents get copied verbatim,
+ * and any other content type is ignored.  This means that a non-text
+ * document (such as FOOTER.gif) might get multiviewed as the result
+ * instead of a text document, meaning nothing will be displayed, but
+ * oh well.
+ */
+static void emit_tail(request_rec *r, char *readme_fname, int suppress_amble)
+{
+    FILE *f;
+    request_rec *rr = NULL;
+    int suppress_post = 0;
+    int suppress_sig = 0;
+
+    /*
+     * If there's a readme file, send a subrequest to look for it.  If it's
+     * found and a text file, handle it -- otherwise fall through and
+     * pretend there's nothing there.
+     */
+    if ((readme_fname != NULL)
+	&& (rr = ap_sub_req_lookup_uri(readme_fname, r))
+	&& (rr->status == HTTP_OK)
+	&& (rr->filename != NULL)
+	&& S_ISREG(rr->finfo.st_mode)) {
+	/*
+	 * Check for the two specific cases we allow: text/html and
+	 * text/anything-else.  The former is allowed to be processed for
+	 * SSIs.
+	 */
+	if (rr->content_type != NULL) {
+	    if (!strcasecmp(ap_field_noparam(r->pool, rr->content_type),
+			    "text/html")) {
+		if (ap_run_sub_req(rr) == OK) {
+		    /* worked... */
+		    suppress_sig = 1;
+		    suppress_post = suppress_amble;
+		}
 	    }
-	    while (n == -1 && ferror(f) && errno == EINTR);
-	    if (n == -1 || n == 0) {
-		break;
-	    }
-	    buf[n] = '\0';
-	    c = 0;
-	    while (c < n) {
-	        for (i = c; i < n; i++) {
-		    if (buf[i] == '<' || buf[i] == '>' || buf[i] == '&') {
-			break;
-		    }
+	    else if (!strncasecmp("text/", rr->content_type, 5)) {
+		/*
+		 * If we can open the file, suppress the signature.
+		 */
+		if ((f = ap_pfopen(r->pool, rr->filename, "r")) != 0) {
+		    do_emit_plain(r, f);
+		    ap_pfclose(r->pool, f);
+		    suppress_sig = 1;
 		}
-		ch = buf[i];
-		buf[i] = '\0';
-		ap_rputs(&buf[c], r);
-		if (ch == '<') {
-		    ap_rputs("&lt;", r);
-		}
-		else if (ch == '>') {
-		    ap_rputs("&gt;", r);
-		}
-		else if (ch == '&') {
-		    ap_rputs("&amp;", r);
-		}
-		c = i + 1;
 	    }
 	}
     }
-    ap_pfclose(r->pool, f);
-    if (plaintext) {
-	ap_rputs("</PRE>\n", r);
+    
+    if (!suppress_sig) {
+	ap_rputs(ap_psignature("", r), r);
     }
-    return 1;
+    if (!suppress_post) {
+	ap_rputs("</BODY></HTML>\n", r);
+    }
+    if (rr != NULL) {
+	ap_destroy_sub_req(rr);
+    }
 }
 
 
@@ -863,8 +1081,9 @@ static char *find_title(request_rec *r)
     if (r->status != HTTP_OK) {
 	return NULL;
     }
-    if (r->content_type
-	&& (!strcmp(r->content_type, "text/html")
+    if ((r->content_type != NULL)
+	&& (!strcasecmp(ap_field_noparam(r->pool, r->content_type),
+			"text/html")
 	    || !strcmp(r->content_type, INCLUDES_MAGIC_TYPE))
 	&& !r->content_encoding) {
         if (!(thefile = ap_pfopen(r->pool, r->filename, "r"))) {
@@ -1042,41 +1261,6 @@ static void emit_link(request_rec *r, char *anchor, char fname, char curkey,
     }
 }
 
-/*
- * Fit a string into a specified buffer width, marking any
- * truncation.  The size argument is the actual buffer size, including
- * the \0 termination byte.  The buffer will be prefilled with blanks.
- * If the pad argument is false, any extra spaces at the end of the
- * buffer are omitted.  (Used when constructing anchors.)
- */
-static ap_inline char *widthify(const char *s, char *buff, int size, int pad)
-{
-    int s_len;
-
-    memset(buff, ' ', size);
-    buff[size - 1] = '\0';
-    s_len = strlen(s);
-    if (s_len > (size - 1)) {
-	ap_cpystrn(buff, s, size);
-	if (size > 1) {
-	    buff[size - 2] = '>';
-	}
-	if (size > 2) {
-	    buff[size - 3] = '.';
-	}
-	if (size > 3) {
-	    buff[size - 4] = '.';
-	}
-    }
-    else {
-	ap_cpystrn(buff, s, s_len + 1);
-	if (pad) {
-	    buff[s_len] = ' ';
-	}
-    }
-    return buff;
-}
-
 static void output_directories(struct ent **ar, int n,
 			       autoindex_config_rec *d, request_rec *r,
 			       int autoindex_opts, char keyid, char direction)
@@ -1088,6 +1272,7 @@ static void output_directories(struct ent **ar, int n,
     pool *scratch = ap_make_sub_pool(r->pool);
     int name_width;
     char *name_scratch;
+    char *pad_scratch;
 
     if (name[0] == '\0') {
 	name = "/";
@@ -1102,10 +1287,10 @@ static void output_directories(struct ent **ar, int n,
 	    }
 	}
     }
-    ++name_width;
     name_scratch = ap_palloc(r->pool, name_width + 1);
-    memset(name_scratch, ' ', name_width);
-    name_scratch[name_width] = '\0';
+    pad_scratch = ap_palloc(r->pool, name_width + 1);
+    memset(pad_scratch, ' ', name_width);
+    pad_scratch[name_width] = '\0';
 
     if (autoindex_opts & FANCY_INDEXING) {
 	ap_rputs("<PRE>", r);
@@ -1123,14 +1308,8 @@ static void output_directories(struct ent **ar, int n,
 	    }
 	    ap_rputs("> ", r);
 	}
-        emit_link(r, widthify("Name", name_scratch,
-			      (name_width > 5) ? 5 : name_width, K_NOPAD),
-		  K_NAME, keyid, direction, static_columns);
-	if (name_width > 5) {
-	    memset(name_scratch, ' ', name_width);
-	    name_scratch[name_width] = '\0';
-	    ap_rputs(&name_scratch[5], r);
-	}
+        emit_link(r, "Name", K_NAME, keyid, direction, static_columns);
+	ap_rputs(pad_scratch + 4, r);
 	/*
 	 * Emit the guaranteed-at-least-one-space-between-columns byte.
 	 */
@@ -1156,7 +1335,6 @@ static void output_directories(struct ent **ar, int n,
 
     for (x = 0; x < n; x++) {
 	char *anchor, *t, *t2;
-	char *pad;
 	int nwidth;
 
 	ap_clear_pool(scratch);
@@ -1167,15 +1345,12 @@ static void output_directories(struct ent **ar, int n,
 	    if (t[0] == '\0') {
 		t = "/";
 	    }
-	       /* 1234567890123456 */
 	    t2 = "Parent Directory";
-	    pad = name_scratch + 16;
 	    anchor = ap_escape_html(scratch, ap_os_escape_path(scratch, t, 0));
 	}
 	else {
 	    t = ar[x]->name;
-	    pad = name_scratch + strlen(t);
-	    t2 = ap_escape_html(scratch, t);
+	    t2 = t;
 	    anchor = ap_escape_html(scratch, ap_os_escape_path(scratch, t, 0));
 	}
 
@@ -1200,18 +1375,19 @@ static void output_directories(struct ent **ar, int n,
 		ap_rputs("</A>", r);
 	    }
 
-	    ap_rvputs(r, " <A HREF=\"", anchor, "\">",
-		      widthify(t2, name_scratch, name_width, K_NOPAD),
-		      "</A>", NULL);
-	    /*
-	     * We know that widthify() prefilled the buffer with spaces
-	     * before doing its thing, so use them.
-	     */
 	    nwidth = strlen(t2);
-	    if (nwidth < (name_width - 1)) {
-		name_scratch[nwidth] = ' ';
-		ap_rputs(&name_scratch[nwidth], r);
+	    if (nwidth > name_width) {
+	      memcpy(name_scratch, t2, name_width - 3);
+	      name_scratch[name_width - 3] = '.';
+	      name_scratch[name_width - 2] = '.';
+	      name_scratch[name_width - 1] = '>';
+	      name_scratch[name_width] = 0;
+	      t2 = name_scratch;
+	      nwidth = name_width;
 	    }
+	    ap_rvputs(r, " <A HREF=\"", anchor, "\">",
+	      ap_escape_html(scratch, t2), "</A>", pad_scratch + nwidth,
+	      NULL);
 	    /*
 	     * The blank before the storm.. er, before the next field.
 	     */
@@ -1241,7 +1417,7 @@ static void output_directories(struct ent **ar, int n,
 	}
 	else {
 	    ap_rvputs(r, "<LI><A HREF=\"", anchor, "\"> ", t2,
-		      "</A>", pad, NULL);
+		      "</A>", NULL);
 	}
 	ap_rputc('\n', r);
     }
@@ -1326,7 +1502,6 @@ static int index_directory(request_rec *r,
     int num_ent = 0, x;
     struct ent *head, *p;
     struct ent **ar = NULL;
-    char *tmp;
     const char *qstring;
     int autoindex_opts = autoindex_conf->opts;
     char keyid;
@@ -1356,12 +1531,8 @@ static int index_directory(request_rec *r,
 	*title_endp-- = '\0';
     }
 
-    if ((!(tmp = find_header(autoindex_conf, r)))
-	|| (!(insert_readme(name, tmp, title_name, NO_HRULE, FRONT_MATTER, r)))
-	) {
-	emit_preamble(r, title_name);
-	ap_rvputs(r, "<H1>Index of ", title_name, "</H1>\n", NULL);
-    }
+    emit_head(r, find_header(autoindex_conf, r),
+	      autoindex_opts & SUPPRESS_PREAMBLE, title_name);
 
     /*
      * Figure out what sort of indexing (if any) we're supposed to use.
@@ -1426,15 +1597,11 @@ static int index_directory(request_rec *r,
 		       direction);
     ap_pclosedir(r->pool, d);
 
-    if ((tmp = find_readme(autoindex_conf, r))) {
-	if (!insert_readme(name, tmp, "",
-			   ((autoindex_opts & FANCY_INDEXING) ? HRULE
-			                                      : NO_HRULE),
-			   END_MATTER, r)) {
-	    ap_rputs(ap_psignature("<HR>\n", r), r);
-	}
+    if (autoindex_opts & FANCY_INDEXING) {
+	ap_rputs("<HR>\n", r);
     }
-    ap_rputs("</BODY></HTML>\n", r);
+    emit_tail(r, find_readme(autoindex_conf, r),
+	      autoindex_opts & SUPPRESS_PREAMBLE);
 
     ap_kill_timeout(r);
     return 0;

@@ -1,8 +1,8 @@
 /*                      _             _
-**  _ __ ___   ___   __| |    ___ ___| |
-** | '_ ` _ \ / _ \ / _` |   / __/ __| |
-** | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-** |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+**  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+** | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+** |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 **                      |_____|
 **  ssl_engine_ext.c
 **  Extensions to other Apache parts
@@ -27,7 +27,7 @@
  *    software must display the following acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * 4. The names "mod_ssl" must not be used to endorse or promote
  *    products derived from this software without prior written
@@ -42,7 +42,7 @@
  *    acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -76,12 +76,15 @@ static void  ssl_ext_mr_register(void);
 static void  ssl_ext_mr_unregister(void);
 static void  ssl_ext_mp_register(void);
 static void  ssl_ext_mp_unregister(void);
+static void  ssl_ext_ms_register(void);
+static void  ssl_ext_ms_unregister(void);
 
 void ssl_ext_register(void)
 {
     ssl_ext_mlc_register();
     ssl_ext_mr_register();
     ssl_ext_mp_register();
+    ssl_ext_ms_register();
     return;
 }
 
@@ -90,6 +93,7 @@ void ssl_ext_unregister(void)
     ssl_ext_mlc_unregister();
     ssl_ext_mr_unregister();
     ssl_ext_mp_unregister();
+    ssl_ext_ms_unregister();
     return;
 }
 
@@ -119,7 +123,7 @@ static void ssl_ext_mlc_unregister(void)
 {
     ap_hook_unregister("ap::mod_log_config::log_c",
                        ssl_ext_mlc_log_c);
-    ap_hook_unregister("ap::mod_log_config::log_x", 
+    ap_hook_unregister("ap::mod_log_config::log_x",
                        ssl_ext_mlc_log_x);
     return;
 }
@@ -135,17 +139,17 @@ static char *ssl_ext_mlc_log_c(request_rec *r, char *a)
     if (ap_ctx_get(r->connection->client->ctx, "ssl") == NULL)
         return NULL;
     result = NULL;
-    if (strcmp(a, "version") == 0)
+    if (strEQ(a, "version"))
         result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_PROTOCOL");
-    else if (strcmp(a, "cipher") == 0)
+    else if (strEQ(a, "cipher"))
         result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CIPHER");
-    else if (strcmp(a, "subjectdn") == 0 || strcmp(a, "clientcert") == 0)
+    else if (strEQ(a, "subjectdn") || strEQ(a, "clientcert"))
         result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_S_DN");
-    else if (strcmp(a, "issuerdn") == 0 || strcmp(a, "cacert") == 0)
+    else if (strEQ(a, "issuerdn") || strEQ(a, "cacert"))
         result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_I_DN");
-    else if (strcmp(a, "errcode") == 0)
+    else if (strEQ(a, "errcode"))
         result = "-";
-    else if (strcmp(a, "errstr") == 0)
+    else if (strEQ(a, "errstr"))
         result = ap_ctx_get(r->connection->client->ctx, "ssl::verify::error");
     if (result != NULL && result[0] == NUL)
         result = NULL;
@@ -188,7 +192,7 @@ static void ssl_ext_mr_register(void)
 
 static void ssl_ext_mr_unregister(void)
 {
-    ap_hook_unregister("ap::mod_rewrite::lookup_variable", 
+    ap_hook_unregister("ap::mod_rewrite::lookup_variable",
                        ssl_ext_mr_lookup_variable);
     return;
 }
@@ -251,7 +255,7 @@ static int ssl_ext_mp_canon(request_rec *r, char *url)
 {
     int rc;
 
-    if (strncasecmp(url, "https:", 6) == 0) {
+    if (strcEQn(url, "https:", 6)) {
         rc = OK;
         ap_hook_call("ap::mod_proxy::http::canon",
                      &rc, r, url+6, "https", DEFAULT_HTTPS_PORT);
@@ -265,18 +269,21 @@ static int ssl_ext_mp_handler(
 {
     int rc;
 
-    if (strcasecmp(protocol, "https") == 0) {
-        ap_ctx_set(r->ctx, "ssl_enabled", (void *)1);
+    if (strcEQ(protocol, "https")) {
+        ap_ctx_set(r->ctx, "ssl::proxy::enabled", PTRUE);
         ap_hook_call("ap::mod_proxy::http::handler",
                      &rc, r, cr, url, proxyhost, proxyport);
         return rc;
+    }
+    else {
+        ap_ctx_set(r->ctx, "ssl::proxy::enabled", PFALSE);
     }
     return DECLINED;
 }
 
 static int ssl_ext_mp_set_destport(request_rec *r)
 {
-    if (ap_ctx_get(r->ctx, "ssl_enabled") == (void *)1)
+    if (ap_ctx_get(r->ctx, "ssl::proxy::enabled") == PTRUE)
         return DEFAULT_HTTPS_PORT;
     else
         return DEFAULT_HTTP_PORT;
@@ -288,18 +295,30 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb)
     SSL *ssl;
     char *errmsg;
     int rc;
+    char *cpVHostID;
 
-    if (ap_ctx_get(r->ctx, "ssl_enabled") != (void *)1)
+    if (ap_ctx_get(r->ctx, "ssl::proxy::enabled") == PFALSE)
         return NULL;
+    cpVHostID = ssl_util_vhostid(r->pool, r->server);
 
     /*
      * Create a SSL context and handle
      */
     ssl_ctx = SSL_CTX_new(SSLv23_client_method());
-    ssl = SSL_new(ssl_ctx);
+    if ((ssl = SSL_new(ssl_ctx)) == NULL) {
+        errmsg = ap_pstrcat(r->pool, "SSL new failed (%s): ", cpVHostID,
+                            ERR_reason_error_string(ERR_get_error()), NULL);
+        ap_ctx_set(fb->ctx, "ssl", NULL);
+        return errmsg;
+    }
     SSL_clear(ssl);
+    SSL_set_session_id_context(ssl, (unsigned char *)cpVHostID, strlen(cpVHostID));
     SSL_set_fd(ssl, fb->fd);
     ap_ctx_set(fb->ctx, "ssl", ssl);
+
+    /*
+     * Give us a chance to gracefully close the connection
+     */
     ap_register_cleanup(r->pool, (void *)fb,
                         ssl_ext_mp_close_connection, ssl_ext_mp_close_connection);
 
@@ -307,9 +326,10 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb)
      * Establish the SSL connection
      */
     if ((rc = SSL_connect(ssl)) <= 0) {
-        errmsg = ap_pstrcat(r->pool, "SSL connect failed: ",
+        errmsg = ap_pstrcat(r->pool, "SSL connect failed (%s): ", cpVHostID,
                             ERR_reason_error_string(ERR_get_error()), NULL);
         SSL_free(ssl);
+        ap_ctx_set(fb->ctx, "ssl", NULL);
         return errmsg;
     }
 
@@ -324,7 +344,7 @@ static void ssl_ext_mp_close_connection(void *_fb)
     ssl = ap_ctx_get(fb->ctx, "ssl");
     if (ssl != NULL) {
         SSL_set_shutdown(ssl, SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
-        while (!SSL_shutdown(ssl));
+        SSL_smart_shutdown(ssl);
         SSL_free(ssl);
         ap_ctx_set(fb->ctx, "ssl", NULL);
     }
@@ -334,7 +354,7 @@ static void ssl_ext_mp_close_connection(void *_fb)
 static int ssl_ext_mp_write_host_header(
     request_rec *r, BUFF *fb, char *host, int port, char *portstr)
 {
-    if (ap_ctx_get(r->ctx, "ssl_enabled") != (void *)1)
+    if (ap_ctx_get(r->ctx, "ssl::proxy::enabled") == PFALSE)
         return DECLINED;
 
     if (portstr != NULL && port != DEFAULT_HTTPS_PORT) {
@@ -342,5 +362,52 @@ static int ssl_ext_mp_write_host_header(
         return OK;
     }
     return DECLINED;
+}
+
+
+/*  _________________________________________________________________
+**
+**  SSL Extension to mod_status
+**  _________________________________________________________________
+*/
+
+static void ssl_ext_ms_display(request_rec *, int, int);
+
+static void ssl_ext_ms_register(void)
+{
+    ap_hook_register("ap::mod_status::display", ssl_ext_ms_display, AP_HOOK_NOCTX);
+    return;
+}
+
+static void ssl_ext_ms_unregister(void)
+{
+    ap_hook_unregister("ap::mod_status::display", ssl_ext_ms_display);
+    return;
+}
+
+static void ssl_ext_ms_display_cb(char *str, void *_r)
+{
+    request_rec *r = (request_rec *)_r;
+    if (str != NULL)
+        ap_rputs(str, r);
+    return;
+}
+
+static void ssl_ext_ms_display(request_rec *r, int no_table_report, int short_report)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(r->server);
+
+    if (sc == NULL)
+        return;
+    ap_rputs("<hr>\n", r);
+    ap_rputs("<table cellspacing=0 cellpadding=0>\n", r);
+    ap_rputs("<tr><td bgcolor=\"#000000\">\n", r);
+    ap_rputs("<b><font color=\"#ffffff\" face=\"Arial,Helvetica\">SSL/TLS Session Cache Status:</font></b>\r", r);
+    ap_rputs("</td></tr>\n", r);
+    ap_rputs("<tr><td bgcolor=\"#ffffff\">\n", r);
+    ssl_scache_status(r->server, r->pool, ssl_ext_ms_display_cb, r);
+    ap_rputs("</td></tr>\n", r);
+    ap_rputs("</table>\n", r);
+    return;
 }
 

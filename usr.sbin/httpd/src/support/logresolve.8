@@ -6,7 +6,7 @@
 .\" are met:
 .\"
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
+.\"    notice, this list of conditions and the following disclaimer. 
 .\"
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in
@@ -59,7 +59,7 @@ logresolve \- resolve hostnames for IP-adresses in Apache logfiles
 .BI \-s " filename"
 ] [
 .B \-c
-] <
+] < 
 .I access_log
 >
 .I access_log.new
@@ -75,9 +75,9 @@ up the first time it is found in the log file.
 .BI \-s " filename"
 Specifies a filename to record statistics.
 .TP 12
-.B \-c
-This causes
-.B logresolve
+.B \-c 
+This causes 
+.B logresolve 
 to apply some DNS checks: after finding the hostname from the IP address, it
 looks up the IP addresses for the hostname and checks that one of these
 matches the original address.

@@ -6,7 +6,7 @@
 .\" are met:
 .\"
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
+.\"    notice, this list of conditions and the following disclaimer. 
 .\"
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in
@@ -56,14 +56,23 @@ apxs \- APache eXtenSion tool
 .SH SYNOPSIS
 .B apxs
 .B \-g
+[
+.BI \-S " name=value
+]
 .BI \-n " modname"
 
 .B apxs
 .B \-q
+[
+.BI \-S " name=value
+]
 .IR query " ..."
 
 .B apxs
 .B \-c
+[
+.BI \-S " name=value
+]
 [
 .BI \-o " dsofile"
 ]
@@ -89,6 +98,25 @@ apxs \- APache eXtenSion tool
 
 .B apxs
 .B \-i
+[
+.BI \-S " name=value
+]
+[
+.BI \-n " modname"
+]
+[
+.B \-a
+]
+[
+.B \-A
+]
+.IR dsofile " ..."
+
+.B apxs
+.B \-e
+[
+.BI \-S " name=value
+]
 [
 .BI \-n " modname"
 ]
@@ -159,7 +187,7 @@ even a library archive (.a). The
 tool automatically recognizes these extensions and automtaically used the C
 source files for compilation while just using the object and archive files for
 the linking phase. But when using such pre-compiled objects make sure they are
-compiled for position independent code (PIC) to be able to use them for a
+compiled for position independend code (PIC) to be able to use them for a
 dynamically loaded shared object.
 For instance with GCC you always just have to use
 .BR -fpic .
@@ -198,18 +226,18 @@ by guessing it from the filename.
 .PP
 Query options:
 .TP 12
-.B \-q
-Performs a query for
+.B \-q 
+Performs a query for 
 .BR apxs 's
 knowledge about certain settings. The
 .I query
 parameters can be one or more of the following strings:
 .nf
   CC              TARGET
-  CFLAGS          SBINDIR
-  CFLAGS_SHLIB    INCLUDEDIR
-  LD_SHLIB        LIBEXECDIR
-  LDFLAGS_SHLIB   SYSCONFDIR
+  CFLAGS          SBINDIR    
+  CFLAGS_SHLIB    INCLUDEDIR 
+  LD_SHLIB        LIBEXECDIR 
+  LDFLAGS_SHLIB   SYSCONFDIR 
   LIBS_SHLIB
 .fi
 Use this for manually determining settings. For instance use
@@ -218,6 +246,11 @@ Use this for manually determining settings. For instance use
 .fi
 inside your own Makefiles if you need manual access
 to Apache's C header files.
+.PP
+Configuration options:
+.TP 12
+.BI \-S " name=value"
+This option changes the apxs settings described above.
 .PP
 Template Generation options:
 .TP 12
@@ -278,42 +311,51 @@ This option is directly passed through to the linker command.
 Use this to add your own libraries to search to the build process.
 .TP 12
 .BI \-Wc, "compiler-flags"
-This option passes
+This option passes 
 .I compiler-flags
 as additional flags to the compiler command.
 Use this to add local compiler-specific options.
 .TP 12
 .BI \-Wl, "linker-flags"
-This option passes
+This option passes 
 .I linker-flags
 as additional flags to the linker command.
 Use this to add local linker-specific options.
 .PP
-DSO installation options:
+DSO installation and configuration options:
 .TP 12
 .B \-i
 This indicates the installation operation and installs one or more
 dynamically shared objects into the
-servers
+server's
 .I libexec
 directory.
 .TP 12
 .B \-a
-This additionally activates the module
-by automatically adding a corresponding
+This activates the module by automatically adding a corresponding
 .B LoadModule
 line to Apache's
 .B httpd.conf
-configuration file (only if still no such entry exists).
+configuration file, or by enabling it if it already exists.
 .TP 12
 .B \-A
 Same as option
 .B \-a
-but the created
+but the created 
 .B LoadModule
-directive is
-prefixed with a hash sign (#), i.e. the module is
-just prepared for later activation but initially disabled.
+directive is prefixed with a hash sign (#), i.e. the module is
+just prepared for later activation but initially disabled. 
+.TP 12
+.B \-e
+This indicates the editing operation, which can be used with the
+.B \-a
+and
+.B \-A
+options similarly to the
+.B \-i
+operation to edit Apache's
+.B httpd.conf
+configuration file without attempting to install the module.
 .PD
 .SH EXAMPLES
 Assume you have an Apache module named mod_foo.c available which should extend

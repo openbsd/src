@@ -1,0 +1,23 @@
+
+ This is the ssl.csr/ directory of Apache/mod_ssl
+ where PEM-encoded X.509 Certificate Signing Requests for SSL are stored.
+
+ Per default the following file is provided:
+
+ o server.csr:
+   This is the server certificate signing request for Apache/mod_ssl
+   corresponding to the ../ssl.crt/server.crt file.  Per default this is a
+   dummy file, but may be overwritten by the `make certificate' target under
+   built-time.  Then it contains the CSR which you can send to a public
+   Certification Authority (CA) for requesting a real signed certificate
+   (which then can replace the ../ssl.crt/server.crt file).
+
+ You can also use this directory for temporarily storing CSRs from within your
+ (CGI-) scripts when you want to perform client authentication with your own
+ CA instance.
+
+ You can view the ingredients of a particular CSR file in plain text
+ by running the command:
+
+   $ openssl req -noout -text -in <name>.csr
+

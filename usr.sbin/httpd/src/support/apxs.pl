@@ -68,18 +68,18 @@ package apxs;
 ##  Configuration
 ##
 
-my $CFG_TARGET        = '@TARGET@';        # substituted via Makefile.tmpl 
-my $CFG_CC            = '@CC@';            # substituted via Makefile.tmpl
-my $CFG_CFLAGS        = '@CFLAGS@';        # substituted via Makefile.tmpl
-my $CFG_CFLAGS_SHLIB  = '@CFLAGS_SHLIB@';  # substituted via Makefile.tmpl
-my $CFG_LD_SHLIB      = '@LD_SHLIB@';      # substituted via Makefile.tmpl
-my $CFG_LDFLAGS_SHLIB = '@LDFLAGS_SHLIB@'; # substituted via Makefile.tmpl 
-my $CFG_LIBS_SHLIB    = '@LIBS_SHLIB@';    # substituted via Makefile.tmpl 
-my $CFG_PREFIX        = '@prefix@';        # substituted via APACI install
-my $CFG_SBINDIR       = '@sbindir@';       # substituted via APACI install
-my $CFG_INCLUDEDIR    = '@includedir@';    # substituted via APACI install
-my $CFG_LIBEXECDIR    = '@libexecdir@';    # substituted via APACI install
-my $CFG_SYSCONFDIR    = '@sysconfdir@';    # substituted via APACI install
+my $CFG_TARGET        = '@TARGET@';            # substituted via Makefile.tmpl 
+my $CFG_CC            = '@CC@';                # substituted via Makefile.tmpl
+my $CFG_CFLAGS        = '@CFLAGS@';            # substituted via Makefile.tmpl
+my $CFG_CFLAGS_SHLIB  = '@CFLAGS_SHLIB@';      # substituted via Makefile.tmpl
+my $CFG_LD_SHLIB      = '@LD_SHLIB@';          # substituted via Makefile.tmpl
+my $CFG_LDFLAGS_SHLIB = '@LDFLAGS_MOD_SHLIB@'; # substituted via Makefile.tmpl 
+my $CFG_LIBS_SHLIB    = '@LIBS_SHLIB@';        # substituted via Makefile.tmpl 
+my $CFG_PREFIX        = '@prefix@';            # substituted via APACI install
+my $CFG_SBINDIR       = '@sbindir@';           # substituted via APACI install
+my $CFG_INCLUDEDIR    = '@includedir@';        # substituted via APACI install
+my $CFG_LIBEXECDIR    = '@libexecdir@';        # substituted via APACI install
+my $CFG_SYSCONFDIR    = '@sysconfdir@';        # substituted via APACI install
 
 ##
 ##  Cleanup the above stuff
@@ -91,6 +91,10 @@ $CFG_CFLAGS =~ s|\s+`.+apaci`||;
 ##
 ##  Initial shared object support check
 ##
+if (not -x "$CFG_SBINDIR/$CFG_TARGET") {
+	print STDERR "apxs:Error: $CFG_SBINDIR/$CFG_TARGET not found or not executable\n";
+	exit(1);
+}
 if (not grep(/mod_so/, `$CFG_SBINDIR/$CFG_TARGET -l`)) {
     print STDERR "apxs:Error: Sorry, no shared object support for Apache\n";
     print STDERR "apxs:Error: available under your platform. Make sure\n";
@@ -113,6 +117,8 @@ my @opt_I = ();
 my @opt_L = ();
 my @opt_l = ();
 my @opt_W = ();
+my @opt_S = ();
+my $opt_e = 0;
 my $opt_i = 0;
 my $opt_a = 0;
 my $opt_A = 0;
@@ -184,26 +190,48 @@ sub Getopts {
 }
 
 sub usage {
-    print STDERR "Usage: apxs -g -n <modname>\n";
-    print STDERR "       apxs -q <query> ...\n";
-    print STDERR "       apxs -c [-o <dsofile>] [-D <name>[=<value>]] [-I <incdir>]\n";
-    print STDERR "               [-L <libdir>] [-l <libname>] [-Wc,<flags>] [-Wl,<flags>]\n";
-    print STDERR "               <files> ...\n";
-    print STDERR "       apxs -i [-a] [-A] [-n <modname>] <dsofile> ...\n";
+    print STDERR "Usage: apxs -g [-S <var>=<val>] -n <modname>\n";
+    print STDERR "       apxs -q [-S <var>=<val>] <query> ...\n";
+    print STDERR "       apxs -c [-S <var>=<val>] [-o <dsofile>] [-D <name>[=<value>]]\n";
+    print STDERR "               [-I <incdir>] [-L <libdir>] [-l <libname>] [-Wc,<flags>]\n";
+    print STDERR "               [-Wl,<flags>] <files> ...\n";
+    print STDERR "       apxs -i [-S <var>=<val>] [-a] [-A] [-n <modname>] <dsofile> ...\n";
+    print STDERR "       apxs -e [-S <var>=<val>] [-a] [-A] [-n <modname>] <dsofile> ...\n";
     exit(1);
 }
 
 #   option handling
 my $rc;
-($rc, @ARGV) = &Getopts("qn:gco:I+D+L+l+W+iaA", @ARGV);
+($rc, @ARGV) = &Getopts("qn:gco:I+D+L+l+W+S+eiaA", @ARGV);
 &usage if ($rc == 0);
 &usage if ($#ARGV == -1 and not $opt_g);
-&usage if (not $opt_q and not ($opt_g and $opt_n) and not $opt_i and not $opt_c);
+&usage if (not $opt_q and not ($opt_g and $opt_n) and not $opt_i and not $opt_c and not $opt_e);
 
 #   argument handling
 my @args = @ARGV;
 my $name = 'unknown';
 $name = $opt_n if ($opt_n ne '');
+
+if (@opt_S) {
+    my ($opt_S);
+    foreach $opt_S (@opt_S) {
+	if ($opt_S =~ m/^([^=]+)=(.*)$/) {
+	    my ($var) = $1;
+	    my ($val) = $2;
+	    my $oldval = eval "\$CFG_$var";
+
+	    unless ($var and $oldval) {
+		print STDERR "apxs:Error: no config variable $var\n";
+		&usage;
+	    }
+
+	    eval "\$CFG_${var}=\"${val}\"";
+	} else {
+	    print STDERR "apxs:Error: malformatted -S option\n";
+	    &usage;
+	}	
+    }
+}
 
 ##
 ##  Operation
@@ -354,7 +382,11 @@ if ($opt_c) {
     $opt = '';
     my ($opt_Wl, $opt_L, $opt_l);
     foreach $opt_Wl (@opt_W) {
-        $opt .= " $1" if ($opt_Wl =~ m|^\s*l,(.*)$|);
+		if($CFG_LD_SHLIB ne "gcc") {
+	        $opt .= " $1" if ($opt_Wl =~ m|^\s*l,(.*)$|);
+		} else {
+	        $opt .= " -W$opt_Wl";
+		}
     }
     foreach $opt_L (@opt_L) {
         $opt .= " -L$opt_L";
@@ -370,12 +402,12 @@ if ($opt_c) {
     &execute_cmds(@cmds);
 
     #   allow one-step compilation and installation
-    if ($opt_i) {
+    if ($opt_i or $opt_e) {
         @args = ( $dso_file );
     }
 }
 
-if ($opt_i) {
+if ($opt_i or $opt_e) {
     ##
     ##  SHARED OBJECT INSTALLATION
     ##
@@ -393,8 +425,10 @@ if ($opt_i) {
         }
         my $t = $f;
         $t =~ s|^.+/([^/]+)$|$1|;
-        push(@cmds, "cp $f $CFG_LIBEXECDIR/$t");
-        push(@cmds, "chmod 755 $CFG_LIBEXECDIR/$t");
+        if ($opt_i) {
+	    push(@cmds, "cp $f $CFG_LIBEXECDIR/$t");
+	    push(@cmds, "chmod 755 $CFG_LIBEXECDIR/$t");
+        }
 
         #   determine module symbolname and filename
         my $filename = '';
@@ -455,29 +489,28 @@ if ($opt_i) {
             exit(1);
         }
 
-        my $update = 0;
         my $lmd;
+        my $c = '';
+        $c = '#' if ($opt_A);
         foreach $lmd (@lmd) {
+            my $what = $opt_A ? "preparing" : "activating";
             if ($content !~ m|\n#?\s*$lmd|) {
-                 my $c = '';
-                 $c = '#' if ($opt_A);
                  $content =~ s|^(.*\n#?\s*LoadModule\s+[^\n]+\n)|$1$c$lmd\n|sg;
-                 $update = 1;
-                 $lmd =~ m|LoadModule\s+(.+?)_module.*|;
-                 my $what = $opt_A ? "preparing" : "activating";
-                 print STDERR "[$what module `$1' in $CFG_SYSCONFDIR/$CFG_TARGET.conf]\n";
+            } else {
+                 $content =~ s|^(.*\n)#?\s*$lmd[^\n]*\n|$1$c$lmd\n|sg;
             }
+            $lmd =~ m|LoadModule\s+(.+?)_module.*|;
+            print STDERR "[$what module `$1' in $CFG_SYSCONFDIR/$CFG_TARGET.conf]\n";
         }
         my $amd;
         foreach $amd (@amd) {
             if ($content !~ m|\n#?\s*$amd|) {
-                 my $c = '';
-                 $c = '#' if ($opt_A);
                  $content =~ s|^(.*\n#?\s*AddModule\s+[^\n]+\n)|$1$c$amd\n|sg;
-                 $update = 1;
+            } else {
+                 $content =~ s|^(.*\n)#?\s*$amd[^\n]*\n|$1$c$amd\n|sg;
             }
         }
-        if ($update) {
+        if (@lmd or @amd) {
             open(FP, ">$CFG_SYSCONFDIR/$CFG_TARGET.conf.new") || die;
             print FP $content;
             close(FP);

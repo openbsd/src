@@ -91,6 +91,10 @@
 
 #include "mod_rewrite.h"
 
+#ifndef NO_WRITEV
+#include <sys/types.h>
+#include <sys/uio.h>
+#endif
 
 /*
 ** +-------------------------------------------------------+
@@ -158,9 +162,9 @@ static const command_rec command_table[] = {
     { "RewriteBase",     cmd_rewritebase,     NULL, OR_FILEINFO, TAKE1,
       "the base URL of the per-directory context" },
     { "RewriteCond",     cmd_rewritecond,     NULL, OR_FILEINFO, RAW_ARGS,
-      "a input string and a to be applied regexp-pattern" },
+      "an input string and a to be applied regexp-pattern" },
     { "RewriteRule",     cmd_rewriterule,     NULL, OR_FILEINFO, RAW_ARGS,
-      "a URL-applied regexp-pattern and a substitution URL" },
+      "an URL-applied regexp-pattern and a substitution URL" },
     { "RewriteMap",      cmd_rewritemap,      NULL, RSRC_CONF,   TAKE2,
       "a mapname and a filename" },
     { "RewriteLock",     cmd_rewritelock,     NULL, RSRC_CONF,   TAKE1,
@@ -208,10 +212,8 @@ static cache *cachep;
     /* whether proxy module is available or not */
 static int proxy_available;
 
-    /* the txt mapfile parsing stuff */
-static regex_t   *lookup_map_txtfile_regexp = NULL;
-static regmatch_t lookup_map_txtfile_regmatch[MAX_NMATCH];
-
+static char *lockname;
+static int lockfd = -1;
 
 /*
 ** +-------------------------------------------------------+
@@ -238,8 +240,6 @@ static void *config_server_create(pool *p, server_rec *s)
     a->rewritelogfile  = NULL;
     a->rewritelogfp    = -1;
     a->rewriteloglevel = 0;
-    a->rewritelockfile = NULL;
-    a->rewritelockfp   = -1;
     a->rewritemaps     = ap_make_array(p, 2, sizeof(rewritemap_entry));
     a->rewriteconds    = ap_make_array(p, 2, sizeof(rewritecond_entry));
     a->rewriterules    = ap_make_array(p, 2, sizeof(rewriterule_entry));
@@ -274,12 +274,6 @@ static void *config_server_merge(pool *p, void *basev, void *overridesv)
         a->rewritelogfp    = overrides->rewritelogfp != -1 
                              ? overrides->rewritelogfp 
                              : base->rewritelogfp;
-        a->rewritelockfile = overrides->rewritelockfile != NULL
-                             ? overrides->rewritelockfile
-                             : base->rewritelockfile;
-        a->rewritelockfp   = overrides->rewritelockfp != -1
-                             ? overrides->rewritelockfp
-                             : base->rewritelockfp;
         a->rewritemaps     = ap_append_arrays(p, overrides->rewritemaps,
                                               base->rewritemaps);
         a->rewriteconds    = ap_append_arrays(p, overrides->rewriteconds,
@@ -295,8 +289,6 @@ static void *config_server_merge(pool *p, void *basev, void *overridesv)
         a->rewriteloglevel = overrides->rewriteloglevel;
         a->rewritelogfile  = overrides->rewritelogfile;
         a->rewritelogfp    = overrides->rewritelogfp;
-        a->rewritelockfile = overrides->rewritelockfile;
-        a->rewritelockfp   = overrides->rewritelockfp;
         a->rewritemaps     = overrides->rewritemaps;
         a->rewriteconds    = overrides->rewriteconds;
         a->rewriterules    = overrides->rewriterules;
@@ -532,12 +524,12 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, char *a1,
 
 static const char *cmd_rewritelock(cmd_parms *cmd, void *dconf, char *a1)
 {
-    rewrite_server_conf *sconf;
+    const char *error;
 
-    sconf = (rewrite_server_conf *)
-            ap_get_module_config(cmd->server->module_config, &rewrite_module);
+    if ((error = ap_check_cmd_context(cmd, GLOBAL_ONLY)) != NULL)
+        return error;
 
-    sconf->rewritelockfile = a1;
+    lockname = a1;
 
     return NULL;
 }
@@ -951,10 +943,6 @@ static void init_module(server_rec *s, pool *p)
 {
     /* check if proxy module is available */
     proxy_available = (ap_find_linked_module("mod_proxy.c") != NULL);
-
-    /* precompile a static pattern
-       for the txt mapfile parsing */
-    lookup_map_txtfile_regexp = ap_pregcomp(p, MAPFILE_PATTERN, REG_EXTENDED);
 
     /* create the rewriting lockfile in the parent */
     rewritelock_create(s, p);
@@ -1804,7 +1792,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
         rewritelog(r, 3, "[per-dir %s] applying pattern '%s' to uri '%s'",
                    perdir, p->pattern, uri);
     }
-    rc = (regexec(regexp, uri, regexp->re_nsub+1, regmatch, 0) == 0);
+    rc = (ap_regexec(regexp, uri, regexp->re_nsub+1, regmatch, 0) == 0);
     if (! (( rc && !(p->flags & RULEFLAG_NOTMATCH)) ||
            (!rc &&  (p->flags & RULEFLAG_NOTMATCH))   ) ) {
         return 0;
@@ -2180,7 +2168,7 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
             }
         }
     }
-    else if (strcmp(p->pattern, "-s ") == 0) {
+    else if (strcmp(p->pattern, "-s") == 0) {
         if (stat(input, &sb) == 0) {
             if (S_ISREG(sb.st_mode) && sb.st_size > 0) {
                 rc = 1;
@@ -2273,8 +2261,8 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
     }
     else {
         /* it is really a regexp pattern, so apply it */
-        rc = (regexec(p->regexp, input,
-                      p->regexp->re_nsub+1, regmatch,0) == 0);
+        rc = (ap_regexec(p->regexp, input,
+                         p->regexp->re_nsub+1, regmatch,0) == 0);
 
         /* if it isn't a negated pattern and really matched
            we update the passed-through regex subst info structure */
@@ -2729,13 +2717,15 @@ static char *lookup_map(request_rec *r, char *name, char *key)
                     else {
                         rewritelog(r, 5, "map lookup FAILED: map=%s[txt] "
                                    "key=%s", s->name, key);
+                        set_cache_string(cachep, s->name, CACHEMODE_TS,
+                                         st.st_mtime, key, "");
                         return NULL;
                     }
                 }
                 else {
                     rewritelog(r, 5, "cache lookup OK: map=%s[txt] key=%s "
                                "-> val=%s", s->name, key, value);
-                    return value;
+                    return value[0] != '\0' ? value : NULL;
                 }
             }
             else if (s->type == MAPTYPE_DBM) {
@@ -2764,13 +2754,15 @@ static char *lookup_map(request_rec *r, char *name, char *key)
                     else {
                         rewritelog(r, 5, "map lookup FAILED: map=%s[dbm] "
                                    "key=%s", s->name, key);
+                        set_cache_string(cachep, s->name, CACHEMODE_TS,
+                                         st.st_mtime, key, "");
                         return NULL;
                     }
                 }
                 else {
                     rewritelog(r, 5, "cache lookup OK: map=%s[dbm] key=%s "
                                "-> val=%s", s->name, key, value);
-                    return value;
+                    return value[0] != '\0' ? value : NULL;
                 }
 #else
                 return NULL;
@@ -2823,6 +2815,8 @@ static char *lookup_map(request_rec *r, char *name, char *key)
                     else {
                         rewritelog(r, 5, "map lookup FAILED: map=%s[txt] "
                                    "key=%s", s->name, key);
+                        set_cache_string(cachep, s->name, CACHEMODE_TS,
+                                         st.st_mtime, key, "");
                         return NULL;
                     }
                 }
@@ -2830,8 +2824,13 @@ static char *lookup_map(request_rec *r, char *name, char *key)
                     rewritelog(r, 5, "cache lookup OK: map=%s[txt] key=%s "
                                "-> val=%s", s->name, key, value);
                 }
-                value = select_random_value_part(r, value);
-                rewritelog(r, 5, "randomly choosen the subvalue `%s'", value);
+                if (value[0] != '\0') {
+                   value = select_random_value_part(r, value);
+                   rewritelog(r, 5, "randomly choosen the subvalue `%s'", value);
+                }
+                else {
+                    value = NULL;
+                }
                 return value;
             }
         }
@@ -2839,44 +2838,45 @@ static char *lookup_map(request_rec *r, char *name, char *key)
     return NULL;
 }
 
-
 static char *lookup_map_txtfile(request_rec *r, char *file, char *key)
 {
     FILE *fp = NULL;
     char line[1024];
-    char output[1024];
-    char result[1024];
     char *value = NULL;
     char *cpT;
+    size_t skip;
     char *curkey;
     char *curval;
 
     if ((fp = ap_pfopen(r->pool, file, "r")) == NULL) {
-        return NULL;
+       return NULL;
     }
 
-    ap_cpystrn(output, MAPFILE_OUTPUT, sizeof(output));
     while (fgets(line, sizeof(line), fp) != NULL) {
-        if (line[strlen(line)-1] == '\n') {
-            line[strlen(line)-1] = '\0';
-        }
-        if (regexec(lookup_map_txtfile_regexp, line,
-                    lookup_map_txtfile_regexp->re_nsub+1,
-                    lookup_map_txtfile_regmatch, 0) == 0) {
-            ap_cpystrn(result, ap_pregsub(r->pool, output, line,
-                    lookup_map_txtfile_regexp->re_nsub+1,
-                    lookup_map_txtfile_regmatch),
-                    sizeof(result)); /* substitute in output */
-            cpT = strchr(result, ',');
-            *cpT = '\0';
-            curkey = result;
-            curval = cpT+1;
-
-            if (strcmp(curkey, key) == 0) {
-                value = ap_pstrdup(r->pool, curval);
-                break;
-            }
-        }
+        if (line[0] == '#')
+            continue; /* ignore comments */
+        cpT = line;
+        curkey = cpT;
+        skip = strcspn(cpT," \t\r\n");
+        if (skip == 0)
+            continue; /* ignore lines that start with a space, tab, CR, or LF */
+        cpT += skip;
+        *cpT = '\0';
+        if (strcmp(curkey, key) != 0)
+            continue; /* key does not match... */
+            
+        /* found a matching key; now extract and return the value */
+        ++cpT;
+        skip = strspn(cpT, " \t\r\n");
+        cpT += skip;
+        curval = cpT;
+        skip = strcspn(cpT, " \t\r\n");
+        if (skip == 0)
+            continue; /* no value... */
+        cpT += skip;
+        *cpT = '\0';
+        value = ap_pstrdup(r->pool, curval);
+        break;
     }
     ap_pfclose(r->pool, fp);
     return value;
@@ -2913,6 +2913,9 @@ static char *lookup_map_program(request_rec *r, int fpin, int fpout, char *key)
     char buf[LONG_STRING_LEN];
     char c;
     int i;
+#ifndef NO_WRITEV
+    struct iovec iov[2];
+#endif
 
     /* when `RewriteEngine off' was used in the per-server
      * context then the rewritemap-programs were not spawned.
@@ -2927,8 +2930,16 @@ static char *lookup_map_program(request_rec *r, int fpin, int fpout, char *key)
     rewritelock_alloc(r);
 
     /* write out the request key */
+#ifdef NO_WRITEV
     write(fpin, key, strlen(key));
     write(fpin, "\n", 1);
+#else
+    iov[0].iov_base = key;
+    iov[0].iov_len = strlen(key);
+    iov[1].iov_base = "\n";
+    iov[1].iov_len = 1;
+    writev(fpin, iov, 2);
+#endif
 
     /* read in the response value */
     i = 0;
@@ -3247,28 +3258,26 @@ static void rewritelock_create(server_rec *s, pool *p)
     conf = ap_get_module_config(s->module_config, &rewrite_module);
 
     /* only operate if a lockfile is used */
-    if (conf->rewritelockfile == NULL
-        || *(conf->rewritelockfile) == '\0') {
+    if (lockname == NULL || *(lockname) == '\0') {
         return;
     }
 
     /* fixup the path, especially for rewritelock_remove() */
-    conf->rewritelockfile = ap_server_root_relative(p, conf->rewritelockfile);
+    lockname = ap_server_root_relative(p, lockname);
 
     /* create the lockfile */
-    unlink(conf->rewritelockfile);
-    if ((conf->rewritelockfp = ap_popenf(p, conf->rewritelockfile,
-                                         O_WRONLY|O_CREAT,
+    unlink(lockname);
+    if ((lockfd = ap_popenf(p, lockname, O_WRONLY|O_CREAT,
                                          REWRITELOCK_MODE)) < 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, s,
                      "mod_rewrite: Parent could not create RewriteLock "
-                     "file %s", conf->rewritelockfile);
+                     "file %s", lockname);
         exit(1);
     }
 #if !defined(OS2) && !defined(WIN32)
     /* make sure the childs have access to this file */
     if (geteuid() == 0 /* is superuser */)
-        chown(conf->rewritelockfile, ap_user_id, -1 /* no gid change */);
+        chown(lockname, ap_user_id, -1 /* no gid change */);
 #endif
 
     return;
@@ -3281,18 +3290,16 @@ static void rewritelock_open(server_rec *s, pool *p)
     conf = ap_get_module_config(s->module_config, &rewrite_module);
 
     /* only operate if a lockfile is used */
-    if (conf->rewritelockfile == NULL
-        || *(conf->rewritelockfile) == '\0') {
+    if (lockname == NULL || *(lockname) == '\0') {
         return;
     }
 
     /* open the lockfile (once per child) to get a unique fd */
-    if ((conf->rewritelockfp = ap_popenf(p, conf->rewritelockfile,
-                                         O_WRONLY,
+    if ((lockfd = ap_popenf(p, lockname, O_WRONLY,
                                          REWRITELOCK_MODE)) < 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, s,
                      "mod_rewrite: Child could not open RewriteLock "
-                     "file %s", conf->rewritelockfile);
+                     "file %s", lockname);
         exit(1);
     }
     return;
@@ -3300,43 +3307,29 @@ static void rewritelock_open(server_rec *s, pool *p)
 
 static void rewritelock_remove(void *data)
 {
-    server_rec *s;
-    rewrite_server_conf *conf;
-
-    /* the data is really the server_rec */
-    s = (server_rec *)data;
-    conf = ap_get_module_config(s->module_config, &rewrite_module);
-
     /* only operate if a lockfile is used */
-    if (conf->rewritelockfile == NULL
-        || *(conf->rewritelockfile) == '\0') {
+    if (lockname == NULL || *(lockname) == '\0') {
         return;
     }
 
     /* remove the lockfile */
-    unlink(conf->rewritelockfile);
+    unlink(lockname);
+    lockname = NULL;
+    lockfd = -1;
 }
 
 static void rewritelock_alloc(request_rec *r)
 {
-    rewrite_server_conf *conf;
-
-    conf = ap_get_module_config(r->server->module_config, &rewrite_module);
-
-    if (conf->rewritelockfp != -1) {
-        fd_lock(r, conf->rewritelockfp);
+    if (lockfd != -1) {
+        fd_lock(r, lockfd);
     }
     return;
 }
 
 static void rewritelock_free(request_rec *r)
 {
-    rewrite_server_conf *conf;
-
-    conf = ap_get_module_config(r->server->module_config, &rewrite_module);
-
-    if (conf->rewritelockfp != -1) {
-        fd_unlock(r, conf->rewritelockfp);
+    if (lockfd != -1) {
+        fd_unlock(r, lockfd);
     }
     return;
 }
@@ -3607,6 +3600,9 @@ static char *lookup_variable(request_rec *r, char *var)
     else if (strcasecmp(var, "SERVER_NAME") == 0) {
         result = ap_get_server_name(r);
     }
+    else if (strcasecmp(var, "SERVER_ADDR") == 0) { /* non-standard */
+        result = r->connection->local_ip;
+    }
     else if (strcasecmp(var, "SERVER_PORT") == 0) {
         ap_snprintf(resultbuf, sizeof(resultbuf), "%u", ap_get_server_port(r));
         result = resultbuf;
@@ -3843,12 +3839,57 @@ static char *get_cache_string(cache *c, char *res, int mode,
     return ap_pstrdup(c->pool, ce->value);
 }
 
+static int cache_tlb_hash(char *key)
+{
+    unsigned long n;
+    char *p;
+
+    n = 0;
+    for (p=key; *p != '\0'; ++p) {
+        n = n * 53711 + 134561 + (unsigned)(*p & 0xff);
+    }
+
+    return n % CACHE_TLB_ROWS;
+}
+
+static cacheentry *cache_tlb_lookup(cachetlbentry *tlb, cacheentry *elt,
+                                    char *key)
+{
+    int ix = cache_tlb_hash(key);
+    int i;
+    int j;
+
+    for (i=0; i < CACHE_TLB_COLS; ++i) {
+        j = tlb[ix].t[i];
+        if (j < 0)
+            return NULL;
+        if (strcmp(elt[j].key, key) == 0)
+            return &elt[j];
+    }
+    return NULL;
+}
+
+static void cache_tlb_replace(cachetlbentry *tlb, cacheentry *elt,
+                              cacheentry *e)
+{
+    int ix = cache_tlb_hash(e->key);
+    int i;
+
+    tlb = &tlb[ix];
+
+    for (i=1; i < CACHE_TLB_COLS; ++i)
+        tlb->t[i] = tlb->t[i-1];
+
+    tlb->t[0] = e - elt;
+}
+
 static void store_cache_string(cache *c, char *res, cacheentry *ce)
 {
     int i;
     int j;
     cachelist *l;
     cacheentry *e;
+    cachetlbentry *t;
     int found_list;
 
     found_list = 0;
@@ -3857,11 +3898,22 @@ static void store_cache_string(cache *c, char *res, cacheentry *ce)
         l = &(((cachelist *)c->lists->elts)[i]);
         if (strcmp(l->resource, res) == 0) {
             found_list = 1;
+
+            e = cache_tlb_lookup((cachetlbentry *)l->tlb->elts,
+                                 (cacheentry *)l->entries->elts, ce->key);
+            if (e != NULL) {
+                e->time  = ce->time;
+                e->value = ap_pstrdup(c->pool, ce->value);
+                return;
+            }
+
             for (j = 0; j < l->entries->nelts; j++) {
                 e = &(((cacheentry *)l->entries->elts)[j]);
                 if (strcmp(e->key, ce->key) == 0) {
                     e->time  = ce->time;
                     e->value = ap_pstrdup(c->pool, ce->value);
+                  cache_tlb_replace((cachetlbentry *)l->tlb->elts,
+                                    (cacheentry *)l->entries->elts, e);
                     return;
                 }
             }
@@ -3873,6 +3925,13 @@ static void store_cache_string(cache *c, char *res, cacheentry *ce)
         l = ap_push_array(c->lists);
         l->resource = ap_pstrdup(c->pool, res);
         l->entries  = ap_make_array(c->pool, 2, sizeof(cacheentry));
+        l->tlb      = ap_make_array(c->pool, CACHE_TLB_ROWS,
+                                    sizeof(cachetlbentry));
+        for (i=0; i<CACHE_TLB_ROWS; ++i) {
+            t = &((cachetlbentry *)l->tlb->elts)[i];
+                for (j=0; j<CACHE_TLB_COLS; ++j)
+                    t->t[j] = -1;
+        }
     }
 
     /* create the new entry */
@@ -3883,6 +3942,8 @@ static void store_cache_string(cache *c, char *res, cacheentry *ce)
             e->time  = ce->time;
             e->key   = ap_pstrdup(c->pool, ce->key);
             e->value = ap_pstrdup(c->pool, ce->value);
+            cache_tlb_replace((cachetlbentry *)l->tlb->elts,
+                              (cacheentry *)l->entries->elts, e);
             return;
         }
     }
@@ -3901,6 +3962,12 @@ static cacheentry *retrieve_cache_string(cache *c, char *res, char *key)
     for (i = 0; i < c->lists->nelts; i++) {
         l = &(((cachelist *)c->lists->elts)[i]);
         if (strcmp(l->resource, res) == 0) {
+
+            e = cache_tlb_lookup((cachetlbentry *)l->tlb->elts,
+                                 (cacheentry *)l->entries->elts, key);
+            if (e != NULL)
+                return e;
+
             for (j = 0; j < l->entries->nelts; j++) {
                 e = &(((cacheentry *)l->entries->elts)[j]);
                 if (strcmp(e->key, key) == 0) {

@@ -1,8 +1,8 @@
 /*                      _             _
-**  _ __ ___   ___   __| |    ___ ___| |
-** | '_ ` _ \ / _ \ / _` |   / __/ __| |
-** | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-** |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+**  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+** | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+** |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 **                      |_____|
 **  ssl_engine_log.c
 **  Logging Facility
@@ -27,7 +27,7 @@
  *    software must display the following acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * 4. The names "mod_ssl" must not be used to endorse or promote
  *    products derived from this software without prior written
@@ -42,7 +42,7 @@
  *    acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -74,13 +74,27 @@
 /*
  * Open the SSL logfile
  */
-void ssl_log_open(server_rec *s, pool *p)
+void ssl_log_open(server_rec *s_main, server_rec *s, pool *p)
 {
     char *szLogFile;
+    SSLSrvConfigRec *sc_main = mySrvConfig(s_main);
     SSLSrvConfigRec *sc = mySrvConfig(s);
     piped_log *pl;
 
-    if (sc->szLogFile != NULL) {
+    /* 
+     * Short-circuit for inherited logfiles in order to save
+     * filedescriptors in mass-vhost situation. Be careful, this works
+     * fine because the close happens implicitly by the pool facility.
+     */
+    if (   s != s_main 
+        && sc_main->fileLogFile != NULL
+        && (   (sc->szLogFile == NULL)
+            || (   sc->szLogFile != NULL 
+                && sc_main->szLogFile != NULL 
+                && strEQ(sc->szLogFile, sc_main->szLogFile)))) {
+        sc->fileLogFile = sc_main->fileLogFile;
+    }
+    else if (sc->szLogFile != NULL) {
         if (strEQ(sc->szLogFile, "/dev/null"))
             return;
         else if (sc->szLogFile[0] == '|') {
@@ -128,6 +142,7 @@ static struct {
     { "*SSL3_READ_BYTES:sslv3*alert*bad*certificate*", "Subject CN in certificate not server name!?" },
     { "*self signed certificate in certificate chain*", "Client certificate signed by CA not known to server?" },
     { "*peer did not return a certificate*", "No CAs known to server for verification?" },
+    { "*no shared cipher*", "Too restrictive SSLCipherSuite or using DSA server certificate?" },
     { NULL, NULL }
 };
 
@@ -144,6 +159,20 @@ static char *ssl_log_annotation(char *error)
         }
     }
     return errstr;
+}
+
+BOOL ssl_log_applies(server_rec *s, int level)
+{
+    SSLSrvConfigRec *sc;
+
+    sc = mySrvConfig(s);
+    if (   sc->fileLogFile == NULL
+        && !(level & SSL_LOG_ERROR))
+        return FALSE;
+    if (   level > sc->nLogLevel
+        && !(level & SSL_LOG_ERROR))
+        return FALSE;
+    return TRUE;
 }
 
 void ssl_log(server_rec *s, int level, const char *msg, ...)

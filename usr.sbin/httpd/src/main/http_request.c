@@ -178,8 +178,8 @@ static int get_path_info(request_rec *r)
     char *end = &path[strlen(path)];
     char *last_cp = NULL;
     int rv;
-#ifdef WIN32
-    BOOL bStripSlash=TRUE;
+#ifdef HAVE_DRIVE_LETTERS
+    char bStripSlash=1;
 #endif
 
     if (r->finfo.st_mode) {
@@ -187,12 +187,12 @@ static int get_path_info(request_rec *r)
 	return OK;
     }
 
-#ifdef WIN32
+#ifdef HAVE_DRIVE_LETTERS
     /* If the directory is x:\, then we don't want to strip
      * the trailing slash since x: is not a valid directory.
      */
     if (strlen(path) == 3 && path[1] == ':' && path[2] == '/')
-        bStripSlash = FALSE;
+        bStripSlash = 0;
 
 
     /* If UNC name == //machine/share/, do not 
@@ -211,7 +211,7 @@ static int get_path_info(request_rec *r)
         }
     
         if (iCount == 4)
-            bStripSlash = FALSE;
+            bStripSlash = 0;
     }
 
     if (bStripSlash)
@@ -265,8 +265,12 @@ static int get_path_info(request_rec *r)
             *cp = '\0';
             return OK;
         }
+	/* must set this to zero, some stat()s may have corrupted it
+	 * even if they returned an error.
+	 */
+	r->finfo.st_mode = 0;
 #if defined(ENOENT) && defined(ENOTDIR)
-        else if (errno == ENOENT || errno == ENOTDIR) {
+        if (errno == ENOENT || errno == ENOTDIR) {
             last_cp = cp;
 
             while (--cp > path && *cp != '/')
@@ -299,15 +303,13 @@ static int get_path_info(request_rec *r)
          * you needed to do this.  Please be sure to include the operating
          * system you are using.
          */
-        else {
-            last_cp = cp;
+	last_cp = cp;
 
-            while (--cp > path && *cp != '/')
-                continue;
+	while (--cp > path && *cp != '/')
+	    continue;
 
-            while (cp > path && cp[-1] == '/')
-                --cp;
-        }
+	while (cp > path && cp[-1] == '/')
+	    --cp;
 #endif  /* ENOENT && ENOTDIR */
     }
     return OK;
@@ -368,7 +370,7 @@ static int directory_walk(request_rec *r)
 
             this_conf = NULL;
             if (entry_core->r) {
-                if (!regexec(entry_core->r, r->filename, 0, NULL, 0))
+                if (!ap_regexec(entry_core->r, r->filename, 0, NULL, 0))
                     this_conf = entry_config;
             }
             else if (entry_core->d_is_fnmatch) {
@@ -534,7 +536,7 @@ static int directory_walk(request_rec *r)
                      ap_get_module_config(entry_config, &core_module);
 
         if (entry_core->r) {
-            if (!regexec(entry_core->r, test_dirname, 0, NULL, REG_NOTEOL)) {
+            if (!ap_regexec(entry_core->r, test_dirname, 0, NULL, REG_NOTEOL)) {
                 per_dir_defaults =
                     ap_merge_per_dir_configs(r->pool, per_dir_defaults,
                                           entry_config);
@@ -610,7 +612,7 @@ static int location_walk(request_rec *r)
 	this_conf = NULL;
 
 	if (entry_core->r) {
-	    if (!regexec(entry_core->r, r->uri, 0, NULL, 0))
+	    if (!ap_regexec(entry_core->r, r->uri, 0, NULL, 0))
 		this_conf = entry_config;
 	}
 	else if (entry_core->d_is_fnmatch) {
@@ -671,7 +673,7 @@ static int file_walk(request_rec *r)
             this_conf = NULL;
 
             if (entry_core->r) {
-                if (!regexec(entry_core->r, test_file, 0, NULL, 0))
+                if (!ap_regexec(entry_core->r, test_file, 0, NULL, 0))
                     this_conf = entry_config;
             }
             else if (entry_core->d_is_fnmatch) {
@@ -718,8 +720,9 @@ static request_rec *make_sub_request(const request_rec *r)
     return rr;
 }
 
-API_EXPORT(request_rec *) ap_sub_req_lookup_uri(const char *new_file,
-                                             const request_rec *r)
+API_EXPORT(request_rec *) ap_sub_req_method_uri(const char *method,
+                                                const char *new_file,
+                                                const request_rec *r)
 {
     request_rec *rnew;
     int res;
@@ -735,6 +738,10 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_uri(const char *new_file,
     rnew->per_dir_config = r->server->lookup_defaults;
 
     ap_set_sub_req_protocol(rnew, r);
+
+    /* would be nicer to pass "method" to ap_set_sub_req_protocol */
+    rnew->method = method;
+    rnew->method_number = ap_method_number_of(method);
 
     if (new_file[0] == '/')
         ap_parse_uri(rnew, new_file);
@@ -794,6 +801,12 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_uri(const char *new_file,
         rnew->status = res;
     }
     return rnew;
+}
+
+API_EXPORT(request_rec *) ap_sub_req_lookup_uri(const char *new_file,
+                                                const request_rec *r)
+{
+    return ap_sub_req_method_uri("GET", new_file, r);
 }
 
 API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
@@ -1298,6 +1311,7 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
 
     new->htaccess        = r->htaccess;
     new->no_cache        = r->no_cache;
+    new->expecting_100	 = r->expecting_100;
     new->no_local_copy   = r->no_local_copy;
     new->read_length     = r->read_length;     /* We can only read it once */
     new->vlist_validator = r->vlist_validator;

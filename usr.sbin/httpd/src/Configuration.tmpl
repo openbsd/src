@@ -29,25 +29,21 @@
 ################################################################
 # SSL support:
 #
-# o Set SSL_BASE to either the directory of your SSLeay 
-#   source tree or the installation tree. Alternatively you can
-#   also use the value 'SYSTEM' which then indicates that SSLeay
-#   is installed under various system locations.
+# o Set SSL_BASE to either the directory of your OpenSSL source tree or the
+#   installation tree. Alternatively you can also use the value 'SYSTEM' which
+#   then indicates that OpenSSL is installed under various system locations.
 #
-# o If you're a US-citizen you have to compile SSLeay with the
-#   RSAref library (which replaces the RSA code of SSLeay)
-#   because of patent legalities with the RSA algorithm used for
-#   the SSL protocol. For this situation you already have to
-#   compile SSLeay with the -DRSAref define and now you have to
-#   force Apache to link against the RSAglue library (from
-#   SSLeay) and the rsaref library (from RSA). So, set RSA_BASE
-#   to the directory of your RSAref source tree or to 'SYSTEM'
-#   (indicating that librsaref.a is installed under a system
-#   location)
+# o If you're a US-citizen you have to compile OpenSSL with the RSAref library
+#   (which replaces the RSA code of OpenSSL) because of patent legalities with
+#   the RSA algorithm used for the SSL protocol. For this situation you
+#   already have to compile OpenSSL with the -DRSAref define and now you have
+#   to force Apache to link against the RSAglue library (from OpenSSL) and the
+#   rsaref library (from RSA). So, set RSA_BASE to the directory of your
+#   RSAref source tree or to 'SYSTEM' (indicating that librsaref.a is
+#   installed under a system location)
 #
-# o Disable SSL_COMPAT rule to build mod_ssl without backward
-#   compatibility code for Apache-SSL 1.x, mod_ssl 2.0.x Sioux
-#   1.x and Stronghold 2.x.
+# o Disable SSL_COMPAT rule to build mod_ssl without backward compatibility
+#   code for Apache-SSL 1.x, mod_ssl 2.0.x, Sioux 1.x and Stronghold 2.x.
 #
 # o The SSL_SDBM rule controls whether the built-in SDBM library should be
 #   used instead of a custom defined or vendor supplied DBM library.  Use the
@@ -59,13 +55,18 @@
 #   inside mod_ssl. These are usually new features which need some more
 #   testing before they can be considered stable. So, enabled this on your own
 #   risk and only when you like to see Apache+mod_ssl dump core ;-)
-#   
+#
+# o The SSL_VENDOR rule can be used to enable code inside mod_ssl which can be
+#   used by product vendors to extend mod_ssl via EAPI hooks without patching
+#   the source. Additionally ssl_vendor*.c source files are automatically
+#   picked up by the compilation process.
 
 #SSL_BASE=/usr/local/ssl
 #RSA_BASE=/usr/local/rsa
 Rule SSL_COMPAT=yes
 Rule SSL_SDBM=default
 Rule SSL_EXPERIMENTAL=no
+Rule SSL_VENDOR=no
 
 ################################################################
 # Makefile configuration
@@ -106,6 +107,24 @@ EXTRA_DEPS=
 # Name of the installed Apache HTTP webserver.
 #
 #TARGET=
+
+################################################################
+# Extended API (EAPI) support:
+#
+# EAPI:
+#   The EAPI rule enables more module hooks, a generic low-level hook
+#   mechanism, a generic context mechanism and shared memory based pools. 
+#
+# EAPI_MM:
+#   Set the EAPI_MM variable to either the directory of a MM Shared Memory
+#   Library source tree or the installation tree of MM. Alternatively you can
+#   also use the value 'SYSTEM' which then indicates that MM is installed
+#   under various system locations. When the MM library files cannot be found
+#   the EAPI still can be built, but without shared memory pool support, of
+#   course.
+
+Rule EAPI=no
+#EAPI_MM=SYSTEM
 
 ################################################################
 # Dynamic Shared Object (DSO) support
@@ -164,12 +183,12 @@ Rule SHARED_CHAIN=default
 # functions. The format is: Rule RULE=value
 #
 # At present, only the following RULES are known: WANTHSREGEX, SOCKS4,
-# SOCKS5, IRIXNIS, IRIXN32 and PARANOID.
+# SOCKS5, IRIXNIS, IRIXN32, PARANOID, and DEV_RANDOM.
 #
-# For all Rules, if set to "yes", then Configure knows we want that
-# capability and does what is required to add it in. If set to "default"
-# then Configure makes a "best guess"; if set to anything else, or not
-# present, then nothing is done.
+# For all Rules except DEV_RANDOM, if set to "yes", then Configure knows
+# we want that capability and does what is required to add it in. If set
+# to "default" then Configure makes a "best guess"; if set to anything
+# else, or not present, then nothing is done.
 #
 # SOCKS4:
 #  If SOCKS4 is set to 'yes', be sure that you add the socks library
@@ -200,12 +219,11 @@ Rule SHARED_CHAIN=default
 #  is performing this function. If PARANOID is set to yes, it will
 #  actually print-out the code that the modules execute
 #
-# EAPI:
-#  Enable the Extended API which provides more module hooks, a generic
-#  low-level hook mechanism and a generic context mechanism. Please notice
-#  that enabling this rule forces you to recompile (with -DEAPI) all existing
-#  modules which are already built and installed as DSOs.  Because under EAPI
-#  the module configuration structure has a different size.
+# EXPAT:
+#  Include James Clark's Expat package into Apache, for use by the
+#  modules. The "default" is to include it if the lib/expat-lite/
+#  directory is present. This rule will always be interpreted as "no"
+#  if the directory is not present.
 #
 
 Rule SOCKS4=no
@@ -213,7 +231,20 @@ Rule SOCKS5=no
 Rule IRIXNIS=no
 Rule IRIXN32=yes
 Rule PARANOID=no
-Rule EAPI=no
+Rule EXPAT=default
+
+# DEV_RANDOM:
+#  Note: this rule is only used when compiling mod_auth_digest.
+#  mod_auth_digest requires a cryptographically strong random seed for its
+#  random number generator. It knows two ways of getting this: 1) from
+#  a file or device (such as "/dev/random"), or 2) from the truerand
+#  library. If this rule is set to 'default' then Configure will choose
+#  to use /dev/random if it exists, else /dev/urandom if it exists,
+#  else the truerand library. To override this behaviour set DEV_RANDOM
+#  either to 'truerand' (to use the library) or to a device or file
+#  (e.g. '/dev/urandom'). If the truerand library is selected, Configure
+#  will assume "-L/usr/local/lib -lrand".
+Rule DEV_RANDOM=default
 
 # The following rules should be set automatically by Configure. However, if
 # they are not set by Configure (because we don't know the correct value for
@@ -255,6 +286,13 @@ Rule WANTHSREGEX=default
 
 # AddModule modules/experimental/mod_mmap_static.o
 
+## mod_vhost_alias provides support for mass virtual hosting
+## by dynamically changing the document root and CGI directory
+## based on the host header or local IP address of the request.
+## See "../htdocs/manual/vhosts/mass.html".
+
+# AddModule modules/standard/mod_vhost_alias.o
+
 ##
 ## Config manipulation modules
 ##
@@ -263,6 +301,11 @@ Rule WANTHSREGEX=default
 ## it does not do per-request stuff.
 
 AddModule modules/standard/mod_env.o
+
+## mod_define expands variables on arbitrary directive lines.
+## It requires Extended API (EAPI).
+
+# AddModule modules/extra/mod_define.o
 
 ##
 ## Request logging modules
@@ -343,13 +386,6 @@ AddModule modules/standard/mod_actions.o
 
 AddModule modules/standard/mod_userdir.o
 
-## The proxy module enables the server to act as a proxy for outside
-## http and ftp services. It's not as complete as it could be yet.
-## NOTE: You do not want this module UNLESS you are running a proxy;
-##       it is not needed for normal (origin server) operation.
-
-# AddModule modules/proxy/libproxy.a
-
 ## The Alias module provides simple URL translation and redirection.
 
 AddModule modules/standard/mod_alias.o
@@ -380,9 +416,34 @@ AddModule modules/standard/mod_auth.o
 # AddModule modules/standard/mod_auth_db.o
 
 ## "digest" implements HTTP Digest Authentication rather than the less 
-## secure Basic Auth used by the other modules.
+## secure Basic Auth used by the other modules.  This is the old version.
 
 # AddModule modules/standard/mod_digest.o
+
+## "auth_digest" implements HTTP/1.1 Digest Authentication (RFC 2617)
+## rather than the less secure Basic Auth used by the other modules.
+## This is an updated version of mod_digest, but it is not as well tested
+## and is therefore marked experimental.  Use either the one above, or
+## this one below, but not both digest modules.
+## Note: if you add this module in then you might also need the
+## truerand library (available for example from
+## ftp://research.att.com/dist/mab/librand.shar) - see the Rule
+## DEV_RANDOM above for more info.
+##
+## Must be added above (run later than) the proxy module because the
+## WWW-Authenticate and Proxy-Authenticate headers are parsed in the
+## post-read-request phase and it needs to know if this is a proxy request.
+
+# AddModule modules/experimental/mod_auth_digest.o
+
+## Optional Proxy
+##
+## The proxy module enables the server to act as a proxy for outside
+## http and ftp services. It's not as complete as it could be yet.
+## NOTE: You do not want this module UNLESS you are running a proxy;
+##       it is not needed for normal (origin server) operation.
+
+# AddModule modules/proxy/libproxy.a
 
 ## Optional response header manipulation modules. 
 ##

@@ -1,8 +1,8 @@
 /*                      _             _
-**  _ __ ___   ___   __| |    ___ ___| |
-** | '_ ` _ \ / _ \ / _` |   / __/ __| |
-** | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-** |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+**  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+** | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+** |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 **                      |_____|
 **  ssl_engine_config.c
 **  Apache Configuration Directives
@@ -27,7 +27,7 @@
  *    software must display the following acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * 4. The names "mod_ssl" must not be used to endorse or promote
  *    products derived from this software without prior written
@@ -42,7 +42,7 @@
  *    acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -85,6 +85,9 @@ void ssl_hook_AddModule(module *m)
         ssl_var_register();
         ssl_ext_register();
         ssl_io_register();
+#if defined(SSL_VENDOR) && defined(SSL_VENDOR_OBJS)
+        ssl_vendor_register();
+#endif
     }
     return;
 }
@@ -98,6 +101,9 @@ void ssl_hook_RemoveModule(module *m)
         ssl_var_unregister();
         ssl_ext_unregister();
         ssl_io_unregister();
+#if defined(SSL_VENDOR) && defined(SSL_VENDOR_OBJS)
+        ssl_vendor_unregister();
+#endif
     }
     return;
 }
@@ -121,17 +127,28 @@ void ssl_config_global_create(void)
          * initialize per-module configuration
          */
         mc->nInitCount             = 0;
-        mc->pRSATmpKey             = NULL;
+        mc->pRSATmpKey512          = NULL;
+        mc->pRSATmpKey1024         = NULL;
+        mc->pDHTmpParam512         = NULL;
+        mc->pDHTmpParam1024        = NULL;
         mc->nSessionCacheMode      = SSL_SCMODE_UNSET;
         mc->szSessionCacheDataFile = NULL;
+        mc->nSessionCacheDataSize  = 0;
+        mc->pSessionCacheDataMM    = NULL;
+        mc->tSessionCacheDataTable = NULL;
         mc->nMutexMode             = SSL_MUTEXMODE_UNSET;
         mc->szMutexFile            = NULL;
         mc->nMutexFD               = -1;
         mc->nMutexSEMID            = -1;
         mc->aRandSeed              = ap_make_array(pPool, 4, sizeof(ssl_randseed_t));
-
         mc->tPrivateKey            = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
         mc->tPublicCert            = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
+
+#ifdef SSL_VENDOR
+        mc->ctx = ap_ctx_new(pPool);
+        ap_hook_use("ap::mod_ssl::vendor::config_global_create",
+                AP_HOOK_SIG2(void,ptr), AP_HOOK_MODE_ALL, mc);
+#endif
 
         /*
          * And push it into Apache's global context
@@ -172,10 +189,9 @@ void *ssl_config_server_create(pool *p, server_rec *s)
 
     sc = ap_palloc(p, sizeof(SSLSrvConfigRec));
     sc->bEnabled               = UNSET;
-    sc->szCertificateFile      = NULL;
-    sc->szKeyFile              = NULL;
     sc->szCACertificatePath    = NULL;
     sc->szCACertificateFile    = NULL;
+    sc->szCertificateChain     = NULL;
     sc->szLogFile              = NULL;
     sc->szCipherSuite          = NULL;
     sc->nLogLevel              = SSL_LOG_NONE;
@@ -186,9 +202,22 @@ void *ssl_config_server_create(pool *p, server_rec *s)
     sc->szPassPhraseDialogPath = NULL;
     sc->nProtocol              = SSL_PROTOCOL_ALL;
     sc->fileLogFile            = NULL;
-    sc->px509Certificate       = NULL;
-    sc->prsaKey                = NULL;
     sc->pSSLCtx                = NULL;
+    sc->szCARevocationPath     = NULL;
+    sc->szCARevocationFile     = NULL;
+    sc->pRevocationStore       = NULL;
+
+    (void)memset(sc->szPublicCertFile, 0, SSL_AIDX_MAX*sizeof(char *));
+    (void)memset(sc->szPrivateKeyFile, 0, SSL_AIDX_MAX*sizeof(char *));
+    (void)memset(sc->pPublicCert, 0, SSL_AIDX_MAX*sizeof(X509 *));
+    (void)memset(sc->pPrivateKey, 0, SSL_AIDX_MAX*sizeof(EVP_PKEY *));
+
+#ifdef SSL_VENDOR
+    sc->ctx = ap_ctx_new(p);
+    ap_hook_use("ap::mod_ssl::vendor::config_server_create",
+                AP_HOOK_SIG4(void,ptr,ptr,ptr), AP_HOOK_MODE_ALL,
+                p, s, sc);
+#endif
 
     return sc;
 }
@@ -201,12 +230,12 @@ void *ssl_config_server_merge(pool *p, void *basev, void *addv)
     SSLSrvConfigRec *base = (SSLSrvConfigRec *)basev;
     SSLSrvConfigRec *add  = (SSLSrvConfigRec *)addv;
     SSLSrvConfigRec *new  = (SSLSrvConfigRec *)ap_palloc(p, sizeof(SSLSrvConfigRec));
+    int i;
 
     cfgMergeBool(bEnabled);
-    cfgMergeString(szCertificateFile);
-    cfgMergeString(szKeyFile);
     cfgMergeString(szCACertificatePath);
     cfgMergeString(szCACertificateFile);
+    cfgMergeString(szCertificateChain);
     cfgMergeString(szLogFile);
     cfgMergeString(szCipherSuite);
     cfgMerge(nLogLevel, SSL_LOG_NONE);
@@ -217,9 +246,24 @@ void *ssl_config_server_merge(pool *p, void *basev, void *addv)
     cfgMergeString(szPassPhraseDialogPath);
     cfgMerge(nProtocol, SSL_PROTOCOL_ALL);
     cfgMerge(fileLogFile, NULL);
-    cfgMerge(px509Certificate, NULL);
-    cfgMerge(prsaKey, NULL);
     cfgMerge(pSSLCtx, NULL);
+    cfgMerge(szCARevocationPath, NULL);
+    cfgMerge(szCARevocationFile, NULL);
+    cfgMerge(pRevocationStore, NULL);
+
+    for (i = 0; i < SSL_AIDX_MAX; i++) {
+        cfgMergeString(szPublicCertFile[i]);
+        cfgMergeString(szPrivateKeyFile[i]);
+        cfgMerge(pPublicCert[i], NULL);
+        cfgMerge(pPrivateKey[i], NULL);
+    }
+
+#ifdef SSL_VENDOR
+    cfgMergeCtx(ctx);
+    ap_hook_use("ap::mod_ssl::vendor::config_server_merge",
+                AP_HOOK_SIG5(void,ptr,ptr,ptr,ptr), AP_HOOK_MODE_ALL,
+                p, base, add, new);
+#endif
 
     return new;
 }
@@ -243,6 +287,13 @@ void *ssl_config_perdir_create(pool *p, char *dir)
 #ifdef SSL_EXPERIMENTAL
     dc->szCACertificatePath    = NULL;
     dc->szCACertificateFile    = NULL;
+#endif
+
+#ifdef SSL_VENDOR
+    dc->ctx = ap_ctx_new(p);
+    ap_hook_use("ap::mod_ssl::vendor::config_perdir_create",
+                AP_HOOK_SIG4(void,ptr,ptr,ptr), AP_HOOK_MODE_ALL,
+                p, dir, dc);
 #endif
 
     return dc;
@@ -280,6 +331,13 @@ void *ssl_config_perdir_merge(pool *p, void *basev, void *addv)
     cfgMergeString(szCACertificateFile);
 #endif
 
+#ifdef SSL_VENDOR
+    cfgMergeCtx(ctx);
+    ap_hook_use("ap::mod_ssl::vendor::config_perdir_merge",
+                AP_HOOK_SIG5(void,ptr,ptr,ptr,ptr), AP_HOOK_MODE_ALL,
+                p, base, add, new);
+#endif
+
     return new;
 }
 
@@ -314,10 +372,14 @@ const char *ssl_cmd_SSLMutex(
         mc->nMutexMode  = SSL_MUTEXMODE_NONE;
     }
     else if (strlen(arg) > 5 && strcEQn(arg, "file:", 5)) {
+#ifndef WIN32
         mc->nMutexMode  = SSL_MUTEXMODE_FILE;
         mc->szMutexFile = ap_psprintf(mc->pPool, "%s.%lu",
-                                      ap_server_root_relative(cmd->pool, arg+5), 
+                                      ap_server_root_relative(cmd->pool, arg+5),
                                       (unsigned long)getpid());
+#else
+        return "SSLMutex: Lockfiles not available on this platform";
+#endif
     }
     else if (strcEQ(arg, "sem")) {
 #ifdef SSL_CAN_USE_SEM
@@ -394,12 +456,12 @@ const char *ssl_cmd_SSLRandomSeed(
         if (!ssl_util_path_check(SSL_PCM_EXISTS, pRS->cpPath))
             return ap_pstrcat(cmd->pool, "SSLRandomSeed: source path '",
                               pRS->cpPath, "' not exists", NULL);
-    if (arg3 == NULL) 
+    if (arg3 == NULL)
         pRS->nBytes = 0; /* read whole file */
     else {
         if (pRS->nSrc == SSL_RSSRC_BUILTIN)
             return "SSLRandomSeed: byte specification not "
-                   "allowd for builtin seed source";
+                   "allowed for builtin seed source";
         pRS->nBytes = atoi(arg3);
         if (pRS->nBytes < 0)
             return "SSLRandomSeed: invalid number of bytes specified";
@@ -433,12 +495,19 @@ const char *ssl_cmd_SSLCertificateFile(
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
     char *cpPath;
+    int i;
 
     cpPath = ap_server_root_relative(cmd->pool, arg);
     if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
         return ap_pstrcat(cmd->pool, "SSLCertificateFile: file '",
                           cpPath, "' not exists or empty", NULL);
-    sc->szCertificateFile = cpPath;
+    for (i = 0; i < SSL_AIDX_MAX && sc->szPublicCertFile[i] != NULL; i++)
+        ;
+    if (i == SSL_AIDX_MAX)
+        return ap_psprintf(cmd->pool, "SSLCertificateFile: only up to %d "
+                          "different certificates per virtual host allowed", 
+                          SSL_AIDX_MAX);
+    sc->szPublicCertFile[i] = cpPath;
     return NULL;
 }
 
@@ -447,12 +516,33 @@ const char *ssl_cmd_SSLCertificateKeyFile(
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
     char *cpPath;
+    int i;
 
     cpPath = ap_server_root_relative(cmd->pool, arg);
     if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
         return ap_pstrcat(cmd->pool, "SSLCertificateKeyFile: file '",
                           cpPath, "' not exists or empty", NULL);
-    sc->szKeyFile = cpPath;
+    for (i = 0; i < SSL_AIDX_MAX && sc->szPrivateKeyFile[i] != NULL; i++)
+        ;
+    if (i == SSL_AIDX_MAX)
+        return ap_psprintf(cmd->pool, "SSLCertificateKeyFile: only up to %d "
+                          "different private keys per virtual host allowed", 
+                          SSL_AIDX_MAX);
+    sc->szPrivateKeyFile[i] = cpPath;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLCertificateChainFile(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    char *cpPath;
+
+    cpPath = ap_server_root_relative(cmd->pool, arg);
+    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
+        return ap_pstrcat(cmd->pool, "SSLCertificateChainFile: file '",
+                          cpPath, "' not exists or empty", NULL);
+    sc->szCertificateChain = cpPath;
     return NULL;
 }
 
@@ -485,7 +575,7 @@ const char *ssl_cmd_SSLCACertificateFile(
 
     cpPath = ap_server_root_relative(cmd->pool, arg);
     if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
-        return ap_pstrcat(cmd->pool, "SSLCACertificateKeyFile: file '",
+        return ap_pstrcat(cmd->pool, "SSLCACertificateFile: file '",
                           cpPath, "' not exists or empty", NULL);
 #ifdef SSL_EXPERIMENTAL
     if (cmd->path == NULL || dc == NULL)
@@ -495,6 +585,34 @@ const char *ssl_cmd_SSLCACertificateFile(
 #else
     sc->szCACertificateFile = cpPath;
 #endif
+    return NULL;
+}
+
+const char *ssl_cmd_SSLCARevocationPath(
+    cmd_parms *cmd, SSLDirConfigRec *dc, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    char *cpPath;
+
+    cpPath = ap_server_root_relative(cmd->pool, arg);
+    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISDIR, cpPath))
+        return ap_pstrcat(cmd->pool, "SSLCARecocationPath: directory '",
+                          cpPath, "' not exists", NULL);
+    sc->szCARevocationPath = cpPath;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLCARevocationFile(
+    cmd_parms *cmd, SSLDirConfigRec *dc, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    char *cpPath;
+
+    cpPath = ap_server_root_relative(cmd->pool, arg);
+    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
+        return ap_pstrcat(cmd->pool, "SSLCARevocationFile: file '",
+                          cpPath, "' not exists or empty", NULL);
+    sc->szCARevocationFile = cpPath;
     return NULL;
 }
 
@@ -542,6 +660,8 @@ const char *ssl_cmd_SSLSessionCache(
 {
     const char *err;
     SSLModConfigRec *mc = myModConfig();
+    char *cp, *cp2;
+    int maxsize;
 
     if ((err = ap_check_cmd_context(cmd, GLOBAL_ONLY)) != NULL)
         return err;
@@ -556,7 +676,34 @@ const char *ssl_cmd_SSLSessionCache(
         mc->szSessionCacheDataFile = ap_pstrdup(mc->pPool,
                                      ap_server_root_relative(cmd->pool, arg+4));
     }
-    else
+    else if (strlen(arg) > 4 && strcEQn(arg, "shm:", 4)) {
+        if (!ap_mm_useable())
+            return "SSLSessionCache: shared memory cache not useable on this platform";
+        mc->nSessionCacheMode      = SSL_SCMODE_SHM;
+        mc->szSessionCacheDataFile = ap_pstrdup(mc->pPool,
+                                     ap_server_root_relative(cmd->pool, arg+4));
+        mc->tSessionCacheDataTable = NULL;
+        mc->nSessionCacheDataSize  = 1024*512; /* 512KB */
+        if ((cp = strchr(mc->szSessionCacheDataFile, '(')) != NULL) {
+            *cp++ = NUL;
+            if ((cp2 = strchr(cp, ')')) == NULL)
+                return "SSLSessionCache: Invalid argument: no closing parenthesis";
+            *cp2 = NUL;
+            mc->nSessionCacheDataSize = atoi(cp);
+            if (mc->nSessionCacheDataSize <= 8192)
+                return "SSLSessionCache: Invalid argument: size has to be >= 8192 bytes";
+            maxsize = ap_mm_core_maxsegsize();
+            if (mc->nSessionCacheDataSize >= maxsize)
+                return ap_psprintf(cmd->pool, "SSLSessionCache: Invalid argument: "
+                                   "size has to be < %d bytes on this platform", maxsize);
+        }
+    }
+	else
+#ifdef SSL_VENDOR
+        if (!ap_hook_use("ap::mod_ssl::vendor::cmd_sslsessioncache",
+             AP_HOOK_SIG4(void,ptr,ptr,ptr), AP_HOOK_MODE_ALL,
+             cmd, arg, mc))
+#endif
         return "SSLSessionCache: Invalid argument";
     return NULL;
 }
@@ -638,6 +785,10 @@ const char *ssl_cmd_SSLOptions(
             opt = SSL_OPT_EXPORTCERTDATA;
         else if (strcEQ(w, "FakeBasicAuth"))
             opt = SSL_OPT_FAKEBASICAUTH;
+        else if (strcEQ(w, "StrictRequire"))
+            opt = SSL_OPT_STRICTREQUIRE;
+        else if (strcEQ(w, "OptRenegotiate"))
+            opt = SSL_OPT_OPTRENEGOTIATE;
         else
             return ap_pstrcat(cmd->pool, "SSLOptions: Illegal option '", w, "'", NULL);
 

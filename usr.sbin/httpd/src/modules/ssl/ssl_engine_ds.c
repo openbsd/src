@@ -1,8 +1,8 @@
 /*                      _             _
-**  _ __ ___   ___   __| |    ___ ___| |
-** | '_ ` _ \ / _ \ / _` |   / __/ __| |
-** | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-** |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+**  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+** | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+** |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 **                      |_____|
 **  ssl_engine_ds.c
 **  Additional Data Structures
@@ -27,7 +27,7 @@
  *    software must display the following acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * 4. The names "mod_ssl" must not be used to endorse or promote
  *    products derived from this software without prior written
@@ -42,7 +42,7 @@
  *    acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE

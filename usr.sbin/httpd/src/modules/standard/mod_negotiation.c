@@ -140,7 +140,6 @@ static const command_rec negotiation_cmds[] =
 typedef struct accept_rec {
     char *name;                 /* MUST be lowercase */
     float quality;
-    float max_bytes;
     float level;
     char *charset;              /* for content-type only */
 } accept_rec;
@@ -315,7 +314,6 @@ static const char *get_entry(pool *p, accept_rec *result,
                              const char *accept_line)
 {
     result->quality = 1.0f;
-    result->max_bytes = 0.0f;
     result->level = 0.0f;
     result->charset = "";
 
@@ -391,10 +389,6 @@ static const char *get_entry(pool *p, accept_rec *result,
         if (parm[0] == 'q'
             && (parm[1] == '\0' || (parm[1] == 's' && parm[2] == '\0'))) {
             result->quality = atof(cp);
-        }
-        else if (parm[0] == 'm' && parm[1] == 'x' &&
-                 parm[2] == 'b' && parm[3] == '\0') {
-            result->max_bytes = atof(cp);
         }
         else if (parm[0] == 'l' && !strcmp(&parm[1], "evel")) {
             result->level = atof(cp);
@@ -511,81 +505,81 @@ static negotiation_state *parse_accept_headers(request_rec *r)
 static void parse_negotiate_header(request_rec *r, negotiation_state *neg)
 {
     const char *negotiate = ap_table_get(r->headers_in, "Negotiate");
+    char *tok;
     
-    if (negotiate) {
-        /* Negotiate: header tells us UA does transparent negotiation */
+    /* First, default to no TCN, no Alternates, and the original Apache
+     * negotiation algorithm with fiddles for broken browser configs.
+     *
+     * To save network bandwidth, we do not configure to send an
+     * Alternates header to the user agent by default.  User
+     * agents that want an Alternates header for agent-driven
+     * negotiation will have to request it by sending an
+     * appropriate Negotiate header.
+     */
+    neg->ua_supports_trans   = 0;
+    neg->send_alternates     = 0;
+    neg->may_choose          = 1;
+    neg->use_rvsa            = 0;
+    neg->dont_fiddle_headers = 0;
 
-        /* sending Alternates on non-transparent resources is allowed,
-         * and may even be useful, but we don't for now, also
-         * because it could clash with an Alternates header set by
-         * a sub- or super- request on a transparent resource.
+    if (!negotiate)
+        return;
+
+    if (strcmp(negotiate, "trans") == 0) {
+        /* Lynx 2.7 and 2.8 send 'negotiate: trans' even though they
+         * do not support transparent content negotiation, so for Lynx we
+         * ignore the negotiate header when its contents are exactly "trans".
+         * If future versions of Lynx ever need to say 'negotiate: trans',
+         * they can send the equivalent 'negotiate: trans, trans' instead
+         * to avoid triggering the workaround below. 
          */
+        const char *ua = ap_table_get(r->headers_in, "User-Agent");
 
-        while (*negotiate) {
-            char *tok = ap_get_token(neg->pool, &negotiate, 1);
-            char *cp;
+        if (ua && (strncmp(ua, "Lynx", 4) == 0))
+            return;
+    }
 
-            for (cp = tok; (*cp && !ap_isspace(*cp) && *cp != '='); ++cp) {
-                *cp = ap_tolower(*cp);
+    neg->may_choose = 0;  /* An empty Negotiate would require 300 response */
+
+    while ((tok = ap_get_list_item(neg->pool, &negotiate)) != NULL) {
+
+        if (strcmp(tok, "trans") == 0 ||
+            strcmp(tok, "vlist") == 0 ||
+            strcmp(tok, "guess-small") == 0 ||
+            ap_isdigit(tok[0]) ||
+            strcmp(tok, "*") == 0) {
+
+            /* The user agent supports transparent negotiation */
+            neg->ua_supports_trans = 1;
+
+            /* Send-alternates could be configurable, but note
+             * that it must be 1 if we have 'vlist' in the
+             * negotiate header.
+             */
+            neg->send_alternates = 1;
+
+            if (strcmp(tok, "1.0") == 0) {
+                /* we may use the RVSA/1.0 algorithm, configure for it */
+                neg->may_choose = 1;
+                neg->use_rvsa = 1;
+                neg->dont_fiddle_headers = 1;
             }
-            *cp = 0;
-            
-            if (strcmp(tok, "trans") == 0 ||
-                strcmp(tok, "vlist") == 0 ||
-                strcmp(tok, "guess-small") == 0 ||
-                ap_isdigit(tok[0]) ||
-                strcmp(tok, "*") == 0) {
-
-                /* The user agent supports transparent negotiation */
-                neg->ua_supports_trans = 1;
-
-                /* Send-alternates could be configurable, but note
-                 * that it must be 1 if we have 'vlist' in the
-                 * negotiate header.
+            else if (tok[0] == '*') {
+                /* we may use any variant selection algorithm, configure
+                 * to use the Apache algorithm
                  */
-                neg->send_alternates = 1;
-
-                if (strcmp(tok, "1.0") == 0) {
-                    /* we may use the RVSA/1.0 algorithm, configure for it */
-                    neg->may_choose = 1;
-                    neg->use_rvsa = 1;
-                    neg->dont_fiddle_headers = 1;
-                }
-                else if (strcmp(tok, "*") == 0) {
-                    /* we may use any variant selection algorithm, configure
-                     * to use the Apache algorithm
-                     */
-                    neg->may_choose = 1;
-                    
-                    /* We disable header fiddles on the assumption that a
-                     * client sending Negotiate knows how to send correct
-                     * headers which don't need fiddling.
-                     */
-                    neg->dont_fiddle_headers = 1; 
-                }
+                neg->may_choose = 1;
+                
+                /* We disable header fiddles on the assumption that a
+                 * client sending Negotiate knows how to send correct
+                 * headers which don't need fiddling.
+                 */
+                neg->dont_fiddle_headers = 1; 
             }
-
-            if (*negotiate)
-                negotiate++; /* skip over , */
         }
     }
 
-    if (!neg->ua_supports_trans) {
-        /* User agent does not support transparent negotiation,
-         * configure to do server-driven negotiation with the Apache
-         * algorithm.
-         */
-        neg->may_choose = 1;
-
-        /* To save network bandwidth, we do not configure to send an
-         * Alternates header to the user agent in this case.  User
-         * agents which want an Alternates header for agent-driven
-         * negotiation will have to request it by sending an
-         * appropriate Negotiate header.
-         */
-    }
-
-#if NEG_DEBUG
+#ifdef NEG_DEBUG
     fprintf(stderr, "dont_fiddle_headers=%d use_rvsa=%d ua_supports_trans=%d "
             "send_alternates=%d, may_choose=%d\n",
             neg->dont_fiddle_headers, neg->use_rvsa,  
@@ -613,7 +607,6 @@ static void maybe_add_default_accepts(negotiation_state *neg,
         new_accept->name = "*/*";
         new_accept->quality = 1.0f;
         new_accept->level = 0.0f;
-        new_accept->max_bytes = 0.0f;
     }    
 
     new_accept = (accept_rec *) ap_push_array(neg->accepts);
@@ -626,7 +619,6 @@ static void maybe_add_default_accepts(negotiation_state *neg,
         new_accept->quality = prefer_scripts ? 2.0f : 0.001f;
     }
     new_accept->level = 0.0f;
-    new_accept->max_bytes = 0.0f;
 }
 
 /*****************************************************************
@@ -837,9 +829,6 @@ static int read_type_map(negotiation_state *neg, request_rec *rr)
                 has_content = 1;
             }
             else if (!strncmp(buffer, "description:", 12)) {
-                /* XXX: The possibility to set a description is
-                 * currently not documented.
-                 */
                 char *desc = ap_pstrdup(neg->pool, body);
                 char *cp;
 
@@ -1523,13 +1512,6 @@ static void set_accept_quality(negotiation_state *neg, var_rec *variant)
             }
         }
 
-        /* Check maxbytes -- not in HTTP/1.1 or TCN */
-
-        if (type->max_bytes > 0
-            && (find_content_length(neg, variant) > type->max_bytes)) {
-            continue;
-        }
-
         /* If we are allowed to mess with the q-values
          * and have no explicit q= parameters in the accept header,
          * make wildcards very low, so we have a low chance
@@ -1556,7 +1538,7 @@ static void set_accept_quality(negotiation_state *neg, var_rec *variant)
 }
 
 /* For a given variant, find the 'q' value of the charset given
- * on the Accept-Charset line. If not charsets are listed,
+ * on the Accept-Charset line. If no charsets are listed,
  * assume value of '1'.
  */
 static void set_charset_quality(negotiation_state *neg, var_rec *variant)
@@ -1763,20 +1745,21 @@ static int is_variant_better_rvsa(negotiation_state *neg, var_rec *variant,
         variant->charset_quality *
         variant->lang_quality;
 
-   /* Make sure that variants with a very low nonzero q value
-    * do not get rounded down to 0
+   /* RFC 2296 calls for the result to be rounded to 5 decimal places,
+    * but we don't do that because it serves no useful purpose other
+    * than to ensure that a remote algorithm operates on the same
+    * precision as ours.  That is silly, since what we obviously want
+    * is for the algorithm to operate on the best available precision
+    * regardless of who runs it.  Since the above calculation may
+    * result in significant variance at 1e-12, rounding would be bogus.
     */
-   if (q <= 0.0f)
-       q = 0.0f; 
-   else if (q < 0.00001f)
-       q = 0.00001f; 
 
 #ifdef NEG_DEBUG
     fprintf(stderr, "Variant: file=%s type=%s lang=%s sourceq=%1.3f "
            "mimeq=%1.3f langq=%1.3f charq=%1.3f encq=%1.3f "
            "q=%1.5f definite=%d\n",            
             (variant->file_name ? variant->file_name : ""),
-            (variant->mime_name ? variant->mime_name : ""),
+            (variant->mime_type ? variant->mime_type : ""),
             (variant->content_languages
              ? ap_array_pstrcat(neg->pool, variant->content_languages, ',')
              : ""),
@@ -1784,11 +1767,12 @@ static int is_variant_better_rvsa(negotiation_state *neg, var_rec *variant,
             variant->mime_type_quality,
             variant->lang_quality,
             variant->charset_quality,
-            variant->encoding_qual             q,
+            variant->encoding_quality,
+            q,
             variant->definite);
 #endif
 
-    if (q == 0.0f) {
+    if (q <= 0.0f) {
         return 0;
     }
     if (q > bestq) {
@@ -1800,19 +1784,6 @@ static int is_variant_better_rvsa(negotiation_state *neg, var_rec *variant,
          * this variant, then we prefer this variant
          */
         if (variant->encoding_quality > best->encoding_quality) {
-            *p_bestq = q;
-            return 1;
-        }
-        /* If the best variant's charset is ISO-8859-1 and this variant has
-         * the same charset quality, then we prefer this variant
-         */
-        if (variant->charset_quality == best->charset_quality &&
-            (variant->content_charset != NULL &&
-             *variant->content_charset != '\0' &&
-             strcmp(variant->content_charset, "iso-8859-1") != 0) &&
-            (best->content_charset == NULL ||
-             *best->content_charset == '\0' ||
-             strcmp(best->content_charset, "iso-8859-1") == 0)) {
             *p_bestq = q;
             return 1;
         }
@@ -1833,7 +1804,7 @@ static int is_variant_better(negotiation_state *neg, var_rec *variant,
     /* For non-transparent negotiation, server can choose how
      * to handle the negotiation. We'll use the following in
      * order: content-type, language, content-type level, charset,
-     * content length.
+     * content encoding, content length.
      *
      * For each check, we have three possible outcomes:
      *   This variant is worse than current best: return 0
@@ -1852,6 +1823,22 @@ static int is_variant_better(negotiation_state *neg, var_rec *variant,
     /* First though, eliminate this variant if it is not
      * acceptable by type, charset, encoding or language.
      */
+
+#ifdef NEG_DEBUG
+    fprintf(stderr, "Variant: file=%s type=%s lang=%s sourceq=%1.3f "
+           "mimeq=%1.3f langq=%1.3f langidx=%d charq=%1.3f encq=%1.3f \n",
+            (variant->file_name ? variant->file_name : ""),
+            (variant->mime_type ? variant->mime_type : ""),
+            (variant->content_languages
+             ? ap_array_pstrcat(neg->pool, variant->content_languages, ',')
+             : ""),
+            variant->source_quality,
+            variant->mime_type_quality,
+            variant->lang_quality,
+            variant->lang_index,
+            variant->charset_quality,
+            variant->encoding_quality);
+#endif
 
     if (variant->encoding_quality == 0.0f ||
         variant->lang_quality == 0.0f ||
@@ -1879,17 +1866,13 @@ static int is_variant_better(negotiation_state *neg, var_rec *variant,
         return 1;
     }
 
-    /* if language qualities were equal, try the LanguagePriority
-     * stuff
-     */
-    /* XXX: TODO: there is a slight discrepancy between how this
-     * behaves and how it described in the documentation
-     */
-    if (best->lang_index != -1 && variant->lang_index > best->lang_index) {
+    /* if language qualities were equal, try the LanguagePriority stuff */
+    if (best->lang_index != -1 &&
+        (variant->lang_index == -1 || variant->lang_index > best->lang_index)) {
         return 0;
     }
     if (variant->lang_index != -1 &&
-        (variant->lang_index < best->lang_index || best->lang_index == -1)) {
+        (best->lang_index == -1 || variant->lang_index < best->lang_index)) {
         *p_bestq = q;
         return 1;
     }
@@ -1912,9 +1895,6 @@ static int is_variant_better(negotiation_state *neg, var_rec *variant,
     }
     /* If the best variant's charset is ISO-8859-1 and this variant has
      * the same charset quality, then we prefer this variant
-     */
-    /* XXX: TODO: this specific tie-breaker is not described in the
-     * documentation
      */
 
     if (variant->charset_quality > best->charset_quality ||
@@ -2211,14 +2191,6 @@ static void set_neg_headers(request_rec *r, negotiation_state *neg,
                         ap_array_pstrcat(r->pool, arr, '\0'));
     } 
 
-    /* Theoretically the negotiation result _always_ has a dependence on
-     * the contents of the Accept header because we do 'mxb='
-     * processing in set_accept_quality().  However, variations in mxb
-     * only affect the relative quality of several acceptable variants,
-     * so there is no reason to worry about an unacceptable variant
-     * being mistakenly prioritized.  We therefore ignore mxb in deciding
-     * whether or not to include Accept in the Vary field value.
-     */
     if (neg->is_transparent || vary_by_type || vary_by_language ||
         vary_by_language || vary_by_charset || vary_by_encoding) {
 
@@ -2437,7 +2409,6 @@ static int do_negotiation(request_rec *r, negotiation_state *neg,
     int alg_result;              /* result of variant selection algorithm */
     int res;
     int j;
-    int unencoded_variants = 0;
 
     /* Decide if resource is transparently negotiable */
 
@@ -2465,20 +2436,7 @@ static int do_negotiation(request_rec *r, negotiation_state *neg,
              */
             if (strchr(variant->file_name, '/'))
                 neg->is_transparent = 0;
-
-            if (!variant->content_encoding)
-                unencoded_variants++;
         }
-        
-        /* If there are less than 2 unencoded variants, we always
-         * switch to server-driven negotiation, regardless of whether
-         * we are contacted by a client capable of transparent
-         * negotiation.  We do this because our current TCN
-         * implementation does not deal well with the case of having 0
-         * or 1 unencoded variants.
-         */
-        if (unencoded_variants < 2)
-            neg->is_transparent = 0;
     }
 
     if (neg->is_transparent)  {

@@ -88,13 +88,28 @@
  *
  */
 
+/*
+ * The ap_MD5Encode() routine uses much code obtained from the FreeBSD 3.0
+ * MD5 crypt() function, which is licenced as follows:
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <phk@login.dknet.dk> wrote this file.  As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
+ * ----------------------------------------------------------------------------
+ */
+
 #include <string.h>
 
 #include "ap_config.h"
 #include "ap_md5.h"
+#include "ap.h"
 #ifdef CHARSET_EBCDIC
 #include "ebcdic.h"
 #endif /*CHARSET_EBCDIC*/
+#if HAVE_CRYPT_H
+#include <crypt.h>
+#endif
 
 /* Constants for MD5Transform routine.
  */
@@ -166,7 +181,7 @@ static unsigned char PADDING[64] =
 
 /* MD5 initialization. Begins an MD5 operation, writing a new context.
  */
-API_EXPORT(void) ap_MD5Init(AP_MD5_CTX * context)
+API_EXPORT(void) ap_MD5Init(AP_MD5_CTX *context)
 {
     context->count[0] = context->count[1] = 0;
     /* Load magic initialization constants. */
@@ -180,8 +195,8 @@ API_EXPORT(void) ap_MD5Init(AP_MD5_CTX * context)
    operation, processing another message block, and updating the
    context.
  */
-API_EXPORT(void) ap_MD5Update(AP_MD5_CTX * context, const unsigned char *input,
-			   unsigned int inputLen)
+API_EXPORT(void) ap_MD5Update(AP_MD5_CTX *context, const unsigned char *input,
+			      unsigned int inputLen)
 {
     unsigned int i, idx, partLen;
 
@@ -189,8 +204,10 @@ API_EXPORT(void) ap_MD5Update(AP_MD5_CTX * context, const unsigned char *input,
     idx = (unsigned int) ((context->count[0] >> 3) & 0x3F);
 
     /* Update number of bits */
-    if ((context->count[0] += ((UINT4) inputLen << 3)) < ((UINT4) inputLen << 3))
+    if ((context->count[0] += ((UINT4) inputLen << 3))
+	< ((UINT4) inputLen << 3)) {
 	context->count[1]++;
+    }
     context->count[1] += (UINT4) inputLen >> 29;
 
     partLen = 64 - idx;
@@ -201,13 +218,15 @@ API_EXPORT(void) ap_MD5Update(AP_MD5_CTX * context, const unsigned char *input,
 	memcpy(&context->buffer[idx], input, partLen);
 	MD5Transform(context->state, context->buffer);
 
-	for (i = partLen; i + 63 < inputLen; i += 64)
+	for (i = partLen; i + 63 < inputLen; i += 64) {
 	    MD5Transform(context->state, &input[i]);
+	}
 
 	idx = 0;
     }
-    else
+    else {
 	i = 0;
+    }
 
     /* Buffer remaining input */
     memcpy(&context->buffer[idx], &input[i], inputLen - i);
@@ -224,8 +243,9 @@ API_EXPORT(void) ap_MD5Update(AP_MD5_CTX * context, const unsigned char *input,
 
 	idx = 0;
     }
-    else
+    else {
 	i = 0;
+    }
 
     /* Buffer remaining input */
     ebcdic2ascii_strictly(&context->buffer[idx], &input[i], inputLen - i);
@@ -235,7 +255,7 @@ API_EXPORT(void) ap_MD5Update(AP_MD5_CTX * context, const unsigned char *input,
 /* MD5 finalization. Ends an MD5 message-digest operation, writing the
    the message digest and zeroizing the context.
  */
-API_EXPORT(void) ap_MD5Final(unsigned char digest[16], AP_MD5_CTX * context)
+API_EXPORT(void) ap_MD5Final(unsigned char digest[16], AP_MD5_CTX *context)
 {
     unsigned char bits[8];
     unsigned int idx, padLen;
@@ -262,10 +282,10 @@ API_EXPORT(void) ap_MD5Final(unsigned char digest[16], AP_MD5_CTX * context)
     /* Pad out to 56 mod 64. */
     idx = (unsigned int) ((context->count[0] >> 3) & 0x3f);
     padLen = (idx < 56) ? (56 - idx) : (120 - idx);
-    ap_MD5Update(context, PADDING, padLen);
+    ap_MD5Update(context, (const unsigned char *)PADDING, padLen);
 
     /* Append length (before padding) */
-    ap_MD5Update(context, bits, 8);
+    ap_MD5Update(context, (const unsigned char *)bits, 8);
 
     /* Store state in digest */
     Encode(digest, context->state, 16);
@@ -380,7 +400,7 @@ static void Encode(unsigned char *output, const UINT4 *input, unsigned int len)
 }
 
 /* Decodes input (unsigned char) into output (UINT4). Assumes len is
-   a multiple of 4.
+ * a multiple of 4.
  */
 static void Decode(UINT4 *output, const unsigned char *input, unsigned int len)
 {
@@ -389,4 +409,175 @@ static void Decode(UINT4 *output, const unsigned char *input, unsigned int len)
     for (i = 0, j = 0; j < len; i++, j += 4)
 	output[i] = ((UINT4) input[j]) | (((UINT4) input[j + 1]) << 8) |
 	    (((UINT4) input[j + 2]) << 16) | (((UINT4) input[j + 3]) << 24);
+}
+
+/*
+ * The following MD5 password encryption code was largely borrowed from
+ * the FreeBSD 3.0 /usr/src/lib/libcrypt/crypt.c file, which is
+ * licenced as stated at the top of this file.
+ */
+API_EXPORT(void) ap_to64(char *s, unsigned long v, int n)
+{
+    static unsigned char itoa64[] =         /* 0 ... 63 => ASCII - 64 */
+	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    while (--n >= 0) {
+	*s++ = itoa64[v&0x3f];
+	v >>= 6;
+    }
+}
+
+API_EXPORT(void) ap_MD5Encode(const unsigned char *pw,
+			      const unsigned char *salt,
+			      char *result, size_t nbytes)
+{
+    /*
+     * Minimum size is 8 bytes for salt, plus 1 for the trailing NUL,
+     * plus 4 for the '$' separators, plus the password hash itself.
+     * Let's leave a goodly amount of leeway.
+     */
+
+    char passwd[120], *p;
+    const unsigned char *sp, *ep;
+    unsigned char final[16];
+    int i;
+    unsigned int sl;
+    int pl;
+    unsigned int pwlen;
+    AP_MD5_CTX ctx, ctx1;
+    unsigned long l;
+
+    /* 
+     * Refine the salt first.  It's possible we were given an already-hashed
+     * string as the salt argument, so extract the actual salt value from it
+     * if so.  Otherwise just use the string up to the first '$' as the salt.
+     */
+    sp = salt;
+
+    /*
+     * If it starts with the magic string, then skip that.
+     */
+    if (strncmp((char *)sp, AP_MD5PW_ID, AP_MD5PW_IDLEN) == 0) {
+	sp += AP_MD5PW_IDLEN;
+    }
+
+    /*
+     * It stops at the first '$' or 8 chars, whichever comes first
+     */
+    for (ep = sp; (*ep != '\0') && (*ep != '$') && (ep < (sp + 8)); ep++) {
+	continue;
+    }
+
+    /*
+     * Get the length of the true salt
+     */
+    sl = ep - sp;
+
+    /*
+     * 'Time to make the doughnuts..'
+     */
+    ap_MD5Init(&ctx);
+
+    pwlen = strlen((char *)pw);
+    /*
+     * The password first, since that is what is most unknown
+     */
+    ap_MD5Update(&ctx, pw, pwlen);
+
+    /*
+     * Then our magic string
+     */
+    ap_MD5Update(&ctx, (const unsigned char *) AP_MD5PW_ID, AP_MD5PW_IDLEN);
+
+    /*
+     * Then the raw salt
+     */
+    ap_MD5Update(&ctx, sp, sl);
+
+    /*
+     * Then just as many characters of the MD5(pw, salt, pw)
+     */
+    ap_MD5Init(&ctx1);
+    ap_MD5Update(&ctx1, pw, pwlen);
+    ap_MD5Update(&ctx1, sp, sl);
+    ap_MD5Update(&ctx1, pw, pwlen);
+    ap_MD5Final(final, &ctx1);
+    for(pl = pwlen; pl > 0; pl -= 16) {
+	ap_MD5Update(&ctx, final, (pl > 16) ? 16 : (unsigned int) pl);
+    }
+
+    /*
+     * Don't leave anything around in vm they could use.
+     */
+    memset(final, 0, sizeof(final));
+
+    /*
+     * Then something really weird...
+     */
+    for (i = pwlen; i != 0; i >>= 1) {
+	if (i & 1) {
+	    ap_MD5Update(&ctx, final, 1);
+	}
+	else {
+	    ap_MD5Update(&ctx, pw, 1);
+	}
+    }
+
+    /*
+     * Now make the output string.  We know our limitations, so we
+     * can use the string routines without bounds checking.
+     */
+    ap_cpystrn(passwd, AP_MD5PW_ID, AP_MD5PW_IDLEN + 1);
+    ap_cpystrn(passwd + AP_MD5PW_IDLEN, (char *)sp, sl + 1);
+    passwd[AP_MD5PW_IDLEN + sl]     = '$';
+    passwd[AP_MD5PW_IDLEN + sl + 1] = '\0';
+
+    ap_MD5Final(final, &ctx);
+
+    /*
+     * And now, just to make sure things don't run too fast..
+     * On a 60 Mhz Pentium this takes 34 msec, so you would
+     * need 30 seconds to build a 1000 entry dictionary...
+     */
+    for (i = 0; i < 1000; i++) {
+	ap_MD5Init(&ctx1);
+	if (i & 1) {
+	    ap_MD5Update(&ctx1, pw, pwlen);
+	}
+	else {
+	    ap_MD5Update(&ctx1, final, 16);
+	}
+	if (i % 3) {
+	    ap_MD5Update(&ctx1, sp, sl);
+	}
+
+	if (i % 7) {
+	    ap_MD5Update(&ctx1, pw, pwlen);
+	}
+
+	if (i & 1) {
+	    ap_MD5Update(&ctx1, final, 16);
+	}
+	else {
+	    ap_MD5Update(&ctx1, pw, pwlen);
+	}
+	ap_MD5Final(final,&ctx1);
+    }
+
+    p = passwd + strlen(passwd);
+
+    l = (final[ 0]<<16) | (final[ 6]<<8) | final[12]; ap_to64(p, l, 4); p += 4;
+    l = (final[ 1]<<16) | (final[ 7]<<8) | final[13]; ap_to64(p, l, 4); p += 4;
+    l = (final[ 2]<<16) | (final[ 8]<<8) | final[14]; ap_to64(p, l, 4); p += 4;
+    l = (final[ 3]<<16) | (final[ 9]<<8) | final[15]; ap_to64(p, l, 4); p += 4;
+    l = (final[ 4]<<16) | (final[10]<<8) | final[ 5]; ap_to64(p, l, 4); p += 4;
+    l =                    final[11]                ; ap_to64(p, l, 2); p += 2;
+    *p = '\0';
+
+    /*
+     * Don't leave anything around in vm they could use.
+     */
+    memset(final, 0, sizeof(final));
+
+    ap_cpystrn(result, passwd, nbytes - 1);
 }

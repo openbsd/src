@@ -1,3 +1,877 @@
+Changes with Apache 1.3.9
+
+  *) Remove bogus error message when a redirect doesn't set Location.
+     Instead, use an empty string to avoid coredump if the error message
+     was supposed to include a location.  [Roy Fielding]
+
+  *) Don't allow configure to include mod_auth_digest unless it is
+     explicitly requested, even if the user asked for all modules.
+     [Roy Fielding]
+
+  *) Translate module names to dll names for OS/2 so that they are no more
+     than 8 characters long and have an extension of "dll" instead of "so".
+     [Brian Havard]
+
+  *) Print out pointer to Rule DEV_RANDOM when truerand lib not found.
+     Fix test-compile check to check for randbyte instead of trand32.
+     Use ap_base64encode_binary/decode instead of copy in mod_auth_digest.c
+     and tweak to make Amaya happier.  [Ronald Tschalär]
+
+  *) Ensure that the installed expat include files are world readable,
+     just like the other header files.  [Martin Kraemer]
+
+  *) Fixed generated AddModule adjustments in APACI's `configure' script
+     in order to allow (new) modules like mod_vhost_alias to be handled
+     correctly (which was touched by the adjustments for mod_alias).
+     [Ralf S. Engelschall]
+
+  *) For binary builds, add -R flag to apachectl to work around the lack of
+     an absolute path to the ./libexec directory where the libhttp.ep file
+     is needed for SHARED_CORE architectures.  [Randy Terbush]
+
+  *) WIN32: Create the CGI script process as DETACHED.  This may solve the
+     problem observed by some Win95/98 users where they get CGI script
+     output sent to the console.  [Bill Stoddard]
+
+  *) Fix (re)naming in the uuencode/decode section. The ap/ap_
+     routines are now called ap_base64* and are 'plain' (i.e., no 
+     pool access or anything clever). Inside util.c the routines acting
+     like pstrdup are called ap_pbase64encode() and ap_pbase64decode().
+     The oddly named ap_uuencode(), ap_uudecode() are kept around for
+     now but deprecated.  [dirkx]
+
+  *) Clean up the base64 and SHA1 additions and make sure they are
+     represented in the ApacheCore.def, ApacheCoreOS2.def, and httpd.exp
+     files.  [Roy Fielding]
+
+  *) WIN32: Migrate to InstallShield 5.5 and provide a bit more error
+     checking.  Allow compiling on VS 6.0.  [Randy Terbush]
+
+  *) Fixed assumption of absolute paths in binbuild.sh.  [Tony Finch]
+
+  *) Use TestCompile to search for the truerand library (rather than blindly
+     assuming its existence). If it is not found, complain (but do not
+     exit - yet).  [Martin Kraemer]
+
+  *) We forgot to add the new exported function names to
+     src/support/httpd.exp.  [Bill Stoddard, Randy Terbush]
+
+  *) Add description of -T command-line option to usage().
+     [Ralf S. Engelschall]
+
+  *) For "some" platforms (notably, EBCDIC based ones), libos needs to be
+     searched only AFTER libap has been searched, because libap needs
+     some symbols from libos.  [Martin Kraemer]
+
+  *) Fix conflict with original mod_digest related to the symbol of the
+     module dispatch list (which has to be unique for DSO and follow the
+     usual conventions for the installation procedure).
+     [Ralf S. Engelschall]
+
+  *) Add a dbm-library check for the "usual places" (-ldbm, -lndbm, -ldb)
+     for other platforms as well.  [Martin Kraemer]
+
+  *) Make ap_sha1.c compile for EBCDIC platforms: replace remaining LONG
+     types by AP_LONG and replace reference to renamed variable 'ubuf'
+     by 'buffer'.  [Martin Kraemer]
+
+Changes with Apache 1.3.8 [not released]
+
+  *) Flush the output buffer immediately after sending an error or redirect
+     response, since the result may be needed by the client to abort a
+     long data transfer or restart a series of pipelined requests.
+     [Tom Vaughan <tvaughan@aventail.com>, Roy Fielding]
+
+  *) PORT: Improved compilation and DSO support on Sequent DYNIX/ptx.
+     [Ian Turner <iant@sequent.com>] PR#4735
+
+  *) Local struct mmap in http_core.c conflicted with system structure
+     name on DYNIX -- changed to mmap_rec.  [Roy Fielding] PR#4735
+
+  *) Added updated mod_digest as modules/experimental/mod_auth_digest.
+     [Ronald Tschalär <ronald@innovation.ch>]
+
+  *) Fix a memory leak where the module counts were getting messed
+     up across restarts.  [David Harris <dharris@drh.net>]
+
+  *) CIDR addresses such as a.b.c.d/24 where d != 0 weren't handled
+     properly in mod_access.
+     ["Paul J. Reder" <rederpj@raleigh.ibm.com>] PR#4770
+
+  *) RewriteLock/RewriteMap didn't work properly with virtual hosts.
+     [Dmitry Khrustalev <dima@bog.msu.su>] PR#3874
+
+  *) PORT: Support for compaq/tandem/com.
+     [Michael Ottati <michael.ottati@compaq.com>, dirkx]
+
+  *) Added SHA1 password encryption support to easy migration from 
+     Netscape servers. See support/SHA1 for more information.
+     Caused the separation of ap_md5.c into md5, sha1 and a general
+     ap_checkpass.c with just a validate_passwd routine. Added a
+     couple of flags to support/htpasswd. Some reuse of the to64()
+     function; hence renamed to ap_to64().
+     [Dirk-Willem van Gulik, Clinton Wong <clintdw@netcom.com>]
+
+  *) Change for EBCDIC platforms (TPF and BS2000) to correctly deal
+     with ASCII/EBCDIC conversions in "ident" query.
+     [David McCreedy <McCreedy@us.ibm.com>]
+
+  *) Get rid of redefinition warning on MAC_OS_X_SERVER platform.
+     Change "Power Macintosh" to Power* so if uname prints "Power Book"
+     we're still happy on Rhapsody platforms.  [Wilfredo Sanchez]
+
+  *) Fix SIGSEGV on some systems because the Vary fix below included
+     a call to table_do with a variable argument list that was not
+     NULL terminated.  Replaced with better implementation. [Roy Fielding]
+
+Changes with Apache 1.3.7 [not released]
+
+  *) The "Vary" response header field is now sanitised right before
+     the header is sent back to the client.  Multiple "Vary" fields
+     are combined, and duplicate tokens (e.g., "Vary: host, host" or
+     "Vary: host, negotiate, host, accept-language") are reduced to
+     single instances.  This is a better solution than the force-no-vary
+     one (which is still valid for clients that can't cope with Vary
+     at all).  PR#3118 [Dean Gaudet, Roy Fielding, Ken Coar]
+
+  *) Portability changes for BeOS. [David Reid abb37@dial.pipex.com]
+
+  *) Link DSO's with "gcc -shared" instead of "ld -Bshareable" at 
+     least on Linux and FreeBSD for now.  
+     [Rasmus Lerdorf]
+
+  *) Win32: More apache -k restart work. Restarts are now honored
+     immediately and connections in the listen queue are -not- lost.
+     This is made possible by the use of the WSADuplicateSocket()
+     call.  The listeners are opened in the parent, duplicated, then
+     the duplicates are passed to the child. The original listen sockets 
+     are not closed by the parent across a restart, thus the listen queue 
+     is preserved.
+     [Bill Stoddard <stoddard@raleigh.ibm.com>]
+
+  *) Fix handling of case when a client has sent "Expect: 100-continue"
+     and we are going to respond with an error, but get stuck waiting to
+     discard the body in the pointless hope of preserving the connection.
+     [Roy Fielding, Joe Orton <jeo101@york.ac.uk>] PR#4499, PR#3806
+
+  *) Fix 'configure' to work correctly with SysV-based versions of
+     'tr' (consistent with Configure's use as well). [Jim Jagielski]
+
+  *) apxs: Add "-S var=val" option which allows for override of CFG_*
+     built-in values. Add "-e" option which works like -i but doesn't
+     install the DSO; useful for editing httpd.conf with apxs. Fix
+     editing code so that multiple invocations of apxs -a will not
+     create duplicate LoadModule/AddModule entries; apxs can now be
+     used to re- enable/disable a module.  [Wilfredo Sanchez]
+
+  *) Win32: Update the server to use Winsock 2. Specifically, link with
+     ws2_32.lib rather than wsock32.lib.  This gives us access to 
+     WSADuplcateSocket() in addition to some other enhanced comm APIs.
+     Win 95 users may need to update their TCP/IP stack to pick up
+     Winsock 2. (See http://www.microsoft.com/windows95/downloads/)
+     [Bill Stoddard stoddard@raleigh.ibm.com]
+
+  *) Win32: Redirect CGI script stderr (script debug info) into the 
+     error.log when CGI scripts fail. This makes Apache on Win32 
+     behave more like Unix.      
+     [Bill Stoddard stoddard@raleigh.ibm.com]
+
+  *) Fixed `httpd' usage display: -D was missing.
+     [Ralf S. Engelschall] PR#4614
+
+  *) Fix `make r' test procedure in src/regex/: ap_isprint was not found.
+     [Ralf S. Engelschall] PR#4561, PR#4562
+
+  *) OS/2: Fix problem with accept lock semaphores where server would die with
+     "OS2SEM: Error 105 getting accept lock. Exiting!" 
+     [Brian Havard] PR#4505
+
+  *) Add DSO support for DGUX 4.x using gcc. Tested on x86 platforms.
+     [Randy Terbush <randy@covalent.net>]
+ 
+  *) Add the new mass-vhost module (mod_vhost_alias.c) developed and
+     used by Demon Internet, Ltd. [Tony Finch <fanf@demon.net>]
+
+  *) Better GCC detection for DSO flags under Solaris 2 where the `cc' 
+     command potentially _is_ GCC. [Ralf S. Engelschall]
+
+  *) Fix apxs build issues on AIX 
+     [Rasmus Lerdorf <rasmus@raleigh.ibm.com>]
+
+  *) DocumentRoot Checking: Under previous versions, when Apache
+     first started up, it used to do a stat of each DocumentRoot to
+     see if it existed and was a directory. If not, then an error
+     message was printed. THIS HAS BEEN DISABLED. If DocumentRoot
+     does not exist, you will get error messages in error_log. If
+     the '-t' command line option is used (to check the configuration)
+     the check of DocumentRoot IS performed. An additional command
+     line option, '-T', has been added if you want to avoid the
+     DocumentRoot check even when checking the configuration.
+     [Jim Jagielski]
+
+  *) Win32: The query switch "apache -S" didn't exit after showing the
+     vhost settings. That was inconsistent with the other query functions.
+     [Bill Stoddard - Fixed by Martin on Unix in 1.3.4]
+
+  *) Win32: Changed behaviour of apache -k restart. 
+     Previously, the server would drain all connections in the stack's
+     listen queue before honoring the restart. On a busy server, this
+     could take hours.  Now, a restart is honored almost immediately. 
+     All connections in Apache's queues are handled but connections in 
+     the stack's listen queue are discarded. Restart triggered by 
+     MaxRequestPerChild is unchanged.
+     [Bill Stoddard <stoddard@raleigh.ibm.com>]
+
+  *) Win32: Eliminated unnecessary call to wait_for_multiple_objects in
+     the accept loop. Good for a 5% performance boost. Cleaned up 
+     parent/child process management code. 
+     [Bill Stoddard <stoddard@raleigh.ibm.com>]
+
+  *) Added ceiling on file size for memory mapped files.
+     [John Giannandrea <jg@meer.net>] PR#4122
+
+  *) Fix ndbm.h include problems with brain-dead glibc >= 2.1 which 
+     has ndbm.h in a non-standard db1/ subdir. PR#4431, PR#4528
+     [Henri Gomez <gomez@slib.fr>, Ralf S. Engelschall] 
+
+  *) Determine AP_BYTE_ORDER for ap_config_auto.h and already
+     use this at least for Expat. [Ralf S. Engelschall]
+
+  *) Allow .module files to specify libraries with Lib:.
+     [Ben Laurie]
+
+  *) Allow SetEnvIf[NoCase] to test environment variables as well
+     as header fields and request attributes.  [Ken Coar]
+
+  *) Fix mod_autoindex's handling of ScanHTMLTitles when file
+     content-types are "text/html;parameters".  PR#4524  [Ken Coar]
+
+  *) Remove "mxb" support from mod_negotiation -- it was a draft feature
+     never accepted into any standard, and it opens up certain DoS
+     attacks.  [Koen Holtman <Koen.Holtman@cern.ch>]
+
+  *) TestCompile updated. We can now run programs and output the
+     results during the Configure process. [ Jim Jagielski]
+
+  *) The source is now quad (long long) aware as needed. Specifically,
+     the Configure process determines the correct size of off_t and
+     *void. When the OS/platform/compiler supports quads, ap_snprintf()
+     provides for the 'q' format qualifier (if quads are not available,
+     'q' is silently "demoted" to long). [Jim Jagielski]
+
+  *) When the username or password fed to htpasswd is too long, include the
+     size limit in the error message.  Also report illegal characters
+     (currently only ':') in the username.  Add the size restrictions
+     to the man page.  [Ken Coar]
+
+  *) Fixed the configure --without-support option so it doesn't result in
+     an infinite loop.  [Marc Slemko]
+
+  *) Piped error logs could cause a segfault if an error occured
+     during configuration after a restart.
+     [Aidan Cully <aidan@panix.com>] PR#4456
+
+  *) If a "Location" field was stored in r->err_headers_out rather
+     than r->headers_out, redirect processing wouldn't find it and
+     the server would core dump on ap_escape_html(NULL).  Check both
+     tables and raise HTTP_INTERNAL_SERVER_ERROR with a log message
+     if Location isn't set.  [Doug MacEachern, Ken Coar]
+
+  *) Add RULE_EXPAT, the src/lib/ directory structure, and a modified copy
+     of the Expat 1.0.2 distribution. [Greg Stein]
+
+  *) Replace regexec() calls with calls to a new API stub function
+     ap_regexec().  This solves problems with DSO modules which use the regex
+     library. [Jens-Uwe Mager <jum@helios.de>, Ralf S. Engelschall]
+
+  *) Add 'Request_Protocol' special keyword to mod_setenvif so that
+     environment variables can be set according to the protocol version
+     (e.g., HTTP/0.9 or HTTP/1.1) of the request.  [Ken Coar]
+
+  *) Add DSO support for OpenStep (Mach 4.2) platform.
+     [Ralf S. Engelschall, Rex Dieter <rdieter@math.unl.edu>] PR#3997
+
+  *) Fix sed regex for generating ap_config_auto.h in src/Configure.
+     [Jan Gallo <gallo@pvt.sk>] PR#3690, PR#4373
+ 
+  *) Switch to /bin/sh5 in APACI on Ultrix and friends to avoid problems with
+     their brain-dead /bin/sh. [Ralf S. Engelschall] PR#4372
+
+  *) Better DSO flags recognition on NetBSD platforms using ELF.
+     [Todd Vierling <tv@pobox.com>] PR#4310
+
+  *) Always log months in english format for %t in mod_log_config.
+     [Petr Lampa <lampa@fee.vutbr.cz>] PR#4366, 679
+
+  *) Support for server-parsed and multiview-determined ReadmeName and
+     HeaderName files in mod_autoindex. Removed the restriction on
+     "/"s in ReadmeName and HeaderName directives since the *sub_req*
+     routines will deal with the access issues. (It's now possible to
+     have {site|group|project|customer|...} wide readmes and headers.)
+     [Raymond S Brand <rsbx@rsbx.net>, Ken Coar] PR#1574, 3026, 3529,
+     3569, 4256
+
+  *) When stat() fails, don't assume anything about the contents of
+     the struct stat.  [Ed Korthof <ed@bitmechanic.com>]
+
+  *) It's OK for a semop to return EINTR, just loop around and try
+     again.  [Dean Gaudet]
+
+  *) Fix configuration engine re-entrant hangups, which solve a
+     handful of problems seen with mod_perl <Perl> configuration sections
+     [Salvador Ortiz Garcia <sog@msg.com.mx>]
+
+  *) Mac OS and Mac OS X Server now use the appropriate custom layout
+     by default when building with APACI; allow for platform-specific
+     variable defaults in configure. [Wilfredo Sanchez]
+
+  *) Do setgid() before initgroups() in http_main; some platforms
+     zap the grouplist when setgid() is called.  This was fixed in
+     suexec earlier, but the main httpd code missed the change.
+     [Rob Saccoccio <robs@InfiniteTechnology.com>]  PR#2579
+
+  *) Add recognition of .tgz as a gzipped tarchive.
+     [Bertrand de Singly <bertrand.de-singly@polytechnique.fr>]  PR#2364
+
+  *) mod_include's fsize/flastmod should allow only relative paths, just
+     like "include file".  [Jaroslav Benkovsky <benkovsk@pha.pvt.cz>]
+
+  *) OS/2: Add support for building loadable modules using DLLs.
+     [Brian Havard]
+
+  *) Add iconsdir, htdocsdir, and cgidir to config.layout.
+     [Wilfredo Sanchez]
+
+  *) Fix minor but annoying bug with the test for Configuration.tmpl
+     being newer than Configuration so that it is less likely to fail
+     when using APACI and shadow sources. [Wilfredo Sanchez]
+
+  *) PORT: Add initial support for Mac OS (versions 10.0 and
+     greater). Use Mac OS X Server layout for now. Clean up dyld code
+     in unix/os.c, and don't install the dyld error handlers, which
+     are no longer needed in Mac OS. [Wilfredo Sanchez]
+
+  *) Rename Rhapsody layout to "Mac OS X Server". Change install
+     locations to appropriate ones for user-built (as opposed to
+     system) installs. [Wilfredo Sanchez]
+
+  *) Modify mod_autoindex's handling of AddDescription so that the
+     behaviour matches the documentation.  [Ken Coar] PR#1898, 3072.
+
+  *) Add functionality to the install-bindist.sh script created by
+     binbuild.sh to use tar when copying distribution files to the
+     serverroot. This allows upgrading an existing installation
+     without nesting the new distribution in the old.
+
+     install-bindist.sh now detects the local perl5 path to install
+     apxs and dbmmanage with proper path to perl interpreter.
+
+     Add an install-binsupport target which copies the source files
+     for apxs and dbmmanage to bindist to allow these scripts to
+     be properly installed relative to the destination serverroot.
+     [Randy Terbush, Covalent Technologies, randy@covalent.net]
+
+  *) Fix intermittent SEGV in ap_proxy_cache_error() in
+     src/modules/proxy_util.c where a NULL filepointer and
+     temporary filename were closed and unlinked.
+     [Graham Leggett <minfrin@sharp.fm>,
+     Tim Costello <tjcostel@socs.uts.edu.au>] PR#3178
+
+  *) Fix inconsistent error messages reported by mod_proxy.
+     [Graham Leggett <minfrin@sharp.fm>]
+
+  *) OS/2: Fix terminating CGIs that aren't compiled by EMX GCC when a 
+     connection is aborted.  [Brian Havard]
+
+  *) Force the LANG envariable to the known state of "C" so that we
+     have assurance about how string manipulators (e.g., tr) will
+     function.  [Ken Coar]  PR#1630
+
+  *) Add a directive to allow customising of the tracking cookie name.
+     [Ken Coar]  PR#2921, 4303
+
+  *) Add "force-no-vary" envariable to allow servers to work around
+     clients that choke on "Vary" fields in the response header.
+     [Ken Coar, Dmitry Khrustalev <dima@zippy.machaon.ru>]  PR#4118
+
+  *) Fixed a bug in mod_dir that causes a child process will infinitely
+     recurse when it attemps to handle a request for a directory wnd the
+     value of the DirectoryIndex directive is a single dot. Also likely
+     to happen for anyother values of DirectoryIndex that will map back
+     to the same directory. The handler now only considers regular files
+     as being index candidates. No PR#s found.
+     [Raymond S Brand <rsbx@rsbx.net>]
+
+  *) Ease configuration debugging by making TestCompile fall back to
+     using "make" if the $MAKE variable is unset [Martin Kraemer]
+
+  *) Fixed the ServerSignature directive to work as documented.
+     [Raymond S Brand <rsbx@rsbx.net>] PR#4248
+
+  *) Add "opt" (SysV-style) layout to config.layout. [Raymond S Brand
+     <rsbx@rsbx.net>]
+
+  *) Add APACI --without-execstrip option which can be used to disable the
+     stripping of executables on installation.  This is very important for DSO
+     and debugging situations. [Ralf S. Engelschall]
+
+  *) Add support for OS/2 (case insenstive filesystem, .exe suffix, etc)
+     to APACI files and related scripts. 
+     [Yitzchak Scott-Thoennes <sthoenna@efn.org>, Ralf S. Engelschall] PR#4269
+
+  *) Add support for standalone mode in TPF
+     [Joe Moenich <moenich@us.ibm.com>]
+
+  *) Fix number of bytes copied by read_connection() in src/support/ab.c
+     [Jim Cox <jc@superlink.net>] PR#4271
+
+  *) Fix special RewriteCond "-s" pattern matching.
+     [Bob Finch <bob@nas.com>]
+
+  *) Fix value quoting in src/Configure script for ap_config_auto.h 
+     [Paul Sutton <paul@awe.com>]
+
+  *) Make sure RewriteLock can be used only in the global context, (i.e.
+     outside of any <VirtualHost> sections) because it's a global facility of
+     the rewrite engine. [Ralf S. Engelschall]
+
+  *) Fix the ownership delegation for proxy directory under `make install'.
+     [Ralf S. Engelschall]
+
+  *) APACI would not correctly build suexec. [Maria Verina
+     <mariav@icgeb.trieste.it>] PR#4260
+
+  *) mod_mime_magic passed only the first 4k of a file to
+     uncompress/gzip, but those tools sometimes do not produce
+     any output unless a sufficient portion of the compressed
+     file is input.  Change to pass the entire file -- but
+     only read 4k of output.
+     [Marcin Cieslak <saper@system.pl>] PR#4097
+
+  *) "IndexOptions None" generated extra spaces at the end of each
+     line.  [inkling@firstnethou.com] PR#3770
+
+  *) The "100 Continue" response wasn't being sent after internal
+     redirects. [Jose KAHAN <kahan@w3.org>] PR#3910, 3806, 3575
+
+  *) When padding the name with spaces for display, mod_autoindex would
+     count &, <, and > in their escaped width, messing up the display.
+     [Dean Gaudet] PR#4075, 3758
+
+  *) PORT: fixed a compilation problem on NEXT.
+     [Jacques Distler <distler@golem.ph.utexas.edu>] PR#4130
+
+  *) r->request_time wasn't being set properly in certain error conditions.
+     [Dean Gaudet] PR#4156
+
+  *) PORT: deal with UTS compiler error in http_protocol.c
+     [Dave Dykstra <dwd@bell-labs.com>] PR#4189
+
+  *) Add ap_vrprintf() function.  [John Tobey <jtobey@banta-im.com>] PR#4246
+
+  *) Fix the mod_mime hash table to work properly with locales other
+     than C.  [Dean Gaudet] PR#3427
+
+  *) Fix a memory leak which is exacerbated by certain configurations.
+     [Dean Gaudet] PR#4225
+
+  *) Prevent clobbering saved IFS values in APACI. [Jim Jagielski]
+
+  *) Fix buffer overflows in ap_uuencode and ap_uudecode pointed out
+     by "Peter 'Luna' Altberg <peter@altberg.nu>" and PR#3422
+     [Peter 'Luna' Altberg <peter@altberg.nu>, Ronald Tschalär]
+
+  *) Make {Set,Unset,Pass}Env per-directory instead of per-server.
+     [Ben Laurie]
+
+  *) Correct an apparent typo: on the Windows and MPE platforms, the
+     htpasswd utility was limiting passwords to only 8 characters.
+     [Ken Coar]
+
+  *) EBCDIC platforms: David submitted patches for two bugs in the
+     MD5 digest port for EBCDIC machines:
+     a) the htdigest utility overwrote the old contents of the digest file
+     b) the Content-MD5 header value (ContentDigest directive) was wrong
+     when the returned file was not converted from EBCDIC, but was a
+     binary (e.g., image file) in the first place.
+     [David McCreedy <mccreedy@us.ibm.com>]
+
+  *) support/htpasswd now permits the password to be specified on the
+     command line with the '-b' switch.  This is useful when passwords
+     need to be maintained by scripts -- particularly in the Win32
+     environment.  [Ken Coar]
+
+  *) Win32: Win32 multiple services patch. Added capability to install and
+     run multiple copies of apache as individual services.
+
+     Example 1:
+     apache -n apache1 -i -f c:/httpd.conf
+        Installs apache as service 'apache1' and associates c:/httpd.conf
+        with that service.
+     net start apache1
+        Starts apache1 service.
+     net stop apache1
+        Stops apache1 service
+
+     Example 2:
+     apache -n apache2 -i
+        Installs apache as service 'apache2'. httpd.conf is located under
+        the default server root (/apache/conf/httpd.conf).
+     net start apache2
+        Starts apache2 service.
+
+     Example 3:
+     apache -n apache3 -i -d c:/program files/apache
+        Install apache as service 'apache3' and sets server root to
+        c:/program files/apache.
+
+     Example 4:
+     apache -n apache2 -k restart
+        Restart apache2 service 
+
+     [Keith Wannamaker, Ken Parzygnat, Bill Stoddard]
+
+  *) Correct the signed/unsigned character handling for the MD5 routines;
+     mismatches were causing compilation problems with gcc -pedantic and
+     in the TPF cross-compilation.  [Ken Coar]
+
+  *) OS/2: Rework CGI handling to use spawn*() instead of fork/exec, achieving
+     a roughly 5 fold speed up. [Brian Havard]
+
+  *) proxy ftp: instead of using the hardwired string "text/plain" as
+     a fallback type for files served by the ftp proxy, use the
+     ap_default_type() function to determine the configured type.
+     This allows for special configurations like
+	<Directory proxy:ftp://some.host>
+	DefaultType gargle/blurb
+	</Directory>
+     Additionally, add the Content-Encoding: header to FTP proxy replies
+     when the encoding is defined (by the AddEncoding directive).
+     Because it was missing, it was almost impossible to browse compressed
+     files using the FTP proxy (works now perfectly in Communicator).
+     The ftp proxy now also returns the Date: and Server: header lines (if not
+     much else... This code is "somewhat" broken) like normal requests do.
+     [Martin Kraemer]
+
+  *) Be more smart in APACI's configure script when determining the UID/GID
+     for User/Group directives and use the determined UID/GID to initialize
+     the permissions on the proxycachedir.
+     [Dirk-Willem van Gulik, Ralf S. Engelschall]
+
+  *) Changed the forking-prior-to-cleanup in the proxy module to first
+     check wether it actually needs to collect garbage. This reduces 
+     the number of fork()s from one/request to just the odd one an hour.
+     [Dirk-Willem van Gulik]
+
+  *) Added proxy, auth and header support to src/support/ab.c. Added a
+     README file to src/support/
+     [Dirk-Willem van Gulik]
+
+  *) Don't hard-code the path to AWK in --shadow bootstrapping Makefile.
+     [Ralf S. Engelschall] PR#4050
+
+  *) Add support for DSO module compilation on BSD/OS 3.x.
+     [Randy Terbush, Covalent Technologies]
+
+  *) Fix sed-substitutions in `make install': path elements like `httpd/conf'
+     (for instance from an APACI configure --sysconfdir=/etc/httpd/conf
+     option) were substituted with $(TARGET).conf, etc. Same for other strings
+     with dots where the dot wasn't matched as plain text. 
+     [Ralf S. Engelschall]
+
+  *) PORT: Add support for FreeBSD 4.x [Ralf S. Engelschall]
+
+  *) Fix verbose output of APACI configure (option -v) 
+     [Martin Kraemer, Ralf S. Engelschall]
+
+Changes with Apache 1.3.6
+
+  *) Removed new PassAllEnv code due to DSO problems. [Lars Eilebrecht]
+
+Changes with Apache 1.3.5 [not released]
+
+  *) M_INVALID needed a value within the scope of METHODS so that unknown
+     methods can be access controlled.  [Roy Fielding] PR#3821
+
+  *) Added PassAllEnv; makes server's entire environment available
+     to CGIs and SSIs executed within directive's scope.  [Ken Coar]
+
+  *) ap_uuencode() always added two trailing '='s and encoding of
+     8 bit characters on a machine with signed char may produced
+     incorrect results. Additionally ap_uuencode() should now
+     work correctly on EBCDIC platforms.
+     [Ronald Tschalär <ronald@innovation.ch>] PR#3411
+
+  *) WIN32: Binary installer now runs the configuration DLL before
+     the reboot prompt (which is only given if MSVCRT.DLL system
+     DLL is new or updated). This should avoid the configuration
+     directory being empty after installation. [Paul Sutton]
+     PR#3767, 3800, 3827, 3850, 3900, 3953, 3988
+
+  *) WIN32: Binary installer now creates Start menu options to start
+     and stop Apache as a console application and to uninstall
+     the Apache service on NT. [Paul Sutton] PR#3741
+
+  *) WIN32: Apache.exe now contains an icon. [Paul Sutton]
+
+  *) PORT: Switch back to using fcntl() locking on Linux -- instabilities
+     have been reported with flock() locking (probably related to kernel
+     version).  [Dean Gaudet] PR#2723, 3531
+
+  *) Using APACI, the main config file (usually httpd.conf) was
+     not being adjusted as $(TARGET).conf. [Wilfredo Sanchez
+     <wsanchez@apple.com>]
+
+  *) PORT: AIX does not require the SHARED_CODE "hack"
+     [Ryan Bloom <rbb@raleigh.ibm.com>]
+
+  *) Set-Cookie headers were being doubled up for some CGIs by the O(n^2)
+     avoidance code added in 1.3.3.
+     [Dean Gaudet, Jeff Lewis <lewis@stanford.edu>] PR#3872
+
+  *) ap_isxdigit was somehow neglected when adding the ap_isfoo() macros
+     for 8-bit safeness.  [Dean Gaudet]
+
+  *) PORT: Use -fPIC instead of -fpic on Solaris and SunOS for compiling DSOs
+     because SPARCs have a small machine-specific maximum size for the Global
+     Offset Table which is often exceeded when compiling one of the larger
+     third-party modules with Apache. [Peter Urban <Peter.Urban@epfl.ch>] PR#3977
+
+  *) Move the directive `ExtendedStatus' in httpd.conf-dist-win _after_ the
+     DSO/DLL section because it's a directive from mod_status and isn't
+     available before the DLL of mod_status is loaded.
+     [Martin POESCHL <mpoeschl@gmx.net>] PR#3936
+
+  *) SECURITY: Fix a bug in the calculation of the buffer size for the line 
+     continuation facility in Apache's configuration files which could 
+     lead to a buffer overflow situation.
+     [Thomas Devanneaux <Thomas.Devanneaux@enst.fr>] PR#3617
+
+  *) Make documentation and error messages of APACI's --activate-module=FILE 
+     option more clear. [Jan Wolter <janc@wwnet.net>] PR#3995
+
+  *) Fix the gcc version check (for enabling the `inline' facility) to 
+     really support all future gcc versions >= 2.7 until we know more.
+     [John Tobey <jtobey@banta-im.com>] PR#3983
+
+  *) Let APACI's configure script correctly complain for unknown --enable-XXX
+     and --disable-XXX options. [Ralf S. Engelschall] PR#3958
+
+  *) Link the shared core bootstrap program (``Rule SHARED_CORE=yes'') also
+     against libap.a and use its ap_snprintf() instead of sprintf() to avoid
+     possible buffer overflows. [Ralf S. Engelschall]
+
+  *) Remove no longer used non-API function ap_single_module_init().
+     [Ralf S. Engelschall]
+
+  *) Add Apple's Mac OS X Server Layout "Rhapsody" to config.layout.
+     [Wilfredo Sanchez]
+
+  *) Add cgidir, htdocsdir, iconsdir variables to Makefile.tmpl in order
+     to make platform installations easier.  [Wilfredo Sanchez]
+
+  *) In configure, do not append the target name to the directory path if
+     the path already contains "apache".  [Ralf S. Engelschall]
+
+  *) SIGPIPE is now ignored by the server core.  The request write routines
+     (ap_rputc, ap_rputs, ap_rvputs, ap_rwrite, ap_rprintf, ap_rflush) now
+     correctly check for output errors and mark the connection as aborted.
+     Replaced many direct (unchecked) calls to ap_b* routines with the
+     analogous ap_r* calls.  [Roy Fielding]
+
+  *) Enhanced mod_rewrite's mapfile handling: The in-core cache for text and
+     DBM format mapfiles now uses a 4-way hash table with LRU functionality.
+     Furthermore map lookups for non-existent keys are now cached as well.
+     Additionally "txt" maps are now parsed with simple string functions
+     instead of using ap_pregcomp(). As a side effect a bug that prevented
+     the usage of keys containing the "," character was fixed.
+     The changes drastically improve the performance when large rewrite maps
+     are in use.
+     [Michael van Elst <mlelstv@serpens.swb.de>, Lars Eilebrecht] PR#3160
+
+  *) Added ap_sub_req_method_uri() for doing a subrequest with a method
+     other than GET, and const'd the definition of method in request_rec.
+     [Greg Stein]
+
+  *) Use proper pid_t type for saving PIDs in alloc.c.  [John Bley]
+
+  *) Replaced use of WIN32 define with HAVE_DRIVE_LETTERS to indicate
+     when the OS allows a DOS drive letter within pathnames.  [Brian Havard]
+
+  *) Add %V to mod_log_config, this logs the hostname according to the
+     UseCanonicalName setting (this is the pre-1.3.4 behaviour of
+     %v).  Useful for mass vhosting.  [Tony Finch <dot@dotat.at>]
+
+  *) Add support for \n and \t to mod_log_config, can be used to produce
+     more reliable logs with multiline entries.  [Tony Finch <dot@dotat.at>]
+
+  *) Fixed a few compiler nits.  [John Bley <jbb6@acpub.duke.edu>]
+
+  *) Added informative error messages for failed munmap() and fseek() calls
+     in http_core.c. [John Bley, Roy Fielding]
+
+  *) Added some informative error messages for some failed malloc()
+     calls. [John Bley <jbb6@acpub.duke.edu>, Jim Jagielski]
+
+  *) OS/2 ap_os_canonical_filename()'s behaviour is improved: ap_assert()
+     is removed. This allows <Directory proxy:*> directives to work and
+     prevents invalid requests from killing the process.
+     [Brian Havard <brianh@kheldar.apana.org.au>]
+
+  *) Reorganised FAQ document.
+     [Joshua Slive <slive@finance.commerce.ubc.ca>] PR#2497
+
+  *) src/support/: The ApacheBench benchmark program was overhauled by
+     David N. Welton: you can now have it generate an HTML TABLE, presumably
+     for integration into other HTML sources. David updated the ab man page
+     as well and added some missing descriptions. Thanks!
+     [David N. Welton <davidw@prosa.it>]
+
+  *) Win32: The filename validity checker now allows filenames containing
+     characters in the range 0x80 to 0xff (for example accented characters).
+     [Paul Sutton] PR#3890
+
+  *) Added conditional logging based upon environment variables to
+     mod_log_config.  mod_log_referer and mod_log_agent
+     are now deprecated.  [Ken Coar]
+
+  *) Allow apache acting as a proxy server to relay the real
+     reason of a failure to a client rather than the "internal
+     server error" it does currently. The general exposure mechanism
+     can be triggered by any module by setting the "verbose-error-to"
+     note to "*"; this allows more than just proxy errors to be exposed.
+     [Cliff Skolnick, Roy Fielding, Martin Kraemer] Related to PR#3455, 4086
+
+  *) Moved man pages for ab and apachectrl to section 8.
+     [Wilfredo Sanchez, Roy Fielding]
+
+  *) Added -S option to install.sh so that options can be passed to
+     strip on some platforms. [Ralf S. Engelschall, Wilfredo Sanchez]
+
+  *) Tweak modules Makefile generated by Configure so that it handles
+     the test case of no modules being selected. [chaz@reliant.com]
+
+  *) Added a <LimitExcept method ...> sectioning directive that allows
+     the user to assign authentication control to any HTTP method that
+     is *not* given in the argument list; i.e., the logical negation
+     of the <Limit> directive.  This is particularly useful for controlling
+     access on methods unknown to the Apache core, but perhaps known by
+     some module or CGI script. [Roy Fielding, Tony Finch]
+
+  *) Prevent apachectl from complaining if the PIDFILE exists but
+     does not contain a process id, as might occur if the server is
+     being rapidly restarted. [Wilfredo Sanchez]
+
+  *) Win32: Add global symbols missing from ApacheCore.def. [Carl Olsen]
+
+  *) Entity tag comparisons for If-Match and If-None-Match were not being
+     performed correctly -- weak tags might cause false positives.  Also,
+     strong comparison wasn't properly enforced in all cases.
+     [Roy Fielding, Ken Coar, Dean Gaudet] PR#2065, 3657
+
+  *) OS/2: Supply OS/2 error code instead of errno on semaphore errors.
+     [Brian Havard]
+
+  *) Work around a bug in Lynx regarding its sending "Negotiate: trans"
+     even though it doesn't understand TCN.  [Koen Holtman, Roy Fielding]
+
+  *) Added ap_size_list_item(), ap_get_list_item(), and ap_find_list_item()
+     to util.c for parsing an HTTP header field value to extract the next
+     list item, taking into account the possible presence of nested comments,
+     quoted-pairs, and quoted-strings. ap_get_list_item() also removes
+     insignificant whitespace and lowercases non-quoted tokens.
+     [Roy Fielding] PR#2065
+
+  *) proxy: The various calls to ap_proxyerror() can return HTTP/1.1 status
+     code different from 500. This allows the proxy to, e.g., return
+     "403 Forbidden" for ProxyBlock'ed URL's. [Martin Kraemer] Related to PR#3455
+
+  *) Fix ordering of language variants for the case where the traditional
+     negotiation algorithm is being used with multiple language variants
+     and no Accept-Language. [James Treacy <treacy@debian.org>] PR#3299, 3688
+
+  *) Do not round the TCN quality calculation to 5 decimal places,
+     unlike RFC 2296, because the calculation might need 12 decimal places
+     to get the right result.  [Roy Fielding]
+
+  *) Remove unused code to disable transparent negotiation when
+     negotiating on encoding only, as we now handle encoding too
+     (though this is nonstandard for TCN), remove charset=ISO-8859-1
+     fiddle from the fiddle-averse RVSA comparison, and fix bugs in
+     some debugging statements within mod_negotiation. [Koen Holtman]
+
+  *) Fixed a rare memory corruption possibility in mod_dir if the index
+     file is negotiable and no acceptable variant can be found.
+     [Dean Gaudet, Roy Fielding, Martin Kraemer]
+
+  *) Win32: Add new config directive, ScriptInterpreterSource, to enable
+     searching the Win32 registry for script interpreters.
+     [Bill Stoddard]
+
+  *) Win32: The compiled-in default filename for the error log is now
+     error.log, which matches the default in the distributed httpd.conf.
+     [Paul Sutton]
+
+  *) Win32: Any error messages from -i or -u command line options are now
+     displayed on the console output rather than sent to the error log.
+     Also the "Running Apache..." message is not output unless Apache is
+     going to serve requests. [Paul Sutton]
+
+  *) Rework the MD5 authentication scheme to use FreeBSD's algorithm,
+     and use a private significator ('$apr1$') to mark passwords as
+     being smashed with our own algorithm.  Also abstract the password
+     checking into a new ap_validate_password() routine.  [Ken Coar]
+
+  *) Win32: The filename validity checker now allows "COM" but refuses 
+     access to "COM1" through "COM4". This allows filenames such
+     as "com.name" to be served. [Paul Sutton] PR#3769.
+
+  *) BS2000: Adapt to the new ufork() system call interface which will
+     make subtasking easier on the OSD/POSIX mainframe environment.
+     [Martin Kraemer]
+
+  *) Add a compatibility define for escape_uri() -> ap_escape_uri() to
+     ap_compat.h. [David White <david@persimmon.com>] PR#3725
+
+  *) Make NDBM file suffix determination for mod_rewrite more accurate, i.e.
+     use `.db' instead of `.pag' not only for FreeBSD, but also when
+     the NDBM library looks like Berkeley-DB based.
+     [Ralf S. Engelschall] PR#3773
+
+  *) Add ability to handle DES or MD5 authentication passwords.
+     [Ryan Bloom <rbb@Raleigh.IBM.Com>]
+
+  *) Fix O(n^2) memory consumption in mod_speling.  [Dean Gaudet]
+
+  *) SECURITY: Avoid some buffer overflow problems when escaping
+     quoted strings.  (This overflow was on the heap and we believe
+     impossible to exploit.)  [Rick Perry <perry@ece.vill.edu>]
+
+  *) Let src/Configure be aware of CFLAGS options starting with plus
+     signs as it's the case for the HP/UX compiler.
+     [Doug Yatcilla <yatcilda@umdnj.edu>] PR#3681
+
+  *) Remove the hard-wire of TAR=tar (we now check for gtar and gnutar first)
+     and check to see if the tar we wind up with supports '-h'.
+     [Jim Jagielski] PR#3671
+
+  *) A consistent and conservative style for all shell scripts has been
+     implemented. Basically, all shell string tests use the traditional
+     hack of 'if [ "x$var" != "x" ]' or 'if [ "x$var" = "xstring" ]'
+     to protect against bare null variable strings (ie: wrapping both
+     sides with double quotes and prepending 'x'). 'x' was chosen
+     because it's more universal and hopefully easier for old shell
+     prgrammers, as well as being easier to search for in 'vi' (/x\$) :)
+     [Jim Jagielski]
+
+  *) The status module now prints out both the main server generation as
+     well as the generation of each process. Also, the vhost info is
+     printed with '?notable'. [Jim Jagielski]
+
+  *) Move src/main/md5c.c to src/ap/ap_md5c.c; it's httpd-neutral
+     and this makes its functions available to things in src/support.
+     [Ken Coar]
+
 Changes with Apache 1.3.4
 
   *) Renamed macros status_drops_connection to ap_status_drops_connection
@@ -1967,7 +2841,7 @@ Changes with Apache 1.3b6
   *) PORT: IRIX needs the -n32 flag iff using the 'cc' compiler
      [Jim Jagielski] PR#1901
 
-  *) BUG: Configure was using TCC and CC inconsistantly. Make sure
+  *) BUG: Configure was using TCC and CC inconsistently. Make sure
      Configure knows which CC we are using. [Jim Jagielski]
 
   *) "Options +Includes" wasn't correctly merged if "+IncludesNoExec"

@@ -1,7 +1,17 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <HTML>
  <HEAD>
-  <TITLE>Default Page for Apache Installation on OpenBSD</TITLE>
+  <TITLE>Test Page for the SSL-aware Apache Installation on Web Site</TITLE>
+  <STYLE TYPE="text/css">
+  H1 {
+      font-weight: bold;
+      font-size: 18pt;
+      line-height: 18pt;
+      font-family: arial,helvetica;
+      font-variant: normal;
+      font-style: normal;
+  }
+  </STYLE>
  </HEAD>
 <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
  <BODY
@@ -11,6 +21,8 @@
   VLINK="#000080"
   ALINK="#FF0000"
  >
+  <BLOCKQUOTE>
+
   <H1 ALIGN="CENTER">
    Welcome to <A HREF="http://www.apache.org/">Apache</A> on
    <A HREF="http://www.openbsd.org/">OpenBSD</A>
@@ -22,15 +34,20 @@
   OpenBSD System</A>.  They now have to add content to this directory
   and replace this placeholder page, or else point the server at their real
   content.
-  </P>
   <HR>
   <P>
   The Apache
   <A
    HREF="manual/index.html"
   >documentation</A>
-  has been included with this distribution.
+  has been included with this distribution.<BR>
+  Especially read the 
+  <A
+   HREF="manual/mod/mod_ssl/"
+  >SSL documentation</A>
+  carefully.
   </P>
+
   You may use the images below on any
   <A HREF="http://www.OpenBSD.org/">OpenBSD</A>-powered Web
   server. 
@@ -44,8 +61,6 @@
   <IMG SRC="logo24.jpg" ALT="This Site OpenBSD 2.4 Powered!"><BR>
   <IMG SRC="smalltitle.gif" ALT="OpenBSD"><BR>
   </DIV>
+  </BLOCKQUOTE>
  </BODY>
 </HTML>
-
-
-

@@ -69,6 +69,9 @@ extern "C" {
 /* Headers in which EVERYONE has an interest... */
 
 #include "ap_config.h"
+#ifdef EAPI
+#include "ap_mm.h"
+#endif
 #include "alloc.h"
 /*
  * Include the Extended API headers.
@@ -94,8 +97,10 @@ extern "C" {
 #elif defined(WIN32)
 /* Set default for Windows file system */
 #define HTTPD_ROOT "/apache"
+#elif defined(BEOS)
+#define HTTPD_ROOT "/boot/home/apache"
 #else
-#define HTTPD_ROOT "/var/www"
+#define HTTPD_ROOT "/usr/local/apache"
 #endif
 #endif /* HTTPD_ROOT */
 
@@ -165,8 +170,7 @@ extern "C" {
 
 /* The name of the log files */
 #ifndef DEFAULT_XFERLOG
-#ifdef OS2
-/* Set default for OS/2 file system */
+#if defined(OS2) || defined(WIN32)
 #define DEFAULT_XFERLOG "logs/access.log"
 #else
 #define DEFAULT_XFERLOG "logs/access_log"
@@ -174,8 +178,7 @@ extern "C" {
 #endif /* DEFAULT_XFERLOG */
 
 #ifndef DEFAULT_ERRORLOG
-#ifdef OS2
-/* Set default for OS/2 file system */
+#if defined(OS2) || defined(WIN32)
 #define DEFAULT_ERRORLOG "logs/error.log"
 #else
 #define DEFAULT_ERRORLOG "logs/error_log"
@@ -322,7 +325,11 @@ extern "C" {
  * the overhead.
  */
 #ifndef HARD_SERVER_LIMIT
+#ifdef WIN32
+#define HARD_SERVER_LIMIT 1024
+#else
 #define HARD_SERVER_LIMIT 256
+#endif
 #endif
 
 /*
@@ -359,6 +366,19 @@ extern "C" {
  */
 #ifndef SCOREBOARD_MAINTENANCE_INTERVAL
 #define SCOREBOARD_MAINTENANCE_INTERVAL 1000000
+#endif
+
+/*
+ * Unix only:
+ * Path to Shared Memory Files 
+ */
+#ifdef EAPI
+#ifndef EAPI_MM_CORE_PATH
+#define EAPI_MM_CORE_PATH "logs/mm"
+#endif
+#ifndef EAPI_MM_CORE_MAXSIZE
+#define EAPI_MM_CORE_MAXSIZE 1024*1024*1 /* max. 1MB */
+#endif
 #endif
 
 /* Number of requests to try to handle in a single process.  If <= 0,
@@ -429,7 +449,7 @@ extern "C" {
  * Example: "Apache/1.1.0 MrWidget/0.1-alpha" 
  */
 
-#define SERVER_BASEVERSION "Apache/1.3.4"       /* SEE COMMENTS ABOVE */
+#define SERVER_BASEVERSION "Apache/1.3.9"	/* SEE COMMENTS ABOVE */
 #define SERVER_VERSION  SERVER_BASEVERSION
 enum server_token_type {
     SrvTk_MIN,		/* eg: Apache/1.3.0 */
@@ -448,7 +468,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  * Always increases along the same track as the source branch.
  * For example, Apache 1.4.2 would be '10402100', 2.5b7 would be '20500007'.
  */
-#define APACHE_RELEASE 10304100
+#define APACHE_RELEASE 10309100
 
 #define SERVER_PROTOCOL "HTTP/1.1"
 #ifndef SERVER_SUPPORT
@@ -574,9 +594,9 @@ API_EXPORT(void) ap_add_config_define(const char *define);
 #define M_MOVE      12
 #define M_LOCK      13
 #define M_UNLOCK    14
+#define M_INVALID   15
 
-#define METHODS     15
-#define M_INVALID   31
+#define METHODS     16
 
 #define CGI_MAGIC_TYPE "application/x-httpd-cgi"
 #define INCLUDES_MAGIC_TYPE "text/x-server-parsed-html"
@@ -588,6 +608,23 @@ API_EXPORT(void) ap_add_config_define(const char *define);
 #define ASIS_MAGIC_TYPE "httpd/send-as-is"
 #define DIR_MAGIC_TYPE "httpd/unix-directory"
 #define STATUS_MAGIC_TYPE "application/x-httpd-status"
+
+/*
+ * Define the HTML doctype strings centrally.
+ */
+#define DOCTYPE_HTML_2_0  "<!DOCTYPE HTML PUBLIC \"-//IETF//" \
+                          "DTD HTML 2.0//EN\">\n"
+#define DOCTYPE_HTML_3_2  "<!DOCTYPE HTML PUBLIC \"-//W3C//" \
+                          "DTD HTML 3.2 Final//EN\">\n"
+#define DOCTYPE_HTML_4_0S "<!DOCTYPE HTML PUBLIC \"-//W3C//" \
+                          "DTD HTML 4.0//EN\"\n" \
+                          "\"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+#define DOCTYPE_HTML_4_0T "<!DOCTYPE HTML PUBLIC \"-//W3C//" \
+                          "DTD HTML 4.0 Transitional//EN\"\n" \
+                          "\"http://www.w3.org/TR/REC-html40/loose.dtd\">\n"
+#define DOCTYPE_HTML_4_0F "<!DOCTYPE HTML PUBLIC \"-//W3C//" \
+                          "DTD HTML 4.0 Frameset//EN\"\n" \
+                          "\"http://www.w3.org/TR/REC-html40/frameset.dtd\">\n"
 
 /* Just in case your linefeed isn't the one the other end is expecting. */
 #ifndef CHARSET_EBCDIC
@@ -680,14 +717,14 @@ struct request_rec {
 
     time_t request_time;	/* When the request started */
 
-    char *status_line;		/* Status line, if set by script */
+    const char *status_line;	/* Status line, if set by script */
     int status;			/* In any case */
 
     /* Request method, two ways; also, protocol, etc..  Outside of protocol.c,
      * look, but don't touch.
      */
 
-    char *method;		/* GET, HEAD, POST, etc. */
+    const char *method;		/* GET, HEAD, POST, etc. */
     int method_number;		/* M_GET, M_POST, etc. */
 
     /*
@@ -845,7 +882,10 @@ struct conn_rec {
     signed int double_reverse:2;/* have we done double-reverse DNS?
 				 * -1 yes/failure, 0 not yet, 1 yes/success */
     int keepalives;		/* How many times have we used it? */
-
+    char *local_ip;		/* server IP address */
+    char *local_host;		/* used for ap_get_server_name when
+				 * UseCanonicalName is set to DNS
+				 * (ignores setting of HostnameLookups) */
 #ifdef EAPI
     ap_ctx *ctx;
 #endif /* EAPI */
@@ -947,6 +987,7 @@ extern API_VAR_EXPORT const char ap_day_snames[7][4];
 
 API_EXPORT(struct tm *) ap_get_gmtoff(int *tz);
 API_EXPORT(char *) ap_get_time(void);
+API_EXPORT(char *) ap_field_noparam(pool *p, const char *intype);
 API_EXPORT(char *) ap_ht_time(pool *p, time_t t, const char *fmt, int gmt);
 API_EXPORT(char *) ap_gm_timestr_822(pool *p, time_t t);
 
@@ -962,6 +1003,10 @@ API_EXPORT(char *) ap_getword_nulls(pool *p, const char **line, char stop);
 API_EXPORT(char *) ap_getword_nulls_nc(pool *p, char **line, char stop);
 API_EXPORT(char *) ap_getword_conf(pool *p, const char **line);
 API_EXPORT(char *) ap_getword_conf_nc(pool *p, char **line);
+
+API_EXPORT(const char *) ap_size_list_item(const char **field, int *len);
+API_EXPORT(char *) ap_get_list_item(pool *p, const char **field);
+API_EXPORT(int) ap_find_list_item(pool *p, const char *line, const char *tok);
 
 API_EXPORT(char *) ap_get_token(pool *p, const char **accept_line, int accept_white);
 API_EXPORT(int) ap_find_token(pool *p, const char *line, const char *tok);
@@ -989,14 +1034,22 @@ API_EXPORT(char *) ap_make_full_path(pool *a, const char *dir, const char *f);
 API_EXPORT(int) ap_is_matchexp(const char *str);
 API_EXPORT(int) ap_strcmp_match(const char *str, const char *exp);
 API_EXPORT(int) ap_strcasecmp_match(const char *str, const char *exp);
-API_EXPORT(char *) ap_uudecode(pool *, const char *);
+API_EXPORT(char *) ap_pbase64decode(pool *p, const char *bufcoded);
+API_EXPORT(char *) ap_pbase64encode(pool *p, char *string); 
+API_EXPORT(char *) ap_uudecode(pool *p, const char *bufcoded);
 API_EXPORT(char *) ap_uuencode(pool *p, char *string); 
+
 #ifdef OS2
 void os2pathname(char *path);
+char *ap_double_quotes(pool *p, char *str);
 #endif
 
+API_EXPORT(int)    ap_regexec(const regex_t *preg, const char *string,
+                              size_t nmatch, regmatch_t pmatch[], int eflags);
+API_EXPORT(size_t) ap_regerror(int errcode, const regex_t *preg, 
+                               char *errbuf, size_t errbuf_size);
 API_EXPORT(char *) ap_pregsub(pool *p, const char *input, const char *source,
-			   size_t nmatch, regmatch_t pmatch[]);
+                              size_t nmatch, regmatch_t pmatch[]);
 
 API_EXPORT(void) ap_content_type_tolower(char *);
 API_EXPORT(void) ap_str_tolower(char *);

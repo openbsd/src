@@ -341,7 +341,9 @@ static int status_handler(request_rec *r)
     ap_hard_timeout("send status info", r);
 
     if (!short_report) {
-	ap_rputs("<HTML><HEAD>\n<TITLE>Apache Status</TITLE>\n</HEAD><BODY>\n", r);
+	ap_rputs(DOCTYPE_HTML_3_2
+		 "<HTML><HEAD>\n<TITLE>Apache Status</TITLE>\n</HEAD><BODY>\n",
+		 r);
 	ap_rputs("<H1>Apache Server Status for ", r);
 	ap_rvputs(r, ap_get_server_name(r), "</H1>\n\n", NULL);
 	ap_rvputs(r, "Server Version: ",
@@ -353,6 +355,7 @@ static int status_handler(request_rec *r)
 	ap_rvputs(r, "Restart Time: ",
 	  ap_ht_time(r->pool, ap_restart_time, DEFAULT_TIME_FORMAT, 0), 
 	  "<br>\n", NULL);
+	ap_rprintf(r, "Parent Server Generation: %d <br>\n", (int) ap_my_generation);
 	ap_rputs("Server uptime: ", r);
 	show_time(r, up_time);
 	ap_rputs("<br>\n", r);
@@ -477,12 +480,33 @@ static int status_handler(request_rec *r)
 	    if (no_table_report)
 		ap_rputs("<p><hr><h2>Server Details</h2>\n\n", r);
 	    else
+#ifndef NO_PRETTYPRINT
+		ap_rputs("<p>\n\n<table bgcolor=\"#ffffff\" border=\"0\">"
+			"<tr bgcolor=000000>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Srv</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>PID</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Acc</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>M</b></font></td>"
+#ifndef NO_TIMES
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>CPU</b></font></td>"
+#endif
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>SS</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Req</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Conn</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Child</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Slot</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Host</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>VHost</b></font></td>"
+			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Request</b></td>"
+			"</tr>\n", r);      
+#else /* NO_PRETTYPRINT */
 #ifdef NO_TIMES
 		/* Allow for OS/2 not having CPU stats */
 		ap_rputs("<p>\n\n<table border=0><tr><th>Srv<th>PID<th>Acc<th>M\n<th>SS<th>Req<th>Conn<th>Child<th>Slot<th>Client<th>VHost<th>Request</tr>\n\n", r);
 #else
 		ap_rputs("<p>\n\n<table border=0><tr><th>Srv<th>PID<th>Acc<th>M<th>CPU\n<th>SS<th>Req<th>Conn<th>Child<th>Slot<th>Client<th>VHost<th>Request</tr>\n\n", r);
 #endif
+#endif /* NO_PRETTYPRINT */
 	}
 
 	for (i = 0; i < HARD_SERVER_LIMIT; ++i) {
@@ -527,11 +551,16 @@ static int status_handler(request_rec *r)
 		if (!short_report) {
 		    if (no_table_report) {
 			if (score_record.status == SERVER_DEAD)
-			    ap_rprintf(r, "<b>Server %d</b> (-): %d|%lu|%lu [",
-				    i, (int) conn_lres, my_lres, lres);
+			    ap_rprintf(r,
+				"<b>Server %d-%d</b> (-): %d|%lu|%lu [",
+				i, (int) ps_record.generation, (int) conn_lres,
+				my_lres, lres);
 			else
-			    ap_rprintf(r, "<b>Server %d</b> (%d): %d|%lu|%lu [",
-				    i, (int) ps_record.pid, (int) conn_lres, my_lres, lres);
+			    ap_rprintf(r,
+				"<b>Server %d-%d</b> (%d): %d|%lu|%lu [",
+				i, (int) ps_record.generation,
+				(int) ps_record.pid,
+				(int) conn_lres, my_lres, lres);
 
 			switch (score_record.status) {
 			case SERVER_READY:
@@ -588,17 +617,28 @@ static int status_handler(request_rec *r)
 			ap_rputs("|", r);
 			format_byte_out(r, bytes);
 			ap_rputs(")\n", r);
-			ap_rprintf(r, " <i>%s {%s}</i><br>\n\n",
-				score_record.client,
-				ap_escape_html(r->pool, score_record.request));
+			ap_rprintf(r, " <i>%s {%s}</i> <b>[%s]</b><br>\n\n",
+			    score_record.client,
+			    ap_escape_html(r->pool, score_record.request),
+			    vhost ? vhost->server_hostname : "(unavailable)");
 		    }
 		    else {		/* !no_table_report */
+#ifndef NO_PRETTYPRINT
+			ap_rprintf(r,"<tr bgcolor=\"#ffffff\">");
+#else
+			ap_rprintf(r,"<tr>");
+#endif
 			if (score_record.status == SERVER_DEAD)
-			    ap_rprintf(r, "<tr><td><b>%d</b><td>-<td>%d/%lu/%lu",
-				    i, (int) conn_lres, my_lres, lres);
+			    ap_rprintf(r,
+				"<td><b>%d-%d</b><td>-<td>%d/%lu/%lu",
+				i, (int) ps_record.generation,
+				(int) conn_lres, my_lres, lres);
 			else
-			    ap_rprintf(r, "<tr><td><b>%d</b><td>%d<td>%d/%lu/%lu",
-				    i, (int) ps_record.pid, (int) conn_lres, my_lres, lres);
+			    ap_rprintf(r,
+				"<td><b>%d-%d</b><td>%d<td>%d/%lu/%lu",
+				i, (int) ps_record.generation,
+				(int) ps_record.pid, (int) conn_lres,
+				my_lres, lres);
 
 			switch (score_record.status) {
 			case SERVER_READY:
@@ -655,11 +695,22 @@ static int status_handler(request_rec *r)
 			    ap_rprintf(r,
 			     "<td>?<td nowrap>?<td nowrap>..reading.. </tr>\n\n");
 			else
+#ifndef NO_PRETTYPRINT
+			    ap_rprintf(r,
+			     "<td nowrap><font face=\"Arial,Helvetica\" size=\"-1\">%s</font>"
+			     "<td nowrap><font face=\"Arial,Helvetica\" size=\"-1\">%s</font>"
+			     "<td nowrap><font face=\"Arial,Helvetica\" size=\"-1\">%s</font>"
+			     "</tr>\n\n",
+			     score_record.client,
+			     vhost ? vhost->server_hostname : "(unavailable)",
+			     ap_escape_html(r->pool, score_record.request));
+#else
 			    ap_rprintf(r,
 			     "<td>%s<td nowrap>%s<td nowrap>%s</tr>\n\n",
 			     score_record.client,
 			     vhost ? vhost->server_hostname : "(unavailable)",
 			     ap_escape_html(r->pool, score_record.request));
+#endif
 		    }		/* no_table_report */
 		}			/* !short_report */
 	    }			/* if (<active child>) */
@@ -670,7 +721,7 @@ static int status_handler(request_rec *r)
 	    ap_rputs("</table>\n \
 <hr> \
 <table>\n \
-<tr><th>Srv<td>Server number\n \
+<tr><th>Srv<td>Child Server number - generation\n \
 <tr><th>PID<td>OS process ID\n \
 <tr><th>Acc<td>Number of accesses this connection / this child / this slot\n \
 <tr><th>M<td>Mode of operation\n \
@@ -684,7 +735,7 @@ static int status_handler(request_rec *r)
 	    ap_rputs("</table>\n \
 <hr> \
 <table>\n \
-<tr><th>Srv<td>Server number\n \
+<tr><th>Srv<td>Child Server number - generation\n \
 <tr><th>PID<td>OS process ID\n \
 <tr><th>Acc<td>Number of accesses this connection / this child / this slot\n \
 <tr><th>M<td>Mode of operation\n \
@@ -697,6 +748,12 @@ static int status_handler(request_rec *r)
 </table>\n", r);
 #endif
 	}
+
+#ifdef EAPI
+    ap_hook_use("ap::mod_status::display",
+                AP_HOOK_SIG4(void,ptr,int,int), AP_HOOK_ALL,
+                r, no_table_report, short_report);
+#endif
 
     } else {
 

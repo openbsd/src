@@ -2,19 +2,24 @@
   _ __ ___   ___   __| |    ___ ___| |
  | '_ ` _ \ / _ \ / _` |   / __/ __| | 
  | | | | | | (_) | (_| |   \__ \__ \ | ``mod_ssl combines the flexibility of
- |_| |_| |_|\___/ \__,_|___|___/___/_|   Apache with the security of SSLeay.''
+ |_| |_| |_|\___/ \__,_|___|___/___/_|   Apache with the security of OpenSSL.''
                       |_____|                                           
-                                       ``Ralf Engelschall has released an
- mod_ssl - Apache Interface to SSLeay    excellent module that integrates
- http://www.engelschall.com/sw/mod_ssl/  Apache and SSLeay.''                 
- Version 2.1.0-1.3.3                         Tim J. Hudson, SSLeay co-author
+ mod_ssl                               ``Ralf Engelschall has released an
+ Apache Interface to OpenSSL             excellent module that integrates
+ http://www.modssl.org/                  Apache and SSLeay.''                 
+ Version 2.3                                               -- Tim J. Hudson
                                            
+ SYNOPSIS
+
  This Apache module provides strong cryptography for the Apache 1.3 webserver
  via the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS
- v1) protocols by the help of the SSL/TLS implementation library SSLeay from
- Eric A. Young and Tim J. Hudson. The mod_ssl package was created in April
- 1998 by Ralf S. Engelschall and was originally derived from software
- developed by Ben Laurie for use in the Apache-SSL HTTP server project. 
+ v1) protocols by the help of the SSL/TLS implementation library OpenSSL which
+ is based on SSLeay from Eric A. Young and Tim J. Hudson. The mod_ssl package
+ was created in April 1998 by Ralf S. Engelschall and was originally derived
+ from software developed by Ben Laurie for use in the Apache-SSL HTTP server
+ project. 
+
+ SOURCES
 
  Here is a short overview of the source files:
 
@@ -53,18 +58,22 @@
  -Wmissing-declarations -Wnested-externs -Winline'' compiler test without any
  complains. When you make changes or additions make sure the source still
  passes this compiler test.
+
+ FUNCTIONS
   
  Inside the source code you will be confronted with the following types of
  functions which can be identified by their prefixes:
 
    ap_xxxx() ............... Apache API function
    ssl_xxxx() .............. mod_ssl function
-   SSL_xxxx() .............. SSLeay function (SSL library)
-   SSLeay_xxxx() ........... SSLeay function (SSL library)
-   X509_xxxx() ............. SSLeay function (Crypto library)
-   PEM_xxxx() .............. SSLeay function (Crypto library)
-   EVP_xxxx() .............. SSLeay function (Crypto library)
-   RSA_xxxx() .............. SSLeay function (Crypto library)
+   SSL_xxxx() .............. OpenSSL function (SSL library)
+   OpenSSL_xxxx() .......... OpenSSL function (SSL library)
+   X509_xxxx() ............. OpenSSL function (Crypto library)
+   PEM_xxxx() .............. OpenSSL function (Crypto library)
+   EVP_xxxx() .............. OpenSSL function (Crypto library)
+   RSA_xxxx() .............. OpenSSL function (Crypto library)
+
+ DATA STRUCTURES
 
  Inside the source code you will be confronted with the following
  data structures:
@@ -77,16 +86,51 @@
    SSLModConfig ............ mod_ssl (Global)  Module Configuration
    SSLSrvConfig ............ mod_ssl (Virtual) Server Configuration
    SSLDirConfig ............ mod_ssl Directory Configuration
-   SSL_CTX ................. SSLeay Context
-   SSL_METHOD .............. SSLeay Protocol Method
-   SSL_CIPHER .............. SSLeay Cipher
-   SSL_SESSION ............. SSLeay Session
-   SSL ..................... SSLeay Connection
-   BIO ..................... SSLeay Connection Buffer
+   SSL_CTX ................. OpenSSL Context
+   SSL_METHOD .............. OpenSSL Protocol Method
+   SSL_CIPHER .............. OpenSSL Cipher
+   SSL_SESSION ............. OpenSSL Session
+   SSL ..................... OpenSSL Connection
+   BIO ..................... OpenSSL Connection Buffer
 
  For an overview how these are related and chained together have a look at the
  page in README.dsov.{fig,ps}. It contains overview diagrams for those data
  structures. It's designed for DIN A4 paper size, but you can easily generate
  a smaller version inside XFig by specifing a magnification on the Export
  panel.
+
+ EXPERIMENTAL CODE
+
+ Experimental code is always encapsulated as
+
+   | #ifdef SSL_EXPERIMENTAL
+   | ...
+   | #endif
+
+ blocks and only compiled in when this define is enabled with the APACI
+ --enable-rule=SSL_EXPERIMENTAL option. Currently the following features are
+ experimental:
+
+   o The ability to use SSLCACertificateFile and SSLCACertificatePath
+     in a per-directory context (.htaccess). This is provided by some nasty
+     reconfiguration hacks until OpenSSL has better support for this. It
+     should work on non-multithreaded platforms (all but Win32).
+
+ VENDOR EXTENSIONS
+
+ Inside the mod_ssl sources you can enable various EAPI vendor hooks
+ (`ap::mod_ssl::vendor::xxxx') by using the APACI --enable-rule=SSL_VENDOR
+ option.  These hooks can be used to change or extend mod_ssl by a vendor
+ without patching the source code. Grep for `ap::mod_ssl::vendor::'.
+ Additionally vendors can add their own source code to files named
+ ssl_vendor.c, ssl_vendor_XXX.c, etc.  The libssl.module script automatically
+ picks these up under configuration time and mod_ssl under run-time calls the
+ functions `void ssl_vendor_register(void)' and `void
+ ssl_vendor_unregister(void)' inside these objects to bootstrap them.
+
+ An ssl_vendor.c should at least contain the following contents:
+
+   |  #include "mod_ssl.h"
+   |  void ssl_vendor_register(void) { return; }
+   |  void ssl_vendor_unregister(void) { return; }
 

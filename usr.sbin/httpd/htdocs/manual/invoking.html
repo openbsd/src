@@ -123,7 +123,17 @@ server. (Up to Apache 1.3.3, this option also started the server).
 <DD>Test the configuration file syntax (<EM>i.e.</EM>, read all configuration files
 and interpret them) but do not start the server. If the configuration contains
 errors, display an error message and exit with a non-zero exit status,
-otherwise display "Syntax OK" and terminate with a zero exit status.
+otherwise display "Syntax OK" and terminate with a zero exit status. This
+command checks to see if all DocumentRoot entries exist and are directories.
+For sites with many vhosts, this is expensive; consider the <CODE>-T</CODE>
+command instead.
+
+<DT><CODE>-T</CODE>
+<DD>Test the configuration file syntax (<EM>i.e.</EM>, read all configuration files
+and interpret them) but do not start the server. If the configuration contains
+errors, display an error message and exit with a non-zero exit status,
+otherwise display "Syntax OK" and terminate with a zero exit status. This
+command does not perform any checking of the DocumentRoot entries.
 
 <DT><CODE>-k</CODE> <EM>option</EM>
 <DD>Windows only: signal Apache to restart or shutdown. <EM>option</EM> 
@@ -194,7 +204,7 @@ kill the children httpd processes.
 
 The server will log error messages to a log file, by default
 <CODE>logs/error_log</CODE> on Unix or <CODE>logs/error.log</CODE> on
-OS/2. The filename can be set using the <A
+Windows and OS/2. The filename can be set using the <A
 HREF="mod/core.html#errorlog">ErrorLog</A> directive; different error
 logs can be set for different <A
 HREF="mod/core.html#virtualhost">virtual hosts</A>.
@@ -203,9 +213,10 @@ HREF="mod/core.html#virtualhost">virtual hosts</A>.
 
 The server will typically log each request to a transfer file, by
 default <CODE>logs/access_log</CODE> on Unix or
-<CODE>logs/access.log</CODE> on OS/2. The filename can be set using a
-<A HREF="mod/mod_log_config.html#transferlog">TransferLog</A>
-directive or additional log files created with the <A
+<CODE>logs/access.log</CODE> on Windows and OS/2. The filename can be
+set using a <A
+HREF="mod/mod_log_config.html#transferlog">TransferLog</A> directive
+or additional log files created with the <A
 HREF="mod/mod_log_config.html#customlog">CustomLog</A> directive;
 different transfer logs can be set for different <A
 HREF="mod/core.html#virtualhost">virtual hosts</A>.

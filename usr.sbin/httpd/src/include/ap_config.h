@@ -95,7 +95,9 @@ stat() properly */
  * means.  In particular it's missing inline and the __attribute__
  * stuff.  So we hack around it.  PR#1613. -djg
  */
-#if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC_MINOR__ < 7 || defined(NEXT)
+#if !defined(__GNUC__) || __GNUC__ < 2 || \
+    (__GNUC__ == 2 && __GNUC_MINOR__ < 7) ||\
+    defined(NEXT)
 #define ap_inline
 #define __attribute__(__x)
 #define ENUM_BITFIELD(e,n,w)  signed int n : w
@@ -316,11 +318,34 @@ typedef int rlim_t;
 typedef int rlim_t;
 
 #elif defined(SEQUENT)
-#define HAVE_GMTOFF 1
-#undef NO_KILLPG
-#define NO_SETSID
-#define NEED_STRDUP
+#define DEFAULT_USER "nobody"
+#define DEFAULT_GROUP "nobody"
+#define NO_SHMGET 1
+#define HAVE_MMAP 1
 #define HAVE_SYSLOG 1
+#define USE_MMAP_FILES 1
+#define USE_MMAP_SCOREBOARD 1
+#define USE_FCNTL_SERIALIZED_ACCEPT 1
+#define JMP_BUF sigjmp_buf
+#undef NO_SETSID
+#if SEQUENT < 40
+typedef int rlim_t;
+#define NO_GETTIMEOFDAY
+#undef HAVE_SYS_RESOURCE_H /* exists but does not provide *rlimit funcs */
+#include <sys/times.h>
+#endif
+#if SEQUENT < 42
+#define NEED_STRCASECMP
+#define NEED_STRNCASECMP
+#endif
+#if SEQUENT < 44
+#define NO_KILLPG 1
+#define NET_SIZE_T int
+#endif
+#if SEQUENT >= 44
+#undef NO_KILLPG
+#define NET_SIZE_T size_t
+#endif
 
 #elif defined(NEXT)
 typedef unsigned short mode_t;
@@ -365,10 +390,6 @@ typedef unsigned short mode_t;
 #endif
 #ifndef S_IWOTH
 #define S_IWOTH 000002
-#ifndef rlim_t
-typedef int rlim_t;
-#endif
-typedef u_long n_long;
 #endif
 
 #define STDIN_FILENO  0
@@ -386,12 +407,29 @@ typedef int pid_t;
 #define NO_USE_SIGACTION
 #define HAVE_SYSLOG 1
 
-#elif defined(RHAPSODY) /* Mac OS X Server */
+#if defined(__DYNAMIC__)
+#define HAVE_DYLD
+#define DYLD_CANT_UNLOAD
+#endif
+
+#elif defined(MAC_OS) || defined(MAC_OS_X_SERVER) /* Mac OS (>= 10.0) and Mac OS X Server (<= 5.x) */
+#undef PLATFORM
+#ifdef MAC_OS_X_SERVER
+#define PLATFORM "Mac OS X Server"
+#else
+#define PLATFORM "Mac OS"
+#endif
+#define HAVE_DYLD
+#ifdef MAC_OS_X_SERVER
+#define DYLD_CANT_UNLOAD
+#endif /* MAC_OS_X_SERVER */
 #define HAVE_GMTOFF
 #define HAVE_MMAP
 #define USE_MMAP_FILES
 #define USE_MMAP_SCOREBOARD
+#ifdef MAC_OS_X_SERVER
 #define MAP_TMPFILE
+#endif /* MAC_OS_X_SERVER */
 #define HAVE_RESOURCE
 #define HAVE_SNPRINTF
 #define JMP_BUF jmp_buf
@@ -399,26 +437,52 @@ typedef int pid_t;
 #define USE_FLOCK_SERIALIZED_ACCEPT
 #define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
 /*
- * If you are using APACI, (you should be on Rhapsody) these
- * values are set at configure time. These are here as reference;
- * the apache that is built into Rhapsody is configured with
- * these values.
+ * If you are using APACI, (you probably should be on Mac OS) these
+ * values are set at configure time.
  */
-#if 0
+#ifndef HTTPD_ROOT
 #define HTTPD_ROOT              "/Local/Library/WebServer"
+#endif
+#ifndef DOCUMENT_LOCATION
 #define DOCUMENT_LOCATION       HTTPD_ROOT "/Documents"
+#endif
+#ifndef DEFAULT_XFERLOG
 #define DEFAULT_XFERLOG         "Logs/Access"
+#endif
+#ifndef DEFAULT_ERRORLOG
 #define DEFAULT_ERRORLOG        "Logs/Errors"
+#endif
+#ifndef DEFAULT_PIDLOG
 #define DEFAULT_PIDLOG          "Logs/Process"
+#endif
+#ifndef DEFAULT_SCOREBOARD
 #define DEFAULT_SCOREBOARD      "Logs/Status"
+#endif
+#ifndef DEFAULT_LOCKFILE
 #define DEFAULT_LOCKFILE        "Logs/Lock"
+#endif
+#ifndef SERVER_CONFIG_FILE
 #define SERVER_CONFIG_FILE      "Configuration/Server"
+#endif
+#ifndef RESOURCE_CONFIG_FILE
 #define RESOURCE_CONFIG_FILE    "Configuration/Resources"
+#endif
+#ifndef TYPES_CONFIG_FILE
 #define TYPES_CONFIG_FILE       "Configuration/MIME"
+#endif
+#ifndef ACCESS_CONFIG_FILE
 #define ACCESS_CONFIG_FILE      "Configuration/Access"
+#endif
+#ifndef DEFAULT_USER_DIR
 #define DEFAULT_USER_DIR        "Library/Web Documents"
-#define DEFAULT_USER            "nobody"
-#define DEFAULT_GROUP           "nogroup"
+#endif
+#ifndef DEFAULT_USER
+#define DEFAULT_USER            "www"
+#endif
+#ifndef DEFAULT_GROUP
+#define DEFAULT_GROUP           "www"
+#endif
+#ifndef DEFAULT_PATH
 #define DEFAULT_PATH            "/bin:/usr/bin:/usr/local/bin"
 #endif
 
@@ -458,7 +522,13 @@ typedef int pid_t;
 #define USE_MMAP_FILES
 
 /* flock is faster ... but hasn't been tested on 1.x systems */
-#define USE_FLOCK_SERIALIZED_ACCEPT
+/* PR#3531 indicates flock() may not be stable, probably depends on
+ * kernel version.  Go back to using fcntl, but provide a way for
+ * folks to tweak their Configuration to get flock.
+ */
+#ifndef USE_FLOCK_SERIALIZED_ACCEPT
+#define USE_FCNTL_SERIALIZED_ACCEPT
+#endif
 
 #define SYS_SIGLIST	_sys_siglist
 
@@ -559,12 +629,10 @@ extern char *crypt();
 #define HAVE_SHMGET 1
 #define USE_SHMGET_SCOREBOARD
 #ifdef _OSD_POSIX /* BS2000-POSIX mainframe needs initgroups */
-#define NEED_INITGROUPS
 #define NEED_HASHBANG_EMUL /* execve() doesn't start shell scripts by default */
-#undef HAVE_SHMGET
+#define _KMEMUSER          /* Enable SHM_R/SHM_W defines in <shm.h> */
 #undef NEED_STRCASECMP
 #undef NEED_STRNCASECMP
-#undef USE_SHMGET_SCOREBOARD
 #undef bzero
 #endif /*_OSD_POSIX*/
 
@@ -738,13 +806,14 @@ typedef int rlim_t;
 #define NO_KILLPG
 #define NEED_STRCASECMP
 #define NEED_STRNCASECMP
+#define NEED_PROCESS_H
 #define NO_SETSID
 #define NO_TIMES
 #define CASE_BLIND_FILESYSTEM
 /* Add some drive name support */
 #define chdir _chdir2
 #include <sys/time.h>
-#define MAXSOCKETS 4096
+#define MAXSOCKETS 2048
 #define USE_OS2_SCOREBOARD
 #define NO_RELIABLE_PIPED_LOGS
 #define USE_OS2SEM_SERIALIZED_ACCEPT
@@ -844,10 +913,16 @@ typedef int rlim_t;
 #include <sysgtime.h>
 #define PRIMECRAS 0x010000
 #define JMP_BUF jmp_buf
+#define HAVE_SHMGET
+#undef  HAVE_SYS_RESOURCE_H
 #define NEED_INITGROUPS
+#define NEED_SIGNAL_INTERRUPT
+#include <strings.h>
+#ifndef __strings_h
 #define NEED_STRCASECMP
-#define NEED_STRDUP
 #define NEED_STRNCASECMP
+#endif
+#define NEED_STRDUP
 #define NO_DBM_REWRITEMAP
 #define NO_GETTIMEOFDAY
 #define NO_KILLPG
@@ -856,15 +931,25 @@ typedef int rlim_t;
 #define NO_OTHER_CHILD
 #define NO_RELIABLE_PIPED_LOGS
 #define NO_SETSID
-#define NO_SHMGET
 #define NO_SLACK
 #define NO_TIMES
 #define NO_USE_SIGACTION
 #define NO_WRITEV
 #define USE_LONGJMP
+/*#define USE_SHMGET_SCOREBOARD*/
+#define USE_TPF_ACCEPT
+#define USE_TPF_CORE_SERIALIZED_ACCEPT
+/*#define USE_TPF_DAEMON*/
+#define USE_TPF_SCOREBOARD
 #define USE_TPF_SELECT
 #undef  offsetof
 #define offsetof(s_type,field) ((size_t)&(((s_type*)0)->field))
+
+#elif defined(__TANDEM)
+#define NO_WRITEV
+#define NO_KILLPG
+#define NEED_INITGROUPS
+#define NO_SLACK
 
 #else
 /* Unknown system - Edit these to match */
@@ -919,7 +1004,7 @@ typedef int rlim_t;
  * __private_extern__.
  * For other systems, make that a no-op.
  */
-#if defined(RHAPSODY)
+#if (defined(MAC_OS) || defined(MAC_OS_X_SERVER)) && defined(__DYNAMIC__)
 #define ap_private_extern __private_extern__
 #else
 #define ap_private_extern
@@ -949,8 +1034,11 @@ typedef int rlim_t;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __TANDEM
+#include <strings.h>
+#endif
 #include "ap_ctype.h"
-#if !defined(MPE) && !defined(WIN32) && !defined(TPF)
+#if !defined(MPE) && !defined(WIN32) && !defined(TPF) && !defined(__TANDEM)
 #include <sys/file.h>
 #endif
 #ifndef WIN32
@@ -970,24 +1058,26 @@ typedef int rlim_t;
 #include <pwd.h>
 #include <grp.h>
 #include <fcntl.h>
-#include <limits.h>
 #define closesocket(s) close(s)
 #ifndef O_BINARY
 #define O_BINARY (0)
 #endif
 
 #else /* WIN32 */
-#include <winsock.h>
+#include <winsock2.h>
 #include <malloc.h>
 #include <io.h>
 #include <fcntl.h>
 #endif /* ndef WIN32 */
-
+#include <limits.h>
 #include <time.h>		/* for ctime */
 #ifdef WIN32
 #define strftime(s,max,format,tm)  os_strftime(s,max,format,tm)
 #endif
 #include <signal.h>
+#if defined(TPF) && defined(NSIG)
+#undef NSIG
+#endif
 #include <errno.h>
 #if !defined(QNX) && !defined(CONVEXOS11) && !defined(NEXT) && !defined(TPF)
 #include <memory.h>
@@ -1090,13 +1180,32 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #endif
 #endif
 
-#ifdef SELECT_NEEDS_CAST
+/* Majority of os's want to verify FD_SETSIZE */
+#if !defined(WIN32) && !defined(TPF)
+#define CHECK_FD_SETSIZE
+#endif
+
+#ifdef USE_TPF_SELECT
 #define ap_select(_a, _b, _c, _d, _e)	\
+	tpf_select(_a, _b, _c, _d, _e)
+#elif defined(SELECT_NEEDS_CAST)
+#define ap_select(_a, _b, _c, _d, _e)   \
     select((_a), (int *)(_b), (int *)(_c), (int *)(_d), (_e))
-#elif defined(USE_TPF_SELECT)
-#define ap_select   tpf_select
 #else
-#define ap_select	select
+#define ap_select(_a, _b, _c, _d, _e)   \
+	select(_a, _b, _c, _d, _e)
+#endif
+
+#ifdef USE_TPF_ACCEPT
+#define ap_accept(_fd, _sa, _ln)	tpf_accept(_fd, _sa, _ln)
+#else
+#define ap_accept(_fd, _sa, _ln)	accept(_fd, _sa, _ln)
+#endif
+
+#ifdef NEED_SIGNAL_INTERRUPT
+#define ap_check_signals()	tpf_process_signals()
+#else
+#define ap_check_signals()
 #endif
 
 #ifdef ULTRIX_BRAIN_DEATH

@@ -1,11 +1,11 @@
 /*                      _             _
-**  _ __ ___   ___   __| |    ___ ___| |
-** | '_ ` _ \ / _ \ / _` |   / __/ __| |
-** | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-** |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+**  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+** | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+** |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 **                      |_____|
 **  ssl_util_ssl.h
-**  Additional Utility Functions for SSLeay
+**  Additional Utility Functions for OpenSSL
 */
 
 /* ====================================================================
@@ -27,7 +27,7 @@
  *    software must display the following acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * 4. The names "mod_ssl" must not be used to endorse or promote
  *    products derived from this software without prior written
@@ -42,7 +42,7 @@
  *    acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -68,14 +68,11 @@
 #ifdef OPENSSL_VERSION_NUMBER
 #define SSL_LIBRARY_VERSION OPENSSL_VERSION_NUMBER
 #define SSL_LIBRARY_NAME    "OpenSSL"
-#else
-#ifdef SSLEAY_VERSION_NUMBER
-#define SSL_LIBRARY_VERSION SSLEAY_VERSION_NUMBER
-#define SSL_LIBRARY_NAME    "SSLeay"
+#define SSL_LIBRARY_TEXT    OPENSSL_VERSION_TEXT
 #else
 #define SSL_LIBRARY_VERSION 0x0000
 #define SSL_LIBRARY_NAME    "OtherSSL"
-#endif
+#define SSL_LIBRARY_TEXT    "OtherSSL 0.0.0 00 XXX 0000"
 #endif
 
 /*
@@ -89,8 +86,18 @@
 /*  
  *  Additional Functions
  */
-int    SSL_get_app_data2_idx(void);
-void  *SSL_get_app_data2(SSL *);
-void   SSL_set_app_data2(SSL *, void *);
+int         SSL_get_app_data2_idx(void);
+void       *SSL_get_app_data2(SSL *);
+void        SSL_set_app_data2(SSL *, void *);
+X509       *SSL_read_X509(FILE *, X509 **, int (*)());
+EVP_PKEY   *SSL_read_PrivateKey(FILE *, EVP_PKEY **, int (*)());
+int         SSL_smart_shutdown(SSL *ssl);
+X509_STORE *SSL_X509_STORE_create(char *, char *);
+int         SSL_X509_STORE_lookup(X509_STORE *, int, X509_NAME *, X509_OBJECT *);
+char       *SSL_make_ciphersuite(pool *, SSL *);
+BOOL        SSL_X509_isSGC(X509 *);
+BOOL        SSL_X509_getBC(X509 *, int *, int *);
+BOOL        SSL_X509_getCN(pool *, X509 *, char **);
+int         SSL_CTX_use_certificate_chain(SSL_CTX *, char *, int, int (*)());
 
 #endif /* SSL_UTIL_SSL_H */

@@ -4,16 +4,64 @@
  * 26/06/97 PCS 1.000 Initial version
  * 22/02/98 PCS 1.001 Used the excellent NTemacs to apply proper formating
  * 04/05/98 PCS 1.002 Copy conf files to *.conf.default, then to *.conf
+ * 16/02/99 PCS 1.003 Add logging to "install.log" in the installed directory
  */
 
-#include <windows.h>
-#include <winsock.h>
+#define VERSION ( "1.003 " __DATE__ " " __TIME__ )
+
+#include <winsock2.h>
 #include <string.h>
 #include <stdio.h>
 #include <direct.h>
+#include <time.h>
+
+#include "conf.h"
+#include "ap.h"
+
+#ifdef strftime
+#undef strftime
+#endif
+
+#define AP_WIN32ERROR 1
 
 /* Global to store the instance handle */
 HINSTANCE hInstance = NULL;
+
+static char *szLogFilename = NULL;
+static FILE *fpLog = NULL;
+
+void LogMessage(char *fmt, ...)
+{
+    char buf[4000];
+    va_list ap;
+    struct tm *tms;
+    time_t nowtime;
+    char *bp = buf;
+    int rv;
+    int free = sizeof(buf);
+
+    if (!fpLog) {
+	return;
+    }
+
+    nowtime = time(NULL);
+    tms = localtime(&nowtime);
+    rv = strftime(bp, free, "%c", tms);
+    bp += rv;
+    free -= rv;
+    if (free) {
+        *bp++ = ' ';
+	free--;
+    }
+
+    va_start(ap, fmt);
+    rv = ap_vsnprintf(bp, free, fmt, ap);
+    va_end(ap);
+
+    free -= rv;
+
+    fprintf(fpLog, "%s\n", buf);
+}
 
 /*
  * MessageBox_error() is a helper function to display an error in a 
@@ -23,43 +71,102 @@ HINSTANCE hInstance = NULL;
  * the output string. The output string is given as a printf-format
  * and replacement arguments. The hWnd, title and mb_opt fields are 
  * passed on to the Win32 MessageBox() call.
- *
- * We shouldn't use a fixed length buffer to build up the printf
- * text. Umm.
  */
-
-#define AP_WIN32ERROR 1
 
 int MessageBox_error(HWND hWnd, int opt, char *title, 
 		     int mb_opt, char *fmt, ...)
 {
-    char buf[4000];
+    char buf[1000];
     va_list ap;
+    int free = sizeof(buf);       /* Number of bytes free in the buffer */
+    int rv;
+    char *p;
 
     va_start(ap, fmt);
-    wvsprintf(buf, fmt, ap);
+    rv = ap_vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
 
-    if (opt & AP_WIN32ERROR) {
-	char *p;
+    free -= rv;
 
-	strcat(buf, "\r\r(");
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
-		      NULL,
-		      GetLastError(),
-		      0,
-		      buf + strlen(buf),
-		      4000 - strlen(buf),
-		      NULL);
-	p = buf+strlen(buf)-1;
-	while (*p == '\r' || *p == '\n')
-	    p--;
-	p++;
-	*p = '\0';
-	strcat(buf, ")");
+    if (opt & AP_WIN32ERROR && free > 3) {
+      /* We checked in the "if" that we have enough space in buf for
+       * at least three extra characters.
+       */
+      p = buf + strlen(buf);
+      *p++ = '\r';
+      *p++ = '\r';
+      *p++ = '(';
+      free -= 3;
+      /* NB: buf is now not null terminated */
+
+      /* Now put the error message straight into buf. This function
+       * takes the free buffer size as the 6th argument.
+       */
+      rv = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+                         NULL,
+                         GetLastError(),
+                         0,
+                         p,
+                         free,
+                         NULL);
+
+      if (rv == 0) {
+          /* FormatMessage failed, so get rid of the "\r\r(" we just placed
+           * in the buffer, since there is no system error message.
+           */
+          p -= 3;
+          *p = '\0';
+          free += 3;
+      } else {
+          free -= rv;
+          p += rv;
+
+          /* Strip any trailing \r or \n characters to make it look nice on
+           * the screen.
+           */
+          while (*(p-1) == '\r' || *(p-1) == '\n')
+              p--, free++;
+          *p = '\0';
+
+          /* Append a trailing ) */
+          if (free >= 1) {
+              *p++ = ')';
+              *p++ = '\0';
+          }
+      }
     }
 
+    for (p = buf; *p; p++) {
+	if (*p == '\n' || *p == '\r') {
+	    *p = ' ';
+	}
+    }
+    LogMessage("MSG %s", buf);
+
     return MessageBox(hWnd, buf, title, mb_opt);
+}
+
+int OpenLog(HWND hwnd, char *dir, char *fn)
+{
+    szLogFilename = malloc(strlen(dir) + 1 + strlen(fn) + 1);
+    sprintf(szLogFilename, "%s\\%s", dir, fn);
+
+    if ((fpLog = fopen(szLogFilename, "a+")) == NULL) {
+	MessageBox_error(hwnd, 
+			 AP_WIN32ERROR,
+			 "Installation Problem",
+			 MB_OK | MB_ICONSTOP,
+			 "Cannot open log file %s", szLogFilename);
+	return -1;
+    }
+    return 0;
+}
+
+void CloseLog(void)
+{
+    if (fpLog) {
+	fclose(fpLog);
+    }
 }
 
 /*
@@ -262,8 +369,8 @@ int WINAPI ExpandConfFile(HWND hwnd, LPSTR szInst, LPSTR szinFile, LPSTR szoutFi
     FILE *infp;
     FILE *outfp;
 
-    sprintf(inFile, "%s\\%s", szInst, szinFile);
-    sprintf(outFile, "%s\\%s", szInst, szoutFile);
+    ap_snprintf(inFile, sizeof(inFile), "%s\\%s", szInst, szinFile);
+    ap_snprintf(outFile, sizeof(outFile), "%s\\%s", szInst, szoutFile);
 
     if (!(infp = fopen(inFile, "r"))) {
 	MessageBox_error(hwnd, 
@@ -348,8 +455,11 @@ int WINAPI ExpandConfFile(HWND hwnd, LPSTR szInst, LPSTR szinFile, LPSTR szoutFi
     fclose(infp);
     fclose(outfp);
 
+    LogMessage("COPY: expanded %s to %s", inFile, outFile);
+
     if (options & OPT_DELETESOURCE) {
 	unlink(inFile);
+        LogMessage("COPY: deleted file %s", inFile);
     }
 
     return 0;
@@ -375,6 +485,9 @@ int FillInReplaceTable(HWND hwnd, REPLACETABLE table, char *szInst)
 #endif
 	    for (p = item->value; *p; p++)
 	        if (*p == '\\') *p = '/';
+
+	    LogMessage("FillInReplaceTable tmpl=%s value=%s", item->tmpl, item->value);
+
 	    continue;
 	}
 #if NEED_FQDN
@@ -452,14 +565,6 @@ ACTIONITEM actionTable[] = {
     { CMD_COPY, ".tmp\\highperformance.conf-dist", "conf\\highperformance.conf-dist", 
 	OPT_EXPAND|OPT_OVERWRITE|OPT_DELETESOURCE },
 
-    /* Move the default htdocs files into place, provided they don't already
-     * exist.
-     */
-    { CMD_COPY, ".tmp\\index.html", "htdocs\\index.html", OPT_DELETESOURCE|OPT_SILENT },
-    { CMD_RM, ".tmp\\index.html", NULL, OPT_SILENT },
-    { CMD_COPY, ".tmp\\apache_pb.gif", "htdocs\\apache_pb.gif", OPT_DELETESOURCE|OPT_SILENT },
-    { CMD_RM, ".tmp\\apache_pb.gif", NULL, OPT_SILENT },
-
     { CMD_RMDIR, ".tmp", NULL },
 
     { CMD_END, NULL, NULL, OPT_NONE }
@@ -477,10 +582,22 @@ CHAR WINAPI BeforeExit(HWND hwnd, LPSTR szSrcDir, LPSTR szSupport, LPSTR szInst,
     ACTIONITEM *pactionItem;
     int end = 0;
 
+    OpenLog(hwnd, szInst, "install.log");
+    LogMessage("STARTED %s", VERSION);
+    LogMessage("src=%s support=%s inst=%s",
+		szSrcDir, szSupport, szInst);
+
     FillInReplaceTable(hwnd, replaceHttpd, szInst);
 
     pactionItem = actionTable;
     while (!end) {
+
+	LogMessage("command=%d 1in=%s out=%s options=%d",
+		   pactionItem->command,
+		   pactionItem->in ? pactionItem->in : "NULL",
+		   pactionItem->out ? pactionItem->out : "NULL",
+		   pactionItem->options);
+
 	switch(pactionItem->command) {
 	case CMD_END:
 	    end = 1;
@@ -498,7 +615,7 @@ CHAR WINAPI BeforeExit(HWND hwnd, LPSTR szSrcDir, LPSTR szSupport, LPSTR szInst,
 	case CMD_RM: {
 	    char inFile[MAX_INPUT_LINE];
 
-	    sprintf(inFile, "%s\\%s", szInst, pactionItem->in);
+	    ap_snprintf(inFile, sizeof(inFile), "%s\\%s", szInst, pactionItem->in);
 	    if (unlink(inFile) < 0 && !(pactionItem->options & OPT_SILENT)) {
 		MessageBox_error(hwnd, AP_WIN32ERROR, "Error during configuration",
 		    MB_ICONHAND,
@@ -506,12 +623,13 @@ CHAR WINAPI BeforeExit(HWND hwnd, LPSTR szSrcDir, LPSTR szSupport, LPSTR szInst,
 		    inFile);
 		return 0;
 	    }
+	    LogMessage("RM: deleted file %s", inFile);
 	    break;
 	}
 	case CMD_RMDIR: {
 	    char inFile[MAX_INPUT_LINE];
 
-	    sprintf(inFile, "%s\\%s", szInst, pactionItem->in);
+	    ap_snprintf(inFile, sizeof(inFile), "%s\\%s", szInst, pactionItem->in);
 	    if (rmdir(inFile) < 0) {
 		MessageBox_error(hwnd, AP_WIN32ERROR, "Error during configuration",
 		    MB_ICONHAND,
@@ -519,6 +637,7 @@ CHAR WINAPI BeforeExit(HWND hwnd, LPSTR szSrcDir, LPSTR szSupport, LPSTR szInst,
 		    inFile);
 		return 0;
 	    }
+	    LogMessage("RMDIR: deleted directory %s", inFile);
 	    break;
 	}
 	default:
@@ -531,6 +650,10 @@ CHAR WINAPI BeforeExit(HWND hwnd, LPSTR szSrcDir, LPSTR szSupport, LPSTR szInst,
 	}
 	pactionItem++;
     }
+
+    LogMessage("FINISHED OK");
+    CloseLog();
+
     return 1;
 }
 

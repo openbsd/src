@@ -1,0 +1,340 @@
+
+ Extended API (EAPI)
+ ===================
+
+ What is EAPI
+ ============
+
+ Extended API (EAPI) is a comprehensive API addition which can be _OPTIONALLY_
+ enabled with ``Rule EAPI=yes'' in src/Configuration or ``--enable-rule=EAPI''
+ on the APACI configure command line. This then defines a -DEAPI and this way
+ the EAPI code is compiled into Apache. When this define is not present _NO_
+ EAPI code is compiled into Apache at all, because all(!) EAPI patches are
+ encapsulated in #ifdef EAPI...#endif.
+
+ What is provided by EAPI?
+ =========================
+
+ EAPI's additions to the Apache API fall into the following categories:
+
+    o  Context Attachment Support for Data Structures
+    o  Loosly-coupled Hook Interface for Inter-Module Communication
+    o  Direct and Pool-based Shared Memory Support 
+    o  Additional Apache Module Hooks
+    o  Specialized EAPI Goodies
+
+ They are discussed in details now....
+
+ Context Attachment Support for Data Structures
+ ----------------------------------------------
+
+ Attaching private information to a request_rec, conn_rec, server_rec or even
+ BUFF structure is for a lot of modules the most elegant solution to keep
+ states between API phases without the need for any global variables. That's
+ especially true for modules which operate on lower I/O levels (where no
+ per-module configuration structure is available) or have to deal with various
+ callback functions of third-party libraries (where one need to find the
+ private context which can be hard without global variables).
+
+ The EAPI way to solve this situation is: 
+
+ 1. A generic context library was written which allows one
+    to create a context and later store and retrieve context variables
+    identified by a unique key.
+
+ 2. The Apache kernel was extended to provide contexts for all standard data
+    structures like request_rec, server_rec, conn_rec, BUFF, etc.  This way
+    modules can easily attach information to all these structures with the
+    help of the context API.
+
+ Point 1 is implemented by new src/ap/ap_ctx.c and src/include/ap_ctx.h source
+ files.  Point 2 is implemented by EAPI patches to various src/main/*.c and
+ src/include/*.h files.
+
+ Example:
+ 
+  | /* a module implements on-the-fly compression for
+  |    the buffer code and for this uses a third-party library which 
+  |    don't uses a filedescriptor. Instead a CLIB* is used.  The module has to
+  |    attach this CLIB* to the BUFF in oder to have it available whenever a
+  |    BUFF is used somewhere. */
+  | BUFF *buff;
+  | CLIB *comp;
+  | comp = CLIB_new_from_fd(buff->fd);
+  | ap_ctx_set(buff->ctx, "CLIB", comp);
+  |   :
+  | 
+  | /* later when it deals with a BUFF, it can easily find back the
+  |    CLIB* via the BUFF* */
+  | comp = (CLIB *)ap_ctx_get(buff->ctx, "CLIB");
+  |   :
+ 
+ Possible use cases from practice are:
+  
+  o  attaching third-party structures to Apache structures
+  o  replacing global module variables with clean context variables
+  o  custom attachments for complex modules like mod_php, mod_php, etc.
+  o  companion support for the hook interface (see below)
+  o  etc. pp.
+
+ Loosly-coupled Hook Interface for Inter-Module Communication
+ ------------------------------------------------------------
+
+ Apache is structured into modules which is a nice idea.  With the Dynamic
+ Shared Object (DSO) facility it gets even nicer because then modules are then
+ really stand-alone objects. The drawback is that DSO restricts modules.  The
+ most popular problem is that no inter-module symbol references are allowed.
+ The classical problem: Module A implements some nice functions module B would
+ like to use to avoid reimplementing the wheel. But B cannot call A's
+ functions because this violates both the design idea of stand-alone modules
+ and the DSO restrictions. Additionally a module C could exists which also
+ provides a variant of the functionality of A's function.  Then B should get
+ the variant (either A's or C's) which is best or available at all.
+ 
+ Real Life Example:
+
+ mod_rewrite provides %{XXXX} constructs to lookup variables.  The available
+ variables are (and have to be) hard-coded into mod_rewrite. Now our mod_clib
+ which does on-the-fly compression provides a variable CLIB_FACTOR which gives
+ information about the shrink factor of the compression and a user wants to
+ use this shrink factor to make an URL-rewriting decision (<grin>). No chance
+ without EAPI.  With EAPI it's easy: Inside the if-cascade for the various
+ variables in mod_rewrite one replaces:
+
+  | char *result;
+  | request_rec *r;
+  |    :
+  | if (strcasecmp(var, "...") == 0) {
+  |    :
+  | else if (strcasecmp(var, "SCRIPT_GROUP") == 0) {
+  |     result = ...
+  | }
+  | else {
+  |     if (result == NULL) {
+  |         ...complain...
+  |     }
+  | }
+  |    :
+
+ with
+
+  | char *result;
+  | request_rec *r;
+  |    :
+  | if (strcasecmp(var, "...") == 0) {
+  |    :
+  | else if (strcasecmp(var, "SCRIPT_GROUP") == 0) {
+  |     result = ...
+  | }
+  | else {
+  |     ap_hook_use("ap::lookup_variable",
+  |                 AP_HOOK_SIG4(ptr,ptr,ptr,ctx), 
+  |                 AP_HOOK_DECLINE(NULL),
+  |                 &result, r, var);
+  |     if (result == NULL) {
+  |         ...complain...
+  |     }
+  | }
+  |    :
+
+ What this does is that when XXXX of %{XXXX} isn't known, a hook named
+ ap::lookup_variable is called with the request_rec and the var ("XXX") and
+ the result variable. When no one has registered for this hook, nothing
+ happens. ap_hook_use() immediately returns and nothing was changed. 
+
+ But now let's assume mod_clib is additionally loaded as a DSO. And without
+ changing anything now magically mod_rewrite implements %{CLIB_FACTOR}. How?
+ Look inside mod_clib.c:
+
+  | /* mod_clib registeres for the ap::lookup_variable hook 
+  | inside it's init phase */
+  | CLIB *comp;
+  | ap_hook_register("ap::lookup_variable", 
+  |                  my_lookup_variable, AP_HOOK_CTX(comp));
+  |
+  | /* and implements the my_lookup_variable() function */
+  | char *my_lookup_variable(request_rec *r, char *name, CLIB *comp)
+  | {
+  |     if (strcmp(name, "CLIB_FACTOR") == 0)
+  |         return ap_psrintf(r->pool, "%d", comp->factor);
+  |     return NULL;
+  | }
+
+ What happens? When mod_rewrite calls the ap_hook_use() function internally
+ the hook facility knows that mod_clib has registered for this hook and calls
+ the equivalent of
+
+ |     result = my_lookup_variable(r, var, <comp>);
+
+ where <comp> is the CLIB* context variable mod_clib has registered for
+ itself. Now assume a second module exists which also provides variables and
+ want to allow mod_rewrite to lookup them.  It registers after mod_clib with
+
+ |      ap_hook_register("ap::lookup_variable", 
+ |                        my_lookup_variable2, AP_HOOK_CTX(whatever));
+ | 
+
+ and then the following happens: The hook facility does for mod_rewrite the
+ equivalent of:
+
+ |      result = my_lookup_variable(r, var, <comp>);
+ |      if (result == NULL)
+ |          result = my_lookup_variable2(r, var, <whatever>);
+
+ As you can see the hook functions decline in this example with NULL.  That's
+ the NULL from AP_HOOK_DECLINE(NULL) and can be any value of any type, of
+ course.
+
+ The same idea can be also used by mod_log_config and every other module which
+ wants to lookup a variable inside Apache. Which variables are available
+ depend on the available modules which implement them. And this all works
+ nicely with the DSO facility, because the ap_hook_xxx() API is part of the
+ Apache kernel code. And nothing has to be changed inside Apache when another
+ modules wants to create a new hook, because the mechanism is totally generic.
+
+ So when our module A wants to let other modules to use it's function it just
+ has to configure a hook for this.  Then other modules call this hook. Is
+ module A not there the boolean return value of the hook call will indicate
+ this. When module A is there the function is called.
+
+ Direct and Pool-based Shared Memory Support
+ -------------------------------------------
+
+ Since years it was annoying that Apache's pre-forked process model basically
+ means that every server lives it's own life (= address space) and this way
+ module authors cannot easily spread module configuration or other data
+ accross the processes.  The most elegant solution is to use shared memory
+ segments.  The drawback is that there is no portable API for shared memory
+ handling and there is no convinient memory allocation API for working inside
+ shared memory segments.
+
+ The EAPI way to solve this situation is: 
+
+ 1. A stand-alone and resuable library was written (named MM from "memory
+    mapped" and available from http://www.engelschall.com/sw/mm/) which
+    abstracts the shared memory and memory mutex fiddling into a low-level
+    API.  Internally the shared memory and mutex functionality is implemented
+    in various platform-depended ways: 4.4BSD or POSIX.1 anonymous memory
+    mapping, /dev/zero-based memory mapping, temporary file memory mapping, or
+    SysV IPC shared memory for allocating the shared memory areas and POSIX.1
+    fcntl(2), BSD flock(2) or SysV IPC semaphores for implementing mutual
+    exclusion capabilities.
+
+    Additionally MM provides a high-level malloc()-style API based on this
+    abstracted shared memory low-level API. The idea is just to allocate the
+    requested memory chunks from shared memory segments instead of the heap.
+
+ 2. EAPI now provides an easy method (with the EAPI_MM configuration 
+    variable) to build Apache against this MM library. For this the whole MM
+    API (mm_xxx() functions) is encapsulated in an Apache API subpart
+    (ap_mm_xxx() functions). This way the API is fixed and always present (no
+    #ifdef EAPI stuff in modules!), but useable only when EAPI was used in
+    conjunction with MM. A simple ``EAPI_MM=/path/to/mm ./configure
+    --enable-rule=EAPI ...'' is enough to put MM under the ap_mm_xxx() API.
+    This way modules can use a consistent, powerful and abstracted ap_mm_xxx()
+    API for dealing with shared memory.
+
+ 3. Because inside Apache mostly all memory handling is done via the
+    pool facility, additional support for ``shared memory pools'' is provided.
+    This way modules can use all ap_pxxx() functions in combination with
+    shared memory.
+
+ Point 1 is implemented inside the MM package. Point 2 is implemented by the
+ new src/ap/ap_mm.c and src/include/ap_mm.h source files.  Point 3 is
+ implemented by EAPI patches to src/main/alloc.c and src/include/alloc.h.
+
+ Example:
+
+ | /* inside a module init function (before the forking!)
+ |    for instance a module allocates a structure with a counter
+ |    in a shared memory segment */
+ | pool *p;
+ | pool *sp;
+ | struct mystuff { int cnt } *my;
+ | sp = ap_make_shared_sub_pool(p);
+ | my = (struct mystuff *)ap_palloc(sp, sizeof(struct mystuff));
+ | my->cnt = 0;
+ | 
+ |     :
+ | /* then under request processing time it's changed by one process */
+ | ap_acquire_pool(sp, AP_POOL_RW);
+ | my->cnt++;
+ | ap_release_pool(sp);
+ |     :
+ | 
+ | /* and at the same time read by other processes */
+ | ap_acquire_pool(sp, AP_POOL_RD);
+ | ap_rprintf(r, "The counter is %d\n", my->cnt);
+ | ap_release_pool(sp);
+
+ Possible use cases from practice are:
+
+  o  assembling traffic or other accounting details
+  o  establishing of high-performance inter-process caches
+  o  inter-process wide keeping of session state information
+  o  shared memory support for mod_perl, mod_php, etc.
+  o  etc. pp.
+
+ Additional Apache Module Hooks
+ ------------------------------
+
+ The above three EAPI additions are all very generic facilities.  But there
+ were also specialized things which were missing in Apache (and needed by
+ modules). Mostly additional API phases. EAPI adds the following additional
+ hook pointers to the module structure:
+
+ add_module: 
+     Called from within ap_add_module() right after the module structure
+     was linked into the Apache internal module list.  It is mainly
+     intended to be used to define configuration defines (<IfDefine>)
+     which have to be available directly after a LoadModule/AddModule.
+     Actually this is the earliest possible hook a module can use.  It's
+     especially important for the modules when they use the hook facility.
+
+ remove_module: 
+     Called from within ap_remove_module() right before the module
+     structure is kicked out from the Apache internal module list.
+     Actually this is last possible hook a module can use and exists for
+     consistency with the add_module hook.
+
+ rewrite_command:
+     Called right after a configuration directive line was read and
+     before it is processed. It is mainly intended to be used for
+     rewriting directives in order to provide backward compatibility to
+     old directive variants.
+
+ new_connection:
+     Called from within the internal new_connection() function, right
+     after the conn_rec structure for the new established connection was
+     created and before Apache starts processing the request with
+     ap_read_request().  It is mainly intended to be used to setup/run
+     connection dependent things like sending start headers for
+     on-the-fly compression, etc.
+
+ close_connection:
+     Called from within the Apache dispatching loop just before any
+     ap_bclose() is performed on the socket connection, but a long time
+     before any pool cleanups are done for the connection (which can be
+     too late for some applications).  It is mainly intended to be used
+     to close/finalize connection dependent things like sending end
+     headers for on-the-fly compression, etc.
+
+ Specialized EAPI Goodies
+ ------------------------
+
+ And finally EAPI now uses some of the new functionality to add a few new
+ EAPI-based goodies to mod_rewrite, mod_status and mod_proxy:
+
+ mod_rewrite:
+     The above presented example of lookup hooks is implemented which allows
+     mod_rewrite to lookup arbitrary variables provides by not known modules.
+
+ mod_status:
+     Any module now can register to an EAPI hook of mod_status which
+     allows it to put additional text on the /status webpages.
+
+ mod_proxy:  
+     Some EAPI hooks are provided to allow other modules to control the HTTP
+     client processing inside mod_proxy.  This can be used for a lot of
+     tricks.
+

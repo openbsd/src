@@ -203,6 +203,29 @@
  *                        scan_script_header -> ap_scan_script_header_err
  *                      - reordered entries in request_rec that were waiting
  *                        for a non-binary-compatible release.
+ *          (1.3.5-dev)
+ * 19990108.1           - add ap_MD5Encode() for MD5 password handling.
+ * 19990108.2           - add ap_validate_password() and change ap_MD5Encode()
+ *                        to use a stronger algorithm.
+ * 19990108.4           - add ap_size_list_item(), ap_get_list_item(), and
+ *                        ap_find_list_item()
+ * 19990108.5           - added ap_sub_req_method_uri() and added const to the
+ *                        definition of method in request_rec.
+ * 19990108.6           - SIGPIPE is now ignored by the core server.
+ * 19990108.7           - ap_isxdigit added
+ * 19990320             - METHODS and M_INVALID symbol values modified
+ * 19990320.1           - add ap_vrprintf()
+ * 19990320.2           - add cmd_parms.context, ap_set_config_vectors, 
+ *                        export ap_add_file_conf
+ * 19990320.3           - add ap_regexec() and ap_regerror()
+ * 19990320.4           - add ap_field_noparam()
+ * 19990320.5           - add local_ip/host to conn_rec for mass-vhost
+ * 19990320.6           - add ap_SHA1Final(), ap_SHA1Init(),
+ *                        ap_SHA1Update_binary(), ap_SHA1Update(),
+ *                        ap_base64encode(), ap_base64encode_binary(),
+ *                        ap_base64encode_len(), ap_base64decode(),
+ *                        ap_base64decode_binary(), ap_base64decode_len(),
+ *                        ap_pbase64decode(), ap_pbase64encode()
  */
 
 /* 
@@ -224,9 +247,9 @@
 #endif
 
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
-#define MODULE_MAGIC_NUMBER_MAJOR 19990108
+#define MODULE_MAGIC_NUMBER_MAJOR 19990320
 #endif
-#define MODULE_MAGIC_NUMBER_MINOR 0                     /* 0...n */
+#define MODULE_MAGIC_NUMBER_MINOR 6                     /* 0...n */
 #define MODULE_MAGIC_NUMBER MODULE_MAGIC_NUMBER_MAJOR	/* backward compat */
 
 /* Useful for testing for features. */

@@ -60,6 +60,8 @@
 **  Written by Ralf S. Engelschall <rse@engelschall.com> 
 */
 
+#ifdef EAPI
+
 #include "httpd.h"
 #include "ap_config.h"
 #include "ap_ctx.h"
@@ -126,3 +128,28 @@ API_EXPORT(void *) ap_ctx_get(ap_ctx *ctx, char *key)
     return NULL;
 }
 
+API_EXPORT(ap_ctx *) ap_ctx_overlay(pool *p, ap_ctx *over, ap_ctx *base)
+{
+    ap_ctx *new;
+    int i;
+
+#ifdef POOL_DEBUG
+    if (p != NULL) {
+        if (!ap_pool_is_ancestor(over->cr_pool, p))
+            ap_log_assert("ap_ctx_overlay: overlay's pool is not an ancestor of p", 
+                          __FILE__, __LINE__);
+        if (!ap_pool_is_ancestor(base->cr_pool, p))
+            ap_log_assert("ap_ctx_overlay: base's pool is not an ancestor of p",
+                          __FILE__, __LINE__);
+    }
+#endif
+    if ((new = ap_ctx_new(p)) == NULL)
+        return NULL;
+    memcpy(new->cr_entry, base->cr_entry, 
+           sizeof(ap_ctx_entry *)*(AP_CTX_MAX_ENTRIES+1));
+    for (i = 0; over->cr_entry[i] != NULL; i++)
+        ap_ctx_set(new, over->cr_entry[i]->ce_key, over->cr_entry[i]->ce_val);
+    return new;
+}
+
+#endif /* EAPI */

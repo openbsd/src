@@ -1,8 +1,8 @@
 ##                      _             _ 
-##  _ __ ___   ___   __| |    ___ ___| |  
-## | '_ ` _ \ / _ \ / _` |   / __/ __| |  
-## | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-## |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+##  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+## | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+## | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+## |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 ##                      |_____|         
 ##  Makefile.win32
 ##  Apache 1.3 Makefile for SSL module (Win32 environment)
@@ -28,7 +28,7 @@
 ##     software must display the following acknowledgment:
 ##     "This product includes software developed by 
 ##      Ralf S. Engelschall <rse@engelschall.com> for use in the
-##      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+##      mod_ssl project (http://www.modssl.org/)."
 ## 
 ##  4. The names "mod_ssl" must not be used to endorse or promote
 ##     products derived from this software without prior written
@@ -43,7 +43,7 @@
 ##     acknowledgment:
 ##     "This product includes software developed by 
 ##      Ralf S. Engelschall <rse@engelschall.com> for use in the
-##      mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+##      mod_ssl project (http://www.modssl.org/)."
 ## 
 ##  THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
 ##  EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -62,8 +62,8 @@
 
 #   the following variables are automatically
 #   adjusted by the configure.bat script.
-SSLEAY_INC       = p:\ssl\work\win32\ssleay\include
-SSLEAY_LIB       = p:\ssl\work\win32\ssleay\lib
+SSL_INC          = p:\ssl\work\win32\openssl\include
+SSL_LIB          = p:\ssl\work\win32\openssl\lib
 MOD_SSL_VERS_NUM = 000000
 MOD_SSL_VERS_STR = 0.0.0
 
@@ -71,7 +71,7 @@ MOD_SSL_VERS_STR = 0.0.0
 CC       = cl.exe
 CFLAGS   = /nologo /c /O2 /MD /W3 /GX /DNDEBUG /DWIN32 /D_WINDOWS /DSHARED_MODULE /DEAPI
 CFLAGS   = $(CFLAGS) /DMOD_SSL=$(MOD_SSL_VERS_NUM) /DMOD_SSL_VERSION=\"$(MOD_SSL_VERS_STR)\"
-CFLAGS   = $(CFLAGS) /I..\..\include /I$(SSLEAY_INC)
+CFLAGS   = $(CFLAGS) /I..\..\include /I$(SSL_INC)
 LD       = link.exe
 LDFLAGS  = /nologo
 RM       = del
@@ -87,6 +87,7 @@ OBJS=\
  ssl_engine_config.obj\
  ssl_engine_compat.obj\
  ssl_engine_ds.obj\
+ ssl_engine_dh.obj\
  ssl_engine_init.obj\
  ssl_engine_kernel.obj\
  ssl_engine_rand.obj\
@@ -103,7 +104,8 @@ OBJS=\
  ssl_expr_eval.obj\
  ssl_util.obj\
  ssl_util_ssl.obj\
- ssl_util_sdbm.obj
+ ssl_util_sdbm.obj\
+ ssl_util_table.obj
 
 .c.obj:
 	$(CC) $(CFLAGS) $<
@@ -118,8 +120,8 @@ $(LIBNAME).dll: $(OBJS)
 	$(LD) $(LDFLAGS) /dll /out:$@ \
 		$(OBJS) \
 		..\..\CoreR\ApacheCore.lib \
-		$(SSLEAY_LIB)\ssleay32.lib \
-		$(SSLEAY_LIB)\libeay32.lib \
+		$(SSL_LIB)\ssleay32.lib \
+		$(SSL_LIB)\libeay32.lib \
 		wsock32.lib
 
 clean:

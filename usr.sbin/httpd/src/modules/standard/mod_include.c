@@ -628,7 +628,7 @@ static int include_cgi(char *s, request_rec *r)
  */
 static int is_only_below(const char *path)
 {
-#if WIN32
+#ifdef HAVE_DRIVE_LETTERS
     if (path[1] == ':')
 	return 0;
 #endif
@@ -765,6 +765,9 @@ static int handle_include(FILE *in, request_rec *r, const char *error, int noexe
 }
 
 typedef struct {
+#ifdef TPF
+    TPF_FORK_CHILD t;
+#endif
     request_rec *r;
     char *s;
 } include_cmd_arg;
@@ -818,11 +821,14 @@ static int include_cmd_child(void *arg, child_info *pinfo)
 #ifdef DEBUG_INCLUDE_CMD
     fprintf(dbg, "Attempting to exec '%s'\n", s);
 #endif
+#ifdef TPF
+    return (0);
+#else
     ap_cleanup_for_exec();
     /* set shellcmd flag to pass arg to SHELL_PATH */
     child_pid = ap_call_exec(r, pinfo, s, ap_create_environment(r->pool, env),
 			     1);
-#ifdef WIN32
+#if defined(WIN32) || defined(OS2)
     return (child_pid);
 #else
     /* Oh, drat.  We're still here.  The log file descriptors are closed,
@@ -840,6 +846,7 @@ static int include_cmd_child(void *arg, child_info *pinfo)
     /* NOT REACHED */
     return (child_pid);
 #endif /* WIN32 */
+#endif /* TPF */
 }
 
 static int include_cmd(char *s, request_rec *r)
@@ -849,6 +856,11 @@ static int include_cmd(char *s, request_rec *r)
 
     arg.r = r;
     arg.s = s;
+#ifdef TPF
+    arg.t.filename = r->filename;
+    arg.t.subprocess_env = r->subprocess_env;
+    arg.t.prog_type = FORK_FILE;
+#endif
 
     if (!ap_bspawn_child(r->pool, include_cmd_child, &arg,
 			 kill_after_timeout, NULL, &script_in, NULL)) {
@@ -1033,35 +1045,41 @@ static int handle_config(FILE *in, request_rec *r, char *error, char *tf,
 static int find_file(request_rec *r, const char *directive, const char *tag,
                      char *tag_val, struct stat *finfo, const char *error)
 {
-    char *to_send;
-    request_rec *rr;
+    char *to_send = tag_val;
+    request_rec *rr = NULL;
     int ret=0;
+    char *error_fmt = NULL;
 
     if (!strcmp(tag, "file")) {
-        ap_getparents(tag_val);    /* get rid of any nasties */
-        
-        rr = ap_sub_req_lookup_file(tag_val, r);
-
-        if (rr->status == HTTP_OK && rr->finfo.st_mode != 0) {
-            to_send = rr->filename;
-            if ((ret = stat(to_send, finfo)) == -1) {
-                ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
-                            "unable to get information about \"%s\" "
-                            "in parsed file %s",
-                            to_send, r->filename);
-                ap_rputs(error, r);
-            }
+        /* be safe; only files in this directory or below allowed */
+        if (!is_only_below(tag_val)) {
+            error_fmt = "unable to access file \"%s\" "
+                        "in parsed file %s";
         }
         else {
+            ap_getparents(tag_val);    /* get rid of any nasties */
+            rr = ap_sub_req_lookup_file(tag_val, r);
+
+            if (rr->status == HTTP_OK && rr->finfo.st_mode != 0) {
+                to_send = rr->filename;
+                if (stat(to_send, finfo)) {
+                    error_fmt = "unable to get information about \"%s\" "
+                                "in parsed file %s";
+                }
+            }
+            else {
+                error_fmt = "unable to lookup information about \"%s\" "
+                            "in parsed file %s";
+            }
+        }
+
+        if (error_fmt) {
             ret = -1;
-            ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
-                        "unable to lookup information about \"%s\" "
-                        "in parsed file %s",
-                        tag_val, r->filename);
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, r, error_fmt, to_send, r->filename);
             ap_rputs(error, r);
         }
-        
-        ap_destroy_sub_req(rr);
+
+        if (rr) ap_destroy_sub_req(rr);
         
         return ret;
     }
@@ -1116,9 +1134,8 @@ static int handle_fsize(FILE *in, request_rec *r, const char *error, int sizefmt
                 }
                 else {
                     int l, x;
-#if defined(BSD) && BSD > 199305
-                    /* ap_snprintf can't handle %qd */
-                    sprintf(tag, "%qd", finfo.st_size);
+#if defined(AP_OFF_T_IS_QUAD)
+                    ap_snprintf(tag, sizeof(tag), "%qd", finfo.st_size);
 #else
                     ap_snprintf(tag, sizeof(tag), "%ld", finfo.st_size);
 #endif
@@ -1169,7 +1186,7 @@ static int re_check(request_rec *r, char *string, char *rexp)
                     "unable to compile pattern \"%s\"", rexp);
         return -1;
     }
-    regex_error = regexec(compiled, string, 0, (regmatch_t *) NULL, 0);
+    regex_error = ap_regexec(compiled, string, 0, (regmatch_t *) NULL, 0);
     ap_pregfree(r->pool, compiled);
     return (!regex_error);
 }

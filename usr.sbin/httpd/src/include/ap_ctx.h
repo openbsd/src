@@ -60,6 +60,8 @@
 **  Written by Ralf S. Engelschall <rse@engelschall.com> 
 */
 
+#ifdef EAPI
+
 #ifndef AP_CTX_H
 #define AP_CTX_H
 
@@ -87,11 +89,22 @@ typedef struct {
 typedef ap_ctx_rec ap_ctx;
 
 /*
+ * Some convinience macros for storing _numbers_ 0...n in contexts, i.e.
+ * treating numbers as pointers but keeping track of the NULL return code of
+ * ap_ctx_get.
+ */
+#define AP_CTX_NUM2PTR(n) (void *)((unsigned int)(n)+1)
+#define AP_CTX_PTR2NUM(p) (unsigned int)(((char *)(p))-1)
+
+/*
  * Prototypes for Context Handling Functions
  */
 
 API_EXPORT(ap_ctx *)ap_ctx_new(pool *p);
 API_EXPORT(void)    ap_ctx_set(ap_ctx *ctx, char *key, void *val);
 API_EXPORT(void *)  ap_ctx_get(ap_ctx *ctx, char *key);
+API_EXPORT(ap_ctx *)ap_ctx_overlay(pool *p, ap_ctx *over, ap_ctx *base);
 
 #endif /* AP_CTX_H */
+
+#endif /* EAPI */

@@ -69,6 +69,10 @@
 #endif /* WIN32 */
 #include "multithread.h"
 #include "ap_md5.h"
+#ifdef __TANDEM
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 
 DEF_Explain
 
@@ -102,8 +106,7 @@ typedef struct {
 #define ROUNDUP2BLOCKS(_bytes) (((_bytes)+block_size-1) & ~(block_size-1))
 static long block_size = 512;	/* this must be a power of 2 */
 static long61_t curbytes, cachesize;
-static time_t every, garbage_now, garbage_expire;
-static char *filename;
+static time_t garbage_now, garbage_expire;
 static mutex *garbage_mutex = NULL;
 
 
@@ -119,6 +122,7 @@ int ap_proxy_garbage_init(server_rec *r, pool *p)
 static int sub_garbage_coll(request_rec *r, array_header *files,
 			    const char *cachedir, const char *cachesubdir);
 static void help_proxy_garbage_coll(request_rec *r);
+static int should_proxy_garbage_coll(request_rec *r);
 #if !defined(WIN32) && !defined(MPE) && !defined(OS2)
 static void detached_proxy_garbage_coll(request_rec *r);
 #endif
@@ -138,10 +142,11 @@ void ap_proxy_garbage_coll(request_rec *r)
     (void) ap_release_mutex(garbage_mutex);
 
     ap_block_alarms();		/* avoid SIGALRM on big cache cleanup */
+    if (should_proxy_garbage_coll(r))
 #if !defined(WIN32) && !defined(MPE) && !defined(OS2)
-    detached_proxy_garbage_coll(r);
+        detached_proxy_garbage_coll(r);
 #else
-    help_proxy_garbage_coll(r);
+        help_proxy_garbage_coll(r);
 #endif
     ap_unblock_alarms();
 
@@ -205,6 +210,10 @@ static void detached_proxy_garbage_coll(request_rec *r)
     int status;
     pid_t pgrp;
 
+#if 0
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, r->server,
+			 "proxy: Guess what; we fork() again...");
+#endif
     switch (pid = fork()) {
 	case -1:
 	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
@@ -264,6 +273,76 @@ static void detached_proxy_garbage_coll(request_rec *r)
 }
 #endif /* ndef WIN32 */
 
+#define DOT_TIME "/.time"	/* marker */
+
+static int should_proxy_garbage_coll(request_rec *r)
+{
+    void *sconf = r->server->module_config;
+    proxy_server_conf *pconf =
+    (proxy_server_conf *) ap_get_module_config(sconf, &proxy_module);
+    const struct cache_conf *conf = &pconf->cache;
+
+    const char *cachedir = conf->root;
+    char *filename;
+    struct stat buf;
+    int timefd;
+    time_t every = conf->gcinterval;
+    static time_t lastcheck = BAD_DATE;         /* static (per-process) data!!! */
+
+    if (cachedir == NULL || every == -1)
+        return 0;
+
+    filename = ap_palloc(r->pool, strlen(cachedir) + strlen( DOT_TIME ) +1);
+
+    garbage_now = time(NULL);
+    /* Usually, the modification time of <cachedir>/.time can only increase.
+     * Thus, even with several child processes having their own copy of
+     * lastcheck, if time(NULL) still < lastcheck then it's not time
+     * for GC yet.
+     */
+    if (garbage_now != -1 && lastcheck != BAD_DATE && garbage_now < lastcheck + every)
+        return 0;
+
+    strcpy(filename,cachedir);
+    strcat(filename,DOT_TIME);
+
+    /* At this point we have a bit of an engineering compromise. We could either
+     * create and/or mark the .time file  (prior to the fork which might
+     * fail on a resource issue) or wait until we are safely forked. The
+     * advantage of doing it now in this process is that we get some
+     * usefull live out of the global last check variable. (XXX which
+     * should go scoreboard IMHO.) Note that the actual counting is 
+     * at a later moment.
+     */
+   if (stat(filename, &buf) == -1) {   /* does not exist */
+        if (errno != ENOENT) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
+                         "proxy: stat(%s)", filename);
+            return 0;
+        }
+        if ((timefd = creat(filename, 0666)) == -1) {
+            if (errno != EEXIST)
+                ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
+                             "proxy: creat(%s)", filename);
+            else
+                lastcheck = garbage_now;        /* someone else got in there */
+            return 0;
+        }
+        close(timefd);
+    }
+    else {
+	lastcheck = buf.st_mtime;       /* save the time */
+        if (garbage_now < lastcheck + every) {
+            return 0;
+        }
+        if (utime(filename, NULL) == -1)
+            ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
+                         "proxy: utimes(%s)", filename);
+    }
+
+    return 1;
+}
+
 static void help_proxy_garbage_coll(request_rec *r)
 {
     const char *cachedir;
@@ -272,61 +351,18 @@ static void help_proxy_garbage_coll(request_rec *r)
     (proxy_server_conf *) ap_get_module_config(sconf, &proxy_module);
     const struct cache_conf *conf = &pconf->cache;
     array_header *files;
-    struct stat buf;
     struct gc_ent *fent;
-    int i, timefd;
-    static time_t lastcheck = BAD_DATE;		/* static (per-process) data!!! */
+    char *filename;
+    int i;
 
     cachedir = conf->root;
+    filename = ap_palloc(r->pool, strlen(cachedir) + HASH_LEN + 2);
     /* configured size is given in kB. Make it bytes, convert to long61_t: */
     cachesize.lower = cachesize.upper = 0;
     add_long61(&cachesize, conf->space << 10);
-    every = conf->gcinterval;
-
-    if (cachedir == NULL || every == -1)
-	return;
-    garbage_now = time(NULL);
-    /* Usually, the modification time of <cachedir>/.time can only increase.
-     * Thus, even with several child processes having their own copy of
-     * lastcheck, if time(NULL) still < lastcheck then it's not time
-     * for GC yet.
-     */
-    if (garbage_now != -1 && lastcheck != BAD_DATE && garbage_now < lastcheck + every)
-	return;
 
     ap_block_alarms();		/* avoid SIGALRM on big cache cleanup */
 
-    filename = ap_palloc(r->pool, strlen(cachedir) + HASH_LEN + 2);
-    strcpy(filename, cachedir);
-    strcat(filename, "/.time");
-    if (stat(filename, &buf) == -1) {	/* does not exist */
-	if (errno != ENOENT) {
-	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-			 "proxy: stat(%s)", filename);
-	    ap_unblock_alarms();
-	    return;
-	}
-	if ((timefd = creat(filename, 0666)) == -1) {
-	    if (errno != EEXIST)
-		ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-			     "proxy: creat(%s)", filename);
-	    else
-		lastcheck = garbage_now;	/* someone else got in there */
-	    ap_unblock_alarms();
-	    return;
-	}
-	close(timefd);
-    }
-    else {
-	lastcheck = buf.st_mtime;	/* save the time */
-	if (garbage_now < lastcheck + every) {
-	    ap_unblock_alarms();
-	    return;
-	}
-	if (utime(filename, NULL) == -1)
-	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-			 "proxy: utimes(%s)", filename);
-    }
     files = ap_make_array(r->pool, 100, sizeof(struct gc_ent));
     curbytes.upper = curbytes.lower = 0L;
 
@@ -385,8 +421,10 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
 #endif
     struct gc_ent *fent;
     int nfiles = 0;
+    char *filename;
 
     ap_snprintf(cachedir, sizeof(cachedir), "%s%s", cachebasedir, cachesubdir);
+    filename = ap_palloc(r->pool, strlen(cachedir) + HASH_LEN + 2);
     Explain1("GC Examining directory %s", cachedir);
     dir = opendir(cachedir);
     if (dir == NULL) {
@@ -777,7 +815,7 @@ int ap_proxy_cache_check(request_rec *r, char *url, struct cache_conf *conf,
 int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
 		       const int is_HTTP1, int nocache)
 {
-#ifdef ULTRIX_BRAIN_DEATH
+#if defined(ULTRIX_BRAIN_DEATH) || defined(SINIX_D_RESOLVER_BUG)
   extern char *mktemp(char *template);
 #endif 
     request_rec *r = c->req;
@@ -826,7 +864,7 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
  * requests with an Authorization header, or
  * protocol requests nocache (e.g. ftp with user/password)
  */
-/* @@@ XXX FIXME: is the test "r->status != HTTP_MOVED_PERMANENTLY" corerct?
+/* @@@ XXX FIXME: is the test "r->status != HTTP_MOVED_PERMANENTLY" correct?
  * or shouldn't it be "ap_is_HTTP_REDIRECT(r->status)" ? -MnKr */
     if ((r->status != HTTP_OK && r->status != HTTP_MOVED_PERMANENTLY && r->status != HTTP_NOT_MODIFIED) ||
 	(expire != NULL && expc == BAD_DATE) ||
@@ -999,14 +1037,19 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
     strcpy(c->tempfile, conf->cache.root);
     strcat(c->tempfile, TMPFILESTR);
 #undef TMPFILESTR
-    i = mkstemp(c->tempfile);
+    p = mktemp(c->tempfile);
+    if (p == NULL)
+	return DECLINED;
+
+    Explain1("Create temporary file %s", c->tempfile);
+
+    i = open(c->tempfile, O_WRONLY | O_CREAT | O_EXCL | O_BINARY, 0622);
     if (i == -1) {
 	ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
 		     "proxy: error creating cache file %s",
 		     c->tempfile);
 	return DECLINED;
     }
-
     ap_note_cleanups_for_fd(r->pool, i);
     c->fp = ap_bcreate(r->pool, B_WR);
     ap_bpushfd(c->fp, -1, i);
@@ -1101,6 +1144,8 @@ void ap_proxy_cache_tidy(cache_req *c)
 	    *p = '\0';
 #ifdef WIN32
 	    if (mkdir(c->filename) < 0 && errno != EEXIST)
+#elif defined(__TANDEM)
+	    if (mkdir(c->filename, S_IRWXU | S_IRWXG | S_IRWXO) < 0 && errno != EEXIST)
 #else
 	    if (mkdir(c->filename, S_IREAD | S_IWRITE | S_IEXEC) < 0 && errno != EEXIST)
 #endif /* WIN32 */

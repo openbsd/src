@@ -1,8 +1,8 @@
 /*                      _             _
-**  _ __ ___   ___   __| |    ___ ___| |
-** | '_ ` _ \ / _ \ / _` |   / __/ __| |
-** | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to SSLeay
-** |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.engelschall.com/sw/mod_ssl/
+**  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+** | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+** |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
 **                      |_____|
 **  ssl_engine_mutex.c
 **  Semaphore for Mutual Exclusion
@@ -27,7 +27,7 @@
  *    software must display the following acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * 4. The names "mod_ssl" must not be used to endorse or promote
  *    products derived from this software without prior written
@@ -42,7 +42,7 @@
  *    acknowledgment:
  *    "This product includes software developed by
  *     Ralf S. Engelschall <rse@engelschall.com> for use in the
- *     mod_ssl project (http://www.engelschall.com/sw/mod_ssl/)."
+ *     mod_ssl project (http://www.modssl.org/)."
  *
  * THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -75,18 +75,14 @@ void ssl_mutex_init(server_rec *s, pool *p)
 {
     SSLModConfigRec *mc = myModConfig();
 
-    if (mc->nMutexMode == SSL_MUTEXMODE_FILE) {
+    if (mc->nMutexMode == SSL_MUTEXMODE_FILE)
         ssl_mutex_file_create(s, p);
-        ap_register_cleanup(p, (void *)s, ssl_mutex_file_remove, ap_null_cleanup);
-    }
-    else if (mc->nMutexMode == SSL_MUTEXMODE_SEM) {
+    else if (mc->nMutexMode == SSL_MUTEXMODE_SEM)
         ssl_mutex_sem_create(s, p);
-        ap_register_cleanup(p, (void *)s, ssl_mutex_sem_remove, ap_null_cleanup);
-    }
     return;
 }
 
-void ssl_mutex_open(server_rec *s, pool *p)
+void ssl_mutex_reinit(server_rec *s, pool *p)
 {
     SSLModConfigRec *mc = myModConfig();
 
@@ -97,25 +93,42 @@ void ssl_mutex_open(server_rec *s, pool *p)
     return;
 }
 
-void ssl_mutex_on(void)
+void ssl_mutex_on(server_rec *s)
 {
     SSLModConfigRec *mc = myModConfig();
+    BOOL ok = TRUE;
 
     if (mc->nMutexMode == SSL_MUTEXMODE_FILE)
-        ssl_mutex_file_acquire();
+        ok = ssl_mutex_file_acquire();
     else if (mc->nMutexMode == SSL_MUTEXMODE_SEM)
-        ssl_mutex_sem_acquire();
+        ok = ssl_mutex_sem_acquire();
+    if (!ok)
+        ssl_log(s, SSL_LOG_WARN, "Failed to acquire global mutex lock");
     return;
 }
 
-void ssl_mutex_off(void)
+void ssl_mutex_off(server_rec *s)
+{
+    SSLModConfigRec *mc = myModConfig();
+    BOOL ok = TRUE;
+
+    if (mc->nMutexMode == SSL_MUTEXMODE_FILE)
+        ok = ssl_mutex_file_release();
+    else if (mc->nMutexMode == SSL_MUTEXMODE_SEM)
+        ok = ssl_mutex_sem_release();
+    if (!ok)
+        ssl_log(s, SSL_LOG_WARN, "Failed to release global mutex lock");
+    return;
+}
+
+void ssl_mutex_kill(server_rec *s)
 {
     SSLModConfigRec *mc = myModConfig();
 
     if (mc->nMutexMode == SSL_MUTEXMODE_FILE)
-        ssl_mutex_file_release();
+        ssl_mutex_file_remove(s);
     else if (mc->nMutexMode == SSL_MUTEXMODE_SEM)
-        ssl_mutex_sem_release();
+        ssl_mutex_sem_remove(s);
     return;
 }
 
@@ -140,9 +153,20 @@ void ssl_mutex_file_create(server_rec *s, pool *p)
                 mc->szMutexFile);
         ssl_die();
     }
+    ap_pclosef(p, mc->nMutexFD);
+
     /* make sure the childs have access to this file */
     if (geteuid() == 0 /* is superuser */)
         chown(mc->szMutexFile, ap_user_id, -1 /* no gid change */);
+
+    /* open the lockfile for real */
+    if ((mc->nMutexFD = ap_popenf(p, mc->szMutexFile,
+                                  O_WRONLY, SSL_MUTEX_LOCK_MODE)) < 0) {
+        ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
+                "Parent could not open SSLMutex lockfile %s",
+                mc->szMutexFile);
+        ssl_die();
+    }
 #endif
     return;
 }
@@ -154,7 +178,7 @@ void ssl_mutex_file_open(server_rec *s, pool *p)
 
     /* open the lockfile (once per child) to get a unique fd */
     if ((mc->nMutexFD = ap_popenf(p, mc->szMutexFile,
-                                           O_WRONLY, SSL_MUTEX_LOCK_MODE)) < 0) {
+                                  O_WRONLY, SSL_MUTEX_LOCK_MODE)) < 0) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
                 "Child could not open SSLMutex lockfile %s",
                 mc->szMutexFile);
@@ -312,7 +336,7 @@ BOOL ssl_mutex_sem_acquire(void)
     rc = semop(mc->nMutexSEMID, sb, 2);
 #endif
 #ifdef SSL_HAVE_W32SEM
-    rc = ap_acquire_mutex((mutex *)mc->nMutexSEMID);
+    rc = (ap_acquire_mutex((mutex *)mc->nMutexSEMID) == 0);
 #endif
 #endif
     return rc;
@@ -326,7 +350,7 @@ BOOL ssl_mutex_sem_release(void)
 
 #ifdef SSL_HAVE_IPCSEM
     struct sembuf sb[] = {
-        { 0, -1, SEM_UNDO } /* derements semaphore */
+        { 0, -1, SEM_UNDO } /* decrements semaphore */
     };
 
     rc = semop(mc->nMutexSEMID, sb, 1);

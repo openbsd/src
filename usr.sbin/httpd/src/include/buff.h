@@ -180,6 +180,10 @@ API_EXPORT(int) ap_vbprintf(BUFF *fb, const char *fmt, va_list vlist);
 API_EXPORT(int) ap_bflsbuf(int c, BUFF *fb);
 API_EXPORT(int) ap_bfilbuf(BUFF *fb);
 
+#ifdef EAPI
+#define ap_bpeekc(fb) ( ((fb)->incnt == 0) ? EOF : *((fb)->inptr) )
+#endif
+
 #ifndef CHARSET_EBCDIC
 
 #define ap_bgetc(fb)   ( ((fb)->incnt == 0) ? ap_bfilbuf(fb) : \

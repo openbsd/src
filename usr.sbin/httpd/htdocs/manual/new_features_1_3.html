@@ -70,7 +70,6 @@ the <A HREF="upgrading_to_1_3.html">upgrade notes</A>.
     it.  This opens up more opportunities for log rotation, hit
     filtering, real-time splitting of multiple vhosts into separate
     logs, and asynchronous DNS resolving on the fly.
-
 </DL>
 
 <P><HR>
@@ -207,6 +206,12 @@ documentation</A> for more information.
     <CODE>VirtualHost</CODE> sections.  This is useful for folks
     trying to debug their virtual host configuration.
 
+<DT><STRONG>Control of HTTP methods</STRONG>
+<DD><A HREF="mod/core.html#limitexcept">&lt;LimitExcept&gt; and
+    &lt;/LimitExcept&gt;</A> are used to enclose a group of access control
+    directives which will then apply to any HTTP access method not listed in
+    the arguments; i.e., it is the opposite of a <Limit> section and can be
+    used to control both standard and nonstandard/unrecognized methods.
 </DL>
 
 <P><HR>
@@ -400,6 +405,11 @@ MIME-typing</A></STRONG>
     HREF="mod/mod_log_config.html#customlog"
     ><CODE>CustomLog</CODE></A> directives, rather than having to
     spell out the complete log format string each time.
+
+<DT><STRONG>Conditional logging</STRONG>
+<DD><A HREF="mod/mod_log_config.html#customlog-conditional">mod_log_config</A>
+    now supports logging based upon environment variables.
+    mod_log_referer and mod_log_agent are now deprecated.
 
 <DT><STRONG>mod_cern_meta configurable per-directory</STRONG>
 <DD><A HREF="mod/mod_cern_meta.html">mod_cern_meta</A> is now
@@ -607,7 +617,7 @@ MIME-typing</A></STRONG>
     config files.  So you will see errors in the config file.  This
     should make it easier to start Apache via rsh or crontab.
 
-<DT><STRONG>Year-2000 Improvements</STRONG>
+<DT><A NAME="y2k"><STRONG>Year-2000 Improvements</STRONG></A>
 <DD>The default <CODE>timefmt</CODE> string used by <A
     HREF="mod/mod_include.html"><CODE>mod_include</CODE></A> has been
     modified to display the year using four digits rather than the
@@ -670,6 +680,15 @@ MIME-typing</A></STRONG>
     As of Apache 1.3, this additional information is included by default.
 
 </DL>
+
+<DT><STRONG>Support for Netscape style SHA1 encrypted passwords</STRONG><BR>
+<DD>To facilitate migration or integration of BasicAuth password
+    schemes where the password is encrypted using SHA1 (as opposed
+    to apache's build in MD5 and/or the OS specific crypt(3) function
+    ) passwords prefixed with with <CODE>{SHA1}</CODE> are taken
+    as Base64 encoded SHA1 passwords. More information and
+    some utilities to convert Netscape ldap/ldif entries can be
+    found in support/SHA1. 
 
 <HR>
  <H3 ALIGN="CENTER">

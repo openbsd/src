@@ -23,6 +23,7 @@ extern "C" {
 #define acquire_mutex                  ap_acquire_mutex
 #define add_cgi_vars                   ap_add_cgi_vars
 #define add_common_vars                ap_add_common_vars
+#define add_file_conf                  ap_add_file_conf
 #define add_module                     ap_add_module
 #define add_named_module               ap_add_named_module
 #define add_per_dir_conf               ap_add_per_dir_conf
@@ -118,6 +119,7 @@ extern "C" {
 #define escape_html                    ap_escape_html
 #define escape_path_segment            ap_escape_path_segment
 #define escape_shell_cmd               ap_escape_shell_cmd
+#define escape_uri                     ap_escape_uri
 #define excess_requests_per_child      ap_excess_requests_per_child
 #define exists_scoreboard_image        ap_exists_scoreboard_image
 #define finalize_request_protocol      ap_finalize_request_protocol
@@ -303,6 +305,8 @@ extern "C" {
 #define rationalize_mtime              ap_rationalize_mtime
 #define read_config                    ap_read_config
 #define read_request                   ap_read_request
+#define regexec                        ap_regexec
+#define regerror                       ap_regerror
 #define register_cleanup               ap_register_cleanup
 #define register_other_child           ap_register_other_child
 #define release_mutex                  ap_release_mutex
@@ -349,6 +353,7 @@ extern "C" {
 #define server_root_relative           ap_server_root_relative
 #define set_byterange                  ap_set_byterange
 #define set_callback_and_alarm         ap_set_callback_and_alarm
+#define set_config_vectors             ap_set_config_vectors
 #define set_content_length             ap_set_content_length
 #define set_etag                       ap_set_etag
 #define set_file_slot                  ap_set_file_slot

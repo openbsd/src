@@ -55,6 +55,7 @@ always available.
 <LI><A HREF="#keepalive">KeepAlive</A>
 <LI><A HREF="#keepalivetimeout">KeepAliveTimeout</A>
 <LI><A HREF="#limit">&lt;Limit&gt;</A>
+<LI><A HREF="#limitexcept">&lt;LimitExcept&gt;</A>
 <LI><A HREF="#limitrequestbody">LimitRequestBody</A>
 <LI><A HREF="#limitrequestfields">LimitRequestFields</A>
 <LI><A HREF="#limitrequestfieldsize">LimitRequestFieldsize</A>
@@ -81,6 +82,7 @@ always available.
 <LI><A HREF="#rlimitnproc">RLimitNPROC</A>
 <LI><A HREF="#satisfy">Satisfy</A>
 <LI><A HREF="#scoreboardfile">ScoreBoardFile</A>
+<LI><A HREF="#scriptinterpretersource">ScriptInterpreterSource</A>
 <LI><A HREF="#sendbuffersize">SendBufferSize</A>
 <LI><A HREF="#serveradmin">ServerAdmin</A>
 <LI><A HREF="#serveralias">ServerAlias</A>
@@ -664,7 +666,8 @@ page for more details.
 
 The directory sections typically occur in the access.conf file, but they
 may appear in any configuration file. &lt;Directory&gt; directives cannot
-nest, and cannot appear in a <A HREF="#limit">&lt;Limit&gt;</A> section.
+nest, and cannot appear in a <A HREF="#limit">&lt;Limit&gt;</A> or
+<A HREF="#limitexcept">&lt;LimitExcept&gt;</A> section.
 <P>
 
 <STRONG>See also</STRONG>: <A HREF="../sections.html">How Directory,
@@ -824,7 +827,12 @@ responses.</A><P><HR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
-><STRONG>Default:</STRONG></A> <CODE>ErrorLog logs/error_log</CODE><BR>
+><STRONG>Default:</STRONG></A> <CODE>ErrorLog logs/error_log</CODE> (Unix)<BR>
+<A
+ HREF="directive-dict.html#Default"
+ REL="Help"
+><STRONG>Default:</STRONG></A> <CODE>ErrorLog logs/error.log</CODE> 
+ (Windows and OS/2)<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -1319,24 +1327,57 @@ applies.
  REL="Help"
 ><STRONG>Status:</STRONG></A> core<P>
 
-&lt;Limit&gt; and &lt;/Limit&gt; are used to enclose a group of
-access control directives which will then apply only to the specified
-access methods, where <EM>method</EM> is any valid HTTP method.
-Any directive except another &lt;Limit&gt; or
-<A HREF="#directory">&lt;Directory&gt;</A> may be used; the majority will be
-unaffected by the &lt;Limit&gt;. Example:
+Access controls are normally effective for <STRONG>all</STRONG> access
+methods, and this is the usual desired behaviour.  <STRONG>In the
+general case, access control directives should not be placed within a
+<CODE>&lt;limit&gt;</CODE> section.</STRONG> 
+
+<P>The purpose of the &lt;Limit&gt; directive is to restrict the effect
+of the access controls to the nominated HTTP methods.  For all other
+methods, the access restrictions that are enclosed in the
+&lt;Limit&gt; bracket <STRONG>will have no effect</STRONG>.  The
+following example applies the access control only to the methods POST,
+PUT, and DELETE, leaving all other methods unprotected:
+
 <BLOCKQUOTE><CODE>
-&lt;Limit GET POST&gt;<BR>
+&lt;Limit POST PUT DELETE&gt;<BR>
 require valid-user<BR>
 &lt;/Limit&gt;</CODE></BLOCKQUOTE>
 
-If an access control directive appears outside a &lt;Limit&gt;
-directive, then it applies to all access methods. The method names
-listed can be one or more of: GET, POST, PUT, DELETE, CONNECT or
-OPTIONS. <STRONG>The method name is case-sensitive.</STRONG>
-If GET is used it will also restrict HEAD requests.
-<STRONG>If you wish to limit all methods, do not include any
-&lt;Limit&gt; directive at all.</STRONG>
+The method names listed can be one or more of: GET, POST, PUT, DELETE,
+CONNECT, OPTIONS, TRACE, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY,
+MOVE, LOCK, and UNLOCK. <STRONG>The method name is
+case-sensitive.</STRONG> If GET is used it will also restrict HEAD
+requests.  
+
+<P><HR>
+
+<H2><A NAME="limitexcept">&lt;LimitExcept&gt; directive</A></H2>
+<!--%plaintext &lt;?INDEX {\tt LimitExcept} section directive&gt; -->
+<A
+ HREF="directive-dict.html#Syntax"
+ REL="Help"
+><STRONG>Syntax:</STRONG></A>
+ &lt;LimitExcept <EM>method method</EM> ... &gt; ... &lt;/LimitExcept&gt;<BR>
+<A
+ HREF="directive-dict.html#Context"
+ REL="Help"
+><STRONG>Context:</STRONG></A> any<BR>
+<A
+ HREF="directive-dict.html#Status"
+ REL="Help"
+><STRONG>Status:</STRONG></A> core<BR>
+<A
+ HREF="directive-dict.html#Compatibility"
+ REL="Help"
+><STRONG>Compatibility:</STRONG></A> Available in Apache 1.3.5 and later<P>
+
+&lt;LimitExcept&gt; and &lt;/LimitExcept&gt; are used to enclose a group of
+access control directives which will then apply to any HTTP access method
+<STRONG>not</STRONG> listed in the arguments; i.e., it is the opposite of a
+<A HREF="#limit">&lt;Limit&gt;</A> section and can be used to control both
+standard and nonstandard/unrecognized methods. See the documentation for 
+<A HREF="#limit">&lt;Limit&gt;</A> for more details.
 
 <P><HR>
 
@@ -1967,6 +2008,10 @@ number of processes when the server load reduces.
 
 <P>This directive has no effect on Win32.
 
+<P><STRONG>NOTE:</STRONG> For <EM>KeepAlive</EM> requests, only the first
+request is counted towards this limit. In effect, it changes the
+behavior to limit the number of <EM>connections</EM> per child.
+
 <P><HR>
 
 <H2><A NAME="maxspareservers">MaxSpareServers directive</A></H2>
@@ -2336,24 +2381,25 @@ Only users in the named groups can access the directory.<P>
 All valid users can access the directory.
 </UL>
 <P>
-If <CODE>require</CODE> appears in a <A HREF="#limit">&lt;Limit&gt;</A>
-section, then it restricts access to the named methods, otherwise
-it restricts access for all methods. Example:
-<BLOCKQUOTE><CODE>
-AuthType Basic<BR>
-AuthName somedomain<BR>
-AuthUserFile /web/users<BR>
-AuthGroupFile /web/groups<BR>
-&lt;Limit GET POST&gt;<BR>
-require group admin<BR>
-&lt;/Limit&gt;
-</CODE></BLOCKQUOTE>
-
 Require must be accompanied by <A HREF="#authname">AuthName</A> and
 <A HREF="#authtype">AuthType</A> directives, and directives such as
 <A HREF="mod_auth.html#authuserfile">AuthUserFile</A> and
 <A HREF="mod_auth.html#authgroupfile">AuthGroupFile</A> (to define users and
-groups) in order to work correctly.<P><HR>
+groups) in order to work correctly.  Example:
+<BLOCKQUOTE><CODE>
+AuthType Basic<BR>
+AuthName "Restricted Directory"<BR>
+AuthUserFile /web/users<BR>
+AuthGroupFile /web/groups<BR>
+require group admin<BR>
+</CODE></BLOCKQUOTE>
+
+Access controls which are applied in this way are effective for
+<STRONG>all</STRONG> methods. <STRONG>This is what is normally
+desired.</STRONG> If you wish to apply access controls only to
+specific methods, while leaving other methods unprotected, then place
+the <CODE>require</CODE> statement into a <A
+HREF="#limit">&lt;Limit&gt;</A> section<P><HR>
 
 <H2><A NAME="resourceconfig">ResourceConfig directive</A></H2>
 <!--%plaintext &lt;?INDEX {\tt ResourceConfig} directive&gt; -->
@@ -2420,6 +2466,11 @@ that the limit should be set to the maximum allowed by the operating system
 configuration. Raising the maximum resource limit requires that the server
 is running as root, or in the initial startup phase.<P>
 
+This applies to processes forked off from Apache children servicing requests,
+not the Apache children themselves. This includes CGI scripts and SSI
+exec commands, but not any processes forked off from the Apache parent
+such as piped logs.<P>
+
 CPU resource limits are expressed in seconds per process.<P>
 
 See also <A HREF="#rlimitmem">RLimitMEM</A> or
@@ -2458,6 +2509,11 @@ limit should be set to the maximum allowed by the operating system
 configuration. Raising the maximum resource limit requires that the
 server is running as root, or in the initial startup phase.<P>
 
+This applies to processes forked off from Apache children servicing requests,
+not the Apache children themselves. This includes CGI scripts and SSI
+exec commands, but not any processes forked off from the Apache parent
+such as piped logs.<P>
+
 Memory resource limits are expressed in bytes per process.<P>
 
 See also <A HREF="#rlimitcpu">RLimitCPU</A> or
@@ -2495,6 +2551,11 @@ Either parameter can be a number, or <EM>max</EM> to indicate to the server
 that the limit should be set to the maximum allowed by the operating system
 configuration. Raising the maximum resource limit requires that the server
 is running as root, or in the initial startup phase.<P>
+
+This applies to processes forked off from Apache children servicing requests,
+not the Apache children themselves. This includes CGI scripts and SSI
+exec commands, but not any processes forked off from the Apache parent
+such as piped logs.<P>
 
 Process limits control the number of processes per user.<P>
 
@@ -2597,6 +2658,32 @@ release. (Prior to 1.3b4, <CODE>HAVE_SHMGET</CODE> would have sufficed.)<P>
 <STRONG>See Also</STRONG>:
 <A HREF="../stopping.html">Stopping and Restarting Apache</A></P>
 
+<P><HR>
+
+<H2><A NAME="scriptinterpretersource">ScriptInterpreterSource directive</A></H2>
+<!--%plaintext &lt;?INDEX {\tt ScriptInterpreterSource} directive&gt; -->
+<A
+ HREF="directive-dict.html#Syntax"
+ REL="Help"
+><STRONG>Syntax:</STRONG></A> ScriptInterpreterSource <EM>'registry' or 'script'</EM><BR>
+<A
+ HREF="directive-dict.html#Default"
+ REL="Help"
+><STRONG>Default:</STRONG></A> <CODE>ScriptInterpreterSource script</CODE>
+<BR>
+<A
+ HREF="directive-dict.html#Context"
+ REL="Help"
+><STRONG>Context:</STRONG></A> directory, .htaccess<BR>
+<A
+ HREF="directive-dict.html#Status"
+ REL="Help"
+><STRONG>Status:</STRONG></A> core (Windows only)<P>
+
+This directive is used to control how Apache 1.3.5 and later finds the interpreter
+used to run CGI scripts. The default technique is to use the interpreter pointed to by
+the #! line in the script.  Setting ScriptInterpreterSource registry will cause the
+Windows Registry to be searched using the script file extension (e.g., .pl) as a search key.
 <P><HR>
 
 <H2><A NAME="sendbuffersize">SendBufferSize directive</A></H2>
@@ -3005,12 +3092,11 @@ a packet is sent.
 <H2><A NAME="usecanonicalname">UseCanonicalName directive</A></H2>
 <!--%plaintext &lt;?INDEX {\tt UseCanonicalName} directive&gt; -->
 <A HREF="directive-dict.html#Syntax" REL="Help">
-<STRONG>Syntax:</STRONG></A> UseCanonicalName <EM>on|off</EM><BR>
+<STRONG>Syntax:</STRONG></A> UseCanonicalName <EM>on|off|dns</EM><BR>
 <A HREF="directive-dict.html#Default" REL="Help">
 <STRONG>Default:</STRONG></A> <CODE>UseCanonicalName on</CODE><BR>
 <A HREF="directive-dict.html#Context" REL="Help">
-<STRONG>Context:</STRONG></A> server config, virtual host, directory, .htaccess
-<BR>
+<STRONG>Context:</STRONG></A> server config, virtual host<BR>
 <A HREF="directive-dict.html#Override" REL="Help">
 <STRONG>Override:</STRONG></A> Options<BR>
 <A HREF="directive-dict.html#Compatibility" REL="Help">
@@ -3044,6 +3130,12 @@ enabled, this will cause the user to have to reauthenticate twice (once
 for <CODE>www</CODE> and once again for <CODE>www.domain.com</CODE>).
 But if <CODE>UseCanonicalName</CODE> is set off, then Apache will redirect
 to <CODE>http://www/splat/</CODE>.
+
+<P>There is a third option, <CODE>UseCanonicalName DNS</CODE>, which
+is intended for use with mass IP-based virtual hosting to support
+ancient clients that do not provide a <CODE>Host:</CODE> header. With
+this option Apache does a reverse DNS lookup on the server IP address
+that the client connected to in order to work out self-referential URLs.
 
 <P><STRONG>Warning:</STRONG> if CGIs make assumptions about the values of
 <CODE>SERVER_NAME</CODE> they may be broken by this option.  The client

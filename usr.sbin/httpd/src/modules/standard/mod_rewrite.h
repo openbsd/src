@@ -105,6 +105,7 @@
 #include <sys/stat.h>
 
     /* Include from the Apache server ... */
+#define CORE_PRIVATE
 #include "httpd.h"
 #include "http_config.h"
 #include "http_conf_globals.h"
@@ -126,8 +127,15 @@
      * so we also need to know the file extension
      */
 #ifndef NO_DBM_REWRITEMAP
+#if defined(__GLIBC__) && defined(__GLIBC_MINOR__) \
+    && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
+#include <db1/ndbm.h>
+#else
 #include <ndbm.h>
-#if (__FreeBSD__)
+#endif
+#if defined(DBM_SUFFIX)
+#define NDBM_FILE_SUFFIX DBM_SUFFIX
+#elif defined(__FreeBSD__) || (defined(DB_LOCK) && defined(DB_SHMEM))
 #define NDBM_FILE_SUFFIX ".db"
 #else
 #define NDBM_FILE_SUFFIX ".pag"
@@ -149,7 +157,7 @@
 #endif
 #if !defined(USE_FCNTL) && !defined(USE_FLOCK)
 #define USE_FLOCK 1
-#if !defined(MPE) && !defined(WIN32)
+#if !defined(MPE) && !defined(WIN32) && !defined(__TANDEM)
 #include <sys/file.h>
 #endif
 #ifndef LOCK_UN
@@ -219,6 +227,9 @@
 #define CACHEMODE_TS                1<<0
 #define CACHEMODE_TTL               1<<1
 
+#define CACHE_TLB_ROWS 1024
+#define CACHE_TLB_COLS 4
+
 #ifndef FALSE
 #define FALSE 0
 #define TRUE  !FALSE
@@ -240,10 +251,6 @@
 #define MAX_ENV_FLAGS 15
 
 #define MAX_NMATCH    10
-
-#define MAPFILE_PATTERN "^([^ \t]+)[ \t]+([^ \t]+).*$"
-#define MAPFILE_OUTPUT  "$1,$2"
-
 
 /*
 **
@@ -295,8 +302,6 @@ typedef struct {
     char         *rewritelogfile;  /* the RewriteLog filename */
     int           rewritelogfp;    /* the RewriteLog open filepointer */
     int           rewriteloglevel; /* the RewriteLog level of verbosity */
-    char         *rewritelockfile; /* the RewriteLock filename */
-    int           rewritelockfp;   /* the RewriteLock open filepointer */
     array_header *rewritemaps;     /* the RewriteMap entries */
     array_header *rewriteconds;    /* the RewriteCond entries (temporary) */
     array_header *rewriterules;    /* the RewriteRule entries */
@@ -317,17 +322,23 @@ typedef struct {
 } rewrite_perdir_conf;
 
 
-    /* the cache structures */
-
+    /* the cache structures,
+     * a 4-way hash table with LRU functionality
+     */
 typedef struct cacheentry {
     time_t time;
     char  *key;
     char  *value;
 } cacheentry;
 
+typedef struct tlbentry {
+    int t[CACHE_TLB_COLS];
+} cachetlbentry;
+
 typedef struct cachelist {
     char         *resource;
     array_header *entries;
+    array_header *tlb;
 } cachelist;
 
 typedef struct cache {
@@ -335,9 +346,10 @@ typedef struct cache {
     array_header *lists;
 } cache;
 
-    /* the regex structure for the
-       substitution of backreferences */
 
+    /* the regex structure for the
+     * substitution of backreferences
+     */
 typedef struct backrefinfo {
     char *source;
     int nsub;

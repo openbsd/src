@@ -99,7 +99,7 @@ static int total_modules = 0;
  */
 static int dynamic_modules = 0;
 API_VAR_EXPORT module *top_module = NULL;
-API_VAR_EXPORT module **ap_loaded_modules;
+API_VAR_EXPORT module **ap_loaded_modules=NULL;
 
 typedef int (*handler_func) (request_rec *);
 typedef void *(*dir_maker_func) (pool *, char *);
@@ -327,6 +327,9 @@ static void build_method_shortcuts(void)
 	}
     }
     method_ptrs = malloc((how_many_ptrs + NMETHODS) * sizeof(handler_func));
+    if (method_ptrs == NULL) {
+	fprintf(stderr, "Ouch!  Out of memory in build_method_shortcuts()!\n");
+    }
     next_ptr = 0;
     for (i = 0; i < NMETHODS; ++i) {
 	/* XXX: This is an itsy bit presumptuous about the alignment
@@ -651,6 +654,7 @@ API_EXPORT(void) ap_remove_module(module *m)
     m->module_index = -1;	/* simulate being unloaded, should
 				 * be unnecessary */
     dynamic_modules--;
+    total_modules--;
 }
 
 API_EXPORT(void) ap_add_loaded_module(module *mod)
@@ -722,6 +726,9 @@ void ap_setup_prelinked_modules()
      */
     ap_loaded_modules = (module **)malloc(
         sizeof(module *)*(total_modules+DYNAMIC_MODULE_LIMIT+1));
+    if (ap_loaded_modules == NULL) {
+	fprintf(stderr, "Ouch!  Out of memory in ap_setup_prelinked_modules()!\n");
+    }
     for (m = ap_preloaded_modules, m2 = ap_loaded_modules; *m != NULL; )
         *m2++ = *m++;
     *m2 = NULL;
@@ -983,8 +990,26 @@ CORE_EXPORT(const command_rec *) ap_find_command_in_modules(const char *cmd_name
     return NULL;
 }
 
+CORE_EXPORT(void *) ap_set_config_vectors(cmd_parms *parms, void *config, module *mod)
+{
+    void *mconfig = ap_get_module_config(config, mod);
+    void *sconfig = ap_get_module_config(parms->server->module_config, mod);
+
+    if (!mconfig && mod->create_dir_config) {
+	mconfig = (*mod->create_dir_config) (parms->pool, parms->path);
+	ap_set_module_config(config, mod, mconfig);
+    }
+
+    if (!sconfig && mod->create_server_config) {
+	sconfig = (*mod->create_server_config) (parms->pool, parms->server);
+	ap_set_module_config(parms->server->module_config, mod, sconfig);
+    }
+    return mconfig;
+}
+
 CORE_EXPORT(const char *) ap_handle_command(cmd_parms *parms, void *config, const char *l)
 {
+    void *oldconfig;
     const char *args, *cmd_name, *retval;
     const command_rec *cmd;
     module *mod = top_module;
@@ -1018,6 +1043,8 @@ CORE_EXPORT(const char *) ap_handle_command(cmd_parms *parms, void *config, cons
     if (*cmd_name == '\0')
 	return NULL;
 
+    oldconfig = parms->context;
+    parms->context = config;
     do {
 	if (!(cmd = ap_find_command_in_modules(cmd_name, &mod))) {
             errno = EINVAL;
@@ -1026,25 +1053,13 @@ CORE_EXPORT(const char *) ap_handle_command(cmd_parms *parms, void *config, cons
                            "not included in the server configuration", NULL);
 	}
 	else {
-	    void *mconfig = ap_get_module_config(config, mod);
-	    void *sconfig =
-		ap_get_module_config(parms->server->module_config, mod);
-
-	    if (!mconfig && mod->create_dir_config) {
-		mconfig = (*mod->create_dir_config) (parms->pool, parms->path);
-		ap_set_module_config(config, mod, mconfig);
-	    }
-
-	    if (!sconfig && mod->create_server_config) {
-		sconfig =
-		    (*mod->create_server_config) (parms->pool, parms->server);
-		ap_set_module_config(parms->server->module_config, mod, sconfig);
-	    }
+	    void *mconfig = ap_set_config_vectors(parms,config, mod);
 
 	    retval = invoke_cmd(cmd, parms, mconfig, args);
 	    mod = mod->next;	/* Next time around, skip this one */
 	}
     } while (retval && !strcmp(retval, DECLINE_CMD));
+    parms->context = oldconfig;
 
     return retval;
 }
@@ -1119,7 +1134,7 @@ API_EXPORT_NONSTD(const char *) ap_set_file_slot(cmd_parms *cmd, char *struct_pt
  */
 
 static cmd_parms default_parms =
-{NULL, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL};
+{NULL, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 API_EXPORT(char *) ap_server_root_relative(pool *p, char *file)
 {
@@ -1542,14 +1557,6 @@ void ap_single_module_configure(pool *p, server_rec *s, module *m)
     if (m->create_dir_config)
         ap_set_module_config(s->lookup_defaults, m,
                              (*m->create_dir_config)(p, NULL));
-}
-
-void ap_single_module_init(pool *p, server_rec *s, module *m)
-{
-    if (m->init)
-        (*m->init)(s, p);
-    build_method_shortcuts();
-    init_handlers(p);
 }
 
 void ap_init_modules(pool *p, server_rec *s)

@@ -172,8 +172,10 @@ static int error_log_child(void *cmd, child_info *pinfo)
     child_pid = spawnl(_P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
     return(child_pid);
 #elif defined(OS2)
-    /* For OS/2 we need to use a '/' */
-    execl(SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
+    /* For OS/2 we need to use a '/' and spawn the child rather than exec as
+     * we haven't forked */
+    child_pid = spawnl(P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
+    return(child_pid);
 #else    
     execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, NULL);
 #endif    
@@ -188,9 +190,17 @@ static void open_error_log(server_rec *s, pool *p)
 
     if (*s->error_fname == '|') {
 	FILE *dummy;
-
+#ifdef TPF
+        TPF_FORK_CHILD cld;
+        cld.filename = s->error_fname+1;
+        cld.subprocess_env = NULL;
+        cld.prog_type = FORK_NAME;
+        if (!ap_spawn_child(p, NULL, &cld,
+                            kill_after_timeout, &dummy, NULL, NULL)) {
+#else
 	if (!ap_spawn_child(p, error_log_child, (void *)(s->error_fname+1),
 			    kill_after_timeout, &dummy, NULL, NULL)) {
+#endif /* TPF */
 	    perror("ap_spawn_child");
 	    fprintf(stderr, "Couldn't fork child for ErrorLog process\n");
 	    exit(1);
@@ -311,6 +321,18 @@ static void log_error_core(const char *file, int line, int level,
 	    return;
 	logf = s->error_log;
     }
+#ifdef TPF
+    else if (tpf_child) {
+    /*
+     * If we are doing normal logging, don't log messages that are
+     * above the server log level unless it is a startup/shutdown notice
+     */
+    if (((level & APLOG_LEVELMASK) != APLOG_NOTICE) &&
+        ((level & APLOG_LEVELMASK) > s->loglevel))
+        return;
+    logf = stderr;
+    }
+#endif /* TPF */
     else {
 	/*
 	 * If we are doing syslog logging, don't log messages that are
@@ -322,8 +344,7 @@ static void log_error_core(const char *file, int line, int level,
     }
 
     if (logf) {
-	len = ap_snprintf(errstr, sizeof(errstr), "%s: [%s] ",
-			  ap_server_argv0, ap_get_time());
+	len = ap_snprintf(errstr, sizeof(errstr), "[%s] ", ap_get_time());
     } else {
 	len = 0;
     }
@@ -331,6 +352,7 @@ static void log_error_core(const char *file, int line, int level,
     len += ap_snprintf(errstr + len, sizeof(errstr) - len,
 	    "[%s] ", priorities[level & APLOG_LEVELMASK].t_name);
 
+#ifndef TPF
     if (file && (level & APLOG_LEVELMASK) == APLOG_DEBUG) {
 #ifdef _OSD_POSIX
 	char tmp[256];
@@ -353,6 +375,7 @@ static void log_error_core(const char *file, int line, int level,
 	len += ap_snprintf(errstr + len, sizeof(errstr) - len,
 		"%s(%d): ", file, line);
     }
+#endif /* TPF */
     if (r) {
 	/* XXX: TODO: add a method of selecting whether logged client
 	 * addresses are in dotted quad or resolved form... dotted
@@ -456,6 +479,8 @@ API_EXPORT(void) ap_log_rerror(const char *file, int line, int level,
      * something, even an empty string, into the "error-notes" cell
      * before calling this routine.
      */
+    va_end(args);
+    va_start(args,fmt); 
     if (((level & APLOG_LEVELMASK) <= APLOG_WARNING)
 	&& (ap_table_get(r->notes, "error-notes") == NULL)) {
 	ap_table_setn(r->notes, "error-notes",
@@ -704,8 +729,10 @@ static int piped_log_child(void *cmd, child_info *pinfo)
     child_pid = spawnl(_P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
     return(child_pid);
 #elif defined(OS2)
-    /* For OS/2 we need to use a '/' */
-    execl (SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
+    /* For OS/2 we need to use a '/' and spawn the child rather than exec as
+     * we haven't forked */
+    child_pid = spawnl(P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
+    return(child_pid);
 #else
     execl (SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, NULL);
 #endif
@@ -719,9 +746,18 @@ API_EXPORT(piped_log *) ap_open_piped_log(pool *p, const char *program)
 {
     piped_log *pl;
     FILE *dummy;
+#ifdef TPF
+    TPF_FORK_CHILD cld;
+    cld.filename = (char *)program;
+    cld.subprocess_env = NULL;
+    cld.prog_type = FORK_NAME;
 
+    if (!ap_spawn_child (p, NULL, &cld,
+      kill_after_timeout, &dummy, NULL, NULL)){
+#else
     if (!ap_spawn_child(p, piped_log_child, (void *)program,
 			kill_after_timeout, &dummy, NULL, NULL)) {
+#endif /* TPF */
 	perror("ap_spawn_child");
 	fprintf(stderr, "Couldn't fork child for piped log process\n");
 	exit (1);

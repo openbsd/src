@@ -102,5 +102,21 @@ SOURCE=.\ap_snprintf.c
 
 # PROP Default_Filter ""
 # End Group
+# Begin Source File
+
+SOURCE=.\ap_md5c.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ap_sha1.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ap_checkpass.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ap_base64.c
+# End Source File
 # End Target
 # End Project

@@ -11,12 +11,19 @@ OBJS= \
   $(OSDIR)/libos.a \
   ap/libap.a
 
-TYPE=test
+TYPE=
+ALGO=
 CRT=
 KEY=
+VIEW=
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $<
+
+# Used to generate import library for OS/2
+.SUFFIXES: .def
+.def.a:
+	emximp -o $@ $<
 
 all: @@Configuration@@ $(TARGET)
 
@@ -32,14 +39,15 @@ $(TARGET): $(EXTRA_DEPS) $(SUBTARGET)
 target_static: subdirs modules.o
 	$(CC) -c $(INCLUDES) $(CFLAGS) buildmark.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SHLIB_EXPORT) \
-	      -o $(TARGET) buildmark.o $(OBJS) $(REGLIB) $(LIBS)
+	      -o $(TARGET) buildmark.o $(OBJS) $(REGLIB) $(EXPATLIB) $(LIBS)
 
 target_compile_only: subdirs modules.o
 	$(CC) -c $(INCLUDES) $(CFLAGS) buildmark.c
 
-target_shared: lib$(TARGET).ep
+target_shared: $(SHCORE_IMPLIB) $(SHARED_CORE_EP) lib$(TARGET).$(SHLIB_SUFFIX_NAME)
 	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SHLIB_EXPORT) \
-	      -o $(TARGET) -DSHARED_CORE_BOOTSTRAP main/http_main.c
+	      -o $(TARGET) -DSHARED_CORE_BOOTSTRAP main/http_main.c \
+	      ap/libap.a $(LIBS) $(SHCORE_IMPLIB)
 
 lib$(TARGET).ep: lib$(TARGET).$(SHLIB_SUFFIX_NAME)
 	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SHLIB_EXPORT) \
@@ -48,7 +56,7 @@ lib$(TARGET).ep: lib$(TARGET).$(SHLIB_SUFFIX_NAME)
 
 lib$(TARGET).$(SHLIB_SUFFIX_NAME): subdirs modules.o
 	$(CC) -c $(INCLUDES) $(CFLAGS) buildmark.c
-	$(LD_SHLIB) $(LDFLAGS_SHLIB) -o lib$(TARGET).$(SHLIB_SUFFIX_NAME) buildmark.o $(OBJS) $(REGLIB)
+	$(LD_SHLIB) $(LDFLAGS_SHLIB) -o lib$(TARGET).$(SHLIB_SUFFIX_NAME) buildmark.o $(OBJS) $(REGLIB) $(EXPATLIB) $(LD_SHCORE_DEF) $(LD_SHCORE_LIBS)
 	@if [ ".$(SHLIB_SUFFIX_LIST)" != . ]; then \
 		rm -f lib$(TARGET).$(SHLIB_SUFFIX_NAME).*; \
 		for suffix in $(SHLIB_SUFFIX_LIST) ""; do \
@@ -60,10 +68,10 @@ lib$(TARGET).$(SHLIB_SUFFIX_NAME): subdirs modules.o
 
 certificate:   
 	@./support/mkcert.sh \
-		"$(MAKE)" "$(MFLAGS_STATIC)" \
+		"$(MAKE)" "$(MFLAGS) $(MFLAGS_STATIC)" \
 		"$(SSL_PROGRAM)" ./support \
-		"$(TYPE)" "$(CRT)" "$(KEY)"
-	@cd ../conf/ssl.crt; $(MAKE) $(MFLAGS_STATIC) SSLEAY=$(SSL_PROGRAM) >/dev/null 2>&1
+		"$(TYPE)" "$(ALGO)" "$(CRT)" "$(KEY)" "$(VIEW)"
+	@cd ../conf/ssl.crt; $(MAKE) $(MFLAGS_STATIC) SSL_PROGRAM=$(SSL_PROGRAM) >/dev/null 2>&1
 
 subdirs:
 	@for i in $(SUBDIRS); do \
@@ -98,6 +106,7 @@ distclean:
 	-rm -f modules.c
 	-rm -f modules/Makefile
 	-rm -f regex/Makefile
+	-rm -f lib/Makefile
 	-rm -f Makefile.config
 	-rm -f Makefile
 
