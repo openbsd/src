@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.16 1998/07/14 16:13:03 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.17 1998/07/14 23:26:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.16 1998/07/14 16:13:03 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.17 1998/07/14 23:26:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,10 +218,10 @@ main(argc, argv)
 #define	COMPACT(e)	t = e; while (*p++ = *t++);
 
 	/*
-	 * Write "insecure" (V7 style) info to the .db file.
+	 * Write "insecure" (no passwd) info to the .db file.
 	 * We do the loop three times, one per key type, to get good
 	 * locality in the db file.
-	 * 1) Store by name, check for yp, issue warnings.
+	 * 1) Store by name, check for YP, issue warnings and save V7 format.
 	 * 2) Store by uid.
 	 * 3) Store by number (used for iterative lookups).
 	 */
@@ -269,7 +269,7 @@ main(argc, argv)
 
 		/* Create original format password file entry */
 		if (makeold)
-			if (fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
+			if (fprintf(oldfp, "%s:*:%u:%u:%s:%s:%s\n",
 			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
 			    pwd.pw_dir, pwd.pw_shell) == EOF)
 				error("write old");
@@ -333,7 +333,6 @@ main(argc, argv)
 		key.size = sizeof(cnt) + 1;
 		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
-
 	}
 
 	/* Store YP token, if needed. */
@@ -365,7 +364,7 @@ main(argc, argv)
 	clean = FILE_SECURE;
 
 	/*
-	 * Write "secure" (master.passwd) info to the .db file.
+	 * Write "secure" (including passwd) info to the .db file.
 	 * We do the loop three times, one per key type, to get good
 	 * locality in the db file.
 	 * 1) Store by name.
@@ -379,9 +378,9 @@ main(argc, argv)
 		p = buf;
 		COMPACT(pwd.pw_name);
 		COMPACT(pwd.pw_passwd);
-		memmove(p, &pwd.pw_uid, sizeof(int));
+		memmove(p, &pwd.pw_uid, sizeof(uid_t));
 		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(int));
+		memmove(p, &pwd.pw_gid, sizeof(gid_t));
 		p += sizeof(int);
 		memmove(p, &pwd.pw_change, sizeof(time_t));
 		p += sizeof(time_t);
@@ -410,9 +409,9 @@ main(argc, argv)
 		p = buf;
 		COMPACT(pwd.pw_name);
 		COMPACT(pwd.pw_passwd);
-		memmove(p, &pwd.pw_uid, sizeof(int));
+		memmove(p, &pwd.pw_uid, sizeof(uid_t));
 		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(int));
+		memmove(p, &pwd.pw_gid, sizeof(gid_t));
 		p += sizeof(int);
 		memmove(p, &pwd.pw_change, sizeof(time_t));
 		p += sizeof(time_t);
@@ -440,9 +439,9 @@ main(argc, argv)
 		p = buf;
 		COMPACT(pwd.pw_name);
 		COMPACT(pwd.pw_passwd);
-		memmove(p, &pwd.pw_uid, sizeof(int));
+		memmove(p, &pwd.pw_uid, sizeof(uid_t));
 		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(int));
+		memmove(p, &pwd.pw_gid, sizeof(gid_t));
 		p += sizeof(int);
 		memmove(p, &pwd.pw_change, sizeof(time_t));
 		p += sizeof(time_t);
