@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.11 1997/01/16 20:43:45 kstailey Exp $ */
+/* $OpenBSD: machdep.c,v 1.12 1997/05/28 23:27:33 niklas Exp $ */
 /* $NetBSD: machdep.c,v 1.35 1997/01/11 11:31:26 ragge Exp $  */
 
 /*
@@ -457,19 +457,24 @@ struct trampframe {
 };
 
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, type, val)
 	sig_t		catcher;
 	int		sig, mask;
 	u_long		code;
+	int		type;
+	union sigval	val;
 {
-	struct	proc	*p = curproc;
-	struct	sigacts *psp = p->p_sigacts;
-	struct	trapframe *syscf;
-	struct	sigcontext *sigctx;
-	struct	trampframe *trampf;
-	unsigned	cursp;
-	int	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	extern	char sigcode[], esigcode[];
+	struct proc *p = curproc;
+	struct sigacts *psp = p->p_sigacts;
+	struct trapframe *syscf;
+	struct sigcontext *sigctx;
+	struct trampframe *trampf;
+	unsigned cursp;
+	int oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	extern char sigcode[], esigcode[];
+	int fsize, rndfsize, kscsize;
+	siginfo_t *sip, ksi;
+
 	/*
 	 * Allocate and validate space for the signal handler context. Note
 	 * that if the stack is in P0 space, the call to grow() is a nop, and
@@ -478,14 +483,22 @@ sendsig(catcher, sig, mask, code)
 	 * stack for both struct sigcontext and struct calls...
 	 */
 	syscf = p->p_addr->u_pcb.framep;
+	fsize = sizeof *sigctx;
+	rndfsize = ((fsize + 7) / 8) * 8;		/* XXX */
+	kscsize = rndfsize;
+	if (psp->ps_siginfo & sigmask(sig)) {
+		fsize += sizeof ksi;
+		rndfsize = ((fsize + 7) / 8) * 8;	/* XXX */
+	}
 
 	/* First check what stack to work on */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		cursp = (int)(psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size);
+		cursp = (int)(psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size - 
+		    rndfsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
-		cursp = syscf->sp;
+		cursp = syscf->sp - rndfsize;
 	if (cursp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void) grow(p, cursp);
 
@@ -497,8 +510,7 @@ sendsig(catcher, sig, mask, code)
 	 /* Place for pointer to arg list in sigreturn */
 	cursp = (unsigned)sigctx - 8;
 
-	if (useracc((caddr_t) cursp, sizeof(struct sigcontext) +
-		    sizeof(struct trampframe), B_WRITE) == 0) {
+	if (useracc((caddr_t)cursp, fsize, B_WRITE) == 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -511,13 +523,13 @@ sendsig(catcher, sig, mask, code)
 		psignal(p, SIGILL);
 		return;
 	}
+
 	/* Set up pointers for sigreturn args */
 	trampf->arg = (int) sigctx;
 	trampf->pc = (unsigned) catcher;
 	trampf->scp = (int) sigctx;
 	trampf->code = code;
 	trampf->sig = sig;
-
 
 	sigctx->sc_pc = syscf->pc;
 	sigctx->sc_ps = syscf->psl;
@@ -531,15 +543,21 @@ sendsig(catcher, sig, mask, code)
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
 	syscf->sp = cursp;
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		initsiginfo(&ksi, sig, code, type, val);
+		sip = (void *)cursp + kscsize;
+		copyout((caddr_t)&ksi, (caddr_t)sip, fsize - kscsize);
+	}
 }
 
 int	waittime = -1;
 static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 
 void
-boot(howto, bootstr)
+boot(howto /* , bootstr */)
 	register howto;
-	char *bootstr;
+/*	char *bootstr; */
 {
 	showto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
@@ -708,11 +726,10 @@ dumpsys()
 
 int
 fuswintr(addr)
-	const void *addr;
+	caddr_t addr;
 {
 	panic("fuswintr: need to be implemented");
 	return 0;
-
 }
 
 int
@@ -726,8 +743,8 @@ suibyte(base, byte)
 
 int
 suswintr(addr, cnt)
-	void *addr;
-	short	cnt;
+	caddr_t	addr;
+	u_int cnt;
 {
 	panic("suswintr: need to be implemented");
 	return 0;
