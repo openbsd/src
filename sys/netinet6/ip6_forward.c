@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.16 2001/07/18 09:56:49 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.17 2001/09/29 08:02:07 jasoni Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -30,6 +30,8 @@
  * SUCH DAMAGE.
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -52,6 +54,10 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #ifdef IPSEC_IPV6FWD
 #include <netinet6/ipsec.h>
@@ -480,6 +486,14 @@ ip6_forward(m, srcrt)
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
+#if NPF > 0 
+        if (pf_test6(PF_OUT, rt->rt_ifp, &m) != PF_PASS) {
+		m_freem(m);
+		goto senderr;
+	}
+	ip6 = mtod(m, struct ip6_hdr *);
+#endif 
+
 #ifdef OLDIP6OUTPUT
 	error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,
 					 (struct sockaddr *)dst,
@@ -500,6 +514,10 @@ ip6_forward(m, srcrt)
 				goto freecopy;
 		}
 	}
+
+#if NPF > 0
+senderr:
+#endif
 	if (mcopy == NULL)
 		return;
 
