@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.32 2002/06/25 15:33:18 millert Exp $
+#	$OpenBSD: bsd.README,v 1.33 2003/07/16 01:29:34 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -352,7 +352,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIB45		/usr/lib/lib45.a
 			LIBASN1		/usr/lib/libasn1.a
 			LIBC		/usr/lib/libc.a
-			LIBCOM_ERR	/usr/lib/libcom_err.a
 			LIBCOMPAT	/usr/lib/libcompat.a
 			LIBCRYPTO	/usr/lib/libcrypto.a
 			LIBCURSES	/usr/lib/libcurses.a

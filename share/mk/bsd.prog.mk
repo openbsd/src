@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.35 2003/07/08 13:59:13 espie Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.36 2003/07/16 01:29:34 deraadt Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -27,7 +27,6 @@ LIB45?=		${DESTDIR}/usr/lib/lib45.a
 LIBACL?=	${DESTDIR}/usr/lib/libacl.a
 LIBASN1?=	${DESTDIR}/usr/lib/libasn1.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
-LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
