@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.3 2004/05/25 20:44:50 mickey Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.4 2004/06/10 18:36:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 	.import errno, data
 ENTRY(__cerror,0)
