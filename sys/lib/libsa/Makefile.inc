@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2002/04/29 01:02:28 hugh Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2003/06/01 17:00:32 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.5 1996/09/30 16:01:18 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -31,7 +31,7 @@ ${SALIB}:		.NOTMAIN __always_make_salib
 	@echo making sure the stand-alone library is up to date...
 	@${SAMAKE} libsa.a
 
-clean::	 		.NOTMAIN __always_make_salib
+clean::			.NOTMAIN __always_make_salib
 	@echo cleaning the stand-alone library objects
 	@${SAMAKE} clean
 	-rmdir -p ${SADST}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctime.c,v 1.2 1998/06/11 01:34:10 mickey Exp $	*/
+/*	$OpenBSD: ctime.c,v 1.3 2003/06/01 17:00:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -73,7 +73,7 @@ ctime(clock)
 		tt--;
 
 	/* no field widths in printf() */
-	sprintf(buf, "%s %s %d %d:%d:%d %d\n",
+	snprintf(buf, sizeof buf, "%s %s %d %d:%d:%d %d\n",
 		((wday  < 0 || wday  >=  7)? "???": wdays[wday]),
 		((month < 0 || month >= 12)? "???": months[month]),
 		(int)tt, hh, mm, ss, year);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrtvid.c,v 1.3 1998/08/22 08:52:56 smurph Exp $ */
+/*	$OpenBSD: wrtvid.c,v 1.4 2003/06/01 17:00:37 deraadt Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -38,16 +38,16 @@ main(argc, argv)
 		perror(filename);
 		exit(2);
 	}
-	sprintf(fileext, "%c%cboot", filename[4], filename[5]);
+	snprintf(fileext, sizeof fileext, "%c%cboot", filename[4], filename[5]);
 	tape_vid = open(fileext, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-	sprintf(fileext, "boot%c%c", filename[4], filename[5]);
+	snprintf(fileext, sizeof fileext, "boot%c%c", filename[4], filename[5]);
 	tape_exe = open(fileext, O_WRONLY|O_CREAT|O_TRUNC,0644);
 
 	pcpul = (struct cpu_disklabel *)malloc(sizeof(struct cpu_disklabel));
 	bzero(pcpul, sizeof(struct cpu_disklabel));
 
 	pcpul->version = 1;
-	strcpy(pcpul->vid_id, "M88K");
+	memcpy(pcpul->vid_id, "M88K", sizeof pcpul->vid_id);
 
 	fstat(exe_file, &stat);
 	/* size in 256 byte blocks round up after a.out header removed */

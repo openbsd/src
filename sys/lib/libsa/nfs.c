@@ -1,10 +1,10 @@
-/*	$OpenBSD: nfs.c,v 1.8 1997/03/25 20:30:43 niklas Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.9 2003/06/01 17:00:33 deraadt Exp $	*/
 /*	$NetBSD: nfs.c,v 1.19 1996/10/13 02:29:04 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -15,7 +15,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -126,7 +126,7 @@ nfs_getrootfh(d, path, fhp)
 		struct repl d;
 	} rdata;
 	size_t cc;
-	
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_getrootfh: %s\n", path);
@@ -191,7 +191,7 @@ nfs_lookupfh(d, name, newfd)
 		struct repl d;
 	} rdata;
 	ssize_t cc;
-	
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("lookupfh: called\n");
@@ -259,7 +259,7 @@ nfs_readlink(d, buf)
 
 	if (cc < 4)
 		return (EIO);
-	
+
 	if (rdata.d.errno)
 		return (ntohl(rdata.d.errno));
 
@@ -390,8 +390,8 @@ nfs_open(path, f)
 	int error = 0;
 
 #ifdef NFS_DEBUG
- 	if (debug)
- 	    printf("nfs_open: %s\n", path);
+	if (debug)
+		printf("nfs_open: %s\n", path);
 #endif
 	if (nfs_root_node.iodesc == NULL) {
 		printf("nfs_open: must mount first.\n");
@@ -400,7 +400,7 @@ nfs_open(path, f)
 
 	currfd = &nfs_root_node;
 	newfd = 0;
-	
+
 	cp = path;
 	while (*cp) {
 		/*
@@ -418,18 +418,18 @@ nfs_open(path, f)
 			error = ENOTDIR;
 			goto out;
 		}
-		
+
 		/* allocate file system specific data structure */
 		newfd = alloc(sizeof(*newfd));
 		newfd->iodesc = currfd->iodesc;
 		newfd->off = 0;
-	
+
 		/*
 		 * Get next component of path name.
 		 */
 		{
 			register int len = 0;
-			
+
 			ncp = cp;
 			while ((c = *cp) != '\0' && c != '/') {
 				if (++len > NFS_MAXNAMLEN) {
@@ -440,19 +440,19 @@ nfs_open(path, f)
 			}
 			*cp = '\0';
 		}
-		
+
 		/* lookup a file handle */
 		error = nfs_lookupfh(currfd, ncp, newfd);
 		*cp = c;
 		if (error)
 			goto out;
-		
+
 		/*
 		 * Check for symbolic link
 		 */
 		if (newfd->fa.fa_type == htonl(NFLNK)) {
 			int link_len, len;
-			
+
 			error = nfs_readlink(newfd, linkbuf);
 			if (error)
 				goto out;
@@ -468,7 +468,7 @@ nfs_open(path, f)
 
 			bcopy(cp, &namebuf[link_len], len + 1);
 			bcopy(linkbuf, namebuf, link_len);
-			
+
 			/*
 			 * If absolute pathname, restart at root.
 			 * If relative pathname, restart at parent directory.
@@ -482,10 +482,10 @@ nfs_open(path, f)
 
 			free(newfd, sizeof(*newfd));
 			newfd = 0;
-			
+
 			continue;
 		}
-		
+
 		if (currfd != &nfs_root_node)
 			free(currfd, sizeof(*currfd));
 		currfd = newfd;
@@ -499,7 +499,7 @@ out:
 		f->f_fsdata = (void *)currfd;
 		return (0);
 	}
-		
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_open: %s lookupfh failed: %s\n",
@@ -527,7 +527,7 @@ nfs_close(f)
 	if (fp)
 		free(fp, sizeof(struct nfs_iodesc));
 	f->f_fsdata = (void *)0;
-	
+
 	return (0);
 }
 
@@ -544,7 +544,7 @@ nfs_read(f, buf, size, resid)
 	register struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 	register ssize_t cc;
 	register char *addr = buf;
-	
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_read: size=%d off=%d\n", size, (int)fp->off);

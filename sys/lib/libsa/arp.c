@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.9 2002/03/14 03:16:09 millert Exp $	*/
+/*	$OpenBSD: arp.c,v 1.10 2003/06/01 17:00:32 deraadt Exp $	*/
 /*	$NetBSD: arp.c,v 1.15 1996/10/13 02:28:58 christos Exp $	*/
 
 /*
@@ -80,14 +80,14 @@ arpwhohas(d, addr)
 		struct ether_header eh;
 		struct {
 			struct ether_arp arp;
-			u_char pad[18]; 	/* 60 - sizeof(...) */
+			u_char pad[18];		/* 60 - sizeof(...) */
 		} data;
 	} wbuf;
 	struct {
 		struct ether_header eh;
 		struct {
 			struct ether_arp arp;
-			u_char pad[24]; 	/* extra space */
+			u_char pad[24];		/* extra space */
 		} data;
 	} rbuf;
 
@@ -103,8 +103,8 @@ arpwhohas(d, addr)
 	}
 
 #ifdef ARP_DEBUG
- 	if (debug)
- 	    printf("arpwhohas: send request for %s\n", inet_ntoa(addr));
+	if (debug)
+	    printf("arpwhohas: send request for %s\n", inet_ntoa(addr));
 #endif
 
 	bzero((char *)&wbuf.data, sizeof(wbuf.data));
@@ -132,7 +132,7 @@ arpwhohas(d, addr)
 	/* Store ethernet address in cache */
 	ah = &rbuf.data.arp;
 #ifdef ARP_DEBUG
- 	if (debug) {
+	if (debug) {
 		printf("arp: response from %s\n",
 		    ether_sprintf(rbuf.eh.ether_shost));
 		printf("arp: cacheing %s --> %s\n",
@@ -153,7 +153,7 @@ arpsend(d, pkt, len)
 {
 
 #ifdef ARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("arpsend: called\n");
 #endif
 
@@ -176,7 +176,7 @@ arprecv(d, pkt, len, tleft)
 	u_int16_t etype;	/* host order */
 
 #ifdef ARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("arprecv: ");
 #endif
 
@@ -244,7 +244,7 @@ arprecv(d, pkt, len, tleft)
 
 	/* We have our answer. */
 #ifdef ARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("got it\n");
 #endif
 	return (n);

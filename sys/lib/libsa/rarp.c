@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarp.c,v 1.8 2002/03/14 03:16:10 millert Exp $	*/
+/*	$OpenBSD: rarp.c,v 1.9 2003/06/01 17:00:33 deraadt Exp $	*/
 /*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
 
 /*
@@ -67,19 +67,19 @@ rarp_getipaddress(sock)
 		u_char header[ETHER_SIZE];
 		struct {
 			struct ether_arp arp;
-			u_char pad[18]; 	/* 60 - sizeof(arp) */
+			u_char pad[18];		/* 60 - sizeof(arp) */
 		} data;
 	} wbuf;
 	struct {
 		u_char header[ETHER_SIZE];
 		struct {
 			struct ether_arp arp;
-			u_char pad[24]; 	/* extra space */
+			u_char pad[24];		/* extra space */
 		} data;
 	} rbuf;
 
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarp: socket=%d\n", sock);
 #endif
 	if (!(d = socktodesc(sock))) {
@@ -87,7 +87,7 @@ rarp_getipaddress(sock)
 		return (-1);
 	}
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarp: d=%x\n", (u_int)d);
 #endif
 
@@ -139,7 +139,7 @@ rarpsend(d, pkt, len)
 {
 
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarpsend: called\n");
 #endif
 
@@ -162,7 +162,7 @@ rarprecv(d, pkt, len, tleft)
 	u_int16_t etype;	/* host order */
 
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarprecv: ");
 #endif
 
@@ -216,7 +216,7 @@ rarprecv(d, pkt, len, tleft)
 
 	/* We have our answer. */
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("got it\n");
 #endif
 	return (n);

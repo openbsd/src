@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.39 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: stand.h,v 1.40 2003/06/01 17:00:33 deraadt Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ char	*getdisklabel(const char *, struct disklabel *);
 u_int	dkcksum(struct disklabel *);
 
 void	printf(const char *, ...);
-void	sprintf(char *, const char *, ...);
+int	snprintf(char *, size_t, const char *, ...);
 void	vprintf(const char *, _BSD_VA_LIST_);
 void	twiddle(void);
 void	gets(char *);
@@ -195,7 +195,7 @@ u_int	sleep(u_int);
 void	usleep(u_int);
 char *ctime(const time_t *);
 
-void	putchar(int);    
+void	putchar(int);
 int	getchar(void);
 
 #ifdef __INTERNAL_LIBSA_CREAD

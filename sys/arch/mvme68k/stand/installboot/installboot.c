@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.7 2002/03/14 03:15:56 millert Exp $ */
+/*	$OpenBSD: installboot.c,v 1.8 2003/06/01 17:00:36 deraadt Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -121,7 +121,7 @@ main(argc, argv)
 	boot = argv[optind];
 	proto = argv[optind + 1];
 	dev = argv[optind + 2];
-	strcpy(cdev, dev);
+	strlcpy(cdev, dev, sizeof cdev);
 	cdev[strlen(cdev)-1] = 'c';
 	
 	if (verbose) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfs.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
+/*	$OpenBSD: hfs.c,v 1.2 2003/06/01 17:00:36 deraadt Exp $	*/
 /*	$NetBSD: hfs.c,v 1.1 2000/11/14 11:25:35 tsubai Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@ hfs_open(path, f)
 	int chosen;
 	char bootpath[128], *cp;
 
-
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return ENXIO;
 	bzero(bootpath, sizeof bootpath);
@@ -54,7 +53,7 @@ hfs_open(path, f)
 	cp = strrchr(bootpath, ',');
 #else
 	cp = bootpath;
-	cp += strlen (bootpath);
+	cp += strlen(bootpath);
 	for (; *cp != ','; cp--) {
 		if (cp == bootpath) {
 			cp = NULL;
@@ -65,11 +64,10 @@ hfs_open(path, f)
 	if (cp == NULL)
 		return ENXIO;
 
-	strcpy(cp + 1, path);
+	strlcpy(cp + 1, path, bootpath + sizeof bootpath - (cp + 1));
 	OF_fd = OF_open(bootpath);
 	if (OF_fd == -1)
 		return ENOENT;
-
 	return 0;
 }
 

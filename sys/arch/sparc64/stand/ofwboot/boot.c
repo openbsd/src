@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2003/05/11 20:22:20 mdw Exp $	*/
+/*	$OpenBSD: boot.c,v 1.8 2003/06/01 17:00:40 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -209,7 +209,7 @@ chain(pentry, args, ssym, esym)
 
 #ifdef DEBUG
 	printf("chain: calling OF_chain(%x, %x, %x, %x, %x)\n",
-	       (void *)RELOC, end - (char *)RELOC, entry, args, l);
+	    (void *)RELOC, end - (char *)RELOC, entry, args, l);
 #endif
 	/* if -D is set then pause in the PROM. */
 	if (debug > 1) OF_enter();
@@ -248,7 +248,7 @@ loadfile(fd, args)
 			printf("read header: %s\n", strerror(errno));
 		else
 			printf("read header: short read (only %d of %d)\n",
-				rval, sizeof(hdr));
+			    rval, sizeof(hdr));
 		rval = 1;
 		goto err;
 	}
@@ -263,8 +263,7 @@ loadfile(fd, args)
 	if (bcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
 		rval = elf32_exec(fd, &hdr.elf32, &entry, &ssym, &esym);
-	} else
-	if (bcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
+	} else if (bcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
 		rval = elf64_exec(fd, &hdr.elf64, &entry, &ssym, &esym);
 	} else
@@ -476,8 +475,8 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 	for (i = 0; i < elf->e_shnum; i++, shp++) {
 		if (shp->sh_type == SHT_NULL)
 			continue;
-		if (shp->sh_type != SHT_SYMTAB
-		    && shp->sh_type != SHT_STRTAB) {
+		if (shp->sh_type != SHT_SYMTAB &&
+		    shp->sh_type != SHT_STRTAB) {
 			shp->sh_offset = 0; 
 			shp->sh_type = SHT_NOBITS;
 			continue;
@@ -511,8 +510,8 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 	addr += sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	off = sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == SHT_SYMTAB
-		    || shp->sh_type == SHT_STRTAB) {
+		if (shp->sh_type == SHT_SYMTAB ||
+		    shp->sh_type == SHT_STRTAB) {
 			if (first)
 				printf("symbols @ 0x%lx ", (u_long)addr);
 			printf("%s%d", first ? "" : "+", shp->sh_size);
@@ -552,9 +551,9 @@ main()
 	/*
 	 * Get the boot arguments from Openfirmware
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1
-	    || OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0
-	    || OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
+	if ((chosen = OF_finddevice("/chosen")) == -1 ||
+	    OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0 ||
+	    OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
 		printf("Invalid Openfirmware environment\n");
 		exit();
 	}
@@ -569,8 +568,8 @@ main()
 	 */
 
 	bootlp = kernels;
-	if (parseargs(bootline, &boothowto) == -1
-			|| (boothowto & RB_ASKNAME)) {
+	if (parseargs(bootline, &boothowto) == -1 ||
+	    (boothowto & RB_ASKNAME)) {
 		bootlp = 0;
 	} else if (*bootline) {
 		just_bootline[0] = bootline;
@@ -586,7 +585,7 @@ main()
 				kernels[0] = 0;	/* no more iteration */
 			} else if (cp != bootline) {
 				printf(": trying %s...\n", cp);
-				strcpy(bootline, cp);
+				strlcpy(bootline, cp, sizeof bootline);
 			}
 		}
 		if (!bootlp) {
@@ -598,8 +597,8 @@ main()
 				bootlp = kernels;
 				continue;
 			}
-			if (strcmp(bootline, "exit") == 0
-					|| strcmp(bootline, "halt") == 0) {
+			if (strcmp(bootline, "exit") == 0 ||
+			    strcmp(bootline, "halt") == 0) {
 				_rtt();
 			}
 		}
@@ -611,7 +610,7 @@ main()
 		OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
 		cp = bootline;
 #else
-		strcpy(bootline, opened_name);
+		strlcpy(bootline, opened_name, sizeof bootline);
 		cp = bootline + strlen(bootline);
 		*cp++ = ' ';
 #endif

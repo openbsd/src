@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.4 2003/05/07 18:11:37 mickey Exp $ */
+/* $OpenBSD: loadfile.c,v 1.5 2003/06/01 17:00:32 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ loadfile(fname, marks, flags)
 #ifdef BOOT_AOUT
 		struct exec aout;
 #endif
-		
+
 	} hdr;
 	ssize_t nr;
 	int fd, rval;
@@ -457,7 +457,7 @@ aout_exec(fd, x, marks, flags)
 		sub = 0;
 	else
 		sub = sizeof(*x);
-	
+
 	minp = maxp = ALIGNENTRY(entry);
 
 	if (lseek(fd, sizeof(*x), SEEK_SET) == -1)  {

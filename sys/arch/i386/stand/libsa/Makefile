@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2003/04/17 03:43:18 drahn Exp $
+#	$OpenBSD: Makefile,v 1.41 2003/06/01 17:00:35 deraadt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -28,8 +28,8 @@ CLEANFILES+=	unixdev.o unixsys.o nullfs.o
 
 # stand routines
 SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
-	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c \
-	strtol.c ctime.c
+	strncmp.c memcmp.c memcpy.c memset.c printf.c snprintf.c \
+	strerror.c strncpy.c strtol.c ctime.c strlcpy.c strlcat.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \

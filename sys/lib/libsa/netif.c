@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif.c,v 1.6 1999/01/11 05:12:26 millert Exp $	*/
+/*	$OpenBSD: netif.c,v 1.7 2003/06/01 17:00:33 deraadt Exp $	*/
 /*	$NetBSD: netif.c,v 1.7 1996/10/13 02:29:03 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ netif_init()
 {
 	struct netif_driver *drv;
 	int d, i;
-    
+
 #ifdef NETIF_DEBUG
 	if (netif_debug)
 		printf("netif_init: called\n");
@@ -113,7 +113,7 @@ netif_select(machdep_hint)
 		for (u = 0; u < drv->netif_nifs; u++) {
 			cur_if.nif_unit = u;
 			unit_done = 0;
-		
+
 #ifdef NETIF_DEBUG
 			if (netif_debug)
 				printf("\t%s%d:", drv->netif_bname,
@@ -189,14 +189,14 @@ netif_attach(nif, desc, machdep_hint)
 	if (netif_debug)
 		printf("%s%d: netif_attach\n", drv->netif_bname, nif->nif_unit);
 #endif
-	desc->io_netif = nif; 
+	desc->io_netif = nif;
 #ifdef PARANOID
 	if (drv->netif_init == NULL)
 		panic("%s%d: no netif_init support", drv->netif_bname,
 		    nif->nif_unit);
 #endif
 	drv->netif_init(desc, machdep_hint);
-	bzero(drv->netif_ifs[nif->nif_unit].dif_stats, 
+	bzero(drv->netif_ifs[nif->nif_unit].dif_stats,
 	    sizeof(struct netif_stats));
 }
 
@@ -297,7 +297,7 @@ netif_open(machdep_hint)
 	int fd;
 	register struct iodesc *s;
 	struct netif *nif;
-	
+
 	/* find a free socket */
 	for (fd = 0, s = sockets; fd < SOPEN_MAX; fd++, s++)
 		if (s->io_netif == (struct netif *)0)
@@ -309,7 +309,7 @@ fnd:
 	bzero(s, sizeof(*s));
 	netif_init();
 	nif = netif_select(machdep_hint);
-	if (!nif) 
+	if (!nif)
 		panic("netboot: no interfaces left untried");
 	if (netif_probe(nif, machdep_hint)) {
 		printf("netboot: couldn't probe %s%d\n",

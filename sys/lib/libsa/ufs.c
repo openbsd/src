@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.13 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.14 2003/06/01 17:00:33 deraadt Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -35,30 +35,30 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *  
+ *
  *
  * Copyright (c) 1990, 1991 Carnegie Mellon University
  * All Rights Reserved.
  *
  * Author: David Golub
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -125,8 +125,8 @@ read_inode(inumber, f)
 	buf = alloc(fs->fs_bsize);
 	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-		fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize,
-		buf, &rsize);
+	    fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize,
+	    buf, &rsize);
 	if (rc)
 		goto out;
 	if (rsize != (size_t)fs->fs_bsize) {
@@ -153,7 +153,7 @@ read_inode(inumber, f)
 	}
 out:
 	free(buf, fs->fs_bsize);
-	return (rc);	 
+	return (rc);
 }
 
 /*
@@ -232,13 +232,11 @@ block_map(f, file_block, disk_block_p)
 		if (fp->f_blkno[level] != ind_block_num) {
 			if (fp->f_blk[level] == (char *)0)
 				fp->f_blk[level] =
-					alloc(fs->fs_bsize);
+				    alloc(fs->fs_bsize);
 			twiddle();
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-				fsbtodb(fp->f_fs, ind_block_num),
-				fs->fs_bsize,
-				fp->f_blk[level],
-				&fp->f_blksize[level]);
+			    fsbtodb(fp->f_fs, ind_block_num), fs->fs_bsize,
+			    fp->f_blk[level], &fp->f_blksize[level]);
 			if (rc)
 				return (rc);
 			if (fp->f_blksize[level] != (size_t)fs->fs_bsize)
@@ -298,8 +296,8 @@ buf_read_file(f, buf_p, size_p)
 		} else {
 			twiddle();
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-				fsbtodb(fs, disk_block),
-				block_size, fp->f_buf, &fp->f_buf_size);
+			    fsbtodb(fs, disk_block),
+			    block_size, fp->f_buf, &fp->f_buf_size);
 			if (rc)
 				return (rc);
 		}
@@ -404,7 +402,7 @@ ufs_open(path, f)
 	fp->f_fs = fs;
 	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-		SBLOCK, SBSIZE, (char *)fs, &buf_size);
+	    SBLOCK, SBSIZE, (char *)fs, &buf_size);
 	if (rc)
 		goto out;
 
@@ -507,7 +505,7 @@ ufs_open(path, f)
 
 			if (link_len < fs->fs_maxsymlinklen) {
 				bcopy(fp->f_di.di_shortlink, namebuf,
-				      (unsigned) link_len);
+				    (unsigned) link_len);
 			} else {
 				/*
 				 * Read file for symbolic link
@@ -521,11 +519,11 @@ ufs_open(path, f)
 				rc = block_map(f, (daddr_t)0, &disk_block);
 				if (rc)
 					goto out;
-				
+
 				twiddle();
 				rc = (f->f_dev->dv_strategy)(f->f_devdata,
-					F_READ, fsbtodb(fs, disk_block),
-					fs->fs_bsize, buf, &buf_size);
+				    F_READ, fsbtodb(fs, disk_block),
+				    fs->fs_bsize, buf, &buf_size);
 				if (rc)
 					goto out;
 
@@ -707,7 +705,7 @@ ufs_readdir(f, name)
 			while (dp < edp && dp->d_ino == (ino_t)0)
 				dp = (struct direct *)((char *)dp + dp->d_reclen);
 			fp->f_seekp += buf_size -
-				((u_int8_t *)edp - (u_int8_t *)dp);
+			    ((u_int8_t *)edp - (u_int8_t *)dp);
 		} while (dp >= edp);
 
 #if BYTE_ORDER == LITTLE_ENDIAN

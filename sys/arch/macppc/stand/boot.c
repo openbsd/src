@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.9 2003/06/01 17:00:36 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -181,9 +181,9 @@ main()
 	/*
 	 * Get the boot arguments from Openfirmware
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1
-	    || OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0
-	    || OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
+	if ((chosen = OF_finddevice("/chosen")) == -1 ||
+	    OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0 ||
+	    OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
 		printf("Invalid Openfirmware environment\n");
 		exit();
 	}
@@ -206,7 +206,7 @@ main()
 	OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
 	cp = bootline;
 #else
-	strcpy(bootline, opened_name);
+	strlcpy(bootline, opened_name, sizeof bootline);
 	cp = bootline + strlen(bootline);
 	*cp++ = ' ';
 #endif
@@ -234,7 +234,7 @@ main()
 	ssym = (void *)marks[MARK_SYM];
 	esym = (void *)marks[MARK_END];
 
-	chain ((void *)entry, bootline, ssym, esym);
+	chain((void *)entry, bootline, ssym, esym);
 
 	_rtt();
 	return 0;

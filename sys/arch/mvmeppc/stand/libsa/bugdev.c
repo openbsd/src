@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.1 2001/06/26 21:58:07 smurph Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.2 2003/06/01 17:00:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -425,7 +425,8 @@ retry:
 	printf(" IO @ %x\n", io);
 	printf("MEM @ %x\n", mem);
 
-#define PRINT_REG(regname, x) printf("%s = 0x%x\n", regname, md_swap_long(*(unsigned *)(io + x)))
+#define PRINT_REG(regname, x) printf("%s = 0x%x\n", regname, \
+	    md_swap_long(*(unsigned *)(io + x)))
 	
         PRINT_REG("CSR0", 0x00);
         PRINT_REG("CSR1", 0x08);
@@ -472,19 +473,21 @@ net_open(struct open_file *f, ...)
 	va_end(ap);
 
 #ifdef DEBUG
-	printf("net_open: using mvmebug ctrl %d dev %d, filename: %s\n", pp->clun, pp->dlun, filename);
+	printf("net_open: using mvmebug ctrl %d dev %d, filename: %s\n",
+	    pp->clun, pp->dlun, filename);
 #endif
 	nfo.clun = pp->clun;
 	nfo.dlun = pp->dlun;
 	nfo.status = 0;
-	strcpy(nfo.filename, filename);
+	strlcpy(nfo.filename, filename, sizeof filename);
 	/* .NETFOPN syscall */
 	mvmeprom_netfopen(&nfo);
 	
 #ifdef DEBUG
 	if (nfo.status) {
 		nfoerr = nfo.status;
-		printf("net_open: ci err = 0x%x, cd err = 0x%x\n", ((nfoerr >> 8) & 0x0F), (nfoerr & 0x0F));
+		printf("net_open: ci err = 0x%x, cd err = 0x%x\n",
+		    ((nfoerr >> 8) & 0x0F), (nfoerr & 0x0F));
 	}
 #endif
 	return (nfo.status);

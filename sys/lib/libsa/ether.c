@@ -1,4 +1,4 @@
-/*	$OpenBSD: ether.c,v 1.5 1998/02/23 20:32:23 niklas Exp $	*/
+/*	$OpenBSD: ether.c,v 1.6 2003/06/01 17:00:32 deraadt Exp $	*/
 /*	$NetBSD: ether.c,v 1.8 1996/10/13 02:29:00 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ sendether(d, pkt, len, dea, etype)
 	register struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
- 	if (debug)
+	if (debug)
 		printf("sendether: called\n");
 #endif
 
@@ -103,7 +103,7 @@ readether(d, pkt, len, tleft, etype)
 	register struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
- 	if (debug)
+	if (debug)
 		printf("readether: called\n");
 #endif
 

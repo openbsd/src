@@ -1,5 +1,5 @@
-/*	$OpenBSD: strerror.c,v 1.6 2003/06/01 17:00:33 deraadt Exp $	*/
-/*	$NetBSD: strerror.c,v 1.11 1996/10/13 02:29:08 christos Exp $	*/
+/*	$OpenBSD: snprintf.c,v 1.1 2003/06/01 17:00:33 deraadt Exp $	*/
+/*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,50 +32,52 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)printf.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
-#include "saerrno.h"
+#include <machine/stdarg.h>
+
 #include "stand.h"
 
-char *
-strerror(err)
-	int err;
+extern void kprintn(void (*)(int), u_long, int);
+extern void kdoprnt(void (*)(int), const char *, va_list);
+
+#ifndef	STRIPPED
+static void sputchar(int);
+
+static char *sbuf, *sbuf_end;
+static size_t sbuf_len;
+
+void
+sputchar(c)
+	int c;
 {
-	static	char ebuf[64];
-
-	switch (err) {
-	case EADAPT:
-		return "bad adaptor number";
-	case ECTLR:
-		return "bad controller number";
-	case EUNIT:
-		return "bad drive number";
-	case EPART:
-		return "bad partition";
-	case ERDLAB:
-		return "can't read disk label";
-	case EUNLAB:
-		return "unlabeled";
-	case ENXIO:
-		return "Device not configured";
-	case EPERM:
-		return "Operation not permitted";
-	case ENOENT:
-		return "No such file or directory";
-	case ESTALE:
-		return "Stale NFS file handle";
-	case EFTYPE:
-		return "Inappropriate file type or format";
-	case ENOEXEC:
-		return "Exec format error";
-	case EIO:
-		return "Input/output error";
-	case EINVAL:
-		return "Invalid argument";
-
-	default:
-		snprintf(ebuf, sizeof ebuf, "Unknown error: code %d", err);
-		return ebuf;
-	}
+	if (sbuf < sbuf_end)
+		*sbuf = c;
+	sbuf++;
 }
+
+int
+snprintf(char *buf, size_t len, const char *fmt, ...)
+{
+	va_list ap;
+
+	sbuf = buf;
+	sbuf_len = len;
+	sbuf_end = sbuf + len;
+	va_start(ap, fmt);
+	kdoprnt(sputchar, fmt, ap);
+	va_end(ap);
+
+	if (sbuf < sbuf_end)
+		*sbuf = '\0';
+	else if (len > 0)
+		*(sbuf_end - 1) = '\0';
+
+	return sbuf - buf;
+}
+
+#endif	/* STRIPPED */

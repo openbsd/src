@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1999/08/16 09:43:09 downsj Exp $
+#	$OpenBSD: Makefile,v 1.13 2003/06/01 17:00:34 deraadt Exp $
 
 LIB=	sa
 
@@ -11,7 +11,7 @@ CFLAGS= -O2 -msoft-float \
 
 # stand routines
 SRCS=	alloc.c devopen.c exit.c exec.c getfile.c gets.c globals.c \
-	memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c
+	memcmp.c memcpy.c memset.c printf.c snprintf.c strerror.c strncpy.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.7 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: vars.c,v 1.8 2003/06/01 17:00:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <libsa.h>
 #include <sys/reboot.h>
+#include <lib/libkern/funcs.h>
 #include "cmd.h"
 
 extern const char version[];
@@ -55,7 +56,7 @@ int Xenv(void);
 const struct cmd_table cmd_set[] = {
 	{"addr",   CMDT_VAR, Xaddr},
 	{"howto",  CMDT_VAR, Xhowto},
-#ifdef DEBUG	
+#ifdef DEBUG
 	{"debug",  CMDT_VAR, Xdebug},
 #endif
 	{"device", CMDT_VAR, Xdevice},
@@ -109,7 +110,7 @@ Xdevice()
 	if (cmd.argc != 2)
 		printf("%s\n", cmd.bootdev);
 	else
-		strncpy(cmd.bootdev, cmd.argv[1], sizeof(cmd.bootdev));
+		strlcpy(cmd.bootdev, cmd.argv[1], sizeof(cmd.bootdev));
 	return 0;
 }
 
@@ -119,7 +120,7 @@ Ximage()
 	if (cmd.argc != 2)
 		printf("%s\n", cmd.image);
 	else
-		strncpy(cmd.image, cmd.argv[1], sizeof(cmd.image));
+		strlcpy(cmd.image, cmd.argv[1], sizeof(cmd.image));
 	return 0;
 }
 
@@ -232,6 +233,7 @@ bootparse(i)
  * terminated by the usual '\0'
  */
 char *environ;
+
 int
 Xenv()
 {
@@ -245,20 +247,23 @@ Xenv()
 		int l;
 		for (p = environ; p && *p; p = q) {
 			l = strlen(cmd.argv[1]);
-			for (q = p; *q != '='; q++);
+			for (q = p; *q != '='; q++)
+				;
 			l = max(l, q - p) + 1;
-			for (q = p; *q != '\n'; q++);
+			for (q = p; *q != '\n'; q++)
+				;
 			if (*q)
 				q++;
 			if (!strncmp(p, cmd.argv[1], l)) {
-				while((*p++ = *q++));
+				while((*p++ = *q++))
+					;
 				p--;
 			}
 		}
 		if (!p)
 			p = environ = alloc(4096);
-		sprintf(p, "%s=%s\n",
-			cmd.argv[1], (cmd.argc==3?cmd.argv[2]:""));
+		snprintf(p, environ + 4096 - p, "%s=%s\n",
+		    cmd.argv[1], (cmd.argc==3?cmd.argv[2]:""));
 	}
 
 	return 0;

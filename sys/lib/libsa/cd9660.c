@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.8 2003/04/15 18:41:19 mickey Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.9 2003/06/01 17:00:32 deraadt Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ pnmatch(path, pp)
 {
 	char *cp;
 	int i;
-	
+
 	cp = pp->name;
 	for (i = isonum_711(pp->namlen); --i >= 0; path++, cp++) {
 		if (toupper(*path) == *cp)
@@ -145,7 +145,7 @@ cd9660_open(path, f)
 	struct ptable_ent *pp;
 	struct iso_directory_record *dp;
 	int rc;
-	
+
 	/* First find the volume descriptor */
 	buf = alloc(buf_size = ISO_DEFAULT_BLOCK_SIZE);
 	dp = (struct iso_directory_record *)buf;
@@ -170,11 +170,11 @@ cd9660_open(path, f)
 	}
 	if (isonum_723(vd->logical_block_size) != ISO_DEFAULT_BLOCK_SIZE)
 		goto out;
-	
+
 	/* Now get the path table and lookup the directory of the file */
 	bno = isonum_732(vd->type_m_path_table);
 	psize = isonum_733(vd->path_table_size);
-	
+
 	if (psize > ISO_DEFAULT_BLOCK_SIZE) {
 		free(buf, ISO_DEFAULT_BLOCK_SIZE);
 		buf = alloc(buf_size = roundup(psize, ISO_DEFAULT_BLOCK_SIZE));
@@ -189,12 +189,12 @@ cd9660_open(path, f)
 		rc = EIO;
 		goto out;
 	}
-	
+
 	parent = 1;
 	pp = (struct ptable_ent *)buf;
 	ent = 1;
 	bno = isonum_732(pp->block) + isonum_711(pp->extlen);
-	
+
 	rc = ENOENT;
 	/*
 	 * Remove extra separators
@@ -261,7 +261,7 @@ cd9660_open(path, f)
 		rc = ENOENT;
 		goto out;
 	}
-	
+
 	/* allocate file system specific data structure */
 	fp = alloc(sizeof(struct file));
 	bzero(fp, sizeof(struct file));
@@ -271,14 +271,14 @@ cd9660_open(path, f)
 	fp->bno = isonum_733(dp->extent);
 	fp->size = isonum_733(dp->size);
 	free(buf, buf_size);
-	
+
 	return 0;
-	
+
 out:
 	if (fp)
 		free(fp, sizeof(struct file));
 	free(buf, buf_size);
-	
+
 	return rc;
 }
 
@@ -287,10 +287,10 @@ cd9660_close(f)
 	struct open_file *f;
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	
+
 	f->f_fsdata = 0;
 	free(fp, sizeof *fp);
-	
+
 	return 0;
 }
 
@@ -307,7 +307,7 @@ cd9660_read(f, start, size, resid)
 	char buf[ISO_DEFAULT_BLOCK_SIZE];
 	char *dp;
 	size_t read, off;
-	
+
 	while (size) {
 		if (fp->off < 0 || fp->off >= fp->size)
 			break;
@@ -317,7 +317,7 @@ cd9660_read(f, start, size, resid)
 			dp = buf;
 		else
 			dp = start;
-		twiddle();	
+		twiddle();
 		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
 					   ISO_DEFAULT_BLOCK_SIZE, dp, &read);
 		if (rc)
@@ -361,7 +361,7 @@ cd9660_seek(f, offset, where)
 	int where;
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	
+
 	switch (where) {
 	case SEEK_SET:
 		fp->off = offset;
@@ -384,7 +384,7 @@ cd9660_stat(f, sb)
 	struct stat *sb;
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	
+
 	/* only importatn stuff */
 	sb->st_mode = S_IFREG | S_IRUSR | S_IRGRP | S_IROTH;
 	sb->st_uid = sb->st_gid = 0;

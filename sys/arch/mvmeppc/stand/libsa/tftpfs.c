@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpfs.c,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
+/*	$OpenBSD: tftpfs.c,v 1.3 2003/06/01 17:00:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -119,7 +119,7 @@ tftp_read_file(f, buf_p, size_p)
 		 * and start again.
 		 */
 		char filename[64];
-		strcpy(filename, fp->filename);
+		strlcpy(filename, fp->filename, sizeof filename);
                 tftpfs_close(f);
                 tftpfs_open(filename, f);
 		for (i = 1; i <= file_block; i++) {
@@ -171,7 +171,7 @@ tftpfs_open(path, f)
 	bzero(fp->f_buf, TFTP_BLOCK_SIZE);
 	fp->f_buf_size = 0;
 
-        strcpy(fp->filename, path);
+        strlcpy(fp->filename, path, sizeof fp->filename);
 	
 	if (f->f_dev->dv_open == NULL) {
 		panic("No device open()!");

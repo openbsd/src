@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.26 2003/05/19 08:18:25 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.27 2003/06/01 17:00:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -19,8 +19,8 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -38,9 +38,9 @@
 #include <sys/stat.h>
 #include <libsa.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libkern/funcs.h>
 
 #include "cmd.h"
-
 
 static const char *const kernels[] = {
 	"/bsd",
@@ -66,7 +66,7 @@ boot(bootdev)
 	printf(">> OpenBSD/" MACHINE " BOOT %s\n", version);
 
 	devboot(bootdev, cmd.bootdev);
-	strncpy(cmd.image, bootfile, sizeof(cmd.image));
+	strlcpy(cmd.image, bootfile, sizeof(cmd.image));
 	cmd.boothowto = 0;
 	cmd.conf = "/etc/boot.conf";
 	cmd.addr = (void *)DEFAULT_KERNEL_ADDRESS;
@@ -74,7 +74,8 @@ boot(bootdev)
 
 	st = read_conf();
 	if (!bootprompt)
-		sprintf(cmd.path, "%s:%s", cmd.bootdev, cmd.image);
+		snprintf(cmd.path, sizeof cmd.path, "%s:%s",
+		    cmd.bootdev, cmd.image);
 
 	while (1) {
 		/* no boot.conf, or no boot cmd in there */
@@ -95,7 +96,7 @@ boot(bootdev)
 			bootfile = kernels[i=0];
 		} else
 			bootfile = kernels[i];
-		strncpy(cmd.image, bootfile, sizeof(cmd.image));
+		strlcpy(cmd.image, bootfile, sizeof(cmd.image));
 		printf(" failed(%d). will try %s\n", errno, bootfile);
 
 		if (try < 2)

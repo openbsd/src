@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.4 1998/05/25 18:37:30 mickey Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.5 2003/06/01 17:00:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -18,8 +18,8 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -56,11 +56,11 @@ unixstrategy(devdata, rw, blk, size, buf, rsize)
 
 #ifdef	UNIX_DEBUG
 	printf("unixstrategy: %s %d bytes @ %d\n",
-		(rw==F_READ?"reading":"writing"), size, blk);
+	    (rw==F_READ?"reading":"writing"), size, blk);
 #endif
 	if ((rc = ulseek((int)devdata, blk * DEV_BSIZE, 0)) >= 0)
-		rc = rw==F_READ? uread((int)devdata, buf, size) :
-			uwrite((int)devdata, buf, size);
+		rc = (rw==F_READ) ? uread((int)devdata, buf, size) :
+		    uwrite((int)devdata, buf, size);
 
 	if (rc >= 0) {
 		*rsize = (size_t)rc;
@@ -88,7 +88,8 @@ unixopen(struct open_file *f, ...)
 
 	if (strncmp("/dev/", *file, 5) == 0) {
 		/* p = strchr(p + 5, '/') */
-		for (p = *file + 5; *p != '\0' && *p != '/'; p++);
+		for (p = *file + 5; *p != '\0' && *p != '/'; p++)
+			;
 		if (*p == '/')
 			*p = '\0';
 	}
@@ -99,7 +100,7 @@ unixopen(struct open_file *f, ...)
 	if (p != NULL)
 		*p = '/';
 
-	return fd<0? -1: 0;
+	return fd < 0 ? -1 : 0;
 }
 
 int
@@ -171,6 +172,7 @@ unix_getc(dev)
 			return 1;
 	} else {
 		char c;
+
 		return uread(0, &c, 1)<1? -1: c;
 	}
 }
