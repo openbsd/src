@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.9 2003/10/20 21:10:19 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.10 2005/01/13 19:19:44 ian Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -109,6 +109,7 @@ main(int argc, char *argv[])
 		}
 		if (playfile(fd, dev) < 0)
 			exit(1);
+		(void) close(fd);
 		argc--;
 		argv++;
 	}
