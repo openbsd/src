@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.16 2004/04/01 23:17:11 tdeval Exp $ */
+/*	$OpenBSD: procmap.c,v 1.17 2004/07/09 19:30:52 tdeval Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -970,14 +970,11 @@ usage(void)
 static pid_t
 strtopid(const char *str)
 {
-	unsigned long pid;
-	char *endptr;
+	pid_t pid;
 
 	errno = 0;
-	pid = strtoul(str, &endptr, 10);
-	if (str[0] == '\0' || *endptr != '\0')
-		usage();
-	if (errno == ERANGE && pid == ULONG_MAX)
+	pid = (pid_t)strtonum(str, 0, INT_MAX, NULL);
+	if (errno != 0)
 		usage();
 	return (pid);
 }
