@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.32 2004/10/04 12:23:58 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.33 2004/10/04 12:30:54 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -247,7 +247,7 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 # Abstract class for all file-like elements
 package OpenBSD::PackingElement::FileBase;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::FileObject);
 use File::Spec;
 sub write
 {
@@ -347,7 +347,7 @@ sub add_object
 }
 
 package OpenBSD::PackingElement::Sample;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
 sub NoDuplicateNames() { 1 }
 __PACKAGE__->setKeyword('sample');
@@ -508,7 +508,7 @@ sub add
 }
 
 package OpenBSD::PackingElement::CVSTag;
-our @ISA=qw(OpenBSD::PackingElement OpenBSD::PackingElement::Comment);
+our @ISA=qw(OpenBSD::PackingElement::Meta OpenBSD::PackingElement::Comment);
 
 sub category() { 'cvstags'}
 
@@ -677,7 +677,7 @@ sub stringize($)
 }
 
 package OpenBSD::PackingElement::NewUser;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Action);
 __PACKAGE__->setKeyword("newuser");
 
 sub category() { "users" }
@@ -734,7 +734,8 @@ sub stringize($)
 }
 
 package OpenBSD::PackingElement::NewGroup;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Action);
+
 __PACKAGE__->setKeyword("newgroup");
 
 sub category() { "groups" }
@@ -810,7 +811,7 @@ sub category() { "localbase" }
 
 package OpenBSD::PackingElement::Cwd;
 use File::Spec;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::State);
 
 __PACKAGE__->setKeyword('cwd');
 
@@ -823,7 +824,7 @@ sub destate
 }
 
 package OpenBSD::PackingElement::Owner;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::State);
 
 __PACKAGE__->setKeyword('owner');
 sub keyword() { 'owner' }
@@ -840,7 +841,7 @@ sub destate
 }
 
 package OpenBSD::PackingElement::Group;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::State);
 
 __PACKAGE__->setKeyword('group');
 sub keyword() { 'group' }
@@ -857,7 +858,7 @@ sub destate
 }
 
 package OpenBSD::PackingElement::Mode;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::State);
 
 __PACKAGE__->setKeyword('mode');
 sub keyword() { 'mode' }
@@ -874,7 +875,7 @@ sub destate
 }
 
 package OpenBSD::PackingElement::Exec;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Action);
 
 __PACKAGE__->setKeyword('exec');
 
@@ -887,7 +888,7 @@ sub destate
 }
 
 package OpenBSD::PackingElement::Unexec;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Action);
 
 __PACKAGE__->setKeyword('unexec');
 sub keyword() { "unexec" }
@@ -899,7 +900,7 @@ sub destate
 }
 
 package OpenBSD::PackingElement::ExtraUnexec;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Action);
 
 __PACKAGE__->setKeyword('extraunexec');
 sub keyword() { "extraunexec" }
@@ -911,7 +912,7 @@ sub destate
 }
 
 package OpenBSD::PackingElement::DirRm;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
 __PACKAGE__->setKeyword('dirrm');
 sub keyword() { "dirrm" }
@@ -934,7 +935,7 @@ sub stringize($)
 sub NoDuplicateNames() { 1 }
 
 package OpenBSD::PackingElement::Dir;
-our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::FileObject);
 
 __PACKAGE__->setKeyword('dir');
 sub keyword() { "dir" }
@@ -1022,13 +1023,14 @@ sub finish_fontdirs
 
 package OpenBSD::PackingElement::Mandir;
 our @ISA=qw(OpenBSD::PackingElement::Dir);
+
 __PACKAGE__->setKeyword('mandir');
 sub keyword() { "mandir" }
 sub needs_keyword() { 1 }
 sub dirclass() { "OpenBSD::PackingElement::Mandir" }
 
 package OpenBSD::PackingElement::Extra;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
 __PACKAGE__->setKeyword('extra');
 sub keyword() { 'extra' }
