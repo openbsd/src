@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.19 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: prep,v 1.20 2003/09/06 22:22:42 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -128,4 +128,4 @@ OpenBSD/MACHINE console device restrictions:
     use display && keyboard console'', then you need to use a serial
     console.
     If your machine was not listed in the list above, please report this
-    on <alpha@openbsd.org>.
+    on <alpha@OpenBSD.org>.

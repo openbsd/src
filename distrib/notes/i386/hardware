@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.128 2003/09/05 19:11:38 henning Exp $
+dnl	$OpenBSD: hardware,v 1.129 2003/09/06 22:22:43 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -952,5 +952,5 @@ Special care for PCI BIOS:
 
 	Try to gather dmesg output from the failing configuration, for
 	example by using serial console (see boot(8)) and send it to
-	<mickey@openbsd.org> along with descriptions of your hardware setup.
+	<mickey@OpenBSD.org> along with descriptions of your hardware setup.
 	Alternatively, dig in the code and fix problems.
