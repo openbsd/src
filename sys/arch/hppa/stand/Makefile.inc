@@ -1,21 +1,17 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1998/10/30 19:46:42 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1999/04/20 20:15:13 mickey Exp $
 
 CFLAGS=${DEBUG} -O2 -g -Wall -Werror
 CPPFLAGS+=-I${S} -I. -I${.CURDIR}
-SACFLAGS=-nostdinc -fno-builtin
+SACFLAGS=-nostdinc -fno-builtin -D_STANDALONE -I${SADIR}/libsa
 SACFLAGS+=-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
-SACFLAGS+=-D_STANDALONE -I${SADIR}/libsa
 DEBUGFLAGS=-DDEBUG
-DEBUGFLAGS+=-DPDCDEBUG
-DEBUGFLAGS+=-DLIFDEBUG
+#DEBUGFLAGS+=-DPDCDEBUG
+#DEBUGFLAGS+=-DLIFDEBUG
 DEBUGFLAGS+=-DEXEC_DEBUG
 # DEBUGFLAGS+=-DALLOC_TRACE
-# DEBUGFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG
-# DEBUGFLAGS+=-DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG
-LINKADDR=0x500000
-LOADADDR=0x500000
-HEAP_LIMIT=0x600000
-#ROM_SIZE=32768
+LINKADDR=0x700000
+LOADADDR=0x700000
+HEAP_LIMIT=0x7c0000
 CLEANFILES+=	machine
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir) && !make(obj) && !(defined(PROG) && ${PROG} == "mkboot")
@@ -44,5 +40,4 @@ MKBOOT=${SADIR}/mkboot/mkboot
 MKBOOT=${SADIR}/mkboot/${__objdir}/mkboot
 .endif
 
-# NO_NET=no_net
 BINDIR=	/usr/mdec
