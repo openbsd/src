@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.10 2001/12/20 07:50:08 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.11 2002/03/07 22:36:03 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -66,6 +66,7 @@ pthread_cancel(pthread)
 				if (pthread->join_status.thread != NULL) {
 					pthread->join_status.thread->joiner
 					    = NULL;
+					pthread->join_status.thread = NULL;
 				}
 				pthread->cancelflags |= PTHREAD_CANCELLING;
 				PTHREAD_NEW_STATE(pthread, PS_RUNNING);
