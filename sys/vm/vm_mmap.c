@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.12 1998/02/19 22:00:27 niklas Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.13 1998/02/25 22:13:46 deraadt Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -215,13 +215,6 @@ sys_mmap(p, v, retval)
 		vp = (struct vnode *)fp->f_data;
 
 		/*
-		 * Only files and cdevs are mappable, and cdevs does not
-		 * provide private mappings of any kind.
-		 */
-		if (vp->v_type != VREG &&
-		    (vp->v_type != VCHR || (flags & (MAP_PRIVATE|MAP_COPY))))
-			return (EINVAL);
-		/*
 		 * XXX hack to handle use of /dev/zero to map anon
 		 * memory (ala SunOS).
 		 */
@@ -229,6 +222,14 @@ sys_mmap(p, v, retval)
 			flags |= MAP_ANON;
 			goto is_anon;
 		}
+
+		/*
+		 * Only files and cdevs are mappable, and cdevs does not
+		 * provide private mappings of any kind.
+		 */
+		if (vp->v_type != VREG &&
+		    (vp->v_type != VCHR || (flags & (MAP_PRIVATE|MAP_COPY))))
+			return (EINVAL);
 		/*
 		 * Ensure that file and memory protections are
 		 * compatible.  Note that we only worry about
