@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.3 2000/11/08 19:16:58 ericj Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.4 2002/01/22 21:48:43 ericj Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -91,12 +91,6 @@ extern void dec_axppci_33_init __P((void));
 #define	dec_axppci_33_init	platform_not_configured
 #endif
 
-#ifdef DEC_KN8AE
-extern void dec_kn8ae_init __P((void));
-#else
-#define	dec_kn8ae_init		platform_not_configured
-#endif
-
 #ifdef DEC_2100_A50
 extern void dec_2100_a50_init __P((void));
 #else
@@ -109,22 +103,10 @@ extern void dec_kn20aa_init __P((void));
 #define	dec_kn20aa_init		platform_not_configured
 #endif
 
-#ifdef DEC_EB64PLUS
-extern void dec_eb64plus_init __P((void));
-#else
-#define	dec_eb64plus_init	platform_not_configured
-#endif
-
 #ifdef DEC_EB164
 extern void dec_eb164_init __P((void));
 #else
 #define	dec_eb164_init		platform_not_configured
-#endif
-
-#ifdef AVALON_A12
-extern void avalon_a12_init __P((void));
-#else
-#define	avalon_a12_init		platform_not_configured
 #endif
 
 #ifdef	DEC_KN300
@@ -139,50 +121,10 @@ extern void dec_550_init __P((void));
 #define	dec_550_init		platform_not_configured
 #endif
 
-#if defined(DEC_1000) || defined(DEC_1000A)
-extern void _dec_1000a_init __P((void));
-#endif
-#ifdef DEC_1000A
-#define	dec_1000a_init		_dec_1000a_init
-#else
-#define	dec_1000a_init		platform_not_configured
-#endif
-#ifdef DEC_1000
-#define	dec_1000_init		_dec_1000a_init
-#else
-#define	dec_1000_init		platform_not_configured
-#endif
-
-#ifdef DEC_ALPHABOOK1
-extern void dec_alphabook1_init __P((void));
-#else
-#define	dec_alphabook1_init	platform_not_configured
-#endif
-
-#ifdef DEC_EB66
-extern void dec_eb66_init __P((void));
-#else
-#define	dec_eb66_init		platform_not_configured
-#endif
-
 #ifdef DEC_6600
 extern void dec_6600_init __P((void));
 #else
 #define	dec_6600_init		platform_not_configured
-#endif
-
-#if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
-extern void _dec_2100_a500_init __P((void));
-#endif
-#ifdef DEC_2100_A500
-#define	dec_2100_a500_init	_dec_2100_a500_init
-#else
-#define	dec_2100_a500_init	platform_not_configured
-#endif
-#ifdef DEC_2100A_A500
-#define	dec_2100a_a500_init	_dec_2100_a500_init
-#else
-#define	dec_2100a_a500_init	platform_not_configured
 #endif
 
 #ifdef API_UP1000
@@ -191,37 +133,30 @@ extern void api_up1000_init __P((void));
 #define	api_up1000_init		platform_not_configured
 #endif
 
-#undef DEC_2000_300	/* XXX - why is it defined in config? */
-#ifdef DEC_2000_300
-extern void dec_2000_300_init __P((void));
-#else
-#define	dec_2000_300_init	platform_not_configured
-#endif
-
 static const struct cpuinit cpuinit[] = {
 	cpu_notsupp(ST_ADU, "Alpha Demo Unit"),
 	cpu_notsupp(ST_DEC_4000, "DEC 4000 (``Cobra'')"),
 	cpu_notsupp(ST_DEC_7000, "DEC 7000 (``Ruby'')"),
 	cpu_init(ST_DEC_3000_500, dec_3000_500_init, "DEC_3000_500"),
-	cpu_init(ST_DEC_2000_300, dec_2000_300_init, "DEC_2000_300"),
+	cpu_notsupp(ST_DEC_2000_300, "DEC_2000_300"),
 	cpu_init(ST_DEC_3000_300, dec_3000_300_init, "DEC_3000_300"),
-	cpu_init(ST_AVALON_A12, avalon_a12_init, "AVALON_A12"),
-	cpu_init(ST_DEC_2100_A500, dec_2100_a500_init, "DEC_2100_A500"),
+	cpu_notsupp(ST_AVALON_A12, "AVALON_A12"),
+	cpu_notsupp(ST_DEC_2100_A500, "DEC_2100_A500"),
 	cpu_notsupp(ST_DEC_APXVME_64, "AXPvme 64"),
 	cpu_init(ST_DEC_AXPPCI_33, dec_axppci_33_init, "DEC_AXPPCI_33"),
-	cpu_init(ST_DEC_21000, dec_kn8ae_init, "DEC_KN8AE"),
+	cpu_notsupp(ST_DEC_21000, "DEC_KN8AE"),
 	cpu_init(ST_DEC_2100_A50, dec_2100_a50_init, "DEC_2100_A50"),
 	cpu_notsupp(ST_DEC_MUSTANG, "Mustang"),
 	cpu_init(ST_DEC_KN20AA, dec_kn20aa_init, "DEC_KN20AA"),
-	cpu_init(ST_DEC_1000, dec_1000_init, "DEC_1000"),
-	cpu_init(ST_EB66, dec_eb66_init, "DEC_EB66"),
-	cpu_init(ST_EB64P, dec_eb64plus_init, "DEC_EB64PLUS"),
-	cpu_init(ST_ALPHABOOK1, dec_alphabook1_init, "DEC_ALPHABOOK1"),
-	cpu_init(ST_DEC_4100, dec_kn300_init, "DEC_KN300"),
+	cpu_notsupp(ST_DEC_1000, "DEC_1000"),
+	cpu_notsupp(ST_EB66, "DEC_EB66"),
+	cpu_notsupp(ST_EB64P, "DEC_EB64PLUS"),
+	cpu_notsupp(ST_ALPHABOOK1, "DEC_ALPHABOOK1"),
+	cpu_notsupp(ST_DEC_4100, "DEC_KN300"),
 	cpu_notsupp(ST_DEC_EV45_PBP, "EV45 Passive Backplane Board"),
-	cpu_init(ST_DEC_2100A_A500, dec_2100a_a500_init, "DEC_2100A_A500"),
+	cpu_notsupp(ST_DEC_2100A_A500, "DEC_2100A_A500"),
 	cpu_init(ST_EB164, dec_eb164_init, "DEC_EB164"),
-	cpu_init(ST_DEC_1000A, dec_1000a_init, "DEC_1000A"),
+	cpu_notsupp(ST_DEC_1000A, "DEC_1000A"),
 	cpu_notsupp(ST_DEC_ALPHAVME_224, "AlphaVME 224"),
 	cpu_init(ST_DEC_550, dec_550_init, "DEC_550"),
 	cpu_notsupp(ST_DEC_EV56_PBP, "EV56 Passive Backplane Board"),
