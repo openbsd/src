@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.12 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.13 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.12 1999/12/18 21:53:33 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.13 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ Targ_NewGN (name)
 #ifdef CLEANUP
     if (allGNs == NULL)
 	allGNs = Lst_Init();
-    Lst_AtEnd(allGNs, (ClientData) gn);
+    Lst_AtEnd(allGNs, (ClientData)gn);
 #endif
 
     return (gn);
@@ -270,7 +270,7 @@ Targ_FindNode (name, flags)
 	if (isNew) {
 	    gn = Targ_NewGN (name);
 	    Hash_SetValue (he, gn);
-	    (void) Lst_AtEnd (allTargets, (ClientData)gn);
+	    Lst_AtEnd(allTargets, (ClientData)gn);
 	}
     } else {
 	he = Hash_FindEntry (&targets, name);
@@ -323,9 +323,9 @@ Targ_FindList (names, flags)
 	     * are added to the list in the order in which they were
 	     * encountered in the makefile.
 	     */
-	    (void) Lst_AtEnd (nodes, (ClientData)gn);
+	    Lst_AtEnd(nodes, (ClientData)gn);
 	    if (gn->type & OP_DOUBLEDEP) {
-		(void)Lst_Concat (nodes, gn->cohorts, LST_CONCNEW);
+		Lst_Concat(nodes, gn->cohorts, LST_CONCNEW);
 	    }
 	} else if (flags == TARG_NOCREATE) {
 	    Error ("\"%s\" -- target unknown.", name);

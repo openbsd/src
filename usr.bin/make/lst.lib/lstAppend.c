@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAppend.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.7 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.7 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,8 @@ static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.6 1999/12/18 21:53:33 espie Exp
  *
  *-----------------------------------------------------------------------
  */
-ReturnStatus
-Lst_Append (l, ln, d)
+void
+Lst_Append(l, ln, d)
     Lst	  	l;	/* affected list */
     LstNode	ln;	/* node after which to append the datum */
     ClientData	d;	/* said datum */
@@ -83,7 +83,7 @@ Lst_Append (l, ln, d)
     }
 
     if (!LstValid (l) || LstIsEmpty (l)  || ! LstNodeValid (ln, l)) {
-	return (FAILURE);
+	return;
     }
     ok:
 
@@ -110,7 +110,5 @@ Lst_Append (l, ln, d)
 	    list->lastPtr = nLNode;
 	}
     }
-
-    return (SUCCESS);
 }
 

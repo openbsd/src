@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInsert.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.7 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.7 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,16 +58,13 @@ static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.6 1999/12/18 21:53:33 espie Exp
  *	Insert a new node with the given piece of data before the given
  *	node in the given list.
  *
- * Results:
- *	SUCCESS or FAILURE.
- *
  * Side Effects:
  *	the firstPtr field will be changed if ln is the first node in the
  *	list.
  *
  *-----------------------------------------------------------------------
  */
-ReturnStatus
+void
 Lst_Insert (l, ln, d)
     Lst	    	  	l;	/* list to manipulate */
     LstNode	  	ln;	/* node before which to insert d */
@@ -85,7 +82,7 @@ Lst_Insert (l, ln, d)
 	goto ok;
 
     if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
-	return (FAILURE);
+	return;
     }
 
     ok:
@@ -110,7 +107,5 @@ Lst_Insert (l, ln, d)
 	    list->firstPtr = nLNode;
 	}
     }
-
-    return (SUCCESS);
 }
 

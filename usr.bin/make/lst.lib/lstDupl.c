@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDupl.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: lstDupl.c,v 1.7 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.7 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,17 +85,11 @@ Lst_Duplicate (l, copyProc)
 	return (NULL);
     }
 
-    ln = list->firstPtr;
-    while (ln != NULL) {
-	if (copyProc != NOCOPY) {
-	    if (Lst_AtEnd (nl, (*copyProc) (ln->datum)) == FAILURE) {
-		return (NULL);
-	    }
-	} else if (Lst_AtEnd (nl, ln->datum) == FAILURE) {
-	    return (NULL);
-	}
-
-	ln = ln->nextPtr;
+    for (ln = list->firstPtr; ln != NULL; ln = ln->nextPtr) {
+    	if (copyProc != NOCOPY)
+	    Lst_AtEnd(nl, (*copyProc)(ln->datum));
+	else
+	    Lst_AtEnd(nl, ln->datum);
     }
 
     return (nl);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.12 1999/12/18 21:56:07 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.13 1999/12/18 21:58:07 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.12 1999/12/18 21:56:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.13 1999/12/18 21:58:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ DirMatchFiles (pattern, p, expansions)
 	    ((entry->name[0] != '.') ||
 	     (pattern[0] == '.')))
 	{
-	    (void)Lst_AtEnd(expansions,
+	    Lst_AtEnd(expansions,
 			    (isDot ? estrdup(entry->name) :
 			     str_concat(p->name, entry->name,
 					STR_ADDSLASH)));
@@ -488,7 +488,7 @@ DirExpandCurly(word, brace, path, expansions)
 	     * Hit the end w/o finding any wildcards, so stick the expansion
 	     * on the end of the list.
 	     */
-	    (void)Lst_AtEnd(expansions, file);
+	    Lst_AtEnd(expansions, file);
 	} else {
 	next:
 	    free(file);
@@ -1067,7 +1067,7 @@ Dir_AddDir (path, name)
 	p = (Path *)Lst_Datum (ln);
 	if (Lst_Member(path, (ClientData)p) == NULL) {
 	    p->refCount += 1;
-	    (void)Lst_AtEnd (path, (ClientData)p);
+	    Lst_AtEnd(path, (ClientData)p);
 	}
     } else {
 	if (DEBUG(DIR)) {
@@ -1102,8 +1102,8 @@ Dir_AddDir (path, name)
 		(void)Hash_CreateEntry(&p->files, dp->d_name, (Boolean *)NULL);
 	    }
 	    (void) closedir (d);
-	    (void)Lst_AtEnd (openDirectories, (ClientData)p);
-	    (void)Lst_AtEnd (path, (ClientData)p);
+	    Lst_AtEnd(openDirectories, (ClientData)p);
+	    Lst_AtEnd(path, (ClientData)p);
 	}
 	if (DEBUG(DIR)) {
 	    printf("done\n");
@@ -1201,7 +1201,7 @@ Dir_Destroy (pp)
 	LstNode	ln;
 
 	ln = Lst_Member (openDirectories, (ClientData)p);
-	(void) Lst_Remove (openDirectories, ln);
+	Lst_Remove(openDirectories, ln);
 
 	Hash_DeleteTable (&p->files);
 	free((Address)p->name);
@@ -1259,7 +1259,7 @@ Dir_Concat(path1, path2)
 	p = (Path *)Lst_Datum(ln);
 	if (Lst_Member(path1, (ClientData)p) == NULL) {
 	    p->refCount += 1;
-	    (void)Lst_AtEnd(path1, (ClientData)p);
+	    Lst_AtEnd(path1, (ClientData)p);
 	}
     }
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstRemove.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
+/*	$OpenBSD: lstRemove.c,v 1.6 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: lstRemove.c,v 1.5 1996/11/06 17:59:50 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstRemove.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstRemove.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstRemove.c,v 1.6 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,8 @@ static char rcsid[] = "$OpenBSD: lstRemove.c,v 1.5 1999/12/18 21:53:34 espie Exp
  *
  *-----------------------------------------------------------------------
  */
-ReturnStatus
-Lst_Remove (l, ln)
+void
+Lst_Remove(l, ln)
     Lst	    	  	l;
     LstNode	  	ln;
 {
@@ -77,7 +77,7 @@ Lst_Remove (l, ln)
 
     if (!LstValid (l) ||
 	!LstNodeValid (ln, l)) {
-	    return (FAILURE);
+	    return;
     }
 
     /*
@@ -132,7 +132,5 @@ Lst_Remove (l, ln)
     } else {
 	lNode->flags |= LN_DELETED;
     }
-
-    return (SUCCESS);
 }
 

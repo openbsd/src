@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAtEnd.c,v 1.4 1998/12/05 00:06:31 espie Exp $	*/
+/*	$OpenBSD: lstAtEnd.c,v 1.5 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: lstAtEnd.c,v 1.5 1996/11/06 17:59:32 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstAtEnd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstAtEnd.c,v 1.4 1998/12/05 00:06:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAtEnd.c,v 1.5 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,21 +57,15 @@ static char rcsid[] = "$OpenBSD: lstAtEnd.c,v 1.4 1998/12/05 00:06:31 espie Exp 
  * Lst_AtEnd --
  *	Add a node to the end of the given list
  *
- * Results:
- *	SUCCESS if life is good.
- *
  * Side Effects:
  *	A new ListNode is created and added to the list.
  *
  *-----------------------------------------------------------------------
  */
-ReturnStatus
-Lst_AtEnd (l, d)
+void
+Lst_AtEnd(l, d)
     Lst		l;	/* List to which to add the datum */
     ClientData	d;	/* Datum to add */
 {
-    register LstNode	end;
-
-    end = Lst_Last (l);
-    return (Lst_Append (l, end, d));
+    Lst_Append(l, Lst_Last(l), d);
 }

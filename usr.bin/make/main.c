@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 1999/12/18 21:58:07 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.25 1999/12/18 21:53:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.26 1999/12/18 21:58:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'V':
 			printVars = TRUE;
-			(void)Lst_AtEnd(variables, (ClientData)optarg);
+			Lst_AtEnd(variables, (ClientData)optarg);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -280,7 +280,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
 			break;
 		case 'f':
-			(void)Lst_AtEnd(makefiles, (ClientData)optarg);
+			Lst_AtEnd(makefiles, (ClientData)optarg);
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
@@ -371,7 +371,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 					optind = 1;     /* - */
 				goto rearg;
 			}
-			(void)Lst_AtEnd(create, (ClientData)estrdup(*argv));
+			Lst_AtEnd(create, (ClientData)estrdup(*argv));
 		}
 }
 

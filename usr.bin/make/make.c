@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.11 1999/12/18 21:56:07 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.12 1999/12/18 21:58:07 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.11 1999/12/18 21:56:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.12 1999/12/18 21:58:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,7 @@ MakeAddChild (gnp, lp)
     Lst            l = (Lst) lp;
 
     if (!gn->make && !(gn->type & OP_USE)) {
-	(void)Lst_EnQueue (l, (ClientData)gn);
+	Lst_EnQueue(l, (ClientData)gn);
     }
     return (0);
 }
@@ -340,7 +340,7 @@ Make_HandleUse (cgn, pgn)
 	     * .USE or transformation and target has no commands -- append
 	     * the child's commands to the parent.
 	     */
-	    (void) Lst_Concat (pgn->commands, cgn->commands, LST_CONCNEW);
+	    Lst_Concat (pgn->commands, cgn->commands, LST_CONCNEW);
 	}
 
 	if (Lst_Open (cgn->children) == SUCCESS) {
@@ -348,8 +348,8 @@ Make_HandleUse (cgn, pgn)
 		gn = (GNode *)Lst_Datum (ln);
 
 		if (Lst_Member (pgn->children, gn) == NULL) {
-		    (void) Lst_AtEnd (pgn->children, gn);
-		    (void) Lst_AtEnd (gn->parents, pgn);
+		    Lst_AtEnd(pgn->children, gn);
+		    Lst_AtEnd(gn->parents, pgn);
 		    pgn->unmade += 1;
 		}
 	    }
@@ -522,7 +522,7 @@ Make_Update (cgn)
 	if (succ->make && succ->unmade == 0 && succ->made == UNMADE &&
 	    Lst_Member(toBeMade, (ClientData)succ) == NULL)
 	{
-	    (void)Lst_EnQueue(toBeMade, (ClientData)succ);
+	    Lst_EnQueue(toBeMade, (ClientData)succ);
 	}
     }
 
@@ -850,7 +850,7 @@ Make_Run (targs)
 	    if (gn->unmade != 0) {
 		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
 	    } else {
-		(void)Lst_EnQueue (toBeMade, (ClientData)gn);
+		Lst_EnQueue(toBeMade, (ClientData)gn);
 	    }
 	}
     }

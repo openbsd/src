@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.19 1999/12/18 21:56:07 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.20 1999/12/18 21:58:07 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.19 1999/12/18 21:56:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.20 1999/12/18 21:58:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -679,7 +679,7 @@ JobSaveCommand(cmd, gn)
     ClientData   gn;
 {
     cmd = (ClientData) Var_Subst((char *) cmd, (GNode *) gn, FALSE);
-    (void) Lst_AtEnd(postCommands->commands, cmd);
+    Lst_AtEnd(postCommands->commands, cmd);
     return(0);
 }
 
@@ -856,7 +856,7 @@ JobFinish(job, status)
 		    WSTOPSIG(*status));
 	    }
 	    job->flags |= JOB_RESUME;
-	    (void)Lst_AtEnd(stoppedJobs, (ClientData)job);
+	    Lst_AtEnd(stoppedJobs, (ClientData)job);
 #ifdef REMOTE
 	    if (job->flags & JOB_REMIGRATE)
 		JobRestart(job);
@@ -1339,7 +1339,7 @@ jobExecFinish:
      * Now the job is actually running, add it to the table.
      */
     nJobs += 1;
-    (void) Lst_AtEnd(jobs, (ClientData)job);
+    Lst_AtEnd(jobs, (ClientData)job);
     if (nJobs == maxJobs) {
 	jobFull = TRUE;
     }
@@ -1474,7 +1474,7 @@ JobRestart(job)
 		   (void) fprintf(stdout, "*** holding\n");
 		   (void) fflush(stdout);
   		}
-		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
+		Lst_AtFront(stoppedJobs, (ClientData)job);
 		jobFull = TRUE;
 		if (DEBUG(JOB)) {
 		   (void) fprintf(stdout, "Job queue is full.\n");
@@ -1495,7 +1495,7 @@ JobRestart(job)
 	}
 #endif
 
-	(void)Lst_AtEnd(jobs, (ClientData)job);
+	Lst_AtEnd(jobs, (ClientData)job);
 	nJobs += 1;
 	if (nJobs == maxJobs) {
 	    jobFull = TRUE;
@@ -1540,7 +1540,7 @@ JobRestart(job)
 		    (void) fprintf(stdout, "holding\n");
 		    (void) fflush(stdout);
 		}
-		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
+		Lst_AtFront(stoppedJobs, (ClientData)job);
 		jobFull = TRUE;
 		if (DEBUG(JOB)) {
 		    (void) fprintf(stdout, "Job queue is full.\n");
@@ -1640,7 +1640,7 @@ JobRestart(job)
 		(void) fprintf(stdout, "table full\n");
 		(void) fflush(stdout);
 	    }
-	    (void) Lst_AtFront(stoppedJobs, (ClientData)job);
+	    Lst_AtFront(stoppedJobs, (ClientData)job);
 	    jobFull = TRUE;
 	    if (DEBUG(JOB)) {
 		(void) fprintf(stdout, "Job queue is full.\n");
@@ -1941,7 +1941,7 @@ JobStart(gn, flags, previous)
 	   (void) fflush(stdout);
 	}
 	job->flags |= JOB_RESTART;
-	(void) Lst_AtEnd(stoppedJobs, (ClientData)job);
+	Lst_AtEnd(stoppedJobs, (ClientData)job);
     } else {
 	if ((nLocal >= maxLocal) && local) {
 	    /*
@@ -2270,7 +2270,7 @@ Job_CatchChildren(block)
 	    }
 	} else {
 	    job = (Job *) Lst_Datum(jnode);
-	    (void) Lst_Remove(jobs, jnode);
+	    Lst_Remove(jobs, jnode);
 	    nJobs -= 1;
 	    if (jobFull && DEBUG(JOB)) {
 		(void) fprintf(stdout, "Job queue is no longer full.\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstConcat.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: lstConcat.c,v 1.7 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.7 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.6 1999/12/18 21:53:33 espie Exp
  *	New elements are created and appended the the first list.
  *-----------------------------------------------------------------------
  */
-ReturnStatus
+void
 Lst_Concat (l1, l2, flags)
     Lst    	  	l1; 	/* The list to which l2 is to be appended */
     Lst    	  	l2; 	/* The list to append to l1 */
@@ -84,7 +84,7 @@ Lst_Concat (l1, l2, flags)
     register List 	list2 = (List)l2;
 
     if (!LstValid (l1) || !LstValid (l2)) {
-	return (FAILURE);
+	return;
     }
 
     if (flags == LST_CONCLINK) {
@@ -155,7 +155,5 @@ Lst_Concat (l1, l2, flags)
 
 	list2->lastPtr->nextPtr = list2->firstPtr;
     }
-
-    return (SUCCESS);
 }
 

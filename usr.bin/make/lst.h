@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.9 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.10 1999/12/18 21:58:07 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -88,19 +88,19 @@ Boolean		Lst_IsEmpty __P((Lst));
  * Functions to modify a list
  */
 /* Insert an element before another */
-ReturnStatus	Lst_Insert __P((Lst, LstNode, ClientData));
+void		Lst_Insert __P((Lst, LstNode, ClientData));
 /* Insert an element after another */
-ReturnStatus	Lst_Append __P((Lst, LstNode, ClientData));
+void		Lst_Append __P((Lst, LstNode, ClientData));
 /* Place an element at the front of a lst. */
-ReturnStatus	Lst_AtFront __P((Lst, ClientData));
+void		Lst_AtFront __P((Lst, ClientData));
 /* Place an element at the end of a lst. */
-ReturnStatus	Lst_AtEnd __P((Lst, ClientData));
+void		Lst_AtEnd __P((Lst, ClientData));
 /* Remove an element */
-ReturnStatus	Lst_Remove __P((Lst, LstNode));
+void		Lst_Remove __P((Lst, LstNode));
 /* Replace a node with a new value */
-ReturnStatus	Lst_Replace __P((LstNode, ClientData));
+void		Lst_Replace __P((LstNode, ClientData));
 /* Concatenate two lists */
-ReturnStatus	Lst_Concat __P((Lst, Lst, int));
+void		Lst_Concat __P((Lst, Lst, int));
 
 /*
  * Node-specific functions
@@ -157,7 +157,7 @@ void		Lst_Close __P((Lst));
  * for using the list as a queue
  */
 /* Place an element at tail of queue */
-ReturnStatus	Lst_EnQueue __P((Lst, ClientData));
+void		Lst_EnQueue __P((Lst, ClientData));
 /* Remove an element from head of queue */
 ClientData	Lst_DeQueue __P((Lst));
 

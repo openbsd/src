@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.26 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.27 1999/12/18 21:58:08 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.26 1999/12/18 21:53:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.27 1999/12/18 21:58:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -379,8 +379,8 @@ VarAdd(name, val, ctxt)
 
     v->flags = 0;
 
-    (void) Lst_AtFront (ctxt->context, (ClientData)v);
-    (void) Lst_AtEnd (allVars, (ClientData) v);
+    Lst_AtFront(ctxt->context, (ClientData)v);
+    Lst_AtEnd(allVars, (ClientData)v);
     if (DEBUG(VAR)) {
 	printf("%s:%s = %s\n", ctxt->name, name, val);
     }
