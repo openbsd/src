@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 1999/02/24 22:05:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.101 1999/02/25 21:17:22 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -285,7 +285,7 @@ cpu_startup()
 
 	/* Boot arguments are in page 1 */
 	if (bootapiver >= 2) {
-		pa = NBPG;
+		pa = (vm_offset_t)bootargv;
 		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
 			pmap_enter(pmap_kernel(),
 			    (vm_offset_t)((caddr_t)bootargp + i * NBPG),
@@ -1708,7 +1708,7 @@ init386(first_avail)
 #if !defined(MACHINE_NEW_NONCONTIG)
 	avail_next =
 #endif
-	avail_start = bootapiver >= 2 ? NBPG + i386_round_page(bootargc) : NBPG;
+	avail_start = bootapiver >= 2? i386_round_page(bootargv+bootargc): NBPG;
 	avail_end = extmem ? IOM_END + extmem * 1024
 		: cnvmem * 1024;	/* just temporary use */
 
