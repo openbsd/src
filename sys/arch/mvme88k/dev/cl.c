@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.45 2004/04/29 16:20:02 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.46 2004/07/02 11:19:58 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -344,17 +344,17 @@ clattach(parent, self, aux)
 
 	sc->sc_ih_m.ih_fn = cl_mintr;
 	sc->sc_ih_m.ih_arg = sc;
-	sc->sc_ih_e.ih_wantframe = 0;
+	sc->sc_ih_m.ih_wantframe = 0;
 	sc->sc_ih_m.ih_ipl = ca->ca_ipl;
 
 	sc->sc_ih_t.ih_fn = cl_txintr;
 	sc->sc_ih_t.ih_arg = sc;
-	sc->sc_ih_e.ih_wantframe = 0;
+	sc->sc_ih_t.ih_wantframe = 0;
 	sc->sc_ih_t.ih_ipl = ca->ca_ipl;
 
 	sc->sc_ih_r.ih_fn = cl_rxintr;
 	sc->sc_ih_r.ih_arg = sc;
-	sc->sc_ih_e.ih_wantframe = 0;
+	sc->sc_ih_r.ih_wantframe = 0;
 	sc->sc_ih_r.ih_ipl = ca->ca_ipl;
 
 	pcctwointr_establish(PCC2V_SCC_RXE, &sc->sc_ih_e);

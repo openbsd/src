@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 2004/05/17 08:36:22 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.8 2004/07/02 11:19:58 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -364,6 +364,7 @@ leattach(parent, self, aux)
 	/* connect the interrupt */
 	lesc->sc_ih.ih_fn = vle_intr;
 	lesc->sc_ih.ih_arg = sc;
+	lesc->sc_ih.ih_wantframe = 0;
 	lesc->sc_ih.ih_ipl = ca->ca_ipl;
 	vmeintr_establish(ca->ca_vec, &lesc->sc_ih);
 }
