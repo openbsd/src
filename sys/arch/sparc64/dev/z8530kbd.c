@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.2 2002/01/16 15:35:26 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.3 2002/01/16 16:25:49 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -502,8 +502,9 @@ zskbd_attach(parent, self, aux)
 		 * but we must make sure status interrupts are turned on by
 		 * the time zsparam() reads the initial rr0 state.
 		 */
-		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
 		zskbd_init(zst);
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
 
 		s = splzs();
 
@@ -1317,11 +1318,10 @@ zskbd_rxsoft(zst, tp)
 	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
-	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
 	u_char *get, *end;
-	u_int cc, scc;
+	u_int cc, scc, type;
 	u_char rr1;
-	int code;
+	int code, value;
 	int s;
 
 	end = zst->zst_ebuf;
@@ -1334,13 +1334,6 @@ zskbd_rxsoft(zst, tp)
 			timeout_add(&zst->zst_diag_ch, 60 * hz);
 	}
 
-	/* If not yet open, drop the entire buffer content here */
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		get += cc << 1;
-		if (get >= end)
-			get -= zskbd_rbuf_size << 1;
-		cc = 0;
-	}
 	while (cc) {
 		code = get[0];
 		rr1 = get[1];
@@ -1355,34 +1348,20 @@ zskbd_rxsoft(zst, tp)
 			if (ISSET(rr1, ZSRR1_PE))
 				SET(code, TTY_PE);
 		}
-		if ((*rint)(code, tp) == -1) {
-			/*
-			 * The line discipline's buffer is out of space.
-			 */
-			if (!ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
-				/*
-				 * We're either not using flow control, or the
-				 * line discipline didn't tell us to block for
-				 * some reason.  Either way, we have no way to
-				 * know when there's more space available, so
-				 * just drop the rest of the data.
-				 */
-				get += cc << 1;
-				if (get >= end)
-					get -= zskbd_rbuf_size << 1;
-				cc = 0;
-			} else {
-				/*
-				 * Don't schedule any more receive processing
-				 * until the line discipline tells us there's
-				 * space available (through comhwiflow()).
-				 * Leave the rest of the data in the input
-				 * buffer.
-				 */
-				SET(zst->zst_rx_flags, RX_TTY_OVERFLOWED);
-			}
+
+		switch (code) {
+		case SKBD_RSP_IDLE:
+			type = WSCONS_EVENT_ALL_KEYS_UP;
+			value = 0;
+			break;
+		default:
+			type = (code & 0x80) ?
+			    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+			value = code & 0x7f;
 			break;
 		}
+		wskbd_input(zst->zst_wskbddev, type, value);
+
 		get += 2;
 		if (get >= end)
 			get = zst->zst_rbuf;
