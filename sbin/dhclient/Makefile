@@ -32,10 +32,6 @@
 
 .include <bsd.own.mk>
 
-CLIENT_PATH = '"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
-CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes \
-	-DCLIENT_PATH=${CLIENT_PATH} -Wall
-
 SRCS=	dhclient.c clparse.c \
 	alloc.c dispatch.c hash.c memory.c print.c bpf.c icmp.c options.c \
 	tree.c conflex.c errwarn.c inet.c packet.c socket.c convert.c \
@@ -43,6 +39,8 @@ SRCS=	dhclient.c clparse.c \
 
 PROG=	dhclient
 MAN=	dhclient.8 dhclient.conf.5 dhclient.leases.5 dhclient-script.8
+
+CFLAGS+=-Wall
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

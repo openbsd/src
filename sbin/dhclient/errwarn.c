@@ -43,130 +43,123 @@
 #include "dhcpd.h"
 #include <errno.h>
 
-static void do_percentm PROTO ((char *obuf, size_t size, char *ibuf));
+static void do_percentm(char *obuf, size_t size, char *ibuf);
 
-static char mbuf [1024];
-static char fbuf [1024];
+static char mbuf[1024];
+static char fbuf[1024];
 
 int warnings_occurred;
 
 /* Log an error message, then exit... */
 
-void error (char * fmt, ...)
-     KandR (char *fmt;)
-     va_dcl
+void
+error(char *fmt, ...)
 {
-  va_list list;
+	va_list list;
 
-  do_percentm (fbuf, sizeof(fbuf), fmt);
+	do_percentm(fbuf, sizeof(fbuf), fmt);
 
-  va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
-  va_end (list);
+	va_start(list, fmt);
+	vsnprintf(mbuf, sizeof mbuf, fbuf, list);
+	va_end(list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, "%s", mbuf);
+	syslog(log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
-  /* Also log it to stderr? */
-  if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
-  }
+	/* Also log it to stderr? */
+	if (log_perror) {
+		write (2, mbuf, strlen(mbuf));
+		write (2, "\n", 1);
+	}
 
-  syslog (LOG_CRIT, "exiting.");
-  if (log_perror) {
-	fprintf (stderr, "exiting.\n");
-	fflush (stderr);
-  }
-  cleanup ();
-  exit (1);
+	syslog(LOG_CRIT, "exiting.");
+	if (log_perror) {
+		fprintf(stderr, "exiting.\n");
+		fflush(stderr);
+	}
+	cleanup();
+	exit(1);
 }
 
 /* Log a warning message... */
 
-int warn (char * fmt, ...)
-     KandR (char *fmt;)
-     va_dcl
+int
+warn(char * fmt, ...)
 {
-  va_list list;
+	va_list list;
 
-  do_percentm (fbuf, sizeof(fbuf), fmt);
+	do_percentm(fbuf, sizeof(fbuf), fmt);
 
-  va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
-  va_end (list);
+	va_start(list, fmt);
+	vsnprintf(mbuf, sizeof mbuf, fbuf, list);
+ 	va_end(list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, "%s", mbuf);
+	syslog(log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
-  if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
-  }
+	if (log_perror) {
+		write (2, mbuf, strlen (mbuf));
+		write (2, "\n", 1);
+	}
 
-  return 0;
+	return 0;
 }
 
 /* Log a note... */
-
-int note (char * fmt, ...)
-     KandR (char *fmt;)
-     va_dcl
+int
+note(char * fmt, ...)
 {
-  va_list list;
+	va_list list;
 
-  do_percentm (fbuf, sizeof(fbuf), fmt);
+	do_percentm(fbuf, sizeof(fbuf), fmt);
 
-  va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
-  va_end (list);
+	va_start(list, fmt);
+	vsnprintf(mbuf, sizeof mbuf, fbuf, list);
+ 	va_end(list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_INFO, "%s", mbuf);
+	syslog (log_priority | LOG_INFO, "%s", mbuf);
 #endif
 
-  if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
-  }
+	if (log_perror) {
+		write (2, mbuf, strlen (mbuf));
+		write (2, "\n", 1);
+	}
 
-  return 0;
+	return 0;
 }
 
 /* Log a debug message... */
 
-int debug (char * fmt, ...)
-     KandR (char *fmt;)
-     va_dcl
+int
+debug(char * fmt, ...)
 {
-  va_list list;
+	va_list list;
 
-  do_percentm (fbuf, sizeof(fbuf), fmt);
+	do_percentm(fbuf, sizeof(fbuf), fmt);
 
-  va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
-  va_end (list);
+	va_start(list, fmt);
+	vsnprintf(mbuf, sizeof mbuf, fbuf, list);
+	va_end(list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_DEBUG, "%s", mbuf);
+	syslog (log_priority | LOG_DEBUG, "%s", mbuf);
 #endif
 
-  if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
-  }
+	if (log_perror) {
+		write (2, mbuf, strlen (mbuf));
+		write (2, "\n", 1);
+	}
 
-  return 0;
+	return 0;
 }
 
 /* Find %m in the input string and substitute an error message string. */
 
-static void do_percentm (obuf, size, ibuf)
-     char *obuf;
-     size_t size;
-     char *ibuf;
+static void
+do_percentm(char *obuf, size_t size, char *ibuf)
 {
 	char ch;
 	char *s = ibuf;
@@ -199,26 +192,25 @@ static void do_percentm (obuf, size, ibuf)
 }
 
 
-int parse_warn (char * fmt, ...)
-	KandR (char *fmt;)
-	va_dcl
+int
+parse_warn(char * fmt, ...)
 {
 	va_list list;
-	static char spaces [] = "                                                                                ";
+	static char spaces[] = "                                                                                ";
 	
-	do_percentm (mbuf, sizeof(mbuf), fmt);
-	snprintf (fbuf, sizeof fbuf, "%s line %d: %s",
-		  tlname, lexline, mbuf);
-	VA_start (list, fmt);
-	vsnprintf (mbuf, sizeof mbuf, fbuf, list);
-	va_end (list);
+	do_percentm(mbuf, sizeof(mbuf), fmt);
+	snprintf(fbuf, sizeof fbuf, "%s line %d: %s", tlname, lexline, mbuf);
+/* XXXFIX */
+	VA_start(list, fmt);
+	vsnprintf(mbuf, sizeof mbuf, fbuf, list);
+	va_end(list);
 
 #ifndef DEBUG
-	syslog (log_priority | LOG_ERR, "%s", mbuf);
-	syslog (log_priority | LOG_ERR, "%s", token_line);
+	syslog(log_priority | LOG_ERR, "%s", mbuf);
+	syslog(log_priority | LOG_ERR, "%s", token_line);
 	if (lexline < 81)
-		syslog (log_priority | LOG_ERR,
-			"%s^", &spaces [sizeof spaces - lexchar]);
+		syslog(log_priority | LOG_ERR,
+		    "%s^", &spaces [sizeof spaces - lexchar]);
 #endif
 
 	if (log_perror) {

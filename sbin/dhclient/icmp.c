@@ -51,9 +51,8 @@ static int icmp_protocol_fd;
 
 /* Initialize the ICMP protocol. */
 
-void icmp_startup (routep, handler)
-	int routep;
-	void (*handler) PROTO ((struct iaddr, u_int8_t *, int));
+void
+icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 {
 	struct protoent *proto;
 	int protocol = 1;
@@ -61,13 +60,13 @@ void icmp_startup (routep, handler)
 
 	/* Only initialize icmp once. */
 	if (icmp_protocol_initialized)
-		error ("attempted to reinitialize icmp protocol");
+		error("attempted to reinitialize icmp protocol");
 	icmp_protocol_initialized = 1;
 
 	/* Get the protocol number (should be 1). */
 	proto = getprotobyname ("icmp");
 	if (proto)
-		protocol = proto -> p_proto;
+		protocol = proto->p_proto;
 
 	/* Get a raw socket for the ICMP protocol. */
 	icmp_protocol_fd = socket (AF_INET, SOCK_RAW, protocol);
@@ -76,29 +75,28 @@ void icmp_startup (routep, handler)
 
 	/* Make sure it does routing... */
 	state = 0;
-	if (setsockopt (icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
-			(char *)&state, sizeof state) < 0)
-		error ("Unable to disable SO_DONTROUTE on ICMP socket: %m");
+	if (setsockopt(icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
+	   (char *)&state, sizeof state) < 0)
+		error("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
-	add_protocol ("icmp", icmp_protocol_fd, icmp_echoreply,
-		      (void *)handler);
+	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, (void *)handler);
 }
 
-int icmp_echorequest (addr)
-	struct iaddr *addr;
+int
+icmp_echorequest (struct iaddr *addr)
 {
 	struct sockaddr_in to;
 	struct icmp icmp;
 	int status;
 
 	if (!icmp_protocol_initialized)
-		error ("attempt to use ICMP protocol before initialization.");
+		error("attempt to use ICMP protocol before initialization.");
 
 	memset(&to, 0, sizeof to);
 	to.sin_len = sizeof to;
 	to.sin_family = AF_INET;
-	to.sin_port = 0; /* unused. */
-	memcpy (&to.sin_addr, addr -> iabuf, sizeof to.sin_addr); /* XXX */
+	to.sin_port = 0;
+	memcpy (&to.sin_addr, addr->iabuf, sizeof to.sin_addr); /* XXX */
 
 	icmp.icmp_type = ICMP_ECHO;
 	icmp.icmp_code = 0;
@@ -111,22 +109,22 @@ int icmp_echorequest (addr)
 	icmp.icmp_id = (u_int32_t)addr;
 #endif
 
-	icmp.icmp_cksum = wrapsum (checksum ((unsigned char *)&icmp,
+	icmp.icmp_cksum = wrapsum(checksum((unsigned char *)&icmp,
 					     sizeof icmp, 0));
 
 	/* Send the ICMP packet... */
 	status = sendto (icmp_protocol_fd, (char *)&icmp, sizeof icmp, 0,
-			 (struct sockaddr *)&to, sizeof to);
+	    (struct sockaddr *)&to, sizeof to);
 	if (status < 0)
-		warn ("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
+		warn("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
 
 	if (status != sizeof icmp)
 		return 0;
 	return 1;
 }
 
-void icmp_echoreply (protocol)
-	struct protocol *protocol;
+void
+icmp_echoreply(struct protocol *protocol)
 {
 	struct icmp *icfrom;
 	struct sockaddr_in from;
@@ -134,10 +132,10 @@ void icmp_echoreply (protocol)
 	int status, len;
 	socklen_t salen;
 	struct iaddr ia;
-	void (*handler) PROTO ((struct iaddr, u_int8_t *, int));
+	void (*handler)(struct iaddr, u_int8_t *, int);
 
 	salen = sizeof from;
-	status = recvfrom (protocol -> fd, (char *)icbuf, sizeof icbuf, 0,
+	status = recvfrom (protocol->fd, (char *)icbuf, sizeof icbuf, 0,
 			  (struct sockaddr *)&from, &salen);
 	if (status < 0) {
 		warn ("icmp_echoreply: %m");
@@ -145,23 +143,20 @@ void icmp_echoreply (protocol)
 	}
 
 	/* Probably not for us. */
-	if (status < (sizeof (struct ip)) + (sizeof *icfrom)) {
+	if (status < (sizeof (struct ip)) + (sizeof *icfrom))
 		return;
-	}
 
 	len = status - sizeof (struct ip);
 	icfrom = (struct icmp *)(icbuf + sizeof (struct ip));
 
 	/* Silently discard ICMP packets that aren't echoreplies. */
-	if (icfrom -> icmp_type != ICMP_ECHOREPLY) {
+	if (icfrom->icmp_type != ICMP_ECHOREPLY)
 		return;
-	}
 
 	/* If we were given a second-stage handler, call it. */
-	if (protocol -> local) {
-		handler = ((void (*) PROTO ((struct iaddr,
-					    u_int8_t *, int)))
-			   protocol -> local);
+	if (protocol->local) {
+		handler = ((void (*)(struct iaddr, u_int8_t *, int))
+			   protocol->local);
 		memcpy (ia.iabuf, &from.sin_addr, sizeof from.sin_addr);
 		ia.len = sizeof from.sin_addr;
 

@@ -36,12 +36,6 @@
  * under a contract with Vixie Laboratories.
  */
 
-#include "site.h"
-
-/* Porting::
-
-   If you add a new network API, you must add a check for it below: */
-
 #if !defined (USE_SOCKETS) && \
     !defined (USE_SOCKET_SEND) && \
     !defined (USE_SOCKET_RECEIVE) && \
@@ -51,19 +45,53 @@
     !defined (USE_BPF) && \
     !defined (USE_BPF_SEND) && \
     !defined (USE_BPF_RECEIVE) && \
-    !defined (USE_LPF) && \
-    !defined (USE_LPF_SEND) && \
-    !defined (USE_LPF_RECEIVE) && \
-    !defined (USE_NIT) && \
-    !defined (USE_NIT_SEND) && \
-    !defined (USE_NIT_RECEIVE) && \
-    !defined (USR_DLPI_SEND) && \
-    !defined (USE_DLPI_RECEIVE)
 #  define USE_DEFAULT_NETWORK
 #endif
 
+#include <syslog.h>
+#include <sys/types.h>
+#include <string.h>
+#include <paths.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <setjmp.h>
+#include <limits.h>
 
-#include "openbsd.h"
+#include <sys/wait.h>
+#include <signal.h>
+
+extern int h_errno;
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/route.h>
+#include <sys/sockio.h>
+
+#define ifr_netmask ifr_addr
+
+/* Varargs stuff... */
+#include <stdarg.h>
+#define VA_DOTDOTDOT ...
+#define va_dcl
+#define VA_start(list, last) va_start (list, last)
+
+#define EOL	'\n'
+#define VOIDPTR void *
+
+/* Time stuff... */
+#include <sys/time.h>
+#define TIME time_t
+#define GET_TIME(x)	time ((x))
+
+#define HAVE_SA_LEN
+#define HAVE_MKSTEMP
+
+#define USE_BPF
+
+#if defined(__alpha__) || (defined(__sparc64__) && defined(__arch64__))
+#define PTRSIZE_64BIT
+#endif
 
 #if !defined (TIME_MAX)
 # define TIME_MAX 2147483647
@@ -88,26 +116,6 @@
 #ifdef USE_BPF
 #  define USE_BPF_SEND
 #  define USE_BPF_RECEIVE
-#endif
-
-#ifdef USE_LPF
-#  define USE_LPF_SEND
-#  define USE_LPF_RECEIVE
-#endif
-
-#ifdef USE_NIT
-#  define USE_NIT_SEND
-#  define USE_NIT_RECEIVE
-#endif
-
-#ifdef USE_DLPI
-#  define USE_DLPI_SEND
-#  define USE_DLPI_RECEIVE
-#endif
-
-#ifdef USE_UPF
-#  define USE_UPF_SEND
-#  define USE_UPF_RECEIVE
 #endif
 
 /* Porting::
@@ -148,12 +156,6 @@
     defined (USE_LPF_SEND) || \
     (defined (USE_SOCKET_SEND) && defined (SO_BINDTODEVICE))
 #  define PACKET_DECODING
-#endif
-
-/* If we don't have a DLPI packet filter, we have to filter in userland.
-   Probably not worth doing, actually. */
-#if defined (USE_DLPI_RECEIVE) && !defined (USE_DLPI_PFMOD)
-#  define USERLAND_FILTER
 #endif
 
 /* jmp_buf is assumed to be a struct unless otherwise defined in the
