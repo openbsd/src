@@ -598,6 +598,7 @@ check_keynote_assertions(request_rec *r)
     array_header *policy_asserts = (array_header *)ap_get_module_config(r->per_dir_config, &keynote_module);
     int sessid, res, i, noclientcert = 0;
     int rval = OK;
+    size_t authLen;
     char **assertions;
     SSL_CTX *ctx;
     SSL *ssl;
@@ -637,13 +638,17 @@ check_keynote_assertions(request_rec *r)
 	    /* Missing or self-signed, deny them */
 	    issuer = X509_get_issuer_name(cert);
 	    subject = X509_get_subject_name(cert);
-	    if (!issuer || !subject || X509_name_cmp(issuer, subject) == NULL)
-		return(FORBIDDEN);
+	    if (!issuer || !subject || X509_name_cmp(issuer, subject) == NULL) {
+		rval = FORBIDDEN;
+		goto done;
+	    }
 
 	    /* Build a set of fake assertions corresponding to the certificate chain. */
 	    for (i = 0; i < sk_X509_num(certstack) && (icert = sk_X509_value(certstack, i)); i++) {
-		if (keynote_fake_assertion(r, sessid, cert, X509_get_pubkey(icert), X509_get_subject_name(icert)) == -1)
-		    return(FORBIDDEN);
+		if (keynote_fake_assertion(r, sessid, cert, X509_get_pubkey(icert), X509_get_subject_name(icert)) == -1) {
+		    rval = FORBIDDEN;
+		    goto done;
+		}
 		cert = icert;
 	    }
 
@@ -654,8 +659,10 @@ check_keynote_assertions(request_rec *r)
 		subject = sk_X509_NAME_value(CA_list, i);
 		if (subject && X509_NAME_cmp(issuer, subject) == 0) {
 		    /* An X509_NAME does not contain the public key. */
-		    if (keynote_fake_assertion(r, sessid, cert, NULL, subject) == -1)
-			return(FORBIDDEN);
+		    if (keynote_fake_assertion(r, sessid, cert, NULL, subject) == -1) {
+			rval = FORBIDDEN;
+			goto done;
+		    }
 		    break;
 		}
 	    }
@@ -665,8 +672,10 @@ check_keynote_assertions(request_rec *r)
 		    "didn't find CA for issuer of last cert in chain");
 
 	    /* Add the user's public key as an authorizer. */
-	    if (keynote_add_authorizer(r, sessid, cert) == -1)
-		return(FORBIDDEN);
+	    if (keynote_add_authorizer(r, sessid, cert) == -1) {
+		rval = FORBIDDEN;
+		goto done;
+	    }
 	} else
 	    noclientcert = 1; /* No client certificates used. */
     } else
@@ -682,8 +691,8 @@ check_keynote_assertions(request_rec *r)
 
 	    pwauth = calloc(120, sizeof(char));
 	    if (pwauth == NULL) {
-		kn_close(sessid);
-		return(FORBIDDEN);
+		rval = FORBIDDEN;
+		goto done;
 	    }
 	    res = strlen("passphrase-sha1-base64:");
 	    strlcpy(pwauth, "passphrase-sha1-base64:", res + 1);
@@ -696,16 +705,20 @@ check_keynote_assertions(request_rec *r)
 
 	    /* Add username as a principal too. */
 	    if (r->connection->user != NULL) {
-		pwauth = calloc(strlen(r->connection->user) + 1 + 
-		    strlen("username:"), sizeof(char));
+		authLen = strlen(r->connection->user) + 1 + strlen("username:");
+		pwauth = calloc(authLen, sizeof(char));
 		if (pwauth == NULL) {
-		    kn_close(sessid);
-		    return(FORBIDDEN);
+		    rval = FORBIDDEN;
+		    goto done;
 		}
 
-		snprintf(pwauth, strlen(r->connection->user) + 1 +
-		    strlen("username:"), "username:%s",
+		int n = snprintf(pwauth, authLen, "username:%s",
 		    r->connection->user);
+		if (n == -1 || n >= authLen) {
+		    rval = FORBIDDEN;
+		    free(pwauth);
+		    goto done;
+		}
 
 		kn_add_authorizer(sessid, pwauth);
 		free(pwauth);
