@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.21 1996/12/09 09:27:06 niklas Exp $	*/
+/*	$OpenBSD: isa.c,v 1.22 1997/01/04 14:14:55 niklas Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -93,6 +93,7 @@ isaattach(parent, self, aux)
 	/*
 	 * Map port 0x84, which causes a 1.25us delay when read.
 	 * We do this now, since several drivers need it.
+	 * XXX this port doesn't exist on all ISA busses...
 	 */
 	if (bus_space_map(sc->sc_iot, 0x84, 1, 0, &sc->sc_delaybah))
 		panic("isaattach: can't map `delay port'");	/* XXX */
