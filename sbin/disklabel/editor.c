@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.43 1998/08/06 18:07:40 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.44 1998/08/07 00:06:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.43 1998/08/06 18:07:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.44 1998/08/07 00:06:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -224,15 +224,22 @@ editor(lp, f, dev)
 			editor_display(&label, &freesectors, arg ? *arg : 0);
 			break;
 
-		case 'M':
-			fp = popen(_PATH_LESS, "w");
-			if (fp) {
-				extern char manpage[];
+		case 'M': {
+			sig_t opipe = signal(SIGPIPE, SIG_IGN);
+			char *pager;
+			extern char manpage[];
 
+			if ((pager = getenv("PAGER")) == NULL)
+				pager = _PATH_LESS;
+			if ((fp = popen(pager, "w")) != NULL) {
 				(void) fwrite(manpage, strlen(manpage), 1, fp);
 				pclose(fp);
-			}
+			} else
+				warn("unable to execute %s", pager);
+
+			(void)signal(SIGPIPE, opipe);
 			break;
+		}
 
 		case 'q':
 			if (donothing) {
@@ -1590,6 +1597,7 @@ getdisktype(lp, banner, dev)
 		char *type;
 	} dtypes[] = {
 		"sd",	"SCSI",
+		"rz",	"SCSI",
 		"wd",	"IDE",
 		"fd",	"FLOPPY",
 		"xd",	"SMD",
@@ -1634,13 +1642,11 @@ getdisktype(lp, banner, dev)
 				continue;
 			if (strcasecmp(s, "IDE") == 0) {
 				lp->d_type = DTYPE_ESDI;
-				putchar('\n');
 				return;
 			}
 			for (i = 1; i < DKMAXTYPES; i++)
 				if (strcasecmp(s, dktypenames[i]) == 0) {
 					lp->d_type = i;
-					putchar('\n');
 					return;
 				}
 			printf("\"%s\" is not a valid disk type.\n", s);
@@ -1775,7 +1781,7 @@ find_bounds(lp)
 	    dosdp->dp_typ == DOSPTYP_NETBSD)) {
 		starting_sector = get_le(&dosdp->dp_start);
 		ending_sector = starting_sector + get_le(&dosdp->dp_size);
-		printf("Treating sectors %u-%u as the OpenBSD portion of the "
+		printf("\nTreating sectors %u-%u as the OpenBSD portion of the "
 		    "disk.\nYou can use the 'b' command to change this.\n",
 		    starting_sector, ending_sector);
 		/*
@@ -1825,8 +1831,9 @@ editor_help(arg)
 	case 'M':
 		puts(
 "The 'M' command pipes the entire OpenBSD manual page for disklabel though\n"
-"The 'less' pager.  It is especially useful during install when the normal\n"
-"system manual is not available.\n");
+"the pager specified by the PAGER environment variable or 'less' if PAGER is\n"
+"not set.  It is especially useful during install when the normal system\n"
+"manual is not available.\n");
 		break;
 	case 'e':
 		puts(
