@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.7 2004/02/27 21:46:44 grange Exp $ */
+/*	$OpenBSD: est.c,v 1.8 2004/06/06 17:34:37 grange Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -260,7 +260,6 @@ est_init(const char *cpu_device)
 		    i < est_fqlist->n - 1 ? ", " : " MHz\n");
 
 	cpu_setperf = est_setperf;
-	cpu_cpuspeed = est_cpuspeed;
 	setperf_prio = 3;
 }
 
@@ -285,13 +284,5 @@ est_setperf(int level)
 	wrmsr(MSR_PERF_CTL, msr);
 	pentium_mhz = est_fqlist->table[i].mhz;
 	
-	return (0);
-}
-
-
-int
-est_cpuspeed(int *freq)
-{
-	*freq = MSR2MHZ(rdmsr(MSR_PERF_STATUS));
 	return (0);
 }

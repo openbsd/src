@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.294 2004/05/23 20:28:46 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.295 2004/06/06 17:34:37 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -245,7 +245,10 @@ struct vm_map *phys_map = NULL;
 
 int kbd_reset;
 int p4_model;
+int p3_step;
 int setperf_prio = 0;		/* for concurrent handlers */
+
+void (*update_cpuspeed)(void) = NULL;
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -327,7 +330,8 @@ void	tm86_cpu_setup(const char *, int, int);
 char *	intel686_cpu_name(int);
 char *	cyrix3_cpu_name(int, int);
 char *	tm86_cpu_name(int);
-int	p4_cpuspeed(int *);
+void	p4_update_cpuspeed(void);
+void	p3_update_cpuspeed(void);
 int	pentium_cpuspeed(int *);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
@@ -1384,6 +1388,12 @@ intel686_cpu_setup(const char *cpu_device, int model, int step)
 		cpu_feature &= ~CPUID_SER;
 		cpuid_level = 2;
 	}
+
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+	p3_step = step;
+	update_cpuspeed = p3_update_cpuspeed;
+	update_cpuspeed();
+#endif
 }
 
 void
@@ -1392,10 +1402,9 @@ intel686_p4_cpu_setup(const char *cpu_device, int model, int step)
 	intel686_common_cpu_setup(cpu_device, model, step);
 
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
-	if (cpu_cpuspeed == NULL) {
-		p4_model = model;
-		cpu_cpuspeed = p4_cpuspeed;
-	}
+	p4_model = model;
+	update_cpuspeed = p4_update_cpuspeed;
+	update_cpuspeed();
 #endif
 }
 
@@ -1701,7 +1710,7 @@ identifycpu()
 
 #ifndef SMALL_KERNEL
 #if defined(I586_CPU) || defined(I686_CPU)
-	if (cpu_cpuspeed == NULL && pentium_mhz != 0)
+	if (pentium_mhz != 0)
 		cpu_cpuspeed = pentium_cpuspeed;
 #endif
 #endif
@@ -1799,11 +1808,11 @@ identifycpu()
 
 #ifndef SMALL_KERNEL
 #ifdef I686_CPU
-int
-p4_cpuspeed(int *freq)
+void
+p4_update_cpuspeed(void)
 {
 	u_int64_t msr;
-	int bus, mult;
+	int bus, mult, freq;
 
 	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
 	if (p4_model < 2) {
@@ -1831,12 +1840,42 @@ p4_cpuspeed(int *freq)
 		}
 	}
 	mult = ((msr >> 24) & 0xff);
-	*freq = bus * mult;
+	freq = bus * mult;
 	/* 133MHz actually means 133.(3)MHz */
 	if (bus == 133)
-		*freq += mult / 3;
+		freq += mult / 3;
 
-	return (0);
+	pentium_mhz = freq;
+}
+
+void
+p3_update_cpuspeed(void)
+{
+	u_int64_t msr;
+	int bus, mult;
+	const u_int8_t mult_code[] = {
+	    50, 30, 40, 0, 55, 35, 45, 0, 0, 70, 80, 60, 0, 75, 0, 65 };
+
+	msr = rdmsr(MSR_EBL_CR_POWERON);
+	bus = (msr >> 18) & 0x3;
+	switch (bus) {
+	case 0:
+		bus = 66;
+		break;
+	case 1:
+		bus = 133;
+		break;
+	case 2:
+		bus = 100;
+		break;
+	}
+
+	mult = (msr >> 22) & 0xf;
+	mult = mult_code[mult];
+	if (p3_step > 1)
+		mult += ((msr >> 27) & 0x1) * 40;
+
+	pentium_mhz = (bus * mult) / 10;
 }
 #endif	/* I686_CPU */
 

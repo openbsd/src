@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.8 2004/06/05 15:06:22 grange Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.9 2004/06/06 17:34:37 grange Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ struct elansc_softc {
 
 int	elansc_match(struct device *, void *, void *);
 void	elansc_attach(struct device *, struct device *, void *);
-int	elansc_cpuspeed(int *);
+void	elansc_update_cpuspeed(void);
 int	elansc_setperf(int);
 
 void	elansc_wdogctl(struct elansc_softc *, int, uint16_t);
@@ -158,7 +158,6 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 
 	wdog_register(sc, elansc_wdogctl_cb);
 	elansc = sc;
-	cpu_cpuspeed = elansc_cpuspeed;
 	cpu_setperf = elansc_setperf;
 
 	/* Initialize GPIO pins array */
@@ -267,16 +266,15 @@ elansc_wdogctl_cb(void *self, int period)
 	return (period);
 }
 
-int
-elansc_cpuspeed(int *freq)
+void
+elansc_update_cpuspeed(void)
 {
 	static const int elansc_mhz[] = { 0, 100, 133, 999 };
 	uint8_t cpuctl;
 
 	cpuctl = bus_space_read_1(elansc->sc_memt, elansc->sc_memh,
 	    MMCR_CPUCTL);
-	*freq = elansc_mhz[cpuctl & CPUCTL_CPU_CLK_SPD_MASK];
-	return (0);
+	pentium_mhz = elansc_mhz[cpuctl & CPUCTL_CPU_CLK_SPD_MASK];
 }
 
 int
@@ -299,6 +297,8 @@ elansc_setperf(int level)
 	    (cpuctl & ~CPUCTL_CPU_CLK_SPD_MASK) | speed);
 	enable_intr();
 	write_eflags(eflags);
+
+	elansc_update_cpuspeed();
 
 	return (0);
 }

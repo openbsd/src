@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.59 2004/04/02 22:28:41 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.60 2004/06/06 17:34:37 grange Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -167,6 +167,8 @@ extern int i386_use_fxsave;
 extern int i386_has_sse;
 extern int i386_has_sse2;
 
+extern void (*update_cpuspeed)(void);
+
 /* machdep.c */
 void	dumpconf(void);
 void	cpu_reset(void);
@@ -191,14 +193,12 @@ void	rtcdrain(void *);
 /* est.c */
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void	est_init(const char *);
-int     est_cpuspeed(int *);
 int     est_setperf(int);
 #endif
 
 /* longrun.c */
 #if !defined(SMALL_KERNEL) && defined(I586_CPU)
 void	longrun_init(void);
-int	longrun_cpuspeed(int *);
 int	longrun_setperf(int);
 #endif
 
