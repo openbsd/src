@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.58 2002/05/02 22:56:06 miod Exp $
+#	$OpenBSD: files.alpha,v 1.59 2002/06/30 16:24:40 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -12,7 +12,7 @@ maxusers 2 8 64
 define	alpha_shared_intr
 file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn20aa | dec_6600 | dec_550 |
-					dec_eb64plus
+					dec_1000 | dec_1000a | dec_eb64plus
 
 define	alpha_sgmap
 file	arch/alpha/dev/sgmap_common.c alpha_sgmap | dec_3000_500
@@ -228,6 +228,8 @@ file	arch/alpha/pci/pci_eb64plus.c		dec_eb64plus
 file	arch/alpha/pci/pci_eb64plus_intr.s	dec_eb64plus
 file	arch/alpha/pci/pci_kn20aa.c		dec_kn20aa
 file	arch/alpha/pci/pci_550.c		dec_550
+file	arch/alpha/pci/pci_1000a.c		dec_1000a
+file	arch/alpha/pci/pci_1000.c		dec_1000
 file	arch/alpha/pci/pci_6600.c		dec_6600
 file	arch/alpha/pci/pci_up1000.c		api_up1000
 
@@ -313,6 +315,7 @@ file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
+file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a	needs-flag
 file    arch/alpha/alpha/dec_6600.c             dec_6600	needs-flag
 file	arch/alpha/alpha/api_up1000.c		api_up1000	needs-flag
 

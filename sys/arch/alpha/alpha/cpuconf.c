@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.8 2002/06/25 21:33:19 miod Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.9 2002/06/30 16:24:37 miod Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -127,6 +127,20 @@ extern void dec_550_init(void);
 #define	dec_550_init		platform_not_configured
 #endif
 
+#if defined(DEC_1000) || defined(DEC_1000A)
+extern void _dec_1000a_init(void);
+#endif
+#ifdef DEC_1000A
+#define	dec_1000a_init		_dec_1000a_init
+#else
+#define	dec_1000a_init		platform_not_configured
+#endif
+#ifdef DEC_1000
+#define	dec_1000_init		_dec_1000a_init
+#else
+#define	dec_1000_init		platform_not_configured
+#endif
+
 #ifdef DEC_6600
 extern void dec_6600_init(void);
 #else
@@ -154,7 +168,7 @@ static const struct cpuinit cpuinit[] = {
 	cpu_init(ST_DEC_2100_A50, dec_2100_a50_init, "DEC_2100_A50"),
 	cpu_notsupp(ST_DEC_MUSTANG, "Mustang"),
 	cpu_init(ST_DEC_KN20AA, dec_kn20aa_init, "DEC_KN20AA"),
-	cpu_notsupp(ST_DEC_1000, "DEC_1000"),
+	cpu_init(ST_DEC_1000, dec_1000_init, "DEC_1000"),
 	cpu_notsupp(ST_EB66, "DEC_EB66"),
 	cpu_init(ST_EB64P, dec_eb64plus_init, "DEC_EB64PLUS"),
 	cpu_notsupp(ST_ALPHABOOK1, "DEC_ALPHABOOK1"),
@@ -162,7 +176,7 @@ static const struct cpuinit cpuinit[] = {
 	cpu_notsupp(ST_DEC_EV45_PBP, "EV45 Passive Backplane Board"),
 	cpu_notsupp(ST_DEC_2100A_A500, "DEC_2100A_A500"),
 	cpu_init(ST_EB164, dec_eb164_init, "DEC_EB164"),
-	cpu_notsupp(ST_DEC_1000A, "DEC_1000A"),
+	cpu_init(ST_DEC_1000A, dec_1000a_init, "DEC_1000A"),
 	cpu_notsupp(ST_DEC_ALPHAVME_224, "AlphaVME 224"),
 	cpu_init(ST_DEC_550, dec_550_init, "DEC_550"),
 	cpu_notsupp(ST_DEC_EV56_PBP, "EV56 Passive Backplane Board"),

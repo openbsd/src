@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.111 2002/06/30 16:23:04 miod Exp $
+#	$OpenBSD: GENERIC,v 1.112 2002/06/30 16:24:40 miod Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -16,6 +16,8 @@ option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 option		DEC_550		# Miata:	Digital Personal Workstation
+option		DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
+option		DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 option		DEC_6600	# EV6:		XP1000, 264DP OEM Board
 option		API_UP1000	# EV6:		Alpha Processor UP1000
 
