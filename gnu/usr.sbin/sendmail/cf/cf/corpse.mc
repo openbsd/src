@@ -30,7 +30,7 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-VERSIONID(`$OpenBSD: corpse.mc,v 1.1 2000/04/02 19:48:11 millert Exp $')dnl
+VERSIONID(`$OpenBSD: corpse.mc,v 1.2 2000/04/27 05:47:25 mickey Exp $')dnl
 
 OSTYPE(openbsd)dnl
 
@@ -40,6 +40,6 @@ define(`_NO_CANONIFY_', 1)dnl
 FEATURE(`always_add_domain')dnl
 FEATURE(`nullclient',`mail.$m')dnl
 
-LOCAL_CONFIG
+LOCAL_RULESETS
 S1
 R$-		$@ $1@$H	user -> user@hub
