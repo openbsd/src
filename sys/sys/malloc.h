@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.16 1998/11/17 21:05:40 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.17 1999/01/07 22:07:14 deraadt Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -245,7 +245,11 @@
  	"dirrem",	/* 90 M_DIRREM */ \
  	"VM page bucket", /* 91 M_VMPBUCKET */ \
 	"VM swap",	/* 92 M_VMSWAP */ \
-	NULL, NULL, NULL, NULL, NULL, \
+	"IPv6 discq",	/* 93 M_DISCQ */ \
+	"IPv6 fragq",	/* 94 M_FRAGQ */ \
+	"Sec Assoc",	/* 95 M_SECA */ \
+	"IPv6 if info",	/* 96 M_I6IFP */ \
+	NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
