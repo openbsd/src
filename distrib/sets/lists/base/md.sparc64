@@ -1328,6 +1328,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/elf_abi.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/endian.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/exec.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/fbvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/float.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/frame.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/fsr.ph
