@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2001/08/23 04:14:20 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2001/08/23 05:36:53 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -327,7 +327,7 @@ address		: STRING			{
 				yyerror("cannot resolve %s", $1);
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_host));
+			$$ = calloc(1, sizeof(struct node_host));
 			memcpy(&$$->addr, hp->h_addr, sizeof(u_int32_t));
 		}
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
@@ -337,7 +337,7 @@ address		: STRING			{
 				    $1, $3, $5, $7);
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_host));
+			$$ = calloc(1, sizeof(struct node_host));
 			$$->addr = htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7);
 		}
 		;
@@ -355,18 +355,21 @@ port_item	: port				{
 			$$->port[0] = $1;
 			$$->port[1] = $1;
 			$$->op = PF_OP_EQ;
+			$$->next = NULL;
 		}
 		| PORTUNARY port		{
 			$$ = malloc(sizeof(struct node_port));
 			$$->port[0] = $2;
 			$$->port[1] = $2;
 			$$->op = $1;
+			$$->next = NULL;
 		}
 		| port PORTBINARY port		{
 			$$ = malloc(sizeof(struct node_port));
 			$$->port[0] = $1;
 			$$->port[1] = $3;
 			$$->op = $2;
+			$$->next = NULL;
 		}
 		;
 
