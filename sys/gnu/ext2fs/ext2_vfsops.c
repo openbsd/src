@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.5 1996/07/14 04:15:04 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.6 1996/07/14 06:46:07 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -891,7 +891,7 @@ ext2_vget(mp, ino, vpp)
 	struct buf *bp;
 	struct vnode *vp;
 	dev_t dev;
-	int i, error;
+	int error;
 	int used_blocks;
 
 	ump = VFSTOUFS(mp);
@@ -928,9 +928,13 @@ restart:
 	ip->i_e2fs = fs = ump->um_e2fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
-#if QUOTA
-	for (i = 0; i < MAXQUOTAS; i++)
-		ip->i_dquot[i] = NODQUOT;
+#ifdef QUOTA
+	{
+		int i;
+
+		for (i = 0; i < MAXQUOTAS; i++)
+			ip->i_dquot[i] = NODQUOT;
+	}
 #endif
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -945,12 +949,9 @@ restart:
 	ext2fs_inode_hash_lock = 0;
 
 	/* Read in the disk contents for the inode, copy into the inode. */
-	/* Read in the disk contents for the inode, copy into the inode. */
-#if 0
-printf("ext2_vget(%d) dbn= %d ", ino, fsbtodb(fs, ino_to_fsba(fs, ino)));
-#endif
-	if (error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
-	    (int)fs->s_blocksize, NOCRED, &bp)) {
+	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
+	    	      (int)fs->s_blocksize, NOCRED, &bp);
+	if (error) {
 		/*
 		 * The inode does not contain anything useful, so it would
 		 * be misleading to leave it on its hash chain. With mode
@@ -966,17 +967,18 @@ printf("ext2_vget(%d) dbn= %d ", ino, fsbtodb(fs, ino_to_fsba(fs, ino)));
 	ext2_ei2di((struct ext2_inode *) ((char *)bp->b_data + EXT2_INODE_SIZE *
 			ino_to_fsbo(fs, ino)), &ip->i_din);
 	ip->i_block_group = ino_to_cg(fs, ino);
-#if 0
 	ip->i_next_alloc_block = 0;
 	ip->i_next_alloc_goal = 0;
 	ip->i_prealloc_count = 0;
 	ip->i_prealloc_block = 0;
-#endif
+
         /* now we want to make sure that block pointers for unused
            blocks are zeroed out - ext2_balloc depends on this 
 	   although for regular files and directories only
 	*/
 	if(S_ISDIR(ip->i_mode) || S_ISREG(ip->i_mode)) {
+		int i;
+
 		used_blocks = (ip->i_size+fs->s_blocksize-1) / fs->s_blocksize;
 		for(i = used_blocks; i < EXT2_NDIR_BLOCKS; i++)
 			ip->i_db[i] = 0;
@@ -990,7 +992,8 @@ printf("ext2_vget(%d) dbn= %d ", ino, fsbtodb(fs, ino_to_fsba(fs, ino)));
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	if (error = ufs_vinit(mp, ext2_specop_p, ext2_fifoop_p, &vp)) {
+	error = ufs_vinit(mp, ext2_specop_p, EXT2_FIFOOPS, &vp);
+	if (error) {
 		vput(vp);
 		*vpp = NULL;
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_inode.c,v 1.1 1996/06/24 03:34:55 downsj Exp $	*/
+/*	$OpenBSD: ext2_inode.c,v 1.2 1996/07/14 06:46:07 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -182,7 +182,7 @@ printf("ext2_truncate called %d to %d\n", VTOI(ovp)->i_number, ap->a_length);
 	 * are not meaningful anyways.
 	 */
 	if (length < 0)
-	    return EFBIG;
+	    return (EINVAL);
 
 	oip = VTOI(ovp);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
@@ -205,6 +205,7 @@ printf("ext2_truncate called %d to %d\n", VTOI(ovp)->i_number, ap->a_length);
 	if (error = getinoquota(oip))
 		return (error);
 #endif
+	vnode_pager_setsize(ovp, (u_long)length);
 	fs = oip->i_e2fs;
 	osize = oip->i_size;
 	ext2_discard_prealloc(oip);
@@ -390,7 +391,6 @@ done:
 	if (oip->i_blocks < 0)			/* sanity */
 		oip->i_blocks = 0;
 	oip->i_flag |= IN_CHANGE;
-	vnode_pager_setsize(ovp, length);
 #if QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif

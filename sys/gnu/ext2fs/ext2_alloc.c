@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_alloc.c,v 1.1 1996/06/24 03:34:53 downsj Exp $	*/
+/*	$OpenBSD: ext2_alloc.c,v 1.2 1996/07/14 06:46:06 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -171,6 +171,8 @@ ext2_alloc(ip, lbn, bpref, size, cred, bnp)
 #endif
 
 	if (bno > 0) {
+		(void) vnode_pager_uncache(ITOV(ip));
+
 		/* set next_alloc fields as done in block_getblk */
 		ip->i_next_alloc_block = lbn;
 		ip->i_next_alloc_goal = bno;

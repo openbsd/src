@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_balloc.c,v 1.1 1996/06/24 03:34:54 downsj Exp $	*/
+/*	$OpenBSD: ext2_balloc.c,v 1.2 1996/07/14 06:46:06 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -155,6 +155,7 @@ ext2_debug("ext2_balloc called (%d, %d, %d)\n",
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 		}
+		vnode_pager_setsize(vp, (u_long)ip->i_size);	/* XXX */
 		ip->i_db[bn] = dbtofsb(fs, bp->b_blkno);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bpp = bp;
