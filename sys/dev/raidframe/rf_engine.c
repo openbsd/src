@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.11 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.12 2002/07/15 18:42:06 art Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -753,11 +753,6 @@ DAGExecutionThread_pre(RF_ThreadArg_t arg)
 	pid_t oldpid = lastpid;
 
 	raidPtr = (RF_Raid_t *) arg;
-
-	if (rf_hook_cookies && rf_hook_cookies[raidPtr->raidid] != NULL) {
-		startuphook_disestablish(rf_hook_cookies[raidPtr->raidid]);
-		rf_hook_cookies[raidPtr->raidid] = NULL;
-	}
 
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
