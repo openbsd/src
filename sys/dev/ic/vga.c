@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.2 1997/07/09 03:07:39 deraadt Exp $	*/
+/*	$OpenBSD: vga.c,v 1.3 1997/07/10 04:25:57 kstailey Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -322,6 +322,8 @@ vga_erasecols(id, row, startcol, ncols)
 	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, ncols);
 }
 
+/* be careful not to call bus_space_copy_2() with overlapping regions */
+
 void
 vga_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
@@ -333,9 +335,19 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	srcoff = (srcrow * vc->vc_ncol + 0) * 2;
 	dstoff = (dstrow * vc->vc_ncol + 0) * 2;
 
-	/* XXX SHOULDN'T USE THIS IF REGIONS OVERLAP... */
-	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
-	    nrows * vc->vc_ncol);
+	if (nrows == 0 || srcrow == dstrow)
+		return;
+
+	if (srcrow < dstrow && srcrow + nrows > dstrow) {
+		int srow, drow;
+
+		for (srow = srcrow + nrows - 1, drow = dstrow + nrows - 1;
+		     srow >= srcrow; srow--, drow--) {
+			vga_copyrows(id, srow, drow, 1);
+		}
+	} else
+		bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff,
+			 vc->vc_memh, dstoff, nrows * vc->vc_ncol);
 }
 
 void
