@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.55 1998/12/17 18:25:06 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.56 1998/12/18 12:00:46 form Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -31,7 +31,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.55 1998/12/17 18:25:06 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.56 1998/12/18 12:00:46 form Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -265,11 +265,11 @@ REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #
 # Motif support:
 #
-# USE_MOTIF	- Set this in your port if it requires Motif or Lesstif.
-#		  It will be built using Lesstif port unless Motif libraries
-#		  found or HAVE_MOTIF is defined. See also REQUIRES_MOTIF.
+# USE_MOTIF		- Set this in your port if it requires Motif or Lesstif.
+#				  It will be built using Lesstif port unless Motif libraries
+#				  found or HAVE_MOTIF is defined. See also REQUIRES_MOTIF.
 #
-# REQUIRES_MOTIF - Set this in your port if it requires Motif.  It will  be
+# REQUIRES_MOTIF- Set this in your port if it requires Motif.  It will  be
 #				  built only if HAVE_MOTIF is set.
 # HAVE_MOTIF	- If set, means system has Motif.  Typically set in
 #				  /etc/make.conf (FreeBSD) or
@@ -1435,6 +1435,7 @@ _PORT_USE: .USE
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} run-depends lib-depends
 .endif
 .if make(real-install)
+	@touch ${INSTALL_PRE_COOKIE}
 .if !defined(NO_MTREE)
 	@if [ `id -u` = 0 ]; then \
 		if [ ! -f ${MTREE_FILE} ]; then \
@@ -1540,7 +1541,6 @@ ${CONFIGURE_COOKIE}:
 ${BUILD_COOKIE}:
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-build
 ${INSTALL_COOKIE}:
-	@touch ${INSTALL_PRE_COOKIE}
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-install
 ${PACKAGE_COOKIE}:
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-package
