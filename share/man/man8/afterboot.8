@@ -120,6 +120,9 @@ by commenting it out, i.e. by placing a # sign at the start of the line:
 # route add -net 224.0.0.0 -interface $hostname
 .Ed
 .Pp
+See
+.Xr dhcp 8
+for instructions on configuring interfaces with DHCP.
 .Ss Check for correct routing
 Do a
 .Ic netstat -r -n
@@ -633,6 +636,7 @@ etc.
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
 .Xr config 8 ,
+.Xr dhcp 8 ,
 .Xr domainname 8 ,
 .Xr ext_srvtab 8 ,
 .Xr ifconfig 8 ,
