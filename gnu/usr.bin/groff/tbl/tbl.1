@@ -1,4 +1,4 @@
-.\" $OpenBSD: tbl.1,v 1.1 2003/03/01 11:21:06 espie Exp $
+.\" $OpenBSD: tbl.1,v 1.2 2003/03/01 11:39:28 espie Exp $
 .\"
 .\" Copyright (c) 2003 Marc Espie
 .\"
@@ -177,6 +177,39 @@ spanned heading.
 vertically spanned heading.
 .El
 .Ss TABLE DATA
+Each table line is normally entered as one line of data.
+Long lines may be broken, by using \ as a continuation character.
+Table entries are separated with tabulations (or with the character
+specified in the
+.Ar tabs
+option).
+There a few exceptions:
+.Bl -tag -width "Troff"
+.It "Embedded troff commands"
+An input line beginning with a
+.Sq .
+followed by anything but a number is passed through to
+troff unchanged.
+For instance,
+\&.sp
+can be used to produce extra space within a table.
+.It "Horizontal rules"
+A line containing only
+.Sq _
+or
+.Sq =
+produces a single or double horizontal rule that extends for the
+full width of the table.
+.It "Single columns horizontal rules"
+A table entry containing only
+.Sq _
+or
+.Sq =
+produces a single or double horizontal rule that extends for
+the width of the column.
+If necessary, the rule is extended to meet matching horizontal 
+or vertical rules adjoining this column.
+.El
 .Sh GNU DIFFERENCES
 The version of
 .Nm
