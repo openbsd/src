@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.4 2004/09/26 12:36:56 grange Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.5 2004/09/26 16:45:40 grange Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -275,44 +275,14 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x70);
 	control = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x74);
 	if ((iobase & 0xff80) == 0 || (control & 1) == 0) {
-		printf(": disabled\n");
-		return;
+		printf(": HWM disabled");
+		goto nohwm;
 	}
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, iobase & 0xff80, 128, 0, &sc->sc_ioh)) {
-		printf(": failed to map i/o\n");
-		return;
+		printf(": failed to map HWM I/O space");
+		goto nohwm;
 	}
-
-#ifdef __HAVE_TIMECOUNTER
-	/* Check if power management I/O space is enabled */
-	control = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_GENCFG);
-	if ((control & VIAENV_GENCFG_PMEN) == 0) {
-		printf(": PM disabled");
-		goto nopm;
-	}
-
-	/* Map power management I/O space */
-	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_PMBASE);
-	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(iobase),
-	    VIAENV_PMSIZE, 0, &sc->sc_pm_ioh)) {
-		printf(": failed to map PM I/O space");
-		goto nopm;
-	}
-
-	/* Check for 32-bit PM timer */
-	if (control & VIAENV_GENCFG_TMR32) {
-		printf(": 32-bit PM timer");
-		viaenv_timecounter.tc_counter_mask = 0xffffffff;
-	}
-
-	/* Register new timecounter */
-	viaenv_timecounter.tc_priv = sc;
-	tc_init(&viaenv_timecounter);
-nopm:
-#endif	/* __HAVE_TIMECOUNTER */
-
-	printf("\n");
 
 	/* Initialize sensors */
 	for (i = 0; i < VIANUMSENSORS; ++i) {
@@ -356,6 +326,38 @@ nopm:
 	timeout_set(&viaenv_timeout, viaenv_refresh, sc);
 	timeout_add(&viaenv_timeout, (15 * hz) / 10);
 
+nohwm:
+#ifdef __HAVE_TIMECOUNTER
+	/* Check if power management I/O space is enabled */
+	control = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_GENCFG);
+	if ((control & VIAENV_GENCFG_PMEN) == 0) {
+		printf(": PM disabled");
+		goto nopm;
+	}
+
+	/* Map power management I/O space */
+	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_PMBASE);
+	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(iobase),
+	    VIAENV_PMSIZE, 0, &sc->sc_pm_ioh)) {
+		printf(": failed to map PM I/O space");
+		goto nopm;
+	}
+
+	/* Check for 32-bit PM timer */
+	if (control & VIAENV_GENCFG_TMR32)
+		viaenv_timecounter.tc_counter_mask = 0xffffffff;
+
+	/* Register new timecounter */
+	viaenv_timecounter.tc_priv = sc;
+	tc_init(&viaenv_timecounter);
+
+	printf(": %s-bit timer at %u Hz",
+	    (viaenv_timecounter.tc_counter_mask == 0xffffffff ? "32" : "24"),
+	    viaenv_timecounter.tc_frequency);
+
+nopm:
+#endif	/* __HAVE_TIMECOUNTER */
+	printf("\n");
 }
 
 #if 0
