@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.19 2001/08/23 02:42:25 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.20 2001/08/23 14:10:33 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -641,8 +641,10 @@ in6_ifattach(ifp, altifp)
 #ifdef IFT_STF
 	case IFT_STF:
 		/*
-		 * 6to4 interface is a very speical kind of beast.
-		 * no multicast, no linklocal (based on 03 draft).
+		 * 6to4 interface is a very special kind of beast.
+		 * no multicast, no linklocal.  RFC2529 specifies how to make
+		 * linklocals for 6to4 interface, but there's no use and
+		 * it is rather harmful to have one.
 		 */
 		goto statinit;
 #endif
@@ -654,7 +656,8 @@ in6_ifattach(ifp, altifp)
 	 * usually, we require multicast capability to the interface
 	 */
 	if ((ifp->if_flags & IFF_MULTICAST) == 0) {
-		printf("%s: not multicast capable, IPv6 not enabled\n",
+		log(LOG_INFO, "in6_ifattach: "
+		    "%s is not multicast capable, IPv6 not enabled\n",
 		    ifp->if_xname);
 		return;
 	}
