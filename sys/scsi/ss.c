@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.10 1997/03/06 12:44:41 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.11 1997/03/07 03:05:15 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -511,7 +511,9 @@ ss_set_window(sc, sio)
 	bzero(&window_data, sizeof(window_data));
 	_lto2l(sio->sio.scan_x_resolution, window_data.x_res);
 	_lto2l(sio->sio.scan_y_resolution, window_data.y_res);
-	_lto2l(sio->, window_data.x_org);
-	_lto2l(sio->, window_data.y_org);
+	_lto4l(sio->sio.scan_x_origin, window_data.x_org);
+	_lto4l(sio->sio.scan_y_origin, window_data.y_org);
+	_lto4l(sio->sio.scan_width, window_data.width);
+	_lto4l(sio->sio.scan_height, window_data.length);
 }
 #endif
