@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_mkpw.c,v 1.23 2002/06/20 03:43:41 deraadt Exp $	*/
+/*	$OpenBSD: yppasswdd_mkpw.c,v 1.24 2003/04/26 18:28:25 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.23 2002/06/20 03:43:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.24 2003/04/26 18:28:25 pvalchev Exp $";
 #endif
 
 #include <sys/param.h>
@@ -113,7 +113,7 @@ make_passwd(yppasswd *argp)
 {
 	struct passwd pw;
 	int     pfd = -1, tfd;
-	char	buf[10], *bp = NULL, *p, *t;
+	char	buf[11], *bp = NULL, *p, *t;
 	int	n;
 	ssize_t cnt;
 	size_t	resid;
