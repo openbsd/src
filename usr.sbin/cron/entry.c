@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.27 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.28 2004/06/22 03:15:33 avsm Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.27 2004/06/17 22:11:55 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.28 2004/06/22 03:15:33 avsm Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -279,8 +279,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw, char
 		goto eof;
 	}
 	if (!env_get("SHELL", e->envp)) {
-		if (glue_strings(envstr, sizeof envstr, "SHELL",
-				 _PATH_BSHELL, '=')) {
+		if (snprintf(envstr, sizeof envstr, "SHELL=%s", _PATH_BSHELL) >=
+		    sizeof(envstr)) {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
 				goto eof;
@@ -290,8 +290,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw, char
 			log_it("CRON", getpid(), "error", "can't set SHELL");
 	}
 	if (!env_get("HOME", e->envp)) {
-		if (glue_strings(envstr, sizeof envstr, "HOME",
-				 pw->pw_dir, '=')) {
+		if (snprintf(envstr, sizeof envstr, "HOME=%s", pw->pw_dir) >=
+		    sizeof(envstr)) {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
 				goto eof;
@@ -303,8 +303,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw, char
 #ifndef LOGIN_CAP
 	/* If login.conf is in use we will get the default PATH later. */
 	if (!env_get("PATH", e->envp)) {
-		if (glue_strings(envstr, sizeof envstr, "PATH",
-				 _PATH_DEFPATH, '=')) {
+		if (snprintf(envstr, sizeof envstr, "PATH=%s", _PATH_DEFPATH) >=
+		    sizeof(envstr)) {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
 				goto eof;
@@ -314,8 +314,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw, char
 			log_it("CRON", getpid(), "error", "can't set PATH");
 	}
 #endif /* LOGIN_CAP */
-	if (glue_strings(envstr, sizeof envstr, "LOGNAME",
-			 pw->pw_name, '=')) {
+	if (snprintf(envstr, sizeof envstr, "LOGNAME=%s", pw->pw_name) >=
+		sizeof(envstr)) {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 			ecode = e_memory;
 			goto eof;
@@ -324,8 +324,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw, char
 	} else
 		log_it("CRON", getpid(), "error", "can't set LOGNAME");
 #if defined(BSD) || defined(__linux)
-	if (glue_strings(envstr, sizeof envstr, "USER",
-			 pw->pw_name, '=')) {
+	if (snprintf(envstr, sizeof envstr, "USER=%s", pw->pw_name) >=
+		sizeof(envstr)) {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 			ecode = e_memory;
 			goto eof;

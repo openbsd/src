@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.30 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.31 2004/06/22 03:15:33 avsm Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.30 2004/06/17 22:11:55 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.31 2004/06/22 03:15:33 avsm Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -49,41 +49,6 @@ static int LogFD = ERR;
 #if defined(SYSLOG)
 static int syslog_open = FALSE;
 #endif
-
-/*
- * glue_strings is the overflow-safe equivalent of
- *	snprintf(buffer, buffer_size, "%s%c%s", a, separator, b);
- *
- * returns 1 on success, 0 on failure.  'buffer' MUST NOT be used if
- * glue_strings fails.
- */
-int
-glue_strings(char *buffer, size_t buffer_size, const char *a, const char *b,
-	     char separator)
-{
-	char *buf;
-	char *buf_end;
-
-	if (buffer_size <= 0)
-		return (0);
-	buf_end = buffer + buffer_size;
-	buf = buffer;
-
-	for ( /* nothing */; buf < buf_end && *a != '\0'; buf++, a++ )
-		*buf = *a;
-	if (buf == buf_end)
-		return (0);
-	if (separator != '/' || buf == buffer || buf[-1] != '/')
-		*buf++ = separator;
-	if (buf == buf_end)
-		return (0);
-	for ( /* nothing */; buf < buf_end && *b != '\0'; buf++, b++ )
-		*buf = *b;
-	if (buf == buf_end)
-		return (0);
-	*buf = '\0';
-	return (1);
-}
 
 int
 strcmp_until(const char *left, const char *right, char until) {
@@ -769,8 +734,8 @@ open_socket()
 		    "can't make socket non-blocking");
 		exit(ERROR_EXIT);
 	}
-	if (!glue_strings(s_un.sun_path, sizeof s_un.sun_path, SPOOL_DIR,
-	    CRONSOCK, '/')) {
+	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
+	      SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
 		fprintf(stderr, "%s/%s: path too long\n", SPOOL_DIR, CRONSOCK);
 		log_it("CRON", getpid(), "DEATH", "path too long");
 		exit(ERROR_EXIT);
@@ -811,8 +776,8 @@ poke_daemon(const char *spool_dir, unsigned char cookie) {
 		return;
 	}
 
-	if (glue_strings(s_un.sun_path, sizeof s_un.sun_path, SPOOL_DIR,
-	    CRONSOCK, '/')) {
+	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
+	    SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
 		s_un.sun_family = AF_UNIX;
 #ifdef SUN_LEN
 		s_un.sun_len = SUN_LEN(&s_un);
