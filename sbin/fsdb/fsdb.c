@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.17 2003/10/31 08:44:07 otto Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.18 2004/03/19 14:16:01 aaron Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.17 2003/10/31 08:44:07 otto Exp $";
+static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.18 2004/03/19 14:16:01 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -457,15 +457,16 @@ CMDFUNCSTART(focusname)
 		    return 1;
 	}
 	for (p = argv[1]; p != NULL;) {
-		while ((val = strsep(&p, "/")) != NULL && *val == '\0');
-			if (val) {
-				printf("component `%s': ", val);
-				fflush(stdout);
-				if (!dolookup(val)) {
-					curinode = ginode(curinum);
-					return(1);
-				}
+		while ((val = strsep(&p, "/")) != NULL && *val == '\0')
+			;
+		if (val) {
+			printf("component `%s': ", val);
+			fflush(stdout);
+			if (!dolookup(val)) {
+				curinode = ginode(curinum);
+				return(1);
 			}
+		}
 	}
 	return 0;
 }
