@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2004/02/05 14:42:45 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.50 2004/02/05 23:50:54 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,10 +243,10 @@ optnumber	: /* empty */		{ $$ = 0; }
 		| number
 		;
 
-neighbor	: NEIGHBOR address optnl '{' optnl {
-			curpeer = new_peer();
+neighbor	: {	curpeer = new_peer(); }
+		    NEIGHBOR address optnl '{' optnl {
 			curpeer->conf.remote_addr.af = AF_INET;
-			curpeer->conf.remote_addr.v4.s_addr = $2.s_addr;
+			curpeer->conf.remote_addr.v4.s_addr = $3.s_addr;
 			if (get_id(curpeer)) {
 				yyerror("get_id failed");
 				YYERROR;
