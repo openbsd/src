@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.11 2003/03/12 00:28:54 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.12 2004/05/24 21:59:28 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -451,7 +451,7 @@ static void	remote_read(bktr_ptr_t bktr, struct bktr_remote *remote);
 /*
  * ioctls common to both video & tuner.
  */
-static int	common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg );
+int	bktr_common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg );
 
 
 #if !defined(BKTR_USE_FREEBSD_SMBUS)
@@ -1498,7 +1498,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		break;
 
 	case METEORGBRIG:	/* get brightness */
-		*(u_char *)arg = INB(bktr, BKTR_BRIGHT);
+		*(u_char *)arg = INB(bktr, BKTR_BRIGHT) + 128;
 		break;
 
 	case METEORSCSAT:	/* set chroma saturation */
@@ -1625,7 +1625,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 
 			start_capture(bktr, METEOR_CONTIN);
 
-			/* Clear the interrypt status register */
+			/* Clear the interrupt status register */
 			OUTL(bktr, BKTR_INT_STAT, INL(bktr, BKTR_INT_STAT));
 
 			OUTW(bktr, BKTR_GPIO_DMA_CTL, FIFO_ENABLED);
@@ -1873,7 +1873,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		break;
 
 	default:
-		return common_ioctl( bktr, cmd, arg );
+		return bktr_common_ioctl( bktr, cmd, arg );
 	}
 
 	return( 0 );
@@ -2292,7 +2292,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 #endif
 
 	default:
-		return common_ioctl( bktr, cmd, arg );
+		return bktr_common_ioctl( bktr, cmd, arg );
 	}
 
 	return( 0 );
@@ -2303,7 +2303,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
  * common ioctls
  */
 int
-common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg )
+bktr_common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg )
 {
         int                           pixfmt;
 	unsigned int	              temp;
@@ -2490,7 +2490,7 @@ dump_bt848( bktr_ptr_t bktr )
 		       r[i], INL(bktr, r[i]),
 		       r[i+1], INL(bktr, r[i+1]),
 		       r[i+2], INL(bktr, r[i+2]),
-		       r[i+3], INL(bktr, r[i+3]]));
+		       r[i+3], INL(bktr, r[i+3]));
 	}
 
 	printf("%s: INT STAT %x \n", bktr_name(bktr),
@@ -2548,7 +2548,8 @@ dump_bt848( bktr_ptr_t bktr )
 #define BKTR_TEST_RISC_STATUS_BIT2 (1 << 30)
 #define BKTR_TEST_RISC_STATUS_BIT3 (1 << 31)
 
-bool_t notclipped (bktr_reg_t * bktr, int x, int width) {
+static bool_t
+notclipped (bktr_reg_t * bktr, int x, int width) {
     int i;
     bktr_clip_t * clip_node;
     bktr->clip_start = -1;
@@ -2575,7 +2576,8 @@ bool_t notclipped (bktr_reg_t * bktr, int x, int width) {
     return TRUE;
 }
 
-bool_t getline(bktr_reg_t *bktr, int x ) {
+static bool_t
+getline(bktr_reg_t *bktr, int x ) {
     int i, j;
     bktr_clip_t * clip_node ;
 
@@ -2833,7 +2835,7 @@ rgb_vbi_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = htole32(OP_SYNC | BKTR_FM1);
 	*dma_prog++ = htole32(0);
 	for(i = 0; i < vbilines; i++) {
-		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
+		*dma_prog++ = htole32(OP_WRITE | OP_SOL | OP_EOL | vbisamples);
 #ifdef __FreeBSD__
 		*dma_prog++ = (u_long) vtophys((caddr_t)bktr->vbidata +
 				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
@@ -2945,7 +2947,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 
 	buffer = target_buffer;
 
-	/* contruct sync : for video packet format */
+	/* construct sync : for video packet format */
 	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
 
 	/* sync, mode indicator packed data */
@@ -3106,7 +3108,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 
 	/* contruct sync : for video packet format */
 	/* sync, mode indicator packed data */
-	*dma_prog++ = htole32(OP_SYNC | 1 << 15 | BKTR_FM1);
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 
 	b = cols;
@@ -3122,7 +3124,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	switch (i_flag) {
 	case 1:
 		/* sync vre */
-		*dma_prog++ = htole32(OP_SYNC  | 1 << 24 | BKTR_VRE);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		*dma_prog++ = htole32(OP_JUMP);
@@ -3135,7 +3137,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 
 	case 2:
 		/* sync vro */
-		*dma_prog++ = htole32(OP_SYNC  | 1 << 24 | BKTR_VRO);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
@@ -3147,7 +3149,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 
 	case 3:
 		/* sync vro */
-		*dma_prog++ = htole32(OP_SYNC | 1 << 24 | 1 << 15 | BKTR_VRO);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
@@ -3165,7 +3167,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		dma_prog = (u_long * ) bktr->odd_dma_prog;
 
 		/* sync vre */
-		*dma_prog++ = htole32(OP_SYNC | 1 << 24 |  1 << 15 | BKTR_FM1);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		for (i = 0; i < (rows/interlace) ; i++) {
@@ -3178,7 +3180,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	}
 
 	/* sync vro IRQ bit */
-	*dma_prog++ = htole32(OP_SYNC | 1 << 24 | 1 << 15 | BKTR_VRE);
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 	*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
@@ -3226,8 +3228,8 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 
 	OUTB(bktr, BKTR_E_VSCALE_HI, INB(bktr, BKTR_E_VSCALE_HI) & ~0x80); /* clear Ycomb */
 	OUTB(bktr, BKTR_O_VSCALE_HI, INB(bktr, BKTR_O_VSCALE_HI) & ~0x80);
-	OUTB(bktr, BKTR_E_VSCALE_HI, INB(bktr, BKTR_E_VSCALE_HI) | ~0x40); /* set chroma comb */
-	OUTB(bktr, BKTR_O_VSCALE_HI, INB(bktr, BKTR_O_VSCALE_HI) | ~0x40);
+	OUTB(bktr, BKTR_E_VSCALE_HI, INB(bktr, BKTR_E_VSCALE_HI) | 0x40); /* set chroma comb */
+	OUTB(bktr, BKTR_O_VSCALE_HI, INB(bktr, BKTR_O_VSCALE_HI) | 0x40);
 
 	/* disable gamma correction removal */
 	OUTB(bktr, BKTR_COLOR_CTL, INB(bktr, BKTR_COLOR_CTL) | BT848_COLOR_CTL_GAMMA);
@@ -3249,7 +3251,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 
 	/* contruct sync : for video packet format */
 	/*     sync, mode indicator packed data*/
-	*dma_prog++ = htole32(OP_SYNC | 1 << 15 | BKTR_FM3);
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 
 	for (i = 0; i < (rows/interlace ) ; i++) {
@@ -3264,7 +3266,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 
 	switch (i_flag) {
 	case 1:
-		*dma_prog++ = htole32(OP_SYNC | 1 << 24 | BKTR_VRE);  /*sync vre*/
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE);  /*sync vre*/
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		*dma_prog++ = htole32(OP_JUMP);
@@ -3276,7 +3278,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 		return;
 
 	case 2:
-		*dma_prog++ = htole32(OP_SYNC | 1 << 24 | BKTR_VRO);  /*sync vre*/
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO);  /*sync vre*/
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		*dma_prog++ = htole32(OP_JUMP);
@@ -3288,7 +3290,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 		return;
 
 	case 3:
-		*dma_prog++ = htole32(OP_SYNC | 1 << 24 | 1 << 15 | BKTR_VRO);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		*dma_prog++ = htole32(OP_JUMP);
@@ -3306,7 +3308,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 
 		target_buffer  = (u_int) buffer + cols;
 		t1 = buffer + cols/2;
-		*dma_prog++ = htole32(OP_SYNC | 1 << 15 | BKTR_FM3);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		for (i = 0; i < (rows/interlace )  ; i++) {
@@ -3321,7 +3323,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 		}
 	}
 
-	*dma_prog++ = htole32(OP_SYNC | 1 << 24 | 1 << 15 | BKTR_VRE);
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 	*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
@@ -3372,7 +3374,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 	t1 = buffer;
 
 	/* sync, mode indicator packed data*/
-	*dma_prog++ = htole32(OP_SYNC | 1 << 15 | BKTR_FM3);
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 
 	for (i = 0; i < (rows/interlace )/2 ; i++) {
@@ -3392,7 +3394,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 
 	switch (i_flag) {
 	case 1:
-		*dma_prog++ = htole32(OP_SYNC | 1 << 24 | BKTR_VRE);  /*sync vre*/
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE);  /*sync vre*/
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		*dma_prog++ = htole32(OP_JUMP);
@@ -3404,7 +3406,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 		return;
 
 	case 2:
-		*dma_prog++ = htole32(OP_SYNC | 1 << 24 | BKTR_VRO);  /*sync vro*/
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO);  /*sync vro*/
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		*dma_prog++ = htole32(OP_JUMP);
@@ -3416,7 +3418,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 		return;
 
 	case 3:
-		*dma_prog++ = htole32(OP_SYNC |  1 << 24 | 1 << 15 | BKTR_VRO);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
@@ -3433,7 +3435,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 
 		target_buffer  = (u_long) buffer + cols;
 		t1 = buffer + cols/2;
-		*dma_prog++ = htole32(OP_SYNC | 1 << 15 | BKTR_FM3);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 
 		for (i = 0; i < ((rows/interlace )/2 ) ; i++) {
@@ -3452,7 +3454,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 		}
 	}
 
-	*dma_prog++ = htole32(OP_SYNC | 1 << 24 | 1 << 15 | BKTR_VRE);
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 	*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.7 2004/03/14 07:24:54 mickey Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.8 2004/05/24 21:59:28 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -666,7 +666,7 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
                     goto checkTuner;
                 }
 
-		if (subsystem_vendor_id == PCI_VENDOR_PINNACLE) {
+		if (subsystem_vendor_id == PCI_VENDOR_PINNACLE_ALT) {
                     bktr->card = cards[ (card = CARD_MIRO) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
