@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.46 2001/09/28 13:04:39 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.47 2001/10/07 22:27:01 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1406,6 +1406,16 @@ ttypend(tp)
 	CLR(tp->t_state, TS_TYPEN);
 }
 
+void ttvtimeout(void *);
+
+void
+ttvtimeout(void *arg)
+{
+	struct tty *tp = (struct tty *)arg;
+
+	wakeup(&tp->t_rawq);
+}
+
 /*
  * Process a read call on a tty device.
  */
@@ -1415,15 +1425,14 @@ ttread(tp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct clist *qp;
-	register int c;
-	register long lflag;
-	register u_char *cc = tp->t_cc;
-	register struct proc *p = curproc;
+	struct timeout *stime = NULL;
+	struct proc *p = curproc;
 	int s, first, error = 0;
-	struct timeval stime;
-	int has_stime = 0, last_cc = 0;
-	long slp = 0;
+	u_char *cc = tp->t_cc;
+	struct clist *qp;
+	int last_cc = 0;
+	long lflag;
+	int c;
 
 loop:	lflag = tp->t_lflag;
 	s = spltty();
@@ -1440,19 +1449,28 @@ loop:	lflag = tp->t_lflag;
 	if (isbackground(p, tp)) {
 		if ((p->p_sigignore & sigmask(SIGTTIN)) ||
 		   (p->p_sigmask & sigmask(SIGTTIN)) ||
-		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0)
-			return (EIO);
+		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0) {
+			error = EIO;
+			goto out;
+		}
 		pgsignal(p->p_pgrp, SIGTTIN, 1);
 		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
 		if (error)
-			return (error);
+			goto out;
 		goto loop;
 	}
 
 	s = spltty();
 	if (!ISSET(lflag, ICANON)) {
 		int m = cc[VMIN];
-		long t = cc[VTIME];
+		long t;
+
+		/*
+		 * Note - since cc[VTIME] is a u_char, this won't overflow
+		 * until we have 32-bit longs and a hz > 8388608.
+		 * Hopefully this code and 32-bit longs are obsolete by then.
+		 */
+		t = cc[VTIME] * hz / 10;
 
 		qp = &tp->t_rawq;
 		/*
@@ -1460,57 +1478,35 @@ loop:	lflag = tp->t_lflag;
 		 * (m > 0 && t == 0) is the normal read case.
 		 * It should be fairly efficient, so we check that and its
 		 * companion case (m == 0 && t == 0) first.
-		 * For the other two cases, we compute the target sleep time
-		 * into slp.
 		 */
 		if (t == 0) {
 			if (qp->c_cc < m)
 				goto sleep;
 			goto read;
 		}
-		t *= 100000;		/* time in us */
-#define diff(t1, t2) (((t1).tv_sec - (t2).tv_sec) * 1000000 + \
-			 ((t1).tv_usec - (t2).tv_usec))
 		if (m > 0) {
 			if (qp->c_cc <= 0)
 				goto sleep;
 			if (qp->c_cc >= m)
 				goto read;
-			if (!has_stime) {
-				/* first character, start timer */
-				has_stime = 1;
-				stime = time;
-				slp = t;
+			if (stime == NULL) {
+alloc_timer:
+				stime = malloc(sizeof(*stime), M_TEMP, M_WAITOK);
+				timeout_set(stime, ttvtimeout, tp);
+				timeout_add(stime, t);
 			} else if (qp->c_cc > last_cc) {
 				/* got a character, restart timer */
-				stime = time;
-				slp = t;
-			} else {
-				/* nothing, check expiration */
-				slp = t - diff(time, stime);
+				timeout_add(stime, t);
 			}
 		} else {	/* m == 0 */
 			if (qp->c_cc > 0)
 				goto read;
-			if (!has_stime) {
-				has_stime = 1;
-				stime = time;
-				slp = t;
-			} else
-				slp = t - diff(time, stime);
+			if (stime == NULL) {
+				goto alloc_timer;
+			}
 		}
 		last_cc = qp->c_cc;
-#undef diff
-		if (slp > 0) {
-			/*
-			 * Rounding down may make us wake up just short
-			 * of the target, so we round up.
-			 * The formula is ceiling(slp * hz/1000000).
-			 * 32-bit arithmetic is enough for hz < 169.
-			 *
-			 * Also, use plain wakeup() not ttwakeup().
-			 */
-			slp = (long) (((u_long)slp * hz) + 999999) / 1000000;
+		if (stime && !timeout_triggered(stime)) {
 			goto sleep;
 		}
 	} else if ((qp = &tp->t_canq)->c_cc <= 0) {
@@ -1526,19 +1522,25 @@ sleep:
 		    ISSET(tp->t_cflag, CLOCAL);
 		if (!carrier && ISSET(tp->t_state, TS_ISOPEN)) {
 			splx(s);
-			return (0);	/* EOF */
+			error = 0;
+			goto out;
 		}
 		if (flag & IO_NDELAY) {
 			splx(s);
-			return (EWOULDBLOCK);
+			error = EWOULDBLOCK;
+			goto out;
 		}
 		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-		    carrier ? ttyin : ttopen, slp);
+		    carrier ? ttyin : ttopen, 0);
 		splx(s);
-		if (cc[VMIN] == 0 && error == EWOULDBLOCK)
-			return (0);
+		if (stime && timeout_triggered(stime))
+			error = EWOULDBLOCK;
+		if (cc[VMIN] == 0 && error == EWOULDBLOCK) {
+			error = 0;
+			goto out;
+		}
 		if (error && error != EWOULDBLOCK)
-			return (error);
+			goto out;
 		goto loop;
 	}
 read:
@@ -1593,6 +1595,12 @@ read:
 	if (tp->t_rawq.c_cc < TTYHOG/5)
 		ttyunblock(tp);
 	splx(s);
+
+out:
+	if (stime) {
+		timeout_del(stime);
+		free(stime, M_TEMP);
+	}
 	return (error);
 }
 
