@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.57 1995/10/04 00:35:07 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.58 1995/11/10 04:42:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -66,7 +66,6 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -942,7 +941,8 @@ u14_find(uha, ia)
 			uha->sc_drq = 7;
 			break;
 		default:
-			printf("illegal dma setting %x\n", config & U14_DMA_MASK);
+			printf("%s: illegal drq setting %x\n",
+			    uha->sc_dev.dv_xname, config & U14_DMA_MASK);
 			return EIO;
 		}
 		break;
@@ -962,7 +962,8 @@ u14_find(uha, ia)
 		uha->sc_irq = 15;
 		break;
 	default:
-		printf("illegal int setting %x\n", config & U14_IRQ_MASK);
+		printf("%s: illegal irq setting %x\n", uha->sc_dev.dv_xname,
+		    config & U14_IRQ_MASK);
 		return EIO;
 	}
 
@@ -1042,8 +1043,6 @@ u24_find(uha, ia)
 		uha_id = config2 & U24_HOSTID_MASK;
 
 		uha->sc_drq = DRQUNK;
-		uha->sc_iobase = iobase;
-		ia->ia_iobase = iobase;
 
 		switch (irq_ch) {
 		case U24_IRQ10:
@@ -1059,7 +1058,8 @@ u24_find(uha, ia)
 			uha->sc_irq = 15;
 			break;
 		default:
-			printf("illegal int setting %x\n", irq_ch);
+			printf("%s: illegal irq setting %x\n",
+			    uha->sc_dev.dv_xname, irq_ch);
 			continue;
 		}
 
