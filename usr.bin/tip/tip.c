@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.15 2001/10/24 18:38:58 millert Exp $	*/
+/*	$OpenBSD: tip.c,v 1.16 2002/02/25 00:20:19 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.15 2001/10/24 18:38:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.16 2002/02/25 00:20:19 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -370,7 +370,8 @@ intprompt()
 void
 tipin()
 {
-	char gch, bol = 1;
+	char bol = 1;
+	int gch;
 
 	/*
 	 * Kinda klugey here...
@@ -386,6 +387,7 @@ tipin()
 
 	while (1) {
 		gch = getchar()&STRIP_PAR;
+		/* XXX does not check for EOF */
 		if ((gch == character(value(ESCAPE))) && bol) {
 			if (!noesc) {
 				if (!(gch = escape()))
@@ -420,11 +422,12 @@ extern esctable_t etable[];
 int
 escape()
 {
-	char gch;
+	int gch;
 	esctable_t *p;
 	char c = character(value(ESCAPE));
 
 	gch = (getchar()&STRIP_PAR);
+	/* XXX does not check for EOF */
 	for (p = etable; p->e_char; p++)
 		if (p->e_char == gch) {
 			if ((p->e_flags&PRIV) && uid)
