@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.48 2000/09/17 14:41:35 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.49 2000/10/27 07:53:49 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
