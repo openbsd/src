@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.6 2004/01/24 23:13:55 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.7 2004/01/24 23:32:13 deraadt Exp $	*/
 /*	$NetBSD: pcmcia_cis_quirks.c,v 1.3 1998/12/29 09:00:28 marc Exp $	*/
 
 /*
@@ -191,7 +191,13 @@ static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  PCMCIA_CIS_INVALID, 
 	  &pcmcia_megahertz_xjem1144_func1,
 	  &pcmcia_megahertz_xjem1144_func1_cfe0 },
+	{ PCMCIA_VENDOR_SIERRA, PCMCIA_PRODUCT_SIERRA_A550,
+	  PCMCIA_CIS_INVALID, 
+	  &pcmcia_sierra_a555_func1, &pcmcia_sierra_a555_func1_cfe0 },
 	{ PCMCIA_VENDOR_SIERRA, PCMCIA_PRODUCT_SIERRA_A555,
+	  PCMCIA_CIS_INVALID, 
+	  &pcmcia_sierra_a555_func1, &pcmcia_sierra_a555_func1_cfe0 },
+	{ PCMCIA_VENDOR_SIERRA, PCMCIA_PRODUCT_SIERRA_A710,
 	  PCMCIA_CIS_INVALID, 
 	  &pcmcia_sierra_a555_func1, &pcmcia_sierra_a555_func1_cfe0 },
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
