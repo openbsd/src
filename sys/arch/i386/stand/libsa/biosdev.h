@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.12 1997/08/12 19:05:56 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.13 1997/08/12 19:16:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -66,9 +66,6 @@ COM_PROTO(1)
 COM_PROTO(2)
 COM_PROTO(3)
 #undef COM_PROTO
-
-/* biosmem.S */
-u_int biosmem __P((void));
 
 /* time.c */
 void time_print __P((void));
