@@ -31,15 +31,12 @@
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/*	$OpenBSD: openbsd.h,v 1.3 1996/05/04 08:20:39 deraadt Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.4 1996/08/25 11:50:11 deraadt Exp $	*/
 
 /* There are conflicting reports about whether this system uses
    a different assembler syntax.  wilson@cygnus.com says # is right.  */
 #undef COMMENT_BEGIN
 #define COMMENT_BEGIN "#"
-
-#undef	CC1_SPEC
-#define CC1_SPEC "-fno-strength-reduce"
 
 #undef ASM_APP_ON
 #define ASM_APP_ON "#APP\n"
