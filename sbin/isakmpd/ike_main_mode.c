@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.6 1999/02/26 03:41:46 niklas Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.70 1999/02/25 11:39:03 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.7 1999/03/31 23:46:52 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.71 1999/03/31 23:33:02 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -900,6 +900,7 @@ struct validation_state {
   char *life;
 };
 
+/* Validate a proposal inside SA according to EXCHANGE's policy.  */
 static int
 ike_main_mode_validate_prop (struct exchange *exchange, struct sa *sa)
 {
@@ -964,6 +965,11 @@ ike_main_mode_validate_prop (struct exchange *exchange, struct sa *sa)
   return 0;
 }
 
+/*
+ * Look at the attribute of type TYPE, located at VALUE for LEN bytes forward.
+ * The VVS argument holds a validation state kept across invocations.
+ * If the attribute is unacceptable to use, return non-zero, otherwise zero.
+ */
 static int
 attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 			void *vvs)
@@ -1037,7 +1043,6 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
        * In order to do this we need to find the specific section of our
        * policy's "Life" list and match its duration
        */
-      vs->life = 0;
       switch (type)
 	{
 	case IKE_ATTR_LIFE_TYPE:
@@ -1057,8 +1062,9 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 		{
 		  vs->life = life->field;
 		  rv = 0;
-		  goto bail_out;
 		}
+	      else
+		vs->life = 0;
 	    }
 	  /* XXX Log?  */
 	  break;
@@ -1068,10 +1074,11 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	    {
 	      log_print ("attribute_unacceptable: "
 			 "LIFE_DURATION without LIFE_TYPE");
-	      rv = 0;
+	      rv = 1;
 	      goto bail_out;
 	    }
-	  rv = conf_match_num (vs->life, "LIFE_DURATION", decode_16 (value));
+	  rv = !conf_match_num (vs->life, "LIFE_DURATION", decode_16 (value));
+	  vs->life = 0;
 	  break;
 	}
 
