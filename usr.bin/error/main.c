@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2002/03/14 06:51:41 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 2002/03/14 06:51:41 mpech Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 2002/06/14 21:35:00 todd Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -248,7 +248,7 @@ forkvi(argc, argv)
 
 	/*
 	 *	ed_agument's first argument is
-	 *	a vi/ex compatabile search argument
+	 *	a vi/ex compatible search argument
 	 *	to find the first occurance of ###
 	 */
 	try("vi", argc, argv);

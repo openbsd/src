@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.234 2002/06/11 02:42:27 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.235 2002/06/14 21:35:00 todd Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2799,7 +2799,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		/* update max window */
 		if (src->max_win < win)
 			src->max_win = win;
-		/* syncronize sequencing */
+		/* synchronize sequencing */
 		if (SEQ_GT(end, src->seqlo))
 			src->seqlo = end;
 		/* slide the window of what the other end can send */
@@ -2889,7 +2889,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		/* update max window */
 		if (src->max_win < win)
 			src->max_win = win;
-		/* syncronize sequencing */
+		/* synchronize sequencing */
 		if (SEQ_GT(end, src->seqlo))
 			src->seqlo = end;
 		/* slide the window of what the other end can send */

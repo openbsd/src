@@ -1,4 +1,4 @@
-/*	$OpenBSD: pi.c,v 1.3 1998/11/16 06:22:28 deraadt Exp $	*/
+/*	$OpenBSD: pi.c,v 1.4 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: pi.c,v 1.3 1995/09/02 06:15:44 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: pi.c,v 1.3 1998/11/16 06:22:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pi.c,v 1.4 2002/06/14 21:35:00 todd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -234,7 +234,7 @@ Errorclass pi()
 		 *	Where the | is intended to be a down arrow, so that
 		 *	the pi error messages can be inserted above the
 		 *	line in error, instead of below.  (All of the other
-		 *	language put thier messages before the source line,
+		 *	language put their messages before the source line,
 		 *	instead of after it as does pi.)
 		 *
 		 *	where the pointer to the error has been truncated
@@ -379,7 +379,7 @@ Errorclass pi()
 		return(C_IGNORE);
 	}
 	/*
-	 *	Attempt to match messages refering to a line number
+	 *	Attempt to match messages referring to a line number
 	 *
 	 *	Multiply defined label in case, lines %d and %d
 	 *	Goto %s from line %d is into a structured statement

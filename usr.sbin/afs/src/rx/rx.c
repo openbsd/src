@@ -2063,7 +2063,7 @@ rxi_ReceiveDataPacket(struct rx_call * call,
 	}
 	/*
 	 * If the sequence number is greater than what can be
-         * accomodated by the current window, then send a negative
+         * accommodated by the current window, then send a negative
          * acknowledge and drop the packet
 	 */
 	if ((call->rnext + call->rwind) <= np->header.seq) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.h,v 1.5 2001/07/12 05:17:01 deraadt Exp $	*/
+/*	$OpenBSD: error.h,v 1.6 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: error.h,v 1.3 1995/09/02 06:15:25 jtc Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ extern struct lang_desc lang_table[];
 #define	MOD2INCOMMENT	"(*###"
 #define	MOD2OUTCOMMENT	"%%%*)\n"
 /*
- *	Defines and resources for determing if a given line
+ *	Defines and resources for determining if a given line
  *	is to be discarded because it refers to a file not to
  *	be touched, or if the function reference is to a
  *	function the user doesn't want recorded.
@@ -180,7 +180,7 @@ typedef struct edesc	Edesc;
 typedef	Edesc	*Eptr;
 
 struct edesc{
-	Eptr	error_next;		/*linked together*/
+	Eptr	error_next;		/* linked together*/
 	int	error_lgtext;		/* how many on the right hand side*/
 	char	**error_text;		/* the right hand side proper*/
 	Errorclass	error_e_class;	/* error category of this error*/

@@ -62,7 +62,7 @@
  *          Junichi SATOH <junichi@astec.co.jp>
  *                        <junichi@junichi.org>
  *
- * $OpenBSD: alias_smedia.c,v 1.4 2001/01/29 11:41:37 brian Exp $
+ * $OpenBSD: alias_smedia.c,v 1.5 2002/06/14 21:35:01 todd Exp $
  */
 
 /*
@@ -402,7 +402,7 @@ AliasHandleRtspOut(struct ip *pip, struct alias_link *link, int maxpacketsize)
     } else {
 
       /* When aliasing a server, check for the 200 reply
-         Accomodate varying number of blanks between 200 & OK */
+         Accommodate varying number of blanks between 200 & OK */
 
       if (dlen >= strlen(str200)) {
 

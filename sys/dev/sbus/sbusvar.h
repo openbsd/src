@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.5 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.6 2002/06/14 21:34:59 todd Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.11 2000/11/01 06:18:45 eeh Exp $ */
 
 /*-
@@ -65,7 +65,7 @@ struct sbus_intr {
 	u_int32_t	sbi_vec;	/* vector (always 0?) */
 };
 
-/* Address translation accross busses */
+/* Address translation across busses */
 struct sbus_range {
 	u_int32_t	cspace;		/* Client space */
 	u_int32_t	coffset;	/* Client offset */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.12 2002/04/29 15:25:38 nate Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.13 2002/06/14 21:34:59 todd Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1812,7 +1812,7 @@ bge_reset(sc)
  * on the receive return list.
  *
  * Note: we have to be able to handle two possibilities here:
- * 1) the frame is from the jumbo recieve ring
+ * 1) the frame is from the jumbo receive ring
  * 2) the frame is from the standard receive ring
  */
 

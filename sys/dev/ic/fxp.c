@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.38 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.39 2002/06/14 21:34:59 todd Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -915,7 +915,7 @@ fxp_stats_update(arg)
 	 * then assume the receiver has locked up and attempt to clear
 	 * the condition by reprogramming the multicast filter. This is
 	 * a work-around for a bug in the 82557 where the receiver locks
-	 * up if it gets certain types of garbage in the syncronization
+	 * up if it gets certain types of garbage in the synchronization
 	 * bits prior to the packet header. This bug is supposed to only
 	 * occur in 10Mbps mode, but has been seen to occur in 100Mbps
 	 * mode as well (perhaps due to a 10/100 speed transition).

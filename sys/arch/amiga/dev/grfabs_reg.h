@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfabs_reg.h,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: grfabs_reg.h,v 1.4 2002/06/14 21:34:58 todd Exp $	*/
 /*	$NetBSD: grfabs_reg.h,v 1.5 1996/04/21 21:11:31 veego Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ extern struct monitor_list *monitors;
  * If you do not mimic everyone else exactly problems will appear.
  * If you need a template look at alloc_bitmap() in grf_cc.c.
  *
- * WARNING: the plane array is only for convience, all data for bitplanes 
+ * WARNING: the plane array is only for convenience, all data for bitplanes 
  *	MUST be contiguous.  This is for mapping purposes.  The reason
  *	for the plane pointers and row_mod is to support interleaving
  *	on monitors that wish to support this. 

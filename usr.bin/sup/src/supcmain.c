@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.15 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.16 2002/06/14 21:35:00 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -70,7 +70,7 @@
  *	The remaining flags affect all collections unless an explicit list
  *	of collections are given with the flags.  Multiple flags may be
  *	specified together that affect the same collections.  For the sake
- *	of convience, any flags that always affect all collections can be
+ *	of convenience, any flags that always affect all collections can be
  *	specified with flags that affect only some collections.  For
  *	example, "sup -sde=coll1,coll2" would perform a system upgrade,
  *	and the first two collections would allow both file deletions and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.45 2002/06/11 07:36:00 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.46 2002/06/14 21:35:00 todd Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -1371,7 +1371,7 @@ in6_purgeif(ifp)
  *	other values may be returned from in6_ioctl()
  *
  * NOTE: SIOCALIFADDR(with IFLR_PREFIX set) allows prefixlen less than 64.
- * this is to accomodate address naming scheme other than RFC2374,
+ * this is to accommodate address naming scheme other than RFC2374,
  * in the future.
  * RFC2373 defines interface id to be 64bit, but it allows non-RFC2374
  * address encoding scheme. (see figure on page 8)

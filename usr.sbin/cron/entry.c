@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.8 2001/02/18 19:48:33 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.9 2002/06/14 21:35:01 todd Exp $	*/
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: entry.c,v 1.8 2001/02/18 19:48:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: entry.c,v 1.9 2002/06/14 21:35:01 todd Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -232,7 +232,7 @@ load_entry(file, error_func, pw, envp)
 		}
 	}
 
-	/* make sundays equivilent */
+	/* make sundays equivalent */
 	if (bit_test(e->dow, 0) || bit_test(e->dow, 7)) {
 		bit_set(e->dow, 0);
 		bit_set(e->dow, 7);
@@ -515,7 +515,7 @@ get_range(bits, low, high, names, ch, file)
 	/* range. set all elements from num1 to num2, stepping
 	 * by num3.  (the step is a downward-compatible extension
 	 * proposed conceptually by bob@acornrc, syntactically
-	 * designed then implmented by paul vixie).
+	 * designed then implemented by paul vixie).
 	 */
 	for (i = num1;  i <= num2;  i += num3)
 		if (EOF == set_element(bits, low, high, i))

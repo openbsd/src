@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.15 2002/06/05 22:13:18 fgsch Exp $	*/
+/*	$OpenBSD: hme.c,v 1.16 2002/06/14 21:34:59 todd Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ hme_config(sc)
 			 * connector.
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
-				printf("%s: cannot accomodate MII device %s"
+				printf("%s: cannot accommodate MII device %s"
 				    " at phy %d, instance %d\n",
 				    sc->sc_dev.dv_xname,
 				    child->mii_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2002/05/29 09:45:39 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2002/06/14 21:35:01 todd Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ defoption(name)
 	(void)do_option(defopttab, &nextdefopt, n, name, "defopt");
 
 	/*
-	 * Insert a verbatum copy of the option name, as well,
+	 * Insert a verbatim copy of the option name, as well,
 	 * to speed lookups when creating the Makefile.
 	 */
 	(void)ht_insert(defopttab, name, (void *)name);
@@ -507,7 +507,7 @@ hasparent(i)
 	 *	    we search its devbase for a matching unit number.
 	 *	(2) If the device was attach to an attribute, then we
 	 *	    search all attributes the device can be attached to
-	 *	    for parents (with appropriate unit numebrs) that
+	 *	    for parents (with appropriate unit numbers) that
 	 *	    may be able to attach the device.
 	 */
 

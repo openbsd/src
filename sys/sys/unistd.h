@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.9 2001/09/29 20:27:49 naddy Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.10 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
 #define	_POSIX_VDISABLE		(0377)
-				/* file syncronization is available */
+				/* file synchronization is available */
 #define	_POSIX_FSYNC		1
 
 /* access function */

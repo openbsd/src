@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.23 2002/06/10 22:48:09 chris Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.24 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 #define	ETHER_ADDR_LEN	6	/* Ethernet address length		*/
 #define ETHER_TYPE_LEN	2	/* Ethernet type field length		*/
-#define ETHER_CRC_LEN	4	/* Ethernet CRC lenght			*/
+#define ETHER_CRC_LEN	4	/* Ethernet CRC length			*/
 #define ETHER_HDR_LEN	((ETHER_ADDR_LEN * 2) + ETHER_TYPE_LEN)
 #define ETHER_MIN_LEN	64	/* Minimum frame length, CRC included	*/
 #define ETHER_MAX_LEN	1518	/* Maximum frame length, CRC included	*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: README,v 1.2 1996/10/31 01:09:19 niklas Exp $	*/
+/*	$OpenBSD: README,v 1.3 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: README,v 1.6 1995/06/02 14:04:36 mycroft Exp $	*/
 
 This release consists of the following files 
@@ -30,7 +30,7 @@ the ioctls for mag tapes (including st).
 General scsi ioctls are found in sys/scsiio.h.
 
 -----------cd-rom-----------------
-Cdrom audio is only suported at all for cdroms that use SCSI2 audio
+Cdrom audio is only supported at all for cdroms that use SCSI2 audio
 definitions.
 
 -------------media changer---------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.13 2002/02/19 18:38:02 mpech Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.14 2002/06/14 21:35:01 todd Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: do_command.c,v 1.13 2002/02/19 18:38:02 mpech Exp $";
+static char rcsid[] = "$OpenBSD: do_command.c,v 1.14 2002/06/14 21:35:01 todd Exp $";
 #endif
 
 #include "cron.h"
@@ -89,7 +89,7 @@ child_process(entry *e, user *u) {
 
 	/* our parent is watching for our death by catching SIGCHLD.  we
 	 * do not care to watch for our children's deaths this way -- we
-	 * use wait() explictly.  so we have to reset the signal (which
+	 * use wait() explicitly.  so we have to reset the signal (which
 	 * was inherited from the parent).
 	 */
 	(void) signal(SIGCHLD, SIG_DFL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifreg.h,v 1.7 2002/01/13 01:54:48 jason Exp $	*/
+/*	$OpenBSD: spifreg.h,v 1.8 2002/06/14 21:34:59 todd Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -326,7 +326,7 @@ struct stcregs {
  *
  * The *iack registers are read/written with the IACK bit set.  When
  * the interrupt routine starts, it reads the MRAR, TRAR, and RRAR registers
- * from this mapping.  This signals an interrupt acknowlegement cycle.
+ * from this mapping.  This signals an interrupt acknowledgement cycle.
  * (NOTE: these are not really the MRAR, TRAR, and RRAR... They are copies
  * of the GSVR, I just mapped them to the same location as the mrar, trar,
  * and rrar because it seemed appropriate).

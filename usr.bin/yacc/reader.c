@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.10 2002/02/16 21:28:00 millert Exp $	*/
+/*	$OpenBSD: reader.c,v 1.11 2002/06/14 21:35:00 todd Exp $	*/
 
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
@@ -51,7 +51,7 @@ static char rcsid[] = "$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $";
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
 /*  Note that if a line exceeds LINESIZE characters, the line buffer	*/
-/*  will be expanded to accomodate it.					*/
+/*  will be expanded to accommodate it.					*/
 
 #define LINESIZE 100
 

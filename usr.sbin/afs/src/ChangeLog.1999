@@ -1049,7 +1049,7 @@ Mon Oct  4 01:58:56 1999  Magnus Ahltorp  <map@stacken.kth.se>
 	* arlad/inter.c (cm_symlink): return the realfid
 
 	* arlad/bsd-subr.c (write_dirent): also handle the case of `..'
- 	refering to a mount-point
+ 	referring to a mount-point
 
 	* tests/readdir-vs-lstat.c (verify_inodes): no need to check for
  	. or ..

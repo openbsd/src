@@ -69,7 +69,7 @@
  * I have included directive _DES_PARA for shared memory computers.
  * I have included a directive LONGCRYPT to using this routine to cipher
  * passwords with more then 8 bytes like HP-UX 10.x it used. The MAXPLEN
- * definition is the maximum of lenght of password and can changed. I have
+ * definition is the maximum of length of password and can changed. I have
  * defined 24.
  */
 

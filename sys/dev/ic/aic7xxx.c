@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.38 2002/03/26 00:56:10 krw Exp $
+ * $OpenBSD: aic7xxx.c,v 1.39 2002/06/14 21:34:59 todd Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -1052,7 +1052,7 @@ ahc_xxx_reset(devname, iot, ioh)
 #ifdef AHC_DUMP_SEQ
 	ahc_dumpseq(ahc);
 #endif
-	/* Retain the IRQ type accross the chip reset */
+	/* Retain the IRQ type across the chip reset */
 	hcntrl = (bus_space_read_1(iot, ioh, HCNTRL) & IRQMS) | INTEN;
 
 	bus_space_write_1(iot, ioh, HCNTRL, CHIPRST | PAUSE);

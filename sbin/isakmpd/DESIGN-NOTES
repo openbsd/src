@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.20 2002/06/10 18:11:11 ho Exp $
+$OpenBSD: DESIGN-NOTES,v 1.21 2002/06/14 21:34:58 todd Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -301,7 +301,7 @@ RECORD_B : RECORD_A
 
 This creates some utility constants like RECORD_A_SZ, RECORD_A_FIELD_A_LEN,
 RECORD_A_FIELD_A_OFF, RECORD_A_FIELD_B_LEN etc.  The *_OFF contains the
-octet offset into the record and the *_LEN constants are the lenghts.
+octet offset into the record and the *_LEN constants are the lengths.
 The type fields can be: raw, num, mask, ign & cst.  Raw are used for
 octet buffers, num for (unsigned) numbers of 1, 2 or 4 octet's length
 in network byteorder, mask is a bitmask where the bit values have symbols

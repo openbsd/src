@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.h,v 1.5 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: slcompress.h,v 1.6 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: slcompress.h,v 1.11 1997/05/17 21:12:11 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  * 
  * There are 5 numbers which can change (they are always inserted
  * in the following order): TCP urgent pointer, window,
- * acknowlegement, sequence number and IP ID.  (The urgent pointer
+ * acknowledgement, sequence number and IP ID.  (The urgent pointer
  * is different from the others in that its value is sent, not the
  * change in value.)  Since typical use of SLIP links is biased
  * toward small packets (see comments on MTU/MSS below), changes

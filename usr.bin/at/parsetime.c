@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.11 2002/05/14 18:05:39 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.12 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -139,12 +139,12 @@ static char scc;	/* scanner - count of remaining arguments */
 static char *sct;	/* scanner - next char pointer in current argument */
 static int need;	/* scanner - need to advance to next argument */
 static char *sc_token;	/* scanner - token buffer */
-static size_t sc_len;   /* scanner - lenght of token buffer */
+static size_t sc_len;   /* scanner - length of token buffer */
 static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.11 2002/05/14 18:05:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.12 2002/06/14 21:35:00 todd Exp $";
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.3 2001/07/12 05:17:02 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.4 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/09/10 15:55:13 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: input.c,v 1.3 2001/07/12 05:17:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.4 2002/06/14 21:35:00 todd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -89,7 +89,7 @@ eaterrors(r_errorc, r_errorv)
 	line[inbuflen] = '\0';
 	wordvbuild(line, &wordc, &wordv);
 	/*
-	 *	for convience, convert wordv to be 1 based, instead
+	 *	for convenience, convert wordv to be 1 based, instead
 	 *	of 0 based.
 	 */
 	wordv -= 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.14 2002/06/08 01:53:43 millert Exp $ */
+/*	$OpenBSD: pac.c,v 1.15 2002/06/14 21:35:01 todd Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: pac.c,v 1.14 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pac.c,v 1.15 2002/06/14 21:35:01 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ main(int argc, char **argv)
  * Read the entire accounting file, accumulating statistics
  * for the users that we have in the hash table.  If allflag
  * is set, then just gather the facts on everyone.
- * Note that we must accomodate both the active and summary file
+ * Note that we must accommodate both the active and summary file
  * formats here.
  * The Format of the accounting file is:
  *     feet_per_page   [runs_count] [hostname:]username

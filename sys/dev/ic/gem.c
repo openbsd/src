@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.24 2002/06/09 03:38:40 drahn Exp $	*/
+/*	$OpenBSD: gem.c,v 1.25 2002/06/14 21:34:59 todd Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -259,7 +259,7 @@ gem_config(sc)
 			 * connector.
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
-				printf("%s: cannot accomodate MII device %s"
+				printf("%s: cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
 				       sc->sc_dev.dv_xname,
 				       child->mii_dev.dv_xname,
@@ -819,7 +819,7 @@ gem_init(struct ifnet *ifp)
 		(*sc->sc_hwinit)(sc);
 
 
-	/* step 15.  Give the reciever a swift kick */
+	/* step 15.  Give the receiver a swift kick */
 	bus_space_write_4(t, h, GEM_RX_KICK, GEM_NRXDESC-4);
 
 	/* Start the one second timer. */

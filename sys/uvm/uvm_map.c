@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.47 2002/06/05 17:40:08 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.48 2002/06/14 21:35:00 todd Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3438,7 +3438,7 @@ uvmspace_fork(vm1)
 			 *    process is sharing the amap with another 
 			 *    process.  if we do not clear needs_copy here
 			 *    we will end up in a situation where both the
-			 *    parent and child process are refering to the
+			 *    parent and child process are referring to the
 			 *    same amap with "needs_copy" set.  if the 
 			 *    parent write-faults, the fault routine will
 			 *    clear "needs_copy" in the parent by allocating

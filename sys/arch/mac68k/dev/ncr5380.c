@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.18 2002/03/14 03:15:55 millert Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.19 2002/06/14 21:34:58 todd Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -1780,7 +1780,7 @@ SC_REQ	*reqp;
 		return (0);
 
 	/*
-	 * LWP: I think that this restriction is not strictly nessecary.
+	 * LWP: I think that this restriction is not strictly necessary.
 	 */
 	if ((req_len & 0x1) || ((u_int)req_addr & 0x3))
 		return (0);

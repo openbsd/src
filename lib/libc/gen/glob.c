@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.19 2002/05/24 21:22:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.20 2002/06/14 21:34:58 todd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -667,7 +667,7 @@ glob3(pathbuf, pathbuf_last, pathend, pathend_last, pattern, pattern_last,
 
 
 /*
- * Extend the gl_pathv member of a glob_t structure to accomodate a new item,
+ * Extend the gl_pathv member of a glob_t structure to accommodate a new item,
  * add the new item, and update gl_pathc.
  *
  * This assumes the BSD realloc, which only copies the block when its size

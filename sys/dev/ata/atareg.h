@@ -1,4 +1,4 @@
-/*	$OpenBSD: atareg.h,v 1.5 2002/03/27 17:42:37 gluk Exp $	*/
+/*	$OpenBSD: atareg.h,v 1.6 2002/06/14 21:34:59 todd Exp $	*/
 /*	$NetBSD: atareg.h,v 1.5 1999/01/18 20:06:24 bouyer Exp $	*/
 
 #ifndef __DEV_ATA_ATAREG_H__
@@ -122,7 +122,7 @@ struct ataparams {
 #define	WDC_VER_ATA13	0x2000
 #define	WDC_VER_ATA14	0x4000
     u_int16_t   atap_ata_minor;  	/* 81: Minor version number */
-    u_int16_t	atap_cmd_set1;    	/* 82: command set suported */
+    u_int16_t	atap_cmd_set1;    	/* 82: command set supported */
 #define WDC_CMD1_NOP	0x4000
 #define WDC_CMD1_RB	0x2000
 #define WDC_CMD1_WB	0x1000
@@ -137,7 +137,7 @@ struct ataparams {
 #define WDC_CMD1_REMOV	0x0004
 #define WDC_CMD1_SEC	0x0002
 #define WDC_CMD1_SMART	0x0001
-    u_int16_t	atap_cmd_set2;    	/* 83: command set suported */
+    u_int16_t	atap_cmd_set2;    	/* 83: command set supported */
 #define ATAPI_CMD2_FCE	0x2000 /* Flush Cache Ext supported */
 #define ATAPI_CMD2_FC	0x1000 /* Flush Cache supported */
 #define ATAPI_CMD2_DCO	0x0800 /* Device Configuration Overlay supported */

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.37 2002/03/05 17:23:45 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.38 2002/06/14 21:35:01 todd Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.37 2002/03/05 17:23:45 millert Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.38 2002/06/14 21:35:01 todd Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -239,7 +239,7 @@ sub shell_default_valid {
 }
 
 # return default home partition (f.e. "/home")
-# create base directory if nesseccary
+# create base directory if necessary 
 sub home_partition {
     local($home) = @_;
     $home = &stripdir($home);

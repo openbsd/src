@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rio.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_rio.c,v 1.4 2002/06/14 21:34:58 todd Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -135,7 +135,7 @@
 #define	TH_MIN		 5	/* min threshold */
 #define	TH_MAX		15	/* max threshold */
 
-#define	RIO_LIMIT	60	/* default max queue lenght */
+#define	RIO_LIMIT	60	/* default max queue length */
 #define	RIO_STATS		/* collect statistics */
 
 #define	TV_DELTA(a, b, delta) {					\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.50 2002/06/08 21:51:08 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.51 2002/06/14 21:35:00 todd Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ nd6_options(ndopts)
 		default:
 			/*
 			 * Unknown options must be silently ignored,
-			 * to accomodate future extension to the protocol.
+			 * to accommodate future extension to the protocol.
 			 */
 			nd6log((LOG_DEBUG,
 			    "nd6_options: unsupported option %d - "

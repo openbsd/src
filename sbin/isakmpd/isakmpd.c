@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.43 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.44 2002/06/14 21:34:58 todd Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ static char *report_file = "/var/run/isakmpd.report";
 static int sigusr2ed = 0;
 
 /*
- * If we recieve a TERM signal, perform a "clean shutdown" of the daemon.
+ * If we receive a TERM signal, perform a "clean shutdown" of the daemon.
  * This includes to send DELETE notifications for all our active SAs.
  */
 static int sigtermed = 0;

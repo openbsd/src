@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: fgetln.c,v 1.2 1996/08/19 08:32:29 tholo Exp $";
+static char *rcsid = "$OpenBSD: fgetln.c,v 1.3 2002/06/14 21:34:58 todd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -114,7 +114,7 @@ fgetln(fp, lenp)
 	 * As a bonus, though, we can leave off the __SMOD.
 	 *
 	 * OPTIMISTIC is length that we (optimistically) expect will
-	 * accomodate the `rest' of the string, on each trip through the
+	 * accommodate the `rest' of the string, on each trip through the
 	 * loop below.
 	 */
 #define OPTIMISTIC 80

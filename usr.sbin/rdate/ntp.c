@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.6 2002/05/16 22:00:37 ho Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.7 2002/06/14 21:35:01 todd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -205,7 +205,7 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 #endif
 
 		if (a > b)
-			errx(1, "Inconsistent times recieved from NTP server");
+			errx(1, "Inconsistent times received from NTP server");
 
 		if (*error <= minerr)
 			break;

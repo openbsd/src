@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.9 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: ipic.c,v 1.10 2002/06/14 21:34:58 todd Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -115,7 +115,7 @@ ipicscan(parent, child, args)
 	}
 #endif
 
-	/* XXX can we determing IPIC_IPSPACE automatically? */
+	/* XXX can we determine IPIC_IPSPACE automatically? */
 	for (slot = 0; slot < sc->sc_nip; slot++) {
 		ipp = sc->sc_ipspace + (slot * IPIC_IP_MODSIZE);
 		if (badpaddr((paddr_t)ipp + IPIC_IP_IDOFFSET, 2))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.h,v 1.6 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: advlib.h,v 1.7 2002/06/14 21:34:59 todd Exp $	*/
 /*      $NetBSD: advlib.h,v 1.5 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -449,10 +449,10 @@ typedef struct asc_scisq_1
 	u_int8_t	sg_queue_cnt;	/* number of SG entries */
 	u_int8_t	target_id;
 	u_int8_t	target_lun;
-	u_int32_t	data_addr; /* physical address of first segment to transef */
+	u_int32_t	data_addr; /* physical address of first segment to transfer */
 	u_int32_t	data_cnt;  /* byte count of first segment to transfer */
 	u_int32_t	sense_addr; /* physical address of the sense buffer */
-	u_int8_t	sense_len; /* lenght of sense buffer */
+	u_int8_t	sense_len; /* length of sense buffer */
 	u_int8_t	extra_bytes;
 } ASC_SCSIQ_1;
 

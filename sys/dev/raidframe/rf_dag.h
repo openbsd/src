@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_dag.h,v 1.2 1999/02/16 00:02:28 niklas Exp $	*/
+/*	$OpenBSD: rf_dag.h,v 1.3 2002/06/14 21:34:59 todd Exp $	*/
 /*	$NetBSD: rf_dag.h,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -222,7 +222,7 @@ struct RF_DagList_s {
   (_h_)->status = rf_enable;     \
 }
 
-/* convience macro for declaring a create dag function */
+/* convenience macro for declaring a create dag function */
 
 #define RF_CREATE_DAG_FUNC_DECL(_name_) \
 void _name_ ( \

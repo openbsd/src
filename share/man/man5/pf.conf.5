@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.56 2002/06/08 17:10:52 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.57 2002/06/14 21:34:58 todd Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -472,7 +472,7 @@ UDP packets are matched to states using only host addresses and ports.
 ICMP messages fall in two categories: ICMP error messages, which always
 refer to a TCP or UDP packet, are matched against the refered to connection.
 If one keeps state on a TCP connection, and an ICMP source quench message
-refering to this TCP connection arrives, it will be matched to the right
+referring to this TCP connection arrives, it will be matched to the right
 state and get passed.
 .Pp
 For ICMP queries, keep state creates an ICMP state, and

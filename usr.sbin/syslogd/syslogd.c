@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.52 2002/06/05 17:12:52 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.53 2002/06/14 21:35:01 todd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.52 2002/06/05 17:12:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.53 2002/06/14 21:35:01 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static char rcsid[] = "$OpenBSD: syslogd.c,v 1.52 2002/06/05 17:12:52 millert Ex
  *
  * Defined Constants:
  *
- * MAXLINE -- the maximimum line length that can be handled.
+ * MAXLINE -- the maximum line length that can be handled.
  * DEFUPRI -- the default priority for user messages
  * DEFSPRI -- the default priority for kernel messages
  *

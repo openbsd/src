@@ -1,4 +1,4 @@
-.\"	$OpenBSD: beyond43.ms,v 1.2 2001/02/03 08:14:56 niklas Exp $
+.\"	$OpenBSD: beyond43.ms,v 1.3 2002/06/14 21:34:58 todd Exp $
 .\"
 .\" Copyright (c) 1989 The Regents of the University of California.
 .\" All rights reserved.
@@ -154,7 +154,7 @@ The new ``fat'' filesystem allows these limits to be set at filesystem
 creation time.
 Old kernels will treat the new filesystems as read-only,
 and new kernels
-will accomodate both formats.
+will accommodate both formats.
 The filesystem check facility, \fCfsck\fP, has also been modified to check
 either type.
 .br

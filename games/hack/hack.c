@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
+/*	$OpenBSD: hack.c,v 1.5 2002/06/14 21:34:58 todd Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: hack.c,v 1.5 2002/06/14 21:34:58 todd Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -447,7 +447,7 @@ pickup(all)
 		}
 	lift_some:
 		if(inv_cnt() >= 52) {
-		    pline("Your knapsack cannot accomodate anymore items.");
+		    pline("Your knapsack cannot accommodate anymore items.");
 		    break;
 		}
 		if(wt > -5) pline("You have a little trouble lifting");
