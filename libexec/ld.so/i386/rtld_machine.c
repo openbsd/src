@@ -318,6 +318,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Rel *rel;
 	struct load_list *llist;
 
+	if (pltgot == NULL)
+		return; /* it is possible to have no PLT/GOT relocations */
+
 	pltgot[1] = (Elf_Addr)object;
 	pltgot[2] = (Elf_Addr)&_dl_bind_start;
 
