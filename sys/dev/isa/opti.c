@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti.c,v 1.1 1996/04/24 16:51:14 mickey Exp $	*/
+/*	$OpenBSD: opti.c,v 1.2 1996/04/29 09:59:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -36,7 +36,7 @@
  * Code to setup 82C929 chipset
  */
 
-#define	OPTI_DEBUG		9
+/* #define	OPTI_DEBUG	9 /* */
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,6 +57,8 @@
 #else
 #  define XDEBUG(level, data)	/* ((opti_debuglevel >= level)? printf data:0) */
 #endif
+
+int	opti_type = OPTI_C929;	/* XXX only one card can be installed */
 
 #define	OPTI_cd_valid_ift(i)	((i)==OPTI_SONY||(i)==OPTI_PANASONIC||\
 					(i)==OPTI_MITSUMI||(i)==OPTI_IDE)
@@ -144,23 +146,39 @@ OPTI_snd_drq(d)
 	}
 }
 
+static __inline void
+opti_outb( u_short port, u_char byte )
+{
+	outb( OPTI_PASSWD, opti_type );
+	outb( port, byte );
+}
+
+static __inline u_char
+opti_inb( u_short port )
+{
+	outb( OPTI_PASSWD, opti_type );
+	return inb( port );
+}
+
 static int
 opti_present( void )
 {
 	register u_char	a, b;
 	int s = splhigh();
 
-	outb( OPTI_CTRL, 0xe3 );
-	a = inb( OPTI_CTRL );
+	a = opti_inb( OPTI_PASSWD );
+	opti_outb( OPTI_PASSWD, 0x00 );
+	b = opti_inb( OPTI_PASSWD );
+	opti_outb( OPTI_PASSWD, a );
 
-	outb( OPTI_CTRL, 0xe3 );
-	outb( OPTI_CTRL, 0x00 );
+	if (b != 2) {
+		opti_type = OPTI_C928;
 
-	outb( OPTI_CTRL, 0xe3 );
-	b = inb( OPTI_CTRL );
-
-	outb( OPTI_CTRL, 0xe3 );
-	outb( OPTI_CTRL,  a );
+		a = opti_inb( OPTI_PASSWD );
+		opti_outb( OPTI_PASSWD, 0x00 );
+		b = opti_inb( OPTI_PASSWD );
+		opti_outb( OPTI_PASSWD, a );
+	}
 
 	splx(s);
 
@@ -173,7 +191,7 @@ opti_cd_setup( ift, addr, irq, drq )
 {
 	int	ret = 0;
 
-	XDEBUG( 2, ("opti: do CD setup t=%u, a=0x%x, i=%d, d=%d\n",
+	XDEBUG( 2, ("opti: do CD setup type=%u, addr=0x%x, irq=%d, drq=%d\n",
 		    ift, addr, irq, drq));
 
 	if( !opti_present() )
@@ -193,52 +211,36 @@ opti_cd_setup( ift, addr, irq, drq )
 		register u_char	a, b;
 
 			/* set interface type */
-		outb( OPTI_CTRL, 0xe3 );
-		a = inb( OPTI_IFTP );
-
-		outb( OPTI_CTRL, 0xe3 );
-		b = (inb( OPTI_DATA ) & 0x20) | 3 ;
-
-		outb( OPTI_CTRL, 0xe3 );
-		outb( OPTI_DATA,  b );
-
-		outb( OPTI_CTRL, 0xe3 );
-		outb( OPTI_IFTP, (a & 0xf1) | 2*ift );
-
-		outb( OPTI_CTRL, 0xe3 );
-		outb( OPTI_ENBL, 0x80 );
+		a = opti_inb( OPTI_IFTP );
+		b = (opti_inb( OPTI_DATA ) & 0x20) | 3 ;
+		opti_outb( OPTI_DATA,  b );
+		opti_outb( OPTI_IFTP, (a & OPTI_SND_MASK) | 2 * ift );
+		opti_outb( OPTI_ENBL, 0x80 );
 
 			/* we don't need any additional setup for IDE CD-ROM */
 		if( ift != OPTI_IDE )
 		{
 				/* set address */
-			outb( OPTI_CTRL, 0xe3 );
-			a = inb( OPTI_DATA );
-
-			outb( OPTI_CTRL, 0xe3 );
-			outb( OPTI_DATA, (a & 0x3f) |
+			a = opti_inb( OPTI_DATA );
+			opti_outb( OPTI_DATA, (a & 0x3f) |
 			     (0x40 * OPTI_cd_addr(addr)) );
 
 				/* set irq */
 			if( irq != IRQUNK )
 			{
-				outb( OPTI_CTRL, 0xe3 );
-				a = inb( OPTI_DATA );
-
-				outb( OPTI_CTRL, 0xe3 );
-				outb( OPTI_DATA, (inb( OPTI_DATA ) & 0xe3) |
-				     OPTI_cd_irq(irq) );
+				a = opti_inb( OPTI_DATA );
+				opti_outb( OPTI_DATA,
+					  (inb( OPTI_DATA ) & 0xe3) |
+					  OPTI_cd_irq(irq) );
 			}
 
 				/* set drq */
 			if( drq != DRQUNK )
 			{
-				outb( OPTI_CTRL, 0xe3 );
-				a = inb( OPTI_DATA );
-
-				outb( OPTI_CTRL, 0xe3 );
-				outb( OPTI_DATA, (inb( OPTI_DATA ) & 0xfc) |
-				     OPTI_cd_drq(drq) );
+				a = opti_inb( OPTI_DATA );
+				opti_outb( OPTI_DATA,
+					  (inb( OPTI_DATA ) & 0xfc) |
+					  OPTI_cd_drq(drq) );
 			}
 		}
 		splx(s);
@@ -253,7 +255,7 @@ int
 opti_snd_setup( ift, addr, irq, drq )
 	int	ift, addr, irq, drq;
 {
-	XDEBUG( 2, ("opti: do SND setup t=%u,a=%x,i=%d,d=%d\n",
+	XDEBUG( 2, ("opti: do SND setup type=%u,addr=%x,irq=%d,drq=%d\n",
 		    ift, addr, irq, drq));
 
 	if( !opti_present() )
@@ -273,20 +275,10 @@ opti_snd_setup( ift, addr, irq, drq )
 		register u_char	a, b;
 
 		if (ift == OPTI_WSS) {
-			outb( OPTI_CTRL, 0xe3 );
-			a = inb( OPTI_CTRL );
-
-			outb( OPTI_CTRL, 0xe3 );
-			outb( OPTI_ENBL, 0x1a );
-
-			outb( OPTI_CTRL, 0xe3 );
-			outb( OPTI_IFTP, OPTI_snd_addr(addr)*16 + 1 );
-
-			outb( OPTI_CTRL, 0xe3 );
-			outb( OPTI_ENBL, 0x1a );
-
-			outb( OPTI_CTRL, 0xe3 );
-			outb( OPTI_CTRL, a );
+			a = opti_inb( OPTI_IFTP );
+			opti_outb( OPTI_IFTP, (a & ~OPTI_SND_MASK)
+				  | OPTI_snd_addr(addr)*16 + 1 );
+			opti_outb( OPTI_ENBL, 0x1a );
 		}
 
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti.h,v 1.1 1996/04/24 16:51:14 mickey Exp $	*/
+/*	$OpenBSD: opti.h,v 1.2 1996/04/29 09:59:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,13 +35,23 @@
 #ifndef	__OPTI_HEADER__
 #define	__OPTI_HEADER__
 
-		/* i/o ports */
+	/* card types */
+
+#define OPTI_C928	0xe2
+#define OPTI_MOZART	0xe2
+#define OPTI_C929	0xe3
+#define OPTI_C930	0xe3	/* XXX 0xe4 ??? */
+
+	/* i/o ports */
+
 #define	OPTI_4			0xF84
 #define	OPTI_5			0xF85
 #define	OPTI_DATA		0xF8E
 #define	OPTI_IFTP		0xF8D	/* iface control register */
-#define	OPTI_CTRL		0xF8F
+#define	OPTI_PASSWD		0xF8F
 #define	OPTI_ENBL		0xF91
+
+#define	OPTI_SND_MASK	0xf1
 
 	/* CD-ROM iface setup */
 
@@ -59,8 +69,8 @@
 #define OPTI_SB		(1)	/* Sound Blaster Pro(tm) compatible */
 
 #ifdef _KERNEL
-int		opti_cd_setup __P(( int, int, int, int ));
-int		opti_snd_setup __P(( int, int, int, int ));
+int	opti_cd_setup __P(( int, int, int, int ));
+int	opti_snd_setup __P(( int, int, int, int ));
 #endif
 
 #endif	/* __OPTI_HEADER__ */
