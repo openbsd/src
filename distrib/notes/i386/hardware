@@ -1,14 +1,15 @@
 OpenBSD/MACHINE OSREV runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
 does NOT support MCA systems, such as some IBM PS/2 systems.  The
-minimal configuration is said to require 4M of RAM and 50M of disk space,
-though we do not know of anyone running with a system quite this minimal today.
-To install the entire system requires much more disk space, and to run X
-or compile the system, more RAM is recommended.  (4M of RAM will
-actually allow you to run X and/or compile, but it won't be speedy.
-Note that until you have around 16M of RAM, getting more RAM is more
-important than getting a faster CPU.)
-
+minimal configuration to install the system is 6M or 8M of RAM and
+perhaps 50M of disk space.  A custom kernel might be able to run
+with only 4MB, though we do not know of anyone running with a system
+quite this minimal today.  To install the entire system requires
+much more disk space, and to run X or compile the system, more RAM
+is recommended.  (8M of RAM will actually allow you to run X and/or
+compile but it won't be speedy.  Note that until you have around 16M
+of RAM, getting more RAM is more important than getting a faster CPU.)
+ 
 Supported devices {:-include-:}:
 	Floppy controllers.
 	MFM, ESDI, IDE, and RLL hard disk controllers.
