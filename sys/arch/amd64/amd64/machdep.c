@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2004/02/13 00:05:52 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2004/02/13 03:37:10 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -598,12 +598,10 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
 
-	if (p->p_md.md_flags & MDP_USEDFPU)
-		fpusave_proc(p, 1);
-
 	bcopy(tf, &ksc, sizeof(*tf));
 	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	ksc.sc_mask = mask;
+	ksc.sc_fpstate = NULL;
 
 	/* Allocate space for the signal handler context. */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !ksc.sc_onstack &&
@@ -611,10 +609,20 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		sp = (register_t)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size;
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
-		sp = tf->tf_rsp;
+		sp = tf->tf_rsp - 128;
 
 	sp &= ~15ULL;	/* just in case */
 	sss = (sizeof(ksc) + 15) & ~15;
+
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+		fpusave_proc(p, 1);
+		sp -= sizeof(struct fxsave64);
+		ksc.sc_fpstate = (struct fxsave64 *)sp;
+		if (copyout(&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		    (void *)sp, sizeof(struct fxsave64)))
+			sigexit(p, SIGILL);
+	}
+
 	sip = 0;
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sip = sp - ((sizeof(ksi) + 15) & ~15);
@@ -680,13 +688,19 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
-
-	if (copyin((caddr_t)scp, &ksc, sizeof ksc))
+	if ((error = copyin((caddr_t)scp, &ksc, sizeof ksc)))
 		return (error);
 
 	if (((ksc.sc_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
 	    !USERMODE(ksc.sc_cs, ksc.sc_eflags))
 		return (EINVAL);
+
+	if (p->p_md.md_flags & MDP_USEDFPU)
+		fpusave_proc(p, 0);
+
+	if (ksc.sc_fpstate && (error = copyin(ksc.sc_fpstate,
+	    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave, sizeof (struct fxsave64))))
+		return (error);
 
 	ksc.sc_trapno = tf->tf_trapno;
 	ksc.sc_err = tf->tf_err;

@@ -79,6 +79,7 @@ struct sigcontext {
 	long	sc_rsp;
 	long	sc_ss;
 
+	struct fxsave64 *sc_fpstate;
 	int	sc_onstack;
 	int	sc_mask;
 };
