@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ecn.c,v 1.3 2001/06/08 03:53:45 angelos Exp $	*/
+/*	$OpenBSD: ip_ecn.c,v 1.4 2002/05/16 14:10:51 kjc Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.9 2000/10/01 12:44:48 itojun Exp $	*/
 
 /*
@@ -55,6 +55,37 @@
 #include <netinet/ip_ecn.h>
 
 /*
+ * ECN and TOS (or TCLASS) processing rules at tunnel encapsulation and
+ * decapsulation from RFC3168:
+ *
+ *                      Outer Hdr at                 Inner Hdr at
+ *                      Encapsulator                 Decapsulator
+ *   Header fields:     --------------------         ------------
+ *     DS Field         copied from inner hdr        no change
+ *     ECN Field        constructed by (I)           constructed by (E)
+ *
+ * ECN_ALLOWED (full functionality):
+ *    (I) if the ECN field in the inner header is set to CE, then set the
+ *    ECN field in the outer header to ECT(0).
+ *    otherwise, copy the ECN field to the outer header.
+ *
+ *    (E) if the ECN field in the outer header is set to CE and the ECN
+ *    field of the inner header is not-ECT, drop the packet.
+ *    if the ECN field in the inner header is set to ECT(0) or ECT(1)
+ *    and the ECN field in the outer header is set to CE, then copy CE to
+ *    the inner header.  otherwise, make no change to the inner header.
+ *
+ * ECN_FORBIDDEN (limited functionality):
+ *    (I) set the ECN field to not-ECT in the outer header.
+ *
+ *    (E) if the ECN field in the outer header is set to CE, drop the packet.
+ *    otherwise, make no change to the ECN field in the inner header.
+ *
+ * the drop rule is for backward compatibility and protection against
+ * erasure of CE.
+ */
+
+/*
  * modify outer ECN (TOS) field on ingress operation (tunnel encapsulation).
  * call it after you've done the default initialization/copy for the outer.
  */
@@ -67,12 +98,21 @@ ip_ecn_ingress(mode, outer, inner)
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip_ecn_ingress");
 
+	*outer = *inner;
 	switch (mode) {
 	case ECN_ALLOWED:		/* ECN allowed */
-		*outer &= ~IPTOS_CE;
+		/*
+		 * full-functionality: if the inner is CE, set ECT(0)
+		 * to the outer.  otherwise, copy the ECN field.
+		 */
+		if ((*inner & IPTOS_ECN_MASK) == IPTOS_ECN_CE)
+			*outer &= ~IPTOS_ECN_ECT1;
 		break;
 	case ECN_FORBIDDEN:		/* ECN forbidden */
-		*outer &= ~(IPTOS_ECT | IPTOS_CE);
+		/*
+		 * limited-functionality: set not-ECT to the outer
+		 */
+		*outer &= ~IPTOS_ECN_MASK;
 		break;
 	case ECN_NOCARE:	/* no consideration to ECN */
 		break;
@@ -82,8 +122,9 @@ ip_ecn_ingress(mode, outer, inner)
 /*
  * modify inner ECN (TOS) field on egress operation (tunnel decapsulation).
  * call it after you've done the default initialization/copy for the inner.
+ * the caller should drop the packet if the return value is 0.
  */
-void
+int
 ip_ecn_egress(mode, outer, inner)
 	int mode;
 	u_int8_t *outer;
@@ -94,13 +135,28 @@ ip_ecn_egress(mode, outer, inner)
 
 	switch (mode) {
 	case ECN_ALLOWED:
-		if (*outer & IPTOS_CE)
-			*inner |= IPTOS_CE;
+		/*
+		 * full-functionality: if the outer is CE and the inner is
+		 * not-ECT, should drop it.  otherwise, copy CE.
+		 */
+		if ((*outer & IPTOS_ECN_MASK) == IPTOS_ECN_CE) {
+			if ((*inner & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT)
+				return (0);
+			*inner |= IPTOS_ECN_CE;
+		}
 		break;
 	case ECN_FORBIDDEN:		/* ECN forbidden */
+		/*
+		 * limited-functionality: if the outer is CE, should drop it.
+		 * otherwise, leave the inner.
+		 */
+		if ((*outer & IPTOS_ECN_MASK) == IPTOS_ECN_CE)
+			return (0);
+		break;
 	case ECN_NOCARE:	/* no consideration to ECN */
 		break;
 	}
+	return (1);
 }
 
 #ifdef INET6
@@ -115,28 +171,31 @@ ip6_ecn_ingress(mode, outer, inner)
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip6_ecn_ingress");
 
-	outer8 = (ntohl(*outer) >> 20) & 0xff;
 	inner8 = (ntohl(*inner) >> 20) & 0xff;
 	ip_ecn_ingress(mode, &outer8, &inner8);
 	*outer &= ~htonl(0xff << 20);
 	*outer |= htonl((u_int32_t)outer8 << 20);
 }
 
-void
+int
 ip6_ecn_egress(mode, outer, inner)
 	int mode;
 	u_int32_t *outer;
 	u_int32_t *inner;
 {
-	u_int8_t outer8, inner8;
+	u_int8_t outer8, inner8, oinner8;
 
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip6_ecn_egress");
 
 	outer8 = (ntohl(*outer) >> 20) & 0xff;
-	inner8 = (ntohl(*inner) >> 20) & 0xff;
-	ip_ecn_egress(mode, &outer8, &inner8);
-	*inner &= ~htonl(0xff << 20);
-	*inner |= htonl((u_int32_t)inner8 << 20);
+	inner8 = oinner8 = (ntohl(*inner) >> 20) & 0xff;
+	if (ip_ecn_egress(mode, &outer8, &inner8) == 0)
+		return (0);
+	if (inner8 != oinner8) {
+		*inner &= ~htonl(0xff << 20);
+		*inner |= htonl((u_int32_t)inner8 << 20);
+	}
+	return (1);
 }
 #endif

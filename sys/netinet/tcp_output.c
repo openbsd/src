@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.49 2002/03/08 03:49:58 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.50 2002/05/16 14:10:51 kjc Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -237,6 +237,9 @@ tcp_output(tp)
 #ifdef TCP_SIGNATURE
 	unsigned int sigoff;
 #endif /* TCP_SIGNATURE */
+#ifdef TCP_ECN
+	int needect;
+#endif
 
 #if defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC)
 	if (!tp->sack_disable && (tp->t_flags & TF_SIGNATURE))
@@ -815,6 +818,39 @@ send:
 		bcopy((caddr_t)opt, (caddr_t)(th + 1), optlen);
 		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
+#ifdef TCP_ECN
+	if (tcp_do_ecn) {
+		/*
+		 * if we have received congestion experienced segs,
+		 * set ECE bit.
+		 */
+		if (tp->t_flags & TF_RCVD_CE) {
+			flags |= TH_ECE;
+			tcpstat.tcps_ecn_sndece++;
+		}
+		if (!(tp->t_flags & TF_DISABLE_ECN)) {
+			/*
+			 * if this is a SYN seg, set ECE and CWR.
+			 * set only ECE for SYN-ACK if peer supports ECN.
+			 */
+			if ((flags & (TH_SYN|TH_ACK)) == TH_SYN)
+				flags |= (TH_ECE|TH_CWR);
+			else if ((tp->t_flags & TF_ECN_PERMIT) &&
+				 (flags & (TH_SYN|TH_ACK)) == (TH_SYN|TH_ACK))
+				flags |= TH_ECE;
+		}
+		/*
+		 * if we have reduced the congestion window, notify
+		 * the peer by setting CWR bit.
+		 */
+		if ((tp->t_flags & TF_ECN_PERMIT) &&
+		    (tp->t_flags & TF_SEND_CWR)) {
+			flags |= TH_CWR;
+			tp->t_flags &= ~TF_SEND_CWR;
+			tcpstat.tcps_ecn_sndcwr++;
+		}
+	}
+#endif
 	th->th_flags = flags;
 
 	/*
@@ -1038,6 +1074,23 @@ send:
 	 */
 	m->m_pkthdr.len = hdrlen + len;
 
+#ifdef TCP_ECN
+	/*
+	 * if peer is ECN capable, set the ECT bit in the IP header.
+	 * but don't set ECT for a pure ack, a retransmit or a window probe.
+	 */
+	needect = 0;
+	if (tcp_do_ecn && (tp->t_flags & TF_ECN_PERMIT)) {
+		if (len == 0 || SEQ_LT(tp->snd_nxt, tp->snd_max) ||
+		    (tp->t_force && len == 1)) {
+			/* don't set ECT */
+		} else {
+			needect = 1;
+			tcpstat.tcps_ecn_sndect++;
+		}
+	}
+#endif
+
 	switch (tp->pf) {
 	case 0:	/*default to PF_INET*/
 #ifdef INET
@@ -1049,6 +1102,10 @@ send:
 			ip->ip_len = m->m_pkthdr.len;
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
+#ifdef TCP_ECN
+			if (needect)
+				ip->ip_tos |= IPTOS_ECN_ECT0;
+#endif
 		}
 		error = ip_output(m, tp->t_inpcb->inp_options,
 			&tp->t_inpcb->inp_route,
@@ -1067,6 +1124,10 @@ send:
 				sizeof(struct ip6_hdr);
 			ipv6->ip6_nxt = IPPROTO_TCP;
 			ipv6->ip6_hlim = in6_selecthlim(tp->t_inpcb, NULL);
+#ifdef TCP_ECN
+			if (needect)
+				ipv6->ip6_flow |= htonl(IPTOS_ECN_ECT0 << 20);
+#endif
 		}
 		error = ip6_output(m, tp->t_inpcb->inp_outputopts6,
 			  &tp->t_inpcb->inp_route6,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.28 2002/03/08 03:49:58 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.29 2002/05/16 14:10:51 kjc Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -330,6 +330,13 @@ tcp_timer_rexmt(void *arg)
 		tp->snd_cwnd = tp->t_maxseg;
 		tp->snd_ssthresh = win * tp->t_maxseg;
 		tp->t_dupacks = 0;
+#ifdef TCP_ECN
+		tp->snd_last = tp->snd_max;
+		tp->t_flags |= TF_SEND_CWR;
+#endif
+#if 1 /* TCP_ECN */
+		tcpstat.tcps_cwr_timeout++;
+#endif
 	}
 	(void) tcp_output(tp);
 
