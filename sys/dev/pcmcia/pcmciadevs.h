@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.12 1999/03/04 05:53:46 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.13 1999/05/16 23:14:13 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.10 1999/03/04 05:50:28 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.11 1999/05/16 22:42:44 niklas Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -51,6 +51,7 @@
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK */
+#define	PCMCIA_VENDOR_XIRCOM	0x0105	/* XIRCOM -- same as TDK */
 #define	PCMCIA_VENDOR_SMC	0x0108	/* SMC */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics */
