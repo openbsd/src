@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.102 2003/08/01 07:47:58 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.103 2003/08/01 19:53:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1045,7 +1045,7 @@ register_t *retval;
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
-	if ((int)scp & 3 || uvm_useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0 ||
+	if ((int)scp & 3 ||
 	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(struct sigcontext)))
 		return (EINVAL);
 
