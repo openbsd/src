@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.78 2001/09/29 20:09:34 gluk Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.79 2001/10/11 08:07:12 gluk Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ int	main __P((void *));
 void	check_console __P((struct proc *));
 void	start_init __P((void *));
 void	start_pagedaemon __P((void *));
-void	start_flusher __P((void *));
+void	start_cleaner __P((void *));
 void	start_update __P((void *));
 void	start_reaper __P((void *));
 void    start_crypto __P((void *));
@@ -414,9 +414,9 @@ main(framep)
 	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
-	/* Create process 4, the flusher daemon kernel thread. */
-	if (kthread_create(start_flusher, NULL, NULL, "flusher"))
-		panic("fork flusher");
+	/* Create process 4, the cleaner daemon kernel thread. */
+	if (kthread_create(start_cleaner, NULL, NULL, "cleaner"))
+		panic("fork cleaner");
 
 	/* Create process 5, the update daemon kernel thread. */
 	if (kthread_create(start_update, NULL, NULL, "update"))
@@ -620,7 +620,7 @@ start_update(arg)
 }
 
 void
-start_flusher(arg)
+start_cleaner(arg)
 	void *arg;
 {
 	buf_daemon(curproc);
