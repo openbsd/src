@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.24 2001/06/26 19:29:25 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.25 2001/06/27 05:49:33 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -62,26 +62,26 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		/*
-		 * If it's not initialized or has remaining sessions referencing
-		 * it, skip.
+		 * If it's not initialized or has remaining sessions
+		 * referencing it, skip.
 		 */
 		if (crypto_drivers[hid].cc_newsession == NULL ||
 		    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP))
 			continue;
 
-		/* hardware requested -- ignore software drivers */
+		/* Hardware requested -- ignore software drivers. */
 		if (hard &&
 		    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE))
 			continue;
 
-		/* See if all the algorithms are supported */
+		/* See if all the algorithms are supported. */
 		for (cr = cri; cr; cr = cr->cri_next)
 			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0)
 			break;
 
-		/* Ok, all algorithms are supported */
+		/* Ok, all algorithms are supported. */
 		if (cr == NULL)
-		break;
+			break;
 	}
 
 	/*
@@ -96,8 +96,8 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		return EINVAL;
 	}
 
-	/* Call the driver initialization routine */
-	lid = hid; /* Pass the driver ID */
+	/* Call the driver initialization routine. */
+	lid = hid; /* Pass the driver ID. */
 	err = crypto_drivers[hid].cc_newsession(&lid, cri);
 	if (err == 0) {
 		(*sid) = hid;
@@ -123,7 +123,7 @@ crypto_freesession(u_int64_t sid)
 	if (crypto_drivers == NULL)
 		return EINVAL;
 
-	/* Determine two IDs */
+	/* Determine two IDs. */
 	hid = (sid >> 32) & 0xffffffff;
 
 	if (hid >= crypto_drivers_num)
@@ -134,7 +134,7 @@ crypto_freesession(u_int64_t sid)
 	if (crypto_drivers[hid].cc_sessions)
 		crypto_drivers[hid].cc_sessions--;
 
-	/* Call the driver cleanup routine, if available */
+	/* Call the driver cleanup routine, if available. */
 	if (crypto_drivers[hid].cc_freesession)
 		err = crypto_drivers[hid].cc_freesession(sid);
 
@@ -183,16 +183,16 @@ crypto_get_driverid(void)
 		}
 	}
 
-	/* Out of entries, allocate some more */
+	/* Out of entries, allocate some more. */
 	if (i == crypto_drivers_num) {
-		/* Be careful about wrap-around */
+		/* Be careful about wrap-around. */
 		if (2 * crypto_drivers_num <= crypto_drivers_num) {
 			splx(s);
 			return -1;
 		}
 
-		newdrv = malloc(2 * crypto_drivers_num * sizeof(struct cryptocap),
-		    M_CRYPTO_DATA, M_NOWAIT);
+		newdrv = malloc(2 * crypto_drivers_num *
+		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT);
 		if (newdrv == NULL) {
 			splx(s);
 			return -1;
@@ -289,7 +289,9 @@ crypto_unregister(u_int32_t driverid, int alg)
 		ses = crypto_drivers[driverid].cc_sessions;
 		bzero(&crypto_drivers[driverid], sizeof(struct cryptocap));
 		if (ses != 0) {
-			/* If there are pending sessions, just mark as invalid */
+			/*
+			 * If there are pending sessions, just mark as invalid.
+			 */
 			crypto_drivers[driverid].cc_flags |= CRYPTOCAP_F_CLEANUP;
 			crypto_drivers[driverid].cc_sessions = ses;
 		}
@@ -329,7 +331,7 @@ crypto_invoke(struct cryptop *crp)
 	u_int64_t nid;
 	u_int32_t hid;
 
-	/* Sanity checks */
+	/* Sanity checks. */
 	if (crp == NULL || crp->crp_callback == NULL)
 		return EINVAL;
 
@@ -341,7 +343,7 @@ crypto_invoke(struct cryptop *crp)
 
 	hid = (crp->crp_sid >> 32) & 0xffffffff;
 	if (hid >= crypto_drivers_num) {
-		/* Migrate session */
+		/* Migrate session. */
 		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
@@ -357,7 +359,7 @@ crypto_invoke(struct cryptop *crp)
 		crypto_freesession(crp->crp_sid);
 
 	if (crypto_drivers[hid].cc_process == NULL) {
-		/* Migrate session */
+		/* Migrate session. */
 		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
@@ -456,7 +458,7 @@ crypto_thread(void)
 			continue;
 		}
 
-		/* Remove from the queue */
+		/* Remove from the queue. */
 		crp_req_queue = crp->crp_next;
 		crypto_invoke(crp);
 	}
