@@ -111,9 +111,9 @@ struct rstdirdesc {
 static long	seekpt;
 static FILE	*df, *mf;
 static RST_DIR	*dirp;
-static char	dirfile[32] = "#";	/* No file */
-static char	modefile[32] = "#";	/* No file */
-static char	dot[2] = ".";		/* So it can be modified */
+static char	dirfile[MAXPATHLEN] = "#";	/* No file */
+static char	modefile[MAXPATHLEN] = "#";	/* No file */
+static char	dot[2] = ".";			/* So it can be modified */
 
 /*
  * Format of old style directories.
@@ -151,7 +151,13 @@ extractdirs(genmode)
 	struct direct nulldir;
 
 	vprintf(stdout, "Extract directories from tape\n");
-	(void) sprintf(dirfile, "%s/rstdir%d", _PATH_TMP, dumpdate);
+	(void) sprintf(dirfile, "%s/rstdir%d-XXXXXX", _PATH_TMP, dumpdate);
+	if (mktemp(dirfile) == NULL) {
+		fprintf(stderr,
+		    "restore: %s - cannot generate directory temporary\n",
+		    dirfile);
+		exit(1);
+	}
 	df = fopen(dirfile, "w");
 	if (df == NULL) {
 		fprintf(stderr,
@@ -161,7 +167,14 @@ extractdirs(genmode)
 		exit(1);
 	}
 	if (genmode != 0) {
-		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+		(void) sprintf(modefile, "%s/rstmode%d-XXXXXX", _PATH_TMP,
+		    dumpdate);
+		if (mktemp(modefile) == NULL) {
+			fprintf(stderr,
+			    "restore: %s - cannot generate modefile\n",
+			    modefile);
+			exit(1);
+		}
 		mf = fopen(modefile, "w");
 		if (mf == NULL) {
 			fprintf(stderr,
