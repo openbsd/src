@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.34 2004/04/21 08:56:08 mickey Exp $
+$OpenBSD: cpudevs,v 1.35 2004/04/21 17:07:02 mickey Exp $
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -209,7 +209,7 @@ board	HP800D		0x5ba	800/D390/R390 (UltraLight 2w U+/240)
 board	HP785_C3000	0x5bb	785/C3000 (AllegroHigh W)
 board	HP785_B1000	0x5bc	785/B1000 (AllegroLow W)
 board	HP785_J5000	0x5bd	785/J5000 (Forte W 2w)
-board	HP800_N400036	0x5be	800/N4000-36/rp7405 (Prelude W)
+board	HP800_N400036	0x5be	800/N4000-36/rp7400 (Prelude W)
 board	HP785_J7000	0x5bf	785/J7000 (Forte W 4w)
 #board			0x5c0	(M2250)
 #board			0x5c1	(M2500)
@@ -223,18 +223,18 @@ board	HP785_C360	0x5c6	780/C360 (Raven W 360)
 board	HP800_L100044	0x5c9	800/L1000-44/rp5400 (Rhapsody DC-440)
 board	HP800_L100036	0x5ca	800/L1000-36/rp5400 (Rhapsody DC-360)
 board	HP897_A50044	0x5cb	897/A500-44/rp2450 (Crescendo 440)
-board	HP800_N400044	0x5cc	800/N4000-44/rp7405 (Prelude W 440)
+board	HP800_N400044	0x5cc	800/N4000-44/rp7400 (Prelude W 440)
 #board			0x5cd	SPP2600
 #board			0x5ce	M2600
 board	HP785_C3600	0x5cf	785/C3600 (Allegro)
 board	HP786_B2000	0x5d0	786/B2000 (Kazoo W+)
 board	HP785_J5600	0x5d1	785/J5600 (Forte W+ 2w)
 board	HP785_J7600	0x5d2	785/J7600 (Forte W+ 4w)
-board	HP800_N400055	0x5d3	800/N4000-55/rp7410 (Prelude W+ 550)
+board	HP800_N400055	0x5d3	800/N4000-55/rp7400 (Prelude W+ 550)
 board	HP785_J6000	0x5d4	785/J6000 (Duet W+)
 board	HP897_A5005X	0x5d5	897/A500-5X/rp2450 (Crescendo 550)
 board	HP897_A40044	0x5d6	897/A400-44/rp2400 (Crescendo 440)
-board	HP800_N40005X	0x5d7	800/N4000-5X/rp7410 (Keystone W+)
+board	HP800_N40005X	0x5d7	800/N4000-5X/rp7410 (Keystone W+ 550)
 board	HP800_L150044	0x5d8	800/L1500-44/rp5430 (Rhapsody wave 2 W+)
 board	HP800_L150036	0x5d9	800/L1500-36/rp5430 (Rhapsody wave 2 W+)
 #board			0x5da	(Marcato W+ DC-)
