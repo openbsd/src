@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.14 2003/06/26 07:20:12 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.15 2003/06/26 18:19:29 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -34,7 +34,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 
 #include "diff.h"
@@ -88,7 +90,6 @@ const char *diff = _PATH_DIFF;
 const char *diffh = _PATH_DIFFH;
 const char *pr = _PATH_PR;
 
-static void noroom(void);
 __dead void usage(void);
 
 int
@@ -178,19 +179,19 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (argc != 2)
-		errx(1, "two filename arguments required");
+		errorx("two filename arguments required");
 	file1 = argv[0];
 	file2 = argv[1];
 	if (hflag && opt)
-		errx(1, "-h doesn't support -D, -c, -C, -e, -f, -I, -n, -u or -U");
+		errorx("-h doesn't support -D, -c, -C, -e, -f, -I, -n, -u or -U");
 	if (!strcmp(file1, "-"))
 		stb1.st_mode = S_IFREG;
 	else if (stat(file1, &stb1) < 0)
-		err(1, "%s", file1);
+		error("%s", file1);
 	if (!strcmp(file2, "-"))
 		stb2.st_mode = S_IFREG;
 	else if (stat(file2, &stb2) < 0)
-		err(1, "%s", file2);
+		error("%s", file2);
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode))
 		diffdir(argv);
 	else
@@ -215,9 +216,9 @@ max(int a, int b)
 __dead void
 done(int sig)
 {
-	if (tempfiles[0])
+	if (tempfiles[0] != NULL)
 		unlink(tempfiles[0]);
-	if (tempfiles[1])
+	if (tempfiles[1] != NULL)
 		unlink(tempfiles[1]);
 	if (sig)
 		_exit(status);
@@ -230,7 +231,7 @@ emalloc(size_t n)
 	void *p;
 
 	if ((p = malloc(n)) == NULL)
-		noroom();
+		error("files too big, try -h");
 	return (p);
 }
 
@@ -240,15 +241,38 @@ erealloc(void *p, size_t n)
 	void *q;
 
 	if ((q = realloc(p, n)) == NULL)
-		noroom();
+		error("files too big, try -h");
 	return (q);
 }
 
-static void
-noroom(void)
+__dead void
+error(const char *fmt, ...)
 {
-	warn("files too big, try -h");
-	done(0);
+	va_list ap;
+	int sverrno = errno;
+
+	if (tempfiles[0] != NULL)
+		unlink(tempfiles[0]);
+	if (tempfiles[1] != NULL)
+		unlink(tempfiles[1]);
+	errno = sverrno;
+	va_start(ap, fmt);
+	verr(status, fmt, ap);
+	va_end(ap);
+}
+
+__dead void
+errorx(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (tempfiles[0] != NULL)
+		unlink(tempfiles[0]);
+	if (tempfiles[1] != NULL)
+		unlink(tempfiles[1]);
+	va_start(ap, fmt);
+	verrx(status, fmt, ap);
+	va_end(ap);
 }
 
 __dead void
@@ -262,5 +286,5 @@ usage(void)
 	    "       diff [-biwt] [-c | -e | -f | -h | -n | -u ] "
 	    "[-l] [-r] [-s] [-S name]\n            dir1 dir2\n");
 
-	exit(1);
+	exit(2);
 }

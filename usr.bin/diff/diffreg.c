@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.20 2003/06/26 04:52:26 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.21 2003/06/26 18:19:29 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -232,49 +232,33 @@ diffreg(void)
 	if (hflag) {
 		diffargv[0] = "diffh";
 		execv(diffh, diffargv);
-		warn("%s", diffh);
-		done(0);
+		error("%s", diffh);
 	}
 	chrtran = (iflag ? cup2low : clow2low);
-	if (strcmp(file1, "-") == 0 && strcmp(file2, "-") == 0) {
-		warnx("can't specify - -");
-		done(0);
-	}
+	if (strcmp(file1, "-") == 0 && strcmp(file2, "-") == 0)
+		errorx("can't specify - -");
 	if (S_ISDIR(stb1.st_mode)) {
 		file1 = splice(file1, file2);
-		if (stat(file1, &stb1) < 0) {
-			warn("%s", file1);
-			done(0);
-		}
+		if (stat(file1, &stb1) < 0)
+			error("%s", file1);
 	} else if (!S_ISREG(stb1.st_mode) || strcmp(file1, "-") == 0) {
 		file1 = copytemp(file1, 1);
-		if (stat(file1, &stb1) < 0) {
-			warn("%s", file1);
-			done(0);
-		}
+		if (stat(file1, &stb1) < 0)
+			error("%s", file1);
 	}
 	if (S_ISDIR(stb2.st_mode)) {
 		file2 = splice(file2, file1);
-		if (stat(file2, &stb2) < 0) {
-			warn("%s", file2);
-			done(0);
-		}
+		if (stat(file2, &stb2) < 0)
+			error("%s", file2);
 	} else if (!S_ISREG(stb2.st_mode) || strcmp(file2, "-") == 0) {
 		file2 = copytemp(file2, 2);
-		if (stat(file2, &stb2) < 0) {
-			warn("%s", file2);
-			done(0);
-		}
+		if (stat(file2, &stb2) < 0)
+			error("%s", file2);
 	}
-	if ((f1 = fopen(file1, "r")) == NULL) {
-		warn("%s", file1);
-		done(0);
-	}
-	if ((f2 = fopen(file2, "r")) == NULL) {
-		warn("%s", file2);
-		fclose(f1);
-		done(0);
-	}
+	if ((f1 = fopen(file1, "r")) == NULL)
+		error("%s", file1);
+	if ((f2 = fopen(file2, "r")) == NULL)
+		error("%s", file2);
 	if (S_ISREG(stb1.st_mode) && S_ISREG(stb2.st_mode) &&
 	    stb1.st_size != stb2.st_size)
 		goto notsame;
@@ -300,9 +284,7 @@ notsame:
 	status = 1;
 	if (!asciifile(f1) || !asciifile(f2)) {
 		printf("Binary files %s and %s differ\n", file1, file2);
-		fclose(f1);
-		fclose(f2);
-		done(0);
+		exit(status);
 	}
 	prepare(0, f1);
 	prepare(1, f2);
@@ -339,7 +321,6 @@ notsame:
 same:
 	if (anychange == 0 && (opt == D_CONTEXT || opt == D_UNIFIED))
 		printf("No differences encountered\n");
-	done(0);
 }
 
 char *tempfiles[2];
@@ -355,17 +336,13 @@ copytemp(const char *file, int n)
 
 	if (strcmp(file, "-") == 0)
 		ifd = STDIN_FILENO;
-	else if ((ifd = open(file, O_RDONLY, 0644)) < 0) {
-		warn("%s", file);
-		done(0);
-	}
+	else if ((ifd = open(file, O_RDONLY, 0644)) < 0)
+		error("%s", file);
 
 	if ((tempdir = getenv("TMPDIR")) == NULL)
 		tempdir = _PATH_TMP;
-	if (asprintf(&tempfile, "%s/diff%d.XXXXXXXX", tempdir, n) == -1) {
-		warn(NULL);
-		done(0);
-	}
+	if (asprintf(&tempfile, "%s/diff%d.XXXXXXXX", tempdir, n) == -1)
+		error(NULL);
 	tempfiles[n - 1] = tempfile;
 
 	signal(SIGHUP, done);
@@ -373,15 +350,12 @@ copytemp(const char *file, int n)
 	signal(SIGPIPE, done);
 	signal(SIGTERM, done);
 	ofd = mkstemp(tempfile);
-	if (ofd < 0) {
-		warn("%s", tempfile);
-		done(0);
+	if (ofd < 0)
+		error("%s", tempfile);
+	while ((i = read(ifd, buf, BUFSIZ)) > 0) {
+		if (write(ofd, buf, i) != i)
+			error("%s", tempfile);
 	}
-	while ((i = read(ifd, buf, BUFSIZ)) > 0)
-		if (write(ofd, buf, i) != i) {
-			warn("%s", tempfile);
-			done(0);
-		}
 	close(ifd);
 	close(ofd);
 	return (tempfile);
@@ -393,10 +367,8 @@ splice(char *dir, char *file)
 	char *tail, *buf;
 	size_t len;
 
-	if (!strcmp(file, "-")) {
-		warnx("can't specify - with other arg directory");
-		done(0);
-	}
+	if (!strcmp(file, "-"))
+		errorx("can't specify - with other arg directory");
 	tail = strrchr(file, '/');
 	if (tail == NULL)
 		tail = file;
@@ -573,14 +545,10 @@ check(void)
 	int i, j, jackpot, c, d;
 	long ctold, ctnew;
 
-	if ((input[0] = fopen(file1, "r")) == NULL) {
-		perror(file1);
-		done(0);
-	}
-	if ((input[1] = fopen(file2, "r")) == NULL) {
-		perror(file2);
-		done(0);
-	}
+	if ((input[0] = fopen(file1, "r")) == NULL)
+		error("%s", file1);
+	if ((input[1] = fopen(file2, "r")) == NULL)
+		error("%s", file2);
 	j = 1;
 	ixold[0] = ixnew[0] = 0;
 	jackpot = 0;

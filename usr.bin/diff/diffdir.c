@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.13 2003/06/25 22:14:43 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.14 2003/06/26 18:19:29 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -186,7 +186,7 @@ setfile(char **fpp, char **epp, char *file)
 	*fpp = emalloc(MAXPATHLEN);
 	len = strlcpy(*fpp, file, MAXPATHLEN);
 	if (len >= MAXPATHLEN - 1)
-		errx(1, "%s: %s", file, strerror(ENAMETOOLONG));
+		errorx("%s: %s", file, strerror(ENAMETOOLONG));
 	cp = *fpp + len - 1;
 	if (*cp == '/')
 		++cp;
@@ -239,10 +239,8 @@ setupdir(char *cp)
 	DIR *dirp;
 
 	dirp = opendir(cp);
-	if (dirp == NULL) {
-		warn("%s", cp);
-		done(0);
-	}
+	if (dirp == NULL)
+		error("%s", cp);
 	nitems = 0;
 	dp = emalloc(sizeof(struct dir));
 	while ((rp = readdir(dirp))) {
@@ -284,12 +282,12 @@ compare(struct dir *dp)
 	strlcpy(efile2, dp->d_entry, file2 + MAXPATHLEN - efile2);
 	f1 = open(file1, 0);
 	if (f1 < 0) {
-		perror(file1);
+		warn("%s", file1);
 		return;
 	}
 	f2 = open(file2, 0);
 	if (f2 < 0) {
-		perror(file2);
+		warn("%s", file2);
 		close(f1);
 		return;
 	}
@@ -378,10 +376,8 @@ calldiff(char *wantpr)
 		    "%s %s", file1, file2);
 		pipe(pv);
 		pid = fork();
-		if (pid == -1) {
-			warnx("No more processes");
-			done(0);
-		}
+		if (pid == -1)
+			errorx("No more processes");
 		if (pid == 0) {
 			close(0);
 			dup(pv[0]);
@@ -389,15 +385,12 @@ calldiff(char *wantpr)
 			close(pv[1]);
 			execv(pr + 4, prargs);
 			execv(pr, prargs);
-			perror(pr);
-			done(0);
+			errorx("%s", pr);
 		}
 	}
 	pid = fork();
-	if (pid == -1) {
-		warnx("No more processes");
-		done(0);
-	}
+	if (pid == -1)
+		errorx("No more processes");
 	if (pid == 0) {
 		if (wantpr) {
 			close(1);
@@ -407,8 +400,7 @@ calldiff(char *wantpr)
 		}
 		execv(diff + 4, diffargv);
 		execv(diff, diffargv);
-		perror(diff);
-		done(0);
+		error("%s", diff);
 	}
 	if (wantpr) {
 		close(pv[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.9 2003/06/26 04:52:26 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.10 2003/06/26 18:19:29 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -76,4 +76,6 @@ void	diffdir(char **);
 void	diffreg(void);
 int	max(int, int);
 int	min(int, int);
+__dead void error(const char *, ...);
+__dead void errorx(const char *, ...);
 __dead void done(int);
