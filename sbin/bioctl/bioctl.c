@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.7 2005/04/06 02:36:34 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.8 2005/04/06 20:51:46 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/queue.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_ses.h>
 #include <dev/biovar.h>
 
 #include "bioctl.h"
@@ -446,7 +447,7 @@ void
 bio_blink_userland(u_int8_t opc, u_int8_t c, u_int8_t t)
 {
 	struct dev *delm;
-	struct scsi_enc_ctrl_diag_page *cdp;
+	struct ses_enc_ctrl_diag_page *cdp;
 
 	u_int8_t rc[SESSIZE];
 
@@ -472,7 +473,7 @@ bio_blink_userland(u_int8_t opc, u_int8_t c, u_int8_t t)
 			return;
 		}
 
-		cdp = (struct scsi_enc_ctrl_diag_page *)rc;
+		cdp = (struct ses_enc_ctrl_diag_page *)rc;
 
 		cdp->elmts[0].common_ctrl = 0x80;
 		switch (opc) {
