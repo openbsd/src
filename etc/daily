@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.37 2001/10/24 11:32:13 espie Exp $
+#	$OpenBSD: daily,v 1.38 2001/10/29 18:16:23 millert Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -113,19 +113,6 @@ fi
 	}
 }
 
-echo ""
-if [ -d /var/yp/binding -a ! -d /var/yp/`domainname` -o "X$CALENDAR" = X0 ]
-then
-	if [ "X$CALENDAR" = X0 ]; then
-		echo "Not running calendar, (disabled)."
-	else
-		echo "Not running calendar, (yp client)."
-	fi
-else
-	echo "Running calendar in the background."
-	calendar -a &
-fi
-
 # Rotation of mail log now handled automatically by cron and 'newsyslog'
 
 echo ""
@@ -153,6 +140,19 @@ t=/var/rwho/*
 if [ "$t" != '/var/rwho/*' ]; then
 	echo ""
 	ruptime
+fi
+
+echo ""
+if [ -d /var/yp/binding -a ! -d /var/yp/`domainname` -o "X$CALENDAR" = X0 ]
+then
+	if [ "X$CALENDAR" = X0 ]; then
+		echo "Not running calendar, (disabled)."
+	else
+		echo "Not running calendar, (yp client)."
+	fi
+else
+	echo "Running calendar in the background."
+	calendar -a &
 fi
 
 # If CHECKFILESYSTEMS is set to 1 in the environment, run fsck
