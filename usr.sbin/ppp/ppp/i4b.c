@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: i4b.c,v 1.5 2001/06/19 10:24:53 brian Exp $
+ *	$OpenBSD: i4b.c,v 1.6 2001/10/24 10:01:13 brian Exp $
  */
 
 #include <sys/param.h>
@@ -39,8 +39,13 @@
 #include <machine/i4b_ioctl.h>
 #include <machine/i4b_rbch_ioctl.h>
 #else
+#ifdef __NetBSD__
+#include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_rbch_ioctl.h>
+#else
 #include <i4b/i4b_ioctl.h>
 #include <i4b/i4b_rbch_ioctl.h>
+#endif
 #endif
 #include <stdio.h>
 #include <stdlib.h>
