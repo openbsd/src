@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.156 2003/02/20 22:09:27 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.157 2003/03/07 12:55:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -182,7 +182,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-AdehnNqrROvz] ", __progname);
+	fprintf(stderr, "usage: %s [-AdeghnNqrROvz] ", __progname);
 	fprintf(stderr, "[-a anchor[:ruleset]] [-D macro=value]\n");
 	fprintf(stderr, "             ");
 	fprintf(stderr, "[-f file] [-F modifier] [-k host] [-s modifier]\n");
@@ -482,7 +482,7 @@ pfctl_clear_pool(struct pf_pool *pool)
 void
 pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 {
-	if (opts & PF_OPT_VERBOSE2) {
+	if (opts & PF_OPT_DEBUG) {
 		const char *t[PF_SKIP_COUNT] = { "i", "d", "f",
 		    "p", "sa", "sp", "da", "dp" };
 		int i;
@@ -511,6 +511,7 @@ pfctl_show_rules(int dev, int opts, int format)
 {
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr;
+	int rule_numbers = opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG);
 
 	if (*anchorname && !*rulesetname) {
 		struct pfioc_ruleset pr;
@@ -566,8 +567,7 @@ pfctl_show_rules(int dev, int opts, int format)
 		case 1:
 			if (pr.rule.label[0]) {
 				if (opts & PF_OPT_VERBOSE)
-					print_rule(&pr.rule,
-					    opts & PF_OPT_VERBOSE2);
+					print_rule(&pr.rule, rule_numbers);
 				else
 					printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu\n",
@@ -576,7 +576,7 @@ pfctl_show_rules(int dev, int opts, int format)
 			}
 			break;
 		default:
-			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
+			print_rule(&pr.rule, rule_numbers);
 			pfctl_print_rule_counters(&pr.rule, opts);
 		}
 		pfctl_clear_pool(&pr.rule.rpool);
@@ -602,8 +602,7 @@ pfctl_show_rules(int dev, int opts, int format)
 		case 1:
 			if (pr.rule.label[0]) {
 				if (opts & PF_OPT_VERBOSE)
-					print_rule(&pr.rule,
-					    opts & PF_OPT_VERBOSE2);
+					print_rule(&pr.rule, rule_numbers);
 				else
 					printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu\n",
@@ -612,7 +611,7 @@ pfctl_show_rules(int dev, int opts, int format)
 			}
 			break;
 		default:
-			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
+			print_rule(&pr.rule, rule_numbers);
 			pfctl_print_rule_counters(&pr.rule, opts);
 		}
 		pfctl_clear_pool(&pr.rule.rpool);
@@ -1264,7 +1263,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:AdD:eqf:F:hk:nNOrRs:t:T:vx:z")) !=
+	while ((ch = getopt(argc, argv, "a:AdD:eqf:F:ghk:nNOrRs:t:T:vx:z")) !=
 		-1) {
 		switch (ch) {
 		case 'a':
@@ -1316,6 +1315,9 @@ main(int argc, char *argv[])
 		case 'f':
 			rulesopt = optarg;
 			mode = O_RDWR;
+			break;
+		case 'g':
+			opts |= PF_OPT_DEBUG;
 			break;
 		case 'A':
 			loadopt &= ~PFCTL_FLAG_ALL;
