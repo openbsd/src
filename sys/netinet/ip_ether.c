@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.41 2002/10/15 14:52:46 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.42 2003/03/06 09:43:35 markus Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -36,6 +36,7 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -51,6 +52,7 @@
 #include <net/if_gif.h>
 
 #include "gif.h"
+#include "bpfilter.h"
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -239,6 +241,18 @@ etherip_input(struct mbuf *m, ...)
 		m_freem(m);
 		return;
 	}
+#if NBPFILTER > 0
+	if (gif_softc[i].gif_if.if_bpf) {
+		struct mbuf m0;
+		u_int32_t af = sdst.sa.sa_family;
+
+		m0.m_next = m;
+		m0.m_len = 4;
+		m0.m_data = (char *)&af;
+
+		bpf_mtap(gif_softc[i].gif_if.if_bpf, &m0);
+	}
+#endif
 
 #if NBRIDGE > 0
 	/*
