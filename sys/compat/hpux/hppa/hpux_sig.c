@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.2 2004/07/11 00:20:46 mickey Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.3 2004/07/11 00:29:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff.  All rights reserved.
@@ -421,13 +421,8 @@ hpux_sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct hpux_sigaltstack *) nss;
 		syscallarg(struct hpux_sigaltstack *) oss;
 	} */ *uap = v;
-	struct hpux_sigaltstack {
-		void	*ss_sp;
-		int	ss_flags;
-#define	HPUX_SS_DISABLE	0x0002
-		size_t	ss_size;
-	} hsa;
 	struct sys_sigaltstack_args saa;
+	struct hpux_sigaltstack hsa;
 	struct sigaltstack *psa, sa;
 	caddr_t sg;
 	int error;

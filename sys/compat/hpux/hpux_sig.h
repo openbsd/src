@@ -1,7 +1,8 @@
-/*	$OpenBSD: hpux_sig.h,v 1.3 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: hpux_sig.h,v 1.4 2004/07/11 00:29:30 mickey Exp $	*/
 /*	$NetBSD: hpux_sig.h,v 1.1 1997/04/01 19:59:03 scottr Exp $	*/
 
 /*
+ * Copyright (c) 2004 Michael Shalayeff.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +41,15 @@
  */
 
 /*
- * Signal-related HPUX compatibility routines
+ * Signal-related HPUX compatibility routines and data types
  */
+
+struct hpux_sigaltstack {
+	void	*ss_sp;
+	int	ss_flags;
+	size_t	ss_size;
+};
+#define	HPUX_SS_DISABLE	0x0002
 
 #ifdef _KERNEL
 int	hpuxtobsdsig(int);
