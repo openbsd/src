@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcibios.4,v 1.1 2000/08/17 20:20:46 mickey Exp $
+.\" $OpenBSD: pcibios.4,v 1.2 2000/08/17 21:50:03 deraadt Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 2000 Michale Shalayeff, All rights reserved.
@@ -65,33 +65,31 @@ boots.
 Flags is a bit mask each bit of which specifies which fixup procedures to
 ommit. The following list specifies these procedures and gives
 flags bit values to disable them in case they cause problems.
-
-.Bl -tag -width 0x0000 -offset 3n
-
+.Pp
+.Bl -tag -width 0x0000
 .It 0x0001
-fixup PCI I/O and memory addresses.
+Fixup PCI I/O and memory addresses.
 .Pp
 Some BIOS implementations don't allocate I/O space and
-memory space for some PCI devices. Especially, a BIOS
-which is
-.Qq PnP OS mode enabled
-shows this behavior.
+memory space for all PCI devices. Especially, a BIOS
+which has
+.Qq PnP OS mode
+enabled shows this behavior.
 Since necessary space isn't allocated, those devices
 will not work without special handling.
-
+.Pp
 Without this flag force allocation of I/O space and memory space
 instead of relying upon the BIOS to do so.
-
+.Pp
 If necessary space is already correctly assigned to the devices,
 this option leaves the space as is.
-
+.Pp
 Although many BIOS implementations leave CardBus bridges'
 space unallocated, the CardBus bridge device driver doesn't
 require this option, since the driver allocates necessary space
 by itself.
-
 .It 0x0002
-fixup PCI bus numbering; needed for many 
+Fixup PCI bus numbering; needed for many 
 .Xr cardbus 4
 bridges.
 .Pp
@@ -99,7 +97,7 @@ Each PCI bus and CardBus should have a unique bus number.
 But some BIOS implementations don't assign a bus number
 for subordinate PCI buses. And many BIOS implementations
 don't assign a bus number for CardBuses.
-
+.Pp
 A typical symptom of this is the following boot message:
 .D1 Sy cardbus0 at cardslot0: bus 0 device 0...
 Please note that this cardbus0 has a bus number
@@ -113,26 +111,24 @@ show correct device ID,
 because its bus number 0 incorrectly refers to the primary 
 PCI bus, and a device ID in the primary PCI bus is shown
 in the boot message instead of the device's ID in the cardbus0.
-
+.Pp
 Without this flag force assignment of bus numbers for all subordinate
 PCI buses and CardBuses.
-
+.Pp
 Since this procedure renumbers all PCI buses and CardBuses,
 all bus numbers of subordinate buses become different
 when this option is enabled.
-
 .It 0x0004
-fixup PCI interrupt routing.
+Fixup PCI interrupt routing.
 .Pp
 Some BIOS implementations don't assign an interrupt for
 some devices.
-
+.Pp
 This procedure assigns an interrupt for such devices instead
 of relying upon the BIOS to do so.
-
+.Pp
 If the BIOS has already assigned an interrupt to a device, this
 procedure leaves the interrupt as is.
-
 .\" .It Nm PCIBIOS_IRQS_HINT
 .\" hint for IRQ use.
 .\" When the
