@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.14 2000/02/17 20:18:00 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.15 2000/02/18 17:40:04 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -277,15 +277,15 @@ dvma_mapout(kva, va, len)
 /*ARGSUSED*/
 void
 vmapbuf(bp, sz)
-	register struct buf *bp;
+	struct buf *bp;
 	vsize_t sz;
 {
-	register vaddr_t addr, kva;
+	vaddr_t addr, kva;
 	paddr_t pa;
-	register vsize_t size, off;
-	register int npf;
+	vsize_t size, off;
+	int npf;
 	struct proc *p;
-	register struct vm_map *map;
+	struct vm_map *map;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -298,7 +298,20 @@ vmapbuf(bp, sz)
 	off = addr & PGOFSET;
 	size = round_page(bp->b_bcount + off);
 #if defined(UVM)
-	kva = uvm_km_valloc_wait(kernel_map, size);
+	/*
+	 * Note that this is an expanded version of:
+	 *   kva = uvm_km_valloc_wait(kernel_map, size);
+	 * We do it on our own here to be able to specify an offset to uvm_map
+	 * so that we can get all benefits of PMAP_PREFER.
+	 */
+	while (1) {
+		kva = vm_map_min(kernel_map);
+		if (uvm_map(kernel_map, &kva, size, NULL, addr,
+		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == KERN_SUCCESS)
+			break;
+		tsleep(kernel_map, PVM, "vallocwait", 0);
+	}
 #else
 	kva = kmem_alloc_wait(kernel_map, size);
 #endif
