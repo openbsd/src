@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.135 2001/08/21 06:53:36 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.136 2001/08/22 14:18:36 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1021,6 +1021,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_AUTH_LEVEL:
 		case IP_ESP_TRANS_LEVEL:
 		case IP_ESP_NETWORK_LEVEL:
+		case IP_IPCOMP_LEVEL:
 #ifndef IPSEC
 			error = EOPNOTSUPP;
 #else
