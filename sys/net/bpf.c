@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.44 2004/02/24 21:43:55 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.45 2004/05/08 20:54:13 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -292,6 +292,12 @@ bpf_detachd(d)
 #define D_MARKUSED(d) ((d)->bd_next = 0)
 
 /*
+ * Reference count access to descriptor buffers
+ */
+#define D_GET(d) ((d)->bd_ref++)
+#define D_PUT(d) bpf_freed(d)
+
+/*
  * bpfilterattach() is called at boot time in new systems.  We do
  * nothing here since old systems will not call this.
  */
@@ -344,6 +350,8 @@ bpfopen(dev, flag, mode, p)
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_sig = SIGIO;
 
+	D_GET(d);
+
 	return (0);
 }
 
@@ -365,8 +373,8 @@ bpfclose(dev, flag, mode, p)
 	s = splimp();
 	if (d->bd_bif)
 		bpf_detachd(d);
+	D_PUT(d);
 	splx(s);
-	bpf_freed(d);
 
 	return (0);
 }
@@ -407,6 +415,8 @@ bpfread(dev, uio, ioflag)
 
 	s = splimp();
 
+	D_GET(d);
+	
 	/*
 	 * bd_rdStart is tagged when we start the read, iff there's a timeout.
 	 * we can then figure out when we're done reading.
@@ -442,6 +452,7 @@ bpfread(dev, uio, ioflag)
 				error = 0;
 		}
 		if (error == EINTR || error == ERESTART) {
+			D_PUT(d);
 			splx(s);
 			return (error);
 		}
@@ -460,6 +471,7 @@ bpfread(dev, uio, ioflag)
 				break;
 
 			if (d->bd_slen == 0) {
+				D_PUT(d);
 				splx(s);
 				return (0);
 			}
@@ -483,6 +495,8 @@ bpfread(dev, uio, ioflag)
 	d->bd_fbuf = d->bd_hbuf;
 	d->bd_hbuf = 0;
 	d->bd_hlen = 0;
+
+	D_PUT(d);
 	splx(s);
 
 	return (error);
@@ -1280,18 +1294,19 @@ bpf_allocbufs(d)
 }
 
 /*
- * Free buffers currently in use by a descriptor.
- * Called on close.
+ * Free buffers currently in use by a descriptor
+ * when the reference count drops to zero.
  */
 void
 bpf_freed(d)
 	struct bpf_d *d;
 {
-	/*
-	 * We don't need to lock out interrupts since this descriptor has
-	 * been detached from its interface and it yet hasn't been marked
-	 * free.
-	 */
+	d->bd_ref--;
+	if (d->bd_ref > 0) {
+		bpf_wakeup(d);
+		return;
+	}
+
 	if (d->bd_sbuf != 0) {
 		free(d->bd_sbuf, M_DEVBUF);
 		if (d->bd_hbuf != 0)
