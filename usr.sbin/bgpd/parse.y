@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.141 2004/10/19 12:02:50 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.142 2004/11/04 14:05:46 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1486,6 +1486,17 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct sym		*sym, *next;
 	struct peer		*p, *pnext;
 
+	if ((fin = fopen(filename, "r")) == NULL) {
+		warn("%s", filename);
+		return (-1);
+	}
+	infile = filename;
+
+	if (check_file_secrecy(fileno(fin), filename)) {
+		fclose(fin);
+		return (-1);
+	}
+
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
 	if ((mrtconf = calloc(1, sizeof(struct mrt_head))) == NULL)
@@ -1507,21 +1518,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	filter_l = xfilter_l;
 	TAILQ_INIT(filter_l);
 	conf->opts = xconf->opts;
-
-	if ((fin = fopen(filename, "r")) == NULL) {
-		warn("%s", filename);
-		free(conf);
-		free(mrtconf);
-		return (-1);
-	}
-	infile = filename;
-
-	if (check_file_secrecy(fileno(fin), filename)) {
-		fclose(fin);
-		free(conf);
-		free(mrtconf);
-		return (-1);
-	}
 
 	yyparse();
 
