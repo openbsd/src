@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2002/02/23 16:59:36 matthieu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2002/03/08 02:52:36 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -210,16 +210,11 @@ initppc(startkernel, endkernel, args)
 #endif
 	extern void consinit __P((void));
 	extern void callback __P((void *));
+	extern void *msgbuf_addr;
 	int exc, scratch;
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
-
-	/*
-	 * XXX We use the page just above the interrupt vector as
-	 * message buffer
-	 */
-	initmsgbuf((void *)0x3000, MSGBUFSIZE);
 
 where = 3;
 	curpcb = &proc0paddr->u_pcb;
@@ -382,6 +377,11 @@ where = 3;
 
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+	/*
+	 * use the memory provided by pmap_bootstrap for message buffer
+	 */
+	initmsgbuf(msgbuf_addr, MSGBUFSIZE);
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.

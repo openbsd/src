@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2002/01/25 04:04:55 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.59 2002/03/08 02:52:36 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -458,6 +458,8 @@ pte_spill(addr)
 	return 0;
 }
 
+void *msgbuf_addr;	 /* memory for msgbuf, physical, mapped with BATs */
+
 int avail_start;
 int avail_end;
 /*
@@ -564,6 +566,22 @@ pmap_bootstrap(kernelstart, kernelend)
 			bcopy(mp1, mp1 + 1, (void *)mp - (void *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
+		}
+	}
+	/*
+	 * grab first available memory for msgbuf
+	 */
+	for (mp = avail; mp->size; mp++) {
+		if (mp->size >= MSGBUFSIZE) {
+			mp->size -= MSGBUFSIZE;
+			msgbuf_addr = (void *)mp->start;
+			mp->start += MSGBUFSIZE;
+			if (mp->size == 0) {
+				bcopy(mp + 1, mp,
+				      (cnt - (mp - avail)) * sizeof *mp);
+				cnt--;
+			}
+			break;
 		}
 	}
 #if 0
