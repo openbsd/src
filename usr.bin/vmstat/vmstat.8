@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.22 2001/11/09 00:56:24 miod Exp $
+.\"	$OpenBSD: vmstat.8,v 1.23 2002/02/01 14:34:03 art Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@
 .Nd report virtual memory statistics
 .Sh SYNOPSIS
 .Nm vmstat
-.Op Fl fimst
+.Op Fl fimstv
 .Nm vmstat
 .Op Fl c Ar count
 .Op Fl M Ar core
@@ -98,6 +98,8 @@ seconds between each display.
 If no repeat
 .Ar count
 is specified, the default is infinity.
+.It Fl v
+Print more verbose information.
 .El
 .Pp
 By default,
