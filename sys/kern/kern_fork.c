@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.11 1997/08/01 22:54:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.12 1999/01/10 02:20:20 niklas Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -64,12 +64,6 @@ int	nprocs = 1;		/* process 0 */
 int	randompid;		/* when set to 1, pid's go random */
 pid_t	lastpid;
 
-#define	ISFORK	0
-#define	ISVFORK	1
-#define	ISRFORK	2
-
-int fork1 __P((struct proc *, int, int, register_t *));
-
 /*ARGSUSED*/
 int
 sys_fork(p, v, retval)
@@ -126,8 +120,6 @@ fork1(p1, forktype, rforkflags, retval)
 			return (EINVAL);
 		if (rforkflags & RFFDG)
 			dupfd = 1;
-		if (rforkflags & RFNOWAIT)
-			return (EINVAL);	/* XXX unimplimented */
 		if (rforkflags & RFCFDG)
 			cleanfd = 1;
 	}
@@ -268,7 +260,7 @@ again:
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
 	if (rforkflags & RFNOWAIT) {
-		/* XXX should we do anything? */
+		p2->p_flag |= P_NOZOMBIE;
 	} else {
 		LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	}
