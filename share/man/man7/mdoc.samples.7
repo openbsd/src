@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.54 2004/06/30 13:59:08 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.55 2004/06/30 15:14:18 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -169,23 +169,26 @@ outlined as follows:
 .It "UNIX Macro" .
 .It "Emphasis Macro" .
 .It "Font mode" .
-.It "Enclosure/Quoting Macros"
+.It "Enclosure and Quoting Macros"
 .Bl -tag -width flag -compact -offset indent
 .It "Angle Bracket Quote/Enclosure" .
 .It "Bracket Quote/Enclosure" .
 .It "Double Quote macro/Enclosure" .
+.It "Enclose String macro" .
 .It "Parenthesis Quote/Enclosure" .
-.It "Single Quote/Enclosure" .
-.It "Prefix Macro" .
+.It "Quoted Literal macro/Enclosure" .
+.It "Straight Double Quote macro/Enclosure" .
+.It "Single Quote macro/Enclosure" .
 .El
-.It "Extended Arguments" .
 .It "No\-Op or Normal Text Macro" .
 .It "No Space Macro" .
+.It "Prefix Macro" .
 .It "Section Cross References" .
+.It "Space Mode Macro" .
 .It "Symbolic Macro" .
 .It "Mathematical Symbols" .
 .It "References and Citations" .
-.It "Trade Names (Acronyms and Type Names)" .
+.It "Trade Names (or Acronyms and Type Names)" .
 .It "Extended Arguments" .
 .It "Miscellaneous Macros" .
 .El
@@ -1883,21 +1886,6 @@ an item is only quoted if the width
 of the item is less than three constant width characters.
 This is to make short strings more visible where the font change
 to literal (constant width) is less noticeable.
-.It Li \&.Pf
-The prefix macro is not callable, but it is parsed:
-.Bl -tag -width "(namexx" -offset indent
-.It Li ".Pf ( Fa name2"
-becomes
-.Pf ( Fa name2 .
-.El
-.It Li \&.Ns
-The
-.Ql \&.Ns
-(no space) macro, which
-.Em is
-callable, performs the analogous suffix function.
-It implies
-.Dq \&.No .
 .El
 .Pp
 Examples of quoting:
@@ -1974,6 +1962,18 @@ follows it.
 The macro
 .Ql \&.Ns
 is parsed and is callable.
+.Ss Prefix Macro
+The
+.Ql \&.Pf
+macro eliminates unwanted spaces between its
+first and second arguments.
+.Bl -tag -width ".Pf ( Fa name2XXXXXXXXXXXX" -offset indent
+.It Li ".Pf ( Fa name2"
+produces
+.Pf ( Fa name2
+.El
+.Pp
+The prefix macro is not callable, but it is parsed.
 .Ss Section Cross References
 The
 .Ql \&.Sx
@@ -1984,7 +1984,26 @@ It is parsed and is callable.
 .It Li \&.Sx FILES
 .Sx FILES
 .El
-.Ss Symbolic
+.Ss Space Mode Macro
+The
+.Ql \&.Sm
+macro turns spacing on or off.
+It is especially useful in situations where the
+.Ql \&.Ns
+macro may be too clumsy to use.
+An argument of either
+.Fl on
+or
+.Fl off
+must be specified, to turn spacing on or off, respectively.
+.Pp
+.Dl Usage: .Sm -on | -off
+.Pp
+See
+.Sx Extended Arguments
+.Pq below
+for example usage.
+.Ss Symbolic Macro
 The symbolic emphasis macro is generally a boldface macro in
 either the symbolic sense or the traditional English usage.
 .Pp
@@ -2220,10 +2239,6 @@ The
 .Nm \-mdoc
 macro package describes it as
 .Dq old function type (fortran) .
-.It \&.Sm
-Toggles spacing on or off.
-.Pp
-.Dl Usage: \&.Sm [on | off]
 .It \&.Ud
 Prints
 .Dq currently under development.
