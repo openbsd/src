@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 2004/03/17 14:16:04 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 2004/08/01 07:34:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -625,10 +625,10 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		dbp->b_dev = dev;
 
 		/* read LIF directory */
-		dbp->b_blkno = btodb(LIF_DIRSTART);
+		dbp->b_blkno = lifstodb(osdep->u._hppa.lifvol.vol_addr);
 		dbp->b_bcount = lp->d_secsize;
 		dbp->b_flags = B_BUSY | B_READ;
-		dbp->b_cylin = (LIF_DIRSTART) / lp->d_secpercyl;
+		dbp->b_cylin = dbp->b_blkno / lp->d_secpercyl;
 		(*strat)(dbp);
 
 		if (biowait(dbp)) {
@@ -646,13 +646,100 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 
 		/* scan for LIF_DIR_FS dir entry */
 		for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
-		    fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++)
-			if (p->dir_type == LIF_DIR_FS)
-				fsoff = lifstodb(p->dir_addr);
+		    fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++) {
+			if (p->dir_type == LIF_DIR_FS ||
+			    p->dir_type == LIF_DIR_HPLBL)
+				break;
+		}
+
+		if (p->dir_type == LIF_DIR_FS)
+			fsoff = lifstodb(p->dir_addr);
+		else if (p->dir_type == LIF_DIR_HPLBL) {
+			struct hpux_label *hl;
+			struct partition *pp;
+			u_int8_t fstype;
+			int i;
+
+			dev = bp->b_dev;
+			dbp = geteblk(LIF_DIRSIZE);
+			dbp->b_dev = dev;
+
+			/* read LIF directory */
+			dbp->b_blkno = lifstodb(p->dir_addr);
+			dbp->b_bcount = lp->d_secsize;
+			dbp->b_flags = B_BUSY | B_READ;
+			dbp->b_cylin = dbp->b_blkno / lp->d_secpercyl;
+			(*strat)(dbp);
+
+			if (biowait(dbp)) {
+				if (partoffp)
+					*partoffp = -1;
+
+				dbp->b_flags |= B_INVAL;
+				brelse(dbp);
+				return ("HOUX label I/O error");
+			}
+
+			bcopy(dbp->b_data, &osdep->u._hppa.hplabel,
+			    sizeof(osdep->u._hppa.hplabel));
+			dbp->b_flags |= B_INVAL;
+			brelse(dbp);
+
+			hl = &osdep->u._hppa.hplabel;
+			if (hl->hl_magic1 != hl->hl_magic2 ||
+			    hl->hl_magic != HPUX_MAGIC ||
+			    hl->hl_version != 1) {
+				if (partoffp)
+					*partoffp = -1;
+
+				return "HPUX label magic mismatch";
+			}
+
+			lp->d_bbsize = 8192;
+			lp->d_sbsize = 8192;
+			for (i = 0; i < MAXPARTITIONS; i++) {
+				lp->d_partitions[i].p_size = 0;
+				lp->d_partitions[i].p_offset = 0;
+				lp->d_partitions[i].p_fstype = 0;
+			}
+
+			for (i = 0; i < HPUX_MAXPART; i++) {
+				if (!hl->hl_flags[i])
+					continue;
+
+				if (hl->hl_flags[i] == HPUX_PART_ROOT) {
+					pp = &lp->d_partitions[0];
+					fstype = FS_BSDFFS;
+				} else if (hl->hl_flags[i] == HPUX_PART_SWAP) {
+					pp = &lp->d_partitions[1];
+					fstype = FS_SWAP;
+				} else if (hl->hl_flags[i] == HPUX_PART_BOOT) {
+					pp = &lp->d_partitions[RAW_PART + 1];
+					fstype = FS_BSDFFS;
+				} else
+					continue;
+
+				pp->p_size = hl->hl_parts[i].hlp_length * 2;
+				pp->p_offset = hl->hl_parts[i].hlp_start * 2;
+				pp->p_fstype = fstype;
+			}
+
+			lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+			lp->d_partitions[RAW_PART].p_offset = 0;
+			lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+			lp->d_npartitions = MAXPARTITIONS;
+			lp->d_magic = DISKMAGIC;
+			lp->d_magic2 = DISKMAGIC;
+			lp->d_checksum = 0;
+			lp->d_checksum = dkcksum(lp);
+
+			return (NULL);
+		}
 
 		/* if no suitable lifdir entry found assume zero */
-		if (fsoff < 0)
+		if (fsoff < 0) {
 			fsoff = 0;
+		}
 	}
 
 	if (partoffp)

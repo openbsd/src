@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.6 2003/01/14 22:38:36 mickey Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.7 2004/08/01 07:34:18 mickey Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -296,9 +296,31 @@ struct lif_load {
 	int count;
 };
 
+#define	HPUX_MAGIC	0x8b7f6a3c
+#define	HPUX_MAXPART	16
+struct hpux_label {
+	int32_t		hl_magic1;
+	u_int32_t	hl_magic;
+	int32_t		hl_version;
+	struct {
+		int32_t	hlp_blah[2];
+		int32_t	hlp_start;
+		int32_t	hlp_length;
+	}		hl_parts[HPUX_MAXPART];
+	u_int8_t	hl_flags[HPUX_MAXPART];
+#define	HPUX_PART_ROOT	0x10
+#define	HPUX_PART_SWAP	0x14
+#define	HPUX_PART_BOOT	0x32
+	int32_t		hl_blah[3*16];
+	u_int16_t	hl_boot;
+	u_int16_t	hl_reserved;
+	int32_t		hl_magic2;
+};
+
 #define LIF_VOL_ID	-32768
 #define LIF_VOL_OCT	4096
 #define LIF_DIR_SWAP	0x5243
+#define LIF_DIR_HPLBL	0xa271
 #define	LIF_DIR_FS	0xcd38
 #define	LIF_DIR_IOMAP	0xcd60
 #define	LIF_DIR_HPUX	0xcd80
@@ -311,7 +333,7 @@ struct lif_load {
 #define LIF_DIR_FLAG	0x8001	/* dont ask me! */
 #define	LIF_SECTSIZE	256
 
-#define LIF_NUMDIR	8
+#define LIF_NUMDIR	16
 
 #define LIF_VOLSTART	0
 #define LIF_VOLSIZE	sizeof(struct lifvol)
@@ -343,6 +365,7 @@ struct cpu_disklabel {
 		struct {
 			struct lifvol lifvol;
 			struct lifdir lifdir[LIF_NUMDIR];
+			struct hpux_label hplabel;
 		} _hppa;
 	} u;
 };
