@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.2 2004/06/05 15:07:06 miod Exp $
+.\" $OpenBSD: re.4,v 1.3 2004/06/05 19:12:37 pvalchev Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -36,21 +36,23 @@
 .Os
 .Sh NAME
 .Nm re
-.Nd "RealTek 8139C+/8169/8169S/8110S PCI ethernet adapter driver"
+.\" .Nd "RealTek 8139C+/8169/8169S/8110S PCI ethernet adapter driver"
+.Nd "Realtek 8169/8169S/8110S PCI ethernet adapter driver"
 .Sh SYNOPSIS
 .Cd "re* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for various NICs based on the RealTek RTL8139C+,
+driver provides support for various NICs based on the
+.\" RealTek RTL8139C+,
 RTL8169, RTL8169S and RTL8110S PCI ethernet controllers, including
 the following:
 .Pp
 .Bl -bullet -compact
-.It
-Alloy Computer Products EtherGOLD 1439E 10/100 (8139C+)
-.It
-Compaq Evo N1015v Integrated Ethernet (8139C+)
+.\" .It
+.\" Alloy Computer Products EtherGOLD 1439E 10/100 (8139C+)
+.\" .It
+.\" Compaq Evo N1015v Integrated Ethernet (8139C+)
 .It
 Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
 .It
@@ -58,10 +60,10 @@ PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 .It
 Xterasys XN-152 10/100/1000 NIC (8169)
 .El
-.Pp
-NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over CAT5
-cable. NICs based on the 8169, 8169S and 8110S are capable of 10, 100 and
-1000Mbps operation.
+.\" .Pp
+.\" NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over CAT5
+.\" cable. NICs based on the 8169, 8169S and 8110S are capable of 10, 100 and
+.\" 1000Mbps operation.
 .\" .Pp
 .\" All NICs supported by the
 .\" .Nm
@@ -69,7 +71,7 @@ cable. NICs based on the 8169, 8169S and 8110S are capable of 10, 100 and
 .\" features, and use a descriptor-based DMA mechanism. They are also
 .\" capable of TCP large send (TCP segmentation offload).
 .Pp
-The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
+.\" The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
 The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
 The 8169S and 8110S are single-chip devices containing both a 10/100/1000
 MAC and 10/100/1000 copper PHY.
