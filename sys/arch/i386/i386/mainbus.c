@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.13 1998/01/20 18:40:15 niklas Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.14 1999/02/19 17:32:39 art Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_iba.iba_busname = "isa";
 		mba.mba_iba.iba_iot = I386_BUS_SPACE_IO;
 		mba.mba_iba.iba_memt = I386_BUS_SPACE_MEM;
-#if NISA > 0
+#if NISADMA > 0
 		mba.mba_iba.iba_dmat = &isa_bus_dma_tag;
 #endif
 		config_found(self, &mba.mba_iba, mainbus_print);
