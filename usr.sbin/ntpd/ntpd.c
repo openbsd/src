@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.5 2004/06/17 19:17:48 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.6 2004/07/05 07:46:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,6 +40,7 @@ int	main(int, char *[]);
 int	check_child(pid_t, const char *);
 int	reconfigure(char *);
 int	dispatch_imsg(void);
+void	ntpd_adjtime(double);
 
 int			rfd = -1;
 volatile sig_atomic_t	quit = 0;
@@ -227,6 +228,7 @@ dispatch_imsg(void)
 {
 	struct imsg		 imsg;
 	int			 n;
+	double			 d;
 
 	if ((n = imsg_read(&ibuf)) == -1)
 		return (-1);
@@ -244,10 +246,26 @@ dispatch_imsg(void)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_ADJTIME:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
+				fatal("invalid IMSG_ADJTIME received");
+			memcpy(&d, imsg.data, sizeof(d));
+			ntpd_adjtime(d);
 		default:
 			break;
 		}
 		imsg_free(&imsg);
 	}
 	return (0);
+}
+
+void
+ntpd_adjtime(double d)
+{
+	struct timeval	tv;
+
+	d_to_tv(d, &tv);
+	log_debug("calling adjtime, offset=%fs", d);
+	if (adjtime(&tv, NULL) == -1)
+		log_warn("adjtime failed");
 }

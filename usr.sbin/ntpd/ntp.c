@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.9 2004/06/22 07:59:48 alexander Exp $ */
+/*	$OpenBSD: ntp.c,v 1.10 2004/07/05 07:46:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,7 @@ struct l_fixedpt	 ref_ts;
 void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
 int	ntp_dispatch(int fd);
+void	ntp_adjtime(struct ntpd_conf *);
 
 void
 ntp_sighdlr(int sig)
@@ -63,7 +64,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 	struct listen_addr	*la;
 	struct ntp_peer		*p;
 	struct ntp_peer		**idx2peer = NULL;
-	time_t			 nextaction;
+	time_t			 nextaction, next_adjtime;
 	void			*newp;
 
 	switch (pid = fork()) {
@@ -114,6 +115,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		peer_cnt++;
 
+	next_adjtime = time(NULL) + INTERVAL_ADJTIME;
+
 	while (ntp_quit == 0) {
 		if (peer_cnt > idx2peer_elms ||
 		    peer_cnt + IDX2PEER_RESERVE < idx2peer_elms) {
@@ -146,11 +149,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 		bzero(idx2peer, sizeof(struct ntp_peer) * idx2peer_elms);
-		nextaction = time(NULL) + 240;
+		nextaction = next_adjtime;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
-		if (ibuf_main.w.queued > 0)
-			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
 		i = 1;
 		TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
@@ -158,7 +159,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 			pfd[i].events = POLLIN;
 			i++;
 		}
-
 
 		idx_peers = i;
 		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
@@ -176,6 +176,14 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 			}
 		}
 
+		if (next_adjtime <= time(NULL)) {
+			next_adjtime = time(NULL) + INTERVAL_ADJTIME;
+			ntp_adjtime(conf);
+		}
+
+		if (ibuf_main.w.queued > 0)
+			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
+
 		timeout = nextaction - time(NULL);
 		if (timeout < 0)
 			timeout = 0;
@@ -185,6 +193,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 				log_warn("poll error");
 				ntp_quit = 1;
 			}
+
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT))
 			if (msgbuf_write(&ibuf_main.w) < 0) {
 				log_warn("pipe write error (to parent)");
@@ -268,4 +277,29 @@ ntp_dispatch(int fd)
 	ntp_reply(fd, (struct sockaddr *)&fsa, &msg, 0);
 
 	return (0);
+}
+
+void
+ntp_adjtime(struct ntpd_conf *conf)
+{
+	struct ntp_peer	*p;
+	double		 offset_median = 0;
+	int		 offset_cnt = 0;
+
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
+		if (p->state == STATE_NONE)
+			continue;
+
+		offset_median += p->offset;
+		offset_cnt++;
+	}
+
+	offset_median /= offset_cnt;
+
+	if (offset_median >= 0.001 || offset_median <= 0.001) {
+		imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
+			    &offset_median, sizeof(offset_median));
+		TAILQ_FOREACH(p, &conf->ntp_peers, entry)
+			p->offset = 0;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.9 2004/07/04 22:24:20 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.10 2004/07/05 07:46:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@
 #define	NTPD_OPT_VERBOSE	0x0001
 #define	NTPD_OPT_VERBOSE2	0x0002
 
+#define	INTERVAL_ADJTIME	120	/* call adjtime every n seconds */
 #define	INTERVAL_QUERY		60	/* sync with peers every n seconds */
 #define	QUERYTIME_MAX		30	/* single query might take n secs max */
 
@@ -101,7 +102,8 @@ struct imsgbuf {
 };
 
 enum imsg_type {
-	IMSG_NONE
+	IMSG_NONE,
+	IMSG_ADJTIME
 };
 
 struct imsg_hdr {
@@ -176,5 +178,6 @@ int	client_dispatch(struct ntp_peer *);
 
 /* util.c */
 double	gettime(void);
+void	d_to_tv(double, struct timeval *);
 double	lfp_to_d(struct l_fixedpt);
 struct	l_fixedpt d_to_lfp(double);
