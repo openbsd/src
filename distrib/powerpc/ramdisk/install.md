@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 2000/08/08 01:08:07 deraadt Exp $
+#	$OpenBSD: install.md,v 1.15 2000/09/12 03:03:40 rahnds Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ md_machine_arch() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	bsort `cat /kern/msgbuf | egrep "^[sw]d[0-9]+|ofdisk[0-9] " | cutword 1`
+	bsort `cat /kern/msgbuf | egrep "^[sw]d[0-9]+ " | cutword 1`
 }
 
 md_get_cddevs() {
@@ -371,8 +371,8 @@ __EOT
 md_not_going_to_install() {
 	cat << __EOT
 
-OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the machine
-has halted, power-cycle the system to load new boot code.
+OK, then.  Enter 'reboot' at the prompt to reset the machine.  Once the machine
+has rebooted, use openfirmware to load the new boot code.
 
 __EOT
 }
