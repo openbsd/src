@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.4 2001/10/08 17:40:40 drahn Exp $
+#	$OpenBSD: list,v 1.5 2001/11/19 01:23:26 drahn Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -98,6 +98,5 @@ COPY	dot.profile			.profile
 SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${CURDIR}/install.md > install.md
 COPY	${CURDIR}/../../miniroot/install.sh		install
 COPY	${CURDIR}/../../miniroot/upgrade.sh		upgrade
-#SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub
 SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade
