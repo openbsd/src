@@ -1,4 +1,4 @@
-/*      $OpenBSD: asm.h,v 1.3 1996/07/30 20:24:23 pefo Exp $	*/
+/*      $OpenBSD: asm.h,v 1.4 1996/08/26 10:54:54 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,12 +60,20 @@
 #define _C_LABEL(x) x
 
 /*
- * Define how to access unaligned data word (LITTLE Endian mode)
+ * Define how to access unaligned data word 
  */
+#ifdef MIPSEL
 #define LWLO    lwl
 #define LWHI    lwr
 #define	SWLO	swl
 #define	SWHI	swr
+#endif
+#ifdef MIPSEB
+#define LWLO    lwr
+#define LWHI    lwl
+#define	SWLO	swr
+#define	SWHI	swl
+#endif
 
 /*
  * Code for setting gp reg if abicalls are used.
@@ -101,6 +109,7 @@
  *	Declare a leaf routine.
  */
 #define LEAF(x)			\
+	.align	3;		\
 	.globl x;		\
 	.ent x, 0;		\
 x: ;				\
@@ -118,6 +127,7 @@ x:
  *	Declare a non-profiled leaf routine.
  */
 #define NLEAF(x)		\
+	.align	3;		\
 	.globl x;		\
 	.ent x, 0;		\
 x: ;				\
@@ -130,6 +140,7 @@ x: ;				\
  *	Declare a non-leaf routine (a routine that makes other C calls).
  */
 #define NON_LEAF(x, fsize, retpc) \
+	.align	3;		\
 	.globl x;		\
 	.ent x, 0;		\
 x: ;				\
@@ -144,6 +155,7 @@ x: ;				\
  *	(a routine that makes other C calls).
  */
 #define NNON_LEAF(x, fsize, retpc) \
+	.align	3;		\
 	.globl x;		\
 	.ent x, 0;		\
 x: ;				\
