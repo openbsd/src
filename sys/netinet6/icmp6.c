@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.c,v 1.12 2000/05/15 11:34:46 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.75 2000/03/11 09:32:17 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.13 2000/05/15 11:45:35 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.88 2000/05/11 00:58:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1697,6 +1697,7 @@ icmp6_redirect_output(m0, rt)
 	size_t maxlen;
 	u_char *p;
 	struct ifnet *outif = NULL;
+	struct sockaddr_in6 src_sa;
 
 	/* if we are not router, we don't send icmp6 redirect */
 	if (!ip6_forwarding || ip6_accept_rtadv)
@@ -1713,7 +1714,13 @@ icmp6_redirect_output(m0, rt)
 	 *  [RFC 2461, sec 8.2]
 	 */
 	sip6 = mtod(m0, struct ip6_hdr *);
-	if (nd6_is_addr_neighbor(&sip6->ip6_src, ifp) == 0)
+	bzero(&src_sa, sizeof(src_sa));
+	src_sa.sin6_family = AF_INET6;
+	src_sa.sin6_len = sizeof(src_sa);
+	src_sa.sin6_addr = sip6->ip6_src;
+	/* we don't currently use sin6_scope_id, but eventually use it */
+	src_sa.sin6_scope_id = in6_addr2scopeid(ifp, &sip6->ip6_src);
+	if (nd6_is_addr_neighbor(&src_sa, ifp) == 0)
 		goto fail;
 	if (IN6_IS_ADDR_MULTICAST(&sip6->ip6_dst))
 		goto fail;	/* what should we do here? */

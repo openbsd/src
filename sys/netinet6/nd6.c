@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.14 2000/05/15 11:29:14 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.15 2000/05/15 11:45:35 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.62 2000/05/09 11:35:55 itojun Exp $	*/
 
 /*
@@ -169,15 +169,7 @@ nd6_ifattach(ifp)
 	ND.reachable = ND_COMPUTE_RTIME(ND.basereachable);
 	ND.retrans = RETRANS_TIMER;
 	ND.receivedra = 0;
-#if 1
-	/* XXX temporary workaround */
-	if (ifp->if_flags & IFF_POINTOPOINT)
-		ND.flags = 0;
-	else
-		ND.flags = ND6_IFF_PERFORMNUD;
-#else
 	ND.flags = ND6_IFF_PERFORMNUD;
-#endif
 	nd6_setmtu(ifp);
 #undef ND
 }
@@ -744,7 +736,7 @@ nd6_lookup(addr6, create, ifp)
  */
 int
 nd6_is_addr_neighbor(addr, ifp)
-	struct in6_addr *addr;
+	struct sockaddr_in6 *addr;
 	struct ifnet *ifp;
 {
 	register struct ifaddr *ifa;
@@ -753,8 +745,13 @@ nd6_is_addr_neighbor(addr, ifp)
 #define IFADDR6(a) ((((struct in6_ifaddr *)(a))->ia_addr).sin6_addr)
 #define IFMASK6(a) ((((struct in6_ifaddr *)(a))->ia_prefixmask).sin6_addr)
 
-	/* A link-local address is always a neighbor. */
-	if (IN6_IS_ADDR_LINKLOCAL(addr))
+	/*
+	 * A link-local address is always a neighbor.
+	 * XXX: we should use the sin6_scope_id field rather than the embedded
+	 * interface index.
+	 */
+	if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr) &&
+	    ntohs(*(u_int16_t *)&addr->sin6_addr.s6_addr[2]) == ifp->if_index)
 		return(1);
 
 	/*
@@ -769,7 +766,8 @@ nd6_is_addr_neighbor(addr, ifp)
 			next: continue;
 
 		for (i = 0; i < 4; i++) {
-			if ((IFADDR6(ifa).s6_addr32[i] ^ addr->s6_addr32[i]) &
+			if ((IFADDR6(ifa).s6_addr32[i] ^
+			     addr->sin6_addr.s6_addr32[i]) &
 			    IFMASK6(ifa).s6_addr32[i])
 				goto next;
 		}
@@ -780,7 +778,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * Even if the address matches none of our addresses, it might be
 	 * in the neighbor cache.
 	 */
-	if (nd6_lookup(addr, 0, ifp))
+	if (nd6_lookup(&addr->sin6_addr, 0, ifp))
 		return(1);
 
 	return(0);
@@ -1748,6 +1746,7 @@ nd6_output(ifp, m0, dst, rt0)
 {
 	register struct mbuf *m = m0;
 	register struct rtentry *rt = rt0;
+	struct sockaddr_in6 *gw6 = NULL;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
 	long time_second = time.tv_sec;
@@ -1759,7 +1758,7 @@ nd6_output(ifp, m0, dst, rt0)
 	 * XXX: we currently do not make neighbor cache on any interface
 	 * other than ARCnet, Ethernet, FDDI and GIF.
 	 *
-	 * draft-ietf-ngtrans-mech-04.txt says:
+	 * draft-ietf-ngtrans-mech-06.txt says:
 	 * - unidirectional tunnels needs no ND
 	 */
 	switch (ifp->if_type) {
@@ -1771,10 +1770,6 @@ nd6_output(ifp, m0, dst, rt0)
 	default:
 		goto sendpkt;
 	}
-
-	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
-	    (nd_ifinfo[ifp->if_index].flags & ND6_IFF_PERFORMNUD) == 0)
-		goto sendpkt;
 
 	/*
 	 * next hop determination. This routine is derived from ether_outpout.
@@ -1790,7 +1785,35 @@ nd6_output(ifp, m0, dst, rt0)
 			} else
 				senderr(EHOSTUNREACH);
 		}
+
 		if (rt->rt_flags & RTF_GATEWAY) {
+			gw6 = (struct sockaddr_in6 *)rt->rt_gateway;
+
+			/*
+			 * We skip link-layer address resolution and NUD
+			 * if the gateway is not a neighbor from ND point
+			 * of view, regardless the value of the value of
+			 * nd_ifinfo.flags.
+			 * The second condition is a bit tricky: we skip
+			 * if the gateway is our own address, which is
+			 * sometimes used to install a route to a p2p link.
+			 */
+			if (!nd6_is_addr_neighbor(gw6, ifp) ||
+			    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
+				if (rt->rt_flags & RTF_REJECT)
+					senderr(EHOSTDOWN);
+
+				/*
+				 * We allow this kind of tricky route only
+				 * when the outgoing interface is p2p.
+				 * XXX: we may need a more generic rule here.
+				 */
+				if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
+					senderr(EHOSTUNREACH);
+
+				goto sendpkt;
+			}
+
 			if (rt->rt_gwroute == 0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
@@ -1815,14 +1838,26 @@ nd6_output(ifp, m0, dst, rt0)
 	if (rt && (rt->rt_flags & RTF_LLINFO) != 0)
 		ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	else {
-		if ((rt = nd6_lookup(&dst->sin6_addr, 1, ifp)) != NULL)
+		/*
+		 * Since nd6_is_addr_neighbor() internally calls nd6_lookup(),
+		 * the condition below is not very efficient. But we believe
+		 * it is tolerable, because this should be a rare case.
+		 */
+		if (nd6_is_addr_neighbor(dst, ifp) &&
+		    (rt = nd6_lookup(&dst->sin6_addr, 1, ifp)) != NULL)
 			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	}
 	if (!ln || !rt) {
-		log(LOG_DEBUG, "nd6_output: can't allocate llinfo for %s "
-		    "(ln=%p, rt=%p)\n",
-		    ip6_sprintf(&dst->sin6_addr), ln, rt);
-		senderr(EIO);	/* XXX: good error? */
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
+		    !(nd_ifinfo[ifp->if_index].flags & ND6_IFF_PERFORMNUD)) {
+			log(LOG_DEBUG,
+			    "nd6_output: can't allocate llinfo for %s "
+			    "(ln=%p, rt=%p)\n",
+			    ip6_sprintf(&dst->sin6_addr), ln, rt);
+			senderr(EIO);	/* XXX: good error? */
+		}
+
+		goto sendpkt;	/* send anyway */
 	}
 
 	/* We don't have to do link-layer address resolution on a p2p link. */

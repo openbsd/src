@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.h,v 1.5 2000/04/17 04:44:51 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.19 2000/03/25 07:23:57 sumikawa Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.6 2000/05/15 11:45:35 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.20 2000/04/29 04:46:41 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -268,7 +268,7 @@ union nd_opts {
 /* nd6.c */
 void nd6_init __P((void));
 void nd6_ifattach __P((struct ifnet *));
-int nd6_is_addr_neighbor __P((struct in6_addr *, struct ifnet *));
+int nd6_is_addr_neighbor __P((struct sockaddr_in6 *, struct ifnet *));
 void nd6_option_init __P((void *, int, union nd_opts *));
 struct nd_opt_hdr *nd6_option __P((union nd_opts *));
 int nd6_options __P((union nd_opts *));
