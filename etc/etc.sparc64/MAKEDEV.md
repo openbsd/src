@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.6 2002/01/12 21:14:57 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.7 2002/01/12 21:25:45 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -129,11 +129,11 @@ magma*)
 	while [ $n -lt 16 ]
 	do
 		name=${nam}`hex $n`
-		M tty$name c 71 Add($offset,$n)
+		M tty$name c 71 Add($offset,$n) 660 dialer uucp
 		n=Add($n,1)
 	done
-	M bpp${nam}0 c 72 Add($offset,0)
-	M bpp${nam}1 c 72 Add($offset,1)
+	M bpp${nam}0 c 72 Add($offset,0) 600 wheel root
+	M bpp${nam}1 c 72 Add($offset,1) 600 wheel root
 	;;
 
 dnl No number allocated yet...
@@ -149,8 +149,8 @@ dnl 	n=0
 dnl 	while [ $n -lt 8 ]
 dnl 	do
 dnl 		name=${nam}`hex $n`
-dnl 		M tty$name c 102 Add($offset,$n)
+dnl 		M tty$name c 102 Add($offset,$n) 660 dialer uucp
 dnl 		n=Add($n,1)
 dnl 	done
-dnl 	M bpp${nam}0 c 103 Add($offset,0)
+dnl 	M bpp${nam}0 c 103 Add($offset,0) 600 wheel root
 dnl 	;;
