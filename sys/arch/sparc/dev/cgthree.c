@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.27 2005/01/05 23:04:24 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.28 2005/03/07 16:44:50 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -311,7 +311,7 @@ cgthreeattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb,
-		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0, cgthree_burner);
+		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
 	}
 
 #if defined(SUN4C) || defined(SUN4M)

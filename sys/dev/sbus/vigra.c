@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.6 2005/03/06 23:04:04 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.7 2005/03/07 16:44:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -350,7 +350,7 @@ vigraattach(struct device *parent, struct device *self, void *args)
 			break;
 		}
 
-		fbwscons_console_init(&sc->sc_sunfb, row, vigra_burner);
+		fbwscons_console_init(&sc->sc_sunfb, row);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);

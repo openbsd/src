@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.30 2005/03/01 21:21:24 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.31 2005/03/07 16:44:50 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -295,7 +295,7 @@ obp_name:
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, bwtwo_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 #if defined(SUN4C) || defined(SUN4M)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.4 2005/03/01 21:21:25 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.5 2005/03/07 16:44:53 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	if (isconsole) {
 		/* zx_reset() below will clear screen, so restart at 1st row */
-		fbwscons_console_init(&sc->sc_sunfb, 0, zx_burner);
+		fbwscons_console_init(&sc->sc_sunfb, 0);
 	}
 
 	/* reset cursor & frame buffer controls */

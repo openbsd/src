@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.23 2005/01/05 23:04:24 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.24 2005/03/07 16:44:50 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ cgfourattach(parent, self, args)
 	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, cgfour_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &cgfour_accessops, isconsole);

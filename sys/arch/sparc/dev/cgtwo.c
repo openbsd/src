@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.31 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.32 2005/03/07 16:44:50 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -244,7 +244,7 @@ cgtwoattach(parent, self, args)
 	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, cgtwo_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &cgtwo_accessops, isconsole);

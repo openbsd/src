@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.23 2005/01/05 23:04:24 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.24 2005/03/07 16:44:50 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ cgeightattach(parent, self, args)
 	    sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, cgeight_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &cgeight_accessops, isconsole);

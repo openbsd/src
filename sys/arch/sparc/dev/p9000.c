@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.11 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.12 2005/03/07 16:44:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -281,7 +281,7 @@ p9000attach(struct device *parent, struct device *self, void *args)
 		else
 			row = -1;
 
-		fbwscons_console_init(&sc->sc_sunfb, row, p9000_burner);
+		fbwscons_console_init(&sc->sc_sunfb, row);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &p9000_accessops, isconsole);

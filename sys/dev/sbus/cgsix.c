@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.49 2005/03/03 01:52:41 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.50 2005/03/07 16:44:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -242,7 +242,7 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 
 	if (console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = cgsix_ras_updatecursor;
-		fbwscons_console_init(&sc->sc_sunfb, -1, cgsix_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &cgsix_accessops, console);

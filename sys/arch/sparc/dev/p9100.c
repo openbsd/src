@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.32 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.33 2005/03/07 16:44:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -324,7 +324,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 		else
 			row = -1;
 
-		fbwscons_console_init(&sc->sc_sunfb, row, p9100_burner);
+		fbwscons_console_init(&sc->sc_sunfb, row);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &p9100_accessops, isconsole);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.7 2005/01/05 23:04:24 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.8 2005/03/07 16:44:50 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -215,7 +215,7 @@ agtenattach(struct device *parent, struct device *self, void *args)
 	fbwscons_setcolormap(&sc->sc_sunfb, agten_setcolor);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, NULL);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.6 2004/11/29 22:07:40 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.7 2005/03/07 16:44:52 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -174,8 +174,7 @@ fbwscons_init(struct sunfb *sf, int flags)
 }
 
 void
-fbwscons_console_init(struct sunfb *sf, int row,
-    void (*burner)(void *, u_int, u_int))
+fbwscons_console_init(struct sunfb *sf, int row)
 {
 	long defattr;
 
@@ -233,10 +232,6 @@ fbwscons_console_init(struct sunfb *sf, int row,
 	fb_initwsd(sf);
 	wsdisplay_cnattach(&sf->sf_wsd, &sf->sf_ro,
 	    sf->sf_ro.ri_ccol, sf->sf_ro.ri_crow, defattr);
-
-	/* remember screen burner routine */
-	fb_burner = burner;
-	fb_cookie = sf;
 }
 
 void
@@ -273,6 +268,10 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 	if (isconsole == 0) {
 		/* done in wsdisplay_cnattach() earlier if console */
 		fb_initwsd(sf);
+	} else {
+		/* remember screen burner routine */
+		fb_burner = op->burn_screen;
+		fb_cookie = sf;
 	}
 
 	scrlist[0] = &sf->sf_wsd;

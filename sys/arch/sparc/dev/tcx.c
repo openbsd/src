@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.22 2005/03/07 01:28:45 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.23 2005/03/07 16:44:50 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -257,7 +257,7 @@ tcxattach(parent, self, args)
 	    self->dv_xname);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, tcx_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 		shutdownhook_establish(tcx_prom, sc);
 	}
 

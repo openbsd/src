@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.3 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.4 2005/03/07 16:44:53 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -254,7 +254,7 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, NULL);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);

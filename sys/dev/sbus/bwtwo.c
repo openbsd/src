@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.13 2005/03/01 21:23:36 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.14 2005/03/07 16:44:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -209,7 +209,7 @@ bwtwoattach(parent, self, aux)
 	
 	if (console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = bwtwo_updatecursor;
-		fbwscons_console_init(&sc->sc_sunfb, -1, bwtwo_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &bwtwo_accessops, console);

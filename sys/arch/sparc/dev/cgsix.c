@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.31 2005/01/05 23:04:24 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.32 2005/03/07 16:44:50 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -360,7 +360,7 @@ cgsixattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb,
-		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0, cgsix_burner);
+		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
 	}
 
 #if defined(SUN4C) || defined(SUN4M)

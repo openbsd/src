@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.38 2005/03/01 21:23:36 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.39 2005/03/07 16:44:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -286,7 +286,7 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 	if (console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = cgthree_updatecursor;
 		fbwscons_console_init(&sc->sc_sunfb,
-		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0, cgthree_burner);
+		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &cgthree_accessops, console);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.3 2005/03/03 02:14:02 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.4 2005/03/07 16:44:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -309,7 +309,7 @@ rfxattach(struct device *parent, struct device *self, void *args)
 	fbwscons_setcolormap(&sc->sc_sunfb, rfx_setcolor);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, rfx_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	/* enable video */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.11 2005/03/03 09:49:05 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.12 2005/03/07 16:44:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -215,7 +215,7 @@ cgtwelveattach(parent, self, args)
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1, NULL);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 		shutdownhook_establish(cgtwelve_prom, sc);
 	}
 

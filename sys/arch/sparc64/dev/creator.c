@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.31 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.32 2005/03/07 16:44:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -138,8 +138,7 @@ creator_attach(struct creator_softc *sc)
 
 	if (sc->sc_console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = creator_ras_updatecursor;
-		fbwscons_console_init(&sc->sc_sunfb, -1,
-		    NULL);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &creator_accessops, sc->sc_console);
