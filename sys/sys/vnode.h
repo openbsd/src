@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.30 2001/02/26 00:18:32 csapuntz Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.31 2001/02/26 00:24:38 csapuntz Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -90,22 +90,22 @@ struct vnode {
 #ifdef UVM
 	struct uvm_vnode v_uvm;			/* uvm data */
 #endif
-	int 	(**v_op) __P((void *));		/* vnode operations vector */
+	int	(**v_op) __P((void *));		/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
-	u_int32_t v_flag;			/* vnode flags (see below) */
-	u_int32_t v_usecount;			/* reference count of users */
-	u_int32_t v_writecount;			/* reference count of writers */
-	u_int32_t v_bioflag;                    /* flags that can be 
-						   read/written
-						   at interrupt level */
-	u_int32_t v_holdcnt;			/* buffer references */
-	u_int32_t v_id;				/* capability identifier */
+	u_int	v_flag;				/* vnode flags (see below) */
+	u_int   v_usecount;			/* reference count of users */
+	/* reference count of writers */
+	u_int   v_writecount;			
+	/* Flags that can be read/written in interrupts */
+	u_int   v_bioflag;
+	u_int   v_holdcnt;			/* buffer references */
+	u_int   v_id;				/* capability identifier */
 	struct	mount *v_mount;			/* ptr to vfs we are in */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
-	u_int32_t v_numoutput;			/* num of writes in progress */
+	u_int   v_numoutput;			/* num of writes in progress */
 	LIST_ENTRY(vnode) v_synclist;           /* vnode with dirty buffers */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
