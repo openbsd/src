@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.69 2003/05/16 20:31:16 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.70 2003/05/18 20:39:25 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -991,6 +991,8 @@ sa_reinit (void)
   tag = conf_get_str ("General", "Renegotiate-on-HUP");
   if (!tag)
     return;
+
+  LOG_DBG ((LOG_SA, 30, "sa_reinit: renegotiating active connections"));
 
   /* Get phase 2 SAs. Soft expire those without active exchanges.  */
   for (i = 0; i <= bucket_mask; i++)
