@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.46 1999/04/01 21:24:22 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.47 1999/04/07 05:58:04 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -306,9 +306,10 @@ else
 	done
 fi
 
-if [ -f /sbin/swapon ]; then
-	swapon /dev/${ROOTDISK}b
-fi
+#unfortunately, cannot do this in 2.5
+#if [ -f /sbin/swapon ]; then
+#	swapon /dev/${ROOTDISK}b
+#fi
 
 # Get network configuration information, and store it for placement in the
 # root filesystem later.
