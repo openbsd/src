@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.11 1998/08/29 21:11:52 deraadt Exp $
+.\"	$OpenBSD: printf.3,v 1.12 1998/08/30 22:19:37 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,6 @@
 .Nm sprintf ,
 .Nm snprintf ,
 .Nm asprintf ,
-.Nm asnprintf ,
 .Nm vprintf ,
 .Nm vfprintf ,
 .Nm vsprintf ,
@@ -66,8 +65,6 @@
 .Fn snprintf "char *str" "size_t size" "const char *format" ...
 .Ft int
 .Fn asprintf "char **ret" "const char *format" ...
-.Ft int
-.Fn asnprintf "char **ret" "size_t size" "const char *format" ...
 .Fd #include <stdarg.h>
 .Ft int
 .Fn vprintf "const char *format" "va_list ap"
@@ -79,8 +76,6 @@
 .Fn vsnprintf "char *str" "size_t size" "const char *format" "va_list ap"
 .Ft int
 .Fn vasprintf "char **ret" "const char *format" "va_list ap"
-.Ft int
-.Fn vasnprintf "char **ret" "size_t size" "const char *format" "va_list ap"
 .Sh DESCRIPTION
 The
 .Fn printf
@@ -100,16 +95,14 @@ write output to the given output
 .Fa stream ;
 .Fn sprintf ,
 .Fn snprintf ,
-.Fn vsprintf ,
+.Fn vsprintf
 and
 .Fn vsnprintf
 write to the character string
 .Fa str ;
-.Fn asprintf ,
-.Fn asnprintf ,
-.Fn vasprintf
+.Fn asprintf
 and
-.Fn vasnprintf
+.Fn vasprintf
 write to a dynamically allocated string that is stored in
 .Fa ret .
 .Pp
@@ -126,11 +119,9 @@ the number of characters printed
 .Ql \e0
 used to end output to strings).
 .Pp
-.Fn Asprintf ,
-.Fn asnprintf ,
-.Fn vasprintf
+.Fn Asprintf
 and
-.Fn vasnprintf
+.Fn vasprintf
 return a pointer to a buffer sufficiently large to hold the
 string in the
 .Fa ret
@@ -144,8 +135,6 @@ will return -1 and set
 to be a NULL pointer.
 .Pp
 If
-.Fn asnprintf
-or
 .Fn vasprintf
 are given a
 .Fa size
@@ -153,11 +142,9 @@ of 0, they set
 .Fa ret
 to be a NULL pointer.
 .Pp
-.Fn Snprintf ,
-.Fn vsnprintf ,
-.Fn asnprintf
+.Fn Snprintf
 and
-.Fn vasnprintf
+.Fn vsnprintf
 will write at most
 .Fa size Ns \-1
 of the characters printed into the output string
