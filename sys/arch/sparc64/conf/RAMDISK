@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.27 2004/03/20 14:56:05 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.28 2004/08/26 03:44:49 brad Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -41,10 +41,13 @@ pci*	at ppb?
 ppb*	at pci? dev ? function ?
 ebus*	at pci?
 
+# PCI Ethernet
 hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
-#ti*	at pci? dev ? function ?
-dc*	at pci? dev ? function ?
+#ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
+fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
+xl*	at pci? dev ? function ?		# 3C9xx ethernet
+dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 
 auxio*	at ebus?
@@ -106,10 +109,15 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 
 # Media Independent Interface (mii) drivers)
+exphy*	at mii? phy ?				# 3Com internal PHYs
+brgphy*	at mii? phy ?				# Broadcom PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 dcphy*	at mii? phy ?				# Digital clone PHYs
 amphy*	at mii? phy ?				# AMD AM79c873 PHYs
+iophy*	at mii? phy ?				# Intel 82553 PHYs
+inphy*	at mii? phy ?				# Intel 82555 PHYs
+lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
 pseudo-device	rd	2	# ramdisk
