@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.2 1999/01/03 10:05:52 deraadt Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.3 1999/05/02 22:35:40 fgsch Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -171,5 +171,7 @@ pcic_write(h, idx, data)
 	if (idx != -1)
 		bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_INDEX,
 		    h->sock + idx);
-	bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_DATA, (data));
+	if (data != -1)
+		bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_DATA,
+		   (data));
 }

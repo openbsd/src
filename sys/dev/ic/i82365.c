@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.6 1999/02/13 09:58:38 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.7 1999/05/02 22:35:40 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -57,8 +57,11 @@
 #define	PCIC_VENDOR_UNKNOWN		0
 #define	PCIC_VENDOR_I82365SLR0		1
 #define	PCIC_VENDOR_I82365SLR1		2
-#define	PCIC_VENDOR_CIRRUS_PD6710	3
-#define	PCIC_VENDOR_CIRRUS_PD672X	4
+#define	PCIC_VENDOR_I82365SLR2		3
+#define	PCIC_VENDOR_CIRRUS_PD6710	4
+#define	PCIC_VENDOR_CIRRUS_PD672X	5
+#define PCIC_VENDOR_VADEM_VG468		6
+#define PCIC_VENDOR_VADEM_VG469		7
 
 /*
  * Individual drivers will allocate their own memory and io regions. Memory
@@ -109,7 +112,7 @@ int
 pcic_vendor(h)
 	struct pcic_handle *h;
 {
-	int reg;
+	int vendor, reg;
 
 	/*
 	 * the chip_id of the cirrus toggles between 11 and 00 after a write.
@@ -132,12 +135,42 @@ pcic_vendor(h)
 
 	reg = pcic_read(h, PCIC_IDENT);
 
-	if ((reg & PCIC_IDENT_REV_MASK) == PCIC_IDENT_REV_I82365SLR0)
-		return (PCIC_VENDOR_I82365SLR0);
-	else
-		return (PCIC_VENDOR_I82365SLR1);
+	switch (reg) {
+	case PCIC_IDENT_REV_I82365SLR0:
+		vendor = PCIC_VENDOR_I82365SLR0;
+		break;
+	case PCIC_IDENT_REV_I82365SLR1:
+		vendor = PCIC_VENDOR_I82365SLR1;
+		break;
+	case PCIC_IDENT_REV_I82365SLR2:
+		vendor = PCIC_VENDOR_I82365SLR2;
+		break;
+	default:
+		vendor = PCIC_VENDOR_UNKNOWN;
+		break;
+	}
 
-	return (PCIC_VENDOR_UNKNOWN);
+	pcic_write(h, 0x0e, -1);
+	pcic_write(h, 0x37, -1);
+
+	reg = pcic_read(h, PCIC_VG468_MISC);
+	reg |= PCIC_VG468_MISC_VADEMREV;
+	pcic_write(h, PCIC_VG468_MISC, reg);
+
+	reg = pcic_read(h, PCIC_IDENT);
+
+	if (reg & PCIC_IDENT_VADEM_MASK) {
+		if ((reg & 7) >= 4)
+			vendor = PCIC_VENDOR_VADEM_VG469;
+		else
+			vendor = PCIC_VENDOR_VADEM_VG468;
+
+		reg = pcic_read(h, PCIC_VG468_MISC);
+		reg &= ~PCIC_VG468_MISC_VADEMREV;
+		pcic_write(h, PCIC_VG468_MISC, reg);
+	}
+
+	return (vendor);
 }
 
 char *
@@ -149,10 +182,16 @@ pcic_vendor_to_string(vendor)
 		return ("Intel 82365SL Revision 0");
 	case PCIC_VENDOR_I82365SLR1:
 		return ("Intel 82365SL Revision 1");
+	case PCIC_VENDOR_I82365SLR2:
+		return ("Intel 82365SL Revision 2");
 	case PCIC_VENDOR_CIRRUS_PD6710:
 		return ("Cirrus PD6710");
 	case PCIC_VENDOR_CIRRUS_PD672X:
 		return ("Cirrus PD672X");
+	case PCIC_VENDOR_VADEM_VG468:
+		return ("Vadem VG468");
+	case PCIC_VENDOR_VADEM_VG469:
+		return ("Vadem VG469");
 	}
 
 	return ("Unknown controller");
@@ -1115,6 +1154,12 @@ pcic_chip_socket_enable(pch)
 	 * we are changing Vcc (Toff).
 	 */
 	delay((300 + 100) * 1000);
+
+	if (h->vendor == PCIC_VENDOR_VADEM_VG469) {
+		reg = pcic_read(h, PCIC_VG469_VSELECT);
+		reg &= ~PCIC_VG469_VSELECT_VCC;
+		pcic_write(h, PCIC_VG469_VSELECT, reg);
+	}
 
 	/* power up the socket */
 
