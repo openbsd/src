@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.11 2001/03/15 23:59:14 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.12 2001/05/20 05:50:43 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -37,12 +37,13 @@ S!=	cd ../../../..; pwd
 MVME88K=	$S/arch/mvme88k
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmvme88k -Dm88k
-CDIAGFLAGS=	-Wall -Wmissing-prototypes \
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme88k -Dm88k
+CWARNFLAGS=	-Wall -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main # -Wstrict-prototypes
 CMACHFLAGS=
-CFLAGS=		${DEBUG} -O ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+COPTS?=		-O
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-Ttext 0x10000 -e start
 STRIPFLAGS=	-d
 TOUCHFLAGS=	-f -c
@@ -73,13 +74,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # is marked as config-dependent.
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
@@ -105,7 +100,8 @@ SYSTEM_OBJ=	locore.o \
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o -L. -lgcc -lgcc
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o \
+		`${CC} -print-libgcc-file-name`
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@;
 
 DEBUG?=
@@ -120,23 +116,17 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.s: genassym
-	./genassym >assym.s
-
-genassym: genassym.o
-	${HOSTCC} -o $@ genassym.o
-
-genassym.o: ${MVME88K}/mvme88k/genassym.c
-	${HOSTED_C}
-#	${HOSTCC} -static ${INCLUDES} -I$S/sys ${IDENT} ${PARAM} \
-#	  -Dmvme88k -Dm88k -o genassym ${MVME88K}/mvme88k/genassym.c
+assym.h: $S/kern/genassym.sh ${MVME88K}/mvme88k/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${MVME88K}/mvme88k/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -147,7 +137,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-		[Ee]rrs linterrs makelinks assym.s genassym genassym.o
+		[Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
@@ -167,15 +157,13 @@ links:
 	sh makelinks && rm -f dontlink
 
 SRCS=	param.c ioconf.c ${CFILES} ${SFILES}
+
 depend:: .depend
-.depend: ${SRCS} assym.s param.c 
+.depend: ${SRCS} assym.h param.c 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${MVME88K}/mvme88k/genassym.c
-
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -186,12 +174,12 @@ if_tun.o if_loop.o if_ethersubr.o: Makefile
 in_proto.o: Makefile
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+assym.h machdep.o: Makefile
 
 # depend on CPU configuration 
 locore.o machdep.o: Makefile
 
-locore.o: ${MVME88K}/mvme88k/locore.S assym.s
+locore.o: ${MVME88K}/mvme88k/locore.S assym.h
 	${NORMAL_S}
 
 %RULES
