@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.627 2003/05/20 22:00:53 jason Exp 
+ *		OpenBSD: pcidevs,v 1.628 2003/05/24 08:39:43 markus Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1993,6 +1993,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3,
 	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI,
+	    "PERC 4/Di i960",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI_2,
+	    "PERC 4/Di Verde",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
