@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 1999/06/24 15:18:11 espie Exp $
+#	$OpenBSD: Makefile,v 1.70 1999/07/01 21:41:32 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -32,7 +32,7 @@ MFILES+= link.h dlfcn.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netinet6 netccitt netiso netns netipx nfs sys ufs vm \
-	ddb scsi netatalk isofs xfs uvm
+	ddb scsi netatalk isofs xfs uvm miscfs
 
 # Directories with an includes target
 RDIRS=	../lib/libc_r ../lib/libcom_err ../lib/libcompat ../lib/libcurses \
