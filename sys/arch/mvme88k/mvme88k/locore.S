@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.33 2003/10/15 17:48:36 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.34 2003/11/03 06:54:26 david Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -193,7 +193,7 @@ GLOBAL(start_text)
 	 *	shadow registers frozen
 	 *
 	 * The manual says not to disable interrupts and freeze shadowing
-	 * at the same time because interupts are not actually disabled
+	 * at the same time because interrupts are not actually disabled
 	 * until after the next instruction. Well, if an interrupt
 	 * occurs now, we're in deep   anyway, so I'm going to do
 	 * the two together.

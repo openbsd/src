@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicdma.c,v 1.8 2003/06/02 05:09:14 deraadt Exp $ */
+/*	$OpenBSD: sbicdma.c,v 1.9 2003/11/03 06:54:25 david Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -187,7 +187,7 @@ sbicdma_dmago(sc, va, count, flags)
 	pcc->pcc_dmabcnt = (PCC_DMABCNT_MAKEFC(FC_USERD)) |
 	    (count & PCC_DMABCNT_CNTMASK);
 
-	/* make certain interupts are disabled first, and reset */
+	/* make certain interrupts are disabled first, and reset */
 	pcc->pcc_dmairq = sc->sc_dmaih.ih_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
 	pcc->pcc_sbicirq = sc->sc_ih.ih_ipl | PCC_SBIC_RESETIRQ | PCC_IRQ_IEN;
 	pcc->pcc_dmacsr = 0;
@@ -268,6 +268,6 @@ sbicdma_dmafree(sc)
 	struct pccreg *pcc = (struct pccreg *)sc->sc_cregs;
 
 	printf("sbicdma_dmafree called\n");
-	/* make certain interupts are disabled first, reset */
+	/* make certain interrupts are disabled first, reset */
 	pcc->pcc_dmairq = 0;
 }

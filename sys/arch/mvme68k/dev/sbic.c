@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.13 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: sbic.c,v 1.14 2003/11/03 06:54:25 david Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -1084,7 +1084,7 @@ sbicselectbus(dev)
      * We only really need to do anything when the target goes to MSG out
      * If the device ignored ATN, it's probably old and brain-dead,
      * but we'll try to support it anyhow.
-     * If it doesn't support message out, it definately doesn't
+     * If it doesn't support message out, it definitely doesn't
      * support synchronous transfers, so no point in even asking...
      */
     if ( csr == (SBIC_CSR_MIS_2 | MESG_OUT_PHASE) ) {

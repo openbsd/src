@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.91 2003/10/28 21:43:44 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.92 2003/11/03 06:54:26 david Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -590,7 +590,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
  *
  *  This routine sequences through the pages of the specified range.
  * For each, it calls pmap_pte to acquire a pointer to the page table
- * entry (PTE). If the PTE is invalid, or non-existant, nothing is done.
+ * entry (PTE). If the PTE is invalid, or non-existent, nothing is done.
  * Otherwise, the cache-control bits in the PTE's are adjusted as specified.
  *
  */
@@ -1705,7 +1705,7 @@ next:
  *
  *  This routine sequences through the pages of the specified range.
  * For each, it calls pmap_pte to acquire a pointer to the page table
- * entry (PTE). If the PTE is invalid, or non-existant, nothing is done.
+ * entry (PTE). If the PTE is invalid, or non-existent, nothing is done.
  * Otherwise, the PTE's protection attributes are adjusted as specified.
  */
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.17 2003/08/11 20:45:17 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.18 2003/11/03 06:54:26 david Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -1369,7 +1369,7 @@ signed:       bb0    modelo,r10,OFnegative /* rounding mode is round negative */
 
 
 /* In the round toward nearest mode, positive values are rounded to */
-/* postive infinity and negative values are loaded toward negative infinity. */
+/* positive infinity and negative values are loaded toward negative infinity. */
 /* The value for single or double precision is loaded from a data table. */
 
 OFnearest:      

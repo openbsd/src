@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.10 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: vs.c,v 1.11 2003/11/03 06:54:25 david Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -1027,7 +1027,7 @@ vs_build_memory_structure(xs, iopb)
 		LV(iopb->iopb_LENGTH, sg->elements);
 		LV(iopb->iopb_SGTTL, len);
 	} else { 
-		/* no scatter/gather neccessary */
+		/* no scatter/gather necessary */
 		LV(iopb->iopb_BUFF, starting_point_phys);
 		LV(iopb->iopb_LENGTH, len);
 	}

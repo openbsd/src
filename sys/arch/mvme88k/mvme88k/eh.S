@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.45 2003/10/09 16:30:58 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.46 2003/11/03 06:54:26 david Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -761,7 +761,7 @@ GLOBAL(reset_handler)
 
 	CALL(_C_LABEL(error_fatal), r30, r30)
 
-	/* turn interupts back on */
+	/* turn interrupts back on */
 	ldcr	r1, PSR
 	clr	r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r1, PSR
@@ -1683,7 +1683,7 @@ ASLOCAL(fpu_enable)
 	bb1.n	eq,   r3,   8f
 #endif
 
-	/* turn interupts back on */
+	/* turn interrupts back on */
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
@@ -1759,7 +1759,7 @@ ENTRY(proc_do_uret)
 	 * We load it into r14 since it is preserved across function
 	 * calls, and we may have to call some routines from within here.
 	 *
-	 * Control is transfered here from obvious places in this file.
+	 * Control is transferred here from obvious places in this file.
 	 */
 
 #ifdef M88100
@@ -2303,7 +2303,7 @@ GLOBAL(m88110_reset_handler)
 
 	CALL(_C_LABEL(error_fatal), r30, r30)
 
-	/* turn interupts back on */
+	/* turn interrupts back on */
 	ldcr	r1, PSR
 	clr	r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r1, PSR
@@ -2718,7 +2718,7 @@ ASLOCAL(m88110_fpu_enable)
 	bb1.n	eq,   r3,   8f
 #endif
 
-	/* turn interupts back on */
+	/* turn interrupts back on */
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.25 2003/10/27 10:43:44 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.26 2003/11/03 06:54:26 david Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -209,7 +209,7 @@ ENTRY(copyin)
 	cmp	r9,   LEN,  8
 	bb1	lt,   r9,   _ASM_LABEL(copyin_byte_only)
 
-	/* If they're not aligned similiarly, use byte only... */
+	/* If they're not aligned similarly, use byte only... */
 	xor	r9,   SRC,  DEST
 	mask	r8,   r9,   0x3
 	bcnd	ne0,  r8,   _ASM_LABEL(copyin_byte_only)
@@ -473,7 +473,7 @@ ENTRY(copyout)
 	cmp	r9,   LEN,  8
 	bb1	lt,   r9,   _ASM_LABEL(copyout_byte_only)
 
-	/* If they're not aligned similiarly, use byte only... */
+	/* If they're not aligned similarly, use byte only... */
 	xor	r9,   SRC,  DEST
 	mask	r8,   r9,   0x3
 	bcnd	ne0,  r8,   _ASM_LABEL(copyout_byte_only)
