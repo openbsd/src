@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
+.\"	$OpenBSD: mktemp.1,v 1.9 1998/04/13 17:22:10 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ any file name with some number of
 .Ql X Ns s
 appended
 to it, for example
-.Pa /tmp/temp.XXXX .
+.Pa /tmp/temp.XXXXXX .
 The trailing
 .Ql X Ns s
 are replaced with the current process number and/or a
@@ -132,11 +132,6 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 .Ed
-.Pp
-Note that one can also check to see that $TMPFILE is
-zero length instead of checking $?.  This would allow
-the check to be done later one in the script (since
-$? would get clobbered by the next shell command).
 .Sh SEE ALSO
 .Xr mktemp 3 ,
 .Xr mkdtemp 3 ,
