@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.43 2003/03/08 14:40:03 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.44 2003/03/10 14:48:38 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -317,9 +317,10 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 	int		 error = 0;
 
 	/* find the corresponding interface and copy fields used by queues */
-	if_pa = pfaltq_lookup(pa->ifname);
-	if (if_pa == NULL)
-		errx(1, "altq not defined on %s", pa->ifname);
+	if ((if_pa = pfaltq_lookup(pa->ifname)) == NULL) {
+		fprintf(stderr, "altq not defined on %s\n", pa->ifname);
+		return (1);
+	}
 	pa->scheduler = if_pa->scheduler;
 	pa->ifbandwidth = if_pa->ifbandwidth;
 	pa->qid = qname_to_qid(pa->qname);
@@ -327,9 +328,11 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 	parent = NULL;
 	if (pa->parent[0] != 0) {
 		parent = qname_to_pfaltq(pa->parent, pa->ifname);
-		if (parent == NULL)
-			errx(1, "parent %s not found for %s",
+		if (parent == NULL) {
+			fprintf(stderr, "parent %s not found for %s\n",
 			    pa->parent, pa->qname);
+			return (1);
+		}
 		pa->parent_qid = parent->qid;
 	}
 	if (pa->qlimit == 0)
@@ -340,16 +343,22 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 			pa->bandwidth = bw_absolute;
 		else if (bw_percent > 0 && parent != NULL)
 			pa->bandwidth = parent->bandwidth / 100 * bw_percent;
-		else
-			errx(1, "bandwidth for %s invalid (%d / %d)", pa->qname,
-			    bw_absolute, bw_percent);
+		else {
+			fprintf(stderr, "bandwidth for %s invalid (%d / %d)\n",
+			    pa->qname, bw_absolute, bw_percent);
+			return (1);
+		}
 
-		if (pa->bandwidth > pa->ifbandwidth)
-			errx(1, "bandwidth for %s higher than interface",
+		if (pa->bandwidth > pa->ifbandwidth) {
+			fprintf(stderr, "bandwidth for %s higher than "
+			    "interface\n", pa->qname);
+			return (1);
+		}
+		if (parent != NULL && pa->bandwidth > parent->bandwidth) {
+			fprintf(stderr, "bandwidth for %s higher than parent\n",
 			    pa->qname);
-		if (parent != NULL && pa->bandwidth > parent->bandwidth)
-			errx(1, "bandwidth for %s higher than parent",
-			    pa->qname);
+			return (1);
+		}
 	}
 
 	switch (pa->scheduler) {
