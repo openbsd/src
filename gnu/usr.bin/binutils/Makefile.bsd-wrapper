@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1997/01/02 03:09:48 rahnds Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1997/02/02 01:14:00 graichen Exp $
 
 MAN=		binutils/ar.1 binutils/nlmconv.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/objdump.1 binutils/ranlib.1 \
@@ -6,16 +6,11 @@ MAN=		binutils/ar.1 binutils/nlmconv.1 binutils/nm.1 \
 		gas/doc/as.1 ld/ld.1
 
 SUBDIRS=	libiberty opcodes bfd
-# When enabling gdb, enable these too
-.if (${MACHINE_ARCH} != "mips") && (${MACHINE_ARCH} != "alpha")
-SUBDIRS+=	mmalloc readline 
+# gdb not ready yet
+.if (${MACHINE_ARCH} != "powerpc")
+SUBDIRS+=	gdb mmalloc readline 
 .endif
 SUBDIRS+=	binutils ld gas
-# GDB not ready yet
-.if (${MACHINE_ARCH} != "mips") && (${MACHINE_ARCH} != "alpha") \
-	&& (${MACHINE_ARCH} != "powerpc")
-SUBDIRS+=	gdb
-.endif
 	
 all:	config.status
 	${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
