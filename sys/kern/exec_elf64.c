@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.6 1999/09/25 11:43:29 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.7 1999/09/27 11:10:30 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -94,7 +94,9 @@ struct elf64_probe_entry {
 #ifdef COMPAT_NETBSD
 	{ netbsd_elf64_probe, 1 << OOS_NETBSD },
 #endif
+#ifdef NATIVE_ELF
 	{ 0, 1 << OOS_OPENBSD }
+#endif
 };
 
 int elf64_load_file __P((struct proc *, char *, struct exec_package *,
