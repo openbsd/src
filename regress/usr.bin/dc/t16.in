@@ -1,0 +1,48 @@
+[s. 0]s1
+[[nok1]P]s0
+[[ok1]P]s2
+ 0d0=1 0!=0e2 
+[s. 0]s1
+[[ok2]P]s0
+[[nok2]P]s2
+ 1d0=1 0!=0e2 
+[s. 1]s1
+[[ok3]P]s0
+[[nok3]P]s2
+ 0d0=1 0!=0e2 
+[s. 1]s1
+[[ok4]P]s0
+[[nok4]P]s2
+ 1d0=1 0!=0e2 
+[
+]n
+
+[[f]P 0 1Q0 1Q]s
+
+
+[[g]P 0 1Q0 1Q]s
+
+
+[[h]P 1 1Q0 1Q]s
+
+
+
+[s.lx]s1
+[s.lx]s2
+[[ok5]P]s0
+[[nok5]P]s3
+lxd0=1d0=2 0!=0e3 
+[s.lx]s1
+[s.lxN]s2
+[[nok6]P]s0
+[[ok6]P]s3
+lxd0=1d0=2 0!=0e3 
+[s.lxN]s1
+[s.lx]s2
+[[nok7]P]s0
+[[ok7]P]s3
+lxd0=1d0=2 0!=0e3 
+
+[
+]n
+q
