@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.8 1996/10/26 07:30:24 tholo Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.9 1997/09/15 05:46:12 millert Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -244,10 +244,24 @@ exit1(p, rv)
 	p->p_pctcpu = 0;
 
 	/*
-	 * Notify parent that we're gone.
+	 * Notify parent that we're gone.  If parent has the P_NOCLDWAIT
+	 * flag set, notify process 1 instead (and hope it will handle
+	 * this situation).
 	 */
+	if (p->p_pptr->p_flag & P_NOCLDWAIT) {
+		struct proc *pp = p->p_pptr;
+		proc_reparent(p, initproc);
+		/*
+		 * If this was the last child of our parent, notify
+		 * parent, so in case he was wait(2)ing, he will
+		 * continue.
+		 */
+		if (pp->p_children.lh_first == NULL)
+			wakeup((caddr_t)pp);
+	}
 	psignal(p->p_pptr, SIGCHLD);
 	wakeup((caddr_t)p->p_pptr);
+
 	/*
 	 * Notify procfs debugger
 	 */

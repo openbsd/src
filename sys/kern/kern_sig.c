@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.18 1997/09/12 02:47:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.19 1997/09/15 05:46:13 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -126,6 +126,8 @@ sys_sigaction(p, v, retval)
 		if (signum == SIGCHLD) {
 			if ((p->p_flag & P_NOCLDSTOP) != 0)
 				sa->sa_flags |= SA_NOCLDSTOP;
+			if ((p->p_flag & P_NOCLDWAIT) != 0)
+				sa->sa_flags |= SA_NOCLDWAIT;
 		}
 		if ((sa->sa_mask & bit) == 0)
 			sa->sa_flags |= SA_NODEFER;
@@ -168,6 +170,19 @@ setsigvec(p, signum, sa)
 			p->p_flag |= P_NOCLDSTOP;
 		else
 			p->p_flag &= ~P_NOCLDSTOP;
+		if (sa->sa_flags & SA_NOCLDWAIT) {
+			/*
+			 * Paranoia: since SA_NOCLDWAIT is implemented by
+			 * reparenting the dying child to PID 1 (and
+			 * trust it to reap the zombie), PID 1 itself is
+			 * forbidden to set SA_NOCLDWAIT.
+			 */
+			if (p->p_pid == 1)
+				p->p_flag &= ~P_NOCLDWAIT;
+			else
+				p->p_flag |= P_NOCLDWAIT;
+		} else
+			p->p_flag &= ~P_NOCLDWAIT;
 	}
 	if ((sa->sa_flags & SA_RESETHAND) != 0)
 		ps->ps_sigreset |= bit;
