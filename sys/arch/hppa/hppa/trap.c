@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.66 2003/06/17 04:39:39 jfb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.67 2003/07/26 04:14:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -626,15 +626,17 @@ syscall(struct trapframe *frame)
 	scdebug_ret(p, code, oerror, rval);
 #endif
 	userret(p, frame->tf_iioq_head, 0);
-	splx(cpl);	/* process softints */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, oerror, rval[0]);
 #endif
 #ifdef DIAGNOSTIC
-	if (cpl != oldcpl)
+	if (cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
 		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
 		    cpl, code, args[0], args[1], args[2], p->p_pid);
+		cpl = oldcpl;
+	}
 #endif
+	splx(cpl);	/* process softints */
 }
