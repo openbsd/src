@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.23 2002/02/18 21:51:18 matthieu Exp $	*/
+/*	$OpenBSD: pci.c,v 1.24 2002/02/18 23:09:30 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -427,9 +427,14 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		goto done;
 	}
 	/* Check bounds */
-	if (pci.sc_bus >= 256 || 
+#ifdef PCI_USERCONF
+	if (pci.sc_bus >= 256 ||
 	    io->pi_sel.pc_dev >= pci_bus_maxdevs(pc, pci.sc_bus) ||
-	    io->pi_sel.pc_func >= 8) {
+		error = EINVAL;
+		goto done;
+	}
+#endif
+	if (io->pi_sel.pc_func >= 8) {
 		error = EINVAL;
 		goto done;
 	}
