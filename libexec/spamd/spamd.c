@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.56 2004/03/10 00:32:54 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.57 2004/03/10 00:33:39 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -474,7 +474,7 @@ nomatch:
 	if (cp->blacklists != NULL)
 		asprintf(&cp->obuf,
 		    "%s-Sorry %s\n"
-		    "%s-You are trying to send mail from an address"
+		    "%s-You are trying to send mail from an address "
 		    "listed by one\n"
 		    "%s or more IP-based registries as being a SPAM source.\n",
 		    nreply, cp->addr, nreply, nreply);
