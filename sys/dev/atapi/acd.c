@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.30 1998/06/09 13:29:57 provos Exp $	*/
+/*	$OpenBSD: acd.c,v 1.31 1998/07/11 03:48:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -796,12 +796,8 @@ acdioctl(dev, cmd, addr, flag, p)
 		error = acd_read_toc(acd, 0, 0, &hdr, sizeof(hdr));
 		if (error)
 			return error;
-		if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
+		if (acd->ad_link->quirks & AQUIRK_LITTLETOC)
 			bswap((u_int8_t *)&hdr.len, sizeof(hdr.len));
-#endif
-		} else
-			hdr.len = ntohs(hdr.len);
 		bcopy(&hdr, addr, sizeof(hdr));
 		return 0;
 	}
@@ -830,26 +826,16 @@ acdioctl(dev, cmd, addr, flag, p)
 			    th->ending_track - th->starting_track + 1;
 		            ntracks >= 0; ntracks--) {
 				toc.tab[ntracks].addr_type = CD_LBA_FORMAT;
-				if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
+				if (acd->ad_link->quirks & AQUIRK_LITTLETOC)
 					bswap((u_int8_t*)
 					    &toc.tab[ntracks].addr.addr,
-					    sizeof(toc.tab[ntracks].addr.addr)
-					    );
-#endif
-				} else
-					toc.tab[ntracks].addr.lba =
-					    ntohl(toc.tab[ntracks].addr.lba);
+					    sizeof(toc.tab[ntracks].addr.addr));
 			}
 		}
-		if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
+		if (acd->ad_link->quirks & AQUIRK_LITTLETOC)
 			bswap((u_int8_t*)&th->len, sizeof(th->len));
-#endif
-		} else
-			th->len = ntohs(th->len);
 
-		len = min(len, th->len - sizeof(struct ioc_toc_header));
+		len = min(len, ntohs(th->len) - sizeof(struct ioc_toc_header));
 		return copyout(toc.tab, te->data, len);
 	}
 
