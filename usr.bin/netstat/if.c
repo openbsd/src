@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.38 2004/03/13 22:02:13 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.39 2004/06/25 20:05:40 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.38 2004/03/13 22:02:13 deraadt Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.39 2004/06/25 20:05:40 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,6 @@ static char *rcsid = "$OpenBSD: if.c,v 1.38 2004/03/13 22:02:13 deraadt Exp $";
 #include <netns/ns_if.h>
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
 #include <arpa/inet.h>
 
 #include <limits.h>
@@ -88,7 +86,6 @@ intpr(int interval, u_long ifnetaddr)
 #endif
 		struct ns_ifaddr ns;
 		struct ipx_ifaddr ipx;
-		struct iso_ifaddr iso;
 	} ifaddr;
 	u_long total, ifaddraddr;
 	struct sockaddr *sa;
