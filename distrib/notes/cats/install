@@ -1,25 +1,18 @@
-dnl	$OpenBSD: install,v 1.1 2004/02/08 00:35:14 drahn Exp $
+dnl	$OpenBSD: install,v 1.2 2004/02/08 23:12:14 miod Exp $
 OpenBSDInstallPrelude
 
-If OpenBSD will be sharing the disk with DOS or another operating
-system, you should have already completed the section of these notes
-that instructed you on how to prepare your hard disk.  You should know
-the size of the OpenBSD area of the disk and its offset from the
-beginning of the disk.  You will need this information when setting up
-your OpenBSD partitions. 
+There are several ways to install OpenBSD onto a disk.  The easiest way
+is to burn bsd.rd on a CD-ROM, and boot off it. However, the ABLE firmware
+is versatile and will boot from a variety of devices and filesystems.
 
-There are several ways to install OpenBSD onto a disk.  The easiest way,
-should your computer support it, is to boot off the OpenBSD CD-ROM, or
-off the bootable CD-ROM mini image.
+Booting from CD-ROM installation media:
+
+At the ABLE firmware prompt, enter :
+    boot (cd0)bsd.rd
+to boot from the first detected cd-rom drive.
+
 
 OpenBSDInstallPart2
-
-	XXX 
-	Booting with ABLE
-
-	XXXX
-	Cyclone firmware not supported.
-
 
 OpenBSDBootMsgs
 
@@ -42,7 +35,7 @@ OpenBSDInstallPart3({:- or "wd0" for IDE drives-:})
 	correct this.  Note that you should make OpenBSD be the active
 	partition at least until the install has been completed.
 
-OpenBSDInstallPart4({:- If you have DOS or Linux partitions
+OpenBSDInstallPart4({:- If you have Linux partitions
 	defined on the disk, these will usually show up as partition
 	'h', 'i' and so on.-:})
 

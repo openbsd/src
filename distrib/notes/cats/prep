@@ -1,19 +1,41 @@
-dnl	$OpenBSD: prep,v 1.1 2004/02/08 00:35:14 drahn Exp $
+dnl	$OpenBSD: prep,v 1.2 2004/02/08 23:12:14 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of ABLE Firmware, the low-level
 process that controls the microprocessor after hardware initialization
 and diagnostics are performed but before control is handed to the
 operating system.
 
-Important ABLE Firmware command examples:
+A complete documentation on the ABLE firmware is available from Simtec at
+the following URL:
+  http://www.simtec.co.uk/products/SWABLE/files/able-doc-allset/
+
+For convenience, a few ABLE commands are described below:
 
 boot (hd0)bsd
-	boot the ELF file 'bsd' from the disk partition idenfied
+	boot the ELF file 'bsd' from the disk partition identified
 	by firmware as hd0.
 
+nvset variable value
+	sets a firmware environment variable.
 
-XXX autoboot 
+nvsave
+	saves all variable changes to non-volatile memory.
 
-XXX arguments to kernel
+nvclear
+	restores environment variables defaults.
 
-XXX bootable partitions
+The following environment variables control the system startup:
+
+boot.auto
+	when set to "true" (which is its default value), the system will
+	attempt to execute the command set in the "boot.cmd" variable
+	after "boot.timeout" seconds.
+boot.cmd
+	command used to auto-boot, such as "boot (hd0)bsd" to boot the
+	bsd kernel from the first hard disk drive.
+boot.timeout
+	delay until the system boots, in seconds
+
+dnl XXX arguments to kernel
+dnl
+dnl XXX bootable partitions

@@ -1,41 +1,24 @@
-dnl	$OpenBSD: contents,v 1.1 2004/02/08 00:35:14 drahn Exp $
+dnl	$OpenBSD: contents,v 1.2 2004/02/08 23:12:14 miod Exp $
 TopPart
-
-OpenBSDfloppy
-
-		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
-				image that contains almost all
-				OpenBSD drivers; see below.
 
 OpenBSDdistsets
 
 OpenBSDbsd
 
 OpenBSDrd
+dnl not yet...
+dnl OpenBSDcd
 
-OpenBSDcd
+DistributionDescription(six)
 
-As well you may be interested in
+OpenBSDbase
 
-.../OSREV/tools/
-		miscellaneous MACHINE installation utilities like
-		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe;
-		see installation section, below.
+OpenBSDcomp
 
+OpenBSDetc(,,noupgrade)
 
-In addition, the "tools/" directory contains some utilities that might be
-useful for the installation.
+OpenBSDgame
 
-DistributionDescription(ten)
+OpenBSDman
 
-OpenBSDbase(31.0,90.9,shared)
-
-OpenBSDcomp(17.4,57.6,shared)
-
-OpenBSDetc(1.6,6.0)
-
-OpenBSDgame(2.6,6.0)
-
-OpenBSDman(6.3,22.4)
-
-OpenBSDmisc(2.0,6.5)
+OpenBSDmisc
