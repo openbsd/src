@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/12/28 06:31:09 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1997/02/18 22:36:40 rahnds Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 .if !defined(__stand_makefile_inc)
@@ -25,7 +25,7 @@ INCLUDES+=	-I. -I$(.CURDIR)/.. -I$(S)/arch -I$(S) -I$(S)/lib/libsa
 DEFS+=		-DSTANDALONE -DRELOC=0x$(RELOC) -DLOADADDR=0x$(LOADADDR) \
 		-DFIREPOWERBUGS
 CFLAGS+=	$(INCLUDES) $(DEFS) $(EXTRACFLAGS)
-LDFLAGS=	-X -N -Ttext $(RELOC) -e $(ENTRY)
+LDFLAGS?=	-X -N -Ttext $(RELOC) -e $(ENTRY)
 
 cleandir:
 	rm -rf lib machine

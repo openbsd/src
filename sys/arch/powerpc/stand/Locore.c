@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.3 1997/02/06 23:44:54 rahnds Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.4 1997/02/18 22:36:40 rahnds Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1996/09/30 16:34:58 ws Exp $	*/
 
 /*
@@ -43,7 +43,11 @@ static int (*openfirmware)(void *);
 static void
 setup();
 
+void _start();
+
 #define __dead
+
+void const *__start[3] = { &_start, 0, 0};
 
 __dead void
 _start(vpd, res, openfirm, arg, argl)
@@ -60,6 +64,7 @@ _start(vpd, res, openfirm, arg, argl)
 	main(arg, argl);
 	exit();
 }
+
 
 __dead void
 _rtt()
