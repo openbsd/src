@@ -1,6 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1998/09/17 23:43:40 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2001/06/25 06:55:15 art Exp $
 
 BINDIR?=	/usr/sbin
-.if (${MACHINE_ARCH} == "alpha")
-CFLAGS:=	${CFLAGS:S/^-O2$/-O/}
-.endif
