@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1996/04/21 23:40:14 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1996/08/29 03:33:06 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.17 1996/03/17 11:50:13 cgd Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ mksymlinks()
 	char *p, buf[200];
 
 	p = path("machine");
-	(void)sprintf(buf, "../../include", machine);
+	(void)sprintf(buf, "../../include");
 	(void)unlink(p);
 	ret = symlink(buf, p);
 	if (ret)
