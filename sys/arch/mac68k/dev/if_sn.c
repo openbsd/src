@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.6 1996/09/21 03:34:55 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.7 1996/10/19 10:02:53 niklas Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -140,21 +140,11 @@ struct cfdriver sn_cd = {
 #else
 #define	_assert(e)	assert(e)
 #ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
 #else	/* PCC */
-#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, "e"))
+#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
 #endif
 #endif
-
-void
-__assert(file, line, failedexpr)
-	const char *file, *failedexpr;
-	int line;
-{
-	(void)printf(
-	    "assertion \"%s\" failed: file \"%s\", line %d\n",
-	    failedexpr, file, line);
-}
 
 int ethdebug = 0;
 

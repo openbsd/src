@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.10 1996/07/28 01:05:48 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.11 1996/10/19 10:02:49 niklas Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
@@ -132,6 +132,20 @@ panic(fmt, va_alist)
 	Debugger();
 #endif
 	boot(bootopt);
+}
+
+/*
+ *	Partial support (the failure case) of the assertion facility
+ *	commonly found in userland.
+ */
+void
+__assert(t, f, l, e)
+	const char *t, *f, *e;
+	int l;
+{
+
+	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d\n",
+	    t, e, f, l);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.6 1996/10/12 00:50:43 deraadt Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.7 1996/10/19 10:02:51 niklas Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -113,16 +113,20 @@ struct cfdriver sn_cd = {
 	NULL, "sn", DV_IFNET, NULL, 0
 };
 
-#include <assert.h>
-void
-__assert(file, line, failedexpr)
-	const char *file, *failedexpr;
-	int line;
-{
-	(void)printf(
-	    "assertion \"%s\" failed: file \"%s\", line %d\n",
-	    failedexpr, file, line);
-}
+#undef assert
+#undef _assert
+
+#ifdef NDEBUG
+#define	assert(e)	((void)0)
+#define	_assert(e)	((void)0)
+#else
+#define	_assert(e)	assert(e)
+#ifdef __STDC__
+#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
+#else	/* PCC */
+#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
+#endif
+#endif
 
 void 
 m_check(m)
