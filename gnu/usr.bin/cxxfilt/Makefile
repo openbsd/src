@@ -1,14 +1,11 @@
 NOMAN=1
 PROG=c++filt
 
-SRCS=	cxxmain.c underscore.c
-LIBIBERTY_SRCDIR=${.CURDIR}/../../lib/libiberty/src
+SRCS=	cxxfilt.c
 LIBIBERTY_INCDIR=${.CURDIR}/../../lib/libiberty/include
 
-CFLAGS+=-I${LIBIBERTY_INCDIR} -DMAIN -DVERSION=\"${VERSION}\"
-VERSION=2.95.3
-
-LDADD=	-liberty
+CFLAGS+=-I${LIBIBERTY_INCDIR}
+LDADD=-liberty
 
 underscore.c:
 	@case ${ELF_TOOLCHAIN:L} in \
@@ -22,5 +19,10 @@ underscore.c:
 cxxmain.c:
 	ln -s ${LIBIBERTY_SRCDIR}/cplus-dem.c $@
 
-CLEANFILES+=${SRCS}
 .include <bsd.prog.mk>
+
+.if ${ELF_TOOLCHAIN:L} == "yes"
+CFLAGS+=-DTARGET_PREPENDS_UNDERSCORE=0
+.else
+CFLAGS+=-DTARGET_PREPENDS_UNDERSCORE=1
+.endif
