@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.55 1999/07/20 19:55:06 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.56 1999/07/21 00:05:47 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -317,11 +317,15 @@ main(argc, argv, envp)
 		case 'u':
 		    {
 			long val = 0;
+			char *p;
 
-			val = strtol(optarg, &optarg, 8);
-			if (*optarg != '\0' || val < 0 || (val & ~ACCESSPERMS))
-				warnx("bad value for -u");
-			else
+			val = strtol(optarg, &p, 8);
+			if (*p != '\0' || val < 0 || (val & ~ACCESSPERMS)) {
+				syslog(LOG_ERR,
+				    "ftpd: %s is a bad value for -u, aborting..",
+				    optarg);
+				exit(2);
+			} else
 				defumask = val;
 			break;
 		    }
