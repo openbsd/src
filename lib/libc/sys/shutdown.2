@@ -52,13 +52,19 @@ the socket associated with
 to be shut down.
 If
 .Fa how
-is 0, further receives will be disallowed.
+is
+.Ar SHUT_RD ,
+further receives will be disallowed.
 If
 .Fa how
-is 1, further sends will be disallowed.
+is
+.Ar SHUT_WR ,
+further sends will be disallowed.
 If
 .Fa how
-is 2, further sends and receives will be disallowed.
+is
+.Ar SHUT_RDWR ,
+further sends and receives will be disallowed.
 .Sh DIAGNOSTICS
 A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
@@ -66,7 +72,11 @@ The call succeeds unless:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa how
-is not in the valid range of 0 - 2.
+is not
+.Ar SHUT_RD ,
+.Ar SHUT_WR ,
+or
+.Ar SHUT_RDWR .
 .It Bq Er EBADF
 .Fa S
 is not a valid descriptor.
@@ -84,3 +94,9 @@ The
 .Fn shutdown
 function call appeared in
 .Bx 4.2 .
+The
+.Fa how
+arguments used to be simply 0, 1, and 2, but now have named values
+as specified by
+.St -xpg4 .
+

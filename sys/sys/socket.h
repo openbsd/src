@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.17 1997/07/14 03:07:21 angelos Exp $	*/
+/*	$OpenBSD: socket.h,v 1.18 1997/11/16 19:57:39 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -186,6 +186,13 @@ struct sockproto {
 #define	PF_SIP		AF_SIP
 #define PF_KEY		AF_KEY
 #define	PF_MAX		AF_MAX
+
+/*
+ * These are the valid values for the "how" field used by shutdown(2).
+ */
+#define	SHUT_RD		0
+#define	SHUT_WR		1
+#define	SHUT_RDWR	2
 
 /*
  * Definitions for network related sysctl, CTL_NET.
