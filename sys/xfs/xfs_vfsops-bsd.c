@@ -38,7 +38,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-bsd.c,v 1.1 1999/04/30 01:59:01 art Exp $");
+RCSID("$Id: xfs_vfsops-bsd.c,v 1.2 2000/02/01 04:12:19 assar Exp $");
 
 /*
  * XFS vfs operations.
@@ -336,7 +336,6 @@ xfs_fhopen (struct proc *proc,
     int flags = FFLAGS(user_flags);
     int index;
     struct file *fp;
-    extern struct fileops vnops;
 
     XFSDEB(XDEBVFOPS, ("xfs_fhopen: fileid = %ld, flags = %d\n",
 		       fileid, user_flags));
