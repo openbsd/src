@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zic.c	7.96";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.9 1999/01/29 07:04:05 d Exp $";
+static char elsieid[] = "@(#)zic.c	7.99";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.10 1999/07/01 23:05:39 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -562,12 +562,18 @@ _("%s: More than one -L option specified\n"),
 	/*
 	** Make links.
 	*/
-	for (i = 0; i < nlinks; ++i)
+	for (i = 0; i < nlinks; ++i) {
+		eat(links[i].l_filename, links[i].l_linenum);
 		dolink(links[i].l_from, links[i].l_to);
-	if (lcltime != NULL)
+	}
+	if (lcltime != NULL) {
+		eat("command line", 1);
 		dolink(lcltime, TZDEFAULT);
-	if (psxrules != NULL)
+	}
+	if (psxrules != NULL) {
+		eat("command line", 1);
 		dolink(psxrules, TZDEFRULES);
+	}
 	return (errors == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -604,12 +610,20 @@ const char * const	tofile;
 
 		if (mkdirs(toname) != 0)
 			(void) exit(EXIT_FAILURE);
+
 		result = link(fromname, toname);
 #if (HAVE_SYMLINK - 0) 
 		if (result != 0) {
-			result = symlink(fromname, toname);
+		        char *s = (char *) tofile;
+		        register char * symlinkcontents = NULL;
+		        while ((s = strchr(s+1, '/')) != NULL)
+			        symlinkcontents = ecatalloc(symlinkcontents, "../");
+			symlinkcontents = ecatalloc(symlinkcontents, fromfile);
+
+			result = symlink(symlinkcontents, toname);
 			if (result == 0)
 warning(_("hard link failed, symbolic link used"));
+			ifree(symlinkcontents);
 		}
 #endif
 		if (result != 0) {
