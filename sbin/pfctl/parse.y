@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.197 2002/11/19 18:51:09 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.198 2002/11/22 12:24:30 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2295,6 +2295,18 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 		else {
 			eval_pfaltq(pf, &pa);
 			pfctl_add_altq(pf, &pa);
+			if (pf->opts & PF_OPT_VERBOSE) {
+				print_altq(&pf->paltq->altq, 0);
+				if (nqueues && nqueues->tail) {
+					printf(" queue { ");
+					LOOP_THROUGH(struct node_queue, queue,
+					    nqueues,
+						printf("%s ", queue->queue);
+					);
+					printf("}");
+				}
+				printf("\n");
+			}
 
 			/* now create a root queue */
 			memset(&pb, 0, sizeof(struct pf_altq));
@@ -2356,14 +2368,26 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 					queues->tail = n;
 				}
 			);
-			FREE_LIST(struct node_queue, nqueues);
 			strlcpy(a->ifname, tqueue->ifname, IFNAMSIZ);
 			strlcpy(a->parent, tqueue->parent, PF_QNAME_SIZE);
 
 			eval_pfqueue(pf, a, bwspec.bw_absolute,
 			    bwspec.bw_percent);
 			pfctl_add_altq(pf, a);
+			if (pf->opts & PF_OPT_VERBOSE) {
+				print_altq(&pf->paltq->altq, 0);
+				if (nqueues && nqueues->tail) {
+					printf(" { ");
+					LOOP_THROUGH(struct node_queue, queue,
+					    nqueues,
+						printf("%s ", queue->queue);
+					);
+					printf("}");
+				}
+				printf("\n");
+			}
 			added++;
+			FREE_LIST(struct node_queue, nqueues);
 		}
 	);
 
