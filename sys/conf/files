@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.50 1997/02/20 01:07:37 deraadt Exp $
+#	$OpenBSD: files,v 1.51 1997/02/27 14:05:52 briggs Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -25,6 +25,7 @@ define	fddi
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
+define	ncr53c9x	# NCR 53c9x or Emulex ESP SCSI Controller
 define	pdq		# DEC FDDI chipset
 
 # "Chipset" drivers.  These are the bus-independent routines which
@@ -116,6 +117,7 @@ file ddb/db_hangman.c			ddb
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
+file dev/ic/ncr53c9x.c			ncr53c9x
 file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/mulaw.c			mulaw
