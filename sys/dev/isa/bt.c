@@ -871,7 +871,9 @@ bt_find(ia, sc)
 		/* We don't grok MicroChannel (yet). */
 		return 1;
 	default:
-		printf("bt_find: illegal bus type %c\n", inquire.reply.bus_type);
+		if (inquire.reply.bus_type != 'F')
+			printf("bt_find: illegal bus type %c\n",
+			    inquire.reply.bus_type);
 		return 1;
 	}
 
