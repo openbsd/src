@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.3 2003/03/08 22:06:02 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.4 2003/03/09 02:50:54 beck Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -748,6 +748,7 @@ main(int argc, char *argv[])
 				white = blc - 1;
 				black = blc;
 			}
+			memset(&blists[black], 0, sizeof(struct blacklist));
 			blc += getlist(db_array, name, &blists[white],
 			    &blists[black]);
 		}
