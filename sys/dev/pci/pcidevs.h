@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.678 2003/10/07 19:49:02 grange Exp 
+ *		OpenBSD: pcidevs,v 1.679 2003/10/08 20:52:43 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1148,6 +1148,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_4	0x103d		/* PRO/100 VE */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_5	0x103e		/* PRO/100 VM */
 #define	PCI_PRODUCT_INTEL_PRO_2100_3B	0x1043		/* PRO/2100 3B */
+#define	PCI_PRODUCT_INTEL_PROXGB	0x1048		/* PRO/XGB */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_5	0x1050		/* PRO/100 VE */
 #define	PCI_PRODUCT_INTEL_PRO_100_M	0x1059		/* PRO/100 M */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
