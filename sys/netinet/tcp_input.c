@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.44 1999/07/22 17:14:18 niklas Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.45 1999/07/28 05:37:18 cmetz Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -891,6 +891,12 @@ findpcb:
 			return;
 		}
 	}
+
+	/*
+	 * Drop TCP, IP headers and TCP options.
+	 */
+	m->m_data += iphlen + off;
+	m->m_len  -= iphlen + off;
 
 	/*
 	 * Calculate amount of space in receive window,
@@ -1953,13 +1959,6 @@ step6:
 		if (SEQ_GT(tp->rcv_nxt, tp->rcv_up))
 			tp->rcv_up = tp->rcv_nxt;
 dodata:							/* XXX */
-
-	/*
-	 * Drop TCP, IP headers and TCP options.
-	 */
-	m->m_data += iphlen + off;
-	m->m_len  -= iphlen + off;
-
 	/*
 	 * Process the segment text, merging it into the TCP sequencing queue,
 	 * and arranging for acknowledgment of receipt if necessary.
