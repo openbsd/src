@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 
+#include <err.h>
 #include <errno.h>
 #include <paths.h>
 #include <stdio.h>

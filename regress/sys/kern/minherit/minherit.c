@@ -1,4 +1,4 @@
-/*	$OpenBSD: minherit.c,v 1.2 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: minherit.c,v 1.3 2003/08/02 01:24:36 david Exp $	*/
 /*
  * Written by Artur Grabowski <art@openbsd.org> Public Domain.
  */
@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#include <unistd.h>
 
 #define MAGIC "inherited"
 

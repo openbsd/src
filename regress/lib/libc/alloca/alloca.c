@@ -1,8 +1,9 @@
-/*	$OpenBSD: alloca.c,v 1.4 2003/07/31 21:48:02 deraadt Exp $	*/
+/*	$OpenBSD: alloca.c,v 1.5 2003/08/02 01:24:36 david Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public Domain.	*/
 
 #include <stdio.h>
+#include <string.h>
 
 int
 main(int argc, char *argv[])
