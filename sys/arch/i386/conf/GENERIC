@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.283 2001/11/30 00:17:02 nate Exp $
+#	$OpenBSD: GENERIC,v 1.284 2001/12/24 20:11:11 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -55,7 +55,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 pci*	at pchb? bus ?
-pcib*	at pci? dev ? function ?	# PCI-ISA bridges (do nothing)
+pcib*	at pci? dev ? function ?	# PCI-ISA bridge
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE

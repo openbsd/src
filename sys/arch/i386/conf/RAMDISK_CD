@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.51 2001/10/10 23:43:43 millert Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.52 2001/12/24 20:11:11 mickey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -45,6 +45,7 @@ apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 pcibios0 at bios0 flags 0x0000
 
 isa0	at mainbus0
+isa0	at pcib?
 eisa0	at mainbus0
 pci*	at mainbus0
 
@@ -55,6 +56,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 pci*	at pchb? bus ?
+pcib*	at pci? dev ? function ?	# PCI-ISA bridge
 
 # CardBus bus support
 cardbus*	at cardslot?
