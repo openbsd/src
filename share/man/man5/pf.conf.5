@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.271 2003/09/02 18:37:08 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.272 2003/10/07 09:57:43 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2027,7 +2027,7 @@ rule after the
 rule:
 .Bd -literal -offset indent
 anchor spam
-load anchor spam:manual from /etc/pf-spam.conf
+load anchor spam:manual from "/etc/pf-spam.conf"
 .Ed
 .Pp
 When
