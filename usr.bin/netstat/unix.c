@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.3 1997/06/29 20:18:04 millert Exp $	*/
+/*	$OpenBSD: unix.c,v 1.4 1997/06/29 20:52:42 millert Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.3 1997/06/29 20:18:04 millert Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.4 1997/06/29 20:52:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,12 +124,12 @@ unixdomainpr(so, soaddr)
 	if (first) {
 		printf("Active UNIX domain sockets\n");
 		printf(
-"%-8.8s %-6.6s %-6.6s %-6.6s %8.8s %8.8s %8.8s %8.8s Addr\n",
+"%-18.18s %-6.6s %-6.6s %-6.6s %18.18s %18.18s %18.18s %18.18s Addr\n",
 		    "Address", "Type", "Recv-Q", "Send-Q",
 		    "Inode", "Conn", "Refs", "Nextref");
 		first = 0;
 	}
-	printf("%8p %-6.6s %6ld %6ld %8p %8p %8p %8p",
+	printf("%18p %-6.6s %6ld %6ld %18p %18p %18p %18p",
 	    soaddr, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
 	    unp->unp_vnode, unp->unp_conn,
 	    unp->unp_refs, unp->unp_nextref);

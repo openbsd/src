@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.2 1997/06/29 20:18:00 millert Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.3 1997/06/29 20:52:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.2 1997/06/29 20:18:00 millert Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.3 1997/06/29 20:52:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ ipxprotopr(off, name)
 				printf(" (including servers)");
 			putchar('\n');
 			if (Aflag)
-				printf("%-8.8s ", "PCB");
+				printf("%-18.18s ", "PCB");
 			printf(Aflag ?
 				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
 				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
@@ -136,7 +136,7 @@ ipxprotopr(off, name)
 			first = 0;
 		}
 		if (Aflag)
-			printf("%8p ", ipxpcb.ipxp_ppcb);
+			printf("%18p ", ipxpcb.ipxp_ppcb);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		printf("  %-22.22s", ipx_prpr(&ipxpcb.ipxp_laddr));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.13 1997/06/29 20:18:03 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.14 1997/06/29 20:52:41 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.13 1997/06/29 20:18:03 millert Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.14 1997/06/29 20:52:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -216,8 +216,8 @@ pr_rthdr()
 {
 
 	if (Aflag)
-		printf("%-8.8s ","Address");
-	printf("%-*.*s %-*.*s %-6.6s  %6.6s%8.8s %6.6s  %s\n",
+		printf("%-18.18s ","Address");
+	printf("%-*.*s %-*.*s %-6.6s  %6.6s%16.16s %6.6s  %s\n",
 		WID_DST, WID_DST, "Destination",
 		WID_GW, WID_GW, "Gateway",
 		"Flags", "Refs", "Use", "Mtu", "Interface");
@@ -230,7 +230,7 @@ void
 pr_encaphdr()
 {
 	if (Aflag)
-		printf("%-8s ", "Address");
+		printf("%-18s ", "Address");
 	printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-8s %s\n",
 	    "Source address", "Source mask", "Port", "Dest. address", 
 	    "Dest. mask", "Port", "Proto", "Tunnel exit",
@@ -257,7 +257,7 @@ again:
 	kget(rn, rnode);
 	if (rnode.rn_b < 0) {
 		if (Aflag)
-			printf("%-8.8lx ", rn);
+			printf("%-16p ", rn);
 		if (rnode.rn_flags & RNF_ROOT) {
 			if (Aflag)
 				printf("(root node)%s",
@@ -276,7 +276,7 @@ again:
 			goto again;
 	} else {
 		if (Aflag && do_rtent) {
-			printf("%-8.8lx ", rn);
+			printf("%-16p ", rn);
 			p_rtnode();
 		}
 		rn = rnode.rn_r;
@@ -301,12 +301,13 @@ p_rtnode()
 			return;
 	} else {
 		sprintf(nbuf, "(%d)", rnode.rn_b);
-		printf("%6.6s %8.8lx : %8.8lx", nbuf, rnode.rn_l, rnode.rn_r);
+		printf("%6.6s %16p : %16p", nbuf, rnode.rn_l,
+		    rnode.rn_r);
 	}
 	while (rm) {
 		kget(rm, rmask);
 		sprintf(nbuf, " %d refs, ", rmask.rm_refs);
-		printf(" mk = %8.8lx {(%d),%s",
+		printf(" mk = %16p {(%d),%s",
 			rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask), 0, -1);
 		putchar('}');

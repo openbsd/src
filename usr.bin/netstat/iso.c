@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.4 1997/06/29 20:18:00 millert Exp $	*/
+/*	$OpenBSD: iso.c,v 1.5 1997/06/29 20:52:41 millert Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.4 1997/06/29 20:18:00 millert Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.5 1997/06/29 20:52:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ iso_protopr(off, name)
 		next = isopcb.isop_next;
 		kget(next, isopcb);
 		if (isopcb.isop_prev != prev) {
-			printf("prev 0x%p next 0x%p isop_prev 0x%p isop_next 0x%p???\n",
+			printf("prev %p next %p isop_prev %p isop_next %p???\n",
 				prev, next, isopcb.isop_prev, isopcb.isop_next);
 			break;
 		}
@@ -266,7 +266,7 @@ iso_protopr1(kern_addr, istp)
 			printf(" (including servers)");
 		putchar('\n');
 		if (Aflag)
-			printf("%-8.8s ", "PCB");
+			printf("%-18.18s ", "PCB");
 		printf(Aflag ?
 			"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
 			"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
@@ -275,7 +275,7 @@ iso_protopr1(kern_addr, istp)
 		first = 0;
 	}
 	if (Aflag)
-			printf("%8p ",
+			printf("%18p ",
 					(sockb.so_pcb ? (void *)sockb.so_pcb : (void *)kern_addr));
 	printf("%-5.5s %6ld %6ld ", "tp", sockb.so_rcv.sb_cc,
 	    sockb.so_snd.sb_cc);
@@ -328,7 +328,7 @@ tp_protopr(off, name)
 			continue;
 		kget(tpr->tpr_pcb, tpcb);
 		if (tpcb.tp_state == ST_ERROR)
-			printf("undefined tpcb state: 0x%p\n", tpr->tpr_pcb);
+			printf("undefined tpcb state: %p\n", tpr->tpr_pcb);
 		if (!aflag &&
 			(tpcb.tp_state == TP_LISTENING ||
 			 tpcb.tp_state == TP_CLOSED ||

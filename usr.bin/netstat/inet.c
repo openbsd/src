@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.16 1997/06/29 20:17:59 millert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.17 1997/06/29 20:52:39 millert Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.16 1997/06/29 20:17:59 millert Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.17 1997/06/29 20:52:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ protopr(off, name)
 				printf(" (including servers)");
 			putchar('\n');
 			if (Aflag)
-				printf("%-8.8s ", "PCB");
+				printf("%-18.18s ", "PCB");
 			printf(Aflag ?
 				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
 				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
@@ -149,9 +149,9 @@ protopr(off, name)
 		}
 		if (Aflag)
 			if (istcp)
-				printf("%8p ", inpcb.inp_ppcb);
+				printf("%18p ", inpcb.inp_ppcb);
 			else
-				printf("%8p ", prev);
+				printf("%18p ", prev);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name, 1);
