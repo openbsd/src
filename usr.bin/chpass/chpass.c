@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.23 2002/06/27 19:02:40 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.24 2002/06/27 19:16:50 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.23 2002/06/27 19:02:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.24 2002/06/27 19:16:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,6 @@ static char rcsid[] = "$OpenBSD: chpass.c,v 1.23 2002/06/27 19:02:40 deraadt Exp
 #include "chpass.h"
 #include "pathnames.h"
 
-char tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
 enum { NEWSH, LOADENTRY, EDITENTRY } op;
 uid_t uid;
 
@@ -83,7 +82,6 @@ int pw_yp(struct passwd *, uid_t);
 #endif
 
 void	baduser(void);
-void	tempcleanup(void);
 void	kbintr(int);
 void	usage(void);
 
@@ -183,12 +181,15 @@ main(int argc, char *argv[])
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
+		char tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
+
 		dfd = mkstemp(tempname);
 		if (dfd == -1 || fcntl(dfd, F_SETFD, 1) == -1)
 			pw_error(tempname, 1, 1);
-		atexit(tempcleanup);
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
+		close(dfd);
+		unlink(tempname);
 	}
 
 	/* Drop user's real uid and block all signals to avoid a DoS. */
@@ -245,13 +246,6 @@ baduser(void)
 }
 
 void
-tempcleanup(void)
-{
-
-	unlink(tempname);
-}
-
-void
 kbintr(int signo)
 {
 	struct iovec iv[5];
@@ -267,9 +261,6 @@ kbintr(int signo)
 	iv[4].iov_base = " unchanged\n";
 	iv[4].iov_len = 11;
 	writev(STDERR_FILENO, iv, 5);
-
-	if (op == EDITENTRY)
-		unlink(tempname);
 
 	_exit(1);
 }
