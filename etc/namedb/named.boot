@@ -5,7 +5,7 @@
 
 sortlist 128.3.0.0
 
-directory	/etc/namedb
+directory	/var/named
 
 ; type    domain		source host/file		backup file
 
