@@ -262,11 +262,17 @@ EOF
     mac68k:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
+    macppc:OpenBSD:*:*)
+	echo powerpc-unknown-openbsd${UNAME_RELEASE}
+	exit 0 ;;
     mvme68k:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     mvme88k:OpenBSD:*:*)
 	echo m88k-unknown-openbsd${UNAME_RELEASE}
+	exit 0 ;;
+    mvmeppc:OpenBSD:*:*)
+	echo powerpc-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     powerpc:machten:*:*)
 	echo powerpc-apple-machten${UNAME_RELEASE}
