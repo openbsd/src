@@ -1,4 +1,4 @@
-.\" $OpenBSD: ehci.4,v 1.4 2004/10/27 11:27:41 dlg Exp $
+.\" $OpenBSD: ehci.4,v 1.5 2005/03/13 05:05:02 dlg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Nm ehci
 .Nd USB Enhanced Host Controller driver
 .Sh SYNOPSIS
+.Cd "ehci* at cardbus?"
 .Cd "ehci* at pci?"
 .Cd "usb*  at ehci?"
 .Sh DESCRIPTION
@@ -70,8 +71,5 @@ connector appear to connect to different USB busses.
 .Xr usb 4
 .Sh BUGS
 The driver is not finished and is quite buggy.
-.Pp
-There is no support (yet) for hubs that are connected with high speed upstream
-and low or full speed downstream (i.e., for transaction translators).
 .Pp
 There is no support (yet) for isochronous transfers.
