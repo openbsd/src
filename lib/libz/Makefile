@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1998/08/08 20:57:04 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/02/23 23:17:01 deraadt Exp $
 
 LIB=	z
 HDRS=	zconf.h zlib.h
@@ -6,7 +6,7 @@ SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infblock.c \
 	infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c \
 	uncompr.c zutil.c
 NOMAN=	noman
-CFLAGS+=-DHAVE_UNISTD_H -DHAVE_STRERROR -DHAVE_MEMCPY
+CFLAGS+=-DHAVE_UNISTD_H -DHAVE_STRERROR -DHAVE_MEMCPY -DHAS_vsnprintf
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
