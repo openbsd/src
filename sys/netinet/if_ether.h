@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.12 2000/03/07 18:15:47 chris Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.13 2000/12/28 23:56:47 mickey Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -281,6 +281,7 @@ int arpresolve __P((struct arpcom *, struct rtentry *, struct mbuf *,
 void arpintr __P((void));
 int arpioctl __P((u_long, caddr_t));
 void arp_ifinit __P((struct arpcom *, struct ifaddr *));
+void arprequest __P((struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *));
 void revarpinput __P((struct mbuf *));
 void in_revarpinput __P((struct mbuf *));
 void revarprequest __P((struct ifnet *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.24 2000/11/27 16:20:43 ho Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.25 2000/12/28 23:56:47 mickey Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -82,8 +82,6 @@ int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
 
-static	void arprequest
-	    __P((struct arpcom *, u_int32_t *, u_int32_t *, u_int8_t *));
 static	void arptfree __P((struct llinfo_arp *));
 void arptimer __P((void *));
 static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
@@ -196,7 +194,7 @@ arp_rtrequest(req, rt, sa)
 		}
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
-			arprequest((struct arpcom *)rt->rt_ifp,
+			arprequest(rt->rt_ifp,
 			    &SIN(rt_key(rt))->sin_addr.s_addr,
 			    &SIN(rt_key(rt))->sin_addr.s_addr,
 			    (u_char *)LLADDR(SDL(gate)));
@@ -267,9 +265,9 @@ arp_rtrequest(req, rt, sa)
  *	- arp header target ip address
  *	- arp header source ethernet address
  */
-static void
-arprequest(ac, sip, tip, enaddr)
-	register struct arpcom *ac;
+void
+arprequest(ifp, sip, tip, enaddr)
+	register struct ifnet *ifp;
 	register u_int32_t *sip, *tip;
 	register u_int8_t *enaddr;
 {
@@ -301,7 +299,7 @@ arprequest(ac, sip, tip, enaddr)
 	bcopy((caddr_t)tip, (caddr_t)ea->arp_tpa, sizeof(ea->arp_tpa));
 	sa.sa_family = AF_UNSPEC;
 	sa.sa_len = sizeof(sa);
-	(*ac->ac_if.if_output)(&ac->ac_if, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 }
 
 /*
@@ -382,7 +380,7 @@ arpresolve(ac, rt, m, dst, desten)
 		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
 			rt->rt_expire = time.tv_sec;
 			if (la->la_asked++ < arp_maxtries)
-				arprequest(ac,
+				arprequest(&ac->ac_if,
 				    &(SIN(rt->rt_ifa->ifa_addr)->sin_addr.s_addr),
 				    &(SIN(dst)->sin_addr.s_addr),
 				    ac->ac_enaddr);
@@ -663,7 +661,7 @@ arp_ifinit(ac, ifa)
 {
 
 	/* Warn the user if another station has this IP address. */
-	arprequest(ac,
+	arprequest(&ac->ac_if,
 	    &(IA_SIN(ifa)->sin_addr.s_addr),
 	    &(IA_SIN(ifa)->sin_addr.s_addr),
 	    ac->ac_enaddr);
