@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.2 2000/03/02 14:46:35 todd Exp $
+#	$OpenBSD: README,v 1.3 2002/01/24 19:36:53 fgsch Exp $
 #
 # Copyright (c) 1993 Terrence R. Lambert.
 # All rights reserved.
@@ -134,7 +134,7 @@
 	in their predefined locations with regard to mount.  This
 	means that there are changes to vfssw[] and mount coming
 	down the road (which will end up incrementing the lkm version
-	and introducing an incompatability as far as file system modules
+	and introducing an incompatibility as far as file system modules
 	are converned).
 
 	The directory ./sample/vfs contains the sample implementation
@@ -153,7 +153,7 @@
 	to the init routine, and then using a "/devices" file system
 	to export devices to the file system name space.  Of course,
 	the default "/dev" directory would have to be maintained for
-	compatability (probably using symbolic links).
+	compatibility (probably using symbolic links).
 
 	This distribution does not contain a loadable device driver
 	example.  A potentially beneficial example could be made of
