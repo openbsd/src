@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.37 2002/11/07 21:49:31 millert Exp $ */
+/* $OpenBSD: user.c,v 1.38 2002/11/07 22:02:18 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -381,7 +381,8 @@ modify_gid(char *group, char *newent)
 	int		cc;
 
 	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
-		warn("can't create gid for %s: can't open %s", group, _PATH_GROUP);
+		warn("can't create gid for %s: can't open %s", group,
+		    _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
@@ -504,7 +505,7 @@ append_group(char *user, int ngroups, char **groups)
 			continue;
 		}
 		if ((colon = strchr(buf, ':')) == NULL) {
-			warn("badly formed entry `%s'", buf);
+			warnx("badly formed entry `%s'", buf);
 			continue;
 		}
 		for (i = 0 ; i < ngroups ; i++) {
@@ -569,7 +570,7 @@ valid_group(char *group)
 	char	*cp;
 
 	for (cp = group ; *cp ; cp++) {
-		if (!isalnum(*cp)) {
+		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
 			return 0;
 		}
 	}
@@ -1622,7 +1623,7 @@ groupadd(int argc, char **argv)
 	}
 	checkeuid();
 	if (gid < 0 && !getnextgid(&gid, LowGid, HighGid)) {
-		err(EXIT_FAILURE, "can't add group: can't get next gid");
+		errx(EXIT_FAILURE, "can't add group: can't get next gid");
 	}
 	if (!dupgid && getgrgid((gid_t) gid) != NULL) {
 		errx(EXIT_FAILURE, "can't add group: gid %d is a duplicate", gid);
@@ -1720,26 +1721,26 @@ groupmod(int argc, char **argv)
 	}
 	checkeuid();
 	if (gid < 0 && newname == NULL) {
-		err(EXIT_FAILURE, "Nothing to change");
+		errx(EXIT_FAILURE, "Nothing to change");
 	}
 	if (dupgid && gid < 0) {
-		err(EXIT_FAILURE, "Duplicate which gid?");
+		errx(EXIT_FAILURE, "Duplicate which gid?");
 	}
 	if ((grp = getgrnam(*argv)) == NULL) {
-		err(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
+		errx(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
 	}
 	if (newname != NULL && !valid_group(newname)) {
-		warn("warning - invalid group name `%s'", newname);
+		warnx("warning - invalid group name `%s'", newname);
 	}
 	if ((cc = snprintf(buf, sizeof(buf), "%s:%s:%u:",
 	    (newname) ? newname : grp->gr_name, grp->gr_passwd,
 	    (gid < 0) ? grp->gr_gid : gid)) >= sizeof(buf) || cc < 0)
-		err(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
+		errx(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
 
 	for (cpp = grp->gr_mem ; *cpp ; cpp++) {
 		cc = strlcat(buf, *cpp, sizeof(buf)) + 1;
 		if (cc >= sizeof(buf))
-			err(EXIT_FAILURE, "group `%s' entry too long",
+			errx(EXIT_FAILURE, "group `%s' entry too long",
 			    grp->gr_name);
 		if (cpp[1] != NULL) {
 			buf[cc - 1] = ',';
@@ -1748,7 +1749,7 @@ groupmod(int argc, char **argv)
 	}
 	cc = strlcat(buf, "\n", sizeof(buf));
 	if (cc >= sizeof(buf))
-		err(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
+		errx(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
 
 	if (!modify_gid(*argv, buf))
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
