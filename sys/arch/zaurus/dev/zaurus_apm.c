@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.2 2005/03/11 00:18:17 uwe Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.3 2005/03/13 05:13:15 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -107,9 +107,9 @@ int	zaurus_jkvad_voltage(void);
 int	zaurus_battery_temp(void);
 #endif
 int	zaurus_battery_voltage(void);
-int	zaurus_battery_life(void);
-int	zaurus_battery_state(void);
-int	zaurus_minutes_left(void);
+int	zaurus_battery_state(int);
+int	zaurus_battery_life(int);
+int	zaurus_minutes_left(int);
 int	zaurus_ac_present(void);
 int	zaurus_charge_complete(void);
 void	zaurus_charge_control(int);
@@ -243,14 +243,12 @@ zaurus_battery_voltage(void)
 }
 
 int
-zaurus_battery_state(void)
+zaurus_battery_state(int volt)
 {
 	const struct battery_threshold *bthr;
-	int volt;
 	int i;
 
 	bthr = zaurus_main_battery->bi_thres;
-	volt = zaurus_battery_voltage();
 
 	for (i = 0; bthr[i].bt_volt > 0; i++)
 		if (bthr[i].bt_volt <= volt)
@@ -260,14 +258,12 @@ zaurus_battery_state(void)
 }
 
 int
-zaurus_battery_life(void)
+zaurus_battery_life(int volt)
 {
 	const struct battery_threshold *bthr;
-	int volt;
 	int i;
 
 	bthr = zaurus_main_battery->bi_thres;
-	volt = zaurus_battery_voltage();
 
 	for (i = 0; bthr[i].bt_volt > 0; i++)
 		if (bthr[i].bt_volt <= volt)
@@ -283,11 +279,9 @@ zaurus_battery_life(void)
 }
 
 int
-zaurus_minutes_left(void)
+zaurus_minutes_left(int life)
 {
-	int life;
 
-	life = zaurus_battery_life();
 	return (zaurus_main_battery->bi_minutes * life / 100);
 }
 
@@ -391,6 +385,7 @@ void
 zaurus_power_info(struct pxa2x0_apm_softc *sc,
     struct apm_power_info *power)
 {
+	int volt;
 
 	if (zaurus_batt_state == BATT_CHARGING) {
 		power->ac_state = APM_AC_ON;
@@ -400,8 +395,10 @@ zaurus_power_info(struct pxa2x0_apm_softc *sc,
 	} else {
 		power->ac_state = zaurus_ac_present() ? APM_AC_ON :
 		    APM_AC_OFF;
-		power->battery_state = zaurus_battery_state();
-		power->battery_life = zaurus_battery_life();
-		power->minutes_left = zaurus_minutes_left();
+		volt = zaurus_battery_voltage();
+		power->battery_state = zaurus_battery_state(volt);
+		power->battery_life = zaurus_battery_life(volt);
+		power->minutes_left =
+		    zaurus_minutes_left(power->battery_life);
 	}
 }
