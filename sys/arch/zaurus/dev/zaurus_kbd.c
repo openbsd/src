@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.18 2005/03/15 16:05:17 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.19 2005/03/15 23:48:40 uwe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -216,7 +216,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		}
 		pxa2x0_gpio_set_function(pin, GPIO_IN);
-		pxa2x0_gpio_intr_establish(pin, IST_EDGE_BOTH, IPL_BIO,
+		pxa2x0_gpio_intr_establish(pin, IST_EDGE_BOTH, IPL_TTY,
 		    zkbd_irq, sc, sc->sc_dev.dv_xname);
 	}
 	pxa2x0_gpio_intr_establish(sc->sc_onkey_pin, IST_EDGE_RISING, IPL_TTY,
