@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.3 2004/03/30 15:12:38 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.4 2004/03/30 15:29:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -157,7 +157,6 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 	else
 		sn = "";
 
-/* printf("%s 0x%x %s(0x%x)\n", stab + sym->st_name, sym->st_info, sn, sym->st_shndx); */
 	switch(ELF_ST_TYPE(sym->st_info)) {
 	case STT_NOTYPE:
 		switch (sym->st_shndx) {
@@ -209,8 +208,10 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 			np->n_type = N_COMM;
 		else if (sym->st_shndx >= eh->e_shnum)
 			break;
-		else if (!strcmp(sn, ELF_BSS))
+		else if (!strcmp(sn, ELF_SBSS))
 			np->n_type = N_BSS;
+		else if (!strcmp(sn, ELF_BSS))
+			np->n_type = N_BSS | N_EXT;
 		else if (!strcmp(sn, ELF_RODATA))
 			np->n_other = 'r';
 		break;
