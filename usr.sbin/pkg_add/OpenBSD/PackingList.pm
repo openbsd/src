@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.15 2004/08/03 12:29:45 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.16 2004/08/03 12:33:48 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -73,7 +73,7 @@ sub DirrmOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@cwd\b/ || m/^\@dirrm\b/ || m/^\@dir\b/ || m/^\@fontdir\b/ || m/^\@name\b/ || m/^[^\@].*\/$/;
+		next unless m/^\@(?:cwd|dirrm|dir|fontdir|mandir|name)\b/ || m/^[^\@].*\/$/;
 		&$cont($_);
 	}
 }
@@ -83,7 +83,7 @@ sub FilesOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-	    	next unless m/^\@cwd\b/ || m/^\@name\b/ || m/^\@info\b/ || m/^\@man\b/ || !m/^\@/;
+	    	next unless m/^\@(?:cwd|name|info|man|file)\b/ || !m/^\@/;
 		&$cont($_);
 	}
 }
@@ -93,7 +93,7 @@ sub ConflictOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-	    	next unless m/^\@pkgcfl\b/ || m/^\@option\b/ || m/^\@name\b/;
+	    	next unless m/^\@(?:pkgcfl|option|name)\b/;
 		&$cont($_);
 	}
 }
@@ -107,13 +107,13 @@ MAINLOOP:
 		if (m/^\@shared\b/) {
 			&$cont($_);
 			while(<$fh>) {
-				redo MAINLOOP unless m/^\@md5\b/ || 
+				redo MAINLOOP unless m/^\@(?:md5|size|symlink|link)\b/;
 				    m/^\@size\b/ || m/^\@symlink\b/ || 
 				    m/^\@link\b/;
 				&$cont($_);
 			}
 		} else {
-			next unless m/^\@cwd\b/ || m/^\@dirrm\b/ || m/^\@name\b/;
+			next unless m/^\@(?:cwd|dirrm|name)\b/;
 		}
 		&$cont($_);
 	}
