@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.58 2001/09/19 20:50:56 mickey Exp $	*/
+/* $OpenBSD: machdep.c,v 1.59 2001/09/21 01:18:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -642,18 +642,13 @@ cpu_startup()
 
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
-	if (phys_map == NULL) {
-		panic("cpu_startup: unable to create phys_map");
-	}
 
 	/* 
 	 * Allocate map for external I/O
 	 */
 	iomap_map = uvm_km_suballoc(kernel_map, &iomapbase, &maxaddr,
 				   IOMAP_SIZE, 0, FALSE, NULL);
-	if (iomap_map == NULL) {
-		panic("cpu_startup: unable to create iomap_map");
-	}
+
 	iomap_extent = extent_create("iomap", iomapbase,
 	    iomapbase + IOMAP_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
 	if (iomap_extent == NULL)
