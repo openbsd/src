@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.2 1997/04/14 10:57:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/04/14 11:01:02 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		miniroot-${REV}.fs
+IMAGE=		mr-${REV}.fs
 CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
-BASE=miniroot
+BASE=mr
 
 MOUNT_POINT=	/mnt
 BDEV=		/dev/rd0a
