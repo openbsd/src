@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.4 2004/07/30 23:12:12 jfb Exp $	*/
+/*	$OpenBSD: server.c,v 1.5 2004/08/02 17:35:37 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -37,6 +37,7 @@
 #include "cvs.h"
 #include "log.h"
 #include "sock.h"
+#include "proto.h"
 
 
 
@@ -64,27 +65,43 @@ u_int   cvs_case   = 0;
 int
 cvs_server(int argc, char **argv)
 {
-	ssize_t ret;
+	size_t len;
 	char reqbuf[128];
-	struct cvsroot *root;
 
 	if (argc != 1) {
 		return (EX_USAGE);
 	}
 
-	for (;;) {
-		ret = read(STDIN_FILENO, reqbuf, sizeof(reqbuf));
-		if (ret == 0) {
-			break;
-		}
+	/* make sure standard in and standard out are line-buffered */
+	(void)setvbuf(stdin, NULL, _IOLBF, 0);
+	(void)setvbuf(stdout, NULL, _IOLBF, 0);
 
-
+	if (cvs_sock_connect(CVSD_SOCK_PATH) < 0) {
+		cvs_log(LP_ERR, "failed to connect to CVS server socket");
+		return (-1);
 	}
 
 
-	if (cvs_sock_connect(root->cr_dir) < 0) {
-		cvs_log(LP_ERR, "failed to connect to CVS server socket");
-		return (-1);
+	for (;;) {
+		if (fgets(reqbuf, sizeof(reqbuf), stdin) == NULL) {
+			if (feof(stdin))
+				break;
+			else if (ferror(stdin))
+				return (EX_DATAERR);
+		}
+
+		len = strlen(reqbuf);
+		if (len == 0)
+			continue;
+		else if (reqbuf[len - 1] != '\n') {
+			cvs_log(LP_ERR, "truncated request");
+			return (EX_DATAERR);
+		}
+		reqbuf[--len] = '\0';
+
+		cvs_req_handle(reqbuf);
+
+
 	}
 
 	cvs_sock_disconnect();
