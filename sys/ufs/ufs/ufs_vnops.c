@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.15 1997/11/06 17:23:01 kstailey Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.16 1997/11/06 23:07:24 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1794,7 +1794,8 @@ ufsspec_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 
 	simple_lock(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1)
