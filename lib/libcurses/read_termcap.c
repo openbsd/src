@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.6 1998/10/31 06:30:31 millert Exp $	*/
+/*	$OpenBSD: read_termcap.c,v 1.7 1998/11/19 17:22:23 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -802,7 +802,10 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 	 * searched instead.  The path is found in the TERMPATH variable, or
 	 * becomes "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
 	 */
-	if (!issetugid() && !is_pathname(cp)) {	/* no TERMCAP or it holds an entry */
+#define	MY_PATH_DEF	"/etc/termcap /usr/share/misc/termcap"
+	if (issetugid())
+		strlcpy(pathbuf, MY_PATH_DEF, PBUFSIZ);
+	else if (!is_pathname(cp)) {	/* no TERMCAP or it holds an entry */
 		if ((termpath = getenv("TERMPATH")) != 0) {
 			strlcpy(pathbuf, termpath, PBUFSIZ);
 		} else {
@@ -812,8 +815,8 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 				strcpy(pathbuf, home);	/* $HOME first */
 				*p++ = '/';
 			}	/* if no $HOME look in current directory */
-#define	MY_PATH_DEF	".termcap /etc/termcap /usr/share/misc/termcap"
-			strlcpy(p, MY_PATH_DEF, (size_t)(PBUFSIZ - (p - pathbuf)));
+			strlcpy(p, ".termcap " MY_PATH_DEF,
+			    (size_t)(PBUFSIZ - (p - pathbuf)));
 		}
 	}
 	else				/* user-defined name in TERMCAP */
@@ -971,7 +974,7 @@ int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 	char	pathbuf[PATH_MAX];
 
 	termpaths[filecount] = 0;
-	if (!issetugid() && (tc = getenv("TERMCAP")) != 0)
+	if ((tc = getenv("TERMCAP")) != 0 && (!issetugid() || !is_pathname(tc)))
 	{
 		if (is_pathname(tc))	/* interpret as a filename */
 		{
