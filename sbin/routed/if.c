@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.6 1997/07/30 23:28:40 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.7 2002/08/08 14:00:24 aaron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: if.c,v 1.6 1997/07/30 23:28:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: if.c,v 1.7 2002/08/08 14:00:24 aaron Exp $";
 #endif
 
 #include "defs.h"
@@ -1105,7 +1105,7 @@ addrouteforif(struct interface *ifp)
 		/* If we are going to send packets to the gateway,
 		 * it must be reachable using our physical interfaces
 		 */
-		if (!(ifp->int_state && IS_EXTERNAL)
+		if (!(ifp->int_state & IS_EXTERNAL)
 		    && !rtfind(ifp->int_dstaddr)
 		    && ifp->int_transitions == 0) {
 			msglog("unreachable gateway %s in "

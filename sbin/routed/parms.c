@@ -1,4 +1,4 @@
-/*	$OpenBSD: parms.c,v 1.6 1997/07/30 23:28:43 deraadt Exp $	*/
+/*	$OpenBSD: parms.c,v 1.7 2002/08/08 14:00:24 aaron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -515,11 +515,11 @@ check_parms(struct parm *new)
 		    || (0 != (new->parm_int_state & GROUP_IS_SOL)
 			&& 0 != (parmp->parm_int_state & GROUP_IS_SOL)
 			&& 0 != ((new->parm_int_state ^ parmp->parm_int_state)
-				 && GROUP_IS_SOL))
+				 & GROUP_IS_SOL))
 		    || (0 != (new->parm_int_state & GROUP_IS_ADV)
 			&& 0 != (parmp->parm_int_state & GROUP_IS_ADV)
 			&& 0 != ((new->parm_int_state ^ parmp->parm_int_state)
-				 && GROUP_IS_ADV))
+				 & GROUP_IS_ADV))
 		    || (new->parm_rdisc_pref != 0
 			&& parmp->parm_rdisc_pref != 0
 			&& new->parm_rdisc_pref != parmp->parm_rdisc_pref)
