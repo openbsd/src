@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.20 1999/02/26 17:05:55 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.21 1999/02/27 23:54:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.22 1998/12/24 17:50:34 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.25 1999/02/26 08:39:24 wpaul Exp $
  */
 
 /*
@@ -195,7 +195,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.22 1998/12/24 17:50:34 wpaul Exp $";
+	"$FreeBSD: if_xl.c,v 1.25 1999/02/26 08:39:24 wpaul Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -314,7 +314,6 @@ static void xl_wait(sc)
 	register int		i;
 
 	for (i = 0; i < XL_TIMEOUT; i++) {
-		DELAY(10);
 		if (!(CSR_READ_2(sc, XL_STATUS) & XL_STAT_CMDBUSY))
 			break;
 	}
@@ -1551,6 +1550,7 @@ xl_attach(config_id, unit)
 	ifp->if_watchdog = xl_watchdog;
 	ifp->if_init = xl_init;
 	ifp->if_baudrate = 10000000;
+	ifp->if_snd.ifq_maxlen = XL_TX_LIST_CNT - 1;
 
 	/*
 	 * Figure out the card type. 3c905B adapters have the
@@ -2497,11 +2497,13 @@ static void xl_init(xsc)
 	for (i = 0; i < 3; i++)
 		CSR_WRITE_2(sc, XL_W2_STATION_MASK_LO + (i * 2), 0);
 
+#ifdef notdef
 	/* Reset TX and RX. */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_RESET);
 	xl_wait(sc);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 	xl_wait(sc);
+#endif
 
 	/* Init circular RX list. */
 	if (xl_list_rx_init(sc) == ENOBUFS) {
@@ -2878,10 +2880,12 @@ static void xl_stop(sc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_DISABLE);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
 	DELAY(800);
+#ifdef notdef
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_RESET);
 	xl_wait(sc);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 	xl_wait(sc);
+#endif
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|XL_STAT_INTLATCH);
 
 	/* Stop the stats updater. */
@@ -3151,6 +3155,7 @@ xl_attach(parent, self, aux)
 	ifp->if_start = xl_start;
 	ifp->if_watchdog = xl_watchdog;
 	ifp->if_baudrate = 10000000;
+	ifp->if_snd.ifq_maxlen = XL_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.8 1998/11/23 19:56:51 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.9 1999/02/27 23:54:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xlreg.h,v 1.8 1998/10/22 15:52:25 wpaul Exp $
+ *	$FreeBSD: if_xlreg.h,v 1.9 1998/12/10 16:18:43 wpaul Exp $
  */
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
