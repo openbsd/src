@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.26 2001/02/10 10:42:35 niklas Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.27 2001/02/10 20:40:03 millert Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.29 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /* 
@@ -81,7 +81,7 @@ db_symformat_t db_symformat_aout = {
 static char *strtab;
 static int slen;
 
-#define X_db_getname(s)	(s->n_un.n_strx > slen ? NULL : strtab + s->n_un.n_strx)
+#define X_db_getname(t, s)	(s->n_un.n_strx ? t->end + s->n_un.n_strx : NULL)
 
 /* XXX */
 #ifndef ALIGNED_POINTER
@@ -184,7 +184,7 @@ db_aout_lookup(stab, symstr)
 	ep = (struct nlist *)stab->end;
 
 	for (; sp < ep; sp++) {
-		if ((n_name = X_db_getname(sp)) == 0)
+		if ((n_name = X_db_getname(stab, sp)) == 0)
 			continue;
 		if ((sp->n_type & N_STAB) == 0 &&
 		    db_eqname(n_name, symstr, '_'))
@@ -208,10 +208,10 @@ db_aout_search_symbol(symtab, off, strategy, diffp)
 	ep = (struct nlist *)symtab->end;
 
 	for (; sp < ep; sp++) {
-		if (X_db_getname(sp) == 0)
-			continue;
 		if ((sp->n_type & N_STAB) != 0 ||
 		    (sp->n_type & N_TYPE) == N_FN)
+			continue;
+		if (X_db_getname(symtab, sp) == 0)
 			continue;
 		if (off >= sp->n_value) {
 			if (off - sp->n_value < diff) {
@@ -253,7 +253,7 @@ db_aout_symbol_values(symtab, sym, namep, valuep)
 
 	sp = (struct nlist *)sym;
 	if (namep)
-		*namep = X_db_getname(sp);
+		*namep = X_db_getname(symtab, sp);
 	if (valuep)
 		*valuep = sp->n_value;
 }
@@ -286,10 +286,10 @@ db_aout_line_at_pc(symtab, cursym, filename, linenum, off)
 		 */
 #if 0
 		if (sp->n_value <= off && (off - sp->n_value) <= sodiff &&
-		    NEWSRC(X_db_getname(sp))) {
+		    NEWSRC(X_db_getname(symtab, sp))) {
 #endif
 		if ((sp->n_type & N_TYPE) == N_FN ||
-		    NEWSRC(X_db_getname(sp))) {
+		    NEWSRC(X_db_getname(symtab, sp))) {
 			sodiff = lndiff = -1UL;
 			ln = 0;
 			fname = NULL;
@@ -299,7 +299,7 @@ db_aout_line_at_pc(symtab, cursym, filename, linenum, off)
 			if (sp->n_value <= off &&
 			    (off - sp->n_value) < sodiff) {
 				sodiff = off - sp->n_value;
-				fname = X_db_getname(sp);
+				fname = X_db_getname(symtab, sp);
 			}
 			continue;
 		}
@@ -350,7 +350,7 @@ db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
 				if (nargs >= maxnarg)
 					break;
 				nargs++;
-				n_name = X_db_getname(sp);
+				n_name = X_db_getname(symtab, sp);
 				*argnamep++ = n_name ? n_name : "???";
 				{
 					/* XXX - remove trailers */
@@ -381,7 +381,7 @@ db_aout_forall(stab, db_forall_func, arg)
 	ep = (struct nlist *)stab->end;
 
 	for (; sp < ep; sp++) {
-		if (X_db_getname(sp) == 0)
+		if (X_db_getname(stab, sp) == 0)
 			continue;
 		if ((sp->n_type & N_STAB) == 0) {
 			suffix[1] = '\0';
@@ -404,8 +404,8 @@ db_aout_forall(stab, db_forall_func, arg)
 			default:
 				suffix[0] = '\0';
 			}
-			(*db_forall_func)(stab, (db_sym_t)sp, X_db_getname(sp),
-			    suffix, '_', arg);
+			(*db_forall_func)(stab, (db_sym_t)sp,
+			    X_db_getname(stab, sp), suffix, '_', arg);
 		}
 	}
 	return;
