@@ -1,4 +1,5 @@
-/*	$NetBSD: ansi.h,v 1.8 1996/11/15 22:38:56 jtc Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.2 1999/02/20 22:43:52 millert Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6 1996/11/15 22:38:59 jtc Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -32,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ansi.h	8.2 (Berkeley) 1/4/94
+ * 	@(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
 #ifndef	_ANSI_H_
@@ -51,7 +52,7 @@
 #define	_BSD_PTRDIFF_T_	int			/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
-#define	_BSD_TIME_T_	long			/* time() */
+#define	_BSD_TIME_T_	int			/* time() */
 #define	_BSD_VA_LIST_	char *			/* va_list */
 #define _BSD_CLOCKID_T_	int
 #define _BSD_TIMER_T_	int
@@ -65,7 +66,7 @@
  * chosen over a long is that the is*() and to*() routines take ints (says
  * ANSI C), but they use _RUNE_T_ instead of int.  By changing it here, you
  * lose a bit of ANSI conformance, but your programs will still work.
- *    
+ *
  * Note that _WCHAR_T_ and _RUNE_T_ must be of the same type.  When wchar_t
  * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
  * defined for ctype.h.
