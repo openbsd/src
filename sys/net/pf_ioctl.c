@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.118 2004/05/03 07:51:59 kjc Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.119 2004/05/05 23:16:03 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -178,6 +178,7 @@ pfattach(int num)
 	timeout[PFTM_FRAG] = 30;			/* Fragment expire */
 	timeout[PFTM_INTERVAL] = 10;			/* Expire interval */
 	timeout[PFTM_SRC_NODE] = 0;			/* Source tracking */
+	timeout[PFTM_TS_DIFF] = 30;			/* Allowed TS diff */
 
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
 	timeout_add(&pf_expire_to, timeout[PFTM_INTERVAL] * hz);

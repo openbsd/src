@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.192 2004/04/28 02:51:58 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.193 2004/05/05 23:16:03 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,7 +69,7 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 	  PFTM_OTHER_FIRST_PACKET, PFTM_OTHER_SINGLE,
 	  PFTM_OTHER_MULTIPLE, PFTM_FRAG, PFTM_INTERVAL,
 	  PFTM_ADAPTIVE_START, PFTM_ADAPTIVE_END, PFTM_SRC_NODE,
-	  PFTM_MAX, PFTM_PURGE, PFTM_UNTIL_PACKET };
+	  PFTM_TS_DIFF, PFTM_MAX, PFTM_PURGE, PFTM_UNTIL_PACKET };
 enum	{ PF_NOPFROUTE, PF_FASTROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
@@ -569,11 +569,19 @@ struct pf_src_node {
 #define PFSNODE_HIWAT		10000	/* default source node table size */
 
 struct pf_state_scrub {
+	struct timeval	pfss_last;	/* time received last packet	*/
+	u_int32_t	pfss_tsecr;	/* last echoed timestamp	*/
+	u_int32_t	pfss_tsval;	/* largest timestamp		*/
+	u_int32_t	pfss_tsval0;	/* original timestamp		*/
 	u_int16_t	pfss_flags;
-#define PFSS_TIMESTAMP	0x0001		/* modulate timestamp	*/
-	u_int8_t	pfss_ttl;	/* stashed TTL		*/
+#define PFSS_TIMESTAMP	0x0001		/* modulate timestamp		*/
+#define PFSS_PAWS	0x0010		/* stricter PAWS checks		*/
+#define PFSS_PAWS_IDLED	0x0020		/* was idle too long.  no PAWS	*/
+#define PFSS_DATA_TS	0x0040		/* timestamp on data packets	*/
+#define PFSS_DATA_NOTS	0x0080		/* no timestamp on data packets	*/
+	u_int8_t	pfss_ttl;	/* stashed TTL			*/
 	u_int8_t	pad;
-	u_int32_t	pfss_ts_mod;	/* timestamp modulation	*/
+	u_int32_t	pfss_ts_mod;	/* timestamp modulation		*/
 };
 
 struct pf_state_host {
@@ -870,7 +878,8 @@ struct pf_pdesc {
 #define PFRES_SHORT	3		/* Dropping short packet */
 #define PFRES_NORM	4		/* Dropping by normalizer */
 #define PFRES_MEMORY	5		/* Dropped due to lacking mem */
-#define PFRES_MAX	6		/* total+1 */
+#define PFRES_TS	6		/* Bad TCP Timestamp (RFC1323) */
+#define PFRES_MAX	7		/* total+1 */
 
 #define PFRES_NAMES { \
 	"match", \
@@ -879,6 +888,7 @@ struct pf_pdesc {
 	"short", \
 	"normalize", \
 	"memory", \
+	"bad-timestamp", \
 	NULL \
 }
 
@@ -1326,6 +1336,8 @@ void				 pf_src_tree_remove_state(struct pf_state *);
 extern struct pf_state		*pf_find_state_byid(struct pf_state *);
 extern struct pf_state		*pf_find_state_all(struct pf_state *key,
 				    u_int8_t tree, int *more);
+extern void			 pf_print_state(struct pf_state *);
+extern void			 pf_print_flags(u_int8_t);
 extern struct pf_anchor		*pf_find_anchor(const char *);
 extern struct pf_ruleset	*pf_find_ruleset(char *, char *);
 extern struct pf_ruleset	*pf_find_or_create_ruleset(
@@ -1377,8 +1389,8 @@ void	pf_normalize_tcp_cleanup(struct pf_state *);
 int	pf_normalize_tcp_init(struct mbuf *, int, struct pf_pdesc *,
 	    struct tcphdr *, struct pf_state_peer *, struct pf_state_peer *);
 int	pf_normalize_tcp_stateful(struct mbuf *, int, struct pf_pdesc *,
-	    u_short *, struct tcphdr *, struct pf_state_peer *,
-	    struct pf_state_peer *, int *);
+	    u_short *, struct tcphdr *, struct pf_state *,
+	    struct pf_state_peer *, struct pf_state_peer *, int *);
 u_int32_t
 	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);

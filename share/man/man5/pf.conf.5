@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.295 2004/04/24 23:22:54 cedric Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.296 2004/05/05 23:16:02 frantzen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -618,6 +618,24 @@ guessable base time.
 will cause
 .Ar scrub
 to modulate the TCP timestamps with a random number.
+.It extended PAWS checks
+There is a problem with TCP on long fat pipes, in that a packet might get
+delayed for longer than it takes the connection to wrap its 32-bit sequence
+space.
+In such an occurance, the old packet would be indistinguishable from a
+new packet and would be accepted as such.
+The solution to this is called PAWS: Protection Against Wrapped Sequence
+numbers.
+It protects against it by making sure the timestamp on each packet does
+not go backwards.
+.Ar reassemble tcp
+also makes sure the timestamp on the packet does not go forward more
+than the RFC allows.
+By doing this,
+.Xr pf 4
+artificially extends the security of TCP sequence numbers by 10 to 18
+bits when the host uses appropriately randomized timestamps, since a
+blind attacker would have to guess the timestamp as well.
 .El
 .El
 .Pp

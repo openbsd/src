@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.214 2004/04/09 12:42:06 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.215 2004/05/05 23:16:03 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -122,6 +122,7 @@ static const struct pf_hint pf_hint_normal[] = {
 	{ "tcp.closing",	15 * 60 },
 	{ "tcp.finwait",	45 },
 	{ "tcp.closed",		90 },
+	{ "tcp.tsdiff",		30 },
 	{ NULL,			0 }
 };
 static const struct pf_hint pf_hint_satellite[] = {
@@ -131,6 +132,7 @@ static const struct pf_hint pf_hint_satellite[] = {
 	{ "tcp.closing",	15 * 60 + 5 },
 	{ "tcp.finwait",	45 + 5 },
 	{ "tcp.closed",		90 + 5 },
+	{ "tcp.tsdiff",		60 },
 	{ NULL,			0 }
 };
 static const struct pf_hint pf_hint_conservative[] = {
@@ -140,6 +142,7 @@ static const struct pf_hint pf_hint_conservative[] = {
 	{ "tcp.closing",	60 * 60 },
 	{ "tcp.finwait",	10 * 60 },
 	{ "tcp.closed",		3 * 60 },
+	{ "tcp.tsdiff",		60 },
 	{ NULL,			0 }
 };
 static const struct pf_hint pf_hint_aggressive[] = {
@@ -149,6 +152,7 @@ static const struct pf_hint pf_hint_aggressive[] = {
 	{ "tcp.closing",	60 },
 	{ "tcp.finwait",	30 },
 	{ "tcp.closed",		30 },
+	{ "tcp.tsdiff",		10 },
 	{ NULL,			0 }
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.445 2004/04/28 02:51:58 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.446 2004/05/05 23:16:03 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -111,8 +111,6 @@ struct pool		 pf_src_tree_pl, pf_rule_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
-void			 pf_print_state(struct pf_state *);
-void			 pf_print_flags(u_int8_t);
 
 u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
 			    u_int8_t);
@@ -2760,8 +2758,11 @@ cleanup:
 			return (PF_DROP);
 		}
 		if ((pd->flags & PFDESC_TCP_NORM) && s->src.scrub &&
-		    pf_normalize_tcp_stateful(m, off, pd, &reason, th, &s->src,
-		    &s->dst, &rewrite)) {
+		    pf_normalize_tcp_stateful(m, off, pd, &reason, th, s,
+		    &s->src, &s->dst, &rewrite)) {
+			/* This really shouldn't happen!!! */
+			DPFPRINTF(PF_DEBUG_URGENT,
+			    ("pf_normalize_tcp_stateful failed on first pkt"));
 			pf_normalize_tcp_cleanup(s);
 			pf_src_tree_remove_state(s);
 			pool_put(&pf_state_pl, s);
@@ -3926,6 +3927,12 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	    (pd->flags & PFDESC_IP_REAS) == 0)) {
 	    /* Require an exact sequence match on resets when possible */
 
+		if (dst->scrub || src->scrub) {
+			if (pf_normalize_tcp_stateful(m, off, pd, reason, th,
+			    *state, src, dst, &copyback))
+				return (PF_DROP);
+		}
+
 		/* update max window */
 		if (src->max_win < win)
 			src->max_win = win;
@@ -4010,6 +4017,12 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    (*state)->packets[0], (*state)->packets[1]);
 		}
 
+		if (dst->scrub || src->scrub) {
+			if (pf_normalize_tcp_stateful(m, off, pd, reason, th,
+			    *state, src, dst, &copyback))
+				return (PF_DROP);
+		}
+
 		/* update max window */
 		if (src->max_win < win)
 			src->max_win = win;
@@ -4075,11 +4088,6 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		return (PF_DROP);
 	}
 
-	if (dst->scrub || src->scrub) {
-		if (pf_normalize_tcp_stateful(m, off, pd, reason, th,
-		    src, dst, &copyback))
-			return (PF_DROP);
-	}
 
 	/* Any packets which have gotten here are to be passed */
 
