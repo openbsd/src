@@ -19,7 +19,7 @@
 
 #ifdef IPX_CHANGE
 #ifndef lint
-static char rcsid[] = "$Id: ipxcp.c,v 1.1 1996/07/20 12:02:09 joshd Exp $";
+static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.2 1996/12/23 13:22:42 mickey Exp $";
 #endif
 
 /*
@@ -428,23 +428,9 @@ ipxcp_addci(f, ucp, lenp)
     }
 
     if (go->neg_router && (go->router & (BIT(0) | BIT(2) | BIT(4)))) {
-	if (go->router & BIT(0)) {
 	    PUTCHAR  (IPX_ROUTER_PROTOCOL, ucp);
 	    PUTCHAR  (CILEN_PROTOCOL,	   ucp);
-	    PUTSHORT (0,		   ucp);
-	} else {
-	    if (go->router & BIT(2)) {
-		PUTCHAR	 (IPX_ROUTER_PROTOCOL, ucp);
-		PUTCHAR	 (CILEN_PROTOCOL,      ucp);
-		PUTSHORT (2,		       ucp);
-	    }
-	    
-	    if (go->router & BIT(4)) {
-		PUTCHAR	 (IPX_ROUTER_PROTOCOL, ucp);
-		PUTCHAR	 (CILEN_PROTOCOL,      ucp);
-		PUTSHORT (4,		       ucp);
-	    }
-	}
+	PUTSHORT (go->router,          ucp);
     }
 
     if (go->neg_complete) {
@@ -521,20 +507,13 @@ ipxcp_ackci(f, p, len)
 	    break; \
     }
 
-#define ACKCIPROTO(opt, neg, val, bit) \
-    if (neg && (val & BIT(bit))) \
+#define ACKCIPROTO(opt, neg, val) \
+    if (neg && p[1] == CILEN_PROTOCOL && len >= p[1] && p[0] == opt) \
       { \
-	if (len < 2) \
-	    break; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != CILEN_PROTOCOL || citype != opt) \
-	    break; \
-	len -= cilen; \
-	if (len < 0) \
-	    break; \
+	INCPTR(2, p); \
+	len -= CILEN_PROTOCOL; \
 	GETSHORT(cishort, p); \
-	if (cishort != (bit)) \
+	if (cishort != (val)) \
 	    break; \
       }
 /*
@@ -544,9 +523,7 @@ ipxcp_ackci(f, p, len)
 	ACKCINETWORK  (IPX_NETWORK_NUMBER,  go->neg_nn,	    go->our_network);
 	ACKCINODE     (IPX_NODE_NUMBER,	    go->neg_node,   go->our_node);
 	ACKCINAME     (IPX_ROUTER_NAME,	    go->neg_name,   go->name);
-	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router, 0);
-	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router, 2);
-	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router, 4);
+	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
 	ACKCICOMPLETE (IPX_COMPLETE,	    go->neg_complete);
 /*
  * This is the end of the record.
@@ -700,33 +677,22 @@ ipxcp_rejci(f, p, len)
     ipxcp_options try;		/* options to request next time */
 
 #define REJCINETWORK(opt, neg, val) \
-    if (neg) { \
+    if (neg && p[1] == CILEN_NETN && len >= p[1] && p[0] == opt) { \
 	neg = 0; \
-	if ((len -= CILEN_NETN) < 0) \
-	    break; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != CILEN_NETN || \
-	    citype != opt) \
-	    break; \
+	INCPTR(2, p); \
+	len -= CILEN_NETN; \
 	GETLONG(cilong, p); \
 	if (cilong != val) \
 	    break; \
-	IPXCPDEBUG((LOG_INFO,"ipxcp_rejci rejected long opt %d", opt)); \
+	IPXCPDEBUG((LOG_INFO,"ipxcp_rejci rejected network 0x%08x", val)); \
     }
 
 #define REJCICHARS(opt, neg, val, cnt) \
-    if (neg) { \
+    if (neg && p[1] == cnt + 2 && p[1] >= len && p[0] == opt) { \
 	int indx, count = cnt; \
 	neg = 0; \
-	len -= (count + 2); \
-	if (len < 0) \
-	    break; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != (count + 2) || \
-	    citype != opt) \
-	    break; \
+	INCPTR(2, p); \
+	len -= (cnt + 2); \
 	for (indx = 0; indx < count; ++indx) {\
 	    GETCHAR(cichar, p); \
 	    if (cichar != ((u_char *) &val)[indx]) \
@@ -741,34 +707,23 @@ ipxcp_rejci(f, p, len)
 #define REJCINAME(opt,neg,val) REJCICHARS(opt,neg,val,strlen(val))
 
 #define REJCIVOID(opt, neg) \
-    if (neg) { \
+    if (neg && p[1] == CILEN_VOID && len >= p[1] && p[0] == opt) { \
 	neg = 0; \
-	if ((len -= CILEN_VOID) < 0) \
-	    break; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != CILEN_VOID || citype != opt) \
-	    break; \
+	INCPTR(2, p); \
+	len -= CILEN_VOID; \
 	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci rejected void opt %d", opt)); \
     }
 
-#define REJCIPROTO(opt, neg, val, bit) \
-    if (neg && (val & BIT(bit))) \
+#define REJCIPROTO(opt, neg, val) \
+    if (neg && p[1] == CILEN_PROTOCOL && len >= p[1] && p[0] == opt) \
       { \
-	if (len < 2) \
-	    break; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != CILEN_PROTOCOL || citype != opt) \
-	    break; \
-	len -= cilen; \
-	if (len < 0) \
-	    break; \
+	INCPTR(2, p); \
+	len -= CILEN_PROTOCOL; \
 	GETSHORT(cishort, p); \
-	if (cishort != (bit)) \
+	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci rejected router proto 0x%04x", cishort)); \
+        if ((cishort & val) == 0) \
 	    break; \
-	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci rejected router proto %d", bit)); \
-	val &= ~BIT(bit); \
+	val &= ~cishort; \
 	if (val == 0) \
 	    neg = 0; \
       }
@@ -783,9 +738,7 @@ ipxcp_rejci(f, p, len)
     do {
 	REJCINETWORK (IPX_NETWORK_NUMBER,  try.neg_nn,	   try.our_network);
 	REJCINODE    (IPX_NODE_NUMBER,	   try.neg_node,   try.our_node);
-	REJCIPROTO   (IPX_ROUTER_PROTOCOL, try.neg_router, try.router, 0);
-	REJCIPROTO   (IPX_ROUTER_PROTOCOL, try.neg_router, try.router, 2);
-	REJCIPROTO   (IPX_ROUTER_PROTOCOL, try.neg_router, try.router, 4);
+	REJCIPROTO   (IPX_ROUTER_PROTOCOL, try.neg_router, try.router);
 	REJCINAME    (IPX_ROUTER_NAME,	   try.neg_name,   try.name);
 	REJCIVOID    (IPX_COMPLETE,	   try.neg_complete);
 /*
@@ -1163,7 +1116,7 @@ ipxcp_up(f)
      *	/etc/ppp/ipx-up interface tty speed local-IPX remote-IPX
      */
 
-    ipxcp_script (f, "/etc/ppp/ipx-up");
+    ipxcp_script (f, _PATH_IPXUP);
 }
 
 /*
@@ -1183,7 +1136,7 @@ ipxcp_down(f)
 
     cipxfaddr (f->unit);
     sifdown(f->unit);
-    ipxcp_script (f, "/etc/ppp/ipx-down");
+    ipxcp_script (f, _PATH_IPXDOWN);
 }
 
 
@@ -1269,7 +1222,7 @@ static int
 ipxcp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer)();
+    void (*printer) __P((void *, char *, ...));
     void *arg;
 {
     int code, id, len, olen;

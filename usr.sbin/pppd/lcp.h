@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.h,v 1.3 1996/07/20 12:02:11 joshd Exp $	*/
+/*	$OpenBSD: lcp.h,v 1.4 1996/12/23 13:22:43 mickey Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -29,6 +29,7 @@
 #define CI_MAGICNUMBER	5	/* Magic Number */
 #define CI_PCOMPRESSION	7	/* Protocol Field Compression */
 #define CI_ACCOMPRESSION 8	/* Address/Control Field Compression */
+#define CI_CALLBACK	13	/* callback */
 
 /*
  * LCP-specific packet types.
@@ -37,6 +38,7 @@
 #define ECHOREQ		9	/* Echo Request */
 #define ECHOREP		10	/* Echo Reply */
 #define DISCREQ		11	/* Discard Request */
+#define CBCP_OPT	6	/* Use callback control protocol */
 
 /*
  * The state of options is described by an lcp_options structure.
@@ -53,6 +55,7 @@ typedef struct lcp_options {
     int neg_pcompression : 1;	/* HDLC Protocol Field Compression? */
     int neg_accompression : 1;	/* HDLC Address/Control Field Compression? */
     int neg_lqr : 1;		/* Negotiate use of Link Quality Reports */
+    int neg_cbcp : 1;		/* Negotiate use of CBCP */
     u_short mru;		/* Value of MRU */
     u_char chap_mdtype;		/* which MD type (hashing algorithm) */
     u_int32_t asyncmap;		/* Value of async map */
@@ -82,4 +85,4 @@ extern struct protent lcp_protent;
 
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */
-#define DEFLOOPBACKFAIL	5
+#define DEFLOOPBACKFAIL	10

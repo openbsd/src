@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.3 1996/07/20 12:02:14 joshd Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.4 1996/12/23 13:22:48 mickey Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -31,7 +31,6 @@
 #include <sys/types.h>		/* for u_int32_t, if defined */
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
-#include <net/bpf.h>
 
 #if __STDC__
 #include <stdarg.h>
@@ -41,12 +40,11 @@
 #define __V(x)        (va_alist) va_dcl
 #endif
 
-#define NUM_PPP	1		/* One PPP interface supported (per process) */
-
 /*
  * Limits.
  */
 
+#define NUM_PPP		1	/* One PPP interface supported (per process) */
 #define MAXWORDLEN	1024	/* max length of word in file (incl null) */
 #define MAXARGS		1	/* max # args to a command */
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
@@ -65,8 +63,10 @@ extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	phase;		/* Current state of link - see values below */
 extern int	baud_rate;	/* Current link speed in bits/sec */
 extern char	*progname;	/* Name of this program */
-extern int    redirect_stderr;  /* Connector's stderr should go to file */
-extern char   peer_authname[];  /* Authenticated name of peer */
+extern int	redirect_stderr;/* Connector's stderr should go to file */
+extern char	peer_authname[];/* Authenticated name of peer */
+extern int	privileged;	/* We were run by real-uid root */
+extern int	need_holdoff;	/* Need holdoff period after link terminates */
 
 /*
  * Variables set by command-line options.
@@ -85,8 +85,8 @@ extern int	nodetach;	/* Don't detach from controlling tty */
 extern char	*connector;	/* Script to establish physical link */
 extern char	*disconnector;	/* Script to disestablish physical link */
 extern char	*welcomer;	/* Script to welcome client after connection */
-extern int	maxconnect;	/* maximum number of seconds for a connection */
-extern char	user[];		/* Username for PAP */
+extern int	maxconnect;	/* Maximum connect time (seconds) */
+extern char	user[];		/* Our name for authenticating ourselves */
 extern char	passwd[];	/* Password for PAP */
 extern int	auth_required;	/* Peer is required to authenticate */
 extern int	proxyarp;	/* Set up proxy ARP entry for peer */
@@ -103,8 +103,6 @@ extern char	*ipparam;	/* Extra parameter for ip up/down scripts */
 extern int	cryptpap;	/* Others' PAP passwords are encrypted */
 extern int	idle_time_limit;/* Shut down link if idle for this long */
 extern int	holdoff;	/* Dead time before restarting */
-extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
-extern struct	bpf_program active_filter; /* Filter for link-active pkts */
 extern int    refuse_pap;     /* Don't wanna auth. ourselves with PAP */
 extern int    refuse_chap;    /* Don't wanna auth. ourselves with CHAP */
 
@@ -117,9 +115,10 @@ extern int    refuse_chap;    /* Don't wanna auth. ourselves with CHAP */
 #define PHASE_DORMANT         2
 #define PHASE_ESTABLISH               3
 #define PHASE_AUTHENTICATE    4
-#define PHASE_NETWORK         5
-#define PHASE_TERMINATE               6
-#define PHASE_HOLDOFF         7
+#define PHASE_CALLBACK		5
+#define PHASE_NETWORK		6
+#define PHASE_TERMINATE		7
+#define PHASE_HOLDOFF		8
 
 /*
  * The following struct gives the addresses of procedures to call
@@ -231,7 +230,6 @@ void sys_init __P((void));	/* Do system-dependent initialization */
 void sys_cleanup __P((void));	/* Restore system state before exiting */
 void sys_check_options __P((void)); /* Check options specified */
 void sys_close __P((void));	/* Clean up in a child before execing */
-void note_debug_level __P((void)); /* Note change in debug level */
 int  ppp_available __P((void));	/* Test whether ppp kernel support exists */
 void open_ppp_loopback __P((void)); /* Open loopback for demand-dialling */
 void establish_ppp __P((int));	/* Turn serial port into a ppp interface */
@@ -286,22 +284,39 @@ void unlock __P((void));	/* Delete previously-created lock file */
 int  daemon __P((int, int));	/* Detach us from terminal session */
 int  logwtmp __P((char *, char *, char *));
 				/* Write entry to wtmp file */
-int  set_filters __P((struct bpf_program *pass, struct bpf_program *active));
-				/* Set filter programs in kernel */
 
 /* Procedures exported from options.c */
 int  parse_args __P((int argc, char **argv));
 				/* Parse options from arguments given */
 void usage __P((void));		/* Print a usage message */
-int  options_from_file __P((char *filename, int must_exist, int check_prot));
+int  options_from_file __P((char *filename, int must_exist, int check_prot,
+                            int privileged));
 				/* Parse options from an options file */
 int  options_from_user __P((void)); /* Parse options from user's .ppprc */
 int  options_for_tty __P((void)); /* Parse options from /etc/ppp/options.tty */
 void scan_args __P((int argc, char **argv));
                                 /* Look for tty name in command-line args */
-
 int  getword __P((FILE *f, char *word, int *newlinep, char *filename));
 				/* Read a word from a file */
+void option_error __P((char *fmt, ...));
+				/* Print an error message about an option */
+
+/*
+ * This structure is used to store information about certain
+ * options, such as where the option value came from (/etc/ppp/options,
+ * command line, etc.) and whether it came from a privileged source.
+ */
+
+struct option_info {
+    int	    priv;		/* was value set by sysadmin? */
+    char    *source;		/* where option came from */
+};
+
+extern struct option_info auth_req_info;
+extern struct option_info connector_info;
+extern struct option_info disconnector_info;
+extern struct option_info welcomer_info;
+extern struct option_info devnam_info;
 
 /*
  * Inline versions of get/put char/short/long.
@@ -430,6 +445,12 @@ int  getword __P((FILE *f, char *word, int *newlinep, char *filename));
 #define CHAPDEBUG(x)	if (debug) syslog x
 #else
 #define CHAPDEBUG(x)
+#endif
+
+#ifdef DEBUGIPXCP
+#define IPXCPDEBUG(x)	if (debug) syslog x
+#else
+#define IPXCPDEBUG(x)
 #endif
 
 #ifndef SIGTYPE

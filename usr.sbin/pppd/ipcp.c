@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.3 1996/07/20 12:02:08 joshd Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.4 1996/12/23 13:22:41 mickey Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ipcp.c,v 1.3 1996/07/20 12:02:08 joshd Exp $";
+static char rcsid[] = "$OpenBSD: ipcp.c,v 1.4 1996/12/23 13:22:41 mickey Exp $";
 #endif
 
 /*
@@ -35,9 +35,6 @@ static char rcsid[] = "$OpenBSD: ipcp.c,v 1.3 1996/07/20 12:02:08 joshd Exp $";
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
 
 #include "pppd.h"
 #include "fsm.h"
@@ -1065,13 +1062,11 @@ ip_check_options()
     }
 
     if (demand && wo->hisaddr == 0) {
-	fprintf(stderr, "%s: remote IP address required for demand-dialling\n",
-		progname);
+	option_error("remote IP address required for demand-dialling\n");
 	exit(1);
     }
     if (demand && wo->accept_remote) {
-	fprintf(stderr, "%s: ipcp-accept-remote is incompatible with demand\n",
-		progname);
+	option_error("ipcp-accept-remote is incompatible with demand\n");
 	exit(1);
     }
 }
@@ -1089,9 +1084,9 @@ ip_demand_conf(u)
 
     if (!sifaddr(u, wo->ouraddr, wo->hisaddr, GetMask(wo->ouraddr)))
 	return 0;
-    if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
-	return 0;
     if (!sifup(u))
+	return 0;
+    if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
 	return 0;
     if (wo->default_route)
 	if (sifdefaultroute(u, wo->hisaddr))
@@ -1174,11 +1169,14 @@ ipcp_up(f)
 	 * Set IP addresses and (if specified) netmask.
 	 */
 	mask = GetMask(go->ouraddr);
+
+#if !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
 	    IPCPDEBUG((LOG_WARNING, "sifaddr failed"));
 	    ipcp_close(f->unit, "Interface configuration failed");
 	    return;
 	}
+#endif
 
 	/* bring the interface up for IP */
 	if (!sifup(f->unit)) {
@@ -1187,6 +1185,13 @@ ipcp_up(f)
 	    return;
 	}
 
+#if (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
+	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
+	    IPCPDEBUG((LOG_WARNING, "sifaddr failed"));
+	    ipcp_close(f->unit, "Interface configuration failed");
+	    return;
+	}
+#endif
         sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
 
 	/* assign a default route through the interface if required */
@@ -1408,35 +1413,49 @@ ipcp_printpkt(p, plen, printer, arg)
 }
 
 /*
- * ip_active_pkt - see if this IP packet is worth bringing the link up
-for.
+ * ip_active_pkt - see if this IP packet is worth bringing the link up for.
  * We don't bring the link up for IP fragments or for TCP FIN packets
  * with no data.
  */
-#ifndef IP_OFFMASK
+#define IP_HDRLEN	20	/* bytes */
 #define IP_OFFMASK      0x1fff
-#endif
+#define IPPROTO_TCP	6
+#define TCP_HDRLEN	20
+#define TH_FIN		0x01
     
+/*
+ * We use these macros because the IP header may be at an odd address,
+ * and some compilers might use word loads to get th_off or ip_hl.
+ */
+
+#define net_short(x)	(((x)[0] << 8) + (x)[1])
+#define get_iphl(x)	(((unsigned char *)(x))[0] & 0xF)
+#define get_ipoff(x)	net_short((unsigned char *)(x) + 6)
+#define get_ipproto(x)	(((unsigned char *)(x))[9])
+#define get_tcpoff(x)	(((unsigned char *)(x))[12] >> 4)
+#define get_tcpflags(x)	(((unsigned char *)(x))[13])
+
+static int
 ip_active_pkt(pkt, len)
     u_char *pkt;
     int len;
 {
-    struct ip *ip;
-    struct tcphdr *tcp;
+    u_char *tcp;
     int hlen;
     
-    if (len < sizeof(struct ip) + PPP_HDRLEN)
+    len -= PPP_HDRLEN;
+    pkt += PPP_HDRLEN;
+    if (len < IP_HDRLEN)
         return 0;
-    ip = (struct ip *) (pkt + PPP_HDRLEN);
-    if ((ntohs(ip->ip_off) & IP_OFFMASK) != 0)
+    if ((get_ipoff(pkt) & IP_OFFMASK) != 0)
         return 0;
-    if (ip->ip_p != IPPROTO_TCP)
+    if (get_ipproto(pkt) != IPPROTO_TCP)
         return 1;
-    hlen = ip->ip_hl * 4;
-    if (len < hlen + sizeof(struct tcphdr) + PPP_HDRLEN)
+    hlen = get_iphl(pkt) * 4;
+    if (len < hlen + TCP_HDRLEN)
         return 0;
-    tcp = (struct tcphdr *) (pkt + PPP_HDRLEN + hlen);
-    if ((tcp->th_flags & TH_FIN) != 0 && hlen + tcp->th_off * 4 == len)
+    tcp = pkt + hlen;
+    if ((get_tcpflags(tcp) & TH_FIN) != 0 && len == hlen + get_tcpoff(tcp) * 4)
         return 0;
     return 1;
 }

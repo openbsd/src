@@ -1,7 +1,7 @@
-/*	$OpenBSD: demand.c,v 1.2 1996/07/20 12:02:07 joshd Exp $	*/
+/*	$OpenBSD: demand.c,v 1.3 1996/12/23 13:22:40 mickey Exp $	*/
 
 /*
- * demand.c - Dial on demand support.
+ * demand.c - Support routines for demand-dialling.
  *
  * Copyright (c) 1993 The Australian National University.
  * All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: demand.c,v 1.2 1996/07/20 12:02:07 joshd Exp $";
+static char rcsid[] = "$OpenBSD: demand.c,v 1.3 1996/12/23 13:22:40 mickey Exp $";
 #endif
 
 #include <stdio.h>
@@ -38,7 +38,6 @@ static char rcsid[] = "$OpenBSD: demand.c,v 1.2 1996/07/20 12:02:07 joshd Exp $"
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <net/bpf.h>
 
 #include "pppd.h"
 #include "fsm.h"
@@ -250,10 +249,6 @@ loop_chars(p, n)
  * decide whether to bring up the link or not, and, if we want
  * to transmit this frame later, put it on the pending queue.
  * Return value is 1 if we need to bring up the link, 0 otherwise.
- * We assume that the kernel driver has already applied the
- * pass_filter, so we won't get packets it rejected.
- * We apply the active_filter to see if we want this packet to
- * bring up the link.
  */
 int
 loop_frame(frame, len)
@@ -262,12 +257,12 @@ loop_frame(frame, len)
 {
     struct packet *pkt;
 
+    /* log_packet(frame, len, "from loop: "); */
     if (len < PPP_HDRLEN)
 	return 0;
     if ((PPP_PROTOCOL(frame) & 0x8000) != 0)
 	return 0;		/* shouldn't get any of these anyway */
-    if (active_filter.bf_len != 0
-	&& bpf_filter(active_filter.bf_insns, frame, len, len) == 0)
+    if (!active_packet(frame, len))
 	return 0;
 
     pkt = (struct packet *) malloc(sizeof(struct packet) + len);

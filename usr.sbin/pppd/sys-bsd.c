@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.4 1996/07/14 00:27:09 downsj Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.5 1996/12/23 13:22:49 mickey Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -23,7 +23,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.4 1996/07/14 00:27:09 downsj Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.5 1996/12/23 13:22:49 mickey Exp $";
 #endif
 
 /*
@@ -57,6 +57,15 @@ static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.4 1996/07/14 00:27:09 downsj Exp 
 #endif
 
 #include "pppd.h"
+#include "fsm.h"
+
+#ifdef IPX_CHANGE
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
+#include "ipxcp.h"
+#endif
+
+#define ok_error(num) ((num)==EIO)
 
 static int initdisc = -1;	/* Initial TTY discipline for ppp_fd */
 static int initfdflags = -1;	/* Initial file descriptor flags for ppp_fd */
@@ -153,20 +162,6 @@ sys_check_options()
 {
 }
 
-
-/*
- * note_debug_level - note a change in the debug level.
- */
-void
-note_debug_level()
-{
-    if (debug) {
-	syslog(LOG_INFO, "Debug turned ON, Level %d", debug);
-	setlogmask(LOG_UPTO(LOG_DEBUG));
-    } else {
-	setlogmask(LOG_UPTO(LOG_WARNING));
-    }
-}
 
 /*
  * ppp_available - check whether the system has any ppp interfaces
@@ -310,6 +305,102 @@ restore_loop()
     ppp_fd = loop_slave;
 }
 
+#ifdef IPX_CHANGE
+/*
+ * sipxfaddr - Config the interface IPX networknumber
+ */
+int
+sipxfaddr(unit, network, node)
+	  int unit;
+	  u_long network;
+	  u_char * node;
+{
+	int    skfd; 
+	int    result = 1;
+	struct sockaddr_ipx  ipx_addr;
+	struct ifreq         ifr;
+	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
+
+	skfd = socket (AF_IPX, SOCK_DGRAM, 0);
+	if (skfd < 0) { 
+		if (!ok_error (errno))
+			syslog (LOG_DEBUG, "socket(AF_IPX): %m(%d)", errno);
+		result = 0;
+	} else {
+		bzero (&ifr, sizeof (ifr));
+		strncpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+
+		sipx->sipx_len     = sizeof(*sipx);
+		sipx->sipx_family  = AF_IPX;
+		sipx->sipx_type    = ETHERTYPE_II;
+		sipx->sipx_port    = 0;
+		sipx->sipx_network = htonl (network);
+		memcpy (sipx->sipx_node, node, IPX_HOSTADDRLEN);
+
+		/*
+		 *  Set the IPX device
+		 */
+		if (ioctl(skfd, SIOCSIFADDR, (caddr_t) &ifr) < 0) {
+			result = 0;
+			if (errno != EEXIST && !ok_error (errno)) {
+				syslog (LOG_DEBUG,
+					"ioctl(SIOCAIFADDR, CRTITF): %m(%d)",
+					errno);
+			} else {
+				syslog (LOG_WARNING,
+					"ioctl(SIOCAIFADDR, CRTITF): Address already exists");
+			}
+		}
+		close (skfd);
+	}
+
+	return result;
+}
+
+/*
+ * cipxfaddr - Clear the information for the IPX network. The IPX routes
+ *	       are removed and the device is no longer able to pass IPX
+ *	       frames.
+ */
+int
+cipxfaddr(unit)
+	int unit;
+{
+	int    skfd; 
+	int    result = 1;
+	struct sockaddr_ipx  ipx_addr;
+	struct ifreq         ifr;
+	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
+
+	skfd = socket (AF_IPX, SOCK_DGRAM, 0);
+	if (skfd < 0) {
+		if (! ok_error (errno))
+			syslog (LOG_DEBUG, "socket(AF_IPX): %m(%d)", errno);
+		result = 0;
+	} else {
+		bzero (&ifr, sizeof (ifr));
+		strncpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+
+		sipx->sipx_len     = sizeof(*sipx);
+		sipx->sipx_family  = AF_IPX;
+		sipx->sipx_type    = ETHERTYPE_II;
+
+		/*
+		 *  Set the IPX device
+		 */
+		if (ioctl(skfd, SIOCDIFADDR, (caddr_t) &ifr) < 0) {
+			if (!ok_error (errno))
+				syslog (LOG_INFO,
+					"ioctl(SIOCAIFADDR, IPX_DLTITF): %m(%d)",
+					errno);
+			result = 0;
+		}
+		close (skfd);
+	}
+
+	return result;
+}
+#endif
 
 /*
  * disestablish_ppp - Restore the serial port to normal operation.
@@ -645,7 +736,6 @@ get_loop_output()
 {
     int rv = 0;
     int n;
-    struct ppp_idle idle;
 
     while ((n = read(loop_master, inbuf, sizeof(inbuf))) >= 0) {
 	if (loop_chars(inbuf, n))
@@ -659,16 +749,7 @@ get_loop_output()
 	syslog(LOG_ERR, "read from loopback: %m");
 	die(1);
     }
-    if (get_idle_time(0, &idle)) {
-	/* somebody sent a packet which poked the active filter. */
-	/* VJ compression may result in get_loop_output() never
-	   matching the idle filter since it's applied here in user space
-	   after the kernel has compressed the packet.
-	   The kernel applies the active filter before the VJ compression. */
-	if (idle.xmit_idle < idle_time_limit)
-	    rv = 1;
-	SYSDEBUG((LOG_DEBUG, "xmit idle %d", idle.xmit_idle));
-    }
+
     return rv;
 }
 
@@ -826,31 +907,6 @@ get_idle_time(u, ip)
 
 
 /*
- * set_filters - transfer the pass and active filters to the kernel.
- */
-int
-set_filters(pass, active)
-    struct bpf_program *pass, *active;
-{
-    int ret = 1;
-
-    if (pass->bf_len > 0) {
-	if (ioctl(ppp_fd, PPPIOCSPASS, pass) < 0) {
-	    syslog(LOG_ERR, "Couldn't set pass-filter in kernel: %m");
-	    ret = 0;
-	}
-    }
-    if (active->bf_len > 0) {
-	if (ioctl(ppp_fd, PPPIOCSACTIVE, active) < 0) {
-	    syslog(LOG_ERR, "Couldn't set active-filter in kernel: %m");
-	    ret = 0;
-	}
-    }
-    return ret;
-}
-
-
-/*
  * sifvjcomp - config tcp header compression
  */
 int
@@ -869,7 +925,7 @@ sifvjcomp(u, vjcomp, cidcomp, maxcid)
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	return 0;
     }
-    if (ioctl(ppp_fd, PPPIOCSMAXCID, (caddr_t) &maxcid) < 0) {
+    if (vjcomp && ioctl(ppp_fd, PPPIOCSMAXCID, (caddr_t) &maxcid) < 0) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	return 0;
     }
@@ -884,7 +940,6 @@ sifup(u)
     int u;
 {
     struct ifreq ifr;
-    struct npioctl npi;
 
     strncpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
     if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
@@ -897,12 +952,6 @@ sifup(u)
 	return 0;
     }
     if_is_up = 1;
-    npi.protocol = PPP_IP;
-    npi.mode = NPMODE_PASS;
-    if (ioctl(ppp_fd, PPPIOCSNPMODE, &npi) < 0) {
-	syslog(LOG_ERR, "ioctl(set IP mode to PASS): %m");
-	return 0;
-    }
     return 1;
 }
 

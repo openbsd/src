@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1996/12/22 03:29:01 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1996/12/23 13:22:44 mickey Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 1996/12/22 03:29:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 1996/12/23 13:22:44 mickey Exp $";
 #endif
 
 #include <stdio.h>
@@ -54,17 +54,17 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.12 1996/12/22 03:29:01 deraadt Exp $
 #include "pathnames.h"
 #include "patchlevel.h"
 
+#ifdef CBCP_SUPPORT
+#include "cbcp.h"
+#endif
+
+#if defined(SUNOS4)
+extern char *strerror();
+#endif
+
 #ifdef IPX_CHANGE
 #include "ipxcp.h"
 #endif /* IPX_CHANGE */
-
-/*
- * If REQ_SYSOPTIONS is defined to 1, pppd will not run unless
- * /etc/ppp/options exists.
- */
-#ifndef	REQ_SYSOPTIONS
-#define REQ_SYSOPTIONS	1
-#endif
 
 /* interface vars */
 char ifname[IFNAMSIZ];		/* Interface name */
@@ -76,12 +76,14 @@ static char pidfilename[MAXPATHLEN];	/* name of pid file */
 static char default_devnam[MAXPATHLEN];	/* name of default device */
 static pid_t pid;		/* Our pid */
 static uid_t uid;		/* Our real user-id */
+static int conn_running;	/* we have a [dis]connector running */
 
 int ttyfd = -1;			/* Serial port file descriptor */
 mode_t tty_mode = -1;           /* Original access permissions to tty */
 int baud_rate;                  /* Actual bits/second for serial device */
 int hungup;                     /* terminal has been hung up */
-
+int privileged;			/* we're running as real uid root */
+int need_holdoff;		/* need holdoff period before restarting */
 
 int phase;			/* where the link is at */
 int kill_link;
@@ -91,19 +93,11 @@ int redirect_stderr;          /* Connector's stderr should go to file */
 u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
 
-int hungup;			/* terminal has been hung up */
 static int n_children;		/* # child processes still running */
-
-int baud_rate;			/* Actual bits/second for serial device */
 
 static int locked;		/* lock() has succeeded */
 
 char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
-
-static char *restricted_environ[] = {
-	"PATH=" _PATH_STDPATH,
-	NULL
-};
 
 /* Prototypes for procedures local to this file. */
 
@@ -132,7 +126,7 @@ extern	char	*getlogin __P((void));
 #define	O_NONBLOCK	O_NDELAY
 #endif
 
-#ifdef PRIMITIVE_SYSLOG 
+#ifdef ULTRIX
 #define setlogmask(x)
 #endif
 
@@ -145,6 +139,9 @@ struct protent *protocols[] = {
     &lcp_protent,
     &pap_protent,
     &chap_protent,
+#ifdef CBCP_SUPPORT
+    &cbcp_protent,
+#endif
     &ipcp_protent,
     &ccp_protent,
 #ifdef IPX_CHANGE
@@ -175,7 +172,7 @@ main(argc, argv)
     strcpy(default_devnam, devnam);
 
     /* Initialize syslog facilities */
-#ifdef PRIMITIVE_SYSLOG
+#ifdef ULTRIX
     openlog("pppd", LOG_PID);
 #else
     openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
@@ -183,12 +180,13 @@ main(argc, argv)
 #endif
 
     if (gethostname(hostname, MAXNAMELEN) < 0 ) {
-        syslog(LOG_ERR, "couldn't get hostname: %m");
+	option_error("Couldn't get hostname: %m");
 	die(1);
     }
     hostname[MAXNAMELEN-1] = 0;
 
     uid = getuid();
+    privileged = uid == 0;
 
     /*
      * Initialize to the standard option set, then parse, in order,
@@ -200,7 +198,7 @@ main(argc, argv)
   
     progname = *argv;
 
-    if (!options_from_file(_PATH_SYSOPTIONS, REQ_SYSOPTIONS, 0)
+    if (!options_from_file(_PATH_SYSOPTIONS, !privileged, 0, 1)
         || !options_from_user())
         exit(1);
     scan_args(argc-1, argv+1);  /* look for tty name on command line */
@@ -209,8 +207,17 @@ main(argc, argv)
 	exit(1);
 
     if (!ppp_available()) {
-	fprintf(stderr, no_ppp_msg);
+	option_error(no_ppp_msg);
 	exit(1);
+    }
+
+    /*
+     * Check that we are running as root.
+     */
+    if (geteuid() != 0) {
+	option_error("must be root to run %s, since it is not setuid-root",
+		     argv[0]);
+	die(1);
     }
 
     /*
@@ -222,8 +229,7 @@ main(argc, argv)
 	if (protp->check_options != NULL)
 	    (*protp->check_options)();
     if (demand && connector == 0) {
-	fprintf(stderr, "%s: connect script required for demand-dialling\n",
-		progname);
+	option_error("connect script required for demand-dialling\n");
 	exit(1);
     }
 
@@ -370,6 +376,8 @@ main(argc, argv)
 
     for (;;) {
 
+	need_holdoff = 1;
+
 	if (demand) {
 	    /*
 	     * Don't do anything until we see some activity.
@@ -509,7 +517,6 @@ main(argc, argv)
 	    get_input();
 	    if (kill_link) {
 		lcp_close(0, "User request");
-		phase = PHASE_TERMINATE;
 		kill_link = 0;
 	    }
 	    if (open_ccp_flag) {
@@ -560,11 +567,11 @@ main(argc, argv)
 	}
 
 	if (!persist)
-	    die(1);
+	    break;
 
 	if (demand)
 	    demand_discard();
-	if (holdoff > 0) {
+	if (holdoff > 0 && need_holdoff) {
 	    phase = PHASE_HOLDOFF;
 	    TIMEOUT(holdoff_end, NULL, holdoff);
 	    do {
@@ -690,8 +697,6 @@ connect_time_expired(arg)
     caddr_t arg;
 {
     syslog(LOG_INFO, "Connect time expired");
-
-    phase = PHASE_TERMINATE;
     lcp_close(0, "Connect time expired");	/* Close connection */
 }
 
@@ -873,6 +878,23 @@ timeleft(tvp)
     
 
 /*
+ * kill_my_pg - send a signal to our process group, and ignore it ourselves.
+ */
+static void
+kill_my_pg(sig)
+    int sig;
+{
+    struct sigaction act, oldact;
+
+    act.sa_handler = SIG_IGN;
+    act.sa_flags = 0;
+    sigaction(sig, &act, &oldact);
+    kill(-getpgrp(), sig);
+    sigaction(sig, &oldact, NULL);
+}
+
+
+/*
  * hup - Catch SIGHUP signal.
  *
  * Indicates that the physical layer has been disconnected.
@@ -885,6 +907,9 @@ hup(sig)
 {
     syslog(LOG_INFO, "Hangup (SIGHUP)");
     kill_link = 1;
+    if (conn_running)
+	/* Send the signal to the [dis]connector process(es) also */
+	kill_my_pg(sig);
 }
 
 
@@ -901,6 +926,9 @@ term(sig)
     syslog(LOG_INFO, "Terminating on signal %d.", sig);
     persist = 0;		/* don't try to restart */
     kill_link = 1;
+    if (conn_running)
+	/* Send the signal to the [dis]connector process(es) also */
+	kill_my_pg(sig);
 }
 
 
@@ -957,6 +985,8 @@ bad_signal(sig)
     int sig;
 {
     syslog(LOG_ERR, "Fatal signal %d", sig);
+    if (conn_running)
+	kill_my_pg(SIGTERM);
     die(1);
 }
 
@@ -974,9 +1004,11 @@ device_script(program, in, out)
     int status;
     int errfd;
 
+    conn_running = 1;
     pid = fork();
 
     if (pid < 0) {
+	conn_running = 0;
 	syslog(LOG_ERR, "Failed to create child process: %m");
 	die(1);
     }
@@ -1027,6 +1059,7 @@ device_script(program, in, out)
 	syslog(LOG_ERR, "error waiting for (dis)connection process: %m");
 	die(1);
     }
+    conn_running = 0;
 
     return (status == 0 ? 0 : -1);
 }
@@ -1045,6 +1078,7 @@ run_program(prog, args, must_exist)
     int must_exist;
 {
     int pid;
+    char *nullenv[1];
 
     pid = fork();
     if (pid == -1) {
@@ -1089,7 +1123,8 @@ run_program(prog, args, must_exist)
 	/* SysV recommends a second fork at this point. */
 
         /* run the program; give it a null environment */
-        execve(prog, args, restricted_environ);
+	nullenv[0] = NULL;
+	execve(prog, args, nullenv);
 	if (must_exist || errno != ENOENT)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
 	_exit(-1);
@@ -1301,7 +1336,11 @@ fmtmsg __V((char *buf, int buflen, char *fmt, ...))
 #define OUTCHAR(c)      (buflen > 0? (--buflen, *buf++ = (c)): 0)
    
 int
-vfmtmsg(char *buf, int buflen, char *fmt, va_list args)
+vfmtmsg(buf, buflen, fmt, args)
+    char *buf;
+    int buflen;
+    char *fmt;
+    va_list args;
 {
     int c, i, n;
     int width, prec, fillch;
@@ -1309,10 +1348,10 @@ vfmtmsg(char *buf, int buflen, char *fmt, va_list args)
     unsigned long val;  
     char *str, *f, *buf0;
     unsigned char *p;
-    va_list a; 
+    void *a;
     char num[32];
     time_t t;
-    static char hexchars[16] = "0123456789abcdef";
+    static char hexchars[] = "0123456789abcdef";
     
     buf0 = buf;
     --buflen;
@@ -1401,7 +1440,11 @@ vfmtmsg(char *buf, int buflen, char *fmt, va_list args)
             break;
         case 'r':
             f = va_arg(args, char *);
-            a = va_arg(args, va_list);
+	    /*
+	     * XXX We assume a va_list is either a pointer or an array, so
+	     * what gets passed for a va_list is like a void * in some sense.
+	     */
+	    a = va_arg(args, void *);
             n = vfmtmsg(buf, buflen + 1, f, a);
             buf += n;
             buflen -= n;
@@ -1507,4 +1550,3 @@ vfmtmsg(char *buf, int buflen, char *fmt, va_list args)
     *buf = 0;
     return buf - buf0;
 }
-                

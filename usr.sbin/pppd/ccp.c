@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.4 1996/07/20 12:02:05 joshd Exp $	*/
+/*	$OpenBSD: ccp.c,v 1.5 1996/12/23 13:22:38 mickey Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -28,12 +28,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ccp.c,v 1.4 1996/07/20 12:02:05 joshd Exp $";
+static char rcsid[] = "$OpenBSD: ccp.c,v 1.5 1996/12/23 13:22:38 mickey Exp $";
 #endif
 
 #include <string.h>
 #include <syslog.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <net/ppp_defs.h>
 #include <net/ppp-comp.h>
 
 #include "pppd.h"
@@ -93,6 +95,7 @@ static void ccp_up __P((fsm *));
 static void ccp_down __P((fsm *));
 static int  ccp_extcode __P((fsm *, int, int, u_char *, int));
 static void ccp_rack_timeout __P(());
+static char *method_name __P((ccp_options *, ccp_options *));
 
 static fsm_callbacks ccp_callbacks = {
     ccp_resetci,
@@ -164,7 +167,7 @@ ccp_init(unit)
 /*
  * ccp_open - CCP is allowed to come up.
  */
-void
+static void
 ccp_open(unit)
     int unit;
 {
@@ -831,7 +834,7 @@ method_name(opt, opt2)
 }
     
 /*
- * CCP has come up - inform the kernel driver.
+ * CCP has come up - inform the kernel driver and log a message.
  */
 static void
 ccp_up(f)
@@ -856,7 +859,7 @@ ccp_up(f)
         } else
             syslog(LOG_NOTICE, "%s receive compression enabled",
                    method_name(go, NULL));
-    } else
+    } else if (ANY_COMPRESS(*ho))
         syslog(LOG_NOTICE, "%s transmit compression enabled",
                method_name(ho, NULL));
 } 
@@ -994,7 +997,7 @@ ccp_printpkt(p, plen, printer, arg)
  * decompression; if it was, we take CCP down, thus disabling
  * compression :-(, otherwise we issue the reset-request.
  */
-void
+static void
 ccp_datainput(unit, pkt, len)
     int unit;
     u_char *pkt;

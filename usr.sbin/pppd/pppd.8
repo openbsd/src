@@ -1,5 +1,5 @@
-.\" $OpenBSD: pppd.8,v 1.7 1996/10/08 01:21:04 michaels Exp $
-.\" manual page [] for pppd 2.0
+.\" $OpenBSD: pppd.8,v 1.8 1996/12/23 13:22:47 mickey Exp $
+.\" manual page [] for pppd 2.3
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -39,7 +39,8 @@ is prepended if necessary.  If no device name is given,
 or if the name of the controlling terminal is given,
 .I pppd
 will use the controlling terminal, and will not fork to put itself in
-the background.
+the background. This option is privileged if the \fInoauth\fR option is
+used.
 .TP
 .I <speed>
 Set the baud rate to <speed> (a decimal number).  On systems such as
@@ -47,46 +48,57 @@ Set the baud rate to <speed> (a decimal number).  On systems such as
 (e.g. SunOS) allow only a limited set of speeds.
 .TP
 .B asyncmap \fI<map>
-Set the async character map to <map>.
-This map describes which control characters cannot be successfully
-received over the serial line.
+Set the async character map to <map>.  This map describes which
+control characters cannot be successfully received over the serial
+line.
 .I pppd
 will ask the peer to send these characters as a 2-byte escape sequence.
-The argument is a 32 bit hex number
-with each bit representing a character to escape. 
+The argument is a 32 bit hex number with each bit representing a character
+to escape. 
 Bit 0 (00000001) represents the character 0x00;
 bit 31 (80000000) represents the character 0x1f or ^_.
 If multiple \fBasyncmap\fR options are
 given, the values are ORed together.
 If no \fBasyncmap\fR option is given, no async character map will be
 negotiated for the receive direction; the peer should then escape
-\fIall\fR control characters.
+\fIall\fR control characters. To escape transmitted
+characters, use the \fIescape\fR option.
 .TP
 .B auth
 Require the peer to authenticate itself before allowing network
 packets to be sent or received.
 .TP
+.B call \fIname
+Read options from the file /etc/ppp/peers/\fIname\fR.  This file may
+contain privileged options, such as \fInoauth\fR, even if pppd
+is not being run by root.  The \fIname\fR string may not begin with /
+or include .. as a pathname component.  The format of the options file
+is described below.
+.TP
 .B connect \fI<p>
-Use the executable or shell command specified by \fI<p>\fR to set up the
-serial line.  This script would typically use the chat(8) program to
-dial the modem and start the remote ppp session.
+Use the executable or shell command specified by \fI<p>\fR to set
+up the serial line.  This script would typically use the chat(8)
+program to dial the modem and start the remote ppp session. This
+option is privileged if the \fBnoauth\fR option is used.
 .TP
 .B crtscts
 Use hardware flow control (i.e. RTS/CTS) to control the flow of data
 on the serial port.  If neither the \fBcrtscts\fR nor the
-\fB\-crtscts\fR option is given, the hardware flow control setting for
-the serial port is left unchanged.
+\fB\-crtscts\fR option is given, the hardware flow control setting
+for the serial port is left unchanged.
 .TP
 .B defaultroute
 Add a default route to the system routing tables, using the peer as
 the gateway, when IPCP negotiation is successfully completed.
-This entry is removed when the PPP connection is broken.
+This entry is removed when the PPP connection is broken.  This option
+is privileged if the \fBnodefaultroute\fR option has been specified.
 .TP
-.B disconnect \fI<p>
-Run the executable or shell command specified by \fI<p>\fR after
+.B disconnect \fIscript
+Run the executable or shell command specified by \fIscript\fR after
 \fIpppd\fR has terminated the link.  This script could, for example,
 issue commands to the modem to cause it to hang up if hardware modem
-control signals were not available.
+control signals were not available.  This option is privileged if the
+\fBnoauth\fR option is used.
 .TP
 .B escape \fIxx,yy,...
 Specifies that certain characters should be escaped on transmission
@@ -98,8 +110,9 @@ unlike the \fBasyncmap\fR option which only allows control characters
 to be specified.  The characters which may not be escaped are those
 with hex values 0x20 - 0x3f or 0x5e.
 .TP
-.B file \fI<f>
-Read options from file <f> (the format is described below).
+.B file \fIname
+Read options from file \fIname\fR (the format is described below).
+The file must be readable by the user who has invoked pppd.
 .TP
 .B lock
 Specifies that \fIpppd\fR should create a UUCP-style lock file for the
@@ -119,15 +132,6 @@ peer requests a smaller value via MRU negotiation, \fIpppd\fR will
 request that the kernel networking code send data packets of no more
 than \fIn\fR bytes through the PPP network interface. 
 .TP
-.B netmask \fI<n>
-Set the interface netmask to <n>, a 32 bit netmask in "decimal dot"
-notation (e.g. 255.255.255.0).  If this option is given, the value
-specified is ORed with the default netmask.  The default netmask is
-chosen based on the negotiated remote IP address; it is the
-appropriate network mask for the class of the remote IP address, ORed
-with the netmasks for any non point-to-point network interfaces in the
-system which are on the same network.
-.TP
 .B passive
 Enables the "passive" option in the LCP.  With this option,
 .I pppd
@@ -136,13 +140,6 @@ the peer,
 .I pppd
 will then just wait passively for a valid LCP packet from the peer
 (instead of exiting, as it does without this option).
-.TP
-.B silent
-With this option,
-.I pppd
-will not transmit LCP packets to initiate a connection until a valid
-LCP packet is received from the peer (as for the `passive' option with
-ancient versions of \fIpppd\fR).
 .SH OPTIONS
 .TP
 .I <local_IP_address>\fB:\fI<remote_IP_address>
@@ -150,48 +147,15 @@ Set the local and/or remote interface IP addresses.  Either one may be
 omitted.  The IP addresses can be specified with a host name or in
 decimal dot notation (e.g. 150.234.56.78).  The default local
 address is the (first) IP address of the system (unless the
-.B noipdefault
+\fInoipdefault\fR
 option is given).  The remote address will be obtained from the peer
 if not specified in any option.  Thus, in simple cases, this option is
 not required.  If a local and/or remote IP address is specified with
 this option,
 .I pppd
 will not accept a different value from the peer in the IPCP
-negotiation, unless the
-.B ipcp-accept-local
-and/or
-.B ipcp-accept-remote
-options are given, respectively.
-.TP
-.B -ac
-Disable Address/Control compression negotiation (use default, i.e.
-address/control field compression disabled).
-.TP
-.B active-filter \fIfilter-expression
-Specifies a packet filter to be applied to data packets to determine
-which packets are to be regarded as link activity, and therefore reset
-the idle timer, or cause the link to be brought up in demand-dialling
-mode.  This option is useful in conjunction with the
-\fBidle\fR option if there are packets being sent or received
-regularly over the link (for example, routing information packets)
-which would otherwise prevent the link from ever appearing to be idle.
-The \fIfilter-expression\fR syntax is as described for tcpdump(1),
-except that qualifiers which are inappropriate for a PPP link, such as
-\fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
-expression should be enclosed in single-quotes to prevent whitespace
-in the expression from being interpreted by the shell.
-.TP
-.B -all
-Don't request or allow negotiation of any options for LCP and IPCP (use
-default values).
-.TP
-.B -am
-Disable asyncmap negotiation (use the default asyncmap, i.e. escape
-all control characters).
-.TP
-.B -as \fI<n>
-Same as
-.B asyncmap \fI<n>
+negotiation, unless the \fBipcp-accept-local\fR and/or
+\fBipcp-accept-remote\fR options are given, respectively.
 .TP
 .B bsdcomp \fInr,nt
 Request that the peer compress packets that it sends, using the
@@ -203,24 +167,6 @@ given for \fInr\fR.  Values in the range 9 to 15 may be used for
 consume more kernel memory for compression dictionaries.
 Alternatively, a value of 0 for \fInr\fR or \fInt\fR disables
 compression in the corresponding direction.
-.TP
-.B \-bsdcomp
-Disables BSD-Compress compression; \fBpppd\fR will not request or
-agree to compress packets using the BSD-Compress scheme.
-.TP
-.B -ccp
-Disable CCP (Compression Control Protocol) negotiation.  This option
-should only be required if the peer is buggy and gets confused by
-requests from
-.I pppd
-for CCP negotiation.
-.TP
-.B +chap
-Require the peer to authenticate itself using CHAP [Challenge-Handshake
-Authentication Protocol] authentication.
-.TP
-.B -chap
-Don't agree to authenticate using CHAP.
 .TP
 .B chap-interval \fI<n>
 If this option is given,
@@ -235,15 +181,6 @@ Set the maximum number of CHAP challenge transmissions to <n> (default
 Set the CHAP restart interval (retransmission timeout for challenges)
 to <n> seconds (default 3).
 .TP
-.B -crtscts
-Disable hardware flow control (i.e. RTS/CTS) on the serial port.  If
-neither the \fBcrtscts\fR nor the \fB\-crtscts\fR option is given,
-the hardware flow control setting for the serial port is left
-unchanged.
-.TP
-.B -d
-Increase debugging level (same as the \fBdebug\fR option).
-.TP
 .B debug
 Increase debugging level (same as \fB\-d\fR).
 If this option is given, \fIpppd\fR will log the contents of all
@@ -252,10 +189,14 @@ logged through syslog with facility \fIdaemon\fR and level
 \fIdebug\fR.  This information can be directed to a file by setting up
 /etc/syslog.conf appropriately (see syslog.conf(5)).
 .TP
-.B \-defaultroute
-Disable the \fBdefaultroute\fR option.  The system administrator who
-wishes to prevent users from creating default routes with \fIpppd\fR
-can do so by placing this option in the /etc/ppp/options file.
+.B default-asyncmap
+Disable asyncmap negotiation, forcing all control characters to be
+escaped for both the transmit and the receive direction.
+.TP
+.B default-mru
+Disable MRU [Maximum Receive Unit] negotiation.  With this option,
+pppd will use the default MRU value of 1500 bytes for both the
+transmit and receive direction.
 .TP
 .B deflate \fInr,nt
 Request that the peer compress packets that it sends, using the
@@ -270,10 +211,6 @@ compression in the corresponding direction.  (Note: \fBpppd\fR
 requests Deflate compression in preference to BSD-Compress
 if the peer can do either.)
 .TP
-.B \-deflate
-Disables Deflate compression; \fBpppd\fR will not request or agree to
-compress packets using the Deflate scheme.
-.TP
 .B demand
 Initiate the link only on demand, i.e. when data traffic is present.
 With this option, the remote IP address must be specific by the user
@@ -285,28 +222,14 @@ When this is completed, \fBpppd\fR will commence passing data packets
 (i.e., IP packets) across the link.  The persist, idle and holdoff
 options are often useful in conjuction with this option.
 .TP
-.B -detach
-Don't fork to become a background process (otherwise
-.I pppd
-will do so if a serial device other than its controlling terminal is
-specified).
-.TP
-.B ms-dns \fI<addr>
-If
-.I pppd
-is acting as a server for Microsoft Windows clients, this option
-allows
-.I pppd
-to supply one or two DNS (Domain Name Server) addresses to the
-clients.  The first instance of this option specifies the primary DNS
-address; the second instance (if given) specifies the secondary DNS
-address.
-.TP
 .B domain \fI<d>
 Append the domain name <d> to the local host name for authentication
 purposes.  For example, if gethostname() returns the name porsche, but the
-fully qualified domain name is porsche.Quotron.COM, you would use the
-domain option to set the domain name to Quotron.COM.
+fully qualified domain name is porsche.Quotron.COM, you could use the
+specify \fIdomain Quotron.COM\fR.  Pppd would then use the name
+\fIporsche.Quotron.COM\fR for looking up secrets in the secrets file,
+and as the default name to send to the peer when authenticating itself
+to the peer.  This option is privileged.
 .TP
 .B holdoff \fI<n>
 Specifies how many seconds to wait before re-initiating the link after
@@ -319,13 +242,6 @@ Specifies that \fBpppd\fR should disconnect if it is idle for
 packets) are being sent or received.  If the \fBactive-filter\fR
 option is given, data packets which are rejected by the specified
 activity filter also count as the link being idle.
-.TP
-.B -ip
-Disable IPCP negotiation and IP communication.  This option should
-only be required if the peer is buggy and gets confused by requests
-from
-.I pppd
-for IPCP negotiation.
 .TP
 .B ipcp-accept-local
 With this option,
@@ -360,12 +276,78 @@ Provides an extra parameter to the ip-up and ip-down scripts.  If this
 option is given, the \fIstring\fR supplied is given as the 6th
 parameter to those scripts.
 .TP
-.B kdebug \fIn
+.B ipx
+Enable the IPXCP and IPX protocols.  Under Linux, this is the default
+condition if your kernel supports IPX.  This option is presently only
+supported under Linux and OpenBSD.
+.TP
+.B ipx-network \fI<n>
+Set the IPX network number in the IPXCP configure request frame to
+\fI<n>\fR, a hexadecimal number (without a leading 0x).  There is no
+valid default.  If this option is not specified, the network number is
+obtained from the peer.  If the peer does not have the network number,
+the IPX protocol will not be started.
+.TP
+.B ipx-node \fI<n>\fB:\fI<m>
+Set the IPX node numbers. The two node numbers are separated from each
+other with a colon character. The first number \fI<n>\fR is the local
+node number. The second number \fI<m>\fR is the peer's node number. Each
+node number is a hexadecimal number, at most 10 digits long. The node
+numbers on the ipx-network must be unique. There is no valid
+default. If this option is not specified then the node numbers are
+obtained from the peer.
+.TP
+.B ipx-router-name \fI<string>
+Set the name of the router. This is a string and is sent to the peer
+as information data.
+.TP
+.B ipx-routing \fI<n>
+Set the routing protocol to be received by this option. More than one
+instance of \fIipx-routing\fR may be specified. The '\fInone\fR'
+option (0) may be specified as the only instance of ipx-routing. The
+values may be \fI0\fR for \fINONE\fR, \fI2\fR for \fIRIP/SAP\fR, and
+\fI4\fR for \fINLSP\fR.
+.TP
+.B ipxcp-accept-local
+Accept the peer's NAK for the node number specified in the ipx-node
+option. If a node number was specified, and non-zero, the default is
+to insist that the value be used. If you include this option then you
+will permit the peer to override the entry of the node number.
+.TP
+.B ipxcp-accept-network
+Accept the peer's NAK for the network number specified in the
+ipx-network option. If a network number was specified, and non-zero, the
+default is to insist that the value be used. If you include this
+option then you will permit the peer to override the entry of the node
+number.
+.TP
+.B ipxcp-accept-remote
+Use the peer's network number specified in the configure request
+frame. If a node number was specified for the peer and this option was
+not specified, the peer will be forced to use the value which you have
+specified.
+.TP
+.B ipxcp-max-configure \fI<n>
+Set the maximum number of IPXCP configure request frames which the
+system will send to \fI<n>\fR. The default is 10.
+.TP
+.B ipxcp-max-failure \fI<n>
+Set the maximum number of IPXCP NAK frames which the local system will
+send before it rejects the options. The default value is 3.
+.TP
+.B ipxcp-max-terminate \fI<n>
+Set the maximum nuber of IPXCP terminate request frames before the
+local system considers that the peer is not listening to them. The
+default value is 3.
+.TP
+.B kdebug \fI<n>
 Enable debugging code in the kernel-level PPP driver.  The argument
-\fIn\fR is a number which is the sum of the following values: 1 to
+\fI<n>\fR is a number which is the sum of the following values: 1 to
 enable general debug messages, 2 to request that the contents of
 received packets be printed, and 4 to request that the contents of
-transmitted packets be printed.
+transmitted packets be printed.  On most systems, messages printed by
+the kernel are logged by syslog(1) to a file as directed in the
+/etc/syslog.conf configuration file.
 .TP
 .B lcp-echo-failure \fI<n>
 If this option is given, \fIpppd\fR will presume the peer to be dead
@@ -424,17 +406,71 @@ executing the connect script.
 On Ultrix, this option implies hardware
 flow control, as for the \fBcrtscts\fR option.  
 .TP
-.B -mn
-Disable magic number negotiation.  With this option,
+.B ms-dns \fI<addr>
+If
 .I pppd
-cannot detect a looped-back line.
-.TP
-.B -mru
-Disable MRU [Maximum Receive Unit] negotiation.  With this option,
-\fIpppd\fR will use the default MRU value of 1500 bytes.
+is acting as a server for Microsoft Windows clients, this option
+allows
+.I pppd
+to supply one or two DNS (Domain Name Server) addresses to the
+clients.  The first instance of this option specifies the primary DNS
+address; the second instance (if given) specifies the secondary DNS
+address.
 .TP
 .B name \fI<n>
 Set the name of the local system for authentication purposes to <n>.
+.TP
+.B netmask \fI<n>
+Set the interface netmask to \fI<n>\fR, a 32 bit netmask in "decimal dot"
+notation (e.g. 255.255.255.0).  If this option is given, the value
+specified is ORed with the default netmask.  The default netmask is
+chosen based on the negotiated remote IP address; it is the
+appropriate network mask for the class of the remote IP address, ORed
+with the netmasks for any non point-to-point network interfaces in the
+system which are on the same network.
+.TP
+.B noaccomp
+Disable Address/Control compression in both directions (send and
+receive).
+.TP
+.B noauth
+Do not require the peer to authenticate itself.  This option is
+privileged if the \fBauth\fR option is specified in /etc/ppp/options.
+.TP
+.B nobsdcomp
+Disables BSD-Compress compression;
+.I pppd
+will not request or agree to compress packets using the BSD-Compress scheme.
+.TP
+.B noccp
+Disable CCP (Compression Control Protocol) negotiation.  This option
+should only be required if the peer is buggy and gets confused by
+requests from
+.I pppd
+for CCP negotiation.
+.B nocrtscts
+Disable hardware flow control (i.e. RTS/CTS) on the serial port.  If
+neither the \fBcrtscts\fR nor the \fB\nocrtscts\fR option is given,
+the hardware flow control setting for the serial port is left
+unchanged.
+.B nodefaultroute
+Disable the \fBdefaultroute\fR option.  The system administrator who
+wishes to prevent users from creating default routes with pppd
+can do so by placing this option in the /etc/ppp/options file.
+.TP
+.B nodeflate
+Disables Deflate compression; pppd will not request or agree to
+compress packets using the Deflate scheme.
+.TP
+.B nodetach
+Don't detach from the controlling terminal.  Without this option, if a
+serial device other than the terminal on the standard input is
+specified, pppd will fork to become a background process.
+.TP
+.B noip
+Disable IPCP negotiation and IP communication.  This option should
+only be required if the peer is buggy and gets confused by requests
+from pppd for IPCP negotiation.
 .TP
 .B noipdefault
 Disables the default behaviour when no local IP address is specified,
@@ -443,17 +479,43 @@ hostname.  With this option, the peer will have to supply the local IP
 address during IPCP negotiation (unless it specified explicitly on the
 command line or in an options file).
 .TP
-.B -p
-Same as the
-.B passive
-option.
+.B noipx
+Disable the IPXCP and IPX protocols.  This option should only be
+required if the peer is buggy and gets confused by requests from
+.I pppd
+for IPXCP negotiation.
 .TP
-.B +pap
-Require the peer to authenticate itself using PAP.
+.B nomagic
+Disable magic number negotiation.  With this option, pppd cannot
+detect a looped-back line.  This option should only be needed if the
+peer is buggy.
 .TP
-.B -pap
-Don't agree to authenticate using PAP.
+.B nopcomp
+Disable protocol field compression negotiation in both the receive and
+the transmit direction.
 .TP
+.B nopersist
+Exit once a connection has been made and terminated.  This is the
+default unless the \fIpersist\fR or \fIdemand\fR option has been
+specified.
+.TP
+.B nopredictor1
+Do not accept or agree to Predictor-1 comprssion.
+.TP
+.B noproxyarp
+Disable the \fBproxyarp\fR option.  The system administrator who
+wishes to prevent users from creating proxy ARP entries with pppd can
+do so by placing this option in the /etc/ppp/options file.
+.TP
+.B novj
+Disable Van Jacobson style TCP/IP header compression in both the
+transmit and the receive direction.
+.TP
+.B novjccomp
+Disable the connection-ID compression option in Van Jacobson style
+TCP/IP header compression.  With this option, pppd will not omit the
+connection-ID byte from Van Jacobson compressed TCP/IP headers, nor
+ask the peer to do so.
 .B papcrypt
 Indicates that all secrets in the /etc/ppp/pap-secrets file which
 are used for checking the identity of the peer are encrypted, and thus
@@ -474,50 +536,47 @@ Set the maximum time that
 will wait for the peer to authenticate itself with PAP to
 <n> seconds (0 means no limit).
 .TP
-.B pass-filter \fIfilter-expression
-Specifies a packet filter to applied to data packets being sent or
-received to determine which packets should be allowed to pass.
-Packets which are rejected by the filter are silently discarded.  This
-option can be used to provide protection against IP address spoofing
-and other attacks.
-The \fIfilter-expression\fR syntax is as described for tcpdump(1),
-except that qualifiers which are inappropriate for a PPP link, such as
-\fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
-expression should be enclosed in single-quotes to prevent whitespace
-in the expression from being interpreted by the shell.  Note that it
-is possible to apply different constraints to incoming and outgoing
-packets using the \fBinbound\fR and \fBoutbound\fR qualifiers.
-.TP
-.B -pc
-Disable protocol field compression negotiation (use default, i.e.
-protocol field compression disabled).
-.TP
 .B persist
 Do not exit after a connection is terminated; instead try to reopen
 the connection.
+.TP
+.B predictor1
+Request that the peer compress frames that it sends using Predictor-1
+compression, and agree to compress transmitted frames with Predictor-1
+if requested.  This option has no effect unless the kernel driver
+supports Predictor-1 compression.
 .TP
 .B proxyarp
 Add an entry to this system's ARP [Address Resolution Protocol] table
 with the IP address of the peer and the Ethernet address of this
 system.
 .TP
-.B \-proxyarp
-Disable the \fBproxyarp\fR option.  The system administrator who
-wishes to prevent users from creating proxy ARP entries with
-\fIpppd\fR can do so by placing this option in the /etc/ppp/options
-file.
-.TP
 .B remotename \fI<n>
 Set the assumed name of the remote system for authentication purposes
 to <n>.
 .TP
-.B +ua \fI<p>
-Agree to authenticate using PAP [Password Authentication Protocol] if
-requested by the peer, and
-use the data in file <p> for the user and password to send to the
-peer. The file contains the remote user name, followed by a newline,
-followed by the remote password, followed by a newline.  This option
-is obsolescent.
+.B refuse-chap
+With this option, pppd will not agree to authenticate itself to the
+peer using CHAP.
+.TP
+.B refuse-pap
+With this option, pppd will not agree to authenticate itself to the
+peer using PAP.
+.TP
+.B require-chap
+Require the peer to authenticate itself using CHAP [Challenge
+Handshake Authentication Protocol] authentication
+.TP
+.B require-pap
+Require the peer to authenticate itself using PAP [Password
+Authentication Protocol] authentication.
+.TP
+.B silent
+With this option,
+.I pppd
+will not transmit LCP packets to initiate a connection until a valid
+LCP packet is received from the peer (as for the `passive' option with
+ancient versions of \fIpppd\fR).
 .TP
 .B usehostname
 Enforce the use of the hostname as the name of the local system for
@@ -529,20 +588,16 @@ option).
 Set the user name to use for authenticating this machine with the peer
 using PAP to <u>.
 .TP
-.B -vj
-Disable negotiation of Van Jacobson style TCP/IP header compression (use
-default, i.e. no compression).
-.TP
-.B -vjccomp
-Disable the connection-ID compression option in Van Jacobson style
-TCP/IP header compression.  With this option, \fIpppd\fR will not omit
-the connection-ID byte from Van Jacobson compressed TCP/IP headers,
-nor ask the peer to do so.
-.TP
 .B vj-max-slots \fIn
 Sets the number of connection slots to be used by the Van Jacobson
 TCP/IP header compression and decompression code to \fIn\fR, which
 must be between 2 and 16 (inclusive).
+.TP
+.B welcome \fIscript
+Run the executable or shell command specified by \fIscript\fR before
+initiating PPP negotiation, after the connect script (if any) has
+completed.  This option is privileged if the \fBnoauth\fR option is
+used.
 .TP
 .B xonxoff
 Use software flow control (i.e. XON/XOFF) to control the flow of data on
@@ -551,12 +606,40 @@ at present.
 .SH OPTIONS FILES
 Options can be taken from files as well as the command line.  
 .I pppd
-reads options from the files /etc/ppp/options and ~/.ppprc before
-looking at the command line.  An options file is parsed into a series
-of words, delimited by whitespace.  Whitespace can be included in a
-word by enclosing the word in quotes (").  A backslash (\\) quotes the
-following character.  A hash (#) starts a comment, which continues
-until the end of the line.
+reads options from the files /etc/ppp/options, ~/.ppprc and
+/etc/ppp/options.\fBttyname\fR (in that order) before processing the
+option on the command line.  (In fact, the command-line options are
+scanned to find the terminal name before the options.\fIttyname\fR
+file is read.)  In forming the name of the options.\fIttyname\fR file,
+the initial /dev/ is removed from the terminal name, and any remaining
+/ characters are replaced with dots.
+.PP
+An options file is parsed into a series of words, delimited by
+whitespace.  Whitespace can be included in a word by enclosing the
+word in quotes (").  A backslash (\\) quotes the following character.
+A hash (#) starts a comment, which continues until the end of the
+line. There is no restriction on using the \fBfile\fR or \fBcall\fR
+options within an options file.
+.SH PRIVILEGED OPTIONS
+As indicated above, some security-sensitive options are privileged,
+which means that they may not be used by an ordinary non-privileged
+user running a setuid-root pppd, either on the command line, in the
+user's ~/.ppprc file, or in an options file read using the \fBfile\fR
+option.  Privileged options may be used in /etc/ppp/options file or in
+an options file read using the \fBcall\fR option.  If pppd is being
+run by the root user, privileged options can be used without
+restriction.
+.PP
+The normal way that pppd should be set up is to have the \fBauth\fR
+option in the /etc/ppp/options file.  (This may become the default in
+later releases.)  If users wish to use pppd to dial out to a peer
+which will refuse to authenticate itself (such as an internet service
+provider), the system administrator should create an options file
+under /etc/ppp/peers containing the \fBnoauth\fR option, the name of
+the serial port to use, and the \fBconnect\fR option (if required),
+plus any other appropriate options.  In this way, pppd can be set up
+to allow non-privileged users to make unauthenticated connections only
+to trusted peers.
 .SH AUTHENTICATION
 .I pppd
 provides system administrators with sufficient access control that PPP
@@ -590,14 +673,20 @@ directions if desired.
 .LP
 A secrets file is parsed into words as for a options file.  A secret
 is specified by a line containing at least 3 words, in the order
-client name, server name, secret.  Any following words on the same line are
-taken to be a list of acceptable IP addresses for that client.  If
-there are only 3 words on the line, it is assumed that any IP address
-is OK; to disallow all IP addresses, use "-".  If the secret starts
-with an `@', what follows is assumed to be the name of a file from
-which to read the secret.  A "*" as the client or server name matches
-any name.  When selecting a secret, \fIpppd\fR takes the best match, i.e.
-the match with the fewest wildcards.
+client name, server name, secret.  Any following words on the same
+line are taken to be a list of acceptable IP addresses for that
+client.  If there are only 3 words on the line, it is assumed that any
+IP address is OK; to disallow all IP addresses, use "-".  A word
+starting with "!" indicates that the specified address is \fInot\fR
+acceptable.  An address may be followed by "/" and a number \fIn\fR,
+to indicate a whole subnet, i.e. all addresses which have the same
+value in the most significant \fIn\fR bits.  Note that case is
+significant in the client and server names and in the secret.
+.LP
+If the secret starts with an `@', what follows is assumed to be the
+name of a file from which to read the secret.  A "*" as the client or
+server name matches any name.  When selecting a secret, \fIpppd\fR takes the
+best match, i.e. the match with the fewest wildcards.
 .LP
 Thus a secrets file contains both secrets for use in authenticating
 other hosts, plus secrets which we use for authenticating ourselves to
@@ -773,6 +862,23 @@ process.  This signal acts as a toggle.
 .B /var/run/ppp\fIn\fB.pid \fR(BSD or Linux), \fB/etc/ppp/ppp\fIn\fB.pid \fR(others)
 Process-ID for \fIpppd\fR process on ppp interface unit \fIn\fR.
 .TP
+.B /etc/ppp/auth-up
+A program or script which is executed after the remote system
+successfully authenticates itself.  It is executed with the parameters
+.IP
+\fIinterface-name peer-name user-name tty-device speed\fR
+.IP
+and with its standard input, output and error redirected to
+/dev/null.  This program or script is executed with the real and
+effective user-IDs set to root, and with an empty environment.  (Note
+that this script is not executed if the peer doesn't authenticate
+itself, for example when the \fInoauth\fR option is used.)
+.TP
+.B /etc/ppp/auth-down
+A program or script which is executed when the link goes down, if
+/etc/ppp/auth-up was previously executed.  It is executed in the same
+manner with the same parameters as /etc/ppp/auth-up.
+.TP
 .B /etc/ppp/ip-up
 A program or script which is executed when the link is available for
 sending and receiving IP packets (that is, IPCP has come up).  It is
@@ -803,6 +909,45 @@ used for undoing the effects of the /etc/ppp/ip-up script.  It is
 invoked with the same parameters as the ip-up script, and the same
 security considerations apply, since it is executed with the same
 effective and real user-IDs as \fIpppd\fR.
+.TP
+.B /etc/ppp/ipx-up
+A program or script which is executed when the link is available for
+sending and receiving IPX packets (that is, IPXCP has come up).  It is
+executed with the parameters
+.IP
+\fIinterface-name tty-device speed network-number local-IPX-node-address
+remote-IPX-node-address local-IPX-routing-protocol remote-IPX-routing-protocol
+local-IPX-router-name remote-IPX-router-name ipparam pppd-pid\fR
+.IP
+and with its standard input,
+output and error streams redirected to /dev/null.
+.br
+.IP
+The local-IPX-routing-protocol and remote-IPX-routing-protocol field
+may be one of the following:
+.IP
+NONE      to indicate that there is no routing protocol
+.br
+RIP       to indicate that RIP/SAP should be used
+.br
+NLSP      to indicate that Novell NLSP should be used
+.br
+RIP NLSP  to indicate that both RIP/SAP and NLSP should be used
+.br
+.IP
+This program or script is executed with the real and effective
+user-IDs set to root, and with an empty environment.  This is so
+that it can be used to manipulate routes, run privileged daemons (e.g.
+\fIripd\fR), etc.  Be careful that the contents of the /etc/ppp/ipx-up
+and /etc/ppp/ipx-down scripts do not compromise your system's
+security.
+.TP
+.B /etc/ppp/ipx-down
+A program or script which is executed when the link is no longer
+available for sending and receiving IPX packets.  This script can be
+used for undoing the effects of the /etc/ppp/ipx-up script.  It is
+invoked in the same manner and with the same parameters as the ipx-up
+script, and the same security considerations apply.
 .TP
 .B /etc/ppp/pap-secrets
 Usernames, passwords and IP addresses for PAP authentication.

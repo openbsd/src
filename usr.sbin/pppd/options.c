@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.5 1996/12/15 23:20:34 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.6 1996/12/23 13:22:45 mickey Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: options.c,v 1.5 1996/12/15 23:20:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.6 1996/12/23 13:22:45 mickey Exp $";
 #endif
 
 #include <ctype.h>
@@ -48,7 +48,9 @@ static char rcsid[] = "$OpenBSD: options.c,v 1.5 1996/12/15 23:20:34 millert Exp
 #include "upap.h"
 #include "chap.h"
 #include "ccp.h"
-#include "bpf_compile.h"
+#ifdef CBCP_SUPPORT
+#include "cbcp.h"
+#endif
 
 #ifdef IPX_CHANGE
 #include "ipxcp.h"
@@ -102,11 +104,14 @@ char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
 int	cryptpap;		/* Passwords in pap-secrets are encrypted */
 int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
-struct	bpf_program pass_filter;/* Filter program for packets to pass */
-struct	bpf_program active_filter; /* Filter program for link-active pkts */
 int   refuse_pap = 0;         /* Set to say we won't do PAP */
 int   refuse_chap = 0;        /* Set to say we won't do CHAP */
 
+struct option_info auth_req_info;
+struct option_info connector_info;
+struct option_info disconnector_info;
+struct option_info welcomer_info;
+struct option_info devnam_info;
 
 /*
  * Prototypes
@@ -137,6 +142,9 @@ static int setasyncmap __P((char **));
 static int setescape __P((char **));
 static int setmru __P((char **));
 static int setmtu __P((char **));
+#ifdef CBCP_SUPPORT
+static int setcbcp __P((char **));
+#endif
 static int nomru __P((void));
 static int nopcomp __P((void));
 static int setconnector __P((char **));
@@ -156,12 +164,15 @@ static int setname __P((char **));
 static int setuser __P((char **));
 static int setremote __P((char **));
 static int setauth __P((void));
+static int setnoauth __P((void));
 static int readfile __P((char **));
+static int callfile __P((char **));
 static int setdefaultroute __P((void));
 static int setnodefaultroute __P((void));
 static int setproxyarp __P((void));
 static int setnoproxyarp __P((void));
 static int setpersist __P((void));
+static int setnopersist __P((void));
 static int setdologin __P((void));
 static int setusehostname __P((void));
 static int setnoipdflt __P((void));
@@ -195,12 +206,11 @@ static int setipparam __P((char **));
 static int setpapcrypt __P((void));
 static int setidle __P((char **));
 static int setholdoff __P((char **));
-static int setpassfilter __P((char **));
-static int setactivefilter __P((char **));
+static int setdnsaddr __P((char **));
+static int resetipxproto __P((void));
 
 #ifdef IPX_CHANGE
 static int setipxproto __P((void));
-static int resetipxproto __P((void));
 static int setipxanet __P((void));
 static int setipxalcl __P((void));
 static int setipxarmt __P((void));
@@ -214,16 +224,9 @@ static int setipxcpconf __P((char **));
 static int setipxcpfails __P((char **));
 #endif /* IPX_CHANGE */
 
-#ifdef USE_MS_DNS
-static int setdnsaddr __P((char **));
-#endif
-
 static int number_option __P((char *, u_int32_t *, int));
 static int int_option __P((char *, int *));
 static int readable __P((int fd));
-static void option_error __P((char *fmt, ...));
-
-void usage();
 
 /*
  * Valid arguments.
@@ -250,13 +253,11 @@ static struct cmd {
     {"-mru", 0, nomru},		/* Disable mru negotiation */
     {"-p", 0, setpassive},	/* Set passive mode */
     {"nopcomp", 0, nopcomp},  /* Disable protocol field compression */   
-#ifdef  OLD_OPTIONS
     {"-pc", 0, nopcomp},	/* Disable protocol field compress */
-#endif
-    {"require-pap", 0, reqpap},       /* Require PAP authentication from peer */
-#ifdef OLD_OPTIONS
+#if OLD_OPTIONS
     {"+ua", 1, setupapfile},	/* Get PAP user and password from file */
 #endif
+    {"require-pap", 0, reqpap},	/* Require PAP authentication from peer */
     {"+pap", 0, reqpap},	/* Require PAP auth from peer */
     {"refuse-pap", 0, nopap}, /* Don't agree to auth to peer with PAP */
     {"-pap", 0, nopap},		/* Don't allow UPAP authentication with peer */
@@ -284,6 +285,9 @@ static struct cmd {
     {"domain", 1, setdomain},	/* Add given domain name to hostname*/
     {"mru", 1, setmru},		/* Set MRU value for negotiation */
     {"mtu", 1, setmtu},		/* Set our MTU */
+#ifdef CBCP_SUPPORT
+    {"callback", 1, setcbcp},	/* Ask for callback */
+#endif
     {"netmask", 1, setnetmask},	/* set netmask */
     {"passive", 0, setpassive},	/* Set passive mode */
     {"silent", 0, setsilent},	/* Set silent mode */
@@ -291,11 +295,13 @@ static struct cmd {
     {"local", 0, setlocal},	/* Don't use modem control lines */
     {"lock", 0, setlock},	/* Lock serial device (with lock file) */
     {"name", 1, setname},	/* Set local name for authentication */
-    {"user", 1, setuser},	/* Set username for PAP auth with peer */
+    {"user", 1, setuser},	/* Set name for auth with peer */
     {"usehostname", 0, setusehostname},	/* Must use hostname for auth. */
     {"remotename", 1, setremote}, /* Set remote name for authentication */
     {"auth", 0, setauth},	/* Require authentication from peer */
+    {"noauth", 0, setnoauth},	/* Don't require peer to authenticate */
     {"file", 1, readfile},	/* Take options from a file */
+    {"call", 1, callfile},	/* Take options from a privileged file */
     {"defaultroute", 0, setdefaultroute}, /* Add default route */
     {"nodefaultroute", 0, setnodefaultroute}, /* disable defaultroute option */
     {"-defaultroute", 0, setnodefaultroute}, /* disable defaultroute option */
@@ -303,6 +309,7 @@ static struct cmd {
     {"noproxyarp", 0, setnoproxyarp}, /* disable proxyarp option */
     {"-proxyarp", 0, setnoproxyarp}, /* disable proxyarp option */
     {"persist", 0, setpersist},	/* Keep on reopening connection after close */
+    {"nopersist", 0, setnopersist},  /* Turn off persist option */
     {"demand", 0, setdemand},	/* Dial on demand */
     {"login", 0, setdologin},	/* Use system password database for UPAP */
     {"noipdefault", 0, setnoipdflt}, /* Don't use name for default IP adrs */
@@ -339,8 +346,9 @@ static struct cmd {
     {"papcrypt", 0, setpapcrypt},	/* PAP passwords encrypted */
     {"idle", 1, setidle},		/* idle time limit (seconds) */
     {"holdoff", 1, setholdoff},		/* set holdoff time (seconds) */
-    {"pass-filter", 1, setpassfilter},	/* set filter for packets to pass */
-    {"active-filter", 1, setactivefilter}, /* set filter for active pkts */
+    {"ms-dns", 1, setdnsaddr},		/* DNS address for the peer's use */
+    {"noipx",  0, resetipxproto},	/* Disable IPXCP (and IPX) */
+    {"-ipx",   0, resetipxproto},	/* Disable IPXCP (and IPX) */
 
 #ifdef IPX_CHANGE
     {"ipx-network",          1, setipxnetwork}, /* IPX network number */
@@ -358,18 +366,8 @@ static struct cmd {
     {"ipx-compression", 1, setipxcompression}, /* IPX compression number */
 #endif
     {"ipx",                0, setipxproto},   /* Enable IPXCP (and IPX) */
-    {"noipx",              0, resetipxproto}, /* Disable IPXCP (and IPX) */
     {"+ipx",		     0, setipxproto},	/* Enable IPXCP (and IPX) */
-    {"-ipx",		     0, resetipxproto},	/* Disable IPXCP (and IPX) */
 #endif /* IPX_CHANGE */
-
-#ifdef _linux_
-    {"idle-disconnect", 1, setidle}, /* seconds for disconnect of idle IP */
-#endif
-
-#ifdef USE_MS_DNS
-    {"ms-dns", 1, setdnsaddr},	/* DNS address(es) for the peer's use */
-#endif
 
     {NULL, 0, NULL}
 };
@@ -399,11 +397,11 @@ See pppd(8) for more options.\n\
 ";
 
 static char *current_option;  /* the name of the option being parsed */
-
+static int privileged_option;	/* set iff the current option came from root */
+static char *option_source;	/* string saying where the option came from */
 
 /*
- * parse_args - parse a string of arguments, from the command
- * line or from a file.
+ * parse_args - parse a string of arguments from the command line.
  */
 int
 parse_args(argc, argv)
@@ -414,6 +412,8 @@ parse_args(argc, argv)
     struct cmd *cmdp;
     int ret;
 
+    privileged_option = privileged;
+    option_source = "command line";
     while (argc > 0) {
 	arg = *argv++;
 	--argc;
@@ -503,14 +503,16 @@ usage()
  * and interpret them.
  */
 int
-options_from_file(filename, must_exist, check_prot)
+options_from_file(filename, must_exist, check_prot, priv)
     char *filename;
     int must_exist;
     int check_prot;
+    int priv;
 {
     FILE *f;
     int i, newline, ret;
     struct cmd *cmdp;
+    int oldpriv;
     char *argv[MAXARGS];
     char args[MAXARGS][MAXWORDLEN];
     char cmd[MAXWORDLEN];
@@ -527,6 +529,9 @@ options_from_file(filename, must_exist, check_prot)
 	return 0;
     }
 
+    oldpriv = privileged_option;
+    privileged_option = priv;
+    ret = 0;
     while (getword(f, cmd, &newline, filename)) {
 	/*
 	 * First see if it's a command.
@@ -541,34 +546,35 @@ options_from_file(filename, must_exist, check_prot)
                     option_error(
                         "In file %s: too few parameters for option '%s'",
 			    filename, cmd);
-		    fclose(f);
-		    return 0;
+		    goto err;
 		}
 		argv[i] = args[i];
 	    }
             current_option = cmd;
-	    if (!(*cmdp->cmd_func)(argv)) {
-		fclose(f);
-		return 0;
-	    }
+	    if (!(*cmdp->cmd_func)(argv))
+		goto err;
 
 	} else {
 	    /*
 	     * Maybe a tty name, speed or IP address?
 	     */
-            if ((ret = setdevname(cmd, 0)) == 0
-		&& (ret = setspeed(cmd)) == 0
-		&& (ret = setipaddr(cmd)) == 0) {
+	    if ((i = setdevname(cmd, 0)) == 0
+		&& (i = setspeed(cmd)) == 0
+		&& (i = setipaddr(cmd)) == 0) {
                 option_error("In file %s: unrecognized option '%s'",
 			filename, cmd);
-		fclose(f);
-		return 0;
+		goto err;
 	    }
-	    if (ret < 0)	/* error */
-		return 0;
+	    if (i < 0)		/* error */
+		goto err;
 	}
     }
-    return 1;
+    ret = 1;
+
+err:
+    fclose(f);
+    privileged_option = oldpriv;
+    return ret;
 }
 
 /*
@@ -592,7 +598,7 @@ options_from_user()
     strcpy(path, user);
     strcat(path, "/");
     strcat(path, file);
-    ret = options_from_file(path, 0, 1);
+    ret = options_from_file(path, 0, 1, privileged);
     free(path);
     return ret;
 }
@@ -620,7 +626,7 @@ options_for_tty()
     for (p = path + strlen(path); *dev != 0; ++dev)
 	*p++ = (*dev == '/'? '.': *dev);
     *p = 0;
-    ret = options_from_file(path, 0, 0);
+    ret = options_from_file(path, 0, 0, 1);
     free(path);
     return ret;
 }
@@ -967,7 +973,7 @@ int_option(str, valp)
 
 
 /*
- * The following procedures execute commands.
+ * The following procedures parse options.
  */
 
 /*
@@ -977,8 +983,53 @@ static int
 readfile(argv)
     char **argv;
 {
-    return options_from_file(*argv, 1, 1);
+    return options_from_file(*argv, 1, 1, privileged_option);
 }
+
+/*
+ * callfile - take commands from /etc/ppp/peers/<name>.
+ * Name may not contain /../, start with / or ../, or end in /..
+ */
+static int
+callfile(argv)
+    char **argv;
+{
+    char *fname, *arg, *p;
+    int l, ok;
+
+    arg = *argv;
+    ok = 1;
+    if (arg[0] == '/' || arg[0] == 0)
+	ok = 0;
+    else {
+	for (p = arg; *p != 0; ) {
+	    if (p[0] == '.' && p[1] == '.' && (p[2] == '/' || p[2] == 0)) {
+		ok = 0;
+		break;
+	    }
+	    while (*p != '/' && *p != 0)
+		++p;
+	    if (*p == '/')
+		++p;
+	}
+    }
+    if (!ok) {
+	option_error("call option value may not contain .. or start with /");
+	return 0;
+    }
+
+    l = strlen(arg) + strlen(_PATH_PEERFILES) + 1;
+    if ((fname = (char *) malloc(l)) == NULL)
+	novm("call file name");
+    strcpy(fname, _PATH_PEERFILES);
+    strcat(fname, arg);
+
+    ok = options_from_file(fname, 1, 1, 1);
+
+    free(fname);
+    return ok;
+}
+
 
 /*
  * setdebug - Set debug (command line argument).
@@ -1115,6 +1166,21 @@ setmtu(argv)
     return (1);
 }
 
+#ifdef CBCP_SUPPORT
+static int
+setcbcp(argv)
+    char **argv;
+{
+    lcp_wantoptions[0].neg_cbcp = 1;
+    cbcp_protent.enabled_flag = 1;
+    cbcp[0].us_number = strdup(*argv);
+    if (cbcp[0].us_number == 0)
+	novm("callback number");
+    cbcp[0].us_type |= (1 << CB_CONF_USER);
+    cbcp[0].us_type |= (1 << CB_CONF_ADMIN);
+    return (1);
+}
+#endif
 
 /*
  * nopcomp - Disable Protocol field compression negotiation.
@@ -1170,7 +1236,7 @@ static int
 reqpap()
 {
     lcp_wantoptions[0].neg_upap = 1;
-    auth_required = 1;
+    setauth();
     return 1;
 }
 
@@ -1190,11 +1256,11 @@ setupapfile(argv)
 
     /* open user info file */
     if ((ufile = fopen(*argv, "r")) == NULL) {
-	fprintf(stderr, "unable to open user login data file %s\n", *argv);
+	option_error("unable to open user login data file %s", *argv);
 	return 0;
     }
     if (!readable(fileno(ufile))) {
-        option_error("unable to open user login data file %s", *argv);
+	option_error("%s: access denied", *argv);
 	return 0;
     }
     check_access(ufile, *argv);
@@ -1202,7 +1268,7 @@ setupapfile(argv)
     /* get username */
     if (fgets(user, MAXNAMELEN - 1, ufile) == NULL
 	|| fgets(passwd, MAXSECRETLEN - 1, ufile) == NULL){
-        option_error("%s: access denied", *argv);
+	option_error("unable to read user login data file %s", *argv);
 	return 0;
     }
     fclose(ufile);
@@ -1238,7 +1304,7 @@ static int
 reqchap()
 {
     lcp_wantoptions[0].neg_chap = 1;
-    auth_required = 1;
+    setauth();
     return (1);
 }
 
@@ -1298,6 +1364,8 @@ setconnector(argv)
     connector = strdup(*argv);
     if (connector == NULL)
 	novm("connect script");
+    connector_info.priv = privileged_option;
+    connector_info.source = option_source;
   
     return (1);
 }
@@ -1312,6 +1380,8 @@ setdisconnector(argv)
     disconnector = strdup(*argv);
     if (disconnector == NULL)
 	novm("disconnect script");
+    disconnector_info.priv = privileged_option;
+    disconnector_info.source = option_source;
   
     return (1);
 }
@@ -1326,6 +1396,8 @@ setwelcomer(argv)
     welcomer = strdup(*argv);
     if (welcomer == NULL)
 	novm("welcome script");
+    welcomer_info.priv = privileged_option;
+    welcomer_info.source = option_source;
   
     return (1);
 }
@@ -1345,6 +1417,10 @@ setmaxconnect(argv)
       option_error("maxconnect time must be positive");
       return 0;
     }
+    if (maxconnect > 0 && (value == 0 || value > maxconnect)) {
+	option_error("maxconnect time cannot be increased");
+	return 0;
+    }
     maxconnect = value;
     return 1;
 }
@@ -1356,6 +1432,10 @@ static int
 setdomain(argv)
     char **argv;
 {
+    if (!privileged_option) {
+	option_error("using the domain option requires root privilege");
+	return 0;
+    }
     gethostname(hostname, MAXNAMELEN);
     if (**argv != 0) {
 	if (**argv != '.')
@@ -1468,6 +1548,8 @@ setdevname(cp, quiet)
     (void) strncpy(devnam, cp, MAXPATHLEN);
     devnam[MAXPATHLEN-1] = 0;
     default_device = FALSE;
+    devnam_info.priv = privileged_option;
+    devnam_info.source = option_source;
   
     return 1;
 }
@@ -1482,7 +1564,6 @@ setipaddr(arg)
 {
     struct hostent *hp;
     char *colon;
-    struct in_addr ina;
     u_int32_t local, remote;
     ipcp_options *wo = &ipcp_wantoptions[0];
   
@@ -1497,19 +1578,14 @@ setipaddr(arg)
      */
     if (colon != arg) {
 	*colon = '\0';
-	if (inet_aton(arg, &ina) == 0) {
+	if ((local = inet_addr(arg)) == -1) {
 	    if ((hp = gethostbyname(arg)) == NULL) {
                 option_error("unknown host: %s", arg);
 		return -1;
 	    } else {
 		local = *(u_int32_t *)hp->h_addr;
-		if (our_name[0] == 0) {
-		    strncpy(our_name, arg, MAXNAMELEN);
-		    our_name[MAXNAMELEN-1] = 0;
 		}
 	    }
-	} else
-	    local = ina.s_addr;
 	if (bad_ip_adrs(local)) {
             option_error("bad local IP address %s", ip_ntoa(local));
 	    return -1;
@@ -1523,7 +1599,7 @@ setipaddr(arg)
      * If colon last character, then no remote addr.
      */
     if (*++colon != '\0') {
-	if (inet_aton(colon, &ina) == 0) {
+	if ((remote = inet_addr(colon)) == -1) {
 	    if ((hp = gethostbyname(colon)) == NULL) {
                 option_error("unknown host: %s", colon);
 		return -1;
@@ -1534,8 +1610,7 @@ setipaddr(arg)
 		    remote_name[MAXNAMELEN-1] = 0;
 		}
 	    }
-	} else
-	    remote = ina.s_addr;
+	}
 	if (bad_ip_adrs(remote)) {
             option_error("bad remote IP address %s", ip_ntoa(remote));
 	    return -1;
@@ -1588,14 +1663,14 @@ static int
 setnetmask(argv)
     char **argv;
 {
-    struct in_addr ina;
+    u_int32_t mask;
 
-    if (inet_aton(*argv, &ina) == 0 || (netmask & ~ina.s_addr) != 0) {
+    if ((mask = inet_addr(*argv)) == -1 || (netmask & ~mask) != 0) {
         option_error("invalid netmask value '%s'", *argv);
 	return 0;
     }
 
-    netmask = ina.s_addr;
+    netmask = mask;
     return (1);
 }
 
@@ -1634,6 +1709,7 @@ static int
 setdemand()
 {
     demand = 1;
+    persist = 1;
     return 1;
 }
 
@@ -1669,10 +1745,12 @@ static int
 setname(argv)
     char **argv;
 {
-    if (our_name[0] == 0) {
+    if (!privileged_option) {
+	option_error("using the name option requires root privilege");
+	return 0;
+    }
 	strncpy(our_name, argv[0], MAXNAMELEN);
 	our_name[MAXNAMELEN-1] = 0;
-    }
     return 1;
 }
 
@@ -1698,6 +1776,22 @@ static int
 setauth()
 {
     auth_required = 1;
+    if (privileged_option > auth_req_info.priv) {
+	auth_req_info.priv = privileged_option;
+	auth_req_info.source = option_source;
+    }
+    return 1;
+}
+
+static int
+setnoauth()
+{
+    if (auth_required && privileged_option < auth_req_info.priv) {
+	option_error("cannot override auth option set by %s",
+		     auth_req_info.source);
+	return 0;
+    }
+    auth_required = 0;
     return 1;
 }
 
@@ -1743,6 +1837,13 @@ static int
 setpersist()
 {
     persist = 1;
+    return 1;
+}
+
+static int
+setnopersist()
+{
+    persist = 0;
     return 1;
 }
 
@@ -2016,26 +2117,33 @@ setholdoff(argv)
     return int_option(*argv, &holdoff);
 }
 
+/*
+ * setdnsaddr - set the dns address(es)
+ */
 static int
-setpassfilter(argv)
+setdnsaddr(argv)
     char **argv;
 {
-    if (bpf_compile(&pass_filter, *argv, 1) == 0)
-	return 1;
-    fprintf(stderr, "%s: error in pass-filter expression: %s\n",
-	    progname, bpf_geterr());
-    return 0;
-}
+    u_int32_t dns;
+    struct hostent *hp;
 
-static int
-setactivefilter(argv)
-    char **argv;
-{
-    if (bpf_compile(&active_filter, *argv, 1) == 0)
-	return 1;
-    fprintf(stderr, "%s: error in active-filter expression: %s\n",
-	    progname, bpf_geterr());
+    dns = inet_addr(*argv);
+    if (dns == -1) {
+	if ((hp = gethostbyname(*argv)) == NULL) {
+	    option_error("invalid address parameter '%s' for ms-dns option",
+			 *argv);
     return 0;
+	}
+	dns = *(u_int32_t *)hp->h_addr;
+    }
+
+    if (ipcp_allowoptions[0].dnsaddr[0] == 0) {
+	ipcp_allowoptions[0].dnsaddr[0] = dns;
+    } else {
+	ipcp_allowoptions[0].dnsaddr[1] = dns;
+    }
+
+    return (1);
 }
 
 #ifdef IPX_CHANGE
@@ -2199,35 +2307,11 @@ resetipxproto()
     ipxcp_protent.enabled_flag = 0;
     return 1;
 }
-#endif /* IPX_CHANGE */
-
-#ifdef USE_MS_DNS
-/*
- * setdnsaddr - set the dns address(es)
- */
+#else
 
 static int
-setdnsaddr(argv)
-    char **argv;
+resetipxproto()
 {
-    u_int32_t dns;
-    struct hostent *hp;
-
-    if (inet_aton(*argv, &dns) == 0) {
-	if ((hp = gethostbyname(*argv)) == NULL) {
-            option_error("invalid address parameter '%s' for ms-dns option",
-                         *argv);
-	    return 0;
-	}
-	dns = *(u_int32_t *)hp->h_addr;
-    }
-
-    if (ipcp_allowoptions[0].dnsaddr[0] == 0) {
-	ipcp_allowoptions[0].dnsaddr[0] = dns;
-    } else {
-	ipcp_allowoptions[0].dnsaddr[1] = dns;
-    }
-
-    return (1);
+    return 1;
 }
-#endif /* USE_MS_DNS */
+#endif /* IPX_CHANGE */
