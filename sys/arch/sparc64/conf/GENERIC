@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2001/08/23 10:54:21 art Exp $
+#	$OpenBSD: GENERIC,v 1.14 2001/08/23 14:25:40 art Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -59,10 +59,10 @@ be*		at qec?
 
 hme*		at sbus? slot ? offset ?
 
-#pciide*	at pci? dev ? function ? flags 0x0000
-#wd*	at pciide? channel ? drive ? flags 0x0000
-#atapiscsi* at pciide? channel ?
-#scsibus* at atapiscsi?
+pciide*	at pci? dev ? function ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
 
 #
 # Note the flags on the esp entries below, that work around
