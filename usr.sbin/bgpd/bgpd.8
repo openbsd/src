@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.10 2004/06/23 00:11:27 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.11 2004/07/09 11:01:22 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -28,10 +28,9 @@
 .Op Fl f Ar file
 .Ek
 .Sh DESCRIPTION
-The
 .Nm
-daemon implements the Border Gateway Protocol version 4 as described
-in RFC 1771.
+is a daemon usually invoked at boot time to manage the network routing tables.
+It uses the Border Gateway Protocol, Version 4, as described in RFC 1771.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl D Ar macro=value
