@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.53 2004/05/24 18:54:47 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.54 2004/05/25 02:32:07 jolan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -720,8 +720,6 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 		sc->sc_counter = arc4random();
 		sc->sc_counter = sc->sc_counter << 32;
 		sc->sc_counter += arc4random();
-	} else if (sc->sc_counter == 0xffffffffffffffffULL) {
-		sc->sc_counter = 0;
 	} else
 		sc->sc_counter++;
 
