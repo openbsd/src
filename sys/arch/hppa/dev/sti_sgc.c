@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.2 2000/06/13 18:36:37 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.3 2000/06/15 03:04:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -92,7 +92,7 @@ sti_sgc_probe(parent, match, aux)
 	 * Locate STI ROM.
 	 * On some machines it may not be part of the HPA space.
 	 */
-	if (!PAGE0->pd_resv2[1]) {
+	if (PAGE0->pd_resv2[1] < HPPA_IOBEGIN) {
 		rom = ca->ca_hpa;
 		romh = ioh;
 		romunmapped++;
@@ -151,7 +151,7 @@ sti_sgc_attach(parent, self, aux)
 	bus_addr_t addr;
 	int rv;
 
-	if (!PAGE0->pd_resv2[1])
+	if (PAGE0->pd_resv2[1] < HPPA_IOBEGIN)
 		addr = ca->ca_hpa;
 	else
 		addr = PAGE0->pd_resv2[1];
