@@ -16,13 +16,6 @@ this.  You can:
 If you purchased the OpenBSD CD-ROM you already have several popular
 ``packages'', and the ``ports'' collection.
 
- NOTE:	Some important packages which are not permitted on the CD (due to
-	patents) are available on our FTP servers.  In 	particular, we
-	provide  the USA and international versions of both SSH and PGP.
-	The filenames are:
-		ssh-usa-1.2.27.tgz	ssh-intl-1.2.27.tgz
-		pgp-usa-2.6.3.tgz	pgp-intl-2.6.3.tgz
-
 Instructions for installing applications from the various sources using
 the different installation methods follow.  If emacs is to be installed
 it should be installed first as it creates the ``info'' directory file
@@ -80,12 +73,6 @@ Installing applications from the ftp.openbsd.org package collection:
     Password: <enter your root password>
     {:-#-:} pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE/emacs-20.3.tgz
 
-	Note: there are both USA and INTERNATIONAL versions of ssh and
-	pgp on the ftp server.  Be sure to grab the correct version.
-	The USA versions, ssh-usa-1.2.26.tgz and pgp-usa-2.6.3.tgz, use
-	RSAREF, a legal requirement for use within the United States due
-	to patent issues.
-
 	Packages available {:-include-:} (at least):
 
 		ImageMagick-4.2.0.tgz		m4-1.4.tgz
@@ -104,8 +91,7 @@ Installing applications from the ftp.openbsd.org package collection:
 		enscript-1.6.1.tgz		screen-3.7.6.tgz
 		ethereal-0.5.1.tgz		sharutils-4.2.tgz
 		expect-5.28.tgz			sniffit-0.3.5.tgz
-		fetchmail-4.7.9.tgz		ssh-1.2.27-intl.tgz
-		freetype-1.2.tgz		ssh-1.2.27-usa.tgz
+		fetchmail-4.7.9.tgz		freetype-1.2.tgz		
 		gettext-0.10.35.tgz		tar-1.12.tgz
 		ghostscript-5.10.tgz		tcl-8.0.5.tgz
 		gimp-1.1.4.tgz			tcsh-6.08.00.tgz
