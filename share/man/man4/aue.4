@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aue.4,v 1.16 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: aue.4,v 1.17 2003/07/09 13:26:20 jmc Exp $
 .\"	$NetBSD: aue.4,v 1.9 2002/07/11 00:23:31 rh Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
@@ -49,7 +49,7 @@ driver provides support for USB Ethernet adapters based on the ADMtek
 AN986 ("Pegasus") and ADM8511 ("Pegasus II") chipsets.
 This includes the following adapters:
 .Pp
-.Bl -tag -width -offset indent -compact
+.Bl -tag -width Ds -offset indent -compact
 .It Tn 3Com 3c460b
 .It Tn Abocom UFE1000
 .It Tn Abocom DSB650TX
@@ -97,7 +97,6 @@ received and transmitted over separate USB bulk transfer endpoints.
 The
 .Nm
 driver supports the following media types:
-.Pp
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It autoselect
 Enable autoselection of the media type and options.
@@ -136,7 +135,6 @@ mode.
 The
 .Nm
 driver supports the following media options:
-.Pp
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It full-duplex
 Force full duplex operation.

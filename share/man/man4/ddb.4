@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.33 2003/05/12 20:03:35 mickey Exp $
+.\"	$OpenBSD: ddb.4,v 1.34 2003/07/09 13:26:20 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -36,7 +36,7 @@ The
 .Nm
 debugger provides a means for debugging the kernel,
 and analysing the kernel after a system crash ("panic"), with a
-.Xr gdb 1 No Ns \&-like
+.Xr gdb 1 Ns \&-like
 syntax.
 .Pp
 .Nm
@@ -59,14 +59,11 @@ is set to 1.
 .Nm
 prompts for commands on the console with:
 .Pp
-.Bd -literal -offset indent
-ddb>
-.Ed
+.Dl ddb>
 .Pp
 The general syntax of a
 .Nm
 command is:
-.Pp
 .Bd -ragged -offset indent
 .Ar command
 .Oo Ic / Ns Ar modifiers Oc " "
@@ -135,7 +132,7 @@ has a feature like
 for the output.
 If the number of lines output in response to one command exceeds the number
 set in the
-.Va \&$lines
+.Va $lines
 variable, it displays the message
 .Ql "--db_more--"
 and waits for a response.
@@ -154,29 +151,29 @@ Abort the current command, and return to the command input mode.
 The following command line editing keys are provided:
 .Pp
 .Bl -tag -width 10n -offset indent -compact
-.It Ic \&^b
+.It Ic ^b
 back one character
-.It Ic \&^f
+.It Ic ^f
 forward one character
-.It Ic \&^a
+.It Ic ^a
 beginning of line
-.It Ic \&^e
+.It Ic ^e
 end of line
-.It Ic \&^w
+.It Ic ^w
 erase word back
-.It Ic \&^h | <del>
+.It Ic ^h | <del>
 erase previous character
-.It Ic \&^d
+.It Ic ^d
 erase next character
-.It Ic \&^k
+.It Ic ^k
 delete to end of line
-.It Ic \&^u
+.It Ic ^u
 delete line
-.It Ic \&^p
+.It Ic ^p
 previous in command history
-.It Ic \&^n
+.It Ic ^n
 next in command history
-.It Ic \&^r
+.It Ic ^r
 redraw line
 .El
 .\" .Pp
@@ -356,8 +353,8 @@ command may not parse as you expect.
 It is best to enclose each expression in parentheses.
 .\" --------------------
 .It Xo Ic set
-.Ic \&$ Ns Ar name
-.Op Ic \&=
+.Ic $ Ns Ar name
+.Op Ic =
 .Ar expr
 .Xc
 Set the named variable or register with the value of
@@ -366,7 +363,8 @@ Valid variable names are described below.
 .It Ic boot Ar how
 Reboot the machine depending on
 .Ar how :
-.Bl -tag -width "boot poweroff" -compact -indent offset
+.Pp
+.Bl -tag -width "boot poweroff" -compact
 .It Ic boot sync
 Sync disks and reboot.
 .It Ic boot crash
@@ -394,7 +392,7 @@ If
 is supplied,
 .Nm
 allows the breakpoint to be silently hit
-.Ar ( count No \&- 1 )
+.Ar ( count No \- 1 )
 times before stopping at the
 break point.
 .Pp
@@ -738,7 +736,7 @@ Display information on all processes.
 .Bl -tag -width foo -compact
 .It Cm /n
 (Default) Show process information in a
-.Xr ps 1 No Ns \&-like
+.Xr ps 1 Ns \&-like
 format.
 Information printed includes process ID, parent
 process ID, process group, UID, process status, process flags, process
@@ -787,29 +785,29 @@ For example, register variables can have the
 .Ql :u
 modifier to indicate a
 user register (e.g.,
-.Ql \&$eax:u ) .
+.Ql $eax:u ) .
 .Pp
 Built-in debugger variables currently supported are:
 .Bl -tag -width 10n -compact -offset indent
-.It Va \&$radix
+.It Va $radix
 Input and output radix.
-.It Va \&$maxoff
+.It Va $maxoff
 Addresses are printed as
 .Ar symbol Ns Li + Ns Ar offset
 unless
 .Ar offset
 is greater than
-.Va \&$maxoff .
-.It Va \&$maxwidth
+.Va $maxoff .
+.It Va $maxwidth
 The width of the displayed lines.
-.It Va \&$lines
+.It Va $lines
 The number of lines to page.
 This is used by the
 .Dq more
 feature.
-.It Va \&$tabstops
+.It Va $tabstops
 Tab stop width.
-.It Va \&$work Ns Ar xx
+.It Va $work Ns Ar xx
 Work variables.
 The suffix
 .Ar xx
@@ -817,10 +815,10 @@ is a number from 0 to 31.
 .El
 .Sh EXPRESSIONS
 Almost all expression operators in C are supported except for
-.Ql \&~ ,
-.Ql \&^ ,
+.Ql ~ ,
+.Ql ^ ,
 and unary
-.Ql \&& .
+.Ql & .
 Special rules for expressions in
 .Nm
 are:
@@ -848,7 +846,7 @@ if supported by an object format dependent routine:
 .Sm on
 .El
 The symbol may be prefixed with
-.Ql Ar symboltablename Ns \&::
+.Sq Ar symboltablename Ns \&::
 (e.g.,
 .Ql emulator::mach_msg_trap )
 to specify other than kernel symbols.
@@ -860,12 +858,12 @@ hex,
 octal,
 .Ql 0t :
 decimal, otherwise, the value of
-.Va \&$radix
+.Va $radix
 is used.
 .It Li \&.
 .Va dot :
 the current address.
-.It Li \&+
+.It Li +
 .Va next :
 the next address.
 .It Li \..
@@ -879,18 +877,18 @@ this is only changed by the
 or
 .Ic write
 command.
-.It Li \&'
+.It Li '
 The last address explicitly specified.
-.It Li \&$ Ns Ar variable
+.It Li $ Ns Ar variable
 The value of a register or variable.
 The name may be followed by a
 .Ql \&:
 and modifiers as described above with
 .Ar identifier .
-.It Ar expr Li \&# Ar expr
+.It Ar expr Li # Ar expr
 A binary operator which rounds up the left hand side to the next
 multiple of right hand side.
-.It Li \&* Ns Ar expr
+.It Li * Ns Ar expr
 Indirection.
 It may be followed by a ':' and modifiers as described above.
 .El

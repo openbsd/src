@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iop.4,v 1.7 2003/03/20 07:26:33 jmc Exp $
+.\"	$OpenBSD: iop.4,v 1.8 2003/07/09 13:26:20 jmc Exp $
 .\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,11 +44,11 @@
 .Tn I2O adapter driver
 .Sh SYNOPSIS
 .Cd "iop* at pci? dev ? function ?"
-.Cd "iopsp*" at iop? tid ?
-.Cd "ioprbs*" at iop? tid ?
-.Cd "scsibus*" at iopsp?
-.Cd "scsibus*" at ioprbs?
-.Cd option I2OVERBOSE
+.Cd "iopsp* at iop? tid ?"
+.Cd "ioprbs* at iop? tid ?"
+.Cd "scsibus* at iopsp?"
+.Cd "scsibus* at ioprbs?"
+.Cd "option I2OVERBOSE"
 .Sh DESCRIPTION
 The
 .Nm

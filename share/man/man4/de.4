@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.14 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: de.4,v 1.15 2003/07/09 13:26:20 jmc Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -39,7 +39,7 @@ device driver supports Ethernet adapters based on the Digital
 Equipment DC21x4x based self-contained Ethernet chips.
 This includes, among others, the following models:
 .Pp
-.Bl -tag -width -offset indent -compact
+.Bl -tag -width Ds -offset indent -compact
 .It Asante
 .It Cogent EM100FX and EM440TX
 .It DEC PCI DE435, EISA DE425, DE450, DE500
@@ -55,7 +55,6 @@ controllers.
 The following media types and options (as given to
 .Xr ifconfig 8 )
 are supported:
-.Pp
 .Bl -tag -width xxx -offset indent
 .It Cm media No autoselect
 Enable autoselection of the media type and options.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.28 2003/06/23 21:08:22 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.29 2003/07/09 13:26:20 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -120,7 +120,7 @@ A true PCMCIA bridge (such as those sold by Lucent) will attach
 as a real PCMCIA controller.
 The wireless card will then attach to the PCMCIA bus.
 Wireless cards in PCMCIA slots may be inserted and ejected on the fly.
-.br
+.Pp
 A dumb bridge, on the other hand, does not show up as a true PCMCIA bus.
 The wireless card will simply appear to the host as a normal PCI
 device and will not require any PCMCIA support.
@@ -201,7 +201,7 @@ Several vendors sell PCI adapters built around the PLX Technology 9050
 or 9052 chip.
 The following such adapters are supported or expected to work:
 .Pp
-.Bl -tag -width -offset indent -compact
+.Bl -tag -width Ds -offset indent -compact
 .It 3Com AirConnect 3CRWE777A (3.3V)
 .It Belkin F5D6000 (a rebadged WL11000P)
 .It Eumitcom WL11000P
@@ -225,7 +225,6 @@ Join an existing BSS network (ie: connect to an access point):
 Join a specific BSS network with network name
 .Dq my_net .
 .Dl # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net
-.br
 .Pp
 Join a specific BSS network with WEP encryption:
 .Bd -literal -compact -offset indent

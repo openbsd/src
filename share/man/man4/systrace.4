@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.7 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: systrace.4,v 1.8 2003/07/09 13:26:20 jmc Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@ interface.
 .Sh SYSTEM CALL POLICIES
 .Nm
 can assign the following policies to system calls:
-.Bl -tag -enum -width SYSTR_POLICY_XXXXXX
+.Bl -tag -width SYSTR_POLICY_XXXXXX
 .It SYSTR_POLICY_ASK
 Send a message of the type
 .Dv SYSTR_MSG_ASK ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lms.4,v 1.8 2003/06/06 10:29:42 jmc Exp $
+.\"	$OpenBSD: lms.4,v 1.9 2003/07/09 13:26:20 jmc Exp $
 .\" $NetBSD: lms.4,v 1.13 2000/07/05 16:13:48 msaitoh Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -40,9 +40,9 @@
 .Nm lms
 .Nd Logitech-style bus mouse driver
 .Sh SYNOPSIS
-.Cd lms0 at isa? port 0x23c irq 5
-.Cd lms1 at isa? port 0x238 irq 5
-.Cd wsmouse* at lms? mux 0
+.Cd "lms0 at isa? port 0x23c irq 5"
+.Cd "lms1 at isa? port 0x238 irq 5"
+.Cd "wsmouse* at lms? mux 0"
 .Sh DESCRIPTION
 This driver provides an interface to a Logitech-style bus mouse.
 Mouse related data are accessed by

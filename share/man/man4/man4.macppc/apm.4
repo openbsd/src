@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.5 2003/04/01 07:31:27 jmc Exp $
+.\"	$OpenBSD: apm.4,v 1.6 2003/07/09 13:26:20 jmc Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -16,7 +16,7 @@
 .Nm apm
 .Nd advanced power management device interface
 .Sh SYNOPSIS
-.Cd apm0 at adb?
+.Cd "apm0 at adb?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -52,7 +52,6 @@ driver implements the following
 calls.
 They are defined in
 .Aq Pa machine/apmvar.h .
-.Pp
 .Bl -tag -width Ds
 .It Dv APM_IOC_REJECT
 .Em Not implemented . DO NOT USE .
@@ -157,6 +156,7 @@ is a sequential count of events that can be used to check if any
 events were lost and
 .Va type
 is one of:
+.Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Dv APM_STANDBY_REQ
 .It Dv APM_SUSPEND_REQ
@@ -258,7 +258,7 @@ to 1 using
 The variable can be set at boot time in
 .Xr sysctl.conf 5 .
 .Sh FILES
-.Bl -tag -width /dev/apmctl -compat
+.Bl -tag -width /dev/apmctl
 .It Pa /dev/apm
 .Tn APM
 data device.

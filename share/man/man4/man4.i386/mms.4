@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mms.4,v 1.7 2003/06/06 10:29:42 jmc Exp $
+.\"	$OpenBSD: mms.4,v 1.8 2003/07/09 13:26:20 jmc Exp $
 .\" $NetBSD: mms.4,v 1.13 2000/07/05 16:13:49 msaitoh Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -40,9 +40,9 @@
 .Nm mms
 .Nd Microsoft-style bus mouse driver
 .Sh SYNOPSIS
-.Cd mms0 at isa? port 0x23c irq 5
-.Cd mms1 at isa? port 0x238 irq 5
-.Cd wsmouse* at mms? mux 0
+.Cd "mms0 at isa? port 0x23c irq 5"
+.Cd "mms1 at isa? port 0x238 irq 5"
+.Cd "wsmouse* at mms? mux 0"
 .Sh DESCRIPTION
 This driver provides an interface to a Microsoft-style bus mouse.
 Mouse related data are accessed by
