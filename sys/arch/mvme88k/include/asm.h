@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.13 2001/08/24 22:50:03 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.14 2001/09/21 02:19:31 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,6 @@
 #ifndef __MACHINE_M88K_ASM_H__
 #define __MACHINE_M88K_ASM_H__
 
-#ifdef	_LOCORE
 #ifdef __STDC__
 #define	_C_LABEL(name)		_ ## name
 #else
@@ -62,8 +61,6 @@
 
 #define	ASBSS(name, size) \
 	.comm	_ASM_LABEL(name), size
-
-#endif	/* _LOCORE */
 
 #define RTE	NOP ; rte
 
