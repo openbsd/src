@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.3 1996/06/23 14:31:32 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.4 1996/06/25 21:31:26 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.3 1996/06/23 14:31:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.4 1996/06/25 21:31:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,7 @@ main(argc, argv)
 	char *conf;
 	int mntflags = 0;
 	char tag[32];
+	mode_t um;
 
 	qelem q;
 	int rc;
@@ -171,10 +172,13 @@ main(argc, argv)
 		fprintf(stderr, "mount_portal: socket: %s\n", strerror(errno));
 		exit(1);
 	}
+
+	um = umask(077);
 	(void) unlink(un.sun_path);
 	if (bind(so, (struct sockaddr *) &un, sizeof(un)) < 0)
 		err(1, NULL);
 	(void) unlink(un.sun_path);
+	(void) umask(um);
 
 	(void) listen(so, 5);
 
