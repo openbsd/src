@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.40 2003/08/09 14:56:48 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.41 2003/08/22 15:19:23 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1917,7 +1917,7 @@ pfr_detach_table(struct pfr_ktable *kt)
 		pfr_setflags_ktable(kt, kt->pfrkt_flags&~PFR_TFLAG_REFERENCED);
 }
 
-int 
+int
 pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
     struct pf_addr **raddr, struct pf_addr **rmask, sa_family_t af)
 {
@@ -1950,7 +1950,7 @@ _next_block:
 
 	if (use_counter) {
 		/* is supplied address within block? */
-		if(!PF_MATCHA(0, *raddr, *rmask, counter, af)) {
+		if (!PF_MATCHA(0, *raddr, *rmask, counter, af)) {
 			/* no, go to next block in table */
 			idx++;
 			use_counter = 0;
@@ -1968,7 +1968,7 @@ _next_block:
 		*pidx = idx;
 		return (0);
 	}
-	for(;;) {
+	for (;;) {
 		/* we don't want to use a nested block */
                 ke2 = (struct pfr_kentry *)(af == AF_INET ?
 		    rn_match(&pfr_sin, kt->pfrkt_ip4) :
@@ -1985,7 +1985,7 @@ _next_block:
 		pfr_prepare_network(&mask, AF_INET, ke2->pfrke_net);
 		PF_POOLMASK(addr, addr, SUNION2PF(&mask, af), &pfr_ffaddr, af);
 		PF_AINC(addr, af);
-		if(!PF_MATCHA(0, *raddr, *rmask, addr, af)) {
+		if (!PF_MATCHA(0, *raddr, *rmask, addr, af)) {
 			/* ok, we reached the end of our main block */
 			/* go to next block in table */
 			idx++;
@@ -2006,7 +2006,7 @@ pfr_kentry_byidx(struct pfr_ktable *kt, int idx, int af)
 
 	switch(af) {
 	case AF_INET:
-        	rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
+		rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
 		return w.pfrw_kentry;
 	case AF_INET6:
 		rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.72 2003/08/21 19:12:08 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.73 2003/08/22 15:19:23 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -881,7 +881,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		DPFPRINTF(("max packet %d\n", fragoff + ip_len));
 		goto bad;
 	}
-	max = fragoff + ip_len; 
+	max = fragoff + ip_len;
 
 	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0) {
 		/* Fully buffer all of the fragments */

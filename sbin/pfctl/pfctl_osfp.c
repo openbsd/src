@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.1 2003/08/21 19:12:08 frantzen Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.2 2003/08/22 15:17:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -63,21 +63,21 @@ struct name_list classes = LIST_HEAD_INITIALIZER(&classes);
 int class_count;
 int fingerprint_count;
 
-void	 		 add_fingerprint(int, int, struct pf_osfp_ioctl *);
-struct name_entry 	*fingerprint_name_entry(struct name_list *, char *);
+void			 add_fingerprint(int, int, struct pf_osfp_ioctl *);
+struct name_entry	*fingerprint_name_entry(struct name_list *, char *);
 void			 pfctl_flush_my_fingerprints(struct name_list *);
 char			*get_field(char **, size_t *, int *);
-int	 		 get_int(char **, size_t *, int *, int *, const char *,
+int			 get_int(char **, size_t *, int *, int *, const char *,
 			     int, int, const char *, int);
-int	 		 get_str(char **, size_t *, char **, const char *, int,
+int			 get_str(char **, size_t *, char **, const char *, int,
 			     const char *, int);
 int			 get_tcpopts(const char *, int, const char *,
 			    pf_tcpopts_t *, int *, int *, int *, int *, int *,
 			    int *);
 void			 import_fingerprint(struct pf_osfp_ioctl *);
-const char 		*print_ioctl(struct pf_osfp_ioctl *);
-void	 		 print_name_list(int, struct name_list *, const char *);
-void	 		 sort_name_list(int, struct name_list *);
+const char		*print_ioctl(struct pf_osfp_ioctl *);
+void			 print_name_list(int, struct name_list *, const char *);
+void			 sort_name_list(int, struct name_list *);
 struct name_entry	*lookup_name_list(struct name_list *, const char *);
 
 /* Load fingerprints from a file */
@@ -216,7 +216,7 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 			break;
 		}
 		fp.fp_mss = mss;
-		
+
 		fp.fp_tcpopts = packed_tcpopts;
 		fp.fp_optcnt = optcnt;
 		if (ts0)
@@ -542,41 +542,41 @@ add_fingerprint(int dev, int opts, struct pf_osfp_ioctl *fp)
 		_dot = fp->field[_i] - '0';				\
 		_i += 2;						\
 	}								\
-	if (isdigit(fp->field[_i])) 					\
-		_start = fp->field[_i++] - '0'; 			\
-	else 								\
-		break; 							\
-	if (isdigit(fp->field[_i])) 					\
+	if (isdigit(fp->field[_i]))					\
+		_start = fp->field[_i++] - '0';				\
+	else								\
+		break;							\
+	if (isdigit(fp->field[_i]))					\
 		_start = (_start * 10) + fp->field[_i++] - '0';		\
 	if (fp->field[_i++] != '-')					\
-		break; 							\
+		break;							\
 	if (isdigit(fp->field[_i]) && fp->field[_i+1] == '.' &&		\
 	    fp->field[_i] - '0' == _dot)				\
 		_i += 2;						\
 	else if (_dot != -1)						\
 		break;							\
-	if (isdigit(fp->field[_i])) 					\
-		_end = fp->field[_i++] - '0'; 				\
-	else 								\
-		break; 							\
-	if (isdigit(fp->field[_i])) 					\
-		_end = (_end * 10) + fp->field[_i++] - '0'; 		\
-	if (isdigit(fp->field[_i])) 					\
-		_end = (_end * 10) + fp->field[_i++] - '0'; 		\
-	if (fp->field[_i] != '\0') 					\
-		break; 							\
-	memcpy(&fptmp, fp, sizeof(fptmp)); 				\
-	for (;_start <= _end; _start++) { 				\
+	if (isdigit(fp->field[_i]))					\
+		_end = fp->field[_i++] - '0';				\
+	else								\
+		break;							\
+	if (isdigit(fp->field[_i]))					\
+		_end = (_end * 10) + fp->field[_i++] - '0';		\
+	if (isdigit(fp->field[_i]))					\
+		_end = (_end * 10) + fp->field[_i++] - '0';		\
+	if (fp->field[_i] != '\0')					\
+		break;							\
+	memcpy(&fptmp, fp, sizeof(fptmp));				\
+	for (;_start <= _end; _start++) {				\
 		memset(fptmp.field, 0, sizeof(fptmp.field));		\
 		fptmp.fp_os.fp_enflags |= PF_OSFP_EXPANDED;		\
 		if (_dot == -1)						\
 			snprintf(fptmp.field, sizeof(fptmp.field),	\
-			    "%d", _start); 				\
+			    "%d", _start);				\
 		    else						\
 			snprintf(fptmp.field, sizeof(fptmp.field),	\
-			    "%d.%d", _dot, _start); 			\
-		add_fingerprint(dev, opts, &fptmp); 			\
-	} 								\
+			    "%d.%d", _dot, _start);			\
+		add_fingerprint(dev, opts, &fptmp);			\
+	}								\
 } while(0)
 
 	/* We allow "#-#" as a version or subtype and we'll expand it */
@@ -588,7 +588,7 @@ add_fingerprint(int dev, int opts, struct pf_osfp_ioctl *fp)
 
 	version = PF_OSFP_ANY;
 	subtype = PF_OSFP_ANY;
-	
+
 	nm_class = fingerprint_name_entry(&classes, fp->fp_os.fp_class_nm);
 	if (nm_class->nm_num == 0)
 		nm_class->nm_num = ++class_count;
@@ -889,7 +889,7 @@ get_tcpopts(const char *filename, int lineno, const char *tcpopts,
 	*mss_mod = T_DC;
 	*ts0 = 0;
 	if (strcmp(tcpopts, ".") == 0)
-		return(0);
+		return (0);
 
 	for (i = 0; tcpopts[i] && *optcnt < PF_OSFP_MAX_OPTS;) {
 		switch ((opt = toupper(tcpopts[i++]))) {
