@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.23 1997/08/13 14:24:00 niklas Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.24 1997/08/21 19:07:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -45,22 +45,19 @@ extern int debug;
 static int Xaddr __P((void));
 static int Xboot __P((void));
 static int Xcd __P((void));
-static int Xcp __P((void));
 static int Xdevice __P((void));
 #ifdef DEBUG
 static int Xdebug __P((void));
+static int Xregs __P((void));
 #endif
 static int Xhelp __P((void));
 static int Ximage __P((void));
 static int Xls __P((void));
-static int Xnope __P((void));
 static int Xreboot __P((void));
-static int Xregs __P((void));
 static int Xset __P((void));
 static int Xhowto __P((void));
 static int Xtty __P((void));
 static int Xtime __P((void));
-static int Xdmesg __P((void));
 static int Xecho __P((void));
 
 struct cmd_table {
@@ -87,14 +84,13 @@ static const struct cmd_table cmd_set[] = {
 static const struct cmd_table cmd_table[] = {
 	{"boot",   CMDT_CMD, Xboot}, /* XXX must be first */
 	{"cd",     CMDT_CMD, Xcd},
-	{"cp",     CMDT_CMD, Xcp},
-	{"dmesg",  CMDT_CMD, Xdmesg},
 	{"echo",   CMDT_CMD, Xecho},
 	{"help",   CMDT_CMD, Xhelp},
 	{"ls",     CMDT_CMD, Xls},
-	{"nope",   CMDT_CMD, Xnope},
 	{"reboot", CMDT_CMD, Xreboot},
+#ifdef DEBUG
 	{"regs",   CMDT_CMD, Xregs},
+#endif
 	{"set",    CMDT_SET, Xset},
 	{"time",   CMDT_CMD, Xtime},
 	{NULL, 0},
@@ -433,12 +429,6 @@ Xtime()
 }
 
 static int
-Xdmesg()
-{
-	return 0;
-}
-
-static int
 Xls()
 {
 	struct stat sb;
@@ -659,23 +649,11 @@ Xreboot()
 	return 0; /* just in case */
 }
 
+#ifdef DEBUG
 static int
 Xregs()
 {
 	DUMP_REGS;
 	return 0;
 }
-
-static int
-Xnope()
-{
-	return 0;
-}
-
-static int
-Xcp()
-{
-	printf("cp: no writable filesystems\n");
-	return 0;
-}
-
+#endif
