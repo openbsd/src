@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.61 2001/05/11 06:43:41 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.62 2001/05/12 06:47:17 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.61 2001/05/11 06:43:41 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.62 2001/05/12 06:47:17 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1492,12 +1492,21 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 			return(-1);
 		}
 		ptr = strstr(buf, name);
-		if (ptr == NULL)	/* Should never happen */
-			return(-1);
-		/* Catch weird prefix match -- XXX recovery ? */
+ tryagain:
+		if (ptr == NULL) {
+		       warnx("fourth level name %s in %s is invalid", name,
+			     string);
+		       return(-1);
+		}
 		if ((*(ptr + strlen(name)) != ',') &&
-		    (*(ptr + strlen(name)) != '\0'))
-			return(-1);
+		    (*(ptr + strlen(name)) != '\0')) {
+			ptr = strstr(ptr + 1, name); /* retry */
+			goto tryagain;
+		}
+		if ((ptr != buf) && (*(ptr - 1) != ',')) {
+			ptr = strstr(ptr + 1, name); /* retry */
+			goto tryagain;
+		}
 		for (i = 0, stor = 0; buf + i < ptr; i++)
 			if (buf[i] == ',')
 				stor++;
