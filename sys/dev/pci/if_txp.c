@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.28 2001/05/15 05:18:13 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.29 2001/05/15 14:57:28 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -506,8 +506,7 @@ txp_download_fw_section(sc, sect, sectnum)
 		goto bail;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, dma.dma_map,
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, dma.dma_map, BUS_DMASYNC_PREREAD);
 
 	WRITE_REG(sc, TXP_H2A_1, sect->nbytes);
 	WRITE_REG(sc, TXP_H2A_2, sect->cksum);
@@ -519,11 +518,9 @@ txp_download_fw_section(sc, sect, sectnum)
 	if (txp_download_fw_wait(sc)) {
 		printf(": fw wait failed, section %d\n", sectnum);
 		err = -1;
-		goto bail;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, dma.dma_map,
-	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, dma.dma_map, BUS_DMASYNC_POSTREAD);
 
 bail:
 	txp_dma_free(sc, &dma);
@@ -616,6 +613,38 @@ txp_rx_reclaim(sc, r)
 
 		eh = mtod(m, struct ether_header *);
 		ifp->if_ipackets++;
+
+#ifdef __STRICT_ALIGNMENT
+		{
+			/*
+			 * XXX Nice chip, except it won't accept "off by 2"
+			 * buffers, so we're force to copy.  Supposedly
+			 * this will be fixed in a newer firmware rev
+			 * and this will be temporary.
+			 */
+			struct mbuf *mnew;
+
+			MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+			if (mnew == NULL) {
+				m_freem(m);
+				goto next;
+			}
+			if (m->m_len > (MHLEN - 2)) {
+				MCLGET(mnew, M_DONTWAIT);
+				if (!(mnew->m_flags & M_EXT)) {
+					m_freem(mnew);
+					m_freem(m);
+					goto next;
+				}
+			}
+			mnew->m_pkthdr.rcvif = ifp;
+			mnew->m_pkthdr.len = mnew->m_len = m->m_len;
+			mnew->m_data += 2;
+			bcopy(m->m_data, mnew->m_data, m->m_len);
+			m_freem(m);
+			m = mnew;
+		}
+#endif
 
 #if NBPFILTER > 0
 		/*
@@ -1034,37 +1063,34 @@ txp_dma_malloc(sc, size, dma, mapflags)
 {
         int r;
 
+	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
+	    &dma->dma_seg, 1, &dma->dma_nseg, 0)) != 0)
+		goto fail_0;
+
+	if ((r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg,
+	    size, &dma->dma_vaddr, mapflags | BUS_DMA_NOWAIT)) != 0)
+		goto fail_1;
+
 	if ((r = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &dma->dma_map)) != 0)
-		return (r);
-
-	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
-	    dma->dma_map->dm_segs, dma->dma_map->dm_nsegs,
-	    &dma->dma_map->dm_nsegs, BUS_DMA_NOWAIT)) != 0) {
-		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
-		return (r);
-	}
-
-	if ((r = bus_dmamem_map(sc->sc_dmat, dma->dma_map->dm_segs,
-	    dma->dma_map->dm_nsegs, size, &dma->dma_vaddr,
-	    mapflags | BUS_DMA_NOWAIT)) != 0) {
-		bus_dmamem_free(sc->sc_dmat, dma->dma_map->dm_segs,
-		    dma->dma_map->dm_nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
-		return (r);
-	}
+		goto fail_2;
 
 	if ((r = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_vaddr,
-	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
-		bus_dmamem_free(sc->sc_dmat, dma->dma_map->dm_segs, dma->dma_map->dm_nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
-		return (r);
-	}
+	    size, NULL, BUS_DMA_NOWAIT)) != 0)
+		goto fail_3;
 
 	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
-
+	dma->dma_size = size;
 	return (0);
+
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+fail_0:
+	return (r);
 }
 
 void
@@ -1072,10 +1098,10 @@ txp_dma_free(sc, dma)
 	struct txp_softc *sc;
 	struct txp_dma_alloc *dma;
 {
-	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_map->dm_mapsize);
-	bus_dmamem_free(sc->sc_dmat, dma->dma_map->dm_segs, dma->dma_map->dm_nsegs);
 	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
 	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_size);
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 }
 
 int
