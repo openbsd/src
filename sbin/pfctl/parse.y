@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.290 2003/01/15 15:14:42 mpech Exp $	*/
+/*	$OpenBSD: parse.y,v 1.291 2003/01/17 12:53:52 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -883,7 +883,7 @@ queue_opts_l	: queue_opts_l queue_opt
 
 queue_opt	: bandwidth	{
 			if (queue_opts.marker & QOM_BWSPEC) {
-				yyerror("bandwith cannot be respecified");
+				yyerror("bandwidth cannot be respecified");
 				YYERROR;
 			}
 			queue_opts.marker |= QOM_BWSPEC;
@@ -1320,7 +1320,8 @@ blockspec	: /* empty */		{
 			$$.b2 = PFRULE_RETURNICMP;
 			if (!($$.w = parseicmpspec($3, AF_INET)))
 				YYERROR;
-			if (!($$.w2 = parseicmpspec($5, AF_INET6)));
+			if (!($$.w2 = parseicmpspec($5, AF_INET6)))
+				YYERROR;
 		}
 		| RETURN {
 			$$.b2 = PFRULE_RETURN;
