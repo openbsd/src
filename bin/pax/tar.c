@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.4 1996/08/27 03:53:14 tholo Exp $	*/
+/*	$OpenBSD: tar.c,v 1.5 1997/02/10 06:48:16 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.4 1996/08/27 03:53:14 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.5 1997/02/10 06:48:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ tar_trail(buf, in_resync, cnt)
 	 * might as well throw this block out since a valid header can NEVER be
 	 * a block of all 0 (we must have a valid file name).
 	 */
-	if (!in_resync && (++*cnt >= NULLCNT))
+	if (!in_resync)
 		return(0);
 	return(1);
 }

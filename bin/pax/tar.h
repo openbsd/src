@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.h,v 1.3 1997/02/10 06:35:39 millert Exp $	*/
+/*	$OpenBSD: tar.h,v 1.4 1997/02/10 06:48:15 millert Exp $	*/
 /*	$NetBSD: tar.h,v 1.3 1995/03/21 09:07:51 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #define CHK_LEN		8		/* length of checksum field */
 #define TNMSZ		100		/* size of name field */
 #ifdef _PAX_
-#define NULLCNT		1		/* number of null blocks in trailer */
+#define NULLCNT		2		/* number of null blocks in trailer */
 #define CHK_OFFSET	148		/* start of chksum field */
 #define BLNKSUM		256L		/* sum of checksum field using ' ' */
 #endif /* _PAX_ */
