@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.2 2000/01/08 02:12:47 angelos Exp $
+.\" $OpenBSD: gre.4,v 1.3 2000/01/08 02:30:02 angelos Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
 
    # route add default B
    # ifconfig greN  A D netmask 0xffffffff linkX up
-   # greconfig -i greN -s A -d D
    # route add E D
 
    On Host D (Cisco):
@@ -191,7 +190,6 @@ option to
 .Xr atalk 4 ,
 .Xr inet 4 ,
 .Xr ifconfig 8 ,
-.Xr greconfig 8 ,
 .Xr options 4 ,
 .Xr protocols 5 ,
 .Xr sysctl 8
@@ -207,9 +205,9 @@ This is possibly not the best solution.
 .Pp
 To avoid the address munging described above, turn on the link1 flag
 on the ifconfig command line.
-This implies that the GRE packet destination (set via greconfig -d)
-and the ifconfig remote host are not the same IP addresses, and that
-the GRE destination does not route over the greX interface itself.
+This implies that the GRE packet destination and the remote host are not
+the same IP addresses, and that the GRE destination does not route over
+the greX interface itself.
 .Pp
 GRE RFC not yet fully implemented (no GRE options), no other protocols
 yet than IP over IP.
