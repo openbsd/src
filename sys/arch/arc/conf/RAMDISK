@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 1997/08/01 11:22:12 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.6 1997/08/01 11:31:23 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -36,28 +36,28 @@ option		KERNFS		# kernel data-structure filesystem
 option		MFS		# memory-based filesystem
 option		MSDOSFS		# Ability to read write MS-Dos filsystem
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)
-#option 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-#option 	NULLFS		# null layer filesystem
-#option 	PORTAL		# portal filesystem (still experimental)
-#option 	PROCFS		# /proc
-#option 	UMAPFS		# uid/gid remapping filesystem
-#option 	UNION		# union file system
+#option		NFSSERVER	# Sun NFS-compatible filesystem (server)
+#option		NULLFS		# null layer filesystem
+#option		PORTAL		# portal filesystem (still experimental)
+#option		PROCFS		# /proc
+#option		UMAPFS		# uid/gid remapping filesystem
+#option		UNION		# union file system
 
 
 # Networking options
 #option		GATEWAY		# IP packet forwarding
-options 	INET		# Internet protocols
-#option 	NS		# XNS
-#option 	IPX		# IPX+SPX
+option		INET		# Internet protocols
+#option		NS		# XNS
+#option		IPX		# IPX+SPX
 #option		ISO,TPIP	# OSI networking
 #option		EON		# OSI tunneling over IP
-#option         CCITT,LLC,HDLC	# X.25
+#option		CCITT,LLC,HDLC	# X.25
 #option		IPFILTER	# IP packet filter for security
 #option		IPFILTER_LOG	# use /dev/ipl to log IPF
 
-#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-#options 	MULTICAST	# Multicast support
-#options 	MROUTING	# Multicast routing support
+#option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#option		MULTICAST	# Multicast support
+#option		MROUTING	# Multicast routing support
 
 # Specify storage configuration using ramdisk
 config		bsd	root on rd0a swap on rd0b
@@ -141,6 +141,6 @@ pseudo-device	ppp		 2	# serial-line PPP ports
 pseudo-device	rd		 1	# Ram disk.
 
 # RAMDISK stuff
-option          MINIROOTSIZE=8192
-option          RAMDISK_HOOKS
+option		MINIROOTSIZE=8192
+option		RAMDISK_HOOKS
 

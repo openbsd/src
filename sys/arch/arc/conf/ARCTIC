@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.9 1997/08/01 11:22:09 deraadt Exp $
+#	$OpenBSD: ARCTIC,v 1.10 1997/08/01 11:31:21 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -38,19 +38,19 @@ option		MSDOSFS		# Ability to read write MS-Dos filsystem
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)
 option		NFSSERVER	# Sun NFS-compatible filesystem (server)
 option	 	NULLFS		# null layer filesystem
-option 		PORTAL		# portal filesystem (still experimental)
+option		PORTAL		# portal filesystem (still experimental)
 option	 	UMAPFS		# uid/gid remapping filesystem
 
 # Networking options
-option 		INET		# Internet protocols
+option		INET		# Internet protocols
 option		IPSEC		# IP-sec
-#option 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 option	 	GATEWAY		# IP packet forwarding
-#option 	MULTICAST	# Multicast support
-#option 	MROUTING	# Multicast routing support
-#option 	ISO		# OSI networking
-#option 	TPIP
-#option 	EON
+#option		MULTICAST	# Multicast support
+#option		MROUTING	# Multicast routing support
+#option		ISO		# OSI networking
+#option		TPIP
+#option		EON
 
 # Compatibilitry modules
 option		COMPAT_43	# compatibility with 4.3BSD binaries
