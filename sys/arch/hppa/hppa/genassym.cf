@@ -1,0 +1,192 @@
+#	$OpenBSD: genassym.cf,v 1.1 1998/09/12 03:12:55 mickey Exp $
+
+#
+# Copyright (c) 1982, 1990, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	8.3 (Berkeley) 1/4/94
+#
+
+include <sys/param.h>
+include <sys/buf.h>
+include <sys/map.h>
+include <sys/proc.h>
+include <sys/mbuf.h>
+include <sys/msgbuf.h>
+include <sys/syscall.h>
+include <sys/user.h>
+
+include <vm/vm.h>
+
+include	<machine/types.h>
+include <machine/cpu.h>
+include <machine/psl.h>
+include <machine/reg.h>
+include <machine/pte.h>
+include <machine/frame.h>
+include <machine/pmap.h>
+include <machine/iodc.h>
+include <machine/iomod.h>
+
+
+# general constants
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+define	NBPG			NBPG
+define	PGSHIFT			PGSHIFT
+define	USRSTACK		USRSTACK
+define	INTSTACK_SIZE		INTSTACK_SIZE
+define	HPPA_PID_KERNEL		HPPA_PID_KERNEL
+
+# pte things
+define	TLB_ICACHE_POS		TLB_ICACHE_POS
+define	TLB_DCACHE_POS		TLB_DCACHE_POS
+define	TLB_REF_POS		TLB_REF_POS
+define	TLB_GATE_PROT		TLB_GATE_PROT
+define	TLB_DIRTY_POS		TLB_DIRTY_POS
+define	TLB_ALIGNED_POS		TLB_ALIGNED_POS
+define	TLB_AR_KRW		TLB_AR_KRW
+
+# cpu stuff
+define	CACHE_LINE_SIZE		CACHE_LINE_SIZE
+
+# hpt_table fields
+struct	hpt_entry
+member	hpt_tlbprot
+member	hpt_tlbpage
+member	hpt_entry
+define	hpt_tag	0
+
+# pv_entry fields
+struct	pv_entry
+member	pv_hash
+member	pv_pmap
+member	pv_space
+member	pv_va
+member	pv_tlbpage
+member	pv_tlbprot
+member	pv_tlbsw
+
+# pmap
+struct	pmap
+member	pmap_space
+member	pmap_pid
+
+# vm_map
+define vmmap_pmap	offsetof(struct vm_map, pmap)
+
+# export iomod
+struct	iomod
+member	io_command
+
+# saved state fields
+define	TF_SIZE		sizeof(struct trapframe)
+define	TF_FLAGS	offsetof(struct trapframe, flags)
+define	TF_R1		offsetof(struct trapframe, r1)
+define	TF_R2		offsetof(struct trapframe, rp)
+define	TF_GOTO		offsetof(struct trapframe, rp)
+define	TF_R3		offsetof(struct trapframe, r3)
+define	TF_R4		offsetof(struct trapframe, r4)
+define	TF_R5		offsetof(struct trapframe, r5)
+define	TF_R6		offsetof(struct trapframe, r6)
+define	TF_R7		offsetof(struct trapframe, r7)
+define	TF_R8		offsetof(struct trapframe, r8)
+define	TF_R9		offsetof(struct trapframe, r9)
+define	TF_R10		offsetof(struct trapframe, r10)
+define	TF_R11		offsetof(struct trapframe, r11)
+define	TF_R12		offsetof(struct trapframe, r12)
+define	TF_R13		offsetof(struct trapframe, r13)
+define	TF_R14		offsetof(struct trapframe, r14)
+define	TF_R15		offsetof(struct trapframe, r15)
+define	TF_R16		offsetof(struct trapframe, r16)
+define	TF_R17		offsetof(struct trapframe, r17)
+define	TF_R18		offsetof(struct trapframe, r18)
+define	TF_R19		offsetof(struct trapframe, t4)
+define	TF_R20		offsetof(struct trapframe, t3)
+define	TF_R21		offsetof(struct trapframe, t2)
+define	TF_R22		offsetof(struct trapframe, t1)
+define	TF_R23		offsetof(struct trapframe, arg3)
+define	TF_R24		offsetof(struct trapframe, arg2)
+define	TF_R25		offsetof(struct trapframe, arg1)
+define	TF_R26		offsetof(struct trapframe, arg0)
+define	TF_R27		offsetof(struct trapframe, dp)
+define	TF_R28		offsetof(struct trapframe, ret0)
+define	TF_R29		offsetof(struct trapframe, ret1)
+define	TF_R30		offsetof(struct trapframe, sp)
+define	TF_R31		offsetof(struct trapframe, r31)
+define	TF_CR0		offsetof(struct trapframe, rctr)
+define	TF_IIOQH	offsetof(struct trapframe, iioq_head)
+define	TF_IIOQT	offsetof(struct trapframe, iioq_tail)
+define	TF_IISQH	offsetof(struct trapframe, iisq_head)
+define	TF_IISQT	offsetof(struct trapframe, iisq_tail)
+define	TF_CR8		offsetof(struct trapframe, pidr1)
+define	TF_CR9		offsetof(struct trapframe, pidr2)
+define	TF_CR11		offsetof(struct trapframe, sar)
+define	TF_CR12		offsetof(struct trapframe, pidr3)
+define	TF_CR13		offsetof(struct trapframe, pidr4)
+define	TF_CR15		offsetof(struct trapframe, eiem)
+define	TF_CR19		offsetof(struct trapframe, iir)
+define	TF_CR20		offsetof(struct trapframe, isr)
+define	TF_CR21		offsetof(struct trapframe, ior)
+define	TF_CR22		offsetof(struct trapframe, ipsw)
+define	TF_SR0		offsetof(struct trapframe, sr0)
+define	TF_SR1		offsetof(struct trapframe, sr1)
+define	TF_SR2		offsetof(struct trapframe, sr2)
+define	TF_SR3		offsetof(struct trapframe, sr3)
+define	TF_SR4		offsetof(struct trapframe, sr4)
+define	TF_SR5		offsetof(struct trapframe, sr5)
+define	TF_SR6		offsetof(struct trapframe, sr6)
+define	TF_SR7		offsetof(struct trapframe, sr7)
+
+# proc fields and values
+struct	proc
+member	p_forw
+member	p_back
+member	p_vmspace
+member	p_addr
+member	p_priority
+member	p_stat
+member	p_wchan
+define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
+define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	SSLEEP			SSLEEP
+define	SRUN			SRUN
+
+# VM structure fields
+define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
+
+# interrupt/fault metering
+define	V_INTR			offsetof(struct vmmeter, v_intr)
+
+# system calls
+define	SYS_exit		SYS_exit
+define	SYS_execve		SYS_execve
+define	SYS_sigreturn		SYS_sigreturn
