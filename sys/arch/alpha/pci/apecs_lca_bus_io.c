@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_lca_bus_io.c,v 1.5 1996/12/08 00:20:32 niklas Exp $	*/
+/*	$OpenBSD: apecs_lca_bus_io.c,v 1.6 2001/02/06 19:26:39 art Exp $	*/
 /*	$NetBSD: apecs_lca_bus_io.c,v 1.4 1996/08/27 16:29:23 cgd Exp $	*/
 
 /*
@@ -59,4 +59,4 @@
 #define	CHIP_IO_W2_BASE(v)	APECS_PCI_SIO
 #define	CHIP_IO_W2_MASK(v)	0x00ffffff
 
-#include "pcs_bus_io_common.c"
+#include "pci_swiz_bus_io_chipdep.c"

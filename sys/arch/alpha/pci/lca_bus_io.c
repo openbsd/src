@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca_bus_io.c,v 1.2 1997/11/10 15:53:12 niklas Exp $	*/
+/*	$OpenBSD: lca_bus_io.c,v 1.3 2001/02/06 19:26:39 art Exp $	*/
 /*	$NetBSD: lca_bus_io.c,v 1.1 1996/11/25 03:42:14 cgd Exp $	*/
 
 /*
@@ -51,4 +51,4 @@
 #define	CHIP_IO_W1_SYS_START(v)	LCA_PCI_SIO
 #define	CHIP_IO_W1_SYS_END(v)	(LCA_PCI_SIO + ((0x00ffffffUL + 1) << 5) - 1)
 
-#include "pcs_bus_io_common.c"
+#include "pci_swiz_bus_io_chipdep.c"

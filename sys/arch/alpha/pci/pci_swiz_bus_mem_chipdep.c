@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcs_bus_mem_common.c,v 1.9 2000/06/16 21:47:10 provos Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.1 2001/02/06 19:26:39 art Exp $	*/
 /*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
 
 /*

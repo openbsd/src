@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_bus_mem.c,v 1.2 1997/11/10 15:53:11 niklas Exp $	*/
+/*	$OpenBSD: apecs_bus_mem.c,v 1.3 2001/02/06 19:26:39 art Exp $	*/
 /*	$NetBSD: apecs_bus_mem.c,v 1.1 1996/11/25 03:42:11 cgd Exp $	*/
 
 /*
@@ -71,4 +71,4 @@
 #define	CHIP_S_MEM_W2_SYS_END(v)					\
     (APECS_PCI_SPARSE + (0x08000000UL << 5) - 1)
 
-#include "pcs_bus_mem_common.c"
+#include "pci_swiz_bus_mem_chipdep.c"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cia_bus_mem.c,v 1.6 1997/01/24 19:57:38 niklas Exp $	*/
+/*	$OpenBSD: cia_bus_mem.c,v 1.7 2001/02/06 19:26:39 art Exp $	*/
 /*	$NetBSD: cia_bus_mem.c,v 1.7 1996/11/25 03:46:09 cgd Exp $	*/
 
 /*
@@ -82,4 +82,4 @@
 #define	CHIP_S_MEM_W3_SYS_END(v)					\
 	    (CIA_PCI_SMEM3 + ((HAE_MEM_REG3_MASK + 1) << 5) - 1)
 
-#include "pcs_bus_mem_common.c"
+#include "pci_swiz_bus_mem_chipdep.c"

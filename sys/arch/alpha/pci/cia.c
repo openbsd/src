@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.10 2000/11/08 20:59:24 ericj Exp $ */
+/* $OpenBSD: cia.c,v 1.11 2001/02/06 19:26:39 art Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -140,7 +140,7 @@ struct cia_config cia_configuration;
 #endif
 
 #ifndef CIA_PYXIS_FORCE_BWX
-#define	CIA_PYXIS_FORCE_BWX 0
+#define	CIA_PYXIS_FORCE_BWX 1
 #endif
 
 int	cia_pci_use_bwx = CIA_PCI_USE_BWX;
