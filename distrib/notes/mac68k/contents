@@ -51,7 +51,7 @@ this directory are as follows:
 		 start the operating system.  In all cases, you will need to
 		 download this file.
 
-	Installer_1.1g.sea.hqx
+	Installer_1.2.sea.hqx
 		 This is the MacOS program used to install downloaded sets
 		 (such as those from the bins directory) onto a BSD partition.
 		 It is necessary in either the case of a fresh install or an
