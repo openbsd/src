@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.4 1998/08/04 00:46:19 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.5 1999/01/14 08:42:37 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -28,6 +28,7 @@
 01/11	Prithvi Jayanti in Nepal
 01/11	Surgeon General condemned cigarettes, 1964
 01/11	The Whiskey-A-Go-Go opens on Sunset Boulevard in Los Angeles, 1963
+01/14	Gregorian Calendar New Year's Day
 01/14	The first "Be-In" is held in Golden Gate Park, 1967
 01/16	Prohibition begins, 1920
 01/17	Passing of Gandalf (LOTR)
