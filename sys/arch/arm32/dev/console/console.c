@@ -710,7 +710,7 @@ physconstart(tp)
 
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		timeout_add(&tp->t_rstrt_to, 1);
 	}
 
 	if (cl->c_cc <= tp->t_lowat) {
