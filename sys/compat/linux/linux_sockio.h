@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sockio.h,v 1.2 1995/06/22 21:34:42 fvdl Exp $	*/
+/*	$NetBSD: linux_sockio.h,v 1.4 1996/02/27 08:18:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,6 +34,12 @@
 #ifndef _LINUX_SOCKIO_H
 #define _LINUX_SOCKIO_H
 
+#define	LINUX_SIOCGIFCONF	0x8912
+#define	LINUX_SIOCGIFFLAGS	0x8913
+#define	LINUX_SIOCGIFADDR	0x8915
+#define	LINUX_SIOCGIFDSTADDR	0x8917
+#define	LINUX_SIOCGIFBRDADDR	0x8919
+#define	LINUX_SIOCGIFNETMASK	0x891b
 #define LINUX_SIOCADDMULTI	0x8931
 #define LINUX_SIOCDELMULTI	0x8932
 
