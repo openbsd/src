@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.52 2004/07/09 16:32:54 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.53 2004/09/23 21:10:21 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.52 2004/07/09 16:32:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.53 2004/09/23 21:10:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,7 @@ static struct Info {
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
 	long	nchcount;
-	int	*intrcnt;
+	u_quad_t *intrcnt;
 } s, s1, s2, z;
 
 #include "dkstats.h"
@@ -92,6 +92,7 @@ static float cputime(int);
 static void dinfo(int, int);
 static void getinfo(struct Info *, enum state);
 static void putint(int, int, int, int);
+static void putuint64(u_int64_t, int, int, int);
 static void putfloat(double, int, int, int, int, int);
 static int ucount(void);
 
@@ -308,7 +309,8 @@ void
 showkre(void)
 {
 	float f1, f2;
-	int psiz, inttotal;
+	int psiz;
+	u_int64_t inttotal, intcnt;
 	int i, l, c;
 	static int failcnt = 0, first_run = 0;
 
@@ -351,12 +353,15 @@ showkre(void)
 			mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s",
 			    intrname[i]);
 		}
-		X(intrcnt);
-		l = (int)((float)s.intrcnt[i]/etime + 0.5);
-		inttotal += l;
-		putint(l, intrloc[i], INTSCOL, 8);
+		t = intcnt = s.intrcnt[i];
+		s.intrcnt[i] -= s1.intrcnt[i];
+		if (state == TIME)
+			s1.intrcnt[i] = intcnt;
+		intcnt = (u_int64_t)((float)s.intrcnt[i]/etime + 0.5);
+		inttotal += intcnt;
+		putuint64(intcnt, intrloc[i], INTSCOL, 8);
 	}
-	putint(inttotal, INTSROW + 1, INTSCOL, 8);
+	putuint64(inttotal, INTSROW + 1, INTSCOL, 8);
 	Z(ncs_goodhits); Z(ncs_badhits); Z(ncs_miss);
 	Z(ncs_long); Z(ncs_pass2); Z(ncs_2passes);
 	s.nchcount = nchtotal.ncs_goodhits + nchtotal.ncs_badhits +
@@ -557,6 +562,26 @@ putint(int n, int l, int c, int w)
 }
 
 static void
+putuint64(u_int64_t n, int l, int c, int w)
+{
+	char b[128];
+
+	move(l, c);
+	if (n == 0) {
+		while (w-- > 0)
+			addch(' ');
+		return;
+	}
+	snprintf(b, sizeof b, "%*llu", w, n);
+	if (strlen(b) > w) {
+		while (w-- > 0)
+			addch('*');
+		return;
+	}
+	addstr(b);
+}
+
+static void
 putfloat(double f, int l, int c, int w, int d, int nz)
 {
 	char b[128];
@@ -594,8 +619,9 @@ getinfo(struct Info *s, enum state st)
 		mib[2] = KERN_INTRCNT_CNT;
 		mib[3] = i;
 		size = sizeof(s->intrcnt[i]);
-		if (sysctl(mib, 4, &s->intrcnt[i], &size, NULL, 0) < 0)
+		if (sysctl(mib, 4, &s->intrcnt[i], &size, NULL, 0) < 0) {
 			s->intrcnt[i] = 0;
+		}
 	}
 
 	size = sizeof(s->time);
@@ -627,7 +653,7 @@ static void
 allocinfo(struct Info *s)
 {
 
-	s->intrcnt = (int *) malloc(nintr * sizeof(int));
+	s->intrcnt = (u_quad_t *) malloc(nintr * sizeof(u_quad_t));
 	if (s->intrcnt == NULL)
 		errx(2, "out of memory");
 }
@@ -635,11 +661,11 @@ allocinfo(struct Info *s)
 static void
 copyinfo(struct Info *from, struct Info *to)
 {
-	int *intrcnt;
+	u_quad_t *intrcnt;
 
 	intrcnt = to->intrcnt;
 	*to = *from;
-	bcopy(from->intrcnt, to->intrcnt = intrcnt, nintr * sizeof (int));
+	bcopy(from->intrcnt, to->intrcnt = intrcnt, nintr * sizeof (u_quad_t));
 }
 
 static void
