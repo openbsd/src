@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.10 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.11 2002/06/11 17:05:13 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.10 2002/02/19 19:39:40 millert Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.11 2002/06/11 17:05:13 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -295,6 +295,7 @@ ike_pl_transform_print (u_char *buf, int len, u_char doi)
 {
 	const char *ah[] = IPSEC_AH_INITIALIZER;
 	const char *esp[] = IPSEC_ESP_INITIALIZER;
+	const char *ipcomp[] = IPCOMP_INITIALIZER;
 	u_char *attr = buf + 4;
 
 	printf("\n\t%stransform: %u ID: ", ike_tab_offset(), buf[0]);
@@ -318,6 +319,12 @@ ike_pl_transform_print (u_char *buf, int len, u_char doi)
 		case PROTO_IPSEC_ESP:
 			if (buf[1] < (sizeof esp / sizeof esp[0]))
 				printf("%s", esp[buf[1]]);
+			else
+				printf("%d(unknown)", buf[1]);
+			break;
+		case PROTO_IPCOMP:
+			if (buf[1] < (sizeof ipcomp / sizeof ipcomp[0]))
+				printf("%s", ipcomp[buf[1]]);
 			else
 				printf("%d(unknown)", buf[1]);
 			break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.4 2001/10/26 14:14:49 ho Exp $ */
+/* $OpenBSD: ike.h,v 1.5 2002/06/11 17:05:13 ho Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -312,7 +312,7 @@
 	  "CAST", "BLOWFISH", "3IDEA", "DES_IV32", "RC4",	\
 	  "NULL", "AES",					\
 	}
-#define IPSEC_ATTR_IPCOMP_INITIALIZER				\
+#define IPCOMP_INITIALIZER					\
 	{ "NONE", "OUI", "DEFLATE", "LZS", "V42BIS",		\
 	}
 
