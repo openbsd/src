@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ncpaddr.c,v 1.4 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: ncpaddr.c,v 1.5 2002/05/16 14:46:05 brian Exp $
  */
 
 #include <sys/types.h>
@@ -53,11 +53,8 @@
 #include "iplist.h"
 #include "throughput.h"
 #include "mbuf.h"
-#include "ip.h"
 #include "ipcp.h"
-#include "filter.h"
 #include "descriptor.h"
-#include "route.h"
 #include "layer.h"
 #include "lqr.h"
 #include "hdlc.h"
@@ -65,12 +62,8 @@
 #include "ccp.h"
 #include "link.h"
 #include "mp.h"
-#ifndef NORADIUS
-#include "radius.h"
-#endif
 #include "ipv6cp.h"
 #include "ncp.h"
-#include "bundle.h"
 
 
 #define ncprange_ip4addr	u.ip4.ipaddr
