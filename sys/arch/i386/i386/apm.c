@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.36 2000/04/17 18:14:22 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.37 2000/04/21 16:29:58 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
+#include <sys/lock.h>
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -73,6 +75,9 @@
 #define	DPRINTF(x)	/**/
 #endif
 
+#define	APM_LOCK(sc)	lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL, curproc)
+#define	APM_UNLOCK(sc)	lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL, curproc)
+
 int apmprobe __P((struct device *, void *, void *));
 void apmattach __P((struct device *, struct device *, void *));
 
@@ -92,6 +97,8 @@ struct apm_softc {
 	int	event_count;
 	int	event_ptr;
 	struct	apm_event_info event_list[APM_NEVENTS];
+	struct proc *sc_thread;
+	struct lock sc_lock;
 };
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002
@@ -99,7 +106,7 @@ struct apm_softc {
 
 /*
  * Flags to control kernel display
- * 	SCFLAG_NOPRINT:		do not output APM power messages due to
+ *	SCFLAG_NOPRINT:		do not output APM power messages due to
  *				a power change event.
  *
  *	SCFLAG_PCTPRINT:	do not output APM power messages due to
@@ -153,8 +160,10 @@ int apmcall __P((u_int, u_int, struct apmregs *));
 void apm_power_print __P((struct apm_softc *, struct apmregs *));
 void apm_handle_event __P((struct apm_softc *, struct apmregs *));
 void apm_set_ver __P((struct apm_softc *));
-void apm_periodic_check __P((void *));
-/* void apm_disconnect __P((void *)); */
+void apm_periodic_check __P((struct apm_softc *));
+void apm_thread_create __P((void *v));
+void apm_thread __P((void *));
+void apm_disconnect __P((struct apm_softc *));
 void apm_perror __P((const char *, struct apmregs *));
 void apm_powmgt_enable __P((int onoff));
 void apm_powmgt_engage __P((int onoff, u_int devid));
@@ -494,10 +503,9 @@ apm_handle_event(sc, regs)
 }
 
 void
-apm_periodic_check(arg)
-	void *arg;
+apm_periodic_check(sc)
+	struct apm_softc *sc;
 {
-	register struct apm_softc *sc = arg;
 	struct apmregs regs;
 
 	if (apm_op_inprog)
@@ -522,8 +530,6 @@ apm_periodic_check(arg)
 
 	if (apm_resumes)
 		apm_resumes--;
-
-	timeout(apm_periodic_check, sc, hz);
 }
 
 void
@@ -639,7 +645,7 @@ apm_set_ver(self)
 
 	bzero(&regs, sizeof(regs));
 	regs.cx = APM_VERSION;
-	
+
 	if (APM_MAJOR(apm_flags) == 1 && APM_MINOR(apm_flags) == 2 &&
 	    (rv = apmcall(APM_DRIVER_VERSION, APM_DEV_APM_BIOS, &regs)) == 0) {
 		apm_majver = APM_CONN_MAJOR(&regs);
@@ -653,7 +659,7 @@ apm_set_ver(self)
 		bzero(&regs, sizeof(regs));
 		regs.cx = 0x0101;
 
-	    	if (apmcall(APM_DRIVER_VERSION, APM_DEV_APM_BIOS, &regs) == 0) {
+		if (apmcall(APM_DRIVER_VERSION, APM_DEV_APM_BIOS, &regs) == 0) {
 			apm_majver = 1;
 			apm_minver = 1;
 		} else {
@@ -687,10 +693,9 @@ apm_set_ver(self)
 	printf("\n");
 }
 
-#ifdef notused
 void
-apm_disconnect(xxx)
-	void *xxx;
+apm_disconnect(sc)
+	struct apm_softc *sc;
 {
 	struct apmregs regs;
 	bzero(&regs, sizeof(regs));
@@ -703,7 +708,6 @@ apm_disconnect(xxx)
 	else
 		printf("APM disconnected\n");
 }
-#endif
 
 int
 apmprobe(parent, match, aux)
@@ -801,7 +805,7 @@ apmattach(parent, self, aux)
 
 			bus_space_map(ba->bios_memt, cbase, clen + 1, 1, &ch16);
 			bus_space_map(ba->bios_memt, ap->apm_data_base,
-				      ap->apm_data_len + 1, 1, &dh);
+			    ap->apm_data_len + 1, 1, &dh);
 		}
 		ch32 = ch16;
 		if (ap->apm_code16_base == cbase)
@@ -839,11 +843,43 @@ apmattach(parent, self, aux)
 		} else
 			apm_perror("get power status", &regs);
 		apm_cpu_busy();
+
+		lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+
 		apm_periodic_check(sc);
+
+		kthread_create_deferred(apm_thread_create, sc);
 	} else {
 		dynamic_gdt[GAPM32CODE_SEL] = dynamic_gdt[GNULL_SEL];
 		dynamic_gdt[GAPM16CODE_SEL] = dynamic_gdt[GNULL_SEL];
 		dynamic_gdt[GAPMDATA_SEL] = dynamic_gdt[GNULL_SEL];
+	}
+}
+
+void
+apm_thread_create(v)
+	void *v;
+{
+	struct apm_softc *sc = v;
+	if (kthread_create(apm_thread, sc, &sc->sc_thread,
+	    "%s", sc->sc_dev.dv_xname)) {
+		apm_disconnect(sc);
+		printf("%s: failed to create kernel thread, disabled",
+		    sc->sc_dev.dv_xname);
+	}
+}
+
+void
+apm_thread(v)
+	void *v;
+{
+	struct apm_softc *sc = v;
+
+	for (;;) {
+		APM_LOCK(sc);
+		apm_periodic_check(sc);
+		APM_UNLOCK(sc);
+		tsleep(&lbolt, PWAIT, "apmev", 0);
 	}
 }
 
@@ -854,6 +890,7 @@ apmopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct apm_softc *sc;
+	int error = 0;
 
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
@@ -863,24 +900,32 @@ apmopen(dev, flag, mode, p)
 	DPRINTF(("apmopen: dev %d pid %d flag %x mode %x\n",
 	    APMDEV(dev), p->p_pid, flag, mode));
 
+	APM_LOCK(sc);
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
-		if (!(flag & FWRITE))
-			return EINVAL;
-		if (sc->sc_flags & SCFLAG_OWRITE)
-			return EBUSY;
+		if (!(flag & FWRITE)) {
+			error = EINVAL;
+			break;
+		}
+		if (sc->sc_flags & SCFLAG_OWRITE) {
+			error = EBUSY;
+			break;
+		}
 		sc->sc_flags |= SCFLAG_OWRITE;
 		break;
 	case APMDEV_NORMAL:
-		if (!(flag & FREAD) || (flag & FWRITE))
-			return EINVAL;
+		if (!(flag & FREAD) || (flag & FWRITE)) {
+			error = EINVAL;
+			break;
+		}
 		sc->sc_flags |= SCFLAG_OREAD;
 		break;
 	default:
-		return ENXIO;
+		error = ENXIO;
 		break;
 	}
-	return 0;
+	APM_UNLOCK(sc);
+	return error;
 }
 
 int
@@ -890,16 +935,15 @@ apmclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct apm_softc *sc;
-	int s;
 
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
-	
+
 	DPRINTF(("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
 
-	s = splhigh();
+	APM_LOCK(sc);
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		sc->sc_flags &= ~SCFLAG_OWRITE;
@@ -912,7 +956,7 @@ apmclose(dev, flag, mode, p)
 		sc->event_count = 0;
 		sc->event_ptr = 0;
 	}
-	splx(s);
+	APM_UNLOCK(sc);
 	return 0;
 }
 
@@ -925,87 +969,83 @@ apmioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct apm_softc *sc;
-	struct apm_power_info *powerp;
-	struct apm_event_info *evp;
 	struct apmregs regs;
-	register int i;
-	struct apm_ctl *actl;
-	int s;
+	int i, error = 0;
 
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
-	
+
+	APM_LOCK(sc);
 	switch (cmd) {
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
-		apm_userstandbys++;
-		return 0;
+			error = EBADF;
+		else
+			apm_userstandbys++;
+		break;
 	case APM_IOC_SUSPEND:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
-		apm_suspends++;
-		return 0;
+			error = EBADF;
+		else
+			apm_suspends++;
+		break;
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
-		{
+			error = EBADF;
+		else {
 			int flag = *(int*)data;
 			DPRINTF(( "APM_IOC_PRN_CTL: %d\n", flag ));
-			s = splhigh();
 			switch (flag) {
 			case APM_PRINT_ON:	/* enable printing */
 				sc->sc_flags &= ~SCFLAG_PRINT;
-				splx(s);
-				return 0;
+				break;
 			case APM_PRINT_OFF: /* disable printing */
 				sc->sc_flags &= ~SCFLAG_PRINT;
 				sc->sc_flags |= SCFLAG_NOPRINT;
-				splx(s);
-				return 0;
+				break;
 			case APM_PRINT_PCT: /* disable some printing */
 				sc->sc_flags &= ~SCFLAG_PRINT;
 				sc->sc_flags |= SCFLAG_PCTPRINT;
-				splx(s);
-				return 0;
+				break;
 			default:
+				error = EINVAL;
 				break;
 			}
 		}
-		return EINVAL;
+		break;
 	case APM_IOC_DEV_CTL:
-		actl = (struct apm_ctl *)data;
 		if ((flag & FWRITE) == 0)
-			return EBADF;
-		{
-			struct apmregs regs;
-			
+			error = EBADF;
+		else {
+			struct apm_ctl *actl = (struct apm_ctl *)data;
+
 			bzero(&regs, sizeof(regs));
 			if (!apmcall(APM_GET_POWER_STATE, actl->dev, &regs))
 				printf("%s: dev %04x state %04x\n",
-				       sc->sc_dev.dv_xname, dev, regs.cx);
+				    sc->sc_dev.dv_xname, dev, regs.cx);
+
+			error = apm_set_powstate(actl->dev, actl->mode);
 		}
-		return apm_set_powstate(actl->dev, actl->mode);
+		break;
 	case APM_IOC_NEXTEVENT:
-		s = splhigh();
 		if (sc->event_count) {
-			evp = (struct apm_event_info *)data;
+			struct apm_event_info *evp =
+			    (struct apm_event_info *)data;
 			i = sc->event_ptr + APM_NEVENTS - sc->event_count;
 			i %= APM_NEVENTS;
 			*evp = sc->event_list[i];
 			sc->event_count--;
-			splx(s);
-			return 0;
-		} else {
-			splx(s);
-			return EAGAIN;
-		}
+		} else
+			error = EAGAIN;
+		break;
 	case APM_IOC_GETPOWER:
-		powerp = (struct apm_power_info *)data;
 		if (apm_get_powstat(&regs) == 0) {
+			struct apm_power_info *powerp =
+			    (struct apm_power_info *)data;
+
 			bzero(powerp, sizeof(*powerp));
 			if (BATT_LIFE(&regs) != APM_BATT_LIFE_UNKNOWN)
 				powerp->battery_life = BATT_LIFE(&regs);
@@ -1034,15 +1074,16 @@ apmioctl(dev, cmd, data, flag, p)
 			}
 		} else {
 			apm_perror("ioctl get power status", &regs);
-			return (EIO);
+			error = EIO;
 		}
 		break;
-		
+
 	default:
-		return (ENOTTY);
+		error = ENOTTY;
 	}
 
-	return 0;
+	APM_UNLOCK(sc);
+	return error;
 }
 
 int
@@ -1052,25 +1093,25 @@ apmselect(dev, rw, p)
 	struct proc *p;
 {
 	struct apm_softc *sc;
-	int s, ret = 0;
+	int ret = 0;
 
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
-	
+
+	APM_LOCK(sc);
 	switch (rw) {
 	case FREAD:
-		s = splhigh();
 		if (sc->event_count)
 			ret++;
 		else
 			selrecord(p, &sc->sc_rsel);
-		splx(s);
 		break;
 	case FWRITE:
 	case 0:
 		break;
 	}
+	APM_UNLOCK(sc);
 	return ret;
 }
