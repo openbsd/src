@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.268 2003/08/24 12:47:07 cedric Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.269 2003/08/26 18:34:25 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1717,10 +1717,11 @@ Example:
 pass in proto tcp from any to any port www flags S/SA synproxy state
 .Ed
 .Sh STATEFUL TRACKING OPTIONS
-Both
-.Ar keep state
-and
+All three of
+.Ar keep state ,
 .Ar modulate state
+and
+.Ar synproxy state
 support the following options:
 .Pp
 .Bl -tag -width xxxx -compact
@@ -2294,7 +2295,8 @@ pf-rule        = action [ ( "in" | "out" ) ]
 
 filteropt-list = filteropt-list filteropt | filteropt
 filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
-                 ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] |
+                 ( "keep" | "modulate" | "synproxy" ) "state"
+                 [ "(" state-opts ")" ] |
                  "fragment" | "no-df" | "min-ttl" number |
                  "max-mss" number | "random-id" | "reassemble tcp" |
                  fragmentation | "allow-opts" |
