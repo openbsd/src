@@ -484,11 +484,11 @@ fakes a three-button mouse using the Mouse Systems protocol. The first
 .Nm pcvt
 device node not used by a virtual screen is the mouse device. I.\& e.,
 for the default value of 8 virtual screens,
-.Pa /dev/ttyv0
+.Pa /dev/ttyC0
 through
-.Pa /dev/ttyv7
+.Pa /dev/ttyC7
 would refer to the virtual screens, and
-.Pa /dev/ttyv8
+.Pa /dev/ttyC8
 were the mouse emulator device. The mouse emulation is turned on by
 pressing the
 .Aq Em NumLock
@@ -814,7 +814,7 @@ for their documentation.
 Definitions for
 .Xr ioctl 2
 function calls
-.It Pa /dev/ttyv?
+.It Pa /dev/ttyC?
 .It Pa /dev/console
 Device nodes to access the
 .Nm pcvt

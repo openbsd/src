@@ -68,11 +68,11 @@ driver not being used as a virtual terminal device. E.\ g., if you
 have configured eight virtual terminals
 .Pq the default value ,
 named
-.Pa /dev/ttyv0
+.Pa /dev/ttyC0
 through
-.Pa /dev/ttyv7 ,
+.Pa /dev/ttyC7 ,
 the mouse emulator would allocate
-.Pa /dev/ttyv8 .
+.Pa /dev/ttyC8 .
 
 If
 .Nm
@@ -139,7 +139,7 @@ mouse emulator:
 .Fl r Ar f3
 .Fl a Ar 250
 .Fl s Ar \&no
-.Pa /dev/ttyv8
+.Pa /dev/ttyC8
 .Sh BUGS
 The key names used to map the button-emulating keys to scan codes
 .Pq and vica verse
