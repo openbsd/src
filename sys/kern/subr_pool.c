@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.33 2002/10/12 01:09:45 krw Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.34 2002/10/13 18:26:12 krw Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -790,7 +790,7 @@ pool_get(struct pool *pp, int flags)
 	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
 		pr_printlog(pp, pi, printf);
 		panic("pool_get(%s): free list modified: magic=%x; page %p;"
-		       " item addr %p\n",
+		       " item addr %p",
 			pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
 	}
 #endif

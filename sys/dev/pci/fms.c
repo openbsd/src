@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.12 2002/05/29 14:30:21 mickey Exp $ */
+/*	$OpenBSD: fms.c,v 1.13 2002/10/13 18:26:12 krw Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -860,7 +860,7 @@ fms_trigger_output(addr, start, end, blksize, intr, arg, param)
 	
 	if (!p)
 		panic("fms_trigger_output: request with bad start "
-		      "address (%p)\n", start);
+		      "address (%p)", start);
 
 	sc->sc_play_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_play_end = sc->sc_play_start + ((char *)end - (char *)start);
@@ -898,7 +898,7 @@ fms_trigger_input(addr, start, end, blksize, intr, arg, param)
 	
 	if (!p)
 		panic("fms_trigger_input: request with bad start "
-		      "address (%p)\n", start);
+		      "address (%p)", start);
 
 	sc->sc_rec_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_rec_end = sc->sc_rec_start + ((char *)end - (char *)start);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.65 2002/10/13 18:26:12 krw Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -3148,7 +3148,7 @@ pmap_transfer(dstpmap, srcpmap, daddr, len, saddr, move)
 			panic("pmap_transfer: dstvalid non-zero after drain");
 		if ((dstl.addr & (NBPD-1)) != 0)
 			panic("pmap_transfer: dstaddr not on PD boundary "
-			      "(0x%lx)\n", dstl.addr);
+			      "(0x%lx)", dstl.addr);
 #endif
 
 		if (dstptes == NULL && dstl.pte != NULL) {
