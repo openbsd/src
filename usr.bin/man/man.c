@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.17 2001/04/10 02:32:33 millert Exp $	*/
+/*	$OpenBSD: man.c,v 1.18 2001/08/18 21:59:37 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.17 2001/04/10 02:32:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.18 2001/08/18 21:59:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -569,7 +569,7 @@ build_page(fmt, pathp)
 	 * Get a temporary file and build a version of the file
 	 * to display.  Replace the old file name with the new one.
 	 */
-	(void)strcpy(tpath, _PATH_TMPFILE);
+	(void)strlcpy(tpath, _PATH_TMPFILE, sizeof(tpath));
 	if ((fd = mkstemp(tpath)) == -1) {
 		warn("%s", tpath);
 		(void)cleanup();
