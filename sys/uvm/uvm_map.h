@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.21 2002/02/18 10:02:20 art Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.22 2002/02/25 00:20:45 provos Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -139,6 +139,9 @@ union vm_map_object {
  * Also included is control information for virtual copy operations.
  */
 struct vm_map_entry {
+	RB_ENTRY(vm_map_entry)	rb_entry;	/* tree information */
+	vaddr_t			ownspace;	/* free space after */
+	vaddr_t			space;		/* space in subtree */
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
 	vaddr_t			start;		/* start address */
@@ -217,6 +220,7 @@ struct vm_map_entry {
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	lock_data_t		lock;		/* Lock for map data */
+	RB_HEAD(uvm_tree, vm_map_entry) rbhead;	/* Tree for entries */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */

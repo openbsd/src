@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.40 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.41 2002/02/25 00:20:45 provos Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -373,6 +373,7 @@ extern struct uvmexp uvmexp;
  */
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
 #include <uvm/uvm_param.h>
 #include <sys/lock.h>
 #include <uvm/uvm_page.h>
