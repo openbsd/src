@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.410 2003/08/22 21:50:34 david Exp $	*/
+/*	$OpenBSD: parse.y,v 1.411 2003/08/24 13:02:28 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1449,10 +1449,16 @@ pfrule		: action dir logquick interface route af proto fromto
 					    "matching address family found.");
 					YYERROR;
 				}
+				if (r.rpool.opts == PF_POOL_NONE && (
+				    $5.host->next != NULL ||
+				    $5.host->addr.type == PF_ADDR_TABLE))
+					r.rpool.opts = PF_POOL_ROUNDROBIN;
+				if (r.rpool.opts != PF_POOL_ROUNDROBIN)
+					if (disallow_table($5.host, "tables "
+					    "are only supported in round-robin "
+					    "routing pools"))
+						YYERROR;
 				if ($5.host->next != NULL) {
-					if (r.rpool.opts == PF_POOL_NONE)
-						r.rpool.opts =
-						    PF_POOL_ROUNDROBIN;
 					if (r.rpool.opts !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("r.rpool.opts must "
@@ -4360,9 +4366,17 @@ int
 invalid_redirect(struct node_host *nh, sa_family_t af)
 {
 	if (!af) {
-		yyerror("address family not given and translation "
-		    "address expands to multiple address families");
-		return (1);
+		struct node_host *n;
+
+		/* only tables are ok without an address family */
+		for(n = nh; n != NULL; n = n->next) {
+			if(n->addr.type != PF_ADDR_TABLE) {
+				yyerror("address family not given and "
+				    "translation address expands to multiple "
+				    "address families");
+				return (1);
+			}
+		}
 	}
 	if (nh == NULL) {
 		yyerror("no translation address with matching address family "
