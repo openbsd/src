@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.46 2004/06/20 18:47:45 otto Exp $	*/
+/*	$OpenBSD: diff.c,v 1.47 2004/12/07 11:53:29 espie Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.46 2004/06/20 18:47:45 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.47 2004/12/07 11:53:29 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ main(int argc, char **argv)
 		err(2, "%s", argv[1]);
 	if (gotstdin && (S_ISDIR(stb1.st_mode) || S_ISDIR(stb2.st_mode)))
 		errx(2, "can't compare - to a directory");
-	set_argstr(oargv + 1, argv);
+	set_argstr(oargv, argv);
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
 		if (format == D_IFDEF)
 			errx(2, "-D option not supported with directories");
