@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.52 2003/06/30 08:04:22 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.53 2003/06/30 10:30:23 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -197,8 +197,10 @@ ip6_input(m)
 	u_int32_t rtalert = ~0;
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
+#if NPF > 0
 	struct in6_addr odst;
-	int srcrt;
+#endif
+	int srcrt = 0;
 
 	/*
 	 * mbuf statistics by kazu
