@@ -1,44 +1,52 @@
-/*	$OpenBSD: toint.c,v 1.4 2003/09/02 23:52:17 david Exp $	*/
+/*	$OpenBSD: toint.c,v 1.5 2004/04/02 20:37:42 mickey Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public domain.	*/
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
 
-static void
+void
 sigfpe(int sig, siginfo_t *si, void *v)
 {
 	char buf[132];
 
 	if (si) {
-		snprintf(buf, sizeof(buf), "sigfpe: addr=%p, code=%d\n",
-		    si->si_addr, si->si_code);
+		snprintf(buf, sizeof(buf), "sigfpe: trap=%d code=%d addr=%p\n",
+		    si->si_trapno, si->si_code, si->si_addr);
 		write(1, buf, strlen(buf));
 	}
 	_exit(1);
 }
 
-static int
+int
 toint(double d)
 {
-	return (int)d;
+	return (int)(d + 1);
 }
 
 int
 main(int argc, char *argv[])
 {
 	struct sigaction sa;
+	int i;
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = sigfpe;
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGFPE, &sa, NULL);
 
-	if (toint(8.6) != 8)
+	if (toint(8.6) != 9)
 		exit(1);
+
+	i = toint(INT_MAX);
+	if (i != INT_MIN) {
+		printf("%d != %d\n", i, INT_MIN);
+		exit(1);
+	}
 
 	exit(0);
 }
