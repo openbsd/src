@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.18 2002/03/14 01:27:08 millert Exp $	*/
+/*	$OpenBSD: union_vnops.c,v 1.19 2002/06/08 18:43:34 art Exp $	*/
 /*	$NetBSD: union_vnops.c,v 1.30.4.1 1996/05/25 22:10:14 jtc Exp $	*/
 
 /*
@@ -1617,7 +1617,7 @@ start:
 			panic("union: locking against myself");
 #endif
 		un->un_flags |= UN_WANTED;
-		sleep((caddr_t)un, PINOD);
+		tsleep((caddr_t)un, PINOD, "unionlk", 0);
 		goto start;
 	}
 
