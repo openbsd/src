@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.20 2004/09/16 05:35:24 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.21 2005/03/02 16:45:30 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -473,7 +473,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
 		if (bu == bs) {
 			char *tmp;
 
-			tmp = realloc(buf, bs + 8192);
+			tmp = realloc(buf, bs + 8192 + 1);
 			if (tmp == NULL) {
 				free(buf);
 				buf = NULL;
@@ -496,7 +496,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
 	}
  parse:
 	start = 0;
-	for (i = 0; i < bu; i++) {
+	for (i = 0; i <= bu; i++) {
 		if (*blc == *bls) {
 			struct bl *tmp;
 
@@ -509,7 +509,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
 			}
 			bl = tmp;
 		}
-		if (buf[i] == '\n') {
+		if (i == bu || buf[i] == '\n') {
 			buf[i] = '\0';
 			if (parse_netblock(buf + start,
 			    bl + *blc, bl + *blc + 1, white))
