@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.36 2003/07/08 11:02:23 jmc Exp $
+.\" $OpenBSD: keynote.3,v 1.37 2004/06/24 22:02:41 hshoexer Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -855,6 +855,11 @@ parses the argument, treating it as a
 .Xr keynote 4
 (quoted) string.
 This is useful for parsing key files.
+On success, this function returns a pointer to the parsing result.
+The result is dynamically allocated and should be freed after use.
+On failure, 
+.Dv NULL
+is returned.
 .Sh FILES
 .Bl -tag -width libkeynote.a -compact
 .It Pa keynote.h
