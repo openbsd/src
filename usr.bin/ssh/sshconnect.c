@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.54 2000/02/05 10:13:11 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.55 2000/02/15 13:08:01 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -150,8 +150,9 @@ ssh_create_socket(uid_t original_real_uid, int privileged, int family)
 		int p = IPPORT_RESERVED - 1;
 		sock = rresvport_af(&p, family);
 		if (sock < 0)
-			fatal("rresvport: af=%d %.100s", family, strerror(errno));
-		debug("Allocated local port %d.", p);
+			error("rresvport: af=%d %.100s", family, strerror(errno));
+		else
+			debug("Allocated local port %d.", p);
 	} else {
 		/*
 		 * Just create an ordinary socket on arbitrary port.  We use
