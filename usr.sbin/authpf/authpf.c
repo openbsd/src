@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.53 2003/02/19 00:03:22 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.54 2003/04/20 02:37:00 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 		do_death(0);
 
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
-	if (config != NULL && read_config(config))
+	if (config == NULL || read_config(config))
 		do_death(0);
 
 	if (remove_stale_rulesets())
