@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_ioctl.c,v 1.6 1997/12/04 07:21:27 deraadt Exp $	*/
+/*	$OpenBSD: sunos_ioctl.c,v 1.7 1997/12/18 22:13:27 deraadt Exp $	*/
 /*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
+#include <compat/sunos/sunos_util.h>
 
 /*
  * SunOS ioctl calls.
@@ -833,6 +834,77 @@ sunos_sys_ioctl(p, v, retval)
 #define SUN_F_CNVT	12
 #define SUN_F_RSETLKW	13
 
+/* SunOS flock translation */
+struct sunos_flock {
+	short	l_type;
+	short	l_whence;
+	long	l_start;
+	long	l_len;
+	short	l_pid;
+	short	l_xxx;
+};
+
+static void bsd_to_sunos_flock __P((struct flock *, struct sunos_flock *));
+static void sunos_to_bsd_flock __P((struct sunos_flock *, struct flock *));
+
+#define SUNOS_F_RDLCK	1
+#define	SUNOS_F_WRLCK	2
+#define SUNOS_F_UNLCK	3
+
+static void
+bsd_to_sunos_flock(iflp, oflp)
+	struct flock		*iflp;
+	struct sunos_flock	*oflp;
+{
+	switch (iflp->l_type) {
+	case F_RDLCK:
+		oflp->l_type = SUNOS_F_RDLCK;
+		break;
+	case F_WRLCK:
+		oflp->l_type = SUNOS_F_WRLCK;
+		break;
+	case F_UNLCK:
+		oflp->l_type = SUNOS_F_UNLCK;
+		break;
+	default:
+		oflp->l_type = -1;
+		break;
+	}
+
+	oflp->l_whence = (short) iflp->l_whence;
+	oflp->l_start = (long) iflp->l_start;
+	oflp->l_len = (long) iflp->l_len;
+	oflp->l_pid = (short) iflp->l_pid;
+	oflp->l_xxx = 0;
+}
+
+
+static void
+sunos_to_bsd_flock(iflp, oflp)
+	struct sunos_flock	*iflp;
+	struct flock		*oflp;
+{
+	switch (iflp->l_type) {
+	case SUNOS_F_RDLCK:
+		oflp->l_type = F_RDLCK;
+		break;
+	case SUNOS_F_WRLCK:
+		oflp->l_type = F_WRLCK;
+		break;
+	case SUNOS_F_UNLCK:
+		oflp->l_type = F_UNLCK;
+		break;
+	default:
+		oflp->l_type = -1;
+		break;
+	}
+
+	oflp->l_whence = iflp->l_whence;
+	oflp->l_start = (off_t) iflp->l_start;
+	oflp->l_len = (off_t) iflp->l_len;
+	oflp->l_pid = (pid_t) iflp->l_pid;
+
+}
 static struct {
 	long	sun_flg;
 	long	bsd_flg;
@@ -878,6 +950,45 @@ sunos_sys_fcntl(p, v, retval)
 		SCARG(uap, arg) = (void *)flg;
 		break;
 
+	case F_GETLK:
+	case F_SETLK:
+	case F_SETLKW:
+		{
+			int error;
+			struct sunos_flock	 ifl;
+			struct flock		*flp, fl;
+			caddr_t sg = stackgap_init(p->p_emul);
+			struct sys_fcntl_args		fa;
+
+			SCARG(&fa, fd) = SCARG(uap, fd);
+			SCARG(&fa, cmd) = SCARG(uap, cmd);
+
+			flp = stackgap_alloc(&sg, sizeof(struct flock));
+			SCARG(&fa, arg) = (void *) flp;
+
+			error = copyin(SCARG(uap, arg), &ifl, sizeof ifl);
+			if (error)
+				return error;
+
+			sunos_to_bsd_flock(&ifl, &fl);
+
+			error = copyout(&fl, flp, sizeof fl);
+			if (error)
+				return error;
+
+			error = sys_fcntl(p, &fa, retval);
+			if (error || SCARG(&fa, cmd) != F_GETLK)
+				return error;
+
+			error = copyin(flp, &fl, sizeof fl);
+			if (error)
+				return error;
+
+			bsd_to_sunos_flock(&fl, &ifl);
+
+			return copyout(&ifl, SCARG(uap, arg), sizeof ifl);
+		}
+		break;
 	case SUN_F_RGETLK:
 	case SUN_F_RSETLK:
 	case SUN_F_CNVT:
