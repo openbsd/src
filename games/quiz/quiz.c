@@ -301,14 +301,21 @@ char *
 next_cat(s)
 	register char *	s;
 {
+	int esc = 0;
+
 	for (;;)
 		switch (*s++) {
 		case '\0':
 			return (NULL);
 		case '\\':
+			esc = 1;
 			break;
 		case ':':
-			return (s);
+			if (!esc)
+				return (s);
+		default:
+			esc = 0;
+			break;
 		}
 	/* NOTREACHED */
 }
