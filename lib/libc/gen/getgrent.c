@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.12 2000/01/08 08:07:24 d Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.13 2000/09/24 14:35:10 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -184,7 +184,7 @@ setgroupent(stayopen)
 		_gr_stayopen = stayopen;
 		retval = 1;
 	}
-	_THREAD_PRIVATE_MUTEX_LOCK(gr);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
 	return (retval);
 }
 
