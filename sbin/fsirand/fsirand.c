@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.9 1997/02/28 00:46:33 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.10 1997/08/11 02:52:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.9 1997/02/28 00:46:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.10 1997/08/11 02:52:31 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
@@ -139,7 +139,7 @@ fsirand(device)
 	/* Read in master superblock */
 	(void)memset(&sbuf, 0, sizeof(sbuf));
 	sblock = (struct fs *)&sbuf;
-	if (lseek(devfd, SBOFF, SEEK_SET) == -1) {
+	if (lseek(devfd, (off_t)SBOFF, SEEK_SET) == -1) {
 		warn("Can't seek to superblock (%qd) on %s", SBOFF, devpath);
 		return (1);
 	}
@@ -172,7 +172,7 @@ fsirand(device)
 	sblock = (struct fs *)&sbuftmp;
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+		if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
 			warn("Can't seek to %qd", (off_t)dblk * bsize);
 			return (1);
 		} else if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
@@ -216,7 +216,7 @@ fsirand(device)
 		sblock->fs_id[0] = (u_int32_t)time(NULL);
 		sblock->fs_id[1] = arc4random();
 
-		if (lseek(devfd, SBOFF, SEEK_SET) == -1) {
+		if (lseek(devfd, (off_t)SBOFF, SEEK_SET) == -1) {
 			warn("Can't seek to superblock (%qd) on %s", SBOFF,
 			    devpath);
 			return (1);
@@ -233,7 +233,7 @@ fsirand(device)
 		/* Update superblock if appropriate */
 		if ((sblock->fs_inodefmt >= FS_44INODEFMT) && !printonly) {
 			dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-			if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+			if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
 				warn("Can't seek to %qd", (off_t)dblk * bsize);
 				return (1);
 			} else if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
@@ -246,7 +246,7 @@ fsirand(device)
 
 		/* Read in inodes, then print or randomize generation nums */
 		dblk = fsbtodb(sblock, ino_to_fsba(sblock, inumber));
-		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+		if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
 			warn("Can't seek to %qd", (off_t)dblk * bsize);
 			return (1);
 		} else if ((n = read(devfd, inodebuf, ibufsize)) != ibufsize) {
@@ -267,7 +267,7 @@ fsirand(device)
 
 		/* Write out modified inodes */
 		if (!printonly) {
-			if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+			if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
 				warn("Can't seek to %qd",
 				    (off_t)dblk * bsize);
 				return (1);
