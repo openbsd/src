@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.77 2004/05/25 18:07:20 mickey Exp $ */
+/*	$OpenBSD: loader.c,v 1.78 2004/05/25 20:51:03 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -84,9 +84,15 @@ _dl_debug_state(void)
 void
 _dl_run_dtors(elf_object_t *object)
 {
-	DL_DEB(("doing dtors: [%s]\n", object->load_name));
-	if (object->dyn.fini)
+	if (object->dyn.fini) {
+		DL_DEB(("doing dtors @%p: [%s]\n",
+		    object->dyn.fini, object->load_name));
+#ifdef MD_CALL
+		MD_CALL(object, object->dyn.fini, NULL);
+#else
 		(*object->dyn.fini)();
+#endif
+	}
 	if (object->next)
 		_dl_run_dtors(object->next);
 }
@@ -402,17 +408,22 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Do not schedule destructors if run from ldd.
 	 */
 	{
+		const elf_object_t *sobj;
 		const Elf_Sym *sym;
 		Elf_Addr ooff;
 
 		sym = NULL;
-		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, NULL,
+		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, &sobj,
 		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, dyn_obj);
 		if (sym == NULL)
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
 		else
+#ifdef MD_ATEXIT
+			MD_ATEXIT(sobj, sym, (Elf_Addr)&_dl_dtors);
+#else
 			(*(void (*)(Elf_Addr))(sym->st_value + ooff))
 			    ((Elf_Addr)_dl_dtors);
+#endif
 	}
 
 	DL_DEB(("entry point: 0x%lx\n", dl_data[AUX_entry]));
@@ -667,9 +678,15 @@ _dl_call_init(elf_object_t *object)
 	if (object->status & STAT_INIT_DONE)
 		return;
 
-	DL_DEB(("doing ctors: [%s]\n", object->load_name));
-	if (object->dyn.init)
+	if (object->dyn.init) {
+		DL_DEB(("doing ctors @%p: [%s]\n",
+		    object->dyn.init, object->load_name));
+#ifdef MD_CALL
+		MD_CALL(object, object->dyn.init, NULL);
+#else
 		(*object->dyn.init)();
+#endif
+	}
 
 	/* What about loops? */
 	object->status |= STAT_INIT_DONE;
