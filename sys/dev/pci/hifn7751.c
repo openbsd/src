@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.96 2001/08/22 16:11:31 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.97 2001/08/22 16:34:47 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1535,7 +1535,7 @@ hifn_newsession(sidp, cri)
 		return (EINVAL);
 
 	for (i = 0; i < sc->sc_maxses; i++)
-		if (sc->sc_sessions[i].hs_flags == 0)
+		if (sc->sc_sessions[i].hs_state == HS_STATE_FREE)
 			break;
 	if (i == sc->sc_maxses)
 		return (ENOMEM);
@@ -1566,7 +1566,7 @@ hifn_newsession(sidp, cri)
 		return (EINVAL);
 
 	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
-	sc->sc_sessions[i].hs_flags = 1;
+	sc->sc_sessions[i].hs_state = HS_STATE_USED;
 
 	return (0);
 }
@@ -1701,7 +1701,8 @@ hifn_process(crp)
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_RC4;
 			if ((enccrd->crd_flags & CRD_F_ENCRYPT)
 			    != sc->sc_sessions[session].hs_prev_op)
-				sc->sc_sessions[session].hs_flags=1;
+				sc->sc_sessions[session].hs_state =
+				    HS_STATE_USED;
 			break;
 		case CRYPTO_DES_CBC:
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES |
@@ -1755,7 +1756,7 @@ hifn_process(crp)
 		cmd->ck = enccrd->crd_key;
 		cmd->cklen = enccrd->crd_klen >> 3;
 
-		if (sc->sc_sessions[session].hs_flags == 1)
+		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
 			cmd->cry_masks |= HIFN_CRYPT_CMD_NEW_KEY;
 	}
 
@@ -1771,7 +1772,7 @@ hifn_process(crp)
 		else
 			cmd->mac_masks |= HIFN_MAC_CMD_ALG_SHA1;
 
-		if (sc->sc_sessions[session].hs_flags == 1) {
+		if (sc->sc_sessions[session].hs_state == HS_STATE_USED) {
 			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
 			bcopy(maccrd->crd_key, cmd->mac, maccrd->crd_klen >> 3);
 			bzero(cmd->mac + (maccrd->crd_klen >> 3),
@@ -1787,8 +1788,8 @@ hifn_process(crp)
 	if (!err) {
 		sc->sc_sessions[session].hs_prev_op=enccrd->crd_flags
 		    & CRD_F_ENCRYPT;
-		if (sc->sc_sessions[session].hs_flags == 1)
-			sc->sc_sessions[session].hs_flags = 2;
+		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
+			sc->sc_sessions[session].hs_state = HS_STATE_KEY;
 		return 0;
 	}
 
@@ -1868,8 +1869,8 @@ hifn_abort(sc)
 
 	/* Force upload of key next time */
 	for (i = 0; i < sc->sc_maxses; i++)
-		if (sc->sc_sessions[i].hs_flags == 2)
-			sc->sc_sessions[i].hs_flags = 1;
+		if (sc->sc_sessions[i].hs_state == HS_STATE_KEY)
+			sc->sc_sessions[i].hs_state = HS_STATE_USED;
 	
 	hifn_reset_board(sc, 1);
 	hifn_init_dma(sc);
