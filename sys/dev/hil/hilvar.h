@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilvar.h,v 1.4 2003/02/18 02:40:51 miod Exp $	*/
+/*	$OpenBSD: hilvar.h,v 1.5 2003/02/26 20:22:04 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -70,10 +70,7 @@
 
 #define NHILD		8		/* 7 actual + loop pseudo (dev 0) */
 
-struct hil_cb {
-	void (*cb_fn)(void *, u_int, u_int8_t *);
-	void *cb_arg;
-};
+struct hildev_softc;
 
 struct hil_softc {
 	struct device	sc_dev;
@@ -90,21 +87,20 @@ struct hil_softc {
 	u_int8_t	*sc_pollbp;	/* pointer into sc_pollbuf */
 	u_int8_t	*sc_cmdbp;	/* pointer into sc_cmdbuf */
 
+	int		sc_cpending;	/* reconfiguration in progress */
 	u_int		sc_maxdev;	/* number of devices on loop */
-	struct hil_cb	sc_cb[NHILD];	/* interrupt dispatcher */
+	struct hildev_softc *sc_devices[NHILD];	/* interrupt dispatcher */
 };
 
 #ifdef _KERNEL
 
 void	send_hil_cmd(struct hil_softc *, u_int, u_int8_t *, u_int, u_int8_t *);
-void	send_hildev_cmd(struct hil_softc *, u_int, u_int, u_int8_t *, u_int *);
+void	send_hildev_cmd(struct hildev_softc *, u_int, u_int8_t *, u_int *);
 void	hil_set_poll(struct hil_softc *, int);
-int	hil_poll_data(struct hil_softc *, u_int, u_int8_t *, u_int8_t *);
+int	hil_poll_data(struct hildev_softc *, u_int8_t *, u_int8_t *);
 
 void	hil_attach(struct hil_softc *, int);
 void	hil_attach_deferred(void *);
-void	hil_callback_register(struct hil_softc *, u_int,
-    void (*)(void *, u_int, u_int8_t *), void *);
 int	hil_intr(void *);
 int	hildevprint(void *, const char *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.6 2003/02/19 00:03:30 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.7 2003/02/26 20:22:03 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -88,7 +88,11 @@
 #include <dev/hil/hildevs.h>
 #include <dev/hil/hildevs_data.h>
 
-#define	splhil	spltty
+/*
+ * splhigh is extremely conservative but insures atomic operation,
+ * splvm (clock only interrupts) seems to be good enough in practice.
+ */
+#define	splhil	splvm
 
 struct cfdriver hil_cd = {
 	NULL, "hil", DV_DULL
@@ -98,6 +102,7 @@ void	hilconfig(struct hil_softc *);
 int	hilsubmatch(struct device *, void *, void *);
 void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
 int	hil_process_poll(struct hil_softc *, u_int8_t, u_int8_t);
+void	send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd);
 void	polloff(struct hil_softc *);
 void	pollon(struct hil_softc *);
 
@@ -120,7 +125,7 @@ hildatawait(struct hil_softc *sc)
 		/* nothing */
 	}
 }
-
+
 /*
  * Common HIL bus attachment
  */
@@ -179,8 +184,7 @@ void
 hil_attach_deferred(void *v)
 {
 	struct hil_softc *sc = v;
-	struct hil_attach_args ha;
-	int id, s, tries;
+	int tries;
 	u_int8_t db;
 
 	/*
@@ -230,68 +234,8 @@ hil_attach_deferred(void *v)
 	 * The reconfiguration interrupt has already called hilconfig().
 	 */
 	send_hil_cmd(sc, HIL_INTON, NULL, 0, NULL);
-
-	/*
-	 * Now attach hil devices as they are found.
-	 */
-
-	s = splhil();
-
-	/* Attach the remaining devices */
-	for (id = 1; id <= sc->sc_maxdev; id++) {
-		int len;
-		const struct hildevice *hd;
-		
-		send_hildev_cmd(sc, id, HIL_IDENTIFY, NULL, NULL);
-
-		len = sc->sc_cmdbp - sc->sc_cmdbuf;
-		if (len == 0) {
-#ifdef HILDEBUG
-			printf("%s: no device at code %d\n",
-			    sc->sc_dev.dv_xname, id);
-#endif
-			continue;
-		}
-
-		/* Attach found devices */
-		for (hd = hildevs; hd->minid >= 0; hd++)
-			if (sc->sc_cmdbuf[0] >= hd->minid &&
-			    sc->sc_cmdbuf[0] <= hd->maxid) {
-
-			ha.ha_console = sc->sc_console;
-			ha.ha_code = id;
-			ha.ha_type = hd->type;
-			ha.ha_descr = hd->descr;
-			ha.ha_infolen = len;
-			bcopy(sc->sc_cmdbuf, ha.ha_info, len);
-
-			config_found_sm(&sc->sc_dev, &ha, hildevprint,
-			    hilsubmatch);
-		}
-	}
-
-	sc->sc_cmdbp = sc->sc_cmdbuf;
-
-	splx(s);
 }
 
-void
-hil_callback_register(struct hil_softc *sc, u_int hilid,
-    void (*handler)(void *, u_int, u_int8_t *), void *arg)
-{
-#ifdef HILDEBUG
-	if (hilid < 0 || hilid >= NHILD)
-		panic("hil_callback_register invoked with hilid %d", hilid);
-#endif
-
-	if (sc->sc_cb[hilid].cb_fn != NULL)
-		panic("hil_callback_register: invoked twice for hilid %d",
-		   hilid);
-
-	sc->sc_cb[hilid].cb_fn = handler;
-	sc->sc_cb[hilid].cb_arg = arg;
-}
-
 /*
  * Asynchronous event processing
  */
@@ -316,6 +260,8 @@ hil_intr(void *v)
 void
 hil_process_int(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 {
+	struct hildev_softc *dev;
+
 	switch ((stat >> HIL_SSHIFT) & HIL_SMASK) {
 	case HIL_STATUS:
 		if (c & HIL_ERROR) {
@@ -326,9 +272,9 @@ hil_process_int(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 		}
 		if (c & HIL_COMMAND) {
 		  	if (c & HIL_POLLDATA) {	/* End of data */
-				if (sc->sc_cb[sc->sc_actdev].cb_fn != NULL)
-					sc->sc_cb[sc->sc_actdev].cb_fn
-					    (sc->sc_cb[sc->sc_actdev].cb_arg,
+				dev = sc->sc_devices[sc->sc_actdev];
+				if (dev != NULL && dev->sc_fn != NULL)
+					dev->sc_fn(dev,
 					    sc->sc_pollbp - sc->sc_pollbuf,
 					    sc->sc_pollbuf);
 			} else {		/* End of command */
@@ -371,16 +317,28 @@ hil_process_int(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 int
 hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 {
+	u_int8_t db;
+
 	switch ((stat >> HIL_SSHIFT) & HIL_SMASK) {
 	case HIL_STATUS:
 		if (c & HIL_ERROR) {
 		  	sc->sc_cmddone = 1;
 			if (c == HIL_RECONFIG) {
 				/*
-				 * XXX We should remember if a configuration
-				 * event occured and invoke hilconfig() upon
+				 * Remember that a configuration event
+				 * occured; it will be processed upon
 				 * leaving polled mode...
 				 */
+				sc->sc_cpending = 1;
+				/*
+				 * However, the keyboard will come back as
+				 * cooked, and we rely on it being in raw
+				 * mode. So, put it back in raw mode right
+				 * now.
+				 */
+				db = 0;
+				send_hil_cmd(sc, HIL_WRITEKBDSADR, &db,
+				    1, NULL);
 			}
 			break;
 		}
@@ -435,8 +393,9 @@ hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 void
 hilconfig(struct hil_softc *sc)
 {
+	struct hil_attach_args ha;
 	u_int8_t db;
-	int s;
+	int id, s;
 
 	s = splhil();
 
@@ -447,7 +406,7 @@ hilconfig(struct hil_softc *sc)
 	send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db);
 	sc->sc_maxdev = db & LPS_DEVMASK;
 #ifdef HILDEBUG
-	printf("%s: %d devices\n", sc->sc_dev.dv_xname, sc->sc_maxdev);
+	printf("%s: %d device(s)\n", sc->sc_dev.dv_xname, sc->sc_maxdev);
 #endif
 
 	/*
@@ -456,9 +415,76 @@ hilconfig(struct hil_softc *sc)
 	db = 0;
 	send_hil_cmd(sc, HIL_WRITEKBDSADR, &db, 1, NULL);
 
+	/*
+	 * Now attach hil devices as they are found.
+	 */
+	for (id = 1; id <= sc->sc_maxdev; id++) {
+		int len;
+		const struct hildevice *hd;
+		
+		send_device_cmd(sc, id, HIL_IDENTIFY);
+
+		len = sc->sc_cmdbp - sc->sc_cmdbuf;
+		if (len == 0) {
+#ifdef HILDEBUG
+			printf("%s: no device at code %d\n",
+			    sc->sc_dev.dv_xname, id);
+#endif
+			continue;
+		}
+
+		/*
+		 * If we already have a device configured at this position,
+		 * then either it is still the same, or there has been some
+		 * removal or insertion in the chain that made it change
+		 * its position on the loop.
+		 *
+		 * Rather than trying to play smart and find where the
+		 * device has gone, detach it, it will get reattached at
+		 * its new address...
+		 */
+		if (sc->sc_devices[id] != NULL) {
+			if (len == sc->sc_devices[id]->sc_infolen &&
+			    bcmp(sc->sc_cmdbuf, sc->sc_devices[id]->sc_info,
+			      len) == 0)
+				continue;
+
+			config_detach((struct device *)sc->sc_devices[id], 0);
+		}
+
+		/* Identify and attach device */
+		for (hd = hildevs; hd->minid >= 0; hd++)
+			if (sc->sc_cmdbuf[0] >= hd->minid &&
+			    sc->sc_cmdbuf[0] <= hd->maxid) {
+
+			ha.ha_console = sc->sc_console;
+			ha.ha_code = id;
+			ha.ha_type = hd->type;
+			ha.ha_descr = hd->descr;
+			ha.ha_infolen = len;
+			bcopy(sc->sc_cmdbuf, ha.ha_info, len);
+
+			sc->sc_devices[id] = (struct hildev_softc *)
+			    config_found_sm(&sc->sc_dev, &ha, hildevprint,
+			        hilsubmatch);
+		}
+	}
+
+	/*
+	 * Detach remaining devices, if they have been removed
+	 */
+	for (id = sc->sc_maxdev + 1; id < NHILD; id++) {
+		if (sc->sc_devices[id] != NULL)
+			config_detach((struct device *)sc->sc_devices[id],
+			    DETACH_FORCE);
+		sc->sc_devices[id] = NULL;
+	}
+
+	sc->sc_cmdbp = sc->sc_cmdbuf;
+
 	splx(s);
 }
-
+
 /*
  * Low level routines which actually talk to the 8042 chip.
  */
@@ -466,15 +492,15 @@ hilconfig(struct hil_softc *sc)
 /*
  * Send a command to the 8042 with zero or more bytes of data.
  * If rdata is non-null, wait for and return a byte of data.
- * We run at splvm() to make the transaction as atomic as
- * possible without blocking the clock (is this necessary?)
  */
 void
 send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
     u_int8_t *rdata)
 {
 	u_int8_t status;
-	int s = splvm();
+	int s;
+	
+	s = splhil();
 
 	hilwait(sc);
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, HILP_CMD, cmd);
@@ -501,16 +527,12 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
  * Hence we mask interrupts to prevent potential access from most
  * interrupt routines and turn off auto-polling to disable the
  * internally generated poll commands.
- *
- * splhigh is extremely conservative but insures atomic operation,
- * splvm (clock only interrupts) seems to be good enough in practice.
+ * Needs to be called at splhil().
  */
 void
-send_hildev_cmd(struct hil_softc *sc, u_int device, u_int cmd,
-    u_int8_t *outbuf, u_int *outlen)
+send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd)
 {
 	u_int8_t status, c;
-	int s = splvm();
 
 	polloff(sc);
 
@@ -544,6 +566,20 @@ send_hildev_cmd(struct hil_softc *sc, u_int device, u_int cmd,
 
 	sc->sc_cmddev = 0;
 
+	pollon(sc);
+}
+
+void
+send_hildev_cmd(struct hildev_softc *dev, u_int cmd,
+    u_int8_t *outbuf, u_int *outlen)
+{
+	struct hil_softc *sc = (struct hil_softc *)dev->sc_dev.dv_parent;
+	int s;
+       
+	s = splhil();
+
+	send_device_cmd(sc, dev->sc_code, cmd);
+
 	/*
 	 * Return the command response in the buffer if necessary
 	 */
@@ -551,8 +587,6 @@ send_hildev_cmd(struct hil_softc *sc, u_int device, u_int cmd,
 		*outlen = min(*outlen, sc->sc_cmdbp - sc->sc_cmdbuf);
 		bcopy(sc->sc_cmdbuf, outbuf, *outlen);
 	}
-
-	pollon(sc);
 
 	splx(s);
 }
@@ -630,13 +664,21 @@ pollon(struct hil_softc *sc)
 void
 hil_set_poll(struct hil_softc *sc, int on)
 {
-	/* Always work in auto polled mode... */
-	pollon(sc);
+	if (on) {
+		pollon(sc);
+	} else {
+		if (sc->sc_cpending) {
+			sc->sc_cpending = 0;
+			hilconfig(sc);
+		}
+		send_hil_cmd(sc, HIL_INTON, NULL, 0, NULL);
+	}
 }
 
 int
-hil_poll_data(struct hil_softc *sc, u_int code, u_int8_t *stat, u_int8_t *data)
+hil_poll_data(struct hildev_softc *dev, u_int8_t *stat, u_int8_t *data)
 {
+	struct hil_softc *sc = (struct hil_softc *)dev->sc_dev.dv_parent;
 	u_int8_t s, c;
 
 	s = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
@@ -647,7 +689,7 @@ hil_poll_data(struct hil_softc *sc, u_int code, u_int8_t *stat, u_int8_t *data)
 
 	if (hil_process_poll(sc, s, c)) {
 		/* Discard any data not for us */
-		if (sc->sc_actdev == code) {
+		if (sc->sc_actdev == dev->sc_code) {
 			*stat = s;
 			*data = c;
 			return 0;

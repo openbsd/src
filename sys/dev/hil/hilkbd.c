@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.7 2003/02/18 23:48:20 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.8 2003/02/26 20:22:04 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -47,9 +47,8 @@
 #include <dev/hil/hilkbdmap.h>
 
 struct hilkbd_softc {
-	struct device	sc_dev;
+	struct hildev_softc sc_hildev;
 
-	int		sc_code;
 	int		sc_numleds;
 	int		sc_ledstate;
 	int		sc_enabled;
@@ -60,13 +59,14 @@ struct hilkbd_softc {
 
 int	hilkbdprobe(struct device *, void *, void *);
 void	hilkbdattach(struct device *, struct device *, void *);
+int	hilkbddetach(struct device *, int);
 
 struct cfdriver hilkbd_cd = {
 	NULL, "hilkbd", DV_DULL
 };
 
 struct cfattach hilkbd_ca = {
-	sizeof(struct hilkbd_softc), hilkbdprobe, hilkbdattach
+	sizeof(struct hilkbd_softc), hilkbdprobe, hilkbdattach, hilkbddetach,
 };
 
 int	hilkbd_enable(void *, int);
@@ -99,9 +99,11 @@ struct wskbd_mapdata hilkbd_keymapdata = {
 };
 
 void	hilkbd_bell(struct hil_softc *, u_int, u_int, u_int);
-void	hilkbd_callback(void *, u_int, u_int8_t *);
+void	hilkbd_callback(struct hildev_softc *, u_int, u_int8_t *);
 void	hilkbd_decode(u_int8_t, u_int8_t, u_int *, int *);
 int	hilkbd_is_console(int);
+
+int	seen_hilkbd_console;
 
 int
 hilkbdprobe(struct device *parent, void *match, void *aux)
@@ -122,7 +124,11 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	struct wskbddev_attach_args a;
 	u_int8_t layoutcode;
 
-	sc->sc_code = ha->ha_code;
+	sc->hd_code = ha->ha_code;
+	sc->hd_type = ha->ha_type;
+	sc->hd_infolen = ha->ha_infolen;
+	bcopy(ha->ha_info, sc->hd_info, ha->ha_infolen);
+	sc->hd_fn = hilkbd_callback;
 
 	/*
 	 * Determine the keyboard language configuration, but don't
@@ -147,9 +153,6 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 			printf(", %d leds", sc->sc_numleds);
 	}
 
-	hil_callback_register((struct hil_softc *)parent, ha->ha_code,
-	    hilkbd_callback, sc);
-
 	printf("\n");
 
 	a.console = hilkbd_is_console(ha->ha_console);
@@ -165,6 +168,26 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+}
+
+int
+hilkbddetach(struct device *self, int flags)
+{
+	struct hilkbd_softc *sc = (void *)self;
+
+	/*
+	 * Handle console keyboard for the best. It should have been set
+	 * as the first device in the loop anyways.
+	 */
+	if (sc->sc_console) {
+		wskbd_cndetach();
+		seen_hilkbd_console = 0;
+	}
+
+	if (sc->sc_wskbddev != NULL)
+		return config_detach(sc->sc_wskbddev, flags);
+
+	return (0);
 }
 
 int
@@ -200,18 +223,15 @@ hilkbd_set_leds(void *v, int leds)
 
 	/* We do not handle more than 3 leds here */
 	if (changemask & WSKBD_LED_SCROLL)
-		send_hildev_cmd((struct hil_softc *)sc->sc_dev.dv_parent,
-		    sc->sc_code,
+		send_hildev_cmd((struct hildev_softc *)sc,
 		    (leds & WSKBD_LED_SCROLL) ? HIL_PROMPT1 : HIL_ACK1,
 		    NULL, NULL);
 	if (changemask & WSKBD_LED_NUM)
-		send_hildev_cmd((struct hil_softc *)sc->sc_dev.dv_parent,
-		    sc->sc_code,
+		send_hildev_cmd((struct hildev_softc *)sc,
 		    (leds & WSKBD_LED_NUM) ? HIL_PROMPT2 : HIL_ACK2,
 		    NULL, NULL);
 	if (changemask & WSKBD_LED_CAPS)
-		send_hildev_cmd((struct hil_softc *)sc->sc_dev.dv_parent,
-		    sc->sc_code,
+		send_hildev_cmd((struct hildev_softc *)sc,
 		    (leds & WSKBD_LED_CAPS) ? HIL_PROMPT3 : HIL_ACK3,
 		    NULL, NULL);
 
@@ -235,7 +255,7 @@ hilkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return 0;
 	case WSKBDIO_COMPLEXBELL:
 #define	d ((struct wskbd_bell_data *)data)
-		hilkbd_bell((struct hil_softc *)sc->sc_dev.dv_parent,
+		hilkbd_bell((struct hil_softc *)sc->hd_parent,
 		    d->pitch, d->period, d->volume);
 #undef d
 		return 0;
@@ -251,8 +271,7 @@ hilkbd_cngetc(void *v, u_int *type, int *data)
 	u_int8_t c, stat;
 
 	for (;;) {
-		while (hil_poll_data((struct hil_softc *)sc->sc_dev.dv_parent,
-		    sc->sc_code, &stat, &c) != 0)
+		while (hil_poll_data((struct hildev_softc *)sc, &stat, &c) != 0)
 			;
 
 		/*
@@ -271,7 +290,7 @@ hilkbd_cnpollc(void *v, int on)
 {
 	struct hilkbd_softc *sc = v;
 
-	hil_set_poll((struct hil_softc *)sc->sc_dev.dv_parent, on);
+	hil_set_poll((struct hil_softc *)sc->hd_parent, on);
 }
 
 void
@@ -279,7 +298,7 @@ hilkbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
 	struct hilkbd_softc *sc = v;
 
-	hilkbd_bell((struct hil_softc *)sc->sc_dev.dv_parent,
+	hilkbd_bell((struct hil_softc *)sc->hd_parent,
 	    pitch, period, volume);
 }
 
@@ -297,9 +316,9 @@ hilkbd_bell(struct hil_softc *sc, u_int pitch, u_int period, u_int volume)
 }
 
 void
-hilkbd_callback(void *v, u_int buflen, u_int8_t *buf)
+hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 {
-	struct hilkbd_softc *sc = v;
+	struct hilkbd_softc *sc = (struct hilkbd_softc *)dev;
 	u_int type;
 	int key;
 	int i;
@@ -329,8 +348,6 @@ hilkbd_decode(u_int8_t stat, u_int8_t data, u_int *type, int *key)
 int
 hilkbd_is_console(int hil_is_console)
 {
-	static int seen_hilkbd_console = 0;
-
 	/* if not first hil keyboard, then not the console */
 	if (seen_hilkbd_console)
 		return (0);

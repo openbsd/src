@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilid.c,v 1.1 2003/02/15 23:50:02 miod Exp $	*/
+/*	$OpenBSD: hilid.c,v 1.2 2003/02/26 20:22:04 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -40,20 +40,21 @@
 #include <dev/hil/hildevs.h>
 
 struct hilid_softc {
-	struct device	sc_dev;
+	struct hildev_softc sc_hildev;
 
 	u_int8_t	sc_id[16];
 };
 
 int	hilidprobe(struct device *, void *, void *);
 void	hilidattach(struct device *, struct device *, void *);
+int	hiliddetach(struct device *, int);
 
 struct cfdriver hilid_cd = {
 	NULL, "hilid", DV_DULL
 };
 
 struct cfattach hilid_ca = {
-	sizeof(struct hilid_softc), hilidprobe, hilidattach
+	sizeof(struct hilid_softc), hilidprobe, hilidattach, hiliddetach,
 };
 
 int
@@ -74,16 +75,28 @@ hilidattach(struct device *parent, struct device *self, void *aux)
 	struct hil_attach_args *ha = aux;
 	u_int i, len;
 
+	sc->hd_code = ha->ha_code;
+	sc->hd_type = ha->ha_type;
+	sc->hd_infolen = ha->ha_infolen;
+	bcopy(ha->ha_info, sc->hd_info, ha->ha_infolen);
+	sc->hd_fn = NULL;
+
 	printf("\n");
 
 	bzero(sc->sc_id, sizeof(sc->sc_id));
 	len = sizeof(sc->sc_id);
-	send_hildev_cmd((struct hil_softc *)parent, ha->ha_code,
+	send_hildev_cmd((struct hildev_softc *)sc,
 	    HIL_SECURITY, sc->sc_id, &len);
 
-	printf("%s: security code", sc->sc_dev.dv_xname);
+	printf("%s: security code", self->dv_xname);
 	for (i = 0; i < sizeof(sc->sc_id); i++)
 		printf(" %02.2x", sc->sc_id[i]);
 
 	printf("\n");
+}
+
+int
+hiliddetach(struct device *self, int flags)
+{
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hildevs.h,v 1.2 2003/02/15 23:42:48 miod Exp $	*/
+/*	$OpenBSD: hildevs.h,v 1.3 2003/02/26 20:22:04 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -50,3 +50,23 @@ struct hil_attach_args {
 #define	HIL_DEVICE_KEYBOARD	1
 #define	HIL_DEVICE_IDMODULE	2
 #define	HIL_DEVICE_MOUSE	3
+
+/* Common softc part for hil devices */
+struct hildev_softc {
+	struct device	sc_dev;
+
+	int		sc_code;	/* hil code */
+	int		sc_type;	/* hil device type */
+
+	int		sc_infolen;	/* identify info length */
+	u_int8_t	sc_info[HILBUFSIZE];	/* identify info bits */
+
+	void		(*sc_fn)(struct hildev_softc *, u_int, u_int8_t *);
+};
+
+#define	hd_code		sc_hildev.sc_code
+#define	hd_fn		sc_hildev.sc_fn
+#define	hd_info		sc_hildev.sc_info
+#define	hd_infolen	sc_hildev.sc_infolen
+#define	hd_parent	sc_hildev.sc_dev.dv_parent
+#define	hd_type		sc_hildev.sc_type

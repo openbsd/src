@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilms.c,v 1.1 2003/02/12 01:43:31 miod Exp $	*/
+/*	$OpenBSD: hilms.c,v 1.2 2003/02/26 20:22:04 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -43,7 +43,7 @@
 #include <dev/wscons/wsmousevar.h>
 
 struct hilms_softc {
-	struct device	sc_dev;
+	struct hildev_softc sc_hildev;
 
 	int		sc_features;
 	int		sc_axes;
@@ -55,13 +55,14 @@ struct hilms_softc {
 
 int	hilmsprobe(struct device *, void *, void *);
 void	hilmsattach(struct device *, struct device *, void *);
+int	hilmsdetach(struct device *, int);
 
 struct cfdriver hilms_cd = {
 	NULL, "hilms", DV_DULL
 };
 
 struct cfattach hilms_ca = {
-	sizeof(struct hilms_softc), hilmsprobe, hilmsattach
+	sizeof(struct hilms_softc), hilmsprobe, hilmsattach, hilmsdetach,
 };
 
 int	hilms_enable(void *);
@@ -74,7 +75,7 @@ const struct wsmouse_accessops hilms_accessops = {
 	hilms_disable,
 };
 
-void	hilms_callback(void *, u_int, u_int8_t *);
+void	hilms_callback(struct hildev_softc *, u_int, u_int8_t *);
 
 int
 hilmsprobe(struct device *parent, void *match, void *aux)
@@ -101,6 +102,12 @@ hilmsattach(struct device *parent, struct device *self, void *aux)
 	struct hil_attach_args *ha = aux;
 	struct wsmousedev_attach_args a;
 	int iob, buttons, rx, ry;
+
+	sc->hd_code = ha->ha_code;
+	sc->hd_type = ha->ha_type;
+	sc->hd_infolen = ha->ha_infolen;
+	bcopy(ha->ha_info, sc->hd_info, ha->ha_infolen);
+	sc->hd_fn = hilms_callback;
 
 	/*
 	 * Interpret the identification bytes, if any
@@ -140,16 +147,13 @@ hilmsattach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_features & HILIOB_PIO)
 		printf(", pressure sensor");
 	if (sc->sc_features & HIL_ABSOLUTE) {
-		printf ("\n%s: %d", sc->sc_dev.dv_xname, rx);
+		printf ("\n%s: %d", self->dv_xname, rx);
 		if (ry != 0)
 			printf("x%d", ry);
 		else
 			printf(" linear");
 		printf(" fixed area");
 	}
-
-	hil_callback_register((struct hil_softc *)parent, ha->ha_code,
-	    hilms_callback, sc);
 
 	printf("\n");
 
@@ -159,6 +163,17 @@ hilmsattach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+}
+
+int
+hilmsdetach(struct device *self, int flags)
+{
+	struct hilms_softc *sc = (void *)self;
+
+	if (sc->sc_wsmousedev != NULL)
+		return config_detach(sc->sc_wsmousedev, flags);
+
+	return (0);
 }
 
 int
@@ -200,9 +215,9 @@ hilms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 void
-hilms_callback(void *v, u_int buflen, u_int8_t *buf)
+hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 {
-	struct hilms_softc *sc = v;
+	struct hilms_softc *sc = (struct hilms_softc *)dev;
 	int type, flags;
 	int dx, dy, dz, button;
 #ifdef DIAGNOSTIC
