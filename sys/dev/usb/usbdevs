@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.144 2005/03/18 00:32:18 reyk Exp $
+$OpenBSD: usbdevs,v 1.145 2005/03/22 12:49:43 mbalmer Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -325,6 +325,7 @@ vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
 vendor AGILENT		0x0957	Agilent Technologies
+vendor GUDE		0x0959	Gude ADS
 vendor PORTSMITH	0x095a	Portsmith
 vendor ACERW		0x0967  Acer
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
@@ -922,6 +923,9 @@ product GREENHOUSE2 USBKR100PNA	0x8151	GH-USB100B Ethernet PNA
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
+
+/* Gude ADS */
+product GUDE DCF		0xdcf7	Expert mouseCLOCK USB
 
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
