@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.40 2001/02/04 15:06:05 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.41 2001/08/07 01:46:12 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -441,7 +441,7 @@ part of the label.
 The bootstrap code is comprised of one or two boot
 programs depending on the machine.
 .Pp
-When installting bootstrap code with the
+When installing bootstrap code with the
 .Fl B
 flag, if the names are not explicitly given, standard boot programs
 will be used.
@@ -478,6 +478,31 @@ previously.
 The final two forms are analogous to the basic write and
 restore versions except that they will install bootstrap code in
 addition to a new label.
+.Pp
+Note that when a disk has no real BSD disklabel the kernel creates a
+default label so that the disk can be used.
+This default label will include other partitions found on the disk if
+they are supported on your architechture.
+For example, on systems that support
+.Xr fdisk 8
+partitions the default label will also include DOS and Linux partitions.
+However, these entries are not dynamic, they are fixed at the time
+.Nm
+is run.
+That means that subsequent changes that affect non-OpenBSD
+partitions will not be present in the default label, though you
+may update them by hand.
+To see the default label, run
+.Nm
+with the
+.Fl d
+flag.
+You can then run
+.Nm
+with the
+.Fl e
+flag and paste any entries you want from the default label into the real
+one.
 .Sh EXAMPLES
 .Dl disklabel sd0
 .Pp
