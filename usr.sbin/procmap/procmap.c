@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.10 2004/02/23 03:21:23 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.11 2004/02/23 04:34:31 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -786,8 +786,8 @@ findname(kvm_t *kd, struct kbit *vmspace,
 				*name = '/';
 				/*FALLTHROUGH*/
 			case 2: /* found nothing */
-				name -= 6;
-				memcpy(name, " -??- ", (size_t)6);
+				name -= 11;
+				memcpy(name, " -unknown- ", (size_t)11);
 				name -= l;
 				memcpy(name,
 				    D(vfs, mount)->mnt_stat.f_mntonname, l);
@@ -826,7 +826,7 @@ findname(kvm_t *kd, struct kbit *vmspace,
 		else if (UVM_OBJ_IS_VNODE(D(uvm_obj, uvm_object)))
 			name = "  [ ?VNODE? ]";
 		else {
-			snprintf(buf, sizeof(buf), "  [ ?? %p ?? ]",
+			snprintf(buf, sizeof(buf), "  [ unknown (%p) ]",
 			    D(uvm_obj, uvm_object)->pgops);
 			name = buf;
 		}
