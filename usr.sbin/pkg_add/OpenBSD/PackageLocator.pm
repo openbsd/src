@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.3 2003/10/23 23:18:55 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.4 2003/10/31 18:42:51 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -190,7 +190,7 @@ if (defined $ENV{PKG_PATH}) {
 			$i.= ":".(shift @tentative);
 		}
 		$i =~ m|/$| or $i.='/';
-		unshift @pkgpath, OpenBSD::PackageLocation->new($i);
+		push @pkgpath, OpenBSD::PackageLocation->new($i);
 	}
 } else {
 	@pkgpath=(OpenBSD::PackageLocation->new("./"));
@@ -206,8 +206,14 @@ sub find
 	}
 	my $package;
 	if (m/\//) {
-		my $location = OpenBSD::PackageLocation->new($_);
-		$package = openAbsolute($location, '');
+		use File::Basename;
+
+		my ($pkgname, $path) = fileparse($_);
+		my $location = OpenBSD::PackageLocation->new($path);
+		$package = openAbsolute($location, $pkgname);
+		if (defined $package) {
+			push(@pkgpath, $location);
+		}
 	} else {
 		for my $p (@pkgpath) {
 			$package = openAbsolute($p, $_);
