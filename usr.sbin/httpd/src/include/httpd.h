@@ -252,7 +252,7 @@ extern "C" {
 
 /* The default path for CGI scripts if none is currently set */
 #ifndef DEFAULT_PATH
-#define DEFAULT_PATH "/bin:/usr/bin:/usr/ucb:/usr/bsd:/usr/local/bin"
+#define DEFAULT_PATH "/bin:/usr/bin:local/bin"
 #endif
 
 /* The path to the shell interpreter, for parsed docs */

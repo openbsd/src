@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/10/01 05:30:27 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.4 1999/10/01 21:54:19 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -519,6 +519,11 @@ lint:
 
 tags:
 	# Nothing here so far...
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
 
 distribution:
 	@-for i in ${CONFFILES}; do \
