@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphyreg.h,v 1.2 1999/06/22 16:12:05 jason Exp $	*/
+/*	$OpenBSD: inphyreg.h,v 1.3 2001/04/17 01:19:22 jason Exp $	*/
 /*	$NetBSD: inphyreg.h,v 1.1 1998/08/11 00:00:28 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,10 @@
 #define	_DEV_MII_INPHYREG_H_
 
 /*
- * Intel 82555 registers.
+ * Intel 82555, 82562EM, and 82562ET registers.
+ * Note that the 82562 chips are basically 82555 with a few extra registers
+ * and all of the 100baseT4 support removed.  Bits in the SCR register do
+ * overlap however.
  */
 
 #define	MII_INPHY_SCR		0x10	/* Status and Control */
@@ -56,6 +59,9 @@
 #define	SCR_T4			0x0004	/* autoneg resulted in 100baseT4 */
 #define	SCR_S100		0x0002	/* autoneg resulted in 100baseTX */
 #define	SCR_FDX			0x0001	/* autoneg resulted in full-duplex */
+/* 82562E[MT] only */
+#define	SCR_PHYADDR_M		0x007c	/* phy address mask */
+#define	SCR_PHYADDR_S		2	/* shift to normalize */
 
 #define	MII_INPHY_SCTRL		0x11	/* Special Control Bit */
 #define	SCTRL_SCRBYPASS		0x8000	/* scrambler bypass */
@@ -73,6 +79,15 @@
 #define	SCTRL_EXTSQUELCH	0x0004	/* extended sequelch enable */
 #define	SCTRL_LINKINTDIS	0x0002	/* link integrity disable */
 #define	SCTRL_JABBERDIS		0x0001	/* jabber disabled */
+/* 82562E[MT] only */
+#define	SCTRL_SRE		0x0400	/* symbol error enable */
+#define SCTRL_FORCEPOL		0x0020	/* force polarity, 0 = normal */
+
+/* 82562E[MT] only */
+#define	MII_INPHY_PHYADDR	0x12	/* phy address register, 82562 only */
+
+/* 82562E[MT] only */
+#define	MII_INPHY_100TXFCC	0x13	/* false carrier counter */
 
 #define	MII_INPHY_100TXRDC	0x14	/* 100baseTX Receive Disconnect Cntr */
 

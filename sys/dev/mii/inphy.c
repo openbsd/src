@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.6 2000/08/26 20:04:17 nate Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.7 2001/04/17 01:19:21 jason Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -112,9 +112,14 @@ inphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_INTEL &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_INTEL_I82555)
-		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_INTEL) {
+		switch (MII_MODEL(ma->mii_id2)) {
+		case MII_MODEL_INTEL_I82555:
+		case MII_MODEL_INTEL_I82562EM:
+		case MII_MODEL_INTEL_I82562ET:
+			return (10);
+		}
+	}
 
 	return (0);
 }
@@ -127,9 +132,23 @@ inphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	char *mstr;
 
-	printf(": %s, rev. %d\n", MII_STR_INTEL_I82555,
-	    MII_REV(ma->mii_id2));
+	switch (MII_MODEL(ma->mii_id2)) {
+	case MII_MODEL_INTEL_I82555:
+		mstr = MII_STR_INTEL_I82555;
+		break;
+	case MII_MODEL_INTEL_I82562EM:
+		mstr = MII_STR_INTEL_I82562EM;
+		break;
+	case MII_MODEL_INTEL_I82562ET:
+		mstr = MII_STR_INTEL_I82562ET;
+		break;
+	default:
+		mstr = "unknown inphy";
+		break;
+	}
+	printf(": %s, rev. %d\n", mstr, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -244,7 +263,7 @@ inphy_status(sc)
 			return;
 		}
 		scr = PHY_READ(sc, MII_INPHY_SCR);
-		if (scr & SCR_T4)
+		if ((bmsr & BMSR_100T4) && (scr & SCR_T4))
 			mii->mii_media_active |= IFM_100_T4;
 		else if (scr & SCR_S100)
 			mii->mii_media_active |= IFM_100_TX;
