@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.14 2002/02/14 23:03:19 dhartmei Exp $
+.\"	$OpenBSD: pf.4,v 1.15 2002/03/26 09:38:30 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -153,6 +153,17 @@ struct pfioc_state {
 .Ed
 .Pp
 Extracts the entry with the specified number from the state table.
+.It Dv DIOCKILLSTATES  Fa "struct pfioc_state_kill"
+Removes matching entries from the state table.
+Returns the number of killed states in psk_af.
+.Bd -literal
+struct pfioc_state_kill {
+	int			psk_af;
+	int			psk_proto;
+	struct pf_rule_addr	psk_src;
+	struct pf_rule_addr	psk_dst;
+};
+.Ed
 .It Dv DIOCSETSTATUSIF Fa "struct pfioc_if"
 .Bd -literal
 struct pfioc_if {
