@@ -116,7 +116,7 @@ bsdauth_verify(pw, prompt, auth)
     char *prompt;
     sudo_auth *auth;
 {
-    volatile char *pass;
+    char *pass;
     char *s;
     size_t len;
     int authok = 0;
@@ -165,7 +165,7 @@ bsdauth_verify(pw, prompt, auth)
 
     if (pass) {
 	authok = auth_userresponse(as, (char *)pass, 1);
-	memset(pass, 0, strlen(pass));
+	zero_bytes(pass, strlen(pass));
     }
 
     /* restore old signal handler */

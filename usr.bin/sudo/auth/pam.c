@@ -205,16 +205,16 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     struct pam_response **response;
     VOID *appdata_ptr;
 {
-    volatile struct pam_response *pr;
+    struct pam_response *pr;
     PAM_CONST struct pam_message *pm;
     const char *p = def_prompt;
-    volatile char *pass;
+    char *pass;
     int n, flags;
     extern int nil_pw;
 
     if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
 	return(PAM_CONV_ERR);
-    (void) memset(*response, 0, num_msg * sizeof(struct pam_response));
+    zero_bytes(*response, num_msg * sizeof(struct pam_response));
 
     for (pr = *response, pm = *msg, n = num_msg; n--; pr++, pm++) {
 	flags = tgetpass_flags;
@@ -232,7 +232,7 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		if (*pr->resp == '\0')
 		    nil_pw = 1;		/* empty password */
 		else
-		    memset(pass, 0, strlen(pass));
+		    zero_bytes(pass, strlen(pass));
 		break;
 	    case PAM_TEXT_INFO:
 		if (pm->msg)
@@ -248,13 +248,12 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		/* Zero and free allocated memory and return an error. */
 		for (pr = *response, n = num_msg; n--; pr++) {
 		    if (pr->resp != NULL) {
-			(void) memset(pr->resp, 0, strlen(pr->resp));
+			zero_bytes(pr->resp, strlen(pr->resp));
 			free(pr->resp);
 			pr->resp = NULL;
 		    }
 		}
-		(void) memset(*response, 0,
-		    num_msg * sizeof(struct pam_response));
+		zero_bytes(*response, num_msg * sizeof(struct pam_response));
 		free(*response);
 		*response = NULL;
 		return(PAM_CONV_ERR);

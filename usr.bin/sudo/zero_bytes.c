@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,60 +30,28 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Sponsored in part by the Defense Advanced Research Projects
- * Agency (DARPA) and Air Force Research Laboratory, Air Force
- * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
+
+#include <sys/types.h>
 
 #include "config.h"
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <stdio.h>
-#ifdef STDC_HEADERS
-# include <stdlib.h>
-# include <stddef.h>
-#else
-# ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-# endif
-#endif /* STDC_HEADERS */
-#ifdef HAVE_STRING_H
-# include <string.h>
-#else
-# ifdef HAVE_STRINGS_H
-#  include <strings.h>
-# endif
-#endif /* HAVE_STRING_H */
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#include <pwd.h>
-
-#include "sudo.h"
-#include "sudo_auth.h"
-
 #ifndef lint
-static const char rcsid[] = "$Sudo: aix_auth.c,v 1.15 2003/04/16 00:42:10 millert Exp $";
+static const char rcsid[] = "$Sudo: zero_bytes.c,v 1.1 2003/12/31 22:46:08 millert Exp $";
 #endif /* lint */
 
-int
-aixauth_verify(pw, prompt, auth)
-    struct passwd *pw;
-    char *prompt;
-    sudo_auth *auth;
+/*
+ * Like bzero(3) but with a volatile pointer.  The hope is that
+ * the compiler will not be able to optimize away this function.
+ */
+void
+zero_bytes(v, n)
+    volatile VOID *v;
+    size_t n;
 {
-    char *pass;
-    char *message;
-    int reenter = 1;
-    int rval = AUTH_FAILURE;
+    volatile char *p, *ep;
 
-    pass = tgetpass(prompt, def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags);
-    if (pass) {
-	if (authenticate(pw->pw_name, (char *)pass, &reenter, &message) == 0)
-	    rval = AUTH_SUCCESS;
-	zero_bytes(pass, strlen(pass));
-    }
-    return(rval);
+    for (p = v, ep = p + n; p < ep; p++)
+	*p = 0;
+    return;
 }

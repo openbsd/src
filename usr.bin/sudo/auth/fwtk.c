@@ -114,8 +114,8 @@ fwtk_verify(pw, prompt, auth)
     char *prompt;
     sudo_auth *auth;
 {
-    volatile char *pass;		/* Password from the user */
-    volatile char buf[SUDO_PASS_MAX + 12]; /* General prupose buffer */
+    char *pass;				/* Password from the user */
+    char buf[SUDO_PASS_MAX + 12];	/* General prupose buffer */
     char resp[128];			/* Response from the server */
     int error;
     extern int nil_pw;
@@ -166,8 +166,8 @@ fwtk_verify(pw, prompt, auth)
 	warnx("%s", resp);
     error = AUTH_FAILURE;
 done:
-    memset(pass, 0, strlen(pass));
-    memset(buf, 0, strlen(buf));
+    zero_bytes(pass, strlen(pass));
+    zero_bytes(buf, strlen(buf));
     return(error);
 }
 

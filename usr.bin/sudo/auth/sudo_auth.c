@@ -117,7 +117,7 @@ verify_user(pw, prompt)
     int success = AUTH_FAILURE;
     int status;
     int flags;
-    volatile char *p;
+    char *p;
     sudo_auth *auth;
     sigaction_t sa, osa;
 
@@ -202,7 +202,7 @@ verify_user(pw, prompt)
 	}
 #ifndef AUTH_STANDALONE
 	if (p)
-	    (void) memset(p, 0, strlen(p));
+	    zero_bytes(p, strlen(p));
 #endif
 
 	/* Exit loop on nil password, but give it a chance to match first. */
