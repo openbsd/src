@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.18 2000/10/18 05:12:11 aaron Exp $
+.\"	$OpenBSD: select.2,v 1.19 2001/03/03 21:32:35 deraadt Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -200,7 +200,7 @@ userland libraries:
 	fd_set *fdsr;
 	int max = fd;
 
-	fsdr = (fd_set *)calloc(howmany(max+1, NFDBITS),
+	fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
 	    sizeof(fd_mask));
 	if (fdsr == NULL) {
 		...
