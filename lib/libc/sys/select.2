@@ -160,7 +160,7 @@ of the kernel limit on the number of open files, the dimension
 of a sufficiently large bit field for select remains a problem.
 The default size
 .Dv FD_SETSIZE
-(currently 256) is somewhat larger than
+(currently 256) is somewhat smaller than
 the current kernel limit to the number of open files.
 However, in order to accommodate programs which might potentially
 use a larger number of open files with select, it is possible
