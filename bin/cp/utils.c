@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.12 1998/06/07 05:16:34 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.13 1998/09/26 21:53:16 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.12 1998/06/07 05:16:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.13 1998/09/26 21:53:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ copy_file(entp, dne)
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
 	} else
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
-		    fs->st_mode & ~(S_ISUID | S_ISGID));
+		    fs->st_mode & ~(S_ISTXT | S_ISUID | S_ISGID));
 
 	if (to_fd == -1) {
 		warn("%s", to.p_path);
@@ -245,7 +245,7 @@ setfile(fs, fd)
 	int rval;
 
 	rval = 0;
-	fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
+	fs->st_mode &= S_ISTXT | S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
 	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
@@ -265,7 +265,7 @@ setfile(fs, fd)
 			warn("chown: %s", to.p_path);
 			rval = 1;
 		}
-		fs->st_mode &= ~(S_ISUID | S_ISGID);
+		fs->st_mode &= ~(S_ISTXT | S_ISUID | S_ISGID);
 	}
 	if (fd ? fchmod(fd, fs->st_mode) : chmod(to.p_path, fs->st_mode)) {
 		warn("chown: %s", to.p_path);
