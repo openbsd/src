@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.298 2003/01/05 22:14:23 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.299 2003/01/06 10:08:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -752,7 +752,7 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		if (cur->src.addr.type == PF_ADDR_DYNIFTL ||
 		    prev->src.addr.type == PF_ADDR_DYNIFTL ||
 		    cur->src.not !=  prev->src.not ||
-		    (cur->src.addr.type == PF_ADDR_NOROUTE) != 
+		    (cur->src.addr.type == PF_ADDR_NOROUTE) !=
 		    (prev->src.addr.type == PF_ADDR_NOROUTE) ||
 		    !PF_AEQ(&cur->src.addr.v.a.addr, &prev->src.addr.v.a.addr, 0) ||
 		    !PF_AEQ(&cur->src.addr.v.a.mask, &prev->src.addr.v.a.mask, 0))
