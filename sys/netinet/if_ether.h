@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.5 1996/07/27 11:06:42 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.6 1999/01/07 09:11:52 deraadt Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ struct	ether_header {
 #define	ETHERTYPE_IP		0x0800	/* IP protocol */
 #define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
 #define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
+#define	ETHERTYPE_IPV6		0x86DD	/* IPv6 protocol */
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
