@@ -1,4 +1,4 @@
-/*	$OpenBSD: osdep.h,v 1.9 2004/02/23 18:33:57 henning Exp $	*/
+/*	$OpenBSD: osdep.h,v 1.10 2004/02/23 20:09:02 deraadt Exp $	*/
 
 /* Operating system dependencies... */
 
@@ -56,6 +56,8 @@ extern int h_errno;
 #include <net/route.h>
 #include <sys/sockio.h>
 
+#include <sys/time.h>
+
 #define ifr_netmask ifr_addr
 
 /* Varargs stuff... */
@@ -64,10 +66,6 @@ extern int h_errno;
 #define EOL	'\n'
 #define VOIDPTR void *
 
-/* Time stuff... */
-#include <sys/time.h>
-#define TIME time_t
-#define GET_TIME(x)	time ((x))
 
 #if defined(__alpha__) || defined(__sparc64__) || defined(__amd64__)
 #define PTRSIZE_64BIT

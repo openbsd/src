@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
+/*	$OpenBSD: tree.c,v 1.6 2004/02/23 20:09:02 deraadt Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -42,9 +42,9 @@
 
 #include "dhcpd.h"
 
-static TIME tree_evaluate_recurse(
+static time_t tree_evaluate_recurse(
     int *, unsigned char **, int *, struct tree *);
-static TIME do_host_lookup(
+static time_t do_host_lookup(
     int *, unsigned char **, int *, struct dns_host_entry *);
 static void do_data_copy(
     int *, unsigned char **, int *, unsigned char *, int);
@@ -236,12 +236,12 @@ tree_evaluate(struct tree_cache *tree_cache)
 	return (1);
 }
 
-static TIME
+static time_t
 tree_evaluate_recurse(int *bufix, unsigned char **bufp, int *bufcount,
     struct tree *tree)
 {
 	int limit;
-	TIME t1, t2;
+	time_t t1, t2;
 
 	switch (tree->op) {
 	case TREE_CONCAT:
@@ -278,7 +278,7 @@ tree_evaluate_recurse(int *bufix, unsigned char **bufp, int *bufcount,
 	}
 }
 
-static TIME
+static time_t
 do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
     struct dns_host_entry *dns)
 {

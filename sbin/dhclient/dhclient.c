@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.9 2004/02/10 13:12:48 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.10 2004/02/23 20:09:02 deraadt Exp $	*/
 
 /* DHCP Client. */
 
@@ -71,9 +71,9 @@
 
 #define	CLIENT_PATH "PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 
-TIME cur_time;
-TIME default_lease_time = 43200; /* 12 hours... */
-TIME max_lease_time = 86400; /* 24 hours... */
+time_t cur_time;
+time_t default_lease_time = 43200; /* 12 hours... */
+time_t max_lease_time = 86400; /* 24 hours... */
 struct tree_cache *global_options[256];
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
@@ -296,7 +296,7 @@ main(int argc, char *argv[])
 	remote_port = htons(ntohs(local_port) - 1);	/* XXX */
 
 	/* Get the current time... */
-	GET_TIME(&cur_time);
+	time(&cur_time);
 
 	memset(&sockaddr_broadcast, 0, sizeof(sockaddr_broadcast));
 	sockaddr_broadcast.sin_family = AF_INET;

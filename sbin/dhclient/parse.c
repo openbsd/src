@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
+/*	$OpenBSD: parse.c,v 1.6 2004/02/23 20:09:02 deraadt Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -266,7 +266,7 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
  * lease-time :== NUMBER SEMI
  */
 void
-parse_lease_time(FILE *cfile, TIME *timep)
+parse_lease_time(FILE *cfile, time_t *timep)
 {
 	char *val;
 	int token;
@@ -486,7 +486,7 @@ convert_num(unsigned char *buf, char *str, int base, int size)
  * year/month/day; next is hours:minutes:seconds on a 24-hour
  * clock.
  */
-TIME
+time_t
 parse_date(FILE *cfile)
 {
 	struct tm tm;

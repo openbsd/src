@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.3 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: tree.h,v 1.4 2004/02/23 20:09:02 deraadt Exp $	*/
 
 /* Definitions for address trees... */
 
@@ -79,14 +79,14 @@ struct dns_host_entry {
 	unsigned char *data;
 	int data_len;
 	int buf_len;
-	TIME timeout;
+	time_t timeout;
 };
 
 struct tree_cache {
 	unsigned char *value;
 	int len;
 	int buf_size;
-	TIME timeout;
+	time_t timeout;
 	struct tree *tree;
 	int flags;
 #define	TC_AWAITING_RESOLUTION	1

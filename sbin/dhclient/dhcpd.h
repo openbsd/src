@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.8 2004/02/23 19:51:15 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.9 2004/02/23 20:09:02 deraadt Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -75,14 +75,14 @@ struct string_list {
 struct name_server {
 	struct name_server *next;
 	struct sockaddr_in addr;
-	TIME rcdate;
+	time_t rcdate;
 };
 
 /* A domain search list element. */
 struct domain_search_list {
 	struct domain_search_list *next;
 	char *domain;
-	TIME rcdate;
+	time_t rcdate;
 };
 
 /* A dhcp packet and the pointers to its option values. */
@@ -117,7 +117,7 @@ struct lease {
 	struct lease *waitq_next;
 
 	struct iaddr ip_addr;
-	TIME starts, ends, timestamp;
+	time_t starts, ends, timestamp;
 	unsigned char *uid;
 	int uid_len;
 	int uid_max;
@@ -147,7 +147,7 @@ struct lease_state {
 
 	struct interface_info *ip;
 
-	TIME offered_expiry;
+	time_t offered_expiry;
 
 	struct tree_cache *options[256];
 	u_int32_t expiry, renewal, rebind;
@@ -197,10 +197,10 @@ struct group {
 	struct subnet *subnet;
 	struct shared_network *shared_network;
 
-	TIME default_lease_time;
-	TIME max_lease_time;
-	TIME bootp_lease_cutoff;
-	TIME bootp_lease_length;
+	time_t default_lease_time;
+	time_t max_lease_time;
+	time_t bootp_lease_cutoff;
+	time_t bootp_lease_length;
 
 	char *filename;
 	char *server_name;
@@ -262,7 +262,7 @@ struct class {
 /* DHCP client lease structure... */
 struct client_lease {
 	struct client_lease *next;		      /* Next lease in list. */
-	TIME expiry, renewal, rebind;			  /* Lease timeouts. */
+	time_t expiry, renewal, rebind;			  /* Lease timeouts. */
 	struct iaddr address;			    /* Address being leased. */
 	char *server_name;			     /* Name of boot server. */
 	char *filename;		     /* Name of file we're supposed to boot. */
@@ -300,22 +300,22 @@ struct client_config {
 	u_int8_t required_options[256]; /* Options server must supply. */
 	u_int8_t requested_options[256]; /* Options to request from server. */
 	int requested_option_count;	/* Number of requested options. */
-	TIME timeout;			/* Start to panic if we don't get a
+	time_t timeout;			/* Start to panic if we don't get a
 					   lease in this time period when
 					   SELECTING. */
-	TIME initial_interval;		/* All exponential backoff intervals
+	time_t initial_interval;	/* All exponential backoff intervals
 					   start here. */
-	TIME retry_interval;		/* If the protocol failed to produce
+	time_t retry_interval;		/* If the protocol failed to produce
 					   an address before the timeout,
 					   try the protocol again after this
 					   many seconds. */
-	TIME select_interval;		/* Wait this many seconds from the
+	time_t select_interval;		/* Wait this many seconds from the
 					   first DHCPDISCOVER before
 					   picking an offered lease. */
-	TIME reboot_timeout;		/* When in INIT-REBOOT, wait this
+	time_t reboot_timeout;		/* When in INIT-REBOOT, wait this
 					   long before giving up and going
 					   to INIT. */
-	TIME backoff_cutoff;		/* When doing exponential backoff,
+	time_t backoff_cutoff;		/* When doing exponential backoff,
 					   never back off to an interval
 					   longer than this amount. */
 	struct string_list *media;	/* Possible network media values. */
@@ -340,8 +340,8 @@ struct client_state {
 	struct iaddr destination;		    /* Where to send packet. */
 	u_int32_t xid;					  /* Transaction ID. */
 	u_int16_t secs;			    /* secs value from DHCPDISCOVER. */
-	TIME first_sending;			/* When was first copy sent? */
-	TIME interval;		      /* What's the current resend interval? */
+	time_t first_sending;			/* When was first copy sent? */
+	time_t interval;		      /* What's the current resend interval? */
 	struct string_list *medium;		   /* Last media type tried. */
 
 	struct dhcp_packet packet;		    /* Outgoing DHCP packet. */
@@ -396,7 +396,7 @@ struct hardware_link {
 
 struct timeout {
 	struct timeout *next;
-	TIME when;
+	time_t when;
 	void (*func)(void *);
 	void *what;
 };
@@ -475,11 +475,11 @@ char *parse_string(FILE *);
 char *parse_host_name(FILE *);
 int parse_ip_addr(FILE *, struct iaddr *);
 void parse_hardware_param(FILE *, struct hardware *);
-void parse_lease_time(FILE *, TIME *);
+void parse_lease_time(FILE *, time_t *);
 unsigned char *parse_numeric_aggregate(FILE *, unsigned char *, int *,
     int, int, int);
 void convert_num(unsigned char *, char *, int, int);
-TIME parse_date(FILE *);
+time_t parse_date(FILE *);
 
 /* tree.c */
 pair cons(caddr_t, pair);
@@ -563,7 +563,7 @@ struct interface_info *setup_fallback(void);
 void reinitialize_interfaces(void);
 void dispatch(void);
 void got_one(struct protocol *);
-void add_timeout(TIME, void (*)(void *), void *);
+void add_timeout(time_t, void (*)(void *), void *);
 void cancel_timeout(void (*)(void *), void *);
 void add_protocol(char *, int, void (*)(struct protocol *), void *);
 void remove_protocol(struct protocol *);
@@ -607,7 +607,7 @@ extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
 extern char *path_dhclient_pid;
 extern int interfaces_requested;
-extern TIME cur_time;
+extern time_t cur_time;
 extern u_int16_t local_port;
 extern int log_priority;
 extern int log_perror;

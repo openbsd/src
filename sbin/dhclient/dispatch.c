@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.10 2004/02/23 19:19:12 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.11 2004/02/23 20:09:02 deraadt Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -364,7 +364,7 @@ another:
 		/* Not likely to be transitory... */
 		if (count == -1) {
 			if (errno == EAGAIN || errno == EINTR) {
-				GET_TIME(&cur_time);
+				time(&cur_time);
 				continue;
 			}
 			else
@@ -372,7 +372,7 @@ another:
 		}
 
 		/* Get the current time... */
-		GET_TIME(&cur_time);
+		time(&cur_time);
 
 		i = 0;
 		for (l = protocols; l; l = l->next) {
@@ -500,7 +500,7 @@ active:
 }
 
 void
-add_timeout(TIME when, void (*where)(void *), void *what)
+add_timeout(time_t when, void (*where)(void *), void *what)
 {
 	struct timeout *t, *q;
 
