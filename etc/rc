@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.165 2001/03/02 06:22:39 deraadt Exp $
+#	$OpenBSD: rc,v 1.166 2001/04/01 19:39:54 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -547,11 +547,6 @@ fi
 echo -n ' cron';		cron
 
 echo '.'
-
-if [ -f /etc/rc.wscons -a -f /etc/wscons.conf ]; then
-	echo configuring wscons
-	/bin/sh /etc/rc.wscons
-fi
 
 date
 
