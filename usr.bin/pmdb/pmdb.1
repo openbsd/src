@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmdb.1,v 1.14 2003/07/01 02:35:49 pvalchev Exp $
+.\"	$OpenBSD: pmdb.1,v 1.15 2003/08/02 17:40:51 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -81,7 +81,12 @@ A stopped process can be examined, changed and restarted with the
 command.
 .El
 .Sh COMMANDS
-.Bl -tag -width continue
+.Bl -tag -width continueXXXX
+.It examine Ar symbol|address
+Fetch and display in hex a word at
+.Ar address
+or
+.Ar symbol .
 .It regs
 Show the contents of the processor registers at the moment the process was
 .Ic STOPPED .
