@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.4 1996/09/15 09:31:42 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.5 1997/02/17 00:04:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -98,7 +98,6 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	register int sock;
 	u_int sendsz, recvsz;
 {
-	bool_t madesock = FALSE;
 	register SVCXPRT *xprt;
 	register struct svcudp_data *su;
 	struct sockaddr_in addr;
@@ -109,7 +108,6 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 			perror("svcudp_create: socket creation problem");
 			return ((SVCXPRT *)NULL);
 		}
-		madesock = TRUE;
 	}
 	memset(&addr, 0, sizeof (addr));
 	addr.sin_len = sizeof(struct sockaddr_in);
@@ -120,23 +118,28 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	}
 	if (getsockname(sock, (struct sockaddr *)&addr, &len) != 0) {
 		perror("svcudp_create - cannot getsockname");
-		if (madesock)
-			(void)close(sock);
+		(void)close(sock);
 		return ((SVCXPRT *)NULL);
 	}
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
 		(void)fprintf(stderr, "svcudp_create: out of memory\n");
+		(void)close(sock);
 		return (NULL);
 	}
 	su = (struct svcudp_data *)mem_alloc(sizeof(*su));
 	if (su == NULL) {
 		(void)fprintf(stderr, "svcudp_create: out of memory\n");
+		(void)close(sock);
+		free(xprt);
 		return (NULL);
 	}
 	su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
 	if ((rpc_buffer(xprt) = mem_alloc(su->su_iosz)) == NULL) {
 		(void)fprintf(stderr, "svcudp_create: out of memory\n");
+		(void)close(sock);
+		free(xprt);
+		free(su);
 		return (NULL);
 	}
 	xdrmem_create(
