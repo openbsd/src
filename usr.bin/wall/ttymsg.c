@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.6 1998/11/18 16:47:01 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.7 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.6 1998/11/18 16:47:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.7 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,6 +74,7 @@ ttymsg(iov, iovcnt, line, tmout)
 	struct iovec localiov[6];
 	int forked = 0;
 	struct stat st;
+	sigset_t mask;
 
 	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
 		return ("too many iov's (change code in wall/ttymsg.c)");
@@ -159,7 +160,8 @@ ttymsg(iov, iovcnt, line, tmout)
 			/* wait at most tmout seconds */
 			(void) signal(SIGALRM, SIG_DFL);
 			(void) signal(SIGTERM, SIG_DFL); /* XXX */
-			(void) sigsetmask(0);
+			(void) sigemptyset(&mask);
+			(void) sigprocmask(SIG_SETMASK, &mask, NULL);
 			(void) alarm((u_int)tmout);
 			(void) fcntl(fd, O_NONBLOCK, &off);
 			continue;

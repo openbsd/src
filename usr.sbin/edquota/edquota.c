@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.27 2001/01/15 05:17:17 angelos Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.28 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -361,11 +361,10 @@ int
 editit(tmpfile)
 	char *tmpfile;
 {
-	int omask;
 	int pid, stat, xpid;
 	char *argp[] = {"sh", "-c", NULL, NULL};
-	register char *ed;
-	char *p;
+	char *ed, *p;
+	sigset_t mask, omask;
 
 	if ((ed = getenv("EDITOR")) == (char *)0)
 		ed = _PATH_VI;
@@ -375,7 +374,11 @@ editit(tmpfile)
 	(void)sprintf(p, "%s %s", ed, tmpfile);
 	argp[2] = p;
 
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGQUIT);
+	sigaddset(&mask, SIGHUP);
+	sigprocmask(SIG_SETMASK, &mask, &omask);
  top:
 	if ((pid = fork()) < 0) {
 		if (errno == EPROCLIM) {
@@ -392,7 +395,7 @@ editit(tmpfile)
 		return(0);
 	}
 	if (pid == 0) {
-		sigsetmask(omask);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		setgid(getgid());
 		setuid(getuid());
 		execv(_PATH_BSHELL, argp);
@@ -406,7 +409,7 @@ editit(tmpfile)
 		else if (WIFEXITED(stat))
 			break;
 	}
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0)
 		return(0);
 	return(1);

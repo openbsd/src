@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.5 2001/02/13 11:46:01 pjanzen Exp $	*/
+/*	$OpenBSD: screen.c,v 1.6 2001/09/04 23:35:58 millert Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -54,10 +54,6 @@
 #include <term.h>
 #include <termios.h>
 #include <unistd.h>
-
-#ifndef sigmask
-#define sigmask(s) (1 << ((s) - 1))
-#endif
 
 #include "screen.h"
 #include "tetris.h"

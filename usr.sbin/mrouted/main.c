@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.5 2001/03/09 03:24:07 deraadt Exp $";
+	"@(#) $Id: main.c,v 1.6 2001/09/04 23:35:59 millert Exp $";
 #endif
 
 extern char *configfilename;
@@ -98,7 +98,6 @@ main(argc, argv)
     char *argv[];
 {
     register int recvlen;
-    register int omask;
     int dummy;
     FILE *fp;
     struct timeval tv;
@@ -106,6 +105,7 @@ main(argc, argv)
     int vers;
     fd_set rfds, readers;
     int nfds, n, i;
+    sigset_t mask, omask;
 #ifdef SNMP
     struct timeval  timeout, *tvp = &timeout;
     struct timeval  sched, *svp = &sched, now, *nvp = &now;
@@ -314,9 +314,6 @@ usage:	fprintf(stderr,
      */
     dummy = 0;
     for(;;) {
-#ifdef SYSV
-	sigset_t block, oblock;
-#endif
 	bcopy((char *)&readers, (char *)&rfds, sizeof(rfds));
 #ifdef SNMP
    gettimeofday(nvp, 0);
@@ -358,20 +355,12 @@ usage:	fprintf(stderr,
 		if (errno != EINTR) log(LOG_ERR, errno, "recvfrom");
 		continue;
 	    }
-#ifdef SYSV
-	    (void)sigemptyset(&block);
-	    (void)sigaddset(&block, SIGALRM);
-	    if (sigprocmask(SIG_BLOCK, &block, &oblock) < 0)
+	    (void)sigemptyset(&mask);
+	    (void)sigaddset(&mask, SIGALRM);
+	    if (sigprocmask(SIG_BLOCK, &mask, &omask) < 0)
 		    log(LOG_ERR, errno, "sigprocmask");
-#else
-	    omask = sigblock(sigmask(SIGALRM));
-#endif
 	    accept_igmp(recvlen);
-#ifdef SYSV
-	    (void)sigprocmask(SIG_SETMASK, &oblock, (sigset_t *)NULL);
-#else
-	    (void)sigsetmask(omask);
-#endif
+	    (void)sigprocmask(SIG_SETMASK, &omask, NULL);
         }
 
 	for (i = 0; i < nhandlers; i++) {
@@ -591,24 +580,17 @@ static void
 restart(i)
     int i;
 {
-    register int omask;
-#ifdef SYSV
-    sigset_t block, oblock;
-#endif
+    sigset_t mask, omask;
 
     log(LOG_NOTICE, 0, "%s restart", versionstring);
 
     /*
      * reset all the entries
      */
-#ifdef SYSV
-    (void)sigemptyset(&block);
-    (void)sigaddset(&block, SIGALRM);
-    if (sigprocmask(SIG_BLOCK, &block, &oblock) < 0)
+    (void)sigemptyset(&mask);
+    (void)sigaddset(&mask, SIGALRM);
+    if (sigprocmask(SIG_BLOCK, &mask, &omask) < 0)
 	log(LOG_ERR, errno, "sigprocmask");
-#else
-    omask = sigblock(sigmask(SIGALRM));
-#endif
     free_all_prunes();
     free_all_routes();
     stop_all_vifs();
@@ -629,11 +611,7 @@ restart(i)
     k_init_dvmrp();		/* enable DVMRP routing in kernel */
     init_installvifs();
 
-#ifdef SYSV
-    (void)sigprocmask(SIG_SETMASK, &oblock, (sigset_t *)NULL);
-#else
-    (void)sigsetmask(omask);
-#endif
+    (void)sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 #define LOG_MAX_MSGS	20	/* if > 20/minute then shut up for a while */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.9 2001/07/27 17:13:42 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.10 2001/09/04 23:35:59 millert Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -25,8 +25,6 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
  * The following preprocessor variables, when defined, are used to
  * distinguish between different Unix implementations:
  *
- *	SIGHOLD  - use SVR4 sighold function when defined
- *	SIGRELSE - use SVR4 sigrelse function when defined
  *	FD_SET   - macros FD_SET and FD_ZERO are used when defined
  */
 
@@ -55,9 +53,6 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
 /* The buffer that stdio will use */
 char stdoutbuf[Buffersize];
-
-/* build Signal masks */
-#define Smask(s)	(1 << ((s) - 1))
 
 /* imported from screen.c */
 extern int overstrike;
@@ -120,7 +115,7 @@ char *argv[];
 
     static char tempbuf1[50];
     static char tempbuf2[50];
-    int old_sigmask;		/* only used for BSD-style signals */
+    sigset_t mask, oldmask;
     int topn = Default_TOPN;
     int delay = Default_DELAY;
     int displays = 0;		/* indicates unspecified */
@@ -457,14 +452,12 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	displays = smart_terminal ? Infinity : 1;
     }
 
-    /* hold interrupt signals while setting up the screen and the handlers */
-#ifdef SIGHOLD
-    sighold(SIGINT);
-    sighold(SIGQUIT);
-    sighold(SIGTSTP);
-#else
-    old_sigmask = sigblock(Smask(SIGINT) | Smask(SIGQUIT) | Smask(SIGTSTP));
-#endif
+    /* block interrupt signals while setting up the screen and the handlers */
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGQUIT);
+    sigaddset(&mask, SIGTSTP);
+    sigprocmask(SIG_BLOCK, &mask, &oldmask);
     init_screen();
     (void) signal(SIGINT, leave);
     (void) signal(SIGQUIT, leave);
@@ -472,13 +465,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 #ifdef SIGWINCH
     (void) signal(SIGWINCH, winch);
 #endif
-#ifdef SIGRELSE
-    sigrelse(SIGINT);
-    sigrelse(SIGQUIT);
-    sigrelse(SIGTSTP);
-#else
-    (void) sigsetmask(old_sigmask);
-#endif
+    sigprocmask(SIG_SETMASK, &oldmask, NULL);
     if (warnings)
     {
 	fputs("....", stderr);
@@ -640,11 +627,9 @@ restart:
 		    (void) signal(SIGTSTP, SIG_DFL);
 
 		    /* unblock the signal and send ourselves one */
-#ifdef SIGRELSE
-		    sigrelse(SIGTSTP);
-#else
-		    (void) sigsetmask(sigblock(0) & ~(1 << (SIGTSTP - 1)));
-#endif
+		    sigemptyset(&mask);
+		    sigaddset(&mask, SIGTSTP);
+		    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 		    (void) kill(0, SIGTSTP);
 
 		    /* reset the signal handler */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.6 2000/07/10 03:10:17 millert Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.7 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: keyboard.c,v 1.2 1995/01/20 08:51:59 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: keyboard.c,v 1.6 2000/07/10 03:10:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: keyboard.c,v 1.7 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -52,7 +52,7 @@ void
 keyboard()
 {
         char ch, line[80];
-	int oldmask;
+	sigset_t mask, omask;
 
         for (;;) {
                 col = 0;
@@ -69,21 +69,23 @@ keyboard()
                         if (ch >= 'A' && ch <= 'Z')
                                 ch += 'a' - 'A';
                         if (col == 0) {
-#define	mask(s)	(1 << ((s) - 1))
-                                if (ch == CTRL('l')) {
-					oldmask = sigblock(mask(SIGALRM));
-					wrefresh(curscr);
-					sigsetmask(oldmask);
+				switch (ch) {
+				case CTRL('l'):
+				case CTRL('g'):
+					sigemptyset(&mask);
+					sigaddset(&mask, SIGALRM);
+					sigprocmask(SIG_BLOCK, &mask, &omask);
+					if (ch == CTRL('l'))
+						wrefresh(curscr);
+					else
+						status();
+					sigprocmask(SIG_SETMASK, &omask, NULL);
                                         continue;
-                                }
-				if (ch == CTRL('g')) {
-					oldmask = sigblock(mask(SIGALRM));
-					status();
-					sigsetmask(oldmask);
+				case ':':
+					break;
+				default:
 					continue;
 				}
-                                if (ch != ':')
-                                        continue;
                                 move(CMDLINE, 0);
                                 clrtoeol();
                         }
@@ -124,9 +126,11 @@ keyboard()
                         }
                 } while (col == 0 || (ch != '\r' && ch != '\n'));
                 line[col] = '\0';
-		oldmask = sigblock(mask(SIGALRM));
+		sigemptyset(&mask);
+		sigaddset(&mask, SIGALRM);
+		sigprocmask(SIG_BLOCK, &mask, &omask);
                 command(line + 1);
-		sigsetmask(oldmask);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
         }
 	/*NOTREACHED*/
 }

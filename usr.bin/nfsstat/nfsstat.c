@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.11 2001/06/25 17:15:46 markus Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.12 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.11 2001/06/25 17:15:46 markus Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.12 2001/09/04 23:35:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ struct nlist nl[] = {
 	{ "" },
 };
 kvm_t *kd;
-u_char	signalled;			/* set if alarm goes off "early" */
+volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
 int nfs_id;
 
 void getnfsstats __P((struct nfsstats *));
@@ -363,7 +363,8 @@ sidewaysintpr(interval, display)
 	u_int display;
 {
 	struct nfsstats nfsstats, lastst;
-	int hdrcnt, oldmask;
+	int hdrcnt;
+	sigset_t emptyset;
 	void catchalarm();
 
 	(void)signal(SIGALRM, catchalarm);
@@ -403,10 +404,9 @@ sidewaysintpr(interval, display)
 		    +(nfsstats.srvrpccnt[NFSPROC_READDIRPLUS]-lastst.srvrpccnt[NFSPROC_READDIRPLUS]));
 		lastst = nfsstats;
 		fflush(stdout);
-		oldmask = sigblock(sigmask(SIGALRM));
+		sigemptyset(&emptyset);
 		if (!signalled)
-			sigpause(0);
-		sigsetmask(oldmask);
+			sigsuspend(&emptyset);
 		signalled = 0;
 		(void)alarm(interval);
 	}

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.4 2001/03/02 06:22:04 deraadt Exp $
+ *	$Id: nfs_start.c,v 1.5 2001/09/04 23:35:59 millert Exp $
  */
 
 #include "am.h"
@@ -64,8 +64,6 @@ SVCXPRT *nfsxprt;
 
 extern int fwd_sock;
 int max_fds = -1;
-
-#define	MASKED_SIGS	(sigmask(SIGINT)|sigmask(SIGTERM)|sigmask(SIGCHLD)|sigmask(SIGHUP))
 
 #ifdef DEBUG
 /*
@@ -102,8 +100,9 @@ static char *max_mem = 0;
 }
 #endif /* DEBUG */
 
-static int do_select(smask, fds, fdp, tvp)
-int smask;
+static int do_select(mask, omask, fds, fdp, tvp)
+sigset_t *mask;
+sigset_t *omask;
 int fds;
 fd_set *fdp;
 struct timeval *tvp;
@@ -133,7 +132,7 @@ struct timeval *tvp;
 		 * occurs, then it will cause a longjmp
 		 * up above.
 		 */
-		(void) sigsetmask(smask);
+		sigprocmask(SIG_SETMASK, omask, NULL);
 		/*
 		 * Wait for input
 		 */
@@ -142,7 +141,7 @@ struct timeval *tvp;
 
 	}
 
-	(void) sigblock(MASKED_SIGS);
+	sigprocmask(SIG_BLOCK, mask, NULL);
 
 	/*
 	 * Perhaps reload the cache?
@@ -201,7 +200,14 @@ static int rpc_pending_now()
 
 static serv_state run_rpc(P_void)
 {
-	int smask = sigblock(MASKED_SIGS);
+	sigset_t mask, omask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGTERM);
+	sigaddset(&mask, SIGCHLD);
+	sigaddset(&mask, SIGHUP);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 
 	next_softclock = clocktime();
 
@@ -283,7 +289,7 @@ static serv_state run_rpc(P_void)
 			dlog("Select waits for Godot");
 #endif /* DEBUG */
 
-		nsel = do_select(smask, fdsn + 1, fdsp, &tvv);
+		nsel = do_select(mask, omask, fdsn + 1, fdsp, &tvv);
 
 
 		switch (nsel) {
@@ -349,7 +355,7 @@ static serv_state run_rpc(P_void)
 		free(fdsp);
 	}
 
-	(void) sigsetmask(smask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	if (amd_state == Quit)
 		amd_state = Done;

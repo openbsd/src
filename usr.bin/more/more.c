@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.12 2001/07/18 17:17:39 pvalchev Exp $	*/
+/*	$OpenBSD: more.c,v 1.13 2001/09/04 23:35:59 millert Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -1853,6 +1853,8 @@ register FILE *f;
 void
 onsusp ()
 {
+    sigset_t mask;
+
     /* ignore SIGTTOU so we don't get stopped if csh grabs the tty */
     signal(SIGTTOU, SIG_IGN);
     reset_tty ();
@@ -1860,7 +1862,8 @@ onsusp ()
     signal(SIGTTOU, SIG_DFL);
     /* Send the TSTP signal to suspend our process group */
     signal(SIGTSTP, SIG_DFL);
-    sigsetmask(0);
+    sigemptyset(&mask);
+    sigprocmask(SIG_SETMASK, &mask, NULL);
     kill (0, SIGTSTP);
     /* Pause for station break */
 

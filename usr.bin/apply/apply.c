@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.9 2001/07/09 07:04:47 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.10 2001/09/04 23:35:58 millert Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.9 2001/07/09 07:04:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.10 2001/09/04 23:35:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -198,7 +198,8 @@ system(command)
 {
 	static char *name, *shell;
 	pid_t pid;
-	int omask, pstat;
+	int pstat;
+	sigset_t mask, omask;
 	sig_t intsave, quitsave;
 
 	if (shell == NULL) {
@@ -212,19 +213,21 @@ system(command)
 	if (!command)		/* just checking... */
 		return(1);
 
-	omask = sigblock(sigmask(SIGCHLD));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 	switch(pid = fork()) {
 	case -1:			/* error */
 		err(1, "fork");
 	case 0:				/* child */
-		(void)sigsetmask(omask);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		execl(shell, name, "-c", command, (char *)NULL);
 		err(1, "%s", shell);
 	}
 	intsave = signal(SIGINT, SIG_IGN);
 	quitsave = signal(SIGQUIT, SIG_IGN);
 	pid = waitpid(pid, &pstat, 0);
-	(void)sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	(void)signal(SIGINT, intsave);
 	(void)signal(SIGQUIT, quitsave);
 	return(pid == -1 ? -1 : pstat);

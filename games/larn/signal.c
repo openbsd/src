@@ -1,10 +1,10 @@
-/*	$OpenBSD: signal.c,v 1.3 1998/09/15 05:12:33 pjanzen Exp $	*/
+/*	$OpenBSD: signal.c,v 1.4 2001/09/04 23:35:57 millert Exp $	*/
 /*	$NetBSD: signal.c,v 1.6 1997/10/18 20:03:50 christos Exp $	*/
 
 /* "Larn is copyrighted 1986 by Noah Morgan.\n" */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: signal.c,v 1.3 1998/09/15 05:12:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: signal.c,v 1.4 2001/09/04 23:35:57 millert Exp $";
 #endif	/* not lint */
 
 #include <stdio.h>
@@ -19,8 +19,6 @@ static void cntlc __P((int));
 static void sgam __P((int));
 static void tstop __P((int));
 static void sigpanic __P((int));
-
-#define BIT(a) (1<<((a)-1))
 
 static void
 s2choose()
@@ -69,20 +67,24 @@ sgam(n)
 static void
 tstop(n)
 	int n;
-{				/* control Y	 */
+{				/* control Z	 */
 	if (nosignal)
 		return;		/* nothing if inhibited */
 	lcreat((char *) 0);
 	clearvt100();
 	lflush();
 	signal(SIGTSTP, SIG_DFL);
-#ifdef SIGVTALRM
-	/*
-	 * looks like BSD4.2 or higher - must clr mask for signal to take
-	 * effect
-	 */
-	sigsetmask(sigblock(0) & ~BIT(SIGTSTP));
-#endif
+	if (n == SIGTSTP) {
+		sigset_t mask;
+
+		/*
+		 * We have to unblock SIGTSTP for the kill() below to
+		 * have any effect.
+		 */
+		sigemptyset(&mask);
+		sigaddset(&mask, SIGTSTP);
+		sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	}
 	kill(getpid(), SIGTSTP);
 
 	setupvt100();

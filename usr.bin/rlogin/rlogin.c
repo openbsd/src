@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.23 2001/07/03 23:47:05 jasoni Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.24 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.23 2001/07/03 23:47:05 jasoni Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.24 2001/09/04 23:35:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ struct	winsize winsize;
 
 void		catch_child __P((int));
 void		copytochild __P((int));
-__dead void	doit __P((int));
+__dead void	doit __P((sigset_t *));
 __dead void	done __P((int));
 void		echo __P((char));
 u_int		getescape __P((char *));
@@ -136,7 +136,7 @@ void		lostpeer __P((int));
 void		mode __P((int));
 void		msg __P((char *));
 void		oob __P((int));
-int		reader __P((int));
+int		reader __P((sigset_t *));
 void		sendwindow __P((void));
 void		setsignal __P((int));
 void		sigwinch __P((int));
@@ -163,7 +163,7 @@ main(argc, argv)
 	struct passwd *pw;
 	struct servent *sp;
 	struct termios tty;
-	int omask;
+	sigset_t mask, omask;
 	int argoff, ch, dflag, one, uid;
 	char *host, *p, *user, term[64];
 	struct sockaddr_storage ss;
@@ -287,7 +287,10 @@ main(argc, argv)
 
 	(void)signal(SIGPIPE, lostpeer);
 	/* will use SIGUSR1 for window size hack, so hold it off */
-	omask = sigblock(sigmask(SIGURG) | sigmask(SIGUSR1));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGURG);
+	sigaddset(&mask, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 	/*
 	 * We set SIGURG and SIGUSR1 below so that an
 	 * incoming signal will be held pending rather than being
@@ -367,7 +370,7 @@ try_connect:
 
 	(void)seteuid(uid);
 	(void)setuid(uid);
-	doit(omask);
+	doit(&omask);
 	/*NOTREACHED*/
 
 	return 0;
@@ -377,7 +380,7 @@ pid_t child;
 
 void
 doit(omask)
-	int omask;
+	sigset_t *omask;
 {
 	struct sigaction sa;
 
@@ -419,7 +422,7 @@ doit(omask)
 	 * signals to the child. We can now unblock SIGURG and SIGUSR1
 	 * that were set above.
 	 */
-	(void)sigsetmask(omask);
+	(void)sigprocmask(SIG_SETMASK, omask, NULL);
 	writer();
 	msg("closed connection.");
 	done(0);
@@ -430,11 +433,16 @@ void
 setsignal(sig)
 	int sig;
 {
-	int omask = sigblock(sigmask(sig));
+	sigset_t mask, omask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, sig);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 
 	if (signal(sig, exit) == SIG_IGN)
 		(void)signal(sig, SIG_IGN);
-	(void)sigsetmask(omask);
+
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 __dead void
@@ -757,7 +765,7 @@ oob(signo)
 /* reader: read from remote: line -> 1 */
 int
 reader(omask)
-	int omask;
+	sigset_t *omask;
 {
 	pid_t pid;
 	int n, remaining;
@@ -769,7 +777,7 @@ reader(omask)
 	ppid = getppid();
 	(void)fcntl(rem, F_SETOWN, pid);
 	(void)setjmp(rcvtop);
-	(void)sigsetmask(omask);
+	(void)sigprocmask(SIG_SETMASK, omask, NULL);
 	bufp = rcvbuf;
 	for (;;) {
 		while ((remaining = rcvcnt - (bufp - rcvbuf)) > 0) {

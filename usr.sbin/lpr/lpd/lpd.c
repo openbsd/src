@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.19 2001/08/30 23:24:46 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.20 2001/09/04 23:35:59 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.19 2001/08/30 23:24:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.20 2001/09/04 23:35:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,11 +123,11 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int f, funix, finet, options, fromlen;
+	int f, lfd, funix, finet, options, fromlen;
 	fd_set defreadfds;
 	struct sockaddr_un un, fromunix;
 	struct sockaddr_in sin, frominet;
-	int omask, lfd;
+	sigset_t mask, omask;
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
@@ -196,8 +196,12 @@ main(argc, argv)
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
-#define	mask(s)	(1 << ((s) - 1))
-	omask = sigblock(mask(SIGHUP)|mask(SIGINT)|mask(SIGQUIT)|mask(SIGTERM));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGHUP);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGQUIT);
+	sigaddset(&mask, SIGTERM);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 	(void) umask(07);
 	signal(SIGHUP, mcleanup);
 	signal(SIGINT, mcleanup);
@@ -214,7 +218,7 @@ main(argc, argv)
 		exit(1);
 	}
 	(void) umask(0);
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);

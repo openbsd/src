@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.8 2000/10/10 15:41:10 millert Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.9 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -636,6 +636,9 @@ TerminalNewMode(f)
 		tc.t_brkc = esc;
 #endif
     } else {
+#ifdef	SIGTSTP
+	sigset_t mask;
+#endif	/* SIGTSTP */
 #ifdef	SIGINFO
 	void ayt_status();
 
@@ -643,11 +646,9 @@ TerminalNewMode(f)
 #endif
 #ifdef	SIGTSTP
 	(void) signal(SIGTSTP, SIG_DFL);
-# ifndef SOLARIS
-	(void) sigsetmask(sigblock(0) & ~(1<<(SIGTSTP-1)));
-# else	SOLARIS
-	(void) sigrelse(SIGTSTP);
-# endif	SOLARIS
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGTSTP);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 #endif	/* SIGTSTP */
 #ifndef USE_TERMIO
 	ltc = oltc;

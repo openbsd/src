@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.14 2001/07/27 20:34:36 pvalchev Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.15 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -217,6 +217,7 @@ main(argc, argv)
 	struct sgttyb tty, otty;
 #endif
 	char logincmd[2*BUFSIZ+32];
+	sigset_t emptyset;
 	extern uid_t getuid();
 
 	environ = restricted_environ; /* minimal protection for system() */
@@ -378,8 +379,9 @@ main(argc, argv)
 
 	/* twiddle thumbs until we get a signal; allow user to kill */
 	seteuid(uid);
+	sigemptyset(&emptyset);
 	while (1)
-		sigpause(0);
+		sigsuspend(&emptyset);
 
 	/* NOTREACHED */
 }

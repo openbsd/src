@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.5 1997/06/23 22:21:45 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.6 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.5 1997/06/23 22:21:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.6 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -55,9 +55,12 @@ command(cmd)
 {
         register struct cmdtab *p;
         register char *cp;
-	int interval, omask;
+	int interval;
+	sigset_t mask, omask;
 
-	omask = sigblock(sigmask(SIGALRM));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGALRM);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
         for (cp = cmd; *cp && !isspace(*cp); cp++)
                 ;
         if (*cp)
@@ -144,7 +147,7 @@ command(cmd)
 	if (curcmd->c_cmd == 0 || !(*curcmd->c_cmd)(cmd, cp))
 		error("%s: Unknown command.", cmd);
 done:
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 struct cmdtab *

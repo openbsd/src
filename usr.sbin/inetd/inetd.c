@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.84 2001/09/03 21:22:38 pjanzen Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.85 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.84 2001/09/03 21:22:38 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.85 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -174,8 +174,6 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.84 2001/09/03 21:22:38 pjanzen Exp 
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
 
-#define	SIGBLOCK	(sigmask(SIGCHLD)|sigmask(SIGHUP)|sigmask(SIGALRM))
-
 void	config __P((int));
 void	doconfig __P((void));
 void	reap __P((int));
@@ -184,16 +182,18 @@ void	retry __P((int));
 void	doretry __P((void));
 void	goaway __P((int));
 
-int	debug = 0;
-int	nsock, maxsock;
+int	 debug = 0;
+int	 nsock, maxsock;
 fd_set	*allsockp;
-int	allsockn;
-int	toomany = TOOMANY;
-int	options;
-int	timingout;
-struct	servent *sp;
+int	 allsockn;
+int	 toomany = TOOMANY;
+int	 options;
+int	 timingout;
+struct	 servent *sp;
 char	*curdom;
-uid_t	uid;
+uid_t	 uid;
+sigset_t blockmask;
+sigset_t emptymask;
 
 #ifndef OPEN_MAX
 #define OPEN_MAX	64
@@ -412,6 +412,12 @@ main(argc, argv, envp)
 	}
 #endif
 
+	sigemptyset(&emptymask);
+	sigemptyset(&blockmask);
+	sigaddset(&blockmask, SIGCHLD);
+	sigaddset(&blockmask, SIGHUP);
+	sigaddset(&blockmask, SIGALRM);
+
 	memset((char *)&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);	
 	sigaddset(&sa.sa_mask, SIGALRM);
@@ -446,13 +452,13 @@ main(argc, argv, envp)
 	    int n, ctrl = -1;
 
 	    if (nsock == 0) {
-		(void) sigblock(SIGBLOCK);
+		(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
 		while (nsock == 0) {
 		    if (wantretry || wantconfig || wantreap)
 			break;
-		    sigpause(0L);
+		    sigsuspend(&emptymask);
 		}
-		(void) sigsetmask(0L);
+		(void) sigprocmask(SIG_SETMASK, &emptymask, NULL);
 	    }
 	    
 	    if (wantretry || wantconfig || wantreap) {
@@ -525,7 +531,7 @@ main(argc, argv, envp)
 			}
 		} else
 			ctrl = sep->se_fd;
-		(void) sigblock(SIGBLOCK);
+		(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
 		pid = 0;
 		dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
 		if (dofork) {
@@ -565,7 +571,8 @@ main(argc, argv, envp)
 					sep->se_fd = -1;
 					sep->se_count = 0;
 					nsock--;
-					sigsetmask(0L);
+					sigprocmask(SIG_SETMASK, &emptymask,
+					    NULL);
 					if (!timingout) {
 						timingout = 1;
 						alarm(RETRYTIME);
@@ -579,7 +586,7 @@ main(argc, argv, envp)
 			syslog(LOG_ERR, "fork: %m");
 			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
 				close(ctrl);
-			sigsetmask(0L);
+			sigprocmask(SIG_SETMASK, &emptymask, NULL);
 			sleep(1);
 			continue;
 		}
@@ -588,7 +595,7 @@ main(argc, argv, envp)
 			FD_CLR(sep->se_fd, allsockp);
 			nsock--;
 		}
-		sigsetmask(0L);
+		sigprocmask(SIG_SETMASK, &emptymask, NULL);
 		if (pid == 0) {
 			if (sep->se_bi)
 				(*sep->se_bi->bi_fn)(ctrl, sep);
@@ -774,9 +781,9 @@ void
 doconfig(void)
 {
 	register struct servtab *sep, *cp, **sepp;
-	int omask;
 	int n, add;
 	char protoname[10];
+	sigset_t omask;
 
 	if (!setconfig()) {
 		syslog(LOG_ERR, "%s: %m", CONFIG);
@@ -795,7 +802,7 @@ doconfig(void)
 
 #define SWAP(type, a, b) {type c=(type)a; (type)a=(type)b; (type)b=(type)c;}
 
-			omask = sigblock(SIGBLOCK);
+			sigprocmask(SIG_BLOCK, &blockmask, &omask);
 			/*
 			 * sep->se_wait may be holding the pid of a daemon
 			 * that we're waiting for.  If so, don't overwrite
@@ -816,7 +823,7 @@ doconfig(void)
 				unregister_rpc(sep);
 			sep->se_rpcversl = cp->se_rpcversl;
 			sep->se_rpcversh = cp->se_rpcversh;
-			sigsetmask(omask);
+			sigprocmask(SIG_SETMASK, &omask, NULL);
 			freeconfig(cp);
 			add = 1;
 		} else {
@@ -968,7 +975,7 @@ doconfig(void)
 	/*
 	 * Purge anything not looked at above.
 	 */
-	omask = sigblock(SIGBLOCK);
+	sigprocmask(SIG_BLOCK, &blockmask, &omask);
 	sepp = &servtab;
 	while ((sep = *sepp)) {
 		if (sep->se_checked) {
@@ -990,7 +997,7 @@ doconfig(void)
 		freeconfig(sep);
 		free((char *)sep);
 	}
-	(void) sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 void
@@ -1179,7 +1186,7 @@ enter(cp)
 	struct servtab *cp;
 {
 	register struct servtab *sep;
-	int omask;
+	sigset_t omask;
 
 	sep = (struct servtab *)malloc(sizeof (*sep));
 	if (sep == NULL) {
@@ -1189,10 +1196,10 @@ enter(cp)
 	*sep = *cp;
 	sep->se_fd = -1;
 	sep->se_rpcprog = -1;
-	omask = sigblock(SIGBLOCK);
+	sigprocmask(SIG_BLOCK, &blockmask, &omask);
 	sep->se_next = servtab;
 	servtab = sep;
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	return (sep);
 }
 

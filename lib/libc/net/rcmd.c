@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.38 2001/06/27 00:58:55 lebel Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.39 2001/09/04 23:35:58 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	int error;
 	struct sockaddr_storage from;
 	fd_set *readsp = NULL;
-	int oldmask;
+	sigset_t oldmask, mask;
 	pid_t pid;
 	int s, lport, timo;
 	char c, *p;
@@ -132,7 +132,9 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 
 	r = res;
 	refused = 0;
-	oldmask = sigblock(sigmask(SIGURG));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGURG);
+	oldmask = sigprocmask(SIG_BLOCK, &mask, &oldmask);
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport_af(&lport, r->ai_family);
 		if (s < 0) {
@@ -146,7 +148,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 				r = r->ai_next;
 				continue;
 			} else {
-				sigsetmask(oldmask);
+				sigprocmask(SIG_SETMASK, &oldmask, NULL);
 				freeaddrinfo(res);
 				return (-1);
 			}
@@ -194,7 +196,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 		}
 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
 		    strerror(errno));
-		sigsetmask(oldmask);
+		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		freeaddrinfo(res);
 		return (-1);
 	}
@@ -306,7 +308,7 @@ again:
 		}
 		goto bad2;
 	}
-	sigsetmask(oldmask);
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	free(readsp);
 	return (s);
 bad2:
@@ -316,7 +318,7 @@ bad:
 	if (readsp)
 		free(readsp);
 	(void)close(s);
-	sigsetmask(oldmask);
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	return (-1);
 }
 

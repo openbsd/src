@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.42 2001/05/29 12:53:40 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.43 2001/09/04 23:35:58 millert Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1236,7 +1236,11 @@ JobExec(job, argv)
 	_exit(1);
     } else {
 #ifdef REMOTE
-	int omask = sigblock(sigmask(SIGCHLD));
+	sigset_t mask, omask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 #endif
 	job->pid = cpid;
 
@@ -1284,7 +1288,7 @@ JobExec(job, argv)
 	    }
 	}
 #ifdef REMOTE
-	(void)sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 #endif
     }
 

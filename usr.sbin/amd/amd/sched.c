@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.3 2001/03/02 06:22:04 deraadt Exp $
+ *	$Id: sched.c,v 1.4 2001/09/04 23:35:59 millert Exp $
  */
 
 /*
@@ -110,14 +110,16 @@ cb_fun cf;
 voidp ca;
 {
 	pjob *p = sched_job(cf, ca);
-	int mask;
+	sigset_t mask, omask;
 
 	p->wchan = (voidp) p;
 
-	mask = sigblock(sigmask(SIGCHLD));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 
 	if ((p->pid = background())) {
-		sigsetmask(mask);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		return;
 	}
 
@@ -275,51 +277,3 @@ void do_task_notify(P_void)
 		free((voidp) p);
 	}
 }
-
-#ifdef HAS_SVR3_SIGNALS
-/*
- * 4.2 signal library based on svr3 (4.1+ bsd) interface
- * From Stephen C. Pope <scp@acl.lanl.gov).
- */
-
-static int current_mask = 0;
-
-int sigblock(mask)
-int mask;
-{
-    int sig;
-    int m;
-    int oldmask;
-
-    oldmask = current_mask;
-    for ( sig = 1, m = 1; sig <= MAXSIG; sig++, m <<= 1 ) {
-        if (mask & m)  {
-	    sighold(sig);
-            current_mask |= m;
-        }
-    }
-    return oldmask;
-}
-
-int sigsetmask(mask)
-int mask;
-{
-    int sig;
-    int m;
-    int oldmask;
-
-    oldmask = current_mask;
-    for ( sig = 1, m = 1; sig <= MAXSIG; sig++, m <<= 1 ) {
-        if (mask & m)  {
-            sighold(sig);
-            current_mask |= m;
-        }
-        else  {
-            sigrelse(sig);
-            current_mask &= ~m;
-        }
-    }
-    return oldmask;
-}
-
-#endif /* HAS_SVR3_SIGNALS */

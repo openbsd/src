@@ -117,8 +117,8 @@ rsrr_read(f, rfd)
 	int f;
 	fd_set *rfd;
 {
-    register int rsrr_recvlen;
-    register int omask;
+    int rsrr_recvlen;
+    sigset_t mask, omask;
     
     bzero((char *) &client_addr, sizeof(client_addr));
     rsrr_recvlen = recvfrom(rsrr_socket, rsrr_recv_buf, sizeof(rsrr_recv_buf),
@@ -129,9 +129,11 @@ rsrr_read(f, rfd)
 	return;
     }
     /* Use of omask taken from main() */
-    omask = sigblock(sigmask(SIGALRM));
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGALRM);
+    sigprocmask(SIG_BLOCK, &mask, &omask);
     rsrr_accept(rsrr_recvlen);
-    (void)sigsetmask(omask);
+    sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 /* Accept a message from the reservation protocol and take

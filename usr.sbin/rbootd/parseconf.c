@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.4 2001/01/17 00:33:03 pjanzen Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.5 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: parseconf.c,v 1.4 2001/01/17 00:33:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: parseconf.c,v 1.5 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,8 @@ ParseConfig()
 	char line[C_LINELEN];
 	register char *cp, *bcp;
 	register int i, j;
-	int omask, linecnt = 0;
+	int linecnt = 0;
+	sigset_t mask, omask;
 
 	if (BootAny)				/* ignore config file */
 		return(1);
@@ -110,7 +111,9 @@ ParseConfig()
 	 *  this could have unexpected results if the server was HUP'd
 	 *  whilst reconfiguring.  Hence, it is done here.
 	 */
-	omask = sigblock(sigmask(SIGHUP));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGHUP);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 
 	/*
 	 *  GETSTR positions `bcp' at the start of the current token,
@@ -212,7 +215,7 @@ ParseConfig()
 
 	(void) fclose(fp);				/* close config file */
 
-	(void) sigsetmask(omask);			/* reset signal mask */
+	sigprocmask(SIG_SETMASK, &omask, NULL);		/* reset signal mask */
 
 	return(1);					/* return success */
 }

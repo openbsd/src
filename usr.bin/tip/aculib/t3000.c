@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.5 1997/04/02 01:47:07 millert Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.6 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: t3000.c,v 1.5 1997/04/02 01:47:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: t3000.c,v 1.6 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -355,45 +355,14 @@ t3000_verbose_read()
 }
 #endif
 
-/*
- * Code stolen from /usr/src/lib/libc/gen/sleep.c
- */
-#define mask(s) (1<<((s)-1))
-#define setvec(vec, a) \
-        vec.sv_handler = a; vec.sv_mask = vec.sv_onstack = 0
-
-static napms = 50; /* Give the t3000 50 milliseconds between characters */
-
-static int ringring;
-
+/* Give the t3000 50 milliseconds between characters */
+void
 t3000_nap()
 {
-	int omask;
-        struct itimerval itv, oitv;
-        register struct itimerval *itp = &itv;
-        struct sigvec vec, ovec;
+	struct timespec ts;
 
-        timerclear(&itp->it_interval);
-        timerclear(&itp->it_value);
-        if (setitimer(ITIMER_REAL, itp, &oitv) < 0)
-                return;
-        setvec(ovec, SIG_DFL);
-        omask = sigblock(mask(SIGALRM));
-        itp->it_value.tv_sec = napms/1000;
-	itp->it_value.tv_usec = ((napms%1000)*1000);
-        setvec(vec, t3000_napx);
-        ringring = 0;
-        (void) sigvec(SIGALRM, &vec, &ovec);
-        (void) setitimer(ITIMER_REAL, itp, (struct itimerval *)0);
-        while (!ringring)
-                sigpause(omask &~ mask(SIGALRM));
-        (void) sigvec(SIGALRM, &ovec, (struct sigvec *)0);
-        (void) setitimer(ITIMER_REAL, &oitv, (struct itimerval *)0);
-	(void) sigsetmask(omask);
-}
+	ts.tv_sec = 0;
+	ts.tv_nsec = 50 * 1000000;
 
-static void
-t3000_napx()
-{
-        ringring = 1;
+	nanosleep(&ts, NULL);
 }

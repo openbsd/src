@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.25 2001/08/26 09:42:04 brian Exp $	*/
+/*	$OpenBSD: if.c,v 1.26 2001/09/04 23:35:59 millert Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.25 2001/08/26 09:42:04 brian Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.26 2001/09/04 23:35:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -376,7 +376,7 @@ struct	iftot {
 	int	ift_dr;			/* drops */
 } iftot[MAXIF];
 
-u_char	signalled;			/* set if alarm goes off "early" */
+volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
 
 /*
  * Print a running summary of interface statistics.
@@ -395,7 +395,7 @@ sidewaysintpr(interval, off)
 	register int line;
 	struct iftot *lastif, *sum, *interesting;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
-	int oldmask;
+	sigset_t emptyset;
 
 	/*
 	 * Find the pointer to the first ifnet structure.  Replace
@@ -552,11 +552,9 @@ loop:
 	putchar('\n');
 	fflush(stdout);
 	line++;
-	oldmask = sigblock(sigmask(SIGALRM));
-	if (! signalled) {
-		sigpause(0);
-	}
-	sigsetmask(oldmask);
+	sigemptyset(&emptyset);
+	if (!signalled)
+		sigsuspend(&emptyset);
 	signalled = NO;
 	(void)alarm(interval);
 	if (line == 21)

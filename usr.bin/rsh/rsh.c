@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.19 2000/02/01 03:23:37 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.20 2001/09/04 23:35:59 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.19 2000/02/01 03:23:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.20 2001/09/04 23:35:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
 
 void usage __P((void));
 
-void talk __P((int, int, int, register int));
+void talk __P((int, sigset_t *, int, register int));
 
 /*
  * rsh - remote shell
@@ -103,7 +103,7 @@ main(argc, argv)
 	extern int optind;
 	struct passwd *pw;
 	struct servent *sp;
-	int omask;
+	sigset_t mask, omask;
 	int argoff, asrsh, ch, dflag, nflag, one, pid = 0, rem, uid;
 	register char *p;
 	char *args, *host, *user, *copyargs();
@@ -292,7 +292,11 @@ try_connect:
 
 	(void)seteuid(uid);
 	(void)setuid(uid);
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGTERM));
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGQUIT);
+	sigaddset(&mask, SIGTERM);
+	sigprocmask(SIG_BLOCK, &mask, &omask);
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		(void)signal(SIGINT, sendsig);
 	if (signal(SIGQUIT, SIG_IGN) != SIG_IGN)
@@ -317,7 +321,7 @@ try_connect:
 		(void)ioctl(rem, FIONBIO, &one);
 	}
 
-	talk(nflag, omask, pid, rem);
+	talk(nflag, &omask, pid, rem);
 
 	if (!nflag)
 		(void)kill(pid, SIGKILL);
@@ -328,7 +332,7 @@ try_connect:
 void
 talk(nflag, omask, pid, rem)
 	int nflag, pid;
-	int omask;
+	sigset_t *omask;
 	register int rem;
 {
 	register int cc, wc;
@@ -377,7 +381,7 @@ done:
 		exit(0);
 	}
 
-	(void)sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	FD_ZERO(&readfrom);
 	FD_SET(rfd2, &readfrom);
 	FD_SET(rem, &readfrom);
