@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.25 2002/03/30 01:29:18 deraadt Exp $
+#	$OpenBSD: upgrade.sh,v 1.26 2002/03/31 03:05:04 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,13 +67,14 @@ MODE="upgrade"
 trap 'cleanup_on_exit' EXIT
 trap 'exit 2' HUP INT QUIT TERM
 
-# which sets?
-THESETS="$UPGRSETS $MDSETS"
+# Remove 'etc' set from THESETS. It should be installed
+# manually, after the upgrade.
+THESETS=`echo $THESETS | sed -e 's/ etc / /'`
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
 echo -n "Proceed with upgrade? [n] "
-getresp "n"
+getresp n
 case "$resp" in
 y*|Y*)	echo	"Cool!  Let's get to it..."
 	;;
@@ -145,7 +146,7 @@ if you wish to use the network installation capabilities of this program.
 
 __EOT
 echo -n	"Enable network? [y] "
-getresp "y"
+getresp y
 case "$resp" in
 y*|Y*)
 	if ! enable_network; then
@@ -162,7 +163,7 @@ opportunity to redo the default route in the event that it failed above.
 
 __EOT
 	echo -n "Escape to shell? [n] "
-	getresp "n"
+	getresp n
 	case "$resp" in
 	y*|Y*)	echo "Type 'exit' to return to upgrade."
 		sh
@@ -187,13 +188,13 @@ NOTE:	1) this fstab is used only during the upgrade. It will not be
 
 __EOT
 echo -n	"Edit the fstab with ${EDITOR}? [n] "
-getresp "n"
+getresp n
 case "$resp" in
 y*|Y*)	${EDITOR} /tmp/fstab
 	;;
 esac
 
-echo	""
+echo
 
 # Create a fstab containing only ffs filesystems w/o 'noauto'.
 munge_fstab < /tmp/fstab
@@ -236,7 +237,7 @@ fi
 )
 
 echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
-getresp "y"
+getresp y
 case "$resp" in
 y*|Y*)	get_localdir /mnt
 	;;

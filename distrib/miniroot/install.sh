@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.88 2002/03/30 01:29:18 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.89 2002/03/31 03:05:04 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -102,9 +102,6 @@ MODE="install"
 trap 'cleanup_on_exit' EXIT
 trap 'exit 2' HUP INT QUIT TERM
 
-# which sets?
-THESETS="$ALLSETS $MDSETS"
-
 if [ ! -f /etc/fstab ]; then
 	# Good {morning,afternoon,evening,night}.
 	echo ==================================================
@@ -115,7 +112,7 @@ else
 	echo "You can try to skip the disk preparation steps and continue,"
 	echo "otherwise you should reboot the miniroot and start over..."
 	echo -n "Skip disk initialization? [n] "
-	getresp "n"
+	getresp n
 	case "$resp" in
 	y*|Y*)	echo
 		echo "Cool!  Let's get to it..."
@@ -262,7 +259,7 @@ __EOT
 	echo
 
 	echo -n	"Are you really sure that you're ready to proceed? [n] "
-	getresp "n"
+	getresp n
 	case "$resp" in
 	y*|Y*)	;;
 	*)	echo "ok, try again later..."
@@ -296,7 +293,7 @@ will be preserved and copied into the new root filesystem.
 
 __EOT
 echo -n	"Configure the network? [y] "
-getresp "y"
+getresp y
 case "$resp" in
 y*|Y*)	donetconfig
 	;;
@@ -325,7 +322,7 @@ mount | while read line; do
 	if [ "$3" = "/" -a "$5" = "nfs" ]; then
 		echo "You appear to be running diskless."
 		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
-		getresp "n"
+		getresp n
 		case "$resp" in
 		y*|Y*)	get_localdir
 			;;
@@ -341,14 +338,14 @@ resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Password (will not echo): "
 	stty -echo
-	getresp -n ""
+	getresp -n
 	stty echo
 	echo
 	_password="$resp"
 
 	echo -n "Password (again): "
 	stty -echo
-	getresp -n ""
+	getresp -n
 	stty echo
 	echo
 	if [ "${_password}" != "${resp}" ]; then

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.194 2002/03/30 13:34:51 krw Exp $
+#	$OpenBSD: install.sub,v 1.195 2002/03/31 03:05:04 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,31 +67,6 @@
 #
 
 #	OpenBSD installation/upgrade script - common subroutines.
-
-ROOTDISK=
-VERSION=31
-VERSION_MAJOR=$(( $VERSION / 10 ))
-VERSION_MINOR=$(( $VERSION % 10 ))
-export VERSION VERSION_MAJOR VERSION_MINOR
-
-# extra "site" set can be provided by person doing install or
-# upgrade. THESETS is set to ALLSETS for installs and UPGRSETS
-# for upgrades.
-ALLSETS="base etc misc comp man game xbase xshare xfont xserv site"
-UPGRSETS="base misc comp man game xbase xshare xfont xserv site"
-THESETS=
-
-# Path searched for sets by install_sets on the local filesystems
-local_sets_dir=
-
-# decide upon an editor
-if [ "X$EDITOR" = X ]; then
-	EDITOR=ed
-	if [ -x /usr/bin/vi ]; then
-		EDITOR=vi
-	fi
-	export EDITOR
-fi
 
 getresp() {
 	local _no_shell=0
@@ -281,20 +256,20 @@ bsort() {
 
 dir_has_sets() {
 	# return true when the directory $1 contains a set for $2...$n
-	local _dir=$1 _file
+	local _dir="$1" _file
 
 	shift
 	for _file in $*
 	do
-		if [ -f $_dir/${_file}${VERSION}.tar.gz ]; then
+		if [ -f "$_dir/${_file}${VERSION}.tar.gz" ]; then
 			return 0
 		fi
 		# Try for stupid msdos convention
-		if [ -f $_dir/${_file}${VERSION}.tgz ]; then
+		if [ -f "$_dir/${_file}${VERSION}.tgz" ]; then
 			return 0
 		fi
 		# Special check for kernel
-		if [ $_file = "kernel" -a -f $_dir/bsd ]; then
+		if [ $_file = "kernel" -a -f "$_dir/bsd" ]; then
 			return 0
 		fi
 	done
@@ -340,14 +315,14 @@ get_localdir() {
 	local _mp=$1 _dir=
 
 	while : ; do
-		echo -n "Enter the pathname where the sets are stored [$_dir] "
+		echo -n "Enter the pathname where the sets are stored: [$_dir] "
 		getresp "$_dir"
-		_dir=$resp
+		_dir="$resp"
 
 		# Allow break-out with empty response
 		if [ -z "$_dir" ]; then
 			echo -n "Are you sure you don't want to set the pathname? [n] "
-			getresp "n"
+			getresp n
 			case "$resp" in
 			y*|Y*)	break
 				;;
@@ -366,7 +341,7 @@ The directory \"$local_sets_dir\" does not exist, or does not hold any of the
 upgrade sets.
 __EOT
 			echo -n "Re-enter pathname? [y] "
-			getresp "y"
+			getresp y
 			case "$resp" in
 			y*|Y*)	;;
 			*)	local_sets_dir=
@@ -383,15 +358,12 @@ getanotherdisk() {
 Now you can select another disk to initialize.  (Do not re-select a disk
 you have already entered information for).  Available disks are:
 
+$_DKDEVS
+
 __EOT
-	_DKDEVS=`md_get_diskdevs`
-	echo	"$_DKDEVS"
-	echo
 	echo -n	"Which one? [done] "
-	getresp ""
-	if [ "X${resp}" = "X" ]; then
-		DISK=done
-	elif [ "X${resp}" = "Xdone" ]; then
+	getresp done
+	if [ "X${resp}" = "Xdone" ]; then
 		DISK=done
 	elif isin $resp $_DKDEVS ; then
 		DISK="$resp"
@@ -403,6 +375,13 @@ __EOT
 }
 
 getrootdisk() {
+	local _defdsk
+
+	_defdsk=`echo $_DKDEVS | cutlast`
+	if [ "${_defdsk}" != "${_DKDEVS}" ]; then
+		_defdsk=
+	fi
+
 	cat << __EOT
 
 The installation program needs to know which disk to consider the root disk.
@@ -410,23 +389,16 @@ Note the unit number may be different than the unit number you used in the
 boot program (especially on a PC with multiple disk controllers).
 Available disks are:
 
-__EOT
-	local _defdsk
+$_DKDEVS
 
-	_DKDEVS=`md_get_diskdevs`
-	_defdsk=`echo $_DKDEVS | cutlast`
-	if [ "${_defdsk}" != "${_DKDEVS}" ]; then
-		_defdsk=
-	fi
-	echo	"$_DKDEVS"
-	echo
+__EOT
 	echo -n "Which disk is the root disk? [${_defdsk}] "
-	getresp "${_defdsk}"
+	getresp "$_defdsk"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK="$resp"
 	else
 		echo
-		echo "The disk $resp does not exist."
+		echo "The disk '$resp' does not exist."
 		ROOTDISK=
 	fi
 }
@@ -489,7 +461,7 @@ __EOT
 			done
 			echo
 		fi
-		echo -n	"Configure which interface? (or, enter 'done') [$_ouranswer] "
+		echo -n	"Configure which interface? (or 'done') [$_ouranswer] "
 		getresp "$_ouranswer"
 		case "$resp" in
 		"done")	;;
@@ -546,7 +518,7 @@ configure_ifs() {
 	# Get IP address
 	resp=
 	while [ "X${resp}" = X"" ]; do
-		echo -n "IP address${_dhcp_prompt} ? [$_if_ip] "
+		echo -n "IP address${_dhcp_prompt}? [$_if_ip] "
 		getresp "$_if_ip"
 		if [ ! -x /sbin/dhclient -a "X$resp" == "Xdhcp" ]; then
 			resp=
@@ -570,7 +542,7 @@ configure_ifs() {
 			_if_mask=255.255.255.0
 		fi
 		while [ "X${resp}" = X"" ]; do
-			echo -n "Netmask ? [$_if_mask] "
+			echo -n "Netmask? [$_if_mask] "
 			getresp "$_if_mask"
 			_if_mask=$resp
 		done
@@ -948,7 +920,7 @@ if [ "X${_proxy_host}" = X"" ]; then
 	_proxy_host=none
 fi
 echo -n "HTTP/FTP proxy URL? (e.g. \"http://proxy:8080\", or \"none\") [${_proxy_host}] "
-getresp "${_proxy_host}"
+getresp "$_proxy_host"
 if [ "X${resp}" = X"none" ]; then
 	unset _proxy_host ftp_proxy http_proxy
 else
@@ -967,7 +939,7 @@ if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 	echo "old ftp servers that claim to support passive mode, but really do not."
 	echo "In this case, you should explicitly request an active session."
 	echo -n "Do you want to use active ftp? [${resp}] "
-	getresp "${resp}"
+	getresp "$resp"
 	case "$resp" in
 	y*|Y*)	_ftp_active=-A ;;
 	*)	unset _ftp_active ;;
@@ -977,7 +949,7 @@ fi
 # Provide a list of possible servers
 test -z "$_ftp_getlist" && _ftp_getlist=y
 echo -n "Do you want a list of potential ${_url_type} servers? [${_ftp_getlist}] "
-getresp $_ftp_getlist
+getresp "$_ftp_getlist"
 case "$resp" in
 n*|N*)	_ftp_getlist=n
 	;;
@@ -1060,7 +1032,7 @@ if [ "${_url_type}" = "ftp" ]; then
 	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Login? [${_ftp_server_login}] "
-		getresp "${_ftp_server_login}"
+		getresp "$_ftp_server_login"
 		_ftp_server_login="$resp"
 	done
 
@@ -1070,7 +1042,7 @@ if [ "${_url_type}" = "ftp" ]; then
 		while [ "X${resp}" = X"" ]; do
 			echo -n "Password (will not echo): "
 			stty -echo
-			getresp -n "${_ftp_server_password}"
+			getresp -n "$_ftp_server_password"
 			stty echo
 			echo
 			_ftp_server_password="$resp"
@@ -1117,7 +1089,7 @@ if list_has_sets "$_file_list" $THESETS; then
 else
 	eval echo "There are no OpenBSD install sets available in \"\$_${_url_type}_server_dir\"."
 	echo -n "Search for *.tar.gz and *.tgz files? [y] "
-	getresp "y"
+	getresp y
 	case "$resp" in
 	n*|N*)	return ;;
 	esac
@@ -1132,7 +1104,7 @@ else
 	if [ "X${_sets}" = X"" ]; then
 		echo "There are no *.tar.gz or *.tgz files in that dir."
 		echo -n "See a directory listing? [y] "
-		getresp "y"
+		getresp y
 		case "$resp" in
 		n*|N*)	return ;;
 		esac
@@ -1201,8 +1173,8 @@ eval _installed_via_${_url_type}=1
 
 echo
 echo "Fetching files via ${_url_type} may take a long time, especially over a slow network"
-echo -n "connection.  Ready to download files? [y] "
-getresp "y"
+echo -n "connection. Ready to download files? [y] "
+getresp y
 case "$resp" in
 y*|Y*)	;;
 *)	_setsdone="$_osetsdone"
@@ -1257,43 +1229,43 @@ install_from_mounted_fs() {
 # $1 - directory containing installation sets
 local _sets= _kernel _f _get_files _failed_files _osetsdone
 
-if [ ! -d $1 ]; then
-	echo "No such directory: $1"
+if [ ! -d "$1" ]; then
+	echo "No such directory: '$1'"
 	return
 fi
 
-if dir_has_sets $1 $THESETS; then
+if dir_has_sets "$1" $THESETS; then
 	for _f in $THESETS ; do
 		if [ "X${_f}" = "Xkernel" ]; then
-			if [ -f $1/bsd ]; then
+			if [ -f "$1/bsd" ]; then
 				_kernel=bsd
 			fi
-		elif [ -f $1/${_f}${VERSION}.tar.gz ]; then
+		elif [ -f "$1/${_f}${VERSION}.tar.gz" ]; then
 			_sets="$_sets ${_f}${VERSION}.tar.gz"
-		elif [ -f $1/${_f}${VERSION}.tgz ]; then
+		elif [ -f "$1/${_f}${VERSION}.tgz" ]; then
 			_sets="$_sets ${_f}${VERSION}.tgz"
 		fi
 	done
 else
 	echo "There are no OpenBSD install sets available in \"$1\"."
 	echo -n "Search for *.tar.gz and *.tgz files? [y] "
-	getresp "y"
+	getresp y
 	case "$resp" in
 	n*|N*)	return ;;
 	esac
 	# *.tar.gz and *.tgz are possible sets
 	_sets=
 	_kernel=
-	_sets=`cd $1 ; echo *.tar.gz *.tgz`
+	_sets=`cd "$1" ; echo *.tar.gz *.tgz`
 	if [ "X${_sets}" = X'*.tar.gz *.tgz' ]; then
 		echo "There are no *.tar.gz or *.tgz files in that dir."
 		echo -n "See a directory listing? [y] "
-		getresp "y"
+		getresp y
 		case "$resp" in
 		n*|N*)	return ;;
 		esac
 		echo
-		( cd $1 && ls )
+		( cd "$1" && ls )
 		echo
 		return
 	else
@@ -1353,7 +1325,7 @@ fi
 
 echo
 echo -n "Ready to extract selected file sets? [y] "
-getresp "y"
+getresp y
 case "$resp" in
 y*|Y*)	;;
 *)	_setsdone="$_osetsdone"
@@ -1408,7 +1380,6 @@ install_cdrom() {
 local _drive _range _part _fstype _directory _n
 
 # Get the cdrom device info
-_CDDEVS=`md_get_cddevs`
 if [ "X${_CDDEVS}" = X"" ]; then
 	echo "No CD-ROM devices were found.  Aborting."
 	return
@@ -1467,7 +1438,7 @@ else
 	_range=`md_get_partition_range`
 	resp=
 	while [ "X${resp}" = X"" ]; do
-		echo -n 'CD-ROM partition to mount (normally "c")? [c] '
+		echo -n 'CD-ROM partition to mount? (normally "c") [c] '
 		getresp c
 		case "$resp" in
 		$_range)
@@ -1491,7 +1462,7 @@ __EOT
 	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Which filesystem type? [cd9660] "
-		getresp "cd9660"
+		getresp cd9660
 		case "$resp" in
 		cd9660|ffs)
 			_fstype=$resp
@@ -1512,18 +1483,14 @@ if ! mount -t ${_fstype} -o ro /dev/${_drive}${_part} /mnt2 ; then
 fi
 
 # Get the directory where the file lives
-if [ "X${_directory}" = X"" ]; then
-	_directory="/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
-fi
 resp=
-while [ "X${resp}" = X"" ]; do
-	echo "Enter the directory relative to the mount point that"
-	echo -n "contains the file. [${_directory}] "
-	getresp "${_directory}"
-done
-_directory=$resp
+_directory="${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+echo "Enter the directory relative to the mount point that contains"
+echo -n "the file: [${_directory}] "
 
-install_from_mounted_fs /mnt2/${_directory}
+getresp "$_directory"
+
+install_from_mounted_fs "/mnt2/${resp}"
 umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -1533,9 +1500,20 @@ mount_a_disk() {
 # returns 0 on failure.
 
 local _drive _def_partition _partition_range _partition _fstype
-local _fsopts _directory _md_fstype _md_fsopts
+local _fsopts _md_fstype _md_fsopts
 
-getresp "abort"
+cat << __EOT
+
+The following disk devices are installed on your system; please select
+the disk device containing the partition with the installation sets:
+
+$_DKDEVS
+
+__EOT
+
+echo -n	"Which is the disk with the installation sets? [abort] "
+getresp abort
+
 case "$resp" in
 abort)	echo "Aborting."
 	return 0
@@ -1560,14 +1538,14 @@ __EOT
 disklabel $_drive 2>/dev/null | grep '^  .:'
 echo
 _likely_partition_range=`disklabel $_drive 2>/dev/null | \
-    sed -n -e '/swap/s/.*//' -e '/unused/s/.*//' \
-	-e '/^  .:/{s/^  \(.\).*/\1/;H;}' \
-	-e '${g;s/\n//g;s/^/[/;s/$/]/p;}'`
+	sed -n -e '/swap/s/.*//' -e '/unused/s/.*//' \
+		-e '/^  .:/{s/^  \(.\).*/\1/;H;}' \
+		-e '${g;s/\n//g;s/^/[/;s/$/]/p;}'`
 _partition_range=`disklabel $_drive 2>/dev/null | \
-    sed -n -e '/^  .:/{s/^  \(.\).*/\1/;H;}' \
-	-e '${g;s/\n//g;s/^/[/;s/$/]/p;}'`
+	sed -n -e '/^  .:/{s/^  \(.\).*/\1/;H;}' \
+		-e '${g;s/\n//g;s/^/[/;s/$/]/p;}'`
 _def_partition=`echo $_likely_partition_range | \
-    sed -n 's/^\[\(.\).*\]/\1/p'`
+	sed -n 's/^\[\(.\).*\]/\1/p'`
 if [ -z "$_def_partition" ]; then
 	_def_partition=`echo $_partition_range | \
 		sed -n 's/^\[\(.\).*\]/\1/p'`
@@ -1608,7 +1586,7 @@ fi
 resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which filesystem type? [default] "
-	getresp "default"
+	getresp default
 	case "$resp" in
 	default)
 		_fstype=
@@ -1633,85 +1611,68 @@ if ! mount $_fstype -o $_fsopts /dev/${_drive}${_partition} /mnt2; then
 	echo "Cannot mount disk.  Aborting."
 	return 0
 fi
+
 return 1
 }
 
 install_disk() {
-local _directory
+	if mount_a_disk ; then
+		return
+	fi
 
-cat << __EOT
-
-The following disk devices are installed on your system; please select
-the disk device containing the partition with the installation sets:
-
-__EOT
-_DKDEVS=`md_get_diskdevs`
-echo "$_DKDEVS"
-echo
-echo -n	"Which is the disk with the installation sets? [abort] "
-
-if mount_a_disk ; then
-	return
-fi
-
-# Get the directory where the file lives
-resp=
-while [ "X${resp}" = X"" ]; do
+	# Get the directory where the file lives
 	echo "Enter the directory relative to the mount point that"
-	echo -n "contains the file. [${_directory}] "
-	getresp "${_directory}"
-done
-_directory=$resp
+	echo -n "contains the file: [.] "
+	getresp "."
 
-install_from_mounted_fs /mnt2/${_directory}
-umount -f /mnt2 > /dev/null 2>&1
+	install_from_mounted_fs "/mnt2/${resp}"
+	umount -f /mnt2 > /dev/null 2>&1
 }
 
 install_nfs() {
-# Get the IP address of the server
-resp=
-while [ "X${resp}" = X"" ]; do
-	echo -n "Server IP address or hostname? [${_nfs_server_ip}] "
-	getresp "${_nfs_server_ip}"
-done
-_nfs_server_ip=$resp
+	# Get the IP address of the server
+	resp=
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Server IP address or hostname? [${_nfs_server_ip}] "
+		getresp "$_nfs_server_ip"
+	done
+	_nfs_server_ip=$resp
 
-# Get server path to mount
-resp=
-while [ "X${resp}" = X"" ]; do
-	echo -n "Filesystem on server to mount? [${_nfs_server_path}] "
-	getresp "${_nfs_server_path}"
-done
-_nfs_server_path=$resp
+	# Get server path to mount
+	resp=
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Filesystem on server to mount? [${_nfs_server_path}] "
+		getresp "$_nfs_server_path"
+	done
+	_nfs_server_path=$resp
 
-# Determine use of TCP
-echo -n "Use TCP transport (only works with capable NFS server)? [n] "
-getresp "n"
-case "$resp" in
-y*|Y*)	_nfs_tcp="-T"
-	;;
-*)	_nfs_tcp=
-	;;
-esac
+	# Determine use of TCP
+	echo -n "Use TCP transport? (only works with capable NFS server) [n] "
+	getresp n
+	case "$resp" in
+	y*|Y*)	_nfs_tcp="-T"
+		;;
+	*)	_nfs_tcp=
+		;;
+	esac
 
-# Mount the server
-mkdir /mnt2 > /dev/null 2>&1
-if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} /mnt2 ; then
-	echo "Cannot mount NFS server.  Aborting."
-	return
-fi
+	# Mount the server
+	mkdir /mnt2 > /dev/null 2>&1
+	if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} /mnt2 ; then
+		echo "Cannot mount NFS server. Aborting."
+		return
+	fi
 
-# Get the directory where the file lives
-resp=
-while [ "X${resp}" = X"" ]; do
-	echo "Enter the directory relative to the mount point that"
-	echo -n "contains the file. [${_nfs_directory}] "
-	getresp "${_nfs_directory}"
-done
-_nfs_directory=$resp
+	# Get the directory where the file lives
+	resp=
+	while [ "X${resp}" = X"" ]; do
+		echo "Enter the directory relative to the mount point that"
+		echo -n "contains the file: [.] "
+		getresp
+	done
 
-install_from_mounted_fs /mnt2/${_nfs_directory}
-umount -f /mnt2 > /dev/null 2>&1
+	install_from_mounted_fs "/mnt2/${resp}"
+	umount -f /mnt2 > /dev/null 2>&1
 }
 
 install_tape() {
@@ -1728,7 +1689,7 @@ _tape=`basename $TAPE`
 resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Name of tape device? [${_tape}]"
-	getresp "${_tape}"
+	getresp "$_tape"
 done
 _tape=`basename $resp`
 TAPE="/dev/${_tape}"
@@ -1752,7 +1713,7 @@ echo "done."
 resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "File number? "
-	getresp ""
+	getresp
 	case "$resp" in
 	[1-9]*)	_nskip=$(( $resp - 1 ))
 		;;
@@ -1784,7 +1745,7 @@ __EOT
 resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which way is it? [1] "
-	getresp "1"
+	getresp 1
 	case "$resp" in
 	1)	_xcmd="tar -zxvpf -"
 		;;
@@ -1834,7 +1795,7 @@ if [ X$TZ = X ]; then
 	TZ=${TZ#/usr/share/zoneinfo/}
 fi
 while : ; do
-	echo -n	"What timezone are you in? [\`?' for list] [$TZ] "
+	echo -n	"What timezone are you in? (\`?' for list) [$TZ] "
 	getresp "$TZ"
 	case "$resp" in
 	"")	echo "Timezone defaults to GMT"
@@ -1847,8 +1808,8 @@ while : ; do
 		while [ -d ${_zonepath}/usr/share/zoneinfo/$_a ]; do
 			echo -n "There are several timezones available"
 			echo " within zone '$_a'"
-			echo -n "Select a sub-timezone [\`?' for list]: "
-			getresp ""
+			echo -n "Select a sub-timezone (\`?' for list): "
+			getresp
 			case "$resp" in
 			"?")	ls -F ${_zonepath}/usr/share/zoneinfo/$_a ;;
 			*)	_a=${_a}/${resp}
@@ -1921,7 +1882,7 @@ can recover from some errors.
 __EOT
 
 if [ "X$local_sets_dir" != "X" ]; then
-	install_from_mounted_fs ${local_sets_dir}
+	install_from_mounted_fs "${local_sets_dir}"
 	if [ X"$_setsdone" != X ]; then
 		_yup="TRUE"
 	fi
@@ -1936,7 +1897,7 @@ while [ X"${resp}" = X ]; do
 		echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM"
 		test -n "$_have_nfs" && echo -n ", (N)FS"
 		echo -n " or local (d)isk? "
-		getresp ""
+		getresp
 		case "$resp" in
 		d*|D*)	install_disk
 			resp=d
@@ -1979,7 +1940,7 @@ while [ X"${resp}" = X ]; do
 		# don't necessarily have to come from the same media.
 		echo
 		echo -n	"Extract more sets? [n] "
-		getresp "n"
+		getresp n
 		case "$resp" in
 		y*|Y*)	# Force loop to repeat
 			resp=
@@ -2240,7 +2201,7 @@ donetconfig() {
 		echo "lookup file bind" >> /tmp/resolv.conf
 
 		echo -n "Would you like to use the nameserver now? [y] "
-		getresp "y"
+		getresp y
 		case "$resp" in
 		y*|Y*)	cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 			;;
@@ -2259,7 +2220,7 @@ NFS installation or an FTP installation without a name server and want
 to refer to the server by name rather than by its numeric ip address.
 __EOT
 		echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
-		getresp "n"
+		getresp n
 		case "$resp" in
 		y*|Y*)	${EDITOR} /tmp/hosts
 			;;
@@ -2274,7 +2235,7 @@ additional routes, if needed.  In addition, you might take this opportunity
 to redo the default route in the event that it failed above.
 __EOT
 	echo -n "Escape to shell? [n] "
-	getresp "n"
+	getresp n
 	case "$resp" in
 	y*|Y*)	echo "Type 'exit' to return to install."
 		sh
@@ -2287,3 +2248,35 @@ populateusrlocal() {
 		/mnt/usr/sbin/chroot /mnt /usr/sbin/mtree -Uedqn -p /usr/local -f /etc/mtree/BSD.local.dist >/dev/null
 	fi
 }
+
+# Actions common to both installs and upgrades.
+#
+# Some may require machine dependend routines, which may
+# call functions defined above, so it's easiest to put this
+# code here rather than at the top of the file.
+
+ROOTDISK=
+VERSION=31
+VERSION_MAJOR=$(( $VERSION / 10 ))
+VERSION_MINOR=$(( $VERSION % 10 ))
+export VERSION VERSION_MAJOR VERSION_MINOR
+
+# Use install.md routines to get lists of devices on system
+_DKDEVS=`md_get_diskdevs`
+_CDDEVS=`md_get_cddevs`
+
+# extra "site" set can be provided by person doing install or
+# upgrade.
+THESETS="base etc misc comp man game xbase xshare xfont xserv site $MDSETS"
+
+# Path searched for sets by install_sets on the local filesystems
+local_sets_dir=
+
+# decide upon an editor
+if [ "X$EDITOR" = X ]; then
+	EDITOR=ed
+	if [ -x /usr/bin/vi ]; then
+		EDITOR=vi
+	fi
+	export EDITOR
+fi
