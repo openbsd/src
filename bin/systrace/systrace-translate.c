@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.11 2002/09/30 03:45:39 itojun Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.12 2002/10/16 14:43:33 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
+#include <sys/socket.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -171,6 +172,78 @@ print_number(char *buf, size_t buflen, struct intercept_translate *tl)
 }
 
 static int
+print_sockdom(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	int domain = (intptr_t)tl->trans_addr;
+	char *what = NULL;
+
+	switch (domain) {
+	case AF_UNIX:
+		what = "AF_UNIX";
+		break;
+	case AF_INET:
+		what = "AF_INET";
+		break;
+	case AF_INET6:
+		what = "AF_INET6";
+		break;
+	case AF_ISO:
+		what = "AF_ISO";
+		break;
+	case AF_NS:
+		what = "AF_NS";
+		break;
+	case AF_IPX:
+		what = "AF_IPX";
+		break;
+	case AF_IMPLINK:
+		what = "AF_IMPLINK";
+		break;
+	default:
+		snprintf(buf, buflen, "AF_UNKNOWN(%d)", domain);
+		break;
+	}
+
+	if (what != NULL)
+		strlcpy(buf, what, buflen);
+
+	return (0);
+}
+
+static int
+print_socktype(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	int type = (intptr_t)tl->trans_addr;
+	char *what = NULL;
+
+	switch (type) {
+	case SOCK_STREAM:
+		what = "SOCK_STREAM";
+		break;
+	case SOCK_DGRAM:
+		what = "SOCK_DGRAM";
+		break;
+	case SOCK_RAW:
+		what = "SOCK_RAW";
+		break;
+	case SOCK_SEQPACKET:
+		what = "SOCK_SEQPACKET";
+		break;
+	case SOCK_RDM:
+		what = "SOCK_RDM";
+		break;
+	default:
+		snprintf(buf, buflen, "SOCK_UNKNOWN(%d)", type);
+		break;
+	}
+
+	if (what != NULL)
+		strlcpy(buf, what, buflen);
+
+	return (0);
+}
+
+static int
 print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	struct passwd *pw;
@@ -271,4 +344,14 @@ struct intercept_translate gidt = {
 struct intercept_translate fdt = {
 	"fd",
 	NULL, print_number,
+};
+
+struct intercept_translate sockdom = {
+	"sockdom",
+	NULL, print_sockdom,
+};
+
+struct intercept_translate socktype = {
+	"socktype",
+	NULL, print_socktype,
 };
