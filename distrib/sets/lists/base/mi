@@ -1,3 +1,6 @@
+./usr/bin/readlink
+./sbin/fsck_ext2fs
+./etc/namedb/tmp
 .
 ./altroot
 ./bin
@@ -58,7 +61,6 @@
 ./sbin/badsect
 ./sbin/ccdconfig
 ./sbin/clri
-./sbin/delspi
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
@@ -105,7 +107,6 @@
 ./sbin/nfsd
 ./sbin/nfsiod
 ./sbin/nologin
-./sbin/pfr
 ./sbin/ping
 ./sbin/quotacheck
 ./sbin/rdump
@@ -117,17 +118,9 @@
 ./sbin/rt
 ./sbin/rtdelete
 ./sbin/rtquery
-./sbin/sah
-./sbin/sahhmac
 ./sbin/savecore
 ./sbin/scsi
-./sbin/sesp
-./sbin/sesp3md5
-./sbin/sespmd5
-./sbin/sgrp
-./sbin/shahmac
 ./sbin/shutdown
-./sbin/si4
 ./sbin/slattach
 ./sbin/swapon
 ./sbin/ttyflags
@@ -1738,3 +1731,11 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/share/nls/nl
+./usr/share/nls/nl/libc.cat
+./usr/share/nls/no
+./usr/share/nls/no/libc.cat
+./usr/share/nls/sv
+./usr/share/nls/sv/libc.cat
+./usr/share/nls/fi
+./usr/share/nls/fi/libc.cat

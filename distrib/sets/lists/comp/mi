@@ -525,13 +525,6 @@
 ./usr/include/g++/vector
 ./usr/include/g++/vector.h
 ./usr/include/glob.h
-./usr/include/gnu
-./usr/include/gnu/ext2fs
-./usr/include/gnu/ext2fs/ext2_extern.h
-./usr/include/gnu/ext2fs/ext2_fs.h
-./usr/include/gnu/ext2fs/ext2_fs_i.h
-./usr/include/gnu/ext2fs/ext2_fs_sb.h
-./usr/include/gnu/ext2fs/fs.h
 ./usr/include/grp.h
 ./usr/include/histedit.h
 ./usr/include/ieeefp.h
@@ -2201,3 +2194,9 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/ufs/ext2fs
+./usr/include/ufs/ext2fs/ext2fs.h
+./usr/include/ufs/ext2fs/ext2fs_dinode.h
+./usr/include/ufs/ext2fs/ext2fs_dir.h
+./usr/include/ufs/ext2fs/ext2fs_extern.h
+./usr/include/dev/pci/if_devar.h
