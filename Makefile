@@ -11,6 +11,10 @@ SUBDIR+= sys
 SUBDIR+= domestic
 .endif
 
+.if exists(kerberosIV)
+SUBDIR+= kerberosIV
+.endif
+
 .if exists(regress)
 .ifmake !(install)
 SUBDIR+= regress
@@ -40,7 +44,7 @@ build:
 	(cd ${.CURDIR}/domestic/libcrypt && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .endif
 .if exists(kerberosIV)
-	(cd ${.CURDIR}/kerberosIV && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
