@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.4 1998/07/21 20:35:18 mickey Exp $
+#	$OpenBSD: devlist2h.awk,v 1.5 2001/01/26 22:27:37 mickey Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -167,7 +167,7 @@ END {
 	if (nvendor_dup > 0)
 		exit(1);
 
-	printf("struct pci_knowndev pci_knowndevs[] = {\n") > dfile
+	printf("static const struct pci_knowndev pci_knowndevs[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    PCI_VENDOR_%s, PCI_PRODUCT_%s_%s,\n",
