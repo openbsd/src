@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.7 1998/11/08 00:21:30 aaron Exp $
+.\"	$Id: inetd.8,v 1.8 1998/12/04 07:52:02 deraadt Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -89,7 +89,7 @@ service name
 socket type
 protocol
 wait/nowait[.max]
-user[.group]
+user[.group] or user[:group]
 server program
 server program arguments
 .Ed
@@ -102,7 +102,7 @@ service name/version
 socket type
 rpc/protocol
 wait/nowait[.max]
-user[.group]
+user[.group] or user[:group]
 server program
 server program arguments
 .Ed

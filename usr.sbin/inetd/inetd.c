@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.53 1998/11/21 00:15:58 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.54 1998/12/04 07:52:02 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.53 1998/11/21 00:15:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.54 1998/12/04 07:52:02 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -73,7 +73,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.53 1998/11/21 00:15:58 deraadt Exp 
  *	socket type			stream/dgram/raw/rdm/seqpacket
  *	protocol			must be in /etc/protocols
  *	wait/nowait[.max]		single-threaded/multi-threaded, max #
- *	user[.group]			user/group to run daemon as
+ *	user[.group] or user[:group]	user/group to run daemon as
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
  *
@@ -82,7 +82,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.53 1998/11/21 00:15:58 deraadt Exp 
  *	socket type			stream/dgram/raw/rdm/seqpacket
  *	protocol			must be in /etc/protocols
  *	wait/nowait[.max]		single-threaded/multi-threaded
- *	user[.group]			user to run daemon as
+ *	user[.group] or user[:group]	user to run daemon as
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
  *
@@ -114,7 +114,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.53 1998/11/21 00:15:58 deraadt Exp 
  */
 
 /*
- * Here's the scoop concerning the user.group feature:
+ * Here's the scoop concerning the user[.:]group feature:
  *
  * 1) set-group-option off.
  * 
@@ -1230,6 +1230,8 @@ more:
 	sep->se_wait = strcmp(arg, "wait") == 0;
 	sep->se_user = newstr(skip(&cp));
 	arg = strchr(sep->se_user, '.');
+	if (arg == NULL)
+		arg = strchr(sep->se_user, ':');
 	if (arg) {
 		*arg++ = '\0';
 		sep->se_group = newstr(arg);
@@ -1854,7 +1856,7 @@ print_service(action, sep)
 		fprintf(stderr, "proto=%s,", sep->se_proto);
 
 	fprintf(stderr,
-	    " wait.max=%hd.%d user.group=%s.%s builtin=%lx server=%s\n",
+	    " wait.max=%hd.%d user:group=%s.%s builtin=%lx server=%s\n",
 	    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
 	    (long)sep->se_bi, sep->se_server);
 }
