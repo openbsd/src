@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.19 2004/04/08 01:11:22 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.20 2004/06/28 01:47:41 aaron Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -552,11 +552,13 @@ timerattach(parent, self, aux)
 	level10.ih_number = ma->ma_interrupts[0];
 	level10.ih_clr = (void *)&timerreg_4u.t_clrintr[0];
 	level10.ih_map = (void *)&timerreg_4u.t_mapintr[0];
+	strlcpy(level10.ih_name, "clock", sizeof(level10.ih_name));
 	intr_establish(10, &level10);
 
 	level14.ih_number = ma->ma_interrupts[1];
 	level14.ih_clr = (void *)&timerreg_4u.t_clrintr[1];
 	level14.ih_map = (void *)&timerreg_4u.t_mapintr[1];
+	strlcpy(level14.ih_name, "prof", sizeof(level14.ih_name));
 	intr_establish(14, &level14);
 
 	printf(" irq vectors %lx and %lx", 
@@ -674,6 +676,7 @@ cpu_initclocks()
 		 * so we set the ih_number to 1.
 		 */
 		level0.ih_number = 1;
+		strlcpy(level0.ih_name, "clock", sizeof(level0.ih_name));
 		intr_establish(10, &level0);
 		/* We only have one timer so we have no statclock */
 		stathz = 0;	
@@ -796,6 +799,8 @@ clockintr(cap)
 
 	lasttick = tick() & TICK_TICKS;
 
+	level10.ih_count.ec_count++;
+
 	return (1);
 }
 
@@ -824,6 +829,7 @@ tickintr(cap)
 	lasttick &= TICK_TICKS;
 	/* Reset the interrupt */
 	next_tick(tick_increment);
+	level0.ih_count.ec_count++;
 	splx(s);
 
 	return (1);
@@ -867,6 +873,9 @@ statintr(cap)
 			send_softint(-1, PIL_SCHED, &schedint);
 	stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
 	     tmr_ustolim(newint)|TMR_LIM_IEN|TMR_LIM_RELOAD);
+
+	level14.ih_count.ec_count++;
+
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.46 2004/06/20 04:30:34 aaron Exp $	*/
+/*	$OpenBSD: locore.s,v 1.47 2004/06/28 01:47:41 aaron Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3309,18 +3309,11 @@ _C_LABEL(sparc_interrupt):
 	stx	%fp, [%sp + CC64FSZ + BIAS + TF_KSTACK]	!  old frame pointer
 	
 	sub	%l5, 0x40, %l6			! Convert to interrupt level
-	sethi	%hi(_C_LABEL(intrcnt)), %l4
 	stb	%l6, [%sp + CC64FSZ + BIAS + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l6, 2, %l3
-	or	%l4, %lo(_C_LABEL(intrcnt)), %l4	! intrcnt[intlev]++;
 	stb	%o1, [%sp + CC64FSZ + BIAS + TF_OLDPIL]	! old %pil
-	ld	[%l4 + %l3], %o0
-	add	%l4, %l3, %l4
 	clr	%l5			! Zero handled count
 	mov	1, %l3			! Ack softint
-	inc	%o0	
-	st	%o0, [%l4]
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
 	sethi	%hi(_C_LABEL(handled_intr_level)), %l4
@@ -3386,7 +3379,10 @@ sparc_intr_retry:
 
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5		! Add handler return value
+	ldx	[%l2 + IH_COUNT], %o0	! ih->ih_count.ec_count++;
 	stx	%g0, [%l1]		! Clear intr source
+	inc	%o0
+	stx	%o0, [%l2 + IH_COUNT]
 0:
 	brnz,pn	%l7, 2b			! 'Nother?
 	 mov	%l7, %l2
@@ -9517,34 +9513,14 @@ _C_LABEL(ssym):
 _C_LABEL(proc0paddr):
 	.xword	_C_LABEL(u0)		! KVA of proc0 uarea
 
-/* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
+/* Some bogus data, to keep vmstat happy, for now. */
+	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
 	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames), _C_LABEL(eintrnames)
-	OTYPE(intrcnt)
-	OTYPE(eintrcnt)
-	OTYPE(intrnames)
-	OTYPE(eintrnames)
 _C_LABEL(intrnames):
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"lev6"
-	.asciz	"lev7"
-	.asciz  "lev8"
-	.asciz	"lev9"
-	.asciz	"clock"
-	.asciz	"lev11"
-	.asciz	"lev12"
-	.asciz	"lev13"
-	.asciz	"prof"
-	.asciz  "lev15"
+	.long	0
 _C_LABEL(eintrnames):
-	_ALIGN
 _C_LABEL(intrcnt):
-	.space	16 * 4
+	.long	0
 _C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4

@@ -241,6 +241,7 @@ member	IH_PEND		ih_pending
 member	ih_next
 member	ih_map
 member	ih_clr
+member	IH_COUNT	ih_count.ec_count
 	
 # mbuf fields of import
 struct	mbuf

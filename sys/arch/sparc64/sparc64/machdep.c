@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2004/06/23 04:40:05 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2004/06/28 01:47:41 aaron Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1900,14 +1900,12 @@ bus_intr_allocate(bus_space_tag_t t, int (*handler)(void *), void *arg,
     const char *what)
 {
 	struct intrhand *ih;
-	size_t namelen = strlen(what) + 1;
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand) + namelen - 1, M_DEVBUF, M_NOWAIT);
+	ih = (struct intrhand *)malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return (NULL);
 
-	memset(ih, 0, sizeof(struct intrhand) + namelen - 1);
+	memset(ih, 0, sizeof(struct intrhand));
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
@@ -1916,7 +1914,7 @@ bus_intr_allocate(bus_space_tag_t t, int (*handler)(void *), void *arg,
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;
 	ih->ih_bus = t;
-	strlcpy(ih->ih_name, what, namelen);
+	strlcpy(ih->ih_name, what, sizeof(ih->ih_name));
 
 	return (ih);
 }
