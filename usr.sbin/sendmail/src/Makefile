@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1996/12/08 15:00:06 downsj Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/01/17 04:49:01 downsj Exp $
 #
 #  OpenBSD Makefile
 #
@@ -30,9 +30,8 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	srvrsmtp.c stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
 MAN=	aliases.5 mailstats.8 mailq.1 newaliases.1 sendmail.8
-LINKS=	${BINDIR}/sendmail ${BINDIR}/newaliases ${BINDIR}/sendmail ${BINDIR}/mailq
-INSTALL=install
-BINDIR=	/usr/sbin
+LINKS=	${BINDIR}/sendmail /usr/bin/newaliases \
+	${BINDIR}/sendmail /usr/bin/mailq
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
@@ -45,4 +44,5 @@ beforeinstall:
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/sendmail.hf ${DESTDIR}/usr/share/misc
 
+.include "../../Makefile.inc"
 .include <bsd.prog.mk>
