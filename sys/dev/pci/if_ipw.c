@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.28 2004/11/24 21:27:50 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.29 2004/12/05 17:13:52 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1571,12 +1571,12 @@ ipw_stop_master(struct ipw_softc *sc)
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
 
 	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_STOP_MASTER);
-	for (ntries = 0; ntries < 5; ntries++) {
+	for (ntries = 0; ntries < 50; ntries++) {
 		if (CSR_READ_4(sc, IPW_CSR_RST) & IPW_RST_MASTER_DISABLED)
 			break;
 		DELAY(10);
 	}
-	if (ntries == 5)
+	if (ntries == 50)
 		printf("%s: timeout waiting for master\n",
 		    sc->sc_dev.dv_xname);
 
