@@ -1,4 +1,4 @@
-# $OpenBSD: Vstat.pm,v 1.4 2004/03/10 08:21:40 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.5 2004/04/28 06:47:12 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -65,7 +65,7 @@ sub init_dirinfo()
 	    chomp;
 	    if (m/^Filesystem\s+(\d+)\-blocks/) {
 		    $blocksize = $1;
-	    } elsif (m/^.*?\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+(.*?)$/) {
+	    } elsif (m/^.*?\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+(\/.*?)$/) {
 	    	my ($mntpoint, $avail) = ($2, $1);
 		my $i = create_mntpoint($mntpoint);
 		$i->{avail} = $avail;
@@ -76,7 +76,7 @@ sub init_dirinfo()
     open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
     while (<$cmd1>) {
 	    chomp;
-	    if (m/^.*?\s+on\s+(.*?)\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
+	    if (m/^.*?\s+on\s+(\/.*?)\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
 		my ($mntpoint, $opts) = ($1, $2);
 		my $i = create_mntpoint($mntpoint);
 		next unless defined $opts;
