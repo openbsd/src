@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.6 2001/05/24 03:05:26 mickey Exp $	*/
+/*	$OpenBSD: region.c,v 1.7 2002/02/13 03:03:49 vincent Exp $	*/
 
 /*
  *		Region based commands.
@@ -298,7 +298,7 @@ setprefix(f, n)
 		s = ereply("Prefix string (default %s): ",
 			   buf, sizeof buf, prefix_string);
 	if (s == TRUE)
-		(void)strcpy(prefix_string, buf);
+		(void)strlcpy(prefix_string, buf, sizeof prefix_string);
 	/* CR -- use old one */
 	if ((s == FALSE) && (prefix_string[0] != '\0'))
 		s = TRUE;

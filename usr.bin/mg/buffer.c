@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.19 2002/01/18 09:40:07 art Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.20 2002/02/13 03:03:49 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -428,7 +428,7 @@ bfind(bname, cflag)
 		ewprintf("Can't get %d bytes", sizeof(BUFFER));
 		return NULL;
 	}
-	if ((bp->b_bname = malloc((strlen(bname) + 1))) == NULL) {
+	if ((bp->b_bname = strdup(bname)) == NULL) {
 		ewprintf("Can't get %d bytes", strlen(bname) + 1);
 		free((char *) bp);
 		return NULL;
@@ -453,7 +453,6 @@ bfind(bname, cflag)
 	} while (i++ < defb_nmodes);
 	bp->b_fname[0] = '\0';
 	bzero(&bp->b_fi, sizeof(bp->b_fi));
-	(void) strcpy(bp->b_bname, bname);
 	lp->l_fp = lp;
 	lp->l_bp = lp;
 	bp->b_bufp = bheadp;

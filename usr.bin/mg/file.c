@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2001/05/24 03:05:22 mickey Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2002/02/13 03:03:49 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -95,7 +95,7 @@ findbuffer(fname)
 	char *fname;
 {
 	BUFFER		*bp;
-	char		 bname[NBUFN], *cp;
+	char		 bname[NBUFN];
 	unsigned int	 count = 1;
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
@@ -103,10 +103,10 @@ findbuffer(fname)
 			return bp;
 	}
 	/* new buffer name */
-	strcpy(bname, basename(fname));
-	cp = bname + strlen(bname);
 	for (count = 1; bfind(bname, FALSE) != NULL; count++)
-		sprintf(cp, "<%d>", count);
+		;
+	snprintf(bname, sizeof bname, "%s<%d>", basename(fname), count);
+
 	return bfind(bname, TRUE);
 }
 
@@ -182,7 +182,7 @@ insertfile(fname, newname, needinfo)
 	/* cheap */
 	bp = curbp;
 	if (newname != NULL)
-		(void)strcpy(bp->b_fname, newname);
+		(void)strlcpy(bp->b_fname, newname, sizeof bp->b_fname);
 
 	/* hard file open */
 	if ((s = ffropen(fname, needinfo ? bp : NULL)) == FIOERR)
@@ -340,7 +340,7 @@ filewrite(f, n)
 	/* old attributes are no longer current */
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
 	if ((s = writeout(curbp, adjfname)) == TRUE) {
-		(void)strcpy(curbp->b_fname, adjfname);
+		(void)strlcpy(curbp->b_fname, adjfname, sizeof curbp->b_fname);
 #ifndef NO_BACKUP
 		curbp->b_flag &= ~(BFBAK | BFCHG);
 #else /* !NO_BACKUP */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.20 2001/09/21 15:08:16 wilfried Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.21 2002/02/13 03:03:49 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -10,6 +10,7 @@ static FILE	*ffp;
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
+#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -47,7 +48,7 @@ ffwopen(fn, bp)
 {
 
 	if ((ffp = fopen(fn, "w")) == NULL) {
-		ewprintf("Cannot open file for writing");
+		ewprintf("Cannot open file for writing : %s", strerror(errno));
 		return (FIOERR);
 	}
 
@@ -161,29 +162,28 @@ fbackupfile(fn)
 	struct stat	sb;
 	int		from, to, serrno;
 	size_t		nread;
-	size_t		len;
 	char		buf[BUFSIZ];
 	char		*nname;
 
-	len = strlen(fn);
-	if ((nname = malloc(len + 1 + 1)) == NULL) {
-		ewprintf("Can't get %d bytes", len + 1 + 1);
+	if (asprintf(&nname, "%s~", fn) == -1) {
+		ewprintf("Can't allocate temp file name : %s",
+		    strerror(errno));
 		return (ABORT);
 	}
-	(void) strcpy(nname, fn);
-	(void) strcpy(nname + len, "~");
-
 	if (stat(fn, &sb) == -1) {
-		ewprintf("Can't stat %s", fn);
+		ewprintf("Can't stat %s : %s", fn, strerror(errno));
 		return (FALSE);
 	}
 
-	if ((from = open(fn, O_RDONLY)) == -1)
+	if ((from = open(fn, O_RDONLY)) == -1) {
+		free(nname);
 		return (FALSE);
+	}
 	to = open(nname, O_WRONLY|O_CREAT|O_TRUNC, (sb.st_mode & 0777));
 	if (to == -1) {
 		serrno = errno;
 		close(from);
+		free(nname);
 		errno = serrno;
 		return (FALSE);
 	}
@@ -196,10 +196,13 @@ fbackupfile(fn)
 	serrno = errno;
 	close(from);
 	close(to);
-	if (nread == -1)
-		unlink(nname);
+	if (nread == -1) {
+		if (unlink(nname) == -1)
+			ewprintf("Can't unlink temp : %s", strerror(errno));
+	}
 	free(nname);
 	errno = serrno;
+	
 	return (nread == -1 ? FALSE : TRUE);
 }
 #endif
@@ -310,8 +313,8 @@ adjustname(fn)
 				cp[-1] = '/';
 #endif
 				--cp;
-				while (cp > fnb && *--cp != '/') {
-				}
+				while (cp > fnb && *--cp != '/')
+					;
 				++cp;
 				if (fn[2] == '\0') {
 					*--cp = '\0';
@@ -453,7 +456,7 @@ dired_(dirname)
 		return NULL;
 	}
 	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
-	(void) strncpy(bp->b_fname, dirname, NFILEN);
+	(void) strlcpy(bp->b_fname, dirname, sizeof bp->b_fname);
 	if ((bp->b_modes[0] = name_mode("dired")) == NULL) {
 		bp->b_modes[0] = name_mode("fundamental");
 		ewprintf("Could not find mode dired");
@@ -539,7 +542,7 @@ make_file_list(buf)
 		}
 	}
 	/* Now we get the prefix of the name the user typed. */
-	strcpy(prefixx, buf);
+	strlcpy(prefixx, buf, sizeof prefixx);
 	cp = strrchr(prefixx, '/');
 	if (cp == NULL)
 		prefixx[0] = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.7 2001/05/24 03:05:26 mickey Exp $	*/
+/*	$OpenBSD: search.c,v 1.8 2002/02/13 03:03:49 vincent Exp $	*/
 
 /*
  *		Search commands.
@@ -175,7 +175,7 @@ isearch(dir)
 	for (cip = 0; cip < NSRCH; cip++)
 		cmds[cip].s_code = SRCH_NOPR;
 
-	(void)strcpy(opat, pat);
+	(void)strlcpy(opat, pat, sizeof opat);
 	cip = 0;
 	pptr = -1;
 	clp = curwp->w_dotp;
@@ -216,7 +216,7 @@ isearch(dir)
 			curwp->w_flag |= WFMOVE;
 			srch_lastdir = dir;
 			(void)ctrlg(FFRAND, 0);
-			(void)strcpy(pat, opat);
+			(void)strlcpy(pat, opat, sizeof pat);
 			return ABORT;
 		case CCHR(']'):
 		case CCHR('S'):
@@ -689,7 +689,7 @@ readpattern(prompt)
 
 	/* specified */
 	if (s == TRUE)
-		(void) strcpy(pat, tpat);
+		(void) strlcpy(pat, tpat, sizeof pat);
 	/* CR, but old one */
 	else if (s == FALSE && pat[0] != 0)
 		s = TRUE;

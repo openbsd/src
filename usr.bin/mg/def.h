@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.24 2002/01/18 08:37:08 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.25 2002/02/13 03:03:49 vincent Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -573,7 +573,7 @@ extern int	 defb_nmodes;
 extern int	 defb_flag;
 extern const char cinfo[];
 extern char	*keystrings[];
-extern char	 pat[];
+extern char	 pat[NPAT];
 #ifndef NO_DPROMPT
 extern char	 prompt[];
 #endif	/* !NO_DPROMPT */
