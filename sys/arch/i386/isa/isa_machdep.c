@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.25 1997/12/25 06:13:04 downsj Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.26 1997/12/25 12:49:04 downsj Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
@@ -377,9 +377,9 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
-			panic("intr_establish: can't share %s with %s",
+			panic("intr_establish: can't share %s with %s, irq %d",
 			    isa_intr_typename(intrtype[irq]),
-			    isa_intr_typename(type));
+			    isa_intr_typename(type), irq);
 		break;
 	}
 
