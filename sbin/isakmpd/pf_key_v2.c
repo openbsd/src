@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.8 1999/04/27 21:01:28 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.12 1999/04/25 15:50:19 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.9 1999/05/01 00:51:45 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.13 1999/05/01 00:52:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -694,7 +694,12 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
   ssa.sadb_sa_replay
     = conf_get_str ("General", "Shared-SADB") ? 0 : iproto->replay_window;
   ssa.sadb_sa_state = SADB_SASTATE_MATURE;
+#ifdef SADB_SAFLAGS_X_TUNNEL
+  ssa.sadb_sa_flags
+    = iproto->encap_mode == IPSEC_ENCAP_TUNNEL ? SADB_SAFLAGS_X_TUNNEL : 0;
+#else
   ssa.sadb_sa_flags = 0;
+#endif
   if (pf_key_v2_msg_add (update, (struct sadb_ext *)&ssa, 0) == -1)
     goto cleanup;
 
