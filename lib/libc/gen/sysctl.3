@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.57 2000/12/12 00:29:02 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.58 2000/12/21 01:14:13 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -854,6 +854,8 @@ The currently defined protocols and names are:
 .It icmp6	nodeinfo	integer	yes
 .It icmp6	errppslimit	integer	yes
 .It icmp6	nd6_maxnudhint	integer	yes
+.It icmp6	mtudisc_hiwat	integer	yes
+.It icmp6	mtudisc_lowat	integer	yes
 .El
 .Pp
 The variables are as follows:
@@ -976,6 +978,20 @@ For example, by setting the variable to 3, neighbor discovery layer
 will take 3 consecutive hints in maximum.
 After receiving 3 hints, neighbor discovery layer will perform
 normal neighbor discovery process.
+.It Li icmp6.mtudisc_hiwat
+.It Li icmp6.mtudisc_lowat
+The variables define the maximum number of routing table entries,
+created due to path MTU discovery
+.Pq prevents denial-of-service attacks with ICMPv6 too big messages .
+When IPv6 path MTU discovery happens, we keep path MTU information into
+the routing table.
+If the number of routing table entries exceed the value,
+the kernel will not attempt to keep the path MTU information.
+.Li icmp6.mtudisc_hiwat
+is used when we have verified ICMPv6 too big messages.
+.Li icmp6.mtudisc_lowat
+is used when we have unverified ICMPv6 too big messages.
+Verification is performed by using address/port pairs kept in connected pcbs.
 .El
 .Pp
 We reuse

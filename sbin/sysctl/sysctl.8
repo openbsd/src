@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.56 2000/10/14 01:06:44 itojun Exp $
+.\"	$OpenBSD: sysctl.8,v 1.57 2000/12/21 01:14:14 itojun Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -223,6 +223,8 @@ privilege can change the value.
 .It net.inet6.icmp6.nodeinfo	integer	yes
 .It net.inet6.icmp6.errppslimit	integer	yes
 .It net.inet6.icmp6.nd6_maxnudhint	integer	yes
+.It net.inet6.icmp6.mtudisc_hiwat	integer	yes
+.It net.inet6.icmp6.mtudisc_lowat	integer	yes
 .It net.ipx.ipx.checksum	integer	yes
 .It net.ipx.ipx.forwarding	integer	yes
 .It net.ipx.ipx.netbios	integer	yes
