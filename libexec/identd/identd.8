@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.20 2003/02/03 17:46:56 jmc Exp $
+.\"	$OpenBSD: identd.8,v 1.21 2003/06/02 12:57:42 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -110,8 +110,8 @@ This token is entered into the local system logs
 so that the administrator can later discover who the real user was.
 .It Fl H
 Hide information about non existing users (e.g., connections through NAT) as
-well as existing users. 
-Implies 
+well as existing users.
+Implies
 .Fl h .
 .It Fl t Ar seconds
 Specifies an idle timeout in seconds where a daemon running in
@@ -182,7 +182,7 @@ check for a file
 .Pa .ident
 in the user's home directory.
 If this file is accessible, return
-the contents of the file 
+the contents of the file
 instead of the normal USERID response.
 .It Fl m
 Allow multiple requests to be processed per session.
@@ -223,6 +223,6 @@ files for use when running with the
 flag will need to be world accessible.
 The same applies for
 .Pa .noident
-files when running with the 
+files when running with the
 .Fl N
 flag.
