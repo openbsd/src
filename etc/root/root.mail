@@ -9,7 +9,7 @@ This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
 this message for later reference.
 
-For more information on how to setup your OpenBSD system, refer to the
+For more information on how to set up your OpenBSD system, refer to the
 "afterboot" man page (ie. after you exit the mail subsystem, type
 "man afterboot" ).  If you are not familiar with how to read man pages, type
 "man man" at a shell prompt and read the entire thing.  Pay specific
@@ -998,7 +998,7 @@ list of those who have donated money, equipment, or other resources to ensure
 OpenBSD continues.
 
 If you wish to ensure that OpenBSD runs better on your machines, please do us
-a favor (after you have your mail system setup!) and type something like:
+a favor (after you have your mail system configured!) and type something like:
     dmesg | mail -s "Sony VAIO 505R laptop, apm works OK" dmesg@openbsd.org
 so that we can see what kinds of configurations people are running.  As shown,
 including a bit of information about your machine in the subject or the body
