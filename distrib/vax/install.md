@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2002/02/24 23:17:29 hugh Exp $
+#	$OpenBSD: install.md,v 1.6 2002/03/10 06:48:43 hugh Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -88,7 +88,7 @@ md_questions() {
 
 md_installboot() {
 	echo "Installing boot block..."
-	cp /usr/mdec/boot /mnt/boot
+	cp /mnt/usr/mdec/boot /mnt/boot
 	/sbin/disklabel -B $1
 }
 

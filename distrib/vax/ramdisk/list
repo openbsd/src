@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 2002/02/24 23:15:08 hugh Exp $
+#	$OpenBSD: list,v 1.8 2002/03/10 06:48:43 hugh Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
@@ -28,9 +28,6 @@ LINK	usr/mdec/xxboot			usr/mdec/hpboot
 LINK	usr/mdec/xxboot			usr/mdec/raboot
 LINK	usr/mdec/xxboot			usr/mdec/rdboot
 LINK	usr/mdec/xxboot			usr/mdec/sdboot
-
-# copy the second stage boot code
-COPY    ${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 
 # and a few useful bits of the termcap file (512K and still growing 8-)
 SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
