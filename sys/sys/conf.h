@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.37 2000/07/03 19:22:37 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.38 2000/09/26 14:03:51 art Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -438,6 +438,7 @@ int	chrtoblk __P((dev_t));
 int	blktochr __P((dev_t));
 int	iskmemdev __P((dev_t));
 int	iszerodev __P((dev_t));
+dev_t	getnulldev __P((void));
 
 cdev_decl(filedesc);
 

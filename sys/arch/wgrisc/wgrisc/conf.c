@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 1998/09/25 09:20:55 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.8 2000/09/26 14:03:55 art Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.7 1998/09/25 09:20:55 todd Exp $
+ *      $Id: conf.c,v 1.8 2000/09/26 14:03:55 art Exp $
  */
 
 #include <sys/param.h>
@@ -246,6 +246,12 @@ iszerodev(dev)
 #else
 	return (major(dev) == 3 && minor(dev) == 12);
 #endif
+}
+
+dev_t
+getnulldev()
+{
+	return makedev(3, 2);
 }
 
 

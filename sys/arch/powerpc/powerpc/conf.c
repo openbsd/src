@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2000/09/06 02:45:11 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.17 2000/09/26 14:03:54 art Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -290,6 +290,12 @@ iszerodev(dev)
 	dev_t dev;
 {
 	return major(dev) == mem_no && minor(dev) == 12;
+}
+
+dev_t
+getnulldev()
+{
+	return makedev(mem_no, 2);
 }
 
 static int chrtoblktbl[] = {

@@ -339,6 +339,12 @@ iszerodev(dev)
 	return (major(dev) == mem_no && minor(dev) == 3);
 }
 
+dev_t
+getnulldev()
+{
+	return makedev(mem_no, 2);
+}
+
 
 static int chrtoblktbl[] = {
 /* XXXX This needs to be dynamic for LKMs. */

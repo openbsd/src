@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2000/06/01 00:02:11 bjc Exp $ */
+/*	$OpenBSD: conf.c,v 1.20 2000/09/26 14:03:55 art Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -665,3 +665,8 @@ iszerodev(dev)
 	return (major(dev) == 3 && minor(dev) == 12);
 }
 
+dev_t
+getnulldev()
+{
+	return makedev(3, 2);
+}

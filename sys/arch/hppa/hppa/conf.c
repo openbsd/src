@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2000/01/17 06:59:34 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2000/09/26 14:03:52 art Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -266,6 +266,12 @@ iszerodev(dev)
 	dev_t dev;
 {
 	return (major(dev) == mem_no && minor(dev) == 12);
+}
+
+dev_t
+getnulldev()
+{
+	return makedev(mem_no, 2);
 }
 
 /*
