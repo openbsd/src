@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.3 2004/09/21 08:40:45 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.4 2004/09/23 12:42:05 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -36,11 +36,12 @@
 #include "util.h"
 
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
-
 #define	MACHID	EM_MIPS		/* ELF e_machine ID value checked */
+
 
 #define RELOC_REL(relp, symp, adrp, val)				\
 do {									\
+	_dl_mprotect(adrp, 8, PROT_EXEC|PROT_READ|PROT_WRITE);		\
 	if (ELF64_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\
 		if (ELF64_R_SYM(rp->r_info) != 0)			\
 			*adrp = symp->st_value + val;			\
