@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.3 1998/10/30 00:24:40 aaron Exp $
+.\"	$OpenBSD: tr.1,v 1.4 1999/04/30 06:24:25 pjanzen Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -69,8 +69,13 @@ The following options are available:
 .Bl -tag -width Ds
 .It Fl c
 Complements the set of characters in
-.Ar string1 ,
-that is ``-c ab'' includes every character except for ``a'' and ``b''.
+.Ar string1 ;
+for instance,
+.Dq -c\ ab
+includes every character except for
+.Dq a
+and
+.Dq b .
 .It Fl d
 The
 .Fl d
@@ -134,7 +139,7 @@ to specify sets of characters:
 Any character not described by one of the following conventions
 represents itself.
 .It \eoctal
-A backslash followed by 1, 2 or 3 octal digits represents a character
+A backslash followed by 1, 2, or 3 octal digits represents a character
 with that encoded value.
 To follow an octal sequence with a digit as a character, left zero-pad
 the octal sequence to the full 3 octal digits.
@@ -189,9 +194,17 @@ Class names are:
 \." and vice-versa) is specified in the same relative position in
 \." .Ar string1 .
 \." .Pp
-With the exception of the ``upper'' and ``lower'' classes, characters
+With the exception of the
+.Dq upper
+and
+.Dq lower
+classes, characters
 in the classes are in unspecified order.
-In the ``upper'' and ``lower'' classes, characters are entered in
+In the
+.Dq upper
+and
+.Dq lower
+classes, characters are entered in
 ascending order.
 .Pp
 For specific information as to which ASCII characters are included
@@ -205,8 +218,12 @@ the same equivalence class as
 If
 there is a secondary ordering within the equivalence class, the characters
 are ordered in ascending sequence.
-Otherwise, they are ordered after their encoded values. 
-An example of an equivalence class might be ``c'' and ``ch'' in Spanish;
+Otherwise, they are ordered after their encoded values.
+An example of an equivalence class might be
+.Dq c
+and
+.Dq ch
+in Spanish;
 English has no equivalence classes.
 .It [#*n]
 Represents
@@ -224,7 +241,7 @@ sequence to the length of
 .Ar string1 .
 If
 .Ar n
-has a leading zero, it is interpreted as an octal value, otherwise,
+has a leading zero, it is interpreted as an octal value; otherwise,
 it's interpreted as a decimal value.
 .El
 .Pp
@@ -248,31 +265,51 @@ Strip out non-printable characters from file1.
 .D1 Li "tr -cd \*q[:print:]\*q < file1"
 .Sh COMPATIBILITY
 System V has historically implemented character ranges using the syntax
-``[c-c]'' instead of the ``c-c'' used by historic BSD implementations and
+.Dq [c-c]
+instead of the
+.Dq c-c
+used by historic BSD implementations and
 standardized by POSIX.
 System V shell scripts should work under this implementation as long as
 the range is intended to map in another range, i.e. the command
-``tr [a-z] [A-Z]'' will work as it will map the ``['' character in
+.Dq tr\ [a-z]\ [A-Z]
+will work as it will map the
+.Dq [
+character in
 .Ar string1
-to the ``['' character in
+to the
+.Dq [
+character in
 .Ar string2 .
 However, if the shell script is deleting or squeezing characters as in
-the command ``tr -d [a-z]'', the characters ``['' and ``]'' will be 
-included in the deletion or compression list which would not have happened
+the command
+.Dq tr\ -d\ [a-z] ,
+the characters
+.Dq [
+and
+.Dq \]
+will be
+included in the deletion or compression list, which would not have happened
 under an historic System V implementation.
-Additionally, any scripts that depended on the sequence ``a-z'' to
-represent the three characters ``a'', ``-'' and ``z'' will have to be
-rewritten as ``a\e-z''.
+Additionally, any scripts that depended on the sequence
+.Dq a-z
+to represent the three characters
+.Dq a ,
+.Dq - ,
+and
+.Dq z
+will have to be rewritten as
+.Dq a\e-z .
 .Pp
 The
 .Nm tr
 utility has historically not permitted the manipulation of NUL bytes in
-its input and, additionally, stripped NUL's from its input stream.
+its input and, additionally, has stripped NUL's from its input stream.
 This implementation has removed this behavior as a bug.
 .Pp
 The
 .Nm tr
-utility has historically been extremely forgiving of syntax errors,
+utility has historically been extremely forgiving of syntax errors:
 for example, the
 .Fl c
 and
@@ -293,4 +330,6 @@ has less characters than
 .Ar string1
 is permitted by POSIX but is not required.
 Shell scripts attempting to be portable to other POSIX systems should use
-the ``[#*]'' convention instead of relying on this behavior.
+the
+.Dq [#*]
+convention instead of relying on this behavior.
