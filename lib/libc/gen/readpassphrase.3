@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.13 2003/06/17 21:56:23 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.14 2004/04/16 10:48:39 jmc Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -52,8 +52,7 @@ characters and the terminating newline (or return) character are discarded.
 .Fn readpassphrase
 takes the following optional
 .Fa flags :
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 RPP_ECHO_OFF		turn off echo (default behavior)
 RPP_ECHO_ON		leave echo on
 RPP_REQUIRE_TTY		fail if there is no tty
@@ -123,8 +122,7 @@ flag was specified.
 .Sh SIGNALS
 .Fn readpassphrase
 will catch the following signals:
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 SIGALRM
 SIGHUP
 SIGINT

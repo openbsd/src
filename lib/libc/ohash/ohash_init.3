@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.7 2004/01/23 23:08:45 jmc Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.8 2004/04/16 10:48:39 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -167,10 +167,9 @@ if the slot was empty.
 and
 .Fn ohash_next
 can be used to access all elements in an ohash table, like this:
-.Pp
-.Bd -literal
-	for (n = ohash_first(h, &i); n != NULL; n = ohash_next(h, &i))
-		do_something_with(n);
+.Bd -literal -offset indent
+for (n = ohash_first(h, &i); n != NULL; n = ohash_next(h, &i))
+	do_something_with(n);
 .Ed
 .Pp
 .Fa i

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getifaddrs.3,v 1.10 2003/05/30 21:37:59 jmc Exp $
+.\"	$OpenBSD: getifaddrs.3,v 1.11 2004/04/16 10:48:39 jmc Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -58,7 +58,6 @@ structure contains at least the following entries:
     struct sockaddr  *ifa_dstaddr;      /* P2P interface destination */
     void             *ifa_data;		/* Address specific data */
 .Ed
-.Pp
 .Bl -tag -width Ds
 .It Fa ifa_next
 Contains a pointer to the next structure on the list.

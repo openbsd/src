@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.23 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: syslog.3,v 1.24 2004/04/16 10:48:39 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,7 +66,7 @@
 .Ft int
 .Fn setlogmask_r "int maskpri" "struct syslog_data *data"
 .Bd -literal
-.Pp
+
 struct syslog_data {
         int             log_file;
         int             connected;
@@ -76,7 +76,7 @@ struct syslog_data {
         int             log_fac;
         int             log_mask;
 };
-.Pp
+
 #define SYSLOG_DATA_INIT {-1, 0, 0, 0, NULL, LOG_USER, 0xff}
 .Ed
 .Sh DESCRIPTION
@@ -350,7 +350,7 @@ and
 .Fn setlogmask_r
 always return the previous log mask level.
 .Sh EXAMPLES
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 syslog(LOG_ALERT, "who: internal error 23");
 
 openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
@@ -360,11 +360,10 @@ setlogmask(LOG_UPTO(LOG_ERR));
 syslog(LOG_INFO, "Connection from host %d", CallingHost);
 
 syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
-.Pp
 .Ed
-For the reentrant functions:
 .Pp
-.Bd -literal -offset indent -compact
+For the reentrant functions:
+.Bd -literal -offset indent
 struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 syslog_r(LOG_INFO|LOG_LOCAL2, &sdata, "foobar error: %m");

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_interval.3,v 1.4 2002/05/01 08:03:29 mpech Exp $
+.\"	$OpenBSD: ohash_interval.3,v 1.5 2004/04/16 10:48:39 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie.
 .\"
@@ -72,7 +72,8 @@ to the terminating null byte.
 is a simple hashing function that yields good results on common data sets.
 .Pp
 .Fn ohash_create_entry
-can be used to create a new record with a given key. In that case,
+can be used to create a new record with a given key.
+In that case,
 the alloc field of
 .Fa info
 should point to a
