@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.7 2003/06/25 15:45:10 deraadt Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.8 2003/06/26 07:59:49 deraadt Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.7 2003/06/25 15:45:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.8 2003/06/26 07:59:49 deraadt Exp $";
 #endif /* not lint */
 
 /* Simple minded read-ahead/write-behind subroutines for tftp user and
@@ -78,7 +78,7 @@ static int current;		/* index of buffer in use */
 int newline = 0;		/* fillbuf: in middle of newline expansion */
 int prevchar = -1;		/* putbuf: previous char (cr check) */
 
-static struct tftphdr *rw_init();
+static struct tftphdr *rw_init(int);
 
 struct tftphdr *
 w_init(void)
