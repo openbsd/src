@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.4 1999/01/28 04:58:33 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.5 1999/02/06 17:01:17 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -227,6 +227,9 @@ pcic_attach(sc)
 		}
 
 		DPRINTF((" 0x%02x\n", reg));
+	} else {
+		sc->handle[2].flags = 0;
+		sc->handle[3].flags = 0;
 	}
 
 	if (count == 0)
@@ -237,13 +240,11 @@ pcic_attach(sc)
 	/* XXX block interrupts? */
 
 	for (i = 0; i < PCIC_NSLOTS; i++) {
-#if 0
 		/*
 		 * this should work, but w/o it, setting tty flags hangs at
 		 * boot time.
 		 */
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
-#endif
 		{
 			pcic_write(&sc->handle[i], PCIC_CSC_INTR, 0);
 			pcic_read(&sc->handle[i], PCIC_CSC);
