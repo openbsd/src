@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.3 1996/10/25 06:06:30 downsj Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.4 1998/11/18 01:03:16 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.3 1996/10/25 06:06:30 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.4 1998/11/18 01:03:16 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.3 1996/10/25 06:06:30 downsj Exp $
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 /*
  * Display the contents of a uio structure on a terminal.  Used by wall(1),
@@ -91,17 +92,23 @@ ttymsg(iov, iovcnt, line, tmout)
 		return (errbuf);
 	}
 
+	seteuid(geteuid());
+
 	/*
 	 * open will fail on slip lines or exclusive-use lines
 	 * if not running as root; not an error.
 	 */
 	if ((fd = open(device, O_WRONLY|O_NONBLOCK, 0)) < 0) {
-		if (errno == EBUSY || errno == EACCES)
+		if (errno == EBUSY || errno == EACCES) {
+			seteuid(getuid());
 			return (NULL);
+		}
+		seteuid(getuid());
 		(void) snprintf(errbuf, sizeof(errbuf),
 		    "%s: %s", device, strerror(errno));
 		return (errbuf);
 	}
+	seteuid(getuid());
 
 	for (cnt = left = 0; cnt < iovcnt; ++cnt)
 		left += iov[cnt].iov_len;
