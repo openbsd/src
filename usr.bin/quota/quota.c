@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.10 1998/07/10 08:17:39 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.11 1998/07/10 08:50:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.10 1998/07/10 08:17:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.11 1998/07/10 08:50:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -554,7 +554,7 @@ getufsquota(fst, fs, qup, id, quotatype)
 			 * Convert implicit 0 quota (EOF)
 			 * into an explicit one (zero'ed dqblk)
 			 */
-			bzero((caddr_t)&qup->dqblk, sizeof(struct dqblk));
+			memset((caddr_t)&qup->dqblk, 0, sizeof(struct dqblk));
 			break;
 		case sizeof(struct dqblk):	/* OK */
 			break;
@@ -603,12 +603,12 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	}
  
 	*cp = '\0';
-	if (*(cp+1) != '/') {
+	if (cp[1] != '/') {
 		*cp = ':';
 		return (0);
 	}
 
-	gq_args.gqa_pathp = cp + 1;
+	gq_args.gqa_pathp = &cp[1];
 	gq_args.gqa_uid = id;
 	if (callaurpc(fst->f_mntfromname, RQUOTAPROG, RQUOTAVERS,
 	    RQUOTAPROC_GETQUOTA, xdr_getquota_args, &gq_args,
@@ -677,7 +677,9 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		return ((int) RPC_UNKNOWNHOST);
 	timeout.tv_usec = 0;
 	timeout.tv_sec = 6;
-	bcopy(hp->h_addr, &server_addr.sin_addr, hp->h_length);
+
+	memset(&server_addr, 0, sizeof server_addr);
+	memcpy(&server_addr.sin_addr, hp->h_addr, hp->h_length);
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port =  0;
 
