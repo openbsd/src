@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.3 2003/10/20 00:43:58 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.4 2003/10/20 03:01:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -352,14 +352,12 @@ carp_input(struct mbuf *m, ...)
 		break;
 	case MASTER:
 		/*
-		 * If we're allowing preemption, and we recieve an advertisement
-		 * from a master who's going to be more frequent than us,
-		 * go into BACKUP state.
+		 * If we recieve an advertisement from a master who's going to
+		 * be more frequent than us, go into BACKUP state.
 		 */
-		if (carp_opts[CARPCTL_PREEMPT] &&
-		    (timercmp(&sc_tv, &ch_tv, >) ||
+		if (timercmp(&sc_tv, &ch_tv, >) ||
 		    (timercmp(&sc_tv, &ch_tv, ==) &&
-		    ip->ip_src.s_addr > sc->sc_ia->ia_addr.sin_addr.s_addr))) {
+		    ip->ip_src.s_addr > sc->sc_ia->ia_addr.sin_addr.s_addr)) {
 			timeout_del(&sc->sc_ad_tmo);
 			sc->sc_state = BACKUP;
 			carp_setrun(sc);
@@ -733,7 +731,7 @@ carp_setrun(struct carp_softc *sc)
 
 	switch (sc->sc_state) {
 	case INIT:
-		if (sc->sc_advskew == 0) {
+		if (carp_opts[CARPCTL_PREEMPT]) {
 			carp_send_ad(sc);
 			carp_send_arp(sc);
 			sc->sc_state = MASTER;
