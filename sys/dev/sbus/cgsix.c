@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.27 2002/08/02 16:13:07 millert Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.28 2002/08/05 22:12:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -87,7 +87,7 @@ void cgsix_loadcmap_immediate(struct cgsix_softc *, u_int, u_int);
 void cgsix_loadcmap_deferred(struct cgsix_softc *, u_int, u_int);
 void cgsix_setcolor(struct cgsix_softc *, u_int,
     u_int8_t, u_int8_t, u_int8_t);
-void cgsix_reset(struct cgsix_softc *);
+void cgsix_reset(struct cgsix_softc *, u_int32_t);
 void cgsix_hardreset(struct cgsix_softc *);
 void cgsix_burner(void *, u_int, u_int);
 int cgsix_intr(void *);
@@ -143,6 +143,7 @@ cgsixattach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args waa;
 	int console, i;
 	long defattr;
+	u_int32_t fhc, rev;
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
@@ -209,7 +210,9 @@ cgsixattach(parent, self, aux)
 
 	console = cgsix_is_console(sa->sa_node);
 
-	cgsix_reset(sc);
+	fhc = FHC_READ(sc);
+	rev = (fhc & FHC_REV_MASK) >> FHC_REV_SHIFT;
+	cgsix_reset(sc, rev);
 
 	/* grab the current palette */
 	BT_WRITE(sc, BT_ADDR, 0);
@@ -240,6 +243,15 @@ cgsixattach(parent, self, aux)
 	rasops_init(&sc->sc_rasops,
 	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
 	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
+
+	/*
+	 * Old rev. cg6 cards do not like the current acceleration code.
+	 *
+	 * Some hints from Sun point out at timing and cache problems, which
+	 * will be investigated later.
+	 */
+	if (rev < 5)
+		sc->sc_dev.dv_cfdata->cf_flags &= ~CG6_CFFLAG_NOACCEL;
 
 	if ((sc->sc_dev.dv_cfdata->cf_flags & CG6_CFFLAG_NOACCEL) == 0) {
 		sc->sc_rasops.ri_hw = sc;
@@ -596,10 +608,11 @@ cgsix_setcolor(sc, index, r, g, b)
 }
 
 void
-cgsix_reset(sc)
+cgsix_reset(sc, fhcrev)
 	struct cgsix_softc *sc;
+	u_int32_t fhcrev;
 {
-	u_int32_t fhc, rev;
+	u_int32_t fhc;
 
 	/* hide the cursor, just in case */
 	THC_WRITE(sc, CG6_THC_CURSXY, THC_CURSOFF);
@@ -608,18 +621,17 @@ cgsix_reset(sc)
 	TEC_WRITE(sc, CG6_TEC_CLIP, 0);
 	TEC_WRITE(sc, CG6_TEC_VDC, 0);
 
-	fhc = FHC_READ(sc);
-	rev = (fhc & FHC_REV_MASK) >> FHC_REV_SHIFT;
 	/* take core of hardware bugs in old revisions */
-	if (rev < 5) {
+	if (fhcrev < 5) {
 		/*
 		 * Keep current resolution; set cpu to 68020, set test
 		 * window (size 1Kx1K), and for rev 1, disable dest cache.
 		 */
+		fhc = FHC_READ(sc);
 		fhc &= FHC_RES_MASK;
 		fhc |= FHC_CPU_68020 | FHC_TEST |
 		    (11 << FHC_TESTX_SHIFT) | (11 << FHC_TESTY_SHIFT);
-		if (rev < 2)
+		if (fhcrev < 2)
 			fhc |= FHC_DST_DISABLE;
 		FHC_WRITE(sc, fhc);
 	}
