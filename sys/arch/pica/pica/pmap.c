@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.3 1996/05/02 07:59:43 pefo Exp $
+ *      $Id: pmap.c,v 1.4 1996/06/06 23:07:44 deraadt Exp $
  */
 
 /*
@@ -78,9 +78,8 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 
-#include <machine/machConst.h>
-#include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/pte.h>
 
 extern vm_page_t vm_page_alloc1 __P((void));
 extern void vm_page_free1 __P((vm_page_t));
@@ -206,7 +205,7 @@ pmap_bootstrap(firstaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - pica_btop(MACH_CACHED_TO_PHYS(firstaddr));
+	i = maxmem - pica_btop(CACHED_TO_PHYS(firstaddr));
 	valloc(pv_table, struct pv_entry, i);
 
 	/*
@@ -215,7 +214,7 @@ pmap_bootstrap(firstaddr)
 	firstaddr = pica_round_page(firstaddr);
 	bzero((caddr_t)start, firstaddr - start);
 
-	avail_start = MACH_CACHED_TO_PHYS(firstaddr);
+	avail_start = CACHED_TO_PHYS(firstaddr);
 	avail_end = pica_ptob(maxmem);
 	mem_size = avail_end - avail_start;
 
@@ -258,7 +257,7 @@ pmap_bootstrap_alloc(size)
 	if (vm_page_startup_initialized)
 		panic("pmap_bootstrap_alloc: called after startup initialized");
 
-	val = MACH_PHYS_TO_CACHED(avail_start);
+	val = PHYS_TO_CACHED(avail_start);
 	size = round_page(size);
 	avail_start += size;
 
@@ -354,7 +353,7 @@ pmap_pinit(pmap)
 		mem = vm_page_alloc1();
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
-			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
+			PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
 		i = NBPG / sizeof(struct segtab);
 		s = splimp();
 		while (--i != 0) {
@@ -446,7 +445,7 @@ pmap_release(pmap)
 #endif
 			MachHitFlushDCache(pte, PAGE_SIZE);
 			vm_page_free1(
-				PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
+				PHYS_TO_VM_PAGE(CACHED_TO_PHYS(pte)));
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
 		s = splimp();
@@ -574,7 +573,7 @@ pmap_remove(pmap, sva, eva)
 			 */
 			if (pmap->pm_tlbgen == tlbpid_gen) {
 				MachTLBFlushAddr(sva | (pmap->pm_tlbpid <<
-					VMMACH_TLB_PID_SHIFT));
+					VMTLB_PID_SHIFT));
 #ifdef DEBUG
 				remove_stats.flushes++;
 #endif
@@ -736,7 +735,7 @@ pmap_protect(pmap, sva, eva, prot)
 			 */
 			if (pmap->pm_tlbgen == tlbpid_gen)
 				MachTLBUpdate(sva | (pmap->pm_tlbpid <<
-					VMMACH_TLB_PID_SHIFT), entry);
+					VMTLB_PID_SHIFT), entry);
 		}
 	}
 }
@@ -802,7 +801,7 @@ pmap_page_cache(pa,mode)
 					pte->pt_entry = entry;
 					if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
 						MachTLBUpdate(pv->pv_va | (pv->pv_pmap->pm_tlbpid <<
-							VMMACH_TLB_PID_SHIFT), entry);
+							VMTLB_PID_SHIFT), entry);
 				}
 			}
 		}
@@ -1015,7 +1014,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * NOTE: we only support cache flush for read only text.
 	 */
 	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE))
-		MachFlushICache(MACH_PHYS_TO_CACHED(pa), PAGE_SIZE);
+		MachFlushICache(PHYS_TO_CACHED(pa), PAGE_SIZE);
 
 	if (!pmap->pm_segtab) {
 		/* enter entries into kernel pmap */
@@ -1045,7 +1044,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		mem = vm_page_alloc1();
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
-			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
+			PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
 #ifdef DIAGNOSTIC
 		for (i = 0; i < NPTEPG; i++) {
 			if ((pte+i)->pt_entry)
@@ -1079,7 +1078,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	pte->pt_entry = npte;
 	if (pmap->pm_tlbgen == tlbpid_gen)
 		j = MachTLBUpdate(va | (pmap->pm_tlbpid <<
-			VMMACH_TLB_PID_SHIFT), npte);
+			VMTLB_PID_SHIFT), npte);
 }
 
 /*
@@ -1256,7 +1255,7 @@ pmap_zero_page(phys)
 #endif
 /*XXX FIXME Not very sophisticated */
 	MachFlushCache();
-	p = (int *)MACH_PHYS_TO_CACHED(phys);
+	p = (int *)PHYS_TO_CACHED(phys);
 	end = p + PAGE_SIZE / sizeof(int);
 	do {
 		p[0] = 0;
@@ -1286,8 +1285,8 @@ pmap_copy_page(src, dst)
 #endif
 /*XXX FIXME Not very sophisticated */
 	MachFlushCache();
-	s = (int *)MACH_PHYS_TO_CACHED(src);
-	d = (int *)MACH_PHYS_TO_CACHED(dst);
+	s = (int *)PHYS_TO_CACHED(src);
+	d = (int *)PHYS_TO_CACHED(dst);
 	end = s + PAGE_SIZE / sizeof(int);
 	do {
 		tmp0 = s[0];
@@ -1438,7 +1437,7 @@ pmap_alloc_tlbpid(p)
 	pmap = &p->p_vmspace->vm_pmap;
 	if (pmap->pm_tlbgen != tlbpid_gen) {
 		id = tlbpid_cnt;
-		if (id == VMMACH_NUM_PIDS) {
+		if (id == VMNUM_PIDS) {
 			MachTLBFlush();
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++tlbpid_gen == 0)

@@ -51,8 +51,7 @@ typedef unsigned char uchar;
 #define SWR(a, x) 	(a) = (x)
 #define SRD(a)		((a) & 0xffff)
 
-#include <machine/machConst.h>
-#define wbflush() 	MachEmptyWriteBuffer()
+#include <machine/cpu.h>
 
 /*
  * Statistics collected over time
@@ -498,7 +497,6 @@ void
 snreset(sc)
 	struct sn_softc *sc;
 {
-	printf("snreset\n");
 	snstop(sc);
 	sninit(sc);
 }

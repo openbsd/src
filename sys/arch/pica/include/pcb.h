@@ -1,3 +1,5 @@
+/*      $OpenBSD: pcb.h,v 1.2 1996/06/06 23:06:55 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -35,10 +37,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: pcb.h 1.13 89/04/23
- *
+ *	from: Utah Hdr: pcb.h 1.13 89/04/23
  *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
- *      $Id: pcb.h,v 1.1.1.1 1995/10/18 10:39:13 deraadt Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$OpenBSD: cpu.h,v 1.2 1996/06/06 23:06:35 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +35,244 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	Copyright (C) 1989 Digital Equipment Corporation.
+ *	Permission to use, copy, modify, and distribute this software and
+ *	its documentation for any purpose and without fee is hereby granted,
+ *	provided that the above copyright notice appears in all copies.
+ *	Digital Equipment Corporation makes no representations about the
+ *	suitability of this software for any purpose.  It is provided "as is"
+ *	without express or implied warranty.
+ *
  *	from: @(#)cpu.h	8.4 (Berkeley) 1/4/94
- *      $Id: cpu.h,v 1.1.1.1 1995/10/18 10:39:11 deraadt Exp $
  */
 
 #ifndef _CPU_H_
 #define _CPU_H_
 
-#include <machine/machConst.h>
+#ifdef _KERNEL
+
+#define KUSEG_ADDR		0x0
+#define CACHED_MEMORY_ADDR	0x80000000
+#define UNCACHED_MEMORY_ADDR	0xa0000000
+#define KSEG2_ADDR		0xc0000000
+#define MAX_MEM_ADDR		0xbe000000
+#define	RESERVED_ADDR		0xbfc80000
+
+#define	CACHED_TO_PHYS(x)	((unsigned)(x) & 0x1fffffff)
+#define	PHYS_TO_CACHED(x)	((unsigned)(x) | CACHED_MEMORY_ADDR)
+#define	UNCACHED_TO_PHYS(x) 	((unsigned)(x) & 0x1fffffff)
+#define	PHYS_TO_UNCACHED(x) 	((unsigned)(x) | UNCACHED_MEMORY_ADDR)
+#define VA_TO_CINDEX(x) 	((unsigned)(x) & 0xffffff | CACHED_MEMORY_ADDR)
+
+#define CODE_START		0x80080000
+
+/*
+ * The bits in the cause register.
+ *
+ *	CR_BR_DELAY	Exception happened in branch delay slot.
+ *	CR_COP_ERR		Coprocessor error.
+ *	CR_IP		Interrupt pending bits defined below.
+ *	CR_EXC_CODE	The exception type (see exception codes below).
+ */
+#define CR_BR_DELAY		0x80000000
+#define CR_COP_ERR		0x30000000
+#define CR_EXC_CODE		0x0000007C
+#define CR_IP			0x0000FF00
+#define CR_EXC_CODE_SHIFT	2
+
+/*
+ * The bits in the status register.  All bits are active when set to 1.
+ */
+#define SR_COP_USABILITY	0xf0000000
+#define SR_COP_0_BIT		0x10000000
+#define SR_COP_1_BIT		0x20000000
+#define SR_RP			0x08000000
+#define SR_FR_32		0x04000000
+#define SR_RE			0x02000000
+#define SR_BOOT_EXC_VEC		0x00400000
+#define SR_TLB_SHUTDOWN		0x00200000
+#define SR_SOFT_RESET		0x00100000
+#define SR_DIAG_CH		0x00040000
+#define SR_DIAG_CE		0x00020000
+#define SR_DIAG_PE		0x00010000
+#define SR_KX			0x00000080
+#define SR_SX			0x00000040
+#define SR_UX			0x00000020
+#define SR_KSU_MASK		0x00000018
+#define SR_KSU_USER		0x00000010
+#define SR_KSU_SUPER		0x00000008
+#define SR_KSU_KERNEL		0x00000000
+#define SR_ERL			0x00000004
+#define SR_EXL			0x00000002
+#define SR_INT_ENAB		0x00000001
+/*#define SR_INT_MASK		0x0000ff00*/
+
+/*
+ * The interrupt masks.
+ * If a bit in the mask is 1 then the interrupt is enabled (or pending).
+ */
+#define INT_MASK		0x7f00
+#define INT_MASK_5		0x8000	/* Not used (on chip timer) */
+#define INT_MASK_4		0x4000
+#define INT_MASK_3		0x2000
+#define INT_MASK_2		0x1000
+#define INT_MASK_1		0x0800
+#define INT_MASK_0		0x0400
+#define HARD_INT_MASK		0x7c00
+#define SOFT_INT_MASK_1		0x0200
+#define SOFT_INT_MASK_0		0x0100
+
+/*
+ * The bits in the context register.
+ */
+#define CNTXT_PTE_BASE		0xFF800000
+#define CNTXT_BAD_VPN2		0x007FFFF0
+
+/*
+ * Location of exception vectors.
+ */
+#define RESET_EXC_VEC		0xBFC00000
+#define TLB_MISS_EXC_VEC	0x80000000
+#define XTLB_MISS_EXC_VEC	0x80000080
+#define CACHE_ERR_EXC_VEC	0x80000100
+#define GEN_EXC_VEC		0x80000180
+
+/*
+ * Coprocessor 0 registers:
+ */
+#define COP_0_TLB_INDEX		$0
+#define COP_0_TLB_RANDOM	$1
+#define COP_0_TLB_LO0		$2
+#define COP_0_TLB_LO1		$3
+#define COP_0_TLB_CONTEXT	$4
+#define COP_0_TLB_PG_MASK	$5
+#define COP_0_TLB_WIRED		$6
+#define COP_0_BAD_VADDR		$8
+#define COP_0_TLB_HI		$10
+#define COP_0_STATUS_REG	$12
+#define COP_0_CAUSE_REG		$13
+#define COP_0_EXC_PC		$14
+#define COP_0_PRID		$15
+#define COP_0_CONFIG		$16
+#define COP_0_LLADDR		$17
+#define COP_0_WATCH_LO		$18
+#define COP_0_WATCH_HI		$19
+#define COP_0_TLB_XCONTEXT	$20
+#define COP_0_ECC		$26
+#define COP_0_CACHE_ERR		$27
+#define COP_0_TAG_LO		$28
+#define COP_0_TAG_HI		$29
+#define COP_0_ERROR_PC		$30
+
+/*
+ * Values for the code field in a break instruction.
+ */
+#define BREAK_INSTR		0x0000000d
+#define BREAK_VAL_MASK		0x03ff0000
+#define BREAK_VAL_SHIFT		16
+#define BREAK_KDB_VAL		512
+#define BREAK_SSTEP_VAL		513
+#define BREAK_BRKPT_VAL		514
+#define BREAK_SOVER_VAL		515
+#define BREAK_KDB	(BREAK_INSTR | (BREAK_KDB_VAL << BREAK_VAL_SHIFT))
+#define BREAK_SSTEP	(BREAK_INSTR | (BREAK_SSTEP_VAL << BREAK_VAL_SHIFT))
+#define BREAK_BRKPT	(BREAK_INSTR | (BREAK_BRKPT_VAL << BREAK_VAL_SHIFT))
+#define BREAK_SOVER	(BREAK_INSTR | (BREAK_SOVER_VAL << BREAK_VAL_SHIFT))
+
+/*
+ * Mininum and maximum cache sizes.
+ */
+#define MIN_CACHE_SIZE		(16 * 1024)
+#define MAX_CACHE_SIZE		(256 * 1024)
+
+/*
+ * The floating point version and status registers.
+ */
+#define	FPC_ID			$0
+#define	FPC_CSR			$31
+
+/*
+ * The floating point coprocessor status register bits.
+ */
+#define FPC_ROUNDING_BITS		0x00000003
+#define FPC_ROUND_RN			0x00000000
+#define FPC_ROUND_RZ			0x00000001
+#define FPC_ROUND_RP			0x00000002
+#define FPC_ROUND_RM			0x00000003
+#define FPC_STICKY_BITS			0x0000007c
+#define FPC_STICKY_INEXACT		0x00000004
+#define FPC_STICKY_UNDERFLOW		0x00000008
+#define FPC_STICKY_OVERFLOW		0x00000010
+#define FPC_STICKY_DIV0			0x00000020
+#define FPC_STICKY_INVALID		0x00000040
+#define FPC_ENABLE_BITS			0x00000f80
+#define FPC_ENABLE_INEXACT		0x00000080
+#define FPC_ENABLE_UNDERFLOW		0x00000100
+#define FPC_ENABLE_OVERFLOW		0x00000200
+#define FPC_ENABLE_DIV0			0x00000400
+#define FPC_ENABLE_INVALID		0x00000800
+#define FPC_EXCEPTION_BITS		0x0003f000
+#define FPC_EXCEPTION_INEXACT		0x00001000
+#define FPC_EXCEPTION_UNDERFLOW		0x00002000
+#define FPC_EXCEPTION_OVERFLOW		0x00004000
+#define FPC_EXCEPTION_DIV0		0x00008000
+#define FPC_EXCEPTION_INVALID		0x00010000
+#define FPC_EXCEPTION_UNIMPL		0x00020000
+#define FPC_COND_BIT			0x00800000
+#define FPC_FLUSH_BIT			0x01000000
+#define FPC_MBZ_BITS			0xfe7c0000
+
+/*
+ * Constants to determine if have a floating point instruction.
+ */
+#define OPCODE_SHIFT		26
+#define OPCODE_C1		0x11
+
+/*
+ * The low part of the TLB entry.
+ */
+#define VMTLB_PF_NUM		0x3fffffc0
+#define VMTLB_ATTR_MASK		0x00000038
+#define VMTLB_MOD_BIT		0x00000004
+#define VMTLB_VALID_BIT		0x00000002
+#define VMTLB_GLOBAL_BIT	0x00000001
+
+#define VMTLB_PHYS_PAGE_SHIFT	6
+
+/*
+ * The high part of the TLB entry.
+ */
+#define VMTLB_VIRT_PAGE_NUM	0xffffe000
+#define VMTLB_PID		0x000000ff
+#define VMTLB_PID_SHIFT		0
+#define VMTLB_VIRT_PAGE_SHIFT	12
+
+/*
+ * The number of TLB entries and the first one that write random hits.
+ */
+#define VMNUM_TLB_ENTRIES	48
+#define VMWIRED_ENTRIES	 	8
+
+/*
+ * The number of process id entries.
+ */
+#define	VMNUM_PIDS		256
+
+/*
+ * TLB probe return codes.
+ */
+#define VMTLB_NOT_FOUND		0
+#define VMTLB_FOUND		1
+#define VMTLB_FOUND_WITH_PATCH	2
+#define VMTLB_PROBE_ERROR	3
+
+/*
+ * Kernel virtual address for user page table entries
+ * (i.e., the address for the context register).
+ */
+#define VMPTE_BASE		0xFF800000
+
+#endif /* _KERNEL */
 
 /*
  * Exported definitions unique to pica/mips cpu support.
@@ -56,6 +288,7 @@
 #define cpu_set_init_frame(p, fp) /* nothing */
 #define cpu_swapout(p)		panic("cpu_swapout: can't get here");
 
+#ifndef _LOCORE
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
@@ -65,9 +298,8 @@ struct clockframe {
 	int	sr;	/* status register at time of interrupt */
 };
 
-#define	CLKF_USERMODE(framep)	((framep)->sr & MACH_SR_KSU_USER)
-#define	CLKF_BASEPRI(framep)	\
-	((~(framep)->sr & (MACH_INT_MASK | MACH_SR_INT_ENAB)) == 0)
+#define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)
+#define	CLKF_BASEPRI(framep)	((~(framep)->sr & (INT_MASK|SR_INT_ENAB)) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
 
@@ -126,6 +358,8 @@ union cpuprid {
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
+#endif /* !_LOCORE */
+
 /*
  * MIPS CPU types (cp_imp).
  */
@@ -165,7 +399,7 @@ union cpuprid {
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
 #define	MIPS_R3NKK	0x23	/* NKK R3000 based FPU		ISA I   */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_LOCORE)
 union	cpuprid cpu_id;
 union	cpuprid fpu_id;
 u_int	machPrimaryDataCacheSize;

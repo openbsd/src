@@ -1,3 +1,4 @@
+/*	$OpenBSD: kdbparam.h,v 1.2 1996/06/06 23:06:44 deraadt Exp $	*/
 /*	$NetBSD: kdbparam.h,v 1.4 1994/10/26 21:09:42 cgd Exp $	*/
 
 /*-
@@ -52,13 +53,13 @@
 #define LPRMODE		"%R"
 #define OFFMODE		"+%R"
 
-#define	SETBP(ins)	MACH_BREAK_BRKPT
+#define	SETBP(ins)	BREAK_BRKPT
 
 /* return the program counter value modified if we are in a delay slot */
 #define	kdbgetpc(pcb)		(kdbvar[kdbvarchk('t')] < 0 ? \
 	(pcb).pcb_regs[34] + 4 : (pcb).pcb_regs[34])
 #define	kdbishiddenreg(p)	((p) >= &kdbreglist[33])
-#define	kdbisbreak(type)	(((type) & MACH_CR_EXC_CODE) == 0x24)
+#define	kdbisbreak(type)	(((type) & CR_EXC_CODE) == 0x24)
 
 /* check for address wrap around */
 #define	kdbaddrwrap(addr,newaddr)	(((addr)^(newaddr)) >> 31)

@@ -1,3 +1,5 @@
+/*	$OpenBSD: bsd-aout.h,v 1.2 1996/06/06 23:06:32 deraadt Exp $	*/
+
 /* bsd-aout.h
 
    4.4bsd a.out format, for backwards compatibility...  */

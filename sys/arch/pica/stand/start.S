@@ -44,8 +44,8 @@
  */
 
 #include <machine/regdef.h>
-#include <machine/machConst.h>
-#include <machine/machAsmDefs.h>
+#include <machine/cpu.h>
+#include <machine/asm.h>
 
 /*
  * Frame required for the debugger (if we have any)

@@ -1,3 +1,5 @@
+/*      $OpenBSD: profile.h,v 1.4 1996/06/06 23:07:01 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/10/93
- *      $Id: profile.h,v 1.3 1996/05/01 18:23:48 pefo Exp $
  */
 
 #define	_MCOUNT_DECL static void ___mcount

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pica,v 1.4 1996/05/15 07:09:08 pefo Exp $
+#	$OpenBSD: files.pica,v 1.5 1996/06/06 23:06:17 deraadt Exp $
 #	$NetBSD: files.pica,v 1.16 1995/04/30 10:11:00 cgd Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -16,7 +16,6 @@ file	arch/pica/pica/conf.c
 file	arch/pica/pica/cpu_exec.c
 file	arch/pica/pica/disksubr.c
 file	arch/pica/dev/dma.c
-file	arch/pica/pica/exec_elf.c
 file	arch/pica/pica/machdep.c
 file	arch/pica/pica/mainbus.c
 file	arch/pica/pica/minidebug.c

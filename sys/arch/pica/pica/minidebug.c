@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.2 1996/05/01 18:16:13 pefo Exp $
+ *      $Id: minidebug.c,v 1.3 1996/06/06 23:07:41 deraadt Exp $
  */
 
 /*
@@ -45,7 +45,7 @@
 #include <machine/pte.h>
 #include <vm/vm_prot.h>
 #undef SP
-#include <machine/machConst.h>
+#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
@@ -252,7 +252,7 @@ break_insert()
 	for(i = 0; i < MAXBRK; i++) {
 		if(brk_tab[i].addr != 0) {
 			brk_tab[i].inst = *(u_int *)brk_tab[i].addr;
-			*(u_int *)brk_tab[i].addr = MACH_BREAK_BRKPT;
+			*(u_int *)brk_tab[i].addr = BREAK_BRKPT;
 			MachFlushDCache(brk_tab[i].addr,4);
 			MachFlushICache(brk_tab[i].addr,4);
 		}
@@ -304,11 +304,11 @@ mdb(causeReg, vadr, p, kernelmode)
 static int ssandrun;	/* Single step and run flag (when cont at brk) */
 
 	splhigh();
-	cause = (causeReg & MACH_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
+	cause = (causeReg & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT;
 	newaddr = (int)(mdbpcb.pcb_regs[PC]);
 	switch(cause) {
 	case T_BREAK:
-		if(*(int *)newaddr == MACH_BREAK_SOVER) {
+		if(*(int *)newaddr == BREAK_SOVER) {
 			break_restore();
 			mdbpcb.pcb_regs[PC] += 4;
 			printf("\nStop break (panic)\n# ");
@@ -317,7 +317,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			printf("\n# ");
 			break;
 		}
-		if(*(int *)newaddr == MACH_BREAK_BRKPT) {
+		if(*(int *)newaddr == BREAK_BRKPT) {
 			break_restore();
 			printf("\rBRK %08x\t",newaddr);
 			if(mdbprintins(*(int *)newaddr, newaddr)) {
@@ -565,7 +565,7 @@ mdbsetsstep()
 	if ((int)va < 0) {
 		/* kernel address */
 		mdb_ss_instr = mdbpeek(va);
-		mdbpoke((caddr_t)va, MACH_BREAK_SSTEP);
+		mdbpoke((caddr_t)va, BREAK_SSTEP);
 		MachFlushDCache(va,4);
 		MachFlushICache(va,4);
 		return;
@@ -590,7 +590,7 @@ mdbclrsstep(cr)
 
 	/* read break instruction */
 	instr = mdbpeek(va);
-	if (instr != MACH_BREAK_SSTEP)
+	if (instr != BREAK_SSTEP)
 		return(FALSE);
 
 	if ((int)va < 0) {

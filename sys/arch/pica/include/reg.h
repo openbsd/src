@@ -1,3 +1,4 @@
+/*	$OpenBSD: reg.h,v 1.3 1996/06/06 23:07:07 deraadt Exp $	*/
 /*	$NetBSD: reg.h,v 1.6 1995/12/20 02:00:27 jonathan Exp $	*/
 
 /*
@@ -37,8 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: reg.h 1.1 90/07/09
- *
+ *	from: Utah Hdr: reg.h 1.1 90/07/09
  *	@(#)reg.h	8.2 (Berkeley) 1/11/94
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 1996/05/02 08:18:34 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 1996/06/06 23:06:33 deraadt Exp $	*/
 /*	$NetBSD: bus.h,v 1.2 1996/04/05 23:59:37 thorpej Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_BUS_H_
-#define _I386_BUS_H_
+#ifndef _PICA_BUS_H_
+#define _PICA_BUS_H_
 
 #include <machine/pio.h>
 
@@ -123,4 +123,4 @@ void	bus_mem_unmap __P((bus_chipset_tag_t t, bus_mem_handle_t memh,
 #define bus_from_host_4(t, v) (v)
 #define bus_from_host_8(t, v) (v)
 
-#endif /* _I386_BUS_H_ */
+#endif /* _PICA_BUS_H_ */

@@ -1,3 +1,5 @@
+/*      $OpenBSD: psl.h,v 1.2 1996/06/06 23:07:03 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,35 +36,34 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	8.1 (Berkeley) 6/10/93
- *      $Id: psl.h,v 1.1.1.1 1995/10/18 10:39:13 deraadt Exp $
  */
 
 #include <machine/machConst.h>
 
-#define	PSL_LOWIPL	(MACH_INT_MASK | MACH_SR_INT_ENAB)
+#define	PSL_LOWIPL	(INT_MASK | SR_INT_ENAB)
 
 #define	PSL_USERSET (	\
-	MACH_SR_KSU_USER |	\
-	MACH_SR_INT_ENAB |	\
-	MACH_SR_EXL      |	\
-	MACH_INT_MASK)
+	SR_KSU_USER |	\
+	SR_INT_ENAB |	\
+	SR_EXL      |	\
+	INT_MASK)
 
 #define	PSL_USERCLR (	\
-	MACH_SR_COP_USABILITY |	\
-	MACH_SR_BOOT_EXC_VEC |	\
-	MACH_SR_TLB_SHUTDOWN |	\
-	MACH_SR_PARITY_ERR |	\
-	MACH_SR_CACHE_MISS |	\
-	MACH_SR_PARITY_ZERO |	\
-	MACH_SR_SWAP_CACHES |	\
-	MACH_SR_ISOL_CACHES |	\
-	MACH_SR_KU_CUR |	\
-	MACH_SR_INT_ENA_CUR |	\
-	MACH_SR_MBZ)
+	SR_COP_USABILITY |	\
+	SR_BOOT_EXC_VEC |	\
+	SR_TLB_SHUTDOWN |	\
+	SR_PARITY_ERR |	\
+	SR_CACHE_MISS |	\
+	SR_PARITY_ZERO |	\
+	SR_SWAP_CACHES |	\
+	SR_ISOL_CACHES |	\
+	SR_KU_CUR |	\
+	SR_INT_ENA_CUR |	\
+	SR_MBZ)
 
 /*
  * Macros to decode processor status word.
  */
-#define	USERMODE(ps)	(((ps) & MACH_SR_KSU_MASK) == MACH_SR_KSU_USER)
-#define	BASEPRI(ps)	(((ps) & (MACH_INT_MASK | MACH_SR_INT_ENA_PREV)) \
-			== (MACH_INT_MASK | MACH_SR_INT_ENA_PREV))
+#define	USERMODE(ps)	(((ps) & SR_KSU_MASK) == SR_KSU_USER)
+#define	BASEPRI(ps)	(((ps) & (INT_MASK | SR_INT_ENA_PREV)) \
+			== (INT_MASK | SR_INT_ENA_PREV))

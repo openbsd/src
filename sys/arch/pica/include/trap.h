@@ -1,3 +1,5 @@
+/*      $OpenBSD: trap.h,v 1.2 1996/06/06 23:07:18 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -35,10 +37,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: trap.h 1.1 90/07/09
- *
+ *	from: Utah Hdr: trap.h 1.1 90/07/09
  *	from: @(#)trap.h	8.1 (Berkeley) 6/10/93
- *      $Id: trap.h,v 1.1.1.1 1995/10/18 10:39:15 deraadt Exp $
  */
 
 /*

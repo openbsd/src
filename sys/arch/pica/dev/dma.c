@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.4 1996/05/02 07:59:37 pefo Exp $
+ *      $Id: dma.c,v 1.5 1996/06/06 23:06:26 deraadt Exp $
  */
 
 /*
@@ -86,7 +86,7 @@ picaDmaInit()
 	free_dma_pte->queue.next = NULL;
 	free_dma_pte->queue.size = PICA_TL_SIZE / sizeof(dma_pte_t);
 
-	out32(PICA_SYS_TL_BASE, MACH_UNCACHED_TO_PHYS(map));
+	out32(PICA_SYS_TL_BASE, UNCACHED_TO_PHYS(map));
 	out32(PICA_SYS_TL_LIMIT, PICA_TL_SIZE);
 	out32(PICA_SYS_TL_IVALID, 0);
 }
@@ -194,7 +194,7 @@ picaDmaTLBMap(dma_softc_t *sc)
 	va = sc->req_va;
 	while(nbytes > 0) {
 		if(va < VM_MIN_KERNEL_ADDRESS) {
-			pa = MACH_CACHED_TO_PHYS(va);
+			pa = CACHED_TO_PHYS(va);
 		}
 		else {
 			pa = pmap_extract(vm_map_pmap(phys_map), va);
@@ -251,7 +251,7 @@ picaDmaStart(sc, addr, size, datain)
 		sc->mode |= DMA_DIR_WRITE;
 		regs->dma_enab = PICA_DMA_ENAB_RUN | PICA_DMA_ENAB_WRITE;
 	}
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /*

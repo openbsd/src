@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.8 1996/05/15 07:09:11 pefo Exp $
+ *      $Id: machdep.c,v 1.9 1996/06/06 23:07:37 deraadt Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -259,7 +259,7 @@ mips_init(argc, argv, code)
 	 */
 	MachSetWIRED(0);
 	MachTLBFlush();
-	MachSetWIRED(VMMACH_WIRED_ENTRIES);
+	MachSetWIRED(VMWIRED_ENTRIES);
 
 	/*
 	 * Set up mapping for hardware the way we want it!
@@ -302,7 +302,7 @@ mips_init(argc, argv, code)
 	start = v;
 	curproc->p_addr = proc0paddr = (struct user *)v;
 	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
-	firstaddr = MACH_CACHED_TO_PHYS(v);
+	firstaddr = CACHED_TO_PHYS(v);
 	for (i = 0; i < UPAGES; i+=2) {
 		tlb.tlb_mask = PG_SIZE_4K;
 		tlb.tlb_hi = vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
@@ -325,7 +325,7 @@ mips_init(argc, argv, code)
 	nullproc.p_addr = (struct user *)v;
 	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
 	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
-	firstaddr = MACH_CACHED_TO_PHYS(v);
+	firstaddr = CACHED_TO_PHYS(v);
 	for (i = 0; i < UPAGES; i+=2) {
 		nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
 		nullproc.p_md.md_upte[i+1] = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
@@ -341,9 +341,9 @@ mips_init(argc, argv, code)
 	 */
 	if (MachTLBMissEnd - MachTLBMiss > 0x80)
 		panic("startup: TLB code too large");
-	bcopy(MachTLBMiss, (char *)MACH_TLB_MISS_EXC_VEC,
+	bcopy(MachTLBMiss, (char *)TLB_MISS_EXC_VEC,
 		MachTLBMissEnd - MachTLBMiss);
-	bcopy(MachException, (char *)MACH_GEN_EXC_VEC,
+	bcopy(MachException, (char *)GEN_EXC_VEC,
 		MachExceptionEnd - MachException);
 
 	/*
@@ -398,8 +398,8 @@ mips_init(argc, argv, code)
 
 	default:
 		physmem = btoc((u_int)v - KERNBASE);
-		cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);
-		while (cp < (char *)MACH_MAX_MEM_ADDR) {
+		cp = (char *)PHYS_TO_UNCACHED(physmem << PGSHIFT);
+		while (cp < (char *)MAX_MEM_ADDR) {
 			if (badaddr(cp, 4))
 				break;
 			i = *(int *)cp;
@@ -409,7 +409,7 @@ mips_init(argc, argv, code)
 			 * Have to be tricky here.
 			 */
 			((int *)cp)[4] = 0x5a5a5a5a;
-			MachEmptyWriteBuffer();
+			wbflush();
 			if (*(int *)cp != 0xa5a5a5a5)
 				break;
 			*(int *)cp = i;
@@ -425,7 +425,7 @@ mips_init(argc, argv, code)
 	 * Initialize error message buffer (at end of core).
 	 */
 	maxmem -= btoc(sizeof (struct msgbuf));
-	msgbufp = (struct msgbuf *)(MACH_PHYS_TO_CACHED(maxmem << PGSHIFT));
+	msgbufp = (struct msgbuf *)(PHYS_TO_CACHED(maxmem << PGSHIFT));
 	msgbufmapped = 1;
 
 	/*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: regnum.h,v 1.2 1996/06/06 23:07:10 deraadt Exp $	*/
 /*	$NetBSD: reg.h,v 1.5 1995/01/18 06:40:12 mellon Exp $	*/
 
 /*
@@ -37,8 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: reg.h 1.1 90/07/09
- *
+ *	from: Utah Hdr: reg.h 1.1 90/07/09
  *	@(#)reg.h	8.2 (Berkeley) 1/11/94
  */
 
