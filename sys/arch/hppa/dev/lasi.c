@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.16 2003/08/20 22:51:07 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.17 2003/08/28 15:24:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -195,6 +195,7 @@ lasiattach(parent, self, aux)
 		break;
 
 	case HPPA_BOARD_HP800_A180C:
+	case HPPA_BOARD_HP778_B180L:
 	case HPPA_BOARD_HP780_C100:
 	case HPPA_BOARD_HP780_C110:
 	case HPPA_BOARD_HP779_C132L:
