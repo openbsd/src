@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.85 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: hardware,v 1.86 2002/07/10 19:44:09 mickey Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -188,27 +188,27 @@ Supported hardware {:-include-:}:
 		PCI `universal' communication cards, providing serial
 		  and parallel ports, including: [G]
 		    Dolphin Peripherals 4014 (dual parallel) and
-		    	4035 (dual serial)
+			4035 (dual serial)
 		    SIIG Cyber 2P1S (dual parallel, single serial)
-		    	and 2S1P (dual serial, single parallel)
+			and 2S1P (dual serial, single parallel)
 		    SIIG Cyber 4S (quad serial)
 		    SIIG Cyber I/O (single parallel, single serial)
 		    SIIG Cyber Parallel, Parallel Dual, Serial,
-		    	Serial Dual
+			Serial Dual
 		    VScom PCI-800 (8 port serial, probably OEM)
 		    AT&T/Lucent Venus Modem (found on IBM 33L4618
-		    	card, Actiontec 56K, and others)
+			card, Actiontec 56K, and others)
 		    US Robotics 3CP5609 PCI (modem)
 		    Lava Computers 2SP-PCI (parallel port)
 		    Lava Computers 2SP-PCI and Quattro-PCI (dual
-		    	serial)
+			serial)
 		    NEC PK-UG-X008 (serial)
 		    NEC PK-UG-X001 K56flex PCI (modem)
 		    Koutech IOFLEX-2S (dual serial)
 		    Syba Tech Ltd. PCI-4S2P-550-ECP (4 port serial, 2
-		    	port parallel)
+			port parallel)
 		    Moxa Technologies Co., Ltd. PCI I/O Card 4S (4 port
-		    	serial)
+			serial)
 		    NetMos 2S1P (2 port serial and 1 port parallel)
 	Ethernet Adapters
 		3Com 3c501 [A] [B] [C]
@@ -224,13 +224,13 @@ Supported hardware {:-include-:}:
 		    3Com 3c980/3c980C server adapters
 		    3Com 3cSOHO apapter
 		    3Com 3c900B-FL and 3c900B-FL/FX fiber optic
-		    	adapters
+			adapters
 		    3Com 3c555/3c556/3c556B MiniPCI adapters
 		    Dell on-board 3c920
 		    Dell Precision on-board 3c905B
 		    Dell OptiPlex GX1 on-board 3c918
 		    Dell Latitude laptop docking station embedded
-		    	3c905
+			3c905
 		3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including: [A]
 		  [B] [C]
 		    3C990-TX-95
@@ -582,6 +582,15 @@ Supported hardware {:-include-:}:
 		ProAudio Spectrum
 		S3 SonicVibes
 		Windows Sound System
+	Radio Receiver Devices
+		AIMS Lab Radiotrack FM radio
+		AIMS Lab Radiotrack II FM radio
+		Aztech/PackardBell FM radio
+		Brooktree 848/849/878/879-based TV tuner
+		D-Link DSB-R100 USB radio
+		Forte Media FM801 audio
+		SoundForte RadioLink SF16-FMR FM radio
+		SoundForte RadioLink SF16-FMR2 FM radio
 	Miscellaneous Devices
 		APM power management,
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
