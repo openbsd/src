@@ -160,7 +160,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	    && client_active)
 	{
 	    char *root = Name_Root (NULL, update_dir);
-	    if (strcmp (root, current_root) != 0)
+	    if (root == NULL || strcmp (root, current_root) != 0)
 		/* We're skipping this directory because it is for
 		   a different root.  Therefore, we just want to
 		   do the subdirectories only.  Processing files would
