@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.8 1999/09/16 20:19:34 espie Exp $	*/
+/*	$OpenBSD: expr.c,v 1.9 1999/11/15 22:12:00 espie Exp $	*/
 /*	$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: expr.c,v 1.8 1999/09/16 20:19:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.9 1999/11/15 22:12:00 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -516,7 +516,7 @@ num()
 	for(;;) {
 		switch(c) {
 			case '8': case '9':
-				if (base != OCTAL) 
+				if (base == OCTAL) 
 					goto bad_digit;
 				/*FALLTHRU*/
 			case '0': case '1': case '2': case '3': 
