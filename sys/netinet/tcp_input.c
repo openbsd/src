@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.159 2004/04/04 17:39:07 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.160 2004/04/12 14:17:55 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -122,9 +122,9 @@ int tcp_rst_ppslim = 100;		/* 100pps */
 int tcp_rst_ppslim_count = 0;
 struct timeval tcp_rst_ppslim_last;
 
-int tcp_synack_ppslim = 100;		/* 100pps */
-int tcp_synack_ppslim_count = 0;
-struct timeval tcp_synack_ppslim_last;
+int tcp_ackdrop_ppslim = 100;		/* 100pps */
+int tcp_ackdrop_ppslim_count = 0;
+struct timeval tcp_ackdrop_ppslim_last;
 
 #endif /* TUBA_INCLUDE */
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
@@ -1455,16 +1455,10 @@ trimthenstep6:
 
 	/*
 	 * If a SYN is in the window, then this is an
-	 * error and we send an RST and drop the connection.
+	 * error and we ACK and drop the packet.
 	 */
-	if (tiflags & TH_SYN) {
-		if (ppsratecheck(&tcp_synack_ppslim_last, &tcp_synack_ppslim_count,
-		    tcp_synack_ppslim) == 0) {
-			/* XXX stat */
-			goto drop;
-		}
-		goto dropafterack;
-	}
+	if (tiflags & TH_SYN)
+		goto dropafterack_ratelim;
 
 	/*
 	 * If the ACK bit is off we drop the segment and return.
@@ -1565,8 +1559,16 @@ trimthenstep6:
 			 *	Window shrinks
 			 *	Old ACK
 			 */
-			if (tlen)
+			if (tlen) {
+				/* Drop very old ACKs unless th_seq matches */
+				if (th->th_seq != tp->rcv_nxt &&
+				   SEQ_LT(th->th_ack,
+				   tp->snd_una - tp->max_sndwnd)) {
+					/* XXX stat */
+					goto drop;
+				}
 				break;
+			}
 			/*
 			 * If we get an old ACK, there is probably packet
 			 * reordering going on.  Be conservative and reset
@@ -1769,7 +1771,7 @@ trimthenstep6:
 #endif
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
-			goto dropafterack;
+			goto dropafterack_ratelim;
 		}
 		acked = th->th_ack - tp->snd_una;
 		tcpstat.tcps_rcvackpack++;
@@ -2126,6 +2128,14 @@ badsyn:
 	tcpstat.tcps_badsyn++;
 	tp = NULL;
 	goto dropwithreset;
+
+dropafterack_ratelim:
+	if (ppsratecheck(&tcp_ackdrop_ppslim_last, &tcp_ackdrop_ppslim_count,
+	    tcp_ackdrop_ppslim) == 0) {
+		/* XXX stat */
+		goto drop;
+	}
+	/* ...fall into dropafterack... */
 
 dropafterack:
 	/*
