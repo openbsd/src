@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.32 2002/07/04 04:26:39 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.33 2003/02/19 07:32:03 tedu Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.32 2002/07/04 04:26:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.33 2003/02/19 07:32:03 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -478,8 +478,10 @@ raw_df(char *file, struct statfs *sfsp)
 
 	if (ffs_df(rfd, file, sfsp) == 0) {
 		return (0);
+#if 0
 	} else if (lfs_df(rfd, file, sfsp) == 0) {
 		return (0);
+#endif
 	} else if (e2fs_df(rfd, file, sfsp) == 0) {
 		return (0);
 	} else {
