@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ftp_pxy.c,v 1.12 2001/01/17 04:47:14 fgsch Exp $	*/
+/*	$OpenBSD: ip_ftp_pxy.c,v 1.13 2001/03/17 22:54:20 beck Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -515,6 +515,8 @@ int dlen;
 
 	if ((ftp->ftp_passok == 1) && !strncmp(rptr, "331", 3))
 		 ftp->ftp_passok = 2;
+	else if ((ftp->ftp_passok == 1) && !strncmp(rptr, "230", 3))
+		 ftp->ftp_passok = 4;
 	else if ((ftp->ftp_passok == 3) && !strncmp(rptr, "230", 3))
 		 ftp->ftp_passok = 4;
 	else if ((ftp->ftp_passok == 3) && !strncmp(rptr, "530", 3))
