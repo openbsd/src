@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.c,v 1.1 2004/11/02 02:15:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.c,v 1.2 2004/11/06 18:31:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>. 
@@ -66,10 +66,10 @@ static const struct ieee80211_countryname
 ieee80211_r_ctry[] = IEEE80211_REGDOMAIN_COUNTRY_NAMES;
 
 #ifndef bsearch
-void *bsearch(const void *, const void *, size_t, size_t,
+const void *bsearch(const void *, const void *, size_t, size_t,
     int (*)(const void *, const void *));
 
-void *
+const void *
 bsearch(const void *key, const void *base0, size_t nmemb, size_t size,
     int (*compar)(const void *, const void *))
 {
@@ -81,9 +81,9 @@ bsearch(const void *key, const void *base0, size_t nmemb, size_t size,
 		p = base + (lim >> 1) * size;
 		cmp = (*compar)(key, p);
 		if (cmp == 0)
-			return ((void *)p);
+			return ((const void *)p);
 		if (cmp > 0) {  /* key > p: move right */
-			base = (char *)p + size;
+			base = (const char *)p + size;
 			lim--;
 		} /* else move left */
 	}
@@ -94,21 +94,21 @@ bsearch(const void *key, const void *base0, size_t nmemb, size_t size,
 int
 ieee80211_regdomain_compare_cn(const void *a, const void *b)
 {
-	return(strcmp(((struct ieee80211_countryname*)a)->cn_name, 
-		   ((struct ieee80211_countryname*)b)->cn_name));
+	return(strcmp(((const struct ieee80211_countryname*)a)->cn_name, 
+		   ((const struct ieee80211_countryname*)b)->cn_name));
 }
 
 int
 ieee80211_regdomain_compare_rn(const void *a, const void *b)
 {
-	return(strcmp(((struct ieee80211_regdomainname*)a)->rn_name, 
-		   ((struct ieee80211_regdomainname*)b)->rn_name));
+	return(strcmp(((const struct ieee80211_regdomainname*)a)->rn_name, 
+		   ((const struct ieee80211_regdomainname*)b)->rn_name));
 }
 
 u_int16_t
 ieee80211_name2countrycode(const char *name)
 {
-	struct ieee80211_countryname key = { CTRY_DEFAULT, name }, *value;
+	const struct ieee80211_countryname key = { CTRY_DEFAULT, name }, *value;
 
 	if((value = bsearch(&key, &ieee80211_r_ctry,
 		sizeof(ieee80211_r_ctry) / sizeof(ieee80211_r_ctry[0]),
@@ -122,7 +122,7 @@ ieee80211_name2countrycode(const char *name)
 u_int32_t
 ieee80211_name2regdomain(const char *name)
 {
-	struct ieee80211_regdomainname key = { DMN_DEFAULT, name }, *value;
+	const struct ieee80211_regdomainname key = { DMN_DEFAULT, name }, *value;
 
 	if((value = bsearch(&key, &ieee80211_r_names,
 		sizeof(ieee80211_r_names) / sizeof(ieee80211_r_names[0]),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.h,v 1.1 2004/11/02 02:15:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.h,v 1.2 2004/11/06 18:31:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -356,7 +356,7 @@ enum ieee80211_countrycode {
 struct ieee80211_countryname {
 	u_int16_t	cn_code;
 	const char 	*cn_name;
-	u_int16_t 	cn_domain;
+	u_int32_t 	cn_domain;
 };
 
 #define IEEE80211_REGDOMAIN_COUNTRY_NAMES { 				\
