@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.8 1999/04/19 19:57:29 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.13 1999/04/18 15:17:26 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.9 1999/06/05 18:01:42 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.14 1999/06/05 18:01:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -311,7 +311,10 @@ x509_cert_get_subject (u_int8_t *asn, u_int32_t asnlen,
   return 0;
 }
 
-/* Initalizes the struct x509_attribval from a AtributeValueAssertion.  */
+/*
+ * Initalizes the struct x509_attribval from a AtributeValueAssertion.
+ * XXX Error checking.
+ */
 void
 x509_get_attribval (struct norm_type *obj, struct x509_attribval *a)
 {
@@ -326,7 +329,7 @@ x509_get_attribval (struct norm_type *obj, struct x509_attribval *a)
     a->val = strdup ((char *)tmp->data);
 }
 
-/* Set OBJ with values from A.  */
+/* Set OBJ with values from A.  XXX Error checking.  */
 void
 x509_set_attribval (struct norm_type *obj, struct x509_attribval *a)
 {
@@ -391,19 +394,32 @@ x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen,
     goto fail;
 
   tmp = asn_decompose ("cert.subjectPublicKeyInfo.subjectPublicKey", &cert);
+  if (!tmp)
+    goto fail;
   if (!pkcs_public_key_from_asn (&rcert->key, tmp->data + 1, tmp->len - 1))
     goto fail;
   
   tmp = asn_decompose ("cert.version", &cert);
+  if (!tmp)
+    goto fail;
   rcert->version = mpz_get_ui (tmp->data);
+
   tmp = asn_decompose ("cert.serialNumber", &cert);
+  if (!tmp)
+    goto fail;
   rcert->serialnumber = mpz_get_ui (tmp->data);
+
   tmp = asn_decompose ("cert.signature.algorithm", &cert);
+  if (!tmp)
+    goto fail;
   rcert->signaturetype = strdup ((char *)tmp->data);
 
   tmp = asn_decompose ("cert.issuer.RelativeDistinguishedName."
 		       "AttributeValueAssertion", &cert);
+  if (!tmp)
+    goto fail;
   x509_get_attribval (tmp, &rcert->issuer1);
+
   tmp = asn_decompose ("cert.issuer.RelativeDistinguishedName[1]."
 		       "AttributeValueAssertion", &cert);
   if (tmp)
@@ -413,7 +429,10 @@ x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen,
 
   tmp = asn_decompose ("cert.subject.RelativeDistinguishedName."
 		       "AttributeValueAssertion", &cert);
+  if (!tmp)
+    goto fail;
   x509_get_attribval (tmp, &rcert->subject1);
+
   tmp = asn_decompose ("cert.subject.RelativeDistinguishedName[1]."
 		       "AttributeValueAssertion", &cert);
   if (tmp)
@@ -422,9 +441,24 @@ x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen,
     rcert->subject2.type = 0;
 
   tmp = asn_decompose ("cert.validity.notBefore", &cert);
+  if (!tmp)
+    goto fail;
   rcert->start = strdup ((char *)tmp->data);
+  if (!rcert->start)
+    {
+      log_error ("x509_decode_certificate: strdup(\"%s\") failed", tmp->data);
+      goto fail;
+    }
+
   tmp = asn_decompose ("cert.validity.notAfter", &cert);
+  if (!tmp)
+    goto fail;
   rcert->end = strdup ((char *)tmp->data);
+  if (!rcert->end)
+    {
+      log_error ("x509_decode_certificate: strdup(\"%s\") failed", tmp->data);
+      goto fail;
+    }
 
   /* For x509v3 there might be an extension, try to decode it.  */
   tmp = asn_decompose ("cert.extension", &cert);
