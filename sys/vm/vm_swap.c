@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.2 1996/03/03 17:45:38 niklas Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.3 1997/02/17 07:38:20 mickey Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.32 1996/02/05 01:54:09 christos Exp $	*/
 
 /*
@@ -462,8 +462,10 @@ swfree(p, index)
 	 * root (sure beats rewriting standalone restor).
 	 */
 	if (vp == rootvp) {
+#ifndef MINIROOTSIZE
 		struct mount *mp;
 		struct statfs *sp;
+#endif
 		long firstblk;
 		int rootblks;
 
