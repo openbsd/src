@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.1 2004/02/07 21:16:47 deraadt Exp $
+# $OpenBSD: list.local,v 1.2 2004/03/21 18:43:20 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 #LINK	instbin					sbin/wicontrol
@@ -6,3 +6,9 @@
 #LINK	instbin					sbin/ccdconfig
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/rtsol
+
+LINK	instbin					sbin/dhclient
+
+# dhcp things
+SCRIPT	${DESTDIR}/sbin/dhclient-script 	sbin/dhclient-script
+SPECIAL chmod 755 sbin/dhclient-script
