@@ -9,7 +9,6 @@
 ./usr/lib/gcc-lib/x86_64-unknown-openbsd3.4/3.3.2
 ./usr/lib/gcc-lib/x86_64-unknown-openbsd3.4/3.3.2/collect2
 ./usr/lib/gcc-lib/x86_64-unknown-openbsd3.4/3.3.2/specs
-./usr/lib/libstdc++.so.32.0
 ./usr/libdata/perl5/site_perl/x86_64-openbsd
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/a.out.ph
