@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.50 2002/11/10 21:23:09 miod Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.51 2003/03/28 02:39:07 millert Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1456,17 +1456,20 @@ ccdsize(dev)
 	dev_t dev;
 {
 	struct ccd_softc *cs;
-	int part, size;
+	int part, size, unit;
+
+	unit = ccdunit(dev);
+	if (unit >= numccd)
+		return (-1);
+
+	cs = &ccd_softc[unit];
+	if ((cs->sc_flags & CCDF_INITED) == 0)
+		return (-1);
 
 	if (ccdopen(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
-	cs = &ccd_softc[ccdunit(dev)];
 	part = DISKPART(dev);
-
-	if ((cs->sc_flags & CCDF_INITED) == 0)
-		return (-1);
-
 	if (cs->sc_dkdev.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
