@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.15 1998/06/11 06:20:18 deraadt Exp $	*/
+/*	$OpenBSD: fio.c,v 1.16 1998/06/12 17:51:51 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.15 1998/06/11 06:20:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.16 1998/06/12 17:51:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ append(mp, f)
 }
 
 /*
- * Delete a file, but only if the file is a plain file.
+ * Delete or truncate a file, but only if the file is a plain file.
  */
 int
 rm(name)
@@ -285,7 +285,13 @@ rm(name)
 		errno = EISDIR;
 		return(-1);
 	}
-	return(unlink(name));
+	if (unlink(name) == -1) {
+		if (errno == EPERM)
+			return(truncate(name, 0));
+		else
+			return(-1);
+	}
+	return(0);
 }
 
 static int sigdepth;		/* depth of holdsigs() */

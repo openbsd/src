@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.16 1998/05/04 05:37:52 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.17 1998/06/12 17:51:53 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.16 1998/05/04 05:37:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.17 1998/06/12 17:51:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -388,6 +388,9 @@ wait_child(pid)
 	struct child *cp = findchild(pid, 0);
 	sigset_t nset, oset;
 
+	if (cp == NULL)
+		return(-1);
+
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -409,6 +412,9 @@ free_child(pid)
 {
 	struct child *cp = findchild(pid, 0);
 	sigset_t nset, oset;
+
+	if (cp == NULL)
+		return;
 
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
