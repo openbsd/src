@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.17 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.18 2003/08/04 07:29:22 hin Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.17 2003/07/10 00:06:51 david Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.18 2003/08/04 07:29:22 hin Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -45,9 +45,6 @@ static const char rcsid[] = "$OpenBSD: passwd.c,v 1.17 2003/07/10 00:06:51 david
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
-#ifdef KERBEROS
-#include <kerberosIV/krb.h>
-#endif
 
 /*
  * Note on configuration:
@@ -65,7 +62,6 @@ int force_yp;
 
 extern int local_passwd(char *, int);
 extern int yp_passwd(char *);
-extern int krb_passwd(int, char **);
 extern int krb5_passwd(int, char **);
 extern int _yp_check(char **);
 void usage(int retval);
@@ -80,7 +76,7 @@ main(int argc, char **argv)
 	int status = 0;
 #endif
 
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS5)
 	extern char realm[];
 
 	if (krb_get_lrealm(realm,1) == KSUCCESS)
@@ -91,22 +87,12 @@ main(int argc, char **argv)
 #endif
 
 	/* Process args and options */
-	while ((ch = getopt(argc, argv, "lykK")) != -1)
+	while ((ch = getopt(argc, argv, "lyK")) != -1)
 		switch (ch) {
 		case 'l':		/* change local password file */
 			use_kerberos = 0;
 			use_yp = 0;
 			break;
-		case 'k':		/* change Kerberos password */
-#if defined(KERBEROS)
-			use_kerberos = 1;
-			use_yp = 0;
-			exit(krb_passwd(argc, argv));
-			break;
-#else
-			fprintf(stderr, "passwd: Kerberos not compiled in\n");
-			exit(1);
-#endif
 		case 'K':
 #ifdef KRB5
 			/* Skip programname and '-K' option */
@@ -148,11 +134,11 @@ main(int argc, char **argv)
 	case 0:
 		break;
 	case 1:
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS5)
 		if (use_kerberos && strcmp(argv[0], username)) {
 			(void)fprintf(stderr, "passwd: %s\n\t%s\n%s\n",
 			    "to change another user's Kerberos password, do",
-			    "\"passwd -k -u <user>\";",
+			    "\"passwd -K -u <user>\";",
 			    "to change a user's local passwd, use \"passwd -l <user>\"");
 			exit(1);
 		}
@@ -162,11 +148,6 @@ main(int argc, char **argv)
 	default:
 		usage(1);
 	}
-
-#if defined(KERBEROS) || defined(KERBEROS5)
-	if (use_kerberos)
-		exit(krb_passwd(argc, argv));
-#endif
 
 #ifdef	YP
 	if (force_yp || ((status = local_passwd(username, 0)) && use_yp))

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.26 2003/07/25 09:58:45 jmc Exp $
+.\"	$OpenBSD: passwd.1,v 1.27 2003/08/04 07:29:22 hin Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,15 +40,9 @@
 .Bk -words
 .Op Fl l
 .Op Fl y
-.Op Fl k
 .Op Fl K
-.Op Fl n Ar name
-.Op Fl i Ar instance
-.Op Fl r Ar realm
-.Op Fl u Ar username[.instance][@realm]
 .Op Ar user
 .Ek
-.\" This should really be: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]]] [user]
 .Sh DESCRIPTION
 .Nm
 changes the user's local, Kerberos, or YP password.
@@ -83,38 +77,12 @@ the user has an entry in the local database.
 The
 .Xr rpc.yppasswdd 8
 daemon should be running on the YP master server.
-.It Fl k
-Forces the change to affect the Kerberos database, even
+.It Fl K
+Forces the change to affect the Kerberos 5 database, even
 if the user has a password in the local database.
 Once the password has been verified,
 .Nm
 communicates the new password information to the Kerberos authenticating host.
-.El
-.Pp
-The following flags are only used when the
-.Fl k
-flag is specified:
-.Bl -tag -width flag
-.It Fl n Ar name
-Specifies a
-.Ar name
-that will be used as the principal name rather than the username
-of the user running
-.Nm passwd .
-(This is determined from the ticket file if it exists; otherwise,
-it is determined from the Unix user ID.)
-.It Fl i Ar instance
-Specifies an
-.Ar instance
-to use rather than a null instance.
-.It Fl r Ar realm
-Specifies a
-.Ar realm
-instead of the local realm.
-.It Fl u Ar username[.instance][@realm]
-Specifies a fully qualified Kerberos principal.
-.It Fl K Ar principal@REALM
-Changes a user's Kerberos password.
 .El
 .Pp
 This is the behavior if no flags are specified:
@@ -125,10 +93,6 @@ in the local database).
 If the password is not in the local password database, then
 an attempt is made to use the YP database.
 .Pp
-To change another user's Kerberos password, one must first run
-.Xr kinit 1
-followed by
-.Nm passwd .
 The superuser is not required to provide a user's current password
 if only the local password is modified.
 .Pp
