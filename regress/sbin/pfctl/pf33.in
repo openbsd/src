@@ -1,7 +1,8 @@
 ext_if = "lo0"
 
 altq on $ext_if cbq bandwidth 10Mb tbrsize 1824 \
-    queue { deflt, http, ssh, mail, rsets }
+    queue { ctrl, deflt, http, ssh, mail, rsets }
+queue	ctrl bandwidth 5% priority 0 cbq(control)
 queue	deflt bandwidth 10% priority 0 cbq(default ecn)
 queue	http bandwidth 1.5Mb priority 3 { http_vhosts, http_cust1 }
 queue	 http_vhosts bandwidth 40% cbq(borrow red)
