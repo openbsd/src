@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.59 1999/03/07 03:05:31 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.60 1999/03/14 19:31:19 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.59 1999/03/07 03:05:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.60 1999/03/14 19:31:19 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1054,7 +1054,7 @@ display_partition(f, lp, i, unit, width)
 			    (pp->p_offset + 
 			    pp->p_size + lp->d_secpercyl - 1) /
 			    lp->d_secpercyl - 1);
-			if (pp->p_size % lp->d_secpercyl)
+			if ((pp->p_offset + pp->p_size) % lp->d_secpercyl)
 				putc('*', f);
 			putc(')', f);
 		}
