@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.39 2002/02/12 18:41:21 art Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.40 2002/02/12 22:13:22 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -336,7 +336,7 @@ svr4_sys_getdents64(p, v, retval)
 
 	FREF(fp);
 	error = readdir_with_callback(fp, &fp->f_offset, SCARG(uap, nbytes),
-	    svr4_readdir64_callback, &args)) != 0)
+	    svr4_readdir64_callback, &args);
 	FRELE(fp);
 	if (error)
 		return (error);
