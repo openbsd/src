@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.h,v 1.2 1999/09/14 01:05:24 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_machdep.h,v 1.3 2001/01/15 12:02:36 art Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,5 +49,9 @@ struct netbsd_sigcontext {
 	long	sc_xxx[8];		/* XXX */
 	netbsd_sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
+
+#ifdef _KERNEL
+void netbsd_sendsig __P((sig_t, int, int, u_long, int, union sigval));
+#endif
 
 #endif /* _NETBSD_MACHDEP_H */
