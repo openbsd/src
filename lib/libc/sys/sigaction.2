@@ -232,8 +232,7 @@ structure is a part of
 .St -p1003.1b .
 It provides much more information about the causes and
 attributes of the signal that is being delivered.
-.El
-.Pp
+.It Dv SA_RESTART
 If a signal is caught during the system calls listed below,
 the call may be forced to terminate
 with the error
@@ -262,6 +261,7 @@ or
 .Xr ioctl 2 .
 However, calls that have already committed are not restarted,
 but instead return a partial success (for example, a short read count).
+.El
 .Pp
 After a
 .Xr fork 2
