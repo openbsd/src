@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.97 2002/04/26 02:14:23 krw Exp $
+#	$OpenBSD: install.sh,v 1.98 2002/04/28 14:44:01 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -170,8 +170,7 @@ __EOT
 
 			# Get the mount point from the user
 			while : ; do
-				echo -n "Mount point for ${DISK}${_pp} (size=${_ps}k) [$_mp, RET, none, or done]? "
-				getresp "$_mp"
+				ask "Mount point for ${DISK}${_pp} (size=${_ps}k), RET, none or done?" "$_mp"
 				case $resp in
 				/*)	_mount_points[${_i}]=$resp
 					break
@@ -224,8 +223,7 @@ __EOT
 		echo
 	) < ${FILESYSTEMS}
 
-	echo -n	"\nAre you really sure that you're ready to proceed? [n] "
-	getresp n
+	ask "\nAre you really sure that you're ready to proceed?" n
 	case $resp in
 	y*|Y*)	;;
 	*)	echo "ok, try again later..."
@@ -258,8 +256,7 @@ Even if you choose not to transfer installation sets that way, this information
 will be preserved and copied into the new root filesystem.
 
 __EOT
-echo -n	"Configure the network? [y] "
-getresp y
+ask "Configure the network?" y
 case $resp in
 y*|Y*)	donetconfig
 	;;
@@ -287,8 +284,7 @@ mount | while read line; do
 	set -- $line
 	if [ "$3" = "/" -a "$5" = "nfs" ]; then
 		echo "You appear to be running diskless."
-		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
-		getresp n
+		ask "Are the install sets on one of your currently mounted filesystems?" n
 		case $resp in
 		y*|Y*)	get_localdir
 			;;

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2002/04/28 02:13:20 deraadt Exp $
+#	$OpenBSD: install.md,v 1.8 2002/04/28 14:44:01 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@ ARCH=ARCH
 
 md_set_term() {
 	test -n "$TERM" && return
-	echo -n "Specify terminal type [vt220]: "
-	getresp vt220
+	ask "Specify terminal type:" vt220
 	TERM=$resp
 	export TERM
 }
@@ -109,8 +108,7 @@ md_init_mbr() {
 	echo "consult your PowerPC OpenFirmware manual -and- the"
 	echo "PowerPC OpenBSD Installation Guide for doing setup this way."
 	echo
-	echo -n "Do you want to init the MBR and the MSDOS partition? [y] "
-	getresp "y"
+	ask "Do you want to init the MBR and the MSDOS partition?" y
 	case "$resp" in
 	n*|N*)	exit 0;;
 	*)	echo
@@ -156,8 +154,7 @@ md_checkfordisklabel() {
 	echo "any HFS partitions on the disk, including the partition table."
 	echo "Choose the MBR option carefully, knowing this fact."
 
-	echo -n "Do you want to choose (H)FS labeling or (M)BR labeling [H] "
-	getresp "h"
+	ask "Do you want to choose (H)FS labeling or (M)BR labeling?" H
 	case "$resp" in
 	m*|M*)	export disklabeltype=MBR
 		md_checkforMBRdisklabel $1
@@ -173,15 +170,13 @@ md_checkfordisklabel() {
 md_checkforMBRdisklabel() {
 
 	echo "You have chosen to put a MBR disklabel on the disk."
-	echo -n "Is this correct? [n] "
-	getresp "n"
+	ask "Is this correct?" n
 	case "$resp" in
 	n*|N*)	echo "aborting install"
 		exit 0;;
 	esac
 
-	echo -n "Have you initialized an MSDOS partition using OpenFirmware? [n] "
-	getresp "n"
+	ask "Have you initialized an MSDOS partition using OpenFirmware?" n
 	case "$resp" in
 	n*|N*)	md_init_mbr $1;;
 	*)	echo
@@ -193,8 +188,7 @@ md_checkforMBRdisklabel() {
 		echo "Also note that the boot partition must be included as partition"
 		echo "'i' in the OpenBSD disklabel."
 		echo
-		echo -n "Do you want to keep the current MSDOS partition setup? [y]"
-		getresp "y"
+		ask "Do you want to keep the current MSDOS partition setup?" y
 		case "$resp" in
 		n*|N*)	md_init_mbr $1;;
 		esac
@@ -233,14 +227,12 @@ md_prep_fdisk()
 	echo "WARNING: Wrong information in the BIOS partition table might"
 	echo "render the disk unusable."
 
-	echo -n "Press [Enter] to continue "
-	getresp ""
+	ask "Press [Enter] to continue"
 
 	echo
 	echo "Current partition information is:"
 	fdisk ${_disk}
-	echo -n "Press [Enter] to continue "
-	getresp ""
+	ask "Press [Enter] to continue"
 
 	_done=0
 	while [ $_done = 0 ]; do
@@ -258,8 +250,7 @@ If you make a mistake, simply exit fdisk without storing the new
 information, and you will be allowed to start over.
 __EOT
 		echo
-		echo -n "Press [Enter] to continue "
-		getresp ""
+		ask "Press [Enter] to continue"
 
 		fdisk -e ${_disk}
 
@@ -270,8 +261,7 @@ __EOT
 		echo
 		echo "(You will be permitted to edit this information again.)"
 		echo "-------------------------------------------------------"
-		echo -n "Is the above information correct? [n] "
-		getresp "n"
+		ask "Is the above information correct?" n
 
 		case "$resp" in
 		n*|N*)	;;
@@ -285,8 +275,7 @@ __EOT
 	echo "At least the MSDOS partition used for booting must be accessible"
 	echo "by OpenBSD as partition 'i'. You may need this information to "
 	echo "fill in the OpenBSD disk label later."
-	echo -n "Press [Enter] to continue "
-	getresp ""
+	ask "Press [Enter] to continue"
 }
 
 md_prep_disklabel()
@@ -296,18 +285,17 @@ md_prep_disklabel()
 	_disk=$1
 	md_checkfordisklabel $_disk
 	case $? in
-	0)	echo -n "Do you wish to edit the disklabel on $_disk? [y] "
+	0)	ask "Do you wish to edit the disklabel on $_disk?" y
 		;;
 	1)	md_prep_fdisk ${_disk}
 		echo "WARNING: Disk $_disk has no label"
-		echo -n "Do you want to create one with the disklabel editor? [y] "
+		ask "Do you want to create one with the disklabel editor?" y
 		;;
 	2)	echo "WARNING: Label on disk $_disk is corrupted"
-		echo -n "Do you want to try and repair the damage using the disklabel editor? [y] "
+		ask "Do you want to try and repair the damage using the disklabel editor?" y
 		;;
 	esac
 
-	getresp "y"
 	case "$resp" in
 	y*|Y*)	;;
 	*)	return ;;
@@ -340,8 +328,8 @@ Do not change any parameters except the partition layout and the label name.
   i:    10208       32     MSDOS                        # (Cyl.    0*- 11*)
 [End of example]
 __EOT
-	echo -n "Press [Enter] to continue "
-	getresp ""
+	ask "Press [Enter] to continue"
+
 	if [[ $disklabeltype = "HFS" ]]
 	then
 		disklabel -c -f /tmp/fstab.${_disk} -E ${_disk}

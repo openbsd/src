@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.210 2002/04/27 19:12:57 krw Exp $
+#	$OpenBSD: install.sub,v 1.211 2002/04/28 14:44:01 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -86,7 +86,7 @@
 
 # Ask for a password, saving the input in $resp.
 #    Display $1 as the prompt.
-#    *Don't* allow the '!' options that getresp does.
+#    *Don't* allow the '!' options that ask does.
 #    *Don't* echo input.
 askpass() {
 	set -o noglob
@@ -97,11 +97,19 @@ askpass() {
 	echo
 }
 
-# Ask for user input, saving the input (or the default value
-# given in $1 if the input is empty) in $resp. Allow the user
-# to escape to shells ('!') or execute commands ('!foo')
-# before entering the input.
-getresp() {
+# Ask for user input.
+#
+#    $1    = the question to ask the user
+#    $2    = the default answer
+#    
+# Save the user input (or the default) in $resp.
+#
+# Allow the user to escape to shells ('!') or execute commands
+# ('!foo') before entering the input.
+ask() {
+	echo -n "$1 "
+	[ $# -lt 2 ] || echo -n "[$2] "
+
 	set -o noglob
 	while : ; do
 		read resp
@@ -111,7 +119,7 @@ getresp() {
 			;;
 		!*)	eval ${resp#?}
 			;;
-		*)	: ${resp:=$1}
+		*)	: ${resp:=$2}
 			break
 			;;
 		esac
@@ -279,14 +287,12 @@ get_localdir() {
 	local _mp=$1 _dir=
 
 	while : ; do
-		echo -n "Enter the pathname where the sets are stored: [$_dir] "
-		getresp "$_dir"
+		ask "Enter the pathname where the sets are stored:" "$_dir"
 		_dir=$resp
 
 		# Allow break-out with empty response
 		if [ -z "$_dir" ]; then
-			echo -n "Are you sure you don't want to set the pathname? [n] "
-			getresp n
+			ask "Are you sure you don't want to set the pathname?" n
 			case $resp in
 			y*|Y*)	break
 				;;
@@ -305,8 +311,7 @@ get_localdir() {
 The directory "${_mp}/${_dir}" does not exist, or does not hold any
 OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets.
 __EOT
-		echo -n "Re-enter pathname? [y] "
-		getresp y
+		ask "Re-enter pathname?" y
 		case $resp in
 		y*|Y*)	;;
 		*)	local_sets_dir=
@@ -339,8 +344,7 @@ you have already entered information for). Available disks are:
 $_DKDEVS
 
 __EOT
-	echo -n	"Which one? [done] "
-	getresp done
+	ask "Which one?" done
 	if [ "X${resp}" = "Xdone" ]; then
 		DISK=done
 	elif isin $resp $_DKDEVS ; then
@@ -370,8 +374,7 @@ Available disks are:
 $_DKDEVS
 
 __EOT
-	echo -n "Which disk is the root disk? [${_defdsk}] "
-	getresp "$_defdsk"
+	ask "Which disk is the root disk?" "$_defdsk"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK=$resp
 		makedev $resp || ROOTDISK=
@@ -436,8 +439,7 @@ __EOT
 			done
 			echo
 		fi
-		echo -n	"Configure which interface? (or 'done') [$_ouranswer] "
-		getresp "$_ouranswer"
+		ask "Configure which interface? (or 'done')" "$_ouranswer"
 		case $resp in
 		"done")	;;
 		"")	_reprompt=0
@@ -492,8 +494,7 @@ configure_ifs() {
 	# Get IP address
 	resp=
 	while [ -z "$resp" ] ; do
-		echo -n "IP address${_dhcp_prompt}? [$_if_ip] "
-		getresp "$_if_ip"
+		ask "IP address${_dhcp_prompt}?" "$_if_ip"
 		if [ ! -x /sbin/dhclient -a "X$resp" == "Xdhcp" ]; then
 			resp=
 		fi
@@ -504,8 +505,7 @@ configure_ifs() {
 	_hostname=`hostname`
 	resp=
 	while [ -z "$resp" ] ; do
-		echo -n "Symbolic (host) name? [$_hostname] "
-		getresp "$_hostname"
+		ask "Symbolic (host) name?" "$_hostname"
 		_if_symname=$resp
 	done
 
@@ -516,8 +516,7 @@ configure_ifs() {
 			_if_mask=255.255.255.0
 		fi
 		while [ -z "$resp" ]; do
-			echo -n "Netmask? [$_if_mask] "
-			getresp "$_if_mask"
+			ask "Netmask?" "$_if_mask"
 			_if_mask=$resp
 		done
 	fi
@@ -539,8 +538,7 @@ __EOT
 If the default is not satisfactory, and you wish to use another
 media, copy that line from above (e.g. "media 100baseTX")
 __EOT
-		echo -n "Media directives? [$_if_extra] "
-		getresp "$_if_extra"
+		ask "Media directives?" "$_if_extra"
 		if [ -n "$resp" ]; then
 			_if_extra=$resp
 		fi
@@ -795,8 +793,7 @@ get_selection() {
 	done
 
 	# Get the name of the file.
-	echo -n "File name? [$_next] "
-	getresp "$_next"
+	ask "File name?" "$_next"
 
 	# Ignore a bare '-' or '+'
 	case $resp in
@@ -909,8 +906,7 @@ The directory
 
 contains no OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets.
 __EOT
-		echo -n "Search for other *.tar.gz and *.tgz files? [y] "
-		getresp y
+		ask "Search for other *.tar.gz and *.tgz files?" y
 		case $resp in
 		n*|N*)	return ;;
 		esac
@@ -923,9 +919,7 @@ __EOT
 	fi
 
 	if [ -z "$_sets" ]; then
-		eval echo "There are no *.tar.gz or *.tgz files in ${_src}."
-		echo -n "See a directory listing? [y] "
-		getresp y
+		ask "There are no *.tar.gz or *.tgz files in ${_src}.\nSee a directory listing?" y
 		case $resp in
 		n*|N*)	return ;;
 		esac
@@ -980,8 +974,7 @@ get_get_files_list () {
 install_get_files_list () {
 	local _f _failed_files _src=$1 _public_src=$2
 
-	echo -n "Ready to ${MODE} sets? [y] "
-	getresp y
+	ask "Ready to ${MODE} sets?" y
 	case $resp in
 	y*|Y*)	;;
 	*)	_setsdone=$_osetsdone
@@ -1064,8 +1057,7 @@ __EOT
 	if [ -z "$_proxy_host" ]; then
 		_proxy_host=none
 	fi
-	echo -n "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none') [${_proxy_host}] "
-	getresp "$_proxy_host"
+	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" "$_proxy_host"
 	if [ "X${resp}" = X"none" ]; then
 		unset _proxy_host ftp_proxy http_proxy
 	else
@@ -1086,8 +1078,7 @@ By default, ftp will attempt a passive connection and fall back to a normal
 old ftp servers that claim to support passive mode, but really do not.
 In this case, you should explicitly request an active session.
 __EOT
-		echo -n "Do you want to use active ftp? [${resp}] "
-		getresp "$resp"
+		ask "Do you want to use active ftp?" "$resp"
 		case $resp in
 		y*|Y*)	_ftp_active=-A ;;
 		*)	unset _ftp_active ;;
@@ -1096,8 +1087,7 @@ __EOT
 
 	# Provide a list of possible servers
 	[ -z "$_ftp_getlist" ] && _ftp_getlist=y
-	echo -n "Do you want a list of potential ${_url_type} servers? [${_ftp_getlist}] "
-	getresp "$_ftp_getlist"
+	ask "Do you want a list of potential ${_url_type} servers?" "$_ftp_getlist"
 	case $resp in
 	n*|N*)	_ftp_getlist=n
 		;;
@@ -1114,11 +1104,10 @@ __EOT
 	resp=
 	while [ -z "$resp" ] ; do
 		if [ -f /tmp/ftplist ]; then
-			eval echo -n "Server IP address, hostname, or list#? [\$_${_url_type}_server_ip]\ "
+			eval ask \"Server IP address, hostname, or list#?\" \"\$_${_url_type}_server_ip\"
 		else
-			eval echo -n "Server IP address, or hostname? [\$_${_url_type}_server_ip]\ "
+			eval ask \"Server IP address, or hostname?\" \"\$_${_url_type}_server_ip\"
 		fi
-		eval getresp "\$_${_url_type}_server_ip"
 		if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
 			cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 			resp=
@@ -1156,8 +1145,7 @@ __EOT
 	fi
 	resp=
 	while [ -z "$resp" ] ; do
-		eval echo -n "Server directory? [\$_${_url_type}_server_dir]\ "
-		eval getresp "\$_${_url_type}_server_dir"
+		eval ask \"Server directory?\" \"\$_${_url_type}_server_dir\"
 		eval _${_url_type}_server_dir=$resp
 	done
 
@@ -1176,8 +1164,7 @@ __EOT
 		IFS=
 		resp=
 		while [ -z "$resp" ] ; do
-			echo -n "Login? [${_ftp_server_login}] "
-			getresp "$_ftp_server_login"
+			ask "Login?" "$_ftp_server_login"
 			_ftp_server_login=$resp
 		done
 
@@ -1283,8 +1270,7 @@ $_CDDEVS
 __EOT
 
 	_drive=`echo $_CDDEVS | cutword 1`
-	echo -n	"Which CD-ROM contains the installation media? [$_drive] "
-	getresp "$_drive"
+	ask "Which CD-ROM contains the installation media?" "$_drive"
 	case $resp in
 	abort)	echo "Aborting."
 		return
@@ -1325,8 +1311,7 @@ __EOT
 		_range=`md_get_partition_range`
 		resp=
 		while [ -z "$resp" ] ; do
-			echo -n 'CD-ROM partition to mount? (normally "c") [c] '
-			getresp c
+			ask "CD-ROM partition to mount? (normally 'c')" c
 			case $resp in
 			$_range)
 				_part=$resp
@@ -1348,8 +1333,7 @@ ffs		Berkeley Fast Filesystem
 __EOT
 		resp=
 		while [ -z "$resp" ] ; do
-			echo -n "Which filesystem type? [cd9660] "
-			getresp cd9660
+			ask "Which filesystem type?" cd9660
 			case $resp in
 			cd9660|ffs)
 				_fstype=$resp
@@ -1374,9 +1358,7 @@ __EOT
 	resp=
 	_directory=${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
 	echo "Enter the directory relative to the mount point that contains"
-	echo -n "the file: [${_directory}] "
-
-	getresp "$_directory"
+	ask "the file:" "$_directory"
 
 	install_from_mounted_fs "/mnt2/${resp}"
 	umount -f /mnt2 > /dev/null 2>&1
@@ -1399,8 +1381,7 @@ $_DKDEVS
 
 __EOT
 
-	echo -n	"Which is the disk with the installation sets? [abort] "
-	getresp abort
+	ask "Which is the disk with the installation sets?" abort
 
 	case $resp in
 	abort)	echo "Aborting."
@@ -1443,8 +1424,7 @@ __EOT
 
 	resp=
 	while [ -z "$resp" ]; do
-		echo -n "Partition? [$_def_partition] "
-		getresp "$_def_partition"
+		ask "Partition?" "$_def_partition"
 		case $resp in
 		$_partition_range)
 			_partition=$resp
@@ -1474,8 +1454,7 @@ __EOT
 
 	resp=
 	while [ -z "$resp" ]; do
-		echo -n "Which filesystem type? [default] "
-		getresp default
+		ask "Which filesystem type?" default
 		case $resp in
 		default)
 			_fstype=
@@ -1511,8 +1490,7 @@ install_disk() {
 
 	# Get the directory where the file lives
 	echo "Enter the directory relative to the mount point that"
-	echo -n "contains the file: [.] "
-	getresp "."
+	ask "contains the file:" .
 
 	install_from_mounted_fs "/mnt2/${resp}"
 	umount -f /mnt2 > /dev/null 2>&1
@@ -1522,22 +1500,19 @@ install_nfs() {
 	# Get the IP address of the server
 	resp=
 	while [ -z "$resp" ] ; do
-		echo -n "Server IP address or hostname? [${_nfs_server_ip}] "
-		getresp "$_nfs_server_ip"
+		ask "Server IP address or hostname?" "$_nfs_server_ip"
 	done
 	_nfs_server_ip=$resp
 
 	# Get server path to mount
 	resp=
 	while [ -z "$resp" ]; do
-		echo -n "Filesystem on server to mount? [${_nfs_server_path}] "
-		getresp "$_nfs_server_path"
+		ask "Filesystem on server to mount?" "$_nfs_server_path"
 	done
 	_nfs_server_path=$resp
 
 	# Determine use of TCP
-	echo -n "Use TCP transport? (only works with capable NFS server) [n] "
-	getresp n
+	ask "Use TCP transport? (only works with capable NFS server)" n
 	case $resp in
 	y*|Y*)	_nfs_tcp=-T
 		;;
@@ -1556,8 +1531,7 @@ install_nfs() {
 	resp=
 	while [ -z "$resp" ]; do
 		echo "Enter the directory relative to the mount point that"
-		echo -n "contains the file: [.] "
-		getresp
+		ask "contains the file:" .
 	done
 
 	install_from_mounted_fs "/mnt2/${resp}"
@@ -1577,8 +1551,7 @@ __EOT
 	_tape=`basename $TAPE`
 	resp=
 	while [ -z "$resp" ]; do
-		echo -n "Name of tape device? [${_tape}]"
-		getresp "$_tape"
+		ask "Name of tape device?" "$_tape"
 	done
 	_tape=`basename $resp`
 	TAPE=/dev/${_tape}
@@ -1601,8 +1574,7 @@ __EOT
 	# Get the file number
 	resp=
 	while [ -z "$resp" ]; do
-		echo -n "File number? "
-		getresp
+		ask "File number?"
 		case $resp in
 		[1-9]*)	_nskip=$(( $resp - 1 ))
 			;;
@@ -1634,8 +1606,7 @@ __EOT
 
 	resp=
 	while [ -z "$resp" ]; do
-		echo -n "Which way is it? [1] "
-		getresp 1
+		ask "Which way is it?" 1
 		case $resp in
 		1)	_xcmd="tar -zxvpf -"
 			;;
@@ -1679,8 +1650,7 @@ __EOT
 	while : ; do
 		_zonepath=$_zoneroot
 
-		echo -n	"What timezone are you in? ('?' for list) [$TZ] "
-		getresp "$TZ"
+		ask "What timezone are you in? ('?' for list)" "$TZ"
 
 		if [ "$resp" = "?" ]; then
 			ls -F ${_zonepath}
@@ -1691,8 +1661,7 @@ __EOT
 
 		while [ -d "$_zonepath" ]; do
 			echo -n "Select a sub-timezone of "
-			echo -n "'${_zonepath#$_zoneroot}' ('?' for list): "
-			getresp
+			ask "'${_zonepath#$_zoneroot}' ('?' for list):"
 			if [ "$resp" = "?" ]; then
 				ls -F ${_zonepath}
 			else
@@ -1784,8 +1753,7 @@ __EOT
 		if [ X"$_yup" = X"FALSE" ]; then
 			echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM"
 			[ -n "$_have_nfs" ] && echo -n ", (N)FS"
-			echo -n " or local (d)isk? "
-			getresp
+			ask " or local (d)isk?"
 			case $resp in
 			d*|D*)	install_disk
 				resp=d
@@ -1826,8 +1794,7 @@ __EOT
 		if sane_install; then
 			# Give the user the opportunity to extract more sets. They
 			# don't necessarily have to come from the same media.
-			echo -n	"\nExtract more sets? [n] "
-			getresp n
+			ask "\nExtract more sets?" n
 			case $resp in
 			y*|Y*)	# Force loop to repeat
 				resp=
@@ -1978,8 +1945,7 @@ get_fqdn() {
 		sed "s/\\(.*\\)[[:space:]]\\(.*\\)\$/\\1 \\2.$FQDN \\2/" $2 > $2.new
 		mv $2.new $2
 	else
-		echo -n "Enter DNS domain name (e.g. 'bar.com'): [$FQDN] "
-		getresp "$FQDN"
+		ask "Enter DNS domain name (e.g. 'bar.com'):" "$FQDN"
 		FQDN=$resp
 	fi
 }
@@ -1994,8 +1960,7 @@ donetconfig() {
 
 	resp=
 	while [ -z "$resp" ] ; do
-		echo -n "Enter system hostname (short form, e.g. 'foo'): [$_nam] "
-		getresp "$_nam"
+		ask "Enter system hostname (short form, e.g. 'foo'):" "$_nam"
 	done
 	hostname $resp
 	echo $resp > /tmp/myname
@@ -2059,8 +2024,7 @@ __EOT
 			fi
 		fi
 	fi
-	echo -n "Enter IP address of default route: [$resp] "
-	getresp "$resp"
+	ask "Enter IP address of default route:" "$resp"
 	if [ "X${resp}" != X"none" ]; then
 		route delete default > /dev/null 2>&1
 		if route add default $resp > /dev/null ; then
@@ -2080,8 +2044,7 @@ __EOT
 			fi
 		done
 	fi
-	echo -n	"Enter IP address of primary nameserver: [$resp] "
-	getresp "$resp"
+	ask "Enter IP address of primary nameserver:" "$resp"
 	if [ "X${resp}" != X"none" ]; then
 		echo "search $FQDN" > /tmp/resolv.conf
 		for n in `echo ${resp}`; do
@@ -2089,8 +2052,7 @@ __EOT
 		done
 		echo "lookup file bind" >> /tmp/resolv.conf
 
-		echo -n "Would you like to use the nameserver now? [y] "
-		getresp y
+		ask "Would you like to use the nameserver now?" y
 		case $resp in
 		y*|Y*)	cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 			;;
@@ -2106,8 +2068,7 @@ You may want to edit the host table in the event that you are doing an
 NFS installation or an FTP installation without a name server and want
 to refer to the server by name rather than by its numeric ip address.
 __EOT
-		echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
-		getresp n
+		ask "Would you like to edit the host table with ${EDITOR}?" n
 		case $resp in
 		y*|Y*)	${EDITOR} /tmp/hosts
 			;;
@@ -2121,8 +2082,7 @@ any additional network configuration you may need. This may include adding
 additional routes, if needed. In addition, you might take this opportunity
 to redo the default route in the event that it failed above.
 __EOT
-	echo -n "Escape to shell? [n] "
-	getresp n
+	ask "Escape to shell?" n
 	case $resp in
 	y*|Y*)	echo "Type 'exit' to return to install."
 		sh
@@ -2225,8 +2185,7 @@ else
 	echo -n "P"
 fi
 	
-echo -n "roceed with ${MODE}? [n] "
-getresp n
+ask "roceed with ${MODE}?" n
 case $resp in
 y*|Y*)	echo "\nCool!  Let's get to it...\n"
 	;;

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.31 2002/04/13 21:03:31 deraadt Exp $
+#	$OpenBSD: upgrade.sh,v 1.32 2002/04/28 14:44:01 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,8 +67,7 @@ done
 # this with the user. Check and mount the root filesystem.
 resp=
 while [ "X${resp}" = "X" ]; do
-	echo -n	"Root filesystem? [${ROOTDISK}a] "
-	getresp "${ROOTDISK}a"
+	ask "Root filesystem?" "${ROOTDISK}a"
 	_root_filesystem=/dev/`basename $resp`
 	if [ ! -b ${_root_filesystem} ]; then
 		echo "Sorry, ${_root_filesystem} is not a block device."
@@ -110,8 +109,7 @@ configuration already stored on the root filesystem. This is required
 if you wish to use the network installation capabilities of this program.
 
 __EOT
-echo -n	"Enable network? [y] "
-getresp y
+ask "Enable network?" y
 case $resp in
 y*|Y*)
 	if ! enable_network; then
@@ -127,8 +125,7 @@ adding additional routes, if needed. In addition, you might take this
 opportunity to redo the default route in the event that it failed above.
 
 __EOT
-	echo -n "Escape to shell? [n] "
-	getresp n
+	ask "Escape to shell?" n
 	case $resp in
 	y*|Y*)	echo "Type 'exit' to return to upgrade."
 		sh
@@ -152,8 +149,7 @@ NOTE:	1) this fstab is used only during the upgrade. It will not be
 	   option, will be ignored during the upgrade.
 
 __EOT
-echo -n	"Edit the fstab with ${EDITOR}? [n] "
-getresp n
+ask "Edit the fstab with ${EDITOR}?" n
 case $resp in
 y*|Y*)	${EDITOR} /tmp/fstab
 	;;
@@ -201,8 +197,7 @@ if [ -d /mnt/usr/X11R6/lib/X11 ]; then
 fi
 )
 
-echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
-getresp y
+ask "Are the upgrade sets on one of your normally mounted (local) filesystems?" y
 case $resp in
 y*|Y*)	get_localdir /mnt
 	;;

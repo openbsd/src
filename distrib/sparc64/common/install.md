@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2002/04/13 02:33:10 deraadt Exp $
+#	$OpenBSD: install.md,v 1.7 2002/04/28 14:44:01 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -46,8 +46,7 @@ ARCH=ARCH
 
 md_set_term() {
 	test -n "$TERM" && return
-	echo -n "Specify terminal type [sun]: "
-	getresp sun
+	ask "Specify terminal type:" sun
 	TERM=$resp
 	export TERM
 }
@@ -82,8 +81,7 @@ md_get_partition_range() {
 
 md_questions() {
 	echo
-	echo -n "Do you expect to run the X Window System? [y] "
-	getresp y
+	ask "Do you expect to run the X Window System?" y
 	case "$resp" in
 	y*|Y*)	xfree86=y
 		;;

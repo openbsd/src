@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2002/04/22 02:40:02 deraadt Exp $
+#	$OpenBSD: install.md,v 1.2 2002/04/28 14:44:01 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,13 +47,11 @@ md_set_term() {
 	local _tables
 
 	test -n "$TERM" && return
-	echo -n "Specify terminal type [vt220]: "
-	getresp vt220
+	ask "Specify terminal type:" vt220
 	TERM=$resp
 	export TERM
 
-	echo -n "Do you wish to select a keyboard encoding table? [n] "
-	getresp n
+	ask "Do you wish to select a keyboard encoding table?" n
 
 	case $resp in
 	Y*|y*)	;;
@@ -63,8 +61,7 @@ md_set_term() {
 
 	resp=
 	while : ; do
-		echo -n "Select your keyboard type: (P)C-AT/XT, (U)SB or 'done' [P] "
-		getresp P
+		ask "Select your keyboard type: (P)C-AT/XT, (U)SB or 'done'" P
 		case $resp in
 		P*|p*)  _tables="be de dk es fr it jp lt no pt ru sf sg sv ua uk us"
 			;;
@@ -88,8 +85,7 @@ The available keyboard encoding tables are:
 	${_tables}
 
 __EOT
-		echo -n "Table name? (or 'done') [us] "
-		getresp us
+		ask "Table name? (or 'done')" us
 		case $resp in
 		done)	;;
 		*)	if kbd $resp ; then
@@ -121,8 +117,7 @@ md_get_partition_range() {
 
 md_questions() {
 	echo
-	echo -n "Do you expect to run the X Window System? [y] "
-	getresp y
+	ask "Do you expect to run the X Window System?" y
 	case "$resp" in
 	y*|Y*)
 		xfree86=y
@@ -214,8 +209,7 @@ md_prep_disklabel()
 {
 	local _disk=$1
 
-	echo -n 'Do you want to use the *entire* disk for OpenBSD? [no] '
-	getresp "no"
+	ask "Do you want to use the *entire* disk for OpenBSD?" no
 	case $resp in
 	y*|Y*)	md_prep_fdisk ${_disk} Y ;;
 	*)	md_prep_fdisk ${_disk} ;;
