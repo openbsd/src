@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.7 2001/03/03 08:53:46 maja Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.8 2001/03/14 02:49:22 mickey Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -48,6 +48,9 @@
 #include <sys/ioccom.h>
 #include <dev/wscons/wsksymvar.h>
 
+#define	WSSCREEN_NAME_SIZE	16
+#define	WSEMUL_NAME_SIZE	16
+#define	WSFONT_NAME_SIZE	16
 
 /*
  * Common event structure (used by keyboard and mouse)
@@ -299,7 +302,8 @@ struct wsdisplay_cursor {
  * XXX to be changed without care about backwards compatibility!
  */
 struct wsdisplay_font {
-	char *name;
+	char name[WSFONT_NAME_SIZE];
+	int index;
 	int firstchar, numchars;
 	int encoding;
 #define WSDISPLAY_FONTENC_ISO 0
@@ -312,28 +316,27 @@ struct wsdisplay_font {
 #define	WSDISPLAY_FONTORDER_KNOWN	0	/* i.e, no need to convert */
 #define	WSDISPLAY_FONTORDER_L2R		1
 #define	WSDISPLAY_FONTORDER_R2L		2
+	void *cookie;
 	void *data;
 };
-#define WSDISPLAYIO_LDFONT	_IOW('W', 77, struct wsdisplay_font)
+#define WSDISPLAYIO_LDFONT	_IOW ('W', 77, struct wsdisplay_font)
+#define	WSDISPLAYIO_LSFONT	_IOWR('W', 78, struct wsdisplay_font)
+#define	WSDISPLAYIO_DELFONT	_IOW ('W', 79, struct wsdisplay_font)
+#define WSDISPLAYIO_USEFONT	_IOW ('W', 80, struct wsdisplay_font)
 
 struct wsdisplay_addscreendata {
 	int idx; /* screen index */
-	char *screentype;
-	char *emul;
+	char screentype[WSSCREEN_NAME_SIZE];
+	char emul[WSEMUL_NAME_SIZE];
 };
-#define WSDISPLAYIO_ADDSCREEN _IOW('W', 78, struct wsdisplay_addscreendata)
+#define WSDISPLAYIO_ADDSCREEN _IOW('W', 82, struct wsdisplay_addscreendata)
 
 struct wsdisplay_delscreendata {
 	int idx; /* screen index */
 	int flags;
 #define WSDISPLAY_DELSCR_FORCE 1
 };
-#define WSDISPLAYIO_DELSCREEN _IOW('W', 79, struct wsdisplay_delscreendata)
-
-struct wsdisplay_usefontdata {
-	char *name;
-};
-#define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
+#define WSDISPLAYIO_DELSCREEN _IOW('W', 83, struct wsdisplay_delscreendata)
 
 /* Display information: number of bytes per row, may be same as pixels */
 #define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)

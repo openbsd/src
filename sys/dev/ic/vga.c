@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.18 2001/02/28 16:48:28 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.19 2001/03/14 02:49:22 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -53,7 +53,7 @@
 #endif
 
 static struct vgafont {
-	char name[16];
+	char name[WSFONT_NAME_SIZE];
 	int height;
 	int encoding;
 #ifdef notyet
@@ -113,7 +113,7 @@ static struct vgascreen vga_console_screen;
 static struct vga_config vga_console_vc;
 
 int vga_selectfont __P((struct vga_config *, struct vgascreen *,
-			char *, char *));
+			const char *, const char *));
 void vga_init_screen __P((struct vga_config *, struct vgascreen *,
 			  const struct wsscreen_descr *,
 			  int, long *));
@@ -341,7 +341,7 @@ int
 vga_selectfont(vc, scr, name1, name2)
 	struct vga_config *vc;
 	struct vgascreen *scr;
-	char *name1, *name2; /* NULL: take first found */
+	const char *name1, *name2; /* NULL: take first found */
 {
 	const struct wsscreen_descr *type = scr->pcs.type;
 	struct vgafont *f1, *f2;
@@ -355,13 +355,15 @@ vga_selectfont(vc, scr, name1, name2)
 			continue;
 		if (!f1 &&
 		    vga_valid_primary_font(f) &&
-		    (!name1 || !strcmp(name1, f->name))) {
+		    (!name1 || !*name1 ||
+		     !strncmp(name1, f->name, WSFONT_NAME_SIZE))) {
 			f1 = f;
 			continue;
 		}
 		if (!f2 &&
 		    VGA_SCREEN_CANTWOFONTS(type) &&
-		    (!name2 || !strcmp(name2, f->name))) {
+		    (!name2 || !*name2 ||
+		     !strncmp(name2, f->name, WSFONT_NAME_SIZE))) {
 			f2 = f;
 			continue;
 		}
@@ -371,7 +373,7 @@ vga_selectfont(vc, scr, name1, name2)
 	 * The request fails if no primary font was found,
 	 * or if a second font was requested but not found.
 	 */
-	if (f1 && (!name2 || f2)) {
+	if (f1 && (!name2 || !*name2 || f2)) {
 #ifdef VGAFONTDEBUG
 		if (scr != &vga_console_screen || vga_console_attached) {
 			printf("vga (%s): font1=%s (slot %d)", type->name,
@@ -866,13 +868,20 @@ vga_load_font(v, cookie, data)
 	}
 #endif
 
-	for (slot = 0; slot < 8; slot++)
-		if (!vc->vc_fonts[slot])
-			break;
-	if (slot == 8)
+	if (data->index < 0) {
+		for (slot = 0; slot < 8; slot++)
+			if (!vc->vc_fonts[slot])
+				break;
+	} else
+		slot = data->index;
+
+	if (slot >= 8)
 		return (ENOSPC);
 
-	f = malloc(sizeof(struct vgafont), M_DEVBUF, M_WAITOK);
+	if (!vc->vc_fonts[slot])
+		f = malloc(sizeof(struct vgafont), M_DEVBUF, M_WAITOK);
+	if (!f)
+		return (ENOMEM);
 	strncpy(f->name, data->name, sizeof(f->name));
 	f->height = data->fontheight;
 	f->encoding = data->encoding;
@@ -887,6 +896,8 @@ vga_load_font(v, cookie, data)
 	vga_loadchars(&vc->hdl, slot, 0, 256, f->height, data->data);
 	f->slot = slot;
 	vc->vc_fonts[slot] = f;
+	data->cookie = f;
+	data->index = slot;
 
 	return (0);
 }

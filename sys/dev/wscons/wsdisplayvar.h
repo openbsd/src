@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.7 2001/02/10 19:42:06 mickey Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.8 2001/03/14 02:49:22 mickey Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.14.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -80,8 +80,10 @@ struct wsdisplay_emulops {
 	/* XXX need a free_attr() ??? */
 };
 
+#define	WSSCREEN_NAME_SIZE	16
+
 struct wsscreen_descr {
-	char *name;
+	char name[WSSCREEN_NAME_SIZE];
 	int ncols, nrows;
 	const struct wsdisplay_emulops *textops;
 	int fontwidth, fontheight;

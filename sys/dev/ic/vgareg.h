@@ -1,4 +1,4 @@
-/* $OpenBSD: vgareg.h,v 1.1 2000/11/15 20:17:38 aaron Exp $ */
+/* $OpenBSD: vgareg.h,v 1.2 2001/03/14 02:49:22 mickey Exp $ */
 /* $NetBSD: vgareg.h,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
 
 /*
@@ -33,25 +33,29 @@
  *
  */
 
+#pragma pack(1)
+
 struct reg_vgaattr { /* indexed via port 0x3c0 */
-	char palette[16];
-	char mode, overscan, colplen, horpixpan;
-	char colreset, misc;
+	u_int8_t palette[16];
+	u_int8_t mode, overscan, colplen, horpixpan;
+	u_int8_t colreset, misc;
 };
 #define VGA_ATC_INDEX 0
 #define VGA_ATC_DATAW 0
 #define VGA_ATC_DATAR 1
 
 struct reg_vgats { /* indexed via port 0x3c4 */
-	char syncreset, mode, wrplmask, fontsel, memmode;
+	u_int8_t syncreset, mode, wrplmask, fontsel, memmode;
 };
 #define VGA_TS_INDEX 4
 #define VGA_TS_DATA 5
 
 struct reg_vgagdc { /* indexed via port 0x3ce */
-	char setres, ensetres, colorcomp, rotfunc;
-	char rdplanesel, mode, misc, colorcare;
-	char bitmask;
+	u_int8_t setres, ensetres, colorcomp, rotfunc;
+	u_int8_t rdplanesel, mode, misc, colorcare;
+	u_int8_t bitmask;
 };
 #define VGA_GDC_INDEX 0xe
 #define VGA_GDC_DATA 0xf
+
+#pragma pack()

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.3 2001/01/30 06:50:12 aaron Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.4 2001/03/14 02:51:36 mickey Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -74,8 +74,8 @@ main(argc, argv)
 	delete = 0;
 	kbd = 0;
 	mux = 0;
-	asd.screentype = 0;
-	asd.emul = 0;
+	asd.screentype[0] = 0;
+	asd.emul[0] = 0;
 	dsd.flags = 0;
 
 	while ((c = getopt(argc, argv, "f:dkmt:e:F")) != -1) {
@@ -94,10 +94,10 @@ main(argc, argv)
 			kbd++;
 			break;
 		case 't':
-			asd.screentype = optarg;
+			strlcpy(asd.screentype, optarg, WSSCREEN_NAME_SIZE);
 			break;
 		case 'e':
-			asd.emul = optarg;
+			strlcpy(asd.emul, optarg, WSEMUL_NAME_SIZE);
 			break;
 		case 'F':
 			dsd.flags |= WSDISPLAY_DELSCR_FORCE;

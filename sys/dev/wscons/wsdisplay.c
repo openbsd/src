@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.16 2001/03/05 22:16:41 millert Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.17 2001/03/14 02:49:22 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -107,7 +107,8 @@ static void wsdisplay_closescreen __P((struct wsdisplay_softc *,
 				       struct wsscreen *));
 int wsdisplay_delscreen __P((struct wsdisplay_softc *, int, int));
 
-#define WSDISPLAY_MAXSCREEN 12
+#define WSDISPLAY_MAXSCREEN	12
+#define WSDISPLAY_MAXFONT	8
 
 struct wsdisplay_softc {
 	struct device sc_dv;
@@ -120,6 +121,8 @@ struct wsdisplay_softc {
 	struct wsscreen *sc_scr[WSDISPLAY_MAXSCREEN];
 	int sc_focusidx;	/* available only if sc_focus isn't null */
 	struct wsscreen *sc_focus;
+
+	struct wsdisplay_font sc_fonts[WSDISPLAY_MAXFONT];
 
 	int	sc_isconsole;
 
@@ -308,12 +311,12 @@ wsdisplay_screentype_pick(scrdata, name)
 
 	KASSERT(scrdata->nscreens > 0);
 
-	if (name == NULL)
+	if (name == NULL || *name == '\0')
 		return (scrdata->screens[0]);
 
 	for (i = 0; i < scrdata->nscreens; i++) {
 		scr = scrdata->screens[i];
-		if (!strcmp(name, scr->name))
+		if (!strncmp(name, scr->name, WSSCREEN_NAME_SIZE))
 			return (scr);
 	}
 
@@ -672,7 +675,7 @@ wsdisplay_cnattach(type, cookie, ccol, crow, defattr)
 	wsdisplay_console_conf.emulcookie = cookie;
 	wsdisplay_console_conf.scrdata = type;
 
-	wsemul = wsemul_pick(0); /* default */
+	wsemul = wsemul_pick(""); /* default */
 	wsdisplay_console_conf.wsemul = wsemul;
 	wsdisplay_console_conf.wsemulcookie = (*wsemul->cnattach)(type, cookie,
 								  ccol, crow,
@@ -953,8 +956,6 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 	struct proc *p;
 {
 	int error;
-	char namebuf[16];
-	struct wsdisplay_font fd;
 
 #if NWSKBD > 0
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -1000,19 +1001,12 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 #undef d
 
 	case WSDISPLAYIO_USEFONT:
-#define d ((struct wsdisplay_usefontdata *)data)
+#define d ((struct wsdisplay_font *)data)
 		if (!sc->sc_accessops->load_font)
 			return (EINVAL);
-		if (d->name) {
-			error = copyinstr(d->name, namebuf, sizeof(namebuf), 0);
-			if (error)
-				return (error);
-			fd.name = namebuf;
-		} else
-			fd.name = 0;
-		fd.data = 0;
+		d->data = 0;
 		error = (*sc->sc_accessops->load_font)(sc->sc_accesscookie,
-					scr->scr_dconf->emulcookie, &fd);
+					scr->scr_dconf->emulcookie, d);
 		if (!error && WSSCREEN_HAS_EMULATOR(scr))
 			(*scr->scr_dconf->wsemul->reset)
 				(scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
@@ -1034,7 +1028,6 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 	struct proc *p;
 {
 	int error;
-	char *type, typebuf[16], *emul, emulbuf[16];
 	void *buf;
 #if defined(COMPAT_14) && NWSKBD > 0
 	struct wsmux_device wsmuxdata;
@@ -1043,23 +1036,8 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 	switch (cmd) {
 	case WSDISPLAYIO_ADDSCREEN:
 #define d ((struct wsdisplay_addscreendata *)data)
-		if (d->screentype) {
-			error = copyinstr(d->screentype, typebuf,
-					  sizeof(typebuf), 0);
-			if (error)
-				return (error);
-			type = typebuf;
-		} else
-			type = 0;
-		if (d->emul) {
-			error = copyinstr(d->emul, emulbuf, sizeof(emulbuf), 0);
-			if (error)
-				return (error);
-			emul = emulbuf;
-		} else
-			emul = 0;
-
-		if ((error = wsdisplay_addscreen(sc, d->idx, type, emul)) == 0)
+		if ((error = wsdisplay_addscreen(sc, d->idx,
+		    d->screentype, d->emul)) == 0)
 			wsdisplay_addscreen_print(sc, d->idx, 0);
 		return (error);
 #undef d
@@ -1071,13 +1049,8 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 #define d ((struct wsdisplay_font *)data)
 		if (!sc->sc_accessops->load_font)
 			return (EINVAL);
-		if (d->name) {
-			error = copyinstr(d->name, typebuf, sizeof(typebuf), 0);
-			if (error)
-				return (error);
-			d->name = typebuf;
-		} else
-			d->name = "loaded"; /* ??? */
+		if (d->index >= WSDISPLAY_MAXFONT)
+			return (EINVAL);
 		buf = malloc(d->fontheight * d->stride * d->numchars,
 			     M_DEVBUF, M_WAITOK);
 		error = copyin(d->data, buf,
@@ -1089,9 +1062,21 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		d->data = buf;
 		error =
 		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
-		free(buf, M_DEVBUF);
-#undef d
+		if (error || d->index < 0)
+			free(buf, M_DEVBUF);
+		else
+			sc->sc_fonts[d->index] = *d;
 		return (error);
+
+	case WSDISPLAYIO_LSFONT:
+		if (d->index < 0 || d->index >= WSDISPLAY_MAXFONT)
+			return (EINVAL);
+		*d = sc->sc_fonts[d->index];
+		return (0);
+
+	case WSDISPLAYIO_DELFONT:
+		return (EINVAL);
+#undef d
 
 #if NWSKBD > 0
 #ifdef COMPAT_14
