@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.33 2002/04/09 01:22:19 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.34 2002/04/14 02:35:27 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -601,7 +601,7 @@ This you can do by running
 
 	mail
 
-and then just enter "1" to get the first message.  You quit mail by
+and then just enter "more 1" to get the first message.  You quit mail by
 entering "q".
 
 Some of the files in the OpenBSD OSREV distribution might need to be
