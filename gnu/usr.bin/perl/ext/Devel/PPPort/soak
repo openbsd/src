@@ -1,13 +1,31 @@
-
-# soak: Test Devel::PPPort with multiple versions of Perl.
+#!/usr/bin/perl -w
+################################################################################
 #
-# Author:	Paul Marquess
+#  soak -- Test Devel::PPPort with multiple versions of Perl.
 #
+#  Original Author: Paul Marquess
+#
+################################################################################
+#
+#  $Revision: 6 $
+#  $Author: mhx $
+#  $Date: 2004/08/13 12:49:41 +0200 $
+#
+################################################################################
+#
+#  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+#  Version 2.x, Copyright (C) 2001, Paul Marquess.
+#  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the same terms as Perl itself.
+#
+################################################################################
 
 require 5.006001;
 
-use strict ;
-use warnings ;
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
 use Getopt::Long;
 
@@ -44,17 +62,18 @@ my $bad = 0 ;
 my $good = 0 ;
 my $total = 0 ;
 
-# prime the pump, so the first "make clean" will work.
+# prime the pump, so the first "make realclean" will work.
 runit("perl Makefile.PL") || die "Cannot run perl Makefile.PL\n" ;
 
 foreach my $perl (@GoodPerls)
 {
-   my $prefix = "$perl -- " if $verbose ;
+   my $prefix = $verbose  ? "$perl -- " : '';
    print "Testing $perl " . ('.' x ($maxlen - length $perl)) ;
 
-   my $ok = runit("$MAKE clean") &&
+   my $ok = runit("$MAKE realclean") &&
             runit("$perl Makefile.PL") &&
-            runit("$MAKE test")	;
+            # runit("$perl Makefile.PL --with-apicheck") &&
+            runit("$MAKE test");
 
     ++ $total;
     if ($ok) {
@@ -177,3 +196,5 @@ sub WRITE
 {
     my $self = shift;
 }                
+
+

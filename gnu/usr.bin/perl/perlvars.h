@@ -69,3 +69,6 @@ PERLVAR(Gsv_placeholder, SV)
 PERLVARI(Gcsighandlerp,	Sighandler_t, &Perl_csighandler)	/* Pointer to C-level sighandler */
 #endif
 
+#ifndef PERL_USE_SAFE_PUTENV
+PERLVARI(Guse_safe_putenv, int, 1)
+#endif

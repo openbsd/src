@@ -1,6 +1,6 @@
 package ExtUtils::Constant;
 use vars qw (@ISA $VERSION %XS_Constant %XS_TypeSet @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.14';
+$VERSION = 0.14_01;
 
 =head1 NAME
 
@@ -32,7 +32,7 @@ Generally one only needs to call the C<WriteConstants> function, and then
 
 in the C section of C<Foo.xs>
 
-    INCLUDE const-xs.inc
+    INCLUDE: const-xs.inc
 
 in the XS section of C<Foo.xs>.
 

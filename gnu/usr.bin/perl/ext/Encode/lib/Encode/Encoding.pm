@@ -1,10 +1,11 @@
 package Encode::Encoding;
 # Base class for classes which implement encodings
 use strict;
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 require Encode;
 
+sub DEBUG { 0 }
 sub Define
 {
     my $obj = shift;
@@ -16,7 +17,18 @@ sub Define
 
 sub name  { return shift->{'Name'} }
 
-sub renew { return $_[0] }
+# sub renew { return $_[0] }
+
+sub renew {
+    my $self = shift;
+    my $clone = bless { %$self } => ref($self);
+    $clone->{renewed}++; # so the caller can see it
+    DEBUG and warn $clone->{renewed};
+    return $clone;
+}
+
+sub renewed{ return $_[0]->{renewed} || 0 }
+
 *new_sequence = \&renew;
 
 sub needs_lines { 0 };
@@ -39,14 +51,14 @@ sub encode {
     require Carp;
     my $obj = shift;
     my $class = ref($obj) ? ref($obj) : $obj;
-    Carp::croak $class, "->encode() not defined!";
+    Carp::croak($class . "->encode() not defined!");
 }
 
 sub decode{
     require Carp;
     my $obj = shift;
     my $class = ref($obj) ? ref($obj) : $obj;
-    Carp::croak $class, "->encode() not defined!";
+    Carp::croak($class . "->encode() not defined!");
 }
 
 sub DESTROY {}
@@ -167,24 +179,28 @@ MUST return the string representing the canonical name of the encoding.
 
 Predefined As:
 
-  sub renew { return $_[0] }
+  sub renew {
+    my $self = shift;
+    my $clone = bless { %$self } => ref($self);
+    $clone->{renewed}++;
+    return $clone;
+  }
 
 This method reconstructs the encoding object if necessary.  If you need
 to store the state during encoding, this is where you clone your object.
-Here is an example:
-
-  sub renew { 
-      my $self = shift;
-      my $clone = bless { %$self } => ref($self);
-      $clone->{clone} = 1; # so the caller can see it
-      return $clone;
-  }
-
-Since most encodings are stateless the default behavior is just return
-itself as shown above.
 
 PerlIO ALWAYS calls this method to make sure it has its own private
 encoding object.
+
+=item -E<gt>renewed
+
+Predefined As:
+
+  sub renewed { $_[0]->{renewed} || 0 }
+
+Tells whether the object is renewed (and how many times).  Some
+modules emit C<Use of uninitialized value in null operation> warning
+unless the value is numeric so return 0 for false.
 
 =item -E<gt>perlio_ok()
 

@@ -68,7 +68,9 @@ while (<DATA>)
         $try .= '++$x;';
       } elsif ($f eq "fdec") {
         $try .= '--$x;';
-      }elsif ($f eq "fround") {
+      } elsif ($f eq "digit") {
+        $try .= "\$x->digit($args[1]);";
+      } elsif ($f eq "fround") {
         $try .= "$setup; \$x->bround($args[1]);";
       } elsif ($f eq "ffround") {
         $try .= "$setup; \$x->bfround($args[1]);";
@@ -182,6 +184,18 @@ sub ok_undef
   }
 
 __DATA__
+&digit
+123:2:1
+1234:0:4
+1234:1:3
+1234:2:2
+1234:3:1
+1234:-1:1
+1234:-2:2
+1234:-3:3
+1234:-4:4
+0:0:0
+0:1:0
 &bmodinv
 # format: number:modulus:result
 # bmodinv Data errors
@@ -353,6 +367,10 @@ abc:NaN
 +01:1
 +001:1
 +00000100000:100000
++00000800/00000010:80
+-00000800/00000010:-80
++00000800/-00000010:-80
+-00000800/-00000010:80
 123456789:123456789
 -1:-1
 -01:-1
@@ -696,30 +714,12 @@ NaN:0
 NaNparts:NaN NaN
 +inf:inf inf
 -inf:-inf inf
-#&exponent
-#0:1
-#1:0
-#123:0
-#-123:0
-#-1200:2
-#+inf:inf
-#-inf:inf
-#NaNexponent:NaN
-#&mantissa
-#0:0
-#1:1
-#123:123
-#-123:-123
-#-1200:-12
-#+inf:inf
-#-inf:-inf
-#NaNmantissa:NaN
-#&length
-#123:3
-#-123:3
-#0:1
-#1:1
-#12345678901234567890:20
+&length
+123:3
+-123:3
+0:1
+1:1
+12345678901234567890:20
 &is_zero
 NaNzero:0
 +inf:0
@@ -870,14 +870,17 @@ inf:inf
 -3/7:-3
 0:0
 1:1
+5/-3:-5
 &denominator
 NaN:NaN
-inf:inf
--inf:-inf
+inf:1
+-inf:1
 3/7:7
 0:1
 1/1:1
+-1/1:1
 -3/7:7
+4/-5:5
 &finc
 3/2:5/2
 -15/6:-3/2

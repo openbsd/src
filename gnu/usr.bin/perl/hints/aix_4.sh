@@ -216,7 +216,11 @@ regcomp_cflags='optimize='
 # -bI:$(PERL_INC)/perl.exp  Read the exported symbols from the perl binary
 # -bE:$(BASEEXT).exp	    Export these symbols.  This file contains only one
 #			    symbol: boot_$(EXP)	 can it be auto-generated?
-lddlflags="$lddlflags -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc"
+if test $usenativedlopen = 'true' ; then
+    lddlflags="$lddlflags -bhalt:4 -bexpall -G -bnoentry -lc"
+else
+    lddlflags="$lddlflags -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc"
+    fi
 
 case "$use64bitall" in
     $define|true|[yY]*) use64bitint="$define" ;;
@@ -402,6 +406,7 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 	        ccflags="`echo $ccflags | sed -e 's@ -b@ -Wl,-b@g'`"
 	        ldflags="`echo ' '$ldflags | sed -e 's@ -b@ -Wl,-b@g'`"
 	        lddlflags="`echo ' '$lddlflags | sed -e 's@ -b@ -Wl,-b@g'`"
+		lddlflags="`echo ' '$lddlflags | sed -e 's@ -G @ -Wl,-G @g'`"
 	        ld='gcc'
 	        echo >&4 "(using ccflags   $ccflags)"
 	        echo >&4 "(using ldflags   $ldflags)"

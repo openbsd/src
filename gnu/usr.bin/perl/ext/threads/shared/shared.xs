@@ -639,8 +639,18 @@ sharedsv_elem_mg_FETCH(pTHX_ SV *sv, MAGIC *mg)
     CALLER_CONTEXT;
     if (svp) {
 	/* Exists in the array */
-	target = Perl_sharedsv_associate(aTHX_ &sv, *svp, target);
-	sv_setsv(sv, *svp);
+	if (SvROK(*svp)) {
+	    SV *obj = Nullsv;
+	    Perl_sharedsv_associate(aTHX_ &obj, SvRV(*svp), NULL);
+	    sv_setsv_nomg(sv, &PL_sv_undef);
+	    SvRV(sv) = obj;
+	    SvROK_on(sv);
+	    SvSETMAGIC(sv);
+	}
+	else {
+	    target = Perl_sharedsv_associate(aTHX_ &sv, *svp, target);
+	    sv_setsv(sv, *svp);
+	}
     }
     else {
 	/* Not in the array */

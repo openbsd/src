@@ -1,5 +1,5 @@
 #
-# $Id: macSymbol.ucm,v 2.0 2004/05/16 20:55:27 dankogai Exp $
+# $Id: macSymbol.ucm,v 2.1 2004/10/22 06:23:11 dankogai Exp $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/SYMBOL.TXT
@@ -47,13 +47,7 @@ CHARMAP
 <U0025> \x25 |0 # PERCENT SIGN
 <U0026> \x26 |0 # AMPERSAND
 <U0028> \x28 |0 # LEFT PARENTHESIS
-<U0028><UF870> \xE6 |3 # LEFT PARENTHESIS, fragment (top)
-<U0028><UF871> \xE7 |3 # LEFT PARENTHESIS, fragment (extender)
-<U0028><UF872> \xE8 |3 # LEFT PARENTHESIS, fragment (bottom)
 <U0029> \x29 |0 # RIGHT PARENTHESIS
-<U0029><UF870> \xF6 |3 # RIGHT PARENTHESIS, fragment (top)
-<U0029><UF871> \xF7 |3 # RIGHT PARENTHESIS, fragment (extender)
-<U0029><UF872> \xF8 |3 # RIGHT PARENTHESIS, fragment (bottom)
 <U002B> \x2B |0 # PLUS SIGN
 <U002C> \x2C |0 # COMMA
 <U002E> \x2E |0 # FULL STOP
@@ -75,28 +69,16 @@ CHARMAP
 <U003E> \x3E |0 # GREATER-THAN SIGN
 <U003F> \x3F |0 # QUESTION MARK
 <U005B> \x5B |0 # LEFT SQUARE BRACKET
-<U005B><UF870> \xE9 |3 # LEFT SQUARE BRACKET, fragment (top)
-<U005B><UF871> \xEA |3 # LEFT SQUARE BRACKET, fragment (extender)
-<U005B><UF872> \xEB |3 # LEFT SQUARE BRACKET, fragment (bottom)
 <U005D> \x5D |0 # RIGHT SQUARE BRACKET
-<U005D><UF870> \xF9 |3 # RIGHT SQUARE BRACKET, fragment (top)
-<U005D><UF871> \xFA |3 # RIGHT SQUARE BRACKET, fragment (extender)
-<U005D><UF872> \xFB |3 # RIGHT SQUARE BRACKET, fragment (bottom)
 <U005F> \x5F |0 # LOW LINE
 <U007B> \x7B |0 # LEFT CURLY BRACKET
-<U007B><UF870> \xEC |3 # LEFT CURLY BRACKET, fragment (top)
-<U007B><UF871> \xED |3 # LEFT CURLY BRACKET, fragment (center)
-<U007B><UF872> \xEE |3 # LEFT CURLY BRACKET, fragment (bottom)
 <U007C> \x7C |0 # VERTICAL LINE
 <U007D> \x7D |0 # RIGHT CURLY BRACKET
-<U007D><UF870> \xFC |3 # RIGHT CURLY BRACKET, fragment (top)
-<U007D><UF871> \xFD |3 # RIGHT CURLY BRACKET, fragment (center)
-<U007D><UF872> \xFE |3 # RIGHT CURLY BRACKET, fragment (bottom)
 <U00A9> \xD3 |0 # COPYRIGHT SIGN # serif
-<U00A9><UF87F> \xE3 |3 # COPYRIGHT SIGN, alternate (sans serif)
+<U00A9><UF87F> \xE3 |3 # COPYRIGHT SIGN, alternate: sans serif
 <U00AC> \xD8 |0 # NOT SIGN
 <U00AE> \xD2 |0 # REGISTERED SIGN # serif
-<U00AE><UF87F> \xE2 |3 # REGISTERED SIGN, alternate (sans serif)
+<U00AE><UF87F> \xE2 |3 # REGISTERED SIGN, alternate: sans serif
 <U00B0> \xB0 |0 # DEGREE SIGN
 <U00B1> \xB1 |0 # PLUS-MINUS SIGN
 <U00D7> \xB4 |0 # MULTIPLICATION SIGN
@@ -165,7 +147,7 @@ CHARMAP
 <U2118> \xC3 |0 # SCRIPT CAPITAL P
 <U211C> \xC2 |0 # BLACK-LETTER CAPITAL R
 <U2122> \xD4 |0 # TRADE MARK SIGN # serif
-<U2122><UF87F> \xE4 |3 # TRADE MARK SIGN, alternate (sans serif)
+<U2122><UF87F> \xE4 |3 # TRADE MARK SIGN, alternate: sans serif
 <U2135> \xC0 |0 # ALEF SYMBOL
 <U2190> \xAC |0 # LEFTWARDS ARROW
 <U2191> \xAD |0 # UPWARDS ARROW
@@ -199,7 +181,6 @@ CHARMAP
 <U2229> \xC7 |0 # INTERSECTION
 <U222A> \xC8 |0 # UNION
 <U222B> \xF2 |0 # INTEGRAL
-<U222B><UF871> \xF4 |3 # INTEGRAL, fragment (extender)
 <U2234> \x5C |0 # THEREFORE
 <U223C> \x7E |0 # TILDE OPERATOR
 <U2245> \x40 |0 # APPROXIMATELY EQUAL TO
@@ -220,15 +201,34 @@ CHARMAP
 <U22C5> \xD7 |0 # DOT OPERATOR
 <U2320> \xF3 |0 # TOP HALF INTEGRAL
 <U2321> \xF5 |0 # BOTTOM HALF INTEGRAL
+<U239B> \xE6 |0 # LEFT PARENTHESIS UPPER HOOK # for Unicode 3.2 and later
+<U239C> \xE7 |0 # LEFT PARENTHESIS EXTENSION # for Unicode 3.2 and later
+<U239D> \xE8 |0 # LEFT PARENTHESIS LOWER HOOK # for Unicode 3.2 and later
+<U239E> \xF6 |0 # RIGHT PARENTHESIS UPPER HOOK # for Unicode 3.2 and later
+<U239F> \xF7 |0 # RIGHT PARENTHESIS EXTENSION # for Unicode 3.2 and later
+<U23A0> \xF8 |0 # RIGHT PARENTHESIS LOWER HOOK # for Unicode 3.2 and later
+<U23A1> \xE9 |0 # LEFT SQUARE BRACKET UPPER CORNER # for Unicode 3.2 and later
+<U23A2> \xEA |0 # LEFT SQUARE BRACKET EXTENSION # for Unicode 3.2 and later
+<U23A3> \xEB |0 # LEFT SQUARE BRACKET LOWER CORNER # for Unicode 3.2 and later
+<U23A4> \xF9 |0 # RIGHT SQUARE BRACKET UPPER CORNER # for Unicode 3.2 and later
+<U23A5> \xFA |0 # RIGHT SQUARE BRACKET EXTENSION # for Unicode 3.2 and later
+<U23A6> \xFB |0 # RIGHT SQUARE BRACKET LOWER CORNER # for Unicode 3.2 and later
+<U23A7> \xEC |0 # LEFT CURLY BRACKET UPPER HOOK # for Unicode 3.2 and later
+<U23A8> \xED |0 # LEFT CURLY BRACKET MIDDLE PIECE # for Unicode 3.2 and later
+<U23A9> \xEE |0 # LEFT CURLY BRACKET LOWER HOOK # for Unicode 3.2 and later
+<U23AA> \xEF |0 # CURLY BRACKET EXTENSION # for Unicode 3.2 and later
+<U23AB> \xFC |0 # RIGHT CURLY BRACKET UPPER HOOK # for Unicode 3.2 and later
+<U23AC> \xFD |0 # RIGHT CURLY BRACKET MIDDLE PIECE # for Unicode 3.2 and later
+<U23AD> \xFE |0 # RIGHT CURLY BRACKET LOWER HOOK # for Unicode 3.2 and later
+<U23AE> \xF4 |0 # INTEGRAL EXTENSION # for Unicode 3.2 and later
+<U23AF> \xBE |0 # HORIZONTAL LINE EXTENSION (for arrows) # for Unicode 3.2 and later
 <U2660> \xAA |0 # BLACK SPADE SUIT
 <U2663> \xA7 |0 # BLACK CLUB SUIT
 <U2665> \xA9 |0 # BLACK HEART SUIT
 <U2666> \xA8 |0 # BLACK DIAMOND SUIT
 <U3008> \xE1 |0 # LEFT ANGLE BRACKET
 <U3009> \xF1 |0 # RIGHT ANGLE BRACKET
-<UF8E5> \x60 |0 # radical extender
-<UF8E6> \xBD |0 # vertical arrow extender
-<UF8E7> \xBE |0 # horizontal arrow extender
-<UF8F4> \xEF |0 # curly bracket extender
+<UF8E5> \x60 |0 # radical extender # corporate char
+<UF8E6> \xBD |0 # vertical line extension (for arrows) # corporate char
 <UF8FF> \xF0 |0 # Apple logo
 END CHARMAP

@@ -1,5 +1,5 @@
 #
-# $Id: macGreek.ucm,v 2.0 2004/05/16 20:55:27 dankogai Exp $
+# $Id: macGreek.ucm,v 2.1 2004/10/22 06:23:11 dankogai Exp $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/GREEK.TXT
@@ -145,7 +145,7 @@ CHARMAP
 <U00A9> \xA9 |0 # COPYRIGHT SIGN
 <U00AB> \xC7 |0 # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
 <U00AC> \xC2 |0 # NOT SIGN
-<U00AD> \x9C |0 # SOFT HYPHEN
+<U00AD> \xFF |0 # SOFT HYPHEN # before Mac OS 9.2.2, was undefined
 <U00AE> \xA8 |0 # REGISTERED SIGN
 <U00B0> \xAE |0 # DEGREE SIGN
 <U00B1> \xB1 |0 # PLUS-MINUS SIGN
@@ -258,10 +258,10 @@ CHARMAP
 <U2022> \x96 |0 # BULLET
 <U2026> \xC9 |0 # HORIZONTAL ELLIPSIS
 <U2030> \x98 |0 # PER MILLE SIGN
+<U20AC> \x9C |0 # EURO SIGN # before Mac OS 9.2.2, was SOFT HYPHEN
 <U2122> \x93 |0 # TRADE MARK SIGN
 <U2248> \xC5 |0 # ALMOST EQUAL TO
 <U2260> \xAD |0 # NOT EQUAL TO
 <U2264> \xB2 |0 # LESS-THAN OR EQUAL TO
 <U2265> \xB3 |0 # GREATER-THAN OR EQUAL TO
-<UF8A0> \xFF |0 # undefined1
 END CHARMAP

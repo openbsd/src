@@ -155,16 +155,36 @@ sub canonpath {
       else          { return vmsify($path);  }
     }
     else {
-      $path =~ s/([\[<])000000\./$1/g;                  # [000000.foo     ==> [foo
-      $path =~ s/([^-]+)\.(\]\[|><)?000000([\]\>])/$1$3/g;  # foo.000000] ==> foo]
-      $path =~ s-\]\[--g;  $path =~ s/><//g;            # foo.][bar       ==> foo.bar
-      1 while $path =~ s{([\[<-])\.-}{$1-};             # [.-.-           ==> [--
-      $path =~ s/\.[^\[<\.]+\.-([\]\>])/$1/;            # bar.foo.-]      ==> bar]
-      $path =~ s/([\[<])(-+)/$1 . "\cx" x length($2)/e; # encode leading '-'s
-      $path =~ s/([\[<\.])([^\[<\.\cx]+)\.-\.?/$1/g;    # bar.-.foo       ==> foo
-      $path =~ s/([\[<])(\cx+)/$1 . '-' x length($2)/e; # then decode
-      $path =~ s/^[\[<\]>]{2}//;                        # []foo           ==> foo
-      return $path;
+	$path =~ tr/<>/[]/;			# < and >       ==> [ and ]
+	$path =~ s/\]\[\./\.\]\[/g;		# ][.		==> .][
+	$path =~ s/\[000000\.\]\[/\[/g;		# [000000.][	==> [
+	$path =~ s/\[000000\./\[/g;		# [000000.	==> [
+	$path =~ s/\.\]\[000000\]/\]/g;		# .][000000]	==> ]
+	$path =~ s/\.\]\[/\./g;			# foo.][bar     ==> foo.bar
+	1 while ($path =~ s/([\[\.])(-+)\.(-+)([\.\]])/$1$2$3$4/);
+						# That loop does the following
+						# with any amount of dashes:
+						# .-.-.		==> .--.
+						# [-.-.		==> [--.
+						# .-.-]		==> .--]
+						# [-.-]		==> [--]
+	1 while ($path =~ s/([\[\.])[^\]\.]+\.-(-+)([\]\.])/$1$2$3/);
+						# That loop does the following
+						# with any amount (minimum 2)
+						# of dashes:
+						# .foo.--.	==> .-.
+						# .foo.--]	==> .-]
+						# [foo.--.	==> [-.
+						# [foo.--]	==> [-]
+						#
+						# And then, the remaining cases
+	$path =~ s/\[\.-/[-/;			# [.-		==> [-
+	$path =~ s/\.[^\]\.]+\.-\./\./g;	# .foo.-.	==> .
+	$path =~ s/\[[^\]\.]+\.-\./\[/g;	# [foo.-.	==> [
+	$path =~ s/\.[^\]\.]+\.-\]/\]/g;	# .foo.-]	==> ]
+	$path =~ s/\[[^\]\.]+\.-\]/\[\]/g;	# [foo.-]	==> []
+	$path =~ s/\[\]//;			# []		==>
+	return $path;
     }
 }
 
@@ -351,7 +371,19 @@ Split dirspec using VMS syntax.
 
 sub splitdir {
     my($self,$dirspec) = @_;
-    $dirspec =~ s/\]\[//g;  $dirspec =~ s/\-\-/-.-/g;
+    $dirspec =~ tr/<>/[]/;			# < and >	==> [ and ]
+    $dirspec =~ s/\]\[\./\.\]\[/g;		# ][.		==> .][
+    $dirspec =~ s/\[000000\.\]\[/\[/g;		# [000000.][	==> [
+    $dirspec =~ s/\[000000\./\[/g;		# [000000.	==> [
+    $dirspec =~ s/\.\]\[000000\]/\]/g;		# .][000000]	==> ]
+    $dirspec =~ s/\.\]\[/\./g;			# foo.][bar	==> foo.bar
+    while ($dirspec =~ s/(^|[\[\<\.])\-(\-+)($|[\]\>\.])/$1-.$2$3/g) {}
+						# That loop does the following
+						# with any amount of dashes:
+						# .--.		==> .-.-.
+						# [--.		==> [-.-.
+						# .--]		==> .-.-]
+						# [--]		==> [-.-]
     $dirspec = "[$dirspec]" unless $dirspec =~ /[\[<]/; # make legal
     my(@dirs) = split('\.', vmspath($dirspec));
     $dirs[0] =~ s/^[\[<]//s;  $dirs[-1] =~ s/[\]>]\Z(?!\n)//s;
@@ -443,10 +475,10 @@ Use VMS syntax when converting filespecs.
 
 sub rel2abs {
     my $self = shift ;
-    return vmspath(File::Spec::Unix::rel2abs( $self, @_ ))
-        if ( join( '', @_ ) =~ m{/} ) ;
-
     my ($path,$base ) = @_;
+    return undef unless defined $path;
+    $path = vmsify($path) if $path =~ m/\//;
+    $base = vmspath($base) if defined $base && $base =~ m/\//;
     # Clean up and split up $path
     if ( ! $self->file_name_is_absolute( $path ) ) {
         # Figure out the effective $base and clean it up.

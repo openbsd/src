@@ -1,5 +1,5 @@
 #
-# $Id: macThai.ucm,v 2.0 2004/05/16 20:55:27 dankogai Exp $
+# $Id: macThai.ucm,v 2.1 2004/10/22 06:23:11 dankogai Exp $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/THAI.TXT
@@ -256,6 +256,6 @@ CHARMAP
 <U201D> \x8E |0 # RIGHT DOUBLE QUOTATION MARK
 <U2022> \x91 |0 # BULLET
 <U2026> \x82 |0 # HORIZONTAL ELLIPSIS
+<U2060> \xDB |0 # WORD JOINER # for Unicode 3.2 and later
 <U2122> \xEE |0 # TRADE MARK SIGN
-<UFEFF> \xDB |0 # ZERO WIDTH NO-BREAK SPACE
 END CHARMAP

@@ -21,9 +21,7 @@ sub Fetch
 
 __END__
 
-=head1 NAME
-
-DBM_Filter::null -- DBM Filter to force null termination
+=head1 DBM_Filter::null
 
 =head1 SYNOPSIS
 

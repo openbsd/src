@@ -1,8 +1,7 @@
+TODO:
 
+* more documentation, more tests
 
-  * Don't need to install the harness files - fix Makefile.PL
-
-  * more documentation
-
-  * 
+* Resolve dependencies in Makefile.PL and remind of
+  running 'make regen'
 

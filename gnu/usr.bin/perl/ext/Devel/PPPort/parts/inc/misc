@@ -1,0 +1,385 @@
+################################################################################
+##
+##  $Revision: 1.1.1.1 $
+##  $Author: millert $
+##  $Date: 2005/01/15 21:16:46 $
+##
+################################################################################
+##
+##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 2.x, Copyright (C) 2001, Paul Marquess.
+##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+##
+##  This program is free software; you can redistribute it and/or
+##  modify it under the same terms as Perl itself.
+##
+################################################################################
+
+=provides
+
+__UNDEFINED__
+PERL_UNUSED_DECL
+PERL_GCC_BRACE_GROUPS_FORBIDDEN
+NVTYPE
+INT2PTR
+PTRV
+NUM2PTR
+PTR2IV
+PTR2UV
+PTR2NV
+PTR2ul
+START_EXTERN_C
+END_EXTERN_C
+EXTERN_C
+STMT_START
+STMT_END
+/PL_\w+/
+
+=implementation
+
+#if (PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION <= 5))
+/* Replace: 1 */
+#  define PL_DBsingle               DBsingle
+#  define PL_DBsub                  DBsub
+#  define PL_Sv                     Sv
+#  define PL_compiling              compiling
+#  define PL_copline                copline
+#  define PL_curcop                 curcop
+#  define PL_curstash               curstash
+#  define PL_debstash               debstash
+#  define PL_defgv                  defgv
+#  define PL_diehook                diehook
+#  define PL_dirty                  dirty
+#  define PL_dowarn                 dowarn
+#  define PL_errgv                  errgv
+#  define PL_hexdigit               hexdigit
+#  define PL_hints                  hints
+#  define PL_na	                    na
+#  define PL_no_modify              no_modify
+#  define PL_perl_destruct_level    perl_destruct_level
+#  define PL_perldb                 perldb
+#  define PL_ppaddr                 ppaddr
+#  define PL_rsfp_filters           rsfp_filters
+#  define PL_rsfp                   rsfp
+#  define PL_stack_base             stack_base
+#  define PL_stack_sp               stack_sp
+#  define PL_stdingv                stdingv
+#  define PL_sv_arenaroot           sv_arenaroot
+#  define PL_sv_no                  sv_no
+#  define PL_sv_undef               sv_undef
+#  define PL_sv_yes                 sv_yes
+#  define PL_tainted                tainted
+#  define PL_tainting               tainting
+/* Replace: 0 */
+#endif
+
+#ifdef HASATTRIBUTE
+#  if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
+#    define PERL_UNUSED_DECL
+#  else
+#    define PERL_UNUSED_DECL __attribute__((unused))
+#  endif
+#else
+#  define PERL_UNUSED_DECL
+#endif
+
+__UNDEFINED__  NOOP          (void)0
+__UNDEFINED__  dNOOP         extern int Perl___notused PERL_UNUSED_DECL
+
+#ifndef NVTYPE
+#  if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE)
+#    define NVTYPE long double
+#  else
+#    define NVTYPE double
+#  endif
+typedef NVTYPE NV;
+#endif
+
+#ifndef INT2PTR
+
+#  if (IVSIZE == PTRSIZE) && (UVSIZE == PTRSIZE)
+#    define PTRV                  UV
+#    define INT2PTR(any,d)        (any)(d)
+#  else
+#    if PTRSIZE == LONGSIZE
+#      define PTRV                unsigned long
+#    else
+#      define PTRV                unsigned
+#    endif
+#    define INT2PTR(any,d)        (any)(PTRV)(d)
+#  endif
+
+#  define NUM2PTR(any,d)  (any)(PTRV)(d)
+#  define PTR2IV(p)       INT2PTR(IV,p)
+#  define PTR2UV(p)       INT2PTR(UV,p)
+#  define PTR2NV(p)       NUM2PTR(NV,p)
+
+#  if PTRSIZE == LONGSIZE
+#    define PTR2ul(p)     (unsigned long)(p)
+#  else
+#    define PTR2ul(p)     INT2PTR(unsigned long,p)        
+#  endif
+
+#endif /* !INT2PTR */
+
+#undef START_EXTERN_C
+#undef END_EXTERN_C
+#undef EXTERN_C
+#ifdef __cplusplus
+#  define START_EXTERN_C extern "C" {
+#  define END_EXTERN_C }
+#  define EXTERN_C extern "C"
+#else
+#  define START_EXTERN_C
+#  define END_EXTERN_C
+#  define EXTERN_C extern
+#endif
+
+#ifndef PERL_GCC_BRACE_GROUPS_FORBIDDEN
+#  if defined(__STRICT_ANSI__) && defined(PERL_GCC_PEDANTIC)
+#    define PERL_GCC_BRACE_GROUPS_FORBIDDEN
+#  endif
+#endif
+
+#undef STMT_START
+#undef STMT_END
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN) && !defined(__cplusplus)
+#  define STMT_START	(void)(	/* gcc supports ``({ STATEMENTS; })'' */
+#  define STMT_END	)
+#else
+#  if defined(VOIDFLAGS) && (VOIDFLAGS) && (defined(sun) || defined(__sun__)) && !defined(__GNUC__)
+#    define STMT_START	if (1)
+#    define STMT_END	else (void)0
+#  else
+#    define STMT_START	do
+#    define STMT_END	while (0)
+#  endif
+#endif
+
+__UNDEFINED__  boolSV(b)    ((b) ? &PL_sv_yes : &PL_sv_no)
+
+/* DEFSV appears first in 5.004_56 */
+__UNDEFINED__  DEFSV	    GvSV(PL_defgv)
+__UNDEFINED__  SAVE_DEFSV   SAVESPTR(GvSV(PL_defgv))
+
+/* Older perls (<=5.003) lack AvFILLp */
+__UNDEFINED__  AvFILLp      AvFILL
+
+__UNDEFINED__  ERRSV        get_sv("@",FALSE)
+
+__UNDEFINED__  newSVpvn(data,len)  ((data)                                              \
+                                    ? ((len) ? newSVpv((data), (len)) : newSVpv("", 0)) \
+                                    : newSV(0))
+
+/* Hint: gv_stashpvn
+ * This function's backport doesn't support the length parameter, but
+ * rather ignores it. Portability can only be ensured if the length
+ * parameter is used for speed reasons, but the length can always be
+ * correctly computed from the string argument.
+ */
+
+__UNDEFINED__  gv_stashpvn(str,len,create)  gv_stashpv(str,create)
+
+/* Replace: 1 */
+__UNDEFINED__  get_cv          perl_get_cv
+__UNDEFINED__  get_sv          perl_get_sv
+__UNDEFINED__  get_av          perl_get_av
+__UNDEFINED__  get_hv          perl_get_hv
+/* Replace: 0 */
+
+#ifdef HAS_MEMCMP
+__UNDEFINED__  memNE(s1,s2,l)  (memcmp(s1,s2,l))
+__UNDEFINED__  memEQ(s1,s2,l)  (!memcmp(s1,s2,l))
+#else
+__UNDEFINED__  memNE(s1,s2,l)  (bcmp(s1,s2,l))
+__UNDEFINED__  memEQ(s1,s2,l)  (!bcmp(s1,s2,l))
+#endif
+
+__UNDEFINED__  MoveD(s,d,n,t)  memmove((char*)(d),(char*)(s), (n) * sizeof(t))
+__UNDEFINED__  CopyD(s,d,n,t)  memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
+#ifdef HAS_MEMSET
+__UNDEFINED__  ZeroD(d,n,t)    memzero((char*)(d), (n) * sizeof(t))
+#else
+__UNDEFINED__  ZeroD(d,n,t)    ((void)memzero((char*)(d), (n) * sizeof(t)),d)
+#endif
+
+__UNDEFINED__  Poison(d,n,t)   (void)memset((char*)(d), 0xAB, (n) * sizeof(t))
+
+__UNDEFINED__  dUNDERBAR       dNOOP
+__UNDEFINED__  UNDERBAR        DEFSV
+
+__UNDEFINED__  dAX             I32 ax = MARK - PL_stack_base + 1
+__UNDEFINED__  dITEMS          I32 items = SP - MARK
+
+=xsubs
+
+int
+gv_stashpvn(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = gv_stashpvn(name, strlen(name), create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_sv(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_sv(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_av(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_av(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_hv(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_hv(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_cv(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_cv(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
+void
+newSVpvn()
+	PPCODE:
+		XPUSHs(newSVpvn("test", 4));
+		XPUSHs(newSVpvn("test", 2));
+		XPUSHs(newSVpvn("test", 0));
+		XPUSHs(newSVpvn(NULL, 2));
+		XPUSHs(newSVpvn(NULL, 0));
+		XSRETURN(5);
+
+SV *
+PL_sv_undef()
+	CODE:
+		RETVAL = newSVsv(&PL_sv_undef);
+	OUTPUT:
+		RETVAL
+
+SV *
+PL_sv_yes()
+	CODE:
+		RETVAL = newSVsv(&PL_sv_yes);
+	OUTPUT:
+		RETVAL
+
+SV *
+PL_sv_no()
+	CODE:
+		RETVAL = newSVsv(&PL_sv_no);
+	OUTPUT:
+		RETVAL
+
+int
+PL_na(string)
+	char *string
+	CODE:
+		PL_na = strlen(string);
+		RETVAL = PL_na;
+	OUTPUT:
+		RETVAL
+
+SV*
+boolSV(value)
+	int value
+	CODE:
+		RETVAL = newSVsv(boolSV(value));
+	OUTPUT:
+		RETVAL
+
+SV*
+DEFSV()
+	CODE:
+		RETVAL = newSVsv(DEFSV);
+	OUTPUT:
+		RETVAL
+
+int
+ERRSV()
+	CODE:
+		RETVAL = SvTRUE(ERRSV);
+	OUTPUT:
+		RETVAL
+
+SV*
+UNDERBAR()
+	CODE:
+		{
+		  dUNDERBAR;
+		  RETVAL = newSVsv(UNDERBAR);
+		}
+	OUTPUT:
+		RETVAL
+
+=tests plan => 31
+
+use vars qw($my_sv @my_av %my_hv);
+
+my @s = &Devel::PPPort::newSVpvn();
+ok(@s == 5);
+ok($s[0], "test");
+ok($s[1], "te");
+ok($s[2], "");
+ok(!defined($s[3]));
+ok(!defined($s[4]));
+
+ok(!defined(&Devel::PPPort::PL_sv_undef()));
+ok(&Devel::PPPort::PL_sv_yes());
+ok(!&Devel::PPPort::PL_sv_no());
+ok(&Devel::PPPort::PL_na("abcd"), 4);
+
+ok(&Devel::PPPort::boolSV(1));
+ok(!&Devel::PPPort::boolSV(0));
+
+$_ = "Fred";
+ok(&Devel::PPPort::DEFSV(), "Fred");
+ok(&Devel::PPPort::UNDERBAR(), "Fred");
+
+eval { 1 };
+ok(!&Devel::PPPort::ERRSV());
+eval { cannot_call_this_one() };
+ok(&Devel::PPPort::ERRSV());
+
+ok(&Devel::PPPort::gv_stashpvn('Devel::PPPort', 0));
+ok(!&Devel::PPPort::gv_stashpvn('does::not::exist', 0));
+ok(&Devel::PPPort::gv_stashpvn('does::not::exist', 1));
+
+$my_sv = 1;
+ok(&Devel::PPPort::get_sv('my_sv', 0));
+ok(!&Devel::PPPort::get_sv('not_my_sv', 0));
+ok(&Devel::PPPort::get_sv('not_my_sv', 1));
+
+@my_av = (1);
+ok(&Devel::PPPort::get_av('my_av', 0));
+ok(!&Devel::PPPort::get_av('not_my_av', 0));
+ok(&Devel::PPPort::get_av('not_my_av', 1));
+
+%my_hv = (a=>1);
+ok(&Devel::PPPort::get_hv('my_hv', 0));
+ok(!&Devel::PPPort::get_hv('not_my_hv', 0));
+ok(&Devel::PPPort::get_hv('not_my_hv', 1));
+
+sub my_cv { 1 };
+ok(&Devel::PPPort::get_cv('my_cv', 0));
+ok(!&Devel::PPPort::get_cv('not_my_cv', 0));
+ok(&Devel::PPPort::get_cv('not_my_cv', 1));
+

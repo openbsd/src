@@ -1,5 +1,5 @@
 
-# Time-stamp: "2004-07-01 14:34:40 ADT"
+# Time-stamp: "2004-10-06 23:26:33 ADT"
 # Sean M. Burke <sburke@cpan.org>
 
 require 5.000;
@@ -19,7 +19,7 @@ require Exporter;
                );
 %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
-$VERSION = "0.33";
+$VERSION = "0.35";
 
 sub uniq { my %seen; return grep(!($seen{$_}++), @_); } # a util function
 
@@ -403,7 +403,8 @@ sub locale2language_tag {
   return $lang if &is_language_tag($lang); # like "en"
 
   $lang =~ tr<_><->;  # "en_US" -> en-US
-  $lang =~ s<\.[-_a-zA-Z0-9\.]*><>s;  # "en_US.ISO8859-1" -> en-US
+  $lang =~ s<(?:[\.\@][-_a-zA-Z0-9]+)+$><>s;  # "en_US.ISO8859-1" -> en-US
+   # it_IT.utf8@euro => it-IT
 
   return $lang if &is_language_tag($lang);
 
@@ -868,7 +869,7 @@ C<http://www.iana.org/assignments/language-tags>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1998-2004 Sean M. Burke. All rights reserved.
+Copyright (c) 1998+ Sean M. Burke. All rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -83,8 +83,10 @@ sub postamble
 {
     my $self = shift;
     my $dir  = $self->catdir($self->curdir,'ucm');
-    my $str  = "# Encode\$(OBJ_EXT) depends on .h and .exh files not .c files - but all written by enc2xs\n";
+    my $str  = "# Encode\$(OBJ_EXT) does not depend on .c files directly\n";
+    $str  .= "# (except Encode.c), but on .h and .exh files written by enc2xs\n";
     $str  .= $^O eq 'MacOS' ? 'Encode.c.{$(MACPERL_BUILD_EXT_STATIC)}.o :' : 'Encode$(OBJ_EXT) :';
+    $str  .= ' Encode.c';
     foreach my $table (keys %tables)
     {
 	$str .= " $table.c";

@@ -3,7 +3,7 @@
 
 package Devel::Peek;
 
-$VERSION = '1.01';
+$VERSION = '1.02';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -391,28 +391,40 @@ The following shows the raw form of a reference to a hash.
 
 The output:
 
-        SV = RV(0xf041c)
-          REFCNT = 1
-          FLAGS = (ROK)
-          RV = 0xb2850
-        SV = PVHV(0xbd448)
-          REFCNT = 1
-          FLAGS = ()
-          NV = 0
-          ARRAY = 0xbd748
-          KEYS = 1
-          FILL = 1
-          MAX = 7
-          RITER = -1
-          EITER = 0x0
-        Elt "hello" => 0xbaaf0
-        SV = IV(0xbe860)
-          REFCNT = 1
-          FLAGS = (IOK,pIOK)
-          IV = 42
+	SV = RV(0x8177858) at 0x816a618
+	  REFCNT = 1
+	  FLAGS = (ROK)
+	  RV = 0x814fc10
+	  SV = PVHV(0x8167768) at 0x814fc10
+	    REFCNT = 1
+	    FLAGS = (SHAREKEYS)
+	    IV = 1
+	    NV = 0
+	    ARRAY = 0x816c5b8  (0:7, 1:1)
+	    hash quality = 100.0%
+	    KEYS = 1
+	    FILL = 1
+	    MAX = 7
+	    RITER = -1
+	    EITER = 0x0
+	    Elt "hello" HASH = 0xc8fd181b
+	    SV = IV(0x816c030) at 0x814fcf4
+	      REFCNT = 1
+	      FLAGS = (IOK,pIOK)
+	      IV = 42
 
 This shows C<$a> is a reference pointing to an SV.  That SV is a PVHV, a
 hash. Fields RITER and EITER are used by C<L<each>>.
+
+The "quality" of a hash is defined as the total number of comparisons needed
+to access every element once, relative to the expected number needed for a
+random hash. The value can go over 100%.
+
+The total number of comparisons is equal to the sum of the squares of the
+number of entries in each bucket.  For a random hash of C<<n>> keys into
+C<<k>> buckets, the expected value is:
+
+		n + n(n-1)/2k
 
 =head2 Dumping a large array or hash
 

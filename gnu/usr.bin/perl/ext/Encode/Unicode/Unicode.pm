@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load(__PACKAGE__,$VERSION);
@@ -46,7 +46,7 @@ sub renew {
     my $self = shift;
     $BOM_Unknown{$self->name} or return $self;
     my $clone = bless { %$self } => ref($self);
-    $clone->{clone} = 1; # so the caller knows it is renewed.
+    $clone->{renewed}++; # so the caller knows it is renewed.
     return $clone;
 }
 
@@ -233,6 +233,24 @@ every one of \x{0000_0000} up to \x{ffff_ffff} (*) is I<a character>.
 
   (*) or \x{ffff_ffff_ffff_ffff} if your perl is compiled with 64-bit
   integer support!
+
+=head1 Error Checking
+
+Unlike most encodings which accept various ways to handle errors,
+Unicode encodings simply croaks.
+
+  % perl -MEncode -e '$_ = "\xfe\xff\xd8\xd9\xda\xdb\0\n"' \
+         -e 'Encode::from_to($_, "utf16","shift_jis", 0); print'
+  UTF-16:Malformed LO surrogate d8d9 at /path/to/Encode.pm line 184.
+  % perl -MEncode -e '$a = "BOM missing"' \
+         -e ' Encode::from_to($a, "utf16", "shift_jis", 0); print'
+  UTF-16:Unrecognised BOM 424f at /path/to/Encode.pm line 184.
+
+Unlike other encodings where mappings are not one-to-one against
+Unicode, UTFs are supposed to map 100% against one another.  So Encode
+is more strict on UTFs.
+
+Consider that "division by zero" of Encode :)
 
 =head1 SEE ALSO
 

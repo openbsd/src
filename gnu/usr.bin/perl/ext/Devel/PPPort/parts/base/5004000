@@ -1,0 +1,48 @@
+5.004000
+GIMME_V                        # E
+G_VOID                         # E
+HEf_SVKEY                      # E
+HeHASH                         # U
+HeKEY                          # E
+HeKLEN                         # U
+HePV                           # E
+HeSVKEY                        # E
+HeSVKEY_force                  # E
+HeSVKEY_set                    # E
+HeVAL                          # E
+PUSHu                          # U
+SvSetMagicSV                   # U
+SvSetMagicSV_nosteal           # U
+SvSetSV_nosteal                # U
+SvTAINTED                      # U
+SvTAINTED_off                  # U
+SvTAINTED_on                   # U
+SvUV                           # U
+SvUVX                          # U
+SvUVx                          # U
+XPUSHu                         # U
+my_memcmp                      # U
+newRV_inc                      # E
+sv_2uv                         # U
+PERL_INT_MAX                   # added by devel/scanprov
+PERL_INT_MIN                   # added by devel/scanprov
+PERL_LONG_MAX                  # added by devel/scanprov
+PERL_LONG_MIN                  # added by devel/scanprov
+PERL_QUAD_MAX                  # added by devel/scanprov
+PERL_QUAD_MIN                  # added by devel/scanprov
+PERL_SHORT_MAX                 # added by devel/scanprov
+PERL_SHORT_MIN                 # added by devel/scanprov
+PERL_UCHAR_MAX                 # added by devel/scanprov
+PERL_UCHAR_MIN                 # added by devel/scanprov
+PERL_UINT_MAX                  # added by devel/scanprov
+PERL_UINT_MIN                  # added by devel/scanprov
+PERL_ULONG_MAX                 # added by devel/scanprov
+PERL_ULONG_MIN                 # added by devel/scanprov
+PERL_UQUAD_MAX                 # added by devel/scanprov
+PERL_UQUAD_MIN                 # added by devel/scanprov
+PERL_USHORT_MAX                # added by devel/scanprov
+PERL_USHORT_MIN                # added by devel/scanprov
+SvUVXx                         # added by devel/scanprov
+boolSV                         # added by devel/scanprov
+memEQ                          # added by devel/scanprov
+memNE                          # added by devel/scanprov

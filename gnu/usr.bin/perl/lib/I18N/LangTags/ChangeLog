@@ -1,6 +1,21 @@
 Revision history for Perl module I18N::LangTags.
-                                        Time-stamp: "2004-07-01 14:28:23 ADT"
+                                        Time-stamp: "2004-10-06 23:26:53 ADT"
 
+2004-10-06  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.35
+
+	Bugfix version: locale2language_tag now correctly understands
+	locale-IDs with at-signs in them, like 'it_IT.utf8@euro' or 
+	'it_IT@euro'.  This is now enforced by the new t/20_locales.t
+
+	Thanks to Luca 'loopback' Cavalli for letting me know about these
+	new locale-ID name-styles.
+
+	
+	* Release 0.34 -- never happened, because of an upload error
+
+	
 2004-07-01  Sean M. Burke  sburke@cpan.org
 
 	* Release 0.33

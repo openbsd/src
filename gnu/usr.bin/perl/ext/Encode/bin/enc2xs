@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
@@ -331,8 +331,8 @@ END
   close(D) or warn "Error closing '$dname': $!";
   close(H) or warn "Error closing '$hname': $!";
 
-  my $perc_saved    = $strings/($strings + $saved) * 100;
-  my $perc_subsaved = $strings/($strings + $subsave) * 100;
+  my $perc_saved    = $saved/($strings + $saved) * 100;
+  my $perc_subsaved = $subsave/($strings + $subsave) * 100;
   printf STDERR "%d bytes in string tables\n",$strings;
   printf STDERR "%d bytes (%.3g%%) saved spotting duplicates\n",
     $saved, $perc_saved              if $saved;
@@ -1126,8 +1126,8 @@ Now all you have to do is make.
   Reading myascii (myascii)
   Writing compiled form
   128 bytes in string tables
-  384 bytes (25%) saved spotting duplicates
-  1 bytes (99.2%) saved using substrings
+  384 bytes (75%) saved spotting duplicates
+  1 bytes (0.775%) saved using substrings
   ....
   chmod 644 blib/arch/auto/Encode/My/My.bs
   $
@@ -1318,7 +1318,9 @@ down, here is what happens.
 The Encode package comes with F<ucmlint>, a crude but sufficient
 utility to check the integrity of a UCM file.  Check under the
 Encode/bin directory for this.
-  
+
+When in doubt, you can use F<ucmsort>, yet another utility under
+Encode/bin directory.
 
 =head1 Bookmarks
 

@@ -15,6 +15,12 @@
 
 /*
 =head1 Numeric functions
+
+This file contains all the stuff needed by perl for manipulating numeric
+values, including such things as replacements for the OS's atof() function
+
+=cut
+
 */
 
 #include "EXTERN.h"
@@ -118,8 +124,10 @@ converts a string representing a binary number to numeric form.
 On entry I<start> and I<*len> give the string to scan, I<*flags> gives
 conversion flags, and I<result> should be NULL or a pointer to an NV.
 The scan stops at the end of the string, or the first invalid character.
-On return I<*len> is set to the length scanned string, and I<*flags> gives
-output flags.
+Unless C<PERL_SCAN_SILENT_ILLDIGIT> is set in I<*flags>, encountering an
+invalid character will also trigger a warning.
+On return I<*len> is set to the length of the scanned string,
+and I<*flags> gives output flags.
 
 If the value is <= UV_MAX it is returned as a UV, the output flags are clear,
 and nothing is written to I<*result>. If the value is > UV_MAX C<grok_bin>
@@ -127,7 +135,7 @@ returns UV_MAX, sets C<PERL_SCAN_GREATER_THAN_UV_MAX> in the output flags,
 and writes the value to I<*result> (or the value is discarded if I<result>
 is NULL).
 
-The hex number may optionally be prefixed with "0b" or "b" unless
+The binary number may optionally be prefixed with "0b" or "b" unless
 C<PERL_SCAN_DISALLOW_PREFIX> is set in I<*flags> on entry. If
 C<PERL_SCAN_ALLOW_UNDERSCORES> is set in I<*flags> then the binary
 number may use '_' characters to separate digits.
@@ -231,9 +239,11 @@ converts a string representing a hex number to numeric form.
 
 On entry I<start> and I<*len> give the string to scan, I<*flags> gives
 conversion flags, and I<result> should be NULL or a pointer to an NV.
-The scan stops at the end of the string, or the first non-hex-digit character.
-On return I<*len> is set to the length scanned string, and I<*flags> gives
-output flags.
+The scan stops at the end of the string, or the first invalid character.
+Unless C<PERL_SCAN_SILENT_ILLDIGIT> is set in I<*flags>, encountering an
+invalid character will also trigger a warning.
+On return I<*len> is set to the length of the scanned string,
+and I<*flags> gives output flags.
 
 If the value is <= UV_MAX it is returned as a UV, the output flags are clear,
 and nothing is written to I<*result>. If the value is > UV_MAX C<grok_hex>
@@ -342,6 +352,24 @@ Perl_grok_hex(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
 /*
 =for apidoc grok_oct
 
+converts a string representing an octal number to numeric form.
+
+On entry I<start> and I<*len> give the string to scan, I<*flags> gives
+conversion flags, and I<result> should be NULL or a pointer to an NV.
+The scan stops at the end of the string, or the first invalid character.
+Unless C<PERL_SCAN_SILENT_ILLDIGIT> is set in I<*flags>, encountering an
+invalid character will also trigger a warning.
+On return I<*len> is set to the length of the scanned string,
+and I<*flags> gives output flags.
+
+If the value is <= UV_MAX it is returned as a UV, the output flags are clear,
+and nothing is written to I<*result>. If the value is > UV_MAX C<grok_oct>
+returns UV_MAX, sets C<PERL_SCAN_GREATER_THAN_UV_MAX> in the output flags,
+and writes the value to I<*result> (or the value is discarded if I<result>
+is NULL).
+
+If C<PERL_SCAN_ALLOW_UNDERSCORES> is set in I<*flags> then the octal
+number may use '_' characters to separate digits.
 
 =cut
  */
@@ -396,7 +424,7 @@ Perl_grok_oct(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
                 goto redo;
 	    }
         /* Allow \octal to work the DWIM way (that is, stop scanning
-         * as soon as non-octal characters are seen, complain only iff
+         * as soon as non-octal characters are seen, complain only if
          * someone seems to want to use the digits eight and nine). */
         if (digit == 8 || digit == 9) {
             if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT) && ckWARN(WARN_DIGIT))

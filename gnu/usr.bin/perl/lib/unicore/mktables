@@ -1023,6 +1023,7 @@ sub UnicodeData_Txt()
 	    push @PVA, "\n", "\%utf8::$name = (\n",
 		simple_dumper (%{$utf8::{$name}}), ");\n";
 	}
+	push @PVA, "1;\n";
 	WriteIfChanged("PVA.pl", @PVA);
     }
 

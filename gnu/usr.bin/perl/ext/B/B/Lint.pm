@@ -1,6 +1,6 @@
 package B::Lint;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 =head1 NAME
 
@@ -13,7 +13,7 @@ perl -MO=Lint[,OPTIONS] foo.pl
 =head1 DESCRIPTION
 
 The B::Lint module is equivalent to an extended version of the B<-w>
-option of B<perl>. It is named after the program B<lint> which carries
+option of B<perl>. It is named after the program F<lint> which carries
 out a similar process for C programs.
 
 =head1 OPTIONS AND LINT CHECKS
@@ -36,6 +36,7 @@ context. For example, both of the lines
 
     $foo = length(@bar);
     $foo = @bar;
+
 will elicit a warning. Using an explicit B<scalar()> silences the
 warning. For example,
 
@@ -63,15 +64,15 @@ This option warns whenever a bareword is implicitly quoted, but is also
 the name of a subroutine in the current package. Typical mistakes that it will
 trap are:
 
-	use constant foo => 'bar';
-	@a = ( foo => 1 );
-	$b{foo} = 2;
+    use constant foo => 'bar';
+    @a = ( foo => 1 );
+    $b{foo} = 2;
 
 Neither of these will do what a naive user would expect.
 
 =item B<dollar-underscore>
 
-This option warns whenever $_ is used either explicitly anywhere or
+This option warns whenever C<$_> is used either explicitly anywhere or
 as the implicit argument of a B<print> statement.
 
 =item B<private-names>
@@ -79,7 +80,7 @@ as the implicit argument of a B<print> statement.
 This option warns on each use of any variable, subroutine or
 method name that lives in a non-current package but begins with
 an underscore ("_"). Warnings aren't issued for the special case
-of the single character name "_" by itself (e.g. $_ and @_).
+of the single character name "_" by itself (e.g. C<$_> and C<@_>).
 
 =item B<undefined-subs>
 
@@ -92,8 +93,8 @@ mechanism.
 
 =item B<regexp-variables>
 
-This option warns whenever one of the regexp variables $', $& or
-$' is used. Any occurrence of any of these variables in your
+This option warns whenever one of the regexp variables C<$`>, C<$&> or C<$'>
+is used. Any occurrence of any of these variables in your
 program can slow your whole program down. See L<perlre> for
 details.
 

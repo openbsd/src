@@ -16,9 +16,23 @@ our @EXPORT = qw( print_double print_int print_long
 		  print_float print_long_double have_long_double print_flush
 		  mpushp mpushn mpushi mpushu
 		  mxpushp mxpushn mxpushi mxpushu
+		  call_sv call_pv call_method eval_sv eval_pv require_pv
+		  G_SCALAR G_ARRAY G_VOID G_DISCARD G_EVAL G_NOARGS
+		  G_KEEPERR G_NODEBUG G_METHOD
 );
 
-our $VERSION = '0.04';
+# from cop.h 
+sub G_SCALAR()	{   0 }
+sub G_ARRAY()	{   1 }
+sub G_VOID()	{ 128 }
+sub G_DISCARD()	{   2 }
+sub G_EVAL()	{   4 }
+sub G_NOARGS()	{   8 }
+sub G_KEEPERR()	{  16 }
+sub G_NODEBUG()	{  32 }
+sub G_METHOD()	{  64 }
+
+our $VERSION = '0.05';
 
 bootstrap XS::APItest $VERSION;
 
@@ -133,6 +147,30 @@ correctly by C<printf>.
 
 Output is sent to STDOUT.
 
+=item B<call_sv>, B<call_pv>, B<call_method>
+
+These exercise the C calls of the same names. Everything after the flags
+arg is passed as the the args to the called function. They return whatever
+the C function itself pushed onto the stack, plus the return value from
+the function; for example
+
+    call_sv( sub { @_, 'c' }, G_ARRAY,  'a', 'b'); # returns 'a', 'b', 'c', 3
+    call_sv( sub { @_ },      G_SCALAR, 'a', 'b'); # returns 'b', 1
+
+=item B<eval_sv>
+
+Evalulates the passed SV. Result handling is done the same as for
+C<call_sv()> etc.
+
+=item B<eval_pv>
+
+Excercises the C function of the same name in scalar context. Returns the
+same SV that the C function returns.
+
+=item B<require_pv>
+
+Excercises the C function of the same name. Returns nothing.
+
 =back
 
 =head1 SEE ALSO
@@ -147,7 +185,7 @@ Hugo van der Sanden E<lt>hv@crypt.compulink.co.ukE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2002 Tim Jenness, Christian Soeller, Hugo van der Sanden.
+Copyright (C) 2002,2004 Tim Jenness, Christian Soeller, Hugo van der Sanden.
 All Rights Reserved.
 
 This library is free software; you can redistribute it and/or modify

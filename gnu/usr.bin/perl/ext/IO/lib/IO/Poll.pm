@@ -46,6 +46,7 @@ sub mask {
     my $self = shift;
     my $io = shift;
     my $fd = fileno($io);
+    return unless defined $fd;
     if (@_) {
 	my $mask = shift;
 	if($mask) {

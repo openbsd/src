@@ -155,6 +155,10 @@ use Test::More;
 use Config qw(%Config);
 
 BEGIN {
+  if (($Config{'extensions'} !~ /\bB\b/) ){
+    print "1..0 # Skip -- Perl configured without B module\n";
+    exit 0;
+  }
   if (($Config{'extensions'} !~ /\bByteLoader\b/) ){
     print "1..0 # Skip -- Perl configured without ByteLoader module\n";
     exit 0;

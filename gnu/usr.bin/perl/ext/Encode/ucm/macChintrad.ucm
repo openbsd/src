@@ -1,5 +1,5 @@
 #
-# $Id: macChintrad.ucm,v 2.0 2004/05/16 20:55:26 dankogai Exp $
+# $Id: macChintrad.ucm,v 2.1 2004/10/22 06:23:11 dankogai Exp $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/CHINTRAD.TXT
@@ -253,8 +253,8 @@ CHARMAP
 <U2252> \xA1\xDC |0 # APPROXIMATELY EQUAL TO OR THE IMAGE OF
 <U2260> \xA1\xDA |0 # NOT EQUAL TO
 <U2261> \xA1\xDD |0 # IDENTICAL TO
-<U2266> \xA1\xD8 |0 # LESS THAN OVER EQUAL TO
-<U2267> \xA1\xD9 |0 # GREATER THAN OVER EQUAL TO
+<U2266> \xA1\xD8 |0 # LESS-THAN OVER EQUAL TO
+<U2267> \xA1\xD9 |0 # GREATER-THAN OVER EQUAL TO
 <U2295> \xA1\xF2 |0 # CIRCLED PLUS # change from UTC mapping
 <U22A5> \xA1\xE6 |0 # UP TACK
 <U22BF> \xA1\xE9 |0 # RIGHT TRIANGLE

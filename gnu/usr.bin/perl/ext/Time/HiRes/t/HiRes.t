@@ -4,6 +4,11 @@ BEGIN {
     if ($ENV{PERL_CORE}) {
 	chdir 't' if -d 't';
 	@INC = '../lib';
+	require Config; import Config;
+	if (" $Config{'extensions'} " !~ m[ Time/HiRes ]) {
+	    print "1..0 # Skip -- Perl configured without Time::HiRes module\n";
+	    exit 0;
+	}
     }
 }
 
@@ -161,27 +166,27 @@ if (!$have_ualarm || !$have_alarm) {
 }
 else {
     my $tick = 0;
-    local $SIG{ALRM} = sub { $tick++ };
+    local $SIG{ ALRM } = sub { $tick++ };
 
-    my $one = time; $tick = 0; ualarm(10_000); while ($tick == 0) { sleep }
-    my $two = time; $tick = 0; ualarm(10_000); while ($tick == 0) { sleep }
+    my $one = time; $tick = 0; ualarm(10_000); while ($tick == 0) { }
+    my $two = time; $tick = 0; ualarm(10_000); while ($tick == 0) { }
     my $three = time;
     ok 12, $one == $two || $two == $three, "slept too long, $one $two $three";
+    print "# tick = $tick, one = $one, two = $two, three = $three\n";
 
-    $tick = 0;
-    ualarm(10_000, 10_000);
-    while ($tick < 3) { sleep }
+    $tick = 0; ualarm(10_000, 10_000); while ($tick < 3) { }
     ok 13, 1;
     ualarm(0);
+    print "# tick = $tick, one = $one, two = $two, three = $three\n";
 }
 
-# new test: did we even get close?
+# Did we even get close?
 
 if (!$have_time) {
-    skip 14
+    skip 14;
 } else {
- my ($s, $n);
- for my $i (1 .. 100) {
+ my ($s, $n, $i) = (0);
+ for $i (1 .. 100) {
      $s += Time::HiRes::time() - time();
      $n++;
  }
@@ -286,7 +291,8 @@ unless (   defined &Time::HiRes::setitimer
     print "# setitimer: ", join(" ", setitimer(ITIMER_VIRTUAL, 0.5, 0.4)), "\n";
 
     # Assume interval timer granularity of $limit * 0.5 seconds.  Too bold?
-    print "not " unless abs(getitimer(ITIMER_VIRTUAL) / 0.5) - 1 < $limit;
+    my $virt = getitimer(ITIMER_VIRTUAL);
+    print "not " unless defined $virt && abs($virt / 0.5) - 1 < $limit;
     print "ok 18\n";
 
     print "# getitimer: ", join(" ", getitimer(ITIMER_VIRTUAL)), "\n";
@@ -298,7 +304,8 @@ unless (   defined &Time::HiRes::setitimer
 
     print "# getitimer: ", join(" ", getitimer(ITIMER_VIRTUAL)), "\n";
 
-    print "not " unless getitimer(ITIMER_VIRTUAL) == 0;
+    $virt = getitimer(ITIMER_VIRTUAL);
+    print "not " unless defined $virt && $virt == 0;
     print "ok 19\n";
 
     $SIG{VTALRM} = 'DEFAULT';
@@ -366,5 +373,6 @@ if ($have_ualarm) {
 if (defined $pid) {
     print "# Terminating the timer process $pid\n";
     kill('TERM', $pid); # We are done, the timer can go.
+    unlink("ktrace.out");
 }
 

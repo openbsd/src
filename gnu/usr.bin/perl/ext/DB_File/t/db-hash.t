@@ -23,7 +23,7 @@ BEGIN {
 use DB_File; 
 use Fcntl;
 
-print "1..161\n";
+print "1..166\n";
 
 unlink glob "__db.*";
 
@@ -877,14 +877,14 @@ EOM
 #
 #    ok(128, $@ =~ /^DB_File hash callback: recursion detected/);
 #    {
-#        local ($^W) = 0; #no warnings;
+#        no warnings;
 #        untie %hash;
 #    }
 #    unlink $Dfile;
 #}
 
-#ok(127,1);
-#ok(128,1);
+#ok(127, 1);
+#ok(128, 1);
 
 {
     # Check that two hash's don't interact
@@ -934,9 +934,11 @@ EOM
     tie %hash1, 'DB_File',$Dfile, undef;
     ok(133, $warn_count == 0);
     $warn_count = 0;
+    untie %hash1;
     unlink $Dfile;
     tie %hash1, 'DB_File',$Dfile, O_RDWR|O_CREAT, undef;
     ok(134, $warn_count == 0);
+    untie %hash1;
     unlink $Dfile;
     tie %hash1, 'DB_File',$Dfile, undef, undef;
     ok(135, $warn_count == 0);
@@ -1113,9 +1115,9 @@ EOM
 
     my %bad = () ;
     $key = '';
-    for ($status = $db->seq($key, $value, R_FIRST ) ;
+    for ($status = $db->seq(substr($key,0), substr($value,0), R_FIRST ) ;
          $status == 0 ;
-         $status = $db->seq($key, $value, R_NEXT ) ) {
+         $status = $db->seq(substr($key,0), substr($value,0), R_NEXT ) ) {
 
         #print "# key [$key] value [$value]\n" ;
         if (defined $remember{$key} && defined $value && 
@@ -1130,11 +1132,11 @@ EOM
     ok 157, keys %bad == 0 ;
     ok 158, keys %remember == 0 ;
 
-    print "# missing -- $key $value\n" while ($key, $value) = each %remember;
-    print "# bad     -- $key $value\n" while ($key, $value) = each %bad;
+    print "# missing -- $key=>$value\n" while ($key, $value) = each %remember;
+    print "# bad     -- $key=>$value\n" while ($key, $value) = each %bad;
 
     # Make sure this fix does not break code to handle an undef key
-    # Berkeley DB undef key is bron between versions 2.3.16 and 
+    # Berkeley DB undef key is broken between versions 2.3.16 and 3.1
     my $value = 'fred';
     $warned = '';
     $db->put(undef, $value) ;
@@ -1154,6 +1156,76 @@ EOM
     undef $db ;
     untie %h;
     unlink $Dfile;
+}
+
+{
+   # Check filter + substr
+
+   use warnings ;
+   use strict ;
+   my (%h, $db) ;
+   my $Dfile = "xxy.db";
+   unlink $Dfile;
+
+   ok(162, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
+
+
+   {
+       $db->filter_fetch_key   (sub { lc $_ } );
+       $db->filter_store_key   (sub { uc $_ } );
+       $db->filter_fetch_value (sub { lc $_ } );
+       $db->filter_store_value (sub { uc $_ } );
+   }
+
+   $_ = 'fred';
+
+    # db-put with substr of key
+    my %remember = () ;
+    my $status = 0 ;
+    for my $ix ( 1 .. 2 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{$key} = $value ;
+        $status += $db->put(substr($key,0), substr($value,0)) ;
+    }
+
+    ok 163, $status == 0 or print "# Status $status\n" ;
+
+    if (1)
+    {
+       $db->filter_fetch_key   (undef);
+       $db->filter_store_key   (undef);
+       $db->filter_fetch_value (undef);
+       $db->filter_store_value (undef);
+    }
+
+    my %bad = () ;
+    my $key = '';
+    my $value = '';
+    for ($status = $db->seq($key, $value, R_FIRST ) ;
+         $status == 0 ;
+         $status = $db->seq($key, $value, R_NEXT ) ) {
+
+        #print "# key [$key] value [$value]\n" ;
+        if (defined $remember{$key} && defined $value && 
+             $remember{$key} eq $value) {
+            delete $remember{$key} ;
+        }
+        else {
+            $bad{$key} = $value ;
+        }
+    }
+    
+    ok 164, $_ eq 'fred';
+    ok 165, keys %bad == 0 ;
+    ok 166, keys %remember == 0 ;
+
+    print "# missing -- $key $value\n" while ($key, $value) = each %remember;
+    print "# bad     -- $key $value\n" while ($key, $value) = each %bad;
+   undef $db ;
+   untie %h;
+   unlink $Dfile;
 }
 
 exit ;

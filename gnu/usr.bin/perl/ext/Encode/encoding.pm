@@ -1,15 +1,16 @@
-# $Id: encoding.pm,v 2.0 2004/05/16 20:55:16 dankogai Exp $
+# $Id: encoding.pm,v 2.1 2004/10/19 04:55:01 dankogai Exp $
 package encoding;
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use Encode;
 use strict;
+
 sub DEBUG () { 0 }
 
 BEGIN {
     if (ord("A") == 193) {
 	require Carp;
-	Carp::croak("encoding pragma does not support EBCDIC platforms");
+	Carp::croak("encoding: pragma does not support EBCDIC platforms");
     }
 }
 
@@ -30,15 +31,79 @@ sub _exception{
     return $Config{perl_patchlevel} ? 0 : 1 # maintperl then no
 }
 
+sub in_locale { $^H & ($locale::hint_bits || 0)}
+
+sub _get_locale_encoding {
+    my $locale_encoding;
+
+    # I18N::Langinfo isn't available everywhere
+    eval {
+	require I18N::Langinfo;
+	I18N::Langinfo->import(qw(langinfo CODESET));
+	$locale_encoding = langinfo(CODESET());
+    };
+    
+    my $country_language;
+
+    no warnings 'uninitialized';
+
+    if (not $locale_encoding && in_locale()) {
+	if ($ENV{LC_ALL} =~ /^([^.]+)\.([^.]+)$/) {
+	    ($country_language, $locale_encoding) = ($1, $2);
+	} elsif ($ENV{LANG} =~ /^([^.]+)\.([^.]+)$/) {
+	    ($country_language, $locale_encoding) = ($1, $2);
+	}
+	# LANGUAGE affects only LC_MESSAGES only on glibc
+    } elsif (not $locale_encoding) {
+	if ($ENV{LC_ALL} =~ /\butf-?8\b/i ||
+	    $ENV{LANG}   =~ /\butf-?8\b/i) {
+	    $locale_encoding = 'utf8';
+	}
+	# Could do more heuristics based on the country and language
+	# parts of LC_ALL and LANG (the parts before the dot (if any)),
+	# since we have Locale::Country and Locale::Language available.
+	# TODO: get a database of Language -> Encoding mappings
+	# (the Estonian database at http://www.eki.ee/letter/
+	# would be excellent!) --jhi
+    }
+    if (defined $locale_encoding &&
+	lc($locale_encoding) eq 'euc' &&
+	defined $country_language) {
+	if ($country_language =~ /^ja_JP|japan(?:ese)?$/i) {
+	    $locale_encoding = 'euc-jp';
+	} elsif ($country_language =~ /^ko_KR|korean?$/i) {
+	    $locale_encoding = 'euc-kr';
+	} elsif ($country_language =~ /^zh_CN|chin(?:a|ese)?$/i) {
+	    $locale_encoding = 'euc-cn';
+	} elsif ($country_language =~ /^zh_TW|taiwan(?:ese)?$/i) {
+	    $locale_encoding = 'euc-tw';
+	} else {
+	    require Carp;
+	    Carp::croak("encoding: Locale encoding '$locale_encoding' too ambiguous");
+	}
+    }
+
+    return $locale_encoding;
+}
+
 sub import {
     my $class = shift;
     my $name  = shift;
+    if ($name eq ':_get_locale_encoding') { # used by lib/open.pm
+	my $caller = caller();
+        {
+	    no strict 'refs';
+	    *{"${caller}::_get_locale_encoding"} = \&_get_locale_encoding;
+	}
+	return;
+    }
+    $name = _get_locale_encoding() if $name eq ':locale';
     my %arg = @_;
-    $name ||= $ENV{PERL_ENCODING};
+    $name = $ENV{PERL_ENCODING} unless defined $name;
     my $enc = find_encoding($name);
     unless (defined $enc) {
 	require Carp;
-	Carp::croak("Unknown encoding '$name'");
+	Carp::croak("encoding: Unknown encoding '$name'");
     }
     $name = $enc->name; # canonize
     unless ($arg{Filter}) {
@@ -62,13 +127,14 @@ sub import {
 			   $status ;
 		       });
 	};
-    }	DEBUG and warn "Filter installed";
+        $@ eq '' and DEBUG and warn "Filter installed";
+    }
     defined ${^UNICODE} and ${^UNICODE} != 0 and return 1;
     for my $h (qw(STDIN STDOUT)){
 	if ($arg{$h}){
 	    unless (defined find_encoding($arg{$h})) {
 		require Carp;
-		Carp::croak("Unknown encoding for $h, '$arg{$h}'");
+		Carp::croak("encoding: Unknown encoding for $h, '$arg{$h}'");
 	    }
 	    eval { binmode($h, ":raw :encoding($arg{$h})") };
 	}else{
@@ -132,6 +198,14 @@ encoding - allows you to write your script in non-ascii or non-utf8
   # an alternate way, Filter
   use encoding "euc-jp", Filter=>1;
   # now you can use kanji identifiers -- in euc-jp!
+
+  # switch on locale -
+  # note that this probably means that unless you have a complete control
+  # over the environments the application is ever going to be run, you should
+  # NOT use the feature of encoding pragma allowing you to write your script
+  # in any recognized encoding because changing locale settings will wreck
+  # the script; you can of course still use the other features of the pragma.
+  use encoding ':locale';
 
 =head1 ABSTRACT
 
@@ -510,10 +584,44 @@ Arabic and Hebrew).
 
 =back
 
+=head2 The Logic of :locale
+
+The logic of C<:locale> is as follows:
+
+=over 4
+
+=item 1.
+
+If the platform supports the langinfo(CODESET) interface, the codeset
+returned is used as the default encoding for the open pragma.
+
+=item 2.
+
+If 1. didn't work but we are under the locale pragma, the environment
+variables LC_ALL and LANG (in that order) are matched for encodings
+(the part after C<.>, if any), and if any found, that is used 
+as the default encoding for the open pragma.
+
+=item 3.
+
+If 1. and 2. didn't work, the environment variables LC_ALL and LANG
+(in that order) are matched for anything looking like UTF-8, and if
+any found, C<:utf8> is used as the default encoding for the open
+pragma.
+
+=back
+
+If your locale environment variables (LC_ALL, LC_CTYPE, LANG)
+contain the strings 'UTF-8' or 'UTF8' (case-insensitive matching),
+the default encoding of your STDIN, STDOUT, and STDERR, and of
+B<any subsequent file open>, is UTF-8.
+
 =head1 HISTORY
 
 This pragma first appeared in Perl 5.8.0.  For features that require 
 5.8.1 and better, see above.
+
+The C<:locale> subpragma was implemented in 2.01, or Perl 5.8.6.
 
 =head1 SEE ALSO
 

@@ -396,6 +396,8 @@ sub unimport
     ${^WARNING_BITS} = $mask ;
 }
 
+my %builtin_type; @builtin_type{qw(SCALAR ARRAY HASH CODE REF GLOB LVALUE Regexp)} = ();
+
 sub __chk
 {
     my $category ;
@@ -405,10 +407,10 @@ sub __chk
     if (@_) {
         # check the category supplied.
         $category = shift ;
-        if (ref $category) {
-            Croaker ("not an object")
-                if $category !~ /^([^=]+)=/ ;
-	    $category = $1 ;
+        if (my $type = ref $category) {
+            Croaker("not an object")
+                if exists $builtin_type{$type};
+	    $category = $type;
             $isobj = 1 ;
         }
         $offset = $Offsets{$category};

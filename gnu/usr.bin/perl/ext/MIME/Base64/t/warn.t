@@ -52,12 +52,6 @@ $a = do {
 };
 warn;
 
-if ($^O eq 'MSWin32') {
-    for (@warn) {
-	s|\\|/|g;
-    }
-}
-
 for (@warn) {
     print "# $_";
 }

@@ -29,6 +29,12 @@ static char unees[] = "Malformed UTF-8 character (unexpected end of string)";
 /* 
 =head1 Unicode Support
 
+This file contains various utility functions for manipulating UTF8-encoded
+strings. For the uninitiated, this is a method of representing arbitrary
+Unicode characters as a variable number of bytes, in such a way that
+characters in the ASCII range are unmodified, and a zero byte never appears
+within non-zero characters.
+
 =for apidoc A|U8 *|uvuni_to_utf8_flags|U8 *d|UV uv|UV flags
 
 Adds the UTF-8 representation of the Unicode codepoint C<uv> to the end
@@ -862,8 +868,14 @@ Perl_utf16_to_utf8(pTHX_ U8* p, U8* d, I32 bytelen, I32 *newlen)
     U8* pend;
     U8* dstart = d;
 
+    if (bytelen == 1 && p[0] == 0) { /* Be understanding. */
+	 d[0] = 0;
+	 *newlen = 1;
+	 return d;
+    }
+
     if (bytelen & 1)
-	Perl_croak(aTHX_ "panic: utf16_to_utf8: odd bytelen");
+	Perl_croak(aTHX_ "panic: utf16_to_utf8: odd bytelen %d", bytelen);
 
     pend = p + bytelen;
 
@@ -1916,7 +1928,7 @@ If the pe1 and pe2 are non-NULL, the scanning pointers will be copied
 in there (they will point at the beginning of the I<next> character).
 If the pointers behind pe1 or pe2 are non-NULL, they are the end
 pointers beyond which scanning will not continue under any
-circustances.  If the byte lengths l1 and l2 are non-zero, s1+l1 and
+circumstances.  If the byte lengths l1 and l2 are non-zero, s1+l1 and
 s2+l2 will be used as goal end pointers that will also stop the scan,
 and which qualify towards defining a successful match: all the scans
 that define an explicit length must reach their goal pointers for

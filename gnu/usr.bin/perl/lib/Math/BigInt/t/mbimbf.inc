@@ -398,10 +398,10 @@ my $warn = ''; $SIG{__WARN__} = sub { $warn = shift; };
 # these should warn, since '3.17' is a NaN in BigInt and thus >= returns undef
 $warn = ''; eval "\$z = 3.17 <= \$y"; ok ($z, 1);
 print "# Got: '$warn'\n" unless
-ok ($warn =~ /^Use of uninitialized value (in numeric le \(<=\) |)at/);	
+ok ($warn =~ /^Use of uninitialized value (\$y )?(in numeric le \(<=\) |)at/);	
 $warn = ''; eval "\$z = \$y >= 3.17"; ok ($z, 1);
 print "# Got: '$warn'\n" unless
-ok ($warn =~ /^Use of uninitialized value (in numeric ge \(>=\) |)at/);	
+ok ($warn =~ /^Use of uninitialized value (\$y )?(in numeric ge \(>=\) |)at/);	
 
 # XXX TODO breakage:
 # $z = $y->copy()->bmul($u,2,0,'odd'); ok ($z,31000);

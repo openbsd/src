@@ -73,9 +73,10 @@ want to do in advance.
 
 Dig into a bunch of modules to see how they're written. I'd suggest
 starting with L<Text::Tabs|Text::Tabs>, since it's in the standard
-library and is nice and simple, and then looking at something like
-L<Time::Zone|Time::Zone>, L<File::Copy|File::Copy> and then some of the
-C<Mail::*> modules if you're planning on writing object oriented code.
+library and is nice and simple, and then looking at something a little
+more complex like L<File::Copy|File::Copy>.  For object oriented
+code, C<WWW::Mechanize> or the C<Email::*> modules provide some good
+examples.
 
 These should give you an overall feel for how modules are laid out and
 written.
@@ -84,8 +85,8 @@ written.
 
 There are a lot of modules on CPAN, and it's easy to miss one that's
 similar to what you're planning on contributing. Have a good plough
-through the modules list and the F<by-module> directories, and make sure
-you're not the one reinventing the wheel!
+through the L<http://search.cpan.org> and make sure you're not the one
+reinventing the wheel!
 
 =item Discuss the need
 
@@ -119,18 +120,29 @@ wanted and not currently available, it's time to start coding.
 
 =over 3
 
-=item Start with F<h2xs>
+=item Start with F<module-starter> or F<h2xs>
 
-Originally a utility to convert C header files into XS modules,
-L<h2xs|h2xs> has become a useful utility for churning out skeletons for
-Perl-only modules as well. If you don't want to use the
-L<Autoloader|Autoloader> which splits up big modules into smaller
-subroutine-sized chunks, you'll say something like this:
+The F<module-starter> utility is distributed as part of the
+L<Module::Starter|Module::Starter> CPAN package.  It creates a directory
+with stubs of all the necessary files to start a new module, according
+to recent "best practice" for module development, and is invoked from
+the command line, thus:
 
-    h2xs -AX -n Net::Acme
+    module-starter --module=Foo::Bar \
+       --author="Your Name" --email=yourname@cpan.org
 
-The C<-A> omits the Autoloader code, C<-X> omits XS elements, and C<-n>
-specifies the name of the module.
+If you do not wish to install the L<Module::Starter|Module::Starter>
+package from CPAN, F<h2xs> is an older tool, originally intended for the
+development of XS modules, which comes packaged with the Perl
+distribution. 
+
+A typical invocation of L<h2xs|h2xs> for a pure Perl module is:
+
+    h2xs -AX --skip-exporter --use-new-tests -n Foo::Bar 
+
+The C<-A> omits the Autoloader code, C<-X> omits XS elements,
+C<--skip-exporter> omits the Exporter code, C<--use-new-tests> sets up a
+modern testing environment, and C<-n> specifies the name of the module.
 
 =item Use L<strict|strict> and L<warnings|warnings>
 
@@ -164,10 +176,9 @@ your module at fault.
 
 =item Use L<Exporter|Exporter> - wisely!
 
-C<h2xs> provides stubs for L<Exporter|Exporter>, which gives you a
-standard way of exporting symbols and subroutines from your module into
-the caller's namespace. For instance, saying C<use Net::Acme qw(&frob)>
-would import the C<frob> subroutine.
+L<Exporter|Exporter> gives you a standard way of exporting symbols and
+subroutines from your module into the caller's namespace. For instance,
+saying C<use Net::Acme qw(&frob)> would import the C<frob> subroutine.
 
 The package variable C<@EXPORT> will determine which symbols will get
 exported when the caller simply says C<use Net::Acme> - you will hardly
@@ -180,21 +191,23 @@ export set - look at L<Exporter> for more details.
 
 The work isn't over until the paperwork is done, and you're going to
 need to put in some time writing some documentation for your module.
-C<h2xs> will provide a stub for you to fill in; if you're not sure about
-the format, look at L<perlpod> for an introduction. Provide a good
-synopsis of how your module is used in code, a description, and then
-notes on the syntax and function of the individual subroutines or
-methods. Use Perl comments for developer notes and POD for end-user
-notes.
+C<module-starter> or C<h2xs> will provide a stub for you to fill in; if
+you're not sure about the format, look at L<perlpod> for an
+introduction. Provide a good synopsis of how your module is used in
+code, a description, and then notes on the syntax and function of the
+individual subroutines or methods. Use Perl comments for developer notes
+and POD for end-user notes.
 
 =item Write tests
 
 You're encouraged to create self-tests for your module to ensure it's
 working as intended on the myriad platforms Perl supports; if you upload
 your module to CPAN, a host of testers will build your module and send
-you the results of the tests. Again, C<h2xs> provides a test framework
-which you can extend - you should do something more than just checking
-your module will compile.
+you the results of the tests. Again, C<module-starter> and C<h2xs>
+provide a test framework which you can extend - you should do something
+more than just checking your module will compile.
+L<Test::Simple|Test::Simple> and L<Test::More|Test::More> are good
+places to start when writing a test suite.
 
 =item Write the README
 
@@ -212,15 +225,15 @@ does in detail, and the user-visible changes since the last release.
 
 =item Get a CPAN user ID
 
-Every developer publishing modules on CPAN needs a CPAN ID. See the
-instructions at C<http://www.cpan.org/modules/04pause.html> (or
-equivalent on your nearest mirror) to find out how to do this.
+Every developer publishing modules on CPAN needs a CPAN ID.  Visit
+C<http://pause.perl.org/>, select "Request PAUSE Account", and wait for
+your request to be approved by the PAUSE administrators.
 
 =item C<perl Makefile.PL; make test; make dist>
 
-Once again, C<h2xs> has done all the work for you. It produces the
-standard C<Makefile.PL> you'll have seen when you downloaded and
-installs modules, and this produces a Makefile with a C<dist> target.
+Once again, C<module-starter> or C<h2xs> has done all the work for you.
+They produce the standard C<Makefile.PL> you see when you download and
+install modules, and this produces a Makefile with a C<dist> target.
 
 Once you've ensured that your module passes its own tests - always a
 good thing to make sure - you can C<make dist>, and the Makefile will
@@ -235,31 +248,9 @@ you can upload your module to CPAN.
 =item Announce to the modules list
 
 Once uploaded, it'll sit unnoticed in your author directory. If you want
-it connected to the rest of the CPAN, you'll need to tell the modules
-list about it. The best way to do this is to email them a line in the
-style of the modules list, like this:
-
-  Net::Acme bdpOP   Interface to Acme Frobnicator servers      FOOBAR
-  ^         ^^^^^   ^                                          ^
-  |         |||||   Module description                         Your ID
-  |         ||||| 
-  |         ||||\-Public Licence: (p)standard Perl, (g)GPL, (b)BSD,
-  |         ||||                  (l)LGPL, (a)rtistic, (o)ther
-  |         ||||
-  |         |||\- Interface: (O)OP, (r)eferences, (h)ybrid, (f)unctions
-  |         |||
-  |         ||\-- Language: (p)ure Perl, C(+)+, (h)ybrid, (C), (o)ther
-  |         ||
-  Module    |\--- Support: (d)eveloper, (m)ailing list, (u)senet, (n)one
-  Name      |
-            \---- Development: (i)dea, (c)onstructions, (a)lpha, (b)eta,
-                               (R)eleased, (M)ature, (S)tandard
-
-plus a description of the module and why you think it should be
-included. If you hear nothing back, that means your module will
-probably appear on the modules list at the next update. Don't try
-subscribing to C<modules@perl.org>; it's not another mailing list. Just
-have patience.
+it connected to the rest of the CPAN, you'll need to go to "Register
+Namespace" on PAUSE.  Once registered, your module will appear in the
+by-module and by-category listings on CPAN.
 
 =item Announce to clpa
 
@@ -278,9 +269,12 @@ maintaining a software project...
 
 Simon Cozens, C<simon@cpan.org>
 
+Updated by Kirrily "Skud" Robert, C<skud@cpan.org>
+
 =head1 SEE ALSO
 
 L<perlmod>, L<perlmodlib>, L<perlmodinstall>, L<h2xs>, L<strict>,
-L<Carp>, L<Exporter>, L<perlpod>, L<Test>, L<ExtUtils::MakeMaker>,
+L<Carp>, L<Exporter>, L<perlpod>, L<Test::Simple>, L<Test::More>
+L<ExtUtils::MakeMaker>, L<Module::Build>, L<Module::Starter>
 http://www.cpan.org/ , Ken Williams' tutorial on building your own
 module at http://mathforum.org/~ken/perl_modules.html

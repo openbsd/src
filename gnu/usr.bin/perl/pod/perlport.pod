@@ -1102,7 +1102,7 @@ native formats.
 
 What C<\n> represents depends on the type of file opened.  It usually
 represents C<\012> but it could also be C<\015>, C<\012>, C<\015\012>, 
-C<\000>, C<\040>, or nothing depending on the file organiztion and 
+C<\000>, C<\040>, or nothing depending on the file organization and 
 record format.  The VMS::Stdio module provides access to the 
 special fopen() requirements of files with unusual attributes on VMS.
 

@@ -1,0 +1,64 @@
+5.007003
+PerlIO_clearerr                # E (PerlIO_clearerr)
+PerlIO_close                   # E (PerlIO_close)
+PerlIO_eof                     # E (PerlIO_eof)
+PerlIO_error                   # E (PerlIO_error)
+PerlIO_fileno                  # E (PerlIO_fileno)
+PerlIO_fill                    # E (PerlIO_fill)
+PerlIO_flush                   # E (PerlIO_flush)
+PerlIO_get_base                # E (PerlIO_get_base)
+PerlIO_get_bufsiz              # E (PerlIO_get_bufsiz)
+PerlIO_get_cnt                 # E (PerlIO_get_cnt)
+PerlIO_get_ptr                 # E (PerlIO_get_ptr)
+PerlIO_read                    # E (PerlIO_read)
+PerlIO_seek                    # E (PerlIO_seek)
+PerlIO_set_cnt                 # E (PerlIO_set_cnt)
+PerlIO_set_ptrcnt              # E (PerlIO_set_ptrcnt)
+PerlIO_setlinebuf              # E (PerlIO_setlinebuf)
+PerlIO_stderr                  # E (PerlIO_stderr)
+PerlIO_stdin                   # E (PerlIO_stdin)
+PerlIO_stdout                  # E (PerlIO_stdout)
+PerlIO_tell                    # E (PerlIO_tell)
+PerlIO_unread                  # E (PerlIO_unread)
+PerlIO_write                   # E (PerlIO_write)
+SvLOCK                         # E
+SvSHARE                        # E
+SvUNLOCK                       # E
+atfork_lock                    # E
+atfork_unlock                  # E
+custom_op_desc                 # E
+custom_op_name                 # E
+deb                            # U
+debstack                       # U
+debstackptrs                   # U
+gv_fetchmeth_autoload          # E
+ibcmp_utf8                     # E
+my_fork                        # E
+my_socketpair                  # E
+pack_cat                       # E
+perl_destruct                  # E (perl_destruct)
+pv_uni_display                 # E
+regclass_swash                 # E (Perl_regclass_swash)
+save_shared_pvref              # E
+savesharedpv                   # E
+sortsv                         # E
+sv_copypv                      # E
+sv_magicext                    # E
+sv_nolocking                   # E
+sv_nosharing                   # E
+sv_nounlocking                 # E
+sv_recode_to_utf8              # E
+sv_uni_display                 # E
+to_uni_fold                    # E
+to_uni_lower                   # E (Perl_to_uni_lower)
+to_uni_title                   # E (Perl_to_uni_title)
+to_uni_upper                   # E (Perl_to_uni_upper)
+to_utf8_case                   # E
+to_utf8_fold                   # E
+to_utf8_lower                  # E (Perl_to_utf8_lower)
+to_utf8_title                  # E (Perl_to_utf8_title)
+to_utf8_upper                  # E (Perl_to_utf8_upper)
+unpack_str                     # E
+uvchr_to_utf8_flags            # E
+uvuni_to_utf8_flags            # E
+vdeb                           # U

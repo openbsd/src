@@ -15,7 +15,7 @@ BEGIN {
 }
 
 $| = 1;
-print "1..25\n";
+print "1..26\n";
 
 my $fh;
 my $var = "ok 2\n";
@@ -143,3 +143,9 @@ print <$fh>;
     close $fh;
     print $ok ? "ok 25\n" : "not ok 25\n";
 }
+
+my $data = "a non-empty PV";
+$data = undef;
+open(MEM, '<', \$data) or die "Fail: $!\n";
+my $x = join '', <MEM>;
+print $x eq '' ? "ok 26\n" : "not ok 26\n";

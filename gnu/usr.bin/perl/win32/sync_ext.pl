@@ -2,6 +2,13 @@
 
 Synchronize filename cases for extensions.
 
+This script could be used to perform following renaming:
+if there exist file, for example, "FiLeNaME.c" and
+filename.obj then it renames "filename.obj" to "FiLeNaME.obj".
+There is a problem when some compilers (e.g.Borland) generate
+such .obj files and then "make" process will not treat them
+as dependant and already maked files.
+
 This script takes two arguments - first and second extensions to
 synchronize filename cases with.
 

@@ -8,10 +8,10 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib'; # for running manually
-  plan tests => 174;
+  plan tests => 180;
   }
 
-# testing of Math::BigRat
+# basic testing of Math::BigRat
 
 use Math::BigRat;
 use Math::BigInt;
@@ -68,20 +68,23 @@ foreach my $func (qw/new bnorm/)
   $x = $cr->$func($mbf->new(1232.3));	ok ($x,'12323/10');
   }
 
-$x =  $cr->new('-0'); ok ($x,'0'); ok ($x->{_n}, '0'); ok ($x->{_d},'1');
-$x =  $cr->new('NaN'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
-$x =  $cr->new('-NaN'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
-$x =  $cr->new('-1r4'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
+my $n = 'numerator';
+my $d = 'denominator';
 
-$x =  $cr->new('+inf'); ok ($x,'inf'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
-$x =  $cr->new('-inf'); ok ($x,'-inf'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
-$x =  $cr->new('123a4'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
+$x =  $cr->new('-0'); ok ($x,'0'); 	ok ($x->$n(), '0'); ok ($x->$d(),'1');
+$x =  $cr->new('NaN'); ok ($x,'NaN');	ok ($x->$n(), 'NaN'); ok ($x->$d(),'NaN');
+$x =  $cr->new('-NaN'); ok ($x,'NaN');	ok ($x->$n(), 'NaN'); ok ($x->$d(),'NaN');
+$x =  $cr->new('-1r4'); ok ($x,'NaN');	ok ($x->$n(), 'NaN'); ok ($x->$d(),'NaN');
+
+$x =  $cr->new('+inf'); ok ($x,'inf');	ok ($x->$n(), 'inf'); ok ($x->$d(),'1');
+$x =  $cr->new('-inf'); ok ($x,'-inf'); ok ($x->$n(), '-inf'); ok ($x->$d(),'1');
+$x =  $cr->new('123a4'); ok ($x,'NaN'); ok ($x->$n(), 'NaN'); ok ($x->$d(),'NaN');
 
 # wrong inputs
-$x =  $cr->new('1e2e2'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
-$x =  $cr->new('1+2+2'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
-# failed due to BigFlaot bug
-$x =  $cr->new('1.2.2'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
+$x =  $cr->new('1e2e2'); ok ($x,'NaN'); ok ($x->$n(), 'NaN'); ok ($x->$d(),'NaN');
+$x =  $cr->new('1+2+2'); ok ($x,'NaN'); ok ($x->$n(), 'NaN'); ok ($x->$d(),'NaN');
+# failed due to BigFloat bug
+$x =  $cr->new('1.2.2'); ok ($x,'NaN'); ok ($x->$n(), 'NaN'); ok ($x->$d(),'NaN');
 
 ok ($cr->new('123a4'),'NaN');
 ok ($cr->new('123e4'),'1230000');
@@ -210,8 +213,8 @@ $x =  $cr->new('15/6'); ok ($x->bdec(),'3/2');
 ##############################################################################
 # bfloor/bceil
 
-$x = $cr->new('-7/7'); ok ($x->{_n}, '1'); ok ($x->{_d}, '1');
-$x = $cr->new('-7/7')->bfloor(); ok ($x->{_n}, '1'); ok ($x->{_d}, '1');
+$x = $cr->new('-7/7'); ok ($x->$n(), '-1'); ok ($x->$d(), '1');
+$x = $cr->new('-7/7')->bfloor(); ok ($x->$n(), '-1'); ok ($x->$d(), '1');
 
 ##############################################################################
 # bsstr
@@ -238,7 +241,15 @@ $x = $cr->new('NaN'); ok ($x->numify(), 'NaN');
 $x = $cr->new('4/3'); ok ($x->numify(), 4/3);
 
 ##############################################################################
-# broot(), bmodpow() and bmodinv()
+# as_hex(), as_bin()
+
+$x = $cr->new('8/8');
+ok ($x->as_hex(), '0x1'); ok ($x->as_bin(), '0b1');
+$x = $cr->new('80/8');
+ok ($x->as_hex(), '0xa'); ok ($x->as_bin(), '0b1010');
+
+##############################################################################
+# broot(), blog(), bmodpow() and bmodinv()
 
 $x = $cr->new(2) ** 32;
 $y = $cr->new(4);
@@ -246,7 +257,6 @@ $z = $cr->new(3);
 
 ok ($x->copy()->broot($y), 2 ** 8);
 ok (ref($x->copy()->broot($y)), $cr);
-
 
 ok ($x->copy()->bmodpow($y,$z), 1);
 ok (ref($x->copy()->bmodpow($y,$z)), $cr);
@@ -268,6 +278,11 @@ $x = $cr->new('256.1');
 ok ($x->copy()->blog(2), '8000563442710106079310294693803606983661/1000000000000000000000000000000000000000');
 ok (ref($x->copy()->blog(2)), $cr);
 
+$x = $cr->new(144);
+ok ($x->copy()->broot('2'), 12, 'v/144 = 12');
+
+$x = $cr->new(12*12*12);
+ok ($x->copy()->broot('3'), 12, '(12*12*12) ** 1/3 = 12');
 
 ##############################################################################
 # done

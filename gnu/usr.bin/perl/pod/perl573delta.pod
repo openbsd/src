@@ -103,7 +103,7 @@ document that use utf8 is not the right way most of the time
 
 =item 11656
 
-allow builing perl with -DUSE_UTF8_SCRIPTS which makes UTF-8
+allow building perl with -DUSE_UTF8_SCRIPTS which makes UTF-8
 the default script encoding (not the default since that would
 break all scripts having legacy eight-bit data in them)
 

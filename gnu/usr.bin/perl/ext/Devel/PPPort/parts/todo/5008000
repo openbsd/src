@@ -1,0 +1,5 @@
+5.008000
+hv_iternext_flags              # E
+hv_store_flags                 # E
+is_utf8_idcont                 # U
+nothreadhook                   # U

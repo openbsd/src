@@ -5,7 +5,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '1.4';
+$VERSION = '1.5';
 
 @ISA = qw(File::Spec::Unix);
 
@@ -201,7 +201,7 @@ sub splitpath {
                       (?:\\\\|//)[^\\/]+[\\/][^\\/]+
                   )?
                 )
-                ( (?:.*[\\\\/](?:\.\.?\Z(?!\n))?)? )
+                ( (?:.*[\\/](?:\.\.?\Z(?!\n))?)? )
                 (.*)
              }xs;
         $volume    = $1;
@@ -335,7 +335,9 @@ sub rel2abs {
     if ( ! $self->file_name_is_absolute( $path ) ) {
 
         if ( !defined( $base ) || $base eq '' ) {
-            $base = $self->_cwd() ;
+	    require Cwd ;
+	    $base = Cwd::getdcwd( ($self->splitpath( $path ))[0] ) if defined &Cwd::getdcwd ;
+	    $base = $self->_cwd() unless defined $base ;
         }
         elsif ( ! $self->file_name_is_absolute( $base ) ) {
             $base = $self->rel2abs( $base ) ;

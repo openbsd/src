@@ -1754,7 +1754,7 @@ letter, the braces can be dropped.  For instance, C<\pM> is the
 character class of Unicode 'marks', for example accent marks.
 For the full list see L<perlunicode>.
 
-The Unicode has also been separated into various sets of charaters
+The Unicode has also been separated into various sets of characters
 which you can test with C<\p{In...}> (in) and C<\P{In...}> (not in),
 for example C<\p{Latin}>, C<\p{Greek}>, or C<\P{Katakana}>.
 For the full list see L<perlunicode>.
@@ -2271,7 +2271,7 @@ may surprise you:
     $pat = qr/(?{ $foo = 1 })/;  # precompile code regexp
     /foo${pat}bar/;      # compiles ok
 
-If a regexp has (1) code expressions and interpolating variables,or
+If a regexp has (1) code expressions and interpolating variables, or
 (2) a variable that interpolates a code expression, perl treats the
 regexp as an error. If the code expression is precompiled into a
 variable, however, interpolating is ok. The question is, why is this

@@ -21,7 +21,7 @@ look alike environment for the EPOC OS.  For more information look at:
 http://epocemx.sourceforge.net/
 
 perl and epocemx runs on Epoc Release 5 machines: Psion 5mx, 5mx Pro,
-Psion Revo, Psion Netbook and on the Ericson M128. It may run on Epoc
+Psion Revo, Psion Netbook and on the Ericsson M128. It may run on Epoc
 Release 3 Hardware (Series 5 classic), too. For more information about
 this hardware please refer to http://www.psion.com/
 

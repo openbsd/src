@@ -3,64 +3,58 @@ use warnings;
 use Carp;
 $open::hint_bits = 0x20000; # HINT_LOCALIZE_HH
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
+
+require 5.008001; # for PerlIO::get_layers()
 
 my $locale_encoding;
 
-sub in_locale { $^H & ($locale::hint_bits || 0)}
+sub _get_encname {
+    return ($1, Encode::resolve_alias($1)) if $_[0] =~ /^:?encoding\((.+)\)$/;
+    return;
+}
 
-sub _get_locale_encoding {
-    unless (defined $locale_encoding) {
-	# I18N::Langinfo isn't available everywhere
-	eval {
-	    require I18N::Langinfo;
-	    I18N::Langinfo->import(qw(langinfo CODESET));
-	    $locale_encoding = langinfo(CODESET());
-	};
-	my $country_language;
-
-	no warnings 'uninitialized';
-
-        if (not $locale_encoding && in_locale()) {
-	    if ($ENV{LC_ALL} =~ /^([^.]+)\.([^.]+)$/) {
-		($country_language, $locale_encoding) = ($1, $2);
-	    } elsif ($ENV{LANG} =~ /^([^.]+)\.([^.]+)$/) {
-		($country_language, $locale_encoding) = ($1, $2);
-	    }
-	    # LANGUAGE affects only LC_MESSAGES only on glibc
-	} elsif (not $locale_encoding) {
-	    if ($ENV{LC_ALL} =~ /\butf-?8\b/i ||
-		$ENV{LANG}   =~ /\butf-?8\b/i) {
-		$locale_encoding = 'utf8';
-	    }
-	    # Could do more heuristics based on the country and language
-	    # parts of LC_ALL and LANG (the parts before the dot (if any)),
-	    # since we have Locale::Country and Locale::Language available.
-	    # TODO: get a database of Language -> Encoding mappings
-	    # (the Estonian database at http://www.eki.ee/letter/
-	    # would be excellent!) --jhi
-	}
-	if (defined $locale_encoding &&
-	    lc($locale_encoding) eq 'euc' &&
-	    defined $country_language) {
-	    if ($country_language =~ /^ja_JP|japan(?:ese)?$/i) {
-		$locale_encoding = 'euc-jp';
-	    } elsif ($country_language =~ /^ko_KR|korean?$/i) {
-		$locale_encoding = 'euc-kr';
-	    } elsif ($country_language =~ /^zh_CN|chin(?:a|ese)?$/i) {
-		$locale_encoding = 'euc-cn';
-	    } elsif ($country_language =~ /^zh_TW|taiwan(?:ese)?$/i) {
-		$locale_encoding = 'euc-tw';
-	    } else {
-		croak "Locale encoding 'euc' too ambiguous";
-	    }
-	}
+sub _drop_oldenc {
+    # If by the time we arrive here there already is at the top of the
+    # perlio layer stack an encoding identical to what we would like
+    # to push via this open pragma, we will pop away the old encoding
+    # (+utf8) so that we can push ourselves in place (this is easier
+    # than ignoring pushing ourselves because of the way how ${^OPEN}
+    # works).  So we are looking for something like
+    #
+    #   stdio encoding(xxx) utf8
+    #
+    # in the existing layer stack, and in the new stack chunk for
+    #
+    #   :encoding(xxx)
+    #
+    # If we find a match, we pop the old stack (once, since
+    # the utf8 is just a flag on the encoding layer)
+    my ($h, @new) = @_;
+    return unless @new >= 1 && $new[-1] =~ /^:encoding\(.+\)$/;
+    my @old = PerlIO::get_layers($h);
+    return unless @old >= 3 &&
+	          $old[-1] eq 'utf8' &&
+                  $old[-2] =~ /^encoding\(.+\)$/;
+    require Encode;
+    my ($loname, $lcname) = _get_encname($old[-2]);
+    unless (defined $lcname) { # Should we trust get_layers()?
+	require Carp;
+	Carp::croak("open: Unknown encoding '$loname'");
+    }
+    my ($voname, $vcname) = _get_encname($new[-1]);
+    unless (defined $vcname) {
+	require Carp;
+	Carp::croak("open: Unknown encoding '$voname'");
+    }
+    if ($lcname eq $vcname) {
+	binmode($h, ":pop"); # utf8 is part of the encoding layer
     }
 }
 
 sub import {
     my ($class,@args) = @_;
-    croak("`use open' needs explicit list of PerlIO layers") unless @args;
+    croak("open: needs explicit list of PerlIO layers") unless @args;
     my $std;
     $^H |= $open::hint_bits;
     my ($in,$out) = split(/\0/,(${^OPEN} || "\0"), -1);
@@ -81,7 +75,8 @@ sub import {
             $layer =~ s/^://;
 	    if ($layer eq 'locale') {
 		require Encode;
-		_get_locale_encoding()
+		require encoding;
+		$locale_encoding = encoding::_get_locale_encoding()
 		    unless defined $locale_encoding;
 		(warnings::warnif("layer", "Cannot figure out an encoding to use"), last)
 		    unless defined $locale_encoding;
@@ -105,19 +100,23 @@ sub import {
 	    }
 	}
 	if ($type eq 'IN') {
-	    $in  = join(' ',@val);
+	    _drop_oldenc(*STDIN, @val);
+	    $in  = join(' ', @val);
 	}
 	elsif ($type eq 'OUT') {
-	    $out = join(' ',@val);
+	    _drop_oldenc(*STDOUT, @val);
+	    $out = join(' ', @val);
 	}
 	elsif ($type eq 'IO') {
-	    $in = $out = join(' ',@val);
+	    _drop_oldenc(*STDIN,  @val);
+	    _drop_oldenc(*STDOUT, @val);
+	    $in = $out = join(' ', @val);
 	}
 	else {
 	    croak "Unknown PerlIO layer class '$type'";
 	}
     }
-    ${^OPEN} = join("\0",$in,$out) if $in or $out;
+    ${^OPEN} = join("\0", $in, $out);
     if ($std) {
 	if ($in) {
 	    if ($in =~ /:utf8\b/) {
@@ -229,35 +228,9 @@ chosen to be in C<< :encoding(koi8r) >>, a C<:std> will cause only the
 STDOUT and STDERR to be in C<koi8r>.  The C<:locale> subpragma
 implicitly turns on C<:std>.
 
-The logic of C<:locale> is as follows:
-
-=over 4
-
-=item 1.
-
-If the platform supports the langinfo(CODESET) interface, the codeset
-returned is used as the default encoding for the open pragma.
-
-=item 2.
-
-If 1. didn't work but we are under the locale pragma, the environment
-variables LC_ALL and LANG (in that order) are matched for encodings
-(the part after C<.>, if any), and if any found, that is used 
-as the default encoding for the open pragma.
-
-=item 3.
-
-If 1. and 2. didn't work, the environment variables LC_ALL and LANG
-(in that order) are matched for anything looking like UTF-8, and if
-any found, C<:utf8> is used as the default encoding for the open
-pragma.
-
-=back
-
-If your locale environment variables (LC_ALL, LC_CTYPE, LANG)
-contain the strings 'UTF-8' or 'UTF8' (case-insensitive matching),
-the default encoding of your STDIN, STDOUT, and STDERR, and of
-B<any subsequent file open>, is UTF-8.
+The logic of C<:locale> is described in full in L</encoding>,
+but in short it is first trying nl_langinfo(CODESET) and then
+guessing from the LC_ALL and LANG locale environment variables.
 
 Directory handles may also support PerlIO layers in the future.
 

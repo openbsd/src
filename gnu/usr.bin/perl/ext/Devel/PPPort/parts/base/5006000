@@ -1,0 +1,504 @@
+5.006000
+Gv_AMupdate                    # E (Perl_Gv_AMupdate)
+POPn                           # E
+PUSHn                          # E
+SvIOK_UV                       # U
+SvIOK_notUV                    # U
+SvIOK_only_UV                  # U
+SvNV                           # E
+SvNVX                          # E
+SvNVx                          # E
+SvPOK_only_UTF8                # U
+SvPV_nolen                     # E
+SvPVbyte                       # E
+SvPVbyte_nolen                 # E
+SvPVbytex                      # E
+SvPVbytex_force                # E
+SvPVutf8                       # E
+SvPVutf8_force                 # E
+SvPVutf8_nolen                 # E
+SvPVutf8x                      # E
+SvPVutf8x_force                # E
+SvUTF8                         # U
+SvUTF8_off                     # U
+SvUTF8_on                      # U
+XPUSHn                         # E
+XSRETURN_NV                    # E
+XST_mNV                        # E
+amagic_call                    # E (Perl_amagic_call)
+av_clear                       # E (Perl_av_clear)
+av_delete                      # E
+av_exists                      # E
+av_extend                      # E (Perl_av_extend)
+av_fetch                       # E (Perl_av_fetch)
+av_fill                        # E (Perl_av_fill)
+av_len                         # E (Perl_av_len)
+av_make                        # E (Perl_av_make)
+av_pop                         # E (Perl_av_pop)
+av_push                        # E (Perl_av_push)
+av_shift                       # E (Perl_av_shift)
+av_store                       # E (Perl_av_store)
+av_undef                       # E (Perl_av_undef)
+av_unshift                     # E (Perl_av_unshift)
+block_gimme                    # E (Perl_block_gimme)
+call_argv                      # E (perl_call_argv)
+call_atexit                    # E
+call_list                      # E (Perl_call_list)
+call_method                    # E (perl_call_method)
+call_pv                        # E (perl_call_pv)
+call_sv                        # E (perl_call_sv)
+cast_i32                       # E (cast_i32)
+cast_iv                        # E (cast_iv)
+cast_ulong                     # E
+cast_uv                        # E (cast_uv)
+croak                          # E (Perl_croak)
+cv_const_sv                    # E (Perl_cv_const_sv)
+cv_undef                       # E (Perl_cv_undef)
+cx_dump                        # E (Perl_cx_dump)
+debop                          # E (Perl_debop)
+debprofdump                    # E (Perl_debprofdump)
+delimcpy                       # E (Perl_delimcpy)
+die                            # E (Perl_die)
+do_binmode                     # E (Perl_do_binmode)
+do_close                       # E (Perl_do_close)
+do_gv_dump                     # E
+do_gvgv_dump                   # E
+do_hv_dump                     # E
+do_join                        # E (Perl_do_join)
+do_magic_dump                  # E
+do_op_dump                     # E
+do_open                        # E (Perl_do_open)
+do_open9                       # E
+do_pmop_dump                   # E
+do_sprintf                     # E (Perl_do_sprintf)
+do_sv_dump                     # E
+dounwind                       # E (Perl_dounwind)
+dowantarray                    # E (Perl_dowantarray)
+dump_all                       # E
+dump_eval                      # E
+dump_form                      # E
+dump_indent                    # E
+dump_packsubs                  # E
+dump_sub                       # E
+dump_vindent                   # E
+eval_pv                        # E (perl_eval_pv)
+eval_sv                        # E (perl_eval_sv)
+fbm_compile                    # E (Perl_fbm_compile)
+fbm_instr                      # E (Perl_fbm_instr)
+filter_add                     # E (Perl_filter_add)
+filter_del                     # E (Perl_filter_del)
+filter_read                    # E (Perl_filter_read)
+form                           # E (Perl_form)
+free_tmps                      # E (Perl_free_tmps)
+get_av                         # E (perl_get_av)
+get_context                    # E
+get_cv                         # E (perl_get_cv)
+get_hv                         # E (perl_get_hv)
+get_op_descs                   # E (Perl_get_op_descs)
+get_op_names                   # E (Perl_get_op_names)
+get_ppaddr                     # E
+get_sv                         # E (perl_get_sv)
+get_vtbl                       # E (Perl_get_vtbl)
+gp_free                        # E (Perl_gp_free)
+gp_ref                         # E (Perl_gp_ref)
+gv_AVadd                       # E (Perl_gv_AVadd)
+gv_HVadd                       # E (Perl_gv_HVadd)
+gv_IOadd                       # E (Perl_gv_IOadd)
+gv_autoload4                   # E (Perl_gv_autoload4)
+gv_check                       # E (Perl_gv_check)
+gv_dump                        # E
+gv_efullname                   # E (Perl_gv_efullname)
+gv_efullname3                  # E (Perl_gv_efullname3)
+gv_fetchfile                   # E (Perl_gv_fetchfile)
+gv_fetchmeth                   # E (Perl_gv_fetchmeth)
+gv_fetchmethod                 # E (Perl_gv_fetchmethod)
+gv_fetchmethod_autoload        # E (Perl_gv_fetchmethod_autoload)
+gv_fetchpv                     # E (Perl_gv_fetchpv)
+gv_fullname                    # E (Perl_gv_fullname)
+gv_fullname3                   # E (Perl_gv_fullname3)
+gv_init                        # E (Perl_gv_init)
+gv_stashpv                     # E (Perl_gv_stashpv)
+gv_stashpvn                    # E (Perl_gv_stashpvn)
+gv_stashsv                     # E (Perl_gv_stashsv)
+hv_clear                       # E (Perl_hv_clear)
+hv_delayfree_ent               # E (Perl_hv_delayfree_ent)
+hv_delete                      # E (Perl_hv_delete)
+hv_delete_ent                  # E (Perl_hv_delete_ent)
+hv_exists                      # E (Perl_hv_exists)
+hv_exists_ent                  # E (Perl_hv_exists_ent)
+hv_fetch                       # E (Perl_hv_fetch)
+hv_fetch_ent                   # E (Perl_hv_fetch_ent)
+hv_free_ent                    # E (Perl_hv_free_ent)
+hv_iterinit                    # E (Perl_hv_iterinit)
+hv_iterkey                     # E (Perl_hv_iterkey)
+hv_iterkeysv                   # E (Perl_hv_iterkeysv)
+hv_iternext                    # E (Perl_hv_iternext)
+hv_iternextsv                  # E (Perl_hv_iternextsv)
+hv_iterval                     # E (Perl_hv_iterval)
+hv_ksplit                      # E (Perl_hv_ksplit)
+hv_magic                       # E (Perl_hv_magic)
+hv_store                       # E (Perl_hv_store)
+hv_store_ent                   # E (Perl_hv_store_ent)
+hv_undef                       # E (Perl_hv_undef)
+ibcmp                          # E (Perl_ibcmp)
+ibcmp_locale                   # E (Perl_ibcmp_locale)
+init_i18nl10n                  # E (perl_init_i18nl10n)
+init_i18nl14n                  # E (perl_init_i18nl14n)
+init_stacks                    # E (Perl_init_stacks)
+instr                          # E (Perl_instr)
+is_uni_alnum                   # E
+is_uni_alnum_lc                # E
+is_uni_alnumc                  # E
+is_uni_alnumc_lc               # E
+is_uni_alpha                   # E
+is_uni_alpha_lc                # E
+is_uni_ascii                   # E
+is_uni_ascii_lc                # E
+is_uni_cntrl                   # E
+is_uni_cntrl_lc                # E
+is_uni_digit                   # E
+is_uni_digit_lc                # E
+is_uni_graph                   # E
+is_uni_graph_lc                # E
+is_uni_idfirst                 # E
+is_uni_idfirst_lc              # E
+is_uni_lower                   # E
+is_uni_lower_lc                # E
+is_uni_print                   # E
+is_uni_print_lc                # E
+is_uni_punct                   # E
+is_uni_punct_lc                # E
+is_uni_space                   # E
+is_uni_space_lc                # E
+is_uni_upper                   # E
+is_uni_upper_lc                # E
+is_uni_xdigit                  # E
+is_uni_xdigit_lc               # E
+is_utf8_alnum                  # E
+is_utf8_alnumc                 # E
+is_utf8_alpha                  # E
+is_utf8_ascii                  # E
+is_utf8_char                   # E
+is_utf8_cntrl                  # E
+is_utf8_digit                  # E
+is_utf8_graph                  # E
+is_utf8_idfirst                # E
+is_utf8_lower                  # E
+is_utf8_mark                   # E
+is_utf8_print                  # E
+is_utf8_punct                  # E
+is_utf8_space                  # E
+is_utf8_upper                  # E
+is_utf8_xdigit                 # E
+leave_scope                    # E (Perl_leave_scope)
+load_module                    # E
+looks_like_number              # E (Perl_looks_like_number)
+magic_dump                     # E
+markstack_grow                 # E (Perl_markstack_grow)
+mess                           # E (Perl_mess)
+mg_clear                       # E (Perl_mg_clear)
+mg_copy                        # E (Perl_mg_copy)
+mg_find                        # E (Perl_mg_find)
+mg_free                        # E (Perl_mg_free)
+mg_get                         # E (Perl_mg_get)
+mg_length                      # E (Perl_mg_length)
+mg_magical                     # E (Perl_mg_magical)
+mg_set                         # E (Perl_mg_set)
+mg_size                        # E (Perl_mg_size)
+moreswitches                   # E (Perl_moreswitches)
+my_atof                        # E
+my_exit                        # E (Perl_my_exit)
+my_failure_exit                # E (Perl_my_failure_exit)
+my_fflush_all                  # E
+my_lstat                       # E (Perl_my_lstat)
+my_pclose                      # E (Perl_my_pclose)
+my_popen                       # E (Perl_my_popen)
+my_setenv                      # E (Perl_my_setenv)
+my_stat                        # E (Perl_my_stat)
+newANONATTRSUB                 # E
+newANONHASH                    # E (Perl_newANONHASH)
+newANONLIST                    # E (Perl_newANONLIST)
+newANONSUB                     # E (Perl_newANONSUB)
+newASSIGNOP                    # E (Perl_newASSIGNOP)
+newATTRSUB                     # E
+newAV                          # E (Perl_newAV)
+newAVREF                       # E (Perl_newAVREF)
+newBINOP                       # E (Perl_newBINOP)
+newCONDOP                      # E (Perl_newCONDOP)
+newCONSTSUB                    # E (Perl_newCONSTSUB)
+newCVREF                       # E (Perl_newCVREF)
+newFORM                        # E (Perl_newFORM)
+newFOROP                       # E (Perl_newFOROP)
+newGVOP                        # E (Perl_newGVOP)
+newGVREF                       # E (Perl_newGVREF)
+newGVgen                       # E (Perl_newGVgen)
+newHV                          # E (Perl_newHV)
+newHVREF                       # E (Perl_newHVREF)
+newHVhv                        # E (Perl_newHVhv)
+newIO                          # E (Perl_newIO)
+newLISTOP                      # E (Perl_newLISTOP)
+newLOGOP                       # E (Perl_newLOGOP)
+newLOOPEX                      # E (Perl_newLOOPEX)
+newLOOPOP                      # E (Perl_newLOOPOP)
+newMYSUB                       # E
+newNULLLIST                    # E (Perl_newNULLLIST)
+newOP                          # E (Perl_newOP)
+newPADOP                       # E
+newPMOP                        # E (Perl_newPMOP)
+newPROG                        # E (Perl_newPROG)
+newPVOP                        # E (Perl_newPVOP)
+newRANGE                       # E (Perl_newRANGE)
+newRV                          # E (Perl_newRV)
+newRV_noinc                    # E (Perl_newRV_noinc)
+newSLICEOP                     # E (Perl_newSLICEOP)
+newSTATEOP                     # E (Perl_newSTATEOP)
+newSUB                         # E (Perl_newSUB)
+newSV                          # E (Perl_newSV)
+newSVOP                        # E (Perl_newSVOP)
+newSVREF                       # E (Perl_newSVREF)
+newSViv                        # E (Perl_newSViv)
+newSVnv                        # E (Perl_newSVnv)
+newSVpv                        # E (Perl_newSVpv)
+newSVpvf                       # E (Perl_newSVpvf)
+newSVpvn                       # E (Perl_newSVpvn)
+newSVrv                        # E (Perl_newSVrv)
+newSVsv                        # E (Perl_newSVsv)
+newSVuv                        # E
+newUNOP                        # E (Perl_newUNOP)
+newWHILEOP                     # E (Perl_newWHILEOP)
+newXS                          # E (Perl_newXS)
+newXSproto                     # E
+new_collate                    # E (perl_new_collate)
+new_ctype                      # E (perl_new_ctype)
+new_numeric                    # E (perl_new_numeric)
+new_stackinfo                  # E (Perl_new_stackinfo)
+ninstr                         # E (Perl_ninstr)
+op_dump                        # E
+op_free                        # E (Perl_op_free)
+pad_sv                         # E (Perl_pad_sv)
+perl_parse                     # E (perl_parse)
+pmflag                         # E (Perl_pmflag)
+pmop_dump                      # E
+pop_scope                      # E (Perl_pop_scope)
+pregcomp                       # E (Perl_pregcomp)
+pregexec                       # E (Perl_pregexec)
+pregfree                       # E (Perl_pregfree)
+push_scope                     # E (Perl_push_scope)
+pv_display                     # E
+re_intuit_start                # E
+re_intuit_string               # E
+regdump                        # E (Perl_regdump)
+regexec_flags                  # E (Perl_regexec_flags)
+reginitcolors                  # E
+regnext                        # E (Perl_regnext)
+repeatcpy                      # E (Perl_repeatcpy)
+require_pv                     # E (perl_require_pv)
+rninstr                        # E (Perl_rninstr)
+rsignal                        # E (Perl_rsignal)
+rsignal_state                  # E (Perl_rsignal_state)
+runops_debug                   # E (Perl_runops_debug)
+runops_standard                # E (Perl_runops_standard)
+safesyscalloc                  # E
+safesysfree                    # U
+safesysmalloc                  # E
+safesysrealloc                 # E
+save_I16                       # E (Perl_save_I16)
+save_I32                       # E (Perl_save_I32)
+save_I8                        # E
+save_aelem                     # E (Perl_save_aelem)
+save_alloc                     # E
+save_aptr                      # E (Perl_save_aptr)
+save_ary                       # E (Perl_save_ary)
+save_clearsv                   # E (Perl_save_clearsv)
+save_delete                    # E (Perl_save_delete)
+save_destructor                # E (Perl_save_destructor)
+save_destructor_x              # E
+save_freepv                    # E (Perl_save_freepv)
+save_freesv                    # E (Perl_save_freesv)
+save_generic_svref             # E (Perl_save_generic_svref)
+save_gp                        # E (Perl_save_gp)
+save_hash                      # E (Perl_save_hash)
+save_helem                     # E (Perl_save_helem)
+save_hints                     # E (Perl_save_hints)
+save_hptr                      # E (Perl_save_hptr)
+save_int                       # E (Perl_save_int)
+save_item                      # E (Perl_save_item)
+save_iv                        # E (Perl_save_iv)
+save_list                      # E (Perl_save_list)
+save_long                      # E (Perl_save_long)
+save_nogv                      # E (Perl_save_nogv)
+save_pptr                      # E (Perl_save_pptr)
+save_re_context                # E
+save_scalar                    # E (Perl_save_scalar)
+save_sptr                      # E (Perl_save_sptr)
+save_svref                     # E (Perl_save_svref)
+save_threadsv                  # E (Perl_save_threadsv)
+save_vptr                      # E
+savepv                         # E (Perl_savepv)
+savepvn                        # E (Perl_savepvn)
+savestack_grow                 # E (Perl_savestack_grow)
+scan_bin                       # E
+scan_hex                       # E (Perl_scan_hex)
+scan_oct                       # E (Perl_scan_oct)
+screaminstr                    # E (Perl_screaminstr)
+set_context                    # U
+set_numeric_local              # E (perl_set_numeric_local)
+set_numeric_radix              # E
+set_numeric_standard           # E (perl_set_numeric_standard)
+stack_grow                     # E (Perl_stack_grow)
+start_subparse                 # E (Perl_start_subparse)
+str_to_version                 # E
+sv_2bool                       # E (Perl_sv_2bool)
+sv_2cv                         # E (Perl_sv_2cv)
+sv_2io                         # E (Perl_sv_2io)
+sv_2mortal                     # E (Perl_sv_2mortal)
+sv_2nv                         # E (Perl_sv_2nv)
+sv_2pv_nolen                   # E
+sv_2pvbyte                     # E
+sv_2pvbyte_nolen               # E
+sv_2pvutf8                     # E
+sv_2pvutf8_nolen               # E
+sv_backoff                     # E (Perl_sv_backoff)
+sv_bless                       # E (Perl_sv_bless)
+sv_catpv                       # E (Perl_sv_catpv)
+sv_catpv_mg                    # E (Perl_sv_catpv_mg)
+sv_catpvf                      # E (Perl_sv_catpvf)
+sv_catpvf_mg                   # E (Perl_sv_catpvf_mg)
+sv_catpvn_mg                   # E (Perl_sv_catpvn_mg)
+sv_catsv_mg                    # E (Perl_sv_catsv_mg)
+sv_chop                        # E (Perl_sv_chop)
+sv_clear                       # E (Perl_sv_clear)
+sv_cmp                         # E (Perl_sv_cmp)
+sv_cmp_locale                  # E (Perl_sv_cmp_locale)
+sv_collxfrm                    # E (Perl_sv_collxfrm)
+sv_dec                         # E (Perl_sv_dec)
+sv_derived_from                # E (Perl_sv_derived_from)
+sv_dump                        # E (Perl_sv_dump)
+sv_eq                          # E (Perl_sv_eq)
+sv_force_normal                # E
+sv_free                        # E (Perl_sv_free)
+sv_gets                        # E (Perl_sv_gets)
+sv_grow                        # E (Perl_sv_grow)
+sv_inc                         # E (Perl_sv_inc)
+sv_insert                      # E (Perl_sv_insert)
+sv_isa                         # E (Perl_sv_isa)
+sv_isobject                    # E (Perl_sv_isobject)
+sv_iv                          # E (Perl_sv_iv)
+sv_len                         # E (Perl_sv_len)
+sv_len_utf8                    # E
+sv_magic                       # E (Perl_sv_magic)
+sv_mortalcopy                  # E (Perl_sv_mortalcopy)
+sv_newmortal                   # E (Perl_sv_newmortal)
+sv_newref                      # E (Perl_sv_newref)
+sv_nv                          # E (Perl_sv_nv)
+sv_peek                        # E (Perl_sv_peek)
+sv_pos_b2u                     # E
+sv_pos_u2b                     # E
+sv_pv                          # E
+sv_pvbyte                      # E
+sv_pvbyten                     # E
+sv_pvbyten_force               # E
+sv_pvn                         # E (Perl_sv_pvn)
+sv_pvutf8                      # E
+sv_pvutf8n                     # E
+sv_pvutf8n_force               # E
+sv_reftype                     # E (Perl_sv_reftype)
+sv_replace                     # E (Perl_sv_replace)
+sv_report_used                 # E (Perl_sv_report_used)
+sv_reset                       # E (Perl_sv_reset)
+sv_rvweaken                    # E
+sv_setiv                       # E (Perl_sv_setiv)
+sv_setiv_mg                    # E (Perl_sv_setiv_mg)
+sv_setnv                       # E (Perl_sv_setnv)
+sv_setnv_mg                    # E (Perl_sv_setnv_mg)
+sv_setpv                       # E (Perl_sv_setpv)
+sv_setpv_mg                    # E (Perl_sv_setpv_mg)
+sv_setpvf                      # E (Perl_sv_setpvf)
+sv_setpvf_mg                   # E (Perl_sv_setpvf_mg)
+sv_setpvn                      # E (Perl_sv_setpvn)
+sv_setpvn_mg                   # E (Perl_sv_setpvn_mg)
+sv_setref_iv                   # E (Perl_sv_setref_iv)
+sv_setref_nv                   # E (Perl_sv_setref_nv)
+sv_setref_pv                   # E (Perl_sv_setref_pv)
+sv_setref_pvn                  # E (Perl_sv_setref_pvn)
+sv_setsv_mg                    # E (Perl_sv_setsv_mg)
+sv_setuv                       # E (Perl_sv_setuv)
+sv_setuv_mg                    # E (Perl_sv_setuv_mg)
+sv_taint                       # E (Perl_sv_taint)
+sv_tainted                     # E (Perl_sv_tainted)
+sv_true                        # E (Perl_sv_true)
+sv_unmagic                     # E (Perl_sv_unmagic)
+sv_unref                       # E (Perl_sv_unref)
+sv_untaint                     # E (Perl_sv_untaint)
+sv_upgrade                     # E (Perl_sv_upgrade)
+sv_usepvn                      # E (Perl_sv_usepvn)
+sv_usepvn_mg                   # E (Perl_sv_usepvn_mg)
+sv_utf8_decode                 # E
+sv_utf8_downgrade              # E
+sv_utf8_encode                 # E
+sv_uv                          # E (Perl_sv_uv)
+sv_vcatpvf                     # E
+sv_vcatpvf_mg                  # E
+sv_vcatpvfn                    # E (Perl_sv_vcatpvfn)
+sv_vsetpvf                     # E
+sv_vsetpvf_mg                  # E
+sv_vsetpvfn                    # E (Perl_sv_vsetpvfn)
+swash_init                     # E
+taint_env                      # E (Perl_taint_env)
+taint_proper                   # E (Perl_taint_proper)
+tmps_grow                      # E
+to_uni_lower_lc                # E
+to_uni_title_lc                # E
+to_uni_upper_lc                # E
+unsharepvn                     # E (Perl_unsharepvn)
+utf8_distance                  # E
+utf8_hop                       # E
+vcroak                         # E
+vform                          # E
+vload_module                   # E
+vmess                          # E
+vnewSVpvf                      # E
+vwarn                          # E
+vwarner                        # E
+warn                           # E (Perl_warn)
+warner                         # E
+whichsig                       # E (Perl_whichsig)
+CopFILE                        # added by devel/scanprov
+CopFILEAV                      # added by devel/scanprov
+CopFILEGV                      # added by devel/scanprov
+CopFILEGV_set                  # added by devel/scanprov
+CopFILESV                      # added by devel/scanprov
+CopFILE_set                    # added by devel/scanprov
+CopSTASH                       # added by devel/scanprov
+CopSTASHPV                     # added by devel/scanprov
+CopSTASHPV_set                 # added by devel/scanprov
+CopSTASH_eq                    # added by devel/scanprov
+CopSTASH_set                   # added by devel/scanprov
+INT2PTR                        # added by devel/scanprov
+IVSIZE                         # added by devel/scanprov
+IVTYPE                         # added by devel/scanprov
+IVdf                           # added by devel/scanprov
+NUM2PTR                        # added by devel/scanprov
+NVTYPE                         # added by devel/scanprov
+PERL_REVISION                  # added by devel/scanprov
+PERL_SUBVERSION                # added by devel/scanprov
+PERL_VERSION                   # added by devel/scanprov
+PTR2IV                         # added by devel/scanprov
+PTR2NV                         # added by devel/scanprov
+PTR2UV                         # added by devel/scanprov
+PTRV                           # added by devel/scanprov
+UVSIZE                         # added by devel/scanprov
+UVTYPE                         # added by devel/scanprov
+UVof                           # added by devel/scanprov
+UVuf                           # added by devel/scanprov
+UVxf                           # added by devel/scanprov
+aTHX                           # added by devel/scanprov
+aTHX_                          # added by devel/scanprov
+dNOOP                          # added by devel/scanprov
+dTHX                           # added by devel/scanprov
+dTHXa                          # added by devel/scanprov
+dTHXoa                         # added by devel/scanprov
+pTHX                           # added by devel/scanprov
+pTHX_                          # added by devel/scanprov
+PL_no_modify                   # added by devel/scanprov
+PL_ppaddr                      # added by devel/scanprov

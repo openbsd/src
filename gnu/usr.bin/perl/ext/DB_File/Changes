@@ -1,5 +1,11 @@
 
 
+1.810 7th August 2004
+
+   * Fixed db-hash.t for Cygwin
+
+   * Added substr tests to db-hast.t
+
 1.809 20th June 2004
 
    * Merged core patch 22258

@@ -922,7 +922,7 @@ all privacy in Perl, and it is a powerful form of privacy indeed.
 
 It is widely perceived, and indeed has often been written, that Perl
 provides no data hiding, that it affords the class designer no privacy
-nor isolation, merely a rag-tag assortment of weak and unenforcible
+nor isolation, merely a rag-tag assortment of weak and unenforceable
 social conventions instead.  This perception is demonstrably false and
 easily disproven.  In the next section, we show how to implement forms
 of privacy that are far stronger than those provided in nearly any
@@ -1106,7 +1106,7 @@ itself access its own class attributes without the mediating intervention of
 properly designed accessor methods is probably not a good idea after all.
 
 Restricting access to class attributes from the class itself is usually
-not enforcible even in strongly object-oriented languages.  But in Perl,
+not enforceable even in strongly object-oriented languages.  But in Perl,
 you can.
 
 Here's one way:
@@ -1298,7 +1298,7 @@ You can't use file-scoped lexicals in conjunction with the SelfLoader
 or the AutoLoader, because they alter the lexical scope in which the
 module's methods wind up getting compiled.
 
-The usual mealy-mouthed package-mungeing doubtless applies to setting
+The usual mealy-mouthed package-munging doubtless applies to setting
 up names of object attributes.  For example, C<< $self->{ObData1} >>
 should probably be C<< $self->{ __PACKAGE__ . "_ObData1" } >>, but that
 would just confuse the examples.

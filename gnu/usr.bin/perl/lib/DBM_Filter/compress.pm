@@ -23,9 +23,7 @@ sub Fetch { $_ = uncompress($_) }
 
 __END__
 
-=head1 NAME
-
-DBM_Filter::compress -- compression DBM Filter
+=head1 DBM_Filter::compress
 
 =head1 SYNOPSIS
 

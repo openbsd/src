@@ -38,6 +38,22 @@ home site C<http://www.cs.hut.fi/ssh> which mentions ftp sites from
 which it's available. You only need to build the client parts (ssh
 and ssh-keygen should suffice).
 
+If you're on Windows then you might like to obtain MSYS (Minimal System)
+from:
+
+    http://www.mingw.org/download.shtml
+
+which contains an ssh client.  If you use this outside of the MSYS
+environment then you'll need to ensure the HOME environment variable
+is set to a suitable directory: ssh.exe will want to access files in
+a F<.ssh> sub-directory of %HOME%.
+
+Alternatively, the "plink" program, part of PuTTY:
+
+    http://www.chiark.greenend.org.uk/~sgtatham/putty/
+
+should also work fine for Windows users.
+
 =back
 
 =head1 Creating an SSH Key Pair
@@ -76,6 +92,19 @@ a filename corresponding to your private key's filename but with
 can be (but need not be) world readable. It is not used by your
 own system at all.
 
+Note that the above process creates a key pair for ssh protocol 1.
+You can request ssh protocol 2 (RSA) instead if you prefer (if your
+particular ssh client supports it), via the command
+
+    ssh-keygen -t rsa
+
+This will create private/public identity files called F<~/.ssh/id_rsa>
+and F<~/.ssh/id_rsa.pub> respectively.  Protocol 2 offers a higher
+level of security than protocol 1.  This is not required for access to
+the Perl repository -- ssh is used for authentication rather than
+encryption (the Perl sources are open anyway) -- but either protocol
+is supported by the server.
+
 =head1 Notifying the Repository Keeper
 
 Mail the contents of that public key file to the keeper of the perl
@@ -84,21 +113,39 @@ When the key is added to the repository host's configuration file,
 you will be able to connect to it with ssh by using the corresponding
 private key file (after unlocking it with your chosen passphrase).
 
+There is no harm in creating both protocol 1 and protocol 2 keys and
+mailing them both in.  That way you'll be able to connect using either
+protocol, which may be useful if you later find yourself using a client
+that only supports one or the other protocol.
+
 =head1 Connecting to the Repository
 
 Connections to the repository are made by using ssh to provide a
 TCP "tunnel" rather than by using ssh to login to or invoke any
-ordinary commands on the repository. When you want to start a
-session using the repository, use the command
+ordinary commands on the repository.
+
+The ssh (secure shell) protocol runs over port number 22, so if you
+have a firewall installed at the client end then you must ensure that
+it is configured to allow you to make an outgoing connection to port 22
+on sickle.activestate.com.
+
+When you want to start a session using the repository, use the command:
 
     ssh -l perlrep -f -q -x -L 1666:127.0.0.1:1666 sickle.activestate.com foo
 
-If you are not using the default filename of F<~/.ssh/identity>
-to hold your perl repository private key then you'll need to add
-the option B<-i filename> to tell ssh where it is. Unless you chose
-a blank passphrase for that private key, ssh will prompt you for the
-passphrase to unlock that key. Then ssh will fork and put itself
+If you are not using the default filename of F<~/.ssh/identity> or
+F<~/.ssh/id_rsa> to hold your perl repository private key then you'll
+need to add the option B<-i filename> to tell ssh where it is. Unless
+you chose a blank passphrase for that private key, ssh will prompt you
+for the passphrase to unlock that key. Then ssh will fork and put itself
 in the background, returning you (silently) to your shell prompt.
+
+Note that the first time you connect you may see a message like
+"The authenticity of host 'sickle.activestate.com' can't be established,"
+and asking you if you want to continue.  Just answer yes and sickle's
+details will be cached in a F<known_hosts> or F<known_hosts2> file.  You
+will not see that message again unless you delete the cache file.
+
 The tunnel for repository access is now ready for use.
 
 For the sake of completeness (and for the case where the chosen
@@ -177,9 +224,22 @@ above.  If you see a prompt that looks like:
 
     perlrep@sickle.activestate.com's password:
 
-Then you either don't have a ~/.ssh/identity file corresponding
-to your public key, or your ~/.ssh/identity file is not readable.
+Then you either don't have a F<~/.ssh/identity> or F<~/.ssh/id_rsa>
+file corresponding to your public key, or that file is not readable.
 Fix the problem and try again.
+
+If you only had the public key file for one protocol installed at the
+server end then make sure your client is using the corresponding
+protocol.  An ssh client that supports protocol 2 will probably choose
+that by default, which will fail if the server end only has your public
+key file for protocol 1.  Some ssh clients have "-1" and "-2" arguments
+to force which protocol to use.
+
+The "-v" (verbose) flag can be useful for seeing what protocol your
+client is actually trying to connect with, and for spotting any other
+problems.  The flag can be specified multiple times to increase
+verbosity.  Note that specifying the "-q" flag as well might override
+your request for verbose output, so drop the "-q" flag when trying this.
 
 =head1 Using the Perforce Client
 
@@ -255,13 +315,22 @@ The C<p4 users> command lists all currently known users.
 
 =back
 
+Note that on Windows P4PORT and P4USER are requested when installing
+Perforce.  They are stored in the registry, so they do not need to be
+set in the environment.
+
 Once these three environment variables are set, you can use the
 perforce p4 client exactly as described in its documentation.
+
 After setting these variables and connecting to the repository
 for the first time, you should use the C<p4 user> command to
-set a valid email address for yourself.  Also use the C<p4 client>
-command to specify your workspace specifications for each
-individual client from which you will interact with the repository.
+set a valid email address for yourself.  Messages to the commit list
+are sent (faked) from whatever email address you set here.
+
+Also use the C<p4 client> command to specify your workspace
+specifications for each individual client from which you will interact
+with the repository.  The P4CLIENT environment variable, of course,
+needs to be set to one of these client workspace names.
 
 =head1 Ending a Repository Session
 
@@ -285,15 +354,16 @@ This is not strictly enforced in order to allow the flexibility
 of other users stealing the pumpkin for short periods with the
 owner's permission.
 
-Here is the current structure of the repository:
+Here is (part of) the current structure of the repository:
 
     /----+-----perl                  - Mainline development (bleadperl)
          +-----perlio                - PerlIO Pumpkin's Perl
          +-----vmsperl               - VMS Pumpkin's Perl
          +-----maint-5.004------perl - Maintainance branches
          +-----maint-5.005------perl
-         +-----maint-5.6------perl
-         +-----maint-5.6------pureperl
+         +-----maint-5.6--------perl
+         +-----maint-5.8--------perl
+         +-----pureperl---------pureperl
 
 Perforce uses a branching model that simply tracks relationships
 between files.  It does not care about directories at all, so
@@ -398,22 +468,24 @@ Integrate patches 12347-12350 from the perlio branch to the mainline:
 
 =head1 Contact Information
 
-The mail alias <perl-repository-keepers@perl.org> can be used to reach
+The mail alias E<lt>perl-repository-keepers@perl.orgE<gt> can be used to reach
 all current users of the repository.
 
 The repository keeper is currently Gurusamy Sarathy
-<gsar@activestate.com>.
+E<lt>gsar@activestate.comE<gt>.
 
 =head1 AUTHORS
 
-Malcolm Beattie, mbeattie@sable.ox.ac.uk, 24 June 1997.
+Malcolm Beattie, E<lt>mbeattie@sable.ox.ac.ukE<gt>, 24 June 1997.
 
-Gurusamy Sarathy, gsar@activestate.com, 8 May 1999.
+Gurusamy Sarathy, E<lt>gsar@activestate.comE<gt>, 8 May 1999.
 
-Slightly updated by Simon Cozens, simon@brecon.co.uk, 3 July 2000.
+Slightly updated by Simon Cozens, E<lt>simon@brecon.co.ukE<gt>, 3 July 2000.
 
-More updates by Jarkko Hietaniemi, jhi@iki.fi, 28 June 2001.
+More updates by Jarkko Hietaniemi, E<lt>jhi@iki.fiE<gt>, 28 June 2001.
 
-Perforce clarifications by Randall Gellens, rcg@users.sourceforge.net, 12 July 2001.
+Perforce clarifications by Randall Gellens, E<lt>rcg@users.sourceforge.netE<gt>, 12 July 2001.
+
+Windows-related updates by Steve Hay E<lt>shay@cpan.orgE<gt>, 23 July 2004.
 
 =cut

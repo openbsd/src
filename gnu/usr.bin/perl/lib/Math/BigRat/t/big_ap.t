@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+# Test that accuracy() and precision() in BigInt/BigFloat do not disturb
+# the rounding force in BigRat.
+
 use Test;
 use strict;
 
@@ -93,7 +96,7 @@ $z = $x->copy->bmul($y);
 ok ($z,$proper2);
 
 ##############################################################################
-# binc
+# binc/bdec
 
 $x = $proper->copy()->binc(); ok ($x,$proper_inc);
 $x = $proper->copy()->bdec(); ok ($x,$proper_dec);

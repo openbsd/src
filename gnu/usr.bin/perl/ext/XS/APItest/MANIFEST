@@ -3,6 +3,7 @@ MANIFEST
 README
 APItest.pm
 APItest.xs
+t/call.t
 t/hash.t
 t/printf.t
 t/push.t

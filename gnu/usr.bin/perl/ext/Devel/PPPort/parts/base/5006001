@@ -1,0 +1,13 @@
+5.006001
+apply_attrs_string             # U
+bytes_to_utf8                  # E
+gv_efullname4                  # U
+gv_fullname4                   # U
+is_utf8_string                 # U
+save_generic_pvref             # U
+utf16_to_utf8                  # E (Perl_utf16_to_utf8)
+utf16_to_utf8_reversed         # E (Perl_utf16_to_utf8_reversed)
+utf8_to_bytes                  # E
+NVef                           # added by devel/scanprov
+NVff                           # added by devel/scanprov
+NVgf                           # added by devel/scanprov

@@ -5,10 +5,15 @@ extern "C" {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
+#if defined(__CYGWIN__) && defined(HAS_W32API_WINDOWS_H)
+# include <w32api/windows.h>
+# define CYGWIN_WITH_W32API
+#endif
 #ifdef WIN32
-#include <time.h>
+# include <time.h>
 #else
-#include <sys/time.h>
+# include <sys/time.h>
 #endif
 #ifdef HAS_SELECT
 # ifdef I_SYS_SELECT
@@ -19,105 +24,18 @@ extern "C" {
 }
 #endif
 
-#ifndef NOOP
-#    define NOOP (void)0
-#endif
-#ifndef dNOOP
-#    define dNOOP extern int Perl___notused
-#endif
-
-#ifndef aTHX_
-#    define aTHX_
-#    define pTHX_
-#    define dTHX dNOOP
-#endif
-
-#ifdef START_MY_CXT
-#  ifndef MY_CXT_CLONE
-#    define MY_CXT_CLONE                                                \
-	dMY_CXT_SV;							\
-	my_cxt_t *my_cxtp = (my_cxt_t*)SvPVX(newSV(sizeof(my_cxt_t)-1));\
-	Copy(INT2PTR(my_cxt_t*, SvUV(my_cxt_sv)), my_cxtp, 1, my_cxt_t); \
-	sv_setuv(my_cxt_sv, PTR2UV(my_cxtp))
-#  endif
-#else
-#    define START_MY_CXT static my_cxt_t my_cxt;
-#    define dMY_CXT	 dNOOP
-#    define MY_CXT_INIT	 NOOP
-#    define MY_CXT_CLONE NOOP
-#    define MY_CXT	 my_cxt
-#endif
-
-#ifndef NVTYPE
-#   if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE)
-#       define NVTYPE long double
-#   else
-#       define NVTYPE double
-#   endif
-typedef NVTYPE NV;
-#endif
-
-#ifndef IVdf
-#  ifdef IVSIZE
-#      if IVSIZE == LONGSIZE
-#           define	IVdf		"ld"
-#           define	UVuf		"lu"
-#       else
-#           if IVSIZE == INTSIZE
-#               define	IVdf	"d"
-#               define	UVuf	"u"
-#           endif
-#       endif
-#   else
-#       define	IVdf	"ld"
-#       define	UVuf	"lu"
-#   endif
-#endif
-
-#ifndef NVef
-#   if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE) && \
-	defined(PERL_PRIgldbl) /* Not very likely, but let's try anyway. */ 
-#       define NVgf		PERL_PRIgldbl
-#   else
-#       define NVgf		"g"
-#   endif
-#endif
-
-#ifndef INT2PTR
-
-#if (IVSIZE == PTRSIZE) && (UVSIZE == PTRSIZE)
-#  define PTRV                  UV
-#  define INT2PTR(any,d)        (any)(d)
-#else
-#  if PTRSIZE == LONGSIZE
-#    define PTRV                unsigned long
-#  else
-#    define PTRV                unsigned
-#  endif
-#  define INT2PTR(any,d)        (any)(PTRV)(d)
-#endif
-#define PTR2IV(p)       INT2PTR(IV,p)
-
-#endif /* !INT2PTR */
-
-#ifndef SvPV_nolen
-static char *
-sv_2pv_nolen(pTHX_ register SV *sv)
-{
-    STRLEN n_a;
-    return sv_2pv(sv, &n_a);
-}
-#   define SvPV_nolen(sv) \
-        ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
-         ? SvPVX(sv) : sv_2pv_nolen(sv))
-#endif
-
 #ifndef PerlProc_pause
 #   define PerlProc_pause() Pause()
 #endif
 
+#ifdef HAS_PAUSE
+#   define Pause   pause
+#else
+#   define Pause() sleep(~0) /* Zzz for a long time. */
+#endif
+
 /* Though the cpp define ITIMER_VIRTUAL is available the functionality
- * is not supported in Cygwin as of August 2002, ditto for Win32.
+ * is not supported in Cygwin as of August 2004, ditto for Win32.
  * Neither are ITIMER_PROF or ITIMER_REALPROF implemented.  --jhi
  */
 #if defined(__CYGWIN__) || defined(WIN32)
@@ -128,14 +46,14 @@ sv_2pv_nolen(pTHX_ register SV *sv)
 
 /* 5.004 doesn't define PL_sv_undef */
 #ifndef ATLEASTFIVEOHOHFIVE
-#ifndef PL_sv_undef
-#define PL_sv_undef sv_undef
-#endif
+# ifndef PL_sv_undef
+#  define PL_sv_undef sv_undef
+# endif
 #endif
 
 #include "const-c.inc"
 
-#ifdef WIN32
+#if defined(WIN32) || defined(CYGWIN_WITH_W32API)
 
 #ifndef HAS_GETTIMEOFDAY
 #   define HAS_GETTIMEOFDAY
@@ -160,15 +78,16 @@ typedef struct {
     unsigned __int64 base_ticks;
     unsigned __int64 tick_frequency;
     FT_t base_systime_as_filetime;
+    unsigned __int64 reset_time;
 } my_cxt_t;
 
 START_MY_CXT
 
 /* Number of 100 nanosecond units from 1/1/1601 to 1/1/1970 */
 #ifdef __GNUC__
-#define Const64(x) x##LL
+# define Const64(x) x##LL
 #else
-#define Const64(x) x##i64
+# define Const64(x) x##i64
 #endif
 #define EPOCH_BIAS  Const64(116444736000000000)
 
@@ -184,8 +103,11 @@ START_MY_CXT
 /* If the performance counter delta drifts more than 0.5 seconds from the
  * system time then we recalibrate to the system time.  This means we may
  * move *backwards* in time! */
+#define MAX_PERF_COUNTER_SKEW Const64(5000000) /* 0.5 seconds */
 
-#define MAX_DIFF Const64(5000000)
+/* Reset reading from the performance counter every five minutes.
+ * Many PC clocks just seem to be so bad. */
+#define MAX_PERF_COUNTER_TICKS Const64(300000000) /* 300 seconds */
 
 static int
 _gettimeofday(pTHX_ struct timeval *tp, void *not_used)
@@ -195,26 +117,27 @@ _gettimeofday(pTHX_ struct timeval *tp, void *not_used)
     unsigned __int64 ticks;
     FT_t ft;
 
-    if (MY_CXT.run_count++) {
+    if (MY_CXT.run_count++ == 0 ||
+	MY_CXT.base_systime_as_filetime.ft_i64 > MY_CXT.reset_time) {
+        QueryPerformanceFrequency((LARGE_INTEGER*)&MY_CXT.tick_frequency);
+        QueryPerformanceCounter((LARGE_INTEGER*)&MY_CXT.base_ticks);
+        GetSystemTimeAsFileTime(&MY_CXT.base_systime_as_filetime.ft_val);
+        ft.ft_i64 = MY_CXT.base_systime_as_filetime.ft_i64;
+	MY_CXT.reset_time = ft.ft_i64 + MAX_PERF_COUNTER_TICKS;
+    }
+    else {
 	__int64 diff;
-	FT_t filtim;
-	GetSystemTimeAsFileTime(&filtim.ft_val);
         QueryPerformanceCounter((LARGE_INTEGER*)&ticks);
         ticks -= MY_CXT.base_ticks;
         ft.ft_i64 = MY_CXT.base_systime_as_filetime.ft_i64
                     + Const64(10000000) * (ticks / MY_CXT.tick_frequency)
                     +(Const64(10000000) * (ticks % MY_CXT.tick_frequency)) / MY_CXT.tick_frequency;
 	diff = ft.ft_i64 - MY_CXT.base_systime_as_filetime.ft_i64;
-	if (diff < -MAX_DIFF || diff > MAX_DIFF) {
-	     MY_CXT.base_ticks = ticks;
-	     ft.ft_i64 = filtim.ft_i64;
+	if (diff < -MAX_PERF_COUNTER_SKEW || diff > MAX_PERF_COUNTER_SKEW) {
+	    MY_CXT.base_ticks += ticks;
+            GetSystemTimeAsFileTime(&MY_CXT.base_systime_as_filetime.ft_val);
+            ft.ft_i64 = MY_CXT.base_systime_as_filetime.ft_i64;
 	}
-    }
-    else {
-        QueryPerformanceFrequency((LARGE_INTEGER*)&MY_CXT.tick_frequency);
-        QueryPerformanceCounter((LARGE_INTEGER*)&MY_CXT.base_ticks);
-        GetSystemTimeAsFileTime(&MY_CXT.base_systime_as_filetime.ft_val);
-        ft.ft_i64 = MY_CXT.base_systime_as_filetime.ft_i64;
     }
 
     /* seconds since epoch */
@@ -702,7 +625,7 @@ static NV
 myNVtime()
 {
 #ifdef WIN32
-    dTHX;
+  dTHX;
 #endif
   struct timeval Tp;
   int status;

@@ -1,0 +1,10 @@
+5.005000
+PL_modglobal                   # E
+NOOP                           # added by devel/scanprov
+PL_Sv                          # added by devel/scanprov
+PL_copline                     # added by devel/scanprov
+PL_hexdigit                    # added by devel/scanprov
+PL_hints                       # added by devel/scanprov
+END_EXTERN_C                   # added by devel/scanprov
+EXTERN_C                       # added by devel/scanprov
+START_EXTERN_C                 # added by devel/scanprov

@@ -18,6 +18,10 @@
  * nef aear, si nef aearon!
  */
 
+/* utility functions for handling locale-specific stuff like what
+ * character represents the decimal point.
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_LOCALE_C
 #include "perl.h"
@@ -560,6 +564,7 @@ Perl_init_i18nl14n(pTHX_ int printwarn)
  * The real transformed data begins at offset sizeof(collationix).
  * Please see sv_collxfrm() to see how this is used.
  */
+
 char *
 Perl_mem_collxfrm(pTHX_ const char *s, STRLEN len, STRLEN *xlen)
 {

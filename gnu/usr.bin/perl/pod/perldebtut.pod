@@ -332,7 +332,7 @@ and will merrily dump out nested references, complete objects, partial objects
 - just about whatever you throw at it:
 
 Let's make a quick object and x-plode it, first we'll start the debugger:
-it wants some form of input from STDIN, so we give it something non-commital,
+it wants some form of input from STDIN, so we give it something non-committal,
 a zero:
 
 	> perl -de 0

@@ -74,7 +74,7 @@ while (<DATA>)
       } elsif ($f eq "ffac") {
         $try .= "$setup; \$x->ffac();";
       } elsif ($f eq "flog") {
-        if ($args[1] ne '')
+        if (defined $args[1] && $args[1] ne '')
           {
           $try .= "\$y = $class->new($args[1]);";
           $try .= "$setup; \$x->flog(\$y);";
@@ -257,6 +257,72 @@ ok ($class->new(-1)->is_one('-'),1);
 
 ok ($class->new(1)->fdiv('0.5')->bsstr(),'2e+0');
 
+###############################################################################
+# [perl #30609] bug with $x -= $x not beeing 0, but 2*$x
+
+$x = $class->new(3);  $x -= $x; ok ($x, 0);
+$x = $class->new(-3); $x -= $x; ok ($x, 0);
+$x = $class->new(3);  $x += $x; ok ($x, 6);
+$x = $class->new(-3); $x += $x; ok ($x, -6);
+
+$x = $class->new('NaN'); $x -= $x; ok ($x->is_nan(), 1);
+$x = $class->new('inf'); $x -= $x; ok ($x->is_nan(), 1);
+$x = $class->new('-inf'); $x -= $x; ok ($x->is_nan(), 1);
+
+$x = $class->new('NaN'); $x += $x; ok ($x->is_nan(), 1);
+$x = $class->new('inf'); $x += $x; ok ($x->is_inf(), 1);
+$x = $class->new('-inf'); $x += $x; ok ($x->is_inf('-'), 1);
+
+$x = $class->new('3.14');  $x -= $x; ok ($x, 0);
+$x = $class->new('-3.14'); $x -= $x; ok ($x, 0);
+$x = $class->new('3.14');  $x += $x; ok ($x, '6.28');
+$x = $class->new('-3.14'); $x += $x; ok ($x, '-6.28');
+
+$x = $class->new('3.14');  $x *= $x; ok ($x, '9.8596');
+$x = $class->new('-3.14'); $x *= $x; ok ($x, '9.8596');
+$x = $class->new('3.14');  $x /= $x; ok ($x, '1');
+$x = $class->new('-3.14'); $x /= $x; ok ($x, '1');
+$x = $class->new('3.14');  $x %= $x; ok ($x, '0');
+$x = $class->new('-3.14'); $x %= $x; ok ($x, '0');
+
+###############################################################################
+# the following two were reported by "kenny" via hotmail.com:
+
+#perl -MMath::BigFloat -wle 'print Math::BigFloat->new(0)->bpow(".1")'
+#Use of uninitialized value in numeric le (<=) at BigFloat.pm line 1851.
+
+$x = $class->new(0); $y = $class->new('0.1');
+ok ($x ** $y, 0, 'no warnings and zero result');
+
+#perl -MMath::BigFloat -lwe 'print Math::BigFloat->new(".222222222222222222222222222222222222222222")->bceil()'
+#Use of uninitialized value in numeric le (<=) at BigFloat.pm line 1851.
+
+$x = $class->new(".222222222222222222222222222222222222222222"); 
+ok ($x->bceil(), 1, 'no warnings and one as result');
+
+###############################################################################
+# test **=, <<=, >>=
+
+# ((2^148)-1)/17
+$x = $class->new(2); $x **= 148; $x++; $x->bdiv(17, 60)->bfloor(); $x->accuracy(undef);
+ok ($x,"20988936657440586486151264256610222593863921");
+ok ($x->length(),length "20988936657440586486151264256610222593863921");
+
+$x = $class->new('2');
+my $y = $class->new('18');
+ok ($x <<= $y, 2 << 18);
+ok ($x, 2 << 18);
+ok ($x >>= $y, 2);
+ok ($x, 2);
+
+$x = $class->new('2');
+$y = $class->new('18.2');
+$x <<= $y;		# 2 * (2 ** 18.2);
+
+ok ($x->copy()->bfround(-9), '602248.763144685');
+ok ($x >>= $y, 2);	# 2 * (2 ** 18.2) / (2 ** 18.2) => 2
+ok ($x, 2);
+
 1; # all done
 
 ###############################################################################
@@ -284,22 +350,22 @@ $div_scale = 40;
 1::0
 1:1:0
 1:2:0
-# this is too slow for the testsuite
-#2:0.6931471805599453094172321214581765680755
-#2.718281828:0.9999999998311266953289851340574956564911
-#$div_scale = 20;
-#2.718281828:0.99999999983112669533
-# too slow, too 
-#123:4.8112184355
-$div_scale = 14;
-#10:0:2.302585092994
-#1000:0:6.90775527898214
-#100:0:4.60517018598809
-2::0.69314718055995
-#3.1415:0:1.14470039286086
-# too slow
-#12345:0:9.42100640177928
-#0.001:0:-6.90775527898214
+2::0.6931471805599453094172321214581765680755
+2.718281828::0.9999999998311266953289851340574956564911
+$div_scale = 20;
+2.718281828::0.99999999983112669533
+$div_scale = 15;
+123::4.81218435537242
+10::2.30258509299405
+1000::6.90775527898214
+100::4.60517018598809
+2::0.693147180559945
+3.1415::1.14470039286086
+12345::9.42100640177928
+0.001::-6.90775527898214
+# bug until v1.71:
+10:10:1
+100:100:1
 # reset for further tests
 $div_scale = 40;
 1::0
@@ -330,10 +396,37 @@ fnormNaN:NaN
 1__2:NaN
 1E1__2:NaN
 11__2E2:NaN
-#1.E3:NaN
 .2E-3.:NaN
-#1e3e4:NaN
+1e3e4:NaN
+# strange, but valid
 .2E2:20
+1.E3:1000
+# some inputs that result in zero
+0e0:0
++0e0:0
++0e+0:0
+-0e+0:0
+0e-0:0
+-0e-0:0
++0e-0:0
+000:0
+00e2:0
+00e02:0
+000e002:0
+000e1230:0
+00e-3:0
+00e+3:0
+00e-03:0
+00e+03:0
+-000:0
+-00e2:0
+-00e02:0
+-000e002:0
+-000e1230:0
+-00e-3:0
+-00e+3:0
+-00e-03:0
+-00e+03:0
 &as_number
 0:0
 1:1

@@ -34,6 +34,8 @@ my $FASTSTDIO = $Config{d_faststdio} && $Config{usefaststdio}      ? 1 : 0;
 
 my $NTEST = 43 - (($DOSISH || !$FASTSTDIO) ? 7 : 0) - ($DOSISH ? 5 : 0);
 
+sub PerlIO::F_UTF8 () { 0x00008000 } # from perliol.h
+
 plan tests => $NTEST;
 
 print <<__EOH__;

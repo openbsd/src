@@ -33,6 +33,7 @@ sub walk_table (&@) {
     else {
 	safer_unlink $filename;
 	open F, ">$filename" or die "Can't open $filename: $!";
+	binmode F;
 	$F = \*F;
     }
     print $F $leader if $leader;
@@ -158,6 +159,7 @@ for $file (($MANIFEST =~ /^(\S+\.c)\t/gm), ($MANIFEST =~ /^(\S+\.h)\t/gm)) {
 safer_unlink "pod/perlapi.pod";
 open (DOC, ">pod/perlapi.pod") or
 	die "Can't create pod/perlapi.pod: $!\n";
+binmode DOC;
 
 walk_table {	# load documented functions into approriate hash
     if (@_ > 1) {
@@ -251,6 +253,7 @@ close(DOC) or die "Error closing pod/perlapi.pod: $!";
 safer_unlink "pod/perlintern.pod";
 open(GUTS, ">pod/perlintern.pod") or
 		die "Unable to create pod/perlintern.pod: $!\n";
+binmode GUTS;
 print GUTS <<'END';
 =head1 NAME
 

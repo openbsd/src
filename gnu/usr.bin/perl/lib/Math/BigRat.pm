@@ -19,19 +19,28 @@ use strict;
 
 require Exporter;
 use Math::BigFloat;
-use vars qw($VERSION @ISA $PACKAGE $upgrade $downgrade
+use vars qw($VERSION @ISA $upgrade $downgrade
             $accuracy $precision $round_mode $div_scale $_trap_nan $_trap_inf);
 
 @ISA = qw(Exporter Math::BigFloat);
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 
-use overload;			# inherit from Math::BigFloat
+use overload;			# inherit overload from Math::BigFloat
 
-BEGIN { *objectify = \&Math::BigInt::objectify; }
+BEGIN
+  { 
+  *objectify = \&Math::BigInt::objectify; 	# inherit this from BigInt
+  *AUTOLOAD = \&Math::BigFloat::AUTOLOAD;	# can't inherit AUTOLOAD
+  # we inherit these from BigFloat because currently it is not possible
+  # that MBF has a different $MBI variable than we, because MBF also uses
+  # Math::BigInt::config->('lib'); (there is always only one library loaded)
+  *_e_add = \&Math::BigFloat::_e_add;
+  *_e_sub = \&Math::BigFloat::_e_sub;
+  }
 
 ##############################################################################
-# global constants, flags and accessory
+# Global constants and flags. Access these only via the accessor methods!
 
 $accuracy = $precision = undef;
 $round_mode = 'even';
@@ -39,16 +48,16 @@ $div_scale = 40;
 $upgrade = undef;
 $downgrade = undef;
 
-# these are internally, and not to be used from the outside
-
-use constant MB_NEVER_ROUND => 0x0001;
+# These are internally, and not to be used from the outside at all!
 
 $_trap_nan = 0;                         # are NaNs ok? set w/ config()
 $_trap_inf = 0;                         # are infs ok? set w/ config()
 
+# the package we are using for our private parts, defaults to:
+# Math::BigInt->config()->{lib}
+my $MBI = 'Math::BigInt::Calc';
+
 my $nan = 'NaN';
-my $MBI = 'Math::BigInt';
-my $CALC = 'Math::BigInt::Calc';
 my $class = 'Math::BigRat';
 my $IMPORT = 0;
 
@@ -58,10 +67,7 @@ sub isa
   UNIVERSAL::isa(@_);
   }
 
-sub BEGIN
-  {
-  *AUTOLOAD = \&Math::BigFloat::AUTOLOAD;
-  }
+##############################################################################
 
 sub _new_from_float
   {
@@ -71,23 +77,21 @@ sub _new_from_float
   return $self->bnan() if $f->is_nan();
   return $self->binf($f->{sign}) if $f->{sign} =~ /^[+-]inf$/;
 
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-  $self->{_n} = $MBI->new($CALC->_str ( $f->{_m} ),undef,undef);# mantissa
-  $self->{_d} = $MBI->bone();
+  $self->{_n} = $MBI->_copy( $f->{_m} );	# mantissa
+  $self->{_d} = $MBI->_one();
   $self->{sign} = $f->{sign} || '+';
   if ($f->{_es} eq '-')
     {
     # something like Math::BigRat->new('0.1');
     # 1 / 1 => 1/10
-    $self->{_d}->blsft( $MBI->new($CALC->_str ( $f->{_e} )),10);	
+    $MBI->_lsft ( $self->{_d}, $f->{_e} ,10);	
     }
   else
     {
     # something like Math::BigRat->new('10');
     # 1 / 1 => 10/1
-    $self->{_n}->blsft( $MBI->new($CALC->_str($f->{_e})),10) unless 
-      $CALC->_is_zero($f->{_e});	
+    $MBI->_lsft ( $self->{_n}, $f->{_e} ,10) unless 
+      $MBI->_is_zero($f->{_e});	
     }
   $self;
   }
@@ -112,28 +116,29 @@ sub new
     if ($n->isa('Math::BigInt'))
       {
       # TODO: trap NaN, inf
-      $self->{_n} = $n->copy();				# "mantissa" = $n
-      $self->{_d} = $MBI->bone();
-      $self->{sign} = $self->{_n}->{sign}; $self->{_n}->{sign} = '+';
+      $self->{_n} = $MBI->_copy($n->{value});		# "mantissa" = $n
+      $self->{_d} = $MBI->_one();			# d => 1
+      $self->{sign} = $n->{sign};
       }
     if ($n->isa('Math::BigInt::Lite'))
       {
       # TODO: trap NaN, inf
       $self->{sign} = '+'; $self->{sign} = '-' if $$n < 0;
-      $self->{_n} = $MBI->new(abs($$n),undef,undef);	# "mantissa" = $n
-      $self->{_d} = $MBI->bone();
+      $self->{_n} = $MBI->_new(abs($$n));		# "mantissa" = $n
+      $self->{_d} = $MBI->_one();			# d => 1
       }
-    return $self->bnorm();
+    return $self->bnorm();				# normalize (120/1 => 12/10)
     }
-  return $n->copy() if ref $n;
+  return $n->copy() if ref $n;				# already a BigRat
 
   if (!defined $n)
     {
-    $self->{_n} = $MBI->bzero();			# undef => 0
-    $self->{_d} = $MBI->bone();
+    $self->{_n} = $MBI->_zero();			# undef => 0
+    $self->{_d} = $MBI->_one();
     $self->{sign} = '+';
-    return $self->bnorm();
+    return $self;
     }
+
   # string input with / delimiter
   if ($n =~ /\s*\/\s*/)
     {
@@ -143,65 +148,86 @@ sub new
     # try as BigFloats first
     if (($n =~ /[\.eE]/) || ($d =~ /[\.eE]/))
       {
-      # one of them looks like a float 
-      # Math::BigFloat($n,undef,undef) does not what it is supposed to do, so:
       local $Math::BigFloat::accuracy = undef;
       local $Math::BigFloat::precision = undef;
-      local $Math::BigInt::accuracy = undef;
-      local $Math::BigInt::precision = undef;
 
+      # one of them looks like a float 
       my $nf = Math::BigFloat->new($n,undef,undef);
       $self->{sign} = '+';
       return $self->bnan() if $nf->is_nan();
-      $self->{_n} = $MBI->new( $CALC->_str( $nf->{_m} ) );
+      $self->{_n} = $MBI->_copy( $nf->{_m} );	# get mantissa
 
       # now correct $self->{_n} due to $n
       my $f = Math::BigFloat->new($d,undef,undef);
       return $self->bnan() if $f->is_nan();
-      $self->{_d} = $MBI->new( $CALC->_str( $f->{_m} ) );
+      $self->{_d} = $MBI->_copy( $f->{_m} );
 
       # calculate the difference between nE and dE
-      my $diff_e = $MBI->new ($nf->exponent())->bsub ( $f->exponent);
+      # XXX TODO: check that exponent() makes a copy to avoid copy()
+      my $diff_e = $nf->exponent()->copy()->bsub( $f->exponent);
       if ($diff_e->is_negative())
 	{
         # < 0: mul d with it
-        $self->{_d}->blsft($diff_e->babs(),10);
+        $MBI->_lsft( $self->{_d}, $MBI->_new( $diff_e->babs()), 10);
 	}
       elsif (!$diff_e->is_zero())
         {
         # > 0: mul n with it
-        $self->{_n}->blsft($diff_e,10);
+        $MBI->_lsft( $self->{_n}, $MBI->_new( $diff_e), 10);
         }
       }
     else
       {
-      # both d and n are (big)ints
-      $self->{_n} = $MBI->new($n,undef,undef);
-      $self->{_d} = $MBI->new($d,undef,undef);
-      $self->{sign} = '+';
-      return $self->bnan() if $self->{_n}->{sign} eq $nan ||
-                              $self->{_d}->{sign} eq $nan;
-      # handle inf and NAN cases:
-      if ($self->{_n}->is_inf() || $self->{_d}->is_inf())
-        {
-        # inf/inf => NaN
-        return $self->bnan() if
-	  ($self->{_n}->is_inf() && $self->{_d}->is_inf());
-        if ($self->{_n}->is_inf())
-	  {
-	  my $s = '+'; 		# '+inf/+123' or '-inf/-123'
-	  $s = '-' if substr($self->{_n}->{sign},0,1) ne $self->{_d}->{sign};
-	  # +-inf/123 => +-inf
-          return $self->binf($s);
-	  }
-        # 123/inf => 0
-        return $self->bzero();
+      # both d and n look like (big)ints
+
+      $self->{sign} = '+';					# no sign => '+'
+      $self->{_n} = undef;
+      $self->{_d} = undef;
+      if ($n =~ /^([+-]?)0*(\d+)\z/)				# first part ok?
+	{
+	$self->{sign} = $1 || '+';				# no sign => '+'
+	$self->{_n} = $MBI->_new($2 || 0);
         }
- 
-      $self->{sign} = $self->{_n}->{sign}; $self->{_n}->babs();
-      # if $d is negative, flip sign
-      $self->{sign} =~ tr/+-/-+/ if $self->{_d}->{sign} eq '-';
-      $self->{_d}->babs();				# normalize
+
+      if ($d =~ /^([+-]?)0*(\d+)\z/)				# second part ok?
+	{
+	$self->{sign} =~ tr/+-/-+/ if ($1 || '') eq '-';	# negate if second part neg.
+	$self->{_d} = $MBI->_new($2 || 0);
+        }
+
+      if (!defined $self->{_n} || !defined $self->{_d})
+	{
+        $d = Math::BigInt->new($d,undef,undef) unless ref $d;
+        $n = Math::BigInt->new($n,undef,undef) unless ref $n;
+	
+        if ($n->{sign} =~ /^[+-]$/ && $d->{sign} =~ /^[+-]$/)
+	  { 
+	  # both parts are ok as integers (wierd things like ' 1e0'
+          $self->{_n} = $MBI->_copy($n->{value});
+          $self->{_d} = $MBI->_copy($d->{value});
+          $self->{sign} = $n->{sign};
+          $self->{sign} =~ tr/+-/-+/ if $d->{sign} eq '-';	# -1/-2 => 1/2
+          return $self->bnorm();
+	  }
+
+        $self->{sign} = '+';					# a default sign
+        return $self->bnan() if $n->is_nan() || $d->is_nan();
+
+	# handle inf cases:
+        if ($n->is_inf() || $d->is_inf())
+	  {
+	  if ($n->is_inf())
+	    {
+	    return $self->bnan() if $d->is_inf();		# both are inf => NaN
+	    my $s = '+'; 		# '+inf/+123' or '-inf/-123'
+	    $s = '-' if substr($n->{sign},0,1) ne $d->{sign};
+	    # +-inf/123 => +-inf
+	    return $self->binf($s);
+	    }
+          # 123/inf => 0
+          return $self->bzero();
+	  }
+	}
       }
 
     return $self->bnorm();
@@ -211,21 +237,29 @@ sub new
   if (($n =~ /[\.eE]/))
     {
     # looks like a float, quacks like a float, so probably is a float
-    # Math::BigFloat($n,undef,undef) does not what it is supposed to do, so:
+    $self->{sign} = 'NaN';
     local $Math::BigFloat::accuracy = undef;
     local $Math::BigFloat::precision = undef;
-    local $Math::BigInt::accuracy = undef;
-    local $Math::BigInt::precision = undef;
-    $self->{sign} = 'NaN';
     $self->_new_from_float(Math::BigFloat->new($n,undef,undef));
     }
   else
     {
-    $self->{_n} = $MBI->new($n,undef,undef);
-    $self->{_d} = $MBI->bone();
-    $self->{sign} = $self->{_n}->{sign}; $self->{_n}->babs();
-    return $self->bnan() if $self->{sign} eq 'NaN';
-    return $self->binf($self->{sign}) if $self->{sign} =~ /^[+-]inf$/;
+    # for simple forms, use $MBI directly
+    if ($n =~ /^([+-]?)0*(\d+)\z/)
+      {
+      $self->{sign} = $1 || '+';
+      $self->{_n} = $MBI->_new($2 || 0);
+      $self->{_d} = $MBI->_one();
+      }
+    else
+      {
+      my $n = Math::BigInt->new($n,undef,undef);
+      $self->{_n} = $MBI->_copy($n->{value});
+      $self->{_d} = $MBI->_one();
+      $self->{sign} = $n->{sign};
+      return $self->bnan() if $self->{sign} eq 'NaN';
+      return $self->binf($self->{sign}) if $self->{sign} =~ /^[+-]inf$/;
+      }
     }
   $self->bnorm();
   }
@@ -245,11 +279,11 @@ sub copy
     }
   return unless ref($x); # only for objects
 
-  my $self = {}; bless $self,$c;
+  my $self = bless {}, $c;
 
   $self->{sign} = $x->{sign};
-  $self->{_d} = $x->{_d}->copy();
-  $self->{_n} = $x->{_n}->copy();
+  $self->{_d} = $MBI->_copy($x->{_d});
+  $self->{_n} = $MBI->_copy($x->{_n});
   $self->{_a} = $x->{_a} if defined $x->{_a};
   $self->{_p} = $x->{_p} if defined $x->{_p};
   $self;
@@ -284,8 +318,8 @@ sub bstr
 
   my $s = ''; $s = $x->{sign} if $x->{sign} ne '+';	# '+3/2' => '3/2'
 
-  return $s . $x->{_n}->bstr() if $x->{_d}->is_one();
-  $s . $x->{_n}->bstr() . '/' . $x->{_d}->bstr();
+  return $s . $MBI->_str($x->{_n}) if $MBI->_is_one($x->{_d});
+  $s . $MBI->_str($x->{_n}) . '/' . $MBI->_str($x->{_d});
   }
 
 sub bsstr
@@ -299,57 +333,46 @@ sub bsstr
     }
   
   my $s = ''; $s = $x->{sign} if $x->{sign} ne '+';	# +3 vs 3
-  $s . $x->{_n}->bstr() . '/' . $x->{_d}->bstr(); 
+  $s . $MBI->_str($x->{_n}) . '/' . $MBI->_str($x->{_d});
   }
 
 sub bnorm
   {
-  # reduce the number to the shortest form and remember this (so that we
-  # don't reduce again)
+  # reduce the number to the shortest form
   my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
 
-  # both parts must be BigInt's (or whatever we are using today)
-  if (ref($x->{_n}) ne $MBI)
+  # Both parts must be objects of whatever we are using today.
+  # Second check because Calc.pm has ARRAY res as unblessed objects.
+  if (ref($x->{_n}) ne $MBI && ref($x->{_n}) ne 'ARRAY')
     {
-    require Carp; Carp::croak ("n is not $MBI but (".ref($x->{_n}).')');
+    require Carp; Carp::croak ("n is not $MBI but (".ref($x->{_n}).') in bnorm()');
     }
-  if (ref($x->{_d}) ne $MBI)
+  if (ref($x->{_d}) ne $MBI && ref($x->{_d}) ne 'ARRAY')
     {
-    require Carp; Carp::croak ("d is not $MBI but (".ref($x->{_d}).')');
+    require Carp; Carp::croak ("d is not $MBI but (".ref($x->{_d}).') in bnorm()');
     }
-
-  # this is to prevent automatically rounding when MBI's globals are set
-  $x->{_d}->{_f} = MB_NEVER_ROUND;
-  $x->{_n}->{_f} = MB_NEVER_ROUND;
-  # 'forget' that parts were rounded via MBI::bround() in MBF's bfround()
-  delete $x->{_d}->{_a}; delete $x->{_n}->{_a};
-  delete $x->{_d}->{_p}; delete $x->{_n}->{_p}; 
 
   # no normalize for NaN, inf etc.
   return $x if $x->{sign} !~ /^[+-]$/;
 
   # normalize zeros to 0/1
-  if (($x->{sign} =~ /^[+-]$/) &&
-      ($x->{_n}->is_zero()))
+  if ($MBI->_is_zero($x->{_n}))
     {
-    $x->{sign} = '+';					# never -0
-    $x->{_d} = $MBI->bone() unless $x->{_d}->is_one();
+    $x->{sign} = '+';					# never leave a -0
+    $x->{_d} = $MBI->_one() unless $MBI->_is_one($x->{_d});
     return $x;
     }
 
-  return $x if $x->{_d}->is_one();			# no need to reduce
+  return $x if $MBI->_is_one($x->{_d});			# no need to reduce
 
   # reduce other numbers
-  # disable upgrade in BigInt, otherwise deep recursion
-  local $Math::BigInt::upgrade = undef;
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-  my $gcd = $x->{_n}->bgcd($x->{_d});
-
-  if (!$gcd->is_one())
+  my $gcd = $MBI->_copy($x->{_n});
+  $gcd = $MBI->_gcd($gcd,$x->{_d});
+  
+  if (!$MBI->_is_one($gcd))
     {
-    $x->{_n}->bdiv($gcd);
-    $x->{_d}->bdiv($gcd);
+    $x->{_n} = $MBI->_div($x->{_n},$gcd);
+    $x->{_d} = $MBI->_div($x->{_d},$gcd);
     }
   $x;
   }
@@ -368,8 +391,8 @@ sub _bnan
     my $class = ref($self);
     Carp::croak ("Tried to set $self to NaN in $class\::_bnan()");
     }
-  $self->{_n} = $MBI->bzero();
-  $self->{_d} = $MBI->bzero();
+  $self->{_n} = $MBI->_zero();
+  $self->{_d} = $MBI->_zero();
   }
 
 sub _binf
@@ -383,24 +406,24 @@ sub _binf
     my $class = ref($self);
     Carp::croak ("Tried to set $self to inf in $class\::_binf()");
     }
-  $self->{_n} = $MBI->bzero();
-  $self->{_d} = $MBI->bzero();
+  $self->{_n} = $MBI->_zero();
+  $self->{_d} = $MBI->_zero();
   }
 
 sub _bone
   {
   # used by parent class bone() to initialize number to +1/-1
   my $self = shift;
-  $self->{_n} = $MBI->bone();
-  $self->{_d} = $MBI->bone();
+  $self->{_n} = $MBI->_one();
+  $self->{_d} = $MBI->_one();
   }
 
 sub _bzero
   {
   # used by parent class bzero() to initialize number to 0
   my $self = shift;
-  $self->{_n} = $MBI->bzero();
-  $self->{_d} = $MBI->bone();
+  $self->{_n} = $MBI->_zero();
+  $self->{_d} = $MBI->_one();
   }
 
 ##############################################################################
@@ -418,11 +441,12 @@ sub badd
     ($self,$x,$y,@r) = objectify(2,@_);
     }
 
-  $x = $self->new($x) unless $x->isa($self);
-  $y = $self->new($y) unless $y->isa($self);
+  # +inf + +inf => +inf,  -inf + -inf => -inf
+  return $x->binf(substr($x->{sign},0,1))
+    if $x->{sign} eq $y->{sign} && $x->{sign} =~ /^[+-]inf$/;
 
-  return $x->bnan() if ($x->{sign} eq 'NaN' || $y->{sign} eq 'NaN');
-  # TODO: inf handling
+  # +inf + -inf or -inf + +inf => NaN
+  return $x->bnan() if ($x->{sign} !~ /^[+-]$/ || $y->{sign} !~ /^[+-]$/);
 
   #  1   1    gcd(3,4) = 1    1*3 + 1*4    7
   #  - + -                  = --------- = --                 
@@ -433,21 +457,17 @@ sub badd
   #  - + -  = --------- = --                 
   #  4   3       4*3      12
  
-  # the gcd() calculation and reducing is then done in bnorm()
+  # and bnorm() will then take care of the rest
 
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
+  $x->{_n} = $MBI->_mul( $x->{_n}, $y->{_d});
 
-  $x->{_n}->bmul($y->{_d}); $x->{_n}->{sign} = $x->{sign};
-  my $m = $y->{_n}->copy()->bmul($x->{_d});
-  $m->{sign} = $y->{sign};			# 2/1 - 2/1
-  $x->{_n}->badd($m);
+  my $m = $MBI->_mul( $MBI->_copy( $y->{_n} ), $x->{_d} );
 
-  $x->{_d}->bmul($y->{_d});
+  ($x->{_n}, $x->{sign}) = _e_add( $x->{_n}, $m, $x->{sign}, $y->{sign});
 
-  # calculate sign of result and norm our _n part
-  $x->{sign} = $x->{_n}->{sign}; $x->{_n}->{sign} = '+';
+  $x->{_d} = $MBI->_mul( $x->{_d}, $y->{_d});
 
+  # normalize and round
   $x->bnorm()->round(@r);
   }
 
@@ -465,10 +485,10 @@ sub bsub
 
   # flip sign of $x, call badd(), then flip sign of result
   $x->{sign} =~ tr/+-/-+/
-    unless $x->{sign} eq '+' && $x->{_n}->is_zero();	# not -0
-  $x->badd($y,@r);			# does norm and round
+    unless $x->{sign} eq '+' && $MBI->_is_zero($x->{_n});	# not -0
+  $x->badd($y,@r);				# does norm and round
   $x->{sign} =~ tr/+-/-+/ 
-    unless $x->{sign} eq '+' && $x->{_n}->is_zero();	# not -0
+    unless $x->{sign} eq '+' && $MBI->_is_zero($x->{_n});	# not -0
   $x;
   }
 
@@ -483,9 +503,6 @@ sub bmul
     {
     ($self,$x,$y,@r) = objectify(2,@_);
     }
-
-  $x = $self->new($x) unless $x->isa($self);
-  $y = $self->new($y) unless $y->isa($self);
 
   return $x->bnan() if ($x->{sign} eq 'NaN' || $y->{sign} eq 'NaN');
 
@@ -504,17 +521,16 @@ sub bmul
   # x== 0 # also: or y == 1 or y == -1
   return wantarray ? ($x,$self->bzero()) : $x if $x->is_zero();
 
-  # According to Knuth, this can be optimized by doingtwice gcd (for d and n)
-  # and reducing in one step)
+  # XXX TODO:
+  # According to Knuth, this can be optimized by doing gcd twice (for d and n)
+  # and reducing in one step. This would save us the bnorm() at the end.
 
-  #  1   1    2    1
-  #  - * - =  -  = -
-  #  4   3    12   6
+  #  1   2    1 * 2    2    1
+  #  - * - =  -----  = -  = -
+  #  4   3    4 * 3    12   6
   
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-  $x->{_n}->bmul($y->{_n});
-  $x->{_d}->bmul($y->{_d});
+  $x->{_n} = $MBI->_mul( $x->{_n}, $y->{_n});
+  $x->{_d} = $MBI->_mul( $x->{_d}, $y->{_d});
 
   # compute new sign
   $x->{sign} = $x->{sign} eq $y->{sign} ? '+' : '-';
@@ -535,25 +551,22 @@ sub bdiv
     ($self,$x,$y,@r) = objectify(2,@_);
     }
 
-  $x = $self->new($x) unless $x->isa($self);
-  $y = $self->new($y) unless $y->isa($self);
-
   return $self->_div_inf($x,$y)
    if (($x->{sign} !~ /^[+-]$/) || ($y->{sign} !~ /^[+-]$/) || $y->is_zero());
 
   # x== 0 # also: or y == 1 or y == -1
   return wantarray ? ($x,$self->bzero()) : $x if $x->is_zero();
 
-  # TODO: list context, upgrade
+  # XXX TODO: list context, upgrade
+  # According to Knuth, this can be optimized by doing gcd twice (for d and n)
+  # and reducing in one step. This would save us the bnorm() at the end.
 
   # 1     1    1   3
   # -  /  - == - * -
   # 4     3    4   1
   
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-  $x->{_n}->bmul($y->{_d});
-  $x->{_d}->bmul($y->{_n});
+  $x->{_n} = $MBI->_mul( $x->{_n}, $y->{_d});
+  $x->{_d} = $MBI->_mul( $x->{_d}, $y->{_n});
 
   # compute new sign 
   $x->{sign} = $x->{sign} eq $y->{sign} ? '+' : '-';
@@ -574,12 +587,6 @@ sub bmod
     ($self,$x,$y,@r) = objectify(2,@_);
     }
 
-  $x = $self->new($x) unless $x->isa($self);
-  $y = $self->new($y) unless $y->isa($self);
-
-  return $self->_div_inf($x,$y)
-   if (($x->{sign} !~ /^[+-]$/) || ($y->{sign} !~ /^[+-]$/) || $y->is_zero());
-
   return $self->_div_inf($x,$y)
    if (($x->{sign} !~ /^[+-]$/) || ($y->{sign} !~ /^[+-]$/) || $y->is_zero());
 
@@ -587,29 +594,23 @@ sub bmod
 
   # compute $x - $y * floor($x/$y), keeping the sign of $x
 
-  # locally disable these, since they would interfere
-  local $Math::BigInt::upgrade = undef;
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-
-  my $u = $x->copy()->babs();
-  # first, do a "normal" division ($x/$y)
-  $u->{_d}->bmul($y->{_n});
-  $u->{_n}->bmul($y->{_d});
-
-  # compute floor
-  if (!$u->{_d}->is_one())
+  # copy x to u, make it positive and then do a normal division ($u/$y)
+  my $u = bless { sign => '+' }, $self;
+  $u->{_n} = $MBI->_mul( $MBI->_copy($x->{_n}), $y->{_d} );
+  $u->{_d} = $MBI->_mul( $MBI->_copy($x->{_d}), $y->{_n} );
+  
+  # compute floor(u)
+  if (! $MBI->_is_one($u->{_d}))
     {
-    $u->{_n}->bdiv($u->{_d});			# 22/7 => 3/1 w/ truncate
-    # no need to set $u->{_d} to 1, since later we set it to $y->{_d}
-    #$x->{_n}->binc() if $x->{sign} eq '-';	# -22/7 => -4/1
+    $u->{_n} = $MBI->_div($u->{_n},$u->{_d});	# 22/7 => 3/1 w/ truncate
+    # no need to set $u->{_d} to 1, since below we set it to $y->{_d} anyway
     }
   
-  # compute $y * $u
-  $u->{_d} = $y->{_d};			# 1 * $y->{_d}, see floor above
-  $u->{_n}->bmul($y->{_n});
+  # now compute $y * $u
+  $u->{_d} = $MBI->_copy($y->{_d});		# 1 * $y->{_d}, see floor above
+  $u->{_n} = $MBI->_mul($u->{_n},$y->{_n});
 
-  my $xsign = $x->{sign}; $x->{sign} = '+';	# remember sign and make abs
+  my $xsign = $x->{sign}; $x->{sign} = '+';	# remember sign and make x positive
   # compute $x - $u
   $x->bsub($u);
   $x->{sign} = $xsign;				# put sign back
@@ -627,23 +628,21 @@ sub bdec
 
   return $x if $x->{sign} !~ /^[+-]$/;	# NaN, inf, -inf
 
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
   if ($x->{sign} eq '-')
     {
-    $x->{_n}->badd($x->{_d});	# -5/2 => -7/2
+    $x->{_n} = $MBI->_add( $x->{_n}, $x->{_d});		# -5/2 => -7/2
     }
   else
     {
-    if ($x->{_n}->bacmp($x->{_d}) < 0)
+    if ($MBI->_acmp($x->{_n},$x->{_d}) < 0)		# n < d?
       {
       # 1/3 -- => -2/3
-      $x->{_n} = $x->{_d} - $x->{_n};
+      $x->{_n} = $MBI->_sub( $MBI->_copy($x->{_d}), $x->{_n});
       $x->{sign} = '-';
       }
     else
       {
-      $x->{_n}->bsub($x->{_d});		# 5/2 => 3/2
+      $x->{_n} = $MBI->_sub($x->{_n}, $x->{_d}); 	# 5/2 => 3/2
       }
     }
   $x->bnorm()->round(@r);
@@ -656,24 +655,22 @@ sub binc
   
   return $x if $x->{sign} !~ /^[+-]$/;	# NaN, inf, -inf
 
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
   if ($x->{sign} eq '-')
     {
-    if ($x->{_n}->bacmp($x->{_d}) < 0)
+    if ($MBI->_acmp($x->{_n},$x->{_d}) < 0)
       {
       # -1/3 ++ => 2/3 (overflow at 0)
-      $x->{_n} = $x->{_d} - $x->{_n};
+      $x->{_n} = $MBI->_sub( $MBI->_copy($x->{_d}), $x->{_n});
       $x->{sign} = '+';
       }
     else
       {
-      $x->{_n}->bsub($x->{_d});		# -5/2 => -3/2
+      $x->{_n} = $MBI->_sub($x->{_n}, $x->{_d}); 	# -5/2 => -3/2
       }
     }
   else
     {
-    $x->{_n}->badd($x->{_d});	# 5/2 => 7/2
+    $x->{_n} = $MBI->_add($x->{_n},$x->{_d});		# 5/2 => 7/2
     }
   $x->bnorm()->round(@r);
   }
@@ -687,7 +684,7 @@ sub is_int
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
   return 1 if ($x->{sign} =~ /^[+-]$/) &&	# NaN and +-inf aren't
-    $x->{_d}->is_one();				# x/y && y != 1 => no integer
+    $MBI->_is_one($x->{_d});			# x/y && y != 1 => no integer
   0;
   }
 
@@ -696,7 +693,7 @@ sub is_zero
   # return true if arg (BRAT or num_str) is zero
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
-  return 1 if $x->{sign} eq '+' && $x->{_n}->is_zero();
+  return 1 if $x->{sign} eq '+' && $MBI->_is_zero($x->{_n});
   0;
   }
 
@@ -707,7 +704,7 @@ sub is_one
 
   my $sign = $_[2] || ''; $sign = '+' if $sign ne '-';
   return 1
-   if ($x->{sign} eq $sign && $x->{_n}->is_one() && $x->{_d}->is_one());
+   if ($x->{sign} eq $sign && $MBI->_is_one($x->{_n}) && $MBI->_is_one($x->{_d}));
   0;
   }
 
@@ -717,7 +714,7 @@ sub is_odd
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
   return 1 if ($x->{sign} =~ /^[+-]$/) &&		# NaN & +-inf aren't
-    ($x->{_d}->is_one() && $x->{_n}->is_odd());		# x/2 is not, but 3/1
+    ($MBI->_is_one($x->{_d}) && $MBI->_is_odd($x->{_n})); # x/2 is not, but 3/1
   0;
   }
 
@@ -727,8 +724,8 @@ sub is_even
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
   return 0 if $x->{sign} !~ /^[+-]$/;			# NaN & +-inf aren't
-  return 1 if ($x->{_d}->is_one()			# x/3 is never
-     && $x->{_n}->is_even());				# but 4/1 is
+  return 1 if ($MBI->_is_one($x->{_d})			# x/3 is never
+     && $MBI->_is_even($x->{_n}));			# but 4/1 is
   0;
   }
 
@@ -739,9 +736,10 @@ sub numerator
   {
   my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
 
-  return $MBI->new($x->{sign}) if ($x->{sign} !~ /^[+-]$/);
+  # NaN, inf, -inf
+  return Math::BigInt->new($x->{sign}) if ($x->{sign} !~ /^[+-]$/);
 
-  my $n = $x->{_n}->copy(); $n->{sign} = $x->{sign};
+  my $n = Math::BigInt->new($MBI->_str($x->{_n})); $n->{sign} = $x->{sign};
   $n;
   }
 
@@ -749,21 +747,28 @@ sub denominator
   {
   my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
 
-  return $MBI->new($x->{sign}) if ($x->{sign} !~ /^[+-]$/);
-  $x->{_d}->copy(); 
+  # NaN
+  return Math::BigInt->new($x->{sign}) if $x->{sign} eq 'NaN';
+  # inf, -inf
+  return Math::BigInt->bone() if $x->{sign} !~ /^[+-]$/;
+  
+  Math::BigInt->new($MBI->_str($x->{_d}));
   }
 
 sub parts
   {
   my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
 
-  return ($self->bnan(),$self->bnan()) if $x->{sign} eq 'NaN';
-  return ($self->binf(),$self->binf()) if $x->{sign} eq '+inf';
-  return ($self->binf('-'),$self->binf()) if $x->{sign} eq '-inf';
+  my $c = 'Math::BigInt';
 
-  my $n = $x->{_n}->copy();
+  return ($c->bnan(),$c->bnan()) if $x->{sign} eq 'NaN';
+  return ($c->binf(),$c->binf()) if $x->{sign} eq '+inf';
+  return ($c->binf('-'),$c->binf()) if $x->{sign} eq '-inf';
+
+  my $n = $c->new( $MBI->_str($x->{_n}));
   $n->{sign} = $x->{sign};
-  return ($n,$x->{_d}->copy());
+  my $d = $c->new( $MBI->_str($x->{_d}));
+  ($n,$d);
   }
 
 sub length
@@ -771,15 +776,15 @@ sub length
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
   return $nan unless $x->is_int();
-  $x->{_n}->length();			# length(-123/1) => length(123)
+  $MBI->_len($x->{_n});				# length(-123/1) => length(123)
   }
 
 sub digit
   {
-  my ($self,$x,$n) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
+  my ($self,$x,$n) = ref($_[0]) ? (undef,$_[0],$_[1]) : objectify(1,@_);
 
   return $nan unless $x->is_int();
-  $x->{_n}->digit($n);			# digit(-123/1,2) => digit(123,2)
+  $MBI->_digit($x->{_n},$n || 0);		# digit(-123/1,2) => digit(123,2)
   }
 
 ##############################################################################
@@ -789,16 +794,14 @@ sub bceil
   {
   my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
 
-  return $x unless $x->{sign} =~ /^[+-]$/;
-  return $x if $x->{_d}->is_one();		# 22/1 => 22, 0/1 => 0
+  return $x if $x->{sign} !~ /^[+-]$/ ||	# not for NaN, inf
+            $MBI->_is_one($x->{_d});		# 22/1 => 22, 0/1 => 0
 
-  local $Math::BigInt::upgrade = undef;
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-  $x->{_n}->bdiv($x->{_d});			# 22/7 => 3/1 w/ truncate
-  $x->{_d}->bone();
-  $x->{_n}->binc() if $x->{sign} eq '+';	# +22/7 => 4/1
-  $x->{sign} = '+' if $x->{_n}->is_zero();	# -0 => 0
+  $x->{_n} = $MBI->_div($x->{_n},$x->{_d});	# 22/7 => 3/1 w/ truncate
+  $x->{_d} = $MBI->_one();			# d => 1
+  $x->{_n} = $MBI->_inc($x->{_n})
+    if $x->{sign} eq '+';			# +22/7 => 4/1
+  $x->{sign} = '+' if $MBI->_is_zero($x->{_n});	# -0 => 0
   $x;
   }
 
@@ -806,15 +809,13 @@ sub bfloor
   {
   my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
 
-  return $x unless $x->{sign} =~ /^[+-]$/;
-  return $x if $x->{_d}->is_one();		# 22/1 => 22, 0/1 => 0
+  return $x if $x->{sign} !~ /^[+-]$/ ||	# not for NaN, inf
+            $MBI->_is_one($x->{_d});		# 22/1 => 22, 0/1 => 0
 
-  local $Math::BigInt::upgrade = undef;
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-  $x->{_n}->bdiv($x->{_d});			# 22/7 => 3/1 w/ truncate
-  $x->{_d}->bone();
-  $x->{_n}->binc() if $x->{sign} eq '-';	# -22/7 => -4/1
+  $x->{_n} = $MBI->_div($x->{_n},$x->{_d});	# 22/7 => 3/1 w/ truncate
+  $x->{_d} = $MBI->_one();			# d => 1
+  $x->{_n} = $MBI->_inc($x->{_n})
+    if $x->{sign} eq '-';			# -22/7 => -4/1
   $x;
   }
 
@@ -822,13 +823,15 @@ sub bfac
   {
   my ($self,$x,@r) = ref($_[0]) ? (ref($_[0]),@_) : objectify(1,@_);
 
-  # if $x is an integer
-  if (($x->{sign} eq '+') && ($x->{_d}->is_one()))
+  # if $x is not an integer
+  if (($x->{sign} ne '+') || (!$MBI->_is_one($x->{_d})))
     {
-    $x->{_n}->bfac();
-    return $x->round(@r);
+    return $x->bnan();
     }
-  $x->bnan();
+
+  $x->{_n} = $MBI->_fac($x->{_n});
+  # since _d is 1, we don't need to reduce/norm the result
+  $x->round(@r);
   }
 
 sub bpow
@@ -847,7 +850,8 @@ sub bpow
   return $x->bnan() if $x->{sign} eq $nan || $y->{sign} eq $nan;
   return $x->bone(@r) if $y->is_zero();
   return $x->round(@r) if $x->is_one() || $y->is_one();
-  if ($x->{sign} eq '-' && $x->{_n}->is_one() && $x->{_d}->is_one())
+
+  if ($x->{sign} eq '-' && $MBI->_is_one($x->{_n}) && $MBI->_is_one($x->{_d}))
     {
     # if $x == -1 and odd/even y => +1/-1
     return $y->is_odd() ? $x->round(@r) : $x->babs()->round(@r);
@@ -855,16 +859,16 @@ sub bpow
     }
   # 1 ** -y => 1 / (1 ** |y|)
   # so do test for negative $y after above's clause
- #  return $x->bnan() if $y->{sign} eq '-';
+
   return $x->round(@r) if $x->is_zero();  # 0**y => 0 (if not y <= 0)
 
   # shortcut y/1 (and/or x/1)
-  if ($y->{_d}->is_one())
+  if ($MBI->_is_one($y->{_d}))
     {
     # shortcut for x/1 and y/1
-    if ($x->{_d}->is_one())
+    if ($MBI->_is_one($x->{_d}))
       {
-      $x->{_n}->bpow($y->{_n});		# x/1 ** y/1 => (x ** y)/1
+      $x->{_n} = $MBI->_pow($x->{_n},$y->{_n});		# x/1 ** y/1 => (x ** y)/1
       if ($y->{sign} eq '-')
         {
         # 0.2 ** -3 => 1/(0.2 ** 3)
@@ -874,13 +878,13 @@ sub bpow
       if ($x->{sign} eq '-')
         {
         # - * - => +, - * - * - => -
-        $x->{sign} = '+' if $y->{_n}->is_even();	
+        $x->{sign} = '+' if $MBI->_is_even($y->{_n});	
         }
       return $x->round(@r);
       }
     # x/z ** y/1
-    $x->{_n}->bpow($y->{_n});		# 5/2 ** y/1 => 5 ** y / 2 ** y
-    $x->{_d}->bpow($y->{_n});
+    $x->{_n} = $MBI->_pow($x->{_n},$y->{_n});		# 5/2 ** y/1 => 5 ** y / 2 ** y
+    $x->{_d} = $MBI->_pow($x->{_d},$y->{_n});
     if ($y->{sign} eq '-')
       {
       # 0.2 ** -3 => 1/(0.2 ** 3)
@@ -890,19 +894,20 @@ sub bpow
     if ($x->{sign} eq '-')
       {
       # - * - => +, - * - * - => -
-      $x->{sign} = '+' if $y->{_n}->is_even();	
+      $x->{sign} = '+' if $MBI->_is_even($y->{_n});	
       }
     return $x->round(@r);
     }
 
   # regular calculation (this is wrong for d/e ** f/g)
-  my $pow2 = $self->__one();
-  my $y1 = $MBI->new($y->{_n}/$y->{_d})->babs();
-  my $two = $MBI->new(2);
-  while (!$y1->is_one())
+  my $pow2 = $self->bone();
+  my $y1 = $MBI->_div ( $MBI->_copy($y->{_n}), $y->{_d});
+  my $two = $MBI->_two();
+
+  while (!$MBI->_is_one($y1))
     {
-    $pow2->bmul($x) if $y1->is_odd();
-    $y1->bdiv($two);
+    $pow2->bmul($x) if $MBI->_is_odd($y1);
+    $MBI->_div($y1, $two);
     $x->bmul($x);
     }
   $x->bmul($pow2) unless $pow2->is_one();
@@ -937,6 +942,17 @@ sub blog
   $x->_new_from_float( $x->_as_float()->blog(Math::BigFloat->new("$y"),@r) );
   }
 
+sub _float_from_part
+  {
+  my $x = shift;
+
+  my $f = Math::BigFloat->bzero();
+  $f->{_m} = $MBI->_copy($x);
+  $f->{_e} = $MBI->_zero();
+
+  $f;
+  }
+
 sub _as_float
   {
   my $x = shift;
@@ -945,7 +961,15 @@ sub _as_float
   local $Math::BigFloat::accuracy = undef;
   local $Math::BigFloat::precision = undef;
   # 22/7 => 3.142857143..
-  Math::BigFloat->new($x->{_n})->bdiv($x->{_d}, $x->accuracy());
+
+  my $a = $x->accuracy() || 0;
+  if ($a != 0 || !$MBI->_is_one($x->{_d}))
+    {
+    # n/d
+    return Math::BigFloat->new($x->{sign} . $MBI->_str($x->{_n}))->bdiv( $MBI->_str($x->{_d}), $x->accuracy());
+    }
+  # just n
+  Math::BigFloat->new($x->{sign} . $MBI->_str($x->{_n}));
   }
 
 sub broot
@@ -1030,25 +1054,30 @@ sub bsqrt
   local $Math::BigInt::precision = undef;
   local $Math::BigInt::accuracy = undef;
 
-  $x->{_d} = Math::BigFloat->new($x->{_d})->bsqrt();
-  $x->{_n} = Math::BigFloat->new($x->{_n})->bsqrt();
+  $x->{_n} = _float_from_part( $x->{_n} )->bsqrt();
+  $x->{_d} = _float_from_part( $x->{_d} )->bsqrt();
+
+  # XXX TODO: we probably can optimze this:
 
   # if sqrt(D) was not integer
   if ($x->{_d}->{_es} ne '+')
     {
     $x->{_n}->blsft($x->{_d}->exponent()->babs(),10);	# 7.1/4.51 => 7.1/45.1
-    $x->{_d} = $MBI->new($CALC->_str($x->{_d}->{_m}));	# 7.1/45.1 => 71/45.1
+    $x->{_d} = $MBI->_copy( $x->{_d}->{_m} );		# 7.1/45.1 => 71/45.1
     }
   # if sqrt(N) was not integer
   if ($x->{_n}->{_es} ne '+')
     {
     $x->{_d}->blsft($x->{_n}->exponent()->babs(),10);	# 71/45.1 => 710/45.1
-    $x->{_n} = $MBI->new($CALC->_str($x->{_n}->{_m}));	# 710/45.1 => 710/451
+    $x->{_n} = $MBI->_copy( $x->{_n}->{_m} );		# 710/45.1 => 710/451
     }
- 
+
   # convert parts to $MBI again 
-  $x->{_n} = $x->{_n}->as_number() unless $x->{_n}->isa($MBI);
-  $x->{_d} = $x->{_d}->as_number() unless $x->{_d}->isa($MBI);
+  $x->{_n} = $MBI->_lsft( $MBI->_copy( $x->{_n}->{_m} ), $x->{_n}->{_e}, 10)
+    if ref($x->{_n}) ne $MBI && ref($x->{_n}) ne 'ARRAY';
+  $x->{_d} = $MBI->_lsft( $MBI->_copy( $x->{_d}->{_m} ), $x->{_d}->{_e}, 10)
+    if ref($x->{_d}) ne $MBI && ref($x->{_d}) ne 'ARRAY';
+
   $x->bnorm()->round(@r);
   }
 
@@ -1064,7 +1093,7 @@ sub blsft
 
 sub brsft
   {
-  my ($self,$x,$y,$b,@r) = objectify(2,@_);
+  my ($self,$x,$y,$b,@r) = objectify(3,@_);
 
   $b = 2 unless defined $b;
   $b = $self->new($b) unless ref ($b);
@@ -1120,15 +1149,18 @@ sub bcmp
   return -1 if $x->{sign} eq '-' && $y->{sign} eq '+';  # does also -x <=> 0
 
   # shortcut
-  my $xz = $x->{_n}->is_zero();
-  my $yz = $y->{_n}->is_zero();
+  my $xz = $MBI->_is_zero($x->{_n});
+  my $yz = $MBI->_is_zero($y->{_n});
   return 0 if $xz && $yz;                               # 0 <=> 0
   return -1 if $xz && $y->{sign} eq '+';                # 0 <=> +y
   return 1 if $yz && $x->{sign} eq '+';                 # +x <=> 0
  
-  my $t = $x->{_n} * $y->{_d}; $t->{sign} = $x->{sign};
-  my $u = $y->{_n} * $x->{_d}; $u->{sign} = $y->{sign};
-  $t->bcmp($u);
+  my $t = $MBI->_mul( $MBI->_copy($x->{_n}), $y->{_d});
+  my $u = $MBI->_mul( $MBI->_copy($y->{_n}), $x->{_d});
+
+  my $cmp = $MBI->_acmp($t,$u);				# signs are equal
+  $cmp = -$cmp if $x->{sign} eq '-';			# both are '-' => reverse
+  $cmp;
   }
 
 sub bacmp
@@ -1152,9 +1184,9 @@ sub bacmp
     return -1;
     }
 
-  my $t = $x->{_n} * $y->{_d};
-  my $u = $y->{_n} * $x->{_d};
-  $t->bacmp($u);
+  my $t = $MBI->_mul( $MBI->_copy($x->{_n}), $y->{_d});
+  my $u = $MBI->_mul( $MBI->_copy($y->{_n}), $x->{_d});
+  $MBI->_acmp($t,$u);					# ignore signs
   }
 
 ##############################################################################
@@ -1168,26 +1200,23 @@ sub numify
   return $x->bstr() if $x->{sign} !~ /^[+-]$/;	# inf, NaN, etc
 
   # N/1 => N
-  return $x->{_n}->numify() if $x->{_d}->is_one();
+  return $MBI->_num($x->{_n}) if $MBI->_is_one($x->{_d});
 
   # N/D
   my $neg = 1; $neg = -1 if $x->{sign} ne '+';
-  $neg * $x->{_n}->numify() / $x->{_d}->numify();	# return sign * N/D
+  $neg * $MBI->_num($x->{_n}) / $MBI->_num($x->{_d});	# return sign * N/D
   }
 
 sub as_number
   {
   my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
-  return $x if $x->{sign} !~ /^[+-]$/;			# NaN, inf etc
+  return Math::BigInt->new($x) if $x->{sign} !~ /^[+-]$/;	# NaN, inf etc
  
-  # need to disable these, otherwise bdiv() gives BigRat again
-  local $Math::BigInt::upgrade = undef;
-  local $Math::BigInt::accuracy = undef;
-  local $Math::BigInt::precision = undef;
-  my $t = $x->{_n}->copy()->bdiv($x->{_d});		# 22/7 => 3
-  $t->{sign} = $x->{sign};
-  $t;
+  my $u = Math::BigInt->bzero();
+  $u->{sign} = $x->{sign};
+  $u->{value} = $MBI->_div( $MBI->_copy($x->{_n}), $x->{_d});	# 22/7 => 3
+  $u;
   }
 
 sub as_bin
@@ -1197,7 +1226,7 @@ sub as_bin
   return $x unless $x->is_int();
 
   my $s = $x->{sign}; $s = '' if $s eq '+';
-  $s . $x->{_n}->as_bin();
+  $s . $MBI->_as_bin($x->{_n});
   }
 
 sub as_hex
@@ -1207,7 +1236,7 @@ sub as_hex
   return $x unless $x->is_int();
 
   my $s = $x->{sign}; $s = '' if $s eq '+';
-  $s . $x->{_n}->as_hex();
+  $s . $MBI->_as_hex($x->{_n});
   }
 
 sub import
@@ -1285,7 +1314,7 @@ sub import
     require Carp; Carp::croak ("Couldn't load $MBI: $! $@");
     }
 
-  $CALC = Math::BigFloat->config()->{lib};
+  $MBI = Math::BigFloat->config()->{lib};
   
   # any non :constant stuff is handled by our parent, Exporter
   # even if @_ is empty, to give it a chance

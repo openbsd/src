@@ -3,7 +3,8 @@ package File::Spec;
 use strict;
 use vars qw(@ISA $VERSION);
 
-$VERSION = '0.87';
+$VERSION = '3.01';
+$VERSION = eval $VERSION;
 
 my %module = (MacOS   => 'Mac',
 	      MSWin32 => 'Win32',
@@ -92,7 +93,7 @@ path.
 Concatenate two or more directory names to form a complete path ending
 with a directory. But remove the trailing slash from the resulting
 string, because it doesn't look good, isn't necessary and confuses
-OS2. Of course, if this is the root directory, don't cut off the
+OS/2. Of course, if this is the root directory, don't cut off the
 trailing slash :-)
 
     $path = File::Spec->catdir( @directories );
@@ -127,8 +128,8 @@ Returns a string representation of the root directory.
 Returns a string representation of the first writable directory from a
 list of possible temporary directories.  Returns the current directory
 if no writable temporary directories are found.  The list of directories
-checked depends on the platform; e.g. File::Spec::Unix checks $ENV{TMPDIR}
-(unless taint is on) and /tmp.
+checked depends on the platform; e.g. File::Spec::Unix checks C<$ENV{TMPDIR}>
+(unless taint is on) and F</tmp>.
 
     $tmpdir = File::Spec->tmpdir();
 
@@ -148,13 +149,13 @@ directory. (Does not strip symlinks, only '.', '..', and equivalents.)
 =item case_tolerant
 
 Returns a true or false value indicating, respectively, that alphabetic
-is not or is significant when comparing file specifications.
+case is not or is significant when comparing file specifications.
 
     $is_case_tolerant = File::Spec->case_tolerant();
 
 =item file_name_is_absolute
 
-Takes as argument a path and returns true if it is an absolute path.
+Takes as its argument a path, and returns true if it is an absolute path.
 
     $is_absolute = File::Spec->file_name_is_absolute( $path );
 
@@ -164,7 +165,7 @@ Mac OS (Classic).  It does consult the working environment for VMS
 
 =item path
 
-Takes no argument, returns the environment variable PATH (or the local
+Takes no argument.  Returns the environment variable C<PATH> (or the local
 platform's equivalent) as a list.
 
     @PATH = File::Spec->path();
@@ -182,8 +183,8 @@ with no concept of volume, returns '' for volume.
     ($volume,$directories,$file) = File::Spec->splitpath( $path, $no_file );
 
 For systems with no syntax differentiating filenames from directories, 
-assumes that the last file is a path unless $no_file is true or a 
-trailing separator or /. or /.. is present. On Unix this means that $no_file
+assumes that the last file is a path unless C<$no_file> is true or a
+trailing separator or F</.> or F</..> is present. On Unix, this means that C<$no_file>
 true makes this return ( '', $path, '' ).
 
 The directory portion may or may not be returned with a trailing '/'.
@@ -197,19 +198,19 @@ The opposite of L</catdir()>.
 
     @dirs = File::Spec->splitdir( $directories );
 
-$directories must be only the directory portion of the path on systems 
+C<$directories> must be only the directory portion of the path on systems 
 that have the concept of a volume or that have path syntax that differentiates
 files from directories.
 
 Unlike just splitting the directories on the separator, empty
 directory names (C<''>) can be returned, because these are significant
-on some OSs.
+on some OSes.
 
 =item catpath()
 
 Takes volume, directory and file portions and returns an entire path. Under
-Unix, $volume is ignored, and directory and file are concatenated.  A '/' is
-inserted if need be.  On other OSs, $volume is significant.
+Unix, C<$volume> is ignored, and directory and file are concatenated.  A '/' is
+inserted if need be.  On other OSes, C<$volume> is significant.
 
     $full_path = File::Spec->catpath( $volume, $directory, $file );
 
@@ -221,22 +222,22 @@ from the base path to the destination path:
     $rel_path = File::Spec->abs2rel( $path ) ;
     $rel_path = File::Spec->abs2rel( $path, $base ) ;
 
-If $base is not present or '', then L<cwd()|Cwd> is used. If $base is
+If C<$base> is not present or '', then L<cwd()|Cwd> is used. If C<$base> is
 relative, then it is converted to absolute form using
 L</rel2abs()>. This means that it is taken to be relative to
 L<cwd()|Cwd>.
 
-On systems with the concept of volume, if $path and $base appear to be
+On systems with the concept of volume, if C<$path> and C<$base> appear to be
 on two different volumes, we will not attempt to resolve the two
-paths, and we will instead simply return $path.  Note that previous
-versions of this module ignored the volume of $base, which resulted in
+paths, and we will instead simply return C<$path>.  Note that previous
+versions of this module ignored the volume of C<$base>, which resulted in
 garbage results part of the time.
 
 On systems that have a grammar that indicates filenames, this ignores the 
-$base filename as well. Otherwise all path components are assumed to be
+C<$base> filename as well. Otherwise all path components are assumed to be
 directories.
 
-If $path is relative, it is converted to absolute form using L</rel2abs()>.
+If C<$path> is relative, it is converted to absolute form using L</rel2abs()>.
 This means that it is taken to be relative to L<cwd()|Cwd>.
 
 No checks against the filesystem are made.  On VMS, there is
@@ -252,21 +253,21 @@ Converts a relative path to an absolute path.
     $abs_path = File::Spec->rel2abs( $path ) ;
     $abs_path = File::Spec->rel2abs( $path, $base ) ;
 
-If $base is not present or '', then L<cwd()|Cwd> is used. If $base is relative, 
+If C<$base> is not present or '', then L<cwd()|Cwd> is used. If C<$base> is relative,
 then it is converted to absolute form using L</rel2abs()>. This means that it
 is taken to be relative to L<cwd()|Cwd>.
 
-On systems with the concept of volume, if $path and $base appear to be
+On systems with the concept of volume, if C<$path> and C<$base> appear to be
 on two different volumes, we will not attempt to resolve the two
-paths, and we will instead simply return $path.  Note that previous
-versions of this module ignored the volume of $base, which resulted in
+paths, and we will instead simply return C<$path>.  Note that previous
+versions of this module ignored the volume of C<$base>, which resulted in
 garbage results part of the time.
 
 On systems that have a grammar that indicates filenames, this ignores the 
-$base filename as well. Otherwise all path components are assumed to be
+C<$base> filename as well. Otherwise all path components are assumed to be
 directories.
 
-If $path is absolute, it is cleaned up and returned using L</canonpath()>.
+If C<$path> is absolute, it is cleaned up and returned using L</canonpath()>.
 
 No checks against the filesystem are made.  On VMS, there is
 interaction with the working environment, as logicals and
@@ -286,17 +287,21 @@ L<File::Spec::Unix>, L<File::Spec::Mac>, L<File::Spec::OS2>,
 L<File::Spec::Win32>, L<File::Spec::VMS>, L<File::Spec::Functions>,
 L<ExtUtils::MakeMaker>
 
-=head1 AUTHORS
+=head1 AUTHOR
 
-Kenneth Albanowski <kjahds@kjahds.com>, Andy Dougherty
-<doughera@lafayette.edu>, Andreas KE<ouml>nig
-<A.Koenig@franz.ww.TU-Berlin.DE>, Tim Bunce <Tim.Bunce@ig.co.uk.
-VMS support by Charles Bailey <bailey@newman.upenn.edu>.
-OS/2 support by Ilya Zakharevich <ilya@math.ohio-state.edu>.
-Mac support by Paul Schinder <schinder@pobox.com>, and Thomas Wegner
-<wegner_thomas@yahoo.com>.  abs2rel() and rel2abs() written by Shigio
-Yamaguchi <shigio@tamacom.com>, modified by Barrie Slaymaker
-<barries@slaysys.com>.  splitpath(), splitdir(), catpath() and
-catdir() by Barrie Slaymaker.
+Currently maintained by Ken Williams C<< <KWILLIAMS@cpan.org> >>.
+
+The vast majority of the code was written by
+Kenneth Albanowski C<< <kjahds@kjahds.com> >>,
+Andy Dougherty C<< <doughera@lafayette.edu> >>,
+Andreas KE<ouml>nig C<< <A.Koenig@franz.ww.TU-Berlin.DE> >>,
+Tim Bunce C<< <Tim.Bunce@ig.co.uk> >>.
+VMS support by Charles Bailey C<< <bailey@newman.upenn.edu> >>.
+OS/2 support by Ilya Zakharevich C<< <ilya@math.ohio-state.edu> >>.
+Mac support by Paul Schinder C<< <schinder@pobox.com> >>, and
+Thomas Wegner C<< <wegner_thomas@yahoo.com> >>.
+abs2rel() and rel2abs() written by Shigio Yamaguchi C<< <shigio@tamacom.com> >>,
+modified by Barrie Slaymaker C<< <barries@slaysys.com> >>.
+splitpath(), splitdir(), catpath() and catdir() by Barrie Slaymaker.
 
 =cut

@@ -1,0 +1,286 @@
+################################################################################
+##
+##  $Revision: 1.1.1.1 $
+##  $Author: millert $
+##  $Date: 2005/01/15 21:16:46 $
+##
+################################################################################
+##
+##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 2.x, Copyright (C) 2001, Paul Marquess.
+##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+##
+##  This program is free software; you can redistribute it and/or
+##  modify it under the same terms as Perl itself.
+##
+################################################################################
+
+=provides
+
+=dontwarn
+
+NEED_function
+NEED_function_GLOBAL
+DPPP_NAMESPACE
+
+=implementation
+
+=pod
+
+=head1 NAME
+
+ppport.h - Perl/Pollution/Portability version __VERSION__
+
+=head1 SYNOPSIS
+
+  perl ppport.h [options] [files]
+
+  --help                      show short help
+
+  --patch=file                write one patch file with changes
+  --copy=suffix               write changed copies with suffix
+  --diff=program              use diff program and options
+
+  --compat-version=version    provide compatibility with Perl version
+  --cplusplus                 accept C++ comments
+
+  --quiet                     don't output anything except fatal errors
+  --nodiag                    don't show diagnostics
+  --nohints                   don't show hints
+  --nochanges                 don't suggest changes
+
+  --list-provided             list provided API
+  --list-unsupported          list unsupported API
+
+=head1 COMPATIBILITY
+
+This version of F<ppport.h> is designed to support operation with Perl
+installations back to __MIN_PERL__, and has been tested up to __MAX_PERL__.
+
+=head1 OPTIONS
+
+=head2 --help
+
+Display a brief usage summary.
+
+=head2 --patch=I<file>
+
+If this option is given, a single patch file will be created if
+any changes are suggested. This requires a working diff program
+to be installed on your system.
+
+=head2 --copy=I<suffix>
+
+If this option is given, a copy of each file will be saved with
+the given suffix that contains the suggested changes. This does
+not require any external programs.
+
+If neither C<--patch> or C<--copy> are given, the default is to
+simply print the diffs for each file. This requires either
+C<Text::Diff> or a C<diff> program to be installed.
+
+=head2 --diff=I<program>
+
+Manually set the diff program and options to use. The default
+is to use C<Text::Diff>, when installed, and output unified
+context diffs.
+
+=head2 --compat-version=I<version>
+
+Tell F<ppport.h> to check for compatibility with the given
+Perl version. The default is to check for compatibility with Perl
+version __MIN_PERL__. You can use this option to reduce the output
+of F<ppport.h> if you intend to be backward compatible only
+up to a certain Perl version.
+
+=head2 --cplusplus
+
+Usually, F<ppport.h> will detect C++ style comments and
+replace them with C style comments for portability reasons.
+Using this option instructs F<ppport.h> to leave C++
+comments untouched.
+
+=head2 --quiet
+
+Be quiet. Don't print anything except fatal errors.
+
+=head2 --nodiag
+
+Don't output any diagnostic messages. Only portability
+alerts will be printed.
+
+=head2 --nohints
+
+Don't output any hints. Hints often contain useful portability
+notes.
+
+=head2 --nochanges
+
+Don't suggest any changes. Only give diagnostic output and hints
+unless these are also deactivated.
+
+=head2 --list-provided
+
+Lists the API elements for which compatibility is provided by
+F<ppport.h>. Also lists if it must be explicitly requested,
+if it has dependencies, and if there are hints for it.
+
+=head2 --list-unsupported
+
+Lists the API elements that are known not to be supported by
+F<ppport.h> and below which version of Perl they probably
+won't be available or work.
+
+=head1 DESCRIPTION
+
+In order for a Perl extension (XS) module to be as portable as possible
+across differing versions of Perl itself, certain steps need to be taken.
+
+=over 4
+
+=item *
+
+Including this header is the first major one. This alone will give you
+access to a large part of the Perl API that hasn't been available in
+earlier Perl releases. Use
+
+    perl ppport.h --list-provided
+
+to see which API elements are provided by ppport.h.
+
+=item *
+
+You should avoid using deprecated parts of the API. For example, using
+global Perl variables without the C<PL_> prefix is deprecated. Also,
+some API functions used to have a C<perl_> prefix. Using this form is
+also deprecated. You can safely use the supported API, as F<ppport.h>
+will provide wrappers for older Perl versions.
+
+=item *
+
+If you use one of a few functions that were not present in earlier
+versions of Perl, and that can't be provided using a macro, you have
+to explicitly request support for these functions by adding one or
+more C<#define>s in your source code before the inclusion of F<ppport.h>.
+
+These functions will be marked C<explicit> in the list shown by
+C<--list-provided>.
+
+Depending on whether you module has a single or multiple files that
+use such functions, you want either C<static> or global variants.
+
+For a C<static> function, use:
+
+    #define NEED_function
+
+For a global function, use:
+
+    #define NEED_function_GLOBAL
+
+Note that you mustn't have more than one global request for one
+function in your project.
+
+    __EXPLICIT_API__
+
+To avoid namespace conflicts, you can change the namespace of the
+explicitly exported functions using the C<DPPP_NAMESPACE> macro.
+Just C<#define> the macro before including C<ppport.h>:
+
+    #define DPPP_NAMESPACE MyOwnNamespace_
+    #include "ppport.h"
+
+The default namespace is C<DPPP_>.
+
+=back
+
+The good thing is that most of the above can be checked by running
+F<ppport.h> on your source code. See the next section for
+details.
+
+=head1 EXAMPLES
+
+To verify whether F<ppport.h> is needed for your module, whether you
+should make any changes to your code, and whether any special defines
+should be used, F<ppport.h> can be run as a Perl script to check your
+source code. Simply say:
+
+    perl ppport.h
+
+The result will usually be a list of patches suggesting changes
+that should at least be acceptable, if not necessarily the most
+efficient solution, or a fix for all possible problems.
+
+If you know that your XS module uses features only available in
+newer Perl releases, if you're aware that it uses C++ comments,
+and if you want all suggestions as a single patch file, you could
+use something like this:
+
+    perl ppport.h --compat-version=5.6.0 --cplusplus --patch=test.diff
+
+If you only want your code to be scanned without any suggestions
+for changes, use:
+
+    perl ppport.h --nochanges
+
+You can specify a different C<diff> program or options, using
+the C<--diff> option:
+
+    perl ppport.h --diff='diff -C 10'
+
+This would output context diffs with 10 lines of context.
+
+=head1 BUGS
+
+If this version of F<ppport.h> is causing failure during
+the compilation of this module, please check if newer versions
+of either this module or C<Devel::PPPort> are available on CPAN
+before sending a bug report.
+
+If F<ppport.h> was generated using the latest version of
+C<Devel::PPPort> and is causing failure of this module, please
+file a bug report using the CPAN Request Tracker at L<http://rt.cpan.org/>.
+
+Please include the following information:
+
+=over 4
+
+=item 1.
+
+The complete output from running "perl -V"
+
+=item 2.
+
+This file.
+
+=item 3.
+
+The name and version of the module you were trying to build.
+
+=item 4.
+
+A full log of the build that failed.
+
+=item 5.
+
+Any other information that you think could be relevant.
+
+=back
+
+For the latest version of this code, please get the C<Devel::PPPort>
+module from CPAN.
+
+=head1 COPYRIGHT
+
+Version 3.x, Copyright (c) 2004, Marcus Holland-Moritz.
+
+Version 2.x, Copyright (C) 2001, Paul Marquess.
+
+Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+See L<Devel::PPPort>.
+

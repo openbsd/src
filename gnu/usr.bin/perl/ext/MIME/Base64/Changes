@@ -1,3 +1,48 @@
+2004-09-20   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.05
+
+   Steve Hay <steve.hay@uk.radan.com> found the warn test broken
+   on Windows and provided a fix.
+
+
+
+2004-09-18   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.04
+   
+   Fixed the bad-sv.t test script to actually contain the
+   correct expected result as of v3.02.
+
+
+
+2004-08-25   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.03
+
+   Forgot to increment version number in MIME::QuotedPrint even
+   if its interface changed in 3.02.  As a result you will now
+   need to require MIME::QuotedPrint 3.03 if you want to ensure
+   it provides the binmode interface.
+
+
+
+2004-08-24   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.02
+
+   The encode_qp() function now takes an optional third argument
+   to select binary encoding mode.
+   <https://rt.cpan.org/Ticket/Display.html?id=7456>
+
+   The result of encode_qp($non_empty, $eol) will now always be
+   $eol terminated.  If the string to encode does not end with "\n"
+   then a soft line break is appended to the result.  As an example
+   encode_qp("foo") used to be encoded as "foo", but now encodes as
+   "foo=\n".
+
+
+
 2004-03-29   Gisle Aas <gisle@ActiveState.com>
 
    Release 3.01

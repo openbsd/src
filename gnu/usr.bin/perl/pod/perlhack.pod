@@ -38,12 +38,14 @@ releases of Perl are shepherded by a ``pumpking'', a porter
 responsible for gathering patches, deciding on a patch-by-patch
 feature-by-feature basis what will and will not go into the release.
 For instance, Gurusamy Sarathy was the pumpking for the 5.6 release of
-Perl, and Jarkko Hietaniemi is the pumpking for the 5.8 release, and
-Hugo van der Sanden will be the pumpking for the 5.10 release.
+Perl, and Jarkko Hietaniemi was the pumpking for the 5.8 release, and
+Hugo van der Sanden and Rafael Garcia-Suarez share the pumpking for
+the 5.10 release.
 
 In addition, various people are pumpkings for different things.  For
-instance, Andy Dougherty and Jarkko Hietaniemi share the I<Configure>
-pumpkin.
+instance, Andy Dougherty and Jarkko Hietaniemi did a grand job as the
+I<Configure> pumpkin up till the 5.8 release. For the 5.10 release
+H.Merijn Brand took over.
 
 Larry sees Perl development along the lines of the US government:
 there's the Legislature (the porters), the Executive branch (the
@@ -1932,6 +1934,14 @@ C<-torture> argument to F<t/harness>.
 =item utest ucheck test.utf8 check.utf8
 
 Run all the tests with -Mutf8.  Not all tests will succeed.
+
+=item minitest.utf16 test.utf16
+
+Runs the tests with UTF-16 encoded scripts, encoded with different
+versions of this encoding.
+
+C<make utest.utf16> runs the test suite with a combination of C<-utf8> and
+C<-utf16> arguments to F<t/TEST>.
 
 =item test_harness
 

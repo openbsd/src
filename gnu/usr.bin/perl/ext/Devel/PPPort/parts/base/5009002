@@ -1,0 +1,21 @@
+5.009002
+CopyD                          # E
+MoveD                          # E
+PUSHmortal                     # E
+SvPVbyte_force                 # E
+UNDERBAR                       # E
+XPUSHmortal                    # E
+ZeroD                          # E
+dUNDERBAR                      # E
+find_rundefsvoffset            # U
+mPUSHi                         # U
+mPUSHn                         # U
+mPUSHp                         # U
+mPUSHu                         # U
+mXPUSHi                        # U
+mXPUSHn                        # U
+mXPUSHp                        # U
+mXPUSHu                        # U
+vnormal                        # E
+PERL_BCDVERSION                # added by devel/scanprov
+MY_CXT_CLONE                   # added by devel/scanprov

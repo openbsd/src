@@ -14,14 +14,12 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
 	 OPpLVAL_INTRO OPpOUR_INTRO OPpENTERSUB_AMPER OPpSLICE OPpCONST_BARE
 	 OPpTRANS_SQUASH OPpTRANS_DELETE OPpTRANS_COMPLEMENT OPpTARGET_MY
 	 OPpCONST_ARYBASE OPpEXISTS_SUB OPpSORT_NUMERIC OPpSORT_INTEGER
-	 OPpSORT_REVERSE OPpSORT_INPLACE
+	 OPpSORT_REVERSE OPpSORT_INPLACE OPpSORT_DESCEND OPpITER_REVERSED
 	 SVf_IOK SVf_NOK SVf_ROK SVf_POK SVpad_OUR SVf_FAKE SVs_RMG SVs_SMG
-         CVf_METHOD CVf_LOCKED CVf_LVALUE
+         CVf_METHOD CVf_LOCKED CVf_LVALUE CVf_ASSERTION
 	 PMf_KEEP PMf_GLOBAL PMf_CONTINUE PMf_EVAL PMf_ONCE PMf_SKIPWHITE
 	 PMf_MULTILINE PMf_SINGLELINE PMf_FOLD PMf_EXTENDED);
-# Not sure if I really should have this as maint's version, given that Deparse
-# differs from blead. (latter has // support)
-$VERSION = 0.67;
+$VERSION = 0.69;
 use strict;
 use vars qw/$AUTOLOAD/;
 use warnings ();
@@ -829,11 +827,12 @@ Carp::confess("SPECIAL in deparse_sub") if $cv->isa("B::SPECIAL");
     if ($cv->FLAGS & SVf_POK) {
 	$proto = "(". $cv->PV . ") ";
     }
-    if ($cv->CvFLAGS & (CVf_METHOD|CVf_LOCKED|CVf_LVALUE)) {
+    if ($cv->CvFLAGS & (CVf_METHOD|CVf_LOCKED|CVf_LVALUE|CVf_ASSERTION)) {
         $proto .= ": ";
         $proto .= "lvalue " if $cv->CvFLAGS & CVf_LVALUE;
         $proto .= "locked " if $cv->CvFLAGS & CVf_LOCKED;
         $proto .= "method " if $cv->CvFLAGS & CVf_METHOD;
+        $proto .= "assertion " if $cv->CvFLAGS & CVf_ASSERTION;
     }
 
     local($self->{'curcv'}) = $cv;
@@ -1014,6 +1013,8 @@ sub maybe_local {
 	and not $self->{'avoid_local'}{$$op}) {
 	my $our_local = ($op->private & OPpLVAL_INTRO) ? "local" : "our";
 	if( $our_local eq 'our' ) {
+	    # XXX This assertion fails code with non-ASCII identifiers,
+	    # like ./ext/Encode/t/jperl.t
 	    die "Unexpected our($text)\n" unless $text =~ /^\W(\w+::)*\w+\z/;
 	    $text =~ s/(\w+::)+//;
 	}
@@ -2102,6 +2103,7 @@ sub logop {
 
 sub pp_and { logop(@_, "and", 3, "&&", 11, "if") }
 sub pp_or  { logop(@_, "or",  2, "||", 10, "unless") }
+sub pp_dor { logop(@_, "err", 2, "//", 10, "") }
 
 # xor is syntactically a logop, but it's really a binop (contrary to
 # old versions of opcode.pl). Syntax is what matters here.
@@ -2118,7 +2120,8 @@ sub logassignop {
 }
 
 sub pp_andassign { logassignop(@_, "&&=") }
-sub pp_orassign { logassignop(@_, "||=") }
+sub pp_orassign  { logassignop(@_, "||=") }
+sub pp_dorassign { logassignop(@_, "//=") }
 
 sub listop {
     my $self = shift;
@@ -2300,18 +2303,22 @@ sub indirop {
 	$kid = $kid->sibling;
     }
     if ($name eq "sort" && $op->private & (OPpSORT_NUMERIC | OPpSORT_INTEGER)) {
-	$indir = ($op->private & OPpSORT_REVERSE) ? '{$b <=> $a} '
+	$indir = ($op->private & OPpSORT_DESCEND) ? '{$b <=> $a} '
 						  : '{$a <=> $b} ';
     }
-    elsif ($name eq "sort" && $op->private & OPpSORT_REVERSE) {
+    elsif ($name eq "sort" && $op->private & OPpSORT_DESCEND) {
 	$indir = '{$b cmp $a} ';
     }
     for (; !null($kid); $kid = $kid->sibling) {
 	$expr = $self->deparse($kid, 6);
 	push @exprs, $expr;
     }
+    my $name2 = $name;
+    if ($name eq "sort" && $op->private & OPpSORT_REVERSE) {
+	$name2 = 'reverse sort';
+    }
     if ($name eq "sort" && ($op->private & OPpSORT_INPLACE)) {
-	return "$exprs[0] = sort $indir $exprs[0]";
+	return "$exprs[0] = $name2 $indir $exprs[0]";
     }
 
     my $args = $indir . join(", ", @exprs);
@@ -2323,12 +2330,12 @@ sub indirop {
 	# neccessary more often that they really are, because we don't
 	# distinguish which side of an assignment we're on.
 	if ($cx >= 5) {
-	    return "($name $args)";
+	    return "($name2 $args)";
 	} else {
-	    return "$name $args";
+	    return "$name2 $args";
 	}
     } else {
-	return $self->maybe_parens_func($name, $args, $cx, 5);
+	return $self->maybe_parens_func($name2, $args, $cx, 5);
     }
 
 }
@@ -2393,7 +2400,12 @@ sub pp_list {
 			&& $lop->first->private & OPpOUR_INTRO) { # our()
 	    ($local = "", last) if $local eq "my" || $local eq "local";
 	    $local = "our";
-	} elsif ($lop->name ne "undef") { # local()
+	} elsif ($lop->name ne "undef"
+		# specifically avoid the "reverse sort" optimisation,
+		# where "reverse" is nullified
+		&& !($lop->name eq 'sort' && ($lop->flags & OPpSORT_REVERSE)))
+	{
+	    # local()
 	    ($local = "", last) if $local eq "my" || $local eq "our";
 	    $local = "local";
 	}
@@ -2489,7 +2501,10 @@ sub loop_common {
     } elsif ($enter->name eq "enteriter") { # foreach
 	my $ary = $enter->first->sibling; # first was pushmark
 	my $var = $ary->sibling;
-	if ($enter->flags & OPf_STACKED
+	if ($ary->name eq 'null' and $enter->private & OPpITER_REVERSED) {
+	    # "reverse" was optimised away
+	    $ary = listop($self, $ary->first->sibling, 1, 'reverse');
+	} elsif ($enter->flags & OPf_STACKED
 	    and not null $ary->first->sibling->sibling)
 	{
 	    $ary = $self->deparse($ary->first->sibling, 9) . " .. " .
@@ -2513,8 +2528,13 @@ sub loop_common {
 	} elsif ($var->name eq "gv") {
 	    $var = "\$" . $self->deparse($var, 1);
 	}
-	$head = "foreach $var ($ary) ";
 	$body = $kid->first->first->sibling; # skip OP_AND and OP_ITER
+	if (!is_state $body->first and $body->first->name ne "stub") {
+	    confess unless $var eq '$_';
+	    $body = $body->first;
+	    return $self->deparse($body, 2) . " foreach ($ary)";
+	}
+	$head = "foreach $var ($ary) ";
     } elsif ($kid->name eq "null") { # while/until
 	$kid = $kid->first;
 	my $name = {"and" => "while", "or" => "until"}->{$kid->name};

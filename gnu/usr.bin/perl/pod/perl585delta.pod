@@ -1,6 +1,6 @@
 =head1 NAME
 
-perldelta - what is new for perl v5.8.5
+perl585delta - what is new for perl v5.8.5
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,8 @@ user-defined character classes from within other user defined character
 classes.
 
 =head1 Modules and Pragmata
+
+FIXME test 12 in ext/List/Util/t/lln.t at RC1 time
 
 =over 4
 
@@ -167,7 +169,7 @@ been fixed.
 
 The internals of the ithreads implementation were not checking if OS-level
 thread creation had failed. threads->create() now returns C<undef> in if
-thead creation fails instead of crashing perl.
+thread creation fails instead of crashing perl.
 
 =back
 

@@ -1445,6 +1445,7 @@
 #define PL_sigfpe_saved		(PL_Vars.Gsigfpe_saved)
 #define PL_sv_placeholder	(PL_Vars.Gsv_placeholder)
 #define PL_thr_key		(PL_Vars.Gthr_key)
+#define PL_use_safe_putenv	(PL_Vars.Guse_safe_putenv)
 
 #else /* !PERL_GLOBAL_STRUCT */
 
@@ -1462,6 +1463,7 @@
 #define PL_Gsigfpe_saved	PL_sigfpe_saved
 #define PL_Gsv_placeholder	PL_sv_placeholder
 #define PL_Gthr_key		PL_thr_key
+#define PL_Guse_safe_putenv	PL_use_safe_putenv
 
 #endif /* PERL_GLOBAL_STRUCT */
 

@@ -10,7 +10,7 @@ use Exporter;
 use B qw(ppname);
 use B::Asmdata qw(%insn_data @insn_name);
 use Config qw(%Config);
-require ByteLoader;		# we just need its $VERSIOM
+require ByteLoader;		# we just need its $VERSION
 
 no warnings;			# XXX
 

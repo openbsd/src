@@ -5,7 +5,7 @@ BEGIN {
     }
 }
 use Encode;
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load(__PACKAGE__,$VERSION);
@@ -45,7 +45,7 @@ supported are as follows.
                                 = ISO-2022-JP with JIS X 0212-1990
 				  support.  See below
   MacJapanese	                Shift JIS + Apple vendor mappings
-  cp932                         Code Page 932	
+  cp932       /\bwindows-31j$/i Code Page 932
                                 = Shift JIS + MS/IBM vendor mappings
   jis0201-raw                   JIS0201, raw format
   jis0208-raw                   JIS0201, raw format

@@ -6,7 +6,7 @@ use strict;
 
 use vars qw/$VERSION/;
 
-$VERSION = '0.40';
+$VERSION = '0.43';
 
 # Package to store unsigned big integers in decimal and do math with them
 
@@ -37,7 +37,7 @@ sub api_version () { 1; }
  
 # constants for easier life
 my $nan = 'NaN';
-my ($MBASE,$BASE,$RBASE,$BASE_LEN,$MAX_VAL,$BASE_LEN2,$BASE_LEN_SMALL);
+my ($MBASE,$BASE,$RBASE,$BASE_LEN,$MAX_VAL,$BASE_LEN_SMALL);
 my ($AND_BITS,$XOR_BITS,$OR_BITS);
 my ($AND_MASK,$XOR_MASK,$OR_MASK);
 
@@ -68,7 +68,6 @@ sub _base_len
     $BASE_LEN = shift if (defined $_[0]);		# one more arg?
     $BASE = int("1e".$BASE_LEN);
 
-    $BASE_LEN2 = int($BASE_LEN_SMALL / 2);		# for mul shortcut
     $MBASE = int("1e".$BASE_LEN_SMALL);
     $RBASE = abs('1e-'.$BASE_LEN_SMALL);		# see USE_MUL
     $MAX_VAL = $MBASE-1;
@@ -97,6 +96,21 @@ sub _base_len
   return ($BASE_LEN, $AND_BITS, $XOR_BITS, $OR_BITS, $BASE_LEN_SMALL, $MAX_VAL);
   }
 
+sub _new
+  {
+  # (ref to string) return ref to num_array
+  # Convert a number from string format (without sign) to internal base
+  # 1ex format. Assumes normalized value as input.
+  my $il = length($_[1])-1;
+
+  # < BASE_LEN due len-1 above
+  return [ int($_[1]) ] if $il < $BASE_LEN;	# shortcut for short numbers
+
+  # this leaves '00000' instead of int 0 and will be corrected after any op
+  [ reverse(unpack("a" . ($il % $BASE_LEN+1) 
+    . ("a$BASE_LEN" x ($il / $BASE_LEN)), $_[1])) ];
+  }                                                                             
+
 BEGIN
   {
   # from Daniel Pfeiffer: determine largest group of digits that is precisely
@@ -123,28 +137,7 @@ BEGIN
 
   use integer;
 
-  ############################################################################
-  # the next block is no longer important
-
-  ## this below detects 15 on a 64 bit system, because after that it becomes
-  ## 1e16  and not 1000000 :/ I can make it detect 18, but then I get a lot of
-  ## test failures. Ugh! (Tomake detect 18: uncomment lines marked with *)
-
-  #my $bi = 5;			# approx. 16 bit
-  #$num = int('9' x $bi);
-  ## $num = 99999; # *
-  ## while ( ($num+$num+1) eq '1' . '9' x $bi)	# *
-  #while ( int($num+$num+1) eq '1' . '9' x $bi)
-  #  {
-  #  $bi++; $num = int('9' x $bi);
-  #  # $bi++; $num *= 10; $num += 9;	# *
-  #  }
-  #$bi--;				# back off one step
-  # by setting them equal, we ignore the findings and use the default
-  # one-size-fits-all approach from former versions
-  my $bi = $e;				# XXX, this should work always
-
-  __PACKAGE__->_base_len($e,$bi);	# set and store
+  __PACKAGE__->_base_len($e);	# set and store
 
   # find out how many bits _and, _or and _xor can take (old default = 16)
   # I don't think anybody has yet 128 bit scalars, so let's play safe.
@@ -179,31 +172,12 @@ BEGIN
     } while ($OR_BITS < $max && $x == $z && $y == $x);
   $OR_BITS --;						# retreat one step
   
-  }
-
-###############################################################################
-
-sub _new
-  {
-  # (ref to string) return ref to num_array
-  # Convert a number from string format (without sign) to internal base
-  # 1ex format. Assumes normalized value as input.
-  my $il = length($_[1])-1;
-
-  # < BASE_LEN due len-1 above
-  return [ int($_[1]) ] if $il < $BASE_LEN;	# shortcut for short numbers
-
-  # this leaves '00000' instead of int 0 and will be corrected after any op
-  [ reverse(unpack("a" . ($il % $BASE_LEN+1) 
-    . ("a$BASE_LEN" x ($il / $BASE_LEN)), $_[1])) ];
-  }                                                                             
-  
-BEGIN
-  {
   $AND_MASK = __PACKAGE__->_new( ( 2 ** $AND_BITS ));
   $XOR_MASK = __PACKAGE__->_new( ( 2 ** $XOR_BITS ));
   $OR_MASK = __PACKAGE__->_new( ( 2 ** $OR_BITS ));
   }
+
+###############################################################################
 
 sub _zero
   {
@@ -328,7 +302,7 @@ sub _inc
     return $x if (($i += 1) < $BASE);		# early out
     $i = 0;					# overflow, next
     }
-  push @$x,1 if ($x->[-1] == 0);		# last overflowed, so extend
+  push @$x,1 if (($x->[-1] || 0) == 0);		# last overflowed, so extend
   $x;
   }                                                                             
 
@@ -968,7 +942,7 @@ sub _digit
   
   my $elem = int($n / $BASE_LEN);	# which array element
   my $digit = $n % $BASE_LEN;		# which digit in this element
-  $elem = '0000'.@$x[$elem];		# get element padded with 0's
+  $elem = '0000000'.@$x[$elem];		# get element padded with 0's
   substr($elem,-$digit-1,1);
   }
 
@@ -1176,7 +1150,7 @@ sub _rsft
   my $dst = 0;				# destination
   my $src = _num($c,$y);		# as normal int
   my $xlen = (@$x-1)*$BASE_LEN+length(int($x->[-1]));  # len of x in digits
-  if ($src > $xlen or ($src == $xlen and ! defined $x->[1]))
+  if ($src >= $xlen or ($src == $xlen and ! defined $x->[1]))
     {
     # 12345 67890 shifted right by more than 10 digits => 0
     splice (@$x,1);                    # leave only one element
@@ -1761,11 +1735,7 @@ sub _as_hex
   my ($c,$x) = @_;
 
   # fit's into one element (handle also 0x0 case)
-  if (@$x == 1)
-    {
-    my $t = sprintf("0x%x",$x->[0]);
-    return $t;
-    }
+  return sprintf("0x%x",$x->[0]) if @$x == 1;
 
   my $x1 = _copy($c,$x);
 
@@ -1779,7 +1749,6 @@ sub _as_hex
     {
     $x10000 = [ 0x1000 ]; $h = 'h3';
     }
-  # while (! _is_zero($c,$x1))
   while (@$x1 != 1 || $x1->[0] != 0)		# _is_zero()
     {
     ($x1, $xr) = _div($c,$x1,$x10000);
@@ -1787,8 +1756,7 @@ sub _as_hex
     }
   $es = reverse $es;
   $es =~ s/^[0]+//;   # strip leading zeros
-  $es = '0x' . $es;
-  $es;
+  '0x' . $es;					# return result prepended with 0x
   }
 
 sub _as_bin
@@ -1819,7 +1787,6 @@ sub _as_bin
     {
     $x10000 = [ 0x1000 ]; $b = 'b12';
     }
-  # while (! _is_zero($c,$x1))
   while (!(@$x1 == 1 && $x1->[0] == 0))		# _is_zero()
     {
     ($x1, $xr) = _div($c,$x1,$x10000);
@@ -1828,8 +1795,7 @@ sub _as_bin
     }
   $es = reverse $es;
   $es =~ s/^[0]+//;   # strip leading zeros
-  $es = '0b' . $es;
-  $es;
+  '0b' . $es;					# return result prepended with 0b
   }
 
 sub _from_hex
@@ -1837,20 +1803,34 @@ sub _from_hex
   # convert a hex number to decimal (ref to string, return ref to array)
   my ($c,$hs) = @_;
 
+  my $m = _new($c, 0x10000000);			# 28 bit at a time (<32 bit!)
+  my $d = 7;					# 7 digits at a time
+  if ($] <= 5.006)
+    {
+    # for older Perls, play safe
+    $m = [ 0x10000 ];				# 16 bit at a time (<32 bit!)
+    $d = 4;					# 4 digits at a time
+    }
+
   my $mul = _one();
-  my $m = [ 0x10000 ];				# 16 bit at a time
   my $x = _zero();
 
-  my $len = length($hs)-2;
-  $len = int($len/4);				# 4-digit parts, w/o '0x'
-  my $val; my $i = -4;
+  my $len = int( (length($hs)-2)/$d );		# $d digit parts, w/o the '0x'
+  my $val; my $i = -$d;
   while ($len >= 0)
     {
-    $val = substr($hs,$i,4);
+    $val = substr($hs,$i,$d);			# get hex digits
     $val =~ s/^[+-]?0x// if $len == 0;		# for last part only because
     $val = hex($val);				# hex does not like wrong chars
-    $i -= 4; $len --;
-    _add ($c, $x, _mul ($c, [ $val ], $mul ) ) if $val != 0;
+    $i -= $d; $len --;
+    my $adder = [ $val ];
+    # if the resulting number was to big to fit into one element, create a
+    # two-element version (bug found by Mark Lakata - Thanx!)
+    if (CORE::length($val) > $BASE_LEN)
+      {
+      $adder = _new($c,$val);
+      }
+    _add ($c, $x, _mul ($c, $adder, $mul ) ) if $val != 0;
     _mul ($c, $mul, $m ) if $len >= 0; 		# skip last mul
     }
   $x;
@@ -1868,9 +1848,9 @@ sub _from_bin
   $hs =~ s/^[+-]?0b//;					# remove sign and 0b
   my $l = length($hs);					# bits
   $hs = '0' x (8-($l % 8)) . $hs if ($l % 8) != 0;	# padd left side w/ 0
-  my $h = unpack('H*', pack ('B*', $hs));		# repack as hex
+  my $h = '0x' . unpack('H*', pack ('B*', $hs));	# repack as hex
   
-  $c->_from_hex('0x'.$h);
+  $c->_from_hex($h);
   }
 
 ##############################################################################
@@ -1903,8 +1883,7 @@ sub _modinv
   # if the gcd is not 1, then return NaN
   return (undef,undef) unless _is_one($c,$a);
  
-  $sign = $sign == 1 ? '+' : '-';
-  ($u1,$sign);
+  ($u1, $sign == 1 ? '+' : '-');
   }
 
 sub _modpow

@@ -1,10 +1,10 @@
 
 require 5;
 package I18N::LangTags::List;
-#  Time-stamp: "2003-10-10 17:39:45 ADT"
+#  Time-stamp: "2004-10-06 23:26:21 ADT"
 use strict;
 use vars qw(%Name %Is_Disrec $Debug $VERSION);
-$VERSION = '0.29';
+$VERSION = '0.35';
 # POD at the end.
 
 #----------------------------------------------------------------------
@@ -1715,7 +1715,7 @@ L<I18N::LangTags|I18N::LangTags> and its "See Also" section.
 
 =head1 COPYRIGHT AND DISCLAIMER
 
-Copyright (c) 2001,2002,2003 Sean M. Burke. All rights reserved.
+Copyright (c) 2001+ Sean M. Burke. All rights reserved.
 
 You can redistribute and/or
 modify this document under the same terms as Perl itself.

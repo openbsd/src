@@ -13,7 +13,7 @@ BEGIN {
 
 use Errno;
 
-print "1..5\n";
+print "1..6\n";
 
 print "not " unless @Errno::EXPORT_OK;
 print "ok 1\n";
@@ -53,3 +53,6 @@ if($s1 ne $s2) {
 }
 
 print "ok 5\n";
+
+eval { exists $!{[]} };
+print $@ ? "not ok 6\n" : "ok 6\n";

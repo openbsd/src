@@ -197,7 +197,7 @@ bigint - Transparent BigInteger support for Perl
 
 =head1 SYNOPSIS
 
-  use bignt;
+  use bigint;
 
   $x = 2 + 4.5,"\n";			# BigInt 6
   print 2 ** 512,"\n";			# really is what you think it is

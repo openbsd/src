@@ -1,8 +1,3 @@
-
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
-#
-
 require 5.002;
 
 use Config;
@@ -16,7 +11,8 @@ my $XSOPT;
 
 use vars qw($self); # Used in 'sourcing' the hints.
 
-my $ld_exeext = ($^O eq 'os2' and $Config{ldflags} =~ /-Zexe\b/) ? '.exe' : '';
+my $ld_exeext = ($^O eq 'cygwin' ||
+                 $^O eq 'os2' && $Config{ldflags} =~ /-Zexe\b/) ? '.exe' : '';
 
 unless($ENV{PERL_CORE}) {
     $ENV{PERL_CORE} = 1 if grep { $_ eq 'PERL_CORE=1' } @ARGV;
@@ -102,7 +98,7 @@ sub try_compile_and_link {
 
 	if ($^O eq 'VMS') {
 	    if ($ENV{PERL_CORE}) {
-		# Fragile if the extensions change hierachy within
+		# Fragile if the extensions change hierarchy within
 		# the Perl core but this should do for now.
                 $cccmd = "$Config{'cc'} /include=([---]) $tmp.c";
 	    } else {
@@ -206,6 +202,23 @@ EOM
     return 0;
 }
 
+sub has_include {
+    my ($inc) = @_;
+    return 1 if
+    try_compile_and_link(<<EOM);
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+
+#include <$inc>
+int main _((int argc, char** argv, char** env))
+{
+	return 0;
+}
+EOM
+    return 0;
+}
+
 sub init {
     my $hints = File::Spec->catfile("hints", "$^O.pl");
     if (-f $hints) {
@@ -276,7 +289,7 @@ EOD
     }
 
     if ($has_setitimer && $has_getitimer) {
-	print "You have interval timers (both setitimer and setitimer).\n";
+	print "You have interval timers (both setitimer and getitimer).\n";
     } else {
 	print "You do not have interval timers.\n";
     }
@@ -338,11 +351,27 @@ EOD
 
     if ($has_nanosleep) {
 	print "found.\n";
-        print "You can mix subsecond sleeps with signals.\n";
+        print "You can mix subsecond sleeps with signals, if you want to.\n";
+        print "(It's still not portable, though.)\n";
     } else {
 	print "NOT found.\n";
 	my $nt = ($^O eq 'os2' ? '' : 'not');
         print "You can$nt mix subsecond sleeps with signals.\n";
+        print "(It would not be portable anyway.)\n";
+    }
+
+    my $has_w32api_windows_h;
+    if ($^O eq 'cygwin') {
+        print "Looking for <w32api/windows.h>... ";
+        if (has_include('w32api/windows.h')) {
+	    $has_w32api_windows_h++;
+	    $DEFINE .= ' -DHAS_W32API_WINDOWS_H';
+	}
+        if ($has_w32api_windows_h) {
+	    print "found.\n";
+	} else {
+	    print "NOT found.\n";
+	}
     }
 
     if ($DEFINE) {
@@ -410,7 +439,8 @@ sub doConstants {
 					   NAMES => \@names,
 					  );
     } else {
-	foreach my $file ('const-c.inc', 'const-xs.inc') {
+        my $file;
+	foreach $file ('const-c.inc', 'const-xs.inc') {
 	    my $fallback = File::Spec->catfile('fallback', $file);
 	    local $/;
 	    open IN, "<$fallback" or die "Can't open $fallback: $!";
@@ -424,6 +454,9 @@ sub doConstants {
 
 sub main {
     print "Configuring Time::HiRes...\n";
+    if ($] == 5.007002) {
+	die "Cannot Configure Time::HiRes for Perl $], aborting.\n";
+    }
 
     if ($^O =~ /Win32/i) {
       $DEFINE = '-DSELECT_IS_BROKEN';
@@ -434,20 +467,18 @@ sub main {
     doMakefile;
     doConstants;
     my $make = $Config{'make'} || "make";
-    unless ($ENV{PERL_CORE}) {
+    unless (exists $ENV{PERL_CORE} && $ENV{PERL_CORE}) {
 	print  <<EOM;
 Now you may issue '$make'.  Do not forget also '$make test'.
-
 EOM
-       if ($ENV{LC_ALL}   =~ /utf-?8/i ||
-           $ENV{LC_CTYPE} =~ /utf-?8/i ||
-           $ENV{LANG}     =~ /utf-?8/i) {
+       if ((exists $ENV{LC_ALL}   && $ENV{LC_ALL}   =~ /utf-?8/i) ||
+           (exists $ENV{LC_CTYPE} && $ENV{LC_CTYPE} =~ /utf-?8/i) ||
+           (exists $ENV{LANG}     && $ENV{LANG}     =~ /utf-?8/i)) {
             print  <<EOM;
 NOTE: if you get an error like this (the line number may vary):
 Makefile:91: *** missing separator
 then set the environment variable LC_ALL to "C" and retry
 from scratch (re-run perl "Makefile.PL").
-
 EOM
         }
     }

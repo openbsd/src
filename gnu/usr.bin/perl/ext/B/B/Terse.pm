@@ -16,7 +16,6 @@ sub terse {
     } else {
 	concise_subref('basic', $subref);
     }
-
 }
 
 sub compile {
@@ -28,7 +27,7 @@ sub compile {
 }
 
 sub indent {
-    my $level = @_ ? shift : 0;
+    my ($level) = @_ ? shift : 0;
     return "    " x $level;
 }
 
@@ -43,20 +42,27 @@ sub B::SV::terse {
     my($sv, $level) = (@_, 0);
     my %info;
     B::Concise::concise_sv($sv, \%info);
-    my $s = B::Concise::fmt_line(\%info, "#svclass~(?((#svaddr))?)~#svval", 0);
-    print indent($level), $s, "\n";
+    my $s = indent($level)
+	. B::Concise::fmt_line(\%info, $sv,
+				 "#svclass~(?((#svaddr))?)~#svval", 0);
+    chomp $s;
+    print "$s\n" unless defined wantarray;
+    $s;
 }
 
 sub B::NULL::terse {
     my ($sv, $level) = @_;
-    print indent($level);
-    printf "%s (0x%lx)\n", class($sv), $$sv;
+    my $s = indent($level) . sprintf "%s (0x%lx)", class($sv), $$sv;
+    print "$s\n" unless defined wantarray;
+    $s;
 }
 
 sub B::SPECIAL::terse {
     my ($sv, $level) = @_;
-    print indent($level);
-    printf "%s #%d %s\n", class($sv), $$sv, $specialsv_name[$$sv];
+    my $s = indent($level)
+	. sprintf( "%s #%d %s", class($sv), $$sv, $specialsv_name[$$sv]);
+    print "$s\n" unless defined wantarray;
+    $s;
 }
 
 1;

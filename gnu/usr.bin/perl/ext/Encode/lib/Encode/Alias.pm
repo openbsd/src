@@ -2,7 +2,7 @@ package Encode::Alias;
 use strict;
 no warnings 'redefine';
 use Encode;
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 sub DEBUG () { 0 }
 
 use base qw(Exporter);
@@ -18,43 +18,43 @@ our @EXPORT =
 our @Alias;  # ordered matching list
 our %Alias;  # cached known aliases
 
-sub find_alias
-{
+sub find_alias{
     my $class = shift;
     my $find = shift;
-    unless (exists $Alias{$find})
-    {
+    unless (exists $Alias{$find}) {
         $Alias{$find} = undef; # Recursion guard
-	for (my $i=0; $i < @Alias; $i += 2)
-	{
+	for (my $i=0; $i < @Alias; $i += 2){
 	    my $alias = $Alias[$i];
 	    my $val   = $Alias[$i+1];
 	    my $new;
-	    if (ref($alias) eq 'Regexp' && $find =~ $alias)
-	    {
+	    if (ref($alias) eq 'Regexp' && $find =~ $alias){
 		DEBUG and warn "eval $val";
 		$new = eval $val;
 		DEBUG and $@ and warn "$val, $@";
-	    }
-	    elsif (ref($alias) eq 'CODE')
-	    {
+	    }elsif (ref($alias) eq 'CODE'){
 		DEBUG and warn "$alias", "->", "($find)";
 		$new = $alias->($find);
-	    }
-	    elsif (lc($find) eq lc($alias))
-	    {
+	    }elsif (lc($find) eq lc($alias)){
 		$new = $val;
 	    }
-	    if (defined($new))
-	    {
+	    if (defined($new)){
 		next if $new eq $find; # avoid (direct) recursion on bugs
 		DEBUG and warn "$alias, $new";
 		my $enc = (ref($new)) ? $new : Encode::find_encoding($new);
-		if ($enc)
-		{
+		if ($enc){
 		    $Alias{$find} = $enc;
 		    last;
 		}
+	    }
+	}
+	# case insensitive search when canonical is not in all lowercase
+	# RT ticket #7835
+	unless ($Alias{$find}){
+	    my $lcfind = lc($find);
+	    for my $name (keys %Encode::Encoding, keys %Encode::ExtModule){
+		$lcfind eq lc($name) or next;
+		$Alias{$find} =  Encode::find_encoding($name);
+		DEBUG and warn "$find => $name";
 	    }
 	}
     }
@@ -70,23 +70,19 @@ sub find_alias
     return $Alias{$find};
 }
 
-sub define_alias
-{
-    while (@_)
-    {
+sub define_alias{
+    while (@_){
 	my ($alias,$name) = splice(@_,0,2);
 	unshift(@Alias, $alias => $name);   # newer one has precedence
-	# clear %Alias cache to allow overrides
 	if (ref($alias)){
+	    # clear %Alias cache to allow overrides
 	    my @a = keys %Alias;
 	    for my $k (@a){
-		if (ref($alias) eq 'Regexp' && $k =~ $alias)
-		{
+		if (ref($alias) eq 'Regexp' && $k =~ $alias){
 		    DEBUG and warn "delete \$Alias\{$k\}";
 		    delete $Alias{$k};
 		}
-		elsif (ref($alias) eq 'CODE')
-		{
+		elsif (ref($alias) eq 'CODE'){
 		    DEBUG and warn "delete \$Alias\{$k\}";
 		    delete $Alias{$alias->($name)};
 		}
@@ -99,7 +95,7 @@ sub define_alias
 }
 
 # Allow latin-1 style names as well
-                     # 0  1  2  3  4  5   6   7   8   9  10
+# 0  1  2  3  4  5   6   7   8   9  10
 our @Latin2iso = ( 0, 1, 2, 3, 4, 9, 10, 13, 14, 15, 16 );
 # Allow winlatin1 style names as well
 our %Winlatin2cp   = (
@@ -124,7 +120,6 @@ sub undef_aliases{
 sub init_aliases
 {
     undef_aliases();
-
     # Try all-lower-case version should all else fails
     define_alias( qr/^(.*)$/ => '"\L$1"' );
 
@@ -134,9 +129,9 @@ sub init_aliases
     define_alias( qr/^UCS-?2-?(BE)?$/i    => '"UCS-2BE"',
                   qr/^UCS-?4-?(BE|LE)?$/i => 'uc("UTF-32$1")',
 		  qr/^iso-10646-1$/i      => '"UCS-2BE"' );
-    define_alias( qr/^UTF(16|32)-?BE$/i   => '"UTF-$1BE"',
-		  qr/^UTF(16|32)-?LE$/i   => '"UTF-$1LE"',
-		  qr/^UTF(16|32)$/i       => '"UTF-$1"',
+    define_alias( qr/^UTF-?(16|32)-?BE$/i   => '"UTF-$1BE"',
+		  qr/^UTF-?(16|32)-?LE$/i   => '"UTF-$1LE"',
+		  qr/^UTF-?(16|32)$/i       => '"UTF-$1"',
 		);
     # ASCII
     define_alias(qr/^(?:US-?)ascii$/i => '"ascii"');
@@ -193,7 +188,7 @@ sub init_aliases
   
     # Standardize on the dashed versions.
     # define_alias( qr/\butf8$/i  => '"utf-8"' );
-    define_alias( qr/\bkoi8[\s-_]*([ru])$/i => '"koi8-$1"' );
+    define_alias( qr/\bkoi8[\s\-_]*([ru])$/i => '"koi8-$1"' );
 
     unless ($Encode::ON_EBCDIC){
         # for Encode::CN
@@ -211,6 +206,7 @@ sub init_aliases
 	define_alias( qr/\bujis$/i           => '"euc-jp"' );
 	define_alias( qr/\bshift.*jis$/i     => '"shiftjis"' );
 	define_alias( qr/\bsjis$/i           => '"shiftjis"' );
+	define_alias( qr/\bwindows-31j$/i    => '"cp932"' );
         # for Encode::KR
 	define_alias( qr/\beuc.*kr$/i        => '"euc-kr"' );
 	define_alias( qr/\bkr.*euc$/i        => '"euc-kr"' );

@@ -40,9 +40,7 @@ sub Filter
 
 __END__
 
-=head1 NAME
-
-DBM_Filter::encode -- character encoding DBM Filter
+=head1 DBM_Filter::encode
 
 =head1 SYNOPSIS
 

@@ -1,5 +1,5 @@
 #
-# $Id: macArabic.ucm,v 2.0 2004/05/16 20:55:26 dankogai Exp $
+# $Id: macArabic.ucm,v 2.1 2004/10/22 06:23:11 dankogai Exp $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/ARABIC.TXT
@@ -213,6 +213,7 @@ CHARMAP
 <U064F> \xEF |0 # ARABIC DAMMA
 <U0650> \xF0 |0 # ARABIC KASRA
 <U0651> \xF1 |0 # ARABIC SHADDA
+<U0652> \xF2 |0 # ARABIC SUKUN
 <U0660> \xB0 |0 # ARABIC-INDIC DIGIT ZERO, right-left (need override)
 <U0661> \xB1 |0 # ARABIC-INDIC DIGIT ONE, right-left (need override)
 <U0662> \xB2 |0 # ARABIC-INDIC DIGIT TWO, right-left (need override)
@@ -223,7 +224,6 @@ CHARMAP
 <U0667> \xB7 |0 # ARABIC-INDIC DIGIT SEVEN, right-left (need override)
 <U0668> \xB8 |0 # ARABIC-INDIC DIGIT EIGHT, right-left (need override)
 <U0669> \xB9 |0 # ARABIC-INDIC DIGIT NINE, right-left (need override)
-<U0652> \xF2 |0 # ARABIC SUKUN
 <U066A> \xA5 |0 # ARABIC PERCENT SIGN
 <U0679> \xF4 |0 # ARABIC LETTER TTEH
 <U067E> \xF3 |0 # ARABIC LETTER PEH

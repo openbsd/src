@@ -1,0 +1,27 @@
+5.005000
+PL_modglobal                   # E
+cx_dump                        # U
+debop                          # U
+debprofdump                    # U
+fbm_compile                    # E (Perl_fbm_compile)
+fbm_instr                      # E (Perl_fbm_instr)
+get_op_descs                   # E
+get_op_names                   # E
+init_stacks                    # U
+mg_length                      # U
+mg_size                        # U
+newHVhv                        # E
+new_stackinfo                  # E
+regdump                        # U
+regexec_flags                  # U
+regnext                        # E (Perl_regnext)
+runops_debug                   # U
+runops_standard                # U
+save_hints                     # U
+save_iv                        # U (save_iv)
+save_threadsv                  # E
+screaminstr                    # E (Perl_screaminstr)
+sv_iv                          # U
+sv_nv                          # U
+sv_peek                        # U
+sv_true                        # U

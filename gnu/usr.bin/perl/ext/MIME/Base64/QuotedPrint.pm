@@ -1,6 +1,6 @@
 package MIME::QuotedPrint;
 
-# $Id: QuotedPrint.pm,v 3.1 2004/03/29 11:55:49 gisle Exp $
+# $Id: QuotedPrint.pm,v 3.4 2004/08/25 09:33:45 gisle Exp $
 
 use strict;
 use vars qw(@ISA @EXPORT $VERSION);
@@ -9,7 +9,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(encode_qp decode_qp);
 
-$VERSION = "3.01";
+$VERSION = "3.03";
 
 use MIME::Base64;  # will load XS version of {en,de}code_qp()
 
@@ -50,19 +50,29 @@ The following functions are provided:
 
 =item encode_qp($str, $eol)
 
-This function returns an encoded version of the string given as
+=item encode_qp($str, $eol, $binmode)
+
+This function returns an encoded version of the string ($str) given as
 argument.
 
-The second argument is the line-ending sequence to use.  It is
-optional and defaults to "\n".  Every occurrence of "\n" is
-replaced with this string, and it is also used for additional
-"soft line breaks" to ensure that no line is longer than 76
-characters.  You might want to pass it as "\015\012" to produce data
-suitable for external consumption.  The string "\r\n" produces the
-same result on many platforms, but not all.
+The second argument ($eol) is the line-ending sequence to use.  It is
+optional and defaults to "\n".  Every occurrence of "\n" is replaced
+with this string, and it is also used for additional "soft line
+breaks" to ensure that no line end up longer than 76 characters.  Pass
+it as "\015\012" to produce data suitable for external consumption.
+The string "\r\n" produces the same result on many platforms, but not
+all.
 
-An $eol of "" (the empty string) is special.  In this case, no "soft line breaks" are introduced
-and any literal "\n" in the original data is encoded as well.
+The third argument ($binmode) will select binary mode if passed as a
+TRUE value.  In binary mode "\n" will be encoded in the same way as
+any other non-printable character.  This ensures that a decoder will
+end up with exactly the same string whatever line ending sequence it
+uses.  In general it is preferable to use the base64 encoding for
+binary data; see L<MIME::Base64>.
+
+An $eol of "" (the empty string) is special.  In this case, no "soft
+line breaks" are introduced and binary mode is effectively enabled so
+that any "\n" in the original data is encoded as well.
 
 =item decode_qp($str);
 

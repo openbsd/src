@@ -731,7 +731,7 @@ pd	|void	|sv_add_arena	|char* ptr|U32 size|U32 flags
 Apd	|int	|sv_backoff	|SV* sv
 Apd	|SV*	|sv_bless	|SV* sv|HV* stash
 Afpd	|void	|sv_catpvf	|SV* sv|const char* pat|...
-Ap	|void	|sv_vcatpvf	|SV* sv|const char* pat|va_list* args
+Apd	|void	|sv_vcatpvf	|SV* sv|const char* pat|va_list* args
 Apd	|void	|sv_catpv	|SV* sv|const char* ptr
 Amdb	|void	|sv_catpvn	|SV* sv|const char* ptr|STRLEN len
 Amdb	|void	|sv_catsv	|SV* dsv|SV* ssv
@@ -782,7 +782,7 @@ Apd	|void	|sv_replace	|SV* sv|SV* nsv
 Apd	|void	|sv_report_used
 Apd	|void	|sv_reset	|char* s|HV* stash
 Afpd	|void	|sv_setpvf	|SV* sv|const char* pat|...
-Ap	|void	|sv_vsetpvf	|SV* sv|const char* pat|va_list* args
+Apd	|void	|sv_vsetpvf	|SV* sv|const char* pat|va_list* args
 Apd	|void	|sv_setiv	|SV* sv|IV num
 Apdb	|void	|sv_setpviv	|SV* sv|IV num
 Apd	|void	|sv_setuv	|SV* sv|UV num
@@ -891,12 +891,12 @@ Ap	|int	|runops_debug
 Ap	|SV*	|sv_lock	|SV *sv
 #endif
 Afpd	|void	|sv_catpvf_mg	|SV *sv|const char* pat|...
-Ap	|void	|sv_vcatpvf_mg	|SV* sv|const char* pat|va_list* args
+Apd	|void	|sv_vcatpvf_mg	|SV* sv|const char* pat|va_list* args
 Apd	|void	|sv_catpv_mg	|SV *sv|const char *ptr
 Apd	|void	|sv_catpvn_mg	|SV *sv|const char *ptr|STRLEN len
 Apd	|void	|sv_catsv_mg	|SV *dstr|SV *sstr
 Afpd	|void	|sv_setpvf_mg	|SV *sv|const char* pat|...
-Ap	|void	|sv_vsetpvf_mg	|SV* sv|const char* pat|va_list* args
+Apd	|void	|sv_vsetpvf_mg	|SV* sv|const char* pat|va_list* args
 Apd	|void	|sv_setiv_mg	|SV *sv|IV i
 Apdb	|void	|sv_setpviv_mg	|SV *sv|IV iv
 Apd	|void	|sv_setuv_mg	|SV *sv|UV u
@@ -1422,4 +1422,7 @@ sM	|HE*	|hv_fetch_common|HV* tb|SV* key_sv|const char* key|STRLEN klen|int flags
 Apd	|SV*	|hv_scalar	|HV* hv|
 p	|SV*	|magic_scalarpack|HV* hv|MAGIC*	mg
 
+#if defined(DEBUGGING)
+p	|int	|get_debug_opts_flags	|char **s|int flags
+#endif
 END_EXTERN_C

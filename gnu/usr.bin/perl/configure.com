@@ -44,6 +44,7 @@ $ extra_flags = ""
 $ user_c_flags = ""
 $ use_ieee_math = "y"
 $ be_case_sensitive = "n"
+$ unlink_all_versions = "n"
 $ use_vmsdebug_perl = "n"
 $ use64bitall = "n"
 $ use64bitint = "n"
@@ -880,7 +881,7 @@ $   config_symbols0 ="|archlib|archlibexp|bin|binexp|builddir|cf_email|config_sh
 $   config_symbols1 ="|installprivlib|installscript|installsitearch|installsitelib|most|oldarchlib|oldarchlibexp|osname|pager|perl_symbol|perl_verb|"
 $   config_symbols2 ="|prefix|privlib|privlibexp|scriptdir|sitearch|sitearchexp|sitebin|sitelib|sitelib_stem|sitelibexp|try_cxx|use64bitall|use64bitint|"
 $   config_symbols3 ="|usecasesensitive|usedefaulttypes|usedevel|useieee|useithreads|usemultiplicity|usemymalloc|usedebugging_perl|useperlio|usesecurelog|"
-$   config_symbols4 ="|usethreads|usevmsdebug|usefaststdio|usemallocwrap|"
+$   config_symbols4 ="|usethreads|usevmsdebug|usefaststdio|usemallocwrap|unlink_all_versions|"
 $!  
 $   open/read CONFIG 'config_sh'
 $   rd_conf_loop:
@@ -2445,6 +2446,30 @@ $ useieee = "undef"
 $ usecasesensitive = "undef"
 $ if (use_ieee_math) then useieee = "define"
 $ if (be_case_sensitive) then usecasesensitive = "define"
+$! Unlink all versions?
+$ echo ""
+$ echo "By default, Perl's unlink() provides VMS-like behavior and only"
+$ echo "deletes the latest version of a file.  Enabling this option builds"
+$ echo "Perl so that unlink() deletes all versions of a file."
+$ bool_dflt = unlink_all_versions
+$ if f$type(unlink_all_versions) .nes. ""
+$ then
+$       if unlink_all_versions .or. unlink_all_versions .eqs. "define"
+$       then
+$         bool_dflt="y"
+$       else
+$         bool_dflt="n"
+$       endif
+$ endif
+$ rp = "Make unlink() delete all versions of a file? [''bool_dflt'] "
+$ GOSUB myread
+$ unlink_all_versions = ans
+$ IF unlink_all_versions
+$ THEN
+$     d_unlink_all_versions = "define"
+$ ELSE
+$     d_unlink_all_versions = "undef"
+$ ENDIF
 $! CC Flags
 $ echo ""
 $ echo "Your compiler may want other flags.  For this question you should include"
@@ -5594,7 +5619,7 @@ $ WC "d_ualarm='" + d_ualarm + "'"
 $ WC "d_umask='define'"
 $ WC "d_uname='" + d_uname + "'"
 $ WC "d_union_semun='undef'"
-$ WC "d_unlink_all_versions='undef'"
+$ WC "d_unlink_all_versions='" + d_unlink_all_versions + "'"	! VMS-specific
 $ WC "d_unordered='undef'"
 $ WC "d_usleep='" + d_usleep + "'"
 $ WC "d_usleepproto='" + d_usleep + "'"
@@ -6166,6 +6191,8 @@ $! Alas this does not help to build Fcntl
 $!   WC "#define PERL_IGNORE_FPUSIG SIGFPE"
 $ ENDIF
 $ IF kill_by_sigprc .EQS. "define" then WC "#define KILL_BY_SIGPRC"
+$ IF unlink_all_versions .OR. unlink_all_versions .EQS. "define" THEN -
+    WC "#define UNLINK_ALL_VERSIONS"
 $ CLOSE CONFIG
 $!
 $ echo4 "Doing variable substitutions on .SH files..."

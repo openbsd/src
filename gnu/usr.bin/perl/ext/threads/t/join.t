@@ -6,6 +6,10 @@ BEGIN {
         print "1..0 # Skip: no useithreads\n";
         exit 0;
     }
+    if ($Config{'extensions'} !~ /\bDevel\/Peek\b/) {
+	print "1..0 # Skip: Devel::Peek was not built\n";
+	exit 0;
+    }
 }
 
 use ExtUtils::testlib;

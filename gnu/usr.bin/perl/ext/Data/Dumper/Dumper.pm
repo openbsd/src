@@ -9,7 +9,7 @@
 
 package Data::Dumper;
 
-$VERSION = '2.121';
+$VERSION = '2.121_02';
 
 #$| = 1;
 
@@ -381,7 +381,7 @@ sub _dump {
       if ($s->{deparse}) {
 	require B::Deparse;
 	my $sub =  'sub ' . (B::Deparse->new)->coderef2text($val);
-	$pad    =  $s->{sep} . $s->{pad} . $s->{xpad} . $s->{apad} . '    ';
+	$pad    =  $s->{sep} . $s->{pad} . $s->{apad} . $s->{xpad} x ($s->{level} - 1);
 	$sub    =~ s/\n/$pad/gse;
 	$out   .=  $sub;
       } else {
@@ -703,7 +703,8 @@ The default output of self-referential structures can be C<eval>ed, but the
 nested references to C<$VAR>I<n> will be undefined, since a recursive
 structure cannot be constructed using one Perl statement.  You should set the
 C<Purity> flag to 1 to get additional statements that will correctly fill in
-these references.
+these references.  Moreover, if C<eval>ed when strictures are in effect,
+you need to ensure that any variables it accesses are previously declared.
 
 In the extended usage form, the references to be dumped can be given
 user-specified names.  If a name begins with a C<*>, the output will 

@@ -1,0 +1,60 @@
+#!/usr/bin/perl -w
+################################################################################
+#
+#  mktodo -- generate baseline and todo files by running mktodo.pl
+#
+################################################################################
+#
+#  $Revision: 1.1.1.1 $
+#  $Author: millert $
+#  $Date: 2005/01/15 21:16:45 $
+#
+################################################################################
+#
+#  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+#  Version 2.x, Copyright (C) 2001, Paul Marquess.
+#  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the same terms as Perl itself.
+#
+################################################################################
+
+use strict;
+use Getopt::Long;
+
+my %opt = (
+  base  => 0,
+);
+
+GetOptions(\%opt, qw(
+            base
+          )) or die;
+
+# my $outdir = $opt{base} ? 'parts/base' : 'parts/todo';
+my $outdir = 'parts/todo';
+
+# for (glob "$outdir/*") {
+#   unlink or die "$_: $!\n";
+# }
+
+my $install = '/tmp/perl/install/default';
+# my $install = '/tmp/perl/install/thread';
+
+my @perls = sort { $b->{version} <=> $a->{version} }
+            map { { version => `$_ -e 'printf "%.6f", \$]'`, path => $_ } }
+            ('bleadperl', glob "$install/*/bin/perl5.*");
+
+for (1 .. $#perls) {
+  $perls[$_]{todo} = $perls[$_-1]{version};
+}
+
+shift @perls;
+
+for (@perls) {
+  my $todo = do { my $v = $_->{todo}; $v =~ s/\D+//g; $v };
+  -e "$outdir/$todo" and next;
+  my @args = ('--perl', $_->{path}, '--todo', "$outdir/$todo", '--version', "$_->{todo}");
+  push @args, '--base' if $opt{base};
+  system 'devel/mktodo.pl', @args and die "system(@args): [$!] [$?]\n";
+}

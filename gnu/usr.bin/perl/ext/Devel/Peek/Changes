@@ -62,3 +62,7 @@
 	Had problems with HEf_SVKEY magic.
 0.95:
 	Added "hash quality" output to estimate Perl's hash functions.
+
+1.02:
+	2004-10-22: Document "hash quality" output and update examples.
+

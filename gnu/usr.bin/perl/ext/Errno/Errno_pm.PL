@@ -377,7 +377,8 @@ sub FIRSTKEY {
 
 sub EXISTS {
     my ($self, $errname) = @_;
-    my $proto = prototype($errname);
+    my $r = ref $errname;
+    my $proto = !$r || $r eq 'CODE' ? prototype($errname) : undef;
     defined($proto) && $proto eq "";
 }
 

@@ -1,0 +1,16 @@
+^Makefile$
+~$
+\.old(?:\..*)?$
+\.swp$
+\.o$
+\.bs$
+\.bak$
+\.orig$
+\.cache\.cm$
+^blib
+^pm_to_blib
+^backup
+^parts/todo-
+^ppport\.h$
+^PPPort\.c$
+Devel-PPPort.*\.tar\.gz$

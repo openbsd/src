@@ -32,6 +32,7 @@ cygwin.c: cygwin/cygwin.c
 ld2: $& Makefile perlld ${src}/cygwin/ld2.in
 	@echo "extracting ld2 (with variable substitutions)"
 	@$sed s,@buildpath@,$addtopath,g <${src}/cygwin/ld2.in >ld2
+	@chmod a+x ld2
 	@echo "installing ld2 into $installbin"
 # install is included in Cygwin distributions, and we make a note of th
 # requirement in the README.cygwin file. However, let's give them

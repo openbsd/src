@@ -560,7 +560,7 @@ The results end up in C<$1>, C<$2> and so on.
 
     # a cheap and nasty way to break an email address up into parts
 
-    if ($email =~ /([^@])+@(.+)/) {
+    if ($email =~ /([^@]+)@(.+)/) {
         print "Username is $1\n";
         print "Hostname is $2\n";
     }

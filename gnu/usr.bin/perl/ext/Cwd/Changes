@@ -1,5 +1,26 @@
 Revision history for Perl extension Cwd.
 
+2.21  Tue Aug 31 22:50:14 CDT 2004
+
+ - Removed "NO_META" from the Makefile.PL, since I'm not building the
+   distribution with MakeMaker anyway.  [Rohan Carly]
+
+ - Only test _perl_abs_path() on platforms where it's expected to work
+   (platforms with '/' as the directory separator). [Craig A. Berry]
+
+2.20  Thu Jul 22 08:23:53 CDT 2004
+
+ - On some implementations of perl on Win32, a memory leak (or worse?)
+   occurred when calling getdcwd().  This has been fixed. [PodMaster]
+
+ - Added tests for getdcwd() on Win32.
+
+ - Fixed a problem in the pure-perl implementation _perl_abs_path()
+   that caused a fatal error when run on plain files. [Nicholas Clark]
+   To exercise the appropriate test code on platforms that wouldn't
+   otherwise use _perl_abs_path(), run the tests with $ENV{PERL_CORE}
+   or $ENV{TEST_PERL_CWD_CODE} set.
+
 2.19  Thu Jul 15 08:32:18 CDT 2004
 
  - The abs_path($arg) fix from 2.18 didn't work for VMS, now it's
