@@ -493,6 +493,10 @@ main(argc, argv)
 			send_probe(++seq, ttl, &to);
 			while (cc = wait_for_reply(s, &from, &t1)) {
 				(void) gettimeofday(&t2, &tz);
+				if (t2.tv_sec - t1.tv_sec > waittime) {
+					cc = 0;
+					break;
+				}
 				if ((i = packet_ok(packet, cc, &from, seq))) {
 					if (from.sin_addr.s_addr != lastaddr) {
 						print(packet, cc, &from);
