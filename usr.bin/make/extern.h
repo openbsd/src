@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.18 2000/01/08 09:45:15 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.19 2000/02/02 13:47:47 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -45,8 +45,8 @@
 ReturnStatus Arch_ParseArchive __P((char **, Lst, GNode *));
 void Arch_Touch __P((GNode *));
 void Arch_TouchLib __P((GNode *));
-time_t Arch_MTime __P((GNode *));
-time_t Arch_MemMTime __P((GNode *));
+Boolean Arch_MTime __P((GNode *));
+Boolean Arch_MemMTime __P((GNode *));
 void Arch_FindLib __P((GNode *, Lst));
 Boolean Arch_LibOODate __P((GNode *));
 void Arch_Init __P((void));

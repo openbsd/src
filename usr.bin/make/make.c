@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.12 1999/12/18 21:58:07 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.13 2000/02/02 13:47:48 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.12 1999/12/18 21:58:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.13 2000/02/02 13:47:48 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ Make_OODate (gn)
     if ((gn->type & (OP_JOIN|OP_USE|OP_EXEC)) == 0) {
 	(void) Dir_MTime (gn);
 	if (DEBUG(MAKE)) {
-	    if (gn->mtime != 0) {
+	    if (gn->mtime != OUT_OF_DATE) {
 		printf ("modified %s...", Targ_FmtTime(gn->mtime));
 	    } else {
 		printf ("non-existent...");
@@ -204,7 +204,7 @@ Make_OODate (gn)
 	 */
 
 	oodate = Arch_LibOODate (gn) ||
-	    ((gn->cmtime == 0) && (gn->type & OP_DOUBLEDEP));
+	    (gn->cmtime == OUT_OF_DATE && (gn->type & OP_DOUBLEDEP));
     } else if (gn->type & OP_JOIN) {
 	/*
 	 * A target with the .JOIN attribute is only considered
@@ -229,21 +229,21 @@ Make_OODate (gn)
 	    }
 	}
 	oodate = TRUE;
-    } else if ((gn->mtime < gn->cmtime) ||
-	       ((gn->cmtime == 0) &&
-		((gn->mtime==0) || (gn->type & OP_DOUBLEDEP))))
+    } else if (gn->mtime < gn->cmtime ||
+	       (gn->cmtime == OUT_OF_DATE &&
+		(gn->mtime == OUT_OF_DATE || (gn->type & OP_DOUBLEDEP))))
     {
 	/*
 	 * A node whose modification time is less than that of its
-	 * youngest child or that has no children (cmtime == 0) and
-	 * either doesn't exist (mtime == 0) or was the object of a
+	 * youngest child or that has no children (cmtime == OUT_OF_DATE) and
+	 * either doesn't exist (mtime == OUT_OF_DATE) or was the object of a
 	 * :: operator is out-of-date. Why? Because that's the way Make does
 	 * it.
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime < gn->cmtime) {
 		printf("modified before source...");
-	    } else if (gn->mtime == 0) {
+	    } else if (gn->mtime == OUT_OF_DATE) {
 		printf("non-existent and no sources...");
 	    } else {
 		printf(":: operator and no sources...");
@@ -472,7 +472,7 @@ Make_Update (cgn)
 	 * the target is made now. Otherwise archives with ... rules
 	 * don't work!
 	 */
-	if (noExecute || (cgn->type & OP_SAVE_CMDS) || Dir_MTime(cgn) == 0) {
+	if (noExecute || (cgn->type & OP_SAVE_CMDS) || Dir_MTime(cgn) == FALSE) {
 	    cgn->mtime = now;
 	}
 	if (DEBUG(MAKE)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.5 2000/02/02 13:47:47 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ void Dir_End __P((void));
 Boolean Dir_HasWildcards __P((char *));
 void Dir_Expand __P((char *, Lst, Lst));
 char *Dir_FindFile __P((char *, Lst));
-int Dir_MTime __P((GNode *));
+Boolean Dir_MTime __P((GNode *));
 void Dir_AddDir __P((Lst, char *));
 char *Dir_MakeFlags __P((char *, Lst));
 void Dir_ClearPath __P((Lst));

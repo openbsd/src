@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 1999/12/19 00:04:25 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2000/02/02 13:47:47 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.27 1999/12/19 00:04:25 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.28 2000/02/02 13:47:47 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.27 1999/12/19 00:04:25 espie Exp $";
 #define	MAKEFLAGS	".MAKEFLAGS"
 
 Lst			create;		/* Targets to be made */
-time_t			now;		/* Time at start of make */
+time_t			now = OUT_OF_DATE;/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.15 2000/01/25 20:52:15 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.16 2000/02/02 13:47:47 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.15 2000/01/25 20:52:15 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.16 2000/02/02 13:47:47 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ static char rcsid[] = "$OpenBSD: dir.c,v 1.15 2000/01/25 20:52:15 espie Exp $";
  *	    	  	    If it exists, the entire path is returned.
  *	    	  	    Otherwise NULL is returned.
  *
- *	Dir_MTime 	    Return the modification time of a node. The file
+ *	Dir_MTime 	    Return TRUE if node exists. The file
  *	    	  	    is searched for along the default search path.
  *	    	  	    The path and mtime fields of the node are filled
  *	    	  	    in.
@@ -977,7 +977,7 @@ Dir_FindFile (name, path)
  *	search path dirSearchPath.
  *
  * Results:
- *	The modification time or 0 if it doesn't exist
+ *	TRUE if file exists.
  *
  * Side Effects:
  *	The modification time is placed in the node's mtime slot.
@@ -985,7 +985,7 @@ Dir_FindFile (name, path)
  *	found one for it, the full name is placed in the path slot.
  *-----------------------------------------------------------------------
  */
-int
+Boolean
 Dir_MTime (gn)
     GNode         *gn;	      /* the file whose modification time is
 			       * desired */
@@ -993,6 +993,7 @@ Dir_MTime (gn)
     char          *fullName;  /* the full pathname of name */
     struct stat	  stb;	      /* buffer for finding the mod time */
     Hash_Entry	  *entry;
+    Boolean 	  exists;
 
     if (gn->type & OP_ARCHV) {
 	return Arch_MTime (gn);
@@ -1019,18 +1020,21 @@ Dir_MTime (gn)
 	}
 	stb.st_mtime = (time_t)(long)Hash_GetValue(entry);
 	Hash_DeleteEntry(&mtimes, entry);
+	exists = TRUE;
     } else if (stat (fullName, &stb) == 0) {
     	/* XXX forces make to differentiate between the epoch and
 	 * non-existent files by kludging the timestamp slightly. */
-    	if (stb.st_mtime == 0)
-		stb.st_mtime = 1;
+    	if (stb.st_mtime == OUT_OF_DATE)
+		stb.st_mtime++;
+	exists = TRUE;
     } else {
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
 	    return Arch_MemMTime (gn);
 	} else {
-	    stb.st_mtime = 0;
+	    stb.st_mtime = OUT_OF_DATE;
+	    exists = FALSE;
 	}
     }
     if (fullName && gn->path == (char *)NULL) {
@@ -1038,7 +1042,7 @@ Dir_MTime (gn)
     }
 
     gn->mtime = stb.st_mtime;
-    return (gn->mtime);
+    return exists;
 }
 
 /*-

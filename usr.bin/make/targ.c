@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.13 1999/12/18 21:58:08 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.14 2000/02/02 13:47:48 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.13 1999/12/18 21:58:08 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.14 2000/02/02 13:47:48 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ Targ_NewGN (name)
     gn->made = 	    	UNMADE;
     gn->childMade = 	FALSE;
     gn->order =		0;
-    gn->mtime = gn->cmtime = 0;
+    gn->mtime = gn->cmtime = OUT_OF_DATE;
     gn->iParents =  	Lst_Init();
     gn->cohorts =   	Lst_Init();
     gn->parents =   	Lst_Init();
@@ -560,7 +560,7 @@ TargPrintNode (gnp, passp)
 		printf("# No unmade children\n");
 	    }
 	    if (! (gn->type & (OP_JOIN|OP_USE|OP_EXEC))) {
-		if (gn->mtime != 0) {
+		if (gn->mtime != OUT_OF_DATE) {
 		    printf("# last modified %s: %s\n",
 			      Targ_FmtTime(gn->mtime),
 			      (gn->made == UNMADE ? "unmade" :

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.24 2000/01/08 09:45:15 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.25 2000/02/02 13:47:46 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.24 2000/01/08 09:45:15 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.25 2000/02/02 13:47:46 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,9 +73,9 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.24 2000/01/08 09:45:15 espie Exp $";
  *	    	  	    	of the library's table of contents.
  *
  *	Arch_MTime	    	Find the modification time of a member of
- *	    	  	    	an archive *in the archive*. The time is also
- *	    	  	    	placed in the member's GNode. Returns the
- *	    	  	    	modification time.
+ *	    	  	    	an archive *in the archive*, return TRUE if
+ *				exists. The time is placed in the member's 
+ *				GNode. Returns the modification time.
  *
  *	Arch_MemTime	    	Find the modification time of a member of
  *	    	  	    	an archive. Called when the member doesn't
@@ -995,7 +995,7 @@ Arch_TouchLib (gn)
  *	Return the modification time of a member of an archive.
  *
  * Results:
- *	The modification time (seconds).
+ *	TRUE if found.
  *
  * Side Effects:
  *	The mtime field of the given node is filled in with the value
@@ -1003,7 +1003,7 @@ Arch_TouchLib (gn)
  *
  *-----------------------------------------------------------------------
  */
-time_t
+Boolean
 Arch_MTime (gn)
     GNode	  *gn;	      /* Node describing archive member */
 {
@@ -1014,13 +1014,12 @@ Arch_MTime (gn)
 			     Var_Value(MEMBER, gn),
 			     TRUE);
     if (arhPtr != NULL) {
-	modTime = (time_t) strtol(arhPtr->ar_date, NULL, 10);
+	gn->mtime = (time_t) strtol(arhPtr->ar_date, NULL, 10);
+	return TRUE;
     } else {
-	modTime = 0;
+    	gn->mtime = OUT_OF_DATE;
+	return FALSE;
     }
-
-    gn->mtime = modTime;
-    return (modTime);
 }
 
 /*-
@@ -1030,14 +1029,14 @@ Arch_MTime (gn)
  *	time from its archived form, if it exists.
  *
  * Results:
- *	The modification time.
+ *	TRUE if found.
  *
  * Side Effects:
  *	The mtime field is filled in.
  *
  *-----------------------------------------------------------------------
  */
-time_t
+Boolean
 Arch_MemMTime (gn)
     GNode   	  *gn;
 {
@@ -1047,8 +1046,8 @@ Arch_MemMTime (gn)
 		  *nameEnd;
 
     if (Lst_Open (gn->parents) != SUCCESS) {
-	gn->mtime = 0;
-	return (0);
+	gn->mtime = OUT_OF_DATE;
+	return FALSE;
     }
     while ((ln = Lst_Next (gn->parents)) != NULL) {
 	pgn = (GNode *) Lst_Datum (ln);
@@ -1070,21 +1069,24 @@ Arch_MemMTime (gn)
 
 	    if (pgn->make && nameEnd != NULL &&
 		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0) {
-				     gn->mtime = Arch_MTime(pgn);
+		    if (Arch_MTime(pgn))
+			gn->mtime = pgn->mtime;
+		    else
+		    	gn->mtime = OUT_OF_DATE;
 	    }
 	} else if (pgn->make) {
 	    /*
 	     * Something which isn't a library depends on the existence of
 	     * this target, so it needs to exist.
 	     */
-	    gn->mtime = 0;
+	    gn->mtime = OUT_OF_DATE;
 	    break;
 	}
     }
 
     Lst_Close (gn->parents);
 
-    return (gn->mtime);
+    return gn->mtime == OUT_OF_DATE;
 }
 
 /*-
@@ -1172,17 +1174,18 @@ Arch_LibOODate (gn)
 
     if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
-    } else if ((gn->mtime > now) || (gn->mtime < gn->cmtime) || !gn->mtime) {
-	oodate = TRUE;
+    } else if (gn->mtime > now || gn->mtime < gn->cmtime || 
+    	gn->mtime == OUT_OF_DATE) {
+	    oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
 	struct ar_hdr  	*arhPtr;    /* Header for __.SYMDEF */
-	int 	  	modTimeTOC; /* The table-of-contents's mod time */
+	time_t 	  	modTimeTOC; /* The table-of-contents's mod time */
 
 	arhPtr = ArchStatMember (gn->path, RANLIBMAG, FALSE);
 
 	if (arhPtr != NULL) {
-	    modTimeTOC = (int) strtol(arhPtr->ar_date, NULL, 10);
+	    modTimeTOC = (time_t) strtol(arhPtr->ar_date, NULL, 10);
 
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));

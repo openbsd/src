@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.21 2000/02/01 03:23:32 deraadt Exp $	*/
+/*	$OpenBSD: compat.c,v 1.22 2000/02/02 13:47:47 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.21 2000/02/01 03:23:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.22 2000/02/02 13:47:47 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -588,7 +588,7 @@ CompatMake (gnp, pgnp)
 	     * ok.
 	     * -- ardeb 1/12/88
 	     */
-	    if (noExecute || Dir_MTime(gn) == 0) {
+	    if (noExecute || Dir_MTime(gn) == FALSE) {
 		gn->mtime = now;
 	    }
 	    if (gn->cmtime > gn->mtime)
