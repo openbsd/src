@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.52 2000/05/01 18:31:27 markus Exp $");
+RCSID("$Id: channels.c,v 1.53 2000/05/01 19:11:35 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -632,6 +632,8 @@ channel_handle_rfd(Channel *c, fd_set * readset, fd_set * writeset)
 	if (c->rfd != -1 &&
 	    FD_ISSET(c->rfd, readset)) {
 		len = read(c->rfd, buf, sizeof(buf));
+		if (len < 0 && (errno == EINTR || errno == EAGAIN))
+			return 1;
 		if (len <= 0) {
 			debug("channel %d: read<=0 rfd %d len %d",
 			    c->self, c->rfd, len);
@@ -658,7 +660,9 @@ channel_handle_wfd(Channel *c, fd_set * readset, fd_set * writeset)
 	    FD_ISSET(c->wfd, writeset) &&
 	    buffer_len(&c->output) > 0) {
 		len = write(c->wfd, buffer_ptr(&c->output),
-			    buffer_len(&c->output));
+		    buffer_len(&c->output));
+		if (len < 0 && (errno == EINTR || errno == EAGAIN))
+			return 1;
 		if (len <= 0) {
 			if (compat13) {
 				buffer_consume(&c->output, buffer_len(&c->output));
