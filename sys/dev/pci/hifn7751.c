@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.87 2001/07/20 14:21:58 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.88 2001/07/21 03:08:57 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -153,6 +153,10 @@ hifn_attach(parent, self, aux)
 	int rseg;
 	caddr_t kva;
 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
+		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
+
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
@@ -222,10 +226,6 @@ hifn_attach(parent, self, aux)
 		goto fail_mem;
 	}
 	hifn_reset_puc(sc);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
-		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
 
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
@@ -635,9 +635,20 @@ hifn_init_pci_registers(sc)
 	    offsetof(struct hifn_dma, resr[0]));
 
 	/* write status register */
-	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA |
-	    HIFN_DMACSR_R_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
-	    HIFN_DMACSR_C_CTRL_ENA);
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS |
+	    HIFN_DMACSR_S_CTRL_DIS | HIFN_DMACSR_C_CTRL_DIS |
+	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_D_DONE | HIFN_DMACSR_D_LAST |
+	    HIFN_DMACSR_D_WAIT | HIFN_DMACSR_D_OVER |
+	    HIFN_DMACSR_R_ABORT | HIFN_DMACSR_R_DONE | HIFN_DMACSR_R_LAST |
+	    HIFN_DMACSR_R_WAIT | HIFN_DMACSR_R_OVER |
+	    HIFN_DMACSR_S_ABORT | HIFN_DMACSR_S_DONE | HIFN_DMACSR_S_LAST |
+	    HIFN_DMACSR_S_WAIT | HIFN_DMACSR_S_OVER |
+	    HIFN_DMACSR_C_ABORT | HIFN_DMACSR_C_DONE | HIFN_DMACSR_C_LAST |
+	    HIFN_DMACSR_C_WAIT |
+	    HIFN_DMACSR_C_EIRQ |
+	    ((sc->sc_flags & HIFN_HAS_PUBLIC) ? HIFN_DMACSR_PUBDONE : 0));
+	sc->sc_d_busy = sc->sc_r_busy = sc->sc_s_busy = sc->sc_c_busy = 0;
 	sc->sc_dmaier |= HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_ABORT |
 	    HIFN_DMAIER_S_ABORT | HIFN_DMAIER_D_ABORT | HIFN_DMAIER_R_ABORT;
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
@@ -802,11 +813,16 @@ hifn_writeramaddr(sc, addr, data, slot)
 	struct hifn_dma *dma = sc->sc_dma;
 	hifn_base_command_t wc;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
+	int r;
 
 	wc.masks = 3 << 13;
 	wc.session_num = addr >> 14;
 	wc.total_source_count = 8;
 	wc.total_dest_count = addr & 0x3fff;;
+
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
+	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
 	/* build write command */
 	bzero(dma->command_bufs[slot], HIFN_MAX_COMMAND);
@@ -835,9 +851,16 @@ hifn_writeramaddr(sc, addr, data, slot)
 		printf("\n%s: writeramaddr error -- "
 		    "result[%d](addr %d) valid still set\n",
 		    sc->sc_dv.dv_xname, slot, addr);
+		r = -1;
 		return (-1);
-	}
-	return (0);
+	} else
+	    r = 0;
+
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_DIS | HIFN_DMACSR_S_CTRL_DIS |
+	    HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS);
+
+	return (r);
 }
 
 int
@@ -849,11 +872,16 @@ hifn_readramaddr(sc, addr, data, slot)
 	struct hifn_dma *dma = sc->sc_dma;
 	hifn_base_command_t rc;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
+	int r;
 
 	rc.masks = 2 << 13;
 	rc.session_num = addr >> 14;
 	rc.total_source_count = addr & 0x3fff;
 	rc.total_dest_count = 8;
+
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
+	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
 	bzero(dma->command_bufs[slot], HIFN_MAX_COMMAND);
 	*(hifn_base_command_t *)dma->command_bufs[slot] = rc;
@@ -881,10 +909,17 @@ hifn_readramaddr(sc, addr, data, slot)
 		printf("\n%s: readramaddr error -- "
 		    "result[%d](addr %d) valid still set\n",
 		    sc->sc_dv.dv_xname, slot, addr);
-		return (-1);
+		r = -1;
+	} else {
+		r = 0;
+		bcopy(&dma->test_dst, data, sizeof(dma->test_dst));
 	}
-	bcopy(&dma->test_dst, data, sizeof(dma->test_dst));
-	return (0);
+
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_DIS | HIFN_DMACSR_S_CTRL_DIS |
+	    HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS);
+
+	return (r);
 }
 
 /*
@@ -1189,6 +1224,10 @@ hifn_crypto(sc, cmd, crp)
 	dma->cmdr[cmdi].l = cmdlen | HIFN_D_VALID | HIFN_D_LAST |
 	    HIFN_D_MASKDONEIRQ;
 	dma->cmdu++;
+	if (sc->sc_c_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA);
+		sc->sc_c_busy = 1;
+	}
 
 	/*
 	 * We don't worry about missing an interrupt (which a "command wait"
@@ -1205,9 +1244,17 @@ hifn_crypto(sc, cmd, crp)
 
 	hifn_dmamap_load(cmd->src_map, &dma->srci, dma->srcr,
 	    HIFN_D_SRC_RSIZE, &dma->srcu);
+	if (sc->sc_s_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_S_CTRL_ENA);
+		sc->sc_s_busy = 1;
+	}
 
 	hifn_dmamap_load(cmd->dst_map, &dma->dsti, dma->dstr,
 	    HIFN_D_DST_RSIZE, &dma->dstu);
+	if (sc->sc_d_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA);
+		sc->sc_d_busy = 1;
+	}
 
 	/*
 	 * Unlike other descriptors, we don't mask done interrupt from
@@ -1219,6 +1266,10 @@ hifn_crypto(sc, cmd, crp)
 	dma->hifn_commands[resi] = cmd;
 	dma->resr[resi].l = HIFN_MAX_RESULT | HIFN_D_VALID | HIFN_D_LAST;
 	dma->resu++;
+	if (sc->sc_r_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_CTRL_ENA);
+		sc->sc_r_busy = 1;
+	}
 
 #ifdef HIFN_DEBUG
 	printf("%s: command: stat %8x ier %8x\n",
@@ -1251,7 +1302,7 @@ hifn_intr(arg)
 {
 	struct hifn_softc *sc = arg;
 	struct hifn_dma *dma = sc->sc_dma;
-	u_int32_t dmacsr, restart;
+	u_int32_t dmacsr, restart, rings = 0;
 	int i, u;
 
 	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
@@ -1347,14 +1398,32 @@ hifn_intr(arg)
 	}
 	dma->cmdk = i; dma->cmdu = u;
 
+	if (dma->cmdu == 0) {
+		rings |= HIFN_DMACSR_C_CTRL_DIS;
+		sc->sc_c_busy = 0;
+	}
+	if (dma->srcu == 0) {
+		rings |= HIFN_DMACSR_S_CTRL_DIS;
+		sc->sc_s_busy = 0;
+	}
+	if (dma->dstu == 0) {
+		rings |= HIFN_DMACSR_D_CTRL_DIS;
+		sc->sc_d_busy = 0;
+	}
+	if (dma->resu == 0) {
+		rings |= HIFN_DMACSR_R_CTRL_DIS;
+		sc->sc_r_busy = 0;
+	}
+
 	/*
 	 * Clear "result done" and "command wait" flags in status register.
 	 * If we still have slots to process and we received a "command wait"
 	 * interrupt, this will interupt us again.
 	 */
-	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE|HIFN_DMACSR_C_WAIT);
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_R_DONE | HIFN_DMACSR_C_WAIT | rings);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD); 
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	return (1);
 }
 
