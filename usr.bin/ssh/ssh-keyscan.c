@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.12 2001/02/04 15:32:26 stevesk Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.13 2001/02/07 18:04:50 itojun Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -470,7 +470,7 @@ conloop(void)
 		seltime = c->c_tv;
 		seltime.tv_sec -= now.tv_sec;
 		seltime.tv_usec -= now.tv_usec;
-		if ((int) seltime.tv_usec < 0) {
+		if (seltime.tv_usec < 0) {
 			seltime.tv_usec += 1000000;
 			seltime.tv_sec--;
 		}
