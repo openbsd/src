@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.10 1997/12/19 09:03:32 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.11 2000/07/07 20:47:25 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.10 1997/12/19 09:03:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.11 2000/07/07 20:47:25 deraadt Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ numlabels(row)
 		mvwaddstr(wnd, row++, INSET, "No drives attached.");
 		return (row);
 	}
-#define COLWIDTH	14
+#define COLWIDTH	17
 #define DRIVESPERLINE	((wnd->_maxx - INSET) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
@@ -149,16 +149,16 @@ numlabels(row)
 	 */
 	if (linesperregion < 3)
 		linesperregion = 3;
-	col = 0;
+	col = INSET;
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= wnd->_maxx - INSET) {
-				col = 0, row += linesperregion + 1;
+			if (col + COLWIDTH >= wnd->_maxx) {
+				col = INSET, row += linesperregion + 1;
 				if (row > wnd->_maxy - (linesperregion + 1))
 					break;
 			}
 			mvwaddstr(wnd, row, col + 4, cur.dk_name[i]);
-			mvwaddstr(wnd, row + 1, col, "Kps tps  sec");
+			mvwaddstr(wnd, row + 1, col, " KBps tps  sec");
 			col += COLWIDTH;
 		}
 	if (col)
@@ -227,7 +227,7 @@ showiostat()
 			}
 		return;
 	}
-	col = 0;
+	col = INSET;
 	wmove(wnd, row + linesperregion, 0);
 	wdeleteln(wnd);
 	wmove(wnd, row + 3, 0);
@@ -235,7 +235,7 @@ showiostat()
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 			if (col + COLWIDTH >= wnd->_maxx) {
-				col = 0, row += linesperregion + 1;
+				col = INSET, row += linesperregion + 1;
 				if (row > wnd->_maxy - (linesperregion + 1))
 					break;
 				wmove(wnd, row + linesperregion, 0);
@@ -260,7 +260,7 @@ stats(row, col, dn)
 
 	words = cur.dk_bytes[dn] / 1024.0;	/* # of K transferred */
 	if (numbers) {
-		mvwprintw(wnd, row, col, "%3.0f%4.0f%5.1f",
+		mvwprintw(wnd, row, col, "%5.0f%4.0f%5.1f",
 		    words / etime, cur.dk_xfer[dn] / etime, atime / etime);
 		return (row);
 	}
