@@ -1,4 +1,4 @@
-/*	$OpenBSD: termout.c,v 1.5 1996/06/26 05:41:32 deraadt Exp $	*/
+/*	$OpenBSD: termout.c,v 1.6 1998/07/27 15:24:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: termout.c,v 1.5 1996/06/26 05:41:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: termout.c,v 1.6 1998/07/27 15:24:31 millert Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: termout.c,v 1.5 1996/06/26 05:41:32 deraadt Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ocurses.h>
+#include <curses.h>
 #if	defined(ultrix)
 /* Some version of this OS has a bad definition for nonl() */
 #undef	nl
