@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
+/* $OpenBSD: radio.c,v 1.3 2002/01/02 22:05:44 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -58,8 +58,7 @@ struct cfdriver radio_cd = {
 int
 radioprobe(struct device *parent, void *match, void *aux)
 {
-	printf("\n");		/* stub!?, fixme */
-	return 1;
+	return (1);
 }
 
 void
