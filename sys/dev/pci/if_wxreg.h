@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wxreg.h,v 1.5 2001/10/06 22:42:53 mjacob Exp $	*/
+/*	$OpenBSD: if_wxreg.h,v 1.6 2001/10/24 18:25:55 mjacob Exp $	*/
 /*
  * Principal Author: Matthew Jacob
  * Copyright (c) 1999, 2001 by Traakan Software
@@ -145,7 +145,6 @@ typedef struct {
 #define	WXREG_RCTL		0x00000100
 #define	WXREG_RDTR0		0x00000108
 #define		WXREG_RDTR0_LIVENGOOD		0x00002820
-#define			WXREG_RDTR0_VALUE	9765	/* ~10us delay */
 #define	WXREG_RDBA0_LO		0x00000110
 #define		WXREG_RDBA0_LO_LIVENGOOD	0x00002800
 #define	WXREG_RDBA0_HI		0x00000114
@@ -304,7 +303,7 @@ typedef struct {
 #define WXISR_GPI_EN3	0x4000
 
 #define	WXIENABLE_DEFAULT	\
-	 (WXISR_RXO | WXISR_RXT0 | WXISR_RXDMT0 | WXISR_RXSEQ |	\
+	 (WXISR_RXO | WXISR_RXT0 | WXISR_RXDMT0 | WXISR_RXSEQ |	WXISR_TXDW |\
 		    WXISR_LSC | WXISR_PCIE | WXISR_GPI_EN1)
 
 #define	WXDISABLE	0xffffffff
