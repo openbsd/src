@@ -1,122 +1,244 @@
-.\"	$OpenBSD: sectok.1,v 1.1 2001/06/27 19:41:46 rees Exp $
+.\"	$OpenBSD: sectok.1,v 1.2 2001/07/25 20:28:57 jakob Exp $
 .\"
-.\" copyright 1997, 2000
-.\" the regents of the university of michigan
-.\" all rights reserved
-.\" 
-.\" permission is granted to use, copy, create derivative works 
-.\" and redistribute this software and such derivative works 
-.\" for any purpose, so long as the name of the university of 
-.\" michigan is not used in any advertising or publicity 
-.\" pertaining to the use or distribution of this software 
-.\" without specific, written prior authorization.  if the 
-.\" above copyright notice or any other identification of the 
-.\" university of michigan is included in any copy of any 
-.\" portion of this software, then the disclaimer below must 
-.\" also be included.
-.\" 
-.\" this software is provided as is, without representation 
-.\" from the university of michigan as to its fitness for any 
-.\" purpose, and without warranty by the university of 
-.\" michigan of any kind, either express or implied, including 
-.\" without limitation the implied warranties of 
-.\" merchantability and fitness for a particular purpose. the 
-.\" regents of the university of michigan shall not be liable 
-.\" for any damages, including special, indirect, incidental, or 
-.\" consequential damages, with respect to any claim arising 
-.\" out of or in connection with the use of the software, even 
-.\" if it has been or is hereafter advised of the possibility of 
-.\" such damages.
-
-.Dd January 10, 2001
-.Dt PAY 1
+.\" Copyright (C) 2001, Jakob Schlyter. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the project nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 17, 2001
+.Dt SECTOK 1
 .Os
 .Sh NAME
-.Nm pay
+.Nm sectok
 .Nd communicate with smartcards using iso7816
 .Sh SYNOPSIS
-.Nm pay
-.Ar [-ht]
+.Nm sectok
+.Op Fl 0123
+.Op Fl f Ar scriptfile
+.Op Fl s Ar sleeptime
+.Pp
 .Sh DESCRIPTION
 .Nm
-is a command-line-like interface for communicating with smartcards.   APDU's () can be sent to the card, and results are displayed.  Some commands are card-specific, and focus on the Schlumberger Cyberflex Access Javacards, as that is one of CITI's most commonly used cards.
-
-The
+is a command-line-like interface for communicating with smartcards.
+APDUs can be sent to the card, and results are displayed. Some
+commands are card-specific, and focus on the Schlumberger Cyberflex
+Access Javacards.
+.Pp
+.Sh OPTIONS
+.Pp
+.Bl -tag -width Ds
+.It Fl 0123
+Select port.
+.Pp
+.It Fl f Ar scriptfile
+Run commands from scriptfile.
+.Pp
+.It Fl s Ar sleeptime
+Set sleep between commands in the script.
+.Pp
+.Sh COMMANDS
+.Pp
+.Ss Non-card commands
+.Pp
+.Bl -tag -width Ds
+.It Xo
+.Cm help
+.Op command
+.Xc
+Show help for
+.Ar command .
+.It Xo
+.Cm ?
+.Op command
+.Xc
+Show help for
+.Ar command .
+.It Xo
+.Cm reset
+.Op Fl 0123ivf
+.Xc
+Reset smartcard.
+.Bl -tag -width Ds
+.It Fl 0123
+select port
+.It Fl i
+don't wait for card insertion
+.It Fl v
+verbose
+.It Fl f
+open connection even if atr is bad
+.El
+.It Xo
+.Cm open
+.Op Fl 0123ivf
+.Xc
+Synonym for reset.
+.It Xo
+.Cm close
+.Xc
+Close smartcard connection.
+.It Xo
+.Cm quit
+.Xc
+Quit
+.Nm Li .
+.El
+.Ss ISO 7816-4 commands
+.Pp
+.Bl -tag -width Ds
+.It Xo
+.Cm apdu
+.Op Fl c Ar class
+.Ar "ins p1 p2 p3 data ..."
+.Xc
+Send APDU to smartcard.
+.It Xo
+.Cm fid
+.Op Fl v
+.Ar fid
+.Xc
+Select file identified by
+.Ar fid .
+.Ar fid
+can be a numeric fid such as 3f00 or a two character name.
+.It Xo
+.Cm isearch
+.Xc
+Try all 256 possible instructions and print results.
+.It Xo
+.Cm class
+.Op Ar class
+.Xc
+.It Xo
+.Cm read
+.Op Fl x
+.Ar filesize
+.Xc
+.It Xo
+.Cm write
+.Ar input-filename
+.Xc
+.El
+.Ss Cyberflex commands
+.Pp
+.Bl -tag -width Ds
+.It Xo
+.Cm ls
+.Op Fl l
+.Xc
+List all files in current DF.
+.It Xo
+.Cm acl
+.Ar fid
+.Op Ar principal: "r1 r2 ..."
+.Xc
+.Bl -tag -width Ds
+.It principals
+world, CHV1, CHV2, AUT0, AUT1, AUT2, AUT3, AUT4
+.It f_rights
+r, w, x/a, inval, rehab, dec, inc
+.It d_rights
+l, d, a, i, manage
+.El
+.It Xo
+.Cm create
+.Ar fid
+.Ar size
+.Xc
+.It Xo
+.Cm delete
+.Ar fid
+.Xc
+.It Xo
+.Cm jdefault
+.Op Fl d
+.Xc
+Set default applet.
+.Bl -tag -width Ds
+.It Fl d
+set default applet to default loader
+.El
+.It Xo
+.Cm jatr
+.Xc
+Set java atr.
+.It Xo
+.Cm jdata
+.Xc
+Print useful info about the card
+.It Xo
+.Cm login
+.Op Fl d
+.Op Fl k Ar keyno
+.Op Fl v
+.Op Fl x Ar hex-aut0
+.Xc
+.It Xo
+.Cm jload
+.Op Fl p Ar progID
+.Op Fl c Ar contID
+.Op Fl s Ar cont_size
+.Op Fl i Ar inst_size
+.Op Fl v
+.Op Fl a Ar filename
+.Xc
+.It Xo
+.Cm jlogin
+.Op Fl d
+.Xc
+"login" (verify AUT0 key)
+.Bl -tag -width Ds
+.It Fl d
+use manufacturer's default AUT0 key
+.El
+.It Xo
+.Cm junload
+.Op Fl p Ar progID
+.Op Fl c Ar contID
+.Xc
+.It Xo
+.Cm jselect
+.Op Fl a Ar aid
+.Op Fl d
+.Xc
+Select applet.
+.Bl -tag -width Ds
+.It Fl d
+select default loader
+.El
+.It Xo
+.Cm setpass
+.Op Fl d
+.Op Fl x Ar hex-aut0
+.Xc
+.El
+.Sh AUTHORS
 .Nm
-options are as follows:
-
-     -h  watch for card removal.
+was written by Jim Rees and others at University of Michigan.
+.Sh HISTORY
 .Nm
-alerts user of this event
-
-     -t	 change the ATR timeout of a card.  Many cards do not conform to the ISO specs, and use varying lengths of ATR timeouts.
-
-
-The
-.Nm
-commands are as follows:
-
-1/2 - number of port to which smartcard reader is attached also calls reset (and accepts same modifiers) modifers:  t -
-
-r   - issue a reset to the card
-      modifers: v - verbose
-                f - force open
-                i - return immediately if there is no card in the reader
-
-C   - set the instruction class
-
-f   - select or open a file
-      options:  / - select root file (30 00)
-                <byte>.<byte>
-                <byte> <byte> - select file designated by
-                                these two bytes
-
-g   - stat currently selected file
-
-?/h - display the help screen
-      option: command you want help on
-
-i/o/b - send an 'in/out/in-out' command
-      requires ins, p1, p2, p3
-      options: c - allows you to specify class byte
-
-T   - send T=1 I block and get reply
-      options: S - send R/S block
-
-I   - find instructions
-
-j   - Cyberflex: Verify AUT0
-      options:
-        r - reset to default loader
-        s - set selected app as default
-        a - fix broken java atr
-        x - list files in selected DF
-        l - download applet (.bin)
-           options -p program FID, -c instance directory FID,
-                   -s data directory size, -i data container size,
-                   -a applet AID
-        u - unload applet
-           options -p program ID, -c instance directory FID,
-                   -a applet AID
-        p - select applet
-                   -a applet AID
-        q - select default loader as current
-        k - load DES key  (Usage: jk number_of_keys)
-        R - load RSA private key
-
-s   - Sm@rt Cafe:
-       l - download applet (.CAP)
-
-R   - read file
-      R filesize
-
-W   - write file
-      W <filename>
-
-x   - explore (similar to unix `ls`)
-
-c   - dump file contents
-
-e   - eject
-
-q   - quit
+first appeared in
+.Ox 3.0 .
+.Sh BUGS
+Probably several.
