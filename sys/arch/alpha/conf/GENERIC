@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.86 2001/07/19 14:35:12 art Exp $
+#	$OpenBSD: GENERIC,v 1.87 2001/09/28 07:18:30 mickey Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -137,12 +137,14 @@ dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID PCI
 scsibus* at dpt?
 gdt*	at pci? dev ? function ?	# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
+twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+scsibus*	at twe?
 
 #BROKEN: adv and twe have 64-bit problems
 #adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
 #scsibus* at adv?
-#twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-#scsibus*	at twe?
+#ami*	at pci? dev ? function ?	# AMI MegaRAID controllers
+#scsibus*	at ami?
 
 # PCI Network devices
 de*	at pci? dev ? function ?	# 21x4[012]-based Ethernet
@@ -168,6 +170,7 @@ ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?	# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
 wx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
+an*	at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 
 #BROKEN:  The following two drivers have 64-bit issues
 #tx*	at pci? dev ? function ?	# SMC 83C170 EPIC ethernet
