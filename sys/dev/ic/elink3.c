@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.16 1996/11/28 23:27:49 niklas Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.17 1997/01/05 04:03:26 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.11 1996/10/21 22:34:21 thorpej Exp $	*/
 
 /*
@@ -547,6 +547,9 @@ epintr(arg)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int16_t status;
 	int ret = 0;
+
+	if (sc->bustype == EP_BUS_PCMCIA && (sc->pcmcia_flags & EP_ABSENT))
+		return (ret);
 
 	for (;;) {
 		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
