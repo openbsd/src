@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.101 2004/07/05 02:13:43 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.102 2004/07/28 16:00:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ int	main(int, char *[]);
 int	check_child(pid_t, const char *);
 int	reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 	    struct peer **, struct filter_head *);
-int	dispatch_imsg(struct imsgbuf *, int, struct mrt_head *);
+int	dispatch_imsg(struct imsgbuf *, int);
 
 int			rfd = -1;
 volatile sig_atomic_t	mrtdump = 0;
@@ -276,15 +276,13 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
 			nfds--;
-			if (dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION,
-			    &mrt_l) == -1)
+			if (dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION) == -1)
 				quit = 1;
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
-			if (dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE,
-			    &mrt_l) == -1)
+			if (dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE) == -1)
 				quit = 1;
 		}
 
@@ -428,10 +426,9 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 }
 
 int
-dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
+dispatch_imsg(struct imsgbuf *ibuf, int idx)
 {
 	struct imsg		 imsg;
-	struct mrt		 mrt;
 	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -450,15 +447,6 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MRT_CLOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct mrt)) {
-				log_warnx("wrong imsg len");
-				break;
-			}
-			memcpy(&mrt, imsg.data, sizeof(struct mrt));
-			mrt_close(mrt_get(mrt_l, &mrt));
-			break;
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("route request not from RDE");

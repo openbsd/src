@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.12 2004/07/13 17:57:20 jaredy Exp $ */
+/*	$OpenBSD: mrt.h,v 1.13 2004/07/28 16:00:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -285,7 +285,6 @@ void		 mrt_dump_upcall(struct pt_entry *, void *);
 int		 mrt_write(struct mrt *);
 void		 mrt_clean(struct mrt *);
 void		 mrt_init(struct imsgbuf *, struct imsgbuf *);
-void		 mrt_close(struct mrt *);
 int		 mrt_timeout(struct mrt_head *);
 void		 mrt_reconfigure(struct mrt_head *);
 void		 mrt_handler(struct mrt_head *);

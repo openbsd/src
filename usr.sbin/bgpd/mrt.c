@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.35 2004/07/07 21:18:06 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.36 2004/07/28 16:00:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -364,7 +364,6 @@ mrt_open(struct mrt *mrt, time_t now)
 	enum imsg_type	type;
 	int		i;
 
-	mrt_close(mrt);
 	if (strftime(MRT2MC(mrt)->file, sizeof(MRT2MC(mrt)->file),
 	    MRT2MC(mrt)->name, localtime(&now)) == 0) {
 		log_warnx("mrt_open: strftime conversion failed");
@@ -388,33 +387,9 @@ mrt_open(struct mrt *mrt, time_t now)
 
 	if (imsg_compose_fdpass(mrt_imsgbuf[i], type, mrt->fd,
 	    mrt, sizeof(struct mrt)) == -1)
-		log_warn("mrt_close");
+		log_warn("mrt_open");
 
 	return (1);
-}
-
-void
-mrt_close(struct mrt *mrt)
-{
-	if (mrt == NULL)
-		return;
-	/*
-	 * this function is normaly called twice. First because of a imsg 
-	 * form the child to inform the parent to close the fd. The second time
-	 * it is called after reconfigure when the mrt file gets removed.
-	 * In that case the parent must inform the child to close and remove
-	 * this mrt dump descriptor.
-	 */
-	if (MRT2MC(mrt)->state == MRT_STATE_REMOVE)
-		if (imsg_compose(
-		    mrt_imsgbuf[mrt->type == MRT_TABLE_DUMP ? 0 : 1],
-		    IMSG_MRT_CLOSE, 0, mrt, sizeof(struct mrt)) == -1)
-			log_warn("mrt_close");
-
-	if (mrt->fd == -1)
-		return;
-	close(mrt->fd);
-	mrt->fd = -1;
 }
 
 int
@@ -459,7 +434,6 @@ mrt_reconfigure(struct mrt_head *mrt)
 			MRT2MC(m)->state = MRT_STATE_RUNNING;
 		}
 		if (MRT2MC(m)->state == MRT_STATE_REMOVE) {
-			mrt_close(m);
 			LIST_REMOVE(m, entry);
 			free(m);
 			continue;
