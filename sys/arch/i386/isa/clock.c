@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.22 2001/02/13 17:19:12 ho Exp $	*/
+/*	$OpenBSD: clock.c,v 1.23 2001/02/19 04:57:02 ho Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -207,7 +207,8 @@ rtcdrain(void *v)
 {
 	struct timeout *to = (struct timeout *)v;
 
-	timeout_del(to);
+	if (to != NULL)
+		timeout_del(to);
 
 	/* 
 	 * Drain any un-acknowledged RTC interrupts. 
@@ -242,7 +243,7 @@ int
 rtcintr(arg)
 	void *arg;
 {
-	struct clockframe *frame = arg;		/* not strictly neccecary */
+	struct clockframe *frame = arg;		/* not strictly necessary */
 	u_int stat = 0;
 
 	/* 
