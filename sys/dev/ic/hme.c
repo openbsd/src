@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.5 2001/09/20 17:58:33 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.6 2001/09/23 20:03:01 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -84,12 +84,12 @@
 
 #include <machine/bus.h>
 
-#include <dev/ic/hmereg.h>
-#include <dev/ic/hmevar.h>
-
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
 #endif
+
+#include <dev/ic/hmereg.h>
+#include <dev/ic/hmevar.h>
 
 struct cfdriver hme_cd = {
 	NULL, "hme", DV_IFNET
@@ -495,12 +495,7 @@ hme_init(sc)
 	bus_space_write_4(t, mac, HME_MACI_FCCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_EXCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
-	v = ETHERMTU + sizeof(struct ether_header) +
-#if NVLAN > 0
-	    EVL_ENCAPLEN +
-#endif
-	    0;
-	bus_space_write_4(t, mac, HME_MACI_TXSIZE, v);
+	bus_space_write_4(t, mac, HME_MACI_TXSIZE, HME_MTU);
 
 	/* Load station MAC address */
 	ea = sc->sc_enaddr;
@@ -527,12 +522,7 @@ hme_init(sc)
 	bus_space_write_4(t, etx, HME_ETXI_RSIZE, sc->sc_rb.rb_ntbuf);
 
 	bus_space_write_4(t, erx, HME_ERXI_RING, sc->sc_rb.rb_rxddma);
-	v = ETHERMTU + sizeof(struct ether_header) +
-#if NVLAN > 0
-	    EVL_ENCAPLEN +
-#endif
-	    0;
-	bus_space_write_4(t, mac, HME_MACI_RXSIZE, v);
+	bus_space_write_4(t, mac, HME_MACI_RXSIZE, HME_MTU);
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK,
@@ -737,12 +727,7 @@ hme_read(sc, ix, len)
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
-	    (len > ETHERMTU + sizeof(struct ether_header) +
-#if NVLAN > 1
-		EVL_ENCAPLEN +
-#endif
-		0
-	    )) {
+	    (len > HME_MTU)) {
 #ifdef HMEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);

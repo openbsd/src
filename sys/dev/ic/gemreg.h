@@ -530,4 +530,11 @@ struct gem_desc {
 #define	GEM_RD_BUFSHIFT		16
 #define	GEM_RD_BUFLEN(x)	(((x)&GEM_RD_BUFSIZE)>>GEM_RD_BUFSHIFT)
 
+#ifndef EVL_ENCAPLEN		/* defined if NVLAN > 0 */
+#define	EVL_ENCAPLEN	0
 #endif
+
+#define	GEM_MTU		\
+    (ETHERMTU + EVL_ENCAPLEN + sizeof(u_int32_t) + sizeof(struct ether_header))
+
+#endif /* _IF_GEMREG_H */

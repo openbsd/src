@@ -748,12 +748,8 @@ if (gem_opdebug) printf("in init\n");
 
 	/* step 4. TX MAC registers & counters */
 	gem_init_regs(sc);
-	v = ETHERMTU + sizeof(struct ether_header) + 50 +
-#if NVLAN > 0
-	    EVL_ENCAPLEN +
-#endif
-	    0;
-	bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME, (v) | (0x2000<<16));
+	v = (GEM_MTU) | (0x2000 << 16) /* Burst size */;
+	bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME, v);
 
 	/* step 5. RX MAC registers & counters */
 	gem_setladrf(sc);
@@ -891,11 +887,7 @@ gem_init_regs(struct gem_softc *sc)
 
 		bus_space_write_4(t, h, GEM_MAC_MAC_MIN_FRAME, ETHER_MIN_LEN);
 		/* Max frame and max burst size */
-		v = ((ETHERMTU + sizeof(struct ether_header) + 50 +
-#if NVLAN > 0
-		    EVL_ENCAPLEN +
-#endif
-		    0) | (0x2000<<16) /* Burst size */);
+		v = (GEM_MTU) | (0x2000 << 16) /* Burst size */;
 		bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME, v);
 		bus_space_write_4(t, h, GEM_MAC_PREAMBLE_LEN, 0x7);
 		bus_space_write_4(t, h, GEM_MAC_JAM_SIZE, 0x4);
