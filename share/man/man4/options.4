@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.1 1997/08/18 01:27:54 mickey Exp $
+.\"	$OpenBSD: options.4,v 1.2 1997/08/18 01:52:51 mickey Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
@@ -80,34 +80,8 @@ compatibility, without which programs using the old interface produce
 an
 .Dq inapropriate ioctl
 error.
-.It Cd option COMPAT_11
-Enable binary compatibility with
-.Nx 1.1 .
-This allows binaries running on the i386 port to gain direct access to
-the io ports by opening
-.Pa /dev/io
-read/write.  This functionality was
-replaced by 
-.Xr i386_iopl 2
-post 1.1.
-On the
-.Tn Atari
-port, the location of the disk label was moved after 1.1. When the
-.Em COMPAT_11
-option is set, the kernel will read (pre) 1.1 style disk labels as a
-last resort. When a disklabel is re-written, the old style label will
-be replaced with a post 1.1 style label.
-.It Cd option COMPAT_12
-Enable binary compatibility with
-.Nx 1.2 .
-This allows the use of old syscalls for
-.Fn reboot , and
-.Fn swapon .
-The syscall numbers was changed post 1.2 to add functionality to the
-reboot syscall, and the new
-.Fn swapctl
-interface was introduced.
 .It Cd option COMPAT_43
+Use of this option is discouraged extremely.
 Enables compatibility with
 .Bx 4.3 .
 This adds an old syscall for lseek.  It also adds the ioctls for
@@ -120,8 +94,7 @@ It also provides backwards compatibility with
 SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
 binary compatibility with code written before the introduction of the
 sa_len field in sockaddrs.
-It also enables
-support for some older pre BSD 4.4 socket calls.
+It also enables support for some older pre BSD 4.4 socket calls.
 .It Cd option COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
@@ -235,11 +208,11 @@ for details.
 .El
 .Ss File Systems
 .Bl -ohang
-.It Cd file-system FFS
+.It Cd option FFS
 Includes code implementing the Berkeley Fast File System
 .Em ( FFS ) .
 Most machines need this if they are not running diskless.
-.It Cd file-system EXT2FS
+.It Cd option EXT2FS
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .
 This is the most commonly used file system on the Linux operating system,
@@ -250,15 +223,7 @@ like the "behavior on errors" are not implemented. This file system can't be
 used with UID or GID greather than 65535. See
 .Xr mount_ext2fs 8
 for details.
-.It Cd file-system LFS
-Include the log structured file system
-.Em ( LFS ) .
-See
-.Xr mount_lfs 8
-and
-.Xr newlfs 8
-for details.
-.It Cd file-system MFS
+.It Cd option MFS
 Include the memory file system
 .Em ( MFS ) .
 This file system stores files in swappable memory, and produces
@@ -268,7 +233,7 @@ for
 and similar file systems. See
 .Xr mount_mfs 8
 for details.
-.It Cd file-system NFS
+.It Cd option NFS
 Include the client side of the
 .Em NFS
 (Network File System) remote file sharing protocol.
@@ -280,13 +245,13 @@ work. See
 and
 .Xr nfsiod 8
 for details.
-.It Cd file-system CD9660
+.It Cd option CD9660
 Includes code for the ISO 9660 + Rock Ridge file system, which is the
 standard file system on many CD-ROMs. Useful mostly if you have a CD
 drive. See
 .Xr mount_cd9660 8
 for details.
-.It Cd file-system MSDOSFS
+.It Cd option MSDOSFS
 Includes the
 .Tn MS-DOS
 FAT file system, which is reportedly still used
@@ -300,7 +265,7 @@ file names. see
 and
 .Xr fsck_msdos 8
 for details.
-.It Cd file-system FDESC
+.It Cd option FDESC
 Includes code for a file system, conventionally mounted on
 .Pa /dev/fd ,
 which permits access to the per-process file descriptor space via
@@ -323,7 +288,7 @@ and on
 .Pa /dev/stdout ,
 and
 .Pa /dev/stderr .
-.It Cd file-system KERNFS
+.It Cd option KERNFS
 Includes code which permits the mounting of a special file system
 (normally mounted on
 .Pa /kern )
@@ -332,13 +297,13 @@ may be found.
 See
 .Xr mount_kernfs 8
 for details.
-.It Cd file-system NULLFS
+.It Cd option NULLFS
 Includes code for a loopback file system. This permits portions of the file
 hierarchy to be re-mounted in other places. The code really exists to
 provide an example of a stackable file system layer. See
 .Xr mount_null 8
 for details.
-.It Cd file-system PORTAL
+.It Cd option PORTAL
 Includes the (experimental) portal filesystem. This permits
 interesting tricks like opening TCP sockets by opening files in the
 file system. The portal file system is conventionally mounted on
@@ -346,7 +311,7 @@ file system. The portal file system is conventionally mounted on
 and is partially implemented by a special daemon. See
 .Xr mount_portal 8
 for details.
-.It Cd file-system PROCFS
+.It Cd option PROCFS
 Includes code for a special file system (conventionally mounted on
 .Pa /proc )
 in which the process space becomes visible in the file system. Among
@@ -356,14 +321,14 @@ visible as files, and signals may be sent to processes by writing to
 files in the procfs namespace. See
 .Xr mount_procfs 8
 for details.
-.It Cd file-system UMAPFS
+.It Cd option UMAPFS
 Includes a loopback file system in which user and group ids may be
 remapped -- this can be useful when mounting alien file systems with
 different uids and gids than the local system.
 See
 .Xr mount_umap 8
 for details.
-.It Cd file-system UNION
+.It Cd option UNION
 Includes code for the union file system, which permits directories to
 be mounted on top of each other in such a way that both file systems
 remain visible -- this permits tricks like allowing writing (and the
@@ -465,11 +430,11 @@ requiring a suid root program to do it.
 This option changes part of the VM/pmap interface, to allow for
 non-contiguous memory.  On some ports it is not an option.  These
 ports typically only use one of the interfaces.
-.It Cd option MEMORY_DISK_HOOKS
+.It Cd option RAMDISK_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
 the ramdisk driver is configured. This can result in automatically loading
 a ramdisk from floppy on open (among other things).
-.It Cd option MEMORY_DISK_IS_ROOT
+.It Cd option RAMDISK_DISK_IS_ROOT
 Forces the ramdisk to be the root device. This can only be overridden when
 the kernel is booted in the 'ask-for-root' mode.
 .It Cd option NTP
@@ -501,36 +466,6 @@ is not an integer, the
 .Em NTP
 option also enables extended-precision arithmetic to keep track of
 fractional clock ticks at NTP time-format precision.
-.It Cd option PPS
-This option enables a kernel serial line discipline for receiving time
-phase signals from an external reference clock such as a radio clock.
-(The
-.Em NTP
-option (which see) must be on if the
-.Em PPS
-option is used.)
-Some reference clocks generate a pulse per second (PPS) signal in
-phase with their time source. The
-.Em PPS
-line discipline receives this signal on either the data leads
-or the DCD control lead of a serial port.
-.Em NTP
-uses the PPS signal to discipline the local clock oscillator to a high
-degree of precision (typically less than 50 microseconds in time and
-0.1 ppm in accuracy).
-.Em PPS
-can also generate a serial output pulse when the system receives a PPS
-interrupt.  This can be used to measure the system interrupt latency
-and thus calibrate
-.Em NTP
-to account for it.
-Using
-.Em PPS
-usually requires a
-gadget box
-to convert from TTL to RS-232 signal levels.
-The gadget box and PPS are described in more detail in the HTML documentation
-shipped with the xntpd distribution.
 .It Cd option SETUIDSCRIPTS
 Allows scripts with the setuid bit set to execute as the effective
 user rather than the real user, just like binary executables.
@@ -728,16 +663,8 @@ bugs.
 Include support for Internetwork Packet Exchange protocol.
 .It Cd option NETATALK
 Include support for AppleTalk.
-.It Cd option IPNOPRIVPORTS
-Normally, only root can bind a socket descriptor to a so-called
-.Dq privileged
-TCP
-port, that is, a port number in the range 0-1023.  This option
-eliminates those checks from the kernel. This can be useful if there
-is a desire to allow daemons without privileges to bind those ports,
-e.g. on firewalls. The security tradeoffs in doing this are subtle.
-This option should only be used by experts.
 .It Cd option TCP_COMPAT_42
+Use of this option is discouraged extremely.
 TCP bug compatibility with 4.2BSD.  In 4.2BSD, TCP sequence numbers
 were 32-bit signed values.  Modern implementations of TCP use unsigned
 values.  This option clamps the initial sequence number to start in
@@ -810,16 +737,6 @@ Turns on paging.  (To be specific, this enables the virtual memory
 module responsible for handling page faults for
 .Dq anonymous 
 objects (i.e. BSS pages)).
-.Em MANDATORY
--- you cannot actually run without
-this
-.Dq option .
-.It Cd option VNODEPAGER
-Support for mmap()ing of files. (Specifically, this enables the
-virtual memory module responsible for handling page faults on mapped
-files (
-.Dq plain file
-vnodes)).
 .Em MANDATORY
 -- you cannot actually run without
 this
