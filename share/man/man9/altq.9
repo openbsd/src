@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.10 2003/04/14 18:11:32 tedu Exp $
+.\"	$OpenBSD: altq.9,v 1.11 2004/01/24 12:04:09 jmc Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -78,13 +78,13 @@ enqueues a packet
 to the queue
 .Fa ifq .
 The underlying queuing discipline may discard the packet.
-.Fa error
+.Fa err
 is set to 0 on success, or
 .Dv ENOBUFS
 if the packet is discarded.
 .Fa m
 will be freed by the device driver on success or by the queuing discipline on
-failure so that the caller should not touch
+failure, so the caller should not touch
 .Fa m
 after calling
 .Fn IFQ_ENQUEUE .
@@ -242,18 +242,22 @@ If the enqueue operation fails,
 .Fa err
 is set to
 .Dv ENOBUFS .
-.Fa mbuf
+.Fa m
 is freed by the queuing discipline.
-The caller should not touch mbuf after calling
-.Fn IFQ_ENQUEUE
-so that the caller may need to copy
+The caller should not touch
+.Fa m
+after calling
+.Fn IFQ_ENQUEUE ,
+so the caller may need to copy the
 .Fa m_pkthdr.len
 or
 .Fa m_flags
-field beforehand for statistics.
+fields beforehand for statistics.
 The caller should not use
 .Fn senderr
-since mbuf was already freed.
+since
+.Fa m
+was already freed.
 .Pp
 The new style
 .Fn if_output
