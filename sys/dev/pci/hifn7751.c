@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.80 2001/06/24 17:43:28 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.81 2001/06/24 19:31:49 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -909,24 +909,24 @@ hifn_write_command(cmd, buf)
 
 	if (using_mac) {
 		mac_cmd = (hifn_mac_command_t *)buf_pos;
-		dlen = cmd->mac_process_len;
+		dlen = cmd->maccrd->crd_len;
 		mac_cmd->source_count = dlen & 0xffff;
 		dlen >>= 16;
 		mac_cmd->masks = cmd->mac_masks |
 		    ((dlen << HIFN_MAC_CMD_SRCLEN_S) & HIFN_MAC_CMD_SRCLEN_M);
-		mac_cmd->header_skip = cmd->mac_header_skip;
+		mac_cmd->header_skip = cmd->maccrd->crd_skip;
 		mac_cmd->reserved = 0;
 		buf_pos += sizeof(hifn_mac_command_t);
 	}
 
 	if (using_crypt) {
 		cry_cmd = (hifn_crypt_command_t *)buf_pos;
-		dlen = cmd->crypt_process_len;
+		dlen = cmd->enccrd->crd_len;
 		cry_cmd->source_count = dlen & 0xffff;
 		dlen >>= 16;
 		cry_cmd->masks = cmd->cry_masks |
 		    ((dlen << HIFN_CRYPT_CMD_SRCLEN_S) & HIFN_CRYPT_CMD_SRCLEN_M);
-		cry_cmd->header_skip = cmd->crypt_header_skip;
+		cry_cmd->header_skip = cmd->enccrd->crd_skip;
 		cry_cmd->reserved = 0;
 		buf_pos += sizeof(hifn_crypt_command_t);
 	}
@@ -1485,6 +1485,7 @@ hifn_process(crp)
 	}
 
 	if (enccrd) {
+		cmd->enccrd = enccrd;
 		cmd->base_masks |= HIFN_BASE_CMD_CRYPT;
 		cmd->cry_masks |= HIFN_CRYPT_CMD_MODE_CBC |
 		    HIFN_CRYPT_CMD_NEW_IV;
@@ -1521,8 +1522,6 @@ hifn_process(crp)
 		else
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_3DES;
 
-		cmd->crypt_header_skip = enccrd->crd_skip;
-		cmd->crypt_process_len = enccrd->crd_len;
 		cmd->ck = enccrd->crd_key;
 
 		if (sc->sc_sessions[session].hs_flags == 1)
@@ -1530,6 +1529,7 @@ hifn_process(crp)
 	}
 
 	if (maccrd) {
+		cmd->maccrd = maccrd;
 		cmd->base_masks |= HIFN_BASE_CMD_MAC;
 		cmd->mac_masks |= HIFN_MAC_CMD_RESULT |
 		    HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_RESULT |
@@ -1546,9 +1546,6 @@ hifn_process(crp)
 			bzero(cmd->mac + (maccrd->crd_klen >> 3),
 			    HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
 		}
-
-		cmd->mac_header_skip = maccrd->crd_skip;
-		cmd->mac_process_len = maccrd->crd_len;
 	}
 
 	if (sc->sc_sessions[session].hs_flags == 1)
