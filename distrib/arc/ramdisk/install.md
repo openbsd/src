@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 1997/05/19 10:33:20 pefo Exp $
+#	$OpenBSD: install.md,v 1.5 1997/05/19 22:19:58 pefo Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@ md_installboot() {
 	else
 		echo "Failed, you will not be able to boot from /dev/${1}."
 	fi
+	echo "Building dynamic libraries cache"
+	/mnt/sbin/ldconfig -f /mnt/etc/ld.so.cache -P /mnt
 }
 
 md_native_fstype() {
