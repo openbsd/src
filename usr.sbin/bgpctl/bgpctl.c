@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.1 2004/01/02 02:22:52 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.2 2004/01/03 13:55:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -44,7 +44,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
-	int			 fd, n;
+	int			 fd, n, done;
 	struct imsg		 imsg;
 	struct peer		*p;
 
@@ -63,26 +63,35 @@ main(int argc, char *argv[])
 
 	imsg_init(&ibuf, fd);
 	imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
-	imsg_read(&ibuf);
+	done = 0;
 
-	for (;;) {
-		if ((n = imsg_get(&ibuf, &imsg)) == -1)
-			errx(1, "imsg_get error");
-
-		if (n == 0)
+	while (!done) {
+		if(imsg_read(&ibuf) == -1)
 			break;
 
-		switch (imsg.hdr.type) {
-		case IMSG_CTL_SHOW_NEIGHBOR:
-			p = imsg.data;
-			printf("%s: %s\n",
-			    inet_ntoa(p->conf.remote_addr.sin_addr),
-			    statenames[p->state]);
-			break;
-		default:
-			break;
+		while (!done) {
+			if ((n = imsg_get(&ibuf, &imsg)) == -1)
+				errx(1, "imsg_get error");
+
+			if (n == 0) {
+				done = 1;
+				break;
+			}
+
+			switch (imsg.hdr.type) {
+			case IMSG_CTL_SHOW_NEIGHBOR:
+				p = imsg.data;
+				printf("%s: %s\n",
+				    inet_ntoa(p->conf.remote_addr.sin_addr),
+				    statenames[p->state]);
+				break;
+			case IMSG_CTL_END:
+				done = 1;
+				break;
+			default:
+				break;
+			}
 		}
 	}
-
 	close(fd);
 }
