@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.4 1997/02/01 19:38:26 jkatz Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.5 1998/04/28 22:13:25 pjanzen Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -38,23 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: get_names.c,v 1.4 1997/02/01 19:38:26 jkatz Exp $";
+static char rcsid[] = "$OpenBSD: get_names.c,v 1.5 1998/04/28 22:13:25 pjanzen Exp $";
 #endif /* not lint */
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <protocols/talkd.h>
-#include <pwd.h>
-#include <string.h>
 #include "talk.h"
+#include <sys/param.h>
+#include <pwd.h>
+#include <unistd.h>
 
-char	*getlogin();
-char	*ttyname();
 extern	CTL_MSG msg;
 
 /*
  * Determine the local and remote user, tty, and machines
  */
+void
 get_names(argc, argv)
 	int argc;
 	char *argv[];
@@ -62,23 +59,17 @@ get_names(argc, argv)
 	char hostname[MAXHOSTNAMELEN];
 	char *his_name, *my_name;
 	char *my_machine_name, *his_machine_name;
-	char *my_tty, *his_tty;
+	char *his_tty;
 	register char *cp;
 	char *names;
 
-	if (argc < 2 ) {
+	if ((argc < 2 ) || ('@' == argv[1][0])) {
 		printf("Usage: talk user [ttyname]\n");
 		printf("       talk user@hostname [ttyname]\n");
 		exit(-1);
 	}
 	if (!isatty(0)) {
 		printf("Standard input must be a tty, not a pipe or a file\n");
-		exit(-1);
-	}
-
-	if ('@' == argv[1][0]) {
-		printf("Usage: talk user [ttyname]\n");
-		printf("       talk user@hostname [ttyname]\n");
 		exit(-1);
 	}
 

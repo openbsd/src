@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.3 1996/06/26 05:40:22 deraadt Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.4 1998/04/28 22:13:26 pjanzen Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-static char rcsid[] = "$OpenBSD: init_disp.c,v 1.3 1996/06/26 05:40:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init_disp.c,v 1.4 1998/04/28 22:13:26 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -46,21 +46,21 @@ static char rcsid[] = "$OpenBSD: init_disp.c,v 1.3 1996/06/26 05:40:22 deraadt E
  * as well as the signal handling routines.
  */
 
+#include "talk.h"
 #include <sys/ioctl.h>
 #include <sys/ioctl_compat.h>
-
-#include <termios.h>
-#include <signal.h>
 #include <err.h>
-#include "talk.h"
+#include <signal.h>
+#include <termios.h>
+#include <unistd.h>
 
 /* 
  * Set up curses, catch the appropriate signals,
  * and build the various windows.
  */
+void
 init_display()
 {
-	void sig_sent();
 	struct sigvec sigv;
 
 	if (initscr() == NULL)
@@ -105,6 +105,7 @@ init_display()
  * the first three characters each talk transmits after
  * connection are the three edit characters.
  */
+void
 set_edit_chars()
 {
 	char buf[3];
@@ -133,7 +134,8 @@ set_edit_chars()
 }
 
 void
-sig_sent()
+sig_sent(dummy)
+	int dummy;
 {
 
 	message("Connection closing. Exiting");
@@ -143,6 +145,7 @@ sig_sent()
 /*
  * All done talking...hang up the phone and reset terminal thingy's
  */
+void
 quit()
 {
 

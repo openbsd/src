@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_addrs.c,v 1.2 1996/06/26 05:40:21 deraadt Exp $	*/
+/*	$OpenBSD: get_addrs.c,v 1.3 1998/04/28 22:13:23 pjanzen Exp $	*/
 /*	$NetBSD: get_addrs.c,v 1.3 1994/12/09 02:14:14 jtc Exp $	*/
 
 /*
@@ -38,17 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: get_addrs.c,v 1.2 1996/06/26 05:40:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: get_addrs.c,v 1.3 1998/04/28 22:13:23 pjanzen Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <protocols/talkd.h>
+#include "talk.h"
 #include <netdb.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "talk_ctl.h"
 
+void
 get_addrs(my_machine_name, his_machine_name)
 	char *my_machine_name, *his_machine_name;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.4 1998/04/27 15:45:49 pjanzen Exp $	*/
+/*	$OpenBSD: invite.c,v 1.5 1998/04/28 22:13:27 pjanzen Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -38,20 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: invite.c,v 1.4 1998/04/27 15:45:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: invite.c,v 1.5 1998/04/28 22:13:27 pjanzen Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "talk.h"
+#include <arpa/inet.h>
 #include <sys/time.h>
 #include <signal.h>
-#include <netinet/in.h>
 #include <netdb.h>
-#include <protocols/talkd.h>
 #include <errno.h>
 #include <setjmp.h>
+#include <unistd.h>
 #include "talk_ctl.h"
-#include "talk.h"
 
 #define STRING_LENGTH 158
 
@@ -68,12 +66,12 @@ static char rcsid[] = "$OpenBSD: invite.c,v 1.4 1998/04/27 15:45:49 pjanzen Exp 
  * invitations.
  */
 int	local_id, remote_id;
-void	re_invite();
 jmp_buf invitebuf;
 
+void
 invite_remote()
 {
-	int nfd, read_mask, template, new_sockt;
+	int new_sockt;
 	struct itimerval itimer;
 	CTL_RESPONSE response;
 	struct sockaddr rp;
@@ -150,9 +148,9 @@ invite_remote()
  * Routine called on interupt to re-invite the callee
  */
 void
-re_invite()
+re_invite(dummy)
+	int dummy;
 {
-
 	message("Ringing your party again");
 	/* force a re-announce */
 	msg.id_num = htonl(remote_id + 1);
@@ -171,11 +169,12 @@ static	char *answers[] = {
 	"Target machine indicates protocol botch (addr)",/* BADADDR */
 	"Target machine indicates protocol botch (ctl_addr)",/* BADCTLADDR */
 };
-#define	NANSWERS	(sizeof (answers) / sizeof (answers[0]))
+#define NANSWERS (sizeof (answers) / sizeof (answers[0]))
 
 /*
  * Transmit the invitation and process the response
  */
+void
 announce_invite()
 {
 	CTL_RESPONSE response;
@@ -196,6 +195,7 @@ announce_invite()
 /*
  * Tell the daemon to remove your invitation
  */
+void
 send_delete()
 {
 

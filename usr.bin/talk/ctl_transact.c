@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.3 1996/06/26 05:40:20 deraadt Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.4 1998/04/28 22:13:21 pjanzen Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -38,37 +38,38 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.3 1996/06/26 05:40:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.4 1998/04/28 22:13:21 pjanzen Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "talk.h"
 #include <sys/time.h>
-#include <netinet/in.h>
-#include <protocols/talkd.h>
 #include <errno.h>
+#include <unistd.h>
 #include "talk_ctl.h"
 
 #define CTL_WAIT 2	/* time to wait for a response, in seconds */
 
 /*
  * SOCKDGRAM is unreliable, so we must repeat messages if we have
- * not recieved an acknowledgement within a reasonable amount
+ * not received an acknowledgement within a reasonable amount
  * of time
  */
+void
 ctl_transact(target, msg, type, rp)
 	struct in_addr target;
 	CTL_MSG msg;
 	int type;
 	CTL_RESPONSE *rp;
 {
-	int read_mask, ctl_mask, nready, cc;
+	fd_set read_mask, ctl_mask;
+	int nready, cc;
 	struct timeval wait;
 
 	msg.type = type;
 	daemon_addr.sin_addr = target;
 	daemon_addr.sin_port = daemon_port;
-	ctl_mask = 1 << ctl_sockt;
+	FD_ZERO(&ctl_mask);
+	FD_SET(ctl_sockt, &ctl_mask);
 
 	/*
 	 * Keep sending the message until a response of
