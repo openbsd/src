@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.219 2003/03/04 18:42:52 danh Exp $
+#	$OpenBSD: rc,v 1.220 2003/03/04 22:45:53 jakob Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -188,9 +188,9 @@ dmesg >/var/run/dmesg.boot
 
 echo 'starting system logger'
 rm -f /dev/log
-if [ "X${named_flags}" != X"NO" -a "X${named_chroot}" != "X" ]; then
-	rm -f ${named_chroot}/dev/log
-	syslogd_flags="${syslogd_flags} -a ${named_chroot}/dev/log"
+if [ "X${named_flags}" != X"NO" ]; then
+	rm -f /var/named/dev/log
+	syslogd_flags="${syslogd_flags} -a /var/named/dev/log"
 fi
 if [ -d /var/empty ]; then
 	rm -f /var/empty/dev/log
@@ -214,15 +214,9 @@ if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
 	fi
 fi
 
-# $named_flags, $named_user, and $named_chroot are imported from /etc/rc.conf;
+# $named_flags are imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
-	if [ "X${named_user}" != "X" -a "X${named_user}" != X"root" ]; then
-		named_flags="-u ${named_user} ${named_flags}"
-	fi
-	if [ "X${named_chroot}" != "X" ]; then
-		named_flags="-t ${named_chroot} ${named_flags}"
-	fi
 	echo 'starting named';		named $named_flags
 fi
 
