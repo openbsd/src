@@ -1000,6 +1000,7 @@
 ./usr/share/man/cat4/gdt.0
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gre.0
+./usr/share/man/cat4/gx.0
 ./usr/share/man/cat4/hifn.0
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp300/apci.0
@@ -1135,6 +1136,7 @@
 ./usr/share/man/cat4/networking.0
 ./usr/share/man/cat4/nge.0
 ./usr/share/man/cat4/ns.0
+./usr/share/man/cat4/nsgphy.0
 ./usr/share/man/cat4/nsip.0
 ./usr/share/man/cat4/nsphy.0
 ./usr/share/man/cat4/nsphyter.0
