@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.2 2002/02/07 20:24:59 mickey Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.3 2002/02/08 16:35:15 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	.asciz	"$OpenBSD: setjmp.S,v 1.2 2002/02/07 20:24:59 mickey Exp $"
+	.asciz	"$OpenBSD: setjmp.S,v 1.3 2002/02/08 16:35:15 mickey Exp $"
 	.align	4
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,8 @@
 
 ENTRY(sigsetjmp, 64)
 	sub,=	%r0, %arg1, %r0
-	b	_setjmp
+	b,n	_setjmp
+	nop
 
 	stw	%arg1, 44(%arg0)	; last of reserved words
 
@@ -71,12 +72,13 @@ ALTENTRY(setjmp)
 
 	copy	%r3, %r1
 	copy	%sp, %r3
-	stwm	%r1, HPPA_FRAME_SIZE(%sp)
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
 	bl	sigblock, %rp
 	copy	%r0, %arg0
 
-	ldwm	-HPPA_FRAME_SIZE(%sp),%r3
+	ldo	HPPA_FRAME_SIZE(%r3), %sp
+	ldw,mb	-HPPA_FRAME_SIZE(%sp),%r3
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
 
@@ -151,12 +153,13 @@ ALTENTRY(longjmp)
 
 	copy	%r3, %r1
 	copy	%sp, %r3
-	stwm	%r1, HPPA_FRAME_SIZE(%sp)
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
 	bl	sigsetmask, %rp
 	ldw	4(%arg0), %arg0
 
-	ldwm	-HPPA_FRAME_SIZE(%sp),%r3
+	ldo	HPPA_FRAME_SIZE(%r3), %sp
+	ldw,mb	-HPPA_FRAME_SIZE(%sp),%r3
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
 	b	_longjmp$restores
@@ -192,7 +195,7 @@ _longjmp$restores
 	ldwm	4(%r1), %r18
 
 	/* restore the rest */
-	ldw	8(%arg0), %sp
+	ldw	12(%arg0), %sp
 	ldw	20(%arg0), %rp		/* check the priv level */
 	bv	%r0(%rp)
 	copy	%arg1, %ret0
