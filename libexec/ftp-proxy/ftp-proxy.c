@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.27 2002/12/19 18:19:10 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.28 2003/01/23 23:15:16 djm Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -88,13 +88,15 @@
 #include <string.h>
 #include <sysexits.h>
 #include <syslog.h>
-#include <tcpd.h>
 #include <unistd.h>
 
 #include "util.h"
 
+#ifdef LIBWRAP
+#include <tcpd.h>
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_NOTICE;
+#endif /* LIBWRAP */
 
 int min_port = IPPORT_HIFIRSTAUTO;
 int max_port = IPPORT_HILASTAUTO;
@@ -228,6 +230,7 @@ drop_privs(void)
 	}
 }
 
+#ifdef LIBWRAP
 /*
  * Check a connection against the tcpwrapper, log if we're going to
  * reject it, returns: 0 -> reject, 1 -> accept. We add in hostnames
@@ -285,6 +288,7 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 	}
 	return(1);
 }
+#endif /* LIBWRAP */
 
 double
 wallclock_time(void)
@@ -958,9 +962,12 @@ main(int argc, char *argv[])
 	struct csiob client_iob, server_iob;
 	struct sigaction new_sa, old_sa;
 	int sval, ch, salen, flags, i;
-	int use_tcpwrapper = 0, one = 1;
+	int one = 1;
 	long timeout_seconds = 0;
 	struct timeval tv;
+#ifdef LIBWRAP
+	int use_tcpwrapper = 0;
+#endif /* LIBWRAP */
 
 	while ((ch = getopt(argc, argv, "D:g:m:M:t:u:AnVwr")) != -1) {
 		char *p;
@@ -1007,9 +1014,11 @@ main(int argc, char *argv[])
 		case 'V':
 			Verbose = 1;
 			break;
+#ifdef LIBWRAP
 		case 'w':
 			use_tcpwrapper = 1; /* do the libwrap thing */
 			break;
+#endif /* LIBWRAP */
 		default:
 			usage();
 			/* NOTREACHED */
@@ -1071,8 +1080,10 @@ main(int argc, char *argv[])
 		exit(EX_OSERR);
 	}
 
+#ifdef LIBWRAP
 	if (use_tcpwrapper && !check_host(&client_iob.sa, &real_server_sa))
 		exit(EX_NOPERM);
+#endif
 
 	client_iob.fd = 0;
 
