@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.70 2001/04/05 15:48:18 stevesk Exp $");
+RCSID("$OpenBSD: session.c,v 1.71 2001/04/06 21:00:12 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -325,7 +325,7 @@ do_authenticated1(Authctxt *authctxt)
 			/* Setup to always have a local .Xauthority. */
 			xauthfile = xmalloc(MAXPATHLEN);
 			strlcpy(xauthfile, "/tmp/ssh-XXXXXXXX", MAXPATHLEN);
-			temporarily_use_uid(s->pw->pw_uid);
+			temporarily_use_uid(s->pw);
 			if (mkdtemp(xauthfile) == NULL) {
 				restore_uid();
 				error("private X11 dir: mkdtemp %s failed: %s",
@@ -849,7 +849,7 @@ do_child(Session *s, const char *command)
 			endgrent();
 
 			/* Permanently switch to the desired uid. */
-			permanently_set_uid(pw->pw_uid);
+			permanently_set_uid(pw);
 #endif
 		}
 		if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
@@ -1372,7 +1372,7 @@ session_x11_req(Session *s)
 	}
 	xauthfile = xmalloc(MAXPATHLEN);
 	strlcpy(xauthfile, "/tmp/ssh-XXXXXXXX", MAXPATHLEN);
-	temporarily_use_uid(s->pw->pw_uid);
+	temporarily_use_uid(s->pw);
 	if (mkdtemp(xauthfile) == NULL) {
 		restore_uid();
 		error("private X11 dir: mkdtemp %s failed: %s",
