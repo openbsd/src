@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2004/12/14 01:50:42 deraadt Exp $
+# $OpenBSD: Makefile,v 1.2 2004/12/19 13:54:04 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -11,7 +11,7 @@ NOMAN=
 
 FIRM=	3c990
 
-CLEANFILES+= build
+CLEANFILES+= build ${FIRM}
 
 all:	build
 	${.OBJDIR}/build
