@@ -51,7 +51,9 @@ static void
 fileattr_delproc (node)
     Node *node;
 {
+    assert (node->data != NULL);
     free (node->data);
+    node->data = NULL;
 }
 
 /* Read all the attributes for the current directory into memory.  */
@@ -159,7 +161,7 @@ fileattr_get (filename, attrname)
 	    return NULL;
 	p = node->data;
     }
-    while (1)
+    while (p)
     {
 	if (strncmp (attrname, p, attrname_len) == 0
 	    && p[attrname_len] == '=')
@@ -345,6 +347,7 @@ fileattr_set (filename, attrname, attrval)
 
     p = fileattr_modify (node->data, attrname, attrval, '=', ';');
     free (node->data);
+    node->data = NULL;
     if (p == NULL)
 	delnode (node);
     else

@@ -24,6 +24,12 @@ the command line (i.e., "make SL=\"), I believe just one will do.
 have edited the `install_dir' variable in the Makefile, you may type
 "make install-cvs" to put cvs.exe in the right place.
 
+        If the makefile has linefeeds only at the end of lines, make
+(at least the port of GNU make that I have) will interpret it
+differently.  This is (IMHO) a bizarre behavior, but you need to
+convert the linefeeds to CRLF pairs (editing the file with an editor
+such as emacs will generally do this).
+
         You will get warnings during the compilation; ignore them.
 Report bugs to <bug-cvs@prep.ai.mit.edu>.
 

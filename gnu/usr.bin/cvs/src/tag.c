@@ -160,7 +160,7 @@ tag (argc, argv)
 
 	send_arg (symtag);
 
-	send_file_names (argc, argv);
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
@@ -234,8 +234,15 @@ check_fileproc (finfo)
     p->key = xstrdup (finfo->file);
     p->type = UPDATE;
     p->delproc = tag_delproc;
-    vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL, (char *) NULL,
-		       finfo->file, 0, 0, finfo->entries, finfo->srcfiles);
+    vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL,
+		       (char *) NULL, finfo->file, 0, 0,
+		       finfo->entries, finfo->rcs);
+    if (vers->srcfile == NULL)
+    {
+        if (!really_quiet)
+	    error (0, 0, "nothing known about %s", finfo->file);
+	return (1);
+    }
     p->data = RCS_getversion(vers->srcfile, numtag, date, force_tag_match, 0);
     if (p->data != NULL)
     {
@@ -392,7 +399,7 @@ tag_fileproc (finfo)
     int retcode = 0;
 
     vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL, (char *) NULL,
-		       finfo->file, 0, 0, finfo->entries, finfo->srcfiles);
+		       finfo->file, 0, 0, finfo->entries, finfo->rcs);
 
     if ((numtag != NULL) || (date != NULL))
     {
@@ -439,10 +446,7 @@ tag_fileproc (finfo)
 	/* warm fuzzies */
 	if (!really_quiet)
 	{
-	    if (finfo->update_dir[0])
-		(void) printf ("D %s/%s\n", finfo->update_dir, finfo->file);
-	    else
-		(void) printf ("D %s\n", finfo->file);
+	    (void) printf ("D %s\n", finfo->fullname);
 	}
 
 	freevers_ts (&vers);
@@ -500,34 +504,33 @@ tag_fileproc (finfo)
     oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1, 0);
     if (oversion != NULL)
     {
-       int isbranch = RCS_isbranch (finfo->file, symtag, finfo->srcfiles);
+	int isbranch = RCS_isbranch (finfo->rcs, symtag);
 
-       /*
-	* if versions the same and neither old or new are branches don't have 
-	* to do anything
-	*/
-       if (strcmp (version, oversion) == 0 && !branch_mode && !isbranch)
-       {
-	  free (oversion);
-	  freevers_ts (&vers);
-	  return (0);
-       }
-       
-       if (!force_tag_move) {		/* we're NOT going to move the tag */
-	  if (finfo->update_dir[0])
-	     (void) printf ("W %s/%s", finfo->update_dir, finfo->file);
-	  else
-	     (void) printf ("W %s", finfo->file);
+	/*
+	 * if versions the same and neither old or new are branches don't have 
+	 * to do anything
+	 */
+	if (strcmp (version, oversion) == 0 && !branch_mode && !isbranch)
+	{
+	    free (oversion);
+	    freevers_ts (&vers);
+	    return (0);
+	}
 
-	  (void) printf (" : %s already exists on %s %s", 
-			 symtag, isbranch ? "branch" : "version", oversion);
-	  (void) printf (" : NOT MOVING tag to %s %s\n", 
-			 branch_mode ? "branch" : "version", rev);
-	  free (oversion);
-	  freevers_ts (&vers);
-	  return (0);
-       }
-       free (oversion);
+	if (!force_tag_move)
+	{
+	    /* we're NOT going to move the tag */
+	    (void) printf ("W %s", finfo->fullname);
+
+	    (void) printf (" : %s already exists on %s %s", 
+			   symtag, isbranch ? "branch" : "version", oversion);
+	    (void) printf (" : NOT MOVING tag to %s %s\n", 
+			   branch_mode ? "branch" : "version", rev);
+	    free (oversion);
+	    freevers_ts (&vers);
+	    return (0);
+	}
+	free (oversion);
     }
 
     if ((retcode = RCS_settag(vers->srcfile->path, symtag, rev)) != 0)
@@ -542,15 +545,12 @@ tag_fileproc (finfo)
     /* more warm fuzzies */
     if (!really_quiet)
     {
-	if (finfo->update_dir[0])
-	    (void) printf ("T %s/%s\n", finfo->update_dir, finfo->file);
-	else
-	    (void) printf ("T %s\n", finfo->file);
+	(void) printf ("T %s\n", finfo->fullname);
     }
 
     if (nversion != NULL)
     {
-        free(nversion);
+        free (nversion);
     }
     freevers_ts (&vers);
     return (0);
@@ -595,16 +595,13 @@ val_fileproc (finfo)
     struct file_info *finfo;
 {
     RCSNode *rcsdata;
-    Node *node;
     struct val_args *args = val_args_static;
     char *tag;
 
-    node = findnode (finfo->srcfiles, finfo->file);
-    if (node == NULL)
+    if ((rcsdata = finfo->rcs) == NULL)
 	/* Not sure this can happen, after all we passed only
 	   W_REPOS | W_ATTIC.  */
 	return 0;
-    rcsdata = (RCSNode *) node->data;
 
     tag = RCS_gettag (rcsdata, args->name, 1, 0);
     if (tag != NULL)
@@ -727,7 +724,7 @@ Numeric tag %s contains characters other than digits and '.'", name);
 	else
 	{
 	    if (save_cwd (&cwd))
-		exit (1);
+		exit (EXIT_FAILURE);
 	    if (chdir (repository) < 0)
 		error (1, errno, "cannot change to %s directory", repository);
 	}
@@ -740,7 +737,7 @@ Numeric tag %s contains characters other than digits and '.'", name);
     if (repository != NULL && repository[0] != '\0')
     {
 	if (restore_cwd (&cwd, NULL))
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	free_cwd (&cwd);
     }
 

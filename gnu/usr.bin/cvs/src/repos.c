@@ -4,13 +4,18 @@
  * 
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS 1.4 kit.
- * 
- * Name of Repository
- * 
- * Determine the name of the RCS repository and sets "Repository" accordingly.
  */
 
 #include "cvs.h"
+
+/* Determine the name of the RCS repository for directory DIR in the
+   current working directory, or for the current working directory
+   itself if DIR is NULL.  Returns the name in a newly-malloc'd
+   string.  On error, gives a fatal error and does not return.
+   UPDATE_DIR is the path from where cvs was invoked (for use in error
+   messages), and should contain DIR as its last component.
+   UPDATE_DIR can be NULL to signify the directory in which cvs was
+   invoked.  */
 
 char *
 Name_Repository (dir, update_dir)

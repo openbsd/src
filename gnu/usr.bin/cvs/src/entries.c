@@ -126,7 +126,7 @@ Scratch_Entry (list, fname)
 #endif
 
     /* hashlookup to see if it is there */
-    if ((node = findnode (list, fname)) != NULL)
+    if ((node = findnode_fn (list, fname)) != NULL)
     {
 	delnode (node);			/* delete the node */
 #ifdef SERVER_SUPPORT
@@ -444,7 +444,7 @@ AddEntryNode (list, entdata)
     Node *p;
 
     /* was it already there? */
-    if ((p  = findnode (list, entdata->user)) != NULL)
+    if ((p  = findnode_fn (list, entdata->user)) != NULL)
     {
 	/* take it out */
 	delnode (p);

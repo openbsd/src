@@ -20,7 +20,7 @@ static Dtype diff_dirproc PROTO((char *dir, char *pos_repos, char *update_dir));
 static int diff_filesdoneproc PROTO((int err, char *repos, char *update_dir));
 static int diff_dirleaveproc PROTO((char *dir, int err, char *update_dir));
 static int diff_file_nodiff PROTO((char *file, char *repository, List *entries,
-			     List *srcfiles, Vers_TS *vers));
+			     RCSNode *rcs, Vers_TS *vers));
 static int diff_fileproc PROTO((struct file_info *finfo));
 static void diff_mark_errors PROTO((int err));
 
@@ -177,7 +177,7 @@ diff (argc, argv)
 	if (diff_date2)
 	    client_senddate (diff_date2);
 
-	send_file_names (argc, argv);
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
 #if 0
 	/* FIXME: We shouldn't have to send current files to diff two
 	   revs, but it doesn't work yet and I haven't debugged it.
@@ -240,7 +240,7 @@ diff_fileproc (finfo)
     user_file_rev = 0;
 #endif
     vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL, (char *) NULL,
-		       finfo->file, 1, 0, finfo->entries, finfo->srcfiles);
+		       finfo->file, 1, 0, finfo->entries, finfo->rcs);
 
     if (diff_rev2 != NULL || diff_date2 != NULL)
     {
@@ -249,7 +249,7 @@ diff_fileproc (finfo)
     }
     else if (vers->vn_user == NULL)
     {
-	error (0, 0, "I know nothing about %s", finfo->file);
+	error (0, 0, "I know nothing about %s", finfo->fullname);
 	freevers_ts (&vers);
 	diff_mark_errors (err);
 	return (err);
@@ -260,7 +260,8 @@ diff_fileproc (finfo)
 	    empty_file = DIFF_ADDED;
 	else
 	{
-	    error (0, 0, "%s is a new entry, no comparison available", finfo->file);
+	    error (0, 0, "%s is a new entry, no comparison available",
+		   finfo->fullname);
 	    freevers_ts (&vers);
 	    diff_mark_errors (err);
 	    return (err);
@@ -272,7 +273,8 @@ diff_fileproc (finfo)
 	    empty_file = DIFF_REMOVED;
 	else
 	{
-	    error (0, 0, "%s was removed, no comparison available", finfo->file);
+	    error (0, 0, "%s was removed, no comparison available",
+		   finfo->fullname);
 	    freevers_ts (&vers);
 	    diff_mark_errors (err);
 	    return (err);
@@ -282,7 +284,8 @@ diff_fileproc (finfo)
     {
 	if (vers->vn_rcs == NULL && vers->srcfile == NULL)
 	{
-	    error (0, 0, "cannot find revision control file for %s", finfo->file);
+	    error (0, 0, "cannot find revision control file for %s",
+		   finfo->fullname);
 	    freevers_ts (&vers);
 	    diff_mark_errors (err);
 	    return (err);
@@ -291,7 +294,7 @@ diff_fileproc (finfo)
 	{
 	    if (vers->ts_user == NULL)
 	    {
-		error (0, 0, "cannot find %s", finfo->file);
+		error (0, 0, "cannot find %s", finfo->fullname);
 		freevers_ts (&vers);
 		diff_mark_errors (err);
 		return (err);
@@ -308,7 +311,7 @@ diff_fileproc (finfo)
 	}
     }
 
-    if (empty_file == DIFF_NEITHER && diff_file_nodiff (finfo->file, finfo->repository, finfo->entries, finfo->srcfiles, vers))
+    if (empty_file == DIFF_NEITHER && diff_file_nodiff (finfo->file, finfo->repository, finfo->entries, finfo->rcs, vers))
     {
 	freevers_ts (&vers);
 	return (0);
@@ -319,10 +322,7 @@ diff_fileproc (finfo)
 
     /* Output an "Index:" line for patch to use */
     (void) fflush (stdout);
-    if (finfo->update_dir[0])
-	(void) printf ("Index: %s/%s\n", finfo->update_dir, finfo->file);
-    else
-	(void) printf ("Index: %s\n", finfo->file);
+    (void) printf ("Index: %s\n", finfo->fullname);
     (void) fflush (stdout);
 
     tocvsPath = wrap_tocvs_process_file(finfo->file);
@@ -340,6 +340,8 @@ diff_fileproc (finfo)
 
     if (empty_file == DIFF_ADDED || empty_file == DIFF_REMOVED)
     {
+	/* This is file, not fullname, because it is the "Index:" line which
+	   is supposed to contain the directory.  */
 	(void) printf ("===================================================================\nRCS file: %s\n",
 		       finfo->file);
 	(void) printf ("diff -N %s\n", finfo->file);
@@ -485,11 +487,11 @@ diff_dirleaveproc (dir, err, update_dir)
  * verify that a file is different 0=same 1=different
  */
 static int
-diff_file_nodiff (file, repository, entries, srcfiles, vers)
+diff_file_nodiff (file, repository, entries, rcs, vers)
     char *file;
     char *repository;
     List *entries;
-    List *srcfiles;
+    RCSNode *rcs;
     Vers_TS *vers;
 {
     Vers_TS *xvers;
@@ -511,7 +513,7 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
 	else
 	{
 	    xvers = Version_TS (repository, (char *) NULL, diff_rev1,
-				diff_date1, file, 1, 0, entries, srcfiles);
+				diff_date1, file, 1, 0, entries, rcs);
 	    if (xvers->vn_rcs == NULL)
 	    {
 		/* Don't gripe if it doesn't exist, just ignore! */
@@ -538,7 +540,7 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
 	else
 	{
 	    xvers = Version_TS (repository, (char *) NULL, diff_rev2,
-				diff_date2, file, 1, 0, entries, srcfiles);
+				diff_date2, file, 1, 0, entries, rcs);
 	    if (xvers->vn_rcs == NULL)
 	    {
 		/* Don't gripe if it doesn't exist, just ignore! */

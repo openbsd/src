@@ -16,9 +16,6 @@
    We just want to avoid a redefinition error message.  */
 #undef _ALL_SOURCE
 
-/* Define if using alloca.c.  */
-#undef C_ALLOCA
-
 /* Define if type char is unsigned and you are not using gcc.  */
 /* We wrote a little test program whose output suggests that char is
    signed on this system.  Go back and check the verdict when CVS
@@ -29,28 +26,11 @@
 /* Const is working.  */
 #undef const
 
-/* Define to one of _getb67, GETB67, getb67 for Cray-2 and Cray-YMP systems.
-   This function is required for alloca.c support on those systems.  */
-/* This shouldn't matter, but pro forma:  */
-#undef CRAY_STACKSEG_END
-
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* OS/2 doesn't have gid_t.  It doesn't even really have group
    numbers, I think.  This will take more thought to get right, but
    let's get it running first.  */
 #define gid_t int
-
-/* Define if you have alloca, as a function or macro.  */
-#define HAVE_ALLOCA 1
-/* OS/2 has alloca() in <stdlib.h>! */
-#define ALLOCA_IN_STDLIB 1
-
-/* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
-/* but calls it _alloca and says it returns void *.  We provide our
-   own header file.  */
-/* OS/2 declares alloca in `stdlib.h'. */
-/* #define HAVE_ALLOCA_H 1 */
-#undef HAVE_ALLOCA_H
 
 /* Define if you support file names longer than 14 characters.  */
 /* We support long file names, but not long corporate acronyms. */
@@ -100,16 +80,6 @@
 /* sys/types.h doesn't define it, but stdio.h does, which cvs.h
    #includes, so things should be okay.  */
 /* #undef size_t */
-
-/* If using the C implementation of alloca, define if you know the
-   direction of stack growth for your system; otherwise it will be
-   automatically deduced at run-time.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown
- */
-/* This shouldn't matter, but pro forma:  */
-#undef STACK_DIRECTION
 
 /* Define if the `S_IS*' macros in <sys/stat.h> do not work properly. */
 /* sys/stat.h apparently doesn't even have them; setting this will let

@@ -97,16 +97,19 @@
  * unless the user overrides the default with the RCSBIN environment variable
  * or the "-b" option to CVS.
  * 
- * If you're compiling the authenticating server (see
- * AUTH_SERVER_SUPPORT farther down), then you probably want to set
- * RCSBIN_DFLT.  The authenticating server starts out running as root,
- * and then switches to run as the appropriate user once
- * authentication is complete.  No shell is ever started by that user,
- * so the PATH environment variable may not contain the directory with
- * the RCS binaries, even though if that user logged in normally, PATH
- * would include the directory.  An alternative to setting RCSBIN_DFLT
- * is to make sure that root has the right directory in its path
- * already.
+ * If you use the password-authenticating server, then you need to
+ * make sure that the server can find the RCS programs to invoke them.
+ * The authenticating server starts out running as root, and then
+ * switches to run as the appropriate user once authentication is
+ * complete.  But no actual shell is ever started by that user, so the
+ * PATH environment variable may not contain the directory with the
+ * RCS binaries, even though if that user logged in normally, PATH
+ * would include the directory.  
+ *
+ * One way to solve this problem is to set RCSBIN_DFLT here.  An
+ * alternative is to make sure that root has the right directory in
+ * its path already.  Another, probably better alternative is to
+ * specify -b in /etc/inetd.conf. 
  *
  * This define should be either the empty string ("") or a full pathname to the
  * directory containing all the installed programs from the RCS distribution.
@@ -228,9 +231,6 @@
  * Yes, we can do the authenticated client.
  */
 #define AUTH_CLIENT_SUPPORT 1
-
-/* Authenticated server doesn't work yet on NT.  */
-/* #define AUTH_SERVER_SUPPORT 1 */
 
 /*
  * This tells the client that it must use send()/recv() to talk to the

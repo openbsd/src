@@ -123,7 +123,7 @@ descramble (str)
   {
     fprintf (stderr, "descramble: unknown scrambling method\n", str);
     fflush (stderr);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 #endif  /* DIAGNOSTIC */
 

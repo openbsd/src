@@ -23,10 +23,14 @@ char cvsrc[] = CVSRC_FILENAME;
 
 extern char *strtok ();
 
+/* Read cvsrc, processing options matching CMDNAME ("cvs" for global
+   options, and update *ARGC and *ARGV accordingly.  */
+
 void
-read_cvsrc (argc, argv)
-     int *argc;
-     char ***argv;
+read_cvsrc (argc, argv, cmdname)
+    int *argc;
+    char ***argv;
+    char *cmdname;
 {
     char *homedir;
     char *homeinit;
@@ -81,7 +85,7 @@ read_cvsrc (argc, argv)
 
     line = NULL;
     line_chars_allocated = 0;
-    command_len = strlen (command_name);
+    command_len = strlen (cmdname);
     cvsrcfile = open_file (homeinit, "r");
     while ((line_length = getline (&line, &line_chars_allocated, cvsrcfile))
 	   >= 0)
@@ -91,7 +95,7 @@ read_cvsrc (argc, argv)
 	    continue;
 
 	/* stop if we match the current command */
-	if (!strncmp (line, command_name, command_len)
+	if (!strncmp (line, cmdname, command_len)
 	    && isspace (*(line + command_len)))
 	{
 	    found = 1;

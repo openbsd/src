@@ -22,6 +22,7 @@
    file system semantics.  */
 
 #include <io.h>
+#include <windows.h>
 
 #include "cvs.h"
 
@@ -711,7 +712,7 @@ fncmp (const char *n1, const char *n2)
 	       == WNT_filename_classes[(unsigned char) *n2]))
         n1++, n2++;
     return (WNT_filename_classes[(unsigned char) *n1]
-            - WNT_filename_classes[(unsigned char) *n1]);
+            - WNT_filename_classes[(unsigned char) *n2]);
 }
 
 /* Fold characters in FILENAME to their canonical forms.  
@@ -790,4 +791,75 @@ char *
 get_homedir ()
 {
     return getenv ("HOMEPATH");
+}
+
+/* See cvs.h for description.  */
+void
+expand_wild (argc, argv, pargc, pargv)
+    int argc;
+    char **argv;
+    int *pargc;
+    char ***pargv;
+{
+    int i;
+    int new_argc;
+    char **new_argv;
+    /* Allocated size of new_argv.  We arrange it so there is always room for
+	   one more element.  */
+    int max_new_argc;
+
+    new_argc = 0;
+    /* Add one so this is never zero.  */
+    max_new_argc = argc + 1;
+    new_argv = (char **) xmalloc (max_new_argc * sizeof (char *));
+    for (i = 0; i < argc; ++i)
+    {
+	HANDLE h;
+	WIN32_FIND_DATA fdata;
+
+	h = FindFirstFile (argv[i], &fdata);
+	if (h == INVALID_HANDLE_VALUE)
+	{
+	    if (GetLastError () == ENOENT)
+	    {
+		/* No match.  The file specified didn't contain a wildcard (in which case
+		   we clearly should return it unchanged), or it contained a wildcard which
+		   didn't match (in which case it might be better for it to be an error,
+		   but we don't try to do that).  */
+		new_argv [new_argc++] = xstrdup (argv[i]);
+		if (new_argc == max_new_argc)
+		{
+		    max_new_argc *= 2;
+		    new_argv = xrealloc (new_argv, max_new_argc * sizeof (char *));
+		}
+	    }
+	    else
+	    {
+		error (1, errno, "cannot find %s", argv[i]);
+	    }
+	}
+	else
+	{
+	    while (1)
+	    {
+		new_argv [new_argc++] = xstrdup (fdata.cFileName);
+		if (new_argc == max_new_argc)
+		{
+		    max_new_argc *= 2;
+		    new_argv = xrealloc (new_argv, max_new_argc * sizeof (char *));
+		}
+		if (!FindNextFile (h, &fdata))
+		{
+		    if (GetLastError () == ERROR_NO_MORE_FILES)
+			break;
+		    else
+			error (1, errno, "cannot find %s", argv[i]);
+		}
+	    }
+	    if (!FindClose (h))
+		error (1, GetLastError (), "cannot close %s", argv[i]);
+	}
+    }
+    *pargc = new_argc;
+    *pargv = new_argv;
 }

@@ -16,8 +16,6 @@
 #include <sys/types.h>
 
 static char *expand_variable PROTO((char *env, char *file, int line));
-extern char *xmalloc ();
-extern void  free ();
 
 
 /* User variables.  */

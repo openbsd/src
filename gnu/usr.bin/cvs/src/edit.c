@@ -87,7 +87,7 @@ watch_onoff (argc, argv)
 
 	if (local)
 	    send_arg ("-l");
-	send_file_names (argc, argv);
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
@@ -300,9 +300,10 @@ edit_fileproc (finfo)
     if (fclose (fp) < 0)
     {
 	if (finfo->update_dir[0] == '\0')
-	    error (0, errno, "cannot close %s", finfo->file);
+	    error (0, errno, "cannot close %s", CVSADM_NOTIFY);
 	else
-	    error (0, errno, "cannot close %s/%s", finfo->update_dir, finfo->file);
+	    error (0, errno, "cannot close %s/%s", finfo->update_dir,
+		   CVSADM_NOTIFY);
     }
 
     xchmod (finfo->file, 1);
@@ -448,9 +449,7 @@ unedit_fileproc (finfo)
 
     if (xcmp (finfo->file, basefilename) != 0)
     {
-	if (finfo->update_dir[0] != '\0')
-	    printf ("%s/", finfo->update_dir);
-	printf ("%s has been modified; revert changes? ", finfo->file);
+	printf ("%s has been modified; revert changes? ", finfo->fullname);
 	if (!yesno ())
 	{
 	    /* "no".  */
@@ -472,9 +471,10 @@ unedit_fileproc (finfo)
     if (fclose (fp) < 0)
     {
 	if (finfo->update_dir[0] == '\0')
-	    error (0, errno, "cannot close %s", finfo->file);
+	    error (0, errno, "cannot close %s", CVSADM_NOTIFY);
 	else
-	    error (0, errno, "cannot close %s/%s", finfo->update_dir, finfo->file);
+	    error (0, errno, "cannot close %s/%s", finfo->update_dir,
+		   CVSADM_NOTIFY);
     }
 
     xchmod (finfo->file, 0);
@@ -928,10 +928,7 @@ editors_fileproc (finfo)
     if (them == NULL)
 	return 0;
 
-    if (finfo->update_dir[0] == '\0')
-	printf ("%s", finfo->file);
-    else
-	printf ("%s/%s", finfo->update_dir, finfo->file);
+    fputs (finfo->fullname, stdout);
 
     p = them;
     while (1)
@@ -1006,7 +1003,7 @@ editors (argc, argv)
 
 	if (local)
 	    send_arg ("-l");
-	send_file_names (argc, argv);
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */

@@ -730,3 +730,27 @@ convert_file (char *infile,  int inflags,
     if (close (infd) < 0)
         error (0, errno, "warning: couldn't close %s", infile);
 }
+
+/* Return the home directory.  Returns a pointer to storage
+   managed by this function or its callees (currently getenv).  */
+char *
+get_homedir ()
+{
+    return getenv ("HOME");
+}
+
+/* See cvs.h for description.  On OS/2 this does nothing, but it probably
+   should be expanding wildcards like on NT.  */
+void
+expand_wild (argc, argv, pargc, pargv)
+    int argc;
+    char **argv;
+    int *pargc;
+    char ***pargv;
+{
+    int i;
+    *pargc = argc;
+    *pargv = (char **) xmalloc (argc * sizeof (char *));
+    for (i = 0; i < argc; ++i)
+	(*pargv)[i] = xstrdup (argv[i]);
+}

@@ -3,7 +3,7 @@ during which changes which had been merged into the official CVS
 (which produced releases such as 1.4A1 and 1.4A2) went into what has
 become ChangeLog-9194, and changes which existed only at Cygnus went
 into this file (ChangeLog-9395).  Eventually the Cygnus release became
-Cyclic CVS (it is was then called), which became CVS 1.5, so probably
+Cyclic CVS (as it was then called), which became CVS 1.5, so probably
 all the changes in both (what are now) ChangeLog-9194 and
 ChangeLog-9395 made it into 1.5.
 

@@ -109,7 +109,7 @@ Find_Names (repository, which, aflag, optentries)
  * create a list of directories to traverse from the current directory
  */
 List *
-Find_Dirs (repository, which)
+Find_Directories (repository, which)
     char *repository;
     int which;
 {

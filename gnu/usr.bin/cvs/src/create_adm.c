@@ -29,14 +29,14 @@ Create_Admin (dir, update_dir, repository, tag, date)
 
 #ifdef SERVER_SUPPORT
     if (trace)
-      {
+    {
 	char wd[PATH_MAX];
 	getwd (wd);
 	fprintf (stderr, "%c-> Create_Admin (%s, %s, %s, %s, %s) in %s\n",
 		 (server_active) ? 'S' : ' ',
                 dir, update_dir, repository, tag ? tag : "",
                 date ? date : "", wd);
-      }
+    }
 #endif
 
     if (noexec)
@@ -125,13 +125,16 @@ Create_Admin (dir, update_dir, repository, tag, date)
 
 #ifdef SERVER_SUPPORT
     if (server_active)
-      server_set_sticky (update_dir, repository, tag, date);
+    {
+	server_set_sticky (update_dir, repository, tag, date);
+	server_template (update_dir, repository);
+    }
 
     if (trace)
-      {
+    {
 	fprintf (stderr, "%c<- Create_Admin\n",
 		 (server_active) ? 'S' : ' ');
-      }
+    }
 #endif
 
 }

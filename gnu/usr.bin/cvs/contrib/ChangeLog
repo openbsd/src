@@ -1,3 +1,26 @@
+Sun Apr 14 11:30:36 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * Removed pcl-cvs/ subdir; see tools/ subdir in the top-level from
+        now on.
+        Added elib/ subdir.
+        
+        * Makefile.in (dist-dir): Removed all references to pcl-cvs/
+        subdir.
+
+Wed Mar  6 10:20:28 1996  Greg A. Woods  <woods@most.weird.com>
+
+	* log_accum.pl: ($MAILER): use sendmail directly to allow other
+	headers to be included
+	* log_accum.pl (mail_notification): add support to allow settting
+	of Reply-To and Date header fields in the sent mail; remove $mailto
+	argument and use the global variable (as with $replyto).
+	* log_accum.pl: add -R option for mail_notification()'s optional
+	Reply-To value [default to $login]
+
+Fri Mar  1 01:51:56 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* listener.c: added as mentioned in ../README.VMS
+
 Mon Feb 19 13:37:36 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* README: Don't just tell people "we don't want your script"; tell

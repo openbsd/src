@@ -326,11 +326,13 @@ run_exec (stin, stout, sterr, flags)
 	    break;
     }
 #endif
+
     if (w == -1)
     {
 	rc = -1;
 	rerrno = errno;
     }
+#ifndef VMS /* status is return status */
     else if (WIFEXITED (status))
 	rc = WEXITSTATUS (status);
     else if (WIFSIGNALED (status))
@@ -341,6 +343,9 @@ run_exec (stin, stout, sterr, flags)
     }
     else
 	rc = 1;
+#else /* VMS */
+    rc = WEXITSTATUS (status);
+#endif /* VMS */
 
     /* restore the signals */
 #ifdef POSIX_SIGNALS

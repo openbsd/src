@@ -475,7 +475,7 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
     char *tocvsPath;
 
     vers = Version_TS (repository, (char *) NULL, vbranch, (char *) NULL, vfile,
-		       1, 0, (List *) NULL, (List *) NULL);
+		       1, 0, (List *) NULL, (RCSNode *) NULL);
     if (vers->vn_rcs != NULL
 	&& !RCS_isdead(vers->srcfile, vers->vn_rcs))
     {
@@ -487,7 +487,7 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
 	if (tmpdir == NULL || tmpdir[0] == '\0') 
 	  tmpdir = "/tmp";
 
-	(void) sprintf (xtmpfile, "%s/cvs-imp%d", tmpdir, getpid());
+	(void) sprintf (xtmpfile, "%s/cvs-imp%ld", tmpdir, (long) getpid());
 
 	/*
 	 * The rcs file does have a revision on the vendor branch. Compare
@@ -679,7 +679,7 @@ add_tags (rcs, vfile, vtag, targc, targv)
 	return (1);
     }
     vers = Version_TS (repository, (char *) NULL, vtag, (char *) NULL, vfile,
-		       1, 0, (List *) NULL, (List *) NULL);
+		       1, 0, (List *) NULL, (RCSNode *) NULL);
     for (i = 0; i < targc; i++)
     {
 	if ((retcode = RCS_settag (rcs, targv[i], vers->vn_rcs)) != 0)
@@ -852,7 +852,7 @@ add_rcs_file (message, rcs, user, vtag, targc, targv)
 #ifndef HAVE_RCS5
     char altdate2[50];
 #endif
-    char *author, *buf;
+    char *author;
     int i, ierrno, err = 0;
     mode_t mode;
     char *tocvsPath;
@@ -861,23 +861,23 @@ add_rcs_file (message, rcs, user, vtag, targc, targv)
     if (noexec)
 	return (0);
 
-#ifdef LINES_CRLF_TERMINATED
-    /* There exits a port of RCS to such a system that stores files with
-       straight newlines.  If we ever reach this point on such a system,
-       we'll need to decide what to do with the open_file call below.  */
-    abort ();
-#endif
+    /* FIXME?  We always import files as text files (note that means
+       that files get stored with straight linefeeds).  There isn't an
+       obvious, clean, way to let people specify which files are binary.
+       Maybe based on the file name....  */
     tocvsPath = wrap_tocvs_process_file (user);
     userfile = (tocvsPath == NULL ? user : tocvsPath);
     fpuser = fopen (userfile, "r");
-    if (fpuser == NULL) {
+    if (fpuser == NULL)
+    {
 	/* not fatal, continue import */
 	fperror (logfp, 0, errno, "ERROR: cannot read file %s", userfile);
 	error (0, errno, "ERROR: cannot read file %s", userfile);
 	goto read_error;
     }
-    fprcs = fopen (rcs, "w+");
-    if (fprcs == NULL) {
+    fprcs = fopen (rcs, "w+b");
+    if (fprcs == NULL)
+    {
 	ierrno = errno;
 	goto write_error_noclose;
     }
@@ -885,9 +885,9 @@ add_rcs_file (message, rcs, user, vtag, targc, targv)
     /*
      * putadmin()
      */
-    if (fprintf (fprcs, "head     %s;\n", vhead) < 0 ||
-	fprintf (fprcs, "branch   %s;\n", vbranch) < 0 ||
-	fprintf (fprcs, "access   ;\n") < 0 ||
+    if (fprintf (fprcs, "head     %s;\012", vhead) < 0 ||
+	fprintf (fprcs, "branch   %s;\012", vbranch) < 0 ||
+	fprintf (fprcs, "access   ;\012") < 0 ||
 	fprintf (fprcs, "symbols  ") < 0)
     {
 	goto write_error;
@@ -897,21 +897,21 @@ add_rcs_file (message, rcs, user, vtag, targc, targv)
 	if (fprintf (fprcs, "%s:%s.1 ", targv[i], vbranch) < 0)
 	    goto write_error;
 
-    if (fprintf (fprcs, "%s:%s;\n", vtag, vbranch) < 0 ||
-	fprintf (fprcs, "locks    ; strict;\n") < 0 ||
+    if (fprintf (fprcs, "%s:%s;\012", vtag, vbranch) < 0 ||
+	fprintf (fprcs, "locks    ; strict;\012") < 0 ||
 	/* XXX - make sure @@ processing works in the RCS file */
-	fprintf (fprcs, "comment  @%s@;\n", get_comment (user)) < 0)
+	fprintf (fprcs, "comment  @%s@;\012", get_comment (user)) < 0)
     {
 	goto write_error;
     }
 
     if (keyword_opt != NULL)
-      if (fprintf (fprcs, "expand   @%s@;\n", keyword_opt) < 0)
+      if (fprintf (fprcs, "expand   @%s@;\012", keyword_opt) < 0)
 	{
 	  goto write_error;
 	}
 
-    if (fprintf (fprcs, "\n") < 0)
+    if (fprintf (fprcs, "\012") < 0)
       goto write_error;
 
     /*
@@ -948,53 +948,56 @@ add_rcs_file (message, rcs, user, vtag, targc, targv)
 #endif
     author = getcaller ();
 
-    if (fprintf (fprcs, "\n%s\n", vhead) < 0 ||
-	fprintf (fprcs, "date     %s;  author %s;  state Exp;\n",
+    if (fprintf (fprcs, "\012%s\012", vhead) < 0 ||
+	fprintf (fprcs, "date     %s;  author %s;  state Exp;\012",
 		 altdate1, author) < 0 ||
-	fprintf (fprcs, "branches %s.1;\n", vbranch) < 0 ||
-	fprintf (fprcs, "next     ;\n") < 0 ||
-	fprintf (fprcs, "\n%s.1\n", vbranch) < 0 ||
-	fprintf (fprcs, "date     %s;  author %s;  state Exp;\n",
+	fprintf (fprcs, "branches %s.1;\012", vbranch) < 0 ||
+	fprintf (fprcs, "next     ;\012") < 0 ||
+	fprintf (fprcs, "\012%s.1\012", vbranch) < 0 ||
+	fprintf (fprcs, "date     %s;  author %s;  state Exp;\012",
 		 altdate2, author) < 0 ||
-	fprintf (fprcs, "branches ;\n") < 0 ||
-	fprintf (fprcs, "next     ;\n\n") < 0 ||
+	fprintf (fprcs, "branches ;\012") < 0 ||
+	fprintf (fprcs, "next     ;\012\012") < 0 ||
 	/*
 	 * putdesc()
 	 */
-	fprintf (fprcs, "\ndesc\n") < 0 ||
-	fprintf (fprcs, "@@\n\n\n") < 0 ||
+	fprintf (fprcs, "\012desc\012") < 0 ||
+	fprintf (fprcs, "@@\012\012\012") < 0 ||
 	/*
 	 * putdelta()
 	 */
-	fprintf (fprcs, "\n%s\n", vhead) < 0 ||
-	fprintf (fprcs, "log\n") < 0 ||
-	fprintf (fprcs, "@Initial revision\n@\n") < 0 ||
-	fprintf (fprcs, "text\n@") < 0)
+	fprintf (fprcs, "\012%s\012", vhead) < 0 ||
+	fprintf (fprcs, "log\012") < 0 ||
+	fprintf (fprcs, "@Initial revision\012@\012") < 0 ||
+	fprintf (fprcs, "text\012@") < 0)
     {
 	goto write_error;
     }
 
-    if (sb.st_size > 0)
+    /* Now copy over the contents of the file, expanding at signs.  */
     {
-	off_t size;
+	unsigned char buf[8192];
+	unsigned int len;
 
-	size = sb.st_size;
-	buf = xmalloc ((int) size);
-	if (fread (buf, (int) size, 1, fpuser) != 1)
-	    error (1, errno, "cannot read file %s for copying", user);
-	if (expand_at_signs (buf, size, fprcs) < 0)
+	while (1)
 	{
-	    free (buf);
-	    goto write_error;
+	    len = fread (buf, 1, sizeof buf, fpuser);
+	    if (len == 0)
+	    {
+		if (ferror (fpuser))
+		    error (1, errno, "cannot read file %s for copying", user);
+		break;
+	    }
+	    if (expand_at_signs (buf, len, fprcs) < 0)
+		goto write_error;
 	}
-	free (buf);
     }
-    if (fprintf (fprcs, "@\n\n") < 0 ||
-	fprintf (fprcs, "\n%s.1\n", vbranch) < 0 ||
-	fprintf (fprcs, "log\n@") < 0 ||
+    if (fprintf (fprcs, "@\012\012") < 0 ||
+	fprintf (fprcs, "\012%s.1\012", vbranch) < 0 ||
+	fprintf (fprcs, "log\012@") < 0 ||
 	expand_at_signs (message, (off_t) strlen (message), fprcs) < 0 ||
-	fprintf (fprcs, "@\ntext\n") < 0 ||
-	fprintf (fprcs, "@@\n") < 0)
+	fprintf (fprcs, "@\012text\012") < 0 ||
+	fprintf (fprcs, "@@\012") < 0)
     {
 	goto write_error;
     }
@@ -1168,7 +1171,10 @@ import_descend_dir (message, dir, vtag, targc, targv)
     if (!isdir (repository))
 #endif
     {
-	if (isfile (repository))
+	char rcs[PATH_MAX];
+
+	(void) sprintf (rcs, "%s%s", repository, RCSEXT);
+	if (isfile (repository) || isfile(rcs))
 	{
 	    fperror (logfp, 0, 0, "ERROR: %s is a file, should be a directory!",
 		     repository);
@@ -1195,7 +1201,7 @@ import_descend_dir (message, dir, vtag, targc, targv)
     else
 	repository[0] = '\0';
     if (restore_cwd (&cwd, NULL))
-      exit (1);
+      exit (EXIT_FAILURE);
     free_cwd (&cwd);
     return (err);
 }

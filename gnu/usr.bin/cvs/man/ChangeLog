@@ -1,3 +1,8 @@
+Wed Mar 13 17:06:39 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsinit.8: Removed.
+	* Makefile.in, cvs.1, cvs.5: Remove references to cvsinit.
+
 Tue Feb 13 22:30:54 1996  Samuel Tardieu  <sam@inf.enst.fr>
 
 	* Makefile.in: Remove reference to mkmodules.1

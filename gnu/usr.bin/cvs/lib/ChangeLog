@@ -1,3 +1,40 @@
+Thu Apr 25 18:26:34 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* getdate.y (get_date): Set Start from nowtime, not now->time,
+	which may not be set.
+	* getdate.c: Regenerated.
+
+Wed Apr 10 17:55:02 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* getdate.y (get_date): Use a time_t variable rather than a field
+	in a struct timeb.  Works around Solaris compiler bug.  Sure, it
+	is a compiler bug, but the workaround is completely painless.
+	* getdate.c: Regenerated.
+
+Fri Mar 22 11:17:05 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* system.h: If EXIT_FAILURE is not defined by stdlib.h, define it
+	ourself.
+
+Thu Mar 14 16:27:53 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* system.h: Remove alloca cruft.
+
+Wed Feb 28 03:16:48 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* build_lib.com: Changed definition of symbol CC to search
+	for include files in [-.VMS] so VMS config.h can be picked
+	up without copying.
+
+Tue Feb 27 21:26:34 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* build_lib.com: Added.  DCL File to build contents of [.lib]
+
+Tue Feb 27 21:18:38 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* system.h: added an existence_error macro check for EVMSERR
+	necessary for happiness under VMS
+
 Thu Feb 22 22:30:04 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* Makefile.in (OBJECTS): Remove @ALLOCA@

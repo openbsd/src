@@ -11,20 +11,6 @@
 #include <compat.h>
 #include <sys/errno.h>
 
-/* MetroWerks provides alloca, but only for PPC Macs - try CVS 'alloca' */
-
-#if !__POWERPC__
-#undef REGEX_MALLOC
-#undef HAVE_ALLOCA
-#undef ALLOCA_IN_STDLIB
-#undef HAVE_ALLOCA_H
-#else
-#undef REGEX_MALLOC
-#define HAVE_ALLOCA 1
-#undef ALLOCA_IN_STDLIB
-#define HAVE_ALLOCA_H 1
-#endif
-
 /* Define if files are crlf terminated.  */
 #define LINES_CRLF_TERMINATED 1
 

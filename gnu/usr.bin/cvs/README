@@ -27,7 +27,8 @@ Welcome to CVS!
 
 Bug reports are accepted, however note that someone may or may not
 feel like taking care of your bug report.  Support contracts are
-available from Cyclic Software (http://www.cyclic.com).
+available from Cyclic Software (http://www.cyclic.com or
+info@cyclic.com).
 
 To report bugs send mail to bug-cvs@prep.ai.mit.edu, or run the "cvsbug"
 program and fill out the template:
@@ -56,7 +57,7 @@ SOFTWARE IS SUPPLIED COMPLETELY "AS IS".  NO WARRANTY....
 
 Thanks for your support!
 
-	-The CVS Team, and the Cyclic CVS Hackers
+	-The CVS Team
 
 -------------------------------------------------------------------------------
 
@@ -114,6 +115,12 @@ Please read the INSTALL file for installation instructions.  Brief summary:
 	$ make check	# optional, long-running, step
 	$ make install
 	$ cvsinit
+
+The documentation is in the doc subdirectory.  cvs.texinfo is the main
+manual; cvs.info* and cvs.ps are the info and postscript versions,
+respectively, generated from cvs.texinfo.  The postscript version is
+for A4 paper; if you want US letter size, you need to remove the line
+@afourpaper from cvs.texinfo and re-generate cvs.ps using TeX.
 
 -------------------------------------------------------------------------------
 
@@ -213,7 +220,3 @@ apologize.  Just write to me and let me know!
 Many contributors have added code to the "contrib" directory.  See the
 README file there for a list of what is available.  There is also a
 contributed GNU Emacs CVS-mode in contrib/pcl-cvs.
-
--------------------------------------------------------------------------------
-
-				Cyclic Software <info@cyclic.com>

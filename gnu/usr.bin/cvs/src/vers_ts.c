@@ -14,12 +14,12 @@ static void time_stamp_server PROTO((char *, Vers_TS *));
 
 /*
  * Fill in and return a Vers_TS structure "user" is the name of the local
- * file; entries is the entries file - preparsed for our pleasure. xfiles is
- * all source code control files, preparsed for our pleasure
+ * file; entries is the entries file - preparsed for our pleasure. rcs is
+ * the current source control file - preparsed for our pleasure.
  */
 Vers_TS *
 Version_TS (repository, options, tag, date, user, force_tag_match,
-	    set_time, entries, xfiles)
+	    set_time, entries, rcs)
     char *repository;
     char *options;
     char *tag;
@@ -28,7 +28,7 @@ Version_TS (repository, options, tag, date, user, force_tag_match,
     int force_tag_match;
     int set_time;
     List *entries;
-    List *xfiles;
+    RCSNode *rcs;
 {
     Node *p;
     RCSNode *rcsdata;
@@ -51,7 +51,7 @@ Version_TS (repository, options, tag, date, user, force_tag_match,
     }
     else
     {
-	p = findnode (entries, user);
+	p = findnode_fn (entries, user);
 	sdtp = (struct stickydirtag *) entries->list->data; /* list-private */
     }
 
@@ -86,10 +86,24 @@ Version_TS (repository, options, tag, date, user, force_tag_match,
      */
     if (options)
 	vers_ts->options = xstrdup (options);
-    else if (sdtp && sdtp->aflag == 0)
+    else if (!vers_ts->options)
     {
-	if (!vers_ts->options)
+	if (sdtp && sdtp->aflag == 0)
 	    vers_ts->options = xstrdup (sdtp->options);
+	else if (rcs != NULL)
+	{
+	    /* If no keyword expansion was specified on command line,
+	       use whatever was in the rcs file (if there is one).  This
+	       is how we, if we are the server, tell the client whether
+	       a file is binary.  */
+	    char *rcsexpand = RCS_getexpand (rcs);
+	    if (rcsexpand != NULL)
+	    {
+		vers_ts->options = xmalloc (strlen (rcsexpand) + 3);
+		strcpy (vers_ts->options, "-k");
+		strcat (vers_ts->options, rcsexpand);
+	    }
+	}
     }
     if (!vers_ts->options)
 	vers_ts->options = xstrdup ("");
@@ -112,16 +126,10 @@ Version_TS (repository, options, tag, date, user, force_tag_match,
     }
 
     /* Now look up the info on the source controlled file */
-    if (xfiles != (List *) NULL)
+    if (rcs != NULL)
     {
-	p = findnode (xfiles, user);
-	if (p != NULL)
-	{
-	    rcsdata = (RCSNode *) p->data;
-	    rcsdata->refcount++;
-	}
-	else
-	    rcsdata = NULL;
+	rcsdata = rcs;
+	rcsdata->refcount++;
     }
     else if (repository != NULL)
 	rcsdata = RCS_parse (user, repository);
@@ -244,8 +252,26 @@ time_stamp_server (file, vers_ts)
     }
     else
     {
+        struct tm *tm_p;
+        struct tm local_tm;
+
 	vers_ts->ts_user = xmalloc (25);
-	cp = asctime (gmtime (&sb.st_mtime));	/* copy in the modify time */
+	/* We want to use the same timestamp format as is stored in the
+	   st_mtime.  For unix (and NT I think) this *must* be universal
+	   time (UT), so that files don't appear to be modified merely
+	   because the timezone has changed.  For VMS, or hopefully other
+	   systems where gmtime returns NULL, the modification time is
+	   stored in local time, and therefore it is not possible to cause
+	   st_mtime to be out of sync by changing the timezone.  */
+	tm_p = gmtime (&sb.st_mtime);
+	if (tm_p)
+	{
+	    memcpy (&local_tm, tm_p, sizeof (local_tm));
+	    cp = asctime (&local_tm);	/* copy in the modify time */
+	}
+	else
+	    cp = ctime (&sb.st_mtime);
+
 	cp[24] = 0;
 	(void) strcpy (vers_ts->ts_user, cp);
     }
@@ -270,8 +296,25 @@ time_stamp (file)
     }
     else
     {
+	struct tm *tm_p;
+        struct tm local_tm;
 	ts = xmalloc (25);
-	cp = asctime (gmtime (&sb.st_mtime));	/* copy in the modify time */
+	/* We want to use the same timestamp format as is stored in the
+	   st_mtime.  For unix (and NT I think) this *must* be universal
+	   time (UT), so that files don't appear to be modified merely
+	   because the timezone has changed.  For VMS, or hopefully other
+	   systems where gmtime returns NULL, the modification time is
+	   stored in local time, and therefore it is not possible to cause
+	   st_mtime to be out of sync by changing the timezone.  */
+	tm_p = gmtime (&sb.st_mtime);
+	if (tm_p)
+	{
+	    memcpy (&local_tm, tm_p, sizeof (local_tm));
+	    cp = asctime (&local_tm);	/* copy in the modify time */
+	}
+	else
+	    cp = ctime(&sb.st_mtime);
+
 	cp[24] = 0;
 	(void) strcpy (ts, cp);
     }

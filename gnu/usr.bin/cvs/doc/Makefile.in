@@ -80,8 +80,20 @@ cvs.info: cvs.texinfo CVSvn.texi
 		cp $(srcdir)/CVSvn.texi . ; else true; fi
 	$(MAKEINFO) $(srcdir)/cvs.texinfo -o cvs.info
 
-cvsclient.info: cvsclient.texi
+cvsclient.info: cvsclient.texi CVSvn.texi
+	if [ ! -f ./CVSvn.texi ]; then \
+		ln -s $(srcdir)/CVSvn.texi . || \
+		ln $(srcdir)/CVSvn.texi . || \
+		cp $(srcdir)/CVSvn.texi . ; else true; fi
 	$(MAKEINFO) $(srcdir)/cvsclient.texi -o cvsclient.info
+
+# Version of the protocol suitable for emailing
+cvsclient.txt: cvsclient.texi CVSvn.texi
+	if [ ! -f ./CVSvn.texi ]; then \
+		ln -s $(srcdir)/CVSvn.texi . || \
+		ln $(srcdir)/CVSvn.texi . || \
+		cp $(srcdir)/CVSvn.texi . ; else true; fi
+	$(MAKEINFO) $(srcdir)/cvsclient.texi --no-headers -o cvsclient.txt
 
 # If the user gets a distribution (which contains *.info), unpacks
 # it, and builds it in a seperate build dir, then *.info* are in srcdir.
@@ -113,7 +125,11 @@ cvs.dvi cvs.aux: cvs.texinfo CVSvn.texi
 		cp $(srcdir)/CVSvn.texi . ; else true; fi
 	$(TEXI2DVI) $(srcdir)/cvs.texinfo
 
-cvsclient.dvi cvsclient.aux: cvsclient.texi
+cvsclient.dvi cvsclient.aux: cvsclient.texi CVSvn.texi
+	if [ ! -f ./CVSvn.texi ]; then \
+		ln -s $(srcdir)/CVSvn.texi . || \
+		ln $(srcdir)/CVSvn.texi . || \
+		cp $(srcdir)/CVSvn.texi . ; else true; fi
 	$(SET_TEXINPUTS) $(TEX) cvsclient.texi
 	$(SET_TEXINPUTS) $(TEX) cvsclient.texi
 	$(TEXINDEX) cvsclient.??

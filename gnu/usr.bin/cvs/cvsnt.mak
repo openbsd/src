@@ -458,7 +458,6 @@ DEP_MKMOD=\
 	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -486,7 +485,6 @@ DEP_SUBR_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -514,7 +512,6 @@ DEP_ADMIN=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -545,7 +542,6 @@ DEP_SERVE=\
 	.\src\fileattr.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -573,7 +569,6 @@ DEP_DIFF_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -598,13 +593,12 @@ $(INTDIR)/diff.obj :  $(SOURCE)  $(DEP_DIFF_) $(INTDIR)
 
 SOURCE=.\src\client.c
 DEP_CLIEN=\
+	".\windows-NT\config.h"\
 	.\src\cvs.h\
 	.\lib\getline.h\
 	.\src\edit.h\
 	.\lib\md5.h\
-	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -632,7 +626,6 @@ DEP_CHECK=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -660,7 +653,6 @@ DEP_NO_DI=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -689,7 +681,6 @@ DEP_ENTRI=\
 	.\lib\getline.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -718,7 +709,6 @@ DEP_TAG_C=\
 	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -746,7 +736,6 @@ DEP_RTAG_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -774,7 +763,6 @@ DEP_STATU=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -802,7 +790,6 @@ DEP_ROOT_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -831,7 +818,6 @@ DEP_MYNDB=\
 	.\lib\getline.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -859,7 +845,6 @@ DEP_HASH_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -887,7 +872,6 @@ DEP_REPOS=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -915,7 +899,6 @@ DEP_PARSE=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -943,7 +926,6 @@ DEP_VERS_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -973,7 +955,6 @@ DEP_CHECKI=\
 	.\src\edit.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1004,7 +985,6 @@ DEP_COMMI=\
 	.\src\fileattr.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1032,7 +1012,6 @@ DEP_VERSI=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1061,7 +1040,6 @@ DEP_CVSRC=\
 	.\lib\getline.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1089,7 +1067,6 @@ DEP_REMOV=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1121,7 +1098,6 @@ DEP_UPDAT=\
 	.\src\edit.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1150,7 +1126,6 @@ DEP_LOGMS=\
 	.\lib\getline.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1178,7 +1153,6 @@ DEP_CLASS=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1206,7 +1180,6 @@ DEP_HISTO=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1235,7 +1208,6 @@ DEP_ADD_C=\
 	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1263,7 +1235,6 @@ DEP_LOCK_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1294,7 +1265,6 @@ DEP_RECUR=\
 	.\src\edit.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1323,7 +1293,6 @@ DEP_MODUL=\
 	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1351,7 +1320,6 @@ DEP_FIND_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1379,7 +1347,6 @@ DEP_RCS_C=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1407,7 +1374,6 @@ DEP_CREAT=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1435,7 +1401,6 @@ DEP_MAIN_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1464,7 +1429,6 @@ DEP_PATCH=\
 	.\lib\getline.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1492,7 +1456,6 @@ DEP_RELEA=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1520,7 +1483,6 @@ DEP_RCSCM=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1549,7 +1511,6 @@ DEP_IMPOR=\
 	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1577,7 +1538,6 @@ DEP_IGNOR=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1605,7 +1565,6 @@ DEP_LOG_C=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1633,7 +1592,6 @@ DEP_WRAPP=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1661,7 +1619,6 @@ DEP_ERROR=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1689,7 +1646,6 @@ DEP_EXPAN=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1721,7 +1677,6 @@ DEP_EDIT_=\
 	.\src\fileattr.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1751,7 +1706,6 @@ DEP_FILEA=\
 	.\src\fileattr.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1782,7 +1736,6 @@ DEP_WATCH=\
 	.\src\watch.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -1824,7 +1777,6 @@ DEP_LOGIN=\
 	.\src\rcs.h\
 	.\src\error.h\
 	.\src\update.h\
-	".\windows-NT\alloca.h"\
 	".\windows-NT\ndir.h"
 
 $(INTDIR)/login.obj :  $(SOURCE)  $(DEP_LOGIN) $(INTDIR)
@@ -1852,7 +1804,6 @@ DEP_SCRAM=\
 	.\src\rcs.h\
 	.\src\error.h\
 	.\src\update.h\
-	".\windows-NT\alloca.h"\
 	".\windows-NT\ndir.h"
 
 $(INTDIR)/scramble.obj :  $(SOURCE)  $(DEP_SCRAM) $(INTDIR)
@@ -1870,7 +1821,6 @@ SOURCE=.\lib\getwd.c
 DEP_GETWD=\
 	".\windows-NT\config.h"\
 	.\lib\system.h\
-	".\windows-NT\alloca.h"\
 	".\windows-NT\ndir.h"
 
 $(INTDIR)/getwd.obj :  $(SOURCE)  $(DEP_GETWD) $(INTDIR)
@@ -1884,7 +1834,6 @@ SOURCE=.\lib\sighandle.c
 DEP_SIGHA=\
 	".\windows-NT\config.h"\
 	.\lib\system.h\
-	".\windows-NT\alloca.h"\
 	".\windows-NT\ndir.h"
 
 $(INTDIR)/sighandle.obj :  $(SOURCE)  $(DEP_SIGHA) $(INTDIR)
@@ -1956,7 +1905,6 @@ SOURCE=.\lib\valloc.c
 DEP_VALLO=\
 	".\windows-NT\config.h"\
 	.\lib\system.h\
-	".\windows-NT\alloca.h"\
 	".\windows-NT\ndir.h"
 
 $(INTDIR)/valloc.obj :  $(SOURCE)  $(DEP_VALLO) $(INTDIR)
@@ -1970,7 +1918,6 @@ SOURCE=.\lib\xgetwd.c
 DEP_XGETW=\
 	".\windows-NT\config.h"\
 	.\lib\system.h\
-	".\windows-NT\alloca.h"\
 	".\windows-NT\ndir.h"
 
 $(INTDIR)/xgetwd.obj :  $(SOURCE)  $(DEP_XGETW) $(INTDIR)
@@ -1983,8 +1930,7 @@ $(INTDIR)/xgetwd.obj :  $(SOURCE)  $(DEP_XGETW) $(INTDIR)
 SOURCE=.\lib\regex.c
 DEP_REGEX=\
 	".\windows-NT\config.h"\
-	.\lib\regex.h\
-	".\windows-NT\alloca.h"
+	.\lib\regex.h
 
 $(INTDIR)/regex.obj :  $(SOURCE)  $(DEP_REGEX) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
@@ -2007,8 +1953,7 @@ $(INTDIR)/fnmatch.obj :  $(SOURCE)  $(DEP_FNMAT) $(INTDIR)
 
 SOURCE=.\lib\getdate.c
 DEP_GETDA=\
-	".\windows-NT\config.h"\
-	".\windows-NT\alloca.h"
+	".\windows-NT\config.h"
 
 $(INTDIR)/getdate.obj :  $(SOURCE)  $(DEP_GETDA) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
@@ -2061,7 +2006,6 @@ DEP_MKDIR=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -2089,7 +2033,6 @@ DEP_RUN_C=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -2128,7 +2071,6 @@ DEP_FILES=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\
@@ -2219,7 +2161,6 @@ DEP_START=\
 	".\windows-NT\rcmd.h"\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
-	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
 	".\windows-NT\pwd.h"\
 	.\lib\system.h\

@@ -1,5 +1,9 @@
 /* CVS client-related stuff.  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include "cvs.h"
 #include "getline.h"
 #include "edit.h"
@@ -8,23 +12,24 @@
 
 #include "md5.h"
 
-#if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS
-#ifdef HAVE_WINSOCK_H
-#include <winsock.h>
-#else /* No winsock.h */
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#endif /* No winsock.h */
-#endif /* defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS */
+#if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP
+#  ifdef HAVE_WINSOCK_H
+#    include <winsock.h>
+#  else /* No winsock.h */
+#    include <sys/socket.h>
+#    include <netinet/in.h>
+#    include <netdb.h>
+#  endif /* No winsock.h */
+#endif /* defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP */
 
 #ifdef AUTH_CLIENT_SUPPORT
 char *get_cvs_password PROTO((char *user, char *host, char *cvsrooot));
 #endif /* AUTH_CLIENT_SUPPORT */
 
-#if HAVE_KERBEROS
+#if HAVE_KERBEROS || USE_DIRECT_TCP
 #define CVS_PORT 1999
 
+#if HAVE_KERBEROS
 #include <krb.h>
 
 extern char *krb_realmofhost ();
@@ -33,6 +38,7 @@ extern char *krb_realmofhost ();
 #endif /* HAVE_KRB_GET_ERR_TEXT */
 #endif /* HAVE_KERBEROS */
 
+#endif /* HAVE_KERBEROS || USE_DIRECT_TCP */
 
 static void add_prune_candidate PROTO((char *));
 
@@ -77,6 +83,7 @@ static void handle_m PROTO((char *, int));
 static void handle_e PROTO((char *, int));
 static void handle_notified PROTO((char *, int));
 
+static size_t try_read_from_server PROTO ((char *, size_t));
 #endif /* CLIENT_SUPPORT */
 
 #if defined(CLIENT_SUPPORT) || defined(SERVER_SUPPORT)
@@ -890,8 +897,18 @@ copy_a_file (data, ent_list, short_pathname, filename)
     char *filename;
 {
     char *newname;
+#ifdef USE_VMS_FILENAMES
+    char *p;
+#endif
 
     read_line (&newname, 0);
+
+#ifdef USE_VMS_FILENAMES
+    /* Mogrify the filename so VMS is happy with it. */
+    for(p = newname; *p; p++)
+       if(*p == '.' || *p == '#') *p = '_';
+#endif
+
     copy_file (filename, newname);
     free (newname);
 }
@@ -902,6 +919,86 @@ handle_copy_file (args, len)
     int len;
 {
     call_in_directory (args, copy_a_file, (char *)NULL);
+}
+
+
+static void read_counted_file PROTO ((char *, char *));
+
+/* Read from the server the count for the length of a file, then read
+   the contents of that file and write them to FILENAME.  FULLNAME is
+   the name of the file for use in error messages.  FIXME-someday:
+   extend this to deal with compressed files and make update_entries
+   use it.  On error, gives a fatal error.  */
+static void
+read_counted_file (filename, fullname)
+    char *filename;
+    char *fullname;
+{
+    char *size_string;
+    size_t size;
+    char *buf;
+
+    /* Pointers in buf to the place to put data which will be read,
+       and the data which needs to be written, respectively.  */
+    char *pread;
+    char *pwrite;
+    /* Number of bytes left to read and number of bytes in buf waiting to
+       be written, respectively.  */
+    size_t nread;
+    size_t nwrite;
+
+    FILE *fp;
+
+    read_line (&size_string, 0);
+    if (size_string[0] == 'z')
+	error (1, 0, "\
+protocol error: compressed files not supported for that operation");
+    /* FIXME: should be doing more error checking, probably.  Like using
+       strtoul and making sure we used up the whole line.  */
+    size = atoi (size_string);
+    free (size_string);
+
+    /* A more sophisticated implementation would use only a limited amount
+       of buffer space (8K perhaps), and read that much at a time.  We allocate
+       a buffer for the whole file only to make it easy to keep track what
+       needs to be read and written.  */
+    buf = xmalloc (size);
+
+    /* FIXME-someday: caller should pass in a flag saying whether it
+       is binary or not.  I haven't carefully looked into whether
+       CVS/Template files should use local text file conventions or
+       not.  */
+    fp = fopen (filename, "wb");
+    if (fp == NULL)
+	error (1, errno, "cannot write %s", fullname);
+    nread = size;
+    nwrite = 0;
+    pread = buf;
+    pwrite = buf;
+    while (nread > 0 || nwrite > 0)
+    {
+	size_t n;
+
+	if (nread > 0)
+	{
+	    n = try_read_from_server (pread, nread);
+	    nread -= n;
+	    pread += n;
+	    nwrite += n;
+	}
+
+	if (nwrite > 0)
+	{
+	    n = fwrite (pwrite, 1, nwrite, fp);
+	    if (ferror (fp))
+		error (1, errno, "cannot write %s", fullname);
+	    nwrite -= n;
+	    pwrite += n;
+	}
+    }
+    free (buf);
+    if (fclose (fp) < 0)
+	error (1, errno, "cannot close %s", fullname);
 }
 
 /*
@@ -1059,6 +1156,15 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	else if (*tag_or_date == 'D')
 	    date = tag_or_date + 1;
     }
+    else
+	/* For cvs export, assume it is a text file.  FIXME: This is
+	   broken behavior--we should be having the server tell us
+	   whether it is text or binary and dealing accordingly.  I
+	   think maybe we can parse the entries line, get the options,
+	   and then ignore the entries line otherwise, but I haven't
+	   checked to see whether the server sends the entries line
+	   correctly in this case.  */
+	options = NULL;
 
     if (data->contents == UPDATE_ENTRIES_UPDATE
 	|| data->contents == UPDATE_ENTRIES_PATCH)
@@ -1088,11 +1194,17 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	free (size_string);
 
 	temp_filename = xmalloc (strlen (filename) + 80);
+#ifdef USE_VMS_FILENAMES
+        /* A VMS rename of "blah.dat" to "foo" to implies a
+           destination of "foo.dat" which is unfortinate for CVS */
+       sprintf (temp_filename, "%s_new_", filename);
+#else
 #ifdef _POSIX_NO_TRUNC
 	sprintf (temp_filename, ".new.%.9s", filename);
 #else /* _POSIX_NO_TRUNC */
 	sprintf (temp_filename, ".new.%s", filename);
 #endif /* _POSIX_NO_TRUNC */
+#endif /* USE_VMS_FILENAMES */
 	buf = xmalloc (size);
 
         /* Some systems, like OS/2 and Windows NT, end lines with CRLF
@@ -1102,12 +1214,10 @@ update_entries (data_arg, ent_list, short_pathname, filename)
            flag, then we don't want to convert, else we do (because
            CVS assumes text files by default). */
 
-        /* Actually, I don't believe options can be NULL here, but I'm
-           not dead certain of that. */
-        if (options)
-          bin = !(strcmp (options, "-kb"));
-        else
-          bin = 0;
+	if (options)
+	    bin = !(strcmp (options, "-kb"));
+	else
+	    bin = 0;
 
         fd = open (temp_filename,
                    O_WRONLY | O_CREAT | O_TRUNC | (bin ? OPEN_BINARY : 0),
@@ -1132,7 +1242,8 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	if (gzip_pid > 0)
 	{
 	    if (waitpid (gzip_pid, &gzip_status, 0) == -1)
-		error (1, errno, "waiting for gzip process %d", gzip_pid);
+		error (1, errno, "waiting for gzip process %ld",
+		       (long) gzip_pid);
 	    else if (gzip_status != 0)
 		error (1, 0, "gzip process exited %d", gzip_status);
 	}
@@ -1608,6 +1719,32 @@ handle_clear_sticky (pathname, len)
     call_in_directory (pathname, clear_sticky, (char *)NULL);
 }
 
+
+static void template PROTO ((char *, List *, char *, char *));
+
+static void
+template (data, ent_list, short_pathname, filename)
+    char *data;
+    List *ent_list;
+    char *short_pathname;
+    char *filename;
+{
+    /* FIXME: should be computing second argument from CVSADM_TEMPLATE
+       and short_pathname.  */
+    read_counted_file (CVSADM_TEMPLATE, "<CVS/Template file>");
+}
+
+static void handle_template PROTO ((char *, int));
+
+static void
+handle_template (pathname, len)
+    char *pathname;
+    int len;
+{
+    call_in_directory (pathname, template, NULL);
+}
+
+
 struct save_prog {
     char *name;
     char *dir;
@@ -1618,7 +1755,7 @@ static struct save_prog *checkin_progs;
 static struct save_prog *update_progs;
 
 /*
- * Unlike some requests this doesn't include the repository.  So we can't
+ * Unlike some responses this doesn't include the repository.  So we can't
  * just call call_in_directory and have the right thing happen; we save up
  * the requests and do them at the end.
  */
@@ -2134,7 +2271,7 @@ client_send_expansions (local)
        cleaner if we genuinely expanded module names, all the way to a
        local directory and repository, but that isn't the way it works
        now.  */
-    send_file_names (module_argc, module_argv);
+    send_file_names (module_argc, module_argv, 0);
 
     for (i = 0; i < modules_count; ++i)
     {
@@ -2207,6 +2344,8 @@ struct response responses[] =
        rs_optional),
     RSP_LINE("Clear-sticky", handle_clear_sticky, response_type_normal,
        rs_optional),
+    RSP_LINE("Template", handle_template, response_type_normal,
+       rs_optional),
     RSP_LINE("Set-checkin-prog", handle_set_checkin_prog, response_type_normal,
        rs_optional),
     RSP_LINE("Set-update-prog", handle_set_update_prog, response_type_normal,
@@ -2245,17 +2384,23 @@ send_to_server (str, len)
       int just_wrtn = 0;
       size_t wrtn = 0;
 
+#ifdef VMS
+      /* send() blocks under VMS */
+      if (send (server_sock, str + wrtn, len - wrtn, 0) < 0)
+        error (1, errno, "writing to server socket");
+#else /* VMS */
       while (wrtn < len)
         {
           just_wrtn = send (server_sock, str + wrtn, len - wrtn, 0);
 
           if (just_wrtn == -1)
-            error (1, errno, "reading from server socket");
+            error (1, errno, "writing to server socket");
           
           wrtn += just_wrtn;
           if (wrtn == len)
             break;
         }
+#endif  /* VMS */
     }
   else
 #endif /* NO_SOCKET_TO_FD */
@@ -2281,57 +2426,60 @@ send_to_server (str, len)
       error (0, errno, "writing to to-server logfile");
 }
 
+/* Read up to LEN bytes from the server.  Returns actual number of bytes
+   read.  Gives a fatal error on EOF or error.  */
+static size_t
+try_read_from_server (buf, len)
+    char *buf;
+    size_t len;
+{
+    int nread;
+
+#ifdef NO_SOCKET_TO_FD
+    if (use_socket_style)
+    {
+	nread = recv (server_sock, buf, len, 0);
+	if (nread == -1)
+	    error (1, errno, "reading from server");
+    }
+    else
+#endif
+    {
+	nread = fread (buf, 1, len, from_server);
+	if (ferror (from_server))
+	    error (1, errno, "reading from server");
+	if (feof (from_server))
+	    error (1, 0,
+		   "end of file from server (consult above messages if any)");
+    }
+
+    /* Log, if that's what we're doing. */
+    if (from_server_logfile != NULL && nread > 0)
+    {
+	size_t towrite = nread;
+	if (fwrite (buf, 1, towrite, from_server_logfile) < towrite)
+	    error (0, errno, "writing to from-server logfile");
+    }
+
+    return nread;
+}
+
 /*
  * Read LEN bytes from the server or die trying.
  */
 void
 read_from_server (buf, len)
-     char *buf;
-     size_t len;
+    char *buf;
+    size_t len;
 {
-#ifdef NO_SOCKET_TO_FD
-  if (use_socket_style)
+    size_t red = 0;
+    while (red < len)
     {
-      int just_red = 0;
-      size_t red = 0;
-
-      while (red < len)
-        {
-          just_red = recv (server_sock, buf + red, len - red, 0);
-
-          if (just_red == -1)
-            error (1, errno, "reading from server");
-
-          red += just_red;
-          if (red == len)
-            break;
-        }
+	red += try_read_from_server (buf + red, len - red);
+	if (red == len)
+	    break;
     }
-  else
-#endif /* NO_SOCKET_TO_FD */
-    {
-      size_t red = 0;
-      
-      while (red < len)
-        {
-          red += fread (buf + red, 1, len - red, from_server);
-          
-          if (red == len)
-            break;
-          
-          if (ferror (from_server))
-            error (1, errno, "reading from server");
-          if (feof (from_server))
-            error (1, 0, "end of file from server (consult above messages if any)");
-        }
-    }
-  
-  /* Log, if that's what we're doing. */
-  if (from_server_logfile)
-    if (fwrite (buf, 1, len, from_server_logfile) < len)
-      error (0, errno, "writing to from-server logfile");
 }
-
 
 /*
  * Get some server responses and process them.  Returns nonzero for
@@ -2406,7 +2554,7 @@ get_responses_and_close ()
     else
 #endif /* NO_SOCKET_TO_FD */
       {
-#if defined(HAVE_KERBEROS) || defined(AUTH_CLIENT_SUPPORT)
+#if defined(HAVE_KERBEROS) || defined(USE_DIRECT_TCP) || defined(AUTH_CLIENT_SUPPORT)
         if (server_fd != -1)
           {
             if (shutdown (server_fd, 1) < 0)
@@ -2423,7 +2571,7 @@ get_responses_and_close ()
               }
           }
         else
-#endif /* HAVE_KERBEROS || AUTH_CLIENT_SUPPORT */
+#endif /* HAVE_KERBEROS || USE_DIRECT_TCP || AUTH_CLIENT_SUPPORT */
           
 #ifdef SHUTDOWN_SERVER
           SHUTDOWN_SERVER (fileno (to_server));
@@ -2482,22 +2630,22 @@ supported_request (name)
 #ifdef AUTH_CLIENT_SUPPORT
 void
 init_sockaddr (name, hostname, port)
-     struct sockaddr_in *name;
-     const char *hostname;
-     unsigned short int port;
+    struct sockaddr_in *name;
+    const char *hostname;
+    unsigned short int port;
 {
-  struct hostent *hostinfo;
-  
-  memset (name, 0, sizeof (*name));
-  name->sin_family = AF_INET;
-  name->sin_port = htons (port);
-  hostinfo = gethostbyname (hostname);
-  if (hostinfo == NULL)
+    struct hostent *hostinfo;
+
+    memset (name, 0, sizeof (*name));
+    name->sin_family = AF_INET;
+    name->sin_port = htons (port);
+    hostinfo = gethostbyname (hostname);
+    if (hostinfo == NULL)
     {
-      fprintf (stderr, "Unknown host %s.\n", hostname);
-      exit (EXIT_FAILURE);
+	fprintf (stderr, "Unknown host %s.\n", hostname);
+	exit (EXIT_FAILURE);
     }
-  name->sin_addr = *(struct in_addr *) hostinfo->h_addr;
+    name->sin_addr = *(struct in_addr *) hostinfo->h_addr;
 }
 
 
@@ -2538,7 +2686,7 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
     if (sock == -1)
     {
 	fprintf (stderr, "socket() failed\n");
-	exit (1);
+	exit (EXIT_FAILURE);
     }
     port_number = auth_server_port_number ();
     init_sockaddr (&client_sai, server_host, port_number);
@@ -2672,7 +2820,7 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
 #endif /* AUTH_CLIENT_SUPPORT */
 
 
-#if HAVE_KERBEROS
+#if HAVE_KERBEROS || USE_DIRECT_TCP
 
 /*
  * FIXME: this function has not been changed to deal with
@@ -2682,19 +2830,24 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
  * have to make take care of this.
  */
 void
-start_kerberos_server (tofdp, fromfdp)
+start_tcp_server (tofdp, fromfdp)
      int *tofdp, *fromfdp;
 {
   int tofd, fromfd;
 
   struct hostent *hp;
   char *hname;
-  const char *realm;
   const char *portenv;
   int port;
   struct sockaddr_in sin;
   int s;
+
+
+#if HAVE_KERBEROS
   KTEXT_ST ticket;
+  const char *realm;
+#endif /* HAVE_KERBEROS */
+
   int status;
   
   /*
@@ -2711,14 +2864,19 @@ start_kerberos_server (tofdp, fromfdp)
   hname = xmalloc (strlen (hp->h_name) + 1);
   strcpy (hname, hp->h_name);
   
+#if HAVE_KERBEROS
   realm = krb_realmofhost (hname);
+#endif /* HAVE_KERBEROS */
   
+  /* Get CVS_CLIENT_PORT or look up cvs/tcp with CVS_PORT as default */
   portenv = getenv ("CVS_CLIENT_PORT");
   if (portenv != NULL)
     {
       port = atoi (portenv);
       if (port <= 0)
         goto try_rsh_no_message;
+      if (trace)
+        fprintf(stderr, "Using TCP port %d to contact server.\n", port);
       port = htons (port);
     }
   else
@@ -2750,11 +2908,12 @@ start_kerberos_server (tofdp, fromfdp)
   tofd = -1;
   if (connect (s, (struct sockaddr *) &sin, sizeof sin) < 0)
     {
-      error (0, errno, "kerberos connect");
+      error (0, errno, "connect");
       close (s);
     }
   else
     {
+#ifdef HAVE_KERBEROS
       struct sockaddr_in laddr;
       int laddrlen;
       MSG_DAT msg_data;
@@ -2776,14 +2935,23 @@ start_kerberos_server (tofdp, fromfdp)
         }
       else
         {
+#endif /* HAVE_KERBEROS */
+
           server_fd = s;
           close_on_exec (server_fd);
           tofd = fromfd = s;
+
+#ifdef HAVE_KERBEROS
         }
+#endif /* HAVE_KERBEROS */
     }
   
   if (tofd == -1)
     {
+      /* FIXME: Falling back like this is slow and we should probably
+	 just make it a fatal error (so that people use the right
+	 environment variables or, when we get around to implementing
+	 the right ones, access methods).  */
       error (0, 0, "trying to start server using rsh");
     try_rsh_no_message:
       server_fd = -1;
@@ -2803,7 +2971,7 @@ start_kerberos_server (tofdp, fromfdp)
   *fromfdp = fromfd;
 }
 
-#endif /* HAVE_KERBEROS */
+#endif /* HAVE_KERBEROS || USE_DIRECT_TCP */
 
 static int send_variable_proc PROTO ((Node *, void *));
 
@@ -2827,6 +2995,11 @@ start_server ()
   int tofd, fromfd;
   char *log = getenv ("CVS_CLIENT_LOG");
 
+  /* Note that generally speaking we do *not* fall back to a different
+     way of connecting if the first one does not work.  This is slow
+     (*really* slow on a 14.4kbps link); the clean way to have a CVS
+     which supports several ways of connecting is with access methods.  */
+
   /* Init these to NULL.  They will be set later if logging is on. */
   from_server_logfile = (FILE *) NULL;
   to_server_logfile   = (FILE *) NULL;
@@ -2841,22 +3014,27 @@ start_server ()
     else
 #endif /* AUTH_CLIENT_SUPPORT */
       {
-#if HAVE_KERBEROS
-        start_kerberos_server (&tofd, &fromfd);
-#else /* ! HAVE_KERBEROS */
+#if HAVE_KERBEROS || USE_DIRECT_TCP
+        start_tcp_server (&tofd, &fromfd);
+#else
 
-#if ! RSH_NOT_TRANSPARENT
+#  if ! RSH_NOT_TRANSPARENT
         start_rsh_server (&tofd, &fromfd);
-#else /* RSH_NOT_TRANSPARENT */
+#  else
 
-#if defined(START_SERVER)
+#    if defined(START_SERVER)
         START_SERVER (&tofd, &fromfd, getcaller (),
                       server_user, server_host, server_cvsroot);
-#endif /* defined(START_SERVER) */
-
-#endif /* ! RSH_NOT_TRANSPARENT */
-#endif /* HAVE_KERBEROS */
+#    endif
+#  endif
+#endif
       }
+
+#if defined(VMS) && defined(NO_SOCKET_TO_FD)
+    /* Avoid mixing sockets with stdio */
+    use_socket_style = 1;
+    server_sock = tofd;
+#endif /* VMS && NO_SOCKET_TO_FD */
 
     /* "Hi, I'm Darlene and I'll be your server tonight..." */
     server_started = 1;
@@ -2927,9 +3105,12 @@ start_server ()
     stored_checksum_valid = 0;
     stored_mode_valid = 0;
 
-    send_to_server ("Root ", 0);
-    send_to_server (server_cvsroot, 0);
-    send_to_server ("\012", 1);
+    if (strcmp (command_name, "init") != 0)
+    {
+	send_to_server ("Root ", 0);
+	send_to_server (server_cvsroot, 0);
+	send_to_server ("\012", 1);
+    }
 
     {
 	struct response *rs;
@@ -2946,7 +3127,7 @@ start_server ()
     send_to_server ("valid-requests\012", 0);
 
     if (get_server_responses ())
-	exit (1);
+	exit (EXIT_FAILURE);
 
     /*
      * Now handle global options.
@@ -3043,10 +3224,16 @@ start_server ()
 	    gzip_level = 0;
 	}
     }
+
+#ifdef FILENAMES_CASE_INSENSITIVE
+    if (supported_request ("Case"))
+	send_to_server ("Case\012", 0);
+#endif
+
     /* If "Set" is not supported, just silently fail to send the variables.
        Users with an old server should get a useful error message when it
        fails to recognize the ${=foo} syntax.  This way if someone uses
-       several server, some of which are new and some old, they can still
+       several servers, some of which are new and some old, they can still
        set user variables in their .cvsrc without trouble.  */
     if (supported_request ("Set"))
 	walklist (variable_list, send_variable_proc, NULL);
@@ -3333,6 +3520,10 @@ send_modified (file, short_pathname, vers)
 #endif /* LINES_CRLF_TERMINATED */
 
 	fd = filter_through_gzip (fd, 1, gzip_level, &gzip_pid);
+
+	/* FIXME: is there any reason to go through all this realloc'ing
+	   when we could just be writing the data to the network as we read
+	   it from gzip?  */
 	while (1)
 	{
 	    if ((bufp - buf) + readsize >= bufsize)
@@ -3360,7 +3551,7 @@ send_modified (file, short_pathname, vers)
 	    error (0, errno, "warning: can't close %s", short_pathname);
 
 	if (waitpid (gzip_pid, &gzip_status, 0) != gzip_pid)
-	    error (1, errno, "waiting for gzip proc %d", gzip_pid);
+	    error (1, errno, "waiting for gzip proc %ld", (long) gzip_pid);
 	else if (gzip_status != 0)
 	    error (1, errno, "gzip exited %d", gzip_status);
 
@@ -3395,6 +3586,11 @@ send_modified (file, short_pathname, vers)
 	    char *bufp = buf;
 	    int len;
 
+	    /* FIXME: This is gross.  It assumes that we might read
+	       less than st_size bytes (true on NT), but not more.
+	       Instead of this we should just be reading a block of
+	       data (e.g. 8192 bytes), writing it to the network, and
+	       so on until EOF.  */
 	    while ((len = read (fd, bufp, (buf + sb.st_size) - bufp)) > 0)
 	        bufp += len;
 
@@ -3437,18 +3633,12 @@ send_fileproc (finfo)
     struct file_info *finfo;
 {
     Vers_TS *vers;
-    int update_dir_len = strlen (finfo->update_dir);
-    char *short_pathname = xmalloc (update_dir_len + strlen (finfo->file) + 40);
-    strcpy (short_pathname, finfo->update_dir);
-    if (finfo->update_dir[0] != '\0')
-	strcat (short_pathname, "/");
-    strcat (short_pathname, finfo->file);
 
     send_a_repository ("", finfo->repository, finfo->update_dir);
 
     vers = Version_TS ((char *)NULL, (char *)NULL, (char *)NULL,
 		       (char *)NULL,
-		       finfo->file, 0, 0, finfo->entries, (List *)NULL);
+		       finfo->file, 0, 0, finfo->entries, (RCSNode *)NULL);
 
     if (vers->vn_user != NULL)
     {
@@ -3505,7 +3695,7 @@ send_fileproc (finfo)
     else if (vers->ts_rcs == NULL
 	     || strcmp (vers->ts_user, vers->ts_rcs) != 0)
     {
-	send_modified (finfo->file, short_pathname, vers);
+	send_modified (finfo->file, finfo->fullname, vers);
     }
     else
     {
@@ -3530,7 +3720,6 @@ send_fileproc (finfo)
     }
 
     freevers_ts (&vers);
-    free (short_pathname);
     return 0;
 }
 
@@ -3664,15 +3853,21 @@ send_option_string (string)
 /* Send the names of all the argument files to the server.  */
 
 void
-send_file_names (argc, argv)
+send_file_names (argc, argv, flags)
     int argc;
     char **argv;
+    unsigned int flags;
 {
     int i;
     char *p;
     char *q;
     int level;
     int max_level;
+
+    /* The fact that we do this here as well as start_recursion is a bit 
+       of a performance hit.  Perhaps worth cleaning up someday.  */
+    if (flags & SEND_EXPAND_WILD)
+	expand_wild (argc, argv, &argc, &argv);
 
     /* Send Max-dotdot if needed.  */
     max_level = 0;
@@ -3746,6 +3941,14 @@ send_file_names (argc, argv)
 	}
 	send_to_server ("\012", 1);
     }
+
+    if (flags & SEND_EXPAND_WILD)
+    {
+	int i;
+	for (i = 0; i < argc; ++i)
+	    free (argv[i]);
+	free (argv);
+    }
 }
 
 
@@ -3775,7 +3978,7 @@ send_files (argc, argv, local, aflag)
 	 send_dirent_proc, (DIRLEAVEPROC)NULL,
 	 argc, argv, local, W_LOCAL, aflag, 0, (char *)NULL, 0, 0);
     if (err)
-	exit (1);
+	exit (EXIT_FAILURE);
     if (toplevel_repos == NULL)
 	/*
 	 * This happens if we are not processing any files,
@@ -4256,4 +4459,32 @@ client_unedit (argc, argv)
     return unedit (argc, argv);	/* Call real code */
 }
 
+void
+send_init_command ()
+{
+    /* This is here because we need the server_cvsroot variable.  */
+    send_to_server ("init ", 0);
+    send_to_server (server_cvsroot, 0);
+    send_to_server ("\012", 0);
+}
+
+int
+client_init (argc, argv)
+    int argc;
+    char **argv;
+{
+    parse_cvsroot ();
+
+    return init (argc, argv);	/* Call real code */
+}
+
+int
+client_annotate (argc, argv)
+    int argc;
+    char **argv;
+{
+    parse_cvsroot ();
+
+    return annotate (argc, argv);	/* Call real code */
+}
 #endif /* CLIENT_SUPPORT */

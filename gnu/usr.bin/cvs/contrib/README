@@ -100,3 +100,7 @@ Contents of this directory:
  	clmerge		A perl script to handle merge conflicts in GNU
 			style ChangeLog files .
 			Contributed by Tom Tromey <tromey@busco.lanl.gov>.
+	listener	A program which listens to a TCP port, authenticates
+			by hostname, then runs a subprocess whose input/output
+			is redirected through the port.
+			Contributed by Benjamin J. Lee <benjamin@cyclic.com>

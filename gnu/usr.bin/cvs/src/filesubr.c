@@ -325,9 +325,11 @@ xchmod (fname, writable)
     if (trace)
 #ifdef SERVER_SUPPORT
 	(void) fprintf (stderr, "%c-> chmod(%s,%o)\n",
-			(server_active) ? 'S' : ' ', fname, mode);
+			(server_active) ? 'S' : ' ', fname,
+			(unsigned int) mode);
 #else
-	(void) fprintf (stderr, "-> chmod(%s,%o)\n", fname, mode);
+	(void) fprintf (stderr, "-> chmod(%s,%o)\n", fname,
+			(unsigned int) mode);
 #endif
     if (noexec)
 	return;
@@ -420,22 +422,20 @@ unlink_file_dir (f)
     if (noexec)
 	return (0);
 
-    if (unlink (f) != 0)
+    /* For at least some unices, if root tries to unlink() a directory,
+       instead of doing something rational like returning EISDIR,
+       the system will gleefully go ahead and corrupt the filesystem.
+       So we first call isdir() to see if it is OK to call unlink().  This
+       doesn't quite work--if someone creates a directory between the
+       call to isdir() and the call to unlink(), we'll still corrupt
+       the filesystem.  Where is the Unix Haters Handbook when you need
+       it?  */
+    if (isdir(f)) 
+	return deep_remove_dir(f);
+    else
     {
-	/* under NEXTSTEP errno is set to return EPERM if
-	 * the file is a directory,or if the user is not
-	 * allowed to read or write to the file.
-	 * [This is probably a bug in the O/S]
-	 * other systems will return EISDIR to indicate
-	 * that the path is a directory.
-	 */
-        if (errno == EISDIR || errno == EPERM)
-                return deep_remove_dir (f);
-        else
-		/* The file wasn't a directory and some other
-		 * error occured
-		 */
-                return -1;
+	if (unlink (f) != 0)
+	    return -1;
     }
     /* We were able to remove the file from the disk */
     return 0;
@@ -469,22 +469,22 @@ deep_remove_dir (path)
 
 	    sprintf (buf, "%s/%s", path, dp->d_name);
 
-	    if (unlink (buf) != 0 )
+	    /* See comment in unlink_file_dir explanation of why we use
+	       isdir instead of just calling unlink and checking the
+	       status.  */
+	    if (isdir(buf)) 
 	    {
-		if (errno == EISDIR || errno == EPERM)
+		if (deep_remove_dir(buf))
 		{
-		    if (deep_remove_dir (buf))
-		    {
-			closedir (dirp);
-			return -1;
-		    }
+		    closedir(dirp);
+		    return -1;
 		}
-		else
+	    }
+	    else
+	    {
+		if (unlink (buf) != 0)
 		{
-		    /* buf isn't a directory, or there are
-		     * some sort of permision problems
-		     */
-		    closedir (dirp);
+		    closedir(dirp);
 		    return -1;
 		}
 	    }
@@ -643,4 +643,20 @@ char *
 get_homedir ()
 {
     return getenv ("HOME");
+}
+
+/* See cvs.h for description.  On unix this does nothing, because the
+   shell expands the wildcards.  */
+void
+expand_wild (argc, argv, pargc, pargv)
+    int argc;
+    char **argv;
+    int *pargc;
+    char ***pargv;
+{
+    int i;
+    *pargc = argc;
+    *pargv = (char **) xmalloc (argc * sizeof (char *));
+    for (i = 0; i < argc; ++i)
+	(*pargv)[i] = xstrdup (argv[i]);
 }

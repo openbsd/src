@@ -1,20 +1,70 @@
-\input texinfo
+\input texinfo @c -*- texinfo -*-
 
 @setfilename cvsclient.info
+@include CVSvn.texi
 
 @node Top
 @top CVS Client/Server
 
-This manual describes the client/server protocol used by CVS.  It does
-not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.
+This document describes the client/server protocol used by CVS.  It does
+not describe how to use or administer client/server CVS; see the regular
+CVS manual for that.  This is version @value{CVSVN} of the protocol
+specification---@xref{Introduction} for more on what this version number
+means.
 
 @menu
+* Introduction::      What is CVS and what is the client/server protocol for?
 * Goals::             Basic design decisions, requirements, scope, etc.
 * Notes::             Notes on the current implementation
 * Protocol Notes::    Possible enhancements, limitations, etc. of the protocol
+* Connection and Authentication::  Various ways to connect to the server
 * Protocol::          Complete description of the protocol
 @end menu
+
+@node Introduction
+@chapter Introduction
+
+CVS is a version control system (with some additional configuration
+management functionality).  It maintains a central @dfn{repository}
+which stores files (often source code), including past versions,
+information about who modified them and when, and so on.  People who
+wish to look at or modify those files, known as @dfn{developers}, use
+CVS to @dfn{check out} a @dfn{working directory} from the repository, to
+@dfn{check in} new versions of files to the repository, and other
+operations such as viewing the modification history of a file.  If
+developers are connected to the repository by a network, particularly a
+slow or flaky one, the most efficient way to use the network is with the
+CVS-specific protocol described in this document.
+
+Developers, using the machine on which they store their working
+directory, run the CVS @dfn{client} program.  To perform operations
+which cannot be done locally, it connects to the CVS @dfn{server}
+program, which maintains the repository.  For more information on how
+to connect see @ref{Connection and Authentication}.
+
+This document describes the CVS protocol.  Unfortunately, it does not
+yet completely document one aspect of the protocol---the detailed
+operation of each CVS command and option---and one must look at the CVS
+user documentation, @file{cvs.texinfo}, for that information.  The
+protocol is non-proprietary (anyone who wants to is encouraged to
+implement it) and an implementation, known as CVS, is available under
+the GNU Public License.  The CVS distribution, containing this
+implementation, @file{cvs.texinfo}, and a copy (possibly more or less up
+to date than what you are reading now) of this document,
+@file{cvsclient.texi}, can be found at the usual GNU FTP sites, with a
+filename such as @file{cvs-@var{version}.tar.gz}.
+
+This is version @value{CVSVN} of the protocol specification.  This
+version number is intended only to aid in distinguishing different
+versions of this specification.  Although the specification is currently
+maintained in conjunction with the CVS implementation, and carries the
+same version number, it also intends to document what is involved with
+interoperating with other implementations (such as other versions of
+CVS); see @xref{Requirements}.  This version number should not be used
+by clients or servers to determine what variant of the protocol to
+speak; they should instead use the @code{valid-requests} and
+@code{Valid-responses} mechanism (@pxref{Protocol}), which is more
+flexible.
 
 @node Goals
 @chapter Goals
@@ -117,6 +167,51 @@ more files), because it can't keep locks open while waiting for the
 network.  Perhaps this whole thing is irrelevant if client-side
 repositories are implemented, and the rcsmerge is done by the client.
 @end itemize
+
+@node Connection and Authentication
+@chapter How to Connect to and Authenticate Oneself to the CVS server
+
+Connection and authentication occurs before the CVS protocol itself is
+started.  There are several ways to connect.
+
+@table @asis
+@item rsh
+If the client has a way to execute commands on the server, and provide
+input to the commands and output from them, then it can connect that
+way.  This could be the usual rsh (port 514) protocol, Kerberos rsh,
+SSH, or any similar mechanism.  The client may allow the user to specify
+the name of the server program; the default is @code{cvs}.  It is
+invoked with one argument, @code{server}.  Once it invokes the server,
+the client proceeds to start the cvs protocol.
+
+@item kserver
+The kerberized server listens on a port (in the current implementation,
+by having inetd call "cvs kserver") which defaults to 1999.  The client
+connects, sends the usual kerberos authentication information, and then
+starts the cvs protocol.  Note: port 1999 is officially registered for
+another use, and in any event one cannot register more than one port for
+CVS, so the kerberized client and server should be changed to use port
+2401 (see below), and send a different string in place of @samp{BEGIN
+AUTH REQUEST} to identify the authentication method in use.  However,
+noone has yet gotten around to implementing this.
+
+@item pserver
+The password authenticated server listens on a port (in the current
+implementation, by having inetd call "cvs pserver") which defaults to
+2401 (this port is officially registered).  The client
+connects, sends the string @samp{BEGIN AUTH REQUEST}, a linefeed, the
+cvs root, a linefeed, the username, a linefeed, the password trivially
+encoded (see scramble.c in the cvs sources), a linefeed, the string
+@samp{END AUTH REQUEST}, and a linefeed.  The server responds with
+@samp{I LOVE YOU} and a linefeed if the authentication is successful or
+@samp{I HATE YOU} and a linefeed if the authentication fails.  After
+receiving @samp{I LOVE YOU}, the client proceeds with the cvs protocol.
+If the client wishes to merely authenticate without starting the cvs
+protocol, the procedure is the same, except @samp{BEGIN AUTH REQUEST} is
+replaced with @samp{BEGIN VERIFICATION REQUEST}, @samp{END AUTH REQUEST}
+is replaced with @samp{END VERIFICATION REQUEST}, and upon receipt of
+@samp{I LOVE YOU} the connection is closed rather than continuing.
+@end table
 
 @node Protocol
 @chapter The CVS client/server protocol
@@ -222,8 +317,12 @@ compressed form) ends with a newline.
 
 @table @code
 @item Root @var{pathname} \n
-Response expected: no.
-Tell the server which @code{CVSROOT} to use.
+Response expected: no.  Tell the server which @code{CVSROOT} to use.
+@var{pathname} must already exist; if creating a new root, use the
+@code{init} request, not @code{Root}.  @var{pathname} does not include
+the hostname of the server, how to access the server, etc.; by the time
+the CVS protocol is in use, connection, authentication, etc., are
+already taken care of.
 
 @item Valid-responses @var{request-list} \n
 Response expected: no.
@@ -350,6 +449,13 @@ whether @var{filename} should be ignored, and if not, next time the
 server sends responses, send (in a @code{M} response) @samp{?} followed
 by the directory and filename.
 
+@item Case \n
+Tell the server that filenames should be matched against ignore patterns
+in a case-insensitive fashion.  Note that this does not apply to other
+comparisons---for example the filenames given in @code{Entry} and
+@code{Modified} requests for the same file must match in case regardless
+of whether the @code{Case} request is sent.
+
 @item Argument @var{text} \n
 Response expected: no.
 Save argument for use in a subsequent command.  Arguments
@@ -393,6 +499,7 @@ need to expand modules on the client side.
 @itemx history \n
 @itemx watchers \n
 @itemx editors \n
+@itemx annotate \n
 Response expected: yes.  Actually do a cvs command.  This uses any
 previous @code{Argument}, @code{Repository}, @code{Entry},
 @code{Modified}, or @code{Lost} requests, if they have been sent.  The
@@ -400,6 +507,11 @@ last @code{Repository} sent specifies the working directory at the time
 of the operation.  No provision is made for any input from the user.
 This means that @code{ci} must use a @code{-m} argument if it wants to
 specify a log message.
+
+@itemx init @var{root-name} \n
+Response expected: yes.  If it doesn't already exist, create a @sc{cvs}
+repository @var{root-name}.  The @code{Root} request need not have been
+previously sent.
 
 @itemx update \n
 Response expected: yes.  Actually do a @code{cvs update} command.  This
@@ -586,6 +698,13 @@ remainder of @var{tagspec} contains the actual tag or date.
 
 @item Clear-sticky @var{pathname} \n
 Clear any sticky tag or date set by @code{Set-sticky}.
+
+@item Template @var{pathname} \n
+Additional data: file transmission (note: compressed file transmissions
+are not supported).  @var{pathname} ends in a slash; its purpose is to
+specify a directory, not a file within a directory.  Tell the client to
+store the file transmission as the template log message, and then use
+that template in the future when prompting the user for a log message.
 
 @item Set-checkin-prog @var{dir} \n
 Additional data: @var{prog} \n.  Tell the client to set a checkin

@@ -1,3 +1,159 @@
+Sun May  5 17:38:21 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	Integrated changes submitted by Ian Taylor <ian@cygnus.com>
+
+	* update.c (update_dirent_proc): cvs co -p doesn't print
+	anything when run from an empty directory.
+
+        * import.c (import_descend_dir): Check for a file in the
+        repository which will be checked out to the same name as the
+        directory.
+
+Sun May  5 15:49:00 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* configure.in: autoconf 2.9 handles AC_CHECK_LIB in a
+	way that it can not be used to check for main().  Check
+	for printf() instead. (Reported by ian@cygnus.com)
+
+	* configure: Regenerated.
+
+Thu May  2 13:34:37 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* Version 1.7.88
+
+Thu May  2 10:42:13 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Clarify what happened to examples directory.
+
+Thu May  2 02:06:49 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* INSTALL: Updated for NeXTSTEP 3.3 (1.7)
+
+Thu May  2 01:40:55 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* Compatibility fixes affecting QNX, NetBSD, and SCO
+
+	* configure.in (AC_CHECK_FUNCS): Added check for initgroups(),
+          (ac_cv_func_crypt) Added check for crypt() in -lcrypt;
+          define AUTH_SERVER_SUPPORT only if crypt() is found.
+
+	* configure: Regenerated.
+
+	* src/server.c (HAVE_INITGROUPS): Use initgroups() only if
+        located by configure.
+
+Wed May  1 15:38:56 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Remove item about reserving all-uppercase tag names.
+
+Fri Apr 19 11:22:35 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* Version 1.7.86
+
+Sun Apr 14 11:06:44 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * configure.in (AC_OUTPUT): generate contrib/elib/Makefile,
+        tools/Makefile, and tools/pcl-cvs/Makefile.  Do not any longer
+        generate contrib/pcl-cvs/Makefile.
+        
+        * Makefile.in: deal w/ above changes.
+        
+        * configure: regenerated.
+
+        * Added `tools' subdir (pcl-cvs will live there, as will other
+        things maintained along with the CVS distribution).
+
+Wed Apr 10 17:15:25 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Mention documentation and A4 paper in particular.
+
+Thu Mar 28 12:31:38 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Add "cvs annotate".
+
+Tue Mar 26 10:46:59 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: In example, change tag name to avoid using a tag name
+	reserved to CVS.
+
+	* NEWS: Document reservation of some tag names.
+
+Fri Mar 22 10:45:23 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Clarify that RCS is only for server or local.
+
+Mon Mar 18 10:15:18 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Mention info@cyclic.com where we mention support
+	contracts, not at the end where people might be tempted to view it
+	as a generic help line.
+
+Thu Mar 14 16:34:26 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (stamp-h): Don't run ./config.status --recheck.
+
+Thu Mar 14 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* cvsnt.mak: Regenerate dependencies.
+
+Thu Mar 14 13:45:11 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* configure.in (AC_OUTPUT): Don't create examples/Makefile; we're
+	not using the examples directory any more.
+
+Wed Mar 13 17:02:00 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Refer to cvs.texinfo rather than out-of-date cvsinit
+	instructions.  Instead of telling everyone to update modules
+	whenever adding directories (which is optional), refer to the
+	manual regarding all administrative files.  Revise "make check"
+	instructions to be even less encouraging about submitting bug
+	reports.
+
+	* examples/*: Removed.
+	* Makefile.in (SUBDIRS): Remove examples.
+	* cvsinit.sh: Removed.
+	* Makefile.in: Remove all cvsinit and PROGS stuff.
+	* NEWS: Mention cvsinit -> cvs init change.
+
+Mon Mar 11 13:12:35 1996  Samuel Tardieu  <sam@inf.enst.fr>
+
+	* BUGS: removed previous description from Greg Woods (3/6/96)
+	since the bug seems to be corrected
+
+Wed Mar  6 10:35:32 1996  Greg A. Woods  <woods@most.weird.com>
+
+	* BUGS: describe a weird core-dump with 'cvs co -c'.  Now I can't
+	even get a stack backtrace again -- dbx dumps core!
+
+Fri Mar  1 09:21:56 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.VMS: Remove distribution information (since it is no
+	longer different for VMS).  Various wording fixes to reflect the
+	fact that using rsh is just one of several ways to connect to a
+	cvs server, not "the official" one.  Say that the unsuitable rsh
+	is the UCX one.  Clarify what rsh uses privileged ports for.
+
+Fri Mar  1 01:26:28 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* README.VMS, build.com: Added for VMS.
+
+Thu Feb 29 10:04:20 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention change to default ignore list.
+
+Thu Feb 29 00:28:08 1996  Peter Wemm  <peter@jhome.DIALix.COM>
+
+	* configure.in: correctly spell FNM_PATHNAME in fnmatch() test,
+	the supplied test fails on proposed POSIX.2, lib/fnmatch.*, Linux,
+	FreeBSD, etc.
+	* configure: Regenerated.
+
+Tue Feb 27 10:43:14 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Change submission address to bug-cvs from info-cvs.
+	Encourage submissions to be in the form of diffs to INSTALL.
+
 Sun Feb 25 15:23:31 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* HACKING: Fix typo.

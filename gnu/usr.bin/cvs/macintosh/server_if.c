@@ -21,21 +21,24 @@ macos_start_server (int *tofd, int *fromfd,
 {
     char *cvs_server;
     char *command;
-    struct servent *s;
+    char *portenv;
+    struct servent *sptr;
     unsigned short port;
 
     if (! (cvs_server = getenv ("CVS_SERVER")))
         cvs_server = "cvs";
-    command = alloca (strlen (cvs_server)
-    		      + strlen (server_cvsroot)
-		      + 50);
+    command = xmalloc (strlen (cvs_server)
+		       + strlen (server_cvsroot)
+		       + 50);
     sprintf (command, "%s -d %s server", cvs_server, server_cvsroot);
 
-    if ((s = getservbyname("shell", "tcp")) == NULL)
-    error (1, errno, "cannot getservbyname for shell, tcp");
-
+    portenv = getenv("CVS_RCMD_PORT");
+    if (portenv)
+	port = atoi(portenv);
+    else if ((sptr = getservbyname("shell", "tcp")) != NULL)
+	port = sptr->s_port;
     else
-        port = s->s_port;
+	error (1, errno, "cannot getservbyname for shell, tcp");
 
     read_fd = rcmd (&server_host,
     	            port,
@@ -52,6 +55,7 @@ macos_start_server (int *tofd, int *fromfd,
     
     *tofd = write_fd;
     *fromfd = read_fd;
+    free (command);
 }
 
 

@@ -38,9 +38,9 @@ xmalloc (bytes)
  * a "malloc" if the argument is NULL, but you can't depend on it.  Here, I
  * can *force* it.
  */
-char *
+void *
 xrealloc (ptr, bytes)
-    char *ptr;
+    void *ptr;
     size_t bytes;
 {
     char *cp;

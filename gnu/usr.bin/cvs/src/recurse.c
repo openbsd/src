@@ -81,6 +81,8 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
     List *files_by_dir = NULL;
     struct recursion_frame frame;
 
+    expand_wild (argc, argv, &argc, &argv);
+
     if (update_preload == NULL)
 	update_dir[0] = '\0';
     else
@@ -114,7 +116,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 	 * called with the list of sub-dirs of the current dir as args
 	 */
 	if ((which & W_LOCAL) && !isdir (CVSADM))
-	    dirlist = Find_Dirs ((char *) NULL, W_LOCAL);
+	    dirlist = Find_Directories ((char *) NULL, W_LOCAL);
 	else
 	    addlist (&dirlist, ".");
 
@@ -245,6 +247,10 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 			     frame.flags, frame.which, frame.aflag,
 			     frame.readlock, frame.dosrcs);
 
+    /* Free the data which expand_wild allocated.  */
+    for (i = 0; i < argc; ++i)
+	free (argv[i]);
+    free (argv);
 
     return (err);
 }
@@ -382,7 +388,7 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
 
 	/* find sub-directories if we will recurse */
 	if (flags != R_SKIP_DIRS)
-	    dirlist = Find_Dirs (repository, which);
+	    dirlist = Find_Directories (repository, which);
     }
     else
     {
@@ -396,7 +402,7 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
     }
 
     /* process the files (if any) */
-    if (filelist != NULL)
+    if (filelist != NULL && fileproc)
     {
 	struct file_info finfo_struct;
 
@@ -413,12 +419,6 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
 	    notify_check (repository, update_dir);
 #endif /* CLIENT_SUPPORT */
 
-	/* pre-parse the source files */
-	if (dosrcs && repository)
-	    finfo_struct.srcfiles = RCS_parsefiles (filelist, repository);
-	else
-	    finfo_struct.srcfiles = (List *) NULL;
-
 	finfo_struct.repository = repository;
 	finfo_struct.update_dir = update_dir;
 	finfo_struct.entries = entries;
@@ -433,7 +433,6 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
 
 	/* clean up */
 	dellist (&filelist);
-	dellist (&finfo_struct.srcfiles);
     }
 
     if (entries) 
@@ -477,11 +476,30 @@ do_file_proc (p, closure)
     void *closure;
 {
     struct file_info *finfo = (struct file_info *)closure;
+    int ret;
+
     finfo->file = p->key;
-    if (fileproc != NULL)
-	return fileproc (finfo);
-    else
-	return (0);
+    finfo->fullname = xmalloc (strlen (finfo->file)
+			       + strlen (finfo->update_dir)
+			       + 2);
+    finfo->fullname[0] = '\0';
+    if (finfo->update_dir[0] != '\0')
+    {
+	strcat (finfo->fullname, finfo->update_dir);
+	strcat (finfo->fullname, "/");
+    }
+    strcat (finfo->fullname, finfo->file);
+
+    if (dosrcs && repository)
+	finfo->rcs = RCS_parse (finfo->file, repository);
+    else 
+        finfo->rcs = (RCSNode *) NULL;
+    ret = fileproc (finfo);
+
+    freercsnode(&finfo->rcs);
+    free (finfo->fullname);
+
+    return (ret);
 }
 
 /*
@@ -545,7 +563,7 @@ do_dir_proc (p, closure)
     {
 	/* save our current directory and static vars */
         if (save_cwd (&cwd))
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	sdirlist = dirlist;
 	srepository = repository;
 	dirlist = NULL;
@@ -579,7 +597,7 @@ do_dir_proc (p, closure)
 
 	/* get back to where we started and restore state vars */
 	if (restore_cwd (&cwd, NULL))
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	free_cwd (&cwd);
 	dirlist = sdirlist;
 	repository = srepository;
@@ -663,7 +681,7 @@ unroll_files_proc (p, closure)
     if (strcmp(p->key, ".") != 0)
     {
         if (save_cwd (&cwd))
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	if (chdir (p->key) < 0)
 	    error (1, errno, "could not chdir to %s", p->key);
 
@@ -686,7 +704,7 @@ unroll_files_proc (p, closure)
 	free (save_update_dir);
 
 	if (restore_cwd (&cwd, NULL))
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	free_cwd (&cwd);
     }
 

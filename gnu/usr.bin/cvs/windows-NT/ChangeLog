@@ -1,3 +1,40 @@
+Tue Apr  9 20:56:14 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Mention CRLF for src/server.c.
+
+Mon Mar 25 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* filesubr.c (expand_wild): New function.
+
+Tue Mar 19 17:55:39 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* startserver.c (wnt_start_server): Cleaned up code to get port
+	  (and thus made consistent with VMS and Mac)
+
+Mon Mar 18 14:54:50 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Don't declare gethostname; main.c already includes
+	winsock.h.  Define FILENAMES_CASE_INSENSITIVE.
+
+Fri Mar 15 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* filesubr.c (fncmp): Fix typo (n1 -> n2) which had caused the
+	function to always return 0.
+
+Thu Mar  7 08:55:39 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (HEADERS): Remove alloca.h from list.
+
+Wed Feb 28 11:08:06 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove AUTH_SERVER_SUPPORT; no longer should be
+	defined in options.h.
+
+	* config.h: Remove C_ALLOCA, CRAY_STACKSEG_END, HAVE_ALLOCA,
+	HAVE_ALLOCA_H, and STACK_DIRECTION to reflect alloca removal.
+	* startserver.c (wnt_start_server): Don't use alloca.
+	* alloca.h: Removed.
+
 Fri Feb 23 18:00:00 1996  Jim Kingdon  <kingdon@cyclic.com>
 
 	* options.h: Define AUTH_CLIENT_SUPPORT and NO_SOCKET_TO_FD.

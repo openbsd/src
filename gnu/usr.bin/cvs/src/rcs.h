@@ -61,6 +61,7 @@ struct rcsversnode
 {
     char *version;
     char *date;
+    char *author;
     char *next;
     int dead;
     List *branches;
@@ -79,7 +80,6 @@ typedef struct rcsversnode RCSVers;
 /*
  * exported interfaces
  */
-List *RCS_parsefiles PROTO((List * files, char *xrepos));
 RCSNode *RCS_parse PROTO((const char *file, const char *repos));
 RCSNode *RCS_parsercsfile PROTO((char *rcsfile));
 char *RCS_check_kflag PROTO((const char *arg));
@@ -89,16 +89,16 @@ char *RCS_gettag PROTO((RCSNode * rcs, char *symtag, int force_tag_match,
 char *RCS_getversion PROTO((RCSNode * rcs, char *tag, char *date,
 		      int force_tag_match, int return_both));
 char *RCS_magicrev PROTO((RCSNode *rcs, char *rev));
-int RCS_isbranch PROTO((char *file, char *rev, List *srcfiles));
-int RCS_nodeisbranch PROTO((char *rev, RCSNode *rcs));
-char *RCS_whatbranch PROTO((char *file, char *tag, List *srcfiles));
+int RCS_isbranch PROTO((RCSNode *rcs, const char *rev));
+int RCS_nodeisbranch PROTO((RCSNode *rcs, const char *tag));
+char *RCS_whatbranch PROTO((RCSNode *rcs, const char *tag));
 char *RCS_head PROTO((RCSNode * rcs));
 int RCS_datecmp PROTO((char *date1, char *date2));
 time_t RCS_getrevtime PROTO((RCSNode * rcs, char *rev, char *date, int fudge));
 List *RCS_symbols PROTO((RCSNode *rcs));
 void RCS_check_tag PROTO((const char *tag));
 void freercsnode PROTO((RCSNode ** rnodep));
-void RCS_addnode PROTO((const char *file, RCSNode *rcs, List *list));
 char *RCS_getbranch PROTO((RCSNode * rcs, char *tag, int force_tag_match));
 
 int RCS_isdead PROTO((RCSNode *, const char *));
+char *RCS_getexpand PROTO ((RCSNode *));

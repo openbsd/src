@@ -14,15 +14,10 @@
 static RCSNode *RCS_parsercsfile_i PROTO((FILE * fp, const char *rcsfile));
 static char *RCS_getdatebranch PROTO((RCSNode * rcs, char *date, char *branch));
 static int getrcskey PROTO((FILE * fp, char **keyp, char **valp));
-static int parse_rcs_proc PROTO((Node * file, void *closure));
 static int checkmagic_proc PROTO((Node *p, void *closure));
 static void do_branches PROTO((List * list, char *val));
 static void do_symbols PROTO((List * list, char *val));
-static void rcsnode_delproc PROTO((Node * p));
 static void rcsvers_delproc PROTO((Node * p));
-
-static List *rcslist;
-static char *repository;
 
 /*
  * We don't want to use isspace() from the C library because:
@@ -52,70 +47,6 @@ static const char spacetab[] = {
 };
 
 #define whitespace(c)	(spacetab[(unsigned char)c] != 0)
-
-/*
- * Parse all the rcs files specified and return a list
- */
-List *
-RCS_parsefiles (files, xrepos)
-    List *files;
-    char *xrepos;
-{
-    /* initialize */
-    repository = xrepos;
-    rcslist = getlist ();
-
-    /* walk the list parsing files */
-    if (walklist (files, parse_rcs_proc, NULL) != 0)
-    {
-	/* free the list and return NULL on error */
-	dellist (&rcslist);
-	return ((List *) NULL);
-    }
-    else
-	/* return the list we built */
-	return (rcslist);
-}
-
-/*
- * Parse an rcs file into a node on the rcs list
- */
-static int
-parse_rcs_proc (file, closure)
-    Node *file;
-    void *closure;
-{
-    RCSNode *rdata;
-
-    /* parse the rcs file into rdata */
-    rdata = RCS_parse (file->key, repository);
-
-    /* if we got a valid RCSNode back, put it on the list */
-    if (rdata != (RCSNode *) NULL)
-	RCS_addnode (file->key, rdata, rcslist);
-
-    return (0);
-}
-
-/*
- * Add an RCSNode to a list of them.
- */
-
-void
-RCS_addnode (file, rcs, list)
-    const char *file;
-    RCSNode *rcs;
-    List *list;
-{
-    Node *p;
-    
-    p = getnode ();
-    p->key = xstrdup (file);
-    p->delproc = rcsnode_delproc;
-    p->type = RCSNODE;
-    p->data = (char *) rcs;
-    (void) addnode (list, p);
-}
 
 
 /*
@@ -216,11 +147,15 @@ RCS_parsercsfile_i (fp, rcsfile)
 
     if (getrcskey (fp, &key, &value) == -1 || key == NULL)
 	goto l_error;
+    if (strcmp (key, RCSDESC) == 0)
+	goto l_error;
 
     if (strcmp (RCSHEAD, key) == 0 && value != NULL)
 	rdata->head = xstrdup (value);
 
     if (getrcskey (fp, &key, &value) == -1 || key == NULL)
+	goto l_error;
+    if (strcmp (key, RCSDESC) == 0)
 	goto l_error;
 
     if (strcmp (RCSBRANCH, key) == 0 && value != NULL)
@@ -257,14 +192,16 @@ l_error:
 }
 
 
-/*
- * Do the real work of parsing an RCS file 
- *
- * There are no allowances for error here.
- */
-void
-RCS_reparsercsfile (rdata)
+/* Do the real work of parsing an RCS file.
+
+   On error, die with a fatal error; if it returns at all it was successful.
+
+   If PFP is NULL, close the file when done.  Otherwise, leave it open
+   and store the FILE * in *PFP.  */
+static void
+RCS_reparsercsfile (rdata, pfp)
     RCSNode *rdata;
+    FILE **pfp;
 {
     FILE *fp;
     char *rcsfile;
@@ -275,6 +212,7 @@ RCS_reparsercsfile (rdata)
     char *cp;
     char *key, *value;
 
+    assert (rdata != NULL);
     rcsfile = rdata->path;
 
     fp = fopen(rcsfile, FOPEN_BINARY_READ);
@@ -294,7 +232,8 @@ RCS_reparsercsfile (rdata)
 
 	/* if key is NULL here, then the file is missing some headers
 	   or we had trouble reading the file. */
-	if (getrcskey (fp, &key, &value) == -1 || key == NULL)
+	if (getrcskey (fp, &key, &value) == -1 || key == NULL
+	    || strcmp (key, RCSDESC) == 0)
 	{
 	    if (ferror(fp))
 	    {
@@ -357,12 +296,18 @@ RCS_reparsercsfile (rdata)
 
 	vnode->date = xstrdup (valp);
 
-	/* throw away the author field */
+	/* Get author field.  */
 	(void) getrcskey (fp, &key, &value);
+	/* FIXME: should be using errno in case of ferror.  */
+	if (key == NULL || strcmp (key, "author") != 0)
+	    error (1, 0, "\
+unable to parse rcs file; `author' not in the expected place");
+	vnode->author = xstrdup (value);
 
-	/* throw away the state field */
+	/* Get state field.  */
 	(void) getrcskey (fp, &key, &value);
-	if (strcmp (key, "state") != 0)
+	/* FIXME: should be using errno in case of ferror.  */
+	if (key == NULL || strcmp (key, "state") != 0)
 	    error (1, 0, "\
 unable to parse rcs file; `state' not in the expected place");
 	if (strcmp (value, "dead") == 0)
@@ -372,6 +317,9 @@ unable to parse rcs file; `state' not in the expected place");
 
 	/* fill in the branch list (if any branches exist) */
 	(void) getrcskey (fp, &key, &value);
+	/* FIXME: should be handling various error conditions better.  */
+	if (key != NULL && strcmp (key, RCSDESC) == 0)
+	    value = NULL;
 	if (value != (char *) NULL)
 	{
 	    vnode->branches = getlist ();
@@ -380,6 +328,9 @@ unable to parse rcs file; `state' not in the expected place");
 
 	/* fill in the next field if there is a next revision */
 	(void) getrcskey (fp, &key, &value);
+	/* FIXME: should be handling various error conditions better.  */
+	if (key != NULL && strcmp (key, RCSDESC) == 0)
+	    value = NULL;
 	if (value != (char *) NULL)
 	    vnode->next = xstrdup (value);
 
@@ -387,8 +338,17 @@ unable to parse rcs file; `state' not in the expected place");
 	 * at this point, we skip any user defined fields XXX - this is where
 	 * we put the symbolic link stuff???
 	 */
+	/* FIXME: Does not correctly handle errors, e.g. from stdio.  */
 	while ((n = getrcskey (fp, &key, &value)) >= 0)
 	{
+	    assert (key != NULL);
+
+	    if (strcmp (key, RCSDESC) == 0)
+	    {
+		n = -1;
+		break;
+	    }
+
 	    /* Enable use of repositories created by certain obsolete
 	       versions of CVS.  This code should remain indefinately;
 	       there is no procedure for converting old repositories, and
@@ -430,18 +390,16 @@ unable to parse rcs file; `state' not in the expected place");
 	    break;
     }
 
-    fclose (fp);
+    if (pfp == NULL)
+    {
+	if (fclose (fp) < 0)
+	    error (0, errno, "cannot close %s", rcsfile);
+    }
+    else
+    {
+	*pfp = fp;
+    }
     rdata->flags &= ~PARTIAL;
-}
-
-/*
- * rcsnode_delproc - free up an RCS type node
- */
-static void
-rcsnode_delproc (p)
-    Node *p;
-{
-    freercsnode ((RCSNode **) & p->data);
 }
 
 /*
@@ -509,6 +467,10 @@ rcsvers_delproc (p)
  *    o if a word starts with @, do funky rcs processing
  *    o strip whitespace off end of value or set value to NULL if it empty 
  *    o return 0 since we found something besides "desc"
+ *
+ * Sets *KEYP and *VALUEP to point to storage managed by the getrcskey
+ * function; the contents are only valid until the next call to getrcskey
+ * or getrcsrev.
  */
 
 static char *key = NULL;
@@ -569,14 +531,6 @@ getrcskey (fp, keyp, valp)
 	max = key + keysize;
     }
     *cur = '\0';
-
-    /* if we got "desc", we are done with the file */
-    if (strcmp (RCSDESC, key) == 0)
-    {
-	*keyp = (char *) NULL;
-	*valp = (char *) NULL;
-	return (-1);
-    }
 
     /* skip whitespace between key and val */
     while (whitespace (c))
@@ -643,6 +597,13 @@ getrcskey (fp, keyp, valp)
 	    }
 	}
 
+	/* The syntax for some key-value pairs is different; they
+	   don't end with a semicolon.  */
+	if (strcmp (key, RCSDESC) == 0
+	    || strcmp (key, "text") == 0
+	    || strcmp (key, "log") == 0)
+	    break;
+
 	/* compress whitespace down to a single space */
 	if (whitespace (c))
 	{
@@ -705,6 +666,63 @@ getrcskey (fp, keyp, valp)
 	*valp = NULL;
     *keyp = key;
     return (0);
+}
+
+static void getrcsrev PROTO ((FILE *fp, char **revp));
+
+/* Read an RCS revision number from FP.  Put a pointer to it in *REVP;
+   it points to space managed by getrcsrev which is only good until
+   the next call to getrcskey or getrcsrev.  */
+static void
+getrcsrev (fp, revp)
+    FILE *fp;
+    char **revp;
+{
+    char *cur;
+    char *max;
+    int c;
+
+    do {
+	c = getc (fp);
+	if (c == EOF)
+	    /* FIXME: should be including filename in error message.  */
+	    error (1, errno, "cannot read rcs file");
+    } while (whitespace (c));
+
+    if (!(isdigit (c) || c == '.'))
+	/* FIXME: should be including filename in error message.  */
+	error (1, 0, "error reading rcs file; revision number expected");
+
+    cur = key;
+    max = key + keysize;
+    while (isdigit (c) || c == '.')
+    {
+	if (cur >= max)
+	{
+	    key = xrealloc (key, keysize + ALLOCINCR);
+	    cur = key + keysize;
+	    keysize += ALLOCINCR;
+	    max = key + keysize;
+	}
+	*cur++ = c;
+
+	c = getc (fp);
+	if (c == EOF)
+	{
+	    /* FIXME: should be including filename in error message.  */
+	    error (1, errno, "cannot read rcs file");
+	}
+    }
+
+    if (cur >= max)
+    {
+	key = xrealloc (key, keysize + ALLOCINCR);
+	cur = key + keysize;
+	keysize += ALLOCINCR;
+	max = key + keysize;
+    }
+    *cur = '\0';
+    *revp = key;
 }
 
 /*
@@ -852,7 +870,7 @@ RCS_gettag (rcs, symtag, force_tag_match, return_both)
 
     /* XXX this is probably not necessary, --jtc */
     if (rcs->flags & PARTIAL) 
-	RCS_reparsercsfile (rcs);
+	RCS_reparsercsfile (rcs, NULL);
 
     /* If tag is "HEAD", special case to get head RCS revision */
     if (tag && (strcmp (tag, TAG_HEAD) == 0 || *tag == '\0'))
@@ -1052,31 +1070,27 @@ checkmagic_proc (p, closure)
 }
 
 /*
- * Given a list of RCSNodes, returns non-zero if the specified
- * revision number or symbolic tag resolves to a "branch" within the
- * rcs file.
+ * Given an RCSNode, returns non-zero if the specified revision number 
+ * or symbolic tag resolves to a "branch" within the rcs file.
+ *
+ * FIXME: this is the same as RCS_nodeisbranch except for the special 
+ *        case for handling a null rcsnode.
  */
 int
-RCS_isbranch (file, rev, srcfiles)
-    char *file;
-    char *rev;
-    List *srcfiles;
-{
-    Node *p;
+RCS_isbranch (rcs, rev)
     RCSNode *rcs;
-
+    const char *rev;
+{
     /* numeric revisions are easy -- even number of dots is a branch */
     if (isdigit (*rev))
 	return ((numdots (rev) & 1) == 0);
 
     /* assume a revision if you can't find the RCS info */
-    p = findnode (srcfiles, file);
-    if (p == NULL)
+    if (rcs == NULL)
 	return (0);
 
     /* now, look for a match in the symbols list */
-    rcs = (RCSNode *) p->data;
-    return (RCS_nodeisbranch (rev, rcs));
+    return (RCS_nodeisbranch (rcs, rev));
 }
 
 /*
@@ -1085,9 +1099,9 @@ RCS_isbranch (file, rev, srcfiles)
  * take into account any magic branches as well.
  */
 int
-RCS_nodeisbranch (rev, rcs)
-    char *rev;
+RCS_nodeisbranch (rcs, rev)
     RCSNode *rcs;
+    const char *rev;
 {
     int dots;
     Node *p;
@@ -1130,22 +1144,18 @@ RCS_nodeisbranch (rev, rcs)
  * for the specified *symbolic* tag.  Magic branches are handled correctly.
  */
 char *
-RCS_whatbranch (file, rev, srcfiles)
-    char *file;
-    char *rev;
-    List *srcfiles;
-{
-    int dots;
-    Node *p;
+RCS_whatbranch (rcs, rev)
     RCSNode *rcs;
+    const char *rev;
+{
+    Node *p;
+    int dots;
 
     /* assume no branch if you can't find the RCS info */
-    p = findnode (srcfiles, file);
-    if (p == NULL)
+    if (rcs == NULL)
 	return ((char *) NULL);
 
     /* now, look for a match in the symbols list */
-    rcs = (RCSNode *) p->data;
     p = findnode (RCS_symbols(rcs), rev);
     if (p == NULL)
 	return ((char *) NULL);
@@ -1198,7 +1208,7 @@ RCS_getbranch (rcs, tag, force_tag_match)
     assert (rcs != NULL);
 
     if (rcs->flags & PARTIAL)
-	RCS_reparsercsfile (rcs);
+	RCS_reparsercsfile (rcs, NULL);
 
     /* find out if the tag contains a dot, or is on the trunk */
     cp = strrchr (tag, '.');
@@ -1337,7 +1347,7 @@ RCS_getdate (rcs, date, force_tag_match)
     assert (rcs != NULL);
 
     if (rcs->flags & PARTIAL)
-	RCS_reparsercsfile (rcs);
+	RCS_reparsercsfile (rcs, NULL);
 
     /* if the head is on a branch, try the branch first */
     if (rcs->branch != NULL)
@@ -1424,7 +1434,7 @@ RCS_getdatebranch (rcs, date, branch)
     assert (rcs != NULL);
 
     if (rcs->flags & PARTIAL)
-	RCS_reparsercsfile (rcs);
+	RCS_reparsercsfile (rcs, NULL);
 
     p = findnode (rcs->versions, xrev);
     free (xrev);
@@ -1509,7 +1519,7 @@ RCS_getrevtime (rcs, rev, date, fudge)
     assert (rcs != NULL);
 
     if (rcs->flags & PARTIAL)
-	RCS_reparsercsfile (rcs);
+	RCS_reparsercsfile (rcs, NULL);
 
     /* look up the revision */
     p = findnode (rcs->versions, rev);
@@ -1522,6 +1532,12 @@ RCS_getrevtime (rcs, rev, date, fudge)
     (void) sscanf (vers->date, SDATEFORM, &ftm->tm_year, &ftm->tm_mon,
 		   &ftm->tm_mday, &ftm->tm_hour, &ftm->tm_min,
 		   &ftm->tm_sec);
+
+    /* If the year is from 1900 to 1999, RCS files contain only two
+       digits, and sscanf gives us a year from 0-99.  If the year is
+       2000+, RCS files contain all four digits and we subtract 1900,
+       because the tm_year field should contain years since 1900.  */
+
     if (ftm->tm_year > 1900)
 	ftm->tm_year -= 1900;
 
@@ -1565,7 +1581,7 @@ RCS_symbols(rcs)
     assert(rcs != NULL);
 
     if (rcs->flags & PARTIAL)
-	RCS_reparsercsfile (rcs);
+	RCS_reparsercsfile (rcs, NULL);
 
     if (rcs->symbols_data) {
 	rcs->symbols = getlist ();
@@ -1670,7 +1686,7 @@ RCS_isdead (rcs, tag)
     RCSVers *version;
 
     if (rcs->flags & PARTIAL)
-	RCS_reparsercsfile (rcs);
+	RCS_reparsercsfile (rcs, NULL);
 
     p = findnode (rcs->versions, tag);
     if (p == NULL)
@@ -1678,4 +1694,569 @@ RCS_isdead (rcs, tag)
 
     version = (RCSVers *) p->data;
     return (version->dead);
+}
+
+/* Return the RCS keyword expansion mode.  For example "b" for binary.
+   Returns a pointer into storage which is allocated and freed along with
+   the rest of the RCS information; the caller should not modify this
+   storage.  Returns NULL if the RCS file does not specify a keyword
+   expansion mode; for all other errors, die with a fatal error.  */
+char *
+RCS_getexpand (rcs)
+    RCSNode *rcs;
+{
+    assert (rcs != NULL);
+    if (rcs->flags & PARTIAL)
+	RCS_reparsercsfile (rcs, NULL);
+    return rcs->expand;
+}
+
+/* Stuff related to annotate command.  This should perhaps be split
+   into the stuff which knows about the guts of RCS files, and the
+   command parsing type stuff.  */
+
+/* Linked list of allocated blocks.  Seems kind of silly to
+   reinvent the obstack wheel, and this isn't as nice as obstacks
+   in some ways, but obstacks are pretty baroque.  */
+struct allocblock
+{
+    char *text;
+    struct allocblock *next;
+};
+struct allocblock *blocks;
+
+static void *block_alloc PROTO ((size_t));
+
+static void *
+block_alloc (n)
+    size_t n;
+{
+    struct allocblock *blk;
+    blk = (struct allocblock *) xmalloc (sizeof (struct allocblock));
+    blk->text = xmalloc (n);
+    blk->next = blocks;
+    blocks = blk;
+    return blk->text;
+}
+
+static void block_free PROTO ((void));
+
+static void
+block_free ()
+{
+    struct allocblock *p;
+    struct allocblock *q;
+
+    p = blocks;
+    while (p != NULL)
+    {
+	free (p->text);
+	q = p->next;
+	free (p);
+	p = q;
+    }
+    blocks = NULL;
+}
+
+struct line
+{
+    /* Text of this line, terminated by \n or \0.  */
+    char *text;
+    /* Version in which it was introduced.  */
+    RCSVers *vers;
+    /* Nonzero if this line ends with \n.  This will always be true
+       except possibly for the last line.  */
+    int has_newline;
+};
+
+struct linevector
+{
+    /* How many lines in use for this linevector?  */
+    unsigned int nlines;
+    /* How many lines allocated for this linevector?  */
+    unsigned int lines_alloced;
+    /* Pointer to array containing a pointer to each line.  */
+    struct line **vector;
+};
+
+static void linevector_init PROTO ((struct linevector *));
+
+/* Initialize *VEC to be a linevector with no lines.  */
+static void
+linevector_init (vec)
+    struct linevector *vec;
+{
+    vec->lines_alloced = 10;
+    vec->nlines = 0;
+    vec->vector = (struct line **)
+	xmalloc (vec->lines_alloced * sizeof (*vec->vector));
+}
+
+static void linevector_add PROTO ((struct linevector *vec, char *text,
+				   RCSVers *vers, unsigned int pos));
+
+/* Given some text TEXT, add each of its lines to VEC before line POS
+   (where line 0 is the first line).  The last line in TEXT may or may
+   not be \n terminated.  All \n in TEXT are changed to \0.  Set the
+   version for each of the new lines to VERS.  */
+static void
+linevector_add (vec, text, vers, pos)
+    struct linevector *vec;
+    char *text;
+    RCSVers *vers;
+    unsigned int pos;
+{
+    unsigned int i;
+    unsigned int nnew;
+    char *p;
+    struct line *lines;
+
+    assert (vec->lines_alloced > 0);
+
+    /* Count the number of lines we will need to add.  */
+    nnew = 1;
+    for (p = text; *p != '\0'; ++p)
+	if (*p == '\n' && p[1] != '\0')
+	    ++nnew;
+    /* Allocate the struct line's.  */
+    lines = block_alloc (nnew * sizeof (struct line));
+
+    /* Expand VEC->VECTOR if needed.  */
+    if (vec->nlines + nnew >= vec->lines_alloced)
+    {
+	while (vec->nlines + nnew >= vec->lines_alloced)
+	    vec->lines_alloced *= 2;
+	vec->vector = xrealloc (vec->vector,
+				vec->lines_alloced * sizeof (*vec->vector));
+    }
+
+    /* Make room for the new lines in VEC->VECTOR.  */
+    for (i = vec->nlines + nnew - 1; i >= pos + nnew; --i)
+	vec->vector[i] = vec->vector[i - nnew];
+
+    if (pos > vec->nlines)
+	error (1, 0, "invalid rcs file: line to add out of range");
+
+    /* Actually add the lines, to LINES and VEC->VECTOR.  */
+    i = pos;
+    lines[0].text = text;
+    lines[0].vers = vers;
+    lines[0].has_newline = 0;
+    vec->vector[i++] = &lines[0];
+    for (p = text; *p != '\0'; ++p)
+	if (*p == '\n')
+	{
+	    *p = '\0';
+	    lines[i - pos - 1].has_newline = 1;
+	    if (p[1] == '\0')
+		/* If there are no characters beyond the last newline, we
+		   don't consider it another line.  */
+		break;
+	    lines[i - pos].text = p + 1;
+	    lines[i - pos].vers = vers;
+	    lines[i - pos].has_newline = 0;
+	    vec->vector[i] = &lines[i - pos];
+	    ++i;
+	}
+    vec->nlines += nnew;
+}
+
+static void linevector_delete PROTO ((struct linevector *, unsigned int,
+				      unsigned int));
+
+/* Remove NLINES lines from VEC at position POS (where line 0 is the
+   first line).  */
+static void
+linevector_delete (vec, pos, nlines)
+    struct linevector *vec;
+    unsigned int pos;
+    unsigned int nlines;
+{
+    unsigned int i;
+    unsigned int last;
+
+    last = vec->nlines - nlines;
+    for (i = pos; i < last; ++i)
+	vec->vector[i] = vec->vector[i + nlines];
+    vec->nlines -= nlines;
+}
+
+static void linevector_copy PROTO ((struct linevector *, struct linevector *));
+
+/* Copy FROM to TO, copying the vectors but not the lines pointed to.  */
+static void
+linevector_copy (to, from)
+    struct linevector *to;
+    struct linevector *from;
+{
+    if (from->nlines > to->lines_alloced)
+    {
+	while (from->nlines > to->lines_alloced)
+	    to->lines_alloced *= 2;
+	to->vector = (struct line **)
+	    xrealloc (to->vector, to->lines_alloced * sizeof (*to->vector));
+    }
+    memcpy (to->vector, from->vector,
+	    from->nlines * sizeof (*to->vector));
+    to->nlines = from->nlines;
+}
+
+static void linevector_free PROTO ((struct linevector *));
+
+/* Free storage associated with linevector (that is, the vector but
+   not the lines pointed to).  */
+static void
+linevector_free (vec)
+    struct linevector *vec;
+{
+   free (vec->vector);
+}
+
+static char *month_printname PROTO ((char *));
+
+/* Given a textual string giving the month (1-12), terminated with any
+   character not recognized by atoi, return the 3 character name to
+   print it with.  I do not think it is a good idea to change these
+   strings based on the locale; they are standard abbreviations (for
+   example in rfc822 mail messages) which should be widely understood.
+   Returns a pointer into static readonly storage.  */
+static char *
+month_printname (month)
+    char *month;
+{
+    static const char *const months[] =
+      {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    int mnum;
+
+    mnum = atoi (month);
+    if (mnum < 1 || mnum > 12)
+	return "???";
+    return (char *)months[mnum - 1];
+}
+
+static int annotate_fileproc PROTO ((struct file_info *));
+
+static int
+annotate_fileproc (finfo)
+    struct file_info *finfo;
+{
+    FILE *fp;
+    char *key;
+    char *value;
+    RCSVers *vers;
+    RCSVers *prev_vers;
+    int n;
+    int ishead;
+    Node *node;
+    struct linevector headlines;
+    struct linevector curlines;
+
+    if (finfo->rcs == NULL)
+        return (1);
+
+    /* Distinguish output for various files if we are processing
+       several files.  */
+    cvs_outerr ("Annotations for ", 0);
+    cvs_outerr (finfo->fullname, 0);
+    cvs_outerr ("\n***************\n", 0);
+
+    if (!(finfo->rcs->flags & PARTIAL))
+	/* We are leaking memory by calling RCS_reparsefile again.  */
+	error (0, 0, "internal warning: non-partial rcs in annotate_fileproc");
+    RCS_reparsercsfile (finfo->rcs, &fp);
+
+    ishead = 1;
+    vers = NULL;
+
+    do {
+	getrcsrev (fp, &key);
+
+	/* Stash the previous version.  */
+	prev_vers = vers;
+
+	/* look up the revision */
+	node = findnode (finfo->rcs->versions, key);
+	if (node == NULL)
+	    error (1, 0, "mismatch in rcs file %s between deltas and deltatexts",
+		   finfo->rcs->path);
+	vers = (RCSVers *) node->data;
+
+	while ((n = getrcskey (fp, &key, &value)) >= 0)
+	{
+	    if (strcmp (key, "text") == 0)
+	    {
+		if (ishead)
+		{
+		    char *p;
+
+		    p = block_alloc (strlen (value) + 1);
+		    strcpy (p, value);
+
+		    linevector_init (&headlines);
+		    linevector_init (&curlines);
+		    linevector_add (&headlines, p, NULL, 0);
+		    linevector_copy (&curlines, &headlines);
+		    ishead = 0;
+		}
+		else
+		{
+		    char *p;
+		    char *q;
+		    int op;
+		    /* The RCS format throws us for a loop in that the
+		       deltafrags (if we define a deltafrag as an
+		       add or a delete) need to be applied in reverse
+		       order.  So we stick them into a linked list.  */
+		    struct deltafrag {
+			enum {ADD, DELETE} type;
+			unsigned long pos;
+			unsigned long nlines;
+			char *new_lines;
+			struct deltafrag *next;
+		    };
+		    struct deltafrag *dfhead;
+		    struct deltafrag *df;
+
+		    dfhead = NULL;
+		    for (p = value; p != NULL && *p != '\0'; )
+		    {
+			op = *p++;
+			if (op != 'a' && op != 'd')
+			    /* Can't just skip over the deltafrag, because
+			       the value of op determines the syntax.  */
+			    error (1, 0, "unrecognized operation '%c' in %s",
+				   op, finfo->rcs->path);
+			df = (struct deltafrag *)
+			    xmalloc (sizeof (struct deltafrag));
+			df->next = dfhead;
+			dfhead = df;
+			df->pos = strtoul (p, &q, 10);
+
+			if (p == q)
+			    error (1, 0, "number expected in %s",
+				   finfo->rcs->path);
+			p = q;
+			if (*p++ != ' ')
+			    error (1, 0, "space expected in %s",
+				   finfo->rcs->path);
+			df->nlines = strtoul (p, &q, 10);
+			if (p == q)
+			    error (1, 0, "number expected in %s",
+				   finfo->rcs->path);
+			p = q;
+			if (*p++ != '\012')
+			    error (1, 0, "linefeed expected in %s",
+				   finfo->rcs->path);
+
+			if (op == 'a')
+			{
+			    unsigned int i;
+
+			    df->type = ADD;
+			    i = df->nlines;
+			    /* The text we want is the number of lines
+			       specified, or until the end of the value,
+			       whichever comes first (it will be the former
+			       except in the case where we are adding a line
+			       which does not end in newline).  */
+			    for (q = p; i != 0; ++q)
+				if (*q == '\n')
+				    --i;
+				else if (*q == '\0')
+				{
+				    if (i != 1)
+					error (1, 0, "\
+invalid rcs file %s: premature end of value",
+					       finfo->rcs->path);
+				    else
+					break;
+				}
+
+			    /* Copy the text we are adding into allocated
+			       space.  */
+			    df->new_lines = block_alloc (q - p + 1);
+			    strncpy (df->new_lines, p, q - p);
+			    df->new_lines[q - p] = '\0';
+
+			    p = q;
+			}
+			else
+			{
+			    /* Correct for the fact that line numbers in RCS
+			       files start with 1.  */
+			    --df->pos;
+
+			    assert (op == 'd');
+			    df->type = DELETE;
+			}
+		    }
+		    for (df = dfhead; df != NULL;)
+		    {
+			unsigned int ln;
+
+			switch (df->type)
+			{
+			case ADD:
+			    linevector_add (&curlines, df->new_lines,
+					    NULL, df->pos);
+			    break;
+			case DELETE:
+			    if (df->pos > curlines.nlines
+				|| df->pos + df->nlines > curlines.nlines)
+				error (1, 0, "\
+invalid rcs file %s (`d' operand out of range)",
+				       finfo->rcs->path);
+			    for (ln = df->pos; ln < df->pos + df->nlines; ++ln)
+				curlines.vector[ln]->vers = prev_vers;
+			    linevector_delete (&curlines, df->pos, df->nlines);
+			    break;
+			}
+		        df = df->next;
+			free (dfhead);
+			dfhead = df;
+		    }
+		}
+		break;
+	    }
+	}
+	if (n < 0)
+	    goto l_error;
+    } while (vers->next != NULL);
+
+    if (fclose (fp) < 0)
+	error (0, errno, "cannot close %s", finfo->rcs->path);
+
+    /* Now print out the data we have just computed.  */
+    {
+	unsigned int ln;
+
+	for (ln = 0; ln < headlines.nlines; ++ln)
+	{
+	    char buf[80];
+	    /* Period which separates year from month in date.  */
+	    char *ym;
+	    /* Period which separates month from day in date.  */
+	    char *md;
+	    RCSVers *prvers;
+
+	    prvers = headlines.vector[ln]->vers;
+	    if (prvers == NULL)
+		prvers = vers;
+
+	    sprintf (buf, "%-12s (%-8.8s ",
+		     prvers->version,
+		     prvers->author);
+	    cvs_output (buf, 0);
+
+	    /* Now output the date.  */
+	    ym = strchr (prvers->date, '.');
+	    if (ym == NULL)
+		cvs_output ("??-???-??", 0);
+	    else
+	    {
+		md = strchr (ym + 1, '.');
+		if (md == NULL)
+		    cvs_output ("??", 0);
+		else
+		    cvs_output (md + 1, 2);
+
+		cvs_output ("-", 1);
+		cvs_output (month_printname (ym + 1), 0);
+		cvs_output ("-", 1);
+		/* Only output the last two digits of the year.  Our output
+		   lines are long enough as it is without printing the
+		   century.  */
+		cvs_output (ym - 2, 2);
+	    }
+	    cvs_output ("): ", 0);
+	    cvs_output (headlines.vector[ln]->text, 0);
+	    cvs_output ("\n", 1);
+	}
+    }
+
+    if (!ishead)
+    {
+	linevector_free (&curlines);
+	linevector_free (&headlines);
+    }
+    block_free ();
+    return 0;
+
+  l_error:
+    if (ferror (fp))
+	error (1, errno, "cannot read %s", finfo->rcs->path);
+    else
+        error (1, 0, "%s does not appear to be a valid rcs file",
+	       finfo->rcs->path);
+    /* Shut up gcc -Wall.  */
+    return 0;
+}
+
+static const char *const annotate_usage[] =
+{
+    "Usage: %s %s [-l] [files...]\n",
+    "\t-l\tLocal directory only, no recursion.\n",
+    NULL
+};
+
+/* Command to show the revision, date, and author where each line of a
+   file was modified.  Currently it will only show the trunk, all the
+   way to the head, but it would be useful to enhance it to (a) allow
+   one to specify a revision, and display only as far as that (easy;
+   just have annotate_fileproc set all the ->vers fields to NULL when
+   you hit that revision), and (b) handle branches (not as easy, but
+   doable).  The user interface for both (a) and (b) could be a -r
+   option.  */
+
+int
+annotate (argc, argv)
+    int argc;
+    char **argv;
+{
+    int local = 0;
+    int c;
+
+    if (argc == -1)
+	usage (annotate_usage);
+
+    optind = 0;
+    while ((c = getopt (argc, argv, "+l")) != -1)
+    {
+	switch (c)
+	{
+	    case 'l':
+		local = 1;
+		break;
+	    case '?':
+	    default:
+		usage (annotate_usage);
+		break;
+	}
+    }
+    argc -= optind;
+    argv += optind;
+
+#ifdef CLIENT_SUPPORT
+    if (client_active)
+    {
+	start_server ();
+	ign_setup ();
+
+	if (local)
+	    send_arg ("-l");
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
+	/* FIXME:  We shouldn't have to send current files, but I'm not sure
+	   whether it works.  So send the files --
+	   it's slower but it works.  */
+	send_files (argc, argv, local, 0);
+	send_to_server ("annotate\012", 0);
+	return get_responses_and_close ();
+    }
+#endif /* CLIENT_SUPPORT */
+
+    return start_recursion (annotate_fileproc, (FILESDONEPROC) NULL,
+			    (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+			    argc, argv, local, W_LOCAL, 0, 1, (char *)NULL,
+			    1, 0);
 }

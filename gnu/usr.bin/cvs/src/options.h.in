@@ -221,18 +221,24 @@
 #define	CVS_DIFFDATE
 #endif
 
-/*
- * define this to enable the SETXID support (see FAQ 4D.13)
- */
+/* Define this to enable the SETXID support.  The way to use this is
+   to create a group with no users in it (except perhaps cvs
+   administrators), set the cvs executable to setgid that group, chown
+   all the repository files to that group, and change all directory
+   permissions in the repository to 770.  The last person to modify a
+   file will own it, but as long as directory permissions are set
+   right that won't matter.  You'll need a system which inherits file
+   groups from the parent directory.  I don't know how carefully this
+   has been inspected for security holes.  */
+
 #ifndef SETXID_SUPPORT
 /* #define SETXID_SUPPORT */
 #endif
 
-/* The client will not perform password-authentication unless you
- * explicitly ask for it.  Whether to include the authenticating
- * server is set in config.h.
- */
-/* #define AUTH_CLIENT_SUPPORT 1 */
+/* Should we build the password-authenticating client?  Whether to
+   include the password-authenticating _server_, on the other hand, is
+   set in config.h.  */
+#define AUTH_CLIENT_SUPPORT 1
 
 /*
  * If you are working with a large remote repository and a 'cvs checkout' is

@@ -12,12 +12,28 @@
 #include "cvs.h"
 #include <assert.h>
 
+/* For RCS file PATH, make symbolic tag TAG point to revision REV.
+   This validates that TAG is OK for a user to use.  Return value is
+   -1 for error (and errno is set to indicate the error), positive for
+   error (and an error message has been printed), or zero for success.  */
+
 int
 RCS_settag(path, tag, rev)
     const char *path;
     const char *tag;
     const char *rev;
 {
+    if (strcmp (tag, TAG_BASE) == 0
+	|| strcmp (tag, TAG_HEAD) == 0)
+    {
+	/* Print the name of the tag might be considered redundant
+	   with the caller, which also prints it.  Perhaps this helps
+	   clarify why the tag name is considered reserved, I don't
+	   know.  */
+	error (0, 0, "Attempt to add reserved tag name %s", tag);
+	return 1;
+    }
+
     run_setup ("%s%s -x,v/ -q -N%s:%s", Rcsbin, RCS, tag, rev);
     run_arg (path);
     return run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);

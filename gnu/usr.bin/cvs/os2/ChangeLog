@@ -1,3 +1,19 @@
+Thu Apr 25 09:28:10 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Add note about LF vs. CRLF in makefile.
+
+Tue Apr 23 20:43:01 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* filesubr.c (get_homedir, expand_wild): New functions.
+
+Wed Feb 28 11:08:06 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove AUTH_SERVER_SUPPORT; no longer should be
+	defined in options.h.
+
+	* config.h: Remove C_ALLOCA, CRAY_STACKSEG_END, HAVE_ALLOCA,
+	HAVE_ALLOCA_H, and STACK_DIRECTION to reflect alloca removal.
+
 Mon Feb 19 00:35:24 1996  Karl Fogel  <kfogel@floss.red-bean.com>
 
         * Makefile.in: deal with new objects `mkmodules' and `vasprintf'.

@@ -1,3 +1,123 @@
+Wed May  1 15:38:26 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Tags): Document un-revision of all-uppercase tag
+	names.
+
+Wed Apr 24 08:41:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Password authentication security): Rewrite sentence
+	on complex and unknown security bugs to clarify that it is
+	referring to people who have been give access to cvs, not to holes
+	in the authentication method (which is relatively simple).
+
+Tue Apr 23 09:31:29 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Wrappers): Talk about what -m does (and does not
+	do).  Other minor edits.
+
+Wed Apr 17 15:27:03 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (rcsinfo): Rewrite paragraph concerning remote CVS.
+	* cvsclient.texi (Responses): Document Template response.
+
+Sun Apr 14 16:01:39 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * .cvsignore: added CVSvn.texi.
+
+Wed Apr 10 16:56:21 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (~/.cvsrc): Mention setting global options with "cvs".
+
+	* cvs.texinfo (release): Change "modules" to "directories".
+	Release does not take module names as arguments.
+
+	* cvs.texinfo (Creating a branch): Add comments about how we
+	should better document tagging the branchpoint.
+
+Tue Apr  9 19:59:45 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Top): Use @value{CVSVN}, not a vague refenece to 1.4.
+
+	* cvs.texinfo (From other version control systems): New node.
+
+Mon Apr  8 15:59:37 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Connection and Authentication): Revise kerberos
+	and pserver sections to reflect the fact that port 2401 is now
+	officially registered.
+
+Thu Mar 28 09:51:13 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (History browsing): Reinstate this node.  Try to get
+	it into some minimally useful state (it still needs a lot of
+	work).
+	(annotate): New node, subnode of History browing.
+
+	* cvsclient.texi (Requests): Add annotate request.
+
+Tue Mar 26 08:46:39 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo: In various examples, change tag names to avoid tag
+	names reserved to CVS.
+
+	* cvs.texinfo (Tags): Document what is a valid tag name.
+
+	* cvs.texinfo (Substitution modes): Try to describe how the
+	various keyword expansion settings interract.
+	(Binary files): Suggest cvs update -A, not removing file and then
+	updating it, to get effect of new keyword expansion options.
+
+	* cvs.texinfo (admin options): Mention CVS's use of `dead' state.
+
+Thu Mar 21 08:25:17 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Environment variables): Expand introduction to RCS
+	environment variables.  Expand and correct CVS_SERVER_SLEEP.
+
+	* cvs.texinfo (Environment variables): Remove POSIXLY_CORRECT; cvs
+	requires options to precede arguments regardless of it.
+
+Thu Mar 21 08:18:42 1996  Norbert Kiesel <nk@col.sw-ley.de>
+
+	* cvs.texinfo: Remove paragrahps about a forthcoming CVS
+          newsgroup and about sending patches to think.com.
+          (Environment): Document some more (all?) used environment
+          variables.
+
+Wed Mar 20 09:44:21 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Introduction): New node.
+	* Makefile.in: Add cruft to reflect fact that cvsclient.texi now
+	uses CVSvn.texi.
+
+Mon Mar 18 14:43:53 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Requests): Add Case request.
+
+Wed Mar 13 16:01:47 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Connection and Authentication): New node.
+
+	* cvsclient.texi (Requests): Expand discussion of Root a bit.
+
+	* cvs.texinfo (Setting up): Don't refer to INSTALL file; revise to
+	reflect some information which had been in the INSTALL file.
+
+	* cvs.texinfo (history file): Update to reflect cvsinit -> cvs
+	init.  Adjust discussion of whether history file format is
+	documented.
+	(Setting up): Update to reflect cvsinit -> cvs init.
+
+	* cvsclient.texi (Requests): Document init request.
+
+Thu Feb 29 10:08:31 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (loginfo example): Adjust example to reflect the way
+	that CVS actually works.  Add comments questioning whether that is
+	the best behavior.
+
+	* cvs.texinfo (cvsignore): Document additions to default ignore list.
+
 Mon Feb 26 13:48:01 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* cvsclient.texi (Filenames): New node, documents / vs \, etc.

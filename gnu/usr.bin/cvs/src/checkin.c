@@ -118,7 +118,7 @@ Checkin (type, file, update_dir, repository,
 
 	    /* re-register with the new data */
 	    vers = Version_TS (repository, (char *) NULL, tag, (char *) NULL,
-			       file, 1, set_time, entries, (List *) NULL);
+			       file, 1, set_time, entries, (RCSNode *) NULL);
 	    if (strcmp (vers->options, "-V4") == 0)
 		vers->options[0] = '\0';
 	    Register (entries, file, vers->vn_rcs, vers->ts_user,

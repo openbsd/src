@@ -123,7 +123,7 @@ add (argc, argv)
 		free (date);
 	      free (rcsdir);
 	    }
-	send_file_names (argc, argv);
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	send_files (argc, argv, 0, 0);
 	send_to_server ("add\012", 0);
 	return get_responses_and_close ();
@@ -149,7 +149,7 @@ add (argc, argv)
 	}
 
 	vers = Version_TS (repository, options, (char *) NULL, (char *) NULL,
-			   user, 0, 0, entries, (List *) NULL);
+			   user, 0, 0, entries, (RCSNode *) NULL);
 	if (vers->vn_user == NULL)
 	{
 	    /* No entry available, ts_rcs is invalid */
@@ -466,7 +466,7 @@ add_directory (repository, dir)
     (void) printf ("%s", message);
 out:
     if (restore_cwd (&cwd, NULL))
-      exit (1);
+      exit (EXIT_FAILURE);
     free_cwd (&cwd);
     return (0);
 }

@@ -350,7 +350,7 @@ check_fileproc (finfo)
     p->type = UPDATE;
     p->delproc = tag_delproc;
     vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL,
-        (char *) NULL, finfo->file, 0, 0, finfo->entries, finfo->srcfiles);
+        (char *) NULL, finfo->file, 0, 0, finfo->entries, finfo->rcs);
     p->data = RCS_getversion(vers->srcfile, numtag, date, force_tag_match, 0);
     if (p->data != NULL)
     {
@@ -499,16 +499,13 @@ static int
 rtag_fileproc (finfo)
     struct file_info *finfo;
 {
-    Node *p;
     RCSNode *rcsfile;
     char *version, *rev;
     int retcode = 0;
 
     /* find the parsed RCS data */
-    p = findnode (finfo->srcfiles, finfo->file);
-    if (p == NULL)
+    if ((rcsfile = finfo->rcs) == NULL)
 	return (1);
-    rcsfile = (RCSNode *) p->data;
 
     /*
      * For tagging an RCS file which is a symbolic link, you'd best be
@@ -561,51 +558,51 @@ rtag_fileproc (finfo)
     }
     else
     {
-       char *oversion;
+	char *oversion;
        
-       /*
-	* As an enhancement for the case where a tag is being re-applied to
-	* a large body of a module, make one extra call to RCS_getversion to
-	* see if the tag is already set in the RCS file.  If so, check to
-	* see if it needs to be moved.  If not, do nothing.  This will
-	* likely save a lot of time when simply moving the tag to the
-	* "current" head revisions of a module -- which I have found to be a
-	* typical tagging operation.
-	*/
-       rev = branch_mode ? RCS_magicrev (rcsfile, version) : version;
-       oversion = RCS_getversion (rcsfile, symtag, (char *) NULL, 1, 0);
-       if (oversion != NULL)
-       {
-	  int isbranch = RCS_isbranch (finfo->file, symtag, finfo->srcfiles);
+	/*
+	 * As an enhancement for the case where a tag is being re-applied to
+	 * a large body of a module, make one extra call to RCS_getversion to
+	 * see if the tag is already set in the RCS file.  If so, check to
+	 * see if it needs to be moved.  If not, do nothing.  This will
+	 * likely save a lot of time when simply moving the tag to the
+	 * "current" head revisions of a module -- which I have found to be a
+	 * typical tagging operation.
+	 */
+	rev = branch_mode ? RCS_magicrev (rcsfile, version) : version;
+	oversion = RCS_getversion (rcsfile, symtag, (char *) NULL, 1, 0);
+	if (oversion != NULL)
+	{
+	    int isbranch = RCS_isbranch (finfo->rcs, symtag);
 
-	  /*
-	   * if versions the same and neither old or new are branches don't
-	   * have to do anything
-	   */
-	  if (strcmp (version, oversion) == 0 && !branch_mode && !isbranch)
-	  {
-	     free (oversion);
-	     free (version);
-	     return (0);
-	  }
+	    /*
+	     * if versions the same and neither old or new are branches don't
+	     * have to do anything
+	     */
+	    if (strcmp (version, oversion) == 0 && !branch_mode && !isbranch)
+	    {
+		free (oversion);
+		free (version);
+		return (0);
+	    }
 	  
-	  if (!force_tag_move) {	/* we're NOT going to move the tag */
-	     if (finfo->update_dir[0])
-		(void) printf ("W %s/%s", finfo->update_dir, finfo->file);
-	     else
-		(void) printf ("W %s", finfo->file);
-	     
-	     (void) printf (" : %s already exists on %s %s", 
-			    symtag, isbranch ? "branch" : "version", oversion);
-	     (void) printf (" : NOT MOVING tag to %s %s\n", 
-			    branch_mode ? "branch" : "version", rev);
-	     free (oversion);
-	     free (version);
-	     return (0);
-	  }
-	  free (oversion);
-       }
-       retcode = RCS_settag(rcsfile->path, symtag, rev);
+	    if (!force_tag_move)
+	    {
+		/* we're NOT going to move the tag */
+		(void) printf ("W %s", finfo->fullname);
+
+		(void) printf (" : %s already exists on %s %s", 
+			       symtag, isbranch ? "branch" : "version",
+			       oversion);
+		(void) printf (" : NOT MOVING tag to %s %s\n", 
+			       branch_mode ? "branch" : "version", rev);
+		free (oversion);
+		free (version);
+		return (0);
+	    }
+	    free (oversion);
+	}
+	retcode = RCS_settag(rcsfile->path, symtag, rev);
     }
 
     if (retcode != 0)

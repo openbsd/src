@@ -22,7 +22,7 @@ static void sticky_ck PROTO((char *file, int aflag, Vers_TS * vers, List * entri
  */
 Ctype
 Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
-	       entries, srcfiles, versp, update_dir, pipeout)
+	       entries, rcsnode, versp, update_dir, pipeout)
     char *file;
     char *tag;
     char *date;
@@ -31,7 +31,7 @@ Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
     int aflag;
     char *repository;
     List *entries;
-    List *srcfiles;
+    RCSNode *rcsnode;
     Vers_TS **versp;
     char *update_dir;
     int pipeout;
@@ -48,7 +48,7 @@ Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
 
     /* get all kinds of good data about the file */
     vers = Version_TS (repository, options, tag, date, file,
-		       force_tag_match, 0, entries, srcfiles);
+		       force_tag_match, 0, entries, rcsnode);
 
     if (vers->vn_user == NULL)
     {

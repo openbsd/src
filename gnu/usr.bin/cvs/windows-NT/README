@@ -17,10 +17,10 @@ confuse the makefile for Visual C++.
 To compile, use Microsoft Visual C++ on the file cvsnt.mak in the
 distribution's top directory.  At least with the tar port I'm using,
 the sources get extracted without carriage returns and you must add
-carriage returns to the end of every line in cvsnt.mak.  It doesn't
-seem to be necessary to add them to any other file.  This makefile
-was generated with Visual C++ 2.1.  As far as is known, it should work
-with Visual C++ 4,0 also.
+carriage returns to the end of every line in cvsnt.mak.  I also had to
+add them to src/server.c.  It doesn't seem to be necessary to add them
+to any other file.  This makefile was generated with Visual C++ 2.1.
+As far as is known, it should work with Visual C++ 4,0 also.
 
 Send bug reports to bug-cvs@prep.ai.mit.edu.
 

@@ -1,5 +1,17 @@
 Changes since 1.7:
 
+* New "cvs annotate" command to display the last modification for each
+line of a file, with the revision number, user checking in the
+modification, and date of the modification.  For more information see
+the `annotate' node in cvs.texinfo.
+
+* The cvsinit shell script has been replaced by a cvs init command.
+The cvs init command creates some example administrative files which
+are similar to the files found in the examples directory (and copied
+by cvsinit) in previous releases.
+
+* Added the patterns *.olb *.exe _$* *$ to default ignore list.
+
 * There is now a $USER internal variable for *info files.
 
 * There is no longer a separate `mkmodules' program; the functionality

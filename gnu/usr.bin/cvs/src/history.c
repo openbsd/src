@@ -1136,7 +1136,7 @@ select_hrec (hr)
 	time_t t;
 
 	vers = Version_TS (hr->repos, (char *) NULL, since_rev, (char *) NULL,
-			   hr->file, 1, 0, (List *) NULL, (List *) NULL);
+			   hr->file, 1, 0, (List *) NULL, (RCSNode *) NULL);
 	if (vers->vn_rcs)
 	{
 	    if ((t = RCS_getrevtime (vers->srcfile, vers->vn_rcs, (char *) 0, 0))

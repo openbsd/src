@@ -48,14 +48,6 @@ The files described here are supporting files; they do not have to
 exist for \fBcvs\fP to operate, but they allow you to make \fBcvs\fP
 operation more flexible.
 .SP
-The
-.BR cvsinit ( 1 )
-shell script included at the top-level of the
-.B cvs
-distribution can be used to setup an initial
-.B $CVSROOT/CVSROOT
-area, if you don't have one already.
-.SP
 You can use the `\|modules\|' file to define symbolic names for
 collections of source maintained with \fBcvs\fP.  If there is no
 `\|modules\|' file, developers must specify complete path names
@@ -116,10 +108,6 @@ The `\|modules\|' file records your definitions of names for
 collections of source code.  \fBcvs\fP will use these definitions if
 you use \fBcvs\fP to check in a file with the right format to
 `\|\fB$CVSROOT/CVSROOT/modules,v\fP\|'.  
-.SP
-The
-.BR cvsinit ( 8 )
-script will setup a sample `\|modules\|' file for you automatically.
 .SP
 The `\|modules\|' file may contain blank lines and comments (lines
 beginning with `\|\fB#\fP\|') as well as module definitions.

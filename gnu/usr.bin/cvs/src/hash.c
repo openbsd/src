@@ -247,10 +247,9 @@ addnode (list, p)
     return (0);
 }
 
-/*
- * look up an entry in hash list table and return a pointer to the
- * node.  Return NULL on error or not found.
- */
+/* Look up an entry in hash list table and return a pointer to the
+   node.  Return NULL if not found.  Abort with a fatal error for
+   errors.  */
 Node *
 findnode (list, key)
     List *list;
@@ -263,6 +262,8 @@ findnode (list, key)
        the callers to see if any are relying on this behavior.  */
     if ((list == (List *) NULL))
 	return ((Node *) NULL);
+
+    assert (key != NULL);
 
     head = list->hasharray[hashp (key)];
     if (head == (Node *) NULL)
@@ -285,8 +286,13 @@ findnode_fn (list, key)
 {
     Node *head, *p;
 
+    /* This probably should be "assert (list != NULL)" (or if not we
+       should document the current behavior), but only if we check all
+       the callers to see if any are relying on this behavior.  */
     if (list == (List *) NULL)
 	return ((Node *) NULL);
+
+    assert (key != NULL);
 
     head = list->hasharray[hashp (key)];
     if (head == (Node *) NULL)

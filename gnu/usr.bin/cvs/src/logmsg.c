@@ -112,10 +112,8 @@ fmt_proc (p, closure)
  * editor on the file.  The header garbage in the resultant file is then
  * stripped and the log message is stored in the "message" argument.
  * 
- * rcsinfo - is the name of a file containing lines tacked onto the end of the
- * RCS info offered to the user for editing. If specified, the '-m' flag to
- * "commit" is disabled -- users are forced to run the editor.
- * 
+ * If REPOSITORY is non-NULL, process rcsinfo for that repository; if it
+ * is NULL, use the CVSADM_TEMPLATE file instead.
  */
 void
 do_editor (dir, messagep, repository, changes)
@@ -136,6 +134,10 @@ do_editor (dir, messagep, repository, changes)
     if (noexec || reuse_log_message)
 	return;
 
+    /* Abort creation of temp file if no editor is defined */
+    if (strcmp (Editor, "") == 0 && !editinfo_editor)
+	error(1, 0, "no editor defined, must use -e or -m");
+
     /* Create a temporary file */
     (void) tmpnam (fname);
   again:
@@ -155,6 +157,41 @@ do_editor (dir, messagep, repository, changes)
     if (repository != NULL)
 	/* tack templates on if necessary */
 	(void) Parse_Info (CVSROOTADM_RCSINFO, repository, rcsinfo_proc, 1);
+    else
+    {
+	FILE *tfp;
+	char buf[1024];
+	char *p;
+	size_t n;
+	size_t nwrite;
+
+	/* Why "b"?  */
+	tfp = fopen (CVSADM_TEMPLATE, "rb");
+	if (tfp == NULL)
+	{
+	    if (!existence_error (errno))
+		error (1, errno, "cannot read %s", CVSADM_TEMPLATE);
+	}
+	else
+	{
+	    while (!feof (tfp))
+	    {
+		n = fread (buf, 1, sizeof buf, tfp);
+		nwrite = n;
+		p = buf;
+		while (nwrite > 0)
+		{
+		    n = fwrite (p, 1, nwrite, fp);
+		    nwrite -= n;
+		    p += n;
+		}
+		if (ferror (tfp))
+		    error (1, errno, "cannot read %s", CVSADM_TEMPLATE);
+	    }
+	    if (fclose (tfp) < 0)
+		error (0, errno, "cannot close %s", CVSADM_TEMPLATE);
+	}
+    }
 
     (void) fprintf (fp,
   "%s----------------------------------------------------------------------\n",
@@ -206,6 +243,8 @@ do_editor (dir, messagep, repository, changes)
 	*messagep = NULL;
     else
     {
+	/* On NT, we might read less than st_size bytes, but we won't
+	   read more.  So this works.  */
 	*messagep = (char *) xmalloc (post_stbuf.st_size + 1);
  	*messagep[0] = '\0';
     }
@@ -421,16 +460,16 @@ logfile_write (repository, filter, title, message, revision, logfp, changes)
     List *changes;
 {
     char cwd[PATH_MAX];
-    FILE *pipefp, *run_popen ();
+    FILE *pipefp;
     char *prog = xmalloc (MAXPROGLEN);
     char *cp;
     int c;
+    int pipestatus;
 
-    /* XXX <woods@web.net> -- this is gross, ugly, and a hack!  FIXME! */
     /*
-     * A maximum of 6 %s arguments are supported in the filter
+     * Only 1 %s argument is supported in the filter
      */
-    (void) sprintf (prog, filter, title, title, title, title, title, title);
+    (void) sprintf (prog, filter, title);
     if ((pipefp = run_popen (prog, "w")) == NULL)
     {
 	if (!noexec)
@@ -453,7 +492,8 @@ logfile_write (repository, filter, title, message, revision, logfp, changes)
 	    (void) putc ((char) c, pipefp);
     }
     free (prog);
-    return (pclose (pipefp));
+    pipestatus = pclose (pipefp);
+    return ((pipestatus == -1) || (pipestatus == 127)) ? 1 : 0;
 }
 
 /*

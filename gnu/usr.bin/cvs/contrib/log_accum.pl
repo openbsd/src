@@ -1,6 +1,8 @@
 #! xPERL_PATHx
 # -*-Perl-*-
 #
+#ident	"@(#)ccvs/contrib:$Name:  $:$Id: log_accum.pl,v 1.1.1.3 1996/05/06 22:20:41 tholo Exp $"
+#
 # Perl filter to handle the log messages from the checkin of files in
 # a directory.  This script will group the lists of files by log
 # message, and mail a single consolidated log message at the end of
@@ -13,9 +15,10 @@
 #
 # hacked greatly by Greg A. Woods <woods@planix.com>
 
-# Usage: log_accum.pl [-d] [-s] [-M module] [[-m mailto] ...] [-f logfile]
+# Usage: log_accum.pl [-d] [-s] [-M module] [[-m mailto] ...] [[-R replyto] ...] [-f logfile]
 #	-d		- turn on debugging
 #	-m mailto	- send mail to "mailto" (multiple)
+#	-R replyto	- set the "Reply-To:" to "replyto" (multiple)
 #	-M modulename	- set module name to "modulename"
 #	-f logfile	- write commit messages to logfile too
 #	-s		- *don't* run "cvs status -v" for each file
@@ -24,7 +27,8 @@
 #	Configurable options
 #
 
-$MAILER	       = "Mail";	# set this to something that takes "-s"
+# set this to something that takes a whole message on stdin
+$MAILER	       = "/usr/lib/sendmail -t";
 
 #
 #	End user configurable options.
@@ -168,7 +172,7 @@ sub read_logfile {
 
 sub build_header {
     local($header);
-    local($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+    local($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     $header = sprintf("CVSROOT:\t%s\nModule name:\t%s\nChanges by:\t%s@%s\t%02d/%02d/%02d %02d:%02d:%02d",
 		      $cvsroot,
 		      $modulename,
@@ -178,8 +182,55 @@ sub build_header {
 }
 
 sub mail_notification {
-    local($name, @text) = @_;
-    open(MAIL, "| $MAILER -s \"CVS Update: " . $modulename . "\" " . $name);
+    local(@text) = @_;
+
+    # if only we had strftime()...  stuff stolen from perl's ctime.pl:
+    local($[) = 0;
+
+    @DoW = ('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+    @MoY = ('Jan','Feb','Mar','Apr','May','Jun',
+	    'Jul','Aug','Sep','Oct','Nov','Dec');
+
+    # Determine what time zone is in effect.
+    # Use GMT if TZ is defined as null, local time if TZ undefined.
+    # There's no portable way to find the system default timezone.
+    #
+    $TZ = defined($ENV{'TZ'}) ? ( $ENV{'TZ'} ? $ENV{'TZ'} : 'GMT' ) : '';
+
+    # Hack to deal with 'PST8PDT' format of TZ
+    # Note that this can't deal with all the esoteric forms, but it
+    # does recognize the most common: [:]STDoff[DST[off][,rule]]
+    #
+    if ($TZ =~ /^([^:\d+\-,]{3,})([+-]?\d{1,2}(:\d{1,2}){0,2})([^\d+\-,]{3,})?/) {
+        $TZ = $isdst ? $4 : $1;
+	$tzoff = sprintf("%05d", -($2) * 100);
+    }
+
+    # perl-4.036 doesn't have the $zone or $gmtoff...
+    ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst, $zone, $gmtoff) =
+        ($TZ eq 'GMT') ? gmtime(time) : localtime(time);
+
+    $year += ($year < 70) ? 2000 : 1900;
+
+    if ($gmtoff != 0) {
+	$tzoff = sprintf("%05d", ($gmtoff / 60) * 100);
+    }
+    if ($zone ne '') {
+	$TZ = $zone;
+    }
+
+    # ok, let's try....
+    $rfc822date = sprintf("%s, %2d %s %4d %2d:%02d:%02d %s (%s)",
+			  $DoW[$wday], $mday, $MoY[$mon], $year,
+			  $hour, $min, $sec, $tzoff, $TZ);
+
+    open(MAIL, "| $MAILER");
+    print MAIL "Date:     " . $rfc822date . "\n";
+    print MAIL "Subject:  CVS Update: " . $modulename . "\n";
+    print MAIL "To:       " . $mailto . "\n";
+    print MAIL "From:     " . $login . "@" . $hostdomain . "\n";
+    print MAIL "Reply-To: " . $replyto . "\n";
+    print MAIL "\n";
     print MAIL join("\n", @text), "\n";
     close(MAIL);
 }
@@ -218,7 +269,17 @@ while (@ARGV) {
 	$debug = 1;
 	print STDERR "Debug turned on...\n";
     } elsif ($arg eq '-m') {
-	$mailto = "$mailto " . shift @ARGV;
+	if ($mailto eq '') {
+	    $mailto = shift @ARGV;
+	} else {
+	    $mailto = $mailto . ", " . shift @ARGV;
+	}
+    } elsif ($arg eq '-R') {
+	if ($replyto eq '') {
+	    $replyto = shift @ARGV;
+	} else {
+	    $replyto = $replyto . ", " . shift @ARGV;
+	}
     } elsif ($arg eq '-M') {
 	$modulename = shift @ARGV;
     } elsif ($arg eq '-s') {
@@ -232,7 +293,10 @@ while (@ARGV) {
 	@files = split(/ /, $arg);
     }
 }
-($mailto) || die("No -m mail recipient specified\n");
+($mailto) || die("No mail recipient specified (use -m)\n");
+if ($replyto eq '') {
+    $replyto = $login;
+}
 
 # for now, the first "file" is the repository directory being committed,
 # relative to the $CVSROOT location
@@ -309,7 +373,7 @@ if ($files[2] =~ /Imported/ && $files[3] =~ /sources/) {
 	push(@text, $_);
     }
 
-    &mail_notification($mailto, @text);
+    &mail_notification(@text);
 
     exit 0;
 }
@@ -485,7 +549,7 @@ if ($#status_txt >= 0) {
 
 # Mailout the notification.
 #
-&mail_notification($mailto, @text);
+&mail_notification(@text);
 
 # cleanup
 #

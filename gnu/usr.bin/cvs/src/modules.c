@@ -23,6 +23,17 @@
 #include "cvs.h"
 #include "savecwd.h"
 
+
+/* Defines related to the syntax of the modules file.  */
+
+/* Options in modules file.  Note that it is OK to use GNU getopt features;
+   we already are arranging to make sure we are using the getopt distributed
+   with CVS.  */
+#define	CVSMODULE_OPTS	"+ad:i:lo:e:s:t:u:"
+
+/* Special delimiter.  */
+#define CVSMODULE_SPEC	'&'
+
 struct sortrec
 {
     char *modname;
@@ -295,7 +306,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 
     /* remember where we start */
     if (save_cwd (&cwd))
-	exit (1);
+	exit (EXIT_FAILURE);
 
     /* copy value to our own string since if we go recursive we'll be
        really screwed if we do another dbm lookup */
@@ -561,7 +572,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 
     /* cd back to where we started */
     if (restore_cwd (&cwd, NULL))
-	exit (1);
+	exit (EXIT_FAILURE);
     free_cwd (&cwd);
 
     /* run checkout or tag prog if appropriate */
@@ -823,7 +834,7 @@ cat_module (status)
 	argc = moduleargc;
 	argv = moduleargv;
 
-	optind = 1;
+	optind = 0;
 	wid = 0;
 	while ((c = getopt (argc, argv, CVSMODULE_OPTS)) != -1)
 	{

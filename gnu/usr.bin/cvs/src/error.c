@@ -82,7 +82,7 @@ error_set_cleanup (arg)
 /* Print the program name and error message MESSAGE, which is a printf-style
    format string with optional args.
    If ERRNUM is nonzero, print its corresponding system error message.
-   Exit with status STATUS if it is nonzero. */
+   Exit with status EXIT_FAILURE if STATUS is nonzero.  */
 /* VARARGS */
 void
 #if defined (HAVE_VPRINTF) && __STDC__
@@ -206,14 +206,14 @@ error (status, errnum, message, va_alist)
     {
 	if (cleanup_fn)
 	    (*cleanup_fn) ();
-	exit (status);
+	exit (EXIT_FAILURE);
     }
 }
 
 /* Print the program name and error message MESSAGE, which is a printf-style
    format string with optional args to the file specified by FP.
    If ERRNUM is nonzero, print its corresponding system error message.
-   Exit with status STATUS if it is nonzero. */
+   Exit with status EXIT_FAILURE if STATUS is nonzero.  */
 /* VARARGS */
 void
 #if defined (HAVE_VPRINTF) && __STDC__
@@ -251,6 +251,6 @@ fperror (fp, status, errnum, message, va_alist)
     {
 	if (cleanup_fn)
 	    (*cleanup_fn) ();
-	exit (status);
+	exit (EXIT_FAILURE);
     }
 }
