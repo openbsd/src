@@ -1,7 +1,7 @@
-/*	$OpenBSD: pmap.c,v 1.95 2003/01/22 23:56:33 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.96 2003/01/29 17:06:05 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2002 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -758,7 +758,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	} else {
 		DPRINTF(PDB_ENTER,
 		    ("pmap_enter: new mapping 0x%x -> 0x%x\n", va, pa));
-		pte = PTE_PROT(0);
+		pte = PTE_PROT(TLB_REFTRAP);
 		pve = NULL;
 		pmap->pm_stats.resident_count++;
 		if (wired)
@@ -819,7 +819,7 @@ pmap_remove(pmap, sva, eva)
 				sva += ~PDE_MASK + 1 - PAGE_SIZE;
 				continue;
 			}
-			batch = pdemask == sva && sva + ~PDE_MASK + 1 < eva;
+			batch = pdemask == sva && sva + ~PDE_MASK + 1 <= eva;
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
@@ -900,8 +900,6 @@ pmap_write_protect(pmap, sva, eva, prot)
 			simple_unlock(&pg->mdpage.pvh_lock);
 
 			pmap_pte_flush(pmap, sva, pte);
-			if (!(tlbprot & TLB_WRITE))
-				pte &= ~PTE_PROT(TLB_DIRTY);
 			pte &= ~PTE_PROT(TLB_AR_MASK);
 			pte |= tlbprot;
 			pmap_pte_set(pde, sva, pte);
@@ -1146,7 +1144,8 @@ pmap_kenter_pa(va, pa, prot)
 		    va, pde, pte);
 #endif
 
-	pte = pa | PTE_PROT(TLB_WIRED|pmap_prot(pmap_kernel(), prot));
+	pte = pa | PTE_PROT(TLB_WIRED | TLB_REFTRAP |
+	    pmap_prot(pmap_kernel(), prot));
 	if (pa >= HPPA_IOSPACE)
 		pte |= PTE_PROT(TLB_UNCACHABLE);
 	pmap_pte_set(pde, va, pte);
