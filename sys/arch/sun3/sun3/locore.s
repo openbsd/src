@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.20 2000/07/14 14:28:11 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.21 2000/11/09 01:27:38 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -814,7 +814,7 @@ Lswnofpsave:
 	/*
 	 * Call pmap_activate() to set the MMU context register
 	 */
-	lea	a2@(VM_PMAP),a2		| pmap = &vm.vm_pmap
+	movl	a2@(VM_PMAP),a2		| pmap = &vm.vm_map.pmap
 	pea	a2@			| push pmap
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(pmap)
 	addql	#4,sp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.9 2000/07/14 14:27:04 miod Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.10 2000/11/09 01:27:38 miod Exp $	*/
 /*	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ main()
 	def("MDP_TRCB", ffs(MDP_HPUXTRACE) - 1);
 
 	/* VM structure fields */
-	def("VM_PMAP", &vms->vm_pmap);
+	def("VM_PMAP", &vms->vm_map.pmap);
 
 	/* pcb offsets */
 	def("PCB_FLAGS", &pcb->pcb_flags);
