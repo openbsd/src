@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fnmatch.3,v 1.3 1997/06/13 13:01:44 deraadt Exp $
+.\"	$OpenBSD: fnmatch.3,v 1.4 1997/09/22 05:03:29 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 16, 1994
+.\"     @(#)fnmatch.3	8.3 (Berkeley) 4/28/95
+.\"
+.Dd April 28, 1995
 .Dt FNMATCH 3
 .Os
 .Sh NAME
@@ -85,7 +87,12 @@ must be explicitly matched by slashes in
 .Fa pattern .
 If this flag is not set, then slashes are treated as regular characters.
 .It Dv FNM_PERIOD
-Leading periods in strings match periods in patterns.
+Leading periods in
+.Fa string
+must be explicitly matched by periods in
+.Fa pattern .
+If this flag is not set, then leading periods are treated as regular
+characters.
 The definition of ``leading'' is related to the specification of
 .Dv FNM_PATHNAME.
 A period is always ``leading'' if it is the first character in
@@ -94,6 +101,17 @@ Additionally, if
 .Dv FNM_PATHNAME
 is set,
 a period is ``leading'' if it immediately follows a slash.
+.It Dv FNM_LEADING_DIR
+Ignore
+.Nm /*
+rest after successful
+.Fa pattern
+matching.
+.It Dv FNM_CASEFOLD
+Ignore  case  distinctions in both the
+.Fa pattern
+and the
+.Fa string .
 .El
 .Sh RETURN VALUES
 The
@@ -116,7 +134,7 @@ function conforms to
 .Sh HISTORY
 The
 .Fn fnmatch
-function first appeared in 
+function first appeared in
 .Bx 4.4 .
 .Sh BUGS
 The pattern
