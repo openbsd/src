@@ -1,4 +1,5 @@
-#	$NetBSD: files.oldconf,v 1.62 1996/02/03 00:23:51 mycroft Exp $
+#	$OpenBSD: files.oldconf,v 1.7 1996/04/19 07:31:23 mickey Exp $
+#	$NetBSD: files.oldconf,v 1.67 1996/03/19 04:40:54 scottr Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -44,6 +45,7 @@ kern/kern_fork.c	standard
 kern/kern_ktrace.c	optional ktrace
 kern/kern_lkm.c		optional lkm
 kern/kern_malloc.c	standard
+kern/kern_ntptime.c	standard
 kern/kern_physio.c	standard
 kern/kern_proc.c	standard
 kern/kern_prot.c	standard
@@ -126,14 +128,16 @@ msdosfs/msdosfs_lookup.c	optional msdosfs
 msdosfs/msdosfs_vfsops.c	optional msdosfs
 msdosfs/msdosfs_vnops.c		optional msdosfs
 net/bpf.c		optional bpfilter
-net/bpf_filter.c	optional bpfilter device-driver
+net/bpf_filter.c	optional bpfilter or ppp device-driver
 net/if.c		standard
 net/if_arcsubr.c      optional arc device-driver
 net/if_ethersubr.c	optional ether device-driver
 net/if_loop.c		optional loop device-driver
 net/if_ppp.c		optional ppp device-driver
-net/bsd-comp.c		optional ppp
+net/bsd-comp.c		optional ppp_bsdcomp
 net/ppp_tty.c		optional ppp
+net/ppp-deflate.c	optional ppp_deflate
+net/zlib.c		optional ppp_deflate
 net/if_sl.c		optional sl device-driver
 net/if_tun.c		optional tun device-driver
 net/radix.c		standard
@@ -181,11 +185,6 @@ netinet/tcp_subr.c	optional inet
 netinet/tcp_timer.c	optional inet
 netinet/tcp_usrreq.c	optional inet
 netinet/udp_usrreq.c	optional inet
-netinet/ip_fil.c	optional ipfilter requires inet
-netinet/fil.c		optional ipfilter requires inet
-netinet/ip_nat.c	optional ipfilter requires inet
-netinet/ip_frag.c	optional ipfilter requires inet
-netinet/ip_state.c	optional ipfilter requires inet
 netiso/clnp_debug.c	optional iso
 netiso/clnp_er.c	optional iso
 netiso/clnp_frag.c	optional iso
@@ -291,3 +290,5 @@ vm/vm_unix.c		standard
 vm/vm_user.c		standard
 vm/vnode_pager.c	optional vnodepager
 dev/ccd.c		optional ccd needs-count
+# XXX !! This should not be necessary!
+dev/audio.c		optional audio device-driver

@@ -1,4 +1,5 @@
-#	$NetBSD: files,v 1.74 1996/02/13 17:09:46 christos Exp $
+#	$OpenBSD: files,v 1.13 1996/04/19 07:31:23 mickey Exp $
+#	$NetBSD: files,v 1.82 1996/03/19 01:02:35 paulus Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -25,6 +26,15 @@ define	fddi
 define	pdq		# DEC FDDI chipset
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
 define	aic7xxx		# Adaptec aic7770 and aic7870 SCSI controllers
+
+# Attributes which machine-independent bus support can be attached to.
+# These should be defined here, because some of these busses can have
+# devices which provide these attributes, and we'd like to avoid hairy
+# ordering constraints on inclusion of the busses' "files" files.
+define	isabus { }			# ISA attachment
+define	eisabus { }			# EISA attachment
+define	pcibus {[bus = -1]}		# PCI attachment
+define	tcbus { }			# TurboChannel attachment
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
@@ -96,8 +106,8 @@ file kern/kern_exit.c
 file kern/kern_fork.c
 file kern/kern_ktrace.c			ktrace
 file kern/kern_lkm.c			lkm
-file kern/kern_malloc.c
 file kern/kern_ntptime.c
+file kern/kern_malloc.c
 file kern/kern_physio.c
 file kern/kern_proc.c
 file kern/kern_prot.c
@@ -182,7 +192,7 @@ file msdosfs/msdosfs_lookup.c		msdosfs
 file msdosfs/msdosfs_vfsops.c		msdosfs
 file msdosfs/msdosfs_vnops.c		msdosfs
 file net/bpf.c				bpfilter		needs-count
-file net/bpf_filter.c			bpfilter
+file net/bpf_filter.c			bpfilter ppp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
 file net/if_ethersubr.c			ether fddi		needs-flag
@@ -191,7 +201,9 @@ file net/if_loop.c			loop			needs-count
 file net/if_sl.c			sl			needs-count
 file net/if_ppp.c			ppp			needs-count
 file net/ppp_tty.c			ppp
-file net/bsd-comp.c			ppp
+file net/bsd-comp.c			ppp_bsdcomp
+file net/ppp-deflate.c			ppp_deflate
+file net/zlib.c				ppp_deflate
 file net/if_tun.c			tun			needs-count
 file net/radix.c
 file net/raw_cb.c
@@ -285,9 +297,20 @@ file netns/ns_ip.c			ns
 file netns/ns_output.c			ns
 file netns/ns_pcb.c			ns
 file netns/ns_proto.c			ns
-file netns/ns_cksum.c			ns
 file netns/spp_debug.c			ns
 file netns/spp_usrreq.c			ns
+file netipx/ipx.c			ipx
+file netipx/ipx_cksum.c			ipx
+file netipx/ipx_error.c			ipx
+file netipx/ipx_input.c			ipx
+file netipx/ipx_ip.c			ipx
+file netipx/ipx_outputfl.c		ipx
+file netipx/ipx_pcb.c			ipx
+file netipx/ipx_proto.c			ipx
+file netipx/ipx_tun.c			ipx
+file netipx/ipx_usrreq.c		ipx
+file netipx/spx_debug.c			ipx
+file netipx/spx_usrreq.c		ipx
 file nfs/krpc_subr.c			nfsclient
 file nfs/nfs_bio.c			nfsclient
 file nfs/nfs_boot.c			nfsclient
