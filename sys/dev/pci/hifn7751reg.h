@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.17 2000/12/12 21:30:34 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.18 2001/05/08 22:09:51 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -137,6 +137,9 @@ struct hifn_softc {
 	int32_t sc_cid;
 	int sc_maxses;
 	int sc_ramsize;
+	int sc_flags;
+#define HIFN_HAS_RNG		1
+#define HIFN_HAS_PUBLIC		2
 	struct hifn_session sc_sessions[2048];
 };
 
@@ -246,6 +249,17 @@ struct hifn_softc {
 #define	HIFN_1_DMA_IER		0x44	/* DMA Interrupt Enable */
 #define	HIFN_1_DMA_CNFG		0x48	/* DMA Configuration */
 #define	HIFN_1_REVID		0x98	/* Revision ID */
+
+#define HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
+#define HIFN_1_PUB_BASE		0x300	/* Public Base Address */
+#define HIFN_1_PUB_OPLEN	0x304	/* Public Operand Length */
+#define HIFN_1_PUB_OP		0x308	/* Public Operand */
+#define HIFN_1_PUB_STATUS	0x30c	/* Public Status */
+#define HIFN_1_PUB_IEN		0x310	/* Public Interrupt Enable */
+#define HIFN_1_RNG_CONFIG	0x314	/* RNG config */
+#define HIFN_1_RNG_DATA		0x318	/* RNG data */
+#define HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
+#define HIFN_1_PUB_MEMEND	0xbff	/* end of Public key memory */
 
 /* DMA Status and Control Register (HIFN_1_DMA_CSR) */
 #define	HIFN_DMACSR_D_CTRLMASK	0xc0000000	/* Destinition Ring Control */
