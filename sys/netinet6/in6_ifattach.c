@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.23 2002/05/23 06:56:16 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.24 2002/05/29 02:59:12 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -54,10 +54,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
-struct in6_ifstat **in6_ifstat = NULL;
-struct icmp6_ifstat **icmp6_ifstat = NULL;
-size_t in6_ifstatmax = 0;
-size_t icmp6_ifstatmax = 0;
 unsigned long in6_maxmtu = 0;
 
 static int get_rand_ifid(struct ifnet *, struct in6_addr *);
@@ -561,7 +557,6 @@ in6_ifattach(ifp, altifp)
 	struct ifnet *ifp;
 	struct ifnet *altifp;	/* secondary EUI64 source */
 {
-	static size_t if_indexlim = 8;
 	struct sockaddr_in6 mltaddr;
 	struct sockaddr_in6 mltmask;
 	struct sockaddr_in6 gate;
@@ -581,47 +576,6 @@ in6_ifattach(ifp, altifp)
 		    ifp->if_xname[sizeof("bridge")] <= '9')
 			return;
 		break;
-	}
-
-	/*
-	 * We have some arrays that should be indexed by if_index.
-	 * since if_index will grow dynamically, they should grow too.
-	 *	struct in6_ifstat **in6_ifstat
-	 *	struct icmp6_ifstat **icmp6_ifstat
-	 */
-	if (in6_ifstat == NULL || icmp6_ifstat == NULL ||
-	    if_index >= if_indexlim) {
-		size_t n;
-		caddr_t q;
-		size_t olim;
-
-		olim = if_indexlim;
-		while (if_index >= if_indexlim)
-			if_indexlim <<= 1;
-
-		/* grow in6_ifstat */
-		n = if_indexlim * sizeof(struct in6_ifstat *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
-		if (in6_ifstat) {
-			bcopy((caddr_t)in6_ifstat, q,
-				olim * sizeof(struct in6_ifstat *));
-			free((caddr_t)in6_ifstat, M_IFADDR);
-		}
-		in6_ifstat = (struct in6_ifstat **)q;
-		in6_ifstatmax = if_indexlim;
-
-		/* grow icmp6_ifstat */
-		n = if_indexlim * sizeof(struct icmp6_ifstat *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
-		if (icmp6_ifstat) {
-			bcopy((caddr_t)icmp6_ifstat, q,
-				olim * sizeof(struct icmp6_ifstat *));
-			free((caddr_t)icmp6_ifstat, M_IFADDR);
-		}
-		icmp6_ifstat = (struct icmp6_ifstat **)q;
-		icmp6_ifstatmax = if_indexlim;
 	}
 
 	/* create a multicast kludge storage (if we have not had one) */
@@ -773,17 +727,6 @@ statinit:;
 	/* update dynamically. */
 	if (in6_maxmtu < ifp->if_mtu)
 		in6_maxmtu = ifp->if_mtu;
-
-	if (in6_ifstat[ifp->if_index] == NULL) {
-		in6_ifstat[ifp->if_index] = (struct in6_ifstat *)
-			malloc(sizeof(struct in6_ifstat), M_IFADDR, M_WAITOK);
-		bzero(in6_ifstat[ifp->if_index], sizeof(struct in6_ifstat));
-	}
-	if (icmp6_ifstat[ifp->if_index] == NULL) {
-		icmp6_ifstat[ifp->if_index] = (struct icmp6_ifstat *)
-			malloc(sizeof(struct icmp6_ifstat), M_IFADDR, M_WAITOK);
-		bzero(icmp6_ifstat[ifp->if_index], sizeof(struct icmp6_ifstat));
-	}
 
 	/* initialize NDP variables */
 	nd6_ifattach(ifp);

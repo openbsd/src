@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.21 2002/03/14 03:16:11 millert Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.22 2002/05/29 02:59:12 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
@@ -620,11 +620,8 @@ void	icmp6_mtudisc_callback_register(void (*)(struct in6_addr *));
 /* XXX: is this the right place for these macros? */
 #define icmp6_ifstat_inc(ifp, tag) \
 do {								\
-	if ((ifp) && (ifp)->if_index <= if_index			\
-	 && (ifp)->if_index < icmp6_ifstatmax			\
-	 && icmp6_ifstat && icmp6_ifstat[(ifp)->if_index]) {	\
-		icmp6_ifstat[(ifp)->if_index]->tag++;		\
-	}							\
+	if (ifp)						\
+		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->icmp6_ifstat->tag++; \
 } while (0)
 
 #define icmp6_ifoutstat_inc(ifp, type, code) \
