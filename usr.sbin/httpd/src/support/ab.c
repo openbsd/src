@@ -226,6 +226,7 @@ struct connection *con;		/* connection array */
 struct data *stats;		/* date for each request */
 
 fd_set readbits, writebits;	/* bits for select */
+int fd_max;			/* for select */
 struct sockaddr_in server;	/* server addr structure */
 
 #ifndef BEOS
@@ -286,6 +287,7 @@ static void write_request(struct connection * c)
     c->state = STATE_READ;
     FD_SET(c->fd, &readbits);
     FD_CLR(c->fd, &writebits);
+    fd_max = fd_max < c->fd ? c->fd : fd_max;
 }
 
 /* --------------------------------------------------------- */
@@ -541,6 +543,7 @@ static void start_connect(struct connection * c)
 	if (errno == EINPROGRESS) {
 	    c->state = STATE_CONNECTING;
 	    FD_SET(c->fd, &writebits);
+	    fd_max = fd_max < c->fd ? c->fd : fd_max;
 	    return;
 	}
 	else {
@@ -556,6 +559,7 @@ static void start_connect(struct connection * c)
     /* connected first time */
     c->state = STATE_CONNECTING;
     FD_SET(c->fd, &writebits);
+    fd_max = fd_max < c->fd ? c->fd : fd_max;
 }
 
 /* --------------------------------------------------------- */
@@ -788,6 +792,7 @@ static void test(void)
 
     FD_ZERO(&readbits);
     FD_ZERO(&writebits);
+    fd_max = 0;
 
     /* setup request */
     if (posting <= 0) {
@@ -853,7 +858,8 @@ static void test(void)
 	/* Timeout of 30 seconds. */
 	timeout.tv_sec = 30;
 	timeout.tv_usec = 0;
-	n = ap_select(FD_SETSIZE, &sel_read, &sel_write, &sel_except, &timeout);
+	n = ap_select(fd_max + 1, &sel_read, &sel_write, &sel_except,
+		      &timeout);
 	if (!n) {
 	    err("\nServer timed out\n\n");
 	}
@@ -886,14 +892,14 @@ static void test(void)
 static void copyright(void)
 {
     if (!use_html) {
-	printf("This is ApacheBench, Version %s\n", VERSION " <$Revision: 1.6 $> apache-1.3");
+	printf("This is ApacheBench, Version %s\n", VERSION " <$Revision: 1.7 $> apache-1.3");
 	printf("Copyright (c) 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/\n");
 	printf("Copyright (c) 1998-1999 The Apache Group, http://www.apache.org/\n");
 	printf("\n");
     }
     else {
 	printf("<p>\n");
-	printf(" This is ApacheBench, Version %s <i>&lt;%s&gt;</i> apache-1.3<br>\n", VERSION, "$Revision: 1.6 $");
+	printf(" This is ApacheBench, Version %s <i>&lt;%s&gt;</i> apache-1.3<br>\n", VERSION, "$Revision: 1.7 $");
 	printf(" Copyright (c) 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/<br>\n");
 	printf(" Copyright (c) 1998-1999 The Apache Group, http://www.apache.org/<br>\n");
 	printf("</p>\n<p>\n");
