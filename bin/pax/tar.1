@@ -1,0 +1,162 @@
+.\"
+.\" Copyright (c) 1996 SigmaSoft, Th. Lockert
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by SigmaSoft, Th. Lockert.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$OpenBSD: tar.1,v 1.1 1996/06/11 18:07:13 tholo Exp $
+.\"
+.Dd June 11, 1996
+.Dt TAR 1
+.Os
+.Sh NAME
+.Nm tar
+.Nd tape archiver
+.Sh SYNOPSIS
+.Nm tar
+.No [-]{crtux}[befmopvwzHLPXZ014578]
+.Op Ar archive
+.Op Ar blocksize
+.Ar file1
+.Op Ar file2...
+.Sh DESCRIPTION
+The
+.Nm tar
+command creates, adds files to, or extracts files from an
+archive file in \*Qtar\*U format.  A tar archive is often
+stored on a magnetic tape, but can be a floppy or a regular
+disk file.
+.Pp
+One of the following flags must be present:
+.Bl -tag -width Ar
+.It Fl c
+Create new archive, or overwrite an existing archive,
+adding the specified files to it.
+.It Fl r
+Append the named new files to existing archive.  Note that
+this will only work on media on which an end-of-file mark
+can be overwritten.
+.It Fl t
+List contents of archive.  If any files are named on the
+command line, only those files will be listed.
+.It Fl u
+Alias for
+.Fl r
+.It Fl x
+Extract files from archive.  If any files are named on the
+command line, only those files will be extracted from the
+archive.  If more than one copy of a file exists in the
+archive, later copies will overwrite earlier copies during
+extration.
+.El
+.Pp
+In addition to the flags mentioned above, any of the following
+flags may be used:
+.Bl -tag -width Ar
+.It Fl b Ar blocksize
+Set block size to use for archive.  Any multiple of 512 between
+10240 and 32256 may be used.
+.It Fl e
+Stop after first error.
+.It Fl f Ar archive
+Filename where the archive is stored.  Defaults to
+.Pa /dev/rmt8
+.It Fl m
+Do not preserve modification time.
+.It Fl o
+Do not create directories.
+.It Fl p
+Preserve user id, group id, file mode, access and modification
+times.
+.It Fl v
+Verbose operation mode.
+.It Fl w
+Interactively rename files.
+.It Fl z
+Compress archive using gzip.
+.It Fl H
+Follow symlinks given on command line only.
+.It Fl L
+Follow all symlinks.
+.It Fl P
+Do not follow any symlinks.
+.It Fl X
+Do not cross mount points in the file system.
+.It Fl Z
+Compress archive using compress.
+.El
+.Pp
+The options
+.Op Fl 014578
+can be use to select one of the compiled-in backup devices,
+.Pa /dev/rmtN .
+.Sh FILES
+.Bl -tag -width "/dev/rmt8"
+.It Pa /dev/rmt8
+The default archive name
+.El
+.Sh SEE ALSO
+.Xr pax 1 ,
+.Xr cpio 1
+.Sh AUTHOR
+Keith Muller at the University of California, San Diego
+.Sh ERRORS
+.Nm tar
+will exit with one of the following values:
+.Bl -tag -width 2n
+.It 0
+All files were processed successfully.
+.It 1
+An error occured.
+.El
+.Pp
+Whenever
+.Nm tar
+cannot create a file or a link when extracting an archive or cannot
+find a file while writing an archive, or cannot preserve the user
+ID, group ID, file mode or access and modification times when the
+.Fl p
+options is specified, a diagnostic message is written to standard
+error and a non-zero exit value will be returned, but processing
+will continue.  In the case where
+.Nm tar
+cannot create a link to a file,
+.Nm tar
+will not create a second copy of the file.
+.Pp
+If the extraction of a file from an archive is prematurely terminated
+by a signal or error,
+.Nm tar
+may have only partially extracted the file the user wanted.
+Additionally, the file modes of extracted files and directories may
+have incorrect file bits, and the modification and access times may
+be wrong.
+.Pp
+If the creation of an archive is prematurely terminated by a signal
+or error,
+.Nm tar
+may have only partially created the archive which may violate the
+specific archive format specification.
