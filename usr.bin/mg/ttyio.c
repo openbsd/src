@@ -1,12 +1,11 @@
-/*	$OpenBSD: ttyio.c,v 1.22 2002/08/22 23:28:19 deraadt Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.23 2002/09/15 14:08:57 vincent Exp $	*/
 
 /*
  * POSIX terminal I/O.
  *
- * The functions in this file
- * negotiate with the operating system for
- * keyboard characters, and write characters to
- * the display in a barely buffered fashion.
+ * The functions in this file negotiate with the operating system for
+ * keyboard characters, and write characters to the display in a barely
+ * buffered fashion.
  */
 #include	"def.h"
 
@@ -17,18 +16,18 @@
 #include	<termios.h>
 #include	<term.h>
 
-#define NOBUF	512			/* Output buffer size.		*/
+#define NOBUF	512			/* Output buffer size. */
 
 #ifndef TCSASOFT
 #define TCSASOFT	0
 #endif
 
-char	obuf[NOBUF];			/* Output buffer.		*/
-int	nobuf;				/* Buffer count.		*/
-struct	termios	oldtty;			/* POSIX tty settings.		*/
+char	obuf[NOBUF];			/* Output buffer. */
+int	nobuf;				/* Buffer count. */
+struct	termios	oldtty;			/* POSIX tty settings. */
 struct	termios	newtty;
-int	nrow;				/* Terminal size, rows.		*/
-int	ncol;				/* Terminal size, columns.	*/
+int	nrow;				/* Terminal size, rows. */
+int	ncol;				/* Terminal size, columns. */
 
 /*
  * This function gets called once, to set up the terminal.
@@ -36,7 +35,7 @@ int	ncol;				/* Terminal size, columns.	*/
  * which isn't really the right thing to do.
  */
 void
-ttopen()
+ttopen(void)
 {
 
 	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
@@ -54,12 +53,12 @@ ttopen()
  * will be reflected in mg.
  */
 int
-ttraw()
+ttraw(void)
 {
 
 	if (tcgetattr(0, &oldtty) < 0) {
 		ewprintf("ttopen can't get terminal attributes");
-		return(FALSE);
+		return (FALSE);
 	}
 	(void)memcpy(&newtty, &oldtty, sizeof(newtty));
 	/* Set terminal to 'raw' mode and ignore a 'break' */
@@ -81,9 +80,9 @@ ttraw()
 #endif
 	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &newtty) < 0) {
 		ewprintf("ttopen can't tcsetattr");
-		return(FALSE);
+		return (FALSE);
 	}
-	return(TRUE);
+	return (TRUE);
 }
 
 /*
@@ -93,9 +92,8 @@ ttraw()
  * because vttidy() in display.c expects it for portability reasons.
  */
 void
-ttclose()
+ttclose(void)
 {
-
 	if (ttcooked() == FALSE)
 		panic("");		/* ttcooked() already printf'd */
 }
@@ -105,15 +103,14 @@ ttclose()
  * in anticipation of exiting or suspending the editor.
  */
 int
-ttcooked()
+ttcooked(void)
 {
-
 	ttflush();
 	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &oldtty) < 0) {
 		ewprintf("ttclose can't tcsetattr");
-		return(FALSE);
+		return (FALSE);
 	}
-	return(TRUE);
+	return (TRUE);
 }
 
 /*
@@ -123,18 +120,17 @@ ttcooked()
 int
 ttputc(int c)
 {
-
 	if (nobuf >= NOBUF)
 		ttflush();
 	obuf[nobuf++] = c;
-	return(c);
+	return (c);
 }
 
 /*
  * Flush output.
  */
 void
-ttflush()
+ttflush(void)
 {
 	ssize_t written;
 	char *buf = obuf;
@@ -152,12 +148,11 @@ ttflush()
 }
 
 /*
- * Read character from terminal.
- * All 8 bits are returned, so that you can use
- * a multi-national terminal.
+ * Read character from terminal. All 8 bits are returned, so that you
+ * can use a multi-national terminal.
  */
 int
-ttgetc()
+ttgetc(void)
 {
 	char	c;
 	int ret;
@@ -179,11 +174,11 @@ ttgetc()
  * Returns TRUE if there are characters waiting to be read.
  */
 int
-typeahead()
+typeahead(void)
 {
 	int	x;
 
-	return((ioctl(0, FIONREAD, (char *) &x) < 0) ? 0 : x);
+	return ((ioctl(0, FIONREAD, (char *) &x) < 0) ? 0 : x);
 }
 
 /*
@@ -192,7 +187,6 @@ typeahead()
 void
 panic(char *s)
 {
-
 	(void) fputs("panic: ", stderr);
 	(void) fputs(s, stderr);
 	(void) fputc('\n', stderr);
