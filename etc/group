@@ -16,6 +16,7 @@ popa3d:*:26:
 sshd:*:27:
 guest:*:31:root
 utmp:*:45:
+crontab:*:66:
 www:*:67:
 network:*:69:
 named:*:70:
