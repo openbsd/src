@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.11 2005/02/15 20:14:49 jfb Exp $	*/
+/*	$OpenBSD: sock.c,v 1.12 2005/02/22 23:17:42 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,9 +39,6 @@
 #include "log.h"
 #include "sock.h"
 #include "cvsd.h"
-
-
-volatile sig_atomic_t  cvs_sock_doloop;
 
 
 char     *cvsd_sock_path;
