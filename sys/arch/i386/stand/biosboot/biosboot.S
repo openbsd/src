@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.17 1997/08/29 20:10:56 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.18 1997/08/29 21:16:48 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -338,4 +338,4 @@ _partitions:
 	
 	. = 0x200 - 2
 	/* a little signature */
-	.word	0xaa55
+	.word	DOSMBR_SIGNATURE
