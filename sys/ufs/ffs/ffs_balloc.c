@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.9 1999/05/27 20:36:21 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.10 2000/04/20 14:41:57 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ ffs_balloc(v)
 	daddr_t newb, *bap, pref;
 	int deallocated, osize, nsize, num, i, error;
 	daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR+1];
+	int unwindidx = -1;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -292,6 +293,8 @@ ffs_balloc(v)
                         }
 		}
 		bap[indirs[i - 1].in_off] = nb;
+		if (allocib == NULL && unwindidx < 0)
+			unwindidx = i - 1;
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -358,8 +361,23 @@ fail:
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);
 		deallocated += fs->fs_bsize;
 	}
-	if (allocib != NULL)
+	if (allocib != NULL) {
 		*allocib = 0;
+	} else if (unwindidx >= 0) {
+		int r;
+
+		r = bread(vp, indirs[unwindidx].in_lbn, 
+		    (int)fs->fs_bsize, NOCRED, &bp);
+		if (r)
+			panic("Could not unwind indirect block, error %d", r);
+		bap = (ufs_daddr_t *)bp->b_data;
+		bap[indirs[unwindidx].in_off] = 0;
+		if (flags & B_SYNC) {
+			bwrite(bp);
+		} else {
+			bdwrite(bp);
+		}
+	}
 	if (deallocated) {
 #ifdef QUOTA
 		/*
@@ -370,6 +388,6 @@ fail:
 		ip->i_ffs_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	return (error);
 
+	return (error);
 }
