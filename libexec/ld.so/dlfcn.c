@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.24 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.25 2003/04/28 22:51:25 marc Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -48,6 +48,9 @@ int _dl_errno;
 
 static int _dl_real_close(void *handle);
 static void _dl_unload_deps(elf_object_t *object);
+static void _dl_thread_kern_stop(void);
+static void _dl_thread_kern_go(void);
+static void (*_dl_thread_fnc)(int) = NULL;
 
 void *
 dlopen(const char *libname, int how)
@@ -60,7 +63,9 @@ dlopen(const char *libname, int how)
 
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
+	_dl_thread_kern_stop();
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
+	_dl_thread_kern_go();
 	if (object == 0)
 		return((void *)0);
 
@@ -86,7 +91,9 @@ dlopen(const char *libname, int how)
 				continue;
 
 			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
+			_dl_thread_kern_stop();
 			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB);
+			_dl_thread_kern_go();
 			if (!depobj)
 				_dl_exit(4);
 
@@ -139,12 +146,20 @@ dlsym(void *handle, const char *name)
 int
 dlctl(void *handle, int command, void *data)
 {
+	int retval;
+
 	switch (command) {
+	case DL_SETTHREADLCK:
+		DL_DEB(("dlctl: _dl_thread_fnc set to %p\n", data));
+		_dl_thread_fnc = data;
+		retval = 0;
+		break;
 	default:
 		_dl_errno = DL_INVALID_CTL;
+		retval = -1;
 		break;
 	}
-	return(-1);
+	return (retval);
 }
 
 int
@@ -287,3 +302,18 @@ _dl_show_objects(void)
 		object = object->next;
 	}
 }
+
+static void
+_dl_thread_kern_stop(void)
+{
+	if (_dl_thread_fnc != NULL)
+		(*_dl_thread_fnc)(0);
+}
+
+static void
+_dl_thread_kern_go(void)
+{
+	if (_dl_thread_fnc != NULL)
+		(*_dl_thread_fnc)(1);
+}
+
