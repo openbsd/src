@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.2 1997/11/09 22:21:22 gene Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.3 1999/02/13 01:02:21 fgsch Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -168,10 +168,6 @@ look_for_card(ia, sc)
 {
 	int count1, count2;
 
-	sc->sc_ioh = ia->ia_iot;
-	if(bus_space_map(ia->ia_iot, ia->ia_iobase, EX_IOSIZE, 0, &sc->sc_ioh)) 
-		return(0);
-
 	/*
 	 * Check for the i82595 signature, and check that the round robin
 	 * counter actually advances.
@@ -183,10 +179,8 @@ look_for_card(ia, sc)
 	count2 = ISA_GET(ID_REG);
 	if ((count2 & Counter_bits) == ((count1 + 0xc0) & Counter_bits))
 		return(1);
-	else {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, EX_IOSIZE);
+	else
 		return(0);
-	}
 }
 
 
@@ -197,6 +191,8 @@ ex_probe(parent, match, aux)
 {
 	struct ex_softc *sc = match;
 	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 
 	int iobase;
 	u_short eaddr_tmp;
@@ -207,13 +203,17 @@ ex_probe(parent, match, aux)
 	iobase = ia->ia_iobase;
 
 	if ((iobase >= 0x200) && (iobase <= 0x3a0)) {
-		if (look_for_card(ia, sc) == 0)
+		if(bus_space_map(iot, iobase, EX_IOSIZE, 0, &ioh))
+			return(0);
+
+		if (!look_for_card(ia, sc)) {
+			bus_space_unmap(iot, ioh, EX_IOSIZE);
 			return(0); 
+		}
 	} else
 		return(0);
 
 	ia->ia_iosize = EX_IOSIZE;
-/*	ia->ia_iobase = iobase; */
 
 	/*
 	 * Reset the card.
