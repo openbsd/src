@@ -346,12 +346,7 @@ union ssl_ipc_semun {
 #define SSL_DBM_FILE_SUFFIX_DIR ".dir"
 #define SSL_DBM_FILE_SUFFIX_PAG ".pag"
 #else /* !SSL_USE_SDBM */
-#if defined(__GLIBC__) && defined(__GLIBC_MINOR__) \
-    && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
-#include <db1/ndbm.h>
-#else
 #include <ndbm.h>
-#endif
 #define ssl_dbm_open     dbm_open
 #define ssl_dbm_close    dbm_close
 #define ssl_dbm_store    dbm_store

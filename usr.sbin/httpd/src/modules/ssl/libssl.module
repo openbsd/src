@@ -255,8 +255,8 @@ ConfigStart
         fi
         #   4. override decision on a few brain-dead platforms
         if [ ".$my_rule_SSL_SDBM" = .default ]; then
-            case "$OS" in
-                Linux )
+            case "$PLAT" in
+                *-linux* )
                     #   force Linux boxes to use builtin SDBM per default because 
                     #   of too much broken vendor DBM libraries on this platform
                     SSL_DBM_NAME=''
@@ -367,7 +367,7 @@ ConfigStart
     #   SSL engine support
     #
     case $SSL_VERSION_ID in
-        *0.9.6*engine* )
+        *0.9.6*engine* | *0.9.6a*engine* | *0.9.[789]* )
             SSL_CFLAGS="$SSL_CFLAGS -DSSL_ENGINE"
             ;;
     esac

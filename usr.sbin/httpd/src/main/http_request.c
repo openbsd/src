@@ -1370,6 +1370,10 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
 
     new->method          = r->method;
     new->method_number   = r->method_number;
+#ifdef EAPI
+    /* initialize context _BEFORE_ ap_parse_uri() call */
+    new->ctx             = r->ctx;
+#endif /* EAPI */
     ap_parse_uri(new, new_uri);
     new->request_config = ap_create_request_config(r->pool);
     new->per_dir_config = r->server->lookup_defaults;
@@ -1404,9 +1408,6 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
     new->no_local_copy   = r->no_local_copy;
     new->read_length     = r->read_length;     /* We can only read it once */
     new->vlist_validator = r->vlist_validator;
-#ifdef EAPI
-    new->ctx             = r->ctx;
-#endif /* EAPI */
 
     ap_table_setn(new->subprocess_env, "REDIRECT_STATUS",
 	ap_psprintf(r->pool, "%d", r->status));

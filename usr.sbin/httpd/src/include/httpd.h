@@ -154,8 +154,8 @@ extern "C" {
 #define DEFAULT_HTTPS_PORT	443
 #define ap_is_default_port(port,r)	((port) == ap_default_port(r))
 #ifdef EAPI
-#define ap_http_method(r)   (ap_ctx_get((r)->ctx, "ap::http::method") != NULL ? ((char *)ap_ctx_get((r)->ctx, "ap::http::method")) : "http")
-#define ap_default_port(r)  (ap_ctx_get((r)->ctx, "ap::default::port") != NULL ? atoi((char *)ap_ctx_get((r)->ctx, "ap::default::port")) : DEFAULT_HTTP_PORT)
+#define ap_http_method(r)   (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::http::method") != NULL) ? ((char *)ap_ctx_get((r)->ctx, "ap::http::method")) : "http")
+#define ap_default_port(r)  (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::default::port") != NULL) ? atoi((char *)ap_ctx_get((r)->ctx, "ap::default::port")) : DEFAULT_HTTP_PORT)
 #else /* EAPI */
 #define ap_http_method(r)	"http"
 #define ap_default_port(r)	DEFAULT_HTTP_PORT

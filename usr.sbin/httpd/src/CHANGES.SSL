@@ -23,6 +23,40 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.4 (04-May-2001 to 20-May-2001)
+
+   *) Removed old db1/ndbm.h kludge from mod_ssl.h, because it should be
+      not needed at all, because mod_ssl downgrades to SDBM anyway on all
+      Linux platforms. Additionally made the Linux check more accurate
+      by using src/Configure's $PLAT variable instead of $OS.
+
+   *) Upgraded to Apache 1.3.20
+
+   *) +------------------------------------------------------------------+
+      | Officially moved mod_ssl to Apache 2.0:                          |
+      | The mod_ssl 2.8.x source tree is now frozen for development      |
+      | and will only be updated for bugfixes and Apache 1.3.x version   |
+      | upgrades. The last release (2.8.3) was imported to the ASF CVS   |
+      | repository under httpd-2.0/modules/ssl/. All development efforts |
+      | are now directed to the Apache 2.0 area. Nevertheless, mod_ssl   |
+      | 2.8.x releases will occur as long as Apache 1.3.x releases occur.|
+      +------------------------------------------------------------------+
+
+  Changes with mod_ssl 2.8.3 (30-Mar-2001 to 04-May-2001)
+
+   *) Allow loadcacert.cgi script to work inside mod_perl.
+
+   *) Fixed typo in the directive descriptions in mod_ssl.c
+
+   *) Fixed EAPI context usage in http_request.c: a context pointer
+      potentially can be NULL requests and can cause a segfault if
+      dereferenced.
+
+   *) Fixed ENGINE support: the engine support is are now already
+      loaded at configure time. Else mod_ssl fails to find them.
+
+   *) Fixed typo in httpd.conf-dist.
+
   Changes with mod_ssl 2.8.2 (03-Mar-2001 to 30-Mar-2001)
 
    *) Moved the Shared Memory Cyclic Buffer (SHMCB) session cache
