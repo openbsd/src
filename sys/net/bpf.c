@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.50 2004/06/22 04:04:19 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.51 2004/06/22 04:58:27 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1104,7 +1104,7 @@ bpf_tap(arg, pkt, pktlen)
 	struct bpf_if *bp;
 	struct bpf_d *d;
 	size_t slen;
-	int match = 0;
+	int drop = 0;
 
 	/*
 	 * Note that the ipl does not have to be raised at this point.
@@ -1117,11 +1117,12 @@ bpf_tap(arg, pkt, pktlen)
 		slen = bpf_filter(d->bd_rfilter, pkt, pktlen, pktlen);
 		if (slen != 0) {
 			bpf_catchpacket(d, pkt, pktlen, slen, bcopy);
-			match ++;
+			if (d->bd_fildrop)
+				drop++;
 		}
 	}
 
-	return (d->bd_fildrop && match);
+	return (drop);
 }
 
 /*
@@ -1163,7 +1164,7 @@ bpf_mtap(arg, m)
 	struct bpf_d *d;
 	size_t pktlen, slen;
 	struct mbuf *m0;
-	int match = 0;
+	int drop = 0;
 
 	if (m == NULL)
 		return (0);
@@ -1177,11 +1178,12 @@ bpf_mtap(arg, m)
 		slen = bpf_filter(d->bd_rfilter, (u_char *)m, pktlen, 0);
 		if (slen != 0) {
 			bpf_catchpacket(d, (u_char *)m, pktlen, slen, bpf_mcopy);
-			match++;
+			if (d->bd_fildrop)
+				drop++;
 		}
 	}
 
-	return (d->bd_fildrop && match);
+	return (drop);
 }
 
 /*
