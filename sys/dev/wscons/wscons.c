@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons.c,v 1.7 1998/08/15 22:47:53 kstailey Exp $	*/
+/*	$OpenBSD: wscons.c,v 1.8 1998/11/21 18:02:28 niklas Exp $	*/
 /*	$NetBSD: wscons.c,v 1.10 1996/12/05 01:39:47 cgd Exp $	*/
 
 /*
@@ -393,6 +393,8 @@ wsconsmmap(dev, offset, prot)
 {
 	struct wscons_softc *sc = wscons_cd.cd_devs[WSCUNIT(dev)];
 
+	if (offset < 0)
+		return -1;
 	if (sc->sc_mmap != NULL)
 		return (*sc->sc_mmap)(sc->sc_dev.dv_parent, offset, prot);
 	else
