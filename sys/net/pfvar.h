@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.182 2004/02/10 18:49:10 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.183 2004/02/10 22:42:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -558,7 +558,7 @@ struct pf_src_node {
 	struct pfi_kif	*kif;
 	u_int32_t	 bytes;
 	u_int32_t	 packets;
-	u_int32_t        states;
+	u_int32_t	 states;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	sa_family_t	 af;
@@ -619,7 +619,7 @@ struct pf_state {
 	u_int32_t	 expire;
 	u_int32_t	 packets[2];
 	u_int32_t	 bytes[2];
-	u_int32_t        creatorid;
+	u_int32_t	 creatorid;
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
@@ -759,8 +759,8 @@ struct pfr_ktable {
 };
 #define pfrkt_t		pfrkt_ts.pfrts_t
 #define pfrkt_name	pfrkt_t.pfrt_name
-#define pfrkt_anchor    pfrkt_t.pfrt_anchor
-#define pfrkt_ruleset   pfrkt_t.pfrt_ruleset
+#define pfrkt_anchor	pfrkt_t.pfrt_anchor
+#define pfrkt_ruleset	pfrkt_t.pfrt_ruleset
 #define pfrkt_flags	pfrkt_t.pfrt_flags
 #define pfrkt_cnt	pfrkt_ts.pfrts_cnt
 #define pfrkt_refcnt	pfrkt_ts.pfrts_refcnt
@@ -835,8 +835,8 @@ struct pf_pdesc {
 #endif /* INET6 */
 		void			*any;
 	} hdr;
-	struct pf_addr   baddr;         /* address before translation */
-	struct pf_addr   naddr;         /* address after translation */
+	struct pf_addr	 baddr;		/* address before translation */
+	struct pf_addr	 naddr;		/* address after translation */
 	struct pf_rule	*nat_rule;	/* nat/rdr rule applied to packet */
 	struct pf_addr	*src;
 	struct pf_addr	*dst;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.423 2004/02/10 20:20:01 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.424 2004/02/10 22:42:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -558,7 +558,7 @@ int
 pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
     struct pf_addr *src, sa_family_t af)
 {
-	struct pf_src_node  k;
+	struct pf_src_node	k;
 
 	if (*sn == NULL) {
 		k.af = af;
@@ -1769,7 +1769,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	struct pf_pool		*rpool = &r->rpool;
 	struct pf_addr		*raddr = &rpool->cur->addr.v.a.addr;
 	struct pf_addr		*rmask = &rpool->cur->addr.v.a.mask;
-	struct pf_pooladdr      *acur = rpool->cur;
+	struct pf_pooladdr	*acur = rpool->cur;
 	struct pf_src_node	 k;
 
 	if (*sn == NULL && r->rpool.opts & PF_POOL_STICKYADDR &&
@@ -5264,15 +5264,15 @@ pf_add_mbuf_tag(struct mbuf *m, u_int tag)
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
-	struct pfi_kif	  *kif;
-	u_short		   action, reason = 0, log = 0;
-	struct mbuf	  *m = *m0;
-	struct ip	  *h;
-	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr, *nr;
-	struct pf_state	  *s = NULL;
-	struct pf_ruleset *ruleset = NULL;
-	struct pf_pdesc	   pd;
-	int		   off, dirndx, pqid = 0;
+	struct pfi_kif		*kif;
+	u_short			 action, reason = 0, log = 0;
+	struct mbuf		*m = *m0;
+	struct ip		*h;
+	struct pf_rule		*a = NULL, *r = &pf_default_rule, *tr, *nr;
+	struct pf_state		*s = NULL;
+	struct pf_ruleset	*ruleset = NULL;
+	struct pf_pdesc		 pd;
+	int			 off, dirndx, pqid = 0;
 
 	if (!pf_status.running ||
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
@@ -5569,15 +5569,15 @@ done:
 int
 pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
-	struct pfi_kif	  *kif;
-	u_short		   action, reason = 0, log = 0;
-	struct mbuf	  *m = *m0;
-	struct ip6_hdr	  *h;
-	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr, *nr;
-	struct pf_state	  *s = NULL;
-	struct pf_ruleset *ruleset = NULL;
-	struct pf_pdesc    pd;
-	int		   off, terminal = 0, dirndx;
+	struct pfi_kif		*kif;
+	u_short			 action, reason = 0, log = 0;
+	struct mbuf		*m = *m0;
+	struct ip6_hdr		*h;
+	struct pf_rule		*a = NULL, *r = &pf_default_rule, *tr, *nr;
+	struct pf_state		*s = NULL;
+	struct pf_ruleset	*ruleset = NULL;
+	struct pf_pdesc		 pd;
+	int			 off, terminal = 0, dirndx;
 
 	if (!pf_status.running ||
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))

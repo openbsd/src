@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.45 2004/02/10 18:49:10 henning Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.46 2004/02/10 22:42:57 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -127,7 +127,7 @@ struct pool		 pfr_ktable_pl;
 struct pool		 pfr_kentry_pl;
 struct sockaddr_in	 pfr_sin;
 struct sockaddr_in6	 pfr_sin6;
-union  sockaddr_union	 pfr_mask;
+union sockaddr_union	 pfr_mask;
 struct pf_addr		 pfr_ffaddr;
 
 void			 pfr_copyout_addr(struct pfr_addr *,
@@ -174,7 +174,7 @@ void			 pfr_clean_node_mask(struct pfr_ktable *,
 int			 pfr_table_count(struct pfr_table *, int);
 int			 pfr_skip_table(struct pfr_table *,
 			    struct pfr_ktable *, int);
-struct pfr_kentry       *pfr_kentry_byidx(struct pfr_ktable *, int, int);
+struct pfr_kentry	*pfr_kentry_byidx(struct pfr_ktable *, int, int);
 
 RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 RB_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
@@ -833,7 +833,7 @@ void
 pfr_clean_node_mask(struct pfr_ktable *kt,
     struct pfr_kentryworkq *workq)
 {
-	struct pfr_kentry       *p;
+	struct pfr_kentry	*p;
 
 	SLIST_FOREACH(p, workq, pfrke_workq)
 		pfr_unroute_kentry(kt, p);

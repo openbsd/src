@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.103 2004/02/10 18:49:10 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.104 2004/02/10 22:42:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -667,7 +667,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
 {
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule;
-	struct pf_rulequeue     *old_rules;
+	struct pf_rulequeue	*old_rules;
 	int			 s;
 
 	if (rs_num < 0 || rs_num >= PF_RULESET_MAX)
