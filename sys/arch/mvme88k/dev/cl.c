@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.15 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: cl.c,v 1.16 2001/12/14 00:51:41 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -253,7 +253,7 @@ clprobe(parent, self, aux)
 	ca->ca_vaddr = ca->ca_paddr = (void *)CD2400_BASE_ADDR;
 	cl_reg = (struct clreg *)ca->ca_vaddr;
 
-	if (badvaddr(&cl_reg->cl_gfrcr,1))
+	if (badvaddr((vm_offset_t)&cl_reg->cl_gfrcr,1))
 		return 0;
 	return 1;
 }
