@@ -1,4 +1,4 @@
-.\"	$OpenBSD: copy.9,v 1.12 2005/01/04 22:57:51 jmc Exp $
+.\"	$OpenBSD: copy.9,v 1.13 2005/01/14 01:46:05 kevlo Exp $
 .\"	$NetBSD: copy.9,v 1.2 1996/01/09 03:23:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
@@ -43,15 +43,15 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/systm.h>
 .Ft int
-.Fn copyin "void *uaddr" "void *kaddr" "size_t len"
+.Fn copyin "const void *uaddr" "void *kaddr" "size_t len"
 .Ft int
-.Fn copyout "void *kaddr" "void *uaddr" "size_t len"
+.Fn copyout "const void *kaddr" "void *uaddr" "size_t len"
 .Ft int
-.Fn copystr "void *kfaddr" "void *kdaddr" "size_t len" "size_t *done"
+.Fn copystr "const void *kfaddr" "void *kdaddr" "size_t len" "size_t *done"
 .Ft int
-.Fn copyinstr "void *uaddr" "void *kaddr" "size_t len" "size_t *done"
+.Fn copyinstr "const void *uaddr" "void *kaddr" "size_t len" "size_t *done"
 .Ft int
-.Fn copyoutstr "void *kaddr" "void *uaddr" "size_t len" "size_t *done"
+.Fn copyoutstr "const void *kaddr" "void *uaddr" "size_t len" "size_t *done"
 .Sh DESCRIPTION
 The
 .Nm
