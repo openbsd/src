@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.9 2003/09/28 21:01:43 grange Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.10 2003/10/16 14:15:41 grange Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -38,68 +38,65 @@
 /*
  * Controller register (wdr_ctlr)
  */
-#define  WDCTL_4BIT	 0x08	/* use four head bits (wd1003) */
-#define  WDCTL_RST	 0x04	/* reset the controller */
-#define  WDCTL_IDS	 0x02	/* disable controller interrupts */
-#if 0 /* NOT MAPPED; fd uses this register on PCs */
-#define	wd_digin	1	/* disk controller input (R) */
-#endif
+#define WDCTL_4BIT	0x08	/* use four head bits (wd1003) */
+#define WDCTL_RST	0x04	/* reset the controller */
+#define WDCTL_IDS	0x02	/* disable controller interrupts */
 
 /*
  * Status bits.
  */
-#define	WDCS_BSY	0x80	/* busy */
-#define	WDCS_DRDY	0x40	/* drive ready */
-#define	WDCS_DWF	0x20	/* drive write fault */
-#define	WDCS_DSC	0x10	/* drive seek complete */
-#define	WDCS_DRQ	0x08	/* data request */
-#define	WDCS_CORR	0x04	/* corrected data */
-#define	WDCS_IDX	0x02	/* index */
-#define	WDCS_ERR	0x01	/* error */
+#define WDCS_BSY	0x80	/* busy */
+#define WDCS_DRDY	0x40	/* drive ready */
+#define WDCS_DWF	0x20	/* drive write fault */
+#define WDCS_DSC	0x10	/* drive seek complete */
+#define WDCS_DRQ	0x08	/* data request */
+#define WDCS_CORR	0x04	/* corrected data */
+#define WDCS_IDX	0x02	/* index */
+#define WDCS_ERR	0x01	/* error */
 #define WDCS_BITS	"\020\010bsy\007drdy\006dwf\005dsc\004drq\003corr\002idx\001err"
 
 /*
  * Error bits.
  */
-#define	WDCE_BBK	0x80	/* bad block detected */
-#define	WDCE_CRC	0x80	/* CRC error (Ultra-DMA only) */
-#define	WDCE_UNC	0x40	/* uncorrectable data error */
-#define	WDCE_MC		0x20	/* media changed */
-#define	WDCE_IDNF	0x10	/* id not found */
-#define	WDCE_MCR	0x08	/* media change requested */
-#define	WDCE_ABRT	0x04	/* aborted command */
-#define	WDCE_TK0NF	0x02	/* track 0 not found */
-#define	WDCE_AMNF	0x01	/* address mark not found */
+#define WDCE_BBK	0x80	/* bad block detected */
+#define WDCE_CRC	0x80	/* CRC error (Ultra-DMA only) */
+#define WDCE_UNC	0x40	/* uncorrectable data error */
+#define WDCE_MC		0x20	/* media changed */
+#define WDCE_IDNF	0x10	/* id not found */
+#define WDCE_MCR	0x08	/* media change requested */
+#define WDCE_ABRT	0x04	/* aborted command */
+#define WDCE_TK0NF	0x02	/* track 0 not found */
+#define WDCE_AMNF	0x01	/* address mark not found */
 
 /*
  * Commands for Disk Controller.
  */
 #define WDCC_NOP	0x00	/* NOP - Always fail with "aborted command" */
-#define	WDCC_RECAL	0x10	/* disk restore code -- resets cntlr */
+#define WDCC_RECAL	0x10	/* disk restore code -- resets cntlr */
 
-#define	WDCC_READ	0x20	/* disk read code */
-#define	WDCC_WRITE	0x30	/* disk write code */
-#define	 WDCC__LONG	 0x02	 /* modifier -- access ecc bytes */
-#define	 WDCC__NORETRY	 0x01	 /* modifier -- no retrys */
+#define WDCC_READ	0x20	/* disk read code */
+#define WDCC_WRITE	0x30	/* disk write code */
+#define WDCC__LONG	0x02	/* modifier -- access ecc bytes */
+#define WDCC__NORETRY	0x01	/* modifier -- no retrys */
 
-#define	WDCC_FORMAT	0x50	/* disk format code */
-#define	WDCC_DIAGNOSE	0x90	/* controller diagnostic */
-#define	WDCC_IDP	0x91	/* initialize drive parameters */
+#define WDCC_FORMAT	0x50	/* disk format code */
+#define WDCC_DIAGNOSE	0x90	/* controller diagnostic */
+#define WDCC_IDP	0x91	/* initialize drive parameters */
 
-#define	WDCC_READMULTI	0xc4	/* read multiple */
-#define	WDCC_WRITEMULTI	0xc5	/* write multiple */
-#define	WDCC_SETMULTI	0xc6	/* set multiple mode */
+#define WDCC_READMULTI	0xc4	/* read multiple */
+#define WDCC_WRITEMULTI	0xc5	/* write multiple */
+#define WDCC_SETMULTI	0xc6	/* set multiple mode */
 
-#define	WDCC_READDMA	0xc8	/* read with DMA */
-#define	WDCC_WRITEDMA	0xca	/* write with DMA */
+#define WDCC_READDMA	0xc8	/* read with DMA */
+#define WDCC_WRITEDMA	0xca	/* write with DMA */
 
-#define	WDCC_ACKMC	0xdb	/* acknowledge media change */
-#define	WDCC_LOCK	0xde	/* lock drawer */
-#define	WDCC_UNLOCK	0xdf	/* unlock drawer */
+#define WDCC_ACKMC	0xdb	/* acknowledge media change */
+#define WDCC_LOCK	0xde	/* lock drawer */
+#define WDCC_UNLOCK	0xdf	/* unlock drawer */
 
-#define	WDCC_FLUSHCACHE	0xe7	/* Flush cache */
-#define	WDCC_IDENTIFY	0xec	/* read parameters from controller */
-#define	SET_FEATURES	0xef	/* set features */
+#define WDCC_FLUSHCACHE	0xe7	/* Flush cache */
+#define WDCC_IDENTIFY	0xec	/* read parameters from controller */
+#define SET_FEATURES	0xef	/* set features */
 
 #define WDCC_IDLE	0xe3	/* set idle timer & enter idle mode */
 #define WDCC_IDLE_IMMED	0xe1	/* enter idle mode */
@@ -120,7 +117,7 @@
 /* Subcommands for SET_FEATURES (features register ) */
 #define WDSF_8BIT_PIO_EN	0x01 /* Enable 8bit PIO (CFA featureset) */
 #define WDSF_EN_WR_CACHE	0x02
-#define WDSF_SET_MODE    	0x03
+#define WDSF_SET_MODE		0x03
 #define WDSF_REASSIGN_EN	0x04 /* Obsolete in ATA-6 */
 #define WDSF_APM_EN		0x05 /* Enable Adv. Power Management */
 #define WDSF_PUIS_EN		0x06 /* Enable Power-Up In Standby */
@@ -148,14 +145,14 @@
 #define WDSF_READAHEAD_EN	0xAA
 #define WDSF_PREFETCH_SET	0xAB /* Obsolete in ATA-6 */
 #define WDSF_AAM_DS		0xC2 /* Disable Autom. Acoustic Management */
-#define WDSF_POD_EN             0xCC
+#define WDSF_POD_EN		0xCC
 #define WDSF_RLSE_DS		0xDD /* Disable release interrupt */
 #define WDSF_SRV_DS		0xDE /* Disable SERVICE interrupt */
 
 /* parameters uploaded to device/heads register */
-#define	WDSD_IBM	0xa0	/* forced to 512 byte sector, ecc */
-#define	WDSD_CHS	0x00	/* cylinder/head/sector addressing */
-#define	WDSD_LBA	0x40	/* logical block addressing */
+#define WDSD_IBM	0xa0	/* forced to 512 byte sector, ecc */
+#define WDSD_CHS	0x00	/* cylinder/head/sector addressing */
+#define WDSD_LBA	0x40	/* logical block addressing */
 
 /* Commands for ATAPI devices */
 #define ATAPI_CHECK_POWER_MODE	0xe5
@@ -165,7 +162,7 @@
 #define ATAPI_PKT_CMD		0xa0
 #define ATAPI_IDENTIFY_DEVICE	0xa1
 #define ATAPI_SOFT_RESET	0x08
-#define ATAPI_DEVICE_RESET      0x08 /* ATA/ATAPI-5 name for soft reset */
+#define ATAPI_DEVICE_RESET	0x08 /* ATA/ATAPI-5 name for soft reset */
 #define ATAPI_SLEEP		0xe6
 #define ATAPI_STANDBY_IMMEDIATE	0xe0
 #define ATAPI_SMART		0xB0 /* SMART operations */
@@ -175,18 +172,16 @@
 #define ATAPI_WRITEMULTIEXT	0x39 /* Write Multi Ext */
 
 /* Bytes used by ATAPI_PACKET_COMMAND ( feature register) */
-#define ATAPI_PKT_CMD_FTRE_DMA 0x01
-#define ATAPI_PKT_CMD_FTRE_OVL 0x02
+#define ATAPI_PKT_CMD_FTRE_DMA	0x01
+#define ATAPI_PKT_CMD_FTRE_OVL	0x02
 
 /* ireason */
-#define WDCI_CMD         0x01    /* command(1) or data(0) */
-#define WDCI_IN          0x02    /* transfer to(1) or from(0) the host */
-#define WDCI_RELEASE     0x04    /* bus released until completion */
+#define WDCI_CMD	0x01 /* command(1) or data(0) */
+#define WDCI_IN		0x02 /* transfer to(1) or from(0) the host */
+#define WDCI_RELEASE	0x04 /* bus released until completion */
 
-#define PHASE_CMDOUT    (WDCS_DRQ | WDCI_CMD)
-#define PHASE_DATAIN    (WDCS_DRQ | WDCI_IN)
-#define PHASE_DATAOUT   WDCS_DRQ
-#define PHASE_COMPLETED (WDCI_IN | WDCI_CMD)
-#define PHASE_ABORTED   0
-
-
+#define PHASE_CMDOUT	(WDCS_DRQ | WDCI_CMD)
+#define PHASE_DATAIN	(WDCS_DRQ | WDCI_IN)
+#define PHASE_DATAOUT	WDCS_DRQ
+#define PHASE_COMPLETED	(WDCI_IN | WDCI_CMD)
+#define PHASE_ABORTED	0

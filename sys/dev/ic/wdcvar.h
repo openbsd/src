@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.28 2003/09/28 21:01:43 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.29 2003/10/16 14:15:41 grange Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -65,10 +65,10 @@ struct channel_softc { /* Per channel data */
 	bus_space_handle_t      data32ioh;
 	/* Our state */
 	int ch_flags;
-#define WDCF_ACTIVE   0x01	/* channel is active */
-#define WDCF_ONESLAVE 0x02      /* slave-only channel */
-#define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
-#define WDCF_VERBOSE_PROBE 0x40 /* verbose probe */
+#define WDCF_ACTIVE		0x01 /* channel is active */
+#define WDCF_ONESLAVE		0x02 /* slave-only channel */
+#define WDCF_IRQ_WAIT		0x10 /* controller is waiting for irq */
+#define WDCF_VERBOSE_PROBE	0x40 /* verbose probe */
 	u_int8_t ch_status;         /* copy of status register */
 	u_int8_t ch_prev_log_status; /* previous logged value of status reg */
 	u_int8_t ch_log_idx;
@@ -88,7 +88,7 @@ struct channel_softc { /* Per channel data */
  * Disk Controller register definitions.
  */
 #define _WDC_REGMASK 7
-#define _WDC_AUX 8
+#define _WDC_AUX     8
 #define _WDC_RDONLY  16
 #define _WDC_WRONLY  32
 enum wdc_regs {
@@ -130,9 +130,9 @@ struct channel_softc_vtbl {
 #define CHP_READ_REG(chp, a)  ((chp)->_vtbl->read_reg)(chp, a)
 #define CHP_WRITE_REG(chp, a, b)  ((chp)->_vtbl->write_reg)(chp, a, b)
 #define CHP_READ_RAW_MULTI_2(chp, a, b)  \
-        ((chp)->_vtbl->read_raw_multi_2)(chp, a, b)
+	((chp)->_vtbl->read_raw_multi_2)(chp, a, b)
 #define CHP_WRITE_RAW_MULTI_2(chp, a, b)  \
-        ((chp)->_vtbl->write_raw_multi_2)(chp, a, b)
+	((chp)->_vtbl->write_raw_multi_2)(chp, a, b)
 #define CHP_READ_RAW_MULTI_4(chp, a, b)  \
 	((chp)->_vtbl->read_raw_multi_4)(chp, a, b)
 #define CHP_WRITE_RAW_MULTI_4(chp, a, b)  \
@@ -143,17 +143,17 @@ struct wdc_softc { /* Per controller state */
 	/* mandatory fields */
 	int           cap;
 /* Capabilities supported by the controller */
-#define	WDC_CAPABILITY_DATA16 0x0001    /* can do  16-bit data access */
-#define	WDC_CAPABILITY_DATA32 0x0002    /* can do 32-bit data access */
+#define WDC_CAPABILITY_DATA16 0x0001	/* can do  16-bit data access */
+#define WDC_CAPABILITY_DATA32 0x0002	/* can do 32-bit data access */
 #define WDC_CAPABILITY_MODE   0x0004	/* controller knows its PIO/DMA modes */
-#define	WDC_CAPABILITY_DMA    0x0008	/* DMA */
-#define	WDC_CAPABILITY_UDMA   0x0010	/* Ultra-DMA/33 */
-#define	WDC_CAPABILITY_HWLOCK 0x0020	/* Needs to lock HW */
-#define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
-#define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
+#define WDC_CAPABILITY_DMA    0x0008	/* DMA */
+#define WDC_CAPABILITY_UDMA   0x0010	/* Ultra-DMA/33 */
+#define WDC_CAPABILITY_HWLOCK 0x0020	/* Needs to lock HW */
+#define WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
+#define WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
-#define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_IRQACK 0x0400    /* callback to ack interrupt */
+#define WDC_CAPABILITY_PREATA 0x0200	/* ctrl can be a pre-ata one */
+#define WDC_CAPABILITY_IRQACK 0x0400	/* callback to ack interrupt */
 #define WDC_CAPABILITY_SINGLE_DRIVE 0x800 /* Don't proble second drive */
 #define WDC_CAPABILITY_NO_ATAPI_DMA 0x1000 /* Don't do DMA with ATAPI */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
@@ -180,16 +180,16 @@ struct wdc_softc { /* Per controller state */
 #define WDC_DMA_IRQW	0x02
 #define WDC_DMA_LBA48	0x04
 	int             dma_status; /* status return from dma_finish() */
-#define WDC_DMAST_NOIRQ 0x01    /* missing IRQ */
-#define WDC_DMAST_ERR   0x02    /* DMA error */
-#define WDC_DMAST_UNDER 0x04    /* DMA underrun */
+#define WDC_DMAST_NOIRQ	0x01 /* missing IRQ */
+#define WDC_DMAST_ERR	0x02 /* DMA error */
+#define WDC_DMAST_UNDER	0x04 /* DMA underrun */
 
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
-	int            (*claim_hw)(void *, int);
+	int             (*claim_hw)(void *, int);
 	void            (*free_hw)(void *);
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
-	void 		(*set_modes)(struct channel_softc *);
+	void            (*set_modes)(struct channel_softc *);
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void            (*irqack)(struct channel_softc *);
@@ -203,14 +203,14 @@ struct atapi_return_args;
 
 struct wdc_xfer {
 	volatile u_int c_flags;
-#define C_ATAPI  	0x0002 /* xfer is ATAPI request */
-#define C_TIMEOU  	0x0004 /* xfer processing timed out */
-#define C_NEEDDONE  	0x0010 /* need to call upper-level done */
+#define C_ATAPI		0x0002 /* xfer is ATAPI request */
+#define C_TIMEOU	0x0004 /* xfer processing timed out */
+#define C_NEEDDONE	0x0010 /* need to call upper-level done */
 #define C_POLL		0x0020 /* cmd is polled */
 #define C_DMA		0x0040 /* cmd uses DMA */
 #define C_SENSE		0x0080 /* cmd is a internal command */
-#define C_MEDIA_ACCESS  0x0100 /* is a media access command */
-#define C_POLL_MACHINE  0x0200 /* machine has a poll hander */
+#define C_MEDIA_ACCESS	0x0100 /* is a media access command */
+#define C_POLL_MACHINE	0x0200 /* machine has a poll hander */
 
 	/* Informations about our location */
 	struct channel_softc *chp;
@@ -228,7 +228,7 @@ struct wdc_xfer {
         void (*c_kill_xfer)(struct channel_softc *, struct wdc_xfer *);
 
 	/* Used by ATAPISCSI */
- 	volatile int endticks;
+	volatile int endticks;
 	struct timeout atapi_poll_to;
 	void (*next)(struct channel_softc *, struct wdc_xfer *, int,
 			 struct atapi_return_args *);
@@ -251,27 +251,27 @@ int   wdcactivate(struct device *, enum devact);
 int   wdcintr(void *);
 void  wdc_exec_xfer(struct channel_softc *, struct wdc_xfer *);
 struct wdc_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
-#define WDC_CANSLEEP 0x00
-#define WDC_NOSLEEP 0x01
+#define WDC_CANSLEEP	0x00
+#define WDC_NOSLEEP	0x01
 void   wdc_free_xfer(struct channel_softc *, struct wdc_xfer *);
 void  wdcstart(struct channel_softc *);
 void  wdcrestart(void *);
 int   wdcreset(struct channel_softc *, int);
-#define VERBOSE 1
-#define SILENT 0 /* wdcreset will not print errors */
+#define VERBOSE	1
+#define SILENT	0 /* wdcreset will not print errors */
 int   wdc_wait_for_status(struct channel_softc *, int, int, int);
 int   wdc_dmawait(struct channel_softc *, struct wdc_xfer *, int);
 void  wdcbit_bucket(struct channel_softc *, int);
 
 void  wdccommand(struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
-	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t);
+	u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 void  wdccommandext(struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
-		    u_int16_t);
-void   wdccommandshort(struct channel_softc *, int, int);
+	u_int16_t);
+void  wdccommandshort(struct channel_softc *, int, int);
 void  wdctimeout(void *arg);
 
-int	wdc_addref(struct channel_softc *);
-void	wdc_delref(struct channel_softc *);
+int   wdc_addref(struct channel_softc *);
+void  wdc_delref(struct channel_softc *);
 
 /*
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
@@ -279,7 +279,7 @@ void	wdc_delref(struct channel_softc *);
  */
 #define wdcwait(chp, status, mask, timeout) ((wdc_wait_for_status((chp), (status), (mask), (timeout)) >= 0) ? 0 : -1)
 #define wait_for_drq(chp, timeout) wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout))
-#define wait_for_unbusy(chp, timeout)	wdcwait((chp), 0, 0, (timeout))
+#define wait_for_unbusy(chp, timeout) wdcwait((chp), 0, 0, (timeout))
 #define wait_for_ready(chp, timeout) wdcwait((chp), WDCS_DRDY, \
 	WDCS_DRDY, (timeout))
 
@@ -298,4 +298,3 @@ void wdc_input_bytes(struct ata_drive_datas *drvp, void *, unsigned int);
 void wdc_print_current_modes(struct channel_softc *);
 
 int wdc_ioctl(struct ata_drive_datas *, u_long, caddr_t, int, struct proc *);
-
