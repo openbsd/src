@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ioctl.h,v 1.8 1998/03/28 09:36:43 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_ioctl.h,v 1.9 1998/05/29 00:41:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -485,11 +485,17 @@ struct pcvtinfo {			/* compile time option values */
  * this header file.
  */
 
+#ifndef CONSOLE_X_MODE_ON
 #define CONSOLE_X_MODE_ON   _IO('t', 121) /* turn off pcvt, grant IOPL for X */
+#endif
 
+#ifndef CONSOLE_X_MODE_OFF
 #define CONSOLE_X_MODE_OFF  _IO('t', 122) /* back to pcvt */
+#endif
 
+#ifndef CONSOLE_X_BELL
 #define CONSOLE_X_BELL      _IOW('t', 123, int[2]) /* set bell behaviour */
+#endif
 
 /*
  * start of USL VT compatibility stuff
