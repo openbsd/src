@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_misc.c,v 1.12 2000/08/04 15:47:55 ericj Exp $ */
+/* $OpenBSD: osf1_misc.c,v 1.13 2000/08/12 20:46:42 ericj Exp $ */
 /* $NetBSD: osf1_misc.c,v 1.55 2000/06/28 15:39:33 mrg Exp $ */
 
 /*
@@ -240,15 +240,22 @@ osf1_sys_uname(p, v, retval)
 	struct osf1_sys_uname_args *uap = v;
         struct osf1_utsname u;
         const char *cp;
+	extern char ostype[], hostname[], osrelease[], version[], machine[];
         char *dp, *ep;
 
 	/* XXX would use stackgap, but our struct utsname is too big! */
-	/*
-         * strncpy(u.sysname, ostype, sizeof(u.sysname));
-         */
-	strncpy(u.sysname, "OpenBSD", sizeof(u.sysname));
+
+	bzero(&u, sizeof(u));
+	
+        strncpy(u.sysname, ostype, sizeof(u.sysname));
+	u.sysname[sizeof(u.sysname) - 1] = '\0';
+
         strncpy(u.nodename, hostname, sizeof(u.nodename));
-        strncpy(u.release, version, sizeof(u.release));
+	u.nodename[sizeof(u.nodename) - 1] = '\0';
+
+        strncpy(u.release, osrelease, sizeof(u.release));
+	u.release[sizeof(u.release) - 1] = '\0';
+
         dp = u.version;
         ep = &u.version[sizeof(u.version) - 1];
         for (cp = version; *cp && *cp != '('; cp++)
@@ -260,7 +267,10 @@ osf1_sys_uname(p, v, retval)
         for (; *cp && *cp != ':' && dp < ep; cp++)
                 *dp++ = *cp;
         *dp = '\0';
-        strncpy(u.machine, MACHINE, sizeof(u.machine));
+
+        strncpy(u.machine, machine, sizeof(u.machine));
+	u.machine[sizeof(u.machine) - 1] = '\0';
+
         return (copyout((caddr_t)&u, (caddr_t)SCARG(uap, name), sizeof u));
 }
 
