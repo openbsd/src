@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.31 1997/09/30 02:49:18 millert Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.32 1997/09/30 02:53:11 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -467,6 +467,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Following entry reported as a Tandberg 3600; ref. PR1933 */
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "VIPER 150  21247", ""},     SDEV_NOLUNS},
+	/* Following entry for a Cipher ST150S */
+	{{T_SEQUENTIAL, T_REMOV,
+	 "ARCHIVE ", "VIPER 1500 21247", "2.2G"}, SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "Python 28454-XXX", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
