@@ -195,6 +195,7 @@
 ./var/www/htdocs/manual/howto/cgi.html.ja.jis
 ./var/www/htdocs/manual/howto/footer.html
 ./var/www/htdocs/manual/howto/header.html
+./var/www/htdocs/manual/howto/htaccess.html
 ./var/www/htdocs/manual/howto/ssi.html.en
 ./var/www/htdocs/manual/howto/ssi.html.html
 ./var/www/htdocs/manual/howto/ssi.html.ja.jis
@@ -283,11 +284,13 @@
 ./var/www/htdocs/manual/mod/mod_actions.html.en
 ./var/www/htdocs/manual/mod/mod_actions.html.html
 ./var/www/htdocs/manual/mod/mod_actions.html.ja.jis
-./var/www/htdocs/manual/mod/mod_alias.html
+./var/www/htdocs/manual/mod/mod_alias.html.en
+./var/www/htdocs/manual/mod/mod_alias.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_asis.html.en
 ./var/www/htdocs/manual/mod/mod_asis.html.html
 ./var/www/htdocs/manual/mod/mod_asis.html.ja.jis
-./var/www/htdocs/manual/mod/mod_auth.html
+./var/www/htdocs/manual/mod/mod_auth.html.en
+./var/www/htdocs/manual/mod/mod_auth.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_auth_anon.html
 ./var/www/htdocs/manual/mod/mod_auth_db.html
 ./var/www/htdocs/manual/mod/mod_auth_dbm.html

@@ -1017,6 +1017,12 @@
 ./usr/share/man/cat4/hp300/sd.0
 ./usr/share/man/cat4/hp300/tc.0
 ./usr/share/man/cat4/hppa
+./usr/share/man/cat4/hppa/asp.0
+./usr/share/man/cat4/hppa/cpu.0
+./usr/share/man/cat4/hppa/gsc.0
+./usr/share/man/cat4/hppa/ie.0
+./usr/share/man/cat4/hppa/intro.0
+./usr/share/man/cat4/hppa/lasi.0
 ./usr/share/man/cat4/hsq.0
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/i386/apm.0
@@ -1649,6 +1655,7 @@
 ./usr/share/man/cat8/hp300/boot_hp300.0
 ./usr/share/man/cat8/hp300/hilinfo.0
 ./usr/share/man/cat8/hppa
+./usr/share/man/cat8/hppa/MAKEDEV.0
 ./usr/share/man/cat8/hppa/kbd.0
 ./usr/share/man/cat8/hppa/wsconscfg.0
 ./usr/share/man/cat8/hppa/wsconsctl.0

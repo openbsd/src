@@ -589,8 +589,6 @@
 ./usr/include/dev/rasops/rasops_masks.h
 ./usr/include/dev/rcons
 ./usr/include/dev/rcons/raster.h
-./usr/include/dev/rcons/rcons.h
-./usr/include/dev/rcons/rcons_subr.h
 ./usr/include/dev/rndioctl.h
 ./usr/include/dev/rndvar.h
 ./usr/include/dev/sbus
@@ -2551,6 +2549,7 @@
 ./usr/share/man/cat3/SSL_clear.0
 ./usr/share/man/cat3/SSL_connect.0
 ./usr/share/man/cat3/SSL_ctrl.0
+./usr/share/man/cat3/SSL_do_handshake.0
 ./usr/share/man/cat3/SSL_flush_sessions.0
 ./usr/share/man/cat3/SSL_free.0
 ./usr/share/man/cat3/SSL_get0_session.0

@@ -577,8 +577,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rasops/rasops_masks.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rcons
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rcons/raster.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/rcons/rcons.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/rcons/rcons_subr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rndioctl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rndvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus

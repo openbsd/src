@@ -1039,8 +1039,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rasops/rasops_masks.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rcons
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rcons/raster.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rcons/rcons.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rcons/rcons_subr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rndioctl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rndvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus
