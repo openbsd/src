@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.45 1998/09/08 05:51:06 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.46 1998/10/05 05:13:34 form Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1111,6 +1111,10 @@ do-fetch:
 				fi ; \
 			fi ; \
 			${ECHO_MSG} ">> $$file doesn't seem to exist on this system."; \
+			if [ ! -w ${_DISTDIR}/. ]; then \
+				${ECHO_MSG} ">> Can't download to ${_DISTDIR} (permission denied?)."; \
+				exit 1; \
+			fi; \
 			for site in ${MASTER_SITES}; do \
 			    ${ECHO_MSG} ">> Attempting to fetch from $${site}."; \
 				if ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} ${FETCH_AFTER_ARGS}; then \
