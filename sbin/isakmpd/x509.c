@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.92 2004/06/14 13:53:31 hshoexer Exp $	 */
+/* $OpenBSD: x509.c,v 1.93 2004/06/17 19:32:06 hshoexer Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -923,14 +923,23 @@ x509_cert_validate(void *scert)
 	/*
 	 * Return if validation succeeded or self-signed certs are not
 	 * accepted.
+	 *
+	 * XXX X509_verify_cert seems to return -1 if the validation should be
+	 * retried somehow.  We take this as an error and give up.
 	 */
-	if (res)
+	if (res > 0)
 		return 1;
-	else if (!conf_get_str("X509-certificates", "Accept-self-signed")) {
+	else if (res < 0 ||
+	    (res == 0 && err != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)) {
 		if (err)
 			log_print("x509_cert_validate: %.100s",
 			    X509_verify_cert_error_string(err));
-		return res;
+		return 0;
+	} else if (!conf_get_str("X509-certificates", "Accept-self-signed")) {
+		if (err)
+			log_print("x509_cert_validate: %.100s",
+			    X509_verify_cert_error_string(err));
+		return 0;
 	}
 	issuer = X509_get_issuer_name(cert);
 	subject = X509_get_subject_name(cert);
