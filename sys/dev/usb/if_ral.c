@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.14 2005/03/19 10:18:49 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.15 2005/03/23 12:41:47 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -67,9 +67,13 @@
 #include <dev/usb/if_ralreg.h>
 #include <dev/usb/if_ralvar.h>
 
+#ifdef USB_DEBUG
+#define RAL_DEBUG
+#endif
+
 #ifdef RAL_DEBUG
-#define DPRINTF(x)	if (ural_debug > 0) printf x
-#define DPRINTFN(n, x)	if (ural_debug >= (n)) printf x
+#define DPRINTF(x)	do { if (ural_debug) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (ural_debug >= (n)) printf x; } while (0)
 int ural_debug = 14;
 #else
 #define DPRINTF(x)
