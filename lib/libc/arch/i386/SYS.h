@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.7 2000/01/06 09:05:58 d Exp $
+ *	$OpenBSD: SYS.h,v 1.8 2000/01/06 10:49:20 d Exp $
  */
 
 #include <machine/asm.h>
@@ -54,7 +54,7 @@
 #ifdef __STDC__
 #define	SYSENTRY(x)	ENTRY(_thread_sys_ ## x)
 #else /* ! __STDC__ */
-#define	SYSENTRY(x)	ENTRY(_thread_sys_ /**/ x)
+#define	SYSENTRY(x)	ENTRY(_thread_sys_/**/x)
 #endif /* ! __STDC__ */
 #else /* ! _THREAD_SAFE */
 /* Use {syscall} when compiling without -D_THREAD_SAFE */
