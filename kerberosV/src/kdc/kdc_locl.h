@@ -67,6 +67,7 @@ extern krb5_boolean allow_anonymous;
 extern char *v4_realm;
 extern int enable_v4;
 extern int enable_524;
+extern int enable_v4_cross_realm;
 extern krb5_boolean enable_kaserver;
 #endif
 

@@ -430,6 +430,13 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
+	if (!enable_v4_cross_realm && strcmp(realm, v4_realm) != 0) {
+	    kdc_log(0, "krb4 Cross-realm %s -> %s disabled", realm, v4_realm);
+	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
+			   "Can't hop realms");
+	    goto out2;
+	}
+
 	if(strcmp(sname, "changepw") == 0){
 	    kdc_log(0, "Bad request for changepw ticket");
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
