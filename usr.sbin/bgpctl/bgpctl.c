@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.20 2004/01/06 23:23:49 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.21 2004/01/07 02:00:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -402,7 +402,7 @@ fmt_timeframe(time_t t)
 	if (t == 0)
 		return ("Never");
 	else
-		return(fmt_timeframe_core(time(NULL) - t));
+		return (fmt_timeframe_core(time(NULL) - t));
 }
 
 static char *
