@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.11 2000/11/09 17:52:00 aaron Exp $
+.\"	$OpenBSD: rm.1,v 1.12 2000/11/16 22:37:05 aaron Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -82,8 +82,13 @@ option overrides any previous
 options.
 .It Fl P
 Overwrite regular files before deleting them.
-Files are overwritten three times, first with the byte pattern 0xff,
-then 0x00, and then 0xff again, before they are deleted.
+Files are overwritten three times, first with the byte pattern
+.Li 0xff ,
+then
+.Li 0x00 ,
+and then
+.Li 0xff
+again, before they are deleted.
 .It Fl R
 Attempt to remove the file hierarchy rooted in each file argument.
 The
