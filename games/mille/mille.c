@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.8 2000/04/07 05:03:15 pjanzen Exp $	*/
+/*	$OpenBSD: mille.c,v 1.9 2001/03/08 21:18:35 deraadt Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: mille.c,v 1.8 2000/04/07 05:03:15 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mille.c,v 1.9 2001/03/08 21:18:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(ac, av)
 		break;
 	  default:
 		printf("usage: milles [ restore_file ]\n");
-		exit(-1);
+		exit(1);
 		/* NOTREACHED */
 	}
 	Play = PLAYER;
