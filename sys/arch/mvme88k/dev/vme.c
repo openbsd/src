@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.37 2004/07/23 22:19:07 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.38 2004/07/30 19:02:06 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -464,9 +464,7 @@ vmerw(sc, uio, flags, bus)
  */
 
 int
-vmeintr_establish(vec, ih)
-	int vec;
-	struct intrhand *ih;
+vmeintr_establish(int vec, struct intrhand *ih, const char *name)
 {
 	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
 
@@ -480,7 +478,7 @@ vmeintr_establish(vec, ih)
 #endif
 	}
 
-	return intr_establish(vec, ih);
+	return intr_establish(vec, ih, name);
 }
 
 #if NPCCTWO > 0
@@ -565,7 +563,7 @@ vme2chip_init(sc)
 	sc->sc_abih.ih_arg = 0;
 	sc->sc_abih.ih_wantframe = 1;
 	sc->sc_abih.ih_ipl = IPL_NMI;
-	intr_establish(110, &sc->sc_abih);
+	intr_establish(110, &sc->sc_abih, sc->sc_dev.dv_xname);
 
 	irqen = bus_space_read_4(sc->sc_iot, sc->sc_ioh, VME2_IRQEN);
 	irqen |= VME2_IRQ_AB;

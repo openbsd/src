@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.20 2004/05/07 18:10:28 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.21 2004/07/30 19:02:06 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -152,25 +152,23 @@ sysconattach(parent, self, args)
 	sc->sc_m188ih.ih_wantframe = 1;
 	sc->sc_m188ih.ih_ipl = IPL_ABORT;
 
-	sysconintr_establish(SYSCV_ABRT, &sc->sc_abih);
-	sysconintr_establish(SYSCV_ACF, &sc->sc_acih);
-	sysconintr_establish(SYSCV_SYSF, &sc->sc_sfih);
-	intr_establish(M188_IVEC, &sc->sc_m188ih);
+	sysconintr_establish(SYSCV_ABRT, &sc->sc_abih, "abort");
+	sysconintr_establish(SYSCV_ACF, &sc->sc_acih, "acfail");
+	sysconintr_establish(SYSCV_SYSF, &sc->sc_sfih, "sysfail");
+	intr_establish(M188_IVEC, &sc->sc_m188ih, self->dv_xname);
 
 	config_search(syscon_scan, self, args);
 }
 
 int
-sysconintr_establish(vec, ih)
-	int vec;
-	struct intrhand *ih;
+sysconintr_establish(int vec, struct intrhand *ih, const char *name)
 {
 #ifdef DIAGNOSTIC
 	if (vec < 0 || vec >= SYSCON_NVEC)
 		panic("sysconintr_establish: illegal vector 0x%x\n", vec);
 #endif
 
-	return (intr_establish(SYSCON_VECT + vec, ih));
+	return intr_establish(SYSCON_VECT + vec, ih, name);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.15 2004/07/20 20:32:02 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.16 2004/07/30 19:02:06 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -95,8 +95,6 @@ struct vs_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct intrhand		sc_ih_e, sc_ih_n;
-	struct evcount		sc_intrcnt_e;
-	struct evcount		sc_intrcnt_n;
 	char			sc_intrname_e[16 + 4];
 	int			sc_ipl;
 	int			sc_evec, sc_nvec;

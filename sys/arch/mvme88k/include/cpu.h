@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.28 2004/07/24 15:05:07 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.29 2004/07/30 19:02:08 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -40,17 +40,19 @@
 #ifndef	_MVME88K_CPU_H_
 #define	_MVME88K_CPU_H_
 
+#include <sys/evcount.h>
 #include <m88k/cpu.h>
 
 struct intrhand {
+	SLIST_ENTRY(intrhand) ih_link;
 	int	(*ih_fn)(void *);
 	void	*ih_arg;
 	int	ih_ipl;
 	int	ih_wantframe;
-	struct	intrhand *ih_next;
+	struct evcount ih_count;
 };
 
-int	intr_establish(int vec, struct intrhand *);
+int	intr_establish(int, struct intrhand *, const char *);
 
 /*
  * There are 256 possible vectors on a mvme88k platform (including
@@ -58,6 +60,8 @@ int	intr_establish(int vec, struct intrhand *);
  * handler for the given vector. vector number is used to index
  * into the intr_handlers[] table.
  */
-extern struct intrhand *intr_handlers[256];
+#define	NVMEINTR	256
+typedef SLIST_HEAD(, intrhand) intrhand_t;
+extern intrhand_t intr_handlers[NVMEINTR];
 
 #endif

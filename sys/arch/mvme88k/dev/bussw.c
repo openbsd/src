@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.14 2004/05/07 18:10:28 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.15 2004/07/30 19:02:05 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  *
@@ -60,7 +60,7 @@ struct cfdriver bussw_cd = {
 int	bussw_print(void *, const char *);
 int	bussw_scan(struct device *, void *, void *);
 int	busswabort(void *);
-int	busswintr_establish(int, struct intrhand *);
+int	busswintr_establish(int, struct intrhand *, const char *);
 
 int
 bussw_match(parent, vcf, args)
@@ -123,7 +123,7 @@ bussw_attach(parent, self, args)
 	sc->sc_abih.ih_wantframe = 1;
 	sc->sc_abih.ih_ipl = IPL_NMI;
 
-	busswintr_establish(BS_ABORTIRQ, &sc->sc_abih);
+	busswintr_establish(BS_ABORTIRQ, &sc->sc_abih, "abort");
 	bus_space_write_1(sc->sc_iot, ioh, BS_ABORT,
 	    bus_space_read_4(sc->sc_iot, ioh, BS_ABORT) | BS_ABORT_IEN);
 
@@ -174,16 +174,14 @@ bussw_scan(parent, child, args)
 }
 
 int
-busswintr_establish(vec, ih)
-	int vec;
-	struct intrhand *ih;
+busswintr_establish(int vec, struct intrhand *ih, const char *name)
 {
 #ifdef DIAGNOSTIC
 	if (vec < 0 || vec >= BS_NVEC)
 		panic("busswintr_establish: illegal vector 0x%x\n", vec);
 #endif
 
-	return (intr_establish(BS_VECBASE + vec, ih));
+	return intr_establish(BS_VECBASE + vec, ih, name);
 }
 
 int

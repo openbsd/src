@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.32 2004/07/23 21:00:09 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.33 2004/07/30 19:02:05 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -75,7 +75,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/evcount.h>
 
 #include <machine/asm.h>
 #include <machine/board.h>	/* for register defines */
@@ -118,9 +117,7 @@ void	write_cio(int, u_int8_t);
 struct clocksoftc {
 	struct device	sc_dev;
 	struct intrhand	sc_profih;
-	struct evcount	sc_profcnt;
 	struct intrhand	sc_statih;
-	struct evcount	sc_statcnt;
 };
 
 struct cfattach clock_ca = {
@@ -194,14 +191,14 @@ clockattach(struct device *parent, struct device *self, void *args)
 		sc->sc_profih.ih_wantframe = 1;
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
+		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih, "clock");
 		md.clock_init_func = sbc_initclock;
 		sc->sc_statih.ih_fn = sbc_statintr;
 		sc->sc_statih.ih_arg = 0;
 		sc->sc_statih.ih_wantframe = 1;
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
 		stat_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-		pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih);
+		pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih, "stat");
 		md.statclock_init_func = sbc_initstatclock;
 		break;
 #endif /* NPCCTWO */
@@ -211,22 +208,18 @@ clockattach(struct device *parent, struct device *self, void *args)
 		sc->sc_profih.ih_arg = 0;
 		sc->sc_profih.ih_wantframe = 1;
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
-		sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih);
+		sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih, "clock");
 		md.clock_init_func = m188_initclock;
 		sc->sc_statih.ih_fn = m188_statintr;
 		sc->sc_statih.ih_arg = 0;
 		sc->sc_statih.ih_wantframe = 1;
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
-		sysconintr_establish(SYSCV_TIMER2, &sc->sc_statih);
+		sysconintr_establish(SYSCV_TIMER2, &sc->sc_statih, "stat");
 		md.statclock_init_func = m188_initstatclock;
 		break;
 #endif /* NSYSCON */
 	}
 
-	evcount_attach(&sc->sc_statcnt, "stat", (void *)&sc->sc_statih.ih_ipl,
-	    &evcount_intr);
-	evcount_attach(&sc->sc_profcnt, "clock", (void *)&sc->sc_profih.ih_ipl,
-	    &evcount_intr);
 	printf("\n");
 }
 
@@ -262,13 +255,10 @@ sbc_initclock(void)
 int
 sbc_clockintr(void *eframe)
 {
-	struct clocksoftc *sc = clock_cd.cd_devs[0];
-
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
 	    prof_reset;
 
 	intrcnt[M88K_CLK_IRQ]++;
-	sc->sc_profcnt.ec_count++;
 
 	hardclock(eframe);
 #if NBUGTTY > 0
@@ -315,14 +305,12 @@ sbc_initstatclock(void)
 int
 sbc_statintr(void *eframe)
 {
-	struct clocksoftc *sc = clock_cd.cd_devs[0];
 	u_long newint, r, var;
 
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
 	    stat_reset;
 
 	intrcnt[M88K_SCLK_IRQ]++;
-	sc->sc_statcnt.ec_count++;
 
 	statclock((struct clockframe *)eframe);
 
@@ -354,7 +342,6 @@ sbc_statintr(void *eframe)
 int
 m188_clockintr(void *eframe)
 {
-	struct clocksoftc *sc = clock_cd.cd_devs[0];
 	volatile int tmp;
 
 	/* acknowledge the timer interrupt */
@@ -364,7 +351,6 @@ m188_clockintr(void *eframe)
 	tmp = *(int *volatile)DART_STOPC;
 
 	intrcnt[M88K_CLK_IRQ]++;
-	sc->sc_profcnt.ec_count++;
 
 	hardclock(eframe);
 #if NBUGTTY > 0
@@ -438,13 +424,11 @@ m188_timer_init(unsigned period)
 int
 m188_statintr(void *eframe)
 {
-	struct clocksoftc *sc = clock_cd.cd_devs[0];
 	u_long newint, r, var;
 
 	CIO_LOCK;
 
 	intrcnt[M88K_SCLK_IRQ]++;
-	sc->sc_statcnt.ec_count++;
 
 	statclock((struct clockframe *)eframe);
 	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */

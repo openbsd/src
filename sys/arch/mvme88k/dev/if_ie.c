@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.29 2004/07/02 14:00:43 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.30 2004/07/30 19:02:05 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -105,7 +105,6 @@ Mode of operation:
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -164,7 +163,7 @@ struct vm_map *ie_map; /* for obio */
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
 	struct intrhand sc_ih, sc_failih;  /* interrupt info */
-	struct evcount sc_intrcnt; /* # of interrupts, per ie */
+	char	sc_failintrname[16 + 4];
 
 	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
 	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
@@ -484,8 +483,10 @@ ieattach(parent, self, aux)
 	sc->sc_failih.ih_wantframe = 0;
 	sc->sc_failih.ih_ipl = ca->ca_ipl;
 
-	pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
-	pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih);
+	pcctwointr_establish(PCC2V_IE, &sc->sc_ih, self->dv_xname);
+	snprintf(sc->sc_failintrname, sizeof sc->sc_failintrname, "%s_err",
+	    self->dv_xname);
+	pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih, sc->sc_failintrname);
 
 	/* enable device interrupts */
 	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
@@ -494,9 +495,6 @@ ieattach(parent, self, aux)
 	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
 	    PCCTWO_IEBERR, PCC2_IRQ_IEN | PCC2_IRQ_ICLR |
 	      (ca->ca_ipl & PCC2_IRQ_IPL));
-
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
-	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
 }
 
 /*
@@ -598,7 +596,6 @@ loop:
 	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
 		goto loop;
 
-	sc->sc_intrcnt.ec_count++;
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.36 2004/07/23 23:15:49 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.37 2004/07/30 19:02:05 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,6 @@
 #include <sys/device.h>
 #include <sys/simplelock.h>
 #include <sys/syslog.h>
-#include <sys/evcount.h>
 
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
 #include <machine/autoconf.h>
@@ -74,7 +73,6 @@ struct dart_info {
 
 struct dartsoftc {
 	struct device		sc_dev;
-	struct evcount		sc_intrcnt;
 	union  dartreg		*dart_reg;
         union  dart_pt_io	*port_reg[NDARTPORTS];
 	struct dart_info	sc_dart[NDARTPORTS];
@@ -307,9 +305,7 @@ dartattach(parent, self, aux)
 	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	sysconintr_establish(SYSCV_SCC, &sc->sc_ih);
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
-	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
+	sysconintr_establish(SYSCV_SCC, &sc->sc_ih, self->dv_xname);
 	printf("\n");
 }
 
@@ -1102,8 +1098,6 @@ dartintr(arg)
 
 	if (isr == 0)	/* not interrupt from this duart */
 		return 0;
-
-	sc->sc_intrcnt.ec_count++;
 
 	if (isr & IIPCHG) {
 		unsigned int ip = addr->read.rd_ip;

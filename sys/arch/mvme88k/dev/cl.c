@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.47 2004/07/02 14:00:42 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.48 2004/07/30 19:02:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -35,7 +35,6 @@
 #include <sys/time.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
-#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -110,18 +109,16 @@ struct clsoftc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	struct evcount		sc_txintrcnt;
-	char			sc_txintrname[16 + 3];
-	struct evcount		sc_rxintrcnt;
-	char			sc_rxintrname[16 + 3];
-	struct evcount		sc_mxintrcnt;
-	char			sc_mxintrname[16 + 3];
 	time_t			sc_fotime;	/* time of last fifo overrun */
 	struct cl_info		sc_cl[CLCD_PORTS_PER_CHIP];
 	struct intrhand		sc_ih_e;
 	struct intrhand		sc_ih_m;
 	struct intrhand		sc_ih_t;
 	struct intrhand		sc_ih_r;
+	char			sc_errintrname[16 + 4];
+	char			sc_mxintrname[16 + 3];
+	char			sc_rxintrname[16 + 3];
+	char			sc_txintrname[16 + 3];
 	struct pcctwosoftc	*sc_pcctwo;
 };
 
@@ -361,10 +358,19 @@ clattach(parent, self, aux)
 	sc->sc_ih_r.ih_wantframe = 0;
 	sc->sc_ih_r.ih_ipl = ca->ca_ipl;
 
-	pcctwointr_establish(PCC2V_SCC_RXE, &sc->sc_ih_e);
-	pcctwointr_establish(PCC2V_SCC_M, &sc->sc_ih_m);
-	pcctwointr_establish(PCC2V_SCC_TX, &sc->sc_ih_t);
-	pcctwointr_establish(PCC2V_SCC_RX, &sc->sc_ih_r);
+	snprintf(sc->sc_errintrname, sizeof sc->sc_errintrname,
+	    "%s_err", self->dv_xname);
+	snprintf(sc->sc_mxintrname, sizeof sc->sc_mxintrname,
+	    "%s_mx", self->dv_xname);
+	snprintf(sc->sc_rxintrname, sizeof sc->sc_rxintrname,
+	    "%s_rx", self->dv_xname);
+	snprintf(sc->sc_txintrname, sizeof sc->sc_txintrname,
+	    "%s_tx", self->dv_xname);
+
+	pcctwointr_establish(PCC2V_SCC_RXE, &sc->sc_ih_e, sc->sc_errintrname);
+	pcctwointr_establish(PCC2V_SCC_M, &sc->sc_ih_m, sc->sc_mxintrname);
+	pcctwointr_establish(PCC2V_SCC_TX, &sc->sc_ih_t, sc->sc_txintrname);
+	pcctwointr_establish(PCC2V_SCC_RX, &sc->sc_ih_r, sc->sc_rxintrname);
 
 	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
 	    PCCTWO_SCCICR, PCC2_IRQ_IEN | (ca->ca_ipl & PCC2_IRQ_IPL));
@@ -372,19 +378,6 @@ clattach(parent, self, aux)
 	    PCCTWO_SCCTX, PCC2_IRQ_IEN | (ca->ca_ipl & PCC2_IRQ_IPL));
 	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
 	    PCCTWO_SCCRX, PCC2_IRQ_IEN | (ca->ca_ipl & PCC2_IRQ_IPL));
-
-	snprintf(sc->sc_txintrname, sizeof sc->sc_txintrname,
-	    "%s_tx", self->dv_xname);
-	evcount_attach(&sc->sc_txintrcnt, sc->sc_txintrname,
-	    (void *)&sc->sc_ih_t.ih_ipl, &evcount_intr);
-	snprintf(sc->sc_rxintrname, sizeof sc->sc_rxintrname,
-	    "%s_rx", self->dv_xname);
-	evcount_attach(&sc->sc_rxintrcnt, sc->sc_rxintrname,
-	    (void *)&sc->sc_ih_r.ih_ipl, &evcount_intr);
-	snprintf(sc->sc_mxintrname, sizeof sc->sc_mxintrname,
-	    "%s_mx", self->dv_xname);
-	evcount_attach(&sc->sc_mxintrcnt, sc->sc_mxintrname,
-	    (void *)&sc->sc_ih_m.ih_ipl, &evcount_intr);
 
 	printf("\n");
 }
@@ -1315,7 +1308,6 @@ cl_mintr(arg)
 		log(LOG_WARNING, "cl_mintr extra intr\n");
 		return 0;
 	}
-	sc->sc_mxintrcnt.ec_count++;
 
 	channel = mir & 0x03;
 	misr = bus_space_read_1(iot, ioh, CL_MISR);
@@ -1378,7 +1370,6 @@ cl_txintr(arg)
 		log(LOG_WARNING, "cl_txintr extra intr\n");
 		return 0;
 	}
-	sc->sc_txintrcnt.ec_count++;
 
 	channel = tir & 0x03;
 	sc->sc_cl[channel].txcnt ++;
@@ -1513,7 +1504,7 @@ cl_rxintr(arg)
 		log(LOG_WARNING, "cl_rxintr extra intr\n");
 		return 0;
 	}
-	sc->sc_rxintrcnt.ec_count++;
+
 	channel = rir & 0x3;
 	cmr = bus_space_read_1(iot, ioh, CL_CMR);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memc.c,v 1.10 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: memc.c,v 1.11 2004/07/30 19:02:06 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -105,7 +105,7 @@ memcattach(parent, self, args)
 	sc->sc_ih.ih_arg = 0;
 	sc->sc_ih.ih_wantframe = 1;
 	sc->sc_ih.ih_ipl = 7;
-	mcintr_establish(xxx, &sc->sc_ih);
+	mcintr_establish(xxx, &sc->sc_ih, self->dv_xname);
 #endif
 
 	switch (sc->sc_memc->memc_chipid) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwovar.h,v 1.1 2004/04/24 19:51:48 miod Exp $	*/
+/*	$OpenBSD: pcctwovar.h,v 1.2 2004/07/30 19:02:06 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -36,6 +36,6 @@ struct pcctwosoftc {
 	bus_space_handle_t	sc_ioh;
 };
 
-int pcctwointr_establish(int vec, struct intrhand *ih);
+int pcctwointr_establish(int, struct intrhand *, const char *);
 
 #endif	/* _MVME88K_PCCTWOVAR_H_ */

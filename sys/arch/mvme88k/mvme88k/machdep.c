@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.148 2004/07/29 10:17:21 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.149 2004/07/30 19:02:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -104,7 +104,7 @@
 #include <ddb/db_interface.h>
 #endif /* DDB */
 
-struct intrhand *intr_handlers[256];
+intrhand_t intr_handlers[NVMEINTR];
 vaddr_t interrupt_stack[MAX_CPUS];
 
 /* machine dependent function pointers. */
@@ -676,9 +676,10 @@ cpu_startup()
 	bufinit();
 
 	/*
-	 * zero out intr_handlers
+	 * Set up interrupt handlers.
 	 */
-	bzero((void *)intr_handlers, 256 * sizeof(struct intrhand *));
+	for (i = 0; i < NVMEINTR; i++)
+		SLIST_INIT(&intr_handlers[i]);
 	setupiackvectors();
 
 	/*
@@ -1390,32 +1391,33 @@ intr_findvec(int start, int end, int skip)
 	int vec;
 
 #ifdef DEBUG
-	if (start < 0 || end > 255 || start > end)
+	if (start < 0 || end >= NVMEINTR || start > end)
 		panic("intr_findvec(%d,%d): bad parameters", start, end);
 #endif
 
 	for (vec = start; vec <= end; vec++) {
 		if (vec == skip)
 			continue;
-		if (intr_handlers[vec] == NULL)
-			return (vec);
+		if (SLIST_EMPTY(&intr_handlers[vec]))
+			return vec;
 	}
 #ifdef DIAGNOSTIC
 	printf("intr_findvec(%d,%d,%d): no vector available\n",
 	    start, end, skip);
 #endif
-	return (-1);
+	return -1;
 }
 
 /*
  * Try to insert ihand in the list of handlers for vector vec.
  */
 int
-intr_establish(int vec, struct intrhand *ihand)
+intr_establish(int vec, struct intrhand *ihand, const char *name)
 {
 	struct intrhand *intr;
+	intrhand_t *list;
 
-	if (vec < 0 || vec > 255) {
+	if (vec < 0 || vec >= NVMEINTR) {
 #if DIAGNOSTIC
 		panic("intr_establish: vec (0x%x) not between 0x00 and 0xff",
 		      vec);
@@ -1423,9 +1425,9 @@ intr_establish(int vec, struct intrhand *ihand)
 		return (EINVAL);
 	}
 
-	ihand->ih_next = NULL;
-
-	if ((intr = intr_handlers[vec]) != NULL) {
+	list = &intr_handlers[vec];
+	if (!SLIST_EMPTY(list)) {
+		intr = SLIST_FIRST(list);
 		if (intr->ih_ipl != ihand->ih_ipl) {
 #if DIAGNOSTIC
 			panic("intr_establish: there are other handlers with "
@@ -1434,13 +1436,11 @@ intr_establish(int vec, struct intrhand *ihand)
 #endif /* DIAGNOSTIC */
 			return (EINVAL);
 		}
+	}
 
-		while (intr->ih_next)
-			intr = intr->ih_next;
-		intr->ih_next = ihand;
-	} else
-		intr_handlers[vec] = ihand;
-
+	evcount_attach(&ihand->ih_count, name, (void *)&ihand->ih_ipl,
+	    &evcount_intr);
+	SLIST_INSERT_HEAD(list, ihand, ih_link);
 	return (0);
 }
 
@@ -1474,6 +1474,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	unsigned int cur_mask;
 	unsigned int level, old_spl;
 	struct intrhand *intr;
+	intrhand_t *list;
 	int ret, intbit;
 	unsigned vec;
 
@@ -1580,7 +1581,8 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			    level, intbit, 1 << intbit, IST_STRING);
 		}
 
-		if ((intr = intr_handlers[vec]) == NULL) {
+		list = &intr_handlers[vec];
+		if (SLIST_EMPTY(list)) {
 			/* increment intr counter */
 			intrcnt[M88K_SPUR_IRQ]++;
 			printf("Spurious interrupt: level = %d vec = 0x%x, "
@@ -1592,14 +1594,15 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			 * for the given vector, calling each handler in turn,
 			 * till some handler returns a value != 0.
 			 */
-			for (ret = 0; intr; intr = intr->ih_next) {
+			ret = 0;
+			SLIST_FOREACH(intr, list, ih_link) {
 				if (intr->ih_wantframe != 0)
 					ret = (*intr->ih_fn)((void *)eframe);
 				else
 					ret = (*intr->ih_fn)(intr->ih_arg);
 				if (ret != 0) {
-					/* increment intr counter */
 					intrcnt[level]++;
+					intr->ih_count.ec_count++;
 					break;
 				}
 			}
@@ -1646,6 +1649,7 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 {
 	int mask, level;
 	struct intrhand *intr;
+	intrhand_t *list;
 	int ret;
 	u_char vec;
 
@@ -1691,14 +1695,16 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 
 	enable_interrupt();
 
-	if ((intr = intr_handlers[vec]) == NULL) {
+	list = &intr_handlers[vec];
+	if (SLIST_EMPTY(list)) {
 		/* increment intr counter */
 		intrcnt[M88K_SPUR_IRQ]++;
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
 	} else {
 #ifdef DIAGNOSTIC
-		if (intr && intr->ih_ipl != level) {
+		intr = SLIST_FIRST(list);
+		if (intr->ih_ipl != level) {
 			panic("Handler ipl %x not the same as level %x. "
 			    "vec = 0x%x",
 			    intr->ih_ipl, level, vec);
@@ -1711,14 +1717,15 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 		 * returns a value != 0.
 		 */
 
-		for (ret = 0; intr; intr = intr->ih_next) {
-			if (intr->ih_wantframe != 0) {
+		ret = 0;
+		SLIST_FOREACH(intr, list, ih_link) {
+			if (intr->ih_wantframe != 0)
 				ret = (*intr->ih_fn)((void *)eframe);
-			} else
+			else
 				ret = (*intr->ih_fn)(intr->ih_arg);
 			if (ret != 0) {
-				/* increment intr counter */
 				intrcnt[level]++;
+				intr->ih_count.ec_count++;
 				break;
 			}
 		}
@@ -1751,6 +1758,7 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 {
 	int mask, level, src;
 	struct intrhand *intr;
+	intrhand_t *list;
 	int ret;
 	u_char vec;
 
@@ -1798,14 +1806,16 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		enable_interrupt();
 	}
 
-	if ((intr = intr_handlers[vec]) == NULL) {
+	list = &intr_handlers[vec];
+	if (SLIST_EMPTY(list)) {
 		/* increment intr counter */
 		intrcnt[M88K_SPUR_IRQ]++;
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
 	} else {
 #ifdef DIAGNOSTIC
-		if (intr && intr->ih_ipl != level) {
+		intr = SLIST_FIRST(list);
+		if (intr->ih_ipl != level) {
 			panic("Handler ipl %x not the same as level %x. "
 			    "vec = 0x%x",
 			    intr->ih_ipl, level, vec);
@@ -1818,14 +1828,15 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		 * returns a value != 0.
 		 */
 
-		for (ret = 0; intr; intr = intr->ih_next) {
+		ret = 0;
+		SLIST_FOREACH(intr, list, ih_link) {
 			if (intr->ih_wantframe != 0)
 				ret = (*intr->ih_fn)((void *)eframe);
 			else
 				ret = (*intr->ih_fn)(intr->ih_arg);
 			if (ret != 0) {
-				/* increment intr counter */
 				intrcnt[level]++;
+				intr->ih_count.ec_count++;
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_levar.h,v 1.3 2004/07/02 14:00:43 miod Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.4 2004/07/30 19:02:05 miod Exp $	*/
 /*	$NetBSD: if_levar.h,v 1.5 1996/05/07 01:27:32 thorpej Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@ struct	le_softc {
 	struct	intrhand	 sc_ih;		/* interrupt vectoring */
 	u_int16_t		 sc_csr;	/* CSR image */
 	void 			*sc_r1;		/* LANCE registers */
-	struct	evcount		 sc_intrcnt;
 	u_char			 sc_ipl;
 	u_char			 sc_vec;
 };

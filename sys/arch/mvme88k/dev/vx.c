@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.35 2004/07/02 14:00:43 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.36 2004/07/30 19:02:06 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -38,7 +38,6 @@
 #include <sys/time.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
-#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -66,7 +65,6 @@ struct vx_info {
 
 struct vxsoftc {
 	struct device     sc_dev;
-	struct evcount    sc_intrcnt;
 	struct vx_info  sc_info[NVXPORTS];
 	struct vxreg    *vx_reg;
 	vaddr_t		board_vaddr;
@@ -227,9 +225,7 @@ vxattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = IPL_TTY;
 
-	vmeintr_establish(ca->ca_vec, &sc->sc_ih);
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
-	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
+	vmeintr_establish(ca->ca_vec, &sc->sc_ih, self->dv_xname);
 }
 
 short
@@ -974,8 +970,6 @@ vx_intr(void *arg)
 	int valid;
 	short cmd;
 	u_char port;
-
-	sc->sc_intrcnt.ec_count++;
 
 	while (env_isvalid(get_status_head(sc))) {
 		pktp = get_packet(sc, get_status_head(sc));
