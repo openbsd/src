@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmdtab.c,v 1.3 1996/11/09 19:55:11 kstailey Exp $      */
+/*      $OpenBSD: cmdtab.c,v 1.4 1996/12/01 05:27:22 millert Exp $      */
 /*      $NetBSD: cmdtab.c,v 1.6 1995/09/08 01:06:10 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.3 1996/11/09 19:55:11 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.4 1996/12/01 05:27:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ char	casehelp[] =	"toggle mget upper/lower case id mapping";
 char	cdhelp[] =	"change remote working directory";
 char	cduphelp[] = 	"change remote working directory to parent directory";
 char	chmodhelp[] =	"change file permissions of remote file";
-char	connecthelp[] =	"connect to remote tftp";
+char	connecthelp[] =	"connect to remote ftp";
 char	crhelp[] =	"toggle carriage return stripping on ascii gets";
 char	deletehelp[] =	"delete remote file";
 char	debughelp[] =	"toggle/set debugging mode";
