@@ -19,11 +19,11 @@
    Among other things, the copyright notice and this notice must be
    preserved on all copies.  */
 
-/* This is Makeinfo version 1.63.  If you change the version number of
+/* This is Makeinfo version 1.64.  If you change the version number of
    Makeinfo, please change it here and at the lines reading:
 
     int major_version = 1;
-    int minor_version = 63;
+    int minor_version = 64;
 
    in the code below.
 
@@ -134,6 +134,10 @@ char **get_brace_args ();
 int array_len ();
 void free_array ();
 static void isolate_nodename ();
+
+#if !defined (HAVE_MEMMOVE)
+#  define memmove(dst, src, len) bcopy (src, dst, len)
+#endif
 
 /* Non-zero means that we are currently hacking the insides of an
    insertion which would use a fixed width font. */
@@ -871,7 +875,7 @@ static COMMAND CommandTable[] = {
   {(char *) NULL, (COMMAND_FUNCTION *) NULL}, NO_BRACE_ARGS};
 
 int major_version = 1;
-int minor_version = 63;
+int minor_version = 64;
 
 struct option long_options[] =
 {
@@ -1070,7 +1074,7 @@ main (argc, argv)
 void
 print_version_info ()
 {
-  printf ("This is GNU Makeinfo version %d.%d.\n",
+  printf ("This is GNU Makeinfo version %d.%d, from texinfo-3.7.\n",
 	  major_version, minor_version);
 }
 
@@ -1281,7 +1285,7 @@ find_and_load (filename)
   /* Set the globals to the new file. */
   input_text = result;
   size_of_input_text = count;
-  input_filename = strdup (fullpath);
+  input_filename = fullpath;
   node_filename = strdup (fullpath);
   input_text_offset = 0;
   line_number = 1;
@@ -1764,6 +1768,10 @@ read_token ()
   if (self_delimiting (character))
     {
       input_text_offset++;
+
+      if (character == '\n')
+	line_number++;
+
       result = strdup (" ");
       *result = character;
       return (result);
@@ -2979,10 +2987,7 @@ flush_output ()
 
   for (i = 0; i < output_paragraph_offset; i++)
     {
-      if (output_paragraph[i] == (unsigned char)(' ' | 0x80) ||
-	  output_paragraph[i] == (unsigned char)('\t' | 0x80) ||
-	  output_paragraph[i] == (unsigned char)('\n' | 0x80) ||
-	  sentence_ender (UNMETA (output_paragraph[i])))
+      if (output_paragraph[i] == (unsigned char)(' ' | 0x80))
 	output_paragraph[i] &= 0x7f;
     }
 
@@ -3803,8 +3808,7 @@ discard_insertions ()
     {
       if (insertion_stack->insertion == ifinfo ||
 	  insertion_stack->insertion == ifset ||
-	  insertion_stack->insertion == ifclear ||
-	  insertion_stack->insertion == cartouche)
+	  insertion_stack->insertion == ifclear)
 	break;
       else
 	{
@@ -5612,9 +5616,14 @@ isolate_nodename (nodename)
 void
 cm_menu ()
 {
+  if (current_node == (char *)NULL)
+    {
+      warning ("%cmenu seen before a node has been defined", COMMAND_PREFIX);
+      warning ("Creating `TOP' node.");
+      execute_string ("@node Top");
+    }
   begin_insertion (menu);
 }
-
 
 /* **************************************************************** */
 /*								    */
@@ -5667,6 +5676,12 @@ cm_xref (arg)
 	    node_name = arg2;
 
 	  execute_string ("%s: (%s)%s", node_name, arg4, arg1);
+	  /* Free all of the arguments found. */
+	  if (arg1) free (arg1);
+	  if (arg2) free (arg2);
+	  if (arg3) free (arg3);
+	  if (arg4) free (arg4);
+	  if (arg5) free (arg5);
 	  return;
 	}
       else
@@ -7146,7 +7161,7 @@ cm_center ()
   start = output_paragraph_offset;
   inhibit_output_flushing ();
   get_rest_of_line ((char **)&line);
-  execute_string ((char *)line);
+  execute_string ("%s", (char *)line);
   free (line);
   uninhibit_output_flushing ();
 
@@ -7814,6 +7829,7 @@ make_index_entries_unique (array, count)
 {
   register int i, j;
   INDEX_ELT **copy;
+  int counter = 1;
 
   copy = (INDEX_ELT **)xmalloc ((1 + count) * sizeof (INDEX_ELT *));
 
@@ -7836,7 +7852,7 @@ make_index_entries_unique (array, count)
      the copy, fixing the NEXT pointers. */
   for (i = 0; copy[i] != (INDEX_ELT *)NULL; i++)
     {
-      int counter = 1;
+
       copy[i]->next = copy[i + 1];
 
       /* Fix entry names which are the same.  They point to different nodes,
@@ -8438,7 +8454,7 @@ delete_macro (name)
   for (i = 0; macro_list && (def = macro_list[i]); i++)
     if (strcmp (def->name, name) == 0)
       {
-	memcpy (macro_list + i, macro_list + i + 1,
+	memmove (macro_list + i, macro_list + i + 1,
 	       ((macro_list_len + 1) - i) * sizeof (MACRO_DEF *));
 	break;
       }
@@ -8478,8 +8494,9 @@ get_macro_args (def)
 	      char **arglist;
 
 	      get_rest_of_line (&word);
-	      input_text_offset--;
-	      canon_white (word);
+	      if (input_text[input_text_offset - 1] == '\n')
+		input_text_offset--;
+	      /* canon_white (word); */
 	      arglist = (char **)xmalloc (2 * sizeof (char *));
 	      arglist[0] = word;
 	      arglist[1] = (char *)NULL;
@@ -8621,7 +8638,7 @@ execute_macro (def)
 	  me_execute_string (execution_string);
 	}
       else
-	execute_string (execution_string);
+	execute_string ("%s", execution_string);
 
       free (execution_string);
     }
@@ -8713,7 +8730,11 @@ cm_macro ()
 		  while ((character = curchar ())
 			 && character != ','
 			 && character != '}')
-		    input_text_offset++;
+		    {
+		      input_text_offset++;
+		      if (character == '\n')
+			line_number++;
+		    }
 
 		  /* Add the word to our list of words. */
 		  if ((arglist_index + 2) >= arglist_size)
@@ -8778,7 +8799,7 @@ cm_macro ()
 	  (strncmp (line + 1, "quote-arg", 9) == 0) &&
 	  (line[10] == '\0' || whitespace (line[10])))
 	{
-	  for (i = 16; whitespace (line[i]); i++);
+	  for (i = 10; whitespace (line[i]); i++);
 	  strcpy (line, line + i);
 
 	  if (arglist && arglist[0] && !arglist[1])
@@ -9000,10 +9021,10 @@ append_to_expansion_output (offset)
   if (!itext)
     itext = remember_itext (input_text, 0);
 
-  if (offset > itext_info[i]->offset)
+  if (offset > itext->offset)
     {
       write_region_to_macro_output
-	(input_text, itext_info[i]->offset, offset);
+	(input_text, itext->offset, offset);
       remember_itext (input_text, offset);
     }
 }
@@ -9123,7 +9144,8 @@ get_brace_args (quote_single)
 
 		  for (i = 0; word[i]; i++)
 		    if (word[i] == '\\')
-		      memcpy (word + i, word + i + 1, strlen (word + i + 1));
+		      memmove (word + i, word + i + 1,
+			       1 + strlen (word + i + 1));
 		}
 
 	      if (arglist_index + 2 >= arglist_size)
@@ -9146,7 +9168,10 @@ get_brace_args (quote_single)
 	  input_text_offset++;
 	}
       else
-	input_text_offset++;
+	{
+	  input_text_offset++;
+	  if (character == '\n') line_number++;
+	}
     }
   return (arglist);
 }

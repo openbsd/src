@@ -33,7 +33,8 @@ AC_STRUCT_TM
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
 AC_FUNC_SETVBUF_REVERSED
-AC_CHECK_FUNCS(setvbuf getcwd memset bzero bcopy memcpy strchr strcasecmp \
-  strdup vfprintf vsprintf strerror sigprocmask sigsetmask)
+AC_CHECK_FUNCS(setvbuf getcwd bzero bcopy  memset memcpy memmove strchr \
+	       strcasecmp strdup vfprintf vsprintf strerror sigprocmask \
+	       sigsetmask)
 
 AC_OUTPUT(Makefile libtxi/Makefile makeinfo/Makefile info/Makefile util/Makefile emacs/Makefile)

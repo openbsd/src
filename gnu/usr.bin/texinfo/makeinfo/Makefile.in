@@ -81,6 +81,10 @@ makeinfo.info: ./makeinfo makeinfo.texi macro.texi
 # makeinfo.texi: ./makeinfo makeinfo.mki
 # 	./makeinfo -E makeinfo.texi -I$(srcdir) makeinfo.mki
 
+makeinfo.dvi: ./makeinfo makeinfo.texi macro.texi
+	./makeinfo -E makeinfo.txi -I$(srcdir) makeinfo.texi
+	$(srcdir)/../util/texi2dvi makeinfo.txi
+
 install: all
 	for f in $(PROGS); do $(INSTALL_PROGRAM) $$f $(bindir)/$(binprefix)$$f; done
 	-d=$(srcdir); test -f ./makeinfo.info && d=.; $(INSTALL_DATA) $$d/makeinfo.info $(infodir)/makeinfo.info

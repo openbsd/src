@@ -1,10 +1,11 @@
-;;;; texinfmt.el
-;;; Copyright (C) 1985, 1986, 1988, 1990, 1991,
-;;;               1992, 1993, 1994, 1995  Free Software Foundation, Inc.
+;;; texinfmt.el --- format Texinfo files into Info files.
+
+;; Copyright (C) 1985, 1986, 1988,
+;;               1990, 1991, 1992, 1993  Free Software Foundation, Inc.
 
 ;; Maintainer: Robert J. Chassell <bug-texinfo@prep.ai.mit.edu>
 
-;;; This file is part of GNU Emacs.
+;; This file is part of GNU Emacs.
 
 ;; GNU Emacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,7 +25,7 @@
 
 ;;; Emacs lisp functions to convert Texinfo files to Info files.
 
-(defvar texinfmt-version "2.34 of 7 June 1995")
+(defvar texinfmt-version "2.32 of 19 November 1993")
 
 ;;; Variable definitions
 
@@ -1916,11 +1917,9 @@ Default is to leave paragraph indentation as is."
   ;; are used to underline it.  This could occur if the line following
   ;; the underlining is not an index entry and has text within it.
   (let* ((previous-paragraph-separate paragraph-separate)
-         (paragraph-separate
-          (concat paragraph-separate "\\|[-=.]+\\|\\*\\*+"))
+         (paragraph-separate (concat paragraph-separate "\\|[-=*.]+"))
          (previous-paragraph-start paragraph-start)
-         (paragraph-start 
-          (concat paragraph-start "\\|[-=.]+\\|\\*\\*+")))
+         (paragraph-start (concat paragraph-start "\\|[-=*.]+")))
     (unwind-protect
         (fill-paragraph nil)
       (setq paragraph-separate previous-paragraph-separate)
@@ -2987,7 +2986,6 @@ The command  `@value{foo}'  expands to the value."
 (put 'settitle 'texinfo-format 'texinfo-discard-line-with-args)
 (put 'setx 'texinfo-format 'texinfo-discard-line-with-args)
 (put 'shortcontents 'texinfo-format 'texinfo-discard-line-with-args)
-(put 'shorttitlepage 'texinfo-format 'texinfo-discard-line-with-args)
 (put 'smallbook 'texinfo-format 'texinfo-discard-line)
 (put 'summarycontents 'texinfo-format 'texinfo-discard-line-with-args)
 

@@ -1,11 +1,12 @@
-;;;; texinfo.el--major mode for editing Texinfo files.
+;;; texinfo.el --- major mode for editing Texinfo files
+
 ;; Copyright (C) 1985, '88, '89, 
 ;;                '90, '91, '92, '93 Free Software Foundation, Inc.
 
-;;; Author: Robert J. Chassell          
-;;; Maintainer: FSF
+;; Author: Robert J. Chassell          
+;; Maintainer: FSF
 
-;;; This file is part of GNU Emacs.
+;; This file is part of GNU Emacs.
 
 ;; GNU Emacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -196,18 +197,30 @@ chapter."
   (modify-syntax-entry ?} "){" texinfo-mode-syntax-table)
   (modify-syntax-entry ?\' "w" texinfo-mode-syntax-table))
 
+;; Written by Wolfgang Bangerth <zcg51122@rpool1.rus.uni-stuttgart.de>
+;; To overide this example, set either `imenu-generic-expression'
+;; or `imenu-create-index-function'.
+(defvar texinfo-imenu-generic-expression
+  '((nil "^@node[ \t]+\\([^,\n]*\\)" 1)
+    ("Chapters" "^@chapter[ \t]+\\(.*\\)$" 1))
+
+  "Imenu generic expression for TexInfo mode.  See `imenu-generic-expression'.")
+
 (defvar texinfo-font-lock-keywords
   (list
-   '("^\\(@c\\|@comment\\)[ \t].*" . font-lock-comment-face)	;comments
+   ;; All but the first 2 had an OVERRIDE of t.
+   ;; It didn't seem to be any better, and it's slower--simon.
+   '("^\\(@c\\|@comment\\)\\>.*" . font-lock-comment-face) 	;comments
+   ;; Robert J. Chassell <bob@gnu.ai.mit.edu> says remove this line.
+   ;'("\\$\\([^$]*\\)\\$" 1 font-lock-string-face t)
    "@\\(@\\|[^}\t \n{]+\\)"					;commands
-   '("^\\(*.*\\)[\t ]*$" 1 font-lock-function-name-face t)	;menu items
-   '("@\\(emph\\|strong\\|b\\|i\\){\\([^}]+\\)" 2 font-lock-comment-face t)
-   '("@\\(file\\|kbd\\|key\\){\\([^}]+\\)" 2 font-lock-string-face t)
-   '("@\\(samp\\|code\\|var\\){\\([^}]+\\)" 2 font-lock-function-name-face t)
-   '("@\\(xref\\|pxref\\){\\([^}]+\\)" 2 font-lock-keyword-face t)
-   '("@end *\\([a-zA-Z0-9]+\\)[ \t]*$" 1 font-lock-function-name-face t)
-   '("@item \\(.*\\)$" 1 font-lock-function-name-face t)
-   '("\\$\\([^$]*\\)\\$" 1 font-lock-string-face t)
+   '("^\\(*.*\\)[\t ]*$" 1 font-lock-function-name-face t) 	;menu items
+   '("@\\(emph\\|strong\\|b\\|i\\){\\([^}]+\\)" 2 font-lock-comment-face)
+   '("@\\(file\\|kbd\\|key\\){\\([^}]+\\)" 2 font-lock-string-face)
+   '("@\\(samp\\|code\\|var\\|math\\){\\([^}]+\\)"
+     2 font-lock-variable-name-face)
+   '("@\\(cite\\|xref\\|pxref\\){\\([^}]+\\)" 2 font-lock-reference-face)
+   '("@\\(end\\|item\\) *\\(.+\\)" 2 font-lock-function-name-face keep)
    )
   "Additional expressions to highlight in TeXinfo mode.")
 
@@ -384,8 +397,10 @@ value of texinfo-mode-hook."
   (setq comment-start-skip "@c +")
   (make-local-variable 'words-include-escapes)
   (setq words-include-escapes t)
+  (make-local-variable 'imenu-generic-expression)
+  (setq imenu-generic-expression texinfo-imenu-generic-expression)
   (make-local-variable 'font-lock-defaults)
-  (setq font-lock-defaults '(texinfo-font-lock-keywords))
+  (setq font-lock-defaults '(texinfo-font-lock-keywords t))
   (make-local-variable 'tex-start-of-header)
   (setq tex-start-of-header "%**start")
   (make-local-variable 'tex-end-of-header)
@@ -396,7 +411,7 @@ value of texinfo-mode-hook."
 ;;; Insert string commands
 
 (defconst texinfo-environment-regexp
-  "^@\\(f?table\\|enumerate\\|itemize\
+  "^[ \t]*@\\(f?table\\|enumerate\\|itemize\
 \\|ifhtml\\|ifinfo\\|iftex\\|ifset\\|ifclear\
 \\|example\\|quotation\\|lisp\\|smallexample\\|smalllisp\\|display\\|format\
 \\|flushleft\\|flushright\\|ignore\\|group\\|tex\\|html\\|cartouche\\|menu\

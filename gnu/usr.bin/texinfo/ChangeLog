@@ -1,3 +1,30 @@
+Sat Dec 23 11:48:43 1995  Brian J. Fox  <bfox@wizard.datawave.net>
+
+	* info/man.c: (clean_manpage) Remove ^L's from page.
+
+	* makeinfo/makeinfo.c (get_brace_args): Change some memcpy's to
+	memmoves.
+
+	* info/info.c (main): Prefer caseless matches over partial
+	matches.
+
+	* Makefile.in (All Subdir Targets): Change suggested by Debian
+	people which allows errors in recursive makes to kill the
+	top-level make.
+
+	* makeinfo/Makefile.in (makeinfo.dvi): New target.
+
+	* info/info.c (main): Print version of containing texinfo package.
+
+	* makeinfo/makeinfo.c (flush_output): Don't strip high-bit from
+	sentence_enders.
+	Print the version number of the containing texinfo package.
+
+	* info/man.c (locate_manpage_xref): Count the 0th entry.
+
+	* makeinfo/makeinfo.c (cm_menu): If a menu is seen before a node
+	has been defined, warn, and create the node `Top'.
+
 Wed Jun 21 03:19:39 1995  Brian Fox  <bfox@albert.gnu.ai.mit.edu>
 
 	* makeinfo/makeinfo.c (cm_infoinclude): Clean up after printing

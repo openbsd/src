@@ -55,6 +55,14 @@ ELISP_OBJS = info.elc makeinfo.elc texinfo.elc texnfo-upd.elc \
 all: $(ELISP_OBJS)
 sub-all: all
 
+# Nobody likes any of these install targets.  Fine.  Install it
+# manually, then.
+install:
+	@echo Please install the lisp files manually.
+
+uninstall:
+	@echo Nothing to be done for uninstall.
+
 # install: $(ELISP_OBJS)
 # 	 @(echo "(print (car load-path))" >/tmp/elc.$$$$; \
 # 	   lispdir=`emacs -batch -q -l /tmp/elc.$$$$ -nw | grep site-lisp`; \
@@ -67,15 +75,15 @@ sub-all: all
 # 	     echo "To install the elisp files, please copy *.elc to the"; \
 # 	     echo "emacs site-lisp directory."; \
 # 	   fi)
-
-install: $(ELISP_OBJS)
-	 for file in $(ELISP_OBJS); do \
-	   $(INSTALL_DATA) $$file $(lispdir); \
-	 done
-
-uninstall: $(ELISP_OBJS)
-	cd $(lispdir) && rm -f $(ELISP_OBJS)
-
+#
+# install: $(ELISP_OBJS)
+# 	 for file in $(ELISP_OBJS); do \
+# 	   $(INSTALL_DATA) $$file $(lispdir); \
+#	 done
+#
+# uninstall: $(ELISP_OBJS)
+# 	cd $(lispdir) && rm -f $(ELISP_OBJS)
+#
 informat.elc: info.elc
 makeinfo.elc: texinfo.elc
 texinfmt.elc: texinfo.elc

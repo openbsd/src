@@ -31,7 +31,7 @@
 /* The version numbers of this version of Info. */
 int info_major_version = 2;
 int info_minor_version = 14;
-int info_patch_level = 0;
+int info_patch_level = 1;
 
 /* Non-zero means search all indices for APROPOS_SEARCH_STRING. */
 static int apropos_p = 0;
@@ -198,7 +198,7 @@ main (argc, argv)
   /* If the user specified --version, then show the version and exit. */
   if (print_version_p)
     {
-      printf ("GNU Info, Version %s.\n", version_string ());
+      printf ("GNU Info, Version %s, from texinfo-3.7.\n", version_string ());
       exit (0);
     }
 
@@ -331,10 +331,19 @@ main (argc, argv)
       if (!entry)
 	{
 	  register int i;
+	  int best_guess = -1;
 
 	  for (i = 0; entry = menu[i]; i++)
-	    if (strncasecmp (entry->label, arg, strlen (arg)) == 0)
-	      break;
+	    {
+	      if (strcasecmp (entry->label, arg) == 0)
+		break;
+	      else
+		if (strncasecmp (entry->label, arg, strlen (arg)) == 0)
+		  best_guess = i;
+	    }
+
+	  if (!entry && best_guess != -1)
+	    entry = menu[best_guess];
 	}
 
       /* If we failed to find the reference, start Info with the current

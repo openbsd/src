@@ -516,6 +516,11 @@ The Definition Commands
 * Abstract Objects::            Commands for object-oriented programming.
 * Data Types::                  The definition command for data types.
 
+Footnotes
+
+* Footnote Commands::           How to write a footnote in Texinfo.
+* Footnote Styles::             Controlling how footnotes appear in Info.
+
 Conditionally Visible Text
 
 * Conditional Commands::        How to specify text for Info or @TeX{}.
@@ -1404,23 +1409,17 @@ and reported mistakes and obscurities; our special thanks go to
 @w{Melissa Weisshaus} for her frequent and often tedious reviews of 
 nearly similar editions.  Our mistakes are our own.
 
-@c ignore until mailing lists set up
-@ignore
 Please send suggestions and corrections to:
 
 @example
 @group
 @r{Internet address:}
     bug-texinfo@@prep.ai.mit.edu
-
-@r{UUCP path:}
-    mit-eddie!prep.ai.mit.edu!bug-texinfo
 @end group
 @end example
 
 @noindent
 Please include the manual's edition number in your messages.
-@end ignore
 
 @node Texinfo Mode, Beginning a File, Overview, Top
 @comment  node-name,  next,  previous,  up
@@ -10448,6 +10447,14 @@ understand the primary text.  For a thorough discussion of footnotes,
 see @cite{The Chicago Manual of Style}, which is published by the
 University of Chicago Press.}@refill
 
+@menu
+* Footnote Commands::           How to write a footnote in Texinfo.
+* Footnote Styles::             Controlling how footnotes appear in Info.
+@end menu
+
+@node Footnote Commands
+@section Footnote Commands
+
 In Texinfo, footnotes are created with the @code{@@footnote} command.
 This command is followed immediately by a left brace, then by the text
 of the footnote, and then by a terminating right brace.  The template
@@ -10468,12 +10475,20 @@ source, it looks like this:@refill
 footnote.@}; in the Texinfo source@dots{}
 @end example
 
+@strong{Warning:} Don't use footnotes in the argument of the
+@code{@@item} command for a @code{@@table} table.  This doesn't work;
+because of limitations of @TeX{}, there is no way to fix it.  To avoid
+the problem, move the footnote into the body text of the table.
+
 In a printed manual or book, the reference mark for a footnote is a
-small, superscripted number; the text of the footnote is written at
-the bottom of the page, below a horizontal line.@refill
+small, superscripted number; the text of the footnote appears at the
+bottom of the page, below a horizontal line.@refill
 
 In Info, the reference mark for a footnote is a pair of parentheses
 with the footnote number between them, like this: @samp{(1)}.@refill
+
+@node Footnote Styles
+@section Footnote Styles
 
 Info has two footnote styles, which determine where the text of the
 footnote is located:@refill

@@ -1900,22 +1900,19 @@ info_menu_or_ref_item (window, count, key, builder, ask_p)
       {
 	SEARCH_BINDING binding;
 
-	binding.start = 0;
-	binding.buffer = window->line_starts[point_line];
+	binding.buffer = window->node->contents;
+	binding.start = window->line_starts[point_line] - binding.buffer;
 	if (window->line_starts[point_line + 1])
 	  binding.end = window->line_starts[point_line + 1] - binding.buffer;
 	else
-	  binding.end =
-	    (window->node->contents + window->node->nodelen) - binding.buffer;
+	  binding.end = window->node->nodelen;
 	binding.flags = 0;
 
 	if (builder == info_menu_of_node)
 	  {
 	    if (point_line)
 	      {
-		binding.buffer--;
-		binding.end++;
-
+		binding.start--;
 		refs = info_menu_items (&binding);
 	      }
 	  }

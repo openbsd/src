@@ -261,7 +261,7 @@ get_manpage_contents (pagename)
 
   if (child == -1)
     return ((char *)NULL);
-  
+
   if (child != 0)
     {
       /* In the parent, close the writing end of the pipe, and read from
@@ -317,7 +317,7 @@ clean_manpage (manpage)
 	  newline_count--;
 	}
 
-      if (manpage[i] == '\b')
+      if (manpage[i] == '\b' || manpage[i] == '\f')
 	j -= 2;
     }
 
@@ -583,7 +583,7 @@ locate_manpage_xref (node, start, dir)
 	}
       else
 	{
-	  for (i = count - 1; i > 0; i--)
+	  for (i = count - 1; i > -1; i--)
 	    {
 	      entry = refs[i];
 

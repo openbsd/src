@@ -1,5 +1,6 @@
-;;; Texinfo mode utilities for updating nodes and menus in Texinfo files.
-;;; Copyright 1989, 1990, 1991, 1992 Free Software Foundation
+;;; texnfo-upd.el --- utilities for updating nodes and menus in Texinfo files
+
+;; Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
 
 ;; Author: Robert J. Chassell      
 ;; Maintainer: bug-texinfo@prep.ai.mit.edu
@@ -1001,10 +1002,11 @@ error if the node is not the top node and a section is not found."
                            t)
         "top")
        ((re-search-forward texinfo-section-types-regexp nil t)
-        (buffer-substring (progn (beginning-of-line) ; copy its name
-                                 (1+ (point)))
-                          (progn (forward-word 1)
-                                 (point))))
+        (buffer-substring-no-properties
+	 (progn (beginning-of-line) ; copy its name
+		(1+ (point)))
+	 (progn (forward-word 1)
+		(point))))
        (t
         (error
          "texinfo-specific-section-type: Chapter or section not found."))))))
