@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.16 2004/03/15 19:42:33 markus Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.17 2004/04/27 11:55:27 jmc Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -82,7 +82,7 @@ usage(void)
 {
 	extern char* __progname;
 
-	fprintf(stderr, "usage: %s [-dhinv] [-D macro=value] [-f config]\n",
+	fprintf(stderr, "usage: %s [-dhinv] [-D macro=value] [-f file]\n",
 		__progname);
 	exit(1);
 }
