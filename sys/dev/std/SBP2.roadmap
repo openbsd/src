@@ -1,0 +1,149 @@
+- configuration rom
+  - p1212 takes care of this, though it might be useful to compile the info into
+    a direct usable form (a struct)
+
+- access control
+  - target login_descriptors : context of a login
+    - lun
+    - login_owner_id
+    - login_owner_EUI_64
+    - status_fifo_addr
+    - exclusive_flag
+    - fetch_agent_csr
+    - login_id
+    - reconnect_hold
+  - login procedure
+    - 8-byte (login_request_addr) block-write transaction to the
+      management_agent_csr
+    - target reads the initiator's EUI64 with 2 quadlet-read transactions
+    - target reads the login_request_orb at login_request_addr
+    - if initiator's EUI64 exists in login_owner_EUI_64 : access denied
+    - if initiator wants exclusive and lun already used : access denied
+    - if exclusive_flag set on lun's login_descriptor : access denied
+    - if no login_descriptor is available : resources unavailable
+    - if it's ok, target return a valid login_response
+  - reconnection procedure
+    - 8-byte (reconnect_request_addr) block-write transaction to the
+      management_agent_csr
+    - target reads the initiator's EUI64 with 2 quadlet-read transactions
+    - target reads the reconnect_request_orb at reconnect_request_addr
+    - a completion status is sent back to the initiator
+  - logout procedure
+    - 8-byte (logout_request_addr) block-write transaction to the
+      management_agent_csr
+    - a completion status is sent back to the initiator
+- command execution
+  - requests and request-lists
+    - fetch agent initialization
+      - initiator allocates a dummy_orb, with a null pointer as next_orb,
+        of at least the minimum orb size
+      - initiator resets target fetch agent with a quadlet-write to
+        AGENT_RESET register
+      - initiator writes dummy_orb_addr with 8-byte block-write to
+        ORB_POINTER register
+      - fetch agent transition to ACTIVE state
+      - fetch agent reads the terminating dummy_orb and transition to
+        SUSPENDED state
+    - dynamic appends to request lists
+      - initiator constructs a linked-list of orbs in system memory, the
+        last orb's next_orb is null
+      - initiator updates the current last orb's next_orb to the first orb
+        of the linked-list
+      - initiator transmits a quadlet-write to the target's DOORBELL register
+      if the target is already in SUSPENDED state, the initiator may write
+      the first orb to ORB_POINTER register, and no DOORBELL is necessary
+  - data transfer
+  - completion status
+  - unsolicited status
+- task management
+  - task sets
+  - basic task management model
+    - all tasks in a task set share the same execution characteristics :
+      reorderable/ordered
+    - reorderable/ordered feature is target dependent, see config_rom
+    - each task is identified by its orb's serial bus address
+    - all targets must at least implement the abort task, abort task set and
+      target reset management functions
+  - error conditions : entire task set is cleared on error condition
+    - fetch agent transitions to dead state
+    - target waits for sent status completion of all the completed tasks
+    - then target sends status completion for the faulty task, with dead bit
+  - task management requests
+    - abort task
+      - modify the rq_fmt to 3 in the task to be aborted's orb
+      - setup an ABORT_TASK management orb with the task orb's serial bus addr
+      - if target fetch an aborted task, sends REQUEST_COMPLETE on dummy_orb
+      - initiator may not reuse the memory of the task to abort until
+        completion has been received
+    - abort task set
+      - initiator sends an ABORT_TASK_SET management orb with login_id to target
+      - fetch agent transitions to dead state
+      - target waits for sent status completion of all the completed tasks
+      - then target sends status completion into the supplied status buffer
+      - initiator may not reuse the memory of any task in the task set until
+        a completion status is received for the abort task set management task
+    - logical unit reset (optional)
+      - initiator sends a LOGICAL_UNIT_RESET management orb with login_id to
+        target
+      - fetch agent transitions to dead state for all the lun's fetch agents
+      - target creates a logical unit attention condition to all the initiators
+        logged in to that lun (except the one initiating the reset)
+      - then target sends status completion into the supplied status buffer
+      - initiator may not reuse the memory of any task in the task set until
+        a completion status is received for the logical unit reset management
+        task
+    - target reset
+      - initiator sends a TARGET_RESET management orb with login_id to target
+      - fetch agent transitions to dead state for all the fetch agents
+      - target creates a logical unit attention condition to all the initiators
+        except the one initiating the reset
+      - then target sends status completion into the supplied status buffer
+      - initiator may not reuse the memory of any task in the task set until
+        a completion status is received for the target reset management task
+
+- data structures
+  - ORB : rq_fmt_dep:128|notify:1|rq_fmt:2|rq_fmt_dep:29|rq_fmt_dep:nq
+    rq_fmt = 0|std, 1|rsvd, 2|vend, 3|nop
+    - Dummy ORB : next_ORB:64|ignore:64|notify:1|3:2|ignore:29|ignore:nq
+    - Command ORB : next_ORB:64|data_descr:64|notify:1|0:2|rsvd:1|direction:1|
+                    speed:3|max_payload:4|page_table_present:1|page_size:3|
+                    data_size:16|command_block:nq
+      speed = 0|S100, 1|S200, 2|S400, 3|S800, 4|S1600, 5|S3200
+      max payload = 2 ^ (max_payload + 2)
+      page size = 2 ^ (page_size + 8), if page_size != 0
+      (page_table_present):(page_size == 0)?unrestricted:normalized
+      (page_table_present):data_size = # of table elements
+                          ?data_size = data_descriptor size
+    - Management ORB : func_dep:128|notify:1|0:2|rsvd:9|function:4|func_dep:16|
+                       func_dep:32|status_fifo:64
+      function = 0|LOGIN, 1|QUERY_LOGINS, 3|RECONNECT, 4|SET_PASSWORD,
+                 7|LOGOUT, B|ABORT_TASK, C|ABORT_TASK_SET,
+                 E|LOGICAL_UNIT_RESET, F|TARGET_RESET
+      - Access ORB
+        - LOGIN ORB : password:64|login_response:64|notify:1|0:2|exclusive:1|
+                      rsvd:4|reconnect:4|0:4|lun:16|password_length:16|
+                      login_response_length:16|status_fifo:64
+          login_response_length >= 12
+          reconnect timeout = 2 ^ reconnect
+          - login response : length:16|login_ID:16|command_block_agent:64|
+                             rsvd:16|reconnect_hold:16
+            reconnect_hold <= 2 ^ reconnect - 1
+        - QUERY_LOGINS ORB : rsvd:64|query_response:64|n0..1:16|lun:16|rsvd:16|
+                             query_response_length:16|status_fifo:64
+          - query response : length:16|max_logins:16|
+                             (node_ID:16|login_ID:16|initiator_EUI_64:64)*n
+        - RECONNECT ORB : rsvd:128|n0..3:16|login_ID:16|rsvd:32|status_fifo:64
+        - LOGOUT ORB : rsvd:128|n0..7:16|login_ID:16|rsvd:32|status_fifo:64
+      - Task Management ORB : ORB_offset:064|rsvd:64|n0..fn:16|login_ID:16|
+                              rsvd:32|status_fifo:64
+        fn = B|ABORT_TASK, C|ABORT_TASK_SET,
+             E|LOGICAL_UNIT_RESET, F|TARGET_RESET
+        if ABORT_TASK, ORB_offset is relevant
+  - page tables
+    - unrestricted page table : segment_length:16|segment_base:48
+    - normalized page table : segment_length:16|segment_base..segment_offset:48
+  - status block : src:2|resp:2|dead:1|len:3|sbp_status:8|ORB_offset:48|cmd_dep
+  - address pointer : node_ID:16|offset:46|rsvd:2
+  - ORB pointer : null:1|rsvd:15|offset:46|rsvd:2
+- CSR
+
