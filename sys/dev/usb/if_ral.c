@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.8 2005/03/18 13:57:42 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.9 2005/03/18 19:07:22 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1095,9 +1095,8 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	DPRINTFN(10, ("sending mgt frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
 
-	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf,
-	    RAL_TX_DESC_SIZE + m0->m_pkthdr.len, USBD_FORCE_SHORT_XFER |
-	    USBD_NO_COPY, RAL_TX_TIMEOUT, ural_txeof);
+	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT, ural_txeof);
 
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
@@ -1181,9 +1180,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	DPRINTFN(10, ("sending data frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
 
-	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf,
-	    xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT,
-	    ural_txeof);
+	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT, ural_txeof);
 
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
