@@ -219,41 +219,41 @@ rijndael_decrypt(rijndael_key *key, u_int8_t a[16], u_int8_t b[16])
 
 	*((u_int32_t*)(b   )) = *((u_int32_t*)T5[temp[0][0]])
 			      ^ *((u_int32_t*)T6[temp[3][1]])
-	                      ^ *((u_int32_t*)T7[temp[2][2]]) 
-	                      ^ *((u_int32_t*)T8[temp[1][3]]);
+			      ^ *((u_int32_t*)T7[temp[2][2]]) 
+			      ^ *((u_int32_t*)T8[temp[1][3]]);
 	*((u_int32_t*)(b+ 4)) = *((u_int32_t*)T5[temp[1][0]])
-	                      ^ *((u_int32_t*)T6[temp[0][1]])
-	                      ^ *((u_int32_t*)T7[temp[3][2]]) 
-	                      ^ *((u_int32_t*)T8[temp[2][3]]);
+			      ^ *((u_int32_t*)T6[temp[0][1]])
+			      ^ *((u_int32_t*)T7[temp[3][2]]) 
+			      ^ *((u_int32_t*)T8[temp[2][3]]);
 	*((u_int32_t*)(b+ 8)) = *((u_int32_t*)T5[temp[2][0]])
-	                      ^ *((u_int32_t*)T6[temp[1][1]])
-	                      ^ *((u_int32_t*)T7[temp[0][2]]) 
-	                      ^ *((u_int32_t*)T8[temp[3][3]]);
+			      ^ *((u_int32_t*)T6[temp[1][1]])
+			      ^ *((u_int32_t*)T7[temp[0][2]]) 
+			      ^ *((u_int32_t*)T8[temp[3][3]]);
 	*((u_int32_t*)(b+12)) = *((u_int32_t*)T5[temp[3][0]])
-	                      ^ *((u_int32_t*)T6[temp[2][1]])
-	                      ^ *((u_int32_t*)T7[temp[1][2]]) 
-	                      ^ *((u_int32_t*)T8[temp[0][3]]);
+			      ^ *((u_int32_t*)T6[temp[2][1]])
+			      ^ *((u_int32_t*)T7[temp[1][2]]) 
+			      ^ *((u_int32_t*)T8[temp[0][3]]);
 	for (r = ROUNDS-1; r > 1; r--) {
 		*((u_int32_t*)temp[0]) = *((u_int32_t*)(b   )) ^ *((u_int32_t*)rk[r][0]);
 		*((u_int32_t*)temp[1]) = *((u_int32_t*)(b+ 4)) ^ *((u_int32_t*)rk[r][1]);
 		*((u_int32_t*)temp[2]) = *((u_int32_t*)(b+ 8)) ^ *((u_int32_t*)rk[r][2]);
 		*((u_int32_t*)temp[3]) = *((u_int32_t*)(b+12)) ^ *((u_int32_t*)rk[r][3]);
 		*((u_int32_t*)(b   )) = *((u_int32_t*)T5[temp[0][0]])
-		                      ^ *((u_int32_t*)T6[temp[3][1]])
-		                      ^ *((u_int32_t*)T7[temp[2][2]]) 
-		                      ^ *((u_int32_t*)T8[temp[1][3]]);
+				      ^ *((u_int32_t*)T6[temp[3][1]])
+				      ^ *((u_int32_t*)T7[temp[2][2]]) 
+				      ^ *((u_int32_t*)T8[temp[1][3]]);
 		*((u_int32_t*)(b+ 4)) = *((u_int32_t*)T5[temp[1][0]])
-		                      ^ *((u_int32_t*)T6[temp[0][1]])
-		                      ^ *((u_int32_t*)T7[temp[3][2]]) 
-		                      ^ *((u_int32_t*)T8[temp[2][3]]);
+				      ^ *((u_int32_t*)T6[temp[0][1]])
+				      ^ *((u_int32_t*)T7[temp[3][2]]) 
+				      ^ *((u_int32_t*)T8[temp[2][3]]);
 		*((u_int32_t*)(b+ 8)) = *((u_int32_t*)T5[temp[2][0]])
-		                      ^ *((u_int32_t*)T6[temp[1][1]])
-		                      ^ *((u_int32_t*)T7[temp[0][2]]) 
-		                      ^ *((u_int32_t*)T8[temp[3][3]]);
+				      ^ *((u_int32_t*)T6[temp[1][1]])
+				      ^ *((u_int32_t*)T7[temp[0][2]]) 
+				      ^ *((u_int32_t*)T8[temp[3][3]]);
 		*((u_int32_t*)(b+12)) = *((u_int32_t*)T5[temp[3][0]])
-		                      ^ *((u_int32_t*)T6[temp[2][1]])
-		                      ^ *((u_int32_t*)T7[temp[1][2]]) 
-		                      ^ *((u_int32_t*)T8[temp[0][3]]);
+				      ^ *((u_int32_t*)T6[temp[2][1]])
+				      ^ *((u_int32_t*)T7[temp[1][2]]) 
+				      ^ *((u_int32_t*)T8[temp[0][3]]);
 	}
 	/* last round is special */   
 	*((u_int32_t*)temp[0]) = *((u_int32_t*)(b   )) ^ *((u_int32_t*)rk[1][0]);
