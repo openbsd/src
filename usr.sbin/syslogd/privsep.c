@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.18 2004/04/09 20:13:25 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.19 2004/07/03 05:32:18 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -66,7 +66,7 @@ enum cmd_types {
 	PRIV_OPEN_UTMP,		/* open utmp for reading only */
 	PRIV_OPEN_CONFIG,	/* open config file for reading only */
 	PRIV_CONFIG_MODIFIED,	/* check if config file has been modified */
-	PRIV_GETHOSTBYNAME,	/* resolve hostname into numerical address */
+	PRIV_GETHOSTSERV,	/* resolve host/service names */
 	PRIV_GETHOSTBYADDR,	/* resolve numeric address into hostname */
 	PRIV_DONE_CONFIG_PARSE	/* signal that the initial config parse is done */
 };
@@ -98,11 +98,13 @@ int
 priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 {
 	int i, fd, socks[2], cmd, addr_len, addr_af, result, restart;
-	size_t path_len, hostname_len;
+	size_t path_len, hostname_len, servname_len;
 	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN];
+	char servname[MAXHOSTNAMELEN];
 	struct stat cf_stat;
 	struct hostent *hp;
 	struct passwd *pw;
+	struct addrinfo hints, *res0;
 
 	for (i = 1; i < _NSIG; i++)
 		signal(i, SIG_DFL);
@@ -275,21 +277,34 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			increase_state(STATE_RUNNING);
 			break;
 
-		case PRIV_GETHOSTBYNAME:
-			dprintf("[priv]: msg PRIV_GETHOSTBYNAME received\n");
-			/* Expecting: length, hostname */
+		case PRIV_GETHOSTSERV:
+			dprintf("[priv]: msg PRIV_GETHOSTSERV received\n");
+			/* Expecting: len, hostname, len, servname */
 			must_read(socks[0], &hostname_len, sizeof(size_t));
 			if (hostname_len == 0 || hostname_len > sizeof(hostname))
 				_exit(0);
 			must_read(socks[0], &hostname, hostname_len);
 			hostname[hostname_len - 1] = '\0';
-			hp = gethostbyname(hostname);
-			if (hp == NULL) {
+
+			must_read(socks[0], &servname_len, sizeof(size_t));
+			if (servname_len == 0 || servname_len > sizeof(servname))
+				_exit(0);
+			must_read(socks[0], &servname, servname_len);
+			servname[servname_len - 1] = '\0';
+
+			memset(&hints, '\0', sizeof(hints));
+			hints.ai_family = AF_INET;
+			hints.ai_socktype = SOCK_DGRAM;
+			i = getaddrinfo(hostname, servname, &hints, &res0);
+			if (i != 0 || res0 == NULL) {
 				addr_len = 0;
 				must_write(socks[0], &addr_len, sizeof(int));
 			} else {
-				must_write(socks[0], &hp->h_length, sizeof(int));
-				must_write(socks[0], hp->h_addr, hp->h_length);
+				/* Just send the first address */
+				i = res0->ai_addrlen;
+				must_write(socks[0], &i, sizeof(int));
+				must_write(socks[0], res0->ai_addr, i);
+				freeaddrinfo(res0);
 			}
 			break;
 
@@ -541,14 +556,15 @@ priv_config_parse_done(void)
 	must_write(priv_fd, &cmd, sizeof(int));
 }
 
-/* Resolve hostname into address.  Response is placed into addr, and
+/* Name/service to address translation.  Response is placed into addr, and
  * the length is returned (zero on error) */
 int
-priv_gethostbyname(char *host, char *addr, size_t addr_len)
+priv_gethostserv(char *host, char *serv, struct sockaddr *addr,
+    size_t addr_len)
 {
-	char hostcpy[MAXHOSTNAMELEN];
+	char hostcpy[MAXHOSTNAMELEN], servcpy[MAXHOSTNAMELEN];
 	int cmd, ret_len;
-	size_t hostname_len;
+	size_t hostname_len, servname_len;
 
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
@@ -556,11 +572,16 @@ priv_gethostbyname(char *host, char *addr, size_t addr_len)
 	if (strlcpy(hostcpy, host, sizeof hostcpy) >= sizeof(hostcpy))
 		errx(1, "%s: overflow attempt in hostname", __func__);
 	hostname_len = strlen(hostcpy) + 1;
+	if (strlcpy(servcpy, serv, sizeof servcpy) >= sizeof(servcpy))
+		errx(1, "%s: overflow attempt in servname", __func__);
+	servname_len = strlen(servcpy) + 1;
 
-	cmd = PRIV_GETHOSTBYNAME;
+	cmd = PRIV_GETHOSTSERV;
 	must_write(priv_fd, &cmd, sizeof(int));
 	must_write(priv_fd, &hostname_len, sizeof(size_t));
 	must_write(priv_fd, hostcpy, hostname_len);
+	must_write(priv_fd, &servname_len, sizeof(size_t));
+	must_write(priv_fd, servcpy, servname_len);
 
 	/* Expect back an integer size, and then a string of that length */
 	must_read(priv_fd, &ret_len, sizeof(int));
@@ -574,7 +595,9 @@ priv_gethostbyname(char *host, char *addr, size_t addr_len)
 		errx(1, "%s: overflow attempt in return", __func__);
 
 	/* Read the resolved address and make sure we got all of it */
+	memset(addr, '\0', addr_len);
 	must_read(priv_fd, addr, ret_len);
+
 	return ret_len;
 }
 

@@ -14,6 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 /* Privilege separation */
 int   priv_init(char *, int, int, int, char **);
 int   priv_open_tty(const char *);
@@ -22,7 +25,7 @@ FILE *priv_open_utmp(void);
 FILE *priv_open_config(void);
 void  priv_config_parse_done(void);
 int   priv_config_modified(void);
-int   priv_gethostbyname(char *, char *, size_t);
+int   priv_gethostserv(char *, char *, struct sockaddr *, size_t);
 int   priv_gethostbyaddr(char *, int, int, char *, size_t);
 
 /* Terminal message */

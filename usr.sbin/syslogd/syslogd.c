@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.80 2004/06/25 19:10:54 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.81 2004/07/03 05:32:18 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.80 2004/06/25 19:10:54 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.81 2004/07/03 05:32:18 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ struct filed {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
 			char	f_hname[MAXHOSTNAMELEN];
-			struct sockaddr_in	f_addr;
+			struct sockaddr_storage	f_addr;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
 		struct {
@@ -262,7 +262,7 @@ void	domark(int);
 void	markit(void);
 void	fprintlog(struct filed *, int, char *);
 void	init(void);
-void	logerror(char *);
+void	logerror(const char *);
 void	logmsg(int, char *, char *, int);
 void	printline(char *, char *);
 void	printsys(char *);
@@ -851,7 +851,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 			l = strlen(line);
 		if (sendto(pfd[PFD_INET].fd, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
-		    sizeof(f->f_un.f_forw.f_addr)) != l) {
+		    f->f_un.f_forw.f_addr.ss_len) != l) {
 			f->f_type = F_UNUSED;
 			logerror("sendto");
 		}
@@ -1051,7 +1051,7 @@ doinit(int signo)
  * Print syslogd errors some place.
  */
 void
-logerror(char *type)
+logerror(const char *type)
 {
 	char buf[100];
 
@@ -1246,7 +1246,8 @@ cfline(char *line, struct filed *f, char *prog)
 {
 	int i, pri, addr_len;
 	size_t rb_len;
-	char *bp, *p, *q;
+	char *bp, *p, *q, *cp;
+	const char *errstr;
 	char buf[MAXLINE], ebuf[100];
 	char addr[MAXHOSTNAMELEN];
 	struct filed *xf;
@@ -1343,20 +1344,25 @@ cfline(char *line, struct filed *f, char *prog)
 	case '@':
 		if (!InetInuse)
 			break;
-		(void)strlcpy(f->f_un.f_forw.f_hname, ++p,
-		    sizeof(f->f_un.f_forw.f_hname));
-		addr_len = priv_gethostbyname(f->f_un.f_forw.f_hname,
-		    addr, sizeof addr);
-		if (addr_len < 1) {
-			logerror((char *)hstrerror(h_errno));
+		if ((cp = strrchr(++p, ':')) != NULL)
+			*cp++ = '\0';
+		if ((strlcpy(f->f_un.f_forw.f_hname, p,
+		    sizeof(f->f_un.f_forw.f_hname)) >=
+		    sizeof(f->f_un.f_forw.f_hname))) {
+			snprintf(ebuf, sizeof(ebuf), "hostname too long \"%s\"",
+			    p);
+			logerror(ebuf);
 			break;
 		}
-		memset(&f->f_un.f_forw.f_addr, 0,
+		addr_len = priv_gethostserv(f->f_un.f_forw.f_hname, 
+		    cp == NULL ? "syslog" : cp, 
+		    (struct sockaddr*)&f->f_un.f_forw.f_addr, 
 		    sizeof(f->f_un.f_forw.f_addr));
-		f->f_un.f_forw.f_addr.sin_len = sizeof(f->f_un.f_forw.f_addr);
-		f->f_un.f_forw.f_addr.sin_family = AF_INET;
-		f->f_un.f_forw.f_addr.sin_port = LogPort;
-		memmove(&f->f_un.f_forw.f_addr.sin_addr, addr, addr_len);
+		if (addr_len < 1) {
+			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"", p);
+			logerror(ebuf);
+			break;
+		}
 		f->f_type = F_FORW;
 		break;
 
