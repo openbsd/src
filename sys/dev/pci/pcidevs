@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.12 1996/10/14 09:00:53 deraadt Exp $
+$OpenBSD: pcidevs,v 1.13 1996/10/14 10:22:22 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
 
@@ -408,12 +408,12 @@ vendor ARK		0xedd8	Ark Logic (or Arc? or Hercules?)
 /* 3COM Products */
 product	3COM 3C590	0x5900	3c590 10Mbps
 product	3COM 3C595	0x5950	3c595 100Base-TX
-product	3COM 3C595	0x5951	3c595 100Base-T4
-product	3COM 3C595	0x5952	3c595 100Base-T/MII
+product	3COM 3C595T	0x5951	3c595 100Base-T4
+product	3COM 3C595TM	0x5952	3c595 100Base-T/MII
 product	3COM 3C900	0x9000	3c900 10Base-T
-product	3COM 3C900	0x9001	3c900 10Mbps-Combo
+product	3COM 3C900T	0x9001	3c900 10Mbps-Combo
 product	3COM 3C905	0x9050	3c905 100Base-TX
-product	3COM 3C905	0x9051	3c905 100Base-T4
+product	3COM 3C905T	0x9051	3c905 100Base-T4
 
 /* Acer products */
 product ACER M1435	0x1435	M1435
