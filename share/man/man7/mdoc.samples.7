@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.48 2003/12/20 11:36:33 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.49 2004/01/24 21:55:08 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1475,6 +1475,22 @@ are:
 .It Li "-susv3"
 .St -susv3
 .El
+.Ss Variable Types
+The
+.Sq .Vt
+macro may be used whenever a type is referenced.
+In the
+.Sx SYNOPSIS
+section, it causes a line break
+.Pq useful for old-style variable declarations .
+.Pp
+.Dl Usage: .Vt Ao type Ac ...
+.Bl -tag -width ".Vt extern char *optarg;" -compact -offset 14n
+.It Li \&.Vt extern char *optarg;
+.Vt extern char *optarg;
+.It Li \&.Vt FILE *
+.Vt FILE *
+.El
 .Ss Variables
 Generic variable reference:
 .Pp
@@ -2087,9 +2103,6 @@ Toggles spacing on or off.
 .It \&.Ud
 Prints
 .Dq currently under development.
-.It \&.Vt
-Variable type
-.Pq Fortran only .
 .El
 .Sh PAGE STRUCTURE DOMAIN
 .Ss Section Headers
@@ -3268,6 +3281,9 @@ The list and display macros do not do any keeps
 and certainly should be able to.
 .Pp
 Section 3f has not been added to the header routines.
+.Pp
+.Sq .Vt
+does not respect punctuation.
 .\" Note what happens if the parameter list overlaps a newline
 .\" boundary.
 .\" to make sure a line boundary is crossed:
