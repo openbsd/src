@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.h,v 1.1 2001/07/05 08:31:48 jjbg Exp $ */
+/* $OpenBSD: ip_ipcomp.h,v 1.2 2001/07/05 08:40:59 angelos Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -41,7 +41,7 @@ struct ipcompstat {
 	u_int32_t	ipcomps_noxform;
 	u_int32_t	ipcomps_wrap;
 	u_int32_t	ipcomps_input;	/* Input IPcomp packets */
-	u_int32_t	ipcomps_output;	/* Ouptut IPcomp packets */
+	u_int32_t	ipcomps_output;	/* Output IPcomp packets */
 	u_int32_t	ipcomps_invalid;	/* Trying to use an invalid
 						 * TDB */
 	u_int32_t	ipcomps_ibytes;	/* Input bytes */
