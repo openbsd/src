@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.8 2002/05/29 09:45:08 deraadt Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.9 2002/07/04 05:05:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.8 2002/05/29 09:45:08 deraadt Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.9 2002/07/04 05:05:29 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ FILE	*debug;
 #define	DEBUG2(f,a1,a2)	if (debug) fprintf(debug, f, a1, a2)
 
 char	*checkbuf(char *, int);
-void	getstring(char *);
+void	getstring(char *, int);
 void	error(int);
 
 int
@@ -106,7 +106,8 @@ top:
 	case 'O':
 		if (tape >= 0)
 			(void) close(tape);
-		getstring(device); getstring(mode);
+		getstring(device, sizeof(device));
+		getstring(mode, sizeof(mode));
 		DEBUG2("rmtd: O %s %s\n", device, mode);
 		tape = open(device, atoi(mode),
 		    S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
@@ -116,14 +117,15 @@ top:
 
 	case 'C':
 		DEBUG("rmtd: C\n");
-		getstring(device);		/* discard */
+		getstring(device, sizeof(device));	/* discard */
 		if (close(tape) == -1)
 			goto ioerror;
 		tape = -1;
 		goto respond;
 
 	case 'L':
-		getstring(count); getstring(pos);
+		getstring(count, sizeof(count));
+		getstring(pos, sizeof(pos));
 		DEBUG2("rmtd: L %s %s\n", count, pos);
 		orval = lseek(tape, strtoq(count, NULL, 0), atoi(pos));
 		if (orval == -1)
@@ -131,7 +133,7 @@ top:
 		goto respond;
 
 	case 'W':
-		getstring(count);
+		getstring(count, sizeof(count));
 		n = atoi(count);
 		DEBUG1("rmtd: W %s\n", count);
 		record = checkbuf(record, n);
@@ -148,7 +150,7 @@ top:
 		goto respond;
 
 	case 'R':
-		getstring(count);
+		getstring(count, sizeof(count));
 		DEBUG1("rmtd: R %s\n", count);
 		n = atoi(count);
 		record = checkbuf(record, n);
@@ -161,7 +163,8 @@ top:
 		goto top;
 
 	case 'I':
-		getstring(op); getstring(count);
+		getstring(op, sizeof(op));
+		getstring(count, sizeof(count));
 		DEBUG2("rmtd: I %s %s\n", op, count);
 		{ struct mtop mtop;
 		  mtop.mt_op = atoi(op);
@@ -199,19 +202,18 @@ ioerror:
 }
 
 void
-getstring(bp)
+getstring(bp, size)
 	char *bp;
+	int size;
 {
-	int i;
 	char *cp = bp;
+	char *ep = bp + size - 1;
 
-	for (i = 0; i < STRSIZE; i++) {
-		if (read(0, cp+i, 1) != 1)
+	do {
+		if (read(0, cp, 1) != 1)
 			exit(0);
-		if (cp[i] == '\n')
-			break;
-	}
-	cp[i] = '\0';
+	} while (*cp != '\n' && ++cp < ep);
+	*cp = '\0';
 }
 
 char *
