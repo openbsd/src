@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.20 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: locore.c,v 1.21 2002/01/31 11:42:52 hugh Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -257,6 +257,22 @@ start()
 			strcpy(cpu_model,"VAX 4000 605A"); break;
 		default:
 			strcpy(cpu_model,"VAX - Unknown Omega Class");
+		}
+		break;
+	case VAX_BTYP_1305:
+		dep_call = &ka680_calls;
+		switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_681:
+			strcpy(cpu_model,"VAX 4000 500A");
+			break;
+		case VAX_STYP_691:
+			strcpy(cpu_model,"VAX 4000 605A");
+			break;
+		case VAX_STYP_694:
+			strcpy(cpu_model,"VAX 4000 705A");
+			break;
+		default:
+			strcpy(cpu_model,"VAX - Unknown Legacy Class");
 		}
 		break;
 #endif

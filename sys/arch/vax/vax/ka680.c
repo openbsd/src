@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.6 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.7 2002/01/31 11:42:52 hugh Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -112,24 +112,36 @@ ka680_conf()
 	*hej = *hej;
 	hej[-1] = hej[-1];
 
-	switch((vax_siedata & 0xff00) >> 8) {
-	case VAX_STYP_675:
-		cpuname = "KA675";
+	switch(vax_boardtype) {
+	case VAX_BTYP_1301:
+		switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_675:
+			cpuname = "KA675";
+			break;
+		case VAX_STYP_680:
+			cpuname = "KA680";
+			break;
+		case VAX_STYP_690:
+			cpuname = "KA690";
+			break;
+		default:
+			cpuname = "unknown NVAX 1301";
+		}
 		break;
-	case VAX_STYP_680:
-		cpuname = "KA680";
-		break;
-	case VAX_STYP_681:
-		cpuname = "KA681";
-		break;
-	case VAX_STYP_690:
-		cpuname = "KA690";
-		break;
-	case VAX_STYP_691:
-		cpuname = "KA691";
-		break;
-	default:
-			cpuname = "unknown NVAX";
+	case VAX_BTYP_1305:
+		switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_681:
+			cpuname = "KA681";
+			break;
+		case VAX_STYP_691:
+			cpuname = "KA691";
+			break;
+		case VAX_STYP_694:
+			cpuname = "KA694";
+			break;
+		default:
+			cpuname = "unknown NVAX 1305";
+		}
 	}
 	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
 }
@@ -162,7 +174,16 @@ ka680_cache_enable()
 		havevic = 1;
 		break;
 	case VAX_STYP_690:
+		fslut = 0x01440000;
+		cslut = 0x01040000;
+		havevic = 1;
+		break;
 	case VAX_STYP_691:	/* XXX untested */
+		fslut = 0x01420000;
+		cslut = 0x01020000;
+		havevic = 1;
+		break;
+	case VAX_STYP_694:	/* XXX untested */
 		fslut = 0x01440000;
 		cslut = 0x01040000;
 		havevic = 1;
