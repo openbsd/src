@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.273 2003/05/20 03:05:42 tedu Exp $
+#	$OpenBSD: files,v 1.274 2003/07/24 03:07:47 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -627,7 +627,7 @@ file net/bpf_filter.c			bpfilter | ppp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm			needs-flag
-file net/if_ethersubr.c			ether | fddi | token	needs-flag
+file net/if_ethersubr.c			ether | inet | fddi | token needs-flag
 file net/if_fddisubr.c			fddi
 file net/if_spppsubr.c			sppp
 file net/if_loop.c			loop
@@ -673,7 +673,7 @@ file netccitt/pk_subr.c			ccitt
 file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
 file netinet/if_atm.c			atm
-file netinet/if_ether.c			ether
+file netinet/if_ether.c			ether | inet
 #file netinet/if_ieee1394arp.c		ieee1394 & inet
 file netinet/in4_cksum.c		inet
 file netinet/igmp.c			inet
