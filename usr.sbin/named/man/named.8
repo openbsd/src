@@ -1,4 +1,4 @@
-.\"	$OpenBSD: named.8,v 1.12 2002/06/08 22:44:18 millert Exp $
+.\"	$OpenBSD: named.8,v 1.13 2002/07/08 00:29:51 deraadt Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -443,10 +443,9 @@ also cause the server to check the serial number on all secondary zones.
 Normally the serial numbers are only checked at the SOA-specified intervals.
 .IP SIGINT
 Dumps the current data base and cache to /var/named/named_dump.db
-.IP SIGIOT
-Dumps statistics data into /var/named/named.stats if the server is
-compiled with -DSTATS.  Statistics data is appended to the file.  Some
-systems use SIGABRT rather than SIGIOT for this.
+.IP SIGABRT
+Dumps statistics data into /var/named/named.stats.
+Statistics data is appended to the file.
 .IP SIGSYS
 Dumps the profiling data in /var/named if the server is compiled
 with profiling (server forks, chdirs and exits).
