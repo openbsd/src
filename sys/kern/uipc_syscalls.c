@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.12 1998/08/05 16:35:44 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.13 1998/09/14 23:35:01 provos Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -437,7 +437,8 @@ sendit(p, s, mp, flags, retsize)
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
 		/* Don't allow sum > SSIZE_MAX */
-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0)
+		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0 &&
+		    (iov->iov_base != 0 || iov->iov_len != 0))
 			return (EINVAL);
 	}
 	if (mp->msg_name) {
@@ -627,7 +628,8 @@ recvit(p, s, mp, namelenp, retsize)
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
 		/* Don't allow sum > SSIZE_MAX */
-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0)
+		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0 &&
+		    (iov->iov_base != 0 || iov->iov_len != 0))
 			return (EINVAL);
 	}
 #ifdef KTRACE
