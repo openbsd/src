@@ -2036,13 +2036,11 @@ IDTVEC(fpu)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
-#if 0
-	pushl	_cpl			# this is apparently not used for anything
-#endif
-	pushl	%esp
+	pushl	_cpl			# if_ppl in intrframe
+	pushl	%esp			# push address of intrframe
 	incl	_cnt+V_TRAP
 	call	_npxintr
-	addl	$8,%esp
+	addl	$8,%esp			# pop address and if_ppl
 	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)
