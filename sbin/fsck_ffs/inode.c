@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.15 2001/03/02 08:33:55 art Exp $	*/
+/*	$OpenBSD: inode.c,v 1.16 2001/05/15 19:32:39 mickey Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.15 2001/03/02 08:33:55 art Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.16 2001/05/15 19:32:39 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -386,7 +386,7 @@ cacheino(dp, inumber)
 	inp = (struct inoinfo *)
 		malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
 	if (inp == NULL)
-		return;
+		errexit("cannot allocate memory for inode cache");
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
