@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 1997/02/10 12:01:49 downsj Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 1997/02/10 12:16:56 downsj Exp $	*/
 /*	$NetBSD: pmap.c,v 1.28 1996/10/21 05:42:27 scottr Exp $	*/
 
 /* 
@@ -1475,7 +1475,6 @@ void
 pmap_copy_page(src, dst)
 	vm_offset_t src, dst;
 {
-void copypage __P((caddr_t, caddr_t));
 	register vm_offset_t skva, dkva;
 	extern caddr_t CADDR1, CADDR2;
 
