@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.25 1999/02/18 22:56:58 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.26 1999/02/19 15:06:52 millert Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -156,9 +156,13 @@ sofree(so)
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
 	if (so->so_head) {
-		if (!soqremque(so, 0) && !soqremque(so, 1))
-			panic("sofree dq");
-		so->so_head = 0;
+		/*
+		 * We must not decommission a socket that's on the accept(2)
+		 * queue.  If we do, then accept(2) may hang after select(2)
+		 * indicated that the listening socket was ready.
+		 */
+		if (!soqremque(so, 0))
+			return;
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
@@ -174,14 +178,19 @@ int
 soclose(so)
 	register struct socket *so;
 {
+	struct socket *so2;
 	int s = splsoftnet();		/* conservative */
 	int error = 0;
 
 	if (so->so_options & SO_ACCEPTCONN) {
-		while (so->so_q0)
-			(void) soabort(so->so_q0);
-		while (so->so_q)
-			(void) soabort(so->so_q);
+		while ((so2 = so->so_q0) != NULL) {
+			(void) soqremque(so2, 0);
+			(void) soabort(so2);
+		}
+		while ((so2 = so->so_q) != NULL) {
+			(void) soqremque(so2, 1);
+			(void) soabort(so2);
+		}
 	}
 	if (so->so_pcb == 0)
 		goto discard;
@@ -237,12 +246,14 @@ soaccept(so, nam)
 	struct mbuf *nam;
 {
 	int s = splsoftnet();
-	int error;
+	int error = 0;
 
 	if ((so->so_state & SS_NOFDREF) == 0)
 		panic("soaccept: !NOFDREF");
 	so->so_state &= ~SS_NOFDREF;
-	error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT, NULL, nam, NULL);
+	if ((so->so_state & SS_ISDISCONNECTED) == 0)
+		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT, NULL,
+		    nam, NULL);
 	splx(s);
 	return (error);
 }
