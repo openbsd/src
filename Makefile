@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 1998/05/18 17:40:00 mickey Exp $
+#	$OpenBSD: Makefile,v 1.38 1998/05/18 18:29:07 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -19,6 +19,13 @@
 #
 # 3) If you are reasonably sure that things will compile OK, use the
 # "make build" target supplied here. Good luck.
+#
+# 4) If you want to setup a cross-build environment, there is a "cross-tools"
+# target available which upon completion of "make TARGET=<target> cross-tools" 
+# (where <target> is one of the names in the /sys/arch directory) will produce
+# a set of compilation tools along with the includes in the /usr/cross/<target>
+# directory.
+#
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
 
