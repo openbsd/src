@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.9 2001/05/14 07:22:06 angelos Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.10 2001/11/14 20:04:40 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ char	*nlistf, *memf;
 
 int		hz, reps, interval;
 static int	todo = 0;
+static int	wantheader;
 
 #define ISSET(x, a)	((x) & (a))
 #define SHOW_CPU	0x0001
@@ -114,7 +115,8 @@ static int	todo = 0;
 static void cpustats __P((void));
 static void disk_stats __P((double));
 static void disk_stats2 __P((double));
-static void header __P((int));
+static void sigheader __P((int));
+static void header __P(());
 static void usage __P((void));
 static void display __P((void));
 static void selectdrives __P((int, char **));
@@ -180,12 +182,13 @@ main(argc, argv)
 	tv.tv_usec = 0;
 
 	/* print a new header on sigcont */
-	(void)signal(SIGCONT, header);
+	(void)signal(SIGCONT, sigheader);
 
 	for (hdrcnt = 1;;) {
-		if (!--hdrcnt) {
-			header(0);
+		if (!--hdrcnt || wantheader) {
+			header();
 			hdrcnt = 20;
+			wantheader = 0;
 		}
 
 		if (!ISSET(todo, SHOW_TOTALS))
@@ -201,8 +204,14 @@ main(argc, argv)
 }
 
 static void
-header(signo)
+sigheader(signo)
 	int signo;
+{
+	wantheader = 1;
+}
+
+static void
+header(void)
 {
 	register int i;
 
