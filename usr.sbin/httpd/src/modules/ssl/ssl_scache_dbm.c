@@ -232,7 +232,6 @@ SSL_SESSION *ssl_scache_dbm_retrieve(server_rec *s, UCHAR *id, int idlen)
         return NULL;
     }
     dbmval = ssl_dbm_fetch(dbm, dbmkey);
-    ssl_dbm_close(dbm);
     ssl_mutex_off(s);
 
     /* immediately return if not found */
@@ -246,6 +245,8 @@ SSL_SESSION *ssl_scache_dbm_retrieve(server_rec *s, UCHAR *id, int idlen)
         return NULL;
     memcpy(ucpData, (char *)dbmval.dptr+sizeof(time_t), nData);
     memcpy(&expiry, dbmval.dptr, sizeof(time_t));
+
+    ssl_dbm_close(dbm);
 
     /* make sure the stuff is still not expired */
     now = time(NULL);
