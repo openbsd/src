@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.113 2002/09/12 03:27:20 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.114 2002/09/19 17:58:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1426,7 +1426,7 @@ ubsec_callback2(sc, q)
 					+ 7) / 8);
 				bcopy(me->me_C.dma_vaddr,
 				    krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
-				    me->me_modbits);
+				    (me->me_modbits + 7) / 8);
 			} else
 				ubsec_kshift_l(me->me_shiftbits,
 				    me->me_C.dma_vaddr, me->me_normbits,
@@ -2176,7 +2176,7 @@ ubsec_kprocess_modexp_hw(sc, krp)
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
 	bzero(ctx, sizeof(*ctx));
 	bcopy(krp->krp_param[UBS_MODEXP_PAR_N].crp_p, ctx->me_N,
-	    (nbits + 7) / 2);
+	    (nbits + 7) / 8);
 	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
 	ctx->me_E_len = htole16(ebits);
