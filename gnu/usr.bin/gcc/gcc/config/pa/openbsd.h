@@ -31,6 +31,9 @@ Boston, MA 02111-1307, USA.  */
 #undef MAX_OFILE_ALIGNMENT
 #define	MAX_OFILE_ALIGNMENT 0x8000
 
+/* libc's profiling functions don't need gcc to allocate counters.  */
+#define NO_PROFILE_COUNTERS 1
+
 /* Run-time target specifications. */
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()		\
@@ -41,14 +44,6 @@ Boston, MA 02111-1307, USA.  */
   while (0)
 
 
-#undef OVERRIDE_OPTIONS
-#define OVERRIDE_OPTIONS						 \
-{							                 \
-    override_options ();				                 \
-    if (! flag_pic)						         \
-        target_flags |= MASK_PORTABLE_RUNTIME | MASK_FAST_INDIRECT_CALLS;\
-}
-	
 /* XXX Why doesn't PA support -R  like everyone ??? */
 #undef LINK_SPEC
 #define LINK_SPEC \
@@ -105,11 +100,35 @@ do { \
 /* Use the default.  */
 #undef ASM_OUTPUT_LABEL
 
-/* Define these to generate the Linux/ELF/SysV style of internal
-   labels all the time - i.e. to be compatible with
-   ASM_GENERATE_INTERNAL_LABEL in <elfos.h>.  Compare these with the
-   ones in pa.h and note the lack of dollar signs in these.  FIXME:
-   shouldn't we fix pa.h to use ASM_GENERATE_INTERNAL_LABEL instead? */
+/* This is how to output an internal numbered label where
+   PREFIX is the class of label and NUM is the number within the class.
+
+   For most svr4 systems, the convention is that any symbol which begins
+   with a period is not put into the linker symbol table by the assembler.  */
+
+#undef  ASM_OUTPUT_INTERNAL_LABEL
+#define ASM_OUTPUT_INTERNAL_LABEL(FILE, PREFIX, NUM)            \
+  do                                                            \
+    {                                                           \
+      fprintf (FILE, ".%s%u:\n", PREFIX, (unsigned) (NUM));     \
+    }                                                           \
+  while (0)
+
+/* This is how to store into the string LABEL
+   the symbol_ref name of an internal numbered label where
+   PREFIX is the class of label and NUM is the number within the class.
+   This is suitable for output with `assemble_name'.
+
+   For most svr4 systems, the convention is that any symbol which begins
+   with a period is not put into the linker symbol table by the assembler.  */
+
+#undef  ASM_GENERATE_INTERNAL_LABEL
+#define ASM_GENERATE_INTERNAL_LABEL(LABEL, PREFIX, NUM)         \
+  do                                                            \
+    {                                                           \
+      sprintf (LABEL, "*.%s%u", PREFIX, (unsigned) (NUM));      \
+    }                                                           \
+  while (0)
 
 #undef ASM_OUTPUT_ADDR_VEC_ELT
 #define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE) \
@@ -187,6 +206,7 @@ do { \
 #define BSS_SECTION_ASM_OP "\t.section\t.bss"
 #define CTORS_SECTION_ASM_OP    "\t.section\t.ctors,\"aw\""
 #define DTORS_SECTION_ASM_OP    "\t.section\t.dtors,\"aw\""
+#define TARGET_ASM_NAMED_SECTION  default_elf_asm_named_section
 
 /* Remove hpux specific pa defines. */
 #undef LDD_SUFFIX

@@ -6,12 +6,11 @@ LIB1ASMFUNCS = _divI _divU _remI _remU _div_const _mulI _dyncall
 LIB1ASMSRC = pa/milli64.S
 
 # Compile libgcc2.a as PIC.
-TARGET_LIBGCC2_CFLAGS = -DELF=1 -DLINUX
+TARGET_LIBGCC2_CFLAGS = -fPIC -DELF=1 -DLINUX
 
-# Don't build a shared libgcc_s.so.  Our libgcc contains millicode, and
-# the ABI (linker and dynamic linker really) does not allow millicode
-# to be exported from shared libraries.  Consequently, to successfully
-# link against libgcc_s.so it is necessary to link against _both_
-# libgcc_s.so and libgcc.a.  This is a pain.  It's easier just to disable
-# the shared libgcc.
-SHLIB_LINK =
+LIB2FUNCS_EXTRA=fptr.c
+
+fptr.c: $(srcdir)/config/pa/fptr.c
+	rm -f fptr.c
+	cp $(srcdir)/config/pa/fptr.c .
+
