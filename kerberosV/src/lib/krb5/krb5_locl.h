@@ -147,8 +147,8 @@ struct sockaddr_dl;
 #define ALLOC_SEQ(X, N) do { (X)->len = (N); ALLOC((X)->val, (N)); } while(0)
 
 /* should this be public? */
-#define KEYTAB_DEFAULT "ANY:FILE:/etc/krb5.keytab,krb4:/etc/kerberosIV/srvtab"
-#define KEYTAB_DEFAULT_MODIFY "FILE:/etc/krb5.keytab"
+#define KEYTAB_DEFAULT "ANY:FILE:/etc/kerberosV/krb5.keytab,krb4:/etc/kerberosIV/srvtab"
+#define KEYTAB_DEFAULT_MODIFY "FILE:/etc/kerberosV/krb5.keytab"
 
 #ifndef O_BINARY
 #define O_BINARY 0
