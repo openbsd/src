@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.3 2003/10/21 11:58:46 otto Exp $
+.\"	$OpenBSD: bc,v 1.4 2003/10/22 12:25:13 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -483,6 +483,7 @@ They are written in the following way
 .DS
 .ft B
 if(relation) statement
+if(relation) statement else statement
 while(relation) statement
 for(expression1; relation; expression2) statement
 .ft P
@@ -491,6 +492,7 @@ or
 .DS
 .ft B
 if(relation) {statements}
+if(relation) {statements} else {statements}
 while(relation) {statements}
 for(expression1; relation; expression2) {statements}
 .ft P
@@ -516,6 +518,9 @@ message, but \fS=\fP really will not do a comparison.
 The `if' statement causes execution of its range
 if and only if the relation is true.
 Then control passes to the next statement in sequence.
+If an `else' branch is present, the statements in this branch are
+executed if the relation is false.
+The `else' keyword is a non-portable extension.
 .PP
 The `while' statement causes execution of its range
 repeatedly as long as the relation
@@ -778,6 +783,7 @@ The following are reserved keywords:
 	length	return
 	while	quit
 	for	continue
+	else
 .fi
 .ft
 .NH 2
@@ -1081,6 +1087,14 @@ If statements
 \fBif\|(\|\fIrelation\fB\|)\|\fIstatement\fR
 .PP
 The substatement is executed if the relation is true.
+.NH 2
+If-else statements
+.sp .5
+\fBif\|(\|\fIrelation\fB\|)\|\fIstatement\fB\|else\|\fIstatement\fR
+.PP
+The first substatement is executed if the relation is true, the second
+substatement if the relation is false.
+The if-else statement is a non-portable extension.
 .NH 2
 While statements
 .sp .5
