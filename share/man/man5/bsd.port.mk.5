@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.69 2002/05/13 00:45:09 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.70 2002/06/05 19:59:02 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -231,6 +231,8 @@ exists, the files described under
 .Ev PATCH_LIST
 will be applied under
 .Ev WRKDIST .
+.It Ar print-depends
+Print all dependencies for the given port.
 .It Ar rebuild
 Force rebuild of the port.
 .It Ar regress
