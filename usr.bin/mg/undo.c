@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.20 2003/11/09 01:11:14 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.21 2003/11/09 01:20:32 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -71,9 +71,9 @@ find_absolute_dot(LINE *lp, int off)
 	int count = 0;
 	LINE *p;
 
-	for (p = curwp->w_linep; p != lp; p = lforw(p)) {
+	for (p = curbp->b_linep; p != lp; p = lforw(p)) {
 		if (count != 0) {
-			if (p == curwp->w_linep) {
+			if (p == curbp->b_linep) {
 				ewprintf("Error: Undo stuff called with a"
 				    "nonexistent line");
 				return (FALSE);
@@ -91,10 +91,10 @@ find_line_offset(int pos, LINE **olp, int *offset)
 {
 	LINE *p;
 
-	p = curwp->w_linep;
+	p = curbp->b_linep;
 	while (pos > llength(p)) {
 		pos -= llength(p) + 1;
-		if ((p = lforw(p)) == curwp->w_linep) {
+		if ((p = lforw(p)) == curbp->b_linep) {
 			*olp = NULL;
 			*offset = 0;
 			return (FALSE);
