@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.9 1998/01/11 20:40:31 provos Exp $	*/
+/*	$OpenBSD: dir.c,v 1.10 1999/08/30 20:29:35 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dir.c,v 1.9 1998/01/11 20:40:31 provos Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.10 1999/08/30 20:29:35 espie Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -942,7 +942,7 @@ reconnect(dosfs, boot, fat, head)
 	struct dosDirEntry d;
 	u_char *p;
 
-	if (ask(1, "Reconnect"))
+	if (!ask(1, "Reconnect"))
 		return FSERROR;
 
 	if (!lostDir) {
