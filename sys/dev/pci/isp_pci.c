@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.17 2001/03/09 17:39:12 nate Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.18 2001/04/04 22:05:37 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -40,20 +40,20 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
-static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
+static u_int16_t isp_pci_rd_reg(struct ispsoftc *, int);
+static void isp_pci_wr_reg(struct ispsoftc *, int, u_int16_t);
 #if !(defined(ISP_DISABLE_1080_SUPPORT) && defined(ISP_DISABLE_12160_SUPPORT))
-static u_int16_t isp_pci_rd_reg_1080 __P((struct ispsoftc *, int));
-static void isp_pci_wr_reg_1080 __P((struct ispsoftc *, int, u_int16_t));
+static u_int16_t isp_pci_rd_reg_1080(struct ispsoftc *, int);
+static void isp_pci_wr_reg_1080(struct ispsoftc *, int, u_int16_t);
 #endif
-static int isp_pci_mbxdma __P((struct ispsoftc *));
-static int isp_pci_dmasetup __P((struct ispsoftc *, struct scsi_xfer *,
-	ispreq_t *, u_int16_t *, u_int16_t));
+static int isp_pci_mbxdma(struct ispsoftc *);
+static int isp_pci_dmasetup(struct ispsoftc *, struct scsi_xfer *,
+	ispreq_t *, u_int16_t *, u_int16_t);
 static void
-isp_pci_dmateardown __P((struct ispsoftc *, struct scsi_xfer *, u_int32_t));
-static void isp_pci_reset1 __P((struct ispsoftc *));
-static void isp_pci_dumpregs __P((struct ispsoftc *, const char *));
-static int isp_pci_intr __P((void *));
+isp_pci_dmateardown (struct ispsoftc *, struct scsi_xfer *, u_int16_t);
+static void isp_pci_reset1 (struct ispsoftc *);
+static void isp_pci_dumpregs (struct ispsoftc *, const char *);
+static int isp_pci_intr (void *);
 
 #ifdef	ISP_COMPILE_FW
 #define	ISP_COMPILE_1040_FW	1
@@ -63,7 +63,7 @@ static int isp_pci_intr __P((void *));
 #define	ISP_COMPILE_2200_FW	1
 #endif
 
-#if	defined(ISP_DISABLE_1020_SUPPORT) || !defined(ISP_COMPILE_1020_FW)
+#if	defined(ISP_DISABLE_1040_SUPPORT) || !defined(ISP_COMPILE_1040_FW)
 #define	ISP_1040_RISC_CODE	NULL
 #else
 #define	ISP_1040_RISC_CODE	isp_1040_risc_code
@@ -243,8 +243,8 @@ static struct ispmdvec mdvec_2200 = {
 #endif
 
 
-static int isp_pci_probe __P((struct device *, void *, void *));
-static void isp_pci_attach __P((struct device *, struct device *, void *));
+static int isp_pci_probe (struct device *, void *, void *);
+static void isp_pci_attach (struct device *, struct device *, void *);
 
 struct isp_pcisoftc {
 	struct ispsoftc		pci_isp;
@@ -271,10 +271,7 @@ const char vstring[] =
 #endif
 
 static int
-isp_pci_probe(parent, match, aux)
-        struct device *parent;
-        void *match;
-	void *aux; 
+isp_pci_probe(struct device *parent, void *match, void *aux)
 {
         struct pci_attach_args *pa = aux;
 
@@ -308,9 +305,7 @@ isp_pci_probe(parent, match, aux)
 
 
 static void    
-isp_pci_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+isp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 #ifdef	DEBUG
 	static char oneshot = 1;
@@ -632,9 +627,7 @@ isp_pci_attach(parent, self, aux)
 }
 
 static u_int16_t
-isp_pci_rd_reg(isp, regoff)
-	struct ispsoftc *isp;
-	int regoff;
+isp_pci_rd_reg(struct ispsoftc *isp, int regoff)
 {
 	u_int16_t rv;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
@@ -659,10 +652,7 @@ isp_pci_rd_reg(isp, regoff)
 }
 
 static void
-isp_pci_wr_reg(isp, regoff, val)
-	struct ispsoftc *isp;
-	int regoff;
-	u_int16_t val;
+isp_pci_wr_reg(struct ispsoftc *isp, int regoff, u_int16_t val)
 {
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 	int offset, oldconf = 0;
@@ -686,9 +676,7 @@ isp_pci_wr_reg(isp, regoff, val)
 
 #if !(defined(ISP_DISABLE_1080_SUPPORT) && defined(ISP_DISABLE_12160_SUPPORT))
 static u_int16_t
-isp_pci_rd_reg_1080(isp, regoff)
-	struct ispsoftc *isp;
-	int regoff;
+isp_pci_rd_reg_1080(struct ispsoftc *isp, int regoff)
 {
 	u_int16_t rv, oc = 0;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
@@ -728,10 +716,7 @@ isp_pci_rd_reg_1080(isp, regoff)
 }
 
 static void
-isp_pci_wr_reg_1080(isp, regoff, val)
-	struct ispsoftc *isp;
-	int regoff;
-	u_int16_t val;
+isp_pci_wr_reg_1080(struct ispsoftc *isp, int regoff, u_int16_t val)
 {
 	u_int16_t oc = 0;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
@@ -771,8 +756,7 @@ isp_pci_wr_reg_1080(isp, regoff, val)
 #endif
 
 static int
-isp_pci_mbxdma(isp)
-	struct ispsoftc *isp;
+isp_pci_mbxdma(struct ispsoftc *isp)
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	bus_dma_segment_t seg;
@@ -848,12 +832,8 @@ isp_pci_mbxdma(isp)
 }
 
 static int
-isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
-	struct ispsoftc *isp;
-	struct scsi_xfer *xs;
-	ispreq_t *rq;
-	u_int16_t *iptrp;
-	u_int16_t optr;
+isp_pci_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq, u_int16_t *iptrp,
+	u_int16_t optr)
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	bus_dmamap_t dmap;
@@ -917,7 +897,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
 		*iptrp = ISP_NXT_QENTRY(*iptrp, RQUEST_QUEUE_LEN(isp));
 		if (*iptrp == optr) {
-			printf("%s: Request Queue Overflow++\n", isp->isp_name);
+			isp_prt(isp, ISP_LOGDEBUG0, "Request Queue Overflow++");
 			bus_dmamap_unload(pci->pci_dmat, dmap);
 			XS_SETERR(xs, HBA_BOTCH);
 			return (CMD_EAGAIN);
@@ -948,8 +928,7 @@ mbxsync:
 }
 
 static int
-isp_pci_intr(arg)
-	void *arg;
+isp_pci_intr(void *arg)
 {
 	int r;
 	struct ispsoftc *isp = (struct ispsoftc *)arg;
@@ -964,10 +943,7 @@ isp_pci_intr(arg)
 }
 
 static void
-isp_pci_dmateardown(isp, xs, handle)
-	struct ispsoftc *isp;
-	struct scsi_xfer *xs;
-	u_int32_t handle;
+isp_pci_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	bus_dmamap_t dmap = pci->pci_xfer_dmap[isp_handle_index(handle)];
@@ -977,17 +953,14 @@ isp_pci_dmateardown(isp, xs, handle)
 }
 
 static void
-isp_pci_reset1(isp)
-	struct ispsoftc *isp;
+isp_pci_reset1(struct ispsoftc *isp)
 {
 	/* Make sure the BIOS is disabled */
 	isp_pci_wr_reg(isp, HCCR, PCI_HCCR_CMD_BIOS);
 }
 
 static void
-isp_pci_dumpregs(isp, msg)
-	struct ispsoftc *isp;
-	const char *msg;
+isp_pci_dumpregs(struct ispsoftc *isp, const char *msg)
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	if (msg)
