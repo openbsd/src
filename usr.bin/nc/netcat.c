@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.74 2004/09/15 18:44:45 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.75 2004/10/17 03:13:55 djm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -127,9 +127,14 @@ main(int argc, char *argv[])
 			family = AF_UNIX;
 			break;
 		case 'X':
-			socksv = (int)strtoul(optarg, &endp, 10);
-			if ((socksv != 4 && socksv != 5) || *endp != '\0')
-				errx(1, "only SOCKS version 4 and 5 supported");
+			if (strcasecmp(optarg, "connect") == 0)
+				socksv = -1; /* HTTP proxy CONNECT */
+			else if (strcmp(optarg, "4") == 0)
+				socksv = 4; /* SOCKS v.4 */
+			else if (strcmp(optarg, "5") == 0)
+				socksv = 5; /* SOCKS v.5 */
+			else
+				errx(1, "unsupported proxy protocol");
 			break;
 		case 'd':
 			dflag = 1;
@@ -779,8 +784,8 @@ help(void)
 	\t-u		UDP mode\n\
 	\t-v		Verbose\n\
 	\t-w secs\t	Timeout for connects and final net reads\n\
-	\t-X vers\t	SOCKS version (4 or 5)\n\
-	\t-x addr[:port]\tSpecify socks proxy address and port\n\
+	\t-X proto	Proxy protocol: \"4\", \"5\" (SOCKS) or \"connect\"\n\
+	\t-x addr[:port]\tSpecify proxy address and port\n\
 	\t-z		Zero-I/O mode [used for scanning]\n\
 	Port numbers can be individual or ranges: lo-hi [inclusive]\n");
 	exit(1);
@@ -790,7 +795,7 @@ void
 usage(int ret)
 {
 	fprintf(stderr, "usage: nc [-46DdhklnrStUuvz] [-i interval] [-p source_port]\n");
-	fprintf(stderr, "\t  [-s source_ip_address] [-w timeout] [-X socks_version]\n");
+	fprintf(stderr, "\t  [-s source_ip_address] [-w timeout] [-X proxy_version]\n");
 	fprintf(stderr, "\t  [-x proxy_address[:port]] [hostname] [port[s]]\n");
 	if (ret)
 		exit(1);

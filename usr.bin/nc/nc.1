@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.32 2004/07/15 15:07:52 markus Exp $
+.\"     $OpenBSD: nc.1,v 1.33 2004/10/17 03:13:55 djm Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Op Fl p Ar source_port
 .Op Fl s Ar source_ip_address
 .Op Fl w Ar timeout
-.Op Fl X Ar socks_version
+.Op Fl X Ar proxy_protocol
 .Oo Xo
 .Fl x Ar proxy_address Ns Oo : Ns
 .Ar port Oc Oc
@@ -77,6 +77,9 @@ simple TCP proxies
 shell-script based HTTP clients and servers
 .It
 network daemon testing
+.It
+a SOCKS or HTTP ProxyCommand for
+.Xr ssh 1
 .It
 and much, much more
 .El
@@ -171,13 +174,19 @@ will listen forever for a connection, with or without the
 .Fl w
 flag.
 The default is no timeout.
-.It Fl X Ar socks_version
+.It Fl X Ar proxy_version
 Requests that
 .Nm
-should use the specified version of the SOCKS protocol when talking to
-a SOCKS proxy.
-SOCKS versions 4 and 5 are currently supported.
-If the version is not specified, SOCKS version 5 is used.
+should use the specified protocol when talking to the proxy server.
+Supported protocols are
+.Dq 4
+(SOCKS v.4),
+.Dq 5
+(SOCKS v.5)
+and
+.Dq connect
+(HTTPS proxy).
+If the protocol is not specified, SOCKS version 5 is used.
 .It Xo
 .Fl x Ar proxy_address Ns Oo : Ns
 .Ar port Oc
@@ -186,13 +195,14 @@ Requests that
 .Nm
 should connect to
 .Ar hostname
-using a SOCKS proxy at
+using a proxy at
 .Ar proxy_address
 and
 .Ar port .
 If
 .Ar port
-is not specified, port 1080 is used.
+is not specified, the well-known port for the proxy protocol is used (1080
+for SOCKS, 3128 for HTTPS).
 .It Fl z
 Specifies that
 .Nm
@@ -342,6 +352,10 @@ responded with an ICMP packet after three seconds:
 Create and listen on a Unix Domain Socket:
 .Pp
 .Dl $ nc -lU /var/tmp/dsocket
+.Pp
+Connect to port 42 of hostname via an HTTP proxy at 10.2.3.4:
+.Pp
+.Dl $ nc -x10.2.3.4:8080 -Xconnect hostname 42
 .Sh SEE ALSO
 .Xr cat 1
 .Sh AUTHORS
