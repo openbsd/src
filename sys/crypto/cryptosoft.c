@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.26 2001/07/05 16:44:00 jjbg Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.27 2001/07/05 17:53:28 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -455,7 +455,9 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 	struct swcr_data **swd;
 	struct auth_hash *axf;
 	struct enc_xform *txf;
+#ifdef IPCOMP
 	struct comp_algo *cxf;
+#endif
 	u_int32_t i;
 	int k;
 
@@ -618,14 +620,12 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_axf = axf;
 			break;
 
+#ifdef IPCOMP
 		case CRYPTO_DEFLATE_COMP:
 			cxf = &comp_algo_deflate;
-			goto compcommon;
-
-		compcommon:
 			(*swd)->sw_cxf = cxf;
 			break;
-
+#endif
 		default:
 			swcr_freesession(i);
 			return EINVAL;
