@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.121 2004/03/31 08:40:01 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.122 2004/05/07 21:58:14 millert Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -187,6 +187,7 @@ privilege can change the value.
 .It kern.watchdog.auto	integer	yes
 .It kern.emul.nemuls	integer	no
 .It kern.emul.other	integer	yes
+.It kern.maxclusters	integer	yes
 .It vm.vmmeter	struct	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
