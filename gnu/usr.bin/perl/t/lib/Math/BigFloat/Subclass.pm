@@ -6,13 +6,13 @@ require 5.005_02;
 use strict;
 
 use Exporter;
-use Math::BigFloat(1.27);
+use Math::BigFloat(1.38);
 use vars qw($VERSION @ISA $PACKAGE
             $accuracy $precision $round_mode $div_scale);
 
 @ISA = qw(Exporter Math::BigFloat);
 
-$VERSION = 0.03;
+$VERSION = 0.04;
 
 use overload; 		# inherit overload from BigInt
 

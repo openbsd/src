@@ -11,8 +11,6 @@ perlnumber - semantics of numbers and numeric operations in Perl
     $n = 12.34e-56;	    # exponential notation
     $n = "-12.34e56";	    # number specified as a string
     $n = "1234";	    # number specified as a string
-    $n = v49.50.51.52;	    # number specified as a string, which in
-			    # turn is specified in terms of numbers :-)
 
 =head1 DESCRIPTION
 

@@ -121,4 +121,15 @@ enum flimflam {
   flam                      
  } flamflim;
 
+/* Handle multi-line quoted strings: */
+__asm__ __volatile__("
+    this
+    produces
+    no
+    output
+");
+
+#define multiline "multiline
+string"
+
 #endif /* _H2PH_H_ */

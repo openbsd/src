@@ -1,8 +1,10 @@
 #!./perl -w
 
 BEGIN {
-    chdir('t') if -d 't';
-    @INC = '../lib';
+    if ($ENV{PERL_CORE}) {
+	@INC = '../lib';
+	chdir 't';
+    }
 }
 
 require "newgetopt.pl";

@@ -7,7 +7,7 @@
 #
 package B::C::Section;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 use B ();
 use base B::Section;
@@ -1012,10 +1012,11 @@ sub B::CV::save {
 		     $cvstashname, $cvname); # debug
     }              
     $pv = '' unless defined $pv; # Avoid use of undef warnings
-    $symsect->add(sprintf("xpvcvix%d\t%s, %u, 0, %d, %s, 0, Nullhv, Nullhv, %s, s\\_%x, $xsub, $xsubany, Nullgv, \"\", %d, s\\_%x, (CV*)s\\_%x, 0x%x",
+    $symsect->add(sprintf("xpvcvix%d\t%s, %u, 0, %d, %s, 0, Nullhv, Nullhv, %s, s\\_%x, $xsub, $xsubany, Nullgv, \"\", %d, s\\_%x, (CV*)s\\_%x, 0x%x, 0x%x",
 			  $xpvcv_ix, cstring($pv), length($pv), $cv->IVX,
 			  $cv->NVX, $startfield, ${$cv->ROOT}, $cv->DEPTH,
-                        $$padlist, ${$cv->OUTSIDE}, $cv->CvFLAGS));
+                        $$padlist, ${$cv->OUTSIDE}, $cv->CvFLAGS,
+			$cv->OUTSIDE_SEQ));
 
     if (${$cv->OUTSIDE} == ${main_cv()}){
 	$init->add(sprintf("CvOUTSIDE(s\\_%x)=PL_main_cv;",$$cv));
@@ -1440,6 +1441,9 @@ typedef struct {
     struct perl_thread *xcv_owner;	/* current owner thread */
 #endif /* USE_5005THREADS */
     cv_flags_t	xcv_flags;
+    U32		xcv_outside_seq; /* the COP sequence (at the point of our
+				  * compilation) in the lexically enclosing
+				  * sub */
 } XPVCV_or_similar;
 #define ANYINIT(i) i
 #else
@@ -1615,6 +1619,15 @@ EOT
     if ((tmpgv = gv_fetchpv("0",TRUE, SVt_PV))) {/* $0 */
         tmpsv = GvSV(tmpgv);
         sv_setpv(tmpsv, ${dollar_0});
+        SvSETMAGIC(tmpsv);
+    }
+EOT
+    }
+    else {
+	print <<EOT;
+    if ((tmpgv = gv_fetchpv("0",TRUE, SVt_PV))) {/* $0 */
+        tmpsv = GvSV(tmpgv);
+        sv_setpv(tmpsv, argv[0]);
         SvSETMAGIC(tmpsv);
     }
 EOT
@@ -1850,10 +1863,10 @@ sub walkpackages
  my $sym;
  my $ref;
  no strict 'vars';
- local(*glob);
  $prefix = '' unless defined $prefix;
  while (($sym, $ref) = each %$symref) 
   {             
+   local(*glob);
    *glob = $ref;
    if ($sym =~ /::$/) 
     {

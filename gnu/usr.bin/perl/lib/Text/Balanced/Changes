@@ -261,3 +261,41 @@ Revision history for Perl extension Text::Balanced.
 1.89	Sun Nov 18 22:49:50 2001
 
 	- Fixed extvar.t tests
+
+
+1.90	Tue Mar 25 11:14:38 2003
+
+	- Fixed subtle bug in gen_extract_tagged (thanks Martin)
+
+	- Doc fix: removed suggestion that extract_tagged defaults
+	  to matching HTML tags
+
+	- Doc fix: clarified general matching behaviour
+
+	- Fixed bug in parsing /.../ after a (
+
+	- Doc fix: documented extract_variable
+
+	- Fixed extract_variable handling of $h{qr}, $h{tr}, etc.
+	  (thanks, Briac)
+
+	- Fixed incorrect handling of $::var (thanks Tim)
+
+
+1.91	Fri Mar 28 23:19:17 2003
+
+	- Fixed error count on t/extract_variable.t
+
+	- Fixed bug in extract_codelike when non-standard delimiters used
+
+
+1.94	Sun Apr 13 02:18:41 2003
+
+	- rereleased in attempt to fix CPAN problems
+
+
+1.95	Mon Apr 28 00:22:04 2003
+
+	- Constrainted _match_quote to only match at word boundaries
+	  (so "exemplum(hic)" doesn't match "m(hic)")
+	  (thanks Craig)

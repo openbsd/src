@@ -1,3 +1,7 @@
+BEGIN {
+    # Get function prototypes
+    require 'regen_lib.pl';
+}
 #use Fatal qw(open close rename chmod unlink);
 open DESC, 'regcomp.sym';
 $ind = 0;
@@ -112,8 +116,6 @@ static const int reg_num = $tot;
 
 EOP
 
-close OUT;
+close OUT or die "close $tmp_h: $!";
 
-chmod 0666, 'regnodes.h';
-unlink 'regnodes.h';
-rename $tmp_h, 'regnodes.h';
+safer_rename $tmp_h, 'regnodes.h';

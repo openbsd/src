@@ -89,7 +89,7 @@ begin with C<perl> be referenced with a C<Perl_> prefix.  The bare function
 names without the C<Perl_> prefix are supported with macros, but this
 support may cease in a future release.
 
-See L<perlguts/"API LISTING">.
+See L<perlapi>.
 
 =item *
 
@@ -492,7 +492,7 @@ In previous versions, this would print "hello", but it now prints "g'bye".
 
 If C<$/> is a reference to an integer, or a scalar that holds an integer,
 <> will read in records instead of lines. For more info, see
-L<perlvar/$/>.
+L<perlvar/$E<sol>>.
 
 =head1 Supported Platforms
 

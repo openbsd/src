@@ -8,6 +8,8 @@
  * XSUB.h provides wrapper functions via perlapi.h that make this
  * irrelevant, but not all code may be expected to #include XSUB.h. */
 
+/* Don't forget to add your variable also to perl_clone()! */
+
 /* The 'I' prefix is only needed for vars that need appropriate #defines
  * generated when built with or without MULTIPLICITY.  It is also used
  * to generate the appropriate export list for win32.
@@ -48,7 +50,7 @@ The C variable which corresponds to Perl's $^W warning variable.
 */
 
 PERLVAR(Idowarn,	U8)
-PERLVAR(Iwidesyscalls,	bool)		/* wide system calls */
+PERLVAR(Iwidesyscalls,	bool)		/* unused since 5.8.1 */
 PERLVAR(Idoextract,	bool)
 PERLVAR(Isawampersand,	bool)		/* must save all match strings */
 PERLVAR(Iunsafe,	bool)
@@ -167,7 +169,7 @@ PERLVAR(Ilastfd,	int)		/* what to preserve mode on */
 PERLVAR(Ioldname,	char *)		/* what to preserve mode on */
 PERLVAR(IArgv,		char **)	/* stuff to free from do_aexec, vfork safe */
 PERLVAR(ICmd,		char *)		/* stuff to free from do_aexec, vfork safe */
-PERLVAR(Igensym,	I32)		/* next symbol for getsym() to define */
+PERLVARI(Igensym,	I32,	0)	/* next symbol for getsym() to define */
 PERLVAR(Ipreambled,	bool)
 PERLVAR(Ipreambleav,	AV *)
 PERLVARI(Ilaststatval,	int,	-1)
@@ -205,7 +207,7 @@ PERLVARI(Irsfp_filters,	AV *,	Nullav)	/* keeps active source filters */
 PERLVAR(Icompiling,	COP)		/* compiling/done executing marker */
 
 PERLVAR(Icompcv,	CV *)		/* currently compiling subroutine */
-PERLVAR(Icomppad,	AV *)		/* storage for lexically scoped temporaries */
+PERLVAR(IBINCOMPAT0,	AV *)		/* filler for binary compatibility */
 PERLVAR(Icomppad_name,	AV *)		/* variable names for "my" variables */
 PERLVAR(Icomppad_name_fill,	I32)	/* last "introduced" variable offset */
 PERLVAR(Icomppad_name_floor,	I32)	/* start of vars in innermost block */
@@ -237,16 +239,19 @@ PERLVAR(Ieuid,		Uid_t)		/* current effective user id */
 PERLVAR(Igid,		Gid_t)		/* current real group id */
 PERLVAR(Iegid,		Gid_t)		/* current effective group id */
 PERLVAR(Inomemok,	bool)		/* let malloc context handle nomem */
-PERLVAR(Ian,		U32)		/* malloc sequence number */
-PERLVAR(Icop_seqmax,	U32)		/* statement sequence number */
-PERLVAR(Iop_seqmax,	U16)		/* op sequence number */
-PERLVAR(Ievalseq,	U32)		/* eval sequence number */
+PERLVARI(Ian,		U32,	0)	/* malloc sequence number */
+PERLVARI(Icop_seqmax,	U32,	0)	/* statement sequence number */
+PERLVARI(Iop_seqmax,	U16,	0)	/* op sequence number */
+PERLVARI(Ievalseq,	U32,	0)	/* eval sequence number */
 PERLVAR(Iorigenviron,	char **)
 PERLVAR(Iorigalen,	U32)
 PERLVAR(Ipidstatus,	HV *)		/* pid-to-status mappings for waitpid */
 PERLVARI(Imaxo,	int,	MAXO)		/* maximum number of ops */
 PERLVAR(Iosname,	char *)		/* operating system */
-PERLVARI(Ish_path,	char *,	SH_PATH)/* full path of shell */
+
+/* For binary compatibility with older versions only */
+PERLVARI(Ish_path_compat,	char *,	SH_PATH)/* full path of shell */
+
 PERLVAR(Isighandlerp,	Sighandler_t)
 
 PERLVAR(Ixiv_arenaroot,	XPV*)		/* list of allocated xiv areas */
@@ -291,7 +296,7 @@ PERLVAR(Isv_yes,	SV)
 
 #ifdef CSH
 PERLVARI(Icshname,	char *,	CSH)
-PERLVAR(Icshlen,	I32)
+PERLVARI(Icshlen,	I32,	0)
 #endif
 
 PERLVAR(Ilex_state,	U32)		/* next token is determined */
@@ -343,17 +348,17 @@ PERLVAR(Ilast_lop_op,	OPCODE)		/* last list operator */
 PERLVAR(Iin_my,		I32)		/* we're compiling a "my" (or "our") declaration */
 PERLVAR(Iin_my_stash,	HV *)		/* declared class of this "my" declaration */
 #ifdef FCRYPT
-PERLVAR(Icryptseen,	bool)		/* has fast crypt() been initialized? */
+PERLVARI(Icryptseen,	bool,	FALSE)	/* has fast crypt() been initialized? */
 #endif
 
 PERLVAR(Ihints,		U32)		/* pragma-tic compile-time flags */
 
 PERLVAR(Idebug,		VOL U32)	/* flags given to -D switch */
 
-PERLVAR(Iamagic_generation,	long)
+PERLVARI(Iamagic_generation,	long,	0)
 
 #ifdef USE_LOCALE_COLLATE
-PERLVAR(Icollation_ix,	U32)		/* Collation generation index */
+PERLVARI(Icollation_ix,	U32,	0)	/* Collation generation index */
 PERLVAR(Icollation_name,char *)		/* Name of current collation */
 PERLVARI(Icollation_standard, bool,	TRUE)
 					/* Assume simple collation */
@@ -406,7 +411,7 @@ PERLVAR(Iyychar,	int)
 PERLVAR(Iyyval,		YYSTYPE)
 PERLVAR(Iyylval,	YYSTYPE)
 
-PERLVAR(Iglob_index,	int)
+PERLVARI(Iglob_index,	int,	0)
 PERLVAR(Isrand_called,	bool)
 PERLVARA(Iuudmap,256,	char)
 PERLVAR(Ibitcount,	char *)
@@ -492,7 +497,7 @@ PERLVAR(Ireentrant_buffer, REENTR*)	/* here we store the _r buffers */
 
 #endif
 
-PERLVAR(Isavebegin,     bool)	/* save BEGINs for compiler	*/
+PERLVARI(Isavebegin,     bool,	FALSE)	/* save BEGINs for compiler	*/
 
 PERLVAR(Icustom_op_names, HV*)  /* Names of user defined ops */
 PERLVAR(Icustom_op_descs, HV*)  /* Descriptions of user defined ops */
@@ -515,14 +520,54 @@ PERLVARI(IOpSpace,I32,0)
 PERLVAR(IOpSlab,I32 *)
 #endif
 
-PERLVAR(Iwantutf8, bool)	/* want utf8 as the default discipline */
+PERLVAR(Iutf8locale,	bool)		/* utf8 locale detected */
 
 PERLVAR(Iutf8_idstart,	SV *)
 PERLVAR(Iutf8_idcont,	SV *)
 
 PERLVAR(Isort_RealCmp,  SVCOMPARE_t)
 
-/* New variables must be added to the very end for binary compatibility.
+PERLVARI(Icheckav_save, AV*, Nullav)	/* save CHECK{}s when compiling */
+
+PERLVARI(Iclocktick, long, 0)	/* this many times() ticks in a second */
+
+PERLVARI(Iin_load_module, int, 0)	/* to prevent recursions in PerlIO_find_layer */
+
+PERLVAR(Iunicode, U32)	/* Unicode features: $ENV{PERL_UNICODE} or -C */
+
+PERLVAR(Isignals, U32)	/* Using which pre-5.8 signals */
+
+PERLVAR(Istashcache,	HV *)		/* Cache to speed up S_method_common */
+
+PERLVAR(Ireentrant_retint, int)	/* Integer return value from reentrant functions */
+
+/* Hooks to shared SVs and locks. */
+PERLVARI(Isharehook,	share_proc_t,	MEMBER_TO_FPTR(Perl_sv_nosharing))
+PERLVARI(Ilockhook,	share_proc_t,	MEMBER_TO_FPTR(Perl_sv_nolocking))
+PERLVARI(Iunlockhook,	share_proc_t,	MEMBER_TO_FPTR(Perl_sv_nounlocking))
+PERLVARI(Ithreadhook,	thrhook_proc_t,	MEMBER_TO_FPTR(Perl_nothreadhook))
+
+/* Force inclusion of both runops options */
+PERLVARI(Irunops_std,	runops_proc_t,	MEMBER_TO_FPTR(Perl_runops_standard))
+PERLVARI(Irunops_dbg,	runops_proc_t,	MEMBER_TO_FPTR(Perl_runops_debug))
+
+/* Stores the PPID */
+#ifdef THREADS_HAVE_PIDS
+PERLVARI(Ippid,		IV,		0)
+#endif
+
+PERLVARI(Ihash_seed, UV, 0)		/* Hash initializer */
+
+PERLVARI(Ihash_seed_set, bool, FALSE)		/* Hash initialized? */
+
+PERLVARI(Irehash_seed, UV, 0)		/* 582 hash initializer */
+
+PERLVARI(Irehash_seed_set, bool, FALSE)	/* 582 hash initialized? */
+
+/* New variables must be added to the very end, before this comment,
+ * for binary compatibility (the offsets of the old members must not change).
+ * (Don't forget to add your variable also to perl_clone()!)
  * XSUB.h provides wrapper functions via perlapi.h that make this
- * irrelevant, but not all code may be expected to #include XSUB.h. */
+ * irrelevant, but not all code may be expected to #include XSUB.h.
+ */
 

@@ -16,7 +16,7 @@ use Test::More;
 
 BEGIN {
 	if ($^O =~ /MSWin32/i) {
-		plan tests => 40;
+		plan tests => 42;
 	} else {
 		plan skip_all => 'This is not Win32';
 	}
@@ -84,7 +84,7 @@ delete $ENV{PATHEXT} unless $had_pathext;
 {
     my $my_perl = $1 if $^X  =~ /(.*)/; # are we in -T or -t?
     my( $perl, $path ) = fileparse( $my_perl );
-    like( $MM->find_perl( $], [ $perl ], [ $path ] ), 
+    like( $MM->find_perl( $], [ $perl ], [ $path ], 0 ), 
           qr/^\Q$my_perl\E$/i, 'find_perl() finds this perl' );
 }
 
@@ -112,7 +112,7 @@ delete $ENV{PATHEXT} unless $had_pathext;
 # init_others(): check if all keys are created and set?
 # qw( TOUCH CHMOD CP RM_F RM_RF MV NOOP TEST_F LD AR LDLOADLIBS DEV_NUL )
 {
-    my $mm_w32 = bless( {}, 'MM' );
+    my $mm_w32 = bless( { BASEEXT => 'Foo' }, 'MM' );
     $mm_w32->init_others();
     my @keys = qw( TOUCH CHMOD CP RM_F RM_RF MV NOOP 
                    TEST_F LD AR LDLOADLIBS DEV_NULL );
@@ -122,32 +122,44 @@ delete $ENV{PATHEXT} unless $had_pathext;
 }
 
 # constants()
+# XXX this test is probably useless now that we can call individual
+# init_* methods and check the keys in $mm_w32 directly
 {
     my $mm_w32 = bless {
         NAME         => 'TestMM_Win32', 
         VERSION      => '1.00',
-        VERSION_FROM => 'TestMM_Win32',
         PM           => { 'MM_Win32.pm' => 1 },
     }, 'MM';
 
     # XXX Hack until we have a proper init method.
     # Flesh out some necessary keys in the MM object.
-    foreach my $key (qw(XS C O_FILES H HTMLLIBPODS HTMLSCRIPTPODS
-                        MAN1PODS MAN3PODS PARENT_NAME)) {
-        $mm_w32->{$key} = '';
-    }
+    @{$mm_w32}{qw(XS MAN1PODS MAN3PODS)} = ({}) x 3;
+    @{$mm_w32}{qw(C O_FILES H)}          = ([]) x 3;
+    @{$mm_w32}{qw(PARENT_NAME)}          = ('') x 3;
+    $mm_w32->{FULLEXT} = 'TestMM_Win32';
+    $mm_w32->{BASEEXT} = 'TestMM_Win32';
+
+    $mm_w32->init_VERSION;
+    $mm_w32->init_linker;
+    $mm_w32->init_INST;
+    $mm_w32->init_xs;
+
     my $s_PM = join( " \\\n\t", sort keys %{$mm_w32->{PM}} );
     my $k_PM = join( " \\\n\t", %{$mm_w32->{PM}} );
 
-    like( $mm_w32->constants(),
-          qr|^NAME\ =\ TestMM_Win32\s+VERSION\ =\ 1\.00.+
-             MAKEMAKER\ =\ \Q$INC{'ExtUtils/MakeMaker.pm'}\E\s+
-             MM_VERSION\ =\ \Q$ExtUtils::MakeMaker::VERSION\E.+
-             VERSION_FROM\ =\ TestMM_Win32.+
-             TO_INST_PM\ =\ \Q$s_PM\E\s+
-             PM_TO_BLIB\ =\ \Q$k_PM\E
-          |xs, 'constants()' );
+    my $constants = $mm_w32->constants;
 
+    foreach my $regex (
+         qr|^NAME       \s* = \s* TestMM_Win32 \s* $|xms,
+         qr|^VERSION    \s* = \s* 1\.00 \s* $|xms,
+         qr|^MAKEMAKER  \s* = \s* \Q$INC{'ExtUtils/MakeMaker.pm'}\E \s* $|xms,
+         qr|^MM_VERSION \s* = \s* \Q$ExtUtils::MakeMaker::VERSION\E \s* $|xms,
+         qr|^TO_INST_PM \s* = \s* \Q$s_PM\E \s* $|xms,
+         qr|^PM_TO_BLIB \s* = \s* \Q$k_PM\E \s* $|xms,
+        )
+    {
+        like( $constants, $regex, 'constants() check' );
+    }
 }
 
 # path()
@@ -172,17 +184,17 @@ delete $ENV{PATH} unless $had_path;
           'clean() Makefile target' );
 }
 
-# perl_archive()
+# init_linker
 {
-    my $libperl = $Config{libperl} || 'libperl.a';
-    is( $MM->perl_archive(), File::Spec->catfile('$(PERL_INC)', $libperl ),
-	    'perl_archive() should respect libperl setting' );
-}
+    my $libperl = File::Spec->catfile('$(PERL_INC)', 
+                                      $Config{libperl} || 'libperl.a');
+    my $export  = '$(BASEEXT).def';
+    my $after   = '';
+    $MM->init_linker;
 
-# export_list
-{
-    my $mm_w32 = bless { BASEEXT => 'someext' }, 'MM';
-    is( $mm_w32->export_list(), 'someext.def', 'export_list()' );
+    is( $MM->{PERL_ARCHIVE},        $libperl,   'PERL_ARCHIVE' );
+    is( $MM->{PERL_ARCHIVE_AFTER},  $after,     'PERL_ARCHIVE_AFTER' );
+    is( $MM->{EXPORT_LIST},         $export,    'EXPORT_LIST' );
 }
 
 # canonpath()
@@ -234,51 +246,8 @@ EOSCRIPT
 unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
 
 
-# pm_to_blib()
-{
-    like( $MM->pm_to_blib(),
-          qr/^pm_to_blib: \Q$(TO_INST_PM)\E.+\Q$(TOUCH) \E\$@\s+$/ms,
-          'pm_to_blib' );
-}
-
-# tool_autosplit()
-{
-    my %attribs = ( MAXLEN => 255 );
-    like( $MM->tool_autosplit( %attribs ),
-          qr/^\#\ Usage:\ \$\(AUTOSPLITFILE\)
-             \ FileToSplit\ AutoDirToSplitInto.+
-             AUTOSPLITFILE\ =\ \$\(PERLRUN\)\ .+
-             \$AutoSplit::Maxlen=$attribs{MAXLEN};
-          /xms,
-          'tool_autosplit()' );
-}
-
-# tools_other()
-{
-    ( my $mm_w32 = bless { }, 'MM' )->init_others();
-        
-    my $bin_sh = ( $Config{make} =~ /^dmake/i 
-               ? "" : ($Config{sh} || 'cmd /c') . "\n" );
-    $bin_sh = "SHELL = $bin_sh" if $bin_sh;
-
-    my $tools = join "\n", map "$_ = $mm_w32->{ $_ }"
-    	=> qw(CHMOD CP LD MV NOOP RM_F RM_RF TEST_F TOUCH UMASK_NULL DEV_NULL);
-
-    like( $mm_w32->tools_other(),
-          qr/^\Q$bin_sh$tools/m,
-          'tools_other()' );
-};
-
 # xs_o() should look into that
 # top_targets() should look into that
-
-# manifypods()
-{
-    my $mm_w32 = bless { NOECHO    => '' }, 'MM';
-    like( $mm_w32->manifypods(),
-          qr/^\nmanifypods :\n\t\$\Q(NOOP)\E\n$/,
-          'manifypods() Makefile target' );
-}
 
 # dist_ci() should look into that
 # dist_core() should look into that

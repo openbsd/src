@@ -28,7 +28,7 @@ package MY;
 
 sub post_constants {
     "\nLIBS = $Config::Config{libs}\n"
-}    
+}
 
 sub upupfile {
     File::Spec->catfile(File::Spec->updir,
@@ -40,9 +40,9 @@ sub MY::postamble {
     my $cop_h  = upupfile('cop.h');
     my $noecho = shift->{NOECHO};
 "
-B\$(OBJ_EXT) : defsubs.h              
+B\$(OBJ_EXT) : defsubs.h
 
-defsubs.h :: $op_h $cop_h                     
+defsubs.h :: $op_h $cop_h defsubs_h.PL
 	$noecho \$(NOOP)
-" 
+"
 }

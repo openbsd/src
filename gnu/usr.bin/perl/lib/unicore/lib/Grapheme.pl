@@ -9,6 +9,7 @@
 # Meaning: Extended property 'Grapheme_Link'
 #
 return <<'END';
+034F		Grapheme_Link
 094D		Grapheme_Link
 09CD		Grapheme_Link
 0A4D		Grapheme_Link

@@ -3,6 +3,7 @@
 # Any changes made here will be lost!
 
 return <<'END';
+0600	0603	U
 0621		U
 0622	0625	R
 0626		D
@@ -33,6 +34,9 @@ return <<'END';
 06D0	06D1	D
 06D2	06D3	R
 06D5		R
+06DD		U
+06EE	06EF	R
+06FF		D
 06FA	06FC	D
 0710		R
 0712	0714	D
@@ -45,5 +49,10 @@ return <<'END';
 072A		R
 072B		D
 072C		R
+072D	072E	D
+072F		R
+074D		R
+074E	074F	D
 200D		C
+200C		U
 END

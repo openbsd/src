@@ -24,6 +24,57 @@ The aim of the implementation is to provide the PerlIO API in a flexible
 and platform neutral manner. It is also a trial of an "Object Oriented
 C, with vtables" approach which may be applied to perl6.
 
+=head2 Basic Structure
+
+PerlIO is a stack of layers.
+
+The low levels of the stack work with the low-level operating system
+calls (file descriptors in C) getting bytes in and out, the higher
+layers of the stack buffer, filter, and otherwise manipulate the I/O,
+and return characters (or bytes) to Perl.  Terms I<above> and I<below>
+are used to refer to the relative positioning of the stack layers.
+
+A layer contains a "vtable", the table of I/O operations (at C level
+a table of function pointers), and status flags.  The functions in the
+vtable implement operations like "open", "read", and "write".
+
+When I/O, for example "read", is requested, the request goes from Perl
+first down the stack using "read" functions of each layer, then at the
+bottom the input is requested from the operating system services, then
+the result is returned up the stack, finally being interpreted as Perl
+data.
+
+The requests do not necessarily go always all the way down to the
+operating system: that's where PerlIO buffering comes into play.
+
+When you do an open() and specify extra PerlIO layers to be deployed,
+the layers you specify are "pushed" on top of the already existing
+default stack.  One way to see it is that "operating system is
+on the left" and "Perl is on the right".
+
+What exact layers are in this default stack depends on a lot of
+things: your operating system, Perl version, Perl compile time
+configuration, and Perl runtime configuration.  See L<PerlIO>,
+L<perlrun/PERLIO>, and L<open> for more information.
+
+binmode() operates similarly to open(): by default the specified
+layers are pushed on top of the existing stack.
+
+However, note that even as the specified layers are "pushed on top"
+for open() and binmode(), this doesn't mean that the effects are
+limited to the "top": PerlIO layers can be very 'active' and inspect
+and affect layers also deeper in the stack.  As an example there
+is a layer called "raw" which repeatedly "pops" layers until
+it reaches the first layer that has declared itself capable of
+handling binary data.  The "pushed" layers are processed in left-to-right
+order.
+
+sysopen() operates (unsurprisingly) at a lower level in the stack than
+open().  For example in UNIX or UNIX-like systems sysopen() operates
+directly at the level of file descriptors: in the terms of PerlIO
+layers, it uses only the "unix" layer, which is a rather thin wrapper
+on top of the UNIX file descriptors.
+
 =head2 Layers vs Disciplines
 
 Initial discussion of the ability to modify IO streams behaviour used
@@ -420,7 +471,10 @@ struct.  It should also C<Unread()> any unconsumed data that has been
 read and buffered from the layer below back to that layer, so that it
 can be re-provided to what ever is now above.
 
-Returns 0 on success and failure.
+Returns 0 on success and failure.  If C<Popped()> returns I<true> then
+I<perlio.c> assumes that either the layer has popped itself, or the
+layer is super special and needs to be retained for other reasons.
+In most cases it should return I<false>.
 
 =item Open
 
@@ -478,6 +532,10 @@ and wait to be "pushed".  If a layer does provide C<Open()> it should
 normally call the C<Open()> method of next layer down (if any) and
 then push itself on top if that succeeds.
 
+If C<PerlIO_push> was performed and open has failed, it must
+C<PerlIO_pop> itself, since if it's not, the layer won't be removed
+and may cause bad problems.
+
 Returns C<NULL> on failure.
 
 =item Binmode
@@ -500,6 +558,10 @@ argument passed to the layer when it was
 pushed. e.g. ":encoding(ascii)" would return an SvPV with value
 "ascii". (I<param> and I<flags> arguments can be ignored in most
 cases)
+
+C<Dup> uses C<Getarg> to retrieve the argument originally passed to
+C<Pushed>, so you must implement this function if your layer has an
+extra argument to C<Pushed> and will ever be C<Dup>ed.
 
 =item Fileno
 
@@ -675,6 +737,110 @@ The application (or layer above) must ensure they are consistent.
 
 =back
 
+=head2 Utilities
+
+To ask for the next layer down use PerlIONext(PerlIO *f).
+
+To check that a PerlIO* is valid use PerlIOValid(PerlIO *f).  (All
+this does is really just to check that the pointer is non-NULL and
+that the pointer behind that is non-NULL.)
+
+PerlIOBase(PerlIO *f) returns the "Base" pointer, or in other words,
+the C<PerlIOl*> pointer.
+
+PerlIOSelf(PerlIO* f, type) return the PerlIOBase cast to a type.
+
+Perl_PerlIO_or_Base(PerlIO* f, callback, base, failure, args) either
+calls the I<callback> from the functions of the layer I<f> (just by
+the name of the IO function, like "Read") with the I<args>, or if
+there is no such callback, calls the I<base> version of the callback
+with the same args, or if the f is invalid, set errno to EBADF and
+return I<failure>.
+
+Perl_PerlIO_or_fail(PerlIO* f, callback, failure, args) either calls
+the I<callback> of the functions of the layer I<f> with the I<args>,
+or if there is no such callback, set errno to EINVAL.  Or if the f is
+invalid, set errno to EBADF and return I<failure>.
+
+Perl_PerlIO_or_Base_void(PerlIO* f, callback, base, args) either calls
+the I<callback> of the functions of the layer I<f> with the I<args>,
+or if there is no such callback, calls the I<base> version of the
+callback with the same args, or if the f is invalid, set errno to
+EBADF.
+
+Perl_PerlIO_or_fail_void(PerlIO* f, callback, args) either calls the
+I<callback> of the functions of the layer I<f> with the I<args>, or if
+there is no such callback, set errno to EINVAL.  Or if the f is
+invalid, set errno to EBADF.
+
+=head2 Implementing PerlIO Layers
+
+If you find the implementation document unclear or not sufficient,
+look at the existing PerlIO layer implementations, which include:
+
+=over
+
+=item * C implementations
+
+The F<perlio.c> and F<perliol.h> in the Perl core implement the
+"unix", "perlio", "stdio", "crlf", "utf8", "byte", "raw", "pending"
+layers, and also the "mmap" and "win32" layers if applicable.
+(The "win32" is currently unfinished and unused, to see what is used
+instead in Win32, see L<PerlIO/"Querying the layers of filehandles"> .)
+
+PerlIO::encoding, PerlIO::scalar, PerlIO::via in the Perl core.
+
+PerlIO::gzip and APR::PerlIO (mod_perl 2.0) on CPAN.
+
+=item * Perl implementations
+
+PerlIO::via::QuotedPrint in the Perl core and PerlIO::via::* on CPAN.
+
+=back
+
+If you are creating a PerlIO layer, you may want to be lazy, in other
+words, implement only the methods that interest you.  The other methods
+you can either replace with the "blank" methods
+
+    PerlIOBase_noop_ok
+    PerlIOBase_noop_fail
+
+(which do nothing, and return zero and -1, respectively) or for
+certain methods you may assume a default behaviour by using a NULL
+method.  The Open method looks for help in the 'parent' layer.
+The following table summarizes the behaviour:
+
+    method      behaviour with NULL
+
+    Clearerr    PerlIOBase_clearerr
+    Close       PerlIOBase_close
+    Dup         PerlIOBase_dup
+    Eof         PerlIOBase_eof
+    Error       PerlIOBase_error
+    Fileno      PerlIOBase_fileno
+    Fill        FAILURE
+    Flush       SUCCESS
+    Getarg      SUCCESS
+    Get_base    FAILURE
+    Get_bufsiz  FAILURE
+    Get_cnt     FAILURE
+    Get_ptr     FAILURE
+    Open        INHERITED
+    Popped      SUCCESS
+    Pushed      SUCCESS
+    Read        PerlIOBase_read
+    Seek        FAILURE
+    Set_cnt     FAILURE
+    Set_ptrcnt  FAILURE
+    Setlinebuf  PerlIOBase_setlinebuf
+    Tell        FAILURE
+    Unread      PerlIOBase_unread
+    Write       FAILURE
+
+ FAILURE        Set errno (to EINVAL in UNIXish, to LIB$_INVARG in VMS) and
+                return -1 (for numeric return values) or NULL (for pointers)
+ INHERITED      Inherited from the layer below
+ SUCCESS        Return 0 (for numeric return values) or a pointer 
 
 =head2 Core Layers
 

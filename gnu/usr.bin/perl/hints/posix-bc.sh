@@ -9,7 +9,7 @@
 # the appropriate -D option.
 
 # remove this line if dynamic libraries are working for you:
-bs2000_ignoredl='y'
+ bs2000_ignoredl='y'
 
 # To get ANSI C, we need to use c89
 # You can override this with Configure -Dcc=gcc
@@ -64,9 +64,9 @@ cat > $bs2000_ld <<EOF
 #
 # Perl's wrapper for genso by Thomas.Dorner@start.de
 
-GENSO=/usr/bin/genso
-options=""
-params=""
+ GENSO=/usr/bin/genso
+ options=""
+ params=""
 while [[ \$# -gt 0 ]]; do
     case \$1 in
 	-K)
@@ -169,4 +169,3 @@ esac
 #case "$ldlibpthname" in
 #'') ldlibpthname=LIBPATH ;;
 #esac
-

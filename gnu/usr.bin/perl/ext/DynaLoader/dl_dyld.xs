@@ -54,7 +54,7 @@ static char *dlerror()
     return dl_last_error;
 }
 
-int dlclose(handle) /* stub only */
+static int dlclose(handle) /* stub only */
 void *handle;
 {
     return 0;
@@ -122,7 +122,7 @@ static char *dlopen(char *path, int mode /* mode is ignored */)
     return handle;
 }
 
-void *
+static void *
 dlsym(handle, symbol)
 void *handle;
 char *symbol;

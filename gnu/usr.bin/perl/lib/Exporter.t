@@ -21,7 +21,7 @@ sub ok ($;$) {
 }
 
 
-print "1..24\n";
+print "1..26\n";
 require Exporter;
 ok( 1, 'Exporter compiled' );
 
@@ -178,3 +178,21 @@ BEGIN {
 ::ok( !$warnings, 'Unused variables can be exported without warning' ) ||
   print "# $warnings\n";
 
+package Moving::Target;
+@ISA = qw(Exporter);
+@EXPORT_OK = qw (foo);
+
+sub foo {"foo"};
+sub bar {"bar"};
+
+package Moving::Target::Test;
+
+Moving::Target->import (foo);
+
+::ok (foo eq "foo", "imported foo before EXPORT_OK changed");
+
+push @Moving::Target::EXPORT_OK, 'bar';
+
+Moving::Target->import (bar);
+
+::ok (bar eq "bar", "imported bar after EXPORT_OK changed");

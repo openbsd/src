@@ -49,9 +49,8 @@ typedef enum {
     OPc_SVOP,	/* 7 */
     OPc_PADOP,	/* 8 */
     OPc_PVOP,	/* 9 */
-    OPc_CVOP,	/* 10 */
-    OPc_LOOP,	/* 11 */
-    OPc_COP	/* 12 */
+    OPc_LOOP,	/* 10 */
+    OPc_COP	/* 11 */
 } opclass;
 
 static char *opclassnames[] = {
@@ -65,9 +64,23 @@ static char *opclassnames[] = {
     "B::SVOP",
     "B::PADOP",
     "B::PVOP",
-    "B::CVOP",
     "B::LOOP",
     "B::COP"	
+};
+
+static size_t opsizes[] = {
+    0,	
+    sizeof(OP),
+    sizeof(UNOP),
+    sizeof(BINOP),
+    sizeof(LOGOP),
+    sizeof(LISTOP),
+    sizeof(PMOP),
+    sizeof(SVOP),
+    sizeof(PADOP),
+    sizeof(PVOP),
+    sizeof(LOOP),
+    sizeof(COP)	
 };
 
 #define MY_CXT_KEY "B::_guts" XS_VERSION
@@ -95,7 +108,8 @@ cc_opclass(pTHX_ OP *o)
 	return ((o->op_private & OPpASSIGN_BACKWARDS) ? OPc_UNOP : OPc_BINOP);
 
 #ifdef USE_ITHREADS
-    if (o->op_type == OP_GV || o->op_type == OP_GVSV || o->op_type == OP_AELEMFAST)
+    if (o->op_type == OP_GV || o->op_type == OP_GVSV ||
+	o->op_type == OP_AELEMFAST || o->op_type == OP_RCATLINE)
 	return OPc_PADOP;
 #endif
 
@@ -397,6 +411,44 @@ walkoptree(pTHX_ SV *opsv, char *method)
     }
 }
 
+SV **
+oplist(pTHX_ OP *o, SV **SP)
+{
+    for(; o; o = o->op_next) {
+	SV *opsv;
+	if (o->op_seq == 0) 
+	    break;
+	o->op_seq = 0;
+	opsv = sv_newmortal();
+	sv_setiv(newSVrv(opsv, cc_opclassname(aTHX_ (OP*)o)), PTR2IV(o));
+	XPUSHs(opsv);
+        switch (o->op_type) {
+	case OP_SUBST:
+            SP = oplist(aTHX_ cPMOPo->op_pmreplstart, SP);
+            continue;
+	case OP_SORT:
+	    if (o->op_flags & OPf_STACKED && o->op_flags & OPf_SPECIAL) {
+		OP *kid = cLISTOPo->op_first->op_sibling;   /* pass pushmark */
+		kid = kUNOP->op_first;                      /* pass rv2gv */
+		kid = kUNOP->op_first;                      /* pass leave */
+		SP = oplist(aTHX_ kid->op_next, SP);
+	    }
+	    continue;
+        }
+	switch (PL_opargs[o->op_type] & OA_CLASS_MASK) {
+	case OA_LOGOP:
+	    SP = oplist(aTHX_ cLOGOPo->op_other, SP);
+	    break;
+	case OA_LOOP:
+	    SP = oplist(aTHX_ cLOOPo->op_lastop, SP);
+	    SP = oplist(aTHX_ cLOOPo->op_nextop, SP);
+	    SP = oplist(aTHX_ cLOOPo->op_redoop, SP);
+	    break;
+	}
+    }
+    return SP;
+}
+
 typedef OP	*B__OP;
 typedef UNOP	*B__UNOP;
 typedef BINOP	*B__BINOP;
@@ -417,6 +469,7 @@ typedef SV	*B__PVMG;
 typedef SV	*B__PVLV;
 typedef SV	*B__BM;
 typedef SV	*B__RV;
+typedef SV	*B__FM;
 typedef AV	*B__AV;
 typedef HV	*B__HV;
 typedef CV	*B__CV;
@@ -446,15 +499,21 @@ BOOT:
 
 #define B_main_cv()	PL_main_cv
 #define B_init_av()	PL_initav
+#define B_inc_gv()	PL_incgv
+#define B_check_av()	PL_checkav_save
 #define B_begin_av()	PL_beginav_save
 #define B_end_av()	PL_endav
 #define B_main_root()	PL_main_root
 #define B_main_start()	PL_main_start
 #define B_amagic_generation()	PL_amagic_generation
+#define B_defstash()	PL_defstash
+#define B_curstash()	PL_curstash
+#define B_dowarn()	PL_dowarn
 #define B_comppadlist()	(PL_main_cv ? CvPADLIST(PL_main_cv) : CvPADLIST(PL_compcv))
 #define B_sv_undef()	&PL_sv_undef
 #define B_sv_yes()	&PL_sv_yes
 #define B_sv_no()	&PL_sv_no
+#define B_formfeed()	PL_formfeed
 #ifdef USE_ITHREADS
 #define B_regex_padav()	PL_regex_padav
 #endif
@@ -463,10 +522,16 @@ B::AV
 B_init_av()
 
 B::AV
+B_check_av()
+
+B::AV
 B_begin_av()
 
 B::AV
 B_end_av()
+
+B::GV
+B_inc_gv()
 
 #ifdef USE_ITHREADS
 
@@ -499,8 +564,29 @@ B_sv_yes()
 B::SV
 B_sv_no()
 
-MODULE = B	PACKAGE = B
+B::HV
+B_curstash()
 
+B::HV
+B_defstash()
+
+U8
+B_dowarn()
+
+B::SV
+B_formfeed()
+
+void
+B_warnhook()
+    CODE:
+	ST(0) = make_sv_object(aTHX_ sv_newmortal(), PL_warnhook);
+
+void
+B_diehook()
+    CODE:
+	ST(0) = make_sv_object(aTHX_ sv_newmortal(), PL_diehook);
+
+MODULE = B	PACKAGE = B
 
 void
 walkoptree(opsv, method)
@@ -642,6 +728,14 @@ threadsv_names()
 
 MODULE = B	PACKAGE = B::OP		PREFIX = OP_
 
+size_t
+OP_size(o)
+	B::OP		o
+    CODE:
+	RETVAL = opsizes[cc_opclass(aTHX_ o)];
+    OUTPUT:
+	RETVAL
+
 B::OP
 OP_next(o)
 	B::OP		o
@@ -697,6 +791,12 @@ U8
 OP_private(o)
 	B::OP		o
 
+void
+OP_oplist(o)
+	B::OP		o
+    PPCODE:
+	SP = oplist(aTHX_ o, SP);
+
 #define UNOP_first(o)	o->op_first
 
 MODULE = B	PACKAGE = B::UNOP		PREFIX = UNOP_
@@ -742,6 +842,9 @@ LISTOP_children(o)
 #define PMOP_pmregexp(o)	PM_GETRE(o)
 #ifdef USE_ITHREADS
 #define PMOP_pmoffset(o)	o->op_pmoffset
+#define PMOP_pmstashpv(o)	o->op_pmstashpv
+#else
+#define PMOP_pmstash(o)		o->op_pmstash
 #endif
 #define PMOP_pmflags(o)		o->op_pmflags
 #define PMOP_pmpermflags(o)	o->op_pmpermflags
@@ -784,6 +887,16 @@ IV
 PMOP_pmoffset(o)
 	B::PMOP		o
 
+char*
+PMOP_pmstashpv(o)
+	B::PMOP		o
+
+#else
+
+B::HV
+PMOP_pmstash(o)
+	B::PMOP		o
+
 #endif
 
 U32
@@ -822,10 +935,10 @@ SVOP_gv(o)
 	B::SVOP	o
 
 #define PADOP_padix(o)	o->op_padix
-#define PADOP_sv(o)	(o->op_padix ? PL_curpad[o->op_padix] : Nullsv)
+#define PADOP_sv(o)	(o->op_padix ? PAD_SVl(o->op_padix) : Nullsv)
 #define PADOP_gv(o)	((o->op_padix \
-			  && SvTYPE(PL_curpad[o->op_padix]) == SVt_PVGV) \
-			 ? (GV*)PL_curpad[o->op_padix] : Nullgv)
+			  && SvTYPE(PAD_SVl(o->op_padix)) == SVt_PVGV) \
+			 ? (GV*)PAD_SVl(o->op_padix) : Nullgv)
 
 MODULE = B	PACKAGE = B::PADOP		PREFIX = PADOP_
 
@@ -888,10 +1001,12 @@ LOOP_lastop(o)
 #define COP_stashpv(o)	CopSTASHPV(o)
 #define COP_stash(o)	CopSTASH(o)
 #define COP_file(o)	CopFILE(o)
+#define COP_filegv(o)	CopFILEGV(o)
 #define COP_cop_seq(o)	o->cop_seq
 #define COP_arybase(o)	o->cop_arybase
 #define COP_line(o)	CopLINE(o)
 #define COP_warnings(o)	o->cop_warnings
+#define COP_io(o)	o->cop_io
 
 MODULE = B	PACKAGE = B::COP		PREFIX = COP_
 
@@ -911,6 +1026,11 @@ char *
 COP_file(o)
 	B::COP	o
 
+B::GV
+COP_filegv(o)
+       B::COP  o
+
+
 U32
 COP_cop_seq(o)
 	B::COP	o
@@ -919,13 +1039,30 @@ I32
 COP_arybase(o)
 	B::COP	o
 
-U16
+U32
 COP_line(o)
 	B::COP	o
 
 B::SV
 COP_warnings(o)
 	B::COP	o
+
+B::SV
+COP_io(o)
+	B::COP	o
+
+MODULE = B	PACKAGE = B::SV
+
+U32
+SvTYPE(sv)
+	B::SV	sv
+
+#define object_2svref(sv)	sv
+#define SVREF SV *
+	
+SVREF
+object_2svref(sv)
+	B::SV	sv
 
 MODULE = B	PACKAGE = B::SV		PREFIX = Sv
 
@@ -935,6 +1072,18 @@ SvREFCNT(sv)
 
 U32
 SvFLAGS(sv)
+	B::SV	sv
+
+U32
+SvPOK(sv)
+	B::SV	sv
+
+U32
+SvROK(sv)
+	B::SV	sv
+
+U32
+SvMAGICAL(sv)
 	B::SV	sv
 
 MODULE = B	PACKAGE = B::IV		PREFIX = Sv
@@ -1036,6 +1185,15 @@ SvPV(sv)
             sv_setpvn(ST(0), NULL, 0);
         }
 
+void
+SvPVBM(sv)
+	B::PV	sv
+    CODE:
+        ST(0) = sv_newmortal();
+	sv_setpvn(ST(0), SvPVX(sv),
+	    SvCUR(sv) + (SvTYPE(sv) == SVt_PVBM ? 257 : 0));
+
+
 STRLEN
 SvLEN(sv)
 	B::PV	sv
@@ -1073,6 +1231,15 @@ MODULE = B	PACKAGE = B::MAGIC	PREFIX = Mg
 B::MAGIC
 MgMOREMAGIC(mg)
 	B::MAGIC	mg
+     CODE:
+	if( MgMOREMAGIC(mg) ) {
+	    RETVAL = MgMOREMAGIC(mg);
+	}
+	else {
+	    XSRETURN_UNDEF;
+	}
+     OUTPUT:
+	RETVAL
 
 U16
 MgPRIVATE(mg)
@@ -1089,15 +1256,6 @@ MgFLAGS(mg)
 B::SV
 MgOBJ(mg)
 	B::MAGIC	mg
-    CODE:
-        if( mg->mg_type != 'r' ) {
-            RETVAL = MgOBJ(mg);
-        }
-        else {
-            croak( "OBJ is not meaningful on r-magic" );
-        }
-    OUTPUT:
-        RETVAL
 
 IV
 MgREGEX(mg)
@@ -1139,9 +1297,9 @@ MgPTR(mg)
  	if (mg->mg_ptr){
 		if (mg->mg_len >= 0){
 	    		sv_setpvn(ST(0), mg->mg_ptr, mg->mg_len);
-		} else {
-			if (mg->mg_len == HEf_SVKEY)	
-				sv_setsv(ST(0),newRV((SV*)mg->mg_ptr));
+		} else if (mg->mg_len == HEf_SVKEY) {
+			ST(0) = make_sv_object(aTHX_
+				    sv_newmortal(), (SV*)mg->mg_ptr);
 		}
 	}
 
@@ -1203,6 +1361,10 @@ is_empty(gv)
     OUTPUT:
         RETVAL
 
+void*
+GvGP(gv)
+	B::GV	gv
+
 B::HV
 GvSTASH(gv)
 	B::GV	gv
@@ -1215,9 +1377,13 @@ B::IO
 GvIO(gv)
 	B::GV	gv
 
-B::CV
+B::FM
 GvFORM(gv)
 	B::GV	gv
+    CODE:
+	RETVAL = (SV*)GvFORM(gv);
+    OUTPUT:
+	RETVAL
 
 B::AV
 GvAV(gv)
@@ -1239,7 +1405,7 @@ U32
 GvCVGEN(gv)
 	B::GV	gv
 
-U16
+U32
 GvLINE(gv)
 	B::GV	gv
 
@@ -1367,13 +1533,34 @@ AvARRAY(av)
 		XPUSHs(make_sv_object(aTHX_ sv_newmortal(), svp[i]));
 	}
 
+void
+AvARRAYelt(av, idx)
+	B::AV	av
+	int	idx
+    PPCODE:
+    	if (idx >= 0 && AvFILL(av) >= 0 && idx <= AvFILL(av))
+	    XPUSHs(make_sv_object(aTHX_ sv_newmortal(), (AvARRAY(av)[idx])));
+	else
+	    XPUSHs(make_sv_object(aTHX_ sv_newmortal(), NULL));
+
+				   
 MODULE = B	PACKAGE = B::AV
 
 U8
 AvFLAGS(av)
 	B::AV	av
 
+MODULE = B	PACKAGE = B::FM		PREFIX = Fm
+
+IV
+FmLINES(form)
+	B::FM	form
+
 MODULE = B	PACKAGE = B::CV		PREFIX = Cv
+
+U32
+CvCONST(cv)
+	B::CV	cv
 
 B::HV
 CvSTASH(cv)
@@ -1407,6 +1594,10 @@ B::CV
 CvOUTSIDE(cv)
 	B::CV	cv
 
+U32
+CvOUTSIDE_SEQ(cv)
+	B::CV	cv
+
 void
 CvXSUB(cv)
 	B::CV	cv
@@ -1419,8 +1610,8 @@ CvXSUBANY(cv)
 	B::CV	cv
     CODE:
 	ST(0) = CvCONST(cv) ?
-                    make_sv_object(aTHX_ sv_newmortal(),CvXSUBANY(cv).any_ptr) :
-                    sv_2mortal(newSViv(CvXSUBANY(cv).any_iv));
+	    make_sv_object(aTHX_ sv_newmortal(),CvXSUBANY(cv).any_ptr) :
+	    sv_2mortal(newSViv(CvXSUBANY(cv).any_iv));
 
 MODULE = B    PACKAGE = B::CV
 

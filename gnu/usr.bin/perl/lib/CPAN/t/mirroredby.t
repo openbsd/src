@@ -8,6 +8,7 @@ BEGIN {
 }
 
 use strict;
+use lib "BUNDLE";
 use Test::More tests => 6; 
 
 use_ok( 'CPAN::FirstTime' );

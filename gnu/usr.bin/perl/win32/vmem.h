@@ -1034,7 +1034,7 @@ int VMem::HeapAdd(void* p, size_t size
 	    if(ptr == m_heaps[index].base + (int)m_heaps[index].len) {
 		/*
 		 * The new block is contiguous with a previously allocated heap area.  Add its
-		 * length to that of the previous heap.  Merge it with the the dummy end-of-heap
+		 * length to that of the previous heap.  Merge it with the dummy end-of-heap
 		 * area marker of the previous heap.
 		 */
 		m_heaps[index].len += size;

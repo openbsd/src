@@ -749,12 +749,20 @@ eightfold increase.  This means that the compiled form of reasonable
 about eight times more space in memory than the code took
 on disk.
 
-There are two Perl-specific ways to analyze memory usage:
-$ENV{PERL_DEBUG_MSTATS} and B<-DL> command-line switch.  The first
-is available only if Perl is compiled with Perl's malloc(); the
-second only if Perl was built with C<-DDEBUGGING>.  See the
-instructions for how to do this in the F<INSTALL> podpage at 
-the top level of the Perl source tree.
+The B<-DL> command-line switch is obsolete since circa Perl 5.6.0
+(it was available only if Perl was built with C<-DDEBUGGING>).
+The switch was used to track Perl's memory allocations and possible
+memory leaks.  These days the use of malloc debugging tools like
+F<Purify> or F<valgrind> is suggested instead.
+
+One way to find out how much memory is being used by Perl data
+structures is to install the Devel::Size module from CPAN: it gives
+you the minimum number of bytes required to store a particular data
+structure.  Please be mindful of the difference between the size()
+and total_size().
+
+If Perl has been compiled using Perl's malloc you can analyze Perl
+memory usage by setting the $ENV{PERL_DEBUG_MSTATS}.
 
 =head2 Using C<$ENV{PERL_DEBUG_MSTATS}>
 
@@ -860,6 +868,9 @@ never touched.
 =back
 
 =head2 Example of using B<-DL> switch
+
+(Note that -DL is obsolete since circa 5.6.0, and even before that
+Perl needed to be compiled with -DDEBUGGING.)
 
 Below we show how to analyse memory usage by 
 

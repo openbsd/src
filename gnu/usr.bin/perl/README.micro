@@ -6,6 +6,16 @@ operating system are left very -- minimal.
 All this is experimental.  If you don't know what to do with microperl
 you probably shouldn't.  Do not report bugs in microperl; fix the bugs.
 
+We assume ANSI C89 plus the following:
+- <stdlib.h>
+- rename()
+- opendir(), readdir(), closedir() (via dirent.h)
+- memchr (via string.h)
+- (a safe) putenv() (via stdlib.h)
+- strtoul() (via stdlib.h)
+(grep for 'define' in uconfig.sh.)
+Also, Perl times() is defined to always return zeroes.
+
 If you are still reading this and you are itching to try out microperl:
 
 	make -f Makefile.micro

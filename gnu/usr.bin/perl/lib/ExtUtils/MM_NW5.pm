@@ -23,7 +23,7 @@ use Config;
 use File::Basename;
 
 use vars qw(@ISA $VERSION);
-$VERSION = '2.05';
+$VERSION = '2.06';
 
 require ExtUtils::MM_Win32;
 @ISA = qw(ExtUtils::MM_Win32);
@@ -37,17 +37,45 @@ my $GCC      = 1 if $Config{'cc'} =~ /^gcc/i;
 my $DMAKE    = 1 if $Config{'make'} =~ /^dmake/i;
 
 
-sub init_others {
-    my ($self) = @_;
-    $self->SUPER::init_others(@_);
+=item os_flavor
+
+We're Netware in addition to being Windows.
+
+=cut
+
+sub os_flavor {
+    my $self = shift;
+    return ($self->SUPER::os_flavor, 'Netware');
+}
+
+=item init_platform (o)
+
+Add Netware macros.
+
+LIBPTH, BASE_IMPORT, NLM_VERSION, MPKTOOL, TOOLPATH, BOOT_SYMBOL,
+NLM_SHORT_NAME, INCLUDE, PATH, MM_NW5_REVISION
+
+
+=item platform_constants
+
+Add Netware macros initialized above to the Makefile.
+
+=cut
+
+sub init_platform {
+    my($self) = shift;
+
+    # To get Win32's setup.
+    $self->SUPER::init_platform;
 
     # incpath is copied to makefile var INCLUDE in constants sub, here just 
     # make it empty
     my $libpth = $Config{'libpth'};
     $libpth =~ s( )(;);
     $self->{'LIBPTH'} = $libpth;
+
     $self->{'BASE_IMPORT'} = $Config{'base_import'};
- 
+
     # Additional import file specified from Makefile.pl
     if($self->{'base_import'}) {
         $self->{'BASE_IMPORT'} .= ', ' . $self->{'base_import'};
@@ -56,12 +84,48 @@ sub init_others {
     $self->{'NLM_VERSION'} = $Config{'nlm_version'};
     $self->{'MPKTOOL'}	= $Config{'mpktool'};
     $self->{'TOOLPATH'}	= $Config{'toolpath'};
+
+    (my $boot = $self->{'NAME'}) =~ s/:/_/g;
+    $self->{'BOOT_SYMBOL'}=$boot;
+
+    # If the final binary name is greater than 8 chars,
+    # truncate it here.
+    if(length($self->{'BASEEXT'}) > 8) {
+        $self->{'NLM_SHORT_NAME'} = substr($self->{'BASEEXT'},0,8);
+    }
+
+    # Get the include path and replace the spaces with ;
+    # Copy this to makefile as INCLUDE = d:\...;d:\;
+    ($self->{INCLUDE} = $Config{'incpath'}) =~ s/([ ]*)-I/;/g;
+
+    # Set the path to CodeWarrior binaries which might not have been set in
+    # any other place
+    $self->{PATH} = '$(PATH);$(TOOLPATH)';
+
+    $self->{MM_NW5_VERSION} = $VERSION;
+}
+
+sub platform_constants {
+    my($self) = shift;
+    my $make_frag = '';
+
+    # Setup Win32's constants.
+    $make_frag .= $self->SUPER::platform_constants;
+
+    foreach my $macro (qw(LIBPTH BASE_IMPORT NLM_VERSION MPKTOOL 
+                          TOOLPATH BOOT_SYMBOL NLM_SHORT_NAME INCLUDE PATH
+                          MM_NW5_VERSION
+                      ))
+    {
+        next unless defined $self->{$macro};
+        $make_frag .= "$macro = $self->{$macro}\n";
+    }
+
+    return $make_frag;
 }
 
 
-=item constants (o)
-
-Initializes lots of constants and .SUFFIXES and .PHONY
+=item const_cccmd (o)
 
 =cut
 
@@ -77,169 +141,6 @@ MAKE_FRAG
 
 }
 
-sub constants {
-    my($self) = @_;
-    my(@m,$tmp);
-
-# Added LIBPTH, BASE_IMPORT, ABSTRACT, NLM_VERSION BOOT_SYMBOL, NLM_SHORT_NAME
-# for NETWARE
-
-    for $tmp (qw/
-
-	      AR_STATIC_ARGS NAME DISTNAME NAME_SYM VERSION
-	      VERSION_SYM XS_VERSION INST_BIN INST_LIB
-	      INST_ARCHLIB INST_SCRIPT PREFIX  INSTALLDIRS
-	      INSTALLPRIVLIB INSTALLARCHLIB INSTALLSITELIB
-	      INSTALLSITEARCH INSTALLBIN INSTALLSCRIPT PERL_LIB
-	      PERL_ARCHLIB SITELIBEXP SITEARCHEXP LIBPERL_A MYEXTLIB
-	      FIRST_MAKEFILE MAKE_APERL_FILE PERLMAINCC PERL_SRC
-	      PERL_INC PERL FULLPERL LIBPTH BASE_IMPORT PERLRUN
-              FULLPERLRUN PERLRUNINST FULLPERLRUNINST
-              FULL_AR PERL_CORE NLM_VERSION MPKTOOL TOOLPATH
-
-	      / ) {
-	next unless defined $self->{$tmp};
-	push @m, "$tmp = $self->{$tmp}\n";
-    }
-
-    (my $boot = $self->{'NAME'}) =~ s/:/_/g;
-    $self->{'BOOT_SYMBOL'}=$boot;
-    push @m, "BOOT_SYMBOL = $self->{'BOOT_SYMBOL'}\n";
-
-    # If the final binary name is greater than 8 chars,
-    # truncate it here.
-    if(length($self->{'BASEEXT'}) > 8) {
-        $self->{'NLM_SHORT_NAME'} = substr($self->{'BASEEXT'},0,8);
-        push @m, "NLM_SHORT_NAME = $self->{'NLM_SHORT_NAME'}\n";
-    }
-
-    push @m, qq{
-VERSION_MACRO = VERSION
-DEFINE_VERSION = -D\$(VERSION_MACRO)=\\\"\$(VERSION)\\\"
-XS_VERSION_MACRO = XS_VERSION
-XS_DEFINE_VERSION = -D\$(XS_VERSION_MACRO)=\\\"\$(XS_VERSION)\\\"
-};
-
-    # Get the include path and replace the spaces with ;
-    # Copy this to makefile as INCLUDE = d:\...;d:\;
-    (my $inc = $Config{'incpath'}) =~ s/([ ]*)-I/;/g;
-
-    # Get the additional include path from the user through the command prompt
-    # and append to INCLUDE
-#    $self->{INC} = '';
-    push @m, "INC = $self->{'INC'}\n";
-
-    push @m, qq{
-INCLUDE = $inc;
-};
-
-    # Set the path to CodeWarrior binaries which might not have been set in
-    # any other place
-    push @m, qq{
-PATH = \$(PATH);\$(TOOLPATH)
-};
-
-    push @m, qq{
-MAKEMAKER = $INC{'ExtUtils/MakeMaker.pm'}
-MM_VERSION = $ExtUtils::MakeMaker::VERSION
-};
-
-    push @m, q{
-# FULLEXT = Pathname for extension directory (eg Foo/Bar/Oracle).
-# BASEEXT = Basename part of FULLEXT. May be just equal FULLEXT. (eg Oracle)
-# PARENT_NAME = NAME without BASEEXT and no trailing :: (eg Foo::Bar)
-# DLBASE  = Basename part of dynamic library. May be just equal BASEEXT.
-};
-
-    for $tmp (qw/
-	      FULLEXT BASEEXT PARENT_NAME DLBASE VERSION_FROM INC DEFINE OBJECT
-	      LDFROM LINKTYPE
-	      /	) {
-	next unless defined $self->{$tmp};
-	push @m, "$tmp = $self->{$tmp}\n";
-    }
-
-    push @m, "
-# Handy lists of source code files:
-XS_FILES= ".join(" \\\n\t", sort keys %{$self->{XS}})."
-C_FILES = ".join(" \\\n\t", @{$self->{C}})."
-O_FILES = ".join(" \\\n\t", @{$self->{O_FILES}})."
-H_FILES = ".join(" \\\n\t", @{$self->{H}})."
-MAN1PODS = ".join(" \\\n\t", sort keys %{$self->{MAN1PODS}})."
-MAN3PODS = ".join(" \\\n\t", sort keys %{$self->{MAN3PODS}})."
-";
-
-    for $tmp (qw/
-	      INST_MAN1DIR        INSTALLMAN1DIR MAN1EXT
-	      INST_MAN3DIR        INSTALLMAN3DIR MAN3EXT
-	      /) {
-	next unless defined $self->{$tmp};
-	push @m, "$tmp = $self->{$tmp}\n";
-    }
-
-    push @m, qq{
-.USESHELL :
-} if $DMAKE;
-
-    push @m, q{
-.NO_CONFIG_REC: Makefile
-} if $ENV{CLEARCASE_ROOT};
-
-    # why not q{} ? -- emacs
-    push @m, qq{
-# work around a famous dec-osf make(1) feature(?):
-makemakerdflt: all
-
-.SUFFIXES: .xs .c .C .cpp .cxx .cc \$(OBJ_EXT)
-
-.PHONY: all config static dynamic test linkext manifest
-
-# Where is the Config information that we are using/depend on
-CONFIGDEP = \$(PERL_ARCHLIB)\\Config.pm \$(PERL_INC)\\config.h
-};
-
-    my @parentdir = split(/::/, $self->{PARENT_NAME});
-    push @m, q{
-# Where to put things:
-INST_LIBDIR      = }. File::Spec->catdir('$(INST_LIB)',@parentdir)        .q{
-INST_ARCHLIBDIR  = }. File::Spec->catdir('$(INST_ARCHLIB)',@parentdir)    .q{
-
-INST_AUTODIR     = }. File::Spec->catdir('$(INST_LIB)','auto','$(FULLEXT)')       .q{
-INST_ARCHAUTODIR = }. File::Spec->catdir('$(INST_ARCHLIB)','auto','$(FULLEXT)')   .q{
-};
-
-    if ($self->has_link_code()) {
-	push @m, '
-INST_STATIC  = $(INST_ARCHAUTODIR)\$(BASEEXT)$(LIB_EXT)
-INST_DYNAMIC = $(INST_ARCHAUTODIR)\$(DLBASE).$(DLEXT)
-INST_BOOT    = $(INST_ARCHAUTODIR)\$(BASEEXT).bs
-';
-    } else {
-	push @m, '
-INST_STATIC  =
-INST_DYNAMIC =
-INST_BOOT    =
-';
-    }
-
-    $tmp = $self->export_list;
-    push @m, "
-EXPORT_LIST = $tmp
-";
-    $tmp = $self->perl_archive;
-    push @m, "
-PERL_ARCHIVE = $tmp
-";
-
-    push @m, q{
-TO_INST_PM = }.join(" \\\n\t", sort keys %{$self->{PM}}).q{
-
-PM_TO_BLIB = }.join(" \\\n\t", %{$self->{PM}}).q{
-};
-
-    join('',@m);
-}
-
 
 =item static_lib (o)
 
@@ -251,7 +152,7 @@ sub static_lib {
     return '' unless $self->has_link_code;
 
     my $m = <<'END';
-$(INST_STATIC): $(OBJECT) $(MYEXTLIB) $(INST_ARCHAUTODIR)\.exists
+$(INST_STATIC): $(OBJECT) $(MYEXTLIB) $(INST_ARCHAUTODIR)$(DIRFILESEP).exists
 	$(RM_RF) $@
 END
 
@@ -274,12 +175,12 @@ END
 
     $m .= sprintf <<'END', $ar_arg;
 	$(AR) %s
-	$(NOECHO)echo "$(EXTRALIBS)" > $(INST_ARCHAUTODIR)\extralibs.ld
+	$(NOECHO) $(ECHO) "$(EXTRALIBS)" > $(INST_ARCHAUTODIR)\extralibs.ld
 	$(CHMOD) 755 $@
 END
 
     $m .= <<'END' if $self->{PERL_SRC};
-	$(NOECHO)echo "$(EXTRALIBS)" >> $(PERL_SRC)\ext.libs
+	$(NOECHO) $(ECHO) "$(EXTRALIBS)" >> $(PERL_SRC)\ext.libs
     
     
 END
@@ -313,16 +214,16 @@ INST_DYNAMIC_DEP = '.$inst_dynamic_dep.'
 
 # Create xdc data for an MT safe NLM in case of mpk build
 $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP)
-	@echo Export boot_$(BOOT_SYMBOL) > $(BASEEXT).def
-	@echo $(BASE_IMPORT) >> $(BASEEXT).def
-	@echo Import @$(PERL_INC)\perl.imp >> $(BASEEXT).def
+	$(NOECHO) $(ECHO) Export boot_$(BOOT_SYMBOL) > $(BASEEXT).def
+	$(NOECHO) $(ECHO) $(BASE_IMPORT) >> $(BASEEXT).def
+	$(NOECHO) $(ECHO) Import @$(PERL_INC)\perl.imp >> $(BASEEXT).def
 MAKE_FRAG
 
 
     if ( $self->{CCFLAGS} =~ m/ -DMPK_ON /) {
         $m .= <<'MAKE_FRAG';
 	$(MPKTOOL) $(XDCFLAGS) $(BASEEXT).xdc
-	@echo xdcdata $(BASEEXT).xdc >> $(BASEEXT).def
+	$(NOECHO) $(ECHO) xdcdata $(BASEEXT).xdc >> $(BASEEXT).def
 MAKE_FRAG
     }
 

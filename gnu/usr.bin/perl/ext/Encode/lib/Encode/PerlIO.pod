@@ -98,14 +98,13 @@ Encode converts from the beginning to \x7E, leaving \xe3 in the buffer
 because it is invalid (partial character).
 
 Unfortunately, this scheme does not work well with escape-based
-encodings such as ISO-2022-JP.  Let's see what happens in that case
-in the next chapter.
+encodings such as ISO-2022-JP.
 
-=head1 BUGS
+=head1 Line Buffering
 
 Now let's see what happens when you try to decode from ISO-2022-JP and
 the buffer ends in the middle of a character.
- 
+
 			  JIS208-ESC   \x{5f3e}
    A   B   C   ....   ~   \e   $   B  |DAN | ....
   41  42  43   ....  7E   1b  24  41  43  46 ....
@@ -118,25 +117,24 @@ area so it has to convert \x43\x46, not \x43.  Unlike utf8 and EUC,
 in escape-based encodings you can't tell if a given octet is a whole
 character or just part of it.
 
-There are actually several ways to solve this problem but none of
-them is fast enough to be practical.  From Encode's point of view,
-the easiest solution is for PerlIO to implement a line buffer instead
-of a fixed-length buffer, but that makes PerlIO really complicated.
+Fortunately PerlIO also supports line buffer if you tell PerlIO to use
+one instead of fixed buffer.  Since ISO-2022-JP is guaranteed to revert to ASCII at the end of the line, partial
+character will never happen when line buffer is used.
 
-So for the time being, using escape-based encodings in the
-":encoding()" layer of PerlIO does not work well.
+To tell PerlIO to use line buffer, implement -E<gt>needs_lines method
+for your encoding object.  See  L<Encode::Encoding> for details.
 
-=head2 Workaround
+Thanks to these efforts most encodings that come with Encode support
+PerlIO but that still leaves following encodings.
 
-If you still insist, you can at least use ":encoding()" by making sure
-the buffer never gets full.  Here is an example.
+  iso-2022-kr
+  MIME-B
+  MIME-Header
+  MIME-Q
 
-  use FileHandle;
-  binmode(STDOUT, ":encoding(7bit-jis)");
-  STDOUT->autoflush(1); # don't forget this!
-  for my $l (@lines){   # $l cannot be longer than 1023 bytes
-    print $l;
-  } 
+Fortunately iso-2022-kr is hardly used (according to Jungshik) and
+MIME-* are very unlikely to be fed to PerlIO because they are for mail
+headers.  See L<Encode::MIME::Header> for details.
 
 =head2 How can I tell whether my encoding fully supports PerlIO ?
 

@@ -1,6 +1,6 @@
 /*    perlvars.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1999, 2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -48,13 +48,24 @@ PERLVAR(Gmalloc_mutex,	perl_mutex)	/* Mutex for malloc */
 PERLVAR(Gop_mutex,	perl_mutex)	/* Mutex for op refcounting */
 #endif
 
-/* Force inclusion of both runops options */
-PERLVARI(Grunops_std,	runops_proc_t,	MEMBER_TO_FPTR(Perl_runops_standard))
-PERLVARI(Grunops_dbg,	runops_proc_t,	MEMBER_TO_FPTR(Perl_runops_debug))
+#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+PERLVAR(Gdollarzero_mutex, perl_mutex)	/* Modifying $0 */
+#endif
 
-/* Hooks to shared SVs and locks. */
-PERLVARI(Gsharehook,	share_proc_t,	MEMBER_TO_FPTR(Perl_sv_nosharing))
-PERLVARI(Glockhook,	share_proc_t,	MEMBER_TO_FPTR(Perl_sv_nolocking))
-PERLVARI(Gunlockhook,	share_proc_t,	MEMBER_TO_FPTR(Perl_sv_nounlocking))
-PERLVARI(Gthreadhook,	thrhook_proc_t,	MEMBER_TO_FPTR(Perl_nothreadhook))
+/* This is constant on most architectures, a global on OS/2 */
+PERLVARI(Gsh_path,	char *,	SH_PATH)/* full path of shell */
+
+#ifndef PERL_MICRO
+/* If Perl has to ignore SIGPFE, this is its saved state.
+ * See perl.h macros PERL_FPU_INIT and PERL_FPU_{PRE,POST}_EXEC. */
+PERLVAR(Gsigfpe_saved,	Sighandler_t)
+#endif
+
+/* Restricted hashes placeholder value.
+ * The contents are never used, only the address. */
+PERLVAR(Gsv_placeholder, SV)
+
+#ifndef PERL_MICRO
+PERLVARI(Gcsighandlerp,	Sighandler_t, &Perl_csighandler)	/* Pointer to C-level sighandler */
+#endif
 

@@ -1,21 +1,22 @@
 package OS2::PrfDB;
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT);
 
 require Exporter;
-require DynaLoader;
+use XSLoader;
+use Tie::Hash;
 
-@ISA = qw(Exporter DynaLoader);
+our $debug;
+our @ISA = qw(Exporter Tie::Hash);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
-@EXPORT = qw(
-	     AnyIni UserIni SystemIni
-	    );
-$VERSION = '0.02';
+our @EXPORT = qw(
+		 AnyIni UserIni SystemIni
+		);
+our $VERSION = '0.03';
 
-bootstrap OS2::PrfDB $VERSION;
+XSLoader::load 'OS2::PrfDB', $VERSION;
 
 # Preloaded methods go here.
 
@@ -31,10 +32,6 @@ sub UserIni {
 sub SystemIni {
   new_from_int OS2::PrfDB::Hini OS2::Prf::System(2),'System settings database',1;
 }
-
-use vars qw{$debug @ISA};
-use Tie::Hash;
-push @ISA, qw{Tie::Hash};
 
 # Internal structure 0 => HINI, 1 => array of entries, 2 => iterator.
 
@@ -127,9 +124,10 @@ sub DESTROY {
 }
 
 package OS2::PrfDB::Sub;
-use vars qw{$debug @ISA};
 use Tie::Hash;
-@ISA = qw{Tie::Hash};
+
+our $debug;
+our @ISA = qw{Tie::Hash};
 
 # Internal structure 0 => HINI, 1 => array of entries, 2 => iterator,
 # 3 => appname.

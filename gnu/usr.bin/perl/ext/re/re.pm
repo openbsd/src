@@ -1,6 +1,6 @@
 package re;
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 =head1 NAME
 
@@ -77,8 +77,8 @@ See L<perlmodlib/Pragmatic Modules>.
 # N.B. File::Basename contains a literal for 'taint' as a fallback.  If
 # taint is changed here, File::Basename must be updated as well.
 my %bitmask = (
-taint		=> 0x00100000,
-eval		=> 0x00200000,
+taint		=> 0x00100000, # HINT_RE_TAINT
+eval		=> 0x00200000, # HINT_RE_EVAL
 );
 
 sub setcolor {

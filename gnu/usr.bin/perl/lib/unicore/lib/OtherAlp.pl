@@ -15,7 +15,8 @@ return <<'END';
 05BF		Other_Alphabetic
 05C1	05C2	Other_Alphabetic
 05C4		Other_Alphabetic
-064B	0655	Other_Alphabetic
+0610	0615	Other_Alphabetic
+064B	0657	Other_Alphabetic
 0670		Other_Alphabetic
 06D6	06DC	Other_Alphabetic
 06E1	06E4	Other_Alphabetic
@@ -33,7 +34,7 @@ return <<'END';
 09CB	09CC	Other_Alphabetic
 09D7		Other_Alphabetic
 09E2	09E3	Other_Alphabetic
-0A02		Other_Alphabetic
+0A01	0A03	Other_Alphabetic
 0A3E	0A42	Other_Alphabetic
 0A47	0A48	Other_Alphabetic
 0A4B	0A4C	Other_Alphabetic
@@ -42,6 +43,7 @@ return <<'END';
 0ABE	0AC5	Other_Alphabetic
 0AC7	0AC9	Other_Alphabetic
 0ACB	0ACC	Other_Alphabetic
+0AE2	0AE3	Other_Alphabetic
 0B01	0B03	Other_Alphabetic
 0B3E	0B43	Other_Alphabetic
 0B47	0B48	Other_Alphabetic
@@ -91,8 +93,10 @@ return <<'END';
 1732	1733	Other_Alphabetic
 1752	1753	Other_Alphabetic
 1772	1773	Other_Alphabetic
-17B4	17C8	Other_Alphabetic
+17B6	17C8	Other_Alphabetic
 18A9		Other_Alphabetic
+1920	192B	Other_Alphabetic
+1930	1938	Other_Alphabetic
 2160	2183	Other_Alphabetic
 FB1E		Other_Alphabetic
 1034A		Other_Alphabetic

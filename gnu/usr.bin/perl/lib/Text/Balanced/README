@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.89 of Text::Balanced
+                  Release of version 1.95 of Text::Balanced
 ==============================================================================
 
 
@@ -66,10 +66,12 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.89
+CHANGES IN VERSION 1.95
 
 
-	- Fixed extvar.t tests
+	- Constrainted _match_quote to only match at word boundaries
+	  (so "exemplum(hic)" doesn't match "m(hic)")
+	  (thanks Craig)
 
 
 ==============================================================================
@@ -77,8 +79,5 @@ CHANGES IN VERSION 1.89
 AVAILABILITY
 
 Text::Balanced has been uploaded to the CPAN
-and is also available from:
-
-	http://www.csse.monash.edu.au/~damian/CPAN/Text-Balanced.tar.gz
 
 ==============================================================================

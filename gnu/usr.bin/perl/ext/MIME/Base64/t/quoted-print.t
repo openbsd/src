@@ -1,6 +1,8 @@
 BEGIN {
-        chdir 't' if -d 't';
-        @INC = '../lib';
+        if ($ENV{PERL_CORE}) {
+                chdir 't' if -d 't';
+                @INC = '../lib';
+        }
 }
 
 use MIME::QuotedPrint;
@@ -23,8 +25,8 @@ $x70 = "x" x 70;
    ["test  \ntest\n\t \t \n" => "test=20=20\ntest\n=09=20=09=20\n"],
 
    # "=" is special an should be decoded
-   ["=\n" => "=3D\n"],
-   ["\0\xff" => "=00=FF"],
+   ["=30\n" => "=3D30\n"],
+   ["\0\xff0" => "=00=FF0"],
 
    # Very long lines should be broken (not more than 76 chars
    ["The Quoted-Printable encoding is intended to represent data that largly consists of octets that correspond to printable characters in the ASCII character set." =>
@@ -55,23 +57,41 @@ y. -- H. L. Mencken"],
    ["$x70!234"		=> "$x70!234"],
    ["$x70!2345"		=> "$x70!2345"],
    ["$x70!23456"	=> "$x70!23456"],
+   ["$x70!234567"	=> "$x70!2345=\n67"],
+   ["$x70!23456="	=> "$x70!2345=\n6=3D"],
    ["$x70!23\n"		=> "$x70!23\n"],
    ["$x70!234\n"	=> "$x70!234\n"],
    ["$x70!2345\n"	=> "$x70!2345\n"],
    ["$x70!23456\n"	=> "$x70!23456\n"],
+   ["$x70!234567\n"	=> "$x70!2345=\n67\n"],
+   ["$x70!23456=\n"	=> "$x70!2345=\n6=3D\n"],
 
    # Not allowed to break =XX escapes using soft line break
-   ["$x70===xxxx" => "$x70=3D=\n=3D=3Dxxxx"],
-   ["$x70!===xxx" => "$x70!=3D=\n=3D=3Dxxx"],
-   ["$x70!!===xx" => "$x70!!=3D=\n=3D=3Dxx"],
-   ["$x70!!!===x" => "$x70!!!=\n=3D=3D=3Dx"],
-   #                            ^
-   #                    70123456|
-   #                           max
-   #                        line width
+   ["$x70===xxxxx"  => "$x70=3D=\n=3D=3Dxxxxx"],
+   ["$x70!===xxxx"  => "$x70!=3D=\n=3D=3Dxxxx"],
+   ["$x70!2===xxx"  => "$x70!2=3D=\n=3D=3Dxxx"],
+   ["$x70!23===xx"  => "$x70!23=\n=3D=3D=3Dxx"],
+   ["$x70!234===x"  => "$x70!234=\n=3D=3D=3Dx"],
+   ["$x70!2=\n"     => "$x70!2=3D\n"],
+   ["$x70!23=\n"    => "$x70!23=\n=3D\n"],
+   ["$x70!234=\n"   => "$x70!234=\n=3D\n"],
+   ["$x70!2345=\n"  => "$x70!2345=\n=3D\n"],
+   ["$x70!23456=\n" => "$x70!2345=\n6=3D\n"],
+   #                              ^
+   #                      70123456|
+   #                             max
+   #                          line width
+
+   # some extra special cases we have had problems with
+   ["$x70!2=x=x" => "$x70!2=3D=\nx=3Dx"],
+   ["$x70!2345$x70!2345$x70!23456\n", "$x70!2345=\n$x70!2345=\n$x70!23456\n"],
+
+   # trailing whitespace
+   ["foo \t ", "foo=20=09=20"],
+   ["foo\t \n \t", "foo=09=20\n=20=09"],
 );
 
-$notests = @tests + 3;
+$notests = @tests + 13;
 print "1..$notests\n";
 
 $testno = 0;
@@ -108,8 +128,41 @@ $testno++; print "ok $testno\n";
 
 # Same test but with "\r\n" terminated lines
 print "not " unless decode_qp("foo  \r\n\r\nfoo =\r\n\r\nfoo=20\r\n\r\n") eq
-                                "foo\r\n\r\nfoo \r\nfoo \r\n\r\n";
+                                "foo\n\nfoo \nfoo \n\n";
 $testno++; print "ok $testno\n";
 
-print "not " if eval { encode_qp("XXX \x{100}") } || $@ !~ /^The Quoted-Printable encoding is only defined for bytes/;
+# Trailing whitespace
+print "not " unless decode_qp("foo  ") eq "foo  ";
+$testno++; print "ok $testno\n";
+
+print "not " unless decode_qp("foo  \n") eq "foo\n";
+$testno++; print "ok $testno\n";
+
+print "not " unless decode_qp("foo = \t\x20\nbar\t\x20\n") eq "foo bar\n";
+$testno++; print "ok $testno\n";
+
+print "not " unless decode_qp("foo = \t\x20\r\nbar\t\x20\r\n") eq "foo bar\n";
+$testno++; print "ok $testno\n";
+
+print "not " unless decode_qp("foo = \t\x20\n") eq "foo ";
+$testno++; print "ok $testno\n";
+
+print "not " unless decode_qp("foo = \t\x20\r\n") eq "foo ";
+$testno++; print "ok $testno\n";
+
+print "not " unless decode_qp("foo = \t\x20y\r\n") eq "foo = \t\x20y\n";
+$testno++; print "ok $testno\n";
+
+print "not " unless decode_qp("foo =xy\n") eq "foo =xy\n";
+$testno++; print "ok $testno\n";
+
+# Test with with alternative line break
+print "not " unless encode_qp("$x70!2345$x70\n", "***") eq "$x70!2345=***$x70***";
+$testno++; print "ok $testno\n";
+
+# Test with no line breaks
+print "not " unless encode_qp("$x70!2345$x70\n", "") eq "$x70!2345$x70=0A";
+$testno++; print "ok $testno\n";
+
+print "not " if $] >= 5.006 && (eval 'encode_qp("XXX \x{100}")' || !$@);
 $testno++; print "ok $testno\n";

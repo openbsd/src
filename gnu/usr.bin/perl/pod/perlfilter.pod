@@ -551,6 +551,20 @@ useful features from the C preprocessor and any other macro processors
 you know. The tricky bit will be choosing how much knowledge of Perl's
 syntax you want your filter to have.
 
+=head1 THINGS TO LOOK OUT FOR
+
+=over 5
+
+=item Some Filters Clobber the C<DATA> Handle
+
+Some source filters use the C<DATA> handle to read the calling program.
+When using these source filters you cannot rely on this handle, nor expect
+any particular kind of behavior when operating on it.  Filters based on
+Filter::Util::Call (and therefore Filter::Simple) do not alter the C<DATA>
+filehandle.
+
+=back
+
 =head1 REQUIREMENTS
 
 The Source Filters distribution is available on CPAN, in 

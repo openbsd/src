@@ -2,6 +2,9 @@
 use strict;
 use Carp;
 
+die "$0: Please run me as ./mktables to avoid unnecessary differences\n"
+    unless $0 eq "./mktables";
+
 ##
 ## mktables -- create the runtime Perl Unicode files (lib/unicore/**/*.pl)
 ## from the Unicode database files (lib/unicore/*.txt).
@@ -624,32 +627,35 @@ sub UnicodeData_Txt()
         ($General{$name} ||= Table->New)->$op($code, $name);
 
         # 005F: SPACING UNDERSCORE
-        $Cat{Word}->$op($code)  if $cat =~ /^[LMN]/ || $code == 0x005F;
-        $Cat{Alnum}->$op($code) if $cat =~ /^[LMN]/;
+        $Cat{Word}->$op($code)  if $cat =~ /^[LMN]|Pc/;
+        $Cat{Alnum}->$op($code) if $cat =~ /^[LM]|Nd/;
         $Cat{Alpha}->$op($code) if $cat =~ /^[LM]/;
 
-
-
-        $Cat{Space}->$op($code) if $cat  =~ /^Z/
+	my $isspace = 
+	    ($cat =~ /Zs|Zl|Zp/ &&
+	     $code != 0x200B) # 200B is ZWSP which is for line break control
+	     # and therefore it is not part of "space" even while it is "Zs".
                                 || $code == 0x0009  # 0009: HORIZONTAL TAB
                                 || $code == 0x000A  # 000A: LINE FEED
                                 || $code == 0x000B  # 000B: VERTICAL TAB
                                 || $code == 0x000C  # 000C: FORM FEED
-                                || $code == 0x000D; # 000D: CARRIAGE RETURN
+                                || $code == 0x000D  # 000D: CARRIAGE RETURN
+                                || $code == 0x0085  # 0085: NEL
 
+	    ;
 
-        $Cat{SpacePerl}->$op($code) if $cat =~ /^Z/
-                                    || $code == 0x0009 # 0009: HORIZONTAL TAB
-                                    || $code == 0x000A # 000A: LINE FEED
-                                    || $code == 0x000C # 000C: FORM FEED
-                                    || $code == 0x000D # 000D: CARRIAGE RETURN
-                                    || $code == 0x0085 # 0085: <NEXT LINE>
-                                    || $code == 0x2028 # 2028: LINE SEPARATOR
-                                    || $code == 0x2029;# 2029: PARAGRAPH SEP.
+        $Cat{Space}->$op($code) if $isspace;
 
-        $Cat{Blank}->$op($code) if $cat  =~ /^Z[^lp]$/
-                                || $code == 0x0009  # 0009: HORIZONTAL TAB
-                                || $code == 0x0020; # 0020: SPACE
+        $Cat{SpacePerl}->$op($code) if $isspace
+	                               && $code != 0x000B; # Backward compat.
+
+        $Cat{Blank}->$op($code) if $isspace
+                                && !($code == 0x000A ||
+				     $code == 0x000B ||
+				     $code == 0x000C ||
+				     $code == 0x000D ||
+				     $code == 0x0085 ||
+				     $cat =~ /^Z[lp]/);
 
         $Cat{Digit}->$op($code) if $cat eq "Nd";
         $Cat{Upper}->$op($code) if $cat eq "Lu";
@@ -657,8 +663,9 @@ sub UnicodeData_Txt()
         $Cat{Title}->$op($code) if $cat eq "Lt";
         $Cat{ASCII}->$op($code) if $code <= 0x007F;
         $Cat{Cntrl}->$op($code) if $cat =~ /^C/;
-        $Cat{Graph}->$op($code) if $cat =~ /^([LMNPS]|Co)/;
-        $Cat{Print}->$op($code) if $cat =~ /^([LMNPS]|Co|Zs)/;
+	my $isgraph = !$isspace && $cat !~ /Cc|Cs|Cn/;
+        $Cat{Graph}->$op($code) if $isgraph;
+        $Cat{Print}->$op($code) if $isgraph || $isspace;
         $Cat{Punct}->$op($code) if $cat =~ /^P/;
 
         $Cat{XDigit}->$op($code) if ($code >= 0x30 && $code <= 0x39)  ## 0..9

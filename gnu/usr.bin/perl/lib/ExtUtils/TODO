@@ -1,0 +1,76 @@
+Rethink MM_Win32 tests.
+
+Investigate one method per make target.
+
+Test MM_Any and pull some redundant tests out of MM_*.t
+
+Create a way to init MM objects.  (XXX What's wrong with MakeMaker->new?)
+
+Move instmodsh to utils/ in the core.
+
+Handle config files (ie. /etc) and their special PREFIX needs
+(ie. PREFIX=/usr, INSTALLCONFIGDIR=/etc).
+
+Make sure PDL builds
+
+Fix find_perl on Amiga trg@privat.utfors.se
+
+Fix appending of .. when DIRS contains directories not immediately
+below the cwd.
+
+Fill in the IMPORTS docs.
+
+Document "make install UNINST=1"
+
+Remove tar -I Sun-ism from instmodsh.
+
+Consider adding a timeout option to prompt() and env variable.
+
+Unify VMS->find_perl
+
+Consider if VMS->find_perl needs to have pieces put into maybe_command()
+
+Add a MM_Any->init_others() using ExtUtils::Command.
+
+Figure out and document the 4th arg to ExtUtils::Install::install()
+
+Consider if adding a nativize() routine to replace macify() and
+fixpath() is useful.
+
+Eliminate eliminate_macros() from inside FS::VMS->catfile and catdir.
+Make into MM_VMS wrappers.
+
+Test ExtUtils::Command::MM
+
+Finish ExtUtils::MakeMaker::Tutorial
+
+Add 'how to install additional files' to ExtUtils::MakeMaker::FAQ.
+
+Fix NORECUSE bug continuing to set DIR
+
+Give typemap location its own macro.
+
+Merge MM_VMS->tool_xsubpp
+
+Initialize PERL_SRC to '' instead of leaving undef when outside the source 
+tree
+
+Reinstate HTMLification to use the new HTML Config info.
+
+split manifypods target into more generic docifypods target which depends on 
+manifypods
+
+Add target to generate native Win32 help files (or whatever Win32 likes
+to use for help files these days)
+
+Add target to generate native VMS help files.
+
+On VMS, write PM_FILTERs to a temp file and run from there avoiding command
+line lengths.  Worth the trouble given the Unixy nature of PM_FILTER?
+
+Move oneliner() and friends into a seperate module for general consumption.
+
+Make out of date check on 'make dist' more useful
+http://archive.develooper.com/makemaker@perl.org/msg01075.html
+
+Make maniadd() return a tied, case-insensitive hash on VMS.

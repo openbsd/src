@@ -47,7 +47,7 @@ no utf8; # we contain Latin-1
  'code2language("nd") eq "Ndebele, North"',
  'code2language("ng") eq "Ndonga"',
  'code2language("nn") eq "Norwegian Nynorsk"',
- 'code2language("nb") eq "Norwegian Bokmål"',
+ 'code2language("nb") eq "Norwegian Bokmal"',
  'code2language("ny") eq "Chichewa; Nyanja"',
  'code2language("oc") eq "Occitan (post 1500)"',
  'code2language("os") eq "Ossetian; Ossetic"',

@@ -4,7 +4,7 @@
 
 SRCDIR     = ..
 PV         = 58
-INST_VER   = 5.8.0
+INST_VER   = 5.8.2
 
 # INSTALL_ROOT specifies a path where this perl will be installed on CE device
 INSTALL_ROOT=/netzwerk/sprache/perl
@@ -49,14 +49,22 @@ CECOPY     = cecopy
 # encodings and may see lower IO performance. You have been warned.
 USE_PERLIO	= define
 
+#
+# set this if you wish to use perl's malloc
+# This will make perl run few times faster
+# WARNING: Turning this on/off WILL break binary compatibility with extensions
+# you may have compiled with/without it.
+#
+PERL_MALLOC	= define
+
 
 NOOP	   = @echo
 # keep this untouched!
 NULL	   =
 
 
-CFG=DEBUG
-#CFG=RELEASE
+#CFG=DEBUG
+CFG=RELEASE
 
 !if "$(MACHINE)" == ""
 MACHINE=wince-arm-hpc-wce300
@@ -73,6 +81,12 @@ MACHINE=wince-arm-hpc-wce300
 #MACHINE=wince-sh3-palm-wce211
 #MACHINE=wince-x86em-palm-wce211
 !endif
+
+# set this to your email address
+#
+#EMAIL		=
+
+##################### CHANGE THESE ONLY IF YOU MUST #####################
 
 ######################################################################
 # machines
@@ -178,7 +192,7 @@ CPU        = ARM
 TARGETCPU  = ARM
 CEVersion  = 300
 OSVERSION  = WCE300
-PLATFORM   = HPC2000
+#PLATFORM   = HPC2000
 MCFLAGS    = -D _MT -D _DLL -D ARM -D arm -D _arm_ -D _ARM_ \
              -DPROCESSOR_ARM -DPALM_SIZE \
              -I $(CELIBDLLDIR)\inc
@@ -275,7 +289,9 @@ MCFLAGS    = -D MIPS -D mips -D _MIPS_ -D _mips_ -DPROCESSOR_MIPS \
 MACH       = -machine:mips
 SUBSYS     = -subsystem:windowsce,3.00
 CELIBPATH  = $(CELIBDLLDIR)\$(MACHINE)-release
+#STDLIBPATH = $(WCEROOT)\$(OSVERSION)\$(PLATFORM)\lib\$(CPU)
 LDLIBPATH  = -libpath:$(CELIBPATH)
+#"-libpath:$(STDLIBPATH)"
 STARTOBJS  = $(CECONSOLEDIR)/$(MACHINE)/wmain.obj \
              $(CECONSOLEDIR)/$(MACHINE)/w32console.obj
 !endif
@@ -291,7 +307,7 @@ PLATFORM   = MS Pocket PC
 MCFLAGS    = -D _MT -D _DLL -DSH3 -D_SH3_ -DSHx -DPROCESSOR_SH3 \
              -DPALM_SIZE -DPOCKET_SIZE \
              -I $(CELIBDLLDIR)\inc 
-MACH       = -machine:mips
+MACH       = -machine:sh3
 SUBSYS     = -subsystem:windowsce,3.00
 CELIBPATH  = $(CELIBDLLDIR)\$(MACHINE)-release
 LDLIBPATH  = -libpath:$(CELIBPATH)
@@ -335,7 +351,11 @@ CECFLAGS  = $(CECFLAGS) -Zi -Od
 !if "$(CFG)" == "RELEASE"
 # -O2 and -Ot give internal compiler error in perl.c and lexer.
 # Also the dll cannot be loaded by perl.exe...
-CECFLAGS  = $(CECFLAGS)
+!if "$(CPU)" == "SH3"
+!else
+CECFLAGS  = $(CECFLAGS) -O2 -Ot
+!endif
+
 !endif
 
 RCDEFS    = /l 0x407 /r /d "UNICODE" /d UNDER_CE=$(CEVersion) \
@@ -362,7 +382,6 @@ LIB=$(WCEROOT)\$(OSVERSION)\$(PLATFORM)\lib\$(ARCH)
 
 BUILDOPT	= $(BUILDOPT) $(CECFLAGS)
 
-##################### CHANGE THESE ONLY IF YOU MUST #####################
 
 !IF "$(CRYPT_SRC)$(CRYPT_LIB)" == ""
 D_CRYPT		= undef
@@ -381,10 +400,6 @@ USE_5005THREADS	= undef
 
 !IF "$(USE_5005THREADS)" == "define"
 USE_ITHREADS	= undef
-!ENDIF
-
-!IF "$(USE_IMP_SYS)" == "define"
-PERL_MALLOC	= undef
 !ENDIF
 
 !IF "$(USE_MULTI)" == ""
@@ -429,7 +444,7 @@ BUILDOPT	= $(BUILDOPT) -DUSE_PERLIO
 !ENDIF
 
 !IF "$(CROSS_NAME)" == ""
-CROSS_NAME	= wince
+CROSS_NAME	= $(MACHINE)
 !ENDIF
 
 # new option - automatically defined in perl.h...
@@ -450,10 +465,10 @@ LINK32		= link
 LIB32		= $(LINK32) -lib
 RSC		= rc
 
-INCLUDES	= -I.\include -I. -I..
+INCLUDES	= -I.\include -I..\win32\include -I. -I..
 DEFINES		= -DWIN32 -D_CONSOLE -DNO_STRICT $(CRYPT_FLAG) $(CECFLAGS)
 LOCDEFS		= -DPERLDLL -DPERL_CORE
-CXX_FLAG	= -TP -GX
+CXX_FLAG	= -TP
 
 PERLEXE_RES	= perl.res
 PERLDLL_RES	=
@@ -486,6 +501,8 @@ LINK_FLAGS	= -nologo -machine:$(PROCESSOR_ARCHITECTURE)
 
 !if "$(CFG)" == "DEBUG"
 LINK_FLAGS      = $(LINK_FLAGS) -debug:full -pdb:none 
+!else
+LINK_FLAGS      = $(LINK_FLAGS) -release 
 !endif
 
 OBJOUT_FLAG	= -Fo
@@ -554,6 +571,7 @@ MICROCORE_SRC	=		\
 		..\hv.c		\
 		..\mg.c		\
 		..\op.c		\
+		..\pad.c	\
 		..\perl.c	\
 		..\perlapi.c	\
 		..\perly.c	\
@@ -635,6 +653,26 @@ CORE_NOCFG_H	=		\
 		.\include\sys\socket.h	\
 		.\win32.h
 
+CORE_H		= $(CORE_NOCFG_H) .\config.h
+
+MICROCORE_OBJ	= $(MICROCORE_SRC:.c=.obj)
+CORE_OBJ	= $(MICROCORE_OBJ) $(EXTRACORE_SRC:.c=.obj)
+WIN32_OBJ	= $(WIN32_SRC:.c=.obj)
+#WIN32_OBJ	= $(WIN32_OBJ:.\=.\$(DLLDIR)\)
+MINICORE_OBJ	= $(MICROCORE_OBJ:..\=.\$(DLLDIR)\)	\
+		  $(MINIDIR)\miniperlmain$(o)	\
+		  $(MINIDIR)\perlio$(o)
+MINIWIN32_OBJ	= $(WIN32_OBJ:.\=.\$(DLLDIR)\)
+MINI_OBJ	= $(MINICORE_OBJ) $(MINIWIN32_OBJ)
+DLL_OBJ		= $(DLL_SRC:.c=.obj)
+X2P_OBJ		= $(X2P_SRC:.c=.obj)
+
+PERLDLL_OBJ	= $(CORE_OBJ)
+PERLEXE_OBJ	= perlmain$(o)
+
+PERLDLL_OBJ	= $(PERLDLL_OBJ) $(WIN32_OBJ) $(DLL_OBJ)
+#PERLEXE_OBJ	= $(PERLEXE_OBJ) $(WIN32_OBJ) $(DLL_OBJ)
+
 !IF "$(USE_SETARGV)" != ""
 SETARGV_OBJ	= setargv$(o)
 !ENDIF
@@ -644,81 +682,11 @@ DYNAMIC_EXT	= Socket IO Fcntl Opcode SDBM_File POSIX attrs Thread B re \
 		Sys/Hostname
 
 STATIC_EXT	= DynaLoader
-NONXS_EXT	= Errno
 
 DYNALOADER	= $(EXTDIR)\DynaLoader\DynaLoader
-SOCKET		= $(EXTDIR)\Socket\Socket
-IO		= $(EXTDIR)\IO\IO
-DUMPER		= $(EXTDIR)\Data\Dumper\Dumper
-#
-FCNTL		= $(EXTDIR)\Fcntl\Fcntl
-OPCODE		= $(EXTDIR)\Opcode\Opcode
-SDBM_FILE	= $(EXTDIR)\SDBM_File\SDBM_File
-POSIX		= $(EXTDIR)\POSIX\POSIX
-ATTRS		= $(EXTDIR)\attrs\attrs
-THREAD		= $(EXTDIR)\Thread\Thread
-B		= $(EXTDIR)\B\B
-RE		= $(EXTDIR)\re\re
-ERRNO		= $(EXTDIR)\Errno\Errno
-PEEK		= $(EXTDIR)\Devel\Peek\Peek
-BYTELOADER	= $(EXTDIR)\ByteLoader\ByteLoader
-DPROF		= $(EXTDIR)\Devel\DProf\DProf
-GLOB		= $(EXTDIR)\File\Glob\Glob
-HOSTNAME	= $(EXTDIR)\Sys\Hostname\Hostname
-SOCKET_DLL	= $(AUTODIR)\Socket\Socket.dll
-FCNTL_DLL	= $(AUTODIR)\Fcntl\Fcntl.dll
-OPCODE_DLL	= $(AUTODIR)\Opcode\Opcode.dll
-SDBM_FILE_DLL	= $(AUTODIR)\SDBM_File\SDBM_File.dll
-IO_DLL		= $(AUTODIR)\IO\IO.dll
-POSIX_DLL	= $(AUTODIR)\POSIX\POSIX.dll
-ATTRS_DLL	= $(AUTODIR)\attrs\attrs.dll
-THREAD_DLL	= $(AUTODIR)\Thread\Thread.dll
-B_DLL		= $(AUTODIR)\B\B.dll
-DUMPER_DLL	= $(AUTODIR)\Data\Dumper\Dumper.dll
-PEEK_DLL	= $(AUTODIR)\Devel\Peek\Peek.dll
-RE_DLL		= $(AUTODIR)\re\re.dll
-BYTELOADER_DLL	= $(AUTODIR)\ByteLoader\ByteLoader.dll
-DPROF_DLL	= $(AUTODIR)\Devel\DProf\DProf.dll
-GLOB_DLL	= $(AUTODIR)\File\Glob\Glob.dll
-HOSTNAME_DLL	= $(AUTODIR)\Sys\Hostname\Hostname.dll
 
 ERRNO_PM	= $(LIBDIR)\Errno.pm
 
-EXTENSION_C	= 		\
-		$(SOCKET).c	\
-		$(FCNTL).c	\
-		$(OPCODE).c	\
-		$(SDBM_FILE).c	\
-		$(IO).c		\
-		$(POSIX).c	\
-		$(ATTRS).c	\
-		$(THREAD).c	\
-		$(RE).c		\
-		$(DUMPER).c	\
-		$(PEEK).c	\
-		$(B).c		\
-		$(BYTELOADER).c	\
-		$(DPROF).c	\
-		$(GLOB).c	\
-		$(HOSTNAME).c
-
-EXTENSION_DLL	= 		\
-		$(SOCKET_DLL)	\
-		$(FCNTL_DLL)	\
-		$(OPCODE_DLL)	\
-		$(SDBM_FILE_DLL)\
-		$(IO_DLL)	\
-		$(POSIX_DLL)	\
-		$(ATTRS_DLL)	\
-		$(DUMPER_DLL)	\
-		$(PEEK_DLL)	\
-		$(B_DLL)	\
-		$(RE_DLL)	\
-		$(THREAD_DLL)	\
-		$(BYTELOADER_DLL)	\
-		$(DPROF_DLL)	\
-		$(GLOB_DLL)	\
-		$(HOSTNAME_DLL)
 
 EXTENSION_PM	=		\
 		$(ERRNO_PM)
@@ -737,7 +705,7 @@ CFG_VARS = \
  "CC=$(CC)" \
  "ccflags=$(OPTIMIZE) $(DEFINES) $(BUILDOPT)" \
  "cf_by=Rainer Keuchel" \
- "cf_email=coyxc@rainer-keuchel.de" \
+ "cf_email=$(EMAIL)" \
  "d_crypt=$(D_CRYPT)" \
  "d_mymalloc=$(PERL_MALLOC)" \
  "libs=$(LIBFILES)" \
@@ -748,7 +716,6 @@ CFG_VARS = \
  "make=nmake" \
  "static_ext=$(STATIC_EXT)" \
  "dynamic_ext=$(DYNAMIC_EXT)" \
- "nonxs_ext=$(NONXS_EXT)" \
  "use5005threads=$(USE_5005THREADS)" \
  "useithreads=$(USE_ITHREADS)" \
  "usethreads=$(USE_5005THREADS)" \
@@ -772,6 +739,7 @@ $(CONFIGPM): .\config.h ..\config.sh ..\minimod.pl
 	$(XCOPY) *.h $(XCOREDIR)\*.*
 	$(XCOPY) ..\ext\re\re.pm $(LIBDIR)\*.*
 	$(RCOPY) include $(XCOREDIR)\*.*
+	$(XCOPY) ..\win32\include $(XCOREDIR)\*.*
 	-$(HPERL) -I..\lib -MCross=$(CROSS_NAME) config_h.PL "INST_VER=$(INST_VER)" "CORE_DIR=$(XCOREDIR)"
 	if errorlevel 1 $(MAKE) /$(MAKEFLAGS) $(CONFIGPM)
 
@@ -804,116 +772,22 @@ $(EXTDIR)\DynaLoader\dl_win32.xs: dl_win32.xs
 	$(COPY) dl_win32.xs $(EXTDIR)\DynaLoader\dl_win32.xs
 
 #----------------------------------------------------------------------------------
+NOT_COMPILE_EXT =
+!if "$(MACHINE)" == "wince-sh3-palm-wce211"
+NOT_COMPILE_EXT = $(NOT_COMPILE_EXT) !XS/Typemap
+!endif
+!if "$(MACHINE)" == "wince-mips-palm-wce211"
+NOT_COMPILE_EXT = $(NOT_COMPILE_EXT) !XS/Typemap
+!endif
+
 Extensions: ..\win32\buildext.pl $(PERLDEP) $(CONFIGPM)
 	$(HPERL) -I..\lib -I..\win32 -MCross=$(CROSS_NAME) ..\win32\buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) \
-	!File/Glob !POSIX !Time/HiRes
+	!POSIX $(NOT_COMPILE_EXT)
 
 Extensions_clean: 
 	-if exist $(MINIPERL) $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) clean
 
 #----------------------------------------------------------------------------------
-
-$(DUMPER_DLL): $(PERLEXE) $(DUMPER).xs
-	cd $(EXTDIR)\Data\$(*B)
-	$(HPERL) -I..\..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\..\wince
-
-$(DPROF_DLL): $(PERLEXE) $(DPROF).xs
-	cd $(EXTDIR)\Devel\$(*B)
-	$(HPERL) -I..\..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\..\wince
-
-$(GLOB_DLL): $(PERLEXE) $(GLOB).xs
-	cd $(EXTDIR)\File\$(*B)
-	$(HPERL) -I..\..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\..\wince
-
-$(PEEK_DLL): $(PERLEXE) $(PEEK).xs
-	cd $(EXTDIR)\Devel\$(*B)
-	$(HPERL) -I..\..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\..\wince
-
-$(RE_DLL): $(PERLEXE) $(RE).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(B_DLL): $(PERLEXE) $(B).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(THREAD_DLL): $(PERLEXE) $(THREAD).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(ATTRS_DLL): $(PERLEXE) $(ATTRS).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(POSIX_DLL): $(PERLEXE) $(POSIX).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(IO_DLL): $(PERLEXE) $(IO).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(SDBM_FILE_DLL) : $(PERLEXE) $(SDBM_FILE).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(FCNTL_DLL): $(PERLEXE) $(FCNTL).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(OPCODE_DLL): $(PERLEXE) $(OPCODE).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(SOCKET_DLL): $(PERLEXE) $(SOCKET).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(HOSTNAME_DLL): $(PERLEXE) $(HOSTNAME).xs
-	cd $(EXTDIR)\Sys\$(*B)
-	$(HPERL) -I..\..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\..\wince
-
-$(BYTELOADER_DLL): $(PERLEXE) $(BYTELOADER).xs
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
-
-$(ERRNO_PM): $(PERLEXE) $(ERRNO)_pm.PL
-	cd $(EXTDIR)\$(*B)
-	$(HPERL) -I..\..\lib -MCross Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\wince
 
 $(PERLEXE_RES): perl.rc perl.ico
 	rc $(RCDEFS) perl.rc
@@ -926,81 +800,6 @@ clean:
 	-rm -f $(MACHINE)/*.lib
 	-rm -f ../config.sh ../lib/Config.pm
 	-rm -f config.h perl.res
-
-!IF "$(MACHINE)" == "wince-sh3-hpc"
-
-install_perlexe: $(PERLEXE)
-	cedel /speicherkarte2/bin/perl.exe
-	$(CECOPY) pc:../perl.exe ce:$(INSTALL_ROOT)/bin
-
-install_perldll: $(PERLDLL)
-	cedel /speicherkarte2/bin/perl$(PV).dll
-	$(CECOPY) pc:../perl$(PV).dll ce:/speicherkarte2/bin
-
-install_perl: install_perlexe install_perldll
-
-test_perl:
-	$(CECOPY) pc:test.pl ce:/speicherkarte2/bin
-	ceexec /speicherkarte2/bin/perl.exe /speicherkarte2/bin/test.pl
-
-install_lib: ../lib/Config.pm
-	$(CECOPY)	pc:../lib/Config.pm ce:$(INSTALL_ROOT)/lib
-
-!ELSEIF "$(MACHINE)" == "wince-arm-hpc"
-
-install_perlexe: $(PERLEXE)
-	-cedel /speicherkarte/bin/perl.exe
-	$(CECOPY) pc:$(MACHINE)/perl.exe ce:$(INSTALL_ROOT)/bin
-
-install_perldll: $(PERLDLL)
-	-cedel /speicherkarte/bin/perl$(PV).dll
-	$(CECOPY) pc:$(MACHINE)/perl$(PV).dll ce:$(INSTALL_ROOT)/bin
-
-install_perl: install_perlexe install_perldll
-
-test_perl:
-	$(CECOPY) pc:test.pl ce:/speicherkarte/bin
-	ceexec /speicherkarte/bin/perl.exe /speicherkarte/bin/test.pl
-
-install_lib: ../lib/Config.pm
-	$(CECOPY)	pc:../lib/Config.pm ce:$(INSTALL_ROOT)/lib
-
-!ELSEIF "$(MACHINE)" == "wince-mips-hpc"
-
-install_perlexe: $(PERLEXE)
-	$(CECOPY) pc:../perl.exe ce:$(INSTALL_ROOT)/bin
-
-install_perldll: $(PERLDLL)
-	$(CECOPY) pc:../perl$(PV).dll ce:$(INSTALL_ROOT)/bin
-
-install_perl: install_perlexe install_perldll
-
-test_perl:
-	$(CECOPY) pc:test.pl ce:/netzwerk/compaq/bin
-	ceexec /netzwerk/compaq/bin/perl.exe $(INSTALL_ROOT)/test.pl
-
-install_lib: ../lib/Config.pm
-	$(CECOPY)	pc:../lib/Config.pm ce:$(INSTALL_ROOT)/lib
-
-!ELSEIF "$(MACHINE)" == "wince-x86em-pocket"
-
-install_lib:
-	ftpcopy ../lib/Config.pm ftp!ftp@localhost:/perl/lib
-	ftpcopy ../lib/Exporter.pm ftp!ftp@localhost:/perl/lib
-	ftpcopy ../lib/Exporter/Heavy.pm ftp!ftp@localhost:/perl/lib/Exporter
-
-install_perlexe: $(PERLEXE)
-	$(CECOPY) pc:../perl.exe ce:$(INSTALL_ROOT)/bin
-
-install_perldll: $(PERLDLL)
-	$(CECOPY) pc:../perl$(PV).dll ce:$(INSTALL_ROOT)/bin
-
-install_perl: install_perlexe install_perldll
-
-test_perl:
-	echo Not yet
-!ENDIF
-
 
 XDLLOBJS = \
 $(DLLDIR)\av.obj \
@@ -1015,6 +814,7 @@ $(DLLDIR)\locale.obj \
 $(DLLDIR)\mg.obj \
 $(DLLDIR)\numeric.obj \
 $(DLLDIR)\op.obj \
+$(DLLDIR)\pad.obj \
 $(DLLDIR)\perl.obj \
 $(DLLDIR)\perlapi.obj \
 $(DLLDIR)\perlio.obj \
@@ -1043,12 +843,31 @@ $(DLLDIR)\wincesck.obj \
 $(DLLDIR)\xsutils.obj \
 $(DLLDIR)\perllib.obj \
 $(DLLDIR)\DynaLoader.obj
+!IF "$(PERL_MALLOC)" == "define"
+XDLLOBJS	= $(XDLLOBJS) $(DLLDIR)\malloc.obj
+!ENDIF
+!IF "$(CRYPT_SRC)" != ""
+XDLLOBJS	= $(XDLLOBJS) $(DLLDIR)\fcrypt.obj
+!ENDIF
 
 {$(SRCDIR)}.c{$(DLLDIR)}.obj:
-    $(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ $<
+    $(CC) -c $(CFLAGS_O) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ $<
+
+# compiler explains that it will optimize toke.c if we'll give it an
+# option -QMOb<num> with num>=4178
+$(DLLDIR)\toke.obj:
+    $(CC) -c $(CFLAGS_O) -QMOb9000 -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ ..\toke.c
 
 {$(SRCDIR)/wince}.c{$(DLLDIR)}.obj:
-    $(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ $<
+    $(CC) -c $(CFLAGS_O) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ $<
+
+# -DPERL_IMPLICIT_SYS needs C++ for perllib.c
+# This is the only file that depends on perlhost.h, vmem.h, and vdir.h
+!IF "$(USE_IMP_SYS)" == "define"
+$(DLLDIR)\perllib$(o)	: perllib.c .\perlhost.h .\vdir.h .\vmem.h
+	$(CC) -c -I. $(CFLAGS_O) $(CXX_FLAG) $(OBJOUT_FLAG)$@ perllib.c
+	rem (frustrated) mv perllib.obj $(DLLDIR)
+!ENDIF
 
 perldll.def : $(HPERL) $(CONFIGPM) ..\global.sym ..\pp.sym ..\makedef.pl
 	$(HPERL) -w ..\makedef.pl PLATFORM=wince $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
@@ -1064,7 +883,7 @@ $(DLLDIR) :
 	if not exist "$(DLLDIR)" mkdir "$(DLLDIR)"
 
 $(DLLDIR)\DynaLoader.obj: $(EXTDIR)\DynaLoader\DynaLoader.c
-    $(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ \
+    $(CC) -c $(CFLAGS_O) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ \
           $(EXTDIR)\DynaLoader\DynaLoader.c
 
 XPERLEXEOBJS = \
@@ -1072,7 +891,7 @@ $(MACHINE)\perlmain.obj
 
 $(PERLEXE) : $(PERLDLL) $(CONFIGPM) $(XPERLEXEOBJS) $(PERLEXE_RES) $(STARTOBJS)
 	$(XCOPY) $(MACHINE)\*.lib $(XCOREDIR)
-        $(LINK32) $(SUBSYS) $(LDLIBPATH) \
+	$(LINK32) $(SUBSYS) $(LDLIBPATH) \
             -entry:wWinMainCRTStartup \
             -out:$(MACHINE)\perl.exe \
             -stack:0x100000 $(LINK_FLAGS) $(STARTOBJS) $(XPERLEXEOBJS) \
@@ -1123,6 +942,16 @@ install: all
 	$(CECOPY) "pc:$(MACHINE)/perl$(PV).dll" "ce:$(INSTALL_ROOT)/bin"
 	$(CECOPY) "pc:../xlib/$(CROSS_NAME)/Config.pm" "ce:$(INSTALL_ROOT)/lib"
 !endif
+
+dist: all
+	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME)
+
+zipdist: all
+	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME)
+	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME) --zip
+
+zip:
+	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME) --zip
 
 perl.ico:
 	$(HPERL) makeico.pl

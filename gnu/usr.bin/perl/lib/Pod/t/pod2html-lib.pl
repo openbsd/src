@@ -21,24 +21,42 @@ sub convert_n_test {
     );
 
 
-    local $/;
-    # expected
-    my $expect = <DATA>;
-    $expect =~ s/\[PERLADMIN\]/$Config::Config{perladmin}/;
-    if (ord("A") == 193) { # EBCDIC.
-	$expect =~ s/item_mat%3c%21%3e/item_mat%4c%5a%6e/;
+    my ($expect, $result);
+    {
+	local $/;
+	# expected
+	$expect = <DATA>;
+	$expect =~ s/\[PERLADMIN\]/$Config::Config{perladmin}/;
+	if (ord("A") == 193) { # EBCDIC.
+	    $expect =~ s/item_mat%3c%21%3e/item_mat%4c%5a%6e/;
+	}
+
+	# result
+	open my $in, $outfile or die "cannot open $outfile: $!";
+	$result = <$in>;
+	close $in;
     }
 
-    # result
-    open my $in, $outfile or die "cannot open $outfile: $!";
-    my $result = <$in>;
-    close $in;
-    1 while unlink $outfile;
+    ok($expect eq $result, $testname) or do {
+	my $diff = '/bin/diff';
+	-x $diff or $diff = '/usr/bin/diff';
+	if (-x $diff) {
+	    my $expectfile = "pod2html-lib.tmp";
+	    open my $tmpfile, ">", $expectfile or die $!;
+	    print $tmpfile $expect;
+	    close $tmpfile;
+	    my $diffopt = $^O eq 'linux' ? 'u' : 'c';
+	    open my $diff, "diff -$diffopt $expectfile $outfile |" or die $!;
+	    print "# $_" while <$diff>;
+	    close $diff;
+	    unlink $expectfile;
+	}
+    };
 
-    is($expect, $result, $testname);
     # pod2html creates these
-    1 while unlink "pod2htmd.x~~";
-    1 while unlink "pod2htmi.x~~";
+    1 while unlink $outfile;
+    1 while unlink "pod2htmd.tmp";
+    1 while unlink "pod2htmi.tmp";
 }
 
 1;

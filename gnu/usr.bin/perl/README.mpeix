@@ -11,7 +11,7 @@ README.mpeix - Perl/iX for HP e3000 MPE
    http://www.bixby.org/mark/perlix.html
    http://jazz.external.hp.com/src/hp_freeware/perl/
    Perl language for MPE
-   Last updated June 2, 2000 @ 0400 UTC
+   Last updated July 29, 2003 @ 2100 UTC
 
 =head1 NOTE
 
@@ -130,8 +130,7 @@ machines that I administer, and I want to have the same power
 available to me on MPE.
 
 Please send your comments, questions, and bug reports directly to me,
-Mark Bixby ( http://www.bixby.org/mark/ ), by e-mailing to
-mark@bixby.org. Or just post them to HP3000-L.
+Mark Bixby ( http://www.bixby.org/mark/ ). Or just post them to HP3000-L.
 
 The platform I'm using to do this port is an HP 3000 957RX running
 MPE/iX 6.0 and using the GNU gcc C compiler
@@ -433,12 +432,6 @@ a zero.
 
 =item *
 
-If you use Perl/iX fcntl() against a socket it will fail, because MPE
-requires that you use sfcntl() instead.  Perl/iX does not presently
-support sfcntl().
-
-=item *
-
 MPE requires GETPRIVMODE() in order to setuid().  There are too many
 calls to setuid() within Perl/iX, so I have not attempted an automatic
 GETPRIVMODE() solution similar to bind().
@@ -680,5 +673,5 @@ Porting begins.
 
 =head1 AUTHOR
 
-Mark Bixby, mark@bixby.org
+Mark Bixby, http://www.bixby.org/mark/
 

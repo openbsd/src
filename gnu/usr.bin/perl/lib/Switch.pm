@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = '2.09';
+$VERSION = '2.10';
 
 
 # LOAD FILTERING MODULE...
@@ -101,7 +101,8 @@ sub filter_blocks
 		my @pos = Text::Balanced::_match_quotelike(\$source,qr/\s*/,1,0);
 		if (defined $pos[0])
 		{
-			$text .= " " . substr($source,$pos[2],$pos[18]-$pos[2]);
+			$text .= " " if $pos[0] < $pos[2];
+			$text .= substr($source,$pos[2],$pos[18]-$pos[2]);
 			next component;
 		}
 		if ($source =~ m/\G\s*($pod_or_DATA)/gc) {
@@ -110,7 +111,8 @@ sub filter_blocks
 		@pos = Text::Balanced::_match_variable(\$source,qr/\s*/);
 		if (defined $pos[0])
 		{
-			$text .= " " . substr($source,$pos[0],$pos[4]-$pos[0]);
+			$text .= " " if $pos[0] < $pos[2];
+			$text .= substr($source,$pos[0],$pos[4]-$pos[0]);
 			next component;
 		}
 
@@ -149,8 +151,9 @@ sub filter_blocks
 			$text .= $1."if (Switch::case";
 			if (@pos = Text::Balanced::_match_codeblock(\$source,qr/\s*/,qr/\{/,qr/\}/,qr/\{/,qr/\}/,undef)) {
 				my $code = substr($source,$pos[0],$pos[4]-$pos[0]);
-				$text .= " sub" if is_block $code;
-				$text .= " " . filter_blocks($code,line(substr($source,0,$pos[0]),$line)) . ")";
+				$text .= " " if $pos[0] < $pos[2];
+				$text .= "sub " if is_block $code;
+				$text .= filter_blocks($code,line(substr($source,0,$pos[0]),$line)) . ")";
 			}
 			elsif (@pos = Text::Balanced::_match_codeblock(\$source,qr/\s*/,qr/[[(]/,qr/[])]/,qr/[[({]/,qr/[])}]/,undef)) {
 				my $code = filter_blocks(substr($source,$pos[0],$pos[4]-$pos[0]),line(substr($source,0,$pos[0]),$line));
@@ -158,13 +161,15 @@ sub filter_blocks
 				$code =~ s {^\s*[(]\s*m\b} { ( qr}	||
 				$code =~ s {^\s*[(]\s*/}   { ( qr/}	||
 				$code =~ s {^\s*[(]\s*qw}  { ( \\qw};
-				$text .= " $code)";
+				$text .= " " if $pos[0] < $pos[2];
+				$text .= "$code)";
 			}
 			elsif ($Perl6 && do{@pos = Text::Balanced::_match_variable(\$source,qr/\s*/)}) {
 				my $code = filter_blocks(substr($source,$pos[0],$pos[4]-$pos[0]),line(substr($source,0,$pos[0]),$line));
 				$code =~ s {^\s*%}  { \%}	||
 				$code =~ s {^\s*@}  { \@};
-				$text .= " $code)";
+				$text .= " " if $pos[0] < $pos[2];
+				$text .= "$code)";
 			}
 			elsif ( @pos = Text::Balanced::_match_quotelike(\$source,qr/\s*/,1,0)) {
 				my $code = substr($source,$pos[2],$pos[18]-$pos[2]);
@@ -172,7 +177,8 @@ sub filter_blocks
 				$code =~ s {^\s*m}  { qr}	||
 				$code =~ s {^\s*/}  { qr/}	||
 				$code =~ s {^\s*qw} { \\qw};
-				$text .= " $code)";
+				$text .= " " if $pos[0] < $pos[2];
+				$text .= "$code)";
 			}
 			elsif ($Perl5 && $source =~ m/\G\s*(([^\$\@{])[^\$\@{]*)(?=\s*{)/gc
 			   ||  $Perl6 && $source =~ m/\G\s*([^;{]*)()/gc) {

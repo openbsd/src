@@ -29,6 +29,49 @@ xs_init(pTHX)
 
 #ifdef PERL_IMPLICIT_SYS
 
+extern "C" void win32_checkTLS(PerlInterpreter *host_perl);
+void
+win32_checkTLS(PerlInterpreter *host_perl)
+{
+    dTHX;
+    if (host_perl != my_perl) {
+        printf(" ... bad in win32_checkTLS\n");
+        printf("  %08X ne %08X\n",host_perl,my_perl);
+	int *nowhere = NULL;
+        *nowhere = 0; 
+	abort();
+    }
+}
+
+#ifdef UNDER_CE
+int GetLogicalDrives() {
+    return 0; /* no logical drives on CE */
+}
+int GetLogicalDriveStrings(int size, char addr[]) {
+    return 0; /* no logical drives on CE */
+}
+/* TBD */
+DWORD GetFullPathNameA(LPCSTR fn, DWORD blen, LPTSTR buf,  LPSTR *pfile) {
+    return 0;
+}
+/* TBD */
+DWORD GetFullPathNameW(CONST WCHAR *fn, DWORD blen, WCHAR * buf,  WCHAR **pfile) {
+    return 0;
+}
+/* TBD */
+DWORD SetCurrentDirectoryA(LPSTR pPath) {
+    return 0;
+}
+/* TBD */
+DWORD SetCurrentDirectoryW(CONST WCHAR *pPath) {
+    return 0;
+}
+int xcesetuid(uid_t id){return 0;}
+int xceseteuid(uid_t id){  return 0;}
+int xcegetuid() {return 0;}
+int xcegeteuid(){ return 0;}
+#endif
+
 #include "perlhost.h"
 
 EXTERN_C void
@@ -127,6 +170,7 @@ perl_alloc(void)
 	    w32_internal_host = pHost;
 	}
     }
+    pHost->host_perl = my_perl; /* FIXME this statement shouldn't be here */
     return my_perl;
 }
 
@@ -256,3 +300,27 @@ DllMain(HANDLE hModule,		/* DLL module handle */
     return TRUE;
 }
 
+
+#if defined(USE_ITHREADS) && defined(PERL_IMPLICIT_SYS)
+EXTERN_C PerlInterpreter *
+perl_clone_host(PerlInterpreter* proto_perl, UV flags) {
+    dTHX;
+    CPerlHost *h;
+    h = new CPerlHost(*(CPerlHost*)PL_sys_intern.internal_host);
+    proto_perl = perl_clone_using(proto_perl, flags,
+                        h->m_pHostperlMem,
+                        h->m_pHostperlMemShared,
+                        h->m_pHostperlMemParse,
+                        h->m_pHostperlEnv,
+                        h->m_pHostperlStdIO,
+                        h->m_pHostperlLIO,
+                        h->m_pHostperlDir,
+                        h->m_pHostperlSock,
+                        h->m_pHostperlProc
+    );
+    proto_perl->Isys_intern.internal_host = h;
+    h->host_perl  = proto_perl;
+    return proto_perl;
+	
+}
+#endif

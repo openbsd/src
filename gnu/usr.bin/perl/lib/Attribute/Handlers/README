@@ -1,5 +1,5 @@
 ==============================================================================
-                Release of version 0.77 of Attribute::Handlers
+                Release of version 0.78 of Attribute::Handlers
 ==============================================================================
 
 
@@ -44,32 +44,20 @@ AUTHOR
     Damian Conway (damian@conway.org)
 
 COPYRIGHT
-             Copyright (c) 2001, Damian Conway. All Rights Reserved.
+             Copyright (c) 2001-2002, Damian Conway. All Rights Reserved.
            This module is free software. It may be used, redistributed
                and/or modified under the same terms as Perl itself.
 
 
 ==============================================================================
 
-0.77	Sat Jun  8 22:58:56 CEST 2002
+0.78	Sat Oct  5 07:18:09 CEST 2002
+	
+	- [#17940] Includes :unique and :shared in the builtin types
 
-	- Since Attribute::Handlers now is core, I will refer to changes
-	with their patch number, please read  Porting/repository.pod from
-	your a perl tarball for more information.
-
-	- Brought up to date with perl 5.8RC1 version 
-	will be 5.8 if no more changes come in
-
-	- [#13686] This changes the behaviour of lexical attributes.
-	Prior to this lexical attributes were done at a compile time, 
-	and they would loose their attribute on the next run over them.
-	Now perl 5.8 calls the attribute handler runtime whenever it hits my.
-
-	- [#14448] Fixes cases with too high refcounts on lexical attributes
-
-	- [#15945] Do not warn about too late CHECK and INIT block if
-	A::H is pulled in using a require.
-
+	- From perl 5.8 { __CALLER__::foo => __PACKAGE } is missparsed,
+	the proper approach is to use  { '__CALLER__::foo' => __PACKAGE }.
+	The documentation is updated to reflect this. 
 
 ==============================================================================
 

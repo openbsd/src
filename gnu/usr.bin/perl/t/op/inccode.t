@@ -10,7 +10,7 @@ BEGIN {
 use File::Spec;
 
 require "test.pl";
-plan(tests => 44);
+plan(tests => 45);
 
 my @tempfiles = ();
 
@@ -19,7 +19,8 @@ sub get_temp_fh {
     1 while -e ++$f;
     push @tempfiles, $f;
     open my $fh, ">$f" or die "Can't create $f: $!";
-    print $fh "package ".substr($_[0],0,-3)."; 1;";
+    print $fh "package ".substr($_[0],0,-3).";\n1;\n";
+    print $fh $_[1] if @_ > 1;
     close $fh or die "Couldn't close: $!";
     open $fh, $f or die "Can't open $f: $!";
     return $fh;
@@ -170,6 +171,22 @@ ok( $evalret,                      'require Toto; magic via anonymous code ref' 
 ok( exists $INC{'Toto.pm'},        '  %INC sees Toto.pm' );
 ok( ! ref $INC{'Toto.pm'},         q/  val Toto.pm isn't a ref in %INC/ );
 is( $INC{'Toto.pm'}, 'xyz',	   '  val Toto.pm is correct in %INC' );
+
+pop @INC;
+
+push @INC, sub {
+    my ($self, $filename) = @_;
+    if ($filename eq 'abc.pl') {
+	return get_temp_fh($filename, qq(return "abc";\n));
+    }
+    else {
+	return undef;
+    }
+};
+
+$ret = "";
+$ret ||= do 'abc.pl';
+is( $ret, 'abc', 'do "abc.pl" sees return value' );
 
 pop @INC;
 

@@ -27,10 +27,11 @@ if ($^O eq 'unicos') { # See lib/Math/Complex.pm and t/lib/complex.t.
 
 sub near ($$;$) {
     my $e = defined $_[2] ? $_[2] : $eps;
+    print "# near? $_[0] $_[1] $e\n";
     $_[1] ? (abs($_[0]/$_[1] - 1) < $e) : abs($_[0]) < $e;
 }
 
-print "1..26\n";
+print "1..29\n";
 
 $x = 0.9;
 print 'not ' unless (near(tan($x), sin($x) / cos($x)));
@@ -188,14 +189,30 @@ use Math::Trig ':radial';
 #	unless (near(great_circle_direction(0, 0, pi, pi), -pi()/2));
     print "ok 25\n";
 
-    # London to Tokyo.
-    my @L = (deg2rad(-0.5), deg2rad(90 - 51.3));
-    my @T = (deg2rad(139.8),deg2rad(90 - 35.7));
+    my @London  = (deg2rad(  -0.167), deg2rad(90 - 51.3));
+    my @Tokyo   = (deg2rad( 139.5),   deg2rad(90 - 35.7));
+    my @Berlin  = (deg2rad ( 13.417), deg2rad(90 - 52.533));
+    my @Paris   = (deg2rad (  2.333), deg2rad(90 - 48.867));
 
-    my $rad = great_circle_direction(@L, @T);
-
-    print 'not ' unless (near($rad, -0.546644569997376));
+    print 'not '
+	unless (near(rad2deg(great_circle_direction(@London, @Tokyo)),
+		     31.791945393073));
+    
     print "ok 26\n";
+    print 'not '
+	unless (near(rad2deg(great_circle_direction(@Tokyo, @London)),
+		     336.069766430326));
+    print "ok 27\n";
+
+    print 'not '
+	unless (near(rad2deg(great_circle_direction(@Berlin, @Paris)),
+		     246.800348034667));
+    
+    print "ok 28\n";
+    print 'not '
+	unless (near(rad2deg(great_circle_direction(@Paris, @Berlin)),
+		     58.2079877553156));
+    print "ok 29\n";
 }
 
 # eof

@@ -10,9 +10,13 @@ BEGIN {
 	print "1..0 # Skip: EBCDIC\n";
 	exit 0;
     }
+    unless( eval { require Encode } ) { 
+	print "1..0 # Skip: No Encode\n";
+	exit 0;
+    }
     plan (9);
+    import Encode qw(:fallback_all);
 }
-use Encode qw(:fallback_all);
 
 # $PerlIO::encoding = 0; # WARN_ON_ERR|PERLQQ;
 

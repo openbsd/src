@@ -3,6 +3,10 @@ BEGIN {
         chdir 't';
         unshift @INC, '../lib';
     }
+    if (ord("A") == 193) {
+        print "1..0 # Skip: EBCDIC\n";
+        exit 0;
+    }
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";

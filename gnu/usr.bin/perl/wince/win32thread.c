@@ -1,5 +1,3 @@
-/* Time-stamp: <01/08/01 21:00:29 keuchel@w2k> */
-
 #include "EXTERN.h"
 #include "perl.h"
 

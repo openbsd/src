@@ -112,17 +112,34 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
     eval "END { \$ENV{'SYS\$TIMEZONE_DIFFERENTIAL'} = $oldtz; }";
     gmtime(0); # Force reset of tz offset
   }
+  # This test script might have been invoked in at least one of four different ways:
+  #     perl lib/vmsish.t
+  #     perl [.lib]vmsish.t
+  #     set def [.t] && perl ../lib/vmsish.t
+  #     set def [.t] && perl [-.lib]vmsish.t
+  # In the following we attempt to find ourselves without resorting to VMS::Filespec.
+  # Note that the chdir in the BEGIN block above complicates matters.
+  my $self = $0;
+  if ( ! -e $self && -e "../$0" ) { $self = "../$0"; }
+  if ( ! -e $self ) {
+      $self =~ s/\[//;
+      $self = "[-$self";
+  }
   {
      use_ok('vmsish qw(time)');
+
+     # but that didn't get it in our current scope
+     use vmsish qw(time);
+
      $vmstime   = time;
      @vmslocal  = localtime($vmstime);
      @vmsgmtime = gmtime($vmstime);
-     $vmsmtime  = (stat $0)[9];
+     $vmsmtime  = (stat $self)[9];
   }
   $utctime   = time;
   @utclocal  = localtime($vmstime);
   @utcgmtime = gmtime($vmstime);
-  $utcmtime  = (stat $0)[9];
+  $utcmtime  = (stat $self)[9];
   
   $offset = $ENV{'SYS$TIMEZONE_DIFFERENTIAL'};
 
@@ -130,23 +147,23 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
   # since it's unlikely local time will differ from UTC by so small
   # an amount, and it renders the test resistant to delays from
   # things like stat() on a file mounted over a slow network link.
-  ok($utctime - $vmstime +$offset <= 10,"(time) UTC:$utctime VMS:$vmstime");
+  ok(abs($utctime - $vmstime + $offset) <= 10,"(time) UTC: $utctime VMS: $vmstime");
 
   $utcval = $utclocal[5] * 31536000 + $utclocal[7] * 86400 +
             $utclocal[2] * 3600     + $utclocal[1] * 60 + $utclocal[0];
   $vmsval = $vmslocal[5] * 31536000 + $vmslocal[7] * 86400 +
             $vmslocal[2] * 3600     + $vmslocal[1] * 60 + $vmslocal[0];
-  ok($vmsval - $utcval + $offset <= 10, "(localtime)");
+  ok(abs($vmsval - $utcval + $offset) <= 10, "(localtime) UTC: $utcval  VMS: $vmsval");
   print "# UTC: @utclocal\n# VMS: @vmslocal\n";
 
   $utcval = $utcgmtime[5] * 31536000 + $utcgmtime[7] * 86400 +
             $utcgmtime[2] * 3600     + $utcgmtime[1] * 60 + $utcgmtime[0];
   $vmsval = $vmsgmtime[5] * 31536000 + $vmsgmtime[7] * 86400 +
             $vmsgmtime[2] * 3600     + $vmsgmtime[1] * 60 + $vmsgmtime[0];
-  ok($vmsval - $utcval + $offset <= 10, "(gmtime)");
+  ok(abs($vmsval - $utcval + $offset) <= 10, "(gmtime) UTC: $utcval  VMS: $vmsval");
   print "# UTC: @utcgmtime\n# VMS: @vmsgmtime\n";
 
-  ok($vmsmtime - $utcmtime + $offset <= 10,"(stat) UTC: $utcmtime  VMS: $vmsmtime");
+  ok(abs($utcmtime - $vmsmtime + $offset) <= 10,"(stat) UTC: $utcmtime  VMS: $vmsmtime");
 }
 }
 

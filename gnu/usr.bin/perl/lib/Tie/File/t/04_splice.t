@@ -12,6 +12,7 @@
 # contents.
 
 
+$| = 1;
 my $file = "tf$$.txt";
 $: = Tie::File::_default_recsep();
 my $data = "rec0$:rec1$:rec2$:";

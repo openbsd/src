@@ -1,5 +1,39 @@
 Revision history for Perl extension Unicode::Normalize.
 
+0.25  Mon Oct  6 22:26:03 2003
+	- added form.t and proto.t.
+
+0.24  Sat Oct  4 17:57:10 2003
+	- supports FCD and FCC (UTN #5):
+	  FCD(), normalize('FCD'), checkFCD(), check('FCD');
+	  FCC(), normalize('FCC'), checkFCC(), check('FCC').
+	- changed INSTALLATION (cf. README).
+	  * Initial state of the distribution is changed to XSUB.  To build
+	    pure Perl, type <perl disableXS> before <perl Makefile.PL>.
+	  * The purePerl-XSUB converter is now provided as two perl
+	    script files, named "enableXS" and "disableXS".
+	    (no longer <perl Makefile.PL xs> and <perl Makefile.PL noxs>.)
+	  * simplified Makefile.PL.
+	- added fcdc.t and split.t.
+
+0.23  Sat Jun 28 20:38:10 2003
+	- bug fix: \0-terminate in compose() in XS.
+	- tweak in pure perl: forced $codepoint to numeric (i.e. "+0065" to 65)
+	- tweak of POD and README.
+
+0.22  Mon Jun 09 22:23:10 2003
+	- internal tweak (again): pack_U() and unpack_U().
+
+0.21  Thu Apr 02 23:12:54 2003
+	- internal tweak: for (?un)pack 'U'.
+
+0.20  Sun Mar 02 13:29:25 2003
+	- decompose Hangul syllables in a decomposition mapping.
+
+0.18  ... unreleased
+	- synchronization with bleadperl.
+	- Change 16262: by me
+
 0.17  Sun Apr 28 23:13:32 2002
 	- now normalize('NFC',$1) should work.
 	- Some croak()'s are added in mkheader.

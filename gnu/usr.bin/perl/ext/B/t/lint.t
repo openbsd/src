@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 13;
+plan tests => 15; # adjust also number of skipped tests !
 
 # Runs a separate perl interpreter with the appropriate lint options
 # turned on
@@ -40,7 +40,7 @@ RESULT
 SKIP : {
 
     use Config;
-    skip("Doesn't work with threaded perls",9)
+    skip("Doesn't work with threaded perls",11)
        if $Config{useithreads} || $Config{use5005threads};
 
     runlint 'implicit-read', '1 for @ARGV', <<'RESULT', 'implicit-read in foreach';
@@ -78,6 +78,13 @@ RESULT
 
     runlint 'regexp-variables', 's/./$&/', <<'RESULT';
 Use of regexp variable $& at -e line 1
+RESULT
+
+    runlint 'bare-subs', 'sub bare(){1};$x=bare', '';
+
+    runlint 'bare-subs', 'sub bare(){1}; $x=[bare=>0]; $x=$y{bare}', <<'RESULT';
+Bare sub name 'bare' interpreted as string at -e line 1
+Bare sub name 'bare' interpreted as string at -e line 1
 RESULT
 
 }

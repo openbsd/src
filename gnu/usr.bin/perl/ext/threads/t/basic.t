@@ -15,7 +15,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    push @INC, '../lib';
     require Config; import Config;
     unless ($Config{'useithreads'}) {
 	print "1..0 # Skip: no useithreads\n";
@@ -25,7 +25,7 @@ BEGIN {
 
 use ExtUtils::testlib;
 use strict;
-BEGIN { $| = 1; print "1..15\n" };
+BEGIN { $| = 1; print "1..19\n" };
 use threads;
 
 
@@ -116,6 +116,24 @@ threads->create('test8')->join;
 ok(14, 0 == threads->self->tid(),"Check so that tid for threads work for main thread");
 ok(15, 0 == threads->tid(),"Check so that tid for threads work for main thread");
 
+{
+	no warnings;
+    local *CLONE = sub { ok(16, threads->tid() == 9, "Tid should be correct in the clone")};
+    threads->create(sub { ok(17, threads->tid() == 9, "And tid be 9 here too") })->join();
+}
+
+{ 
+
+    sub Foo::DESTROY { 
+	ok(19, threads->tid() == 10, "In destroy it should be correct too" )
+	}
+    my $foo;
+    threads->create(sub { ok(18, threads->tid() == 10, "And tid be 10 here");
+			  $foo = bless {}, 'Foo';			  
+			  return undef;
+		      })->join();
+
+}
 1;
 
 

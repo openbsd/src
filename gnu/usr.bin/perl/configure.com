@@ -880,7 +880,7 @@ $   config_symbols0 ="|archlib|archlibexp|bin|binexp|builddir|cf_email|config_sh
 $   config_symbols1 ="|installprivlib|installscript|installsitearch|installsitelib|most|oldarchlib|oldarchlibexp|osname|pager|perl_symbol|perl_verb|"
 $   config_symbols2 ="|prefix|privlib|privlibexp|scriptdir|sitearch|sitearchexp|sitebin|sitelib|sitelib_stem|sitelibexp|try_cxx|use64bitall|use64bitint|"
 $   config_symbols3 ="|usecasesensitive|usedefaulttypes|usedevel|useieee|useithreads|usemultiplicity|usemymalloc|usedebugging_perl|useperlio|usesecurelog|"
-$   config_symbols4 ="|usethreads|usevmsdebug|"
+$   config_symbols4 ="|usethreads|usevmsdebug|usefaststdio|"
 $!  
 $   open/read CONFIG 'config_sh'
 $   rd_conf_loop:
@@ -2573,8 +2573,6 @@ $ IF .NOT. Has_socketshr .AND. .NOT. Has_Dec_C_Sockets
 $ THEN
 $   dflt = dflt - "Socket"            ! optional on VMS
 $ ENDIF
-$ IF .NOT. use_ithreads THEN dflt = dflt - "threads/shared"
-$ IF .NOT. use_ithreads THEN dflt = dflt - "threads"
 $ IF .NOT. use_threads  THEN dflt = dflt - "Thread"
 $ dflt = F$EDIT(dflt,"TRIM,COMPRESS")
 $!
@@ -2709,7 +2707,12 @@ $ make = F$EDIT(build,"UPCASE")
 $!
 $!: locate the preferred pager for this system
 $!pagers = "most|more|less|type/page"
-$ dflt = "type/page"
+$ IF osvers .GES. "V6.1"
+$ THEN
+$   dflt = "type/page=save=10"
+$ ELSE
+$   dflt = "type/page"
+$ ENDIF
 $! assume that the presence of a most symbol indicates the presence
 $! of the pager.
 $ IF F$TYPE(most) .EQS. "STRING" THEN dflt = "most"
@@ -3003,6 +3006,7 @@ $   d_frexpl = "define"
 $   d_isnan = "define"
 $   d_isnanl = "define"
 $   d_modfl = "define"
+$   d_modflproto = "define"
 $ ELSE
 $   d_PRId64 = "undef"
 $   d_PRIXU64 = "undef"
@@ -3023,6 +3027,7 @@ $   d_frexpl = "undef"
 $   d_isnan = "undef"
 $   d_isnanl = "undef"
 $   d_modfl = "undef"
+$   d_modflproto = "undef"
 $ ENDIF
 $!
 $! Now some that we build up
@@ -3663,6 +3668,13 @@ $ tmp = "sys/file.h"
 $ GOSUB inhdr
 $ i_sysfile = tmp
 $!
+$!
+$! Check for sys/ioctl.h
+$!
+$ tmp = "sys/ioctl.h"
+$ GOSUB inhdr
+$ i_sysioctl = tmp
+$!
 $! Check for sys/utsname.h
 $!
 $ tmp = "sys/utsname.h"
@@ -4044,6 +4056,29 @@ $ CS
 $ tmp = "mkdtemp"
 $ GOSUB inlibc
 $ d_mkdtemp = tmp
+$!
+$! Check for poll
+$!
+$ if i_poll .eqs. "define"
+$ then
+$   OS
+$   WS "#if defined(__DECC) || defined(__DECCXX)"
+$   WS "#include <stdlib.h>"
+$   WS "#endif"
+$   WS "#include <poll.h>"
+$   WS "int main()"
+$   WS "{"
+$   WS "struct pollfd pfd;"
+$   WS "int count=poll(&pfd,1,0);"
+$   WS "exit(0);"
+$   WS "}"
+$   CS
+$   tmp = "poll"
+$   GOSUB inlibc
+$   d_poll = tmp
+$ else
+$   d_poll = "undef"
+$ endif
 $!
 $! Check for setvbuf
 $!
@@ -4554,6 +4589,11 @@ $   d_sched_yield="undef"
 $   sched_yield = " "
 $ ENDIF
 $!
+$! Check for pthread_attr_setscope and PTHREAD_SCOPE_SYSTEM.
+$! (The actual test is to be written.)
+$!
+$ d_pthread_attr_setscope="undef"
+$!
 $! Check for generic pointer size
 $!
 $ echo4 "Checking to see how big your pointers are..." 
@@ -4677,14 +4717,13 @@ $   d_truncate="define"
 $   d_wait4="define"
 $   d_index="define"
 $   pidtype="pid_t"
-$   sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT USR1 USR2 SPARE18 SPARE19 CHLD CONT STOP TSTP TTIN TTOU DEBUG SPARE27 SPARE28 SPARE29 SPARE30 SPARE31 SPARE32 RTMIN RTMAX"",0"
+$   sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT USR1 USR2 SPARE18 SPARE19 CHLD CONT STOP TSTP TTIN TTOU DEBUG SPARE27 SPARE28 SPARE29 SPARE30 SPARE31 SPARE32 RTMIN RTMAX"
 $   psnwc1="""ZERO"",""HUP"",""INT"",""QUIT"",""ILL"",""TRAP"",""IOT"",""EMT"",""FPE"",""KILL"",""BUS"",""SEGV"",""SYS"","
 $   psnwc2="""PIPE"",""ALRM"",""TERM"",""ABRT"",""USR1"",""USR2"",""SPARE18"",""SPARE19"",""CHLD"",""CONT"",""STOP"",""TSTP"","
 $   psnwc3="""TTIN"",""TTOU"",""DEBUG"",""SPARE27"",""SPARE28"",""SPARE29"",""SPARE30"",""SPARE31"",""SPARE32"",""RTMIN"",""RTMAX"",0"
 $   sig_name_init = psnwc1 + psnwc2 + psnwc3
-$   sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 64"",0"
+$   sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 64"
 $   sig_num_init="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,6,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,64,0"
-$!   perl_sig_num_with_commas=sig_num_init
 $   sig_size="36"
 $   uidtype="uid_t"
 $   d_pathconf="define"
@@ -4709,13 +4748,12 @@ $   d_sigprocmask="undef"
 $   d_truncate="undef"
 $   d_wait4="undef"
 $   d_index="undef"
-$   sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT USR1 USR2"",0"
+$   sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT USR1 USR2"
 $   psnwc1="""ZERO"",""HUP"",""INT"",""QUIT"",""ILL"",""TRAP"",""IOT"",""EMT"",""FPE"",""KILL"",""BUS"",""SEGV"",""SYS"","
 $   psnwc2="""PIPE"",""ALRM"",""TERM"",""ABRT"",""USR1"",""USR2"",0"
 $   sig_name_init = psnwc1 + psnwc2
-$   sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6 16 17"",0"
+$   sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6 16 17"
 $   sig_num_init="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,6,16,17,0"
-$!   perl_sig_num_with_commas=sig_num_init
 $   sig_size="19"
 $   uidtype="unsigned int"
 $   d_pathconf="undef"
@@ -4756,6 +4794,7 @@ $   d_stdiobase="define"
 $   d_stdio_cnt_lval="define"
 $   d_stdio_ptr_lval="define"
 $   d_stdstdio="define"
+$   d_faststdio="define"
 $   d_wcstombs="define"
 $   d_mblen="define"
 $   d_mktime="define"
@@ -4780,6 +4819,7 @@ $   d_stdiobase="undef"
 $   d_stdio_cnt_lval="undef"
 $   d_stdio_ptr_lval="undef"
 $   d_stdstdio="undef"
+$   d_faststdio="undef"
 $   d_wcstombs="undef"
 $   d_mblen="undef"
 $   d_mktime="undef"
@@ -4794,6 +4834,7 @@ $   d_setlocale="undef"
 $ ENDIF
 $ d_stdio_ptr_lval_sets_cnt="undef"
 $ d_stdio_ptr_lval_nochange_cnt="define"
+$ usefaststdio="define"
 $!
 $! Sockets?
 $ if Has_Socketshr .OR. Has_Dec_C_Sockets
@@ -5051,20 +5092,20 @@ $!      sigusr1 and sigusr2 show up in VMS6.2 and later
 $!
 $       if  vms_ver .GES. "6.2"
 $       then
-$           sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT USR1 USR2"",0"
+$           sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT USR1 USR2"
 $           psnwc1="""ZERO"",""HUP"",""INT"",""QUIT"",""ILL"",""TRAP"",""IOT"",""EMT"",""FPE"",""KILL"",""BUS"",""SEGV"",""SYS"","
 $           psnwc2="""PIPE"",""ALRM"",""TERM"",""ABRT"",""USR1"",""USR2"",0"
 $           sig_name_init = psnwc1 + psnwc2
-$           sig_num="0 1 2 3 4 5 6 7 8 9 10 10 12 13 14 15 6 16 17"",0"
-$           sig_num_init="0,1,2,3,4,5,6,7,8,9,10,10,12,13,14,15,6,16,17,0"
+$           sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6 16 17"
+$           sig_num_init="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,6,16,17,0"
 $           sig_size="19"
 $       else
-$           sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT"",0"
+$           sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT"
 $           psnwc1="""ZERO"",""HUP"",""INT"",""QUIT"",""ILL"",""TRAP"",""IOT"",""EMT"",""FPE"",""KILL"",""BUS"",""SEGV"",""SYS"","
 $           psnwc2="""PIPE"",""ALRM"",""TERM"",""ABRT"",0"
 $           sig_name_init = psnwc1 + psnwc2
-$           sig_num="0 1 2 3 4 5 6 7 8 9 10 10 12 13 14 15 6"",0"
-$           sig_num_init="0,1,2,3,4,5,6,7,8,9,10,10,12,13,14,15,6,0"
+$           sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6"
+$           sig_num_init="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,6,0"
 $           sig_size="17"
 $       endif
 $   ELSE
@@ -5179,6 +5220,7 @@ $ WC "d_SCNfldbl='" + d_SCNfldbl + "'"
 $ WC "d__fwalk='undef'"
 $ WC "d_access='" + d_access + "'"
 $ WC "d_accessx='undef'"
+$ WC "d_aintl='undef'"
 $ WC "d_alarm='define'"
 $ WC "d_archlib='define'"
 $ WC "d_atolf='" + d_atolf + "'"
@@ -5200,6 +5242,7 @@ $ WC "d_chsize='undef'"
 $ WC "d_class='undef'"
 $ WC "d_cmsghdr_s='undef'"
 $ WC "d_const='define'"
+$ WC "d_copysignl='define'"
 $ WC "d_crypt='define'"
 $ WC "d_csh='undef'"
 $ WC "d_cuserid='define'"
@@ -5289,6 +5332,7 @@ $ WC "d_gnulibc='undef'"
 $ WC "d_grpasswd='undef'"
 $ WC "d_hasmntopt='undef'"
 $ WC "d_htonl='" + d_htonl + "'"
+$ WC "d_ilogbl='undef'"
 $ WC "d_index='" + d_index + "'"
 $ WC "d_inetaton='undef'"
 $ WC "d_int64_t='" + d_int64_t + "'"
@@ -5326,6 +5370,7 @@ $ WC "d_mkstemps='" + d_mkstemps + "'"
 $ WC "d_mktime='" + d_mktime + "'"
 $ WC "d_mmap='" + d_mmap + "'"
 $ WC "d_modfl='" + d_modfl + "'"
+$ WC "d_modflproto='" + d_modflproto + "'"
 $ WC "d_modfl_pow32_bug='undef'"
 $ WC "d_mprotect='" + d_mprotect + "'"
 $ WC "d_msg='undef'"
@@ -5338,6 +5383,7 @@ $ WC "d_msghdr_s='undef'"
 $ WC "d_msync='" + d_msync + "'"
 $ WC "d_munmap='" + d_munmap + "'"
 $ WC "d_mymalloc='" + d_mymalloc + "'"
+$ WC "d_nanosleep='undef'"
 $ WC "d_nice='define'"
 $ WC "d_nl_langinfo='" + d_nl_langinfo + "'"
 $ WC "d_nv_preserves_uv='" + d_nv_preserves_uv + "'"
@@ -5352,9 +5398,10 @@ $ WC "d_pause='define'"
 $ WC "d_perl_otherlibdirs='undef'"
 $ WC "d_phostname='" + d_phostname + "'"
 $ WC "d_pipe='define'"
-$ WC "d_poll='undef'"
+$ WC "d_poll='" + d_poll + "'"
 $ WC "d_procselfexe='undef'"
 $ WC "d_pthread_atfork='undef'"
+$ WC "d_pthread_attr_setscope='" + d_pthread_attr_setscope + "'"
 $ WC "d_pthread_yield='" + d_pthread_yield + "'"
 $ WC "d_pthreads_created_joinable='" + d_pthreads_created_joinable + "'"
 $ WC "d_pwage='undef'"
@@ -5379,6 +5426,7 @@ $ WC "d_safebcpy='undef'"
 $ WC "d_safemcpy='define'"
 $ WC "d_sanemcmp='define'"
 $ WC "d_sbrkproto='define'"
+$ WC "d_scalbnl='undef'"
 $ WC "d_sched_yield='" + d_sched_yield + "'"
 $ WC "d_scm_rights='undef'"
 $ WC "d_seekdir='define'"
@@ -5441,6 +5489,7 @@ $ WC "d_stdio_ptr_lval_sets_cnt='" + d_stdio_ptr_lval_sets_cnt + "'"
 $ WC "d_stdio_stream_array='undef'"
 $ WC "d_stdiobase='" + d_stdiobase + "'"
 $ WC "d_stdstdio='" + d_stdstdio + "'"
+$ WC "d_faststdio='" + d_faststdio + "'"
 $ WC "d_strchr='define'"
 $ WC "d_strcoll='" + d_strcoll + "'"
 $ WC "d_strctcpy='define'"
@@ -5600,7 +5649,7 @@ $ WC "i_sunmath='undef'"
 $ WC "i_sysaccess='" + i_sysaccess + "'"
 $ WC "i_sysdir='undef'"
 $ WC "i_sysfile='" + i_sysfile + "'"
-$ WC "i_sysioctl='undef'"
+$ WC "i_sysioctl='" + i_sysioctl + "'"
 $ WC "i_syslog='" + i_syslog + "'"
 $ WC "i_sysmman='undef'"
 $ WC "i_sysmode='" + i_sysmode + "'"
@@ -5705,7 +5754,7 @@ $ WC "path_sep='|'"
 $ WC "perl_root='" + perl_root + "'" ! VMS specific $trnlnm()
 $ WC "perladmin='" + perladmin + "'"
 $ WC "perllibs='" + perllibs + "'"
-$ WC "perlpath='" + "''vms_prefix':[000000]Perl''ext'" + "'"
+$ WC "perlpath='" + "''vms_prefix':[000000]Perl''exe_ext'" + "'"
 $ WC "perl_symbol='" + perl_symbol + "'"  ! VMS specific
 $ WC "perl_verb='" + perl_verb + "'"      ! VMS specific
 $ WC "pgflquota='" + pgflquota + "'"
@@ -5803,6 +5852,7 @@ $ WC "usedebugging_perl='"+use_debugging_perl+"'"
 $ WC "usedefaulttypes='" + usedefaulttypes + "'"    ! VMS-specific
 $ WC "usecrosscompile='undef'"
 $ WC "usedl='" + usedl + "'"
+$ WC "usefaststdio='" + usefaststdio + "'"
 $ WC "useieee='" + useieee + "'"                    ! VMS-specific
 $ WC "useithreads='" + useithreads + "'"
 $ WC "uselargefiles='" + uselargefiles + "'"
@@ -5859,14 +5909,6 @@ $   WC "d_asctime_r='undef'"
 $   WC "ctime_r_proto='0'"
 $   WC "d_ctime_r='undef'"
 $ ENDIF
-$ IF use_threads .AND. vms_ver .GES. "7.3-1"
-$ THEN
-$   WC "readdir_r_proto='REENTRANT_PROTO_I_TSR'"
-$   WC "d_readdir_r='define'"
-$ ELSE
-$   WC "readdir_r_proto='0'"
-$   WC "d_readdir_r='undef'"
-$ ENDIF
 $ WC "d_crypt_r='undef'"
 $ WC "d_ctermid_r='undef'"
 $ WC "d_drand48_r='undef'"
@@ -5899,6 +5941,7 @@ $ WC "d_getspnam_r='undef'"
 $ WC "d_gmtime_r='undef'"      ! leave undef'd; we use my_gmtime
 $ WC "d_localtime_r='undef'"   ! leave undef'd; we use my_localtime
 $ WC "d_random_r='undef'"
+$ WC "d_readdir_r='define'"	! always defined; we roll our own
 $ WC "d_readdir64_r='undef'"
 $ WC "d_setgrent_r='undef'"
 $ WC "d_sethostent_r='undef'"
@@ -5944,6 +5987,7 @@ $ WC "getspnam_r_proto='0'"
 $ WC "gmtime_r_proto='0'"
 $ WC "localtime_r_proto='0'"
 $ WC "random_r_proto='0'"
+$ WC "readdir_r_proto='REENTRANT_PROTO_I_TSR'"  ! always defined; we roll our own
 $ WC "readdir64_r_proto='0'"
 $ WC "setgrent_r_proto='0'"
 $ WC "sethostent_r_proto='0'"
@@ -6223,7 +6267,7 @@ $ if f$search("extra.pods") .eqs. "" .or. P1 .eqs. "FORCE" then -
 $ open/read/error=extra_close EXTRA extra.pods
 $extra_loop:
 $ read/error=extra_close/END_OF_FILE=extra_close EXTRA file
-$ file_type = f$parse(file,,,"TYPE",) - "."
+$ file_type = f$edit(f$parse(file,,,"TYPE",),"LOWERCASE") - "."
 $ if file_type .nes. "VMS" .and. file_type .nes. "vms"
 $ then
 $   pod_file = "[.pod]perl''file_type'.pod"
@@ -6239,7 +6283,8 @@ $       file_rdt = f$cvtime(f$file_attributes(file,"RDT"))
 $       pod_file_rdt = f$cvtime(f$file_attributes(pod_file,"RDT"))
 $       if file_rdt .GTS. pod_file_rdt then do_copy := true
 $     endif
-$     if do_copy then copy/log/noconfirm 'file' 'pod_file'
+$     ! wacky method to preserve case on ODS-5 even when parse style is traditional
+$     if do_copy then mcr sys$disk:[]miniperl.exe -e "exit 0+$^E unless File::Copy::rmscopy(q{''file'}, q{''pod_file'});"
 $   endif
 $ endif
 $ goto extra_loop
@@ -6294,6 +6339,7 @@ $ EXIT
 $ ENDSUBROUTINE ! Bad_environment
 $ echo ""
 $ echo4 "Checking for dangerous pre-existing global symbols and logical names."
+$ CALL Bad_environment "COMP"
 $ CALL Bad_environment "EXT"
 $ CALL Bad_environment "FOO"
 $ CALL Bad_environment "LIB"
@@ -6362,31 +6408,32 @@ $ WRITE CONFIG "$! This perl configured & administered by ''perladmin'"
 $ ENDIF
 $ WRITE CONFIG "$!"
 $ prefix = prefix - "000000."
-$ IF F$LOCATE(".]",prefix) .EQ. F$LENGTH(prefix) THEN -
-    prefix = prefix - "]" + ".]" 
+$ IF F$LOCATE(".]",prefix) .EQ. F$LENGTH(prefix) THEN prefix = prefix - "]" + ".]" 
 $ WRITE CONFIG "$ define/translation=concealed ''vms_prefix' ''prefix'"
 $ WRITE CONFIG "$ ext = "".exe"""
 $ IF sharedperl
 $ THEN
-$   write config "$ if f$getsyi(""HW_MODEL"") .ge. 1024 then ext = "".AXE"""
+$ WRITE CONFIG "$ if f$getsyi(""HW_MODEL"") .ge. 1024 then ext = "".AXE"""
 $ ENDIF
 $ IF (perl_symbol)
 $ THEN
+$   perl_setup_perl = "'" + "'perl'" ! triple quoted foreign command symbol
 $   IF (use_vmsdebug_perl)
 $   THEN
-$     WRITE CONFIG "$ dbgperl :== $''vms_prefix':[000000]dbgPerl'ext'"
-$     WRITE CONFIG "$ perl    :== $''vms_prefix':[000000]ndbgPerl'ext'"
-$     WRITE CONFIG "$ define dbgPerlShr ''vms_prefix':[000000]dbgPerlShr'ext'"
+$     WRITE CONFIG "$ dbgperl :== $''vms_prefix':[000000]dbgperl'ext'"
+$     WRITE CONFIG "$ perl    :== $''vms_prefix':[000000]ndbgperl'ext'"
+$     WRITE CONFIG "$ define dbgperlshr ''vms_prefix':[000000]dbgperlshr'ext'"
 $   ELSE
 $     WRITE CONFIG "$ perl :== $''vms_prefix':[000000]Perl'ext'"
-$     WRITE CONFIG "$ define PerlShr ''vms_prefix':[000000]PerlShr'ext'"
+$     WRITE CONFIG "$ define perlshr ''vms_prefix':[000000]perlshr'ext'"
 $   ENDIF
 $ ELSE ! .NOT.perl_symbol
+$   perl_setup_perl = "perl" ! command verb
 $   IF (use_vmsdebug_perl)
 $   THEN
-$     WRITE CONFIG "$ define dbgPerlShr ''vms_prefix':[000000]dbgPerlShr'ext'"
+$     WRITE CONFIG "$ define dbgperlshr ''vms_prefix':[000000]dbgperlshr'ext'"
 $   ELSE
-$     WRITE CONFIG "$ define PerlShr ''vms_prefix':[000000]PerlShr'ext'"
+$     WRITE CONFIG "$ define perlshr ''vms_prefix':[000000]perlshr'ext'"
 $   ENDIF
 $   IF perl_verb .EQS. "PROCESS"
 $   THEN
@@ -6406,46 +6453,35 @@ $ ENDIF
 $ WRITE CONFIG "$!"
 $ WRITE CONFIG "$! Symbols for commonly used programs:"
 $ WRITE CONFIG "$!"
-$ IF (perl_symbol)
+$ WRITE CONFIG "$ c2ph       == """ + perl_setup_perl + " ''vms_prefix':[utils]c2ph.com"""
+$ WRITE CONFIG "$ cpan       == """ + perl_setup_perl + " ''vms_prefix':[utils]cpan.com"""
+$ IF F$LOCATE("Devel::DProf",extensions) .LT. F$LENGTH(extensions)
 $ THEN
-$   WRITE CONFIG "$ Perldoc  == ""'"+"'Perl' ''vms_prefix':[lib.pod]Perldoc.com -t"""
-$   WRITE CONFIG "$ pod2text == ""'"+"'Perl' pod2text"""
-$   WRITE CONFIG "$ pod2html == ""'"+"'Perl' pod2html"""
-$   WRITE CONFIG "$ pod2latex == ""'"+"'Perl' ''vms_prefix':[lib.pod]pod2latex.com"""
-$   WRITE CONFIG "$!pod2man  == ""'"+"'Perl' pod2man"""
-$   WRITE CONFIG "$!Perlbug  == ""'"+"'Perl' ''vms_prefix':[lib]Perlbug.com"""
-$   WRITE CONFIG "$ c2ph     == ""'"+"'Perl' ''vms_prefix':[utils]c2ph.com"""
-$   IF F$LOCATE("Devel::DProf",extensions) .LT. F$LENGTH(extensions)
-$   THEN
-$     WRITE CONFIG "$ dprofpp     == ""'"+"'Perl' ''vms_prefix':[utils]dprofpp.com"""
-$   ENDIF 
-$   WRITE CONFIG "$ h2ph     == ""'"+"'Perl' ''vms_prefix':[utils]h2ph.com"""
-$   WRITE CONFIG "$ h2xs     == ""'"+"'Perl' ''vms_prefix':[utils]h2xs.com"""
-$   WRITE CONFIG "$ libnetcfg == ""'"+"'Perl' ''vms_prefix':[utils]libnetcfg.com"""
-$   WRITE CONFIG "$!perlcc   == ""'"+"'Perl' ''vms_prefix':[utils]perlcc.com"""
-$   WRITE CONFIG "$ perlivp  == ""'"+"'Perl' ''vms_prefix':[utils]perlivp.com"""
-$   WRITE CONFIG "$ splain   == ""'"+"'Perl' ''vms_prefix':[utils]splain.com"""
-$   WRITE CONFIG "$ xsubpp   == ""'"+"'Perl' ''vms_prefix':[utils]xsubpp.com"""
-$ ELSE
-$   WRITE CONFIG "$ Perldoc  == ""Perl ''vms_prefix':[lib.pod]Perldoc.com -t"""
-$   WRITE CONFIG "$ pod2text == ""Perl pod2text"""
-$   WRITE CONFIG "$ pod2html == ""Perl pod2html"""
-$   WRITE CONFIG "$ pod2latex == ""Perl ''vms_prefix':[lib.pod]pod2latex.com"""
-$   WRITE CONFIG "$!pod2man  == ""Perl pod2man"""
-$   WRITE CONFIG "$!Perlbug  == ""Perl ''vms_prefix':[lib]Perlbug.com"""
-$   WRITE CONFIG "$ c2ph     == ""Perl ''vms_prefix':[utils]c2ph.com"""
-$   IF F$LOCATE("Devel::DProf",extensions) .LT. F$LENGTH(extensions)
-$   THEN
-$     WRITE CONFIG "$ dprofpp     == ""Perl ''vms_prefix':[utils]dprofpp.com"""
-$   ENDIF 
-$   WRITE CONFIG "$ h2ph     == ""Perl ''vms_prefix':[utils]h2ph.com"""
-$   WRITE CONFIG "$ h2xs     == ""Perl ''vms_prefix':[utils]h2xs.com"""
-$   WRITE CONFIG "$ libnetcfg == ""Perl ''vms_prefix':[utils]libnetcfg.com"""
-$   WRITE CONFIG "$!perlcc   == ""Perl ''vms_prefix':[utils]perlcc.com"""
-$   WRITE CONFIG "$ perlivp  == ""Perl ''vms_prefix':[utils]perlivp.com"""
-$   WRITE CONFIG "$ splain   == ""Perl ''vms_prefix':[utils]splain.com"""
-$   WRITE CONFIG "$ xsubpp   == ""Perl ''vms_prefix':[utils]xsubpp.com"""
-$ ENDIF
+$ WRITE CONFIG "$ dprofpp    == """ + perl_setup_perl + " ''vms_prefix':[utils]dprofpp.com"""
+$ ENDIF 
+$ WRITE CONFIG "$ enc2xs     == """ + perl_setup_perl + " ''vms_prefix':[utils]enc2xs.com"""
+$ WRITE CONFIG "$!find2perl  == """ + perl_setup_perl + " ''vms_prefix':[utils]find2perl.com"""
+$ WRITE CONFIG "$ h2ph       == """ + perl_setup_perl + " ''vms_prefix':[utils]h2ph.com"""
+$ WRITE CONFIG "$ h2xs       == """ + perl_setup_perl + " ''vms_prefix':[utils]h2xs.com"""
+$ WRITE CONFIG "$ libnetcfg  == """ + perl_setup_perl + " ''vms_prefix':[utils]libnetcfg.com"""
+$ WRITE CONFIG "$!perlbug    == """ + perl_setup_perl + " ''vms_prefix':[lib]perlbug.com"""
+$ WRITE CONFIG "$!perlcc     == """ + perl_setup_perl + " ''vms_prefix':[utils]perlcc.com"""
+$ WRITE CONFIG "$ perldoc    == """ + perl_setup_perl + " ''vms_prefix':[lib.pod]perldoc.com -t"""
+$ WRITE CONFIG "$ perlivp    == """ + perl_setup_perl + " ''vms_prefix':[utils]perlivp.com"""
+$ WRITE CONFIG "$ piconv     == """ + perl_setup_perl + " ''vms_prefix':[utils]piconv.com"""
+$ WRITE CONFIG "$ pl2pm      == """ + perl_setup_perl + " ''vms_prefix':[utils]pl2pm.com"""
+$ WRITE CONFIG "$ pod2html   == """ + perl_setup_perl + " pod2html"""
+$ WRITE CONFIG "$ pod2latex  == """ + perl_setup_perl + " ''vms_prefix':[lib.pod]pod2latex.com"""
+$ WRITE CONFIG "$ pod2text   == """ + perl_setup_perl + " pod2text"""
+$ WRITE CONFIG "$!pod2man    == """ + perl_setup_perl + " pod2man"""
+$ WRITE CONFIG "$ pod2usage  == """ + perl_setup_perl + " ''vms_prefix':[utils]pod2usage.com"""
+$ WRITE CONFIG "$ podchecker == """ + perl_setup_perl + " ''vms_prefix':[utils]podchecker.com"""
+$ WRITE CONFIG "$ podselect  == """ + perl_setup_perl + " ''vms_prefix':[utils]podselect.com"""
+$ WRITE CONFIG "$ psed       == """ + perl_setup_perl + " ''vms_prefix':[utils]psed.com"""
+$ WRITE CONFIG "$ pstruct    == """ + perl_setup_perl + " ''vms_prefix':[utils]pstruct.com"""
+$ WRITE CONFIG "$ s2p        == """ + perl_setup_perl + " ''vms_prefix':[utils]s2p.com"""
+$ WRITE CONFIG "$ splain     == """ + perl_setup_perl + " ''vms_prefix':[utils]splain.com"""
+$ WRITE CONFIG "$ xsubpp     == """ + perl_setup_perl + " ''vms_prefix':[utils]xsubpp.com"""
 $ CLOSE CONFIG
 $!
 $ echo  ""

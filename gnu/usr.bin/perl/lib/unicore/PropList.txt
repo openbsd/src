@@ -1,10 +1,10 @@
-# PropList-3.2.0.txt
-# Date: 2002-03-19,23:31:21 GMT [MD]
+# PropList-4.0.0.txt
+# Date: 2003-03-20, 20:07:40 GMT [MD]
 #
 # Unicode Character Database: Extended Properties
-# For documentation, see PropList.html
-# Note: Unassigned and Noncharacter codepoints are omitted,
-#       except when listing Noncharacter or Cn.
+# For documentation, see UCD.html
+# Note: Unassigned and Noncharacter codepoints may be omitted
+#       if they have default property values.
 # ================================================
 
 # ================================================
@@ -14,13 +14,15 @@
 0085          ; White_Space # Cc       <control>
 00A0          ; White_Space # Zs       NO-BREAK SPACE
 1680          ; White_Space # Zs       OGHAM SPACE MARK
+180E          ; White_Space # Zs       MONGOLIAN VOWEL SEPARATOR
 2000..200A    ; White_Space # Zs  [11] EN QUAD..HAIR SPACE
 2028          ; White_Space # Zl       LINE SEPARATOR
 2029          ; White_Space # Zp       PARAGRAPH SEPARATOR
 202F          ; White_Space # Zs       NARROW NO-BREAK SPACE
+205F          ; White_Space # Zs       MEDIUM MATHEMATICAL SPACE
 3000          ; White_Space # Zs       IDEOGRAPHIC SPACE
 
-# Total code points: 24
+# Total code points: 26
 
 # ================================================
 
@@ -38,10 +40,10 @@
 # ================================================
 
 002D          ; Dash # Pd       HYPHEN-MINUS
-00AD          ; Dash # Pd       SOFT HYPHEN
 058A          ; Dash # Pd       ARMENIAN HYPHEN
 1806          ; Dash # Pd       MONGOLIAN TODO SOFT HYPHEN
 2010..2015    ; Dash # Pd   [6] HYPHEN..HORIZONTAL BAR
+2053          ; Dash # Po       SWUNG DASH
 207B          ; Dash # Sm       SUPERSCRIPT MINUS
 208B          ; Dash # Sm       SUBSCRIPT MINUS
 2212          ; Dash # Sm       MINUS SIGN
@@ -57,7 +59,7 @@ FF0D          ; Dash # Pd       FULLWIDTH HYPHEN-MINUS
 # ================================================
 
 002D          ; Hyphen # Pd       HYPHEN-MINUS
-00AD          ; Hyphen # Pd       SOFT HYPHEN
+00AD          ; Hyphen # Cf       SOFT HYPHEN
 058A          ; Hyphen # Pd       ARMENIAN HYPHEN
 1806          ; Hyphen # Pd       MONGOLIAN TODO SOFT HYPHEN
 2010..2011    ; Hyphen # Pd   [2] HYPHEN..NON-BREAKING HYPHEN
@@ -126,8 +128,9 @@ FF63          ; Quotation_Mark # Pe       HALFWIDTH RIGHT CORNER BRACKET
 17DA          ; Terminal_Punctuation # Po       KHMER SIGN KOOMUUT
 1802..1805    ; Terminal_Punctuation # Po   [4] MONGOLIAN COMMA..MONGOLIAN FOUR DOTS
 1808..1809    ; Terminal_Punctuation # Po   [2] MONGOLIAN MANCHU COMMA..MONGOLIAN MANCHU FULL STOP
+1944..1945    ; Terminal_Punctuation # Po   [2] LIMBU EXCLAMATION MARK..LIMBU QUESTION MARK
 203C..203D    ; Terminal_Punctuation # Po   [2] DOUBLE EXCLAMATION MARK..INTERROBANG
-2048..2049    ; Terminal_Punctuation # Po   [2] QUESTION EXCLAMATION MARK..EXCLAMATION QUESTION MARK
+2047..2049    ; Terminal_Punctuation # Po   [3] DOUBLE QUESTION MARK..EXCLAMATION QUESTION MARK
 3001..3002    ; Terminal_Punctuation # Po   [2] IDEOGRAPHIC COMMA..IDEOGRAPHIC FULL STOP
 FE50..FE52    ; Terminal_Punctuation # Po   [3] SMALL COMMA..SMALL FULL STOP
 FE54..FE57    ; Terminal_Punctuation # Po   [4] SMALL SEMICOLON..SMALL EXCLAMATION MARK
@@ -139,7 +142,7 @@ FF1F          ; Terminal_Punctuation # Po       FULLWIDTH QUESTION MARK
 FF61          ; Terminal_Punctuation # Po       HALFWIDTH IDEOGRAPHIC FULL STOP
 FF64          ; Terminal_Punctuation # Po       HALFWIDTH IDEOGRAPHIC COMMA
 
-# Total code points: 75
+# Total code points: 78
 
 # ================================================
 
@@ -176,6 +179,8 @@ FE35          ; Other_Math # Ps       PRESENTATION FORM FOR VERTICAL LEFT PARENT
 FE36          ; Other_Math # Pe       PRESENTATION FORM FOR VERTICAL RIGHT PARENTHESIS
 FE37          ; Other_Math # Ps       PRESENTATION FORM FOR VERTICAL LEFT CURLY BRACKET
 FE38          ; Other_Math # Pe       PRESENTATION FORM FOR VERTICAL RIGHT CURLY BRACKET
+FE47          ; Other_Math # Ps       PRESENTATION FORM FOR VERTICAL LEFT SQUARE BRACKET
+FE48          ; Other_Math # Pe       PRESENTATION FORM FOR VERTICAL RIGHT SQUARE BRACKET
 FE59          ; Other_Math # Ps       SMALL LEFT PARENTHESIS
 FE5A          ; Other_Math # Pe       SMALL RIGHT PARENTHESIS
 FE5B          ; Other_Math # Ps       SMALL LEFT CURLY BRACKET
@@ -202,8 +207,7 @@ FF5D          ; Other_Math # Pe       FULLWIDTH RIGHT CURLY BRACKET
 1D4A9..1D4AC  ; Other_Math # L&   [4] MATHEMATICAL SCRIPT CAPITAL N..MATHEMATICAL SCRIPT CAPITAL Q
 1D4AE..1D4B9  ; Other_Math # L&  [12] MATHEMATICAL SCRIPT CAPITAL S..MATHEMATICAL SCRIPT SMALL D
 1D4BB         ; Other_Math # L&       MATHEMATICAL SCRIPT SMALL F
-1D4BD..1D4C0  ; Other_Math # L&   [4] MATHEMATICAL SCRIPT SMALL H..MATHEMATICAL SCRIPT SMALL K
-1D4C2..1D4C3  ; Other_Math # L&   [2] MATHEMATICAL SCRIPT SMALL M..MATHEMATICAL SCRIPT SMALL N
+1D4BD..1D4C3  ; Other_Math # L&   [7] MATHEMATICAL SCRIPT SMALL H..MATHEMATICAL SCRIPT SMALL N
 1D4C5..1D505  ; Other_Math # L&  [65] MATHEMATICAL SCRIPT SMALL P..MATHEMATICAL FRAKTUR CAPITAL B
 1D507..1D50A  ; Other_Math # L&   [4] MATHEMATICAL FRAKTUR CAPITAL D..MATHEMATICAL FRAKTUR CAPITAL G
 1D50D..1D514  ; Other_Math # L&   [8] MATHEMATICAL FRAKTUR CAPITAL J..MATHEMATICAL FRAKTUR CAPITAL Q
@@ -227,7 +231,7 @@ FF5D          ; Other_Math # Pe       FULLWIDTH RIGHT CURLY BRACKET
 1D7C4..1D7C9  ; Other_Math # L&   [6] MATHEMATICAL SANS-SERIF BOLD ITALIC EPSILON SYMBOL..MATHEMATICAL SANS-SERIF BOLD ITALIC PI SYMBOL
 1D7CE..1D7FF  ; Other_Math # Nd  [50] MATHEMATICAL BOLD DIGIT ZERO..MATHEMATICAL MONOSPACE DIGIT NINE
 
-# Total code points: 1066
+# Total code points: 1069
 
 # ================================================
 
@@ -256,7 +260,8 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 05BF          ; Other_Alphabetic # Mn       HEBREW POINT RAFE
 05C1..05C2    ; Other_Alphabetic # Mn   [2] HEBREW POINT SHIN DOT..HEBREW POINT SIN DOT
 05C4          ; Other_Alphabetic # Mn       HEBREW MARK UPPER DOT
-064B..0655    ; Other_Alphabetic # Mn  [11] ARABIC FATHATAN..ARABIC HAMZA BELOW
+0610..0615    ; Other_Alphabetic # Mn   [6] ARABIC SIGN SALLALLAHOU ALAYHE WASSALLAM..ARABIC SMALL HIGH TAH
+064B..0657    ; Other_Alphabetic # Mn  [13] ARABIC FATHATAN..ARABIC INVERTED DAMMA
 0670          ; Other_Alphabetic # Mn       ARABIC LETTER SUPERSCRIPT ALEF
 06D6..06DC    ; Other_Alphabetic # Mn   [7] ARABIC SMALL HIGH LIGATURE SAD WITH LAM WITH ALEF MAKSURA..ARABIC SMALL HIGH SEEN
 06E1..06E4    ; Other_Alphabetic # Mn   [4] ARABIC SMALL HIGH DOTLESS HEAD OF KHAH..ARABIC SMALL HIGH MADDA
@@ -279,7 +284,8 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 09CB..09CC    ; Other_Alphabetic # Mc   [2] BENGALI VOWEL SIGN O..BENGALI VOWEL SIGN AU
 09D7          ; Other_Alphabetic # Mc       BENGALI AU LENGTH MARK
 09E2..09E3    ; Other_Alphabetic # Mn   [2] BENGALI VOWEL SIGN VOCALIC L..BENGALI VOWEL SIGN VOCALIC LL
-0A02          ; Other_Alphabetic # Mn       GURMUKHI SIGN BINDI
+0A01..0A02    ; Other_Alphabetic # Mn   [2] GURMUKHI SIGN ADAK BINDI..GURMUKHI SIGN BINDI
+0A03          ; Other_Alphabetic # Mc       GURMUKHI SIGN VISARGA
 0A3E..0A40    ; Other_Alphabetic # Mc   [3] GURMUKHI VOWEL SIGN AA..GURMUKHI VOWEL SIGN II
 0A41..0A42    ; Other_Alphabetic # Mn   [2] GURMUKHI VOWEL SIGN U..GURMUKHI VOWEL SIGN UU
 0A47..0A48    ; Other_Alphabetic # Mn   [2] GURMUKHI VOWEL SIGN EE..GURMUKHI VOWEL SIGN AI
@@ -292,6 +298,7 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 0AC7..0AC8    ; Other_Alphabetic # Mn   [2] GUJARATI VOWEL SIGN E..GUJARATI VOWEL SIGN AI
 0AC9          ; Other_Alphabetic # Mc       GUJARATI VOWEL SIGN CANDRA O
 0ACB..0ACC    ; Other_Alphabetic # Mc   [2] GUJARATI VOWEL SIGN O..GUJARATI VOWEL SIGN AU
+0AE2..0AE3    ; Other_Alphabetic # Mn   [2] GUJARATI VOWEL SIGN VOCALIC L..GUJARATI VOWEL SIGN VOCALIC LL
 0B01          ; Other_Alphabetic # Mn       ORIYA SIGN CANDRABINDU
 0B02..0B03    ; Other_Alphabetic # Mc   [2] ORIYA SIGN ANUSVARA..ORIYA SIGN VISARGA
 0B3E          ; Other_Alphabetic # Mc       ORIYA VOWEL SIGN AA
@@ -361,17 +368,24 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 1732..1733    ; Other_Alphabetic # Mn   [2] HANUNOO VOWEL SIGN I..HANUNOO VOWEL SIGN U
 1752..1753    ; Other_Alphabetic # Mn   [2] BUHID VOWEL SIGN I..BUHID VOWEL SIGN U
 1772..1773    ; Other_Alphabetic # Mn   [2] TAGBANWA VOWEL SIGN I..TAGBANWA VOWEL SIGN U
-17B4..17B6    ; Other_Alphabetic # Mc   [3] KHMER VOWEL INHERENT AQ..KHMER VOWEL SIGN AA
+17B6          ; Other_Alphabetic # Mc       KHMER VOWEL SIGN AA
 17B7..17BD    ; Other_Alphabetic # Mn   [7] KHMER VOWEL SIGN I..KHMER VOWEL SIGN UA
 17BE..17C5    ; Other_Alphabetic # Mc   [8] KHMER VOWEL SIGN OE..KHMER VOWEL SIGN AU
 17C6          ; Other_Alphabetic # Mn       KHMER SIGN NIKAHIT
 17C7..17C8    ; Other_Alphabetic # Mc   [2] KHMER SIGN REAHMUK..KHMER SIGN YUUKALEAPINTU
 18A9          ; Other_Alphabetic # Mn       MONGOLIAN LETTER ALI GALI DAGALGA
+1920..1922    ; Other_Alphabetic # Mn   [3] LIMBU VOWEL SIGN A..LIMBU VOWEL SIGN U
+1923..1926    ; Other_Alphabetic # Mc   [4] LIMBU VOWEL SIGN EE..LIMBU VOWEL SIGN AU
+1927..1928    ; Other_Alphabetic # Mn   [2] LIMBU VOWEL SIGN E..LIMBU VOWEL SIGN O
+1929..192B    ; Other_Alphabetic # Mc   [3] LIMBU SUBJOINED LETTER YA..LIMBU SUBJOINED LETTER WA
+1930..1931    ; Other_Alphabetic # Mc   [2] LIMBU SMALL LETTER KA..LIMBU SMALL LETTER NGA
+1932          ; Other_Alphabetic # Mn       LIMBU SMALL LETTER ANUSVARA
+1933..1938    ; Other_Alphabetic # Mc   [6] LIMBU SMALL LETTER TA..LIMBU SMALL LETTER LA
 2160..2183    ; Other_Alphabetic # Nl  [36] ROMAN NUMERAL ONE..ROMAN NUMERAL REVERSED ONE HUNDRED
 FB1E          ; Other_Alphabetic # Mn       HEBREW POINT JUDEO-SPANISH VARIKA
 1034A         ; Other_Alphabetic # Nl       GOTHIC LETTER NINE HUNDRED
 
-# Total code points: 398
+# Total code points: 429
 
 # ================================================
 
@@ -396,17 +410,17 @@ F900..FA2D    ; Ideographic # Lo [302] CJK COMPATIBILITY IDEOGRAPH-F900..CJK COM
 00B4          ; Diacritic # Sk       ACUTE ACCENT
 00B7          ; Diacritic # Po       MIDDLE DOT
 00B8          ; Diacritic # Sk       CEDILLA
-02B0..02B8    ; Diacritic # Lm   [9] MODIFIER LETTER SMALL H..MODIFIER LETTER SMALL Y
-02B9..02BA    ; Diacritic # Sk   [2] MODIFIER LETTER PRIME..MODIFIER LETTER DOUBLE PRIME
-02BB..02C1    ; Diacritic # Lm   [7] MODIFIER LETTER TURNED COMMA..MODIFIER LETTER REVERSED GLOTTAL STOP
-02C2..02CF    ; Diacritic # Sk  [14] MODIFIER LETTER LEFT ARROWHEAD..MODIFIER LETTER LOW ACUTE ACCENT
-02D0..02D1    ; Diacritic # Lm   [2] MODIFIER LETTER TRIANGULAR COLON..MODIFIER LETTER HALF TRIANGULAR COLON
+02B0..02C1    ; Diacritic # Lm  [18] MODIFIER LETTER SMALL H..MODIFIER LETTER REVERSED GLOTTAL STOP
+02C2..02C5    ; Diacritic # Sk   [4] MODIFIER LETTER LEFT ARROWHEAD..MODIFIER LETTER DOWN ARROWHEAD
+02C6..02D1    ; Diacritic # Lm  [12] MODIFIER LETTER CIRCUMFLEX ACCENT..MODIFIER LETTER HALF TRIANGULAR COLON
 02D2..02DF    ; Diacritic # Sk  [14] MODIFIER LETTER CENTRED RIGHT HALF RING..MODIFIER LETTER CROSS ACCENT
 02E0..02E4    ; Diacritic # Lm   [5] MODIFIER LETTER SMALL GAMMA..MODIFIER LETTER SMALL REVERSED GLOTTAL STOP
 02E5..02ED    ; Diacritic # Sk   [9] MODIFIER LETTER EXTRA-HIGH TONE BAR..MODIFIER LETTER UNASPIRATED
 02EE          ; Diacritic # Lm       MODIFIER LETTER DOUBLE APOSTROPHE
+02EF..02FF    ; Diacritic # Sk  [17] MODIFIER LETTER LOW DOWN ARROWHEAD..MODIFIER LETTER LOW LEFT ARROW
 0300..034E    ; Diacritic # Mn  [79] COMBINING GRAVE ACCENT..COMBINING UPWARDS ARROW BELOW
-0360..0362    ; Diacritic # Mn   [3] COMBINING DOUBLE TILDE..COMBINING DOUBLE RIGHTWARDS ARROW BELOW
+0350..0357    ; Diacritic # Mn   [8] COMBINING RIGHT ARROWHEAD ABOVE..COMBINING RIGHT HALF RING ABOVE
+035D..0362    ; Diacritic # Mn   [6] COMBINING DOUBLE BREVE..COMBINING DOUBLE RIGHTWARDS ARROW BELOW
 0374..0375    ; Diacritic # Sk   [2] GREEK NUMERAL SIGN..GREEK LOWER NUMERAL SIGN
 037A          ; Diacritic # Lm       GREEK YPOGEGRAMMENI
 0384..0385    ; Diacritic # Sk   [2] GREEK TONOS..GREEK DIALYTIKA TONOS
@@ -419,6 +433,7 @@ F900..FA2D    ; Ideographic # Lo [302] CJK COMPATIBILITY IDEOGRAPH-F900..CJK COM
 05C1..05C2    ; Diacritic # Mn   [2] HEBREW POINT SHIN DOT..HEBREW POINT SIN DOT
 05C4          ; Diacritic # Mn       HEBREW MARK UPPER DOT
 064B..0652    ; Diacritic # Mn   [8] ARABIC FATHATAN..ARABIC SUKUN
+0657..0658    ; Diacritic # Mn   [2] ARABIC INVERTED DAMMA..ARABIC MARK NOON GHUNNA
 06DF..06E0    ; Diacritic # Mn   [2] ARABIC SMALL HIGH ROUNDED ZERO..ARABIC SMALL HIGH UPRIGHT RECTANGULAR ZERO
 06E5..06E6    ; Diacritic # Lm   [2] ARABIC SMALL WAW..ARABIC SMALL YEH
 06EA..06EC    ; Diacritic # Mn   [3] ARABIC EMPTY CENTRE LOW STOP..ARABIC ROUNDED HIGH STOP WITH FILLED CENTRE
@@ -437,6 +452,7 @@ F900..FA2D    ; Ideographic # Lo [302] CJK COMPATIBILITY IDEOGRAPH-F900..CJK COM
 0B4D          ; Diacritic # Mn       ORIYA SIGN VIRAMA
 0BCD          ; Diacritic # Mn       TAMIL SIGN VIRAMA
 0C4D          ; Diacritic # Mn       TELUGU SIGN VIRAMA
+0CBC          ; Diacritic # Mn       KANNADA SIGN NUKTA
 0CCD          ; Diacritic # Mn       KANNADA SIGN VIRAMA
 0D4D          ; Diacritic # Mn       MALAYALAM SIGN VIRAMA
 0DCA          ; Diacritic # Mn       SINHALA SIGN AL-LAKUNA
@@ -454,6 +470,10 @@ F900..FA2D    ; Ideographic # Lo [302] CJK COMPATIBILITY IDEOGRAPH-F900..CJK COM
 1037          ; Diacritic # Mn       MYANMAR SIGN DOT BELOW
 1039          ; Diacritic # Mn       MYANMAR SIGN VIRAMA
 17C9..17D3    ; Diacritic # Mn  [11] KHMER SIGN MUUSIKATOAN..KHMER SIGN BATHAMASAT
+17DD          ; Diacritic # Mn       KHMER SIGN ATTHACAN
+1939..193B    ; Diacritic # Mn   [3] LIMBU SIGN MUKPHRENG..LIMBU SIGN SA-I
+1D2C..1D61    ; Diacritic # Lm  [54] MODIFIER LETTER CAPITAL A..MODIFIER LETTER SMALL CHI
+1D62..1D6A    ; Diacritic # L&   [9] LATIN SUBSCRIPT SMALL LETTER I..GREEK SUBSCRIPT SMALL LETTER CHI
 1FBD          ; Diacritic # Sk       GREEK KORONIS
 1FBF..1FC1    ; Diacritic # Sk   [3] GREEK PSILI..GREEK DIALYTIKA AND PERISPOMENI
 1FCD..1FCF    ; Diacritic # Sk   [3] GREEK PSILI AND VARIA..GREEK PSILI AND PERISPOMENI
@@ -477,7 +497,7 @@ FFE3          ; Diacritic # Sk       FULLWIDTH MACRON
 1D185..1D18B  ; Diacritic # Mn   [7] MUSICAL SYMBOL COMBINING DOIT..MUSICAL SYMBOL COMBINING TRIPLE TONGUE
 1D1AA..1D1AD  ; Diacritic # Mn   [4] MUSICAL SYMBOL COMBINING DOWN BOW..MUSICAL SYMBOL COMBINING SNAP PIZZICATO
 
-# Total code points: 384
+# Total code points: 482
 
 # ================================================
 
@@ -502,10 +522,11 @@ FF70          ; Extender # Lm       HALFWIDTH KATAKANA-HIRAGANA PROLONGED SOUND 
 02E0..02E4    ; Other_Lowercase # Lm   [5] MODIFIER LETTER SMALL GAMMA..MODIFIER LETTER SMALL REVERSED GLOTTAL STOP
 0345          ; Other_Lowercase # Mn       COMBINING GREEK YPOGEGRAMMENI
 037A          ; Other_Lowercase # Lm       GREEK YPOGEGRAMMENI
+1D2C..1D61    ; Other_Lowercase # Lm  [54] MODIFIER LETTER CAPITAL A..MODIFIER LETTER SMALL CHI
 2170..217F    ; Other_Lowercase # Nl  [16] SMALL ROMAN NUMERAL ONE..SMALL ROMAN NUMERAL ONE THOUSAND
 24D0..24E9    ; Other_Lowercase # So  [26] CIRCLED LATIN SMALL LETTER A..CIRCLED LATIN SMALL LETTER Z
 
-# Total code points: 60
+# Total code points: 114
 
 # ================================================
 
@@ -539,12 +560,26 @@ FFFFE..FFFFF  ; Noncharacter_Code_Point # Cn   [2]
 
 # ================================================
 
-FF9E..FF9F    ; Other_Grapheme_Extend # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFWIDTH KATAKANA SEMI-VOICED SOUND MARK
+09BE          ; Other_Grapheme_Extend # Mc       BENGALI VOWEL SIGN AA
+09D7          ; Other_Grapheme_Extend # Mc       BENGALI AU LENGTH MARK
+0B3E          ; Other_Grapheme_Extend # Mc       ORIYA VOWEL SIGN AA
+0B57          ; Other_Grapheme_Extend # Mc       ORIYA AU LENGTH MARK
+0BBE          ; Other_Grapheme_Extend # Mc       TAMIL VOWEL SIGN AA
+0BD7          ; Other_Grapheme_Extend # Mc       TAMIL AU LENGTH MARK
+0CC2          ; Other_Grapheme_Extend # Mc       KANNADA VOWEL SIGN UU
+0CD5..0CD6    ; Other_Grapheme_Extend # Mc   [2] KANNADA LENGTH MARK..KANNADA AI LENGTH MARK
+0D3E          ; Other_Grapheme_Extend # Mc       MALAYALAM VOWEL SIGN AA
+0D57          ; Other_Grapheme_Extend # Mc       MALAYALAM AU LENGTH MARK
+0DCF          ; Other_Grapheme_Extend # Mc       SINHALA VOWEL SIGN AELA-PILLA
+0DDF          ; Other_Grapheme_Extend # Mc       SINHALA VOWEL SIGN GAYANUKITTA
+1D165         ; Other_Grapheme_Extend # Mc       MUSICAL SYMBOL COMBINING STEM
+1D16E..1D16F  ; Other_Grapheme_Extend # Mc   [2] MUSICAL SYMBOL COMBINING FLAG-1..MUSICAL SYMBOL COMBINING FLAG-2
 
-# Total code points: 2
+# Total code points: 16
 
 # ================================================
 
+034F          ; Grapheme_Link # Mn       COMBINING GRAPHEME JOINER
 094D          ; Grapheme_Link # Mn       DEVANAGARI SIGN VIRAMA
 09CD          ; Grapheme_Link # Mn       BENGALI SIGN VIRAMA
 0A4D          ; Grapheme_Link # Mn       GURMUKHI SIGN VIRAMA
@@ -559,7 +594,7 @@ FF9E..FF9F    ; Other_Grapheme_Extend # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND
 1039          ; Grapheme_Link # Mn       MYANMAR SIGN VIRAMA
 17D2          ; Grapheme_Link # Mn       KHMER SIGN COENG
 
-# Total code points: 13
+# Total code points: 14
 
 # ================================================
 
@@ -599,27 +634,31 @@ FA27..FA29    ; Unified_Ideograph # Lo   [3] CJK COMPATIBILITY IDEOGRAPH-FA27..C
 
 # ================================================
 
+034F          ; Other_Default_Ignorable_Code_Point # Mn       COMBINING GRAPHEME JOINER
+115F..1160    ; Other_Default_Ignorable_Code_Point # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
 180B..180D    ; Other_Default_Ignorable_Code_Point # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
-2060..2063    ; Other_Default_Ignorable_Code_Point # Cf   [4] WORD JOINER..INVISIBLE SEPARATOR
+200B          ; Other_Default_Ignorable_Code_Point # Zs       ZERO WIDTH SPACE
 2064..2069    ; Other_Default_Ignorable_Code_Point # Cn   [6] 
-206A..206F    ; Other_Default_Ignorable_Code_Point # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+3164          ; Other_Default_Ignorable_Code_Point # Lo       HANGUL FILLER
 FE00..FE0F    ; Other_Default_Ignorable_Code_Point # Mn  [16] VARIATION SELECTOR-1..VARIATION SELECTOR-16
+FFA0          ; Other_Default_Ignorable_Code_Point # Lo       HALFWIDTH HANGUL FILLER
 FFF0..FFF8    ; Other_Default_Ignorable_Code_Point # Cn   [9] 
-FFF9..FFFB    ; Other_Default_Ignorable_Code_Point # Cf   [3] INTERLINEAR ANNOTATION ANCHOR..INTERLINEAR ANNOTATION TERMINATOR
 E0000         ; Other_Default_Ignorable_Code_Point # Cn       
-E0001         ; Other_Default_Ignorable_Code_Point # Cf       LANGUAGE TAG
 E0002..E001F  ; Other_Default_Ignorable_Code_Point # Cn  [30] 
-E0020..E007F  ; Other_Default_Ignorable_Code_Point # Cf  [96] TAG SPACE..CANCEL TAG
-E0080..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3968] 
+E0080..E00FF  ; Other_Default_Ignorable_Code_Point # Cn [128] 
+E0100..E01EF  ; Other_Default_Ignorable_Code_Point # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
+E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] 
 
-# Total code points: 4143
+# Total code points: 4039
 
 # ================================================
 
 0340..0341    ; Deprecated # Mn   [2] COMBINING GRAVE TONE MARK..COMBINING ACUTE TONE MARK
+17A3          ; Deprecated # Lo       KHMER INDEPENDENT VOWEL QAQ
+17D3          ; Deprecated # Mn       KHMER SIGN BATHAMASAT
 206A..206F    ; Deprecated # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
 
-# Total code points: 8
+# Total code points: 10
 
 # ================================================
 
@@ -628,10 +667,12 @@ E0080..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3968]
 0268          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH STROKE
 0456          ; Soft_Dotted # L&       CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I
 0458          ; Soft_Dotted # L&       CYRILLIC SMALL LETTER JE
+1D62          ; Soft_Dotted # L&       LATIN SUBSCRIPT SMALL LETTER I
 1E2D          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH TILDE BELOW
 1ECB          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH DOT BELOW
+2071          ; Soft_Dotted # L&       SUPERSCRIPT LATIN SMALL LETTER I
 
-# Total code points: 8
+# Total code points: 10
 
 # ================================================
 
@@ -639,4 +680,12 @@ E0080..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3968]
 0EC0..0EC4    ; Logical_Order_Exception # Lo   [5] LAO VOWEL SIGN E..LAO VOWEL SIGN AI
 
 # Total code points: 10
+
+# ================================================
+
+2118          ; Other_ID_Start # So       SCRIPT CAPITAL P
+212E          ; Other_ID_Start # So       ESTIMATED SYMBOL
+309B..309C    ; Other_ID_Start # Sk   [2] KATAKANA-HIRAGANA VOICED SOUND MARK..KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK
+
+# Total code points: 4
 

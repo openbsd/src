@@ -28,7 +28,8 @@ use warnings;
 use Test::More tests => @TestSizes * 2	# sort() tests
 			* 4		# number of pragmas to test
 			+ 1 		# extra test for qsort instability
-			+ 3;		# tests for sort::current
+			+ 3		# tests for sort::current
+			+ 3;		# tests for "defaults" and "no sort"
 
 # Generate array of specified size for testing sort.
 #
@@ -158,5 +159,25 @@ eval q{
     use sort qw(_qsort stable);
     is(sort::current(), 'quicksort stable', 'sort::current for _qsort stable');
     main(0);
+};
+die $@ if $@;
+
+# Tests added to check "defaults" subpragma, and "no sort"
+
+eval q{
+    no sort qw(_qsort);
+    is(sort::current(), 'stable', 'sort::current after no _qsort');
+};
+die $@ if $@;
+
+eval q{
+    use sort qw(defaults _qsort);
+    is(sort::current(), 'quicksort', 'sort::current after defaults _qsort');
+};
+die $@ if $@;
+
+eval q{
+    use sort qw(defaults stable);
+    is(sort::current(), 'stable', 'sort::current after defaults stable');
 };
 die $@ if $@;

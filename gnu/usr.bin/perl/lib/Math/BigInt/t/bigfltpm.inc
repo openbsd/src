@@ -2,6 +2,8 @@
 
 ok ($class->config()->{lib},$CL);
 
+use strict;
+
 while (<DATA>)
   {
   chomp;
@@ -28,7 +30,7 @@ while (<DATA>)
       {
       @args = split(/:/,$_,99); $ans = pop(@args);
       }
-    $try = "\$x = new $class \"$args[0]\";";
+    $try = "\$x = $class->new('$args[0]');";
     if ($f eq "fnorm")
       {
         $try .= "\$x;";
@@ -51,18 +53,14 @@ while (<DATA>)
       } elsif ($f eq "mantissa") {
         # ->bstr() to see if an object is returned
         $try .= '$x->mantissa()->bstr();';
-      } elsif ($f eq "numify") {
-        $try .= "\$x->numify();";
-      } elsif ($f eq "length") {
-        $try .= "\$x->length();";
+      } elsif ($f =~ /^(numify|length|as_number|as_hex|as_bin)$/) {
+        $try .= "\$x->$f();";
       # some unary ops (test the fxxx form, since that is done by AUTOLOAD)
       } elsif ($f =~ /^f(nan|sstr|neg|floor|ceil|abs)$/) {
         $try .= "\$x->f$1();";
       # some is_xxx test function	
       } elsif ($f =~ /^is_(zero|one|negative|positive|odd|even|nan|int)$/) {
         $try .= "\$x->$f();";
-      } elsif ($f eq "as_number") {
-        $try .= '$x->as_number();';
       } elsif ($f eq "finc") {
         $try .= '++$x;';
       } elsif ($f eq "fdec") {
@@ -73,20 +71,30 @@ while (<DATA>)
         $try .= "$setup; \$x->ffround($args[1]);";
       } elsif ($f eq "fsqrt") {
         $try .= "$setup; \$x->fsqrt();";
-      } elsif ($f eq "flog") {
-        $try .= "$setup; \$x->flog();";
       } elsif ($f eq "ffac") {
         $try .= "$setup; \$x->ffac();";
+      } elsif ($f eq "flog") {
+        if ($args[1] ne '')
+          {
+          $try .= "\$y = $class->new($args[1]);";
+          $try .= "$setup; \$x->flog(\$y);";
+          }
+        else
+          {
+          $try .= "$setup; \$x->flog();";
+          }
       }
     else
       {
-      $try .= "\$y = new $class \"$args[1]\";";
+      $try .= "\$y = $class->new(\"$args[1]\");";
       if ($f eq "fcmp") {
         $try .= '$x <=> $y;';
       } elsif ($f eq "facmp") {
         $try .= '$x->facmp($y);';
       } elsif ($f eq "fpow") {
         $try .= '$x ** $y;';
+      } elsif ($f eq "froot") {
+        $try .= "$setup; \$x->froot(\$y);";
       } elsif ($f eq "fadd") {
         $try .= '$x + $y;';
       } elsif ($f eq "fsub") {
@@ -158,8 +166,8 @@ ok ($y,1200); ok ($x,1200);
 my $monster = '1e1234567890123456789012345678901234567890';
 
 # new
-ok ($class->new($monster)->bsstr(),
-                '1e+1234567890123456789012345678901234567890');
+ok ($class->new($monster)->bsstr(), 
+		'1e+1234567890123456789012345678901234567890');
 # cmp
 ok ($class->new($monster) > 0,1);
 
@@ -189,11 +197,19 @@ ok ($class->finf('+'),'inf');
 ok ($class->finf('-'),'-inf');
 ok ($class->finf('-inf'),'-inf');
         
+$class->accuracy(undef); $class->precision(undef);	# reset
+
+###############################################################################
+# bug in bsstr()/numify() showed up in after-rounding in bdiv()
+
+$x = $class->new('0.008'); $y = $class->new(2);
+$x->bdiv(3,$y);
+ok ($x,'0.0027');
+
 ###############################################################################
 # fsqrt() with set global A/P or A/P enabled on $x, also a test whether fsqrt()
 # correctly modifies $x
 
-$class->accuracy(undef); $class->precision(undef);	# reset
 
 $x = $class->new(12); $class->precision(-2); $x->fsqrt(); ok ($x,'3.46');
 
@@ -202,55 +218,32 @@ $x = $class->new(12); $class->precision(0); $x->fsqrt(); ok ($x,'3');
 
 $class->precision(-3); $x = $class->new(12); $x->fsqrt(); ok ($x,'3.464');
 
-# A and P set => NaN
-${${class}.'::accuracy'} = 4; $x = $class->new(12); $x->fsqrt(3); ok ($x,'NaN');
-# supplied arg overrides set global
-$class->precision(undef); $x = $class->new(12); $x->fsqrt(3); ok ($x,'3.46');
+{
+  no strict 'refs';
+  # A and P set => NaN
+  ${${class}.'::accuracy'} = 4; $x = $class->new(12);
+  $x->fsqrt(3); ok ($x,'NaN');
+  # supplied arg overrides set global
+  $class->precision(undef); $x = $class->new(12); $x->fsqrt(3); ok ($x,'3.46');
+  $class->accuracy(undef); $class->precision(undef); # reset for further tests
+}
 
-$class->accuracy(undef); $class->precision(undef); # reset for further tests
-
-###############################################################################
+#############################################################################
 # can we call objectify (broken until v1.52)
 
-$try = '@args' . " = $class" . "::objectify(2,$class,4,5);".'join(" ",@args);';
-$ans = eval $try;
-ok ($ans,"$class 4 5");
+{
+  no strict;
+  $try = 
+    '@args' . " = $class" . "::objectify(2,$class,4,5);".'join(" ",@args);';
+  $ans = eval $try;
+  ok ($ans,"$class 4 5");
+}
 
-###############################################################################
-# test whether an opp calls objectify properly or not (or at least does what
-# it should do given non-objects, w/ or w/o objectify())
+#############################################################################
+# is_one('-') (broken until v1.64)
 
-ok ($class->new(123)->badd(123),246);
-ok ($class->badd(123,321),444);
-ok ($class->badd(123,$class->new(321)),444);
-
-ok ($class->new(123)->bsub(122),1);
-ok ($class->bsub(321,123),198);
-ok ($class->bsub(321,$class->new(123)),198);
-
-ok ($class->new(123)->bmul(123),15129);
-ok ($class->bmul(123,123),15129);
-ok ($class->bmul(123,$class->new(123)),15129);
-
-ok ($class->new(15129)->bdiv(123),123);
-ok ($class->bdiv(15129,123),123);
-ok ($class->bdiv(15129,$class->new(123)),123);
-
-ok ($class->new(15131)->bmod(123),2);
-ok ($class->bmod(15131,123),2);
-ok ($class->bmod(15131,$class->new(123)),2);
-
-ok ($class->new(2)->bpow(16),65536);
-ok ($class->bpow(2,16),65536);
-ok ($class->bpow(2,$class->new(16)),65536);
-
-ok ($class->new(2**15)->brsft(1),2**14);
-ok ($class->brsft(2**15,1),2**14);
-ok ($class->brsft(2**15,$class->new(1)),2**14);
-
-ok ($class->new(2**13)->blsft(1),2**14);
-ok ($class->blsft(2**13,1),2**14);
-ok ($class->blsft(2**13,$class->new(1)),2**14);
+ok ($class->new(-1)->is_one(),0);
+ok ($class->new(-1)->is_one('-'),1);
 
 1; # all done
 
@@ -268,28 +261,36 @@ sub ok_undef
 __DATA__
 $div_scale = 40;
 &flog
-0:NaN
--1:NaN
--2:NaN
-1:0
+0::NaN
+-1::NaN
+-2::NaN
+# base > 0, base != 1
+2:-1:NaN
+2:0:NaN
+2:1:NaN
+# log(1) is always 1, regardless of $base
+1::0
+1:1:0
+1:2:0
 # this is too slow for the testsuite
 #2:0.6931471805599453094172321214581765680755
 #2.718281828:0.9999999998311266953289851340574956564911
 #$div_scale = 20;
 #2.718281828:0.99999999983112669533
-# too slow, too (or hangs?)
+# too slow, too 
 #123:4.8112184355
 $div_scale = 14;
 #10:0:2.302585092994
 #1000:0:6.90775527898214
 #100:0:4.60517018598809
-2:0:0.69314718055995
+2::0.69314718055995
 #3.1415:0:1.14470039286086
+# too slow
 #12345:0:9.42100640177928
 #0.001:0:-6.90775527898214
 # reset for further tests
 $div_scale = 40;
-1:0
+1::0
 &frsft
 NaNfrsft:2:NaN
 0:2:0
@@ -329,17 +330,61 @@ fnormNaN:NaN
 -2:-2
 -123.456:-123
 -200:-200
+# test for bug in brsft() not handling cases that return 0
+0.000641:0
+0.0006412:0
+0.00064123:0
+0.000641234:0
+0.0006412345:0
+0.00064123456:0
+0.000641234567:0
+0.0006412345678:0
+0.00064123456789:0
+0.1:0
+0.01:0
+0.001:0
+0.0001:0
+0.00001:0
+0.000001:0
+0.0000001:0
+0.00000001:0
+0.000000001:0
+0.0000000001:0
+0.00000000001:0
+0.12345:0
+0.123456:0
+0.1234567:0
+0.12345678:0
+0.123456789:0
 &finf
 1:+:inf
 2:-:-inf
 3:abc:inf
+&as_hex
++inf:inf
+-inf:-inf
+hexNaN:NaN
+0:0x0
+5:0x5
+-5:-0x5
+&as_bin
++inf:inf
+-inf:-inf
+hexNaN:NaN
+0:0b0
+5:0b101
+-5:-0b101
 &numify
+# uses bsstr() so 5 => 5e+0 to be compatible w/ Perls output
 0:0e+1
 +1:1e+0
 1234:1234e+0
 NaN:NaN
 +inf:inf
 -inf:-inf
+-5:-5e+0
+100:1e+2
+-100:-1e+2
 &fnan
 abc:NaN
 2:NaN
@@ -358,7 +403,11 @@ abc::1
 +inf:inf
 -inf:-inf
 abcfsstr:NaN
+-abcfsstr:NaN
 1234.567:1234567e-3
+123:123e+0
+-5:-5e+0
+-100:-1e+2
 &fstr
 +inf:::inf
 -inf:::-inf
@@ -382,6 +431,10 @@ abc:NaN
 11111b:NaN
 +1z:NaN
 -1z:NaN
+0e999:0
+0e-999:0
+-0e999:0
+-0e-999:0
 0:0
 +0:0
 +00:0
@@ -1158,6 +1211,55 @@ Nanfac:NaN
 10:3628800
 11:39916800
 12:479001600
+&froot
+# sqrt()
++0:2:0
++1:2:1
+-1:2:NaN
+# -$x ** (1/2) => -$y, but not in froot()
+-123.456:2:NaN
++inf:2:inf
+-inf:2:NaN
+2:2:1.41421356237309504880168872420969807857
+-2:2:NaN
+4:2:2
+9:2:3
+16:2:4
+100:2:10
+123.456:2:11.11107555549866648462149404118219234119
+15241.38393:2:123.4559999756998444766131352122991626468
+1.44:2:1.2
+12:2:3.464101615137754587054892683011744733886
+0.49:2:0.7
+0.0049:2:0.07
+# invalid ones
+1:NaN:NaN
+-1:NaN:NaN
+0:NaN:NaN
+-inf:NaN:NaN
++inf:NaN:NaN
+NaN:0:NaN
+NaN:2:NaN
+NaN:inf:NaN
+NaN:inf:NaN
+12:-inf:NaN
+12:inf:NaN
++0:0:NaN
++1:0:NaN
+-1:0:NaN
+-2:0:NaN
+-123.45:0:NaN
++inf:0:NaN
+12:1:12
+-12:1:NaN
+8:-1:NaN
+-8:-1:NaN
+# cubic root
+8:3:2
+-8:3:NaN
+# fourths root
+16:4:2
+81:4:3
 &fsqrt
 +0:0
 -1:NaN
@@ -1182,6 +1284,8 @@ nanfsqrt:NaN
 144e20:120000000000
 # proved to be an endless loop under 7-9
 12:3.464101615137754587054892683011744733886
+0.49:0.7
+0.0049:0.07
 &is_nan
 123:0
 abc:1
@@ -1320,6 +1424,11 @@ abc:NaN
 -51:-51
 -51.2:-52
 12.2:12
+0.12345:0
+0.123456:0
+0.1234567:0
+0.12345678:0
+0.123456789:0
 &fceil
 0:0
 abc:NaN

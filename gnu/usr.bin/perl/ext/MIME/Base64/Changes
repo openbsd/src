@@ -1,3 +1,127 @@
+2003-10-09   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.21
+
+   Documentation tweaks.
+
+   Don't rely on SvEND(sv) == '\0' as discussed in the perl5-porters
+   mailing list thread that starts with
+   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2003-10/msg00258.html
+
+   Should now pass test suite even without XS support.
+
+   Perl v5.005 or better is now required.
+
+
+
+2003-05-13   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.20
+
+   decode_qp() recognize soft whitespace when there is whitespace
+   between the '=' and the '\n'.
+
+
+
+2003-05-13   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.19
+
+   decode_qp() did eat up all trailing whitespace in the string decoded.
+   Only whitespace in front of "\n" should go.
+
+   Win32 fix for t/warn.t by Reini Urban <rurban@x-ray.at>.
+
+
+
+2003-03-09   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.18
+
+   Fix up INSTALLDIRS for perl-5.8 and newer.
+
+
+
+2003-03-09   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.17
+
+   Make it reliable to disable base64 decoding warnings by
+   resetting $^W in recent perls.  Would really like to be
+   able to do real lexical warnings but the current mechanism
+   does not seems suitable for XS code.
+
+   Passing "" as $eol to encode_qp() disable soft line
+   breaks as well.
+
+   Sync up with changes in bleadperl:
+       - safer patchlevel.h include
+       - bad cast
+
+
+
+2003-01-05   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.16
+
+   Fixed the encode_qp() line breaking code.  It sometimes
+   made lines longer than 76 chars and it could even get into
+   an infinite loop on certain inputs.
+
+
+
+2003-01-03   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.15
+
+   Fixed the XS based decode_qp() for strings where a =XX
+   sequence was followed by digits.
+
+   Faster encode_qp() for long strings with lots of chars
+   that need escaping.
+
+   The old_decode_base64() function introduced in 2.13
+   was returning undef for empty input on olders perls.
+   This problem has been fixed.
+
+
+
+2003-01-01   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.14
+
+   MIME::QuotedPrint functions now also implemented using XS
+   which make them faster.  2-3 times faster when encoding line by
+   line and as much as 200 times faster on long binary input.  There
+   is probably some breakage on non-ASCII systems from this.
+
+   The encode_qp() function now takes an $eol argument in the
+   same way as encode_base64() does.
+
+   Slight change in behaviour: the decode_qp() function now turns
+   \r\n terminated lines into \n terminated lines.  This makes is
+   more likely that encode_qp(decode_qp()) round-trip properly.
+
+   Included {en,de}code-{base64,qp} utility scripts.
+
+
+
+2002-12-27   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.13
+
+   Sync up with bleadperl:
+       - Documentation update
+       - EBCDIC support
+       - Whitespace tweaks
+       - Improved Unicode support
+       - Test suite tweaks
+
+   Improved version of the old_{en,de}code_base64 functions
+   contributed by Paul Szabo <psz@maths.usyd.edu.au>.
+
+
+
 2001-02-23   Gisle Aas <gisle@ActiveState.com>
 
    Release 2.12

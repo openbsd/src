@@ -1,5 +1,5 @@
-# SpecialCasing-3.2.0.txt
-# Date: 2002-03-19,23:31:42 GMT [MD]
+# SpecialCasing-4.0.0.txt
+# Date: 2003-03-14, 20:22:04 GMT [MD]
 #
 # Special Casing Properties
 #
@@ -7,9 +7,10 @@
 # It contains additional information about the casing of Unicode characters.
 # (For compatibility, the UnicodeData.txt file only contains case mappings for
 # characters where they are 1-1, and does not have locale-specific mappings.)
-# For more information, see
-# UTR #21 Case Mappings, at http://www.unicode.org/unicode/reports/tr21/
+# For more information, see the discussion of Case Mappings in the Unicode Standard.
 #
+# All code points not listed in this file that do not have a simple case mappings
+# in UnicodeData.txt map to themselves.
 # ================================================================================
 # Format
 # ================================================================================
@@ -34,10 +35,10 @@
 # <ISO_3166_code> := 2-letter ISO country code,
 # <ISO_639_code> :=  2-letter ISO language code
 #
-# A context is one of the following, as defined in UAX #21: Case Mappings:
-#   Final_Sigma, After_Soft_Dotted, More_Above, Before_Dot
+# A context is one of the following, as defined in the Unicode Standard:
+#   Final_Sigma, After_Soft_Dotted, More_Above, Before_Dot, Not_Before_Dot, After_I
 #
-# Parsers of this file must be prepared to deal future additions to this format:
+# Parsers of this file must be prepared to deal with future additions to this format:
 #  * Additional contexts
 #  * Additional fields
 # ================================================================================
@@ -231,14 +232,14 @@ FB17; FB17; 0544 056D; 0544 053D; # ARMENIAN SMALL LIGATURE MEN XEH
 # I and i-dotless; I-dot and i are case pairs in Turkish and Azeri
 # The following rules handle those cases.
 
-0130; 0069; 0130; 0130; tr # LATIN CAPITAL LETTER I WITH DOT ABOVE
-0130; 0069; 0130; 0130; az # LATIN CAPITAL LETTER I WITH DOT ABOVE
+0130; 0069; 0130; 0130; tr; # LATIN CAPITAL LETTER I WITH DOT ABOVE
+0130; 0069; 0130; 0130; az; # LATIN CAPITAL LETTER I WITH DOT ABOVE
 
 # When lowercasing, remove dot_above in the sequence I + dot_above, which will turn into i.
 # This matches the behavior of the canonically equivalent I-dot_above
 
-0307; ; 0307; 0307; tr After_Soft_Dotted; # COMBINING DOT ABOVE
-0307; ; 0307; 0307; az After_Soft_Dotted; # COMBINING DOT ABOVE
+0307; ; 0307; 0307; tr After_I; # COMBINING DOT ABOVE
+0307; ; 0307; 0307; az After_I; # COMBINING DOT ABOVE
 
 # When lowercasing, unless an I is before a dot_above, it turns into a dotless i.
 

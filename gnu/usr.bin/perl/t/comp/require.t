@@ -11,8 +11,8 @@ $i = 1;
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 23;
-if ($Is_EBCDIC || $Is_UTF8) { $total_tests = 20; }
+my $total_tests = 30;
+if ($Is_EBCDIC || $Is_UTF8) { $total_tests = 27; }
 print "1..$total_tests\n";
 
 sub do_require {
@@ -129,6 +129,23 @@ do "bleah.do";
 dofile();
 sub dofile { do "bleah.do"; };
 print $x;
+
+# Test that scalar context is forced for require
+
+write_file('bleah.pm', <<'**BLEAH**'
+print "not " if !defined wantarray || wantarray ne '';
+print "ok $i - require() context\n";
+1;
+**BLEAH**
+);
+                              delete $INC{"bleah.pm"}; ++$::i;
+$foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+@foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+       eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+       eval q{$_=$_+2;require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+$foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+@foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+       eval  {require bleah};
 
 # UTF-encoded things - skipped on EBCDIC machines and on UTF-8 input
 

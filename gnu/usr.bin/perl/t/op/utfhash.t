@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
     require './test.pl';
 
-    plan(tests => 91);
+    plan(tests => 97);
 }
 
 use strict;
@@ -169,4 +169,17 @@ foreach my $a ("\x7f","\xff")
     is ($l, $r, "\\w on each, utf8 now bytes");
   }
 
+}
+
+{
+  # See if utf8 barewords work [perl #22969]
+  use utf8;
+  my %hash = (тест => 123);
+  is($hash{тест}, $hash{'тест'});
+  is($hash{тест}, 123);
+  is($hash{'тест'}, 123);
+  %hash = (тест => 123);
+  is($hash{тест}, $hash{'тест'});
+  is($hash{тест}, 123);
+  is($hash{'тест'}, 123);
 }

@@ -18,45 +18,97 @@ extern "C" {
 }
 #endif
 
-static IV
-constant(char *name, int arg)
-{
-    errno = 0;
-    switch (*name) {
-    case 'I':
-      if (strEQ(name, "ITIMER_REAL"))
-#ifdef ITIMER_REAL
-	return ITIMER_REAL;
-#else
-	goto not_there;
-#endif
-      if (strEQ(name, "ITIMER_REALPROF"))
-#ifdef ITIMER_REALPROF
-	return ITIMER_REALPROF;
-#else
-	goto not_there;
-#endif
-      if (strEQ(name, "ITIMER_VIRTUAL"))
-#ifdef ITIMER_VIRTUAL
-	return ITIMER_VIRTUAL;
-#else
-	goto not_there;
-#endif
-      if (strEQ(name, "ITIMER_PROF"))
-#ifdef ITIMER_PROF
-	return ITIMER_PROF;
-#else
-	goto not_there;
-#endif
-      break;
-    }
-    errno = EINVAL;
-    return 0;
+#ifndef aTHX_
+#    define aTHX_
+#    define pTHX_
+#endif         
 
-not_there:
-    errno = ENOENT;
-    return 0;
+#ifndef NVTYPE
+#   if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE)
+#       define NVTYPE long double
+#   else
+#       define NVTYPE double
+#   endif
+typedef NVTYPE NV;
+#endif
+
+#ifndef IVdf
+#  ifdef IVSIZE
+#      if IVSIZE == LONGSIZE
+#           define	IVdf		"ld"
+#           define	UVuf		"lu"
+#       else
+#           if IVSIZE == INTSIZE
+#               define	IVdf	"d"
+#               define	UVuf	"u"
+#           endif
+#       endif
+#   else
+#       define	IVdf	"ld"
+#       define	UVuf	"lu"
+#   endif
+#endif
+
+#ifndef NVef
+#   if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE) && \
+	defined(PERL_PRIgldbl) /* Not very likely, but let's try anyway. */ 
+#       define NVgf		PERL_PRIgldbl
+#   else
+#       define NVgf		"g"
+#   endif
+#endif
+
+#ifndef INT2PTR
+
+#if (IVSIZE == PTRSIZE) && (UVSIZE == PTRSIZE)
+#  define PTRV                  UV
+#  define INT2PTR(any,d)        (any)(d)
+#else
+#  if PTRSIZE == LONGSIZE
+#    define PTRV                unsigned long
+#  else
+#    define PTRV                unsigned
+#  endif
+#  define INT2PTR(any,d)        (any)(PTRV)(d)
+#endif
+#define PTR2IV(p)       INT2PTR(IV,p)
+
+#endif /* !INT2PTR */
+
+#ifndef SvPV_nolen
+static char *
+sv_2pv_nolen(pTHX_ register SV *sv)
+{
+    STRLEN n_a;
+    return sv_2pv(sv, &n_a);
 }
+#   define SvPV_nolen(sv) \
+        ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+         ? SvPVX(sv) : sv_2pv_nolen(sv))
+#endif
+
+#ifndef PerlProc_pause
+#   define PerlProc_pause() Pause()
+#endif
+
+/* Though the cpp define ITIMER_VIRTUAL is available the functionality
+ * is not supported in Cygwin as of August 2002, ditto for Win32.
+ * Neither are ITIMER_PROF or ITIMER_REALPROF implemented.  --jhi
+ */
+#if defined(__CYGWIN__) || defined(WIN32)
+#   undef ITIMER_VIRTUAL
+#   undef ITIMER_PROF
+#   undef ITIMER_REALPROF
+#endif
+
+/* 5.004 doesn't define PL_sv_undef */
+#ifndef ATLEASTFIVEOHOHFIVE
+#ifndef PL_sv_undef
+#define PL_sv_undef sv_undef
+#endif
+#endif
+
+#include "const-c.inc"
 
 #if !defined(HAS_GETTIMEOFDAY) && defined(WIN32)
 #define HAS_GETTIMEOFDAY
@@ -286,6 +338,25 @@ gettimeofday (struct timeval *tp, void *tpz)
  return 0;
 }
 #endif
+
+
+ /* Do not use H A S _ N A N O S L E E P
+  * so that Perl Configure doesn't scan for it.
+  * The TIME_HIRES_NANOSLEEP is set by Makefile.PL. */
+#if !defined(HAS_USLEEP) && defined(TIME_HIRES_NANOSLEEP)
+#define HAS_USLEEP
+#define usleep hrt_nanosleep  /* could conflict with ncurses for static build */
+
+void
+hrt_nanosleep(unsigned long usec)
+{
+    struct timespec res;
+    res.tv_sec = usec/1000/1000;
+    res.tv_nsec = ( usec - res.tv_sec*1000*1000 ) * 1000;
+    nanosleep(&res, NULL);
+}
+#endif
+
 
 #if !defined(HAS_USLEEP) && defined(HAS_SELECT)
 #ifndef SELECT_IS_BROKEN
@@ -531,8 +602,6 @@ ualarm_AST(Alarm *a)
 
 #endif /* !HAS_UALARM && VMS */
 
-
-
 #ifdef HAS_GETTIMEOFDAY
 
 static int
@@ -562,6 +631,7 @@ MODULE = Time::HiRes            PACKAGE = Time::HiRes
 PROTOTYPES: ENABLE
 
 BOOT:
+#ifdef ATLEASTFIVEOHOHFIVE
 #ifdef HAS_GETTIMEOFDAY
 {
   UV auv[2];
@@ -570,11 +640,9 @@ BOOT:
     hv_store(PL_modglobal, "Time::U2time", 12, newSViv((IV) auv[0]), 0);
 }
 #endif
+#endif
 
-IV
-constant(name, arg)
-	char *		name
-	int		arg
+INCLUDE: const-xs.inc
 
 #if defined(HAS_USLEEP) && defined(HAS_GETTIMEOFDAY)
 
@@ -621,6 +689,17 @@ sleep(...)
 	         UV useconds = (UV)(1E6 * (seconds - (UV)seconds));
 		 if (seconds >= 1.0)
 		     sleep((U32)seconds);
+		 if ((IV)useconds < 0) {
+#if defined(__sparc64__) && defined(__GNUC__)
+		   /* Sparc64 gcc 2.95.3 (e.g. on NetBSD) has a bug
+		    * where (0.5 - (UV)(0.5)) will under certain
+		    * circumstances (if the double is cast to UV more
+		    * than once?) evaluate to -0.5, instead of 0.5. */
+		   useconds = -(IV)useconds;
+#endif
+		   if ((IV)useconds < 0)
+		     croak("Time::HiRes::sleep(%"NVgf"): internal error: useconds < 0 (unsigned %"UVuf" signed %"IVdf")", seconds, useconds, (IV)useconds);
+		 }
 		 usleep(useconds);
 	    } else
 	        croak("Time::HiRes::sleep(%"NVgf"): negative time not invented yet", seconds);
@@ -779,41 +858,3 @@ getitimer(which)
 
 #endif
 
-# $Id: HiRes.xs,v 1.11 1999/03/16 02:27:38 wegscd Exp wegscd $
-
-# $Log: HiRes.xs,v $
-# Revision 1.11  1999/03/16 02:27:38  wegscd
-# Add U2time, NVtime. Fix symbols for static link.
-#
-# Revision 1.10  1998/09/30 02:36:25  wegscd
-# Add VMS changes.
-#
-# Revision 1.9  1998/07/07 02:42:06  wegscd
-# Win32 usleep()
-#
-# Revision 1.8  1998/07/02 01:47:26  wegscd
-# Add Win32 code for gettimeofday.
-#
-# Revision 1.7  1997/11/13 02:08:12  wegscd
-# Add missing EXTEND in gettimeofday() scalar code.
-#
-# Revision 1.6  1997/11/11 02:32:35  wegscd
-# Do something useful when calling gettimeofday() in a scalar context.
-# The patch is courtesy of Gisle Aas.
-#
-# Revision 1.5  1997/11/06 03:10:47  wegscd
-# Fake ualarm() if we have setitimer.
-#
-# Revision 1.4  1997/11/05 05:41:23  wegscd
-# Turn prototypes ON (suggested by Gisle Aas)
-#
-# Revision 1.3  1997/10/13 20:56:15  wegscd
-# Add PROTOTYPES: DISABLE
-#
-# Revision 1.2  1997/05/23 01:01:38  wegscd
-# Conditional compilation, depending on what the OS gives us.
-#
-# Revision 1.1  1996/09/03 18:26:35  wegscd
-# Initial revision
-#
-#

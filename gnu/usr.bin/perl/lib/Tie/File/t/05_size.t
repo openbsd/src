@@ -86,7 +86,7 @@ print (! defined $r ? "ok $N\n" : "not ok $N \# was <$r>; should be UNDEF\n");
 # 20020326 Well, but happily, this test did fail today.
 
 # In the past, there was a bug in STORESIZE that it didn't correctly
-# remove deleted records from the the cache.  This wasn't detected
+# remove deleted records from the cache.  This wasn't detected
 # because these tests were all done with an empty cache.  populate()
 # will ensure that the cache is fully populated.
 sub populate {

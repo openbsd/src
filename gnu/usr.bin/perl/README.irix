@@ -96,6 +96,43 @@ and later are okay.
     Thanks to Hannu Napari <Hannu.Napari@hut.fi> for the IRIX
     pthreads patches information.
 
+=head2 Irix 5.3
+
+While running Configure and when building, you are likely to get
+quite a few of these warnings:
+
+  ld:
+  The shared object /usr/lib/libm.so did not resolve any symbols.
+        You may want to remove it from your link line.
+
+Ignore them: in IRIX 5.3 there is no way to quieten ld about this.
+
+During compilation you will see this warning from toke.c:
+
+  uopt: Warning: Perl_yylex: this procedure not optimized because it
+        exceeds size threshold; to optimize this procedure, use -Olimit option
+        with value >= 4252.
+
+Ignore the warning.
+
+In IRIX 5.3 and with Perl 5.8.1 (Perl 5.8.0 didn't compile in IRIX 5.3)
+the following failures are known.
+
+ Failed Test                  Stat Wstat Total Fail  Failed  List of Failed
+ --------------------------------------------------------------------------
+ ../ext/List/Util/t/shuffle.t    0   139    ??   ??       %  ??
+ ../lib/Math/Trig.t            255 65280    29   12  41.38%  24-29
+ ../lib/sort.t                   0   138   119   72  60.50%  48-119
+ 56 tests and 474 subtests skipped.
+ Failed 3/811 test scripts, 99.63% okay. 78/75813 subtests failed, 99.90% okay.
+
+They are suspected to be compiler errors (at least the shuffle.t
+failure is known from some IRIX 6 setups) and math library errors
+(the Trig.t failure), but since IRIX 5 is long since end-of-lifed,
+further fixes for the IRIX are unlikely.  If you can get gcc for 5.3,
+you could try that, too, since gcc in IRIX 6 is a known workaround for
+at least the shuffle.t and sort.t failures.
+
 =head1 AUTHOR
 
 Jarkko Hietaniemi <jhi@iki.fi>

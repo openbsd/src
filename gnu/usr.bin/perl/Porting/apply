@@ -2,7 +2,7 @@
 my $file = pop(@ARGV);
 my %meta;
 $ENV{'P4PORT'} = 'bactrian:1667';
-$ENV{'P4CLIENT'} = 'camel-linux';
+$ENV{'P4CLIENT'} = 'ni-s';
 open(FILE,$file) || die "Cannot open $file:$!";
 while (<FILE>)
  {
@@ -69,3 +69,4 @@ sub System
    _exit(exec $cmd);
   }
 }
+

@@ -16,7 +16,7 @@ use IO::Socket;
 use Net::Cmd;
 use Net::Config;
 
-$VERSION = "2.24"; # $Id: //depot/libnet/Net/SMTP.pm#25 $
+$VERSION = "2.26"; # $Id: //depot/libnet/Net/SMTP.pm#31 $
 
 @ISA = qw(Net::Cmd IO::Socket::INET);
 
@@ -26,11 +26,11 @@ sub new
  my $type = ref($self) || $self;
  my $host = shift if @_ % 2;
  my %arg  = @_; 
- my $hosts = defined $host ? [ $host ] : $NetConfig{smtp_hosts};
+ my $hosts = defined $host ? $host : $NetConfig{smtp_hosts};
  my $obj;
 
  my $h;
- foreach $h (@{$hosts})
+ foreach $h (@{ref($hosts) ? $hosts : [ $hosts ]})
   {
    $obj = $type->SUPER::new(PeerAddr => ($host = $h), 
 			    PeerPort => $arg{Port} || 'smtp(25)',
@@ -56,6 +56,7 @@ sub new
    return undef;
   }
 
+ ${*$obj}{'net_smtp_exact_addr'} = $arg{ExactAddresses};
  ${*$obj}{'net_smtp_host'} = $host;
 
  (${*$obj}{'net_smtp_banner'}) = $obj->message;
@@ -126,8 +127,11 @@ sub auth {
     # todo that we would really need to change the ISA hierarchy
     # so we dont inherit from IO::Socket, but instead hold it in an attribute
 
-    my @cmd = ("AUTH", $client->mechanism, MIME::Base64::encode_base64($str,''));
+    my @cmd = ("AUTH", $client->mechanism);
     my $code;
+
+    push @cmd, MIME::Base64::encode_base64($str,'')
+      if defined $str and length $str;
 
     while (($code = $self->command(@cmd)->response()) == CMD_MORE) {
       @cmd = (MIME::Base64::encode_base64(
@@ -164,9 +168,10 @@ sub hello
 	if $ok = $me->_HELO($domain);
   }
 
- $ok && $msg[0] =~ /\A\s*(\S+)/
-	? $1
-	: undef;
+ return undef unless $ok;
+
+ $msg[0] =~ /\A\s*(\S+)/;
+ return ($1 || " ");
 }
 
 sub supports {
@@ -180,16 +185,25 @@ sub supports {
 }
 
 sub _addr {
+  my $self = shift;
   my $addr = shift;
   $addr = "" unless defined $addr;
-  $addr =~ s/^\s*<?\s*|\s*>?\s*$//sg;
+
+  if (${*$self}{'net_smtp_exact_addr'}) {
+    return $1 if $addr =~ /^\s*(<.*>)\s*$/s;
+  }
+  else {
+    return $1 if $addr =~ /(<[^>]*>)/;
+    $addr =~ s/^\s+|\s+$//sg;
+  }
+
   "<$addr>";
 }
 
 sub mail
 {
  my $me = shift;
- my $addr = _addr(shift);
+ my $addr = _addr($me, shift);
  my $opts = "";
 
  if(@_)
@@ -217,7 +231,7 @@ sub mail
       {
        if(exists $esmtp->{DSN})
         {
-	 $opts .= " RET=" . uc $v
+	 $opts .= " RET=" . ((uc($v) eq "FULL") ? "FULL" : "HDRS");
         }
        else
         {
@@ -227,13 +241,36 @@ sub mail
 
      if(defined($v = delete $opt{Bits}))
       {
-       if(exists $esmtp->{'8BITMIME'})
+       if($v eq "8")
         {
-	 $opts .= $v == 8 ? " BODY=8BITMIME" : " BODY=7BIT"
+         if(exists $esmtp->{'8BITMIME'})
+          {
+	 $opts .= " BODY=8BITMIME";
+          }
+         else
+          {
+	 carp 'Net::SMTP::mail: 8BITMIME option not supported by host';
+          }
+        }
+       elsif($v eq "binary")
+        {
+         if(exists $esmtp->{'BINARYMIME'} && exists $esmtp->{'CHUNKING'})
+          {
+   $opts .= " BODY=BINARYMIME";
+   ${*$me}{'net_smtp_chunking'} = 1;
+          }
+         else
+          {
+   carp 'Net::SMTP::mail: BINARYMIME option not supported by host';
+          }
+        }
+       elsif(exists $esmtp->{'8BITMIME'} or exists $esmtp->{'BINARYMIME'})
+        {
+   $opts .= " BODY=7BIT";
         }
        else
         {
-	 carp 'Net::SMTP::mail: 8BITMIME option not supported by host';
+   carp 'Net::SMTP::mail: 8BITMIME and BINARYMIME options not supported by host';
         }
       }
 
@@ -241,7 +278,7 @@ sub mail
       {
        if(exists $esmtp->{CHECKPOINT})
         {
-	 $opts .= " TRANSID=" . _addr($v);
+	 $opts .= " TRANSID=" . _addr($me, $v);
         }
        else
         {
@@ -276,9 +313,9 @@ sub mail
  $me->_MAIL("FROM:".$addr.$opts);
 }
 
-sub send	  { shift->_SEND("FROM:" . _addr($_[0])) }
-sub send_or_mail  { shift->_SOML("FROM:" . _addr($_[0])) }
-sub send_and_mail { shift->_SAML("FROM:" . _addr($_[0])) }
+sub send	  { my $me = shift; $me->_SEND("FROM:" . _addr($me, $_[0])) }
+sub send_or_mail  { my $me = shift; $me->_SOML("FROM:" . _addr($me, $_[0])) }
+sub send_and_mail { my $me = shift; $me->_SAML("FROM:" . _addr($me, $_[0])) }
 
 sub reset
 {
@@ -335,7 +372,7 @@ sub recipient
  my $addr;
  foreach $addr (@_) 
   {
-    if($smtp->_RCPT("TO:" . _addr($addr) . $opts)) {
+    if($smtp->_RCPT("TO:" . _addr($smtp, $addr) . $opts)) {
       push(@ok,$addr) if $skip_bad;
     }
     elsif(!$skip_bad) {
@@ -356,10 +393,51 @@ sub data
 {
  my $me = shift;
 
- my $ok = $me->_DATA() && $me->datasend(@_);
+ if(exists ${*$me}{'net_smtp_chunking'})
+  {
+   carp 'Net::SMTP::data: CHUNKING extension in use, must call bdat instead';
+  }
+ else
+  {
+   my $ok = $me->_DATA() && $me->datasend(@_);
 
- $ok && @_ ? $me->dataend
-	   : $ok;
+   $ok && @_ ? $me->dataend
+	     : $ok;
+  }
+}
+
+sub bdat
+{
+ my $me = shift;
+
+ if(exists ${*$me}{'net_smtp_chunking'})
+  {
+   my $data = shift;
+
+   $me->_BDAT(length $data) && $me->rawdatasend($data) &&
+     $me->response() == CMD_OK;
+  }
+ else
+  {
+   carp 'Net::SMTP::bdat: CHUNKING extension is not in use, call data instead';
+  }
+}
+
+sub bdatlast
+{
+ my $me = shift;
+
+ if(exists ${*$me}{'net_smtp_chunking'})
+  {
+   my $data = shift;
+
+   $me->_BDAT(length $data, "LAST") && $me->rawdatasend($data) &&
+     $me->response() == CMD_OK;
+  }
+ else
+  {
+   carp 'Net::SMTP::bdat: CHUNKING extension is not in use, call data instead';
+  }
 }
 
 sub datafh {
@@ -418,6 +496,7 @@ sub _RSET { shift->command("RSET")->response()	    == CMD_OK }
 sub _NOOP { shift->command("NOOP")->response()	    == CMD_OK }   
 sub _QUIT { shift->command("QUIT")->response()	    == CMD_OK }   
 sub _DATA { shift->command("DATA")->response()	    == CMD_MORE } 
+sub _BDAT { shift->command("BDAT", @_) }
 sub _TURN { shift->unsupported(@_); } 			   	  
 sub _ETRN { shift->command("ETRN", @_)->response()  == CMD_OK }
 sub _AUTH { shift->command("AUTH", @_)->response()  == CMD_OK }   
@@ -491,6 +570,9 @@ known as mailhost:
 This is the constructor for a new Net::SMTP object. C<HOST> is the
 name of the remote host to which an SMTP connection is required.
 
+If C<HOST> is an array reference then each value will be attempted
+in turn until a connection is made.
+
 If C<HOST> is not given, then the C<SMTP_Host> specified in C<Net::Config>
 will be used.
 
@@ -506,6 +588,10 @@ to IO::Socket to allow binding the socket to a local port.
 
 B<Timeout> - Maximum time, in seconds, to wait for a response from the
 SMTP server (default: 120)
+
+B<ExactAddresses> - If true the all ADDRESS arguments must be as
+defined by C<addr-spec> in RFC2822. If not given, or false, then
+Net::SMTP will attempt to extract the address from the value passed.
 
 B<Debug> - Enable debugging information
 
@@ -572,11 +658,13 @@ The C<mail> method can some additional ESMTP OPTIONS which is passed
 in hash like fashion, using key and value pairs.  Possible options are:
 
  Size        => <bytes>
- Return      => <???>
- Bits        => "7" | "8"
+ Return      => "FULL" | "HDRS"
+ Bits        => "7" | "8" | "binary"
  Transaction => <ADDRESS>
  Envelope    => <ENVID>
 
+The C<Return> and C<Envelope> parameters are used for DSN (Delivery
+Status Notification).
 
 =item reset ()
 
@@ -647,8 +735,15 @@ Send the QUIT command to the remote SMTP server and close the socket connection.
 
 =head1 ADDRESSES
 
-All methods that accept addresses expect the address to be a valid rfc2821-quoted address, although
-Net::SMTP will accept accept the address surrounded by angle brackets.
+Net::SMTP attempts to DWIM with addresses that are passed. For
+example an application might extract The From: line from an email
+and pass that to mail(). While this may work, it is not reccomended.
+The application should really use a module like L<Mail::Address>
+to extract the mail address and pass that.
+
+If C<ExactAddresses> is passed to the contructor, then addresses
+should be a valid rfc2821-quoted address, although Net::SMTP will
+accept accept the address surrounded by angle brackets.
 
  funny user@domain      WRONG
  "funny user"@domain    RIGHT, recommended
@@ -670,6 +765,6 @@ it under the same terms as Perl itself.
 
 =for html <hr>
 
-I<$Id: //depot/libnet/Net/SMTP.pm#25 $>
+I<$Id: //depot/libnet/Net/SMTP.pm#31 $>
 
 =cut

@@ -15,7 +15,7 @@ plan tests => 2;
 # Everything loaded fine
 ok 1;
 
-if (($> and $^O ne 'VMS')
+if (($> and $^O ne 'VMS' and $^O ne 'cygwin')
     or ($^O eq 'MSWin32'
         and Win32::IsWinNT())
     or ($^O eq 'VMS'

@@ -1,6 +1,6 @@
 package B::Lint;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 =head1 NAME
 
@@ -56,6 +56,18 @@ and B<implicit-write> will warn about these:
 Both B<implicit-read> and B<implicit-write> warn about this:
 
     for (@a) { ... }
+
+=item B<bare-subs>
+
+This option warns whenever a bareword is implicitly quoted, but is also
+the name of a subroutine in the current package. Typical mistakes that it will
+trap are:
+
+	use constant foo => 'bar';
+	@a = ( foo => 1 );
+	$b{foo} = 2;
+
+Neither of these will do what a naive user would expect.
 
 =item B<dollar-underscore>
 
@@ -121,7 +133,7 @@ Malcolm Beattie, mbeattie@sable.ox.ac.uk.
 
 use strict;
 use B qw(walkoptree_slow main_root walksymtable svref_2object parents
-         OPf_WANT_LIST OPf_WANT OPf_STACKED G_ARRAY
+         OPf_WANT_LIST OPf_WANT OPf_STACKED G_ARRAY SVf_POK
         );
 
 my $file = "unknown";		# shadows current filename
@@ -145,7 +157,7 @@ my %valid_check;
 BEGIN {
     map($valid_check{$_}++,
 	qw(context implicit_read implicit_write dollar_underscore
-	   private_names undefined_subs regexp_variables));
+	   private_names bare_subs undefined_subs regexp_variables));
 }
 
 # Debugging options
@@ -238,6 +250,14 @@ sub B::LOOP::lint {
 
 sub B::SVOP::lint {
     my $op = shift;
+    if ( $check{bare_subs} && $op->name eq 'const'
+         && $op->private & 64 )		# OPpCONST_BARE = 64 in op.h
+    {
+	my $sv = $op->sv;
+	if( $sv->FLAGS & SVf_POK && exists &{$curstash.'::'.$sv->PV} ) {
+	    warning "Bare sub name '" . $sv->PV . "' interpreted as string";
+	}
+    }
     if ($check{dollar_underscore} && $op->name eq "gvsv"
 	&& $op->gv->NAME eq "_")
     {

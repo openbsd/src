@@ -1,7 +1,7 @@
 #  isc_2.sh
 #  Interactive Unix Version 2.2
 #  Compile perl entirely in posix mode. 
-#  Andy Dougherty		doughera@lafcol.lafayette.edu
+#  Andy Dougherty		doughera@lafayette.edu
 #  Wed Oct  5 15:57:37 EDT 1994
 #
 # Use Configure -Dcc=gcc to use gcc

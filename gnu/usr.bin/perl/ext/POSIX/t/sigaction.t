@@ -8,7 +8,7 @@ BEGIN {
 BEGIN{
 	# Don't do anything if POSIX is missing, or sigaction missing.
 	use Config;
-	eval { use POSIX; };
+	eval 'use POSIX';
 	if($@ || $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'dos' ||
 	   $^O eq 'MacOS' || ($^O eq 'VMS' && !$Config{'d_sigaction'})) {
 		print "1..0\n";
@@ -21,7 +21,7 @@ use vars qw/$bad7 $ok10 $bad18 $ok/;
 
 $^W=1;
 
-print "1..18\n";
+print "1..25\n";
 
 sub IGNORE {
 	$bad7=1;
@@ -133,3 +133,51 @@ if ($^O eq 'VMS') {
     print $bad18 ? "not ok 18\n" : "ok 18\n";
 }
 
+{
+    local $SIG{__WARN__} = sub { }; # Just suffer silently.
+
+    my $hup20;
+    my $hup21;
+
+    sub hup20 { $hup20++ }
+    sub hup21 { $hup21++ }
+
+    sigaction("FOOBAR", $newaction);
+    print "ok 19\n"; # no coredump, still alive
+
+    $newaction = POSIX::SigAction->new("hup20");
+    sigaction("SIGHUP", $newaction);
+    kill "HUP", $$;
+    print $hup20 == 1 ? "ok 20\n" : "not ok 20\n";
+
+    $newaction = POSIX::SigAction->new("hup21");
+    sigaction("HUP", $newaction);
+    kill "HUP", $$;
+    print $hup21 == 1 ? "ok 21\n" : "not ok 21\n";
+}
+
+# "safe" attribute.
+# for this one, use the accessor instead of the attribute
+
+# standard signal handling via %SIG is safe
+$SIG{HUP} = \&foo;
+$oldaction = POSIX::SigAction->new;
+sigaction(SIGHUP, undef, $oldaction);
+print $oldaction->safe ? "ok 22\n" : "not ok 22\n";
+
+# SigAction handling is not safe ...
+sigaction(SIGHUP, POSIX::SigAction->new(\&foo));
+sigaction(SIGHUP, undef, $oldaction);
+print $oldaction->safe ? "not ok 23\n" : "ok 23\n";
+
+# ... unless we say so!
+$newaction = POSIX::SigAction->new(\&foo);
+$newaction->safe(1);
+sigaction(SIGHUP, $newaction);
+sigaction(SIGHUP, undef, $oldaction);
+print $oldaction->safe ? "ok 24\n" : "not ok 24\n";
+
+# And safe signal delivery must work
+$ok = 0;
+kill 'HUP', $$;
+print $ok ? "ok 25\n" : "not ok 25\n";

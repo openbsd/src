@@ -73,3 +73,20 @@ sub try {
 for (1..5) { try() }
 ++$ord;
 print "ok $ord\n";
+
+# These tests disabled because the change #19064 was retracted.
+# http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2003-08/msg01485.html
+if (0) {
+# bug #21542 local $_[0] causes reify problems and coredumps
+
+sub local1 { local $_[0] }
+my $foo = 'foo'; local1($foo); local1($foo);
+print "got [$foo], expected [foo]\nnot " if $foo ne 'foo';
+$ord++;
+print "ok $ord\n";
+
+sub local2 { local $_[0]; last L }
+L: { local2 }
+$ord++;
+print "ok $ord\n";
+}

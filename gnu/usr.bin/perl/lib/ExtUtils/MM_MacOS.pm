@@ -12,13 +12,12 @@ require ExtUtils::MM_Unix;
 @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
 
 use vars qw($VERSION);
-$VERSION = '1.03';
+$VERSION = '1.07';
 
 use Config;
 use Cwd 'cwd';
 require Exporter;
 use File::Basename;
-use File::Spec;
 use vars qw(%make_data);
 
 my $Mac_FS = eval { require Mac::FileSpec::Unixish };
@@ -37,6 +36,8 @@ ExtUtils::MM_MacOS - methods to override UN*X behaviour in ExtUtils::MakeMaker
 
 MM_MacOS currently only produces an approximation to the correct Makefile.
 
+=over 4
+
 =cut
 
 sub new {
@@ -51,7 +52,7 @@ sub new {
 
     mkdir("Obj", 0777) unless -d "Obj";
 
-    $self = {} unless (defined $self);
+    $self = {} unless defined $self;
 
     check_hints($self);
 
@@ -61,7 +62,8 @@ sub new {
 	if (ref $self->{CONFIGURE} eq 'CODE') {
 	    $self = { %$self, %{&{$self->{CONFIGURE}}}};
 	} else {
-	    Carp::croak "Attribute 'CONFIGURE' to WriteMakefile() not a code reference\n";
+            require Carp;
+	    Carp::croak("Attribute 'CONFIGURE' to WriteMakefile() not a code reference\n");
 	}
     }
 
@@ -78,7 +80,7 @@ sub new {
     }
 
     $ExtUtils::MakeMaker::Recognized_Att_Keys{$_} = 1
-	for map { $_ . 'Optimize' } qw(MWC MWCPPC MWC68K MPW MRC MRC SC);
+      for map { $_ . 'Optimize' } qw(MWC MWCPPC MWC68K MPW MRC MRC SC);
 
     if (defined $ExtUtils::MakeMaker::Parent[-2]){
         $self->{PARENT} = $ExtUtils::MakeMaker::Parent[-2];
@@ -86,7 +88,7 @@ sub new {
         for $key (@ExtUtils::MakeMaker::Prepend_parent) {
             next unless defined $self->{PARENT}{$key};
             $self->{$key} = $self->{PARENT}{$key};
-            unless ($^O eq 'VMS' && $key =~ /PERL$/) {
+            if ($key !~ /PERL$/) {
                 $self->{$key} = $self->catdir("..",$self->{$key})
                   unless $self->file_name_is_absolute($self->{$key});
             } else {
@@ -130,7 +132,7 @@ sub new {
 # This Makefile is for the $self->{NAME} extension to perl.
 #
 # It was generated automatically by MakeMaker version
-# $VERSION (Revision: $Revision) from the contents of
+# $ExtUtils::MakeMaker::VERSION (Revision: $ExtUtils::MakeMaker::Revision) from the contents of
 # Makefile.PL. Don't edit this file, edit Makefile.PL instead.
 #
 #	ANY CHANGES MADE HERE WILL BE LOST!
@@ -158,10 +160,10 @@ END
 	    pasthru c_o xs_c xs_o top_targets linkext 
 	    dynamic_bs dynamic_lib static_lib manifypods
 	    installbin subdirs dist_basics dist_core
-	    dist_dir dist_test dist_ci install force perldepend makefile
-	    staticmake test pm_to_blib selfdocument 
+	    distdir dist_test dist_ci install force perldepend makefile
+	    staticmake test pm_to_blib selfdocument
 	    const_loadlibs const_cccmd
-    /) 
+    /)
     {
 	$self->{SKIPHASH}{$_} = 2;
     }
@@ -169,7 +171,7 @@ END
     	unless grep /rulez/, @ExtUtils::MakeMaker::MM_Sections;
 
     if ($self->{PARENT}) {
-	for (qw/install dist dist_basics dist_core dist_dir dist_test dist_ci/) {
+	for (qw/install dist dist_basics dist_core distdir dist_test dist_ci/) {
 	    $self->{SKIPHASH}{$_} = 1;
 	}
     }
@@ -182,7 +184,8 @@ END
 
     my $section;
     foreach $section ( @ExtUtils::MakeMaker::MM_Sections ){
-    	next if ($self->{SKIPHASH}{$section} == 2);
+    	next if defined $self->{SKIPHASH}{$section} &&
+                $self->{SKIPHASH}{$section} == 2;
 	print "Processing Makefile '$section' section\n" if ($Verbose >= 2);
 	$self->{ABSTRACT_FROM} = macify($self->{ABSTRACT_FROM})
 		if $self->{ABSTRACT_FROM};
@@ -242,7 +245,7 @@ sub guess_name {
 
 =item macify
 
-Translate relative path names into Mac names.
+Translate relative Unix filepaths into Mac names.
 
 =cut
 
@@ -262,20 +265,21 @@ sub macify {
 	}
 	push(@mac, $_);
     }
-    
+
     return "@mac";
 }
 
 =item patternify
 
-Translate to Mac names & patterns
+Translate Unix filepaths and shell globs to Mac style.
 
 =cut
 
 sub patternify {
     my($unix) = @_;
     my(@mac);
-    
+    use ExtUtils::MakeMaker::bytes; # Non-UTF-8 high bytes below.
+
     foreach (split(/[ \t\n]+/, $unix)) {
 	if (m|/|) {
 	    $_ = ":$_";
@@ -285,13 +289,13 @@ sub patternify {
 	    push(@mac, $_);
 	}
     }
-    
+
     return "@mac";
 }
 
 =item init_main
 
-Initializes some of NAME, FULLEXT, BASEEXT, ROOTEXT, DLBASE, PERL_SRC,
+Initializes some of NAME, FULLEXT, BASEEXT, DLBASE, PERL_SRC,
 PERL_LIB, PERL_ARCHLIB, PERL_INC, INSTALLDIRS, INST_*, INSTALL*,
 PREFIX, CONFIG, AR, AR_STATIC_ARGS, LD, OBJ_EXT, LIB_EXT, MAP_TARGET,
 LIBPERL_A, VERSION_FROM, VERSION, DISTNAME, VERSION_SYM.
@@ -306,14 +310,10 @@ sub init_main {
     # NAME    = The perl module name for this extension (eg DBD::Oracle).
     # FULLEXT = Pathname for extension directory (eg DBD/Oracle).
     # BASEEXT = Basename part of FULLEXT. May be just equal FULLEXT.
-    # ROOTEXT = Directory part of FULLEXT with trailing :.
     ($self->{FULLEXT} =
      $self->{NAME}) =~ s!::!:!g ;		     #eg. BSD:Foo:Socket
     ($self->{BASEEXT} =
      $self->{NAME}) =~ s!.*::!! ;		             #eg. Socket
-    ($self->{ROOTEXT} =
-     $self->{FULLEXT}) =~ s#:?\Q$self->{BASEEXT}\E$## ;      #eg. BSD:Foo
-    $self->{ROOTEXT} .= ":" if ($self->{ROOTEXT});
 
     # --- Initialize PERL_LIB, INST_LIB, PERL_SRC
 
@@ -339,21 +339,15 @@ sub init_main {
 	}
     }
     if ($self->{PERL_SRC}){
-	$self->{MACPERL_SRC}  = File::Spec->catdir("$self->{PERL_SRC}","macos:");
-	$self->{MACPERL_LIB}  ||= File::Spec->catdir("$self->{MACPERL_SRC}","lib");
-	$self->{PERL_LIB}     ||= File::Spec->catdir("$self->{PERL_SRC}","lib");
+	$self->{PERL_LIB}     ||= $self->catdir("$self->{PERL_SRC}","lib");
 	$self->{PERL_ARCHLIB} = $self->{PERL_LIB};
 	$self->{PERL_INC}     = $self->{PERL_SRC};
-	$self->{MACPERL_INC}  = $self->{MACPERL_SRC};
     } else {
 # hmmmmmmm ... ?
-    $self->{PERL_LIB} ||= "$ENV{MACPERL}site_perl";
-	$self->{PERL_ARCHLIB} = $self->{PERL_LIB};
-	$self->{PERL_INC}     = $ENV{MACPERL};
-#    	die <<END;
-#On MacOS, we need to build under the Perl source directory or have the MacPerl SDK
-#installed in the MacPerl folder.
-#END
+        $self->{PERL_LIB}    ||= "$ENV{MACPERL}site_perl";
+	$self->{PERL_ARCHLIB} =  $self->{PERL_LIB};
+	$self->{PERL_INC}     =  $ENV{MACPERL};
+        $self->{PERL_SRC}     = '';
     }
 
     $self->{INSTALLDIRS} = "perl";
@@ -368,12 +362,13 @@ sub init_main {
     # hm ... do we really care?  at all?
 #    warn "Warning: PERL_LIB ($self->{PERL_LIB}) seems not to be a perl library directory
 #        (Exporter.pm not found)"
-#	unless -f File::Spec->catfile("$self->{PERL_LIB}","Exporter.pm") ||
+#	unless -f $self->catfile("$self->{PERL_LIB}","Exporter.pm") ||
 #        $self->{NAME} eq "ExtUtils::MakeMaker";
 
     # Determine VERSION and VERSION_FROM
     ($self->{DISTNAME}=$self->{NAME}) =~ s#(::)#-#g unless $self->{DISTNAME};
     if ($self->{VERSION_FROM}){
+        # XXX replace with parse_version() override
 	local *FH;
 	open(FH,macify($self->{VERSION_FROM})) or
 	    die "Could not open '$self->{VERSION_FROM}' (attribute VERSION_FROM): $!";
@@ -410,18 +405,32 @@ sub init_main {
     # XS_VERSION macro that defaults to VERSION:
     $self->{XS_VERSION} ||= $self->{VERSION};
 
+
+    $self->{DEFINE} .= " \$(XS_DEFINE_VERSION) \$(DEFINE_VERSION)";
+
+    # Preprocessor definitions may be useful
+    $self->{DEFINE} =~ s/-D/-d /g; 
+
+    # UN*X includes probably are not useful
+    $self->{DEFINE} =~ s/-I\S+/_include($1)/eg;
+
+
+    if ($self->{INC}) {
+        # UN*X includes probably are not useful
+    	$self->{INC} =~ s/-I(\S+)/_include($1)/eg;
+    }
+
+
     # --- Initialize Perl Binary Locations
 
     # Find Perl 5. The only contract here is that both 'PERL' and 'FULLPERL'
     # will be working versions of perl 5. miniperl has priority over perl
     # for PERL to ensure that $(PERL) is usable while building ./ext/*
     my ($component,@defpath);
-    foreach $component ($self->{PERL_SRC}, File::Spec->path(), $Config::Config{binexp}) {
+    foreach $component ($self->{PERL_SRC}, $self->path(), $Config::Config{binexp}) {
 	push @defpath, $component if defined $component;
     }
     $self->{PERL} = "$self->{PERL_SRC}miniperl";
-    $self->{FULLPERL} = "$self->{PERL_SRC}perl";
-    $self->{MAKEFILE} = "Makefile.mk";
 }
 
 =item init_others
@@ -457,6 +466,51 @@ sub init_others {	# --- Initialize Other Attributes
 	}
     }
     $self->{SOURCE} = $src;
+    $self->{FULLPERL} = "$self->{PERL_SRC}perl";
+    $self->{MAKEFILE}       = "Makefile.mk";
+    $self->{FIRST_MAKEFILE} = $self->{MAKEFILE};
+    $self->{MAKEFILE_OLD}   = $self->{MAKEFILE}.'.old';
+
+    $self->{'DEV_NULL'} ||= ' \xB3 Dev:Null';
+
+    return 1;
+}
+
+=item init_platform
+
+Add MACPERL_SRC MACPERL_LIB
+
+=item platform_constants
+
+Add MACPERL_SRC MACPERL_LIB MACLIBS_68K MACLIBS_PPC MACLIBS_SC MACLIBS_MRC
+MACLIBS_ALL_68K MACLIBS_ALL_PPC MACLIBS_SHARED
+
+XXX Few are initialized.  How many of these are ever used?
+
+=cut
+
+sub init_platform {
+    my $self = shift;
+
+    $self->{MACPERL_SRC}  = $self->catdir("$self->{PERL_SRC}","macos:");
+    $self->{MACPERL_LIB}  ||= $self->catdir("$self->{MACPERL_SRC}","lib");
+    $self->{MACPERL_INC}  = $self->{MACPERL_SRC};
+}
+
+
+
+sub platform_constants {
+    my $self = shift;
+
+    foreach my $macro (qw(MACPERL_SRC MACPERL_LIB MACLIBS_68K MACLIBS_PPC 
+                          MACLIBS_SC  MACLIBS_MRC MACLIBS_ALL_68K 
+                          MACLIBS_ALL_PPC MACLIBS_SHARED))
+    {
+        next unless defined $self->{$macro};
+        $make_frag .= "$macro = $self->{$macro}\n";
+    }
+
+    return $make_frag;
 }
 
 
@@ -474,7 +528,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
     # in case we don't find it below!
     if ($self->{VERSION_FROM}) {
         my $version_from = macify($self->{VERSION_FROM});
-        $pm{$version_from} = File::Spec->catfile('$(INST_LIBDIR)',
+        $pm{$version_from} = $self->catfile('$(INST_LIBDIR)',
             $version_from);
     }
 
@@ -483,6 +537,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 	next if ($name =~ /^\./ or $ignore{$name});
 	next unless $self->libscan($name);
 	if (-d $name){
+            next if $self->{NORECURS};
 	    $dir{$name} = $name if (-f ":$name:Makefile.PL");
 	} elsif ($name =~ /\.xs$/){
 	    my($c); ($c = $name) =~ s/\.xs$/.c/;
@@ -494,7 +549,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 	} elsif ($name =~ /\.h$/i){
 	    $h{$name} = 1;
 	} elsif ($name =~ /\.(p[ml]|pod)$/){
-	    $pm{$name} = File::Spec->catfile('$(INST_LIBDIR)',$name);
+	    $pm{$name} = $self->catfile('$(INST_LIBDIR)',$name);
 	} elsif ($name =~ /\.PL$/ && $name ne "Makefile.PL") {
 	    ($pl_files{$name} = $name) =~ s/\.PL$// ;
 	}
@@ -523,8 +578,8 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
     #
     # In this way the 'lib' directory is seen as the root of the actual
     # perl library whereas the others are relative to INST_LIBDIR
-    # (which includes ROOTEXT). This is a subtle distinction but one
-    # that's important for nested modules.
+    # This is a subtle distinction but one that's important for nested 
+    # modules.
 
     $self->{PMLIBDIRS} = ['lib', $self->{BASEEXT}]
 	unless $self->{PMLIBDIRS};
@@ -544,7 +599,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 	require File::Find;
 	File::Find::find(sub {
 	    if (-d $_){
-		if ($_ eq "CVS" || $_ eq "RCS"){
+	        unless ($self->libscan($_)){
 		    $File::Find::prune = 1;
 		}
 		return;
@@ -553,7 +608,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 	    my($striplibpath,$striplibname);
 	    $prefix =  '$(INST_LIB)' if (($striplibpath = $path) =~ s:^(\W*)lib\W:$1:);
 	    ($striplibname,$striplibpath) = fileparse($striplibpath);
-	    my($inst) = File::Spec->catfile($prefix,$striplibpath,$striplibname);
+	    my($inst) = $self->catfile($prefix,$striplibpath,$striplibname);
 	    local($_) = $inst; # for backwards compatibility
 	    $inst = $self->libscan($inst);
 	    print "libscan($path) => '$inst'\n" if ($Verbose >= 2);
@@ -578,103 +633,39 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
     }
 }
 
-=item libscan (o)
 
-Takes a path to a file that is found by init_dirscan and returns false
-if we don't want to include this file in the library. Mainly used to
-exclude RCS, CVS, and SCCS directories from installation.
+=item init_VERSION (o)
+
+Change DEFINE_VERSION and XS_DEFINE_VERSION
 
 =cut
 
-# ';
+sub init_VERSION {
+    my $self = shift;
 
-sub libscan {
-    my($self,$path) = @_;
-    return '' if $path =~ m/:(RCS|CVS|SCCS):/ ;
-    $path;
+    $self->SUPER::init_VERSION;
+
+    $self->{DEFINE_VERSION}    = '-d $(VERSION_MACRO)="�"$(VERSION)�""';
+    $self->{XS_DEFINE_VERSION} = '-d $(XS_VERSION_MACRO)="�"$(XS_VERSION)�""';
 }
 
-=item constants (o)
 
-Initializes lots of constants and .SUFFIXES and .PHONY
+=item special_targets (o)
+
+Add .INCLUDE
 
 =cut
 
-sub constants {
-    my($self) = @_;
-    my(@m,$tmp);
+sub special_targets {
+    my $self = shift;
 
-    for $tmp (qw/
-	      NAME DISTNAME NAME_SYM VERSION VERSION_SYM XS_VERSION
-	      INST_LIB INST_ARCHLIB PERL_LIB PERL_SRC MACPERL_SRC MACPERL_LIB PERL FULLPERL
-	      XSPROTOARG MACLIBS_68K MACLIBS_PPC MACLIBS_SC MACLIBS_MRC MACLIBS_ALL_68K MACLIBS_ALL_PPC MACLIBS_SHARED SOURCE TYPEMAPS
-	      / ) {
-	next unless defined $self->{$tmp};
-	if ($tmp eq 'TYPEMAPS' && ref $self->{$tmp}) {
-	    push @m, sprintf "$tmp = %s\n", join " ", @{$self->{$tmp}};
-	} else {
-	    push @m, "$tmp = $self->{$tmp}\n";
-	}
-    }
+    my $make_frag = $self->SUPER::special_targets;
 
-    push @m, q{
-MODULES = }.join(" \\\n\t", sort keys %{$self->{PM}})."\n";
-    push @m, "PMLIBDIRS = @{$self->{PMLIBDIRS}}\n" if @{$self->{PMLIBDIRS}};
+    return $make_frag . <<'MAKE_FRAG';
+.INCLUDE : $(MACPERL_SRC)BuildRules.mk $(MACPERL_SRC)ExtBuildRules.mk
 
-    push @m, '
+MAKE_FRAG
 
-.INCLUDE : $(MACPERL_SRC)BuildRules.mk
-
-';
-
-    push @m, qq{
-VERSION_MACRO = VERSION
-DEFINE_VERSION = -d \$(VERSION_MACRO)="�"\$(VERSION)�""
-XS_VERSION_MACRO = XS_VERSION
-XS_DEFINE_VERSION = -d \$(XS_VERSION_MACRO)="�"\$(XS_VERSION)�""
-};
-
-    $self->{DEFINE} .= " \$(XS_DEFINE_VERSION) \$(DEFINE_VERSION)";
-
-    push @m, qq{
-MAKEMAKER = $INC{'ExtUtils/MakeMaker.pm'}
-MM_VERSION = $ExtUtils::MakeMaker::VERSION
-};
-
-    push @m, q{
-# FULLEXT = Pathname for extension directory (eg DBD:Oracle).
-# BASEEXT = Basename part of FULLEXT. May be just equal FULLEXT.
-# ROOTEXT = Directory part of FULLEXT (eg DBD)
-# DLBASE  = Basename part of dynamic library. May be just equal BASEEXT.
-};
-
-    if ($self->{DEFINE}) {
-    	$self->{DEFINE} =~ s/-D/-d /g; # Preprocessor definitions may be useful
-    	$self->{DEFINE} =~ s/-I\S+/_include($1)/eg; # UN*X includes probably are not useful
-    }
-    if ($self->{INC}) {
-    	$self->{INC} =~ s/-I(\S+)/_include($1)/eg; # UN*X includes probably are not useful
-    }
-    for $tmp (qw/
-	      FULLEXT BASEEXT ROOTEXT DEFINE INC
-	      /	) {
-	next unless defined $self->{$tmp};
-	push @m, "$tmp = $self->{$tmp}\n";
-    }
-
-    push @m, "
-# Handy lists of source code files:
-XS_FILES= ".join(" \\\n\t", sort keys %{$self->{XS}})."
-C_FILES = ".join(" \\\n\t", @{$self->{C}})."
-H_FILES = ".join(" \\\n\t", @{$self->{H}})."
-";
-
-    push @m, '
-
-.INCLUDE : $(MACPERL_SRC)ExtBuildRules.mk
-';
-
-    join('',@m);
 }
 
 =item static (o)
@@ -765,31 +756,55 @@ sub clean {
 # Delete temporary files but do not touch installed files. We don\'t delete
 # the Makefile here so a later make realclean still has a makefile to use.
 
-clean ::
+clean :: clean_subdirs
 ');
-    # clean subdirectories first
-    for $dir (@{$self->{DIR}}) {
-	push @m, 
-"	Set OldEcho \{Echo\}
-	Set Echo 0
-	Directory $dir
-	If \"\`Exists -f $self->{MAKEFILE}\`\" != \"\"
-	    \$(MAKE) clean
-	End
-	Set Echo \{OldEcho\}
-	";
-    }
 
     my(@otherfiles) = values %{$self->{XS}}; # .c files from *.xs files
     push(@otherfiles, patternify($attribs{FILES})) if $attribs{FILES};
     push @m, "\t\$(RM_RF) @otherfiles\n";
     # See realclean and ext/utils/make_ext for usage of Makefile.old
     push(@m,
-	 "\t\$(MV) $self->{MAKEFILE} $self->{MAKEFILE}.old\n");
+	 "\t\$(MV) \$(FIRST_MAKEFILE) \$(MAKEFILE_OLD)\n");
     push(@m,
 	 "\t$attribs{POSTOP}\n")   if $attribs{POSTOP};
     join("", @m);
 }
+
+=item clean_subdirs_target
+
+MacOS semantics for changing directories and checking for existence
+very different than everyone else.
+
+=cut
+
+sub clean_subdirs_target {
+    my($self) = shift;
+
+    # No subdirectories, no cleaning.
+    return <<'NOOP_FRAG' unless @{$self->{DIR}};
+clean_subdirs :
+	$(NOECHO)$(NOOP)
+NOOP_FRAG
+
+
+    my $clean = "clean_subdirs :\n";
+
+    for my $dir (@{$self->{DIR}}) {
+        $clean .= sprintf <<'MAKE_FRAG', $dir;
+	Set OldEcho {Echo}
+	Set Echo 0
+	Directory %s
+	If "`Exists -f $(FIRST_MAKEFILE)`" != ""
+	    $(MAKE) clean
+	End
+	Set Echo {OldEcho}
+	
+MAKE_FRAG
+    }
+
+    return $clean;
+}
+
 
 =item realclean (o)
 
@@ -804,27 +819,49 @@ sub realclean {
 # Delete temporary files (via clean) and also delete installed files
 realclean purge ::  clean
 ');
-    # realclean subdirectories first (already cleaned)
-    my $sub = 
-"	Set OldEcho \{Echo\}
-	Set Echo 0
-	Directory %s
-	If \"\`Exists -f %s\`\" != \"\"
-	    \$(MAKE) realclean
-	End
-	Set Echo \{OldEcho\}
-	";
-    foreach(@{$self->{DIR}}){
-	push(@m, sprintf($sub,$_,"$self->{MAKEFILE}.old","-f $self->{MAKEFILE}.old"));
-	push(@m, sprintf($sub,$_,"$self->{MAKEFILE}",''));
-    }
-    my(@otherfiles) = ($self->{MAKEFILE},
-		       "$self->{MAKEFILE}.old"); # Makefiles last
+
+    my(@otherfiles) = ('$(FIRST_MAKEFILE)', '$(MAKEFILE_OLD)'); # Makefiles last
     push(@otherfiles, patternify($attribs{FILES})) if $attribs{FILES};
     push(@m, "\t\$(RM_RF) @otherfiles\n") if @otherfiles;
     push(@m, "\t$attribs{POSTOP}\n")       if $attribs{POSTOP};
     join("", @m);
 }
+
+
+=item realclean_subdirs_target
+
+MacOS semantics for changing directories and checking for existence
+very different than everyone else.
+
+=cut
+
+sub realclean_subdirs_target {
+    my $self = shift;
+
+    return <<'NOOP_FRAG' unless @{$self->{DIR}};
+realclean_subdirs :
+	$(NOECHO)$(NOOP)
+NOOP_FRAG
+
+    my $rclean = "realclean_subdirs :\n";
+
+    foreach my $dir (@{$self->{DIR}}){
+        $rclean .= sprintf <<'RCLEAN', $dir, 
+	Set OldEcho \{Echo\}
+	Set Echo 0
+	Directory %s
+	If \"\`Exists -f $(FIRST_MAKEFILE)\`\" != \"\"
+	    \$(MAKE) realclean
+	End
+	Set Echo \{OldEcho\}
+
+RCLEAN
+
+    }
+
+    return $rclean;
+}
+
 
 =item rulez (o)
 
@@ -838,11 +875,6 @@ install install_static install_dynamic ::
 
 .INCLUDE : \$(MACPERL_SRC)BulkBuildRules.mk
 ';
-}
-
-sub xsubpp_version
-{
-    return $ExtUtils::MakeMaker::Version;
 }
 
 
@@ -863,7 +895,7 @@ sub processPL {
 	foreach $target (@$list) {
 	push @m, "
 ProcessPL :: $target
-\t$self->{NOECHO}\$(NOOP)
+\t$(NOECHO)\$(NOOP)
 
 $target :: $plfile
 \t\$(PERL) -I\$(MACPERL_LIB) -I\$(PERL_LIB) $plfile $target
@@ -875,14 +907,15 @@ $target :: $plfile
 
 sub cflags {
     my($self,$libperl) = @_;
-    my $optimize;
+    my $optimize = '';
 
     for (map { $_ . "Optimize" } qw(MWC MWCPPC MWC68K MPW MRC MRC SC)) {
-	$optimize .= "$_ = $self->{$_}" if exists $self->{$_};
+        $optimize .= "$_ = $self->{$_}" if exists $self->{$_};
     }
 
     return $self->{CFLAGS} = $optimize;
 }
+
 
 sub _include {  # for Unix-style includes, with -I instead of -i
 	my($inc) = @_;
@@ -896,45 +929,18 @@ sub _include {  # for Unix-style includes, with -I instead of -i
 	}
 }
 
-# yes, these are just copies of the same routines in
-# MakeMaker.pm, but with paths changed.
-sub check_hints {
-    my($self) = @_;
-    # We allow extension-specific hints files.
+=item os_flavor
 
-    return unless -d ":hints";
+MacOS Classic is MacOS and MacOS Classic.
 
-    # First we look for the best hintsfile we have
-    my($hint)="${^O}_$Config{osvers}";
-    $hint =~ s/\./_/g;
-    $hint =~ s/_$//;
-    return unless $hint;
+=cut
 
-    # Also try without trailing minor version numbers.
-    while (1) {
-        last if -f ":hints:$hint.pl";      # found
-    } continue {
-        last unless $hint =~ s/_[^_]*$//; # nothing to cut off
-    }
-    my $hint_file = ":hints:$hint.pl";
-
-    return unless -f $hint_file;    # really there
-
-    _run_hintfile($self, $hint_file);
+sub os_flavor {
+    return('MacOS', 'MacOS Classic');
 }
 
-sub _run_hintfile {
-    no strict 'vars';
-    local($self) = shift;       # make $self available to the hint file.
-    my($hint_file) = shift;
+=back
 
-    local $@;
-    print STDERR "Processing hints file $hint_file\n";
-    my $ret = do $hint_file;
-    unless( defined $ret ) {
-        print STDERR $@ if $@;
-    }
-}
+=cut
+
 1;
-
-__END__

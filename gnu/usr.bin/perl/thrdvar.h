@@ -1,6 +1,6 @@
 /*    thdrvar.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1999, 2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -144,9 +144,9 @@ PERLVARI(Tprotect,	protect_proc_t,	MEMBER_TO_FPTR(Perl_default_protect))
 PERLVARI(Terrors,	SV *, Nullsv)	/* outstanding queued errors */
 
 /* statics "owned" by various functions */
-PERLVAR(Tav_fetch_sv,	SV *)		/* owned by av_fetch() */
-PERLVAR(Thv_fetch_sv,	SV *)		/* owned by hv_fetch() */
-PERLVAR(Thv_fetch_ent_mh, HE)		/* owned by hv_fetch_ent() */
+PERLVAR(Tav_fetch_sv,	SV *)		/* unused as of change #19268 */
+PERLVAR(Thv_fetch_sv,	SV *)		/* unused as of change #19268 */
+PERLVAR(Thv_fetch_ent_mh, HE*)		/* owned by hv_fetch_ent() */
 
 PERLVAR(Tmodcount,	I32)		/* how much mod()ification in assignment? */
 
@@ -273,4 +273,6 @@ PERLVAR(thr_done,	bool)		/* True when the thread has finished */
 #endif /* USE_5005THREADS */
 
 PERLVAR(Treg_match_utf8,	bool)		/* was what we matched against utf8 */
+
+PERLVAR(Tcomppad,	AV *)		/* storage for lexically scoped temporaries */
 

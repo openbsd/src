@@ -1,3 +1,110 @@
+2003-10-09   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.30
+
+   Some tweaks to make the module build on perl-5.004 and
+   perl-5.005 again.
+
+
+
+2003-10-06   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.29
+
+   Another try.  Forgot to update the test checksums.
+
+
+
+2003-10-06   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.28
+
+   Fix minor documentation typo.
+
+
+
+2003-08-04   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.27
+
+   Avoid having to figure how to compile alignment test program
+   on MS-Windows by just assume free alignment as for i386.  Source
+   builds on Windows was apparently broken.
+
+
+
+2003-07-21   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.26
+
+   Don't assume PerlIO_read() works like fread() even though
+   it was documented like that for perl 5.6.  It returns negative
+   on read failure.
+
+   Kill test #3 in t/badfile.t.  I don't know a reliable way
+   to test read failures on a file handle.  Seems better not to
+   test than to make many worry.
+
+
+
+2003-07-04   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.25
+
+   The $md5->addfile method now croaks if it discovers
+   errors on the handle after reading from it.  This should
+   make it more difficult to end up with the wrong digest
+   just because you are to lazy to check the error status
+   on your file handles after reading from them.
+
+   Improved documentation.
+
+   Sync up with bleadperl; even safer patchlevel include.
+
+
+
+2003-03-09   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.24
+
+   Don't let the $^W test get confused by lexical warnings.
+
+   Sync up with bleadperl; safer patchlevel include.
+
+
+
+2003-01-18   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.23
+
+   Override INSTALLDIRS for 5.8 as suggested by
+   Guido Ostkamp <Guido.Ostkamp@t-online.de>.
+
+
+
+2003-01-04   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.22.
+
+   Added clone method.
+   Contributed by Holger Smolinski <holger@kunterbunt.bb.bawue.de>
+
+
+
+2002-12-27   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.21
+
+   Minor tweaks sync up with bleadperl:
+     - VMS optimizer tweaks to the Makefile.PL
+     - MacOS support
+     - Added alignment test
+
+   Added example to the MD5 POD that shows how to calculate the
+   digest of Unicode strings.
+
+
+
 2002-05-05   Gisle Aas <gisle@ActiveState.com>
 
    Release 2.20
@@ -49,7 +156,7 @@
    Release 2.16
 
    Sync up with the bleadperl version:
-      - use SvPVbyte() if avaiable
+      - use SvPVbyte() if available
       - fixes to make the code 'gcc -Wall'-clean
 
 
@@ -58,7 +165,7 @@
 
    Release 2.15
 
-   Avoid exit() in Makefile.PL and bleedperls redefinition of printf
+   Avoid exit() in Makefile.PL and bleadperl redefinition of printf
    in the alignment test program.
    Patch by Doug MacEachern <dougm@covalent.net>.
 
@@ -75,7 +182,7 @@
    Document the missing padding for the base64 digests.
 
    If both XS bootstrap and locating Digest::Perl::MD5 fails
-   reraise the original XS bootstrap exception.
+   re-raise the original XS bootstrap exception.
 
 
 
@@ -318,7 +425,7 @@
    $md5->digest will automatically reset now.
 
    Digest::HMAC methods add() and addfile() did not return the
-   corret object.
+   correct object.
 
    Added Digest.pm loading module.  I am not sure this is a good idea.
 
@@ -461,7 +568,7 @@ amount of data passed to any single call to the underlying MD5
 routines is limited to (2^32 - 1) bytes -- that's 4 gigabytes. I'm
 sorry if that's a real problem for you ...
 
-And finally, a minor complilation warning (unsigned char * used with
+And finally, a minor compilation warning (unsigned char * used with
 function having char * prototype) has also been eliminated.
 
 *** 96/04/09 Version 1.6
@@ -483,7 +590,7 @@ examples as to how the routines might be used.
 *** 96/03/12 Version 1.5.2
 
 Minor fixes from Christopher J Madsen <madsen@computek.net> to provide
-support for building on OS/2 (and to work arround a perl -w bug).
+support for building on OS/2 (and to work around a perl -w bug).
 
 Remove warning about possible difference between add('foo', 'bar') and
 add('foobar'). This is not true (it may have been true in the earliest

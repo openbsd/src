@@ -1,7 +1,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib .);
+    push @INC, '../lib','.';
     require Config; import Config;
     unless ($Config{'useithreads'}) {
         print "1..0 # Skip: no useithreads\n";
@@ -12,7 +12,7 @@ BEGIN {
 
 use ExtUtils::testlib;
 use strict;
-BEGIN { $| = 1; print "1..24\n" };
+BEGIN { $| = 1; print "1..26\n" };
 use threads;
 use threads::shared;
 
@@ -140,4 +140,23 @@ package main;
     ok($th);
     ok($th->join());
 }
+{
+    # there is a little chance this test case will falsly fail
+    # since it tests rand	
+    my %rand : shared;
+    rand(10);
+    threads->new( sub { $rand{int(rand(10000000000))}++ } ) foreach 1..25;
+    $_->join foreach threads->list;
+#    use Data::Dumper qw(Dumper);
+#    print Dumper(\%rand);
+    #$val = rand();
+    ok((keys %rand == 25), "Check that rand works after a new thread");
+}
+
+# bugid #24165
+
+run_perl(prog =>
+    'use threads; sub a{threads->new(shift)} $t = a sub{}; $t->tid; $t->join; $t->tid');
+is($?, 0, 'coredump in global destruction');
+
 

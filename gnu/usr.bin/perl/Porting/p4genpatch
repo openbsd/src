@@ -23,7 +23,7 @@ $0 =~ s|^.*[\\/]||;
 my $VERSION = '0.05';
 my $TOPDIR = cwd();
 my @P4opt;
-our %OPT = ( "d" => "u", b => "//depot/perl", "D" => "diff" );
+our %OPT = ( "d" => "u", b => "//depot/perl/", "D" => "diff" );
 Getopt::Long::Configure("no_ignore_case");
 GetOptions(\%OPT, "b=s", "p=s", "d=s", "D=s", "h", "v", "V") or die Usage;
 print Usage and exit if $OPT{h};
@@ -42,6 +42,7 @@ while (<$p4>) {
   print;
   next unless m|($OPT{b})|;
   my($prefix) = $1;
+  $prefix =~ s|/$||;
   $prefix =~ s|/[^/]+$||; # up to the last "/" in the match is to be stripped
   if (my($file,$action) = m|^\.\.\. (//depot.*)\s(\w+)$|) {
     next if $action eq "delete";
@@ -160,9 +161,10 @@ sub Usage () {
       -p host:port    p4 port (e.g. myhost:1666)
       -d diffopt      option to pass to diff(1)
       -D diff         diff(1) to use
-      -b branch(es)   which branches to include (regex); everything up
-                      to the last slash of matched portion of path is
-                      stripped on local copy (default: //depot/perl)
+      -b branch(es)   which branches to include (regex); the last
+                      directory within the matched part will be
+                      preserved on the local copy, so that patch -p1
+                      will work (default: "//depot/perl/")
       -v              verbose
       -h              print this help and exit
       -V              print version number and exit

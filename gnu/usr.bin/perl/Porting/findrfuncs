@@ -114,7 +114,7 @@ for my $exe (@EXES) {
         $sym =~ s/^\s+//;
         $sym =~ s/^([0-9A-Fa-f]+\s+)?[Uu]\s+//;
         $sym =~ s/\s+[Uu]\s+-$//;
-        next if /\s/;
+        next if $sym =~ /\s/;
         $sym =~ s/\@.*\z//;	# remove @@GLIBC_2.0 etc
         # warn "#### $sym\n";
         if (exists $rfuncs{"${sym}_r"} && ! $syms{"$sym:$exe"}++) {

@@ -135,6 +135,8 @@ This is an href link2: http://example.com/foo/bar.html
 
 This is an email link: mailto:foo@bar.com
 
+    This is a link in a verbatim block <a href="http://perl.org"> Perl </a>
+
 =head1 SEE ALSO
 
 See also L<Test Page 2|htmlescp>, the L<Your::Module> and L<Their::Module>

@@ -3,6 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 # Script to test auto flush on fork/exec/system/qx.  The idea is to
@@ -23,17 +24,19 @@ my $fflushall = defined $Config{fflushall} ? $Config{fflushall} eq 'define' ? 1 
 my $d_fork = defined $Config{d_fork} ? $Config{d_fork} eq 'define' ? 1 : 0 : 0;
 
 if ($useperlio || $fflushNULL || $d_sfio) {
-    print "1..4\n";
+    print "1..7\n";
 } else {
     if ($fflushall) {
-	print "1..4\n";
+	print "1..7\n";
     } else {
 	print "1..0 # Skip: fflush(NULL) or equivalent not available\n";
         exit;
     }
 }
 
-my $runperl = qq{$^X "-I../lib"};
+my $runperl = $^X =~ m/\s/ ? qq{"$^X"} : $^X;
+$runperl .= qq{ "-I../lib"};
+
 my @delete;
 
 END {
@@ -129,3 +132,16 @@ for (qw(system qx popen)) {
     push @delete, $f;
     ++$t;
 }
+
+my $cmd = _create_runperl(
+			  switches => ['-l'],
+			  prog =>
+			  sprintf('print qq[ok $_] for (%d..%d)', $t, $t+2));
+print "# cmd = '$cmd'\n";
+open my $CMD, "$cmd |" or die "Can't open pipe to '$cmd': $!";
+while (<$CMD>) {
+    system("$runperl -e 0");
+    print;
+}
+close $CMD;
+$t += 3;

@@ -112,6 +112,63 @@ $ENV{PROCESSOR_ARCHITECTURE}. This might not work on Win9X.
 does not return a UNC path, since the functionality required for such
 a feature is not available under Windows 95.
 
+=item Win32::GetFolderPath(FOLDER [, CREATE])
+
+[EXT] Returns the full pathname of one of the Windows special folders.
+The folder will be created if it doesn't exist and the optional CREATE
+argument is true.  The following FOLDER constants are defined by the
+Win32 module, but only exported on demand:
+
+        CSIDL_ADMINTOOLS
+        CSIDL_APPDATA
+        CSIDL_CDBURN_AREA
+        CSIDL_COMMON_ADMINTOOLS
+        CSIDL_COMMON_APPDATA
+        CSIDL_COMMON_DESKTOPDIRECTORY
+        CSIDL_COMMON_DOCUMENTS
+        CSIDL_COMMON_FAVORITES
+        CSIDL_COMMON_MUSIC
+        CSIDL_COMMON_PICTURES
+        CSIDL_COMMON_PROGRAMS
+        CSIDL_COMMON_STARTMENU
+        CSIDL_COMMON_STARTUP
+        CSIDL_COMMON_TEMPLATES
+        CSIDL_COMMON_VIDEO
+        CSIDL_COOKIES
+        CSIDL_DESKTOP
+        CSIDL_DESKTOPDIRECTORY
+        CSIDL_FAVORITES
+        CSIDL_FONTS
+        CSIDL_HISTORY
+        CSIDL_INTERNET_CACHE
+        CSIDL_LOCAL_APPDATA
+        CSIDL_MYMUSIC
+        CSIDL_MYPICTURES
+        CSIDL_MYVIDEO
+        CSIDL_NETHOOD
+        CSIDL_PERSONAL
+        CSIDL_PRINTHOOD
+        CSIDL_PROFILE
+        CSIDL_PROGRAMS
+        CSIDL_PROGRAM_FILES
+        CSIDL_PROGRAM_FILES_COMMON
+        CSIDL_RECENT
+        CSIDL_RESOURCES
+        CSIDL_RESOURCES_LOCALIZED
+        CSIDL_SENDTO
+        CSIDL_STARTMENU
+        CSIDL_STARTUP
+        CSIDL_SYSTEM
+        CSIDL_TEMPLATES
+        CSIDL_WINDOWS
+
+Note that not all folders are defined on all versions of Windows.
+
+Please refer to the MSDN documentation of the CSIDL constants,
+currently available at:
+
+http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/enums/csidl.asp
+
 =item Win32::GetFullPathName(FILENAME)
 
 [CORE] GetFullPathName combines the FILENAME with the current drive
@@ -148,12 +205,12 @@ available drive letter.
 
 =item Win32::GetOSVersion()
 
-[CORE] Returns the array (STRING, MAJOR, MINOR, BUILD, ID), where the
+[CORE] Returns the list (STRING, MAJOR, MINOR, BUILD, ID), where the
 elements are, respectively: An arbitrary descriptive string, the major
 version number of the operating system, the minor version number, the
 build number, and a digit indicating the actual operating system.
-For the ID, the values are 0 for Win32s, 1 for Windows 9X and 2 for
-Windows NT/2000/XP.  In scalar context it returns just the ID.
+For the ID, the values are 0 for Win32s, 1 for Windows 9X/Me and 2 for
+Windows NT/2000/XP/2003.  In scalar context it returns just the ID.
 
 Currently known values for ID MAJOR and MINOR are as follows:
 
@@ -166,10 +223,41 @@ Currently known values for ID MAJOR and MINOR are as follows:
     Windows NT 4           2      4       0
     Windows 2000           2      5       0
     Windows XP             2      5       1
-    Windows .NET Server    2      5       1
+    Windows Server 2003    2      5       2
 
-Unfortunately as of June 2002 there is no way to distinguish between
-.NET servers and XP servers without using additional modules.
+On Windows NT 4 SP6 and later this function returns the following
+additional values: SPMAJOR, SPMINOR, SUITEMASK, PRODUCTTYPE.
+
+SPMAJOR and SPMINOR are are the version numbers of the latest
+installed service pack.
+
+SUITEMASK is a bitfield identifying the product suites available on
+the system.  Known bits are:
+
+    VER_SUITE_SMALLBUSINESS             0x00000001
+    VER_SUITE_ENTERPRISE                0x00000002
+    VER_SUITE_BACKOFFICE                0x00000004
+    VER_SUITE_COMMUNICATIONS            0x00000008
+    VER_SUITE_TERMINAL                  0x00000010
+    VER_SUITE_SMALLBUSINESS_RESTRICTED  0x00000020
+    VER_SUITE_EMBEDDEDNT                0x00000040
+    VER_SUITE_DATACENTER                0x00000080
+    VER_SUITE_SINGLEUSERTS              0x00000100
+    VER_SUITE_PERSONAL                  0x00000200
+    VER_SUITE_BLADE                     0x00000400
+    VER_SUITE_EMBEDDED_RESTRICTED       0x00000800
+    VER_SUITE_SECURITY_APPLIANCE        0x00001000
+
+The VER_SUITE_xxx names are listed here to crossreference the Microsoft
+documentation.  The Win32 module does not provide symbolic names for these
+constants.
+
+PRODUCTTYPE provides additional information about the system.  It should
+be one of the following integer values:
+
+    1 - Workstation (NT 4, 2000 Pro, XP Home, XP Pro)
+    2 - Domaincontroller
+    3 - Server
 
 =item Win32::GetOSName()
 
@@ -182,13 +270,18 @@ GetOSVersion() in list context.
 
 Currently the possible values for the OS name are
 
-  Win32s Win95 Win98 WinMe Win2000 WinXP/.Net WinNT3.51 WinNT4
+ Win32s Win95 Win98 WinMe WinNT3.51 WinNT4 Win2000 WinXP/.Net Win2003
 
 This routine is just a simple interface into GetOSVersion().  More
 specific or demanding situations should use that instead.  Another
 option would be to use POSIX::uname(), however the latter appears to
 report only the OS family name and not the specific OS.  In scalar
 context it returns just the ID.
+
+The name "WinXP/.Net" is used for historical reasons only, to maintain
+backwards compatibility of the Win32 module.  Windows .NET Server has
+been renamed as Windows 2003 Server before final release and uses a
+different major/minor version number than Windows XP.
 
 =item Win32::GetShortPathName(PATHNAME)
 

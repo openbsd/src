@@ -1,10 +1,10 @@
 package File::Spec::Epoc;
 
-our $VERSION = '1.00';
-
 use strict;
-use Cwd;
-use vars qw(@ISA);
+use vars qw($VERSION @ISA);
+
+$VERSION = '1.1';
+
 require File::Spec::Unix;
 @ISA = qw(File::Spec::Unix);
 
@@ -23,19 +23,27 @@ there. This package overrides the implementation of these methods, not
 the semantics.
 
 This package is still work in progress ;-)
+
+=head1 AUTHORS
+
 o.flebbe@gmx.de
 
-
-=over 4
+=cut
 
 sub case_tolerant {
     return 1;
 }
 
+=pod
+
+=over 4
+
 =item canonpath()
 
 No physical check on the filesystem, but a logical cleanup of a
 path. On UNIX eliminated successive slashes and successive "/.".
+
+=back
 
 =cut
 
@@ -50,11 +58,12 @@ sub canonpath {
     return $path;
 }
 
-=back
+=pod
 
 =head1 SEE ALSO
 
-L<File::Spec>
+See L<File::Spec> and L<File::Spec::Unix>.  This package overrides the
+implementation of these methods, not the semantics.
 
 =cut
 

@@ -15,9 +15,8 @@ use Cwd;
 # This is so that make depend always knows where to find PL derivatives.
 $origdir = cwd;
 chdir(dirname($0));
-($file = basename($0)) =~ s/\.PL$//;
-$file =~ s/\.pl$// if ($^O eq 'os2' or $^O eq 'dos');  # "case-forgiving"
-$file =~ s/\.pl$/.com/ if ($^O eq 'VMS');              # "case-forgiving"
+$file = basename($0, '.PL');
+$file .= '.com' if $^O eq 'VMS';
 
 open OUT,">$file" or die "Can't create $file: $!";
 
@@ -72,7 +71,7 @@ Print the manual page and exit.
 =item B<-section>S< >I<section-spec>
 
 Specify a section to include in the output.
-See L<Pod::Select/"SECTION SPECIFICATIONS">
+See L<Pod::Parser/"SECTION SPECIFICATIONS">
 for the format to use for I<section-spec>.
 This option may be given multiple times on the command line.
 

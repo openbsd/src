@@ -10,9 +10,8 @@
 # Meaning: General Category 'Lm'
 #
 return <<'END';
-02B0	02B8	
-02BB	02C1	
-02D0	02D1	
+02B0	02C1	
+02C6	02D1	
 02E0	02E4	
 02EE		
 037A		
@@ -23,6 +22,7 @@ return <<'END';
 0EC6		
 17D7		
 1843		
+1D2C	1D61	
 3005		
 3031	3035	
 303B		

@@ -17,9 +17,30 @@
 #include "time.h"
 #include "cectype.h"
 
+#ifndef START_EXTERN_C
+#undef EXTERN_C
+#ifdef __cplusplus
+#  define START_EXTERN_C extern "C" {
+#  define END_EXTERN_C }
+#  define EXTERN_C extern "C"
+#else
+#  define START_EXTERN_C
+#  define END_EXTERN_C
+#  define EXTERN_C
+#endif
+#endif
+
+START_EXTERN_C 
+
+#ifndef _IOFBF
 #define _IOFBF          0x0000
+#endif
+#ifndef _IOLBF
 #define _IOLBF          0x0040
+#endif
+#ifndef _IONBF
 #define _IONBF          0x0004
+#endif
 
 #if UNDER_CE <= 200
 XCE_EXPORT double xceatof(const char *);
@@ -29,7 +50,7 @@ XCE_EXPORT int xcetolower(int c);
 #define toupper xcetoupper
 #define tolower xcetolower
 #else
-double atof(const char *);
+XCE_EXPORT double atof(const char *);
 #endif
 
 XCE_EXPORT void XCEShowMessageA(const char *fmt, ...);
@@ -43,6 +64,7 @@ XCE_EXPORT void XCEShowMessageA(const char *fmt, ...);
 #define ftime xceftime
 #define ctime xcectime
 #define gettimeofday xcegettimeofday
+#define GetSystemTimeAsFileTime XCEGetSystemTimeAsFileTime
 
 XCE_EXPORT int xcesetuid(uid_t id);
 XCE_EXPORT int xceseteuid(uid_t id);
@@ -123,11 +145,12 @@ XCE_EXPORT FARPROC XCEAPI XCEGetProcAddressA(HMODULE hMod, const char *name);
 #define strupr  xcestrupr
 #define time    xcetime
 
-XCE_EXPORT LPVOID XCEGetEnvironmentStrings(VOID);
 XCE_EXPORT BOOL XCEFreeEnvironmentStrings(LPCSTR buf);
 #define GetEnvironmentStrings XCEGetEnvironmentStrings
 #define FreeEnvironmentStrings XCEFreeEnvironmentStrings
 
 void wce_hitreturn();
+
+END_EXTERN_C 
 
 #endif

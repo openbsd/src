@@ -1,9 +1,9 @@
 package File::Spec;
 
 use strict;
-our(@ISA, $VERSION);
+use vars qw(@ISA $VERSION);
 
-$VERSION = 0.83 ;
+$VERSION = '0.86';
 
 my %module = (MacOS   => 'Mac',
 	      MSWin32 => 'Win32',
@@ -125,10 +125,10 @@ Returns a string representation of the root directory.
 =item tmpdir
 
 Returns a string representation of the first writable directory from a
-list of possible temporary directories.  Returns "" if no writable
-temporary directories are found.  The list of directories checked
-depends on the platform; e.g. File::Spec::Unix checks $ENV{TMPDIR} and
-/tmp.
+list of possible temporary directories.  Returns the current directory
+if no writable temporary directories are found.  The list of directories
+checked depends on the platform; e.g. File::Spec::Unix checks $ENV{TMPDIR}
+(unless taint is on) and /tmp.
 
     $tmpdir = File::Spec->tmpdir();
 
@@ -164,7 +164,8 @@ Mac OS (Classic).  It does consult the working environment for VMS
 
 =item path
 
-Takes no argument, returns the environment variable PATH as an array.
+Takes no argument, returns the environment variable PATH (or the local
+platform's equivalent) as a list.
 
     @PATH = File::Spec->path();
 
@@ -175,7 +176,7 @@ join is the same as catfile.
 =item splitpath
 
 Splits a path in to volume, directory, and filename portions. On systems
-with no concept of volume, returns undef for volume. 
+with no concept of volume, returns '' for volume. 
 
     ($volume,$directories,$file) = File::Spec->splitpath( $path );
     ($volume,$directories,$file) = File::Spec->splitpath( $path, $no_file );
@@ -207,7 +208,7 @@ on some OSs.
 =item catpath()
 
 Takes volume, directory and file portions and returns an entire path. Under
-Unix, $volume is ignored, and directory and file are catenated.  A '/' is
+Unix, $volume is ignored, and directory and file are concatenated.  A '/' is
 inserted if need be.  On other OSs, $volume is significant.
 
     $full_path = File::Spec->catpath( $volume, $directory, $file );
@@ -220,12 +221,16 @@ from the base path to the destination path:
     $rel_path = File::Spec->abs2rel( $path ) ;
     $rel_path = File::Spec->abs2rel( $path, $base ) ;
 
-If $base is not present or '', then L<cwd()|Cwd> is used. If $base is relative, 
-then it is converted to absolute form using L</rel2abs()>. This means that it
-is taken to be relative to L<cwd()|Cwd>.
+If $base is not present or '', then L<cwd()|Cwd> is used. If $base is
+relative, then it is converted to absolute form using
+L</rel2abs()>. This means that it is taken to be relative to
+L<cwd()|Cwd>.
 
-On systems with the concept of a volume, this assumes that both paths 
-are on the $destination volume, and ignores the $base volume. 
+On systems with the concept of volume, if $path and $base appear to be
+on two different volumes, we will not attempt to resolve the two
+paths, and we will instead simply return $path.  Note that previous
+versions of this module ignored the volume of $base, which resulted in
+garbage results part of the time.
 
 On systems that have a grammar that indicates filenames, this ignores the 
 $base filename as well. Otherwise all path components are assumed to be
@@ -251,8 +256,11 @@ If $base is not present or '', then L<cwd()|Cwd> is used. If $base is relative,
 then it is converted to absolute form using L</rel2abs()>. This means that it
 is taken to be relative to L<cwd()|Cwd>.
 
-On systems with the concept of a volume, this assumes that both paths 
-are on the $base volume, and ignores the $path volume. 
+On systems with the concept of volume, if $path and $base appear to be
+on two different volumes, we will not attempt to resolve the two
+paths, and we will instead simply return $path.  Note that previous
+versions of this module ignored the volume of $base, which resulted in
+garbage results part of the time.
 
 On systems that have a grammar that indicates filenames, this ignores the 
 $base filename as well. Otherwise all path components are assumed to be
@@ -281,7 +289,7 @@ L<ExtUtils::MakeMaker>
 =head1 AUTHORS
 
 Kenneth Albanowski <kjahds@kjahds.com>, Andy Dougherty
-<doughera@lafcol.lafayette.edu>, Andreas KE<ouml>nig
+<doughera@lafayette.edu>, Andreas KE<ouml>nig
 <A.Koenig@franz.ww.TU-Berlin.DE>, Tim Bunce <Tim.Bunce@ig.co.uk.
 VMS support by Charles Bailey <bailey@newman.upenn.edu>.
 OS/2 support by Ilya Zakharevich <ilya@math.ohio-state.edu>.
@@ -290,3 +298,5 @@ Mac support by Paul Schinder <schinder@pobox.com>, and Thomas Wegner
 Yamaguchi <shigio@tamacom.com>, modified by Barrie Slaymaker
 <barries@slaysys.com>.  splitpath(), splitdir(), catpath() and
 catdir() by Barrie Slaymaker.
+
+=cut

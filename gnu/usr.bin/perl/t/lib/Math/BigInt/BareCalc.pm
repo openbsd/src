@@ -8,13 +8,13 @@ require Exporter;
 use vars qw/@ISA $VERSION/;
 @ISA = qw(Exporter);
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 # Package to to test Bigint's simulation of Calc
 
 # uses Calc, but only features the strictly necc. methods.
 
-use Math::BigInt::Calc '0.29';
+use Math::BigInt::Calc '0.33';
 
 BEGIN
   {
@@ -28,6 +28,7 @@ BEGIN
     my $name  = "Math::BigInt::Calc::_$_";
     *{"Math::BigInt::BareCalc::_$_"} = \&$name;
     }
+  print "# BareCalc using Calc v$Math::BigInt::Calc::VERSION\n";
   }
 
 # catch and throw away

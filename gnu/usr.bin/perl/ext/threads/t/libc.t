@@ -1,7 +1,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    push @INC, '../lib';
     require Config; import Config;
     unless ($Config{'useithreads'}) {
         print "1..0 # Skip: no useithreads\n";

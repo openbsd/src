@@ -28,8 +28,8 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 617
-    + 1;		# our onw tests
+  plan tests => 679
+    + 1;		# our own tests
   }
 
 print "# ",Math::BigInt->config()->{lib},"\n";

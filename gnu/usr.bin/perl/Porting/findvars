@@ -1,4 +1,4 @@
-#!/l/local/bin/perl -w
+#!/usr/bin/perl -w
 
 $pat = '';
 # construct word list

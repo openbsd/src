@@ -10,9 +10,11 @@
 # Meaning: General Category 'Cf'
 #
 return <<'END';
+00AD		
+0600	0603	
 06DD		
 070F		
-180E		
+17B4	17B5	
 200C	200F	
 202A	202E	
 2060	2063	

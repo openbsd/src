@@ -177,7 +177,7 @@ template doesn't match the incoming data, Perl will scream and die.
 
 Hence, putting it all together:
 
-    my($date,$description,$income,$expend) = unpack("A10xA27xA7A*", $_);
+    my($date,$description,$income,$expend) = unpack("A10xA27xA7xA*", $_);
 
 Now, that's our data parsed. I suppose what we might want to do now is
 total up our income and expenditure, and add another line to the end of
@@ -373,7 +373,7 @@ you have to import it with C<use Config>.)
      s!     S!      sizeof(short)      $Config{shortsize}
      i!     I!      sizeof(int)        $Config{intsize}
      l!     L!      sizeof(long)       $Config{longsize}
-     q!     Q!      sizeof(longlong)   $Config{longlongsize}
+     q!     Q!      sizeof(long long)  $Config{longlongsize}
 
 The C<i!> and C<I!> codes aren't different from C<i> and C<I>; they are
 tolerated for completeness' sake.
@@ -422,6 +422,8 @@ together, we may now write:
        $ax,$al,$ah, $bx,$bl,$bh, $cx,$cl,$ch, $dx,$dl,$dh, 
        $si, $di, $bp, $ds, $es ) =
    unpack( 'v2' . ('vXXCC' x 5) . 'v5', $frame );
+
+(The clumsy construction of the template can be avoided - just read on!)  
 
 We've taken some pains to construct the template so that it matches
 the contents of our frame buffer. Otherwise we'd either get undefined values,
@@ -520,7 +522,7 @@ into individual characters. Bit values from the "reserved" positions are
 simply assigned to C<undef>, a convenient notation for "I don't care where
 this goes".
 
-   ($carry, undef, $parity, undef, $auxcarry, undef, $sign,
+   ($carry, undef, $parity, undef, $auxcarry, undef, $zero, $sign,
     $trace, $interrupt, $direction, $overflow) =
       split( //, unpack( 'b16', $status ) );
 
@@ -636,6 +638,54 @@ shows 01 8100 8101 81807F. Since the last byte is always less than
 128, C<unpack> knows where to stop.
 
 
+=head1 Template Grouping
+
+Prior to Perl 5.8, repetitions of templates had to be made by
+C<x>-multiplication of template strings. Now there is a better way as
+we may use the pack codes C<(> and C<)> combined with a repeat count.
+The C<unpack> template from the Stack Frame example can simply
+be written like this:
+
+   unpack( 'v2 (vXXCC)5 v5', $frame )
+
+Let's explore this feature a little more. We'll begin with the equivalent of
+
+   join( '', map( substr( $_, 0, 1 ), @str ) )
+
+which returns a string consisting of the first character from each string.
+Using pack, we can write
+
+   pack( '(A)'.@str, @str )
+
+or, because a repeat count C<*> means "repeat as often as required",
+simply
+
+   pack( '(A)*', @str )
+
+(Note that the template C<A*> would only have packed C<$str[0]> in full
+length.)
+
+To pack dates stored as triplets ( day, month, year ) in an array C<@dates>
+into a sequence of byte, byte, short integer we can write
+
+   $pd = pack( '(CCS)*', map( @$_, @dates ) );
+
+To swap pairs of characters in a string (with even length) one could use
+several techniques. First, let's use C<x> and C<X> to skip forward and back:
+
+   $s = pack( '(A)*', unpack( '(xAXXAx)*', $s ) );
+
+We can also use C<@> to jump to an offset, with 0 being the position where
+we were when the last C<(> was encountered:
+
+   $s = pack( '(A)*', unpack( '(@1A @0A @2)*', $s ) );
+
+Finally, there is also an entirely different approach by unpacking big
+endian shorts and packing them in the reverse byte order:
+
+   $s = pack( '(v)*', unpack( '(n)*', $s );
+
+
 =head1 Lengths and Widths
 
 =head2 String Lengths
@@ -713,20 +763,20 @@ string for the template. So maybe we should introduce...
 
 So far, we've seen literals used as templates. If the list of pack
 items doesn't have fixed length, an expression constructing the
-template has to be used. Here's an example:
-To store named string values in a way that can be conveniently parsed
-by a C program, we create a sequence of names and null terminated ASCII
-strings, with C<=> between the name and the value, followed by an
-additional delimiting null byte. Here's how:
+template is required (whenever, for some reason, C<()*> cannot be used).
+Here's an example: To store named string values in a way that can be
+conveniently parsed by a C program, we create a sequence of names and
+null terminated ASCII strings, with C<=> between the name and the value,
+followed by an additional delimiting null byte. Here's how:
 
-   my $env = pack( 'A*A*Z*' x keys( %Env ) . 'C',
+   my $env = pack( '(A*A*Z*)' . keys( %Env ) . 'C',
                    map( { ( $_, '=', $Env{$_} ) } keys( %Env ) ), 0 );
 
 Let's examine the cogs of this byte mill, one by one. There's the C<map>
 call, creating the items we intend to stuff into the C<$env> buffer:
 to each key (in C<$_>) it adds the C<=> separator and the hash entry value.
 Each triplet is packed with the template code sequence C<A*A*Z*> that
-is multiplied with the number of keys. (Yes, that's what the C<keys>
+is repeated according to the number of keys. (Yes, that's what the C<keys>
 function returns in scalar context.) To get the very last null byte,
 we add a C<0> at the end of the C<pack> list, to be packed with C<C>.
 (Attentive readers may have noticed that we could have omitted the 0.)
@@ -735,10 +785,29 @@ For the reverse operation, we'll have to determine the number of items
 in the buffer before we can let C<unpack> rip it apart:
 
    my $n = $env =~ tr/\0// - 1;
-   my %env = map( split( /=/, $_ ), unpack( 'Z*' x $n, $env ) );
+   my %env = map( split( /=/, $_ ), unpack( "(Z*)$n", $env ) );
 
 The C<tr> counts the null bytes. The C<unpack> call returns a list of
 name-value pairs each of which is taken apart in the C<map> block. 
+
+
+=head2 Counting Repetitions
+
+Rather than storing a sentinel at the end of a data item (or a list of items),
+we could precede the data with a count. Again, we pack keys and values of
+a hash, preceding each with an unsigned short length count, and up front
+we store the number of pairs:
+
+   my $env = pack( 'S(S/A* S/A*)*', scalar keys( %Env ), %Env );
+
+This simplifies the reverse operation as the number of repetitions can be
+unpacked with the C</> code:
+
+   my %env = unpack( 'S/(S/A* S/A*)', $env );
+
+Note that this is one of the rare cases where you cannot use the same
+template for C<pack> and C<unpack> because C<pack> can't determine
+a repeat count for a C<()>-group.
 
 
 =head1 Packing and Unpacking C Structures
@@ -836,7 +905,7 @@ program? Here's a C program that does the trick:
    #define Pt(struct,field,tchar) \
      printf( "@%d%s ", offsetof(struct,field), # tchar );
 
-   int main(){
+   int main() {
      Pt( gappy_t, fc1, c  );
      Pt( gappy_t, fs,  s! );
      Pt( gappy_t, fc2, c  );
@@ -854,6 +923,22 @@ of the pack buffer to the next item: This is just the value
 the C<offsetof> macro (defined in C<E<lt>stddef.hE<gt>>) returns when
 given a C<struct> type and one of its field names ("member-designator" in 
 C standardese).
+
+Neither using offsets nor adding C<x>'s to bridge the gaps is satisfactory.
+(Just imagine what happens if the structure changes.) What we really need
+is a way of saying "skip as many bytes as required to the next multiple of N".
+In fluent Templatese, you say this with C<x!N> where N is replaced by the
+appropriate value. Here's the next version of our struct packaging:
+
+  my $gappy = pack( 'c x!2 s c x!4 l!', $c1, $s, $c2, $l );
+
+That's certainly better, but we still have to know how long all the
+integers are, and portability is far away. Rather than C<2>,
+for instance, we want to say "however long a short is". But this can be
+done by enclosing the appropriate pack code in brackets: C<[s]>. So, here's
+the very best we can do:
+
+  my $gappy = pack( 'c x![s] s c x![l!] l!', $c1, $s, $c2, $l );
 
 
 =head2 Alignment, Take 2
@@ -1038,8 +1123,8 @@ many pairs of hex digits, and use C<map> to handle the traditional
 spacing - 16 bytes to a line:
 
     my $i;
-    print map { ++$i % 16 ? "$_ " : "$_\n" }
-          unpack( 'H2' x length( $mem ), $mem ),
+    print map( ++$i % 16 ? "$_ " : "$_\n",
+               unpack( 'H2' x length( $mem ), $mem ) ),
           length( $mem ) % 16 ? "\n" : '';
 
 

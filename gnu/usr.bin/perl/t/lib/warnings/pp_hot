@@ -57,6 +57,9 @@ $f = $a = "abc" ;
 print $f $a;
 no warnings 'unopened' ;
 print $f $a;
+use warnings;
+no warnings 'unopened' ;
+print $f $a;
 EXPECT
 print() on unopened filehandle abc at - line 4.
 ########
@@ -99,6 +102,9 @@ closedir STDIN;
 no warnings 'closed' ;
 print STDIN "anc";
 opendir STDIN, ".";
+print STDIN "anc";
+use warnings;
+no warnings 'closed' ;
 print STDIN "anc";
 EXPECT
 print() on closed filehandle STDIN at - line 4.

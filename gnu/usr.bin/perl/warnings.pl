@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-
-$VERSION = '1.00';
+$VERSION = '1.02';
 
 BEGIN {
   push @INC, './lib';
@@ -413,7 +412,7 @@ while (<DATA>) {
 #$list{'all'} = [ $offset .. 8 * ($warn_size/2) - 1 ] ;
 
 $last_ver = 0;
-print PM "%Offsets = (\n" ;
+print PM "our %Offsets : unique = (\n" ;
 foreach my $k (sort { $a <=> $b } keys %ValueToName) {
     my ($name, $version) = @{ $ValueToName{$k} };
     $name = lc $name;
@@ -429,7 +428,7 @@ foreach my $k (sort { $a <=> $b } keys %ValueToName) {
 
 print PM "  );\n\n" ;
 
-print PM "%Bits = (\n" ;
+print PM "our %Bits : unique = (\n" ;
 foreach $k (sort keys  %list) {
 
     my $v = $list{$k} ;
@@ -443,7 +442,7 @@ foreach $k (sort keys  %list) {
 
 print PM "  );\n\n" ;
 
-print PM "%DeadBits = (\n" ;
+print PM "our %DeadBits : unique = (\n" ;
 foreach $k (sort keys  %list) {
 
     my $v = $list{$k} ;
@@ -474,7 +473,7 @@ __END__
 
 package warnings;
 
-our $VERSION = '1.00';
+our $VERSION = '1.03';
 
 =head1 NAME
 
@@ -506,6 +505,10 @@ warnings - Perl pragma to control optional warnings
     warnings::warnif($object, "some warning");
 
 =head1 DESCRIPTION
+
+The C<warnings> pragma is a replacement for the command line flag C<-w>,
+but the pragma is limited to the enclosing block, while the flag is global.
+See L<perllexwarn> for more information.
 
 If no import list is supplied, all possible warnings are either enabled
 or disabled.
@@ -595,7 +598,7 @@ See L<perlmodlib/Pragmatic Modules> and L<perllexwarn>.
 
 =cut
 
-use Carp ;
+use Carp ();
 
 KEYWORDS
 
@@ -604,7 +607,7 @@ $All = "" ; vec($All, $Offsets{'all'}, 2) = 3 ;
 sub Croaker
 {
     delete $Carp::CarpInternal{'warnings'};
-    croak @_ ;
+    Carp::croak(@_);
 }
 
 sub bits
@@ -773,10 +776,10 @@ sub warn
 
     my $message = pop ;
     my ($callers_bitmask, $offset, $i) = __chk(@_) ;
-    croak($message)
+    Carp::croak($message)
 	if vec($callers_bitmask, $offset+1, 1) ||
 	   vec($callers_bitmask, $Offsets{'all'}+1, 1) ;
-    carp($message) ;
+    Carp::carp($message) ;
 }
 
 sub warnif
@@ -792,11 +795,11 @@ sub warnif
             	(vec($callers_bitmask, $offset, 1) ||
             	vec($callers_bitmask, $Offsets{'all'}, 1)) ;
 
-    croak($message)
+    Carp::croak($message)
 	if vec($callers_bitmask, $offset+1, 1) ||
 	   vec($callers_bitmask, $Offsets{'all'}+1, 1) ;
 
-    carp($message) ;
+    Carp::carp($message) ;
 }
 
 1;

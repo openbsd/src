@@ -63,6 +63,10 @@ respectively, unified diffs (where the changed line appears immediately next
 to the original) and context diffs (where several lines surrounding the changes
 are included).  See the manpage for diff for more details.
 
+When GNU diff is available, the pumpkins would prefer you use C<-u -p>
+(--unified --show-c-function) as arguments for optimal control. The
+examples below will only use -u.
+
 The preferred method for creating a unified diff suitable for feeding
 to the patch program is:
 
@@ -92,7 +96,14 @@ diffs.  Some examples using GNU diff:
     % diff -bu a/file b/file
     
     # show function name in every hunk (safer, more informative)
+    % diff -u -p old/file new/file
     % diff -u -F '^[_a-zA-Z0-9]+ *(' old/file new/file
+
+    # show sub name in perl files and modules
+    % diff -u -F '^sub' old/file.pm new/file.pm
+
+    # show header in doc patches
+    % diff -u -F '^=head' old/file.pod new/file.pod
 
 =item Derived Files
 
@@ -344,6 +355,11 @@ found in the headers).  This helps reconcile differing paths between
 the machine the patch was created on and the machine on which it is
 being applied.
 
+Be sure to use the Larry Wall version of patch. Some Operating Systems
+(HP-UX amongst those) have a patch command that does something completely
+different. The correct version of patch will show Larry's name several
+times when invoked as patch --version.
+
 =item Cut and paste
 
 B<Never> cut and paste a patch into your editor.  This usually clobbers
@@ -383,12 +399,14 @@ to apply as possible.  Keep that in mind.  8-)
 
 =head1 Last Modified
 
-Last modified 21 January 1999 
+Last modified 22 August 2002
+H.Merijn Brand <h.m.brand@hccnet.nl>
+Prev modified 21 January 1999 
 Daniel Grisinger <dgris@dimensional.com>
 
 =head1 Author and Copyright Information
 
-Copyright (c) 1998, 1999 Daniel Grisinger
+Copyright (c) 1998-2002 Daniel Grisinger
 
 Adapted from a posting to perl5-porters by Tim Bunce (Tim.Bunce@ig.co.uk).
 

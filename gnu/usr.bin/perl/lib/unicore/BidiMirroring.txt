@@ -1,10 +1,10 @@
-# BidiMirroring-3.2.0.txt
+# BidiMirroring-4.0.0.txt
 # 
 # This file is an informative supplement to the UnicodeData file. It
 # lists characters that have the mirrored property
 # where there is another Unicode character that typically has a glyph
 # that is the mirror image of the original character's glyph.
-# The repertoire covered by the file is Unicode 3.2.0.
+# The repertoire covered by the file is Unicode 4.0.0.
 # 
 # The file contains a list of lines with mappings from one code point
 # to another one for character-based mirroring.
@@ -23,12 +23,8 @@
 # For information on bidi mirroring, see UAX #9: Bidirectional Algorithm,
 # at http://www.unicode.org/unicode/reports/tr9/
 # 
-# Please address any comments to <errata@unicode.org>.
-# Note that this is an archival address: messages will be checked,
-# but do not expect an immediate response.
-# 
 # This file was originally created by Markus Scherer.
-# Extended for Unicode 3.2 by Ken Whistler.
+# Extended for Unicode 3.2 and 4.0 by Ken Whistler.
 # 
 # ############################################################
 

@@ -269,7 +269,7 @@ sub try {
   # The record has exactly 17 characters.  This will help ensure that
   # even if _twrite screws up, the data doesn't coincidentally
   # look good because the remainder accidentally lines up.
-  my $d = length($:) == 1 ? "0123456789abcdef$:" : "0123456789abcde$:";
+  my $d = substr("0123456789abcdef$:", -17);
   my $recs = defined($FLEN) ?
     int($FLEN/length($d))+1 : # enough to make up at least $FLEN
     int(8192*5/length($d))+1; # at least 5 blocks' worth

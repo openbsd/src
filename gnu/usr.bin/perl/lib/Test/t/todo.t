@@ -9,11 +9,11 @@ use Test qw(:DEFAULT $TESTOUT $TESTERR $ntest);
 open F, ">todo";
 $TESTOUT = *F{IO};
 $TESTERR = *F{IO};
-
 my $tests = 5; 
 plan tests => $tests, todo => [2..$tests]; 
 
-# line 11
+
+# tests to go to the output file
 ok(1);
 ok(1);
 ok(0,1);
@@ -33,16 +33,23 @@ unlink "todo";
 my $expect = <<"EXPECT";
 1..5 todo 2 3 4 5;
 ok 1
-ok 2 # ($0 at line 12 TODO?!)
+ok 2 # ($0 at line 18 TODO?!)
 not ok 3
-# Test 3 got: '0' ($0 at line 13 *TODO*)
+# Test 3 got: '0' ($0 at line 19 *TODO*)
 #   Expected: '1'
 not ok 4
-# Test 4 got: '0' ($0 at line 14 *TODO*)
+# Test 4 got: '0' ($0 at line 20 *TODO*)
 #   Expected: '1' (need more tuits)
-ok 5 # ($0 at line 15 TODO?!)
+ok 5 # ($0 at line 21 TODO?!)
 EXPECT
 
 
+sub commentless {
+  my $in = $_[0];
+  $in =~ s/^#[^\n]*\n//mg;
+  $in =~ s/\n#[^\n]*$//mg;
+  return $in;
+}
+
 print "1..1\n";
-ok( $out, $expect );
+ok( commentless($out), commentless($expect) );

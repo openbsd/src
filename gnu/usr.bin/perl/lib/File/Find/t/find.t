@@ -15,8 +15,8 @@ BEGIN {
     $SIG{'__WARN__'} = sub { $warn_msg = $_[0]; warn "# $_[0]"; }
 }
 
-if ( $symlink_exists ) { print "1..188\n"; }
-else                   { print "1..78\n";  }
+if ( $symlink_exists ) { print "1..189\n"; }
+else                   { print "1..79\n";  }
 
 # Uncomment this to see where File::Find is chdir'ing to.  Helpful for
 # debugging its little jaunts around the filesystem.
@@ -51,12 +51,23 @@ BEGIN {
 
 cleanup();
 
-find({wanted => sub { print "ok 1\n" if $_ eq 'commonsense.t'; } },
+$::count_commonsense = 0;
+find({wanted => sub { ++$::count_commonsense if $_ eq 'commonsense.t'; } },
    File::Spec->curdir);
+if ($::count_commonsense == 1) {
+  print "ok 1\n";
+} else {
+  print "not ok 1 # found $::count_commonsense files named 'commonsense.t'\n";
+}
 
-finddepth({wanted => sub { print "ok 2\n" if $_ eq 'commonsense.t'; } },
+$::count_commonsense = 0;
+finddepth({wanted => sub { ++$::count_commonsense if $_ eq 'commonsense.t'; } },
 	File::Spec->curdir);
-
+if ($::count_commonsense == 1) {
+  print "ok 2\n";
+} else {
+  print "not ok 2 # found $::count_commonsense files named 'commonsense.t'\n";
+}
 
 my $case = 2;
 my $FastFileTests_OK = 0;
@@ -473,6 +484,18 @@ File::Find::find( {wanted => \&noop_wanted,
 
 Check( scalar(keys %Expect_Dir) == 0 );
 
+{
+    print "# checking argument localization\n";
+
+    ### this checks the fix of perlbug [19977] ###
+    my @foo = qw( a b c d e f );
+    my %pre = map { $_ => } @foo;
+
+    File::Find::find( sub {  } , 'fa' ) for @foo;
+    delete $pre{$_} for @foo;
+
+    Check( scalar( keys %pre ) == 0 );
+}
 
 if ( $symlink_exists ) {
     print "# --- symbolic link tests --- \n";
@@ -750,5 +773,4 @@ if ( $symlink_exists ) {
     Check( scalar(keys %Expect_File) == 0 );
     unlink file_path('fa', 'faa_sl');
 
-} 
-
+}

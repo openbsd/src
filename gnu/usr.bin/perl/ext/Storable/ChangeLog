@@ -1,3 +1,49 @@
+Sat Sep  6 01:08:20 IST 2003   Abhijit Menon-Sen <ams@wiw.org>
+
+    Version 2.08
+
+        This release works around a 5.8.0 bug which caused hashes to not
+        be marked as having key flags even though an HEK had HEK_WASUTF8
+        set. (Note that the only reasonable solution is to silently drop
+        the flag from the affected key.)
+
+        Users of RT 3 who were seeing assertion failures should upgrade.
+        (Perl 5.8.1 will have the bug fixed.)
+
+Mon May  5 10:24:16 IST 2003   Abhijit Menon-Sen <ams@wiw.org>
+
+    Version 2.07
+
+        Minor bugfixes (self-tied objects are now correctly stored, as
+        are the results of additions larger than INT_MAX).
+
+Mon Oct  7 21:56:38 BST 2002   Nicholas Clark  <nick@ccl4.org>
+
+    Version 2.06
+
+	Remove qr// from t/downgrade.t so that it will run on 5.004
+	Mention $File::Spec::VERSION a second time in t/forgive.t so that it
+	runs without warnings in 5.004 (this may be a 5.00405 bug I'm working
+	round)
+	Fix t/integer.t initialisation to actually generate 64 bits of 9c
+	Fix comparison tests to use eval to get around 64 bit IV conversion
+	issues on 5.6.x, following my t/integer.t ^ precedence bug found by
+	Rafael Garcia-Suarez
+	Alter t/malice.t to work with Test/More.pm in t/, and skip individual
+	subtests that use $Config{ptrsize}, so that the rest of the test can
+	now be run with 5.004
+	Change t/malice.t and the error message in check_magic in Storable.xs
+	from "Pointer integer size" to "Pointer size"
+	Remove prerequisite of Test::More from Makefile.PL
+	Ship Test::Builder, Test::Simple and Test::More in t
+
+Thu Oct  3 08:57:22 IST 2002   Abhijit Menon-Sen <ams@wiw.org>
+
+    Version 2.05
+
+        Adds support for CODE references from Slaven Rezic
+        <slaven.rezic@berlin.de>.
+
 Fri Jun  7 23:55:41 BST 2002   Nicholas Clark
 
     Version 2.04

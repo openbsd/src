@@ -3,12 +3,13 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
+    require './test.pl';
 }
 
 use Config;
+use Errno;
 
-require "test.pl";
-plan(tests => 8);
+plan(tests => 9);
 
 ok( binmode(STDERR),            'STDERR made binary' );
 if (find PerlIO::Layer 'perlio') {
@@ -28,3 +29,12 @@ if (find PerlIO::Layer 'perlio') {
 }
 ok( binmode(STDOUT, ":raw"),    '  raw' );
 ok( binmode(STDOUT, ":crlf"),   '  and crlf' );
+
+SKIP: {
+    skip "no EBADF", 1 if (!exists &Errno::EBADF);
+
+    no warnings 'io';
+    $! = 0;
+    binmode(B);
+    ok($! == &Errno::EBADF);
+}

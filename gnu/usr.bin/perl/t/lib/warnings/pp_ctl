@@ -222,18 +222,6 @@ EXPECT
 Use of uninitialized value in print at (eval 1) line 1.
 ########
 # pp_ctl.c
-use warnings 'portable';
-eval 'use 5.6.1';
-EXPECT
-v-string in use/require non-portable at (eval 1) line 2.
-########
-# pp_ctl.c
-use warnings 'portable';
-eval 'use v5.6.1';
-EXPECT
-v-string in use/require non-portable at (eval 1) line 2.
-########
-# pp_ctl.c
 use warnings;
 {
     no warnings;

@@ -6,6 +6,7 @@ Storable.xs		    The C side of Storable
 ChangeLog		    Changes since baseline
 t/blessed.t		    See if Storable works
 t/canonical.t		    See if Storable works
+t/code.t		    Test (de)serialization of code references
 t/compat06.t		    See if Storable works
 t/croak.t		    See if Storable works
 t/dclone.t		    See if Storable works

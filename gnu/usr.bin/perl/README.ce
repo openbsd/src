@@ -8,52 +8,130 @@ Perl for WinCE
 
 =head1 Description
 
-This file gives the instructions for building Perl5.6 and above for
+This file gives the instructions for building Perl5.8 and above for
 WinCE.  Please read and understand the terms under which this
 software is distributed.
 
 =head1 Build
 
 This section describes the steps to be performed to build PerlCE.
+You may find additional and newer information about building perl
+for WinCE using following URL:
+
+  http://perlce.sourceforge.net
+
+There should also be pre-built binaries there.
+
+Don't be confused by large size of downloaded distribution or constructed
+binaries: entire distribution could be large for WinCE ideology, but
+you may strip it at your wish and use only required parts.
 
 =head2 Tools & SDK
 
-For compiling, you need Microsoft Embedded Visual Tools, my
-celib-sources, my console-sources and a perl for win32.
+For compiling, you need following:
+
+=over 4
+
+=item * Microsoft Embedded Visual Tools
+
+=item * Microsoft Visual C++
+
+=item * Rainer Keuchel's celib-sources
+
+=item * Rainer Keuchel's console-sources
+
+=back
 
 Needed source files can be downloaded via:
 www.rainer-keuchel.de/wince/dirlist.html
 
-Some portions of the makefile need a shell for win32, rm, cp, mv,
-xmkdir (mkdir with a -p option).  It also uses my cecopy program for
-copying files to the ce device.
-
 =head2 Make
 
-Miniperl is not built. A pre-existent win32 perl is used.
+Please pay attention that starting from 5.8.0 miniperl *is* built
+and it facilitates in further building process. This means that
+in addition to compiler installation for mobile device you also need
+to have Microsoft Visual C++ installed as well.
 
-The paths for tools and additional libraries have to be changed in
-wince/makefile.ce.
+On the bright side, you do not need to edit any files from ./win32
+subdirectory. Normally you only need to edit ./wince/compile.bat
+to reflect your system and run it.
 
-Different ce targets can be specified with the TARGET macro.
+File ./wince/compile.bat is actually a wrapper to call
+nmake -f makefile.ce with appropriate parameters and it accepts extra
+parameters and forwards them to "nmake" command as additional
+arguments. You should pass target this way.
 
-Before you start, you need to build celib.dll and w32console.
-See instructions in these packages for building.
+To prepare distribution you need to do following:
 
-In the wince directory, type "nmake -f makefile.ce". This should
-build perl.exe and perl.dll. For building extension dlls,
-type "nmake -f makefile.ce dlls"
+=over 4
 
-When building ext dlls, you get lots of macro redefinition
-errors. Just ignore them.
+=item * go to ./wince subdirectory
 
-For further information, look in the text files in the wince
-sub-directory.
+=item * edit file compile.bat
+
+=item * run 
+  compile.bat
+
+=item * run 
+  compile.bat dist
+
+=back
+
+makefile.ce has CROSS_NAME macro, and it is used further to refer to
+your cross-compilation scheme. You could assign a name to it, but this
+is not necessary, because by default it is assigned after your machine
+configuration name, such as "wince-sh3-hpc-wce211", and this is enough
+to distinguish different builds at the same time. This option could be
+handy for several different builds on same platform to perform, say,
+threaded build. In a following example we assume that all required
+environment variables are set properly for C cross-compiler (a special
+*.bat file could fit perfectly to this purpose) and your compile.bat
+has proper "MACHINE" parameter set, to, say, "wince-mips-pocket-wce300".
+
+  compile.bat
+  compile.bat dist
+  compile.bat CROSS_NAME=mips-wce300-thr "USE_ITHREADS=define" "USE_IMP_SYS=define" "USE_MULTI=define"
+  compile.bat CROSS_NAME=mips-wce300-thr "USE_ITHREADS=define" "USE_IMP_SYS=define" "USE_MULTI=define" dist
+
+If all goes okay and no errors during a build, you'll get two independent
+distributions: "wince-mips-pocket-wce300" and "mips-wce300-thr".
+
+Target 'dist' prepares distribution file set. Target 'zipdist' performs
+same as 'dist' but additionally compresses distribution files into zip
+archive.
+
+NOTE: during a build there could be created a number (or one) of Config.pm
+for cross-compilation ("foreign" Config.pm) and those are hidden inside
+../xlib/$(CROSS_NAME) with other auxilary files, but, and this is important to
+note, there should be *no* Config.pm for host miniperl.
+If you'll get an error that perl could not find Config.pm somewhere in building
+process this means something went wrong. Most probably you forgot to
+specify a cross-compilation when invoking miniperl.exe to Makefile.PL
+When building an extension for cross-compilation your command line should
+look like
+
+  ..\miniperl.exe -I..\lib -MCross=mips-wce300-thr Makefile.PL
+
+or just
+
+  ..\miniperl.exe -I..\lib -MCross Makefile.PL
+
+to refer a cross-compilation that was created last time.
+
+
+If you decided to build with fcrypt.c file, please refer to README.win32
+file, as long as all legal considerations and steps to do are exactly same 
+in this case.
+
+All questions related to building for WinCE devices could be asked in
+perlce-users@lists.sourceforge.net mailing list.
 
 =head1 Acknowledgements
 
 The port for Win32 was used as a reference.
 
-=head1 Author
+=head1 AUTHORS
 
 Rainer Keuchel (keuchel@netwave.de)
+Vadim Konovalov (vkonovalov@spb.lucent.com)
+

@@ -1,6 +1,27 @@
 Revision history for Perl module I18N::LangTags.
-                                        Time-stamp: "2002-02-02 20:45:47 MST"
+                                        Time-stamp: "2003-10-10 17:07:55 ADT"
 
+2003-10-10  Sean M. Burke  sburke@cpan.org
+	
+	* Release 0.29
+
+	Minor bugfix to I18N::LangTags::List code.  Addition of the
+	is_decent function, and the 02decency.t test for it.
+	
+	Better Makefile.  Thanks to everyone who told me about the
+	INSTALLDIRS trick.
+	
+	
+	
+2003-07-20  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.28
+	Doc fixes in I18N::LangTags, plus a few added variances (jw/jv,
+	 cre/cr, etc.) 
+	Lots of updates to I18N::LangTags::List
+	Deleted rfc3066.txt from dist.
+	Moved test.pl to t/01test.t and added more tests.
+	
 2002-02-02  Sean M. Burke  sburke@cpan.org
 
 	* Release 0.27 -- minor mods to ::List:

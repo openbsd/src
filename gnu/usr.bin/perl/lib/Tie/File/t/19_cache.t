@@ -3,12 +3,13 @@
 # Tests for various caching errors
 #
 
+$|=1;
 my $file = "tf$$.txt";
 $: = Tie::File::_default_recsep();
 my $data = join $:, "rec0" .. "rec9", "";
 my $V = $ENV{INTEGRITY};        # Verbose integrity checking?
 
-print "1..54\n";
+print "1..55\n";
 
 my $N = 1;
 use Tie::File;
@@ -160,6 +161,11 @@ check();
 splice @a;
 check();
     
+# (55) This was broken on 20030507 when you moved the cache management
+# stuff out of _oadjust back into _splice without also putting it back 
+# into _store.
+@a = (0..11);
+check();
 
 sub init_file {
   my $data = shift;

@@ -33,10 +33,12 @@ print_long(4);
 print_float(4);
 print_long_double() if $ldok;  # val=7 hardwired
 
+print_flush();
+
 # Now redirect STDOUT and read from the file
 ok open(STDOUT, ">&", $oldout), "restore STDOUT";
 ok open(my $foo, "<foo.out"), "open foo.out";
-print "# Test output by reading from file\n";
+#print "# Test output by reading from file\n";
 # now test the output
 my @output = map { chomp; $_ } <$foo>;
 close $foo;

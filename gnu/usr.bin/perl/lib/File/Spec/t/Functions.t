@@ -1,17 +1,10 @@
-#!./perl
+#!/usr/bin/perl -w
 
-BEGIN {
-    $^O = '';
-    chdir 't' if -d 't';
-    @INC = '../lib';
-}
+use Test;
+use File::Spec::Functions qw/:ALL/;
+plan tests => 2;
 
-print "1..1\n";
+ok catfile('a','b','c'), File::Spec->catfile('a','b','c');
 
-use File::Spec::Functions;
-
-if (catfile('a','b','c') eq 'a/b/c') {
-    print "ok 1\n";
-} else {
-    print "not ok 1\n";
-}
+# seems to return 0 or 1, so see if we can call it - 2003-07-07 tels
+ok case_tolerant(), '/^0|1$/';

@@ -313,7 +313,7 @@ will not create a "perl.exe" to replace the one in C<($DJDIR)/bin>.
 
 When you are done, the XS-module install process will have added information
 to your "perllocal" information telling that the perl binary has been replaced,
-and what module was installed.  you can view this information at any time
+and what module was installed.  You can view this information at any time
 by using the command:
 
         perl -S perldoc perllocal

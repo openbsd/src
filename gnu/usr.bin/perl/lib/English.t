@@ -6,7 +6,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 54;
+use Test::More tests => 55;
 
 use English qw( -no_match_vars ) ;
 use Config;
@@ -141,6 +141,12 @@ use English;
 main::is( $PREMATCH, 'a', '$PREMATCH defined' );
 main::is( $MATCH, 'b', '$MATCH defined' );
 main::is( $POSTMATCH, 'c', '$POSTMATCH defined' );
+
+{
+    my $s = "xyz";
+    $s =~ s/y/t$MATCH/;
+    main::is( $s, "xtyz", '$MATCH defined in right side of s///' );
+}
 
 package C;
 

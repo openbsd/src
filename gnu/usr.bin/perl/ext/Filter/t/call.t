@@ -15,7 +15,7 @@ use warnings;
 
 use vars qw($Inc $Perl);
 
-print "1..28\n" ;
+print "1..32\n" ;
 
 $Perl = "$Perl -w" ;
 
@@ -24,12 +24,14 @@ my $here = getcwd ;
 
 
 my $filename = "call.tst" ;
+my $filename2 = "call2.tst" ;
 my $filenamebin = "call.bin" ;
 my $module   = "MyTest" ;
 my $module2  = "MyTest2" ;
 my $module3  = "MyTest3" ;
 my $module4  = "MyTest4" ;
 my $module5  = "MyTest5" ;
+my $module6  = "MyTest6" ;
 my $nested   = "nested" ;
 my $block   = "block" ;
 my $redir   = $^O eq 'MacOS' ? "" : "2>&1";
@@ -781,14 +783,50 @@ EOM
 
 }
 
+{
+
+# no without use
+# see Message-ID: <20021106212427.A15377@ttul.org>
+####################
+
+writeFile("${module6}.pm", <<EOM);
+package ${module6} ;
+#use Filter::Simple;
+#FILTER {}
+use Filter::Util::Call;
+sub import { filter_add(sub{}) }
+sub unimport { filter_del() }
+1;
+EOM
+
+writeFile($filename2, <<EOM);
+no ${module6} ;
+print "ok";
+EOM
+
+my $str = $^O eq 'MacOS' ? "'ok'" : "q{ok}";
+my $a = `$Perl "-I." $Inc -e "no ${module6}; print $str"`;
+ok(29, ($? >>8) == 0);
+chomp( $a ) if $^O eq 'VMS';
+ok(30, $a eq 'ok');
+
+$a = `$Perl "-I." $Inc $filename2`;
+ok(31, ($? >>8) == 0);
+chomp( $a ) if $^O eq 'VMS';
+ok(32, $a eq 'ok');
+
+}
+
 END {
     1 while unlink $filename ;
+    1 while unlink $filename2 ;
     1 while unlink $filenamebin ;
     1 while unlink "${module}.pm" ;
     1 while unlink "${module2}.pm" ;
     1 while unlink "${module3}.pm" ;
     1 while unlink "${module4}.pm" ;
     1 while unlink "${module5}.pm" ;
+    1 while unlink "${module6}.pm" ;
     1 while unlink $nested ;
     1 while unlink "${block}.pm" ;
 }

@@ -4,15 +4,17 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '1.3';
+$VERSION = '1.4';
 
 @ISA = qw(File::Spec::Unix);
 
-use Cwd;
 my $macfiles;
 if ($^O eq 'MacOS') {
 	$macfiles = eval { require Mac::Files };
 }
+
+sub case_tolerant { 1 }
+
 
 =head1 NAME
 
@@ -361,20 +363,18 @@ sub rootdir {
 
 =item tmpdir
 
-Returns the contents of $ENV{TMPDIR}, if that directory exits or the current working
-directory otherwise. Under MacPerl, $ENV{TMPDIR} will contain a path like
-"MacintoshHD:Temporary Items:", which is a hidden directory on your startup volume.
+Returns the contents of $ENV{TMPDIR}, if that directory exits or the
+current working directory otherwise. Under MacPerl, $ENV{TMPDIR} will
+contain a path like "MacintoshHD:Temporary Items:", which is a hidden
+directory on your startup volume.
 
 =cut
 
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    $tmpdir = $ENV{TMPDIR} if -d $ENV{TMPDIR};
-    unless (defined($tmpdir)) {
-   	$tmpdir = cwd();
-    }
-    return $tmpdir;
+    my $self = shift;
+    $tmpdir = $self->_tmpdir( $ENV{TMPDIR} );
 }
 
 =item updir
@@ -442,7 +442,7 @@ sub path {
     ($volume,$directories,$file) = File::Spec->splitpath( $path );
     ($volume,$directories,$file) = File::Spec->splitpath( $path, $no_file );
 
-Splits a path in to volume, directory, and filename portions.
+Splits a path into volume, directory, and filename portions.
 
 On Mac OS, assumes that the last part of the path is a filename unless
 $no_file is true or a trailing separator ":" is present.
@@ -585,10 +585,16 @@ sub catpath {
 	return $file ;
     }
 
+    # We look for a volume in $volume, then in $directory, but not both
+
+    my ($dir_volume, $dir_dirs) = $self->splitpath($directory, 1);
+
+    $volume = $dir_volume unless length $volume;
     my $path = $volume; # may be ''
     $path .= ':' unless (substr($path, -1) eq ':'); # ensure trailing ':'
 
     if ($directory) {
+	$directory = $dir_dirs if $volume;
 	$directory =~ s/^://; # remove leading ':' if any
 	$path .= $directory;
 	$path .= ':' unless (substr($path, -1) eq ':'); # ensure trailing ':'
@@ -617,11 +623,13 @@ If $base is not present or '', then the current working directory is used.
 If $base is relative, then it is converted to absolute form using C<rel2abs()>.
 This means that it is taken to be relative to the current working directory.
 
-Since Mac OS has the concept of volumes, this assumes that both paths
-are on the $destination volume, and ignores the $base volume (!).
+If $path and $base appear to be on two different volumes, we will not
+attempt to resolve the two paths, and we will instead simply return
+$path.  Note that previous versions of this module ignored the volume
+of $base, which resulted in garbage results part of the time.
 
 If $base doesn't have a trailing colon, the last element of $base is
-assumed to be a filename. This filename is ignored (!). Otherwise all path
+assumed to be a filename.  This filename is ignored.  Otherwise all path
 components are assumed to be directories.
 
 If $path is relative, it is converted to absolute form using C<rel2abs()>.
@@ -656,7 +664,7 @@ sub abs2rel {
 
     # Figure out the effective $base and clean it up.
     if ( !defined( $base ) || $base eq '' ) {
-	$base = cwd();
+	$base = $self->_cwd();
     }
     elsif ( ! $self->file_name_is_absolute( $base ) ) {
         $base = $self->rel2abs( $base ) ;
@@ -666,11 +674,11 @@ sub abs2rel {
 	$base = _resolve_updirs( $base );
     }
 
-    # Split up paths
-    my ( $path_dirs, $path_file ) =  ($self->splitpath( $path ))[1,2] ;
+    # Split up paths - ignore $base's file
+    my ( $path_vol, $path_dirs, $path_file ) =  $self->splitpath( $path );
+    my ( $base_vol, $base_dirs )             =  $self->splitpath( $base );
 
-    # ignore $base's volume and file
-    my $base_dirs = ($self->splitpath( $base ))[1] ;
+    return $path unless lc( $path_vol ) eq lc( $base_vol );
 
     # Now, remove all leading components that are the same
     my @pathchunks = $self->splitdir( $path_dirs );
@@ -709,7 +717,7 @@ using C<rel2abs()>. This means that it is taken to be relative to the
 current working directory.
 
 If $base doesn't have a trailing colon, the last element of $base is
-assumed to be a filename. This filename is ignored (!). Otherwise all path
+assumed to be a filename.  This filename is ignored.  Otherwise all path
 components are assumed to be directories.
 
 If $path is already absolute, it is returned and $base is ignored.
@@ -724,7 +732,7 @@ sub rel2abs {
     if ( ! $self->file_name_is_absolute($path) ) {
         # Figure out the effective $base and clean it up.
         if ( !defined( $base ) || $base eq '' ) {
-	    $base = cwd();
+	    $base = $self->_cwd();
         }
         elsif ( ! $self->file_name_is_absolute($base) ) {
             $base = $self->rel2abs($base) ;
@@ -736,7 +744,7 @@ sub rel2abs {
         my ( $path_dirs, $path_file ) = ($self->splitpath($path))[1,2] ;
 
         # ignore $base's file part
-	my ( $base_vol, $base_dirs, undef ) = $self->splitpath($base) ;
+	my ( $base_vol, $base_dirs ) = $self->splitpath($base) ;
 
 	# Glom them together
 	$path_dirs = ':' if ($path_dirs eq '');
@@ -756,10 +764,10 @@ sub rel2abs {
 See the authors list in I<File::Spec>. Mac OS support by Paul Schinder
 <schinder@pobox.com> and Thomas Wegner <wegner_thomas@yahoo.com>.
 
-
 =head1 SEE ALSO
 
-L<File::Spec>
+See L<File::Spec> and L<File::Spec::Unix>.  This package overrides the
+implementation of these methods, not the semantics.
 
 =cut
 

@@ -18,4 +18,4 @@ export RANLIB
 declare -x SHELL="/system/gnu_library/bin/bash.pm"
 export SHELL
 #
-bash Configure -Dusedevel -des
+bash Configure -des

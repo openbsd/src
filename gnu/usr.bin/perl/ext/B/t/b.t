@@ -13,15 +13,9 @@ BEGIN {
 $|  = 1;
 use warnings;
 use strict;
-use Config;
+use Test::More tests => 5;
 
-print "1..2\n";
-
-my $test = 1;
-
-sub ok { print "ok $test\n"; $test++ }
-
-use B;
+BEGIN { use_ok( 'B' ); }
 
 
 package Testing::Symtable;
@@ -55,9 +49,18 @@ my @syms = map { 'Testing::Symtable::'.$_ } qw(This That wibble moo car
 push @syms, "Testing::Symtable::Foo::yarrow";
 
 # Make sure we hit all the expected symbols.
-print "not " unless join('', sort @syms) eq join('', sort keys %Subs);
-ok;
+ok( join('', sort @syms) eq join('', sort keys %Subs), 'all symbols found' );
 
 # Make sure we only hit them each once.
-print "not " unless !grep $_ != 1, values %Subs;
-ok;
+ok( (!grep $_ != 1, values %Subs), '...and found once' );
+
+# Tests for MAGIC / MOREMAGIC
+ok( B::svref_2object(\$.)->MAGIC->TYPE eq "\0", '$. has \0 magic' );
+{
+    my $e = '';
+    local $SIG{__DIE__} = sub { $e = $_[0] };
+    # Used to dump core, bug #16828
+    eval { B::svref_2object(\$.)->MAGIC->MOREMAGIC->TYPE; };
+    like( $e, qr/Can't call method "TYPE" on an undefined value/, 
+	'$. has no more magic' );
+}

@@ -17,14 +17,14 @@ print "1..4\n";
 # first check for stupid permissions second for full, so we clean up
 # behind ourselves
 for my $perm (0111,0777) {
-    my $path = catdir(curdir(), "foo", "bar");
+    my $path = catdir(curdir(), "mhx", "bar");
     mkpath($path);
-    chmod $perm, "foo", $path;
+    chmod $perm, "mhx", $path;
 
-    print "not " unless -d "foo" && -d $path;
+    print "not " unless -d "mhx" && -d $path;
     print "ok ", ++$count, "\n";
 
-    rmtree("foo");
-    print "not " if -e "foo";
+    rmtree("mhx");
+    print "not " if -e "mhx";
     print "ok ", ++$count, "\n";
 }

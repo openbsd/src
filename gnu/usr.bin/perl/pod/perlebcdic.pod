@@ -168,6 +168,27 @@ and from Latin-1 code points to EBCDIC code points
 For doing I/O it is suggested that you use the autotranslating features
 of PerlIO, see L<perluniintro>.
 
+Since version 5.8 Perl uses the new PerlIO I/O library.  This enables
+you to use different encodings per IO channel.  For example you may use
+
+    use Encode;
+    open($f, ">:encoding(ascii)", "test.ascii");
+    print $f "Hello World!\n";
+    open($f, ">:encoding(cp37)", "test.ebcdic");
+    print $f "Hello World!\n";
+    open($f, ">:encoding(latin1)", "test.latin1");
+    print $f "Hello World!\n";
+    open($f, ">:encoding(utf8)", "test.utf8");
+    print $f "Hello World!\n";
+
+to get two files containing "Hello World!\n" in ASCII, CP 37 EBCDIC,
+ISO 8859-1 (Latin-1) (in this example identical to ASCII) respective
+UTF-EBCDIC (in this example identical to normal EBCDIC).  See the
+documentation of Encode::PerlIO for details.
+
+As the PerlIO layer uses raw IO (bytes) internally, all this totally
+ignores things like the type of your filesystem (ASCII or EBCDIC).
+
 =head1 SINGLE OCTET TABLES
 
 The following tables list the ASCII and Latin 1 ordered sets including
@@ -643,13 +664,13 @@ it in tr/// like so:
     '\060\061\062\063\064\065\066\067\070\071\263\333\334\331\332\237' ;
 
     my $ebcdic_string = $ascii_string;
-    eval '$ebcdic_string =~ tr/\000-\377/' . $cp_037 . '/';
+    eval '$ebcdic_string =~ tr/' . $cp_037 . '/\000-\377/';
 
 To convert from EBCDIC 037 to ASCII just reverse the order of the tr/// 
 arguments like so:
 
     my $ascii_string = $ebcdic_string;
-    eval '$ascii_string = tr/' . $cp_037 . '/\000-\377/';
+    eval '$ascii_string =~ tr/\000-\377/' . $cp_037 . '/';
 
 Similarly one could take the output of the third column from recipe 0 to
 obtain a C<$cp_1047> table.  The fourth column of the output from recipe
@@ -1248,11 +1269,15 @@ Legacy multi byte EBCDIC code pages XXX.
 There may be a few system dependent issues 
 of concern to EBCDIC Perl programmers.
 
-=head2 OS/400 
-
-The PASE environment.
+=head2 OS/400
 
 =over 8
+
+=item PASE
+
+The PASE environment is runtime environment for OS/400 that can run
+executables built for PowerPC AIX in OS/400, see L<perlos400>.  PASE
+is ASCII-based, not EBCDIC-based as the ILE.
 
 =item IFS access
 

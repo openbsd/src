@@ -54,8 +54,8 @@ dl_load_file(filename, flags=0)
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,
 flags));
     if (flags & 0x01)
-        Perl_warn(aTHX_ "Can't make loaded symbols global on this platform while loading %s
-",filename);
+        Perl_warn(aTHX_ 
+"Can't make loaded symbols global on this platform while loading %s",filename);
     obj = (p_mpe_dld) safemalloc(sizeof(t_mpe_dld));
     memzero(obj, sizeof(t_mpe_dld));
     if (filename[0] != '/')

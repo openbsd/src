@@ -30,10 +30,11 @@ BEGIN
     unshift @INC, $location;
     }
   print "# INC = @INC\n";
-  plan tests => 141;
+  my $tests = 161;
+  plan tests => $tests;
   if ($] < 5.006)
     {
-    for (1..141) { skip (1,'Not supported on older Perls'); }
+    for (1..$tests) { skip (1,'Not supported on older Perls'); }
     exit;
     }
   }
@@ -58,7 +59,7 @@ use Math::BigInt;
 use Math::BigFloat;
 
 my ($x,$y,$z,$u);
-my $version = '1.46';	# adjust manually to match latest release
+my $version = '1.61';	# adjust manually to match latest release
 
 ###############################################################################
 # check whether op's accept normal strings, even when inherited by subclasses
@@ -164,6 +165,7 @@ inf:1
 &bstr
 5:5
 10:10
+-10:-10
 abc:NaN
 '+inf':inf
 '-inf':-inf
@@ -172,6 +174,10 @@ abc:NaN
 0:0e+1
 2:2e+0
 200:2e+2
+-5:-5e+0
+-100:-1e+2
+abc:NaN
+'+inf':inf
 &babs
 -1:1
 1:1

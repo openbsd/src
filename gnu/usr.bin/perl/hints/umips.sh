@@ -10,7 +10,7 @@
 # 	xxx xxx 4_52 umips mips
 
 # Speculative notes on getting cc to work added by
-# Andy Dougherty	<doughera@lafcol.lafayette.edu>
+# Andy Dougherty	<doughera@lafayette.edu>
 # Tue Aug 20 21:51:49 EDT 1996
     
 # Recommend the GNU C Compiler

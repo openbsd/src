@@ -16,9 +16,9 @@ EPOC is an OS for palmtops and mobile phones. For more informations look at:
 http://www.symbian.com/
 
 This is a port of perl to the epocemx SDK by Eberhard Mattes, which
-itselfs uses the SDK by symbian. Essentially epocemx it is a POSIX
-look alike environment for the EPOC OS. For more informations look at: 
-http://www.windhager.de/~mattes/epocemx/
+itself uses the SDK by symbian. Essentially epocemx it is a POSIX
+look alike environment for the EPOC OS.  For more information look at: 
+http://epocemx.sourceforge.net/
 
 perl and epocemx runs on Epoc Release 5 machines: Psion 5mx, 5mx Pro,
 Psion Revo, Psion Netbook and on the Ericson M128. It may run on Epoc
@@ -31,13 +31,12 @@ me a sample.
 =head1 INSTALLING PERL ON EPOC
 
 You can download a ready-to-install version from
-http://www.science-computing.de/o.flebbe/perl/
+http://www.oflebbe.de/oflebbe/perl/
 
-You will need at least ~6MB free space in order to install and run
-perl.
+You will need at least ~6MB free space in order to install and run perl.
 
 Please install the emxusr.sis package from
-http://www.windhager.de/~mattes/epocemx/ first.
+http://epocemx.sourceforge.net/ first.
 
 Install perl.sis on the EPOC machine. If you do not know how to do
 that, consult your PsiWin documentation.
@@ -91,7 +90,7 @@ binmode does not exist. (No CR LF to LF translation for text files)
 
 EPOC does not handle the notion of current drive and current
 directory very well (i.e. not at all, but it tries hard to emulate
-one) See PATH.
+one). See PATH.
 
 =item *
 
@@ -150,11 +149,11 @@ Very special thanks to Eberhard Mattes for epocemx.
 
 =head1 AUTHOR
 
-Olaf Flebbe <o.flebbe@science-computing.de>
-http://www.science-computing.de/o.flebbe/perl/
+Olaf Flebbe <olaf@oflebbe.de>
+http://www.oflebbe.de/oflebbe/perl/
 
 =head1 LAST UPDATE
 
-2002-03-26
+2003-01-18
 
 =cut

@@ -31,7 +31,7 @@ about this project can be found at:
 
 A recent net or commercial release of Cygwin is required.
 
-At the time this document was last updated, Cygwin 1.3.12 was current.
+At the time this document was last updated, Cygwin 1.5.2 was current.
 
 
 =head2 Cygwin Configuration
@@ -137,10 +137,11 @@ The MD5 port was done by Andy Piper:
 
 GDBM is available for Cygwin.
 
+NOTE: The GDBM library only works on NTFS partitions.
+
 =item * C<-ldb> (C<use DB_File>)
 
-BerkeleyDB is available for Cygwin.  Some details can be found in
-F<ext/DB_File/DB_File.pm>.
+BerkeleyDB is available for Cygwin.
 
 NOTE: The BerkeleyDB library only completely works on NTFS partitions.
 
@@ -153,7 +154,7 @@ C<d_semctl_semun> is undefined because it fails a Configure test
 and on Win9x the I<shm*()> functions seem to hang.  It also creates
 a compile time dependency because F<perl.h> includes F<<sys/ipc.h>>
 and F<<sys/sem.h>> (which will be required in the future when compiling
-CPAN modules).  NO LONGER SUPPORTED!
+CPAN modules). CURRENTLY NOT SUPPORTED!
 
 =item * C<-lutil>
 
@@ -177,13 +178,13 @@ Undefining this symbol forces Perl to be compiled statically.
 
 =item * C<-Uusemymalloc>
 
-By default Perl uses the malloc() included with the Perl source.  If you
-want to force Perl to build with the system malloc() undefine this symbol.
+By default Perl uses the C<malloc()> included with the Perl source.  If you
+want to force Perl to build with the system C<malloc()> undefine this symbol.
 
 =item * C<-Uuseperlio>
 
-Undefining this symbol disables the PerlIO abstraction, which is now the
-default.
+Undefining this symbol disables the PerlIO abstraction.  PerlIO is now the
+default; it is not recommended to disable PerlIO.
 
 =item * C<-Dusemultiplicity>
 
@@ -193,8 +194,7 @@ more than one interpreter instance.  This works with the Cygwin port.
 =item * C<-Duse64bitint>
 
 By default Perl uses 32 bit integers.  If you want to use larger 64
-bit integers, define this symbol.  If there is trouble, check that
-your Cygwin installation is up to date.
+bit integers, define this symbol.
 
 =item * C<-Duselongdouble>
 
@@ -206,17 +206,19 @@ These are B<not> yet available with Cygwin.
 
 =item * C<-Dusethreads>
 
-POSIX threads are B<not> yet implemented in Cygwin completely.
+POSIX threads are implemented in Cygwin, define this symbol if you want
+a threaded perl.
 
 =item * C<-Duselargefiles>
 
-Although Win32 supports large files, Cygwin currently uses 32-bit integers
-for internal size and position calculations.
+Cygwin uses 64-bit integers for internal size and position calculations, 
+this will be correctly detected and defined by Configure.
 
 =item * C<-Dmksymlinks>
 
 Use this to build perl outside of the source tree.  This works with Cygwin.
-Details can be found in the F<INSTALL> document.
+Details can be found in the F<INSTALL> document.  This is the recommended 
+way to build perl from sources.
 
 =back
 
@@ -229,10 +231,10 @@ You may see some messages during Configure that seem suspicious.
 =item * I<dlsym()>
 
 I<ld2> is needed to build dynamic libraries, but it does not exist
-when dlsym() checking occurs (it is not created until `C<make>' runs).
+when C<dlsym()> checking occurs (it is not created until `C<make>' runs).
 You will see the following message:
 
-  Checking whether your dlsym() needs a leading underscore ...
+  Checking whether your C<dlsym()> needs a leading underscore ...
   ld2: not found
   I can't compile and run the test program.
   I'm guessing that dlsym doesn't need a leading underscore.
@@ -260,9 +262,11 @@ The following error occurs because of the Cygwin C<#define> of
 C<_LONG_DOUBLE>:
 
   Guessing which symbols your C compiler and preprocessor define...
-  try.c:<line#>: parse error
+  try.c:<line#>: missing binary operator
 
-This failure does not seem to cause any problems.
+This failure does not seem to cause any problems.  With older gcc
+versions, "parse error" is reported instead of "missing binary
+operator".
 
 =back
 
@@ -272,15 +276,14 @@ Simply run I<make> and wait:
 
   make 2>&1 | tee log.make
 
-=head2 Warnings on Cygwin
+=head2 Errors on Cygwin
 
-Warnings like these are normal:
+Errors like these are normal:
 
-  warning: overriding commands for target <file>
-  warning: ignoring old commands for target <file>
-
-  dllwrap: no export definition file provided
-  dllwrap: creating one, but that may not be what you want
+  ...
+  make: [extra.pods] Error 1 (ignored)
+  ...
+  make: [extras.make] Error 1 (ignored)
 
 =head2 ld2 on Cygwin
 
@@ -337,11 +340,34 @@ these options, these tests will fail (listing not updated yet):
   lib/sdbm.t            2
   op/stat.t             9, 20 (.tmp not an executable extension)
 
-=head2 NDBM_File does not work on FAT filesystems
+=head2 NDBM_File and ODBM_File do not work on FAT filesystems
 
-Do not install NDBM_File on FAT filesystem.  It can be built on a FAT
-filesystem, but many ndbm tests will fail.  With NTFS, there should be
-no problems either way.
+Do not use NDBM_File or ODBM_File on FAT filesystem.  They can be
+built on a FAT filesystem, but many tests will fail:
+
+ ../ext/NDBM_File/ndbm.t       13  3328    71   59  83.10%  1-2 4 16-71
+ ../ext/ODBM_File/odbm.t      255 65280    ??   ??       %  ??
+ ../lib/AnyDBM_File.t           2   512    12    2  16.67%  1 4
+ ../lib/Memoize/t/errors.t      0   139    11    5  45.45%  7-11
+ ../lib/Memoize/t/tie_ndbm.t   13  3328     4    4 100.00%  1-4
+ run/fresh_perl.t                          97    1   1.03%  91
+
+If you intend to run only on FAT (or if using AnyDBM_File on FAT),
+run Configure with the -Ui_ndbm and -Ui_dbm options to prevent
+NDBM_File and ODBM_File being built.
+
+With NTFS (and CYGWIN=ntsec), there should be no problems even if
+perl was built on FAT.
+
+=head2 C<fork()> failures in io_* tests
+
+A C<fork()> failure may result in the following tests failing:
+
+  ext/IO/lib/IO/t/io_multihomed.t
+  ext/IO/lib/IO/t/io_sock.t
+  ext/IO/lib/IO/t/io_unix.t
+
+See comment on fork in L<Miscellaneous> below.
 
 =head2 Script Portability on Cygwin
 
@@ -371,20 +397,38 @@ to the translations applied to POSIX style pathnames).
 
 When a file is opened it is in either text or binary mode.  In text mode
 a file is subject to CR/LF/Ctrl-Z translations.  With Cygwin, the default
-mode for an open() is determined by the mode of the mount that underlies
-the file.  Perl provides a binmode() function to set binary mode on files
-that otherwise would be treated as text.  sysopen() with the C<O_TEXT>
+mode for an C<open()> is determined by the mode of the mount that underlies
+the file.  Perl provides a C<binmode()> function to set binary mode on files
+that otherwise would be treated as text.  C<sysopen()> with the C<O_TEXT>
 flag sets text mode on files that otherwise would be treated as binary:
 
     sysopen(FOO, "bar", O_WRONLY|O_CREAT|O_TEXT)
 
-lseek(), tell() and sysseek() only work with files opened in binary mode.
+C<lseek()>, C<tell()> and C<sysseek()> only work with files opened in binary
+mode.
 
 The text/binary issue is covered at length in the Cygwin documentation.
 
+=item * PerlIO
+
+PerlIO overrides the default Cygwin Text/Binary behaviour.  A file will 
+always treated as binary, regardless which mode of the mount it lives on,
+just like it is in UNIX.  So CR/LF translation needs to be requested in 
+either the C<open()> call like this:
+
+  open(FH, ">:crlf", "out.txt");
+
+which will do conversion from LF to CR/LF on the output, or in the 
+environment settings (add this to your .bashrc):
+
+  export PERLIO=crlf
+
+which will pull in the crlf PerlIO layer which does LF -> CRLF conversion 
+on every output generated by perl.
+
 =item * F<.exe>
 
-The Cygwin stat(), lstat() and readlink() functions make the F<.exe>
+The Cygwin C<stat()>, C<lstat()> and C<readlink()> functions make the F<.exe>
 extension transparent by looking for F<foo.exe> when you ask for F<foo>
 (unless a F<foo> also exists).  Cygwin does not require a F<.exe>
 extension, but I<gcc> adds it automatically when building a program.
@@ -392,24 +436,37 @@ However, when accessing an executable as a normal file (e.g., I<cp>
 in a makefile) the F<.exe> is not transparent.  The I<install> included
 with Cygwin automatically appends a F<.exe> when necessary.
 
-=item * chown()
+=item * C<chown()>
 
-On WinNT chown() can change a file's user and group IDs.  On Win9x chown()
+On WinNT C<chown()> can change a file's user and group IDs.  On Win9x C<chown()>
 is a no-op, although this is appropriate since there is no security model.
 
 =item * Miscellaneous
 
-File locking using the C<F_GETLK> command to fcntl() is a stub that
+File locking using the C<F_GETLK> command to C<fcntl()> is a stub that
 returns C<ENOSYS>.
 
-Win9x can not rename() an open file (although WinNT can).
+Win9x can not C<rename()> an open file (although WinNT can).
 
-The Cygwin chroot() implementation has holes (it can not restrict file
+The Cygwin C<chroot()> implementation has holes (it can not restrict file
 access by native Win32 programs).
 
 Inplace editing C<perl -i> of files doesn't work without doing a backup 
 of the file being edited C<perl -i.bak> because of windowish restrictions,
-so Perl adds the C<.bak> automatically if you just use C<perl -i>.
+therefore Perl adds the suffix C<.bak> automatically if you use C<perl -i> 
+without specifying a backup extension.
+
+Using C<fork()> after loading multiple dlls may fail with an internal cygwin
+error like the following:
+
+  C:\CYGWIN\BIN\PERL.EXE: *** couldn't allocate memory 0x10000(4128768) for 'C:\CYGWIN\LIB\PERL5\5.6.1\CYGWIN-MULTI\AUTO\SOCKET\SOCKET.DLL' alignment, Win32 error 8
+
+    200 [main] perl 377147 sync_with_child: child -395691(0xB8) died before initialization with status code 0x1
+   1370 [main] perl 377147 sync_with_child: *** child state child loading dlls
+
+Use the rebase utility to resolve the conflicting dll addresses.  The
+rebase package is included in the Cygwin netrelease.  Use setup.exe from
+F<http://www.cygwin.com/setup.exe> to install it and run rebaseall.
 
 =back
 
@@ -443,7 +500,7 @@ be kept as clean as possible (listing not updated yet).
   Changes Changes5.005 Changes5.004 Changes5.6
   pod/perl.pod pod/perlport.pod pod/perlfaq3.pod
   pod/perldelta.pod pod/perl5004delta.pod pod/perl56delta.pod
-  pod/perlhist.pod pod/perlmodlib.pod pod/buildtoc.PL pod/perltoc.pod
+  pod/perlhist.pod pod/perlmodlib.pod perl/buildtoc pod/perltoc.pod
 
 =item Build, Configure, Make, Install
 
@@ -509,7 +566,7 @@ be kept as clean as possible (listing not updated yet).
 =head1 BUGS ON CYGWIN
 
 Support for swapping real and effective user and group IDs is incomplete.
-On WinNT Cygwin provides setuid(), seteuid(), setgid() and setegid().
+On WinNT Cygwin provides C<setuid()>, C<seteuid()>, C<setgid()> and C<setegid()>.
 However, additional Cygwin calls for manipulating WinNT access tokens
 and security contexts are required.
 
@@ -521,8 +578,8 @@ alexander smishlajev <als@turnhere.com>,
 Steven Morlock <newspost@morlock.net>,
 Sebastien Barre <Sebastien.Barre@utc.fr>,
 Teun Burgers <burgers@ecn.nl>,
-Gerrit Haase <gh@familiehaase.de>.
+Gerrit P. Haase <gp@familiehaase.de>.
 
 =head1 HISTORY
 
-Last updated: 2002-02-27
+Last updated: 2003-08-12

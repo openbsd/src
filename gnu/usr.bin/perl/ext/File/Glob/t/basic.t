@@ -13,7 +13,7 @@ BEGIN {
         print "1..0\n";
         exit 0;
     }
-    print "1..11\n";
+    print "1..12\n";
 }
 END {
     print "not ok 1\n" unless $loaded;
@@ -182,3 +182,7 @@ print $ok ? "ok 11\n" : "not ok 11\n";
 unlink @f_names;
 chdir "..";
 rmdir "pteerslo";
+
+# this can panic if PL_glob_index gets passed as flags to bsd_glob
+<*>; <*>;
+print "ok 12\n";

@@ -24,7 +24,7 @@ sub BEGIN {
 
 use Storable qw(freeze nfreeze thaw);
 
-print "1..19\n";
+print "1..20\n";
 
 $a = 'toto';
 $b = \$a;
@@ -136,3 +136,16 @@ ok 18, !$@;
 
 thaw $frozen;			# used to segfault here
 ok 19, 1;
+
+if ($] >= 5.006) {
+    eval '
+        $a = []; $#$a = 2; $a->[1] = undef;
+        $b = thaw freeze $a;
+        @a = map { ~~ exists $a->[$_] } 0 .. $#$a;
+        @b = map { ~~ exists $b->[$_] } 0 .. $#$b;
+        ok 20, "@a" eq "@b";
+    ';
+}
+else {
+    print "ok 20 # skipped (no av_exists)\n";
+}

@@ -78,7 +78,7 @@ Perl5.8¤Ç¤Ï¡¢¤³¤ì¤é¤Îµ¡Ç½¤¬¤¹¤Ù¤ÆPerlËÜÂÎ¤À¤±¤Ç¼Â¸½¤Ç¤­¤ë¾å¤Ë¡¢ÆüËÜ¸ì¤Î¤ß¤Ê¤é¤º¾
   # jcode.pl
   require "jcode.pl";
   while(<>){
-    jcode::convert(*_, 'euc', 'sjis);
+    jcode::convert(*_, 'euc', 'sjis');
     print;
   }
   # Jcode.pm
@@ -93,7 +93,7 @@ Perl5.8¤Ç¤Ï¡¢¤³¤ì¤é¤Îµ¡Ç½¤¬¤¹¤Ù¤ÆPerlËÜÂÎ¤À¤±¤Ç¼Â¸½¤Ç¤­¤ë¾å¤Ë¡¢ÆüËÜ¸ì¤Î¤ß¤Ê¤é¤º¾
     print;
   }
   # Perl 5.8 - encoding ¤òÍøÍÑ¤·¤Æ
-  use encoding 'euc-jp', STDIN=>'shiftjis'
+  use encoding 'euc-jp', STDIN => 'shiftjis';
   while(<>){
   	print;
   }

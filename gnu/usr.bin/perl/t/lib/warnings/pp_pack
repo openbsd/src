@@ -18,8 +18,8 @@ no warnings 'unpack' ;
 my @b = unpack ("A,A", "22") ;
 my $b = pack ("A,A", 1,2) ;
 EXPECT
-Invalid type in unpack: ',' at - line 4.
-Invalid type in pack: ',' at - line 5.
+Invalid type ',' in unpack at - line 4.
+Invalid type ',' in pack at - line 5.
 ########
 # pp.c
 use warnings 'uninitialized' ;
@@ -73,10 +73,10 @@ print unpack("c", pack("c", -128)), "\n";
 print unpack("c", pack("c",  127)), "\n";
 print unpack("c", pack("c",  128)), "\n";
 EXPECT
-Character in "C" format wrapped at - line 3.
-Character in "C" format wrapped at - line 3.
-Character in "c" format wrapped at - line 3.
-Character in "c" format wrapped at - line 3.
+Character in 'C' format wrapped in pack at - line 3.
+Character in 'C' format wrapped in pack at - line 3.
+Character in 'c' format wrapped in pack at - line 3.
+Character in 'c' format wrapped in pack at - line 3.
 255
 0
 255

@@ -1,7 +1,6 @@
-@@@	The Unicode Standard 3.2
-@@@+	Draft U32M020305.lst
-	Minor annotation edits for final release.
-	Addition of a few more Khmer annotations.
+@@@	The Unicode Standard 4.0
+@@@+	U40M030411.lst
+	Final Unicode 4.0 names list.
 	This file is semi-automatically derived from UnicodeData.txt and
 	a set of manually created annotations using a script to select
 	or suppress information from the data file. The rules used
@@ -82,7 +81,8 @@
 001F	<control>
 	= INFORMATION SEPARATOR ONE
 	= unit separator (US)
-@		ASCII
+@		ASCII punctuation and symbols
+@+		Based on ISO/IEC 646 from here.
 0020	SPACE
 	* sometimes considered a control code
 	* other space characters: 2000-200A
@@ -109,6 +109,7 @@
 	x (ditto mark - 3003)
 0023	NUMBER SIGN
 	= pound sign, hash, crosshatch, octothorpe
+	x (music sharp sign - 266F)
 0024	DOLLAR SIGN
 	= milreis, escudo
 	* glyph may have one or two vertical bars
@@ -123,8 +124,8 @@
 0027	APOSTROPHE
 	= APOSTROPHE-QUOTE
 	= APL quote
-	* neutral (vertical) glyph having mixed usage
-	* preferred character for apostrophe is 2019
+	* neutral (vertical) glyph with mixed usage
+	* 2019 is preferred for apostrophe
 	* preferred characters in English for paired quotation marks are 2018 & 2019
 	x (modifier letter prime - 02B9)
 	x (modifier letter apostrophe - 02BC)
@@ -169,6 +170,7 @@
 	x (combining long solidus overlay - 0338)
 	x (fraction slash - 2044)
 	x (division slash - 2215)
+@		ASCII digits
 0030	DIGIT ZERO
 0031	DIGIT ONE
 0032	DIGIT TWO
@@ -179,17 +181,20 @@
 0037	DIGIT SEVEN
 0038	DIGIT EIGHT
 0039	DIGIT NINE
+@		ASCII punctuation and symbols
 003A	COLON
 	x (armenian full stop - 0589)
 	x (hebrew punctuation sof pasuq - 05C3)
 	x (ratio - 2236)
 003B	SEMICOLON
+	* this, and not 037E, is the preferred character for 'Greek question mark'
 	x (greek question mark - 037E)
 	x (arabic semicolon - 061B)
 	x (reversed semicolon - 204F)
 003C	LESS-THAN SIGN
 	x (single left-pointing angle quotation mark - 2039)
 	x (left-pointing angle bracket - 2329)
+	x (mathematical left angle bracket - 27E8)
 	x (left angle bracket - 3008)
 003D	EQUALS SIGN
 	* other related characters: 2241-2263
@@ -198,6 +203,7 @@
 003E	GREATER-THAN SIGN
 	x (single right-pointing angle quotation mark - 203A)
 	x (right-pointing angle bracket - 232A)
+	x (mathematical right angle bracket - 27E9)
 	x (right angle bracket - 3009)
 003F	QUESTION MARK
 	x (inverted question mark - 00BF)
@@ -207,6 +213,7 @@
 	x (question exclamation mark - 2048)
 	x (exclamation question mark - 2049)
 0040	COMMERCIAL AT
+@		Uppercase Latin alphabet
 0041	LATIN CAPITAL LETTER A
 0042	LATIN CAPITAL LETTER B
 	x (script capital b - 212C)
@@ -262,6 +269,7 @@
 005A	LATIN CAPITAL LETTER Z
 	x (double-struck capital z - 2124)
 	x (black-letter capital z - 2128)
+@		ASCII punctuation and symbols
 005B	LEFT SQUARE BRACKET
 	= OPENING SQUARE BRACKET
 	* other bracket characters: 3008-301B
@@ -289,6 +297,7 @@
 	x (modifier letter grave accent - 02CB)
 	x (combining grave accent - 0300)
 	x (reversed prime - 2035)
+@		Lowercase Latin alphabet
 0061	LATIN SMALL LETTER A
 0062	LATIN SMALL LETTER B
 0063	LATIN SMALL LETTER C
@@ -327,6 +336,7 @@
 0079	LATIN SMALL LETTER Y
 007A	LATIN SMALL LETTER Z
 	x (latin small letter z with stroke - 01B6)
+@		ASCII punctuation and symbols
 007B	LEFT CURLY BRACKET
 	= OPENING CURLY BRACKET
 	= opening brace
@@ -346,6 +356,7 @@
 	x (combining tilde - 0303)
 	x (tilde operator - 223C)
 	x (fullwidth tilde - FF5E)
+@		Control character
 007F	<control>
 	= DELETE
 @@	0080	C1 Controls and Latin-1 Supplement (Latin-1 Supplement)	00FF
@@ -411,8 +422,10 @@
 	= PRIVACY MESSAGE
 009F	<control>
 	= APPLICATION PROGRAM COMMAND
-@		ISO 8859-1 (aka Latin-1)
+@		Latin-1 punctuation and symbols
+@+		Based on ISO/IEC 8859-1 (aka Latin-1) from here.
 00A0	NO-BREAK SPACE
+	= NBSP
 	x (space - 0020)
 	x (figure space - 2007)
 	x (narrow no-break space - 202F)
@@ -424,7 +437,7 @@
 	x (exclamation mark - 0021)
 00A2	CENT SIGN
 00A3	POUND SIGN
-	= pound sterling, Irish punt
+	= pound sterling, Irish punt, Italian lira, Turkish lira, etc.
 	x (lira sign - 20A4)
 00A4	CURRENCY SIGN
 	= Filzlaus, Ricardi-Sonne (German names)
@@ -457,6 +470,7 @@
 	= angled dash (in typography)
 	x (reversed not sign - 2310)
 00AD	SOFT HYPHEN
+	= SHY
 	= discretionary hyphen
 	x (mongolian todo soft hyphen - 1806)
 00AE	REGISTERED SIGN
@@ -502,7 +516,7 @@
 00B7	MIDDLE DOT
 	= midpoint (in typography)
 	= Georgian comma
-	= Greek middle dot
+	= Greek middle dot (ano teleia)
 	x (greek ano teleia - 0387)
 	x (bullet - 2022)
 	x (one dot leader - 2024)
@@ -541,6 +555,7 @@
 	= turned question mark
 	* Spanish
 	x (question mark - 003F)
+@		Letters
 00C0	LATIN CAPITAL LETTER A WITH GRAVE
 	: 0041 0300
 00C1	LATIN CAPITAL LETTER A WITH ACUTE
@@ -590,8 +605,10 @@
 	: 004F 0303
 00D6	LATIN CAPITAL LETTER O WITH DIAERESIS
 	: 004F 0308
+@		Mathematical operator
 00D7	MULTIPLICATION SIGN
 	= z notation Cartesian product
+@		Letters
 00D8	LATIN CAPITAL LETTER O WITH STROKE
 	= LATIN CAPITAL LETTER O SLASH
 	x (empty set - 2205)
@@ -669,7 +686,9 @@
 	: 006F 0303
 00F6	LATIN SMALL LETTER O WITH DIAERESIS
 	: 006F 0308
+@		Mathematical operator
 00F7	DIVISION SIGN
+@		Letters
 00F8	LATIN SMALL LETTER O WITH STROKE
 	= LATIN SMALL LETTER O SLASH
 	* Danish, Norwegian, Faroese, IPA
@@ -744,6 +763,7 @@
 	x (latin capital letter african d - 0189)
 0111	LATIN SMALL LETTER D WITH STROKE
 	* Croatian, Vietnamese, Sami
+	* an alternate glyph with the stroke through the bowl is used in Americanist orthographies
 	x (latin capital letter d with stroke - 0110)
 	x (cyrillic small letter dje - 0452)
 0112	LATIN CAPITAL LETTER E WITH MACRON
@@ -1046,6 +1066,7 @@
 @		Latin extended-B
 0180	LATIN SMALL LETTER B WITH STROKE
 	* Americanist and Indo-Europeanist usage for phonetic beta
+	* Americanist orthographies use an alternate glyph with the stroke through the bowl 
 	* Old Saxon
 	x (greek small letter beta - 03B2)
 	x (blank symbol - 2422)
@@ -1069,6 +1090,7 @@
 	x (cyrillic small letter soft sign - 044C)
 0186	LATIN CAPITAL LETTER OPEN O
 	* typographically a turned C
+	* African
 	x (latin small letter open o - 0254)
 0187	LATIN CAPITAL LETTER C WITH HOOK
 0188	LATIN SMALL LETTER C WITH HOOK
@@ -1244,6 +1266,7 @@
 	* replaced by "w" in modern transcriptions of Old English
 	* uppercase is 01F7
 	x (runic letter wunjo wynn w - 16B9)
+@		African letters for clicks
 01C0	LATIN LETTER DENTAL CLICK
 	= pipe
 	* Khoisan tradition
@@ -1494,6 +1517,8 @@
 0220	LATIN CAPITAL LETTER N WITH LONG RIGHT LEG
 	* Lakota
 	x (latin small letter n with long right leg - 019E)
+0221	LATIN SMALL LETTER D WITH CURL
+	* phonetic use in Sinology
 0222	LATIN CAPITAL LETTER OU
 0223	LATIN SMALL LETTER OU
 	* Algonquin, Huron
@@ -1536,9 +1561,13 @@
 0233	LATIN SMALL LETTER Y WITH MACRON
 	* Livonian, Cornish
 	: 0079 0304
+@		Additions for Sinology
+0234	LATIN SMALL LETTER L WITH CURL
+0235	LATIN SMALL LETTER N WITH CURL
+0236	LATIN SMALL LETTER T WITH CURL
 @@	0250	IPA Extensions	02AF
 @		IPA extensions
-@+		IPA includes basic Latin letters and a number of Latin letters from other blocks.
+@+		IPA includes basic Latin letters and a number of Latin or Greek letters from other blocks.
 		x (latin small letter ae - 00E6)
 		x (latin small letter c with cedilla - 00E7)
 		x (latin small letter eth - 00F0)
@@ -1767,7 +1796,7 @@
 0292	LATIN SMALL LETTER EZH
 	= dram
 	* voiced postalveolar fricative
-	* mistakenly identified as yogh in Unicode 1.0
+	* mistakenly named yogh in Unicode 1.0
 	* uppercase is 01B7
 	* Skolt Sami
 	x (latin small letter yogh - 021D)
@@ -1839,8 +1868,11 @@
 	* audible lip smack
 02AD	LATIN LETTER BIDENTAL PERCUSSIVE
 	* audible teeth gnashing
+@		Additions for Sinology
+02AE	LATIN SMALL LETTER TURNED H WITH FISHHOOK 
+02AF	LATIN SMALL LETTER TURNED H WITH FISHHOOK AND TAIL
 @@	02B0	Spacing Modifier Letters	02FF
-@		Phonetic modifiers derived from Latin letters
+@		Latin superscript modifier letters
 02B0	MODIFIER LETTER SMALL H
 	* aspiration
 	# <super> 0068
@@ -1871,7 +1903,7 @@
 	# <super> 0077
 02B8	MODIFIER LETTER SMALL Y
 	* palatalization
-	* common Americanist substitution for 02B2
+	* common Americanist usage for 02B2
 	# <super> 0079
 @		Miscellaneous phonetic modifiers
 02B9	MODIFIER LETTER PRIME
@@ -2058,9 +2090,27 @@
 @		IPA modifiers
 02EC	MODIFIER LETTER VOICING
 02ED	MODIFIER LETTER UNASPIRATED
-@		Other modifier letters
+@		Other modifier letter
 02EE	MODIFIER LETTER DOUBLE APOSTROPHE
 	* Nenets
+@		UPA modifiers
+02EF	MODIFIER LETTER LOW DOWN ARROWHEAD
+02F0	MODIFIER LETTER LOW UP ARROWHEAD
+02F1	MODIFIER LETTER LOW LEFT ARROWHEAD
+02F2	MODIFIER LETTER LOW RIGHT ARROWHEAD
+02F3	MODIFIER LETTER LOW RING
+02F4	MODIFIER LETTER MIDDLE GRAVE ACCENT
+02F5	MODIFIER LETTER MIDDLE DOUBLE GRAVE ACCENT
+02F6	MODIFIER LETTER MIDDLE DOUBLE ACUTE ACCENT
+02F7	MODIFIER LETTER LOW TILDE
+02F8	MODIFIER LETTER RAISED COLON
+02F9	MODIFIER LETTER BEGIN HIGH TONE
+02FA	MODIFIER LETTER END HIGH TONE
+02FB	MODIFIER LETTER BEGIN LOW TONE
+02FC	MODIFIER LETTER END LOW TONE
+02FD	MODIFIER LETTER SHELF
+02FE	MODIFIER LETTER OPEN SHELF
+02FF	MODIFIER LETTER LOW LEFT ARROW
 @@	0300	Combining Diacritical Marks	036F
 @		Ordinary diacritics
 0300	COMBINING GRAVE ACCENT (Varia)
@@ -2297,11 +2347,25 @@
 	* IPA: whistled articulation
 @		Grapheme joiner
 034F	COMBINING GRAPHEME JOINER
+	= CGJ
 	* has no visible glyph
 	* indicates that adjoining characters are to be treated as a graphemic unit
+@		Additions for the Uralic Phonetic Alphabet
+0350	COMBINING RIGHT ARROWHEAD ABOVE
+0351	COMBINING LEFT HALF RING ABOVE
+0352	COMBINING FERMATA
+0353	COMBINING X BELOW
+0354	COMBINING LEFT ARROWHEAD BELOW
+0355	COMBINING RIGHT ARROWHEAD BELOW
+0356	COMBINING RIGHT ARROWHEAD AND UP ARROWHEAD BELOW
+0357	COMBINING RIGHT HALF RING ABOVE
 @		Double diacritics
+035D	COMBINING DOUBLE BREVE
+035E	COMBINING DOUBLE MACRON
+035F	COMBINING DOUBLE MACRON BELOW
 0360	COMBINING DOUBLE TILDE
 0361	COMBINING DOUBLE INVERTED BREVE
+	= ligature tie
 0362	COMBINING DOUBLE RIGHTWARDS ARROW BELOW
 	* IPA: sliding articulation
 @		Medieval superscript letter diacritics
@@ -2337,6 +2401,7 @@
 037E	GREEK QUESTION MARK (Erotimatiko)
 	= erotimatiko
 	* sentence-final punctuation
+	* 003B is the preferred character
 	x (question mark - 003F)
 	: 003B semicolon
 0384	GREEK TONOS
@@ -2348,7 +2413,8 @@
 0386	GREEK CAPITAL LETTER ALPHA WITH TONOS
 	: 0391 0301
 0387	GREEK ANO TELEIA
-	* functions in Greek like a semicolon	
+	* functions in Greek like a semicolon
+	* 00B7 is the preferred character	
 	: 00B7 middle dot
 0388	GREEK CAPITAL LETTER EPSILON WITH TONOS
 	: 0395 0301
@@ -2530,7 +2596,7 @@
 03ED	COPTIC SMALL LETTER SHIMA
 03EE	COPTIC CAPITAL LETTER DEI
 03EF	COPTIC SMALL LETTER DEI
-@		Greek symbols
+@		Variant letterforms
 03F0	GREEK KAPPA SYMBOL
 	= GREEK SMALL LETTER SCRIPT KAPPA
 	* used as technical symbol
@@ -2544,7 +2610,7 @@
 	# 03C2 greek small letter final sigma
 @		Additional letter
 03F3	GREEK LETTER YOT
-@		Greek symbols
+@		Variant letterforms and symbols
 03F4	GREEK CAPITAL THETA SYMBOL
 	x (cyrillic capital letter fita - 0472)
 	# 0398 greek capital letter theta
@@ -2555,6 +2621,15 @@
 03F6	GREEK REVERSED LUNATE EPSILON SYMBOL
 	= reversed straight epsilon
 	x (small contains as member - 220D)
+@		Additional archaic letters for Bactrian
+03F7	GREEK CAPITAL LETTER SHO
+03F8	GREEK SMALL LETTER SHO
+@		Variant letterform
+03F9	GREEK CAPITAL LUNATE SIGMA SYMBOL
+	# 03A3 greek capital letter sigma
+@		Archaic letters
+03FA	GREEK CAPITAL LETTER SAN
+03FB	GREEK SMALL LETTER SAN
 @@	0400	Cyrillic	04FF
 @		Cyrillic extensions
 0400	CYRILLIC CAPITAL LETTER IE WITH GRAVE
@@ -2768,7 +2843,7 @@
 	* Kildin Sami
 0490	CYRILLIC CAPITAL LETTER GHE WITH UPTURN
 0491	CYRILLIC SMALL LETTER GHE WITH UPTURN
-	* Old Ukrainian
+	* Ukrainian
 0492	CYRILLIC CAPITAL LETTER GHE WITH STROKE
 0493	CYRILLIC SMALL LETTER GHE WITH STROKE
 	* Azerbaijani, Bashkir, ...
@@ -3195,16 +3270,42 @@
 05F3	HEBREW PUNCTUATION GERESH
 05F4	HEBREW PUNCTUATION GERSHAYIM
 @@	0600	Arabic	06FF
-@		Based on ISO 8859-6
+@		Subtending marks
+0600	ARABIC NUMBER SIGN
+0601	ARABIC SIGN SANAH
+0602	ARABIC FOOTNOTE MARKER
+0603	ARABIC SIGN SAFHA
+@		Punctuation
 060C	ARABIC COMMA
 	* also used with Thaana and Syriac in modern text
 	x (comma - 002C)
+060D	ARABIC DATE SEPARATOR
+@		Poetic marks
+060E	ARABIC POETIC VERSE SIGN
+060F	ARABIC SIGN MISRA
+@		Honorifics
+0610	ARABIC SIGN SALLALLAHOU ALAYHE WASSALLAM
+	* represents sallallahu alayhe wasallam "may God's peace and blessings be upon him"
+0611	ARABIC SIGN ALAYHE ASSALLAM
+	* represents alayhe assalam "upon him be peace"
+0612	ARABIC SIGN RAHMATULLAH ALAYHE
+	* represents rahmatullah alayhe "may God have mercy upon him"
+0613	ARABIC SIGN RADI ALLAHOU ANHU
+	* represents radi allahu 'anhu "may God be pleased with him"
+0614	ARABIC SIGN TAKHALLUS
+	* sign placed over the name or nom-de-plume of a poet, or in some writings used to mark all proper names
+@		Koranic annotation sign
+0615	ARABIC SMALL HIGH TAH 
+	* marks a recommended pause position in some Korans published in Iran and Pakistan
+	* should not be confused with the small TAH sign used as a diacritic for some letters such as 0679
+@		Punctuation
 061B	ARABIC SEMICOLON
 	* also used with Thaana and Syriac in modern text
 	x (semicolon - 003B)
 061F	ARABIC QUESTION MARK
 	* also used with Thaana and Syriac in modern text
 	x (question mark - 003F)
+@		Based on ISO 8859-6
 0621	ARABIC LETTER HAMZA
 	x (modifier letter right half ring - 02BE)
 0622	ARABIC LETTER ALEF WITH MADDA ABOVE
@@ -3264,12 +3365,18 @@
 0651	ARABIC SHADDA
 0652	ARABIC SUKUN
 	* marks absence of a vowel after the base consonant
-	* used in some Korans (Qur'ans) to mark a long vowel as ignored
+	* used in some Korans to mark a long vowel as ignored
 	x (arabic small high dotless head of khah - 06E1)
 @		Combining maddah and hamza
 0653	ARABIC MADDAH ABOVE
 0654	ARABIC HAMZA ABOVE
 0655	ARABIC HAMZA BELOW
+@		Other combining marks
+0656	ARABIC SUBSCRIPT ALEF
+0657	ARABIC INVERTED DAMMA
+0658	ARABIC MARK NOON GHUNNA
+	* Kashmiri and Baluchi
+	* indicates nasalization in Urdu
 @		Arabic-Indic digits
 @+		These digits are used with Arabic proper; for languages of Iran, Pakistan, and India, see the Eastern Arabic-Indic digits at 06F0..06F9.
 0660	ARABIC-INDIC DIGIT ZERO
@@ -3287,6 +3394,8 @@
 	x (percent sign - 0025)
 066B	ARABIC DECIMAL SEPARATOR
 066C	ARABIC THOUSANDS SEPARATOR
+	x (apostrophe - 0027)
+	x (right single quotation mark - 2019)
 066D	ARABIC FIVE POINTED STAR
 	x (asterisk - 002A)
 @		Archaic letters
@@ -3294,9 +3403,10 @@
 066F	ARABIC LETTER DOTLESS QAF
 @		Point
 0670	ARABIC LETTER SUPERSCRIPT ALEF
+	* actually a vowel sign, despite the name
 @		Extended Arabic letters
 0671	ARABIC LETTER ALEF WASLA
-	* Arabic
+	* Koranic Arabic
 0672	ARABIC LETTER ALEF WITH WAVY HAMZA ABOVE
 	* Baluchi, Kashmiri
 0673	ARABIC LETTER ALEF WITH WAVY HAMZA BELOW
@@ -3335,7 +3445,7 @@
 0681	ARABIC LETTER HAH WITH HAMZA ABOVE
 	* Pashto
 0682	ARABIC LETTER HAH WITH TWO DOTS VERTICAL ABOVE
-	* Pashto
+	* not used in modern Pashto
 0683	ARABIC LETTER NYEH
 	* Sindhi
 0684	ARABIC LETTER DYEH
@@ -3359,11 +3469,12 @@
 068D	ARABIC LETTER DDAHAL
 	* Sindhi
 068E	ARABIC LETTER DUL
-	* Sindhi
+	* older shape for DUL, now obsolete in Sindhi
 068F	ARABIC LETTER DAL WITH THREE DOTS ABOVE DOWNWARDS
 	* Sindhi
+	* current shape used for DUL
 0690	ARABIC LETTER DAL WITH FOUR DOTS ABOVE
-	* Urdu
+	* old Urdu, not in current use
 0691	ARABIC LETTER RREH
 	* Urdu
 0692	ARABIC LETTER REH WITH SMALL V
@@ -3402,9 +3513,9 @@
 06A3	ARABIC LETTER FEH WITH DOT BELOW
 	* Ingush
 06A4	ARABIC LETTER VEH
-	* Arabic for foreign words
+	* Middle Eastern Arabic for foreign words
 06A5	ARABIC LETTER FEH WITH THREE DOTS BELOW
-	* Arabic for foreign words
+	* North African Arabic for foreign words
 06A6	ARABIC LETTER PEHEH
 	* Sindhi
 06A7	ARABIC LETTER QAF WITH DOT ABOVE
@@ -3416,6 +3527,7 @@
 06AA	ARABIC LETTER SWASH KAF
 06AB	ARABIC LETTER KAF WITH RING
 	* Pashto
+	* may appear like an Arabic KAF (0643) with a ring below the base
 06AC	ARABIC LETTER KAF WITH DOT ABOVE
 	* old Malay
 06AD	ARABIC LETTER NG
@@ -3429,11 +3541,11 @@
 06B1	ARABIC LETTER NGOEH
 	* Sindhi
 06B2	ARABIC LETTER GAF WITH TWO DOTS BELOW
-	* Sindhi
+	* not used in Sindhi
 06B3	ARABIC LETTER GUEH
 	* Sindhi
 06B4	ARABIC LETTER GAF WITH THREE DOTS ABOVE
-	* Sindhi
+	* not used in Sindhi
 06B5	ARABIC LETTER LAM WITH SMALL V
 	* Kurdish
 06B6	ARABIC LETTER LAM WITH DOT ABOVE
@@ -3457,14 +3569,14 @@
 06C0	ARABIC LETTER HEH WITH YEH ABOVE
 	= ARABIC LETTER HAMZAH ON HA
 	= izafet
-	* Persian, Urdu
-	* actually a ligature, and not an independent letter
+	* Urdu
+	* actually a ligature, not an independent letter
 	: 06D5 0654
 06C1	ARABIC LETTER HEH GOAL
 	* Urdu
 06C2	ARABIC LETTER HEH GOAL WITH HAMZA ABOVE
 	* Urdu
-	* actually a ligature, and not an independent letter
+	* actually a ligature, not an independent letter
 	: 06C1 0654
 06C3	ARABIC LETTER TEH MARBUTA GOAL
 	* Urdu
@@ -3486,6 +3598,9 @@
 	* Uighur, Kazakh
 06CC	ARABIC LETTER FARSI YEH
 	* Arabic, Persian, Urdu, ...
+	* initial and medial forms of this letter have dots
+	x (arabic letter alef maksura - 0649)
+	x (arabic letter yeh - 064A)
 06CD	ARABIC LETTER YEH WITH TAIL
 	* Pashto, Sindhi
 06CE	ARABIC LETTER YEH WITH SMALL V
@@ -3500,7 +3615,7 @@
 	* Urdu
 06D3	ARABIC LETTER YEH BARREE WITH HAMZA ABOVE
 	* Urdu
-	* actually a ligature, and not an independent letter
+	* actually a ligature, not an independent letter
 	: 06D2 0654
 @		Punctuation
 06D4	ARABIC FULL STOP
@@ -3536,8 +3651,11 @@
 06EB	ARABIC EMPTY CENTRE HIGH STOP
 06EC	ARABIC ROUNDED HIGH STOP WITH FILLED CENTRE
 06ED	ARABIC SMALL LOW MEEM
+@		Extended Arabic letters for Parkari
+06EE	ARABIC LETTER DAL WITH INVERTED V
+06EF	ARABIC LETTER REH WITH INVERTED V
 @		Eastern Arabic-Indic digits
-@+		These digits are used with Arabic-script languages of Iran, Pakistan, and India (Persian, Sindhi, Urdu, etc.).
+@+		These digits are used with Arabic-script languages of Iran, Pakistan, and India (Persian, Sindhi, Urdu, etc.). For details of variations in preferred glyphs, see the block description for the Arabic script.
 06F0	EXTENDED ARABIC-INDIC DIGIT ZERO
 06F1	EXTENDED ARABIC-INDIC DIGIT ONE
 06F2	EXTENDED ARABIC-INDIC DIGIT TWO
@@ -3559,6 +3677,8 @@
 @		Signs for Sindhi
 06FD	ARABIC SIGN SINDHI AMPERSAND
 06FE	ARABIC SIGN SINDHI POSTPOSITION MEN
+@		Extended Arabic letter for Parkari
+06FF	ARABIC LETTER HEH WITH INVERTED V
 @@	0700	Syriac	074F
 @		Syriac punctuation and signs
 0700	SYRIAC END OF PARAGRAPH
@@ -3592,6 +3712,7 @@
 	* marks the beginning of a phrase, word, or morpheme that has a marginal note
 @		Syriac format control character
 070F	SYRIAC ABBREVIATION MARK
+	= SAM
 	* marks the beginning of a Syriac abbreviation
 @		Syriac letters
 0710	SYRIAC LETTER ALAPH
@@ -3629,6 +3750,10 @@
 072A	SYRIAC LETTER RISH
 072B	SYRIAC LETTER SHIN
 072C	SYRIAC LETTER TAW
+@		Persian letters
+072D	SYRIAC LETTER PERSIAN BHETH
+072E	SYRIAC LETTER PERSIAN GHAMAL
+072F	SYRIAC LETTER PERSIAN DHALATH
 @		Syriac points (vowels)
 0730	SYRIAC PTHAHA ABOVE
 0731	SYRIAC PTHAHA BELOW
@@ -3671,6 +3796,10 @@
 	* also used in the Syrian Orthodox Anaphora book to mark the breaking of the Eucharist bread
 074A	SYRIAC BARREKH
 	* a diacritic cross used in liturgical texts
+@		Sogdian letters
+074D	SYRIAC LETTER SOGDIAN ZHAIN
+074E	SYRIAC LETTER SOGDIAN KHAPH
+074F	SYRIAC LETTER SOGDIAN FE
 @@	0780	Thaana	07BF
 @		Basic consonants
 0780	THAANA LETTER HAA
@@ -3736,6 +3865,7 @@
 	= bindu
 0903	DEVANAGARI SIGN VISARGA
 @		Independent vowels
+0904	DEVANAGARI LETTER SHORT A
 0905	DEVANAGARI LETTER A
 0906	DEVANAGARI LETTER AA
 0907	DEVANAGARI LETTER I
@@ -3825,7 +3955,7 @@
 094C	DEVANAGARI VOWEL SIGN AU
 @		Various signs
 094D	DEVANAGARI SIGN VIRAMA
-	= halant (the preferred name)
+	= halant (the preferred Hindi name)
 	* suppresses inherent vowel
 0950	DEVANAGARI OM
 0951	DEVANAGARI STRESS SIGN UDATTA
@@ -3855,8 +3985,10 @@
 0962	DEVANAGARI VOWEL SIGN VOCALIC L
 0963	DEVANAGARI VOWEL SIGN VOCALIC LL
 0964	DEVANAGARI DANDA
-	= phrase separator
+	= purna viram
+	* phrase separator
 0965	DEVANAGARI DOUBLE DANDA
+	= deergh viram
 @		Digits
 0966	DEVANAGARI DIGIT ZERO
 0967	DEVANAGARI DIGIT ONE
@@ -3926,6 +4058,7 @@
 @		Various signs
 09BC	BENGALI SIGN NUKTA
 	* for extending the alphabet to new letters
+09BD	BENGALI SIGN AVAGRAHA
 @		Dependent vowel signs
 09BE	BENGALI VOWEL SIGN AA
 09BF	BENGALI VOWEL SIGN I
@@ -3939,15 +4072,15 @@
 	* stands to the left of the consonant
 09C8	BENGALI VOWEL SIGN AI
 	* stands to the left of the consonant
+@		Two-part dependent vowel signs
+@+		These two-part dependent vowel signs have glyph pieces which stand on both sides of the consonant. These vowel signs follow the consonant in logical order, and should be handled as a unit for most processing.
 09CB	BENGALI VOWEL SIGN O
-	* pieces on both sides of the consonant
 	: 09C7 09BE
 09CC	BENGALI VOWEL SIGN AU
-	* pieces on both sides of the consonant
 	: 09C7 09D7
 @		Various signs
 09CD	BENGALI SIGN VIRAMA
-	= halant
+	= hasant (Bengali term for halant)
 09D7	BENGALI AU LENGTH MARK
 @		Additional consonants
 09DC	BENGALI LETTER RRA
@@ -3993,7 +4126,9 @@
 @@	0A00	Gurmukhi	0A7F
 @		Based on ISCII 1988
 @		Various signs
+0A01	GURMUKHI SIGN ADAK BINDI
 0A02	GURMUKHI SIGN BINDI
+0A03	GURMUKHI SIGN VISARGA
 @		Independent vowels
 0A05	GURMUKHI LETTER A
 0A06	GURMUKHI LETTER AA
@@ -4103,6 +4238,8 @@
 0A89	GUJARATI LETTER U
 0A8A	GUJARATI LETTER UU
 0A8B	GUJARATI LETTER VOCALIC R
+0A8C	GUJARATI LETTER VOCALIC L
+	* used with Sanskrit text
 0A8D	GUJARATI VOWEL CANDRA E
 0A8F	GUJARATI LETTER E
 0A90	GUJARATI LETTER AI
@@ -4166,8 +4303,12 @@
 @		Various signs
 0ACD	GUJARATI SIGN VIRAMA
 0AD0	GUJARATI OM
-@		Generic additions
+@		Generic addition
 0AE0	GUJARATI LETTER VOCALIC RR
+@		Additions for use with Sanskrit text
+0AE1	GUJARATI LETTER VOCALIC LL
+0AE2	GUJARATI VOWEL SIGN VOCALIC L
+0AE3	GUJARATI VOWEL SIGN VOCALIC LL
 @		Digits
 0AE6	GUJARATI DIGIT ZERO
 0AE7	GUJARATI DIGIT ONE
@@ -4179,6 +4320,8 @@
 0AED	GUJARATI DIGIT SEVEN
 0AEE	GUJARATI DIGIT EIGHT
 0AEF	GUJARATI DIGIT NINE
+@		Currency sign
+0AF1	GUJARATI RUPEE SIGN
 @@	0B00	Oriya	0B7F
 @		Based on ISCII 1988
 @		Various signs
@@ -4222,14 +4365,14 @@
 0B2A	ORIYA LETTER PA
 0B2B	ORIYA LETTER PHA
 0B2C	ORIYA LETTER BA
-	= Oriya va
+	x (oriya letter va - 0B35)
 0B2D	ORIYA LETTER BHA
 0B2E	ORIYA LETTER MA
 0B2F	ORIYA LETTER YA
 0B30	ORIYA LETTER RA
 0B32	ORIYA LETTER LA
 0B33	ORIYA LETTER LLA
-0B35	<reserved>
+0B35	ORIYA LETTER VA
 	x (oriya letter ba - 0B2C)
 0B36	ORIYA LETTER SHA
 0B37	ORIYA LETTER SSA
@@ -4251,11 +4394,11 @@
 0B48	ORIYA VOWEL SIGN AI
 	* pieces left of and above the consonant
 	: 0B47 0B56
+@		Two-part dependent vowel signs
+@+		These two-part dependent vowel signs have glyph pieces which stand on both sides of the consonant. These vowel signs follow the consonant in logical order, and should be handled as a unit for most processing.
 0B4B	ORIYA VOWEL SIGN O
-	* pieces on both sides of the consonant
 	: 0B47 0B3E
 0B4C	ORIYA VOWEL SIGN AU
-	* pieces on both sides of the consonant
 	: 0B47 0B57
 @		Various signs
 0B4D	ORIYA SIGN VIRAMA
@@ -4263,8 +4406,10 @@
 0B57	ORIYA AU LENGTH MARK
 @		Additional consonants
 0B5C	ORIYA LETTER RRA
+	= dda
 	: 0B21 0B3C
 0B5D	ORIYA LETTER RHA
+	= ddha
 	: 0B22 0B3C
 0B5F	ORIYA LETTER YYA
 @		Generic additions
@@ -4281,12 +4426,16 @@
 0B6D	ORIYA DIGIT SEVEN
 0B6E	ORIYA DIGIT EIGHT
 0B6F	ORIYA DIGIT NINE
-@		Oriya-specific addition
+@		Oriya-specific additions
 0B70	ORIYA ISSHAR
+0B71	ORIYA LETTER WA
+	x (oriya letter o - 0B13)
+	x (oriya letter va - 0B35)
 @@	0B80	Tamil	0BFF
 @		Based on ISCII 1988
 @		Various signs
 0B82	TAMIL SIGN ANUSVARA
+	* not used in Tamil
 0B83	TAMIL SIGN VISARGA
 	= aytham
 @		Independent vowels
@@ -4338,14 +4487,13 @@
 	* stands to the left of the consonant
 0BC8	TAMIL VOWEL SIGN AI
 	* stands to the left of the consonant
+@		Two-part dependent vowel signs
+@+		These two-part dependent vowel signs have glyph pieces which stand on both sides of the consonant. These vowel signs follow the consonant in logical order, and should be handled as a unit for most processing.
 0BCA	TAMIL VOWEL SIGN O
-	* pieces on both sides of the consonant
 	: 0BC6 0BBE
 0BCB	TAMIL VOWEL SIGN OO
-	* pieces on both sides of the consonant
 	: 0BC7 0BBE
 0BCC	TAMIL VOWEL SIGN AU
-	* pieces on both sides of the consonant
 	: 0BC6 0BD7
 @		Various signs
 0BCD	TAMIL SIGN VIRAMA
@@ -4362,10 +4510,21 @@
 0BED	TAMIL DIGIT SEVEN
 0BEE	TAMIL DIGIT EIGHT
 0BEF	TAMIL DIGIT NINE
-@		Tamil-specific additions
+@		Tamil numerics
 0BF0	TAMIL NUMBER TEN
 0BF1	TAMIL NUMBER ONE HUNDRED
 0BF2	TAMIL NUMBER ONE THOUSAND
+@		Tamil symbols
+0BF3	TAMIL DAY SIGN (Naal)
+0BF4	TAMIL MONTH SIGN (Maatham)
+0BF5	TAMIL YEAR SIGN (Varudam)
+0BF6	TAMIL DEBIT SIGN (Patru)
+0BF7	TAMIL CREDIT SIGN (Varavu)
+0BF8	TAMIL AS ABOVE SIGN (Merpadi)
+@		Currency symbol
+0BF9	TAMIL RUPEE SIGN (Rupai)
+@		Tamil symbol
+0BFA	TAMIL NUMBER SIGN (Enn)
 @@	0C00	Telugu	0C7F
 @		Based on ISCII 1988
 @		Various signs
@@ -4514,6 +4673,9 @@
 0CB7	KANNADA LETTER SSA
 0CB8	KANNADA LETTER SA
 0CB9	KANNADA LETTER HA
+@		Various signs
+0CBC	KANNADA SIGN NUKTA
+0CBD	KANNADA SIGN AVAGRAHA
 @		Dependent vowel signs
 0CBE	KANNADA VOWEL SIGN AA
 0CBF	KANNADA VOWEL SIGN I
@@ -4535,6 +4697,7 @@
 0CCC	KANNADA VOWEL SIGN AU
 @		Various signs
 0CCD	KANNADA SIGN VIRAMA
+	* preferred name is halant
 0CD5	KANNADA LENGTH MARK
 0CD6	KANNADA AI LENGTH MARK
 @		Additional consonants
@@ -4641,20 +4804,20 @@
 	* stands to the left of the consonant
 0D48	MALAYALAM VOWEL SIGN AI
 	* stands to the left of the consonant
+@		Two-part dependent vowel signs
+@+		These two-part dependent vowel signs have glyph pieces which stand on both sides of the consonant. These vowel signs follow the consonant in logical order, and should be handled as a unit for most processing.
 0D4A	MALAYALAM VOWEL SIGN O
-	* pieces on both sides of the consonant
 	: 0D46 0D3E
 0D4B	MALAYALAM VOWEL SIGN OO
-	* pieces on both sides of the consonant
 	: 0D47 0D3E
 0D4C	MALAYALAM VOWEL SIGN AU
-	* pieces on both sides of the consonant
 	: 0D46 0D57
 @		Various signs
 0D4D	MALAYALAM SIGN VIRAMA
 	= chandrakkala (the preferred name)
 	= vowel half-u
 0D57	MALAYALAM AU LENGTH MARK
+	* only a representation of the right half of 0D4C
 @		Generic additions
 0D60	MALAYALAM LETTER VOCALIC RR
 0D61	MALAYALAM LETTER VOCALIC LL
@@ -4826,6 +4989,8 @@
 	: 0DD9 0DCA
 0DDB	SINHALA VOWEL SIGN KOMBU DEKA
 	= sinhala vowel sign ai
+@		Two-part dependent vowel signs
+@+		These two-part dependent vowel signs have glyph pieces which stand on both sides of the consonant. These vowel signs follow the consonant in logical order, and should be handled as a unit for most processing.
 0DDC	SINHALA VOWEL SIGN KOMBUVA HAA AELA-PILLA
 	= sinhala vowel sign o
 	: 0DD9 0DCF
@@ -4835,6 +5000,7 @@
 0DDE	SINHALA VOWEL SIGN KOMBUVA HAA GAYANUKITTA
 	= sinhala vowel sign au
 	: 0DD9 0DDF
+@		Dependent vowel sign
 0DDF	SINHALA VOWEL SIGN GAYANUKITTA
 	= sinhala vowel sign vocalic l
 @		Additional dependent vowel signs
@@ -5391,6 +5557,7 @@
 1020	MYANMAR LETTER LLA
 @		Independent vowels
 1021	MYANMAR LETTER A
+	* also represents the glottal stop as a consonant
 1023	MYANMAR LETTER I
 1024	MYANMAR LETTER II
 1025	MYANMAR LETTER U
@@ -5537,27 +5704,46 @@
 @		Punctuation
 10FB	GEORGIAN PARAGRAPH SEPARATOR
 @@	1100	Hangul Jamo	11FF
+@+		The aliases in this block represent the Jamo short names.
 @		Korean combining alphabet
 @		Initial consonants
 1100	HANGUL CHOSEONG KIYEOK (g) *
+	= G
 1101	HANGUL CHOSEONG SSANGKIYEOK (gg) *
+	= GG
 1102	HANGUL CHOSEONG NIEUN (n) *
+	= N
 1103	HANGUL CHOSEONG TIKEUT (d) *
+	= D
 1104	HANGUL CHOSEONG SSANGTIKEUT (dd) *
+	= DD
 1105	HANGUL CHOSEONG RIEUL (r) *
+	= R
 1106	HANGUL CHOSEONG MIEUM (m) *
+	= M
 1107	HANGUL CHOSEONG PIEUP (b) *
+	= B
 1108	HANGUL CHOSEONG SSANGPIEUP (bb) *
+	= BB
 1109	HANGUL CHOSEONG SIOS (s) *
+	= S
 110A	HANGUL CHOSEONG SSANGSIOS (ss) *
+	= SS
 110B	HANGUL CHOSEONG IEUNG
 110C	HANGUL CHOSEONG CIEUC (j) *
+	= J
 110D	HANGUL CHOSEONG SSANGCIEUC (jj) *
+	= JJ
 110E	HANGUL CHOSEONG CHIEUCH (c) *
+	= C
 110F	HANGUL CHOSEONG KHIEUKH (k) *
+	= K
 1110	HANGUL CHOSEONG THIEUTH (t) *
+	= T
 1111	HANGUL CHOSEONG PHIEUPH (p) *
+	= P
 1112	HANGUL CHOSEONG HIEUH (h) *
+	= H
 1113	HANGUL CHOSEONG NIEUN-KIYEOK
 1114	HANGUL CHOSEONG SSANGNIEUN
 1115	HANGUL CHOSEONG NIEUN-TIKEUT
@@ -5633,26 +5819,47 @@
 @		Medial vowels
 1160	HANGUL JUNGSEONG FILLER
 1161	HANGUL JUNGSEONG A
+	= A
 1162	HANGUL JUNGSEONG AE
+	= AE
 1163	HANGUL JUNGSEONG YA
+	= YA
 1164	HANGUL JUNGSEONG YAE
+	= YAE
 1165	HANGUL JUNGSEONG EO
+	= EO
 1166	HANGUL JUNGSEONG E
+	= E
 1167	HANGUL JUNGSEONG YEO
+	= YEO
 1168	HANGUL JUNGSEONG YE
+	= YE
 1169	HANGUL JUNGSEONG O
+	= O
 116A	HANGUL JUNGSEONG WA
+	= WA
 116B	HANGUL JUNGSEONG WAE
+	= WAE
 116C	HANGUL JUNGSEONG OE
+	= OE
 116D	HANGUL JUNGSEONG YO
+	= YO
 116E	HANGUL JUNGSEONG U
+	= U
 116F	HANGUL JUNGSEONG WEO
+	= WEO
 1170	HANGUL JUNGSEONG WE
+	= WE
 1171	HANGUL JUNGSEONG WI
+	= WI
 1172	HANGUL JUNGSEONG YU
+	= YU
 1173	HANGUL JUNGSEONG EU
+	= EU
 1174	HANGUL JUNGSEONG YI
+	= YI
 1175	HANGUL JUNGSEONG I
+	= I
 1176	HANGUL JUNGSEONG A-O
 1177	HANGUL JUNGSEONG A-U
 1178	HANGUL JUNGSEONG YA-O
@@ -5700,32 +5907,59 @@
 11A2	HANGUL JUNGSEONG SSANGARAEA
 @		Final consonants
 11A8	HANGUL JONGSEONG KIYEOK (g) *
+	= G
 11A9	HANGUL JONGSEONG SSANGKIYEOK (gg) *
+	= GG
 11AA	HANGUL JONGSEONG KIYEOK-SIOS (gs) *
+	= GS
 11AB	HANGUL JONGSEONG NIEUN (n) *
+	= N
 11AC	HANGUL JONGSEONG NIEUN-CIEUC (nj) *
+	= NJ
 11AD	HANGUL JONGSEONG NIEUN-HIEUH (nh) *
+	= NH
 11AE	HANGUL JONGSEONG TIKEUT (d) *
+	= D
 11AF	HANGUL JONGSEONG RIEUL (l) *
+	= L
 11B0	HANGUL JONGSEONG RIEUL-KIYEOK (lg) *
+	= LG
 11B1	HANGUL JONGSEONG RIEUL-MIEUM (lm) *
+	= LM
 11B2	HANGUL JONGSEONG RIEUL-PIEUP (lb) *
+	= LB
 11B3	HANGUL JONGSEONG RIEUL-SIOS (ls) *
+	= LS
 11B4	HANGUL JONGSEONG RIEUL-THIEUTH (lt) *
+	= LT
 11B5	HANGUL JONGSEONG RIEUL-PHIEUPH (lp) *
+	= LP
 11B6	HANGUL JONGSEONG RIEUL-HIEUH (lh) *
+	= LH
 11B7	HANGUL JONGSEONG MIEUM (m) *
+	= M
 11B8	HANGUL JONGSEONG PIEUP (b) *
+	= M
 11B9	HANGUL JONGSEONG PIEUP-SIOS (bs) *
+	= BS
 11BA	HANGUL JONGSEONG SIOS (s) *
+	= S
 11BB	HANGUL JONGSEONG SSANGSIOS (ss) *
+	= SS
 11BC	HANGUL JONGSEONG IEUNG (ng) *
+	= NG
 11BD	HANGUL JONGSEONG CIEUC (j) *
+	= J
 11BE	HANGUL JONGSEONG CHIEUCH (c) *
+	= C
 11BF	HANGUL JONGSEONG KHIEUKH (k) *
+	= K
 11C0	HANGUL JONGSEONG THIEUTH (t) *
+	= T
 11C1	HANGUL JONGSEONG PHIEUPH (p) *
+	= P
 11C2	HANGUL JONGSEONG HIEUH (h) *
+	= H
 11C3	HANGUL JONGSEONG KIYEOK-RIEUL
 11C4	HANGUL JONGSEONG KIYEOK-SIOS-KIYEOK
 11C5	HANGUL JONGSEONG NIEUN-KIYEOK
@@ -7137,7 +7371,7 @@
 @		Dependent vowel signs
 1732	HANUNOO VOWEL SIGN I
 1733	HANUNOO VOWEL SIGN U
-@		Hanunóo-specific punctuation
+@		Virama
 1734	HANUNOO SIGN PAMUDPOD
 @		Generic punctuation for Philippine scripts
 1735	PHILIPPINE SINGLE PUNCTUATION
@@ -7207,6 +7441,7 @@
 178C	KHMER LETTER DO
 178D	KHMER LETTER TTHO
 178E	KHMER LETTER NNO
+	* as this character belongs to the first register, its correct transliteration is no, not nno
 178F	KHMER LETTER TA
 1790	KHMER LETTER THA
 1791	KHMER LETTER TO
@@ -7225,16 +7460,18 @@
 	* used only for Pali/Sanskrit transliteration
 179E	KHMER LETTER SSO
 	* used only for Pali/Sanskrit transliteration
+	* as this character belongs to the first register, its correct transliteration is ssa, not sso
 179F	KHMER LETTER SA
 17A0	KHMER LETTER HA
 17A1	KHMER LETTER LA
 17A2	KHMER LETTER QA
 	* glottal stop
+@		Independent vowel (deprecated)
+17A3	KHMER INDEPENDENT VOWEL QAQ *
+	* originally intended only for Pali/Sanskrit transliteration
+	* use of this character is strongly discouraged; 17A2 should be used instead
 @		Independent vowels
-17A3	KHMER INDEPENDENT VOWEL QAQ
-	* used only for Pali/Sanskrit transliteration
-	* use of this character is discouraged; 17A2 should be used instead
-17A4	KHMER INDEPENDENT VOWEL QAA
+17A4	KHMER INDEPENDENT VOWEL QAA *
 	* used only for Pali/Sanskrit transliteration
 	* use of this character is discouraged; the sequence 17A2 17B6 should be used instead
 17A5	KHMER INDEPENDENT VOWEL QI
@@ -7253,13 +7490,13 @@
 17B0	KHMER INDEPENDENT VOWEL QAI
 17B1	KHMER INDEPENDENT VOWEL QOO TYPE ONE
 17B2	KHMER INDEPENDENT VOWEL QOO TYPE TWO
-	* this is a variant of 17B1, used in only two words
+	* this is a variant for 17B1, used in only two words
 	* 17B1 is the normal variant of this vowel
 17B3	KHMER INDEPENDENT VOWEL QAU
 @		Inherent vowels
 @+		These are for phonetic transcription to distinguish Indic language inherent vowels from Khmer inherent vowels. These characters are included solely for compatibility with particular applications; their use in other contexts is discouraged.
-17B4	KHMER VOWEL INHERENT AQ
-17B5	KHMER VOWEL INHERENT AA
+17B4	KHMER VOWEL INHERENT AQ *
+17B5	KHMER VOWEL INHERENT AA *
 @		Dependent vowel signs
 17B6	KHMER VOWEL SIGN AA
 17B7	KHMER VOWEL SIGN I
@@ -7269,12 +7506,17 @@
 17BB	KHMER VOWEL SIGN U
 17BC	KHMER VOWEL SIGN UU
 17BD	KHMER VOWEL SIGN UA
+@		Two-part dependent vowel signs
+@+		These two-part dependent vowel signs have glyph pieces which stand on both sides of the consonant. These vowel signs follow the consonant in logical order, and should be handled as a unit for processing.
 17BE	KHMER VOWEL SIGN OE
 17BF	KHMER VOWEL SIGN YA
 17C0	KHMER VOWEL SIGN IE
+@		Dependent vowel signs
 17C1	KHMER VOWEL SIGN E
 17C2	KHMER VOWEL SIGN AE
 17C3	KHMER VOWEL SIGN AI
+@		Two-part dependent vowel signs
+@+		These two-part dependent vowel signs have glyph pieces which stand on both sides of the consonant. These vowel signs follow the consonant in logical order, and should be handled as a unit for processing.
 17C4	KHMER VOWEL SIGN OO
 17C5	KHMER VOWEL SIGN AU
 @		Various signs
@@ -7282,6 +7524,7 @@
 	= srak am
 	= anusvara
 	* final nasalization
+	* this character is usually regarded as a vowel sign am, along with om and aam
 	x (thai character nikhahit - 0E4D)
 	x (myanmar sign anusvara - 1036)
 17C7	KHMER SIGN REAHMUK
@@ -7290,65 +7533,81 @@
 	x (myanmar sign visarga - 1038)
 17C8	KHMER SIGN YUUKALEAPINTU
 	* inserts a short inherent vowel with abrupt glottal stop
+	* the preferred transliteration is yukaleakpintu
 @		Consonant shifters
 @+		These signs shift the base consonant between registers.
 17C9	KHMER SIGN MUUSIKATOAN
-	* change second register to first
+	* changes the second register to the first
+	* the preferred transliteration is muusekatoan
 17CA	KHMER SIGN TRIISAP
-	* change first register to second
+	* changes the first register to the second
+	* the preferred transliteration is treisap
 @		Various signs
 17CB	KHMER SIGN BANTOC
-	* shortens preceding vowel
+	* shortens the vowel sound in the previous orthographic syllable
+	* the preferred transliteration is bantak
 17CC	KHMER SIGN ROBAT
-	* corresponds to initial r in Indian loan words, but treated as a diacritic
+	* a diacritic historically corresponding to the repha form of ra in Devanagari
 17CD	KHMER SIGN TOANDAKHIAT
-	* marks character not to be pronounced
+	* indicates that the base character is not pronounced
 17CE	KHMER SIGN KAKABAT
 	* sign used with some exclamations
 17CF	KHMER SIGN AHSDA
-	* conjoined sign used in spelling of two single-consonant words
+	* denotes stressed intonation in some single-consonant words
 17D0	KHMER SIGN SAMYOK SANNYA
-	* used with 17A4 to indicate shortened inherent vowel
+	* denotes deviation from the general rules of pronunciation, mostly used in loan words from Pali/Sanskrit, French, and so on
 17D1	KHMER SIGN VIRIAM
-	* mostly obsolete
-	* indicates the base character is part of the previous word
+	* mostly obsolete, a "killer"
+	* indicates that the base character is the final consonant of a word without its inherent vowel sound
 17D2	KHMER SIGN COENG
-	* functions to indicate that a following Khmer letter is to be subscripted
+	* functions to indicate that a following Khmer letter is to be rendered subscripted
 	* shape shown is arbitrary and is not visibly rendered
-17D3	KHMER SIGN BATHAMASAT
-	* rare sign representing the first August of leap year in the lunar calendar
-	* use of this character is discouraged in favor of a complete set of lunar date symbols under development for encoding
+@		Lunar date sign (deprecated)
+17D3	KHMER SIGN BATHAMASAT *
+	* originally intended as part of lunar date symbols
+	* use of this character is strongly discouraged in favor of the complete set of lunar date symbols
+	x (khmer symbol pathamasat - 19E0)
+@		Various signs
 17D4	KHMER SIGN KHAN
-	* functions as full stop, ellipsis, abbreviation
+	* functions as a full stop, period
 	x (thai character paiyannoi - 0E2F)
 	x (myanmar sign little section - 104A)
 17D5	KHMER SIGN BARIYOOSAN
-	* end of section
+	* indicates the end of a section or a text
 	x (thai character angkhankhu - 0E5A)
 	x (myanmar sign section - 104B)
 17D6	KHMER SIGN CAMNUC PII KUUH
-	* functions as colon or semicolon
+	* functions as colon
+	* the preferred transliteration is camnoc pii kuuh
 	x (division sign - 00F7)
 	x (tibetan mark gter tsheg - 0F14)
 17D7	KHMER SIGN LEK TOO
 	* repetition sign
 	x (thai character maiyamok - 0E46)
-17D8	KHMER SIGN BEYYAL
+17D8	KHMER SIGN BEYYAL *
 	* et cetera
 	* use of this character is discouraged; other abbreviations for et cetera also exist
 	* preferred spelling: 17D4 179B 17D4
 17D9	KHMER SIGN PHNAEK MUAN
-	* a list bullet
+	* indicates the beginning of a book or a treatise
+	* the preferred transliteration is phnek moan
 	x (thai character fongman - 0E4F)
 17DA	KHMER SIGN KOOMUUT
-	* indicates end of book or treatise
+	* indicates the end of a book or treatise
+	* this forms a pair with 17D9
+	* the preferred transliteration is koomoot
 	x (thai character khomut - 0E5B)
 @		Currency symbol
 17DB	KHMER CURRENCY SYMBOL RIEL
-@		Sign
+@		Various signs
 17DC	KHMER SIGN AVAKRAHASANYA
-	* rare, shows a deleted Sanskrit vowel, like an apostrophe
+	* rare, shows an omitted Sanskrit vowel, like an apostrophe
+	* the preferred transliteration is avakraha sannya
 	x (devanagari sign avagraha - 093D)
+17DD	KHMER SIGN ATTHACAN
+	* mostly obsolete
+	* indicates that the base character is the final consonant of a word with its inherent vowel sound
+	x (khmer sign viriam - 17D1)
 @		Digits
 17E0	KHMER DIGIT ZERO
 17E1	KHMER DIGIT ONE
@@ -7360,6 +7619,18 @@
 17E7	KHMER DIGIT SEVEN
 17E8	KHMER DIGIT EIGHT
 17E9	KHMER DIGIT NINE
+@		Numeric symbols for divination lore
+@+		These characters have numeric values 0-9, respectively, but are not used for calculation.
+17F0	KHMER SYMBOL LEK ATTAK SON
+17F1	KHMER SYMBOL LEK ATTAK MUOY
+17F2	KHMER SYMBOL LEK ATTAK PII
+17F3	KHMER SYMBOL LEK ATTAK BEI
+17F4	KHMER SYMBOL LEK ATTAK BUON
+17F5	KHMER SYMBOL LEK ATTAK PRAM
+17F6	KHMER SYMBOL LEK ATTAK PRAM-MUOY
+17F7	KHMER SYMBOL LEK ATTAK PRAM-PII
+17F8	KHMER SYMBOL LEK ATTAK PRAM-BEI
+17F9	KHMER SYMBOL LEK ATTAK PRAM-BUON
 @@	1800	Mongolian	18AF
 @		Punctuation
 1800	MONGOLIAN BIRGA
@@ -7371,15 +7642,21 @@
 1805	MONGOLIAN FOUR DOTS
 	* marks the end of a chapter
 1806	MONGOLIAN TODO SOFT HYPHEN
+	* not a format control character, but simply a hyphen for Todo
+	x (soft hyphen - 00AD)
 1807	MONGOLIAN SIBE SYLLABLE BOUNDARY MARKER
 1808	MONGOLIAN MANCHU COMMA
 1809	MONGOLIAN MANCHU FULL STOP
 180A	MONGOLIAN NIRUGU
 @		Format controls
 180B	MONGOLIAN FREE VARIATION SELECTOR ONE
+	= FVS1
 180C	MONGOLIAN FREE VARIATION SELECTOR TWO
+	= FVS2
 180D	MONGOLIAN FREE VARIATION SELECTOR THREE
+	= FVS3
 180E	MONGOLIAN VOWEL SEPARATOR
+	= MVS
 @		Digits
 1810	MONGOLIAN DIGIT ZERO
 1811	MONGOLIAN DIGIT ONE
@@ -7560,7 +7837,343 @@
 18A7	MONGOLIAN LETTER ALI GALI HALF YA
 18A8	MONGOLIAN LETTER MANCHU ALI GALI BHA
 18A9	MONGOLIAN LETTER ALI GALI DAGALGA
+@@	1900	Limbu	194F
+@		Consonants
+1900	LIMBU VOWEL-CARRIER LETTER
+1901	LIMBU LETTER KA
+1902	LIMBU LETTER KHA
+1903	LIMBU LETTER GA
+1904	LIMBU LETTER GHA
+1905	LIMBU LETTER NGA
+1906	LIMBU LETTER CA
+1907	LIMBU LETTER CHA
+1908	LIMBU LETTER JA
+1909	LIMBU LETTER JHA
+190A	LIMBU LETTER YAN
+190B	LIMBU LETTER TA
+190C	LIMBU LETTER THA
+190D	LIMBU LETTER DA
+190E	LIMBU LETTER DHA
+190F	LIMBU LETTER NA
+1910	LIMBU LETTER PA
+1911	LIMBU LETTER PHA
+1912	LIMBU LETTER BA
+1913	LIMBU LETTER BHA
+1914	LIMBU LETTER MA
+1915	LIMBU LETTER YA
+1916	LIMBU LETTER RA
+1917	LIMBU LETTER LA
+1918	LIMBU LETTER WA
+1919	LIMBU LETTER SHA
+191A	LIMBU LETTER SSA
+191B	LIMBU LETTER SA
+191C	LIMBU LETTER HA
+@		Dependent vowel signs
+1920	LIMBU VOWEL SIGN A
+1921	LIMBU VOWEL SIGN I
+1922	LIMBU VOWEL SIGN U
+1923	LIMBU VOWEL SIGN EE
+1924	LIMBU VOWEL SIGN AI
+1925	LIMBU VOWEL SIGN OO
+1926	LIMBU VOWEL SIGN AU
+1927	LIMBU VOWEL SIGN E
+1928	LIMBU VOWEL SIGN O
+@		Subjoined consonants
+1929	LIMBU SUBJOINED LETTER YA
+192A	LIMBU SUBJOINED LETTER RA
+192B	LIMBU SUBJOINED LETTER WA
+@		Final consonants
+1930	LIMBU SMALL LETTER KA
+1931	LIMBU SMALL LETTER NGA
+1932	LIMBU SMALL LETTER ANUSVARA
+1933	LIMBU SMALL LETTER TA
+1934	LIMBU SMALL LETTER NA
+1935	LIMBU SMALL LETTER PA
+1936	LIMBU SMALL LETTER MA
+1937	LIMBU SMALL LETTER RA
+1938	LIMBU SMALL LETTER LA
+@		Various signs
+1939	LIMBU SIGN MUKPHRENG
+193A	LIMBU SIGN KEMPHRENG
+193B	LIMBU SIGN SA-I
+1940	LIMBU SIGN LOO
+1944	LIMBU EXCLAMATION MARK
+1945	LIMBU QUESTION MARK
+@		Digits
+1946	LIMBU DIGIT ZERO
+1947	LIMBU DIGIT ONE
+1948	LIMBU DIGIT TWO
+1949	LIMBU DIGIT THREE
+194A	LIMBU DIGIT FOUR
+194B	LIMBU DIGIT FIVE
+194C	LIMBU DIGIT SIX
+194D	LIMBU DIGIT SEVEN
+194E	LIMBU DIGIT EIGHT
+194F	LIMBU DIGIT NINE
+@@	1950	Tai Le	197F
+@		Consonants
+1950	TAI LE LETTER KA
+1951	TAI LE LETTER XA
+1952	TAI LE LETTER NGA
+1953	TAI LE LETTER TSA
+1954	TAI LE LETTER SA
+1955	TAI LE LETTER YA
+1956	TAI LE LETTER TA
+1957	TAI LE LETTER THA
+1958	TAI LE LETTER LA
+1959	TAI LE LETTER PA
+195A	TAI LE LETTER PHA
+195B	TAI LE LETTER MA
+195C	TAI LE LETTER FA
+195D	TAI LE LETTER VA
+195E	TAI LE LETTER HA
+195F	TAI LE LETTER QA
+1960	TAI LE LETTER KHA
+1961	TAI LE LETTER TSHA
+1962	TAI LE LETTER NA
+@		Vowels
+1963	TAI LE LETTER A
+1964	TAI LE LETTER I
+1965	TAI LE LETTER EE
+1966	TAI LE LETTER EH
+1967	TAI LE LETTER U
+1968	TAI LE LETTER OO
+1969	TAI LE LETTER O
+196A	TAI LE LETTER UE
+196B	TAI LE LETTER E
+196C	TAI LE LETTER AUE
+196D	TAI LE LETTER AI
+@		Tone letters
+1970	TAI LE LETTER TONE-2
+1971	TAI LE LETTER TONE-3
+1972	TAI LE LETTER TONE-4
+1973	TAI LE LETTER TONE-5
+1974	TAI LE LETTER TONE-6
+@@	19E0	Khmer Symbols	19FF
+@		Lunar date symbols
+19E0	KHMER SYMBOL PATHAMASAT
+	* represents the first August in a leap year
+@+		The following fifteen characters represent the first through the fifteenth waxing days, respectively.
+19E1	KHMER SYMBOL MUOY KOET
+19E2	KHMER SYMBOL PII KOET
+19E3	KHMER SYMBOL BEI KOET
+19E4	KHMER SYMBOL BUON KOET
+19E5	KHMER SYMBOL PRAM KOET
+19E6	KHMER SYMBOL PRAM-MUOY KOET
+19E7	KHMER SYMBOL PRAM-PII KOET
+19E8	KHMER SYMBOL PRAM-BEI KOET
+19E9	KHMER SYMBOL PRAM-BUON KOET
+19EA	KHMER SYMBOL DAP KOET
+19EB	KHMER SYMBOL DAP-MUOY KOET
+19EC	KHMER SYMBOL DAP-PII KOET
+19ED	KHMER SYMBOL DAP-BEI KOET
+19EE	KHMER SYMBOL DAP-BUON KOET
+19EF	KHMER SYMBOL DAP-PRAM KOET
+19F0	KHMER SYMBOL TUTEYASAT
+	* represents the second August in a leap year
+@+		The following fifteen characters represent the first through the fifteenth waning days, respectively.
+19F1	KHMER SYMBOL MUOY ROC
+19F2	KHMER SYMBOL PII ROC
+19F3	KHMER SYMBOL BEI ROC
+19F4	KHMER SYMBOL BUON ROC
+19F5	KHMER SYMBOL PRAM ROC
+19F6	KHMER SYMBOL PRAM-MUOY ROC
+19F7	KHMER SYMBOL PRAM-PII ROC
+19F8	KHMER SYMBOL PRAM-BEI ROC
+19F9	KHMER SYMBOL PRAM-BUON ROC
+19FA	KHMER SYMBOL DAP ROC
+19FB	KHMER SYMBOL DAP-MUOY ROC
+19FC	KHMER SYMBOL DAP-PII ROC
+19FD	KHMER SYMBOL DAP-BEI ROC
+19FE	KHMER SYMBOL DAP-BUON ROC
+19FF	KHMER SYMBOL DAP-PRAM ROC
+@@	1D00	Phonetic Extensions	1D7F
+@+		These are non-IPA phonetic extensions, mostly for the Uralic Phonetic Alphabet (UPA).
+@		Latin letters
+1D00	LATIN LETTER SMALL CAPITAL A
+1D01	LATIN LETTER SMALL CAPITAL AE
+1D02	LATIN SMALL LETTER TURNED AE
+	* glyph can also have sideways orientation
+1D03	LATIN LETTER SMALL CAPITAL BARRED B
+1D04	LATIN LETTER SMALL CAPITAL C
+1D05	LATIN LETTER SMALL CAPITAL D
+1D06	LATIN LETTER SMALL CAPITAL ETH
+1D07	LATIN LETTER SMALL CAPITAL E
+1D08	LATIN SMALL LETTER TURNED OPEN E
+1D09	LATIN SMALL LETTER TURNED I
+1D0A	LATIN LETTER SMALL CAPITAL J
+1D0B	LATIN LETTER SMALL CAPITAL K
+1D0C	LATIN LETTER SMALL CAPITAL L WITH STROKE
+1D0D	LATIN LETTER SMALL CAPITAL M
+1D0E	LATIN LETTER SMALL CAPITAL REVERSED N
+1D0F	LATIN LETTER SMALL CAPITAL O
+1D10	LATIN LETTER SMALL CAPITAL OPEN O
+1D11	LATIN SMALL LETTER SIDEWAYS O
+1D12	LATIN SMALL LETTER SIDEWAYS OPEN O
+1D13	LATIN SMALL LETTER SIDEWAYS O WITH STROKE
+1D14	LATIN SMALL LETTER TURNED OE
+	* glyph can also have sideways orientation
+1D15	LATIN LETTER SMALL CAPITAL OU
+1D16	LATIN SMALL LETTER TOP HALF O
+1D17	LATIN SMALL LETTER BOTTOM HALF O
+1D18	LATIN LETTER SMALL CAPITAL P
+	* representa a semi-voiced [p]
+1D19	LATIN LETTER SMALL CAPITAL REVERSED R
+1D1A	LATIN LETTER SMALL CAPITAL TURNED R
+1D1B	LATIN LETTER SMALL CAPITAL T
+1D1C	LATIN LETTER SMALL CAPITAL U
+1D1D	LATIN SMALL LETTER SIDEWAYS U
+1D1E	LATIN SMALL LETTER SIDEWAYS DIAERESIZED U
+	* glyph can also have turned orientation
+1D1F	LATIN SMALL LETTER SIDEWAYS TURNED M
+1D20	LATIN LETTER SMALL CAPITAL V
+1D21	LATIN LETTER SMALL CAPITAL W
+1D22	LATIN LETTER SMALL CAPITAL Z
+1D23	LATIN LETTER SMALL CAPITAL EZH
+1D24	LATIN LETTER VOICED LARYNGEAL SPIRANT
+1D25	LATIN LETTER AIN
+@		Greek letters
+1D26	GREEK LETTER SMALL CAPITAL GAMMA
+1D27	GREEK LETTER SMALL CAPITAL LAMDA
+1D28	GREEK LETTER SMALL CAPITAL PI
+1D29	GREEK LETTER SMALL CAPITAL RHO
+	* represents a voiceless uvular trill
+1D2A	GREEK LETTER SMALL CAPITAL PSI
+@		Cyrillic letter
+1D2B	CYRILLIC LETTER SMALL CAPITAL EL
+	* in italic style, the glyph is obliqued, not italicized
+	x (cyrillic small letter el - 043B)
+@		Latin superscript modifier letters
+1D2C	MODIFIER LETTER CAPITAL A
+	# <super> 0041
+1D2D	MODIFIER LETTER CAPITAL AE
+	# <super> 00C6
+1D2E	MODIFIER LETTER CAPITAL B
+	# <super> 0042
+1D2F	MODIFIER LETTER CAPITAL BARRED B
+1D30	MODIFIER LETTER CAPITAL D
+	# <super> 0044
+1D31	MODIFIER LETTER CAPITAL E
+	# <super> 0045
+1D32	MODIFIER LETTER CAPITAL REVERSED E
+	# <super> 018E
+1D33	MODIFIER LETTER CAPITAL G
+	# <super> 0047
+1D34	MODIFIER LETTER CAPITAL H
+	# <super> 0048
+1D35	MODIFIER LETTER CAPITAL I
+	# <super> 0049
+1D36	MODIFIER LETTER CAPITAL J
+	# <super> 004A
+1D37	MODIFIER LETTER CAPITAL K
+	# <super> 004B
+1D38	MODIFIER LETTER CAPITAL L
+	# <super> 004C
+1D39	MODIFIER LETTER CAPITAL M
+	# <super> 004D
+1D3A	MODIFIER LETTER CAPITAL N
+	# <super> 004E
+1D3B	MODIFIER LETTER CAPITAL REVERSED N
+1D3C	MODIFIER LETTER CAPITAL O
+	# <super> 004F
+1D3D	MODIFIER LETTER CAPITAL OU
+	# <super> 0222
+1D3E	MODIFIER LETTER CAPITAL P
+	# <super> 0050
+1D3F	MODIFIER LETTER CAPITAL R
+	# <super> 0052
+1D40	MODIFIER LETTER CAPITAL T
+	# <super> 0054
+1D41	MODIFIER LETTER CAPITAL U
+	# <super> 0055
+1D42	MODIFIER LETTER CAPITAL W
+	# <super> 0057
+1D43	MODIFIER LETTER SMALL A
+	# <super> 0061
+1D44	MODIFIER LETTER SMALL TURNED A
+	# <super> 0250
+1D45	MODIFIER LETTER SMALL ALPHA
+	# <super> 0251
+1D46	MODIFIER LETTER SMALL TURNED AE
+	# <super> 1D02
+1D47	MODIFIER LETTER SMALL B
+	# <super> 0062
+1D48	MODIFIER LETTER SMALL D
+	# <super> 0064
+1D49	MODIFIER LETTER SMALL E
+	# <super> 0065
+1D4A	MODIFIER LETTER SMALL SCHWA
+	# <super> 0259
+1D4B	MODIFIER LETTER SMALL OPEN E
+	# <super> 025B
+1D4C	MODIFIER LETTER SMALL TURNED OPEN E
+	# <super> 025C
+1D4D	MODIFIER LETTER SMALL G
+	# <super> 0067
+1D4E	MODIFIER LETTER SMALL TURNED I
+1D4F	MODIFIER LETTER SMALL K
+	# <super> 006B
+1D50	MODIFIER LETTER SMALL M
+	# <super> 006D
+1D51	MODIFIER LETTER SMALL ENG
+	# <super> 014B
+1D52	MODIFIER LETTER SMALL O
+	# <super> 006F
+1D53	MODIFIER LETTER SMALL OPEN O
+	# <super> 0254
+1D54	MODIFIER LETTER SMALL TOP HALF O
+	# <super> 1D16
+1D55	MODIFIER LETTER SMALL BOTTOM HALF O
+	# <super> 1D17
+1D56	MODIFIER LETTER SMALL P
+	# <super> 0070
+1D57	MODIFIER LETTER SMALL T
+	# <super> 0074
+1D58	MODIFIER LETTER SMALL U
+	# <super> 0075
+1D59	MODIFIER LETTER SMALL SIDEWAYS U
+	# <super> 1D1D
+1D5A	MODIFIER LETTER SMALL TURNED M
+	# <super> 026F
+1D5B	MODIFIER LETTER SMALL V
+	# <super> 0076
+1D5C	MODIFIER LETTER SMALL AIN
+	# <super> 1D25
+@		Greek superscript modifier letters
+1D5D	MODIFIER LETTER SMALL BETA
+	# <super> 03B2
+1D5E	MODIFIER LETTER SMALL GREEK GAMMA
+	# <super> 03B3
+1D5F	MODIFIER LETTER SMALL DELTA
+	# <super> 03B4
+1D60	MODIFIER LETTER SMALL GREEK PHI
+	# <super> 03C6
+1D61	MODIFIER LETTER SMALL CHI
+	# <super> 03C7
+@		Latin subscript modifier letters
+1D62	LATIN SUBSCRIPT SMALL LETTER I
+	# <sub> 0069
+1D63	LATIN SUBSCRIPT SMALL LETTER R
+	# <sub> 0072
+1D64	LATIN SUBSCRIPT SMALL LETTER U
+	# <sub> 0075
+1D65	LATIN SUBSCRIPT SMALL LETTER V
+	# <sub> 0076
+@		Greek subscript modifier letters
+1D66	GREEK SUBSCRIPT SMALL LETTER BETA
+	# <sub> 03B2
+1D67	GREEK SUBSCRIPT SMALL LETTER GAMMA
+	# <sub> 03B3
+1D68	GREEK SUBSCRIPT SMALL LETTER RHO
+	# <sub> 03C1
+1D69	GREEK SUBSCRIPT SMALL LETTER PHI
+	# <sub> 03C6
+1D6A	GREEK SUBSCRIPT SMALL LETTER CHI
+	# <sub> 03C7
+@		Latin letter
+1D6B	LATIN SMALL LETTER UE
 @@	1E00	Latin Extended Additional	1EFF
+@+		In this block the names "WITH LINE BELOW" refer to a macron below the letter.
 @		Latin general use extensions
 1E00	LATIN CAPITAL LETTER A WITH RING BELOW
 	: 0041 0325
@@ -8596,6 +9209,7 @@
 	* in traditional typography, the thinnest space available
 	# 0020 space
 200B	ZERO WIDTH SPACE
+	= ZWSP
 	* nominally zero width, but may expand in justification
 @		Formatting characters
 200C	ZERO WIDTH NON-JOINER
@@ -8712,12 +9326,17 @@
 202E	RIGHT-TO-LEFT OVERRIDE
 	= RLO
 202F	NARROW NO-BREAK SPACE
+	= NNBSP
 	x (no-break space - 00A0)
 	# <noBreak> 0020
 @		General punctuation
 2030	PER MILLE SIGN
+	= permille, per thousand
+	* used, for example, in measures of blood alcohol content, salinity, etc.
 	x (percent sign - 0025)
 2031	PER TEN THOUSAND SIGN
+	= permyriad
+	* percent of a percent, rarely used
 	x (percent sign - 0025)
 2032	PRIME
 	= minutes, feet
@@ -8733,6 +9352,7 @@
 	x (double prime quotation mark - 301E)
 	# 2032 2032
 2034	TRIPLE PRIME
+	= lines (old measure, 1/12 of an inch)
 	# 2032 2032 2032
 2035	REVERSED PRIME
 	x (grave accent - 0060)
@@ -8772,6 +9392,7 @@
 	= Greek enotikon
 	x (smile - 2323)
 2040	CHARACTER TIE
+	= z notation sequence concatenation
 	x (frown - 2322)
 2041	CARET INSERTION POINT
 	* proofreader's mark: insert here
@@ -8813,14 +9434,18 @@
 	* used in Finno-Ugric Phonetic Alphabet to indicate a related borrowed form with different sound
 	x (percent sign - 0025)
 	x (arabic percent sign - 066A)
+2053	SWUNG DASH
+2054	INVERTED UNDERTIE
 2057	QUADRUPLE PRIME
 	# 2032 2032 2032 2032
 @		Space
 205F	MEDIUM MATHEMATICAL SPACE
+	= MMSP
 	* four-eighteenths of an em
 	# 0020 space
 @		Formatting character
 2060	WORD JOINER
+	= WJ
 	* a zero width non-breaking space (only)
 	* intended for disambiguation of functions for byte order mark
 	x (zero width no-break space - FEFF)
@@ -8914,6 +9539,8 @@
 		x (yen sign - 00A5)
 		x (bengali rupee mark - 09F2)
 		x (bengali rupee sign - 09F3)
+		x (gujarati rupee sign - 0AF1)
+		x (tamil rupee sign - 0BF9)
 		x (thai currency symbol baht - 0E3F)
 		x (khmer currency symbol riel - 17DB)
 		x (rial sign - FDFC)
@@ -8928,7 +9555,8 @@
 20A3	FRENCH FRANC SIGN
 	* France
 20A4	LIRA SIGN
-	* Italy, Turkey
+	* intended for lira, but not widely used
+	* preferred character for lira is 00A3
 	x (pound sign - 00A3)
 20A5	MILL SIGN
 	* USA (1/10 cent)
@@ -8968,8 +9596,9 @@
 20D1	COMBINING RIGHT HARPOON ABOVE
 	* vector
 20D2	COMBINING LONG VERTICAL LINE OVERLAY
-20D3	COMBINING SHORT VERTICAL LINE OVERLAY
 	* negation
+20D3	COMBINING SHORT VERTICAL LINE OVERLAY
+	* occasional variant for negation
 20D4	COMBINING ANTICLOCKWISE ARROW ABOVE
 20D5	COMBINING CLOCKWISE ARROW ABOVE
 	* rotation
@@ -9070,8 +9699,11 @@
 	= Laplace symbol
 	# <font> 004C latin capital letter l
 2113	SCRIPT SMALL L
-	= liter (not an official SI recommendation)
-	* the glyph shown is that of the traditional liter symbol, rather than a glyph harmonized with mathematical script fonts
+	= mathematical symbol 'ell'
+	= liter (traditional symbol)
+	* despite its character name, this symbol is derived from a special italicized version of the small letter l
+	* the SI recommended symbol for liter is 006C
+	x (mathematical script small l - 1D4C1)
 	# <font> 006C latin small letter l
 2114	L B BAR SYMBOL
 	= pounds
@@ -9150,7 +9782,7 @@
 	= error
 	# <font> 0065 latin small letter e
 2130	SCRIPT CAPITAL E
-	= EMF (Electro-Magnetic Force)
+	= emf (electromotive force)
 	# <font> 0045 latin capital letter e
 2131	SCRIPT CAPITAL F
 	= Fourier transform
@@ -9164,7 +9796,8 @@
 2134	SCRIPT SMALL O
 	= order, of inferior order to
 	# <font> 006F latin small letter o
-@		Hebrew letterlike math symbols (left-to-right)
+@		Hebrew letterlike math symbols 
+@+		There are left-to-right characters.
 2135	ALEF SYMBOL
 	= first transfinite cardinal (countable)
 	# 05D0 hebrew letter alef
@@ -9183,6 +9816,9 @@
 	# <font> 0069 latin small letter i
 213A	ROTATED CAPITAL Q
 	* a binding signature mark
+213B	FACSIMILE SIGN
+	x (telephone sign - 2121)
+	# 0046 0041 0058
 213D	DOUBLE-STRUCK SMALL GAMMA
 	# <font> 03B3 greek small letter gamma
 213E	DOUBLE-STRUCK CAPITAL GAMMA
@@ -9597,8 +10233,10 @@
 222C	DOUBLE INTEGRAL
 	# 222B 222B
 222D	TRIPLE INTEGRAL
+	x (quadruple integral operator - 2A0C)
 	# 222B 222B 222B
 222E	CONTOUR INTEGRAL
+	x (integral around a point operator - 2A15)
 222F	SURFACE INTEGRAL
 	# 222E 222E
 2230	VOLUME INTEGRAL
@@ -9617,6 +10255,7 @@
 2239	EXCESS
 223A	GEOMETRIC PROPORTION
 223B	HOMOTHETIC
+	x (tilde operator with rising dots - 2A6B)
 223C	TILDE OPERATOR
 	= varies with (proportional to)
 	= difference between
@@ -9751,33 +10390,42 @@
 228B	SUPERSET OF WITH NOT EQUAL TO
 228C	MULTISET
 228D	MULTISET MULTIPLICATION
+	x (n-ary union operator with dot - 2A03)
+	x (intersection with dot - 2A40)
 228E	MULTISET UNION
 	= z notation bag addition
+	x (n-ary union operator with plus - 2A04)
 228F	SQUARE IMAGE OF
 2290	SQUARE ORIGINAL OF
 2291	SQUARE IMAGE OF OR EQUAL TO
 2292	SQUARE ORIGINAL OF OR EQUAL TO
 2293	SQUARE CAP
+	x (n-ary square intersection operator - 2A05)
 2294	SQUARE CUP
 2295	CIRCLED PLUS
 	= direct sum
 	= vector pointing into page
 	x (earth - 2641)
+	x (n-ary circled plus operator - 2A01)
 2296	CIRCLED MINUS
 	= symmetric difference
+	x (circle with horizontal bar - 29B5)
 2297	CIRCLED TIMES
 	= tensor product
 	= vector pointing into page
+	x (n-ary circled times operator - 2A02)
 2298	CIRCLED DIVISION SLASH
 2299	CIRCLED DOT OPERATOR
 	= direct product
 	= vector pointing out of page
 	x (latin letter bilabial click - 0298)
 	x (sun - 2609)
+	x (n-ary circled dot operator - 2A00)
 229A	CIRCLED RING OPERATOR
 	x (apl functional symbol circle jot - 233E)
 	x (bullseye - 25CE)
 229B	CIRCLED ASTERISK OPERATOR
+	x (apl functional symbol circle star - 235F)
 229C	CIRCLED EQUALS
 229D	CIRCLED DASH
 229E	SQUARED PLUS
@@ -9949,6 +10597,8 @@
 2306	PERSPECTIVE
 2307	WAVY LINE
 	x (wavy dash - 3030)
+@		Corner brackets
+@+		The ceiling and floor characters are recommended for general-purpose corner brackets, rather than the CJK corner brackets, which are wide quotation marks.
 2308	LEFT CEILING
 	= APL upstile
 	x (left corner bracket - 300C)
@@ -9958,11 +10608,13 @@
 	= APL downstile
 230B	RIGHT FLOOR
 	x (right corner bracket - 300D)
+@		Crops
 230C	BOTTOM RIGHT CROP
 	* set of four "crop" corners, arranged facing outward
 230D	BOTTOM LEFT CROP
 230E	TOP RIGHT CROP
 230F	TOP LEFT CROP
+@		Miscellaneous technical
 2310	REVERSED NOT SIGN
 	= beginning of line
 	x (not sign - 00AC)
@@ -9981,19 +10633,25 @@
 	= COMMAND KEY
 2319	TURNED NOT SIGN
 	= line marker
+@		GUI icons
 231A	WATCH
 231B	HOURGLASS
+@		Quine corners
 231C	TOP LEFT CORNER
 	* set of four "quine" corners, for quincuncial arrangement
 231D	TOP RIGHT CORNER
 231E	BOTTOM LEFT CORNER
 231F	BOTTOM RIGHT CORNER
+@		Integral pieces
 2320	TOP HALF INTEGRAL
+	x (integral extension - 23AE)
 2321	BOTTOM HALF INTEGRAL
+@		Frown and smile
 2322	FROWN
 	x (character tie - 2040)
 2323	SMILE
 	x (undertie - 203F)
+@		Keyboard symbols
 2324	UP ARROWHEAD BETWEEN TWO HORIZONTAL BARS
 	= ENTER KEY
 2325	OPTION KEY
@@ -10002,21 +10660,24 @@
 2327	X IN A RECTANGLE BOX
 	= CLEAR KEY
 2328	KEYBOARD
+@		Angle brackets
+@+		These are discouraged for mathematical use because of their canonical equivalence to CJK punctuation.
 2329	LEFT-POINTING ANGLE BRACKET
-	* discouraged for mathematical use because of canonical equivalence to CJK punctuation
 	x (less-than sign - 003C)
 	x (single left-pointing angle quotation mark - 2039)
 	x (mathematical left angle bracket - 27E8)
 	: 3008 left angle bracket
 232A	RIGHT-POINTING ANGLE BRACKET
-	* discouraged for mathematical use because of canonical equivalence to CJK punctuation
 	x (greater-than sign - 003E)
 	x (single right-pointing angle quotation mark - 203A)
 	x (mathematical right angle bracket - 27E9)
 	: 3009 right angle bracket
+@		Keyboard symbol
 232B	ERASE TO THE LEFT
 	= DELETE TO THE LEFT KEY
+@		Chemistry symbol
 232C	BENZENE RING
+@		Drafting symbols
 232D	CYLINDRICITY
 232E	ALL AROUND-PROFILE
 232F	SYMMETRY
@@ -10024,6 +10685,7 @@
 2331	DIMENSION ORIGIN
 2332	CONICAL TAPER
 2333	SLOPE
+	x (lower left triangle - 25FA)
 2334	COUNTERBORE
 	x (open box - 2423)
 2335	COUNTERSINK
@@ -10033,18 +10695,23 @@
 2337	APL FUNCTIONAL SYMBOL SQUISH QUAD
 	x (apl functional symbol quad - 2395)
 	x (white vertical rectangle - 25AF)
+	x (n-ary white vertical bar - 2AFF)
 2338	APL FUNCTIONAL SYMBOL QUAD EQUAL
 2339	APL FUNCTIONAL SYMBOL QUAD DIVIDE
 233A	APL FUNCTIONAL SYMBOL QUAD DIAMOND
 233B	APL FUNCTIONAL SYMBOL QUAD JOT
+	x (squared small circle - 29C7)
 233C	APL FUNCTIONAL SYMBOL QUAD CIRCLE
 233D	APL FUNCTIONAL SYMBOL CIRCLE STILE
 233E	APL FUNCTIONAL SYMBOL CIRCLE JOT
 	x (circled ring operator - 229A)
+	x (circled white bullet - 29BE)
 233F	APL FUNCTIONAL SYMBOL SLASH BAR
 2340	APL FUNCTIONAL SYMBOL BACKSLASH BAR
 2341	APL FUNCTIONAL SYMBOL QUAD SLASH
+	x (squared rising diagonal slash - 29C4)
 2342	APL FUNCTIONAL SYMBOL QUAD BACKSLASH
+	x (squared falling diagonal slash - 29C5)
 2343	APL FUNCTIONAL SYMBOL QUAD LESS-THAN
 2344	APL FUNCTIONAL SYMBOL QUAD GREATER-THAN
 2345	APL FUNCTIONAL SYMBOL LEFTWARDS VANE
@@ -10052,6 +10719,7 @@
 2347	APL FUNCTIONAL SYMBOL QUAD LEFTWARDS ARROW
 2348	APL FUNCTIONAL SYMBOL QUAD RIGHTWARDS ARROW
 2349	APL FUNCTIONAL SYMBOL CIRCLE BACKSLASH
+	x (reversed empty set - 29B0)
 234A	APL FUNCTIONAL SYMBOL DOWN TACK UNDERBAR *
 	= up tack underbar
 	* preferred naming for APL tack symbols now follows the London Convention in ISO/IEC 13751:2000 (APL Extended)
@@ -10082,8 +10750,10 @@
 235B	APL FUNCTIONAL SYMBOL JOT UNDERBAR
 235C	APL FUNCTIONAL SYMBOL CIRCLE UNDERBAR
 235D	APL FUNCTIONAL SYMBOL UP SHOE JOT
+	x (intersection with dot - 2A40)
 235E	APL FUNCTIONAL SYMBOL QUOTE QUAD
 235F	APL FUNCTIONAL SYMBOL CIRCLE STAR
+	x (circled asterisk operator - 229B)
 2360	APL FUNCTIONAL SYMBOL QUAD COLON
 2361	APL FUNCTIONAL SYMBOL UP TACK DIAERESIS *
 	= down tack diaeresis
@@ -10126,6 +10796,7 @@
 237D	SHOULDERED OPEN BOX
 	* from ISO 9995-7
 	* keyboard symbol for No Break Space
+	x (open box - 2423)
 237E	BELL SYMBOL
 	* from ISO 2047
 237F	VERTICAL LINE WITH MIDDLE DOT
@@ -10193,6 +10864,7 @@
 	x (bottom half integral - 2321)
 23AF	HORIZONTAL LINE EXTENSION
 	* used for extension of arrows
+	x (vertical line extension - 23D0)
 @		Bracket pieces
 23B0	UPPER LEFT OR LOWER RIGHT CURLY BRACKET SECTION
 	= left moustache
@@ -10203,7 +10875,9 @@
 23B3	SUMMATION BOTTOM
 @		Vertical brackets
 23B4	TOP SQUARE BRACKET
+	x (presentation form for vertical left square bracket - FE47)
 23B5	BOTTOM SQUARE BRACKET
+	x (presentation form for vertical right square bracket - FE48)
 23B6	BOTTOM SQUARE BRACKET OVER TOP SQUARE BRACKET
 @		Terminal graphic characters
 23B7	RADICAL SYMBOL BOTTOM
@@ -10217,7 +10891,9 @@
 23BD	HORIZONTAL SCAN LINE-9
 @		Dentistry notation symbols
 23BE	DENTISTRY SYMBOL LIGHT VERTICAL AND TOP RIGHT
+	x (left ceiling - 2308)
 23BF	DENTISTRY SYMBOL LIGHT VERTICAL AND BOTTOM RIGHT
+	x (left floor - 230A)
 23C0	DENTISTRY SYMBOL LIGHT VERTICAL WITH CIRCLE
 23C1	DENTISTRY SYMBOL LIGHT DOWN AND HORIZONTAL WITH CIRCLE
 23C2	DENTISTRY SYMBOL LIGHT UP AND HORIZONTAL WITH CIRCLE
@@ -10228,15 +10904,27 @@
 23C7	DENTISTRY SYMBOL LIGHT DOWN AND HORIZONTAL WITH WAVE
 23C8	DENTISTRY SYMBOL LIGHT UP AND HORIZONTAL WITH WAVE
 23C9	DENTISTRY SYMBOL LIGHT DOWN AND HORIZONTAL
+	x (down tack - 22A4)
+	x (box drawings light down and horizontal - 252C)
 23CA	DENTISTRY SYMBOL LIGHT UP AND HORIZONTAL
+	x (up tack - 22A5)
+	x (box drawings light up and horizontal - 2534)
 23CB	DENTISTRY SYMBOL LIGHT VERTICAL AND TOP LEFT
+	x (right ceiling - 2309)
 23CC	DENTISTRY SYMBOL LIGHT VERTICAL AND BOTTOM LEFT
+	x (right floor - 230B)
 @		Miscellaneous technical symbol
 23CD	SQUARE FOOT
-@		Keyboard symbol
+@		Keyboard and UI symbols
 23CE	RETURN SYMBOL
 	* may be shown with either hollow or filled glyph
 	x (downwards arrow with corner leftwards - 21B5)
+23CF	EJECT SYMBOL
+	* UI symbol to eject media
+@		Special character extension
+23D0	VERTICAL LINE EXTENSION
+	* used for extension of arrows
+	x (horizontal line extension - 23AF)
 @@	2400	Control Pictures	243F
 @+		The diagonal lettering glyphs are only exemplary; alternate representations may be, and often are used in the visible display of control codes.
 @		Graphic pictures for control codes
@@ -10615,6 +11303,9 @@
 24FC	DOUBLE CIRCLED DIGIT EIGHT
 24FD	DOUBLE CIRCLED DIGIT NINE
 24FE	DOUBLE CIRCLED NUMBER TEN
+@		Additional white on black circled number
+24FF	NEGATIVE CIRCLED DIGIT ZERO
+	x (dingbat negative circled digit one - 2776)
 @@	2500	Box Drawing	257F
 @		Form and chart components
 2500	BOX DRAWINGS LIGHT HORIZONTAL
@@ -10987,6 +11678,15 @@
 2613	SALTIRE
 	= St. Andrew's Cross
 	x (ballot x - 2717)
+@		Weather symbol
+2614	UMBRELLA WITH RAIN DROPS
+	= showery weather
+@		Miscellaneous symbol
+2615	HOT BEVERAGE
+	= tea or coffee, depending on locale
+	* can be used to indicate a wait
+	x (watch - 231A)
+	x (hourglass - 231B)
 @		Japanese chess symbols
 2616	WHITE SHOGI PIECE
 2617	BLACK SHOGI PIECE
@@ -11121,6 +11821,7 @@
 266E	MUSIC NATURAL SIGN
 266F	MUSIC SHARP SIGN
 	= z notation infix bag count
+	x (number sign - 0023)
 @		Syriac cross symbols
 @+		These symbols are used in liturgical texts of Syriac-speaking churches.
 2670	WEST SYRIAC CROSS
@@ -11161,6 +11862,19 @@
 2687	WHITE CIRCLE WITH TWO DOTS
 2688	BLACK CIRCLE WITH WHITE DOT RIGHT
 2689	BLACK CIRCLE WITH TWO WHITE DOTS
+@		Yijing monogram and digram symbols
+268A	MONOGRAM FOR YANG
+268B	MONOGRAM FOR YIN
+268C	DIGRAM FOR GREATER YANG
+268D	DIGRAM FOR LESSER YIN
+268E	DIGRAM FOR LESSER YANG
+268F	DIGRAM FOR GREATER YIN
+@		Map markers
+2690	WHITE FLAG
+2691	BLACK FLAG
+@		Warning signs
+26A0	WARNING SIGN
+26A1	HIGH VOLTAGE SIGN
 @@	2700	Dingbats	27BF
 @+		ITC Zapf dingbats series 100
 @		Miscellaneous
@@ -11459,8 +12173,10 @@
 	= will always be (modal operator)
 @		Mathematical brackets
 27E6	MATHEMATICAL LEFT WHITE SQUARE BRACKET
+	= z notation left bag bracket
 	x (left white square bracket - 301A)
 27E7	MATHEMATICAL RIGHT WHITE SQUARE BRACKET
+	= z notation right bag bracket
 	x (right white square bracket - 301B)
 27E8	MATHEMATICAL LEFT ANGLE BRACKET
 	= bra
@@ -11814,6 +12530,7 @@
 	= z notation finite injection
 2916	RIGHTWARDS TWO-HEADED ARROW WITH TAIL
 	= bijective mapping
+	= z notation bijection
 2917	RIGHTWARDS TWO-HEADED ARROW WITH TAIL WITH VERTICAL STROKE
 	= z notation surjective injection
 2918	RIGHTWARDS TWO-HEADED ARROW WITH TAIL WITH DOUBLE VERTICAL STROKE
@@ -12037,7 +12754,7 @@
 	x (apl functional symbol quad backslash - 2342)
 29C6	SQUARED ASTERISK
 29C7	SQUARED SMALL CIRCLE
-	x (apl functional symbol quad circle - 233C)
+	x (apl functional symbol quad jot - 233B)
 29C8	SQUARED SQUARE
 29C9	TWO JOINED SQUARES
 @		Triangle symbols
@@ -12170,6 +12887,7 @@
 	x (n-ary summation - 2211)
 2A0B	SUMMATION WITH INTEGRAL
 2A0C	QUADRUPLE INTEGRAL OPERATOR
+	x (triple integral - 222D)
 	# 222B 222B 222B 222B
 2A0D	FINITE PART INTEGRAL
 2A0E	INTEGRAL WITH DOUBLE STROKE
@@ -12180,6 +12898,7 @@
 2A13	LINE INTEGRATION WITH SEMICIRCULAR PATH AROUND POLE
 2A14	LINE INTEGRATION NOT INCLUDING THE POLE
 2A15	INTEGRAL AROUND A POINT OPERATOR
+	x (contour integral - 222E)
 2A16	QUATERNION INTEGRAL OPERATOR
 2A17	INTEGRAL WITH LEFTWARDS ARROW WITH HOOK
 2A18	INTEGRAL WITH TIMES SIGN
@@ -12458,7 +13177,7 @@
 2ADC	FORKING (not independent)
 	= not independent
 	* an equational logic symbol, not a computing science symbol
-	* non-indepedence (original concept) is related to forking
+	* non-independence (original concept) is related to forking
 	: 2ADD 0338
 2ADD	NONFORKING (independent)
 	= independent
@@ -12537,123 +13256,289 @@
 	= Dijkstra choice
 2AFF	N-ARY WHITE VERTICAL BAR
 	= n-ary Dijkstra choice
+@@	2B00	Miscellaneous Symbols and Arrows	2BFF
+@		Arrows
+@+	Other white and black arrows to complete this set can be found in Supplementary Arrows-B and Dingbats
+2B00	NORTH EAST WHITE ARROW
+2B01	NORTH WEST WHITE ARROW
+2B02	SOUTH EAST WHITE ARROW
+2B03	SOUTH WEST WHITE ARROW
+2B04	LEFT RIGHT WHITE ARROW
+2B05	LEFTWARDS BLACK ARROW
+2B06	UPWARDS BLACK ARROW
+2B07	DOWNWARDS BLACK ARROW
+2B08	NORTH EAST BLACK ARROW
+2B09	NORTH WEST BLACK ARROW
+2B0A	SOUTH EAST BLACK ARROW
+2B0B	SOUTH WEST BLACK ARROW
+2B0C	LEFT RIGHT BLACK ARROW
+2B0D	UP DOWN BLACK ARROW
 @@	2E80	CJK Radicals Supplement	2EFF
 @		CJK radicals supplement
 2E80	CJK RADICAL REPEAT
 2E81	CJK RADICAL CLIFF
+	x 5382
 2E82	CJK RADICAL SECOND ONE
+	x 4E5B
 2E83	CJK RADICAL SECOND TWO
+	x 4E5A
 2E84	CJK RADICAL SECOND THREE
+	x 4E59
 2E85	CJK RADICAL PERSON
+	* form used on left side
+	x 4EBB
 2E86	CJK RADICAL BOX
+	x 5182
 2E87	CJK RADICAL TABLE
+	x 51E0
 2E88	CJK RADICAL KNIFE ONE
+	* form used at top
+	x 5200
 2E89	CJK RADICAL KNIFE TWO
+	* form used on right side
+	x 5202
 2E8A	CJK RADICAL DIVINATION
+	* form used at top
+	x 535C
 2E8B	CJK RADICAL SEAL
+	* form used at bottom
+	x 353E
 2E8C	CJK RADICAL SMALL ONE
+	* form used at top
+	x 5C0F
 2E8D	CJK RADICAL SMALL TWO
+	* form used at top
+	x 5C0F
 2E8E	CJK RADICAL LAME ONE
+	x 5C22
 2E8F	CJK RADICAL LAME TWO
+	x 5C23
 2E90	CJK RADICAL LAME THREE
+	x 5C22
 2E91	CJK RADICAL LAME FOUR
+	x 5C23
 2E92	CJK RADICAL SNAKE
+	x 5DF3
 2E93	CJK RADICAL THREAD
+	x 5E7A
 2E94	CJK RADICAL SNOUT ONE
+	x 5F51
 2E95	CJK RADICAL SNOUT TWO
+	x 5F50
 2E96	CJK RADICAL HEART ONE
+	* form used on left side
+	x 5FC4
 2E97	CJK RADICAL HEART TWO
+	* form used at bottom
+	x 5FC3
 2E98	CJK RADICAL HAND
+	* form used on left side
+	x 624C
 2E99	CJK RADICAL RAP
+	* form used on right side
+	x 6535
 2E9B	CJK RADICAL CHOKE
+	x 65E1
 2E9C	CJK RADICAL SUN
+	x 65E5
 2E9D	CJK RADICAL MOON
+	x 6708
 2E9E	CJK RADICAL DEATH
+	x 6B7A
 2E9F	CJK RADICAL MOTHER
 	# 6BCD
 2EA0	CJK RADICAL CIVILIAN
+	x 6C11
 2EA1	CJK RADICAL WATER ONE
+	* form used on left side
+	x 6C35
 2EA2	CJK RADICAL WATER TWO
+	* form used (rarely) at bottom
+	x 6C3A
 2EA3	CJK RADICAL FIRE
+	* form used at bottom
+	x 706C
 2EA4	CJK RADICAL PAW ONE
+	* form used at top
+	x 722B
 2EA5	CJK RADICAL PAW TWO
+	* form used at top
+	x 722B
 2EA6	CJK RADICAL SIMPLIFIED HALF TREE TRUNK
+	x 4E2C
 2EA7	CJK RADICAL COW
+	x 725B
 2EA8	CJK RADICAL DOG
+	* form used on left side
+	x 72AD
 2EA9	CJK RADICAL JADE
+	* form used on left side
+	x 738B
 2EAA	CJK RADICAL BOLT OF CLOTH
+	* form used on left side
+	x 758B
 2EAB	CJK RADICAL EYE
+	* form used at top
+	x (cjk radical net two - 2EB2)
+	x 76EE
 2EAC	CJK RADICAL SPIRIT ONE
+	x 793A
 2EAD	CJK RADICAL SPIRIT TWO
+	x 793B
 2EAE	CJK RADICAL BAMBOO
+	x 7AF9
 2EAF	CJK RADICAL SILK
+	* form used on left side
+	x 7CF9
 2EB0	CJK RADICAL C-SIMPLIFIED SILK
+	* form used on left side
+	x 7E9F
 2EB1	CJK RADICAL NET ONE
+	x 7F53
 2EB2	CJK RADICAL NET TWO
+	x (cjk radical eye - 2EAB)
+	x 7F52
 2EB3	CJK RADICAL NET THREE
+	x 7F51
 2EB4	CJK RADICAL NET FOUR
+	x 7F51
 2EB5	CJK RADICAL MESH
+	x 2626B
 2EB6	CJK RADICAL SHEEP
+	* form used on left side
+	x 7F8A
 2EB7	CJK RADICAL RAM
+	* form used at top
+	x 7F8A
 2EB8	CJK RADICAL EWE
+	x 7F8B
 2EB9	CJK RADICAL OLD
+	x 8002
 2EBA	CJK RADICAL BRUSH ONE
+	x 8080
 2EBB	CJK RADICAL BRUSH TWO
+	x 807F
 2EBC	CJK RADICAL MEAT
+	x 8089
 2EBD	CJK RADICAL MORTAR
+	x 81FC
 2EBE	CJK RADICAL GRASS ONE
+	x 8279
 2EBF	CJK RADICAL GRASS TWO
+	x 8279
 2EC0	CJK RADICAL GRASS THREE
+	x 8279
 2EC1	CJK RADICAL TIGER
+	x 864E
 2EC2	CJK RADICAL CLOTHES
+	* form used on left side
+	x 8864
 2EC3	CJK RADICAL WEST ONE
+	* form used at top
+	x 8980
 2EC4	CJK RADICAL WEST TWO
+	* form used on left side
+	x 897F
 2EC5	CJK RADICAL C-SIMPLIFIED SEE
+	x 89C1
 2EC6	CJK RADICAL SIMPLIFIED HORN
+	x 89D2
 2EC7	CJK RADICAL HORN
+	x 278B2
 2EC8	CJK RADICAL C-SIMPLIFIED SPEECH
+	x 8BA0
 2EC9	CJK RADICAL C-SIMPLIFIED SHELL
+	x 8D1D
 2ECA	CJK RADICAL FOOT
+	* form used on left side
+	x 8DB3
 2ECB	CJK RADICAL C-SIMPLIFIED CART
+	x 8F66
 2ECC	CJK RADICAL SIMPLIFIED WALK
+	x 8FB6
 2ECD	CJK RADICAL WALK ONE
+	x 8FB6
 2ECE	CJK RADICAL WALK TWO
+	x 8FB6
 2ECF	CJK RADICAL CITY
+	* form used on right side
+	x 9091
 2ED0	CJK RADICAL C-SIMPLIFIED GOLD
+	x 9485
 2ED1	CJK RADICAL LONG ONE
+	x 9577
 2ED2	CJK RADICAL LONG TWO
+	* form used on left side
+	x 9578
 2ED3	CJK RADICAL C-SIMPLIFIED LONG
+	x 957F
 2ED4	CJK RADICAL C-SIMPLIFIED GATE
+	x 95E8
 2ED5	CJK RADICAL MOUND ONE
+	x 961C
 2ED6	CJK RADICAL MOUND TWO
+	* form used on left side
+	x 961D
 2ED7	CJK RADICAL RAIN
+	x 96E8
 2ED8	CJK RADICAL BLUE
+	x 9752
 2ED9	CJK RADICAL C-SIMPLIFIED TANNED LEATHER
+	x 97E6
 2EDA	CJK RADICAL C-SIMPLIFIED LEAF
+	x 9875
 2EDB	CJK RADICAL C-SIMPLIFIED WIND
+	x 98CE
 2EDC	CJK RADICAL C-SIMPLIFIED FLY
+	x 98DE
 2EDD	CJK RADICAL EAT ONE
+	* form used at bottom
+	x 98DF
 2EDE	CJK RADICAL EAT TWO
+	* form used on left side
+	x 2967F
 2EDF	CJK RADICAL EAT THREE
+	* form used on left side
+	x 98E0
 2EE0	CJK RADICAL C-SIMPLIFIED EAT
+	* form used on left side
+	x 9963
 2EE1	CJK RADICAL HEAD
+	x 29810
 2EE2	CJK RADICAL C-SIMPLIFIED HORSE
+	x 9A6C
 2EE3	CJK RADICAL BONE
+	x 9AA8
 2EE4	CJK RADICAL GHOST
+	x 9B3C
 2EE5	CJK RADICAL C-SIMPLIFIED FISH
+	x 9C7C
 2EE6	CJK RADICAL C-SIMPLIFIED BIRD
+	x 9E1F
 2EE7	CJK RADICAL C-SIMPLIFIED SALT
+	x 9E75
 2EE8	CJK RADICAL SIMPLIFIED WHEAT
+	x 9EA6
 2EE9	CJK RADICAL SIMPLIFIED YELLOW
+	x 9EC4
 2EEA	CJK RADICAL C-SIMPLIFIED FROG
+	x 9EFE
 2EEB	CJK RADICAL J-SIMPLIFIED EVEN
+	x 6589
 2EEC	CJK RADICAL C-SIMPLIFIED EVEN
+	x 9F50
 2EED	CJK RADICAL J-SIMPLIFIED TOOTH
+	x 6B6F
 2EEE	CJK RADICAL C-SIMPLIFIED TOOTH
+	x 9F7F
 2EEF	CJK RADICAL J-SIMPLIFIED DRAGON
+	x 9F8D
 2EF0	CJK RADICAL C-SIMPLIFIED DRAGON
+	x 9F99
 2EF1	CJK RADICAL TURTLE
+	x 9F9C
 2EF2	CJK RADICAL J-SIMPLIFIED TURTLE
+	x 4E80
 2EF3	CJK RADICAL C-SIMPLIFIED TURTLE
 	# 9F9F
 @@	2F00	Kangxi Radicals	2FDF
@@ -13119,6 +14004,7 @@
 	x (combining enclosing circle - 20DD)
 	x (white circle - 25CB)
 	x (large circle - 25EF)
+@		CJK angle brackets
 3008	LEFT ANGLE BRACKET
 	x (less-than sign - 003C)
 	x (single left-pointing angle quotation mark - 2039)
@@ -13135,6 +14021,8 @@
 300B	RIGHT DOUBLE ANGLE BRACKET
 	x (right-pointing double angle quotation mark - 00BB)
 	x (mathematical right double angle bracket - 27EB)
+@		CJK corner brackets
+@+		The CJK corner brackets, which function as quotation marks, are not recommended for general-purpose corner brackets. See the ceiling and floor characters, instead.
 300C	LEFT CORNER BRACKET
 	x (left ceiling - 2308)
 300D	RIGHT CORNER BRACKET
@@ -13143,11 +14031,14 @@
 300E	LEFT WHITE CORNER BRACKET
 300F	RIGHT WHITE CORNER BRACKET
 	* used as quotation marks
+@		CJK brackets
 3010	LEFT BLACK LENTICULAR BRACKET
 3011	RIGHT BLACK LENTICULAR BRACKET
+@		CJK symbols
 3012	POSTAL MARK
 3013	GETA MARK
 	* substitute for ideograph not in font
+@		CJK brackets
 3014	LEFT TORTOISE SHELL BRACKET
 3015	RIGHT TORTOISE SHELL BRACKET
 3016	LEFT WHITE LENTICULAR BRACKET
@@ -13158,6 +14049,7 @@
 	= left abstract syntax bracket
 301B	RIGHT WHITE SQUARE BRACKET
 	= right abstract syntax bracket
+@		CJK symbols and punctuation
 301C	WAVE DASH
 @+		* This character was encoded to match JIS C 6226-1978 1-33 "wave dash". Subsequent revisions of the JIS standard and industry practice have settled on JIS 1-33 as being the fullwidth tilde character.
 	x (wavy dash - 3030)
@@ -13888,6 +14780,11 @@
 	# 0028 1112 1161 0029
 321C	PARENTHESIZED HANGUL CIEUC U
 	# 0028 110C 116E 0029
+@		Parenthesized Korean words
+321D	PARENTHESIZED KOREAN CHARACTER OJEON
+	# 0028 110B 1169 110C 1165 11AB 0029
+321E	PARENTHESIZED KOREAN CHARACTER O HU
+	# 0028 110B 1169 1112 116E 0029
 @		Parenthesized ideographs
 3220	PARENTHESIZED IDEOGRAPH ONE
 	# 0028 4E00 0029
@@ -13973,6 +14870,9 @@
 3243	PARENTHESIZED IDEOGRAPH REACH
 	* to
 	# 0028 81F3 0029
+@		Squared Latin abbreviation
+3250	PARTNERSHIP SIGN
+	# <square> 0050 0054 0045
 @		Circled numbers
 3251	CIRCLED NUMBER TWENTY ONE
 	# <circle> 0032 0031
@@ -14062,6 +14962,11 @@
 	# <circle> 1111 1161
 327B	CIRCLED HANGUL HIEUH A
 	# <circle> 1112 1161
+@		Circled Korean words
+327C	CIRCLED KOREAN CHARACTER CHAMKO
+	# <circle> 110E 1161 11B7 1100 1169
+327D	CIRCLED KOREAN CHARACTER JUEUI
+	# <circle> 110C 116E 110B 1174
 @		Symbol
 327F	KOREAN STANDARD SYMBOL
 @		Circled ideographs
@@ -14232,6 +15137,15 @@
 	# 0031 0031 6708
 32CB	IDEOGRAPHIC TELEGRAPH SYMBOL FOR DECEMBER
 	# 0031 0032 6708
+@		Squared Latin abbreviations
+32CC	SQUARE HG
+	# <square> 0048 0067
+32CD	SQUARE ERG
+	# <square> 0065 0072 0067
+32CE	SQUARE EV
+	# <square> 0065 0056
+32CF	LIMITED LIABILITY SIGN
+	# <square> 004C 0054 0044
 @		Circled Katakana
 32D0	CIRCLED KATAKANA A
 	# <circle> 30A2
@@ -14657,6 +15571,14 @@
 	# <square> 006F 0056
 3376	SQUARE PC
 	# <square> 0070 0063
+3377	SQUARE DM
+	# <square> 0064 006D
+3378	SQUARE DM SQUARED
+	# <square> 0064 006D 00B2
+3379	SQUARE DM CUBED
+	# <square> 0064 006D 00B3
+337A	SQUARE IU
+	# <square> 0049 0055
 @		Japanese era names
 337B	SQUARE ERA NAME HEISEI
 	# <square> 5E73 6210
@@ -14860,6 +15782,10 @@
 	# <square> 0053 0076
 33DD	SQUARE WB
 	# <square> 0057 0062
+33DE	SQUARE V OVER M
+	# <square> 0056 2215 006D
+33DF	SQUARE A OVER M
+	# <square> 0041 2215 006D
 @		Telegraph symbols for days
 33E0	IDEOGRAPHIC TELEGRAPH SYMBOL FOR DAY ONE
 	# 0031 65E5
@@ -14923,7 +15849,76 @@
 	# 0033 0030 65E5
 33FE	IDEOGRAPHIC TELEGRAPH SYMBOL FOR DAY THIRTY-ONE
 	# 0033 0031 65E5
+@		Squared Latin abbreviation
+33FF	SQUARE GAL
+	# <square> 0067 0061 006C
 @@	3400	CJK Unified Ideographs Extension A	4DB5
+@@	4DC0	Yijing Hexagram Symbols	4DFF
+@		Yijing hexagram symbols
+4DC0	HEXAGRAM FOR THE CREATIVE HEAVEN
+4DC1	HEXAGRAM FOR THE RECEPTIVE EARTH
+4DC2	HEXAGRAM FOR DIFFICULTY AT THE BEGINNING
+4DC3	HEXAGRAM FOR YOUTHFUL FOLLY
+4DC4	HEXAGRAM FOR WAITING
+4DC5	HEXAGRAM FOR CONFLICT
+4DC6	HEXAGRAM FOR THE ARMY
+4DC7	HEXAGRAM FOR HOLDING TOGETHER
+4DC8	HEXAGRAM FOR SMALL TAMING
+4DC9	HEXAGRAM FOR TREADING
+4DCA	HEXAGRAM FOR PEACE
+4DCB	HEXAGRAM FOR STANDSTILL
+4DCC	HEXAGRAM FOR FELLOWSHIP
+4DCD	HEXAGRAM FOR GREAT POSSESSION
+4DCE	HEXAGRAM FOR MODESTY
+4DCF	HEXAGRAM FOR ENTHUSIASM
+4DD0	HEXAGRAM FOR FOLLOWING
+4DD1	HEXAGRAM FOR WORK ON THE DECAYED
+4DD2	HEXAGRAM FOR APPROACH
+4DD3	HEXAGRAM FOR CONTEMPLATION
+4DD4	HEXAGRAM FOR BITING THROUGH
+4DD5	HEXAGRAM FOR GRACE
+4DD6	HEXAGRAM FOR SPLITTING APART
+4DD7	HEXAGRAM FOR RETURN
+4DD8	HEXAGRAM FOR INNOCENCE
+4DD9	HEXAGRAM FOR GREAT TAMING
+4DDA	HEXAGRAM FOR MOUTH CORNERS
+4DDB	HEXAGRAM FOR GREAT PREPONDERANCE
+4DDC	HEXAGRAM FOR THE ABYSMAL WATER
+4DDD	HEXAGRAM FOR THE CLINGING FIRE
+4DDE	HEXAGRAM FOR INFLUENCE
+4DDF	HEXAGRAM FOR DURATION
+4DE0	HEXAGRAM FOR RETREAT
+4DE1	HEXAGRAM FOR GREAT POWER
+4DE2	HEXAGRAM FOR PROGRESS
+4DE3	HEXAGRAM FOR DARKENING OF THE LIGHT
+4DE4	HEXAGRAM FOR THE FAMILY
+4DE5	HEXAGRAM FOR OPPOSITION
+4DE6	HEXAGRAM FOR OBSTRUCTION
+4DE7	HEXAGRAM FOR DELIVERANCE
+4DE8	HEXAGRAM FOR DECREASE
+4DE9	HEXAGRAM FOR INCREASE
+4DEA	HEXAGRAM FOR BREAKTHROUGH
+4DEB	HEXAGRAM FOR COMING TO MEET
+4DEC	HEXAGRAM FOR GATHERING TOGETHER
+4DED	HEXAGRAM FOR PUSHING UPWARD
+4DEE	HEXAGRAM FOR OPPRESSION
+4DEF	HEXAGRAM FOR THE WELL
+4DF0	HEXAGRAM FOR REVOLUTION
+4DF1	HEXAGRAM FOR THE CAULDRON
+4DF2	HEXAGRAM FOR THE AROUSING THUNDER
+4DF3	HEXAGRAM FOR THE KEEPING STILL MOUNTAIN
+4DF4	HEXAGRAM FOR DEVELOPMENT
+4DF5	HEXAGRAM FOR THE MARRYING MAIDEN
+4DF6	HEXAGRAM FOR ABUNDANCE
+4DF7	HEXAGRAM FOR THE WANDERER
+4DF8	HEXAGRAM FOR THE GENTLE WIND
+4DF9	HEXAGRAM FOR THE JOYOUS LAKE
+4DFA	HEXAGRAM FOR DISPERSION
+4DFB	HEXAGRAM FOR LIMITATION
+4DFC	HEXAGRAM FOR INNER TRUTH
+4DFD	HEXAGRAM FOR SMALL PREPONDERANCE
+4DFE	HEXAGRAM FOR AFTER COMPLETION
+4DFF	HEXAGRAM FOR BEFORE COMPLETION
 @@	4E00	CJK Unified Ideographs	9FA5
 @@	A000	Yi Syllables	A48F
 @		Syllables
@@ -16155,7 +17150,7 @@ A4C6	YI RADICAL KE
 @@	DC00	Low Surrogates	DFFF
 @@	E000	Private Use Area	F8FF
 @@	F900	CJK Compatibility Ideographs	FAFF
-@		Pronunciation variants from KS C 5601-1987
+@		Pronunciation variants from KS X 1001:1998
 F900	CJK COMPATIBILITY IDEOGRAPH-F900
 	: 8C48
 F901	CJK COMPATIBILITY IDEOGRAPH-F901
@@ -16525,6 +17520,7 @@ F9B6	CJK COMPATIBILITY IDEOGRAPH-F9B6
 F9B7	CJK COMPATIBILITY IDEOGRAPH-F9B7
 	: 91B4
 F9B8	CJK COMPATIBILITY IDEOGRAPH-F9B8
+	x (cjk unified ideograph-96B7 - 96B7)
 	: 96B8
 F9B9	CJK COMPATIBILITY IDEOGRAPH-F9B9
 	: 60E1
@@ -16911,14 +17907,15 @@ FB16	ARMENIAN SMALL LIGATURE VEW NOW
 FB17	ARMENIAN SMALL LIGATURE MEN XEH
 	# 0574 056D
 @		Hebrew presentation forms
+@+		See the Hebrew block starting at 0590
 FB1D	HEBREW LETTER YOD WITH HIRIQ
 	: 05D9 05B4
 FB1E	HEBREW POINT JUDEO-SPANISH VARIKA
 	* a glyph variant of 05BF
-@+		See the Hebrew block starting at 0590
 FB1F	HEBREW LIGATURE YIDDISH YOD YOD PATAH
 	: 05F2 05B7
 FB20	HEBREW LETTER ALTERNATIVE AYIN
+	* this form of AYIN has no descender, for use with marks placed below the letter
 	# <font> 05E2 hebrew letter ayin
 FB21	HEBREW LETTER WIDE ALEF
 	# <font> 05D0 hebrew letter alef
@@ -18171,7 +19168,7 @@ FDC6	ARABIC LIGATURE SEEN WITH KHAH WITH YEH FINAL FORM
 	# <final> 0633 062E 064A
 FDC7	ARABIC LIGATURE NOON WITH JEEM WITH YEH FINAL FORM
 	# <final> 0646 062C 064A
-@		Process internal codes
+@		Noncharacters
 @+	These codes are intended for process internal uses, but are not permitted for interchange.
 FDD0	<not a character>
 FDD1	<not a character>
@@ -18233,10 +19230,13 @@ FDFB	ARABIC LIGATURE JALLAJALALOUHOU
 @		Currency sign
 FDFC	RIAL SIGN
 	# <isolated> 0631 06CC 0627 0644
+@		Symbol
+FDFD	ARABIC LIGATURE BISMILLAH AR-RAHMAN AR-RAHEEM
 @@	FE00	Variation Selectors	FE0F
 @		Variation selectors
 @+	Combining characters; in conjunction with the preceding character these indicate a predetermined choice of variant glyph
 FE00	VARIATION SELECTOR-1
+	* these are abbreviated VS1, and so on
 FE01	VARIATION SELECTOR-2
 FE02	VARIATION SELECTOR-3
 FE03	VARIATION SELECTOR-4
@@ -18306,6 +19306,13 @@ FE44	PRESENTATION FORM FOR VERTICAL RIGHT WHITE CORNER BRACKET
 FE45	SESAME DOT
 FE46	WHITE SESAME DOT
 	* sesame dots are used beside vertical text for emphasis
+@		Glyphs for vertical variants
+FE47	PRESENTATION FORM FOR VERTICAL LEFT SQUARE BRACKET
+	x (top square bracket - 23B4)
+	# <vertical> 005B
+FE48	PRESENTATION FORM FOR VERTICAL RIGHT SQUARE BRACKET
+	x (bottom square bracket - 23B5)
+	# <vertical> 005D
 @		Overscores and underscores
 FE49	DASHED OVERLINE
 	# 203E overline
@@ -18329,8 +19336,6 @@ FE51	SMALL IDEOGRAPHIC COMMA
 	# <small> 3001
 FE52	SMALL FULL STOP
 	# <small> 002E
-FE53	<reserved>
-	x (middle dot - 00B7)
 FE54	SMALL SEMICOLON
 	# <small> 003B
 FE55	SMALL COLON
@@ -18369,8 +19374,6 @@ FE65	SMALL GREATER-THAN SIGN
 	# <small> 003E
 FE66	SMALL EQUALS SIGN
 	# <small> 003D
-FE67	<reserved>
-	x (division slash - 2215)
 FE68	SMALL REVERSE SOLIDUS
 	# <small> 005C
 FE69	SMALL DOLLAR SIGN
@@ -18666,7 +19669,7 @@ FEFC	ARABIC LIGATURE LAM WITH ALEF FINAL FORM
 	# <final> 0644 0627
 @		Special
 FEFF	ZERO WIDTH NO-BREAK SPACE
-	= BYTE ORDER MARK (BOM)
+	= BYTE ORDER MARK (BOM), ZWNBSP
 	* may be used to detect byte order by contrast with the noncharacter code point FFFE
 	* use as an indication of non-breaking is deprecated; see 2060 instead
 	x (zero width space - 200B)
@@ -18867,7 +19870,7 @@ FF5E	FULLWIDTH TILDE
 FF5F	FULLWIDTH LEFT WHITE PARENTHESIS *
 	# <wide> 2985
 FF60	FULLWIDTH RIGHT WHITE PARENTHESIS *
-	* a commonly occurring glyph variant looks like doubled parentheses
+	* the most commonly occurring glyph variant looks like doubled parentheses
 	# <wide> 2986
 @		Halfwidth CJK punctuation
 @+		See CJK punctuation 3000 - 303F
@@ -19153,14 +20156,318 @@ FFFC	OBJECT REPLACEMENT CHARACTER
 FFFD	REPLACEMENT CHARACTER
 	* used to replace an incoming character whose value is unknown or unrepresentable in Unicode
 	* compare the use of 001A as a control character to indicate the substitute function
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 FFFE	<not a character>
 	* the value FFFE is guaranteed not to be a Unicode character at all
 	* may be used to detect byte order by contrast with FEFF which is a character
 	x (zero width no-break space - FEFF)
 FFFF	<not a character>
 	* the value FFFF is guaranteed not to be a Unicode character at all
+@@	10000	Linear B Syllabary	1007F
+@		Basic syllables
+10000	LINEAR B SYLLABLE B008 A
+10001	LINEAR B SYLLABLE B038 E
+10002	LINEAR B SYLLABLE B028 I
+10003	LINEAR B SYLLABLE B061 O
+10004	LINEAR B SYLLABLE B010 U
+10005	LINEAR B SYLLABLE B001 DA
+10006	LINEAR B SYLLABLE B045 DE
+10007	LINEAR B SYLLABLE B007 DI
+10008	LINEAR B SYLLABLE B014 DO
+10009	LINEAR B SYLLABLE B051 DU
+1000A	LINEAR B SYLLABLE B057 JA
+1000B	LINEAR B SYLLABLE B046 JE
+1000D	LINEAR B SYLLABLE B036 JO
+1000E	LINEAR B SYLLABLE B065 JU
+	= ideogram B129 flour
+1000F	LINEAR B SYLLABLE B077 KA
+10010	LINEAR B SYLLABLE B044 KE
+10011	LINEAR B SYLLABLE B067 KI
+10012	LINEAR B SYLLABLE B070 KO
+10013	LINEAR B SYLLABLE B081 KU
+10014	LINEAR B SYLLABLE B080 MA
+10015	LINEAR B SYLLABLE B013 ME
+10016	LINEAR B SYLLABLE B073 MI
+10017	LINEAR B SYLLABLE B015 MO
+10018	LINEAR B SYLLABLE B023 MU
+	= ideogram B109 ox
+10019	LINEAR B SYLLABLE B006 NA
+1001A	LINEAR B SYLLABLE B024 NE
+1001B	LINEAR B SYLLABLE B030 NI
+	= ideogram B030 figs
+1001C	LINEAR B SYLLABLE B052 NO
+1001D	LINEAR B SYLLABLE B055 NU
+1001E	LINEAR B SYLLABLE B003 PA
+1001F	LINEAR B SYLLABLE B072 PE
+10020	LINEAR B SYLLABLE B039 PI
+10021	LINEAR B SYLLABLE B011 PO
+10022	LINEAR B SYLLABLE B050 PU
+10023	LINEAR B SYLLABLE B016 QA
+10024	LINEAR B SYLLABLE B078 QE
+10025	LINEAR B SYLLABLE B021 QI
+	= ideogram B106 sheep
+10026	LINEAR B SYLLABLE B032 QO
+10028	LINEAR B SYLLABLE B060 RA
+10029	LINEAR B SYLLABLE B027 RE
+1002A	LINEAR B SYLLABLE B053 RI
+1002B	LINEAR B SYLLABLE B002 RO
+1002C	LINEAR B SYLLABLE B026 RU
+1002D	LINEAR B SYLLABLE B031 SA
+	= ideogram B031 flax
+1002E	LINEAR B SYLLABLE B009 SE
+1002F	LINEAR B SYLLABLE B041 SI
+10030	LINEAR B SYLLABLE B012 SO
+10031	LINEAR B SYLLABLE B058 SU
+10032	LINEAR B SYLLABLE B059 TA
+10033	LINEAR B SYLLABLE B004 TE
+10034	LINEAR B SYLLABLE B037 TI
+10035	LINEAR B SYLLABLE B005 TO
+10036	LINEAR B SYLLABLE B069 TU
+10037	LINEAR B SYLLABLE B054 WA
+10038	LINEAR B SYLLABLE B075 WE
+10039	LINEAR B SYLLABLE B040 WI
+1003A	LINEAR B SYLLABLE B042 WO
+1003C	LINEAR B SYLLABLE B017 ZA
+1003D	LINEAR B SYLLABLE B074 ZE
+1003F	LINEAR B SYLLABLE B020 ZO
+@		Supplementary signs
+10040	LINEAR B SYLLABLE B025 A2
+10041	LINEAR B SYLLABLE B043 A3
+10042	LINEAR B SYLLABLE B085 AU
+	= ideogram B108 pig
+10043	LINEAR B SYLLABLE B071 DWE
+10044	LINEAR B SYLLABLE B090 DWO
+10045	LINEAR B SYLLABLE B048 NWA
+10046	LINEAR B SYLLABLE B029 PU2
+10047	LINEAR B SYLLABLE B062 PTE
+10048	LINEAR B SYLLABLE B076 RA2
+10049	LINEAR B SYLLABLE B033 RA3
+	= ideogram B144 saffron
+1004A	LINEAR B SYLLABLE B068 RO2
+1004B	LINEAR B SYLLABLE B066 TA2
+1004C	LINEAR B SYLLABLE B087 TWE
+1004D	LINEAR B SYLLABLE B091 TWO
+@		Symbols
+10050	LINEAR B SYMBOL B018
+10051	LINEAR B SYMBOL B019
+10052	LINEAR B SYMBOL B022
+	= ideogram B107 goat
+10053	LINEAR B SYMBOL B034
+10054	LINEAR B SYMBOL B047
+10055	LINEAR B SYMBOL B049
+10056	LINEAR B SYMBOL B056
+10057	LINEAR B SYMBOL B063
+10058	LINEAR B SYMBOL B064
+10059	LINEAR B SYMBOL B079
+1005A	LINEAR B SYMBOL B082
+1005B	LINEAR B SYMBOL B083
+1005C	LINEAR B SYMBOL B086
+1005D	LINEAR B SYMBOL B089
+@@	10080	Linear B Ideograms	100FF
+@		People and animals
+10080	LINEAR B IDEOGRAM B100 MAN
+10081	LINEAR B IDEOGRAM B102 WOMAN
+10082	LINEAR B IDEOGRAM B104 DEER
+10083	LINEAR B IDEOGRAM B105 EQUID
+10084	LINEAR B IDEOGRAM B105F MARE
+10085	LINEAR B IDEOGRAM B105M STALLION
+10086	LINEAR B IDEOGRAM B106F EWE
+10087	LINEAR B IDEOGRAM B106M RAM
+10088	LINEAR B IDEOGRAM B107F SHE-GOAT
+10089	LINEAR B IDEOGRAM B107M HE-GOAT
+1008A	LINEAR B IDEOGRAM B108F SOW
+1008B	LINEAR B IDEOGRAM B108M BOAR
+1008C	LINEAR B IDEOGRAM B109F COW
+1008D	LINEAR B IDEOGRAM B109M BULL
+@		Cereals and plants
+1008E	LINEAR B IDEOGRAM B120 WHEAT
+1008F	LINEAR B IDEOGRAM B121 BARLEY
+10090	LINEAR B IDEOGRAM B122 OLIVE
+10091	LINEAR B IDEOGRAM B123 SPICE
+10092	LINEAR B IDEOGRAM B125 CYPERUS
+10093	LINEAR B MONOGRAM B127 KAPO
+	= fruit
+10094	LINEAR B MONOGRAM B128 KANAKO
+	= saffron
+@		Extracts
+10095	LINEAR B IDEOGRAM B130 OIL
+10096	LINEAR B IDEOGRAM B131 WINE
+10097	LINEAR B IDEOGRAM B132
+10098	LINEAR B MONOGRAM B133 AREPA
+	= ointment
+10099	LINEAR B MONOGRAM B135 MERI
+	= honey
+@		Metals
+1009A	LINEAR B IDEOGRAM B140 BRONZE
+1009B	LINEAR B IDEOGRAM B141 GOLD
+1009C	LINEAR B IDEOGRAM B142
+@		Other materials
+1009D	LINEAR B IDEOGRAM B145 WOOL
+1009E	LINEAR B IDEOGRAM B146
+1009F	LINEAR B IDEOGRAM B150
+100A0	LINEAR B IDEOGRAM B151 HORN
+100A1	LINEAR B IDEOGRAM B152
+100A2	LINEAR B IDEOGRAM B153
+100A3	LINEAR B IDEOGRAM B154
+100A4	LINEAR B MONOGRAM B156 TURO2
+	= cheese
+100A5	LINEAR B IDEOGRAM B157
+100A6	LINEAR B IDEOGRAM B158
+100A7	LINEAR B IDEOGRAM B159 CLOTH
+100A8	LINEAR B IDEOGRAM B160
+100A9	LINEAR B IDEOGRAM B161
+100AA	LINEAR B IDEOGRAM B162 GARMENT
+100AB	LINEAR B IDEOGRAM B163 ARMOUR
+100AC	LINEAR B IDEOGRAM B164
+100AD	LINEAR B IDEOGRAM B165
+100AE	LINEAR B IDEOGRAM B166
+100AF	LINEAR B IDEOGRAM B167
+100B0	LINEAR B IDEOGRAM B168
+100B1	LINEAR B IDEOGRAM B169
+100B2	LINEAR B IDEOGRAM B170
+100B3	LINEAR B IDEOGRAM B171
+100B4	LINEAR B IDEOGRAM B172
+100B5	LINEAR B IDEOGRAM B173 MONTH
+100B6	LINEAR B IDEOGRAM B174
+100B7	LINEAR B IDEOGRAM B176 TREE
+100B8	LINEAR B IDEOGRAM B177
+100B9	LINEAR B IDEOGRAM B178
+100BA	LINEAR B IDEOGRAM B179
+100BB	LINEAR B IDEOGRAM B180
+100BC	LINEAR B IDEOGRAM B181
+100BD	LINEAR B IDEOGRAM B182
+100BE	LINEAR B IDEOGRAM B183
+100BF	LINEAR B IDEOGRAM B184
+	* the shape of this ideogram is only partially known
+100C0	LINEAR B IDEOGRAM B185
+100C1	LINEAR B IDEOGRAM B189
+100C2	LINEAR B IDEOGRAM B190
+100C3	LINEAR B IDEOGRAM B191 HELMET
+100C4	LINEAR B IDEOGRAM B220 FOOTSTOOL
+100C5	LINEAR B IDEOGRAM B225 BATHTUB
+100C6	LINEAR B IDEOGRAM B230 SPEAR
+100C7	LINEAR B IDEOGRAM B231 ARROW
+100C8	LINEAR B IDEOGRAM B232
+100C9	LINEAR B IDEOGRAM B233 SWORD (pug)
+	= pugio
+100CA	LINEAR B IDEOGRAM B234
+100CB	LINEAR B IDEOGRAM B236 (gup)
+	= "gupio", inverted sword
+100CC	LINEAR B IDEOGRAM B240 WHEELED CHARIOT
+100CD	LINEAR B IDEOGRAM B241 CHARIOT
+100CE	LINEAR B IDEOGRAM B242 CHARIOT FRAME
+100CF	LINEAR B IDEOGRAM B243 WHEEL
+100D0	LINEAR B IDEOGRAM B245
+100D1	LINEAR B IDEOGRAM B246
+100D2	LINEAR B MONOGRAM B247 DIPTE
+100D3	LINEAR B IDEOGRAM B248
+100D4	LINEAR B IDEOGRAM B249
+100D5	LINEAR B IDEOGRAM B251
+	* the shape of this ideogram is only partially known
+100D6	LINEAR B IDEOGRAM B252
+	* the shape of this ideogram is only partially known
+100D7	LINEAR B IDEOGRAM B253
+100D8	LINEAR B IDEOGRAM B254 DART
+100D9	LINEAR B IDEOGRAM B255
+100DA	LINEAR B IDEOGRAM B256
+100DB	LINEAR B IDEOGRAM B257
+100DC	LINEAR B IDEOGRAM B258
+100DD	LINEAR B IDEOGRAM B259
+@		Vessels
+100DE	LINEAR B IDEOGRAM VESSEL B155
+100DF	LINEAR B IDEOGRAM VESSEL B200
+100E0	LINEAR B IDEOGRAM VESSEL B201
+100E1	LINEAR B IDEOGRAM VESSEL B202
+100E2	LINEAR B IDEOGRAM VESSEL B203
+100E3	LINEAR B IDEOGRAM VESSEL B204
+100E4	LINEAR B IDEOGRAM VESSEL B205
+100E5	LINEAR B IDEOGRAM VESSEL B206
+100E6	LINEAR B IDEOGRAM VESSEL B207
+100E7	LINEAR B IDEOGRAM VESSEL B208
+100E8	LINEAR B IDEOGRAM VESSEL B209
+100E9	LINEAR B IDEOGRAM VESSEL B210
+100EA	LINEAR B IDEOGRAM VESSEL B211
+100EB	LINEAR B IDEOGRAM VESSEL B212
+100EC	LINEAR B IDEOGRAM VESSEL B213
+100ED	LINEAR B IDEOGRAM VESSEL B214
+100EE	LINEAR B IDEOGRAM VESSEL B215
+100EF	LINEAR B IDEOGRAM VESSEL B216
+100F0	LINEAR B IDEOGRAM VESSEL B217
+100F1	LINEAR B IDEOGRAM VESSEL B218
+100F2	LINEAR B IDEOGRAM VESSEL B219
+100F3	LINEAR B IDEOGRAM VESSEL B221
+100F4	LINEAR B IDEOGRAM VESSEL B222
+100F5	LINEAR B IDEOGRAM VESSEL B226
+100F6	LINEAR B IDEOGRAM VESSEL B227
+100F7	LINEAR B IDEOGRAM VESSEL B228
+100F8	LINEAR B IDEOGRAM VESSEL B229
+100F9	LINEAR B IDEOGRAM VESSEL B250
+100FA	LINEAR B IDEOGRAM VESSEL B305
+	* the shape of this ideogram is only partially known
+@@	10100	Aegean Numbers	1013F
+@		Punctuation
+10100	AEGEAN WORD SEPARATOR LINE
+10101	AEGEAN WORD SEPARATOR DOT
+10102	AEGEAN CHECK MARK
+@		Numbers
+10107	AEGEAN NUMBER ONE
+10108	AEGEAN NUMBER TWO
+10109	AEGEAN NUMBER THREE
+1010A	AEGEAN NUMBER FOUR
+1010B	AEGEAN NUMBER FIVE
+1010C	AEGEAN NUMBER SIX
+1010D	AEGEAN NUMBER SEVEN
+1010E	AEGEAN NUMBER EIGHT
+1010F	AEGEAN NUMBER NINE
+10110	AEGEAN NUMBER TEN
+10111	AEGEAN NUMBER TWENTY
+10112	AEGEAN NUMBER THIRTY
+10113	AEGEAN NUMBER FORTY
+10114	AEGEAN NUMBER FIFTY
+10115	AEGEAN NUMBER SIXTY
+10116	AEGEAN NUMBER SEVENTY
+10117	AEGEAN NUMBER EIGHTY
+10118	AEGEAN NUMBER NINETY
+10119	AEGEAN NUMBER ONE HUNDRED
+1011A	AEGEAN NUMBER TWO HUNDRED
+1011B	AEGEAN NUMBER THREE HUNDRED
+1011C	AEGEAN NUMBER FOUR HUNDRED
+1011D	AEGEAN NUMBER FIVE HUNDRED
+1011E	AEGEAN NUMBER SIX HUNDRED
+1011F	AEGEAN NUMBER SEVEN HUNDRED
+10120	AEGEAN NUMBER EIGHT HUNDRED
+10121	AEGEAN NUMBER NINE HUNDRED
+10122	AEGEAN NUMBER ONE THOUSAND
+10123	AEGEAN NUMBER TWO THOUSAND
+10124	AEGEAN NUMBER THREE THOUSAND
+10125	AEGEAN NUMBER FOUR THOUSAND
+10126	AEGEAN NUMBER FIVE THOUSAND
+10127	AEGEAN NUMBER SIX THOUSAND
+10128	AEGEAN NUMBER SEVEN THOUSAND
+10129	AEGEAN NUMBER EIGHT THOUSAND
+1012A	AEGEAN NUMBER NINE THOUSAND
+1012B	AEGEAN NUMBER TEN THOUSAND
+1012C	AEGEAN NUMBER TWENTY THOUSAND
+1012D	AEGEAN NUMBER THIRTY THOUSAND
+1012E	AEGEAN NUMBER FORTY THOUSAND
+1012F	AEGEAN NUMBER FIFTY THOUSAND
+10130	AEGEAN NUMBER SIXTY THOUSAND
+10131	AEGEAN NUMBER SEVENTY THOUSAND
+10132	AEGEAN NUMBER EIGHTY THOUSAND
+10133	AEGEAN NUMBER NINETY THOUSAND
+@		Measures
+10137	AEGEAN WEIGHT BASE UNIT
+10138	AEGEAN WEIGHT FIRST SUBUNIT
+10139	AEGEAN WEIGHT SECOND SUBUNIT
+1013A	AEGEAN WEIGHT THIRD SUBUNIT
+1013B	AEGEAN WEIGHT FOURTH SUBUNIT
+1013C	AEGEAN DRY MEASURE FIRST SUBUNIT
+1013D	AEGEAN LIQUID MEASURE FIRST SUBUNIT
+1013E	AEGEAN MEASURE SECOND SUBUNIT
+1013F	AEGEAN MEASURE THIRD SUBUNIT
 @@	10300	Old Italic	1032F
+@		Letters
 10300	OLD ITALIC LETTER A
 10301	OLD ITALIC LETTER BE
 10302	OLD ITALIC LETTER KE
@@ -19192,11 +20499,13 @@ FFFF	<not a character>
 1031C	OLD ITALIC LETTER CHE (Umbrian)
 1031D	OLD ITALIC LETTER II (Oscan)
 1031E	OLD ITALIC LETTER UU (Oscan)
+@		Numerals
 10320	OLD ITALIC NUMERAL ONE
 10321	OLD ITALIC NUMERAL FIVE
 10322	OLD ITALIC NUMERAL TEN
 10323	OLD ITALIC NUMERAL FIFTY
 @@	10330	Gothic	1034F
+@		Letters
 10330	GOTHIC LETTER AHSA
 10331	GOTHIC LETTER BAIRKAN
 10332	GOTHIC LETTER GIBA
@@ -19224,7 +20533,42 @@ FFFF	<not a character>
 10348	GOTHIC LETTER HWAIR
 10349	GOTHIC LETTER OTHAL
 1034A	GOTHIC LETTER NINE HUNDRED
+@@	10380	Ugaritic	1039F
+@		Letters
+10380	UGARITIC LETTER ALPA
+10381	UGARITIC LETTER BETA
+10382	UGARITIC LETTER GAMLA
+10383	UGARITIC LETTER KHA
+10384	UGARITIC LETTER DELTA
+10385	UGARITIC LETTER HO
+10386	UGARITIC LETTER WO
+10387	UGARITIC LETTER ZETA
+10388	UGARITIC LETTER HOTA
+10389	UGARITIC LETTER TET
+1038A	UGARITIC LETTER YOD
+1038B	UGARITIC LETTER KAF
+1038C	UGARITIC LETTER SHIN
+1038D	UGARITIC LETTER LAMDA
+1038E	UGARITIC LETTER MEM
+1038F	UGARITIC LETTER DHAL
+10390	UGARITIC LETTER NUN
+10391	UGARITIC LETTER ZU
+10392	UGARITIC LETTER SAMKA
+10393	UGARITIC LETTER AIN
+10394	UGARITIC LETTER PU
+10395	UGARITIC LETTER SADE
+10396	UGARITIC LETTER QOPA
+10397	UGARITIC LETTER RASHA
+10398	UGARITIC LETTER THANNA
+10399	UGARITIC LETTER GHAIN
+1039A	UGARITIC LETTER TO
+1039B	UGARITIC LETTER I
+1039C	UGARITIC LETTER U
+1039D	UGARITIC LETTER SSU
+@		Punctuation
+1039F	UGARITIC WORD DIVIDER
 @@	10400	Deseret	1044F
+@		Uppercase letters
 10400	DESERET CAPITAL LETTER LONG I
 10401	DESERET CAPITAL LETTER LONG E
 10402	DESERET CAPITAL LETTER LONG A
@@ -19263,6 +20607,9 @@ FFFF	<not a character>
 10423	DESERET CAPITAL LETTER EM
 10424	DESERET CAPITAL LETTER EN
 10425	DESERET CAPITAL LETTER ENG
+10426	DESERET CAPITAL LETTER OI
+10427	DESERET CAPITAL LETTER EW
+@		Lowercase letters
 10428	DESERET SMALL LETTER LONG I
 10429	DESERET SMALL LETTER LONG E
 1042A	DESERET SMALL LETTER LONG A
@@ -19301,6 +20648,159 @@ FFFF	<not a character>
 1044B	DESERET SMALL LETTER EM
 1044C	DESERET SMALL LETTER EN
 1044D	DESERET SMALL LETTER ENG
+1044E	DESERET SMALL LETTER OI
+1044F	DESERET SMALL LETTER EW
+@@	10450	Shavian	1047F
+@		Consonants
+10450	SHAVIAN LETTER PEEP
+10451	SHAVIAN LETTER TOT
+10452	SHAVIAN LETTER KICK
+10453	SHAVIAN LETTER FEE
+10454	SHAVIAN LETTER THIGH
+10455	SHAVIAN LETTER SO
+10456	SHAVIAN LETTER SURE
+10457	SHAVIAN LETTER CHURCH
+10458	SHAVIAN LETTER YEA
+10459	SHAVIAN LETTER HUNG
+1045A	SHAVIAN LETTER BIB
+1045B	SHAVIAN LETTER DEAD
+1045C	SHAVIAN LETTER GAG
+1045D	SHAVIAN LETTER VOW
+1045E	SHAVIAN LETTER THEY
+1045F	SHAVIAN LETTER ZOO
+10460	SHAVIAN LETTER MEASURE
+10461	SHAVIAN LETTER JUDGE
+10462	SHAVIAN LETTER WOE
+10463	SHAVIAN LETTER HA-HA
+10464	SHAVIAN LETTER LOLL
+10465	SHAVIAN LETTER MIME
+@		Vowels
+10466	SHAVIAN LETTER IF
+10467	SHAVIAN LETTER EGG
+10468	SHAVIAN LETTER ASH
+10469	SHAVIAN LETTER ADO
+1046A	SHAVIAN LETTER ON
+1046B	SHAVIAN LETTER WOOL
+1046C	SHAVIAN LETTER OUT
+1046D	SHAVIAN LETTER AH
+1046E	SHAVIAN LETTER ROAR
+1046F	SHAVIAN LETTER NUN
+10470	SHAVIAN LETTER EAT
+10471	SHAVIAN LETTER AGE
+10472	SHAVIAN LETTER ICE
+10473	SHAVIAN LETTER UP
+10474	SHAVIAN LETTER OAK
+10475	SHAVIAN LETTER OOZE
+10476	SHAVIAN LETTER OIL
+10477	SHAVIAN LETTER AWE
+10478	SHAVIAN LETTER ARE
+10479	SHAVIAN LETTER OR
+1047A	SHAVIAN LETTER AIR
+1047B	SHAVIAN LETTER ERR
+1047C	SHAVIAN LETTER ARRAY
+1047D	SHAVIAN LETTER EAR
+1047E	SHAVIAN LETTER IAN
+1047F	SHAVIAN LETTER YEW
+@@	10480	Osmanya	104AF
+@		Letters
+10480	OSMANYA LETTER ALEF
+10481	OSMANYA LETTER BA
+10482	OSMANYA LETTER TA
+10483	OSMANYA LETTER JA
+10484	OSMANYA LETTER XA
+10485	OSMANYA LETTER KHA
+10486	OSMANYA LETTER DEEL
+10487	OSMANYA LETTER RA
+10488	OSMANYA LETTER SA
+10489	OSMANYA LETTER SHIIN
+1048A	OSMANYA LETTER DHA
+1048B	OSMANYA LETTER CAYN
+1048C	OSMANYA LETTER GA
+1048D	OSMANYA LETTER FA
+1048E	OSMANYA LETTER QAAF
+1048F	OSMANYA LETTER KAAF
+10490	OSMANYA LETTER LAAN
+10491	OSMANYA LETTER MIIN
+10492	OSMANYA LETTER NUUN
+10493	OSMANYA LETTER WAW
+10494	OSMANYA LETTER HA
+10495	OSMANYA LETTER YA
+10496	OSMANYA LETTER A
+10497	OSMANYA LETTER E
+10498	OSMANYA LETTER I
+10499	OSMANYA LETTER O
+1049A	OSMANYA LETTER U
+1049B	OSMANYA LETTER AA
+1049C	OSMANYA LETTER EE
+1049D	OSMANYA LETTER OO
+@		Digits
+104A0	OSMANYA DIGIT ZERO
+104A1	OSMANYA DIGIT ONE
+104A2	OSMANYA DIGIT TWO
+104A3	OSMANYA DIGIT THREE
+104A4	OSMANYA DIGIT FOUR
+104A5	OSMANYA DIGIT FIVE
+104A6	OSMANYA DIGIT SIX
+104A7	OSMANYA DIGIT SEVEN
+104A8	OSMANYA DIGIT EIGHT
+104A9	OSMANYA DIGIT NINE
+@@	10800	Cypriot Syllabary	1083F
+@		Syllables
+10800	CYPRIOT SYLLABLE A
+10801	CYPRIOT SYLLABLE E
+10802	CYPRIOT SYLLABLE I
+10803	CYPRIOT SYLLABLE O
+10804	CYPRIOT SYLLABLE U
+10805	CYPRIOT SYLLABLE JA
+10808	CYPRIOT SYLLABLE JO
+1080A	CYPRIOT SYLLABLE KA
+1080B	CYPRIOT SYLLABLE KE
+1080C	CYPRIOT SYLLABLE KI
+1080D	CYPRIOT SYLLABLE KO
+1080E	CYPRIOT SYLLABLE KU
+1080F	CYPRIOT SYLLABLE LA
+10810	CYPRIOT SYLLABLE LE
+10811	CYPRIOT SYLLABLE LI
+10812	CYPRIOT SYLLABLE LO
+10813	CYPRIOT SYLLABLE LU
+10814	CYPRIOT SYLLABLE MA
+10815	CYPRIOT SYLLABLE ME
+10816	CYPRIOT SYLLABLE MI
+10817	CYPRIOT SYLLABLE MO
+10818	CYPRIOT SYLLABLE MU
+10819	CYPRIOT SYLLABLE NA
+1081A	CYPRIOT SYLLABLE NE
+1081B	CYPRIOT SYLLABLE NI
+1081C	CYPRIOT SYLLABLE NO
+1081D	CYPRIOT SYLLABLE NU
+1081E	CYPRIOT SYLLABLE PA
+1081F	CYPRIOT SYLLABLE PE
+10820	CYPRIOT SYLLABLE PI
+10821	CYPRIOT SYLLABLE PO
+10822	CYPRIOT SYLLABLE PU
+10823	CYPRIOT SYLLABLE RA
+10824	CYPRIOT SYLLABLE RE
+10825	CYPRIOT SYLLABLE RI
+10826	CYPRIOT SYLLABLE RO
+10827	CYPRIOT SYLLABLE RU
+10828	CYPRIOT SYLLABLE SA
+10829	CYPRIOT SYLLABLE SE
+1082A	CYPRIOT SYLLABLE SI
+1082B	CYPRIOT SYLLABLE SO
+1082C	CYPRIOT SYLLABLE SU
+1082D	CYPRIOT SYLLABLE TA
+1082E	CYPRIOT SYLLABLE TE
+1082F	CYPRIOT SYLLABLE TI
+10830	CYPRIOT SYLLABLE TO
+10831	CYPRIOT SYLLABLE TU
+10832	CYPRIOT SYLLABLE WA
+10833	CYPRIOT SYLLABLE WE
+10834	CYPRIOT SYLLABLE WI
+10835	CYPRIOT SYLLABLE WO
+10837	CYPRIOT SYLLABLE XA
+10838	CYPRIOT SYLLABLE XE
+1083C	CYPRIOT SYLLABLE ZA
+1083F	CYPRIOT SYLLABLE ZO
 @@	1D000	Byzantine Musical Symbols	1D0FF
 @		Prosodies (Prosodics)
 1D000	BYZANTINE MUSICAL SYMBOL PSILI
@@ -19511,6 +21011,7 @@ FFFF	<not a character>
 1D0C3	BYZANTINE MUSICAL SYMBOL FTHORA MALAKON CHROMA DIFONIAS
 1D0C4	BYZANTINE MUSICAL SYMBOL FTHORA MALAKON CHROMA MONOFONIAS
 1D0C5	BYZANTINE MUSICAL SYMBOL FHTORA SKLIRON CHROMA VASIS
+	* misspelling of "FTHORA" in character name is a known defect
 1D0C6	BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA SYNAFI
 1D0C7	BYZANTINE MUSICAL SYMBOL FTHORA NENANO
 1D0C8	BYZANTINE MUSICAL SYMBOL CHROA ZYGOS
@@ -19829,6 +21330,97 @@ FFFF	<not a character>
 1D1DB	MUSICAL SYMBOL SCANDICUS FLEXUS
 1D1DC	MUSICAL SYMBOL TORCULUS RESUPINUS
 1D1DD	MUSICAL SYMBOL PES SUBPUNCTIS
+@@	1D300	Tai Xuan Jing Symbols	1D35F
+@		Monogram
+1D300	MONOGRAM FOR EARTH
+@		Digrams
+1D301	DIGRAM FOR HEAVENLY EARTH
+1D302	DIGRAM FOR HUMAN EARTH
+1D303	DIGRAM FOR EARTHLY HEAVEN
+1D304	DIGRAM FOR EARTHLY HUMAN
+1D305	DIGRAM FOR EARTH
+@		Tetragrams
+1D306	TETRAGRAM FOR CENTRE
+1D307	TETRAGRAM FOR FULL CIRCLE
+1D308	TETRAGRAM FOR MIRED
+1D309	TETRAGRAM FOR BARRIER
+1D30A	TETRAGRAM FOR KEEPING SMALL
+1D30B	TETRAGRAM FOR CONTRARIETY
+1D30C	TETRAGRAM FOR ASCENT
+1D30D	TETRAGRAM FOR OPPOSITION
+1D30E	TETRAGRAM FOR BRANCHING OUT
+1D30F	TETRAGRAM FOR DEFECTIVENESS OR DISTORTION
+1D310	TETRAGRAM FOR DIVERGENCE
+1D311	TETRAGRAM FOR YOUTHFULNESS
+1D312	TETRAGRAM FOR INCREASE
+1D313	TETRAGRAM FOR PENETRATION
+1D314	TETRAGRAM FOR REACH
+1D315	TETRAGRAM FOR CONTACT
+1D316	TETRAGRAM FOR HOLDING BACK
+1D317	TETRAGRAM FOR WAITING
+1D318	TETRAGRAM FOR FOLLOWING
+1D319	TETRAGRAM FOR ADVANCE
+1D31A	TETRAGRAM FOR RELEASE
+1D31B	TETRAGRAM FOR RESISTANCE
+1D31C	TETRAGRAM FOR EASE
+1D31D	TETRAGRAM FOR JOY
+1D31E	TETRAGRAM FOR CONTENTION
+1D31F	TETRAGRAM FOR ENDEAVOUR
+1D320	TETRAGRAM FOR DUTIES
+1D321	TETRAGRAM FOR CHANGE
+1D322	TETRAGRAM FOR DECISIVENESS
+1D323	TETRAGRAM FOR BOLD RESOLUTION
+1D324	TETRAGRAM FOR PACKING
+1D325	TETRAGRAM FOR LEGION
+1D326	TETRAGRAM FOR CLOSENESS
+1D327	TETRAGRAM FOR KINSHIP
+1D328	TETRAGRAM FOR GATHERING
+1D329	TETRAGRAM FOR STRENGTH
+1D32A	TETRAGRAM FOR PURITY
+1D32B	TETRAGRAM FOR FULLNESS
+1D32C	TETRAGRAM FOR RESIDENCE
+1D32D	TETRAGRAM FOR LAW OR MODEL
+1D32E	TETRAGRAM FOR RESPONSE
+1D32F	TETRAGRAM FOR GOING TO MEET
+1D330	TETRAGRAM FOR ENCOUNTERS
+1D331	TETRAGRAM FOR STOVE
+1D332	TETRAGRAM FOR GREATNESS
+1D333	TETRAGRAM FOR ENLARGEMENT
+1D334	TETRAGRAM FOR PATTERN
+1D335	TETRAGRAM FOR RITUAL
+1D336	TETRAGRAM FOR FLIGHT
+1D337	TETRAGRAM FOR VASTNESS OR WASTING
+1D338	TETRAGRAM FOR CONSTANCY
+1D339	TETRAGRAM FOR MEASURE
+1D33A	TETRAGRAM FOR ETERNITY
+1D33B	TETRAGRAM FOR UNITY
+1D33C	TETRAGRAM FOR DIMINISHMENT
+1D33D	TETRAGRAM FOR CLOSED MOUTH
+1D33E	TETRAGRAM FOR GUARDEDNESS
+1D33F	TETRAGRAM FOR GATHERING IN
+1D340	TETRAGRAM FOR MASSING
+1D341	TETRAGRAM FOR ACCUMULATION
+1D342	TETRAGRAM FOR EMBELLISHMENT
+1D343	TETRAGRAM FOR DOUBT
+1D344	TETRAGRAM FOR WATCH
+1D345	TETRAGRAM FOR SINKING
+1D346	TETRAGRAM FOR INNER
+1D347	TETRAGRAM FOR DEPARTURE
+1D348	TETRAGRAM FOR DARKENING
+1D349	TETRAGRAM FOR DIMMING
+1D34A	TETRAGRAM FOR EXHAUSTION
+1D34B	TETRAGRAM FOR SEVERANCE
+1D34C	TETRAGRAM FOR STOPPAGE
+1D34D	TETRAGRAM FOR HARDNESS
+1D34E	TETRAGRAM FOR COMPLETION
+1D34F	TETRAGRAM FOR CLOSURE
+1D350	TETRAGRAM FOR FAILURE
+1D351	TETRAGRAM FOR AGGRAVATION
+1D352	TETRAGRAM FOR COMPLIANCE
+1D353	TETRAGRAM FOR ON THE VERGE
+1D354	TETRAGRAM FOR DIFFICULTIES
+1D355	TETRAGRAM FOR LABOURING
+1D356	TETRAGRAM FOR FOSTERING
 @@	1D400	Mathematical Alphanumeric Symbols	1D7FF
 @+		To be used for mathematical variables where style variations are important semantically. For general text, use standard Latin and Greek letters with markup.
 @		Bold symbols
@@ -19937,6 +21529,7 @@ FFFF	<not a character>
 1D433	MATHEMATICAL BOLD SMALL Z
 	# <font> 007A latin small letter z
 @		Italic symbols
+@+	 	Several italic symbols have been previously coded in the Letterlike Symbols block and are retained there to ensure unambiguous representation.
 1D434	MATHEMATICAL ITALIC CAPITAL A
 	# <font> 0041 latin capital letter a
 1D435	MATHEMATICAL ITALIC CAPITAL B
@@ -20147,7 +21740,7 @@ FFFF	<not a character>
 1D49B	MATHEMATICAL BOLD ITALIC SMALL Z
 	# <font> 007A latin small letter z
 @		Script symbols
-@+	 	Several script symbols have been previously coded in the Letterlike Symbols block and are retained there to ensure unambiguous representation
+@+	 	Several script symbols have been previously coded in the Letterlike Symbols block and are retained there to ensure unambiguous representation.
 1D49C	MATHEMATICAL SCRIPT CAPITAL A
 	# <font> 0041 latin capital letter a
 1D49D	<reserved>
@@ -20222,8 +21815,9 @@ FFFF	<not a character>
 	# <font> 006A latin small letter j
 1D4C0	MATHEMATICAL SCRIPT SMALL K
 	# <font> 006B latin small letter k
-1D4C1	<reserved>
+1D4C1	MATHEMATICAL SCRIPT SMALL L
 	x (script small l - 2113)
+	# <font> 006C latin small letter l
 1D4C2	MATHEMATICAL SCRIPT SMALL M
 	# <font> 006D latin small letter m
 1D4C3	MATHEMATICAL SCRIPT SMALL N
@@ -20358,7 +21952,7 @@ FFFF	<not a character>
 1D503	MATHEMATICAL BOLD SCRIPT SMALL Z
 	# <font> 007A latin small letter z
 @		Fraktur symbols
-@+		This style is sometimes known as black-letter. Several black-letter symbols have been previously coded in the Letterlike Symbols block and are retained there to ensure unambiguous representation
+@+		This style is sometimes known as black-letter. Several black-letter symbols have been previously coded in the Letterlike Symbols block and are retained there to ensure unambiguous representation.
 1D504	MATHEMATICAL FRAKTUR CAPITAL A
 	# <font> 0041 latin capital letter a
 1D505	MATHEMATICAL FRAKTUR CAPITAL B
@@ -20384,6 +21978,7 @@ FFFF	<not a character>
 1D50F	MATHEMATICAL FRAKTUR CAPITAL L
 	# <font> 004C latin capital letter l
 1D510	MATHEMATICAL FRAKTUR CAPITAL M
+	= New Testament majority text
 	# <font> 004D latin capital letter m
 1D511	MATHEMATICAL FRAKTUR CAPITAL N
 	# <font> 004E latin capital letter n
@@ -20396,6 +21991,7 @@ FFFF	<not a character>
 1D515	<reserved>
 	x (black-letter capital r - 211C)
 1D516	MATHEMATICAL FRAKTUR CAPITAL S
+	= Septuagint, Greek Old Testament
 	# <font> 0053 latin capital letter s
 1D517	MATHEMATICAL FRAKTUR CAPITAL T
 	# <font> 0054 latin capital letter t
@@ -20464,7 +22060,7 @@ FFFF	<not a character>
 1D537	MATHEMATICAL FRAKTUR SMALL Z
 	# <font> 007A latin small letter z
 @		Double-struck symbols
-@+		This style is sometimes known as open-face or blackboard-bold. Several double-struck symbols have been previously coded in the Letterlike Symbols block and are retained there to ensure unambiguous representation
+@+		This style is sometimes known as open-face or blackboard-bold. Several double-struck symbols have been previously coded in the Letterlike Symbols block and are retained there to ensure unambiguous representation.
 1D538	MATHEMATICAL DOUBLE-STRUCK CAPITAL A
 	# <font> 0041 latin capital letter a
 1D539	MATHEMATICAL DOUBLE-STRUCK CAPITAL B
@@ -21896,12 +23492,14 @@ FFFF	<not a character>
 	# <font> 0039 digit nine
 @@	1FF80	Unassigned	1FFFF
 @		Not character codes
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 1FFFE	<not a character>
 	* the value 1FFFE is guaranteed not to be a Unicode character at all
 1FFFF	<not a character>
 	* the value 1FFFF is guaranteed not to be a Unicode character at all
 @@	20000	CJK Unified Ideographs Extension B	2A6D6
 @@	2F800	CJK Compatibility Ideographs Supplement	2FA1F
+@		Duplicate characters from CNS 11643-1992
 2F800	CJK COMPATIBILITY IDEOGRAPH-2F800
 	: 4E3D
 2F801	CJK COMPATIBILITY IDEOGRAPH-2F801
@@ -21929,6 +23527,7 @@ FFFF	<not a character>
 2F80C	CJK COMPATIBILITY IDEOGRAPH-2F80C
 	: 349E
 2F80D	CJK COMPATIBILITY IDEOGRAPH-2F80D
+	x 5145
 	: 2063A
 2F80E	CJK COMPATIBILITY IDEOGRAPH-2F80E
 	: 514D
@@ -21943,6 +23542,7 @@ FFFF	<not a character>
 2F813	CJK COMPATIBILITY IDEOGRAPH-2F813
 	: 34B9
 2F814	CJK COMPATIBILITY IDEOGRAPH-2F814
+	x 5185
 	: 5167
 2F815	CJK COMPATIBILITY IDEOGRAPH-2F815
 	: 518D
@@ -22083,8 +23683,10 @@ FFFF	<not a character>
 2F859	CJK COMPATIBILITY IDEOGRAPH-2F859
 	: 214E4
 2F85A	CJK COMPATIBILITY IDEOGRAPH-2F85A
+	x 58F3
 	: 58F2
 2F85B	CJK COMPATIBILITY IDEOGRAPH-2F85B
+	x 21533
 	: 58F7
 2F85C	CJK COMPATIBILITY IDEOGRAPH-2F85C
 	: 5906
@@ -22111,7 +23713,7 @@ FFFF	<not a character>
 2F867	CJK COMPATIBILITY IDEOGRAPH-2F867
 	: 36EE
 2F868	CJK COMPATIBILITY IDEOGRAPH-2F868
-	: 2136A
+	: 36FC
 2F869	CJK COMPATIBILITY IDEOGRAPH-2F869
 	: 5B08
 2F86A	CJK COMPATIBILITY IDEOGRAPH-2F86A
@@ -22135,7 +23737,7 @@ FFFF	<not a character>
 2F873	CJK COMPATIBILITY IDEOGRAPH-2F873
 	: 5C06
 2F874	CJK COMPATIBILITY IDEOGRAPH-2F874
-	: 5F33
+	: 5F53
 2F875	CJK COMPATIBILITY IDEOGRAPH-2F875
 	: 5C22
 2F876	CJK COMPATIBILITY IDEOGRAPH-2F876
@@ -22215,6 +23817,7 @@ FFFF	<not a character>
 2F89B	CJK COMPATIBILITY IDEOGRAPH-2F89B
 	: 38E3
 2F89C	CJK COMPATIBILITY IDEOGRAPH-2F89C
+	x 22505
 	: 5F9A
 2F89D	CJK COMPATIBILITY IDEOGRAPH-2F89D
 	: 5FCD
@@ -22477,7 +24080,7 @@ FFFF	<not a character>
 2F91E	CJK COMPATIBILITY IDEOGRAPH-2F91E
 	: 719C
 2F91F	CJK COMPATIBILITY IDEOGRAPH-2F91F
-	: 43AB
+	: 243AB
 2F920	CJK COMPATIBILITY IDEOGRAPH-2F920
 	: 7228
 2F921	CJK COMPATIBILITY IDEOGRAPH-2F921
@@ -22605,7 +24208,7 @@ FFFF	<not a character>
 2F95E	CJK COMPATIBILITY IDEOGRAPH-2F95E
 	: 25AA7
 2F95F	CJK COMPATIBILITY IDEOGRAPH-2F95F
-	: 7AAE
+	: 7AEE
 2F960	CJK COMPATIBILITY IDEOGRAPH-2F960
 	: 4202
 2F961	CJK COMPATIBILITY IDEOGRAPH-2F961
@@ -22771,6 +24374,9 @@ FFFF	<not a character>
 2F9B1	CJK COMPATIBILITY IDEOGRAPH-2F9B1
 	: 270D2
 2F9B2	CJK COMPATIBILITY IDEOGRAPH-2F9B2
+	x 5914
+	x 270CD
+	x 270F0
 	: 456B
 2F9B3	CJK COMPATIBILITY IDEOGRAPH-2F9B3
 	: 8650
@@ -22779,6 +24385,7 @@ FFFF	<not a character>
 2F9B5	CJK COMPATIBILITY IDEOGRAPH-2F9B5
 	: 8667
 2F9B6	CJK COMPATIBILITY IDEOGRAPH-2F9B6
+	x 27205
 	: 8669
 2F9B7	CJK COMPATIBILITY IDEOGRAPH-2F9B7
 	: 86A9
@@ -22797,7 +24404,7 @@ FFFF	<not a character>
 2F9BE	CJK COMPATIBILITY IDEOGRAPH-2F9BE
 	: 8786
 2F9BF	CJK COMPATIBILITY IDEOGRAPH-2F9BF
-	: 4D57
+	: 45D7
 2F9C0	CJK COMPATIBILITY IDEOGRAPH-2F9C0
 	: 87E1
 2F9C1	CJK COMPATIBILITY IDEOGRAPH-2F9C1
@@ -22821,6 +24428,7 @@ FFFF	<not a character>
 2F9CA	CJK COMPATIBILITY IDEOGRAPH-2F9CA
 	: 34BB
 2F9CB	CJK COMPATIBILITY IDEOGRAPH-2F9CB
+	x 4695
 	: 278AE
 2F9CC	CJK COMPATIBILITY IDEOGRAPH-2F9CC
 	: 27966
@@ -22843,6 +24451,7 @@ FFFF	<not a character>
 2F9D5	CJK COMPATIBILITY IDEOGRAPH-2F9D5
 	: 8CC1
 2F9D6	CJK COMPATIBILITY IDEOGRAPH-2F9D6
+	x 25AD4
 	: 8D1B
 2F9D7	CJK COMPATIBILITY IDEOGRAPH-2F9D7
 	: 8D77
@@ -22987,73 +24596,85 @@ FFFF	<not a character>
 2FA1D	CJK COMPATIBILITY IDEOGRAPH-2FA1D
 	: 2A600
 @@	2FF80	Unassigned	2FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 2FFFE	<not a character>
 	* the value 2FFFE is guaranteed not to be a Unicode character at all
 2FFFF	<not a character>
 	* the value 2FFFF is guaranteed not to be a Unicode character at all
 @@	3FF80	Unassigned	3FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 3FFFE	<not a character>
 	* the value 3FFFE is guaranteed not to be a Unicode character at all
 3FFFF	<not a character>
 	* the value 3FFFF is guaranteed not to be a Unicode character at all
 @@	4FF80	Unassigned	4FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 4FFFE	<not a character>
 	* the value 4FFFE is guaranteed not to be a Unicode character at all
 4FFFF	<not a character>
 	* the value 4FFFF is guaranteed not to be a Unicode character at all
 @@	5FF80	Unassigned	5FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 5FFFE	<not a character>
 	* the value 5FFFE is guaranteed not to be a Unicode character at all
 5FFFF	<not a character>
 	* the value 5FFFF is guaranteed not to be a Unicode character at all
 @@	6FF80	Unassigned	6FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 6FFFE	<not a character>
 	* the value 6FFFE is guaranteed not to be a Unicode character at all
 6FFFF	<not a character>
 	* the value 6FFFF is guaranteed not to be a Unicode character at all
 @@	7FF80	Unassigned	7FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 7FFFE	<not a character>
 	* the value 7FFFE is guaranteed not to be a Unicode character at all
 7FFFF	<not a character>
 	* the value 7FFFF is guaranteed not to be a Unicode character at all
 @@	8FF80	Unassigned	8FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 8FFFE	<not a character>
 	* the value 8FFFE is guaranteed not to be a Unicode character at all
 8FFFF	<not a character>
 	* the value 8FFFF is guaranteed not to be a Unicode character at all
 @@	9FF80	Unassigned	9FFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 9FFFE	<not a character>
 	* the value 9FFFE is guaranteed not to be a Unicode character at all
 9FFFF	<not a character>
 	* the value 9FFFF is guaranteed not to be a Unicode character at all
 @@	AFF80	Unassigned	AFFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 AFFFE	<not a character>
 	* the value AFFFE is guaranteed not to be a Unicode character at all
 AFFFF	<not a character>
 	* the value AFFFF is guaranteed not to be a Unicode character at all
 @@	BFF80	Unassigned	BFFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 BFFFE	<not a character>
 	* the value BFFFE is guaranteed not to be a Unicode character at all
 BFFFF	<not a character>
 	* the value BFFFF is guaranteed not to be a Unicode character at all
 @@	CFF80	Unassigned	CFFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 CFFFE	<not a character>
 	* the value CFFFE is guaranteed not to be a Unicode character at all
 CFFFF	<not a character>
 	* the value CFFFF is guaranteed not to be a Unicode character at all
 @@	DFF80	Unassigned	DFFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 DFFFE	<not a character>
 	* the value DFFFE is guaranteed not to be a Unicode character at all
 DFFFF	<not a character>
@@ -23158,20 +24779,267 @@ E007C	TAG VERTICAL LINE
 E007D	TAG RIGHT CURLY BRACKET
 E007E	TAG TILDE
 E007F	CANCEL TAG
+@@	E0100	Variation Selectors Supplement	E01EF
+@+	These complete the set started at FE01 to FE0F
+@		Variation selectors
+E0100	VARIATION SELECTOR-17
+	* these are abbreviated VS17, and so on
+E0101	VARIATION SELECTOR-18
+E0102	VARIATION SELECTOR-19
+E0103	VARIATION SELECTOR-20
+E0104	VARIATION SELECTOR-21
+E0105	VARIATION SELECTOR-22
+E0106	VARIATION SELECTOR-23
+E0107	VARIATION SELECTOR-24
+E0108	VARIATION SELECTOR-25
+E0109	VARIATION SELECTOR-26
+E010A	VARIATION SELECTOR-27
+E010B	VARIATION SELECTOR-28
+E010C	VARIATION SELECTOR-29
+E010D	VARIATION SELECTOR-30
+E010E	VARIATION SELECTOR-31
+E010F	VARIATION SELECTOR-32
+E0110	VARIATION SELECTOR-33
+E0111	VARIATION SELECTOR-34
+E0112	VARIATION SELECTOR-35
+E0113	VARIATION SELECTOR-36
+E0114	VARIATION SELECTOR-37
+E0115	VARIATION SELECTOR-38
+E0116	VARIATION SELECTOR-39
+E0117	VARIATION SELECTOR-40
+E0118	VARIATION SELECTOR-41
+E0119	VARIATION SELECTOR-42
+E011A	VARIATION SELECTOR-43
+E011B	VARIATION SELECTOR-44
+E011C	VARIATION SELECTOR-45
+E011D	VARIATION SELECTOR-46
+E011E	VARIATION SELECTOR-47
+E011F	VARIATION SELECTOR-48
+E0120	VARIATION SELECTOR-49
+E0121	VARIATION SELECTOR-50
+E0122	VARIATION SELECTOR-51
+E0123	VARIATION SELECTOR-52
+E0124	VARIATION SELECTOR-53
+E0125	VARIATION SELECTOR-54
+E0126	VARIATION SELECTOR-55
+E0127	VARIATION SELECTOR-56
+E0128	VARIATION SELECTOR-57
+E0129	VARIATION SELECTOR-58
+E012A	VARIATION SELECTOR-59
+E012B	VARIATION SELECTOR-60
+E012C	VARIATION SELECTOR-61
+E012D	VARIATION SELECTOR-62
+E012E	VARIATION SELECTOR-63
+E012F	VARIATION SELECTOR-64
+E0130	VARIATION SELECTOR-65
+E0131	VARIATION SELECTOR-66
+E0132	VARIATION SELECTOR-67
+E0133	VARIATION SELECTOR-68
+E0134	VARIATION SELECTOR-69
+E0135	VARIATION SELECTOR-70
+E0136	VARIATION SELECTOR-71
+E0137	VARIATION SELECTOR-72
+E0138	VARIATION SELECTOR-73
+E0139	VARIATION SELECTOR-74
+E013A	VARIATION SELECTOR-75
+E013B	VARIATION SELECTOR-76
+E013C	VARIATION SELECTOR-77
+E013D	VARIATION SELECTOR-78
+E013E	VARIATION SELECTOR-79
+E013F	VARIATION SELECTOR-80
+E0140	VARIATION SELECTOR-81
+E0141	VARIATION SELECTOR-82
+E0142	VARIATION SELECTOR-83
+E0143	VARIATION SELECTOR-84
+E0144	VARIATION SELECTOR-85
+E0145	VARIATION SELECTOR-86
+E0146	VARIATION SELECTOR-87
+E0147	VARIATION SELECTOR-88
+E0148	VARIATION SELECTOR-89
+E0149	VARIATION SELECTOR-90
+E014A	VARIATION SELECTOR-91
+E014B	VARIATION SELECTOR-92
+E014C	VARIATION SELECTOR-93
+E014D	VARIATION SELECTOR-94
+E014E	VARIATION SELECTOR-95
+E014F	VARIATION SELECTOR-96
+E0150	VARIATION SELECTOR-97
+E0151	VARIATION SELECTOR-98
+E0152	VARIATION SELECTOR-99
+E0153	VARIATION SELECTOR-100
+E0154	VARIATION SELECTOR-101
+E0155	VARIATION SELECTOR-102
+E0156	VARIATION SELECTOR-103
+E0157	VARIATION SELECTOR-104
+E0158	VARIATION SELECTOR-105
+E0159	VARIATION SELECTOR-106
+E015A	VARIATION SELECTOR-107
+E015B	VARIATION SELECTOR-108
+E015C	VARIATION SELECTOR-109
+E015D	VARIATION SELECTOR-110
+E015E	VARIATION SELECTOR-111
+E015F	VARIATION SELECTOR-112
+E0160	VARIATION SELECTOR-113
+E0161	VARIATION SELECTOR-114
+E0162	VARIATION SELECTOR-115
+E0163	VARIATION SELECTOR-116
+E0164	VARIATION SELECTOR-117
+E0165	VARIATION SELECTOR-118
+E0166	VARIATION SELECTOR-119
+E0167	VARIATION SELECTOR-120
+E0168	VARIATION SELECTOR-121
+E0169	VARIATION SELECTOR-122
+E016A	VARIATION SELECTOR-123
+E016B	VARIATION SELECTOR-124
+E016C	VARIATION SELECTOR-125
+E016D	VARIATION SELECTOR-126
+E016E	VARIATION SELECTOR-127
+E016F	VARIATION SELECTOR-128
+E0170	VARIATION SELECTOR-129
+E0171	VARIATION SELECTOR-130
+E0172	VARIATION SELECTOR-131
+E0173	VARIATION SELECTOR-132
+E0174	VARIATION SELECTOR-133
+E0175	VARIATION SELECTOR-134
+E0176	VARIATION SELECTOR-135
+E0177	VARIATION SELECTOR-136
+E0178	VARIATION SELECTOR-137
+E0179	VARIATION SELECTOR-138
+E017A	VARIATION SELECTOR-139
+E017B	VARIATION SELECTOR-140
+E017C	VARIATION SELECTOR-141
+E017D	VARIATION SELECTOR-142
+E017E	VARIATION SELECTOR-143
+E017F	VARIATION SELECTOR-144
+E0180	VARIATION SELECTOR-145
+E0181	VARIATION SELECTOR-146
+E0182	VARIATION SELECTOR-147
+E0183	VARIATION SELECTOR-148
+E0184	VARIATION SELECTOR-149
+E0185	VARIATION SELECTOR-150
+E0186	VARIATION SELECTOR-151
+E0187	VARIATION SELECTOR-152
+E0188	VARIATION SELECTOR-153
+E0189	VARIATION SELECTOR-154
+E018A	VARIATION SELECTOR-155
+E018B	VARIATION SELECTOR-156
+E018C	VARIATION SELECTOR-157
+E018D	VARIATION SELECTOR-158
+E018E	VARIATION SELECTOR-159
+E018F	VARIATION SELECTOR-160
+E0190	VARIATION SELECTOR-161
+E0191	VARIATION SELECTOR-162
+E0192	VARIATION SELECTOR-163
+E0193	VARIATION SELECTOR-164
+E0194	VARIATION SELECTOR-165
+E0195	VARIATION SELECTOR-166
+E0196	VARIATION SELECTOR-167
+E0197	VARIATION SELECTOR-168
+E0198	VARIATION SELECTOR-169
+E0199	VARIATION SELECTOR-170
+E019A	VARIATION SELECTOR-171
+E019B	VARIATION SELECTOR-172
+E019C	VARIATION SELECTOR-173
+E019D	VARIATION SELECTOR-174
+E019E	VARIATION SELECTOR-175
+E019F	VARIATION SELECTOR-176
+E01A0	VARIATION SELECTOR-177
+E01A1	VARIATION SELECTOR-178
+E01A2	VARIATION SELECTOR-179
+E01A3	VARIATION SELECTOR-180
+E01A4	VARIATION SELECTOR-181
+E01A5	VARIATION SELECTOR-182
+E01A6	VARIATION SELECTOR-183
+E01A7	VARIATION SELECTOR-184
+E01A8	VARIATION SELECTOR-185
+E01A9	VARIATION SELECTOR-186
+E01AA	VARIATION SELECTOR-187
+E01AB	VARIATION SELECTOR-188
+E01AC	VARIATION SELECTOR-189
+E01AD	VARIATION SELECTOR-190
+E01AE	VARIATION SELECTOR-191
+E01AF	VARIATION SELECTOR-192
+E01B0	VARIATION SELECTOR-193
+E01B1	VARIATION SELECTOR-194
+E01B2	VARIATION SELECTOR-195
+E01B3	VARIATION SELECTOR-196
+E01B4	VARIATION SELECTOR-197
+E01B5	VARIATION SELECTOR-198
+E01B6	VARIATION SELECTOR-199
+E01B7	VARIATION SELECTOR-200
+E01B8	VARIATION SELECTOR-201
+E01B9	VARIATION SELECTOR-202
+E01BA	VARIATION SELECTOR-203
+E01BB	VARIATION SELECTOR-204
+E01BC	VARIATION SELECTOR-205
+E01BD	VARIATION SELECTOR-206
+E01BE	VARIATION SELECTOR-207
+E01BF	VARIATION SELECTOR-208
+E01C0	VARIATION SELECTOR-209
+E01C1	VARIATION SELECTOR-210
+E01C2	VARIATION SELECTOR-211
+E01C3	VARIATION SELECTOR-212
+E01C4	VARIATION SELECTOR-213
+E01C5	VARIATION SELECTOR-214
+E01C6	VARIATION SELECTOR-215
+E01C7	VARIATION SELECTOR-216
+E01C8	VARIATION SELECTOR-217
+E01C9	VARIATION SELECTOR-218
+E01CA	VARIATION SELECTOR-219
+E01CB	VARIATION SELECTOR-220
+E01CC	VARIATION SELECTOR-221
+E01CD	VARIATION SELECTOR-222
+E01CE	VARIATION SELECTOR-223
+E01CF	VARIATION SELECTOR-224
+E01D0	VARIATION SELECTOR-225
+E01D1	VARIATION SELECTOR-226
+E01D2	VARIATION SELECTOR-227
+E01D3	VARIATION SELECTOR-228
+E01D4	VARIATION SELECTOR-229
+E01D5	VARIATION SELECTOR-230
+E01D6	VARIATION SELECTOR-231
+E01D7	VARIATION SELECTOR-232
+E01D8	VARIATION SELECTOR-233
+E01D9	VARIATION SELECTOR-234
+E01DA	VARIATION SELECTOR-235
+E01DB	VARIATION SELECTOR-236
+E01DC	VARIATION SELECTOR-237
+E01DD	VARIATION SELECTOR-238
+E01DE	VARIATION SELECTOR-239
+E01DF	VARIATION SELECTOR-240
+E01E0	VARIATION SELECTOR-241
+E01E1	VARIATION SELECTOR-242
+E01E2	VARIATION SELECTOR-243
+E01E3	VARIATION SELECTOR-244
+E01E4	VARIATION SELECTOR-245
+E01E5	VARIATION SELECTOR-246
+E01E6	VARIATION SELECTOR-247
+E01E7	VARIATION SELECTOR-248
+E01E8	VARIATION SELECTOR-249
+E01E9	VARIATION SELECTOR-250
+E01EA	VARIATION SELECTOR-251
+E01EB	VARIATION SELECTOR-252
+E01EC	VARIATION SELECTOR-253
+E01ED	VARIATION SELECTOR-254
+E01EE	VARIATION SELECTOR-255
+E01EF	VARIATION SELECTOR-256
 @@	EFF80	Unassigned	EFFFF
-@		Not character codes
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 EFFFE	<not a character>
 	* the value EFFFE is guaranteed not to be a Unicode character at all
 EFFFF	<not a character>
 	* the value EFFFF is guaranteed not to be a Unicode character at all
-@@	FFF80	Private Use	FFFFF
-@		Not character codes
+@@	FFF80	Supplementary Private Use Area-A	FFFFF
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 FFFFE	<not a character>
 	* the value FFFFE is guaranteed not to be a Unicode character at all
 FFFFF	<not a character>
 	* the value FFFFF is guaranteed not to be a Unicode character at all
-@@	10FF80	Private Use	10FFFF
-@		Not character codes
+@@	10FF80	Supplementary Private Use Area-B	10FFFF
+@		Noncharacters
+@+	These codes are intended for process internal uses, but are not permitted for interchange.
 10FFFE	<not a character>
 	* the value 10FFFE is guaranteed not to be a Unicode character at all
 10FFFF	<not a character>

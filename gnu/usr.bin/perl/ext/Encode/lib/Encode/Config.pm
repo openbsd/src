@@ -2,7 +2,7 @@
 # Demand-load module list
 #
 package Encode::Config;
-our $VERSION = do { my @r = (q$Revision: 1.6 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.7 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use strict;
 
@@ -98,6 +98,7 @@ our %ExtModule =
      'UTF-32'                 => 'Encode::Unicode',
      'UTF-32BE'               => 'Encode::Unicode',
      'UTF-32LE'               => 'Encode::Unicode',
+     'UTF-7'                  => 'Encode::Unicode::UTF7',
     );
 
 unless (ord("A") == 193){

@@ -1,22 +1,24 @@
-my $file = 'test.qp';
-
-BEGIN {
-    if ($ENV{PERL_CORE}) {	
-	chdir 't' if -d 't';
-	@INC = '../lib';
+BEGIN {				# Magic Perl CORE pragma
+    if ($ENV{PERL_CORE}) {
+        chdir 't' if -d 't';
+        @INC = '../lib';
     }
     unless (find PerlIO::Layer 'perlio') {
         print "1..0 # Skip: PerlIO not used\n";
-	exit 0;
+        exit 0;
     }
     if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n";
+        print "1..0 # Skip: EBCDIC\n";
     }
 }
 
+use strict;
+use warnings;
 use Test::More tests => 11;
 
 BEGIN { use_ok('PerlIO::via::QuotedPrint') }
+
+my $file = 'test.qp';
 
 my $decoded = <<EOD;
 This is a tést for quoted-printable text that has hàrdly any speçial characters

@@ -9,6 +9,8 @@
 # Meaning: Bi-directional category 'AL'
 #
 return <<'END';
+0600	0603	
+060D		
 061B		
 061F		
 0621	063A	
@@ -17,10 +19,11 @@ return <<'END';
 0671	06D5	
 06DD		
 06E5	06E6	
-06FA	06FE	
-0700	070D	
+06EE	06EF	
+06FA	070D	
 0710		
-0712	072C	
+0712	072F	
+074D	074F	
 0780	07A5	
 07B1		
 FB50	FBB1	

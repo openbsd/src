@@ -148,22 +148,30 @@ pod2usage(2) if ((@ARGV == 0) && (-t STDIN));
 ## Invoke podchecker()
 my $status = 0;
 @ARGV = qw(-) unless(@ARGV);
-for (@ARGV) {
-    if($_ eq '-') {
-      $_ = "<&STDIN";
+for my $podfile (@ARGV) {
+    if($podfile eq '-') {
+      $podfile = "<&STDIN";
     }
-    elsif(-d) {
-      warn "podchecker: Warning: Ignoring directory '$_'\n";
+    elsif(-d $podfile) {
+      warn "podchecker: Warning: Ignoring directory '$podfile'\n";
       next;
     }
-    my $s = podchecker($_, undef, '-warnings' => $options{warnings});
-    if($s > 0) {
+    my $errors = 
+      podchecker($podfile, undef, '-warnings' => $options{warnings});
+    if($errors > 0) {
         # errors occurred
         $status = 1;
+        printf STDERR ("%s has %d pod syntax %s.\n",
+                       $podfile, $errors,
+                       ($errors == 1) ? "error" : "errors");
     }
-    elsif($s < 0) {
+    elsif($errors < 0) {
         # no pod found
         $status = 2 unless($status);
+        print STDERR "$podfile does not contain any pod commands.\n";
+    }
+    else {
+        print STDERR "$podfile pod syntax OK.\n";
     }
 }
 exit $status;

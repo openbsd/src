@@ -1,6 +1,6 @@
 package B::Bblock;
 
-our $VERSION = '1.00';
+our $VERSION = '1.02';
 
 use Exporter ();
 @ISA = "Exporter";
@@ -10,7 +10,7 @@ use B qw(peekop walkoptree walkoptree_exec
 	 main_root main_start svref_2object
          OPf_SPECIAL OPf_STACKED );
 
-use B::Terse;
+use B::Concise qw(concise_cv concise_main set_style_standard);
 use strict;
 
 my $bblock;
@@ -64,8 +64,6 @@ sub walk_bblocks {
 	}
 	printf "    %s\n", peekop($lastop);
     }
-    print "-------\n";
-    walkoptree_exec($start, "terse");
 }
 
 sub walk_bblocks_obj {
@@ -140,10 +138,19 @@ sub compile {
 		$objname = "main::$objname" unless $objname =~ /::/;
 		eval "walk_bblocks_obj(\\&$objname)";
 		die "walk_bblocks_obj(\\&$objname) failed: $@" if $@;
+		print "-------\n";
+		set_style_standard("terse");
+		eval "concise_cv('exec', \\&$objname)";
+		die "concise_cv('exec', \\&$objname) failed: $@" if $@;
 	    }
 	}
     } else {
-	return sub { walk_bblocks(main_root, main_start) };
+	return sub {
+	    walk_bblocks(main_root, main_start);
+	    print "-------\n";
+	    set_style_standard("terse");
+	    concise_main("exec");
+	};
     }
 }
 

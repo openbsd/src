@@ -10,7 +10,7 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib';
-  plan tests => 28;
+  plan tests => 32;
   }
 
 use bigint;
@@ -63,15 +63,17 @@ ok (ref(4.5+4.5) =~ /^Math::BigInt/);
 ###############################################################################
 # accurarcy and precision
 
-# this might change!
+ok_undef (bigint->accuracy());
+ok (bigint->accuracy(12),12);
+ok (bigint->accuracy(),12);
 
-ok_undef ($Math::BigInt::accuracy);
-ok_undef ($Math::BigInt::precision);
-bigint->accuracy(5);
-ok ($Math::BigInt::accuracy,5);
-bigint->precision(-2);
-ok_undef ($Math::BigInt::accuracy);
-ok ($Math::BigInt::precision,-2);
+ok_undef (bigint->precision());
+ok (bigint->precision(12),12);
+ok (bigint->precision(),12);
+
+ok (bigint->round_mode(),'even');
+ok (bigint->round_mode('odd'),'odd');
+ok (bigint->round_mode(),'odd');
 
 ###############################################################################
 ###############################################################################

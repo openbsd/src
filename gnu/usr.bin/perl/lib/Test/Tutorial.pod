@@ -298,8 +298,23 @@ C<%ICal_Dates>.  Now that it's less work to test with more dates, you'll
 be inclined to just throw more in as you think of them.
 Only problem is, every time we add to that we have to keep adjusting
 the C<use Test::More tests =E<gt> ##> line.  That can rapidly get
-annoying.  Instead we use C<no_plan>.  This means we're just running
-some tests, don't know how many. [6]
+annoying.  There's two ways to make this work better.
+
+First, we can calculate the plan dynamically using the C<plan()>
+function.
+
+    use Test::More;
+    use Date::ICal;
+
+    my %ICal_Dates = (
+        ...same as before...
+    );
+
+    # For each key in the hash we're running 8 tests.
+    plan tests => keys %ICal_Dates * 8;
+
+Or to be even more flexible, we use C<no_plan>.  This means we're just
+running some tests, don't know how many. [6]
 
     use Test::More 'no_plan';   # instead of tests => 32
 
@@ -436,6 +451,7 @@ Thumbing through the Date::ICal man page, I came across this:
 the date in the Date::ICal test suite.  So I'll write one.
 
     use Test::More tests => 1;
+    use Date::ICal;
 
     my $ical = Date::ICal->new;
     $ical->ical('20201231Z');

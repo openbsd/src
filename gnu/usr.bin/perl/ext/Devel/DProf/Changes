@@ -1,3 +1,31 @@
+2003 Aug 1
+ Radu Greab:
+  DProf.xs:
+    - do not assume that $^P stays unchanged inside the profiled subroutine
+  DProf.pm:
+    - increase VERSION
+
+2003 Jul 6
+
+ Radu Greab:
+  DProf.xs:
+    - improved the mapping between subroutines and identifiers
+    - do not assume that $^P stays unchanged during the lifetime of the script
+    - panic when the profiled subroutine is leaved with goto/last/next
+  DProf.pm:
+    - document the problem with the subroutines exited with goto/last/next
+  t/test{7,8}*
+    - added
+
+2003 Jan 8
+
+ Blair Zajac:
+  DProf.xs:
+    - To avoid core dumps, increase stack size by 10 instead of 5.
+    - Assert that g_profstack is large enough when DEBUGGING is defined
+  DProf.pm:
+    - Bump VERSION.
+
 1999 Jan 8
 
  Ilya Zakharevich:

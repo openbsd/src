@@ -318,19 +318,32 @@ port of Perl.
 
 =head2 Handling of underflow and overflow
 
-VOS does not support automatically mapping overflowed
-floating-point values to +infinity, nor automatically mapping
-underflowed floating-point values to -infinity, unlike many
-other platforms.  The Perl pack function has been modified to
-perform such mapping in software on VOS.  Performing other
-floating-point computations that underflow or overflow will
-probably result in SIGFPE.  Don't push your luck.
+Prior to VOS Release 14.7.0, VOS does not support automatically
+mapping overflowed floating-point values to +infinity, nor
+automatically mapping underflowed floating-point values to zero,
+unlike many other platforms.  The Perl pack function has been
+modified to perform such mapping in software on VOS.  Performing
+other floating-point computations that underflow or overflow
+will probably result in SIGFPE.  Don't push your luck.
+
+As of VOS Release 14.7.0, the VOS POSIX runtime sets up the
+PA-RISC hardware floating-point status register so that the
+overflow and underflow exceptions do not trap, but instead
+automatically convert the result to infinity or zero, as
+appropriate.  As of this writing, there are still floating-point
+operations that can trap, for example, subtracting two infinite
+values.  This is recorded as suggestion posix-1022, which is not
+yet fixed.
 
 =head1 TEST STATUS
 
-When Perl is built using the native build process on VOS Release
-14.5.0 and GNU C++/GNU Tools 2.0.1, all attempted tests either
-pass or result in TODO (ignored) failures.
+When Perl 5.8.1 is built using the native build process on VOS
+Release 14.5.0 and GNU C++/GNU Tools 2.0.1, all but five
+attempted tests either pass or result in TODO (ignored)
+failures.  The tests that fail are:
+
+ext/Time/HiRes/HiRes, tests 8, 11, 20, and 21.
+lib/Net/Ping/t/450_service, test 8.
 
 =head1 SUPPORT STATUS
 
@@ -350,6 +363,6 @@ Paul Green (Paul.Green@stratus.com)
 
 =head1 LAST UPDATE
 
-May 13, 2002
+March 26, 2003
 
 =cut

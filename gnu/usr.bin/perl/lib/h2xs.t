@@ -58,74 +58,74 @@ If you intend this module to be compatible with earlier perl versions, please
 specify a minimum perl version with the -b option.
 
 Writing $name/ppport.h
-Writing $name/$name.pm
+Writing $name/lib/$name.pm
 Writing $name/$name.xs
 Writing $name/fallback/const-c.inc
 Writing $name/fallback/const-xs.inc
 Writing $name/Makefile.PL
 Writing $name/README
-Writing $name/t/1.t
+Writing $name/t/$name.t
 Writing $name/Changes
 Writing $name/MANIFEST
 EOXSFILES
 
 "-f -n $name -b $thisversion", $], <<"EOXSFILES",
 Writing $name/ppport.h
-Writing $name/$name.pm
+Writing $name/lib/$name.pm
 Writing $name/$name.xs
 Writing $name/fallback/const-c.inc
 Writing $name/fallback/const-xs.inc
 Writing $name/Makefile.PL
 Writing $name/README
-Writing $name/t/1.t
+Writing $name/t/$name.t
 Writing $name/Changes
 Writing $name/MANIFEST
 EOXSFILES
 
 "-f -n $name -b 5.6.1", "5.006001", <<"EOXSFILES",
 Writing $name/ppport.h
-Writing $name/$name.pm
+Writing $name/lib/$name.pm
 Writing $name/$name.xs
 Writing $name/fallback/const-c.inc
 Writing $name/fallback/const-xs.inc
 Writing $name/Makefile.PL
 Writing $name/README
-Writing $name/t/1.t
+Writing $name/t/$name.t
 Writing $name/Changes
 Writing $name/MANIFEST
 EOXSFILES
 
 "-f -n $name -b 5.5.3", "5.00503", <<"EOXSFILES",
 Writing $name/ppport.h
-Writing $name/$name.pm
+Writing $name/lib/$name.pm
 Writing $name/$name.xs
 Writing $name/fallback/const-c.inc
 Writing $name/fallback/const-xs.inc
 Writing $name/Makefile.PL
 Writing $name/README
-Writing $name/t/1.t
+Writing $name/t/$name.t
 Writing $name/Changes
 Writing $name/MANIFEST
 EOXSFILES
 
 "\"-X\" -f -n $name -b $thisversion", $], <<"EONOXSFILES",
-Writing $name/$name.pm
+Writing $name/lib/$name.pm
 Writing $name/Makefile.PL
 Writing $name/README
-Writing $name/t/1.t
+Writing $name/t/$name.t
 Writing $name/Changes
 Writing $name/MANIFEST
 EONOXSFILES
 
 "-f -n $name $header -b $thisversion", $], <<"EOXSFILES",
 Writing $name/ppport.h
-Writing $name/$name.pm
+Writing $name/lib/$name.pm
 Writing $name/$name.xs
 Writing $name/fallback/const-c.inc
 Writing $name/fallback/const-xs.inc
 Writing $name/Makefile.PL
 Writing $name/README
-Writing $name/t/1.t
+Writing $name/t/$name.t
 Writing $name/Changes
 Writing $name/MANIFEST
 EOXSFILES
@@ -134,7 +134,7 @@ EOXSFILES
 my $total_tests = 3; # opening, closing and deleting the header file.
 for (my $i = $#tests; $i > 0; $i-=3) {
   # 1 test for running it, 1 test for the expected result, and 1 for each file
-  # plus 1 to open and 1 to check for the use in $name.pm and Makefile.PL
+  # plus 1 to open and 1 to check for the use in lib/$name.pm and Makefile.PL
   # And 1 more for our check for "bonus" files, 2 more for ExtUtil::Manifest.
   # use the () to force list context and hence count the number of matches.
   $total_tests += 9 + (() = $tests[$i] =~ /(Writing)/sg);
@@ -199,7 +199,7 @@ while (my ($args, $version, $expectation) = splice @tests, 0, 3) {
   pop @INC;
   chdir ($up) or die "chdir $up failed: $!";
  
-  foreach my $leaf ("$name.pm", 'Makefile.PL') {
+  foreach my $leaf (File::Spec->catfile('lib', "$name.pm"), 'Makefile.PL') {
     my $file = File::Spec->catfile($name, $leaf);
     if (ok (open (FILE, $file), "open $file")) {
       my $match = qr/use $version;/;

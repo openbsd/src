@@ -17,24 +17,6 @@ typedef SDBM_File_type * SDBM_File ;
 typedef datum datum_key ;
 typedef datum datum_value ;
 
-#define ckFilter(arg,type,name)					\
-	if (db->type) {						\
-	    SV * save_defsv ;					\
-            /* printf("filtering %s\n", name) ;*/		\
-	    if (db->filtering)					\
-	        croak("recursion detected in %s", name) ;	\
-	    db->filtering = TRUE ;				\
-	    save_defsv = newSVsv(DEFSV) ;			\
-	    sv_setsv(DEFSV, arg) ;				\
-	    PUSHMARK(sp) ;					\
-	    (void) perl_call_sv(db->type, G_DISCARD|G_NOARGS); 	\
-	    sv_setsv(arg, DEFSV) ;				\
-	    sv_setsv(DEFSV, save_defsv) ;				\
-	    SvREFCNT_dec(save_defsv) ;				\
-	    db->filtering = FALSE ;				\
-	    /*printf("end of filtering %s\n", name) ;*/		\
-	}
-
 #define sdbm_TIEHASH(dbtype,filename,flags,mode) sdbm_open(filename,flags,mode)
 #define sdbm_FETCH(db,key)			sdbm_fetch(db->dbp,key)
 #define sdbm_STORE(db,key,value,flags)		sdbm_store(db->dbp,key,value,flags)
@@ -138,32 +120,13 @@ sdbm_clearerr(db)
 	  RETVAL
 
 
-#define setFilter(type)					\
-	{						\
-	    if (db->type)				\
-	        RETVAL = sv_mortalcopy(db->type) ;	\
-	    ST(0) = RETVAL ;				\
-	    if (db->type && (code == &PL_sv_undef)) {	\
-                SvREFCNT_dec(db->type) ;		\
-	        db->type = NULL ;			\
-	    }						\
-	    else if (code) {				\
-	        if (db->type)				\
-	            sv_setsv(db->type, code) ;		\
-	        else					\
-	            db->type = newSVsv(code) ;		\
-	    }	    					\
-	}
-
-
-
 SV *
 filter_fetch_key(db, code)
 	SDBM_File	db
 	SV *		code
 	SV *		RETVAL = &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_fetch_key) ;
+	    DBM_setFilter(db->filter_fetch_key, code) ;
 
 SV *
 filter_store_key(db, code)
@@ -171,7 +134,7 @@ filter_store_key(db, code)
 	SV *		code
 	SV *		RETVAL =  &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_store_key) ;
+	    DBM_setFilter(db->filter_store_key, code) ;
 
 SV *
 filter_fetch_value(db, code)
@@ -179,7 +142,7 @@ filter_fetch_value(db, code)
 	SV *		code
 	SV *		RETVAL =  &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_fetch_value) ;
+	    DBM_setFilter(db->filter_fetch_value, code) ;
 
 SV *
 filter_store_value(db, code)
@@ -187,5 +150,5 @@ filter_store_value(db, code)
 	SV *		code
 	SV *		RETVAL =  &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_store_value) ;
+	    DBM_setFilter(db->filter_store_value, code) ;
 

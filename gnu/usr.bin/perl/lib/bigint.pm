@@ -1,10 +1,11 @@
 package bigint;
 require 5.005;
 
-$VERSION = '0.02';
+$VERSION = '0.04';
 use Exporter;
-@ISA =       qw( Exporter );
-@EXPORT_OK = qw( ); 
+@ISA		= qw( Exporter );
+@EXPORT_OK	= qw( ); 
+@EXPORT		= qw( inf NaN ); 
 
 use strict;
 use overload;
@@ -32,7 +33,7 @@ sub AUTOLOAD
         no strict 'refs';
         if (defined $_[0])
           {
-          Math::BigInt->$name($_[0]);
+          return Math::BigInt->$name($_[0]);
           }
         return Math::BigInt->$name();
         };
@@ -179,7 +180,12 @@ sub import
   # we take care of floating point constants, since BigFloat isn't available
   # and BigInt doesn't like them:
   overload::constant float => sub { Math::BigInt->new( _constant(shift) ); };
+
+  $self->export_to_level(1,$self,@a);           # export inf and NaN
   }
+
+sub inf () { Math::BigInt->binf(); }
+sub NaN () { Math::BigInt->bnan(); }
 
 1;
 
@@ -187,14 +193,16 @@ __END__
 
 =head1 NAME
 
-bigint - Transparent big integer support for Perl
+bigint - Transparent BigInteger support for Perl
 
 =head1 SYNOPSIS
 
   use bignt;
 
   $x = 2 + 4.5,"\n";			# BigInt 6
-  print 2 ** 512;			# really is what you think it is
+  print 2 ** 512,"\n";			# really is what you think it is
+  print inf + 42,"\n";			# inf
+  print NaN * 7,"\n";			# NaN
 
 =head1 DESCRIPTION
 
@@ -202,7 +210,7 @@ All operators (including basic math operations) are overloaded. Integer
 constants are created as proper BigInts.
 
 Floating point constants are truncated to integer. All results are also
-trunctaed.
+truncated.
 
 =head2 OPTIONS
 
@@ -277,7 +285,7 @@ classes, like Math::BigInt, or Math::BigInt::Lite. Mixing them together, even
 with normal scalars is not extraordinary, but normal and expected.
 
 You should not depend on the internal format, all accesses must go through
-accessor methods. E.g. looking at $x->{sign} is not a bright idea since there
+accessor methods. E.g. looking at $x->{sign} is not a good idea since there
 is no guaranty that the object in question has such a hash key, nor is a hash
 underneath at all.
 
@@ -296,6 +304,40 @@ minus infinity. You will get '+inf' when dividing a positive number by 0, and
 Since all numbers are now objects, you can use all functions that are part of
 the BigInt API. You can only use the bxxx() notation, and not the fxxx()
 notation, though. 
+
+=head2 CAVEAT
+
+But a warning is in order. When using the following to make a copy of a number,
+only a shallow copy will be made.
+
+	$x = 9; $y = $x;
+	$x = $y = 7;
+
+Using the copy or the original with overloaded math is okay, e.g. the
+following work:
+
+	$x = 9; $y = $x;
+	print $x + 1, " ", $y,"\n";	# prints 10 9
+
+but calling any method that modifies the number directly will result in
+B<both> the original and the copy beeing destroyed:
+	
+	$x = 9; $y = $x;
+	print $x->badd(1), " ", $y,"\n";	# prints 10 10
+	
+        $x = 9; $y = $x;
+	print $x->binc(1), " ", $y,"\n";	# prints 10 10
+        
+	$x = 9; $y = $x;
+	print $x->bmul(2), " ", $y,"\n";	# prints 18 18
+	
+Using methods that do not modify, but testthe contents works:
+
+	$x = 9; $y = $x;
+	$z = 9 if $x->is_zero();		# works fine
+
+See the documentation about the copy constructor and C<=> in overload, as
+well as the documentation in BigInt for further details.
 
 =head1 MODULES USED
 

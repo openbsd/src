@@ -5,6 +5,7 @@ README
 Semaphore.pm
 SysV.pm
 SysV.xs
+t/ipcsysv.t
 t/msg.t
 t/sem.t
 ChangeLog

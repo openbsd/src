@@ -1,10 +1,16 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
 
 BEGIN {
-    if (ord("A") == 193) {
-	print "1..0 # Unicode::Normalize not ported to EBCDIC\n";
+    unless ("A" eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Normalize " .
+	    "cannot stringify a Unicode code point\n";
 	exit 0;
+    }
+}
+
+BEGIN {
+    if ($ENV{PERL_CORE}) {
+        chdir('t') if -d 't';
+        @INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
     }
 }
 
@@ -17,6 +23,9 @@ BEGIN { plan tests => 13 };
 use Unicode::Normalize qw(:all);
 ok(1); # If we made it this far, we're ok.
 
+sub _pack_U   { Unicode::Normalize::pack_U(@_) }
+sub _unpack_U { Unicode::Normalize::unpack_U(@_) }
+
 #########################
 
 print getCombinClass(   0) == 0
@@ -27,32 +36,32 @@ print getCombinClass(   0) == 0
 
 print ! defined getCanon( 0)
    && ! defined getCanon(41)
-   && getCanon(0x00C0) eq pack('U*', 0x0041, 0x0300)
-   && getCanon(0x00EF) eq pack('U*', 0x0069, 0x0308)
-   && getCanon(0x304C) eq pack('U*', 0x304B, 0x3099)
-   && getCanon(0x1EA4) eq pack('U*', 0x0041, 0x0302, 0x0301)
-   && getCanon(0x1F82) eq "\x{03B1}\x{0313}\x{0300}\x{0345}"
-   && getCanon(0x1FAF) eq pack('U*', 0x03A9, 0x0314, 0x0342, 0x0345)
-   && getCanon(0xAC00) eq pack('U*', 0x1100, 0x1161)
-   && getCanon(0xAE00) eq pack('U*', 0x1100, 0x1173, 0x11AF)
+   && getCanon(0x00C0) eq _pack_U(0x0041, 0x0300)
+   && getCanon(0x00EF) eq _pack_U(0x0069, 0x0308)
+   && getCanon(0x304C) eq _pack_U(0x304B, 0x3099)
+   && getCanon(0x1EA4) eq _pack_U(0x0041, 0x0302, 0x0301)
+   && getCanon(0x1F82) eq _pack_U(0x03B1, 0x0313, 0x0300, 0x0345)
+   && getCanon(0x1FAF) eq _pack_U(0x03A9, 0x0314, 0x0342, 0x0345)
+   && getCanon(0xAC00) eq _pack_U(0x1100, 0x1161)
+   && getCanon(0xAE00) eq _pack_U(0x1100, 0x1173, 0x11AF)
    && ! defined getCanon(0x212C)
    && ! defined getCanon(0x3243)
-   && getCanon(0xFA2D) eq pack('U*', 0x9DB4)
+   && getCanon(0xFA2D) eq _pack_U(0x9DB4)
   ? "ok" : "not ok", " 3\n";
 
 print ! defined getCompat( 0)
    && ! defined getCompat(41)
-   && getCompat(0x00C0) eq pack('U*', 0x0041, 0x0300)
-   && getCompat(0x00EF) eq pack('U*', 0x0069, 0x0308)
-   && getCompat(0x304C) eq pack('U*', 0x304B, 0x3099)
-   && getCompat(0x1EA4) eq pack('U*', 0x0041, 0x0302, 0x0301)
-   && getCompat(0x1F82) eq pack('U*', 0x03B1, 0x0313, 0x0300, 0x0345)
-   && getCompat(0x1FAF) eq pack('U*', 0x03A9, 0x0314, 0x0342, 0x0345)
-   && getCompat(0x212C) eq pack('U*', 0x0042)
-   && getCompat(0x3243) eq pack('U*', 0x0028, 0x81F3, 0x0029)
-   && getCompat(0xAC00) eq pack('U*', 0x1100, 0x1161)
-   && getCompat(0xAE00) eq pack('U*', 0x1100, 0x1173, 0x11AF)
-   && getCompat(0xFA2D) eq pack('U*', 0x9DB4)
+   && getCompat(0x00C0) eq _pack_U(0x0041, 0x0300)
+   && getCompat(0x00EF) eq _pack_U(0x0069, 0x0308)
+   && getCompat(0x304C) eq _pack_U(0x304B, 0x3099)
+   && getCompat(0x1EA4) eq _pack_U(0x0041, 0x0302, 0x0301)
+   && getCompat(0x1F82) eq _pack_U(0x03B1, 0x0313, 0x0300, 0x0345)
+   && getCompat(0x1FAF) eq _pack_U(0x03A9, 0x0314, 0x0342, 0x0345)
+   && getCompat(0x212C) eq _pack_U(0x0042)
+   && getCompat(0x3243) eq _pack_U(0x0028, 0x81F3, 0x0029)
+   && getCompat(0xAC00) eq _pack_U(0x1100, 0x1161)
+   && getCompat(0xAE00) eq _pack_U(0x1100, 0x1173, 0x11AF)
+   && getCompat(0xFA2D) eq _pack_U(0x9DB4)
   ? "ok" : "not ok", " 4\n";
 
 print ! defined getComposite( 0,  0)
@@ -85,11 +94,11 @@ print ! isSingleton( 0)
   ? "ok" : "not ok", " 7\n";
 
 print reorder("") eq ""
-   && reorder(pack("U*", 0x0041, 0x0300, 0x0315, 0x0313, 0x031b, 0x0061))
-      eq pack("U*", 0x0041, 0x031b, 0x0300, 0x0313, 0x0315, 0x0061)
-   && reorder(pack("U*", 0x00C1, 0x0300, 0x0315, 0x0313, 0x031b,
+   && reorder(_pack_U(0x0041, 0x0300, 0x0315, 0x0313, 0x031b, 0x0061))
+      eq _pack_U(0x0041, 0x031b, 0x0300, 0x0313, 0x0315, 0x0061)
+   && reorder(_pack_U(0x00C1, 0x0300, 0x0315, 0x0313, 0x031b,
 	0x0061, 0x309A, 0x3099))
-      eq pack("U*", 0x00C1, 0x031b, 0x0300, 0x0313, 0x0315,
+      eq _pack_U(0x00C1, 0x031b, 0x0300, 0x0313, 0x0315,
 	0x0061, 0x309A, 0x3099)
   ? "ok" : "not ok", " 8\n";
 
@@ -115,15 +124,15 @@ print answer(checkNFD(""))  eq "YES"
   ? "ok" : "not ok", " 9\n";
 
 print 1
-  && answer(checkNFD(NFD(pack('U*', 0xC1, 0x1100, 0x1173, 0x11AF)))) eq "YES"
-  && answer(checkNFD(pack('U*', 0x20, 0xC1, 0x1100, 0x1173, 0x11AF))) eq "NO"
-  && answer(checkNFC(pack('U*', 0x20, 0xC1, 0x1173, 0x11AF))) eq "MAYBE"
-  && answer(checkNFC(pack('U*', 0x20, 0xC1, 0xAE00, 0x1100))) eq "YES"
-  && answer(checkNFC(pack('U*', 0x20, 0xC1, 0xAE00, 0x1100, 0x300))) eq "MAYBE"
-  && answer(checkNFC(pack('U*', 0x20, 0xC1, 0xFF71, 0x2025))) eq "YES"
-  && answer(check("NFC", pack('U*', 0x20, 0xC1, 0x212B, 0x300))) eq "NO"
-  && answer(checkNFKD(pack('U*', 0x20, 0xC1, 0xFF71, 0x2025))) eq "NO"
-  && answer(checkNFKC(pack('U*', 0x20, 0xC1, 0xAE00, 0x2025))) eq "NO"
+  && answer(checkNFD(NFD(_pack_U(0xC1, 0x1100, 0x1173, 0x11AF)))) eq "YES"
+  && answer(checkNFD(_pack_U(0x20, 0xC1, 0x1100, 0x1173, 0x11AF))) eq "NO"
+  && answer(checkNFC(_pack_U(0x20, 0xC1, 0x1173, 0x11AF))) eq "MAYBE"
+  && answer(checkNFC(_pack_U(0x20, 0xC1, 0xAE00, 0x1100))) eq "YES"
+  && answer(checkNFC(_pack_U(0x20, 0xC1, 0xAE00, 0x1100, 0x300))) eq "MAYBE"
+  && answer(checkNFC(_pack_U(0x20, 0xC1, 0xFF71, 0x2025))) eq "YES"
+  && answer(check("NFC", _pack_U(0x20, 0xC1, 0x212B, 0x300))) eq "NO"
+  && answer(checkNFKD(_pack_U(0x20, 0xC1, 0xFF71, 0x2025))) eq "NO"
+  && answer(checkNFKC(_pack_U(0x20, 0xC1, 0xAE00, 0x2025))) eq "NO"
   ? "ok" : "not ok", " 10\n";
 
 "012ABC" =~ /(\d+)(\w+)/;

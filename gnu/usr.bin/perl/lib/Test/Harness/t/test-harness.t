@@ -40,11 +40,14 @@ package main;
 
 use Test::More;
 
-my $IsMacOS   = $^O eq 'MacOS';
+my $IsMacPerl = $^O eq 'MacOS';
 my $IsVMS     = $^O eq 'VMS';
 
 # VMS uses native, not POSIX, exit codes.
-my $die_estat = $IsVMS ? 44 : $IsMacOS ? 0 : 1;
+# MacPerl's exit codes are broken.
+my $die_estat = $IsVMS     ? 44 : 
+                $IsMacPerl ? 0  :
+                             1;
 
 my %samples = (
             simple            => {
@@ -250,6 +253,23 @@ my %samples = (
                                             },
                                   all_ok => 0,
                                  },
+            no_output        => {
+                                 total => {
+                                           bonus       => 0,
+                                           max         => 0,
+                                           'ok'        => 0,
+                                           files       => 1,
+                                           bad         => 1,
+                                           good        => 0,
+                                           tests       => 1,
+                                           sub_skipped => 0,
+                                           'todo'      => 0,
+                                           skipped     => 0,
+                                          },
+                                 failed => {
+                                           },
+                                 all_ok => 0,
+                                },
             skipall          => {
                                   total => {
                                             bonus      => 0,
@@ -414,13 +434,47 @@ my %samples = (
                                   failed => { },
                                   all_ok => 1,
                                  },
+            too_many         => {
+                                 total => {
+                                           bonus       => 0,
+                                           max         => 3,
+                                           'ok'        => 7,
+                                           files       => 1,
+                                           bad         => 1,
+                                           good        => 0,
+                                           tests       => 1,
+                                           sub_skipped => 0,
+                                           'todo'      => 0,
+                                           skipped     => 0,
+                                          },
+                                 failed => {
+                                            canon      => '4-7',
+                                           },
+                                 all_ok => 0,
+                                },
+            switches         => {
+                                  total => {
+                                            bonus      => 0,
+                                            max        => 1,
+                                            'ok'       => 1,
+                                            files      => 1,
+                                            bad        => 0,
+                                            good       => 1,
+                                            tests      => 1,
+                                            sub_skipped=> 0,
+                                            'todo'     => 0,
+                                            skipped    => 0,
+                                           },
+                                  failed => { },
+                                  all_ok => 1,
+                                 },
            );
 
 plan tests => (keys(%samples) * 8) + 1;
 
-use Test::Harness;
 use_ok('Test::Harness');
-
+use Test::Harness; # So that we don't get "used only once" warnings on the next line
+$Test::Harness::Switches = '"-Mstrict"';
 
 tie *NULL, 'My::Dev::Null' or die $!;
 
@@ -438,8 +492,8 @@ while (my($test, $expect) = each %samples) {
     };
     select STDOUT;
 
-    # $? is unreliable in MacPerl, so we'll simply fudge it.
-    $failed->{estat} = $die_estat if $IsMacOS and $failed;
+    # $? is unreliable in MacPerl, so we'll just fudge it.
+    $failed->{estat} = $die_estat if $IsMacPerl and $failed;
 
     SKIP: {
         skip "special tests for bailout", 1 unless $test eq 'bailout';

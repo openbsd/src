@@ -174,6 +174,40 @@ Perl code:
 Although one would expect the quantities $y and $z to be the same and equal
 to 100000 they will differ and instead will be 0 and 100000 respectively.
 
+=head2 Using PerlIO and different encodings on ASCII and EBCDIC partitions
+
+Since version 5.8 Perl uses the new PerlIO on BS2000.  This enables
+you using different encodings per IO channel.  For example you may use
+
+    use Encode;
+    open($f, ">:encoding(ascii)", "test.ascii");
+    print $f "Hello World!\n";
+    open($f, ">:encoding(posix-bc)", "test.ebcdic");
+    print $f "Hello World!\n";
+    open($f, ">:encoding(latin1)", "test.latin1");
+    print $f "Hello World!\n";
+    open($f, ">:encoding(utf8)", "test.utf8");
+    print $f "Hello World!\n";
+
+to get two files containing "Hello World!\n" in ASCII, EBCDIC, ISO
+Latin-1 (in this example identical to ASCII) respective UTF-EBCDIC (in
+this example identical to normal EBCDIC).  See the documentation of
+Encode::PerlIO for details.
+
+As the PerlIO layer uses raw IO internally, all this totally ignores
+the type of your filesystem (ASCII or EBCDIC) and the IO_CONVERSION
+environment variable.  If you want to get the old behavior, that the
+BS2000 IO functions determine conversion depending on the filesystem
+PerlIO still is your friend.  You use IO_CONVERSION as usual and tell
+Perl, that it should use the native IO layer:
+
+    export IO_CONVERSION=YES
+    export PERLIO=stdio
+
+Now your IO would be ASCII on ASCII partitions and EBCDIC on EBCDIC
+partitions.  See the documentation of PerlIO (without C<Encode::>!)
+for further posibilities.
+
 =head1 AUTHORS
 
 Thomas Dorner

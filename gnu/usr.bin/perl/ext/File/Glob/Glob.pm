@@ -56,7 +56,7 @@ use XSLoader ();
     ) ],
 );
 
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 sub import {
     require Exporter;
@@ -125,6 +125,7 @@ sub bsd_glob {
 # File::Glob::glob() is deprecated because its prototype is different from
 # CORE::glob() (use bsd_glob() instead)
 sub glob {
+    splice @_, 1; # don't pass PL_glob_index as flags!
     goto &bsd_glob;
 }
 

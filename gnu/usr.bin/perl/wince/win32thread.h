@@ -1,5 +1,3 @@
-/* Time-stamp: <01/08/01 21:00:36 keuchel@w2k> */
-
 #ifndef _WIN32THREAD_H
 #define _WIN32THREAD_H
 
@@ -57,7 +55,7 @@ typedef HANDLE perl_mutex;
 #define COND_INIT(c) \
     STMT_START {						\
 	(c)->waiters = 0;					\
-	(c)->sem = CreateSemaphore(NULL,0,LONG_MAX,NULL);	\
+	(c)->sem = CreateSemaphoreW(NULL,0,LONG_MAX,NULL);	\
 	if ((c)->sem == NULL)					\
 	    Perl_croak_nocontext("panic: COND_INIT (%ld)",GetLastError());	\
     } STMT_END
@@ -172,10 +170,17 @@ END_EXTERN_C
 #define ALLOC_THREAD_KEY \
     STMT_START {							\
 	if ((PL_thr_key = TlsAlloc()) == TLS_OUT_OF_INDEXES) {		\
-	    fprintf(stderr,"panic: TlsAlloc");				\
+	    PerlIO_printf(PerlIO_stderr(),"panic: TlsAlloc");				\
 	    exit(1);							\
 	}								\
     } STMT_END
+
+#define FREE_THREAD_KEY \
+    STMT_START {							\
+	TlsFree(PL_thr_key);						\
+    } STMT_END
+
+#define PTHREAD_ATFORK(prepare,parent,child)	NOOP
 
 #if defined(USE_RTL_THREAD_API) && !defined(_MSC_VER)
 #define JOIN(t, avp)							\

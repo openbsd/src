@@ -8,6 +8,10 @@
 
 ## Mapping from lc(canonical name) to filename in ./lib
 %utf8::Canonical = (
+
+ # InAegeanNumbers
+   aegeannumbers			    => 'InAegean',
+
    alphabetic				    => 'Alphabet',
 
  # InAlphabeticPresentationForms
@@ -47,6 +51,8 @@
 
  # InBoxDrawing
    boxdrawing				    => 'InBoxDra',
+
+   braille				    => 'Braille',
 
  # InBraillePatterns
    braillepatterns			    => 'InBraill',
@@ -115,6 +121,11 @@
 
  # InCurrencySymbols
    currencysymbols			    => 'InCurren',
+
+   cypriot				    => 'Cypriot',
+
+ # InCypriotSyllabary
+   cypriotsyllabary			    => 'InCyprio',
 
    cyrillic				    => 'Cyrillic',
 
@@ -224,6 +235,9 @@
  # IdsTrinaryOperator
    idstrinaryoperator			    => 'IdsTrina',
 
+ # InAegeanNumbers
+   inaegeannumbers			    => 'InAegean',
+
  # InAlphabeticPresentationForms
    inalphabeticpresentationforms	    => 'InAlphab',
 
@@ -313,6 +327,9 @@
 
  # InCurrencySymbols
    incurrencysymbols			    => 'InCurren',
+
+ # InCypriotSyllabary
+   incypriotsyllabary			    => 'InCyprio',
 
  # InCyrillic
    incyrillic				    => 'InCyrill',
@@ -418,6 +435,9 @@
  # InKhmer
    inkhmer				    => 'InKhmer',
 
+ # InKhmerSymbols
+   inkhmersymbols			    => 'InKhmerS',
+
  # InLao
    inlao				    => 'InLao',
 
@@ -436,6 +456,15 @@
  # InLetterlikeSymbols
    inletterlikesymbols			    => 'InLetter',
 
+ # InLimbu
+   inlimbu				    => 'InLimbu',
+
+ # InLinearBIdeograms
+   inlinearbideograms			    => 'InLinear',
+
+ # InLinearBSyllabary
+   inlinearbsyllabary			    => 'InLinea2',
+
  # InLowSurrogates
    inlowsurrogates			    => 'InLowSur',
 
@@ -449,13 +478,16 @@
    inmathematicaloperators		    => 'InMathem',
 
  # InMiscellaneousMathematicalSymbolsA
-   inmiscellaneousmathematicalsymbolsa	    => 'InMisce3',
+   inmiscellaneousmathematicalsymbolsa	    => 'InMisce4',
 
  # InMiscellaneousMathematicalSymbolsB
-   inmiscellaneousmathematicalsymbolsb	    => 'InMisce4',
+   inmiscellaneousmathematicalsymbolsb	    => 'InMisce5',
 
  # InMiscellaneousSymbols
    inmiscellaneoussymbols		    => 'InMiscel',
+
+ # InMiscellaneousSymbolsAndArrows
+   inmiscellaneoussymbolsandarrows	    => 'InMisce3',
 
  # InMiscellaneousTechnical
    inmiscellaneoustechnical		    => 'InMisce2',
@@ -484,11 +516,20 @@
  # InOriya
    inoriya				    => 'InOriya',
 
+ # InOsmanya
+   inosmanya				    => 'InOsmany',
+
+ # InPhoneticExtensions
+   inphoneticextensions 		    => 'InPhonet',
+
  # InPrivateUseArea
    inprivateusearea			    => 'InPrivat',
 
  # InRunic
    inrunic				    => 'InRunic',
+
+ # InShavian
+   inshavian				    => 'InShavia',
 
  # InSinhala
    insinhala				    => 'InSinhal',
@@ -532,6 +573,12 @@
  # InTags
    intags				    => 'InTags',
 
+ # InTaiLe
+   intaile				    => 'InTaiLe',
+
+ # InTaiXuanJingSymbols
+   intaixuanjingsymbols 		    => 'InTaiXua',
+
  # InTamil
    intamil				    => 'InTamil',
 
@@ -547,11 +594,20 @@
  # InTibetan
    intibetan				    => 'InTibeta',
 
+ # InUgaritic
+   inugaritic				    => 'InUgarit',
+
  # InUnifiedCanadianAboriginalSyllabics
    inunifiedcanadianaboriginalsyllabics     => 'InUnifie',
 
  # InVariationSelectors
    invariationselectors 		    => 'InVariat',
+
+ # InVariationSelectorsSupplement
+   invariationselectorssupplement	    => 'InVaria2',
+
+ # InYijingHexagramSymbols
+   inyijinghexagramsymbols		    => 'InYijing',
 
  # InYiRadicals
    inyiradicals 			    => 'InYiRadi',
@@ -578,6 +634,10 @@
    katakanaphoneticextensions		    => 'InKatak2',
 
    khmer				    => 'Khmer',
+
+ # InKhmerSymbols
+   khmersymbols 			    => 'InKhmerS',
+
    lao					    => 'Lao',
    latin				    => 'Latin',
 
@@ -600,6 +660,17 @@
 
  # LetterNumber
    letternumber 			    => 'Nl',
+
+   limbu				    => 'Limbu',
+
+ # LinearB
+   linearb				    => 'LinearB',
+
+ # InLinearBIdeograms
+   linearbideograms			    => 'InLinear',
+
+ # InLinearBSyllabary
+   linearbsyllabary			    => 'InLinea2',
 
  # LineSeparator
    lineseparator			    => 'Zl',
@@ -629,13 +700,16 @@
    mathsymbol				    => 'Sm',
 
  # InMiscellaneousMathematicalSymbolsA
-   miscellaneousmathematicalsymbolsa	    => 'InMisce3',
+   miscellaneousmathematicalsymbolsa	    => 'InMisce4',
 
  # InMiscellaneousMathematicalSymbolsB
-   miscellaneousmathematicalsymbolsb	    => 'InMisce4',
+   miscellaneousmathematicalsymbolsb	    => 'InMisce5',
 
  # InMiscellaneousSymbols
    miscellaneoussymbols 		    => 'InMiscel',
+
+ # InMiscellaneousSymbolsAndArrows
+   miscellaneoussymbolsandarrows	    => 'InMisce3',
 
  # InMiscellaneousTechnical
    miscellaneoustechnical		    => 'InMisce2',
@@ -676,6 +750,7 @@
    opticalcharacterrecognition		    => 'InOptica',
 
    oriya				    => 'Oriya',
+   osmanya				    => 'Osmanya',
    other				    => 'C',
 
  # OtherAlphabetic
@@ -686,6 +761,9 @@
 
  # OtherGraphemeExtend
    othergraphemeextend			    => 'OtherGra',
+
+ # OtherIdStart
+   otheridstart 			    => 'OtherIdS',
 
  # OtherLetter
    otherletter				    => 'Lo',
@@ -711,6 +789,9 @@
  # ParagraphSeparator
    paragraphseparator			    => 'Zp',
 
+ # InPhoneticExtensions
+   phoneticextensions			    => 'InPhonet',
+
  # PrivateUse
    privateuse				    => 'Co',
 
@@ -725,6 +806,7 @@
    radical				    => 'Radical',
    runic				    => 'Runic',
    separator				    => 'Z',
+   shavian				    => 'Shavian',
    sinhala				    => 'Sinhala',
 
  # InSmallFormVariants
@@ -772,6 +854,12 @@
  # InTags
    tags 				    => 'InTags',
 
+ # TaiLe
+   taile				    => 'TaiLe',
+
+ # InTaiXuanJingSymbols
+   taixuanjingsymbols			    => 'InTaiXua',
+
    tamil				    => 'Tamil',
    telugu				    => 'Telugu',
 
@@ -785,6 +873,7 @@
  # TitlecaseLetter
    titlecaseletter			    => 'Lt',
 
+   ugaritic				    => 'Ugaritic',
    unassigned				    => 'Cn',
 
  # InUnifiedCanadianAboriginalSyllabics
@@ -801,10 +890,16 @@
  # InVariationSelectors
    variationselectors			    => 'InVariat',
 
+ # InVariationSelectorsSupplement
+   variationselectorssupplement 	    => 'InVaria2',
+
  # WhiteSpace
    whitespace				    => 'WhiteSpa',
 
    yi					    => 'Yi',
+
+ # InYijingHexagramSymbols
+   yijinghexagramsymbols		    => 'InYijing',
 
  # InYiRadicals
    yiradicals				    => 'InYiRadi',

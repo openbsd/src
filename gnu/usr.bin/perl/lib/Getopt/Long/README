@@ -80,14 +80,24 @@ command line options and how they must be handled:
   - by entering the option name and the value in an associative array
     (hash) or object (if it is a blessed hash);
   - by calling a user-specified subroutine with the option name and
-    the value as arguments;
+    the value as arguments (for hash options: the name, key and value);
   - combinations of the above.
 
 * Customization:
 
-The module contains a special method, Getopt::Long::Configure, to
-control configuration variables to activate (or de-activate) specific
-behavior. It can be called with one or more names of options:
+The module can be customized by specifying settings in the 'use'
+directive, or by calling a special method, Getopt::Long::Configure.
+For example, the following two cases are functionally equal:
+
+    use Getopt::Long qw(:config bundling no_ignore_case);
+
+and
+
+    use Getopt::Long;
+    Getopt::Long::Configure qw(bundling no_ignore_case);
+    
+Some of the possible customizations. Most of them take a "no_" prefix
+to reverse the effect:
 
   - default
 
@@ -164,8 +174,8 @@ behavior. It can be called with one or more names of options:
 Using the object oriented interface, multiple parser objects can be
 instantiated, each having their own configuration settings:
 
-    $p1 = new Getopt::Long::Parser (config => ["posix"]);
-    $p2 = new Getopt::Long::Parser (config => ["no_posix"]);
+    $p1 = new Getopt::Long::Parser (config => ["bundling"]);
+    $p2 = new Getopt::Long::Parser (config => ["posix"]);
     if ($p1->getoptions(...options descriptions...)) ...
 
 AVAILABILITY
@@ -182,7 +192,7 @@ Or use the CPAN search engine:
 COPYRIGHT AND DISCLAIMER
 ========================
 
-Module Getopt::Long is Copyright 2002,1990 by Johan Vromans.
+Module Getopt::Long is Copyright 2003,1990 by Johan Vromans.
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Perl Artistic License or the
 GNU General Public License as published by the Free Software

@@ -247,26 +247,30 @@ ok( ExtUtils::MM_OS2->file_name_is_absolute( '\foo' ),
 ok( ! ExtUtils::MM_OS2->file_name_is_absolute( 'arduk' ), 
 	'... but not for paths with no leading slash or volume' );
 
-# perl_archive
-is( ExtUtils::MM_OS2->perl_archive(), '$(PERL_INC)/libperl$(LIB_EXT)', 
-	'perl_archive() should return a static string' );
 
-# perl_archive_after
+$mm->init_linker;
+
+# PERL_ARCHIVE
+is( $mm->{PERL_ARCHIVE}, '$(PERL_INC)/libperl$(LIB_EXT)', 'PERL_ARCHIVE' );
+
+# PERL_ARCHIVE_AFTER
 {
 	my $aout = 0;
 	local *OS2::is_aout;
 	*OS2::is_aout = \$aout;
 	
-	isnt( ExtUtils::MM_OS2->perl_archive_after(), '', 
-		'perl_archive_after() should return string without $is_aout set' );
+        $mm->init_linker;
+	isnt( $mm->{PERL_ARCHIVE_AFTER}, '',
+		'PERL_ARCHIVE_AFTER should be empty without $is_aout set' );
 	$aout = 1;
-	is( ExtUtils::MM_OS2->perl_archive_after(), '', 
-		'... and blank string if it is set' );
+	is( $mm->{PERL_ARCHIVE_AFTER}, 
+            '$(PERL_INC)/libperl_override$(LIB_EXT)', 
+		'... and has libperl_override if it is set' );
 }
 
-# export_list
-is( ExtUtils::MM_OS2::export_list({ BASEEXT => 'foo' }), 'foo.def', 
-	'export_list() should add .def to BASEEXT member' );
+# EXPORT_LIST
+is( $mm->{EXPORT_LIST}, '$(BASEEXT).def', 
+	'EXPORT_LIST should add .def to BASEEXT member' );
 
 END {
 	use File::Path;

@@ -9,7 +9,9 @@ BEGIN {
         unshift @INC, 't/lib/';
     }
 }
-chdir 't';
+
+my $Is_VMS = $^O eq 'VMS';
+chdir($Is_VMS ? 'BFD_TEST_ROOT:[t]' : 't');
 
 
 use strict;
@@ -54,7 +56,7 @@ my $prefix = $Config{prefix} || $Config{prefixexp};
 
 # You can concatenate /foo but not foo:, which defaults in the current 
 # directory
-$prefix = VMS::Filespec::unixify($prefix) if $^O eq 'VMS';
+$prefix = VMS::Filespec::unixify($prefix) if $Is_VMS;
 
 # ActivePerl 5.6.1/631 has $Config{prefixexp} as 'p:' for some reason
 $prefix = $Config{prefix} if $prefix eq 'p:' && $^O eq 'MSWin32';
@@ -80,11 +82,9 @@ ok( !$ei->_is_under('foo', @under), '... should find no file not under dirs');
 ok( $ei->_is_under('baz', @under),  '... should find file under dir' );
 
 
-my $wrotelist;
-
 rmtree 'auto/FakeMod';
 ok( mkpath('auto/FakeMod') );
-END { rmtree 'auto/FakeMod' }
+END { rmtree 'auto' }
 
 ok(open(PACKLIST, '>auto/FakeMod/.packlist'));
 print PACKLIST 'list';
@@ -230,14 +230,6 @@ is( ${ $ei->packlist('yesmod') }, 102,
 is( $ei->version('yesmod'), 101, 
 	'version() should report installed mod version' );
 
-END {
-	if ($wrotelist) {
-		for my $file (qw( .packlist FakePak.pm )) {
-			1 while unlink $file;
-		}
-		File::Path::rmtree('auto') or warn "Couldn't rmtree auto: $!";
-	}
-}
 
 package Fakepak;
 

@@ -14,7 +14,7 @@ BEGIN {
 
 my $tmp = "via$$";
 
-use Test::More tests => 16;
+use Test::More tests => 18;
 
 my $fh;
 my $a = join("", map { chr } 0..255) x 10;
@@ -58,7 +58,14 @@ is($a, $b, 'compare original data with filtered version');
 
     close($fh);
 
+{
+package Incomplete::Module; 
+}
 
+    $warnings = '';
+    no warnings 'layer';
+    ok( ! open($fh,">via(Incomplete::Module)", $tmp), 'open via Incomplete::Module will fail');
+    is( $warnings, "",  "don't warn about unknown package" );
 
     $warnings = '';
     no warnings 'layer';

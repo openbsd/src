@@ -1,40 +1,65 @@
 ##
 # Darwin (Mac OS) hints
-# Wilfredo Sanchez <wsanchez@mit.edu>
+# Wilfredo Sanchez <wsanchez@wsanchez.net>
 ##
 
 ##
 # Paths
 ##
 
+# Configure hasn't figured out the version number yet.  Bummer.
+perl_revision=`awk '/define[ 	]+PERL_REVISION/ {print $3}' $src/patchlevel.h`
+perl_version=`awk '/define[ 	]+PERL_VERSION/ {print $3}' $src/patchlevel.h`
+perl_subversion=`awk '/define[ 	]+PERL_SUBVERSION/ {print $3}' $src/patchlevel.h`
+version="${perl_revision}.${perl_version}.${perl_subversion}"
+
+# Pretend that Darwin doesn't know about those system calls [perl #24122]
+d_setregid='undef'
+d_setreuid='undef'
+d_setrgid='undef'
+d_setruid='undef'
+
+# This was previously used in all but causes three cases
+# (no -Ddprefix=, -Dprefix=/usr, -Dprefix=/some/thing/else)
+# but that caused too much grief.
+# vendorlib="/System/Library/Perl/${version}"; # Apple-supplied modules
+
 # BSD paths
 case "$prefix" in
-'')
-	# Default install; use non-system directories
-	prefix='/usr/local'; # Built-in perl uses /usr
+'')	# Default install; use non-system directories
+	prefix='/usr/local';
 	siteprefix='/usr/local';
-	vendorprefix='/usr/local'; usevendorprefix='define';
-
-	# Where to put modules.
-	privlib='/Library/Perl'; # Built-in perl uses /System/Library/Perl
-	sitelib='/Library/Perl';
-	vendorlib='/Network/Library/Perl';
 	;;
-'/usr')
-	# We are building/replacing the built-in perl
+'/usr')	# We are building/replacing the built-in perl
+	prefix='/';
+	installprefix='/';
+	bin='/usr/bin';
 	siteprefix='/usr/local';
-	vendorprefix='/usr/local'; usevendorprefix='define';
-
-	# Where to put modules.
-	privlib='/System/Library/Perl';
-	sitelib='/Library/Perl';
-	vendorlib='/Network/Library/Perl';
+	# We don't want /usr/bin/HEAD issues.
+	sitebin='/usr/local/bin';
+	sitescript='/usr/local/bin';
+	installusrbinperl='define'; # You knew what you were doing.
+	privlib="/System/Library/Perl/${version}";
+	sitelib="/Library/Perl/${version}";
+	vendorprefix='/';
+	usevendorprefix='define';
+	vendorbin='/usr/bin';
+	vendorscript='/usr/bin';
+	vendorlib="/Network/Library/Perl/${version}";
+	# 4BSD uses ${prefix}/share/man, not ${prefix}/man.
+	man1dir='/usr/share/man/man1';
+	man3dir='/usr/share/man/man3';
+	# But users' installs shouldn't touch the system man pages.
+	# Transient obsoleted style.
+	siteman1='/usr/local/share/man/man1';
+	siteman3='/usr/local/share/man/man3';
+	# New style.
+	siteman1dir='/usr/local/share/man/man1';
+	siteman3dir='/usr/local/share/man/man3';
+	;;
+  *)	# Anything else; use non-system directories, use Configure defaults
 	;;
 esac
-
-# 4BSD uses ${prefix}/share/man, not ${prefix}/man.
-man1dir="${prefix}/share/man/man1";
-man3dir="${prefix}/share/man/man3";
 
 ##
 # Tool chain settings
@@ -46,18 +71,30 @@ archname='darwin';
 # nm works.
 usenm='true';
 
-# Optimize.
-if [ "x$optimize" = 'x' ]; then
-    optimize='-O3'
+case "$optimize" in
+'')
+#    Optimizing for size also mean less resident memory usage on the part
+# of Perl.  Apple asserts that this is a more important optimization than
+# saving on CPU cycles.  Given that memory speed has not increased at
+# pace with CPU speed over time (on any platform), this is probably a
+# reasonable assertion.
+if [ -z "${optimize}" ]; then
+  case "`${cc:-gcc} -v 2>&1`" in
+    *"gcc version 3."*) optimize='-Os' ;;
+    *) optimize='-O3' ;;
+  esac
+else
+  optimize='-O3'
 fi
+;;
+esac
 
 # -pipe: makes compilation go faster.
-# -fno-common: we don't like commons.  Common symbols are not allowed
-# in MH_DYLIB binaries, which is what libperl.dylib is.  You will fail
-# to link without that option, unless you otherwise eliminate all commons
-# by, for example, initializing all globals.
-# --Fred Sánchez
-ccflags="${ccflags} -pipe -fno-common"
+# -fno-common because common symbols are not allowed in MH_DYLIB
+# -DPERL_DARWIN: apparently the __APPLE__ is not sanctioned by Apple
+# as the way to differentiate Mac OS X.  (The official line is that
+# *no* cpp symbol does differentiate Mac OS X.)
+ccflags="${ccflags} -pipe -fno-common -DPERL_DARWIN"
 
 # At least on Darwin 1.3.x:
 #
@@ -80,19 +117,20 @@ ccflags="${ccflags} -pipe -fno-common"
 # stdint.h defining INT32_MIN as (-INT32_MAX-1)
 # -- Edward Moy
 #
-case "`grep '^#define INT32_MIN' /usr/include/stdint.h`" in
-*-2147483648) ccflags="${ccflags} -DINT32_MIN_BROKEN -DINT64_MIN_BROKEN" ;;
+case "$(grep '^#define INT32_MIN' /usr/include/stdint.h)" in
+  *-2147483648) ccflags="${ccflags} -DINT32_MIN_BROKEN -DINT64_MIN_BROKEN" ;;
 esac
 
-# cppflags='-traditional-cpp';
-# avoid Apple's cpp precompiler, better for extensions
+# Avoid Apple's cpp precompiler, better for extensions
 cppflags="${cppflags} -no-cpp-precomp"
-# and ccflags needs them as well since we don't use cpp directly
-ccflags="${ccflags} -no-cpp-precomp"
+
+# This is necessary because perl's build system doesn't
+# apply cppflags to cc compile lines as it should.
+ccflags="${ccflags} ${cppflags}"
 
 # Known optimizer problems.
 case "`cc -v 2>&1`" in
-*"3.1 20020105"*) toke_cflags='optimize=""' ;;
+  *"3.1 20020105"*) toke_cflags='optimize=""' ;;
 esac
 
 # Shared library extension is .dylib.
@@ -102,16 +140,41 @@ so='dylib';
 dlext='bundle';
 dlsrc='dl_dyld.xs'; usedl='define';
 cccdlflags=' '; # space, not empty, because otherwise we get -fpic
-# ldflag: -flat_namespace is only available since OS X 10.1 (Darwin 1.4.1)
-#    - but not in 10.0.x (Darwin 1.3.x)
-# -- Kay Roepke
+# Perl bundles do not expect two-level namespace, added in Darwin 1.4.
+# But starting from perl 5.8.1/Darwin 7 the default is the two-level.
 case "$osvers" in
-1.[0-3].*)	;;
-*)		ldflags="${ldflags} -flat_namespace" ;;
+1.[0-3].*)
+   lddlflags="${ldflags} -bundle -undefined suppress"
+   ;;
+1.*)
+   ldflags="${ldflags} -flat_namespace"
+   lddlflags="${ldflags} -bundle -undefined suppress"
+   ;;
+[2-6].*)
+   ldflags="${ldflags} -flat_namespace"
+   lddlflags="${ldflags} -bundle -undefined suppress"
+   ;;
+*) lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
+   case "$ld" in
+   *MACOSX_DEVELOPMENT_TARGET*) ;;
+   *) ld="env MACOSX_DEPLOYMENT_TARGET=10.3 ${ld}" ;;
+   esac
+   ;;
 esac
-lddlflags="${ldflags} -bundle -undefined suppress";
 ldlibpthname='DYLD_LIBRARY_PATH';
-useshrplib='true';
+
+# useshrplib=true results in much slower startup times.
+# 'false' is the default value.  Use Configure -Duseshrplib to override.
+
+cat > UU/archname.cbu <<'EOCBU'
+# This script UU/archname.cbu will get 'called-back' by Configure 
+# after it has otherwise determined the architecture name.
+case "$ldflags" in
+*"-flat_namespace"*) ;; # Backward compat, be flat.
+# If we are using two-level namespace, we will munge the archname to show it.
+*) archname="${archname}-2level" ;;
+esac
+EOCBU
 
 ##
 # System libraries
@@ -120,21 +183,14 @@ useshrplib='true';
 # vfork works
 usevfork='true';
 
-# malloc works
-usemymalloc='n';
-
-##
-# Build process
-##
+# our malloc works (but allow users to override)
+case "$usemymalloc" in
+'') usemymalloc='n' ;;
+esac
 
 # Locales aren't feeling well.
 LC_ALL=C; export LC_ALL;
 LANG=C; export LANG;
-
-# Case-insensitive filesystems don't get along with Makefile and
-# makefile in the same place.  Since Darwin uses GNU make, this dodges
-# the problem.
-firstmakefile=GNUmakefile;
 
 #
 # The libraries are not threadsafe as of OS X 10.1.
@@ -142,13 +198,33 @@ firstmakefile=GNUmakefile;
 # Fix when Apple fixes libc.
 #
 case "$usethreads$useithreads$use5005threads" in
-*define*)
-cat <<EOM >&4
+  *define*)
+  case "$osvers" in
+    [12345].*)     cat <<EOM >&4
+
+
 
 *** Warning, there might be problems with your libraries with
 *** regards to threading.  The test ext/threads/t/libc.t is likely
 *** to fail.
 
 EOM
-	;;
+    ;;
+    *) usereentrant='define';;
+  esac
+
 esac
+
+# Fink can install a GDBM library that claims to have the ODBM interfaces
+# but Perl dynaloader cannot for some reason use that library.  We don't
+# really need ODBM_FIle, though, so let's just hint ODBM away.
+i_dbm=undef;
+
+##
+# Build process
+##
+
+# Case-insensitive filesystems don't get along with Makefile and
+# makefile in the same place.  Since Darwin uses GNU make, this dodges
+# the problem.
+firstmakefile=GNUmakefile;

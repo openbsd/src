@@ -25,7 +25,7 @@ sub ok;
 
 use Storable qw(freeze thaw);
 
-print "1..10\n";
+print "1..12\n";
 
 package SHORT_NAME;
 
@@ -98,3 +98,11 @@ for (my $i = 0; $i < 10; $i++) {
 	do { $good = 0; last } unless ref $y->[4*$i+3] eq "${name}_WITH_HOOK";
 }
 ok 10, $good;
+
+{
+	my $blessed_ref = bless \\[1,2,3], 'Foobar';
+	my $x = freeze $blessed_ref;
+	my $y = thaw $x;
+	ok 11, ref $y eq 'Foobar';
+	ok 12, $$$y->[0] == 1;
+}

@@ -11,7 +11,14 @@ BEGIN {
     print "1..0 \# Skip: no Socket\n";
     exit;
   }
-  unless (getservbyname('echo', 'udp')) {
+  if (my $port = getservbyname('echo', 'tcp')) {
+    socket(*ECHO, &Socket::PF_INET(), &Socket::SOCK_STREAM(), (getprotobyname 'tcp')[2]);
+    unless (connect(*ECHO, scalar &Socket::sockaddr_in($port, &Socket::inet_aton("localhost")))) {
+      print "1..0 \# Skip: loopback tcp echo service is off ($!)\n";
+      exit;
+    }
+    close (*ECHO);
+  } else {
     print "1..0 \# Skip: no echo port\n";
     exit;
   }
@@ -21,11 +28,12 @@ BEGIN {
 #
 # NOTE:
 #   The echo service must be enabled on localhost
-#   to really test the stream protocol ping.
+#   to really test the stream protocol ping.  See
+#   the end of this document on how to enable it.
 
 use Test;
 use Net::Ping;
-plan tests => 12;
+plan tests => 22;
 
 my $p = new Net::Ping "stream";
 
@@ -33,16 +41,12 @@ my $p = new Net::Ping "stream";
 ok !!$p;
 
 # Attempt to connect to the echo port
-if ($p -> ping("localhost")) {
-  ok 1;
-  # Try several pings while it is connected
-  for (1..10) {
-    ok $p -> ping("localhost");
-  }
-} else {
-  # Echo port is off, skip the tests
-  for (2..12) { skip "Local echo port is off", 1; }
-  exit;
+ok ($p -> ping("localhost"));
+
+# Try several pings while it is connected
+for (1..20) {
+  select (undef,undef,undef,0.1);
+  ok $p -> ping("localhost");
 }
 
 __END__
@@ -52,15 +56,18 @@ Just create the following file before restarting xinetd:
 
 /etc/xinetd.d/echo:
 
-# description: echo service
+# description: An echo server.
 service echo
 {
-        socket_type             = stream
-        wait                    = no
-        user                    = root
-        server                  = /bin/cat
-        disable                 = no
+        type            = INTERNAL
+        id              = echo-stream
+        socket_type     = stream
+        protocol        = tcp
+        user            = root
+        wait            = no
+        disable         = no
 }
+
 
 Or if you are using inetd, before restarting, add
 this line to your /etc/inetd.conf:

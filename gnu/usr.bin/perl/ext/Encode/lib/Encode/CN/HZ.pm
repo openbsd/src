@@ -3,105 +3,195 @@ package Encode::CN::HZ;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
-use Encode ();
+use Encode qw(:fallbacks);
 
 use base qw(Encode::Encoding);
 __PACKAGE__->Define('hz');
 
-# HZ is only escaped GB, so we implement it with the
-# GB2312(raw) encoding here. Cf. RFCs 1842 & 1843.
+# HZ is a combination of ASCII and escaped GB, so we implement it
+# with the GB2312(raw) encoding here. Cf. RFCs 1842 & 1843.
 
-
+# not ported for EBCDIC.  Which should be used, "~" or "\x7E"?
 
 sub needs_lines  { 1 }
 
-sub perlio_ok { 
-    return 0; # for the time being
-}
+sub perlio_ok    { 1 }
 
-sub decode
+sub decode ($$;$)
 {
+    use bytes;
     my ($obj,$str,$chk) = @_;
-    my $gb = Encode::find_encoding('gb2312-raw');
 
-    $str =~ s{~			# starting tilde
-	(?:
-	    (~)			# another tilde - escaped (set $1)
-		|		#     or
-	    \n			# \n - output nothing
-		|		#     or
-	    \{			# opening brace of GB data
-		(		#  set $2 to any number of...
-		    (?:	
-			[^~]	#  non-tilde GB character
-			    |   #     or
-			~(?!\}) #  tilde not followed by a closing brace
-		    )*
-		)
-	    ~\}			# closing brace of GB data
-		|		# XXX: invalid escape - maybe die on $chk?
-	)
-    }{
-	(defined $1)	? '~'			# two tildes make one tilde
-	    :
-	(defined $2)	? $gb->decode($2, $chk)	# decode the characters
-	    :
-	''					# ~\n and invalid escape = ''
-    }egx;
+    my $GB = Encode::find_encoding('gb2312-raw');
+    my $ret = '';
+    my $in_ascii = 1; # default mode is ASCII.
 
-    return $str;
-}
-
-sub encode
-{
-    my ($obj,$str,$chk) = @_;
-    my ($out, $in_gb);
-    my $gb = Encode::find_encoding('gb2312-raw');
-
-    $str =~ s/~/~~/g;
-
-    # XXX: Since CHECK and partial decoding has not been implemented yet,
-    #      we'll use a very crude way to test for GB2312ness.
-
-    for my $index (0 .. length($str) - 1) {
-	no warnings 'utf8';
-
-	my $char = substr($str, $index, 1);
-	# try to encode this character
-	# with CHECK on so it stops at proper place.
-	# also note that the assignement was braced in eval
-	#  -- dankogai
-	my $try;
-	eval{ $try = $gb->encode($char, 1) };
-	
-	if (defined($try)) {		# is a GB character:
-	    if ($in_gb) {
-		$out .= $try;		#  in GB mode - just append it
+    while (length $str) {
+	if ($in_ascii) { # ASCII mode
+	    if ($str =~ s/^([\x00-\x7D\x7F]+)//) { # no '~' => ASCII
+		$ret .= $1;
+		# EBCDIC should need ascii2native, but not ported.
 	    }
-	    else {
-		$in_gb = 1;		#  enter GB mode, then append it
-		$out .= "~{$try";
+	    elsif ($str =~ s/^\x7E\x7E//) { # escaped tilde
+		$ret .= '~';
 	    }
-	}				# not a GB character:
-	elsif ($in_gb) {
-	    $in_gb = 0;			#  leave GB mode, then append it
-	    $out .= "~}$char";
+	    elsif ($str =~ s/^\x7E\cJ//) { # '\cJ' == LF in ASCII
+		1; # no-op
+	    }
+	    elsif ($str =~ s/^\x7E\x7B//) { # '~{'
+		$in_ascii = 0; # to GB
+	    }
+	    else { # encounters an invalid escape, \x80 or greater
+		last;
+	    }
 	}
-	else {
-	    $out .= $char;		#  not in GB mode - just append it
+	else { # GB mode; the byte ranges are as in RFC 1843.
+	    if ($str =~ s/^((?:[\x21-\x77][\x21-\x7E])+)//) {
+		$ret .= $GB->decode($1, $chk);
+	    }
+	    elsif ($str =~ s/^\x7E\x7D//) { # '~}'
+		$in_ascii = 1;
+	    }
+	    else { # invalid
+		last;
+	    }
+	}
+    }
+    $_[1] = $str if $chk;
+    return $ret;
+}
+
+sub cat_decode {
+    use bytes;
+
+    my ($obj, undef, $src, $pos, $trm, $chk) = @_;
+    my ($rdst, $rsrc, $rpos) = \@_[1..3];
+
+    my $GB = Encode::find_encoding('gb2312-raw');
+    my $ret = '';
+    my $in_ascii = 1; # default mode is ASCII.
+
+    my $ini_pos = pos($$rsrc);
+
+    substr($src, 0, $pos) = '';
+
+    my $ini_len = bytes::length($src);
+
+    # $trm is the first of the pair '~~', then 2nd tilde is to be removed.
+    # XXX: Is better C<$src =~ s/^\x7E// or die if ...>?
+    $src =~ s/^\x7E// if $trm eq "\x7E";
+
+    while (length $src) {
+	my $now;
+	if ($in_ascii) { # ASCII mode
+	    if ($src =~ s/^([\x00-\x7D\x7F])//) { # no '~' => ASCII
+		$now = $1;
+	    }
+	    elsif ($src =~ s/^\x7E\x7E//) { # escaped tilde
+		$now = '~';
+	    }
+	    elsif ($src =~ s/^\x7E\cJ//) { # '\cJ' == LF in ASCII
+		next;
+	    }
+	    elsif ($src =~ s/^\x7E\x7B//) { # '~{'
+		$in_ascii = 0; # to GB
+		next;
+	    }
+	    else { # encounters an invalid escape, \x80 or greater
+		last;
+	    }
+	}
+	else { # GB mode; the byte ranges are as in RFC 1843.
+	    if ($src =~ s/^((?:[\x21-\x77][\x21-\x7F])+)//) {
+		$now = $GB->decode($1, $chk);
+	    }
+	    elsif ($src =~ s/^\x7E\x7D//) { # '~}'
+		$in_ascii = 1;
+		next;
+	    }
+	    else { # invalid
+		last;
+	    }
+	}
+
+	next if ! defined $now;
+
+	$ret .= $now;
+
+	if ($now eq $trm) {
+	    $$rdst .= $ret;
+	    $$rpos = $ini_pos + $pos + $ini_len - bytes::length($src);
+	    pos($$rsrc) = $ini_pos;
+	    return 1;
 	}
     }
 
-    $out .= '~}' if $in_gb;		# add closing brace if needed
+    $$rdst .= $ret;
+    $$rpos = $ini_pos + $pos + $ini_len - bytes::length($src);
+    pos($$rsrc) = $ini_pos;
+    return ''; # terminator not found
+}
 
-    return $out;
+
+sub encode($$;$)
+{
+    my ($obj,$str,$chk) = @_;
+
+    my $GB = Encode::find_encoding('gb2312-raw');
+    my $ret = '';
+    my $in_ascii = 1; # default mode is ASCII.
+
+    no warnings 'utf8'; # $str may be malformed UTF8 at the end of a chunk.
+
+    while (length $str) {
+	if ($str =~ s/^([[:ascii:]]+)//) {
+	    my $tmp = $1;
+	    $tmp =~ s/~/~~/g; # escapes tildes
+	    if (! $in_ascii) {
+		$ret .= "\x7E\x7D"; # '~}'
+		$in_ascii = 1;
+	    }
+	    $ret .= pack 'a*', $tmp; # remove UTF8 flag.
+	}
+	elsif ($str =~ s/(.)//) {
+	    my $tmp = $GB->encode($1, $chk);
+	    last if !defined $tmp;
+	    if (length $tmp == 2) { # maybe a valid GB char (XXX)
+		if ($in_ascii) {
+		    $ret .= "\x7E\x7B"; # '~{'
+		    $in_ascii = 0;
+		}
+		$ret .= $tmp;
+	    }
+	    elsif (length $tmp) { # maybe FALLBACK in ASCII (XXX)
+		if (!$in_ascii) {
+		    $ret .= "\x7E\x7D"; # '~}'
+		    $in_ascii = 1;
+		}
+		$ret .= $tmp;
+	    }
+	}
+	else { # if $str is malformed UTF8 *and* if length $str != 0.
+	    last;
+	}
+    }
+    $_[1] = $str if $chk;
+
+  # The state at the end of the chunk is discarded, even if in GB mode.
+  # That results in the combination of GB-OUT and GB-IN, i.e. "~}~{".
+  # Parhaps it is harmless, but further investigations may be required...
+
+    if (! $in_ascii) {
+	$ret .= "\x7E\x7D"; # '~}'
+	$in_ascii = 1;
+    }
+    return $ret;
 }
 
 1;
 __END__
-
 
 =head1 NAME
 

@@ -1,9 +1,8 @@
 package Encode::MIME::Header;
 use strict;
 # use warnings;
-our $VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-
-use Encode qw(find_encoding encode_utf8);
+our $VERSION = do { my @r = (q$Revision: 1.9 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+use Encode qw(find_encoding encode_utf8 decode_utf8);
 use MIME::Base64;
 use Carp;
 
@@ -72,17 +71,19 @@ sub decode($$;$){
 
 sub decode_b{
     my $enc = shift;
-    my $d = find_encoding($enc)	or croak(Unknown encoding "$enc");
+    my $d = find_encoding($enc)        or croak qq(Unknown encoding "$enc");
     my $db64 = decode_base64(shift);
-    return $d->decode($db64, Encode::FB_PERLQQ);
+    return $d->name eq 'utf8' ?
+	Encode::decode_utf8($db64) : $d->decode($db64, Encode::FB_PERLQQ);
 }
 
 sub decode_q{
     my ($enc, $q) = @_;
-    my $d = find_encoding($enc) or croak(Unknown encoding "$enc");
+    my $d = find_encoding($enc) or croak qq(Unknown encoding "$enc");
     $q =~ s/_/ /go;
     $q =~ s/=([0-9A-Fa-f]{2})/pack("C", hex($1))/ego;
-    return $d->decode($q, Encode::FB_PERLQQ);
+    return $d->name eq 'utf8' ? 
+	Encode::decode_utf8($q) : $d->decode($q, Encode::FB_PERLQQ);
 }
 
 my $especials = 
@@ -90,7 +91,18 @@ my $especials =
 	 map {quotemeta(chr($_))} 
 	 unpack("C*", qq{()<>@,;:\"\'/[]?.=}));
 
-my $re_especials = qr/$especials/o;
+my $re_encoded_word =
+    qr{
+       (?:
+	=\?               # begin encoded word
+	(?:[0-9A-Za-z\-_]+) # charset (encoding)
+	\?(?:[QqBb])\?      # delimiter
+	(?:.*?)             # Base64-encodede contents
+	\?=                 # end encoded word
+       )
+      }xo;
+
+my $re_especials = qr{$re_encoded_word|$especials}xo;
 
 sub encode($$;$){
     my ($obj, $str, $chk) = @_;
@@ -98,7 +110,7 @@ sub encode($$;$){
     for my $line (split /\r|\n|\r\n/o, $str){
 	my (@word, @subline);
         for my $word (split /($re_especials)/o, $line){
-	    if ($word =~ /[^\x00-\x7f]/o){ 
+	    if ($word =~ /[^\x00-\x7f]/o or $word =~ /^$re_encoded_word$/o){
 		push @word, $obj->_encode($word);
 	    }else{
 		push @word, $word;
@@ -133,7 +145,7 @@ sub _encode{
     $llen *= $enc eq 'B' ? 3.0/4.0 : 1.0/3.0;
     my @result = ();
     my $chunk = '';
-    while(my $chr = substr($str, 0, 1, '')){
+    while(length(my $chr = substr($str, 0, 1, ''))){
 	use bytes ();
 	if (bytes::length($chunk) + bytes::length($chr) > $llen){
 	    push @result, SINGLE->{$enc}($chunk);
@@ -156,7 +168,7 @@ sub _encode_q{
 	       }{
 		   join("" => map {sprintf "=%02X", $_} unpack("C*", $1))
 	       }egox;
-    return HEAD . 'Q?' . $chunk . TAIL;
+    return decode_utf8(HEAD . 'Q?' . $chunk . TAIL);
 }
 
 1;

@@ -16,6 +16,8 @@ int _CRT_glob = 0;
 
 /* Called from w32console/wmain.c */
 
+extern int w32console_usefunctionkeys;
+
 int
 main(int argc, char **argv, char **env)
 {
@@ -24,6 +26,8 @@ main(int argc, char **argv, char **env)
   if(argc == 1)
     XCEShowMessageA("Starting perl with no args is currently\r\n"
 		    "not useful on Windows CE");
+
+  w32console_usefunctionkeys = 0; /* this allows backspace key to work */
 
   res = RunPerl(argc, argv, env);
 

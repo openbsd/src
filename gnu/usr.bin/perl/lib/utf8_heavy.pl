@@ -11,7 +11,8 @@ my %Cache;
 sub croak { require Carp; Carp::croak(@_) }
 
 ##
-## "SWASH" == "SWATCH HASH". A "swatch" is a swatch of the Unicode landscape
+## "SWASH" == "SWATCH HASH". A "swatch" is a swatch of the Unicode landscape.
+## It's a data structure that encodes a set of Unicode characters.
 ##
 
 sub SWASHNEW {
@@ -28,7 +29,7 @@ sub SWASHNEW {
     ## ranges.
     ##
     ## To make the parsing of $type clear, this code takes the a rather
-    ## unorthadox approach of last'ing out of the block once we have the
+    ## unorthodox approach of last'ing out of the block once we have the
     ## info we need. Were this to be a subroutine, the 'last' would just
     ## be a 'return'.
     ##
@@ -50,7 +51,9 @@ sub SWASHNEW {
             ##
             ## 'Block=' is replaced by 'In'.
             ##
-            $type =~ s/^Is(?:\s+|[-_])?//i
+            my $wasIs;
+
+            ($wasIs = $type =~ s/^Is(?:\s+|[-_])?//i)
               or
             $type =~ s/^Category\s*=\s*//i
               or
@@ -85,25 +88,41 @@ sub SWASHNEW {
 	    ## It could be a user-defined property.
 	    ##
 
-	    if ($type =~ /^I[ns](\w+)$/) {
-                my @caller = caller(1);
+	    my $caller1 = caller(1);
 
-                if (defined $caller[0]) {
-                    my $prop = $caller[0] . "::" . $type;
+	    if (defined $caller1 && $type =~ /^(?:\w+)$/) {
+		my $prop = $caller1 . "::" . ( $wasIs ? "Is" : "" ) . $type;
+		if (exists &{$prop}) {
+		    no strict 'refs';
+		    
+		    $list = &{$prop};
+		    last GETFILE;
+		}
+	    }
 
-                    if (exists &{$prop}) {
-                        no strict 'refs';
+	    ##
+	    ## See if it's a user-level "To".
+	    ##
 
-                        $list = &{$prop};
-                        last GETFILE;
-                    }
-                }
-            }
+	    my $caller0 = caller(0);
+
+	    if (defined $caller0 && $type =~ /^To(?:\w+)$/) {
+		my $map = $caller0 . "::" . $type;
+		if (exists &{$map}) {
+		    no strict 'refs';
+		    
+		    $list = &{$map};
+		    last GETFILE;
+		}
+	    }
 
             ##
-            ## Last attempt -- see if it's a "To" name (e.g. "ToLower")
+            ## Last attempt -- see if it's a standard "To" name
+	    ## (e.g. "ToLower")  ToTitle is used by ucfirst().
+	    ## The user-level way to access ToDigit() and ToFold()
+	    ## is to use Unicode::UCD.
             ##
-            if ($type =~ /^To([A-Z][A-Za-z]+)$/)
+            if ($type =~ /^To(Digit|Fold|Lower|Title|Upper)$/)
             {
                 $file = "unicore/To/$1.pl";
                 ## would like to test to see if $file actually exists....
@@ -123,7 +142,7 @@ sub SWASHNEW {
 
 	    ##
 	    ## If we reach here, it was due to a 'last GETFILE' above
-	    ## (exception: user-defined properties), so we
+	    ## (exception: user-defined properties and mappings), so we
 	    ## have a filename, so now we load it if we haven't already.
 	    ## If we have, return the cached results. The cache key is the
 	    ## file to load.
@@ -141,7 +160,7 @@ sub SWASHNEW {
     }
 
     my $extras;
-    my $bits;
+    my $bits = 0;
 
     my $ORIG = $list;
     if ($list) {
@@ -150,8 +169,10 @@ sub SWASHNEW {
 	no warnings;
 	$extras = join '', grep /^[^0-9a-fA-F]/, @tmp;
 	$list = join '',
-	    sort { hex $a <=> hex $b }
-	    grep {/^([0-9a-fA-F]+)/ and not $seen{$1}++} @tmp; # XXX doesn't do ranges right
+	    map  { $_->[1] }
+	    sort { $a->[0] <=> $b->[0] }
+	    map  { /^([0-9a-fA-F]+)/; [ hex($1), $_ ] }
+	    grep { /^([0-9a-fA-F]+)/ and not $seen{$1}++ } @tmp; # XXX doesn't do ranges right
     }
 
     if ($none) {
@@ -161,10 +182,10 @@ sub SWASHNEW {
 
     if ($minbits < 32) {
 	my $top = 0;
-	while ($list =~ /^([0-9a-fA-F]+)(?:\t([0-9a-fA-F]+)?)(?:\t([0-9a-fA-F]+))?/mg) {
+	while ($list =~ /^([0-9a-fA-F]+)(?:[\t]([0-9a-fA-F]+)?)(?:[ \t]([0-9a-fA-F]+))?/mg) {
 	    my $min = hex $1;
-	    my $max = hex(defined $2 ? $2 : $1);
-	    my $val = hex(defined $3 ? $3 : "");
+	    my $max = defined $2 ? hex $2 : $min;
+	    my $val = defined $3 ? hex $3 : 0;
 	    $val += $max - $min if defined $3;
 	    $top = $val if $val > $top;
 	}
@@ -238,10 +259,15 @@ sub SWASHGET {
 	pos $_ = 0;
 	if ($bits > 1) {
 	  LINE:
-	    while (/^([0-9a-fA-F]+)(?:\t([0-9a-fA-F]+)?)(?:\t([0-9a-fA-F]+))?/mg) {
-		my $min = hex $1;
-		my $max = (defined $2 ? hex $2 : $min);
-		my $val = hex $3;
+	    while (/^([0-9a-fA-F]+)(?:[ \t]([0-9a-fA-F]+)?)?(?:[ \t]([0-9a-fA-F]+))?/mg) {
+		chomp;
+		my ($a, $b, $c) = ($1, $2, $3);
+		croak "$type: illegal mapping '$_'"
+		    if $type =~ /^To/ &&
+		       !(defined $a && defined $c);
+		my $min = hex $a;
+		my $max = defined $b ? hex $b : $min;
+		my $val = defined $c ? hex $c : 0;
 		next if $max < $start;
 		print "$min $max $val\n" if DEBUG;
 		if ($none) {
@@ -272,8 +298,9 @@ sub SWASHGET {
 	else {
 	  LINE:
 	    while (/^([0-9a-fA-F]+)(?:[ \t]+([0-9a-fA-F]+))?/mg) {
+		chomp;
 		my $min = hex $1;
-		my $max = (defined $2 ? hex $2 : $min);
+		my $max = defined $2 ? hex $2 : $min;
 		next if $max < $start;
 		if ($min < $start) {
 		    $min = $start;

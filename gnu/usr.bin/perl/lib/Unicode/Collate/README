@@ -1,17 +1,9 @@
-Unicode/Collate version 0.12
+Unicode/Collate version 0.30
 ===============================
 
-Unicode::Collate - Unicode Collation Algorithm
+NAME
 
-  UCA - Unicode TR #10.
-  http://www.unicode.org/unicode/reports/tr10/
-
-  Fetch the following file and put it into the Unicode/Collate directory.
-  http://www.unicode.org/unicode/reports/tr10/allkeys.txt
-
-  You can install this module using a subset "keys.txt"
-  contained in this distribution without the "allkeys.txt";
-  but "keys.txt" is small and not very useful.
+  Unicode::Collate - Unicode Collation Algorithm
 
 SYNOPSIS
 
@@ -30,7 +22,7 @@ SYNOPSIS
 
 INSTALLATION
 
-Perl 5.006 or later
+Perl 5.6.1 or later
 
 To install this module type the following:
 
@@ -39,18 +31,30 @@ To install this module type the following:
    make test
    make install
 
+To use this module, it is better to install a table file in the UCA format,
+by copying it into the lib/Unicode/Collate directory.
+
+The most preferable one is "The Default Unicode Collation Element Table",
+available from the Unicode consortium's website:
+
+    http://www.unicode.org/reports/tr10/allkeys.txt
+
+Though this distribution contains a subset of allkeys.txt, named "keys.txt",
+this one is intended only for doing a test of this module
+and practically useless for any other purpose.
+
 DEPENDENCIES
 
-  It's better if you have Unicode::Normalize (v 0.10 or later)
+  The conformant collation requires Unicode::Normalize (v 0.10 or later)
   although Unicode::Collate can be used without Unicode::Normalize.
 
 COPYRIGHT AND LICENCE
 
-SADAHIRO Tomoyuki <bqw10602@nifty.com>
+SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
   http://homepage1.nifty.com/nomenclator/perl/
 
-  Copyright(C) 2001-2002, SADAHIRO Tomoyuki. Japan. All rights reserved.
+  Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
   This library is free software; you can redistribute it
   and/or modify it under the same terms as Perl itself.

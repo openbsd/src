@@ -21,7 +21,7 @@ use File::Spec;
 use Encode qw(decode encode find_encoding _utf8_off);
 
 #use Test::More qw(no_plan);
-use Test::More tests => 17;
+use Test::More tests => 29;
 use_ok("Encode::Guess");
 {
     no warnings;
@@ -84,6 +84,34 @@ for my $name (keys %CJKT){
 
     my $test = encode($name, decode('utf8', $utf8off));
     is(guess_encoding($test)->name, $name, "CJKT:$name");
+}
+
+my $ambiguous =  "\x{5c0f}\x{98fc}\x{5f3e}";
+my $english   = "The quick brown fox jumps over the black lazy dog.";
+for my $utf (qw/UTF-16 UTF-32/){
+    for my $bl (qw/BE LE/){
+	my $test = encode("$utf$bl" => $english);
+	is(guess_encoding($test)->name, "$utf$bl", "$utf$bl");
+    }
+}
+for my $bl (qw/BE LE/){
+    my $test = encode("UTF-16$bl" => $ambiguous);
+    my $result = guess_encoding($test);
+    ok(! ref($result), "UTF-16$bl:$result");
+}
+
+
+
+Encode::Guess->set_suspects();
+for my $jp (@jp){
+    # intentionally set $1 a priori -- see Changes
+    my $test = "English";
+    '$1' =~ m/^(.*)/o;
+    is(guess_encoding($test, ($jp))->name, 'ascii', 
+       "ascii vs $jp (\$1 messed)");
+    $test = encode($jp, $test . "\n\x{65e5}\x{672c}\x{8a9e}");
+    is(guess_encoding($test, ($jp))->name, 
+       $jp, "$jp vs ascii (\$1 messed)");
 }
 
 __END__;

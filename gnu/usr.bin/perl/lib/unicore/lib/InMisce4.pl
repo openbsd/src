@@ -4,10 +4,10 @@
 
 #
 # This file supports:
-# 	\p{InMiscellaneousMathematicalSymbolsB} (and fuzzy permutations)
+# 	\p{InMiscellaneousMathematicalSymbolsA} (and fuzzy permutations)
 # 
-# Meaning: Block 'Miscellaneous Mathematical Symbols-B'
+# Meaning: Block 'Miscellaneous Mathematical Symbols-A'
 #
 return <<'END';
-2980	29FF	Miscellaneous Mathematical Symbols-B
+27C0	27EF	Miscellaneous Mathematical Symbols-A
 END

@@ -6,7 +6,7 @@
 #      License or the Artistic License, as specified in the README file.
 package B::Disassembler::BytecodeStream;
 
-our $VERSION = '1.01';
+our $VERSION = '1.03';
 
 use FileHandle;
 use Carp;
@@ -137,19 +137,30 @@ sub GET_none {}
 
 sub GET_op_tr_array {
     my $fh = shift;
-    my @ary = unpack("S256", $fh->readn(256 * 2));
-    return join(",", @ary);
+    my $len = unpack "S", $fh->readn(2);
+    my @ary = unpack "S*", $fh->readn($len*2);
+    return join(",", $len, @ary);
 }
 
 sub GET_IV64 {
     my $fh = shift;
-    my ($hi, $lo) = unpack("LL", $fh->readn(8));
-    return sprintf("0x%x%08x", $hi, $lo); # cheat
+    my $str = $fh->readn(8);
+    croak "reached EOF while reading I32" unless length($str) == 8;
+    return sprintf "0x%09llx", unpack("q", $str);
 }
 
 sub GET_IV {
     $Config{ivsize} == 4 ? &GET_I32 : &GET_IV64;
 }
+
+sub B::::GET_PADOFFSET {
+    $Config{ptrsize} == 8 ? &B::GET_IV64 : &B::GET_U32;
+}
+
+sub B::::GET_long {
+    $Config{longsize} == 8 ? &B::GET_IV64 : &B::GET_U32;
+}
+
 
 package B::Disassembler;
 use Exporter;
@@ -160,7 +171,7 @@ use strict;
 
 use B::Asmdata qw(%insn_data @insn_name);
 
-our( $magic, $archname, $blversion, $ivsize, $ptrsize, $byteorder );
+our( $magic, $archname, $blversion, $ivsize, $ptrsize );
 
 sub dis_header($){
     my( $fh ) = @_;
@@ -170,11 +181,10 @@ sub dis_header($){
     $blversion = $fh->GET_strconst();
     $ivsize    = $fh->GET_U32();
     $ptrsize   = $fh->GET_U32();
-    $byteorder = $fh->GET_strconst();
 }
 
 sub get_header(){
-    return( $magic, $archname, $blversion, $ivsize, $ptrsize, $byteorder );
+    return( $magic, $archname, $blversion, $ivsize, $ptrsize);
 }
 
 sub disassemble_fh {

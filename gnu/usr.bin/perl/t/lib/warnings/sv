@@ -345,3 +345,22 @@ no warnings 'numeric' ;
 $a = "\x{100}\x{200}"; $a = -$a;
 EXPECT
 Argument "\x{100}\x{200}" isn't numeric in negation (-) at - line 3.
+########
+# sv.c
+open F, ">".($^O eq 'VMS'? 'NL:' : '/dev/null') ;
+use warnings 'printf';
+$a = "a\nb";
+$s = sprintf "%4s", $a;
+printf F "%4s", $a;
+$s = sprintf "%-4s", $a;
+printf F "%-4s", $a;
+$s = sprintf "%*s", -4, $a;
+no warnings 'printf';
+$s = sprintf "%4s", $a;
+printf F "%4s", $a;
+$s = sprintf "%-4s", $a;
+printf F "%-4s", $a;
+EXPECT
+Newline in left-justified string for sprintf at - line 7.
+Newline in left-justified string for printf at - line 8.
+Newline in left-justified string for sprintf at - line 9.

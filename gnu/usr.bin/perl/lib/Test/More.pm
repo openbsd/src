@@ -18,7 +18,7 @@ sub _carp {
 
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT %EXPORT_TAGS $TODO);
-$VERSION = '0.45';
+$VERSION = '0.47';
 @ISA    = qw(Exporter);
 @EXPORT = qw(ok use_ok require_ok
              is isnt like unlike is_deeply
@@ -304,7 +304,7 @@ test:
 Will produce something like this:
 
     not ok 17 - Is foo the same as bar?
-    #     Failed test 1 (foo.t at line 139)
+    #     Failed test (foo.t at line 139)
     #          got: 'waffle'
     #     expected: 'yarblokos'
 
@@ -773,10 +773,10 @@ the easiest way to illustrate:
         skip "HTML::Lint not installed", 2 if $@;
 
         my $lint = new HTML::Lint;
-        ok( $lint, "Created object" );
+        isa_ok( $lint, "HTML::Lint" );
 
         $lint->parse( $html );
-        is( scalar $lint->errors, 0, "No errors found in HTML" );
+        is( $lint->errors, 0, "No errors found in HTML" );
     }
 
 If the user does not have HTML::Lint installed, the whole block of
@@ -1108,6 +1108,9 @@ sub eq_hash {
 Similar to eq_array(), except the order of the elements is B<not>
 important.  This is a deep check, but the irrelevancy of order only
 applies to the top level.
+
+B<NOTE> By historical accident, this is not a true set comparision.
+While the order of elements does not matter, duplicate elements do.
 
 =cut
 

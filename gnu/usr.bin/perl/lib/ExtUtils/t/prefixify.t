@@ -17,18 +17,24 @@ if( $^O eq 'VMS' ) {
     plan skip_all => 'prefixify works differently on VMS';
 }
 else {
-    plan tests => 2;
+    plan tests => 3;
 }
+use Config;
 use File::Spec;
 use ExtUtils::MM;
 
 my $mm = bless {}, 'MM';
 
 my $default = File::Spec->catdir(qw(this that));
-$mm->prefixify('installbin', 'wibble', 'something', $default);
 
-is( $mm->{INSTALLBIN}, File::Spec->catdir('something', $default),
+$mm->prefixify('installbin', 'wibble', 'something', $default);
+is( $mm->{INSTALLBIN}, $Config{installbin},
                                             'prefixify w/defaults');
+
+$mm->{ARGS}{PREFIX} = 'foo';
+$mm->prefixify('installbin', 'wibble', 'something', $default);
+is( $mm->{INSTALLBIN}, File::Spec->catdir('something', $default),
+                                            'prefixify w/defaults and PREFIX');
 
 {
     undef *ExtUtils::MM_Unix::Config;

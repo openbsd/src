@@ -7,6 +7,7 @@ typedef _rmutex perl_mutex;
 
 /*typedef HEV perl_cond;*/	/* Will include os2.h into all C files.  */
 typedef unsigned long perl_cond;
+int os2_cond_wait(perl_cond *c, perl_mutex *m);
 
 #ifdef USE_SLOW_THREAD_SPECIFIC
 typedef int perl_key;

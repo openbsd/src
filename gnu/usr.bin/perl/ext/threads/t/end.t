@@ -4,7 +4,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    push @INC, '../lib';
     require Config; import Config;
     unless ($Config{'useithreads'}) {
         print "1..0 # Skip: no useithreads\n";
@@ -32,7 +32,7 @@ sub ok {
     $test_id++;
     return $ok;
 }
-ok(1);
+ok(1,'');
 END { ok(1,"End block run once") }
 threads->create(sub { eval "END { ok(1,'') }"})->join();
 threads->create(sub { eval "END { ok(1,'') }"})->join();

@@ -4,21 +4,18 @@ use Config qw(%Config);
 use ExtUtils::MakeMaker;
 
 my @extra;
+@extra = (DEFINE => "-DU32_ALIGNMENT_REQUIRED") unless free_u32_alignment();
 
-unless ($Config{d_u32align}) {
-    @extra = (DEFINE => "-DU32_ALIGNMENT_REQUIRED")
-	if !($Config{'byteorder'} eq '1234' ||
-	     $Config{'byteorder'} eq '4321');
-}
-my @optimize = ();
 if ($^O eq 'VMS') {
     if (defined($Config{ccname})) {
         if (grep(/VMS_VAX/, @INC) && ($Config{ccname} eq 'DEC')) {
             # VAX compiler optimizer even as late as v6.4 gets stuck
-            @optimize = ("OPTIMIZE","/Optimize=(NODISJOINT)");
+            push(@extra, OPTIMIZE => "/Optimize=(NODISJOINT)");
         }
     }
 }
+
+push(@extra, 'INSTALLDIRS'  => 'perl') if $] >= 5.008;
 
 WriteMakefile(
     'NAME'	   => 'Digest::MD5',
@@ -26,7 +23,13 @@ WriteMakefile(
     MAN3PODS    => {},  # Pods will be built by installman.
     @extra,
     'dist'         => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    @optimize
 );
-exit;
 
+
+
+sub free_u32_alignment
+{
+    return 0 if $Config{d_u32align};
+    return 1 if $Config{'byteorder'} eq '1234' || $Config{'byteorder'} eq '4321';
+    return 0;
+}

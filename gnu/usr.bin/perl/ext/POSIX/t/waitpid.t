@@ -9,12 +9,12 @@ BEGIN {
 	print "1..0 # Skip: no fork\n";
 	exit 0;
     }
-    eval { use POSIX qw(sys_wait_h) };
+    eval 'use POSIX qw(sys_wait_h)';
     if ($@) {
 	print "1..0 # Skip: no POSIX sys_wait_h\n";
 	exit 0;
     }
-    eval { use Time::HiRes qw(time) };
+    eval 'use Time::HiRes qw(time)';
     if ($@) {
 	print "1..0 # Skip: no Time::HiRes\n";
 	exit 0;

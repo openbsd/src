@@ -28,10 +28,7 @@ my $testfd;
 
 my $TAINT = substr($^X, 0, 0);
 
-# there is a bug in GUSI that causes problems trying to open
-# files and directories ... it is being fixed, this is just
-# a stopgap -- pudge
-my $file = $^O eq 'MacOS' ? 'TEST-OLD' : 'TEST';
+my $file = 'TEST';
 
 eval { mkfifo($TAINT. $file, 0) };
 like($@, qr/^Insecure dependency/,              'mkfifo with tainted data');

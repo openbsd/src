@@ -9,7 +9,9 @@
 # Meaning: Compatible with 'square'
 #
 return <<'END';
+3250		
+32CC	32CF	
 3300	3357	
-3371	3376	
-337B	33DD	
+3371	33DF	
+33FF		
 END

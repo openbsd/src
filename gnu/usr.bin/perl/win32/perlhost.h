@@ -939,9 +939,9 @@ PerlLIOChown(struct IPerlLIO* piPerl, const char *filename, uid_t owner, gid_t g
 }
 
 int
-PerlLIOChsize(struct IPerlLIO* piPerl, int handle, long size)
+PerlLIOChsize(struct IPerlLIO* piPerl, int handle, Off_t size)
 {
-    return chsize(handle, size);
+    return win32_chsize(handle, size);
 }
 
 int
@@ -1774,9 +1774,9 @@ restart:
     win32_checkTLS(my_perl);
     /* close the std handles to avoid fd leaks */
     {
-	do_close(gv_fetchpv("STDIN", TRUE, SVt_PVIO), FALSE);
-	do_close(gv_fetchpv("STDOUT", TRUE, SVt_PVIO), FALSE);
-	do_close(gv_fetchpv("STDERR", TRUE, SVt_PVIO), FALSE);
+	do_close(PL_stdingv, FALSE);
+	do_close(gv_fetchpv("STDOUT", TRUE, SVt_PVIO), FALSE); /* PL_stdoutgv - ISAGN */
+	do_close(PL_stderrgv, FALSE);
     }
 
     /* destroy everything (waits for any pseudo-forked children) */
@@ -2057,7 +2057,7 @@ CPerlHost::CPerlHost(CPerlHost& host)
 
 CPerlHost::~CPerlHost(void)
 {
-//  Reset();
+    Reset();
     InterlockedDecrement(&num_hosts);
     delete m_pvDir;
     m_pVMemParse->Release();
@@ -2118,6 +2118,8 @@ lookup(const void *arg1, const void *arg2)
 LPSTR*
 CPerlHost::Lookup(LPCSTR lpStr)
 {
+    if (!lpStr)
+	return NULL;
     return (LPSTR*)bsearch(&lpStr, m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), lookup);
 }
 
@@ -2169,20 +2171,24 @@ CPerlHost::Add(LPCSTR lpStr)
 
     // replacing ?
     lpPtr = Lookup(szBuffer);
-    if(lpPtr != NULL) {
-	Renew(*lpPtr, length, char);
+    if (lpPtr != NULL) {
+	// must allocate things via host memory allocation functions 
+	// rather than perl's Renew() et al, as the perl interpreter
+	// may either not be initialized enough when we allocate these,
+	// or may already be dead when we go to free these
+	*lpPtr = (char*)Realloc(*lpPtr, length * sizeof(char));
 	strcpy(*lpPtr, lpStr);
     }
     else {
-	++m_dwEnvCount;
-	Renew(m_lppEnvList, m_dwEnvCount, LPSTR);
-	New(1, m_lppEnvList[m_dwEnvCount-1], length, char);
-	if(m_lppEnvList[m_dwEnvCount-1] != NULL) {
-	    strcpy(m_lppEnvList[m_dwEnvCount-1], lpStr);
-	    qsort(m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), compare);
+	m_lppEnvList = (LPSTR*)Realloc(m_lppEnvList, (m_dwEnvCount+1) * sizeof(LPSTR));
+	if (m_lppEnvList) {
+	    m_lppEnvList[m_dwEnvCount] = (char*)Malloc(length * sizeof(char));
+	    if (m_lppEnvList[m_dwEnvCount] != NULL) {
+		strcpy(m_lppEnvList[m_dwEnvCount], lpStr);
+		++m_dwEnvCount;
+		qsort(m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), compare);
+	    }
 	}
-	else
-	    --m_dwEnvCount;
     }
 }
 
@@ -2325,11 +2331,13 @@ CPerlHost::Reset(void)
     dTHX;
     if(m_lppEnvList != NULL) {
 	for(DWORD index = 0; index < m_dwEnvCount; ++index) {
-	    Safefree(m_lppEnvList[index]);
+	    Free(m_lppEnvList[index]);
 	    m_lppEnvList[index] = NULL;
 	}
     }
     m_dwEnvCount = 0;
+    Free(m_lppEnvList);
+    m_lppEnvList = NULL;
 }
 
 void

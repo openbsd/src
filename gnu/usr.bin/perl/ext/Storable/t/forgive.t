@@ -16,11 +16,6 @@ sub BEGIN {
     } else {
 	unshift @INC, 't';
     }
-    require File::Spec;
-    if ($File::Spec::VERSION < 0.8) {
-	print "1..0 # Skip: newer File::Spec needed\n";
-	exit 0;
-    }
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -30,11 +25,20 @@ sub BEGIN {
 
 use Storable qw(store retrieve);
 
+# problems with 5.00404 when in an BEGIN block, so this is defined here
+if (!eval { require File::Spec; 1 } || $File::Spec::VERSION < 0.8) {
+    print "1..0 # Skip: File::Spec 0.8 needed\n";
+    exit 0;
+    # Mention $File::Spec::VERSION again, as 5.00503's harness seems to have
+    # warnings on.
+    exit $File::Spec::VERSION;
+}
 
 print "1..8\n";
 
 my $test = 1;
-my $bad = ['foo', sub { 1 },  'bar'];
+*GLOB = *GLOB; # peacify -w
+my $bad = ['foo', \*GLOB,  'bar'];
 my $result;
 
 eval {$result = store ($bad , 'store')};

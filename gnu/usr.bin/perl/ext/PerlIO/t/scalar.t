@@ -10,7 +10,7 @@ BEGIN {
 }
 
 $| = 1;
-print "1..22\n";
+print "1..25\n";
 
 my $fh;
 my $var = "ok 2\n";
@@ -115,3 +115,26 @@ while (<$dup>) {
 close($fh);
 close($dup);
 
+# Check reading from non-string scalars
+
+open $fh, '<', \42;
+print <$fh> eq "42" ? "ok 23\n" : "not ok 23\n";
+close $fh;
+
+# reading from magic scalars
+
+{ package P; sub TIESCALAR {bless{}} sub FETCH {"ok 24\n"} }
+tie $p, P; open $fh, '<', \$p;
+print <$fh>;
+
+# don't warn when writing to an undefined scalar
+
+{
+    use warnings;
+    my $ok = 1;
+    local $SIG{__WARN__} = sub { $ok = 0; };
+    open my $fh, '>', \my $scalar;
+    print $fh "foo";
+    close $fh;
+    print $ok ? "ok 25\n" : "not ok 25\n";
+}

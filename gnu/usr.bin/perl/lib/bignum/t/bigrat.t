@@ -10,7 +10,7 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib';
-  plan tests => 16;
+  plan tests => 25;
   }
 
 use bigrat;
@@ -50,19 +50,17 @@ ok (3/7 / 1.5,'2/7');
 ###############################################################################
 # accurarcy and precision
 
-# this might change!
-#ok_undef ($Math::BigInt::accuracy);
-#ok_undef ($Math::BigInt::precision);
-#ok_undef ($Math::BigFloat::accuracy);
-#ok_undef ($Math::BigFloat::precision);
-#bigrat->accuracy(5);
-#ok ($Math::BigInt::accuracy,5);
-#ok ($Math::BigFloat::accuracy,5);
-#bigrat->precision(-2);
-#ok_undef ($Math::BigInt::accuracy);
-#ok_undef ($Math::BigFloat::accuracy);
-#ok ($Math::BigInt::precision,-2);
-#ok ($Math::BigFloat::precision,-2);
+ok_undef (bigrat->accuracy());
+ok (bigrat->accuracy(12),12);
+ok (bigrat->accuracy(),12);
+
+ok_undef (bigrat->precision());
+ok (bigrat->precision(12),12);
+ok (bigrat->precision(),12);
+
+ok (bigrat->round_mode(),'even');
+ok (bigrat->round_mode('odd'),'odd');
+ok (bigrat->round_mode(),'odd');
 
 ###############################################################################
 ###############################################################################

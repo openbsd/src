@@ -1,3 +1,124 @@
+Change 827 on 2003/09/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.13
+
+Change 826 on 2003/09/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix NV casting issue with some compilers
+
+Change 825 on 2003/08/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.12
+
+Change 824 on 2003/08/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Don't directly use the SV returned as $a in the next iteration,
+	take a copy instead. Fixes problem if the code block result was from
+	an eval or sub call
+
+Change 823 on 2003/08/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Install into the 'perl' installdirs for >= 5.008
+
+Change 822 on 2003/08/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix test for EBCDIC portability
+
+Change 771 on 2003/03/03 by <gbarr@pobox.com> (Graham Barr)
+
+	Get path for make from $Config
+
+Change 770 on 2003/02/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.11
+
+Change 769 on 2003/02/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Add t/proto.t to MANIFEST
+
+Change 768 on 2003/02/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Add set_prototype from Rafael Garcia-Suarez
+
+Change 767 on 2003/02/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix t/isvstring.t so it does not cause perl5.004 to segv
+	because of the exit from within BEGIN
+
+Change 766 on 2003/02/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Change how patchlevel.h is included and check we got what we wanted (from Jarkko)
+
+Change 765 on 2003/02/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Add -DPERL_EXT to DEFINEs, requested by Jarkko for 5.8.1
+
+Change 764 on 2003/02/04 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.10
+
+Change 763 on 2003/02/04 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix linking error for older perls
+
+Change 762 on 2003/02/04 by <gbarr@pobox.com> (Graham Barr)
+
+	Make lln tests and perl implementation mimic changes to looks_like_number
+	in different perl versions
+
+Change 761 on 2003/02/04 by <gbarr@pobox.com> (Graham Barr)
+
+	Add looks_like_number
+
+Change 760 on 2003/02/04 by <gbarr@pobox.com> (Graham Barr)
+
+	Ensure PERL_DL_NONLAZY is false so we don't catch link errors during
+	bootstrap and then test the perl only version
+
+Change 759 on 2002/12/12 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.09
+
+Change 758 on 2002/12/12 by <gbarr@pobox.com> (Graham Barr)
+
+	Use UV to return refaddr
+
+Change 757 on 2002/11/03 by <gbarr@pobox.com> (Graham Barr)
+
+	Add XS_VERSION
+
+Change 756 on 2002/11/03 by <gbarr@pobox.com> (Graham Barr)
+
+	Use PAD_* macros in 5.9
+	Reuse our own target when calling pp_rand in shuffle() so we dont need to create a fake pad
+
+Change 751 on 2002/10/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix context so that sub for reduce/first  is always in a scalar context
+	Fix sum/min/max so that they don't upgrade their arguments to NVs
+	if they are IV or UV
+
+Change 750 on 2002/10/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Add isvstring()
+
+Change 745 on 2002/09/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Scalar::Util
+	- Add refaddr()
+
+Change 722 on 2002/04/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.0701
+
+Change 721 on 2002/04/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Add comment to README about failing tests on perl5.6.0
+
+Change 714 on 2002/03/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.07
+
 Change 713 on 2002/03/18 by <gbarr@pobox.com> (Graham Barr)
 
 	Add Scalar::Util::openhandle()

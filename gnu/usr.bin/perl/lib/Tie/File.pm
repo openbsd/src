@@ -1,18 +1,20 @@
 
 package Tie::File;
 require 5.005;
-use Carp;
+use Carp ':DEFAULT', 'confess';
 use POSIX 'SEEK_SET';
-use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'O_WRONLY', 'O_RDONLY';
+use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'LOCK_SH', 'O_WRONLY', 'O_RDONLY';
 sub O_ACCMODE () { O_RDONLY | O_RDWR | O_WRONLY }
 
-$VERSION = "0.93";
+
+$VERSION = "0.97";
 my $DEFAULT_MEMORY_SIZE = 1<<21;    # 2 megabytes
 my $DEFAULT_AUTODEFER_THRESHHOLD = 3; # 3 records
 my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
 
-my %good_opt = map {$_ => 1, "-$_" => 1} 
-               qw(memory dw_size mode recsep discipline autodefer autochomp);
+my %good_opt = map {$_ => 1, "-$_" => 1}
+                 qw(memory dw_size mode recsep discipline 
+                    autodefer autochomp autodefer_threshhold concurrent);
 
 sub TIEARRAY {
   if (@_ % 2 != 0) {
@@ -31,11 +33,15 @@ sub TIEARRAY {
     }
   }
 
+  if ($opts{concurrent}) {
+    croak("$pack: concurrent access not supported yet\n");
+  }
+
   unless (defined $opts{memory}) {
     # default is the larger of the default cache size and the 
     # deferred-write buffer size (if specified)
     $opts{memory} = $DEFAULT_MEMORY_SIZE;
-    $opts{memory} = $opts{dw_size} 
+    $opts{memory} = $opts{dw_size}
       if defined $opts{dw_size} && $opts{dw_size} > $DEFAULT_MEMORY_SIZE;
     # Dora Winifred Read
   }
@@ -49,9 +55,8 @@ sub TIEARRAY {
   $opts{deferred_s} = 0;        # count of total bytes in ->{deferred}
   $opts{deferred_max} = -1;     # empty
 
-  # the cache is a hash instead of an array because it is likely to be
-  # sparsely populated
-  $opts{cache} = Tie::File::Cache->new($opts{memory}); 
+  # What's a good way to arrange that this class can be overridden?
+  $opts{cache} = Tie::File::Cache->new($opts{memory});
 
   # autodeferment is enabled by default
   $opts{autodefer} = 1 unless defined $opts{autodefer};
@@ -93,9 +98,15 @@ sub TIEARRAY {
   } elsif (ref $file) {
     croak "usage: tie \@array, $pack, filename, [option => value]...";
   } else {
-    $fh = \do { local *FH };   # only works in 5.005 and later
+    # $fh = \do { local *FH };  # XXX this is buggy
+    if ($] < 5.006) {
+	# perl 5.005 and earlier don't autovivify filehandles
+	require Symbol;
+	$fh = Symbol::gensym();
+    }
     sysopen $fh, $file, $opts{mode}, 0666 or return;
     binmode $fh;
+    ++$opts{ourfh};
   }
   { my $ofh = select $fh; $| = 1; select $ofh } # autoflush on write
   if (defined $opts{discipline} && $] >= 5.006) {
@@ -114,13 +125,13 @@ sub FETCH {
   my $rec;
 
   # check the defer buffer
-  if ($self->_is_deferring && exists $self->{deferred}{$n}) {
-    $rec = $self->{deferred}{$n};
-  } else {
-    $rec = $self->_fetch($n);
-  }
+  $rec = $self->{deferred}{$n} if exists $self->{deferred}{$n};
+  $rec = $self->_fetch($n) unless defined $rec;
 
-  $self->_chomp1($rec);
+  # inlined _chomp1
+  substr($rec, - $self->{recseplen}) = ""
+    if defined $rec && $self->{autochomp};
+  $rec;
 }
 
 # Chomp many records in-place; return nothing useful
@@ -153,7 +164,7 @@ sub _fetch {
   }
 
   if ($#{$self->{offsets}} < $n) {
-    return if $self->{eof};
+    return if $self->{eof};  # request for record beyond end of file
     my $o = $self->_fill_offsets_to($n);
     # If it's still undefined, there is no such record, so return 'undef'
     return unless defined $o;
@@ -198,26 +209,18 @@ sub STORE {
   # 20020324 Wait, but this DOES alter the cache.  TODO BUG?
   my $oldrec = $self->_fetch($n);
 
-  if (defined($self->{cache}->lookup($n))) {
-    $self->{cache}->update($n, $rec);
-  }
-
   if (not defined $oldrec) {
     # We're storing a record beyond the end of the file
     $self->_extend_file_to($n+1);
     $oldrec = $self->{recsep};
   }
+#  return if $oldrec eq $rec;    # don't bother
   my $len_diff = length($rec) - length($oldrec);
 
   # length($oldrec) here is not consistent with text mode  TODO XXX BUG
-  $self->_twrite($rec, $self->{offsets}[$n], length($oldrec));
-
-  # now update the offsets
-  # array slice goes from element $n+1 (the first one to move)
-  # to the end
-  for (@{$self->{offsets}}[$n+1 .. $#{$self->{offsets}}]) {
-    $_ += $len_diff;
-  }
+  $self->_mtwrite($rec, $self->{offsets}[$n], length($oldrec));
+  $self->_oadjust([$n, 1, $rec]);
+  $self->{cache}->update($n, $rec);
 }
 
 sub _store_deferred {
@@ -259,13 +262,8 @@ sub _delete_deferred {
 
 sub FETCHSIZE {
   my $self = shift;
-  my $n = $#{$self->{offsets}};
-  # 20020317 Change this to binary search
-  unless ($self->{eof}) {
-    while (defined ($self->_fill_offsets_to($n+1))) {
-      ++$n;
-    }
-  }
+  my $n = $self->{eof} ? $#{$self->{offsets}} : $self->_fill_offsets;
+
   my $top_deferred = $self->_defer_max;
   $n = $top_deferred+1 if defined $top_deferred && $n < $top_deferred+1;
   $n;
@@ -310,10 +308,15 @@ sub STORESIZE {
   $self->{cache}->remove(grep $_ >= $len, $self->{cache}->ckeys);
 }
 
+### OPTIMIZE ME
+### It should not be necessary to do FETCHSIZE
+### Just seek to the end of the file.
 sub PUSH {
   my $self = shift;
   $self->SPLICE($self->FETCHSIZE, scalar(@_), @_);
-#  $self->FETCHSIZE;  # av.c takes care of this for me
+
+  # No need to return:
+  #  $self->FETCHSIZE;  # because av.c takes care of this for me
 }
 
 sub POP {
@@ -391,7 +394,6 @@ sub DELETE {
 sub EXISTS {
   my ($self, $n) = @_;
   return 1 if exists $self->{deferred}{$n};
-  $self->_fill_offsets_to($n);  # I think this is unnecessary
   $n < $self->FETCHSIZE;
 }
 
@@ -415,6 +417,10 @@ sub DESTROY {
   my $self = shift;
   $self->flush if $self->_is_deferring;
   $self->{cache}->delink if defined $self->{cache}; # break circular link
+  if ($self->{fh} and $self->{ourfh}) {
+      delete $self->{ourfh};
+      close delete $self->{fh};
+  }
 }
 
 sub _splice {
@@ -447,6 +453,12 @@ sub _splice {
       $nrecs = $oldsize - $pos + $nrecs;
       $nrecs = 0 if $nrecs < 0;
     }
+
+    # nrecs is too big---it really means "until the end"
+    # 20030507
+    if ($nrecs + $pos > $oldsize) {
+      $nrecs = $oldsize - $pos;
+    }
   }
 
   $self->_fixrecs(@data);
@@ -470,76 +482,52 @@ sub _splice {
     $oldlen += $self->{offsets}[$_+1] - $self->{offsets}[$_]
       if defined $self->{offsets}[$_+1];
   }
+  $self->_fill_offsets_to($pos+$nrecs);
 
   # Modify the file
-  $self->_twrite($data, $self->{offsets}[$pos], $oldlen);
+  $self->_mtwrite($data, $self->{offsets}[$pos], $oldlen);
+  # Adjust the offsets table
+  $self->_oadjust([$pos, $nrecs, @data]);
 
-  # update the offsets table part 1
-  # compute the offsets of the new records:
-  my @new_offsets;
-  if (@data) {
-    push @new_offsets, $self->{offsets}[$pos];
-    for (0 .. $#data-1) {
-      push @new_offsets, $new_offsets[-1] + length($data[$_]);
+  { # Take this read cache stuff out into a separate function
+    # You made a half-attempt to put it into _oadjust.  
+    # Finish something like that up eventually.
+    # STORE also needs to do something similarish
+
+    # update the read cache, part 1
+    # modified records
+    for ($pos .. $pos+$nrecs-1) {
+      my $new = $data[$_-$pos];
+      if (defined $new) {
+        $self->{cache}->update($_, $new);
+      } else {
+        $self->{cache}->remove($_);
+      }
     }
-  }
-
-  # If we're about to splice out the end of the offsets table...
-  if ($pos + $nrecs >= @{$self->{offsets}}) {
-    $self->{eof} = 0;           # ... the table is no longer complete
-  }
-  splice(@{$self->{offsets}}, $pos, $nrecs, @new_offsets);
-
-  # update the offsets table part 2
-  # adjust the offsets of the following old records
-  for ($pos+@data .. $#{$self->{offsets}}) {
-    $self->{offsets}[$_] += $datalen - $oldlen;
-  }
-  # If we scrubbed out all known offsets, regenerate the trivial table
-  # that knows that the file does indeed start at 0.
-  $self->{offsets}[0] = 0 unless @{$self->{offsets}};
-  # If the file got longer, the offsets table is no longer complete
-  $self->{eof} = 0 if @data > $nrecs;
-  
-
-  # Perhaps the following cache foolery could be factored out
-  # into a bunch of mor opaque cache functions.  For example,
-  # it's odd to delete a record from the cache and then remove
-  # it from the LRU queue later on; there should be a function to
-  # do both at once.
-
-  # update the read cache, part 1
-  # modified records
-  for ($pos .. $pos+$nrecs-1) {
-    my $new = $data[$_-$pos];
-    if (defined $new) {
-      $self->{cache}->update($_, $new);
-    } else {
-      $self->{cache}->remove($_);
+    
+    # update the read cache, part 2
+    # moved records - records past the site of the change
+    # need to be renumbered
+    # Maybe merge this with the previous block?
+    {
+      my @oldkeys = grep $_ >= $pos + $nrecs, $self->{cache}->ckeys;
+      my @newkeys = map $_-$nrecs+@data, @oldkeys;
+      $self->{cache}->rekey(\@oldkeys, \@newkeys);
     }
-  }
 
-  # update the read cache, part 2
-  # moved records - records past the site of the change
-  # need to be renumbered
-  # Maybe merge this with the previous block?
-  {
-    my @oldkeys = grep $_ >= $pos + $nrecs, $self->{cache}->ckeys;
-    my @newkeys = map $_-$nrecs+@data, @oldkeys;
-    $self->{cache}->rekey(\@oldkeys, \@newkeys);
+    # Now there might be too much data in the cache, if we spliced out
+    # some short records and spliced in some long ones.  If so, flush
+    # the cache.
+    $self->_cache_flush;
   }
-
-  # Now there might be too much data in the cache, if we spliced out
-  # some short records and spliced in some long ones.  If so, flush
-  # the cache.
-  $self->_cache_flush;
 
   # Yes, the return value of 'splice' *is* actually this complicated
   wantarray ? @result : @result ? $result[-1] : undef;
 }
 
+
 # write data into the file
-# $data is the data to be written. 
+# $data is the data to be written.
 # it should be written at position $pos, and should overwrite
 # exactly $len of the following bytes.  
 # Note that if length($data) > $len, the subsequent bytes will have to 
@@ -582,12 +570,247 @@ sub _twrite {
     $readpos += $br;
     $writepos += length $data;
     $data = $next_block;
-  } while $more_data;           # BUG XXX TODO how could this have worked?
+  } while $more_data;
   $self->_seekb($writepos);
   $self->_write_record($next_block);
 
   # There might be leftover data at the end of the file
   $self->_chop_file if $len_diff < 0;
+}
+
+# _iwrite(D, S, E)
+# Insert text D at position S.
+# Let C = E-S-|D|.  If C < 0; die.  
+# Data in [S,S+C) is copied to [S+D,S+D+C) = [S+D,E).
+# Data in [S+C = E-D, E) is returned.  Data in [E, oo) is untouched.
+#
+# In a later version, don't read the entire intervening area into
+# memory at once; do the copying block by block.
+sub _iwrite {
+  my $self = shift;
+  my ($D, $s, $e) = @_;
+  my $d = length $D;
+  my $c = $e-$s-$d;
+  local *FH = $self->{fh};
+  confess "Not enough space to insert $d bytes between $s and $e"
+    if $c < 0;
+  confess "[$s,$e) is an invalid insertion range" if $e < $s;
+
+  $self->_seekb($s);
+  read FH, my $buf, $e-$s;
+
+  $D .= substr($buf, 0, $c, "");
+
+  $self->_seekb($s);
+  $self->_write_record($D);
+
+  return $buf;
+}
+
+# Like _twrite, but the data-pos-len triple may be repeated; you may
+# write several chunks.  All the writing will be done in
+# one pass.   Chunks SHALL be in ascending order and SHALL NOT overlap.
+sub _mtwrite {
+  my $self = shift;
+  my $unwritten = "";
+  my $delta = 0;
+
+  @_ % 3 == 0 
+    or die "Arguments to _mtwrite did not come in groups of three";
+
+  while (@_) {
+    my ($data, $pos, $len) = splice @_, 0, 3;
+    my $end = $pos + $len;  # The OLD end of the segment to be replaced
+    $data = $unwritten . $data;
+    $delta -= length($unwritten);
+    $unwritten  = "";
+    $pos += $delta;             # This is where the data goes now
+    my $dlen = length $data;
+    $self->_seekb($pos);
+    if ($len >= $dlen) {        # the data will fit
+      $self->_write_record($data);
+      $delta += ($dlen - $len); # everything following moves down by this much
+      $data = ""; # All the data in the buffer has been written
+    } else {                    # won't fit
+      my $writable = substr($data, 0, $len - $delta, "");
+      $self->_write_record($writable);
+      $delta += ($dlen - $len); # everything following moves down by this much
+    } 
+
+    # At this point we've written some but maybe not all of the data.
+    # There might be a gap to close up, or $data might still contain a
+    # bunch of unwritten data that didn't fit.
+    my $ndlen = length $data;
+    if ($delta == 0) {
+      $self->_write_record($data);
+    } elsif ($delta < 0) {
+      # upcopy (close up gap)
+      if (@_) {
+        $self->_upcopy($end, $end + $delta, $_[1] - $end);  
+      } else {
+        $self->_upcopy($end, $end + $delta);  
+      }
+    } else {
+      # downcopy (insert data that didn't fit; replace this data in memory
+      # with _later_ data that doesn't fit)
+      if (@_) {
+        $unwritten = $self->_downcopy($data, $end, $_[1] - $end);
+      } else {
+        # Make the file longer to accomodate the last segment that doesn'
+        $unwritten = $self->_downcopy($data, $end);
+      }
+    }
+  }
+}
+
+# Copy block of data of length $len from position $spos to position $dpos
+# $dpos must be <= $spos
+#
+# If $len is undefined, go all the way to the end of the file
+# and then truncate it ($spos - $dpos bytes will be removed)
+sub _upcopy {
+  my $blocksize = 8192;
+  my ($self, $spos, $dpos, $len) = @_;
+  if ($dpos > $spos) {
+    die "source ($spos) was upstream of destination ($dpos) in _upcopy";
+  } elsif ($dpos == $spos) {
+    return;
+  }
+  
+  while (! defined ($len) || $len > 0) {
+    my $readsize = ! defined($len) ? $blocksize
+               : $len > $blocksize ? $blocksize
+               : $len;
+      
+    my $fh = $self->{fh};
+    $self->_seekb($spos);
+    my $bytes_read = read $fh, my($data), $readsize;
+    $self->_seekb($dpos);
+    if ($data eq "") { 
+      $self->_chop_file;
+      last;
+    }
+    $self->_write_record($data);
+    $spos += $bytes_read;
+    $dpos += $bytes_read;
+    $len -= $bytes_read if defined $len;
+  }
+}
+
+# Write $data into a block of length $len at position $pos,
+# moving everything in the block forwards to make room.
+# Instead of writing the last length($data) bytes from the block
+# (because there isn't room for them any longer) return them.
+#
+# Undefined $len means 'until the end of the file'
+sub _downcopy {
+  my $blocksize = 8192;
+  my ($self, $data, $pos, $len) = @_;
+  my $fh = $self->{fh};
+
+  while (! defined $len || $len > 0) {
+    my $readsize = ! defined($len) ? $blocksize 
+      : $len > $blocksize? $blocksize : $len;
+    $self->_seekb($pos);
+    read $fh, my($old), $readsize;
+    my $last_read_was_short = length($old) < $readsize;
+    $data .= $old;
+    my $writable;
+    if ($last_read_was_short) {
+      # If last read was short, then $data now contains the entire rest
+      # of the file, so there's no need to write only one block of it
+      $writable = $data;
+      $data = "";
+    } else {
+      $writable = substr($data, 0, $readsize, "");
+    }
+    last if $writable eq "";
+    $self->_seekb($pos);
+    $self->_write_record($writable);
+    last if $last_read_was_short && $data eq "";
+    $len -= $readsize if defined $len;
+    $pos += $readsize;
+  }
+  return $data;
+}
+
+# Adjust the object data structures following an '_mtwrite'
+# Arguments are
+#  [$pos, $nrecs, @length]  items
+# indicating that $nrecs records were removed at $recpos (a record offset)
+# and replaced with records of length @length...
+# Arguments guarantee that $recpos is strictly increasing.
+# No return value
+sub _oadjust {
+  my $self = shift;
+  my $delta = 0;
+  my $delta_recs = 0;
+  my $prev_end = -1;
+  my %newkeys;
+
+  for (@_) {
+    my ($pos, $nrecs, @data) = @$_;
+    $pos += $delta_recs;
+
+    # Adjust the offsets of the records after the previous batch up
+    # to the first new one of this batch
+    for my $i ($prev_end+2 .. $pos - 1) {
+      $self->{offsets}[$i] += $delta;
+      $newkey{$i} = $i + $delta_recs;
+    }
+
+    $prev_end = $pos + @data - 1; # last record moved on this pass 
+
+    # Remove the offsets for the removed records;
+    # replace with the offsets for the inserted records
+    my @newoff = ($self->{offsets}[$pos] + $delta);
+    for my $i (0 .. $#data) {
+      my $newlen = length $data[$i];
+      push @newoff, $newoff[$i] + $newlen;
+      $delta += $newlen;
+    }
+
+    for my $i ($pos .. $pos+$nrecs-1) {
+      last if $i+1 > $#{$self->{offsets}};
+      my $oldlen = $self->{offsets}[$i+1] - $self->{offsets}[$i];
+      $delta -= $oldlen;
+    }
+
+#    # also this data has changed, so update it in the cache
+#    for (0 .. $#data) {
+#      $self->{cache}->update($pos + $_, $data[$_]);
+#    }
+#    if ($delta_recs) {
+#      my @oldkeys = grep $_ >= $pos + @data, $self->{cache}->ckeys;
+#      my @newkeys = map $_ + $delta_recs, @oldkeys;
+#      $self->{cache}->rekey(\@oldkeys, \@newkeys);
+#    }
+
+    # replace old offsets with new
+    splice @{$self->{offsets}}, $pos, $nrecs+1, @newoff;
+    # What if we just spliced out the end of the offsets table?
+    # shouldn't we clear $self->{eof}?   Test for this XXX BUG TODO
+
+    $delta_recs += @data - $nrecs; # net change in total number of records
+  }
+
+  # The trailing records at the very end of the file
+  if ($delta) {
+    for my $i ($prev_end+2 .. $#{$self->{offsets}}) {
+      $self->{offsets}[$i] += $delta;
+    }
+  }
+
+  # If we scrubbed out all known offsets, regenerate the trivial table
+  # that knows that the file does indeed start at 0.
+  $self->{offsets}[0] = 0 unless @{$self->{offsets}};
+  # If the file got longer, the offsets table is no longer complete
+  # $self->{eof} = 0 if $delta_recs > 0;
+
+  # Now there might be too much data in the cache, if we spliced out
+  # some short records and spliced in some long ones.  If so, flush
+  # the cache.
+  $self->_cache_flush;
 }
 
 # If a record does not already end with the appropriate terminator
@@ -620,9 +843,10 @@ sub _seek {
   defined($o)
     or confess("logic error: undefined offset for record $n");
   seek $self->{fh}, $o, SEEK_SET
-    or die "Couldn't seek filehandle: $!";  # "Should never happen."
+    or confess "Couldn't seek filehandle: $!";  # "Should never happen."
 }
 
+# seek to byte $b in the file
 sub _seekb {
   my ($self, $b) = @_;
   seek $self->{fh}, $b, SEEK_SET
@@ -641,11 +865,10 @@ sub _fill_offsets_to {
   my $rec;
 
   until ($#OFF >= $n) {
-    my $o = $OFF[-1];
     $self->_seek(-1);           # tricky -- see comment at _seek
     $rec = $self->_read_record;
     if (defined $rec) {
-      push @OFF, tell $fh;
+      push @OFF, int(tell $fh);  # Tels says that int() saves memory here
     } else {
       $self->{eof} = 1;
       return;                   # It turns out there is no such record
@@ -654,7 +877,26 @@ sub _fill_offsets_to {
 
   # we have now read all the records up to record n-1,
   # so we can return the offset of record n
-  return $OFF[$n];
+  $OFF[$n];
+}
+
+sub _fill_offsets {
+  my ($self) = @_;
+
+  my $fh = $self->{fh};
+  local *OFF = $self->{offsets};
+  
+  $self->_seek(-1);           # tricky -- see comment at _seek
+
+  # Tels says that inlining read_record() would make this loop
+  # five times faster. 20030508
+  while ( defined $self->_read_record()) {
+    # int() saves us memory here
+    push @OFF, int(tell $fh);
+  }
+
+  $self->{eof} = 1;
+  $#OFF;
 }
 
 # assumes that $rec is already suitably terminated
@@ -675,8 +917,7 @@ sub _read_record {
     $rec = <$fh>;
   }
   return unless defined $rec;
-  if (! $self->{sawlastrec} && 
-      substr($rec, -$self->{recseplen}) ne $self->{recsep}) {
+  if (substr($rec, -$self->{recseplen}) ne $self->{recsep}) {
     # improperly terminated final record --- quietly fix it.
 #    my $ac = substr($rec, -$self->{recseplen});
 #    $ac =~ s/\n/\\n/g;
@@ -735,7 +976,7 @@ sub _extend_file_to {
   # Todo : just use $self->{recsep} x $extras here?
   while ($extras-- > 0) {
     $self->_write_record($self->{recsep});
-    push @{$self->{offsets}}, tell $self->{fh};
+    push @{$self->{offsets}}, int(tell $self->{fh});
   }
 }
 
@@ -752,7 +993,7 @@ sub _chop_file {
 # The result should be at least $n.
 sub _bufsize {
   my $n = shift;
-  return 8192 if $n < 0;
+  return 8192 if $n <= 0;
   my $b = $n & ~8191;
   $b += 8192 if $n & 8191;
   $b;
@@ -772,7 +1013,18 @@ sub flock {
   }
   my $fh = $self->{fh};
   $op = LOCK_EX unless defined $op;
-  flock $fh, $op;
+  my $locked = flock $fh, $op;
+  
+  if ($locked && ($op & (LOCK_EX | LOCK_SH))) {
+    # If you're locking the file, then presumably it's because
+    # there might have been a write access by another process.
+    # In that case, the read cache contents and the offsets table
+    # might be invalid, so discard them.  20030508
+    $self->{offsets} = [0];
+    $self->{cache}->empty;
+  }
+
+  $locked;
 }
 
 # Get/set autochomp option
@@ -785,6 +1037,25 @@ sub autochomp {
   } else {
     $self->{autochomp};
   }
+}
+
+# Get offset table entries; returns offset of nth record
+sub offset {
+  my ($self, $n) = @_;
+
+  if ($#{$self->{offsets}} < $n) {
+    return if $self->{eof};     # request for record beyond the end of file
+    my $o = $self->_fill_offsets_to($n);
+    # If it's still undefined, there is no such record, so return 'undef'
+    return unless defined $o;
+   }
+ 
+  $self->{offsets}[$n];
+}
+
+sub discard_offsets {
+  my $self = shift;
+  $self->{offsets} = [0];
 }
 
 ################################################################
@@ -804,7 +1075,7 @@ sub defer {
 #
 # This could be better optimized to write the file in one pass, instead
 # of one pass per block of records.  But that will require modifications
-# to _twrite, so I should have a good _twite test suite first.
+# to _twrite, so I should have a good _twrite test suite first.
 sub flush {
   my $self = shift;
 
@@ -812,10 +1083,10 @@ sub flush {
   $self->{defer} = 0;
 }
 
-sub _flush {
+sub _old_flush {
   my $self = shift;
   my @writable = sort {$a<=>$b} (keys %{$self->{deferred}});
-  
+
   while (@writable) {
     # gather all consecutive records from the front of @writable
     my $first_rec = shift @writable;
@@ -829,6 +1100,40 @@ sub _flush {
   }
 
   $self->_discard;               # clear out defered-write-cache
+}
+
+sub _flush {
+  my $self = shift;
+  my @writable = sort {$a<=>$b} (keys %{$self->{deferred}});
+  my @args;
+  my @adjust;
+
+  while (@writable) {
+    # gather all consecutive records from the front of @writable
+    my $first_rec = shift @writable;
+    my $last_rec = $first_rec+1;
+    ++$last_rec, shift @writable while @writable && $last_rec == $writable[0];
+    --$last_rec;
+    my $end = $self->_fill_offsets_to($last_rec+1);
+    if (not defined $end) {
+      $self->_extend_file_to($last_rec);
+      $end = $self->{offsets}[$last_rec];
+    }
+    my ($start) = $self->{offsets}[$first_rec];
+    push @args,
+         join("", @{$self->{deferred}}{$first_rec .. $last_rec}), # data
+         $start,                                                  # position
+         $end-$start;                                             # length
+    push @adjust, [$first_rec, # starting at this position...
+                   $last_rec-$first_rec+1,  # this many records...
+                   # are replaced with these...
+                   @{$self->{deferred}}{$first_rec .. $last_rec},
+                  ];
+  }
+
+  $self->_mtwrite(@args);  # write multiple record groups
+  $self->_discard;               # clear out defered-write-cache
+  $self->_oadjust(@adjust);
 }
 
 # Discard deferred writes and disable future deferred writes
@@ -940,7 +1245,7 @@ sub _annotate_ad_history {
   }
 }
 
-# If autodferring was enabled, cut it out and discard the history
+# If autodeferring was enabled, cut it out and discard the history
 sub _stop_autodeferring {
   my $self = shift;
   if ($self->{autodeferring}) {
@@ -1150,6 +1455,9 @@ sub HEAP () { 0 }
 sub HASH () { 1 }
 sub MAX  () { 2 }
 sub BYTES() { 3 }
+#sub STAT () { 4 } # Array with request statistics for each record
+#sub MISS () { 5 } # Total number of cache misses
+#sub REQ  () { 6 } # Total number of cache requests 
 use strict 'vars';
 
 sub new {
@@ -1183,7 +1491,7 @@ sub _heap_move {
   if (defined $n) {
     $self->[HASH]{$k} = $n;
   } else {
-    delete $self->[HASH]{$k}; 
+    delete $self->[HASH]{$k};
   }
 }
 
@@ -1196,6 +1504,12 @@ sub insert {
   }
   confess "undefined val" unless defined $val;
   return if length($val) > $self->[MAX];
+
+#  if ($self->[STAT]) {
+#    $self->[STAT][$key] = 1;
+#    return;
+#  }
+
   my $oldnode = $self->[HASH]{$key};
   if (defined $oldnode) {
     my $oldval = $self->[HEAP]->set_val($oldnode, $val);
@@ -1204,7 +1518,7 @@ sub insert {
     $self->[HEAP]->insert($key, $val);
   }
   $self->[BYTES] += length($val);
-  $self->flush;
+  $self->flush if $self->[BYTES] > $self->[MAX];
 }
 
 sub expire {
@@ -1218,6 +1532,14 @@ sub expire {
 sub remove {
   my ($self, @keys) = @_;
   my @result;
+
+#  if ($self->[STAT]) {
+#    for my $key (@keys) {
+#      $self->[STAT][$key] = 0;
+#    }
+#    return;
+#  }
+
   for my $key (@keys) {
     next unless exists $self->[HASH]{$key};
     my $old_data = $self->[HEAP]->remove($self->[HASH]{$key});
@@ -1231,6 +1553,15 @@ sub lookup {
   my ($self, $key) = @_;
   local *_;
   croak "missing argument to ->lookup" unless defined $key;
+
+#  if ($self->[STAT]) {
+#    $self->[MISS]++  if $self->[STAT][$key]++ == 0;
+#    $self->[REQ]++;
+#    my $hit_rate = 1 - $self->[MISS] / $self->[REQ];
+#    # Do some testing to determine this threshhold
+#    $#$self = STAT - 1 if $hit_rate > 0.20; 
+#  }
+
   if (exists $self->[HASH]{$key}) {
     $self->[HEAP]->lookup($self->[HASH]{$key});
   } else {
@@ -1257,6 +1588,9 @@ sub empty {
   %{$self->[HASH]} = ();
     $self->[BYTES] = 0;
     $self->[HEAP]->empty;
+#  @{$self->[STAT]} = ();
+#    $self->[MISS] = 0;
+#    $self->[REQ] = 0;
 }
 
 sub is_empty {
@@ -1269,7 +1603,7 @@ sub update {
   local *_;
   croak "missing argument to ->update" unless defined $key;
   if (length($val) > $self->[MAX]) {
-    my $oldval = $self->remove($key);
+    my ($oldval) = $self->remove($key);
     $self->[BYTES] -= length($oldval) if defined $oldval;
   } elsif (exists $self->[HASH]{$key}) {
     my $oldval = $self->[HEAP]->set_val($self->[HASH]{$key}, $val);
@@ -1307,23 +1641,29 @@ sub ckeys {
   @a;
 }
 
+# Return total amount of cached data
 sub bytes {
   my $self = shift;
   $self->[BYTES];
 }
 
+# Expire oldest item from cache until cache size is smaller than $max
 sub reduce_size_to {
   my ($self, $max) = @_;
-  until ($self->is_empty || $self->[BYTES] <= $max) {
-    $self->expire;
+  until ($self->[BYTES] <= $max) {
+    # Note that Tie::File::Cache::expire has been inlined here
+    my $old_data = $self->[HEAP]->popheap;
+    return unless defined $old_data;
+    $self->[BYTES] -= length $old_data;
   }
 }
 
+# Why not just $self->reduce_size_to($self->[MAX])?
+# Try this when things stabilize   TODO XXX
+# If the cache is too full, expire the oldest records
 sub flush {
   my $self = shift;
-  until ($self->is_empty || $self->[BYTES] <= $self->[MAX]) {
-    $self->expire;
-  }
+  $self->reduce_size_to($self->[MAX]) if $self->[BYTES] > $self->[MAX];
 }
 
 # For internal use only
@@ -1502,7 +1842,7 @@ sub _insert {
 # Remove the item at node $i from the heap, moving child items upwards.
 # The item with the smallest sequence number is always at the top.
 # Moving items upwards maintains this condition.
-# Return the removed item.
+# Return the removed item.  Return undef if there was no item at node $i.
 sub remove {
   my ($self, $i) = @_;
   $i = 1 unless defined $i;
@@ -1661,13 +2001,16 @@ sub _nodes {
 
 "Cogito, ergo sum.";  # don't forget to return a true value from the file
 
+__END__
+
 =head1 NAME
 
 Tie::File - Access the lines of a disk file via a Perl array
 
 =head1 SYNOPSIS
 
-	# This file documents Tie::File version 0.93
+	# This file documents Tie::File version 0.97
+	use Tie::File;
 
 	tie @array, 'Tie::File', filename or die ...;
 
@@ -1688,7 +2031,7 @@ Tie::File - Access the lines of a disk file via a Perl array
 	push @array, new recs...;
 	my $r1 = pop @array;
 	unshift @array, new recs...;
-	my $r1 = shift @array;
+	my $r2 = shift @array;
 	@old_recs = splice @array, 3, 7, new recs...;
 
 	untie @array;            # all finished
@@ -1712,7 +2055,7 @@ Lazy people and beginners may now stop reading the manual.
 
 What is a 'record'?  By default, the meaning is the same as for the
 C<E<lt>...E<gt>> operator: It's a string terminated by C<$/>, which is
-probably C<"\n">.  (Minor exception: on dos and Win32 systems, a
+probably C<"\n">.  (Minor exception: on DOS and Win32 systems, a
 'record' is a string terminated by C<"\r\n">.)  You may change the
 definition of "record" by supplying the C<recsep> option in the C<tie>
 call:
@@ -1836,7 +2179,13 @@ fetched from disk every time you examine them.
 The C<memory> value is not an absolute or exact limit on the memory
 used.  C<Tie::File> objects contains some structures besides the read
 cache and the deferred write buffer, whose sizes are not charged
-against C<memory>.
+against C<memory>. 
+
+The cache itself consumes about 310 bytes per cached record, so if
+your file has many short records, you may want to decrease the cache
+memory limit, or else the cache overhead may exceed the size of the
+cached data.
+
 
 =head2 C<dw_size>
 
@@ -1888,6 +2237,15 @@ the C<use Fcntl ':flock'> declaration.)
 
 C<MODE> is optional; the default is C<LOCK_EX>.
 
+C<Tie::File> maintains an internal table of the byte offset of each
+record it has seen in the file.  
+
+When you use C<flock> to lock the file, C<Tie::File> assumes that the
+read cache is no longer trustworthy, because another process might
+have modified the file since the last time it was read.  Therefore, a
+successful call to C<flock> discards the contents of the read cache
+and the internal record offset table.
+
 C<Tie::File> promises that the following sequence of operations will
 be safe:
 
@@ -1929,6 +2287,14 @@ See L<"autochomp">, above.
 
 See L<"Deferred Writing">, below.
 
+=head2 C<offset>
+
+	$off = $o->offset($n);
+
+This method returns the byte offset of the start of the C<$n>th record
+in the file.  If there is no such record, it returns an undefined
+value.
+
 =head1 Tying to an already-opened filehandle
 
 If C<$fh> is a filehandle, such as is returned by C<IO::File> or one
@@ -1947,6 +2313,11 @@ array.  Handles must be attached to seekable sources of data---that
 means no pipes or sockets.  If C<Tie::File> can detect that you
 supplied a non-seekable handle, the C<tie> call will throw an
 exception.  (On Unix systems, it can detect this.)
+
+Note that Tie::File will only close any filehandles that it opened
+internally.  If you passed it a filehandle as above, you "own" the
+filehandle, and are responsible for closing it after you have untied
+the @array.
 
 =head1 Deferred Writing
 
@@ -2052,21 +2423,24 @@ or
 Similarly, C<-E<gt>autodefer(1)> re-enables autodeferment, and 
 C<-E<gt>autodefer()> recovers the current value of the autodefer setting.
 
+
+=head1 CONCURRENT ACCESS TO FILES
+
+Caching and deferred writing are inappropriate if you want the same
+file to be accessed simultaneously from more than one process.  Other
+optimizations performed internally by this module are also
+incompatible with concurrent access.  A future version of this module will
+support a C<concurrent =E<gt> 1> option that enables safe concurrent access.
+
+Previous versions of this documentation suggested using C<memory
+=E<gt> 0> for safe concurrent access.  This was mistaken.  Tie::File
+will not support safe concurrent access before version 0.98.
+
 =head1 CAVEATS
 
 (That's Latin for 'warnings'.)
 
 =over 4
-
-=item *
-
-This is BETA RELEASE SOFTWARE.  It may have bugs.  See the discussion
-below about the (lack of any) warranty.
-
-In particular, this means that the interface may change in
-incompatible ways from one version to the next, without warning.  That
-has happened at least once already.  The interface will freeze before
-Perl 5.8 is released, probably sometime in April 2002.
 
 =item *
 
@@ -2100,33 +2474,29 @@ and C<delete>, but in general, the correspondence is extremely close.
 
 =item *
 
-Not quite every effort was made to make this module as efficient as
-possible.  C<FETCHSIZE> should use binary search instead of linear
-search.
-
-The performance of the C<flush> method could be improved.  At present,
-it still rewrites the tail of the file once for each block of
-contiguous lines to be changed.  In the typical case, this will result
-in only one rewrite, but in peculiar cases it might be bad.  It should
-be possible to perform I<all> deferred writing with a single rewrite.
-
-Profiling suggests that these defects are probably minor; in any
-event, they will be fixed in a future version of the module.
-
-=item *
-
 I have supposed that since this module is concerned with file I/O,
 almost all normal use of it will be heavily I/O bound.  This means
 that the time to maintain complicated data structures inside the
 module will be dominated by the time to actually perform the I/O.
 When there was an opportunity to spend CPU time to avoid doing I/O, I
-tried to take it.
+usually tried to take it.
 
 =item *
 
 You might be tempted to think that deferred writing is like
 transactions, with C<flush> as C<commit> and C<discard> as
 C<rollback>, but it isn't, so don't.
+
+=item *
+
+There is a large memory overhead for each record offset and for each
+cache entry: about 310 bytes per cached data record, and about 21 bytes per offset table entry.
+
+The per-record overhead will limit the maximum number of records you
+can access per file. Note that I<accessing> the length of the array
+via C<$x = scalar @tied_file> accesses B<all> records and stores their
+offsets.  The same for C<foreach (@tied_file)>, even if you exit the
+loop early.
 
 =back
 
@@ -2162,7 +2532,7 @@ any news of importance, will be available at
 
 =head1 LICENSE
 
-C<Tie::File> version 0.93 is copyright (C) 2002 Mark Jason Dominus.
+C<Tie::File> version 0.97 is copyright (C) 2003 Mark Jason Dominus.
 
 This library is free software; you may redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -2190,7 +2560,7 @@ For licensing inquiries, contact the author at:
 
 =head1 WARRANTY
 
-C<Tie::File> version 0.93 comes with ABSOLUTELY NO WARRANTY.
+C<Tie::File> version 0.97 comes with ABSOLUTELY NO WARRANTY.
 For details, see the license.
 
 =head1 THANKS
@@ -2206,27 +2576,30 @@ Autrijus Tang (for heroic eleventh-hour Win32 testing above and beyond
 the call of duty), Michael G Schwern (for testing advice), and the
 rest of the CPAN testers (for testing generally).
 
+Special thanks to Tels for suggesting several speed and memory
+optimizations.
+
 Additional thanks to:
 Edward Avis /
+Mattia Barbon /
+Tom Christiansen /
 Gerrit Haase /
+Gurusamy Sarathy /
+Jarkko Hietaniemi (again) /
 Nikola Knezevic /
+John Kominetz /
 Nick Ing-Simmons /
 Tassilo von Parseval /
 H. Dieter Pearcey /
 Slaven Rezic /
+Eric Roode /
 Peter Scott /
 Peter Somu /
 Autrijus Tang (again) /
-Tels /
-Juerd Wallboer
+Tels (again) /
+Juerd Waalboer
 
 =head1 TODO
-
-More tests.  (The cache and heap modules need more unit tests.) 
-
-Improve SPLICE algorithm to use deferred writing machinery.
-
-Cleverer strategy for flushing deferred writes.
 
 More tests.  (Stuff I didn't think of yet.)
 
@@ -2236,8 +2609,22 @@ Fixed-length mode.  Leave-blanks mode.
 
 Maybe an autolocking mode?
 
+For many common uses of the module, the read cache is a liability.
+For example, a program that inserts a single record, or that scans the
+file once, will have a cache hit rate of zero.  This suggests a major
+optimization: The cache should be initially disabled.  Here's a hybrid
+approach: Initially, the cache is disabled, but the cache code
+maintains statistics about how high the hit rate would be *if* it were
+enabled.  When it sees the hit rate get high enough, it enables
+itself.  The STAT comments in this code are the beginning of an
+implementation of this.
+
 Record locking with fcntl()?  Then the module might support an undo
 log and get real transactions.  What a tour de force that would be.
+
+Keeping track of the highest cached record. This would allow reads-in-a-row
+to skip the cache lookup faster (if reading from 1..N with empty cache at
+start, the last cached value will be always N-1).
 
 More tests.
 

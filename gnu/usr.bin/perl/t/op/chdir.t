@@ -21,7 +21,11 @@ use File::Spec::Functions qw(:DEFAULT splitdir rel2abs splitpath);
 # Can't use Cwd::abs_path() because it has different ideas about
 # path separators than File::Spec.
 sub abs_path {
-    $IsVMS ? uc(rel2abs(curdir)) : rel2abs(curdir);
+    my $d = rel2abs(curdir);
+
+    $d = uc($d) if $IsVMS;
+    $d = lc($d) if $^O =~ /^uwin/;
+    $d;
 }
 
 my $Cwd = abs_path;

@@ -35,8 +35,9 @@ use IPC::Semaphore;
 
 print "1..10\n";
 
-$sem = new IPC::Semaphore(IPC_PRIVATE, 10, S_IRWXU | S_IRWXG | S_IRWXO | IPC_CREAT)
-	|| die "semget: ",$!+0," $!\n";
+my $sem =
+    new IPC::Semaphore(IPC_PRIVATE, 10, S_IRWXU | S_IRWXG | S_IRWXO | IPC_CREAT)
+    || die "semget: ",$!+0," $!\n";
 
 print "ok 1\n";
 
@@ -68,5 +69,7 @@ print "ok 8\n";
 print "not " if $sem->getncnt(0);
 print "ok 9\n";
 
-$sem->remove || print "not ";
-print "ok 10\n";
+END {
+	(defined $sem && $sem->remove) || print "not ";
+	print "ok 10\n";
+}

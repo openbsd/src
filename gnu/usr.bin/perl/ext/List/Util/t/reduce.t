@@ -16,7 +16,7 @@ BEGIN {
 
 use List::Util qw(reduce min);
 
-print "1..8\n";
+print "1..13\n";
 
 print "not " if defined reduce {};
 print "ok 1\n";
@@ -50,3 +50,27 @@ print "ok 7\n";
 
 print "not " if defined eval { reduce { die if $b > 2; $a + $b } 0,1,2,3,4 };
 print "ok 8\n";
+
+($x) = foobar();
+print "${x}ok 9\n";
+
+sub foobar { reduce { (defined(wantarray) && !wantarray) ? '' : 'not ' } 0,1,2,3 }
+
+sub add2 { $a + $b }
+
+print "not " unless 6 == reduce \&add2, 1,2,3;
+print "ok 10\n";
+
+print "not " unless 6 == reduce { add2() } 1,2,3;
+print "ok 11\n";
+
+
+print "not " unless 6 == reduce { eval "$a + $b" } 1,2,3;
+print "ok 12\n";
+
+$a = $b = 9;
+reduce { $a * $b } 1,2,3;
+print "not " unless $a == 9 and $b == 9;
+print "ok 13\n";
+
+

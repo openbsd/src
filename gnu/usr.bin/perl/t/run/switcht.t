@@ -14,7 +14,7 @@ my $warning;
 local $SIG{__WARN__} = sub { $warning = join "\n", @_; };
 my $Tmsg = 'while running with -t switch';
 
-ok( ${^TAINT},      '${^TAINT} defined' );
+is( ${^TAINT}, -1, '${^TAINT} == -1' );
 
 my $out = `$Perl -le "print q(Hello)"`;
 is( $out, "Hello\n",                      '`` worked' );

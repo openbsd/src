@@ -74,7 +74,7 @@ A metacharacter can be matched by putting a backslash before it:
     "2+2=4" =~ /2+2/;    # doesn't match, + is a metacharacter
     "2+2=4" =~ /2\+2/;   # matches, \+ is treated like an ordinary +
     'C:\WIN32' =~ /C:\\WIN/;                       # matches
-    "/usr/bin/perl" =~ /\/usr\/local\/bin\/perl/;  # matches
+    "/usr/bin/perl" =~ /\/usr\/bin\/perl/;  # matches
 
 In the last regex, the forward slash C<'/'> is also backslashed,
 because it is used to delimit the regex.
@@ -167,27 +167,39 @@ Perl has several abbreviations for common character classes:
 
 =item *
 
-\d is a digit and represents [0-9]
+\d is a digit and represents
+
+    [0-9]
 
 =item *
 
-\s is a whitespace character and represents [\ \t\r\n\f]
+\s is a whitespace character and represents
+
+    [\ \t\r\n\f]
 
 =item *
 
-\w is a word character (alphanumeric or _) and represents [0-9a-zA-Z_]
+\w is a word character (alphanumeric or _) and represents
+
+    [0-9a-zA-Z_]
 
 =item *
 
-\D is a negated \d; it represents any character but a digit [^0-9]
+\D is a negated \d; it represents any character but a digit
+
+    [^0-9]
 
 =item *
 
-\S is a negated \s; it represents any non-whitespace character [^\s]
+\S is a negated \s; it represents any non-whitespace character
+
+    [^\s]
 
 =item *
 
-\W is a negated \w; it represents any non-word character [^\w]
+\W is a negated \w; it represents any non-word character
+
+    [^\w]
 
 =item *
 
@@ -239,7 +251,7 @@ C<cat> is able to match earlier in the string.
 
 At a given character position, the first alternative that allows the
 regex match to succeed will be the one that matches. Here, all the
-alternatives match at the first string position, so th first matches.
+alternatives match at the first string position, so the first matches.
 
 =head2 Grouping things and hierarchical matching
 
@@ -464,7 +476,7 @@ To extract a comma-delimited list of numbers, use
                                 # $const[2] = '3.142'
 
 If the empty regex C<//> is used, the string is split into individual
-characters.  If the regex has groupings, then list produced contains
+characters.  If the regex has groupings, then the list produced contains
 the matched substrings from the groupings as well:
 
     $x = "/usr/bin";

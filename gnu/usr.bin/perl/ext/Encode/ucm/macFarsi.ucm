@@ -1,5 +1,5 @@
 #
-# $Id: macFarsi.ucm,v 1.20 2002/04/04 19:50:54 dankogai Exp $
+# $Id: macFarsi.ucm,v 1.21 2003/08/20 11:15:31 dankogai Exp dankogai $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/FARSI.TXT
@@ -41,16 +41,38 @@ CHARMAP
 <U001D> \x1D |0 # <control>
 <U001E> \x1E |0 # <control>
 <U001F> \x1F |0 # <control>
-<U0030> \x30 |0 # DIGIT ZERO
-<U0031> \x31 |0 # DIGIT ONE
-<U0032> \x32 |0 # DIGIT TWO
-<U0033> \x33 |0 # DIGIT THREE
-<U0034> \x34 |0 # DIGIT FOUR
-<U0035> \x35 |0 # DIGIT FIVE
-<U0036> \x36 |0 # DIGIT SIX
-<U0037> \x37 |0 # DIGIT SEVEN
-<U0038> \x38 |0 # DIGIT EIGHT
-<U0039> \x39 |0 # DIGIT NINE
+<U0020> \xA0 |0 # SPACE, right-left
+<U0021> \xA1 |0 # EXCLAMATION MARK, right-left
+<U0022> \xA2 |0 # QUOTATION MARK, right-left
+<U0023> \xA3 |0 # NUMBER SIGN, right-left
+<U0024> \xA4 |0 # DOLLAR SIGN, right-left
+<U0025> \x25 |0 # PERCENT SIGN, left-right
+<U0026> \xA6 |0 # AMPERSAND, right-left
+<U0027> \xA7 |0 # APOSTROPHE, right-left
+<U0028> \xA8 |0 # LEFT PARENTHESIS, right-left
+<U0029> \xA9 |0 # RIGHT PARENTHESIS, right-left
+<U002A> \xAA |0 # ASTERISK, right-left
+<U002B> \xAB |0 # PLUS SIGN, right-left
+<U002C> \x2C |0 # COMMA, left-right; in Arabic-script context, displayed as 0x066C ARABIC THOUSANDS SEPARATOR
+<U002D> \xAD |0 # HYPHEN-MINUS, right-left
+<U002E> \xAE |0 # FULL STOP, right-left
+<U002F> \xAF |0 # SOLIDUS, right-left
+<U0030> \x30 |0 # DIGIT ZERO; in Arabic-script context, displayed as 0x06F0 EXTENDED ARABIC-INDIC DIGIT ZERO
+<U0031> \x31 |0 # DIGIT ONE; in Arabic-script context, displayed as 0x06F1 EXTENDED ARABIC-INDIC DIGIT ONE
+<U0032> \x32 |0 # DIGIT TWO; in Arabic-script context, displayed as 0x06F2 EXTENDED ARABIC-INDIC DIGIT TWO
+<U0033> \x33 |0 # DIGIT THREE; in Arabic-script context, displayed as 0x06F3 EXTENDED ARABIC-INDIC DIGIT THREE
+<U0034> \x34 |0 # DIGIT FOUR; in Arabic-script context, displayed as 0x06F4 EXTENDED ARABIC-INDIC DIGIT FOUR
+<U0035> \x35 |0 # DIGIT FIVE; in Arabic-script context, displayed as 0x06F5 EXTENDED ARABIC-INDIC DIGIT FIVE
+<U0036> \x36 |0 # DIGIT SIX; in Arabic-script context, displayed as 0x06F6 EXTENDED ARABIC-INDIC DIGIT SIX
+<U0037> \x37 |0 # DIGIT SEVEN; in Arabic-script context, displayed as 0x06F7 EXTENDED ARABIC-INDIC DIGIT SEVEN
+<U0038> \x38 |0 # DIGIT EIGHT; in Arabic-script context, displayed as 0x06F8 EXTENDED ARABIC-INDIC DIGIT EIGHT
+<U0039> \x39 |0 # DIGIT NINE; in Arabic-script context, displayed as 0x06F9 EXTENDED ARABIC-INDIC DIGIT NINE
+<U003A> \xBA |0 # COLON, right-left
+<U003B> \x3B |0 # SEMICOLON, left-right
+<U003C> \xBC |0 # LESS-THAN SIGN, right-left
+<U003D> \xBD |0 # EQUALS SIGN, right-left
+<U003E> \xBE |0 # GREATER-THAN SIGN, right-left
+<U003F> \x3F |0 # QUESTION MARK, left-right
 <U0040> \x40 |0 # COMMERCIAL AT
 <U0041> \x41 |0 # LATIN CAPITAL LETTER A
 <U0042> \x42 |0 # LATIN CAPITAL LETTER B
@@ -78,6 +100,11 @@ CHARMAP
 <U0058> \x58 |0 # LATIN CAPITAL LETTER X
 <U0059> \x59 |0 # LATIN CAPITAL LETTER Y
 <U005A> \x5A |0 # LATIN CAPITAL LETTER Z
+<U005B> \xDB |0 # LEFT SQUARE BRACKET, right-left
+<U005C> \xDC |0 # REVERSE SOLIDUS, right-left
+<U005D> \xDD |0 # RIGHT SQUARE BRACKET, right-left
+<U005E> \xDE |0 # CIRCUMFLEX ACCENT, right-left
+<U005F> \xDF |0 # LOW LINE, right-left
 <U0060> \x60 |0 # GRAVE ACCENT
 <U0061> \x61 |0 # LATIN SMALL LETTER A
 <U0062> \x62 |0 # LATIN SMALL LETTER B
@@ -105,7 +132,13 @@ CHARMAP
 <U0078> \x78 |0 # LATIN SMALL LETTER X
 <U0079> \x79 |0 # LATIN SMALL LETTER Y
 <U007A> \x7A |0 # LATIN SMALL LETTER Z
+<U007B> \xFB |0 # LEFT CURLY BRACKET, right-left
+<U007C> \xFC |0 # VERTICAL LINE, right-left
+<U007D> \xFD |0 # RIGHT CURLY BRACKET, right-left
 <U007E> \x7E |0 # TILDE
+<U00A0> \x81 |0 # NO-BREAK SPACE, right-left
+<U00AB> \x8C |0 # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK, right-left
+<U00BB> \x98 |0 # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK, right-left
 <U00C4> \x80 |0 # LATIN CAPITAL LETTER A WITH DIAERESIS
 <U00C7> \x82 |0 # LATIN CAPITAL LETTER C WITH CEDILLA
 <U00C9> \x83 |0 # LATIN CAPITAL LETTER E WITH ACUTE
@@ -128,6 +161,7 @@ CHARMAP
 <U00F3> \x97 |0 # LATIN SMALL LETTER O WITH ACUTE
 <U00F4> \x99 |0 # LATIN SMALL LETTER O WITH CIRCUMFLEX
 <U00F6> \x9A |0 # LATIN SMALL LETTER O WITH DIAERESIS
+<U00F7> \x9B |0 # DIVISION SIGN, right-left
 <U00F9> \x9D |0 # LATIN SMALL LETTER U WITH GRAVE
 <U00FA> \x9C |0 # LATIN SMALL LETTER U WITH ACUTE
 <U00FB> \x9E |0 # LATIN SMALL LETTER U WITH CIRCUMFLEX
@@ -192,4 +226,16 @@ CHARMAP
 <U06BA> \x8B |0 # ARABIC LETTER NOON GHUNNA
 <U06D2> \xFF |0 # ARABIC LETTER YEH BARREE
 <U06D5> \xF6 |0 # ARABIC LETTER AE
+<U06F0> \xB0 |0 # EXTENDED ARABIC-INDIC DIGIT ZERO, right-left (need override)
+<U06F1> \xB1 |0 # EXTENDED ARABIC-INDIC DIGIT ONE, right-left (need override)
+<U06F2> \xB2 |0 # EXTENDED ARABIC-INDIC DIGIT TWO, right-left (need override)
+<U06F3> \xB3 |0 # EXTENDED ARABIC-INDIC DIGIT THREE, right-left (need override)
+<U06F4> \xB4 |0 # EXTENDED ARABIC-INDIC DIGIT FOUR, right-left (need override)
+<U06F5> \xB5 |0 # EXTENDED ARABIC-INDIC DIGIT FIVE, right-left (need override)
+<U06F6> \xB6 |0 # EXTENDED ARABIC-INDIC DIGIT SIX, right-left (need override)
+<U06F7> \xB7 |0 # EXTENDED ARABIC-INDIC DIGIT SEVEN, right-left (need override)
+<U06F8> \xB8 |0 # EXTENDED ARABIC-INDIC DIGIT EIGHT, right-left (need override)
+<U06F9> \xB9 |0 # EXTENDED ARABIC-INDIC DIGIT NINE, right-left (need override)
+<U2026> \x93 |0 # HORIZONTAL ELLIPSIS, right-left
+<U274A> \xC0 |0 # EIGHT TEARDROP-SPOKED PROPELLER ASTERISK, right-left
 END CHARMAP

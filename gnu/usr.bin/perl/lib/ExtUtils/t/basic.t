@@ -14,40 +14,22 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 17;
+use Config;
+
+use Test::More tests => 73;
 use MakeMaker::Test::Utils;
+use File::Find;
 use File::Spec;
-use TieOut;
+use File::Path;
+
+# 'make disttest' sets a bunch of environment variables which interfere
+# with our testing.
+delete @ENV{qw(PREFIX LIB MAKEFLAGS)};
 
 my $perl = which_perl();
+my $Is_VMS = $^O eq 'VMS';
 
-my $root_dir = 't';
-
-if( $^O eq 'VMS' ) {
-    # On older systems we might exceed the 8-level directory depth limit
-    # imposed by RMS.  We get around this with a rooted logical, but we
-    # can't create logical names with attributes in Perl, so we do it
-    # in a DCL subprocess and put it in the job table so the parent sees it.
-    open( BFDTMP, '>bfdtesttmp.com' ) || die "Error creating command file; $!";
-    print BFDTMP <<'COMMAND';
-$ IF F$TRNLNM("PERL_CORE") .EQS. "" .AND. F$TYPE(PERL_CORE) .EQS. ""
-$ THEN
-$!  building CPAN version
-$   BFD_TEST_ROOT = F$PARSE("SYS$DISK:[]",,,,"NO_CONCEAL")-".][000000"-"]["-"].;"+".]"
-$ ELSE
-$!  we're in the core
-$   BFD_TEST_ROOT = F$PARSE("SYS$DISK:[-]",,,,"NO_CONCEAL")-".][000000"-"]["-"].;"+".]"
-$ ENDIF
-$ DEFINE/JOB/NOLOG/TRANSLATION=CONCEALED BFD_TEST_ROOT 'BFD_TEST_ROOT'
-COMMAND
-    close BFDTMP;
-
-    system '@bfdtesttmp.com';
-    END { 1 while unlink 'bfdtesttmp.com' }
-    $root_dir = 'BFD_TEST_ROOT:[t]';
-}
-
-chdir $root_dir;
+chdir($Is_VMS ? 'BFD_TEST_ROOT:[t]' : 't');
 
 
 perl_lib;
@@ -56,10 +38,11 @@ my $Touch_Time = calibrate_mtime();
 
 $| = 1;
 
-ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
+ok( chdir('Big-Dummy'), "chdir'd to Big-Dummy" ) ||
   diag("chdir failed: $!");
 
-my @mpl_out = `$perl Makefile.PL PREFIX=dummy-install`;
+my @mpl_out = run(qq{$perl Makefile.PL "PREFIX=../dummy-install"});
+END { rmtree '../dummy-install'; }
 
 cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) ||
   diag(@mpl_out);
@@ -86,36 +69,188 @@ my $make = make_run();
 {
     # Supress 'make manifest' noise
     local $ENV{PERL_MM_MANIFEST_VERBOSE} = 0;
-    my $manifest_out = `$make manifest`;
+    my $manifest_out = run("$make manifest");
     ok( -e 'MANIFEST',      'make manifest created a MANIFEST' );
     ok( -s 'MANIFEST',      '  its not empty' );
 }
 
 END { unlink 'MANIFEST'; }
 
-my $test_out = `$make test`;
+
+my $ppd_out = run("$make ppd");
+is( $?, 0,                      '  exited normally' ) || diag $ppd_out;
+ok( open(PPD, 'Big-Dummy.ppd'), '  .ppd file generated' );
+my $ppd_html;
+{ local $/; $ppd_html = <PPD> }
+close PPD;
+like( $ppd_html, qr{^<SOFTPKG NAME="Big-Dummy" VERSION="0,01,0,0">}m, 
+                                                           '  <SOFTPKG>' );
+like( $ppd_html, qr{^\s*<TITLE>Big-Dummy</TITLE>}m,        '  <TITLE>'   );
+like( $ppd_html, qr{^\s*<ABSTRACT>Try "our" hot dog's</ABSTRACT>}m,         
+                                                           '  <ABSTRACT>');
+like( $ppd_html, 
+      qr{^\s*<AUTHOR>Michael G Schwern &lt;schwern\@pobox.com&gt;</AUTHOR>}m,
+                                                           '  <AUTHOR>'  );
+like( $ppd_html, qr{^\s*<IMPLEMENTATION>}m,          '  <IMPLEMENTATION>');
+like( $ppd_html, qr{^\s*<DEPENDENCY NAME="strict" VERSION="0,0,0,0" />}m,
+                                                           '  <DEPENDENCY>' );
+like( $ppd_html, qr{^\s*<OS NAME="$Config{osname}" />}m,
+                                                           '  <OS>'      );
+like( $ppd_html, qr{^\s*<ARCHITECTURE NAME="$Config{archname}" />}m,  
+                                                           '  <ARCHITECTURE>');
+like( $ppd_html, qr{^\s*<CODEBASE HREF="" />}m,            '  <CODEBASE>');
+like( $ppd_html, qr{^\s*</IMPLEMENTATION>}m,           '  </IMPLEMENTATION>');
+like( $ppd_html, qr{^\s*</SOFTPKG>}m,                      '  </SOFTPKG>');
+END { unlink 'Big-Dummy.ppd' }
+
+
+my $test_out = run("$make test");
 like( $test_out, qr/All tests successful/, 'make test' );
-is( $?, 0 );
+is( $?, 0,                                 '  exited normally' ) || 
+    diag $test_out;
 
 # Test 'make test TEST_VERBOSE=1'
 my $make_test_verbose = make_macro($make, 'test', TEST_VERBOSE => 1);
-$test_out = `$make_test_verbose`;
+$test_out = run("$make_test_verbose");
 like( $test_out, qr/ok \d+ - TEST_VERBOSE/, 'TEST_VERBOSE' );
-like( $test_out, qr/All tests successful/, '  successful' );
-is( $?, 0 );
+like( $test_out, qr/All tests successful/,  '  successful' );
+is( $?, 0,                                  '  exited normally' ) ||
+    diag $test_out;
 
-my $dist_test_out = `$make disttest`;
+
+my $install_out = run("$make install");
+is( $?, 0, 'install' ) || diag $install_out;
+like( $install_out, qr/^Installing /m );
+like( $install_out, qr/^Writing /m );
+
+ok( -r '../dummy-install',     '  install dir created' );
+my %files = ();
+find( sub { 
+    # do it case-insensitive for non-case preserving OSs
+    $files{lc $_} = $File::Find::name; 
+}, '../dummy-install' );
+ok( $files{'dummy.pm'},     '  Dummy.pm installed' );
+ok( $files{'liar.pm'},      '  Liar.pm installed'  );
+ok( $files{'.packlist'},    '  packlist created'   );
+ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+
+
+SKIP: {
+    skip "VMS install targets do not preserve $(PREFIX)", 8 if $Is_VMS;
+
+    $install_out = run("$make install PREFIX=elsewhere");
+    is( $?, 0, 'install with PREFIX override' ) || diag $install_out;
+    like( $install_out, qr/^Installing /m );
+    like( $install_out, qr/^Writing /m );
+
+    ok( -r 'elsewhere',     '  install dir created' );
+    %files = ();
+    find( sub { $files{$_} = $File::Find::name; }, 'elsewhere' );
+    ok( $files{'Dummy.pm'},     '  Dummy.pm installed' );
+    ok( $files{'Liar.pm'},      '  Liar.pm installed'  );
+    ok( $files{'.packlist'},    '  packlist created'   );
+    ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+    rmtree('elsewhere');
+}
+
+
+SKIP: {
+    skip "VMS install targets do not preserve $(DESTDIR)", 10 if $Is_VMS;
+
+    $install_out = run("$make install PREFIX= DESTDIR=other");
+    is( $?, 0, 'install with DESTDIR' ) || 
+        diag $install_out;
+    like( $install_out, qr/^Installing /m );
+    like( $install_out, qr/^Writing /m );
+
+    ok( -d 'other',  '  destdir created' );
+    %files = ();
+    my $perllocal;
+    find( sub { 
+        $files{$_} = $File::Find::name;
+    }, 'other' );
+    ok( $files{'Dummy.pm'},     '  Dummy.pm installed' );
+    ok( $files{'Liar.pm'},      '  Liar.pm installed'  );
+    ok( $files{'.packlist'},    '  packlist created'   );
+    ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+
+    ok( open(PERLLOCAL, $files{'perllocal.pod'} ) ) || 
+        diag("Can't open $files{'perllocal.pod'}: $!");
+    { local $/;
+      unlike(<PERLLOCAL>, qr/other/, 'DESTDIR should not appear in perllocal');
+    }
+    close PERLLOCAL;
+
+# TODO not available in the min version of Test::Harness we require
+#    ok( open(PACKLIST, $files{'.packlist'} ) ) || 
+#        diag("Can't open $files{'.packlist'}: $!");
+#    { local $/;
+#      local $TODO = 'DESTDIR still in .packlist';
+#      unlike(<PACKLIST>, qr/other/, 'DESTDIR should not appear in .packlist');
+#    }
+#    close PACKLIST;
+
+    rmtree('other');
+}
+
+
+SKIP: {
+    skip "VMS install targets do not preserve $(PREFIX)", 9 if $Is_VMS;
+
+    $install_out = run("$make install PREFIX=elsewhere DESTDIR=other/");
+    is( $?, 0, 'install with PREFIX override and DESTDIR' ) || 
+        diag $install_out;
+    like( $install_out, qr/^Installing /m );
+    like( $install_out, qr/^Writing /m );
+
+    ok( !-d 'elsewhere',       '  install dir not created' );
+    ok( -d 'other/elsewhere',  '  destdir created' );
+    %files = ();
+    find( sub { $files{$_} = $File::Find::name; }, 'other/elsewhere' );
+    ok( $files{'Dummy.pm'},     '  Dummy.pm installed' );
+    ok( $files{'Liar.pm'},      '  Liar.pm installed'  );
+    ok( $files{'.packlist'},    '  packlist created'   );
+    ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+    rmtree('other');
+}
+
+
+my $dist_test_out = run("$make disttest");
 is( $?, 0, 'disttest' ) || diag($dist_test_out);
+
+# Test META.yml generation
+use ExtUtils::Manifest qw(maniread);
+ok( -f 'META.yml',    'META.yml written' );
+my $manifest = maniread();
+# VMS is non-case preserving, so we can't know what the MANIFEST will
+# look like. :(
+_normalize($manifest);
+is( $manifest->{'meta.yml'}, 'Module meta-data (added by MakeMaker)' );
+
+# Test NO_META META.yml suppression
+unlink 'META.yml';
+ok( !-f 'META.yml',   'META.yml deleted' );
+@mpl_out = run(qq{$perl Makefile.PL "NO_META=1"});
+cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
+my $metafile_out = run("$make metafile");
+is( $?, 0, 'metafile' ) || diag($metafile_out);
+ok( !-f 'META.yml',   'META.yml generation suppressed by NO_META' );
+
+# Test if MANIFEST is read-only.
+chmod 0444, 'MANIFEST';
+@mpl_out = run(qq{$perl Makefile.PL});
+cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
+$metafile_out = run("$make metafile_addtomanifest");
+is( $?, 0, q{metafile_addtomanifest didn't die with locked MANIFEST} ) || 
+    diag($metafile_out);
 
 
 # Make sure init_dirscan doesn't go into the distdir
-@mpl_out = `$perl Makefile.PL "PREFIX=dummy-install"`;
+@mpl_out = run(qq{$perl Makefile.PL "PREFIX=../dummy-install"});
 
-cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) ||
-  diag(@mpl_out);
+cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
 
-ok( grep(/^Writing $makefile for Big::Dummy/, 
-         @mpl_out) == 1,
+ok( grep(/^Writing $makefile for Big::Dummy/, @mpl_out) == 1,
                                 'init_dirscan skipped distdir') || 
   diag(@mpl_out);
 
@@ -124,8 +259,18 @@ ok( grep(/^Writing $makefile for Big::Dummy/,
 open(SAVERR, ">&STDERR") or die $!;
 open(STDERR, ">".File::Spec->devnull) or die $!;
 
-my $realclean_out = `$make realclean`;
+my $realclean_out = run("$make realclean");
 is( $?, 0, 'realclean' ) || diag($realclean_out);
 
 open(STDERR, ">&SAVERR") or die $!;
 close SAVERR;
+
+
+sub _normalize {
+    my $hash = shift;
+
+    while(my($k,$v) = each %$hash) {
+        delete $hash->{$k};
+        $hash->{lc $k} = $v;
+    }
+}

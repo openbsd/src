@@ -120,12 +120,21 @@ esac
 
 !GROK!THIS!
 
+# Set the following variables.  Mention them here so metaconfig
+# includes the appropriate code in Configure
+#   $bin $scriptdir $privlib $archlib 
+#	$man1dir $man3dir $html1dir $html3dir 
+#   $sitebin $sitescript $sitelib $sitearch 
+#	$siteman1dir $siteman3dir $sitehtml1dir $sitehtml3dir
+#   $vendorbin $vendorscript $vendorlib $vendorarch
+#	$vendorman1dir $vendorman3dir $vendorhtml1dir $vendorhtml3dir
+
 for var in \
 	bin scriptdir privlib archlib man1dir man3dir html1dir html3dir \
 	sitebin sitescript sitelib sitearch \
-		siteman1 siteman3 sitehtml1 sitehtml3 \
+		siteman1dir siteman3dir sitehtml1dir sitehtml3dir \
 	vendorbin vendorscript vendorlib vendorarch \
-		vendorman1 vendorman3 vendorhtml1 vendorhtml3
+		vendorman1dir vendorman3dir vendorhtml1dir vendorhtml3dir
 do
 	
     case "$var" in

@@ -7,7 +7,7 @@ BEGIN {
 	require Config; import Config;
 }
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 
 # open::import expects 'open' as its first argument, but it clashes with open()
 sub import {
@@ -45,6 +45,7 @@ like( $warn, qr/Unknown PerlIO layer/,
 
 SKIP: {
     skip("no perlio, no :utf8", 1) unless (find PerlIO::Layer 'perlio');
+    skip("no Encode for locale layer", 1) unless eval { require Encode }; 
     # now load a real-looking locale
     $ENV{LC_ALL} = ' .utf8';
     import( 'IN', 'locale' );
@@ -169,6 +170,16 @@ EOE
     close G;
     ok($ok == @a,
        "checking syswrite() output on :utf8 streams by reading it back in");
+}
+
+SKIP: {
+    skip("no perlio", 1) unless (find PerlIO::Layer 'perlio');
+    use open IN => ':non-existent';
+    eval {
+	require Symbol; # Anything that exists but we havn't loaded
+    };
+    like($@, qr/Can't locate Symbol|Recursive call/i,
+	 "test for an endless loop in PerlIO_find_layer");
 }
 
 END {

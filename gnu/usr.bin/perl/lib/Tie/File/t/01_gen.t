@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
+$| = 1;
 my $file = "tf$$.txt";
+1 while unlink $file;
 
 print "1..75\n";
 

@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..7\n";
+print "1..8\n";
 
 BEGIN {
     chdir 't' if -d 't';
@@ -49,3 +49,11 @@ abbrev \%y, @z;
 
 $s = join ':', sort keys %y;
 print (($r eq $s)?"ok $test\n":"not ok $test\n"); $test++;
+
+
+# warnings safe with zero arguments
+my $notok;
+$^W = 1;
+$SIG{__WARN__} = sub { $notok++ };
+abbrev();
+print ($notok ? "not ok $test\n" : "ok $test\n"); $test++;

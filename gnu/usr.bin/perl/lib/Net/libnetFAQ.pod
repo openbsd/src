@@ -9,7 +9,7 @@ libnetFAQ - libnet Frequently Asked Questions
 This document is distributed with the libnet distribution, and is also
 available on the libnet web page at
 
-    http://www.pobox.com/~gbarr/libnet/
+    http://search.cpan.org/~gbarr/libnet/
 
 =head2 How to contribute to this document
 
@@ -70,7 +70,7 @@ in
 The latest release and information is also available on the libnet web page
 at
 
- http://www.pobox.com/~gbarr/libnet/
+ http://search.cpan.org/~gbarr/libnet/
 
 =head1 Using Net::FTP
 
@@ -303,5 +303,5 @@ All rights reserved.
 
 =for html <hr>
 
-I<$Id: //depot/libnet/Net/libnetFAQ.pod#5 $>
+I<$Id: //depot/libnet/Net/libnetFAQ.pod#6 $>
 

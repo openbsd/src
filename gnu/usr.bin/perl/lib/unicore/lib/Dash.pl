@@ -10,10 +10,10 @@
 #
 return <<'END';
 002D		Dash
-00AD		Dash
 058A		Dash
 1806		Dash
 2010	2015	Dash
+2053		Dash
 207B		Dash
 208B		Dash
 2212		Dash

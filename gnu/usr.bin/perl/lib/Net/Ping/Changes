@@ -1,6 +1,145 @@
 CHANGES
 -------
 
+2.31  Jun 28 14:00 2003
+	- Win32 Compatibility fixes.
+	  Patch by mhx-perl@gmx.net (Marcus Holland-Moritz)
+	- Apply bleadperl patch #22204
+	- Add ToS support.
+	  Patch by martin@lorensen.dk (Martin Lorensen)
+
+2.30  Apr 18 14:00 2003
+	- Fix select() bug for UDP and ICMP protocols
+	  in case packet comes from wrong source or seq.
+	- Allow UDP ping to different IP addresses
+	  without instantiating a new object.
+	- Add retrans() method to customize or disable
+	  backoff factor for udp pings.
+	  Thanks Torgny.Hofstedt@sevenlevels.se
+	- Let ECONNRESET be considered reachable for
+	  UDP pings.  Now it works for cygwin.
+	  Spot by jhi@iki.fi (Jarkko Hietaniemi).
+
+2.29  Apr 12 15:00 2003
+	- Implement "double send()" concept for udp pings.
+	  See: <http://perlmonks.thepen.com/42898.html>
+	  Thanks to rdw @ perlmonks.
+	- Send multiple udp packets in case of loss.
+	- Exponential backoff code swiped from Net::DNS
+	  Thanks to mike@fuhr.org (Michael Fuhr).
+	- Also allows to capture udp ECONNREFUSED condition.
+	- Rename tcp_service_check method to service_check.
+	- Allow demo/fping -s to force service check.
+	  Idea by ralijani@yahoo.com (REZA Alijani)
+	- Fix return from ping to be compatible with wantarray
+	  when the host doesn't even resolve.
+	- Add udp proto test to test suite.
+	- VMS patch from Craig Berry to pre-check echo.
+	- Apply bleadperl patch (change #18904)
+	- Apply bleadperl patch as explained:
+	http://www.xray.mpe.mpg.de/mailing-lists/perl5-
+	porters/2003-03/msg00992.html
+
+2.28  Jan 23 18:00 2003
+	- No new features.  Bug fixes only.
+	- Fixed ICMP_STRUCT to work on Big Endian platforms.
+	  Thanks to danb@thelittlemacshop.com (Dan Buettner)
+	  for testing on Mac OS X 10.2.3 and many others
+	  for testing on Big Endian boxes.
+	- Not do binmode(). Causes more problems than helps.
+	- Perl 5.004 compatibility fixes (Spot by Honza).
+
+2.27  Jan 15 23:00 2003
+	- Patch by slebedev@iwl.net (Sergey Lebedev):
+	- 1) Fixed response packet parsing offsets in ping_icmp.
+	- 2) Added icmp_result method.
+	- Patch by radu@netsoft.ro (Radu Greab):
+	- 1) Changed ping_tcp() to use non-blocking connect
+	  instead of alarm() interface in order to avoid
+	  conflicts with user applications.
+	- 2) Also get rid of all eval {} code in ping_tcp
+	  in order to avoid catching SIGALRM trigger and
+	  to avoid conflicts with other evals.
+	- 3) Avoid ioctl() syscall for more accurate error
+	  detection on non-blocking tcp connects.
+	- 4) Fix fcntl() syntax usage.
+	- Patch by adelton@fi.muni.cz (Honza Pazdziora):
+	- 1) Fix icmp request pack code to be more platform
+	  independent regardless of Big/Little Endian.
+	- 2) Use binmode for filehandle in case perl 5.8.0
+	  tries to dink with the data stream.
+	- Other changes by Rob Brown:
+	- Fixed ack() failures under certain rare conditions.
+	- Use more appropriate \z instead of $ in regex.
+	- Resolved Cygwin "make test" problems reported by
+	  h.m.brand@hccnet.nl (H.Merijn Brand).
+	- Add sending a real ICMP packet in the test suite.
+	- Add Socket to PREREQ_PM (missing on some boxes?)
+	- Adjust syn_forking IPC pipe for fatter Win32 pids.
+	- Better handling of alarm() in test suite for Win32.
+	- Add a DESTROY method to reduce chances of
+	  lingering connect-choking children.
+
+2.26  Dec 02 12:00 2002
+	- More compatibility fixes.
+	- Thanks for Solaris bug reports:
+	  Paul.Gaborit@enstimac.fr (Paul Gaborit)
+	  Jost.Krieger@ruhr-uni-bochum.de (Jost Krieger)
+	- Thanks for Solaris testing box:
+	  Gunther.Heintzen@rrze.uni-erlangen.de (Gunther Heintzen)
+	- Solaris ENOTCONN select() for write choke bug.
+	- Thanks for Cygwin bug reports:
+	  h.m.brand@hccnet.nl (H.Merijn Brand)
+	- Cygwin "EAGAIN instead of ECONNREFUSED" buttwag.
+
+2.25  Nov 19 12:00 2002
+	- Handle condition where O_NONBLOCK tcp connects
+	  immediately fail without EINPROGRESS
+	  (certain platforms or SMP optimizations).
+
+2.24  Oct 21 22:00 2002
+	- Compatibility fixes.
+	- Avoid using 127.1.1.1 and 127.2.2.2 because
+	  it breaks on some platforms (Irix).
+	- Handle condition where nonblocking tcp connects
+	  immediately connect on some platforms
+	  (solaris and freebsd) and to be SMP safer.
+	- Win32 $p->ack( $host ) method should now work.
+	- Add ack( $host ) test cases to test suite.
+
+2.23  Oct 18 22:00 2002
+	- Fix ack() fd "each" detection bug.
+	- Add nack() method for OO interface to the
+	  reason why the ack() failed.
+	- Fix premature "Timed out" side effect when a
+	  different specified ack( $host ) fails.
+	- IO::Socket::INET ephemeral port buttwag
+	  hack for the t/450_service.t test.
+	- Documental changes.
+
+2.22  Oct 17 16:00 2002
+	- Add $p->tcp_service_check() method to enforce
+	  remote tcp service availability checking.
+	  Patch by jef@linuxbe.org (Jean-Francois Dive).
+	- Changed default behavior of "syn" protocol to
+	  disabled tcp_service_check instead of enabled.
+	- Win32 compatibility changes ("syn" protocol).
+	- Increase timeouts for tests in case client or
+	  server network(s) are busy.
+
+2.21  Oct 14 12:00 2002
+	- Preserve/restore ALRM settings for tcp mode pings.
+	  Spot by d@niel-berlin.de (Daniel Berlin)
+	- Can now select device for udp and icmp protocols.
+	  Patch by sarfata@altern.org (Thomas Sarlandie).
+	- Add new "syn" protocol to allow for mass parallel
+	  (syncronous) TCP service reachability checking.
+	- Add ack() method to utilize non-blocking connect
+	  (SYN/ACK) feature of the "syn" protocol.
+	- Add demo/fping script as a "syn" demonstration.
+	- Compatibiliy patches for cygwin.
+	  Spot by frazee.23@osu.edu (Joseph Frazee)
+
 2.20  Jun 20 10:00 2002
 	- Perl 5.8.0 compatibility stuff.
 	  Spot by dcd@tc.fluke.com (David Dyck).

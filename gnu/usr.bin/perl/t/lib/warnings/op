@@ -1,25 +1,5 @@
   op.c		AOK
 
-     "my" variable %s masks earlier declaration in same scope
-	my $x;
-	my $x ;
-
-     Variable "%s" may be unavailable 
-	sub x {
-      	    my $x;
-      	    sub y {
-         	$x
-      	    }
-   	}
-
-     Variable "%s" will not stay shared 
-	sub x {
-      	    my $x;
-      	    sub y {
-         	sub { $x }
-      	    }
-   	}
-
      Found = in conditional, should be ==
 	1 if $a = 1 ;
 
@@ -113,86 +93,19 @@
 
     Use of /g modifier is meaningless in split
 
+    Possible precedence problem on bitwise %c operator	[Perl_ck_bitop]
+
     Mandatory Warnings 
     ------------------
     Prototype mismatch:		[cv_ckproto]
         sub fred() ;
         sub fred($) {}
 
-    %s never introduced		[pad_leavemy]	TODO
     Runaway prototype		[newSUB]	TODO
     oops: oopsAV		[oopsAV]	TODO
     oops: oopsHV		[oopsHV]	TODO
     
-
 __END__
-# op.c
-use warnings 'misc' ;
-my $x ;
-my $x ;
-my $y = my $y ;
-no warnings 'misc' ;
-my $x ;
-my $y ;
-EXPECT
-"my" variable $x masks earlier declaration in same scope at - line 4.
-"my" variable $y masks earlier declaration in same statement at - line 5.
-########
-# op.c
-use warnings 'closure' ;
-sub x {
-      my $x;
-      sub y {
-         $x
-      }
-   }
-EXPECT
-Variable "$x" will not stay shared at - line 7.
-########
-# op.c
-no warnings 'closure' ;
-sub x {
-      my $x;
-      sub y {
-         $x
-      }
-   }
-EXPECT
-
-########
-# op.c
-use warnings 'closure' ;
-sub x {
-      our $x;
-      sub y {
-         $x
-      }
-   }
-EXPECT
-
-########
-# op.c
-use warnings 'closure' ;
-sub x {
-      my $x;
-      sub y {
-         sub { $x }
-      }
-   }
-EXPECT
-Variable "$x" may be unavailable at - line 6.
-########
-# op.c
-no warnings 'closure' ;
-sub x {
-      my $x;
-      sub y {
-         sub { $x }
-      }
-   }
-EXPECT
-
-########
 # op.c
 use warnings 'syntax' ;
 1 if $a = 1 ;
@@ -300,6 +213,7 @@ eval { getgrnam 1 };	# OP_GGRNAM
 eval { getgrgid 1 };	# OP_GGRGID
 eval { getpwnam 1 };	# OP_GPWNAM
 eval { getpwuid 1 };	# OP_GPWUID
+prototype "foo";	# OP_PROTOTYPE
 EXPECT
 Useless use of repeat (x) in void context at - line 3.
 Useless use of wantarray in void context at - line 5.
@@ -338,6 +252,7 @@ Useless use of getgrnam in void context at - line 50.
 Useless use of getgrgid in void context at - line 51.
 Useless use of getpwnam in void context at - line 52.
 Useless use of getpwuid in void context at - line 53.
+Useless use of subroutine prototype in void context at - line 54.
 ########
 # op.c
 use warnings 'void' ; close STDIN ;
@@ -400,6 +315,7 @@ eval { getgrnam 1 };	# OP_GGRNAM
 eval { getgrgid 1 };	# OP_GGRGID
 eval { getpwnam 1 };	# OP_GPWNAM
 eval { getpwuid 1 };	# OP_GPWUID
+prototype "foo";	# OP_PROTOTYPE
 EXPECT
 ########
 # op.c
@@ -668,20 +584,32 @@ Can't modify private array in substitution (s///) at - line 6, near "s/a/b/ ;"
 BEGIN not safe after errors--compilation aborted at - line 18.
 ########
 # op.c
-use warnings 'syntax' ;
+use warnings 'parenthesis' ;
 my $a, $b = (1,2);
-no warnings 'syntax' ;
+my @foo,%bar,	$quux; # there's a TAB here
+no warnings 'parenthesis' ;
 my $c, $d = (1,2);
 EXPECT
 Parentheses missing around "my" list at - line 3.
+Parentheses missing around "my" list at - line 4.
 ########
 # op.c
-use warnings 'syntax' ;
+use warnings 'parenthesis' ;
+our $a, $b = (1,2);
+no warnings 'parenthesis' ;
+our $c, $d = (1,2);
+EXPECT
+Parentheses missing around "our" list at - line 3.
+########
+# op.c
+use warnings 'parenthesis' ;
 local $a, $b = (1,2);
-no warnings 'syntax' ;
+local *f, *g;
+no warnings 'parenthesis' ;
 local $c, $d = (1,2);
 EXPECT
 Parentheses missing around "local" list at - line 3.
+Parentheses missing around "local" list at - line 4.
 ########
 # op.c
 use warnings 'bareword' ;
@@ -984,3 +912,57 @@ no warnings 'regexp';
 split /blah/g, "blah";
 EXPECT
 Use of /g modifier is meaningless in split at - line 4.
+########
+# op.c
+use warnings 'precedence';
+$a = $b & $c == $d;
+$a = $b ^ $c != $d;
+$a = $b | $c > $d;
+$a = $b < $c & $d;
+$a = $b >= $c ^ $d;
+$a = $b <= $c | $d;
+$a = $b <=> $c & $d;
+$a &= $b == $c; $a |= $b == $c; $a ^= $b == $c; # shouldn't warn
+no warnings 'precedence';
+$a = $b & $c == $d;
+$a = $b ^ $c != $d;
+$a = $b | $c > $d;
+$a = $b < $c & $d;
+$a = $b >= $c ^ $d;
+$a = $b <= $c | $d;
+$a = $b <=> $c & $d;
+EXPECT
+Possible precedence problem on bitwise & operator at - line 3.
+Possible precedence problem on bitwise ^ operator at - line 4.
+Possible precedence problem on bitwise | operator at - line 5.
+Possible precedence problem on bitwise & operator at - line 6.
+Possible precedence problem on bitwise ^ operator at - line 7.
+Possible precedence problem on bitwise | operator at - line 8.
+Possible precedence problem on bitwise & operator at - line 9.
+########
+# op.c
+use integer;
+use warnings 'precedence';
+$a = $b & $c == $d;
+$a = $b ^ $c != $d;
+$a = $b | $c > $d;
+$a = $b < $c & $d;
+$a = $b >= $c ^ $d;
+$a = $b <= $c | $d;
+$a = $b <=> $c & $d;
+no warnings 'precedence';
+$a = $b & $c == $d;
+$a = $b ^ $c != $d;
+$a = $b | $c > $d;
+$a = $b < $c & $d;
+$a = $b >= $c ^ $d;
+$a = $b <= $c | $d;
+$a = $b <=> $c & $d;
+EXPECT
+Possible precedence problem on bitwise & operator at - line 4.
+Possible precedence problem on bitwise ^ operator at - line 5.
+Possible precedence problem on bitwise | operator at - line 6.
+Possible precedence problem on bitwise & operator at - line 7.
+Possible precedence problem on bitwise ^ operator at - line 8.
+Possible precedence problem on bitwise | operator at - line 9.
+Possible precedence problem on bitwise & operator at - line 10.

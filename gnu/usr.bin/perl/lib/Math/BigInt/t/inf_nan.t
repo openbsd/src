@@ -33,9 +33,9 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-	        # values    groups   oprators   classes   tests 
-  plan tests =>   7       * 6      * 5        * 4       * 2 +
-                  7       * 6      * 2        * 4       * 1;		# bmod
+	        # values    groups   operators   classes   tests 
+  plan tests =>   7       * 6      * 5         * 4       * 2 +
+                  7       * 6      * 2         * 4       * 1;	  # bmod
   }
 
 use Math::BigInt;

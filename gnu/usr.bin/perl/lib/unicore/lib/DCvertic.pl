@@ -12,4 +12,5 @@ return <<'END';
 309F		
 30FF		
 FE30	FE44	
+FE47	FE48	
 END

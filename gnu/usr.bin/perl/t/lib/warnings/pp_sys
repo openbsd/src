@@ -389,9 +389,18 @@ my $a = sysread(F, $a,10) ;
 no warnings 'io' ;
 my $a = sysread(F, $a,10) ;
 close F ;
+use warnings 'io' ;
+sysread(F, $a, 10);
+read(F, $a, 10);
+sysread(NONEXISTENT, $a, 10);
+read(NONEXISTENT, $a, 10);
 unlink $file ;
 EXPECT
 Filehandle F opened only for output at - line 12.
+sysread() on closed filehandle F at - line 17.
+read() on closed filehandle F at - line 18.
+sysread() on unopened filehandle NONEXISTENT at - line 19.
+read() on unopened filehandle NONEXISTENT at - line 20.
 ########
 # pp_sys.c [pp_binmode]
 use warnings 'unopened' ;

@@ -40,7 +40,7 @@ Long answer: The question belies a true understanding of the
        longer exposition.
 
        If you want perl to warn you when it sees a program which
-       catenates a number with the string "19" -- a common
+       concatenates a number with the string "19" -- a common
        indication of a year 2000 problem -- build perl using the
        Configure option  "-Accflags=-DPERL_Y2KWARN".
        (See the file INSTALL for more information about building

@@ -1,5 +1,9 @@
 #!./perl
 
+# Note : we're not using t/test.pl here, because we would need
+# fresh_perl_is, and fresh_perl_is uses a closure -- a special
+# case of what this program tests for.
+
 chdir 't' if -d 't';
 @INC = '../lib';
 $Is_VMS = $^O eq 'VMS';
@@ -12,7 +16,7 @@ $|=1;
 
 undef $/;
 @prgs = split "\n########\n", <DATA>;
-print "1..", scalar @prgs, "\n";
+print "1..", 6 + scalar @prgs, "\n";
 
 $tmpfile = "asubtmp000";
 1 while -f ++$tmpfile;
@@ -49,6 +53,30 @@ for (@prgs){
        print "not ";
     }
     print "ok ", ++$i, "\n";
+}
+
+sub test_invalid_decl {
+    my ($code,$todo) = @_;
+    $todo = '' unless defined $todo;
+    eval $code;
+    if ($@ =~ /^Illegal declaration of anonymous subroutine at/) {
+	print "ok ", ++$i, " - '$code' is illegal$todo\n";
+    } else {
+	print "not ok ", ++$i, " - '$code' is illegal$todo\n# GOT: $@";
+    }
+}
+
+test_invalid_decl('sub;');
+test_invalid_decl('sub ($) ;');
+test_invalid_decl('{ $x = sub }');
+test_invalid_decl('sub ($) && 1');
+test_invalid_decl('sub ($) : lvalue;',' # TODO');
+
+eval "sub #foo\n{print 1}";
+if ($@ eq '') {
+    print "ok ", ++$i, "\n";
+} else {
+    print "not ok ", ++$i, "\n# GOT: $@";
 }
 
 __END__

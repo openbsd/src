@@ -1,7 +1,7 @@
 package Encode::JP::JIS7;
 use strict;
 
-our $VERSION = do { my @r = (q$Revision: 1.8 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.12 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -24,8 +24,6 @@ sub needs_lines { 1 }
 
 use Encode::CJKConstants qw(:all);
 
-our $DEBUG = 0;
-
 #
 # decode is identical for all 2022 variants
 #
@@ -35,8 +33,7 @@ sub decode($$;$)
     my ($obj, $str, $chk) = @_;
     my $residue = '';
     if ($chk){
-	$str =~ s/([^\x00-\x7f].*)$//so;
-	$1 and $residue = $1;
+	$str =~ s/([^\x00-\x7f].*)$//so and $residue = $1;
     }
     $residue .= jis_euc(\$str);
     $_[1] = $residue if $chk;
@@ -60,23 +57,68 @@ sub encode($$;$)
     return $octet;
 }
 
+#
+# cat_decode
+#
+my $re_scan_jis_g = qr{
+   \G ( ($RE{JIS_0212}) |  $RE{JIS_0208}  |
+        ($RE{ISO_ASC})  | ($RE{JIS_KANA}) | )
+      ([^\e]*)
+}x;
+sub cat_decode { # ($obj, $dst, $src, $pos, $trm, $chk)
+    my ($obj, undef, undef, $pos, $trm) = @_; # currently ignores $chk
+    my ($rdst, $rsrc, $rpos) = \@_[1,2,3];
+    local ${^ENCODING};
+    use bytes;
+    my $opos = pos($$rsrc);
+    pos($$rsrc) = $pos;
+    while ($$rsrc =~ /$re_scan_jis_g/gc) {
+	my ($esc, $esc_0212, $esc_asc, $esc_kana, $chunk) =
+	  ($1, $2, $3, $4, $5);
+
+	unless ($chunk) { $esc or last;  next; }
+
+	if ($esc && !$esc_asc) {
+	    $chunk =~ tr/\x21-\x7e/\xa1-\xfe/;
+	    if ($esc_kana) {
+		$chunk =~ s/([\xa1-\xdf])/\x8e$1/og;
+	    } elsif ($esc_0212) {
+		$chunk =~ s/([\xa1-\xfe][\xa1-\xfe])/\x8f$1/og;
+	    }
+	    $chunk = Encode::decode('euc-jp', $chunk, 0);
+	}
+	elsif ((my $npos = index($chunk, $trm)) >= 0) {
+	    $$rdst .= substr($chunk, 0, $npos + length($trm));
+	    $$rpos += length($esc) + $npos + length($trm);
+	    pos($$rsrc) = $opos;
+	    return 1;
+	}
+	$$rdst .= $chunk;
+	$$rpos = pos($$rsrc);
+    }
+    $$rpos = pos($$rsrc);
+    pos($$rsrc) = $opos;
+    return '';
+}
 
 # JIS<->EUC
+my $re_scan_jis = qr{
+   (?:($RE{JIS_0212})|$RE{JIS_0208}|($RE{ISO_ASC})|($RE{JIS_KANA}))([^\e]*)
+}x;
 
 sub jis_euc {
+    local ${^ENCODING};
     my $r_str = shift;
-    $$r_str =~ s(
-		 ($RE{JIS_0212}|$RE{JIS_0208}|$RE{ISO_ASC}|$RE{JIS_KANA})
-		 ([^\e]*)
-		 )
+    $$r_str =~ s($re_scan_jis)
     {
-	my ($esc, $chunk) = ($1, $2);
-	if ($esc !~ /$RE{ISO_ASC}/o) {
+	my ($esc_0212, $esc_asc, $esc_kana, $chunk) =
+	   ($1, $2, $3, $4);
+	if (!$esc_asc) {
 	    $chunk =~ tr/\x21-\x7e/\xa1-\xfe/;
-	    if ($esc =~ /$RE{JIS_KANA}/o) {
+	    if ($esc_kana) {
 		$chunk =~ s/([\xa1-\xdf])/\x8e$1/og;
 	    }
-	    elsif ($esc =~ /$RE{JIS_0212}/o) {
+	    elsif ($esc_0212) {
 		$chunk =~ s/([\xa1-\xfe][\xa1-\xfe])/\x8f$1/og;
 	    }
 	}

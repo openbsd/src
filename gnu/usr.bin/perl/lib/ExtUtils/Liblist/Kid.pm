@@ -8,8 +8,9 @@ package ExtUtils::Liblist::Kid;
 use 5.00503;
 # Broken out of MakeMaker from version 4.11
 
+use strict;
 use vars qw($VERSION);
-$VERSION = 1.29;
+$VERSION = 1.30;
 
 use Config;
 use Cwd 'cwd';
@@ -24,6 +25,8 @@ sub ext {
 
 sub _unix_os2_ext {
     my($self,$potential_libs, $verbose, $give_libs) = @_;
+    $verbose ||= 0;
+
     if ($^O =~ 'os2' and $Config{perllibs}) { 
 	# Dynamic libraries are not transitive, so we may need including
 	# the libraries linked against perl.dll again.
@@ -34,8 +37,8 @@ sub _unix_os2_ext {
     return ("", "", "", "", ($give_libs ? [] : ())) unless $potential_libs;
     warn "Potential libraries are '$potential_libs':\n" if $verbose;
 
-    my($so)   = $Config{'so'};
-    my($libs) = $Config{'perllibs'};
+    my($so)   = $Config{so};
+    my($libs) = defined $Config{perllibs} ? $Config{perllibs} : $Config{libs};
     my $Config_libext = $Config{lib_ext} || ".a";
 
 
@@ -146,9 +149,6 @@ sub _unix_os2_ext {
 		next;
 	    }
 	    warn "'-l$thislib' found at $fullname\n" if $verbose;
-	    my($fullnamedir) = dirname($fullname);
-	    push @ld_run_path, $fullnamedir 
-              unless $ld_run_path_seen{$fullnamedir}++;
 	    push @libs, $fullname unless $libs_seen{$fullname}++;
 	    $found++;
 	    $found_lib++;
@@ -157,7 +157,14 @@ sub _unix_os2_ext {
 
 	    # what do we know about this library...
 	    my $is_dyna = ($fullname !~ /\Q$Config_libext\E\z/);
-	    my $in_perl = ($libs =~ /\B-l\Q$ {thislib}\E\b/s);
+	    my $in_perl = ($libs =~ /\B-l\Q${thislib}\E\b/s);
+
+            # include the path to the lib once in the dynamic linker path
+            # but only if it is a dynamic lib and not in Perl itself
+            my($fullnamedir) = dirname($fullname);
+            push @ld_run_path, $fullnamedir
+                 if $is_dyna && !$in_perl &&
+                    !$ld_run_path_seen{$fullnamedir}++;
 
 	    # Do not add it into the list if it is already linked in
 	    # with the main perl executable.
@@ -212,6 +219,7 @@ sub _win32_ext {
     require Text::ParseWords;
 
     my($self, $potential_libs, $verbose, $give_libs) = @_;
+    $verbose ||= 0;
 
     # If user did not supply a list, we punt.
     # (caller should probably use the list in $Config{libs})
@@ -340,7 +348,7 @@ sub _win32_ext {
 
 	# give up
 	warn "Note (probably harmless): "
-		     ."No library found for '$thislib'\n"
+		     ."No library found for $thislib\n"
 	    unless $found_lib>0;
 
     }
@@ -364,9 +372,11 @@ sub _win32_ext {
 
 sub _vms_ext {
   my($self, $potential_libs,$verbose,$give_libs) = @_;
+  $verbose ||= 0;
+
   my(@crtls,$crtlstr);
   my($dbgqual) = $self->{OPTIMIZE} || $Config{'optimize'} ||
-                 $self->{CCFLAS}   || $Config{'ccflags'};
+                 $self->{CCFLAGS}   || $Config{'ccflags'};
   @crtls = ( ($dbgqual =~ m-/Debug-i ? $Config{'dbgprefix'} : '')
               . 'PerlShr/Share' );
   push(@crtls, grep { not /\(/ } split /\s+/, $Config{'perllibs'});
@@ -398,8 +408,8 @@ sub _vms_ext {
   my(@dirs,@libs,$dir,$lib,%found,@fndlibs,$ldlib);
   my $cwd = cwd();
   my($so,$lib_ext,$obj_ext) = @Config{'so','lib_ext','obj_ext'};
-  # List of common Unix library names and there VMS equivalents
-  # (VMS equivalent of '' indicates that the library is automatially
+  # List of common Unix library names and their VMS equivalents
+  # (VMS equivalent of '' indicates that the library is automatically
   # searched by the linker, and should be skipped here.)
   my(@flibs, %libs_seen);
   my %libmap = ( 'm' => '', 'f77' => '', 'F77' => '', 'V77' => '', 'c' => '',
@@ -447,7 +457,7 @@ sub _vms_ext {
       $lib = $libmap{$lib};
     }
 
-    my(@variants,$variant,$name,$test,$cand);
+    my(@variants,$variant,$cand);
     my($ctype) = '';
 
     # If we don't have a file type, consider it a possibly abbreviated name and
@@ -461,44 +471,49 @@ sub _vms_ext {
     push(@variants,$lib);
     warn "Looking for $lib\n" if $verbose;
     foreach $variant (@variants) {
+      my($fullname, $name);
+
       foreach $dir (@dirs) {
         my($type);
 
         $name = "$dir$variant";
         warn "\tChecking $name\n" if $verbose > 2;
-        if (-f ($test = VMS::Filespec::rmsexpand($name))) {
+        $fullname = VMS::Filespec::rmsexpand($name);
+        if (defined $fullname and -f $fullname) {
           # It's got its own suffix, so we'll have to figure out the type
-          if    ($test =~ /(?:$so|exe)$/i)      { $type = 'SHR'; }
-          elsif ($test =~ /(?:$lib_ext|olb)$/i) { $type = 'OLB'; }
-          elsif ($test =~ /(?:$obj_ext|obj)$/i) {
+          if    ($fullname =~ /(?:$so|exe)$/i)      { $type = 'SHR'; }
+          elsif ($fullname =~ /(?:$lib_ext|olb)$/i) { $type = 'OLB'; }
+          elsif ($fullname =~ /(?:$obj_ext|obj)$/i) {
             warn "Note (probably harmless): "
-			 ."Plain object file $test found in library list\n";
+                ."Plain object file $fullname found in library list\n";
             $type = 'OBJ';
           }
           else {
             warn "Note (probably harmless): "
-			 ."Unknown library type for $test; assuming shared\n";
+                ."Unknown library type for $fullname; assuming shared\n";
             $type = 'SHR';
           }
         }
-        elsif (-f ($test = VMS::Filespec::rmsexpand($name,$so))      or
-               -f ($test = VMS::Filespec::rmsexpand($name,'.exe')))     {
+        elsif (-f ($fullname = VMS::Filespec::rmsexpand($name,$so))      or
+               -f ($fullname = VMS::Filespec::rmsexpand($name,'.exe')))     {
           $type = 'SHR';
-          $name = $test unless $test =~ /exe;?\d*$/i;
+          $name = $fullname unless $fullname =~ /exe;?\d*$/i;
         }
-        elsif (not length($ctype) and  # If we've got a lib already, don't bother
-               ( -f ($test = VMS::Filespec::rmsexpand($name,$lib_ext)) or
-                 -f ($test = VMS::Filespec::rmsexpand($name,'.olb'))))  {
+        elsif (not length($ctype) and  # If we've got a lib already, 
+                                       # don't bother
+               ( -f ($fullname = VMS::Filespec::rmsexpand($name,$lib_ext)) or
+                 -f ($fullname = VMS::Filespec::rmsexpand($name,'.olb'))))  {
           $type = 'OLB';
-          $name = $test unless $test =~ /olb;?\d*$/i;
+          $name = $fullname unless $fullname =~ /olb;?\d*$/i;
         }
-        elsif (not length($ctype) and  # If we've got a lib already, don't bother
-               ( -f ($test = VMS::Filespec::rmsexpand($name,$obj_ext)) or
-                 -f ($test = VMS::Filespec::rmsexpand($name,'.obj'))))  {
+        elsif (not length($ctype) and  # If we've got a lib already, 
+                                       # don't bother
+               ( -f ($fullname = VMS::Filespec::rmsexpand($name,$obj_ext)) or
+                 -f ($fullname = VMS::Filespec::rmsexpand($name,'.obj'))))  {
           warn "Note (probably harmless): "
-		       ."Plain object file $test found in library list\n";
+		       ."Plain object file $fullname found in library list\n";
           $type = 'OBJ';
-          $name = $test unless $test =~ /obj;?\d*$/i;
+          $name = $fullname unless $fullname =~ /obj;?\d*$/i;
         }
         if (defined $type) {
           $ctype = $type; $cand = $name;
@@ -509,7 +524,8 @@ sub _vms_ext {
         # This has to precede any other CRTLs, so just make it first
         if ($cand eq 'VAXCCURSE') { unshift @{$found{$ctype}}, $cand; }  
         else                      { push    @{$found{$ctype}}, $cand; }
-        warn "\tFound as $cand (really $test), type $ctype\n" if $verbose > 1;
+        warn "\tFound as $cand (really $fullname), type $ctype\n" 
+          if $verbose > 1;
 	push @flibs, $name unless $libs_seen{$fullname}++;
         next LIB;
       }

@@ -1,5 +1,5 @@
 README for Locale::Maketext
-                                        Time-stamp: "2001-05-25 08:15:55 MDT"
+                                        Time-stamp: "2003-04-02 11:06:17 AHST"
 
 			   Locale::Maketext
 
@@ -17,7 +17,8 @@ PREREQUISITES
 
 This suite requires Perl 5.  It also requires a recent version
 of I18N::LangTags.  MSWin users should also get Win32::Locale.
-File::Findgrep is also useful example code.
+File::Findgrep is also useful example code, as is the rather
+larger Apache::MP3 source (even if you don't run Apache).
 
 
 INSTALLATION
@@ -55,12 +56,12 @@ AVAILABILITY
 
 The latest version of Locale::Maketext is available from the
 Comprehensive Perl Archive Network (CPAN).  Visit
-<http://www.cpan.org/> to find a CPAN site near you.
+<http://www.perl.com/CPAN/> to find a CPAN site near you.
 
 
 COPYRIGHT
 
-Copyright 1999-2001, Sean M. Burke <sburke@cpan.org>, all rights
+Copyright 1999-2003, Sean M. Burke <sburke@cpan.org>, all rights
 reserved.  This program is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
 

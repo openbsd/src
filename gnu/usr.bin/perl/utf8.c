@@ -1,6 +1,6 @@
 /*    utf8.c
  *
- *    Copyright (c) 1998-2002, Larry Wall
+ *    Copyright (C) 2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -31,7 +31,7 @@ static char unees[] = "Malformed UTF-8 character (unexpected end of string)";
 
 =for apidoc A|U8 *|uvuni_to_utf8_flags|U8 *d|UV uv|UV flags
 
-Adds the UTF8 representation of the Unicode codepoint C<uv> to the end
+Adds the UTF-8 representation of the Unicode codepoint C<uv> to the end
 of the string C<d>; C<d> should be have at least C<UTF8_MAXLEN+1> free
 bytes available. The return value is the pointer to the byte after the
 end of the new character. In other words,
@@ -217,10 +217,10 @@ Perl_is_utf8_char(pTHX_ U8 *s)
 /*
 =for apidoc A|bool|is_utf8_string|U8 *s|STRLEN len
 
-Returns true if first C<len> bytes of the given string form a valid UTF8
-string, false otherwise.  Note that 'a valid UTF8 string' does not mean
-'a string that contains UTF8' because a valid ASCII string is a valid
-UTF8 string.
+Returns true if first C<len> bytes of the given string form a valid
+UTF-8 string, false otherwise.  Note that 'a valid UTF-8 string' does
+not mean 'a string that contains code points above 0x7F encoded in UTF-8'
+because a valid ASCII string is a valid UTF-8 string.
 
 =cut
 */
@@ -257,14 +257,63 @@ Perl_is_utf8_string(pTHX_ U8 *s, STRLEN len)
 }
 
 /*
+=for apidoc A|bool|is_utf8_string_loc|U8 *s|STRLEN len|U8 **p
+
+Like is_ut8_string but store the location of the failure in
+the last argument.
+
+=cut
+*/
+
+bool
+Perl_is_utf8_string_loc(pTHX_ U8 *s, STRLEN len, U8 **p)
+{
+    U8* x = s;
+    U8* send;
+    STRLEN c;
+
+    if (!len)
+	len = strlen((char *)s);
+    send = s + len;
+
+    while (x < send) {
+	 /* Inline the easy bits of is_utf8_char() here for speed... */
+	 if (UTF8_IS_INVARIANT(*x))
+	      c = 1;
+	 else if (!UTF8_IS_START(*x)) {
+	      if (p)
+		  *p = x;
+	      return FALSE;
+	 }
+	 else {
+	      /* ... and call is_utf8_char() only if really needed. */
+	      c = is_utf8_char(x);
+	      if (!c) {
+		   if (p)
+		      *p = x;
+		   return FALSE;
+	      }
+	 }
+        x += c;
+    }
+    if (x != send) {
+       if (p)
+	   *p = x;
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*
 =for apidoc A|UV|utf8n_to_uvuni|U8 *s|STRLEN curlen|STRLEN *retlen|U32 flags
 
 Bottom level UTF-8 decode routine.
 Returns the unicode code point value of the first character in the string C<s>
-which is assumed to be in UTF8 encoding and no longer than C<curlen>;
+which is assumed to be in UTF-8 encoding and no longer than C<curlen>;
 C<retlen> will be set to the length, in bytes, of that character.
 
-If C<s> does not point to a well-formed UTF8 character, the behaviour
+If C<s> does not point to a well-formed UTF-8 character, the behaviour
 is dependent on the value of C<flags>: if it contains UTF8_CHECK_ONLY,
 it is assumed that the caller will raise a warning, and this function
 will silently just set C<retlen> to C<-1> and return zero.  If the
@@ -484,10 +533,10 @@ malformed:
 =for apidoc A|UV|utf8_to_uvchr|U8 *s|STRLEN *retlen
 
 Returns the native character value of the first character in the string C<s>
-which is assumed to be in UTF8 encoding; C<retlen> will be set to the
+which is assumed to be in UTF-8 encoding; C<retlen> will be set to the
 length, in bytes, of that character.
 
-If C<s> does not point to a well-formed UTF8 character, zero is
+If C<s> does not point to a well-formed UTF-8 character, zero is
 returned and retlen is set, if possible, to -1.
 
 =cut
@@ -504,13 +553,13 @@ Perl_utf8_to_uvchr(pTHX_ U8 *s, STRLEN *retlen)
 =for apidoc A|UV|utf8_to_uvuni|U8 *s|STRLEN *retlen
 
 Returns the Unicode code point of the first character in the string C<s>
-which is assumed to be in UTF8 encoding; C<retlen> will be set to the
+which is assumed to be in UTF-8 encoding; C<retlen> will be set to the
 length, in bytes, of that character.
 
 This function should only be used when returned UV is considered
 an index into the Unicode semantic tables (e.g. swashes).
 
-If C<s> does not point to a well-formed UTF8 character, zero is
+If C<s> does not point to a well-formed UTF-8 character, zero is
 returned and retlen is set, if possible, to -1.
 
 =cut
@@ -576,7 +625,7 @@ Perl_utf8_length(pTHX_ U8 *s, U8 *e)
 /*
 =for apidoc A|IV|utf8_distance|U8 *a|U8 *b
 
-Returns the number of UTF8 characters between the UTF-8 pointers C<a>
+Returns the number of UTF-8 characters between the UTF-8 pointers C<a>
 and C<b>.
 
 WARNING: use only if you *know* that the pointers point inside the
@@ -671,7 +720,7 @@ Perl_utf8_hop(pTHX_ U8 *s, I32 off)
 /*
 =for apidoc A|U8 *|utf8_to_bytes|U8 *s|STRLEN *len
 
-Converts a string C<s> of length C<len> from UTF8 into byte encoding.
+Converts a string C<s> of length C<len> from UTF-8 into byte encoding.
 Unlike C<bytes_to_utf8>, this over-writes the original string, and
 updates len to contain the new length.
 Returns zero on failure, setting C<len> to -1.
@@ -686,7 +735,7 @@ Perl_utf8_to_bytes(pTHX_ U8 *s, STRLEN *len)
     U8 *d;
     U8 *save = s;
 
-    /* ensure valid UTF8 and chars < 256 before updating string */
+    /* ensure valid UTF-8 and chars < 256 before updating string */
     for (send = s + *len; s < send; ) {
         U8 c = *s++;
 
@@ -712,7 +761,7 @@ Perl_utf8_to_bytes(pTHX_ U8 *s, STRLEN *len)
 /*
 =for apidoc A|U8 *|bytes_from_utf8|U8 *s|STRLEN *len|bool *is_utf8
 
-Converts a string C<s> of length C<len> from UTF8 into byte encoding.
+Converts a string C<s> of length C<len> from UTF-8 into byte encoding.
 Unlike <utf8_to_bytes> but like C<bytes_to_utf8>, returns a pointer to
 the newly-created string, and updates C<len> to contain the new
 length.  Returns the original string if no conversion occurs, C<len>
@@ -733,7 +782,7 @@ Perl_bytes_from_utf8(pTHX_ U8 *s, STRLEN *len, bool *is_utf8)
     if (!*is_utf8)
 	return start;
 
-    /* ensure valid UTF8 and chars < 256 before converting string */
+    /* ensure valid UTF-8 and chars < 256 before converting string */
     for (send = s + *len; s < send;) {
 	U8 c = *s++;
 	if (!UTF8_IS_INVARIANT(c)) {
@@ -766,9 +815,12 @@ Perl_bytes_from_utf8(pTHX_ U8 *s, STRLEN *len, bool *is_utf8)
 /*
 =for apidoc A|U8 *|bytes_to_utf8|U8 *s|STRLEN *len
 
-Converts a string C<s> of length C<len> from ASCII into UTF8 encoding.
+Converts a string C<s> of length C<len> from ASCII into UTF-8 encoding.
 Returns a pointer to the newly-created string, and sets C<len> to
 reflect the new length.
+
+If you want to convert to UTF-8 from other encodings than ASCII,
+see sv_recode_to_utf8().
 
 =cut
 */
@@ -828,7 +880,8 @@ Perl_utf16_to_utf8(pTHX_ U8* p, U8* d, I32 bytelen, I32 *newlen)
 	    continue;
 	}
 	if (uv >= 0xd800 && uv < 0xdbff) {	/* surrogates */
-	    UV low = *p++;
+	    UV low = (p[0] << 8) + p[1];
+	    p += 2;
 	    if (low < 0xdc00 || low >= 0xdfff)
 		Perl_croak(aTHX_ "Malformed UTF-16 surrogate");
 	    uv = ((uv - 0xd800) << 10) + (low - 0xdc00) + 0x10000;
@@ -1232,7 +1285,7 @@ Perl_is_utf8_upper(pTHX_ U8 *p)
     if (!is_utf8_char(p))
 	return FALSE;
     if (!PL_utf8_upper)
-	PL_utf8_upper = swash_init("utf8", "IsUpper", &PL_sv_undef, 0, 0);
+	PL_utf8_upper = swash_init("utf8", "IsUppercase", &PL_sv_undef, 0, 0);
     return swash_fetch(PL_utf8_upper, p, TRUE) != 0;
 }
 
@@ -1242,7 +1295,7 @@ Perl_is_utf8_lower(pTHX_ U8 *p)
     if (!is_utf8_char(p))
 	return FALSE;
     if (!PL_utf8_lower)
-	PL_utf8_lower = swash_init("utf8", "IsLower", &PL_sv_undef, 0, 0);
+	PL_utf8_lower = swash_init("utf8", "IsLowercase", &PL_sv_undef, 0, 0);
     return swash_fetch(PL_utf8_lower, p, TRUE) != 0;
 }
 
@@ -1539,9 +1592,10 @@ Perl_swash_init(pTHX_ char* pkg, char* name, SV *listsv, I32 minbits, I32 none)
     SAVEI32(PL_hints);
     PL_hints = 0;
     save_re_context();
-    if (PL_curcop == &PL_compiling) {
+    if (IN_PERL_COMPILETIME) {
 	/* XXX ought to be handled by lex_start */
 	SAVEI32(PL_in_my);
+	PL_in_my = 0;
 	sv_setpv(tokenbufsv, PL_tokenbuf);
     }
     errsv_save = newSVsv(ERRSV);
@@ -1554,7 +1608,7 @@ Perl_swash_init(pTHX_ char* pkg, char* name, SV *listsv, I32 minbits, I32 none)
     SvREFCNT_dec(errsv_save);
     LEAVE;
     POPSTACK;
-    if (PL_curcop == &PL_compiling) {
+    if (IN_PERL_COMPILETIME) {
 	STRLEN len;
 	char* pv = SvPV(tokenbufsv, len);
 
@@ -1563,8 +1617,8 @@ Perl_swash_init(pTHX_ char* pkg, char* name, SV *listsv, I32 minbits, I32 none)
     }
     if (!SvROK(retval) || SvTYPE(SvRV(retval)) != SVt_PVHV) {
         if (SvPOK(retval))
-	    Perl_croak(aTHX_ "Can't find Unicode property definition \"%s\"",
-		       SvPV_nolen(retval));
+	    Perl_croak(aTHX_ "Can't find Unicode property definition \"%"SVf"\"",
+		       retval);
 	Perl_croak(aTHX_ "SWASHNEW didn't return an HV ref");
     }
     return retval;
@@ -1606,7 +1660,7 @@ Perl_swash_fetch(pTHX_ SV *sv, U8 *ptr, bool do_utf8)
     if (klen == 0)
      {
       /* If char in invariant then swatch is for all the invariant chars
-       * In both UTF-8 and UTF8-MOD that happens to be UTF_CONTINUATION_MARK
+       * In both UTF-8 and UTF-8-MOD that happens to be UTF_CONTINUATION_MARK
        */
       needents = UTF_CONTINUATION_MARK;
       off      = NATIVE_TO_UTF(ptr[klen]);
@@ -1671,7 +1725,7 @@ Perl_swash_fetch(pTHX_ SV *sv, U8 *ptr, bool do_utf8)
 	    POPSTACK;
 	    FREETMPS;
 	    LEAVE;
-	    if (PL_curcop == &PL_compiling)
+	    if (IN_PERL_COMPILETIME)
 		PL_curcop->op_private = (U8)(PL_hints & HINT_PRIVATE_MASK);
 
 	    svp = hv_store(hv, (char*)ptr, klen, retval, 0);
@@ -1710,7 +1764,7 @@ Perl_swash_fetch(pTHX_ SV *sv, U8 *ptr, bool do_utf8)
 /*
 =for apidoc A|U8 *|uvchr_to_utf8|U8 *d|UV uv
 
-Adds the UTF8 representation of the Native codepoint C<uv> to the end
+Adds the UTF-8 representation of the Native codepoint C<uv> to the end
 of the string C<d>; C<d> should be have at least C<UTF8_MAXLEN+1> free
 bytes available. The return value is the pointer to the byte after the
 end of the new character. In other words,
@@ -1744,7 +1798,7 @@ Perl_uvchr_to_utf8_flags(pTHX_ U8 *d, UV uv, UV flags)
 =for apidoc A|UV|utf8n_to_uvchr|U8 *s|STRLEN curlen|STRLEN *retlen|U32 flags
 
 Returns the native character value of the first character in the string C<s>
-which is assumed to be in UTF8 encoding; C<retlen> will be set to the
+which is assumed to be in UTF-8 encoding; C<retlen> will be set to the
 length, in bytes, of that character.
 
 Allows length and flags to be passed to low level routine.

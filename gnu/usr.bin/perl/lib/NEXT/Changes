@@ -37,3 +37,33 @@ Revision history for Perl extension NEXT.pm.
 	  consistent with more useful SUPER:: behaviour
 
 	- Corified tests
+
+
+0.51	Tue Jul 29 23:09:48 2003
+
+	- Fixed NEXT::UNSEEN bug under diamond inheritance (thanks Dan
+	  and Alan)
+
+	- Moved &ancestors out of NEXT class in case anyone ever 
+	  calls NEXT::ancestors
+
+	- Replaced UNSEEN with DISTINCT (but left UNSEEN operational
+	  for backwards compatibility)
+
+
+0.52	Wed Jul 30 21:06:59 2003
+
+	- Refixed NEXT::UNSEEN bug under diamond inheritance 
+
+
+0.53	Tue Aug 12 10:53:25 2003
+
+	- Re-re-fixed NEXT::UNSEEN bug under diamond inheritance 
+
+
+0.60	Wed Aug 13 03:55:33 2003
+
+	- Re-re-re-fixed NEXT::UNSEEN bug under diamond inheritance 
+	  (Note to self: don't code whilst on vacation!)
+
+	- Implemented and documented EVERY functionality

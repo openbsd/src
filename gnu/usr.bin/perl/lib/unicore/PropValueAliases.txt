@@ -1,12 +1,10 @@
-# PropertyValueAliases-3.2.0.txt
-# Date: 2002-03-19,23:31:21 GMT [MD]
+# PropertyValueAliases-4.0.0.txt
+# Date: 2003-03-12, 23:46:08 GMT [MD]
 #
 # This file contains aliases for property values used in the UCD.
 # These names can be used for XML formats of UCD data, for regular-expression
 # property tests, and other programmatic textual descriptions of Unicode data.
-# The names are not normative, except where they correspond to normative property
-# values in the UCD. For information on which properties are normative, see
-# UnicodeCharacterDatabase.html.
+# For information on which properties are normative, see UCD.html.
 #
 # The names may be translated in appropriate environments, and additional
 # aliases may be useful.
@@ -25,32 +23,32 @@
 #
 # Third Field: The third field is a long name.
 #
-# In the case of ccc, their are 4 fields. The second field is numeric, third
+# In the case of ccc, there are 4 fields. The second field is numeric, third
 # is abbreviated, and fourth is long.
 #
 # With loose matching of property names, the case distinctions, whitespace,
 # and '_' are ignored.
 #
-# NOTE: The Block property values are in Blocks.txt, and not repeated here.
-# For more information on the use of blocks, see UTR #24: Regular Expression Guidelines
-#
 # NOTE: Currently there is at most one abbreviated name and one long name for
-# property value. However, in the future additional aliases
-# may be added. In such a case, the first line for the property value
-# would have the preferred alias for output.
+# property value. However, in the future additional aliases may be added.
+# In such a case, the first line for the property value would have
+# the preferred alias for output.
 #
 # NOTE: The property value names are NOT unique across properties, especially
-# with loose matches. For example,
+# with loose matches. For example:
+#
 # AL means Arabic Letter for the Bidi_Class property, and
 # AL means Alpha_Left for the Combining_Class property, and
 # AL means Alphabetic for the Line_Break property.
 #
-# In addition, some property names may be the same as some property value names:
-# cc means Combining_Class property, and
-# cc means the General_Category property value Control (cc)
+# In addition, some property names may be the same as some property value names.
+# For example:
+#
+#   cc means Combining_Class property, and
+#   cc means the General_Category property value Control (cc)
 #
 # The combination of property value and property name is, however, unique.
-# For more information, see UTR #24: Regular Expression Guidelines
+# For more information, see UTR #18: Regular Expression Guidelines
 # ================================================
 
 
@@ -74,9 +72,136 @@ bc ; RLO       ; Right_To_Left_Override
 bc ; S         ; Segment_Separator
 bc ; WS        ; White_Space
 
+blk; n/a       ; Aegean_Numbers
+blk; n/a       ; Alphabetic_Presentation_Forms
+blk; n/a       ; Arabic
+blk; n/a       ; Arabic_Presentation_Forms-A
+blk; n/a       ; Arabic_Presentation_Forms-B
+blk; n/a       ; Armenian
+blk; n/a       ; Arrows
+blk; n/a       ; Basic_Latin
+blk; n/a       ; Bengali
+blk; n/a       ; Block_Elements
+blk; n/a       ; Bopomofo
+blk; n/a       ; Bopomofo_Extended
+blk; n/a       ; Box_Drawing
+blk; n/a       ; Braille_Patterns
+blk; n/a       ; Buhid
+blk; n/a       ; Byzantine_Musical_Symbols
+blk; n/a       ; Cherokee
+blk; n/a       ; CJK_Compatibility
+blk; n/a       ; CJK_Compatibility_Forms
+blk; n/a       ; CJK_Compatibility_Ideographs
+blk; n/a       ; CJK_Compatibility_Ideographs_Supplement
+blk; n/a       ; CJK_Radicals_Supplement
+blk; n/a       ; CJK_Symbols_and_Punctuation
+blk; n/a       ; CJK_Unified_Ideographs
+blk; n/a       ; CJK_Unified_Ideographs_Extension_A
+blk; n/a       ; CJK_Unified_Ideographs_Extension_B
+blk; n/a       ; Combining_Diacritical_Marks
+blk; n/a       ; Combining_Diacritical_Marks_for_Symbols
+blk; n/a       ; Combining_Half_Marks
+blk; n/a       ; Control_Pictures
+blk; n/a       ; Currency_Symbols
+blk; n/a       ; Cypriot_Syllabary
+blk; n/a       ; Cyrillic
+blk; n/a       ; Cyrillic_Supplementary
+blk; n/a       ; Deseret
+blk; n/a       ; Devanagari
+blk; n/a       ; Dingbats
+blk; n/a       ; Enclosed_Alphanumerics
+blk; n/a       ; Enclosed_CJK_Letters_and_Months
+blk; n/a       ; Ethiopic
+blk; n/a       ; General_Punctuation
+blk; n/a       ; Geometric_Shapes
+blk; n/a       ; Georgian
+blk; n/a       ; Gothic
+blk; n/a       ; Greek_and_Coptic
+blk; n/a       ; Greek_Extended
+blk; n/a       ; Gujarati
+blk; n/a       ; Gurmukhi
+blk; n/a       ; Halfwidth_and_Fullwidth_Forms
+blk; n/a       ; Hangul_Compatibility_Jamo
+blk; n/a       ; Hangul_Jamo
+blk; n/a       ; Hangul_Syllables
+blk; n/a       ; Hanunoo
+blk; n/a       ; Hebrew
+blk; n/a       ; High_Private_Use_Surrogates
+blk; n/a       ; High_Surrogates
+blk; n/a       ; Hiragana
+blk; n/a       ; Ideographic_Description_Characters
+blk; n/a       ; IPA_Extensions
+blk; n/a       ; Kanbun
+blk; n/a       ; Kangxi_Radicals
+blk; n/a       ; Kannada
+blk; n/a       ; Katakana
+blk; n/a       ; Katakana_Phonetic_Extensions
+blk; n/a       ; Khmer
+blk; n/a       ; Khmer_Symbols
+blk; n/a       ; Lao
+blk; n/a       ; Latin_Extended_Additional
+blk; n/a       ; Latin_Extended-A
+blk; n/a       ; Latin_Extended-B
+blk; n/a       ; Latin-1_Supplement
+blk; n/a       ; Letterlike_Symbols
+blk; n/a       ; Limbu
+blk; n/a       ; Linear_B_Ideograms
+blk; n/a       ; Linear_B_Syllabary
+blk; n/a       ; Low_Surrogates
+blk; n/a       ; Malayalam
+blk; n/a       ; Mathematical_Alphanumeric_Symbols
+blk; n/a       ; Mathematical_Operators
+blk; n/a       ; Miscellaneous_Mathematical_Symbols-A
+blk; n/a       ; Miscellaneous_Mathematical_Symbols-B
+blk; n/a       ; Miscellaneous_Symbols
+blk; n/a       ; Miscellaneous_Symbols_and_Arrows
+blk; n/a       ; Miscellaneous_Technical
+blk; n/a       ; Mongolian
+blk; n/a       ; Musical_Symbols
+blk; n/a       ; Myanmar
+blk; n/a       ; No_Block
+blk; n/a       ; Number_Forms
+blk; n/a       ; Ogham
+blk; n/a       ; Old_Italic
+blk; n/a       ; Optical_Character_Recognition
+blk; n/a       ; Oriya
+blk; n/a       ; Osmanya
+blk; n/a       ; Phonetic_Extensions
+blk; n/a       ; Private_Use_Area
+blk; n/a       ; Runic
+blk; n/a       ; Shavian
+blk; n/a       ; Sinhala
+blk; n/a       ; Small_Form_Variants
+blk; n/a       ; Spacing_Modifier_Letters
+blk; n/a       ; Specials
+blk; n/a       ; Superscripts_and_Subscripts
+blk; n/a       ; Supplemental_Arrows-A
+blk; n/a       ; Supplemental_Arrows-B
+blk; n/a       ; Supplemental_Mathematical_Operators
+blk; n/a       ; Supplementary_Private_Use_Area-A
+blk; n/a       ; Supplementary_Private_Use_Area-B
+blk; n/a       ; Syriac
+blk; n/a       ; Tagalog
+blk; n/a       ; Tagbanwa
+blk; n/a       ; Tags
+blk; n/a       ; Tai_Le
+blk; n/a       ; Tai_Xuan_Jing_Symbols
+blk; n/a       ; Tamil
+blk; n/a       ; Telugu
+blk; n/a       ; Thaana
+blk; n/a       ; Thai
+blk; n/a       ; Tibetan
+blk; n/a       ; Ugaritic
+blk; n/a       ; Unified_Canadian_Aboriginal_Syllabics
+blk; n/a       ; Variation_Selectors
+blk; n/a       ; Variation_Selectors_Supplement
+blk; n/a       ; Yi_Radicals
+blk; n/a       ; Yi_Syllables
+blk; n/a       ; Yijing_Hexagram_Symbols
+
 ccc;   0; NR   ; Not_Reordered
 ccc;   1; OV   ; Overlay
-ccc; 202; ATBL ; Attached_Below_Left
+ccc; 202; ATB  ; Attached_Below
 ccc; 216; ATAR ; Attached_Above_Right
 ccc; 218; BL   ; Below_Left
 ccc; 220; B    ; Below
@@ -158,6 +283,13 @@ gc ; Zl        ; Line_Separator
 gc ; Zp        ; Paragraph_Separator
 gc ; Zs        ; Space_Separator
 
+hst; L         ; Leading_Jamo
+hst; LV        ; LV_Syllable
+hst; LVT       ; LVT_Syllable
+hst; NA        ; Not_Applicable
+hst; T         ; Trailing_Jamo
+hst; V         ; Vowel_Jamo
+
 jg ; n/a       ; AIN
 jg ; n/a       ; ALAPH
 jg ; n/a       ; ALEF
@@ -166,6 +298,7 @@ jg ; n/a       ; BETH
 jg ; n/a       ; DAL
 jg ; n/a       ; DALATH_RISH
 jg ; n/a       ; E
+jg ; n/a       ; FE
 jg ; n/a       ; FEH
 jg ; n/a       ; FINAL_SEMKATH
 jg ; n/a       ; GAF
@@ -178,6 +311,7 @@ jg ; n/a       ; HEH_GOAL
 jg ; n/a       ; HETH
 jg ; n/a       ; KAF
 jg ; n/a       ; KAPH
+jg ; n/a       ; KHAPH
 jg ; n/a       ; KNOTTED_HEH
 jg ; n/a       ; LAM
 jg ; n/a       ; LAMADH
@@ -209,6 +343,7 @@ jg ; n/a       ; YEH_WITH_TAIL
 jg ; n/a       ; YUDH
 jg ; n/a       ; YUDH_HE
 jg ; n/a       ; ZAIN
+jg ; n/a       ; ZHAIN
 
 jt ; C         ; Join_Causing
 jt ; D         ; Dual_Joining
@@ -234,6 +369,7 @@ lb ; ID        ; Ideographic
 lb ; IN        ; Inseperable
 lb ; IS        ; Infix_Numeric
 lb ; LF        ; Line_Feed
+lb ; NL        ; Next_Line
 lb ; NS        ; Nonstarter
 lb ; NU        ; Numeric
 lb ; OP        ; Open_Punctuation
@@ -244,6 +380,7 @@ lb ; SA        ; Complex_Context
 lb ; SG        ; Surrogate
 lb ; SP        ; Space
 lb ; SY        ; Break_Symbols
+lb ; WJ        ; Word_Joiner
 lb ; XX        ; Unknown
 lb ; ZW        ; ZWSpace
 
@@ -260,9 +397,11 @@ sc ; Arab      ; Arabic
 sc ; Armn      ; Armenian
 sc ; Beng      ; Bengali
 sc ; Bopo      ; Bopomofo
+sc ; Brai      ; Braille
 sc ; Buhd      ; Buhid
 sc ; Cans      ; Canadian_Aboriginal
 sc ; Cher      ; Cherokee
+sc ; Cprt      ; Cypriot
 sc ; Cyrl      ; Cyrillic
 sc ; Deva      ; Devanagari
 sc ; Dsrt      ; Deseret
@@ -283,21 +422,27 @@ sc ; Khmr      ; Khmer
 sc ; Knda      ; Kannada
 sc ; Laoo      ; Lao
 sc ; Latn      ; Latin
+sc ; Limb      ; Limbu
+sc ; Linb      ; Linear_B
 sc ; Mlym      ; Malayalam
 sc ; Mong      ; Mongolian
 sc ; Mymr      ; Myanmar
 sc ; Ogam      ; Ogham
 sc ; Orya      ; Oriya
+sc ; Osma      ; Osmanya
 sc ; Qaai      ; Inherited
 sc ; Runr      ; Runic
+sc ; Shaw      ; Shavian
 sc ; Sinh      ; Sinhala
 sc ; Syrc      ; Syriac
 sc ; Tagb      ; Tagbanwa
+sc ; Tale      ; Tai_Le
 sc ; Taml      ; Tamil
 sc ; Telu      ; Telugu
 sc ; Tglg      ; Tagalog
 sc ; Thaa      ; Thaana
 sc ; Thai      ; Thai
 sc ; Tibt      ; Tibetan
+sc ; Ugar      ; Ugaritic
 sc ; Yiii      ; Yi
 sc ; Zyyy      ; Common

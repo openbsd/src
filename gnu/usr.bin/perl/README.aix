@@ -23,8 +23,16 @@ for which you have to pay: B<xlC> and B<vac>. If you decide to use either
 of these two (which is quite a lot easier than using gcc), be sure to
 upgrade to the latest available patch level. Currently:
 
-    xlC.C     3.1.4.10 or 3.6.6.0 or 5.0.2.6
-    vac.C     4.4.0.3  or 5.0.2.4
+    xlC.C     3.1.4.10 or 3.6.6.0 or 4.0.2.2 or 5.0.2.9 or 6.0.0.3
+    vac.C     4.4.0.3  or 5.0.2.6 or 6.0.0.1
+
+note that xlC has the OS version in the name as of version 4.0.2.0, so
+you will find xlC.C for AIX-5.0 as package
+
+    xlC.aix50.rte   5.0.2.0 or 6.0.0.3
+
+subversions are not the same `latest' on all OS versions. For example,
+the latest xlC-5 on aix41 is 5.0.2.9, while on aix43, it is 5.0.2.7.
 
 Perl can be compiled with either IBM's ANSI C compiler or with gcc.
 The former is recommended, as not only can it compile Perl with no
@@ -61,7 +69,7 @@ cannot be built without bos.adt.syscalls and bos.adt.libm installed
 
     # lslpp -l | egrep "syscalls|libm"
     bos.adt.libm      5.1.0.25  COMMITTED  Base Application Development
-    bos.adt.syscalls  5.1.0.25  COMMITTED  System Calls Application
+    bos.adt.syscalls  5.1.0.36  COMMITTED  System Calls Application
     #
 
 =head2 Building Dynamic Extensions on AIX
@@ -89,9 +97,9 @@ All defaults for Configure can be used.
 
 If you've chosen to use vac 4, be sure to run 4.4.0.3. Older versions
 will turn up nasty later on. For vac 5 be sure to run at least 5.0.1.0,
-but vac 5.0.2.3 or up is highly recommended. Note that since IBM has
-removed vac 5.0.2.1 and 5.0.2.2 from the software depot, these versions
-should be considered obsolete.
+but vac 5.0.2.6 or up is highly recommended. Note that since IBM has
+removed vac 5.0.2.1 through 5.0.2.5 from the software depot, these
+versions should be considered obsolete.
 
 Here's a brief lead of how to upgrade the compiler to the latest
 level.  Of course this is subject to changes.  You can only upgrade
@@ -156,7 +164,8 @@ On AIX 4.3 using vac, we continue:
  -rw-rw-r--   1 45776101 1        13592576 Apr 16 2001  vac.C.5.0.2.0.bff
  -rw-rw-r--   1 45776101 1        14133248 Apr  9 2002  vac.C.5.0.2.3.bff
  -rw-rw-r--   1 45776101 1        14173184 May 20 2002  vac.C.5.0.2.4.bff
- # wget ftp://ftp.software.ibm.com/aix/fixes/v4/other/vac.C.5.0.2.4.bff
+ -rw-rw-r--   1 45776101 1        14192640 Nov 22 2002  vac.C.5.0.2.6.bff
+ # wget ftp://ftp.software.ibm.com/aix/fixes/v4/other/vac.C.5.0.2.6.bff
  #
 
 Likewise on all other OS levels. Then execute the following command, and
@@ -164,17 +173,50 @@ fill in its choices
 
  # smit install_update
   -> Install and Update from LATEST Available Software
-  * INPUT device / directory for software [ vac.C.5.0.2.4.bff    ]
+  * INPUT device / directory for software [ vac.C.5.0.2.6.bff    ]
   [ OK ]
   [ OK ]
 
 Follow the messages ... and you're done.
 
+If you like a more web-like approach, a good start point can be
+http://www14.software.ibm.com/webapp/download/downloadaz.jsp and click
+"C for AIX", and follow the instructions.
+
+=head2 The usenm option
+
+If linking miniperl
+
+ cc -o miniperl ... miniperlmain.o opmini.o perl.o ... -lm -lc ...
+
+causes error like this
+
+ ld: 0711-317 ERROR: Undefined symbol: .aintl
+ ld: 0711-317 ERROR: Undefined symbol: .copysignl
+ ld: 0711-317 ERROR: Undefined symbol: .syscall
+ ld: 0711-317 ERROR: Undefined symbol: .eaccess
+ ld: 0711-317 ERROR: Undefined symbol: .setresuid
+ ld: 0711-317 ERROR: Undefined symbol: .setresgid
+ ld: 0711-317 ERROR: Undefined symbol: .setproctitle
+ ld: 0711-345 Use the -bloadmap or -bnoquiet option to obtain more information.
+
+you could retry with
+
+ make realclean
+ rm config.sh
+ ./Configure -Dusenm ...
+
+which makes Configure to use the C<nm> tool when scanning for library
+symbols, which usually is not done in AIX.
+
+Related to this, you probably should not use the C<-r> option of
+Configure in AIX, because that affects of how the C<nm> tool is used.
+
 =head2 Using GNU's gcc for building perl
 
-Using gcc-3.0 (tested with 3.0.4) now works out of the box, as do
-recent gcc-2.9 builds available directly from IBM as part of their Linux
-compatibility packages, available here:
+Using gcc-3.x (tested with 3.0.4, 3.1, and 3.2) now works out of the box,
+as do recent gcc-2.9 builds available directly from IBM as part of their
+Linux compatibility packages, available here:
 
   http://www.ibm.com/servers/aix/products/aixos/linux/
 
@@ -186,6 +228,20 @@ Should yield no problems.
 
 Threads seem to work OK, though at the moment not all tests pass when
 threads are used in combination with 64bit configurations.
+
+You may get a warning when doing a threaded build:
+
+  "pp_sys.c", line 4640.39: 1506-280 (W) Function argument assignment between types "unsigned char*" and "const void*" is not allowed.
+
+The exact line number may vary, but if the warning (W) comes from a line
+line this
+
+  hent = PerlSock_gethostbyaddr(addr, (Netdb_hlen_t) addrlen, addrtype);
+
+in the "pp_ghostent" function, you may ignore it safely.  The warning
+is caused by the reentrant variant of gethostbyaddr() having a slightly
+different prototype than its non-reentrant variant, but the difference
+is not really significant here.
 
 =head2 64-bit Perl
 
@@ -209,6 +265,6 @@ H.Merijn Brand <h.m.brand@hccnet.nl>
 
 =head1 DATE
 
-Version 0.0.5: 22 May 2002
+Version 0.0.6: 23 Dec 2002
 
 =cut

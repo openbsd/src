@@ -624,7 +624,7 @@ The astonishing thing about the Cosmos class above is that the value
 returned by the &bigbang "constructor" is not a reference to a blessed
 object at all.  It's just the class's own name.  A class name is, for
 virtually all intents and purposes, a perfectly acceptable object.
-It has state, behavior, and identify, the three crucial components
+It has state, behavior, and identity, the three crucial components
 of an object system.  It even manifests inheritance, polymorphism,
 and encapsulation.  And what more can you ask of an object?
 
@@ -692,7 +692,7 @@ that happens to be named &spawn.
     print $obj3->color();  	# prints "vermilion"
 
 Each of these objects' colors is now "vermilion", because that's the
-meta-object's value that attribute, and these objects do not have
+meta-object's value for that attribute, and these objects do not have
 individual color values set.
 
 Changing the attribute on one object has no effect on other objects
@@ -842,7 +842,7 @@ ones.
     # invoked as class method or object method
     sub has_attribute {
 	my($self, $attr)  = @_;
-	my $class = ref $self if $self;
+	my $class = ref($self) || $self;
 	return exists $class->{$attr};  
     } 
 

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 # Check whether there are naming conflicts when names are truncated to
 # the DOSish case-ignoring 8.3 format, plus other portability no-nos.

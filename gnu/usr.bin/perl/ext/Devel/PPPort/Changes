@@ -1,3 +1,30 @@
+2.008 - 20th October 2003
+
+    * eval_(pv|sv) added
+    * PERL_MAGIC_* added
+
+2.007 - 18th September 2003
+
+    * small fix in grok_numeric_radix: variable was used uninitialized
+
+2.006 - 8th September 2003
+
+    * call_(pv|sv|method|argv) added
+    * still compiler-warnings for grok_??? and 5.6.x, fixed
+
+2.005 - 2nd September 2003
+
+    * Some tweaks to grok_(hex|oct|bin) to make compiler warnings
+      go away for older perls
+    * grok_number and grok_numeric_radix added
+
+2.004 - 22th August 2003
+
+    * Added grok_(hex|oct|bin) and related constants
+
+2.003 - 8th May 2003
+
+    * Added get_av, get_cv, get_hv and get_sv
 
 2.002 - 2nd December 2001
 

@@ -93,13 +93,13 @@ we add a flag to re-add the removed byte to the source we could handle
 
 int
 do_encode(encpage_t * enc, const U8 * src, STRLEN * slen, U8 * dst,
-	  STRLEN dlen, STRLEN * dout, int approx)
+	  STRLEN dlen, STRLEN * dout, int approx, const U8 *term, STRLEN tlen)
 {
     const U8 *s = src;
     const U8 *send = s + *slen;
     const U8 *last = s;
     U8 *d = dst;
-    U8 *dend = d + dlen;
+    U8 *dend = d + dlen, *dlast = d;
     int code = 0;
     while (s < send) {
 	encpage_t *e = enc;
@@ -133,6 +133,11 @@ do_encode(encpage_t * enc, const U8 * src, STRLEN * slen, U8 * dst,
 		    if (approx && (e->slen & 0x80))
 			code = ENCODE_FALLBACK;
 		    last = s;
+		    if (term && (STRLEN)(d-dlast) == tlen && memEQ(dlast, term, tlen)) {
+		      code = ENCODE_FOUND_TERM;
+		      break;
+		    }
+		    dlast = d;
 		}
 	    }
 	    else {

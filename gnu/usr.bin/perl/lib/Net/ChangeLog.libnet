@@ -1,3 +1,188 @@
+Change 830 on 2003/09/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- documentation fixes
+
+Change 829 on 2003/09/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Allow spaces after the file size in the response to SIZE
+
+Change 828 on 2003/09/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Avoid infinite loop
+
+Change 821 on 2003/06/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.16
+
+Change 820 on 2003/06/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix uninit warning when sending the ALLO command inside put
+
+Change 819 on 2003/06/13 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.15
+
+Change 818 on 2003/06/13 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix merge error spotted by Slaven Rezic
+
+Change 817 on 2003/06/13 by <gbarr@pobox.com> (Graham Barr)
+
+	Set INSTALLDIRS to 'perl' for perl >= 5.008
+
+Change 816 on 2003/06/13 by <gbarr@pobox.com> (Graham Barr)
+
+	Add SIGNATURE
+
+Change 806 on 2003/06/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.14
+
+Change 805 on 2003/06/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Avoid process death from SIGPIPE
+
+Change 804 on 2003/05/27 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Support for ALLO command (patch from Matthew N. Andrews)
+
+Change 803 on 2003/05/27 by <gbarr@pobox.com> (Graham Barr)
+
+	libnetFAQ
+	- Fix URLs
+
+Change 802 on 2003/05/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Use read/print instead of sysread/syswrite for local files
+	so CRLF translation happens if it needs to
+
+Change 801 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP, Net::NNTP
+	- doc updates from Jarkko
+
+Change 800 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Look in environment on VMS for domainname
+	  (patch from Michael Cartmell)
+
+Change 799 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Allow multiple hosts to be passed to new() as an array reference
+
+Change 798 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Add some error checking to the examples in the SYNOPSIS
+
+Change 797 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Support MTAs with broken HELO response
+	  (patch from Michael Driscoll)
+
+Change 796 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- Add small example to SYNOPSIS
+
+Change 795 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::NNTP
+	- Add post clarifications to pod
+
+Change 794 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP, Net::Cmd
+	- Support for BINARYMIME
+	  (patch from Richard Coles)
+
+Change 793 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Allow the firewall type to be specified in Net::Config
+	  (patch from Philip Newton)
+
+Change 792 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Fixes to the DSN parameter to mail()
+	  (patch from Rafael Garcia-Suarez)
+
+Change 791 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A
+	- Fix CRLF translation in write()
+
+Change 790 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Improve performance of CRLF translation when sending data
+
+Change 789 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Make the use of email address extraction configurable. By default
+	it is now back how it was
+
+Change 788 on 2003/05/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::NNTP
+	- Prevent instance methods being called as class methods when debug is turned on
+
+Change 772 on 2003/03/03 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.13
+
+Change 755 on 2002/11/03 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix typo
+
+Change 749 on 2002/09/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- Make more compilant. +OK and -ERR responses do not have to be followed
+	by a space.
+
+Change 748 on 2002/09/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix unique name extraction to pick up name on initial
+	response, not just the final response
+
+Change 737 on 2002/07/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Compatability fix for 5.004
+
+Change 736 on 2002/07/16 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Ensure all debug output is via ->debug_print
+
+Change 735 on 2002/07/15 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Allow the user to specify a local address to use for sockets
+
+Change 734 on 2002/07/15 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Avoid extra spaces on the end of the AUTH command
+
+Change 728 on 2002/05/28 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.12
+
 Change 727 on 2002/05/28 by <gbarr@pobox.com> (Graham Barr)
 
 	Net::SMTP

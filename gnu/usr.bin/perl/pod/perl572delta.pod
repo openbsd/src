@@ -89,7 +89,7 @@ ugly, but the current implementation slows down normal array and hash
 use quite noticeably. The C<fields> pragma interface will remain
 available.
 
-The syntaxes C<@a->[...]> and  C<@h->{...}> have now been deprecated.
+The syntaxes C<< @a->[...] >> and  C<< @h->{...} >> have now been deprecated.
 
 The suidperl is also considered to be too much a risk to continue
 maintaining and the suidperl code is likely to be removed in a future
@@ -513,7 +513,7 @@ the entire regex.  You will an optional warning if you try to do otherwise.
 
 =item *
 
-Using arrays or hashes as references (e.g. C<%foo->{bar}> has been
+Using arrays or hashes as references (e.g. C<< %foo->{bar} >> has been
 deprecated for a while.  Now you will get an optional warning.
 
 =back

@@ -229,8 +229,16 @@ sub write_errno_pm {
 	    my($name,$expr);
 	    next unless ($name, $expr) = /"(.*?)"\s*\[\s*\[\s*(.*?)\s*\]\s*\]/;
 	    next if $name eq $expr;
-	    $expr =~ s/(\d+)[LU]+\b/$1/g; # 2147483647L et alia
+	    $expr =~ s/\(?\(\w+\)([^\)]*)\)?/$1/; # ((type)0xcafebabe) at alia
+	    $expr =~ s/((?:0x)?[0-9a-fA-F]+)[LU]+\b/$1/g; # 2147483647L et alia
+	    next if $expr =~ m/^[a-zA-Z]+$/; # skip some Win32 functions
+	    if($expr =~ m/^0[xX]/) {
+		$err{$name} = hex $expr;
+	    }
+	    else {
 	    $err{$name} = eval $expr;
+	}
+	    delete $err{$name} unless defined $err{$name};
 	}
 	close(CPPO);
     }

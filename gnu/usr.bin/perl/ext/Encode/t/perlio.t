@@ -27,7 +27,7 @@ use File::Copy;
 use FileHandle;
 
 #use Test::More qw(no_plan);
-use Test::More tests => 28;
+use Test::More tests => 38;
 
 our $DEBUG = 0;
 
@@ -40,23 +40,19 @@ use Encode (":all");
     #$Encode::JP::JIS7::DEBUG = $DEBUG;
 }
 
-
-
 my $seq = 0;
 my $dir = dirname(__FILE__);
 
 my %e = 
     (
      jisx0208 => [ qw/euc-jp shiftjis 7bit-jis iso-2022-jp iso-2022-jp-1/],
-     #ksc5601  => [ qw/euc-kr iso-2022-kr/],
      ksc5601  => [ qw/euc-kr/],
-     #gb2312   => [ qw/euc-cn hz/],
-     gb2312   => [ qw/euc-cn/],
+     gb2312   => [ qw/euc-cn hz/],
     );
 
 $/ = "\x0a"; # may fix VMS problem for test #28 and #29
 
-for my $src(sort keys %e) {
+for my $src (sort keys %e) {
     my $ufile = File::Spec->catfile($dir,"$src.utf");
     open my $fh, "<:utf8", $ufile or die "$ufile : $!";
     my @uline = <$fh>;
@@ -72,9 +68,8 @@ for my $src(sort keys %e) {
     
 	# then create a file via perlio without autoflush
 
-    TODO:{
-	    #local $TODO = "$e: !perlio_ok" unless (perlio_ok($e) or $DEBUG);
-	    todo_skip "$e: !perlio_ok", 4 unless (perlio_ok($e) or $DEBUG);
+    SKIP:{
+	    skip "$e: !perlio_ok", 4 unless (perlio_ok($e) or $DEBUG);
 	    no warnings 'uninitialized';
 	    open $fh, ">:encoding($e)", $pfile or die "$sfile : $!";
 	    $fh->autoflush(0);
@@ -127,11 +122,59 @@ for my $src(sort keys %e) {
 		dump2file("$pfile.$seq", $dtext);
 	    }
 	}
-	$DEBUG or unlink ($sfile, $pfile);
+     if ( ! $DEBUG ) {
+            1 while unlink ($sfile);
+            1 while unlink ($pfile);
+        }
     }
 }
-    
 
+# BOM Test
+
+SKIP:{
+    my $pev = PerlIO::encoding->VERSION;
+    skip "PerlIO::encoding->VERSION = $pev <= 0.07 ", 6
+	unless ($pev >= 0.07 or $DEBUG);
+
+    my $file = File::Spec->catfile($dir,"jisx0208.utf");
+    open my $fh, "<:utf8", $file or die "$file : $!";
+    my $str = join('' => <$fh>);
+    close $fh;
+    my %bom = (
+	       'UTF-16BE' => pack('n', 0xFeFF),
+	       'UTF-16LE' => pack('v', 0xFeFF),
+	       'UTF-32BE' => pack('N', 0xFeFF),
+	       'UTF-32LE' => pack('V', 0xFeFF),
+	      );
+    # reading
+    for my $utf (sort keys %bom){
+	my $bomed = $bom{$utf} . encode($utf, $str);
+	my $sfile = File::Spec->catfile($dir,".${utf}_${seq}_$$");
+	dump2file($sfile, $bomed);
+	my $utf_nobom = $utf; $utf_nobom =~ s/(LE|BE)$//o;
+	# reading
+	open $fh, "<:encoding($utf_nobom)", $sfile or die "$sfile : $!";
+	my $cmp = join '' => <$fh>;
+	close $fh;
+	is($str, $cmp, "<:encoding($utf_nobom) eq $utf");
+	unlink $sfile;  $seq++;
+    }
+    # writing
+    for my $utf_nobom (qw/UTF-16 UTF-32/){
+	my $utf = $utf_nobom . 'BE';
+	my $sfile = File::Spec->catfile($dir,".${utf_nobom}_${seq}_$$");
+	my $bomed = $bom{$utf} . encode($utf, $str);
+	open  $fh, ">:encoding($utf_nobom)", $sfile or die "$sfile : $!";
+	print $fh $str;
+	close $fh;
+	open my $fh, "<", $sfile or die "$sfile : $!";
+	read $fh, my $cmp, -s $sfile;
+	close $fh;
+	use bytes ();
+	ok($bomed eq $cmp, ">:encoding($utf_nobom) eq $utf");
+	unlink $sfile; $seq++;
+    }
+}
 sub dump2file{
     no warnings;
     open my $fh, ">", $_[0] or die "$_[0]: $!";

@@ -1,6 +1,6 @@
 package bytes;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 $bytes::hint_bits = 0x00000008;
 
@@ -18,6 +18,11 @@ sub AUTOLOAD {
 }
 
 sub length ($);
+sub chr ($);
+sub ord ($);
+sub substr ($$;$$);
+sub index ($$;$);
+sub rindex ($$;$);
 
 1;
 __END__
@@ -29,7 +34,14 @@ bytes - Perl pragma to force byte semantics rather than character semantics
 =head1 SYNOPSIS
 
     use bytes;
+    ... chr(...);       # or bytes::chr
+    ... index(...);     # or bytes::index
+    ... length(...);    # or bytes::length
+    ... ord(...);       # or bytes::ord
+    ... rindex(...);    # or bytes::rindex
+    ... substr(...);    # or bytes::substr
     no bytes;
+
 
 =head1 DESCRIPTION
 
@@ -53,16 +65,22 @@ up the UTF8 encoding - and C<length $x> returns C<2>:
     print "Length is ", length $x, "\n";     # "Length is 1"
     printf "Contents are %vd\n", $x;         # "Contents are 400"
     { 
-        use bytes;
+        use bytes; # or "require bytes; bytes::length()"
         print "Length is ", length $x, "\n"; # "Length is 2"
         printf "Contents are %vd\n", $x;     # "Contents are 198.144"
     }
 
+chr(), ord(), substr(), index() and rindex() behave similarly.
+
 For more on the implications and differences between character
-semantics and byte semantics, see L<perlunicode>.
+semantics and byte semantics, see L<perluniintro> and L<perlunicode>.
+
+=head1 LIMITATIONS
+
+bytes::substr() does not work as an lvalue().
 
 =head1 SEE ALSO
 
-L<perlunicode>, L<utf8>
+L<perluniintro>, L<perlunicode>, L<utf8>
 
 =cut

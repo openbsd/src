@@ -102,7 +102,7 @@ if ($^O eq 'VMS') {
      # Everyone needs libperl copied if it's not found by '-lperl'.
      $testlib = $Config{'libperl'};
      my $srclib = $testlib;
-     $testlib =~ s/^[^.]+/libperl/;
+     $testlib =~ s/.+(?=\.[^.]*)/libperl/;
      $testlib = File::Spec::->catfile($lib, $testlib);
      $srclib = File::Spec::->catfile($lib, $srclib);
      if (-f $srclib) {
@@ -151,11 +151,15 @@ __END__
 
 #define my_puts(a) if(puts(a) < 0) exit(666)
 
-static char *cmds[] = { "perl","-e", "print qq[ok 5\\n]", NULL };
+static char *cmds[] = { "perl","-e", "$|=1; print qq[ok 5\\n]", NULL };
 
 int main(int argc, char **argv, char **env)
 {
-    PerlInterpreter *my_perl = perl_alloc();
+    PerlInterpreter *my_perl;
+
+    PERL_SYS_INIT3(&argc,&argv,&env);
+
+    my_perl = perl_alloc();
 
     my_puts("ok 2");
 
@@ -180,6 +184,8 @@ int main(int argc, char **argv, char **env)
     perl_free(my_perl);
 
     my_puts("ok 8");
+
+    PERL_SYS_TERM();
 
     return 0;
 }

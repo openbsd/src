@@ -6,9 +6,10 @@ BEGIN {
     require Config; import Config;
 }
 use strict;
+use warnings;
 use Getopt::Std;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 1.30 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
@@ -158,7 +159,7 @@ my $hname = $cname;
 
 my ($doC,$doEnc,$doUcm,$doPet);
 
-if ($cname =~ /\.(c|xs)$/)
+if ($cname =~ /\.(c|xs)$/i) # VMS may have upcased filenames with DECC$ARGV_PARSE_STYLE defined
  {
   $doC = 1;
   $dname =~ s/(\.[^\.]*)?$/.exh/;
@@ -186,7 +187,7 @@ END
     print C "#include <XSUB.h>\n";
     print C "#define U8 U8\n";
    }
-  print C "#include \"encode.h\"\n";
+  print C "#include \"encode.h\"\n\n";
 
  }
 elsif ($cname =~ /\.enc$/)
@@ -204,6 +205,9 @@ elsif ($cname =~ /\.pet$/)
 
 my %encoding;
 my %strings;
+my $string_acc;
+my %strings_in_acc;
+
 my $saved = 0;
 my $subsave = 0;
 my $strings = 0;
@@ -250,8 +254,19 @@ if ($doC)
   foreach my $name (sort cmp_name keys %encoding)
    {
     my ($e2u,$u2e,$erep,$min_el,$max_el) = @{$encoding{$name}};
-    output(\*C,$name.'_utf8',$e2u);
-    output(\*C,'utf8_'.$name,$u2e);
+    process($name.'_utf8',$e2u);
+    addstrings(\*C,$e2u);
+
+    process('utf8_'.$name,$u2e);
+    addstrings(\*C,$u2e);
+   }
+  outbigstring(\*C,"enctable");
+  foreach my $name (sort cmp_name keys %encoding)
+   {
+    my ($e2u,$u2e,$erep,$min_el,$max_el) = @{$encoding{$name}};
+    outtable(\*C,$e2u, "enctable");
+    outtable(\*C,$u2e, "enctable");
+
     # push(@{$encoding{$name}},outstring(\*C,$e2u->{Cname}.'_def',$erep));
    }
   foreach my $enc (sort cmp_name keys %encoding)
@@ -596,43 +611,6 @@ sub enter_fb0 {
   }
 }
 
-
-sub outstring
-{
- my ($fh,$name,$s) = @_;
- my $sym = $strings{$s};
- if ($sym)
-  {
-   $saved += length($s);
-  }
- else
-  {
-   if ($opt{'O'}) {
-       foreach my $o (keys %strings)
-        {
-         next unless (my $i = index($o,$s)) >= 0;
-         $sym = $strings{$o};
-         # gcc things that 0x0e+0x10 (anything with e+) starts to look like
-         # a hexadecimal floating point constant. Silly gcc. Only p
-         # introduces a floating point constant. Put the space in to stop it
-         # getting confused.
-         $sym .= sprintf(" +0x%02x",$i) if ($i);
-         $subsave += length($s);
-         return $strings{$s} = $sym;
-       }
-   }
-   $strings{$s} = $sym = $name;
-   $strings += length($s);
-   my $definition = sprintf "static const U8 %s[%d] = { ",$name,length($s);
-   # Maybe we should assert that these are all <256.
-   $definition .= join(',',unpack "C*",$s);
-   # We have a single long line. Split it at convenient commas.
-   $definition =~ s/(.{74,77},)/$1\n/g;
-   print $fh "$definition };\n\n";
-  }
- return $sym;
-}
-
 sub process
 {
   my ($name,$a) = @_;
@@ -693,7 +671,8 @@ sub process
   $a->{'Entries'} = \@ent;
 }
 
-sub outtable
+
+sub addstrings
 {
  my ($fh,$a) = @_;
  my $name = $a->{'Cname'};
@@ -701,20 +680,98 @@ sub outtable
  foreach my $b (@{$a->{'Entries'}})
   {
    next unless $b->[AGG_OUT_LEN];
-   my $s = $b->[AGG_MIN_IN];
-   my $e = $b->[AGG_MAX_IN];
-   outstring($fh,sprintf("%s__%02x_%02x",$name,$s,$e),$b->[AGG_OUT_BYTES]);
+   $strings{$b->[AGG_OUT_BYTES]} = undef;
   }
  if ($a->{'Forward'})
   {
    my $var = $^O eq 'MacOS' ? 'extern' : 'static';
-   print $fh "\n$var encpage_t $name\[",scalar(@{$a->{'Entries'}}),"];\n";
+   print $fh "$var encpage_t $name\[",scalar(@{$a->{'Entries'}}),"];\n";
   }
+ $a->{'DoneStrings'} = 1;
+ foreach my $b (@{$a->{'Entries'}})
+  {
+   my ($s,$e,$out,$t,$end,$l) = @$b;
+   addstrings($fh,$t) unless $t->{'DoneStrings'};
+  }
+}
+
+sub outbigstring
+{
+  my ($fh,$name) = @_;
+
+  $string_acc = '';
+
+  # Make the big string in the string accumulator. Longest first, on the hope
+  # that this makes it more likely that we find the short strings later on.
+  # Not sure if it helps sorting strings of the same length lexcically.
+  foreach my $s (sort {length $b <=> length $a || $a cmp $b} keys %strings) {
+    my $index = index $string_acc, $s;
+    if ($index >= 0) {
+      $saved += length($s);
+      $strings_in_acc{$s} = $index;
+    } else {
+    OPTIMISER: {
+	if ($opt{'O'}) {
+	  my $sublength = length $s;
+	  while (--$sublength > 0) {
+	    # progressively lop characters off the end, to see if the start of
+	    # the new string overlaps the end of the accumulator.
+	    if (substr ($string_acc, -$sublength)
+		eq substr ($s, 0, $sublength)) {
+	      $subsave += $sublength;
+	      $strings_in_acc{$s} = length ($string_acc) - $sublength;
+	      # append the last bit on the end.
+	      $string_acc .= substr ($s, $sublength);
+	      last OPTIMISER;
+	    }
+	    # or if the end of the new string overlaps the start of the
+	    # accumulator
+	    next unless substr ($string_acc, 0, $sublength)
+	      eq substr ($s, -$sublength);
+	    # well, the last $sublength characters of the accumulator match.
+	    # so as we're prepending to the accumulator, need to shift all our
+	    # existing offsets forwards
+	    $_ += $sublength foreach values %strings_in_acc;
+	    $subsave += $sublength;
+	    $strings_in_acc{$s} = 0;
+	    # append the first bit on the start.
+	    $string_acc = substr ($s, 0, -$sublength) . $string_acc;
+	    last OPTIMISER;
+	  }
+	}
+	# Optimiser (if it ran) found nothing, so just going have to tack the
+	# whole thing on the end.
+	$strings_in_acc{$s} = length $string_acc;
+	$string_acc .= $s;
+      };
+    }
+  }
+
+  $strings = length $string_acc;
+  my $definition = "\nstatic const U8 $name\[$strings] = { " .
+    join(',',unpack "C*",$string_acc);
+  # We have a single long line. Split it at convenient commas.
+  print $fh $1, "\n" while $definition =~ /\G(.{74,77},)/gcs;
+  print $fh substr ($definition, pos $definition), " };\n";
+}
+
+sub findstring {
+  my ($name,$s) = @_;
+  my $offset = $strings_in_acc{$s};
+  die "Can't find string " . join (',',unpack "C*",$s) . " in accumulator"
+    unless defined $offset;
+  "$name + $offset";
+}
+
+sub outtable
+{
+ my ($fh,$a,$bigname) = @_;
+ my $name = $a->{'Cname'};
  $a->{'Done'} = 1;
  foreach my $b (@{$a->{'Entries'}})
   {
    my ($s,$e,$out,$t,$end,$l) = @$b;
-   outtable($fh,$t) unless $t->{'Done'};
+   outtable($fh,$t,$bigname) unless $t->{'Done'};
   }
  print $fh "\nstatic encpage_t $name\[",scalar(@{$a->{'Entries'}}),"] = {\n";
  foreach my $b (@{$a->{'Entries'}})
@@ -724,7 +781,7 @@ sub outtable
    print  $fh "{";
    if ($l)
     {
-     printf $fh outstring($fh,'',$out);
+     printf $fh findstring($bigname,$out);
     }
    else
     {
@@ -734,14 +791,6 @@ sub outtable
    printf $fh ",0x%02x,0x%02x,$l,$end},\n",$sc,$ec;
   }
  print $fh "};\n";
-}
-
-sub output
-{
- my ($fh,$name,$a) = @_;
- process($name,$a);
- # Sub-tables
- outtable($fh,$a);
 }
 
 sub output_enc
@@ -857,7 +906,7 @@ use vars qw(
 );
 
 sub find_e2x{
-    eval { require File::Find };
+    eval { require File::Find; };
     my (@inc, %e2x_dir);
     for my $inc (@INC){
 	push @inc, $inc unless $inc eq '.'; #skip current dir
@@ -869,6 +918,7 @@ sub find_e2x{
 		     = lstat($_) or return;
 		 -f _ or return;
 		 if (/^.*\.e2x$/o){
+		     no warnings 'once';
 		     $e2x_dir{$File::Find::dir} ||= $mtime;
 		 }
 		 return;
@@ -927,6 +977,7 @@ sub make_configlocal_pm
 	    eval { require "Encode/$f"; };
 	    $@ and die "Can't require Encode/$f: $@\n";
 	    for my $enc (Encode->encodings()){
+		no warnings 'once';
 		$in_core{$enc} and next;
 		$Encode::Config::ExtModule{$enc} and next;
 		my $mod = "Encode/$f"; 

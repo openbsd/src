@@ -85,8 +85,6 @@ my $tests_total = 0;
 # Unixes it is the basename rather than the full path to the perl binary.
 my $perlpath = '';
 if (defined($Config{'perlpath'})) { $perlpath = $Config{'perlpath'}; }
-# Of course some platforms are distinct...
-if ($^O eq 'VMS') { $perlpath = $^X; }
 
 # The useithreads Config variable plays a role in whether or not
 # threads and threads/shared work when C<use>d.  They apparently always

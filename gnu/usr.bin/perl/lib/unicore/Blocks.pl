@@ -45,6 +45,10 @@ return <<'END';
 1760	177F	Tagbanwa
 1780	17FF	Khmer
 1800	18AF	Mongolian
+1900	194F	Limbu
+1950	197F	Tai Le
+19E0	19FF	Khmer Symbols
+1D00	1D7F	Phonetic Extensions
 1E00	1EFF	Latin Extended Additional
 1F00	1FFF	Greek Extended
 2000	206F	General Punctuation
@@ -70,6 +74,7 @@ return <<'END';
 2900	297F	Supplemental Arrows-B
 2980	29FF	Miscellaneous Mathematical Symbols-B
 2A00	2AFF	Supplemental Mathematical Operators
+2B00	2BFF	Miscellaneous Symbols and Arrows
 2E80	2EFF	CJK Radicals Supplement
 2F00	2FDF	Kangxi Radicals
 2FF0	2FFF	Ideographic Description Characters
@@ -84,6 +89,7 @@ return <<'END';
 3200	32FF	Enclosed CJK Letters and Months
 3300	33FF	CJK Compatibility
 3400	4DBF	CJK Unified Ideographs Extension A
+4DC0	4DFF	Yijing Hexagram Symbols
 4E00	9FFF	CJK Unified Ideographs
 A000	A48F	Yi Syllables
 A490	A4CF	Yi Radicals
@@ -102,15 +108,24 @@ FE50	FE6F	Small Form Variants
 FE70	FEFF	Arabic Presentation Forms-B
 FF00	FFEF	Halfwidth and Fullwidth Forms
 FFF0	FFFF	Specials
+10000	1007F	Linear B Syllabary
+10080	100FF	Linear B Ideograms
+10100	1013F	Aegean Numbers
 10300	1032F	Old Italic
 10330	1034F	Gothic
+10380	1039F	Ugaritic
 10400	1044F	Deseret
+10450	1047F	Shavian
+10480	104AF	Osmanya
+10800	1083F	Cypriot Syllabary
 1D000	1D0FF	Byzantine Musical Symbols
 1D100	1D1FF	Musical Symbols
+1D300	1D35F	Tai Xuan Jing Symbols
 1D400	1D7FF	Mathematical Alphanumeric Symbols
 20000	2A6DF	CJK Unified Ideographs Extension B
 2F800	2FA1F	CJK Compatibility Ideographs Supplement
 E0000	E007F	Tags
+E0100	E01EF	Variation Selectors Supplement
 F0000	FFFFF	Supplementary Private Use Area-A
 100000	10FFFF	Supplementary Private Use Area-B
 END

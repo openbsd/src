@@ -11,9 +11,9 @@ $DOWARN = 1; # enable run-time warnings now
 use Config;
 
 require "test.pl";
-plan( tests => 47 );
+plan( tests => 53 );
 
-eval { use v5.5.640; };
+eval 'use v5.5.640';
 is( $@, '', "use v5.5.640; $@");
 
 require_ok('v5.5.640');
@@ -52,7 +52,7 @@ is(v1.20.300.4000, "\x{1}\x{14}\x{12c}\x{fa0}",'compare embedded \x{} string');
 
 #
 # now do the same without the "v"
-eval { use 5.5.640; };
+eval 'use 5.5.640';
 is( $@, '', "use 5.5.640; $@");
 
 require_ok('5.5.640');
@@ -245,3 +245,22 @@ SKIP: {
     }
   }
 }
+
+# Tests for magic v-strings
+
+$v = 1.2.3;
+is( ref(\$v), 'SCALAR', 'v-strings are just scalars' );
+
+$v = v1.2_3;
+is( ref(\$v), 'SCALAR', 'v-strings with v are just scalars' );
+is( sprintf("%vd", $v), '1.23', 'v-string ignores underscores' );
+
+# [perl #16010]
+%h = (v65 => 42);
+ok( exists $h{v65}, "v-stringness is not engaged for vX" );
+%h = (v65.66 => 42);
+ok( exists $h{chr(65).chr(66)}, "v-stringness is engaged for vX.Y" );
+%h = (65.66.67 => 42);
+ok( exists $h{chr(65).chr(66).chr(67)}, "v-stringness is engaged for X.Y.Z" );
+
+

@@ -3,6 +3,7 @@
 # Any changes made here will be lost!
 
 return <<'END';
+0600	0603	<no shaping>
 0621		<no shaping>
 0622	0623	ALEF
 0624		WAW
@@ -66,6 +67,10 @@ return <<'END';
 06D0	06D1	YEH
 06D2	06D3	YEH BARREE
 06D5		TEH MARBUTA
+06DD		<no shaping>
+06EE		DAL
+06EF		REH
+06FF		KNOTTED HEH
 06FA		SEEN
 06FB		SAD
 06FC		AIN
@@ -94,5 +99,12 @@ return <<'END';
 072A		DALATH RISH
 072B		SHIN
 072C		TAW
+072D		BETH
+072E		GAMAL
+072F		DALATH RISH
+074D		ZHAIN
+074E		KHAPH
+074F		FE
 200D		<no shaping>
+200C		<no shaping>
 END

@@ -41,7 +41,7 @@ sub numify { 0 + "${$_[0]}" }	# Not needed, additional overhead
 
 package main;
 
-$test = 0;
+our $test = 0;
 $| = 1;
 print "1..",&last,"\n";
 
@@ -1064,9 +1064,10 @@ package main;
 
 
 my $utfvar = new utf8_o 200.2.1;
-test("$utfvar" eq 200.2.1); # 223
+test("$utfvar" eq 200.2.1); # 223 - stringify
+test("a$utfvar" eq "a".200.2.1); # 224 - overload via sv_2pv_flags
 
-# 224..226 -- more %{} tests.  Hangs in 5.6.0, okay in later releases.
+# 225..227 -- more %{} tests.  Hangs in 5.6.0, okay in later releases.
 # Basically this example implements strong encapsulation: if Hderef::import()
 # were to eval the overload code in the caller's namespace, the privatisation
 # would be quite transparent.
@@ -1080,9 +1081,27 @@ sub xet { @_ == 2 ? $_[0]->{$_[1]} :
 package main;
 my $a = Foo->new;
 $a->xet('b', 42);
-print $a->xet('b') == 42 ? "ok 224\n" : "not ok 224\n";
-print defined eval { $a->{b} } ? "not ok 225\n" : "ok 225\n";
-print $@ =~ /zap/ ? "ok 226\n" : "not ok 226\n";
+print $a->xet('b') == 42 ? "ok 225\n" : "not ok 225\n";
+print defined eval { $a->{b} } ? "not ok 226\n" : "ok 226\n";
+print $@ =~ /zap/ ? "ok 227\n" : "not ok 227\n";
+
+print overload::StrVal(qr/a/) =~ /^Regexp=SCALAR\(0x[0-9a-f]+\)$/ ? "ok 228\n" : "not ok 228\n";
+
+{
+   package t229;
+   use overload '='  => sub { 42 },
+                '++' => sub { my $x = ${$_[0]}; $_[0] };
+   sub new { my $x = 42; bless \$x }
+
+   my $warn;
+   {  
+     local $SIG{__WARN__} = sub { $warn++ };
+      my $x = t229->new;
+      my $y = $x;
+      eval { $y++ };
+   }
+   print $warn ? "not ok 229\n" : "ok 229\n";
+}
 
 # Last test is:
-sub last {226}
+sub last {229}

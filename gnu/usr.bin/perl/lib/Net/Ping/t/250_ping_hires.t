@@ -57,5 +57,7 @@ my ($ret, $duration) = $p -> ping("localhost");
 ok $ret;
 
 # It is extremely likely that the duration contains a decimal
-# point if Time::HiRes is functioning properly.
-ok $duration =~ /\./;
+# point if Time::HiRes is functioning properly, except when it
+# it is fast enough to be "zero".
+print "# duration=[$duration]\n";
+ok $duration =~ /\.|^0$/;

@@ -251,7 +251,7 @@ eval <<'EOE' or $_ = $@;
 EOE
 
 print "# '$_'.\nnot "
-  unless /Empty array returned from lvalue subroutine in scalar context/;
+  unless /Can't return undef from lvalue subroutine/;
 print "ok 31\n";
 
 sub lv10 : lvalue {}
@@ -274,7 +274,7 @@ eval <<'EOE' or $_ = $@;
 EOE
 
 print "# '$_'.\nnot "
-  unless /Can\'t return a readonly value from lvalue subroutine/;
+  unless /Can't return undef from lvalue subroutine/;
 print "ok 33\n";
 
 $_ = undef;
@@ -423,10 +423,7 @@ $a->() = 8;
 print "# '$nnewvar'.\nnot " unless $nnewvar eq '8';
 print "ok 46\n";
 
-# This must happen at run time
-eval {
-    sub AUTOLOAD : lvalue { $newvar };
-};
+eval 'sub AUTOLOAD : lvalue { $newvar }';
 foobar() = 12;
 print "# '$newvar'.\nnot " unless $newvar eq "12";
 print "ok 47\n";

@@ -1,4 +1,4 @@
-                         Storable 1.015
+                         Storable 2.07
                Copyright (c) 1995-2000, Raphael Manfredi
                Copyright (c) 2001,2002, Larry Wall
 
@@ -71,9 +71,8 @@ Thanks to (in chronological order):
 
 for their contributions.
 
-There is a Japanese translation of this man page available at
-http://member.nifty.ne.jp/hippo2000/perltips/storable.htm,
-courtesy of Kawai, Takanori <kawai@nippon-rad.co.jp>.
+A Japanese translation of this man page is available at the Japanized
+Perl Resources Project <https://sourceforge.jp/projects/perldocjp/>.
 ------------------------------------------------------------------------
 
 The perl5-porters would like to thank

@@ -3,7 +3,7 @@ package Tie::Array;
 use 5.006_001;
 use strict;
 use Carp;
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 # Pod documentation after __END__ below.
 
@@ -74,12 +74,12 @@ sub SPLICE {
 
 sub EXISTS {
     my $pkg = ref $_[0];
-    croak "$pkg dosn't define an EXISTS method";
+    croak "$pkg doesn't define an EXISTS method";
 }
 
 sub DELETE {
     my $pkg = ref $_[0];
-    croak "$pkg dosn't define a DELETE method";
+    croak "$pkg doesn't define a DELETE method";
 }
 
 package Tie::StdArray;

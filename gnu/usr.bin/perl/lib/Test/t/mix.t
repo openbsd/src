@@ -46,5 +46,13 @@ ok 4 # skip
 EXPECT
 
 
+sub commentless {
+  my $in = $_[0];
+  $in =~ s/^#[^\n]*\n//mg;
+  $in =~ s/\n#[^\n]*$//mg;
+  return $in;
+}
+
+
 print "1..1\n";
-ok( $out, $expect );
+ok( commentless($out), commentless($expect) );

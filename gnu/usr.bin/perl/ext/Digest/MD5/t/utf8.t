@@ -1,8 +1,10 @@
 #!perl -w
 
-if ($] < 5.006) {
-    print "1..0\n";
-    exit;
+BEGIN {
+    if ($] < 5.006) {
+	print "1..0 # Skipped: your perl don't know unicode\n";
+	exit;
+    }
 }
 
 print "1..3\n";

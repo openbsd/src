@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.05;
+our $VERSION = 0.06;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -165,6 +165,10 @@ The following are the built-in attributes for subroutines:
 
 =item locked
 
+B<5.005 threads only!  The use of the "locked" attribute currently
+only makes sense if you are using the deprecated "Perl 5.005 threads"
+implementation of threads.>
+
 Setting this attribute is only meaningful when the subroutine or
 method is to be called by multiple threads.  When set on a method
 subroutine (i.e., one marked with the B<method> attribute below),
@@ -261,7 +265,7 @@ This list may be empty.
 This method is called with two fixed arguments, followed by the list of
 attributes from the relevant declaration.  The two fixed arguments are
 the relevant package name and a reference to the declared subroutine or
-variable.  The expected return value as a list of attributes which were
+variable.  The expected return value is a list of attributes which were
 not recognized by this handler.  Note that this allows for a derived class
 to delegate a call to its base class, and then only examine the attributes
 which the base class didn't already handle for it.

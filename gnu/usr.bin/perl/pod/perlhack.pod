@@ -480,63 +480,23 @@ for reference.
 =back
 
 
-=head2 Perlbug remote interface
+=head2 Perlbug administration
 
-There are three (3) remote administrative interfaces for modifying bug
-status, category, etc.  In all cases an admin must be first registered
-with the Perlbug database by sending an email request to
-richard@perl.org or bugmongers@perl.org.
+There is a single remote administrative interface for modifying bug status, 
+category, open issues etc. using the B<RT> I<bugtracker> system, maintained
+by I<Robert Spier>.  Become an administrator, and close any bugs you can get 
+your sticky mitts on:
 
-The main requirement is the willingness to classify, (with the
-emphasis on closing where possible :), outstanding bugs.  Further
-explanation can be garnered from the web at http://bugs.perl.org/ , or
-by asking on the admin mailing list at: bugmongers@perl.org
+	http://rt.perl.org
 
-For more info on the web see
+The bugtracker mechanism for B<perl5> bugs in particular is at:
 
-	http://bugs.perl.org/perlbug.cgi?req=spec
+	http://bugs6.perl.org/perlbug
 
-=over 4
+To email the bug system administrators:
 
-=item 1 http://bugs.perl.org
+	"perlbug-admin" <perlbug-admin@perl.org>
 
-Login via the web, (remove B<admin/> if only browsing), where interested
-Cc's, tests, patches and change-ids, etc. may be assigned.
-
-	http://bugs.perl.org/admin/index.html
-
-
-=item 2 bugdb@perl.org
-
-Where the subject line is used for commands:
-
-	To: bugdb@perl.org
-	Subject: -a close bugid1 bugid2 aix install
-
-	To: bugdb@perl.org
-	Subject: -h
-
-
-=item 3 commands_and_bugdids@bugs.perl.org
-
-Where the address itself is the source for the commands:
-
-	To: close_bugid1_bugid2_aix@bugs.perl.org
-
-	To: help@bugs.perl.org
-
-
-=item notes, patches, tests
-
-For patches and tests, the message body is assigned to the appropriate
-bugs and forwarded to p5p for their attention.
-
-	To: test_<bugid1>_aix_close@bugs.perl.org
-	Subject: this is a test for the (now closed) aix bug
-
-	Test is the body of the mail
-
-=back
 
 =head2 Submitting patches
 
@@ -915,7 +875,7 @@ C<"\0">.
 
 Line 13 manipulates the flags; since we've changed the PV, any IV or NV
 values will no longer be valid: if we have C<$a=10; $a.="6";> we don't
-want to use the old IV of 10. C<SvPOK_only_utf8> is a special UTF8-aware
+want to use the old IV of 10. C<SvPOK_only_utf8> is a special UTF-8-aware
 version of C<SvPOK_only>, a macro which turns off the IOK and NOK flags
 and turns on POK. The final C<SvTAINT> is a macro which launders tainted
 data if taint mode is turned on.
@@ -1256,6 +1216,14 @@ important ones are explained in L<perlxs> as well. Pay special attention
 to L<perlguts/Background and PERL_IMPLICIT_CONTEXT> for information on
 the C<[pad]THX_?> macros.
 
+=head2 The .i Targets
+
+You can expand the macros in a F<foo.c> file by saying
+
+    make foo.i
+
+which will expand the macros using cpp.  Don't be scared by the results.
+
 =head2 Poking at Perl
 
 To really poke around with Perl, you'll probably want to build Perl for
@@ -1349,8 +1317,11 @@ blessing when stepping through miles of source code.
 =item print
 
 Execute the given C code and print its results. B<WARNING>: Perl makes
-heavy use of macros, and F<gdb> is not aware of macros. You'll have to
-substitute them yourself. So, for instance, you can't say
+heavy use of macros, and F<gdb> does not necessarily support macros
+(see later L</"gdb macro support">).  You'll have to substitute them
+yourself, or to invoke cpp on the source code files
+(see L</"The .i Targets">)
+So, for instance, you can't say
 
     print SvPV_nolen(sv)
 
@@ -1358,11 +1329,19 @@ but you have to say
 
     print Perl_sv_2pv_nolen(sv)
 
+=back
+
 You may find it helpful to have a "macro dictionary", which you can
 produce by saying C<cpp -dM perl.c | sort>. Even then, F<cpp> won't
-recursively apply the macros for you. 
+recursively apply those macros for you. 
 
-=back
+=head2 gdb macro support
+
+Recent versions of F<gdb> have fairly good macro support, but
+in order to use it you'll need to compile perl with macro definitions
+included in the debugging information.  Using F<gcc> version 3.1, this
+means configuring with C<-Doptimize=-g3>.  Other compilers might use a
+different switch (if they support debugging macros at all).
 
 =head2 Dumping Perl Data Structures
 
@@ -1460,7 +1439,7 @@ some things you'll need to know when fiddling with them. Let's now get
 on and create a simple patch. Here's something Larry suggested: if a
 C<U> is the first active format during a C<pack>, (for example, 
 C<pack "U3C8", @stuff>) then the resulting string should be treated as
-UTF8 encoded.
+UTF-8 encoded.
 
 How do we prepare to fix this up? First we locate the code in question -
 the C<pack> happens at runtime, so it's going to be in one of the F<pp>
@@ -1509,7 +1488,7 @@ of C<pat>:
     while (pat < patend) {
 
 Now if we see a C<U> which was at the start of the string, we turn on
-the UTF8 flag for the output SV, C<cat>:
+the C<UTF8> flag for the output SV, C<cat>:
 
  +  if (datumtype == 'U' && pat==patcopy+1)
  +      SvUTF8_on(cat);
@@ -1595,10 +1574,10 @@ this text in the description of C<pack>:
  =item *
 
  If the pattern begins with a C<U>, the resulting string will be treated
- as Unicode-encoded. You can force UTF8 encoding on in a string with an
- initial C<U0>, and the bytes that follow will be interpreted as Unicode
- characters. If you don't want this to happen, you can begin your pattern
- with C<C0> (or anything else) to force Perl not to UTF8 encode your
+ as UTF-8-encoded Unicode. You can force UTF-8 encoding on in a string
+ with an initial C<U0>, and the bytes that follow will be interpreted as
+ Unicode characters. If you don't want this to happen, you can begin your
+ pattern with C<C0> (or anything else) to force Perl not to UTF-8 encode your
  string, and then follow this with a C<U*> somewhere in your pattern.
 
 All done. Now let's create the patch. F<Porting/patching.pod> tells us
@@ -1759,6 +1738,18 @@ modules hanging around in here that need to be moved out into F<lib/>.
 Testing features of how perl actually runs, including exit codes and
 handling of PERL* environment variables.
 
+=item F<t/uni/>
+
+Tests for the core support of Unicode.
+
+=item F<t/win32/>
+
+Windows-specific tests.
+
+=item F<t/x2p>
+
+A test suite for the s2p converter.
+
 =back
 
 The core uses the same testing style as the rest of Perl, a simple
@@ -1819,12 +1810,23 @@ Run F<perl> on all core tests (F<t/*> and F<lib/[a-z]*> pragma tests).
 
 =item test.deparse
 
-Run all the tests through the B::Deparse.  Not all tests will succeed.
+Run all the tests through B::Deparse.  Not all tests will succeed.
+
+=item test.taintwarn
+
+Run all tests with the B<-t> command-line switch.  Not all tests
+are expected to succeed (until they're specifically fixed, of course).
 
 =item minitest
 
 Run F<miniperl> on F<t/base>, F<t/comp>, F<t/cmd>, F<t/run>, F<t/io>,
 F<t/op>, and F<t/uni> tests.
+
+=item test.valgrind check.valgrind utest.valgrind ucheck.valgrind
+
+(Only in Linux) Run all the tests using the memory leak + naughty
+memory access tool "valgrind".  The log files will be named
+F<testname.valgrind>.
 
 =item test.third check.third utest.third ucheck.third
 
@@ -1835,7 +1837,7 @@ F<perl3.log.testname>.
 =item test.torture torturetest
 
 Run all the usual tests and some extra tests.  As of Perl 5.8.0 the
-only extra tests are Abigail's JAPHs, t/japh/abigail.t.
+only extra tests are Abigail's JAPHs, F<t/japh/abigail.t>.
 
 You can also run the torture test with F<t/harness> by giving
 C<-torture> argument to F<t/harness>.
@@ -1843,6 +1845,59 @@ C<-torture> argument to F<t/harness>.
 =item utest ucheck test.utf8 check.utf8
 
 Run all the tests with -Mutf8.  Not all tests will succeed.
+
+=item test_harness
+
+Run the test suite with the F<t/harness> controlling program, instead of
+F<t/TEST>. F<t/harness> is more sophisticated, and uses the
+L<Test::Harness> module, thus using this test target supposes that perl
+mostly works. The main advantage for our purposes is that it prints a
+detailed summary of failed tests at the end. Also, unlike F<t/TEST>, it
+doesn't redirect stderr to stdout.
+
+=back
+
+=head2 Running tests by hand
+
+You can run part of the test suite by hand by using one the following
+commands from the F<t/> directory :
+
+    ./perl -I../lib TEST list-of-.t-files
+
+or
+
+    ./perl -I../lib harness list-of-.t-files
+
+(if you don't specify test scripts, the whole test suite will be run.)
+
+You can run an individual test by a command similar to
+
+    ./perl -I../lib patho/to/foo.t
+
+except that the harnesses set up some environment variables that may
+affect the execution of the test :
+
+=over 4 
+
+=item PERL_CORE=1
+
+indicates that we're running this test part of the perl core test suite.
+This is useful for modules that have a dual life on CPAN.
+
+=item PERL_DESTRUCT_LEVEL=2
+
+is set to 2 if it isn't set already (see L</PERL_DESTRUCT_LEVEL>)
+
+=item PERL
+
+(used only by F<t/TEST>) if set, overrides the path to the perl executable
+that should be used to run the tests (the default being F<./perl>).
+
+=item PERL_SKIP_TTY_TEST
+
+if set, tells to skip the tests that need a terminal. It's actually set
+automatically by the Makefile, but can also be forced artificially by
+running 'make test_notty'.
 
 =back
 
@@ -1854,6 +1909,38 @@ some common testing and debugging tools with Perl.  This is
 meant as a guide to interfacing these tools with Perl, not
 as any kind of guide to the use of the tools themselves.
 
+B<NOTE 1>: Running under memory debuggers such as Purify, valgrind, or
+Third Degree greatly slows down the execution: seconds become minutes,
+minutes become hours.  For example as of Perl 5.8.1, the
+ext/Encode/t/Unicode.t takes extraordinarily long to complete under
+e.g. Purify, Third Degree, and valgrind.  Under valgrind it takes more
+than six hours, even on a snappy computer-- the said test must be
+doing something that is quite unfriendly for memory debuggers.  If you
+don't feel like waiting, that you can simply kill away the perl
+process.
+
+B<NOTE 2>: To minimize the number of memory leak false alarms (see
+L</PERL_DESTRUCT_LEVEL> for more information), you have to have
+environment variable PERL_DESTRUCT_LEVEL set to 2.  The F<TEST>
+and harness scripts do that automatically.  But if you are running
+some of the tests manually-- for csh-like shells:
+
+    setenv PERL_DESTRUCT_LEVEL 2
+
+and for Bourne-type shells:
+
+    PERL_DESTRUCT_LEVEL=2
+    export PERL_DESTRUCT_LEVEL
+
+or in UNIXy environments you can also use the C<env> command:
+
+    env PERL_DESTRUCT_LEVEL=2 valgrind ./perl -Ilib ...
+
+B<NOTE 3>: There are known memory leaks when there are compile-time
+errors within eval or require, seeing C<S_doeval> in the call stack
+is a good sign of these.  Fixing these leaks is non-trivial,
+unfortunately, but they must be fixed eventually.
+
 =head2 Rational Software's Purify
 
 Purify is a commercial tool that is helpful in identifying
@@ -1861,11 +1948,6 @@ memory overruns, wild pointers, memory leaks and other such
 badness.  Perl must be compiled in a specific way for
 optimal testing with Purify.  Purify is available under
 Windows NT, Solaris, HP-UX, SGI, and Siemens Unix.
-
-The only currently known leaks happen when there are
-compile-time errors within eval or require.  (Fixing these
-is non-trivial, unfortunately, but they must be fixed
-eventually.)
 
 =head2 Purify on Unix
 
@@ -1914,17 +1996,6 @@ can just:
 which creates a binary named 'pureperl' that has been Purify'ed.
 This binary is used in place of the standard 'perl' binary
 when you want to debug Perl memory problems.
-
-To minimize the number of memory leak false alarms
-(see L</PERL_DESTRUCT_LEVEL>), set environment variable
-PERL_DESTRUCT_LEVEL to 2.
-
-    setenv PERL_DESTRUCT_LEVEL 2
-
-In Bourne-type shells:
-
-    PERL_DESTRUCT_LEVEL=2
-    export PERL_DESTRUCT_LEVEL
 
 As an example, to show any memory leaks produced during the
 standard Perl testset you would create and run the Purify'ed
@@ -2008,13 +2079,22 @@ standard Perl testset you would create and run Purify as:
 which would instrument Perl in memory, run Perl on test.pl,
 then finally report any memory problems.
 
-B<NOTE>: as of Perl 5.8.0, the ext/Encode/t/Unicode.t takes
-extraordinarily long (hours?) to complete under Purify.  It has been
-theorized that it would eventually finish, but nobody has so far been
-patient enough :-) (This same extreme slowdown has been seen also with
-the Third Degree tool, so the said test must be doing something that
-is quite unfriendly for memory debuggers.)  It is suggested that you
-simply kill away that testing process.
+=head2 valgrind
+
+The excellent valgrind tool can be used to find out both memory leaks
+and illegal memory accesses.  As of August 2003 it unfortunately works
+only on x86 (ELF) Linux.  The special "test.valgrind" target can be used
+to run the tests under valgrind.  Found errors and memory leaks are
+logged in files named F<test.valgrind>.
+
+As system libraries (most notably glibc) are also triggering errors,
+valgrind allows to suppress such errors using suppression files. The
+default suppression file that comes with valgrind already catches a lot
+of them. Some additional suppressions are defined in F<t/perl.supp>.
+
+To get valgrind and for more information see
+
+    http://developer.kde.org/~sewardj/
 
 =head2 Compaq's/Digital's/HP's Third Degree
 
@@ -2047,12 +2127,12 @@ aren't.  See L</PERL_DESTRUCT_LEVEL> for more information.
 
 =head2 PERL_DESTRUCT_LEVEL
 
-If you want to run any of the tests yourself manually using the
-pureperl or perl.third executables, please note that by default
-perl B<does not> explicitly cleanup all the memory it has allocated
-(such as global memory arenas) but instead lets the exit() of
-the whole program "take care" of such allocations, also known
-as "global destruction of objects".
+If you want to run any of the tests yourself manually using e.g.
+valgrind, or the pureperl or perl.third executables, please note that
+by default perl B<does not> explicitly cleanup all the memory it has
+allocated (such as global memory arenas) but instead lets the exit()
+of the whole program "take care" of such allocations, also known as
+"global destruction of objects".
 
 There is a way to tell perl to do complete cleanup: set the
 environment variable PERL_DESTRUCT_LEVEL to a non-zero value.
@@ -2064,7 +2144,14 @@ For example, for "third-degreed" Perl:
 
 (Note: the mod_perl apache module uses also this environment variable
 for its own purposes and extended its semantics. Refer to the mod_perl
-documentation for more information.)
+documentation for more information. Also, spawned threads do the
+equivalent of setting this variable to the value 1.)
+
+If, at the end of a run you get the message I<N scalars leaked>, you can
+recompile with C<-DDEBUG_LEAKING_SCALARS>, which will cause
+the addresses of all those leaked SVs to be dumped; it also converts
+C<new_SV()> from a macro into a real function, so you can use your
+favourite debugger to discover where those pesky SVs were allocated.
 
 =head2 Profiling
 

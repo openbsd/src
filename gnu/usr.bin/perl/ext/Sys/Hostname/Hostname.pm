@@ -5,17 +5,27 @@ use strict;
 use Carp;
 
 require Exporter;
-use XSLoader ();
 require AutoLoader;
 
 our @ISA     = qw/ Exporter AutoLoader /;
 our @EXPORT  = qw/ hostname /;
 
-our $VERSION = '1.1';
+our $VERSION;
 
 our $host;
 
-XSLoader::load 'Sys::Hostname', $VERSION;
+BEGIN {
+    $VERSION = '1.11';
+    {
+	local $SIG{__DIE__};
+	eval {
+	    require XSLoader;
+	    XSLoader::load('Sys::Hostname', $VERSION);
+	};
+	warn $@ if $@;
+    }
+}
+
 
 sub hostname {
 
@@ -23,7 +33,7 @@ sub hostname {
   return $host if defined $host;
 
   # method 1' - try to ask the system
-  $host = ghname();
+  $host = ghname() if defined &ghname;
   return $host if defined $host;
 
   if ($^O eq 'VMS') {
@@ -47,7 +57,7 @@ sub hostname {
 
     # rats!
     $host = '';
-    Carp::croak "Cannot get host name of local machine";  
+    croak "Cannot get host name of local machine";  
 
   }
   elsif ($^O eq 'MSWin32') {
@@ -61,6 +71,8 @@ sub hostname {
   }
   else {  # Unix
     # is anyone going to make it here?
+
+    local $ENV{PATH} = '/usr/bin:/bin:/usr/sbin:/sbin'; # Paranoia.
 
     # method 2 - syscall is preferred since it avoids tainting problems
     # XXX: is it such a good idea to return hostname untainted?
@@ -110,7 +122,7 @@ sub hostname {
     }
 
     # bummer
-    || Carp::croak "Cannot get host name of local machine";  
+    || croak "Cannot get host name of local machine";  
 
     # remove garbage 
     $host =~ tr/\0\r\n//d;

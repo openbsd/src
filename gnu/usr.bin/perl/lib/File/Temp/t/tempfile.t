@@ -1,14 +1,9 @@
 #!/usr/local/bin/perl -w
 # Test for File::Temp - tempfile function
 
-BEGIN {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-	require Test; import Test;
-	plan(tests => 20);
-}
-
 use strict;
+use Test;
+BEGIN { plan tests => 22}
 use File::Spec;
 
 # Will need to check that all files were unlinked correctly
@@ -89,6 +84,16 @@ push(@files, $tempfile);
 			    DIR => $tempdir,
 			   );
 
+
+ok( (-f $tempfile ));
+push(@files, $tempfile);
+
+# Test tempfile
+# ..and another with changed permissions (read-only)
+($fh, $tempfile) = tempfile(
+			    DIR => $tempdir,
+			   );
+chmod 0444, $tempfile;
 
 ok( (-f $tempfile ));
 push(@files, $tempfile);

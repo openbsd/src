@@ -1,3 +1,32 @@
+2003-03-25  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.07 released.
+
+	* ANSIColor.pm: Add PuTTY, Windows telnet, and Cygwin OpenSSH
+	information to the terminal emulators table, and update the URL to
+	the ECMA standard.
+
+2002-12-09  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.06 released to synchronize the version
+	on CPAN with the version in Perl core.
+
+	* ANSIColor.pm: Fix typo in L<> link in documentation.
+
+2002-06-28  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.05 released.
+
+	* ANSIColor.pm: Update the formatting style, add a pointer to the
+	module web site, use L<> for URLs, and use naked <>s where
+	permissible rather than E<lt> and E<gt>.  Renamed LICENSE to
+	COPYRIGHT AND LICENSE.
+
+2002-02-14  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Added a mention of the specific Windows consoles
+	that don't work with this module.
+
 2001-07-10  Russ Allbery  <rra@stanford.edu>
 
 	* ANSIColor.pm: Version 1.04 released.

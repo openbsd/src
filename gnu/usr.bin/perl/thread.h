@@ -1,6 +1,6 @@
 /*    thread.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1999, 2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -40,6 +40,11 @@
 #    ifdef __OPEN_VM
 #      define pthread_addr_t void *
 #    endif
+#    ifdef OEMVS
+#      define pthread_addr_t void *
+#      define pthread_create(t,a,s,d)        pthread_create(t,&(a),s,d)
+#      define pthread_keycreate              pthread_key_create
+#    endif
 #    ifdef VMS
 #      define pthread_attr_init(a) pthread_attr_create(a)
 #      define PTHREAD_ATTR_SETDETACHSTATE(a,s) pthread_setdetach_np(a,s)
@@ -57,7 +62,7 @@
 #      define pthread_mutexattr_init(a) pthread_mutexattr_create(a)
 #      define pthread_mutexattr_settype(a,t) pthread_mutexattr_setkind_np(a,t)
 #    endif
-#    if defined(DJGPP) || defined(__OPEN_VM)
+#    if defined(DJGPP) || defined(__OPEN_VM) || defined(OEMVS)
 #      define PTHREAD_ATTR_SETDETACHSTATE(a,s) pthread_attr_setdetachstate(a,&(s))
 #      define YIELD pthread_yield(NULL)
 #    endif
@@ -266,14 +271,14 @@
  * It would fail if the key were bogus, but if the key were bogus then
  * Really Bad Things would be happening anyway. --dan */
 #if (defined(__ALPHA) && (__VMS_VER >= 70000000)) || \
-    (defined(__alpha) && defined(__osf__)) /* Available only on >= 4.0 */
+    (defined(__alpha) && defined(__osf__) && !defined(__GNUC__)) /* Available only on >= 4.0 */
 #  define HAS_PTHREAD_UNCHECKED_GETSPECIFIC_NP /* Configure test needed */
 #endif
 
 #ifdef HAS_PTHREAD_UNCHECKED_GETSPECIFIC_NP
 #  define PTHREAD_GETSPECIFIC(key) pthread_unchecked_getspecific_np(key)
 #else
-#  define PTHREAD_GETSPECIFIC(key) pthread_getspecific(key)
+#    define PTHREAD_GETSPECIFIC(key) pthread_getspecific(key)
 #endif
 
 #ifndef PERL_GET_CONTEXT
@@ -381,6 +386,10 @@ typedef struct condpair {
 #define MgOWNER(mg) ((condpair_t *)(mg->mg_ptr))->owner
 
 #endif /* USE_5005THREADS */
+
+#  define LOCK_DOLLARZERO_MUTEX		MUTEX_LOCK(&PL_dollarzero_mutex)
+#  define UNLOCK_DOLLARZERO_MUTEX	MUTEX_UNLOCK(&PL_dollarzero_mutex)
+
 #endif /* USE_5005THREADS || USE_ITHREADS */
 
 #ifndef MUTEX_LOCK
@@ -457,6 +466,14 @@ typedef struct condpair {
 
 #ifndef UNLOCK_SV_LOCK_MUTEX
 #  define UNLOCK_SV_LOCK_MUTEX
+#endif
+
+#ifndef LOCK_DOLLARZERO_MUTEX
+#  define LOCK_DOLLARZERO_MUTEX
+#endif
+
+#ifndef UNLOCK_DOLLARZERO_MUTEX
+#  define UNLOCK_DOLLARZERO_MUTEX
 #endif
 
 /* THR, SET_THR, and dTHR are there for compatibility with old versions */

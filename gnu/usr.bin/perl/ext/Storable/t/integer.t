@@ -37,10 +37,10 @@ my $max_uv_m1 = ~0 ^ 1;
 # use integer.
 my $max_iv_p1 = $max_uv ^ ($max_uv >> 1);
 my $lots_of_9C = do {
-  my $temp = sprintf "%X", ~0;
-  $temp =~ s/FF/9C/g;
+  my $temp = sprintf "%#x", ~0;
+  $temp =~ s/ff/9c/g;
   local $^W;
-  hex $temp;
+  eval $temp;
 };
 
 my $max_iv = ~0 >> 1;
@@ -64,6 +64,8 @@ my @numbers =
    0x7FFFFFFF, 0x80000000, 0x80000001, 0xFFFFFFFF, 0xDEADBEEF,
    # UV bounds
    $max_iv_p1, $max_uv_m1, $max_uv, $lots_of_9C,
+   # NV-UV conversion
+   2559831922.0,
   );
 
 plan tests => @processes * @numbers * 5;
@@ -122,7 +124,7 @@ foreach (@processes) {
   foreach my $number (@numbers) {
     # as $number is an alias into @numbers, we don't want any side effects of
     # conversion macros affecting later runs, so pass a copy to Storable:
-    my $copy1 = my $copy0 = $number;
+    my $copy1 = my $copy2 = my $copy0 = $number;
     my $copy_s = &$sub (\$copy0);
     if (is (ref $copy_s, "SCALAR", "got back a scalar ref?")) {
       # Test inside use integer to see if the bit pattern is identical
@@ -148,19 +150,28 @@ foreach (@processes) {
       # $eq =  && (($copy_s1 <=> 0) == ($copy1 <=> 0));
       # Split this into 2 tests, to cater for 5.005_03
 
-      my $bit =  ok (($copy_s1 ^ $copy1 == 0), "$process $copy1 (bitpattern)");
+      # Aargh. Even this doesn't work because 5.6.x sends values with (same
+      # number of decimal digits as ~0 + 1) via atof. So ^ is getting strings
+      # cast to doubles cast to integers. And that truncates low order bits.
+      # my $bit = ok (($copy_s1 ^ $copy1) == 0, "$process $copy1 (bitpattern)");
+
+      # Oh well; at least the parser gets it right. :-)
+      my $copy_s3 = eval $copy_s1;
+      die "Was supposed to have number $copy_s3, got error $@"
+	unless defined $copy_s3;
+      my $bit = ok (($copy_s3 ^ $copy1) == 0, "$process $copy1 (bitpattern)");
       # This is sick. 5.005_03 survives without the IV/UV flag, and somehow
       # gets it right, providing you don't have side effects of conversion.
 #      local $TODO;
 #      $TODO = "pre 5.6 doesn't have flag to distinguish IV/UV"
 #        if $[ < 5.005_56 and $copy1 > $max_iv;
-      my $sign = ok (($copy_s2 <=> 0) == ($copy1 <=> 0),
+      my $sign = ok (($copy_s2 <=> 0) == ($copy2 <=> 0),
                      "$process $copy1 (sign)");
 
       unless ($bit and $sign) {
         printf "# Passed in %s  (%#x, %i)\n# got back '%s' (%#x, %i)\n",
           $copy1, $copy1, $copy1, $copy_s1, $copy_s1, $copy_s1;
-        # use Devel::Peek; Dump $copy_s1; Dump $$copy_s;
+        # use Devel::Peek; Dump $number; Dump $copy1; Dump $copy_s1;
       }
       # unless ($bit) { use Devel::Peek; Dump $copy_s1; Dump $$copy_s; }
     } else {

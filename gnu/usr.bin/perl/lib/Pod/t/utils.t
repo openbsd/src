@@ -27,11 +27,11 @@ my @links = qw{
 };
 
 my @results = (
-	       "the P<name> manpage",
-	       "the Q<ident> entry in the P<name> manpage",
-	       "the section on Q<sec> in the P<name> manpage",
-	       "the section on Q<sec> elsewhere in this document",
-	       "the section on Q<sec> elsewhere in this document",
+	       "P<name>",
+	       "Q<ident> in P<name>",
+	       "Q<sec> in P<name>",
+	       "Q<sec>",
+	       "Q<sec>",
 	       "Q<http://www.perl.org/>",
 	       "Q<text>",
 	       "Q<text>",

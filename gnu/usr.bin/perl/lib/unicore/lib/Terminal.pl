@@ -33,8 +33,9 @@ return <<'END';
 17DA		Terminal_Punctuation
 1802	1805	Terminal_Punctuation
 1808	1809	Terminal_Punctuation
+1944	1945	Terminal_Punctuation
 203C	203D	Terminal_Punctuation
-2048	2049	Terminal_Punctuation
+2047	2049	Terminal_Punctuation
 3001	3002	Terminal_Punctuation
 FE50	FE52	Terminal_Punctuation
 FE54	FE57	Terminal_Punctuation

@@ -2,7 +2,7 @@
 
 my $file = "tf$$.txt";
 
-print "1..58\n";
+print "1..59\n";
 
 my $N = 1;
 use Tie::File;
@@ -104,7 +104,6 @@ if (setup_badly_terminated_file(3)) {
   $N++;
   push @a, "next";
   check_contents($badrec, "next");
-  undef $o; untie @a;
 }
 # (51-52)
 if (setup_badly_terminated_file(2)) {
@@ -113,7 +112,6 @@ if (setup_badly_terminated_file(2)) {
     or die "Couldn't tie file: $!";
   splice @a, 1, 0, "x", "y";
   check_contents($badrec, "x", "y");
-  undef $o; untie @a;
 }
 # (53-56)
 if (setup_badly_terminated_file(4)) {
@@ -128,10 +126,9 @@ if (setup_badly_terminated_file(4)) {
     : "not ok $N \# expected <$badrec>, got <$r[0]>\n";
   $N++;
   check_contents("x", "y");
-  undef $o; untie @a;
 }
 
-# (57-58) 20020402 The modifiaction would have failed if $\ were set wrong.
+# (57-58) 20020402 The modification would have failed if $\ were set wrong.
 # I hate $\.
 if (setup_badly_terminated_file(2)) {
   $o = tie @a, 'Tie::File', $file,
@@ -141,7 +138,23 @@ if (setup_badly_terminated_file(2)) {
     my $z = $a[0];
   }
   check_contents($badrec);
-  undef $o; untie @a;
+}
+
+# (59) 20030527 Tom Christiansen pointed out that FETCH returns the wrong
+# data on the final record of an unterminated file if the file is opened
+# in read-only mode.  Note that the $#a is necessary here.
+# There's special-case code to fix the final record when it is read normally.
+# But the $#a forces it to be read from the cache, which skips the
+# termination.
+$badrec = "world${RECSEP}hello";
+if (setup_badly_terminated_file(1)) {
+  tie(@a, "Tie::File", $file, mode => 0, recsep => $RECSEP)
+      or die "Couldn't tie file: $!";
+  my $z = $#a;
+  $z = $a[1];
+  print $z eq "hello" ? "ok $N\n" : 
+      "not ok $N \# got $z, expected hello\n";
+  $N++;
 }
 
 sub setup_badly_terminated_file {

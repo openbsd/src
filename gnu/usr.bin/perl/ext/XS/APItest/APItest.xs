@@ -53,3 +53,8 @@ print_float(val)
         float val
         CODE:
         printf("%5.3f\n",val);
+	
+void
+print_flush()
+    	CODE:
+	fflush(stdout);

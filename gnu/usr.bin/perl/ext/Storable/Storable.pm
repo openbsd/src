@@ -21,7 +21,7 @@ package Storable; @ISA = qw(Exporter DynaLoader);
 use AutoLoader;
 use vars qw($canonical $forgive_me $VERSION);
 
-$VERSION = '2.04';
+$VERSION = '2.08';
 *AUTOLOAD = \&AutoLoader::AUTOLOAD;		# Grrr...
 
 #
@@ -361,6 +361,9 @@ sub thaw {
 	return $self;
 }
 
+1;
+__END__
+
 =head1 NAME
 
 Storable - persistence for Perl data structures
@@ -508,6 +511,22 @@ creating lookup tables for complicated queries.
 
 Canonical order does not imply network order; those are two orthogonal
 settings.
+
+=head1 CODE REFERENCES
+
+Since Storable version 2.05, CODE references may be serialized with
+the help of L<B::Deparse>. To enable this feature, set
+C<$Storable::Deparse> to a true value. To enable deserializazion,
+C<$Storable::Eval> should be set to a true value. Be aware that
+deserialization is done through C<eval>, which is dangerous if the
+Storable file contains malicious data. You can set C<$Storable::Eval>
+to a subroutine reference which would be used instead of C<eval>. See
+below for an example using a L<Safe> compartment for deserialization
+of CODE references.
+
+If C<$Storable::Deparse> and/or C<$Storable::Eval> are set to false
+values, then the value of C<$Storable::forgive_me> (see below) is
+respected while serializing and deserializing.
 
 =head1 FORWARD COMPATIBILITY
 
@@ -784,6 +803,28 @@ which prints (on my machine):
 	Blue is still 0.100000
 	Serialization of %color is 102 bytes long.
 
+Serialization of CODE references and deserialization in a safe
+compartment:
+
+=for example begin
+
+	use Storable qw(freeze thaw);
+	use Safe;
+	use strict;
+	my $safe = new Safe;
+        # because of opcodes used in "use strict":
+	$safe->permit(qw(:default require));
+	local $Storable::Deparse = 1;
+	local $Storable::Eval = sub { $safe->reval($_[0]) };
+	my $serialized = freeze(sub { 42 });
+	my $code = thaw($serialized);
+	$code->() == 42;
+
+=for example end
+
+=for example_testing
+        is( $code->(), 42 );
+
 =head1 WARNING
 
 If you're using references as keys within your hash tables, you're bound
@@ -812,9 +853,9 @@ your data.  There is no slowdown on retrieval.
 
 =head1 BUGS
 
-You can't store GLOB, CODE, FORMLINE, etc.... If you can define
-semantics for those operations, feel free to enhance Storable so that
-it can deal with them.
+You can't store GLOB, FORMLINE, etc.... If you can define semantics
+for those operations, feel free to enhance Storable so that it can
+deal with them.
 
 The store functions will C<croak> if they run into such references
 unless you set C<$Storable::forgive_me> to some C<TRUE> value. In that

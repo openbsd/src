@@ -158,13 +158,14 @@ that a metacharacter can be matched by putting a backslash before it:
     "2+2=4" =~ /2\+2/;   # matches, \+ is treated like an ordinary +
     "The interval is [0,1)." =~ /[0,1)./     # is a syntax error!
     "The interval is [0,1)." =~ /\[0,1\)\./  # matches
-    "/usr/bin/perl" =~ /\/usr\/local\/bin\/perl/;  # matches
+    "/usr/bin/perl" =~ /\/usr\/bin\/perl/;  # matches
 
 In the last regexp, the forward slash C<'/'> is also backslashed,
 because it is used to delimit the regexp.  This can lead to LTS
 (leaning toothpick syndrome), however, and it is often more readable
 to change delimiters.
 
+    "/usr/bin/perl" =~ m!/usr/bin/perl!;    # easier to read
 
 The backslash character C<'\'> is a metacharacter itself and needs to
 be backslashed:
@@ -689,10 +690,11 @@ inside goes into the special variables C<$1>, C<$2>, etc.  They can be
 used just as ordinary variables:
 
     # extract hours, minutes, seconds
-    $time =~ /(\d\d):(\d\d):(\d\d)/;  # match hh:mm:ss format
-    $hours = $1;
-    $minutes = $2;
-    $seconds = $3;
+    if ($time =~ /(\d\d):(\d\d):(\d\d)/) {    # match hh:mm:ss format
+	$hours = $1;
+	$minutes = $2;
+	$seconds = $3;
+    }
 
 Now, we know that in scalar context,
 S<C<$time =~ /(\d\d):(\d\d):(\d\d)/> > returns a true or false
@@ -1707,7 +1709,7 @@ it matches I<any> byte 0-255.  So
 The last regexp matches, but is dangerous because the string
 I<character> position is no longer synchronized to the string I<byte>
 position.  This generates the warning 'Malformed UTF-8
-character'.  C<\C> is best used for matching the binary data in strings
+character'.  The C<\C> is best used for matching the binary data in strings
 with binary data intermixed with Unicode characters.
 
 Let us now discuss the rest of the character classes.  Just as with
@@ -2003,6 +2005,10 @@ They evaluate true if the regexps do I<not> match:
     $x =~ /foo(?!bar)/;  # doesn't match, 'bar' follows 'foo'
     $x =~ /foo(?!baz)/;  # matches, 'baz' doesn't follow 'foo'
     $x =~ /(?<!\s)foo/;  # matches, there is no \s before 'foo'
+
+The C<\C> is unsupported in lookbehind, because the already
+treacherous definition of C<\C> would become even more so
+when going backwards.
 
 =head2 Using independent subexpressions to prevent backtracking
 

@@ -1,5 +1,5 @@
 #
-# $Id: QuotedPrint.pm,v 2.3 1997/12/02 10:24:27 aas Exp $
+# $Id: QuotedPrint.pm,v 2.17 2003/10/09 19:04:29 gisle Exp $
 
 package MIME::QuotedPrint;
 
@@ -31,17 +31,27 @@ The following functions are provided:
 
 =item encode_qp($str)
 
+=item encode_qp($str, $eol)
+
 This function will return an encoded version of the string given as
 argument.
 
-Note that encode_qp() does not change newlines C<"\n"> to the CRLF
-sequence even though this might be considered the right thing to do
-(RFC 2045 (Q-P Rule #4)).
+The second argument is the line ending sequence to use.  It is
+optional and defaults to "\n".  Every occurence of "\n" will be
+replaced with this string and it will also be used for additional
+"soft line breaks" to ensure that no line is longer than 76
+characters.  You might want to pass it as "\015\012" to produce data
+suitable external consumption.  The string "\r\n" will produce the
+same result on many platforms, but not all.
+
+An $eol of "" special.  If passed no "soft line breaks" are introduced
+and any literal "\n" in the original data is encoded as well.
 
 =item decode_qp($str);
 
 This function will return the plain text version of the string given
-as argument.
+as argument.  The lines of the result will be "\n" terminated even it
+the $str argument contains "\r\n" terminated lines.
 
 =back
 
@@ -53,12 +63,27 @@ call them as:
   $encoded = MIME::QuotedPrint::encode($decoded);
   $decoded = MIME::QuotedPrint::decode($encoded);
 
+Perl v5.6 and better allow extended Unicode characters in strings.
+Such strings cannot be encoded directly as the quoted-printable
+encoding is only defined for bytes.  The solution is to use the Encode
+module to select the byte encoding you want.  For example:
+
+    use MIME::QuotedPrint qw(encode_qp);
+    use Encode qw(encode);
+
+    $encoded = encode_qp(encode("UTF-8", "\x{FFFF}\n"));
+    print $encoded;
+
 =head1 COPYRIGHT
 
-Copyright 1995-1997 Gisle Aas.
+Copyright 1995-1997,2002-2003 Gisle Aas.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<MIME::Base64>
 
 =cut
 
@@ -72,15 +97,29 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(encode_qp decode_qp);
 
-use Carp qw(croak);
+$VERSION = "2.21";
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.3 $ =~ /(\d+)\.(\d+)/);
+use MIME::Base64;  # try to load XS version of encode_qp
+unless (defined &encode_qp) {
+    *encode_qp = \&old_encode_qp;
+    *decode_qp = \&old_decode_qp;
+}
 
-sub encode_qp ($)
+sub old_encode_qp ($;$)
 {
     my $res = shift;
-    croak("The Quoted-Printable encoding is only defined for bytes")
-	if $res =~ /[^\0-\xFF]/;
+    if ($] >= 5.006) {
+	require bytes;
+	if (bytes::length($res) > length($res) ||
+	    ($] >= 5.008 && $res =~ /[^\0-\xFF]/))
+	{
+	    require Carp;
+	    Carp::croak("The Quoted-Printable encoding is only defined for bytes");
+	}
+    }
+
+    my $eol = shift;
+    $eol = "\n" unless defined $eol;
 
     # Do not mention ranges such as $res =~ s/([^ \t\n!-<>-~])/sprintf("=%02X", ord($1))/eg;
     # since that will not even compile on an EBCDIC machine (where ord('!') > ord('<')).
@@ -109,31 +148,36 @@ sub encode_qp ($)
     }
     else { # ASCII style machine
         $res =~  s/([^ \t\n!"#\$%&'()*+,\-.\/0-9:;<>?\@A-Z[\\\]^_`a-z{|}~])/sprintf("=%02X", ord($1))/eg;  # rule #2,#3
+	$res =~ s/\n/=0A/g unless length($eol);
         $res =~ s/([ \t]+)$/
           join('', map { sprintf("=%02X", ord($_)) }
     		   split('', $1)
           )/egm;                        # rule #3 (encode whitespace at eol)
     }
 
+    return $res unless length($eol);
+
     # rule #5 (lines must be shorter than 76 chars, but we are not allowed
     # to break =XX escapes.  This makes things complicated :-( )
     my $brokenlines = "";
-    $brokenlines .= "$1=\n"
+    $brokenlines .= "$1=$eol"
 	while $res =~ s/(.*?^[^\n]{73} (?:
 		 [^=\n]{2} (?! [^=\n]{0,1} $) # 75 not followed by .?\n
 		|[^=\n]    (?! [^=\n]{0,2} $) # 74 not followed by .?.?\n
 		|          (?! [^=\n]{0,3} $) # 73 not followed by .?.?.?\n
 	    ))//xsm;
+    $res =~ s/\n\z/$eol/;
 
     "$brokenlines$res";
 }
 
 
-sub decode_qp ($)
+sub old_decode_qp ($)
 {
     my $res = shift;
-    $res =~ s/[ \t]+?(\r?\n)/$1/g;  # rule #3 (trailing space must be deleted)
-    $res =~ s/=\r?\n//g;            # rule #5 (soft line breaks)
+    $res =~ s/\r\n/\n/g;            # normalize newlines
+    $res =~ s/[ \t]+\n/\n/g;        # rule #3 (trailing space must be deleted)
+    $res =~ s/=\n//g;               # rule #5 (soft line breaks)
     if (ord('A') == 193) { # EBCDIC style machine
         if (ord('[') == 173) {
             $res =~ s/=([\da-fA-F]{2})/Encode::encode('cp1047',Encode::decode('iso-8859-1',pack("C", hex($1))))/ge;

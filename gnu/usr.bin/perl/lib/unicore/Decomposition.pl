@@ -349,6 +349,7 @@ return <<'END';
 03F2		<compat> 03C2
 03F4		<compat> 0398
 03F5		<compat> 03B5
+03F9		<compat> 03A3
 0400		0415 0300
 0401		0415 0308
 0403		0413 0301
@@ -483,6 +484,66 @@ return <<'END';
 0FAC		0FAB 0FB7
 0FB9		0F90 0FB5
 1026		1025 102E
+1D2C		<super> 0041
+1D2D		<super> 00C6
+1D2E		<super> 0042
+1D30		<super> 0044
+1D31		<super> 0045
+1D32		<super> 018E
+1D33		<super> 0047
+1D34		<super> 0048
+1D35		<super> 0049
+1D36		<super> 004A
+1D37		<super> 004B
+1D38		<super> 004C
+1D39		<super> 004D
+1D3A		<super> 004E
+1D3C		<super> 004F
+1D3D		<super> 0222
+1D3E		<super> 0050
+1D3F		<super> 0052
+1D40		<super> 0054
+1D41		<super> 0055
+1D42		<super> 0057
+1D43		<super> 0061
+1D44		<super> 0250
+1D45		<super> 0251
+1D46		<super> 1D02
+1D47		<super> 0062
+1D48		<super> 0064
+1D49		<super> 0065
+1D4A		<super> 0259
+1D4B		<super> 025B
+1D4C		<super> 025C
+1D4D		<super> 0067
+1D4F		<super> 006B
+1D50		<super> 006D
+1D51		<super> 014B
+1D52		<super> 006F
+1D53		<super> 0254
+1D54		<super> 1D16
+1D55		<super> 1D17
+1D56		<super> 0070
+1D57		<super> 0074
+1D58		<super> 0075
+1D59		<super> 1D1D
+1D5A		<super> 026F
+1D5B		<super> 0076
+1D5C		<super> 1D25
+1D5D		<super> 03B2
+1D5E		<super> 03B3
+1D5F		<super> 03B4
+1D60		<super> 03C6
+1D61		<super> 03C7
+1D62		<sub> 0069
+1D63		<sub> 0072
+1D64		<sub> 0075
+1D65		<sub> 0076
+1D66		<sub> 03B2
+1D67		<sub> 03B3
+1D68		<sub> 03C1
+1D69		<sub> 03C6
+1D6A		<sub> 03C7
 1E00		0041 0325
 1E01		0061 0325
 1E02		0042 0307
@@ -1054,6 +1115,7 @@ return <<'END';
 2137		<compat> 05D2
 2138		<compat> 05D3
 2139		<font> 0069
+213B		<compat> 0046 0041 0058
 213D		<font> 03B3
 213E		<font> 0393
 213F		<font> 03A0
@@ -1722,6 +1784,8 @@ return <<'END';
 321A		<compat> 0028 1111 1161 0029
 321B		<compat> 0028 1112 1161 0029
 321C		<compat> 0028 110C 116E 0029
+321D		<compat> 0028 110B 1169 110C 1165 11AB 0029
+321E		<compat> 0028 110B 1169 1112 116E 0029
 3220		<compat> 0028 4E00 0029
 3221		<compat> 0028 4E8C 0029
 3222		<compat> 0028 4E09 0029
@@ -1758,6 +1822,7 @@ return <<'END';
 3241		<compat> 0028 4F11 0029
 3242		<compat> 0028 81EA 0029
 3243		<compat> 0028 81F3 0029
+3250		<square> 0050 0054 0045
 3251		<circle> 0032 0031
 3252		<circle> 0032 0032
 3253		<circle> 0032 0033
@@ -1801,6 +1866,8 @@ return <<'END';
 3279		<circle> 1110 1161
 327A		<circle> 1111 1161
 327B		<circle> 1112 1161
+327C		<circle> 110E 1161 11B7 1100 1169
+327D		<circle> 110C 116E 110B 1174
 3280		<circle> 4E00
 3281		<circle> 4E8C
 3282		<circle> 4E09
@@ -1877,6 +1944,10 @@ return <<'END';
 32C9		<compat> 0031 0030 6708
 32CA		<compat> 0031 0031 6708
 32CB		<compat> 0031 0032 6708
+32CC		<square> 0048 0067
+32CD		<square> 0065 0072 0067
+32CE		<square> 0065 0056
+32CF		<square> 004C 0054 0044
 32D0		<circle> 30A2
 32D1		<circle> 30A4
 32D2		<circle> 30A6
@@ -2043,6 +2114,10 @@ return <<'END';
 3374		<square> 0062 0061 0072
 3375		<square> 006F 0056
 3376		<square> 0070 0063
+3377		<square> 0064 006D
+3378		<square> 0064 006D 00B2
+3379		<square> 0064 006D 00B3
+337A		<square> 0049 0055
 337B		<square> 5E73 6210
 337C		<square> 662D 548C
 337D		<square> 5927 6B63
@@ -2142,6 +2217,8 @@ return <<'END';
 33DB		<square> 0073 0072
 33DC		<square> 0053 0076
 33DD		<square> 0057 0062
+33DE		<square> 0056 2215 006D
+33DF		<square> 0041 2215 006D
 33E0		<compat> 0031 65E5
 33E1		<compat> 0032 65E5
 33E2		<compat> 0033 65E5
@@ -2173,6 +2250,7 @@ return <<'END';
 33FC		<compat> 0032 0039 65E5
 33FD		<compat> 0033 0030 65E5
 33FE		<compat> 0033 0031 65E5
+33FF		<square> 0067 0061 006C
 F900		8C48
 F901		66F4
 F902		8ECA
@@ -3189,6 +3267,8 @@ FE41		<vertical> 300C
 FE42		<vertical> 300D
 FE43		<vertical> 300E
 FE44		<vertical> 300F
+FE47		<vertical> 005B
+FE48		<vertical> 005D
 FE49	FE4C	<compat> 203E
 FE4D	FE4F	<compat> 005F
 FE50		<small> 002C
@@ -3776,6 +3856,7 @@ FFEE		<narrow> 25CB
 1D4BE		<font> 0069
 1D4BF		<font> 006A
 1D4C0		<font> 006B
+1D4C1		<font> 006C
 1D4C2		<font> 006D
 1D4C3		<font> 006E
 1D4C5		<font> 0070
@@ -4686,7 +4767,7 @@ FFEE		<narrow> 25CB
 2F865		59D8
 2F866		5A66
 2F867		36EE
-2F868		2136A
+2F868		36FC
 2F869		5B08
 2F86A	2F86B	5B3E
 2F86C		219C8
@@ -4697,7 +4778,7 @@ FFEE		<narrow> 25CB
 2F871		21B18
 2F872		5BFF
 2F873		5C06
-2F874		5F33
+2F874		5F53
 2F875		5C22
 2F876		3781
 2F877		5C60
@@ -4866,7 +4947,7 @@ FFEE		<narrow> 25CB
 2F91C		7145
 2F91D		24263
 2F91E		719C
-2F91F		43AB
+2F91F		243AB
 2F920		7228
 2F921		7235
 2F922		7250
@@ -4927,7 +5008,7 @@ FFEE		<narrow> 25CB
 2F95B		7A4F
 2F95C		2597C
 2F95D	2F95E	25AA7
-2F95F		7AAE
+2F95F		7AEE
 2F960		4202
 2F961		25BAB
 2F962		7BC6
@@ -5023,7 +5104,7 @@ FFEE		<narrow> 25CB
 2F9BC		8728
 2F9BD		876B
 2F9BE		8786
-2F9BF		4D57
+2F9BF		45D7
 2F9C0		87E1
 2F9C1		8801
 2F9C2		45F9

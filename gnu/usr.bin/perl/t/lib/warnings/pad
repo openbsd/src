@@ -1,0 +1,111 @@
+  pad.c		AOK
+
+     "my" variable %s masks earlier declaration in same scope
+	my $x;
+	my $x ;
+
+     Variable "%s" may be unavailable 
+	sub x {
+      	    my $x;
+      	    sub y {
+         	$x
+      	    }
+   	}
+
+     Variable "%s" will not stay shared 
+	sub x {
+      	    my $x;
+      	    sub y {
+         	sub { $x }
+      	    }
+   	}
+    "our" variable %s redeclared	(Did you mean "local" instead of "our"?)
+	our $x;
+	{
+	    our $x;
+	}
+
+    %s never introduced		[pad_leavemy]	TODO
+    
+__END__
+# pad.c
+use warnings 'misc' ;
+my $x ;
+my $x ;
+my $y = my $y ;
+no warnings 'misc' ;
+my $x ;
+my $y ;
+EXPECT
+"my" variable $x masks earlier declaration in same scope at - line 4.
+"my" variable $y masks earlier declaration in same statement at - line 5.
+########
+# pad.c
+use warnings 'closure' ;
+sub x {
+      my $x;
+      sub y {
+         $x
+      }
+   }
+EXPECT
+Variable "$x" will not stay shared at - line 7.
+########
+# pad.c
+no warnings 'closure' ;
+sub x {
+      my $x;
+      sub y {
+         $x
+      }
+   }
+EXPECT
+
+########
+# pad.c
+use warnings 'closure' ;
+sub x {
+      our $x;
+      sub y {
+         $x
+      }
+   }
+EXPECT
+
+########
+# pad.c
+use warnings 'closure' ;
+sub x {
+      my $x;
+      sub y {
+         sub { $x }
+      }
+   }
+EXPECT
+Variable "$x" may be unavailable at - line 6.
+########
+# pad.c
+no warnings 'closure' ;
+sub x {
+      my $x;
+      sub y {
+         sub { $x }
+      }
+   }
+EXPECT
+
+########
+use warnings 'misc' ;
+our $x;
+{
+    our $x;
+}
+EXPECT
+"our" variable $x redeclared at - line 4.
+	(Did you mean "local" instead of "our"?)
+########
+# an our var being introduced should suppress errors about global syms
+use strict;
+use warnings;
+our $x unless $x;
+EXPECT

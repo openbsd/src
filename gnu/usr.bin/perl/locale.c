@@ -1,6 +1,7 @@
 /*    locale.c
  *
- *    Copyright (c) 2001-2002, Larry Wall
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -475,50 +476,56 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
 
 #ifdef USE_PERLIO
     {
-      /* Set PL_wantutf8 to TRUE if using PerlIO _and_
+      /* Set PL_utf8locale to TRUE if using PerlIO _and_
 	 any of the following are true:
 	 - nl_langinfo(CODESET) contains /^utf-?8/i
-	 - $ENV{LANGUAGE} contains /^utf-?8/i (only if using glibc)
-	 - $ENV{LC_CALL} contains /^utf-?8/i
+	 - $ENV{LC_ALL}   contains /^utf-?8/i
 	 - $ENV{LC_CTYPE} contains /^utf-?8/i
-	 - $ENV{LANG} contains /^utf-?8/i
-	 If PL_wantutf8 is true, perl.c:S_parse_body()
-	 will turn on the PerlIO :utf8 discipline on STDIN, STDOUT,
-	 STDERR, _and_ the default open discipline.
+	 - $ENV{LANG}     contains /^utf-?8/i
+	 The LC_ALL, LC_CTYPE, LANG obey the usual override
+	 hierarchy of locale environment variables.  (LANGUAGE
+	 affects only LC_MESSAGES only under glibc.) (If present,
+	 it overrides LC_MESSAGES for GNU gettext, and it also
+	 can have more than one locale, separated by spaces,
+	 in case you need to know.)
+	 If PL_utf8locale and PL_unicode (set by -C or by $ENV{PERL_UNICODE})
+         are true, perl.c:S_parse_body() will turn on the PerlIO :utf8 layer
+	 on STDIN, STDOUT, STDERR, _and_ the default open discipline.
       */
-	 bool wantutf8 = FALSE;
+	 bool utf8locale = FALSE;
 	 char *codeset = NULL;
 #if defined(HAS_NL_LANGINFO) && defined(CODESET)
 	 codeset = nl_langinfo(CODESET);
 #endif
-	 if (codeset &&
-	     (ibcmp(codeset,  "UTF-8", 5) == 0 ||
-	      ibcmp(codeset,  "UTF8",  4) == 0))
-	      wantutf8 = TRUE;
+	 if (codeset)
+	      utf8locale = (ibcmp(codeset,  "UTF-8", 5) == 0 ||
+ 			    ibcmp(codeset,  "UTF8",  4) == 0);
 #if defined(USE_LOCALE)
-#ifdef __GLIBC__
-	 if (!wantutf8 && language &&
-	     (ibcmp(language, "UTF-8", 5) == 0 ||
-	      ibcmp(language, "UTF8",  4) == 0))
-	      wantutf8 = TRUE;
-#endif
-	 if (!wantutf8 && lc_all &&
-	     (ibcmp(lc_all,   "UTF-8", 5) == 0 ||
-	      ibcmp(lc_all,   "UTF8",  4) == 0))
-	      wantutf8 = TRUE;
+	 else { /* nl_langinfo(CODESET) is supposed to correctly
+		 * interpret the locale environment variables,
+		 * but just in case it fails, let's do this manually. */ 
+	      if (lang)
+		   utf8locale = (ibcmp(lang,     "UTF-8", 5) == 0 ||
+			         ibcmp(lang,     "UTF8",  4) == 0);
 #ifdef USE_LOCALE_CTYPE
-	 if (!wantutf8 && curctype &&
-	     (ibcmp(curctype,     "UTF-8", 5) == 0 ||
-	      ibcmp(curctype,     "UTF8",  4) == 0))
-	      wantutf8 = TRUE;
+	      if (curctype)
+		   utf8locale = (ibcmp(curctype,     "UTF-8", 5) == 0 ||
+			         ibcmp(curctype,     "UTF8",  4) == 0);
 #endif
-	 if (!wantutf8 && lang &&
-	     (ibcmp(lang,     "UTF-8", 5) == 0 ||
-	      ibcmp(lang,     "UTF8",  4) == 0))
-	      wantutf8 = TRUE;
+	      if (lc_all)
+		   utf8locale = (ibcmp(lc_all,   "UTF-8", 5) == 0 ||
+			         ibcmp(lc_all,   "UTF8",  4) == 0);
+	 }
 #endif /* USE_LOCALE */
-	 if (wantutf8)
-	      PL_wantutf8 = TRUE;
+	 if (utf8locale)
+	      PL_utf8locale = TRUE;
+    }
+    /* Set PL_unicode to $ENV{PERL_UNICODE} if using PerlIO.
+       This is an alternative to using the -C command line switch
+       (the -C if present will override this). */
+    {
+	 char *p = PerlEnv_getenv("PERL_UNICODE");
+	 PL_unicode = p ? parse_unicode_opts(&p) : 0;
     }
 #endif
 

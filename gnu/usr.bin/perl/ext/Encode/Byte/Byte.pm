@@ -1,6 +1,6 @@
 package Encode::Byte;
 use Encode;
-our $VERSION = do { my @r = (q$Revision: 1.22 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.23 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load(__PACKAGE__,$VERSION);
@@ -51,7 +51,7 @@ supported are as follows.
 
   # Vietnamese
   viscii
-  
+
   # all cp* are also available as ibm-*, ms-*, and windows-*
   # also see L<http://msdn.microsoft.com/workshop/author/dhtml/reference/charsets/charset4.asp>
 

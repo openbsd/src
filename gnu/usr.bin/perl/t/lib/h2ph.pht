@@ -1,5 +1,7 @@
 require '_h2ph_pre.ph';
 
+no warnings 'redefine';
+
 unless(defined(&SQUARE)) {
     sub SQUARE {
 	local($x) = @_;
@@ -48,8 +50,9 @@ unless(defined(&_H2PH_H_)) {
     require 'sys/socket.ph';
     require 'sys/ioctl.ph';
     eval {
+	my(@REM);
 	my(%INCD) = map { $INC{$_} => 1 } (grep { $_ eq "sys/fcntl.ph" } keys(%INC));
-	my(@REM) = map { "$_/sys/fcntl.ph" } (grep { not exists($INCD{"$_/sys/fcntl.ph"})and -f "$_/sys/fcntl.ph" } @INC);
+	@REM = map { "$_/sys/fcntl.ph" } (grep { not exists($INCD{"$_/sys/fcntl.ph"}) and -f "$_/sys/fcntl.ph" } @INC);
 	require "$REM[0]" if @REM;
     };
     warn($@) if $@;
@@ -83,5 +86,6 @@ unless(defined(&_H2PH_H_)) {
     }
     eval("sub flim () { 0; }") unless defined(&flim);
     eval("sub flam () { 1; }") unless defined(&flam);
+    eval 'sub multiline () {"multilinestring";}' unless defined(&multiline);
 }
 1;

@@ -2,6 +2,7 @@
 # t/test.pl - most of Test::More functionality without the fuss
 #
 
+$Level = 1;
 my $test = 1;
 my $planned;
 
@@ -76,12 +77,12 @@ sub _ok {
 }
 
 sub _where {
-    my @caller = caller(1);
+    my @caller = caller($Level);
     return "at $caller[1] line $caller[2]";
 }
 
 # DON'T use this for matches. Use like() instead.
-sub ok {
+sub ok ($@) {
     my ($pass, $name, @mess) = @_;
     _ok($pass, _where(), $name, @mess);
 }
@@ -131,9 +132,18 @@ sub display {
     return @result;
 }
 
-sub is {
+sub is ($$@) {
     my ($got, $expected, $name, @mess) = @_;
-    my $pass = $got eq $expected;
+
+    my $pass;
+    if( !defined $got || !defined $expected ) {
+        # undef only matches undef
+        $pass = !defined $got && !defined $expected;
+    }
+    else {
+        $pass = $got eq $expected;
+    }
+
     unless ($pass) {
 	unshift(@mess, "#      got "._q($got)."\n",
 		       "# expected "._q($expected)."\n");
@@ -141,9 +151,18 @@ sub is {
     _ok($pass, _where(), $name, @mess);
 }
 
-sub isnt {
+sub isnt ($$@) {
     my ($got, $isnt, $name, @mess) = @_;
-    my $pass = $got ne $isnt;
+
+    my $pass;
+    if( !defined $got || !defined $isnt ) {
+        # undef only matches undef
+        $pass = defined $got || defined $isnt;
+    }
+    else {
+        $pass = $got ne $isnt;
+    }
+
     unless( $pass ) {
         unshift(@mess, "# it should not be "._q($got)."\n",
                        "# but it is.\n");
@@ -151,7 +170,7 @@ sub isnt {
     _ok($pass, _where(), $name, @mess);
 }
 
-sub cmp_ok {
+sub cmp_ok ($$$@) {
     my($got, $type, $expected, $name, @mess) = @_;
 
     my $pass;
@@ -184,7 +203,7 @@ sub cmp_ok {
 # otherwise $range is a fractional error.
 # Here $range must be numeric, >= 0
 # Non numeric ranges might be a useful future extension. (eg %)
-sub within {
+sub within ($$$@) {
     my ($got, $expected, $range, $name, @mess) = @_;
     my $pass;
     if (!defined $got or !defined $expected or !defined $range) {
@@ -216,7 +235,7 @@ sub within {
 }
 
 # Note: this isn't quite as fancy as Test::More::like().
-sub like {
+sub like ($$@) {
     my ($got, $expected, $name, @mess) = @_;
     my $pass;
     if (ref $expected eq 'Regexp') {
@@ -302,7 +321,7 @@ sub eq_hash {
   !$fail;
 }
 
-sub require_ok {
+sub require_ok ($) {
     my ($require) = @_;
     eval <<REQUIRE_OK;
 require $require;
@@ -310,7 +329,7 @@ REQUIRE_OK
     _ok(!$@, _where(), "require $require");
 }
 
-sub use_ok {
+sub use_ok ($) {
     my ($use) = @_;
     eval <<USE_OK;
 use $use;
@@ -346,9 +365,9 @@ sub _quote_args {
     }
 }
 
-sub runperl {
+sub _create_runperl { # Create the string to qx in runperl().
     my %args = @_;
-    my $runperl = $^X;
+    my $runperl = $^X =~ m/\s/ ? qq{"$^X"} : $^X;
     unless ($args{nolib}) {
 	if ($is_macos) {
 	    $runperl .= ' -I::lib';
@@ -360,12 +379,19 @@ sub runperl {
 	}
     }
     if ($args{switches}) {
+	local $Level = 2;
+	die "test.pl:runperl(): 'switches' must be an ARRAYREF " . _where()
+	    unless ref $args{switches} eq "ARRAY";
 	_quote_args(\$runperl, $args{switches});
     }
     if (defined $args{prog}) {
+	die "test.pl:runperl(): both 'prog' and 'progs' cannot be used " . _where()
+	    if defined $args{progs};
         $args{progs} = [$args{prog}]
     }
     if (defined $args{progs}) {
+	die "test.pl:runperl(): 'progs' must be an ARRAYREF " . _where()
+	    unless ref $args{progs} eq "ARRAY";
         foreach my $prog (@{$args{progs}}) {
             if ($is_mswin || $is_netware || $is_vms) {
                 $runperl .= qq ( -e "$prog" );
@@ -415,6 +441,11 @@ sub runperl {
 	$runperldisplay =~ s/\n/\n\#/g;
 	print STDERR "# $runperldisplay\n";
     }
+    return $runperl;
+}
+
+sub runperl {
+    my $runperl = &_create_runperl;
     my $result = `$runperl`;
     $result =~ s/\n\n/\n/ if $is_vms; # XXX pipes sometimes double these
     return $result;
@@ -562,6 +593,7 @@ sub _fresh_perl {
 
 sub fresh_perl_is {
     my($prog, $expected, $runperl_args, $name) = @_;
+    local $Level = 2;
     _fresh_perl($prog,
 		sub { @_ ? $_[0] eq $expected : $expected },
 		$runperl_args, $name);
@@ -575,6 +607,7 @@ sub fresh_perl_is {
 
 sub fresh_perl_like {
     my($prog, $expected, $runperl_args, $name) = @_;
+    local $Level = 2;
     _fresh_perl($prog,
 		sub { @_ ?
 			  $_[0] =~ (ref $expected ? $expected : /$expected/) :

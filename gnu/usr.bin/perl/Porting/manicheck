@@ -1,0 +1,86 @@
+#!/usr/bin/perl -ws
+
+#
+# manicheck - check files against the MANIFEST
+#
+# Without options prints out (possibly) two lines:
+#
+# extra: a b c
+# missing: d
+#
+# With option -x prints out only the missing files (and without the "extra: ")
+# With option -m prints out only the extra files (and without the "missing: ")
+#
+
+BEGIN {
+  $SIG{__WARN__} = sub {
+    help() if $_[0] =~ /"main::\w" used only once: possible typo at /;
+  };
+}
+
+use strict;
+
+sub help {
+  die <<EOF;
+$0: Usage: $0 [-x|-m|-l|-h]
+-x show only the extra files
+-m show only the missing files
+-l show the files one per line instead of one line
+-h show only this help
+EOF
+}
+
+use vars qw($x $m $l $h);
+
+help() if $h;
+
+open(MANIFEST, "MANIFEST") or die "MANIFEST: $!";
+
+my %mani;
+my %mand = qw(. 1);
+use File::Basename qw(dirname);
+
+while (<MANIFEST>) {
+  if (/^(\S+)\t+(.+)$/) {
+    $mani{$1}++;
+    my $d = dirname($1);
+    while($d ne '.') {
+	$mand{$d}++;
+	$d = dirname($d);
+    }
+  } else {
+    warn "MANIFEST:$.:$_";
+  }
+}
+
+close(MANIFEST);
+
+my %find;
+use File::Find;
+find(sub {
+       my $n = $File::Find::name;
+       $n =~ s:^\./::;
+       $find{$n}++;
+     }, '.' );
+
+my @xtra;
+my @miss;
+
+for (sort keys %find) {
+  push @xtra, $_ unless $mani{$_} || $mand{$_};
+}
+
+for (sort keys %mani) {
+  push @miss, $_ unless $find{$_};
+}
+
+$" = "\n" if $l;
+
+unshift @xtra, "extra:"   if @xtra;
+unshift @miss, "missing:" if @miss;
+
+print "@xtra\n", if @xtra && !$m;
+print "@miss\n"  if @miss && !$x;
+
+exit 0;
+

@@ -9,7 +9,7 @@
  *	This symbol, if defined, indicates that the ioctl() routine is
  *	available to set I/O characteristics
  */
-#define	HAS_IOCTL		/ **/
+#define	HAS_IOCTL		/**/
  
 /* HAS_UTIME:
  *	This symbol, if defined, indicates that the routine utime() is
@@ -54,7 +54,7 @@
  *	This symbol is defined if this system has a stat structure declaring
  *	st_rdev
  */
-#define USE_STAT_RDEV 	/ **/
+#define USE_STAT_RDEV 	/**/
 
 /* ACME_MESS:
  *	This symbol, if defined, indicates that error messages should be 
@@ -108,7 +108,7 @@
 
 /* epocemx setenv bug workaround */
 #ifndef PERL_SYS_INIT
-#    define PERL_SYS_INIT(c,v)    putenv(".dummy=foo"); putenv(".dummy"); MALLOC_INIT
+#    define PERL_SYS_INIT(c,v)    MALLOC_CHECK_TAINT2(*c,*v) putenv(".dummy=foo"); putenv(".dummy"); MALLOC_INIT
 #endif
 
 #ifndef PERL_SYS_TERM

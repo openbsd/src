@@ -26,6 +26,12 @@
  */
 #define LOC_SED 	""	/**/
 
+/* HAS_AINTL:
+ *	This symbol, if defined, indicates that the aintl routine is
+ *	available.  If copysignl is also present we can emulate modfl.
+ */
+/*#define HAS_AINTL		/ **/
+
 /* HAS_ALARM:
  *	This symbol, if defined, indicates that the alarm routine is
  *	available.
@@ -38,6 +44,9 @@
  */
 /*#define HASATTRIBUTE 	/**/
 #ifndef HASATTRIBUTE
+#ifdef __attribute__
+#undef __attribute__
+#endif
 #define __attribute__(_arg_)
 #endif
 
@@ -1078,7 +1087,7 @@
 #define STRINGIFY(a)	PeRl_StGiFy(a)
 #endif
 #if 42 != 1 && 42 != 42
-#   include "Bletch: How does this C preprocessor catenate tokens?"
+#   include "Bletch: How does this C preprocessor concatenate tokens?"
 #endif
 
 /* CPPSTDIN:
@@ -1297,6 +1306,12 @@
  *	available to close whatever was being used for service queries.
  */
 /*#define HAS_ENDSERVENT		/**/
+
+/* HAS_FAST_STDIO:
+ *	This symbol, if defined, indicates that the "fast stdio"
+ *	is available to manipulate the stdio buffers directly.
+ */
+/*#define HAS_FAST_STDIO		/**/
 
 /* HAS_FCHDIR:
  *	This symbol, if defined, indicates that the fchdir routine is
@@ -1786,6 +1801,12 @@
 #define HAS_NTOHL		/**/
 #define HAS_NTOHS		/**/
 
+/* HAS_ILOGBL:
+ *	This symbol, if defined, indicates that the ilogbl routine is
+ *	available.  If scalbnl is also present we can emulate frexpl.
+ */
+/*#define HAS_ILOGBL		/**/
+
 /* HAS_INT64_T:
  *     This symbol will defined if the C compiler supports int64_t.
  *     Usually the <inttypes.h> needs to be included, but sometimes
@@ -1981,6 +2002,12 @@
  */
 /*#define OLD_PTHREAD_CREATE_JOINABLE  /**/
 
+/* HAS_PTHREAD_ATFORK:
+ *	This symbol, if defined, indicates that the pthread_atfork routine
+ *	is available to setup fork handlers.
+ */
+/*#define HAS_PTHREAD_ATFORK		/ **/
+
 /* HAS_PTHREAD_YIELD:
  *	This symbol, if defined, indicates that the pthread_yield 
  *	routine is available to yield the execution of the current
@@ -2064,6 +2091,12 @@
  *		extern void* sbrk(size_t);
  */
 /*#define	HAS_SBRK_PROTO	/**/
+
+/* HAS_SCALBNL:
+ *	This symbol, if defined, indicates that the scalbnl routine is
+ *	available.  If ilogbl is also present we can emulate frexpl.
+ */
+/*#define HAS_SCALBNL		/**/
 
 /* HAS_SEM:
  *	This symbol, if defined, indicates that the entire sem*(2) library is
@@ -3283,8 +3316,8 @@
  *	the sig_name list.
  */
 /* SIG_SIZE:
- *	This variable contains the number of elements of the sig_name
- *	and sig_num arrays, excluding the final NULL entry.
+ *	This variable contains the number of elements of the SIG_NAME
+ *	and SIG_NUM arrays, excluding the final NULL entry.
  */
 #define SIG_NAME "ZERO", "NUM01", "INT", "QUIT", "ILL", "NUM05", "NUM06", "NUM07", "FPE", "KILL", "NUM10", "SEGV", "NUM12", "PIPE", "ALRM", "TERM", "NUM16", "NUM17", "NUM18", "NUM19", "CHLD", "BREAK", "ABRT", "STOP", "NUM24", "CONT", "CLD", 0		/**/
 #define SIG_NUM  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 20, 0		/**/
@@ -3432,6 +3465,15 @@
 
 #ifndef USE_64_BIT_ALL
 /*#define	USE_64_BIT_ALL		/**/
+#endif
+
+/* USE_FAST_STDIO:
+ *	This symbol, if defined, indicates that Perl should
+ *	be built to use 'fast stdio'.
+ *	Defaults to define in Perls 5.8 and earlier, to undef later.
+ */
+#ifndef USE_FAST_STDIO
+#define	USE_FAST_STDIO		/**/
 #endif
 
 /* USE_LARGE_FILES:
@@ -3694,6 +3736,12 @@
 #define	PERL_TARGETARCH	"undef"	/**/
 #endif
 
+/* HAS_COPYSIGNL:
+ *	This symbol, if defined, indicates that the copysignl routine is
+ *	available.  If aintl is also present we can emulate modfl.
+ */
+/*#define HAS_COPYSIGNL		/**/
+
 /* HAS_DBMINIT_PROTO:
  *	This symbol, if defined, indicates that the system provides
  *	a prototype for the dbminit() function.  Otherwise, it is up
@@ -3754,6 +3802,13 @@
 #if defined(HAS_PROCSELFEXE) && !defined(PROCSELFEXE_PATH)
 #define PROCSELFEXE_PATH		/**/
 #endif
+
+/* HAS_PTHREAD_ATTR_SETSCOPE:
+ *	This symbol, if defined, indicates that the pthread_attr_setscope
+ *	system call is available to set the contention scope attribute of
+ *	a thread attribute object.
+ */
+/*#define HAS_PTHREAD_ATTR_SETSCOPE		/ **/
 
 /* HAS_SIGPROCMASK:
  *	This symbol, if defined, indicates that the sigprocmask
@@ -4013,7 +4068,7 @@
 
 /* HAS_PTHREAD_ATFORK:
  *	This symbol, if defined, indicates that the pthread_atfork routine
- *	is available setup fork handlers.
+ *	is available to setup fork handlers.
  */
 /*#define HAS_PTHREAD_ATFORK		/**/
 

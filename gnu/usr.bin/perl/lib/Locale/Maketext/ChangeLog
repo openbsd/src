@@ -1,6 +1,34 @@
 Revision history for Perl suite Locale::Maketext
-                                        Time-stamp: "2001-06-21 23:18:31 MDT"
+                                        Time-stamp: "2003-06-21 23:38:38 AHDT"
 
+2003-06-21  Sean M. Burke  sburke@cpan.org
+	* Release 1.06:  Now has "use utf8" to make the things work
+	happily.  Some fancy footwork is required to make this work under
+	pre-utf8 perl versions.
+	
+2003-04-18  Sean M. Burke  sburke@cpan.org
+	* Release 1.05:  Different Makefile.PL, same .pm code.
+	
+	Jesse Vincent, Hugo van der Sanden, and Jarkko Hietaniemi
+	encourage me to add this to the makefile:
+	 ($] < 5.008) ? () : ( INSTALLDIRS => 'perl'),
+	so that when you install this on a recent version of perl (5.8 or
+	later), the installation will overwrite the Maketext.pm in your
+	core library directory.  Email me if this produces trouble for any
+	of you folks out there, okay?
+	
+2003-04-02  Sean M. Burke  sburke@cpan.org
+	* Release 1.04: Implementing proper HTTP "tag;q=rank" parsing for
+	get_handle.  This should make all the difference for users/victims
+	of the current version of Safari, which uses that syntax as well
+	as inserts random languages with low q numbers.
+	Thanks to Jesse Vincent and the whole RT junta for finding this.
+
+	* Added more tests, now in t/
+
+	* Lots of typo fixes to Maketext.pm.  Thanks to Evan A. Zacks for
+	patient help in finding them all.	
+	
 2001-06-21  Sean M. Burke  sburke@cpan.org
 	* Release 1.03: basically cosmetic tweaks to the docs and the
 	test.pl.

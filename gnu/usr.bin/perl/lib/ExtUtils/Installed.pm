@@ -9,21 +9,28 @@ use Config;
 use File::Find;
 use File::Basename;
 use File::Spec;
-require VMS::Filespec if $^O eq 'VMS';
+
+my $Is_VMS = $^O eq 'VMS';
+my $DOSISH = ($^O =~ /^(MSWin\d\d|os2|dos|mint)$/);
+
+require VMS::Filespec if $Is_VMS;
 
 use vars qw($VERSION);
-$VERSION = '0.06';
-
-my $DOSISH = ($^O =~ /^(MSWin\d\d|os2|dos|mint)$/);
+$VERSION = '0.08';
 
 sub _is_prefix {
     my ($self, $path, $prefix) = @_;
     return unless defined $prefix && defined $path;
 
-    if( $^O eq 'VMS' ) {
+    if( $Is_VMS ) {
         $prefix = VMS::Filespec::unixify($prefix);
         $path   = VMS::Filespec::unixify($path);
     }
+
+    # Sloppy Unix path normalization.
+    $prefix =~ s{/+}{/}g;
+    $path   =~ s{/+}{/}g;
+
     return 1 if substr($path, 0, length($prefix)) eq $prefix;
 
     if ($DOSISH) {
@@ -78,7 +85,7 @@ sub new {
     my $sitearch = $Config{sitearchexp};
 
     # File::Find does not know how to deal with VMS filepaths.
-    if( $^O eq 'VMS' ) {
+    if( $Is_VMS ) {
         $archlib  = VMS::Filespec::unixify($archlib);
         $sitearch = VMS::Filespec::unixify($sitearch);
     }
@@ -96,7 +103,7 @@ sub new {
     # Read the module packlists
     my $sub = sub {
         # Only process module .packlists
-        return if ($_) ne ".packlist" || $File::Find::dir eq $archlib;
+        return if $_ ne ".packlist" || $File::Find::dir eq $archlib;
 
         # Hack of the leading bits of the paths & convert to a module name
         my $module = $File::Find::name;
@@ -110,7 +117,9 @@ sub new {
         $self->{$module}{version} = '';
         foreach my $dir (@INC) {
             my $p = File::Spec->catfile($dir, $modfile);
-            if (-f $p) {
+            if (-r $p) {
+                $module = _module_name($p, $module) if $Is_VMS;
+
                 require ExtUtils::MM;
                 $self->{$module}{version} = MM->parse_version($p);
                 last;
@@ -127,6 +136,36 @@ sub new {
 
     return(bless($self, $class));
 }
+
+# VMS's non-case preserving file-system means the package name can't
+# be reconstructed from the filename.
+sub _module_name {
+    my($file, $orig_module) = @_;
+
+    my $module = '';
+    if (open PACKFH, $file) {
+        while (<PACKFH>) {
+            if (/package\s+(\S+)\s*;/) {
+                my $pack = $1;
+                # Make a sanity check, that lower case $module
+                # is identical to lowercase $pack before
+                # accepting it
+                if (lc($pack) eq lc($orig_module)) {
+                    $module = $pack;
+                    last;
+                }
+            }
+        }
+        close PACKFH;
+    }
+
+    print STDERR "Couldn't figure out the package name for $file\n"
+      unless $module;
+
+    return $module;
+}
+
+
 
 sub modules {
     my ($self) = @_;

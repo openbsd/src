@@ -1,7 +1,7 @@
 package Encode::KR::2022_KR;
 use strict;
 
-our $VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.6 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -29,7 +29,7 @@ sub encode
     my ($obj, $utf8, $chk) = @_;
     # empty the input string in the stack so perlio is ok
     $_[1] = '' if $chk;
-    my $octet = Encode::encode('euc-jp', $utf8, FB_PERLQQ) ;
+    my $octet = Encode::encode('euc-kr', $utf8, FB_PERLQQ) ;
     euc_iso(\$octet);
     return $octet;
 }

@@ -1,17 +1,17 @@
 #
-# $Id: Encoder.pm,v 0.5 2002/04/22 02:45:50 dankogai Exp $
+# $Id: Encoder.pm,v 0.7 2003/07/08 21:52:14 dankogai Exp $
 #
 package Encode::Encoder;
 use strict;
 use warnings;
-our $VERSION = do { my @r = (q$Revision: 0.5 $ =~ /\d+/g); sprintf "%d."."%02d"  x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 0.7 $ =~ /\d+/g); sprintf "%d."."%02d"  x $#r, @r };
 
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw ( encoder );
 
 our $AUTOLOAD;
-our $DEBUG = 0;
+sub DEBUG () { 0 }
 use Encode qw(encode decode find_encoding from_to);
 use Carp;
 
@@ -66,7 +66,7 @@ sub bytes {
 }
 
 sub DESTROY{ # defined so it won't autoload.
-    $DEBUG and warn shift;
+    DEBUG and warn shift;
 }
 
 sub AUTOLOAD {
@@ -77,7 +77,7 @@ sub AUTOLOAD {
     $myname =~ s/.*://;   # strip fully-qualified portion
     my $obj = find_encoding($myname) 
 	    or confess __PACKAGE__, ": unknown encoding: $myname";
-    $DEBUG and warn $self->{encoding}, " => ", $obj->name;
+    DEBUG and warn $self->{encoding}, " => ", $obj->name;
     if ($self->{encoding}){
 	from_to($self->{data}, $self->{encoding}, $obj->name, 1);
     }else{
@@ -101,7 +101,7 @@ __END__
 Encode::Encoder -- Object Oriented Encoder
 
 =head1 SYNOPSIS
-       
+
   use Encode::Encoder;
   # Encode::encode("ISO-8859-1", $data); 
   Encode::Encoder->new($data)->iso_8859_1; # OOP way

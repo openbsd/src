@@ -1,5 +1,25 @@
 Revision history for Perl extension Test::Simple
 
+0.47  Mon Aug 26 03:54:22 PDT 2002 
+    * Tatsuhiko Miyagawa noticed Test::Builder was accidentally storing 
+      objects passed into test functions causing problems with tests 
+      relying on object destruction.
+    - Added example of calculating the number of tests to Test::Tutorial
+    - Peter Scott made the ending logic not fire on child processes when
+      forking.
+    * Test::Builder is once again ithread safe.
+
+0.46  Sat Jul 20 19:57:40 EDT 2002
+    - Noted eq_set() isn't really a set comparision.
+    - Test fix, exit codes are broken on MacPerl (bleadperl@16868)
+    - Make Test::Simple install itself into the core for >= 5.8
+    - Small fixes to Test::Tutorial and skip examples
+    * Added TB->has_plan() from Adrian Howard
+    - Clarified the meaning of 'actual_ok' from TB->details
+    * Added TB->details() from chromatic
+    - Neil Watkiss fixed a pre-5.8 test glitch with threads.t
+    * If the test died before a plan, it would exit with 0 [ID 20020716.013]
+
 0.45  Wed Jun 19 18:41:12 EDT 2002
     - Andy Lester made the SKIP & TODO docs a bit clearer.
     - Explicitly disallowing double plans. (RT #553)

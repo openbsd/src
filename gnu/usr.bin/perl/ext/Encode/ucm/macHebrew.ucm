@@ -1,5 +1,5 @@
 #
-# $Id: macHebrew.ucm,v 1.20 2002/04/04 19:50:54 dankogai Exp $
+# $Id: macHebrew.ucm,v 1.21 2003/08/20 11:15:31 dankogai Exp dankogai $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/HEBREW.TXT
@@ -41,7 +41,38 @@ CHARMAP
 <U001D> \x1D |0 # <control>
 <U001E> \x1E |0 # <control>
 <U001F> \x1F |0 # <control>
+<U0020> \xA0 |0 # SPACE, right-left
+<U0021> \xA1 |0 # EXCLAMATION MARK, right-left
+<U0022> \xA2 |0 # QUOTATION MARK, right-left
+<U0023> \xA3 |0 # NUMBER SIGN, right-left
+<U0024> \xA4 |0 # DOLLAR SIGN, right-left
+<U0025> \xA5 |0 # PERCENT SIGN, right-left
 <U0026> \x26 |0 # AMPERSAND
+<U0027> \xA7 |0 # APOSTROPHE, right-left
+<U0028> \xA9 |0 # LEFT PARENTHESIS, right-left
+<U0029> \xA8 |0 # RIGHT PARENTHESIS, right-left
+<U002A> \xAA |0 # ASTERISK, right-left
+<U002B> \xAB |0 # PLUS SIGN, right-left
+<U002C> \xAC |0 # COMMA, right-left
+<U002D> \xAD |0 # HYPHEN-MINUS, right-left
+<U002E> \xAE |0 # FULL STOP, right-left
+<U002F> \xAF |0 # SOLIDUS, right-left
+<U0030> \xB0 |0 # DIGIT ZERO, right-left (need override)
+<U0031> \xB1 |0 # DIGIT ONE, right-left (need override)
+<U0032> \xB2 |0 # DIGIT TWO, right-left (need override)
+<U0033> \xB3 |0 # DIGIT THREE, right-left (need override)
+<U0034> \xB4 |0 # DIGIT FOUR, right-left (need override)
+<U0035> \xB5 |0 # DIGIT FIVE, right-left (need override)
+<U0036> \xB6 |0 # DIGIT SIX, right-left (need override)
+<U0037> \xB7 |0 # DIGIT SEVEN, right-left (need override)
+<U0038> \xB8 |0 # DIGIT EIGHT, right-left (need override)
+<U0039> \xB9 |0 # DIGIT NINE, right-left (need override)
+<U003A> \xBA |0 # COLON, right-left
+<U003B> \xBB |0 # SEMICOLON, right-left
+<U003C> \xBC |0 # LESS-THAN SIGN, right-left
+<U003D> \xBD |0 # EQUALS SIGN, right-left
+<U003E> \xBE |0 # GREATER-THAN SIGN, right-left
+<U003F> \xBF |0 # QUESTION MARK, right-left
 <U0040> \x40 |0 # COMMERCIAL AT
 <U0041> \x41 |0 # LATIN CAPITAL LETTER A
 <U0042> \x42 |0 # LATIN CAPITAL LETTER B
@@ -69,7 +100,9 @@ CHARMAP
 <U0058> \x58 |0 # LATIN CAPITAL LETTER X
 <U0059> \x59 |0 # LATIN CAPITAL LETTER Y
 <U005A> \x5A |0 # LATIN CAPITAL LETTER Z
+<U005B> \xFE |0 # LEFT SQUARE BRACKET, right-left
 <U005C> \x5C |0 # REVERSE SOLIDUS
+<U005D> \xFC |0 # RIGHT SQUARE BRACKET, right-left
 <U005E> \x5E |0 # CIRCUMFLEX ACCENT
 <U005F> \x5F |0 # LOW LINE
 <U0060> \x60 |0 # GRAVE ACCENT
@@ -99,7 +132,11 @@ CHARMAP
 <U0078> \x78 |0 # LATIN SMALL LETTER X
 <U0079> \x79 |0 # LATIN SMALL LETTER Y
 <U007A> \x7A |0 # LATIN SMALL LETTER Z
+<U007B> \xFD |0 # LEFT CURLY BRACKET, right-left
+<U007C> \xFF |0 # VERTICAL LINE, right-left
+<U007D> \xFB |0 # RIGHT CURLY BRACKET, right-left
 <U007E> \x7E |0 # TILDE
+<U00A0> \xCA |0 # NO-BREAK SPACE, right-left
 <U00C4> \x80 |0 # LATIN CAPITAL LETTER A WITH DIAERESIS
 <U00C7> \x82 |0 # LATIN CAPITAL LETTER C WITH CEDILLA
 <U00C9> \x83 |0 # LATIN CAPITAL LETTER E WITH ACUTE
@@ -172,13 +209,21 @@ CHARMAP
 <U05E8> \xF8 |0 # HEBREW LETTER RESH
 <U05E9> \xF9 |0 # HEBREW LETTER SHIN
 <U05EA> \xFA |0 # HEBREW LETTER TAV
+<U05F2><U05B7> \x81 |3 # HEBREW LIGATURE YIDDISH YOD YOD PATAH
+<U2013> \xD0 |0 # EN DASH, right-left
+<U2014> \xD1 |0 # EM DASH, right-left
+<U2018> \xD4 |0 # LEFT SINGLE QUOTATION MARK, right-left
+<U2019> \xD5 |0 # RIGHT SINGLE QUOTATION MARK, right-left
+<U201C> \xD2 |0 # LEFT DOUBLE QUOTATION MARK, right-left
+<U201D> \xD3 |0 # RIGHT DOUBLE QUOTATION MARK, right-left
+<U201E> \xC1 |0 # DOUBLE LOW-9 QUOTATION MARK, right-left
+<U2026> \xC9 |0 # HORIZONTAL ELLIPSIS, right-left
 <U20AA> \xA6 |0 # NEW SHEQEL SIGN
 <UF86A><U05DC><U05B9> \xC0 |3 # Hebrew ligature lamed holam
 <UF89B> \xC2 |0 # Hebrew canoral 1
 <UF89C> \xC3 |0 # Hebrew canoral 2
 <UF89D> \xC4 |0 # Hebrew canoral 3
 <UF89E> \xC5 |0 # Hebrew canoral 4
-<UFB1F> \x81 |0 # HEBREW LIGATURE YIDDISH YOD YOD PATAH
 <UFB2A> \xD6 |0 # HEBREW LETTER SHIN WITH SHIN DOT
 <UFB2B> \xD7 |0 # HEBREW LETTER SHIN WITH SIN DOT
 <UFB35> \xC8 |0 # HEBREW LETTER VAV WITH DAGESH

@@ -127,7 +127,7 @@ is a NaN.  Previously the behaviour was unspecified.
 
 =item *
 
-C<pack('U0a*', ...)> can now be used to force a string to UTF8.
+C<pack('U0a*', ...)> can now be used to force a string to UTF-8.
 
 =item *
 
@@ -508,7 +508,7 @@ C<IsAlnum>, C<IsAlpha>, and C<IsWord> now match titlecase.
 
 Concatenation with the C<.> operator or via variable interpolation,
 C<eq>, C<substr>, C<reverse>, C<quotemeta>, the C<x> operator,
-substitution with C<s///>, single-quoted UTF8, should now work--in
+substitution with C<s///>, single-quoted UTF-8, should now work--in
 theory.
 
 =item *
@@ -690,7 +690,7 @@ concurrently. (Still 16M per thread.)
 
 =item *
 
-C<File::Spec->tmpdir()> now prefers C:/temp over /tmp
+C<< File::Spec->tmpdir() >> now prefers C:/temp over /tmp
 (works better when perl is running as service).
 
 =item *

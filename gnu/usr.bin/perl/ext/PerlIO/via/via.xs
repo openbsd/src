@@ -35,6 +35,7 @@ typedef struct
  CV *mERROR;
  CV *mEOF;
  CV *BINMODE;
+ CV *UTF8;
 } PerlIOVia;
 
 #define MYMethod(x) #x,&s->x
@@ -143,11 +144,15 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 		s->stash = gv_stashpvn(SvPVX(s->obj), pkglen + 13, FALSE);
 	    }
 	    if (s->stash) {
-		SV *modesv =
-		    (mode) ? sv_2mortal(newSVpvn(mode, strlen(mode))) :
-		    Nullsv;
-		SV *result =
-		    PerlIOVia_method(aTHX_ f, MYMethod(PUSHED), G_SCALAR,
+		char lmode[8];
+		SV *modesv;
+		SV *result;
+		if (!mode) {
+		    /* binmode() passes NULL - so find out what mode is */
+		    mode = PerlIO_modestr(f,lmode);
+		}
+		modesv = sv_2mortal(newSVpvn(mode, strlen(mode)));
+		result = PerlIOVia_method(aTHX_ f, MYMethod(PUSHED), G_SCALAR,
 				     modesv, Nullsv);
 		if (result) {
 		    if (sv_isobject(result)) {
@@ -156,6 +161,18 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 		    }
 		    else if (SvIV(result) != 0)
 			return SvIV(result);
+		}
+		else {
+		    goto push_failed;
+		}
+		modesv = (*PerlIONext(f) && (PerlIOBase(PerlIONext(f))->flags & PERLIO_F_UTF8))
+                           ? &PL_sv_yes : &PL_sv_no;
+		result = PerlIOVia_method(aTHX_ f, MYMethod(UTF8), G_SCALAR, modesv, Nullsv);
+		if (result && SvTRUE(result)) {
+		    PerlIOBase(f)->flags |= ~PERLIO_F_UTF8;
+		}
+		else {
+		    PerlIOBase(f)->flags &= ~PERLIO_F_UTF8;
 		}
 		if (PerlIOVia_fetchmethod(aTHX_ s, MYMethod(FILL)) ==
 		    (CV *) - 1)
@@ -168,6 +185,7 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 		    Perl_warner(aTHX_ packWARN(WARN_LAYER),
 				"Cannot find package '%.*s'", (int) pkglen,
 				pkg);
+push_failed:
 #ifdef ENOSYS
 		errno = ENOSYS;
 #else
@@ -342,12 +360,20 @@ IV
 PerlIOVia_seek(pTHX_ PerlIO * f, Off_t offset, int whence)
 {
     PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
-    SV *offsv = sv_2mortal(newSViv(offset));
+    SV *offsv = sv_2mortal(sizeof(Off_t) > sizeof(IV)
+			   ? newSVnv((NV)offset) : newSViv((IV)offset));
     SV *whsv = sv_2mortal(newSViv(whence));
     SV *result =
 	PerlIOVia_method(aTHX_ f, MYMethod(SEEK), G_SCALAR, offsv, whsv,
 			 Nullsv);
+#if Off_t_size == 8 && defined(CONDOP_SIZE) && CONDOP_SIZE < Off_t_size
+    if (result)
+	return (Off_t) SvIV(result);
+    else
+	return (Off_t) -1;
+#else
     return (result) ? SvIV(result) : -1;
+#endif
 }
 
 Off_t
@@ -356,7 +382,9 @@ PerlIOVia_tell(pTHX_ PerlIO * f)
     PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
     SV *result =
 	PerlIOVia_method(aTHX_ f, MYMethod(TELL), G_SCALAR, Nullsv);
-    return (result) ? (Off_t) SvIV(result) : (Off_t) - 1;
+    return (result)
+	   ? (SvNOK(result) ? (Off_t)SvNV(result) : (Off_t)SvIV(result))
+	   : (Off_t) - 1;
 }
 
 SSize_t

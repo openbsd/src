@@ -122,7 +122,7 @@ DONE
 
 $| = 1;
 
-print "1..", 1 +@tests, "\n";
+print "1..", 2 +@tests, "\n";
 
 use Text::Wrap;
 
@@ -207,3 +207,9 @@ my $w = wrap('zzz','yyy',$tw);
 print (($w eq "zzz$tw") ? "ok $tn\n" : "not ok $tn");
 $tn++;
 
+{
+    local $Text::Wrap::columns = 10;
+    local $Text::Wrap::huge = "wrap";
+    print ((wrap("verylongindent", "", "foo") eq "verylongindent\nfoo") ? "ok $tn\n" : "not ok $tn");
+    $tn++;
+}

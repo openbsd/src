@@ -12,11 +12,37 @@ my $bits_in_uv = int (0.001 + log (~0+1) / log 2);
 
 # 3**30 < 2**48, don't trust things outside that range on a Cray
 # Likewise other 3 should not overflow 48 bits if I did my sums right.
-my @pow = ([3,30,1e-14], [4,32,0], [5,20,1e-14], [2.5, 10,,1e-14], [-2, 69,0]);
+my @pow = ([  3, 30, 1e-14],
+           [  4, 32,     0],
+           [  5, 20, 1e-14],
+           [2.5, 10, 1e-14],
+           [ -2, 69,     0],
+           [ -3, 30, 1e-14],
+);
 my $tests;
 $tests += $_->[1] foreach @pow;
 
-plan tests => 1 + $bits_in_uv + $tests;
+plan tests => 13 + $bits_in_uv + $tests;
+
+# (-3)**3 gave 27 instead of -27 before change #20167.
+# Let's test the other similar edge cases, too.
+is((-3)**0, 1,   "negative ** 0 = 1");
+is((-3)**1, -3,  "negative ** 1 = self");
+is((-3)**2, 9,   "negative ** 2 = positive");
+is((-3)**3, -27, "(negative int) ** (odd power) is negative");
+
+# Positives shouldn't be a problem
+is(3**0, 1,      "positive ** 0 = 1");
+is(3**1, 3,      "positive ** 1 = self");
+is(3**2, 9,      "positive ** 2 = positive");
+is(3**3, 27,     "(positive int) ** (odd power) is positive");
+
+# And test order of operations while we're at it
+is(-3**0, -1);
+is(-3**1, -3);
+is(-3**2, -9);
+is(-3**3, -27);
+
 
 # Ought to be 32, 64, 36 or something like that.
 
@@ -30,17 +56,17 @@ cmp_ok ($remainder, '==', 0, 'Sanity check bits in UV calculation')
 # perfect, forgetting that it's a call to floating point pow() which never
 # claims to deliver perfection.
 foreach my $n (0..$bits_in_uv - 1) {
-    my $exp = 2 ** $n;
+    my $pow = 2 ** $n;
     my $int = 1 << $n;
-    cmp_ok ($exp, '==', $int, "2 ** $n vs 1 << $n");
+    cmp_ok ($pow, '==', $int, "2 ** $n vs 1 << $n");
 }
 
 foreach my $pow (@pow) {
     my ($base, $max, $range) = @$pow;
-    my $fp = 1;
+    my $expect = 1;
     foreach my $n (0..$max-1) {
-        my $exp = $base ** $n;
-        within ($exp, $fp, $range, "$base ** $n [$exp] vs $base * $base * ...");
-        $fp *= $base;
+        my $got = $base ** $n;
+        within ($got, $expect, $range, "$base ** $n got[$got] expect[$expect]");
+        $expect *= $base;
     }
 }

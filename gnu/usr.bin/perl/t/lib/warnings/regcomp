@@ -78,7 +78,7 @@ no warnings 'regexp' ;
 /[.zog.]/;
 EXPECT
 POSIX syntax [. .] belongs inside character classes in regex; marked by <-- HERE in m/[.zog.] <-- HERE / at - line 5.
-POSIX syntax [. .] is reserved for future extensions in regex; marked by <-- HERE in m/[.zog.] <-- HERE /
+POSIX syntax [. .] is reserved for future extensions in regex; marked by <-- HERE in m/[.zog.] <-- HERE / at - line 5.
 ########
 # regcomp.c [S_regclass]
 $_ = "";

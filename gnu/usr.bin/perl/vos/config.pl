@@ -102,7 +102,7 @@ unless (close (CONFIG_H)) {
 close (CONFIG_SH);
 
 while (($key,$value) = each %used) {
-    if ($value == 0) {
+    if ($value == 0 && $key ne '$undef') {
         print "Unused keyword definition: $key\n";
     }
 }

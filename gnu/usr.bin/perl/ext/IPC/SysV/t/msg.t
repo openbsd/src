@@ -27,16 +27,16 @@ use IPC::Msg;
 
 print "1..9\n";
 
-$msq = new IPC::Msg(IPC_PRIVATE, S_IRWXU | S_IRWXG | S_IRWXO)
-	|| die "msgget: ",$!+0," $!\n";
+my $msq =
+    new IPC::Msg(IPC_PRIVATE, S_IRWXU | S_IRWXG | S_IRWXO)
+    || die "msgget: ",$!+0," $!\n";
 	
 print "ok 1\n";
 
 #Putting a message on the queue
 $msgtype = 1;
 $msg = "hello";
-$msq->snd($msgtype,$msg,0) || print "not ";
-print "ok 2\n";
+print $msq->snd($msgtype,$msg,IPC_NOWAIT) ? "ok 2\n" : "not ok 2 # $!\n";
 
 #Check if there are messages on the queue
 $ds = $msq->stat() or print "not ";
@@ -59,5 +59,7 @@ print "ok 7\n";
 print "not " unless $ds && $ds->qnum() == 0;
 print "ok 8\n";
 
-$msq->remove || print "not ";
-print "ok 9\n";
+END {
+	(defined $msq && $msq->remove) || print "not ";
+	print "ok 9\n";
+}

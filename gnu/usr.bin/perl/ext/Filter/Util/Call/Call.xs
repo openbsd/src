@@ -235,7 +235,8 @@ void
 filter_del()
     CODE:
         dMY_CXT;
-	FILTER_ACTIVE(FILTER_DATA(IDX)) = FALSE ;
+	if (PL_rsfp_filters && IDX <= av_len(PL_rsfp_filters) && FILTER_DATA(IDX) && FILTER_ACTIVE(FILTER_DATA(IDX)))
+	    FILTER_ACTIVE(FILTER_DATA(IDX)) = FALSE ;
 
 
 

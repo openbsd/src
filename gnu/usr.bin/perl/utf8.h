@@ -1,6 +1,6 @@
 /*    utf8.h
  *
- *    Copyright (c) 1998-2002, Larry Wall
+ *    Copyright (C) 2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -8,7 +8,7 @@
  */
 
 /* Use UTF-8 as the default script encoding?
- * Turning this on will break scripts having non-UTF8 binary
+ * Turning this on will break scripts having non-UTF-8 binary
  * data (such as Latin-1) in string literals. */
 #ifdef USE_UTF8_SCRIPTS
 #    define USE_UTF8_IN_NAMES (!IN_BYTES)
@@ -162,7 +162,7 @@ encoded character.
 #define isIDFIRST_lazy(p)	isIDFIRST_lazy_if(p,1)
 #define isALNUM_lazy(p)		isALNUM_lazy_if(p,1)
 
-/* how wide can a single UTF8 encoded character become */
+/* how wide can a single UTF-8 encoded character become */
 #define UTF8_MAXLEN 13
 /* how wide a character can become when upper/lowercased */
 #define UTF8_MAXLEN_UCLC_MULT 3

@@ -188,12 +188,12 @@ The Unix column assumes that you are not accessing a serial line
 "\n", and "\n" on output becomes CRLF.
 
 These are just the most common definitions of C<\n> and C<\r> in Perl.
-There may well be others.  For example, on an EBCDIC implementation such
-as z/OS or OS/400 the above material is similar to "Unix" but the code
-numbers change:
+There may well be others.  For example, on an EBCDIC implementation
+such as z/OS (OS/390) or OS/400 (using the ILE, the PASE is ASCII-based)
+the above material is similar to "Unix" but the code numbers change:
 
-    LF  eq  \025  eq  \x15  eq           chr(21)  eq  CP-1047 21
-    LF  eq  \045  eq  \x25  eq  \cU  eq  chr(37)  eq  CP-0037 37
+    LF  eq  \025  eq  \x15  eq  \cU  eq  chr(21)  eq  CP-1047 21
+    LF  eq  \045  eq  \x25  eq           chr(37)  eq  CP-0037 37
     CR  eq  \015  eq  \x0D  eq  \cM  eq  chr(13)  eq  CP-1047 13
     CR  eq  \015  eq  \x0D  eq  \cM  eq  chr(13)  eq  CP-0037 13
 
@@ -404,10 +404,12 @@ interaction.  A program requiring a command line interface might
 not work everywhere.  This is probably for the user of the program
 to deal with, so don't stay up late worrying about it.
 
-Some platforms can't delete or rename files held open by the system.
-Remember to C<close> files when you are done with them.  Don't
-C<unlink> or C<rename> an open file.  Don't C<tie> or C<open> a
-file already tied or opened; C<untie> or C<close> it first.
+Some platforms can't delete or rename files held open by the system,
+this limitation may also apply to changing filesystem metainformation
+like file permissions or owners.  Remember to C<close> files when you
+are done with them.  Don't C<unlink> or C<rename> an open file.  Don't
+C<tie> or C<open> a file already tied or opened; C<untie> or C<close>
+it first.
 
 Don't open the same file more than once at a time for writing, as some
 operating systems put mandatory locks on such files.
@@ -446,7 +448,12 @@ C<closedir> instead.
 Don't count on per-program environment variables, or per-program current
 directories.
 
-Don't count on specific values of C<$!>.
+Don't count on specific values of C<$!>, neither numeric nor
+especially the strings values-- users may switch their locales causing
+error messages to be translated into their languages.  If you can
+trust a POSIXish environment, you can portably use the symbols defined
+by the Errno module, like ENOENT.  And don't trust on the values of C<$!>
+at all except immediately after a failed system call.
 
 =head2 Command names versus file pathnames
 
@@ -479,6 +486,42 @@ To convert $Config{perlpath} to a file pathname, say:
   $thisperl = $Config{perlpath};
   if ($^O ne 'VMS')
      {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
+
+=head2 Networking
+
+Don't assume that you can reach the public Internet.
+
+Don't assume that there is only one way to get through firewalls
+to the public Internet.
+
+Don't assume that you can reach outside world through any other port
+than 80, or some web proxy.  ftp is blocked by many firewalls.
+
+Don't assume that you can send email by connecting to the local SMTP port.
+
+Don't assume that you can reach yourself or any node by the name
+'localhost'.  The same goes for '127.0.0.1'.  You will have to try both.
+
+Don't assume that the host has only one network card, or that it
+can't bind to many virtual IP addresses.
+
+Don't assume a particular network device name.
+
+Don't assume a particular set of ioctl()s will work.
+
+Don't assume that you can ping hosts and get replies.
+
+Don't assume that any particular port (service) will respond.
+
+Don't assume that Sys::Hostname() (or any other API or command)
+returns either a fully qualified hostname or a non-qualified hostname:
+it all depends on how the system had been configured.  Also remember
+things like DHCP and NAT-- the hostname you get back might not be very
+useful.
+
+All the above "don't":s may look daunting, and they are -- but the key
+is to degrade gracefully if one cannot reach the particular network
+service one wants.  Croaking or hanging do not look very professional.
 
 =head2 Interprocess Communication (IPC)
 
@@ -564,16 +607,24 @@ work with any DBM module.  See L<AnyDBM_File> for more details.
 The system's notion of time of day and calendar date is controlled in
 widely different ways.  Don't assume the timezone is stored in C<$ENV{TZ}>,
 and even if it is, don't assume that you can control the timezone through
-that variable.
+that variable.  Don't assume anything about the three-letter timezone
+abbreviations (for example that MST would be the Mountain Standard Time,
+it's been known to stand for Moscow Standard Time).  If you need to
+use timezones, express them in some unambiguous format like the
+exact number of minutes offset from UTC, or the POSIX timezone
+format.
 
 Don't assume that the epoch starts at 00:00:00, January 1, 1970,
-because that is OS- and implementation-specific.  It is better to store a date
-in an unambiguous representation.  The ISO-8601 standard defines
-"YYYY-MM-DD" as the date format.  A text representation (like "1987-12-18")
-can be easily converted into an OS-specific value using a module like
-Date::Parse.  An array of values, such as those returned by
-C<localtime>, can be converted to an OS-specific representation using
-Time::Local.
+because that is OS- and implementation-specific.  It is better to
+store a date in an unambiguous representation.  The ISO 8601 standard
+defines YYYY-MM-DD as the date format, or YYYY-MM-DDTHH-MM-SS
+(that's a literal "T" separating the date from the time).
+Please do use the ISO 8601 instead of making us to guess what
+date 02/03/04 might be.  ISO 8601 even sorts nicely as-is.
+A text representation (like "1987-12-18") can be easily converted
+into an OS-specific value using a module like Date::Parse.
+An array of values, such as those returned by C<localtime>, can be
+converted to an OS-specific representation using Time::Local.
 
 When calculating specific times, such as for tests in time or date modules,
 it may be appropriate to calculate an offset for the epoch.
@@ -584,6 +635,9 @@ it may be appropriate to calculate an offset for the epoch.
 The value for C<$offset> in Unix will be C<0>, but in Mac OS will be
 some large number.  C<$offset> can then be added to a Unix time value
 to get what should be the proper value on any system.
+
+On Windows (at least), you shouldn't pass a negative value to C<gmtime> or
+C<localtime>.
 
 =head2 Character sets and character encoding
 
@@ -610,6 +664,25 @@ system at least attempts to make things a little bit more portable,
 or at least more convenient and native-friendly for non-English
 users.  The system affects character sets and encoding, and date
 and time formatting--amongst other things.
+
+If you really want to be international, you should consider Unicode.
+See L<perluniintro> and L<perlunicode> for more information.
+
+If you want to use non-ASCII bytes (outside the bytes 0x00..0x7f) in
+the "source code" of your code, to be portable you have to be explicit
+about what bytes they are.  Someone might for example be using your
+code under a UTF-8 locale, in which case random native bytes might be
+illegal ("Malformed UTF-8 ...")  This means that for example embedding
+ISO 8859-1 bytes beyond 0x7f into your strings might cause trouble
+later.  If the bytes are native 8-bit bytes, you can use the C<bytes>
+pragma.  If the bytes are in a string (regular expression being a
+curious string), you can often also use the C<\xHH> notation instead
+of embedding the bytes as-is.  If they are in some particular legacy
+encoding (ether single-byte or something more complicated), you can
+use the C<encoding> pragma.  (If you want to write your code in UTF-8,
+you can use either the C<utf8> pragma, or the C<encoding> pragma.)
+The C<bytes> and C<utf8> pragmata are available since Perl 5.6.0, and
+the C<encoding> pragma since Perl 5.8.0.
 
 =head2 System Resources
 
@@ -672,12 +745,14 @@ Be careful in the tests you supply with your module or programs.
 Module code may be fully portable, but its tests might not be.  This
 often happens when tests spawn off other processes or call external
 programs to aid in the testing, or when (as noted above) the tests
-assume certain things about the filesystem and paths.  Be careful
-not to depend on a specific output style for errors, such as when
-checking C<$!> after a system call.  Some platforms expect a certain
-output format, and perl on those platforms may have been adjusted
-accordingly.  Most specifically, don't anchor a regex when testing
-an error value.
+assume certain things about the filesystem and paths.  Be careful not
+to depend on a specific output style for errors, such as when checking
+C<$!> after a failed system call.  Using C<$!> for anything else than
+displaying it as output is doubtful (though see the Errno module for
+testing reasonably portably for error value). Some platforms expect
+a certain output format, and Perl on those platforms may have been
+adjusted accordingly.  Most specifically, don't anchor a regex when
+testing an error value.
 
 =head1 CPAN Testers
 
@@ -1156,7 +1231,9 @@ Character Code Set ID 0037 for OS/400 and either 1047 or POSIX-BC for S/390
 systems).  On the mainframe perl currently works under the "Unix system
 services for OS/390" (formerly known as OpenEdition), VM/ESA OpenEdition, or
 the BS200 POSIX-BC system (BS2000 is supported in perl 5.6 and greater).
-See L<perlos390> for details.  
+See L<perlos390> for details.  Note that for OS/400 there is also a port of
+Perl 5.8.1/5.9.0 or later to the PASE which is ASCII-based (as opposed to
+ILE which is EBCDIC-based), see L<perlos400>. 
 
 As of R2.5 of USS for OS/390 and Version 2.3 of VM/ESA these Unix
 sub-systems do not support the C<#!> shebang trick for script invocation.
@@ -1634,6 +1711,11 @@ Not implemented. (S<Mac OS>, Win32, VM/ESA)
 
 Not implemented. (S<Mac OS>, Win32, VMS, VM/ESA)
 
+=item gethostbyname
+
+C<gethostbyname('localhost')> does not work everywhere: you may have
+to use C<gethostbyname('127.0.0.1')>. (S<Mac OS>, S<Irix 5>)
+
 =item gethostent
 
 Not implemented. (S<Mac OS>, Win32)
@@ -2069,45 +2151,51 @@ First public release with perl5.005.
 
 =head1 Supported Platforms
 
-As of June 2002 (the Perl release 5.8.0), the following platforms are
-able to build Perl from the standard source code distribution
+As of September 2003 (the Perl release 5.8.1), the following platforms
+are able to build Perl from the standard source code distribution
 available at http://www.cpan.org/src/index.html
 
         AIX
         BeOS
+        BSD/OS          (BSDi)
         Cygwin
         DG/UX
         DOS DJGPP       1)
         DYNIX/ptx
         EPOC R5
         FreeBSD
+        HI-UXMPP        (Hitachi) (5.8.0 worked but we didn't know it)
         HP-UX
         IRIX
         Linux
+        LynxOS
         Mac OS Classic
-        Mac OS X         (Darwin)
+        Mac OS X        (Darwin)
         MPE/iX
         NetBSD
         NetWare
         NonStop-UX
-        ReliantUNIX     (SINIX)
+        ReliantUNIX     (formerly SINIX)
         OpenBSD
-        OpenVMS         (VMS)
+        OpenVMS         (formerly VMS)
+        Open UNIX       (Unixware) (since Perl 5.8.1/5.9.0)
         OS/2
+        OS/400          (using the PASE) (since Perl 5.8.1/5.9.0)
         PowerUX
-        POSIX-BC        (BS2000)
+        POSIX-BC        (formerly BS2000)
         QNX
         Solaris
         SunOS 4
-        SUPER-UX
-        Tru64 UNIX      (DEC OSF/1, Digital UNIX)
+        SUPER-UX        (NEC)
+        SVR4
+        Tru64 UNIX      (formerly DEC OSF/1, Digital UNIX)
         UNICOS
         UNICOS/mk
         UTS
         VOS
         Win95/98/ME/2K/XP 2)
         WinCE
-        z/OS            (OS/390)
+        z/OS            (formerly OS/390)
         VM/ESA
 
         1) in DOS mode either the DOS or OS/2 ports can be used
@@ -2115,21 +2203,18 @@ available at http://www.cpan.org/src/index.html
 
 The following platforms worked with the previous releases (5.6 and
 5.7), but we did not manage either to fix or to test these in time
-for the 5.8.0 release.  There is a very good chance that many of these
-will work fine with the 5.8.0.
+for the 5.8.1 release.  There is a very good chance that many of these
+will work fine with the 5.8.1.
 
-        BSD/OS
         DomainOS
         Hurd
-        LynxOS
         MachTen
         PowerMAX
         SCO SV
-        SVR4
         Unixware
         Windows 3.1
 
-Known to be broken for 5.8.0 (but 5.6.1 and 5.7.2 can be used):
+Known to be broken for 5.8.0 and 5.8.1 (but 5.6.1 and 5.7.2 can be used):
 
 	AmigaOS
 
@@ -2177,7 +2262,7 @@ binaries available via http://www.cpan.org/ports/
 
                                 Perl release
 
-        OS/400                  5.005_02
+        OS/400 (ILE)            5.005_02
         Tandem Guardian         5.004
 
 The following platforms have only binaries available via
@@ -2199,10 +2284,11 @@ http://www.cpan.org/ports/index.html for binary distributions.
 L<perlaix>, L<perlamiga>, L<perlapollo>, L<perlbeos>, L<perlbs2000>,
 L<perlce>, L<perlcygwin>, L<perldgux>, L<perldos>, L<perlepoc>,
 L<perlebcdic>, L<perlfreebsd>, L<perlhurd>, L<perlhpux>, L<perlirix>,
-L<perlmachten>, L<perlmacos>, L<perlmint>, L<perlmpeix>,
-L<perlnetware>, L<perlos2>, L<perlos390>, L<perlplan9>, L<perlqnx>,
-L<perlsolaris>, L<perltru64>, L<perlunicode>, L<perlvmesa>,
-L<perlvms>, L<perlvos>, L<perlwin32>, and L<Win32>.
+L<perlmachten>, L<perlmacos>, L<perlmacosx>, L<perlmint>, L<perlmpeix>,
+L<perlnetware>, L<perlos2>, L<perlos390>, L<perlos400>,
+L<perlplan9>, L<perlqnx>, L<perlsolaris>, L<perltru64>,
+L<perlunicode>, L<perlvmesa>, L<perlvms>, L<perlvos>,
+L<perlwin32>, and L<Win32>.
 
 =head1 AUTHORS / CONTRIBUTORS
 

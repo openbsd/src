@@ -1,0 +1,57 @@
+This is a CPAN distribution of the venerable MakeMaker module.  It has been
+backported to work with Perl 5.005_03 and up.
+
+If you do not have a make program, several can be found...
+
+Most Unixen: The make utility which comes with your operating system
+should work fine.  If you don't have one, GNU make is recommended,
+most others (Sun, BSD, etc...) will work fine as well.
+
+Windows: nmake or dmake will work.  GNU make will *not*.
+ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
+http://search.cpan.org/author/GSAR/dmake-4.1pl1-win32/
+
+VMS: MMS or the free MadGoat MaKe utility (MMK) will work.
+http://www.madgoat.com/mmk.html
+
+If all else fails there is a pure Perl version of make available on
+CPAN which should work on most Unixen.
+http://search.cpan.org/author/NI-S/Make-1.00/
+
+
+PLEASE NOTE: This distribution does not include the xsubpp or typemap
+programs.  They are extremely specific to your version or Perl, so
+MakeMaker will simply use the one which came with your copy of Perl.
+Do not delete your old ExtUtils/ directory.  An upgraded version of xsubpp
+can be found in the ExtUtils::ParseXS module.
+
+Known Good Systems:
+
+Every stable MakeMaker release is tested at least on:
+
+MacOS X
+Linux/x86
+ActivePerl on Windows 98
+Cygwin on Windows 98
+OpenVMS
+
+Covering the major portability flavors MakeMaker has to cover.
+(I'm always on the lookout for DJGPP, Solaris, *BSD and OS/2 users)
+
+
+Known Problems:
+
+(See http://rt.cpan.org for a full list of open problems.)
+
+ActivePerl likely broken if installed in C:\Program Files or other
+prefix with a space in the name.
+
+Using the MMS utility on VMS causes lots of extra newlines.  Unknown
+why this is so, might be a bug in MMS.  Problem not seen with MMK.
+
+MacOS Classic is likely broken.
+
+
+See TODO for details.
+
+Please report any bugs via http://rt.cpan.org or to makemaker@perl.org.

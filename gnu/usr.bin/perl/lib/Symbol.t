@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 14;
+use Test::More tests => 19;
 
 BEGIN { $_ = 'foo'; }  # because Symbol used to clobber $_
 
@@ -65,3 +65,13 @@ use Symbol qw(qualify);  # must import into this package too
     'qualify() with an identifier starting with a _' );
 ::ok( qualify("^FOO") eq "main::\cFOO",
     'qualify() with an identifier starting with a ^' );
+
+# tests for delete_package
+package main;
+$Transient::variable = 42;
+ok( exists $::{'Transient::'}, 'transient stash exists' );
+ok( defined $Transient::{variable}, 'transient variable in stash' );
+Symbol::delete_package('Transient');
+ok( !exists $Transient::{variable}, 'transient variable no longer in stash' );
+is( scalar(keys %Transient::), 0, 'transient stash is empty' );
+ok( !exists $::{'Transient::'}, 'no transient stash' );

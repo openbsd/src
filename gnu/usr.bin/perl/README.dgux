@@ -79,7 +79,7 @@ After configuration is done correctly give "make" to compile.
 
 =head2 Testing Perl on DG/UX
 
-Issuing a "make test"  will run all the tests. 
+Issuing a "make test" will run all the tests. 
 If the test lib/ftmp-security gives you as a result
 something like
 

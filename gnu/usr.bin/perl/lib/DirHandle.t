@@ -11,24 +11,25 @@ BEGIN {
 }
 
 use DirHandle;
+require './test.pl';
 
-print "1..5\n";
+plan(5);
 
 $dot = new DirHandle ($^O eq 'MacOS' ? ':' : '.');
 
-print defined($dot) ? "ok" : "not ok", " 1\n";
+ok(defined($dot));
 
 @a = sort <*>;
 do { $first = $dot->read } while defined($first) && $first =~ /^\./;
-print +(grep { $_ eq $first } @a) ? "ok" : "not ok", " 2\n";
+ok(+(grep { $_ eq $first } @a));
 
 @b = sort($first, (grep {/^[^.]/} $dot->read));
-print +(join("\0", @a) eq join("\0", @b)) ? "ok" : "not ok", " 3\n";
+ok(+(join("\0", @a) eq join("\0", @b)));
 
 $dot->rewind;
 @c = sort grep {/^[^.]/} $dot->read;
-print +(join("\0", @b) eq join("\0", @c)) ? "ok" : "not ok", " 4\n";
+cmp_ok(+(join("\0", @b), 'eq', join("\0", @c)));
 
 $dot->close;
 $dot->rewind;
-print defined($dot->read) ? "not ok" : "ok", " 5\n";
+ok(!defined($dot->read));

@@ -477,6 +477,7 @@ SKIP: Abuses a fixed bug.
 
 #######  Prototype fun 2
 print prototype sub "Just another Perl Hacker" {};
+SKIP: Abuses a fixed bug.
 
 #######  Prototype fun 3
 sub _ "Just another Perl Hacker"; print prototype \&_
@@ -486,18 +487,21 @@ sub _ "Just another Perl Hacker"; print prototype \&_
 ${"@_"} = "/"; split // => eval join "+" => 1 .. 7;
 *{"@_"} = sub {foreach (sort keys %_)  {print "$_ $_{$_} "}};
 %{"@_"} = %_ = (Just => another => Perl => Hacker); &{%{%_}};
+SKIP: Hashes are now randomized.
 EXPECT: $JaPH_s
 
 #######  Split 2
 $" = "/"; split // => eval join "+" => 1 .. 7;
 *{"@_"} = sub {foreach (sort keys %_) {print "$_ $_{$_} "}};
 %_ = (Just => another => Perl => Hacker); &{%_};
+SKIP: Hashes are now randomized.
 EXPECT: $JaPH_s
 
 #######  Split 3
 $" = "/"; split $, => eval join "+" => 1 .. 7;
 *{"@_"} = sub  {foreach (sort keys %_) {print "$_ $_{$_} "}};
 %{"@_"} = %_ = (Just => another => Perl => Hacker); &{%{%_}};
+SKIP: Hashes are now randomized.
 EXPECT: $JaPH_s
 
 #######  Here documents 1

@@ -1,26 +1,29 @@
 #!./perl
 
-print "1..5\n";
+BEGIN {
+    chdir 't';
+    @INC = '../lib';
+    require './test.pl';
+}
 
-my $test = 0;
+plan tests => 8;
 
 # symbolic filehandles should only result in glob entries with FH constructors
 
 $|=1;
 my $a = "SYM000";
-print "not " if defined(fileno($a)) or defined *{$a};
-++$test; print "ok $test\n";
+ok(!defined(fileno($a)));
+ok(!defined *{$a});
 
 select select $a;
-print "not " unless defined *{$a};
-++$test; print "ok $test\n";
+ok(defined *{$a});
 
 $a++;
-print "not " if close $a or defined *{$a};
-++$test; print "ok $test\n";
+ok(!close $a);
+ok(!defined *{$a});
 
-print "not " unless open($a, ">&STDOUT") and defined *{$a};
-++$test; print $a "ok $test\n";
+ok(open($a, ">&STDOUT"));
+ok(defined *{$a});
 
-print "not " unless close $a;
-++$test; print $a "not "; print "ok $test\n";
+ok(close $a);
+

@@ -69,7 +69,7 @@ command prompt.  The build process can be stopped after miniperl.exe
 is created. Then run nmake from NetWare folder through WinNT command
 prompt.
 
-Currently the following two build types are tested on NetWare
+Currently the following two build types are tested on NetWare:
 
 =over 4
 
@@ -120,7 +120,7 @@ ActiveState site.  Installation can be done by invoking I<nmake
 install> from the NetWare folder on a WinNT command prompt after
 building NetWare Perl by following steps given above.  This will copy
 all the *.pm files and other required files.  Documentation files are
-not copied.Thus one must first install Windows Perl, Then install
+not copied.  Thus one must first install Windows Perl, Then install
 NetWare Perl.
 
 Once this is done, do the following to build any extension:
@@ -173,7 +173,7 @@ or
 =item * 
 
 Note: Some modules downloaded from CPAN may require NetWare related
-API in order to build on NetWare.Other modules may however build
+API in order to build on NetWare.  Other modules may however build
 smoothly with or without minor changes depending on the type of
 module.
 

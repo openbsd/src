@@ -67,13 +67,6 @@ character data.  Such data may come from filehandles, from calls to
 external programs, from information provided by the system (such as %ENV),
 or from literals and constants in the source text.
 
-On Windows platforms, if the C<-C> command line switch is used or the
-${^WIDE_SYSTEM_CALLS} global flag is set to C<1>, all system calls
-will use the corresponding wide-character APIs.  This feature is
-available only on Windows to conform to the API standard already
-established for that platform--and there are very few non-Windows
-platforms that have Unicode-aware APIs.
-
 The C<bytes> pragma will always, regardless of platform, force byte
 semantics in a particular lexical scope.  See L<bytes>.
 
@@ -184,8 +177,12 @@ You can also use negation in both C<\p{}> and C<\P{}> by introducing a caret
 (^) between the first brace and the property name: C<\p{^Tamil}> is
 equal to C<\P{Tamil}>.
 
+B<NOTE: the properties, scripts, and blocks listed here are as of
+Unicode 3.2.0, March 2002, or Perl 5.8.0, July 2002.  Unicode 4.0.0
+came out in April 2003, and Perl 5.8.1 in September 2003.>
+
 Here are the basic Unicode General Category properties, followed by their
-long form.  You can use either; C<\p{Lu}> and C<\p{LowercaseLetter}>,
+long form.  You can use either; C<\p{Lu}> and C<\p{UppercaseLetter}>,
 for instance, are identical.
 
     Short       Long
@@ -598,21 +595,14 @@ than one Unicode character.
 
 =back
 
-The following cases do not yet work:
+Things to do with locales (Lithuanian, Turkish, Azeri) do B<not> work
+since Perl does not understand the concept of Unicode locales.
 
-=over 8
-
-=item *
-
-the "final sigma" (Greek), and
-
-=item *
-
-anything to with locales (Lithuanian, Turkish, Azeri).
+See the Unicode Technical Report #21, Case Mappings, for more details.
 
 =back
 
-See the Unicode Technical Report #21, Case Mappings, for more details.
+=over 4
 
 =item *
 
@@ -623,10 +613,10 @@ And finally, C<scalar reverse()> reverses by character rather than by byte.
 =head2 User-Defined Character Properties
 
 You can define your own character properties by defining subroutines
-whose names begin with "In" or "Is".  The subroutines must be
-visible in the package that uses the properties.  The user-defined
-properties can be used in the regular expression C<\p> and C<\P>
-constructs.
+whose names begin with "In" or "Is".  The subroutines must be defined
+in the C<main> package.  The user-defined properties can be used in the
+regular expression C<\p> and C<\P> constructs.  Note that the effect
+is compile-time and immutable once defined.
 
 The subroutines must return a specially-formatted string, with one
 or more newline-separated lines.  Each line must be one of the following:
@@ -705,6 +695,56 @@ The negation is useful for defining (surprise!) negated classes.
     END
     }
 
+You can also define your own mappings to be used in the lc(),
+lcfirst(), uc(), and ucfirst() (or their string-inlined versions).
+The principle is the same: define subroutines in the C<main> package
+with names like C<ToLower> (for lc() and lcfirst()), C<ToTitle> (for
+the first character in ucfirst()), and C<ToUpper> (for uc(), and the
+rest of the characters in ucfirst()).
+
+The string returned by the subroutines needs now to be three
+hexadecimal numbers separated by tabulators: start of the source
+range, end of the source range, and start of the destination range.
+For example:
+
+    sub ToUpper {
+	return <<END;
+    0061\t0063\t0041
+    END
+    }
+
+defines an uc() mapping that causes only the characters "a", "b", and
+"c" to be mapped to "A", "B", "C", all other characters will remain
+unchanged.
+
+If there is no source range to speak of, that is, the mapping is from
+a single character to another single character, leave the end of the
+source range empty, but the two tabulator characters are still needed.
+For example:
+
+    sub ToLower {
+	return <<END;
+    0041\t\t0061
+    END
+    }
+
+defines a lc() mapping that causes only "A" to be mapped to "a", all
+other characters will remain unchanged.
+
+(For serious hackers only)  If you want to introspect the default
+mappings, you can find the data in the directory
+C<$Config{privlib}>/F<unicore/To/>.  The mapping data is returned as
+the here-document, and the C<utf8::ToSpecFoo> are special exception
+mappings derived from <$Config{privlib}>/F<unicore/SpecialCasing.txt>.
+The C<Digit> and C<Fold> mappings that one can see in the directory
+are not directly user-accessible, one can use either the
+C<Unicode::UCD> module, or just match case-insensitively (that's when
+the C<Fold> mapping is used).
+
+A final note on the user-defined property tests and mappings: they
+will be used only if the scalar has been marked as having Unicode
+characters.  Old byte-style strings will not be affected.
+
 =head2 Character Encodings for Input and Output
 
 See L<Encode>.
@@ -714,7 +754,8 @@ See L<Encode>.
 The following list of Unicode support for regular expressions describes
 all the features currently supported.  The references to "Level N"
 and the section numbers refer to the Unicode Technical Report 18,
-"Unicode Regular Expression Guidelines".
+"Unicode Regular Expression Guidelines", version 6 (Unicode 3.2.0,
+Perl 5.8.0).
 
 =over 4
 
@@ -739,18 +780,18 @@ Level 1 - Basic Unicode Support
              or user-defined character properties [b] to emulate subtraction
         [ 7] include Letters in word characters
         [ 8] note that Perl does Full case-folding in matching, not Simple:
-             for example U+1F88 is equivalent with U+1F000 U+03B9,
+             for example U+1F88 is equivalent with U+1F00 U+03B9,
              not with 1F80.  This difference matters for certain Greek
              capital letters with certain modifiers: the Full case-folding
              decomposes the letter, while the Simple case-folding would map
              it to a single character.
-        [ 9] see UTR#13 Unicode Newline Guidelines
-        [10] should do ^ and $ also on \x{85}, \x{2028} and \x{2029})
+        [ 9] see UTR #13 Unicode Newline Guidelines
+        [10] should do ^ and $ also on \x{85}, \x{2028} and \x{2029}
              (should also affect <>, $., and script line numbers)
              (the \x{85}, \x{2028} and \x{2029} do match \s)
 
 [a] You can mimic class subtraction using lookahead.
-For example, what TR18 might write as
+For example, what UTR #18 might write as
 
     [{Greek}-[{UNASSIGNED}]]
 
@@ -765,23 +806,28 @@ But in this particular example, you probably really want
 
 which will match assigned characters known to be part of the Greek script.
 
+Also see the Unicode::Regex::Set module, it does implement the full
+UTR #18 grouping, intersection, union, and removal (subtraction) syntax.
+
 [b] See L</"User-Defined Character Properties">.
 
 =item *
 
 Level 2 - Extended Unicode Support
 
-        3.1 Surrogates                          - MISSING
-        3.2 Canonical Equivalents               - MISSING       [11][12]
-        3.3 Locale-Independent Graphemes        - MISSING       [13]
-        3.4 Locale-Independent Words            - MISSING       [14]
-        3.5 Locale-Independent Loose Matches    - MISSING       [15]
+        3.1 Surrogates                          - MISSING	[11]
+        3.2 Canonical Equivalents               - MISSING       [12][13]
+        3.3 Locale-Independent Graphemes        - MISSING       [14]
+        3.4 Locale-Independent Words            - MISSING       [15]
+        3.5 Locale-Independent Loose Matches    - MISSING       [16]
 
-        [11] see UTR#15 Unicode Normalization
-        [12] have Unicode::Normalize but not integrated to regexes
-        [13] have \X but at this level . should equal that
-        [14] need three classes, not just \w and \W
-        [15] see UTR#21 Case Mappings
+        [11] Surrogates are solely a UTF-16 concept and Perl's internal
+             representation is UTF-8.  The Encode module does UTF-16, though.
+        [12] see UTR#15 Unicode Normalization
+        [13] have Unicode::Normalize but not integrated to regexes
+        [14] have \X but at this level . should equal that
+        [15] need three classes, not just \w and \W
+        [16] see UTR#21 Case Mappings
 
 =item *
 
@@ -858,7 +904,7 @@ Like UTF-8 but EBCDIC-safe, in the way that UTF-8 is ASCII-safe.
 
 =item *
 
-UTF-16, UTF-16BE, UTF16-LE, Surrogates, and BOMs (Byte Order Marks)
+UTF-16, UTF-16BE, UTF-16LE, Surrogates, and BOMs (Byte Order Marks)
 
 The followings items are mostly for reference and general Unicode
 knowledge, Perl doesn't use these constructs internally.
@@ -910,7 +956,7 @@ format".
 
 =item *
 
-UTF-32, UTF-32BE, UTF32-LE
+UTF-32, UTF-32BE, UTF-32LE
 
 The UTF-32 family is pretty much like the UTF-16 family, expect that
 the units are 32-bit, and therefore the surrogate scheme is not
@@ -1005,10 +1051,10 @@ there are a couple of exceptions:
 
 =item *
 
-If your locale environment variables (LANGUAGE, LC_ALL, LC_CTYPE, LANG)
-contain the strings 'UTF-8' or 'UTF8' (case-insensitive matching),
-the default encodings of your STDIN, STDOUT, and STDERR, and of
-B<any subsequent file open>, are considered to be UTF-8.
+You can enable automatic UTF-8-ification of your standard file
+handles, default C<open()> layer, and C<@ARGV> by using either
+the C<-C> command line switch or the C<PERL_UNICODE> environment
+variable, see L<perlrun> for the documentation of the C<-C> switch.
 
 =item *
 
@@ -1018,10 +1064,72 @@ straddling of the proverbial fence causes problems.
 
 =back
 
+=head2 When Unicode Does Not Happen
+
+While Perl does have extensive ways to input and output in Unicode,
+and few other 'entry points' like the @ARGV which can be interpreted
+as Unicode (UTF-8), there still are many places where Unicode (in some
+encoding or another) could be given as arguments or received as
+results, or both, but it is not.
+
+The following are such interfaces.  For all of these Perl currently
+(as of 5.8.1) simply assumes byte strings both as arguments and results.
+
+One reason why Perl does not attempt to resolve the role of Unicode in
+this cases is that the answers are highly dependent on the operating
+system and the file system(s).  For example, whether filenames can be
+in Unicode, and in exactly what kind of encoding, is not exactly a
+portable concept.  Similarly for the qx and system: how well will the
+'command line interface' (and which of them?) handle Unicode?
+
+=over 4
+
+=item *
+
+chmod, chmod, chown, chroot, exec, link, mkdir
+rename, rmdir stat, symlink, truncate, unlink, utime
+
+=item *
+
+%ENV
+
+=item *
+
+glob (aka the <*>)
+
+=item *
+
+open, opendir, sysopen
+
+=item *
+
+qx (aka the backtick operator), system
+
+=item *
+
+readdir, readlink
+
+=back
+
+=head2 Forcing Unicode in Perl (Or Unforcing Unicode in Perl)
+
+Sometimes (see L</"When Unicode Does Not Happen">) there are
+situations where you simply need to force Perl to believe that a byte
+string is UTF-8, or vice versa.  The low-level calls
+utf8::upgrade($bytestring) and utf8::downgrade($utf8string) are
+the answers.
+
+Do not use them without careful thought, though: Perl may easily get
+very confused, angry, or even crash, if you suddenly change the 'nature'
+of scalar like that.  Especially careful you have to be if you use the
+utf8::upgrade(): any random byte string is not valid UTF-8.
+
 =head2 Using Unicode in XS
 
-If you want to handle Perl Unicode in XS extensions, you may find
-the following C APIs useful.  See L<perlapi> for details.
+If you want to handle Perl Unicode in XS extensions, you may find the
+following C APIs useful.  See also L<perlguts/"Unicode Support"> for an
+explanation about Unicode at the XS level, and L<perlapi> for the API
+details.
 
 =over 4
 
@@ -1041,7 +1149,7 @@ Unicode model is not to use UTF-8 until it is absolutely necessary.
 
 =item *
 
-C<uvuni_to_utf8(buf, chr>) writes a Unicode character code point into
+C<uvuni_to_utf8(buf, chr)> writes a Unicode character code point into
 a buffer encoding the code point as UTF-8, and returns a pointer
 pointing after the UTF-8 bytes.
 
@@ -1200,61 +1308,130 @@ Unicode data much easier.
 
 Some functions are slower when working on UTF-8 encoded strings than
 on byte encoded strings.  All functions that need to hop over
-characters such as length(), substr() or index() can work B<much>
-faster when the underlying data are byte-encoded. Witness the
-following benchmark:
+characters such as length(), substr() or index(), or matching regular
+expressions can work B<much> faster when the underlying data are
+byte-encoded.
 
-  % perl -e '
-  use Benchmark;
-  use strict;
-  our $l = 10000;
-  our $u = our $b = "x" x $l;
-  substr($u,0,1) = "\x{100}";
-  timethese(-2,{
-  LENGTH_B => q{ length($b) },
-  LENGTH_U => q{ length($u) },
-  SUBSTR_B => q{ substr($b, $l/4, $l/2) },
-  SUBSTR_U => q{ substr($u, $l/4, $l/2) },
-  });
-  '
-  Benchmark: running LENGTH_B, LENGTH_U, SUBSTR_B, SUBSTR_U for at least 2 CPU seconds...
-    LENGTH_B:  2 wallclock secs ( 2.36 usr +  0.00 sys =  2.36 CPU) @ 5649983.05/s (n=13333960)
-    LENGTH_U:  2 wallclock secs ( 2.11 usr +  0.00 sys =  2.11 CPU) @ 12155.45/s (n=25648)
-    SUBSTR_B:  3 wallclock secs ( 2.16 usr +  0.00 sys =  2.16 CPU) @ 374480.09/s (n=808877)
-    SUBSTR_U:  2 wallclock secs ( 2.11 usr +  0.00 sys =  2.11 CPU) @ 6791.00/s (n=14329)
+In Perl 5.8.0 the slowness was often quite spectacular; in Perl 5.8.1
+a caching scheme was introduced which will hopefully make the slowness
+somewhat less spectacular, at least for some operations.  In general,
+operations with UTF-8 encoded strings are still slower. As an example,
+the Unicode properties (character classes) like C<\p{Nd}> are known to
+be quite a bit slower (5-20 times) than their simpler counterparts
+like C<\d> (then again, there 268 Unicode characters matching C<Nd>
+compared with the 10 ASCII characters matching C<d>).
 
-The numbers show an incredible slowness on long UTF-8 strings.  You
-should carefully avoid using these functions in tight loops. If you
-want to iterate over characters, the superior coding technique would
-split the characters into an array instead of using substr, as the following
-benchmark shows:
+=head2 Porting code from perl-5.6.X
 
-  % perl -e '
-  use Benchmark;
-  use strict;
-  our $l = 10000;
-  our $u = our $b = "x" x $l;
-  substr($u,0,1) = "\x{100}";
-  timethese(-5,{
-  SPLIT_B => q{ for my $c (split //, $b){}  },
-  SPLIT_U => q{ for my $c (split //, $u){}  },
-  SUBSTR_B => q{ for my $i (0..length($b)-1){my $c = substr($b,$i,1);} },
-  SUBSTR_U => q{ for my $i (0..length($u)-1){my $c = substr($u,$i,1);} },
-  });
-  '
-  Benchmark: running SPLIT_B, SPLIT_U, SUBSTR_B, SUBSTR_U for at least 5 CPU seconds...
-     SPLIT_B:  6 wallclock secs ( 5.29 usr +  0.00 sys =  5.29 CPU) @ 56.14/s (n=297)
-     SPLIT_U:  5 wallclock secs ( 5.17 usr +  0.01 sys =  5.18 CPU) @ 55.21/s (n=286)
-    SUBSTR_B:  5 wallclock secs ( 5.34 usr +  0.00 sys =  5.34 CPU) @ 123.22/s (n=658)
-    SUBSTR_U:  7 wallclock secs ( 6.20 usr +  0.00 sys =  6.20 CPU) @  0.81/s (n=5)
+Perl 5.8 has a different Unicode model from 5.6. In 5.6 the programmer
+was required to use the C<utf8> pragma to declare that a given scope
+expected to deal with Unicode data and had to make sure that only
+Unicode data were reaching that scope. If you have code that is
+working with 5.6, you will need some of the following adjustments to
+your code. The examples are written such that the code will continue
+to work under 5.6, so you should be safe to try them out.
 
-Even though the algorithm based on C<substr()> is faster than
-C<split()> for byte-encoded data, it pales in comparison to the speed
-of C<split()> when used with UTF-8 data.
+=over 4
+
+=item *
+
+A filehandle that should read or write UTF-8
+
+  if ($] > 5.007) {
+    binmode $fh, ":utf8";
+  }
+
+=item *
+
+A scalar that is going to be passed to some extension
+
+Be it Compress::Zlib, Apache::Request or any extension that has no
+mention of Unicode in the manpage, you need to make sure that the
+UTF-8 flag is stripped off. Note that at the time of this writing
+(October 2002) the mentioned modules are not UTF-8-aware. Please
+check the documentation to verify if this is still true.
+
+  if ($] > 5.007) {
+    require Encode;
+    $val = Encode::encode_utf8($val); # make octets
+  }
+
+=item *
+
+A scalar we got back from an extension
+
+If you believe the scalar comes back as UTF-8, you will most likely
+want the UTF-8 flag restored:
+
+  if ($] > 5.007) {
+    require Encode;
+    $val = Encode::decode_utf8($val);
+  }
+
+=item *
+
+Same thing, if you are really sure it is UTF-8
+
+  if ($] > 5.007) {
+    require Encode;
+    Encode::_utf8_on($val);
+  }
+
+=item *
+
+A wrapper for fetchrow_array and fetchrow_hashref
+
+When the database contains only UTF-8, a wrapper function or method is
+a convenient way to replace all your fetchrow_array and
+fetchrow_hashref calls. A wrapper function will also make it easier to
+adapt to future enhancements in your database driver. Note that at the
+time of this writing (October 2002), the DBI has no standardized way
+to deal with UTF-8 data. Please check the documentation to verify if
+that is still true.
+
+  sub fetchrow {
+    my($self, $sth, $what) = @_; # $what is one of fetchrow_{array,hashref}
+    if ($] < 5.007) {
+      return $sth->$what;
+    } else {
+      require Encode;
+      if (wantarray) {
+        my @arr = $sth->$what;
+        for (@arr) {
+          defined && /[^\000-\177]/ && Encode::_utf8_on($_);
+        }
+        return @arr;
+      } else {
+        my $ret = $sth->$what;
+        if (ref $ret) {
+          for my $k (keys %$ret) {
+            defined && /[^\000-\177]/ && Encode::_utf8_on($_) for $ret->{$k};
+          }
+          return $ret;
+        } else {
+          defined && /[^\000-\177]/ && Encode::_utf8_on($_) for $ret;
+          return $ret;
+        }
+      }
+    }
+  }
+
+
+=item *
+
+A large scalar that you know can only contain ASCII
+
+Scalars that contain only ASCII and are marked as UTF-8 are sometimes
+a drag to your program. If you recognize such a situation, just remove
+the UTF-8 flag:
+
+  utf8::downgrade($val) if $] > 5.007;
+
+=back
 
 =head1 SEE ALSO
 
 L<perluniintro>, L<encoding>, L<Encode>, L<open>, L<utf8>, L<bytes>,
-L<perlretut>, L<perlvar/"${^WIDE_SYSTEM_CALLS}">
+L<perlretut>, L<perlvar/"${^UNICODE}">
 
 =cut

@@ -27,8 +27,9 @@ my $Base = 0;
 
 sub ok {
     my ($offset, $bool, $text) = @_;
-    print "not " unless $bool;
-    print "ok ", $Base + $offset, " - $text\n";
+    my $not = '';
+    $not = "not " unless $bool;
+    print "${not}ok " . ($Base + $offset) . " - $text\n";
 }
 
 # test locking

@@ -18,7 +18,7 @@ sub ok {
     return $ok;
 }
 
-print "1..12\n";
+print "1..19\n";
 
 ($a, $b, $c) = qw(foo bar);
 
@@ -86,4 +86,26 @@ ok("$c$a$c" eq "foo",    "concatenate undef, fore and aft");
     # For symmetry with the above.
     eval{"\x{1234}$pi"};
     ok(!$@, "bug id 20001020.006, constant right");
+}
+
+sub beq { use bytes; $_[0] eq $_[1]; }
+
+{
+    # concat should not upgrade its arguments.
+    my($l, $r, $c);
+
+    ($l, $r, $c) = ("\x{101}", "\x{fe}", "\x{101}\x{fe}");
+    ok(beq($l.$r, $c), "concat utf8 and byte");
+    ok(beq($l, "\x{101}"), "right not changed after concat u+b");
+    ok(beq($r, "\x{fe}"), "left not changed after concat u+b");
+
+    ($l, $r, $c) = ("\x{fe}", "\x{101}", "\x{fe}\x{101}");
+    ok(beq($l.$r, $c), "concat byte and utf8");
+    ok(beq($l, "\x{fe}"), "right not changed after concat b+u");
+    ok(beq($r, "\x{101}"), "left not changed after concat b+u");
+}
+
+{
+    my $a; ($a .= 5) . 6;
+    ok($a == 5, '($a .= 5) . 6 - present since 5.000');
 }

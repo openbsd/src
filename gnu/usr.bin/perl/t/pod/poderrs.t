@@ -1,7 +1,7 @@
 BEGIN {
-   chdir 't' if -d 't';
-   unshift @INC, '../lib';
-   unshift @INC, './pod';
+   use File::Basename;
+   my $THISDIR = dirname $0;
+   unshift @INC, $THISDIR;
    require "testpchk.pl";
    import TestPodChecker;
 }
@@ -17,6 +17,7 @@ exit( ($passed == 1) ? 0 : -1 )  unless $ENV{HARNESS_ACTIVE};
 
 __END__
 
+=head2 This should cause a warning
 
 =head1 NAME
 
@@ -177,7 +178,7 @@ bla is evil
 
 blub is evil
 
-=head2 reoccurrence
+=head2 reoccurence
 
 =over 4
 
@@ -192,6 +193,16 @@ we already have a head Misc
 =head2 another one
 
 previous section is empty!
+
+=head1 LINK TESTS
+
+Due to bug reported by Rafael Garcia-Suarez "rgarciasuarez@free.fr":
+
+The following hyperlinks :
+L<"I/O Operators">
+L<perlop/"I/O Operators">
+trigger a podchecker warning (using bleadperl) :
+    node 'I/O Operators' contains non-escaped | or /
 
 =cut
 

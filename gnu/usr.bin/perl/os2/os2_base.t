@@ -32,10 +32,17 @@ $lpe =~ s#\\#/#g;
 
 like($lpe, qr/\Q$s_cwd/);
 
-is(uc OS2::DLLname(1), uc $Config{dll_name});
-like(OS2::DLLname, qr#\Q/$Config{dll_name}\E\.dll$#i );
-(my $root_cwd = $s_cwd) =~ s,/t$,,;
-like(OS2::DLLname, qr#^\Q$root_cwd\E(/t)?\Q/$Config{dll_name}\E\.dll#i );
+if (uc OS2::DLLname() eq uc $^X) {	# Static build
+  my ($short) = ($^X =~ m,.*[/\\]([^.]+),);
+  is(uc OS2::DLLname(1), uc $short);
+  is(uc OS2::DLLname, uc $^X );		# automatically
+  is(1,1);				# automatically...
+} else {
+  is(uc OS2::DLLname(1), uc $Config{dll_name});
+  like(OS2::DLLname, qr#\Q/$Config{dll_name}\E\.dll$#i );
+  (my $root_cwd = $s_cwd) =~ s,/t$,,;
+  like(OS2::DLLname, qr#^\Q$root_cwd\E(/t)?\Q/$Config{dll_name}\E\.dll#i );
+}
 is(OS2::DLLname, OS2::DLLname(2));
 like(OS2::DLLname(0), qr#^(\d+)$# );
 

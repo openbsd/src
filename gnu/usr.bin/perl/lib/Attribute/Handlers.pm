@@ -2,7 +2,7 @@ package Attribute::Handlers;
 use 5.006;
 use Carp;
 use warnings;
-$VERSION = '0.77';
+$VERSION = '0.78';
 # $DB::single=1;
 
 my %symcache;
@@ -103,12 +103,12 @@ sub AUTOLOAD {
 	my ($class) = $AUTOLOAD =~ m/(.*)::/g;
 	$AUTOLOAD =~ m/_ATTR_(.*?)_(.*)/ or
 	    croak "Can't locate class method '$AUTOLOAD' via package '$class'";
-	croak "Attribute handler '$3' doesn't handle $2 attributes";
+	croak "Attribute handler '$2' doesn't handle $1 attributes";
 }
 
 sub DESTROY {}
 
-my $builtin = qr/lvalue|method|locked/;
+my $builtin = qr/lvalue|method|locked|unique|shared/;
 
 sub _gen_handler_AH_() {
 	return sub {
@@ -137,7 +137,8 @@ sub _gen_handler_AH_() {
 			%lastattr=(pkg=>$pkg,ref=>$ref,type=>$data);
 		}
 		else {
-			my $handler = $pkg->can($attr);
+			my $type = ref $ref;
+			my $handler = $pkg->can("_ATTR_${type}_${attr}");
 			next unless $handler;
 		        my $decl = [$pkg, $ref, $attr, $data,
 				    $raw{$handler}, $phase{$handler}];
@@ -217,8 +218,8 @@ Attribute::Handlers - Simpler definition of attribute handlers
 
 =head1 VERSION
 
-This document describes version 0.77 of Attribute::Handlers,
-released June 8, 2002.
+This document describes version 0.78 of Attribute::Handlers,
+released October 5, 2002.
 
 =head1 SYNOPSIS
 
@@ -602,10 +603,13 @@ C<__CALLER__>, which may be specified as the qualifier of an attribute:
 
         package Tie::Me::Kangaroo:Down::Sport;
 
-        use Attribute::Handlers autotie => { __CALLER__::Roo => __PACKAGE__ };
+        use Attribute::Handlers autotie => { '__CALLER__::Roo' => __PACKAGE__ };
 
 This causes Attribute::Handlers to define the C<Roo> attribute in the package
 that imports the Tie::Me::Kangaroo:Down::Sport module.
+
+Note that it is important to quote the __CALLER__::Roo identifier because
+a bug in perl 5.8 will refuse to parse it and cause an unknown error.
 
 =head3 Passing the tied object to C<tie>
 

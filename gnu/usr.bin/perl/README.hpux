@@ -38,6 +38,24 @@ files compiled with gcc-2.9-hppa-991112
 If you perform a new installation, then Perl will be installed
 automatically.
 
+=head2 Using perl from HP's porting centre
+
+HP porting centre tries very hard to keep up with customer demand and
+release updates from the Open Source community. Having precompiled
+Perl binaries available is obvious.
+
+The HP porting centres are limited in what systems they are allowed
+to port to and they usually choose the two most recent OS versions
+available. This means that at the moment of writing, there are only
+HPUX-11.00 and 11-20/22 (IA64) ports available on the porting centres.
+
+HP has asked the porting centre to move Open Source binaries
+from /opt to /usr/local, so binaries produced since the start
+of July 2002 are located in /usr/local.
+
+One of HP porting centres URL's is http://hpux.connect.org.uk/
+The port currently available is built with GNU gcc.
+
 =head2 Compiling Perl 5 on HP-UX
 
 When compiling Perl, you must use an ANSI C compiler.  The C compiler
@@ -50,7 +68,7 @@ difficulty, but also can take advantage of features listed later that
 require the use of HP compiler-specific command-line flags.
 
 If you decide to use gcc, make sure your installation is recent and
-complete, and be sure to read the Perl README file for more gcc-specific
+complete, and be sure to read the Perl INSTALL file for more gcc-specific
 details.
 
 =head2 PA-RISC
@@ -63,6 +81,17 @@ Motorola chipset.
 
 The most recent version of PA-RISC at the time of this document's last
 update is 2.0.
+
+A complete list of models at the time the OS was built is in the file
+/usr/sam/lib/mo/sched.models. The first column corresponds to the last
+part of the output of the "model" command.  The second column is the
+PA-RISC version and the third column is the exact chip type used.
+(Start browsing at the bottom to prevent confusion ;-)
+
+    # model
+    9000/800/L1000-44
+    # grep L1000-44 /usr/sam/lib/mo/sched.models
+    L1000-44        2.0     PA8500
 
 =head2 PA-RISC 1.0
 
@@ -105,9 +134,18 @@ contain PA-RISC 2.0 chips:
     D280, D370, D380, D390, D650, J220, J2240, J280, J282, J400, J410,
     J5000, J5500XM, J5600, J7000, J7600, K250, K260, K260-EG, K270, K360,
     K370, K380, K450, K460, K460-EG, K460-XP, K470, K570, K580, L1000,
-    L2000, L3000, N4000, R380, R390, RP2400, RP2430, RP2450, RP2470,
-    RP5400, RP5430, RP5450, RP5470, RP7400, RP7410, RP8400, SD16000,
-    SD32000, SD64000, T540, T600, V2000, V2200, V2250, V2500, V2600
+    L2000, L3000, N4000, R380, R390, RP2400, RP2405, RP2430, RP2450,
+    RP2470, RP5400, RP5405, RP5430, RP5450, RP5470, RP7400, RP7405,
+    RP7410, RP8400, SD16000, SD32000, SD64000, T540, T600, V2000, V2200,
+    V2250, V2500, V2600
+
+Just before HP took over Compaq, some systems were renamed. Visit
+http://www.hp.com/products1/servers/server_names.html to see what
+the changes are, or will be.
+
+    HP 9000 A-Class servers, now renamed HP Server rp2400 series.
+    HP 9000 L-Class servers, now renamed HP Server rp5400 series.
+    HP 9000 N-Class servers, now renamed HP Server rp7400.
 
 =head2 Itanium
 
@@ -115,13 +153,7 @@ HP also ships servers with the 128-bit Itanium processor(s). As of the
 date of this document's last update, the following systems contain
 Itanium chips (this is very likely to be out of date):
 
-    RX4610, RX9610
-
-A complete list of models at the time the OS was built is in the file
-/opt/langtools/lib/sched.models.  The first column corresponds to the
-output of the "uname -m" command (without the leading "9000/").  The
-second column is the PA-RISC version and the third column is the exact
-chip type used. (Start browsing at the bottom to prevent confusion ;-)
+    RX2600, RX4610, RX5670, RX9610
 
 =head2 Portability Between PA-RISC Versions
 
@@ -171,6 +203,7 @@ To create a shared library, the following steps must be performed:
     1. Compile source modules with +z or +Z flag to create a .o module
        which contains Position-Independent Code (PIC).  The linker will
        tell you in the next step if +Z was needed.
+       (For gcc, the appropriate flag is -fpic or -fPIC.)
 
     2. Link the shared library using the -b flag.  If the code calls
        any functions in other system libraries (e.g., libm), it must
@@ -206,7 +239,8 @@ run into an error like "invalid loader fixup" during load phase.
 HP is aware of this problem.  Search the HP-UX cxx-dev forums for
 discussions about the subject.  The short answer is that B<everything>
 (all libraries, everything) must be compiled with C<+z> or C<+Z> to be
-PIC (position independent code).  In HP-UX 11.00 or newer the linker
+PIC (position independent code).  (For gcc, that would be
+C<-fpic> or C<-fPIC>).  In HP-UX 11.00 or newer the linker
 error message should tell the name of the offending object file.
 
 A more general approach is to intervene manually, as with an example for
@@ -260,11 +294,18 @@ When you are going to use the GNU C compiler (gcc), and you don't have
 gcc yet, you can either build it yourself from the sources (available
 from e.g. http://www.gnu.ai.mit.edu/software/gcc/releases.html) or fetch
 a prebuilt binary from the HP porting center. There are two places where
-gcc prebuilds can be fetched the first and best (for HP-UX 11 only) is
+gcc prebuilds can be fetched; the first and best (for HP-UX 11 only) is
 http://h21007.www2.hp.com/dspp/tech/tech_TechSoftwareDetailPage_IDX/1,1703,547,00.html
 the second is http://hpux.cs.utah.edu/hppd/hpux/Gnu/ where you can also
 find the GNU binutils package. (Browse through the list, because there
 are often multiple versions of the same package available).
+
+Above mentioned distributions are depots. H.Merijn Brand has made prebuilt
+gcc binaries available on https://www.beepz.com/personal/merijn/ and/or
+http://www.cmve.net/~merijn/ for HP-UX 10.20 and HP-UX 11.00 in both 32-
+and 64-bit versions. Most likely 11i will be available soon. These are
+bzipped tar archives that also include recent GNU binutils and GNU gdb.
+Read the instructions on that page to rebuild gcc using itself.
 
 Building a 64bit capable gcc from source is possible only when you have
 the HP C-ANSI C compiler available, which you should use anyway when
@@ -279,7 +320,7 @@ using the -Duselargefiles flag to Configure.  This causes Perl to be
 compiled using structures and functions in which these are 64 bits wide,
 rather than 32 bits wide.  (Note that this will only work with HP's ANSI
 C compiler.  If you want to compile Perl using gcc, you will have to get
-a version of the compiler that support 64-bit operations. See above for
+a version of the compiler that supports 64-bit operations. See above for
 where to find it.)
 
 There are some drawbacks to this approach.  One is that any extension
@@ -361,11 +402,15 @@ Work is being performed on Perl to make it 64-bit compliant on all
 versions of Unix.  Once this is complete, scalar variables will be able
 to hold numbers larger than 2^32 with complete precision.
 
-As of the date of this document, Perl is not 64-bit compliant on HP-UX.
+As of the date of this document, Perl is fully 64-bit compliant on
+HP-UX 11.00 and up for both ccc- and gcc builds.
 
 Should a user wish to experiment with compiling Perl in the LP64
 environment, use the -Duse64bitall flag to Configure.  This will force
 Perl to be compiled in a pure LP64 environment (via the +DD64 flag).
+(Note that these flags will only work with HP's ANSI C compiler.  If
+you want to compile Perl using gcc, you will have to get a version of
+the compiler that supports 64-bit operations.)
 
 You can also use the -Duse64bitint flag to Configure.  Although there
 are some minor differences between compiling Perl with this flag versus
@@ -377,10 +422,6 @@ you run Configure.  If you do not use do this, but later answer the
 questions about 64-bit numbers when Configure asks you, you may get a
 configuration that cannot be compiled, or that does not function as
 expected.
-
-(Note that these Configure flags will only work with HP's ANSI C
-compiler.  If you want to compile Perl using gcc, you will have to get a
-version of the compiler that support 64-bit operations.)
 
 =head2 Oracle on HP-UX
 
@@ -457,8 +498,8 @@ the following:
   #0  0xc004216c in  () from /usr/lib/libc.2
   #1  0xc00d7550 in __nss_src_state_destr () from /usr/lib/libc.2
   #2  0xc00d7768 in __nss_src_state_destr () from /usr/lib/libc.2
-  #3  0xc00d78a8 in nss_delete () from /usr/lib/libc.2 
-  #4  0xc01126d8 in endpwent () from /usr/lib/libc.2 
+  #3  0xc00d78a8 in nss_delete () from /usr/lib/libc.2
+  #4  0xc01126d8 in endpwent () from /usr/lib/libc.2
   #5  0xd1950 in Perl_pp_epwent () from ./perl
   #6  0x94d3c in Perl_runops_standard () from ./perl
   #7  0x23728 in S_run_body () from ./perl
@@ -469,11 +510,11 @@ The key here is the C<nss_delete> call.  One workaround for this
 bug seems to be to create add to the file F</etc/nsswitch.conf>
 (at least) the following lines
 
-  group: files 
+  group: files
   passwd: files
 
 Whether you are using NIS does not matter.  Amazingly enough,
-the same bug affects also Solaris.
+the same bug also affects Solaris.
 
 =head1 AUTHOR
 
@@ -484,6 +525,6 @@ With much assistance regarding shared libraries from Marc Sabatella.
 
 =head1 DATE
 
-Version 0.6.6: 2002-05-30
+Version 0.6.7: 2002-09-05
 
 =cut

@@ -58,8 +58,6 @@ PERLFILES
 	files from a perl for win32 installation and put the
 	distributed files into the right directories.
 
-	Do not copy any Win32/X86 dlls from your PC to the device...
-
 	The following files are a reasonable minimum if you want to do
 	some socket stuff:
 

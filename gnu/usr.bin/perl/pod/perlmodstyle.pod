@@ -137,7 +137,7 @@ Provide links to further information (URL, email)
 
 =item *
 
-Specify pre-requisites in Makefile.PL
+Specify pre-requisites in Makefile.PL or Build.PL
 
 =item *
 
@@ -563,7 +563,33 @@ Your module should also include a README file describing the module and
 giving pointers to further information (website, author email).  
 
 An INSTALL file should be included, and should contain simple installation 
-instructions (usually "perl Makefile.PL; make; make install").
+instructions. When using ExtUtils::MakeMaker this will usually be:
+
+=over 4
+
+=item perl Makefile.PL
+
+=item make
+
+=item make test
+
+=item make install
+
+=back
+
+When using Module::Build, this will usually be:
+
+=over 4
+
+=item perl Build.PL
+
+=item perl Build
+
+=item perl Build test
+
+=item perl Build install
+
+=back
 
 Release notes or changelogs should be produced for each release of your
 software describing user-visible changes to your module, in terms
@@ -639,16 +665,18 @@ Modules not available from CPAN
 =back
 
 Specify version requirements for other Perl modules in the
-pre-requisites in your Makefile.PL. 
+pre-requisites in your Makefile.PL or Build.PL.
 
-Be sure to specify Perl version requirements both in Makefile.PL and 
-with C<require 5.6.1> or similar.
+Be sure to specify Perl version requirements both in Makefile.PL or
+Build.PL and with C<require 5.6.1> or similar. See the section on
+C<use VERSION> of L<perlfunc/require> for details.
 
 =head2 Testing
 
-All modules should be tested before distribution (using "make disttest", 
+All modules should be tested before distribution (using "make disttest"),
 and the tests should also be available to people installing the modules 
 (using "make test").  
+For Module::Build you would use the C<make test> equivalent C<perl Build test>.
 
 The importance of these tests is proportional to the alleged stability of a 
 module -- a module which purports to be stable or which hopes to achieve wide 
@@ -657,15 +685,17 @@ use should adhere to as strict a testing regime as possible.
 Useful modules to help you write tests (with minimum impact on your 
 development process or your time) include Test::Simple, Carp::Assert 
 and Test::Inline.
+For more sophisticated test suites there are Test::More and Test::MockObject.
 
 =head2 Packaging
 
-Modules should be packaged using the standard MakeMaker tools, allowing
-them to be installed in a consistent manner.  Use "make dist" to create 
-your package.
-
-Tools exist to help you build your module in a MakeMaker-friendly style.  
-These include ExtUtils::ModuleMaker and h2xs.  See also L<perlnewmod>.
+Modules should be packaged using one of the standard packaging tools.
+Currently you have the choice between ExtUtils::MakeMaker and the
+more platform independent Module::Build, allowing modules to be installed in a
+consistent manner.
+When using ExtUtils::MakeMaker, you can use "make dist" to create your
+package. Tools exist to help you to build your module in a MakeMaker-friendly
+style. These include ExtUtils::ModuleMaker and h2xs.  See also L<perlnewmod>.
 
 =head2 Licensing
 
@@ -675,6 +705,7 @@ of the license don't require you to include it).
 
 If you don't know what license to use, dual licensing under the GPL
 and Artistic licenses (the same as Perl itself) is a good idea.
+See L<perlgpl> and L<perlartistic>.
 
 =head1 COMMON PITFALLS
 
@@ -726,9 +757,13 @@ POD documentation
 
 Verifies your POD's correctness
 
+=item Packaging Tools
+
+L<ExtUtils::MakeMaker>, L<Module::Build>
+
 =item Testing tools
 
-L<Test::Simple>, L<Test::Inline>, L<Carp::Assert>
+L<Test::Simple>, L<Test::Inline>, L<Carp::Assert>, L<Test::More>, L<Test::MockObject>
 
 =item http://pause.perl.org/
 

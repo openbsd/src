@@ -1,4 +1,3 @@
-#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -27,7 +26,7 @@ bl_getc(struct byteloader_fdata *data)
       /* Else there must be at least one byte present, which is good enough */
     }
 
-    return *((char *) SvPV_nolen (data->datasv) + data->next_out++);
+    return *((U8 *) SvPV_nolen (data->datasv) + data->next_out++);
 }
 
 int
@@ -81,6 +80,7 @@ byteloader_filter(pTHX_ int idx, SV *buf_sv, int maxlen)
     OP *savestart = PL_main_start;
     struct byteloader_state bstate;
     struct byteloader_fdata data;
+    int len;
 
     data.next_out = 0;
     data.datasv = FILTER_DATA(idx);
@@ -92,7 +92,14 @@ byteloader_filter(pTHX_ int idx, SV *buf_sv, int maxlen)
     bstate.bs_sv = Nullsv;
     bstate.bs_iv_overflows = 0;
 
-    byterun(aTHX_ &bstate);
+/* KLUDGE */
+    if (byterun(aTHX_ &bstate)
+	    && (len = SvCUR(data.datasv) - (STRLEN)data.next_out))
+    {
+	PerlIO_seek(PL_rsfp, -len, SEEK_CUR);
+	PL_rsfp = NULL;
+    }
+    filter_del(byteloader_filter);
 
     if (PL_in_eval) {
         OP *o;
@@ -125,9 +132,3 @@ import(package="ByteLoader", ...)
     if (!sv)
       croak ("Could not allocate ByteLoader buffers");
     filter_add(byteloader_filter, sv);
-
-void
-unimport(package="ByteLoader", ...)
-  char *package
-  PPCODE:
-    filter_del(byteloader_filter);

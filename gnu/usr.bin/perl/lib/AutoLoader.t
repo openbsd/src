@@ -1,26 +1,29 @@
-#!./perl
+#!./perl -w
 
 BEGIN {
     chdir 't' if -d 't';
-    if ($^O eq 'MacOS') {
-	$dir = ":auto-$$";
-	$sep = ":";
-    } else {
-	$dir = "auto-$$";
-	$sep = "/";
-    }
-    @INC = $dir;
-    push @INC, '../lib';
+	@INC = '../lib';
 }
 
-print "1..11\n";
+use strict;
+use File::Spec;
+use File::Path;
+
+my $dir;
+BEGIN
+{
+	$dir = File::Spec->catdir( "auto-$$" );
+	unshift @INC, $dir;
+}
+
+use Test::More tests => 14;
 
 # First we must set up some autoloader files
-mkdir $dir, 0755            or die "Can't mkdir $dir: $!";
-mkdir "$dir${sep}auto", 0755     or die "Can't mkdir: $!";
-mkdir "$dir${sep}auto${sep}Foo", 0755 or die "Can't mkdir: $!";
+my $fulldir = File::Spec->catdir( $dir, 'auto', 'Foo' );
+mkpath( $fulldir ) or die "Can't mkdir '$fulldir': $!";
 
-open(FOO, ">$dir${sep}auto${sep}Foo${sep}foo.al") or die;
+open(FOO, '>', File::Spec->catfile( $fulldir, 'foo.al' ))
+	or die "Can't open foo file: $!";
 print FOO <<'EOT';
 package Foo;
 sub foo { shift; shift || "foo" }
@@ -28,7 +31,8 @@ sub foo { shift; shift || "foo" }
 EOT
 close(FOO);
 
-open(BAR, ">$dir${sep}auto${sep}Foo${sep}bar.al") or die;
+open(BAR, '>', File::Spec->catfile( $fulldir, 'bar.al' ))
+	or die "Can't open bar file: $!";
 print BAR <<'EOT';
 package Foo;
 sub bar { shift; shift || "bar" }
@@ -36,7 +40,8 @@ sub bar { shift; shift || "bar" }
 EOT
 close(BAR);
 
-open(BAZ, ">$dir${sep}auto${sep}Foo${sep}bazmarkhian.al") or die;
+open(BAZ, '>', File::Spec->catfile( $fulldir, 'bazmarkhian.al' ))
+	or die "Can't open bazmarkhian file: $!";
 print BAZ <<'EOT';
 package Foo;
 sub bazmarkhianish { shift; shift || "baz" }
@@ -44,85 +49,112 @@ sub bazmarkhianish { shift; shift || "baz" }
 EOT
 close(BAZ);
 
+open(BLECH, '>', File::Spec->catfile( $fulldir, 'blechanawilla.al' ))
+       or die "Can't open blech file: $!";
+print BLECH <<'EOT';
+package Foo;
+sub blechanawilla { compilation error (
+EOT
+close(BLECH);
+
+# This is just to keep the old SVR3 systems happy; they may fail
+# to find the above file so we duplicate it where they should find it.
+open(BLECH, '>', File::Spec->catfile( $fulldir, 'blechanawil.al' ))
+       or die "Can't open blech file: $!";
+print BLECH <<'EOT';
+package Foo;
+sub blechanawilla { compilation error (
+EOT
+close(BLECH);
+
 # Let's define the package
 package Foo;
 require AutoLoader;
-@ISA=qw(AutoLoader);
+AutoLoader->import( 'AUTOLOAD' );
 
 sub new { bless {}, shift };
 
 package main;
 
-$foo = new Foo;
+my $foo = new Foo;
 
-print "not " unless $foo->foo eq 'foo';  # autoloaded first time
-print "ok 1\n";
+is( $foo->foo, 'foo', 'autoloaded first time' );
+is( $foo->foo, 'foo', 'regular call' );
 
-print "not " unless $foo->foo eq 'foo';  # regular call
-print "ok 2\n";
-
-# Try an undefined method
 eval {
     $foo->will_fail;
 };
-print "not " unless $@ =~ /^Can't locate/;
-print "ok 3\n";
+like( $@, qr/^Can't locate/, 'undefined method' );
 
 # Used to be trouble with this
 eval {
     my $foo = new Foo;
     die "oops";
 };
-print "not " unless $@ =~ /oops/;
-print "ok 4\n";
+like( $@, qr/oops/, 'indirect method call' );
 
 # Pass regular expression variable to autoloaded function.  This used
 # to go wrong because AutoLoader used regular expressions to generate
 # autoloaded filename.
-"foo" =~ /(\w+)/;
-print "not " unless $1 eq 'foo';
-print "ok 5\n";
+'foo' =~ /(\w+)/;
 
-print "not " unless $foo->bar($1) eq 'foo';
-print "ok 6\n";
+is( $foo->bar($1), 'foo', 'autoloaded method should not stomp match vars' );
+is( $foo->bar($1), 'foo', '(again)' );
+is( $foo->bazmarkhianish($1), 'foo', 'for any method call' );
+is( $foo->bazmarkhianish($1), 'foo', '(again)' );
 
-print "not " unless $foo->bar($1) eq 'foo';
-print "ok 7\n";
-
-print "not " unless $foo->bazmarkhianish($1) eq 'foo';
-print "ok 8\n";
-
-print "not " unless $foo->bazmarkhianish($1) eq 'foo';
-print "ok 9\n";
+# Used to retry long subnames with shorter filenames on any old
+# exception, including compilation error.  Now AutoLoader only
+# tries shorter filenames if it can't find the long one.
+eval {
+  $foo->blechanawilla;
+};
+like( $@, qr/syntax error/, 'require error propagates' );
 
 # test recursive autoloads
-open(F, ">$dir${sep}auto${sep}Foo${sep}a.al") or die;
+open(F, '>', File::Spec->catfile( $fulldir, 'a.al'))
+	or die "Cannot make 'a' file: $!";
 print F <<'EOT';
 package Foo;
 BEGIN { b() }
-sub a { print "ok 11\n"; }
+sub a { ::ok( 1, 'adding a new autoloaded method' ); }
 1;
 EOT
 close(F);
 
-open(F, ">$dir${sep}auto${sep}Foo${sep}b.al") or die;
+open(F, '>', File::Spec->catfile( $fulldir, 'b.al'))
+	or die "Cannot make 'b' file: $!";
 print F <<'EOT';
 package Foo;
-sub b { print "ok 10\n"; }
+sub b { ::ok( 1, 'adding a new autoloaded method' ) }
 1;
 EOT
 close(F);
 Foo::a();
 
+package Bar;
+AutoLoader->import();
+::ok( ! defined &AUTOLOAD, 'AutoLoader should not export AUTOLOAD by default' );
+
+package Foo;
+AutoLoader->unimport();
+eval { Foo->baz() };
+::like( $@, qr/locate object method "baz"/,
+	'unimport() should remove imported AUTOLOAD()' );
+
+package Baz;
+
+sub AUTOLOAD { 'i am here' }
+
+AutoLoader->import();
+AutoLoader->unimport();
+
+::is( Baz->AUTOLOAD(), 'i am here', '... but not non-imported AUTOLOAD()' );
+
+package main;
+
 # cleanup
 END {
-return unless $dir && -d $dir;
-unlink "$dir${sep}auto${sep}Foo${sep}foo.al";
-unlink "$dir${sep}auto${sep}Foo${sep}bar.al";
-unlink "$dir${sep}auto${sep}Foo${sep}bazmarkhian.al";
-unlink "$dir${sep}auto${sep}Foo${sep}a.al";
-unlink "$dir${sep}auto${sep}Foo${sep}b.al";
-rmdir "$dir${sep}auto${sep}Foo";
-rmdir "$dir${sep}auto";
-rmdir "$dir";
+	return unless $dir && -d $dir;
+	rmtree $dir;
 }

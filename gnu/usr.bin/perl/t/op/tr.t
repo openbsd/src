@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 97;
+plan tests => 99;
 
 my $Is_EBCDIC = (ord('i') == 0x89 & ord('J') == 0xd1);
 
@@ -160,7 +160,7 @@ is($_, '...d.f...j.l...p');
 
 # 20000705 MJD
 eval "tr/m-d/ /";
-like($@, qr/^Invalid \[\] range "m-d" in transliteration operator/,
+like($@, qr/^Invalid range "m-d" in transliteration operator/,
               'reversed range check');
 
 eval '$1 =~ tr/x/y/';
@@ -379,3 +379,7 @@ my %foo = ();
 eval '$foo{bar} =~ tr/N/N/';
 is( $@, '',         'implicit count outside hash bounds' );
 is( scalar keys %foo, 0,   "    doesn't extend the hash");
+
+$x = \"foo";
+is( $x =~ tr/A/A/, 2, 'non-modifying tr/// on a scalar ref' );
+is( ref $x, 'SCALAR', "    doesn't stringify its argument" );

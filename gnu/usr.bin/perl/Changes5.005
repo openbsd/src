@@ -10105,6 +10105,11 @@ ____________________________________________________________________________
              Files:  t/op/ipcmsg.t
      Branch: maint-5.004/perl
            ! t/op/ipcmsg.t
+
+----------------
+Version 5.004_65
+----------------
+
 ____________________________________________________________________________
 [   988] By: mbeattie                              on 1998/05/15  16:28:08
         Log: Patch from Sarathy to fix up win32 integration. Patch from Jarkko

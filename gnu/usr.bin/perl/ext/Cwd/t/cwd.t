@@ -46,10 +46,10 @@ if ($^O eq 'MSWin32') {
 }
 $pwd_cmd =~ s=\\=/=g if ($^O eq 'dos');
 
-print "# native pwd = '$pwd_cmd'\n";
-
 SKIP: {
     skip "No native pwd command found to test against", 4 unless $pwd_cmd;
+
+    print "# native pwd = '$pwd_cmd'\n";
 
     local @ENV{qw(PATH IFS CDPATH ENV BASH_ENV)};
     my ($pwd_cmd_untainted) = $pwd_cmd =~ /^(.+)$/; # Untaint.
@@ -60,16 +60,33 @@ SKIP: {
     # DCL SHOW DEFAULT has leading spaces
     $start =~ s/^\s+// if $IsVMS;
     SKIP: {
-        skip "'$pwd_cmd' failed, nothing to test against", 4 if $?;
+        skip("'$pwd_cmd' failed, nothing to test against", 4) if $?;
+        skip("/afs seen, paths unlikely to match", 4) if $start =~ m|/afs/|;
+
+	# Darwin's getcwd(3) (which Cwd.xs:bsd_realpath() uses which
+	# Cwd.pm:getcwd uses) has some magic related to the PWD
+	# environment variable: if PWD is set to a directory that
+	# looks about right (guess: has the same (dev,ino) as the '.'?),
+	# the PWD is returned.  However, if that path contains
+	# symlinks, the path will not be equal to the one returned by
+	# /bin/pwd (which probably uses the usual walking upwards in
+	# the path -trick).  This situation is easy to reproduce since
+	# /tmp is a symlink to /private/tmp.  Therefore we invalidate
+	# the PWD to force getcwd(3) to (re)compute the cwd in full.
+	# Admittedly fixing this in the Cwd module would be better
+	# long-term solution but deleting $ENV{PWD} should not be
+	# done light-heartedly. --jhi
+	delete $ENV{PWD} if $^O eq 'darwin';
 
 	my $cwd        = cwd;
 	my $getcwd     = getcwd;
 	my $fastcwd    = fastcwd;
 	my $fastgetcwd = fastgetcwd;
-	is(cwd(),       $start, 'cwd()');
-	is(getcwd(),    $start, 'getcwd()');
-	is(fastcwd(),   $start, 'fastcwd()');
-	is(fastgetcwd(),$start, 'fastgetcwd()');
+
+	is($cwd,        $start, 'cwd()');
+	is($getcwd,     $start, 'getcwd()');
+	is($fastcwd,    $start, 'fastcwd()');
+	is($fastgetcwd, $start, 'fastgetcwd()');
     }
 }
 

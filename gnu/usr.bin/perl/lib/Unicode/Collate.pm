@@ -1,8 +1,8 @@
 package Unicode::Collate;
 
 BEGIN {
-    if (ord("A") == 193) {
-	die "Unicode::Collate not ported to EBCDIC\n";
+    unless ("A" eq pack('U', 0x41)) {
+	die "Unicode::Collate cannot stringify a Unicode code point\n";
     }
 }
 
@@ -14,7 +14,7 @@ use File::Spec;
 
 require Exporter;
 
-our $VERSION = '0.12';
+our $VERSION = '0.30';
 our $PACKAGE = __PACKAGE__;
 
 our @ISA = qw(Exporter);
@@ -26,117 +26,213 @@ our @EXPORT = ();
 (our $Path = $INC{'Unicode/Collate.pm'}) =~ s/\.pm$//;
 our $KeyFile = "allkeys.txt";
 
-our $UNICODE_VERSION;
+# Perl's boolean
+use constant TRUE  => 1;
+use constant FALSE => "";
+use constant NOMATCHPOS => -1;
 
-eval { require Unicode::UCD };
+# A coderef to get combining class imported from Unicode::Normalize
+# (i.e. \&Unicode::Normalize::getCombinClass).
+# This is also used as a HAS_UNICODE_NORMALIZE flag.
+our $CVgetCombinClass;
 
-unless ($@) {
-    $UNICODE_VERSION = Unicode::UCD::UnicodeVersion();
-}
-else { # XXX, Perl 5.6.1
-    my($f, $fh);
-    foreach my $d (@INC) {
-	use File::Spec;
-	$f = File::Spec->catfile($d, "unicode", "Unicode.301");
-	if (open($fh, $f)) {
-	    $UNICODE_VERSION = '3.0.1';
-	    close $fh;
-	    last;
-	}
-    }
-}
+# Supported Levels
+use constant MinLevel => 1;
+use constant MaxLevel => 4;
 
-our $getCombinClass; # coderef for combining class from Unicode::Normalize
+# Minimum weights at level 2 and 3, respectively
+use constant Min2Wt => 0x20;
+use constant Min3Wt => 0x02;
 
-use constant Min2      => 0x20;   # minimum weight at level 2
-use constant Min3      => 0x02;   # minimum weight at level 3
-use constant UNDEFINED => 0xFF80; # special value for undefined CE's
+# Shifted weight at 4th level
+use constant Shift4Wt => 0xFFFF;
 
+# Variable weight at 1st level.
+# This is a negative value but should be regarded as zero on collation.
+# This is for distinction of variable chars from level 3 ignorable chars.
+use constant Var1Wt => -1;
+
+
+# A boolean for Variable and 16-bit weights at 4 levels of Collation Element
+# PROBLEM: The Default Unicode Collation Element Table
+# has weights over 0xFFFF at the 4th level.
+# The tie-breaking in the variable weights
+# other than "shift" (as well as "shift-trimmed") is unreliable.
+use constant VCE_TEMPLATE => 'Cn4';
+
+# A sort key: 16-bit weights
+# See also the PROBLEM on VCE_TEMPLATE above.
+use constant KEY_TEMPLATE => 'n*';
+
+# Level separator in a sort key:
+# i.e. pack(KEY_TEMPLATE, 0)
+use constant LEVEL_SEP => "\0\0";
+
+# As Unicode code point separator for hash keys.
+# A joined code point string (denoted by JCPS below)
+# like "65;768" is used for internal processing
+# instead of Perl's Unicode string like "\x41\x{300}",
+# as the native code point is different from the Unicode code point
+# on EBCDIC platform.
+# This character must not be included in any stringified
+# representation of an integer.
+use constant CODE_SEP => ';';
+
+# boolean values of variable weights
+use constant NON_VAR => 0; # Non-Variable character
+use constant VAR     => 1; # Variable character
+
+# specific code points
+use constant Hangul_LBase  => 0x1100;
+use constant Hangul_LIni   => 0x1100;
+use constant Hangul_LFin   => 0x1159;
+use constant Hangul_LFill  => 0x115F;
+use constant Hangul_VBase  => 0x1161;
+use constant Hangul_VIni   => 0x1160;
+use constant Hangul_VFin   => 0x11A2;
+use constant Hangul_TBase  => 0x11A7;
+use constant Hangul_TIni   => 0x11A8;
+use constant Hangul_TFin   => 0x11F9;
+use constant Hangul_TCount => 28;
+use constant Hangul_NCount => 588;
+use constant Hangul_SBase  => 0xAC00;
+use constant Hangul_SIni   => 0xAC00;
+use constant Hangul_SFin   => 0xD7A3;
+use constant CJK_UidIni    => 0x4E00;
+use constant CJK_UidFin    => 0x9FA5;
+use constant CJK_ExtAIni   => 0x3400;
+use constant CJK_ExtAFin   => 0x4DB5;
+use constant CJK_ExtBIni   => 0x20000;
+use constant CJK_ExtBFin   => 0x2A6D6;
+use constant BMP_Max       => 0xFFFF;
+
+# Logical_Order_Exception in PropList.txt
+# TODO: synchronization with change of PropList.txt.
 our $DefaultRearrange = [ 0x0E40..0x0E44, 0x0EC0..0x0EC4 ];
 
-sub UCA_Version { "8.0" }
+sub UCA_Version { "11" }
 
-sub Base_Unicode_Version { $UNICODE_VERSION || 'unknown' }
+sub Base_Unicode_Version { "4.0" }
 
-##
-## constructor
-##
-sub new
-{
-    my $class = shift;
-    my $self = bless { @_ }, $class;
+######
 
-    # alternate lowercased
-    $self->{alternate} =
-	! exists $self->{alternate} ? 'shifted' : lc($self->{alternate});
+sub pack_U {
+    return pack('U*', @_);
+}
 
-    croak "$PACKAGE unknown alternate tag name: $self->{alternate}"
-	unless $self->{alternate} eq 'blanked'
-	    || $self->{alternate} eq 'non-ignorable'
-	    || $self->{alternate} eq 'shifted'
-	    || $self->{alternate} eq 'shift-trimmed';
+sub unpack_U {
+    return unpack('U*', pack('U*').shift);
+}
 
-    # collation level
-    $self->{level} ||= 4;
+######
 
-    croak "Illegal level lower than 1 (passed $self->{level})."
-	if $self->{level} < 1;
-    croak "A level higher than 4 (passed $self->{level}) is not supported."
-	if 4 < $self->{level};
+my (%VariableOK);
+@VariableOK{ qw/
+    blanked  non-ignorable  shifted  shift-trimmed
+  / } = (); # keys lowercased
 
-    # overrideHangul and -CJK
-    # If true: CODEREF used; '': default; undef: derived elements
-    $self->{overrideHangul} = ''
-	if ! exists $self->{overrideHangul};
-    $self->{overrideCJK} = ''
-	if ! exists $self->{overrideCJK};
+our @ChangeOK = qw/
+    alternate backwards level normalization rearrange
+    katakana_before_hiragana upper_before_lower
+    overrideHangul overrideCJK preprocess UCA_Version
+    hangul_terminator variable
+  /;
 
-    # normalization form
-    $self->{normalization} = 'D'
-	if ! exists $self->{normalization};
-    $self->{UNF} = undef;
+our @ChangeNG = qw/
+    entry mapping table maxlength
+    ignoreChar ignoreName undefChar undefName variableTable
+    versionTable alternateTable backwardsTable forwardsTable rearrangeTable
+    derivCode normCode rearrangeHash L3_ignorable
+    backwardsFlag
+  /;
+# The hash key 'ignored' is deleted at v 0.21.
+# The hash key 'isShift' is deleted at v 0.23.
+# The hash key 'combining' is deleted at v 0.24.
+# The hash key 'entries' is deleted at v 0.30.
 
-    if (defined $self->{normalization}) {
-	eval { require Unicode::Normalize };
-	croak "Unicode/Normalize.pm is required to normalize strings: $@"
-	    if $@;
+sub version {
+    my $self = shift;
+    return $self->{versionTable} || 'unknown';
+}
 
-	Unicode::Normalize->import();
-	$getCombinClass = \&Unicode::Normalize::getCombinClass
-	    if ! $getCombinClass;
+my (%ChangeOK, %ChangeNG);
+@ChangeOK{ @ChangeOK } = ();
+@ChangeNG{ @ChangeNG } = ();
 
-	$self->{UNF} =
-	    $self->{normalization} =~ /^(?:NF)?C$/  ? \&NFC :
-	    $self->{normalization} =~ /^(?:NF)?D$/  ? \&NFD :
-	    $self->{normalization} =~ /^(?:NF)?KC$/ ? \&NFKC :
-	    $self->{normalization} =~ /^(?:NF)?KD$/ ? \&NFKD :
-	  croak "$PACKAGE unknown normalization form name: "
-		. $self->{normalization};
+sub change {
+    my $self = shift;
+    my %hash = @_;
+    my %old;
+    if (exists $hash{variable} && exists $hash{alternate}) {
+	delete $hash{alternate};
+    }
+    elsif (!exists $hash{variable} && exists $hash{alternate}) {
+	$hash{variable} = $hash{alternate};
+    }
+    foreach my $k (keys %hash) {
+	if (exists $ChangeOK{$k}) {
+	    $old{$k} = $self->{$k};
+	    $self->{$k} = $hash{$k};
+	}
+	elsif (exists $ChangeNG{$k}) {
+	    croak "change of $k via change() is not allowed!";
+	}
+	# else => ignored
+    }
+    $self->checkCollator;
+    return wantarray ? %old : $self;
+}
+
+sub _checkLevel {
+    my $level = shift;
+    my $key   = shift;
+    croak sprintf "Illegal level %d (in \$self->{%s}) lower than %d.",
+	$level, $key, MinLevel if MinLevel > $level;
+    croak sprintf "Unsupported level %d (in \$self->{%s}) higher than %d ",
+	$level, $key, MaxLevel if MaxLevel < $level;
+}
+
+my %DerivCode = (
+    8 => \&_derivCE_8,
+    9 => \&_derivCE_9,
+   11 => \&_derivCE_9, # 11 == 9
+);
+
+sub checkCollator {
+    my $self = shift;
+    _checkLevel($self->{level}, "level");
+
+    $self->{derivCode} = $DerivCode{ $self->{UCA_Version} }
+	or croak "Illegal UCA version (passed $self->{UCA_Version}).";
+
+    $self->{variable} ||= $self->{alternate} || $self->{variableTable} ||
+		$self->{alternateTable} || $self->{alternate} || 'shifted';
+    $self->{variable} = $self->{alternate} = lc($self->{variable});
+    exists $VariableOK{ $self->{variable} }
+	or croak "$PACKAGE unknown variable tag name: $self->{variable}";
+
+    if (! defined $self->{backwards}) {
+	$self->{backwardsFlag} = 0;
+    }
+    elsif (! ref $self->{backwards}) {
+	_checkLevel($self->{backwards}, "backwards");
+	$self->{backwardsFlag} = 1 << $self->{backwards};
+    }
+    else {
+	my %level;
+	$self->{backwardsFlag} = 0;
+	for my $b (@{ $self->{backwards} }) {
+	    _checkLevel($b, "backwards");
+	    $level{$b} = 1;
+	}
+	for my $v (sort keys %level) {
+	    $self->{backwardsFlag} += 1 << $v;
+	}
     }
 
-    # Open a table file.
-    # If undef is passed explicitly, no file is read.
-    $self->{table} = $KeyFile
-	if ! exists $self->{table};
-    $self->read_table
-	if defined $self->{table};
-
-    if ($self->{entry}) {
-	$self->parseEntry($_) foreach split /\n/, $self->{entry};
-    }
-
-    # backwards
-    $self->{backwards} ||= [ ];
-    $self->{backwards} = [ $self->{backwards} ]
-	if ! ref $self->{backwards};
-
-    # rearrange
-    $self->{rearrange} = $DefaultRearrange
-	if ! exists $self->{rearrange};
-    $self->{rearrange} = []
-	if ! defined $self->{rearrange};
-    croak "$PACKAGE: A list for rearrangement must be store in an ARRAYREF"
-	if ! ref $self->{rearrange};
+    defined $self->{rearrange} or $self->{rearrange} = [];
+    ref $self->{rearrange}
+	or croak "$PACKAGE: list for rearrangement must be store in ARRAYREF";
 
     # keys of $self->{rearrangeHash} are $self->{rearrange}.
     $self->{rearrangeHash} = undef;
@@ -144,6 +240,58 @@ sub new
     if (@{ $self->{rearrange} }) {
 	@{ $self->{rearrangeHash} }{ @{ $self->{rearrange} } } = ();
     }
+
+    $self->{normCode} = undef;
+
+    if (defined $self->{normalization}) {
+	eval { require Unicode::Normalize };
+	$@ and croak "Unicode::Normalize is required to normalize strings";
+
+	$CVgetCombinClass ||= \&Unicode::Normalize::getCombinClass;
+
+	if ($self->{normalization} =~ /^(?:NF)D\z/) { # tweak for default
+	    $self->{normCode} = \&Unicode::Normalize::NFD;
+	}
+	elsif ($self->{normalization} ne 'prenormalized') {
+	    my $norm = $self->{normalization};
+	    $self->{normCode} = sub {
+		Unicode::Normalize::normalize($norm, shift);
+	    };
+	    eval { $self->{normCode}->("") }; # try
+	    $@ and croak "$PACKAGE unknown normalization form name: $norm";
+	}
+    }
+    return;
+}
+
+sub new
+{
+    my $class = shift;
+    my $self = bless { @_ }, $class;
+
+    # If undef is passed explicitly, no file is read.
+    $self->{table} = $KeyFile if ! exists $self->{table};
+    $self->read_table if defined $self->{table};
+
+    if ($self->{entry}) {
+	$self->parseEntry($_) foreach split /\n/, $self->{entry};
+    }
+
+    $self->{level} ||= MaxLevel;
+    $self->{UCA_Version} ||= UCA_Version();
+
+    $self->{overrideHangul} = ''
+	if ! exists $self->{overrideHangul};
+    $self->{overrideCJK} = ''
+	if ! exists $self->{overrideCJK};
+    $self->{normalization} = 'NFD'
+	if ! exists $self->{normalization};
+    $self->{rearrange} = $self->{rearrangeTable} || $DefaultRearrange
+	if ! exists $self->{rearrange};
+    $self->{backwards} = $self->{backwardsTable}
+	if ! exists $self->{backwards};
+
+    $self->checkCollator;
 
     return $self;
 }
@@ -159,17 +307,23 @@ sub read_table {
     while (<$fk>) {
 	next if /^\s*#/;
 	if (/^\s*\@/) {
-	    if (/^\@version\s*(\S*)/) {
-		$self->{version} ||= $1;
+	    if    (/^\s*\@version\s*(\S*)/) {
+		$self->{versionTable} ||= $1;
 	    }
-	    elsif (/^\@alternate\s+(.*)/) {
-		$self->{alternate} ||= $1;
+	    elsif (/^\s*\@variable\s+(\S*)/) { # since UTS #10-9
+		$self->{variableTable} ||= $1;
 	    }
-	    elsif (/^\@backwards\s+(.*)/) {
-		push @{ $self->{backwards} }, $1;
+	    elsif (/^\s*\@alternate\s+(\S*)/) { # till UTS #10-8
+		$self->{alternateTable} ||= $1;
 	    }
-	    elsif (/^\@rearrange\s+(.*)/) {
-		push @{ $self->{rearrange} }, _getHexArray($1);
+	    elsif (/^\s*\@backwards\s+(\S*)/) {
+		push @{ $self->{backwardsTable} }, $1;
+	    }
+	    elsif (/^\s*\@forwards\s+(\S*)/) { # parhaps no use
+		push @{ $self->{forwardsTable} }, $1;
+	    }
+	    elsif (/^\s*\@rearrange\s+(.*)/) { # (\S*) is NG
+		push @{ $self->{rearrangeTable} }, _getHexArray($1);
 	    }
 	    next;
 	}
@@ -186,7 +340,7 @@ sub parseEntry
 {
     my $self = shift;
     my $line = shift;
-    my($name, $ele, @key);
+    my($name, $entry, @uv, @key);
 
     return if $line !~ /^\s*[0-9A-Fa-f]/;
 
@@ -200,84 +354,135 @@ sub parseEntry
     croak "Wrong Entry: <charList> must be separated by ';' from <collElement>"
 	if ! $k;
 
-    my @e = _getHexArray($e);
-    $ele = pack('U*', @e);
-    return if defined $self->{undefChar} && $ele =~ /$self->{undefChar}/;
+    @uv = _getHexArray($e);
+    return if !@uv;
 
-    # get sort key
-    if (defined $self->{ignoreName} && $name =~ /$self->{ignoreName}/ ||
-	defined $self->{ignoreChar} && $ele  =~ /$self->{ignoreChar}/)
-    {
-	$self->{entries}{$ele} = $self->{ignored}{$ele} = 1;
+    $entry = join(CODE_SEP, @uv); # in JCPS
+
+    if (defined $self->{undefChar} || defined $self->{ignoreChar}) {
+	my $ele = pack_U(@uv);
+
+	# regarded as if it were not entried in the table
+	return
+	    if defined $self->{undefChar} && $ele =~ /$self->{undefChar}/;
+
+	# replaced as completely ignorable
+	$k = '[.0000.0000.0000.0000]'
+	    if defined $self->{ignoreChar} && $ele =~ /$self->{ignoreChar}/;
+    }
+
+    # replaced as completely ignorable
+    $k = '[.0000.0000.0000.0000]'
+	if defined $self->{ignoreName} && $name =~ /$self->{ignoreName}/;
+
+    my $is_L3_ignorable = TRUE;
+
+    foreach my $arr ($k =~ /\[([^\[\]]+)\]/g) { # SPACEs allowed
+	my $var = $arr =~ /\*/; # exactly /^\*/ but be lenient.
+	my @wt = _getHexArray($arr);
+	push @key, pack(VCE_TEMPLATE, $var, @wt);
+	$is_L3_ignorable = FALSE
+	    if $wt[0] + $wt[1] + $wt[2] != 0;
+	  # if $arr !~ /[1-9A-Fa-f]/; NG
+	  # Conformance Test shows L3-ignorable is completely ignorable.
+	# For expansion, an entry $is_L3_ignorable
+	# if and only if "all" CEs are [.0000.0000.0000].
+    }
+
+    $self->{mapping}{$entry} = \@key;
+
+    if (@uv > 1) {
+	(!$self->{maxlength}{$uv[0]} || $self->{maxlength}{$uv[0]} < @uv)
+	    and $self->{maxlength}{$uv[0]} = @uv;
     }
     else {
-	my $combining = 1; # primary = 0, secondary != 0;
-
-	foreach my $arr ($k =~ /\[([^\[\]]+)\]/g) { # SPACEs allowed
-	    my $var = $arr =~ /\*/; # exactly /^\*/ but be lenient.
-	    push @key, $self->altCE($var, _getHexArray($arr));
-	    $combining = 0 unless $key[-1][0] == 0 && $key[-1][1] != 0;
-	}
-	$self->{entries}{$ele} = \@key;
-	$self->{combining}{$ele} = 1 if $combining;
+	$is_L3_ignorable
+	    ? ($self->{L3_ignorable}{$uv[0]} = TRUE)
+	    : ($self->{L3_ignorable}{$uv[0]} and
+	       $self->{L3_ignorable}{$uv[0]} = FALSE); # &&= stores key.
     }
-    $self->{maxlength}{ord $ele} = scalar @e if @e > 1;
 }
 
 
 ##
-## arrayref CE = altCE(bool variable?, list[num] weights)
+## arrayref[weights] = varCE(VCE)
 ##
-sub altCE
+sub varCE
 {
     my $self = shift;
-    my $var  = shift;
-    my @c    = @_;
+    my($var, @wt) = unpack(VCE_TEMPLATE, shift);
 
-    $self->{alternate} eq 'blanked' ?
-	$var ? [0,0,0,$c[3]] : \@c :
-    $self->{alternate} eq 'non-ignorable' ?
-	\@c :
-    $self->{alternate} eq 'shifted' ?
-	$var ? [0,0,0,$c[0] ] : [ @c[0..2], $c[0]+$c[1]+$c[2] ? 0xFFFF : 0 ] :
-    $self->{alternate} eq 'shift-trimmed' ?
-	$var ? [0,0,0,$c[0] ] : [ @c[0..2], 0 ] :
-        croak "$PACKAGE unknown alternate name: $self->{alternate}";
+    $self->{variable} eq 'blanked' ?
+	$var ? [Var1Wt, 0, 0, $wt[3]] : \@wt :
+    $self->{variable} eq 'non-ignorable' ?
+	\@wt :
+    $self->{variable} eq 'shifted' ?
+	$var ? [Var1Wt, 0, 0, $wt[0] ]
+	     : [ @wt[0..2], $wt[0]+$wt[1]+$wt[2] ? Shift4Wt : 0 ] :
+    $self->{variable} eq 'shift-trimmed' ?
+	$var ? [Var1Wt, 0, 0, $wt[0] ] : [ @wt[0..2], 0 ] :
+	croak "$PACKAGE unknown variable name: $self->{variable}";
 }
 
-##
-## string hex_sortkey = splitCE(string arg)
-##
 sub viewSortKey
 {
     my $self = shift;
-    my $key  = $self->getSortKey(@_);
-    my $view = join " ", map sprintf("%04X", $_), unpack 'n*', $key;
-    $view =~ s/ ?0000 ?/|/g;
+    $self->visualizeSortKey($self->getSortKey(@_));
+}
+
+sub visualizeSortKey
+{
+    my $self = shift;
+    my $view = join " ", map sprintf("%04X", $_), unpack(KEY_TEMPLATE, shift);
+
+    if ($self->{UCA_Version} <= 8) {
+	$view =~ s/ ?0000 ?/|/g;
+    } else {
+	$view =~ s/\b0000\b/|/g;
+    }
     return "[$view]";
 }
 
 
 ##
-## list[strings] elements = splitCE(string arg)
+## arrayref of JCPS   = splitEnt(string to be collated)
+## arrayref of arrayref[JCPS, ini_pos, fin_pos] = splitEnt(string, true)
 ##
-sub splitCE
+sub splitEnt
 {
     my $self = shift;
+    my $wLen = $_[1];
+
     my $code = $self->{preprocess};
-    my $norm = $self->{UNF};
-    my $ent  = $self->{entries};
+    my $norm = $self->{normCode};
+    my $map  = $self->{mapping};
     my $max  = $self->{maxlength};
     my $reH  = $self->{rearrangeHash};
+    my $ign  = $self->{L3_ignorable};
+    my $ver9 = $self->{UCA_Version} >= 9;
 
-    my $str = ref $code ? &$code(shift) : shift;
-    $str = &$norm($str) if ref $norm;
+    my ($str, @buf);
 
-    my @src = unpack('U*', $str);
-    my @buf;
+    if ($wLen) {
+	$code and croak "Preprocess breaks character positions. "
+			. "Don't use with index(), match(), etc.";
+	$norm and croak "Normalization breaks character positions. "
+			. "Don't use with index(), match(), etc.";
+	$str = $_[0];
+    }
+    else {
+	$str = $_[0];
+	$str = &$code($str) if ref $code;
+	$str = &$norm($str) if ref $norm;
+    }
 
-    # rearrangement
-    if ($reH) {
+    # get array of Unicode code point of string.
+    my @src = unpack_U($str);
+
+    # rearrangement:
+    # Character positions are not kept if rearranged,
+    # then neglected if $wLen is true.
+    if ($reH && ! $wLen) {
 	for (my $i = 0; $i < @src; $i++) {
 	    if (exists $reH->{ $src[$i] } && $i + 1 < @src) {
 		($src[$i], $src[$i+1]) = ($src[$i+1], $src[$i]);
@@ -286,166 +491,144 @@ sub splitCE
 	}
     }
 
-    for (my $i = 0; $i < @src; $i++) {
-	my $ch;
-	my $u = $src[$i];
-
-	# non-characters
-	next unless defined $u;
-	next if $u < 0 || 0x10FFFF < $u    # out of range
-	    || (0xD800 <= $u && $u <= 0xDFFF); # unpaired surrogates
-	my $four = $u & 0xFFFF; 
-	next if $four == 0xFFFE || $four == 0xFFFF;
-
-	if ($max->{$u}) { # contract
-	    for (my $j = $max->{$u}; $j >= 1; $j--) {
-		next unless $i+$j-1 < @src;
-		$ch = pack 'U*', @src[$i .. $i+$j-1];
-		$i += $j-1, last if $ent->{$ch};
-	    }
-	} else {
-	    $ch = pack('U', $u);
+    if ($ver9) {
+	# To remove a character marked as a completely ignorable.
+	for (my $i = 0; $i < @src; $i++) {
+	    $src[$i] = undef if $ign->{ $src[$i] };
 	}
-
-	# with Combining Char (UTS#10, 4.2.1), here requires Unicode::Normalize.
-	if ($getCombinClass && defined $ch) {
-	    for (my $j = $i+1; $j < @src; $j++) {
-		next unless defined $src[$j];
-		last unless $getCombinClass->( $src[$j] );
-		my $comb = pack 'U', $src[$j];
-		next if ! $ent->{ $ch.$comb };
-		$ch .= $comb;
-		$src[$j] = undef;
-	    }
-	}
-	push @buf, $ch;
     }
-    wantarray ? @buf : \@buf;
+
+    for (my $i = 0; $i < @src; $i++) {
+	next if _isNonCharacter($src[$i]);
+
+	my $i_orig = $i;
+	my $jcps = $src[$i];
+
+	if ($max->{$jcps}) { # contract
+	    my $temp_jcps = $jcps;
+	    my $jcpsLen = 1;
+	    my $maxLen = $max->{$jcps};
+
+	    for (my $p = $i + 1; $jcpsLen < $maxLen && $p < @src; $p++) {
+		next if ! defined $src[$p];
+		$temp_jcps .= CODE_SEP . $src[$p];
+		$jcpsLen++;
+		if ($map->{$temp_jcps}) {
+		    $jcps = $temp_jcps;
+		    $i = $p;
+		}
+	    }
+
+	# not-contiguous contraction with Combining Char (cf. UTS#10, S2.1).
+	# This process requires Unicode::Normalize.
+	# If "normalization" is undef, here should be skipped *always*
+	# (in spite of bool value of $CVgetCombinClass),
+	# since canonical ordering cannot be expected.
+	# Blocked combining character should not be contracted.
+
+	    if ($self->{normalization})
+	    # $self->{normCode} is false in the case of "prenormalized".
+	    {
+		my $preCC = 0;
+		my $curCC = 0;
+
+		for (my $p = $i + 1; $p < @src; $p++) {
+		    next if ! defined $src[$p];
+		    $curCC = $CVgetCombinClass->($src[$p]);
+		    last unless $curCC;
+		    my $tail = CODE_SEP . $src[$p];
+		    if ($preCC != $curCC && $map->{$jcps.$tail}) {
+			$jcps .= $tail;
+			$src[$p] = undef;
+		    } else {
+			$preCC = $curCC;
+		    }
+		}
+	    }
+	}
+
+	if ($wLen) {
+	    for (my $p = $i + 1; $p < @src; $p++) {
+		last if defined $src[$p];
+		$i = $p;
+	    }
+	}
+
+	push @buf, $wLen ? [$jcps, $i_orig, $i + 1] : $jcps;
+    }
+    return \@buf;
 }
 
 
 ##
-## list[arrayrefs] weight = getWt(string element)
+## list of arrayrefs of weights = getWt(JCPS)
 ##
 sub getWt
 {
     my $self = shift;
-    my $ch   = shift;
-    my $ent  = $self->{entries};
-    my $ign  = $self->{ignored};
-    my $cjk  = $self->{overrideCJK};
-    my $hang = $self->{overrideHangul};
+    my $u    = shift;
+    my $map  = $self->{mapping};
+    my $der  = $self->{derivCode};
 
-    return if !defined $ch || $ign->{$ch}; # ignored
-    return @{ $ent->{$ch} } if $ent->{$ch};
-    my $u = unpack('U', $ch);
+    return if !defined $u;
+    return map($self->varCE($_), @{ $map->{$u} })
+	if $map->{$u};
 
-    if (0xAC00 <= $u && $u <= 0xD7A3) { # is_Hangul
-	return $hang
-	    ? &$hang($u)
-	    : defined $hang
-		? map({
-			my $v = $_;
-			my $ar = $ent->{pack('U', $v)};
-			$ar ? @$ar : map($self->altCE(0,@$_), _derivCE($v));
-		    } _decompHangul($u))
-		: map($self->altCE(0,@$_), _derivCE($u));
+    # JCPS must not be a contraction, then it's a code point.
+    if (Hangul_SIni <= $u && $u <= Hangul_SFin) {
+	my $hang = $self->{overrideHangul};
+	my @hangulCE;
+	if ($hang) {
+	    @hangulCE = map(pack(VCE_TEMPLATE, NON_VAR, @$_), &$hang($u));
+	}
+	elsif (!defined $hang) {
+	    @hangulCE = $der->($u);
+	}
+	else {
+	    my $max  = $self->{maxlength};
+	    my @decH = _decompHangul($u);
+
+	    if (@decH == 2) {
+		my $contract = join(CODE_SEP, @decH);
+		@decH = ($contract) if $map->{$contract};
+	    } else { # must be <@decH == 3>
+		if ($max->{$decH[0]}) {
+		    my $contract = join(CODE_SEP, @decH);
+		    if ($map->{$contract}) {
+			@decH = ($contract);
+		    } else {
+			$contract = join(CODE_SEP, @decH[0,1]);
+			$map->{$contract} and @decH = ($contract, $decH[2]);
+		    }
+		    # even if V's ignorable, LT contraction is not supported.
+		    # If such a situatution were required, NFD should be used.
+		}
+		if (@decH == 3 && $max->{$decH[1]}) {
+		    my $contract = join(CODE_SEP, @decH[1,2]);
+		    $map->{$contract} and @decH = ($decH[0], $contract);
+		}
+	    }
+
+	    @hangulCE = map({
+		    $map->{$_} ? @{ $map->{$_} } : $der->($_);
+		} @decH);
+	}
+	return map $self->varCE($_), @hangulCE;
     }
-    elsif (0x3400 <= $u && $u <= 0x4DB5 ||
-	   0x4E00 <= $u && $u <= 0x9FA5 ||
-	   0x20000 <= $u && $u <= 0x2A6D6) { # is_CJK
-	return $cjk
-	    ? &$cjk($u)
-	    : defined $cjk && $u <= 0xFFFF
-		? $self->altCE(0, ($u, 0x20, 0x02, $u))
-		: map($self->altCE(0,@$_), _derivCE($u));
+    elsif (CJK_UidIni  <= $u && $u <= CJK_UidFin  ||
+	   CJK_ExtAIni <= $u && $u <= CJK_ExtAFin ||
+	   CJK_ExtBIni <= $u && $u <= CJK_ExtBFin) {
+	my $cjk  = $self->{overrideCJK};
+	return map $self->varCE($_),
+	    $cjk
+		? map(pack(VCE_TEMPLATE, NON_VAR, @$_), &$cjk($u))
+		: defined $cjk && $self->{UCA_Version} <= 8 && $u <= BMP_Max
+		    ? pack(VCE_TEMPLATE, NON_VAR, $u, Min2Wt, Min3Wt, $u)
+		    : $der->($u);
     }
     else {
-	return map($self->altCE(0,@$_), _derivCE($u));
+	return map $self->varCE($_), $der->($u);
     }
-}
-
-##
-## int = index(string, substring)
-##
-sub index
-{
-    my $self = shift;
-    my $lev  = $self->{level};
-    my $comb = $self->{combining};
-    my $str  = $self->splitCE(shift);
-    my $sub  = $self->splitCE(shift);
-
-    return wantarray ? (0,0) : 0 if ! @$sub;
-    return wantarray ?  ()  : -1 if ! @$str;
-
-    my @subWt = grep _ignorableAtLevel($_,$lev),
-		map $self->getWt($_), @$sub;
-
-    my(@strWt,@strPt);
-    my $count = 0;
-    for (my $i = 0; $i < @$str; $i++) {
-	my $go_ahead = 0;
-
-	my @tmp = grep _ignorableAtLevel($_,$lev), $self->getWt($str->[$i]);
-	$go_ahead += length $str->[$i];
-
-	# /*XXX*/ still broken.
-	# index("e\x{300}", "e") should be 'no match' at level 2 or higher
-	# as "e\x{300}" is a *single* grapheme cluster and not equal to "e".
-
-	# go ahead as far as we find a combining character;
-	while ($i + 1 < @$str &&
-	      (! defined $str->[$i+1] || $comb->{ $str->[$i+1] }) ) {
-	    $i++;
-	    $go_ahead += length $str->[$i];
-	    next if ! defined $str->[$i];
-	    push @tmp,
-		grep _ignorableAtLevel($_,$lev), $self->getWt($str->[$i]);
-	}
-
-	push @strWt, @tmp;
-	push @strPt, ($count) x @tmp;
-	$count += $go_ahead;
-
-	while (@strWt >= @subWt) {
-	    if (_eqArray(\@strWt, \@subWt, $lev)) {
-		my $pos = $strPt[0];
-		return wantarray ? ($pos, $count-$pos) : $pos;
-	    }
-	    shift @strWt;
-	    shift @strPt;
-	}
-    }
-    return wantarray ? () : -1;
-}
-
-##
-## bool _eqArray(arrayref, arrayref, level)
-##
-sub _eqArray($$$)
-{
-    my $a   = shift; # length $a >= length $b;
-    my $b   = shift;
-    my $lev = shift;
-    for my $v (0..$lev-1) {
-	for my $c (0..@$b-1){
-	    return if $a->[$c][$v] != $b->[$c][$v];
-	}
-    }
-    return 1;
-}
-
-
-##
-## bool _ignorableAtLevel(CE, level)
-##
-sub _ignorableAtLevel($$)
-{
-    my $ce = shift;
-    return unless defined $ce;
-    my $lv = shift;
-    return ! grep { ! $ce->[$_] } 0..$lv-1;
 }
 
 
@@ -456,21 +639,59 @@ sub getSortKey
 {
     my $self = shift;
     my $lev  = $self->{level};
-    my $rCE  = $self->splitCE(shift); # get an arrayref
+    my $rEnt = $self->splitEnt(shift); # get an arrayref of JCPS
+    my $ver9 = $self->{UCA_Version} >= 9;
+    my $v2i  = $self->{variable} ne 'non-ignorable';
 
     # weight arrays
-    my @buf = grep defined(), map $self->getWt($_), @$rCE;
+    my (@wts, @buf, $last_is_variable);
+
+    if ($self->{hangul_terminator}) {
+	my $preHST = '';
+	foreach my $jcps (@$rEnt) {
+	    # weird things like VL, TL-contraction are not considered!
+	    my $curHST = '';
+	    foreach my $u (split /;/, $jcps) {
+		$curHST .= getHST($u);
+	    }
+	    if ($preHST && !$curHST || # hangul before non-hangul
+		$preHST =~ /L\z/ && $curHST =~ /^T/ ||
+		$preHST =~ /V\z/ && $curHST =~ /^L/ ||
+		$preHST =~ /T\z/ && $curHST =~ /^[LV]/) {
+
+		push @wts, $self->varCE_HangulTerm;
+	    }
+	    $preHST = $curHST;
+
+	    push @wts, $self->getWt($jcps);
+	}
+	$preHST # end at hangul
+	    and push @wts, $self->varCE_HangulTerm;
+    }
+    else {
+	foreach my $jcps (@$rEnt) {
+	    push @wts, $self->getWt($jcps);
+	}
+    }
+
+    foreach my $wt (@wts) {
+	if ($v2i && $ver9) {
+	    if ($wt->[0] == 0) { # ignorable
+		next if $last_is_variable;
+	    } else {
+		$last_is_variable = ($wt->[0] == Var1Wt);
+	    }
+	}
+	push @buf, $wt;
+    }
 
     # make sort key
     my @ret = ([],[],[],[]);
     foreach my $v (0..$lev-1) {
 	foreach my $b (@buf) {
-	    push @{ $ret[$v] }, $b->[$v] if $b->[$v];
+	    push @{ $ret[$v] }, $b->[$v]
+		if 0 < $b->[$v];
 	}
-    }
-    foreach (@{ $self->{backwards} }) {
-	my $v = $_ - 1;
-	@{ $ret[$v] } = reverse @{ $ret[$v] };
     }
 
     # modification of tertiary weights
@@ -488,7 +709,16 @@ sub getSortKey
 	    elsif (0x0D <= $_ && $_ <= 0x0E) { $_ += 5 } # hiragana
 	}
     }
-    join "\0\0", map pack('n*', @$_), @ret;
+
+    if ($self->{backwardsFlag}) {
+	for (my $v = MinLevel; $v <= MaxLevel; $v++) {
+	    if ($self->{backwardsFlag} & (1 << $v)) {
+		@{ $ret[$v-1] } = reverse @{ $ret[$v-1] };
+	    }
+	}
+    }
+
+    join LEVEL_SEP, map pack(KEY_TEMPLATE, @$_), @ret;
 }
 
 
@@ -514,17 +744,40 @@ sub sort {
 		map [ $obj->getSortKey($_), $_ ], @_;
 }
 
-##
-## list[arrayrefs] CE = _derivCE(int codepoint)
-##
-sub _derivCE {
-    my $code = shift;
-    my $a = UNDEFINED + ($code >> 15); # ok
-    my $b = ($code & 0x7FFF) | 0x8000; # ok
-#   my $a = 0xFFC2 + ($code >> 15);    # ng
-#   my $b = $code & 0x7FFF | 0x1000;   # ng
-    $b ? ([$a,2,1,$code],[$b,0,0,$code]) : [$a,2,1,$code];
+
+sub _derivCE_9 {
+    my $u = shift;
+    my $base =
+	(CJK_UidIni  <= $u && $u <= CJK_UidFin)
+	    ? 0xFB40 : # CJK
+	(CJK_ExtAIni <= $u && $u <= CJK_ExtAFin ||
+	 CJK_ExtBIni <= $u && $u <= CJK_ExtBFin)
+	    ? 0xFB80   # CJK ext.
+	    : 0xFBC0;  # others
+
+    my $aaaa = $base + ($u >> 15);
+    my $bbbb = ($u & 0x7FFF) | 0x8000;
+    return
+	pack(VCE_TEMPLATE, NON_VAR, $aaaa, Min2Wt, Min3Wt, $u),
+	pack(VCE_TEMPLATE, NON_VAR, $bbbb,      0,      0, $u);
 }
+
+sub _derivCE_8 {
+    my $code = shift;
+    my $aaaa =  0xFF80 + ($code >> 15);
+    my $bbbb = ($code & 0x7FFF) | 0x8000;
+    return
+	pack(VCE_TEMPLATE, NON_VAR, $aaaa, 2, 1, $code),
+	pack(VCE_TEMPLATE, NON_VAR, $bbbb, 0, 0, $code);
+}
+
+
+sub varCE_HangulTerm {
+    my $self = shift;
+    return $self->varCE(pack(VCE_TEMPLATE,
+	NON_VAR, $self->{hangul_terminator}, 0,0,0));
+}
+
 
 ##
 ## "hhhh hhhh hhhh" to (dddd, dddd, dddd)
@@ -532,20 +785,277 @@ sub _derivCE {
 sub _getHexArray { map hex, $_[0] =~ /([0-9a-fA-F]+)/g }
 
 #
-# $code must be in Hangul syllable.
+# $code *must* be in Hangul syllable.
 # Check it before you enter here.
 #
 sub _decompHangul {
     my $code = shift;
-    my $SIndex = $code - 0xAC00;
-    my $LIndex = int( $SIndex / 588);
-    my $VIndex = int(($SIndex % 588) / 28);
-    my $TIndex =      $SIndex % 28;
+    my $SIndex = $code - Hangul_SBase;
+    my $LIndex = int( $SIndex / Hangul_NCount);
+    my $VIndex = int(($SIndex % Hangul_NCount) / Hangul_TCount);
+    my $TIndex =      $SIndex % Hangul_TCount;
     return (
-	0x1100 + $LIndex,
-	0x1161 + $VIndex,
-	$TIndex ? (0x11A7 + $TIndex) : (),
+	Hangul_LBase + $LIndex,
+	Hangul_VBase + $VIndex,
+	$TIndex ? (Hangul_TBase + $TIndex) : (),
     );
+}
+
+sub _isNonCharacter {
+    my $code = shift;
+    return ! defined $code                      # removed
+	|| ($code < 0 || 0x10FFFF < $code)      # out of range
+	|| (($code & 0xFFFE) == 0xFFFE)         # ??FFF[EF] (cf. utf8.c)
+	|| (0xD800 <= $code && $code <= 0xDFFF) # unpaired surrogates
+	|| (0xFDD0 <= $code && $code <= 0xFDEF) # other non-characters
+    ;
+}
+
+# Hangul Syllable Type
+sub getHST {
+    my $u = shift;
+    return
+	Hangul_LIni <= $u && $u <= Hangul_LFin || $u == Hangul_LFill ? "L" :
+	Hangul_VIni <= $u && $u <= Hangul_VFin	     ? "V" :
+	Hangul_TIni <= $u && $u <= Hangul_TFin	     ? "T" :
+	Hangul_SIni <= $u && $u <= Hangul_SFin ?
+	    ($u - Hangul_SBase) % Hangul_TCount ? "LVT" : "LV" : "";
+}
+
+
+##
+## bool _nonIgnorAtLevel(arrayref weights, int level)
+##
+sub _nonIgnorAtLevel($$)
+{
+    my $wt = shift;
+    return if ! defined $wt;
+    my $lv = shift;
+    return grep($wt->[$_-1] != 0, MinLevel..$lv) ? TRUE : FALSE;
+}
+
+##
+## bool _eqArray(
+##    arrayref of arrayref[weights] source,
+##    arrayref of arrayref[weights] substr,
+##    int level)
+## * comparison of graphemes vs graphemes.
+##   @$source >= @$substr must be true (check it before call this);
+##
+sub _eqArray($$$)
+{
+    my $source = shift;
+    my $substr = shift;
+    my $lev = shift;
+
+    for my $g (0..@$substr-1){
+	# Do the $g'th graphemes have the same number of AV weigths?
+	return if @{ $source->[$g] } != @{ $substr->[$g] };
+
+	for my $w (0..@{ $substr->[$g] }-1) {
+	    for my $v (0..$lev-1) {
+		return if $source->[$g][$w][$v] != $substr->[$g][$w][$v];
+	    }
+	}
+    }
+    return 1;
+}
+
+##
+## (int position, int length)
+## int position = index(string, substring, position, [undoc'ed grobal])
+##
+## With "grobal" (only for the list context),
+##  returns list of arrayref[position, length].
+##
+sub index
+{
+    my $self = shift;
+    my $str  = shift;
+    my $len  = length($str);
+    my $subE = $self->splitEnt(shift);
+    my $pos  = @_ ? shift : 0;
+       $pos  = 0 if $pos < 0;
+    my $grob = shift;
+
+    my $lev  = $self->{level};
+    my $ver9 = $self->{UCA_Version} >= 9;
+    my $v2i  = $self->{variable} ne 'non-ignorable';
+
+    if (! @$subE) {
+	my $temp = $pos <= 0 ? 0 : $len <= $pos ? $len : $pos;
+	return $grob
+	    ? map([$_, 0], $temp..$len)
+	    : wantarray ? ($temp,0) : $temp;
+    }
+    if ($len < $pos) {
+	return wantarray ? () : NOMATCHPOS;
+    }
+    my $strE = $self->splitEnt($pos ? substr($str, $pos) : $str, TRUE);
+    if (! @$strE) {
+	return wantarray ? () : NOMATCHPOS;
+    }
+    my $last_is_variable;
+    my(@strWt, @iniPos, @finPos, @subWt, @g_ret);
+
+    $last_is_variable = FALSE;
+    for my $wt (map $self->getWt($_), @$subE) {
+	my $to_be_pushed = _nonIgnorAtLevel($wt,$lev);
+
+	if ($v2i && $ver9) {
+	    if ($wt->[0] == 0) {
+		$to_be_pushed = FALSE if $last_is_variable;
+	    } else {
+		$last_is_variable = ($wt->[0] == Var1Wt);
+	    }
+	}
+
+	if (@subWt && $wt->[0] == 0) {
+	    push @{ $subWt[-1] }, $wt if $to_be_pushed;
+	} else {
+	    $wt->[0] = 0 if $wt->[0] == Var1Wt;
+	    push @subWt, [ $wt ];
+	}
+    }
+
+    my $count = 0;
+    my $end = @$strE - 1;
+
+    $last_is_variable = FALSE;
+
+    for (my $i = 0; $i <= $end; ) { # no $i++
+	my $found_base = 0;
+
+	# fetch a grapheme
+	while ($i <= $end && $found_base == 0) {
+	    for my $wt ($self->getWt($strE->[$i][0])) {
+		my $to_be_pushed = _nonIgnorAtLevel($wt,$lev);
+
+		if ($v2i && $ver9) {
+		    if ($wt->[0] == 0) {
+			$to_be_pushed = FALSE if $last_is_variable;
+		    } else {
+			$last_is_variable = ($wt->[0] == Var1Wt);
+		    }
+		}
+
+		if (@strWt && $wt->[0] == 0) {
+		    push @{ $strWt[-1] }, $wt if $to_be_pushed;
+		    $finPos[-1] = $strE->[$i][2];
+		} elsif ($to_be_pushed) {
+		    $wt->[0] = 0 if $wt->[0] == Var1Wt;
+		    push @strWt,  [ $wt ];
+		    push @iniPos, $found_base ? NOMATCHPOS : $strE->[$i][1];
+		    $finPos[-1] = NOMATCHPOS if $found_base;
+		    push @finPos, $strE->[$i][2];
+		    $found_base++;
+		}
+		# else ===> no-op
+	    }
+	    $i++;
+	}
+
+	# try to match
+	while ( @strWt > @subWt || (@strWt == @subWt && $i > $end) ) {
+	    if ($iniPos[0] != NOMATCHPOS &&
+		    $finPos[$#subWt] != NOMATCHPOS &&
+			_eqArray(\@strWt, \@subWt, $lev)) {
+		my $temp = $iniPos[0] + $pos;
+
+		if ($grob) {
+		    push @g_ret, [$temp, $finPos[$#subWt] - $iniPos[0]];
+		    splice @strWt,  0, $#subWt;
+		    splice @iniPos, 0, $#subWt;
+		    splice @finPos, 0, $#subWt;
+		}
+		else {
+		    return wantarray
+			? ($temp, $finPos[$#subWt] - $iniPos[0])
+			:  $temp;
+		}
+	    }
+	    shift @strWt;
+	    shift @iniPos;
+	    shift @finPos;
+	}
+    }
+
+    return $grob
+	? @g_ret
+	: wantarray ? () : NOMATCHPOS;
+}
+
+##
+## scalarref to matching part = match(string, substring)
+##
+sub match
+{
+    my $self = shift;
+    if (my($pos,$len) = $self->index($_[0], $_[1])) {
+	my $temp = substr($_[0], $pos, $len);
+	return wantarray ? $temp : \$temp;
+	# An lvalue ref \substr should be avoided,
+	# since its value is affected by modification of its referent.
+    }
+    else {
+	return;
+    }
+}
+
+##
+## arrayref matching parts = gmatch(string, substring)
+##
+sub gmatch
+{
+    my $self = shift;
+    my $str  = shift;
+    my $sub  = shift;
+    return map substr($str, $_->[0], $_->[1]),
+		$self->index($str, $sub, 0, 'g');
+}
+
+##
+## bool subst'ed = subst(string, substring, replace)
+##
+sub subst
+{
+    my $self = shift;
+    my $code = ref $_[2] eq 'CODE' ? $_[2] : FALSE;
+
+    if (my($pos,$len) = $self->index($_[0], $_[1])) {
+	if ($code) {
+	    my $mat = substr($_[0], $pos, $len);
+	    substr($_[0], $pos, $len, $code->($mat));
+	} else {
+	    substr($_[0], $pos, $len, $_[2]);
+	}
+	return TRUE;
+    }
+    else {
+	return FALSE;
+    }
+}
+
+##
+## int count = gsubst(string, substring, replace)
+##
+sub gsubst
+{
+    my $self = shift;
+    my $code = ref $_[2] eq 'CODE' ? $_[2] : FALSE;
+    my $cnt = 0;
+
+    # Replacement is carried out from the end, then use reverse.
+    for my $pos_len (reverse $self->index($_[0], $_[1], 0, 'g')) {
+	if ($code) {
+	    my $mat = substr($_[0], $pos_len->[0], $pos_len->[1]);
+	    substr($_[0], $pos_len->[0], $pos_len->[1], $code->($mat));
+	} else {
+	    substr($_[0], $pos_len->[0], $pos_len->[1], $_[2]);
+	}
+	$cnt++;
+    }
+    return $cnt;
 }
 
 1;
@@ -568,21 +1078,30 @@ Unicode::Collate - Unicode Collation Algorithm
   #compare
   $result = $Collator->cmp($a, $b); # returns 1, 0, or -1.
 
+  # If %tailoring is false (i.e. empty),
+  # $Collator should do the default collation.
+
 =head1 DESCRIPTION
+
+This module is an implementation
+of Unicode Technical Standard #10 (UTS #10)
+"Unicode Collation Algorithm."
 
 =head2 Constructor and Tailoring
 
 The C<new> method returns a collator object.
 
    $Collator = Unicode::Collate->new(
-      alternate => $alternate,
+      UCA_Version => $UCA_Version,
+      alternate => $alternate, # deprecated: use of 'variable' is recommended.
       backwards => $levelNumber, # or \@levelNumbers
       entry => $element,
-      normalization  => $normalization_form,
+      hangul_terminator => $term_primary_weight,
       ignoreName => qr/$ignoreName/,
       ignoreChar => qr/$ignoreChar/,
       katakana_before_hiragana => $bool,
       level => $collationLevel,
+      normalization  => $normalization_form,
       overrideCJK => \&overrideCJK,
       overrideHangul => \&overrideHangul,
       preprocess => \&preprocess,
@@ -591,40 +1110,25 @@ The C<new> method returns a collator object.
       undefName => qr/$undefName/,
       undefChar => qr/$undefChar/,
       upper_before_lower => $bool,
+      variable => $variable,
    );
-   # if %tailoring is false (i.e. empty),
-   # $Collator should do the default collation.
 
 =over 4
 
-=item alternate
+=item UCA_Version
 
--- see 3.2.2 Alternate Weighting, UTR #10.
+If the tracking version number of the older UCA is given,
+the older behavior of that tracking version is emulated on collating.
+If omitted, the return value of C<UCA_Version()> is used.
 
-This key allows to alternate weighting for variable collation elements,
-which are marked with an ASTERISK in the table
-(NOTE: Many punction marks and symbols are variable in F<allkeys.txt>).
+The supported tracking version: 8, 9, or 11.
 
-   alternate => 'blanked', 'non-ignorable', 'shifted', or 'shift-trimmed'.
-
-These names are case-insensitive.
-By default (if specification is omitted), 'shifted' is adopted.
-
-   'Blanked'        Variable elements are ignorable at levels 1 through 3;
-                    considered at the 4th level.
-
-   'Non-ignorable'  Variable elements are not reset to ignorable.
-
-   'Shifted'        Variable elements are ignorable at levels 1 through 3
-                    their level 4 weight is replaced by the old level 1 weight.
-                    Level 4 weight for Non-Variable elements is 0xFFFF.
-
-   'Shift-Trimmed'  Same as 'shifted', but all FFFF's at the 4th level
-                    are trimmed.
+B<This parameter may be removed in the future version,
+as switching the algorithm would affect the performance.>
 
 =item backwards
 
--- see 3.1.2 French Accents, UTR #10.
+-- see 3.1.2 French Accents, UTS #10.
 
      backwards => $levelNumber or \@levelNumbers
 
@@ -633,9 +1137,12 @@ If omitted, forwards at all the levels.
 
 =item entry
 
--- see 3.1 Linguistic Features; 3.2.1 File Format, UTR #10.
+-- see 3.1 Linguistic Features; 3.2.1 File Format, UTS #10.
 
-Overrides a default order or defines additional collation elements
+If the same character (or a sequence of characters) exists
+in the collation element table through C<table>,
+mapping to collation elements is overrided.
+If it does not exist, the mapping is defined additionally.
 
   entry => <<'ENTRIES', # use the UCA file format
 00E6 ; [.0861.0020.0002.00E6] [.08B1.0020.0002.00E6] # ligature <ae> as <a><e>
@@ -643,22 +1150,54 @@ Overrides a default order or defines additional collation elements
 0043 0068 ; [.0893.0020.0008.0043]      # "Ch" in traditional Spanish
 ENTRIES
 
+B<NOTE:> The code point in the UCA file format (before C<';'>)
+B<must> be a Unicode code point, but not a native code point.
+So C<0063> must always denote C<U+0063>,
+but not a character of C<"\x63">.
+
+=item hangul_terminator
+
+-- see Condition B.2. in 7.1.4 Trailing Weights, UTS #10.
+
+If a true value is given (non-zero but should be positive),
+it will be added as a terminator primary weight to the end of
+every standard Hangul syllable. Secondary and any higher weights
+for terminator are set to zero.
+If the value is false or C<hangul_terminator> key does not exist,
+insertion of terminator weights will not be performed.
+
+Boundaries of Hangul syllables are determined
+according to conjoining Jamo behavior in F<the Unicode Standard>
+and F<HangulSyllableType.txt>.
+
+B<Implementation Note:>
+(1) For expansion mapping (Unicode character mapped
+to a sequence of collation elements), a terminator will not be added
+between collation elements, even if Hangul syllable boundary exists there.
+Addition of terminator is restricted to the next position
+to the last collation element.
+
+(2) Non-conjoining Hangul letters
+(Compatibility Jamo, halfwidth Jamo, and enclosed letters) are not
+automatically terminated with a terminator primary weight.
+These characters may need terminator included in a collation element
+table beforehand.
+
 =item ignoreName
 
 =item ignoreChar
 
--- see Completely Ignorable, 3.2.2 Alternate Weighting, UTR #10.
+-- see Completely Ignorable, 3.2.2 Variable Weighting, UTS #10.
 
-Makes the entry in the table ignorable.
-If a collation element is ignorable,
-it is ignored as if the element had been deleted from there.
+Makes the entry in the table completely ignorable;
+i.e. as if the weights were zero at all level.
 
 E.g. when 'a' and 'e' are ignorable,
 'element' is equal to 'lament' (or 'lmnt').
 
 =item level
 
--- see 4.3 Form a sort key for each string, UTR #10.
+-- see 4.3 Form a sort key for each string, UTS #10.
 
 Set the maximum level.
 Any higher levels than the specified one are ignored.
@@ -666,7 +1205,7 @@ Any higher levels than the specified one are ignored.
   Level 1: alphabetic ordering
   Level 2: diacritic ordering
   Level 3: case ordering
-  Level 4: tie-breaking (e.g. in the case when alternate is 'shifted')
+  Level 4: tie-breaking (e.g. in the case when variable is 'shifted')
 
   ex.level => 2,
 
@@ -674,33 +1213,55 @@ If omitted, the maximum is the 4th.
 
 =item normalization
 
--- see 4.1 Normalize each input string, UTR #10.
+-- see 4.1 Normalize each input string, UTS #10.
 
 If specified, strings are normalized before preparation of sort keys
 (the normalization is executed after preprocess).
 
-As a form name, one of the following names must be used.
+A form name C<Unicode::Normalize::normalize()> accepts will be applied
+as C<$normalization_form>.
+Acceptable names include C<'NFD'>, C<'NFC'>, C<'NFKD'>, and C<'NFKC'>.
+See C<Unicode::Normalize::normalize()> for detail.
+If omitted, C<'NFD'> is used.
 
-  'C'  or 'NFC'  for Normalization Form C
-  'D'  or 'NFD'  for Normalization Form D
-  'KC' or 'NFKC' for Normalization Form KC
-  'KD' or 'NFKD' for Normalization Form KD
+C<normalization> is performed after C<preprocess> (if defined).
 
-If omitted, the string is put into Normalization Form D.
+Furthermore, special values, C<undef> and C<"prenormalized">, can be used,
+though they are not concerned with C<Unicode::Normalize::normalize()>.
 
-If C<undef> is passed explicitly as the value for this key,
+If C<undef> (not a string C<"undef">) is passed explicitly
+as the value for this key,
 any normalization is not carried out (this may make tailoring easier
 if any normalization is not desired).
+Under C<(normalization =E<gt> undef)>, only contiguous contractions
+are resolved; e.g. C<A-cedilla-ring> would be primary equal to C<A>,
+even if C<A-ring> (and C<A-ring-cedilla>) is ordered after C<Z>.
+In this point,
+C<(normalization =E<gt> undef, preprocess =E<gt> sub { NFD(shift) })>
+B<is not> equivalent to C<(normalization =E<gt> 'NFD')>.
 
-see B<CAVEAT>.
+In the case of C<(normalization =E<gt> "prenormalized")>,
+any normalization is not performed, but
+non-contiguous contractions with combining characters are performed.
+Therefore
+C<(normalization =E<gt> 'prenormalized', preprocess =E<gt> sub { NFD(shift) })>
+B<is> equivalent to C<(normalization =E<gt> 'NFD')>.
+If source strings are finely prenormalized,
+C<(normalization =E<gt> 'prenormalized')> may save time for normalization.
+
+Except C<(normalization =E<gt> undef)>,
+B<Unicode::Normalize> is required (see also B<CAVEAT>).
 
 =item overrideCJK
 
--- see 7.1 Derived Collation Elements, UTR #10.
+-- see 7.1 Derived Collation Elements, UTS #10.
 
-By default, mapping of CJK Unified Ideographs
-uses the Unicode codepoint order.
-But the mapping of CJK Unified Ideographs may be overrided.
+By default, CJK Unified Ideographs are ordered in Unicode codepoint order
+(but C<CJK Unified Ideographs> [C<U+4E00> to C<U+9FA5>]  are lesser than
+C<CJK Unified Ideographs Extension> [C<U+3400> to C<U+4DB5> and
+C<U+20000> to C<U+2A6D6>].
+
+Through C<overrideCJK>, ordering of CJK Unified Ideographs can be overrided.
 
 ex. CJK Unified Ideographs in the JIS code point order.
 
@@ -722,16 +1283,16 @@ ex. ignores all CJK Unified Ideographs.
 If C<undef> is passed explicitly as the value for this key,
 weights for CJK Unified Ideographs are treated as undefined.
 But assignment of weight for CJK Unified Ideographs
-in table or L<entry> is still valid.
+in table or C<entry> is still valid.
 
 =item overrideHangul
 
--- see 7.1 Derived Collation Elements, UTR #10.
+-- see 7.1 Derived Collation Elements, UTS #10.
 
 By default, Hangul Syllables are decomposed into Hangul Jamo.
 But the mapping of Hangul Syllables may be overrided.
 
-This tag works like L<overrideCJK>, so see there for examples.
+This tag works like C<overrideCJK>, so see there for examples.
 
 If you want to override the mapping of Hangul Syllables,
 the Normalization Forms D and KD are not appropriate
@@ -741,11 +1302,11 @@ If C<undef> is passed explicitly as the value for this key,
 weight for Hangul Syllables is treated as undefined
 without decomposition into Hangul Jamo.
 But definition of weight for Hangul Syllables
-in table or L<entry> is still valid.
+in table or C<entry> is still valid.
 
 =item preprocess
 
--- see 5.1 Preprocessing, UTR #10.
+-- see 5.1 Preprocessing, UTS #10.
 
 If specified, the coderef is used to preprocess
 before the formation of sort keys.
@@ -756,12 +1317,14 @@ Then, "the pen" is before "a pencil".
      preprocess => sub {
            my $str = shift;
            $str =~ s/\b(?:an?|the)\s+//gi;
-           $str;
+           return $str;
         },
+
+C<preprocess> is performed before C<normalization> (if defined).
 
 =item rearrange
 
--- see 3.1.3 Rearrangement, UTR #10.
+-- see 3.1.3 Rearrangement, UTS #10.
 
 Characters that are not coded in logical order and to be rearranged.
 By default,
@@ -772,17 +1335,23 @@ If you want to disallow any rearrangement,
 pass C<undef> or C<[]> (a reference to an empty list)
 as the value for this key.
 
+B<According to the version 9 of UCA, this parameter shall not be used;
+but it is not warned at present.>
+
 =item table
 
--- see 3.2 Default Unicode Collation Element Table, UTR #10.
+-- see 3.2 Default Unicode Collation Element Table, UTS #10.
 
-You can use another element table if desired.
-The table file must be in your C<lib/Unicode/Collate> directory.
+You can use another collation element table if desired.
+The table file must be put into a directory
+where F<Unicode/Collate.pm> is installed.
+E.g. in F<perl/lib/Unicode/Collate> directory
+when you have F<perl/lib/Unicode/Collate.pm>.
 
-By default, the file C<lib/Unicode/Collate/allkeys.txt> is used.
+By default, the filename F<"allkeys.txt"> is used.
 
 If C<undef> is passed explicitly as the value for this key,
-no file is read (but you can define collation elements via L<entry>).
+no file is read (but you can define collation elements via C<entry>).
 
 A typical way to define a collation element table
 without any file of table:
@@ -803,7 +1372,7 @@ ENTRIES
 
 =item undefChar
 
--- see 6.3.4 Reducing the Repertoire, UTR #10.
+-- see 6.3.4 Reducing the Repertoire, UTS #10.
 
 Undefines the collation element as if it were unassigned in the table.
 This reduces the size of the table.
@@ -819,7 +1388,7 @@ unfamiliar to you and maybe never used.
 
 =item upper_before_lower
 
--- see 6.6 Case Comparisons; 7.3.1 Tertiary Weight Table, UTR #10.
+-- see 6.6 Case Comparisons; 7.3.1 Tertiary Weight Table, UTS #10.
 
 By default, lowercase is before uppercase
 and hiragana is before katakana.
@@ -828,10 +1397,42 @@ If the tag is made true, this is reversed.
 
 B<NOTE>: These tags simplemindedly assume
 any lowercase/uppercase or hiragana/katakana distinctions
-should occur in level 3, and their weights at level 3
-should be same as those mentioned in 7.3.1, UTR #10.
-If you define your collation elements which violates this,
-these tags doesn't work validly.
+must occur in level 3, and their weights at level 3
+must be same as those mentioned in 7.3.1, UTS #10.
+If you define your collation elements which violate this requirement,
+these tags don't work validly.
+
+=item variable
+
+=item alternate
+
+-- see 3.2.2 Variable Weighting, UTS #10.
+
+(the title in UCA version 8: Alternate Weighting)
+
+This key allows to variable weighting for variable collation elements,
+which are marked with an ASTERISK in the table
+(NOTE: Many punction marks and symbols are variable in F<allkeys.txt>).
+
+   variable => 'blanked', 'non-ignorable', 'shifted', or 'shift-trimmed'.
+
+These names are case-insensitive.
+By default (if specification is omitted), 'shifted' is adopted.
+
+   'Blanked'        Variable elements are made ignorable at levels 1 through 3;
+                    considered at the 4th level.
+
+   'Non-ignorable'  Variable elements are not reset to ignorable.
+
+   'Shifted'        Variable elements are made ignorable at levels 1 through 3
+                    their level 4 weight is replaced by the old level 1 weight.
+                    Level 4 weight for Non-Variable elements is 0xFFFF.
+
+   'Shift-Trimmed'  Same as 'shifted', but all FFFF's at the 4th level
+                    are trimmed.
+
+For backward compatibility, C<alternate> can be used as an alias
+for C<variable>.
 
 =back
 
@@ -872,7 +1473,7 @@ They works like the same name operators as theirs.
 
 =item C<$sortKey = $Collator-E<gt>getSortKey($string)>
 
--- see 4.3 Form a sort key for each string, UTR #10.
+-- see 4.3 Form a sort key for each string, UTS #10.
 
 Returns a sort key.
 
@@ -887,38 +1488,41 @@ and get the result of the comparison of the strings using UCA.
 
 =item C<$sortKeyForm = $Collator-E<gt>viewSortKey($string)>
 
-Returns a string formalized to display a sort key.
-Weights are enclosed with C<'['> and C<']'>
-and level boundaries are denoted by C<'|'>.
-
    use Unicode::Collate;
    my $c = Unicode::Collate->new();
    print $c->viewSortKey("Perl"),"\n";
 
-    # output:
-    # [09B3 08B1 09CB 094F|0020 0020 0020 0020|0008 0002 0002 0002|FFFF FFFF FFFF FFFF]
-    #  Level 1             Level 2             Level 3             Level 4
+   # output:
+   # [0B67 0A65 0B7F 0B03 | 0020 0020 0020 0020 | 0008 0002 0002 0002 | FFFF FFFF FFFF FFFF]
+   #  Level 1               Level 2               Level 3               Level 4
 
-=item C<$position = $Collator-E<gt>index($string, $substring)>
+    (If C<UCA_Version> is 8, the output is slightly different.)
 
-=item C<($position, $length) = $Collator-E<gt>index($string, $substring)>
+=back
 
--- see 6.8 Searching, UTR #10.
+=head2 Methods for Searching
+
+B<DISCLAIMER:> If C<preprocess> or C<normalization> tag is true
+for C<$Collator>, calling these methods (C<index>, C<match>, C<gmatch>,
+C<subst>, C<gsubst>) is croaked,
+as the position and the length might differ
+from those on the specified string.
+(And C<rearrange> and C<hangul_terminator> tags are neglected.)
+
+The C<match>, C<gmatch>, C<subst>, C<gsubst> methods work
+like C<m//>, C<m//g>, C<s///>, C<s///g>, respectively,
+but they are not aware of any pattern, but only a literal substring.
+
+=over 4
+
+=item C<$position = $Collator-E<gt>index($string, $substring[, $position])>
+
+=item C<($position, $length) = $Collator-E<gt>index($string, $substring[, $position])>
 
 If C<$substring> matches a part of C<$string>, returns
 the position of the first occurrence of the matching part in scalar context;
 in list context, returns a two-element list of
 the position and the length of the matching part.
-
-B<Notice> that the length of the matching part may differ from
-the length of C<$substring>.
-
-B<Note> that the position and the length are counted on the string
-after the process of preprocess, normalization, and rearrangement.
-Therefore, in case the specified string is not binary equal to
-the preprocessed/normalized/rearranged string, the position and the length
-may differ form those on the specified string. But it is guaranteed
-that, if matched, it returns a non-negative value as C<$position>.
 
 If C<$substring> does not match any part of C<$string>,
 returns C<-1> in scalar context and
@@ -927,15 +1531,86 @@ an empty list in list context.
 e.g. you say
 
   my $Collator = Unicode::Collate->new( normalization => undef, level => 1 );
-  my $str = "Ich mu\x{00DF} studieren.";
-  my $sub = "m\x{00FC}ss";
+                                     # (normalization => undef) is REQUIRED.
+  my $str = "Ich muß studieren Perl.";
+  my $sub = "MÜSS";
   my $match;
   if (my($pos,$len) = $Collator->index($str, $sub)) {
       $match = substr($str, $pos, $len);
   }
 
-and get C<"mu\x{00DF}"> in C<$match> since C<"mu>E<223>C<">
-is primary equal to C<"m>E<252>C<ss">. 
+and get C<"muß"> in C<$match> since C<"muß">
+is primary equal to C<"MÜSS">. 
+
+=item C<$match_ref = $Collator-E<gt>match($string, $substring)>
+
+=item C<($match)   = $Collator-E<gt>match($string, $substring)>
+
+If C<$substring> matches a part of C<$string>, in scalar context, returns
+B<a reference to> the first occurrence of the matching part
+(C<$match_ref> is always true if matches,
+since every reference is B<true>);
+in list context, returns the first occurrence of the matching part.
+
+If C<$substring> does not match any part of C<$string>,
+returns C<undef> in scalar context and
+an empty list in list context.
+
+e.g.
+
+    if ($match_ref = $Collator->match($str, $sub)) { # scalar context
+	print "matches [$$match_ref].\n";
+    } else {
+	print "doesn't match.\n";
+    }
+
+     or 
+
+    if (($match) = $Collator->match($str, $sub)) { # list context
+	print "matches [$match].\n";
+    } else {
+	print "doesn't match.\n";
+    }
+
+=item C<@match = $Collator-E<gt>gmatch($string, $substring)>
+
+If C<$substring> matches a part of C<$string>, returns
+all the matching parts (or matching count in scalar context).
+
+If C<$substring> does not match any part of C<$string>,
+returns an empty list.
+
+=item C<$count = $Collator-E<gt>subst($string, $substring, $replacement)>
+
+If C<$substring> matches a part of C<$string>,
+the first occurrence of the matching part is replaced by C<$replacement>
+(C<$string> is modified) and return C<$count> (always equals to C<1>).
+
+C<$replacement> can be a C<CODEREF>,
+taking the matching part as an argument,
+and returning a string to replace the matching part
+(a bit similar to C<s/(..)/$coderef-E<gt>($1)/e>).
+
+=item C<$count = $Collator-E<gt>gsubst($string, $substring, $replacement)>
+
+If C<$substring> matches a part of C<$string>,
+all the occurrences of the matching part is replaced by C<$replacement>
+(C<$string> is modified) and return C<$count>.
+
+C<$replacement> can be a C<CODEREF>,
+taking the matching part as an argument,
+and returning a string to replace the matching part
+(a bit similar to C<s/(..)/$coderef-E<gt>($1)/eg>).
+
+e.g.
+
+  my $Collator = Unicode::Collate->new( normalization => undef, level => 1 );
+                                     # (normalization => undef) is REQUIRED.
+  my $str = "Camel ass came\x{301}l CAMEL horse cAm\0E\0L...";
+  $Collator->gsubst($str, "camel", sub { "<b>$_[0]</b>" });
+
+  # now $str is "<b>Camel</b> ass <b>came\x{301}l</b> <b>CAMEL</b> horse <b>cAm\0E\0L</b>...";
+  # i.e., all the camels are made bold-faced.
 
 =back
 
@@ -943,32 +1618,54 @@ is primary equal to C<"m>E<252>C<ss">.
 
 =over 4
 
-=item UCA_Version
+=item C<%old_tailoring = $Collator-E<gt>change(%new_tailoring)>
 
-Returns the version number of Unicode Technical Standard 10
-this module consults.
+Change the value of specified keys and returns the changed part.
 
-=item Base_Unicode_Version
+    $Collator = Unicode::Collate->new(level => 4);
 
-Returns the version number of the Unicode Standard
-this module is based on.
+    $Collator->eq("perl", "PERL"); # false
+
+    %old = $Collator->change(level => 2); # returns (level => 4).
+
+    $Collator->eq("perl", "PERL"); # true
+
+    $Collator->change(%old); # returns (level => 2).
+
+    $Collator->eq("perl", "PERL"); # false
+
+Not all C<(key,value)>s are allowed to be changed.
+See also C<@Unicode::Collate::ChangeOK> and C<@Unicode::Collate::ChangeNG>.
+
+In the scalar context, returns the modified collator
+(but it is B<not> a clone from the original).
+
+    $Collator->change(level => 2)->eq("perl", "PERL"); # true
+
+    $Collator->eq("perl", "PERL"); # true; now max level is 2nd.
+
+    $Collator->change(level => 4)->eq("perl", "PERL"); # false
+
+=item C<$version = $Collator-E<gt>version()>
+
+Returns the version number (a string) of the Unicode Standard
+which the C<table> file used by the collator object is based on.
+If the table does not include a version line (starting with C<@version>),
+returns C<"unknown">.
+
+=item C<UCA_Version()>
+
+Returns the tracking version number of UTS #10 this module consults.
+
+=item C<Base_Unicode_Version()>
+
+Returns the version number of UTS #10 this module consults.
 
 =back
 
 =head2 EXPORT
 
 None by default.
-
-=head2 TODO
-
-Unicode::Collate has not been ported to EBCDIC.  The code mostly would
-work just fine but a decision needs to be made: how the module should
-work in EBCDIC?  Should the low 256 characters be understood as
-Unicode or as EBCDIC code points?  Should one be chosen or should
-there be a way to do either?  Or should such translation be left
-outside the module for the user to do, for example by using
-Encode::from_to()?
-(or utf8::unicode_to_native()/utf8::native_to_unicode()?)
 
 =head2 CAVEAT
 
@@ -979,25 +1676,28 @@ If you need not it (say, in the case when you need not
 handle any combining characters),
 assign C<normalization =E<gt> undef> explicitly.
 
--- see 6.5 Avoiding Normalization, UTR #10.
+-- see 6.5 Avoiding Normalization, UTS #10.
 
-=head2 BUGS
+=head2 Conformance Test
 
-C<index()> is an experimental method and
-its return value may be unreliable.
-The correct implementation for C<index()> must be based
-on Locale-Sensitive Support: Level 3 in UTR #18,
-F<Unicode Regular Expression Guidelines>.
+The Conformance Test for the UCA is provided
+in L<http://www.unicode.org/reports/tr10/CollationTest.html>
+and L<http://www.unicode.org/reports/tr10/CollationTest.zip>
 
-See also 4.2 Locale-Dependent Graphemes in UTR #18.
+For F<CollationTest_SHIFTED.txt>,
+a collator via C<Unicode::Collate-E<gt>new( )> should be used;
+for F<CollationTest_NON_IGNORABLE.txt>, a collator via
+C<Unicode::Collate-E<gt>new(variable =E<gt> "non-ignorable", level =E<gt> 3)>.
+
+B<Unicode::Normalize is required to try The Conformance Test.>
 
 =head1 AUTHOR
 
-SADAHIRO Tomoyuki, E<lt>SADAHIRO@cpan.orgE<gt>
+SADAHIRO Tomoyuki, <SADAHIRO@cpan.org>
 
   http://homepage1.nifty.com/nomenclator/perl/
 
-  Copyright(C) 2001-2002, SADAHIRO Tomoyuki. Japan. All rights reserved.
+  Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
   This library is free software; you can redistribute it
   and/or modify it under the same terms as Perl itself.
@@ -1006,21 +1706,27 @@ SADAHIRO Tomoyuki, E<lt>SADAHIRO@cpan.orgE<gt>
 
 =over 4
 
-=item http://www.unicode.org/unicode/reports/tr10/
+=item Unicode Collation Algorithm - UTS #10
 
-Unicode Collation Algorithm - UTR #10
+L<http://www.unicode.org/reports/tr10/>
 
-=item http://www.unicode.org/unicode/reports/tr10/allkeys.txt
+=item The Default Unicode Collation Element Table (DUCET)
 
-The Default Unicode Collation Element Table
+L<http://www.unicode.org/reports/tr10/allkeys.txt>
 
-=item http://www.unicode.org/unicode/reports/tr15/
+=item The conformance test for the UCA
 
-Unicode Normalization Forms - UAX #15
+L<http://www.unicode.org/reports/tr10/CollationTest.html>
 
-=item http://www.unicode.org/unicode/reports/tr18
+L<http://www.unicode.org/reports/tr10/CollationTest.zip>
 
-Unicode Regular Expression Guidelines - UTR #18
+=item Hangul Syllable Type
+
+http://www.unicode.org/Public/UNIDATA/HangulSyllableType.txt
+
+=item Unicode Normalization Forms - UAX #15
+
+L<http://www.unicode.org/reports/tr15/>
 
 =item L<Unicode::Normalize>
 

@@ -1,3 +1,92 @@
+Changes in version 2.34
+-----------------------
+
+* Auto-vivification of array and hash refs
+
+  If an option is specified to require an array or hash ref, and a
+  scalar reference is passed, this is auto-vivified to array or hash
+  ref. 
+
+  Example:
+
+	@ARGV = qw(--foo=xx);
+	GetOptions("foo=s@", \$var);
+	# Now $var->[0] eq "xx"
+
+* Auto-supplied verbose and help options are no longer taken into
+  account when determining option ambiguity. This eliminates the
+  common problem that you suddenly get an ambiguous option warning
+  when you have an option "verbose" and run your program with "-v".
+
+* Cosmetic changes in some error messages.
+
+Changes in version 2.33
+-----------------------
+
+**************** WARNING -- EXPERIMENTAL CODE AHEAD ****************
+
+The following new features are marked experimental. This means that if
+you are going to use them you _must_ watch out for the next release of
+Getopt::Long to see if the API has changed.
+
+* Getopt::Long can automatically handle --version and --help options
+  if the calling program did not specify a handler explicitly.
+
+  Two configuration parameters have been added: 'auto_help' (or
+  'help') and 'auto_version' (or 'version'). If set, Getopt::Long will
+  itself take care of --help and --version options. Otherwise,
+  everything is exactly as it was before.
+
+  The new features will be enabled by default for programs that
+  explicitly require version 2.3203 or later.
+
+  Getopt::Long uses module Pod::Usage to produce the help message from
+  the SYNOPSIS section of the program's POD.
+
+  Using a --help (or -?) command line option will write the SYNOPSIS
+  section of the program's POD to STDOUT, and exit with status 0.
+  However, an illegal option will produce the help text to STDERR,
+  and exit with status 2. This is in accordance with current
+  conventions.
+
+* Two subroutines can be exported on demand:
+
+  - VersionMessage
+
+    This subroutine prints the standard version message.
+
+  - HelpMessage
+
+    This subroutine prints the standard help message.
+
+  Both subroutines take the same arguments as Pod::Usage::pod2usage,
+  see its documentation for details.  
+
+  Example:
+
+    use Getopt::Long 2.33 qw(GetOptions HelpMessage);
+    GetOptions(...) or HelpMessage(2);
+
+**************** END EXPERIMENTAL CODE ****************
+
+* Subroutine Configure can now be exported on demand.
+
+* Negatable options (with "!") now also support the "no-" prefix.
+  On request of Ed Avis.
+
+* Some fixes with hashes and bundling.
+  Thanks to Anders Johnson and Andrei Gnepp.
+  Mandatory/optional status for hash values is now effective.
+  String valued options with no value now default to the empty string
+  instead of 1 (one).
+  NOTE: The hash options still remain more or less experimental.
+
+* Fix a pass_through bug where the options terminator (normally "--")
+  was not passed through in @ARGV.
+  Thanks to Philippe Verdret.
+
+* Add FAQ: I "use GetOpt::Long;" (Windows) and now it doesn't work.
+
 Changes in version 2.32
 -----------------------
 
@@ -7,12 +96,26 @@ was not used for value of a hash option.
 * Remove 5.005 thread safety code. Getopt::Long is completely thread
 safe when using the 5.8 ithreads.
 
+Changes in version 2.31
+-----------------------
+
+* Fix a bug where calling the configure method on a
+  Getopt::Long::Parser object would bail out with 
+  Undefined subroutine &Getopt::Long::Parser::Configure called at
+  Getopt/Long.pm line 186.
+
+Changes in version 2.30
+-----------------------
+
+* Fix a problem where a 'die' from a 'warn' via a localized
+  $SIG{__WARN__} was not properly propagated from a callback.
+  Thanks to Diab Jerius.
+
 Changes in version 2.29
 -----------------------
 
 * Fix a problem where options were not recognized when both
-  auto_abbrev and ignore_case were disabled. Thanks to Seth Robertson
-  <seth@systemdetection.com>.
+  auto_abbrev and ignore_case were disabled. Thanks to Seth Robertson.
 
 * Remove Carp.
 
@@ -54,11 +157,11 @@ Changes in version 2.27
 
 * Avoid errors on references when an option is found in error, e.g.
   GetOptions('fo$@#' => \$var).
-  Thanks to Wolfgang Laun <Wolfgang.Laun@alcatel.at>.
+  Thanks to Wolfgang Laun.
 
 * When an option is specified more than once, an error is now
   generated. E.g., GetOptions('foo', 'foo').
-  Thanks to Wolfgang Laun <Wolfgang.Laun@alcatel.at>.
+  Thanks to Wolfgang Laun.
 
 * Lots of internal restructoring to make room for extensions.
 
@@ -66,17 +169,6 @@ Changes in version 2.27
 
 * Enhance the documentation to prevent common misunderstandings about
   single character options.
-
-Changes in version 2.26
------------------------
-
-* New option type: 'o'. It accepts all kinds of integral numbers in
-  Perl style, including decimal (24), octal (012), hexadecimal (0x2f)
-  and binary (0b1001).
-
-* Fix problem with getopt_compat not matching +foo=bar.
-
-* Remove $VERSION_STRING for production versions.
 
 Changes in version 2.26
 -----------------------

@@ -15,7 +15,7 @@ use warnings;
 use strict;
 use Config;
 
-print "1..17\n";
+print "1..32\n";
 
 use B::Deparse;
 my $deparse = B::Deparse->new() or print "not ";
@@ -25,7 +25,7 @@ print "ok " . $i++ . "\n";
 
 # Tell B::Deparse about our ambient pragmas
 { my ($hint_bits, $warning_bits);
- BEGIN {($hint_bits, $warning_bits) = ($^H, ${^WARNING_BITS})}
+ BEGIN { ($hint_bits, $warning_bits) = ($^H, ${^WARNING_BITS}); }
  $deparse->ambient_pragmas (
      hint_bits    => $hint_bits,
      warning_bits => $warning_bits,
@@ -83,12 +83,11 @@ print "not " if "{\n    (-1) ** \$a;\n}"
 		ne $deparse->coderef2text(sub{(-1) ** $a });
 print "ok " . $i++ . "\n";
 
-# XXX ToDo - constsub that returns a reference
-#use constant cr => ['hello'];
-#my $string = "sub " . $deparse->coderef2text(\&cr);
-#my $val = (eval $string)->();
-#print "not " if ref($val) ne 'ARRAY' || $val->[0] ne 'hello';
-#print "ok " . $i++ . "\n";
+use constant cr => ['hello'];
+my $string = "sub " . $deparse->coderef2text(\&cr);
+my $val = (eval $string)->();
+print "not " if ref($val) ne 'ARRAY' || $val->[0] ne 'hello';
+print "ok " . $i++ . "\n";
 
 my $a;
 my $Is_VMS = $^O eq 'VMS';
@@ -193,3 +192,73 @@ $_ .= <ARGV> . <$foo>;
 ####
 # 14
 my $foo = "Ab\x{100}\200\x{200}\377Cd\000Ef\x{1000}\cA\x{2000}\cZ";
+####
+# 15
+s/x/'y';/e;
+####
+# 16 - various lypes of loop
+{ my $x; }
+####
+# 17
+while (1) { my $k; }
+####
+# 18
+my ($x,@a);
+$x=1 for @a;
+>>>>
+my($x, @a);
+foreach $_ (@a) {
+    $x = 1;
+}
+####
+# 19
+for (my $i = 0; $i < 2;) {
+    my $z = 1;
+}
+####
+# 20
+for (my $i = 0; $i < 2; ++$i) {
+    my $z = 1;
+}
+####
+# 21
+for (my $i = 0; $i < 2; ++$i) {
+    my $z = 1;
+}
+####
+# 22
+my $i;
+while ($i) { my $z = 1; } continue { $i = 99; }
+####
+# 23
+foreach $i (1, 2) {
+    my $z = 1;
+}
+####
+# 24
+my $i;
+foreach $i (1, 2) {
+    my $z = 1;
+}
+####
+# 25
+my $i;
+foreach my $i (1, 2) {
+    my $z = 1;
+}
+####
+# 26
+foreach my $i (1, 2) {
+    my $z = 1;
+}
+####
+# 27
+foreach our $i (1, 2) {
+    my $z = 1;
+}
+####
+# 28
+my $i;
+foreach our $i (1, 2) {
+    my $z = 1;
+}

@@ -123,16 +123,16 @@ This will fix the problem.
 
 This version (5.00402) of perl has passed most of the tests on my system:
 
-Failed Test  Status Wstat Total Fail  Failed  List of failed
-------------------------------------------------------------------------------
-io/pipe.t                    10    2  20.00%  7, 9
-io/tell.t                    13    1   7.69%  12
-lib/complex.t               762   13   1.71%  84-85, 248-251, 257, 272-273,
-                                              371, 380, 419-420
-lib/io_pipe.t                10    1  10.00%  9
-lib/io_tell.t                13    1   7.69%  12
-op/magic.t                   30    2   6.67%  29-30
-Failed 6/152 test scripts, 96.05% okay. 20/4359 subtests failed, 99.54% okay.
+ Failed Test  Status Wstat Total Fail  Failed  List of failed
+ ------------------------------------------------------------------------------
+ io/pipe.t                    10    2  20.00%  7, 9
+ io/tell.t                    13    1   7.69%  12
+ lib/complex.t               762   13   1.71%  84-85, 248-251, 257, 272-273,
+                                               371, 380, 419-420
+ lib/io_pipe.t                10    1  10.00%  9
+ lib/io_tell.t                13    1   7.69%  12
+ op/magic.t                   30    2   6.67%  29-30
+ Failed 6/152 test scripts, 96.05% okay. 20/4359 subtests failed, 99.54% okay.
 
 Pipes always cause problems with MiNT, it's actually a surprise that
 most of the tests did work.  I've got no idea why the "tell" test failed,
@@ -148,7 +148,7 @@ with op/magic.t and op/stat.t.  Maybe you'll find it out.
 
 ##########################################################################
 
-Another possible problem may arise from the implementation of  the "pwd" 
+Another possible problem may arise from the implementation of the "pwd" 
 command.  It happened to add a carriage return and newline to its output 
 no matter what the setting of $UNIXMODE is.  This is quite annoying since many
 library modules for perl take the output of pwd, chop off the
@@ -202,7 +202,7 @@ or extract the original system.o from your libc with
 module somewhere before you succeed.
 
 Anything missing?  Yep, I've almost forgotten...  
-No file in this  distribution without a fine saying.  Take this one:
+No file in this distribution without a fine saying.  Take this one:
 
 	"From a thief you should learn: (1) to work at night;
 	(2) if one cannot gain what one wants in one night to

@@ -2,9 +2,9 @@ use 5.007003;
 use ExtUtils::MakeMaker;
 
 # Just for sure :)
-unless($ENV{PERL_CORE}) {
-    $ENV{PERL_CORE} = 1 if ($^X =~ m{\bminiperl[^/\\\]>:]*$}o);
-}
+my %ARGV = map { split /=/; defined $_[1] or $_[1]=1; @_ } @ARGV;
+$ARGV{DEBUG} and warn "$_ => $ARGV{$_}\n" for keys  %ARGV;
+$ENV{PERL_CORE} ||= $ARGV{PERL_CORE};
 
 my %tables = 
     (
@@ -22,14 +22,9 @@ my @more_exe_files = qw(
 			unidump
 			);
 my @pmlibdirs = qw(lib Encode);
-for my $arg (@ARGV){
-    if ($arg eq "MORE_SCRIPTS"){
-	push @exe_files, @more_exe_files;
-    }
-    if ($arg eq "INSTALL_UCM"){
-	push @pmlibdirs, "ucm";
-    }
-}
+
+$ARGV{MORE_SCRIOPTS} and push @exe_files, @more_exe_files;
+$ARGV{INSTALL_UCM}   and push @pmlibdirs, "ucm";
 
 WriteMakefile(
 	      NAME		=> "Encode",

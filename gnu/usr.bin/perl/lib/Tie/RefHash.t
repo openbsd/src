@@ -18,11 +18,17 @@ BEGIN {
 use strict;
 use Tie::RefHash;
 use Data::Dumper;
-my $numtests = 34;
+my $numtests = 37;
 my $currtest = 1;
 print "1..$numtests\n";
 
 my $ref = []; my $ref1 = [];
+
+package Boustrophedon; # A class with overloaded "".
+sub new { my ($c, $s) = @_; bless \$s, $c }
+use overload '""' => sub { ${$_[0]} . reverse ${$_[0]} };
+package main;
+my $ox = Boustrophedon->new("foobar");
 
 # Test standard hash functionality, by performing the same operations
 # on a tied hash and on a normal hash, and checking that the results
@@ -93,6 +99,10 @@ test(not defined $h{$ref});
 test(not exists($h{$ref}));
 test((keys %h) == 0);
 test((values %h) == 0);
+$h{$ox} = "bellow"; # overloaded ""
+test(exists $h{$ox});
+test($h{$ox} eq "bellow");
+test(not exists $h{"foobarraboof"});
 undef $h;
 untie %h;
 

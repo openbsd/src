@@ -788,13 +788,15 @@ sub parse_text {
         ## Look for the beginning of a sequence
         if ( /^([A-Z])(<(?:<+\s)?)$/ ) {
             ## Push a new sequence onto the stack of those "in-progress"
-            ($cmd, $ldelim) = ($1, $2);
+            my $ldelim_orig;
+            ($cmd, $ldelim_orig) = ($1, $2);
+            ($ldelim = $ldelim_orig) =~ s/\s+$//;
+            ($rdelim = $ldelim) =~ tr/</>/;
             $seq = Pod::InteriorSequence->new(
                        -name   => $cmd,
-                       -ldelim => $ldelim,  -rdelim => '',
+                       -ldelim => $ldelim_orig,  -rdelim => $rdelim,
                        -file   => $file,    -line   => $line
                    );
-            $ldelim =~ s/\s+$//, ($rdelim = $ldelim) =~ tr/</>/;
             (@seq_stack > 1)  and  $seq->nested($seq_stack[-1]);
             push @seq_stack, $seq;
         }
@@ -827,9 +829,13 @@ sub parse_text {
                 $seq_stack[-1]->append($expand_seq ? &$xseq_sub($self,$seq)
                                                    : $seq);
                 ## Remember the current cmd-name and left-delimiter
-                $cmd = (@seq_stack > 1) ? $seq_stack[-1]->name : '';
-                $ldelim = (@seq_stack > 1) ? $seq_stack[-1]->ldelim : '';
-                $ldelim =~ s/\s+$//, ($rdelim = $ldelim) =~ tr/</>/;
+                if(@seq_stack > 1) {
+                    $cmd = $seq_stack[-1]->name;
+                    $ldelim = $seq_stack[-1]->ldelim;
+                    $rdelim = $seq_stack[-1]->rdelim;
+                } else {
+                    $cmd = $ldelim = $rdelim = '';
+                }
             }
         }
         elsif (length) {

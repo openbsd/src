@@ -2,8 +2,9 @@ package Encode::Unicode;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
-our $VERSION = do { my @r = (q$Revision: 1.37 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load(__PACKAGE__,$VERSION);
@@ -13,6 +14,8 @@ XSLoader::load(__PACKAGE__,$VERSION);
 #
 
 require Encode;
+
+our %BOM_Unknown = map {$_ => 1} qw(UTF-16 UTF-32);
 
 for my $name (qw(UTF-16 UTF-16BE UTF-16LE
                  UTF-32 UTF-32BE UTF-32LE
@@ -35,231 +38,23 @@ for my $name (qw(UTF-16 UTF-16BE UTF-16LE
 	       endian => $endian,
 	       ucs2   =>   $ucs2,
 	      } => __PACKAGE__;
-
 }
 
 use base qw(Encode::Encoding);
 
-#
-# three implementations of (en|de)code exist.  The XS version is the
-# fastest.  *_modern uses an array and *_classic sticks with substr.
-# *_classic is  much slower but more memory conservative.
-# *_xs is the default.
-
-sub set_transcoder{
-    no warnings qw(redefine);
-    my $type = shift;
-    if    ($type eq "xs"){
-	*decode = \&decode_xs;
-	*encode = \&encode_xs;
-    }elsif($type eq "modern"){
-	*decode = \&decode_modern;
-	*encode = \&encode_modern;
-    }elsif($type eq "classic"){
-	*decode = \&decode_classic;
-	*encode = \&encode_classic;
-    }else{
-	require Carp; 
-	Carp::croak __PACKAGE__, "::set_transcoder(modern|classic|xs)";
-    }
+sub renew { 
+    my $self = shift;
+    $BOM_Unknown{$self->name} or return $self;
+    my $clone = bless { %$self } => ref($self);
+    $clone->{clone} = 1; # so the caller knows it is renewed.
+    return $clone;
 }
 
-set_transcoder("xs");
+# There used to be a perl implemntation of (en|de)code but with
+# XS version is ripe, perl version is zapped for optimal speed
 
-#
-# Aux. subs & constants
-#
-
-sub FBCHAR(){ 0xFFFd }
-sub BOM_BE(){ 0xFeFF }
-sub BOM16LE(){ 0xFFFe }
-sub BOM32LE(){ 0xFFFe0000 }
-
-sub valid_ucs2($){
-    return 
-	(0 <= $_[0] && $_[0] < 0xD800) 
-	    || 	( 0xDFFF < $_[0] && $_[0] <= 0xFFFF);
-}
-
-sub issurrogate($){   0xD800 <= $_[0]  && $_[0] <= 0xDFFF }
-sub isHiSurrogate($){ 0xD800 <= $_[0]  && $_[0] <  0xDC00 }
-sub isLoSurrogate($){ 0xDC00 <= $_[0]  && $_[0] <= 0xDFFF }
-
-sub ensurrogate($){
-    use integer; # we have divisions
-    my $uni = shift;
-    my  $hi = ($uni - 0x10000) / 0x400 + 0xD800;
-    my  $lo = ($uni - 0x10000) % 0x400 + 0xDC00;
-    return ($hi, $lo);
-}
-
-sub desurrogate($$){
-    my ($hi, $lo) = @_;
-    return 0x10000 + ($hi - 0xD800)*0x400 + ($lo - 0xDC00);
-}
-
-sub Mask { {2 => 0xffff,  4 => 0xffffffff} }
-
-#
-# *_modern are much faster but guzzle more memory
-#
-
-sub decode_modern($$;$)
-{
-    my ($obj, $str, $chk ) = @_;
-    my ($size, $endian, $ucs2) = @$obj{qw(size endian ucs2)};
-
-    # warn "$size, $endian, $ucs2";
-    $endian ||= BOMB($size, substr($str, 0, $size, ''))
-	or poisoned2death($obj, "Where's the BOM?");
-    my  $mask = Mask->{$size};
-    my $utf8   = '';
-    my @ord = unpack("$endian*", $str);
-    undef $str; # to conserve memory
-    while (@ord){
-	my $ord = shift @ord;
-	unless ($size == 4 or valid_ucs2($ord &= $mask)){
-	    if ($ucs2){
-		$chk and 
-		    poisoned2death($obj, "no surrogates allowed", $ord);
-		shift @ord; # skip the next one as well
-		$ord = FBCHAR;
-	    }else{
-		unless (isHiSurrogate($ord)){
-		    poisoned2death($obj, "Malformed HI surrogate", $ord);
-		}
-		my $lo = shift @ord;
-		unless (isLoSurrogate($lo &= $mask)){
-		    poisoned2death($obj, "Malformed LO surrogate", $ord, $lo);
-		}
-		$ord = desurrogate($ord, $lo);
-	    }
-	}
-	$utf8 .= chr($ord);
-    }
-    utf8::upgrade($utf8);
-    return $utf8;
-}
-
-sub encode_modern($$;$)
-{
-    my ($obj, $utf8, $chk) = @_;
-    my ($size, $endian, $ucs2) = @$obj{qw(size endian ucs2)};
-    my @str = ();
-    unless ($endian){
-	$endian = ($size == 4) ? 'N' : 'n';
-	push @str, BOM_BE;
-    }
-    my @ord = unpack("U*", $utf8);
-    undef $utf8; # to conserve memory
-    for my $ord (@ord){
-	unless ($size == 4 or valid_ucs2($ord)) {
-	    unless(issurrogate($ord)){
-		if ($ucs2){
-		    $chk and 
-			poisoned2death($obj, "code point too high", $ord);
-
-		    push @str, FBCHAR;
-		}else{
-		 
-		    push @str, ensurrogate($ord);
-		}
-	    }else{  # not supposed to happen
-		push @str, FBCHAR;
-	    }
-	}else{
-	    push @str, $ord;
-	}
-    }
-    return pack("$endian*", @str);
-}
-
-#
-# *_classic are slower but more memory conservative
-#
-
-sub decode_classic($$;$)
-{
-    my ($obj, $str, $chk ) = @_;
-    my ($size, $endian, $ucs2) = @$obj{qw(size endian ucs2)};
-
-    # warn "$size, $endian, $ucs2";
-    $endian ||= BOMB($size, substr($str, 0, $size, ''))
-	or poisoned2death($obj, "Where's the BOM?");
-    my  $mask = Mask->{$size};
-    my $utf8   = '';
-    my @ord = unpack("$endian*", $str);
-    while (length($str)){
-	 my $ord = unpack($endian, substr($str, 0, $size, ''));
-	unless ($size == 4 or valid_ucs2($ord &= $mask)){
-	    if ($ucs2){
-		$chk and 
-		    poisoned2death($obj, "no surrogates allowed", $ord);
-		substr($str,0,$size,''); # skip the next one as well
-		$ord = FBCHAR;
-	    }else{
-		unless (isHiSurrogate($ord)){
-		    poisoned2death($obj, "Malformed HI surrogate", $ord);
-		}
-		my $lo = unpack($endian ,substr($str,0,$size,''));
-		unless (isLoSurrogate($lo &= $mask)){
-		    poisoned2death($obj, "Malformed LO surrogate", $ord, $lo);
-		}
-		$ord = desurrogate($ord, $lo);
-	    }
-	}
-	$utf8 .= chr($ord);
-    }
-    utf8::upgrade($utf8);
-    return $utf8;
-}
-
-sub encode_classic($$;$)
-{
-    my ($obj, $utf8, $chk) = @_;
-    my ($size, $endian, $ucs2) = @$obj{qw(size endian ucs2)};
-    # warn join ", ", $size, $ucs2, $endian, $mask;
-    my $str   = '';
-    unless ($endian){
-	$endian = ($size == 4) ? 'N' : 'n';
-	$str .= pack($endian, BOM_BE);
-    }
-    while (length($utf8)){
-	my $ord  = ord(substr($utf8,0,1,''));
-	unless ($size == 4 or valid_ucs2($ord)) {
-	    unless(issurrogate($ord)){
-		if ($ucs2){
-		    $chk and 
-			poisoned2death($obj, "code point too high", $ord);
-		    $str .= pack($endian, FBCHAR);
-		}else{
-		    $str .= pack($endian.2, ensurrogate($ord));
-		}
-	    }else{  # not supposed to happen
-		$str .= pack($endian, FBCHAR);
-	    }
-	}else{
-	    $str .= pack($endian, $ord);
-	}
-    }
-    return $str;
-}
-
-sub BOMB {
-    my ($size, $bom) = @_;
-    my $N = $size == 2 ? 'n' : 'N';
-    my $ord = unpack($N, $bom);
-    return ($ord eq BOM_BE) ? $N : 
-	($ord eq BOM16LE) ? 'v' : ($ord eq BOM32LE) ? 'V' : undef;
-}
-
-sub poisoned2death{
-    my $obj = shift;
-    my $msg = shift;
-    my $pair = join(", ", map {sprintf "\\x%x", $_} @_);
-    require Carp;
-    Carp::croak $obj->name, ":", $msg, "<$pair>.", caller;
-}
+*decode = \&decode_xs;
+*encode = \&encode_xs;
 
 1;
 __END__
@@ -287,9 +82,13 @@ for UTF-8, which is a native format in perl).
 =item L<http://www.unicode.org/glossary/> says:
 
 I<Character Encoding Scheme> A character encoding form plus byte
-serialization. There are seven character encoding schemes in Unicode:
+serialization. There are Seven character encoding schemes in Unicode:
 UTF-8, UTF-16, UTF-16BE, UTF-16LE, UTF-32 (UCS-4), UTF-32BE (UCS-4BE) and
-UTF-32LE (UCS-4LE).
+UTF-32LE (UCS-4LE), and UTF-7.
+
+Since UTF-7 is a 7-bit (re)encoded version of UTF-16BE, It is not part of
+Unicode's Character Encoding Scheme.  It is separately implemented in
+Encode::Unicode::UTF7.  For details see L<Encode::Unicode::UTF7>.
 
 =item Quick Reference
 
@@ -358,7 +157,7 @@ endianness is prepended to the string.
   -------------------------
 
 =back
- 
+
 This modules handles the BOM as follows.
 
 =over 4
@@ -434,7 +233,7 @@ every one of \x{0000_0000} up to \x{ffff_ffff} (*) is I<a character>.
 
 =head1 SEE ALSO
 
-L<Encode>, L<http://www.unicode.org/glossary/>,
+L<Encode>, L<Encode::Unicode::UTF7>, L<http://www.unicode.org/glossary/>,
 L<http://www.unicode.org/unicode/faq/utf_bom.html>,
 
 RFC 2781 L<http://rfc.net/rfc2781.html>,

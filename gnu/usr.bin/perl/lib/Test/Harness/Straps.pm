@@ -1,12 +1,12 @@
 # -*- Mode: cperl; cperl-indent-level: 4 -*-
-# $Id: Straps.pm,v 1.13 2002/06/19 21:01:04 schwern Exp $
+# $Id: Straps.pm,v 1.18 2003/08/15 01:29:23 andy Exp $
 
 package Test::Harness::Straps;
 
 use strict;
 use vars qw($VERSION);
 use Config;
-$VERSION = '0.14';
+$VERSION = '0.15';
 
 use Test::Harness::Assert;
 use Test::Harness::Iterator;
@@ -58,11 +58,9 @@ The interface is currently incomplete.  I<Please> contact the author
 if you'd like a feature added or something change or just have
 comments.
 
-=head2 Construction
+=head1 Construction
 
-=over 4
-
-=item B<new>
+=head2 C<new>
 
   my $strap = Test::Harness::Straps->new;
 
@@ -80,9 +78,7 @@ sub new {
     return $self;
 }
 
-=begin _private
-
-=item B<_init>
+=head2 C<_init>
 
   $strap->_init;
 
@@ -93,26 +89,22 @@ Initialize the internal state of a strap to make it ready for parsing.
 sub _init {
     my($self) = shift;
 
-    $self->{_is_vms} = $^O eq 'VMS';
+    $self->{_is_vms}   = $^O eq 'VMS';
+    $self->{_is_win32} = $^O eq 'Win32';
 }
 
-=end _private
+=head1 Analysis
 
-=back
-
-=head2 Analysis
-
-=over 4
-
-=item B<analyze>
+=head2 C<analyze>
 
   my %results = $strap->analyze($name, \@test_output);
 
-Analyzes the output of a single test, assigning it the given $name for
-use in the total report.  Returns the %results of the test.  See
-L<Results>.
+Analyzes the output of a single test, assigning it the given C<$name>
+for use in the total report.  Returns the C<%results> of the test.
+See L<Results>.
 
-@test_output should be the raw output from the test, including newlines.
+C<@test_output> should be the raw output from the test, including
+newlines.
 
 =cut
 
@@ -150,10 +142,10 @@ sub _analyze_iterator {
 
     $totals{skip_all} = $self->{skip_all} if defined $self->{skip_all};
 
-    my $passed = !$totals{max} ||
-                  ($totals{max} && $totals{seen} &&
-                   $totals{max} == $totals{seen} && 
-                   $totals{max} == $totals{ok});
+    my $passed = ($totals{max} == 0 && defined $totals{skip_all}) ||
+                 ($totals{max} && $totals{seen} &&
+                  $totals{max} == $totals{seen} && 
+                  $totals{max} == $totals{ok});
     $totals{passing} = $passed ? 1 : 0;
 
     return %totals;
@@ -206,7 +198,7 @@ sub _analyze_line {
 
         $totals->{ok}++ if $pass;
 
-        if( $result{number} > 100000 ) {
+        if( $result{number} > 100000 && $result{number} > $self->{max} ) {
             warn "Enormous test number seen [test $result{number}]\n";
             warn "Can't detailize, too big.\n";
         }
@@ -230,7 +222,7 @@ sub _analyze_line {
     $self->{'next'} = $result{number} + 1 if $type eq 'test';
 }
 
-=item B<analyze_fh>
+=head2 C<analyze_fh>
 
   my %results = $strap->analyze_fh($name, $test_filehandle);
 
@@ -245,11 +237,11 @@ sub analyze_fh {
     $self->_analyze_iterator($name, $it);
 }
 
-=item B<analyze_file>
+=head2 C<analyze_file>
 
   my %results = $strap->analyze_file($test_file);
 
-Like C<analyze>, but it runs the given $test_file and parses it's
+Like C<analyze>, but it runs the given C<$test_file> and parses its
 results.  It will also use that name for the total report.
 
 =cut
@@ -269,8 +261,9 @@ sub analyze_file {
 
     local $ENV{PERL5LIB} = $self->_INC2PERL5LIB;
 
-    # Is this necessary anymore?
-    my $cmd = $self->{_is_vms} ? "MCR $^X" : $^X;
+    my $cmd = $self->{_is_vms}   ? "MCR $^X" :
+              $self->{_is_win32} ? Win32::GetShortPathName($^X)
+                                 : $^X;
 
     my $switches = $self->_switches($file);
 
@@ -306,9 +299,7 @@ else {
 }
 
 
-=begin _private
-
-=item B<_switches>
+=head2 C<_switches>
 
   my $switches = $self->_switches($file);
 
@@ -322,7 +313,7 @@ sub _switches {
     local *TEST;
     open(TEST, $file) or print "can't open $file. $!\n";
     my $first = <TEST>;
-    my $s = '';
+    my $s = $Test::Harness::Switches || '';
     $s .= " $ENV{'HARNESS_PERL_SWITCHES'}"
       if exists $ENV{'HARNESS_PERL_SWITCHES'};
 
@@ -342,12 +333,12 @@ sub _switches {
 }
 
 
-=item B<_INC2PERL5LIB>
+=head2 C<_INC2PERL5LIB>
 
   local $ENV{PERL5LIB} = $self->_INC2PERL5LIB;
 
-Takes the current value of @INC and turns it into something suitable
-for putting onto PERL5LIB.
+Takes the current value of C<@INC> and turns it into something suitable
+for putting onto C<PERL5LIB>.
 
 =cut
 
@@ -359,12 +350,12 @@ sub _INC2PERL5LIB {
     return join $Config{path_sep}, $self->_filtered_INC;
 }
 
-=item B<_filtered_INC>
+=head2 C<_filtered_INC>
 
   my @filtered_inc = $self->_filtered_INC;
 
-Shortens @INC by removing redundant and unnecessary entries.
-Necessary for OS's with limited command line lengths, like VMS.
+Shortens C<@INC> by removing redundant and unnecessary entries.
+Necessary for OSes with limited command line lengths, like VMS.
 
 =cut
 
@@ -383,11 +374,11 @@ sub _filtered_INC {
 }
 
 
-=item B<_restore_PERL5LIB>
+=head2 C<_restore_PERL5LIB>
 
   $self->_restore_PERL5LIB;
 
-This restores the original value of the PERL5LIB environment variable.
+This restores the original value of the C<PERL5LIB> environment variable.
 Necessary on VMS, otherwise a no-op.
 
 =cut
@@ -402,26 +393,16 @@ sub _restore_PERL5LIB {
     }
 }
 
-
-=end _private
-
-=back
-
-
-=begin _private
-
-=head2 Parsing
+=head1 Parsing
 
 Methods for identifying what sort of line you're looking at.
 
-=over 4
-
-=item B<_is_comment>
+=head2 C<_is_comment>
 
   my $is_comment = $strap->_is_comment($line, \$comment);
 
 Checks if the given line is a comment.  If so, it will place it into
-$comment (sans #).
+C<$comment> (sans #).
 
 =cut
 
@@ -437,14 +418,14 @@ sub _is_comment {
     }
 }
 
-=item B<_is_header>
+=head2 C<_is_header>
 
   my $is_header = $strap->_is_header($line);
 
-Checks if the given line is a header (1..M) line.  If so, it places
-how many tests there will be in $strap->{max}, a list of which tests
-are todo in $strap->{todo} and if the whole test was skipped
-$strap->{skip_all} contains the reason.
+Checks if the given line is a header (1..M) line.  If so, it places how
+many tests there will be in C<< $strap->{max} >>, a list of which tests
+are todo in C<< $strap->{todo} >> and if the whole test was skipped
+C<< $strap->{skip_all} >> contains the reason.
 
 =cut
 
@@ -467,7 +448,11 @@ sub _is_header {
 
             $self->{todo} = { map { $_ => 1 } split /\s+/, $todo } if $todo;
 
-            $self->{skip_all} = $reason if defined $skip and $skip =~ /^Skip/i;
+            if( $self->{max} == 0 ) {
+                $reason = '' unless defined $skip and $skip =~ /^Skip/i;
+            }
+
+            $self->{skip_all} = $reason;
         }
 
         return $YES;
@@ -477,12 +462,12 @@ sub _is_header {
     }
 }
 
-=item B<_is_test>
+=head2 C<_is_test>
 
   my $is_test = $strap->_is_test($line, \%test);
 
 Checks if the $line is a test report (ie. 'ok/not ok').  Reports the
-result back in %test which will contain:
+result back in C<%test> which will contain:
 
   ok            did it succeed?  This is the literal 'ok' or 'not ok'.
   name          name of the test (if any)
@@ -492,7 +477,7 @@ result back in %test which will contain:
   reason        why is it todo or skip? (if any)
 
 If will also catch lone 'not' lines, note it saw them 
-$strap->{saw_lone_not} and the line in $strap->{lone_not_line}.
+C<< $strap->{saw_lone_not} >> and the line in C<< $strap->{lone_not_line} >>.
 
 =cut
 
@@ -546,7 +531,7 @@ sub _is_test {
     }
 }
 
-=item B<_is_bail_out>
+=head2 C<_is_bail_out>
 
   my $is_bail_out = $strap->_is_bail_out($line, \$reason);
 
@@ -567,12 +552,12 @@ sub _is_bail_out {
     }
 }
 
-=item B<_reset_file_state>
+=head2 C<_reset_file_state>
 
   $strap->_reset_file_state;
 
-Resets things like $strap->{max}, $strap->{skip_all}, etc... so its
-ready to parse the next file.
+Resets things like C<< $strap->{max} >> , C<< $strap->{skip_all} >>,
+etc. so it's ready to parse the next file.
 
 =cut
 
@@ -589,14 +574,10 @@ sub _reset_file_state {
     $self->{'next'}       = 1;
 }
 
-=back
+=head1 Results
 
-=end _private
-
-
-=head2 Results
-
-The %results returned from analyze() contain the following information:
+The C<%results> returned from C<analyze()> contain the following
+information:
 
   passing           true if the whole test is considered a pass 
                     (or skipped), false if its a failure
@@ -637,17 +618,13 @@ There is one final item, the details.
 Element 0 of the details is test #1.  I tried it with element 1 being
 #1 and 0 being empty, this is less awkward.
 
-=begin _private
-
-=over 4
-
-=item B<_detailize>
+=head2 C<_detailize>
 
   my %details = $strap->_detailize($pass, \%test);
 
-Generates the details based on the last test line seen.  $pass is true
-if it was considered to be a passed test.  %test is the results of the
-test you're summarizing.
+Generates the details based on the last test line seen.  C<$pass> is
+true if it was considered to be a passed test.  C<%test> is the results
+of the test you're summarizing.
 
 =cut
 
@@ -671,17 +648,14 @@ sub _detailize {
     return %details;
 }
 
-=back
-
-=end _private
-
 =head1 EXAMPLES
 
 See F<examples/mini_harness.plx> for an example of use.
 
 =head1 AUTHOR
 
-Michael G Schwern E<lt>schwern@pobox.comE<gt>
+Michael G Schwern C<< <schwern@pobox.com> >>, currently maintained by
+Andy Lester C<< <andy@petdance.com> >>.
 
 =head1 SEE ALSO
 

@@ -1,4 +1,4 @@
-# Net::Cmd.pm $Id: //depot/libnet/Net/Cmd.pm#28 $
+# Net::Cmd.pm $Id: //depot/libnet/Net/Cmd.pm#33 $
 #
 # Copyright (c) 1995-1997 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ BEGIN {
   }
 }
 
-$VERSION = "2.21";
+$VERSION = "2.24";
 @ISA     = qw(Exporter);
 @EXPORT  = qw(CMD_INFO CMD_OK CMD_MORE CMD_REJECT CMD_ERROR CMD_PENDING);
 
@@ -73,7 +73,6 @@ sub _print_isa
  my @do   = ($pkg);
  my %spc = ( $pkg , "");
 
- print STDERR "\n";
  while ($pkg = shift @do)
   {
    next if defined $done{$pkg};
@@ -85,7 +84,7 @@ sub _print_isa
                 : "";
 
    my $spc = $spc{$pkg};
-   print STDERR "$cmd: ${spc}${pkg}${v}\n";
+   $cmd->debug_print(1,"${spc}${pkg}${v}\n");
 
    if(@{"${pkg}::ISA"})
     {
@@ -93,8 +92,6 @@ sub _print_isa
      unshift(@do, @{"${pkg}::ISA"});
     }
   }
-
- print STDERR "\n";
 }
 
 sub debug
@@ -201,7 +198,7 @@ sub command
 
 
  $cmd->dataend()
-    if(exists ${*$cmd}{'net_cmd_lastch'});
+    if(exists ${*$cmd}{'net_cmd_need_crlf'});
 
  if (scalar(@_))
   {
@@ -395,6 +392,68 @@ sub datasend
 
  return 0 unless defined(fileno($cmd));
 
+ unless (length $line) {
+   # Even though we are not sending anything, the fact we were
+   # called means that dataend needs to be called before the next
+   # command, which happens of net_cmd_need_crlf exists
+   ${*$cmd}{'net_cmd_need_crlf'} ||= 0;
+   return 1;
+ }
+
+ if($cmd->debug) {
+   foreach my $b (split(/\n/,$line)) {
+     $cmd->debug_print(1, "$b\n");
+   }
+  }
+
+ $line =~ s/\r?\n/\r\n/sg;
+ $line =~ tr/\r\n/\015\012/ unless "\r" eq "\015";
+
+ $line =~ s/(\012\.)/$1./sog;
+ $line =~ s/^\./../ unless ${*$cmd}{'net_cmd_need_crlf'};
+
+ ${*$cmd}{'net_cmd_need_crlf'} = substr($line,-1,1) ne "\012";
+
+ my $len = length($line);
+ my $offset = 0;
+ my $win = "";
+ vec($win,fileno($cmd),1) = 1;
+ my $timeout = $cmd->timeout || undef;
+
+ local $SIG{PIPE} = 'IGNORE' unless $^O eq 'MacOS';
+
+ while($len)
+  {
+   my $wout;
+   if (select(undef,$wout=$win, undef, $timeout) > 0)
+    {
+     my $w = syswrite($cmd, $line, $len, $offset);
+     unless (defined($w))
+      {
+       carp("$cmd: $!") if $cmd->debug;
+       return undef;
+      }
+     $len -= $w;
+     $offset += $w;
+    }
+   else
+    {
+     carp("$cmd: Timeout") if($cmd->debug);
+     return undef;
+    }
+  }
+
+ 1;
+}
+
+sub rawdatasend
+{
+ my $cmd = shift;
+ my $arr = @_ == 1 && ref($_[0]) ? $_[0] : \@_;
+ my $line = join("" ,@$arr);
+
+ return 0 unless defined(fileno($cmd));
+
  return 1
     unless length($line);
 
@@ -404,23 +463,13 @@ sub datasend
    print STDERR $b,join("\n$b",split(/\n/,$line)),"\n";
   }
 
- # Translate LF => CRLF, but not if the LF is
- # already preceeded by a CR
- $line =~ s/\G()\n|([^\r\n])\n/$+\015\012/sgo;
-
- ${*$cmd}{'net_cmd_lastch'} ||= " ";
- $line = ${*$cmd}{'net_cmd_lastch'} . $line;
-
- $line =~ s/(\012\.)/$1./sog;
-
- ${*$cmd}{'net_cmd_lastch'} = substr($line,-1,1);
-
- my $len = length($line) - 1;
- my $offset = 1;
+ my $len = length($line);
+ my $offset = 0;
  my $win = "";
  vec($win,fileno($cmd),1) = 1;
  my $timeout = $cmd->timeout || undef;
 
+ local $SIG{PIPE} = 'IGNORE' unless $^O eq 'MacOS';
  while($len)
   {
    my $wout;
@@ -452,27 +501,18 @@ sub dataend
  return 0 unless defined(fileno($cmd));
 
  return 1
-    unless(exists ${*$cmd}{'net_cmd_lastch'});
+    unless(exists ${*$cmd}{'net_cmd_need_crlf'});
 
- if(${*$cmd}{'net_cmd_lastch'} eq "\015")
-  {
-   syswrite($cmd,"\012",1);
-   print STDERR "\n"
-    if($cmd->debug);
-  }
- elsif(${*$cmd}{'net_cmd_lastch'} ne "\012")
-  {
-   syswrite($cmd,"\015\012",2);
-   print STDERR "\n"
-    if($cmd->debug);
-  }
+ local $SIG{PIPE} = 'IGNORE' unless $^O eq 'MacOS';
+ syswrite($cmd,"\015\012",2)
+    if ${*$cmd}{'net_cmd_need_crlf'};
 
- print STDERR "$cmd>>> .\n"
+ $cmd->debug_print(1, ".\n")
     if($cmd->debug);
 
  syswrite($cmd,".\015\012",3);
 
- delete ${*$cmd}{'net_cmd_lastch'};
+ delete ${*$cmd}{'net_cmd_need_crlf'};
 
  $cmd->response() == CMD_OK;
 }
@@ -497,7 +537,7 @@ sub TIEHANDLE {
 # end-of-file when the dot is encountered.
 sub READ {
   my $cmd = shift;
-  my (undef,$len,$offset) = @_;
+  my ($len,$offset) = @_[1,2];
   return unless exists ${*$cmd}{'net_cmd_readbuf'};
   my $done = 0;
   while (!$done and length(${*$cmd}{'net_cmd_readbuf'}) < $len) {
@@ -677,6 +717,11 @@ some C<debug_print> calls into your method.
 
 Unget a line of text from the server.
 
+=item rawdatasend ( DATA )
+
+Send data to the remote server without performing any conversions. C<DATA>
+is a scalar.
+
 =item read_until_dot ()
 
 Read data from the remote server until a line consisting of a single '.'.
@@ -714,6 +759,6 @@ it under the same terms as Perl itself.
 
 =for html <hr>
 
-I<$Id: //depot/libnet/Net/Cmd.pm#28 $>
+I<$Id: //depot/libnet/Net/Cmd.pm#33 $>
 
 =cut

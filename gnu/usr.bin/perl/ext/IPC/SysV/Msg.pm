@@ -11,7 +11,7 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = "1.00_00";
+$VERSION = "1.02";
 $VERSION = eval $VERSION;
 
 {
@@ -69,7 +69,7 @@ sub set {
     else {
 	croak 'Bad arg count' if @_ % 2;
 	my %arg = @_;
-	my $ds = $self->stat
+	$ds = $self->stat
 		or return undef;
 	my($key,$val);
 	$ds->$key($val)

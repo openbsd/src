@@ -76,7 +76,8 @@ struct encode_s
 /* See comment at top of file for deviousness */
 
 extern int do_encode(encpage_t *enc, const U8 *src, STRLEN *slen,
-                     U8 *dst, STRLEN dlen, STRLEN *dout, int approx);
+                     U8 *dst, STRLEN dlen, STRLEN *dout, int approx,
+		     const U8 *term, STRLEN tlen);
 
 extern void Encode_DefineEncoding(encode_t *enc);
 
@@ -86,6 +87,7 @@ extern void Encode_DefineEncoding(encode_t *enc);
 #define ENCODE_PARTIAL  2
 #define ENCODE_NOREP    3
 #define ENCODE_FALLBACK 4
+#define ENCODE_FOUND_TERM 5
 
 #define FBCHAR_UTF8		"\xEF\xBF\xBD"
 

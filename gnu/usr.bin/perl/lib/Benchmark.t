@@ -2,13 +2,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = ('../lib');
 }
 
 use warnings;
 use strict;
 use vars qw($foo $bar $baz $ballast);
-use Test::More tests => 159;
+use Test::More tests => 193;
 
 use Benchmark qw(:all);
 
@@ -22,14 +22,14 @@ sub fib {
 }
 $ballast = 15;
 
-my $all_pattern =
+my $All_Pattern =
     qr/(\d+) +wallclock secs? +\( *(-?\d+\.\d\d) +usr +(-?\d+\.\d\d) +sys +\+ +(-?\d+\.\d\d) +cusr +(-?\d+\.\d\d) +csys += +(-?\d+\.\d\d) +CPU\)/;
-my $noc_pattern =
+my $Noc_Pattern =
     qr/(\d+) +wallclock secs? +\( *(-?\d+\.\d\d) +usr +\+ +(-?\d+\.\d\d) +sys += +(-?\d+\.\d\d) +CPU\)/;
-my $nop_pattern =
+my $Nop_Pattern =
     qr/(\d+) +wallclock secs? +\( *(-?\d+\.\d\d) +cusr +\+ +(-?\d+\.\d\d) +csys += +\d+\.\d\d +CPU\)/;
 # Please don't trust the matching parenthises to be useful in this :-)
-my $default_pattern = qr/$all_pattern|$noc_pattern/;
+my $Default_Pattern = qr/$All_Pattern|$Noc_Pattern/;
 
 my $t0 = new Benchmark;
 isa_ok ($t0, 'Benchmark', "Ensure we can create a benchmark object");
@@ -102,10 +102,10 @@ is ($auto, $default, 'timestr ($diff, "auto") matches timestr ($diff)');
 
 {
     my $all = timestr ($diff, 'all');
-    like ($all, $all_pattern, 'timestr ($diff, "all")');
+    like ($all, $All_Pattern, 'timestr ($diff, "all")');
     print "# $all\n";
 
-    my ($wallclock, $usr, $sys, $cusr, $csys, $cpu) = $all =~ $all_pattern;
+    my ($wallclock, $usr, $sys, $cusr, $csys, $cpu) = $all =~ $All_Pattern;
 
     is (timestr ($diff, 'none'), '', "none supresses output");
 
@@ -138,7 +138,7 @@ is ($foo, $iterations, "benchmarked code was run $iterations times");
 
 $got = $out->read();
 like ($got, qr/^timethis $iterations/, 'default title');
-like ($got, $default_pattern, 'default format is all or noc');
+like ($got, $Default_Pattern, 'default format is all or noc');
 
 $bar = 0;
 select(OUT);
@@ -149,7 +149,7 @@ is ($bar, $iterations, "benchmarked code was run $iterations times");
 
 $got = $out->read();
 like ($got, qr/^timethis $iterations/, 'default title');
-like ($got, $default_pattern, 'default format is all or noc');
+like ($got, $Default_Pattern, 'default format is all or noc');
 
 my $title = 'lies, damn lies and benchmarks';
 $foo = 0;
@@ -161,7 +161,7 @@ is ($foo, $iterations, "benchmarked code was run $iterations times");
 
 $got = $out->read();
 like ($got, qr/^$title:/, 'specify title');
-like ($got, $default_pattern, 'default format is all or noc');
+like ($got, $Default_Pattern, 'default format is all or noc');
 
 # default is auto, which is all or noc. nop can never match the default
 $foo = 0;
@@ -173,7 +173,7 @@ is ($foo, $iterations, "benchmarked code was run $iterations times");
 
 $got = $out->read();
 like ($got, qr/^$title:/, 'specify title');
-like ($got, $nop_pattern, 'specify format as nop');
+like ($got, $Nop_Pattern, 'specify format as nop');
 
 {
     $foo = 0;
@@ -218,7 +218,42 @@ like ($got, qr/timing $iterations iterations of\s+Bar\W+Baz\W+Foo\W*?\.\.\./s,
 # Remove the title
 $got =~ s/.*\.\.\.//s;
 like ($got, qr/\bBar\b.*\bBaz\b.*\bFoo\b/s, 'check output is in sorted order');
-like ($got, $default_pattern, 'should find default format somewhere');
+like ($got, $Default_Pattern, 'should find default format somewhere');
+
+
+{ # ensure 'use strict' does not leak from Benchmark.pm into benchmarked code
+    no strict;
+    select OUT;
+
+    eval {
+        timethese( 1, 
+                   { undeclared_var => q{ $i++; $i-- },
+                     symbolic_ref   => q{ $bar = 42;
+                                          $foo = 'bar';
+                                          $q = ${$foo} },
+                   },
+                   'none'
+                  );
+
+    };
+    is( $@, '', q{no strict leakage in name => 'code'} );
+
+    eval {
+        timethese( 1,
+                   { undeclared_var => sub { $i++; $i-- },
+                     symbolic_ref   => sub { $bar = 42;
+                                             $foo = 'bar';
+                                             return ${$foo} },
+                   },
+                   'none'
+                 );
+    };
+    is( $@, '', q{no strict leakage in name => sub { code }} );
+
+    # clear out buffer
+    $out->read;
+}
+
 
 my $code_to_test =  { Foo => sub {$foo+=fib($ballast-2)},
                       Bar => sub {$bar+=fib($ballast)}};
@@ -292,8 +327,8 @@ sub check_graph_consistency {
     (my $fastslow = $fastslowt) =~ s!%!!;
     if ($slowrate < $fastrate) {
         pass ("slow rate is less than fast rate");
-        unless (ok ($slowfast < 0 && $slowfast >= -100,
-                    "slowfast should be less than zero, and >= -100")) {
+        unless (ok ($slowfast <= 0 && $slowfast >= -100,
+                    "slowfast should be less than or equal to zero, and >= -100")) {
           print STDERR "# slowfast $slowfast\n";
           $all_passed = 0;
         }
@@ -305,10 +340,12 @@ sub check_graph_consistency {
         $all_passed
           &= is ($slowrate, $fastrate,
                  "slow rate isn't less than fast rate, so should be the same");
+	# In OpenBSD the $slowfast is sometimes a really, really, really
+	# small number less than zero, and this gets stringified as -0.
         $all_passed
-          &= is ($slowfast, 0, "slowfast should be zero");
+          &= like ($slowfast, qr/^-?0$/, "slowfast should be zero");
         $all_passed
-          &= is ($fastslow, 0, "fastslow should be zero");
+          &= like ($fastslow, qr/^-?0$/, "fastslow should be zero");
     }
     return $all_passed;
 }
@@ -346,7 +383,7 @@ sub check_graph {
 {
     select(OUT);
     my $start = times;
-    my $chart = cmpthese( -0.1, { a => "++\$i", b => "\$i = sqrt(\$i++)" } ) ;
+    my $chart = cmpthese( -0.1, { a => "++\$i", b => "\$i = sqrt(\$i++)" }, "auto" ) ;
     my $end = times;
     select(STDOUT);
     ok (($end - $start) > 0.05, "benchmarked code ran for over 0.05 seconds");
@@ -359,7 +396,29 @@ sub check_graph {
           'check title');
     # Remove the title
     $got =~ s/.*\.\.\.//s;
-    like ($got, $default_pattern, 'should find default format somewhere');
+    like ($got, $Default_Pattern, 'should find default format somewhere');
+    like ($got, $graph_dissassembly, "Should find the output graph somewhere");
+    check_graph_vs_output ($chart, $got);
+}
+
+# Not giving auto should suppress timethese results.
+{
+    select(OUT);
+    my $start = times;
+    my $chart = cmpthese( -0.1, { a => "++\$i", b => "\$i = sqrt(\$i++)" } ) ;
+    my $end = times;
+    select(STDOUT);
+    ok (($end - $start) > 0.05, "benchmarked code ran for over 0.05 seconds");
+
+    $got = $out->read();
+    # Remove any warnings about having too few iterations.
+    $got =~ s/\(warning:[^\)]+\)//gs;
+
+    unlike ($got, qr/running\W+a\W+b.*?for at least 0\.1 CPU second/s,
+          'should not have title');
+    # Remove the title
+    $got =~ s/.*\.\.\.//s;
+    unlike ($got, $Default_Pattern, 'should not find default format somewhere');
     like ($got, $graph_dissassembly, "Should find the output graph somewhere");
     check_graph_vs_output ($chart, $got);
 }
@@ -379,7 +438,7 @@ sub check_graph {
       'check title');
     # Remove the title
     $got =~ s/.*\.\.\.//s;
-    like ($got, $nop_pattern, 'specify format as nop');
+    like ($got, $Nop_Pattern, 'specify format as nop');
     like ($got, $graph_dissassembly, "Should find the output graph somewhere");
     check_graph_vs_output ($chart, $got);
 }
@@ -470,24 +529,63 @@ untie *STDERR;
 # being used, merely what's become cached.
 
 clearallcache();
-my @before_keys = keys %Benchmark::cache;
+my @before_keys = keys %Benchmark::Cache;
 $bar = 0;
 isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
 is ($bar, 5, "benchmarked code was run 5 times");
-my @after5_keys = keys %Benchmark::cache;
+my @after5_keys = keys %Benchmark::Cache;
 $bar = 0;
 isa_ok(timeit(10, '++$bar'), 'Benchmark', "timeit eval");
 is ($bar, 10, "benchmarked code was run 10 times");
-ok (!eq_array ([keys %Benchmark::cache], \@after5_keys), "10 differs from 5");
+ok (!eq_array ([keys %Benchmark::Cache], \@after5_keys), "10 differs from 5");
 
 clearcache(10);
 # Hash key order will be the same if there are the same keys.
-is_deeply ([keys %Benchmark::cache], \@after5_keys,
+is_deeply ([keys %Benchmark::Cache], \@after5_keys,
            "cleared 10, only cached results for 5 should remain");
 
 clearallcache();
-is_deeply ([keys %Benchmark::cache], \@before_keys,
+is_deeply ([keys %Benchmark::Cache], \@before_keys,
            "back to square 1 when we clear the cache again?");
+
+
+{   # Check usage error messages
+    my %usage = %Benchmark::_Usage;
+    delete $usage{runloop};  # not public, not worrying about it just now
+
+    my @takes_no_args = qw(clearallcache disablecache enablecache);
+
+    my %cmpthese = ('forgot {}' => 'cmpthese( 42, foo => sub { 1 } )',
+                     'not result' => 'cmpthese(42)',
+                     'array ref'  => 'cmpthese( 42, [ foo => sub { 1 } ] )',
+                    );
+    while( my($name, $code) = each %cmpthese ) {
+        eval $code;
+        is( $@, $usage{cmpthese}, "cmpthese usage: $name" );
+    }
+
+    my %timethese = ('forgot {}'  => 'timethese( 42, foo => sub { 1 } )',
+                       'no code'    => 'timethese(42)',
+                       'array ref'  => 'timethese( 42, [ foo => sub { 1 } ] )',
+                      );
+
+    while( my($name, $code) = each %timethese ) {
+        eval $code;
+        is( $@, $usage{timethese}, "timethese usage: $name" );
+    }
+
+
+    while( my($func, $usage) = each %usage ) {
+        next if grep $func eq $_, @takes_no_args;
+        eval "$func()";
+        is( $@, $usage, "$func usage: no args" );
+    }
+
+    foreach my $func (@takes_no_args) {
+        eval "$func(42)";
+        is( $@, $usage{$func}, "$func usage: with args" );
+    }
+}
 
 
 package TieOut;

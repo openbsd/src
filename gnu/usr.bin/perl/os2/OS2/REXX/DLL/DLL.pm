@@ -1,20 +1,9 @@
 package OS2::DLL;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 use Carp;
-use DynaLoader;
-
-@ISA = qw(DynaLoader);
-
-sub AUTOLOAD {
-    $AUTOLOAD =~ /^OS2::DLL::.+::(.+)$/
-      or confess("Undefined subroutine &$AUTOLOAD called");
-    return undef if $1 eq "DESTROY";
-    $_[0]->find($1)
-      or confess("Can't find entry '$1' to DLL '$_[0]->{File}': $^E");
-    goto &$AUTOLOAD;
-}
+use XSLoader;
 
 @libs = split(/;/, $ENV{'PERL5REXX'} || $ENV{'PERLREXX'} || $ENV{'LIBPATH'} || $ENV{'PATH'});
 %dlls = ();
@@ -22,23 +11,10 @@ sub AUTOLOAD {
 # Preloaded methods go here.  Autoload methods go after __END__, and are
 # processed by the autosplit program.
 
-# Cannot autoload, the autoloader is used for the REXX functions.
+# Cannot be autoload, the autoloader is used for the REXX functions.
 
-sub new {
-  confess 'Usage: OS2::DLL->new( <file> [<dirs>] )' unless @_ >= 2;
-  my ($class, $file) = (shift, shift);
-  my $handle;
-  $handle = $class->load($file, @_) and return $handle;
-  my $path = @_ ? " from '@_'" : '';
-  my $err = DynaLoader::dl_error();
-  $err =~ s/\s+at\s+\S+\s+line\s+\S+\s*\z//;
-  croak "Can't load '$file'$path: $err";
-}
-
-sub load
-{
-	confess 'Usage: load OS2::DLL <file> [<dirs>]' unless $#_ >= 1;
-	my ($class, $file, @where) = (@_, @libs);
+my $load_with_dirs = sub {
+	my ($class, $file, @where) = (@_);
 	return $dlls{$file} if $dlls{$file};
 	my $handle;
 	foreach (@where) {
@@ -47,46 +23,86 @@ sub load
 	}
 	$handle = DynaLoader::dl_load_file($file) unless $handle;
 	return undef unless $handle;
-	my $packs = $INC{'OS2/REXX.pm'} ? 'OS2::DLL OS2::REXX' : 'OS2::DLL';
-	eval <<EOE or die "eval package $@";
-package OS2::DLL::$file; \@ISA = qw($packs);
-sub AUTOLOAD {
-  \$OS2::DLL::AUTOLOAD = \$AUTOLOAD;
-  goto &OS2::DLL::AUTOLOAD;
-}
-1;
-EOE
+	my @packs = $INC{'OS2/REXX.pm'} ? qw(OS2::DLL::dll OS2::REXX) : 'OS2::DLL::dll';
+	my $p = "OS2::DLL::dll::$file";
+	@{"$p\::ISA"} = @packs;
+	*{"$p\::AUTOLOAD"} = \&OS2::DLL::dll::AUTOLOAD;
 	return $dlls{$file} = 
-	  bless {Handle => $handle, File => $file, Queue => 'SESSION' },
-		"OS2::DLL::$file";
+	  bless {Handle => $handle, File => $file, Queue => 'SESSION' }, $p;
+};
+
+my $new_dll = sub {
+  my ($dirs, $class, $file) = (shift, shift, shift);
+  my $handle;
+  push @_, @libs if $dirs;
+  $handle = $load_with_dirs->($class, $file, @_)
+    and return $handle;
+  my $path = @_ ? " from '@_'" : '';
+  my $err = DynaLoader::dl_error();
+  $err =~ s/\s+at\s+\S+\s+line\s+\S+\s*\z//;
+  croak "Can't load '$file'$path: $err";
+};
+
+sub new {
+  confess 'Usage: OS2::DLL->new( <file> [<dirs>] )' unless @_ >= 2;
+  $new_dll->(1, @_);
+}
+
+sub module {
+  confess 'Usage: OS2::DLL->module( <file> [<dirs>] )' unless @_ >= 2;
+  $new_dll->(0, @_);
+}
+
+sub load {
+  confess 'Usage: load OS2::DLL <file> [<dirs>]' unless $#_ >= 1;
+  $load_with_dirs->(@_, @libs);
+}
+
+package OS2::DLL::dll;
+use Carp;
+@ISA = 'OS2::DLL';
+
+sub AUTOLOAD {
+    $AUTOLOAD =~ /^OS2::DLL::dll::.+::(.+)$/
+      or confess("Undefined subroutine &$AUTOLOAD called");
+    return undef if $1 eq "DESTROY";
+    die "AUTOLOAD loop" if $1 eq "AUTOLOAD";
+    $_[0]->find($1) or confess($@);
+    goto &$AUTOLOAD;
+}
+
+sub wrapper_REXX {
+	confess 'Usage: $dllhandle->wrapper_REXX($func_name)' unless @_ == 2;
+	my $self   = shift;
+	my $file   = $self->{File};
+	my $handle = $self->{Handle};
+	my $prefix = exists($self->{Prefix}) ? $self->{Prefix} : "";
+	my $queue  = $self->{Queue};
+	my $name = shift;
+	$prefix = '' if $name =~ /^#\d+/;	# loading by ordinal
+	my $addr = (DynaLoader::dl_find_symbol($handle, uc $prefix.$name)
+		    || DynaLoader::dl_find_symbol($handle, $prefix.$name));
+	return sub {
+	  OS2::DLL::_call($name, $addr, $queue, @_);
+	} if $addr;
+	my $err = DynaLoader::dl_error();
+	$err =~ s/\s+at\s+\S+\s+line\s+\S+\s*\z//;
+	croak "Can't find symbol `$name' in DLL `$file': $err";
 }
 
 sub find
 {
 	my $self   = shift;
 	my $file   = $self->{File};
-	my $handle = $self->{Handle};
-	my $prefix = exists($self->{Prefix}) ? $self->{Prefix} : "";
-	my $queue  = $self->{Queue};
+	my $p	   = ref $self;
 	foreach (@_) {
-		my $name = "OS2::DLL::${file}::$_";
-		next if defined(&$name);
-		my $addr = DynaLoader::dl_find_symbol($handle, uc $prefix.$_)
-		        || DynaLoader::dl_find_symbol($handle, $prefix.$_)
-			or return 0;
-		eval <<EOE or die "eval sub";
-package OS2::DLL::$file;
-sub $_ {
-  shift;
-  OS2::DLL::_call('$_', $addr, '$queue', \@_);
-}
-1;
-EOE
+		my $f = eval {$self->wrapper_REXX($_)} or return 0;
+		${"${p}::"}{$_} = sub { shift; $f->(@_) };
 	}
 	return 1;
 }
 
-bootstrap OS2::DLL;
+XSLoader::load 'OS2::DLL';
 
 1;
 __END__
@@ -104,45 +120,124 @@ See documentation of L<OS2::REXX> module if you need the variable pool.
 =head1 SYNOPSIS
 
 	use OS2::DLL;
-	$emx_dll = OS2::DLL->load('emx');
+	$emx_dll = OS2::DLL->module('emx');
 	$emx_version = $emx_dll->emx_revision();
+	$func_emx_version = $emx_dll->wrapper_REXX('#128'); # emx_revision
+	$emx_version = $func_emx_version->();
 
 =head1 DESCRIPTION
 
-=head2 Load REXX DLL
+=head2 Create a DLL handle
 
-	$dll = load OS2::DLL NAME [, WHERE];
+	$dll = OS2::DLL->module( NAME [, WHERE] );
 
-NAME is DLL name, without path and extension.
+Loads an OS/2 module NAME, looking in directories WHERE (adding the
+extension F<.dll>), if the DLL is not found there, loads in the usual OS/2 way
+(via LIBPATH and other settings).  Croaks with a verbose report on failure.
 
-Directories are searched WHERE first (list of dirs), then environment
-paths PERL5REXX, PERLREXX, PATH or, as last resort, OS/2-ish search 
-is performed in default DLL path (without adding paths and extensions).
+The DLL is not unloaded when the return value is destroyed.
 
-The DLL is not unloaded when the variable dies.
-
-Returns DLL object reference, or undef on failure (in this case one can
-get the reason via C<DynaLoader::dl_error()>).
-
-=head2 Create a REXX DLL handle
+=head2 Create a DLL handle (looking in some strange locations)
 
 	$dll = OS2::DLL->new( NAME [, WHERE] );
 
-Same as L<C<load>|Load REXX DLL>, but croaks with a meaningful message on
-failure.
+Same as L<C<module>|Create a DLL handle>, but in addition to WHERE, looks
+in environment paths PERL5REXX, PERLREXX, PATH (provided for backward
+compatibility).
+
+=head2 Loads DLL by name
+
+	$dll = load OS2::DLL NAME [, WHERE];
+
+Same as L<C<new>|Create a DLL handle (looking in some strange locations)>,
+but returns DLL object reference, or undef on failure (in this case one can
+get the reason via C<DynaLoader::dl_error()>) (provided for backward
+compatibility).
 
 =head2 Check for functions (optional):
 
 	BOOL = $dll->find(NAME [, NAME [, ...]]);
 
-Returns true if all functions are available.
+Returns true if all functions are available.  As a side effect, creates
+a REXX wrapper with the specified name in the package constructed by the name
+of the DLL so that the next call to C<$dll->NAME()> will pick up the cached
+method.
 
-=head2 Call external REXX function:
+=head2 Create a Perl wrapper (optional):
 
-	$dll->function(arguments);
+	$func = $dll->wrapper_REXX(NAME);
 
-Returns the return string if the return code is 0, else undef.
-Dies with error message if the function is not available.
+Returns a reference to a Perl function wrapper for the entry point NAME
+in the DLL.  Similar to the OS/2 API, the NAME may be C<"#123"> - in this case
+the ordinal is loaded.   Croaks with a meaningful error message if NAME does
+not exists (although the message for the case when the name is an ordinal may
+be confusing).
+
+=head2 Call external function with REXX calling convention:
+
+	$ret_string = $dll->function_name(arguments);
+
+Returns the return string if the REXX return code is 0, else undef.
+Dies with error message if the function is not available.  On the first call
+resolves the name in the DLL and caches the Perl wrapper; future calls go
+through the wrapper.
+
+Unless used inside REXX environment (see L<OS2::REXX>), the REXX runtime
+environment (variable pool, queue etc.) is not available to the called
+function.
+
+=head1 Low-level API
+
+=over
+
+=item Call a _System linkage function via a pointer
+
+If a function takes up to 20 ULONGs and returns ULONG:
+
+ $res = call20( $pointer, $arg0, $arg1, ...);
+
+=item Same for packed arguments:
+
+ $res = call20_p( $pointer, pack 'L20', $arg0, $arg1, ...);
+
+=item Same for C<regparm(3)> function:
+
+ $res = call20_rp3( $pointer, $arg0, $arg1, ...);
+
+=item Same for packed arguments and C<regparm(3)> function
+
+ $res = call20_rp3_p( $pointer, pack 'L20', $arg0, $arg1, ...);
+
+=item Same for a function which returns non-0 and sets system-error on error
+
+ call20_Dos( $msg, $pointer, $arg0, $arg1, ...); # die("$msg: $^E") if error
+
+[Good for C<Dos*> API - and rare C<Win*> calls.]
+
+=item Same for a function which returns 0 and sets WinLastError() on error
+
+ $res = call20_Win( $msg, $pointer, $arg0, $arg1, ...);
+ # would die("$msg: $^E") if error
+
+[Good for most of C<Win*> API.]
+
+=item Same for a function which returns 0 and sets WinLastError() on error but
+0 is also a valid return
+
+ $res = call20_Win_0OK( $msg, $pointer, $arg0, $arg1, ...);
+ # would die("$msg: $^E") if error
+
+[Good for some of C<Win*> API.]
+
+=item As previous, but without die()
+
+ $res = call20_Win_0OK_survive( $pointer, $arg0, $arg1, ...);
+ if ($res == 0 and $^E) {	# Do error processing here
+ }
+
+[Good for some of C<Win*> API.]
+
+=back
 
 =head1 ENVIRONMENT
 
@@ -151,7 +246,7 @@ in C<PERL5REXX>, C<PERLREXX>, C<PATH>.
 
 =head1 AUTHOR
 
-Extracted by Ilya Zakharevich ilya@math.ohio-state.edu from L<OS2::REXX>
+Extracted by Ilya Zakharevich perl-module-OS2-DLL@ilyaz.org from L<OS2::REXX>
 written by Andreas Kaiser ak@ananke.s.bawue.de.
 
 =cut

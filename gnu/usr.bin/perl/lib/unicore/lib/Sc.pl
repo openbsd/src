@@ -13,6 +13,8 @@ return <<'END';
 0024		
 00A2	00A5	
 09F2	09F3	
+0AF1		
+0BF9		
 0E3F		
 17DB		
 20A0	20B1	

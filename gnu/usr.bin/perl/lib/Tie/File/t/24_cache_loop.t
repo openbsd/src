@@ -43,6 +43,7 @@ $N++;
 alarm 5 unless $^P;
 @a = "record0" .. "record9";
 print "ok 3\n";
+alarm 0;
 
 END {
   undef $o;

@@ -42,10 +42,10 @@ int __perl_mpe_getspaceid(void *source)
    *
    * Refer to the gcc documentation or http://www.dis.com/gnu/gcc_toc.html
    */
-  asm volatile (
-      "comiclr,= 0,%1,%%r28;
-         ldsid (%%r0,%1),%%r28;
-       stw %%r28, %0"
+  __asm__ __volatile__ (
+      "   comiclr,= 0,%1,%%r28\n"
+      "\t  ldsid (%%r0,%1),%%r28\n"
+      "\t stw %%r28, %0"
                         : "=m" (val)    // Output to val
                         : "r" (source)  // Source must be gen reg
                         : "%r28");      // Clobbers %r28
@@ -59,11 +59,11 @@ LONGPOINTER __perl_mpe_longaddr(void *source)
    * Return the long pointer for the address in sr5 space.
    */
 
-  asm volatile (
-      "comiclr,= 0,%2,%%r28;
-         ldsid (%%r0,%2),%%r28;
-       stw %%r28, %0;
-       stw %2, %1"
+  __asm__ __volatile__ (
+      "  comiclr,= 0,%2,%%r28\n"
+      "\t    ldsid (%%r0,%2),%%r28\n"
+      "\t  stw %%r28, %0\n"
+      "\t  stw %2, %1"
                         : "=m" (lptr.spaceid),
                           "=m" (lptr.offset)    // Store to lptr
                         : "r" (source)          // Source must be gen reg
@@ -79,9 +79,9 @@ LONGPOINTER __perl_mpe_addtopointer(LONGPOINTER source,    // %r26 == source off
    * Increment a longpointer.
    */
 
-  asm volatile (
-      "copy %0,%%r28;                           // copy space to r28
-       add %1,%2,%%r29"                         // Increment the pointer
+  __asm__ __volatile__ (
+      "  copy %0,%%r28\n"                       // copy space to r28
+      "\t  add %1,%2,%%r29"                     // Increment the pointer
                         :                       // No output
                         : "r" (source.spaceid), // Source address
                           "r" (source.offset),
@@ -98,14 +98,14 @@ void __perl_mpe_longmove(int len,                  // %r26 == byte length
    * Move data between two buffers in long pointer space.
    */
 
-  asm volatile (
-      ".import $$lr_unk_unk_long,MILLICODE;
-       mtsp %0,%%sr1;                           // copy source space to sr1
-       copy %1,%%r26;                           // load source offset to r26
-       copy %4,%%r24;                           // load length to r24
-       copy %3,%%r25;                           // load target offset to r25
-       bl $$lr_unk_unk_long,%%r31;              // start branch to millicode
-       mtsp %2,%%sr2"                           // copy target space to sr2
+  __asm__ __volatile__ (
+      "  .import $$lr_unk_unk_long,MILLICODE\n"
+      "\t  mtsp %0,%%sr1\n"                     // copy source space to sr1
+      "\t  copy %1,%%r26\n"                     // load source offset to r26
+      "\t  copy %4,%%r24\n"                     // load length to r24
+      "\t  copy %3,%%r25\n"                     // load target offset to r25
+      "\t  bl $$lr_unk_unk_long,%%r31\n"        // start branch to millicode
+      "\t  mtsp %2,%%sr2"                       // copy target space to sr2
                         :                       // No output
                         : "r" (source.spaceid), // Source address
                           "r" (source.offset),
@@ -126,11 +126,11 @@ int __perl_mpe_longpeek(LONGPOINTER source)
    */
   unsigned int val;
 
-  asm volatile (
-      "mtsp %1, %%sr1;
-       copy %2, %%r28;
-       ldw 0(%%sr1, %%r28), %%r28;
-       stw %%r28, %0"
+  __asm__ __volatile__ (
+      "  mtsp %1, %%sr1\n"
+      "\t  copy %2, %%r28\n"
+      "\t  ldw 0(%%sr1, %%r28), %%r28\n"
+      "\t  stw %%r28, %0"
                         : "=m" (val)            // Output val
                         : "r" (source.spaceid), // Source space ID
                           "r" (source.offset)   // Source offset
@@ -145,10 +145,10 @@ void __perl_mpe_longpoke(LONGPOINTER target,       // %r25 == spaceid, %r26 == o
   /*
    * Store the val into long pointer space.
    */
-  asm volatile (
-      "mtsp %0,%%sr1;
-       copy %1, %%r28;
-       stw %2, 0(%%sr1, %%r28)"
+  __asm__ __volatile__ (
+      "  mtsp %0,%%sr1\n"
+      "\t  copy %1, %%r28\n"
+      "\t  stw %2, 0(%%sr1, %%r28)"
                         :                       // No output
                         : "r" (target.spaceid), // Target space ID
                           "r" (target.offset),  // Target offset
@@ -164,12 +164,12 @@ void __perl_mpe_move_fast(int len,                 // %r26 == byte length
   /*
    * Move using short pointers.
    */
-  asm volatile (
-      ".import $$lr_unk_unk,MILLICODE;
-       copy %1, %%r26;                          // Move source addr into pos
-       copy %2, %%r25;                          // Move target addr into pos
-       bl $$lr_unk_unk,%%r31;                   // Start branch to millicode
-       copy %0, %%r24"                          // Move length into position
+  __asm__ __volatile__ (
+      "  .import $$lr_unk_unk,MILLICODE\n"
+      "\t  copy %1, %%r26\n"                    // Move source addr into pos
+      "\t  copy %2, %%r25\n"                    // Move target addr into pos
+      "\t  bl $$lr_unk_unk,%%r31\n"             // Start branch to millicode
+      "\t  copy %0, %%r24"                      // Move length into position
                         :                       // No output
                         : "r" (len),            // Byte length
                           "r" (source),         // Source address
@@ -451,3 +451,56 @@ struct timezone *tpz;
    return 0;
 
 } /* gettimeofday() */
+
+/*
+**  MPE_FCNTL -- shadow function for fcntl()
+**
+**	MPE requires sfcntl() for sockets, and fcntl() for everything 
+**	else.  This shadow routine determines the descriptor type and
+**	makes the appropriate call.
+**
+**	Parameters:
+**		same as fcntl().
+**
+**	Returns:
+**		same as fcntl().
+*/
+
+#include <stdarg.h>
+#include <sys/socket.h>
+
+int
+mpe_fcntl(int fildes, int cmd, ...)
+{
+	int len, result;
+	struct sockaddr sa;
+	
+	void *arg;
+	va_list ap;
+	
+	va_start(ap, cmd);
+	arg = va_arg(ap, void *);
+	va_end(ap);
+	
+	len = sizeof sa;
+	if (getsockname(fildes, &sa, &len) == -1)
+	{
+	        if (errno == EAFNOSUPPORT)
+			/* AF_UNIX socket */
+	                return sfcntl(fildes, cmd, arg);
+
+	        if (errno == ENOTSOCK) 
+			/* file or pipe */
+	                return fcntl(fildes, cmd, arg);
+
+		/* unknown getsockname() failure */
+	        return (-1); 
+	}
+	else
+	{
+		/* AF_INET socket */
+		if ((result = sfcntl(fildes, cmd, arg)) != -1 && cmd == F_GETFL)
+			result |= O_RDWR;  /* fill in some missing flags */
+	        return result;
+	}
+}

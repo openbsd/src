@@ -1,6 +1,7 @@
 /*    numeric.c
  *
- *    Copyright (c) 2001-2002, Larry Wall
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -197,7 +198,7 @@ Perl_grok_bin(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
 		++s;
                 goto redo;
 	    }
-        if (ckWARN(WARN_DIGIT))
+        if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT) && ckWARN(WARN_DIGIT))
             Perl_warner(aTHX_ packWARN(WARN_DIGIT),
                         "Illegal binary digit '%c' ignored", *s);
         break;
@@ -312,7 +313,7 @@ Perl_grok_hex(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
 		++s;
                 goto redo;
 	    }
-        if (ckWARN(WARN_DIGIT))
+        if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT) && ckWARN(WARN_DIGIT))
             Perl_warner(aTHX_ packWARN(WARN_DIGIT),
                         "Illegal hexadecimal digit '%c' ignored", *s);
         break;
@@ -398,7 +399,7 @@ Perl_grok_oct(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
          * as soon as non-octal characters are seen, complain only iff
          * someone seems to want to use the digits eight and nine). */
         if (digit == 8 || digit == 9) {
-            if (ckWARN(WARN_DIGIT))
+            if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT) && ckWARN(WARN_DIGIT))
                 Perl_warner(aTHX_ packWARN(WARN_DIGIT),
                             "Illegal octal digit '%c' ignored", *s);
         }
@@ -717,7 +718,7 @@ Perl_grok_number(pTHX_ const char *pv, STRLEN len, UV *valuep)
   return 0;
 }
 
-NV
+STATIC NV
 S_mulexp10(NV value, I32 exponent)
 {
     NV result = 1.0;
@@ -727,6 +728,8 @@ S_mulexp10(NV value, I32 exponent)
 
     if (exponent == 0)
 	return value;
+    if (value == 0)
+	return 0;
 
     /* On OpenVMS VAX we by default use the D_FLOAT double format,
      * and that format does not have *easy* capabilities [1] for
@@ -811,27 +814,43 @@ Perl_my_atof(pTHX_ const char* s)
 char*
 Perl_my_atof2(pTHX_ const char* orig, NV* value)
 {
-    NV result = 0.0;
+    NV result[3] = {0.0, 0.0, 0.0};
     char* s = (char*)orig;
 #ifdef USE_PERL_ATOF
+    UV accumulator[2] = {0,0};	/* before/after dp */
     bool negative = 0;
     char* send = s + strlen(orig) - 1;
-    bool seendigit = 0;
-    I32 expextra = 0;
+    bool seen_digit = 0;
+    I32 exp_adjust[2] = {0,0};
+    I32 exp_acc[2] = {-1, -1};
+    /* the current exponent adjust for the accumulators */
     I32 exponent = 0;
-    I32 i;
-/* this is arbitrary */
-#define PARTLIM 6
-/* we want the largest integers we can usefully use */
-#if defined(HAS_QUAD) && defined(USE_64_BIT_INT)
-#   define PARTSIZE ((int)TYPE_DIGITS(U64)-1)
-    U64 part[PARTLIM];
-#else
-#   define PARTSIZE ((int)TYPE_DIGITS(U32)-1)
-    U32 part[PARTLIM];
-#endif
-    I32 ipart = 0;	/* index into part[] */
-    I32 offcount;	/* number of digits in least significant part */
+    I32	seen_dp  = 0;
+    I32 digit = 0;
+    I32 old_digit = 0;
+    I32 sig_digits = 0; /* noof significant digits seen so far */
+
+/* There is no point in processing more significant digits
+ * than the NV can hold. Note that NV_DIG is a lower-bound value,
+ * while we need an upper-bound value. We add 2 to account for this;
+ * since it will have been conservative on both the first and last digit.
+ * For example a 32-bit mantissa with an exponent of 4 would have
+ * exact values in the set
+ *               4
+ *               8
+ *              ..
+ *     17179869172
+ *     17179869176
+ *     17179869180
+ *
+ * where for the purposes of calculating NV_DIG we would have to discount
+ * both the first and last digit, since neither can hold all values from
+ * 0..9; but for calculating the value we must examine those two digits.
+ */
+#define MAX_SIG_DIGITS (NV_DIG+2)
+
+/* the max number we can accumulate in a UV, and still safely do 10*N+9 */
+#define MAX_ACCUMULATE ( (UV) ((UV_MAX - 9)/10))
 
     /* leading whitespace */
     while (isSPACE(*s))
@@ -846,74 +865,79 @@ Perl_my_atof2(pTHX_ const char* orig, NV* value)
 	    ++s;
     }
 
-    part[0] = offcount = 0;
-    if (isDIGIT(*s)) {
-	seendigit = 1;	/* get this over with */
+    /* we accumulate digits into an integer; when this becomes too
+     * large, we add the total to NV and start again */
 
-	/* skip leading zeros */
-	while (*s == '0')
-	    ++s;
-    }
+    while (1) {
+	if (isDIGIT(*s)) {
+	    seen_digit = 1;
+	    old_digit = digit;
+	    digit = *s++ - '0';
+	    if (seen_dp)
+		exp_adjust[1]++;
 
-    /* integer digits */
-    while (isDIGIT(*s)) {
-	if (++offcount > PARTSIZE) {
-	    if (++ipart < PARTLIM) {
-		part[ipart] = 0;
-		offcount = 1;	/* ++0 */
-	    }
-	    else {
+	    /* don't start counting until we see the first significant
+	     * digit, eg the 5 in 0.00005... */
+	    if (!sig_digits && digit == 0)
+		continue;
+
+	    if (++sig_digits > MAX_SIG_DIGITS) {
 		/* limits of precision reached */
-		--ipart;
-		--offcount;
-		if (*s >= '5')
-		    ++part[ipart];
+	        if (digit > 5) {
+		    ++accumulator[seen_dp];
+		} else if (digit == 5) {
+		    if (old_digit % 2) { /* round to even - Allen */
+			++accumulator[seen_dp];
+		    }
+		}
+		if (seen_dp) {
+		    exp_adjust[1]--;
+		} else {
+		    exp_adjust[0]++;
+		}
+		/* skip remaining digits */
 		while (isDIGIT(*s)) {
-		    ++expextra;
 		    ++s;
+		    if (! seen_dp) {
+			exp_adjust[0]++;
+		    }
 		}
 		/* warn of loss of precision? */
+	    }
+	    else {
+		if (accumulator[seen_dp] > MAX_ACCUMULATE) {
+		    /* add accumulator to result and start again */
+		    result[seen_dp] = S_mulexp10(result[seen_dp],
+						 exp_acc[seen_dp])
+			+ (NV)accumulator[seen_dp];
+		    accumulator[seen_dp] = 0;
+		    exp_acc[seen_dp] = 0;
+		}
+		accumulator[seen_dp] = accumulator[seen_dp] * 10 + digit;
+		++exp_acc[seen_dp];
+	    }
+	}
+	else if (!seen_dp && GROK_NUMERIC_RADIX((const char **)&s, send)) {
+	    seen_dp = 1;
+	    if (sig_digits > MAX_SIG_DIGITS) {
+		++s;
+		while (isDIGIT(*s)) {
+		    ++s;
+		}
 		break;
 	    }
 	}
-	part[ipart] = part[ipart] * 10 + (*s++ - '0');
-    }
-
-    /* decimal point */
-    if (GROK_NUMERIC_RADIX((const char **)&s, send)) {
-	if (isDIGIT(*s))
-	    seendigit = 1;	/* get this over with */
-
-	/* decimal digits */
-	while (isDIGIT(*s)) {
-	    if (++offcount > PARTSIZE) {
-		if (++ipart < PARTLIM) {
-		    part[ipart] = 0;
-		    offcount = 1;	/* ++0 */
-		}
-		else {
-		    /* limits of precision reached */
-		    --ipart;
-		    --offcount;
-		    if (*s >= '5')
-			++part[ipart];
-		    while (isDIGIT(*s))
-			++s;
-		    /* warn of loss of precision? */
-		    break;
-		}
-	    }
-	    --expextra;
-	    part[ipart] = part[ipart] * 10 + (*s++ - '0');
+	else {
+	    break;
 	}
     }
 
-    /* combine components of mantissa */
-    for (i = 0; i <= ipart; ++i)
-	result += S_mulexp10((NV)part[ipart - i],
-		i ? offcount + (i - 1) * PARTSIZE : 0);
+    result[0] = S_mulexp10(result[0], exp_acc[0]) + (NV)accumulator[0];
+    if (seen_dp) {
+	result[1] = S_mulexp10(result[1], exp_acc[1]) + (NV)accumulator[1];
+    }
 
-    if (seendigit && (*s == 'e' || *s == 'E')) {
+    if (seen_digit && (*s == 'e' || *s == 'E')) {
 	bool expnegative = 0;
 
 	++s;
@@ -930,15 +954,38 @@ Perl_my_atof2(pTHX_ const char* orig, NV* value)
 	    exponent = -exponent;
     }
 
+
+
     /* now apply the exponent */
-    exponent += expextra;
-    result = S_mulexp10(result, exponent);
+
+    if (seen_dp) {
+	result[2] = S_mulexp10(result[0],exponent+exp_adjust[0])
+		+ S_mulexp10(result[1],exponent-exp_adjust[1]);
+    } else {
+	result[2] = S_mulexp10(result[0],exponent+exp_adjust[0]);
+    }
 
     /* now apply the sign */
     if (negative)
-	result = -result;
+	result[2] = -result[2];
 #endif /* USE_PERL_ATOF */
-    *value = result;
+    *value = result[2];
     return s;
 }
 
+#if ! defined(HAS_MODFL) && defined(HAS_AINTL) && defined(HAS_COPYSIGNL)
+long double
+Perl_my_modfl(long double x, long double *ip)
+{
+	*ip = aintl(x);
+	return (x == *ip ? copysignl(0.0L, x) : x - *ip);
+}
+#endif
+
+#if ! defined(HAS_FREXPL) && defined(HAS_ILOGBL) && defined(HAS_SCALBNL)
+long double
+Perl_my_frexpl(long double x, int *e) {
+	*e = x == 0.0L ? 0 : ilogbl(x) + 1;
+	return (scalbnl(x, -*e));
+}
+#endif

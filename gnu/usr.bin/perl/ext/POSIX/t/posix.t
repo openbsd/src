@@ -11,8 +11,7 @@ BEGIN {
 }
 
 require "./test.pl";
-plan(tests => 39);
-
+plan(tests => 61);
 
 use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write
 	     errno);
@@ -76,13 +75,27 @@ SKIP: {
 	my $action = new POSIX::SigAction 'main::SigHUP', $mask, 0;
 	sigaction(&SIGHUP, $action);
 	$SIG{'INT'} = 'SigINT';
-	kill 'HUP', $$;
+
+	# At least OpenBSD/i386 3.3 is okay, as is NetBSD 1.5.
+	# But not NetBSD 1.6 & 1.6.1: the test makes perl crash.
+	# So the kill() must not be done with this config in order to
+	# finish the test.
+	# For others (darwin & freebsd), let the test fail without crashing.
+	my $todo = $^O eq 'netbsd' && $Config{osvers}=~/^1\.6/;
+	my $why_todo = "# TODO $^O $Config{osvers} seems to loose blocked signals";
+	if (!$todo) { 
+	  kill 'HUP', $$; 
+	} else {
+	  print "not ok 9 - sigaction SIGHUP ",$why_todo,"\n";
+	  print "not ok 10 - sig mask delayed SIGINT ",$why_todo,"\n";
+	}
 	sleep 1;
 
-        printf "%s 11 -   masked SIGINT received %s\n",
-          $sigint_called ? "ok" : "not ok",
-          $^O eq 'darwin' ? "# TODO Darwin seems to loose blocked signals" 
-                          : '';
+	$todo = 1 if ($^O eq 'freebsd')
+		  || ($^O eq 'darwin' && $Config{osvers} lt '6.6');
+	printf "%s 11 - masked SIGINT received %s\n",
+	    $sigint_called ? "ok" : "not ok",
+	    $todo ? $why_todo : '';
 
 	print "ok 12 - signal masks successful\n";
 	
@@ -223,6 +236,30 @@ is ($result, undef, "fgets should fail");
 like ($@, qr/^Use method IO::Handle::gets\(\) instead/,
       "check its redef message");
 
+# Simplistic tests for the isXXX() functions (bug #16799)
+ok( POSIX::isalnum('1'),  'isalnum' );
+ok(!POSIX::isalnum('*'),  'isalnum' );
+ok( POSIX::isalpha('f'),  'isalpha' );
+ok(!POSIX::isalpha('7'),  'isalpha' );
+ok( POSIX::iscntrl("\cA"),'iscntrl' );
+ok(!POSIX::iscntrl("A"),  'iscntrl' );
+ok( POSIX::isdigit('1'),  'isdigit' );
+ok(!POSIX::isdigit('z'),  'isdigit' );
+ok( POSIX::isgraph('@'),  'isgraph' );
+ok(!POSIX::isgraph(' '),  'isgraph' );
+ok( POSIX::islower('l'),  'islower' );
+ok(!POSIX::islower('L'),  'islower' );
+ok( POSIX::isupper('U'),  'isupper' );
+ok(!POSIX::isupper('u'),  'isupper' );
+ok( POSIX::isprint('$'),  'isprint' );
+ok(!POSIX::isprint("\n"), 'isprint' );
+ok( POSIX::ispunct('%'),  'ispunct' );
+ok(!POSIX::ispunct('u'),  'ispunct' );
+ok( POSIX::isspace("\t"), 'isspace' );
+ok(!POSIX::isspace('_'),  'isspace' );
+ok( POSIX::isxdigit('f'), 'isxdigit' );
+ok(!POSIX::isxdigit('g'), 'isxdigit' );
+ 
 # Check that output is not flushed by _exit. This test should be last
 # in the file, and is not counted in the total number of tests.
 if ($^O eq 'vos') {

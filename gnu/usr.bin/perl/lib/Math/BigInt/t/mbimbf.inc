@@ -4,26 +4,30 @@
 # Make sure you always quote any bare floating-point values, lest 123.46 will
 # be stringified to 123.4599999999 due to limited float prevision.
 
+use strict;
 my ($x,$y,$z,$u,$rc);
 
 ###############################################################################
 # test defaults and set/get
 
-ok_undef (${"$mbi\::accuracy"});
-ok_undef (${"$mbi\::precision"});
-ok_undef ($mbi->accuracy());
-ok_undef ($mbi->precision());
-ok (${"$mbi\::div_scale"},40);
-ok (${"$mbi\::round_mode"},'even');
-ok ($mbi->round_mode(),'even');
+{
+  no strict 'refs';
+  ok_undef (${"$mbi\::accuracy"});
+  ok_undef (${"$mbi\::precision"});
+  ok_undef ($mbi->accuracy());
+  ok_undef ($mbi->precision());
+  ok (${"$mbi\::div_scale"},40);
+  ok (${"$mbi\::round_mode"},'even');
+  ok ($mbi->round_mode(),'even');
 
-ok_undef (${"$mbf\::accuracy"});
-ok_undef (${"$mbf\::precision"});
-ok_undef ($mbf->precision());
-ok_undef ($mbf->precision());
-ok (${"$mbf\::div_scale"},40);
-ok (${"$mbf\::round_mode"},'even');
-ok ($mbf->round_mode(),'even');
+  ok_undef (${"$mbf\::accuracy"});
+  ok_undef (${"$mbf\::precision"});
+  ok_undef ($mbf->precision());
+  ok_undef ($mbf->precision());
+  ok (${"$mbf\::div_scale"},40);
+  ok (${"$mbf\::round_mode"},'even');
+  ok ($mbf->round_mode(),'even');
+}
 
 # accessors
 foreach my $class ($mbi,$mbf)
@@ -49,44 +53,50 @@ foreach my $class ($mbi,$mbf)
   ok_undef ($class->precision(undef));
   }
 
-# accuracy
-foreach (qw/5 42 -1 0/)
-  {
-  ok (${"$mbf\::accuracy"} = $_,$_);
-  ok (${"$mbi\::accuracy"} = $_,$_);
-  }
-ok_undef (${"$mbf\::accuracy"} = undef);
-ok_undef (${"$mbi\::accuracy"} = undef);
+{
+  no strict 'refs';
+  # accuracy
+  foreach (qw/5 42 -1 0/)
+    {
+    ok (${"$mbf\::accuracy"} = $_,$_);
+    ok (${"$mbi\::accuracy"} = $_,$_);
+    }
+  ok_undef (${"$mbf\::accuracy"} = undef);
+  ok_undef (${"$mbi\::accuracy"} = undef);
 
-# precision
-foreach (qw/5 42 -1 0/)
-  {
-  ok (${"$mbf\::precision"} = $_,$_);
-  ok (${"$mbi\::precision"} = $_,$_);
-  }
-ok_undef (${"$mbf\::precision"} = undef);
-ok_undef (${"$mbi\::precision"} = undef);
+  # precision
+  foreach (qw/5 42 -1 0/)
+    {
+    ok (${"$mbf\::precision"} = $_,$_);
+    ok (${"$mbi\::precision"} = $_,$_);
+    }
+  ok_undef (${"$mbf\::precision"} = undef);
+  ok_undef (${"$mbi\::precision"} = undef);
 
-# fallback
-foreach (qw/5 42 1/)
-  {
-  ok (${"$mbf\::div_scale"} = $_,$_);
-  ok (${"$mbi\::div_scale"} = $_,$_);
-  }
-# illegal values are possible for fallback due to no accessor
+  # fallback
+  foreach (qw/5 42 1/)
+    {
+    ok (${"$mbf\::div_scale"} = $_,$_);
+    ok (${"$mbi\::div_scale"} = $_,$_);
+    }
+  # illegal values are possible for fallback due to no accessor
 
-# round_mode
-foreach (qw/odd even zero trunc +inf -inf/)
-  {
-  ok (${"$mbf\::round_mode"} = $_,$_);
-  ok (${"$mbi\::round_mode"} = $_,$_);
-  }
-${"$mbf\::round_mode"} = 'zero';
-ok (${"$mbf\::round_mode"},'zero');
-ok (${"$mbi\::round_mode"},'-inf');	# from above
+  # round_mode
+  foreach (qw/odd even zero trunc +inf -inf/)
+    {
+    ok (${"$mbf\::round_mode"} = $_,$_);
+    ok (${"$mbi\::round_mode"} = $_,$_);
+    }
+  ${"$mbf\::round_mode"} = 'zero';
+  ok (${"$mbf\::round_mode"},'zero');
+  ok (${"$mbi\::round_mode"},'-inf');	# from above
 
-${"$mbi\::accuracy"} = undef;
-${"$mbi\::precision"} = undef;
+  # reset for further tests
+  ${"$mbi\::accuracy"} = undef;
+  ${"$mbi\::precision"} = undef;
+  ${"$mbf\::div_scale"} = 40;
+}
+
 # local copies
 $x = $mbf->new('123.456');
 ok_undef ($x->accuracy());
@@ -96,41 +106,50 @@ ok_undef ($x->precision());
 ok ($x->precision(5),5);
 ok_undef ($x->precision(undef),undef);
 
-# see if MBF changes MBIs values
-ok (${"$mbi\::accuracy"} = 42,42);
-ok (${"$mbf\::accuracy"} = 64,64);
-ok (${"$mbi\::accuracy"},42);		# should be still 42
-ok (${"$mbf\::accuracy"},64);		# should be now 64
+{
+  no strict 'refs';
+  # see if MBF changes MBIs values
+  ok (${"$mbi\::accuracy"} = 42,42);
+  ok (${"$mbf\::accuracy"} = 64,64);
+  ok (${"$mbi\::accuracy"},42);		# should be still 42
+  ok (${"$mbf\::accuracy"},64);		# should be now 64
+}
 
 ###############################################################################
 # see if creating a number under set A or P will round it
 
-${"$mbi\::accuracy"} = 4;
-${"$mbi\::precision"} = undef;
+{
+  no strict 'refs';
+  ${"$mbi\::accuracy"} = 4;
+  ${"$mbi\::precision"} = undef;
 
-ok ($mbi->new(123456),123500);		# with A
-${"$mbi\::accuracy"} = undef;
-${"$mbi\::precision"} = 3;
-ok ($mbi->new(123456),123000);		# with P
+  ok ($mbi->new(123456),123500);		# with A
+  ${"$mbi\::accuracy"} = undef;
+  ${"$mbi\::precision"} = 3;
+  ok ($mbi->new(123456),123000);		# with P
 
-${"$mbf\::accuracy"} = 4;
-${"$mbf\::precision"} = undef;
-${"$mbi\::precision"} = undef;
+  ${"$mbf\::accuracy"} = 4;
+  ${"$mbf\::precision"} = undef;
+  ${"$mbi\::precision"} = undef;
 
-ok ($mbf->new('123.456'),'123.5');	# with A
-${"$mbf\::accuracy"} = undef;
-${"$mbf\::precision"} = -1;
-ok ($mbf->new('123.456'),'123.5');	# with P from MBF, not MBI!
+  ok ($mbf->new('123.456'),'123.5');	# with A
+  ${"$mbf\::accuracy"} = undef;
+  ${"$mbf\::precision"} = -1;
+  ok ($mbf->new('123.456'),'123.5');	# with P from MBF, not MBI!
 
-${"$mbf\::precision"} = undef;		# reset
+  ${"$mbf\::precision"} = undef;		# reset
+}
 
 ###############################################################################
 # see if MBI leaves MBF's private parts alone
 
-${"$mbi\::precision"} = undef; ${"$mbf\::precision"} = undef;
-${"$mbi\::accuracy"} = 4; ${"$mbf\::accuracy"} = undef;
-ok ($mbf->new('123.456'),'123.456');
-${"$mbi\::accuracy"} = undef; 		# reset
+{
+  no strict 'refs';
+  ${"$mbi\::precision"} = undef; ${"$mbf\::precision"} = undef;
+  ${"$mbi\::accuracy"} = 4; ${"$mbf\::accuracy"} = undef;
+  ok ($mbf->new('123.456'),'123.456');
+  ${"$mbi\::accuracy"} = undef; 		# reset
+}
 
 ###############################################################################
 # see if setting accuracy/precision actually rounds the number
@@ -186,21 +205,72 @@ ok_undef ($x->precision());
 $x = $mbf->new(123.456); $x->accuracy(4); $x->precision(2);
 $z = $x->copy(); ok_undef ($z->accuracy(),undef); ok ($z->precision(),2);
 
-# does accuracy()/precision work on zeros?
-foreach my $class ($mbi,$mbf)
-  {
-  $x = $class->bzero(); $x->accuracy(5); ok ($x->{_a},5);
-  $x = $class->bzero(); $x->precision(5); ok ($x->{_p},5);
-  $x = $class->new(0); $x->accuracy(5); ok ($x->{_a},5);
-  $x = $class->new(0); $x->precision(5); ok ($x->{_p},5);
+# does $x->bdiv($y,d) work when $d > div_scale?
+$x = $mbf->new('0.008'); $x->accuracy(8);
 
-  $x = $class->bzero(); $x->round(5); ok ($x->{_a},5);
-  $x = $class->bzero(); $x->round(undef,5); ok ($x->{_p},5);
-  $x = $class->new(0); $x->round(5); ok ($x->{_a},5);
-  $x = $class->new(0); $x->round(undef,5); ok ($x->{_p},5);
+for my $e ( 4, 8, 16, 32 )
+  {
+  print "# Tried: $x->bdiv(3,$e)\n"
+    unless ok (scalar $x->copy()->bdiv(3,$e), '0.002' . ('6' x ($e-2)) . '7');
+  }
+
+# does accuracy()/precision work on zeros?
+foreach my $c ($mbi,$mbf)
+  {
+  $x = $c->bzero(); $x->accuracy(5); ok ($x->{_a},5);
+  $x = $c->bzero(); $x->precision(5); ok ($x->{_p},5);
+  $x = $c->new(0); $x->accuracy(5); ok ($x->{_a},5);
+  $x = $c->new(0); $x->precision(5); ok ($x->{_p},5);
+
+  $x = $c->bzero(); $x->round(5); ok ($x->{_a},5);
+  $x = $c->bzero(); $x->round(undef,5); ok ($x->{_p},5);
+  $x = $c->new(0); $x->round(5); ok ($x->{_a},5);
+  $x = $c->new(0); $x->round(undef,5); ok ($x->{_p},5);
 
   # see if trying to increasing A in bzero() doesn't do something
-  $x = $class->bzero(); $x->{_a} = 3; $x->round(5); ok ($x->{_a},3);
+  $x = $c->bzero(); $x->{_a} = 3; $x->round(5); ok ($x->{_a},3);
+  }
+
+###############################################################################
+# test whether an opp calls objectify properly or not (or at least does what
+# it should do given non-objects, w/ or w/o objectify())
+
+foreach my $c ($mbi,$mbf)
+  {
+#  ${"$c\::precision"} = undef;		# reset
+#  ${"$c\::accuracy"} = undef;		# reset
+
+  ok ($c->new(123)->badd(123),246);
+  ok ($c->badd(123,321),444);
+  ok ($c->badd(123,$c->new(321)),444);
+
+  ok ($c->new(123)->bsub(122),1);
+  ok ($c->bsub(321,123),198);
+  ok ($c->bsub(321,$c->new(123)),198);
+
+  ok ($c->new(123)->bmul(123),15129);
+  ok ($c->bmul(123,123),15129);
+  ok ($c->bmul(123,$c->new(123)),15129);
+
+# ok ($c->new(15129)->bdiv(123),123);
+# ok ($c->bdiv(15129,123),123);
+# ok ($c->bdiv(15129,$c->new(123)),123);
+
+  ok ($c->new(15131)->bmod(123),2);
+  ok ($c->bmod(15131,123),2);
+  ok ($c->bmod(15131,$c->new(123)),2);
+
+  ok ($c->new(2)->bpow(16),65536);
+  ok ($c->bpow(2,16),65536);
+  ok ($c->bpow(2,$c->new(16)),65536);
+
+#  ok ($c->new(2**15)->brsft(1),2**14);
+#  ok ($c->brsft(2**15,1),2**14);
+#  ok ($c->brsft(2**15,$c->new(1)),2**14);
+
+  ok ($c->new(2**13)->blsft(1),2**14);
+  ok ($c->blsft(2**13,1),2**14);
+  ok ($c->blsft(2**13,$c->new(1)),2**14);
   }
 
 ###############################################################################
@@ -250,6 +320,37 @@ $x = $mbi->new(-123401); $x->{_a} = 4; ok ($x->bneg(),123401);
 $mbf->round_mode('even');
 $x = $mbf->new('740.7')->fdiv('6',4,undef,'zero'); ok ($x,'123.4');
 
+$x = $mbi->new('123456'); $y = $mbi->new('123456'); $y->{_a} = 6;
+ok ($x->bdiv($y),1); ok ($x->{_a},6);			# carried over
+
+$x = $mbi->new('123456'); $y = $mbi->new('123456'); $x->{_a} = 6;
+ok ($x->bdiv($y),1); ok ($x->{_a},6);			# carried over
+
+$x = $mbi->new('123456'); $y = $mbi->new('223456'); $y->{_a} = 6;
+ok ($x->bdiv($y),0); ok ($x->{_a},6);			# carried over
+
+$x = $mbi->new('123456'); $y = $mbi->new('223456'); $x->{_a} = 6;
+ok ($x->bdiv($y),0); ok ($x->{_a},6);			# carried over
+
+###############################################################################
+# test that bop(0) does the same than bop(undef)
+
+$x = $mbf->new('1234567890');
+ok ($x->copy()->bsqrt(0),$x->copy()->bsqrt(undef));
+ok ($x->copy->bsqrt(0),'35136.41828644462161665823116758077037159');
+
+ok_undef ($x->{_a});
+
+# test that bsqrt() modifies $x and does not just return something else
+# (especially under BareCalc)
+$z = $x->bsqrt();
+ok ($z,$x); ok ($x,'35136.41828644462161665823116758077037159');
+
+$x = $mbf->new('1.234567890123456789');
+ok ($x->copy()->bpow('0.5',0),$x->copy()->bpow('0.5',undef));
+ok ($x->copy()->bpow('0.5',0),$x->copy()->bsqrt(undef));
+ok ($x->copy()->bpow('2',0),'1.524157875323883675019051998750190521');
+
 ###############################################################################
 # test (also under Bare) that bfac() rounds at last step
 
@@ -293,7 +394,16 @@ $z = $u->copy()->bmul($y,undef,2,'odd'); ok ($z,30860);
 $z = $u->copy()->bmul($y,undef,3,'odd'); ok ($z,30900);
 $z = $u->copy()->bmul($y,undef,-1,'odd'); ok ($z,30862.5);
 
-# breakage:
+my $warn = ''; $SIG{__WARN__} = sub { $warn = shift; };
+# these should warn, since '3.17' is a NaN in BigInt and thus >= returns undef
+$warn = ''; eval "\$z = 3.17 <= \$y"; ok ($z, 1);
+print "# Got: '$warn'\n" unless
+ok ($warn =~ /^Use of uninitialized value (in numeric le \(<=\) |)at/);	
+$warn = ''; eval "\$z = \$y >= 3.17"; ok ($z, 1);
+print "# Got: '$warn'\n" unless
+ok ($warn =~ /^Use of uninitialized value (in numeric ge \(>=\) |)at/);	
+
+# XXX TODO breakage:
 # $z = $y->copy()->bmul($u,2,0,'odd'); ok ($z,31000);
 # $z = $y * $u; ok ($z,5); ok (ref($z),$mbi);
 # $z = $y + $x; ok ($z,12); ok (ref($z),$mbi);
@@ -302,13 +412,16 @@ $z = $u->copy()->bmul($y,undef,-1,'odd'); ok ($z,30862.5);
 ###############################################################################
 # rounding in bdiv with fallback and already set A or P
 
-${"$mbf\::accuracy"} = undef;
-${"$mbf\::precision"} = undef;
-${"$mbf\::div_scale"} = 40;
+{
+  no strict 'refs';
+  ${"$mbf\::accuracy"} = undef;
+  ${"$mbf\::precision"} = undef;
+  ${"$mbf\::div_scale"} = 40;
+}
 
-$x = $mbf->new(10); $x->{_a} = 4;
-ok ($x->bdiv(3),'3.333');
-ok ($x->{_a},4);			# set's it since no fallback
+  $x = $mbf->new(10); $x->{_a} = 4;
+  ok ($x->bdiv(3),'3.333');
+  ok ($x->{_a},4);			# set's it since no fallback
 
 $x = $mbf->new(10); $x->{_a} = 4; $y = $mbf->new(3);
 ok ($x->bdiv($y),'3.333');
@@ -323,10 +436,13 @@ $x = $mbf->new(10);
 ok ($x->bdiv(3,undef,-2),'3.33');
 
 # round in div with requested P greater than fallback
-${"$mbf\::div_scale"} = 5;
-$x = $mbf->new(10);
-ok ($x->bdiv(3,undef,-8),'3.33333333');
-${"$mbf\::div_scale"} = 40;
+{
+  no strict 'refs';
+  ${"$mbf\::div_scale"} = 5;
+  $x = $mbf->new(10);
+  ok ($x->bdiv(3,undef,-8),'3.33333333');
+  ${"$mbf\::div_scale"} = 40;
+}
 
 $x = $mbf->new(10); $y = $mbf->new(3); $y->{_a} = 4;
 ok ($x->bdiv($y),'3.333');
@@ -488,12 +604,15 @@ ok ($x+$y,'2.46');				# 1.2345+1.2300=> 2.4645 => 2.46
 
 ###############################################################################
 # find out whether _find_round_parameters is doing what's it's supposed to do
- 
-${"$mbi\::accuracy"} = undef;
-${"$mbi\::precision"} = undef;
-${"$mbi\::div_scale"} = 40;
-${"$mbi\::round_mode"} = 'odd';
- 
+
+{
+  no strict 'refs'; 
+  ${"$mbi\::accuracy"} = undef;
+  ${"$mbi\::precision"} = undef;
+  ${"$mbi\::div_scale"} = 40;
+  ${"$mbi\::round_mode"} = 'odd';
+}
+
 $x = $mbi->new(123);
 my @params = $x->_find_round_parameters();
 ok (scalar @params,1);				# nothing to round
@@ -526,18 +645,23 @@ ok ($params[3],'+inf');				# round_mode
 ok (scalar @params,1);				# error, A and P defined
 ok ($params[0],$x);				# self
 
-${"$mbi\::accuracy"} = 1;
-@params = $x->_find_round_parameters(undef,-2);
-ok (scalar @params,1);				# error, A and P defined
-ok ($params[0],$x);				# self
+{
+  no strict 'refs';
+  ${"$mbi\::accuracy"} = 1;
+  @params = $x->_find_round_parameters(undef,-2);
+  ok (scalar @params,1);			# error, A and P defined
+  ok ($params[0],$x);				# self
+  ok ($x->is_nan(),1);				# and must be NaN
 
-${"$mbi\::accuracy"} = undef;
-${"$mbi\::precision"} = 1;
-@params = $x->_find_round_parameters(1,undef);
-ok (scalar @params,1);				# error, A and P defined
-ok ($params[0],$x);				# self
-
-${"$mbi\::precision"} = undef;			# reset
+  ${"$mbi\::accuracy"} = undef;
+  ${"$mbi\::precision"} = 1;
+  @params = $x->_find_round_parameters(1,undef);
+  ok (scalar @params,1);			# error, A and P defined
+  ok ($params[0],$x);				# self
+  ok ($x->is_nan(),1);				# and must be NaN
+ 
+  ${"$mbi\::precision"} = undef;		# reset
+}
 
 ###############################################################################
 # test whether bone/bzero take additional A & P, or reset it etc
@@ -592,16 +716,18 @@ for my $c ($mbi,$mbf)
 # check whether mixing A and P creates a NaN
 
 # new with set accuracy/precision and with parameters
-
-foreach my $c ($mbi,$mbf)
-  {
-  ok ($c->new(123,4,-3),'NaN');			# with parameters
-  ${"$c\::accuracy"} = 42;
-  ${"$c\::precision"} = 2;
-  ok ($c->new(123),'NaN');			# with globals
-  ${"$c\::accuracy"} = undef;
-  ${"$c\::precision"} = undef;
-  }
+{
+  no strict 'refs'; 
+  foreach my $c ($mbi,$mbf)
+    {
+    ok ($c->new(123,4,-3),'NaN');			# with parameters
+    ${"$c\::accuracy"} = 42;
+    ${"$c\::precision"} = 2;
+    ok ($c->new(123),'NaN');			# with globals
+    ${"$c\::accuracy"} = undef;
+    ${"$c\::precision"} = undef;
+    }
+}
 
 # binary ops
 foreach my $class ($mbi,$mbf)

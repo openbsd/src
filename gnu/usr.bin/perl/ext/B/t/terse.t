@@ -5,7 +5,7 @@ BEGIN {
 	@INC = '../lib';
 }
 
-use Test::More tests => 15;
+use Test::More tests => 16;
 
 use_ok( 'B::Terse' );
 
@@ -33,7 +33,7 @@ $sub->();
 # now build some regexes that should match the dumped ops
 my ($hex, $op) = ('\(0x[a-f0-9]+\)', '\s+\w+');
 my %ops = map { $_ => qr/$_ $hex$op/ }
-	qw ( OP	COP	LOOP PMOP UNOP BINOP LOGOP LISTOP );
+	qw ( OP	COP LOOP PMOP UNOP BINOP LOGOP LISTOP PVOP );
 
 # split up the output lines into individual ops (terse is, well, terse!)
 # use an array here so $_ is modifiable
@@ -55,7 +55,9 @@ warn "# didn't find " . join(' ', keys %ops) if keys %ops;
 
 # XXX:
 # this tries to get at all tersified optypes in B::Terse
-# if you add AV, NULL, PADOP, PVOP, or SPECIAL, add it to the regex above too
+# if you can think of a way to produce AV, NULL, PADOP, or SPECIAL,
+# add it to the regex above too. (PADOPs are currently only produced
+# under ithreads, though).
 #
 use vars qw( $a $b );
 sub bar {
@@ -71,7 +73,7 @@ sub bar {
 	# this is awful, but it gives a PMOP
 	my $boo = split('', $foo);
 
-	# PMOP
+	# PVOP, LOOP
 	LOOP: for (1 .. 10) {
 		last LOOP if $_ % 2;
 	}
@@ -83,17 +85,12 @@ sub bar {
 	$foo =~ s/(a)/$1/;
 }
 
-SKIP: {
-    use Config;
-    skip("- B::Terse won't grok RVs under ithreads yet", 1)
-	if $Config{useithreads};
-    # Schwern's example of finding an RV
-    my $path = join " ", map { qq["-I$_"] } @INC;
-    $path = '-I::lib -MMac::err=unix' if $^O eq 'MacOS';
-    my $redir = $^O eq 'MacOS' ? '' : "2>&1";
-    my $items = qx{$^X $path "-MO=Terse" -le "print \\42" $redir};
-    like( $items, qr/RV $hex \\42/, 'RV' );
-}
+# Schwern's example of finding an RV
+my $path = join " ", map { qq["-I$_"] } @INC;
+$path = '-I::lib -MMac::err=unix' if $^O eq 'MacOS';
+my $redir = $^O eq 'MacOS' ? '' : "2>&1";
+my $items = qx{$^X $path "-MO=Terse" -le "print \\42" $redir};
+like( $items, qr/RV $hex \\42/, 'RV' );
 
 package TieOut;
 

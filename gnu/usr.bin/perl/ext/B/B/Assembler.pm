@@ -12,9 +12,11 @@ use B::Asmdata qw(%insn_data @insn_name);
 use Config qw(%Config);
 require ByteLoader;		# we just need its $VERSIOM
 
+no warnings;			# XXX
+
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(assemble_fh newasm endasm assemble);
-$VERSION = 0.04;
+@EXPORT_OK = qw(assemble_fh newasm endasm assemble asm);
+$VERSION = 0.06;
 
 use strict;
 my %opnumber;
@@ -128,23 +130,24 @@ sub B::Asmdata::PUT_none {
     return "";
 }
 sub B::Asmdata::PUT_op_tr_array {
-    my $arg = shift;
-    my @ary = split(/\s*,\s*/, $arg);
-    if (@ary != 256) {
-	error "wrong number of arguments to op_tr_array";
-	@ary = (0) x 256;
-    }
-    return pack("S256", @ary);
+    my @ary = split /\s*,\s*/, shift;
+    return pack "S*", @ary;
 }
-# XXX Check this works
-# Note: $arg >> 32 is a no-op on 32-bit systems
+
 sub B::Asmdata::PUT_IV64 {
-    my $arg = shift;
-    return pack("LL", ($arg >> 16) >>16 , $arg & 0xffffffff);
+    return pack "Q", shift;
 }
 
 sub B::Asmdata::PUT_IV {
     $Config{ivsize} == 4 ? &B::Asmdata::PUT_I32 : &B::Asmdata::PUT_IV64;
+}
+
+sub B::Asmdata::PUT_PADOFFSET {
+    $Config{ptrsize} == 8 ? &B::Asmdata::PUT_IV64 : &B::Asmdata::PUT_U32;
+}
+
+sub B::Asmdata::PUT_long {
+    $Config{longsize} == 8 ? &B::Asmdata::PUT_IV64 : &B::Asmdata::PUT_U32;
 }
 
 my %unesc = (n => "\n", r => "\r", t => "\t", a => "\a",
@@ -186,8 +189,6 @@ sub gen_header {
     $header .= B::Asmdata::PUT_strconst(qq["$ByteLoader::VERSION"]);
     $header .= B::Asmdata::PUT_U32($Config{ivsize});
     $header .= B::Asmdata::PUT_U32($Config{ptrsize});
-    $header .= B::Asmdata::PUT_strconst(sprintf(qq["0x%s"], $Config{byteorder}));
-
     $header;
 }
 
@@ -283,6 +284,17 @@ sub assemble {
 	    $out->(assemble_insn("nop", undef));
         }
     }
+}
+
+### temporary workaround
+
+sub asm {
+    return if $_[0] =~ /\s*\W/;
+    if (defined $_[1]) {
+	return if $_[1] eq "0" and $_[0] !~ /^(?:newsvx?|av_pushx?|xav_flags)$/;
+	return if $_[1] eq "1" and $_[0] =~ /^(?:sv_refcnt)$/;
+    }
+    assemble "@_";
 }
 
 1;

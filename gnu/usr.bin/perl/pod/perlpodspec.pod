@@ -238,7 +238,7 @@ ignored.  Examples:
   # This is the first line of program text.
   sub foo { # This is the second.
 
-It is an error to try to I<start> a Pod black with a "=cut" command.  In
+It is an error to try to I<start> a Pod block with a "=cut" command.  In
 that case, the Pod processor must halt parsing of the input file, and
 must by default emit a warning.
 
@@ -331,6 +331,29 @@ begins with a ":"; if "formatname" I<doesn't> begin with a colon,
 then "text..." will constitute a data paragraph.  There is no way
 to use "=for formatname text..." to express "text..." as a verbatim
 paragraph.
+
+=item "=encoding encodingname"
+
+This command, which should occur early in the document (at least
+before any non-US-ASCII data!), declares that this document is
+encoded in the encoding I<encodingname>, which must be
+an encoding name that L<Encoding> recognizes.  (Encoding's list
+of supported encodings, in L<Encoding::Supported>, is useful here.)
+If the Pod parser cannot decode the declared encoding, it 
+should emit a warning and may abort parsing the document
+altogether.
+
+A document having more than one "=encoding" line should be
+considered an error.  Pod processors may silently tolerate this if
+the not-first "=encoding" lines are just duplicates of the
+first one (e.g., if there's a "=use utf8" line, and later on
+another "=use utf8" line).  But Pod processors should complain if
+there are contradictory "=encoding" lines in the same document
+(e.g., if there is a "=encoding utf8" early in the document and
+"=encoding big5" later).  Pod processors that recognize BOMs
+may also complain if they see an "=encoding" line
+that contradicts the BOM (e.g., if a document with a UTF-16LE
+BOM has an "=encoding shiftjis" line).
 
 =back
 
@@ -589,7 +612,7 @@ UTF-16.  If the file begins with the three literal byte values
  0xEF 0xBB 0xBF
 
 =for comment
- If toke.c is modified to support UTF32, add mention of those here.
+ If toke.c is modified to support UTF-32, add mention of those here.
 
 =item *
 

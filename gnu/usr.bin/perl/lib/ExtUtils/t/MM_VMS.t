@@ -19,7 +19,6 @@ BEGIN {
                    find_perl
                    path
                    maybe_command
-                   maybe_command_in_dirs
                    perl_script
                    file_name_is_absolute
                    replace_manpage_separator
@@ -30,7 +29,6 @@ BEGIN {
                    pm_to_blib
                    tool_autosplit
                    tool_xsubpp
-                   xsubpp_version
                    tools_other
                    dist
                    c_o
@@ -49,7 +47,7 @@ BEGIN {
                    realclean
                    dist_basics
                    dist_core
-                   dist_dir
+                   distdir
                    dist_test
                    install
                    perldepend

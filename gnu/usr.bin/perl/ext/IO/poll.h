@@ -20,6 +20,11 @@
 
 #define EMULATE_POLL_WITH_SELECT
 
+#ifdef poll
+# undef poll
+#endif
+#define poll Perl_my_poll
+
 typedef struct pollfd {
     int fd;
     short events;

@@ -54,13 +54,13 @@ if ($is_thread) {
     $b=<<EOF;
 leave enter nextstate label leaveloop enterloop null and defined null
 threadsv readline gv lineseq nextstate aassign null pushmark split pushre
-threadsv const null pushmark rvav gv nextstate subst const unstack nextstate
+threadsv const null pushmark rvav gv nextstate subst const unstack
 EOF
 } else {
     $b=<<EOF;
 leave enter nextstate label leaveloop enterloop null and defined null
 null gvsv readline gv lineseq nextstate aassign null pushmark split pushre
-null gvsv const null pushmark rvav gv nextstate subst const unstack nextstate
+null gvsv const null pushmark rvav gv nextstate subst const unstack
 EOF
 }
 $b=~s/\n/ /g;$b=~s/\s+/ /g;

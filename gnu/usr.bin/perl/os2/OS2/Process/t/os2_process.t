@@ -24,7 +24,7 @@ BEGIN {			# Remap I/O to the parent's window
 }
 
 use strict;
-use Test::More tests => 227;
+use Test::More tests => 232;
 use OS2::Process;
 
 sub SWP_flags ($) {
@@ -237,21 +237,25 @@ ok hWindowPos_set({behind => 4}, $k_hwnd),	# HWND_BOTTOM
 # This does not work, the result is the handle of "Window List"
 # is((hWindowPos $k_hwnd)->{behind}, 4, 'kis is at back');
 
-my (@list, $next);
+my (@list, $next, @list1);
 { my $force_PM = OS2::localMorphPM->new(0);
   ok $force_PM, 'morphed to PM locally again';
   $enum_handle = BeginEnumWindows 1;		# HWND_DESKTOP
   ok $enum_handle, 'start enumeration';
   push @list, $next while $next = GetNextWindow $enum_handle;
+  @list1 = ChildWindows;
+  ok 1, 'embedded ChildWindows()';
   ok EndEnumWindows($enum_handle), 'end enumeration';
 
+  is_deeply \@list, \@list1, 'Manual list same as by ChildWindows()';
   # Apparently, the 'Desktop' window is still behind us;
   # Note that this window is *not* what is returned by DesktopWindow
   pop @list if WindowText($list[-1]) eq 'Desktop';
 }
 is ($list[-1], $k_hwnd, 'kid is the last in z-order enumeration');
 # print "# kid=$k_hwnd in @list\n";
-@list = ChildWindows;				# HWND_DESKTOP
+@list = ChildWindows;
+is_deeply \@list, \@list1, 'Other ChildWindows(), same result';
 ok scalar @list, 'ChildWindows works';
 is $list[-2], $k_hwnd, 'kid is the last but one in ChildWindows';
 
@@ -403,8 +407,13 @@ ok $my_pos, 'got my position';
   ok IsWindowShowing $k_hwnd, 'kid is showing';
   ok IsWindowVisible $k_hwnd, 'kid is flaged as visible';
   ok IsWindowEnabled $k_hwnd, 'kid is flaged as enabled';
+  SKIP: {
+    skip 'if defaultVIO=MAXIMIZED, new windows are shifted, but maximize to UL corner', 1 unless $fl & 0x800;
+    ok hWindowPos_set({x => $ppos[0], y => $ppos[1]}, $k_hwnd), 'x,y-restore for de-minimization of MAXIMIZED';
+  }
   @nkpos = WindowPos $k_hwnd;
   is_deeply([@ppos[0..5]], [@nkpos[0..5]], 'position restored');
+
 
   # Now the other way
   ok hWindowPos_set( {flags => 0x400}, $k_hwnd), 'set to minimized';
@@ -448,6 +457,10 @@ ok $my_pos, 'got my position';
   ok IsWindowShowing $k_hwnd, 'kid is showing';
   ok IsWindowVisible $k_hwnd, 'kid is flaged as visible';
   ok IsWindowEnabled $k_hwnd, 'kid is flaged as enabled';
+  SKIP: {
+    skip 'if defaultVIO=MAXIMIZED, new windows are shifted, but maximize to UL corner', 1 unless $fl & 0x800;
+    ok hWindowPos_set({x => $ppos[0], y => $ppos[1]}, $k_hwnd), 'x,y-restore for de-minimization of MAXIMIZED';
+  }
   @nkpos = WindowPos $k_hwnd;
   is_deeply([@ppos[0..5]], [@nkpos[0..5]], 'position restored');
 

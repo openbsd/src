@@ -45,6 +45,9 @@ eval {
 # and mingw32 uses said silly CRT
 $have_setlocale = 0 if (($^O eq 'MSWin32' || $^O eq 'NetWare') && $Config{cc} =~ /^(cl|gcc)/i);
 
+# UWIN seems to loop after test 98, just skip for now
+$have_setlocale = 0 if ($^O =~ /^uwin/);
+
 my $last = $have_setlocale ? &last : &last_without_setlocale;
 
 print "1..$last\n";
@@ -523,7 +526,17 @@ foreach $Locale (@Locale) {
     
 	my $word = join('', @Neoalpha);
 
-	if ($Locale =~ /utf-?8/i) {
+	my $badutf8;
+	{
+	    local $SIG{__WARN__} = sub {
+		$badutf8 = $_[0] =~ /Malformed UTF-8/;
+	    };
+	    $Locale =~ /utf-?8/i;
+	}
+
+	if ($badutf8) {
+	    debug "# Locale name contains bad UTF-8, skipping test 99 for locale '$Locale'\n";
+	} elsif ($Locale =~ /utf-?8/i) {
 	    debug "# unknown whether locale and Unicode have the same \\w, skipping test 99 for locale '$Locale'\n";
 	    push @{$Okay{99}}, $Locale;
 	} else {

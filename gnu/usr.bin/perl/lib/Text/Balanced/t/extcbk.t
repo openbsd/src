@@ -59,11 +59,11 @@ while (defined($str = <DATA>))
 
 __DATA__
 
-# USING: extract_codeblock($str);
-{ $data[4] =~ /['"]/; };
-
 # USING: extract_codeblock($str,'(){}',undef,'()');
 (Foo(')'));
+
+# USING: extract_codeblock($str);
+{ $data[4] =~ /['"]/; };
 
 # USING: extract_codeblock($str,'<>');
 < %x = ( try => "this") >;

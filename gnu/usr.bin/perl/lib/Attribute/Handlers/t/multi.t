@@ -184,3 +184,20 @@ ok(1,52 ,"# Skip, no difference between lexical handlers and normal handlers pri
 ok( $match, 52 );
 }
 
+
+# The next two check for the phase invariance that Marcel spotted.
+# Subject: Attribute::Handlers phase variance
+# Message-Id: <54EDDB80-FD75-11D6-A18D-00039379E28A@noug.at>
+
+my ($code_applied, $scalar_applied);
+sub Scotty :ATTR(CODE,BEGIN)   { $code_applied = $_[5] }
+{
+no warnings 'redefine';
+sub Scotty :ATTR(SCALAR,CHECK) { $scalar_applied = $_[5] }
+}
+
+sub warp_coil :Scotty {}
+my $photon_torpedo :Scotty;
+
+ok( $code_applied   eq 'BEGIN', 53, "# phase variance" );
+ok( $scalar_applied eq 'CHECK', 54 );

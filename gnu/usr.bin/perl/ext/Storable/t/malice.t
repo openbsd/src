@@ -17,6 +17,9 @@ sub BEGIN {
     if ($ENV{PERL_CORE}){
 	chdir('t') if -d 't';
 	@INC = ('.', '../lib');
+    } else {
+	# This lets us distribute Test::More in t/
+	unshift @INC, 't';
     }
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
@@ -35,8 +38,8 @@ $file_magic_str = 'pst0';
 $other_magic = 7 + length $byteorder;
 $network_magic = 2;
 $major = 2;
-$minor = 5;
-$minor_write = $] > 5.007 ? 5 : 4;
+$minor = 6;
+$minor_write = $] > 5.007 ? 6 : 4;
 
 use Test::More;
 
@@ -48,7 +51,7 @@ use Test::More;
 # present in files, but not in things store()ed to memory
 $fancy = ($] > 5.007 ? 2 : 0);
 
-plan tests => 368 + length ($byteorder) * 4 + $fancy * 8;
+plan tests => 368 + length ($byteorder) * 4 + $fancy * 8 + 1;
 
 use Storable qw (store retrieve freeze thaw nstore nfreeze);
 
@@ -84,7 +87,11 @@ sub test_header {
     is ($header->{byteorder}, $byteorder, "byte order");
     is ($header->{intsize}, $Config{intsize}, "int size");
     is ($header->{longsize}, $Config{longsize}, "long size");
-    is ($header->{ptrsize}, $Config{ptrsize}, "long size");
+ SKIP: {
+	skip ("No \$Config{prtsize} on this perl version ($])", 1)
+	    unless defined $Config{ptrsize};
+	is ($header->{ptrsize}, $Config{ptrsize}, "long size");
+    }
     is ($header->{nvsize}, $Config{nvsize} || $Config{doublesize} || 8,
         "nv size"); # 5.00405 doesn't even have doublesize in config.
   }
@@ -111,6 +118,7 @@ sub test_truncated {
   for my $i (0 .. length ($data) - 1) {
     my $short = substr $data, 0, $i;
 
+    # local $Storable::DEBUGME = 1;
     my $clone = &$sub($short);
     is (defined ($clone), '', "truncated $what to $i should fail");
     if ($i < $magic_len) {
@@ -209,7 +217,7 @@ sub test_things {
     $where = $file_magic + 3 + length $header->{byteorder};
     foreach (['intsize', "Integer"],
              ['longsize', "Long integer"],
-             ['ptrsize', "Pointer integer"],
+             ['ptrsize', "Pointer"],
              ['nvsize', "Double"]) {
       my ($key, $name) = @$_;
       $copy = $contents;
@@ -241,7 +249,7 @@ sub test_things {
   # local $Storable::DEBUGME = 1;
   # This is the delayed croak
   test_corrupt ($copy, $sub,
-                "/^Storable binary image v$header->{major}.$minor4 contains data of type 255. This Storable is v$header->{major}.$minor and can only handle data types up to 25/",
+                "/^Storable binary image v$header->{major}.$minor4 contains data of type 255. This Storable is v$header->{major}.$minor and can only handle data types up to 26/",
                 "bogus tag, minor plus 4");
   # And check again that this croak is not delayed:
   {
@@ -316,3 +324,15 @@ test_things($contents, \&store_and_retrieve, 'file', 1);
 # And now try almost everything again with a Storable string
 $stored = nfreeze \%hash;
 test_things($stored, \&freeze_and_thaw, 'string', 1);
+
+# Test that the bug fixed by #20587 doesn't affect us under some older
+# Perl. AMS 20030901
+{
+    chop(my $a = chr(0xDF).chr(256));
+    my %a = (chr(0xDF) => 1);
+    $a{$a}++;
+    freeze \%a;
+    # If we were built with -DDEBUGGING, the assert() should have killed
+    # us, which will probably alert the user that something went wrong.
+    ok(1);
+}

@@ -236,9 +236,9 @@ execute the bytecode that it produces.  The ByteLoader module provides
 this functionality.
 
 To turn a Perl program into executable byte code, you can use C<perlcc>
-with the C<-b> switch:
+with the C<-B> switch:
 
-  perlcc -b myperlprogram.pl
+  perlcc -B myperlprogram.pl
 
 The byte code is machine independent, so once you have a compiled
 module or program, it is as portable as Perl source (assuming that
@@ -256,15 +256,15 @@ the Perl data structures directly.  The program will still link against
 the Perl interpreter library, to allow for eval(), C<s///e>,
 C<require>, etc.
 
-The C<perlcc> tool generates such executables when using the -opt
+The C<perlcc> tool generates such executables when using the -O
 switch.  To compile a Perl program (ending in C<.pl>
 or C<.p>):
 
-  perlcc -opt myperlprogram.pl
+  perlcc -O myperlprogram.pl
 
 To produce a shared library from a Perl module (ending in C<.pm>):
 
-  perlcc -opt Myperlmodule.pm
+  perlcc -O Myperlmodule.pm
 
 For more information, see L<perlcc> and L<B::CC>.
 

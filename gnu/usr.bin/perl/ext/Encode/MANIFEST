@@ -20,6 +20,7 @@ JP/Makefile.PL	Encode extension
 KR/KR.pm		Encode extension
 KR/Makefile.PL		Encode extension
 MANIFEST		Encode extension
+META.yml                                Module meta-data in YAML
 Makefile.PL		Encode extension makefile writer
 README		Encode extension
 Symbol/Makefile.PL     Encode extension
@@ -33,6 +34,7 @@ bin/enc2xs	Encode module generator
 bin/piconv	iconv by perl
 bin/ucm2table	Table Generator for testing
 bin/ucmlint	A UCM Lint utility
+bin/ucmsort	Sorts UCM lines
 bin/unidump	Unicode Dump like hexdump(1)
 encengine.c		Encode extension
 encoding.pm	Perl Pragmactic Module
@@ -49,10 +51,12 @@ lib/Encode/KR/2022_KR.pm	 Encode extension
 lib/Encode/MIME/Header.pm	Encode extension
 lib/Encode/PerlIO.pod	Documents for Encode & PerlIO
 lib/Encode/Supported.pod	Documents for supported encodings
+lib/Encode/Unicode/UTF7.pm Encode Extension
 t/Aliases.t	test script
 t/CJKT.t	test script
 t/Encode.t	test script
 t/Encoder.t	test script
+t/Mod_EUCJP.pm	module that t/enc_module.enc uses
 t/Unicode.t	test script
 t/at-cn.t	test script
 t/at-tw.t	test script
@@ -60,11 +64,17 @@ t/big5-eten.enc	test data
 t/big5-eten.utf	test data
 t/big5-hkscs.enc	test data
 t/big5-hkscs.utf	test data
+t/enc_data.t		test script for encoding.pm vs. DATA fh
+t/enc_eucjp.t	test script
+t/enc_module.enc test data for t/enc_module.t
+t/enc_module.t	test script
+t/enc_utf8.t	test script
 t/encoding.t	test script
 t/fallback.t	test script
 t/gb2312.enc	test data
 t/gb2312.utf	test data
 t/grow.t	test script
+t/gsm0338.t	test script
 t/guess.t	test script
 t/jisx0201.enc	test data
 t/jisx0201.utf	test data
@@ -77,6 +87,7 @@ t/ksc5601.enc	test data
 t/ksc5601.utf	test data
 t/mime-header.t	test script
 t/perlio.t	test script
+t/rt.pl		even more test script
 t/unibench.pl	benchmark script
 ucm/8859-1.ucm	Unicode Character Map
 ucm/8859-10.ucm	Unicode Character Map

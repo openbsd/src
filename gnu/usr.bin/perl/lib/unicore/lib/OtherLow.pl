@@ -14,6 +14,7 @@ return <<'END';
 02E0	02E4	Other_Lowercase
 0345		Other_Lowercase
 037A		Other_Lowercase
+1D2C	1D61	Other_Lowercase
 2170	217F	Other_Lowercase
 24D0	24E9	Other_Lowercase
 END

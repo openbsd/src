@@ -37,7 +37,7 @@ To extract an ASCII tar archive on VM/ESA, try this:
 GNU make for VM/ESA, which may be required for the build of perl,
 is available from:
 
-  http://pucc.princeton.edu/~neale/vmoe.html
+  http://vm.marist.edu/~neale/vmoe.html
 
 =head2 Configure Perl on VM/ESA
 

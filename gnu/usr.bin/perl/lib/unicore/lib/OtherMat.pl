@@ -31,6 +31,7 @@ return <<'END';
 212F	2131	Other_Math
 2133	2138	Other_Math
 FE35	FE38	Other_Math
+FE47	FE48	Other_Math
 FE59	FE5C	Other_Math
 FE61		Other_Math
 FE63		Other_Math
@@ -49,8 +50,7 @@ FF5D		Other_Math
 1D4A9	1D4AC	Other_Math
 1D4AE	1D4B9	Other_Math
 1D4BB		Other_Math
-1D4BD	1D4C0	Other_Math
-1D4C2	1D4C3	Other_Math
+1D4BD	1D4C3	Other_Math
 1D4C5	1D505	Other_Math
 1D507	1D50A	Other_Math
 1D50D	1D514	Other_Math

@@ -1,5 +1,5 @@
 ==============================================================================
-                       Release of version 0.50 of NEXT
+                       Release of version 0.60 of NEXT
 ==============================================================================
 
 
@@ -25,7 +25,7 @@ DESCRIPTION
     the current class -- to look for a suitable method in other
     ancestors of C<$self> -- whereas C<$self->SUPER::m()> cannot.
 
-    A particularly interesting use of redispatch is in
+    An particularly interesting use of redispatch is in
     C<AUTOLOAD>'ed methods. If such a method determines that it is
     not able to handle a particular call, it may choose to
     redispatch that call, in the hope that some other C<AUTOLOAD>
@@ -50,22 +50,13 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 0.50
+CHANGES IN VERSION 0.60
 
 
-	- Added a $VERSION (oops!)
+	- Re-re-re-fixed NEXT::UNSEEN bug under diamond inheritance 
+	  (Note to self: don't code whilst on vacation!)
 
-	- Fixed handling of diamond patterns (thanks Paul)
-
-	- Added NEXT::ACTUAL to require existence of next method (thanks Paul)
-
-	- Added NEXT::UNSEEN to avoid calling multiply inherited
-	  methods twice (thanks Paul)
-
-	- Re-fixed setting of $AUTOLOAD in NEXT'd AUTOLOADS to be
-	  consistent with more useful SUPER:: behaviour
-
-	- Corified tests
+	- Implemented and documented EVERY functionality
 
 
 ==============================================================================
@@ -73,8 +64,5 @@ CHANGES IN VERSION 0.50
 AVAILABILITY
 
 NEXT has been uploaded to the CPAN
-and is also available from:
-
-	http://www.csse.monash.edu.au/~damian/CPAN/NEXT.tar.gz
 
 ==============================================================================

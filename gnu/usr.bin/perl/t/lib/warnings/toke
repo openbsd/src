@@ -570,7 +570,7 @@ yelp at foo line 30.
 # toke.c
 my $a = rand + 4 ;
 EXPECT
-Warning: Use of "rand" without parens is ambiguous at - line 2.
+Warning: Use of "rand" without parentheses is ambiguous at - line 2.
 ########
 # toke.c
 $^W = 0 ;
@@ -583,9 +583,9 @@ my $a = rand + 4 ;
 }
 $a = rand + 4 ;
 EXPECT
-Warning: Use of "rand" without parens is ambiguous at - line 3.
-Warning: Use of "rand" without parens is ambiguous at - line 8.
-Warning: Use of "rand" without parens is ambiguous at - line 10.
+Warning: Use of "rand" without parentheses is ambiguous at - line 3.
+Warning: Use of "rand" without parentheses is ambiguous at - line 8.
+Warning: Use of "rand" without parentheses is ambiguous at - line 10.
 ########
 # toke.c
 sub fred {};
@@ -613,6 +613,10 @@ Ambiguous use of -fred resolved as -&fred() at - line 11.
 open FOO || time;
 EXPECT
 Precedence problem: open FOO should be open(FOO) at - line 2.
+########
+# toke.c (and [perl #16184])
+open FOO => "<&0"; close FOO;
+EXPECT
 ########
 # toke.c
 $^W = 0 ;

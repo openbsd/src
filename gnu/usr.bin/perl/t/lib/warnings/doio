@@ -275,3 +275,42 @@ no warnings 'io';
 open FOO, '>', \$x;
 EXPECT
 Can't open a reference at - line 14.
+########
+# doio.c [Perl_do_openn]
+use Config;
+BEGIN {
+    if (!$Config{useperlio}) {
+	print <<EOM;
+SKIPPED
+# warns only with perlio
+EOM
+	exit;
+    }
+}
+use warnings 'io' ;
+close STDOUT;
+open FH1, "harness"; close FH1;
+no warnings 'io' ;
+open FH2, "harness"; close FH2;
+EXPECT
+Filehandle STDOUT reopened as FH1 only for input at - line 14.
+########
+# doio.c [Perl_do_openn]
+use Config;
+BEGIN {
+    if (!$Config{useperlio}) {
+	print <<EOM;
+SKIPPED
+# warns only with perlio
+EOM
+	exit;
+    }
+}
+use warnings 'io' ;
+close STDIN;
+open my $fh1, ">doiowarn.tmp"; close $fh1;
+no warnings 'io' ;
+open my $fh2, ">doiowarn.tmp"; close $fh2;
+unlink "doiowarn.tmp";
+EXPECT
+Filehandle STDIN reopened as $fh1 only for output at - line 14.

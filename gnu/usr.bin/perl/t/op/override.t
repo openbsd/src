@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '.';
-    push @INC, '../lib';
+    @INC = '../lib';
+    require './test.pl';
 }
 
-print "1..17\n";
+plan tests => 21;
 
 #
 # This file tries to test builtin override using CORE::GLOBAL
@@ -15,14 +15,12 @@ my $dirsep = "/";
 
 BEGIN { package Foo; *main::getlogin = sub { "kilroy"; } }
 
-print "not " unless getlogin eq "kilroy";
-print "ok 1\n";
+is( getlogin, "kilroy" );
 
 my $t = 42;
 BEGIN { *CORE::GLOBAL::time = sub () { $t; } }
 
-print "not " unless 45 == time + 3;
-print "ok 2\n";
+is( 45, time + 3 );
 
 #
 # require has special behaviour
@@ -31,44 +29,35 @@ my $r;
 BEGIN { *CORE::GLOBAL::require = sub { $r = shift; 1; } }
 
 require Foo;
-print "not " unless $r eq "Foo.pm";
-print "ok 3\n";
+is( $r, "Foo.pm" );
 
 require Foo::Bar;
-print "not " unless $r eq join($dirsep, "Foo", "Bar.pm");
-print "ok 4\n";
+is( $r, join($dirsep, "Foo", "Bar.pm") );
 
 require 'Foo';
-print "not " unless $r eq "Foo";
-print "ok 5\n";
+is( $r, "Foo" );
 
 require 5.6;
-print "not " unless $r eq "5.6";
-print "ok 6\n";
+is( $r, "5.6" );
 
 require v5.6;
-print "not " unless abs($r - 5.006) < 0.001 && $r eq "\x05\x06";
-print "ok 7\n";
+ok( abs($r - 5.006) < 0.001 && $r eq "\x05\x06" );
 
 eval "use Foo";
-print "not " unless $r eq "Foo.pm";
-print "ok 8\n";
+is( $r, "Foo.pm" );
 
 eval "use Foo::Bar";
-print "not " unless $r eq join($dirsep, "Foo", "Bar.pm");
-print "ok 9\n";
+is( $r, join($dirsep, "Foo", "Bar.pm") );
 
 eval "use 5.6";
-print "not " unless $r eq "5.6";
-print "ok 10\n";
+is( $r, "5.6" );
 
 # localizing *CORE::GLOBAL::foo should revert to finding CORE::foo
 {
     local(*CORE::GLOBAL::require);
     $r = '';
     eval "require NoNeXiSt;";
-    print "not " if $r or $@ !~ /^Can't locate NoNeXiSt/i;
-    print "ok 11\n";
+    ok( ! ( $r or $@ !~ /^Can't locate NoNeXiSt/i ) );
 }
 
 #
@@ -77,14 +66,32 @@ print "ok 10\n";
 
 $r = 11;
 BEGIN { *CORE::GLOBAL::readline = sub (;*) { ++$r }; }
-print <FH>	== 12 ? "ok 12\n" : "not ok 12\n";
-print <$fh>	== 13 ? "ok 13\n" : "not ok 13\n";
+is( <FH>	, 12 );
+is( <$fh>	, 13 );
 my $pad_fh;
-print <$pad_fh>	== 14 ? "ok 14\n" : "not ok 14\n";
+is( <$pad_fh>	, 14 );
 
 # Non-global readline() override
 BEGIN { *Rgs::readline = sub (;*) { --$r }; }
 package Rgs;
-print <FH>	== 13 ? "ok 15\n" : "not ok 15\n";
-print <$fh>	== 12 ? "ok 16\n" : "not ok 16\n";
-print <$pad_fh>	== 11 ? "ok 17\n" : "not ok 17\n";
+::is( <FH>	, 13 );
+::is( <$fh>	, 12 );
+::is( <$pad_fh>	, 11 );
+
+# Verify that the parsing of overriden keywords isn't messed up
+# by the indirect object notation
+{
+    local $SIG{__WARN__} = sub {
+	::like( $_[0], qr/^ok overriden at/ );
+    };
+    BEGIN { *OverridenWarn::warn = sub { CORE::warn "@_ overriden"; }; }
+    package OverridenWarn;
+    sub foo { "ok" }
+    warn( OverridenWarn->foo() );
+    warn OverridenWarn->foo();
+}
+BEGIN { *OverridenPop::pop = sub { ::is( $_[0][0], "ok" ) }; }
+package OverridenPop;
+sub foo { [ "ok" ] }
+pop( OverridenPop->foo() );
+pop OverridenPop->foo();

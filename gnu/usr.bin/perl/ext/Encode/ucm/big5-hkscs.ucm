@@ -1,5 +1,5 @@
 #
-# $Id: big5-hkscs.ucm,v 1.2 2002/04/22 03:41:13 dankogai Exp $
+# $Id: big5-hkscs.ucm,v 1.3 2003/03/31 03:27:27 dankogai Exp $
 #
 <code_set_name> "big5-hkscs"
 <mb_cur_min> 1
@@ -135,14 +135,6 @@ CHARMAP
 <U007D> \x7D |0 # RIGHT CURLY BRACKET
 <U007E> \x7E |0 # TILDE
 <U007F> \x7F |0 # DELETE
-<U0080> \x80 |0 # <control>
-<U0081> \x81 |0 # <control>
-<U0082> \x82 |0 # BREAK PERMITTED HERE
-<U0083> \x83 |0 # NO BREAK HERE
-<U0084> \x84 |0 # <control>
-<U0085> \x85 |0 # NEXT LINE
-<U0086> \x86 |0 # START OF SELECTED AREA
-<U0087> \x87 |0 # END OF SELECTED AREA
 <U00A7> \xA1\xB1 |0
 <U00A8> \xC6\xD8 |0
 <U00AF> \xA1\xC2 |0
@@ -171,7 +163,6 @@ CHARMAP
 <U00F9> \x88\x7B |0
 <U00FA> \x88\x79 |0
 <U00FC> \x88\xA2 |0
-<U00FF> \xFF |0 # LATIN SMALL LETTER Y WITH DIAERESIS
 <U0100> \x88\x56 |0
 <U0101> \x88\x67 |0
 <U0112> \x88\x5A |0

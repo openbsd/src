@@ -1,8 +1,8 @@
 package Unicode::Normalize;
 
 BEGIN {
-    if (ord("A") == 193) {
-	die "Unicode::Normalize not ported to EBCDIC\n";
+    unless ("A" eq pack('U', 0x41)) {
+	die "Unicode::Normalize cannot stringify a Unicode code point\n";
     }
 }
 
@@ -11,12 +11,11 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.17';
+our $VERSION = '0.25';
 our $PACKAGE = __PACKAGE__;
 
 require Exporter;
 require DynaLoader;
-require AutoLoader;
 
 our @ISA = qw(Exporter DynaLoader);
 our @EXPORT = qw( NFC NFD NFKC NFKD );
@@ -26,14 +25,34 @@ our @EXPORT_OK = qw(
     getCanon getCompat getComposite getCombinClass
     isExclusion isSingleton isNonStDecomp isComp2nd isComp_Ex
     isNFD_NO isNFC_NO isNFC_MAYBE isNFKD_NO isNFKC_NO isNFKC_MAYBE
+    FCD checkFCD FCC checkFCC composeContiguous
+    splitOnLastStarter
 );
 our %EXPORT_TAGS = (
     all       => [ @EXPORT, @EXPORT_OK ],
     normalize => [ @EXPORT, qw/normalize decompose reorder compose/ ],
     check     => [ qw/checkNFD checkNFKD checkNFC checkNFKC check/ ],
+    fast      => [ qw/FCD checkFCD FCC checkFCC composeContiguous/ ],
 );
 
+######
+
 bootstrap Unicode::Normalize $VERSION;
+
+######
+
+sub pack_U {
+    return pack('U*', @_);
+}
+
+sub unpack_U {
+    return unpack('U*', pack('U*').shift);
+}
+
+
+##
+## normalization forms
+##
 
 use constant COMPAT => 1;
 
@@ -42,30 +61,49 @@ sub NFKD ($) { reorder(decompose($_[0], COMPAT)) }
 sub NFC  ($) { compose(reorder(decompose($_[0]))) }
 sub NFKC ($) { compose(reorder(decompose($_[0], COMPAT))) }
 
+sub FCD ($) {
+    my $str = shift;
+    return checkFCD($str) ? $str : NFD($str);
+}
+sub FCC ($) { composeContiguous(reorder(decompose($_[0]))) }
+
+our %formNorm = (
+    NFC  => \&NFC,	C  => \&NFC,
+    NFD  => \&NFD,	D  => \&NFD,
+    NFKC => \&NFKC,	KC => \&NFKC,
+    NFKD => \&NFKD,	KD => \&NFKD,
+    FCD  => \&FCD,	FCC => \&FCC,
+);
+
 sub normalize($$)
 {
     my $form = shift;
     my $str = shift;
-    $form =~ s/^NF//;
-    return
-	$form eq 'D'  ? NFD ($str) :
-	$form eq 'C'  ? NFC ($str) :
-	$form eq 'KD' ? NFKD($str) :
-	$form eq 'KC' ? NFKC($str) :
-      croak $PACKAGE."::normalize: invalid form name: $form";
+    return exists $formNorm{$form} 
+	? $formNorm{$form}->($str)
+	: croak $PACKAGE."::normalize: invalid form name: $form";
 }
+
+
+##
+## quick check
+##
+
+our %formCheck = (
+    NFC  => \&checkNFC, 	C  => \&checkNFC,
+    NFD  => \&checkNFD, 	D  => \&checkNFD,
+    NFKC => \&checkNFKC,	KC => \&checkNFKC,
+    NFKD => \&checkNFKD,	KD => \&checkNFKD,
+    FCD  => \&checkFCD, 	FCC => \&checkFCC,
+);
 
 sub check($$)
 {
     my $form = shift;
     my $str = shift;
-    $form =~ s/^NF//;
-    return
-	$form eq 'D'  ? checkNFD ($str) :
-	$form eq 'C'  ? checkNFC ($str) :
-	$form eq 'KD' ? checkNFKD($str) :
-	$form eq 'KC' ? checkNFKC($str) :
-      croak $PACKAGE."::check: invalid form name: $form";
+    return exists $formCheck{$form} 
+	? $formCheck{$form}->($str)
+	: croak $PACKAGE."::check: invalid form name: $form";
 }
 
 1;
@@ -95,6 +133,19 @@ Unicode::Normalize - Unicode Normalization Forms
 
 =head1 DESCRIPTION
 
+Parameters:
+
+C<$string> is used as a string under character semantics
+(see F<perlunicode>).
+
+C<$codepoint> should be an unsigned integer
+representing a Unicode code point.
+
+Note: Between XS edition and pure Perl edition,
+interpretation of C<$codepoint> as a decimal number has incompatibility.
+XS converts C<$codepoint> to an unsigned integer, but pure Perl does not.
+Do not use a floating point nor a negative sign in C<$codepoint>.
+
 =head2 Normalization Forms
 
 =over 4
@@ -117,14 +168,31 @@ returns the Normalization Form KD (formed by compatibility decomposition).
 returns the Normalization Form KC (formed by compatibility decomposition
 followed by B<canonical> composition).
 
+=item C<$FCD_string = FCD($string)>
+
+If the given string is in FCD ("Fast C or D" form; cf. UTN #5),
+returns it without modification; otherwise returns an FCD string.
+
+Note: FCD is not always unique, then plural forms may be equivalent
+each other. C<FCD()> will return one of these equivalent forms.
+
+=item C<$FCC_string = FCC($string)>
+
+returns the FCC form ("Fast C Contiguous"; cf. UTN #5).
+
+Note: FCD is unique, as well as four normalization forms (NF*).
+
 =item C<$normalized_string = normalize($form_name, $string)>
 
 As C<$form_name>, one of the following names must be given.
 
-  'C'  or 'NFC'  for Normalization Form C
-  'D'  or 'NFD'  for Normalization Form D
-  'KC' or 'NFKC' for Normalization Form KC
-  'KD' or 'NFKD' for Normalization Form KD
+  'C'  or 'NFC'  for Normalization Form C  (UAX #15)
+  'D'  or 'NFD'  for Normalization Form D  (UAX #15)
+  'KC' or 'NFKC' for Normalization Form KC (UAX #15)
+  'KD' or 'NFKD' for Normalization Form KD (UAX #15)
+
+  'FCD'          for "Fast C or D" Form  (UTN #5)
+  'FCC'          for "Fast C Contiguous" (UTN #5)
 
 =back
 
@@ -136,7 +204,7 @@ As C<$form_name>, one of the following names must be given.
 
 =item C<$decomposed_string = decompose($string, $useCompatMapping)>
 
-Decompose the specified string and returns the result.
+Decomposes the specified string and returns the result.
 
 If the second parameter (a boolean) is omitted or false, decomposes it
 using the Canonical Decomposition Mapping.
@@ -150,7 +218,7 @@ Reordering may be required.
 
 =item C<$reordered_string  = reorder($string)>
 
-Reorder the combining characters and the like in the canonical ordering
+Reorders the combining characters and the like in the canonical ordering
 and returns the result.
 
 E.g., when you have a list of NFD/NFKD strings,
@@ -173,7 +241,7 @@ you can get its NFC/NFKC string, saying
 
 =head2 Quick Check
 
-(see Annex 8, UAX #15; F<DerivedNormalizationProps.txt>)
+(see Annex 8, UAX #15; and F<DerivedNormalizationProps.txt>)
 
 The following functions check whether the string is in that normalization form.
 
@@ -201,6 +269,17 @@ returns C<YES> (C<1>) or C<NO> (C<empty string>).
 
 returns C<YES> (C<1>), C<NO> (C<empty string>), or C<MAYBE> (C<undef>).
 
+=item C<$result = checkFCD($string)>
+
+returns C<YES> (C<1>) or C<NO> (C<empty string>).
+
+=item C<$result = checkFCC($string)>
+
+returns C<YES> (C<1>), C<NO> (C<empty string>), or C<MAYBE> (C<undef>).
+
+If a string is not in C<FCD>, it must not be in <FCC>.
+So C<checkFCC($not_FCD_string)> should return C<NO>.
+
 =item C<$result = check($form_name, $string)>
 
 returns C<YES> (C<1>), C<NO> (C<empty string>), or C<MAYBE> (C<undef>).
@@ -211,23 +290,26 @@ C<$form_name> is alike to that for C<normalize()>.
 
 B<Note>
 
-In the cases of NFD and NFKD, the answer must be either C<YES> or C<NO>.
-The answer C<MAYBE> may be returned in the cases of NFC and NFKC.
+In the cases of NFD, NFKD, and FCD, the answer must be
+either C<YES> or C<NO>. The answer C<MAYBE> may be returned
+in the cases of NFC, NFKC, and FCC.
 
-A MAYBE-NFC/NFKC string should contain at least
-one combining character or the like.
-For example, C<COMBINING ACUTE ACCENT> has
+A C<MAYBE> string should contain at least one combining character
+or the like. For example, C<COMBINING ACUTE ACCENT> has
 the MAYBE_NFC/MAYBE_NFKC property.
+
 Both C<checkNFC("A\N{COMBINING ACUTE ACCENT}")>
 and C<checkNFC("B\N{COMBINING ACUTE ACCENT}")> will return C<MAYBE>.
 C<"A\N{COMBINING ACUTE ACCENT}"> is not in NFC
 (its NFC is C<"\N{LATIN CAPITAL LETTER A WITH ACUTE}">),
 while C<"B\N{COMBINING ACUTE ACCENT}"> is in NFC.
 
-If you want to check exactly, compare the string with its NFC/NFKC; i.e.,
+If you want to check exactly, compare the string with its NFC/NFKC/FCC;
+i.e.,
 
-    $string eq NFC($string)    # more thorough than checkNFC($string)
-    $string eq NFKC($string)   # more thorough than checkNFKC($string)
+    $string eq NFC($string)    # thorough than checkNFC($string)
+    $string eq NFKC($string)   # thorough than checkNFKC($string)
+    $string eq FCC($string)    # thorough than checkFCC($string)
 
 =head2 Character Data
 
@@ -275,7 +357,7 @@ is a composition exclusion.
 Returns a boolean whether the character of the specified codepoint is
 a singleton.
 
-=item C<$is_non_startar_decomposition = isNonStDecomp($codepoint)>
+=item C<$is_non_starter_decomposition = isNonStDecomp($codepoint)>
 
 Returns a boolean whether the canonical decomposition
 of the character of the specified codepoint
@@ -298,14 +380,14 @@ C<normalize> and other some functions: on request.
 
 =head1 AUTHOR
 
-SADAHIRO Tomoyuki, E<lt>SADAHIRO@cpan.orgE<gt>
+SADAHIRO Tomoyuki, <SADAHIRO@cpan.org>
 
   http://homepage1.nifty.com/nomenclator/perl/
 
-  Copyright(C) 2001-2002, SADAHIRO Tomoyuki. Japan. All rights reserved.
+  Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
-  This program is free software; you can redistribute it and/or 
-  modify it under the same terms as Perl itself.
+  This module is free software; you can redistribute it
+  and/or modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
@@ -318,6 +400,10 @@ Unicode Normalization Forms - UAX #15
 =item http://www.unicode.org/Public/UNIDATA/DerivedNormalizationProps.txt
 
 Derived Normalization Properties
+
+=item http://www.unicode.org/notes/tn5/
+
+Canonical Equivalence in Applications - UTN #5
 
 =back
 

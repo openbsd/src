@@ -19,6 +19,7 @@ including all commercially-important modern languages.  All characters
 in the largest Chinese, Japanese, and Korean dictionaries are also
 encoded. The standards will eventually cover almost all characters in
 more than 250 writing systems and thousands of languages.
+Unicode 1.0 was released in October 1991, and 4.0 in April 2003.
 
 A Unicode I<character> is an abstract entity.  It is not bound to any
 particular integer width, especially not to the C language C<char>.
@@ -33,11 +34,10 @@ case 0x0041 and 0x03B1, respectively.  These unique numbers are called
 I<code points>.
 
 The Unicode standard prefers using hexadecimal notation for the code
-points.  If numbers like C<0x0041> are unfamiliar to
-you, take a peek at a later section, L</"Hexadecimal Notation">.
-The Unicode standard uses the notation C<U+0041 LATIN CAPITAL LETTER A>,
-to give the hexadecimal code point and the normative name of
-the character.
+points.  If numbers like C<0x0041> are unfamiliar to you, take a peek
+at a later section, L</"Hexadecimal Notation">.  The Unicode standard
+uses the notation C<U+0041 LATIN CAPITAL LETTER A>, to give the
+hexadecimal code point and the normative name of the character.
 
 Unicode also defines various I<properties> for the characters, like
 "uppercase" or "lowercase", "decimal digit", or "punctuation";
@@ -86,12 +86,13 @@ characters that do not represent true characters.
 
 A common myth about Unicode is that it would be "16-bit", that is,
 Unicode is only represented as C<0x10000> (or 65536) characters from
-C<0x0000> to C<0xFFFF>.  B<This is untrue.> Since Unicode 2.0, Unicode
-has been defined all the way up to 21 bits (C<0x10FFFF>), and since
-Unicode 3.1, characters have been defined beyond C<0xFFFF>.  The first
-C<0x10000> characters are called the I<Plane 0>, or the I<Basic
-Multilingual Plane> (BMP).  With Unicode 3.1, 17 planes in all are
-defined--but nowhere near full of defined characters, yet.
+C<0x0000> to C<0xFFFF>.  B<This is untrue.>  Since Unicode 2.0 (July
+1996), Unicode has been defined all the way up to 21 bits (C<0x10FFFF>),
+and since Unicode 3.1 (March 2001), characters have been defined
+beyond C<0xFFFF>.  The first C<0x10000> characters are called the
+I<Plane 0>, or the I<Basic Multilingual Plane> (BMP).  With Unicode
+3.1, 17 (yes, seventeen) planes in all were defined--but they are
+nowhere near full of defined characters, yet.
 
 Another myth is that the 256-character blocks have something to
 do with languages--that each block would define the characters used
@@ -104,13 +105,14 @@ so on.  Scripts usually span varied parts of several blocks.
 For further information see L<Unicode::UCD>.
 
 The Unicode code points are just abstract numbers.  To input and
-output these abstract numbers, the numbers must be I<encoded> somehow.
-Unicode defines several I<character encoding forms>, of which I<UTF-8>
-is perhaps the most popular.  UTF-8 is a variable length encoding that
-encodes Unicode characters as 1 to 6 bytes (only 4 with the currently
-defined characters).  Other encodings include UTF-16 and UTF-32 and their
-big- and little-endian variants (UTF-8 is byte-order independent)
-The ISO/IEC 10646 defines the UCS-2 and UCS-4 encoding forms.
+output these abstract numbers, the numbers must be I<encoded> or
+I<serialised> somehow.  Unicode defines several I<character encoding
+forms>, of which I<UTF-8> is perhaps the most popular.  UTF-8 is a
+variable length encoding that encodes Unicode characters as 1 to 6
+bytes (only 4 with the currently defined characters).  Other encodings
+include UTF-16 and UTF-32 and their big- and little-endian variants
+(UTF-8 is byte-order independent) The ISO/IEC 10646 defines the UCS-2
+and UCS-4 encoding forms.
 
 For more information about encodings--for instance, to learn what
 I<surrogates> and I<byte order marks> (BOMs) are--see L<perlunicode>.
@@ -172,14 +174,15 @@ To output UTF-8, use the C<:utf8> output layer.  Prepending
 to this sample program ensures that the output is completely UTF-8,
 and removes the program's warning.
 
-If your locale environment variables (C<LANGUAGE>, C<LC_ALL>,
-C<LC_CTYPE>, C<LANG>) contain the strings 'UTF-8' or 'UTF8',
-regardless of case, then the default encoding of your STDIN, STDOUT,
-and STDERR and of B<any subsequent file open>, is UTF-8.  Note that
-this means that Perl expects other software to work, too: if Perl has
-been led to believe that STDIN should be UTF-8, but then STDIN coming
-in from another command is not UTF-8, Perl will complain about the
-malformed UTF-8.
+You can enable automatic UTF-8-ification of your standard file
+handles, default C<open()> layer, and C<@ARGV> by using either
+the C<-C> command line switch or the C<PERL_UNICODE> environment
+variable, see L<perlrun> for the documentation of the C<-C> switch.
+
+Note that this means that Perl expects other software to work, too:
+if Perl has been led to believe that STDIN should be UTF-8, but then
+STDIN coming in from another command is not UTF-8, Perl will complain
+about the malformed UTF-8.
 
 All features that combine Unicode and I/O also require using the new
 PerlIO feature.  Almost all Perl 5.8 platforms do use PerlIO, though:
@@ -361,7 +364,7 @@ the C<open> pragma.  See L<open>, or look at the following example.
 
 With the C<open> pragma you can use the C<:locale> layer
 
-    $ENV{LC_ALL} = $ENV{LANG} = 'ru_RU.KOI8-R';
+    BEGIN { $ENV{LC_ALL} = $ENV{LANG} = 'ru_RU.KOI8-R' }
     # the :locale will probe the locale environment variables like LC_ALL
     use open OUT => ':locale'; # russki parusski
     open(O, ">koi8");
@@ -398,9 +401,9 @@ written to the stream. For example, the following snippet copies the
 contents of the file "text.jis" (encoded as ISO-2022-JP, aka JIS) to
 the file "text.utf8", encoded as UTF-8:
 
-    open(my $nihongo, '<:encoding(iso2022-jp)', 'text.jis');
-    open(my $unicode, '>:utf8',                 'text.utf8');
-    while (<$nihongo>) { print $unicode }
+    open(my $nihongo, '<:encoding(iso-2022-jp)', 'text.jis');
+    open(my $unicode, '>:utf8',                  'text.utf8');
+    while (<$nihongo>) { print $unicode $_ }
 
 The naming of encodings, both by the C<open()> and by the C<open>
 pragma, is similar to the C<encoding> pragma in that it allows for
@@ -433,7 +436,8 @@ UTF-8 encoded.  A C<use open ':utf8'> would have avoided the bug, or
 explicitly opening also the F<file> for input as UTF-8.
 
 B<NOTE>: the C<:utf8> and C<:encoding> features work only if your
-Perl has been built with the new PerlIO feature.
+Perl has been built with the new PerlIO feature (which is the default
+on most systems).
 
 =head2 Displaying Unicode As Text
 
@@ -449,7 +453,7 @@ displayed as C<\x..>, and the rest of the characters as themselves:
                sprintf("\\x{%04X}", $_) :  # \x{...}
                chr($_) =~ /[[:cntrl:]]/ ?  # else if control character ...
                sprintf("\\x%02X", $_) :    # \x..
-               chr($_)                     # else as themselves
+               quotemeta(chr($_))          # else quoted or as themselves
          } unpack("U*", $_[0]));           # unpack Unicode characters
    }
 
@@ -457,9 +461,11 @@ For example,
 
    nice_string("foo\x{100}bar\n")
 
-returns:
+returns the string
 
-   "foo\x{0100}bar\x0A"
+   'foo\x{0100}bar\x0A'
+
+which is ready to be printed.
 
 =head2 Special Cases
 
@@ -498,9 +504,9 @@ Yet another way would be to use the Devel::Peek module:
 
     perl -MDevel::Peek -e 'Dump(chr(0x100))'
 
-That shows the UTF8 flag in FLAGS and both the UTF-8 bytes
+That shows the C<UTF8> flag in FLAGS and both the UTF-8 bytes
 and Unicode characters in C<PV>.  See also later in this document
-the discussion about the C<is_utf8> function of the C<Encode> module.
+the discussion about the C<utf8::is_utf8()> function.
 
 =back
 
@@ -621,8 +627,7 @@ didn't get the transparency of Unicode quite right.
 
 Okay, if you insist:
 
-    use Encode 'is_utf8';
-    print is_utf8($string) ? 1 : 0, "\n";
+    print utf8::is_utf8($string) ? 1 : 0, "\n";
 
 But note that this doesn't mean that any of the characters in the
 string are necessary UTF-8 encoded, or that any of the characters have
@@ -633,7 +638,7 @@ C<$string>.  If the flag is off, the bytes in the scalar are interpreted
 as a single byte encoding.  If the flag is on, the bytes in the scalar
 are interpreted as the (multi-byte, variable-length) UTF-8 encoded code
 points of the characters.  Bytes added to an UTF-8 encoded string are
-automatically upgraded to UTF-8.  If mixed non-UTF8 and UTF-8 scalars
+automatically upgraded to UTF-8.  If mixed non-UTF-8 and UTF-8 scalars
 are merged (double-quoted interpolation, explicit concatenation, and
 printf/sprintf parameter substitution), the result will be UTF-8 encoded
 as if copies of the byte strings were upgraded to UTF-8: for example,
@@ -642,8 +647,8 @@ as if copies of the byte strings were upgraded to UTF-8: for example,
     $b = "\x{100}";
     print "$a = $b\n";
 
-the output string will be UTF-8-encoded C<ab\x80c\x{100}\n>, but note
-that C<$a> will stay byte-encoded.
+the output string will be UTF-8-encoded C<ab\x80c = \x{100}\n>, but
+C<$a> will stay byte-encoded.
 
 Sometimes you might really need to know the byte length of a string
 instead of the character length. For that use either the
@@ -749,7 +754,10 @@ http://www.cl.cam.ac.uk/~mgk25/unicode.html
 How Does Unicode Work With Traditional Locales?
 
 In Perl, not very well.  Avoid using locales through the C<locale>
-pragma.  Use only one or the other.
+pragma.  Use only one or the other.  But see L<perlrun> for the
+description of the C<-C> switch and its environment counterpart,
+C<$ENV{PERL_UNICODE}> to see how to enable various Unicode features,
+for example by using locale settings.
 
 =back
 
@@ -862,7 +870,7 @@ If you have the GNU recode installed, you can also use the
 Perl front-end C<Convert::Recode> for character conversions.
 
 The following are fast conversions from ISO 8859-1 (Latin-1) bytes
-to UTF-8 bytes, the code works even with older Perl 5 versions.
+to UTF-8 bytes and back, the code works even with older Perl 5 versions.
 
     # ISO 8859-1 to UTF-8
     s/([\x80-\xFF])/chr(0xC0|ord($1)>>6).chr(0x80|ord($1)&0x3F)/eg;
@@ -873,7 +881,8 @@ to UTF-8 bytes, the code works even with older Perl 5 versions.
 =head1 SEE ALSO
 
 L<perlunicode>, L<Encode>, L<encoding>, L<open>, L<utf8>, L<bytes>,
-L<perlretut>, L<Unicode::Collate>, L<Unicode::Normalize>, L<Unicode::UCD>
+L<perlretut>, L<perlrun>, L<Unicode::Collate>, L<Unicode::Normalize>,
+L<Unicode::UCD>
 
 =head1 ACKNOWLEDGMENTS
 
@@ -883,6 +892,6 @@ mailing lists for their valuable feedback.
 
 =head1 AUTHOR, COPYRIGHT, AND LICENSE
 
-Copyright 2001-2002 Jarkko Hietaniemi <jhi@iki.fi>
+Copyright 2001-2002 Jarkko Hietaniemi E<lt>jhi@iki.fiE<gt>
 
 This document may be distributed under the same terms as Perl itself.

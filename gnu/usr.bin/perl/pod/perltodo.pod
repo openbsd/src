@@ -37,7 +37,7 @@ For displaying PVs with control characters, embedded nulls, and Unicode.
 This would be useful for printing warnings, or data and regex dumping,
 not_a_number(), and so on.
 
-Requirements: should handle both byte and UTF8 strings.  isPRINT()
+Requirements: should handle both byte and UTF-8 strings.  isPRINT()
 characters printed as-is, character less than 256 as \xHH, Unicode
 characters as \x{HHH}.  Don't assume ASCII-like, either, get somebody
 on EBCDIC to test the output.
@@ -204,7 +204,7 @@ Floating point formatting is still causing some weird test failures.
 Locales and Unicode interact with each other in unpleasant ways.
 One possible solution would be to adopt/support ICU:
 
-	http://oss.software.ibm.com/developerworks/opensource/icu/project/
+	http://oss.software.ibm.com/icu/index.html
 
 =head2 Arithmetic on non-Arabic numerals
 
@@ -580,6 +580,13 @@ Should taint be stopped from affecting control flow, if ($tainted)?
 Should tainted symbolic method calls and subref calls be stopped?
 (Look at Ruby's $SAFE levels for inspiration?)
 
+=head2 Perform correctly when XSUBs call subroutines that exit via goto(LABEL) and friends
+
+If an XSUB calls a subroutine that exits using goto(LABEL),
+last(LABEL) or next(LABEL), then the interpreter will very probably crash
+with a segfault because the execution resumes in the XSUB instead of
+never returning there.
+
 =head1 Vague ideas
 
 Ideas which have been discussed, and which may or may not happen.
@@ -695,10 +702,13 @@ and so on, varies.  Finding the right level of interfacing to Perl
 requires some thought.  Remember that an OS does not implicate a
 filesystem.
 
-Note that in Windows the -C command line flag already does quite
-a bit of the above (but even there the support is not complete:
-for example the exec/spawn are not Unicode-aware) by turning on
-the so-called "wide API support". 
+(The Windows -C command flag "wide API support" has been at least
+temporarily retired in 5.8.1, and the -C has been repurposed, see
+L<perlrun>.)
+
+=head1 Unicode in %ENV
+
+Currently the %ENV entries are always byte strings.
 
 =head1 Recently done things
 
@@ -796,7 +806,7 @@ Benjamin Sugars has done this.
 
 Nick Ing-Simmons' C<perlio> supports an C<mmap> IO method.
 
-=head2 Byte to/from UTF8 and UTF8 to/from local conversion
+=head2 Byte to/from UTF-8 and UTF-8 to/from local conversion
 
 C<Encode> provides this.
 
@@ -810,7 +820,8 @@ http://lists.perl.org/ , http://archive.develooper.com/
 
 =head2 Bug tracking
 
-Richard Foley has written the bug tracking system at http://bugs.perl.org/
+Since 5.8.0 perl uses the RT bug tracking system from Jesse Vincent,
+implemented by Robert Spier at http://bugs.perl.org/
 
 =head2 Integrate MacPerl
 

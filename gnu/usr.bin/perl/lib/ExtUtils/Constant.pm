@@ -1,6 +1,6 @@
 package ExtUtils::Constant;
 use vars qw (@ISA $VERSION %XS_Constant %XS_TypeSet @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.12';
+$VERSION = '0.14';
 
 =head1 NAME
 
@@ -94,7 +94,10 @@ if ($] >= 5.006) {
   eval "use warnings; 1" or die $@;
 }
 use strict;
+use vars '$is_perl56';
 use Carp;
+
+$is_perl56 = ($] < 5.007 && $] > 5.005_50);
 
 use Exporter;
 use Text::Wrap;
@@ -150,7 +153,12 @@ characters.
 sub C_stringify {
   local $_ = shift;
   return unless defined $_;
-  confess "Wide character in '$_' intended as a C identifier" if tr/\0-\377//c;
+  # grr 5.6.1
+  confess "Wide character in '$_' intended as a C identifier"
+    if tr/\0-\377// != length;
+  # grr 5.6.1 moreso because its regexps will break on data that happens to
+  # be utf8, which includes my 8 bit test cases.
+  $_ = pack 'C*', unpack 'U*', $_ . pack 'U*' if $is_perl56;
   s/\\/\\\\/g;
   s/([\"\'])/\\$1/g;	# Grr. fix perl mode.
   s/\n/\\n/g;		# Ensure newlines don't end up in octal
@@ -189,13 +197,27 @@ sub perl_stringify {
   s/\t/\\t/g;
   s/\f/\\f/g;
   s/\a/\\a/g;
-  s/([^\0-\177])/sprintf "\\x{%X}", ord $1/ge;
   unless ($] < 5.006) {
+    if ($] > 5.007) {
+      s/([^\0-\177])/sprintf "\\x{%X}", ord $1/ge;
+    } else {
+      # Grr 5.6.1. And I don't think I can use utf8; to force the regexp
+      # because 5.005_03 will fail.
+      # This is grim, but I also can't split on //
+      my $copy;
+      foreach my $index (0 .. length ($_) - 1) {
+        my $char = substr ($_, $index, 1);
+        $copy .= ($char le "\177") ? $char : sprintf "\\x{%X}", ord $char;
+      }
+      $_ = $copy;
+    }
     # This will elicit a warning on 5.005_03 about [: :] being reserved unless
     # I cheat
     my $cheat = '([[:^print:]])';
     s/$cheat/sprintf "\\%03o", ord $1/ge;
   } else {
+    # Turns out "\x{}" notation only arrived with 5.6
+    s/([^\0-\177])/sprintf "\\x%02X", ord $1/ge;
     require POSIX;
     s/([^A-Za-z0-9_])/POSIX::isprint($1) ? $1 : sprintf "\\%03o", ord $1/ge;
   }
@@ -241,6 +263,11 @@ is equal to the C variable C<name>. If I<CHECKED_AT> is defined, then it
 is used to avoid C<memEQ> for short names, or to generate a comment to
 highlight the position of the character in the C<switch> statement.
 
+If I<CHECKED_AT> is a reference to a scalar, then instead it gives
+the characters pre-checked at the beginning, (and the number of chars by
+which the C variable name has been advanced. These need to be chopped from
+the front of I<NAME>).
+
 =cut
 
 sub memEQ_clause {
@@ -248,6 +275,14 @@ sub memEQ_clause {
   # Which could actually be a character comparison or even ""
   my ($name, $checked_at, $indent) = @_;
   $indent = ' ' x ($indent || 4);
+  my $front_chop;
+  if (ref $checked_at) {
+    # regexp won't work on 5.6.1 without use utf8; in turn that won't work
+    # on 5.005_03.
+    substr ($name, 0, length $$checked_at,) = '';
+    $front_chop = C_stringify ($$checked_at);
+    undef $checked_at;
+  }
   my $len = length $name;
 
   if ($len < 2) {
@@ -267,12 +302,38 @@ sub memEQ_clause {
       return $indent . "if (name[$check] == '$char') {\n";
     }
   }
-  # Could optimise a memEQ on 3 to 2 single character checks here
+  if (($len == 2 and !defined $checked_at)
+     or ($len == 3 and defined ($checked_at) and $checked_at == 2)) {
+    my $char1 = C_stringify (substr $name, 0, 1);
+    my $char2 = C_stringify (substr $name, 1, 1);
+    return $indent . "if (name[0] == '$char1' && name[1] == '$char2') {\n";
+  }
+  if (($len == 3 and defined ($checked_at) and $checked_at == 1)) {
+    my $char1 = C_stringify (substr $name, 0, 1);
+    my $char2 = C_stringify (substr $name, 2, 1);
+    return $indent . "if (name[0] == '$char1' && name[2] == '$char2') {\n";
+  }
+
+  my $pointer = '^';
+  my $have_checked_last = defined ($checked_at) && $len == $checked_at + 1;
+  if ($have_checked_last) {
+    # Checked at the last character, so no need to memEQ it.
+    $pointer = C_stringify (chop $name);
+    $len--;
+  }
+
   $name = C_stringify ($name);
   my $body = $indent . "if (memEQ(name, \"$name\", $len)) {\n";
-    $body .= $indent . "/*               ". (' ' x $checked_at) . '^'
-      . (' ' x ($len - $checked_at + length $len)) . "    */\n"
-        if defined $checked_at;
+  # Put a little ^ under the letter we checked at
+  # Screws up for non printable and non-7 bit stuff, but that's too hard to
+  # get right.
+  if (defined $checked_at) {
+    $body .= $indent . "/*               ". (' ' x $checked_at) . $pointer
+      . (' ' x ($len - $checked_at + length $len)) . "    */\n";
+  } elsif (defined $front_chop) {
+    $body .= $indent . "/*              $front_chop"
+      . (' ' x ($len + 1 + length $len)) . "    */\n";
+  }
   return $body;
 }
 
@@ -433,7 +494,7 @@ sub match_clause {
       $body .= $indent . "  } else {\n";
       $body .= return_clause ($no, 4 + length $indent); 
     }
-    $body .= $indent . "  }";
+    $body .= $indent . "  }\n";
   } else {
     $body .= return_clause ($item, 2 + length $indent);
   }
@@ -466,7 +527,11 @@ sub switch_clause {
   }
   my @safe_names = @names;
   foreach (@safe_names) {
-    next unless tr/A-Za-z0-9_//c;
+    confess sprintf "Name '$_' is length %d, not $namelen", length
+      unless length == $namelen;
+    # Argh. 5.6.1
+    # next unless tr/A-Za-z0-9_//c;
+    next if tr/A-Za-z0-9_// == length;
     $_ = '"' . perl_stringify ($_) . '"';
     # Ensure that the enclosing C comment doesn't end
     # by turning */  into *" . "/
@@ -478,12 +543,20 @@ sub switch_clause {
   # Figure out what to switch on.
   # (RMS, Spread of jump table, Position, Hashref)
   my @best = (1e38, ~0);
-  foreach my $i (0 .. ($namelen - 1)) {
+  # Prefer the last character over the others. (As it lets us shortern the
+  # memEQ clause at no cost).
+  foreach my $i ($namelen - 1, 0 .. ($namelen - 2)) {
     my ($min, $max) = (~0, 0);
     my %spread;
+    if ($is_perl56) {
+      # Need proper Unicode preserving hash keys for bytes in range 128-255
+      # here too, for some reason. grr 5.6.1 yet again.
+      tie %spread, 'ExtUtils::Constant::Aaargh56Hash';
+    }
     foreach (@names) {
       my $char = substr $_, $i, 1;
       my $ord = ord $char;
+      confess "char $ord is out of range" if $ord > 255;
       $max = $ord if $ord > $max;
       $min = $ord if $ord < $min;
       push @{$spread{$char}}, $_;
@@ -501,6 +574,8 @@ sub switch_clause {
     # the string wins. Because if that passes but the memEQ fails, it may
     # only need the start of the string to bin the choice.
     # I think. But I'm micro-optimising. :-)
+    # OK. Trump that. Now favour the last character of the string, before the
+    # rest.
     my $ss;
     $ss += @$_ * @$_ foreach values %spread;
     my $rms = sqrt ($ss / keys %spread);
@@ -508,18 +583,31 @@ sub switch_clause {
       @best = ($rms, $max - $min, $i, \%spread);
     }
   }
-  die "Internal error. Failed to pick a switch point for @names"
+  confess "Internal error. Failed to pick a switch point for @names"
     unless defined $best[2];
   # use Data::Dumper; print Dumper (@best);
   my ($offset, $best) = @best[2,3];
   $body .= $indent . "/* Offset $offset gives the best switch position.  */\n";
-  $body .= $indent . "switch (name[$offset]) {\n";
+
+  my $do_front_chop = $offset == 0 && $namelen > 2;
+  if ($do_front_chop) {
+    $body .= $indent . "switch (*name++) {\n";
+  } else {
+    $body .= $indent . "switch (name[$offset]) {\n";
+  }
   foreach my $char (sort keys %$best) {
+    confess sprintf "'$char' is %d bytes long, not 1", length $char
+      if length ($char) != 1;
+    confess sprintf "char %#X is out of range", ord $char if ord ($char) > 255;
     $body .= $indent . "case '" . C_stringify ($char) . "':\n";
     foreach my $name (sort @{$best->{$char}}) {
       my $thisone = $items->{$name};
       # warn "You are here";
-      $body .= match_clause ($thisone, $offset, 2 + length $indent);
+      if ($do_front_chop) {
+        $body .= match_clause ($thisone, \$char, 2 + length $indent);
+      } else {
+        $body .= match_clause ($thisone, $offset, 2 + length $indent);
+      }
     }
     $body .= $indent . "  break;\n";
   }
@@ -581,7 +669,11 @@ sub dump_names {
         next if $_->{utf8} eq 'no';
         # Copy the hashref, as we don't want to mess with the caller's hashref.
         $_ = {%$_};
-        utf8::decode ($_->{name});
+        unless ($is_perl56) {
+          utf8::decode ($_->{name});
+        } else {
+          $_->{name} = pack 'U*', unpack 'U0U*', $_->{name};
+        }
         delete $_->{utf8};
       }
     } else {
@@ -589,7 +681,9 @@ sub dump_names {
       $type = $default_type;
     }
     $used_types{$type}++;
-    if ($type eq $default_type and 0 == ($_->{name} =~ tr/A-Za-z0-9_//c)
+    if ($type eq $default_type
+        # grr 5.6.1
+        and length $_->{name} == ($_->{name} =~ tr/A-Za-z0-9_//)
         and !defined ($_->{macro}) and !defined ($_->{value})
         and !defined ($_->{default}) and !defined ($_->{pre})
         and !defined ($_->{post}) and !defined ($_->{def_pre})
@@ -836,6 +930,11 @@ sub C_constant {
     # be a hashref, and pinch %$items from our parent to save recalculation.
     ($namelen, $items) = @$breakout;
   } else {
+    if ($is_perl56) {
+      # Need proper Unicode preserving hash keys.
+      $items = {};
+      tie %$items, 'ExtUtils::Constant::Aaargh56Hash';
+    }
     $breakout ||= 3;
     $default_type ||= 'IV';
     if (!ref $what) {
@@ -870,7 +969,10 @@ sub C_constant {
         $what->{$default_type} = 1;
       }
       warn "ExtUtils::Constant doesn't know how to handle values of type $_ used in macro $name" unless defined $XS_Constant{$item->{type}};
-      if ($name !~ tr/\0-\177//c) {
+      # tr///c is broken on 5.6.1 for utf8, so my original tr/\0-\177//c
+      # doesn't work. Upgrade to 5.8
+      # if ($name !~ tr/\0-\177//c || $] < 5.005_50) {
+      if ($name =~ tr/\0-\177// == length $name || $] < 5.005_50) {
         # No characters outside 7 bit ASCII.
         if (exists $items->{$name}) {
           die "Multiple definitions for macro $name";
@@ -881,7 +983,12 @@ sub C_constant {
         if (exists $items->{$name} and ref $items->{$name} ne 'ARRAY') {
           confess "Unexpected ASCII definition for macro $name";
         }
-        if ($name !~ tr/\0-\377//c) {
+        # Again, 5.6.1 tr broken, so s/5\.6.*/5\.8\.0/;
+        # if ($name !~ tr/\0-\377//c) {
+        if ($name =~ tr/\0-\377// == length $name) {
+#          if ($] < 5.007) {
+#            $name = pack "C*", unpack "U*", $name;
+#          }
           $item->{utf8} = 'no';
           $items->{$name}[1] = $item;
           push @new_items, $item;
@@ -889,7 +996,13 @@ sub C_constant {
           $item = {%$item};
         }
         # Encode the name as utf8 bytes.
-        utf8::encode($name);
+        unless ($is_perl56) {
+          utf8::encode($name);
+        } else {
+#          warn "Was >$name< " . length ${name};
+          $name = pack 'C*', unpack 'C*', $name . pack 'U*';
+#          warn "Now '${name}' " . length ${name};
+        }
         if ($items->{$name}[0]) {
           die "Multiple definitions for macro $name";
         }
@@ -936,7 +1049,18 @@ sub C_constant {
       next unless $by_length[$i];	# None of this length
       $body .= "  case $i:\n";
       if (@{$by_length[$i]} == 1) {
-        $body .= match_clause ($by_length[$i]->[0]);
+        my $only_thing = $by_length[$i]->[0];
+        if ($only_thing->{utf8}) {
+          if ($only_thing->{utf8} eq 'yes') {
+            # With utf8 on flag item is passed in element 0
+            $body .= match_clause ([$only_thing]);
+          } else {
+            # With utf8 off flag item is passed in element 1
+            $body .= match_clause ([undef, $only_thing]);
+          }
+        } else {
+          $body .= match_clause ($only_thing);
+        }
       } elsif (@{$by_length[$i]} < $breakout) {
         $body .= switch_clause (4, '', $i, $items, @{$by_length[$i]});
       } else {
@@ -1224,7 +1348,7 @@ EOT
 
 Writes a file of C code and a file of XS code which you should C<#include>
 and C<INCLUDE> in the C and XS sections respectively of your module's XS
-code.  You probaby want to do this in your C<Makefile.PL>, so that you can
+code.  You probably want to do this in your C<Makefile.PL>, so that you can
 easily edit the list of constants without touching the rest of your module.
 The attributes supported are
 
@@ -1301,7 +1425,7 @@ sub WriteConstants {
   print $c_fh constant_types(); # macro defs
   print $c_fh "\n";
 
-  # indent is still undef. Until anyone implents indent style rules with it.
+  # indent is still undef. Until anyone implements indent style rules with it.
   foreach (C_constant ($ARGS{NAME}, $ARGS{C_SUBNAME}, $ARGS{DEFAULT_TYPE},
                        $types, undef, $ARGS{BREAKOUT_AT}, @{$ARGS{NAMES}})) {
     print $c_fh $_, "\n"; # C constant subs
@@ -1313,6 +1437,28 @@ sub WriteConstants {
   close $xs_fh or warn "Error closing $ARGS{XS_FILE}: $!";
 }
 
+package ExtUtils::Constant::Aaargh56Hash;
+# A support module (hack) to provide sane Unicode hash keys on 5.6.x perl
+use strict;
+require Tie::Hash if $ExtUtils::Constant::is_perl56;
+use vars '@ISA';
+@ISA = 'Tie::StdHash';
+
+#my $a;
+# Storing the values as concatenated BER encoded numbers is actually going to
+# be terser than using UTF8 :-)
+# And the tests are slightly faster. Ops are bad, m'kay
+sub to_key {pack "w*", unpack "U*", ($_[0] . pack "U*")};
+sub from_key {defined $_[0] ? pack "U*", unpack 'w*', $_[0] : undef};
+
+sub STORE    { $_[0]->{to_key($_[1])} = $_[2] }
+sub FETCH    { $_[0]->{to_key($_[1])} }
+sub FIRSTKEY { my $a = scalar keys %{$_[0]}; from_key (each %{$_[0]}) }
+sub NEXTKEY  { from_key (each %{$_[0]}) }
+sub EXISTS   { exists $_[0]->{to_key($_[1])} }
+sub DELETE   { delete $_[0]->{to_key($_[1])} }
+
+#END {warn "$a accesses";}
 1;
 __END__
 

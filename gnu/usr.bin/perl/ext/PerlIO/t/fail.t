@@ -23,7 +23,7 @@ $warn = ''; $! = 0;
 ok(!binmode(FH,":-)"),"All punctuation fails binmode");
 print "# $!\n";
 isnt($!,0,"Got errno");
-like($warn,qr/in layer/,"Got warning");
+like($warn,qr/in PerlIO layer/,"Got warning");
 
 $warn = ''; $! = 0;
 ok(!binmode(FH,":nonesuch"),"Bad package fails binmode");
@@ -36,7 +36,7 @@ $warn = ''; $! = 0;
 ok(!open(FH,"<:-)",$file),"All punctuation fails open");
 print "# $!\n";
 isnt($!,"","Got errno");
-like($warn,qr/in layer/,"Got warning");
+like($warn,qr/in PerlIO layer/,"Got warning");
 
 $warn = ''; $! = 0;
 ok(!open(FH,"<:nonesuch",$file),"Bad package fails open");

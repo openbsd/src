@@ -31,12 +31,12 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 617 
-    + 16;		# own tests
+  plan tests => 679 
+    + 23;		# own tests
   }
 
-use Math::BigInt 1.60;
-use Math::BigFloat 1.35;
+use Math::BigInt 1.63;
+use Math::BigFloat 1.38;
 
 use vars qw/$mbi $mbf/;
 
@@ -56,16 +56,20 @@ ok ($Math::BigInt::rnd_mode,'even');
 ok ($Math::BigFloat::rnd_mode,'even');
 
 my $x = eval '$mbi->round_mode("huhmbi");';
-ok ($@ =~ /^Unknown round mode huhmbi at/);
+print "# Got '$@'\n" unless
+ ok ($@ =~ /^Unknown round mode 'huhmbi' at/);
 
 $x = eval '$mbf->round_mode("huhmbf");';
-ok ($@ =~ /^Unknown round mode huhmbf at/);
+print "# Got '$@'\n" unless
+ ok ($@ =~ /^Unknown round mode 'huhmbf' at/);
 
 # old way (now with test for validity)
 $x = eval '$Math::BigInt::rnd_mode = "huhmbi";';
-ok ($@ =~ /^Unknown round mode huhmbi at/);
+print "# Got '$@'\n" unless
+ ok ($@ =~ /^Unknown round mode 'huhmbi' at/);
 $x = eval '$Math::BigFloat::rnd_mode = "huhmbf";';
-ok ($@ =~ /^Unknown round mode huhmbf at/);
+print "# Got '$@'\n" unless
+ ok ($@ =~ /^Unknown round mode 'huhmbf' at/);
 # see if accessor also changes old variable
 $mbi->round_mode('odd'); ok ($Math::BigInt::rnd_mode,'odd');
 $mbf->round_mode('odd'); ok ($Math::BigInt::rnd_mode,'odd');
@@ -78,3 +82,22 @@ foreach my $class (qw/Math::BigInt Math::BigFloat/)
   ok_undef ($class->accuracy());	# and now A must be cleared
   }
 
+foreach my $class (qw/Math::BigInt Math::BigFloat/)
+  {
+  $class->accuracy(42);
+  my $x = $class->new(123);	# $x gets A of 42, too!
+  ok ($x->accuracy(),42);	# really?
+  ok ($x->accuracy(undef),42);	# $x has no A, but the
+				# global is still in effect for $x
+				# so the return value of that operation should
+				# be 42, not undef
+  ok ($x->accuracy(),42);	# so $x should still have A = 42
+  $class->accuracy(undef);	# reset for further tests
+  $class->precision(undef);
+  }
+
+# bug with flog(Math::BigFloat,Math::BigInt)
+$x = Math::BigFloat->new(100);
+$x = $x->blog(Math::BigInt->new(10));
+
+ok ($x,2);

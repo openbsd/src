@@ -9,12 +9,20 @@ WriteMakefile(
     realclean => {FILES=> 'const-c.inc const-xs.inc'},
 );
 
-# We hope syslogd understands /dev/log.
-#
-# Solaris has a -c /dev/log, but the syslog.t #1 and #2 don't
-# seem to be happy if that's _PATH_LOG.
-#
-my $_PATH_LOG = -S "/dev/log" ? "/dev/log" : "";
+my $_PATH_LOG;
+
+if (-S "/dev/log" && -w "/dev/log") {
+        # Most unixes have a unix domain socket /dev/log.
+       $_PATH_LOG = "/dev/log";
+} elsif (-c "/dev/conslog" && -w "/dev/conslog") {
+        # SunOS 5.8 has a worldwritable /dev/conslog STREAMS log driver.
+        # The /dev/log STREAMS log driver on this platform has permissions
+        # and ownership `crw-r----- root sys'.  /dev/conslog has more liberal
+        # permissions.
+       $_PATH_LOG = "/dev/conslog";
+} else {
+       $_PATH_LOG = "";
+}
 
 WriteConstants(
     NAME => 'Sys::Syslog',

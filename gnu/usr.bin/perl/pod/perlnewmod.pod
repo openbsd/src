@@ -91,7 +91,7 @@ you're not the one reinventing the wheel!
 
 You might love it. You might feel that everyone else needs it. But there
 might not actually be any real demand for it out there. If you're unsure
-about the demand you're module will have, consider sending out feelers
+about the demand your module will have, consider sending out feelers
 on the C<comp.lang.perl.modules> newsgroup, or as a last resort, ask the
 modules list at C<modules@perl.org>. Remember that this is a closed list
 with a very long turn-around time - be prepared to wait a good while for

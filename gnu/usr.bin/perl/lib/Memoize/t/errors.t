@@ -33,7 +33,8 @@ for $mod (qw(DB_File GDBM_File SDBM_File ODBM_File NDBM_File)) {
     memoize(sub {}, LIST_CACHE => [HASH => \%cache ]);
   };
   print $@ =~ /can only store scalars/
-     || $@ =~ /Can't locate.*in \@INC/ ? "ok $n\n" : "not ok $n # $@\n";
+     || $@ =~ /Can't locate.*in \@INC/
+     || $@ =~ /Can't load '.*?' for module/ ? "ok $n\n" : "not ok $n # $@\n";
   1 while unlink $dummyfile, "$dummyfile.dir", "$dummyfile.pag", "$dummyfile.db";
   $n++;
 }

@@ -1,4 +1,4 @@
-/* $Id: MD5.xs,v 1.34 2002/05/01 23:30:28 gisle Exp $ */
+/* $Id: MD5.xs,v 1.40 2003/07/22 05:59:27 gisle Exp $ */
 
 /* 
  * This library is free software; you can redistribute it and/or
@@ -44,9 +44,24 @@ extern "C" {
 }
 #endif
 
-#include "patchlevel.h"
-#if PATCHLEVEL <= 4 && !defined(PL_dowarn)
+#ifndef PERL_VERSION
+#    include <patchlevel.h>
+#    if !(defined(PERL_VERSION) || (SUBVERSION > 0 && defined(PATCHLEVEL)))
+#        include <could_not_find_Perl_patchlevel.h>
+#    endif
+#    define PERL_REVISION       5
+#    define PERL_VERSION        PATCHLEVEL
+#    define PERL_SUBVERSION     SUBVERSION
+#endif
+
+#if PERL_VERSION <= 4 && !defined(PL_dowarn)
    #define PL_dowarn dowarn
+#endif
+
+#ifdef G_WARN_ON
+   #define DOWARN (PL_dowarn & G_WARN_ON)
+#else
+   #define DOWARN PL_dowarn
 #endif
 
 #ifdef SvPVbyte
@@ -562,6 +577,22 @@ new(xclass)
 	XSRETURN(1);
 
 void
+clone(self)
+	SV* self
+    PREINIT:
+	MD5_CTX* cont = get_md5_ctx(self);
+	char *myname = sv_reftype(SvRV(self),TRUE);
+	MD5_CTX* context;
+    PPCODE:
+	STRLEN my_na;
+	New(55, context, 1, MD5_CTX);
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), myname , (void*)context);
+	SvREADONLY_on(SvRV(ST(0)));
+	memcpy(context,cont,sizeof(MD5_CTX));
+	XSRETURN(1);
+
+void
 DESTROY(context)
 	MD5_CTX* context
     CODE:
@@ -599,16 +630,23 @@ addfile(self, fh)
 	         * first.
 	         */
 	        STRLEN missing = 64 - fill;
-	        if ( (n = PerlIO_read(fh, buffer, missing)))
+	        if ( (n = PerlIO_read(fh, buffer, missing)) > 0)
 	 	    MD5Update(context, buffer, n);
 	        else
 		    XSRETURN(1);  /* self */
 	    }
 
-	    /* Process blocks until EOF */
-            while ( (n = PerlIO_read(fh, buffer, sizeof(buffer)))) {
+	    /* Process blocks until EOF or error */
+            while ( (n = PerlIO_read(fh, buffer, sizeof(buffer))) > 0) {
 	        MD5Update(context, buffer, n);
 	    }
+
+	    if (PerlIO_error(fh)) {
+		croak("Reading from filehandle failed");
+	    }
+	}
+	else {
+	    croak("No filehandle passed");
 	}
 	XSRETURN(1);  /* self */
 
@@ -642,7 +680,7 @@ md5(...)
     PPCODE:
 	MD5Init(&ctx);
 
-	if (PL_dowarn) {
+	if (DOWARN) {
             char *msg = 0;
 	    if (items == 1) {
 		if (SvROK(ST(0))) {

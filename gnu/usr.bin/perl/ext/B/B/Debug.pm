@@ -1,6 +1,6 @@
 package B::Debug;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 use strict;
 use B qw(peekop class walkoptree walkoptree_exec
@@ -40,9 +40,9 @@ sub B::LOOP::debug {
     my ($op) = @_;
     $op->B::BINOP::debug();
     printf <<'EOT', ${$op->redoop}, ${$op->nextop}, ${$op->lastop};
-       op_redoop       0x%x
-       op_nextop       0x%x
-       op_lastop       0x%x
+	op_redoop	0x%x
+	op_nextop	0x%x
+	op_lastop	0x%x
 EOT
 }
 
@@ -72,7 +72,8 @@ sub B::PMOP::debug {
 sub B::COP::debug {
     my ($op) = @_;
     $op->B::OP::debug();
-    printf <<'EOT', $op->label, $op->stashpv, $op->file, $op->seq, $op->arybase, $op->line, ${$op->warnings};
+    my $cop_io = class($op->io) eq 'SPECIAL' ? '' : $op->io->as_string;
+    printf <<'EOT', $op->label, $op->stashpv, $op->file, $op->cop_seq, $op->arybase, $op->line, ${$op->warnings}, cstring($cop_io);
 	cop_label	%s
 	cop_stashpv	%s
 	cop_file	%s
@@ -80,6 +81,7 @@ sub B::COP::debug {
 	cop_arybase	%d
 	cop_line	%d
 	cop_warnings	0x%x
+	cop_io		%s
 EOT
 }
 
@@ -100,12 +102,6 @@ sub B::PADOP::debug {
     my ($op) = @_;
     $op->B::OP::debug();
     printf "\top_padix\t\t%ld\n", $op->padix;
-}
-
-sub B::CVOP::debug {
-    my ($op) = @_;
-    $op->B::OP::debug();
-    printf "\top_cv\t\t0x%x\n", ${$op->cv};
 }
 
 sub B::NULL::debug {
@@ -198,15 +194,16 @@ sub B::CV::debug {
     my ($padlist) = $sv->PADLIST;
     my ($file) = $sv->FILE;
     my ($gv) = $sv->GV;
-    printf <<'EOT', $$stash, $$start, $$root, $$gv, $file, $sv->DEPTH, $padlist, ${$sv->OUTSIDE};
+    printf <<'EOT', $$stash, $$start, $$root, $$gv, $file, $sv->DEPTH, $padlist, ${$sv->OUTSIDE}, $sv->OUTSIDE_SEQ;
 	STASH		0x%x
 	START		0x%x
 	ROOT		0x%x
 	GV		0x%x
 	FILE		%s
 	DEPTH		%d
-	PADLIST		0x%x			       
+	PADLIST		0x%x
 	OUTSIDE		0x%x
+	OUTSIDE_SEQ	%d
 EOT
     $start->debug if $start;
     $root->debug if $root;
@@ -220,13 +217,13 @@ sub B::AV::debug {
     my(@array) = $av->ARRAY;
     print "\tARRAY\t\t(", join(", ", map("0x" . $$_, @array)), ")\n";
     printf <<'EOT', scalar(@array), $av->MAX, $av->OFF, $av->AvFLAGS;
-	FILL		%d    
+	FILL		%d
 	MAX		%d
 	OFF		%d
 	AvFLAGS		%d
 EOT
 }
-    
+
 sub B::GV::debug {
     my ($gv) = @_;
     if ($done_gv{$$gv}++) {

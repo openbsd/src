@@ -14,8 +14,8 @@ BEGIN {
     {
 	plan skip_all => "Test uses Socket, Socket not built";
     }
-    if ($^O eq 'MacOS') {
-	plan skip_all => "Test relies on resolution of localhost, fails on Mac OS";
+    if ($^O eq 'MacOS' || ($^O eq 'irix' && $Config{osvers} == 5)) {
+	plan skip_all => "Test relies on resolution of localhost, fails on $^O ($Config{osvers})";
     }
 }
 

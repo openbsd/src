@@ -1,6 +1,6 @@
 /*    utfebcdic.h
  *
- *    Copyright (c) 2001-2002, Larry Wall, Nick Ing-Simmons
+ *    Copyright (C) 2001, 2002, by Larry Wall, Nick Ing-Simmons, and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -339,7 +339,7 @@ END_EXTERN_C
 
 #define UTF8SKIP(s) PL_utf8skip[*(U8*)s]
 
-/* EBCDIC-happy ways of converting native code to UTF8 */
+/* EBCDIC-happy ways of converting native code to UTF-8 */
 
 /* Native to iso-8859-1 */
 #define NATIVE_TO_ASCII(ch)      PL_e2a[(U8)(ch)]

@@ -1,12 +1,10 @@
-# PropertyAliases-3.2.0.txt
-# Date: 2002-03-19,23:31:21 GMT [MD]
+# PropertyAliases-4.0.0.txt
+# Date: 2003-03-12, 23:46:08 GMT [MD]
 #
 # This file contains aliases for properties used in the UCD.
 # These names can be used for XML formats of UCD data, for regular-expression
 # property tests, and other programmatic textual descriptions of Unicode data.
-# The names are not normative, except where they correspond to normative
-# properties in the UCD. For information on which properties are normative,
-# see UnicodeCharacterDatabase.html.
+# For information on which properties are normative, see UCD.html.
 #
 # The names may be translated in appropriate environments, and additional
 # aliases may be useful.
@@ -15,7 +13,7 @@
 #
 # Each line has two fields, separated by semicolons.
 #
-# First Field: The first field is an abbreviated name for the property
+# First Field: The first field is an abbreviated name for the property.
 #
 # Second Field: The second field is a long name
 #
@@ -23,21 +21,19 @@
 # and '_' are ignored.
 #
 # NOTE: Currently there is at most one abbreviated name and one long name for
-# each property. However, in the future additional aliases
-# may be added. In such a case, the first line for the property
-# would have the preferred alias for output.
+# each property. However, in the future additional aliases may be added.
 #
 # NOTE: The property value names are NOT unique across properties, especially
-# with loose matches. For example,
+# with loose matches. For example:
 #
-# AL means Arabic Letter for the Bidi_Class property, and
-# AL means Alpha_Left for the Combining_Class property, and
-# AL means Alphabetic for the Line_Break property.
+#   AL means Arabic Letter for the Bidi_Class property, and
+#   AL means Alpha_Left for the Combining_Class property, and
+#   AL means Alphabetic for the Line_Break property.
 #
 # In addition, some property names may be the same as some property value names.
 #
 # The combination of property value and property name is, however, unique.
-# For more information, see UTR #24: Regular Expression Guidelines
+# For more information, see UTR #18: Regular Expression Guidelines
 # ================================================
 
 
@@ -62,6 +58,7 @@ stc       ; Simple_Titlecase_Mapping
 suc       ; Simple_Uppercase_Mapping
 tc        ; Titlecase_Mapping
 uc        ; Uppercase_Mapping
+URS       ; Unicode_Radical_Stroke
 
 # ================================================
 # Enumerated Non-Binary Properties
@@ -71,11 +68,14 @@ ccc       ; Canonical_Combining_Class
 dt        ; Decomposition_Type
 ea        ; East_Asian_Width
 gc        ; General_Category
+hst       ; Hangul_Syllable_Type
 jg        ; Joining_Group
 jt        ; Joining_Type
 lb        ; Line_Break
 NFC_QC    ; NFC_Quick_Check
+NFD_QC    ; NFD_Quick_Check
 NFKC_QC   ; NFKC_Quick_Check
+NFKD_QC   ; NFKD_Quick_Check
 nt        ; Numeric_Type
 sc        ; Script
 
@@ -107,13 +107,11 @@ Join_C    ; Join_Control
 LOE       ; Logical_Order_Exception
 Lower     ; Lowercase
 Math      ; Math
-NBrk      ; Non_Break
 NChar     ; Noncharacter_Code_Point
-NFD_QC    ; NFD_Quick_Check
-NFKD_QC   ; NFKD_Quick_Check
 OAlpha    ; Other_Alphabetic
 ODI       ; Other_Default_Ignorable_Code_Point
 OGr_Ext   ; Other_Grapheme_Extend
+OIDS      ; Other_ID_Start
 OLower    ; Other_Lowercase
 OMath     ; Other_Math
 OUpper    ; Other_Uppercase

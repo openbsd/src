@@ -10,7 +10,7 @@
 package Pod::Checker;
 
 use vars qw($VERSION);
-$VERSION = 1.3;  ## Current version of this package
+$VERSION = 1.41;  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 use Pod::ParseUtils; ## for hyperlinks and lists
@@ -53,11 +53,9 @@ trigger additional warnings. See L<"Warnings">.
 
 B<podchecker> will perform syntax checking of Perl5 POD format documentation.
 
-I<NOTE THAT THIS MODULE IS CURRENTLY IN THE BETA STAGE!>
-
-It is hoped that curious/ambitious user will help flesh out and add the
-additional features they wish to see in B<Pod::Checker> and B<podchecker>
-and verify that the checks are consistent with L<perlpod>.
+Curious/ambitious users are welcome to propose additional features they wish
+to see in B<Pod::Checker> and B<podchecker> and verify that the checks are
+consistent with L<perlpod>.
 
 The following checks are currently preformed:
 
@@ -274,6 +272,11 @@ The NAME section (C<=head1 NAME>) should consist of a single paragraph
 with the script/module name, followed by a dash `-' and a very short
 description of what the thing is good for.
 
+=item * =headI<n> without preceding higher level
+
+For example if there is a C<=head2> in the POD file prior to a
+C<=head1>.
+
 =back
 
 =head2 Hyperlinks
@@ -314,7 +317,7 @@ there were no POD commands at all found in the file.
 
 =head1 EXAMPLES
 
-I<[T.B.D.]>
+See L</SYNOPSIS>
 
 =head1 INTERFACE
 
@@ -323,6 +326,13 @@ for hyperlinks (C<=headX>, C<=item>) and index entries (C<XE<lt>E<gt>>).
 POD translators can use this feature to syntax-check and get the nodes in
 a first pass before actually starting to convert. This is expensive in terms
 of execution time, but allows for very robust conversions.
+
+Since PodParser-1.24 the B<Pod::Checker> module uses only the B<poderror>
+method to print errors and warnings. The summary output (e.g. 
+"Pod syntax OK") has been dropped from the module and has been included in
+B<podchecker> (the script). This allows users of B<Pod::Checker> to
+control completely the output behaviour. Users of B<podchecker> (the script)
+get the well-known behaviour.
 
 =cut
 
@@ -548,6 +558,7 @@ sub initialize {
     ## Initialize number of errors, and setup an error function to
     ## increment this number and then print to the designated output.
     $self->{_NUM_ERRORS} = 0;
+    $self->{_NUM_WARNINGS} = 0;
     $self->{-quiet} ||= 0;
     # set the error handling subroutine
     $self->errorsub($self->{-quiet} ? sub { 1; } : 'poderror');
@@ -609,6 +620,8 @@ sub poderror {
     ## Increment error count and print message "
     ++($self->{_NUM_ERRORS}) 
         if(!%opts || ($opts{-severity} && $opts{-severity} eq 'ERROR'));
+    ++($self->{_NUM_WARNINGS})
+        if(!%opts || ($opts{-severity} && $opts{-severity} eq 'WARNING'));
     my $out_fh = $self->output_handle() || \*STDERR;
     print $out_fh ($severity, $msg, $line, $file, "\n")
       if($self->{-warnings} || !%opts || $opts{-severity} ne 'WARNING');
@@ -624,6 +637,18 @@ Set (if argument specified) and retrieve the number of errors found.
 
 sub num_errors {
    return (@_ > 1) ? ($_[0]->{_NUM_ERRORS} = $_[1]) : $_[0]->{_NUM_ERRORS};
+}
+
+##################################
+
+=item C<$checker-E<gt>num_warnings()>
+
+Set (if argument specified) and retrieve the number of warnings found.
+
+=cut
+
+sub num_warnings {
+   return (@_ > 1) ? ($_[0]->{_NUM_WARNINGS} = $_[1]) : $_[0]->{_NUM_WARNINGS};
 }
 
 ##################################
@@ -722,7 +747,6 @@ sub end_pod {
     my $out_fh = $self->output_handle();
 
     if(@{$self->{_list_stack}}) {
-        # _TODO_ display, but don't count them for now
         my $list;
         while(($list = $self->_close_list('EOF',$infile)) &&
           $list->indent() ne 'auto') {
@@ -770,19 +794,8 @@ sub end_pod {
             -msg => "multiple occurrence of link target '$_'"});
     }
 
-    ## Print the number of errors found
-    my $num_errors = $self->num_errors();
-    if ($num_errors > 0) {
-        printf $out_fh ("$infile has $num_errors pod syntax %s.\n",
-                      ($num_errors == 1) ? "error" : "errors");
-    }
-    elsif($self->{_commands} == 0) {
-        print $out_fh "$infile does not contain any pod commands.\n";
-        $self->num_errors(-1);
-    }
-    else {
-        print $out_fh "$infile pod syntax OK.\n";
-    }
+    # no POD found here
+    $self->num_errors(-1) if($self->{_commands} == 0);
 }
 
 # check a POD command directive
@@ -907,17 +920,24 @@ sub command {
             }
         }
         elsif($cmd =~ /^head(\d+)/) {
+            my $hnum = $1;
+            $self->{"_have_head_$hnum"}++; # count head types
+            if($hnum > 1 && !$self->{"_have_head_".($hnum -1)}) {
+              $self->poderror({ -line => $line, -file => $file,
+                   -severity => 'WARNING', 
+                   -msg => "=head$hnum without preceding higher level"});
+            }
             # check whether the previous =head section had some contents
             if(defined $self->{_commands_in_head} &&
               $self->{_commands_in_head} == 0 &&
               defined $self->{_last_head} &&
-              $self->{_last_head} >= $1) {
+              $self->{_last_head} >= $hnum) {
                 $self->poderror({ -line => $line, -file => $file,
                      -severity => 'WARNING', 
                      -msg => "empty section in previous paragraph"});
             }
             $self->{_commands_in_head} = -1;
-            $self->{_last_head} = $1;
+            $self->{_last_head} = $hnum;
             # check if there is an open list
             if(@{$self->{_list_stack}}) {
                 my $list;
@@ -1051,17 +1071,17 @@ sub _check_ptree {
     foreach(@$ptree) {
         # regular text chunk
         unless(ref) {
-            my $count;
             # count the unescaped angle brackets
             # complain only when warning level is greater than 1
-            my $i = $_;
-            if($count = $i =~ tr/<>/<>/) {
+            if($self->{-warnings} && $self->{-warnings}>1) {
+              my $count;
+              if($count = tr/<>/<>/) {
                 $self->poderror({ -line => $line, -file => $file,
                      -severity => 'WARNING', 
-                     -msg => "$count unescaped <> in paragraph" })
-                if($self->{-warnings} && $self->{-warnings}>1);
+                     -msg => "$count unescaped <> in paragraph" });
+                }
             }
-            $text .= $i;
+            $text .= $_;
             next;
         }
         # have an interior sequence

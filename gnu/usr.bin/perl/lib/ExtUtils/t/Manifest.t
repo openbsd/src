@@ -14,7 +14,7 @@ chdir 't';
 use strict;
 
 # these files help the test run
-use Test::More tests => 33;
+use Test::More tests => 41;
 use Cwd;
 
 # these files are needed for the module itself
@@ -26,14 +26,14 @@ use File::Path;
 @INC = map { File::Spec->rel2abs($_) } @INC;
 
 # keep track of everything added so it can all be deleted
-my %files;
+my %Files;
 sub add_file {
-	my ($file, $data) = @_;
-	$data ||= 'foo';
-    unlink $file;  # or else we'll get multiple versions on VMS
-	open( T, '>'.$file) or return;
-	print T $data;
-	++$files{$file};
+    my ($file, $data) = @_;
+    $data ||= 'foo';
+    1 while unlink $file;  # or else we'll get multiple versions on VMS
+    open( T, '>'.$file) or return;
+    print T $data;
+    ++$Files{$file};
     close T;
 }
 
@@ -58,7 +58,7 @@ sub remove_dir {
 BEGIN { 
     use_ok( 'ExtUtils::Manifest', 
             qw( mkmanifest manicheck filecheck fullcheck 
-                maniread manicopy skipcheck ) ); 
+                maniread manicopy skipcheck maniadd) ); 
 }
 
 my $cwd = Cwd::getcwd();
@@ -127,10 +127,12 @@ ok( exists( ExtUtils::Manifest::manifind()->{'moretest/quux'} ),
                                         "manifind found moretest/quux" );
 
 # only MANIFEST and foo are in the manifest
+$_ = 'foo';
 my $files = maniread();
 is( keys %$files, 2, 'two files found' );
 is( join(' ', sort { lc($a) cmp lc($b) } keys %$files), 'foo MANIFEST', 
                                         'both files found' );
+is( $_, 'foo', q{maniread() doesn't clobber $_} );
 
 # poison the manifest, and add a comment that should be reported
 add_file( 'MANIFEST', 'none #none' );
@@ -158,7 +160,7 @@ like($warn, qr/^Skipping MANIFEST.SKIP/i, 'warned about MANIFEST.SKIP' );
 	like( $warn, qr/Added to albatross: /, 'using a new manifest file' );
 	
 	# add the new file to the list of files to be deleted
-	$files{'albatross'}++;
+	$Files{'albatross'}++;
 }
 
 
@@ -173,21 +175,59 @@ like( $warn, qr{^Skipping moretest/quux$}i, 'got skipping warning again' );
 # There was a bug where entries in MANIFEST would be blotted out
 # by MANIFEST.SKIP rules.
 add_file( 'MANIFEST.SKIP' => 'foo' );
-add_file( 'MANIFEST'      => 'foobar'   );
+add_file( 'MANIFEST'      => "foobar\n"   );
 add_file( 'foobar'        => '123' );
 ($res, $warn) = catch_warning( \&manicheck );
 is( $res,  '',      'MANIFEST overrides MANIFEST.SKIP' );
 is( $warn, undef,   'MANIFEST overrides MANIFEST.SKIP, no warnings' );
 
+$files = maniread;
+ok( !$files->{wibble},     'MANIFEST in good state' );
+maniadd({ wibble => undef });
+maniadd({ yarrow => "hock" });
+$files = maniread;
+is( $files->{wibble}, '',    'maniadd() with undef comment' );
+is( $files->{yarrow}, 'hock','          with comment' );
+is( $files->{foobar}, '',    '          preserved old entries' );
+
+add_file('MANIFEST'   => 'Makefile.PL');
+maniadd({ foo  => 'bar' });
+$files = maniread;
+# VMS downcases the MANIFEST.  We normalize it here to match.
+%$files = map { (lc $_ => $files->{$_}) } keys %$files;
+my %expect = ( 'makefile.pl' => '',
+               'foo'    => 'bar'
+             );
+is_deeply( $files, \%expect, 'maniadd() vs MANIFEST without trailing newline');
+
+add_file('MANIFEST'   => 'Makefile.PL');
+maniadd({ foo => 'bar' });
+
+SKIP: {
+    chmod( 0400, 'MANIFEST' );
+    skip "Can't make MANIFEST read-only", 2 if -w 'MANIFEST';
+
+    eval {
+        maniadd({ 'foo' => 'bar' });
+    };
+    is( $@, '',  "maniadd() won't open MANIFEST if it doesn't need to" );
+
+    eval {
+        maniadd({ 'grrrwoof' => 'yippie' });
+    };
+    like( $@, qr/^\Qmaniadd() could not open MANIFEST:\E/,  
+                 "maniadd() dies if it can't open the MANIFEST" );
+
+    chmod( 0600, 'MANIFEST' );
+}
+    
 
 END {
-	# the args are evaluated in scalar context
-	is( unlink( keys %files ), keys %files, 'remove all added files' );
+	is( unlink( keys %Files ), keys %Files, 'remove all added files' );
 	remove_dir( 'moretest', 'copy' );
 
 	# now get rid of the parent directory
 	ok( chdir( $cwd ), 'return to parent directory' );
-	unlink('mantest/MANIFEST');
 	remove_dir( 'mantest' );
 }
 

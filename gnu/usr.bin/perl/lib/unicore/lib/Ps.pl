@@ -66,6 +66,7 @@ FE3D
 FE3F		
 FE41		
 FE43		
+FE47		
 FE59		
 FE5B		
 FE5D		

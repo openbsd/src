@@ -1,36 +1,38 @@
 package threads::shared;
 
-use 5.007_003;
+use 5.008;
 use strict;
 use warnings;
+BEGIN {
+    require Exporter;
+    our @ISA = qw(Exporter);
+    our @EXPORT = qw(share cond_wait cond_broadcast cond_signal);
+    our $VERSION = '0.91';
 
-require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT = qw(share cond_wait cond_broadcast cond_signal _refcnt _id _thrcnt);
-our $VERSION = '0.90';
-
-if ($threads::threads) {
+    if ($threads::threads) {
 	*cond_wait = \&cond_wait_enabled;
 	*cond_signal = \&cond_signal_enabled;
 	*cond_broadcast = \&cond_broadcast_enabled;
 	require XSLoader;
 	XSLoader::load('threads::shared',$VERSION);
-}
-else {
-	*share = \&share_disabled;
-	*cond_wait = \&cond_wait_disabled;
-	*cond_signal = \&cond_signal_disabled;
-	*cond_broadcast = \&cond_broadcast_disabled;
-}
+	push @EXPORT,'bless';
+    }
+    else {
 
+# String eval is generally evil, but we don't want these subs to exist at all
+# if threads are loaded successfully.  Vivifying them conditionally this way
+# saves on average about 4K of memory per thread.
 
-sub cond_wait_disabled { return @_ };
-sub cond_signal_disabled { return @_};
-sub cond_broadcast_disabled { return @_};
-sub share_disabled { return @_}
+        eval <<'EOD';
+sub cond_wait      (\[$@%]) { undef }
+sub cond_signal    (\[$@%]) { undef }
+sub cond_broadcast (\[$@%]) { undef }
+sub share          (\[$@%]) { return $_[0] }
+EOD
+    }
+}
 
 $threads::shared::threads_shared = 1;
-
 
 sub threads::shared::tie::SPLICE
 {
@@ -72,7 +74,7 @@ It is used together with the threads module.
 
 =head1 EXPORT
 
-C<share>, C<lock>, C<cond_wait>, C<cond_signal>, C<cond_broadcast>
+C<share>, C<cond_wait>, C<cond_signal>, C<cond_broadcast>
 
 Note that if this module is imported when C<threads> has not yet been
 loaded, then these functions all become no-ops. This makes it possible
@@ -87,7 +89,7 @@ environments.
 
 C<share> takes a value and marks it as shared. You can share a scalar,
 array, hash, scalar ref, array ref or hash ref.  C<share> will return
-the shared rvalue.
+the shared rvalue but always as a reference.
 
 C<share> will traverse up references exactly I<one> level.
 C<share(\$a)> is equivalent to C<share($a)>, while C<share(\\$a)> is not.
@@ -182,10 +184,10 @@ Taking references to the elements of shared arrays and hashes does not
 autovivify the elements, and neither does slicing a shared array/hash
 over non-existent indices/keys autovivify the elements.
 
-share() allows you to C<share $hashref->{key}> without giving any error
-message.  But the C<$hashref->{key}> is B<not> shared, causing the error
+share() allows you to C<< share $hashref->{key} >> without giving any error
+message.  But the C<< $hashref->{key} >> is B<not> shared, causing the error
 "locking can only be used on shared values" to occur when you attempt to
-C<lock $hasref->{key}>.
+C<< lock $hasref->{key} >>.
 
 =head1 AUTHOR
 

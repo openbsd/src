@@ -15,9 +15,9 @@ return <<'END';
 00AF		Diacritic
 00B4		Diacritic
 00B7	00B8	Diacritic
-02B0	02EE	Diacritic
-0300	034E	Diacritic
-0360	0362	Diacritic
+02B0	034E	Diacritic
+0350	0357	Diacritic
+035D	0362	Diacritic
 0374	0375	Diacritic
 037A		Diacritic
 0384	0385	Diacritic
@@ -30,6 +30,7 @@ return <<'END';
 05C1	05C2	Diacritic
 05C4		Diacritic
 064B	0652	Diacritic
+0657	0658	Diacritic
 06DF	06E0	Diacritic
 06E5	06E6	Diacritic
 06EA	06EC	Diacritic
@@ -48,6 +49,7 @@ return <<'END';
 0B4D		Diacritic
 0BCD		Diacritic
 0C4D		Diacritic
+0CBC		Diacritic
 0CCD		Diacritic
 0D4D		Diacritic
 0DCA		Diacritic
@@ -65,6 +67,9 @@ return <<'END';
 1037		Diacritic
 1039		Diacritic
 17C9	17D3	Diacritic
+17DD		Diacritic
+1939	193B	Diacritic
+1D2C	1D6A	Diacritic
 1FBD		Diacritic
 1FBF	1FC1	Diacritic
 1FCD	1FCF	Diacritic

@@ -1,9 +1,9 @@
 
-# Time-stamp: "2001-06-21 23:12:39 MDT"
+# Time-stamp: "2003-04-02 11:10:32 AHST"
 
 =head1 NAME
 
-Locale::Maketext -- framework for localization
+Locale::Maketext - framework for localization
 
 =head1 SYNOPSIS
 
@@ -110,7 +110,7 @@ These are to do with constructing a language handle:
 
 =over
 
-=item  *
+=item *
 
 $lh = YourProjClass->get_handle( ...langtags... ) || die "lg-handle?";
 
@@ -146,7 +146,7 @@ those were the languages passed as parameters to C<get_handle>.
 
 Otherwise (i.e., if not a CGI), this tries various OS-specific ways
 to get the language-tags for the current locale/language, and then
-pretends that those were the value(s) passed to C<cet_handle>.
+pretends that those were the value(s) passed to C<get_handle>.
 
 Currently this OS-specific stuff consists of looking in the environment
 variables "LANG" and "LANGUAGE"; and on MSWin machines (where those
@@ -325,7 +325,7 @@ This is generally meant to be called from inside Bracket Notation
      "Your search matched [quant,_1,document]!"
 
 It's for I<quantifying> a noun (i.e., saying how much of it there is,
-while giving the currect form of it).  The behavior of this method is
+while giving the correct form of it).  The behavior of this method is
 handy for English and a few other Western European languages, and you
 should override it for languages where it's not suitable.  You can feel
 free to read the source, but the current implementation is basically
@@ -347,7 +347,7 @@ So for English (with Bracket Notation)
 C<"...[quant,_1,file]..."> is fine (for 0 it returns "0 files",
 for 1 it returns "1 file", and for more it returns "2 files", etc.)
 
-But for "directory", you'd want C<"[quant,_1,direcory,directories]">
+But for "directory", you'd want C<"[quant,_1,directory,directories]">
 so that our elementary C<quant> method doesn't think that the
 plural of "directory" is "directorys".  And you might find that the
 output may sound better if you specify a negative form, as in:
@@ -511,7 +511,7 @@ or putting into a GUI widget.
 
 While the key must be a string value (since that's a basic
 restriction that Perl places on hash keys), the value in
-the lexicon can currenly be of several types:
+the lexicon can currently be of several types:
 a defined scalar, scalarref, or coderef.  The use of these is
 explained above, in the section 'The "maketext" Method', and
 Bracket Notation for strings is discussed in the next section.
@@ -570,7 +570,7 @@ a command-line program might returns when given an unknown switch,
 I often just use a key "_USAGE_MESSAGE".  At that point I then go
 and immediately to define that lexicon entry in the
 ProjectClass::L10N::en lexicon (since English is always my "project
-lanuage"):
+language"):
 
   '_USAGE_MESSAGE' => <<'EOSTUFF',
   ...long long message...
@@ -755,7 +755,7 @@ as just the interpolation of all its items:
   ),
 
 Examples:  "[_1]" and "[,_1]", which are synonymous; and
-"[,ID-(,_4,-,_2,)]", which compiles as
+"C<[,ID-(,_4,-,_2,)]>", which compiles as
 C<join "", "ID-(", $_[4], "-", $_[2], ")">.
 
 =item *
@@ -811,7 +811,7 @@ you get it with "~~".
 
 Currently, an unescaped "~" before a character
 other than a bracket or a comma is taken to mean just a "~" and that
-charecter.  I.e., "~X" means the same as "~~X" -- i.e., one literal tilde,
+character.  I.e., "~X" means the same as "~~X" -- i.e., one literal tilde,
 and then one literal "X".  However, by using "~X", you are assuming that
 no future version of Maketext will use "~X" as a magic escape sequence.
 In practice this is not a great problem, since first off you can just
@@ -888,7 +888,7 @@ but since you anticipate localizing this, you write:
   my $lh = ThisProject::I18N->get_handle();
    # For the moment, assume that things are set up so
    # that we load class ThisProject::I18N::en
-   # and that's the class that $lh belongs to.
+   # and that that's the class that $lh belongs to.
   ...
   if(-e $filename) {
     go_process_file($filename)
@@ -1004,7 +1004,7 @@ careful, you'll just have to wrap every call to $lh->maketext in an
 S<eval { }>.  However, I want programmers to reserve the right (via
 the "fail" attribute) to treat lookup failure as something other than
 an exception of the same level of severity as a config file being
-unreadable, or some essential resource being inaccessable.
+unreadable, or some essential resource being inaccessible.
 
 One possibly useful value for the "fail" attribute is the method name
 "failure_handler_auto".  This is a method defined in class
@@ -1199,10 +1199,10 @@ Remember to ask your translators about numeral formatting in their
 language, so that you can override the C<numf> method as
 appropriate.  Typical variables in number formatting are:  what to
 use as a decimal point (comma? period?); what to use as a thousands
-separator (space? nonbreakinng space? comma? period? small
+separator (space? nonbreaking space? comma? period? small
 middot? prime? apostrophe?); and even whether the so-called "thousands
 separator" is actually for every third digit -- I've heard reports of
-two hundred thousand being expressable as "2,00,000" for some Indian
+two hundred thousand being expressible as "2,00,000" for some Indian
 (Subcontinental) languages, besides the less surprising "S<200 000>",
 "200.000", "200,000", and "200'000".  Also, using a set of numeral
 glyphs other than the usual ASCII "0"-"9" might be appreciated, as via
@@ -1275,7 +1275,8 @@ Maketext is better than the plain old approach of just having
 message catalogs that are just databases of sprintf formats.
 
 L<File::Findgrep|File::Findgrep> is a sample application/module
-that uses Locale::Maketext to localize its messages.
+that uses Locale::Maketext to localize its messages.  For a larger
+internationalized system, see also L<Apache::MP3>.
 
 L<I18N::LangTags|I18N::LangTags>.
 
@@ -1303,7 +1304,7 @@ shorter than its documentation!
 
 =head1 COPYRIGHT AND DISCLAIMER
 
-Copyright (c) 1999-2001 Sean M. Burke.  All rights reserved.
+Copyright (c) 1999-2003 Sean M. Burke.  All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -1317,5 +1318,3 @@ merchantability or fitness for a particular purpose.
 Sean M. Burke C<sburke@cpan.org>
 
 =cut
-
-# Zing!

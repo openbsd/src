@@ -14,6 +14,8 @@ return <<'END';
 0268		Soft_Dotted
 0456		Soft_Dotted
 0458		Soft_Dotted
+1D62		Soft_Dotted
 1E2D		Soft_Dotted
 1ECB		Soft_Dotted
+2071		Soft_Dotted
 END

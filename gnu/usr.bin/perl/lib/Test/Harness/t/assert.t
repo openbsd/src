@@ -12,9 +12,9 @@ BEGIN {
 
 use strict;
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 
-use Test::Harness::Assert;
+use_ok( 'Test::Harness::Assert' );
 
 
 ok( defined &assert,                'assert() exported' );

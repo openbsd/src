@@ -1,45 +1,44 @@
-# ArabicShaping-3.2.0.txt
+# ArabicShaping-4.0.0.txt
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
 # This file defines the shaping classes for Arabic and Syriac
 # positional shaping, repeating in machine readable form the
-# information printed in Tables 8-6, 8-7, 8-8, 8-10, 8-11, and
-# 8-13 of The Unicode Standard, Version 3.0, plus additions
-# for Unicode 3.1 and Unicode 3.2.
+# information printed in Tables 8-3, 8-7, 8-8, 8-11, 8-12, and
+# 8-13 of The Unicode Standard, Version 4.0.
 #
-# See sections 8.2 and 8.3 of The Unicode Standard, Version 3.0
+# See sections 8.2 and 8.3 of The Unicode Standard, Version 4.0
 # for more information.
 #
 # Each line contains four fields, separated by a semicolon.
 #
-# The first field gives the code point, in 4-digit hexadecimal
+# Field 0: the code point, in 4-digit hexadecimal
 #   form, of an Arabic or Syriac character.
-# The second field gives a short schematic name for that character,
+# Field 1: gives a short schematic name for that character,
 #   abbreviated from the normative Unicode character name.
-# The third field defines the joining type: R right-joining, 
-#   D dual-joining, U non-joining
-# The fourth field defines the joining group.
+# Field 2: defines the joining type
+#   R right-joining,
+#   L left-joining,
+#   D dual-joining,
+#   C join-causing
+#   U non-joining
+#   T transparent
+#       See the Arabic block description for more information on these types.
+# Field 3: defines the joining group.
 #
 #
-# Note: Characters of joining type T and most characters of 
-# joining type U are not explicitly listed in this file.
+# Note: Code points that are not explicitly listed in this file are
+# either of type T or U:
 #
-# Characters of joining type T can derived by the following formula:
-#   T = Mn + Cf - ZWNJ - ZWJ
-# where Mn and Cf are the general category values. In other words,
-# any non-spacing mark or any format control character, except
-# U+200C ZERO WIDTH NON-JOINER (joining type U) and U+200D ZERO WIDTH
-# JOINER (joining type C).
+# - Those that not explicitly listed that are of General Category Mn or Cf
+#   have joining type T.
+# - All others not explicitly listed have type U.
 #
 # For an explicit listing of characters of joining type T, see
 # the derived property file DerivedJoiningType.txt.
 #
 # There are currently no characters of type L defined in Unicode.
-#
-# Joining type U includes all characters which are neither joining
-# type T, nor explicitly marked in this file as types R, L, D, or C.
 #
 # #############################################################
  
@@ -47,6 +46,10 @@
 
 # Arabic characters
 
+0600; ARABIC NUMBER SIGN; U; <no shaping>
+0601; ARABIC SIGN SANAH; U; <no shaping>
+0602; ARABIC FOOTNOTE MARKER; U; <no shaping>
+0603; ARABIC SIGN SAFHA; U; <no shaping>
 0621; HAMZA; U; <no shaping>
 0622; MADDA ON ALEF; R; ALEF
 0623; HAMZA ON ALEF; R; ALEF
@@ -186,6 +189,10 @@
 06D2; YEH BARREE; R; YEH BARREE
 06D3; HAMZA ON YEH BARREE; R; YEH BARREE
 06D5; AE; R; TEH MARBUTA
+06DD; ARABIC END OF AYAH; U; <no shaping>
+06EE; DAL WITH INVERTED V; R; DAL
+06EF; REH WITH INVERTED V; R; REH
+06FF; HEH WITH INVERTED V; D; KNOTTED HEH
 06FA; SEEN WITH DOT BELOW AND 3 DOTS ABOVE; D; SEEN
 06FB; DAD WITH DOT BELOW; D; SAD
 06FC; GHAIN WITH DOT BELOW; D; AIN
@@ -220,7 +227,14 @@
 072A; RISH; R; DALATH RISH
 072B; SHIN; D; SHIN
 072C; TAW; R; TAW
+072D; PERSIAN BHETH; D; BETH
+072E; PERSIAN GHAMAL; D; GAMAL
+072F; PERSIAN DHALATH; R; DALATH RISH
+074D; SOGDIAN ZHAIN; R; ZHAIN
+074E; SOGDIAN KHAPH; D; KHAPH
+074F; SOGDIAN FE; D; FE
 
 # Other
 
 200D; ZERO WIDTH JOINER; C; <no shaping>
+200C; ZERO WIDTH NON-JOINER; U; <no shaping>

@@ -80,7 +80,7 @@ Functions for SCALARs or strings:
      sprintf, substr, tr///, uc, ucfirst, y///
 
 Regular expressions and pattern matching:
-     m//, pos, qr/PATTERN/, quotemeta, s///, split, study
+     m//, pos, qr/STRING/, quotemeta, s///, split, study
 
 Numeric functions:
      abs, atan2, cos, exp, hex, int, log, oct, rand, sin, sqrt,
@@ -109,7 +109,7 @@ Functions for fixed length data or records:
 Functions for filehandles, files, or directories:
      -X, chdir, chmod, chown, chroot, fcntl, glob, ioctl, link,
      lstat, mkdir, open, opendir, readlink, rename, rmdir,
-     stat, symlink, umask, unlink, utime
+     stat, symlink, sysopen, umask, unlink, utime
 
 Keywords related to control flow of your perl program:
      caller, continue, die, do, dump, eval, exit, goto, last,
@@ -124,14 +124,15 @@ Miscellaneous functions:
 
 Functions for processes and process groups:
      alarm, exec, fork, getpgrp, getppid, getpriority, kill,
-     pipe, qx/STRING/, setpgrp, setpriority, sleep, system,
-     times, wait, waitpid
+     pipe, qx/STRING/, readpipe, setpgrp, setpriority, sleep,
+     system, times, wait, waitpid
 
 Keywords related to perl modules:
      do, import, no, package, require, use
 
 Keywords related to classes and object-orientedness:
-     bless, dbmclose, dbmopen, package, ref, tie, untie, use
+     bless, dbmclose, dbmopen, package, ref, tie, tied, untie,
+     use
 
 Low-level socket functions:
      accept, bind, connect, getpeername, getsockname,

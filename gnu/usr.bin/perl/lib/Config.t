@@ -1,10 +1,12 @@
+#!./perl
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require "./test.pl";
 }
 
-plan tests => 23;
+plan tests => 36;
 
 use_ok('Config');
 
@@ -15,6 +17,16 @@ ok(keys %Config > 500, "Config has more than 500 entries");
 ok(each %Config);
 
 is($Config{PERL_REVISION}, 5, "PERL_REVISION is 5");
+
+# Check that old config variable names are aliased to their new ones.
+my %grandfathers = ( PERL_VERSION       => 'PATCHLEVEL',
+                     PERL_SUBVERSION    => 'SUBVERSION',
+                     PERL_CONFIG_SH     => 'CONFIG'
+                   );
+while( my($new, $old) = each %grandfathers ) {
+    isnt($Config{$new}, undef,       "$new is defined");
+    is($Config{$new}, $Config{$old}, "$new is aliased to $old");
+}
 
 ok( exists $Config{cc},      "has cc");
 
@@ -40,12 +52,20 @@ ok(exists $Config{ccflags_nolargefiles}, "has ccflags_nolargefiles");
 
 # Utility functions.
 
-like(Config::myconfig(),  qr/cc='$Config{cc}'/, "myconfig");
-
-SKIP: {
-	skip "cc is tied in $^O", 1 if $^O eq 'MacOS';
-	like(Config::config_sh(), qr/cc='$Config{cc}'/, "config_sh");
+{
+    # make sure we can export what we say we can export.
+    package Foo;
+    my @exports = qw(myconfig config_sh config_vars config_re);
+    Config->import(@exports);
+    foreach my $func (@exports) {
+	::ok( __PACKAGE__->can($func), "$func exported" );
+    }
 }
+
+like(Config::myconfig(),       qr/osname=\Q$Config{osname}\E/,   "myconfig");
+like(Config::config_sh(),      qr/osname='\Q$Config{osname}\E'/, "config_sh");
+like(join("\n", Config::config_re('c.*')),
+			       qr/^c.*?=/,                   'config_re' );
 
 my $out = tie *STDOUT, 'FakeOut';
 
@@ -59,7 +79,7 @@ $out->clear;
 
 untie *STDOUT;
 
-like($out1, qr/^cc='$Config{cc}';/, "config_vars cc");
+like($out1, qr/^cc='\Q$Config{cc}\E';/, "config_vars cc");
 like($out2, qr/^d_bork='UNKNOWN';/, "config_vars d_bork is UNKNOWN");
 
 # Read-only.
@@ -82,18 +102,25 @@ like($@, qr/Config is read-only/, "no CLEAR");
 
 ok( exists $Config{d_fork}, "still d_fork");
 
-package FakeOut;
+{
+    package FakeOut;
 
-sub TIEHANDLE {
-        bless(\(my $text), $_[0]);
+    sub TIEHANDLE {
+	bless(\(my $text), $_[0]);
+    }
+
+    sub clear {
+	${ $_[0] } = '';
+    }
+
+    sub PRINT {
+	my $self = shift;
+	$$self .= join('', @_);
+    }
 }
 
-sub clear {
-        ${ $_[0] } = '';
-}
+# Signal-related variables
+# (this is actually a regression test for Configure.)
 
-sub PRINT {
-        my $self = shift;
-        $$self .= join('', @_);
-}
-
+is($Config{sig_num_init}  =~ tr/,/,/, $Config{sig_size}, "sig_num_init size");
+is($Config{sig_name_init} =~ tr/,/,/, $Config{sig_size}, "sig_name_init size");

@@ -1,11 +1,7 @@
-# CompositionExclusions-3.2.0.txt
-# Date: 2002-03-19,23:30:28 GMT [MD]
+# CompositionExclusions-4.0.0.txt
+# Date: 2003-02-14,16:49:03 GMT [MD]
 #
 # This file lists the characters from the UAX #15 Composition Exclusion Table.
-#
-# The format of the comments in this file has been updated since the last version,
-# CompositionExclusions-3.txt. The only substantive change to this file between that
-# version and this one is the addition of U+2ADC FORKING.
 #
 # For more information, see
 # http://www.unicode.org/unicode/reports/tr15/#Primary Exclusion List Table

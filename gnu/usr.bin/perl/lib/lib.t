@@ -6,7 +6,7 @@ BEGIN {
     @OrigINC = @INC;
 }
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 use Config;
 use File::Spec;
 use File::Path;
@@ -80,6 +80,9 @@ BEGIN {
 }
 
 no lib $Lib_Dir;
+
+unlike( do { eval 'use lib $Config{installsitelib};'; $@ || '' },
+	qr/::Config is read-only/, 'lib handles readonly stuff' );
 
 BEGIN {
     is( grep(/stuff/, @INC), 0, 'no lib' );

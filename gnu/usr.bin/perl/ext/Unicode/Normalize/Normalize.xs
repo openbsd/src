@@ -13,12 +13,18 @@
 /* Perl 5.6.1 ? */
 #ifndef uvuni_to_utf8
 #define uvuni_to_utf8   uv_to_utf8
-#endif /* uvuni_to_utf8 */ 
+#endif /* uvuni_to_utf8 */
 
 /* Perl 5.6.1 ? */
 #ifndef utf8n_to_uvuni
 #define utf8n_to_uvuni  utf8_to_uv
-#endif /* utf8n_to_uvuni */ 
+#endif /* utf8n_to_uvuni */
+
+/* if utf8n_to_uvuni() sets retlen to 0 when flags = 0 */
+#define ErrRetlenIsZero "panic (Unicode::Normalize): zero-length character"
+
+/* utf8_hop() hops back before start. Maybe broken UTF-8 */
+#define ErrHopBeforeStart "panic (Unicode::Normalize): hopping before start"
 
 /* At present, char > 0x10ffff are unaffected without complaint, right? */
 #define VALID_UTF_MAX    (0x10ffff)
@@ -58,13 +64,15 @@ typedef struct {
     STRLEN pos; /* position */
 } UNF_cc;
 
-int compare_cc(const void *a, const void *b)
+int compare_cc (const void *a, const void *b)
 {
     int ret_cc;
-    ret_cc = (*(UNF_cc*)a).cc - (*(UNF_cc*)b).cc;
+    ret_cc = ((UNF_cc*) a)->cc - ((UNF_cc*) b)->cc;
     if (ret_cc)
 	return ret_cc;
-    return (*(UNF_cc*)a).pos - (*(UNF_cc*)b).pos;
+
+    return ( ((UNF_cc*) a)->pos > ((UNF_cc*) b)->pos )
+	 - ( ((UNF_cc*) a)->pos < ((UNF_cc*) b)->pos );
 }
 
 U8* dec_canonical (UV uv)
@@ -185,9 +193,11 @@ decompose(arg, compat = &PL_sv_no)
 
     s = (U8*)SvPV(src,srclen);
     e = s + srclen;
-    for (p = s; p < e;) {
+    for (p = s; p < e; p += retlen) {
 	uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
-	p += retlen;
+	if (!retlen)
+	    croak(ErrRetlenIsZero);
+
 	if (Hangul_IsS(uv))
 	    sv_cat_decompHangul(dst, uv);
 	else {
@@ -195,7 +205,7 @@ decompose(arg, compat = &PL_sv_no)
 	    if (r)
 		sv_catpv(dst, (char *)r);
 	    else
-		sv_catpvn(dst, (char *)p - retlen, retlen);
+		sv_catpvn(dst, (char *)p, retlen);
 	}
     }
     RETVAL = dst;
@@ -240,9 +250,13 @@ reorder(arg)
 	STRLEN cc_len, cc_iter, cc_pos;
 
 	uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
-	curCC = getCombinClass(uv);
+	if (!retlen)
+	    croak(ErrRetlenIsZero);
 	p += retlen;
 
+	
+
+	curCC = getCombinClass(uv);
 	if (! (curCC && p < e))
 	    continue;
 	else
@@ -255,10 +269,14 @@ reorder(arg)
 
 	while (p < e) {
 	    uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
+	    if (!retlen)
+		croak(ErrRetlenIsZero);
+	    p += retlen;
+
 	    curCC = getCombinClass(uv);
 	    if (!curCC)
 		break;
-	    p += retlen;
+
 	    cc_pos++;
 	    if (stk_cc_max <= cc_pos) { /* extend if need */
 		stk_cc_max = cc_pos + 1;
@@ -292,6 +310,8 @@ SV*
 compose(arg)
     SV * arg
   PROTOTYPE: $
+  ALIAS:
+    composeContiguous = 1
   PREINIT:
     SV  *src, *dst, *tmp;
     U8  *s, *p, *e, *d, *t, *tmp_start, curCC, preCC;
@@ -322,6 +342,8 @@ compose(arg)
     for (p = s; p < e;) {
 	if (beginning) {
 	    uvS = utf8n_to_uvuni(p, e - p, &retlen, 0);
+	    if (!retlen)
+		croak(ErrRetlenIsZero);
 	    p += retlen;
 
             if (getCombinClass(uvS)) { /* no Starter found yet */
@@ -338,7 +360,10 @@ compose(arg)
     /* to the next Starter */
 	while (p < e) {
 	    uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
+	    if (!retlen)
+		croak(ErrRetlenIsZero);
 	    p += retlen;
+
 	    curCC = getCombinClass(uv);
 
 	    if (preCC && preCC == curCC) {
@@ -347,7 +372,8 @@ compose(arg)
 	    } else {
 		uvComp = composite_uv(uvS, uv);
 
-		if (uvComp && ! isExclusion(uvComp) && preCC <= curCC) {
+		if (uvComp && ! isExclusion(uvComp) &&
+			(ix ? (t == tmp_start) : (preCC <= curCC))) {
 		    STRLEN leftcur, rightcur, dstcur;
 		    leftcur  = UNISKIP(uvComp);
 		    rightcur = UNISKIP(uvS) + UNISKIP(uv);
@@ -359,7 +385,7 @@ compose(arg)
 		    }
 		    /* preCC not changed to curCC */
 		    uvS = uvComp;
-	        } else if (! curCC && p < e) { /* blocked */
+		} else if (! curCC && p < e) { /* blocked */
 		    break;
 		} else {
 		    preCC = curCC;
@@ -376,11 +402,11 @@ compose(arg)
 	}
 	uvS = uv;
     } /* for */
+    *d = '\0';
     SvCUR_set(dst, d - (U8*)SvPVX(dst));
     RETVAL = dst;
   OUTPUT:
     RETVAL
-
 
 
 void
@@ -394,7 +420,7 @@ checkNFD(arg)
     SV *src;
     STRLEN srclen, retlen;
     U8 *s, *e, *p, curCC, preCC;
-  PPCODE:
+  CODE:
     if (SvUTF8(arg)) {
 	src = arg;
     } else {
@@ -408,6 +434,9 @@ checkNFD(arg)
     preCC = 0;
     for (p = s; p < e; p += retlen) {
 	uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
+	if (!retlen)
+	    croak(ErrRetlenIsZero);
+
 	curCC = getCombinClass(uv);
 	if (preCC > curCC && curCC != 0) /* canonical ordering violated */
 	    XSRETURN_NO;
@@ -431,7 +460,7 @@ checkNFC(arg)
     STRLEN srclen, retlen;
     U8 *s, *e, *p, curCC, preCC;
     bool isMAYBE;
-  PPCODE:
+  CODE:
     if (SvUTF8(arg)) {
 	src = arg;
     } else {
@@ -446,6 +475,9 @@ checkNFC(arg)
     isMAYBE = FALSE;
     for (p = s; p < e; p += retlen) {
 	uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
+	if (!retlen)
+	    croak(ErrRetlenIsZero);
+
 	curCC = getCombinClass(uv);
 
 	if (preCC > curCC && curCC != 0) /* canonical ordering violated */
@@ -460,17 +492,86 @@ checkNFC(arg)
 	    isMAYBE = TRUE;
 	else if (ix) {
 	    char *canon, *compat;
-	 /*
-	  * NFKC_NO when having compatibility mapping;
-	  * i.e. dec_compat(uv) defined & different with dec_canonical(uv).
-	  */
+	  /* NFKC_NO when having compatibility mapping. */
 	    canon  = (char *) dec_canonical(uv);
 	    compat = (char *) dec_compat(uv);
-	    if (compat && (!canon || strNE(canon, compat)))
+	    if (compat && !(canon && strEQ(canon, compat)))
 		XSRETURN_NO;
 	} /* end of get NFC/NFKC property */
 
 	preCC = curCC;
+    }
+    if (isMAYBE)
+	XSRETURN_UNDEF;
+    else
+	XSRETURN_YES;
+
+
+
+void
+checkFCD(arg)
+    SV * arg
+  PROTOTYPE: $
+  ALIAS:
+    checkFCC = 1
+  PREINIT:
+    UV uv, uvLead, uvTrail;
+    SV *src;
+    STRLEN srclen, retlen, canlen, canret;
+    U8 *s, *e, *p, curCC, preCC;
+    U8 *sCan, *pCan, *eCan;
+    bool isMAYBE;
+  CODE:
+    if (SvUTF8(arg)) {
+	src = arg;
+    } else {
+	src = sv_mortalcopy(arg);
+	sv_utf8_upgrade(src);
+    }
+    
+    s = (U8*)SvPV(src,srclen);
+    e = s + srclen;
+
+    preCC = 0;
+    isMAYBE = FALSE;
+    for (p = s; p < e; p += retlen) {
+	uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
+	if (!retlen)
+	    croak(ErrRetlenIsZero);
+
+	sCan = (U8*) dec_canonical(uv);
+
+	if (sCan) {
+	    canlen = (STRLEN)strlen((char *) sCan);
+	    uvLead = utf8n_to_uvuni(sCan, canlen, &canret, 0);
+	}
+	else {
+	    uvLead = uv;
+	}
+
+	curCC = getCombinClass(uvLead);
+
+	if (curCC != 0 && curCC < preCC) /* canonical ordering violated */
+	    XSRETURN_NO;
+
+	if (ix) {
+	    if (isExclusion(uv) || isSingleton(uv) || isNonStDecomp(uv))
+		XSRETURN_NO;
+	    else if (isComp2nd(uv))
+		isMAYBE = TRUE;
+	}
+
+	if (sCan) {
+	    eCan = sCan + canlen;
+	    pCan = utf8_hop(eCan, -1);
+	    if (pCan < sCan)
+		croak(ErrHopBeforeStart);
+	    uvTrail = utf8n_to_uvuni(pCan, eCan - pCan, &canret, 0);
+	    preCC = getCombinClass(uvTrail);
+	}
+	else {
+	    preCC = curCC;
+	}
     }
     if (isMAYBE)
 	XSRETURN_UNDEF;
@@ -515,7 +616,7 @@ isNFD_NO(uv)
   PROTOTYPE: $
   ALIAS:
     isNFKD_NO = 1
-  PPCODE:
+  CODE:
     if (Hangul_IsS(uv) || (ix ? dec_compat(uv) : dec_canonical(uv)))
 	XSRETURN_YES; /* NFD_NO or NFKD_NO */
     else
@@ -530,7 +631,7 @@ isComp_Ex(uv)
   ALIAS:
     isNFC_NO  = 0
     isNFKC_NO = 1
-  PPCODE:
+  CODE:
     if (isExclusion(uv) || isSingleton(uv) || isNonStDecomp(uv))
 	XSRETURN_YES; /* NFC_NO or NFKC_NO */
     else if (ix) {
@@ -586,4 +687,41 @@ getCanon(uv)
     SvUTF8_on(RETVAL);
   OUTPUT:
     RETVAL
+
+
+void
+splitOnLastStarter(arg)
+    SV * arg
+  PREINIT:
+    UV uv;
+    SV *src, *svp;
+    STRLEN srclen, retlen;
+    U8 *s, *e, *p;
+  PPCODE:
+    if (SvUTF8(arg)) {
+	src = arg;
+    } else {
+	src = sv_mortalcopy(arg);
+	sv_utf8_upgrade(src);
+    }
+
+    s = (U8*)SvPV(src,srclen);
+    e = s + srclen;
+
+    for (p = e; s < p; ) {
+	p = utf8_hop(p, -1);
+	if (p < s)
+	    croak(ErrHopBeforeStart);
+	uv = utf8n_to_uvuni(p, e - p, &retlen, 0);
+	if (getCombinClass(uv) == 0) /* Last Starter found */
+	    break;
+    }
+
+    svp = sv_2mortal(newSVpvn((char*)s, p - s));
+    SvUTF8_on(svp);
+    XPUSHs(svp);
+
+    svp = sv_2mortal(newSVpvn((char*)p, e - p));
+    SvUTF8_on(svp);
+    XPUSHs(svp);
 

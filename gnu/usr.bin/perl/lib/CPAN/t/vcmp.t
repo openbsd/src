@@ -1,10 +1,5 @@
 # -*- Mode: cperl; coding: utf-8; -*-
 
-BEGIN {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-}
-
 use strict;
 use CPAN;
 use vars qw($D $N);

@@ -25,7 +25,7 @@ sub ok;
 
 use Storable qw(freeze thaw);
 
-print "1..22\n";
+print "1..23\n";
 
 ($scalar_fetch, $array_fetch, $hash_fetch) = (0, 0, 0);
 
@@ -207,3 +207,14 @@ my $ht = thaw($hf);
 ok 20, defined $ht;
 ok 21, $ht->{'x'} == 1;
 ok 22, $FAULT::fault == 2;
+
+{
+    package P;
+    use Storable qw(freeze thaw);
+    use vars qw($a $b);
+    $b = "not ok ";
+    sub TIESCALAR { bless \$a } sub FETCH { "ok " }
+    tie $a, P; my $r = thaw freeze \$a; $b = $$r;
+    print $b , 23, "\n";
+}
+

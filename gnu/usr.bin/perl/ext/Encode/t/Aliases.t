@@ -51,6 +51,8 @@ sub init_a2c{
 	    'WinArabic'     => 'cp1256',
 	    'WinBaltic'     => 'cp1257',
 	    'WinVietnamese' => 'cp1258',
+	    'koi8r'         => 'koi8-r',
+	    'koi8u'         => 'koi8-u',
 	    'ja_JP.euc'	    => $ON_EBCDIC ? '' : 'euc-jp',
 	    'x-euc-jp'	    => $ON_EBCDIC ? '' : 'euc-jp',
 	    'zh_CN.euc'	    => $ON_EBCDIC ? '' : 'euc-cn',

@@ -13,7 +13,7 @@
 package Pod::Find;
 
 use vars qw($VERSION);
-$VERSION = 0.22;   ## Current version of this package
+$VERSION = 0.24;   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
 
@@ -416,6 +416,9 @@ sub pod_where {
       if -d $Config::Config{'scriptdir'};
   }
 
+  warn "Search path is: ".join(' ', @search_dirs)."\n"
+        if $options{'-verbose'};
+
   # Loop over directories
   Dir: foreach my $dir ( @search_dirs ) {
 
@@ -442,6 +445,17 @@ sub pod_where {
       warn "Directory $dir does not exist\n"
         if $options{'-verbose'};
       next Dir;
+    }
+    # for some strange reason the path on MacOS/darwin/cygwin is
+    # 'pods' not 'pod'
+    # this could be the case also for other systems that
+    # have a case-tolerant file system, but File::Spec
+    # does not recognize 'darwin' yet. And cygwin also has "pods",
+    # but is not case tolerant. Oh well...
+    if((File::Spec->case_tolerant || $^O =~ /macos|darwin|cygwin/i)
+     && -d File::Spec->catdir($dir,'pods')) {
+      $dir = File::Spec->catdir($dir,'pods');
+      redo Dir;
     }
     if(-d File::Spec->catdir($dir,'pod')) {
       $dir = File::Spec->catdir($dir,'pod');

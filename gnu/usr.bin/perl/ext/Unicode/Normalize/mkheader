@@ -13,6 +13,13 @@ use 5.006;
 use strict;
 use warnings;
 use Carp;
+use File::Spec;
+
+BEGIN {
+    unless ("A" eq pack('U', 0x41)) {
+	die "Unicode::Normalize cannot stringify a Unicode code point\n";
+    }
+}
 
 our $PACKAGE = 'Unicode::Normalize, mkheader';
 
@@ -25,8 +32,9 @@ our $Decomp = do "unicore/Decomposition.pl"
     || croak "$PACKAGE: Decomposition.pl not found";
 
 our %Combin;	# $codepoint => $number    : combination class
-our %Canon;	# $codepoint => $hexstring : canonical decomp.
-our %Compat;	# $codepoint => $hexstring : compat. decomp.
+our %Canon;	# $codepoint => \@codepoints : canonical decomp.
+our %Compat;	# $codepoint => \@codepoints : compat. decomp.
+# after _U_stringify(), ($codepoint => $hexstring) for %Canon and %Compat
 our %Exclus;	# $codepoint => 1          : composition exclusions
 our %Single;	# $codepoint => 1          : singletons
 our %NonStD;	# $codepoint => 1          : non-starter decompositions
@@ -38,10 +46,39 @@ our %CompList;	# $listname,$2nd  => $codepoint : composite
 our $prefix = "UNF_";
 our $structname = "${prefix}complist";
 
+########## definition of Hangul constants ##########
+use constant SBase  => 0xAC00;
+use constant SFinal => 0xD7A3; # SBase -1 + SCount
+use constant SCount =>  11172; # LCount * NCount
+use constant NCount =>    588; # VCount * TCount
+use constant LBase  => 0x1100;
+use constant LFinal => 0x1112;
+use constant LCount =>     19;
+use constant VBase  => 0x1161;
+use constant VFinal => 0x1175;
+use constant VCount =>     21;
+use constant TBase  => 0x11A7;
+use constant TFinal => 0x11C2;
+use constant TCount =>     28;
+
+sub decomposeHangul {
+    my $SIndex = $_[0] - SBase;
+    my $LIndex = int( $SIndex / NCount);
+    my $VIndex = int(($SIndex % NCount) / TCount);
+    my $TIndex =      $SIndex % TCount;
+    my @ret = (
+       LBase + $LIndex,
+       VBase + $VIndex,
+      $TIndex ? (TBase + $TIndex) : (),
+    );
+    wantarray ? @ret : pack('U*', @ret);
+     # any element in @ret greater than 0xFF, so no need of u2n conversion.
+}
+
+########## getting full decomposion ##########
 {
     my($f, $fh);
     foreach my $d (@INC) {
-	use File::Spec;
 	$f = File::Spec->catfile($d, "unicore", "CompositionExclusions.txt");
 	last if open($fh, $f);
 	$f = File::Spec->catfile($d, "unicode", "CompExcl.txt");
@@ -136,14 +173,20 @@ foreach my $j (0x1161..0x1175, 0x11A8..0x11C2) {
 
 sub getCanonList {
     my @src = @_;
-    my @dec = map $Canon{$_} ? @{ $Canon{$_} } : $_, @src;
+    my @dec = map {
+	(SBase <= $_ && $_ <= SFinal) ? decomposeHangul($_)
+	    : $Canon{$_} ? @{ $Canon{$_} } : $_
+		} @src;
     return join(" ",@src) eq join(" ",@dec) ? @dec : getCanonList(@dec);
     # condition @src == @dec is not ok.
 }
 
 sub getCompatList {
     my @src = @_;
-    my @dec = map $Compat{$_} ? @{ $Compat{$_} } : $_, @src;
+    my @dec = map {
+	(SBase <= $_ && $_ <= SFinal) ? decomposeHangul($_)
+	    : $Compat{$_} ? @{ $Compat{$_} } : $_
+		} @src;
     return join(" ",@src) eq join(" ",@dec) ? @dec : getCompatList(@dec);
     # condition @src == @dec is not ok.
 }
@@ -158,12 +201,14 @@ foreach my $key (keys %Compat) {
     $Compat{$key} = [ getCompatList($key) ];
 }
 
+sub _pack_U {
+    return pack('U*', @_);
+}
+
 sub _U_stringify {
     sprintf '"%s"', join '',
-	map sprintf("\\x%02x", $_), unpack 'C*', pack 'U*', @_;
+	map sprintf("\\x%02x", $_), unpack 'C*', _pack_U(@_);
 }
-# Do we need say <pack 'U*', map utf8::unicode_to_native($_),>
-# instead of <pack 'U*',> for EBCDIC?
 
 foreach my $hash (\%Canon, \%Compat) {
     foreach my $key (keys %$hash) {
@@ -171,7 +216,7 @@ foreach my $hash (\%Canon, \%Compat) {
     }
 }
 
-####################################
+########## writing header files ##########
 
 my @boolfunc = (
     {

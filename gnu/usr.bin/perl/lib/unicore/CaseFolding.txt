@@ -1,5 +1,5 @@
-# CaseFolding-3.2.0.txt
-# Date: 2002-03-22,20:54:33 GMT [MD]
+# CaseFolding-4.0.0.txt
+# Date: 2003-03-14, 20:22:08 GMT [MD]
 #
 # Case Folding Properties
 #
@@ -13,6 +13,8 @@
 # (where string lengths don't change), and implementations that allow full case folding
 # (where string lengths may grow). Note that where they can be supported, the
 # full case foldings are superior: for example, they allow "MASSE" and "Maﬂe" to match.
+#
+# All code points not listed in this file map to themselves.
 #
 # NOTE: case folding does not preserve normalization formats!
 #
@@ -33,6 +35,8 @@
 # T: special case for uppercase I and dotted uppercase I
 #    - For non-Turkic languages, this mapping is normally not used.
 #    - For Turkic languages (tr, az), this mapping can be used instead of the normal mapping for these characters.
+#      Note that the Turkic mappings do not maintain canonical equivalence without additional processing.
+#      See the discussions of case mapping in the Unicode Standard for more information.
 #
 # Usage:
 #  A. To do a simple case folding, use the mappings with status C + S.
@@ -318,9 +322,11 @@
 03EE; C; 03EF; # COPTIC CAPITAL LETTER DEI
 03F0; C; 03BA; # GREEK KAPPA SYMBOL
 03F1; C; 03C1; # GREEK RHO SYMBOL
-03F2; C; 03C3; # GREEK LUNATE SIGMA SYMBOL
 03F4; C; 03B8; # GREEK CAPITAL THETA SYMBOL
 03F5; C; 03B5; # GREEK LUNATE EPSILON SYMBOL
+03F7; C; 03F8; # GREEK CAPITAL LETTER SHO
+03F9; C; 03F2; # GREEK CAPITAL LUNATE SIGMA SYMBOL
+03FA; C; 03FB; # GREEK CAPITAL LETTER SAN
 0400; C; 0450; # CYRILLIC CAPITAL LETTER IE WITH GRAVE
 0401; C; 0451; # CYRILLIC CAPITAL LETTER IO
 0402; C; 0452; # CYRILLIC CAPITAL LETTER DJE
@@ -910,3 +916,5 @@ FF3A; C; FF5A; # FULLWIDTH LATIN CAPITAL LETTER Z
 10423; C; 1044B; # DESERET CAPITAL LETTER EM
 10424; C; 1044C; # DESERET CAPITAL LETTER EN
 10425; C; 1044D; # DESERET CAPITAL LETTER ENG
+10426; C; 1044E; # DESERET CAPITAL LETTER OI
+10427; C; 1044F; # DESERET CAPITAL LETTER EW

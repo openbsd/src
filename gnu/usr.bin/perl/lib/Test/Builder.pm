@@ -8,17 +8,10 @@ $^C ||= 0;
 
 use strict;
 use vars qw($VERSION $CLASS);
-$VERSION = '0.15';
+$VERSION = '0.17';
 $CLASS = __PACKAGE__;
 
 my $IsVMS = $^O eq 'VMS';
-
-use vars qw($Level);
-my @Test_Results = ();
-my @Test_Details = ();
-my($Test_Died) = 0;
-my($Have_Plan) = 0;
-my $Curr_Test = 0;
 
 # Make Test::Builder thread-safe for ithreads.
 BEGIN {
@@ -27,14 +20,20 @@ BEGIN {
         require threads;
         require threads::shared;
         threads::shared->import;
-        share(\$Curr_Test);
-        share(\@Test_Details);
-        share(\@Test_Results);
     }
     else {
-        *lock = sub { 0 };
+        *share = sub { 0 };
+        *lock  = sub { 0 };
     }
 }
+
+use vars qw($Level);
+my($Test_Died) = 0;
+my($Have_Plan) = 0;
+my $Original_Pid = $$;
+my $Curr_Test = 0;      share($Curr_Test);
+my @Test_Results = ();  share(@Test_Results);
+my @Test_Details = ();  share(@Test_Details);
 
 
 =head1 NAME
@@ -217,6 +216,21 @@ sub no_plan {
     $Have_Plan  = 1;
 }
 
+=item B<has_plan>
+
+  $plan = $Test->has_plan
+  
+Find out whether a plan has been defined. $plan is either C<undef> (no plan has been set), C<no_plan> (indeterminate # of tests) or an integer (the number of expected tests).
+
+=cut
+
+sub has_plan {
+	return($Expected_Tests) if $Expected_Tests;
+	return('no_plan') if $No_Plan;
+	return(undef);
+};
+
+
 =item B<skip_all>
 
   $Test->skip_all;
@@ -263,6 +277,10 @@ like Test::Simple's ok().
 sub ok {
     my($self, $test, $name) = @_;
 
+    # $test might contain an object which we don't want to accidentally
+    # store, so we turn it into a boolean.
+    $test = $test ? 1 : 0;
+
     unless( $Have_Plan ) {
         require Carp;
         Carp::croak("You tried to run a test without a plan!  Gotta have a plan.");
@@ -281,12 +299,15 @@ ERR
     my $todo = $self->todo($pack);
 
     my $out;
+    my $result = {};
+    share($result);
+
     unless( $test ) {
         $out .= "not ";
-        $Test_Results[$Curr_Test-1] = $todo ? 1 : 0;
+        @$result{ 'ok', 'actual_ok' } = ( ( $todo ? 1 : 0 ), 0 );
     }
     else {
-        $Test_Results[$Curr_Test-1] = 1;
+        @$result{ 'ok', 'actual_ok' } = ( 1, $test );
     }
 
     $out .= "ok";
@@ -295,13 +316,24 @@ ERR
     if( defined $name ) {
         $name =~ s|#|\\#|g;     # # in a name can confuse Test::Harness.
         $out   .= " - $name";
+        $result->{name} = $name;
+    }
+    else {
+        $result->{name} = '';
     }
 
     if( $todo ) {
         my $what_todo = $todo;
         $out   .= " # TODO $what_todo";
+        $result->{reason} = $what_todo;
+        $result->{type}   = 'todo';
+    }
+    else {
+        $result->{reason} = '';
+        $result->{type}   = '';
     }
 
+    $Test_Results[$Curr_Test-1] = $result;
     $out .= "\n";
 
     $self->_print($out);
@@ -630,7 +662,16 @@ sub skip {
     lock($Curr_Test);
     $Curr_Test++;
 
-    $Test_Results[$Curr_Test-1] = 1;
+    my %result;
+    share(%result);
+    %result = (
+        'ok'      => 1,
+        actual_ok => 1,
+        name      => '',
+        type      => 'skip',
+        reason    => $why,
+    );
+    $Test_Results[$Curr_Test-1] = \%result;
 
     my $out = "ok";
     $out   .= " $Curr_Test" if $self->use_numbers;
@@ -666,7 +707,17 @@ sub todo_skip {
     lock($Curr_Test);
     $Curr_Test++;
 
-    $Test_Results[$Curr_Test-1] = 1;
+    my %result;
+    share(%result);
+    %result = (
+        'ok'      => 1,
+        actual_ok => 0,
+        name      => '',
+        type      => 'todo_skip',
+        reason    => $why,
+    );
+
+    $Test_Results[$Curr_Test-1] = \%result;
 
     my $out = "not ok";
     $out   .= " $Curr_Test" if $self->use_numbers;
@@ -1024,9 +1075,17 @@ sub current_test {
 
         $Curr_Test = $num;
         if( $num > @Test_Results ) {
-            my $start = @Test_Results ? $#Test_Results : 0;
+            my $start = @Test_Results ? $#Test_Results + 1 : 0;
             for ($start..$num-1) {
-                $Test_Results[$_] = 1;
+                my %result;
+                share(%result);
+                %result = ( ok        => 1, 
+                            actual_ok => undef, 
+                            reason    => 'incrementing test number', 
+                            type      => 'unknown', 
+                            name      => undef 
+                          );
+                $Test_Results[$_] = \%result;
             }
         }
     }
@@ -1048,22 +1107,61 @@ Of course, test #1 is $tests[0], etc...
 sub summary {
     my($self) = shift;
 
-    return @Test_Results;
+    return map { $_->{'ok'} } @Test_Results;
 }
 
-=item B<details>  I<UNIMPLEMENTED>
+=item B<details>
 
     my @tests = $Test->details;
 
 Like summary(), but with a lot more detail.
 
     $tests[$test_num - 1] = 
-            { ok         => is the test considered ok?
+            { 'ok'       => is the test considered a pass?
               actual_ok  => did it literally say 'ok'?
               name       => name of the test (if any)
-              type       => 'skip' or 'todo' (if any)
+              type       => type of test (if any, see below).
               reason     => reason for the above (if any)
             };
+
+'ok' is true if Test::Harness will consider the test to be a pass.
+
+'actual_ok' is a reflection of whether or not the test literally
+printed 'ok' or 'not ok'.  This is for examining the result of 'todo'
+tests.  
+
+'name' is the name of the test.
+
+'type' indicates if it was a special test.  Normal tests have a type
+of ''.  Type can be one of the following:
+
+    skip        see skip()
+    todo        see todo()
+    todo_skip   see todo_skip()
+    unknown     see below
+
+Sometimes the Test::Builder test counter is incremented without it
+printing any test output, for example, when current_test() is changed.
+In these cases, Test::Builder doesn't know the result of the test, so
+it's type is 'unkown'.  These details for these tests are filled in.
+They are considered ok, but the name and actual_ok is left undef.
+
+For example "not ok 23 - hole count # TODO insufficient donuts" would
+result in this structure:
+
+    $tests[22] =    # 23 - 1, since arrays start from 0.
+      { ok        => 1,   # logically, the test passed since it's todo
+        actual_ok => 0,   # in absolute terms, it failed
+        name      => 'hole count',
+        type      => 'todo',
+        reason    => 'insufficient donuts'
+      };
+
+=cut
+
+sub details {
+    return @Test_Results;
+}
 
 =item B<todo>
 
@@ -1201,9 +1299,13 @@ sub _ending {
 
     _sanity_check();
 
+    # Don't bother with an ending if this is a forked copy.  Only the parent
+    # should do the ending.
+    do{ _my_exit($?) && return } if $Original_Pid != $$;
+
     # Bailout if plan() was never called.  This is so
     # "require Test::Simple" doesn't puke.
-    do{ _my_exit(0) && return } if !$Have_Plan;
+    do{ _my_exit(0) && return } if !$Have_Plan && !$Test_Died;
 
     # Figure out if we passed or failed and print helpful messages.
     if( @Test_Results ) {
@@ -1214,11 +1316,16 @@ sub _ending {
         }
 
         # 5.8.0 threads bug.  Shared arrays will not be auto-extended 
-        # by a slice.
-        $Test_Results[$Expected_Tests-1] = undef
-          unless defined $Test_Results[$Expected_Tests-1];
+        # by a slice.  Worse, we have to fill in every entry else
+        # we'll get an "Invalid value for shared scalar" error
+        for my $idx ($#Test_Results..$Expected_Tests-1) {
+            my %empty_result = ();
+            share(%empty_result);
+            $Test_Results[$idx] = \%empty_result
+              unless defined $Test_Results[$idx];
+        }
 
-        my $num_failed = grep !$_, @Test_Results[0..$Expected_Tests-1];
+        my $num_failed = grep !$_->{'ok'}, @Test_Results[0..$Expected_Tests-1];
         $num_failed += abs($Expected_Tests - @Test_Results);
 
         if( $Curr_Test < $Expected_Tests ) {
@@ -1250,6 +1357,11 @@ FAIL
     }
     elsif ( $Skip_All ) {
         _my_exit( 0 ) && return;
+    }
+    elsif ( $Test_Died ) {
+        $self->diag(<<'FAIL');
+Looks like your test died before it could output anything.
+FAIL
     }
     else {
         $self->diag("No tests run!\n");
@@ -1283,7 +1395,7 @@ E<lt>schwern@pobox.comE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2001 by chromatic E<lt>chromatic@wgz.orgE<gt>,
+Copyright 2002 by chromatic E<lt>chromatic@wgz.orgE<gt>,
                   Michael G Schwern E<lt>schwern@pobox.comE<gt>.
 
 This program is free software; you can redistribute it and/or 

@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..15\n";
+print "1..20\n";
 
 print "not " unless length("")    == 0;
 print "ok 1\n";
@@ -132,4 +132,19 @@ print "ok 3\n";
     print "not " unless length($a) == 3;
     print "ok 15\n";
     $test++;
+}
+
+{
+    # Play around with Unicode strings,
+    # give a little workout to the UTF-8 length cache.
+    my $a = chr(256) x 100;
+    print length $a == 100 ? "ok 16\n" : "not ok 16\n";
+    chop $a;
+    print length $a ==  99 ? "ok 17\n" : "not ok 17\n";
+    $a .= $a;
+    print length $a == 198 ? "ok 18\n" : "not ok 18\n";
+    $a = chr(256) x 999;
+    print length $a == 999 ? "ok 19\n" : "not ok 19\n";
+    substr($a, 0, 1) = '';
+    print length $a == 998 ? "ok 20\n" : "not ok 20\n";
 }

@@ -22,7 +22,7 @@ autoflush STDOUT 1;
 $mystdout = new_from_fd FileHandle 1,"w";
 $| = 1;
 autoflush $mystdout;
-print "1..11\n";
+print "1..12\n";
 
 print $mystdout "ok ".fileno($mystdout)."\n";
 
@@ -93,3 +93,5 @@ else {
    exit(0);
   }
 }
+
+print FileHandle->new('','r') ? "not ok 12\n" : "ok 12\n";

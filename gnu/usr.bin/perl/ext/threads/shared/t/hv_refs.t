@@ -30,9 +30,9 @@ sub skip {
 
 use ExtUtils::testlib;
 use strict;
-BEGIN { print "1..13\n" };
+BEGIN { print "1..17\n" };
 use threads;
-use threads::shared qw(:DEFAULT _refcnt _id);
+use threads::shared;
 ok(1,1,"loaded");
 my $foo;
 share($foo);
@@ -57,9 +57,9 @@ my $gg = $foo{test};
 $$gg = "test";
 ok(7, ${$foo{test}} eq "test", "Check reference");
 my $gg2 = delete($foo{test});
-ok(8, _id($$gg) == _id($$gg2),
+ok(8, threads::shared::_id($$gg) == threads::shared::_id($$gg2),
        sprintf("Check we get the same thing (%x vs %x)",
-       _id($$gg),_id($$gg2)));
+       threads::shared::_id($$gg),threads::shared::_id($$gg2)));
 ok(9, $$gg eq $$gg2, "And check the values are the same");
 ok(10, keys %foo == 0, "And make sure we realy have deleted the values");
 {
@@ -73,5 +73,26 @@ ok(10, keys %foo == 0, "And make sure we realy have deleted the values");
     ok(12, $hash1{hash}->{bar2} eq "foo2", "Check hash references work");
     threads->create(sub { my (%hash3); share(%hash3); $hash2{hash} = \%hash3; $hash3{"thread"} = "yes"})->join();
     ok(13, $hash1{hash}->{hash}->{thread} eq "yes", "Check hash created in another thread");
+}
+
+{
+  my $h = {a=>14};
+  my $r = \$h->{a};
+  share($r);
+  lock($r);
+  lock($h->{a});
+  ok(14, 1, "lock on helems now work, this was bug 10045");
+
+}
+{
+    my $object : shared = &share({});
+    threads->new(sub {
+		     bless $object, 'test1';
+		 })->join;
+    ok(15, ref($object) eq 'test1', "blessing does work");
+    my %test = (object => $object);
+    ok(16, ref($test{object}) eq 'test1', "and some more work");
+    bless $object, 'test2';
+    ok(17, ref($test{object}) eq 'test2', "reblessing works!");
 }
 

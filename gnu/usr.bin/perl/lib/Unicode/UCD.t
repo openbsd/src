@@ -12,7 +12,7 @@ use strict;
 use Unicode::UCD;
 use Test::More;
 
-BEGIN { plan tests => 162 };
+BEGIN { plan tests => 179 };
 
 use Unicode::UCD 'charinfo';
 
@@ -232,7 +232,7 @@ ok( charinrange($ranges, "13a0"));
 ok( charinrange($ranges, "13f4"));
 ok(!charinrange($ranges, "13f5"));
 
-is(Unicode::UCD::UnicodeVersion, '3.2.0', 'UnicodeVersion');
+is(Unicode::UCD::UnicodeVersion, '4.0.0', 'UnicodeVersion');
 
 use Unicode::UCD qw(compexcl);
 
@@ -277,5 +277,38 @@ ok($casespec->{az}->{code} eq '0307' &&
    $casespec->{az}->{lower} eq ''  &&
    $casespec->{az}->{title} eq '0307'  &&
    $casespec->{az}->{upper} eq '0307' &&
-   $casespec->{az}->{condition} eq 'az After_Soft_Dotted',
+   $casespec->{az}->{condition} eq 'az After_I',
    'casespec 0x307');
+
+# perl #7305 UnicodeCD::compexcl is weird
+
+for (1) {$a=compexcl $_}
+ok(1, 'compexcl read-only $_: perl #7305');
+grep {compexcl $_} %{{1=>2}};
+ok(1, 'compexcl read-only hash: perl #7305');
+
+is(Unicode::UCD::_getcode('123'),     123, "_getcode(123)");
+is(Unicode::UCD::_getcode('0123'),  0x123, "_getcode(0123)");
+is(Unicode::UCD::_getcode('0x123'), 0x123, "_getcode(0x123)");
+is(Unicode::UCD::_getcode('0X123'), 0x123, "_getcode(0X123)");
+is(Unicode::UCD::_getcode('U+123'), 0x123, "_getcode(U+123)");
+is(Unicode::UCD::_getcode('u+123'), 0x123, "_getcode(u+123)");
+is(Unicode::UCD::_getcode('U+1234'),   0x1234, "_getcode(U+1234)");
+is(Unicode::UCD::_getcode('U+12345'), 0x12345, "_getcode(U+12345)");
+is(Unicode::UCD::_getcode('123x'),    undef, "_getcode(123x)");
+is(Unicode::UCD::_getcode('x123'),    undef, "_getcode(x123)");
+is(Unicode::UCD::_getcode('0x123x'),  undef, "_getcode(x123)");
+is(Unicode::UCD::_getcode('U+123x'),  undef, "_getcode(x123)");
+
+{
+    my $r1 = charscript('Latin');
+    my $n1 = @$r1;
+    is($n1, 26, "26 ranges in Latin script (Unicode 4.0.0)");
+    shift @$r1 while @$r1;
+    my $r2 = charscript('Latin');
+    is(@$r2, $n1, "modifying results should not mess up internal caches");
+}
+
+{
+	is(charinfo(0xdeadbeef), undef, "[perl #23273] warnings in Unicode::UCD");
+}

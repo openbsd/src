@@ -1,32 +1,48 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-print "1..6\n";
+plan tests => 19;
 
-my $a = chr(0x0100);
+my $a = chr(0x100);
 
-print ord($a)     == 0x100 ? "ok 1\n" : "not ok 1\n";
-print length($a)  ==     1 ? "ok 2\n" : "not ok 2\n";
+is(ord($a), 0x100, "ord sanity check");
+is(length($a), 1,  "length sanity check");
+is(substr($a, 0, 1), "\x{100}",  "substr sanity check");
+is(index($a, "\x{100}"),  0, "index sanity check");
+is(rindex($a, "\x{100}"), 0, "rindex sanity check");
+is(bytes::length($a), 2,  "bytes::length sanity check");
+is(bytes::chr(0x100), chr(0),  "bytes::chr sanity check");
 
 {
     use bytes;
-    my $b = chr(0x0100);
-    print ord($b) ==     0 ? "ok 3\n" : "not ok 3\n";
+    my $b = chr(0x100); # affected by 'use bytes'
+    is(ord($b), 0, "chr truncates under use bytes");
+    is(length($b), 1, "length truncated under use bytes");
+    is(bytes::ord($b), 0, "bytes::ord truncated under use bytes");
+    is(bytes::length($b), 1, "bytes::length truncated under use bytes");
+    is(bytes::substr($b, 0, 1), "\0", "bytes::substr truncated under use bytes");
 }
 
-my $c = chr(0x0100);
-
-print ord($c)     == 0x100 ? "ok 4\n" : "not ok 4\n";
+my $c = chr(0x100);
 
 {
     use bytes;
-    if (ord('A') == 193) {
-	print ord($c) == 0x8c ? "ok 5\n" : "not ok 5\n";
+    if (ord('A') == 193) { # EBCDIC?
+	is(ord($c), 0x8c, "ord under use bytes looks at the 1st byte");
     } else {
-	print ord($c) == 0xc4 ? "ok 5\n" : "not ok 5\n";
+	is(ord($c), 0xc4, "ord under use bytes looks at the 1st byte");
     }
-    print length($c) == 2 ? "ok 6\n" : "not ok 6\n";
+    is(length($c), 2, "length under use bytes looks at bytes");
+    is(bytes::length($c), 2, "bytes::length under use bytes looks at bytes");
+    if (ord('A') == 193) { # EBCDIC?
+	is(bytes::ord($c), 0x8c, "bytes::ord under use bytes looks at the 1st byte");
+    } else {
+	is(bytes::ord($c), 0xc4, "bytes::ord under use bytes looks at the 1st byte");
+    }
+    is(bytes::substr($c, 0, 1), "\xc4", "bytes::substr under use bytes looks at bytes");
+    is(bytes::index($c, "\x80"), 1, "bytes::index under use bytes looks at bytes");
+    is(bytes::rindex($c, "\xc4"), 0, "bytes::rindex under use bytes looks at bytes");
 }
-

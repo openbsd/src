@@ -6,7 +6,6 @@ no strict 'refs';
 # On one line so MakeMaker will see it.
 require Exporter;  our $VERSION = $Exporter::VERSION;
 $Carp::Internal{"Exporter::Heavy"} = 1;
-our $Verbose;
 
 =head1 NAME
 
@@ -26,6 +25,17 @@ No user-serviceable parts inside.
 # We go to a lot of trouble not to 'require Carp' at file scope,
 #  because Carp requires Exporter, and something has to give.
 #
+
+sub _rebuild_cache {
+    my ($pkg, $exports, $cache) = @_;
+    s/^&// foreach @$exports;
+    @{$cache}{@$exports} = (1) x @$exports;
+    my $ok = \@{"${pkg}::EXPORT_OK"};
+    if (@$ok) {
+	s/^&// foreach @$ok;
+	@{$cache}{@$ok} = (1) x @$ok;
+    }
+}
 
 sub heavy_export {
 
@@ -49,19 +59,14 @@ sub heavy_export {
     };
 
     my($pkg, $callpkg, @imports) = @_;
-    my($type, $sym, $oops);
+    my($type, $sym, $cache_is_current, $oops);
     my($exports, $export_cache) = (\@{"${pkg}::EXPORT"},
-                                   \%{"${pkg}::EXPORT"});
+                                   $Exporter::Cache{$pkg} ||= {});
 
     if (@imports) {
 	if (!%$export_cache) {
-	    s/^&// foreach @$exports;
-	    @{$export_cache}{@$exports} = (1) x @$exports;
-	    my $ok = \@{"${pkg}::EXPORT_OK"};
-	    if (@$ok) {
-		s/^&// foreach @$ok;
-		@{$export_cache}{@$ok} = (1) x @$ok;
-	    }
+	    _rebuild_cache ($pkg, $exports, $export_cache);
+	    $cache_is_current = 1;
 	}
 
 	if ($imports[0] =~ m#^[/!:]#){
@@ -97,7 +102,7 @@ sub heavy_export {
 		}
 
 		warn "Import ".($remove ? "del":"add").": @names "
-		    if $Verbose;
+		    if $Exporter::Verbose;
 
 		if ($remove) {
 		   foreach $sym (@names) { delete $imports{$sym} } 
@@ -127,10 +132,21 @@ sub heavy_export {
 			last;
 		    }
 		} elsif ($sym !~ s/^&// || !$export_cache->{$sym}) {
-		    # accumulate the non-exports
-		    push @carp,
-		        qq["$sym" is not exported by the $pkg module\n];
-		    $oops++;
+		    # Last chance - see if they've updated EXPORT_OK since we
+		    # cached it.
+
+		    unless ($cache_is_current) {
+			%$export_cache = ();
+			_rebuild_cache ($pkg, $exports, $export_cache);
+			$cache_is_current = 1;
+		    }
+
+		    if (!$export_cache->{$sym}) {
+			# accumulate the non-exports
+			push @carp,
+			  qq["$sym" is not exported by the $pkg module\n];
+			$oops++;
+		    }
 		}
 	    }
 	}
@@ -144,7 +160,7 @@ sub heavy_export {
     }
 
     my($fail, $fail_cache) = (\@{"${pkg}::EXPORT_FAIL"},
-                              \%{"${pkg}::EXPORT_FAIL"});
+                              $Exporter::FailCache{$pkg} ||= {});
 
     if (@$fail) {
 	if (!%$fail_cache) {
@@ -152,7 +168,7 @@ sub heavy_export {
 	    # barewords twice... both with and without a leading &.
 	    # (Technique could be applied to $export_cache at cost of memory)
 	    my @expanded = map { /^\w/ ? ($_, '&'.$_) : $_ } @$fail;
-	    warn "${pkg}::EXPORT_FAIL cached: @expanded" if $Verbose;
+	    warn "${pkg}::EXPORT_FAIL cached: @expanded" if $Exporter::Verbose;
 	    @{$fail_cache}{@expanded} = (1) x @expanded;
 	}
 	my @failed;
@@ -172,7 +188,7 @@ sub heavy_export {
     }
 
     warn "Importing into $callpkg from $pkg: ",
-		join(", ",sort @imports) if $Verbose;
+		join(", ",sort @imports) if $Exporter::Verbose;
 
     foreach $sym (@imports) {
 	# shortcut for the common case of no type character

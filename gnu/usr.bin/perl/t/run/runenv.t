@@ -16,12 +16,16 @@ BEGIN {
 
 use Test;
 
-plan tests => 11;
+plan tests => 17;
 
 my $STDOUT = './results-0';
 my $STDERR = './results-1';
 my $PERL = './perl';
 my $FAILURE_CODE = 119;
+
+delete $ENV{PERLLIB};
+delete $ENV{PERL5LIB};
+delete $ENV{PERL5OPT};
 
 # Run perl with specified environment and arguments returns a list.
 # First element is true if Perl's stdout and stderr match the
@@ -35,6 +39,10 @@ sub runperl {
 
   $stdout = '' unless defined $stdout;
   $stderr = '' unless defined $stderr;
+  local %ENV = %ENV;
+  delete $ENV{PERLLIB};
+  delete $ENV{PERL5LIB};
+  delete $ENV{PERL5OPT};
   my $pid = fork;
   return (0, "Couldn't fork: $!") unless defined $pid;   # failure
   if ($pid) {                   # parent
@@ -142,8 +150,42 @@ try({PERL5OPT => '-w -w'},
 
 try({PERL5OPT => '-t'},
     ['-e', 'print ${^TAINT}'],
-    '1',
+    '-1',
     '');
+
+try({PERLLIB => "foobar$Config{path_sep}42"},
+    ['-e', 'print grep { $_ eq "foobar" } @INC'],
+    'foobar',
+    '');
+
+try({PERLLIB => "foobar$Config{path_sep}42"},
+    ['-e', 'print grep { $_ eq "42" } @INC'],
+    '42',
+    '');
+
+try({PERL5LIB => "foobar$Config{path_sep}42"},
+    ['-e', 'print grep { $_ eq "foobar" } @INC'],
+    'foobar',
+    '');
+
+try({PERL5LIB => "foobar$Config{path_sep}42"},
+    ['-e', 'print grep { $_ eq "42" } @INC'],
+    '42',
+    '');
+
+try({PERL5LIB => "foo",
+     PERLLIB => "bar"},
+    ['-e', 'print grep { $_ eq "foo" } @INC'],
+    'foo',
+    '');
+
+try({PERL5LIB => "foo",
+     PERLLIB => "bar"},
+    ['-e', 'print grep { $_ eq "bar" } @INC'],
+    '',
+    '');
+
+# PERL5LIB tests with included arch directories still missing
 
 END {
     1 while unlink $STDOUT;

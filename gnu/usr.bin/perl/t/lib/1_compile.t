@@ -70,12 +70,6 @@ B::C
 B::CC
 B::Stackobj
 ByteLoader
-CPAN
 CPAN::FirstTime
 DynaLoader
-ExtUtils::MM_NW5
-ExtUtils::Install
-ExtUtils::Liblist
-ExtUtils::Mksymlists
 Pod::Plainer
-Test::Harness::Iterator

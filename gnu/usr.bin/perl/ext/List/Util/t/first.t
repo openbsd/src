@@ -15,7 +15,7 @@ BEGIN {
 
 use List::Util qw(first);
 
-print "1..7\n";
+print "1..8\n";
 
 print "not " unless defined &first;
 print "ok 1\n";
@@ -41,3 +41,10 @@ print "ok 6\n";
 
 print "not " if defined eval { first { die if $_ } 0,0,1 };
 print "ok 7\n";
+
+($x) = foobar();
+$x = '' unless defined $x;
+print "${x}ok 8\n";
+
+sub foobar {  first { !defined(wantarray) || wantarray } "not ","not ","not " }
+
