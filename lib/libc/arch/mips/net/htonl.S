@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: htonl.S,v 1.4 1996/08/19 08:16:09 tholo Exp $"
+	.asciz "$OpenBSD: htonl.S,v 1.5 1999/06/02 10:06:58 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -48,7 +48,7 @@
 ALEAF(ntohl)
 NLEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 	.set	reorder
-#ifdef MIPSEL
+#ifdef __MIPSEL__
 	srl	v1, a0, 24		# v1 = 0x00000011
 	sll	v0, a0, 24		# v0 = 0x44000000
 	or	v0, v0, v1
@@ -59,7 +59,7 @@ NLEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 	and	v1, v1, 0xff00		# v1 = 0x00002200
 	or	v0, v0, v1
 #else
-#ifdef MIPSEB
+#ifdef __MIPSEB__
 	move	v0, a0
 #else
 	ERROR
