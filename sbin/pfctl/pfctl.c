@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.72 2002/06/09 02:14:29 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.73 2002/06/10 15:19:13 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -478,7 +478,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 	p = ps.ps_states;
 	for (i = 0; i < ps.ps_len; i += sizeof(*p)) {
 		if (!proto || (p->proto == proto))
-			print_state(p, opts & PF_OPT_VERBOSE);
+			print_state(p, opts);
 		p++;
 	}
 	return (0);
