@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.2 1999/01/28 04:58:31 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.3 1999/05/16 22:44:12 niklas Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -612,7 +612,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 
 	switch (tuple->code) {
 	case PCMCIA_CISTPL_END:
-		/* if we've seen a LONGLINK_MFC, and this is the first
+		/*
+		 * If we've seen a LONGLINK_MFC, and this is the first
 		 * END after it, reset the function list.  
 		 *
 		 * XXX This might also be the right place to start a
@@ -638,15 +639,17 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			state->pf = NULL;
 		}
 		break;
+
 	case PCMCIA_CISTPL_LONGLINK_MFC:
 		/*
-		 * this tuple's structure was dealt with in scan_cis.  here,
+		 * This tuple's structure was dealt with in scan_cis.  here,
 		 * record the fact that the MFC tuple was seen, so that
 		 * functions declared before the MFC link can be cleaned
 		 * up.
 		 */
 		state->gotmfc = 1;
 		break;
+
 #ifdef PCMCIACISDEBUG
 	case PCMCIA_CISTPL_DEVICE:
 	case PCMCIA_CISTPL_DEVICE_A:
@@ -722,6 +725,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		DPRINTF(("\n"));
 		break;
 #endif
+
 	case PCMCIA_CISTPL_VERS_1:
 		if (tuple->length < 6) {
 			DPRINTF(("CISTPL_VERS_1 too short %d\n",
@@ -749,6 +753,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			DPRINTF(("CISTPL_VERS_1\n"));
 		}
 		break;
+
 	case PCMCIA_CISTPL_MANFID:
 		if (tuple->length < 4) {
 			DPRINTF(("CISTPL_MANFID too short %d\n",
@@ -759,13 +764,38 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		state->card->product = pcmcia_tuple_read_2(tuple, 2);
 		DPRINTF(("CISTPL_MANFID\n"));
 		break;
+
 	case PCMCIA_CISTPL_FUNCID:
 		if (tuple->length < 1) {
 			DPRINTF(("CISTPL_FUNCID too short %d\n",
 			    tuple->length));
 			break;
 		}
-		if ((state->pf == NULL) || (state->gotmfc == 2)) {
+
+		/*
+		 * As far as I understand this, manufacturers do multifunction
+		 * cards in various ways.  Sadly enough I do not have the
+		 * PC-Card standard (donate!) so I can only guess what can
+		 * be done.
+		 * The original code implies FUNCID nodes are above CONFIG
+		 * nodes in the CIS tree, however Xircom does it the other
+		 * way round, which of course makes things a bit hard.
+		 * --niklas@openbsd.org
+		 */
+		if (state->pf) {
+			if (state->pf->function == PCMCIA_FUNCTION_UNSPEC) {
+				/*
+				 * This looks like a opportunistic function
+				 * created by a CONFIG tuple.  Just keep it.
+				 */
+			} else {
+				/*
+				 * A function is being defined, end it.
+				 */
+				state->pf = NULL;
+			}
+		}
+		if (state->pf == NULL) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
 			    M_NOWAIT);
 			bzero(state->pf, sizeof(*state->pf));
@@ -780,6 +810,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 
 		DPRINTF(("CISTPL_FUNCID\n"));
 		break;
+
 	case PCMCIA_CISTPL_CONFIG:
 		if (tuple->length < 3) {
 			DPRINTF(("CISTPL_CONFIG too short %d\n",
@@ -839,6 +870,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		}
 		DPRINTF(("CISTPL_CONFIG\n"));
 		break;
+
 	case PCMCIA_CISTPL_CFTABLE_ENTRY:
 		{
 			int idx, i, j;
@@ -1062,6 +1094,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 					    (1 << cfe->iomask);
 				}
 			}
+
 			if (irq) {
 				if (tuple->length <= idx) {
 					DPRINTF(("ran out of space before TPCE_IR\n"));
@@ -1214,6 +1247,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	abort_cfe:
 		DPRINTF(("CISTPL_CFTABLE_ENTRY\n"));
 		break;
+
 	default:
 		DPRINTF(("unhandled CISTPL %x\n", tuple->code));
 		break;
