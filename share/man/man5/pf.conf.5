@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.149 2002/12/10 00:33:33 margarida Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.150 2002/12/10 01:38:41 margarida Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -710,7 +710,7 @@ Common protocols are
 .Xr udp 4 ,
 .Xr icmp 4 ,
 and
-.Xr icmp6 .
+.Xr icmp6 4 .
 .It Pa from <source> port <source> to <dest> port <dest>
 The rule applies only to packets with the specified source and destination
 addresses and ports.
@@ -824,7 +824,7 @@ The flags are: (F)IN, (S)YN, (R)ST, (P)USH, (A)CK, (U)RG, (E)CE, and C(W)R.
 Flag SYN is set.
 The other flags are ignored.
 .It Em flags S/SA
-Of SYN and ACK, exactly SYN is set.
+Out of SYN and ACK, exactly SYN may be set.
 SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST do not.
 This is more restrictive than the previous example.
 .It Em flags /SFRA
@@ -984,7 +984,7 @@ ruleset is reloaded.
 .It Em round-robin
 The
 .Pa round-robin
-option loops through the redirection address(s).
+option loops through the redirection address(es).
 .Pp
 When more than one redirection address is specified,
 .Pa round-robin
@@ -1207,7 +1207,7 @@ Besides the use of
 .Pa scrub
 rules as described in
 .Pa TRAFFIC NORMALIZATION
-above, there are three options for handling fragments in the packet filter
+above, there are three options for handling fragments in the packet filter.
 .Pp
 The alternative is to filter individual fragments with filter rules.
 If no
@@ -1231,7 +1231,8 @@ For instance, the rule
 .Bd -literal
     pass in proto tcp from any to any port 80
 .Ed
-.Pp never applies to a fragment, even if the fragment is part of a TCP
+.Pp 
+never applies to a fragment, even if the fragment is part of a TCP
 packet with destination port 80, because without reassembly, this information
 is not available for each fragment.
 This also means that fragments cannot create new or match existing
