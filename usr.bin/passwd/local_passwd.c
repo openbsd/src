@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.7 1997/03/27 00:30:53 weingart Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.8 1997/04/07 06:43:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.7 1997/03/27 00:30:53 weingart Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.8 1997/04/07 06:43:09 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ local_passwd(uname)
 
 	uid = getuid();
 	if (uid && uid != pw->pw_uid) {
-		warnx("login != uid: %s", strerror(EACCES));
+		warnx("login/uid mismatch, username argument required.");
 		return(1);
 	}
 
