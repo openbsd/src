@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.15 2003/10/08 16:30:01 sturm Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.16 2004/06/23 05:16:35 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -45,6 +45,10 @@ struct str_msg_ugid {
 	gid_t gid;
 };
 
+struct str_msg_execve {
+	char path[MAXPATHLEN];
+};
+
 #define SYSTR_MAX_POLICIES	64
 #define SYSTR_MAXARGS		64
 #define SYSTR_MAXFNAME		8
@@ -69,6 +73,7 @@ struct str_msg_child {
 #define SYSTR_MSG_CHILD		4
 #define SYSTR_MSG_UGID		5
 #define SYSTR_MSG_POLICYFREE	6
+#define SYSTR_MSG_EXECVE	7
 
 #define SYSTR_MSG_NOPROCESS(x) \
 	((x)->msg.msg_type == SYSTR_MSG_CHILD || \
@@ -84,6 +89,7 @@ struct str_message {
 		struct str_msg_ugid msg_ugid;
 		struct str_msg_ask msg_ask;
 		struct str_msg_child msg_child;
+		struct str_msg_execve msg_execve;
 	} msg_data;
 };
 
@@ -146,17 +152,17 @@ struct systrace_replace {
 	int32_t strr_flags[SYSTR_MAXARGS];
 };
 
-#define STRIOCCLONE	_IOR('s', 100, int)
-#define SYSTR_CLONE	STRIOCCLONE
-#define STRIOCATTACH	_IOW('s', 101, pid_t)
-#define STRIOCDETACH	_IOW('s', 102, pid_t)
-#define STRIOCANSWER	_IOW('s', 103, struct systrace_answer)
-#define STRIOCIO	_IOWR('s', 104, struct systrace_io)
-#define STRIOCPOLICY	_IOWR('s', 105, struct systrace_policy)
-#define STRIOCGETCWD	_IOW('s', 106, pid_t)
-#define STRIOCRESCWD	_IO('s', 107)
-#define STRIOCREPORT	_IOW('s', 108, pid_t)
-#define STRIOCREPLACE	_IOW('s', 109, struct systrace_replace)
+#define STRIOCCLONE		_IOR('s', 100, int)
+#define SYSTR_CLONE		STRIOCCLONE
+#define STRIOCATTACH		_IOW('s', 101, pid_t)
+#define STRIOCDETACH		_IOW('s', 102, pid_t)
+#define STRIOCANSWER		_IOW('s', 103, struct systrace_answer)
+#define STRIOCIO		_IOWR('s', 104, struct systrace_io)
+#define STRIOCPOLICY		_IOWR('s', 105, struct systrace_policy)
+#define STRIOCGETCWD		_IOW('s', 106, pid_t)
+#define STRIOCRESCWD		_IO('s', 107)
+#define STRIOCREPORT		_IOW('s', 108, pid_t)
+#define STRIOCREPLACE		_IOW('s', 109, struct systrace_replace)
 
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1
@@ -197,9 +203,10 @@ struct fsystrace {
 /* Internal prototypes */
 
 void systrace_namei(struct nameidata *);
-int systrace_redirect(int, struct proc *, void *, register_t *);
+int  systrace_redirect(int, struct proc *, void *, register_t *);
 void systrace_exit(struct proc *);
 void systrace_fork(struct proc *, struct proc *);
+void systrace_execve(char *, struct proc *);
 
 #endif /* _KERNEL */
 #endif /* _SYSTRACE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.34 2003/10/21 05:24:40 jmc Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.35 2004/06/23 05:16:35 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -117,7 +117,7 @@ struct str_process {
 	uid_t saveuid;
 	gid_t setegid;
 	gid_t savegid;
-
+	
 	struct str_message msg;
 };
 
@@ -703,8 +703,9 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	 */
 	if (fst->issuser) {
 		maycontrol = 1;
-		issuser =1 ;
-	} else if (!(p->p_flag & P_SUGID)) {
+		issuser = 1;
+	} else if (!ISSET(p->p_flag, P_SUGID) &&
+	    !ISSET(p->p_flag, P_SUGIDEXEC)) {
 		maycontrol = fst->p_ruid == p->p_cred->p_ruid &&
 		    fst->p_rgid == p->p_cred->p_rgid;
 	}
@@ -816,7 +817,7 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 
 	systrace_replacefree(strp);
 
-	if (p->p_flag & P_SUGID) {
+	if (ISSET(p->p_flag, P_SUGID) || ISSET(p->p_flag, P_SUGIDEXEC)) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
 			systrace_unlock();
 			return (error);
@@ -948,7 +949,6 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 		SET(strp->flags, STR_PROC_SETEGID);
 		strp->setegid = ans->stra_setegid;
 	}
-	
 
 	/* Clearing the flag indicates to the process that it woke up */
 	CLR(strp->flags, STR_PROC_WAITANSWER);
@@ -1162,14 +1162,15 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	    gave us setuid/setgid privs (unless
 	 *	    you're root), or...
 	 *
-	 *      [Note: once P_SUGID gets set in execve(), it stays
-	 *	set until the process does another execve(). Hence
+	 *      [Note: once P_SUGID or P_SUGIDEXEC gets set in execve(),
+	 *      it stays set until the process does another execve(). Hence
 	 *	this prevents a setuid process which revokes its
 	 *	special privileges using setuid() from being
 	 *	traced. This is good security.]
 	 */
 	if ((proc->p_cred->p_ruid != p->p_cred->p_ruid ||
-		ISSET(proc->p_flag, P_SUGID)) &&
+		ISSET(proc->p_flag, P_SUGID) ||
+		ISSET(proc->p_flag, P_SUGIDEXEC)) &&
 	    (error = suser(p, 0)) != 0)
 		goto out;
 
@@ -1188,6 +1189,40 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 
  out:
 	return (error);
+}
+
+void
+systrace_execve(char *path, struct proc *p)
+{
+       struct str_process *strp;
+       struct fsystrace *fst;
+       struct str_msg_execve *msg_execve;
+
+       do { 
+               systrace_lock();
+               strp = p->p_systrace;
+               if (strp == NULL) {
+                       systrace_unlock();
+                       return;
+               }
+
+               msg_execve = &strp->msg.msg_data.msg_execve;
+               fst = strp->parent;
+               lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+               systrace_unlock();
+
+               /*
+                * susers will get the execve call anyway.  Also, if
+                * we're not allowed to control the process, escape.
+                */
+               if (fst->issuser ||
+                   fst->p_ruid != p->p_cred->p_ruid ||
+                   fst->p_rgid != p->p_cred->p_rgid) {
+                       lockmgr(&fst->lock, LK_RELEASE, NULL, p);
+                       return;
+               }
+	       strlcpy(msg_execve->path, path, MAXPATHLEN);
+       } while (systrace_make_msg(strp, SYSTR_MSG_EXECVE) != 0);
 }
 
 /* Prepare to replace arguments */
@@ -1295,7 +1330,6 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 int
 systrace_fname(struct str_process *strp, caddr_t kdata, size_t len)
 {
-
 	if (strp->nfname >= SYSTR_MAXFNAME || len < 2)
 		return EINVAL;
 
@@ -1326,6 +1360,7 @@ systrace_namei(struct nameidata *ndp)
 	struct fsystrace *fst;
 	struct componentname *cnp = &ndp->ni_cnd;
 	size_t i;
+	int hamper = 0;
 
 	systrace_lock();
 	strp = cnp->cn_proc->p_systrace;
@@ -1334,18 +1369,22 @@ systrace_namei(struct nameidata *ndp)
 		lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, curproc);
 		systrace_unlock();
 
-		for (i = 0; i < strp->nfname; i++) {
+		for (i = 0; i < strp->nfname; i++)
 			if (strcmp(cnp->cn_pnbuf, strp->fname[i]) == 0) {
-				/* ELOOP if namei() tries to readlink */
-				ndp->ni_loopcnt = MAXSYMLINKS;
-				cnp->cn_flags &= ~FOLLOW;
-				cnp->cn_flags |= NOFOLLOW;
+				hamper = 1;
 				break;
 			}
-		}
+
 		lockmgr(&fst->lock, LK_RELEASE, NULL, curproc);
 	} else
 		systrace_unlock();
+
+	if (hamper) {
+		/* ELOOP if namei() tries to readlink */
+		ndp->ni_loopcnt = MAXSYMLINKS;
+		cnp->cn_flags &= ~FOLLOW;
+		cnp->cn_flags |= NOFOLLOW;
+	}
 }
 
 struct str_process *
@@ -1554,7 +1593,11 @@ systrace_make_msg(struct str_process *strp, int type)
 	struct str_message *msg = &strp->msg;
 	struct fsystrace *fst = strp->parent;
 	struct proc *p = strp->proc;
-	int st;
+	int st, pri;
+
+	pri = PWAIT|PCATCH;
+	if (type == SYSTR_MSG_EXECVE)
+		pri &= ~PCATCH;
 
 	msg->msg_seqnr = ++strp->seqnr;
 	msg->msg_type = type;
@@ -1578,7 +1621,7 @@ systrace_make_msg(struct str_process *strp, int type)
 	lockmgr(&fst->lock, LK_RELEASE, NULL, p);
 
 	while (1) {
-		st = tsleep(strp, PWAIT | PCATCH, "systrmsg", 0);
+		st = tsleep(strp, pri, "systrmsg", 0);
 		if (st != 0)
 			return (ERESTART);
 		/* If we detach, then everything is permitted */

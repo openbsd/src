@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.23 2003/10/22 21:03:35 sturm Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.24 2004/06/23 05:16:35 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -621,6 +621,19 @@ obsd_read(int fd)
 		intercept_child_info(msg.msg_pid,
 		    msg.msg_data.msg_child.new_pid);
 		break;
+#ifdef SYSTR_MSG_EXECVE
+	case SYSTR_MSG_EXECVE: {
+		struct str_msg_execve *msg_execve = &msg.msg_data.msg_execve;
+		
+		intercept_newimage(fd, pid, msg.msg_policy, current->name,
+		    msg_execve->path, NULL);
+
+		if (obsd_answer(fd, pid, seqnr, 0, 0, 0, NULL) == -1)
+			err(1, "%s:%d: answer", __func__, __LINE__);
+		break;
+	}
+#endif
+
 #ifdef SYSTR_MSG_POLICYFREE
 	case SYSTR_MSG_POLICYFREE:
 		intercept_policy_free(msg.msg_policy);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.46 2004/03/30 15:43:20 sturm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.47 2004/06/23 05:16:35 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -829,23 +829,34 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 
 	icpid = intercept_getpid(pid);
 	if (!strcmp("execve", name)) {
-
-		/* Commit the name of the new image */
-		if (icpid->name)
-			free(icpid->name);
-		icpid->name = icpid->newname;
+		intercept_newimage(fd, pid, policynr,
+		    emulation, icpid->newname, icpid);
+		free(icpid->newname);
 		icpid->newname = NULL;
-
-		if (intercept_newimagecb != NULL)
-			(*intercept_newimagecb)(fd, pid, policynr, emulation,
-			    icpid->name, intercept_newimagecbarg);
-
 	}
 
  out:
 	/* Resume execution of the process */
 	intercept.answer(fd, pid, seqnr, 0, 0, 0, NULL);
 }
+
+void
+intercept_newimage(int fd, pid_t pid, int policynr,
+    const char *emulation, char *newname, struct intercept_pid *icpid)
+{
+	if (icpid == NULL)
+		icpid = intercept_getpid(pid);
+
+	if (icpid->name)
+		free(icpid->name);
+	if ((icpid->name = strdup(newname)) == NULL)
+		err(1, "%s:%d: strdup", __func__, __LINE__);
+
+	if (intercept_newimagecb != NULL)
+		(*intercept_newimagecb)(fd, pid, policynr, emulation,
+		    icpid->name, intercept_newimagecbarg);
+}
+
 
 int
 intercept_newpolicy(int fd)
