@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.17 2003/08/21 19:14:23 frantzen Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.18 2003/10/12 10:58:25 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.17 2003/08/21 19:14:23 frantzen Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.18 2003/10/12 10:58:25 dhartmei Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -392,7 +392,11 @@ tcp_print(register const u_char *bp, register u_int length,
 	}
 
 	/* OS Fingerprint */
-	if (oflag && ip6 == NULL && (flags & (TH_SYN|TH_ACK)) == TH_SYN) {
+	if (oflag &&
+#ifdef INET6
+	    ip6 == NULL &&
+#endif
+	    (flags & (TH_SYN|TH_ACK)) == TH_SYN) {
 		struct pf_osfp_enlist *head = NULL;
 		struct pf_osfp_entry *fp;
 		unsigned long left;
