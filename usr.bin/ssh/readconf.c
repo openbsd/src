@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.55 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.56 2001/01/20 17:59:40 deraadt Exp $");
 
 #include "ssh.h"
 #include "readconf.h"
@@ -246,7 +246,7 @@ process_config_line(Options *options, const char *host,
 	/* Ignore leading whitespace. */
 	if (*keyword == '\0')
 		keyword = strdelim(&s);
-	if (!*keyword || *keyword == '\n' || *keyword == '#')
+	if (keyword == NULL || !*keyword || *keyword == '\n' || *keyword == '#')
 		return 0;
 
 	opcode = parse_token(keyword, filename, linenum);
