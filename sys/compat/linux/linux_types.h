@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.5 2002/02/04 20:04:52 provos Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.6 2002/10/28 03:39:30 fgsch Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -42,11 +42,13 @@ typedef struct {
 typedef unsigned short linux_uid_t;
 typedef unsigned short linux_gid_t;
 typedef unsigned short linux_dev_t;
+typedef unsigned long long linux_ino64_t;
 typedef unsigned long linux_ino_t;
 typedef unsigned short linux_mode_t;
 typedef unsigned short linux_nlink_t;
 typedef long linux_time_t;
 typedef long linux_clock_t;
+typedef long long linux_off64_t;
 typedef long linux_off_t;
 typedef u_int64_t linux_loff_t;
 typedef int linux_pid_t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.45 2002/08/23 15:39:31 art Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.46 2002/10/28 03:39:30 fgsch Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 static void bsd_to_linux_statfs(struct statfs *, struct linux_statfs *);
 int	linux_select1(struct proc *, register_t *, int, fd_set *,
      fd_set *, fd_set *, struct timeval *);
+static int getdents_common(struct proc *, void *, register_t *, int);
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -940,6 +941,7 @@ struct linux_readdir_callback_args {
 	caddr_t outp;
 	int     resid;
 	int     oldcall;
+	int	is64bit;
 };
 
 int
@@ -948,6 +950,7 @@ linux_readdir_callback(arg, bdp, cookie)
 	struct dirent *bdp;
 	off_t cookie;
 {
+	struct linux_dirent64 idb64;
 	struct linux_dirent idb;
 	struct linux_readdir_callback_args *cb = arg;
 	int linux_reclen;
@@ -956,30 +959,37 @@ linux_readdir_callback(arg, bdp, cookie)
 	if (cb->oldcall == 2) 
 		return (ENOMEM);
 
-	linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
+	linux_reclen = (cb->is64bit) ?
+	     LINUX_RECLEN(&idb64, bdp->d_namlen) :
+	     LINUX_RECLEN(&idb, bdp->d_namlen);
+
 	if (cb->resid < linux_reclen)
 		return (ENOMEM);
 
-	/*
-	 * Massage in place to make a Linux-shaped dirent (otherwise
-	 * we have to worry about touching user memory outside of
-	 * the copyout() call).
-	 */
-	idb.d_ino = (linux_ino_t)bdp->d_fileno;
-	
-	/*
-	 * The old readdir() call misuses the offset and reclen fields.
-	 */
-	if (cb->oldcall) {
-		idb.d_off = (linux_off_t)linux_reclen;
-		idb.d_reclen = (u_short)bdp->d_namlen;
+	if (cb->is64bit) {
+		idb64.d_ino = (linux_ino64_t)bdp->d_fileno;
+		idb64.d_off = (linux_off64_t)cookie;
+		idb64.d_reclen = (u_short)linux_reclen;
+		idb64.d_type = bdp->d_type;
+		strlcpy(idb64.d_name, bdp->d_name, sizeof(idb64.d_name));
+		error = copyout((caddr_t)&idb64, cb->outp, linux_reclen);
 	} else {
-		idb.d_off = (linux_off_t)cookie;
-		idb.d_reclen = (u_short)linux_reclen;
+		idb.d_ino = (linux_ino_t)bdp->d_fileno;
+		if (cb->oldcall) {
+			/*
+			 * The old readdir() call misuses the offset
+			 * and reclen fields.
+			 */
+			idb.d_off = (linux_off_t)linux_reclen;
+			idb.d_reclen = (u_short)bdp->d_namlen;
+		} else {
+			idb.d_off = (linux_off_t)cookie;
+			idb.d_reclen = (u_short)linux_reclen;
+		}
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
+		error = copyout((caddr_t)&idb, cb->outp, linux_reclen);
 	}
-	
-	strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
-	if ((error = copyout((caddr_t)&idb, cb->outp, linux_reclen)))
+	if (error)
 		return (error);
 
 	/* advance output past Linux-shaped entry */
@@ -993,10 +1003,29 @@ linux_readdir_callback(arg, bdp, cookie)
 }
 
 int
+linux_sys_getdents64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return getdents_common(p, v, retval, 1);
+}
+
+int
 linux_sys_getdents(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
+{
+	return getdents_common(p, v, retval, 0);
+}
+
+static int
+getdents_common(p, v, retval, is64bit)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+	int is64bit;
 {
 	struct linux_sys_getdents_args /* {
 		syscallarg(int) fd;
@@ -1012,6 +1041,11 @@ linux_sys_getdents(p, v, retval)
 		return (error);
 
 	if (nbytes == 1) {	/* emulating old, broken behaviour */
+		/* readdir(2) case. Always struct dirent. */
+		if (is64bit) {
+			FRELE(fp);
+			return (EINVAL);
+		}
 		nbytes = sizeof(struct linux_dirent);
 		args.oldcall = 1;
 	} else {
@@ -1020,6 +1054,7 @@ linux_sys_getdents(p, v, retval)
 
 	args.resid = nbytes;
 	args.outp = (caddr_t)SCARG(uap, dirent);
+	args.is64bit = is64bit;
 
 	if ((error = readdir_with_callback(fp, &fp->f_offset, nbytes,
 	    linux_readdir_callback, &args)) != 0)
