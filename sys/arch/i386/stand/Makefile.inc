@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 1997/04/18 03:17:29 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 1997/06/03 08:03:08 maja Exp $
 
 #CPPFLAGS+=-nostdinc -I/sys
 CPPFLAGS+=-Wall -Werror -I. -Imachine
@@ -19,13 +19,13 @@ HEAP_LIMIT=0x50000
 BOOTREL=0x3000
 BOOTMAGIC=0xdeadbeef
 
-.if exists(${SADIR}/libsa/obj)
-LIBSA=${SADIR}/libsa/obj/libsa.a
+.if exists(${SADIR}/libsa/${__objdir})
+LIBSA=${SADIR}/libsa/${__objdir}/libsa.a
 .else
 LIBSA=${SADIR}/libsa/libsa.a
 .endif
-.if exists(${SADIR}/libz/obj)
-LIBZ=${SADIR}/libz/obj/libz.a
+.if exists(${SADIR}/libz/${__objdir})
+LIBZ=${SADIR}/libz/${__objdir}/libz.a
 .else
 LIBZ=${SADIR}/libz/libz.a
 .endif
