@@ -40,6 +40,9 @@ uuencode(unsigned char *bufin, unsigned int nbytes, char *bufcoded)
 	} else if (i == nbytes + 2) {
 		outptr[-1] = '=';
 		outptr[-2] = '=';
+	} else if (i == nbytes) {
+		debug("uuencode: i == nbytes");
+		*(outptr++) = '=';
 	}
 	*outptr = '\0';
 	return (outptr - bufcoded);
@@ -76,7 +79,8 @@ uudecode(const char *bufcoded, unsigned char *bufplain, int outbufsize)
 	 * buffer, adjust the number of input bytes downwards.
 	 */
 	bufin = bufcoded;
-	while (DEC(*(bufin++)) <= MAXVAL);
+	while (DEC(*(bufin++)) <= MAXVAL)
+		;
 	nprbytes = bufin - bufcoded - 1;
 	nbytesdecoded = ((nprbytes + 3) / 4) * 3;
 	if (nbytesdecoded > outbufsize)
