@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.34 2002/11/20 14:15:35 nate Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.35 2003/02/13 06:02:09 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.31 2002/11/20 14:14:21 nate Exp 
+ *	OpenBSD: miidevs,v 1.32 2003/02/13 05:49:58 fgsch Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -129,6 +129,8 @@
 #define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000baseTX PHY"
 #define	MII_MODEL_BROADCOM_BCM5411	0x0007
 #define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000baseTX PHY"
+#define	MII_MODEL_BROADCOM_3C905B	0x0012
+#define	MII_STR_BROADCOM_3C905B	"Broadcom 3C905B internal PHY"
 #define	MII_MODEL_BROADCOM_3C905C	0x0017
 #define	MII_STR_BROADCOM_3C905C	"Broadcom 3C905C internal PHY"
 #define	MII_MODEL_BROADCOM_BCM5221	0x001e
