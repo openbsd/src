@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.16 2003/05/29 14:39:06 ho Exp $
+.\"	$OpenBSD: spl.9,v 1.17 2004/04/27 12:05:57 jmc Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -80,7 +80,7 @@ blocks interrupts of priority less than or equal to
 The code may then safely access variables and data structures which
 are used by kernel code that runs at an equal or lower priority level.
 .Pp
-A
+An
 .Nm
 function exists for each distinct priority level which can exist in
 the system.
