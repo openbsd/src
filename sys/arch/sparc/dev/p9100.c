@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.11 2002/11/06 21:06:20 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.12 2003/05/12 18:57:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -130,6 +130,14 @@ struct cfdriver pnozz_cd = {
 };
 
 /*
+ * SBus registers mappings
+ */
+#define	P9100_NREG	3
+#define	P9100_REG_CTL	0
+#define	P9100_REG_CMD	1
+#define	P9100_REG_VRAM	2
+
+/*
  * System control and command registers
  * (IBM RGB528 RamDac, p9100, video coprocessor)
  */
@@ -138,6 +146,13 @@ struct p9100_ctl {
 	struct p9100_scr {
 		volatile u_int32_t	unused0;
 		volatile u_int32_t	scr;		/* system config reg */
+#define	SCR_ID_MASK		0x00000007
+#define	SCR_PIXEL_ID_MASK	0x00000007
+#define	SCR_PIXEL_MASK		0x1c000000
+#define	SCR_PIXEL_8BPP		0x08000000
+#define	SCR_PIXEL_16BPP		0x0c000000
+#define	SCR_PIXEL_24BPP		0x1c000000
+#define	SCR_PIXEL_32BPP		0x14000000
 		volatile u_int32_t	ir;		/* interrupt reg */
 		volatile u_int32_t	ier;		/* interrupt enable */
 		volatile u_int32_t	arbr;		/* alt read bank reg */
@@ -247,43 +262,71 @@ p9100attach(parent, self, args)
 	struct p9100_softc *sc = (struct p9100_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int node = 0, i;
-	int isconsole, fb_depth, fb_cmsize;
-	char *cp;
+	int node, row, scr;
+	int isconsole, fb_depth;
+
+#ifdef DIAGNOSTIC
+	if (ca->ca_ra.ra_nreg < P9100_NREG) {
+		printf(": expected %d registers, got only %d\n",
+		    P9100_NREG, ca->ca_ra.ra_nreg);
+		return;
+	}
+#endif
 
 	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
-	sc->sc_phys = ca->ca_ra.ra_reg[2];
+	sc->sc_phys = ca->ca_ra.ra_reg[P9100_REG_VRAM];
 
-	sc->sc_ctl = mapiodev(&(ca->ca_ra.ra_reg[0]), 0,
+	sc->sc_ctl = mapiodev(&(ca->ca_ra.ra_reg[P9100_REG_CTL]), 0,
 	    ca->ca_ra.ra_reg[0].rr_len);
-	sc->sc_cmd = mapiodev(&(ca->ca_ra.ra_reg[1]), 0,
+	sc->sc_cmd = mapiodev(&(ca->ca_ra.ra_reg[P9100_REG_CMD]), 0,
 	    ca->ca_ra.ra_reg[1].rr_len);
 
 	node = ca->ca_ra.ra_node;
 	isconsole = node == fbnode;
 
 	P9100_SELECT_SCR(sc);
-	i = sc->sc_ctl->ctl_scr.scr;
-	switch ((i >> 26) & 7) {
-	case 5:
+	scr = sc->sc_ctl->ctl_scr.scr;
+	switch (scr & SCR_PIXEL_MASK) {
+	case SCR_PIXEL_32BPP:
 		fb_depth = 32;
 		break;
-	case 7:
+	case SCR_PIXEL_24BPP:
 		fb_depth = 24;
 		break;
-	case 3:
+	case SCR_PIXEL_16BPP:
 		fb_depth = 16;
 		break;
-	case 2:
 	default:
+#ifdef DIAGNOSTIC
+		printf(": unknown color depth code 0x%x, assuming 8\n%s",
+		    scr & SCR_PIXEL_MASK, self->dv_xname);
+#endif
+	case SCR_PIXEL_8BPP:
 		fb_depth = 8;
 		break;
 	}
 	fb_setsize(&sc->sc_sunfb, fb_depth, 800, 600, node, ca->ca_bustype);
-	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&(ca->ca_ra.ra_reg[2]), 0,
+	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&sc->sc_phys, 0,
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+
+	printf(": rev %x, %dx%d, depth %d\n", scr & SCR_ID_MASK,
+	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
+	    sc->sc_sunfb.sf_depth);
+
+	/*
+	 * If the framebuffer width is under 1024x768, we will switch from the
+	 * PROM font to the more adequate 8x16 font here.
+	 * However, we need to adjust two things in this case:
+	 * - the display row should be overrided from the current PROM metrics,
+	 *   to prevent us from overwriting the last few lines of text.
+	 * - if the 80x34 screen would make a large margin appear around it,
+	 *   choose to clear the screen rather than keeping old prom output in
+	 *   the margins.
+	 * XXX there should be a rasops "clear margins" feature
+	 */
+	fbwscons_init(&sc->sc_sunfb,
+	    isconsole && (sc->sc_sunfb.sf_width != 800));
 	fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 
 	p9100_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
@@ -291,25 +334,25 @@ p9100attach(parent, self, args)
 	p9100_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	p9100_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
-	printf(": rev %x, %dx%d, depth %d\n", i & 7,
-	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
-	    sc->sc_sunfb.sf_depth);
-
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
-
-	/* initialize color map */
-	fb_cmsize = getpropint(node, "cmsize", 256);
-	cp = &sc->sc_cmap.cm_map[0][0];
-	cp[0] = cp[1] = cp[2] = 0;
-	for (i = 1, cp = &sc->sc_cmap.cm_map[i][0]; i < fb_cmsize; cp += 3, i++)
-		cp[0] = cp[1] = cp[2] = 0xff;
-	p9100_loadcmap(sc, 0, 256);
 
 	/* enable video */
 	p9100_burner(sc, 1, 0);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &p9100_stdscreen, -1,
+		switch (sc->sc_sunfb.sf_width) {
+		case 640:
+			row = p9100_stdscreen.nrows - 1;
+			break;
+		case 800:
+			row = 0;	/* screen has been cleared above */
+			break;
+		default:
+			row = -1;
+			break;
+		}
+
+		fbwscons_console_init(&sc->sc_sunfb, &p9100_stdscreen, row,
 		    p9100_burner);
 	}
 
@@ -474,7 +517,7 @@ p9100_loadcmap(sc, start, ncolors)
 
 	P9100_SELECT_VRAM(sc);
 	P9100_SELECT_VRAM(sc);
-	sc->sc_junk = sc->sc_ctl->ctl_dac.pwraddr;
+	P9100_SELECT_DAC(sc);
 	sc->sc_ctl->ctl_dac.pwraddr = start << 16;
 
 	for (p = sc->sc_cmap.cm_map[start], ncolors *= 3; ncolors-- > 0; p++) {
@@ -482,7 +525,7 @@ p9100_loadcmap(sc, start, ncolors)
 		P9100_SELECT_VRAM(sc);
 		P9100_SELECT_VRAM(sc);
 
-		sc->sc_junk = sc->sc_ctl->ctl_dac.paldata;
+		P9100_SELECT_DAC(sc);
 		sc->sc_ctl->ctl_dac.paldata = (*p) << 16;
 	}
 }
