@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.5 2004/07/07 05:47:57 henning Exp $ */
+/*	$OpenBSD: server.c,v 1.6 2004/07/07 07:05:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,10 +30,9 @@
 int
 setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 {
-	char			 ntopbuf[INET6_ADDRSTRLEN];
 	struct listen_addr	*la;
 	struct ifaddrs		*ifap;
-	struct sockaddr		*sap;
+	struct sockaddr		*sa;
 	u_int			 new_cnt = 0;
 
 	if (conf->listen_all) {
@@ -41,17 +40,17 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 			fatal("getifaddrs");
 
 		for (; ifap != NULL; ifap = ifap->ifa_next) {
-			sap = ifap->ifa_addr;
+			sa = ifap->ifa_addr;
 
-			if (sap->sa_family != AF_INET &&
-			    sap->sa_family != AF_INET6)
+			if (sa->sa_family != AF_INET &&
+			    sa->sa_family != AF_INET6)
 				continue;
 
 			if ((la = calloc(1, sizeof(struct listen_addr))) ==
 			    NULL)
 				fatal("setup_listeners calloc");
 
-			memcpy(&la->sa, sap, SA_LEN(sap));
+			memcpy(&la->sa, sa, SA_LEN(sa));
 			TAILQ_INSERT_TAIL(&conf->listen_addrs, la, entry);
 		}
 
@@ -59,31 +58,25 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 	}
 
 	TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
-		sap = (struct sockaddr *)&la->sa;
 		new_cnt++;
 
 		switch (la->sa.ss_family) {
 		case AF_INET:
-			if (((struct sockaddr_in *)sap)->sin_port == 0)
-				((struct sockaddr_in *)sap)->sin_port =
+			if (((struct sockaddr_in *)&la->sa)->sin_port == 0)
+				((struct sockaddr_in *)&la->sa)->sin_port =
 				    se->s_port;
-			inet_ntop(AF_INET,
-			    &((struct sockaddr_in *)sap)->sin_addr,
-			    ntopbuf, sizeof(ntopbuf));
 			break;
 		case AF_INET6:
-			if (((struct sockaddr_in6 *)sap)->sin6_port == 0)
-				((struct sockaddr_in6 *)sap)->sin6_port =
+			if (((struct sockaddr_in6 *)&la->sa)->sin6_port == 0)
+				((struct sockaddr_in6 *)&la->sa)->sin6_port =
 				    se->s_port;
-			inet_ntop(AF_INET6,
-			    &((struct sockaddr_in6 *)sap)->sin6_addr,
-			    ntopbuf, sizeof(ntopbuf));
 			break;
 		default:
 			fatalx("king bula sez: af borked");
 		}
 
-		log_debug("adding listener on %s", ntopbuf);
+		log_info("listening on %s",
+		    log_sockaddr((struct sockaddr *)&la->sa));
 
 		if ((la->fd = socket(la->sa.ss_family, SOCK_DGRAM, 0)) == -1)
 			fatal("socket");
