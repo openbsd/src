@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.8 1997/05/08 15:48:19 tholo Exp $
+#	$OpenBSD: install.sh,v 1.9 1997/05/13 18:22:18 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -190,7 +190,8 @@ __get_filesystems_1
 	cat ${FILESYSTEMS}
 	echo	""
 	echo	"Filesystems will now be created on these devices."
-	echo -n	"If you made any mistakes, you may edit this now.  Edit? [n] "
+	echo 	"If you made any mistakes, you may edit this now."
+	echo -n	"Edit using ${EDITOR}? [n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)
@@ -306,7 +307,7 @@ case "$resp" in
 		echo "you are doing an NFS installation or an FTP installation"
 		echo "without a name server and want to refer to the server by"
 		echo "name rather than by its numeric ip address."
-		echo -n "Would you like to edit the host table? [n] "
+		echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
 		getresp "n"
 		case "$resp" in
 			y*|Y*)
@@ -373,7 +374,7 @@ This would be especially useful if you plan to keep '/usr' on an NFS
 server.
 
 __fstab_config_1
-	echo -n	"Edit the fstab? [n] "
+	echo -n	"Edit the fstab with ${EDITOR}? [n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)

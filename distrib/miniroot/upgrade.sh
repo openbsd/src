@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.5 1997/05/03 23:06:02 tholo Exp $
+#	$OpenBSD: upgrade.sh,v 1.6 1997/05/13 18:22:14 millert Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ this fstab is only for installation purposes, and will not be copied into
 the root filesystem.
 
 __fstab_config_1
-echo -n	"Edit the fstab? [n] "
+echo -n	"Edit the fstab with ${EDITOR}? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
@@ -259,7 +259,7 @@ echo -n	"Converting ufs to ffs in /etc/fstab..."
 	done
 ) < /mnt/etc/fstab
 echo	"done."
-echo -n	"Would you like to edit the resulting fstab? [y] "
+echo -n	"Would you like to edit the resulting fstab with ${EDITOR}? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
