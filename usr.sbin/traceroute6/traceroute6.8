@@ -1,4 +1,5 @@
-.\"	$OpenBSD: traceroute6.8,v 1.5 2000/04/20 17:43:46 angelos Exp $
+.\"	$OpenBSD: traceroute6.8,v 1.6 2000/06/12 16:37:09 itojun Exp $
+.\"	$KAME: traceroute6.8,v 1.8 2000/06/12 16:29:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,8 +28,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: traceroute6.8,v 1.4 2000/02/16 06:08:39 itojun Exp
-.\"
 .Dd May 17, 1998
 .Dt TRACEROUTE6 8
 .Os
@@ -38,16 +37,35 @@
 .Nd "print the route IPv6 packets will take to the destination"
 .\"
 .Sh SYNOPSIS
-.Nm
+.Nm traceroute6
+.Bk -words
 .Op Fl dlnrv
+.Ek
+.Bk -words
 .Op Fl f Ar firsthop
+.Ek
+.Bk -words
+.Op Fl g Ar gateway
+.Ek
+.Bk -words
 .Op Fl m Ar hoplimit
+.Ek
+.Bk -words
 .Op Fl p Ar port
+.Ek
+.Bk -words
 .Op Fl q Ar probes
+.Ek
+.Bk -words
 .Op Fl s Ar src
+.Ek
+.Bk -words
 .Op Fl w Ar waittime
+.Ek
+.Bk -words
 .Ar target
 .Op Ar datalen
+.Ek
 .\"
 .Sh DESCRIPTION
 .Bl -tag -width Ds
@@ -55,6 +73,12 @@
 Debug mode.
 .It Fl f Ar firsthop
 Specify how many hops to skip in trace.
+.It Fl g Ar gateway
+Specify intermediate gateway
+.Po
+.Nm
+uses routing header
+.Pc .
 .It Fl m Ar hoplimit
 Specify maximum hoplimit.
 .It Fl l
@@ -85,8 +109,9 @@ Specify the delay time between probes.
 .El
 .\"
 .Sh RETURN VALUES
-.Nm Traceroute6
-will exit with 0 on success, and non-zero on errors.
+The
+.Nm
+command will exit with 0 on success, and non-zero on errors.
 .\"
 .Sh SEE ALSO
 .Xr ping 8 ,
@@ -97,6 +122,3 @@ will exit with 0 on success, and non-zero on errors.
 The
 .Nm
 command first appeared in WIDE hydrangea IPv6 protocol stack kit.
-.\"
-.\" .Sh BUGS
-.\" (to be written)
