@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.17 1997/08/29 22:49:06 kstailey Exp $	*/
+/*	$OpenBSD: pms.c,v 1.18 1998/04/01 20:21:00 matthieu Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -364,6 +364,36 @@ pmsread(dev, uio, flag)
 }
 
 int
+pmswrite(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	int i, n;
+	int error;
+	int s;
+	u_char wrbuf[32];
+
+
+	if (!(sc->sc_flags & PMS_RAW)) 
+	    return ENODEV;
+	
+	error = 0;
+	/* Only allow a small number of bytes per write. */
+	n = min(sizeof(wrbuf), uio->uio_resid);
+	error = uiomove(wrbuf, n, uio);
+	if (error)
+		return error;
+	s = spltty();
+	for(i = 0; i < n; i++)
+		pms_dev_cmd(wrbuf[i]);
+	splx(s);
+
+	return error;
+}
+
+int
 pmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -505,53 +535,9 @@ pmsintr(arg)
 #endif
 		}
 	} else {
-		/* read data port */
 		buffer[0] = inb(PMS_DATA);
-
-		/* emulate old state machine for the ioctl's sake. */
-		switch (state) {
-		case 0:
-			buttons = buffer[0];
-			if ((buttons & 0xc0) == 0)
-				++state;
-			break;
-		case 1:
-			dx = buffer[0];
-			/* Bounding at -127 avoids a bug in XFree86. */
-			dx = (dx == -128) ? -127 : dx;
-			++state;
-			break;
-		case 2:
-			dy = buffer[0];
-			dy = (dy == -128) ? -127 : dy;
-#ifdef INTELLIMOUSE
-			++state;
-#else
-			state = 0;
-#endif
-
-			buttons = ((buttons & PS2LBUTMASK) << 2) |
-			  	((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
-			changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
-			sc->sc_status = buttons |
-			    (sc->sc_status & ~BUTSTATMASK) | changed;
-
-			if (dx || dy || changed) {
-				/* Update accumulated movements. */
-				sc->sc_x += dx;
-				sc->sc_y += dy;
-			}
-			break;
-#ifdef INTELLIMOUSE		/* discard fourth "wheel" byte */
-		case 3:
-			state = 0;
-			return 0; /* XXX 0? -1? */
-#endif
-		}
-
-		/* add raw data to the queue. */
 		(void) b_to_q(buffer, 1, &sc->sc_q);
-
+		
 		if (sc->sc_state & PMS_ASLP) {
 			sc->sc_state &= ~PMS_ASLP;
 			wakeup((caddr_t)sc);
