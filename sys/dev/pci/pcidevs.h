@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.607 2003/03/19 20:00:54 millert Exp 
+ *		OpenBSD: pcidevs,v 1.608 2003/03/19 20:15:02 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1877,8 +1877,8 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_LAN	0x0066		/* nForce2 LAN */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_USB	0x0067		/* nForce2 USB */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_USB2	0x0068		/* nForce2 USB2 */
-#define	PCI_PRODUCT_NVIDIA_NFORCE2_AU	0x006a		/* nForce2 Audio */
-#define	PCI_PRODUCT_NVIDIA_NFORCE2_AU2	0x006b		/* nForce2 Audio */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_ACA	0x006a		/* nForce2 AC-97 Audio */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_APU	0x006b		/* nForce2 Audio Processing unit */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_PPB	0x006c		/* nForce2 PCI-PCI */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_PPB2	0x006d		/* nForce2 PCI-PCI */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_FW	0x006e		/* nForce2 FireWire */
