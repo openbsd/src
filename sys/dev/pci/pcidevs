@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.69 1998/07/20 15:05:14 mickey Exp $
+$OpenBSD: pcidevs,v 1.70 1998/07/21 18:45:51 mickey Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -596,6 +596,9 @@ product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE Ethernet
 product AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ethernet & SCSI
 
+/* Apple products */
+product APPLE BANDIT		0x0001	PCI Controller
+
 /* ARC Logic products */
 product ARC 1000PV		0xa091	1000PV
 product ARC 2000PV		0xa099	2000PV
@@ -751,6 +754,9 @@ product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
+/* 2 Micro Inc */
+product 2MICRO OZ6832		OZ6832	CardBus Controller
+
 /* Evans & Sutherland products */
 product ES FREEDOM		0x0001	Freedom PCI-GBus Interface
 
@@ -865,6 +871,7 @@ product NS NS87410		0xd001	NS87410
 
 /* NEC */
 product	NEC XXX			0x0035	XXX USB
+product	NEC POWERVR2		0x0046	PowerVR PCX2
 
 /* NeoMagic */
 product NEOMAGIC NM3160		0x0004	NM3160
@@ -910,6 +917,9 @@ product OPTI RM861HA		0xc861	RM861HA
 
 /* PC Tech products */
 product PCTECH RZ1000		0x1000	RZ1000
+
+/* ProLAN products */
+product PROLAN NE2KETHER	0x1980	NE2000-compatible Ethernet
 
 /* Promise products */
 product PROMISE DC5030		0x5300	DC5030
@@ -1063,9 +1073,10 @@ product V3 V96DPC		0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 /* VIA Technologies products */
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
 product VIATECH VT82C561	0x0561	VT82C561
+product VIATECH VT82C586_IDE	0x0571	VT82C586 (Apollo VP) IDE Controller
 product VIATECH VT82C576	0x0576	VT82C576 3V
 product VIATECH VT82C585	0x0585	VT82C585 (Apollo) PCI-ISA Bridge
-product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge w/IDE
+product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
 product VIATECH VT82C597PCI	0x0597	VT82C597 (Apollo VP3) Host-PCI Bridge
 product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
