@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.60 2004/10/31 17:41:01 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.61 2004/11/01 02:03:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1183,7 +1183,7 @@ xl_newbuf(sc, c)
 	    htole32(c->map->dm_segs[0].ds_addr + ETHER_ALIGN);
 	c->xl_ptr->xl_frag.xl_len =
 	    htole32(c->map->dm_segs[0].ds_len | XL_LAST_FRAG);
-	c->xl_ptr->xl_status = 0;
+	c->xl_ptr->xl_status = htole32(0);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    ((caddr_t)c->xl_ptr - sc->sc_listkva), sizeof(struct xl_list),
@@ -1266,7 +1266,7 @@ again:
 		 */
 		if (rxstat & XL_RXSTAT_UP_ERROR) {
 			ifp->if_ierrors++;
-			cur_rx->xl_ptr->xl_status = 0;
+			cur_rx->xl_ptr->xl_status = htole32(0);
 			continue;
 		}
 
@@ -1279,7 +1279,7 @@ again:
 			printf("%s: bad receive status -- "
 			    "packet dropped\n", sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
-			cur_rx->xl_ptr->xl_status = 0;
+			cur_rx->xl_ptr->xl_status = htole32(0);
 			continue;
 		}
 
@@ -1295,7 +1295,7 @@ again:
 		 */
 		if (xl_newbuf(sc, cur_rx) == ENOBUFS) {
 			ifp->if_ierrors++;
-			cur_rx->xl_ptr->xl_status = 0;
+			cur_rx->xl_ptr->xl_status = htole32(0);
 			continue;
 		}
 
@@ -1911,7 +1911,7 @@ xl_encap_90xB(sc, c, m_head)
 	 */
 	map = sc->sc_tx_sparemap;
 	d = c->xl_ptr;
-	d->xl_status = 0;
+	d->xl_status = htole32(0);
 	d->xl_next = 0;
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
