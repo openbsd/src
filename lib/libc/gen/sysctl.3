@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.20 1999/06/05 03:21:41 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.21 1999/06/30 01:08:52 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -241,6 +241,7 @@ information.
 .Bl -column "KERNXCHOWNXRESTRICTEDXXX" "struct clockrateXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It Dv KERN_ARGMAX No "	integer	no"
+.It Dv KERN_ARND No "	integer	no"
 .It Dv KERN_BOOTTIME No "	struct timeval	no"
 .It Dv KERN_CHOWN_RESTRICTED No "	integer	no"
 .It Dv KERN_CLOCKRATE No "	struct clockinfo	no"
@@ -269,6 +270,7 @@ information.
 .It Dv KERN_PROC No "	struct proc	no"
 .It Dv KERN_PROF No "	node	not applicable"
 .It Dv KERN_RAWPARTITION No "	integer	no"
+.It Dv KERN_RND No "	struct rndstats	no"
 .It Dv KERN_SAVED_IDS No "	integer	no"
 .It Dv KERN_SECURELVL No "	integer	raise only"
 .It Dv KERN_SYSVMSG No "	integer	no"
@@ -283,6 +285,10 @@ information.
 .It Dv KERN_ARGMAX
 The maximum bytes of argument to
 .Xr exec 2 .
+.It Dv KERN_ARND
+Returns a random iteger from the kernel arc4random function.
+This can be useful if /dev/arandom is not available, see
+.Xr rnd 4 .
 .It Dv KERN_BOOTTIME
 A
 .Li struct timeval
