@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.78 2001/01/29 21:08:11 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.79 2001/01/30 08:30:57 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.78 2001/01/29 21:08:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.79 2001/01/30 08:30:57 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1395,8 +1395,15 @@ more:
 
 	s = strchr(arg, '.');
 	if (s) {
+		char *p;
+
 		*s++ = '\0';
-		sep->se_max = atoi(s);
+		sep->se_max = strtoul(s, &p, 0);
+		if (sep->se_max < 1 || *p) {
+			syslog(LOG_ERR, "%s: illegal max field \"%s\", setting to %d",
+			    sep->se_service, s, toomany);
+			sep->se_max = toomany;
+		}
 	} else
 		sep->se_max = toomany;
 
