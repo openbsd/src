@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.17 2000/10/16 17:08:08 aaron Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.18 2001/02/20 19:39:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -420,10 +420,6 @@ xe_pcmcia_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif	/* NBPFILTER > 0 */
 
 	/*
 	 * Reset and initialize the card again for DINGO (as found in Linux

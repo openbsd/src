@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.19 2001/02/03 05:09:48 mickey Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.20 2001/02/20 19:39:41 mickey Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -802,11 +802,6 @@ ieattach(parent, self, aux)
 	printf(": address %s, type %s R%d\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    ie_hardware_names[sc->hard_type], sc->hard_vers + 1);
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, ieintr, sc, sc->sc_dev.dv_xname);

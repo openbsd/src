@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.1 2001/01/28 17:45:18 aaron Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.2 2001/02/20 19:39:47 mickey Exp $ */
 /*	$NetBSD: if_upl.c,v 1.10 2000/12/08 02:24:07 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -344,8 +344,6 @@ USB_ATTACH(upl)
 #if NBPFILTER > 0
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 	bpfattach(ifp, DLT_EN10MB, 0);
-#else
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 #endif
 #if NRND > 0

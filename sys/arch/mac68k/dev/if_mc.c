@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.2 1999/05/13 15:44:49 jason Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.3 2001/02/20 19:39:31 mickey Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
 
 /*-
@@ -173,10 +173,6 @@ mcsetup(sc, lladdr)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = mcwatchdog;
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	if_attach(ifp);
 	ether_ifattach(ifp);
 

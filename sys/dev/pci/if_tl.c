@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.16 2001/02/03 05:52:27 mickey Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.17 2001/02/20 19:39:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2655,10 +2655,6 @@ tl_attach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp,
-	    DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	shutdownhook_establish(tl_shutdown, sc);
 }
 

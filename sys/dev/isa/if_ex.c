@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.5 1999/04/19 07:10:06 fgsch Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.6 2001/02/20 19:39:40 mickey Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -308,14 +308,6 @@ ex_attach(parent, self, aux)
 		case Conn_AUI: printf("AUI\n"); break;
 		default: printf("???\n");
 	}
-
-	/*
-	 * If BPF is in the kernel, call the attach for it
-	 */
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, 
-	    sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, exintr, sc, self->dv_xname);

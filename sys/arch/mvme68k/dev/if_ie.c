@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.11 2000/01/06 03:21:42 smurph Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.12 2001/02/20 19:39:31 mickey Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -463,10 +463,6 @@ ieattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_bustype = ca->ca_bustype;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.9 2000/10/16 17:08:08 aaron Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.10 2001/02/20 19:39:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -989,10 +989,6 @@ sk_attach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(&sc_if->arpcom.ac_if.if_bpf, ifp,
-	    DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	return;
 
 fail:

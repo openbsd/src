@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.5 2001/02/03 05:16:42 mickey Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.6 2001/02/20 19:39:41 mickey Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -305,10 +305,6 @@ iyattach(parent, self, aux)
 	printf(": address %s, chip rev. %d, %d kB SRAM\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    sc->hard_vers, sc->sram/1024);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	timeout_set(&sc->sc_tmo, iymbuffill, sc);
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,

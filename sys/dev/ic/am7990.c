@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.19 2000/03/15 14:37:49 deraadt Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.20 2001/02/20 19:39:36 mickey Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -152,10 +152,6 @@ am7990_config(sc)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	if (sc->sc_memsize > 262144)
 		sc->sc_memsize = 262144;

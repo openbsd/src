@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.3 2001/01/12 22:56:03 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.4 2001/02/20 19:39:37 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -347,10 +347,6 @@ i82596_attach(sc, name, etheraddr, media, nmedia, defmedia)
 
 	printf(" %s v%d.%d, address %s\n", name, sc->sc_vers / 10,
 	       sc->sc_vers % 10, ether_sprintf(etheraddr));
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 

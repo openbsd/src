@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.46 2000/11/09 18:06:38 mickey Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.47 2001/02/20 19:39:36 mickey Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -437,11 +437,6 @@ epconfig(sc, chipset, enaddr)
 	}
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 

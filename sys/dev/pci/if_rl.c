@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.25 2001/02/20 19:10:14 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.26 2001/02/20 19:39:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1409,11 +1409,6 @@ rl_attach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp,
-	    DLT_EN10MB, sizeof(struct ether_header));
-
-#endif
 	shutdownhook_establish(rl_shutdown, sc);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.13 2001/02/20 19:39:30 mickey Exp $	*/
 /*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
 
 /*
@@ -260,10 +260,6 @@ qnattach(parent, self, aux)
 
 #ifdef QN_DEBUG
 	printf(": hardware address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-#endif
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_isr.isr_intr = qnintr;

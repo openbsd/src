@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.20 2001/02/02 08:35:31 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.21 2001/02/20 19:39:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2634,10 +2634,6 @@ xl_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp,
-	    DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	sc->sc_sdhook = shutdownhook_establish(xl_shutdown, sc);
 }
 

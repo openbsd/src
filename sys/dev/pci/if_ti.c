@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.14 2000/11/21 03:50:48 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.15 2001/02/20 19:39:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1719,11 +1719,6 @@ ti_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp,
-	    DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	shutdownhook_establish(ti_shutdown, sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.12 2001/01/22 04:02:34 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.13 2001/02/20 19:39:45 mickey Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -673,9 +673,6 @@ ray_attach(parent, self, aux)
 	else
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	/* disable the card */
 	pcmcia_function_disable(sc->sc_pf);
 

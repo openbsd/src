@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.13 2001/02/20 19:39:29 mickey Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.26 1997/03/17 17:51:42 is Exp $	*/
 
 /*
@@ -275,10 +275,6 @@ ed_zbus_attach(parent, self, aux)
 
 	/* Print additional info when attached. */
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_isr.isr_intr = edintr;
 	sc->sc_isr.isr_arg = sc;

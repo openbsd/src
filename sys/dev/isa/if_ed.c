@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.41 1999/02/28 03:23:37 jason Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.42 2001/02/20 19:39:39 mickey Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -517,12 +517,6 @@ ed_pci_attach(parent, self, aux)
 	else
 		printf("type unknown (0x%x) ", sc->type);
 	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");	/* XXX */
-
-#if NBPFILTER > 0
-        if ((sc->spec_flags & ED_REATTACH) == 0)
-		bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-		    sizeof(struct ether_header));
-#endif
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
@@ -1714,12 +1708,6 @@ edattach(parent, self, aux)
 	}
 
 	printf("\n");
-
-#if NBPFILTER > 0
-	if ((sc->spec_flags & ED_REATTACH) == 0)
-		bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-			  sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, edintr, sc, sc->sc_dev.dv_xname);

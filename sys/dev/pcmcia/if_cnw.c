@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.6 2000/04/24 19:43:35 niklas Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.7 2001/02/20 19:39:46 mickey Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -438,10 +438,6 @@ cnw_attach(parent, self, aux)
 	/* Attach the interface */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 
 	/* Disable the card now, and turn it on when the interface goes up */
 	pcmcia_function_disable(sc->sc_pf);

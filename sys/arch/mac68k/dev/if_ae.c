@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.14 1999/05/13 15:44:49 jason Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.15 2001/02/20 19:39:31 mickey Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -171,10 +171,6 @@ printf(": failed to clear shared memory - check configuration\n");
 	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	printf("type %s, %dKB memory\n", sc->type_str, sc->mem_size / 1024);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	return 0;
 }

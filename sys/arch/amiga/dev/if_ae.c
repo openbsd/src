@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.12 1999/05/13 15:44:47 jason Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.13 2001/02/20 19:39:30 mickey Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.14 1997/03/18 18:44:53 veego Exp $	*/
 
 /*
@@ -245,10 +245,6 @@ aeattach(parent, self, aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_isr.isr_intr = aeintr;
 	sc->sc_isr.isr_arg = sc;

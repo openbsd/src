@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.22 2001/01/17 04:54:47 aaron Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.23 2001/02/20 19:39:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -109,7 +109,7 @@
 #include <dev/pcmcia/if_wavelan_ieee.h>
 
 #define BPF_MTAP(if,mbuf) bpf_mtap((if)->if_bpf, (mbuf))
-#define BPFATTACH(if_bpf,if,dlt,sz) bpfattach((if_bpf), (if), (dlt), (sz))
+#define BPFATTACH(if_bpf,if,dlt,sz)
 #define STATIC
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc) (sc)->sc_dev.dv_xname
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.22 2001/01/17 04:54:47 aaron Exp $";
+	"$OpenBSD: if_wi.c,v 1.23 2001/02/20 19:39:46 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo

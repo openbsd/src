@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.12 1999/02/28 03:23:37 jason Exp $       */
+/*    $OpenBSD: if_el.c,v 1.13 2001/02/20 19:39:40 mickey Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -199,12 +199,6 @@ elattach(parent, self, aux)
 
 	/* Print out some information for the user. */
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-
-	/* Finally, attach to bpf filter if it is present. */
-#if NBPFILTER > 0
-	dprintf(("Attaching to BPF...\n"));
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, elintr, sc, sc->sc_dev.dv_xname);

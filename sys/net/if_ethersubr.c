@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.41 2001/02/01 01:32:51 jason Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.42 2001/02/20 19:39:27 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,8 @@ You should have received a copy of the license with this software. If you
 didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -103,6 +105,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in_var.h>
 #endif
 #include <netinet/if_ether.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include "bridge.h"
 #if NBRIDGE > 0
@@ -881,6 +887,9 @@ ether_ifattach(ifp)
 			break;
 		}
 	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 }
 
 void

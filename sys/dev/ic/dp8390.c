@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.8 2000/05/29 17:08:51 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.9 2001/02/20 19:39:37 mickey Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -143,10 +143,6 @@ dp8390_config(sc, media, nmedia, defmedia)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-		sizeof(struct ether_header));
-#endif
 
 	/* Print additional info when attached. */
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.7 2000/02/02 19:09:58 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.8 2001/02/20 19:39:36 mickey Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -267,11 +267,6 @@ smc91cxx_attach(sc, myea)
 	for (i = 0; i < NSMC91CxxMEDIA; i++)
 		ifmedia_add(&sc->sc_media, smc91cxx_media[i], 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | (aui ? IFM_10_5 : IFM_10_T));
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-		sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);

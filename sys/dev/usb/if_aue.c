@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.11 2001/01/28 09:43:41 aaron Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.12 2001/02/20 19:39:47 mickey Exp $ */
 /*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -934,10 +934,6 @@ USB_ATTACH(aue)
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->aue_dev),
 	    RND_TYPE_NET, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.30 2001/01/30 07:19:52 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.31 2001/02/20 19:39:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -250,10 +250,6 @@ hmeattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 /*

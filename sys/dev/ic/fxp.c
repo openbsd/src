@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.10 2000/10/16 17:08:07 aaron Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.11 2001/02/20 19:39:38 mickey Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -403,10 +403,6 @@ fxp_attach_common(sc, enaddr, intrstr)
 	 */
 	ifp->if_snd.ifq_maxlen = FXP_NTXCB - 1;
 	ether_ifattach(ifp);
-#if NBPFILTER > 0
-	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.3 2001/02/12 08:16:23 smurph Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.4 2001/02/20 19:39:32 mickey Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -379,10 +379,6 @@ struct vam7990_softc *sc;
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	if (sc->sc_memsize > 262144)
 		sc->sc_memsize = 262144;

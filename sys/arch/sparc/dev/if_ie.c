@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.12 1999/09/06 07:13:06 art Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.13 2001/02/20 19:39:33 mickey Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -679,10 +679,6 @@ ieattach(parent, self, aux)
 	printf(" pri %d address %s, type %s\n", pri,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    ie_hardware_names[sc->hard_type]);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	switch (ca->ca_bustype) {
 #if defined(SUN4)

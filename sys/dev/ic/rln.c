@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.8 2000/12/13 15:58:39 mickey Exp $	*/
+/*	$OpenBSD: rln.c,v 1.9 2001/02/20 19:39:37 mickey Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -145,9 +145,6 @@ rlnconfig(sc)
 	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 	if_attach(ifp);
 	ether_ifattach(ifp);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof (struct ether_header));
-#endif
 }
 
 /* Bring device up. */

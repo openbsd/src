@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.12 1999/02/28 03:23:38 jason Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.13 2001/02/20 19:39:40 mickey Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1119,11 +1119,6 @@ feattach(parent, self, aux)
 		printf("%s: SRAM %dKB %dbit %dns, TXB %dKBx2, %dbit I/O\n",
 		    sc->sc_dev.dv_xname, buf, bbw, ram, txb, sbw);
 	}
-#endif
-
-#if NBPFILTER > 0
-	/* If BPF is in the kernel, call the attach for it. */
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,

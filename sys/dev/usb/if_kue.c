@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.8 2001/01/30 21:07:27 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.9 2001/02/20 19:39:46 mickey Exp $ */
 /*	$NetBSD: if_kue.c,v 1.28 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -690,10 +690,6 @@ USB_ATTACH(kue)
 	if_attach(ifp);
 	Ether_ifattach(ifp, sc->kue_desc.kue_macaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->kue_dev),
 	    RND_TYPE_NET, 0);
