@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2001/03/29 21:47:40 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2001/03/30 05:13:46 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -209,7 +209,9 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 				break;
 			}
 		}
+#if 0
 printf("isi iar %x\n", frame->srr0);
+#endif
 	case EXC_MCHK|EXC_USER:
 /* XXX Likely that returning from this trap is bogus... */
 /* XXX Have to make sure that sigreturn does the right thing. */
@@ -392,10 +394,12 @@ mpc_print_pci_stat();
 			errstr[errnum] = "previous address";
 			errnum++;
 		}
+#if 0
 printf("pgm iar %x srr1 %x\n", frame->srr0, frame->srr1);
 for (i = 0; i < errnum; i++) {
 	printf("\t[%s]\n", errstr[i]);
 }
+#endif
 		sv.sival_int = frame->srr0;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
