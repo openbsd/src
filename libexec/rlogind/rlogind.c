@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogind.c,v 1.32 2002/02/15 19:16:36 deraadt Exp $	*/
+/*	$OpenBSD: rlogind.c,v 1.33 2002/02/16 19:34:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: rlogind.c,v 1.32 2002/02/15 19:16:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rlogind.c,v 1.33 2002/02/16 19:34:45 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -594,23 +594,28 @@ fatal(f, msg, syserr)
 	char *msg;
 	int syserr;
 {
-	int len;
+	int len = 0;
 	char buf[BUFSIZ], *bp = buf;
 
 	/*
 	 * Prepend binary one to message if we haven't sent
 	 * the magic null as confirmation.
 	 */
-	if (!confirmed)
+	if (!confirmed) {
 		*bp++ = '\01';		/* error indicator */
+		len++;
+	}
 	if (syserr)
-		len = snprintf(bp, buf + sizeof buf - bp,
+		len += snprintf(bp, sizeof(buf) - len,
 		    "rlogind: %s: %s.\r\n",
 		    msg, strerror(errno));
 	else
-		len = snprintf(bp, buf + sizeof buf - bp,
+		len += snprintf(bp, sizeof(buf) - len,
 		    "rlogind: %s.\r\n", msg);
-	(void) write(f, buf, bp + len - buf);
+	if (len >= sizeof(buf))
+		len = sizeof(buf) - 1;
+
+	(void) write(f, buf, len);
 	exit(1);
 }
 
