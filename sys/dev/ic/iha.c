@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.20 2003/03/29 23:28:49 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.21 2003/03/30 00:32:48 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -71,7 +71,7 @@ struct scsi_device iha_dev = {
  * SCSI Rate Table, indexed by FLAG_SCSI_RATE field of
  * TCS_Flags.
  */
-static const u_int8_t iha_rate_tbl[8] = {
+static const u_int8_t iha_rate_tbl[] = {
 	/* fast 20		  */
 	/* nanosecond divide by 4 */
 	12,	/* 50ns,  20M	  */
@@ -84,9 +84,9 @@ static const u_int8_t iha_rate_tbl[8] = {
 	62	/* 250ns, 4M	  */
 };
 
-int iha_setup_sg_list(struct iha_softc *, struct iha_scsi_req_q *);
-u_int8_t iha_data_over_run(struct iha_scsi_req_q *);
-int iha_push_sense_request(struct iha_softc *, struct iha_scsi_req_q *);
+int iha_setup_sg_list(struct iha_softc *, struct iha_scb *);
+u_int8_t iha_data_over_run(struct iha_scb *);
+int iha_push_sense_request(struct iha_softc *, struct iha_scb *);
 void iha_timeout(void *);
 int  iha_alloc_scbs(struct iha_softc *);
 void iha_read_eeprom(bus_space_tag_t, bus_space_handle_t,
@@ -99,22 +99,22 @@ void iha_reset_chip(struct iha_softc *,
 void iha_reset_dma(bus_space_tag_t, bus_space_handle_t);
 void iha_reset_tcs(struct tcs *, u_int8_t);
 void iha_print_info(struct iha_softc *, int);
-void iha_done_scb(struct iha_softc *, struct iha_scsi_req_q *);
-void iha_exec_scb(struct iha_softc *, struct iha_scsi_req_q *);
+void iha_done_scb(struct iha_softc *, struct iha_scb *);
+void iha_exec_scb(struct iha_softc *, struct iha_scb *);
 void iha_main(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
 void iha_scsi(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
 int  iha_wait(struct iha_softc *, bus_space_tag_t, bus_space_handle_t,
 		      u_int8_t);
-void iha_mark_busy_scb(struct iha_scsi_req_q *);
-void iha_append_free_scb(struct iha_softc *, struct iha_scsi_req_q *);
-struct iha_scsi_req_q *iha_pop_free_scb(struct iha_softc *);
-void iha_append_done_scb(struct iha_softc *, struct iha_scsi_req_q *,
+void iha_mark_busy_scb(struct iha_scb *);
+void iha_append_free_scb(struct iha_softc *, struct iha_scb *);
+struct iha_scb *iha_pop_free_scb(struct iha_softc *);
+void iha_append_done_scb(struct iha_softc *, struct iha_scb *,
 				 u_int8_t);
-struct iha_scsi_req_q *iha_pop_done_scb(struct iha_softc *);
-void iha_append_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
-void iha_push_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
-void iha_del_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
-struct iha_scsi_req_q *iha_find_pend_scb(struct iha_softc *);
+struct iha_scb *iha_pop_done_scb(struct iha_softc *);
+void iha_append_pend_scb(struct iha_softc *, struct iha_scb *);
+void iha_push_pend_scb(struct iha_softc *, struct iha_scb *);
+void iha_del_pend_scb(struct iha_softc *, struct iha_scb *);
+struct iha_scb *iha_find_pend_scb(struct iha_softc *);
 void iha_sync_done(struct iha_softc *,
 			   bus_space_tag_t, bus_space_handle_t);
 void iha_wide_done(struct iha_softc *,
@@ -142,7 +142,7 @@ int  iha_xpad_in(struct iha_softc *,
 			 bus_space_tag_t, bus_space_handle_t);
 int  iha_xpad_out(struct iha_softc *,
 			  bus_space_tag_t, bus_space_handle_t);
-int  iha_xfer_data(struct iha_scsi_req_q *,
+int  iha_xfer_data(struct iha_scb *,
 			   bus_space_tag_t, bus_space_handle_t,
 			   int direction);
 int  iha_status_msg(struct iha_softc *,
@@ -167,7 +167,7 @@ int  iha_msgout_wdtr(struct iha_softc *,
 			     bus_space_tag_t, bus_space_handle_t);
 void iha_select(struct iha_softc *,
 			bus_space_tag_t, bus_space_handle_t,
-			struct iha_scsi_req_q *, u_int8_t);
+			struct iha_scb *, u_int8_t);
 void iha_busfree(struct iha_softc *,
 			 bus_space_tag_t, bus_space_handle_t);
 int  iha_resel(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
@@ -217,7 +217,7 @@ iha_intr(arg)
 int
 iha_setup_sg_list(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	bus_dma_segment_t *segs = pScb->SCB_DataDma->dm_segs;
 	int i, error, nseg = pScb->SCB_DataDma->dm_nsegs;
@@ -264,7 +264,7 @@ int
 iha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct iha_softc *sc = sc_link->adapter_softc;
 	int error;
@@ -366,7 +366,7 @@ int
 iha_init_tulip(sc)
 	struct iha_softc *sc;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	struct iha_nvram_scsi *pScsi;
 	bus_space_handle_t ioh;
 	struct iha_nvram iha_nvram;
@@ -514,11 +514,11 @@ iha_reset_dma(iot, ioh)
 /*
  * iha_pop_free_scb - return the first free SCB, or NULL if there are none.
  */
-struct iha_scsi_req_q *
+struct iha_scb *
 iha_pop_free_scb(sc)
 	struct iha_softc *sc;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	int s;
 
 	s = splbio();
@@ -543,7 +543,7 @@ iha_pop_free_scb(sc)
 void
 iha_append_free_scb(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	int s;
 
@@ -584,7 +584,7 @@ iha_append_free_scb(sc, pScb)
 void
 iha_append_pend_scb(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	/* ASSUMPTION: only called within a splbio()/splx() pair */
 
@@ -599,7 +599,7 @@ iha_append_pend_scb(sc, pScb)
 void
 iha_push_pend_scb(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	int s;
 
@@ -621,11 +621,11 @@ iha_push_pend_scb(sc, pScb)
  *		       and a pointer to the SCB if one is found. If there
  *		       is an active SCB, return NULL!
  */
-struct iha_scsi_req_q *
+struct iha_scb *
 iha_find_pend_scb(sc)
 	struct iha_softc *sc;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	struct tcs *pTcs;
 	int s;
 
@@ -682,7 +682,7 @@ iha_find_pend_scb(sc)
 void
 iha_del_pend_scb(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	int s;
 
@@ -695,7 +695,7 @@ iha_del_pend_scb(sc, pScb)
 
 void
 iha_mark_busy_scb(pScb)
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	int  s;
 
@@ -714,7 +714,7 @@ iha_mark_busy_scb(pScb)
 void
 iha_append_done_scb(sc, pScb, hastat)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	u_int8_t hastat;
 {
 	struct tcs *pTcs;
@@ -744,11 +744,11 @@ iha_append_done_scb(sc, pScb, hastat)
 	splx(s);
 }
 
-struct iha_scsi_req_q *
+struct iha_scb *
 iha_pop_done_scb(sc)
 	struct iha_softc *sc;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	int s;
 
 	s = splbio();
@@ -776,7 +776,7 @@ iha_abort_xs(sc, xs, hastat)
 	struct scsi_xfer *xs;
 	u_int8_t hastat;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	int i, s;
 
 	s = splbio();
@@ -821,7 +821,7 @@ void
 iha_bad_seq(sc)
 	struct iha_softc *sc;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 
 	if (pScb != NULL)
 		iha_append_done_scb(sc, pScb, HOST_BAD_PHAS);
@@ -838,7 +838,7 @@ iha_bad_seq(sc)
 int
 iha_push_sense_request(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	struct scsi_sense *sensecmd;
 	int error;
@@ -922,7 +922,7 @@ iha_main(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 
 	for (;;) {
 iha_scsi_label:
@@ -984,7 +984,7 @@ iha_scsi(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	struct tcs *pTcs;
 	u_int8_t stat;
 	int i;
@@ -1094,7 +1094,7 @@ iha_scsi(sc, iot, ioh)
  */
 u_int8_t
 iha_data_over_run(pScb)
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	switch (pScb->SCB_CDB[0]) {
 	case 0x03: /* Request Sense                   SPC-2 */
@@ -1227,7 +1227,7 @@ iha_state_1(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 	struct tcs *pTcs;
 	u_int16_t flags;
 
@@ -1288,7 +1288,7 @@ iha_state_2(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 
 	iha_mark_busy_scb(pScb);
 
@@ -1315,7 +1315,7 @@ iha_state_3(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 	u_int16_t flags;
 
 	for (;;)
@@ -1374,7 +1374,7 @@ iha_state_4(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 
 	if ((pScb->SCB_Flags & FLAG_DIR) == FLAG_DIR)
 		return (6); /* Both dir flags set => NO xfer was requested */
@@ -1437,7 +1437,7 @@ iha_state_5(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 	struct iha_sg_element *pSg;
 	u_int32_t cnt;
 	u_int16_t period;
@@ -1581,7 +1581,7 @@ iha_state_8(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	u_int32_t i;
 	u_int8_t tar;
 
@@ -1627,7 +1627,7 @@ iha_state_8(sc, iot, ioh)
  */
 int
 iha_xfer_data(pScb, iot, ioh, direction)
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 	int direction;
@@ -1672,7 +1672,7 @@ iha_xpad_in(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 
 	if ((pScb->SCB_Flags & FLAG_DIR) != 0)
 		pScb->SCB_HaStat = HOST_DO_DU;
@@ -1704,7 +1704,7 @@ iha_xpad_out(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb = sc->HCS_ActScb;
+	struct iha_scb *pScb = sc->HCS_ActScb;
 
 	if ((pScb->SCB_Flags & FLAG_DIR) != 0)
 		pScb->SCB_HaStat = HOST_DO_DU;
@@ -1739,7 +1739,7 @@ iha_status_msg(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	u_int8_t msg;
 	int phase;
 
@@ -1812,7 +1812,7 @@ iha_busfree(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 
 	bus_space_write_1(iot, ioh, TUL_SCTRL0,	  RSFIFO);
 	bus_space_write_1(iot, ioh, TUL_SCONFIG0, SCONFIG0DEFAULT);
@@ -1835,7 +1835,7 @@ void
 iha_reset_scsi_bus(sc)
 	struct iha_softc *sc;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	struct tcs *pTcs;
 	int i, s;
 
@@ -1872,7 +1872,7 @@ iha_resel(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	struct tcs *pTcs;
 	u_int8_t tag, target, lun, msg, abortmsg;
 
@@ -2102,13 +2102,15 @@ iha_msgin_extended(sc, iot, ioh)
 		flags = sc->HCS_ActScb->SCB_Tcs->TCS_Flags;
 
 		if ((flags & FLAG_NO_WIDE) != 0)
-			sc->HCS_Msg[2] = 0;	/* Offer async xfers only    */
+			/* Offer 8 bit xfers only */
+			sc->HCS_Msg[2] = MSG_EXT_WDTR_BUS_8_BIT;
 
-		else if (sc->HCS_Msg[2] > 2)	/* BAD MSG: 2 is max  value  */
+		else if (sc->HCS_Msg[2] > MSG_EXT_WDTR_BUS_32_BIT)
 			return (iha_msgout_reject(sc, iot, ioh));
 
-		else if (sc->HCS_Msg[2] == 2)	/* a request for 32 bit xfers*/
-			sc->HCS_Msg[2] = 1;	/* Offer 16 instead	     */
+		else if (sc->HCS_Msg[2] == MSG_EXT_WDTR_BUS_32_BIT)
+			/* Offer 16 instead */
+			sc->HCS_Msg[2] = MSG_EXT_WDTR_BUS_32_BIT;
 
 		else {
 			iha_wide_done(sc, iot, ioh);
@@ -2319,7 +2321,7 @@ iha_sync_done(sc, iot, ioh)
 			pTcs->TCS_JS_Period |= sc->HCS_Msg[3];
 
 			/* pick the highest possible rate */
-			for (i = 0; i < 8; i++)
+			for (i = 0; i < sizeof(iha_rate_tbl); i++)
 				if (iha_rate_tbl[i] >= sc->HCS_Msg[2])
 					break;
 
@@ -2366,7 +2368,7 @@ iha_select(sc, iot, ioh, pScb, select_type)
 	struct iha_softc   *sc;
 	bus_space_tag_t	    iot;
 	bus_space_handle_t  ioh;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 	u_int8_t	select_type;
 {
 	switch (select_type) {
@@ -2488,7 +2490,7 @@ iha_wait(sc, iot, ioh, cmd)
 void
 iha_done_scb(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = pScb->SCB_Xs;
@@ -2582,7 +2584,7 @@ void
 iha_timeout(arg)
 	void *arg;
 {
-	struct iha_scsi_req_q *pScb = (struct iha_scsi_req_q *)arg;
+	struct iha_scb *pScb = (struct iha_scb *)arg;
 	struct scsi_xfer *xs = pScb->SCB_Xs;
 
 	if (xs != NULL) {
@@ -2595,7 +2597,7 @@ iha_timeout(arg)
 void
 iha_exec_scb(sc, pScb)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *pScb;
+	struct iha_scb *pScb;
 {
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot;
@@ -2618,13 +2620,13 @@ iha_exec_scb(sc, pScb)
 		ioh = sc->sc_ioh;
 
 		bus_space_write_1(iot, ioh, TUL_IMSK, MASK_ALL);
-		sc->HCS_Semaph = SEMAPH_IN_MAIN;;
+		sc->HCS_Semaph = SEMAPH_IN_MAIN;
 
 		splx(s);
 		iha_main(sc, iot, ioh);
 		s = splbio();
 
-		sc->HCS_Semaph = ~SEMAPH_IN_MAIN;;
+		sc->HCS_Semaph = ~SEMAPH_IN_MAIN;
 		bus_space_write_1(iot, ioh, TUL_IMSK, (MASK_ALL & ~MSCMP));
 	}
 
@@ -2691,7 +2693,7 @@ iha_alloc_scbs(sc)
 	 * Allocate dma-safe memory for the SCB's
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-		 sizeof(struct iha_scsi_req_q)*IHA_MAX_SCB,
+		 sizeof(struct iha_scb)*IHA_MAX_SCB,
 		 NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT))
 	    != 0) {
 		printf("%s: unable to allocate SCBs,"
@@ -2699,14 +2701,14 @@ iha_alloc_scbs(sc)
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat,
-		 &seg, rseg, sizeof(struct iha_scsi_req_q)*IHA_MAX_SCB,
+		 &seg, rseg, sizeof(struct iha_scb)*IHA_MAX_SCB,
 		 (caddr_t *)&sc->HCS_Scb, BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
 	    != 0) {
 		printf("%s: unable to map SCBs, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		return (error);
 	}
-	bzero(sc->HCS_Scb, sizeof(struct iha_scsi_req_q)*IHA_MAX_SCB);
+	bzero(sc->HCS_Scb, sizeof(struct iha_scb)*IHA_MAX_SCB);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.12 2003/03/29 17:52:01 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.13 2003/03/30 00:32:48 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -47,13 +47,13 @@ struct iha_sg_element {
 };
 
 /*
- * iha_scsi_req_q - SCSI Request structure used by the
- *		    Tulip (aka inic-940/950). Note that 32
- *		    bit pointers and ints are assumed!
+ * iha_scb - SCSI Request structure used by the
+ *	     Tulip (aka inic-940/950). Note that 32
+ *	     bit pointers and ints are assumed!
  */
 
-struct iha_scsi_req_q {
-	TAILQ_ENTRY(iha_scsi_req_q) SCB_ScbList;
+struct iha_scb {
+	TAILQ_ENTRY(iha_scb) SCB_ScbList;
 
 	bus_dmamap_t	SCB_DataDma;	/* maps xfer buffer	     */
 	bus_dmamap_t	SCB_SGDma;	/* maps scatter-gather list  */
@@ -121,7 +121,7 @@ struct tcs {
 	u_int8_t  TCS_SConfig0;
 	u_int8_t  TCS_TagCnt;
 
-	struct iha_scsi_req_q  *TCS_NonTagScb;
+	struct iha_scb  *TCS_NonTagScb;
 };
 
 struct iha_softc {
@@ -161,10 +161,10 @@ struct iha_softc {
 	u_int8_t  HCS_SConf1;
 	u_int8_t  HCS_Msg[IHA_MAX_EXTENDED_MSG];    /* [0] len, [1] Msg Code */
 
-	struct iha_scsi_req_q *HCS_Scb;		    /* SCB array	     */
-	struct iha_scsi_req_q *HCS_ActScb;	    /* SCB using SCSI bus    */
+	struct iha_scb *HCS_Scb;		    /* SCB array	     */
+	struct iha_scb *HCS_ActScb;	    /* SCB using SCSI bus    */
 
-	TAILQ_HEAD(, iha_scsi_req_q) HCS_FreeScb, HCS_PendScb, HCS_DoneScb;
+	TAILQ_HEAD(, iha_scb) HCS_FreeScb, HCS_PendScb, HCS_DoneScb;
 
 	struct tcs HCS_Tcs[IHA_MAX_TARGETS];
 };
