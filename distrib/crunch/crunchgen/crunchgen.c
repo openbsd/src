@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.12 1997/09/07 19:35:08 millert Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.13 1997/09/07 20:03:13 millert Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -31,9 +31,9 @@
  * Generates a Makefile and main C file for a crunched executable,
  * from specs given in a .conf file.  
  */
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
@@ -564,7 +564,7 @@ void fillin_program_objs(prog_t *p, char *path)
     /* discover the objs from the srcdir Makefile */
 
     snprintf(tempfname, sizeof(tempfname), ".tmp_%sXXXXXXXXXX", confname);
-    if ((fd = mkstemp(tempfname) == -1) || (f = fdopen(fd, f, "w") == NULL)) {
+    if ((fd = mkstemp(tempfname) == -1) || (f = fdopen(fd, "w")) == NULL) {
 	if (fd != -1)
 	    close(fd);
 	perror(tempfname);
