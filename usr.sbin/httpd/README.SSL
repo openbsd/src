@@ -1,0 +1,145 @@
+                       _             _ 
+   _ __ ___   ___   __| |    ___ ___| |  
+  | '_ ` _ \ / _ \ / _` |   / __/ __| |  
+  | | | | | | (_) | (_| |   \__ \__ \ |  mod_ssl - Apache Interface to SSLeay  
+  |_| |_| |_|\___/ \__,_|___|___/___/_|  http://www.engelschall.com/sw/mod_ssl/
+                       |_____|         
+  _____________________________________________________________________________
+
+                                              ``All the good things you want
+                                                to do in your life have to be
+                                                started in the next few hours,
+                                                days or weeks.''
+                                                       -- Tom DeMarco
+                           
+                                              ``The best SSL solution for 
+                                                Apache money can't buy.''
+  OVERVIEW
+
+  Description
+  ___________
+
+  This Apache module provides strong cryptography for the Apache 1.3 webserver
+  via the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS
+  v1) protocols by the help of the SSL/TLS implementation library SSLeay from
+  Eric A. Young and Tim J. Hudson. 
+ 
+  The mod_ssl package was created in April 1998 by Ralf S. Engelschall and was
+  originally derived from software developed by Ben Laurie for use in the
+  Apache-SSL HTTP server project.  Additionally it uses a tool developed by
+  Larry Wall and David MacKenzie for use in the GNU project of the FSF.
+
+  Features
+  ________
+
+  The mod_ssl package provides the following features:
+
+   o  Open-Source software (BSD-style license)
+   o  Useable for both commercial and non-commercial use
+   o  Available for both Unix and Win32 platforms
+   o  128-bit strong cryptography world-wide
+   o  Support for SSLv2, SSLv3 and TLSv1 protocols
+   o  Clean reviewable ANSI C source code 
+   o  Clean Apache module architecture
+   o  Integrates seamlessly into Apache through an Extended API (EAPI)
+   o  Full Dynamic Shared Object (DSO) support
+   o  Support for the SSLeay+RSAref US-situation
+   o  Advanced pass-phrase handling for private keys
+   o  X.509 certificate based authentication for both client and server
+   o  Support for per-URL renegotiation of SSL handshake parameters
+   o  Support for explicit seeding of the PRNG from external sources
+   o  Additional boolean-expression based access control facility
+   o  Backward compatibility to other Apache SSL solutions
+   o  Inter-process SSL session cache
+   o  Powerful dedicated SSL engine logging facility
+   o  Simple and robust application to Apache source trees
+   o  Fully integrated into the Apache 1.3 configuration mechanism
+   o  Additional integration into the Apache Autoconf-style Interface (APACI)
+   o  Assistance in X.509 v3 certificate generation
+
+  Disclaimer
+  __________
+
+  But the price you have to pay for getting a free SSL implementation for
+  Apache is the following:
+
+  THIS SOFTWARE IS PROVIDED BY RALF S. ENGELSCHALL ``AS IS'' AND ANY EXPRESSED
+  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
+  NO EVENT SHALL RALF S. ENGELSCHALL OR THEIR CONTRIBUTORS BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+  Restrictions
+  ____________
+
+  Additionally you have to accept the following restriction:
+  
+  Please REMEMBER that export/import and/or use of cryptography software or
+  even just providing cryptography hooks is illegal in some parts of the
+  world.  When you re-distribute this package or even email
+  patches/suggestions to the authors or other people PLEASE PAY CLOSE
+  ATTENTION TO ANY APPLICABLE EXPORT/IMPORT LAWS. The author of mod_ssl is not
+  liable for any violations you make here. So be carefully yourself.
+
+  Security Concerns
+  _________________
+
+  You should be very sensible when using cryptography software, because just
+  running an SSL server _DOES NOT_ mean your system is then secure!  This is
+  for a number of reasons. The following questions illustrate some of the
+  problems.
+
+   o  SSL itself may not be secure. People think it is, do you?
+   o  Does this code implement SSL correctly?
+   o  Have the authors of the various components put in back doors?
+   o  Does the code take appropriate measures to keep private keys private? 
+      To what extent is your cooperation in this process required?
+   o  Is your system physically secure?
+   o  Is your system appropriately secured from intrusion over the network?
+   o  Whom do you trust? Do you understand the trust relationship involved 
+      in SSL certificates? Do your system administrators?
+   o  Are your keys, and keys you trust, generated careful enough to
+      avoid reverse engineering of the private keys?
+   o  How do you obtain certificates, keys, and the like, securely?
+   o  Can you trust your users to safeguard their private keys?
+   o  Can you trust your browser to safeguard its generated private key?
+  
+  If you can't answer these questions to your personal satisfaction, then you
+  usually have a problem. Even if you can, you may still _NOT_ be secure.
+  Don't blame the authors if it all goes horribly wrong. Use it at your own
+  risk!
+
+  Installation
+  ____________
+
+  For installing mod_ssl under Unix please read the document INSTALL,
+  for installing under Win32 read the document INSTALL.Win32.
+
+  Compatibility
+  _____________
+
+  This module was developed and tested with Communicator 4.05, Lynx and cURL
+  under FreeBSD 2.2.6 as the clients only. But it should work with other
+  Navigator/Communicator variants, too. Even Internet Explorer users should be
+  able to use this software.
+
+  Resources
+  _________
+
+  For a large list of resources visit the location
+  http://www.engelschall.com/sw/mod_ssl/related/
+  There you can find a lot of hyperlinks to all SSL-related things.
+
+  Credits
+  _______
+
+  Special thanks to The Apache Group and the NCSA for Apache, to Eric A. Young
+  and Tim J. Hudson for SSLeay and to Ben Laurie for the original Apache-SSL
+  on which mod_ssl is based. Without the effort of these people mod_ssl would
+  not be possible.
+

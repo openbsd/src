@@ -17,6 +17,9 @@ MANUALFILES= \
 	manual/images/mod_rewrite_fig2.fig \
 	manual/images/mod_rewrite_fig2.gif \
 	manual/images/sub.gif \
+	manual/images/apache_pb.gif \
+	manual/images/mod_ssl_sb.gif \
+	manual/images/ssleay.gif \
 	manual/LICENSE \
 	manual/bind.html \
 	manual/cgi_path.html \
@@ -133,6 +136,62 @@ MANUALFILES= \
 	manual/vhosts/name-based.html \
 	manual/vhosts/vhosts-in-depth.html \
 	manual/vhosts/virtual-host.html
+	manual/mod/mod_ssl/index.html \
+	manual/mod/mod_ssl/ssl_compat.gfont000.gif \
+	manual/mod/mod_ssl/ssl_compat.html \
+	manual/mod/mod_ssl/ssl_compat.wml \
+	manual/mod/mod_ssl/ssl_cover.wml \
+	manual/mod/mod_ssl/ssl_cover_logo.jpg \
+	manual/mod/mod_ssl/ssl_cover_title.gif \
+	manual/mod/mod_ssl/ssl_faq.gfont000.gif \
+	manual/mod/mod_ssl/ssl_faq.html \
+	manual/mod/mod_ssl/ssl_faq.wml \
+	manual/mod/mod_ssl/ssl_glossary.html \
+	manual/mod/mod_ssl/ssl_glossary.wml \
+	manual/mod/mod_ssl/ssl_howto.gfont000.gif \
+	manual/mod/mod_ssl/ssl_howto.html \
+	manual/mod/mod_ssl/ssl_howto.wml \
+	manual/mod/mod_ssl/ssl_intro.gfont000.gif \
+	manual/mod/mod_ssl/ssl_intro.html \
+	manual/mod/mod_ssl/ssl_intro.wml \
+	manual/mod/mod_ssl/CVS/Root \
+	manual/mod/mod_ssl/CVS/Repository \
+	manual/mod/mod_ssl/CVS/Entries \
+	manual/mod/mod_ssl/ssl_intro_fig1.gif \
+	manual/mod/mod_ssl/ssl_intro_fig2.gif \
+	manual/mod/mod_ssl/ssl_intro_fig3.gif \
+	manual/mod/mod_ssl/ssl_overview.gfont000.gif \
+	manual/mod/mod_ssl/ssl_overview.html \
+	manual/mod/mod_ssl/ssl_overview.wml \
+	manual/mod/mod_ssl/ssl_overview_fig1.gif \
+	manual/mod/mod_ssl/ssl_reference.gfont000.gif \
+	manual/mod/mod_ssl/ssl_reference.html \
+	manual/mod/mod_ssl/ssl_reference.wml \
+	manual/mod/mod_ssl/ssl_template.head-chapter.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-1.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-2.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-3.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-4.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-5.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-6.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-7.gif \
+	manual/mod/mod_ssl/ssl_template.imgdot-1x1-000000.gif \
+	manual/mod/mod_ssl/ssl_template.imgdot-1x1-transp.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-next-n.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-next-s.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-prev-n.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-prev-s.gif \
+	manual/mod/mod_ssl/ssl_template.title-abstract.gif \
+	manual/mod/mod_ssl/ssl_template.title-compat.gif \
+	manual/mod/mod_ssl/ssl_template.title-faq.gif \
+	manual/mod/mod_ssl/ssl_template.title-gloss.gif \
+	manual/mod/mod_ssl/ssl_template.title-howto.gif \
+	manual/mod/mod_ssl/ssl_template.title-intro.gif \
+	manual/mod/mod_ssl/ssl_template.title-over.gif \
+	manual/mod/mod_ssl/ssl_template.title-preface.gif \
+	manual/mod/mod_ssl/ssl_template.title-ref.gif \
+	manual/mod/mod_ssl/ssl_template.title-toc.gif \
+	manual/mod/mod_ssl/ssl_template.title-tutor.gif
 
 
 ICONFILES= \
