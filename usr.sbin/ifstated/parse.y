@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2004/03/06 21:47:21 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2004/03/07 16:46:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -124,14 +124,18 @@ number		: STRING			{
 
 			if (atoul($1, &ulval) == -1) {
 				yyerror("%s is not a number", $1);
+				free($1);
 				YYERROR;
 			} else
 				$$ = ulval;
+			free($1);
 		}
 		;
 
 string		: string STRING				{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1) {
+				free($1);
+				free($2);
 				yyerror("string: asprintf");
 				YYERROR;
 			}
@@ -145,17 +149,18 @@ varset		: STRING '=' string		{
 			if (conf->opts & IFSD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1) {
+				free($1);
+				free($3);
 				yyerror("cannot store variable");
 				YYERROR;
 			}
+			free($1);
+			free($3);
 		}
 		;
 
 conf_main	: INITSTATE STRING		{
-			if ((start_state = strdup($2)) == NULL) {
-				yyerror("conf_main: strdup");
-				YYERROR;
-			}
+			start_state = $2;
 		}
 		| LOGLEVEL STRING			{
 			if (!strcmp($2, "none"))
@@ -168,14 +173,17 @@ conf_main	: INITSTATE STRING		{
 				conf->loglevel = IFSD_LOG_VERBOSE;
 			else if (!strcmp($2, "debug"))
 				conf->loglevel = IFSD_LOG_DEBUG;
+			free($2);
 		}
 		;
 
 interface	: STRING		{
 			if (($$ = if_nametoindex($1)) == 0) {
 				yyerror("unknown interface %s", $1);
+				free($1);
 				YYERROR;
 			}
+			free($1);
 		}
 		;
 
@@ -192,7 +200,7 @@ action		: RUN STRING		{
 			if ((action = calloc(1, sizeof(*action))) == NULL)
 				err(1, "action: calloc");
 			action->type = IFSD_ACTION_COMMAND;
-			action->act.command = strdup($2);
+			action->act.command = $2;
 			if (action->act.command == NULL)
 				err(1, "action: strdup");
 			TAILQ_INSERT_TAIL(&curaction->act.c.actions,
@@ -202,14 +210,14 @@ action		: RUN STRING		{
 			struct ifsd_action *action;
 
 			if (curstate == NULL) {
+				free($2);
 				yyerror("setstate must be used inside 'if'");
 				YYERROR;
 			}
 			if ((action = calloc(1, sizeof(*action))) == NULL)
 				err(1, "action: calloc");
 			action->type = IFSD_ACTION_CHANGESTATE;
-			if ((action->act.statename = strdup($2)) == NULL)
-				err(1, "action: strdup");
+			action->act.statename = $2;
 			TAILQ_INSERT_TAIL(&curaction->act.c.actions,
 			    action, entries);
 		}
@@ -259,6 +267,7 @@ if_test		: interface LINK UP		{
 
 ext_test	: STRING EVERY number {
 			$$ = new_external($1, $3);
+			free($1);
 		}
 		;
 
@@ -320,13 +329,13 @@ state		: STATE string {
 			TAILQ_FOREACH(state, &conf->states, entries)
 				if (!strcmp(state->name, $2)) {
 					yyerror("state %s already exists", $2);
+					free($2);
 					YYERROR;
 				}
 			if ((state = calloc(1, sizeof(*curstate))) == NULL)
 				errx(1, "state: calloc");
 			init_state(state);
-			if ((state->name = strdup($2)) == NULL)
-				errx(1, "state: strdup");
+			state->name = $2;
 			curstate = state;
 			curaction = state->always;
 		} optnl '{' optnl stateopts_l '}' {
