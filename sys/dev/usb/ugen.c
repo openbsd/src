@@ -1,5 +1,5 @@
-/*	$OpenBSD: ugen.c,v 1.3 1999/08/27 09:00:28 fgsch Exp $	*/
-/*	$NetBSD: ugen.c,v 1.18 1999/08/23 22:55:14 augustss Exp $	*/
+/*	$OpenBSD: ugen.c,v 1.4 1999/08/29 10:35:35 fgsch Exp $	*/
+/*	$NetBSD: ugen.c,v 1.19 1999/08/28 10:01:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct ugen_endpoint {
 
 struct ugen_softc {
 	bdevice sc_dev;		/* base device */
-	struct usbd_device *sc_udev;
+	usbd_device_handle sc_udev;
 
 	char sc_is_open[USB_MAX_ENDPOINTS];
 	struct ugen_endpoint sc_endpoints[USB_MAX_ENDPOINTS][2];

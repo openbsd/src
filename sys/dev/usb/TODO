@@ -1,6 +1,8 @@
 Some things that need to be done in no particular order:
 --------------------------------------------------------
 
+Add lots of bus_dmamap_sync().
+
 Implement isochronous transfer mode.
 
 Implement audio driver.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi.c,v 1.4 1999/08/27 09:00:30 fgsch Exp $	*/
-/*	$NetBSD: usbdi.c,v 1.32 1999/08/23 22:55:14 augustss Exp $	*/
+/*	$OpenBSD: usbdi.c,v 1.5 1999/08/29 10:35:35 fgsch Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.33 1999/08/28 10:04:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -427,7 +427,13 @@ usbd_clear_endpoint_stall(pipe)
 	usbd_status r;
 
 	DPRINTFN(8, ("usbd_clear_endpoint_stall\n"));
+
+	/* 
+	 * Clearing en endpoint stall resets the enpoint toggle, so
+	 * do the same to the HC toggle.
+	 */
 	pipe->methods->cleartoggle(pipe);
+
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
@@ -453,6 +459,7 @@ usbd_clear_endpoint_stall_async(pipe)
 	usbd_status r;
 
 	pipe->methods->cleartoggle(pipe);
+
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
@@ -595,6 +602,7 @@ usbd_ar_pipe(pipe)
 			    pipe, reqh, pipe->methods));
 		/* Make the HC abort it (and invoke the callback). */
 		pipe->methods->abort(reqh);
+		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 	}
 	return (USBD_NORMAL_COMPLETION);
 }
