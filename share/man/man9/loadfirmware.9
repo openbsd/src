@@ -1,4 +1,4 @@
-.\"	$OpenBSD: loadfirmware.9,v 1.1 2004/11/22 04:32:38 deraadt Exp $
+.\"	$OpenBSD: loadfirmware.9,v 1.2 2004/11/22 16:41:44 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Theo de Raadt
 .\" All rights reserved.
@@ -31,7 +31,7 @@ The
 function loads a firmware from the file specified by
 .Ar filename
 in the directory
-.Pa /etc/firmware Ns .
+.Pa /etc/firmware .
 Memory for the firmware is allocated using
 .Xr malloc 9
 with type
@@ -43,7 +43,7 @@ If no longer needed, the firmware buffer
 can be freed using
 .Xr free 9
 with type
-.Va M_DEVBUF.
+.Va M_DEVBUF .
 .Sh RETURN VALUES
 If successful,
 .Ar buf
