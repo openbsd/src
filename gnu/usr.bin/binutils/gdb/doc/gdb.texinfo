@@ -8772,7 +8772,7 @@ things without first using the debugger to find the facts.
 @c Use -I with makeinfo to point to the appropriate directory,
 @c environment var TEXINPUTS with TeX.
 @include rluser.texinfo
-@include inc-hist.texi
+@include hsuser.texinfo
 
 @ifset NOVEL
 @ifset RENAMED

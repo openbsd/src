@@ -44,7 +44,8 @@ TEXI2ROFF=texi2roff
 
 # Where is the source dir for the READLINE library doc?  
 # Traditionally readline is in .. or .
-READLINE_DIR = ${gdbdir}/../readline/doc
+BSDSRCDIR?= /usr/src
+READLINE_DIR = ${BSDSRCDIR}/gnu/lib/libreadline/doc
 
 SET_TEXINPUTS = TEXINPUTS=${TEXIDIR}:.:$(srcdir):$(READLINE_DIR):$$TEXINPUTS
 
@@ -84,7 +85,7 @@ SFILES_INCLUDED = gdb-cfg.texi $(srcdir)/remote.texi
 SFILES_LOCAL = $(srcdir)/gdb.texinfo GDBvn.texi $(SFILES_INCLUDED)
 
 SFILES_DOC = $(SFILES_LOCAL) \
-                $(READLINE_DIR)/rluser.texinfo $(READLINE_DIR)/inc-hist.texi
+                $(READLINE_DIR)/rluser.texinfo hsuser.texinfo
 
 #### Host, target, and site specific Makefile fragments come in here.
 ###
@@ -142,7 +143,7 @@ mostlyclean:
 	rm -f sedref.dvi sedref.tex tmp.sed
 
 clean: mostlyclean
-	rm -f rluser.texinfo inc-hist.texi gdb-cfg.texi
+	rm -f rluser.texinfo hsuser.texinfo gdb-cfg.texi
 
 distclean: clean
 	rm -f Makefile config.status
@@ -217,7 +218,7 @@ gdb.ps: gdb.dvi
 # We're using texinfo2, and older makeinfo's may not be able to
 # cope with all the markup.  
 gdb.info: ${SFILES_DOC}
-	$(MAKEINFO) -I ${READLINE_DIR} -I $(srcdir) -o ./gdb.info gdb.texinfo
+	$(MAKEINFO) -I. -I ${READLINE_DIR} -I $(srcdir) -o ./gdb.info gdb.texinfo
 
 # GDB MANUAL: roff translations
 # Try to use a recent texi2roff.  v2 was put on prep in jan91.
@@ -250,13 +251,13 @@ rluser.texinfo: ${READLINE_DIR}/rluser.texinfo
 		-e 's/^@end ftable/@end table/g' \
 		${READLINE_DIR}/rluser.texinfo > ./rluser.texinfo
 
-inc-hist.texi: ${READLINE_DIR}/inc-hist.texi
-	ln -s ${READLINE_DIR}/inc-hist.texi . || \
-	ln ${READLINE_DIR}/inc-hist.texi . || \
-	cp ${READLINE_DIR}/inc-hist.texi .
+hsuser.texinfo: ${READLINE_DIR}/hsuser.texinfo
+		sed -e '/^@defcodeindex bt/d' \
+		-e '/^@pxref{Programming with GNU History}/d' \
+		${READLINE_DIR}/hsuser.texinfo > ./hsuser.texinfo
 
 # gdb manual suitable for [gtn]roff -me
-gdb.me: $(SFILES_LOCAL) links2roff rluser.texinfo inc-hist.texi
+gdb.me: $(SFILES_LOCAL) links2roff rluser.texinfo hsuser.texinfo
 	sed -e '/\\input texinfo/d' \
 		-e '/@c TEXI2ROFF-KILL/,/@c END TEXI2ROFF-KILL/d' \
 		-e '/^@ifinfo/,/^@end ifinfo/d' \
@@ -271,7 +272,7 @@ gdb.me: $(SFILES_LOCAL) links2roff rluser.texinfo inc-hist.texi
 	>gdb.me 
 
 # gdb manual suitable for [gtn]roff -ms
-gdb.ms: $(SFILES_LOCAL) links2roff rluser.texinfo inc-hist.texi
+gdb.ms: $(SFILES_LOCAL) links2roff rluser.texinfo hsuser.texinfo
 	sed -e '/\\input texinfo/d' \
 		-e '/@c TEXI2ROFF-KILL/,/@c END TEXI2ROFF-KILL/d' \
 		-e '/^@ifinfo/,/^@end ifinfo/d' \
@@ -288,7 +289,7 @@ gdb.ms: $(SFILES_LOCAL) links2roff rluser.texinfo inc-hist.texi
 # gdb manual suitable for [tn]roff -mm
 # '@noindent's removed due to texi2roff-2 mm bug; if yours is newer, 
 #   try leaving them in
-gdb.mm: $(SFILES_LOCAL) links2roff rluser.texinfo inc-hist.texi
+gdb.mm: $(SFILES_LOCAL) links2roff rluser.texinfo hsuser.texinfo
 	sed -e '/\\input texinfo/d' \
 		-e '/@c TEXI2ROFF-KILL/,/@c END TEXI2ROFF-KILL/d' \
 		-e '/^@ifinfo/,/^@end ifinfo/d' \
