@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.48 2004/05/31 13:04:13 markus Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.49 2004/06/21 23:05:10 markus Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -542,6 +542,9 @@ bpfwrite(dev, uio, ioflag)
 
 	ifp = d->bd_bif->bif_ifp;
 
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return (ENETDOWN);
+
 	if (uio->uio_resid == 0)
 		return (0);
 
@@ -948,14 +951,10 @@ bpf_setif(d, ifr)
 			continue;
 		/*
 		 * We found the requested interface.
-		 * If it's not up, return an error.
 		 * Allocate the packet buffers if we need to.
 		 * If we're already attached to requested interface,
 		 * just flush the buffer.
 		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (ENETDOWN);
-
 		if (d->bd_sbuf == 0) {
 			error = bpf_allocbufs(d);
 			if (error != 0)
