@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.99 2004/03/12 20:48:09 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.100 2004/03/15 11:48:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -119,8 +119,9 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		fatal("getpwnam");
 
 	if (chroot(pw->pw_dir) == -1)
-		fatal("chroot failed");
-	chdir("/");
+		fatal("chroot");
+	if (chdir("/") == -1)
+		fatal("chdir(\"/\")");
 
 	setproctitle("route decision engine");
 	bgpd_process = PROC_RDE;
