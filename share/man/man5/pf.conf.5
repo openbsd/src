@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.323 2005/02/24 04:36:45 joel Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.324 2005/02/25 13:59:14 joel Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -839,6 +839,7 @@ This value must not exceed the value of the parent
 .Ar queue
 and can be specified as an absolute value or a percentage of the parent
 queue's bandwidth.
+If not specified, defaults to 100% of the parent queue's bandwidth.
 The
 .Ar priq
 scheduler does not support bandwidth specification.
@@ -967,8 +968,8 @@ queue  developers bandwidth 75% cbq(borrow)
 queue  employees bandwidth 15%
 queue mail bandwidth 10% priority 0 cbq(borrow ecn)
 queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
-queue  ssh_interactive priority 7
-queue  ssh_bulk priority 0
+queue  ssh_interactive bandwidth 50% priority 7 cbq(borrow)
+queue  ssh_bulk bandwidth 50% priority 0 cbq(borrow)
 
 block return out on dc0 inet all queue std
 pass out on dc0 inet proto tcp from $developerhosts to any port 80 \e
