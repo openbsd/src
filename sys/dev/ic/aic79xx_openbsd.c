@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.11 2004/11/18 01:33:28 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.12 2004/11/23 05:15:35 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -209,8 +209,8 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
                                     (list_scb->xs->timeout * hz)/1000);
                 }
 
-		if (ahd_get_transaction_status(scb) != CAM_REQ_INPROG)
-                	ahd_set_transaction_status(scb, CAM_CMD_TIMEOUT);
+		if (aic_get_transaction_status(scb) != CAM_REQ_INPROG)
+                	aic_set_transaction_status(scb, CAM_CMD_TIMEOUT);
 		ahd_print_path(ahd, scb);
                 printf("%s: no longer in timeout, status = %x\n",
                        ahd_name(ahd), xs->status);
@@ -308,12 +308,12 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 			printf(" 0x%x", ((uint8_t *)&xs->sense)[i]);
 		printf("\n");
 
-		ahd_set_transaction_status(scb, XS_SENSE);
+                xs->error = XS_SENSE;
 #endif
 	}
 #if 0	/* MU: no such settings in ahc */
 	if (scb->flags & SCB_REQUEUE)
-                ahd_set_transaction_status(scb, XS_REQUEUE);
+                xs->error = XS_REQUEUE;
 #endif
 	ahd_lock(ahd, &s);
 	ahd_free_scb(ahd, scb);
@@ -603,7 +603,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	if (hscb->cdb_len > MAX_CDB_LEN) {
 		int s;
 		
-		ahd_set_transaction_status(scb, CAM_REQ_INVALID);
+		aic_set_transaction_status(scb, CAM_REQ_INVALID);
 		ahd_lock(ahd, &s);
 		ahd_free_scb(ahd, scb);
 		ahd_unlock(ahd, &s);
@@ -780,13 +780,7 @@ ahd_adapter_req_set_xfer_mode(struct ahd_softc *ahd, struct scb *scb)
 }
 
 void
-ahd_timer_reset(ahd_timer_t *timer, u_int usec, ahd_callback_t *func, void *arg)
-{
-	callout_reset(timer, (usec * hz)/1000000, func, arg);
-}
-
-void
-ahd_scb_timer_reset(struct scb *scb, u_int usec)
+aic_scb_timer_reset(struct scb *scb, u_int usec)
 {
 	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
 		callout_reset(&scb->xs->xs_callout,
@@ -802,151 +796,7 @@ ahd_flush_device_writes(struct ahd_softc *ahd)
 }
 
 void
-ahd_lockinit(struct ahd_softc *ahd)
-{
-}
-
-void
-ahd_lock(struct ahd_softc *ahd, int *flags)
-{
-	*flags = splbio();
-}
-
-void
-ahd_unlock(struct ahd_softc *ahd, int *flags)
-{
-	splx(*flags);
-}
-
-/* Lock held during command compeletion to the upper layer */
-void
-ahd_done_lockinit(struct ahd_softc *ahd)
-{
-}
-
-void
-ahd_done_lock(struct ahd_softc *ahd, int *flags)
-{
-}
-
-void
-ahd_done_unlock(struct ahd_softc *ahd, int *flags)
-{
-}
-
-/* Lock held during ahd_list manipulation and ahd softc frees */
-void
-ahd_list_lockinit(void)
-{
-}
-
-void
-ahd_list_lock(int *flags)
-{
-}
-
-void
-ahd_list_unlock(int *flags)
-{
-}
-
-void ahd_set_transaction_status(struct scb *scb, uint32_t status)
-{
-	scb->xs->error = status;
-}
-
-void ahd_set_scsi_status(struct scb *scb, uint32_t status)
-{
-	scb->xs->xs_status = status;
-}
-
-uint32_t ahd_get_transaction_status(struct scb *scb)
-{
-	if (scb->xs->flags & ITSDONE)
-		return CAM_REQ_CMP;
-	else
-		return scb->xs->error;
-}
-
-uint32_t ahd_get_scsi_status(struct scb *scb)
-{
-	return (scb->xs->status);
-}
-
-void ahd_set_transaction_tag(struct scb *scb, int enabled, u_int type)
-{
-}
-
-u_long ahd_get_transfer_length(struct scb *scb)
-{
-	return (scb->xs->datalen);
-}
-
-int ahd_get_transfer_dir(struct scb *scb)
-{
-	return (scb->xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT));
-}
-
-void ahd_set_residual(struct scb *scb, u_long resid)
-{
-	scb->xs->resid = resid;
-}
-
-void ahd_set_sense_residual(struct scb *scb, u_long resid)
-{
-	scb->xs->resid = resid;
-}
-
-u_long ahd_get_residual(struct scb *scb)
-{
-	return (scb->xs->resid);
-}
-
-int ahd_perform_autosense(struct scb *scb)
-{
-	/* Return true for OpenBSD */
-	return (1);
-}
-
-uint32_t
-ahd_get_sense_bufsize(struct ahd_softc *ahd, struct scb *scb)
-{
-	return (sizeof(struct scsi_sense_data));
-}
-
-void
-ahd_freeze_simq(struct ahd_softc *ahd)
-{
-        /* do nothing for now */
-}
-
-void
-ahd_release_simq(struct ahd_softc *ahd)
-{
-        /* do nothing for now */
-}
-
-void
-ahd_freeze_scb(struct scb *scb)
-{
-        /* do nothing for now */
-}
-
-void
-ahd_platform_freeze_devq(struct ahd_softc *ahd, struct scb *scb)
-{
-}
-
-int
-ahd_platform_abort_scbs(struct ahd_softc *ahd, int target,
-			char channel, int lun, u_int tag,
-			role_t role, uint32_t status)
-{
-	return (0);
-}
-
-void
-ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
+aic_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
 {
 	int s;
 
@@ -963,25 +813,6 @@ ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
 	}
 
 	ahd_unlock(ahd, &s);
-}
-
-int
-ahd_get_pci_function(ahd_dev_softc_t pci)
-{
-	return (pci->pa_function);
-}
-
-int
-ahd_get_pci_slot(ahd_dev_softc_t pci)
-{
-	return (pci->pa_device);
-}
-
-
-int
-ahd_get_pci_bus(ahd_dev_softc_t pci)
-{
-	return (pci->pa_bus);
 }
 
 void
