@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.4 2005/01/04 05:35:40 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.5 2005/01/04 23:45:55 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -300,20 +300,12 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 	sc->sc_handlers[gh->gh_gpio] = NULL;
 
 	if (gh->gh_gpio == 0) {
-#if 0
 		pxa2x0_intr_disestablish(sc->sc_irqcookie[0]);
 		sc->sc_irqcookie[0] = NULL;
-#else
-		panic("pxa2x0_gpio_intr_disestablish: can't unhook GPIO#0");
-#endif
 	} else
 	if (gh->gh_gpio == 1) {
-#if 0
 		pxa2x0_intr_disestablish(sc->sc_irqcookie[1]);
 		sc->sc_irqcookie[0] = NULL;
-#else
-		panic("pxa2x0_gpio_intr_disestablish: can't unhook GPIO#0");
-#endif
 	}
 
 	FREE(gh, M_DEVBUF);
