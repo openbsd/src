@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.32 2003/12/16 20:33:25 markus Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.33 2004/07/16 15:01:09 henning Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -146,11 +146,6 @@
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
 #endif
 
 #ifdef NETATALK
@@ -338,12 +333,6 @@ looutput(ifp, m, dst, rt)
 		isr = NETISR_IPX;
 		break;
 #endif
-#ifdef ISO
-	case AF_ISO:
-		ifq = &clnlintrq;
-		isr = NETISR_ISO;
-		break;
-#endif
 #ifdef NETATALK
 	case AF_APPLETALK:
 		ifq = &atintrq2;
@@ -418,12 +407,6 @@ lo_altqstart(ifp)
 			isr = NETISR_NS;
 			break;
 #endif
-#ifdef ISO
-		case AF_ISO:
-			ifq = &clnlintrq;
-			isr = NETISR_ISO;
-			break;
-#endif
 #ifdef NETATALK
 		case AF_APPLETALK:
 			ifq = &atintrq2;
@@ -483,7 +466,7 @@ loioctl(ifp, cmd, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP | IFF_RUNNING;
 		ifa = (struct ifaddr *)data;
-		if (ifa != 0 /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
+		if (ifa != 0)
 			ifa->ifa_rtrequest = lortrequest;
 		/*
 		 * Everything else is done at a higher level.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.78 2004/06/26 06:01:14 naddy Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.79 2004/07/16 15:01:08 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -138,13 +138,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/argo_debug.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#include <netiso/iso_snpac.h>
 #endif
 
 #include <netccitt/x25.h>
@@ -395,52 +388,6 @@ ether_output(ifp, m0, dst, rt0)
 		}
 		} break;
 #endif /* NETATALK */
-#ifdef	ISO
-	case AF_ISO: {
-		int	snpalen;
-		struct	llc *l;
-		struct sockaddr_dl *sdl;
-
-		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
-		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
-		} else {
-			error = iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
-						(char *)edst, &snpalen);
-			if (error)
-				goto bad; /* Not Resolved */
-		}
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if (*edst & 1)
-			m->m_flags |= (M_BCAST|M_MCAST);
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof (*eh), M_DONTWAIT);
-			if (mcopy) {
-				eh = mtod(mcopy, struct ether_header *);
-				bcopy(edst, eh->ether_dhost, sizeof (edst));
-				bcopy(ac->ac_enaddr, eh->ether_shost,
-				    sizeof (edst));
-			}
-		}
-		M_PREPEND(m, 3, M_DONTWAIT);
-		if (m == NULL)
-			return (0);
-		etype = htons(m->m_pkthdr.len);
-		l = mtod(m, struct llc *);
-		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
-		l->llc_control = LLC_UI;
-#ifdef ARGO_DEBUG
-		if (argo_debug[D_ETHER]) {
-			int i;
-			printf("unoutput: sending pkt to: ");
-			for (i=0; i < ETHER_ADDR_LEN; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf("\n");
-		}
-#endif
-		} break;
-#endif /* ISO */
 /*	case AF_NSAP: */
 	case AF_CCITT: {
 		struct sockaddr_dl *sdl =
@@ -823,70 +770,6 @@ decapsulate:
 				goto decapsulate;
 			}
 			goto dropanyway;
-#ifdef	ISO
-		case LLC_ISO_LSAP:
-			switch (l->llc_control) {
-			case LLC_UI:
-				/* LLC_UI_P forbidden in class 1 service */
-				if ((l->llc_dsap == LLC_ISO_LSAP) &&
-				    (l->llc_ssap == LLC_ISO_LSAP)) {
-					/* LSAP for ISO */
-					if (m->m_pkthdr.len > etype)
-						m_adj(m, etype - m->m_pkthdr.len);
-					m->m_data += 3;		/* XXX */
-					m->m_len -= 3;		/* XXX */
-					m->m_pkthdr.len -= 3;	/* XXX */
-					M_PREPEND(m, sizeof *eh, M_DONTWAIT);
-					if (m == 0)
-						return;
-					*mtod(m, struct ether_header *) = *eh;
-#ifdef ARGO_DEBUG
-					if (argo_debug[D_ETHER])
-						printf("clnp packet");
-#endif
-					schednetisr(NETISR_ISO);
-					inq = &clnlintrq;
-					break;
-				}
-				goto dropanyway;
-
-			case LLC_XID:
-			case LLC_XID_P:
-				if (m->m_len < ETHER_ADDR_LEN)
-					goto dropanyway;
-				l->llc_window = 0;
-				l->llc_fid = 9;
-				l->llc_class = 1;
-				l->llc_dsap = l->llc_ssap = 0;
-				/* Fall through to */
-			case LLC_TEST:
-			case LLC_TEST_P:
-			{
-				struct sockaddr sa;
-				struct ether_header *eh2;
-				int i;
-				u_char c = l->llc_dsap;
-
-				l->llc_dsap = l->llc_ssap;
-				l->llc_ssap = c;
-				if (m->m_flags & (M_BCAST | M_MCAST))
-					bcopy(ac->ac_enaddr,
-					    eh->ether_dhost, ETHER_ADDR_LEN);
-				sa.sa_family = AF_UNSPEC;
-				sa.sa_len = sizeof(sa);
-				eh2 = (struct ether_header *)sa.sa_data;
-				for (i = 0; i < ETHER_ADDR_LEN; i++) {
-					eh2->ether_shost[i] = c = eh->ether_dhost[i];
-					eh2->ether_dhost[i] =
-						eh->ether_dhost[i] = eh->ether_shost[i];
-					eh->ether_shost[i] = c;
-				}
-				ifp->if_output(ifp, m, &sa, NULL);
-				return;
-			}
-			break;
-			}
-#endif /* ISO */
 #ifdef CCITT
 		case LLC_X25_LSAP:
 			if (m->m_pkthdr.len > etype)

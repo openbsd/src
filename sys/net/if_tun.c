@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.60 2004/06/25 04:09:03 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.61 2004/07/16 15:01:09 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -84,11 +84,6 @@
 #ifdef NETATALK
 #include <netatalk/at.h>
 #include <netatalk/at_var.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
 #endif
 
 #include "bpfilter.h"
@@ -943,12 +938,6 @@ tunwrite(dev, uio, ioflag)
 	case AF_APPLETALK:
 		ifq = &atintrq2;
 		isr = NETISR_ATALK;
-		break;
-#endif
-#ifdef ISO
-	case AF_ISO:
-		ifq = &clnlintrq;
-		isr = NETISR_ISO;
 		break;
 #endif
 	default:

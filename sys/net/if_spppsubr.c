@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.23 2004/06/24 19:35:25 tholo Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.24 2004/07/16 15:01:09 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -102,13 +102,6 @@
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/argo_debug.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#include <netiso/iso_snpac.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -562,15 +555,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif
-#ifdef ISO
-		case PPP_ISO:
-			/* OSI NLCP not implemented yet */
-			if (sp->pp_phase == PHASE_NETWORK) {
-				schednetisr (NETISR_ISO);
-				inq = &clnlintrq;
-			}
-			break;
-#endif
 		}
 		break;
 	case CISCO_MULTICAST:
@@ -775,14 +759,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		h->protocol = htons ((sp->pp_flags & PP_CISCO) ?
 			ETHERTYPE_IPX : PPP_IPX);
 		break;
-#endif
-#ifdef ISO
-	case AF_ISO:    /* ISO OSI Protocol */
-		if (sp->pp_flags & PP_CISCO)
-			goto nosupport;
-		h->protocol = htons (PPP_ISO);
-		break;
-nosupport:
 #endif
 	default:
 		m_freem (m);
