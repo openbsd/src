@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.21 2003/08/19 23:42:46 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.22 2003/12/11 22:55:22 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 typedef	u_int16_t	mode_t;		/* permissions */
 typedef	u_int16_t	nlink_t;	/* link count */
 typedef	int32_t		pid_t;		/* process id */
-typedef quad_t		rlim_t;		/* resource limit */
+typedef u_quad_t	rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */

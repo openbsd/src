@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.24 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.25 2003/12/11 22:55:22 millert Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -233,9 +233,6 @@ dosetrlimit(p, which, limp)
 	int error;
 
 	if (which >= RLIM_NLIMITS)
-		return (EINVAL);
-
-	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
 		return (EINVAL);
 
 	alimp = &p->p_rlimit[which];
