@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.1 2000/09/15 16:56:13 mickey Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.2 2000/09/29 19:58:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -87,7 +87,7 @@ twe_pci_attach(parent, self, aux)
 
 	if (pci_mapreg_map(pa, TWE_BAR, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->iot, &sc->ioh, NULL, &size)) {
-		printf(": can't map codec i/o space\n");
+		printf(": can't map controller i/o space\n");
 		return;
 	}
 	sc->dmat = pa->pa_dmat;
