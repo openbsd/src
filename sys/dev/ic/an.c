@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.9 2000/06/20 20:35:14 todd Exp $	*/
+/*	$OpenBSD: an.c,v 1.10 2001/01/10 17:50:15 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -241,7 +241,7 @@ an_attach(sc)
 	    sizeof(AN_DEFAULT_NETNAME) - 1);
 	sc->an_ssidlist.an_ssid1_len = strlen(AN_DEFAULT_NETNAME);
 
-	sc->an_config.an_opmode = AN_OPMODE_IBSS_ADHOC;
+	sc->an_config.an_opmode = AN_OPMODE_INFRASTRUCTURE_STATION;
 
 	sc->an_tx_rate = 0;
 	bzero((char *)&sc->an_stats, sizeof(sc->an_stats));
