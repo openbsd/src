@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.82 2004/12/07 19:26:46 mcbride Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.83 2004/12/07 20:38:46 mcbride Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -239,8 +239,8 @@ ether_ioctl(ifp, arp, cmd, data)
  * Assumes that ifp is actually pointer to arpcom structure.
  */
 int
-ether_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
+ether_output(ifp0, m0, dst, rt0)
+	struct ifnet *ifp0;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -252,8 +252,28 @@ ether_output(ifp, m0, dst, rt0)
 	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	struct ether_header *eh;
-	struct arpcom *ac = (struct arpcom *)ifp;
+	struct arpcom *ac = (struct arpcom *)ifp0;
 	short mflags;
+	struct ifnet *ifp = ifp0;
+
+#if NCARP > 0
+	if (ifp->if_type == IFT_CARP) {
+		struct ifaddr *ifa;
+
+		/* loop back if this is going to the carp interface */
+		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
+		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
+		    ifa->ifa_ifp == ifp0)
+			return (looutput(ifp0, m, dst, rt0));
+
+		ifp = ifp->if_carpdev;
+		ac = (struct arpcom *)ifp;
+
+		if ((ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			senderr(ENETDOWN);
+	}
+#endif /* NCARP > 0 */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -517,7 +537,7 @@ ether_output(ifp, m0, dst, rt0)
 #if NCARP > 0
 	if (ifp->if_carp) {
 		int error;
-		error = carp_output(ifp, m, dst, NULL);
+		error = carp_output(ifp0, m, dst, NULL);
 		if (error)
 			goto bad;
 	}
@@ -537,6 +557,10 @@ ether_output(ifp, m0, dst, rt0)
 		return (error);
 	}
 	ifp->if_obytes += len + ETHER_HDR_LEN;
+#if NCARP > 0
+	if (ifp != ifp0)
+		ifp0->if_obytes += len + ETHER_HDR_LEN;
+#endif /* NCARP > 0 */
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
@@ -653,9 +677,9 @@ ether_input(ifp, eh, m)
 #endif /* NVLAN > 0 */
 
 #if NCARP > 0
-	if (ifp->if_carp &&
-	    carp_forus(ifp->if_carp, eh->ether_dhost))
-		goto decapsulate;
+	if (ifp->if_carp && ifp->if_type != IFT_CARP &&
+	    (carp_input(eh, m) == 0))
+		return;
 #endif /* NCARP > 0 */
 
 	ac = (struct arpcom *)ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.96 2004/12/07 19:26:46 mcbride Exp $	*/
+/*	$OpenBSD: if.c,v 1.97 2004/12/07 20:38:46 mcbride Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_types.h>
 #include <net/route.h>
 
 #ifdef INET
@@ -487,7 +488,7 @@ if_detach(ifp)
 
 #if NCARP > 0
 	/* Remove the interface from any carp group it is a part of.  */
-	if (ifp->if_carp)
+	if (ifp->if_carp && ifp->if_type != IFT_CARP)
 		carp_ifdetach(ifp);
 #endif
 

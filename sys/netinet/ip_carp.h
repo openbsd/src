@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.8 2004/07/29 22:12:15 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.9 2004/12/07 20:38:47 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -109,6 +109,13 @@ struct carpstats {
 	u_int64_t	carps_preempt;		/* if enabled, preemptions */
 };
 
+#define CARPDEVNAMSIZ	16
+#ifdef IFNAMSIZ
+#if CARPDEVNAMSIZ != IFNAMSIZ
+#error
+#endif
+#endif
+
 /*
  * Configuration structure for SIOCSVH SIOCGVH
  */
@@ -116,6 +123,8 @@ struct carpreq {
 	int		carpr_state;
 #define	CARP_STATES	"INIT", "BACKUP", "MASTER"
 #define	CARP_MAXSTATE	2
+
+	char		carpr_carpdev[CARPDEVNAMSIZ];
 	int		carpr_vhid;
 	int		carpr_advskew;
 	int		carpr_advbase;
@@ -143,15 +152,15 @@ struct carpreq {
 
 #ifdef _KERNEL
 void		 carp_ifdetach (struct ifnet *);
-void		 carp_input (struct mbuf *, ...);
+void		 carp_proto_input (struct mbuf *, ...);
 void		 carp_carpdev_state(void *);
-int		 carp6_input (struct mbuf **, int *, int);
-int		 carp_output (struct ifnet *, struct mbuf *, struct sockaddr *,
+int		 carp6_proto_input(struct mbuf **, int *, int);
+int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
-int		 carp_iamatch (void *, struct in_ifaddr *, struct in_addr *,
+int		 carp_iamatch(void *, struct in_ifaddr *, struct in_addr *,
 		     u_int8_t **);
 struct ifaddr	*carp_iamatch6(void *, struct in6_addr *);
 void		*carp_macmatch6(void *, struct mbuf *, struct in6_addr *);
-struct	ifnet	*carp_forus (void *, void *);
-int		 carp_sysctl (int *, u_int,  void *, size_t *, void *, size_t);
+int		 carp_input(struct ether_header *, struct mbuf *);
+int		 carp_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
 #endif

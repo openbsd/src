@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.61 2004/12/07 19:26:46 mcbride Exp $	*/
+/*	$OpenBSD: if.h,v 1.62 2004/12/07 20:38:46 mcbride Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -180,7 +180,12 @@ struct ifnet {				/* and the entries */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */
 	caddr_t	if_bridge;		/* bridge structure */
-	caddr_t	if_carp;		/* carp structure */
+	union {
+		caddr_t	carp_s;		/* carp structure (used by !carp ifs) */
+		struct ifnet *carp_d;	/* ptr to carpdev (used by carp ifs) */
+	} if_carp_ptr;
+#define if_carp		if_carp_ptr.carp_s
+#define if_carpdev	if_carp_ptr.carp_d
 	u_short	if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */

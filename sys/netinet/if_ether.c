@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.54 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.55 2004/12/07 20:38:46 mcbride Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -557,7 +557,7 @@ in_arpinput(m)
 #endif
 
 #if NCARP > 0
-		if (ac->ac_if.if_carp) {
+		if (ac->ac_if.if_carp && ac->ac_if.if_type != IFT_CARP) {
 			if (carp_iamatch(ac->ac_if.if_carp, ia,
 			    &isaddr, &enaddr)) 
 				break;
@@ -645,7 +645,11 @@ in_arpinput(m)
 			}
 		    }
 		} else if (rt->rt_ifp != &ac->ac_if && !(ac->ac_if.if_bridge &&
-		    (rt->rt_ifp->if_bridge == ac->ac_if.if_bridge))) {
+		    (rt->rt_ifp->if_bridge == ac->ac_if.if_bridge)) &&
+		    !(rt->rt_ifp->if_type == IFT_CARP &&
+		    rt->rt_ifp->if_carpdev == &ac->ac_if) &&
+		    !(ac->ac_if.if_type == IFT_CARP &&
+		    ac->ac_if.if_carpdev == rt->rt_ifp)) {
 		    log(LOG_WARNING,
 			"arp: attempt to add entry for %s "
 			"on %s by %s on %s\n",

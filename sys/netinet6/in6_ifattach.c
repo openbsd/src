@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.36 2004/05/07 14:42:27 millert Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.37 2004/12/07 20:38:47 mcbride Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -577,6 +577,7 @@ in6_ifattach(ifp, altifp)
 	case IFT_ENC:
 	case IFT_PFLOG:
 	case IFT_PFSYNC:
+	case IFT_CARP:
 		return;
 	case IFT_PROPVIRTUAL:
 		if (strncmp("bridge", ifp->if_xname, sizeof("bridge")) == 0 &&
