@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.56 2001/06/22 14:35:42 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.57 2001/10/25 12:59:21 drahn Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -340,12 +340,15 @@ cdopen(dev, flag, fmt, p)
 		return error;
 	}
 
+	part = CDPART(dev);
+
 	if (cd->sc_dk.dk_openmask != 0) {
 		/*
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
+		    (part != RAW_PART || fmt != S_IFCHR)) {
 			error = EIO;
 			goto bad3;
 		}
@@ -354,15 +357,24 @@ cdopen(dev, flag, fmt, p)
 		error = scsi_test_unit_ready(sc_link,
 		    SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY);
-		if (error)
-			goto bad3;
-
+		if (error) {
+			if (part != RAW_PART || fmt != S_IFCHR)
+				goto bad3;
+			else
+				goto out;
+		}
+			
 		/* Start the pack spinning if necessary. */
 		error = scsi_start(sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-		if (error)
-			goto bad3;
+
+		if (error) {
+			if (part != RAW_PART || fmt != S_IFCHR)
+				goto bad3;
+			else
+				goto out;
+		}
 
 		sc_link->flags |= SDEV_OPEN;
 
@@ -389,8 +401,6 @@ cdopen(dev, flag, fmt, p)
 		}
 	}
 
-	part = CDPART(dev);
-
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= cd->sc_dk.dk_label->d_npartitions ||
@@ -399,7 +409,7 @@ cdopen(dev, flag, fmt, p)
 		goto bad;
 	}
 
-	/* Insure only one open at a time. */
+out:	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
 		cd->sc_dk.dk_copenmask |= (1 << part);
@@ -834,6 +844,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		case CDIOCRESET:
 		case DVD_AUTH:
 		case DVD_READ_STRUCT:	
+		case MTIOCTOP:
 			if (part == RAW_PART)
 				break;
 		/* FALLTHROUGH */
