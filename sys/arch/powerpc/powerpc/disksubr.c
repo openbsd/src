@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 2001/03/14 08:02:12 drahn Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 2001/06/24 05:06:13 drahn Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -428,7 +428,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	register i;
+	register int i;
 	register struct partition *opp, *npp;
 
 	/* sanity clause */
