@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.32 2004/05/26 21:15:31 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.33 2004/05/26 21:16:10 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -1300,8 +1300,10 @@ create_channels(struct vxsoftc *sc)
 	/* check and see if the channel was created */
 	if (status == 0 && sc->channel->valid) {
 		sc->channel_number = sc->channel->channel_number;
+#ifdef DEBUG_VXT
 		printf("%s: created channel %d\n", sc->sc_dev.dv_xname,
 		       sc->channel->channel_number);
+#endif
 		return 0;
 	} else {
 		switch (status) {
@@ -1486,12 +1488,8 @@ vx_init(struct vxsoftc *sc)
 		inf.def_termio.c_cc[1] = CQUIT;
 		inf.def_termio.c_cc[2] = CERASE;
 		inf.def_termio.c_cc[3] = CKILL;
-		inf.def_termio.c_cc[4] = 20;
-		inf.def_termio.c_cc[5] = 2;
-		inf.reserved1 = 0;  /* Must Be Zero */
-		inf.reserved2 = 0;
-		inf.reserved3 = 0;
-		inf.reserved4 = 0;
+		inf.def_termio.c_cc[4] = CEOF;
+		inf.def_termio.c_cc[5] = CEOL;
 		d16_bcopy(&inf, infp, sizeof(struct init_info));
 		wringp += sizeof(struct wring);
 		rringp += sizeof(struct rring);
