@@ -1,8 +1,8 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.17 2001/02/12 23:47:11 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.18 2001/04/04 22:07:40 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
- * Copyright (c) 1999, 2000 by Matthew Jacob
+ * Copyright (c) 1999, 2000, 2001 by Matthew Jacob
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,16 +60,17 @@
  */
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
-static void ispminphys __P((struct buf *));
-static int32_t ispcmd_slow __P((XS_T *));
-static int32_t ispcmd __P((XS_T *));
+static void ispminphys(struct buf *);
+static int32_t ispcmd_slow(XS_T *);
+static int32_t ispcmd(XS_T *);
 
 static struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
 
-static int isp_polled_cmd __P((struct ispsoftc *, XS_T *));
-static void isp_wdog __P((void *));
+static int isp_polled_cmd (struct ispsoftc *, XS_T *);
+static void isp_wdog (void *);
 static void isp_requeue(void *);
-static void isp_internal_restart(void *);
+static void isp_trestart(void *);
+static void isp_restart(struct ispsoftc *);
 
 struct cfdriver isp_cd = {
 	NULL, "isp", DV_DULL
@@ -80,8 +81,7 @@ struct cfdriver isp_cd = {
  * Complete attachment of hardware, include subdevices.
  */
 void
-isp_attach(isp)
-	struct ispsoftc *isp;
+isp_attach(struct ispsoftc *isp)
 {
 	struct scsi_link *lptr = &isp->isp_osinfo._link[0];
 	isp->isp_osinfo._adapter.scsi_minphys = ispminphys;
@@ -97,15 +97,14 @@ isp_attach(isp)
 	lptr->adapter_softc = isp;
 	lptr->device = &isp_dev;
 	lptr->adapter = &isp->isp_osinfo._adapter;
-	lptr->openings = isp->isp_maxcmds > 128? 128 : isp->isp_maxcmds;
+	lptr->openings = imin(isp->isp_maxcmds, MAXISPREQUEST(isp));
+	isp->isp_osinfo._adapter.scsi_cmd = ispcmd_slow;
 	if (IS_FC(isp)) {
-		isp->isp_osinfo._adapter.scsi_cmd = ispcmd;
 		lptr->adapter_buswidth = MAX_FC_TARG;
 		/* We can set max lun width here */
 		/* loopid set below */
 	} else {
 		sdparam *sdp = isp->isp_param;
-		isp->isp_osinfo._adapter.scsi_cmd = ispcmd_slow;
 		lptr->adapter_buswidth = MAX_TARGETS;
 		/* We can set max lun width here */
 		lptr->adapter_target = sdp->isp_initiator_id;
@@ -115,8 +114,7 @@ isp_attach(isp)
 			lptrb->adapter_softc = isp;
 			lptrb->device = &isp_dev;
 			lptrb->adapter = &isp->isp_osinfo._adapter;
-			lptrb->openings = isp->isp_maxcmds > 128?
-			    128 : isp->isp_maxcmds;
+			lptrb->openings = lptr->openings;
 			lptrb->adapter_buswidth = MAX_TARGETS;
 			lptrb->adapter_target = sdp->isp_initiator_id;
 			lptrb->flags = SDEV_2NDBUS;
@@ -158,16 +156,6 @@ isp_attach(isp)
 		ISP_UNLOCK(isp);
 		lptr->adapter_target = defid;
 	}
-
-	/*
-	 * After this point, we *could* be doing the new configuration
-	 * schema which allows interrups, so we can do tsleep/wakeup
-	 * for mailbox stuff at that point.
-	 */
-#if	0
-	isp->isp_osinfo.no_mbox_ints = 0;
-#endif
-
 	/*
 	 * And attach children (if any).
 	 */
@@ -187,8 +175,7 @@ isp_attach(isp)
  */
 
 static void
-ispminphys(bp)
-	struct buf *bp;
+ispminphys(struct buf *bp)
 {
 	/*
 	 * XX: Only the 1020 has a 24 bit limit.
@@ -200,13 +187,21 @@ ispminphys(bp)
 }
 
 static int32_t
-ispcmd_slow(xs)
-	XS_T *xs;
+ispcmd_slow(XS_T *xs)
 {
+	extern int cold;
 	sdparam *sdp;
 	int tgt, chan;
 	u_int16_t f;
 	struct ispsoftc *isp = XS_ISP(xs);
+
+	if (IS_FC(isp)) {
+		if (cold == 0) {
+			isp->isp_osinfo.no_mbox_ints = 0;
+			isp->isp_osinfo._adapter.scsi_cmd = ispcmd;
+		}
+		return (ispcmd(xs));
+	}
 
 	/*
 	 * Have we completed discovery for this target on this adapter?
@@ -219,31 +214,19 @@ ispcmd_slow(xs)
 	    (isp->isp_osinfo.discovered[chan] & (1 << tgt)) != 0) {
 		return (ispcmd(xs));
 	}
+	if (cold == 0) {
+		isp->isp_osinfo.no_mbox_ints = 0;
+	}
 
 	f = DPARM_DEFAULT;
 	if (xs->sc_link->quirks & SDEV_NOSYNC) {
-		f ^= DPARM_SYNC;
-#ifdef	DEBUG
-	} else {
-		printf("%s: channel %d target %d can do SYNC xfers\n",
-		    isp->isp_name, chan, tgt);
-#endif
+		f &= ~DPARM_SYNC;
 	}
 	if (xs->sc_link->quirks & SDEV_NOWIDE) {
-		f ^= DPARM_WIDE;
-#ifdef	DEBUG
-	} else {
-		printf("%s: channel %d target %d can do WIDE xfers\n",
-		    isp->isp_name, chan, tgt);
-#endif
+		f &= ~DPARM_WIDE;
 	}
 	if (xs->sc_link->quirks & SDEV_NOTAGS) {
-		f ^= DPARM_TQING;
-#ifdef	DEBUG
-	} else {
-		printf("%s: channel %d target %d can do TAGGED xfers\n",
-		    isp->isp_name, chan, tgt);
-#endif
+		f &= ~DPARM_TQING;
 	}
 
 	/*
@@ -282,9 +265,22 @@ ispcmd_slow(xs)
 	return (ispcmd(xs));
 }
 
+static INLINE void isp_add2_blocked_queue(struct ispsoftc *, XS_T *);
+
+static INLINE void
+isp_add2_blocked_queue(struct ispsoftc *isp, XS_T *xs)
+{
+	if (isp->isp_osinfo.wqf != NULL) {
+		isp->isp_osinfo.wqt->free_list.le_next = xs;
+	} else {
+		isp->isp_osinfo.wqf = xs;
+	}
+	isp->isp_osinfo.wqt = xs;
+	xs->free_list.le_next = NULL;
+}
+
 static int32_t
-ispcmd(xs)
-	XS_T *xs;
+ispcmd(XS_T *xs)
 {
 	struct ispsoftc *isp;
 	int result;
@@ -294,7 +290,6 @@ ispcmd(xs)
 	 * Make sure that there's *some* kind of sane setting.
 	 */
 	timeout_set(&xs->stimeout, isp_wdog, isp);
-	timeout_del(&xs->stimeout);
 
 	isp = XS_ISP(xs);
 
@@ -321,21 +316,20 @@ ispcmd(xs)
 	 * Check for queue blockage...
 	 */
 	if (isp->isp_osinfo.blocked) {
-		isp_prt(isp, ISP_LOGDEBUG2, "blocked");
 		if (xs->flags & SCSI_POLL) {
 			xs->error = XS_DRIVER_STUFFUP;
 			ISP_UNLOCK(isp);
 			return (TRY_AGAIN_LATER);
 		}
-		if (isp->isp_osinfo.wqf != NULL) {
-			isp->isp_osinfo.wqt->free_list.le_next = xs;
-		} else {
-			isp->isp_osinfo.wqf = xs;
+		if (isp->isp_osinfo.blocked == 2) {
+			isp_restart(isp);
 		}
-		isp->isp_osinfo.wqt = xs;
-		xs->free_list.le_next = NULL;
-		ISP_UNLOCK(isp);
-		return (SUCCESSFULLY_QUEUED);
+		if (isp->isp_osinfo.blocked) {
+			isp_add2_blocked_queue(isp, xs);
+			ISP_UNLOCK(isp);
+			isp_prt(isp, ISP_LOGDEBUG0, "added to blocked queue");
+			return (SUCCESSFULLY_QUEUED);
+		}
 	}
 
 	if (xs->flags & SCSI_POLL) {
@@ -349,32 +343,32 @@ ispcmd(xs)
 
 	result = isp_start(xs);
 
-#if	0
-{
-	static int na[16] = { 0 };
-	if (na[isp->isp_unit] < isp->isp_nactive) {
-		isp_prt(isp, ISP_LOGALL, "active hiwater %d", isp->isp_nactive);
-		na[isp->isp_unit] = isp->isp_nactive;
-	}
-}
-#endif
-
 	switch (result) {
 	case CMD_QUEUED:
 		result = SUCCESSFULLY_QUEUED;
 		if (xs->timeout) {
 			timeout_add(&xs->stimeout, _XT(xs));
+			XS_CMD_S_TIMER(xs);
+		}
+		if (isp->isp_osinfo.hiwater < isp->isp_nactive) {
+			isp->isp_osinfo.hiwater = isp->isp_nactive;
+			isp_prt(isp, ISP_LOGDEBUG0,
+			    "Active Hiwater Mark=%d", isp->isp_nactive);
 		}
 		break;
 	case CMD_EAGAIN:
-#if	0
-		result = TRY_AGAIN_LATER;
-		break;
-#endif
-	case CMD_RQLATER:
+		isp->isp_osinfo.blocked |= 2;
+		isp_prt(isp, ISP_LOGDEBUG0, "blocking queue");
+		isp_add2_blocked_queue(isp, xs);
 		result = SUCCESSFULLY_QUEUED;
+		break;
+	case CMD_RQLATER:
+		result = SUCCESSFULLY_QUEUED;	/* Lie */
+		isp_prt(isp, ISP_LOGDEBUG1, "retrying later for %d.%d",
+		    XS_TGT(xs), XS_LUN(xs));
 		timeout_set(&xs->stimeout, isp_requeue, xs);
 		timeout_add(&xs->stimeout, hz);
+		XS_CMD_S_TIMER(xs);
 		break;
 	case CMD_COMPLETE:
 		result = COMPLETE;
@@ -385,9 +379,7 @@ ispcmd(xs)
 }
 
 static int
-isp_polled_cmd(isp, xs)
-	struct ispsoftc *isp;
-	XS_T *xs;
+isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 {
 	int result;
 	int infinite = 0, mswait;
@@ -448,27 +440,32 @@ isp_polled_cmd(isp, xs)
 }
 
 void
-isp_done(xs)
-	XS_T *xs;
+isp_done(XS_T *xs)
 {
 	XS_CMD_S_DONE(xs);
 	if (XS_CMD_WDOG_P(xs) == 0) {
-		if (xs->timeout) {
+		struct ispsoftc *isp = XS_ISP(xs);
+		if (XS_CMD_TIMER_P(xs)) {
 			timeout_del(&xs->stimeout);
+			XS_CMD_C_TIMER(xs);
 		}
 		if (XS_CMD_GRACE_P(xs)) {
 			struct ispsoftc *isp = XS_ISP(xs);
-			isp_prt(isp, ISP_LOGDEBUG1,
+			isp_prt(isp, ISP_LOGWARN,
 			    "finished command on borrowed time");
 		}
 		XS_CMD_S_CLEAR(xs);
 		scsi_done(xs);
+		if (isp->isp_osinfo.blocked == 2) {
+			isp->isp_osinfo.blocked = 0;
+			isp_prt(isp, ISP_LOGDEBUG0, "restarting blocked queue");
+			isp_restart(isp);
+		}
 	}
 }
 
 static void
-isp_wdog(arg)
-	void *arg;
+isp_wdog(void *arg)
 {
 	XS_T *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
@@ -510,8 +507,8 @@ isp_wdog(arg)
 		} while (r != r1 && ++i < 1000);
 
 		if (INT_PENDING(isp, r) && isp_intr(isp) && XS_CMD_DONE_P(xs)) {
-			isp_prt(isp, ISP_LOGDEBUG1, "watchdog cleanup (%x, %x)",
-			    isp->isp_name, handle, r);
+			isp_prt(isp, ISP_LOGINFO, "watchdog cleanup (%x, %x)",
+			    handle, r);
 			XS_CMD_C_WDOG(xs);
 			isp_done(xs);
 		} else if (XS_CMD_GRACE_P(xs)) {
@@ -536,11 +533,12 @@ isp_wdog(arg)
 			u_int16_t iptr, optr;
 			ispreq_t *mp;
 
-			isp_prt(isp, ISP_LOGDEBUG2,
+			isp_prt(isp, ISP_LOGINFO,
 			    "possible command timeout (%x, %x)", handle, r);
 
 			XS_CMD_C_WDOG(xs);
 			timeout_add(&xs->stimeout, _XT(xs));
+			XS_CMD_S_TIMER(xs);
 			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
 				ISP_UNLOCK(isp);
 				return;
@@ -555,7 +553,7 @@ isp_wdog(arg)
 			ISP_ADD_REQUEST(isp, iptr);
 		}
 	} else if (isp->isp_dblev) {
-		isp_prt(isp, ISP_LOGDEBUG2, "watchdog with no command");
+		isp_prt(isp, ISP_LOGDEBUG1, "watchdog with no command");
 	}
 	ISP_UNLOCK(isp);
 }
@@ -568,8 +566,7 @@ isp_wdog(arg)
  * Locks are held before coming here.
  */
 void
-isp_uninit(isp)
-	struct ispsoftc *isp;
+isp_uninit(struct ispsoftc *isp)
 {
 	ISP_LOCK(isp);
 	/*
@@ -586,72 +583,100 @@ isp_uninit(isp)
 static void
 isp_requeue(void *arg)
 {
+	int r;
 	struct scsi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
 	ISP_LOCK(isp);
-	switch (ispcmd_slow(xs)) {
-	case SUCCESSFULLY_QUEUED:
-		printf("%s: isp_command_reque: queued %d.%d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+	r = isp_start(xs);
+	switch (r) {
+	case CMD_QUEUED:
+		isp_prt(isp, ISP_LOGDEBUG1, "restarted command for %d.%d",
+		    XS_TGT(xs), XS_LUN(xs));
 		if (xs->timeout) {
 			timeout_set(&xs->stimeout, isp_wdog, isp);
 			timeout_add(&xs->stimeout, _XT(xs));
+			XS_CMD_S_TIMER(xs);
 		}
 		break;
-	case TRY_AGAIN_LATER:
-		printf("%s: EAGAIN for %d.%d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+	case CMD_EAGAIN:
+		isp_prt(isp, ISP_LOGDEBUG0, "blocked cmd again");
+		isp->isp_osinfo.blocked |= 2;
+		isp_add2_blocked_queue(isp, xs);
+		break;
+	case CMD_RQLATER:
+		isp_prt(isp, ISP_LOGDEBUG0, "%s for %d.%d",
+		    (r == CMD_EAGAIN)? "CMD_EAGAIN" : "CMD_RQLATER",
+		    XS_TGT(xs), XS_LUN(xs));
 		timeout_set(&xs->stimeout, isp_requeue, xs);
 		timeout_add(&xs->stimeout, hz);
+		XS_CMD_S_TIMER(xs);
 		break;
-	case COMPLETE:
+	case CMD_COMPLETE:
 		/* can only be an error */
 		if (XS_NOERR(xs))
 			XS_SETERR(xs, XS_DRIVER_STUFFUP);
-		XS_CMD_S_DONE(xs);
+		isp_done(xs);
 		break;
 	}
 	ISP_UNLOCK(isp);
 }
 
 /*
- * Restart function after a LOOP UP event (e.g.),
- * done as a timeout for some hysteresis.
+ * Restart function after a LOOP UP event or a commmand completing,
+ * somtimes done as a timeout for some hysteresis.
  */
 static void
-isp_internal_restart(void *arg)
+isp_trestart(void *arg)
 {
 	struct ispsoftc *isp = arg;
-	int result, nrestarted = 0;
+	struct scsi_xfer *list;
 
 	ISP_LOCK(isp);
-	if (isp->isp_osinfo.blocked == 0) {
-		struct scsi_xfer *xs;
-		while ((xs = isp->isp_osinfo.wqf) != NULL) {
-			isp->isp_osinfo.wqf = xs->free_list.le_next;
+	isp->isp_osinfo.rtpend = 0;
+	list = isp->isp_osinfo.wqf;
+	if (isp->isp_osinfo.blocked == 0 && list != NULL) {
+		int nrestarted = 0;
+
+		isp->isp_osinfo.wqf = NULL;
+		ISP_UNLOCK(isp);
+		do {
+			struct scsi_xfer *xs = list;
+			list = xs->free_list.le_next;
 			xs->free_list.le_next = NULL;
-			result = isp_start(xs);
-			if (result != CMD_QUEUED) {
-				printf("%s: botched command restart (0x%x)\n",
-				    isp->isp_name, result);
-				if (XS_NOERR(xs))
-					XS_SETERR(xs, XS_DRIVER_STUFFUP);
-				XS_CMD_S_DONE(xs);
-			} else if (xs->timeout) {
-				timeout_add(&xs->stimeout, _XT(xs));
-			}
-			nrestarted++;
-		}
-		printf("%s: requeued %d commands\n", isp->isp_name, nrestarted);
+			isp_requeue(xs);
+			if (isp->isp_osinfo.wqf == NULL)
+				nrestarted++;
+		} while (list != NULL);
+		isp_prt(isp, ISP_LOGDEBUG0, "requeued %d commands", nrestarted);
+	} else {
+		ISP_UNLOCK(isp);
 	}
-	ISP_UNLOCK(isp);
+}
+
+static void
+isp_restart(struct ispsoftc *isp)
+{
+	struct scsi_xfer *list;
+
+	list = isp->isp_osinfo.wqf;
+	if (isp->isp_osinfo.blocked == 0 && list != NULL) {
+		int nrestarted = 0;
+
+		isp->isp_osinfo.wqf = NULL;
+		do {
+			struct scsi_xfer *xs = list;
+			list = xs->free_list.le_next;
+			xs->free_list.le_next = NULL;
+			isp_requeue(xs);
+			if (isp->isp_osinfo.wqf == NULL)
+				nrestarted++;
+		} while (list != NULL);
+		isp_prt(isp, ISP_LOGDEBUG0, "requeued %d commands", nrestarted);
+	}
 }
 
 int
-isp_async(isp, cmd, arg)
-	struct ispsoftc *isp;
-	ispasync_t cmd;
-	void *arg;
+isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 {
 	int bus, tgt;
 
@@ -738,12 +763,15 @@ isp_async(isp, cmd, arg)
 		 * Hopefully we get here in time to minimize the number
 		 * of commands we are firing off that are sure to die.
 		 */
-		isp->isp_osinfo.blocked = 1;
+		isp->isp_osinfo.blocked |= 1;
 		isp_prt(isp, ISP_LOGINFO, "Loop DOWN");
 		break;
         case ISPASYNC_LOOP_UP:
-		isp->isp_osinfo.blocked = 0;
-		timeout_set(&isp->isp_osinfo.rqt, isp_internal_restart, isp);
+		isp->isp_osinfo.blocked &= ~1;
+		if (isp->isp_osinfo.rtpend == 0) {
+			timeout_set(&isp->isp_osinfo.rqt, isp_trestart, isp);
+			isp->isp_osinfo.rtpend = 1;
+		}
 		timeout_add(&isp->isp_osinfo.rqt, 1);
 		isp_prt(isp, ISP_LOGINFO, "Loop UP");
 		break;
@@ -897,14 +925,7 @@ isp_async(isp, cmd, arg)
 }
 
 void
-#ifdef	__STDC__
 isp_prt(struct ispsoftc *isp, int level, const char *fmt, ...)
-#else
-isp_log(isp, fmt, va_alist)
-	struct ispsoftc *isp;
-	char *fmt;
-	va_dcl;
-#endif
 {
 	va_list ap;
 	if (level != ISP_LOGALL && (level & isp->isp_dblev) == 0) {
