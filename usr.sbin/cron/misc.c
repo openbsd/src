@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2001/02/19 14:33:33 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2001/02/20 02:03:19 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.9 2001/02/19 14:33:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.10 2001/02/20 02:03:19 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -692,7 +692,7 @@ arpadate(clock)
 	static char ret[64];	/* zone name might be >3 chars */
 	char *qmark;
 	size_t len;
-	long gmtoff = get_gmtoff(&t);
+	long gmtoff = get_gmtoff(&t, tm);
 	int hours = gmtoff / 3600;
 	int minutes = (gmtoff - (hours * 3600)) / 60;
 
@@ -725,36 +725,28 @@ int swap_uids_back() { return (swap_uids()); }
 #endif /*HAVE_SAVED_UIDS*/
 
 /* Return the offset from GMT in seconds (algorithm taken from sendmail). */
-#ifdef HAVE_TM_GMTOFF
-long get_gmtoff(time_t *clock)
+#ifndef HAVE_TM_GMTOFF
+long get_gmtoff(time_t *clock, struct tm *local)
 {
-	struct tm *tm;
-
-	tm = localtime(clock);
-	return (tm->tm_gmtoff);
-}
-#else
-long get_gmtoff(time_t *clock)
-{
-	struct tm local;
-	struct tm *gmt;
+	struct tm gmt;
 	long offset;
 
-	local = *localtime(clock);
-	gmt = gmtime(clock);
+	gmt = *gmtime(clock);
+	if (local == NULL)
+		local = localtime(clock);
 
-	offset = (local.tm_sec - gmt->tm_sec) +
-	    ((local.tm_min - gmt->tm_min) * 60) +
-	    ((local.tm_hour - gmt->tm_hour) * 3600);
+	offset = (local->tm_sec - gmt.tm_sec) +
+	    ((local->tm_min - gmt.tm_min) * 60) +
+	    ((local->tm_hour - gmt.tm_hour) * 3600);
 
 	/* Timezone may cause year rollover to happen on a different day. */
-	if (local.tm_year < gmt->tm_year)
+	if (local->tm_year < gmt.tm_year)
 		offset -= 24 * 3600;
-	else if (local.tm_year > gmt->tm_year)
+	else if (local->tm_year > gmt.tm_year)
 		offset -= 24 * 3600;
-	else if (local.tm_yday < gmt->tm_yday)
+	else if (local->tm_yday < gmt.tm_yday)
 		offset -= 24 * 3600;
-	else if (local.tm_yday > gmt->tm_yday)
+	else if (local->tm_yday > gmt.tm_yday)
 		offset += 24 * 3600;
 
 	return (offset);

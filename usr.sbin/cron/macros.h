@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.1 2001/02/18 19:48:35 millert Exp $	*/
+/*	$OpenBSD: macros.h,v 1.2 2001/02/20 02:03:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -94,6 +94,10 @@
 #define	Set_LineNum(ln)	{Debug(DPARS|DEXT,("linenum=%d\n",ln)); \
 			 LineNumber = ln; \
 			}
+
+#ifdef HAVE_TM_GMTOFF
+#define get_gmtoff(c, t)        (t->tm_gmtoff)
+#endif
 
 #define SECONDS_PER_MINUTE	60
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.2 2001/02/19 14:33:32 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.3 2001/02/20 02:03:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -69,4 +69,6 @@ entry		*load_entry(FILE *, void (*)(),
 
 FILE		*cron_popen(char *, char *, entry *);
 
-long		get_gmtoff(time_t *clock);
+#ifndef HAVE_TM_GMTOFF
+long		get_gmtoff(time_t *, struct tm *);
+#endif

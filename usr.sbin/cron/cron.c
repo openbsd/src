@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.11 2001/02/19 14:33:32 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.12 2001/02/20 02:03:19 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.11 2001/02/19 14:33:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.12 2001/02/20 02:03:19 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -40,6 +40,7 @@ static	void	usage(void),
 
 static	int	got_sighup, got_sigchld;
 static	int	timeRunning, virtualTime, clockTime;
+static	long	GMToff;
 
 static void
 usage(void) {
@@ -314,7 +315,6 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 static void
 set_time(int initialize) {
 	struct tm *tm;
-	static long gmtoff;
 	static int isdst;
 
 	StartTime = time(NULL);
@@ -323,9 +323,9 @@ set_time(int initialize) {
 	tm = localtime(&StartTime);
 	if (initialize || tm->tm_isdst != isdst) {
 		isdst = tm->tm_isdst;
-		gmtoff = get_gmtoff(&StartTime);
+		GMToff = get_gmtoff(&StartTime, tm);
 	}
-	clockTime = (StartTime + gmtoff) / (time_t)SECONDS_PER_MINUTE;
+	clockTime = (StartTime + GMToff) / (time_t)SECONDS_PER_MINUTE;
 }
 
 /*
@@ -334,12 +334,9 @@ set_time(int initialize) {
 static void
 cron_sleep(int target) {
 	time_t t;
-	struct tm *tm;
 	int seconds_to_wait;
 
-	t = time(NULL);
-	tm = localtime(&t);
-	t += tm->tm_gmtoff;
+	t = time(NULL) + GMToff;
 	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t) + 1;
 	Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%d\n",
 	    (long)getpid(), (long)target*SECONDS_PER_MINUTE, seconds_to_wait))
