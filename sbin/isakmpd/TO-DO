@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.4 1998/11/17 11:10:06 niklas Exp $
-$EOM: TO-DO,v 1.25 1998/10/11 16:17:01 niklas Exp $
+$OpenBSD: TO-DO,v 1.5 1998/11/20 07:41:30 niklas Exp $
+$EOM: TO-DO,v 1.27 1998/11/20 07:19:49 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -61,7 +61,7 @@ the program is far from ready in any area.
 
 * Generate all possible SA attributes in quick mode. [done]
 
-* Validate incoming attribute according to policy, main mode.
+* Validate incoming attribute according to policy, main mode. [done]
 
 * Validate incoming attribute according to policy, quick mode.
 
@@ -77,3 +77,5 @@ the program is far from ready in any area.
 
 * Rescan interfaces on SIGHUP and on reception of messages on the INADDR_ANY
   listener socket.
+
+* Validate the configuration file.
