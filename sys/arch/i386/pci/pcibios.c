@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.26 2002/03/21 22:47:02 millert Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.27 2002/07/12 21:17:06 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -267,6 +267,9 @@ pcibios_pir_init(sc)
 		    pirh->signature != BIOS32_MAKESIG('_', 'P', 'I', 'R'))
 			continue;
 		
+		if (pirh->tablesize < sizeof(*pirh))
+			continue;
+
 		cksum = 0;
 		for (i = 0; i < pirh->tablesize; i++)
 			cksum += p[i];
@@ -274,7 +277,7 @@ pcibios_pir_init(sc)
 		printf("%s: PCI IRQ Routing Table rev. %d.%d @ 0x%lx/%d "
 		    "(%d entries)\n", sc->sc_dev.dv_xname,
 		    pirh->version >> 8, pirh->version & 0xff, pa,
-		    pirh->tablesize, (pirh->tablesize - 32) / 16);
+		    pirh->tablesize, (pirh->tablesize - sizeof(*pirh)) / 16);
 
 		if (cksum != 0) {
 			printf("%s: bad IRQ table checksum\n",
@@ -282,7 +285,7 @@ pcibios_pir_init(sc)
 			continue;
 		}
 
-		if (pirh->tablesize < 32 || (pirh->tablesize % 16) != 0) {
+		if (pirh->tablesize % 16 != 0) {
 			printf("%s: bad IRQ table size\n", sc->sc_dev.dv_xname);
 			continue;
 		}
