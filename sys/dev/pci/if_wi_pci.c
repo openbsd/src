@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.23 2002/04/06 21:58:12 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.24 2002/04/09 01:27:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -162,7 +162,7 @@ wi_pci_attach(parent, self, aux)
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_space_tag_t memt = pa->pa_memt;
 	bus_addr_t localbase;
-	bus_size_t localsize, memsize;
+	bus_size_t localsize;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	u_int32_t command;
 	pcireg_t csr;
@@ -173,7 +173,7 @@ wi_pci_attach(parent, self, aux)
 	switch (pp->pp_type) {
 	case WI_PCI_PLX:
 		if (pci_mapreg_map(pa, WI_PLX_MEMRES, PCI_MAPREG_TYPE_MEM, 0,
-		    &memt, &memh, NULL, &memsize, 0) != 0) {
+		    &memt, &memh, NULL, NULL, 0) != 0) {
 			printf(": can't map mem space\n");
 			return;
 		}
