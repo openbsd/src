@@ -1,5 +1,5 @@
-/*	$OpenBSD: data.c,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
-/*	$NetBSD: data.c,v 1.8 2000/04/02 11:10:53 augustss Exp $	*/
+/*	$OpenBSD: data.c,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
+/*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>

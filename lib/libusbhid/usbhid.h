@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
+/*	$OpenBSD: usbhid.h,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
 /*	$NetBSD: usbhid.h,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -32,8 +32,12 @@ typedef struct report_desc *report_desc_t;
 typedef struct hid_data *hid_data_t;
 
 typedef enum hid_kind {
-	hid_input, hid_output, hid_feature, hid_collection, hid_endcollection
-}hid_kind_t;
+	hid_input = 0,
+	hid_output = 1,
+	hid_feature = 2,
+	hid_collection,
+	hid_endcollection
+} hid_kind_t;
 
 typedef struct hid_item {
 	/* Global */
@@ -79,11 +83,11 @@ report_desc_t hid_use_report_desc(unsigned char *data, unsigned int size);
 void hid_dispose_report_desc(report_desc_t);
 
 /* Parsing of a HID report descriptor, parse.c: */
-hid_data_t hid_start_parse(report_desc_t d, int kindset);
+hid_data_t hid_start_parse(report_desc_t d, int kindset, int id);
 void hid_end_parse(hid_data_t s);
 int hid_get_item(hid_data_t s, hid_item_t *h);
-int hid_report_size(report_desc_t d, enum hid_kind k, int *idp);
-int hid_locate(report_desc_t d, unsigned int usage, enum hid_kind k, hid_item_t *h);
+int hid_report_size(report_desc_t d, enum hid_kind k, int id);
+int hid_locate(report_desc_t d, unsigned int usage, enum hid_kind k, hid_item_t *h, int id);
 
 /* Conversion to/from usage names, usage.c: */
 const char *hid_usage_page(int i);

@@ -1,7 +1,7 @@
-.\" $OpenBSD: usbhidctl.1,v 1.3 2001/12/30 07:24:07 pvalchev Exp $
-.\" $NetBSD: usbhidctl.1,v 1.10 2000/09/24 02:27:12 augustss Exp $
+.\" $OpenBSD: usbhidctl.1,v 1.4 2002/05/10 00:09:17 nate Exp $
+.\" $NetBSD: usbhidctl.1,v 1.14 2001/12/28 17:49:32 augustss Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -70,8 +70,8 @@
 .Op Ar item=value ...
 .Sh DESCRIPTION
 .Nm
-can be used to dump or modify the state of a USB HID (Human Interface Device).
-If a list of items is present on the command line, then
+can be used to output or modify the state of a USB HID (Human Interface
+Device).  If a list of items is present on the command line, then
 .Nm
 prints the current value of those items for the specified device.  If the
 .Fl w
@@ -83,6 +83,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Show all items and their current values.
+This option fails if the device does not support the GET_REPORT command.
 .It Fl f Ar device
 Specify a path name for the device to operate on.  If
 .Ar device
@@ -94,9 +95,10 @@ An absolute path is taken to be the literal device pathname.
 Loop and dump the device data every time it changes.  Only 'input' items are
 displayed in this mode.
 .It Fl n
-Suppress printing of the item name when querying specific item values.
+Suppress printing of the item name when querying specific items.  Only output
+the current value.
 .It Fl r
-Dump the report descriptor.
+Dump the USB HID report descriptor.
 .It Fl t Ar table
 Specify a path name for the HID usage table file.
 .It Fl v
@@ -108,18 +110,91 @@ option.
 .Sh FILES
 .Pa /usr/share/misc/usb_hid_usages
 The default HID usage table.
+.Sh SYNTAX
+.Nm
+parses the names of items specified on the command line against the human
+interface items reported by the USB device.  Each human interface item is
+mapped from its native form to a human readable name, using the HID usage
+table file.  Command line items are compared with the generated item names,
+and the USB HID device is operated on when a match is found.
+.Pp
+Each human interface item is named by the
+.Qq page
+it appears in, the
+.Qq usage
+within that page, and the list of
+.Qq collections
+containing the item.  Each collection in turn is also identified by page, and
+the usage within that page.
+.Pp
+On the
+.Nm
+command line the page name is separated from the usage name with the character
+.Cm So : Sc .
+The collections are separated by the character
+.Cm So . Sc .
+.Pp
+As an alternative notation in items on the command line, the native numeric
+value for the page name or usage can be used instead of the full human
+readable page name or usage name.  Numeric values can be specified in decimal,
+octal or hexadecimal.
+.Sh EXAMPLES
+On a standard USB mouse the item
+.Dl Generic_Desktop:Mouse.Generic_Desktop:Pointer.Button:Button_2
+reflects the current status of button 2.  The
+.Qq button 2
+item is encapsulated within two collections, the
+.Qq Mouse
+collection in the
+.Qq Generic Desktop
+page, and the
+.Qq Pointer
+collection in the
+.Qq Generic Desktop
+page.  The item itself is the usage
+.Qq Button_2
+in the
+.Qq Button
+page.
+.Pp
+An item can generally be named by omitting one or more of the page names.  For
+example the
+.Qq button 2
+item would usually just be referred to on the command line as:
+.Dl usbhidctl -f /dev/mouse Mouse.Pointer.Button_2
+.Pp
+Items can also be named by referring to parts of the item name with the
+numeric representation of the native HID usage identifiers.  This is most
+useful when items are missing from the HID usage table.  The page identifier
+for the
+.Qq Generic Desktop
+page is 1, and the usage identifier for the usage
+.Qq Button_2
+is 2, so the following can be used to refer to the
+.Qq button 2
+item:
+.Dl usbhidctl -f /dev/mouse 1:Mouse.1:Pointer.Button:2
+.Pp
+Devices with human interface outputs can be manipulated with the
+.Fl w
+option.  For example, some USB mice have a Light Emitting Diode under software
+control as usage 2 under page 0xffff, in the
+.Qq Mouse
+collection.  The following can be used to switch this LED off:
+.Dl usbhidctl -f /dev/mouse -w Mouse.0xffff:2=0
 .Sh SEE ALSO
+.Xr usbhidaction 1 ,
 .Xr usbhid 3 ,
 .Xr uhid 4 ,
 .Xr usb 4
-.Sh AUTHOR
-David Sainty <David.Sainty@dtsp.co.nz>
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Ox 3.0 .
+.Sh AUTHORS
+.An David Sainty Aq David.Sainty@dtsp.co.nz
 .Sh BUGS
-Some USB HID devices report multiple items with exactly the same description.
-The current naming scheme does not provide the means to specify which of the
-identically named items you are referring to.
+Some USB HID devices report multiple items with exactly the same usage
+identifiers.  The current naming scheme does not provide the means to specify
+which of a set of identically named items you are referring to.

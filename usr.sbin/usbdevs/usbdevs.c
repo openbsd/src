@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdevs.c,v 1.4 2002/05/02 20:12:07 nate Exp $	*/
-/*	$NetBSD: usbdevs.c,v 1.11 1999/09/08 02:39:36 augustss Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.5 2002/05/10 00:09:17 nate Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,8 +49,8 @@
 
 #define USBDEV "/dev/usb"
 
-int verbose;
-int showdevs;
+int verbose = 0;
+int showdevs = 0;
 
 void usage(void);
 void usbdev(int f, int a, int rec);
@@ -72,10 +72,7 @@ char done[USB_MAX_DEVICES];
 int indent;
 
 void
-usbdev(f, a, rec)
-	int f;
-	int a;
-	int rec;
+usbdev(int f, int a, int rec)
 {
 	struct usb_device_info di;
 	int e, p, i;
@@ -90,8 +87,17 @@ usbdev(f, a, rec)
 	printf("addr %d: ", a);
 	done[a] = 1;
 	if (verbose) {
+#ifdef notyet
+		switch (di.udi_speed) {
+		case USB_SPEED_LOW:  printf("low speed, "); break;
+		case USB_SPEED_FULL: printf("full speed, "); break;
+		case USB_SPEED_HIGH: printf("high speed, "); break;
+		default: break;
+		}
+#endif
 		if (di.udi_lowspeed)
 			printf("low speed, ");
+
 		if (di.udi_power)
 			printf("power %d mA, ", di.udi_power);
 		else
@@ -109,10 +115,10 @@ usbdev(f, a, rec)
 		printf("%s, %s", di.udi_product, di.udi_vendor);
 	printf("\n");
 	if (showdevs) {
-		for (i = 0; i< USB_MAX_DEVNAMES; i++)
+		for (i = 0; i < USB_MAX_DEVNAMES; i++)
 			if (di.udi_devnames[i][0])
-				printf("%*s %s\n", indent, "",
-				    di.udi_devnames[i]);
+				printf("%*s  %s\n", indent, "",
+				       di.udi_devnames[i]);
 	}
 	if (!rec)
 		return;
@@ -143,8 +149,7 @@ usbdev(f, a, rec)
 }
 
 void
-usbdump(f)
-	int f;
+usbdump(int f)
 {
 	int a;
 
@@ -155,10 +160,7 @@ usbdump(f)
 }
 
 void
-dumpone(name, f, addr)
-	char *name;
-	int f;
-	int addr;
+dumpone(char *name, int f, int addr)
 {
 	if (verbose)
 		printf("Controller %s:\n", name);
@@ -171,14 +173,10 @@ dumpone(name, f, addr)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, i, f;
 	char buf[50];
-	extern int optind;
-	extern char *optarg;
 	char *dev = 0;
 	int addr = 0;
 	int ncont;
@@ -220,7 +218,8 @@ main(argc, argv)
 			ncont++;
 		}
 		if (verbose && ncont == 0)
-			printf("%s: no USB controllers found\n", __progname);
+			printf("%s: no USB controllers found\n",
+			    __progname);
 	} else {
 		f = open(dev, O_RDONLY);
 		if (f >= 0)

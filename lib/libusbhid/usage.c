@@ -1,5 +1,5 @@
-/*	$OpenBSD: usage.c,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
-/*	$NetBSD: usage.c,v 1.11 2001/01/09 15:59:47 augustss Exp $	*/
+/*	$OpenBSD: usage.c,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
+/*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -163,7 +163,7 @@ hid_usage_page(int i)
 	for (k = 0; k < npages; k++)
 		if (pages[k].usage == i)
 			return pages[k].name;
-	snprintf(b, sizeof b, "0x%04x", i);
+	sprintf(b, "0x%04x", i);
 	return b;
 }
 
@@ -183,7 +183,7 @@ hid_usage_in_page(unsigned int u)
 	for (j = 0; j < pages[k].pagesize; j++) {
 		us = pages[k].page_contents[j].usage;
 		if (us == -1) {
-			snprintf(b, sizeof b, "%s %d",
+			snprintf(b, sizeof b, "%s %d", 
 			    pages[k].page_contents[j].name, i);
 			return b;
 		}
@@ -191,7 +191,7 @@ hid_usage_in_page(unsigned int u)
 			return pages[k].page_contents[j].name;
 	}
  bad:
-	snprintf(b, sizeof b, "0x%04x", i);
+	sprintf(b, "0x%04x", i);
 	return b;
 }
 
@@ -213,10 +213,11 @@ hid_parse_usage_page(const char *name)
 int
 hid_parse_usage_in_page(const char *name)
 {
-	const char *sep = strchr(name, ':');
+	const char *sep;
 	int k, j;
 	unsigned int l;
 
+	sep = strchr(name, ':');
 	if (sep == NULL)
 		return -1;
 	l = sep - name;

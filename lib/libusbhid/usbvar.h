@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbvar.h,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
-/*	$NetBSD: usbvar.h,v 1.2 1999/05/11 21:15:46 augustss Exp $	*/
+/*	$OpenBSD: usbvar.h,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
+/*	$NetBSD: usbvar.h,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>

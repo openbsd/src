@@ -1,7 +1,7 @@
-.\"	$OpenBSD: usbhid.3,v 1.3 2002/05/01 08:03:30 mpech Exp $
-.\"	$NetBSD: usb.3,v 1.14 2001/04/09 12:09:49 wiz Exp $
+.\"	$OpenBSD: usbhid.3,v 1.4 2002/05/10 00:09:17 nate Exp $
+.\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
-.\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
+.\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 11, 1999
+.Dd December 29, 2001
 .Dt USBHID 3
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Nm hid_set_data
 .Nd USB HID access routines
 .Sh SYNOPSIS
-.Fd #include <usbhid.h>
+.Fd #include \*[Lt]usbhid.h\*[Gt]
 .Ft report_desc_t
 .Fn hid_get_report_desc "int file"
 .Ft report_desc_t
@@ -53,15 +53,15 @@
 .Ft void
 .Fn hid_dispose_report_desc "report_desc_t d"
 .Ft hid_data_t
-.Fn hid_start_parse "report_desc_t d" "int kindset"
+.Fn hid_start_parse "report_desc_t d" "int kindset" "int id"
 .Ft void
 .Fn hid_end_parse "hid_data_t s"
 .Ft int
 .Fn hid_get_item "hid_data_t s" "hid_item_t *h"
 .Ft int
-.Fn hid_report_size "report_desc_t d" "hid_kind_t k" "int *idp"
+.Fn hid_report_size "report_desc_t d" "hid_kind_t k" "int id"
 .Ft int
-.Fn hid_locate "report_desc_t d" "u_int usage" "hid_kind_t k" "hid_item_t *h"
+.Fn hid_locate "report_desc_t d" "u_int usage" "hid_kind_t k" "hid_item_t *h" "int id"
 .Ft char *
 .Fn hid_usage_page "int i"
 .Ft char *
@@ -115,11 +115,13 @@ To parse the report descriptor the
 function should be called with a report descriptor and a set that
 describes which items that are interesting.
 The set is obtained by or-ing together values
-.Fa "(1 << k)"
+.Fa "(1 \*[Lt]\*[Lt] k)"
 where
 .Fa k
 is an item of type
 .Fa hid_kind_t .
+The report id (if present) is given by
+.Fa id .
 The function returns
 .Fa NULL
 if the initialization fails, otherwise an opaque value to be used
@@ -140,7 +142,7 @@ will be filled with the relevant data for the item.
 The definition of
 .Fa hid_item_t
 can be found in
-.Pa <usbhid.h>
+.Pa \*[Lt]usbhid.h\*[Gt]
 and the meaning of the components in the USB HID documentation.
 .Pp
 Data should be read/written to the device in the size of
@@ -148,9 +150,8 @@ the report.
 The size of a report (of a certain kind) can be computed by the
 .Fn hid_report_size
 function.
-If the report is prefixed by an ID byte it is stored at
-.Fa idp ,
-otherwise it will contain 0.
+If the report is prefixed by an ID byte it is given by
+.Fa id .
 .Pp
 To locate a single item the
 .Fn hid_locate
@@ -192,18 +193,15 @@ function extracts the value of the item.
 Conversely
 .Fn hid_set_data
 can be used to put data into a report (which must be zeroed first).
-.Sh EXAMPLES
-Not yet.
 .Sh FILES
 .Pa /usr/share/misc/usb_hid_usages
 The default HID usage table.
-.Sh BUGS
-This man page is woefully incomplete.
+.\" .Sh EXAMPLES
 .Sh SEE ALSO
 The
 .Tn USB
 specifications can be found at:
-.Dv http://www.usb.org/developers/docs.html
+.Dv http://www.usb.org/developers/docs.html .
 .Pp
 .Xr uhid 4 ,
 .Xr usb 4
@@ -212,3 +210,5 @@ The
 .Nm
 library first appeared in
 .Ox 3.0 .
+.Sh BUGS
+This man page is woefully incomplete.
