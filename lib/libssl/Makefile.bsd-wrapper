@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.11 1999/09/29 07:30:08 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.12 1999/10/10 21:32:01 maja Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -11,11 +11,8 @@ LNDIR=          /usr/bin/lndir
 .if ${MACHINE_ARCH} == "i386"
 SSLCONF=	--openssldir=/etc/ssl OpenBSD-x86
 .else
-.if ${MACHINE} == "pmax"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD-pmax
-.else
-.if ${MACHINE} == "arc"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD-arc
+.if ${MACHINE_ARCH} == "mips"
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-mips
 .else
 .if ${MACHINE_ARCH} == "alpha"
 SSLCONF=	--openssldir=/etc/ssl OpenBSD-alpha
@@ -28,7 +25,6 @@ SSLCONF=	--openssldir=/etc/ssl OpenBSD
 .else
 ##UNTESTED!	
 SSLCONF=	--openssldir=/etc/ssl OpenBSD
-.endif
 .endif
 .endif
 .endif

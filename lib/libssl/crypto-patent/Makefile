@@ -9,10 +9,7 @@ LCRYPTO_INC= ${.CURDIR}/../${SSLEAYDIST}/include
 .if ${MACHINE_ARCH} == "i386"
 CFLAGS+= -DL_ENDIAN -DBN_ASM
 .else
-.if ${MACHINE_ARCH} == "arc"
-CFLAGS+= -DL_ENDIAN
-.else
-.if ${MACHINE_ARCH} == "pmax"
+.if ${MACHINE_ARCH} == "mips"
 CFLAGS+= -DL_ENDIAN
 .else
 .if ${MACHINE_ARCH} == "alpha"
@@ -22,7 +19,6 @@ CFLAGS+= -DB_ENDIAN
 .endif
 .endif
 .endif
-.endif 
 
 CFLAGS+= -DNO_IDEA -DTERMIOS -DANSI_SOURCE -DNO_ERR -DNO_WINDOWS_BRAINDEATH
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
