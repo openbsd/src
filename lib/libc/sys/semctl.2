@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semctl.2,v 1.3 1997/03/30 18:49:49 millert Exp $
+.\"	$OpenBSD: semctl.2,v 1.4 1997/11/24 02:07:31 deraadt Exp $
 .\"	$NetBSD: semctl.2,v 1.2 1997/03/27 08:20:40 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -197,7 +197,7 @@ the effective uid match either the
 or
 .Va sem_perm.cuid
 fields of the data structure associated with the message queue.
-.It Bq Er EACCESS
+.It Bq Er EACCES
 The caller has no operation permission for this semaphore.
 .It Bq Er EINVAL
 .Fa semid
