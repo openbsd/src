@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.2 1995/10/18 12:29:27 deraadt Exp $
+ *      $Id: machdep.c,v 1.3 1995/10/28 19:19:07 deraadt Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -89,7 +89,6 @@
 #include <pica/pica/pica.h>
 #include <pica/pica/picatype.h>
 
-#include <le.h>
 #include <asc.h>
 
 #if NASC > 0
@@ -128,7 +127,6 @@ int	cputype;		/* Mother board type */
 int	ncpu = 1;		/* At least one cpu in the system */
 int	isa_io_base;		/* Base address of ISA io port space */
 int	isa_mem_base;		/* Base address of ISA memory space */
-u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 
 extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3();
 extern	int Mach_spl4(), Mach_spl5(), splhigh();
@@ -359,15 +357,13 @@ mips_init(argc, argv, code)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-#if 0 /* FIXME */
+#if 0 /* XXX FIXME */
 		Mach_splnet = Mach_spl1;
 		Mach_splbio = Mach_spl0;
 		Mach_splimp = Mach_spl1;
 		Mach_spltty = Mach_spl2;
 		Mach_splstatclock = Mach_spl3;
 #endif
-		Mach_splclock = Mach_spl4;
-
 		strcpy(cpu_model, "PICA_61");
 		break;
 
@@ -423,18 +419,6 @@ mips_init(argc, argv, code)
 	}
 
 	maxmem = physmem;
-
-#if NLE > 0
-	/*
-	 * Grab 128K at the top of physical memory for the lance chip
-	 * on machines where it does dma through the I/O ASIC.
-	 * It must be physically contiguous and aligned on a 128K boundary.
-	 */
-	if (cputype == ACER_PICA_61) {
-		maxmem -= btoc(128 * 1024);
-		le_iomem = (maxmem << PGSHIFT);
-	}
-#endif /* NLE */
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -819,6 +803,7 @@ sendsig(catcher, sig, mask, code)
 /* ARGSUSED */
 sys_sigreturn(p, v, retval)
 	struct proc *p;
+	void *v;
 	register_t *retval;
 {
 	struct sigreturn_args /* {
