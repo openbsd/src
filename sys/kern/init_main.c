@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.102 2003/05/09 00:49:46 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.103 2003/05/13 06:11:11 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -80,6 +80,8 @@
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
+#include <dev/rndvar.h>
+
 #include <ufs/ufs/quota.h>
 
 #include <machine/cpu.h>
@@ -124,6 +126,8 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 struct	timeval boottime;
 struct	timeval runtime;
+
+long	__guard[8];
 
 /* XXX return int so gcc -Werror won't complain */
 int	main(void *);
@@ -176,6 +180,7 @@ main(framep)
 	quad_t lim;
 	int s, i;
 	register_t rval[2];
+	int *guard = (int *)&__guard[0];
 	extern struct pdevinit pdevinit[];
 	extern void scheduler_start(void);
 	extern void disk_init(void);
@@ -362,6 +367,9 @@ main(framep)
 	/* Initialize kernel profiling. */
 	kmstartup();
 #endif
+
+	for (i = 0; i < sizeof(__guard) / 4; i++)
+		guard[i] = arc4random();
 
 	/* Start the scheduler */
 	scheduler_start();
