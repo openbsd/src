@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.12 1998/02/24 05:00:24 millert Exp $
+.\"	$Id: mail.local.8,v 1.13 1998/08/15 21:04:33 millert Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -43,7 +43,6 @@
 .Op Fl L
 .Op Fl l
 .Op Fl f Ar from
-.Op Fl H
 .Ar user ...
 .Sh DESCRIPTION
 .Nm Mail.local
@@ -69,17 +68,6 @@ Request that
 .Fn flock
 be used for locking the mail spool rather than
 .Nm username.lock .
-.It Fl H
-This mode is useful for a client mail program to attain proper locking.
-In this mode
-.Nm mail.local
-(ignoring all other arguments) attains a
-.Nm username.lock
-for the calling user and retains it until stdin is closed or a signal
-like SIGINT, SIGTERM, or SIGHUP is received.  If
-.Nm mail.local
-is able to create the lock file, ``1'' is written to stdout, otherwise
-``0'' is written and an error message is written to stderr.
 .El
 .Pp
 Individual mail messages in the mailbox are delimited by an empty

@@ -1,3 +1,5 @@
+/*	$OpenBSD: mail.local.h,v 1.1 1998/08/15 21:04:35 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -29,11 +31,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)pathnames.h	5.3 (Berkeley) 1/17/91
- *	$Id: pathnames.h,v 1.3 1998/08/15 21:04:35 millert Exp $
  */
-#include <paths.h>
 
-#define _PATH_LOCTMP	"/tmp/local.XXXXXXXXXX"
-#define _PATH_LOCKSPOOL	"/usr/libexec/lockspool"
+#define	FATAL		1
+#define	NOTFATAL	0
+
+void	baditem	__P((char *));
+int	deliver __P((int, char *, int));
+void	err __P((int, const char *, ...));
+int	getlock __P((char *, struct passwd *));
+void	notifybiff __P((char *));
+void	rellock __P((void));
+int	store __P((char *));
+void	usage __P((void));

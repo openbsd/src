@@ -1,4 +1,8 @@
+/*	$OpenBSD: mail.local.c,v 1.19 1998/08/15 21:04:34 millert Exp $	*/
+
 /*-
+ * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
+ * Copyright (c) 1996-1998 David Mazieres <dm@lcs.mit.edu>
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -38,8 +42,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.18 1998/05/18 09:58:03 deraadt Exp $";
+#if 0
+static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
+#else
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.19 1998/08/15 21:04:34 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,26 +65,13 @@ static char rcsid[] = "$Id: mail.local.c,v 1.18 1998/05/18 09:58:03 deraadt Exp 
 #include <stdlib.h>
 #include <string.h>
 #include "pathnames.h"
-
-#define	FATAL		1
-#define	NOTFATAL	0
-
-int	deliver __P((int, char *, int));
-void	err __P((int, const char *, ...));
-void	notifybiff __P((char *));
-int	store __P((char *));
-void	usage __P((void));
-int	dohold __P((void));
-int	getlock __P((char *, struct passwd *));
-void	rellock __P((void));
+#include "mail.local.h"
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	struct passwd *pw;
 	int ch, fd, eval, lockfile=1, holdme=0;
 	uid_t uid;
@@ -112,11 +106,16 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!*argv && !holdme)
-		usage();
-
-	if (holdme)
-		exit(dohold());
+	/* Support -H flag for backwards compat */
+	if (holdme) {
+		execl(_PATH_LOCKSPOOL, "lockspool", NULL);
+		err(FATAL, "execl: lockspool: %s", strerror(errno));
+	} else {
+		if (!*argv)
+			usage();
+		if (geteuid() != 0)
+			err(FATAL, "may only be run by the superuser");
+	}
 
 	/*
 	 * If from not specified, use the name from getlogin() if the
@@ -132,50 +131,6 @@ main(argc, argv)
 	for (eval = 0; *argv; ++argv)
 		eval |= deliver(fd, *argv, lockfile);
 	exit(eval);
-}
-
-void
-unhold()
-{
-	rellock();
-	exit(0);
-}
-
-int
-dohold()
-{
-	struct passwd *pw;
-	char *from, c;
-	int holdfd;
-
-	signal(SIGTERM, unhold);
-	signal(SIGINT, unhold);
-	signal(SIGHUP, unhold);
-
-	from = getlogin();
-	if (from) {
-		pw = getpwnam(from);
-		if (pw == NULL)
-			return (1);
-	} else {
-		pw = getpwuid(getuid());
-		if (pw)
-			from = pw->pw_name;
-		else
-			return (1);
-	}
-
-	holdfd = getlock(from, pw);
-	if (holdfd == -1) {
-		write(STDOUT_FILENO, "0\n", 2);
-		return (1);
-	}
-	write(STDOUT_FILENO, "1\n", 2);
-
-	while (read(0, &c, 1) == -1 && errno == EINTR)
-		;
-	rellock();
-	return (0);
 }
 
 int
@@ -221,118 +176,6 @@ store(from)
 	if (ferror(fp))
 		err(FATAL, "temporary file write error");
 	return(fd);
-}
-
-void
-baditem(path)
-	char *path;
-{
-	char npath[MAXPATHLEN];
-
-	if (unlink(path) == 0)
-		return;
-	snprintf(npath, sizeof npath, "%s/mailXXXXXXXXXX", _PATH_MAILDIR);
-	if (mktemp(npath) == NULL)
-		return;
-	if (rename(path, npath) != -1)
-		err(NOTFATAL, "nasty spool item %s renamed to %s",
-		    path, npath);
-	/* XXX if we fail to rename, another attempt will happen later */
-}
-
-char lpath[MAXPATHLEN];
-
-void
-rellock()
-{
-	if (lpath[0])
-		unlink(lpath);
-}
-
-int
-getlock(name, pw)
-	char *name;
-	struct passwd *pw;
-{
-	struct stat sb, fsb;
-	int lfd=-1;
-	char buf[8*1024];
-	int tries = 0;
-
-	(void)snprintf(lpath, sizeof lpath, "%s/%s.lock",
-	    _PATH_MAILDIR, name);
-
-	if (stat(_PATH_MAILDIR, &sb) != -1 &&
-	    (sb.st_mode & S_IWOTH) == S_IWOTH) {
-		/*
-		 * We have a writeable spool, deal with it as
-		 * securely as possible.
-		 */
-		time_t ctim = -1;
-
-		seteuid(pw->pw_uid);
-		if (lstat(lpath, &sb) != -1)
-			ctim = sb.st_ctime;
-		while (1) {
-			/*
-			 * Deal with existing user.lock files
-			 * or directories or symbolic links that
-			 * should not be here.
-			 */
-			if (readlink(lpath, buf, sizeof buf-1) != -1) {
-				if (lstat(lpath, &sb) != -1 &&
-				    S_ISLNK(fsb.st_mode)) {
-					seteuid(sb.st_uid);
-					unlink(lpath);
-					seteuid(pw->pw_uid);
-				}
-				goto again;
-			}
-			if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL|O_EXLOCK,
-			    S_IRUSR|S_IWUSR)) != -1)
-				break;
-again:
-			if (tries > 10) {
-				err(NOTFATAL, "%s: %s", lpath,
-				    strerror(errno));
-				seteuid(0);
-				return(-1);
-			}
-			if (tries > 9 &&
-			    (lfd = open(lpath, O_WRONLY|O_EXLOCK, 0)) != -1) {
-				if (fstat(lfd, &fsb) != -1 &&
-				    lstat(lpath, &sb) != -1) {
-					if (fsb.st_dev == sb.st_dev &&
-					    fsb.st_ino == sb.st_ino &&
-					    ctim == fsb.st_ctime ) {
-						seteuid(fsb.st_uid);
-						baditem(lpath);
-						seteuid(pw->pw_uid);
-					}
-				}
-			}
-			sleep(1 << tries);
-			tries++;
-			continue;
-		}
-		seteuid(0);
-	} else {
-		/*
-		 * Only root can write the spool directory.
-		 */
-		while (1) {
-			if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
-			    S_IRUSR|S_IWUSR)) != -1)
-				break;
-			if (tries > 9) {
-				err(NOTFATAL, "%s: %s", lpath, strerror(errno));
-				return(-1);
-			}
-			sleep(1 << tries);
-			tries++;
-		}
-	}
-	return (lfd);
 }
 
 int
@@ -492,33 +335,5 @@ notifybiff(msg)
 void
 usage()
 {
-	err(FATAL, "usage: mail.local [-lLH] [-f from] user ...");
-}
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-err(int isfatal, const char *fmt, ...)
-#else
-err(isfatal, fmt)
-	int isfatal;
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vsyslog(LOG_ERR, fmt, ap);
-	va_end(ap);
-	if (isfatal)
-		exit(1);
+	err(FATAL, "usage: mail.local [-lL] [-f from] user ...");
 }
