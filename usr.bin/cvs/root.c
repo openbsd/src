@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.6 2004/07/28 01:59:19 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.7 2004/07/28 02:15:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -91,7 +91,6 @@ cvsroot_parse(const char *str)
 
 	for (i = 0; i < cvs_rcsz; i++) {
 		if (strcmp(str, cvs_rcache[i]->cr_str) == 0) {
-			printf("hitting cache for `%s'\n", str);
 			cvs_rcache[i]->cr_ref++;
 			return (cvs_rcache[i]);
 		}
