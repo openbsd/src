@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.21 2001/07/20 05:56:25 csapuntz Exp $	*/
+/*	$OpenBSD: pci.c,v 1.22 2001/08/25 12:48:35 art Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -131,6 +131,14 @@ pciattach(parent, self, aux)
 #ifdef USER_PCICONF
 	struct pci_softc *sc = (struct pci_softc *)self;
 #endif
+#ifdef __PCI_BUS_DEVORDER
+	char devs[32];
+	int i;
+#endif
+#ifdef __PCI_DEV_FUNCORDER
+	char funcs[8];
+	int j;
+#endif 
 
 	pci_attach_hook(parent, self, pba);
 	printf("\n");
@@ -148,7 +156,12 @@ pciattach(parent, self, aux)
 	if (bus == 0)
 		pci_isa_bridge_callback = NULL;
 
+#ifdef __PCI_BUS_DEVORDER
+	pci_bus_devorder(pc, bus, devs);
+	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++) {
+#else
 	for (device = 0; device < maxndevs; device++) {
+#endif
 		pcitag_t tag;
 		pcireg_t id, class, intr, bhlcr;
 		struct pci_attach_args pa;
@@ -167,7 +180,13 @@ pciattach(parent, self, aux)
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 
+#ifdef __PCI_DEV_FUNCORDER
+		pci_dev_funcorder(pc, bus, device, funcs);
+		for (j = 0; (function = funcs[j]) < nfunctions &&
+		    function >= 0; j++) {
+#else
 		for (function = 0; function < nfunctions; function++) {
+#endif
 			tag = pci_make_tag(pc, bus, device, function);
 			id = pci_conf_read(pc, tag, PCI_ID_REG);
 
