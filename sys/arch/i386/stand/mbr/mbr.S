@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.6 1997/08/08 17:13:13 weingart Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.7 1997/08/08 22:46:13 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -207,43 +207,21 @@ err_stop:
 found:
 	DBGMSG(CHAR_B)
 #if 0
-	pushl	%edx
-	pushl	%esi
-	pushl	%ecx
-
-	/* Print out drive and partition */
-	data32
-	movl	$drive, %esi
-	data32
-	call	message
-
+	pushl	%ax
+	/* Save drive and partition */
 	movl	%dx, %ax
 	andl	$0x0F, %ax
 	orl		$0x30, %ax
-	data32
-	call	chr
+	movb	%al, adrive
 
-	data32
-	movl	$partn, %esi
-	data32
-	call	message
-
-	popl	%eax
+	movl	%cx, %ax
 	decl	%ax
 	xor		$0x03, %ax
 	andl	$0x0F, %ax
 	orl		$0x30, %ax
-	data32
-	call	chr
+	movb	%al, aprtn
 
-	data32
-	movl	$newln, %esi
-	data32
-	call	message
-
-	/* Restore %esi and %edx */
-	popl	%esi
-	popl	%edx
+	popl	%ax
 #endif
 
 	/* Load values from active partition table entry */
@@ -280,6 +258,12 @@ found:
 
 1:
 	DBGMSG(CHAR_G)
+#if 1
+	data32
+	movl	$info, %esi
+	data32
+	call	message
+#endif
 
 	# jump to the new code (%ds:%si is at he right point)
 	data32
@@ -343,9 +327,11 @@ message:
 	ret
 
 /* Info messages */
-drive:	.asciz		"Using Drive: "
-partn:	.asciz		" Partition: "
-newln:	.asciz		"\r\n"
+info:	.ascii		"Using Drive: "
+adrive:	.byte		'X'
+		.ascii		" Partition: "
+aprtn:	.byte		'Y'
+		.asciz		"\r\n"
 
 /* Error messages */
 fdmbr:	.asciz		"MBR on floppy or old BIOS\r\n"
