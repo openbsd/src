@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.382 2001/03/28 21:04:07 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.383 2001/03/28 23:52:23 chris Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -295,7 +295,7 @@ vendor NCUBE		0x10ff	NCube
 vendor JAZZ		0x1100	Jazz Multimedia
 vendor INITIO		0x1101	Initio
 vendor CREATIVELABS	0x1102	Creative Labs
-vendor TRIONES		0x1103	Triones Technologies
+vendor TRIONES		0x1103	HighPoint
 vendor RASTEROPS	0x1104	RasterOps
 vendor SIGMA		0x1105	Sigma Designs
 vendor VIATECH		0x1106	VIA
@@ -1751,8 +1751,8 @@ product TRIDENT 3DIMAGE_9850	0x9850	3DImage 9850
 product TRIDENT BLADE_3D	0x9880	Blade 3D
 
 /* Triones/HighPoint Technologies products */
-product	TRIONES	HPT343		0x0003	HPT343 EIDE
-product	TRIONES HPT366		0x0004	HPT36x/37x EIDE
+product	TRIONES	HPT343		0x0003	HPT343/345 IDE
+product	TRIONES HPT366		0x0004	HPT36x/370 IDE
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
