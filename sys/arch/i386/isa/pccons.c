@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.23 1996/08/27 07:32:04 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.24 1996/08/28 11:21:06 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -532,6 +532,7 @@ pcopen(dev, flag, mode, p)
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
 	struct tty *tp;
+	int s;
 
 	if (unit >= pc_cd.cd_ndevs)
 		return ENXIO;
@@ -539,11 +540,13 @@ pcopen(dev, flag, mode, p)
 	if (sc == 0)
 		return ENXIO;
 
+	s = spltty();
 	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
 		tty_attach(tp);
 	} else
 		tp = sc->sc_tty;
+	splx(s);
 
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
@@ -1583,10 +1586,6 @@ sget()
 top:
 	KBD_DELAY;
 	dt = inb(KBDATAP);
-
-#if NRND > 0
-	add_keyboard_randomness(dt);
-#endif
 
 	switch (dt) {
 	case KBR_ACK:
