@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.14 2002/02/19 15:05:46 tdeval Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.15 2002/02/22 14:56:58 tdeval Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -437,7 +437,7 @@ rf_get_device_status(fds, nfd)
 		}
 		if (device_config.nspares > 0) {
 			printf("Spares:\n");
-			for (j = 0; j < device_config.nspares; i++) {
+			for (j = 0; j < device_config.nspares; j++) {
 				printf("%20s: %s\n",
 				       device_config.spares[j].devname, 
 				       device_status(device_config.spares[j].status));
