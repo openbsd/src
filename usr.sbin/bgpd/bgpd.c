@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.104 2004/08/05 21:01:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.105 2004/08/24 11:43:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -178,19 +178,16 @@ main(int argc, char *argv[])
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
 		fatal("socketpair");
-	if (fcntl(pipe_m2s[0], F_SETFL, O_NONBLOCK) == -1 ||
-	    fcntl(pipe_m2s[1], F_SETFL, O_NONBLOCK) == -1)
-		fatal("fcntl");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2r) == -1)
 		fatal("socketpair");
-	if (fcntl(pipe_m2r[0], F_SETFL, O_NONBLOCK) == -1 ||
-	    fcntl(pipe_m2r[1], F_SETFL, O_NONBLOCK) == -1)
-		fatal("fcntl");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2r) == -1)
 		fatal("socketpair");
-	if (fcntl(pipe_s2r[0], F_SETFL, O_NONBLOCK) == -1 ||
-	    fcntl(pipe_s2r[1], F_SETFL, O_NONBLOCK) == -1)
-		fatal("fcntl");
+	session_socket_blockmode(pipe_m2s[0], BM_NONBLOCK);
+	session_socket_blockmode(pipe_m2s[1], BM_NONBLOCK);
+	session_socket_blockmode(pipe_m2r[0], BM_NONBLOCK);
+	session_socket_blockmode(pipe_m2r[1], BM_NONBLOCK);
+	session_socket_blockmode(pipe_s2r[0], BM_NONBLOCK);
+	session_socket_blockmode(pipe_s2r[1], BM_NONBLOCK);
 
 	prepare_listeners(&conf);
 
