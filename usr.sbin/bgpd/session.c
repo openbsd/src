@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.107 2004/02/01 18:20:59 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.108 2004/02/02 23:15:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1017,6 +1017,7 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 			log_peer_warn(&p->conf, "Write error");
 		buf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
 	}
 
 	start_timer_keepalive(p);
@@ -1064,6 +1065,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 			log_peer_warn(&peer->conf, "Write error");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
 	}
 	peer->stats.msg_sent_notification++;
 }
