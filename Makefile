@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 1998/03/17 18:10:53 mickey Exp $
+#	$OpenBSD: Makefile,v 1.26 1998/03/18 15:51:04 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -143,9 +143,10 @@ cross-gcc:
 	    /bin/sh ${.CURDIR}/gnu/usr.bin/gcc/configure \
 	    --prefix ${CROSSDIR}/usr \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
-	    ${MAKE} BISON=yacc LANGUAGES=c \
+	    ${MAKE} BISON=yacc LANGUAGES=c LDFLAGS=${LDSTATIC} \
 	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" && \
-	    ${MAKE} LANGUAGES=c install)
+	    ${MAKE} BISON=yacc LANGUAGES=c LDFLAGS=${LDSTATIC} \
+	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" install)
 .endif
 
 .include <bsd.subdir.mk>
