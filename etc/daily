@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.13 1996/12/07 07:33:06 bitblt Exp $
+#	$OpenBSD: daily,v 1.14 1996/12/07 18:46:46 millert Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -11,6 +11,12 @@ if [ -f /etc/daily.local ];then
 	echo "Running daily.local:"
 	. /etc/daily.local
 fi
+
+TMP=`mktemp /tmp/_daily.XXXXXX` || {
+	ls -ldgT $TMP
+	exit 1
+}
+trap 'rm -f $TMP' 0 1 15
 
 echo ""
 echo "NOT Removing scratch and junk files."
@@ -44,19 +50,7 @@ echo "NOT Removing scratch and junk files."
 # XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED 
 #	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
 #fi
-TDIR=/tmp/daily.$$
-if ! mkdir $TDIR ; then
-	printf "tmp directory %s already exists, looks like:\n" $TDIR
-	ls -alf $TDIR
-	exit 1
-fi
-cd $TDIR
-trap 'rm -rf $TDIR' 0 1 15
 
-
-TMP=daily.$$
-rm -f $TMP
-echo -n > $TMP
 find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
 		-o -fstype kernfs -o -fstype procfs \) -a -prune -o \
 	-name 'lost+found' -a -prune -o \
@@ -65,13 +59,16 @@ find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
 #	   -o -name '*.CKP' -o -name '.emacs_[0-9]*' \) \
 #		-a -atime +3 -exec rm -f -- {} \; -a -print > $TMP
 
-echo ""
-echo "Possible core dumps:"
-egrep '\.core' $TMP
+if egrep -q '\.core$' $TMP; then
+    echo ""
+    echo "Possible core dumps:"
+    egrep '\.core$' $TMP
 
-#echo ""
-#echo "Deleted files:"
-#egrep -v '\.core' $TMP
+    # XXX - we aren't deleting files due to security bug mentioned above
+    #echo ""
+    #echo "Deleted files:"
+    #egrep -v '\.core$' $TMP
+fi
 
 rm -f $TMP
 
@@ -93,9 +90,9 @@ fi
 
 echo ""
 if [ -d /var/yp/binding -a ! -d /var/yp/`domainname` ]; then 
-	echo "Not running calendar, (yp client)"
+	echo "Not running calendar, (yp client)."
 else
-	echo "Running calendar:"
+	echo "Running calendar."
 	calendar -a
 fi
 
@@ -132,7 +129,10 @@ echo ""
 echo "network:"
 netstat -i
 echo ""
-ruptime
+
+if [ -d /var/rwho ]; then
+	ruptime
+fi
 
 echo ""
 echo "NOT checking filesystems."
