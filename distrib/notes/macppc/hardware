@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.36 2004/10/02 04:33:31 brad Exp $
+dnl	$OpenBSD: hardware,v 1.37 2004/10/05 07:45:13 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -57,8 +57,10 @@ Supported devices {:-include-:}:
 		- ATI Mach64 GV
 		- ATI Mach64 128 PK
 		- ATI Mach64 128 VR AGP
-		- ATI Mobility M3
+		- ATI Rage 128 Mobility M3
 		- ATI Rage Fury AGP4x
+		- ATI Radeon Mobility M7
+		- ATI Radeon Mobility 9200 (M9+)
 		- Nvidia GeForce4 440 Go 64M
 
 	Serial ports
