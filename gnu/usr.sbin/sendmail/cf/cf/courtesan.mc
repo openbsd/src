@@ -4,7 +4,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.4 2001/07/25 17:27:56 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.5 2001/07/26 04:00:35 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -21,6 +21,8 @@ FEATURE(redirect)dnl
 MASQUERADE_AS(courtesan.com)dnl
 FEATURE(masquerade_envelope)dnl
 FEATURE(genericstable, `hash -o /etc/mail/mailnames')dnl
+FEATURE(generics_entire_domain)dnl
+GENERICS_DOMAIN(`courtesan.com')dnl
 dnl
 dnl Virtual domains
 FEATURE(stickyhost)dnl
