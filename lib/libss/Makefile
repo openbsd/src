@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:16 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/07/07 08:42:39 grr Exp $
 
 LIB=	ss
 HDRS=	ss.h ${.OBJDIR}/ss_err.h
@@ -7,7 +7,7 @@ SRCS=	ss_err.c data.c error.c execute_cmd.c help.c invocation.c list_rqs.c \
 	std_rqs.c
 CFLAGS+=-I. -I${.CURDIR}/.. -I${.CURDIR} -I${.CURDIR}/../com_err
 LDADD+=	${COM_ERR}
-CLEANFILES+=	ss_err.c ss_err.h std_rqs.c ss
+CLEANFILES+=	ss_err.c ss_err.h std_rqs.c
 
 ss_err.h ss_err.c:	${.CURDIR}/ss_err.et
 	test -e ss_err.et || ln -s ${.CURDIR}/ss_err.et .
@@ -32,5 +32,8 @@ includes: ss_err.h
 
 beforedepend:
 	test -h ss || ln -s . ss
+
+cleandir: _SUBDIRUSE clean
+	rm -f ss
 
 .include <bsd.lib.mk>
