@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.839 2005/03/02 17:58:42 xsa Exp 
+ *	OpenBSD: pcidevs,v 1.840 2005/03/07 13:28:26 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1822,6 +1822,7 @@
 #define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620T */
 
 /* NetMos */
+#define	PCI_PRODUCT_NETMOS_1P	0x9805		/* 1P */
 #define	PCI_PRODUCT_NETMOS_2S1P	0x9835		/* 2S1P */
 #define	PCI_PRODUCT_NETMOS_4S	0x9845		/* 4S */
 
