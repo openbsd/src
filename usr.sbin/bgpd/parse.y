@@ -1,7 +1,10 @@
-/*	$OpenBSD: parse.y,v 1.2 2003/12/17 18:11:31 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2003/12/19 01:38:34 henning Exp $ */
 
 /*
- * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2001 Daniel Hartmeier.  All rights reserved.
+ * Copyright (c) 2001 Theo de Raadt.  All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +18,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* lexer mostly from pfctl, written by Theo de Raadt */
 
 %{
 #include <sys/types.h>
