@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.10 1998/03/20 02:45:06 deraadt Exp $	*/
+/*	$OpenBSD: in.c,v 1.11 1998/03/27 18:59:56 angelos Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -467,21 +467,34 @@ in_broadcast(in, ifp)
 	/*
 	 * Look through the list of addresses for a match
 	 * with a broadcast address.
-	 * If ifp is NULL, check against all the local interfaces.
+	 * If ifp is NULL, check against all the interfaces.
 	 */
         for (ifn = if_first; ifn != if_target; ifn = ifn->if_list.tqe_next)
 	  for (ifa = ifn->if_addrlist.tqh_first; ifa;
 	       ifa = ifa->ifa_list.tqe_next)
-		if (ifa->ifa_addr->sa_family == AF_INET &&
-		    (((in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
-		       in.s_addr == ia->ia_netbroadcast.s_addr) &&
-		      (ia->ia_subnetmask != 0xffffffff)) ||
-		     /*
-		      * Check for old-style (host 0) broadcast.
-		      */
-		     in.s_addr == ia->ia_subnet ||
-		     in.s_addr == ia->ia_net))
-			    return 1;
+	      if (!ifp)
+	      {
+		  if (ifa->ifa_addr->sa_family == AF_INET &&
+		      ((ia->ia_subnetmask != 0xffffffff &&
+			(in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
+			 in.s_addr == ia->ia_subnet)) ||
+		       /*
+			* Check for old-style (host 0) broadcast.
+			*/
+		       (in.s_addr == ia->ia_netbroadcast.s_addr ||
+			in.s_addr == ia->ia_net)))
+		              return 1;
+	      }
+	      else
+		  if (ifa->ifa_addr->sa_family == AF_INET &&
+		      (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
+		       in.s_addr == ia->ia_netbroadcast.s_addr ||
+		       /*
+			* Check for old-style (host 0) broadcast.
+			*/
+		       in.s_addr == ia->ia_subnet ||
+		       in.s_addr == ia->ia_net))
+		              return 1;
 	return (0);
 #undef ia
 }
