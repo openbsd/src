@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1.1.1 2004/04/21 15:24:00 aoyama Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 2004/04/22 08:54:17 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -70,7 +70,7 @@
 /*
  * The memory looks like:
  *   0x00000 - 0x01000	trap vectors
- *   0x10000 - 0x20000	ROM monitor work area
+ *   0x01000 - 0x20000	ROM monitor work area
  *   0x20000 == start	Boot loader jumps here.
  */
 	text
