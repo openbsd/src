@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.32 2004/05/23 17:16:35 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.33 2004/07/20 20:39:38 miod Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -126,6 +126,9 @@ Mass Storage Devices, e.g., external disk drives.
 ADMtek AN986 / ADM8511 Pegasus family USB Ethernet interfaces.
 .It Xr axe 4
 ASIX Electronics AX88172 USB Ethernet interfaces.
+.It Xr cdce 4
+USB Host-to-Host (aka USB-to-USB) bridges based on the USB
+Communication Device Class (CDC) and Ethernet subclass.
 .It Xr cue 4
 CATC USB-EL1201A-based Ethernet interfaces.
 .It Xr kue 4
@@ -422,6 +425,7 @@ Human Interface Devices
 .Xr aue 4 ,
 .Xr axe 4 ,
 .Xr cardbus 4 ,
+.Xr cdce 4 ,
 .Xr cue 4 ,
 .Xr eisa 4 ,
 .Xr intro 4 ,
