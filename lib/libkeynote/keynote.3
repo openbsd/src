@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.11 1999/10/06 19:26:14 angelos Exp $
+.\" $OpenBSD: keynote.3,v 1.12 1999/10/09 06:34:14 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -547,7 +547,13 @@ indicating the returned value to the query. On failure, it returns \-1
 and sets
 .Va keynote_errno
 to the same values as
-.Xr kn_do_query 3 .
+.Xr kn_do_query 3 ,
+or to
+.Er ERROR_MEMORY
+if a trusted or untrusted assertion could not be added to the session due
+to lack of memory resources. Syntax errors in assertions will not be reported
+by
+.Fn kn_query .
 .Pp
 .Fn kn_encode_base64
 converts the data of length
