@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: binary.c,v 1.1 2003/06/22 22:20:07 deraadt Exp $
+ *	$Id: binary.c,v 1.2 2003/06/22 22:21:50 deraadt Exp $
  */
 
 #include <ctype.h>
@@ -40,7 +40,7 @@ bin_file(FILE *f)
 	char		buf[BUFFER_SIZE];
 	int		i, m;
 
-	if (fseek(f, SEEK_SET, 0) == -1)
+	if (fseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
 	if ((m = (int)fread(buf, 1, BUFFER_SIZE, f)) == 0)
