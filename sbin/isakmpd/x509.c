@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.59 2001/07/01 19:48:44 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.60 2001/07/05 07:16:52 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -131,10 +131,18 @@ x509_generate_kn (int id, X509 *cert)
 
   /* Missing or self-signed, ignore cert but don't report failure.  */
   if (!issuer || !subject || !LC (X509_name_cmp, (issuer, subject)))
-    return 1;
+    {
+      if (issuer)
+	LC (X509_NAME_free, (issuer));
+      if (subject)
+	LC (X509_NAME_free, (subject));
+      return 1;
+    }
 
   if (!x509_cert_get_key (cert, &key))
     {
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       LOG_DBG ((LOG_POLICY, 30,
 		"x509_generate_kn: failed to get public key from cert"));
       return 0;
@@ -147,12 +155,16 @@ x509_generate_kn (int id, X509 *cert)
   if (LKV (keynote_errno) == ERROR_MEMORY)
     {
       log_print ("x509_generate_kn: failed to get memory for public key");
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       LC (RSA_free, (key));
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get subject key"));
       return 0;
     }
   if (!ikey)
-    {
+    { 
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       LC (RSA_free, (key));
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get subject key"));
       return 0;
@@ -169,6 +181,8 @@ x509_generate_kn (int id, X509 *cert)
       if (LC (X509_STORE_get_by_subject, (&csc, X509_LU_X509, issuer, &obj)) !=
           X509_LU_X509)
 	{
+	  LC (X509_NAME_free, (issuer));
+	  LC (X509_NAME_free, (subject));
   	  LC (X509_STORE_CTX_cleanup, (&csc));
 	  LOG_DBG ((LOG_POLICY, 30,
 		    "x509_generate_kn: no certificate found for issuer"));
@@ -181,6 +195,8 @@ x509_generate_kn (int id, X509 *cert)
 
   if (icert == NULL)
     {
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: "
 		"missing certificates, cannot construct X509 chain"));
       free (ikey);
@@ -189,6 +205,8 @@ x509_generate_kn (int id, X509 *cert)
 
   if (!x509_cert_get_key (icert, &key))
     {
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       LOG_DBG ((LOG_POLICY, 30,
 		"x509_generate_kn: failed to get public key from cert"));
       free (ikey);
@@ -205,6 +223,8 @@ x509_generate_kn (int id, X509 *cert)
     {
       log_error ("x509_generate_kn: failed to get memory for public key");
       free (ikey);
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       LC (RSA_free, (key));
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer key"));
       return 0;
@@ -213,6 +233,8 @@ x509_generate_kn (int id, X509 *cert)
   if (!skey)
     {
       free (ikey);
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       LC (RSA_free, (key));
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer key"));
       return 0;
@@ -223,6 +245,8 @@ x509_generate_kn (int id, X509 *cert)
 		sizeof (char));
   if (!buf)
     {
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       log_error ("x509_generate_kn: "
 		 "failed to allocate memory for KeyNote credential");
       free (ikey);
@@ -256,6 +280,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid data in "
 			"NotValidBefore time field"));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -269,6 +295,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid length "
 			"of NotValidBefore time field (%d)", tm->length));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -288,6 +316,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid value in "
 			"NotValidBefore time field"));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -306,6 +336,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid length of "
 			"NotValidBefore time field (%d)", tm->length));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -325,6 +357,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid value in "
 			"NotValidBefore time field"));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -372,6 +406,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid data in "
 			"NotValidAfter time field"));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -385,6 +421,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid length of "
 			"NotValidAfter time field (%d)", tm->length));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -404,6 +442,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid value in "
 			"NotValidAfter time field"));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -422,6 +462,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid length of "
 			"NotValidAfter time field (%d)", tm->length));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -441,6 +483,8 @@ x509_generate_kn (int id, X509 *cert)
 	    {
 	      LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: invalid value in "
 			"NotValidAfter time field"));
+	      LC (X509_NAME_free, (issuer));
+	      LC (X509_NAME_free, (subject));
 	      free (ikey);
 	      free (skey);
 	      free (buf);
@@ -469,6 +513,8 @@ x509_generate_kn (int id, X509 *cert)
     {
       LOG_DBG ((LOG_POLICY, 30,
 		"x509_generate_kn: failed to add new KeyNote credential"));
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       free (buf);
       return 0;
     }
@@ -482,6 +528,8 @@ x509_generate_kn (int id, X509 *cert)
     {
       LOG_DBG ((LOG_POLICY, 50,
 		"x509_generate_kn: X509_NAME_oneline (issuer, ...) failed"));
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       return 0;
     }
 
@@ -489,8 +537,14 @@ x509_generate_kn (int id, X509 *cert)
     {
       LOG_DBG ((LOG_POLICY, 50,
 		"x509_generate_kn: X509_NAME_oneline (subject, ...) failed"));
+      LC (X509_NAME_free, (issuer));
+      LC (X509_NAME_free, (subject));
       return 0;
     }
+
+  /* Don't need them anymore */
+  LC (X509_NAME_free, (issuer));
+  LC (X509_NAME_free, (subject));
 
   buf = malloc (strlen (fmt2) + strlen (isname) + strlen (subname) + 56);
   if (!buf)
