@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.51 2003/03/28 02:39:07 millert Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.52 2003/04/04 02:21:26 krw Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -289,7 +289,11 @@ ccdinit(ccd, cpaths, p)
 	cs->sc_size = 0;
 	cs->sc_ileave = ccd->ccd_interleave;
 	cs->sc_nccdisks = ccd->ccd_ndev;
-	sprintf(cs->sc_xname, "ccd%d", ccd->ccd_unit);	/* XXX */
+	if (snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d",
+	    ccd->ccd_unit) >= sizeof(cs->sc_xname)) {
+		printf("ccdinit: device name too long.\n");
+		return(ENXIO);
+	}
 
 	/* Allocate space for the component info. */
 	cs->sc_cinfo = malloc(cs->sc_nccdisks * sizeof(struct ccdcinfo),
