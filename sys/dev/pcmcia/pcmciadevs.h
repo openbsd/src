@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.56 2001/03/27 07:36:23 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.57 2001/03/27 07:52:29 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.51 2001/03/27 07:36:08 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.52 2001/03/27 07:52:15 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -507,3 +507,5 @@
 #define	PCMCIA_PRODUCT_SMC_2632W	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_NANOSPEED_PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_NANOSPEED_PRISM2	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_CABLETRON_ROAMABOUT	{ "Cabletron", "RoamAbout 802.11 DS", "Version 01.01", NULL }
+#define	PCMCIA_PRODUCT_CABLETRON_ROAMABOUT	PCMCIA_PRODUCT_INVALID
