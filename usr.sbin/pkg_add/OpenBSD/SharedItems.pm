@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.3 2004/11/11 11:16:40 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.4 2004/11/27 11:36:16 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -55,10 +55,8 @@ sub cleanup
 	OpenBSD::ProgressMeter::set_header("Clean shared items");
 	my $total = 0;
 	$total += keys %$h if defined $h;
-	if ($state->{extra}) {
-		$total += keys %$u if defined $u;
-		$total += keys %$g if defined $g;
-	}
+	$total += keys %$u if defined $u;
+	$total += keys %$g if defined $g;
 	my $done = 0;
 
 	if (defined $h) {
@@ -82,22 +80,30 @@ sub cleanup
 			$done++;
 		}
 	}
-	if ($state->{extra}) {
-		if (defined $u) {
-			for my $user (keys %$u) {
-				OpenBSD::ProgressMeter::show($done, $total);
-				next if $remaining->{users}->{$user};
+	if (defined $u) {
+		while (my ($user, $pkgname) = each %$u) {
+			OpenBSD::ProgressMeter::show($done, $total);
+			next if $remaining->{users}->{$user};
+			if ($state->{extra}) {
 				System("/usr/sbin/userdel", $user);
-				$done++;
+			} else {
+				$state->set_pkgname($pkgname);
+				$state->print("You should also run /usr/sbin/userdel $user\n");
 			}
+			$done++;
 		}
-		if (defined $g) {
-			for my $group (keys %$g) {
-				OpenBSD::ProgressMeter::show($done, $total);
-				next if $remaining->{groups}->{$group};
+	}
+	if (defined $g) {
+		while (my ($group, $pkgname) = each %$g) {
+			OpenBSD::ProgressMeter::show($done, $total);
+			next if $remaining->{groups}->{$group};
+			if ($state->{extra}) {
 				System("/usr/sbin/groupdel", $group);
-				$done++;
+			} else {
+				$state->set_pkgname($pkgname);
+				$state->print("You should also run /usr/sbin/groupdel $group\n");
 			}
+			$done++;
 		}
 	}
 	OpenBSD::ProgressMeter::next();

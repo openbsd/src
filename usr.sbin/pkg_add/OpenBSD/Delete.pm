@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.11 2004/11/21 13:32:18 espie Exp $
+# $OpenBSD: Delete.pm,v 1.12 2004/11/27 11:36:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -189,7 +189,7 @@ sub delete
 	$state->{groups_to_rm} = {} unless defined $state->{groups_to_rm};
 
 	my $h = $state->{groups_to_rm};
-	$h->{$name} = 1;
+	$h->{$name} = $state->{pkgname};
 }
 
 package OpenBSD::PackingElement::DirBase;
@@ -284,23 +284,21 @@ sub delete
 	}
 	my $origname = $state->{destdir}.$orig->fullname();
 	if (! -e $realname) {
-		print "File $realname does not exist\n";
+		$state->print("File $realname does not exist\n");
 		return;
 	}
 	if (! -f $realname) {
-		print "File $realname is not a file\n";
+		$state->print("File $realname is not a file\n");
 		return;
 	}
 	if (!defined $orig->{md5}) {
-		print "Problem: file $name does not have an md5 checksum\n";
-		print "NOT deleting: $realname\n";
 		$state->print("Couldn't delete $realname (no md5)\n");
 		return;
 	}
 
 	if ($state->{quick}) {
 		unless ($state->{extra}) {
-			print "NOT deleting file $realname\n";
+			$state->print("You should also remove $realname\n");
 			return;
 		}
 	} else {
@@ -308,9 +306,8 @@ sub delete
 		if ($md5 eq $orig->{md5}) {
 			print "File $realname identical to sample\n" if $state->{not} or $state->{verbose};
 		} else {
-			print "File $realname NOT identical to sample\n";
 			unless ($state->{extra}) {
-				print "NOT deleting $realname\n";
+				$state->print("You should also remove $realname (which was modified)\n");
 				return;
 			}
 		}
@@ -369,16 +366,19 @@ package OpenBSD::PackingElement::Extra;
 sub delete
 {
 	my ($self, $state) = @_;
-	return unless $state->{extra};
 	my $name = $self->fullname();
 	my $realname = $state->{destdir}.$name;
-	if ($state->{beverbose}) {
+	if ($state->{beverbose} && $state->{extra}) {
 		print "deleting extra file: $realname\n";
 	}
 	return if $state->{not};
 	return unless -e $realname;
-	unlink($realname) or 
-	    print "problem deleting extra file $realname\n";
+	if ($state->{extra}) {
+		unlink($realname) or 
+		    print "problem deleting extra file $realname\n";
+	} else {
+		$state->print("You should also remove $realname\n");
+	}
 }
 
 package OpenBSD::PackingElement::Extradir;
@@ -386,8 +386,12 @@ sub delete
 {
 	my ($self, $state) = @_;
 	return unless $state->{extra};
-	return unless -e $state->{destdir}.$self->fullname();
-	$self->SUPER::delete($state);
+	my $realname = $state->{destdir}.$self->fullname();
+	if ($state->{extra}) {
+		$self->SUPER::delete($state);
+	} else {
+		$state->print("You should also remove the directory $realname\n");
+	}
 }
 
 package OpenBSD::PackingElement::ExtraUnexec;
@@ -395,9 +399,11 @@ package OpenBSD::PackingElement::ExtraUnexec;
 sub delete
 {
 	my ($self, $state) = @_;
-	return unless $state->{extra};
-
-	$self->run($state);
+	if ($state->{extra}) {
+		$self->run($state);
+	} else {
+		$state->print("You should also run ", $self->{expanded}, "\n");
+	}
 }
 
 package OpenBSD::PackingElement::Lib;
