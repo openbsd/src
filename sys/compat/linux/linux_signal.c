@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.9 2001/04/09 06:52:26 tholo Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.10 2001/07/27 06:10:38 csapuntz Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -349,6 +349,26 @@ bsd_to_linux_sigaction(bsa, lsa)
 	if ((bsa->sa_flags & SA_SIGINFO) != 0)
 		lsa->sa_flags |= LINUX_SA_SIGINFO;
 	lsa->sa__handler = bsa->sa_handler;
+}
+
+int
+linux_to_bsd_signal(int linuxsig, int *bsdsig)
+{
+	if (linuxsig < 0 || linuxsig > LINUX__NSIG)
+		return (EINVAL);
+
+	*bsdsig = linux_to_bsd_sig[linuxsig];
+	return (0);
+}
+
+int
+bsd_to_linux_signal(int bsdsig, int *linuxsig)
+{
+	if (bsdsig < 0 || bsdsig > NSIG)
+		return (EINVAL);
+
+	*linuxsig = bsd_to_linux_sig[bsdsig];
+	return (0);
 }
 
 /*

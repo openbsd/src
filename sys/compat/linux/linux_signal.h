@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.h,v 1.5 2000/06/07 14:11:38 niklas Exp $	*/
+/*	$OpenBSD: linux_signal.h,v 1.6 2001/07/27 06:10:38 csapuntz Exp $	*/
 /* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*
@@ -137,5 +137,8 @@ void linux_to_bsd_sigaction __P((struct linux_sigaction *,
     struct sigaction *));
 void bsd_to_linux_sigaction __P((struct sigaction *,
     struct linux_sigaction *));
+
+int  linux_to_bsd_signal (int, int *);
+int  bsd_to_linux_signal (int, int *);
 
 #endif /* !_LINUX_SIGNAL_H */
