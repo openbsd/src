@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 1997/09/21 04:21:25 niklas Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2000/04/30 15:28:50 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.14 1995/09/26 04:02:10 gwr Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
  *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
  *	vmparam.h,v 1.2 1993/05/22 07:58:38 cgd Exp
  */
+
+#ifndef _MACHINE_VMPARAM_H
+#define _MACHINE_VMPARAM_H
 
 /*
  * Machine dependent constants for Sun3
@@ -160,3 +163,21 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+ 
+#define MACHINE_NEW_NONCONTIG
+ 
+#define VM_PHYSSEG_MAX		4
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define VM_PHYSSEG_NOADD	/* can't add memory after vm_mem_init */
+ 
+/*
+ * pmap specific data stored in the vm_physmem[] array
+ */
+struct pmap_physseg {
+	struct pvlist *pv_head;
+};
+
+#define VM_NFREELIST		1
+#define VM_FREELIST_DEFAULT	0
+
+#endif /* _MACHINE_VMPARAM_H */
