@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_subr.c,v 1.3 1996/02/29 13:08:05 niklas Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.4 1996/03/02 00:08:06 niklas Exp $	*/
 /*	$NetBSD: umap_subr.c,v 1.7 1996/02/09 22:41:02 christos Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ umapfs_init()
 	printf("umapfs_init\n");		/* printed during system boot */
 #endif
 	umap_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, &umap_node_hash);
-	return 0;
 }
 
 /*
