@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.32 1999/02/16 23:58:00 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.33 1999/02/17 20:39:17 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -85,10 +85,12 @@ static void des1_encrypt(void *, u_int8_t *);
 static void des3_encrypt(void *, u_int8_t *);
 static void blf_encrypt(void *, u_int8_t *);
 static void cast5_encrypt(void *, u_int8_t *);
+static void skipjack_encrypt(void *, u_int8_t *);
 static void des1_decrypt(void *, u_int8_t *);
 static void des3_decrypt(void *, u_int8_t *);
 static void blf_decrypt(void *, u_int8_t *);
 static void cast5_decrypt(void *, u_int8_t *);
+static void skipjack_decrypt(void *, u_int8_t *);
 
 struct esp_hash esp_new_hash[] = {
      { ALG_AUTH_MD5, "HMAC-MD5-96", 
@@ -138,6 +140,12 @@ struct esp_xform esp_new_xform[] = {
        5, 16, 8 | 1,
        cast5_encrypt,
        cast5_decrypt 
+     },
+     { ALG_ENC_CAST, "Skipjack",
+       ESP_SKIPJACK_BLKS, ESP_SKIPJACK_IVS,
+       10, 10, 8 | 1,
+       skipjack_encrypt,
+       skipjack_decrypt 
      }
 };
 
@@ -201,6 +209,20 @@ cast5_decrypt(void *pxd, u_int8_t *blk)
 {
      struct esp_new_xdata *xd = pxd;
      cast_decrypt(&xd->edx_cks, blk, blk);
+}
+
+static void
+skipjack_encrypt(void *pxd, u_int8_t *blk)
+{
+     struct esp_new_xdata *xd = pxd;
+     skipjack_forwards(blk, blk, xd->edx_sks);
+}
+
+static void
+skipjack_decrypt(void *pxd, u_int8_t *blk)
+{
+     struct esp_new_xdata *xd = pxd;
+     skipjack_backwards(blk, blk, xd->edx_sks);
 }
 
 /*
@@ -363,6 +385,9 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
         case ALG_ENC_CAST:
 	    cast_setkey(&xd->edx_cks, (caddr_t) rk, txd.edx_confkeylen);
 	    break;
+        case ALG_ENC_SKIPJACK:
+	    subkey_table_gen((caddr_t) rk, xd->edx_sks);
+	    break;
     }
 
     if (txd.edx_flags & ESP_NEW_FLAG_AUTH)
@@ -428,7 +453,16 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 int
 esp_new_zeroize(struct tdb *tdbp)
 {
+    struct esp_new_xdata *xd = (struct esp_new_xdata *) tdbp->tdb_xdata;
+
     DPRINTF(("esp_new_zeroize(): freeing memory\n"));
+    if (xd->edx_enc_algorithm == ALG_ENC_SKIPJACK) {
+	int k;
+
+	for (k = 0; k < 10; k++)
+	    free(xd->edx_sks[k], M_TEMP);
+    }
+
     if (tdbp->tdb_xdata)
     {
       	FREE(tdbp->tdb_xdata, M_XDATA);

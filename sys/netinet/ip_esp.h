@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.19 1999/02/17 18:10:38 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.20 1999/02/17 20:39:17 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -46,12 +46,14 @@
 #include <netinet/ip_rmd160.h>
 #include <netinet/ip_blf.h>
 #include <netinet/ip_cast.h>
+#include <netinet/ip_skipjack.h>
 
 /* IV lengths */
 #define ESP_DES_IVS		8
 #define ESP_3DES_IVS		8
 #define ESP_BLF_IVS             8
 #define ESP_CAST_IVS            8
+#define ESP_SKIPJACK_IVS	8
 
 #define ESP_MAX_IVS		ESP_3DES_IVS
 
@@ -60,6 +62,7 @@
 #define ESP_3DES_BLKS		8
 #define ESP_BLF_BLKS            8
 #define ESP_CAST_BLKS           8
+#define ESP_SKIPJACK_BLKS	8
 
 #define ESP_MAX_BLKS            ESP_3DES_BLKS
 
@@ -183,6 +186,7 @@ struct esp_new_xdata {
 		u_int32_t Eks[3][16][2];
 		blf_ctx   Bks;
 		cast_key  Cks;
+		u_int8_t  *Sks[10];
 	} Xu;
 	union {
 		MD5_CTX    edx_MD5_ictx;
@@ -198,6 +202,7 @@ struct esp_new_xdata {
 
 #define edx_bks         Xu.Bks
 #define edx_cks         Xu.Cks
+#define edx_sks         Xu.Sks
 #define edx_md5_ictx	edx_ictx.edx_MD5_ictx
 #define edx_md5_octx	edx_octx.edx_MD5_octx
 #define edx_sha1_ictx	edx_ictx.edx_SHA1_ictx

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.105 1999/01/11 14:28:55 niklas Exp $
+#	$OpenBSD: files,v 1.106 1999/02/17 20:39:16 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -32,6 +32,7 @@ define	arc
 define	atm
 define	ether
 define	fddi
+define	crypto
 
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
@@ -454,6 +455,7 @@ file netinet/ip_ah_old.c		inet & ipsec
 file netinet/ip_ah_new.c		inet & ipsec
 file netinet/ip_rmd160.c		inet & ipsec
 file netinet/ip_sha1.c			inet & ipsec
+file netinet/ip_skipjack.c		inet & ipsec
 file netinet/ip_blf.c			inet & ipsec
 file netinet/ip_cast.c			inet & ipsec
 file netinet/libdeslite/ecb_enc.c	inet & ipsec
@@ -611,5 +613,3 @@ file netsec/sadb.c			key
 file netsec/pfkey.c			key
 file netsec/pfkeyv2.c			key
 file netsec/pfkeyv2_parsemessage.c	key
-
-file kern/nbuf.c			nrl_ipsec

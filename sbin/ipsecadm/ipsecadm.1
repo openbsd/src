@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.6 1999/02/09 21:13:06 kjell Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.7 1999/02/17 20:39:16 deraadt Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -174,19 +174,26 @@ For new ESP, specify new style self-describing padding should be used.
 .It enc
 The encryption algorithm to be used with the SPI. Possible values
 are:
-.Nm des
-and
-.Nm 3des
-for both old and new esp.
+.Bl -tag -width skipjack
+.It Nm des
+This is available for both old and new esp.
 Notice that hardware crackers for DES can be (and have been) built for
 US$250,000. Use DES for encryption of critical information at your risk.
 We suggest using of 3DES instead. The DES support is kept for interoperability
 (with old implementations) purposes only.
-Blowfish encryption
-.Nm blf
-and
-.Nm cast
-can only be used with new esp.
+.It Nm 3des 
+This is available for both old and new esp.  It is more considered to be
+more secure than straight DES, since it uses larger keys.
+.It Nm blf
+Blowfish encryption is available only in new esp.
+.It Nm cast
+CAST encryption is available only in new esp.
+.It Nm skipjack
+SKIPJACK encryption is available only in new esp.  This algorithm designed
+by the NSA is faster than 3DES.  However, since it was designed by the NSA
+it is a poor choice.
+.El
+.Pp
 .It auth
 The authentication algorithm to be used with the SPI. Possible values
 are:

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.2 1999/02/13 00:19:48 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.3 1999/02/17 20:39:16 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -103,6 +103,7 @@ transform xf[] = {
 	{"3des", ALG_ENC_3DES, XF_ENC |ESP_OLD|ESP_NEW},
 	{"blf", ALG_ENC_BLF,   XF_ENC |        ESP_NEW},
 	{"cast", ALG_ENC_CAST, XF_ENC |        ESP_NEW},
+	{"skipjack", ALG_ENC_SKIPJACK, XF_ENC |        ESP_NEW},
 	{"md5", ALG_AUTH_MD5,  XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
 	{"sha1", ALG_AUTH_SHA1,XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
 	{"rmd160", ALG_AUTH_RMD160, XF_AUTH|AH_NEW|ESP_NEW},

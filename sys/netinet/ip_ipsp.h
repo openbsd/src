@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.22 1999/02/17 18:10:38 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.23 1999/02/17 20:39:17 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -132,22 +132,23 @@ struct xformsw
 			    struct tdb *, struct mbuf **));
 };
 
-#define XF_IP4		1		/* IP inside IP */
-#define XF_OLD_AH	2		/* RFCs 1828 & 1852 */
-#define XF_OLD_ESP	3		/* RFCs 1829 & 1851 */
-#define XF_NEW_AH	4		/* AH HMAC 96bits */
-#define XF_NEW_ESP	5		/* ESP + auth 96bits + replay counter */
+#define XF_IP4			1	/* IP inside IP */
+#define XF_OLD_AH		2	/* RFCs 1828 & 1852 */
+#define XF_OLD_ESP		3	/* RFCs 1829 & 1851 */
+#define XF_NEW_AH		4	/* AH HMAC 96bits */
+#define XF_NEW_ESP		5	/* ESP + auth 96bits + replay counter */
 
 /* Supported key hash algorithms */
-#define ALG_AUTH_MD5	1
-#define ALG_AUTH_SHA1	2
-#define ALG_AUTH_RMD160 3
+#define ALG_AUTH_MD5		1
+#define ALG_AUTH_SHA1		2
+#define ALG_AUTH_RMD160		3
 
 /* Supported encryption algorithms */
-#define ALG_ENC_DES	1
-#define ALG_ENC_3DES	2
-#define ALG_ENC_BLF     3
-#define ALG_ENC_CAST    4
+#define ALG_ENC_DES		1
+#define ALG_ENC_3DES		2
+#define ALG_ENC_BLF		3
+#define ALG_ENC_CAST		4
+#define ALG_ENC_SKIPJACK	5
 
 #define XFT_AUTH	0x0001
 #define XFT_CONF	0x0100
