@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.1 2000/11/10 09:39:36 niklas Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.2 2000/12/06 21:16:45 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -76,7 +76,7 @@
 struct aac_queue_entry {
 	u_int32_t aq_fib_size;		/* FIB size in bytes */
 	u_int32_t aq_fib_addr;		/* receiver-space address of the FIB */
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 #define AAC_PRODUCER_INDEX	0
 #define AAC_CONSUMER_INDEX	1
@@ -102,7 +102,7 @@ struct aac_queue_table {
 	    qt_AdapNormRespQueue[AAC_ADAP_NORM_RESP_ENTRIES];
 	struct aac_queue_entry
 	    qt_AdapHighRespQueue[AAC_ADAP_HIGH_RESP_ENTRIES];
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /*
  * Adapter Init Structure: this is passed to the adapter with the 
@@ -123,7 +123,7 @@ struct aac_adapter_init {
 	u_int32_t PrintfBufferSize;
 	u_int32_t HostPhysMemPages;
 	u_int32_t HostElapsedSeconds;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 /*
  * Shared data types
@@ -177,12 +177,12 @@ typedef enum {
 struct aac_sg_entry {
 	u_int32_t SgAddress;
 	u_int32_t SgByteCount;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 struct aac_sg_table {
 	u_int32_t SgCount;
 	struct aac_sg_entry SgEntry[0];
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /*
  * Host-side scatter/gather list for 64-bit commands.
@@ -192,7 +192,7 @@ struct aac_sg_table64 {
 	u_int8_t SgSectorsPerPage;
 	u_int16_t SgByteOffset;
 	u_int64_t SgEntry[0];
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /*
  * Container creation data
@@ -208,7 +208,7 @@ struct aac_container_creation {
 	u_int32_t Minute:6;		/* 0-59 */
 	u_int32_t Second:6;		/* 0-59 */
 	u_int64_t ViaAdapterSerialNumber;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 struct FsaRevision {
 	union {
@@ -221,7 +221,7 @@ struct FsaRevision {
 	        u_int32_t ul;
 	} external;
 	u_int32_t buildNumber;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 /*
  * Adapter Information
@@ -319,7 +319,7 @@ struct aac_adapter_info {
 	AAC_BatteryPlatform batteryPlatform;
 	u_int32_t SupportedOptions;	/* supported features of this ctrlr */
 	AAC_OemFlavor OemVariant;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 /*
  * Monitor/Kernel interface.
@@ -412,20 +412,20 @@ struct aac_mntobj {
 		u_int32_t pad[8];
 	} ObjExtension;
 	u_int32_t AlterEgoId;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 struct aac_mntinfo {
 	AAC_VMCommand Command;
 	AAC_FType MntType;
 	u_int32_t MntCount;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 struct aac_mntinforesponse {
 	AAC_FSAStatus Status;
 	AAC_FType MntType;
 	u_int32_t MntRespCount;
 	struct aac_mntobj MntTable[1];
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /*
  * Write 'stability' options.
@@ -457,12 +457,12 @@ struct aac_blockread {
 	u_int32_t BlockNumber;
 	u_int32_t ByteCount;
 	struct aac_sg_table SgMap;	/* variable size */
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 struct aac_blockread_response {
 	AAC_FSAStatus Status;
 	u_int32_t ByteCount;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 struct aac_blockwrite {
 	AAC_VMCommand	Command;	/* not FSACommand! */
@@ -471,13 +471,13 @@ struct aac_blockwrite {
 	u_int32_t ByteCount;
 	AAC_CacheLevel Stable;
 	struct aac_sg_table SgMap;	/* variable size */
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 struct aac_blockwrite_response {
 	AAC_FSAStatus Status;
 	u_int32_t ByteCount;
 	AAC_CommitLevel Committed;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /*
  * Register definitions for the Adaptec AAC-364 'Jalapeno I/II' adapters, based
@@ -567,7 +567,7 @@ struct aac_blockwrite_response {
 struct aac_fib_list_entry {
 	struct fib_list_entry *Flink;
 	struct fib_list_entry *Blink;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 /*
  * FIB (FSA Interface Block?); this is the datastructure passed between the
@@ -590,14 +590,14 @@ struct aac_fib_header {
 		} _s;
 		struct aac_fib_list_entry FibLinks;
 	} _u;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 #define AAC_FIB_DATASIZE (512 - sizeof(struct aac_fib_header))
 
 struct aac_fib {
 	struct aac_fib_header Header;
 	u_int8_t data[AAC_FIB_DATASIZE];
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 /*
  * FIB commands
