@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.9 1998/11/11 17:55:55 millert Exp $
+.\"	$OpenBSD: doc-common,v 1.10 1999/04/18 18:09:30 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -192,7 +192,7 @@
 .de Os
 .ds oS Null
 .if "\\$1"" \{\
-.	ds oS OpenBSD 2.4
+.	ds oS OpenBSD 2.5
 .\}
 .if "\\$2"" \{\
 .	ds aa Non-Null
