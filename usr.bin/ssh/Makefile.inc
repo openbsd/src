@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2001/06/26 17:40:42 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2001/06/27 19:29:13 markus Exp $
 
 CFLAGS+=	-I${.CURDIR}/..
 
@@ -10,7 +10,9 @@ CFLAGS+=	-Wno-uninitialized
 CFLAGS+=	-Wmissing-prototypes
 
 #DEBUG=-g
+
 #CFLAGS+=	-DSMARTCARD
+#LDADD+=	-lsectok
 
 .include <bsd.obj.mk>
 

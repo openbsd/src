@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2001/06/26 17:40:43 markus Exp $
+#	$OpenBSD: Makefile,v 1.21 2001/06/27 19:29:16 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -16,5 +16,3 @@ SRCS=	ssh-keygen.c
 
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
-
-#LDADD+=	-lsectok
