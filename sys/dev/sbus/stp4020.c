@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.8 2003/06/25 22:33:18 mickey Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.9 2003/06/25 22:38:37 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -459,6 +459,22 @@ stp4020_statintr(arg)
 
 		if ((v & STP4020_ISR0_PCTO) != 0) {
 			DPRINTF(("stp4020[%d]: Card access timeout\n",
+			    h->sock));
+			r = 1;
+		}
+
+		if ((v & STP4020_ISR0_SCINT) != 0) {
+			DPRINTF(("stp4020[%d]: Status change\n",
+			    h->sock));
+			r = 1;
+		}
+
+		/*
+		 * Not an interrupt flag per se, but interrupts occur when
+		 * it is asserted, at least on sparc.
+		 */
+		if ((v & STP4020_ISR0_WAITST) != 0) {
+			DPRINTF(("stp4020[%d]: Wait signal\n",
 			    h->sock));
 			r = 1;
 		}
