@@ -1,10 +1,10 @@
-#	$OpenBSD: files.alpha,v 1.11 1997/04/13 04:52:33 millert Exp $
+#	$OpenBSD: files.alpha,v 1.12 1997/07/06 01:53:55 millert Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 8 64
 
