@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.26 1999/05/04 16:15:19 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 1999/08/27 13:58:58 millert Exp $
 #
 # Build wrapper for Perl 5.005_03.
 #
@@ -93,6 +93,8 @@ GENERATED=	config.sh Makefile cflags config.h makeaperl makedepend \
 CLEANFILES=	config.sh Policy.sh ${MANALL}
 
 .BEGIN:
+	@/usr/bin/arch -s >/dev/null || \
+	    { echo Error: you need to update /usr/bin/arch; exit 1; }
 	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
 
 all:	perl.build ${MANALL}
