@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.37 2002/07/23 17:53:46 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.38 2002/07/23 19:25:09 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -50,8 +50,8 @@
  */
 #define	HIFN_BAR0		(PCI_MAPREG_START + 0)	/* PUC register map */
 #define	HIFN_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
-#define	HIFN_RETRY_TIMEOUT	0x40
-#define	HIFN_TRDY_TIMEOUT	0x41
+#define	HIFN_RETRY_TIMEOUT	0x41
+#define	HIFN_TRDY_TIMEOUT	0x40
 
 /*
  * The values below should multiple of 4 -- and be large enough to handle

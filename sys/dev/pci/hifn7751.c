@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.128 2002/07/23 17:53:46 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.129 2002/07/23 19:25:09 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -85,6 +85,7 @@ void	hifn_reset_board(struct hifn_softc *, int);
 void	hifn_reset_puc(struct hifn_softc *);
 void	hifn_puc_wait(struct hifn_softc *);
 int	hifn_enable_crypto(struct hifn_softc *, pcireg_t);
+void	hifn_set_retry(struct hifn_softc *);
 void	hifn_init_dma(struct hifn_softc *);
 void	hifn_init_pci_registers(struct hifn_softc *);
 int	hifn_sramsize(struct hifn_softc *);
@@ -192,9 +193,7 @@ hifn_attach(parent, self, aux)
 		goto fail_io0;
 	}
 
-	cmd = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
-	cmd &= 0xffff0000;
-	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, cmd);
+	hifn_set_retry(sc);
 
 	if (sc->sc_flags & HIFN_IS_7811) {
 		u_int32_t revid;
@@ -485,6 +484,17 @@ hifn_reset_puc(sc)
 	hifn_puc_wait(sc);
 }
 
+void
+hifn_set_retry(sc)
+	struct hifn_softc *sc;
+{
+	u_int32_t r;
+
+	r = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_TRDY_TIMEOUT);
+	r &= 0xffff0000;
+	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_TRDY_TIMEOUT, r);
+}
+
 /*
  * Resets the board.  Values in the regesters are left as is
  * from the reset (i.e. initial values are assigned elsewhere).
@@ -527,9 +537,7 @@ hifn_reset_board(sc, full)
 
 	hifn_puc_wait(sc);
 
-	reg = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
-	reg &= 0xffff0000;
-	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, reg);
+	hifn_set_retry(sc);
 
 	if (sc->sc_flags & HIFN_IS_7811) {
 		for (reg = 0; reg < 1000; reg++) {
@@ -1081,12 +1089,9 @@ hifn_init_dma(sc)
 	struct hifn_softc *sc;
 {
 	struct hifn_dma *dma = sc->sc_dma;
-	u_int32_t reg;
 	int i;
 
-	reg = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
-	reg &= 0xffff0000;
-	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, reg);
+	hifn_set_retry(sc);
 
 	/* initialize static pointer values */
 	for (i = 0; i < HIFN_D_CMD_RSIZE; i++)
