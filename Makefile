@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.87 2002/08/16 02:04:58 wcobb Exp $
+#	$OpenBSD: Makefile,v 1.88 2002/09/17 16:19:49 miod Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -224,11 +224,12 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	(cd ${.CURDIR}/gnu/usr.bin/ld; \
 	    TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
 	    MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
-	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN= depend all; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOPIC= NOMAN= depend all; \
 	    TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
 	    MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} NOMAN= install)
+	    ${MAKE} NOPIC= NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/ld \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ld
 	(cd ${.CURDIR}/usr.bin/ar; \
