@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.3 1999/06/05 13:18:33 aaron Exp $
+.\"	$OpenBSD: mii.4,v 1.4 1999/07/08 18:47:40 deraadt Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,11 +70,9 @@ files to simply specify PHYs as described above in the synopsis.
 The following is an example of the messages displayed when a network
 interface with an attached PHY is detected by the kernel:
 .Bd -literal -offset indent
-epic0 at pci0 dev 12 function 0: SMC EPIC/100 Fast Ethernet
-epic0: interrupting at kn20aa irq 4
-epic0: SMC9432TX, Ethernet address 00:e0:29:07:17:c4
-qsphy0 at epic0 phy 3: QS6612 10/100 media interface, rev. 1
-qsphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
+hme0 at sbus0 slot 1 offset 0x8c00000 pri 7: address 08:00:20:22:86:b8 rev 34
+nsphy0 at hme0 phy 1: DP83840 10/100 media interface, rev. 1
+nsphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
 .Ed
 .Pp
 All PHY drivers display the media types supported by the PHY when it
