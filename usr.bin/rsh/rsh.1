@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsh.1,v 1.10 2001/06/23 23:15:37 hin Exp $
+.\"	$OpenBSD: rsh.1,v 1.11 2002/05/06 22:50:03 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -53,6 +53,14 @@ executes
 on
 .Ar hostname .
 .Pp
+.Em Note:
+.Nm
+has been deprecated in favor of
+.Xr ssh 1 .
+Use of
+.Nm
+is discouraged due to the inherent insecurity of host-based authentication.
+.Pp
 .Nm
 copies its standard input to the remote command, the standard
 output of the remote command to its standard output, and the
@@ -61,6 +69,12 @@ Interrupt, quit and terminate signals are propagated to the remote
 command;
 .Nm
 normally terminates when the remote command does.
+.Pp
+.Nm
+first attempts to use the Kerberos authorization mechanism, described below.
+If the remote host does not support Kerberos the standard Berkeley
+.Pa rhosts
+authorization mechanism is used.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -84,9 +98,6 @@ By default, the remote username is the same as the local username.
 The
 .Fl l
 option allows the remote name to be specified.
-Kerberos authentication is used, and authorization is determined
-as in
-.Xr rlogin 1 .
 .It Fl n
 Redirect input from the special device
 .Pa /dev/null
@@ -98,7 +109,10 @@ section of this manual page).
 If no
 .Ar command
 is specified, you will be logged in on the remote host using
-.Xr rlogin 1 .
+.Nm rlogin
+if it exists on the system or
+.Xr telnet 1
+if not.
 .Pp
 If
 .Nm
@@ -131,12 +145,33 @@ to
 .\" directory /usr/hosts.
 .\" If this directory is included in your search path, you can use the
 .\" shorthand ``host command'' for the longer form ``rsh host command''.
+.Sh KERBEROS AUTHENTICATION
+If Kerberos is configured on the system, each user may have a private
+authorization list in the file
+.Pa .klogin
+in their home directory.
+Each line in this file should contain a Kerberos principal name of the form
+.Ar principal.instance@realm .
+If the originating user is authenticated to one of the principals named in
+.Pa .klogin ,
+access is granted to the account.
+The principal
+.Ar accountname.@localrealm
+is granted access if there is no
+.Pa .klogin
+file.
+Otherwise a login and password will be prompted for on the remote machine
+as in
+.Xr login 1 .
+To avoid certain security problems, the
+.Pa .klogin
+file must be owned by the remote user.
 .Sh FILES
 .Bl -tag -width /etc/hosts -compact
 .It Pa /etc/hosts
 .El
 .Sh SEE ALSO
-.Xr rlogin 1 ,
+.Xr telnet 1 ,
 .Xr kerberos 3 ,
 .Xr krb_realmofhost 3 ,
 .Xr krb_sendauth 3 ,
@@ -169,7 +204,7 @@ or
 using
 .Nm rsh ;
 use
-.Xr rlogin 1
+.Xr telnet 1
 instead.
 .Pp
 Stop signals stop the local
