@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.25 2002/11/19 02:14:56 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.26 2002/11/19 02:18:50 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -853,6 +853,6 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 int
 pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 {
-	fprintf(stderr, "altq not supported in authpf\n");
+	fprintf(stderr, "altq and queue not supported in authpf\n");
 	return (1);
 }
