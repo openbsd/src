@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.16 1998/09/27 17:29:10 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.17 1998/09/27 17:54:22 mickey Exp $
 #
 
 source	/sys
@@ -46,8 +46,6 @@ option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-#option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
-#option		COMPAT_10	# NetBSD 1.0,
 option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
 #option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
