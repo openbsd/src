@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2000/05/27 22:12:33 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2000/05/28 03:55:21 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -948,7 +948,6 @@ pmap_pinit(pmap)
 	if (mmutype == MMU_68040)
 		pmap->pm_stfree = protostfree;
 #endif
-	pmap->pm_stchanged = TRUE;
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
 }
@@ -1259,16 +1258,13 @@ pmap_remove(pmap, sva, eva)
 						ptpmap->pm_stfree =
 						    protostfree;
 #endif
-					ptpmap->pm_stchanged = TRUE;
 					/*
 					 * XXX may have changed segment table
 					 * pointer for current process so
 					 * update now to reload hardware.
 					 */
 					if (active_user_pmap(ptpmap))
-						PMAP_ACTIVATE(ptpmap,
-						    (struct pcb *)
-						    &curproc->p_addr->u_pcb, 1);
+						PMAP_ACTIVATE(ptpmap, 1);
 				}
 			}
 			if (ptpmap == pmap_kernel())
@@ -2002,14 +1998,13 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
 		printf("pmap_activate(%p)\n", p);
 #endif
-	PMAP_ACTIVATE(pmap, pcb, p == curproc);
+	PMAP_ACTIVATE(pmap, p == curproc);
 }
 
 /*
@@ -2414,13 +2409,12 @@ pmap_enter_ptpage(pmap, va)
 			pmap->pm_stfree = protostfree;
 		}
 #endif
-		pmap->pm_stchanged = TRUE;
 		/*
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
 		if (active_user_pmap(pmap))
-			PMAP_ACTIVATE(pmap, &curproc->p_addr->u_pcb, 1);
+			PMAP_ACTIVATE(pmap, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter_pt: pmap %p stab %p(%p)\n", pmap,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 2000/05/27 20:14:18 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.6 2000/05/28 03:55:21 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.17 1997/06/10 18:34:52 veego Exp $	*/
 
 /* 
@@ -49,7 +49,6 @@
 struct pmap {
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	st_entry_t		*pm_stab;	/* KVA of segment table */
-	int			pm_stchanged;	/* ST changed */
 	int			pm_stfree;	/* 040: free lev2 blocks */
 	u_int			*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
@@ -80,12 +79,10 @@ typedef struct pmap	*pmap_t;
 /*
  * Macros for speed
  */
-#define PMAP_ACTIVATE(pmap, pcb, loadhw) \
+#define PMAP_ACTIVATE(pmap, loadhw) \
 { \
-       (pcb)->pcb_ustp = m68k_btop((vm_offset_t)(pmap)->pm_stpa); \
        if ((loadhw)) \
-               loadustp((pcb)->pcb_ustp); \
-       (pmap)->pm_stchanged = FALSE; \
+               loadustp(m68k_btop((pmap)->pm_stpa)); \
 }
 
 /*

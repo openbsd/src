@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 1997/01/16 09:25:59 niklas Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.3 2000/05/28 03:55:21 art Exp $	*/
 /*	$NetBSD: pcb.h,v 1.9 1995/05/11 23:05:57 chopps Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct pcb
 {
 	short	pcb_flags;	/* misc. process flags (+0) */
 	short	pcb_ps; 	/* processor status word (+2) */
-	int	pcb_ustp;	/* user segment table pointer (+4) */
+	int	__pcb_spare0;
 	int	pcb_usp;	/* user stack pointer (+8) */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 (+C) */
 	int	pcb_cmap2;	/* temporary copy PTE */

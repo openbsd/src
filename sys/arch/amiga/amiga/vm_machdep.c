@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2000/05/27 21:21:19 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2000/05/28 03:55:21 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -92,8 +92,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	/* Copy pcb from proc p1 to p2. */
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
-
-	PMAP_ACTIVATE(p2->p_vmspace->vm_map.pmap, pcb, 0);
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
@@ -392,7 +390,7 @@ vmapbuf(bp, sz)
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
 #if defined(UVM)
-	kva = uvm_km_valloc_wait(phys_map, len);
+	kva = uvm_km_valloc_wait(phys_map, ctob(npf));
 #else
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
 #endif
@@ -428,7 +426,7 @@ vunmapbuf(bp, sz)
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
 #if defined(UVM)
-	uvm_km_free_wakeup(phys_map, kva, len);
+	uvm_km_free_wakeup(phys_map, kva, ctob(npf));
 #else
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
 #endif

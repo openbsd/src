@@ -1,5 +1,5 @@
 #	$NetBSD: genassym.cf,v 1.3 1997/07/16 00:01:49 is Exp $
-#	$OpenBSD: genassym.cf,v 1.4 2000/05/27 19:46:49 art Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2000/05/28 03:55:21 art Exp $
 #
 # Copyright (c) 1982, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -110,10 +110,6 @@ define  P_MD_REGS	offsetof(struct proc, p_md.md_regs)
 
 define	SRUN		SRUN
 
-# VM structure fields
-define	PM_STCHG	offsetof(struct pmap, pm_stchanged)
-define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
-
 # interrupt/fault metering
 ifdef UVM
 define	UVMEXP_INTRS	offsetof(struct uvmexp, intrs)
@@ -169,7 +165,6 @@ define	PG_FRAME	PG_FRAME
 # pcb fields
 define	PCB_FLAGS	offsetof(struct pcb, pcb_flags)
 define	PCB_PS		offsetof(struct pcb, pcb_ps)
-define	PCB_USTP	offsetof(struct pcb, pcb_ustp)
 define	PCB_USP		offsetof(struct pcb, pcb_usp)
 define	PCB_REGS	offsetof(struct pcb, pcb_regs)
 define	PCB_CMAP2	offsetof(struct pcb, pcb_cmap2)

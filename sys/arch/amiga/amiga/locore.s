@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.27 2000/05/27 20:14:18 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.28 2000/05/28 03:55:21 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -1378,51 +1378,18 @@ Lswnofpsave:
 	movl	a1,_curpcb
 	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
 
-	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a2	| vmspace = p->p_vmspace
-#ifdef DIAGNOSTIC
-	tstl	a2			| map == VM_MAP_NULL?
-	jeq	Lbadsw			| panic
-#endif
-	movl	a2@(VM_PMAP),a2		| pmap = vmspace->vm_map.pmap
-	tstl	a2@(PM_STCHG)		| pmap->st_changed?
-	jeq	Lswnochg		| no, skip
+	/*
+	 * Activate process's address space.
+	 * XXX Should remember the last USTP value loaded, and call this
+	 * XXX only if it has changed.
+	 */
 	pea	a0@			| push proc
 	jbsr	_pmap_activate		| pmap_activate(p)
 	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr
-Lswnochg:
+
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lres2
-	movl	#CACHE_CLR,d0
-	movc	d0,cacr			| invalidate cache(s)
-	pflusha				| flush entire TLB
-	jra	Lres3
-Lres2:
-	.word	0xf518			| pflusha (68040)
-|	movl	#CACHE40_ON,d0
-|	movc	d0,cacr			| invalidate cache(s)
-#ifdef M68060
-	btst	#7,_machineid+3
-	jeq	Lres3
-	movc	cacr,d2
-	orl	#IC60_CUBC,d2		| clear user branch cache entries
-	movc	d2,cacr
-#endif
-Lres3:
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lres4
-	lea	_protorp,a0		| CRP prototype
-	movl	d0,a0@(4)		| stash USTP
-	pmove	a0@,crp			| load new user root pointer
-	jra	Lres5
-Lres4:
-	.word	0x4e7b,0x0806	| movc d0,URP
-Lres5:
+
 	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
@@ -1884,10 +1851,11 @@ ENTRY(loadustp)
 #endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lldustp040
+	pflusha				| flush entire TLB
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
-	movl	#DC_CLEAR,d0
+	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts				|   since pmove flushes TLB
 #ifdef M68060
@@ -1897,6 +1865,7 @@ Lldustp060:
 	movc	d1,cacr
 #endif
 Lldustp040:
+	.word	0xf518
 	.word	0x4e7b,0x0806		| movec d0,URP
 	rts
 
