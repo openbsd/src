@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.5 1999/07/18 17:12:38 maja Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.6 1999/07/20 07:38:33 maja Exp $	*/
 /*	$NetBSD: kbd.h,v 1.6 1996/03/31 22:21:35 pk Exp $ */
 
 /*
@@ -111,6 +111,15 @@
 #define	IDLE		0x308
 #define	COMPOSE		0x309
 #define	NONL		0x30a
+
+#define	FA_CLASS	0x400
+#define	FA_UMLAUT	0x400
+#define	FA_CFLEX	0x401
+#define	FA_TILDE	0x402
+#define	FA_CEDILLA	0x403
+#define	FA_ACUTE	0x404
+#define	FA_GRAVE	0x405
+#define	FA_CLASS_LAST	0x405
 
 #ifdef _KERNEL
 void 	kbd_serial __P((struct tty *,
