@@ -1,7 +1,7 @@
 #	$NetBSD: sys.mk,v 1.22 1995/09/24 23:49:09 christos Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
-unix=		We run NetBSD.
+unix=		We run OpenBSD.
 
 .SUFFIXES: .out .a .ln .o .c .cc .C .F .f .r .y .l .s .S .cl .p .h .sh .m4
 
