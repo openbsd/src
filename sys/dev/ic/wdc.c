@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.25 2001/01/29 00:20:16 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.26 2001/01/29 02:18:33 niklas Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -93,8 +93,6 @@
 #include <dev/ic/wdcvar.h>
 
 #include "atapiscsi.h"
-
-#define WDCDEBUG
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)

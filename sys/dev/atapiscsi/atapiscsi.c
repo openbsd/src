@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.34 2000/12/19 05:10:06 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.35 2001/01/29 02:18:33 niklas Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -77,8 +77,6 @@
 #define DMAMODE_WAIT	5
 #define READY		6
 
-
-#define WDCDEBUG
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -607,6 +605,7 @@ wdc_atapi_timer_handler(arg)
 
 	/* There is a race here between us and the interrupt */
 	s = splbio();
+	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	wdc_atapi_the_machine(chp, xfer, ctxt_timer);
 	splx(s);
 }
@@ -706,7 +705,12 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 			   xfer->endticks && (ticks - xfer->endticks >= 0));
 
 	if (xfer->timeout != -1) 
-		xfer->endticks = max((xfer->timeout * hz) / 1000, 1) + ticks;
+		/*
+		 * Add 1 tick to compensate for the fact that we can be just
+		 * microseconds before the tick changes.
+		 */
+		xfer->endticks =
+		    max((xfer->timeout * hz) / 1000, 1) + 1 + ticks;
 
 	if (xfer->claim_irq) claim_irq = xfer->claim_irq;
 
