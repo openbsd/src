@@ -1,7 +1,7 @@
-/*	$OpenBSD: newsyslog.c,v 1.61 2003/01/25 05:13:02 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.62 2003/01/25 05:16:50 millert Exp $	*/
 
 /*
- * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.61 2003/01/25 05:13:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.62 2003/01/25 05:16:50 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
