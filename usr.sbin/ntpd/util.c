@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2004/07/07 07:38:21 henning Exp $ */
+/*	$OpenBSD: util.c,v 1.8 2004/07/10 22:24:20 alexander Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -61,4 +61,28 @@ d_to_lfp(double d)
 	lfp.fraction = htonl((u_int32_t)((d - (u_int32_t)d) * UINT_MAX));
 
 	return (lfp);
+}
+
+double
+sfp_to_d(struct s_fixedpt sfp)
+{
+	double	ret;
+
+	sfp.int_part = ntohs(sfp.int_part);
+	sfp.fraction = ntohs(sfp.fraction);
+
+	ret = (double)(sfp.int_part) + ((double)sfp.fraction / USHRT_MAX);
+
+	return (ret);
+}
+
+struct s_fixedpt
+d_to_sfp(double d)
+{
+	struct s_fixedpt	sfp;
+
+	sfp.int_part = htons((u_int16_t)d);
+	sfp.fraction = htons((u_int16_t)((d - (u_int16_t)d) * USHRT_MAX));
+
+	return (sfp);
 }

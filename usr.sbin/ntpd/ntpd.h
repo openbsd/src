@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.21 2004/07/10 18:42:51 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.22 2004/07/10 22:24:20 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -212,3 +212,5 @@ double	gettime(void);
 void	d_to_tv(double, struct timeval *);
 double	lfp_to_d(struct l_fixedpt);
 struct	l_fixedpt d_to_lfp(double);
+double	sfp_to_d(struct s_fixedpt);
+struct	s_fixedpt d_to_sfp(double);
