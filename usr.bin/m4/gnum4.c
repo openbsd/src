@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.16 2002/02/16 21:27:48 millert Exp $ */
+/* $OpenBSD: gnum4.c,v 1.17 2002/04/26 13:13:41 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -198,7 +198,7 @@ static size_t bufsize = 0;
 static size_t current = 0;
 
 static void addchars(const char *, size_t);
-static void addchar(char);
+static void addchar(int);
 static char *twiddle(const char *);
 static char *getstring(void);
 static void exit_regerror(int, regex_t *);
@@ -231,7 +231,7 @@ addchars(c, n)
 
 static void 
 addchar(c)
-	char c;
+	int c;
 {
 	if (current +1 > bufsize) {
 		if (bufsize == 0)
