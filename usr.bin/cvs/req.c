@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.4 2004/08/04 13:55:24 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.5 2004/08/06 14:49:03 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -59,6 +59,7 @@ static int  cvs_req_root       (int, char *);
 static int  cvs_req_validreq   (int, char *);
 static int  cvs_req_validresp  (int, char *);
 static int  cvs_req_directory  (int, char *);
+static int  cvs_req_case       (int, char *);
 static int  cvs_req_argument   (int, char *);
 static int  cvs_req_globalopt  (int, char *);
 static int  cvs_req_version    (int, char *);
@@ -85,7 +86,7 @@ struct cvs_reqhdlr {
 	{ NULL               },
 	{ NULL               },
 	{ NULL               },
-	{ NULL               },
+	{ cvs_req_case       },
 	{ NULL               },
 	{ cvs_req_argument   },	/* 20 */
 	{ cvs_req_argument   },
@@ -236,6 +237,19 @@ cvs_req_directory(int reqid, char *line)
 
 
 
+	return (0);
+}
+
+/*
+ * cvs_req_case()
+ *
+ * Handler for the `Case' requests, which toggles case sensitivity ON or OFF
+ */
+
+static int
+cvs_req_case(int reqid, char *line)
+{
+	cvs_nocase = 1;
 	return (0);
 }
 

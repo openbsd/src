@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.10 2004/08/06 13:01:09 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.11 2004/08/06 14:49:02 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -55,6 +55,7 @@ int   cvs_compress = 0;
 int   cvs_trace = 0;
 int   cvs_nolog = 0;
 int   cvs_readonly = 0;
+int   cvs_nocase = 0;   /* set to 1 to disable case sensitivity on filenames */
 
 /* name of the command we are running */
 char *cvs_command;
@@ -278,7 +279,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-lQqtv] [-d root] [-e editor] [-z level] "
+	    "Usage: %s [-lQqtvx] [-b bindir] [-d root] [-e editor] [-z level] "
 	    "command [options] ...\n",
 	    __progname);
 }
@@ -313,8 +314,16 @@ main(int argc, char **argv)
 	    ((envstr = getenv("EDITOR")) != NULL))
 		cvs_editor = envstr;
 
-	while ((ret = getopt(argc, argv, "d:e:fHlnQqrtvz:")) != -1) {
+	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrtvz:")) != -1) {
 		switch (ret) {
+		case 'b':
+			/*
+			 * We do not care about the bin directory for RCS files
+			 * as this program has no dependencies on RCS programs,
+			 * so it is only here for backwards compatibility.
+			 */
+			cvs_log(LP_NOTICE, "the -b argument is obsolete");
+			break;
 		case 'd':
 			cvs_rootstr = optarg;
 			break;
@@ -347,6 +356,11 @@ main(int argc, char **argv)
 			printf("%s\n", CVS_VERSION);
 			exit(0);
 			/* NOTREACHED */
+			break;
+		case 'x':
+			/*
+			 * Kerberos encryption support, kept for compatibility
+			 */
 			break;
 		case 'z':
 			cvs_compress = (int)strtol(optarg, &ep, 10); 
