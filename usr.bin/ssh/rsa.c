@@ -35,7 +35,7 @@
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.11 1999/11/24 19:53:50 markus Exp $");
+RCSID("$Id: rsa.c,v 1.12 2000/02/21 21:47:31 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -124,7 +124,7 @@ rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	BN_bn2bin(in, inbuf);
 
 	if ((len = RSA_public_encrypt(ilen, inbuf, outbuf, key,
-				      RSA_PKCS1_PADDING)) <= 0)
+	    RSA_PKCS1_PADDING)) <= 0)
 		fatal("rsa_public_encrypt() failed");
 
 	BN_bin2bn(outbuf, len, out);
@@ -149,7 +149,7 @@ rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	BN_bn2bin(in, inbuf);
 
 	if ((len = RSA_private_decrypt(ilen, inbuf, outbuf, key,
-				       RSA_SSLV23_PADDING)) <= 0)
+	    RSA_PKCS1_PADDING)) <= 0)
 		fatal("rsa_private_decrypt() failed");
 
 	BN_bin2bn(outbuf, len, out);
