@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.77 2004/12/17 02:26:27 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.78 2005/01/08 06:02:59 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1657,8 +1657,10 @@ dc_attach(sc)
 		break;
 	case DC_TYPE_AL981:
 	case DC_TYPE_AN983:
-		bcopy(&sc->dc_srom[DC_AL_EE_NODEADDR], &sc->sc_arpcom.ac_enaddr,
-		    ETHER_ADDR_LEN);
+		*(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[0]) =
+			CSR_READ_4(sc, DC_AL_PAR0);
+		*(u_int16_t *)(&sc->sc_arpcom.ac_enaddr[4]) =
+			CSR_READ_4(sc, DC_AL_PAR1);
 		break;
 	case DC_TYPE_XIRCOM:
 		break;

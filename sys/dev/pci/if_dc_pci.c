@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.45 2004/09/28 16:58:56 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.46 2005/01/08 06:02:59 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -345,6 +345,8 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
+			dc_eeprom_width(sc);
+			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN983) {
 			found = 1;
@@ -353,9 +355,9 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_flags |= DC_64BIT_HASH;
 			sc->dc_pmode = DC_PMODE_MII;
+			dc_eeprom_width(sc);
+			/* Don't read SROM for - auto-loaded on reset */
 		}
-		dc_eeprom_width(sc);
-		dc_read_srom(sc, sc->dc_romwidth);
 		break;
 	case PCI_VENDOR_MACRONIX:
 	case PCI_VENDOR_ACCTON:
