@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.90 2001/02/06 22:43:02 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.91 2001/02/06 23:03:24 jakob Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -175,6 +175,7 @@ usage()
 	fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
 	fprintf(stderr, "  -4          Use IPv4 only.\n");
 	fprintf(stderr, "  -6          Use IPv6 only.\n");
+	fprintf(stderr, "  -1          Force protocol version 1.\n");
 	fprintf(stderr, "  -2          Force protocol version 2.\n");
 	fprintf(stderr, "  -o 'option' Process the option as if it was read from a configuration file.\n");
 	fprintf(stderr, "  -s          Invoke command (mandatory) as SSH2 subsystem.\n");
@@ -310,6 +311,9 @@ main(int ac, char **av)
 			optarg = NULL;
 		}
 		switch (opt) {
+		case '1':
+			options.protocol = SSH_PROTO_1;
+			break;
 		case '2':
 			options.protocol = SSH_PROTO_2;
 			break;
