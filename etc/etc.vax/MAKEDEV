@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.49 2002/12/05 03:00:27 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.50 2003/01/06 05:57:40 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -642,7 +642,7 @@ tun*)
 lkm)
 	rm -f lkm
 	mknod lkm c 28 0
-	chown root.kmem lkm
+	chown root._lkm lkm
 	chmod 640 lkm
 	;;
 
