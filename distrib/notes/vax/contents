@@ -11,6 +11,8 @@ OpenBSDfloppy
 		boot.mop	MOP-bootable image (for network installs); 
 				see below.
 
+OpenBSDfloppydesc(single,The)
+
 DistributionDescription(six)
 
 OpenBSDbase(44.4M,84.5M)

@@ -1,19 +1,8 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.17 2001/09/24 20:13:22 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.18 2001/10/02 00:36:39 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
-dnl
-dnl
-dnl If both the 1st and the 2nd argument exist, show the sizes.
-dnl Otherwise, evaluate to NULL.
-dnl
-dnl XXX fix to allow - empty 1st arg, for files uncompressed
-dnl                  - empty 2nd arg, for files where only compressed size is
-dnl                    known
-dnl
-define(`showsize',`ifelse(X$1,X,,X$2,X,,X,X,{:-
-		 [ $1 gzipped, $2 uncompressed ]-:})')dnl
 dnl
 dnl
 dnl  Everybody looks the same on these (or should if they don't)
@@ -44,8 +33,20 @@ dnl   MACHINE_ARCH and OSREV, assigned as cmd line parameters to m4 in the
 dnl   Makefile.
 dnl o `include' and `define' is required as include and define are both m4
 dnl   reserved words that evaluate to NULL if not quoted.
-dnl o showsize() must not be on a new line.  It creates its own new line if
-dnl   there are sizes to display, otherwise, evaluates to NULL
+dnl
+dnl showsize(gzipped size, uncompressed size)
+dnl
+dnl If both the 1st and the 2nd argument exist, show the sizes.
+dnl Otherwise, evaluate to NULL.
+dnl showsize() must not be on a new line.  It creates its own new line if
+dnl there are sizes to display, otherwise, evaluates to NULL
+dnl
+dnl XXX fix to allow - empty 1st arg, for files uncompressed
+dnl                  - empty 2nd arg, for files where only compressed size is
+dnl                    known
+dnl
+define({:-showsize-:},{:-ifelse(X$1,X,,X$2,X,,X,X,{:-
+		 [ $1 gzipped, $2 uncompressed ]-:})-:})dnl
 dnl
 dnl
 dnl 
@@ -162,21 +163,17 @@ define({:-OpenBSDcdrom-:},
 				2.88mb floppy image that contains almost all
 				OpenBSD drivers; see below.-:})dnl
 dnl
+dnl OpenBSDfloppydesc(number of floppies, Article, optional plural 's')
+dnl
+dnl Use as: OpenBSDfloppydesc(single, The) or OpenBSDfloppydesc(three, Each, s)
 define({:-OpenBSDfloppydesc-:},
-{:-In summary, there is one MACHINE floppy image called "floppy{:--:}OSrev.fs" (which
-you can copy to a floppy using rawrite.exe or `dd'; as described later
-in this document).  This is a bootable install floppy which can be 
-used both to install and to upgrade OpenBSD to the current version.   
-It is also useful for maintenance and disaster recovery.
+{:-Bootable installation/upgrade floppy image$3:
 
-Bootable installation/upgrade floppy:
-
-	This disk contains a file system, is bootable, and has   
-	enough utilities on board to prepare your hard disk drive
-	for OpenBSD and to install the OpenBSD distribution.
-
-	It also holds the utilities needed in order to upgrade a
-	system to the current version of OpenBSD.-:})dnl
+	The $1 floppy image$3 can be copied to a floppy using rawrite.exe
+	or `dd', as described later in this document.
+	$2 floppy image is a bootable install floppy which can be used
+	both to install and to upgrade OpenBSD to the current version.
+	It is also useful for maintenance and disaster recovery.-:})dnl
 dnl
 dnl
 dnl misc

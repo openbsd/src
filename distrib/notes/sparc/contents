@@ -1,6 +1,10 @@
 TopPart
 
 OpenBSDminiroot
+				It can be copied to the swap partition of
+				an existing OpenBSD, NetBSD, Linux, SunOS, 
+				or Solaris installation to allow installing
+				or upgrading to OpenBSD OSREV
 
 OpenBSDfloppy
 
@@ -24,35 +28,11 @@ Please note that there are multiple bootable images and kernels, intended
 to allow installing OpenBSD/MACHINE in a variety of situations without
 requiring a pre-existing working operating system.
 
-The "miniroot{:--:}OSrev.fs" is a small bootable root filesystem that can be used
-for installation or upgrade where there is some means to copy the miniroot
-image into a swap or unused partition on the system, and also for diskless
-or net booting.  This can be convenient if you have a existing installation
-of OpenBSD, NetBSD, SunOS, or Solaris and wish to test or upgrade the
-existing system to OpenBSD.
-
-The "floppy{:--:}OSrev.fs" is a bootable floppy image, with contents similar
-to a miniroot stored in a compressed kernel with pre-loaded ramdisk.
-
-These bootable images are also useful as "failsafe" boots for system
-maintenance and disaster recovery.
-
 The kernel and boot images are provided for net booting installations.
 While the OpenBSD bootblocks will work with the provided miniroot images,
 Sun bootblocks require a separate kernel image and root filesystem.
 
-
-Bootable installation images:
-  
-  floppy{:--:}OSrev.fs
-	This disk contains a compressed ramdisk filesystem, and holds
-        all utilities needed to install OpenBSD OSREV
-  
-  miniroot{:--:}OSrev.fs
-	This is a miniroot filesystem image which can be copied to the
-	swap partition of an existing OpenBSD, NetBSD, Linux, SunOS, 
-	or Solaris installation to allow upgrading to OpenBSD OSREV
-
+OpenBSDfloppydesc(single,The)
 
 DistributionDescription(ten)
 
