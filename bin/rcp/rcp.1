@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcp.1,v 1.14 2003/06/02 23:32:09 millert Exp $
+.\"	$OpenBSD: rcp.1,v 1.15 2003/07/25 09:49:02 jmc Exp $
 .\"	$NetBSD: rcp.1,v 1.6 1995/07/25 19:37:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -38,12 +38,10 @@
 .Nd remote file copy
 .Sh SYNOPSIS
 .Nm rcp
-.Op Fl Kpx
-.Op Fl k Ar realm
+.Op Fl px
 .Ar file1 file2
 .Nm rcp
-.Op Fl Kprx
-.Op Fl k Ar realm
+.Op Fl prx
 .Ar file ...
 .Ar directory
 .Sh DESCRIPTION
@@ -69,16 +67,6 @@ characters).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl K
-Turns off all Kerberos authentication.
-.It Fl k Ar realm
-Requests
-.Nm
-to obtain tickets
-for the remote host in realm
-.Ar realm
-instead of the remote host's realm as determined by
-.Xr krb_realmofhost 3 .
 .It Fl p
 Causes
 .Nm
@@ -138,11 +126,6 @@ The
 .Nm
 utility appeared in
 .Bx 4.2 .
-The version of
-.Nm
-described here
-has been reimplemented with Kerberos in
-.Bx 4.3 Reno .
 .Sh BUGS
 Doesn't detect all cases where the target of a copy might
 be a file in cases where only a directory should be legal.
