@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.12 1999/10/11 22:24:33 markus Exp $
+.\" $Id: sshd.8,v 1.13 1999/10/12 18:11:54 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -391,6 +391,13 @@ Specifies whether pure RSA authentication is allowed.  The default is
 .It Cm ServerKeyBits
 Defines the number of bits in the server key.  The minimum value is
 512, and the default is 768.
+.It Cm SilentDeny
+Specifies whether
+.Nm
+should log and complain to denied hosts or close the
+connection silently.
+The default is
+.Dq no .
 .It Cm SkeyAuthentication
 Specifies whether
 .Xr skey 1 

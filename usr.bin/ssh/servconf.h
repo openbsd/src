@@ -13,7 +13,7 @@ Definitions for server configuration data and for the functions reading it.
 
 */
 
-/* RCSID("$Id: servconf.h,v 1.8 1999/10/11 21:48:29 markus Exp $"); */
+/* RCSID("$Id: servconf.h,v 1.9 1999/10/12 18:11:54 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -64,6 +64,7 @@ typedef struct
 #endif
   int permit_empty_passwd;      /* If false, do not permit empty passwords. */
   int use_login;                /* If true, login(1) is used */
+  int silent_deny;              /* If true, do not complain to denied hosts */
   unsigned int num_allow_hosts;
   char *allow_hosts[MAX_ALLOW_HOSTS];
   unsigned int num_deny_hosts;

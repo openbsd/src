@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.13 1999/10/11 21:48:29 markus Exp $");
+RCSID("$Id: servconf.c,v 1.14 1999/10/12 18:11:54 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -58,6 +58,7 @@ void initialize_server_options(ServerOptions *options)
 #endif
   options->permit_empty_passwd = -1;
   options->use_login = -1;
+  options->silent_deny = -1;
   options->num_allow_hosts = 0;
   options->num_deny_hosts = 0;
   options->num_allow_users = 0;
@@ -139,6 +140,8 @@ void fill_default_server_options(ServerOptions *options)
     options->permit_empty_passwd = 1;
   if (options->use_login == -1)
     options->use_login = 0;
+  if (options->silent_deny == -1)
+    options->silent_deny = 0;
 }
 
 #define WHITESPACE " \t\r\n"
@@ -161,7 +164,7 @@ typedef enum
   sPasswordAuthentication, sAllowHosts, sDenyHosts, sListenAddress,
   sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
   sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
-  sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups
+  sUseLogin, sSilentDeny, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups
 
 } ServerOpCodes;
 
@@ -208,6 +211,7 @@ static struct
   { "strictmodes", sStrictModes },
   { "permitemptypasswords", sEmptyPasswd },
   { "uselogin", sUseLogin },
+  { "silentdeny", sSilentDeny },
   { "randomseed", sRandomSeedFile },
   { "keepalive", sKeepAlives },
   { "allowusers", sAllowUsers },
@@ -459,6 +463,10 @@ void read_server_config(ServerOptions *options, const char *filename)
 
         case sUseLogin:
           intptr = &options->use_login;
+          goto parse_flag;
+
+        case sSilentDeny:
+          intptr = &options->silent_deny;
           goto parse_flag;
 
 	case sLogFacility:
