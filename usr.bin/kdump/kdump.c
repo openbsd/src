@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.18 2002/07/06 19:14:20 nordin Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.19 2002/10/17 17:20:49 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.18 2002/07/06 19:14:20 nordin Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.19 2002/10/17 17:20:49 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,12 +88,14 @@ pid_t pid = -1;
 #include "../../sys/compat/ultrix/ultrix_syscall.h"
 
 #define KTRACE
+#define PTRACE
 #define NFSCLIENT
 #define NFSSERVER
 #define SYSVSEM
 #define SYSVMSG
 #define SYSVSHM
 #define LFS
+#define UFS_EXTATTR
 #include "../../sys/kern/syscalls.c"
 
 #include "../../sys/compat/bsdos/bsdos_syscalls.c"
@@ -107,12 +109,14 @@ pid_t pid = -1;
 #include "../../sys/compat/svr4/svr4_syscalls.c"
 #include "../../sys/compat/ultrix/ultrix_syscalls.c"
 #undef KTRACE
+#undef PTRACE
 #undef NFSCLIENT
 #undef NFSSERVER
 #undef SYSVSEM
 #undef SYSVMSG
 #undef SYSVSHM
 #undef LFS
+#undef UFS_EXTATTR
 
 struct emulation {
 	char *name;		/* Emulation name */
@@ -544,8 +548,10 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr,
-"usage: kdump [-dnlRT] [-e emulation] [-p pid] [-f trfile] [-m maxdata] [-t [cnis]]\n");
+	extern char *__progname;
+	fprintf(stderr, "usage: %s "
+	    "[-dnlRT] [-e emulation] [-p pid] [-f trfile] [-m maxdata] "
+	    "[-t [cnis]]\n", __progname);
 	exit(1);
 }
 
