@@ -1,4 +1,4 @@
-/*	$OpenBSD: phantglobs.h,v 1.5 2003/04/06 18:50:38 deraadt Exp $	*/
+/*	$OpenBSD: phantglobs.h,v 1.6 2003/05/12 07:43:27 pjanzen Exp $	*/
 /*	$NetBSD: phantglobs.h,v 1.3 1995/04/24 12:24:39 cgd Exp $	*/
 
 /*
@@ -119,7 +119,6 @@ void	procmain(void);
 void	purgeoldplayers(void);
 void	readmessage(void);
 void	readrecord(struct player *, long);
-long	recallplayer(void);
 long	recallplayer(void);
 long	rollnewplayer(void);
 void	scorelist(void);
