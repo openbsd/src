@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.14 2002/03/12 15:24:05 mickey Exp $
+.\"	$OpenBSD: biosboot.8,v 1.15 2003/01/29 16:53:37 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -40,7 +40,7 @@ i386-specific first-stage system bootstrap
 This small program (roughly 512 bytes of code) is responsible for
 loading the second stage
 .Xr boot 8
-program, which in turn, will load the kernel.
+program, which in turn will load the kernel.
 It takes no input or options directly.
 .Pp
 In order for
@@ -65,7 +65,7 @@ receives control from either the BIOS or the MBR it will print the message:
 .Dl loading /boot
 .Pp
 followed by a dot for every successfully loaded block,
-and then put cursor on the next line right before switching into
+and then put the cursor on the next line right before switching into
 protected mode and transferring control to the just loaded /boot program.
 .Sh DIAGNOSTICS
 Diagnostics consist of two error messages:
@@ -92,8 +92,8 @@ for the device you are booting from.
 The practice of making OpenBSD use the whole disk (ie: having
 .Nm
 as the MBR) has been deprecated, and will not work on certain BIOS versions.
-There is a lot of strange behaviour with different BIOS's, one of well
-known lobotomy cases is that the BIOS does not pass the right boot drive
+There is a lot of strange behaviour with different BIOSes; one well
+known lobotomy case is that the BIOS does not pass the right boot drive
 number to the
 .Nm
 program.  This is one of the main reasons that having

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ancontrol.8,v 1.16 2002/11/09 02:14:10 fgsch Exp $
+.\"	$OpenBSD: ancontrol.8,v 1.17 2003/01/29 16:53:36 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu> All rights reserved.
@@ -40,6 +40,7 @@
 .Nd configure Aironet 4500/4800 devices
 .Sh SYNOPSIS
 .Nm ancontrol
+.Bk -words
 .Op Ar interface
 .Op Fl A
 .Op Fl N
@@ -69,6 +70,7 @@
 .Op Fl t Ar 0|1|2|3|4
 .Op Fl v Ar 1|2|3|4
 .Op Fl W Ar 0|1|2
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -84,7 +86,7 @@ to point) or infrastructure mode, and the network name of a service
 set to join.
 .Nm
 can also be used to view the current NIC status, configuration
-and to dump out the values of the card's statistics counters.
+and to dump the values of the card's statistics counters.
 .Pp
 The
 .Ar interface
@@ -156,14 +158,19 @@ is specified as a MAC address consisting of 6 hexadecimal values
 separated by colons.
 By default, the
 .Fl a
-option only sets the first entry in the AP list.
+option only sets the first entry in the
+.Ar AP
+list.
 The
 .Fl v
-modifier can be used to specify exactly which AP list entry is to be
-modified.
+modifier can be used to specify exactly which
+.Ar AP
+list entry is to be modified.
 If the
 .Fl v
-flag is not used, the first AP list entry will be changed.
+flag is not used, the first
+.Ar AP
+list entry will be changed.
 .It Fl b Ar beacon period
 Set the ad-hoc mode beacon period.
 The becon period is specified in
@@ -329,7 +336,7 @@ the factory default.
 .It Fl r Ar RTS threshold
 Set the RTS/CTS threshold for a given interface.
 This controls the
-number of bytes used for the RTS/CTS handhake boundary.
+number of bytes used for the RTS/CTS handshake boundary.
 The
 .Ar RTS threshold
 can be any value between 0 and 2312.

@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)amd.8	5.10 (Berkeley) 4/19/94
-.\"	$Id: amd.8,v 1.13 2002/07/20 07:21:34 pvalchev Exp $
+.\"	$Id: amd.8,v 1.14 2003/01/29 16:53:36 jmc Exp $
 .\"
 .Dd April 19, 1994
 .Dt AMD 8
@@ -46,29 +46,25 @@
 .Nd automatically mount file systems
 .Sh SYNOPSIS
 .Nm amd
+.Bk -words
 .Op Fl nprv
 .Op Fl a Ar mount_point
 .Op Fl c Ar duration
 .Op Fl d Ar domain
-.Bk -words
 .Op Fl k Ar kernel-arch
-.Ek
 .Op Fl l Ar logfile
 .Op Fl t Ar interval.interval
-.Bk -words
 .Op Fl w Ar interval
-.Ek
 .Op Fl x Ar log-option
 .Op Fl y Ar YP-domain
-.Bk -words
 .Op Fl C Ar cluster-name
-.Ek
 .Op Fl D Ar option
 .Oo
 .Ar directory mapname
 .Op Fl map-options
 .Oc
 .Ar ...
+.Ek
 .Sh DESCRIPTION
 .Nm amd
 is a daemon that automatically mounts filesystems
@@ -146,7 +142,7 @@ in tenths of a second, between
 .Tn NFS/RPC/UDP
 retries.
 The default is 0.8 seconds.
-The second values alters the retransmit counter.
+The second value alters the retransmit counter.
 Useful defaults are supplied if either or both
 values are missing.
 .It Fl v
@@ -184,7 +180,7 @@ The most useful option is
 .Pp
 Since
 .Fl D
-is only used for debugging other options are not documented here:
+is only used for debugging, other options are not documented here:
 the current supported set of options is listed by the
 .Fl v
 option

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bad144.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: bad144.8,v 1.10 2000/11/09 17:53:11 aaron Exp $
+.\"	$Id: bad144.8,v 1.11 2003/01/29 16:53:37 jmc Exp $
 .\"
 .Dd June 6, 1993
 .Dt BAD144 8
@@ -66,7 +66,7 @@ The options are as follows:
 The argument list consists of new bad sectors to be added to an existing
 list.
 The new sectors are sorted into the list,
-which must have been in order.
+which must be in order.
 Replacement sectors are moved to accommodate the additions;
 the new replacement sectors are cleared.
 .It Fl c
@@ -114,7 +114,7 @@ The bad sectors must be listed in ascending order.
 The bad sector information and replacement sectors are conventionally
 only accessible through the
 .Dq c
-file system partition of the disk.o
+file system partition of disk.o.
 If that partition is used for a file system, the user is responsible for
 making sure that it does not overlap the bad sector information or any
 replacement sectors.
@@ -142,8 +142,7 @@ illegal value.
 .Nm
 is invoked by giving a device name (e.g.,
 .Dq hk0 ,
-.Dq hp1 ,
-etc.).
+.Dq hp1 ) .
 With no optional arguments
 it reads the first sector of the last track
 of the corresponding disk and prints out the bad sector information.

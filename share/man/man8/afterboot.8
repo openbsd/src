@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.75 2002/10/02 17:38:38 miod Exp $
+.\"	$OpenBSD: afterboot.8,v 1.76 2003/01/29 16:53:36 jmc Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -151,7 +151,7 @@ le0: flags=9863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST>
 	inet6 fe80::5ef0:f0f0%le0 prefixlen 64 scopeid 0x1
 .Ed
 .Pp
-and, a PPP interface something like:
+and a PPP interface something like:
 .Bd -literal -offset indent
 ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
         inet 203.3.131.108 --> 198.181.0.253 netmask 0xffff0000
@@ -419,7 +419,7 @@ and edit
 .Pa /etc/group
 by hand to add new groups.
 The manual page for
-.Xr su 1 ,
+.Xr su 1
 tells you to make sure to put people in
 the
 .Sq wheel
@@ -556,6 +556,7 @@ for more information.
 The
 .Pa /etc/mail/localhost.cf
 file already has this disabled.
+.br
 .Ss DHCP server
 If this is a
 DHCP
@@ -703,7 +704,7 @@ Install your own packages.
 The
 .Ox
 ports collection includes a large set of Third-Party software.
-A lot of it is available as binary packages, that you can download from
+A lot of it is available as binary packages that you can download from
 .Pa ftp://ftp.openbsd.org
 or a mirror, and install using
 .Xr pkg_add 1 .

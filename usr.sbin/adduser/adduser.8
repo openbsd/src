@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.26 2001/12/22 18:11:17 millert Exp $
+.\"	$OpenBSD: adduser.8,v 1.27 2003/01/29 16:53:36 jmc Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -34,6 +34,7 @@
 .Nd add and delete users from the system
 .Sh SYNOPSIS
 .Nm adduser
+.Bk -words
 .Oo Fl batch Ar username
 .Oo Ar group Ns Op , Ns Ar group
 .Ar ...
@@ -59,6 +60,7 @@
 .Op Fl uid_end Ar uid
 .Op Fl v | verbose
 .Op Fl unencrypted
+.Ek
 .Pp
 .Nm rmuser Op Ar username
 .Sh DESCRIPTION
@@ -176,7 +178,7 @@ Files named in the fashion of
 .Dq Pa dot.foo
 will be renamed to
 .Dq Pa .foo
-int the new directory.
+in the new directory.
 .It
 Mails the new user a welcome message at the discretion of the account creator.
 .El

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: arlad.8,v 1.4 2002/06/10 20:09:46 hin Exp $
+.\"     $OpenBSD: arlad.8,v 1.5 2003/01/29 16:53:36 jmc Exp $
 .\"	$KTH: arlad.8,v 1.7.2.2 2001/05/06 22:49:03 ahltorp Exp $
 .Dd September 5, 1998
 .Dt AFSD 8
@@ -7,7 +7,8 @@
 .Nm afsd
 .Nd AFS cache manager
 .Sh SYNOPSIS
-.Nm
+.Nm afsd
+.Bk -words
 .Op Fl t | Fl -test
 .Oo Fl c Ar string \*(Ba Xo
 .Fl -conffile= Ns Ar string Oc
@@ -35,6 +36,7 @@
 .Op Fl -version
 .Op Fl -help
 .Op Ar device
+.Ek
 .Sh DESCRIPTION
 .Nm
 runs on AFS client machines.

@@ -139,8 +139,8 @@ is a tool for building and installing extension modules for the Apache
 HyperText Transfer Protocol (HTTP) server. This is achieved by building a
 Dynamic Shared Object (DSO) from one or more source or object
 .I files
-which then can be loaded into
-the Apache server under runtime via the
+which can then be loaded into
+the Apache server at runtime via the
 .B LoadModule
 directive from
 .BR mod_so.
@@ -166,7 +166,7 @@ The module
 should be part of the displayed list.
 If these requirements are fulfilled, you can easily extend
 your Apache server's functionality by installing your own
-modules with the DSO mechanism by the help of this
+modules with the DSO mechanism, with the help of this
 .B apxs
 tool:
 
@@ -184,20 +184,20 @@ tool:
   $ _
 .fi
 
-The arguments
+The argument
 .I files
-can be any C source file (.c), a object file (.o) or
+can be any C source file (.c), an object file (.o) or
 even a library archive (.a). The
 .B apxs
 tool automatically recognizes these extensions and automatically uses the C
-source files for compilation while it just uses the object and archive files for
-the linking phase. But when using such pre-compiled objects, make sure they are
-compiled for Position Independend Code (PIC) to be able to use them for a
-DSO. For instance with GCC you always just have to use
+source files for compilation, whereas it just uses the object and archive 
+files for the linking phase. But when using such pre-compiled objects, 
+make sure they are compiled for Position Independent Code (PIC) to be able 
+to use them for a DSO. For instance, with GCC you just have to always use
 .BR -fpic .
 For other
-C compilers please consult its manual
-page or watch for the flags
+C compilers, please consult their manual
+pages or watch for the flags
 .B apxs
 uses to compile the object files.
 
@@ -263,7 +263,7 @@ This generates a subdirectory
 .I name
 (see option
 .BR \-n ")"
-and there two files: A sample module source file named
+and two files: A sample module source file named
 .BI mod_ name.c
 which can be used as a template for creating your own modules or
 as a quick start for playing with the 
@@ -361,7 +361,7 @@ options similarly to the
 .B \-i
 operation to edit Apache's
 .B httpd.conf
-configuration file without attempting to install the module.
+configuration file, without attempting to install the module.
 .PD
 .SH EXAMPLES
 Assume you have an Apache module named mod_foo.c available which should extend
@@ -400,8 +400,8 @@ This way a line named
   LoadModule foo_module libexec/mod_foo.so
 .fi
 
-is added to the configuration file if still not present.
-If you want to have this operation to be disabled, use the
+is added to the configuration file, if still not present.
+If you want this operation to be disabled, use the
 .B \-A
 option, i.e.
 
@@ -448,7 +448,7 @@ You can even use
 .B apxs
 to compile complex modules outside the Apache source tree, like PHP3, because
 .B apxs 
-automatically recognized C source files and object files.  
+automatically recognizes C source files and object files.  
 
 .nf
   $ cd php3
@@ -459,7 +459,7 @@ automatically recognized C source files and object files.
   $ _
 .fi
 
-Only C source files are compiled while remaining object files are used for the
+Only C source files are compiled, while remaining object files are used for the
 linking phase.
 
 .PD

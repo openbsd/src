@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.21 2003/01/14 23:53:25 avsm Exp $
+.\"	$OpenBSD: atactl.8,v 1.22 2003/01/29 16:53:37 jmc Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,8 +167,8 @@ after a reset.
 .Pp
 .It Cm puisenable
 Enables power-up in standby (puis) on the specified device, causing the
-device to wait with spinning up the disks after power-up.
-This may cause problems at boot if the device is to slow in spin-up.
+device to wait while spinning up the disks after power-up.
+This may cause problems at boot if the device is too slow in spin-up.
 This option is therefore
 .Em not recommended
 unless the implications are understood.
@@ -188,8 +188,8 @@ default setting of the device and it is recommended to leave this
 setting disabled.
 .Pp
 .It Cm puisspinup
-Explicitly spins up the device if it powered-up into standby mode (i.e.
-power-up in standby was enabled).
+Explicitly spins up the device if power-up in standby (puis) mode
+is enabled.
 .Pp
 .It Cm readaheadenable
 Enables read look-ahead on the specified device.
@@ -224,7 +224,7 @@ denied after a power cycle until the user password is sent to the device with
 the
 .Cm secunlock
 command.
-A master password may be set in a addition to the user password.
+A master password may be set in addition to the user password.
 The purpose of the master password is to allow an administrator to establish
 a password that is kept secret from the user, and which may be used to unlock
 the device if the user password is lost.
@@ -241,7 +241,7 @@ When the security level is set to high the device requires the
 command if the master password is used to unlock.
 When the security level is set to maximum the device requires a
 .Cm secerase
-command if the master password is used to unlock.
+command if the master password is used to unlock it.
 Execution of the
 .Cm secerase
 command erases all user data on the device.
@@ -254,20 +254,20 @@ If the security level was set to high during the last
 command, the device will unlock if the master password is received.
 If the security level was set to maximum during the last
 .Cm secsetpass
-command, the device won't unlock if the master password is received.
+command, the device won't unlock even if the master password is received.
 .Pp
 .It Cm secerase Ar user|master Op Ar enhanced
 Erases all user data and unlocks the specified device.
-Execution of this command with master password is the only way to unlock a
-device locked at maximum security level with
+Execution of this command with the master password is the only way to unlock a
+device locked at maximum security level with the
 .Cm secsetpass
-command if user password is lost or unknown.
+command if the user's password is lost or unknown.
 There are two erase modes: normal and enhanced.
 Default erase mode is normal.
 In the normal erase mode this command will write binary zeroes to
 all user data areas.
 The enhanced erase mode is optional and may not be supported by the device.
-When enhanced erase mode specified, the device will write predetermined
+When enhanced erase mode is specified, the device will write predetermined
 data patterns to all user data areas.
 In enhanced erase mode, all previously written user data will be overwritten,
 including sectors that are no longer in use due to reallocation.
@@ -296,8 +296,8 @@ command.
 .Em WARNING
 .br
 Be very careful while playing with these commands.
-Loss of the user and master passwords the device will result in an unaccessible
-device.
+Loss of the user and master passwords for the device will result 
+in an inaccessible device.
 .Pp
 .It Cm smartenable
 Enables SMART (Self-Monitoring, Analysis, and Reporting Technology) on the
@@ -317,7 +317,7 @@ information.
 .Pp
 Note that SMART
 .Em must
-be enabled while executing the next described commands or the device will
+be enabled while executing the following commands or the device will
 return an error.
 .Pp
 .It Cm smartstatus
@@ -334,7 +334,7 @@ Enables/disables attribute autosave feature on the specified device.
 .It Cm smartoffline Ar subcommand
 Causes the specified device to immediately initiate the optional set of
 activities that collect SMART data in off-line mode and then save this data
-to the device's non-volatile memory, or execute a self-diagnostic test
+to the device's non-volatile memory, or execute self-diagnostic test
 routines in either captive or off-line mode.
 The
 .Ar subcommand
@@ -376,7 +376,7 @@ Reads specified
 and prints it to stdout.
 The
 .Ar log
-may by one of the following:
+may be one of the following:
 .Bl -tag -width indent
 .Pp
 .It Em directory
@@ -393,9 +393,9 @@ The self-test log.
 .El
 .Pp
 .It Cm readattr
-Displays attributes thresholds and values for the specified device.
-Besides attributes values device vendor can provide additional information
-shown in the last column ``Raw''.
+Displays attribute thresholds and values for the specified device.
+Besides attribute values, device vendors may provide additional information
+shown in the last column, ``Raw''.
 Attributes names can be completely wrong since they vary between vendors and
 even models, so don't rely on it.
 SMART must be enabled while executing this command or the device will return
