@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.3 2003/06/19 18:52:12 mickey Exp $	*/
+/*	$OpenBSD: event.c,v 1.4 2003/07/09 10:54:38 markus Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -29,11 +29,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/tree.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#else 
+#include <sys/_time.h>
+#endif
 #include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +61,12 @@
 #ifdef HAVE_SELECT
 extern const struct eventop selectops;
 #endif
+#ifdef HAVE_POLL
+extern struct eventop pollops;
+#endif
+#ifdef HAVE_EPOLL
+extern struct eventop epollops;
+#endif
 #ifdef HAVE_WORKING_KQUEUE
 extern const struct eventop kqops;
 #endif
@@ -63,6 +75,12 @@ extern const struct eventop kqops;
 const struct eventop *eventops[] = {
 #ifdef HAVE_WORKING_KQUEUE
 	&kqops,
+#endif
+#ifdef HAVE_EPOLL
+	&epollops,
+#endif
+#ifdef HAVE_POLL
+	&pollops,
 #endif
 #ifdef HAVE_SELECT
 	&selectops,
@@ -122,6 +140,12 @@ event_init(void)
 
 		evbase = evsel->init();
 	}
+
+	if (evbase == NULL)
+		errx(1, "%s: no event mechanism available", __func__);
+
+	if (!issetugid() && getenv("EVENT_SHOW_METHOD")) 
+		fprintf(stderr, "libevent using: %s\n", evsel->name); 
 
 #if defined(USE_LOG) && defined(USE_DEBUG)
 	log_to(stderr);
@@ -192,7 +216,7 @@ event_loop(int flags)
 			struct timeval off;
 			LOG_DBG((LOG_MIST, 10,
 				    "%s: time is running backwards, corrected",
-				    __FUNCTION__));
+				    __func__));
 
 			timersub(&event_tv, &tv, &off);
 			timeout_correct(&off);
@@ -286,6 +310,22 @@ event_add(struct event *ev, struct timeval *tv)
 		if (ev->ev_flags & EVLIST_TIMEOUT)
 			event_queue_remove(ev, EVLIST_TIMEOUT);
 
+		/* Check if it is active due to a timeout.  Rescheduling
+		 * this timeout before the callback can be executed
+		 * removes it from the active list. */
+		if ((ev->ev_flags & EVLIST_ACTIVE) &&
+		    (ev->ev_res & EV_TIMEOUT)) {
+			/* See if we are just active executing this
+			 * event in a loop
+			 */
+			if (ev->ev_ncalls && ev->ev_pncalls) {
+				/* Abort loop */
+				*ev->ev_pncalls = 0;
+			}
+			
+			event_queue_remove(ev, EVLIST_ACTIVE);
+		}
+
 		gettimeofday(&now, NULL);
 		timeradd(&now, tv, &ev->ev_timeout);
 
@@ -297,7 +337,7 @@ event_add(struct event *ev, struct timeval *tv)
 	}
 
 	if ((ev->ev_events & (EV_READ|EV_WRITE)) &&
-	    !(ev->ev_flags & EVLIST_INSERTED)) {
+	    !(ev->ev_flags & (EVLIST_INSERTED|EVLIST_ACTIVE))) {
 		event_queue_insert(ev, EVLIST_INSERTED);
 
 		return (evsel->add(evbase, ev));
@@ -449,7 +489,7 @@ void
 event_queue_remove(struct event *ev, int queue)
 {
 	if (!(ev->ev_flags & queue))
-		errx(1, "%s: %p(fd %d) not on queue %x", __FUNCTION__,
+		errx(1, "%s: %p(fd %d) not on queue %x", __func__,
 		    ev, ev->ev_fd, queue);
 
 	ev->ev_flags &= ~queue;
@@ -467,7 +507,7 @@ event_queue_remove(struct event *ev, int queue)
 		TAILQ_REMOVE(&eventqueue, ev, ev_next);
 		break;
 	default:
-		errx(1, "%s: unknown queue %x", __FUNCTION__, queue);
+		errx(1, "%s: unknown queue %x", __func__, queue);
 	}
 }
 
@@ -475,7 +515,7 @@ void
 event_queue_insert(struct event *ev, int queue)
 {
 	if (ev->ev_flags & queue)
-		errx(1, "%s: %p(fd %d) already on queue %x", __FUNCTION__,
+		errx(1, "%s: %p(fd %d) already on queue %x", __func__,
 		    ev, ev->ev_fd, queue);
 
 	ev->ev_flags |= queue;
@@ -493,6 +533,6 @@ event_queue_insert(struct event *ev, int queue)
 		TAILQ_INSERT_TAIL(&eventqueue, ev, ev_next);
 		break;
 	default:
-		errx(1, "%s: unknown queue %x", __FUNCTION__, queue);
+		errx(1, "%s: unknown queue %x", __func__, queue);
 	}
 }

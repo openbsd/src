@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.8 2003/06/03 01:27:31 art Exp $
+.\"	$OpenBSD: event.3,v 1.9 2003/07/09 10:54:38 markus Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -279,8 +279,17 @@ adds
 .Pp
 It is possible to disable support for
 .Va kqueue
+or
+.Va select
 by setting the environment variable
-.Va EVENT_NOKQUEUE .
+.Va EVENT_NOKQUEUE
+or
+.Va EVENT_NOSELECT .
+By setting the environment variable
+.Va EVENT_SHOW_METHOD ,
+.Nm libevent
+displays the kernel notification method that it uses.
+.Pp
 .Sh RETURN VALUES
 Upon successful completion
 .Fn event_add

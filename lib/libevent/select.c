@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.4 2003/06/19 18:52:12 mickey Exp $	*/
+/*	$OpenBSD: select.c,v 1.5 2003/07/09 10:54:38 markus Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -29,10 +29,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <sys/types.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#else
+#include <sys/_time.h>
+#endif
 #include <sys/queue.h>
 #include <signal.h>
 #include <stdio.h>
@@ -50,17 +56,15 @@
 #endif
 
 #include "event.h"
+#include "evsignal.h"
 
-extern struct event_list timequeue;
 extern struct event_list eventqueue;
-extern struct event_list signalqueue;
 
 #ifndef howmany
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
 #endif
 
-short evsigcaught[NSIG];
-volatile sig_atomic_t signal_caught = 0;
+extern volatile sig_atomic_t evsignal_caught;
 
 struct selectop {
 	int event_fds;		/* Highest fd in fd set */
@@ -69,10 +73,6 @@ struct selectop {
 	fd_set *event_writeset;
 	sigset_t evsigmask;
 } sop;
-
-void signal_process(void);
-int signal_recalc(void);
-int signal_deliver(void);
 
 void *select_init	(void);
 int select_add		(void *, struct event *);
@@ -92,9 +92,13 @@ const struct eventop selectops = {
 void *
 select_init(void)
 {
+	/* Disable kqueue when this environment variable is set */
+	if (!issetugid() && getenv("EVENT_NOSELECT"))
+		return (NULL);
+
 	memset(&sop, 0, sizeof(sop));
 
-	sigemptyset(&sop.evsigmask);
+	evsignal_init(&sop.evsigmask);
 
 	return (&sop);
 }
@@ -144,7 +148,7 @@ select_recalc(void *arg, int max)
 		sop->event_fdsz = fdsz;
 	}
 
-	return (signal_recalc());
+	return (evsignal_recalc(&sop->evsigmask));
 }
 
 int
@@ -164,13 +168,13 @@ select_dispatch(void *arg, struct timeval *tv)
 			FD_SET(ev->ev_fd, sop->event_readset);
 	}
 
-	if (signal_deliver() == -1)
+	if (evsignal_deliver(&sop->evsigmask) == -1)
 		return (-1);
 
 	res = select(sop->event_fds + 1, sop->event_readset, 
 	    sop->event_writeset, NULL, tv);
 
-	if (signal_recalc() == -1)
+	if (evsignal_recalc(&sop->evsigmask) == -1)
 		return (-1);
 
 	if (res == -1) {
@@ -179,13 +183,12 @@ select_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-		signal_process();
+		evsignal_process();
 		return (0);
-	} else if (signal_caught)
-		signal_process();
+	} else if (evsignal_caught)
+		evsignal_process();
 
-	LOG_DBG((LOG_MISC, 80, __FUNCTION__": select reports %d",
-		 res));
+	LOG_DBG((LOG_MISC, 80, "%s: select reports %d", __func__, res));
 
 	maxfd = 0;
 	for (ev = TAILQ_FIRST(&eventqueue); ev != NULL; ev = next) {
@@ -216,17 +219,8 @@ select_add(void *arg, struct event *ev)
 {
 	struct selectop *sop = arg;
 
-	if (ev->ev_events & EV_SIGNAL) {
-		int signal;
-
-		if (ev->ev_events & (EV_READ|EV_WRITE))
-			errx(1, "%s: EV_SIGNAL incompatible use",
-			    __FUNCTION__);
-		signal = EVENT_SIGNAL(ev);
-		sigaddset(&sop->evsigmask, signal);
-
-		return (0);
-	}
+	if (ev->ev_events & EV_SIGNAL)
+		return (evsignal_add(&sop->evsigmask, ev));
 
 	/* 
 	 * Keep track of the highest fd, so that we can calculate the size
@@ -247,69 +241,8 @@ select_del(void *arg, struct event *ev)
 {
 	struct selectop *sop = arg;
 
-	int signal;
-
 	if (!(ev->ev_events & EV_SIGNAL))
 		return (0);
 
-	signal = EVENT_SIGNAL(ev);
-	sigdelset(&sop->evsigmask, signal);
-
-	return (sigaction(EVENT_SIGNAL(ev),(struct sigaction *)SIG_DFL, NULL));
+	return (evsignal_del(&sop->evsigmask, ev));
 }
-
-static void
-signal_handler(int sig)
-{
-	evsigcaught[sig]++;
-	signal_caught = 1;
-}
-
-int
-signal_recalc(void)
-{
-	struct sigaction sa;
-	struct event *ev;
-
-	if (sigprocmask(SIG_BLOCK, &sop.evsigmask, NULL) == -1)
-		return (-1);
-	
-	/* Reinstall our signal handler. */
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = signal_handler;
-	sa.sa_mask = sop.evsigmask;
-	sa.sa_flags |= SA_RESTART;
-	
-	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
-		if (sigaction(EVENT_SIGNAL(ev), &sa, NULL) == -1)
-			return (-1);
-	}
-	return (0);
-}
-
-int
-signal_deliver(void)
-{
-	return (sigprocmask(SIG_UNBLOCK, &sop.evsigmask, NULL));
-	/* XXX - pending signals handled here */
-}
-
-void
-signal_process(void)
-{
-	struct event *ev;
-	short ncalls;
-
-	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
-		ncalls = evsigcaught[EVENT_SIGNAL(ev)];
-		if (ncalls) {
-			if (!(ev->ev_events & EV_PERSIST))
-				event_del(ev);
-			event_active(ev, EV_SIGNAL, ncalls);
-		}
-	}
-
-	memset(evsigcaught, 0, sizeof(evsigcaught));
-	signal_caught = 0;
-}
-
