@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.13 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.14 2004/06/21 22:41:11 andreas Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -56,9 +56,9 @@ extern int trap_types;
 extern boolean_t db_cmd_loop_done;
 
 #ifdef MULTIPROCESSOR
-extern boolean_t	 db_switch_cpu;
-extern long		 db_switch_to_cpu;
-
+extern volatile int ddb_state;
+boolean_t	 db_switch_cpu;
+long		 db_switch_to_cpu;
 #endif
 
 int	db_active = 0;
@@ -70,6 +70,7 @@ void db_cpuinfo_cmd(db_expr_t, int, db_expr_t, char *);
 void db_startproc_cmd(db_expr_t, int, db_expr_t, char *);
 void db_stopproc_cmd(db_expr_t, int, db_expr_t, char *);
 void db_ddbproc_cmd(db_expr_t, int, db_expr_t, char *);
+int db_cpuid2apic(int);
 #endif /* MULTIPROCESSOR */
 
 /*
@@ -114,6 +115,16 @@ kdb_trap(type, code, regs)
 		}
 	}
 
+#ifdef MULTIPROCESSOR
+	s = splhigh();
+	SIMPLE_LOCK(&ddb_mp_slock);
+	if (ddb_state == DDB_STATE_EXITING)
+		ddb_state = DDB_STATE_NOT_RUNNING;
+	SIMPLE_UNLOCK(&ddb_mp_slock);
+	splx(s);
+	while (db_enter_ddb()) {
+#endif /* MULTIPROCESSOR */
+
 	/* XXX Should switch to kdb`s own stack here. */
 
 	ddb_regs = *regs;
@@ -151,6 +162,12 @@ kdb_trap(type, code, regs)
 		regs->tf_ss     = ddb_regs.tf_ss & 0xffff;
 	}
 
+
+#ifdef MULTIPROCESSOR
+		if (!db_switch_cpu)
+			ddb_state = DDB_STATE_EXITING;
+	}
+#endif /* MULTIPROCESSOR */
 	return (1);
 }
 
@@ -193,18 +210,28 @@ db_sysregs_cmd(addr, have_addr, count, modif)
 }
 
 #ifdef MULTIPROCESSOR
-void db_cpuinfo_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+int
+db_cpuid2apic(int id)
+{
+	int apic;
+
+	for (apic = 0; apic < I386_MAXPROCS; apic++) {
+		if (cpu_info[apic] != NULL &&
+		    cpu_info[apic]->ci_dev.dv_unit == id)
+			return (apic);
+	}
+	return (-1);
+}
+
+void
+db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int i;
 
 	for (i = 0; i < I386_MAXPROCS; i++) {
 		if (cpu_info[i] != NULL) {
 			db_printf("%c%4d: ", (i == cpu_number()) ? '*' : ' ',
-			    i);
+			    cpu_info[i]->ci_dev.dv_unit);
 			switch(cpu_info[i]->ci_ddb_paused) {
 			case CI_DDB_RUNNING:
 				db_printf("running\n");
@@ -230,62 +257,59 @@ void db_cpuinfo_cmd(addr, have_addr, count, modif)
 	}
 }
 
-void db_startproc_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+void
+db_startproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	int i;
+	int apic;
 
 	if (have_addr) {
-		if (addr >= 0 && addr < I386_MAXPROCS
-		    && cpu_info[addr] != NULL && addr != cpu_number())
-			db_startcpu(addr);
+		apic = db_cpuid2apic(addr);
+		if (apic >= 0 && apic < I386_MAXPROCS &&
+		    cpu_info[apic] != NULL && apic != cpu_number())
+			db_startcpu(apic);
 		else
 			db_printf("Invalid cpu %d\n", (int)addr);
 	} else {
-		for (i = 0; i < I386_MAXPROCS; i++) {
-			if (cpu_info[i] != NULL && i != cpu_number()) {
-				db_startcpu(i);
+		for (apic = 0; apic < I386_MAXPROCS; apic++) {
+			if (cpu_info[apic] != NULL && apic != cpu_number()) {
+				db_startcpu(apic);
 			}
 		}
 	}
 }
 
-void db_stopproc_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+void
+db_stopproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	int i;
+	int apic;
 
 	if (have_addr) {
-		if (addr >= 0 && addr < I386_MAXPROCS
-		    && cpu_info[addr] != NULL && addr != cpu_number())
-			db_stopcpu(addr);
+		apic = db_cpuid2apic(addr);
+		if (apic >= 0 && apic < I386_MAXPROCS &&
+		    cpu_info[apic] != NULL && apic != cpu_number())
+			db_stopcpu(apic);
 		else
 			db_printf("Invalid cpu %d\n", (int)addr);
 	} else {
-		for (i = 0; i < I386_MAXPROCS; i++) {
-			if (cpu_info[i] != NULL && i != cpu_number()) {
-				db_stopcpu(i);
+		for (apic = 0; apic < I386_MAXPROCS; apic++) {
+			if (cpu_info[apic] != NULL && apic != cpu_number()) {
+				db_stopcpu(apic);
 			}
 		}
 	}
 }
 
-void db_ddbproc_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+void
+db_ddbproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
+	int apic;
+
 	if (have_addr) {
-		if (addr >= 0 && addr < I386_MAXPROCS
-		    && cpu_info[addr] != NULL && addr != cpu_number()) {
-			db_switch_to_cpu = addr;
+		apic = db_cpuid2apic(addr);
+		if (apic >= 0 && apic < I386_MAXPROCS &&
+		    cpu_info[apic] != NULL && apic != cpu_number()) {
+			db_stopcpu(apic);
+			db_switch_to_cpu = apic;
 			db_switch_cpu = 1;
 			db_cmd_loop_done = 1;
 		} else {
