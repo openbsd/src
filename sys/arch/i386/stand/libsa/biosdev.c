@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.47 1997/11/01 16:35:19 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.48 1997/11/05 02:02:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -123,9 +123,9 @@ bios_getinfo(dev, pdi)
 	/*
 	 * NOTE: This seems to hang on certain machines.  Use function #8
 	 * first, and verify with #21 IFF #8 succeeds first.
-	 * don't try this for floppies.
+	 * don't try this for a:
 	 */
-	if (dev & 0x80) {
+	if (dev) {
 		__asm __volatile (DOINT(0x13) "; setc %b0"
 			: "=a" (rv) : "0" (0x1500), "d" (dev) : "%ecx", "cc");
 		if(!(rv & 0xff00))
