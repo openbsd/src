@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kthread.9,v 1.5 2003/06/04 04:29:03 deraadt Exp $
+.\"	$OpenBSD: kthread.9,v 1.6 2003/11/02 18:59:46 grange Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -79,6 +79,15 @@ when it can create threads, so it is up to
 to call
 .Fn kthread_create
 at that point.
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn kthread_create
+returns 0.
+Otherwise, the following error values are returned:
+.Bl -tag -width [EAGAIN]
+.It Bq Er EAGAIN
+The limit on the total number of system processes would be exceeded.
+.El
 .Sh SEE ALSO
 .Xr fork1 9
 .Sh BUGS
