@@ -1,4 +1,5 @@
-/*	$NetBSD: bpf.h,v 1.12 1995/09/27 18:30:40 thorpej Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.2 1996/03/03 21:07:02 niklas Exp $	*/
+/*	$NetBSD: bpf.h,v 1.13 1996/02/13 21:59:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -238,12 +239,6 @@ struct bpf_insn {
 
 #ifdef _KERNEL
 int	 bpf_validate __P((struct bpf_insn *, int));
-int	 bpfopen __P((dev_t, int));
-int	 bpfclose __P((dev_t, int));
-int	 bpfread __P((dev_t, struct uio *));
-int	 bpfwrite __P((dev_t, struct uio *));
-int	 bpfioctl __P((dev_t, u_long, caddr_t, int));
-int	 bpf_select __P((dev_t, int, struct proc *));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
 void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_sl.c,v 1.37 1995/08/12 23:59:22 mycroft Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.2 1996/03/03 21:07:10 niklas Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -82,6 +83,9 @@
 #include <sys/tty.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
+#if __NetBSD__
+#include <sys/systm.h>
+#endif
 
 #include <machine/cpu.h>
 
@@ -255,7 +259,7 @@ slopen(dev, tp)
 	int s;
 #endif
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
 	if (tp->t_line == SLIPDISC)
@@ -447,7 +451,7 @@ slstart(tp)
 	struct mbuf *m2;
 #if NBPFILTER > 0
 	u_char bpfbuf[SLMTU + SLIP_HDRLEN];
-	register int len;
+	register int len = 0;
 #endif
 #ifndef NetBSD						/* XXX - cgd */
 	extern int cfreecount;
@@ -520,7 +524,7 @@ slstart(tp)
 				bcopy(mtod(m1, caddr_t), cp, mlen);
 				cp += mlen;
 				len += mlen;
-			} while (m1 = m1->m_next);
+			} while ((m1 = m1->m_next) != NULL);
 		}
 #endif
 		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
@@ -542,7 +546,7 @@ slstart(tp)
 #endif
 		sc->sc_if.if_lastchange = time;
 
-#ifndef NetBSD						/* XXX - cgd */
+#ifndef __NetBSD__					/* XXX - cgd */
 		/*
 		 * If system is getting low on clists, just flush our
 		 * output queue (if the stuff was important, it'll get
@@ -553,7 +557,7 @@ slstart(tp)
 			sc->sc_if.if_collisions++;
 			continue;
 		}
-#endif /* !NetBSD */
+#endif /* !__NetBSD__ */
 		/*
 		 * The extra FRAME_END will start up a new packet, and thus
 		 * will flush any accumulated garbage.  We do this whenever
@@ -589,7 +593,7 @@ slstart(tp)
 					 * Put n characters at once
 					 * into the tty output queue.
 					 */
-#ifdef NetBSD						/* XXX - cgd */
+#ifdef __NetBSD__					/* XXX - cgd */
 					if (b_to_q((u_char *)bp, cp - bp,
 #else
 					if (b_to_q((char *)bp, cp - bp,

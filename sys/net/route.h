@@ -1,4 +1,5 @@
-/*	$NetBSD: route.h,v 1.8 1995/03/26 20:30:19 jtc Exp $	*/
+/*	$OpenBSD: route.h,v 1.2 1996/03/03 21:07:20 niklas Exp $	*/
+/*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -239,16 +240,16 @@ struct	radix_node_head *rt_tables[AF_MAX+1];
 
 struct	socket;
 void	 route_init __P((void));
-int	 route_output __P((struct mbuf *, struct socket *));
-int	 route_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+int	 route_output __P((struct mbuf *, ...));
+int	 route_usrreq __P((struct socket *, int, struct mbuf *,
+			   struct mbuf *, struct mbuf *));
 void	 rt_ifmsg __P((struct ifnet *));
 void	 rt_maskedcopy __P((struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *));
 void	 rt_missmsg __P((int, struct rt_addrinfo *, int, int));
 void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
-int	 rt_setgate __P((struct rtentry *,
-	    struct sockaddr *, struct sockaddr *));
+int	 rt_setgate __P((struct rtentry *, struct sockaddr *,
+			 struct sockaddr *));
 void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
@@ -257,8 +258,10 @@ struct rtentry *
 void	 rtfree __P((struct rtentry *));
 int	 rtinit __P((struct ifaddr *, int, int));
 int	 rtioctl __P((u_long, caddr_t, struct proc *));
-int	 rtredirect __P((struct sockaddr *, struct sockaddr *,
-	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
+void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
+			 struct sockaddr *, int, struct sockaddr *,
+			 struct rtentry **));
 int	 rtrequest __P((int, struct sockaddr *,
-	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
+			struct sockaddr *, struct sockaddr *, int,
+			struct rtentry **));
 #endif /* _KERNEL */

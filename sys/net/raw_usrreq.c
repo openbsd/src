@@ -1,4 +1,5 @@
-/*	$NetBSD: raw_usrreq.c,v 1.10 1995/06/12 00:46:55 mycroft Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.2 1996/03/03 21:07:18 niklas Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -42,12 +43,14 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/raw_cb.h>
 
+#include <machine/stdarg.h>
 /*
  * Initialize raw connection block q.
  */
@@ -68,15 +71,27 @@ raw_init()
  * Raw protocol interface.
  */
 void
-raw_input(m0, proto, src, dst)
+#if __STDC__
+raw_input(struct mbuf *m0, ...)
+#else
+raw_input(m0, va_alist)
 	struct mbuf *m0;
-	register struct sockproto *proto;
-	struct sockaddr *src, *dst;
+	va_dcl
+#endif
 {
 	register struct rawcb *rp;
 	register struct mbuf *m = m0;
 	register int sockets = 0;
 	struct socket *last;
+	va_list ap;
+	register struct sockproto *proto;
+	struct sockaddr *src, *dst;
+	
+	va_start(ap, m0);
+	proto = va_arg(ap, struct sockproto *);
+	src = va_arg(ap, struct sockaddr *);
+	dst = va_arg(ap, struct sockaddr *);
+	va_end(ap);
 
 	last = 0;
 	for (rp = rawcb.lh_first; rp != 0; rp = rp->rcb_list.le_next) {
@@ -101,7 +116,7 @@ raw_input(m0, proto, src, dst)
 			continue;
 		if (last) {
 			struct mbuf *n;
-			if (n = m_copy(m, 0, (int)M_COPYALL)) {
+			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (sbappendaddr(&last->so_rcv, src,
 				    n, (struct mbuf *)0) == 0)
 					/* should notify about lost packet */
@@ -127,14 +142,16 @@ raw_input(m0, proto, src, dst)
 }
 
 /*ARGSUSED*/
-void
-raw_ctlinput(cmd, arg)
+void *
+raw_ctlinput(cmd, arg, d)
 	int cmd;
 	struct sockaddr *arg;
+	void *d;
 {
 
 	if (cmd < 0 || cmd > PRC_NCMDS)
-		return;
+		return NULL;
+	return NULL;
 	/* INCOMPLETE */
 }
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: if.c,v 1.23 1995/08/12 23:59:19 mycroft Exp $	*/
+/*	$OpenBSD: if.c,v 1.4 1996/03/03 21:07:04 niklas Exp $	*/
+/*	$NetBSD: if.c,v 1.24 1996/02/13 22:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -48,6 +49,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/radix.h>
 
 int	ifqmaxlen = IFQ_MAXLEN;
 void	if_slowtimo __P((void *arg));
@@ -87,7 +89,6 @@ if_attach(ifp)
 	register struct sockaddr_dl *sdl;
 	register struct ifaddr *ifa;
 	static int if_indexlim = 8;
-	extern void link_rtrequest();
 
 	if (if_index == 0)
 		TAILQ_INIT(&ifnet);
@@ -306,7 +307,7 @@ link_rtrequest(cmd, rt, sa)
 	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == 0) ||
 	    ((ifp = ifa->ifa_ifp) == 0) || ((dst = rt_key(rt)) == 0))
 		return;
-	if (ifa = ifaof_ifpforaddr(dst, ifp)) {
+	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		IFAFREE(rt->rt_ifa);
 		rt->rt_ifa = ifa;
 		ifa->ifa_refcnt++;
@@ -342,12 +343,15 @@ void
 if_up(ifp)
 	register struct ifnet *ifp;
 {
+#ifdef notyet
 	register struct ifaddr *ifa;
+#endif
 
 	ifp->if_flags |= IFF_UP;
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	     ifa = ifa->ifa_list.tqe_next)
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 #endif
 	rt_ifmsg(ifp);
@@ -363,7 +367,7 @@ if_qflush(ifq)
 	register struct mbuf *m, *n;
 
 	n = ifq->ifq_head;
-	while (m = n) {
+	while ((m = n) != NULL) {
 		n = m->m_act;
 		m_freem(m);
 	}
@@ -469,7 +473,7 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFFLAGS:
-		if (error = suser(p->p_ucred, &p->p_acflag))
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
 			int s = splimp();
@@ -488,14 +492,14 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFMETRIC:
-		if (error = suser(p->p_ucred, &p->p_acflag))
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		ifp->if_metric = ifr->ifr_metric;
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (error = suser(p->p_ucred, &p->p_acflag))
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
@@ -544,8 +548,10 @@ ifioctl(so, cmd, data, p)
 		case OSIOCGIFNETMASK:
 			cmd = SIOCGIFNETMASK;
 		}
-		error =  ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-							    cmd, data, ifp));
+		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+						    (struct mbuf *) cmd,
+						    (struct mbuf *) data,
+						    (struct mbuf *) ifp));
 		switch (ocmd) {
 
 		case OSIOCGIFADDR:

@@ -1,4 +1,5 @@
-/*	$NetBSD: rtsock.c,v 1.16 1995/08/19 07:48:14 cgd Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.2 1996/03/03 21:07:21 niklas Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.17 1996/02/13 22:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -44,9 +45,14 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
+#include <vm/vm.h>
+#include <sys/sysctl.h>
+
 #include <net/if.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
+
+#include <machine/stdarg.h>
 
 struct	sockaddr route_dst = { 2, PF_ROUTE, };
 struct	sockaddr route_src = { 2, PF_ROUTE, };
@@ -85,8 +91,8 @@ route_usrreq(so, req, m, nam, control)
 
 	if (req == PRU_ATTACH) {
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if (so->so_pcb = rp)
-			bzero((caddr_t)so->so_pcb, sizeof(*rp));
+		if ((so->so_pcb = rp) != NULL)
+			bzero(so->so_pcb, sizeof(*rp));
 
 	}
 	if (req == PRU_DETACH && rp) {
@@ -126,9 +132,13 @@ route_usrreq(so, req, m, nam, control)
 
 /*ARGSUSED*/
 int
-route_output(m, so)
-	register struct mbuf *m;
-	struct socket *so;
+#if __STDC__
+route_output(struct mbuf *m, ...)
+#else
+route_output(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
 	register struct rt_msghdr *rtm = 0;
 	register struct rtentry *rt = 0;
@@ -138,6 +148,13 @@ route_output(m, so)
 	int len, error = 0;
 	struct ifnet *ifp = 0;
 	struct ifaddr *ifa = 0;
+	struct socket *so;
+	va_list ap;
+
+	va_start(ap, m);
+	so = va_arg(ap, struct socket *);
+	va_end(ap);
+
 
 #define senderr(e) { error = e; goto flush;}
 	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
@@ -203,8 +220,8 @@ route_output(m, so)
 	case RTM_LOCK:
 		if ((rnh = rt_tables[dst->sa_family]) == 0) {
 			senderr(EAFNOSUPPORT);
-		} else if (rt = (struct rtentry *)
-				rnh->rnh_lookup(dst, netmask, rnh))
+		} else if ((rt = (struct rtentry *)
+				rnh->rnh_lookup(dst, netmask, rnh)) != NULL)
 			rt->rt_refcnt++;
 		else
 			senderr(ESRCH);
@@ -217,7 +234,7 @@ route_output(m, so)
 			netmask = rt_mask(rt);
 			genmask = rt->rt_genmask;
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
-				if (ifp = rt->rt_ifp) {
+				if ((ifp = rt->rt_ifp) != NULL) {
 					ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
 					ifaaddr = rt->rt_ifa->ifa_addr;
 					if (ifp->if_flags & IFF_POINTOPOINT)
@@ -503,7 +520,7 @@ again:
 	default:
 		len = sizeof(struct rt_msghdr);
 	}
-	if (cp0 = cp)
+	if ((cp0 = cp) != NULL)
 		cp += len;
 	for (i = 0; i < RTAX_MAX; i++) {
 		register struct sockaddr *sa;
@@ -526,8 +543,9 @@ again:
 			if (rw->w_tmemsize < len) {
 				if (rw->w_tmem)
 					free(rw->w_tmem, M_RTABLE);
-				if (rw->w_tmem = (caddr_t)
-						malloc(len, M_RTABLE, M_NOWAIT))
+				rw->w_tmem = (caddr_t) malloc(len, M_RTABLE,
+							      M_NOWAIT);
+				if (rw->w_tmem)
 					rw->w_tmemsize = len;
 			}
 			if (rw->w_tmem) {
@@ -618,9 +636,9 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 	register struct rtentry *rt;
 {
 	struct rt_addrinfo info;
-	struct sockaddr *sa;
+	struct sockaddr *sa = NULL;
 	int pass;
-	struct mbuf *m;
+	struct mbuf *m = NULL;
 	struct ifnet *ifp = ifa->ifa_ifp;
 
 	if (route_cb.any_count == 0)
@@ -670,10 +688,11 @@ rt_newaddrmsg(cmd, ifa, error, rt)
  * This is used in dumping the kernel table via sysctl().
  */
 int
-sysctl_dumpentry(rn, w)
+sysctl_dumpentry(rn, v)
 	struct radix_node *rn;
-	register struct walkarg *w;
+	register void *v;
 {
+	register struct walkarg *w = v;
 	register struct rtentry *rt = (struct rtentry *)rn;
 	int error = 0, size;
 	struct rt_addrinfo info;
@@ -701,7 +720,7 @@ sysctl_dumpentry(rn, w)
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;
-		if (error = copyout((caddr_t)rtm, w->w_where, size))
+		if ((error = copyout((caddr_t)rtm, w->w_where, size)) != 0)
 			w->w_where = NULL;
 		else
 			w->w_where += size;
@@ -735,11 +754,12 @@ sysctl_iflist(af, w)
 			ifm->ifm_flags = ifp->if_flags;
 			ifm->ifm_data = ifp->if_data;
 			ifm->ifm_addrs = info.rti_addrs;
-			if (error = copyout((caddr_t)ifm, w->w_where, len))
+			error = copyout((caddr_t)ifm, w->w_where, len);
+			if (error)
 				return (error);
 			w->w_where += len;
 		}
-		while (ifa = ifa->ifa_list.tqe_next) {
+		while ((ifa = ifa->ifa_list.tqe_next) != NULL) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			ifaaddr = ifa->ifa_addr;
@@ -754,7 +774,8 @@ sysctl_iflist(af, w)
 				ifam->ifam_flags = ifa->ifa_flags;
 				ifam->ifam_metric = ifa->ifa_metric;
 				ifam->ifam_addrs = info.rti_addrs;
-				if (error = copyout(w->w_tmem, w->w_where, len))
+				error = copyout(w->w_tmem, w->w_where, len);
+				if (error)
 					return (error);
 				w->w_where += len;
 			}
@@ -767,10 +788,10 @@ sysctl_iflist(af, w)
 int
 sysctl_rtable(name, namelen, where, given, new, newlen)
 	int	*name;
-	int	namelen;
-	caddr_t	where;
+	u_int	namelen;
+	void 	*where;
 	size_t	*given;
-	caddr_t	*new;
+	void	*new;
 	size_t	newlen;
 {
 	register struct radix_node_head *rnh;
@@ -797,8 +818,9 @@ sysctl_rtable(name, namelen, where, given, new, newlen)
 	case NET_RT_FLAGS:
 		for (i = 1; i <= AF_MAX; i++)
 			if ((rnh = rt_tables[i]) && (af == 0 || af == i) &&
-			    (error = rnh->rnh_walktree(rnh,
-							sysctl_dumpentry, &w)))
+			    (error = (*rnh->rnh_walktree)(rnh,
+							  sysctl_dumpentry,
+							  &w)))
 				break;
 		break;
 
@@ -810,7 +832,7 @@ sysctl_rtable(name, namelen, where, given, new, newlen)
 		free(w.w_tmem, M_RTABLE);
 	w.w_needed += w.w_given;
 	if (where) {
-		*given = w.w_where - where;
+		*given = w.w_where - (caddr_t) where;
 		if (*given < w.w_needed)
 			return (ENOMEM);
 	} else {

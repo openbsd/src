@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ppp.h,v 1.9 1995/07/04 06:28:22 paulus Exp $	*/
+/*	$OpenBSD: if_ppp.h,v 1.2 1996/03/03 21:07:09 niklas Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.10 1996/02/13 22:00:21 christos Exp $	*/
 
 /*
  * if_ppp.h - Point-to-Point Protocol definitions.
@@ -126,5 +127,16 @@ struct ifpppcstatsreq {
 #if !defined(ifr_mtu)
 #define ifr_mtu	ifr_ifru.ifru_metric
 #endif
-
+#ifdef _KERNEL
+void pppattach __P((void));
+struct ppp_softc *pppalloc __P((pid_t));
+void pppdealloc __P((struct ppp_softc *));
+int pppioctl __P((struct ppp_softc *, u_long, caddr_t, int, struct proc *));
+int pppsioctl __P((struct ifnet *, u_long, caddr_t));
+int pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+		   struct rtentry *));
+struct mbuf *ppp_dequeue __P((struct ppp_softc *));
+void pppintr __P((void));
+void ppppktin __P((struct ppp_softc *, struct mbuf *, int));
+#endif
 #endif /* _IF_PPP_H_ */

@@ -1,4 +1,5 @@
-/*	$NetBSD: route.c,v 1.13 1995/08/12 23:59:25 mycroft Exp $	*/
+/*	$OpenBSD: route.c,v 1.2 1996/03/03 21:07:19 niklas Exp $	*/
+/*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -146,7 +147,7 @@ rtfree(rt)
 			panic ("rtfree 2");
 		rttrash--;
 		if (rt->rt_refcnt < 0) {
-			printf("rtfree: %x not freed (neg refs)\n", rt);
+			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
 		ifa = rt->rt_ifa;
@@ -176,7 +177,7 @@ ifafree(ifa)
  *
  * N.B.: must be called at splsoftnet
  */
-int
+void
 rtredirect(dst, gateway, netmask, flags, src, rtp)
 	struct sockaddr *dst, *gateway, *netmask, *src;
 	int flags;
@@ -498,7 +499,7 @@ rtinit(ifa, cmd, flags)
 			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
 			dst = deldst;
 		}
-		if (rt = rtalloc1(dst, 0)) {
+		if ((rt = rtalloc1(dst, 0)) != NULL) {
 			rt->rt_refcnt--;
 			if (rt->rt_ifa != ifa) {
 				if (m)
@@ -522,8 +523,8 @@ rtinit(ifa, cmd, flags)
 	if (cmd == RTM_ADD && error == 0 && (rt = nrt)) {
 		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
-			printf("rtinit: wrong ifa (%x) was (%x)\n", ifa,
-				rt->rt_ifa);
+			printf("rtinit: wrong ifa (%p) was (%p)\n",
+			       ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 			    rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));
 			IFAFREE(rt->rt_ifa);

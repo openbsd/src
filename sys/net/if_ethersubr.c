@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ethersubr.c,v 1.17 1995/12/24 03:33:43 mycroft Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.3 1996/03/03 21:07:07 niklas Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.18 1996/02/13 22:00:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -109,9 +110,9 @@ ether_output(ifp, m0, dst, rt0)
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	ifp->if_lastchange = time;
-	if (rt = rt0) {
+	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if (rt0 = rt = rtalloc1(dst, 1))
+			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL)
 				rt->rt_refcnt--;
 			else 
 				senderr(EHOSTUNREACH);
@@ -164,10 +165,12 @@ ether_output(ifp, m0, dst, rt0)
 		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
 			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
-		} else if (error =
-			    iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
-					    (char *)edst, &snpalen))
-			goto bad; /* Not Resolved */
+		} else {
+			error = iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
+						(char *)edst, &snpalen);
+			if (error)
+				goto bad; /* Not Resolved */
+		}
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
@@ -189,13 +192,15 @@ ether_output(ifp, m0, dst, rt0)
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
-		IFDEBUG(D_ETHER)
+#ifdef ARGO_DEBUG
+		if (argo_debug[D_ETHER]) {
 			int i;
 			printf("unoutput: sending pkt to: ");
 			for (i=0; i<6; i++)
 				printf("%x ", edst[i] & 0xff);
 			printf("\n");
-		ENDDEBUG
+		}
+#endif
 		} break;
 #endif /* ISO */
 #ifdef	LLC
@@ -304,10 +309,12 @@ ether_input(ifp, eh, m)
 	struct mbuf *m;
 {
 	register struct ifqueue *inq;
-	register struct llc *l;
 	u_int16_t etype;
-	struct arpcom *ac = (struct arpcom *)ifp;
 	int s;
+#if defined (ISO) || defined (LLC)
+	register struct llc *l;
+	struct arpcom *ac = (struct arpcom *)ifp;
+#endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -372,9 +379,10 @@ ether_input(ifp, eh, m)
 					if (m == 0)
 						return;
 					*mtod(m, struct ether_header *) = *eh;
-					IFDEBUG(D_ETHER)
+#ifdef ARGO_DEBUG
+					if (argo_debug[D_ETHER])
 						printf("clnp packet");
-					ENDDEBUG
+#endif
 					schednetisr(NETISR_ISO);
 					inq = &clnlintrq;
 					break;
@@ -610,7 +618,6 @@ ether_delmulti(ifr, ac)
 	register struct arpcom *ac;
 {
 	register struct ether_multi *enm;
-	register struct ether_multi **p;
 	struct sockaddr_in *sin;
 	u_char addrlo[6];
 	u_char addrhi[6];

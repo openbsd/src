@@ -1,4 +1,5 @@
-/*	$NetBSD: slcompress.c,v 1.13 1995/11/20 20:43:33 cgd Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.3 1996/03/03 21:07:22 niklas Exp $	*/
+/*	$NetBSD: slcompress.c,v 1.14 1996/02/13 22:00:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -45,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+#include <sys/systm.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -275,19 +277,22 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 		 * with it. */
 		 goto uncompressed;
 
-	if (deltaS = (u_int16_t)(ntohs(th->th_win) - ntohs(oth->th_win))) {
+	deltaS = (u_int16_t)(ntohs(th->th_win) - ntohs(oth->th_win));
+	if (deltaS) {
 		ENCODE(deltaS);
 		changes |= NEW_W;
 	}
 
-	if (deltaA = ntohl(th->th_ack) - ntohl(oth->th_ack)) {
+	deltaA = ntohl(th->th_ack) - ntohl(oth->th_ack);
+	if (deltaA) {
 		if (deltaA > 0xffff)
 			goto uncompressed;
 		ENCODE(deltaA);
 		changes |= NEW_A;
 	}
 
-	if (deltaS = ntohl(th->th_seq) - ntohl(oth->th_seq)) {
+	deltaS = ntohl(th->th_seq) - ntohl(oth->th_seq);
+	if (deltaS) {
 		if (deltaS > 0xffff)
 			goto uncompressed;
 		ENCODE(deltaS);

@@ -1,4 +1,5 @@
-/*	$NetBSD: ppp_tty.c,v 1.3 1995/10/05 05:55:14 mycroft Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.2 1996/03/03 21:07:12 niklas Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.4 1996/02/13 22:00:30 christos Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
@@ -92,6 +93,7 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -165,9 +167,9 @@ pppopen(dev, tp)
 {
     struct proc *p = curproc;		/* XXX */
     register struct ppp_softc *sc;
-    int error, s, i;
+    int error, s;
 
-    if (error = suser(p->p_ucred, &p->p_acflag))
+    if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	return (error);
 
     s = spltty();
@@ -222,7 +224,6 @@ pppclose(tp, flag)
     int flag;
 {
     register struct ppp_softc *sc;
-    struct mbuf *m;
     int s;
 
     s = spltty();
@@ -317,7 +318,7 @@ pppread(tp, uio, flag)
     splx(s);
 
     for (m = m0; m && uio->uio_resid; m = m->m_next)
-	if (error = uiomove(mtod(m, u_char *), m->m_len, uio))
+	if ((error = uiomove(mtod(m, u_char *), m->m_len, uio)) != 0)
 	    break;
     m_freem(m0);
     return (error);
@@ -358,7 +359,7 @@ pppwrite(tp, uio, flag)
 	len = M_TRAILINGSPACE(m);
 	if (len > uio->uio_resid)
 	    len = uio->uio_resid;
-	if (error = uiomove(mtod(m, u_char *), len, uio)) {
+	if ((error = uiomove(mtod(m, u_char *), len, uio)) != 0) {
 	    m_freem(m0);
 	    return (error);
 	}
@@ -394,7 +395,7 @@ ppptioctl(tp, cmd, data, flag, p)
     error = 0;
     switch (cmd) {
     case PPPIOCSASYNCMAP:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    break;
 	sc->sc_asyncmap[0] = *(u_int *)data;
 	break;
@@ -404,7 +405,7 @@ ppptioctl(tp, cmd, data, flag, p)
 	break;
 
     case PPPIOCSRASYNCMAP:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    break;
 	sc->sc_rasyncmap = *(u_int *)data;
 	break;
@@ -414,7 +415,7 @@ ppptioctl(tp, cmd, data, flag, p)
 	break;
 
     case PPPIOCSXASYNCMAP:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    break;
 	s = spltty();
 	bcopy(data, sc->sc_asyncmap, sizeof(sc->sc_asyncmap));
@@ -537,10 +538,10 @@ pppstart(tp)
     register struct mbuf *m;
     register int len;
     register u_char *start, *stop, *cp;
-    int n, s, ndone, done, idle;
+    int n, ndone, done, idle;
     struct mbuf *m2;
 
-    if ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0
+    if (((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
 	|| sc == NULL || tp != (struct tty *) sc->sc_devp) {
 	if (tp->t_oproc != NULL)
 	    (*tp->t_oproc)(tp);
@@ -815,7 +816,7 @@ pppinput(c, tp)
 	 * abort sequence "}~".
 	 */
 	if (sc->sc_flags & (SC_FLUSH | SC_ESCAPED)
-	    || ilen > 0 && sc->sc_fcs != PPP_GOODFCS) {
+	    || (ilen > 0 && sc->sc_fcs != PPP_GOODFCS)) {
 	    sc->sc_flags |= SC_PKTLOST;	/* note the dropped packet */
 	    if ((sc->sc_flags & (SC_FLUSH | SC_ESCAPED)) == 0){
 		if (sc->sc_flags & SC_DEBUG)
@@ -992,7 +993,7 @@ ppplogchar(sc, c)
     if (c >= 0)
 	sc->sc_rawin[sc->sc_rawin_count++] = c;
     if (sc->sc_rawin_count >= sizeof(sc->sc_rawin)
-	|| c < 0 && sc->sc_rawin_count > 0) {
+	|| (c < 0 && sc->sc_rawin_count > 0)) {
 	printf("ppp%d input: ", sc->sc_if.if_unit);
 	pppdumpb(sc->sc_rawin, sc->sc_rawin_count);
 	sc->sc_rawin_count = 0;

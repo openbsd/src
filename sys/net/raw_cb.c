@@ -1,4 +1,5 @@
-/*	$NetBSD: raw_cb.c,v 1.8 1995/06/12 00:46:53 mycroft Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.2 1996/03/03 21:07:16 niklas Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -80,7 +81,7 @@ raw_attach(so, proto)
 	 */
 	if (rp == 0)
 		return (ENOBUFS);
-	if (error = soreserve(so, raw_sendspace, raw_recvspace))
+	if ((error = soreserve(so, raw_sendspace, raw_recvspace)) != 0)
 		return (error);
 	rp->rcb_socket = so;
 	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;

@@ -1,4 +1,5 @@
-/*	$NetBSD: bpf.c,v 1.23 1995/09/27 18:30:37 thorpej Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.2 1996/03/03 21:07:00 niklas Exp $	*/
+/*	$NetBSD: bpf.c,v 1.24 1996/02/13 21:59:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -65,6 +66,7 @@
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
+#include <net/net_conf.h>
 
 #include <sys/errno.h>
 
@@ -122,13 +124,18 @@ static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_mcopy __P((const void *, void *, size_t));
 static int	bpf_movein __P((struct uio *, int,
-		    struct mbuf **, struct sockaddr *));
+			        struct mbuf **, struct sockaddr *));
+static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
+static void	bpf_detachd __P((struct bpf_d *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
+#if BSD >= 199103
+int		bpfselect __P((dev_t, int, struct proc *));
+#endif
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
-static void	catchpacket __P((struct bpf_d *, u_char *, size_t,
-		    size_t, void (*)(const void *, void *, size_t)));
+static void	catchpacket __P((struct bpf_d *, u_char *, size_t, size_t,
+				 void (*)(const void *, void *, size_t)));
 static void	reset_d __P((struct bpf_d *));
 
 static int
@@ -317,9 +324,11 @@ bpf_detachd(d)
  */
 /* ARGSUSED */
 int
-bpfopen(dev, flag)
+bpfopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	register struct bpf_d *d;
 
@@ -347,9 +356,11 @@ bpfopen(dev, flag)
  */
 /* ARGSUSED */
 int
-bpfclose(dev, flag)
+bpfclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	register struct bpf_d *d = &bpf_dtab[minor(dev)];
 	register int s;
@@ -417,9 +428,10 @@ bpf_sleep(d)
  *  bpfread - read next chunk of packets from buffers
  */
 int
-bpfread(dev, uio)
+bpfread(dev, uio, ioflag)
 	dev_t dev;
 	register struct uio *uio;
+	int ioflag;
 {
 	register struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int error;
@@ -514,7 +526,7 @@ bpf_wakeup(d)
 	if (d->bd_async && d->bd_sig)
 		if (d->bd_pgid > 0)
 			gsignal (d->bd_pgid, d->bd_sig);
-		else if (p = pfind (-d->bd_pgid))
+		else if ((p = pfind (-d->bd_pgid)) != NULL)
 			psignal (p, d->bd_sig);
 
 #if BSD >= 199103
@@ -531,9 +543,10 @@ bpf_wakeup(d)
 }
 
 int
-bpfwrite(dev, uio)
+bpfwrite(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
+	int ioflag;
 {
 	register struct bpf_d *d = &bpf_dtab[minor(dev)];
 	struct ifnet *ifp;
@@ -605,11 +618,12 @@ reset_d(d)
  */
 /* ARGSUSED */
 int
-bpfioctl(dev, cmd, addr, flag)
+bpfioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	register struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
@@ -959,11 +973,9 @@ bpf_ifname(ifp, ifr)
 	char *s = ifp->if_name;
 	char *d = ifr->ifr_name;
 
-	while (*d++ = *s++)
+	while ((*d++ = *s++) != '\0')
 		continue;
-	/* XXX Assume that unit number is less than 10. */
-	*d++ = ifp->if_unit + '0';
-	*d = '\0';
+	sprintf(d, "%d", ifp->if_unit);
 }
 
 /*

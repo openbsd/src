@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ppp.c,v 1.24 1995/10/05 05:55:09 mycroft Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.4 1996/03/03 21:07:07 niklas Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.28 1996/02/13 22:00:18 christos Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -86,6 +87,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -119,17 +121,9 @@
 #include <net/ppp-comp.h>
 #endif
 
-void	pppattach __P((void));
-int	pppioctl __P((struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
-		      struct proc *));
-int	pppoutput __P((struct ifnet *ifp, struct mbuf *m0,
-		       struct sockaddr *dst, struct rtentry *rtp));
-int	pppsioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
-void	pppintr __P((void));
-
 static void	ppp_requeue __P((struct ppp_softc *));
 static void	ppp_outpkt __P((struct ppp_softc *));
-static int	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
+static void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
 static void	ppp_ccp_closed __P((struct ppp_softc *));
 static void	ppp_inproc __P((struct ppp_softc *, struct mbuf *));
 static void	pppdumpm __P((struct mbuf *m0));
@@ -320,7 +314,7 @@ pppioctl(sc, cmd, data, flag, p)
 	break;
 
     case PPPIOCSFLAGS:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    return (error);
 	flags = *(int *)data & SC_MASK;
 	s = splsoftnet();
@@ -334,7 +328,7 @@ pppioctl(sc, cmd, data, flag, p)
 	break;
 
     case PPPIOCSMRU:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    return (error);
 	mru = *(int *)data;
 	if (mru >= PPP_MRU && mru <= PPP_MAXMRU)
@@ -347,7 +341,7 @@ pppioctl(sc, cmd, data, flag, p)
 
 #ifdef VJC
     case PPPIOCSMAXCID:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    return (error);
 	s = splsoftnet();
 	sl_compress_init(&sc->sc_comp, *(int *)data);
@@ -356,20 +350,20 @@ pppioctl(sc, cmd, data, flag, p)
 #endif
 
     case PPPIOCXFERUNIT:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    return (error);
 	sc->sc_xfer = p->p_pid;
 	break;
 
 #ifdef PPP_COMPRESS
     case PPPIOCSCOMPRESS:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    return (error);
 	odp = (struct ppp_option_data *) data;
 	nb = odp->length;
 	if (nb > sizeof(ccp_option))
 	    nb = sizeof(ccp_option);
-	if (error = copyin(odp->ptr, ccp_option, nb))
+	if ((error = copyin(odp->ptr, ccp_option, nb)) != 0)
 	    return (error);
 	if (ccp_option[1] < 2)	/* preliminary check on the length byte */
 	    return (EINVAL);
@@ -433,7 +427,7 @@ pppioctl(sc, cmd, data, flag, p)
 	if (cmd == PPPIOCGNPMODE) {
 	    npi->mode = sc->sc_npmode[npx];
 	} else {
-	    if (error = suser(p->p_ucred, &p->p_acflag))
+	    if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	    if (npi->mode != sc->sc_npmode[npx]) {
 		s = splsoftnet();
@@ -497,7 +491,7 @@ pppsioctl(ifp, cmd, data)
 	break;
 
     case SIOCSIFMTU:
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    break;
 	sc->sc_if.if_mtu = ifr->ifr_mtu;
 	break;
@@ -570,7 +564,6 @@ pppoutput(ifp, m0, dst, rtp)
     struct rtentry *rtp;
 {
     register struct ppp_softc *sc = &ppp_softc[ifp->if_unit];
-    struct ppp_header *ph;
     int protocol, address, control;
     u_char *cp;
     int s, error;
@@ -579,7 +572,7 @@ pppoutput(ifp, m0, dst, rtp)
     enum NPmode mode;
 
     if (sc->sc_devp == NULL || (ifp->if_flags & IFF_RUNNING) == 0
-	|| (ifp->if_flags & IFF_UP) == 0 && dst->sa_family != AF_UNSPEC) {
+	|| ((ifp->if_flags & IFF_UP) == 0 && dst->sa_family != AF_UNSPEC)) {
 	error = ENETDOWN;	/* sort of */
 	goto bad;
     }
@@ -813,11 +806,9 @@ static void
 ppp_outpkt(sc)
     struct ppp_softc *sc;
 {
-    int s;
     struct mbuf *m, *mp;
     u_char *cp;
     int address, control, protocol;
-    enum NPmode mode;
 
     /*
      * Grab a packet to send: first try the fast queue, then the
@@ -940,7 +931,7 @@ ppp_outpkt(sc)
  * Handle a CCP packet.  `rcvd' is 1 if the packet was received,
  * 0 if it is about to be transmitted.
  */
-static int
+static void
 ppp_ccp(sc, m, rcvd)
     struct ppp_softc *sc;
     struct mbuf *m;
@@ -969,7 +960,7 @@ ppp_ccp(sc, m, rcvd)
     slen = CCP_LENGTH(dp);
     if (dp + slen > ep) {
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("if_ppp/ccp: not enough data in mbuf (%x+%x > %x+%x)\n",
+	    printf("if_ppp/ccp: not enough data in mbuf (%p+%x > %p+%x)\n",
 		   dp, slen, mtod(mp, u_char *), mp->m_len);
 	return;
     }
@@ -1087,7 +1078,7 @@ ppp_inproc(sc, m)
 {
     struct ifnet *ifp = &sc->sc_if;
     struct ifqueue *inq;
-    int s, ilen, xlen, proto, rv;
+    int s, ilen = 0, xlen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp;
     u_char *iphdr;
@@ -1097,7 +1088,10 @@ ppp_inproc(sc, m)
     ifp->if_lastchange = time;
 
     if (sc->sc_flags & SC_LOG_INPKT) {
-	printf("ppp%d: got %d bytes\n", ifp->if_unit, ilen);
+	register int len = 0;
+	for (mp = m; mp != NULL; mp = mp->m_next)
+		len += mp->m_len;
+	printf("ppp%d: got %d bytes\n", ifp->if_unit, len);
 	pppdumpm(m);
     }
 

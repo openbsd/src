@@ -1,4 +1,5 @@
-/*	$NetBSD: radix.c,v 1.9 1995/05/17 15:50:06 mycroft Exp $	*/
+/*	$OpenBSD: radix.c,v 1.2 1996/03/03 21:07:14 niklas Exp $	*/
+/*	$NetBSD: radix.c,v 1.10 1996/02/13 22:00:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -60,6 +61,12 @@ static char *rn_zeros, *rn_ones;
 #define rn_masktop (mask_rnhead->rnh_treetop)
 #undef Bcmp
 #define Bcmp(a, b, l) (l == 0 ? 0 : bcmp((caddr_t)(a), (caddr_t)(b), (u_long)l))
+
+
+static int rn_satsifies_leaf __P((char *, struct radix_node *, int));
+static int rn_lexobetter __P((void *, void *));
+static struct radix_mask *rn_new_radix_mask __P((struct radix_node *,
+						 struct radix_mask *));
 /*
  * The data structure for the keys is a radix tree with one way
  * branching removed.  The index rn_b at an internal node n represents a bit
@@ -177,7 +184,7 @@ rn_lookup(v_arg, m_arg, head)
 	return x;
 }
 
-static
+static int
 rn_satsifies_leaf(trial, leaf, skip)
 	char *trial;
 	register struct radix_node *leaf;
@@ -273,7 +280,7 @@ on1:
 	do {
 		register struct radix_mask *m;
 		t = t->rn_p;
-		if (m = t->rn_mklist) {
+		if ((m = t->rn_mklist) != NULL) {
 			/*
 			 * If non-contiguous masks ever become important
 			 * we can restore the masking and open coding of
@@ -292,7 +299,7 @@ on1:
 					if (x && rn_satsifies_leaf(v, x, off))
 						    return x;
 				}
-			} while (m = m->rm_mklist);
+			} while ((m = m->rm_mklist) != NULL);
 		}
 	} while (t != top);
 	return 0;
@@ -507,9 +514,9 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 	struct radix_node treenodes[2];
 {
 	caddr_t v = (caddr_t)v_arg, netmask = (caddr_t)n_arg;
-	register struct radix_node *t, *x, *tt;
+	register struct radix_node *t, *x = NULL, *tt;
 	struct radix_node *saved_tt, *top = head->rnh_treetop;
-	short b = 0, b_leaf;
+	short b = 0, b_leaf = 0;
 	int keyduplicated;
 	caddr_t mmask;
 	struct radix_mask *m, **mp;
@@ -590,14 +597,15 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 	if (x->rn_b < 0) { 
 	    for (mp = &t->rn_mklist; x; x = x->rn_dupedkey)
 		if (x->rn_mask && (x->rn_b >= b_leaf) && x->rn_mklist == 0) {
-			if (*mp = m = rn_new_radix_mask(x, 0))
+			*mp = m = rn_new_radix_mask(x, 0);
+			if (m)
 				mp = &m->rm_mklist;
 		}
 	} else if (x->rn_mklist) {
 		/*
 		 * Skip over masks whose index is > that of new node
 		 */
-		for (mp = &x->rn_mklist; m = *mp; mp = &m->rm_mklist)
+		for (mp = &x->rn_mklist; (m = *mp) != NULL; mp = &m->rm_mklist)
 			if (m->rm_b >= b_leaf)
 				break;
 		t->rn_mklist = m; *mp = 0;
@@ -617,7 +625,7 @@ on2:
 	 * Need same criteria as when sorting dupedkeys to avoid
 	 * double loop on deletion.
 	 */
-	for (mp = &x->rn_mklist; m = *mp; mp = &m->rm_mklist) {
+	for (mp = &x->rn_mklist; (m = *mp) != NULL; mp = &m->rm_mklist) {
 		if (m->rm_b < b_leaf)
 			continue;
 		if (m->rm_b > b_leaf)
@@ -699,7 +707,7 @@ rn_delete(v_arg, netmask_arg, head)
 		x = t;
 		t = t->rn_p;
 	} while (b <= t->rn_b && x != top);
-	for (mp = &x->rn_mklist; m = *mp; mp = &m->rm_mklist)
+	for (mp = &x->rn_mklist; (m = *mp) != NULL; mp = &m->rm_mklist)
 		if (m == saved_m) {
 			*mp = m->rm_mklist;
 			MKFree(m);
@@ -722,7 +730,7 @@ on1:
 	if (t) t->rn_ybro = tt->rn_ybro;
 #endif
 	t = tt->rn_p;
-	if (dupedkey = saved_tt->rn_dupedkey) {
+	if ((dupedkey = saved_tt->rn_dupedkey) != 0) {
 		if (tt == saved_tt) {
 			x = dupedkey; x->rn_p = t;
 			if (t->rn_l == tt) t->rn_l = x; else t->rn_r = x;
@@ -753,7 +761,7 @@ on1:
 	 */
 	if (t->rn_mklist) {
 		if (x->rn_b >= 0) {
-			for (mp = &x->rn_mklist; m = *mp;)
+			for (mp = &x->rn_mklist; (m = *mp) != NULL;)
 				mp = &m->rm_mklist;
 			*mp = t->rn_mklist;
 		} else {
@@ -796,7 +804,7 @@ out:
 int
 rn_walktree(h, f, w)
 	struct radix_node_head *h;
-	register int (*f)();
+	register int (*f) __P((struct radix_node *, void *));
 	void *w;
 {
 	int error;
@@ -820,7 +828,7 @@ rn_walktree(h, f, w)
 			rn = rn->rn_l;
 		next = rn;
 		/* Process leaves */
-		while (rn = base) {
+		while ((rn = base) != NULL) {
 			base = rn->rn_dupedkey;
 			if (!(rn->rn_flags & RNF_ROOT) && (error = (*f)(rn, w)))
 				return (error);

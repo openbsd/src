@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_tun.c,v 1.4 1996/02/21 12:50:02 mickey Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.5 1996/03/03 21:07:11 niklas Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.22 1996/02/13 22:00:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -8,7 +9,7 @@
  * in any changes that are made.
  *
  * This driver takes packets off the IP i/f and hands them up to a
- * user process to have it's wicked way with. This driver has it's
+ * user process to have its wicked way with. This driver has its
  * roots in a similar driver written by Phil Cockcroft (formerly) at
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
@@ -34,8 +35,8 @@
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/vnode.h>
+#include <sys/signalvar.h>
 
 #include <machine/cpu.h>
 
@@ -68,6 +69,7 @@
 #endif
 
 #include <net/if_tun.h>
+#include <net/net_conf.h>
 
 #ifdef	TUN_DEBUG
 int	tundebug = TUN_DEBUG;
@@ -80,16 +82,17 @@ struct tun_softc tunctl[NTUN];
 
 extern int ifqmaxlen;
 
-int		tunopen		__P((dev_t, int, int, struct proc *));
-int		tunclose	__P((dev_t, int, int, struct proc *));
-int		tunoutput	__P((struct ifnet *, struct mbuf *, struct sockaddr *,
-					struct rtentry *rt));
-int		tunread		__P((dev_t, struct uio *, int));
-int		tunwrite	__P((dev_t, struct uio *, int));
-int		tunioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
-int		tunifioctl	__P((struct ifnet *, u_long, caddr_t));
-int		tunselect	__P((dev_t, int, struct proc *));
-void	tunattach	__P((int));
+void	tunattach __P((int));
+int	tunopen	__P((dev_t, int, int, struct proc *));
+int	tunclose __P((dev_t, int, int, struct proc *));
+int	tun_ioctl __P((struct ifnet *, u_long, caddr_t));
+int	tun_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+		        struct rtentry *rt));
+int	tunioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	tunread	__P((dev_t, struct uio *, int));
+int	tunwrite __P((dev_t, struct uio *, int));
+int	tunselect __P((dev_t, int, struct proc *));
+
 
 static int tuninit __P((int));
 
@@ -99,7 +102,6 @@ tunattach(unused)
 {
 	register int i;
 	struct ifnet *ifp;
-	struct sockaddr_in *sin;
 
 	for (i = 0; i < NTUN; i++) {
 		tunctl[i].tun_flags = TUN_INITED;
@@ -108,8 +110,8 @@ tunattach(unused)
 		ifp->if_unit = i;
 		ifp->if_name = "tun";
 		ifp->if_mtu = TUNMTU;
-		ifp->if_ioctl = tunifioctl;
-		ifp->if_output = tunoutput;
+		ifp->if_ioctl = tun_ioctl;
+		ifp->if_output = tun_output;
 		ifp->if_flags = IFF_POINTOPOINT;
 		ifp->if_type  = IFT_PROPVIRTUAL;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
@@ -141,7 +143,7 @@ tunopen(dev, flag, mode, p)
 	struct tun_softc *tp;
 	register int	unit, error;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
 	if ((unit = minor(dev)) >= NTUN)
@@ -162,7 +164,8 @@ tunopen(dev, flag, mode, p)
 int
 tunclose(dev, flag, mode, p)
 	dev_t	dev;
-	int		flag,mode;
+	int	flag;
+	int	mode;
 	struct proc *p;
 {
 	register int	unit = minor(dev), s;
@@ -240,12 +243,11 @@ tuninit(unit)
  * Process an ioctl request.
  */
 int
-tunifioctl(ifp, cmd, data)
+tun_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long	cmd;
 	caddr_t	data;
 {
-	struct tun_softc *tp = &tunctl[ifp->if_unit];
 	int		error = 0, s;
 
 	s = splimp();
@@ -267,10 +269,10 @@ tunifioctl(ifp, cmd, data)
 }
 
 /*
- * tunoutput - queue packets from higher level ready to put out.
+ * tun_output - queue packets from higher level ready to put out.
  */
 int
-tunoutput(ifp, m0, dst, rt)
+tun_output(ifp, m0, dst, rt)
 	struct ifnet   *ifp;
 	struct mbuf    *m0;
 	struct sockaddr *dst;
@@ -280,7 +282,7 @@ tunoutput(ifp, m0, dst, rt)
 	struct proc	*p;
 	int		s;
 
-	TUNDEBUG(("%s%d: tunoutput\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s%d: tun_output\n", ifp->if_name, ifp->if_unit));
 
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
 		TUNDEBUG(("%s%d: not ready 0%o\n", ifp->if_name,
@@ -322,7 +324,7 @@ tunoutput(ifp, m0, dst, rt)
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgrp) {
 		if (tp->tun_pgrp > 0)
 			gsignal(tp->tun_pgrp, SIGIO);
-		else if (p = pfind(-tp->tun_pgrp))
+		else if ((p = pfind(-tp->tun_pgrp)) != NULL)
 			psignal(p, SIGIO);
 	}
 	selwakeup(&tp->tun_rsel);
@@ -402,10 +404,10 @@ tunioctl(dev, cmd, data, flag, p)
  * least as much of a packet as can be read.
  */
 int
-tunread(dev, uio,flags)
+tunread(dev, uio, ioflag)
 	dev_t		dev;
 	struct uio	*uio;
-	int			flags;
+	int		ioflag;
 {
 	int		unit = minor(dev);
 	struct tun_softc *tp = &tunctl[unit];
@@ -426,7 +428,7 @@ tunread(dev, uio,flags)
 	do {
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0) {
-			if (tp->tun_flags & TUN_NBIO && flags & IO_NDELAY) {
+			if (tp->tun_flags & TUN_NBIO && ioflag & IO_NDELAY) {
 				splx(s);
 				return EWOULDBLOCK;
 			}
@@ -459,10 +461,10 @@ tunread(dev, uio,flags)
  * the cdevsw write interface - an atomic write is a packet - or else!
  */
 int
-tunwrite(dev, uio, flags)
+tunwrite(dev, uio, ioflag)
 	dev_t		dev;
 	struct uio	*uio;
-	int			flags;
+	int		ioflag;
 {
 	int		unit = minor (dev);
 	struct ifnet	*ifp = &tunctl[unit].tun_if;
@@ -574,9 +576,9 @@ tunwrite(dev, uio, flags)
  */
 int
 tunselect(dev, rw, p)
-	dev_t	dev;
+	dev_t		dev;
 	int		rw;
-	struct proc *p;
+	struct proc	*p;
 {
 	int		unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];

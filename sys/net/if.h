@@ -1,4 +1,5 @@
-/*	$NetBSD: if.h,v 1.19 1995/06/19 21:57:28 cgd Exp $	*/
+/*	$OpenBSD: if.h,v 1.2 1996/03/03 21:07:06 niklas Exp $	*/
+/*	$NetBSD: if.h,v 1.20 1996/02/13 22:00:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -226,7 +227,8 @@ struct ifaddr {
 	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
-	void	(*ifa_rtrequest)();	/* check or clean routes (+ or -)'d */
+	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
+		    __P((int, struct rtentry *, struct sockaddr *));
 	u_short	ifa_flags;		/* mostly rt_flags for cloning */
 	short	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */

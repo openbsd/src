@@ -1,4 +1,5 @@
-/*	$NetBSD: raw_cb.h,v 1.8 1995/06/12 00:46:54 mycroft Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.2 1996/03/03 21:07:17 niklas Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -59,12 +60,12 @@ struct rawcb {
 LIST_HEAD(, rawcb) rawcb;		/* head of list */
 
 int	 raw_attach __P((struct socket *, int));
-void	 raw_ctlinput __P((int, struct sockaddr *));
+void	 *raw_ctlinput __P((int, struct sockaddr *, void *));
 void	 raw_detach __P((struct rawcb *));
 void	 raw_disconnect __P((struct rawcb *));
 void	 raw_init __P((void));
-void	 raw_input __P((struct mbuf *,
-	    struct sockproto *, struct sockaddr *, struct sockaddr *));
+void	 raw_input __P((struct mbuf *, ...));
 int	 raw_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+
 #endif /* _KERNEL */
