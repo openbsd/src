@@ -31,8 +31,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ldexp.c,v 1.4 2003/06/02 20:18:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: ldexp.c,v 1.5 2003/07/15 17:32:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
+
+#include <math.h>
 
 /*
  * ldexp(value, exp): return value * (2 ** exp).

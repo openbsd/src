@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: devname.c,v 1.4 2003/06/11 21:03:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: devname.c,v 1.5 2003/07/15 17:32:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,10 +40,12 @@ static char rcsid[] = "$OpenBSD: devname.c,v 1.4 2003/06/11 21:03:10 deraadt Exp
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 char *
-devname(dev_t dev, mode_t type)
+devname(int dev, int t)
 {
+	mode_t type = t;
 	struct {
 		mode_t type;
 		dev_t dev;

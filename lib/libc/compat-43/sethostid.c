@@ -28,11 +28,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: sethostid.c,v 1.6 2003/06/11 21:03:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sethostid.c,v 1.7 2003/07/15 17:32:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 
 int
 sethostid(long hostid)

@@ -28,12 +28,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: daemon.c,v 1.4 2003/06/11 21:03:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: daemon.c,v 1.5 2003/07/15 17:32:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <fcntl.h>
 #include <paths.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int
 daemon(int nochdir, int noclose)
