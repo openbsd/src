@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_parityscan.c,v 1.2 1999/02/16 00:03:09 niklas Exp $	*/
+/*	$OpenBSD: rf_parityscan.c,v 1.3 1999/03/02 21:53:50 niklas Exp $	*/
 /*	$NetBSD: rf_parityscan.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -83,15 +83,15 @@ rf_RewriteParity(raidPtr)
 			break;
 		case RF_PARITY_BAD:
 			printf("Parity bad during correction\n");
-			RF_PANIC();
+			return (1);
 			break;
 		case RF_PARITY_COULD_NOT_CORRECT:
 			printf("Could not correct bad parity\n");
-			RF_PANIC();
+			return (1);
 			break;
 		case RF_PARITY_COULD_NOT_VERIFY:
 			printf("Could not verify parity\n");
-			RF_PANIC();
+			return (1);
 			break;
 		default:
 			printf("Bad rc=%d from VerifyParity in RewriteParity\n", rc);
