@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.6 2004/08/06 13:08:39 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.7 2004/08/12 18:37:27 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -416,6 +416,8 @@ cvs_diff(int argc, char **argv)
 	}
 	else
 		cvs_files = cvs_file_getspec(argv, argc, 0);
+	if (cvs_files == NULL)
+		return (EX_DATAERR);
 
 	cvs_file_examine(cvs_files, cvs_diff_file, &darg);
 
@@ -484,27 +486,35 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 	dap = (struct diff_arg *)arg;
 
 	if (cfp->cf_type == DT_DIR) {
-		root = cfp->cf_ddat->cd_root;
-		if ((cfp->cf_parent == NULL) ||
-		    (root != cfp->cf_parent->cf_ddat->cd_root)) {
-			cvs_connect(root);
-			cvs_diff_sendflags(root, dap);
+		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
+			root = cfp->cf_parent->cf_ddat->cd_root;
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
+		}
+		else {
+			root = cfp->cf_ddat->cd_root;
+			if ((cfp->cf_parent == NULL) ||
+			    (root != cfp->cf_parent->cf_ddat->cd_root)) {
+				cvs_connect(root);
+				cvs_diff_sendflags(root, dap);
+			}
+
+			cvs_senddir(root, cfp);
 		}
 
-		cvs_senddir(root, cfp);
 		return (0);
 	}
-	else	/* take the root of parent directory */
-		root = cfp->cf_parent->cf_ddat->cd_root;
 
 	rf = NULL;
 	diff_file = cfp->cf_path;
+
 	if (cfp->cf_parent != NULL) {
 		dir = cfp->cf_parent->cf_path;
+		root = cfp->cf_parent->cf_ddat->cd_root;
 		repo = cfp->cf_parent->cf_ddat->cd_repo;
 	}
 	else {
 		dir = ".";
+		root = NULL;
 		repo = NULL;
 	}
 
