@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.6 2001/03/30 16:38:14 aaron Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.7 2002/01/11 04:24:40 jason Exp $	*/
 /*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ void
 wsmux_setmax(n)
 	int n;
 {
-	int i = 0;
+	int i;
 	struct wsmux_softc **wsmuxdevs_tmp = NULL;
 
 	if (n >= nwsmux) {
@@ -119,17 +119,16 @@ wsmux_setmax(n)
 			    M_DEVBUF, M_NOWAIT);
 			if (wsmuxdevs_tmp == 0)
 				panic("wsmux_setmax: no mem\n");
-			for (; i < nwsmux; i++)
+			for (i = 0; i < nwsmux; i++)
 				wsmuxdevs_tmp[i] = wsmuxdevs[i];
 			free(wsmuxdevs, M_DEVBUF);
 		}
 
-		wsmuxdevs = malloc(n + 1 * sizeof(*wsmuxdevs), 
+		wsmuxdevs = malloc((n + 1) * sizeof(*wsmuxdevs), 
 		    M_DEVBUF, M_NOWAIT);
-		if (wsmuxdevs == 0)
+		if (wsmuxdevs == NULL)
 			panic("wsmux_setmax: no memory\n");
-		for (; i < n + 1; i++)
-			wsmuxdevs[i] = 0;
+		memset(wsmuxdevs, 0, (n + 1) * sizeof(*wsmuxdevs));
 		if (wsmuxdevs_tmp != NULL) {
 			for (i = 0; i < nwsmux; i++)
 				wsmuxdevs[i] = wsmuxdevs_tmp[i];
@@ -150,7 +149,7 @@ wsmuxattach(n)
 
 	/* Make sure all muxes are there. */
 	for (i = 0; i < nwsmux; i++)
-		if (!wsmuxdevs[i])
+		if (wsmuxdevs[i] == NULL)
 			wsmuxdevs[i] = wsmux_create("wsmux", i);
 }
 
