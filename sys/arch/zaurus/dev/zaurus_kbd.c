@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.9 2005/01/18 01:03:15 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.10 2005/01/18 17:57:13 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -269,8 +269,10 @@ zkbd_poll(void *v)
 {
 	struct zkbd_softc *sc = v;
 	int i, j, col, pin, type, keysdown = 0, s;
+	int stuck;
+	int keystate;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	int npress = 0, ncbuf, c;
+	int npress = 0, ncbuf = 0, c;
 	char cbuf[MAXKEYS *2];
 #endif
 
@@ -332,7 +334,7 @@ zkbd_poll(void *v)
 	/* process after resetting interrupt */
 
 	for (i = 0; i < (sc->sc_nsense * sc->sc_nstrobe); i++) {
-		int stuck = 0;
+		stuck = 0;
 		/* extend  xt_keymap to do this faster. */
 		/* ignore 'stuck' keys' */
 		for (j = 0; j < sizeof(stuck_keys)/sizeof(stuck_keys[0]); j++) {
@@ -343,27 +345,29 @@ zkbd_poll(void *v)
 		}
 		if (stuck)
 			continue;
+		keystate = sc->sc_keystate[i];
 
-		if (sc->sc_keystate[i]) {
-			keysdown++;
+		keysdown |= keystate; /* if any keys held */
+
 #ifdef WSDISPLAY_COMPAT_RAWKBD
+		if (keystate) {
 			if ((sc->sc_rawkbd) && !( npress >= MAXKEYS-1)) {
 				c = sc->sc_xt_keymap[i];
 				if (c & 0x80)
 					sc->sc_rep[npress++] = 0xe0;
 				sc->sc_rep[npress++] = c & 0x7f;
 			}
-#endif
 		}
+#endif
 
-		if (sc->sc_okeystate[i] != sc->sc_keystate[i]) {
+		if (sc->sc_okeystate[i] != keystate) {
 
-			type = sc->sc_keystate[i] ? WSCONS_EVENT_KEY_DOWN :
+			type = keystate ? WSCONS_EVENT_KEY_DOWN :
 			    WSCONS_EVENT_KEY_UP;
 
 #if 0
 			printf("key %d %s\n", i,
-			    sc->sc_keystate[i] ? "pressed" : "released");
+			    keystate ? "pressed" : "released");
 #endif
 
 			if (sc->sc_polling) {
@@ -372,20 +376,22 @@ zkbd_poll(void *v)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 			} else if (sc->sc_rawkbd) {
 
-				c = sc->sc_xt_keymap[i];
+				if (npress < sizeof(cbuf)-2) {
+					c = sc->sc_xt_keymap[i];
 
-				if (c & 0x80)
-					cbuf[ncbuf++] = 0xe0;
-				cbuf[ncbuf] = c & 0x7f;
-				if (type == WSCONS_EVENT_KEY_UP)
-					cbuf[ncbuf] |= 0x80;
-				ncbuf++;
+					if (c & 0x80)
+						cbuf[ncbuf++] = 0xe0;
+					cbuf[ncbuf] = c & 0x7f;
+					if (type == WSCONS_EVENT_KEY_UP)
+						cbuf[ncbuf] |= 0x80;
+					ncbuf++;
+				}
 #endif
 			} else {
 				wskbd_input(sc->sc_wskbddev, type, i);
 			}
 
-			sc->sc_okeystate[i] = sc->sc_keystate[i];
+			sc->sc_okeystate[i] = keystate;
 		}
 	}
 
@@ -393,7 +399,7 @@ zkbd_poll(void *v)
 	if (sc->sc_polling == 0 && sc->sc_rawkbd) {
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, ncbuf);
 		sc->sc_nrep = npress;
-		if (keysdown != 0)
+		if (npress != 0)
 			timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAY1/1000);
 		else 
 			timeout_del(&sc->sc_rawrepeat_ch);
