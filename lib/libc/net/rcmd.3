@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.21 2000/12/21 16:07:37 deraadt Exp $
+.\"	$OpenBSD: rcmd.3,v 1.22 2000/12/21 22:59:53 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -147,13 +147,16 @@ signal numbers, to be
 forwarded to the process group of the command.
 If
 .Fa fd2p
-is 0, then the standard error (unit 2 of the remote command) will be made the
-same as the standard output and no
-provision is made for sending arbitrary signals to the remote process,
-although you may be able to get its attention by using out-of-band data.
+is
+.Va NULL ,
+then the standard error (unit 2 of the remote command) will be made
+the same as the standard output and no provision is made for sending
+arbitrary signals to the remote process, although you may be able to
+get its attention by using out-of-band data.
 Note that if the user is not the superuser,
 .Fa fd2p
-must be 0.
+must be
+.Va NULL .
 .Pp
 .Fn rcmd_af
 takes address family in the last argument.
