@@ -185,7 +185,7 @@ rtmsg(cmd)
 
 	switch (cmd) {
 	default:
-		syslog(LOG_ERR, "arptap_set: internal wrong cmd\n");
+		syslog(LOG_ERR, "arptab_set: internal wrong cmd\n");
 		exit(1);
 	case RTM_ADD:
 		rtm->rtm_addrs |= RTA_GATEWAY;
