@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.14 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.15 2002/05/01 16:23:54 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -123,7 +123,7 @@ username lookups, respectively.
 .Pp
 List elements should be separated by blanks and/or commas.
 .Pp
-With the exception of NIS (YP) netgroup lookups, all access control
+With the exception of YP netgroup lookups, all access control
 checks are case insensitive.
 .Sh PATTERNS
 The access control language implements the following patterns:
@@ -155,8 +155,7 @@ network (131.155.x.x).
 .It
 A string that begins with an
 .Sq @
-character is treated as an NIS
-(formerly YP) netgroup name.
+character is treated as a YP netgroup name.
 A host name is matched if it is a host member of the specified netgroup.
 Netgroup matches are not supported for daemon process names or for client
 user names.
@@ -527,7 +526,7 @@ Access control table (deny list)
 If a name server lookup times out, the host name will not be available
 to the access control software, even though the host is registered.
 .Pp
-Domain name server lookups are case insensitive; NIS (formerly YP)
+Domain name server lookups are case insensitive; YP
 netgroup lookups are case sensitive.
 .Pp
 The total length of an entry can be no more than 2047 characters long,
