@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.4 1998/04/26 10:26:45 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.5 1999/08/16 18:18:34 art Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.4 1998/04/26 10:26:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.5 1999/08/16 18:18:34 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ int	fscale;				/* kernel _fscale variable */
 extern kvm_t *kd;
 
 #define kread(x, v) \
-	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
+	kvm_read(kd, psnl[x].n_value, &v, sizeof v) != sizeof(v)
 
 int
 donlist()
