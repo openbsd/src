@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.16.4.1 1996/06/04 20:27:06 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.16.4.1 1996/06/04 20:27:06 cgd Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -295,12 +295,10 @@ sidewaysintpr(interval, off)
 	for (off = firstifnet, ip = iftot; off;) {
 		if (kread(off, (char *)&ifnet, sizeof ifnet))
 			break;
-		ip->ift_name[0] = '(';
-		bcopy(ifnet.if_xname, ip->ift_name + 1, IFNAMSIZ - 1);
-		if (interface &&
-		    strcmp(ip->ift_name + 1, interface) == 0)
+		bzero(ip->ift_name, sizeof(ip->ift_name));
+		snprintf(ip->ift_name, IFNAMSIZ, "(%s)", ifnet.if_xname);
+		if (interface && strcmp(ifnet.if_xname, interface) == 0)
 			interesting = ip;
-		ip->ift_name[IFNAMSIZ - 1] = '\0';
 		ip++;
 		if (ip >= iftot + MAXIF - 2)
 			break;
