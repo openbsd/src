@@ -1254,6 +1254,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/conf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/cpu.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ctlreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/daadioio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/db_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/disklabel.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/eeprom.ph

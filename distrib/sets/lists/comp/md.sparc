@@ -16,6 +16,7 @@
 ./usr/include/sparc/conf.h
 ./usr/include/sparc/cpu.h
 ./usr/include/sparc/ctlreg.h
+./usr/include/sparc/daadioio.h
 ./usr/include/sparc/db_machdep.h
 ./usr/include/sparc/disklabel.h
 ./usr/include/sparc/eeprom.h
