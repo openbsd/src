@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.11 2003/06/27 22:30:38 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.12 2003/11/22 00:50:48 avsm Exp $	*/
 /*	$NetBSD: crt0.c,v 1.20 1995/06/03 13:16:08 pk Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.11 2003/06/27 22:30:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.12 2003/11/22 00:50:48 avsm Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -54,24 +54,22 @@ extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
 
-__asm("
-	.text
-	.align  4
-	.globl  __start
-	.globl  _start
-_start:
-__start:
-	pushl	%ebx			#ps_strings
-	pushl   %ecx                    # obj
-	pushl   %edx                    # cleanup
-	movl    12(%esp),%eax
-	leal    20(%esp,%eax,4),%ecx
-	leal    16(%esp),%edx
-	pushl   %ecx
-	pushl   %edx
-	pushl   %eax
-	call    ___start
-");
+__asm(".text\n"
+"	.align  4\n"
+"	.globl  __start\n"
+"	.globl  _start\n"
+"_start:\n"
+"__start:\n"
+"	pushl	%ebx			#ps_strings\n"
+"	pushl   %ecx                    # obj\n"
+"	pushl   %edx                    # cleanup\n"
+"	movl    12(%esp),%eax\n"
+"	leal    20(%esp,%eax,4),%ecx\n"
+"	leal    16(%esp),%edx\n"
+"	pushl   %ecx\n"
+"	pushl   %edx\n"
+"	pushl   %eax\n"
+"	call    ___start ");
 
 void
 ___start(int argc, char **argv, char **envp, void (*cleanup)(void),
