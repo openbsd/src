@@ -1,52 +1,52 @@
-#	$OpenBSD: HELIOS_PCMCIA,v 1.7 1996/06/16 11:11:08 deraadt Exp $
+#	$OpenBSD: HELIOS_PCMCIA,v 1.8 1996/06/29 19:17:22 deraadt Exp $
 #
 #	HELIOS_PCMCIA -- Eric Hvozda's notebook
 #
 
 machine		i386		# architecture, used by config; REQUIRED
 
-options		I486_CPU
+option		I486_CPU
 
-options		DUMMY_NOPS	# speed hack; recommended
-options		XSERVER,UCONSOLE
+option		DUMMY_NOPS	# speed hack; recommended
+option		XSERVER,UCONSOLE
 
 maxusers	64		# estimated number of users
-options		TIMEZONE=300	# time zone to adjust RTC time by
-options		DST=1		# daylight savings time used by RTC
+option		TIMEZONE=300	# time zone to adjust RTC time by
+option		DST=1		# daylight savings time used by RTC
 
-options		SWAPPAGER	# paging; REQUIRED
-options		VNODEPAGER	# mmap() of files
-options		DEVPAGER	# mmap() of devices
+option		SWAPPAGER	# paging; REQUIRED
+option		VNODEPAGER	# mmap() of files
+option		DEVPAGER	# mmap() of devices
 
-options		DIAGNOSTIC	# internally consistency checks
-options		KTRACE		# system call tracing, a la ktrace(1)
+option		DIAGNOSTIC	# internally consistency checks
+option		KTRACE		# system call tracing, a la ktrace(1)
 
-options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
-options		COMPAT_09	# NetBSD 0.9,
-options		COMPAT_10	# NetBSD 1.0,
-options		COMPAT_11	# NetBSD 1.1,
-options		COMPAT_43	# and 4.3BSD
+option		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+option		COMPAT_09	# NetBSD 0.9,
+option		COMPAT_10	# NetBSD 1.0,
+option		COMPAT_11	# NetBSD 1.1,
+option		COMPAT_43	# and 4.3BSD
 
-options		LKM		# loadable kernel modules
+option		LKM		# loadable kernel modules
 
-options		FFS		# UFS
-options		QUOTA		# UFS quotas
-options		MFS		# memory file system
+option		FFS		# UFS
+option		QUOTA		# UFS quotas
+option		MFS		# memory file system
 
-options		NFSCLIENT	# Network File System client
-options		NFSSERVER	# Network File System server
+option		NFSCLIENT	# Network File System client
+option		NFSSERVER	# Network File System server
 
-options		MSDOSFS		# MS-DOS file system
-options		FDESC		# /dev/fd
-options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-options		PROCFS		# /proc
-options		UNION		# union file system
+option		MSDOSFS		# MS-DOS file system
+option		FDESC		# /dev/fd
+option		FIFO		# FIFOs; RECOMMENDED
+option		KERNFS		# /kern
+option		PROCFS		# /proc
+option		UNION		# union file system
 
-options		FDSCRIPTS	# secure setuid scripts
-#options	SETUIDSCRIPTS	# secure setuid scripts
+option		FDSCRIPTS	# secure setuid scripts
+#option		SETUIDSCRIPTS	# secure setuid scripts
 
-options		INET		# IP + ICMP + TCP + UDP
+option		INET		# IP + ICMP + TCP + UDP
 
 config		bsd	root on wd0a swap on wd0b dumps on wd0b
 

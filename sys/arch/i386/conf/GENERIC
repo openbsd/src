@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 1996/06/24 17:07:32 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.25 1996/06/29 19:17:21 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -8,27 +8,27 @@ machine		i386		# architecture, used by config; REQUIRED
 
 include "../../../conf/GENERIC"
 
-options		I386_CPU	# CPU classes; at least one is REQUIRED
-options		I486_CPU
-options		I586_CPU
-options		MATH_EMULATE	# floating point emulation
+option		I386_CPU	# CPU classes; at least one is REQUIRED
+option		I486_CPU
+option		I586_CPU
+option		MATH_EMULATE	# floating point emulation
 
-options		VM86		# Virtual 8086 emulation
-options		USER_LDT	# user-settable LDT; used by WINE
-options		XSERVER,UCONSOLE
+option		VM86		# Virtual 8086 emulation
+option		USER_LDT	# user-settable LDT; used by WINE
+option		XSERVER,UCONSOLE
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	EXTMEM_SIZE=...	# size of extended memory
-#options	DUMMY_NOPS	# speed hack; recommended
+#option		EXTMEM_SIZE=...	# size of extended memory
+#option		DUMMY_NOPS	# speed hack; recommended
 
-options		COMPAT_SVR4	# binary compatibility with SVR4
-options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
-options		COMPAT_LINUX	# binary compatibility with Linux
-options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+option		COMPAT_SVR4	# binary compatibility with SVR4
+option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
+option		COMPAT_LINUX	# binary compatibility with Linux
+option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
-options		BOOT_CONFIG	# add support for boot -c
+option		BOOT_CONFIG	# add support for boot -c
 
 maxusers	32		# estimated number of users
 

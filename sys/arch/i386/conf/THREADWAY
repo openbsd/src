@@ -1,73 +1,73 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.1 1996/06/24 10:23:16 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.2 1996/06/29 19:17:31 deraadt Exp $
 #
 
 machine		i386
-options		I586_CPU
+option		I586_CPU
 
-options		XSERVER,UCONSOLE
-options		EXTMEM_SIZE=39936
-options		PCVT_USL_VT_COMPAT=1,PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
+option		XSERVER,UCONSOLE
+option		EXTMEM_SIZE=39936
+option		PCVT_USL_VT_COMPAT=1,PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 
 maxusers	32
-options		TIMEZONE=480
-options		DST=0
+option		TIMEZONE=480
+option		DST=0
 
-options		SWAPPAGER
-options		VNODEPAGER
-options		DEVPAGER
+option		SWAPPAGER
+option		VNODEPAGER
+option		DEVPAGER
 
-#options	DDB
+#option		DDB
 #makeoptions	DEBUG="-g"
-#options	DIAGNOSTIC
-options		KTRACE
+#option		DIAGNOSTIC
+option		KTRACE
 
-options		SYSVMSG
-options		SYSVSEM
-options		SYSVSHM
-#options	SHMMAXPGS=1024
+option		SYSVMSG
+option		SYSVSEM
+option		SYSVSHM
+#option		SHMMAXPGS=1024
 
-options		COMPAT_NOMID
-options		COMPAT_09
-options		COMPAT_10
-options		COMPAT_11
-options		COMPAT_43
-options		TCP_COMPAT_42
+option		COMPAT_NOMID
+option		COMPAT_09
+option		COMPAT_10
+option		COMPAT_11
+option		COMPAT_43
+option		TCP_COMPAT_42
 
-options		COMPAT_SVR4
-options		COMPAT_IBCS2
-options		COMPAT_LINUX
-options		COMPAT_FREEBSD
+option		COMPAT_SVR4
+option		COMPAT_IBCS2
+option		COMPAT_LINUX
+option		COMPAT_FREEBSD
 
-options		VM86
-options		USER_LDT
-options		LKM
+option		VM86
+option		USER_LDT
+option		LKM
 
-options		FFS
-options		QUOTA
-options		MFS
-options		EXT2FS
+option		FFS
+option		QUOTA
+option		MFS
+option		EXT2FS
 
-options		PPP_BSDCOMP,PPP_DEFLATE
-options		IPFILTER
+option		PPP_BSDCOMP,PPP_DEFLATE
+option		IPFILTER
 
-options		NFSCLIENT
-options		NFSSERVER
+option		NFSCLIENT
+option		NFSSERVER
 
-options		CD9660
-options		MSDOSFS
-options		FDESC
-options		FIFO
-options		KERNFS
-options		NULLFS
-options		PROCFS
-options		UMAPFS
-options		UNION
+option		CD9660
+option		MSDOSFS
+option		FDESC
+option		FIFO
+option		KERNFS
+option		NULLFS
+option		PROCFS
+option		UMAPFS
+option		UNION
 
-options		GATEWAY
-options		INET
+option		GATEWAY
+option		INET
 
 config		bsd root on wd0 swap on wd0 and wd2
 
