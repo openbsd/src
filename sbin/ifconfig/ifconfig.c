@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.82 2003/10/19 05:43:35 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.83 2003/11/09 06:04:17 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.82 2003/10/19 05:43:35 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.83 2003/11/09 06:04:17 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -1636,7 +1636,7 @@ status(int link, struct sockaddr_dl *sdl)
 		    (struct ether_addr *)LLADDR(sdl)));
 
 #ifndef	INET_ONLY
-	/* vlan_status(); */
+	vlan_status();
 	carp_status();
 #endif
 	ieee80211_status();
