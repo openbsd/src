@@ -35,7 +35,7 @@ esac
 #
 ARCH=`arch | sed 's/^OpenBSD.//'`
 case "${ARCH}-${osvers}" in
-alpha-2.[0-8]|mips-2.[0-8]|powerpc-2.[0-7]|m88k-*|hppa-3.[0-4]|vax-*)
+alpha-2.[0-8]|mips-2.[0-8]|powerpc-2.[0-7]|m88k-*|hppa-3.[0-5]|vax-*)
 	test -z "$usedl" && usedl=$undef
 	;;
 *)
