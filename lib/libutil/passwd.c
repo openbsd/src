@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.18 1998/06/22 14:41:47 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.19 1998/08/03 17:16:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.18 1998/06/22 14:41:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.19 1998/08/03 17:16:32 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -72,18 +72,20 @@ static char pw_defdir[] = "/etc";
 static char *pw_dir = pw_defdir;
 static char *pw_lck;
 
-/* Removes trailers. */
+/* Removes head and/or tail spaces. */
 static void
-remove_trailing_space(line)
+trim_whitespace(line)
 	char   *line;
 {
 	char   *p;
-	/* Remove trailing spaces */
+
+	/* Remove leading spaces */
 	p = line;
 	while (isspace(*p))
 		p++;
-	memcpy(line, p, strlen(p) + 1);
+	(void) memmove(line, p, strlen(p) + 1);
 
+	/* Remove trailing spaces */
 	p = line + strlen(line) - 1;
 	while (isspace(*p))
 		p--;
@@ -91,7 +93,7 @@ remove_trailing_space(line)
 }
 
 
-/* Get one line, remove trailers */
+/* Get one line, remove spaces from front and tail */
 static int
 read_line(fp, line, max)
 	FILE   *fp;
@@ -112,7 +114,7 @@ read_line(fp, line, max)
 	if ((p = strchr(line, '#')))
 		*p = '\0';
 
-	remove_trailing_space(line);
+	trim_whitespace(line);
 	return 1;
 }
 
@@ -199,9 +201,9 @@ pw_getconf(data, max, key, option)
 		     p2 = line;
 		     if (!(p = strsep(&p2, "=")) || p2 == NULL)
 			  continue;
-		     remove_trailing_space(p);
+		     trim_whitespace(p);
 		     if (!strncmp(p, option, strlen(option))) {
-			  remove_trailing_space(p2);
+			  trim_whitespace(p2);
 			  strcpy(result, p2);
 			  found = 1;
 			  break;
@@ -362,7 +364,7 @@ pw_edit(notsetuid, filename)
 			return;
 	}
 
-	if (!(editor = getenv("EDITOR")))
+	if ((editor = getenv("EDITOR")) == NULL)
 		editor = _PATH_VI;
 
 	p = malloc(strlen(editor) + 1 + strlen(filename) + 1);
@@ -371,7 +373,7 @@ pw_edit(notsetuid, filename)
 	sprintf(p, "%s %s", editor, filename);
 	argp[2] = p;
 
-	switch(editpid = vfork()) {
+	switch (editpid = vfork()) {
 	case -1:			/* error */
 		free(p);
 		return;
@@ -504,9 +506,9 @@ pw_scan(bp, pw, flags)
 		warnx("illegal uid field");
 		return (0);
 	}
-	if (id >= UINT_MAX) {
+	if (id > UID_MAX) {
 		/* errno is set to ERANGE by strtoul(3) */
-		warnx("uid greater than %u", UINT_MAX-1);
+		warnx("uid greater than %u", UID_MAX-1);
 		return (0);
 	}
 	pw->pw_uid = (uid_t)id;
@@ -520,9 +522,9 @@ pw_scan(bp, pw, flags)
 		warnx("illegal gid field");
 		return (0);
 	}
-	if (id > UINT_MAX) {
+	if (id > UID_MAX) {
 		/* errno is set to ERANGE by strtoul(3) */
-		warnx("gid greater than %u", UINT_MAX-1);
+		warnx("gid greater than %u", UID_MAX-1);
 		return (0);
 	}
 	pw->pw_gid = (gid_t)id;
