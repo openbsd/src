@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.8 2003/01/03 22:57:02 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.9 2003/01/03 23:00:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -128,7 +128,7 @@ pfctl_show_tables(int opts)
 
 int
 pfctl_command_tables(int argc, char *argv[], char *tname,
-	char *command, char *file, int opts)
+    char *command, char *file, int opts)
 {
 	if (tname == NULL || command == NULL)
 		usage();
@@ -137,7 +137,7 @@ pfctl_command_tables(int argc, char *argv[], char *tname,
 
 int
 pfctl_table(int argc, char *argv[], char *tname, char *command,
-		char *file, int opts)
+    char *file, int opts)
 {
 	struct pfr_table  table;
 	char		**p;
