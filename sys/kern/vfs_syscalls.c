@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.68 2001/02/21 23:24:30 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.69 2001/03/16 16:24:57 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -496,9 +496,10 @@ sys_sync(p, v, retval)
 	int asyncflag;
 
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
+	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
-			nmp = mp->mnt_list.cqe_prev;
+			nmp = CIRCLEQ_PREV(mp, mnt_list);
 			continue;
 		}
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
@@ -512,7 +513,7 @@ sys_sync(p, v, retval)
 				mp->mnt_flag |= MNT_ASYNC;
 		}
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_prev;
+		nmp = CIRCLEQ_PREV(mp, mnt_list);
 		vfs_unbusy(mp, p);
 	}
 	simple_unlock(&mountlist_slock);
@@ -660,9 +661,10 @@ sys_getfsstat(p, v, retval)
 	sfsp = (caddr_t)SCARG(uap, buf);
 	count = 0;
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
+	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		if (sfsp && count < maxcount) {
@@ -675,7 +677,7 @@ sys_getfsstat(p, v, retval)
 			     flags == 0) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
 				simple_lock(&mountlist_slock);
-				nmp = mp->mnt_list.cqe_next;
+				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp, p);
  				continue;
 			}
@@ -699,7 +701,7 @@ sys_getfsstat(p, v, retval)
 		}
 		count++;
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp, p);
 	}
 	simple_unlock(&mountlist_slock);
@@ -2759,9 +2761,10 @@ sys_ogetfsstat(p, v, retval)
 	sfsp = (caddr_t)SCARG(uap, buf);
 	count = 0;
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
+	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		if (sfsp && count < maxcount) {
@@ -2774,7 +2777,7 @@ sys_ogetfsstat(p, v, retval)
 			     flags == 0) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
 				simple_lock(&mountlist_slock);
-				nmp = mp->mnt_list.cqe_next;
+				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp, p);
  				continue;
 			}
@@ -2789,7 +2792,7 @@ sys_ogetfsstat(p, v, retval)
 		}
 		count++;
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp, p);
 	}
 	simple_unlock(&mountlist_slock);
