@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.8 1997/05/28 22:43:59 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 1997/05/29 09:19:50 grr Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 1997/05/29 09:19:50 grr Exp $
 
 IMAGESIZE?=		4352 # 2Mb & change in 512 byte blocks
-BOOT_INSTALLBOOT?=	/usr/mdec/bootxx
 GZIP?=			gzip
 GZIPFLAGS?=		-9v
 GZIPEXT?=		.gz
 MAKEFLOPPY=		1
 RAWLABEL=
+BOOT=			${DESTDIR}/usr/mdec/zboot
