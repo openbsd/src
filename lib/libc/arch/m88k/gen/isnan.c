@@ -1,4 +1,5 @@
-/*	$OpenBSD: isnan.c,v 1.2 2000/03/01 17:31:20 todd Exp $	*/
+/*	$OpenBSD: isnan.c,v 1.3 2001/09/10 22:38:11 millert Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,21 +35,20 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: isnan.c,v 1.1 91/07/08 19:03:34 torek Exp
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)isnan.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$OpenBSD: isnan.c,v 1.3 2001/09/10 22:38:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
 
+int
 isnan(d)
 	double d;
 {
-	register struct ieee_double *p = (struct ieee_double *)&d;
+	struct ieee_double *p = (struct ieee_double *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
 	    (p->dbl_frach != 0 || p->dbl_fracl != 0));

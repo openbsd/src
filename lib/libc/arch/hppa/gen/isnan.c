@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnan.c,v 1.1 1999/09/14 00:21:15 mickey Exp $	*/
+/*	$OpenBSD: isnan.c,v 1.2 2001/09/10 22:38:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: isnan.c,v 1.1 1999/09/14 00:21:15 mickey Exp $";
+static char rcsid[] = "$OpenBSD: isnan.c,v 1.2 2001/09/10 22:38:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,7 +48,7 @@ int
 isnan(d)
 	double d;
 {
-	register struct ieee_double *p = (struct ieee_double *)&d;
+	struct ieee_double *p = (struct ieee_double *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
 	    (p->dbl_frach != 0 || p->dbl_fracl != 0));

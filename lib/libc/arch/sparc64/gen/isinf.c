@@ -1,4 +1,5 @@
-/*	$OpenBSD: isinf.c,v 1.1 2001/08/29 01:41:29 art Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.2 2001/09/10 22:38:11 millert Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,6 +37,10 @@
  * SUCH DAMAGE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: isinf.c,v 1.2 2001/09/10 22:38:11 millert Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 #include <machine/ieee.h>
 
@@ -43,7 +48,7 @@ int
 isinf(d)
 	double d;
 {
-	register struct ieee_double *p = (struct ieee_double *)&d;
+	struct ieee_double *p = (struct ieee_double *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
 	    p->dbl_frach == 0 && p->dbl_fracl == 0);
