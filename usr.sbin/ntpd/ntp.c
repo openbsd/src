@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.22 2004/07/10 18:42:51 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.23 2004/07/13 19:41:26 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -108,6 +108,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		client_peer_init(p);
+
+	bzero(&conf->status, sizeof(conf->status));
+	conf->status.leap = LI_ALARM;
 
 	log_info("ntp engine ready");
 
@@ -223,7 +226,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 		for (j = 1; nfds > 0 && j < idx_peers; j++)
 			if (pfd[j].revents & POLLIN) {
 				nfds--;
-				if (server_dispatch(pfd[j].fd) == -1)
+				if (server_dispatch(pfd[j].fd, conf) == -1)
 					ntp_quit = 1;
 			}
 
@@ -278,22 +281,34 @@ ntp_adjtime(struct ntpd_conf *conf)
 {
 	struct ntp_peer	*p;
 	double		 offset_median = 0;
-	int		 offset_cnt = 0;
+	int		 offset_cnt = 0, stratum = 254;
 
-	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
-		if (p->update.good) {
-			if (p->update.rcvd + REPLY_MAXAGE < time(NULL))
-				p->update.good = 0;
-			else
-				if (p->trustlevel >= TRUSTLEVEL_BADPEER) {
-					offset_median += p->update.offset;
-					offset_cnt++;
-				}
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
+		if (!p->update.good)
+			continue;
+
+		if (p->update.rcvd + REPLY_MAXAGE < time(NULL)) {
+			p->update.good = 0;
+			continue;
 		}
+
+		if (p->trustlevel < TRUSTLEVEL_BADPEER)
+			continue;
+
+		offset_median += p->update.offset;
+		offset_cnt++;
+
+		if (p->update.status.stratum < stratum)
+			stratum = p->update.status.stratum;	/* XXX */
+	}
 
 	if (offset_cnt > 0) {
 		offset_median /= offset_cnt;
 		imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
 		    &offset_median, sizeof(offset_median));
+
+		conf->status.reftime = gettime();
+		conf->status.stratum = stratum + 1;
+		conf->status.leap = LI_NOWARNING;		/* XXX */
 	}
 }

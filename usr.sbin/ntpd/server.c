@@ -1,7 +1,8 @@
-/*	$OpenBSD: server.c,v 1.9 2004/07/13 17:27:57 alexander Exp $ */
+/*	$OpenBSD: server.c,v 1.10 2004/07/13 19:41:26 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2004 Alexander Guy <alexander@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -92,9 +93,10 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 }
 
 int
-server_dispatch(int fd)
+server_dispatch(int fd, struct ntpd_conf *conf)
 {
 	ssize_t			 size;
+	u_int8_t		 version;
 	double			 rectime;
 	struct sockaddr_storage	 fsa;
 	socklen_t		 fsa_len;
@@ -111,21 +113,27 @@ server_dispatch(int fd)
 	if (ntp_getmsg(buf, size, &query) == -1)
 		return (0);
 
+	version = (query.status & VERSIONMASK) >> 3;
+
 	bzero(&reply, sizeof(reply));
-	reply.status = 0 | (query.status & VERSIONMASK);
+	reply.status = conf->status.leap | (query.status & VERSIONMASK);
 	if ((query.status & MODEMASK) == MODE_CLIENT)
 		reply.status |= MODE_SERVER;
 	else
 		reply.status |= MODE_SYM_PAS;
 
-	reply.stratum =	2;			/* XXX */
+	reply.stratum =	conf->status.stratum;
 	reply.ppoll = query.ppoll;
-	reply.precision = 0;			/* XXX */
+	reply.precision = conf->status.precision;
 	reply.rectime = d_to_lfp(rectime);
-	reply.reftime = reply.rectime;		/* XXX */
+	reply.reftime = d_to_lfp(conf->status.reftime);
 	reply.xmttime = d_to_lfp(gettime());
 	reply.orgtime = query.xmttime;
-	reply.refid = reply.xmttime.fraction;	/* XXX */
+
+	if (version > 3)
+		reply.refid = reply.xmttime.fraction;
+	else
+		reply.refid = 0;	/* XXX */
 
 	return (ntp_sendmsg(fd, (struct sockaddr *)&fsa, &reply, size, 0));
 }

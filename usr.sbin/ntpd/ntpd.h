@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.24 2004/07/11 00:15:10 alexander Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.25 2004/07/13 19:41:26 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,6 +109,7 @@ struct ntpd_conf {
 	TAILQ_HEAD(ntp_peers, ntp_peer)		ntp_peers;
 	u_int8_t				opts;
 	u_int8_t				listen_all;
+	struct ntp_status			status;
 };
 
 struct buf {
@@ -211,7 +212,7 @@ int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
 /* server.c */
 int	setup_listeners(struct servent *, struct ntpd_conf *, u_int *);
 int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
-int	server_dispatch(int);
+int	server_dispatch(int, struct ntpd_conf *);
 
 /* client.c */
 int	client_peer_init(struct ntp_peer *);
