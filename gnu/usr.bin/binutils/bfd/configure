@@ -1664,7 +1664,7 @@ EOF
 EOF
 
 	;;
-  mips-*-openbsd*)
+  mips*-*-openbsd*)
 	COREFILE=netbsd-core.o
 	;;
   mips-dec-bsd*)
@@ -1680,9 +1680,6 @@ EOF
 #define TRAD_HEADER "hosts/mipsmach3.h"
 EOF
 
-	;;
-  mips-*-netbsd*)
-	COREFILE=netbsd-core.o
 	;;
   mips-*-openbsd*)
 	COREFILE=netbsd-core.o
