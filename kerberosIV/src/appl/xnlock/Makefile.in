@@ -1,4 +1,4 @@
-# $KTH: Makefile.in,v 1.41 1999/03/11 12:12:13 joda Exp $
+# $KTH: Makefile.in,v 1.41.16.1 2001/03/03 22:12:26 assar Exp $
 
 SHELL = /bin/sh
 
@@ -57,12 +57,10 @@ install: all
 	  $(INSTALL_PROGRAM) $$x $(DESTDIR)$(bindir)/`echo $$x | sed '$(transform)'`; \
 	done
 	$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man1
-	(cd $(srcdir); \
 	for x in $(MAN1); do \
 	  b=`echo $$x | sed -e 's/\.man//' -e '$(transform)'`.1; \
-	  $(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/man1/$$b; \
-	done)
-
+	  $(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/man1/$$b; \
+	done
 uninstall:
 	PROG_BIN='$(PROG_BIN)'; for x in $$PROG_BIN; do \
 	  rm -f $(DESTDIR)$(bindir)/`echo $$x | sed '$(transform)'`; \

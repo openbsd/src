@@ -1,3 +1,17 @@
+2001-02-18
+
+	* configure.in (VERSION): bump to 1.0.7
+
+2001-01-03
+
+	* Makefile.in (travelkit): make it work with install's that copy
+	the whole path
+	(such as Ultrix install)
+
+2000-12-25
+
+	* configure.in (VERSION): bump to 1.0.5
+
 2000-10-19
 
 	* include/Makefile.in (HEADERS): add md4.h, md5.h, sha.h and rc4.h

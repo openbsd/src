@@ -86,19 +86,19 @@ install: all
 		for x in cat1 cat3 cat5 cat8; do \
 			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/$$x; done \
 		fi
-		@(cd $(srcdir); \
+		@( \
 			for x in $(MAN1) $(MAN8); do \
 				f=`basename $$x`; \
 				b=`echo $$f | sed 's!$(MANRX)!\1!'`; \
 				s=`echo $$x | sed 's!$(MANRX)!\2!'` ; \
 				m=`echo $$b | sed '$(transform)'`.$$s; \
-				echo "$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/man$$s/$$m";\
-				$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/man$$s/$$m; done ;\
+				echo "$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/man$$s/$$m";\
+				$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/man$$s/$$m; done ;\
 			for x in $(MAN3) $(MAN5); do \
 				f=`basename $$x`; \
 				s=`echo $$f | sed 's!$(MANRX)!\2!'` ; \
-				echo "$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/man$$s/$$f";\
-				$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/man$$s/$$f; done ;\
+				echo "$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/man$$s/$$f";\
+				$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/man$$s/$$f; done ;\
 			if test "$(disable_cat_manpages)" != "yes"; then \
 			for x in $(CAT1) $(CAT8); do \
 				if test -f $$x; then \
@@ -106,16 +106,16 @@ install: all
 				b=`echo $$f | sed 's!$(CATRX)!\1!'`; \
 				s=`echo $$x | sed 's!$(CATRX)!\2!'`; \
 				m=`echo $$b | sed '$(transform)'`; \
-				echo "$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/cat$$s/$$m.$(CATSUFFIX)";\
-			$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/cat$$s/$$m.$(CATSUFFIX);\
+				echo "$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/cat$$s/$$m.$(CATSUFFIX)";\
+			$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/cat$$s/$$m.$(CATSUFFIX);\
 			 fi; done ;\
 			for x in $(CAT3) $(CAT5); do \
 				if test -f $$x; then \
 				f=`basename $$x`; \
 				s=`echo $$f |  sed 's!$(CATRX)!\2!'`; \
 				b=`echo $$f |  sed 's!$(CATRX)!\1!'`; \
-			echo "$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/cat$$s/$$b.$(CATSUFFIX)";\
-			$(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/cat$$s/$$b.$(CATSUFFIX);\
+			echo "$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/cat$$s/$$b.$(CATSUFFIX)";\
+			$(INSTALL_DATA) $(srcdir)/$$x $(DESTDIR)$(mandir)/cat$$s/$$b.$(CATSUFFIX);\
 			 fi; done; fi )
 
 uninstall:

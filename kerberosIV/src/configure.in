@@ -8,7 +8,7 @@ dnl
 
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_REVISION($KTH: 1.432.2.13 $)
+AC_REVISION($KTH: 1.432.2.19 $)
 AC_INIT(lib/krb/getrealm.c)
 AC_CONFIG_HEADER(include/config.h)
 
@@ -18,7 +18,7 @@ dnl
 
 PACKAGE=krb4
 AC_SUBST(PACKAGE)dnl
-VERSION=1.0.3
+VERSION=1.0.8
 AC_SUBST(VERSION)dnl
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])dnl
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package])dnl

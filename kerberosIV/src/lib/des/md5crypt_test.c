@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: md5crypt_test.c,v 1.3 1999/12/02 16:58:38 joda Exp $");
+RCSID("$KTH: md5crypt_test.c,v 1.3.2.1 2000/12/19 10:26:10 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ struct test {
     const char *salt;
     const char *result;
 } tests[] = {
-    {"Hello world!", "$1$saltstring", "$1$saltstriYMyguxXMBpd2TEZ.vS/3q1"},
+    {"Hello world!", "$1$saltstring", "$1$saltstri$YMyguxXMBpd2TEZ.vS/3q1"},
     {NULL, NULL, NULL}
 };
 

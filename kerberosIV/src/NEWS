@@ -1,3 +1,35 @@
+Changes in release 1.0.8:
+
+* add GLOB_LIMIT flag to glob and use in ftpd
+
+* fix dynamic memory errors in libkadm
+
+* man pages fixes
+
+Changes in release 1.0.7:
+
+* fix two weak keys that were wrong
+
+* make ftpd handle options to an external ls better
+
+* some few ftp-related fixes
+
+Changes in release 1.0.6:
+
+* build fixes
+
+* fix buffer overrun in ftpd
+
+* add afs syscall for solaris 8
+
+Changes in release 1.0.5:
+
+* Remember to update version string.
+
+* Build fixes
+
+* multiple local realm fix in krb_verify_user
+
 Changes in release 1.0.4:
 
 * Only allow a small list of environment variables in telnetd

@@ -928,7 +928,7 @@
 #undef NEED_SNPRINTF_PROTO
 
 /* define if you have a glob() that groks 
-	GLOB_BRACE, GLOB_NOCHECK, GLOB_QUOTE, and GLOB_TILDE */
+	GLOB_BRACE, GLOB_NOCHECK, GLOB_QUOTE, GLOB_TILDE, and GLOB_LIMIT */
 #undef HAVE_GLOB
 
 /* define if the system is missing a prototype for glob() */

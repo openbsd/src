@@ -1,4 +1,3 @@
-
 PAM
 ---
 
@@ -20,6 +19,6 @@ kpasswd instead.
 
 See also Derrick J Brashear's `<shadow@dementia.org>' Kerberos PAM
 module at
-<ftp://ftp.dementia.org/pub/pam>. It has a lot more features, and it is
+`ftp://ftp.dementia.org/pub/pam'. It has a lot more features, and it is
 also more in line with other PAM modules.
 

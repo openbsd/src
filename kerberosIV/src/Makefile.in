@@ -1,4 +1,4 @@
-# $KTH: Makefile.in,v 1.36 1999/03/01 13:04:23 joda Exp $
+# $KTH: Makefile.in,v 1.36.4.1 2001/01/03 16:37:36 assar Exp $
 
 srcdir		= @srcdir@
 prefix		= @prefix@
@@ -41,7 +41,7 @@ uninstall:
 travelkit:	all
 	$(MKINSTALLDIRS) tmp
 	for i in $(TRAVELKIT); \
-	do $(INSTALL_PROGRAM) $$i tmp; done
+	do $(INSTALL_PROGRAM) $$i tmp/`basename $$i`; done
 	(cd tmp; tar cf ../travelkit.tar `for i in $(TRAVELKIT); do basename $$i; done`)
 	rm -rf tmp
 

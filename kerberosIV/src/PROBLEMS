@@ -1,4 +1,3 @@
-
 Problems compiling Kerberos
 ===========================
 
@@ -100,7 +99,7 @@ Another problem that you might encounter if you run AFS is that Transarc
 apparently doesn't support the 64-bit ABI, and because of this you can't
 get tokens with a 64 bit application. If you really need to do this,
 there is a kernel module that provides this functionality at
-<ftp://ftp.pdc.kth.se/home/joda/irix-afs64.tar.gz>.
+`ftp://ftp.pdc.kth.se/home/joda/irix-afs64.tar.gz'.
 
 AIX problems
 ------------

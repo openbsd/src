@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: krb-protos.h,v 1.24.2.1 2000/06/23 03:32:04 assar Exp $ */
+/* $KTH: krb-protos.h,v 1.24.2.2 2000/12/29 03:26:39 assar Exp $ */
 
 #ifndef __krb_protos_h__
 #define __krb_protos_h__
@@ -785,5 +785,8 @@ tkt_string __P((void));
 int KRB_LIB_FUNCTION
 krb_add_our_ip_for_realm __P((const char *user, const char *instance,
 			      const char *realm, const char *password));
+
+int KRB_LIB_FUNCTION
+krb_get_our_ip_for_realm __P((const char *realm, struct in_addr *ip_addr));
 
 #endif /* __krb_protos_h__ */

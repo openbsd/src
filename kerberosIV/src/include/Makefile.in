@@ -1,4 +1,4 @@
-# $KTH: Makefile.in,v 1.59.2.2 2000/10/19 20:35:56 assar Exp $
+# $KTH: Makefile.in,v 1.59.2.3 2000/12/13 14:41:37 assar Exp $
 
 srcdir		= @srcdir@
 VPATH		= @srcdir@
@@ -160,7 +160,7 @@ sl.h:
 	$(LN_S) $(srcdir)/../lib/sl/sl.h .
 
 protos.h:
-	$(LN_S) $(srcdir)/protos.H protos.h
+	$(LN_S) $(srcdir)/protos.hin protos.h
 
 netdb.h:
 	$(LN_S) $(srcdir)/netdb.x netdb.h
