@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.3 2002/10/23 15:38:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,6 +53,13 @@ typedef double *va_list;
 	    ((ap = (va_list) ((long)((char *)ap - sizeof (type)) &	\
 	                             (sizeof(type) > 4 ? ~0x7 : ~0x3))),\
 	     (*((type *) (void *) ((char *)ap + ((8 - sizeof(type)) % 4))))))
+
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define va_copy(dest, src) \
+	((dest) = (src))
+#endif
 
 #define	va_end(ap)
 

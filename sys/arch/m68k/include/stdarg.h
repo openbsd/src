@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.4 1999/06/03 21:13:45 downsj Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.5 2002/10/23 15:38:15 millert Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.14 1995/12/25 23:15:33 mycroft Exp $	*/
 
 /*-
@@ -59,6 +59,13 @@ typedef _BSD_VA_LIST_	va_list;
 		   (ap) - (sizeof(type) < sizeof(long) &&	\
 			   sizeof(type) != __va_size(type) ?	\
 			   sizeof(type) : __va_size(type))))
+
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define va_copy(dest, src) \
+	((dest) = (src))
+#endif
 
 #define	va_end(ap)	((void)0)
 
