@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.17 2002/01/10 14:21:34 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.18 2002/01/10 14:31:17 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
@@ -107,7 +107,6 @@ struct pool_item {
 	TAILQ_ENTRY(pool_item)	pi_list;
 };
 
-
 #define	PR_HASH_INDEX(pp,addr) \
 	(((u_long)(addr) >> (pp)->pr_pageshift) & (PR_HASHTABSIZE - 1))
 
@@ -191,7 +190,7 @@ int pool_logsize = POOL_LOGSIZE;
 
 #ifdef POOL_DIAGNOSTIC
 static __inline void
-pr_log(struct pool *pp, void *a, int action, const char *file, long line)
+pr_log(struct pool *pp, void *v, int action, const char *file, long line)
 {
 	int n = pp->pr_curlogentry;
 	struct pool_log *pl;
@@ -638,9 +637,7 @@ pool_get(struct pool *pp, int flags)
 			 */
 			pp->pr_flags |= PR_WANTED;
 			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			tsleep((caddr_t)pp, PSWP, (char *)pp->pr_wchan, 0);
-			simple_lock(&pp->pr_slock);
+			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
 			pr_enter(pp, file, line);
 			goto startover;
 		}
@@ -728,16 +725,14 @@ pool_get(struct pool *pp, int flags)
 			 */
 			pp->pr_flags |= PR_WANTED;
 			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			tsleep((caddr_t)pp, PSWP, (char *)pp->pr_wchan, 0);
-			simple_lock(&pp->pr_slock);
+			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
 			pr_enter(pp, file, line);
 			goto startover;
 		}
 
 		/* We have more memory; add it to the pool */
-		pp->pr_npagealloc++;
 		pool_prime_page(pp, v, ph);
+		pp->pr_npagealloc++;
 
 		/* Start the allocation process over. */
 		goto startover;
