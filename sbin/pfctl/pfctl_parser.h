@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.76 2004/05/19 17:50:51 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.77 2004/07/16 23:44:25 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -46,6 +46,8 @@
 #define PF_OPT_DUMMYACTION	0x0100
 #define PF_OPT_DEBUG		0x0200
 #define PF_OPT_SHOWALL		0x0400
+#define PF_OPT_OPTIMIZE		0x0800
+#define PF_OPT_OPTIMIZE_PROFILE	0x1000
 
 #define PF_TH_ALL		0xFF
 
@@ -58,6 +60,11 @@
 	"removals", \
 	NULL \
 }
+
+struct pfr_buffer;	/* forward definition */
+struct pf_opt_rule;
+TAILQ_HEAD(pf_opt_queue, pf_opt_rule);
+
 
 struct pfctl {
 	int dev;
@@ -72,6 +79,7 @@ struct pfctl {
 	struct pfr_buffer *trans;
 	const char *anchor;
 	const char *ruleset;
+	struct pf_opt_queue opt_queue;
 };
 
 struct node_if {
@@ -142,9 +150,31 @@ struct node_tinit {	/* table initializer */
 	char				*file;
 };
 
-struct pfr_buffer;	/* forward definition */
+
+/* optimizer created tables */
+struct pf_opt_tbl {
+	char			 pt_name[PF_TABLE_NAME_SIZE];
+	int			 pt_rulecount;
+	int			 pt_generated;
+	struct node_tinithead	 pt_nodes;
+	struct pfr_buffer	*pt_buf;
+};
+#define PF_OPT_TABLE_PREFIX	"__automatic_"
+
+/* optimizer pf_rule container */
+struct pf_opt_rule {
+	struct pf_rule		 por_rule;
+	struct pf_opt_tbl	*por_src_tbl;
+	struct pf_opt_tbl	*por_dst_tbl;
+	char			 por_anchor[MAXPATHLEN];
+	u_int64_t		 por_profile_count;
+	TAILQ_ENTRY(pf_opt_rule) por_entry;
+	TAILQ_ENTRY(pf_opt_rule) por_skip_entry[PF_SKIP_COUNT];
+};
+
 
 int	pfctl_rules(int, char *, int, char *, struct pfr_buffer *);
+int	pfctl_optimize_rules(struct pfctl *);
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *, const char *);
 int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
@@ -220,6 +250,7 @@ extern const struct pf_timeout pf_timeouts[];
 
 void			 set_ipmask(struct node_host *, u_int8_t);
 int			 check_netmask(struct node_host *, sa_family_t);
+int			 unmask(struct pf_addr *, sa_family_t);
 void			 ifa_load(void);
 struct node_host	*ifa_exists(const char *, int);
 struct node_host	*ifa_lookup(const char *, int);

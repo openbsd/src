@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.217 2004/05/21 23:10:48 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.218 2004/07/16 23:44:24 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -871,6 +871,39 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 		break;
 	}
 
+
+	if ((pf->opts & PF_OPT_OPTIMIZE) && rs_num == PF_RULESET_FILTER) {
+		/*
+		 * We'll do an optimization post-pass before finally adding the
+		 * rules.  Then we'll disable the optimization flag and feed
+		 * the rules right back into this function.
+		 */
+		struct pf_opt_rule *pfr;
+		struct pf_pooladdr *pa;
+
+		if ((pfr = calloc(1, sizeof(*pfr))) == NULL)
+			err(1, "calloc");
+		memcpy(&pfr->por_rule, r, sizeof(*r));
+		if (strlcpy(pfr->por_anchor, anchor_call,
+		    sizeof(pfr->por_anchor)) >= sizeof(pfr->por_anchor))
+			errx(1, "pfctl_add_rule: strlcpy");
+		TAILQ_INSERT_TAIL(&pf->opt_queue, pfr, por_entry);
+
+		if (TAILQ_FIRST(&r->rpool.list) != NULL)  {
+			TAILQ_INIT(&pfr->por_rule.rpool.list);
+			while ((pa = TAILQ_FIRST(&r->rpool.list)) != NULL) {
+				TAILQ_REMOVE(&r->rpool.list, pa, entries);
+				TAILQ_INSERT_TAIL(&pfr->por_rule.rpool.list, pa,
+			    	entries);
+			}
+		} else {
+			memset(&pfr->por_rule.rpool, 0,
+			    sizeof(pfr->por_rule.rpool));
+
+		}
+		return (0);
+	}
+
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		bzero(&pr, sizeof(pr));
 		if (strlcpy(pr.anchor, pf->anchor, sizeof(pr.anchor)) >=
@@ -962,6 +995,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	pf.trans = t;
 	pf.rule_nr = 0;
 	pf.anchor = anchorname;
+	TAILQ_INIT(&pf.opt_queue);
 
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((pf.loadopt & PFCTL_FLAG_NAT) != 0) {
@@ -999,6 +1033,11 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 		else
 			goto _error;
 	}
+	if (pf.opts & PF_OPT_OPTIMIZE) {
+		if (pfctl_optimize_rules(&pf))
+			ERRX("Failed to optimize ruleset: pf rules not loaded");
+	}
+
 	if ((altqsupport && (pf.loadopt & PFCTL_FLAG_ALTQ) != 0))
 		if (check_commit_altq(dev, opts) != 0)
 			ERRX("errors in altq config");
@@ -1345,7 +1384,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:AdD:eqf:F:ghi:k:nNOp:rRs:t:T:vx:z")) != -1) {
+	    "a:AdD:eqf:F:ghi:k:nNOop:rRs:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1407,6 +1446,12 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			loadopt |= PFCTL_FLAG_FILTER;
+			break;
+		case 'o':
+			if (opts & PF_OPT_OPTIMIZE)
+				opts |= PF_OPT_OPTIMIZE_PROFILE;
+			else
+				opts |= PF_OPT_OPTIMIZE;
 			break;
 		case 'O':
 			loadopt |= PFCTL_FLAG_OPTION;

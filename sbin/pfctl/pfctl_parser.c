@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.202 2004/06/29 22:14:13 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.203 2004/07/16 23:44:25 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -966,9 +966,7 @@ set_ipmask(struct node_host *h, u_int8_t b)
 	int		 i, j = 0;
 
 	m = &h->addr.v.a.mask;
-
-	for (i = 0; i < 4; i++)
-		m->addr32[i] = 0;
+	memset(m, 0, sizeof(*m));
 
 	while (b >= 32) {
 		m->addr32[j++] = 0xffffffff;

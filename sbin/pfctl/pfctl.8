@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.112 2004/06/21 20:47:11 msf Exp $
+.\" $OpenBSD: pfctl.8,v 1.113 2004/07/16 23:44:24 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm pfctl
 .Bk -words
-.Op Fl AdeghNnOqRrvz
+.Op Fl AdeghNnOoqRrvz
 .Xo
 .Oo Fl a Ar anchor
 .Op Ns / Ns Ar ruleset Oc
@@ -238,6 +238,39 @@ Do not actually load rules, just parse them.
 .It Fl O
 Load only the options present in the rule file.
 Other rules and options are ignored.
+.It Fl o
+Enable the ruleset optimizer.
+The ruleset optimizer attempts to improve rulesets by removing rule
+duplication and making better use of rule ordering.
+Specifically, it does four things:
+.Pp
+.Bl -enum -compact
+.It
+remove duplicate rules
+.It
+remove rules that are a subset of another rule
+.It
+combine multiple rules into a table when advantageous
+.It
+re-order the rules to improve evaluation performance
+.El
+.Pp
+A second
+.Fl o
+may be specified to use the currently loaded ruleset as a feedback profile
+to tailor the optimization of the
+.Ar quick
+rules to the actual network behavior.
+.Pp
+It is important to note that the ruleset optimizer will modify the ruleset
+to improve performance.
+A side effect of the ruleset modification is that per-rule accounting
+statistics will have different meanings than before.
+If per-rule accounting is important for billing purposes or whatnot, either
+the ruleset optimizer should not be used or a
+.Ar label
+field should be added to all of the accounting rules to act as optimization
+barriers.
 .It Fl p Ar device
 Use the device file
 .Ar device
