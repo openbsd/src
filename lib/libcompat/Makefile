@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/07/24 05:39:10 downsj Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/08/21 02:31:17 downsj Exp $
 #	$NetBSD: Makefile,v 1.15 1995/09/07 07:17:53 jtc Exp $
 
 LIB=	compat
@@ -28,7 +28,7 @@ MLINKS+=stty.3 gtty.3
 
 # compat 4.3 sources
 # missing: ecvt.c gcvt.c sibuf.c sobuf.c strout.c
-SRCS+=	cfree.c lsearch.c regex.c rexec.c
+SRCS+=	lsearch.c regex.c rexec.c
 SRCS+=	insque.c remque.c
 
 # missing: ecvt.0
