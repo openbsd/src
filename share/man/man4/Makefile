@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.239 2003/05/20 20:29:38 grange Exp $
+#	$OpenBSD: Makefile,v 1.240 2003/07/31 01:27:31 deraadt Exp $
 
 MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 \
 	ami.4 amdpm.4 amphy.4 an.4 aria.4 ast.4 atalk.4 atapiscsi.4 \
@@ -57,6 +57,7 @@ MLINKS+=adv.4 advansys.4
 MLINKS+=pcmcia.4 pcic.4
 MLINKS+=usb.4 uhub.4
 MLINKS+=pms.4 pmsi.4
+MLINKS+=sk.4 skc.4
 SUBDIR=	man4.alpha man4.hp300 man4.hppa \
 	man4.i386 man4.mac68k man4.mvme68k man4.macppc man4.sparc man4.sparc64 \
 	man4.vax
