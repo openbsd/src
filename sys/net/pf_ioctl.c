@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.48 2003/01/09 18:36:48 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.49 2003/01/20 20:29:52 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1769,7 +1769,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		error = pfr_set_tflags(io->pfrio_buffer, io->pfrio_size,
 		    io->pfrio_setflag, io->pfrio_clrflag, &io->pfrio_nchange,
-		    &io->pfrio_nadd, io->pfrio_flags);
+		    &io->pfrio_ndel, io->pfrio_flags);
 		break;
 	}
 
