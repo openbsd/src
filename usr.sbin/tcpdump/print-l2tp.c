@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-l2tp.c,v 1.1 2000/01/16 10:54:58 jakob Exp $	*/
+/*	$OpenBSD: print-l2tp.c,v 1.2 2003/12/22 22:22:24 otto Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-l2tp.c,v 1.1 2000/01/16 10:54:58 jakob Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-l2tp.c,v 1.2 2003/12/22 22:22:24 otto Exp $";
 #endif
 
 #include <sys/types.h>
@@ -596,7 +596,7 @@ l2tp_avp_print(const u_char *dat, u_int length)
 		if (ntohs(*ptr) < L2TP_MAX_AVP_INDEX) {
 			printf("%s", l2tp_avp[ntohs(*ptr)].name);
 			printf("(");
-			if (!hidden) {
+			if (!hidden && len >= 6) {
 				(l2tp_avp[ntohs(*ptr)].print)
 					((u_char *)ptr+2, len-6);
 			} else {
@@ -607,7 +607,8 @@ l2tp_avp_print(const u_char *dat, u_int length)
 			printf(" invalid AVP %u", ntohs(*ptr));
 		}
 
-		l2tp_avp_print(dat + len, length - len);
+		if (length >= len && len > 0)
+			l2tp_avp_print(dat + len, length - len);
 	} else if (length == 0) {
 		return;
 	} else {
@@ -627,7 +628,7 @@ l2tp_print(const u_char *dat, u_int length)
 
 	flag_t = flag_l = flag_s = flag_o = flag_p = FALSE;
 
-	if (min(length, snapend - dat) - 6 < 0) { 
+	if (length < 6 || snapend - dat < 6) { 
 		/* flag/ver, tunnel_id, session_id must be present for
 		   this packet to be properly decoded */
 		printf("%s", tstr);
@@ -698,7 +699,8 @@ l2tp_print(const u_char *dat, u_int length)
 		if (length - cnt == 0) {
 			printf(" ZLB");
 		} else {
-			l2tp_avp_print((u_char *)ptr, length - cnt);
+			if (length >= cnt)
+				l2tp_avp_print((u_char *)ptr, length - cnt);
 		}
 	} else {
 #if 0
