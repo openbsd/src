@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.17 2002/11/14 15:15:54 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.18 2002/11/22 22:21:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -493,6 +493,11 @@ _dl_bind(elf_object_t *object, int reloff)
 	const char *symn;
 	Elf_Addr value;
 	Elf_RelA *relas;
+	Elf32_Addr val;
+	Elf32_Addr *pltresolve;
+	Elf32_Addr *pltcall;
+	Elf32_Addr *pltinfo;
+	Elf32_Addr *plttable;
 
 	relas = ((Elf_RelA *)object->Dyn.info[DT_JMPREL]) + (reloff>>2);
 
@@ -512,52 +517,45 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	value = ooff + this->st_value;
 
-	{
-		Elf32_Addr val = value - (Elf32_Addr)r_addr;
+	val = value - (Elf32_Addr)r_addr;
 
-		Elf32_Addr *pltresolve;
-		Elf32_Addr *pltcall;
-		Elf32_Addr *pltinfo;
-		Elf32_Addr *plttable;
+	pltresolve = (Elf32_Addr *)
+	    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
+	pltcall = (Elf32_Addr *)(pltresolve) + PLT_CALL_OFFSET;
 
-		pltresolve = (Elf32_Addr *)
-		    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
-		pltcall = (Elf32_Addr *)(pltresolve) + PLT_CALL_OFFSET;
+	if (!B24_VALID_RANGE(val)) {
+		int index;
+		/* if offset is > RELOC_24 deal with it */
+		index = reloff >> 2;
 
-		if (!B24_VALID_RANGE(val)) {
-			int index;
-			/* if offset is > RELOC_24 deal with it */
-			index = reloff >> 2;
+		/* update plttable before pltcall branch, to make
+		 * this a safe race for threads
+		 */
+		val = ooff + this->st_value + relas->r_addend;
 
-			/* update plttable before pltcall branch, to make
-			 * this a safe race for threads
+		pltinfo = (Elf32_Addr *)(pltresolve) + PLT_INFO_OFFSET;
+		plttable = (Elf32_Addr *)pltinfo[0];
+		plttable[index] = val;
+
+		if (index > (2 << 14)) {
+			/* r_addr[0,1] is initialized to correct
+			 * value in reloc_got.
 			 */
-			val = ooff + this->st_value + relas->r_addend;
-
-			pltinfo = (Elf32_Addr *)(pltresolve) + PLT_INFO_OFFSET;
-			plttable = (Elf32_Addr *)pltinfo[0];
-			plttable[index] = val;
-
-			if (index > (2 << 14)) {
-				/* r_addr[0,1] is initialized to correct
-				 * value in reloc_got.
-				 */
-				BR(r_addr[2], pltcall);
-				_dl_dcbf(&r_addr[2]);
-			} else {
-				/* r_addr[0] is initialized to correct
-				 * value in reloc_got.
-				 */
-				BR(r_addr[1], pltcall);
-				_dl_dcbf(&r_addr[1]);
-			}
+			BR(r_addr[2], pltcall);
+			_dl_dcbf(&r_addr[2]);
 		} else {
-			/* if the offset is small enough,
-			 * branch directly to the dest
+			/* r_addr[0] is initialized to correct
+			 * value in reloc_got.
 			 */
-			BR(r_addr[0], value);
-			_dl_dcbf(&r_addr[0]);
+			BR(r_addr[1], pltcall);
+			_dl_dcbf(&r_addr[1]);
 		}
+	} else {
+		/* if the offset is small enough,
+		 * branch directly to the dest
+		 */
+		BR(r_addr[0], value);
+		_dl_dcbf(&r_addr[0]);
 	}
 
 	return (value);
