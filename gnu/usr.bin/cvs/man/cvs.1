@@ -157,6 +157,13 @@ command name,
 .` "cvs \-H"
 displays a summary of all the commands available.
 .TP
+.B \-R
+Allows
+.B cvs
+to run properly without write access to its log file. See also the
+.SM CVSREADONLYFS
+environment variable.
+.TP
 .B \-Q
 Causes the command to be
 .I really
@@ -2064,6 +2071,12 @@ environment variables are tried (in that order).
 If neither is set, a system-dependent default editor (e.g.,
 .BR vi )
 is used.
+.TP
+.SM CVSREADONLYFS
+Setting this variable allows
+.B cvs
+to run properly without write access to its log file. This is especially
+useful when mounting a read-only source tree via NFS.
 .TP
 .SM CVS_IGNORE_REMOTE_ROOT
 If this variable is set then
