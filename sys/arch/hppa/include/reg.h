@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.3 1998/12/01 03:06:43 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.4 1999/04/20 19:50:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -93,15 +93,18 @@
 
 #define CCR_MASK 0xff
 
+#define	HPPA_NREGS	(32)
+#define	HPPA_NFPREGS	(32)
+
 #ifndef _LOCORE
 
 struct reg {
-	u_int32_t r_regs[32];
+	u_int32_t r_regs[HPPA_NREGS];
 	/* p'bably some cr* ? */
 };
 
 struct fpreg {
-	u_int64_t fpr_regs[32];
+	u_int64_t fpr_regs[HPPA_NFPREGS];
 };
 #endif /* !_LOCORE */
 
