@@ -1,3 +1,0 @@
-$OpenBSD: README,v 1.4 2003/05/14 20:49:37 ho Exp $
-
-Eventually, this sysdep directory will contain support for Linux IPSec.
