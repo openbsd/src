@@ -80,7 +80,7 @@ extern "C" {
 #define AP_SHA1PW_ID "{SHA}"
 #define AP_SHA1PW_IDLEN 5
 
-typedef unsigned long AP_LONG;     /* a 32-bit quantity */
+typedef u_int32_t AP_LONG;         /* a 32-bit quantity */
 
 typedef struct {
     AP_LONG digest[5];             /* message digest */
