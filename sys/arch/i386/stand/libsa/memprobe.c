@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.29 1998/06/08 19:27:33 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.30 1998/08/31 20:53:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -96,7 +96,7 @@ bios_E820(mp)
 	if (!gotcha)
 		return (NULL);
 #ifdef DEBUG
-	printf("0x15[E820]");
+	printf(" 0x15[E820]");
 #endif
 	return (mp);
 }
@@ -120,7 +120,7 @@ bios_E801(mp)
 	if(rc & 0xff)
 		return (NULL);
 #ifdef DEBUG
-	printf("0x15[E801]");
+	printf(" 0x15[E801]");
 #endif
 	/* Fill out BIOS map */
 	mp->addr = (1024 * 1024);	/* 1MB */
@@ -153,7 +153,7 @@ bios_8800(mp)
 	if(rc & 0xff)
 		return (NULL);
 #ifdef DEBUG
-	printf("0x15[8800]");
+	printf(" 0x15[8800]");
 #endif
 	/* Fill out a BIOS_MAP */
 	mp->addr = 1024 * 1024;		/* 1MB */
@@ -173,7 +173,7 @@ bios_int12(mp)
 {
 	int mem;
 #ifdef DEBUG
-	printf(", 0x12\n");
+	printf(" 0x12");
 #endif
 	__asm __volatile(DOINT(0x12) : "=a" (mem) :: "%ecx", "%edx", "cc");
 
@@ -257,7 +257,7 @@ badprobe(mp)
 {
 	int ram;
 #ifdef DEBUG
-	printf("Scan");
+	printf(" Scan");
 #endif
 	/* probe extended memory
 	 *
@@ -281,7 +281,7 @@ memprobe()
 {
 	bios_memmap_t *pm = bios_memmap, *im;
 #ifdef DEBUG
-	printf("Probing memory: ");
+	printf("Probing memory:");
 #endif
 	if(!(pm = bios_E820(bios_memmap))) {
 		im = bios_int12(bios_memmap);
@@ -291,7 +291,7 @@ memprobe()
 		if (!pm)
 			pm = badprobe(im);
 		if (!pm) {
-			printf ("No Extended memory detected.");
+			printf (" No Extended memory detected.");
 			pm = im;
 		}
 	}
