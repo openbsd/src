@@ -1,4 +1,4 @@
-/*	$OpenBSD: utime.h,v 1.2 1997/09/21 10:45:59 niklas Exp $	*/
+/*	$OpenBSD: utime.h,v 1.3 1998/05/13 08:39:21 deraadt Exp $	*/
 /*	$NetBSD: utime.h,v 1.3 1994/10/26 00:56:39 cgd Exp $	*/
 
 /*-
@@ -38,6 +38,13 @@
 
 #ifndef	_UTIME_H_
 #define	_UTIME_H_
+
+#include <machine/ansi.h>
+
+#ifdef	_BSD_TIME_T_
+typedef	_BSD_TIME_T_	time_t;
+#undef	_BSD_TIME_T_
+#endif
 
 struct utimbuf {
 	time_t actime;		/* Access time */
