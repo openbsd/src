@@ -88,7 +88,8 @@ Supported devices {:-include-:}:
 		SMC EtherPower II (EPIC 10/100)
 		Novell NE1000, NE2000
 		Digital DEFPA PCI FDDI adapters
-		Intel EtherExpress 100 Fast Ethernet adapters.
+		Intel EtherExpress 100 Fast Ethernet adapters
+		Intel Pro/1000 Gigabit Ethernet adapters
 		Texas Instruments ThunderLAN PCI Ethernet adapters, including:
 			Compaq Netelligent PCI Adapters
 			Compaq NetFlex 3/P
@@ -299,8 +300,8 @@ SMC EtherPower II (EPIC) 10/100 Ethernet boards
 		tx0	any	any 	[you must assign an interrupt in your
 					 PCI BIOS, or let it do so for you]
 
-Macronix 98713/98715/98725 Ethernet boards
-		mx0	any	any	[you must assign an interrupt in your
+DEC Tulip clones (Macronix, Lite-On, Davicom)
+		dc0	any	any	[you must assign an interrupt in your
 					 PCI BIOS, or let it do so for you]
 
 Alteon Tigon I/II PCI Gigabit Ethernet boards
