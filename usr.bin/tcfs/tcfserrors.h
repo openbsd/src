@@ -8,19 +8,7 @@
 
 /*
  *	Base utility set v0.1
- *
- *	  $Source: /home/cvs/src/usr.bin/tcfs/Attic/tcfserrors.h,v $
- *	   $State: Exp $
- *	$Revision: 1.1.1.1 $
- *	  $Author: provos $
- *	    $Date: 2000/06/18 22:07:24 $
- *
  */
-
-/* RCS_HEADER_ENDS_HERE */
-
-
-
 
 #ifndef _ERRORS_H
 #define _ERRORS_H

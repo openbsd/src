@@ -8,20 +8,7 @@
 
 /*
  *	Base utility set v0.1
- *
- *	  $Source: /home/cvs/src/usr.bin/tcfs/Attic/tcfsputkey.c,v $
- *	   $State: Exp $
- *	$Revision: 1.1.1.1 $
- *	  $Author: provos $
- *	    $Date: 2000/06/18 22:07:24 $
- *
  */
-
-static const char *RCSid="$id: $";
-
-/* RCS_HEADER_ENDS_HERE */
-
-
 
 #include <stdio.h>
 #include <sys/types.h>

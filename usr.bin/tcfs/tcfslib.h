@@ -8,18 +8,7 @@
 
 /*
  *	Base utility set v0.1
- *
- *	  $Source: /home/cvs/src/usr.bin/tcfs/Attic/tcfslib.h,v $
- *	   $State: Exp $
- *	$Revision: 1.1.1.1 $
- *	  $Author: provos $
- *	    $Date: 2000/06/18 22:07:24 $
- *
  */
-
-/* RCS_HEADER_ENDS_HERE */
-
-
 
 #include <unistd.h>
 #include "tcfsdefines.h"
