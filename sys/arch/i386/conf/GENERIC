@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.211 2000/10/17 15:59:05 jason Exp $
+#	$OpenBSD: GENERIC,v 1.212 2000/10/26 20:50:44 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -294,6 +294,7 @@ sf*	at pci? dev ? function ?		# Adaptec AIC-6915 ethernet
 sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 ste*	at pci? dev ? function ?		# Sundance ST201 ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
+dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above

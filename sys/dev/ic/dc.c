@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.17 2000/10/18 16:19:34 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.18 2000/10/26 20:50:43 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -45,7 +45,9 @@
  * ASIX Electronics AX88141 (www.asix.com.tw)
  * ADMtek AL981 (www.admtek.com.tw)
  * ADMtek AN983 (www.admtek.com.tw)
- * Davicom DM9100, DM9102 (www.davicom8.com)
+ * Davicom DM9100, DM9102, DM9102A (www.davicom8.com)
+ * Accton EN1217 (www.accton.com)
+ * Xircom X3201 (www.xircom.com)
  *
  * Datasheets for the 21143 are available at developer.intel.com.
  * Datasheets for the clone parts can be found at their respective sites.
@@ -141,8 +143,8 @@
 #include <net/bpf.h>
 #endif
 
-#include <vm/vm.h>              /* for vtophys */
-#include <vm/pmap.h>            /* for vtophys */
+#include <vm/vm.h>		/* for vtophys */
+#include <vm/pmap.h>		/* for vtophys */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -199,6 +201,7 @@ u_int32_t dc_crc_be	__P((caddr_t));
 void dc_setfilt_21143	__P((struct dc_softc *));
 void dc_setfilt_asix	__P((struct dc_softc *));
 void dc_setfilt_admtek	__P((struct dc_softc *));
+void dc_setfilt_xircom	__P((struct dc_softc *));
 
 void dc_setfilt		__P((struct dc_softc *));
 
@@ -878,6 +881,15 @@ u_int32_t dc_crc_le(sc, addr)
 	if (sc->dc_flags & DC_64BIT_HASH)
 		return (crc & ((1 << DC_BITS_64) - 1));
 
+	/* Xircom's hash filtering table is different (read: weird) */
+	/* Xircom uses the LEAST significant bits */
+	if (DC_IS_XIRCOM(sc)) {
+		if ((crc & 0x180) == 0x180)
+			return (crc & 0x0F) + (crc	& 0x70)*3 + (14 << 4);
+		else
+			return (crc & 0x1F) + ((crc>>1) & 0xF0)*3 + (12 << 4);
+	}
+
 	return (crc & ((1 << DC_BITS_512) - 1));
 }
 
@@ -1056,12 +1068,12 @@ void dc_setfilt_asix(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-        /* Init our MAC address */
-        CSR_WRITE_4(sc, DC_AX_FILTIDX, DC_AX_FILTIDX_PAR0);
-        CSR_WRITE_4(sc, DC_AX_FILTDATA,
+	/* Init our MAC address */
+	CSR_WRITE_4(sc, DC_AX_FILTIDX, DC_AX_FILTIDX_PAR0);
+	CSR_WRITE_4(sc, DC_AX_FILTDATA,
 	    *(u_int32_t *)(&sc->arpcom.ac_enaddr[0]));
-        CSR_WRITE_4(sc, DC_AX_FILTIDX, DC_AX_FILTIDX_PAR1);
-        CSR_WRITE_4(sc, DC_AX_FILTDATA,
+	CSR_WRITE_4(sc, DC_AX_FILTIDX, DC_AX_FILTIDX_PAR1);
+	CSR_WRITE_4(sc, DC_AX_FILTDATA,
 	    *(u_int32_t *)(&sc->arpcom.ac_enaddr[4]));
 
 	/* If we want promiscuous mode, set the allframes bit. */
@@ -1116,6 +1128,78 @@ void dc_setfilt_asix(sc)
 	return;
 }
 
+void dc_setfilt_xircom(sc)
+	struct dc_softc		*sc;
+{
+	struct dc_desc		*sframe;
+	struct arpcom		*ac = &sc->arpcom;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	u_int32_t		h, *sp;
+	struct ifnet		*ifp;
+	int			i;
+
+	ifp = &sc->arpcom.ac_if;
+	DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_TX_ON|DC_NETCFG_RX_ON));
+
+	i = sc->dc_cdata.dc_tx_prod;
+	DC_INC(sc->dc_cdata.dc_tx_prod, DC_TX_LIST_CNT);
+	sc->dc_cdata.dc_tx_cnt++;
+	sframe = &sc->dc_ldata->dc_tx_list[i];
+	sp = (u_int32_t *)&sc->dc_cdata.dc_sbuf;
+	bzero((char *)sp, DC_SFRAME_LEN);
+
+	sframe->dc_data = vtophys(&sc->dc_cdata.dc_sbuf);
+	sframe->dc_ctl = DC_SFRAME_LEN | DC_TXCTL_SETUP | DC_TXCTL_TLINK |
+	    DC_FILTER_HASHPERF | DC_TXCTL_FINT;
+
+	sc->dc_cdata.dc_tx_chain[i] = (struct mbuf *)&sc->dc_cdata.dc_sbuf;
+
+	/* If we want promiscuous mode, set the allframes bit. */
+	if (ifp->if_flags & IFF_PROMISC)
+		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_PROMISC);
+	else
+		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_RX_PROMISC);
+
+	if (ifp->if_flags & IFF_ALLMULTI)
+		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ALLMULTI);
+	else
+		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_RX_ALLMULTI);
+
+	/* now program new ones */
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		h = dc_crc_le(sc, enm->enm_addrlo);
+		sp[h >> 4] |= 1 << (h & 0xF);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	if (ifp->if_flags & IFF_BROADCAST) {
+		h = dc_crc_le(sc, (caddr_t)&etherbroadcastaddr);
+		sp[h >> 4] |= 1 << (h & 0xF);
+	}
+
+	/* Set our MAC address */
+	sp[0] = ((u_int16_t *)sc->arpcom.ac_enaddr)[0];
+	sp[1] = ((u_int16_t *)sc->arpcom.ac_enaddr)[1];
+	sp[2] = ((u_int16_t *)sc->arpcom.ac_enaddr)[2];      
+
+	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_TX_ON);
+	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ON);
+	ifp->if_flags |= IFF_RUNNING;
+	sframe->dc_status = DC_TXSTAT_OWN;
+	CSR_WRITE_4(sc, DC_TXSTART, 0xFFFFFFFF);
+
+	/*
+	 * wait some time...
+	 */
+	DELAY(1000);
+
+	ifp->if_timer = 5;
+
+	return;
+}
+
 void dc_setfilt(sc)
 	struct dc_softc		*sc;
 {
@@ -1128,6 +1212,9 @@ void dc_setfilt(sc)
 
 	if (DC_IS_ADMTEK(sc))
 		dc_setfilt_admtek(sc);
+
+	if (DC_IS_XIRCOM(sc))
+		dc_setfilt_xircom(sc);
 
 	return;
 }
@@ -1277,7 +1364,8 @@ void dc_reset(sc)
 			break;
 	}
 
-	if (DC_IS_ASIX(sc) || DC_IS_ADMTEK(sc)) {
+	if (DC_IS_ASIX(sc) || DC_IS_ADMTEK(sc) || DC_IS_XIRCOM(sc) ||
+	    DC_IS_INTEL(sc)) {
 		DELAY(10000);
 		DC_CLRBIT(sc, DC_BUSCTL, DC_BUSCTL_RESET);
 		i = 0;
@@ -1302,7 +1390,7 @@ void dc_reset(sc)
 	 if (DC_IS_INTEL(sc))
 		DC_SETBIT(sc, DC_SIARESET, DC_SIA_RESET);
 
-        return;
+	return;
 }
 
 /*
@@ -1315,7 +1403,8 @@ void dc_attach_common(sc)
 	struct ifnet		*ifp;
 	int			error = 0, mac_offset;
 
-	dc_eeprom_width(sc);
+	if (!DC_IS_XIRCOM(sc))
+		dc_eeprom_width(sc);
 
 	/*
 	 * Get station address from the EEPROM.
@@ -1343,6 +1432,8 @@ void dc_attach_common(sc)
 	case DC_TYPE_AN983:
 		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
 		    DC_AL_EE_NODEADDR, 3, 0);
+		break;
+	case DC_TYPE_XIRCOM:
 		break;
 	default:
 		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
@@ -1412,6 +1503,19 @@ void dc_attach_common(sc)
 		printf("dc%d: MII without any PHY!\n", sc->dc_unit);
 		error = ENXIO;
 		goto fail;
+	}
+
+	if (DC_IS_XIRCOM(sc)) {
+		/*
+		 * setup General Purpose Port mode and data so the tulip
+		 * can talk to the MII.
+		 */
+		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_WRITE_EN | DC_SIAGP_INT1_EN |
+		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
+		DELAY(10);
+		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_INT1_EN |
+		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
+		DELAY(10);
 	}
 
 	/*
@@ -1700,9 +1804,9 @@ int dc_rx_resync(sc)
 void dc_rxeof(sc)
 	struct dc_softc		*sc;
 {
-        struct ether_header	*eh;
-        struct mbuf		*m;
-        struct ifnet		*ifp;
+	struct ether_header	*eh;
+	struct mbuf		*m;
+	struct ifnet		*ifp;
 	struct dc_desc		*cur_rx;
 	int			i, total_len = 0;
 	u_int32_t		rxstat;
@@ -1850,11 +1954,23 @@ void dc_txeof(sc)
 			continue;
 		}
 
-		if (/*sc->dc_type == DC_TYPE_21143 &&*/
-		    sc->dc_pmode == DC_PMODE_MII &&
-		    ((txstat & 0xFFFF) & ~(DC_TXSTAT_ERRSUM|
-		    DC_TXSTAT_NOCARRIER|DC_TXSTAT_CARRLOST)))
-			txstat &= ~DC_TXSTAT_ERRSUM;
+		if (DC_IS_XIRCOM(sc)) {
+			/*
+			 * XXX: Why does my Xircom taunt me so?
+			 * For some reason it likes setting the CARRLOST flag
+			 * even when the carrier is there. wtf?! */
+			if (/*sc->dc_type == DC_TYPE_21143 &&*/
+			    sc->dc_pmode == DC_PMODE_MII &&
+			    ((txstat & 0xFFFF) & ~(DC_TXSTAT_ERRSUM|
+			    DC_TXSTAT_NOCARRIER)))
+				txstat &= ~DC_TXSTAT_ERRSUM;
+		} else {
+			if (/*sc->dc_type == DC_TYPE_21143 &&*/
+			    sc->dc_pmode == DC_PMODE_MII &&
+		    	    ((txstat & 0xFFFF) & ~(DC_TXSTAT_ERRSUM|
+		    	    DC_TXSTAT_NOCARRIER|DC_TXSTAT_CARRLOST)))
+				txstat &= ~DC_TXSTAT_ERRSUM;
+		}
 
 		if (txstat & DC_TXSTAT_ERRSUM) {
 			ifp->if_oerrors++;
@@ -1987,7 +2103,8 @@ int dc_intr(arg)
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, DC_IMR, 0x00000000);
 
-	while((status = CSR_READ_4(sc, DC_ISR)) & DC_INTRS) {
+	while(((status = CSR_READ_4(sc, DC_ISR)) & DC_INTRS) &&
+	    status != 0xFFFFFFFF) {
 
 		claimed = 1;
 
@@ -2139,7 +2256,7 @@ int dc_coal(sc, m_head)
 	struct dc_softc		*sc;
 	struct mbuf		**m_head;
 {
-        struct mbuf		*m_new, *m;
+	struct mbuf		*m_new, *m;
 
 	m = *m_head;
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -2305,6 +2422,15 @@ void dc_init(xsc)
 			DC_SETBIT(sc, DC_MX_MAGICPACKET, DC_MX_MAGIC_98713);
 		else
 			DC_SETBIT(sc, DC_MX_MAGICPACKET, DC_MX_MAGIC_98715);
+	}
+
+	if (DC_IS_XIRCOM(sc)) {
+		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_WRITE_EN | DC_SIAGP_INT1_EN |
+		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
+		DELAY(10);
+		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_INT1_EN |
+		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
+		DELAY(10);
 	}
 
 	DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_TX_THRESH);
