@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.169 2003/12/30 16:48:47 henning Exp $
+# $OpenBSD: Makefile,v 1.170 2004/01/06 12:34:05 cedric Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -28,6 +28,7 @@ PFALTQ=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 # PFLOAD+=6 22 41 50 52 53 55 57 83
 PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12 13
 PFOPT=1 2 3 4 5
+PFIF2IP=1 2 3
 
 .ifmake !obj && !clean && !cleandir
 .BEGIN:
@@ -141,6 +142,25 @@ pfr${n}-update:
 pfr:		${PFR_TARGETS}
 pfr-update:	${PFR_UPDATES}
 NODEFAULT_TARGETS+=pfr
+
+.for n in ${PFIF2IP}
+PFI_TARGETS+=pfi${n}
+PFI_UPDATES+=pfi${n}-update
+
+pfi${n}:
+	xargs ${SUDO} /bin/ksh ${.CURDIR}/if2ip <${.CURDIR}/pfi${n}.in | \
+            diff -u ${.CURDIR}/pfi${n}.ok /dev/stdin
+
+pfi${n}-update:
+	xargs ${SUDO} /bin/ksh ${.CURDIR}/if2ip <${.CURDIR}/pfi${n}.in \
+	    > ${.CURDIR}/pfi${n}.ok
+
+.endfor
+
+pfi:            ${PFI_TARGETS}
+pfi-update:     ${PFI_UPDATES}
+REGRESS_TARGETS+=pfi
+UPDATE_TARGETS+=pfi-update
 
 .for n in ${PFOPT}
 PFOPT_TARGETS+=pfopt${n}
