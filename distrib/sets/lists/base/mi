@@ -2671,6 +2671,5 @@
 ./sbin/rtsol
 ./usr/sbin/ndp
 ./sbin/ping6
-./etc/rtadvd.conf
 ./usr/sbin/rtadvd
 ./usr/sbin/route6d

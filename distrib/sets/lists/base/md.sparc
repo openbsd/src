@@ -708,3 +708,5 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/memrange.ph
 ./usr/lib/libperl.so.5.3
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_gif.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/net_osdep.ph

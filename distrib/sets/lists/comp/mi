@@ -60,9 +60,6 @@
 ./usr/include/dev/ata/atareg.h
 ./usr/include/dev/ata/atavar.h
 ./usr/include/dev/ata/wdvar.h
-./usr/include/dev/atapi
-./usr/include/dev/atapi/atapi.h
-./usr/include/dev/atapi/atapilink.h
 ./usr/include/dev/atapiscsi
 ./usr/include/dev/atapiscsi/atapiconf.h
 ./usr/include/dev/auconv.h
@@ -208,8 +205,6 @@
 ./usr/include/dev/isa/sbvar.h
 ./usr/include/dev/isa/spkrio.h
 ./usr/include/dev/isa/vga_isavar.h
-./usr/include/dev/isa/wdlink.h
-./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wssvar.h
@@ -760,13 +755,8 @@
 ./usr/include/netinet/udp.h
 ./usr/include/netinet/udp_var.h
 ./usr/include/netinet6
-./usr/include/netinet6/debug.h
-./usr/include/netinet6/debug_inet6.h
-./usr/include/netinet6/icmpv6.h
-./usr/include/netinet6/icmpv6_var.h
 ./usr/include/netinet6/in6.h
 ./usr/include/netinet6/in6_var.h
-./usr/include/netinet6/nd6_protocol.h
 ./usr/include/netinet6/osdep.h
 ./usr/include/netinet6/tcpipv6.h
 ./usr/include/netipx
@@ -3311,3 +3301,5 @@
 ./usr/share/man/cat4/tqphy.0
 ./usr/share/man/cat4/ukphy.0
 ./usr/share/man/cat8/ifmcstat.0
+./usr/include/dev/mii/txphyreg.h
+./usr/include/dev/pci/if_dcreg.h
