@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.7 1996/09/25 11:56:39 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.8 1996/10/04 02:49:59 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ struct dos_partition {
 	u_int8_t	dp_ecyl;	/* end cylinder */
 	u_int32_t	dp_start;	/* absolute starting sector number */
 	u_int32_t	dp_size;	/* partition size in sectors */
-} dos_partitions[NDOSPART];
+};
 
 /* Known DOS partition types. */
 #define DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
