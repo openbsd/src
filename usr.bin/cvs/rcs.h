@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.8 2005/02/25 20:05:41 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.9 2005/02/27 00:22:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,23 +53,25 @@
 #define RCS_KWEXP_DEFAULT  (RCS_KWEXP_NAME | RCS_KWEXP_VAL)
 #define RCS_KWEXP_KVL      (RCS_KWEXP_NAME | RCS_KWEXP_VAL | RCS_KWEXP_LKR)
 
-#define RCS_KWEXP_INVAL(k) (k & RCS_KWEXP_ERR)
+#define RCS_KWEXP_INVAL(k) \
+	((k & RCS_KWEXP_ERR) || ((k & RCS_KWEXP_OLD) != RCS_KWEXP_OLD))
+
 
 
 #define RCSNUM_MAXNUM  USHRT_MAX
 #define RCSNUM_MAXLEN  64
 
 
-/* open modes */
-#define RCS_MODE_READ   0x01
-#define RCS_MODE_WRITE  0x02
-#define RCS_MODE_RDWR   (RCS_MODE_READ|RCS_MODE_WRITE)
-
-
 /* file flags */
-#define RCS_RF_PARSED  0x01   /* file has been parsed */
-#define RCS_RF_SYNCED  0x02   /* in-memory copy is in sync with disk copy */
-#define RCS_RF_SLOCK   0x04   /* strict lock */
+#define RCS_READ    0x01
+#define RCS_WRITE   0x02
+#define RCS_RDWR    (RCS_READ|RCS_WRITE)
+#define RCS_CREATE  0x04			/* create the file */
+
+/* internal flags */
+#define RCS_PARSED  0x010000   /* file has been parsed */
+#define RCS_SYNCED  0x020000   /* in-memory copy is in sync with disk copy */
+#define RCS_SLOCK   0x040000   /* strict lock */
 
 /* delta flags */
 #define RCS_RD_DEAD   0x01     /* dead */
@@ -124,7 +126,7 @@ struct rcs_delta {
 typedef struct rcs_file {
 	char   *rf_path;
 	u_int   rf_ref;
-	u_int   rf_mode;
+	mode_t  rf_mode;
 	u_int   rf_flags;
 
 	RCSNUM *rf_head;
@@ -133,26 +135,30 @@ typedef struct rcs_file {
 	char   *rf_expand;
 	char   *rf_desc;
 
-	struct rcs_dlist rf_delta;
-	TAILQ_HEAD(rcs_slist, rcs_sym)   rf_symbols;
-	TAILQ_HEAD(rcs_llist, rcs_lock)  rf_locks;
+	u_int   rf_ndelta;
+	struct rcs_dlist                rf_delta;
+	TAILQ_HEAD(rcs_slist, rcs_sym)  rf_symbols;
+	TAILQ_HEAD(rcs_llist, rcs_lock) rf_locks;
+
 
 	void   *rf_pdata;
 } RCSFILE;
 
 
-RCSFILE*  rcs_open         (const char *, u_int);
+RCSFILE*  rcs_open         (const char *, int, ...);
 void      rcs_close        (RCSFILE *);
-int       rcs_parse        (RCSFILE *);
 int       rcs_write        (RCSFILE *);
-int       rcs_addsym       (RCSFILE *, const char *, RCSNUM *);
-int       rcs_rmsym        (RCSFILE *, const char *);
+int       rcs_sym_add      (RCSFILE *, const char *, RCSNUM *);
+int       rcs_sym_remove   (RCSFILE *, const char *);
 BUF*      rcs_getrev       (RCSFILE *, RCSNUM *);
 BUF*      rcs_gethead      (RCSFILE *);
 RCSNUM*   rcs_getrevbydate (RCSFILE *, struct tm *);
+int       rcs_kwexp_set    (RCSFILE *, int);
+int       rcs_kwexp_get    (RCSFILE *);
 
 int       rcs_kflag_get    (const char *);
 void      rcs_kflag_usage  (void);
+int       rcs_kw_expand    (RCSFILE *, u_char *, size_t, size_t *);
 
 BUF*      rcs_patch     (const char *, const char *);
 size_t    rcs_stresc    (int, const char *, char *, size_t *);

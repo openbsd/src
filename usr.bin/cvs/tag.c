@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.3 2005/01/14 18:02:04 jfb Exp $	*/
+/*	$OpenBSD: tag.c,v 1.4 2005/02/27 00:22:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <amni@pandora.be>
@@ -223,7 +223,7 @@ cvs_tag_file(CVSFILE *cfp, void *arg)
 		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
 
-		rf = rcs_open(rcspath, RCS_MODE_READ);
+		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
 			cvs_ent_free(entp);
 			return (-1);

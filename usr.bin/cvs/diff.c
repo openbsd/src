@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.21 2005/02/25 20:32:48 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.22 2005/02/27 00:22:08 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -566,7 +566,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, diff_file, RCS_FILE_EXT);
 
-		rf = rcs_open(rcspath, RCS_MODE_READ);
+		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
 			cvs_ent_free(entp);
 			return (-1);

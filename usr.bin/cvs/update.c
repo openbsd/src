@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.16 2005/02/22 23:31:13 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.17 2005/02/27 00:22:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -193,7 +193,7 @@ cvs_update_file(CVSFILE *cf, void *arg)
 		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, fname, RCS_FILE_EXT);
 
-		rf = rcs_open(rcspath, RCS_MODE_READ);
+		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
 			cvs_ent_free(entp);
 			return (-1);
