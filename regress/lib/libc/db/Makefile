@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2002/01/02 17:53:01 art Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/01/03 00:22:47 art Exp $
 #	$NetBSD: Makefile,v 1.11 1995/12/12 01:54:15 cgd Exp $
 
 PROG=	dbtest
@@ -11,7 +11,7 @@ CLEANFILES+= t1 t2 t3
 DBTARGETS=1 2 3 4 5 6 7 8 9 10 11 12 13 20
 
 .for DT in ${DBTARGETS}
-db-${DT}:
+db-${DT}: ${PROG}
 	sh ${.CURDIR}/run.test ${DT}
 REGRESSTARGETS+=db-${DT}
 .PHONY: db-${DT}
