@@ -1,7 +1,8 @@
-/*	$OpenBSD: pciide_natsemi_reg.h,v 1.4 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_natsemi_reg.h,v 1.5 2004/02/02 19:38:43 grange Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,3 +98,33 @@ static u_int8_t natsemi_dma_pulse[] =	{ 7, 10, 10 };
 /* 16 - N = number of clocks */
 static u_int8_t natsemi_pio_recover[] =	{ 6,  8, 11, 13, 15 };
 static u_int8_t natsemi_dma_recover[] =	{ 6,  8,  9 };
+
+
+/*
+ * Register definitions for National Semiconductor SCx200 IDE found
+ * on Geode SC1100 IAOC.
+ */
+#define SCx200_TIM_PIO(chan, drive)	(0x40 + 16 * (chan) + 8 * (drive))
+#define SCx200_TIM_DMA(chan, drive)	(0x44 + 16 * (chan) + 8 * (drive))
+
+#define SCx200_PIOFORMAT_SHIFT		31
+
+/* PIO mode timings */
+const static u_int32_t scx200_pio33[2][5] = {
+    /* Format 0 */
+    { 0x00009172, 0x00012171, 0x00020080, 0x00032010, 0x00040010 },
+    /* Format 1 */
+    { 0x9172d132, 0x21717121, 0x00803020, 0x20102010, 0x00100010 }};
+const static u_int32_t scx200_pio66[2][5] = {
+    /* Fromat 0 */
+    { 0x0000f8e4, 0x000153f3, 0x000213f1, 0x00034231, 0x00041131 },
+    /* Format 1 */
+    { 0xf8e4f8e4, 0x53f3f353, 0x13f18141, 0x42314231, 0x11311131 }};
+
+/* DMA mode timings */
+const static u_int32_t scx200_dma33[] = { 0x00077771, 0x00012121, 0x00002020 };
+const static u_int32_t scx200_dma66[] = { 0x000ffff3, 0x00035352, 0x00015151 };
+
+/* UDMA mode timings */
+const static u_int32_t scx200_udma33[] = { 0x00921250, 0x00911140, 0x00911030 };
+const static u_int32_t scx200_udma66[] = { 0x009436a1, 0x00933481, 0x00923261 };

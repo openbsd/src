@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.159 2004/02/02 00:21:56 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.160 2004/02/02 19:38:43 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -252,6 +252,8 @@ void natsemi_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void natsemi_setup_channel(struct channel_softc *);
 int  natsemi_pci_intr(void *);
 void natsemi_irqack(struct channel_softc *);
+void ns_scx200_chip_map(struct pciide_softc *, struct pci_attach_args *);
+void ns_scx200_setup_channel(struct channel_softc *);
 
 void acer_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void acer_setup_channel(struct channel_softc *);
@@ -490,6 +492,10 @@ const struct pciide_product_desc pciide_natsemi_products[] =  {
 	{ PCI_PRODUCT_NS_PC87415,	/* National Semi PC87415 IDE */
 	  0,
 	  natsemi_chip_map
+	},
+	{ PCI_PRODUCT_NS_SCx200_IDE,	/* National Semi SCx200 IDE */
+	  0,
+	  ns_scx200_chip_map
 	}
 };
 
@@ -4170,6 +4176,156 @@ natsemi_pci_intr(arg)
 		}
 	}
 	return (rv);
+}
+
+void
+ns_scx200_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	int channel;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 2;
+
+	sc->sc_wdcdev.set_modes = ns_scx200_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	/*
+	 * Soekris net4801 errata 0003:
+	 *
+	 * The SC1100 built in busmaster IDE controller is pretty standard,
+	 * but have two bugs: data transfers need to be dword aligned and
+	 * it cannot do an exact 64Kbyte data transfer.
+	 *
+	 * Assume that reducing maximum segment size by one page
+	 * will be enough, and restrict boundary too for extra certainty.
+	 */
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_NS_SCx200_IDE) {
+		sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX - PAGE_SIZE;
+		sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_MAX - PAGE_SIZE;
+	}
+
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0) {
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
+			continue;
+		}
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+	}
+}
+
+void
+ns_scx200_setup_channel(struct channel_softc *chp)
+{
+	struct ata_drive_datas *drvp;
+	int drive, mode;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int channel = chp->channel;
+	int pioformat;
+	pcireg_t piotim, dmatim;
+
+	/* Setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	pioformat = (pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    SCx200_TIM_DMA(0, 0)) >> SCx200_PIOFORMAT_SHIFT) & 0x01;
+	WDCDEBUG_PRINT(("%s: pio format %d\n", __func__, pioformat),
+	    DEBUG_PROBE);
+
+	/* Per channel settings */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+
+		piotim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    SCx200_TIM_PIO(channel, drive));
+		dmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    SCx200_TIM_DMA(channel, drive));
+		WDCDEBUG_PRINT(("%s:%d:%d: piotim=0x%x, dmatim=0x%x\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, channel, drive,
+		    piotim, dmatim), DEBUG_PROBE);
+
+		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_UDMA) != 0) {
+			/* Setup UltraDMA mode */
+			drvp->drive_flags &= ~DRIVE_DMA;
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+			dmatim = scx200_udma33[drvp->UDMA_mode];
+			mode = drvp->PIO_mode;
+		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_DMA) != 0) {
+			/* Setup multiword DMA mode */
+			drvp->drive_flags &= ~DRIVE_UDMA;
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+			dmatim = scx200_dma33[drvp->DMA_mode];
+
+			/* mode = min(pio, dma + 2) */
+			if (drvp->PIO_mode <= (drvp->DMA_mode + 2))
+				mode = drvp->PIO_mode;
+			else
+				mode = drvp->DMA_mode + 2;
+		} else {
+			mode = drvp->PIO_mode;
+		}
+
+		/* Setup PIO mode */
+		drvp->PIO_mode = mode;
+		if (mode < 2)
+			drvp->DMA_mode = 0;
+		else
+			drvp->DMA_mode = mode - 2;
+
+		piotim = scx200_pio33[pioformat][drvp->PIO_mode];
+
+		WDCDEBUG_PRINT(("%s:%d:%d: new piotim=0x%x, dmatim=0x%x\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, channel, drive,
+		    piotim, dmatim), DEBUG_PROBE);
+
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    SCx200_TIM_PIO(channel, drive), piotim);
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    SCx200_TIM_DMA(channel, drive), dmatim);
+	}
+
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL(channel), idedma_ctl);
+	}
+
+	pciide_print_modes(cp);
 }
 
 void
