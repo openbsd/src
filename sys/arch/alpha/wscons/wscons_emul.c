@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.c,v 1.9 1997/07/31 04:10:24 kstailey Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.10 1997/07/31 04:48:11 kstailey Exp $	*/
 /*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
@@ -143,9 +143,7 @@ wscons_emul_input_normal(we, c)
 		break;
 
 	case ASCII_NP:
-		(*we->ac_ef->wef_eraserows)(we->ac_efa,
-		    0, we->ac_nrow - 1);
-
+		(*we->ac_ef->wef_eraserows)(we->ac_efa, 0, we->ac_nrow);
 		we->ac_ccol = 0;
 		we->ac_crow = 0;
 		break;
