@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/08/21 06:58:46 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1996/08/25 15:37:46 downsj Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -6,6 +6,8 @@
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
 LNDIR=		/usr/bin/lndir
+
+#H2PH=		/usr/bin/h2ph
 
 MAN=		x2p/a2p.man x2p/s2p.man pod/perl.man pod/perlbook.man \
 		pod/perlbot.man pod/perlcall.man pod/perldata.man \
@@ -76,6 +78,13 @@ x2p/cflags:
 
 install: ${MANALL} maninstall
 	(cd ${.OBJDIR}; ${MAKE} install)
+#.ifndef DESTDIR
+#	(cd /usr/include; ${H2PH} *.h arpa/*.h machine/*.h net/*.h \
+#			  protocols/*.h sys/*.h)
+#.else
+#	@echo Perl headers must be installed by hand when DESTDIR is set.
+#.endif
+#	-chmod -R a+rX ${DESTDIR}/usr/lib/perl5
 
 clean:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
