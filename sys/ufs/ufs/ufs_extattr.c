@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extattr.c,v 1.1 2002/02/22 20:37:46 drahn Exp $ */
+/*	$OpenBSD: ufs_extattr.c,v 1.2 2002/03/31 22:00:11 drahn Exp $ */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 Robert N. M. Watson
  * Copyright (c) 2002 Networks Associates Technologies, Inc.
@@ -297,16 +297,15 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, char *dirname,
 	FREE(cnp.cn_pnbuf, M_NAMEI);
 
 	if (error) {
-#if 0
-	/* -XXX does OpenBSD ufs_lookup always unlock on error? */
 		/*
 		 * Error condition, may have to release the lock on the parent
 		 * if ufs_lookup() didn't.
 		 */
-		if (!(cnp.cn_flags & PDIRUNLOCK) &&
-		    (lockparent == UE_GETDIR_LOCKPARENT_DONT))
+		if(lockparent == UE_GETDIR_LOCKPARENT_DONT)
 			VOP_UNLOCK(start_dvp, 0, p);
 
+#if 0
+	/* -XXX does OpenBSD ufs_lookup always unlock on error? */
 		/*
 		 * Check that ufs_lookup() didn't release the lock when we
 		 * didn't want it to.
