@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.108 1998/12/25 19:13:38 tholo Exp 
+ *	OpenBSD: pcidevs,v 1.110 1998/12/25 19:53:13 tholo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -492,7 +492,7 @@
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
-#define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube Microsystems */
+#define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
@@ -502,6 +502,7 @@
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
+vencor RISCOM		0x12aa	RISCom
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd ID) */
@@ -898,6 +899,7 @@
 #define	PCI_PRODUCT_INTEL_82443LX_AGP	0x7181		/* 82443LX AGP Device (PAC) */
 #define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX PCI AGP (PAC) */
 #define	PCI_PRODUCT_INTEL_82443BX_AGP	0x7191		/* 82443BX AGP Device (PAC) */
+#define	PCI_PRODUCT_INTEL_82443BX_NOAGP	0x7192		/* 82443BX Host-PCI (no AGP) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 450 PCIset (Orion) Host-PCI */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 450 PCIset (Orion) Memory */
 

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.108 1998/12/25 19:13:38 tholo Exp 
+ *	OpenBSD: pcidevs,v 1.110 1998/12/25 19:53:13 tholo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1573,6 +1573,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82443BX AGP Device (PAC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP,
+	    0,
+	    "Intel",
+	    "82443BX Host-PCI (no AGP)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
@@ -5651,7 +5657,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_CCUBE, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "C-Cube Microsystems",
+	    "C-Cube",
 	    NULL,
 	},
 	{
