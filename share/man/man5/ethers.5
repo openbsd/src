@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ethers.5,v 1.15 2003/10/26 19:45:36 jmc Exp $
+.\"	$OpenBSD: ethers.5,v 1.16 2003/10/28 15:11:37 jmc Exp $
 .\"	$NetBSD: ethers.5,v 1.2 1994/11/30 19:31:16 jtc Exp $
 .\"
 .\"     Written by Roland McGrath <roland@frob.com>.  Public domain.
@@ -44,3 +44,11 @@ file format was adopted from SunOS and appeared in
 0.9b.
 .Sh BUGS
 A name server should be used instead of a static file.
+.Pp
+Lines in
+.Pa /etc/ethers
+are limited to
+.Dv BUFSIZ
+characters
+.Pq currently 1024 .
+Longer lines will be ignored.

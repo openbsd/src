@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.15 2003/10/26 19:45:36 jmc Exp $
+.\"	$OpenBSD: hosts.5,v 1.16 2003/10/28 15:11:37 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -113,3 +113,11 @@ file format appeared in
 .Bx 4.2 .
 .Sh BUGS
 A name server should be used instead of a static file.
+.Pp
+Lines in
+.Pa /etc/hosts
+are limited to
+.Dv BUFSIZ
+characters
+.Pq currently 1024 .
+Longer lines will be ignored.
