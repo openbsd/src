@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.14 2003/06/16 03:22:45 jason Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.15 2003/06/16 03:45:40 jason Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -1240,7 +1240,7 @@ awacs_set_rate(struct awacs_softc *sc, struct audio_params *p)
 	for (i = 1; selected == -1 && i < n; i++) {
 		if (p->sample_rate == awacs_speeds[i].rate)
 			selected = i;
-		else if (p->sample_rate > awacs_speeds[i].rate) {
+		else if (p->sample_rate < awacs_speeds[i].rate) {
 			u_int diff1, diff2;
 
 			diff1 = p->sample_rate - awacs_speeds[i - 1].rate;
