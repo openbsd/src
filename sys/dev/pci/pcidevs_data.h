@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.367 2001/02/20 03:52:05 jason Exp 
+ *		OpenBSD: pcidevs,v 1.368 2001/02/21 23:44:13 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1328,11 +1328,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21040,
-	    "DECchip 21040 /* Tulip */",
+	    "DECchip 21040",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21030,
-	    "DECchip 21030 /* TGA */",
+	    "DECchip 21030",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_NVRAM,
@@ -1344,7 +1344,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140,
-	    "DECchip 21140 /* FasterNet */",
+	    "DECchip 21140",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PBXGB,
@@ -1356,7 +1356,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21041,
-	    "DECchip 21041 /* Tulip Pass 3 */",
+	    "DECchip 21041",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DGLPB,

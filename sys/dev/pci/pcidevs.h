@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.367 2001/02/20 03:52:05 jason Exp 
+ *		OpenBSD: pcidevs,v 1.368 2001/02/21 23:44:13 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -987,15 +987,15 @@
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI */
-#define	PCI_PRODUCT_DEC_21040	0x0002		/* DECchip 21040 /* Tulip */ */
-#define	PCI_PRODUCT_DEC_21030	0x0004		/* DECchip 21030 /* TGA */ */
+#define	PCI_PRODUCT_DEC_21040	0x0002		/* DECchip 21040 */
+#define	PCI_PRODUCT_DEC_21030	0x0004		/* DECchip 21030 */
 #define	PCI_PRODUCT_DEC_NVRAM	0x0007		/* Zephyr NV-RAM */
 #define	PCI_PRODUCT_DEC_KZPSA	0x0008		/* KZPSA */
-#define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 /* FasterNet */ */
+#define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 */
 #define	PCI_PRODUCT_DEC_PBXGB	0x000d		/* TGA2 */
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
 /* product DEC ???		0x0010	??? VME Interface */
-#define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 /* Tulip Pass 3 */ */
+#define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 */
 #define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (OPPO) */
 #define	PCI_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/3 */
 /* Farallon apparently used DEC's vendor ID by mistake */
