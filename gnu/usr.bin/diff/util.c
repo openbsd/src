@@ -208,7 +208,7 @@ begin_output ()
 	      close (pipes[0]);
 	    }
 
-	  execl (PR_PROGRAM, PR_PROGRAM, "-f", "-h", name, 0);
+	  execl (PR_PROGRAM, PR_PROGRAM, "-F", "-h", name, 0);
 	  pfatal_with_name (PR_PROGRAM);
 	}
       else
@@ -222,7 +222,7 @@ begin_output ()
       char *command = xmalloc (4 * strlen (name) + strlen (PR_PROGRAM) + 10);
       char *p;
       char const *a = name;
-      sprintf (command, "%s -f -h ", PR_PROGRAM);
+      sprintf (command, "%s -F -h ", PR_PROGRAM);
       p = command + strlen (command);
       SYSTEM_QUOTE_ARG (p, a);
       *p = 0;
