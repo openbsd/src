@@ -1,0 +1,304 @@
+.\" $OpenBSD: bsd.port.mk.5,v 1.1 2000/06/09 16:39:45 espie Exp $
+.\"
+.\" Copyright (c) 2000 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 10 2000
+.Dt BSD.PORT.MK 5
+.Os
+.Sh NAME
+.Nm bsd.port.mk
+.Nd ports tree master Makefile fragment
+.Sh SYNOPSIS
+.Fd #include <bsd.port.mk>
+.Sh DESCRIPTION
+.Nm 
+holds all the standard routines used by the ports tree.  Some variables
+and targets are for its internal use only.  The rest is documented here.
+.Pp
+Other BSD, and older versions of 
+.Nm
+included other targets and variables. Conversion methods are outlined here.
+.Pp
+This is an incomplete draft, most variables and targets are not yet
+documented.
+.Sh TARGETS
+.Bl -tag -width do-configure
+.El
+.Sh VARIABLES
+.Bl -tag -width MASTER_SITES
+.It Ev ARCH
+Current machine architecture (read-only).
+.It BUILD_DEPENDS
+List of other ports the current port needs to build correctly.
+Each item has the form 
+.Sq file_to_test::directory[:target] .
+The double :: is designed to allow wedging a package specification in the
+near future.  
+.Sq target 
+defaults to 
+.Sq install
+if it is not specified.
+.Sq file_to_test 
+is checked against the current path, or as an absolute
+file name. The special name /nonexistent can be used to force a build
+dependency (see the ghostscript port for an example).
+.Sq directory 
+is set relative to ${PORTSDIR}.
+Build dependencies are checked at the beginning of the extract stage.
+.It Ev CDROM_PACKAGES
+Base location where packages suitable for a CDROM (see
+PERMIT_PACKAGE_CDROM) will be placed 
+(default: ${PORTSDIR}/cdrom-packages/${ARCH})
+.It Ev CLEANDEPENDS
+If set to 
+.Sq Yes
+.Sq make clean
+will also clean dependencies. Note that distclean  never recurses down to
+dependencies.
+.It Ev DIST_SUBDIR
+Optionally subdirectory of ${DISTDIR} where the current port's distfiles
+and patchfiles will be located. See target fetch.
+.It Ev FAKE
+Automatically set to 
+.Sq Yes
+for most ports (and all new ports). Indicates that the port, using
+.Ev FAKE_FLAGS 
+magic, will properly fake installation into ${WRKINST}, to be packaged
+and properly installed from the package.  Set to 
+.Sq No
+in very rare cases, and during port creation.
+.It Ev FETCH_DEPENDS
+See BUILD_DEPENDS for specification.  Fetch dependencies are checked at
+the beginning of the extract stage. No current port uses FETCH_DEPENDS.
+.It Ev FILESDIR
+Location of other files related to the current ports. Holds at least the
+checksum file, and sometimes other files (default: files.${ARCH} or files).
+.It Ev FTP_PACKAGES
+Base location where packages suitable for ftp (see
+PERMIT_PACKAGE_FTP) will be placed 
+(default: ${PORTSDIR}/ftp-packages/${ARCH})
+.It Ev LIB_DEPENDS
+Libraries this port depends upon. Similar to BUILD_DEPENDS, except that
+.Sq file_to_test
+is replaced by a 
+.Sq lib_spec
+of the form:
+.Sq libname.[version.[subversion]] .
+See BUGS AND LIMITATIONS as well.
+.It Ev FULLDISTDIR
+Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
+located, to be used in hand-crafted extraction targets (read-only).
+.It Ev IS_INTERACTIVE
+Set to
+.Sq Yes
+if port needs human interaction to build. Usually implies NO_PACKAGE as
+well.  Porters should strive to minimize IS_INTERACTIVE ports, by using
+FLAVORS for multiple choice ports, and by postponing human intervention
+to package installation time.
+.It Ev LOCALBASE
+where other ports have already been installed (default: /usr/local)
+.It Ev MAKE_PROGRAM
+The make program that is used for building the port. Set to ${MAKE} or
+${GMAKE} depending on USE_GMAKE. Read-only.
+.It Ev NEED_VERSION
+Specific revision of 
+.Nm 
+needed by this ports tree. Usually set to the current version of 
+.Nm
+when port was built, and updated by port maintainers when needed.
+.It Ev NO_SHARED_LIBS
+Set to 
+.Sq Yes
+if platform does not support shared libraries.  To be tested after
+including 
+.Nm bsd.port.mk ,
+if neither PFRAG.SHARED nor CONFIGURE_SHARED are enough.
+.It Ev OPSYS
+Always OpenBSD (read-only).
+.It Ev OPSYS_VER
+Revision number of OpenBSD (read-only).
+.It Ev PACKAGES
+Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
+.It Ev PATCHDIR
+Location for patches applied by patch target (default: patches.${ARCH} or
+patches).
+.It Ev PATCH_LIST
+Wildcard pattern of patches to select under ${PATCHDIR} (default: patch-*).
+Note that filenames ending in .orig, or ~ are never applied.
+.It Ev PORTSDIR
+Root of the ports tree (default: /usr/ports).
+.It Ev PKGDIR
+Location for packaging information (packing list, port description, port
+short description). Default: pkg.${ARCH} or pkg.
+.It Ev PREFIX
+Base directory for the current port installation. Usually ${LOCALBASE},
+though some ports may elect a location under /var, and some multi-packages
+ports may install under several locations.
+.It Ev RUN_DEPENDS
+Specification of ports this port needs installed to be functional.
+Same format as BUILD_DEPENDS.  The corresponding packages will be built at
+.Ar install
+stage, and 
+.Xr pkg_add 1
+will take care of installing them.
+.It Ev SCRIPTDIR
+Location for scripts related to the current port (default: scripts.${ARCH}
+or scripts).
+.It Ev SYSCONFDIR
+Location for ports system configuration files. Defaults to /etc, should
+never be set to /usr/local/etc.
+.It Ev TEMPLATES
+Base location for the templates used in the readme target.
+.It Ev WRKINST
+Subdirectory of ${WRKDIR} where port normally installs (see 
+.Ar fake 
+target).
+.It Ev X11BASE
+Where X11 has been installed (default: /usr/X11R6).
+.It Ev USE_GMAKE
+Set to
+.Sq Yes
+if gnu make is needed for correct behavior of this port.
+.El
+.Sh OBSOLETE TARGETS
+.Bl -tag -width do-configure
+.El
+.Sh OBSOLETE VARIABLES
+.Bl -tag -width MASTER_SITES
+.It Ev NO_CONFIGURE
+If ${FILESDIR}/configure does
+.It Ev NO_EXTRACT
+Set EXTRACT_ONLY=  instead.
+.It Ev NO_PATCH
+The absence of a patches directory does the same. Use PATCH_DIR and
+PATCH_LIST if patches must be changed dynamically.
+.It Ev NO_WRKDIR
+All ports should have a working directory, as this is necessary to store
+cookies and keep state.
+.It Ev NO_WRKSUBDIR
+The same functionality is obtained by setting WRKDIST=${WRKDIR} .
+.It Ev NOCLEANDEPENDS
+Use CLEANDEPENDS instead.
+.It Ev NOMANCOMPRESS
+.Fx
+ships with compressed man pages, and uses this variable to control
+that behavior.
+.It Ev PATCH_SITES
+.Ev PATCH_FILES 
+used to be retrieved from a separate site list. For greater flexibility,
+all files are now retrieved from 
+.Ev MASTER_SITES ,
+.Ev MASTER_SITES0 ,...
+.Ev MASTER_SITES9 ,
+using a 
+.Sq :0 
+to
+.Sq :9
+extension to the file name, e.g., 
+.Bd -litteral -offset indent
+	PATCH_FILES=foo.diff.gz
+	PATCH_SITES=ftp://ftp.zoinx.org/pub/
+.Ed
+becomes
+
+.Bd -litteral -offset indent
+	PATCH_FILES=foo.diff.gz:0
+	MASTER_SITES0=ftp://ftp.zoinx.org/pub/
+.Ed
+.El
+.Sh FILES
+.Bl -tag -width files/md5
+.It Pa ../Makefile.inc
+Common Makefile fragment for a set of ports, included automatically.
+.It Pa Makefile.${ARCH}
+Arch-dependent Makefile fragment, included automatically.
+.It Pa ${FILESDIR}/md5
+Checksum file. Holds the output of 
+.Xr md5 1 ,
+.Xr sha1 1 
+and
+.Xr rmd160 1
+for the ports ${DISTFILES} and ${PATCHFILES}.
+.It Pa ${PKGDIR}/DESCR
+Description for the port. Variables such as ${HOMEPAGE} will be expanded
+(see SUBST_VARS). Multi-packages ports will use DESCR${SUBPACKAGE}.
+.It Pa ${PKGDIR}/COMMENT
+Short, one line description of the port, that is displayed by 
+.Xr pkg_info 1 ,
+and appears in 
+.Pa ${PORTSDIR}/INDEX .
+Name will be adjusted for flavored and multi-packages ports.
+.El
+.Sh OBSOLETE FILES
+.Bl -tag -width files/md5
+.It Pa ${SCRIPTDIR}/{pre,do,post}-*
+Identical functionality can be obtained through a {pre,do,post}-* target,
+invoking the script manually if necessary.
+.It Pa ${PKGDIR}/PLIST.noshared
+Use PFRAG.shared or PFRAG.no-shared instead.  PLIST.noshared was too easy
+to forget when updating ports.
+.It Pa ${PKGDIR}/PLIST.sed
+Use PLIST directly. Until revision 1.295,
+.Nm
+did not substitute variables in the packing list unless this special form
+was used.
+.It Pa /usr/share/mk/bsd.port.mk
+Original location of 
+.Nm .
+The current file lives under ${PORTSDIR}/infrastructure/mk/bsd.port.mk,
+whereas /usr/share/mk/bsd.port.mk is just a stub.
+.It Pa {scripts,files,patches}.${OPSYS}
+The 
+.Ox
+ports tree focuses on robustness, not on being portable to other operating
+systems.
+.It Pa /usr/local/etc
+Used by
+.Fx
+to marshall system configuration files. All
+.Ox
+system configuration files are located in /etc, or in a subdirectory of
+/etc.
+.El
+.Sh BUGS AND LIMITATIONS
+.Ev LOCALBASE ,
+.Ev X11BASE
+and
+.Ev PREFIX
+are not heeded consistently. Most of the ports tree will probably fall
+apart if one tries to build/use stuff elsewhere.
+.Pp
+.Ev LIB_DEPENDS 
+is automatically both a BUILD_DEPENDS and a RUN_DEPENDS, whereas some
+smarter, more intricate mechanism could be designed to minimize dependencies.
+.Sh HISTORY
+The ports mechanism originally came from
+.Fx .
+A lot of additions were taken from 
+.Nx
+over the years.
+.Pp
+When the file grew too large, Marc Espie cleaned it up to restore some of
+its speed and remove a lot of bugs.
