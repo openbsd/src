@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.24 2004/04/11 18:05:23 millert Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.25 2005/03/01 18:22:32 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.16 2005/03/01 13:35:59 otto Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -46,10 +46,16 @@
 # Terminal ports:
 #	cua[a-z]*	Zilog 8530 serial ports
 #	tty[a-z]*	Zilog 8530 serial ports
+#	magma*	Magma multiport cards
+#	spif*	"spif" multiport cards
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
+# Printers:
+#	bpp*	Parallel port
+#	bppmag[mno]	Magma parallel port
+#	bpp[jkl]	"spif" parallel port
 # Console ports:
 #	ttyC0	Minimal wscons devices
 #	ttyC-F*	wscons display devices
@@ -60,16 +66,11 @@
 # Special purpose devices:
 #	audio*	Audio devices
 #	bpf*	Berkeley Packet Filter
-#	bpp*	Parallel port
-#	bppmag[mno]	Magma parallel port
-#	bpp[jkl]	"spif" parallel port
 #	fd	fd/* nodes for fdescfs
 #	lkm	Loadable kernel modules interface
 #	openprom	PROM settings
-#	magma*	Magma multiport cards
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
-#	spif*	"spif" multiport cards
 #	ses*	SES/SAF-TE SCSI devices
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
@@ -257,24 +258,6 @@ ses*)
 	M ses$U c 124 $U 640 operator
 	;;
 
-spif*)
-	case $U in
-	0)	offset=0  nam=j;;
-	1)	offset=16 nam=k;;
-	2)	offset=32 nam=l;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=$(($U*64))
-	n=0
-	while [ $n -lt 8 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 102 $(($offset+$n)) 660 dialer uucp
-		n=$(($n+1))
-	done
-	M bpp${nam}0 c 103 $(($offset+0)) 600
-	;;
-
 *random)
 	n=0
 	for pre in " " s u p a
@@ -286,25 +269,6 @@ spif*)
 
 pf*)
 	M pf c 59 0 600
-	;;
-
-magma*)
-	case $U in
-	0)	offset=0  nam=m;;
-	1)	offset=16 nam=n;;
-	2)	offset=32 nam=o;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=$(($U*64))
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 100 $(($offset+$n)) 660 dialer uucp
-		n=$(($n+1))
-	done
-	M bpp${nam}0 c 101 $(($offset+0)) 600
-	M bpp${nam}1 c 101 $(($offset+1)) 600
 	;;
 
 openprom)
@@ -319,10 +283,6 @@ fd)
 	RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
 	MKlist="$MKlist;chmod 555 fd"
-	;;
-
-bpp*)
-	M bpp$U c 104 $U 600
 	;;
 
 bpf*)
@@ -378,6 +338,10 @@ wscons)
 	R ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
+bpp*)
+	M bpp$U c 104 $U 600
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -402,6 +366,43 @@ pty*)
 
 ptm)
 	M ptm c 125 0 666
+	;;
+
+spif*)
+	case $U in
+	0)	offset=0  nam=j;;
+	1)	offset=16 nam=k;;
+	2)	offset=32 nam=l;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=$(($U*64))
+	n=0
+	while [ $n -lt 8 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 102 $(($offset+$n)) 660 dialer uucp
+		n=$(($n+1))
+	done
+	M bpp${nam}0 c 103 $(($offset+0)) 600
+	;;
+
+magma*)
+	case $U in
+	0)	offset=0  nam=m;;
+	1)	offset=16 nam=n;;
+	2)	offset=32 nam=o;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=$(($U*64))
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 100 $(($offset+$n)) 660 dialer uucp
+		n=$(($n+1))
+	done
+	M bpp${nam}0 c 101 $(($offset+0)) 600
+	M bpp${nam}1 c 101 $(($offset+1)) 600
 	;;
 
 tty[a-z])

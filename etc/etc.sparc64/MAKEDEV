@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.36 2004/08/17 20:58:10 miod Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.37 2005/03/01 18:22:34 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.16 2005/03/01 13:35:59 otto Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -45,6 +45,7 @@
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	cua[a-z]*	Zilog 8530 serial port
 #	tty[a-z]*	Zilog 8530 serial port
+#	spif*	"spif" multiport cards
 #	ttyh*	Sab82532 serial devices
 # Pseudo terminals:
 #	ptm	pty master device
@@ -59,6 +60,9 @@
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Printers:
+#	bpp*	Parallel port
+#	bppmag[mno]	Magma parallel port
+#	bpp[jkl]	"spif" parallel port
 #	lpa*	Polled printer port
 #	lpt*	IEEE 1284 centronics printer
 # USB devices:
@@ -73,9 +77,6 @@
 # Special purpose devices:
 #	audio*	Audio devices
 #	bpf*	Berkeley Packet Filter
-#	bpp*	Parallel port
-#	bppmag[mno]	Magma parallel port
-#	bpp[jkl]	"spif" parallel port
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes for fdescfs
 #	hotplug	devices hot plugging
@@ -86,7 +87,6 @@
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
 #	ses*	SES/SAF-TE SCSI devices
-#	spif*	"spif" multiport cards
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
@@ -273,24 +273,6 @@ ss*)
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
 	;;
 
-spif*)
-	case $U in
-	0)	offset=0  nam=j;;
-	1)	offset=16 nam=k;;
-	2)	offset=32 nam=l;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=$(($U*64))
-	n=0
-	while [ $n -lt 8 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 108 $(($offset+$n)) 660 dialer uucp
-		n=$(($n+1))
-	done
-	M bpp${nam}0 c 109 $(($offset+0)) 600
-	;;
-
 ses*)
 	M ses$U c 4 $U 640 operator
 	;;
@@ -351,10 +333,6 @@ fd)
 
 crypto)
 	M crypto c 75 0
-	;;
-
-bpp*)
-	M bpp$U c 107 $U 600
 	;;
 
 bpf*)
@@ -419,6 +397,10 @@ lpt*|lpa*)
 	lpa*) n=lpa f=128;;
 	esac
 	M $n$U c 37 $(($U+$f)) 600
+	;;
+
+bpp*)
+	M bpp$U c 107 $U 600
 	;;
 
 wsmouse*)
@@ -487,6 +469,24 @@ ptm)
 
 ttyh*)
 	M ttyh$U c 77 $U 660 dialer uucp
+	;;
+
+spif*)
+	case $U in
+	0)	offset=0  nam=j;;
+	1)	offset=16 nam=k;;
+	2)	offset=32 nam=l;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=$(($U*64))
+	n=0
+	while [ $n -lt 8 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 108 $(($offset+$n)) 660 dialer uucp
+		n=$(($n+1))
+	done
+	M bpp${nam}0 c 109 $(($offset+0)) 600
 	;;
 
 tty[a-z])

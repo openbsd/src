@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.27 2005/01/28 18:59:43 danh Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.28 2005/03/01 18:22:58 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.sparc/MAKEDEV.md,v 1.24 2004/04/11 18:05:23 millert Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.15 2005/01/28 18:56:27 danh Exp 
+.\"	OpenBSD: etc.sparc/MAKEDEV.md,v 1.25 2005/03/01 18:22:32 miod Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.16 2005/03/01 13:35:59 otto Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 28, 2005
+.Dd March  1, 2005
 .Dt MAKEDEV 8 sparc
 .Os
 .Sh NAME
@@ -127,6 +127,13 @@ Zilog 8530 serial ports, see
 .It Ar tty[a-z]*
 Zilog 8530 serial ports, see
 .Xr zs 4 .
+.It Ar magma*
+Magma multiport cards, see
+.Xr magma 4 .
+.It Ar spif*
+.Dq spif
+multiport cards, see
+.Xr spif 4 .
 .El
 .Pp
 .Sy Pseudo terminals
@@ -140,6 +147,20 @@ Set of 62 master pseudo terminals, see
 .It Ar tty*
 Set of 62 slave pseudo terminals, see
 .Xr tty 4 .
+.El
+.Pp
+.Sy Printers
+.Bl -tag -width tenletters -compact
+.It Ar bpp*
+Parallel port, see
+.Xr bpp 4 .
+.It Ar bppmag[mno]
+Magma parallel port, see
+.Xr magma 4 .
+.It Ar bpp[jkl]
+.Dq spif
+parallel port, see
+.Xr spif 4 .
 .El
 .Pp
 .Sy Console ports
@@ -173,16 +194,6 @@ Audio devices, see
 .It Ar bpf*
 Berkeley Packet Filter, see
 .Xr bpf 4 .
-.It Ar bpp*
-Parallel port, see
-.Xr bpp 4 .
-.It Ar bppmag[mno]
-Magma parallel port, see
-.Xr magma 4 .
-.It Ar bpp[jkl]
-.Dq spif
-parallel port, see
-.Xr spif 4 .
 .It Ar fd
 fd/* nodes for fdescfs, see
 .Xr mount_fdesc 8 .
@@ -192,19 +203,12 @@ Loadable kernel modules interface, see
 .It Ar openprom
 PROM settings, see
 .Xr openprom 4 .
-.It Ar magma*
-Magma multiport cards, see
-.Xr magma 4 .
 .It Ar pf*
 Packet Filter, see
 .Xr pf 4 .
 .It Ar *random
 In-kernel random data source, see
 .Xr random 4 .
-.It Ar spif*
-.Dq spif
-multiport cards, see
-.Xr spif 4 .
 .It Ar ses*
 SES/SAF-TE SCSI devices, see
 .Xr ses 4 .
