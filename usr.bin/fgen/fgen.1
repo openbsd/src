@@ -1,0 +1,75 @@
+.\"	$OpenBSD: fgen.1,v 1.1 2001/08/17 21:31:02 jason Exp $
+.\"	$NetBSD: fgen.1,v 1.6 2001/06/13 10:46:05 wiz Exp $
+.\"
+.\" Copyright (c) 1998 Eduardo Horvath, All Rights Reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Eduardo Horvath.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd October 31, 1998
+.Dt FGEN 1
+.Os
+.Sh NAME
+.Nm fgen
+.Nd IEEE 1275 Open Firmware FCode Tokenizer
+.Sh SYNOPSIS
+.Nm
+.Op Fl d Ar level
+.Op Fl o Ar outfile
+.Ar infile
+.Sh DESCRIPTION
+Reads Forth source and generates tokenized FCode object file.
+.\" This next request is for sections 1, 6, 7 & 8 only
+.\" .Sh ENVIRONMENT
+.\" .Sh FILES
+.\" .Sh EXAMPLES
+.\" This next request is for sections 1, 6, 7 & 8 only
+.\"     (command return values (to shell) and fprintf/stderr type diagnostics)
+.\" .Sh DIAGNOSTICS
+.\" .Sh ERRORS
+.\" .Sh SEE ALSO
+.\" Cross-references should be ordered by section (low to high), then in
+.\"     alphabetical order.
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.Sh AUTHORS
+Written by Eduardo E. Horvath <eeh@one-o.com>
+.Sh BUGS
+String escape sequences are not recognized so things such as 
+.Pp
+.Li \&" foo \&"\&(01 02\&) \&"n \&"
+.Pp
+will result in the string
+.Pp
+.Dq  foo \&"\&(01 02\&) \&"n .
+.Pp
+Hexadecimal numbers with dots in them such as 
+.Li 100.0000 
+are not parsed.
+.Pp
+Permissions on the output file are often incorrect.
+.Pp
+Output to the standard output device can cause problems.
