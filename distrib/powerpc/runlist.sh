@@ -1,10 +1,10 @@
-#	$NetBSD: runlist.sh,v 1.1 1995/07/18 04:13:01 briggs Exp $
+#	$OpenBSD: runlist.sh,v 1.2 1997/10/10 10:34:39 pefo Exp $
 
 if [ "X$1" = "X-d" ]; then
 	SHELLCMD=cat
 	shift
 else
-	SHELLCMD="sh"
+	SHELLCMD="sh -e"
 fi
 
 ( while [ "X$1" != "X" ]; do
