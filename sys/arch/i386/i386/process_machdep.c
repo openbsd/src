@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.18 2004/07/20 18:59:21 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.19 2004/07/20 21:04:37 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -207,24 +207,47 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
+	union savefpu *frame = process_fpframe(p);
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
-		union savefpu *frame = process_fpframe(p);
-
 #if NNPX > 0
 		npxsave_proc(p, 1);
 #endif
-
+	} else {
+		/*
+		 * Fake a FNINIT.
+		 * The initial control word was already set by setregs(), so
+		 * save it temporarily.
+		 */
 		if (i386_use_fxsave) {
-			struct save87 s87;
+			uint32_t mxcsr = frame->sv_xmm.sv_env.en_mxcsr;
+			uint16_t cw = frame->sv_xmm.sv_env.en_cw;
 
-			/* XXX Yuck */
-			process_xmm_to_s87(&frame->sv_xmm, &s87);
-			memcpy(regs, &s87, sizeof(*regs));
- 		} else
-			bcopy(frame, regs, sizeof(*regs));
+			/* XXX Don't zero XMM regs? */
+			memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
+			frame->sv_xmm.sv_env.en_cw = cw;
+			frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
+			frame->sv_xmm.sv_env.en_sw = 0x0000;
+			frame->sv_xmm.sv_env.en_tw = 0x00;
+		} else {
+			uint16_t cw = frame->sv_87.sv_env.en_cw;
+
+			memset(&frame->sv_87, 0, sizeof(frame->sv_87));
+			frame->sv_87.sv_env.en_cw = cw;
+			frame->sv_87.sv_env.en_sw = 0x0000;
+			frame->sv_87.sv_env.en_tw = 0xffff;
+		}
+		p->p_md.md_flags |= MDP_USEDFPU;
+	}
+
+	if (i386_use_fxsave) {
+		struct save87 s87;
+
+		/* XXX Yuck */
+		process_xmm_to_s87(&frame->sv_xmm, &s87);
+		memcpy(regs, &s87, sizeof(*regs));
 	} else
-		bzero(regs, sizeof(*regs));
+		memcpy(regs, &frame->sv_87, sizeof(*regs));
 
 	return (0);
 }
