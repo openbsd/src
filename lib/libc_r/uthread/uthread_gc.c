@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_gc.c,v 1.7 1999/11/30 04:53:24 d Exp $	*/
+/*	$OpenBSD: uthread_gc.c,v 1.8 1999/11/30 04:59:42 d Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -202,6 +202,9 @@ _thread_gc(pthread_addr_t arg)
 
 			if (pthread_cln->poll_data.fds != NULL)
 				free(pthread_cln->poll_data.fds);
+
+			if (pthread_cln->specific_data != NULL)
+				free(pthread_cln->specific_data);
 
 			free(pthread_cln);
 		}
