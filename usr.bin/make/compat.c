@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.37 2001/05/23 12:34:40 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.38 2001/05/29 12:17:05 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "config.h"
 #include "defines.h"

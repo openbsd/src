@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: error.c,v 1.6 2001/05/23 12:34:42 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.7 2001/05/29 12:17:05 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -32,6 +32,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "config.h"
 #include "defines.h"

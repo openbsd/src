@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: buf.c,v 1.16 2001/05/23 12:34:40 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.17 2001/05/29 12:17:03 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -73,6 +73,7 @@
 
 #include <ctype.h>
 #include <stddef.h>
+#include <string.h>
 #include "config.h"
 #include "defines.h"
 #include "buf.h"
