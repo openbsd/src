@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.8 2005/04/01 16:29:55 uwe Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.9 2005/04/01 16:52:25 uwe Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -825,18 +825,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 
 	switch (cmd) {
-	case SIOCS80211NWID:
-	case SIOCS80211NWKEY:
-	case SIOCS80211POWER:
-	case SIOCS80211TXPOWER:
-		error = suser(curproc, 0);
-		if (error)
-			return (error);
-	default:
-		break;
-	}
-
-	switch (cmd) {
 	case SIOCSIFADDR:
 	case SIOCGIFADDR:
 #ifdef __OpenBSD__
@@ -850,6 +838,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &ic->ic_media, cmd);
 		break;
 	case SIOCS80211NWID:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		if ((error = copyin(ifr->ifr_data, &nwid, sizeof(nwid))) != 0)
 			break;
 		if (nwid.i_len > IEEE80211_NWID_LEN) {
@@ -877,6 +867,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
 		break;
 	case SIOCS80211NWKEY:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		nwkey = (struct ieee80211_nwkey *)data;
 		if ((ic->ic_caps & IEEE80211_C_WEP) == 0 &&
 		    nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
@@ -944,6 +936,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCS80211POWER:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		power = (struct ieee80211_power *)data;
 		ic->ic_lintval = power->i_maxsleep;
 		if (power->i_enabled != 0) {
@@ -966,6 +960,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		power->i_maxsleep = ic->ic_lintval;
 		break;
 	case SIOCS80211BSSID:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		bssid = (struct ieee80211_bssid *)data;
 		if (IEEE80211_ADDR_EQ(bssid->i_bssid, empty_macaddr))
 			ic->ic_flags &= ~IEEE80211_F_DESBSSID;
@@ -1009,6 +1005,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCS80211CHANNEL:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		chanreq = (struct ieee80211chanreq *)data;
 		if (chanreq->i_channel == IEEE80211_CHAN_ANY)
 			ic->ic_des_chan = IEEE80211_CHAN_ANYC;
@@ -1073,6 +1071,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 		break;
 	case SIOCS80211TXPOWER:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		txpower = (struct ieee80211_txpower *)data;
 		if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0) {
 			error = EINVAL;
