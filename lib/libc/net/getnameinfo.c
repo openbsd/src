@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.24 2002/05/22 04:31:14 deraadt Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.25 2002/06/27 09:24:28 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 				return EAI_MEMORY;
 			strlcpy(serv, sp->s_name, servlen);
 		} else {
-			snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
+			snprintf(numserv, sizeof(numserv), "%u", ntohs(port));
 			if (strlen(numserv) + 1 > servlen)
 				return EAI_MEMORY;
 			strlcpy(serv, numserv, servlen);
