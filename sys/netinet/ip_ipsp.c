@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.36 1999/03/04 20:30:36 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.37 1999/03/04 21:51:27 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -463,11 +463,9 @@ handle_expirations(void *arg)
 	  explist->exp_prev = NULL;
 	
 	tdb = gettdb(exp->exp_spi, &exp->exp_dst, exp->exp_sproto);
+	free(exp, M_TDB);
 	if (tdb == (struct tdb *) NULL)
-	{
-	    free(exp, M_TDB);
-	    continue;			/* TDB is gone, ignore this */
-	}
+	  continue;			/* TDB is gone, ignore this */
 	
 	/* Hard expirations first */
 	if ((tdb->tdb_flags & TDBF_TIMER) &&
@@ -477,6 +475,7 @@ handle_expirations(void *arg)
 	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 */
 	    tdb_delete(tdb, 0);
+	    continue;
 	}
 	else
 	  if ((tdb->tdb_flags & TDBF_FIRSTUSE) &&
@@ -486,6 +485,7 @@ handle_expirations(void *arg)
    encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 */
 	      tdb_delete(tdb, 0);
+	      continue;
 	  }
 
 	/* Soft expirations */
@@ -507,8 +507,6 @@ handle_expirations(void *arg)
 */
 	      tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
 	  }
-
-	free(exp, M_TDB);
     }
 
     if (explist)
