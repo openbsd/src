@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2004/02/25 19:48:18 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.61 2004/02/26 09:53:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,7 +213,7 @@ conf_main	: AS number		{
 			else
 				YYERROR;
 		}
-		| NETWORK address '/' number		{
+		| NETWORK address '/' number filter_set	{
 			struct network	*n;
 
 			if ((n = calloc(1, sizeof(struct network))) == NULL)
@@ -224,6 +224,9 @@ conf_main	: AS number		{
 				YYERROR;
 			}
 			n->net.prefixlen = $4;
+			memcpy(&n->net.attrset, &$5,
+			    sizeof(n->net.attrset));
+
 			TAILQ_INSERT_TAIL(netconf, n, network_l);
 		}
 		| DUMP TABLE STRING optnumber		{
@@ -429,8 +432,12 @@ peeropts	: REMOTEAS number	{
 				    strtoul(s, NULL, 16);
 			}
 		}
-		| filter_set		{
-			memcpy(&curpeer->conf.attrset, &$1,
+		| SET filter_set_opt	{
+			memcpy(&curpeer->conf.attrset, &$2,
+			    sizeof(curpeer->conf.attrset));
+		}
+		| SET optnl "{" optnl filter_set_l optnl "}"	{
+			memcpy(&curpeer->conf.attrset, &$5,
 			    sizeof(curpeer->conf.attrset));
 		}
 		| mrtdump
@@ -446,20 +453,6 @@ filterrule	: action quick direction filter_peer filter_match filter_set
 			r.dir = $3;
 
 			if (expand_rule(&r, &$4, &$5, &$6) == -1)
-				YYERROR;
-		}
-		| action quick direction filter_peer filter_match
-		{
-			struct filter_rule	r;
-			struct filter_set	set;
-
-			bzero(&r, sizeof(r));
-			bzero(&set, sizeof(set));
-			r.action = $1;
-			r.quick = $2;
-			r.dir = $3;
-
-			if (expand_rule(&r, &$4, &$5, &set) == -1)
 				YYERROR;
 		}
 		;
@@ -581,7 +574,10 @@ filter_as	: AS		{ $$ = AS_ALL; }
 		| TRANSITAS	{ $$ = AS_TRANSIT; }
 		;
 
-filter_set	: SET filter_set_opt				{ $$ = $2; }
+filter_set	: /* empty */					{
+			bzero(&$$, sizeof($$));
+		}
+		| SET filter_set_opt				{ $$ = $2; }
 		| SET optnl "{" optnl filter_set_l optnl "}"	{ $$ = $5; }
 		;
 

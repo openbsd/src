@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.98 2004/02/24 15:43:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.99 2004/02/26 09:53:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,6 +157,7 @@ struct peer_config {
 struct network_config {
 	struct bgpd_addr	prefix;
 	u_int8_t		prefixlen;
+	struct filter_set	attrset;
 };
 
 TAILQ_HEAD(network_head, network);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.86 2004/02/25 19:48:18 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.87 2004/02/26 09:53:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -893,6 +893,9 @@ network_add(struct network_config *nc)
 	/* lpref = 0 */
 	attrs.origin = ORIGIN_IGP;
 	TAILQ_INIT(&attrs.others);
+
+	/* apply default overrides */
+	rde_apply_set(&attrs, &nc->attrset);
 
 	path_update(&peerself, &attrs, &nc->prefix, nc->prefixlen);
 }
