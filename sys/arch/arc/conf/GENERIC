@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 1997/08/01 11:22:09 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.21 1997/08/01 11:26:58 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -46,7 +46,7 @@ option		UNION           # union file system
 
 # Networking options
 #option		GATEWAY		# IP packet forwarding
-option		NET		# Internet protocols
+option		INET		# Internet protocols
 #option		NS              # XNS
 #option		IPX             # IPX+SPX
 #option		ISO,TPIP	# OSI networking
