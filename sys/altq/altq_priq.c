@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.8 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.9 2003/02/08 13:05:43 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -194,8 +194,7 @@ priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
  * all the filters and classes.
  */
 static int
-priq_clear_interface(pif)
-	struct priq_if *pif;
+priq_clear_interface(struct priq_if *pif)
 {
 	struct priq_class	*cl;
 	int pri;
@@ -209,10 +208,7 @@ priq_clear_interface(pif)
 }
 
 static int
-priq_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+priq_request(struct ifaltq *ifq, int req, void *arg)
 {
 	struct priq_if	*pif = (struct priq_if *)ifq->altq_disc;
 
@@ -226,8 +222,7 @@ priq_request(ifq, req, arg)
 
 /* discard all the queued packets on the interface */
 static void
-priq_purge(pif)
-	struct priq_if *pif;
+priq_purge(struct priq_if *pif)
 {
 	struct priq_class *cl;
 	int pri;
@@ -241,9 +236,7 @@ priq_purge(pif)
 }
 
 static struct priq_class *
-priq_class_create(pif, pri, qlimit, flags)
-	struct priq_if *pif;
-	int pri, qlimit, flags;
+priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags)
 {
 	struct priq_class *cl;
 	int s;
@@ -353,8 +346,7 @@ priq_class_create(pif, pri, qlimit, flags)
 }
 
 static int
-priq_class_destroy(cl)
-	struct priq_class *cl;
+priq_class_destroy(struct priq_class *cl)
 {
 	struct priq_if *pif;
 	int s, pri;
@@ -397,10 +389,7 @@ priq_class_destroy(cl)
  * (*altq_enqueue) in struct ifaltq.
  */
 static int
-priq_enqueue(ifq, m, pktattr)
-	struct ifaltq *ifq;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 {
 	struct priq_if	*pif = (struct priq_if *)ifq->altq_disc;
 	struct priq_class *cl;
@@ -441,9 +430,7 @@ priq_enqueue(ifq, m, pktattr)
  *	after ALTDQ_POLL.
  */
 static struct mbuf *
-priq_dequeue(ifq, op)
-	struct ifaltq	*ifq;
-	int		op;
+priq_dequeue(struct ifaltq *ifq, int op)
 {
 	struct priq_if	*pif = (struct priq_if *)ifq->altq_disc;
 	struct priq_class *cl;
@@ -474,9 +461,7 @@ priq_dequeue(ifq, op)
 }
 
 static int
-priq_addq(cl, m)
-	struct priq_class *cl;
-	struct mbuf *m;
+priq_addq(struct priq_class *cl, struct mbuf *m)
 {
 
 #ifdef ALTQ_RIO
@@ -502,8 +487,7 @@ priq_addq(cl, m)
 }
 
 static struct mbuf *
-priq_getq(cl)
-	struct priq_class *cl;
+priq_getq(struct priq_class *cl)
 {
 #ifdef ALTQ_RIO
 	if (q_is_rio(cl->cl_q))
@@ -524,8 +508,7 @@ priq_pollq(cl)
 }
 
 static void
-priq_purgeq(cl)
-	struct priq_class *cl;
+priq_purgeq(struct priq_class *cl)
 {
 	struct mbuf *m;
 
@@ -540,9 +523,7 @@ priq_purgeq(cl)
 }
 
 static void
-get_class_stats(sp, cl)
-	struct priq_classstats *sp;
-	struct priq_class *cl;
+get_class_stats(struct priq_classstats *sp, struct priq_class *cl)
 {
 	sp->class_handle = cl->cl_handle;
 	sp->qlength = qlen(cl->cl_q);
@@ -565,9 +546,7 @@ get_class_stats(sp, cl)
 
 /* convert a class handle to the corresponding class pointer */
 static struct priq_class *
-clh_to_clp(pif, chandle)
-	struct priq_if *pif;
-	u_int32_t chandle;
+clh_to_clp(struct priq_if *pif, u_int32_t chandle)
 {
 	int idx;
 
