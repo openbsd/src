@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.42 2002/07/27 13:19:26 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.43 2002/07/27 15:40:44 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -491,7 +491,6 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	 * we have been fully relocated here, so most things no longer
 	 * need the loff adjustment
 	 */
-	return;
 }
 
 void
