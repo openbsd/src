@@ -75,7 +75,7 @@ static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycro
 #include <string.h>
 #ifdef YP
 #include <rpc/rpc.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #endif
 

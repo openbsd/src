@@ -49,7 +49,7 @@ static char rcsid[] = "$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $
 #include <grp.h>
 #ifdef YP
 #include <rpc/rpc.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #endif
 

@@ -58,7 +58,7 @@ static char rcsid[] = "$NetBSD: getpwent.c,v 1.14 1995/07/28 05:43:01 phil Exp $
 #include <machine/param.h>
 #include <stdio.h>
 #include <rpc/rpc.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #endif
 
