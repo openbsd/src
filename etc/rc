@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.222 2003/03/10 01:05:28 deraadt Exp $
+#	$OpenBSD: rc,v 1.223 2003/03/20 16:04:37 sturm Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -485,7 +485,7 @@ if [ X${rwhod} = X"YES" ]; then
 fi
 
 
-if [ X${lpd_flags} != X"NO" ]; then
+if [ "X${lpd_flags}" != X"NO" ]; then
 	echo -n ' printer';		lpd ${lpd_flags}
 fi
 
