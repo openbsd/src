@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc931.c,v 1.5 2001/11/17 19:57:36 deraadt Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.6 2001/11/17 20:03:54 deraadt Exp $	*/
 
 /* rfc1413 does an attempt at an ident query to a client. Originally written
  * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.5 2001/11/17 19:57:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rfc931.c,v 1.6 2001/11/17 20:03:54 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -120,7 +120,7 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 
 	/*
 	 * Set up a timer so we won't get stuck while waiting for the server.
-	 * timer sets sig_atomic_t ident_timeout when it fires. 
+	 * timer sets volatile sig_atomic_t ident_timeout when it fires. 
 	 * this has to be checked after system calls in case we timed out.
 	 */
 	
