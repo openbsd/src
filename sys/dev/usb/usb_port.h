@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.14 2000/04/15 17:36:28 jakob Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.15 2000/06/29 13:48:31 aaron Exp $ */
 /*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -211,6 +211,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
+#define bswap16(x)		swap16(x)
 #define usb_kthread_create1	kthread_create
 #define usb_kthread_create	kthread_create_deferred
 
