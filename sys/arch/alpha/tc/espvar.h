@@ -1,4 +1,4 @@
-/*	$OpenBSD: espvar.h,v 1.3 1996/07/29 23:02:04 niklas Exp $	*/
+/*	$OpenBSD: espvar.h,v 1.4 1996/10/18 16:12:03 niklas Exp $	*/
 /*	$NetBSD: espvar.h,v 1.3 1995/12/20 00:40:26 cgd Exp $	*/
 
 /*
@@ -264,7 +264,8 @@ struct esp_softc {
 #define PSEUDO_PHASE		0x100	/* "pseudo" bit */
 
 #if 1
-static inline u_char
+static __inline u_char ESP_READ_REG __P((struct esp_softc *, int));
+static __inline u_char
 ESP_READ_REG(sc, reg)
 	struct esp_softc *sc;
 	int reg;
@@ -313,6 +314,8 @@ ESP_READ_REG(sc, reg)
 				DMAWAIT1(sc); \
 			}
 #else
+int tcds_dma_intr __P((struct tcds_slotconfig *));
+
 #define	DMA_ENINTR(r)		tcds_dma_enintr(r)
 #define	DMA_ISINTR(r)		tcds_dma_isintr(r)
 #define	DMA_RESET(r)		tcds_dma_reset(r)

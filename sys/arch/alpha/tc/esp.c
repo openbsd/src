@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.4 1996/07/29 23:02:00 niklas Exp $	*/
+/*	$OpenBSD: esp.c,v 1.5 1996/10/18 16:12:01 niklas Exp $	*/
 /*	$NetBSD: esp.c,v 1.8.4.1 1996/06/05 00:39:03 cgd Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #include <sparc/dev/espreg.h>
 #include <sparc/dev/espvar.h>
 #else
+#include <machine/autoconf.h>
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tcdsvar.h>
 #include <alpha/tc/espreg.h>
@@ -92,6 +93,8 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ int	espintr		__P((struct esp_softc *));
 /*static*/ void	esp_timeout	__P((void *arg));
 /*static*/ void	esp_abort	__P((struct esp_softc *, struct ecb *));
+int esp_cpb2stp			__P((struct esp_softc *, int));
+int esp_stp2cpb			__P((struct esp_softc *, int));
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
@@ -131,8 +134,8 @@ espmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
 #ifdef SPARC_DRIVER
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -586,8 +589,10 @@ espreadregs(sc)
 /*
  * Convert Synchronous Transfer Period to chip register Clock Per Byte value.
  */
+int
 esp_stp2cpb(sc, period)
 	struct esp_softc *sc;
+	int period;
 {
 	int v;
 	v = (sc->sc_freq * period) / 250;
@@ -600,6 +605,7 @@ esp_stp2cpb(sc, period)
 /*
  * Convert chip register Clock Per Byte value to Synchronous Transfer Period.
  */
+int
 esp_cpb2stp(sc, cpb)
 	struct esp_softc *sc;
 	int cpb;
