@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.16 2003/03/17 23:26:29 matthieu Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.17 2003/05/17 02:31:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -975,7 +975,7 @@ const int sunkbd_layouts[MAXSUNLAYOUT] = {
 	-1,	/* 037 Latvia */
 	-1,	/* 038 Turkey-Q5 */
 	-1,	/* 039 Greece */
-	-1	/* 03a Arabic */
+	-1,	/* 03a Arabic */
 	-1,	/* 03b Lithuania */
 	-1,	/* 03c Belgium */
 	-1,	/* 03d unaffected */
