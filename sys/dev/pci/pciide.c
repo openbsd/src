@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.182 2005/01/15 15:23:39 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.183 2005/01/22 15:08:52 martin Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -476,7 +476,7 @@ const struct pciide_product_desc pciide_cypress_products[] =  {
 };
 
 const struct pciide_product_desc pciide_sis_products[] =  {
-	{ PCI_PRODUCT_SIS_5513,		/* SIS 5513 EIDE */
+	{ PCI_PRODUCT_SIS_5597_IDE,		/* SIS 5597 EIDE */
 	  0,
 	  sis_chip_map
 	}
