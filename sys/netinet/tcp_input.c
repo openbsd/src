@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.99 2001/07/04 23:14:56 espie Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.100 2001/07/07 22:22:04 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2913,7 +2913,7 @@ tcp_mss(tp, offer)
 	 * If we compute a larger value, return it for use in sending
 	 * a max seg size option, but don't store it for use
 	 * unless we received an offer at least that large from peer.
-	 * However, do not accept offers under 32 bytes.
+	 * However, do not accept offers under 64 bytes.
 	 */
 	if (offer > 0)
 		tp->t_peermss = offer;
