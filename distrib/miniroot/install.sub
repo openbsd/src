@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.343 2004/06/26 20:10:17 krw Exp $
+#	$OpenBSD: install.sub,v 1.344 2004/07/17 02:13:53 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1382,11 +1382,11 @@ set_timezone() {
 
 		while [[ -d $_zonepath ]]; do
 			ask "What sub-timezone of '${_zonepath#$_zoneroot}' are you in? ('?' for list)"
-			if [[ $resp == ? ]]; then
-				ls -F $_zonepath
-			else
-				_zonepath=$_zonepath/$resp
-			fi
+			case $resp in
+			"")	;;
+			?)	ls -F $_zonepath ;;
+			*)	_zonepath=$_zonepath/$resp ;;
+			esac
 		done
 
 		if [[ -f $_zonepath ]]; then
