@@ -1,3 +1,5 @@
+/*	$OpenBSD: xform.h,v 1.3 2001/05/13 16:52:33 jason Exp $	*/
+
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
