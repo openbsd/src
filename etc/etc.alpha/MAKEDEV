@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.4 2002/01/23 07:53:01 todd Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.5 2002/02/06 01:35:34 art Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.66 2002/01/23 08:23:19 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.67 2002/02/06 01:36:53 art Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -199,7 +199,7 @@ U=`unt $i`
 case $i in
 floppy)
 	R std wt0 fd0 wd0 wd1 sd0 sd1 tty00 tty01
-	R st0 cd0 ttyC0 random
+	R st0 cd0 ttyC0 random rd0
 	;;
 
 std)
