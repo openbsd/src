@@ -116,7 +116,7 @@ $ ENOTCONN
 $ ESHUTDOWN
 58 Impossible de transmettre après fermeture du socket
 $ ETOOMANYREFS
-59 Trop de références: impossible de les séparer
+59 Trop de références: impossible à réassembler
 $ ETIMEDOUT
 60 Délai de connexion expiré
 $ ECONNREFUSED
