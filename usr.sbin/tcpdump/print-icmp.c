@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.15 2003/09/08 17:35:57 cedric Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.16 2004/08/10 19:54:18 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.15 2003/09/08 17:35:57 cedric Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.16 2004/08/10 19:54:18 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -93,6 +93,13 @@ struct rtentry;
 #ifndef ICMP_ROUTERSOLICIT
 #define ICMP_ROUTERSOLICIT		10	/* router solicitation */
 #endif
+
+#define ICMP_INFOTYPE(type) \
+    ((type) == ICMP_ECHOREPLY || (type) == ICMP_ECHO || \
+    (type) == ICMP_ROUTERADVERT || (type) == ICMP_ROUTERSOLICIT || \
+    (type) == ICMP_TSTAMP || (type) == ICMP_TSTAMPREPLY || \
+    (type) == ICMP_IREQ || (type) == ICMP_IREQREPLY || \
+    (type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
 
 /* Most of the icmp types */
 static struct tok icmp2str[] = {
@@ -368,6 +375,12 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 		break;
 	}
         (void)printf("icmp: %s", str);
+	if (vflag > 1 && !ICMP_INFOTYPE(dp->icmp_type) &&
+	    TTEST(dp->icmp_ip)) {
+		(void)printf(" for ");
+		oip = &dp->icmp_ip;
+		ip_print((u_char *)oip, ntohs(oip->ip_len));
+	}
 	return;
 trunc:
 	fputs("[|icmp]", stdout);
