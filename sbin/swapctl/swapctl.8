@@ -34,22 +34,22 @@
 .Nm swapon
 .Nd system swap management tool
 .Sh SYNOPSIS
-.Nm
+.Nm swapctl
 .Fl A
 .Op Fl p Ar priority
 .Op Fl t Ar blk|noblk
-.Nm ""
+.Nm swapctl
 .Fl a
 .Op Fl p Ar priority
 .Ar path
-.Nm ""
+.Nm swapctl
 .Fl c
 .Fl p Ar priority
 .Ar path
-.Nm ""
+.Nm swapctl
 .Fl d
 .Ar path
-.Nm ""
+.Nm swapctl
 .Fl l | Fl s
 .Op Fl k
 .Nm swapon
@@ -86,7 +86,9 @@ This option causes
 .Nm
 to read the
 .Pa /etc/fstab
-file for devices and files with a ``sw'' type, and adds all these entries
+file for devices and files with an
+.Dq sw
+type, and adds all these entries
 as swap devices.  If no swap devices are configured,
 .Nm
 will exit with an error code.
