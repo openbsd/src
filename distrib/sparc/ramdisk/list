@@ -1,19 +1,14 @@
-#	$OpenBSD: list,v 1.1 1997/05/14 20:44:37 deraadt Exp $
+#	$OpenBSD: list,v 1.2 1997/05/15 00:11:17 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
 
 SYMLINK	../../instbin		usr/bin/basename
-SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
-SYMLINK ../../instbin		usr/bin/getopt
 SYMLINK ../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
-SYMLINK ../../instbin		usr/bin/netstat
 SYMLINK ../../instbin		usr/bin/rsh
-SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
 SYMLINK	../../instbin		usr/bin/less usr/bin/more
 SYMLINK	../../instbin		usr/sbin/installboot
-SYMLINK	../../instbin		usr/sbin/sysctl
 
 SRCDIRS	sys/arch/sparc/stand
 
