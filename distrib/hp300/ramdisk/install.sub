@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.11 1998/03/08 00:26:17 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.12 1998/03/27 06:03:33 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@ VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
 
-ALLSETS="base etc misc comp text man game kernel"	# default install sets
-UPGRSETS="base misc comp text man game kernel"		# default upgrade sets
+ALLSETS="base etc misc comp text man game"	# default install sets
+UPGRSETS="base misc comp text man game"		# default upgrade sets
 SNAPSETS="bin dev etc games man misc sbin text \
 	  usr.bin usr.binutils usr.games usr.include \
-	  usr.lib usr.libexec usr.misc usr.sbin usr.share var kernel"
+	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
 THESETS=					# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
@@ -231,7 +231,7 @@ ftp_list_files() {
 	_pass=$1; shift
 	_dir=$1; shift
 
-	ftp -V -n $_host  <<__ptf
+	ftp ${_ftp_active} -V -n $_host  <<__ptf
 user $_user $_pass
 cd $_dir
 ls
@@ -298,6 +298,29 @@ __get_reldir_1
 	done
 }
 
+getanotherdisk() {
+	cat << \__getanotherdisk_1
+
+Now you can select another disk to initialize.  (Do not re-select a disk
+you have already entered information for).  Available disks are:
+
+__getanotherdisk_1
+	_DKDEVS=`md_get_diskdevs`
+	echo	"$_DKDEVS"
+	echo	""
+	echo -n	"Which one? [done] "
+	getresp ""
+	if [ "X${resp}" = "X" ]; then
+		DISK=done
+	elif isin $resp $_DKDEVS ; then
+		DISK="$resp"
+	else
+		echo ""
+		echo "The disk $resp does not exist."
+		DISK=""
+	fi
+}
+
 getrootdisk() {
 	cat << \__getrootdisk_1
 
@@ -307,11 +330,17 @@ boot program (especially on a PC with multiple disk controllers).
 Available disks are:
 
 __getrootdisk_1
+	local _defdsk;
+
 	_DKDEVS=`md_get_diskdevs`
+	_defdsk=`echo $_DKDEVS | cutlast`
+	if [ "${_defdsk}" != "${_DKDEVS}" ]; then
+		_defdsk=""
+	fi
 	echo	"$_DKDEVS"
 	echo	""
-	echo -n	"Which disk is the root disk? "
-	getresp ""
+	echo -n "Which disk is the root disk [${_defdsk}]? "
+	getresp "${_defdsk}"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK="$resp"
 	else
@@ -397,6 +426,9 @@ marked with [X] have been succesfully configured):
 __configurenetwork_1
 
 			for _ifs in $_IFS; do
+				if [ "X${_ouranswer}" = "X" ]; then
+					_ouranswer=$_ifs
+				fi
 				if isin $_ifs $_ifsdone ; then
 					echo -n "	[X] "
 				else
@@ -613,12 +645,14 @@ install_url() {
 	#	_ftp_server_password, and _ftp_active must be global.
 
 	local _sets
+	local _kernel
 	local _f
 	local _file_list
 	local _get_files
 	local _failed_files
 	local _osetsdone
 	local _url_type
+	local _url_base
 
 	# Is this an ftp or http install?
 	_url_type=$1; shift
@@ -698,23 +732,46 @@ install_url() {
 			_ftp_server_password=root@`hostname`.${FQDN}
 		fi
 
-		if [ "X${ftp_proxy}" = X"" ]; then
-			# Get login name
-			resp=""		# force one iteration
-			while [ "X${resp}" = X"" ]; do
-				echo -n "Login? [${_ftp_server_login}] "
-				getresp "${_ftp_server_login}"
-				_ftp_server_login=$resp 
-			done
+		# Get login name
+		resp=""		# force one iteration
+		while [ "X${resp}" = X"" ]; do
+			echo -n "Login? [${_ftp_server_login}] "
+			getresp "${_ftp_server_login}"
+			_ftp_server_login=$resp 
+		done
 
-			# Get password
+		# Get password unless anonymous
+		if [ ${_ftp_server_login} != "anonymous" ]; then
 			resp=""		# force one iteration
 			while [ "X${resp}" = X"" ]; do
-				echo -n "Password? [${_ftp_server_password}] "
+				echo -n "Password (will not echo): "
+				stty -echo
 				getresp "${_ftp_server_password}"
+				stty echo
+				echo ""
 				_ftp_server_password=$resp
+
+				echo -n "Password (again): "
+				stty -echo
+				getresp "${_ftp_server_password}"
+				stty echo
+				echo ""
+				if [ "${_ftp_server_password}" != "${resp}" ]; then
+					echo "Passwords do not match, try again."
+					resp=""
+				fi
 			done
+		else
+			# only used by ftp_list_files()
+			_ftp_server_password=root@`hostname`.${FQDN}
 		fi
+	fi
+
+	# Build up the base url since it is so nasty...
+	if [ "${_url_type}" = "ftp" -a "${_ftp_server_login}" != "anonymous" ]; then
+		eval _url_base=${_url_type}://${_ftp_server_login}:${_ftp_server_password}@\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+	else
+		eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
 	fi
 
 	# Get list of files from the server.
@@ -724,7 +781,7 @@ install_url() {
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
-		_file_list=`eval ftp -o - -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | sed 's///'`
+		_file_list=`ftp -o - -V ${_url_base}/index.txt | sed 's///'`
 	fi
 
 	_sets=""
@@ -781,9 +838,9 @@ install_url() {
 "'all' to install all the standard sets, or 'list' to list the\\\\n"\
 "files avilable at \$_${_url_type}_server_ip:\$_${_url_type}_server_dir.\\\\n"\
 "When you are done selecting files, enter 'done'.\\\\n"\
-"Some of these sets are required for your ${MODE} and some are optional.\\\\n"\
+"Some of these sets are required for your ${MODE} and some are optional --\\\\n"\
+"You will want at least the base and bsd sets.\\\\n"\
 "Consult the intallation notes if you are not sure which sets are required!\\\\n"
-
 	_osetsdone="$_setsdone"
 	while : ; do
 		echo ""
@@ -827,7 +884,7 @@ install_url() {
 		# Ensure file exists
 		if ! isin $_f $_file_list ; then
 			eval echo "File \$_${_url_type}_server_dir/$_f does not exist.  Check to make"
-			echo "sure you entered the information properly."
+			echo "sure you entered the information properly or enter 'list' for a file list."
 			continue
 		fi
 
@@ -860,17 +917,9 @@ install_url() {
 		for _f in $_get_files ; do
 			echo ""
 			if [ "X${_f}" = "X${_kernel}" ]; then
-				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
-					( cd /mnt ; ftp ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
-				else
-					( cd /mnt ; eval ftp -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} )
-				fi
+				( cd /mnt ; ftp ${_ftp_active} -V ${_url_base}/${_f} )
 			else
-				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
-					( cd /mnt ; ftp -o - ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} | tar zxvpf - )
-				else
-					( cd /mnt ; eval ftp -o - -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} | tar zxvpf - )
-				fi
+				( cd /mnt ; ftp ${_ftp_active} -o - -V ${_url_base}/${_f} | tar zxvpf - )
 			fi
 			if [ $? -ne 0 ]; then
 				# Mark xfer as having failed,.
@@ -930,11 +979,17 @@ install_url() {
 
 install_from_mounted_fs() {
 	# $1 - directory containing installation sets
-	local _filename
 	local _sets
-	local _next
-	local _f
 	local _kernel
+	local _f
+	local _get_files
+	local _failed_files
+	local _osetsdone
+
+	if [ ! -d $1 ]; then
+		echo "No such directory: $1"
+		return
+	fi
 
 	_sets=""
 	if dir_has_sets $1 $THESETS; then
@@ -950,63 +1005,176 @@ install_from_mounted_fs() {
 			fi
 		done
 	else
-		echo "There are no OpenBSD install sets available in \"$1\""
-		return
+		echo "There are no OpenBSD install sets available in \"$1\"."
+		echo -n "Search for *.tar.gz and *.tgz files? [y] "
+		getresp "y"
+		case "$resp" in
+			n*|N*)	return ;;
+			*)	;;
+		esac
+		# *.tar.gz and *.tgz are possible sets
+		_sets=""
+		_kernel=""
+		_sets=`cd $1 ; echo *.tar.gz *.tgz`
+		if [ "X${_sets}" = X'*.tar.gz *.tgz' ]; then
+			echo "There are no *.tar.gz or *.tgz files in that dir."
+			echo -n "See a directory listing? [y] "
+			getresp "y"
+			case "$resp" in
+				n*|N*)	return ;;
+				*)	;;
+			esac
+			echo ""
+			( cd $1 && ls )
+			echo ""
+			return
+		else
+			echo "Adding *.tar.gz and *.tgz files to selector."
+		fi
 	fi
 
+	echo "\n"\
+"You will now be asked for files to extract.  In addition to the\n"\
+"files listed in the selector you may enter any file located in\n"\
+"$1.  You can also enter 'all' to install all the standard\n"\
+"sets, or 'list' to list the files avilable in $1.\n"\
+"When you are done selecting files, enter 'done'.\n"\
+"Some of these sets are required for your ${MODE} and some are optional --\n"\
+"You will want at least the base and bsd sets.\n"\
+"Consult the intallation notes if you are not sure which sets are required!\n"\
+	_osetsdone="$_setsdone"
 	while : ; do
-		echo "The following sets are available for extraction:"
-		echo "(marked sets have already been extracted)"
+		echo ""
+		echo "The following sets are available for extraction."
+		echo "Enter filename, \`list', \`all', or \`done'."
 		echo ""
 
 		_next=""
 		for _f in $_sets $_kernel ; do
-			if isin $_f $_setsdone; then
+			if isin $_f $_setsdone ; then
 				echo -n "	[X] "
 				_next=""
 			else
 				echo -n "	[ ] "
 				if [ -z "$_next" ]; then
-					_next=$_f
+				    _next=$_f
 				fi
 			fi
 			echo $_f
 		done
-		echo ""
 
 		# Get the name of the file.
-		if [ "X$_next" = "X" ]; then
-			resp=n
-		else
-			resp=y
-		fi
-		echo -n "Continue extraction in this directory [$resp]?"
-		getresp "$resp"
-		if [ "$resp" = "n" ]; then
-			break
-		fi
-
 		echo -n "File name [$_next]? "
 		getresp "$_next"
+		if [ "X${resp}" = X"done" ]; then
+			break
+		elif [ "X${resp}" = X"list" ]; then
+			echo ""
+			echo "${1}:"
+			( cd $1 && ls )
+			continue
+		elif [ "X${resp}" = X"all" ]; then
+			# XXX - setting _setsdone like this
+			#       is not entirely correct.
+			_get_files="$_sets $_kernel"
+			_setsdone="$_sets $_kernel"
+			break
+		fi
 		_f=$resp
-		_filename="/$1/$_f"
 
 		# Ensure file exists
-		if [ ! -f $_filename ]; then
-			echo "File $_filename does not exist.  Check to make"
+		if [ ! -f $1/$_f ]; then
+			echo "File $1/$_f does not exist.  Check to make"
 			echo "sure you entered the information properly."
 			continue
 		fi
 
-		# Extract file
-		if [ X$_f = X$_kernel ]; then
-			cp $_filename /mnt/$_f
-		else
-			cat $_filename | (cd /mnt; tar -zxvpf -)
-		fi
-		echo "Extraction complete."
+		# Add file to extraction list
+		_get_files="${_get_files} $_f"
 		_setsdone="$_f $_setsdone"
+	done
 
+	# User may have said "done" without selecting any files
+	if [ "X${_get_files}" = X"" ]; then
+		return
+	fi
+
+	echo
+	echo -n "Ready to extract selected file sets? [y] "
+	getresp "y"
+	case "$resp" in
+		y*|Y*)
+			;;
+		*)
+			_setsdone="$_osetsdone"
+			return
+			;;
+	esac
+
+	# Extract the files one at a time and keep track of which ones failed
+	while test -n "${_get_files}" ; do
+		_failed_files=""
+		for _f in $_get_files ; do
+			echo ""
+			echo "$1/${_f}:"
+			if [ "X${_f}" = "X${_kernel}" ]; then
+				cp $1/$_f /mnt/$_f
+			else
+				cat $1/$_f | (cd /mnt; tar -zxvpf -)
+			fi
+			if [ $? -ne 0 ]; then
+				# Mark xfer as having failed,.
+				_setsdone=`rmel $_f $_setsdone`
+				_failed_files="${_failed_files} ${_f}"
+			fi
+		done
+
+		# Give them the option of retrying failed files.
+		_get_files=""
+		while test -n "${_failed_files}" ; do
+			echo ""
+			echo "The following files failed to extract correctly:"
+			echo "Choose which one(s) to retry or 'done' to exit selector."
+			echo ""
+
+			_next=""
+			for _f in $_failed_files ; do
+				if isin $_f $_setsdone ; then
+					echo -n "	[X] "
+					_next=""
+				else
+					echo -n "	[ ] "
+					if [ -z "$_next" ]; then
+						_next=$_f
+					fi
+				fi
+				echo $_f
+			done
+			echo ""
+
+			# Get the name of the file.
+			echo -n "File name [$_next]? "
+			getresp "$_next"
+			if [ "X${resp}" = X"done" ]; then
+				break
+			elif [ "X${resp}" = X"list" ]; then
+				echo ""
+				echo "${1}:"
+				( cd $1 && ls )
+				echo ""
+				continue
+			fi
+			_f=$resp
+
+			# Ensure file exists
+			if [ ! -f $1/$_f ]; then
+				echo "File $1/$_f does not exist.  Check to make"
+				echo "sure you entered the information properly."
+			fi
+			# Add file to extraction list
+			_get_files="${_get_files} ${_f}"
+			_setsdone="${_f} ${_setsdone}"
+		done
 	done
 }
 
@@ -1512,7 +1680,7 @@ __install_sets_1
 		# If that's the case, bypass the menu the first time.
 		if [ X"$_yup" = X"FALSE" ]; then
 			echo -n	"Install from (f)tp, h(ttp), (t)ape, (C)D-ROM,"
-			echo -n "(N)FS or local (d)isk? "
+			echo -n " (N)FS or local (d)isk? "
 			getresp ""
 			case "$resp" in
 			d*|D*)
@@ -1546,6 +1714,25 @@ __install_sets_1
 			esac
 		else
 			_yup="FALSE"	# So we'll ask next time
+		fi
+
+		if [ ! -f /mnt/bsd ]; then
+			cat << \__install_sets_2
+
+You still do not have a /bsd in your filesystem (ie. the kernel), which
+seems to indicate that you are still missing important distribution files.
+So please continue installing...
+__install_sets_2
+			resp=""
+		fi
+		if [ ! -f /mnt/bin/cat ]; then
+			cat << \__install_sets_3
+
+You still do not have a /bin/cat in your filesystem (ie. a sample random file
+which you probably want). This seems to indicate that you are still missing
+important distribution files. So please continue installing...
+__install_sets_3
+			resp=""
 		fi
 
 		# Give the user the opportunity to extract more sets. They
