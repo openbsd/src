@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.54 2002/08/12 00:55:01 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.55 2002/08/20 12:57:54 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4220,17 +4220,19 @@ Lcsdone:				! done:
 
 Lcsfaulti:
 	cmp	%o1, %o5		! did we write to the string?
-	be,a	1f
-	 deccc	%o1	
+	be	1f
+	 nop
+	deccc	%o1			! --toaddr
 1:
-	stb	%g0, [%o1]		! *--toaddr = '\0';
+	stb	%g0, [%o1]		! *toaddr = '\0';
 	b	Lcsdone			! error = EFAULT;
 	 mov	EFAULT, %o0		! goto ret;
 
 Lcsfaulto:
 	cmp	%o1, %o5		! did we write to the string?
-	be,a	1f
-	 deccc	%o1	
+	be	1f
+	 nop
+	deccc	%o1	
 	stb	%g0, [%o1]		! *--toaddr = '\0';
 1:
 	b	Lcsdone			! error = EFAULT;
