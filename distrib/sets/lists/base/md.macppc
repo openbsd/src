@@ -1994,3 +1994,4 @@
 ./usr/sbin/apmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/lib/libusbhid.so.0.0

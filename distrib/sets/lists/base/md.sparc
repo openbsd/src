@@ -1944,3 +1944,4 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
+./usr/lib/libusbhid.so.0.0

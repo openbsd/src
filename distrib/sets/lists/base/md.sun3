@@ -1977,3 +1977,4 @@
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank
+./usr/lib/libusbhid.so.0.0

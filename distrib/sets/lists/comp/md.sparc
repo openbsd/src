@@ -148,3 +148,4 @@
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0
+./usr/lib/libusbhid_pic.a

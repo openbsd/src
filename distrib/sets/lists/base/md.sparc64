@@ -1946,3 +1946,4 @@
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
+./usr/lib/libusbhid.so.0.0

@@ -1952,3 +1952,4 @@
 ./usr/mdec/setnetbootinfo
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/lib/libusbhid.so.0.0

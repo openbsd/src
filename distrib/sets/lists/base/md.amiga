@@ -1969,3 +1969,4 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
+./usr/lib/libusbhid.so.0.0

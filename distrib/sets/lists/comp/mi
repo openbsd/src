@@ -1715,6 +1715,7 @@
 ./usr/lib/libtermlib.a
 ./usr/lib/libtermlib_p.a
 ./usr/lib/libusbhid.a
+./usr/lib/libusbhid_p.a
 ./usr/lib/libutil.a
 ./usr/lib/libutil_p.a
 ./usr/lib/libwrap.a

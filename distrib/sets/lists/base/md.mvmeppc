@@ -1939,3 +1939,4 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
+./usr/lib/libusbhid.so.0.0

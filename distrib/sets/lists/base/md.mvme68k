@@ -1966,3 +1966,4 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/lib/libusbhid.so.0.0
