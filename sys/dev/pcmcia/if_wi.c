@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.30 2001/04/08 21:44:36 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.31 2001/04/23 20:52:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.30 2001/04/08 21:44:36 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.31 2001/04/23 20:52:35 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -288,6 +288,12 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
 	  PCMCIA_CIS_IODATA2_WNB11PCM,
 	  "I-O DATA WN-B11/PCM",
+	  1 },
+
+	{ PCMCIA_VENDOR_LINKSYS,
+	  PCMCIA_PRODUCT_LINKSYS_WPC11,
+	  PCMCIA_CIS_LINKSYS_WPC11,
+	  "Linksys WPC11",
 	  1 },
 
 	{ 0,
