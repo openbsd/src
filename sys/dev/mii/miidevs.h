@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.4 1998/11/11 03:48:41 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.5 1998/12/24 01:30:55 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.2 1998/11/11 03:39:41 jason Exp 
+ *	OpenBSD: miidevs,v 1.3 1998/12/24 01:30:08 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -53,6 +53,7 @@
 #define	MII_OUI_ICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x1e0400	/* Level 1 */
+#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x0005be	/* Seeq */
@@ -77,6 +78,10 @@
 /* Level 1 PHYs */
 #define	MII_MODEL_LEVEL1_LXT970	0x0000
 #define	MII_STR_LEVEL1_LXT970	"LXT970 10/100 media interface"
+
+/* Myson Technology PHYs */
+#define	MII_MODEL_MYSON_MTD972	0x0000
+#define	MII_STR_MYSON_MTD972	"MTD972 10/100 media interface"
 
 /* National Semiconductor PHYs */
 #define	MII_MODEL_NATSEMI_DP83840	0x0000
