@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2004/01/29 07:25:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2004/02/09 02:49:50 drahn Exp $
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "macppc" || \
@@ -25,6 +25,6 @@ NOPROG=yes
 .endif
 
 MAN=	wsconsctl.8
-MANSUBDIR=	alpha hppa i386 macppc sparc sparc64 pegasos amd64
+MANSUBDIR=	alpha hppa i386 macppc sparc sparc64 pegasos amd64 cats
 
 .include <bsd.prog.mk>
