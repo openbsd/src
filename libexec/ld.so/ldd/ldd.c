@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.1 2000/09/17 17:50:57 deraadt Exp $ */
+/*	$OpenBSD: ldd.c,v 1.2 2001/05/11 15:50:14 art Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -194,7 +194,7 @@ readsoneeded(FILE *infile, int dyncheck)
 	if (fstat(fileno(infile), &st))
 		return -1L;
 	header = mmap(0, st.st_size, PROT_READ, MAP_SHARED, fileno(infile), 0);
-	if (header == (caddr_t)-1)
+	if (header == MAP_FAILED)
 		return -1;
 
 	epnt = (Elf32_Ehdr *)header;
