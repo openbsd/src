@@ -79,6 +79,7 @@ xfs_devioctl(dev_t dev,
     return ENOTTY;
 }
 
+#ifdef HAVE_VOP_SELECT
 static int
 xfs_realselect(dev_t dev, d_thread_t *p, void *wql)
 {
@@ -94,12 +95,13 @@ xfs_realselect(dev_t dev, d_thread_t *p, void *wql)
 #endif
     return 0;
 }
-
+#endif
 
 #ifdef HAVE_VOP_POLL
 int
 xfs_devpoll(dev_t dev, int events, d_thread_t * p)
 {
+    struct xfs_channel *chan = &xfs_channel[minor(dev)];
 #ifdef NNPFS_DEBUG
     char devname[64];
 #endif
@@ -108,12 +110,19 @@ xfs_devpoll(dev_t dev, int events, d_thread_t * p)
 		     xfs_devtoname_r (dev, devname, sizeof(devname)),
 		     events));
 
-    if (!(events & (POLLIN | POLLRDNORM)))
-	return 0;
+    if ((events & (POLLIN | POLLRDNORM)) == 0)
+	return 0;			/* only supports read */
 
-    return xfs_realselect(dev, p, NULL);
+    if (!xfs_emptyq(&chan->messageq))
+	return (events & (POLLIN | POLLRDNORM));
+
+#ifdef HAVE_THREE_ARGUMENT_SELRECORD
+    selrecord (p, &chan->selinfo, wql);
+#else
+    selrecord (p, &chan->selinfo);
+#endif
+    return 0;
 }
-
 #endif
 
 #ifdef HAVE_VOP_SELECT
