@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.15 2001/06/06 16:06:33 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.16 2001/06/22 22:51:22 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.15 2001/06/06 16:06:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.16 2001/06/22 22:51:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -360,9 +360,11 @@ copy(argv, type, fts_options)
 		}
 
 		/* Not an error but need to remember it happened */
-		if (stat(to.p_path, &to_stat) == -1)
+		if (stat(to.p_path, &to_stat) == -1) {
+			if (curr->fts_info == FTS_DP)
+				continue;
 			dne = 1;
-		else {
+		} else {
 			/*
 			 * For -p mode, we need to reset the directory
 			 * times in the post-order pass since the times
