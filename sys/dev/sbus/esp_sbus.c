@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.8 2002/04/09 22:33:58 jason Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.9 2003/02/09 09:25:11 jason Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -249,7 +249,7 @@ espattach_sbus(parent, self, aux)
 
 		burst = getpropint(sa->sa_node, "burst-sizes", -1);
 
-#if ESP_SBUS_DEBUG
+#ifdef ESP_SBUS_DEBUG
 		printf("espattach_sbus: burst 0x%x, sbus 0x%x\n",
 		    burst, sbusburst);
 #endif
