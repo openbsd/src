@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.13 2001/05/24 04:15:26 angelos Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.14 2001/06/25 19:53:54 provos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.13 2001/05/24 04:15:26 angelos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.14 2001/06/25 19:53:54 provos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -74,6 +74,7 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 	u_int family;
 
 	memcpy((char *)&family, (char *)p, sizeof(family));
+	family = ntohl(family);
 
 	if (nflag && family != AF_LINK) {
 		/* XXX just dump the header */
@@ -121,6 +122,7 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 #endif
 
 	memcpy((char *)&family, (char *)p, sizeof(family));
+	family = ntohl(family);
 
 	ts_print(&h->ts);
 
