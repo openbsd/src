@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: sigret.c,v 1.2 2001/12/17 03:31:11 marc Exp $
+ * $OpenBSD: sigret.c,v 1.3 2002/01/02 23:26:57 marc Exp $
  *
  * Public Domain
  *
@@ -20,7 +20,6 @@
  *
  *	-i:	call sigreturn from a function called by the signal handler
  *
- * Program should not exit until killed.
  */
 
 #include <sys/time.h>
@@ -33,6 +32,13 @@
 #include <string.h>
 #include <unistd.h>
 
+/*
+ * sigalarm occurs 50 times/second.  Stop running after 10 seconds
+ * (100 interrupts).
+ */
+#define MAX_INTERRUPTS	500
+
+int failed;
 int altstack;
 int badcall;
 int clobbercall;
@@ -102,6 +108,7 @@ test2(char *fmt)
 	  case 'p':
 	    break;
 	  default:
+	    failed = 1;
 	    fprintf(stderr,
 		    "unexpected character 0x%02x `%c' in %s: count %d\n",
 		    *fmt, *fmt, ofmt, count);
@@ -167,6 +174,8 @@ main(int argc, char * argv[])
 
 	ualarm(10000, 10000);
 
-	while (1)
+	while (count < MAX_INTERRUPTS)
 		test2("iclp");
+
+	return failed;
 }
