@@ -3801,6 +3801,7 @@
 ./usr/share/man/cat3/pthread_join.0
 ./usr/share/man/cat3/pthread_key_create.0
 ./usr/share/man/cat3/pthread_key_delete.0
+./usr/share/man/cat3/pthread_kill.0
 ./usr/share/man/cat3/pthread_main_np.0
 ./usr/share/man/cat3/pthread_multi_np.0
 ./usr/share/man/cat3/pthread_mutex_destroy.0
