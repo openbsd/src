@@ -217,7 +217,7 @@ exec_setup_stack(p, epp)
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = round_page(p->p_rlimit[RLIMIT_STACK].rlim_cur);
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
