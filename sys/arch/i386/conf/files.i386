@@ -106,7 +106,7 @@ major	{fd = 2}
 
 # PC speaker
 device	spkr at isa: tty
-file	arch/i386/isa/spkr.c		speaker needs-flag
+file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)

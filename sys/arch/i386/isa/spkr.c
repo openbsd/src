@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.17 1994/10/30 21:44:18 cgd Exp $	*/
+/*	$NetBSD: spkr.c,v 1.18 1996/02/22 05:53:28 scottr Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -9,12 +9,13 @@
  *      use hz value from param.c
  */
 
-#include "speaker.h"
-#if NSPEAKER > 0
+#include "spkr.h"
+#if NSPKR > 0
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
+#include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 
@@ -22,9 +23,20 @@
 #include <machine/pio.h>
 #include <machine/spkr.h>
 
-#include <i386/isa/isareg.h>
+#include <dev/isa/isareg.h>
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
+
+int spkrprobe __P((struct device *, void *, void *));
+void spkrattach __P((struct device *, struct device *, void *));
+
+struct spkr_softc {
+	struct device sc_dev;
+};
+
+struct cfdriver spkrcd = {
+	NULL, "spkr", spkrprobe, spkrattach, DV_TTY, sizeof(struct spkr_softc)
+};
 
 /**************** MACHINE DEPENDENT PART STARTS HERE *************************
  *
@@ -44,10 +56,6 @@
  */
 #define PIT_MODE	(TIMER_SEL2|TIMER_16BIT|TIMER_SQWAVE)
 
-void
-speakerattach()
-{
-}
 
 static int endtone()
 /* turn off the speaker, ending current tone */
@@ -401,6 +409,16 @@ size_t	slen;
 
 static int spkr_active;	/* exclusion flag */
 static struct buf *spkr_inbuf; /* incoming buf */
+
+int spkrprobe (struct device *parent, void *match, void *aux)
+{
+	return 1;
+}
+
+void spkrattach (struct device *parent, struct device *self, void *aux)
+{
+	printf("\n");
+}
 
 int spkropen(dev)
 dev_t	dev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1996/02/21 12:53:46 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 1996/02/26 10:26:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -58,6 +58,8 @@ bdev_decl(wt);
 bdev_decl(sd);
 #include "st.h"
 bdev_decl(st);
+#include "ss.h"
+cdev_decl(ss);
 #include "cd.h"
 bdev_decl(cd);
 #include "mcd.h"
@@ -124,6 +126,14 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
 		 
+/* open, close, read, ioctl */
+#define cdev_ss_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -161,7 +171,7 @@ dev_decl(fd,open);
 cdev_decl(bpf);
 #include "pcmciabus.h"
 cdev_decl(pcmciabus);
-#include "speaker.h"
+#include "spkr.h"
 cdev_decl(spkr);
 #ifdef LKM
 #define	NLKM	1
@@ -218,7 +228,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
-	cdev_notdef(),			/* 19 */
+	cdev_ss_init(NSS,ss),           /* 19: SCSI scanner */
 	cdev_notdef(),			/* 20 */
 	cdev_notdef(),			/* 21 */
 	cdev_fd_init(1,fd),		/* 22: file descriptor pseudo-device */
@@ -226,7 +236,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 24 */
 	cdev_joy_init(NJOY,joy),	/* 25: Game adapter */
 	cdev_ocis_init(NPCMCIABUS,pcmciabus), /* 26: PCMCIA Bus */
-	cdev_spkr_init(NSPEAKER,spkr),	/* 27: PC speaker */
+	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
