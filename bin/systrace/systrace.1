@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.3 2002/06/04 19:52:47 todd Exp $
+.\"	$OpenBSD: systrace.1,v 1.4 2002/06/04 20:13:19 provos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nd generates and enforces system call policies
 .Sh SYNOPSIS
 .Nm systrace
-.Op Fl ait
+.Op Fl aitU
 .Op Fl g Ar gui
 .Op Fl f Ar file
 .Ar command ...
@@ -59,6 +59,8 @@ not covered by policy is denied.
 Uses text mode to ask for interactive policy generation.
 .It Fl i
 Inherits the policy of the first executed binary to all children.
+.It Fl U
+Ignore user configured policies and use only global system policies.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
 .It Fl f Ar file

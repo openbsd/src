@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.7 2002/06/04 19:58:46 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.8 2002/06/04 20:13:19 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -49,6 +49,7 @@ int fd;
 int connected = 0;		/* Connected to GUI */
 int inherit = 0;		/* Inherit policy to childs */
 int automatic = 0;		/* Do not run interactively */
+int userpolicy = 1;		/* Permit user defined policies */
 
 short
 trans_cb(int fd, pid_t pid, int policynr,
@@ -386,7 +387,7 @@ main(int argc, char **argv)
 	char *guipath = _PATH_XSYSTRACE;
 	int usex11 = 1;
 
-	while ((c = getopt(argc, argv, "aitg:f:")) != -1) {
+	while ((c = getopt(argc, argv, "aitUg:f:")) != -1) {
 		switch (c) {
 		case 'a':
 			automatic = 1;
@@ -402,6 +403,9 @@ main(int argc, char **argv)
 			break;
 		case 't':
 			usex11 = 0;
+			break;
+		case 'U':
+			userpolicy = 0;
 			break;
 		default:
 			usage();

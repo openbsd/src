@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.3 2002/06/04 19:15:54 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.4 2002/06/04 20:13:19 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -260,12 +260,18 @@ systrace_policyfilename(char *dirname, char *name)
 int
 systrace_addpolicy(char *name)
 {
-	char *file;
+	char *file = NULL;
+	extern int userpolicy;
 
-	if ((file = systrace_policyfilename(policydir, name)) == NULL)
-		return (-1);
-	/* Check if the user policy file exists */
-	if (access(file, R_OK) == -1) {
+	if (userpolicy) {
+		file = systrace_policyfilename(policydir, name);
+		/* Check if the user policy file exists */
+		if (file != NULL && access(file, R_OK) == -1)
+			file = NULL;
+	}
+
+	/* Read global policy */
+	if (file == NULL) {
 		file = systrace_policyfilename(POLICY_PATH, name);
 		if (file == NULL)
 			return (-1);
