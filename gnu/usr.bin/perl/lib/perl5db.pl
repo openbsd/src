@@ -492,7 +492,8 @@ package DB;
 use IO::Handle;
 
 # Debugger for Perl 5.00x; perl5db.pl patch level:
-$VERSION = 1.22;
+$VERSION = 1.23;
+
 $header  = "perl5db.pl version $VERSION";
 
 =head1 DEBUGGER ROUTINES
@@ -678,7 +679,10 @@ sub eval {
 # (for subroutines defined outside of the package DB). In fact the same is
 # true if $deep is not defined.
 #
-# $Log:	perldb.pl,v $
+# $Log: perl5db.pl,v $
+# Revision 1.7  2003/12/03 03:02:36  millert
+# Resolve conflicts for perl 5.8.2, remove old files, and add OpenBSD-specific scaffolding
+#
 
 # Enhanced by ilya@math.ohio-state.edu (Ilya Zakharevich)
 
@@ -899,6 +903,8 @@ sub eval {
 #   + Includes cleanup by Robin Barker and Jarkko Hietaniemi.
 # Changes: 1.22  Jun 09, 2003 Alex Vandiver <alexmv@MIT.EDU>
 #   + Flush stdout/stderr before the debugger prompt is printed.
+# Changes: 1.23: Dec 21, 2003 Dominique Quatravaux
+#   + Fix a side-effect of bug #24674 in the perl debugger ("odd taint bug")
 
 ####################################################################
 
@@ -1344,6 +1350,9 @@ if (not defined &get_fork_TTY                        # no routine exists,
 elsif ($^O eq 'os2') {                               # If this is OS/2,
     *get_fork_TTY = \&os2_get_fork_TTY;              # use the OS/2 version
 }
+# untaint $^O, which may have been tainted by the last statement.
+# see bug [perl #24674]
+$^O =~ m/^(.*)\z/; $^O = $1;
 
 # "Here begin the unreadable code.  It needs fixing." 
 

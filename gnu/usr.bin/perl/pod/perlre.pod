@@ -580,6 +580,10 @@ track of the number of nested parentheses. For example:
   /the (\S+)(?{ $color = $^N }) (\S+)(?{ $animal = $^N })/i;
   print "color = $color, animal = $animal\n";
 
+Inside the C<(?{...})> block, C<$_> refers to the string the regular
+expression is matching against. You can also use C<pos()> to know what is
+the current position of matching withing this string.
+
 The C<code> is properly scoped in the following sense: If the assertion
 is backtracked (compare L<"Backtracking">), all changes introduced after
 C<local>ization are undone, so that

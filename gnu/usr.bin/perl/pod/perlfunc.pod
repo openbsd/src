@@ -1033,8 +1033,18 @@ In the case of an array, if the array elements happen to be at the end,
 the size of the array will shrink to the highest element that tests
 true for exists() (or 0 if no such element exists).
 
-Returns each element so deleted or the undefined value if there was no such
-element.  Deleting from C<$ENV{}> modifies the environment.  Deleting from
+Returns a list with the same number of elements as the number of elements
+for which deletion was attempted.  Each element of that list consists of
+either the value of the element deleted, or the undefined value.  In scalar
+context, this means that you get the value of the last element deleted (or
+the undefined value if that element did not exist).
+
+    %hash = (foo => 11, bar => 22, baz => 33);
+    $scalar = delete $hash{foo};             # $scalar is 11
+    $scalar = delete @hash{qw(foo bar)};     # $scalar is 22
+    @array  = delete @hash{qw(foo bar baz)}; # @array  is (undef,undef,33)
+
+Deleting from C<%ENV> modifies the environment.  Deleting from
 a hash tied to a DBM file deletes the entry from the DBM file.  Deleting
 from a C<tie>d hash or array may not necessarily return anything.
 
@@ -2328,7 +2338,8 @@ Perl for security reasons (see L<perlsec/"Algorithmic Complexity
 Attacks">).
 
 As a side effect, calling keys() resets the HASH's internal iterator,
-see L</each>.
+see L</each>. (In particular, calling keys() in void context resets
+the iterator with no other overhead.)
 
 Here is yet another way to print your environment:
 
@@ -5875,6 +5886,7 @@ A class implementing a hash should have the following methods:
     EXISTS this, key
     FIRSTKEY this
     NEXTKEY this, lastkey
+    SCALAR this
     DESTROY this
     UNTIE this
 
@@ -6295,7 +6307,8 @@ function would produce on the same (unmodified) hash.  Since Perl
 for security reasons (see L<perlsec/"Algorithmic Complexity Attacks">).
 
 As a side effect, calling values() resets the HASH's internal iterator,
-see L</each>.
+see L</each>. (In particular, calling values() in void context resets
+the iterator with no other overhead.)
 
 Note that the values are not copied, which means modifying them will
 modify the contents of the hash:

@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq1 - General Questions About Perl ($Revision: 1.12 $, $Date: 2003/07/09 15:47:28 $)
+perlfaq1 - General Questions About Perl ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
 
 =head1 DESCRIPTION
 
@@ -60,7 +60,7 @@ You should definitely use version 5.  Version 4 is old, limited, and
 no longer maintained; its last patch (4.036) was in 1992, long ago and
 far away.  Sure, it's stable, but so is anything that's dead; in fact,
 perl4 had been called a dead, flea-bitten camel carcass.  The most
-recent production release is 5.8.1 (although 5.005_03 and 5.6.1 are
+recent production release is 5.8.2 (although 5.005_03 and 5.6.2 are
 still supported). The most cutting-edge development release is 5.9.
 Further references to the Perl language in this document refer to the
 production release unless otherwise specified.  There may be one or
@@ -101,6 +101,8 @@ Perl On New Internal Engine.  The Perl 5.10 language implementation
 will be used for Ponie, and there will be no language level
 differences between perl5 and ponie.  Ponie is not a complete rewrite
 of perl5.
+
+For more details, see http://www.poniecode.org/
 
 =head2 What is perl6?
 
@@ -307,9 +309,11 @@ for any given task.  Also mention that the difference between version
 (Well, OK, maybe it's not quite that distinct, but you get the idea.)
 If you want support and a reasonable guarantee that what you're
 developing will continue to work in the future, then you have to run
-the supported version.  As of October 2003 that means running either
-5.8.1 (released in September 2003), or one of the older releases like
-5.6.1 (released in April 2001) or 5.005_03 (released in March 1999),
+the supported version.  As of December 2003 that means running either
+5.8.2 (released in November 2003), or one of the older releases like
+5.6.2 (also released in November 2003; a maintenance release to let perl
+5.6 compile on newer systems as 5.6.1 was released in April 2001) or
+5.005_03 (released in March 1999),
 although 5.004_05 isn't that bad if you B<absolutely> need such an old
 version (released in April 1999) for stability  reasons.
 Anything older than 5.004_05 shouldn't be used.

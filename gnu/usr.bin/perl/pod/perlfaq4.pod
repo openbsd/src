@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq4 - Data Manipulation ($Revision: 1.52 $, $Date: 2003/10/02 04:44:33 $)
+perlfaq4 - Data Manipulation ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
 
 =head1 DESCRIPTION
 
@@ -362,9 +362,20 @@ pseudorandom generator than comes with your operating system, look at
 
 =head2 How do I get a random number between X and Y?
 
-Use the following simple function.  It selects a random integer between
-(and possibly including!) the two given integers, e.g.,
-C<random_int_in(50,120)>
+C<rand($x)> returns a number such that
+C<< 0 <= rand($x) < $x >>. Thus what you want to have perl
+figure out is a random number in the range from 0 to the
+difference between your I<X> and I<Y>.
+
+That is, to get a number between 10 and 15, inclusive, you
+want a random number between 0 and 5 that you can then add
+to 10.
+
+    my $number = 10 + int rand( 15-10+1 );
+
+Hence you derive the following simple function to abstract
+that. It selects a random integer between the two given
+integers (inclusive), For example: C<random_int_in(50,120)>.
 
    sub random_int_in ($$) {
      my($min, $max) = @_;
@@ -414,14 +425,6 @@ Use the following simple functions:
     sub get_millennium {
 	return 1+int((((localtime(shift || time))[5] + 1899))/1000);
     }
-
-You can also use the POSIX strftime() function which may be a bit
-slower but is easier to read and maintain.
-
-	use POSIX qw/strftime/;
-
-	my $week_of_the_year = strftime "%W", localtime;
-	my $day_of_the_year  = strftime "%j", localtime;
 
 On some systems, the POSIX module's strftime() function has
 been extended in a non-standard way to use a C<%C> format,
@@ -1489,16 +1492,11 @@ the hash is to be modified.
 
 Use the rand() function (see L<perlfunc/rand>):
 
-    # at the top of the program:
-    srand;			# not needed for 5.004 and later
-
-    # then later on
     $index   = rand @array;
     $element = $array[$index];
 
-Make sure you I<only call srand once per program, if then>.
-If you are calling it more than once (such as before each
-call to rand), you're almost certainly doing something wrong.
+Or, simply:
+    my $element = $array[ rand @array ];
 
 =head2 How do I permute N elements of a list?
 

@@ -1,3 +1,34 @@
+2003-12-07   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.33
+   
+   Enable explicit context passing for slight performance
+   improvement in threaded perls.
+   
+   Tweaks to the Makefile.PL so that it is suitable both for
+   core and CPAN use.
+
+
+
+2003-12-05   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.32
+
+   Don't run u32align test program on HP-UX 10.20 as it
+   will hang.  Patch by H.Merijn Brand <h.m.brand@hccnet.nl>.
+
+   Fixed documentation typo.
+
+
+
+2003-11-28   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.31
+
+   Inherit add_bits() from Digest::base if available.
+
+
+
 2003-10-09   Gisle Aas <gisle@ActiveState.com>
 
    Release 2.30

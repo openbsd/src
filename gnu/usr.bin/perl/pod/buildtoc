@@ -2,7 +2,8 @@
 
 use strict;
 use vars qw($masterpodfile %Build %Targets $Verbose $Up %Ignore
-	    @Master %Readmes %Pods %Aux %Readmepods %Pragmata %Modules);
+	    @Master %Readmes %Pods %Aux %Readmepods %Pragmata %Modules
+	    %Copies);
 use File::Spec;
 use File::Find;
 use FindBin;
@@ -80,17 +81,19 @@ chdir $FindBin::Bin or die "$0: Can't chdir $FindBin::Bin: $!";
 
 open MASTER, $masterpodfile or die "$0: Can't open $masterpodfile: $!";
 
+my ($delta_source, $delta_target);
+
 foreach (<MASTER>) {
   next if /^\#/;
 
   # At least one upper case letter somewhere in the first group
-  if (/^(\S+)\s(.*)/ && $1 =~ tr/A-Z//) {
+  if (/^(\S+)\s(.*)/ && $1 =~ tr/h//) {
     # it's a heading
     my $flags = $1;
+    $flags =~ tr/h//d;
     my %flags = (header => 1);
-    $flags{toc_omit} = 1 if $flags =~ tr/O//d;
-    $flags{include} = 1 if $flags =~ tr/I//d;
-    $flags{aux} = 1 if $flags =~ tr/A//d;
+    $flags{toc_omit} = 1 if $flags =~ tr/o//d;
+    $flags{aux} = 1 if $flags =~ tr/a//d;
     die "$0: Unknown flag found in heading line: $_" if length $flags;
     push @Master, [\%flags, $2];
 
@@ -100,8 +103,18 @@ foreach (<MASTER>) {
 
     my %flags = (indent => 0);
     $flags{indent} = $1 if $flags =~ s/(\d+)//;
-    $flags{toc_omit} = 1 if $flags =~ tr/o//d;
+    $flags{toc_omit} = 1 if $flags =~ tr/o//d; 
     $flags{aux} = 1 if $flags =~ tr/a//d;
+
+    if ($flags =~ tr/D//d) {
+      $flags{perlpod_omit} = 1;
+      $delta_source = "$filename.pod";
+    }
+    if ($flags =~ tr/d//d) {
+      $flags{manifest_omit} = 1;
+      $delta_target = "$filename.pod";
+    }
+
     if ($flags =~ tr/r//d) {
       my $readme = $filename;
       $readme =~ s/^perl//;
@@ -120,6 +133,19 @@ foreach (<MASTER>) {
     die "$0: Malformed line: $_" if $1 =~ tr/A-Z//;
   }
 }
+if (defined $delta_source) {
+  if (defined $delta_target) {
+    # This way round so that keys can act as a MANIFEST skip list
+    # Targets will aways be in the pod directory. Currently we can only cope
+    # with sources being in the same directory. Fix this and do perlvms.pod
+    # with this?
+    $Copies{$delta_target} = $delta_source;
+  } else {
+    die "$0: delta source defined but not target";
+  }
+} elsif (defined $delta_target) {
+  die "$0: delta target defined but not target";
+}
 
 close MASTER;
 
@@ -130,6 +156,7 @@ close MASTER;
   my (@manireadmes, %manireadmes);
   my (@perlpods, %perlpods);
   my (%our_pods);
+  my (%sources);
 
   # Convert these to a list of filenames.
   foreach (keys %Pods, keys %Readmepods) {
@@ -139,6 +166,10 @@ close MASTER;
   # None of these filenames will be boolean false
   @disk_pods = glob("*.pod");
   @disk_pods{@disk_pods} = @disk_pods;
+
+  # Things we copy from won't be in perl.pod
+  # Things we copy to won't be in MANIFEST
+  @sources{values %Copies} = ();
 
   open(MANI, "../MANIFEST") || die "$0: opening ../MANIFEST failed: $!";
   while (<MANI>) {
@@ -170,9 +201,9 @@ close MASTER;
     warn "$0: $i exists but is unknown by buildtoc\n"
       unless $our_pods{$i};
     warn "$0: $i exists but is unknown by ../MANIFEST\n"
-      if !$manipods{$i} && !$manireadmes{$i};
+      if !$manipods{$i} && !$manireadmes{$i} && !$Copies{$i};
     warn "$0: $i exists but is unknown by perl.pod\n"
-	unless $perlpods{$i};
+	if !$perlpods{$i} && !exists $sources{$i};
   }
   foreach my $i (sort keys %our_pods) {
     warn "$0: $i is known by buildtoc but does not exist\n"
@@ -259,7 +290,7 @@ sub output ($);
 sub output_perltoc {
   open(OUT, ">perltoc.pod") || die "$0: creating perltoc.pod failed: $!";
 
-  $/ = '';
+  local $/ = '';
 
   ($_= <<"EOPOD2B") =~ s/^\t//gm && output($_);
 
@@ -453,6 +484,7 @@ sub generate_perlpod {
   foreach (@Master) {
     my $flags = $_->[0];
     next if $flags->{aux};
+    next if $flags->{perlpod_omit};
 
     if (@$_ == 2) {
       # Heading
@@ -486,7 +518,8 @@ sub generate_manifest {
   map {s/ \t/\t\t/g; $_} @temp;
 }
 sub generate_manifest_pod {
-  generate_manifest map {["pod/$_.pod", $Pods{$_}]} sort keys %Pods;
+  generate_manifest map {["pod/$_.pod", $Pods{$_}]}
+    grep {!$Copies{"$_.pod"}} sort keys %Pods;
 }
 sub generate_manifest_readme {
   generate_manifest map {["README.$_", $Readmes{$_}]} sort keys %Readmes;
@@ -522,8 +555,10 @@ SNIP
 }
 
 sub generate_nmake_1 {
-  map {sprintf "\tcopy ..\\README.%-8s .\\perl$_.pod\n", $_}
-    sort keys %Readmes;
+  # XXX Fix this with File::Spec
+  (map {sprintf "\tcopy ..\\README.%-8s ..\\pod\\perl$_.pod\n", $_}
+    sort keys %Readmes),
+      (map {"\tcopy ..\\pod\\$Copies{$_} ..\\pod\\$_\n"} sort keys %Copies);
 }
 
 # This doesn't have a trailing newline
@@ -531,7 +566,8 @@ sub generate_nmake_2 {
   # Spot the special case
   local $Text::Wrap::columns = 76;
   my $line = wrap ("\t    ", "\t    ",
-		   join " ", sort map {"perl$_.pod"} "vms", keys %Readmes);
+		   join " ", sort keys %Copies,
+				  map {"perl$_.pod"} "vms", keys %Readmes);
   $line =~ s/$/ \\/mg;
   $line;
 }
@@ -568,9 +604,11 @@ sub do_nmake {
   my $sections = () = $makefile =~ m/\0+/g;
   die "$0: $name contains no README copies" if $sections < 1;
   die "$0: $name contains discontiguous README copies" if $sections > 1;
-  $makefile =~ s/\0+/join "", &generate_nmake_1/se;
+  # Now remove the other copies that follow
+  1 while $makefile =~ s/\0\tcopy .*\n/\0/gm;
+  $makefile =~ s/\0+/join ("", &generate_nmake_1)/se;
 
-  $makefile =~ s{(cd \$\(PODDIR\) && del /f [^\n]+).*?(pod2html)}
+  $makefile =~ s{(del /f [^\n]+checkpods[^\n]+).*?(pod2html)}
     {"$1\n" . &generate_nmake_2."\n\t    $2"}se;
   $makefile;
 }
@@ -597,7 +635,7 @@ sub do_perlpod {
 sub do_podmak {
   my $name = shift;
   my $body = join '', @_;
-  foreach my $variable qw(pod man html tex) {
+  foreach my $variable (qw(pod man html tex)) {
     die "$0: could not find $variable in $name"
       unless $body =~ s{\n\U$variable\E = (?:[^\n]*\\\n)*[^\n]*}
 	{"\n" . generate_pod_mak ($variable)}se;
@@ -642,7 +680,9 @@ while (my ($target, $name) = each %Targets) {
   next unless $Build{$target};
   $built++;
   if ($target eq "toc") {
+    print "Now processing $name\n" if $Verbose;
     &output_perltoc;
+    print "Finished\n" if $Verbose;
     next;
   }
   print "Now processing $name\n" if $Verbose;

@@ -474,7 +474,8 @@ the constructor.  FETCH and STORE access the key and value pairs.  EXISTS
 reports whether a key is present in the hash, and DELETE deletes one.
 CLEAR empties the hash by deleting all the key and value pairs.  FIRSTKEY
 and NEXTKEY implement the keys() and each() functions to iterate over all
-the keys.  UNTIE is called when C<untie> happens, and DESTROY is called when
+the keys. SCALAR is triggered when the tied hash is evaluated in scalar 
+context. UNTIE is called when C<untie> happens, and DESTROY is called when
 the tied variable is garbage collected.
 
 If this seems like a lot, then feel free to inherit from merely the
@@ -755,6 +756,31 @@ thing, but we'll have to go through the LIST field indirectly.
 	carp &whowasi if $DEBUG;
 	my $self = shift;
 	return each %{ $self->{LIST} }
+    }
+
+=item SCALAR this
+
+This is called when the hash is evaluated in scalar context. In order
+to mimic the behaviour of untied hashes, this method should return a
+false value when the tied hash is considered empty. If this method does
+not exist, perl will make some educated guesses and return true when
+the hash is inside an iteration. If this isn't the case, FIRSTKEY is
+called, and the result will be a false value if FIRSTKEY returns the empty
+list, true otherwise.
+
+However, you should B<not> blindly rely on perl always doing the right 
+thing. Particularly, perl will mistakenly return true when you clear the 
+hash by repeatedly calling DELETE until it is empty. You are therefore 
+advised to supply your own SCALAR method when you want to be absolutely 
+sure that your hash behaves nicely in scalar context.
+
+In our example we can just call C<scalar> on the underlying hash
+referenced by C<$self-E<gt>{LIST}>:
+
+    sub SCALAR {
+	carp &whowasi if $DEBUG;
+	my $self = shift;
+	return scalar %{ $self->{LIST} }
     }
 
 =item UNTIE this
@@ -1106,5 +1132,7 @@ Tom Christiansen
 TIEHANDLE by Sven Verdoolaege <F<skimo@dns.ufsia.ac.be>> and Doug MacEachern <F<dougm@osf.org>>
 
 UNTIE by Nick Ing-Simmons <F<nick@ing-simmons.net>>
+
+SCALAR by Tassilo von Parseval <F<tassilo.von.parseval@rwth-aachen.de>>
 
 Tying Arrays by Casey West <F<casey@geeknest.com>>

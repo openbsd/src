@@ -16,12 +16,12 @@ FATALFUNC		T_OPAQUEPTR
 INPUT
 T_DATUM_K
 	DBM_ckFilter($arg, filter_store_key, \"filter_store_key\");
-	$var.dptr = SvPV($arg, PL_na);
+	$var.dptr = SvPVbyte($arg, PL_na);
 	$var.dsize = (int)PL_na;
 T_DATUM_V
         DBM_ckFilter($arg, filter_store_value, \"filter_store_value\");
 	if (SvOK($arg)) {
-	    $var.dptr = SvPV($arg, PL_na);
+	    $var.dptr = SvPVbyte($arg, PL_na);
 	    $var.dsize = (int)PL_na;
 	}
 	else {

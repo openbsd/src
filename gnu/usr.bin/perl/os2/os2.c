@@ -12,6 +12,7 @@
 #include <os2.h>
 #include "dlfcn.h"
 #include <emx/syscalls.h>
+#include <sys/emxload.h>
 
 #include <sys/uflags.h>
 
@@ -31,6 +32,14 @@
 
 #include "EXTERN.h"
 #include "perl.h"
+
+enum module_name_how { mod_name_handle, mod_name_shortname, mod_name_full,
+  mod_name_C_function = 0x100, mod_name_HMODULE = 0x200};
+
+/* Find module name to which *this* subroutine is compiled */
+#define module_name(how)	module_name_at(&module_name_at, how)
+
+static SV* module_name_at(void *pp, enum module_name_how how);
 
 void
 croak_with_os2error(char *s)
@@ -118,6 +127,7 @@ static struct perlos2_state_t {
   int po2__my_pwent;				/* = -1; */
   int po2_DOS_harderr_state;			/* = -1;    */
   signed char po2_DOS_suppression_state;	/* = -1;    */
+
   PFN po2_ExtFCN[ORD_NENTRIES];	/* Labeled by ord ORD_*. */
 /*  struct PMWIN_entries_t po2_PMWIN_entries; */
 
@@ -153,7 +163,10 @@ static struct perlos2_state_t {
   int po2_emx_runtime_init;		/* If 1, we need to manually init it */
   int po2_emx_exception_init;		/* If 1, we need to manually set it */
   int po2_emx_runtime_secondary;
-
+  char* (*po2_perllib_mangle_installed)(char *s, unsigned int l);
+  char* po2_perl_sh_installed;
+  PGINFOSEG po2_gTable;
+  PLINFOSEG po2_lTable;
 } perlos2_state = {
     -1,					/* po2__my_pwent */
     -1,					/* po2_DOS_harderr_state */
@@ -195,9 +208,12 @@ static struct perlos2_state_t {
 #define emx_runtime_init	(Perl_po2()->po2_emx_runtime_init)
 #define emx_exception_init	(Perl_po2()->po2_emx_exception_init)
 #define emx_runtime_secondary	(Perl_po2()->po2_emx_runtime_secondary)
+#define perllib_mangle_installed	(Perl_po2()->po2_perllib_mangle_installed)
+#define perl_sh_installed	(Perl_po2()->po2_perl_sh_installed)
+#define gTable			(Perl_po2()->po2_gTable)
+#define lTable			(Perl_po2()->po2_lTable)
 
 const Perl_PFN * const pExtFCN = (Perl_po2()->po2_ExtFCN);
-
 
 #if defined(USE_5005THREADS) || defined(USE_ITHREADS)
 
@@ -966,7 +982,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 {
 	int trueflag = flag;
 	int rc, pass = 1;
-	char *real_name;
+	char *real_name = NULL;			/* Shut down the warning */
 	char const * args[4];
 	static const char * const fargs[4] 
 	    = { "/bin/sh", "-c", "\"$@\"", "spawn-via-shell", };
@@ -2100,34 +2116,50 @@ void
 CroakWinError(int die, char *name)
 {
   FillWinError;
-  if (die && Perl_rc) {
-    dTHX;
-
-    Perl_croak(aTHX_ "%s: %s", (name ? name : "Win* API call"), os2error(Perl_rc));
-  }
+  if (die && Perl_rc)
+    croak_with_os2error(name ? name : "Win* API call");
 }
 
-char *
-os2_execname(pTHX)
+static char *
+dllname2buffer(pTHX_ char *buf, STRLEN l)
 {
-  char buf[300], *p, *o = PL_origargv[0], ok = 1;
+    char *o;
+    STRLEN ll;
+    SV *dll = Nullsv;
 
-  if (_execname(buf, sizeof buf) != 0)
-	return o;
+    dll = module_name(mod_name_full);
+    o = SvPV(dll, ll);
+    if (ll < l)
+       memcpy(buf,o,ll);
+    SvREFCNT_dec(dll);
+    return (ll >= l ? "???" : buf);
+}
+
+static char *
+execname2buffer(char *buf, STRLEN l, char *oname)
+{
+  char *p, *orig = oname, ok = oname != NULL;
+
+  if (_execname(buf, l) != 0) {
+    if (!oname || strlen(oname) >= l)
+      return oname;
+    strcpy(buf, oname);
+    ok = 0;
+  }
   p = buf;
   while (*p) {
     if (*p == '\\')
 	*p = '/';
     if (*p == '/') {
-	if (ok && *o != '/' && *o != '\\')
+	if (ok && *oname != '/' && *oname != '\\')
 	    ok = 0;
-    } else if (ok && tolower(*o) != tolower(*p))
+    } else if (ok && tolower(*oname) != tolower(*p))
 	ok = 0;	
     p++;
-    o++;
+    oname++;
   }
-  if (ok) { /* PL_origargv[0] matches the real name.  Use PL_origargv[0]: */
-     strcpy(buf, PL_origargv[0]);	/* _execname() is always uppercased */
+  if (ok) { /* orig matches the real name.  Use orig: */
+     strcpy(buf, orig);		/* _execname() is always uppercased */
      p = buf;
      while (*p) {
        if (*p == '\\')
@@ -2135,61 +2167,238 @@ os2_execname(pTHX)
        p++;
      }     
   }
-  p = savepv(buf);
+  return buf;
+}
+
+char *
+os2_execname(pTHX)
+{
+  char buf[300], *p = execname2buffer(buf, sizeof buf, PL_origargv[0]);
+
+  p = savepv(p);
   SAVEFREEPV(p);
   return p;
+}
+
+int
+Perl_OS2_handler_install(void *handler, enum Perlos2_handler how)
+{
+    char *s, b[300];
+
+    switch (how) {
+      case Perlos2_handler_mangle:
+	perllib_mangle_installed = (char *(*)(char *s, unsigned int l))handler;
+	return 1;
+      case Perlos2_handler_perl_sh:
+	s = (char *)handler;
+	s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perl_sh");
+	perl_sh_installed = savepv(s);
+	return 1;
+      case Perlos2_handler_perllib_from:
+	s = (char *)handler;
+	s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perllib_from");
+	oldl = strlen(s);
+	oldp = savepv(s);
+	return 1;
+      case Perlos2_handler_perllib_to:
+	s = (char *)handler;
+	s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perllib_to");
+	newl = strlen(s);
+	newp = savepv(s);
+	strcpy(mangle_ret, newp);
+	s = mangle_ret - 1;
+	while (*++s)
+	    if (*s == '\\')
+		*s = '/';
+	return 1;
+      default:
+	return 0;
+    }
+}
+
+/* Returns a malloc()ed copy */
+char *
+dir_subst(char *s, unsigned int l, char *b, unsigned int bl, enum dir_subst_e flags, char *msg)
+{
+    char *from, *to = b, *e = b; /* `to' assignment: shut down the warning */
+    STRLEN froml = 0, tol = 0, rest = 0;	/* froml: likewise */
+
+    if (l >= 2 && s[0] == '~') {
+	switch (s[1]) {
+	  case 'i': case 'I':
+	    from = "installprefix";	break;
+	  case 'd': case 'D':
+	    from = "dll";		break;
+	  case 'e': case 'E':
+	    from = "exe";		break;
+	  default:
+	    from = NULL;
+	    froml = l + 1;			/* Will not match */
+	    break;
+	}
+	if (from)
+	    froml = strlen(from) + 1;
+	if (l >= froml && strnicmp(s + 2, from + 1, froml - 2) == 0) {
+	    int strip = 1;
+
+	    switch (s[1]) {
+	      case 'i': case 'I':
+		strip = 0;
+		tol = strlen(INSTALL_PREFIX);
+		if (tol >= bl) {
+		    if (flags & dir_subst_fatal)
+			Perl_croak_nocontext("INSTALL_PREFIX too long: `%s'", INSTALL_PREFIX);
+		    else
+			return NULL;
+		}
+		memcpy(b, INSTALL_PREFIX, tol + 1);
+		to = b;
+		e = b + tol;
+		break;
+	      case 'd': case 'D':
+		if (flags & dir_subst_fatal) {
+		    dTHX;
+
+		    to = dllname2buffer(aTHX_ b, bl);
+		} else {				/* No Perl present yet */
+		    HMODULE self = find_myself();
+		    APIRET rc = DosQueryModuleName(self, bl, b);
+
+		    if (rc)
+			return 0;
+		    to = b - 1;
+		    while (*++to)
+			if (*to == '\\')
+			    *to = '/';
+		    to = b;
+		}
+		break;
+	      case 'e': case 'E':
+		if (flags & dir_subst_fatal) {
+		    dTHX;
+
+		    to = execname2buffer(b, bl, PL_origargv[0]);
+	        } else
+		    to = execname2buffer(b, bl, NULL);
+		break;
+	    }
+	    if (!to)
+		return NULL;
+	    if (strip) {
+		e = strrchr(to, '/');
+		if (!e && (flags & dir_subst_fatal))
+		    Perl_croak_nocontext("%s: Can't parse EXE/DLL name: '%s'", msg, to);
+		else if (!e)
+		    return NULL;
+		*e = 0;
+	    }
+	    s += froml; l -= froml;
+	    if (!l)
+		return to;
+	    if (!tol)
+		tol = strlen(to);
+
+	    while (l >= 3 && (s[0] == '/' || s[0] == '\\')
+		   && s[1] == '.' && s[2] == '.'
+		   && (l == 3 || s[3] == '/' || s[3] == '\\' || s[3] == ';')) {
+		e = strrchr(b, '/');
+		if (!e && (flags & dir_subst_fatal))
+			Perl_croak_nocontext("%s: Error stripping dirs from EXE/DLL/INSTALLDIR name", msg);
+		else if (!e)
+			return NULL;
+		*e = 0;
+		l -= 3; s += 3;
+	    }
+	    if (l && s[0] != '/' && s[0] != '\\' && s[0] != ';')
+		*e++ = '/';
+	}
+    }						/* Else: copy as is */
+    if (l && (flags & dir_subst_pathlike)) {
+	STRLEN i = 0;
+
+	while ( i < l - 2 && s[i] != ';')	/* May have ~char after `;' */
+	    i++;
+	if (i < l - 2) {			/* Found */
+	    rest = l - i - 1;
+	    l = i + 1;
+	}
+    }
+    if (e + l >= b + bl) {
+	if (flags & dir_subst_fatal)
+	    Perl_croak_nocontext("%s: name `%s%s' too long", msg, b, s);
+	else
+	    return NULL;
+    }
+    memcpy(e, s, l);
+    if (rest) {
+	e = dir_subst(s + l, rest, e + l, bl - (e + l - b), flags, msg);
+	return e ? b : e;
+    }
+    e[l] = 0;
+    return b;
+}
+
+char *
+perllib_mangle_with(char *s, unsigned int l, char *from, unsigned int froml, char *to, unsigned int tol)
+{
+    if (!to)
+	return s;
+    if (l == 0)
+	l = strlen(s);
+    if (l < froml || strnicmp(from, s, froml) != 0)
+	return s;
+    if (l + tol - froml > STATIC_FILE_LENGTH || tol > STATIC_FILE_LENGTH)
+	Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
+    if (to && to != mangle_ret)
+	memcpy(mangle_ret, to, tol);
+    strcpy(mangle_ret + tol, s + froml);
+    return mangle_ret;
 }
 
 char *
 perllib_mangle(char *s, unsigned int l)
 {
+    char *name;
+
+    if (perllib_mangle_installed && (name = perllib_mangle_installed(s,l)))
+	return name;
     if (!newp && !notfound) {
-	newp = getenv("PERLLIB_" STRINGIFY(PERL_REVISION)
+	newp = getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION)
 		      STRINGIFY(PERL_VERSION) STRINGIFY(PERL_SUBVERSION)
 		      "_PREFIX");
 	if (!newp)
-	    newp = getenv("PERLLIB_" STRINGIFY(PERL_REVISION)
+	    newp = getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION)
 			  STRINGIFY(PERL_VERSION) "_PREFIX");
 	if (!newp)
-	    newp = getenv("PERLLIB_" STRINGIFY(PERL_REVISION) "_PREFIX");
+	    newp = getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION) "_PREFIX");
 	if (!newp)
-	    newp = getenv("PERLLIB_PREFIX");
+	    newp = getenv(name = "PERLLIB_PREFIX");
 	if (newp) {
-	    char *s;
+	    char *s, b[300];
 	    
 	    oldp = newp;
-	    while (*newp && !isSPACE(*newp) && *newp != ';') {
-		newp++; oldl++;		/* Skip digits. */
-	    }
-	    while (*newp && (isSPACE(*newp) || *newp == ';')) {
+	    while (*newp && !isSPACE(*newp) && *newp != ';')
+		newp++;			/* Skip old name. */
+	    oldl = newp - oldp;
+	    s = dir_subst(oldp, oldl, b, sizeof b, dir_subst_fatal, name);
+	    oldp = savepv(s);
+	    oldl = strlen(s);
+	    while (*newp && (isSPACE(*newp) || *newp == ';'))
 		newp++;			/* Skip whitespace. */
-	    }
-	    newl = strlen(newp);
-	    if (newl == 0 || oldl == 0) {
-		Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
-	    }
-	    strcpy(mangle_ret, newp);
-	    s = mangle_ret;
-	    while (*s) {
-		if (*s == '\\') *s = '/';
-		s++;
-	    }
-	} else {
+	    Perl_OS2_handler_install((void *)newp, Perlos2_handler_perllib_to);
+	    if (newl == 0 || oldl == 0)
+		Perl_croak_nocontext("Malformed %s", name);
+	} else
 	    notfound = 1;
-	}
     }
-    if (!newp) {
+    if (!newp)
 	return s;
-    }
-    if (l == 0) {
+    if (l == 0)
 	l = strlen(s);
-    }
-    if (l < oldl || strnicmp(oldp, s, oldl) != 0) {
+    if (l < oldl || strnicmp(oldp, s, oldl) != 0)
 	return s;
-    }
-    if (l + newl - oldl > STATIC_FILE_LENGTH || newl > STATIC_FILE_LENGTH) {
+    if (l + newl - oldl > STATIC_FILE_LENGTH || newl > STATIC_FILE_LENGTH)
 	Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
-    }
     strcpy(mangle_ret + newl, s + oldl);
     return mangle_ret;
 }
@@ -2394,6 +2603,105 @@ XS(XS_OS2_Errors2Drive)
     XSRETURN(1);
 }
 
+int
+async_mssleep(ULONG ms, int switch_priority) {
+  /* This is similar to DosSleep(), but has 8ms granularity in time-critical
+     threads even on Warp3. */
+  HEV     hevEvent1     = 0;			/* Event semaphore handle    */
+  HTIMER  htimerEvent1  = 0;			/* Timer handle              */
+  APIRET  rc            = NO_ERROR;		/* Return code               */
+  int ret = 1;
+  ULONG priority = 0, nesting;			/* Shut down the warnings */
+  PPIB pib;
+  PTIB tib;
+  char *e = NULL;
+  APIRET badrc;
+
+  if (!(_emx_env & 0x200))	/* DOS */
+    return !_sleep2(ms);
+
+  os2cp_croak(DosCreateEventSem(NULL,	     /* Unnamed */
+				&hevEvent1,  /* Handle of semaphore returned */
+				DC_SEM_SHARED, /* Shared needed for DosAsyncTimer */
+				FALSE),      /* Semaphore is in RESET state  */
+	      "DosCreateEventSem");
+
+  if (ms >= switch_priority)
+    switch_priority = 0;
+  if (switch_priority) {
+    if (CheckOSError(DosGetInfoBlocks(&tib, &pib))) 
+	switch_priority = 0;
+    else {
+	/* In Warp3, to switch scheduling to 8ms step, one needs to do 
+	   DosAsyncTimer() in time-critical thread.  On laters versions,
+	   more and more cases of wait-for-something are covered.
+
+	   It turns out that on Warp3fp42 it is the priority at the time
+	   of DosAsyncTimer() which matters.  Let's hope that this works
+	   with later versions too...		XXXX
+	 */
+	priority = (tib->tib_ptib2->tib2_ulpri);
+	if ((priority & 0xFF00) == 0x0300) /* already time-critical */
+	    switch_priority = 0;
+	/* Make us time-critical.  Just modifying TIB is not enough... */
+	/* tib->tib_ptib2->tib2_ulpri = 0x0300;*/
+	/* We do not want to run at high priority if a signal causes us
+	   to longjmp() out of this section... */
+	if (DosEnterMustComplete(&nesting))
+	    switch_priority = 0;
+	else
+	    DosSetPriority(PRTYS_THREAD, PRTYC_TIMECRITICAL, 0, 0);
+    }
+  }
+
+  if ((badrc = DosAsyncTimer(ms,
+			     (HSEM) hevEvent1,	/* Semaphore to post        */
+			     &htimerEvent1)))	/* Timer handler (returned) */
+     e = "DosAsyncTimer";
+
+  if (switch_priority && tib->tib_ptib2->tib2_ulpri == 0x0300) {
+	/* Nobody switched priority while we slept...  Ignore errors... */
+	/* tib->tib_ptib2->tib2_ulpri = priority; */	/* Get back... */
+	if (!(rc = DosSetPriority(PRTYS_THREAD, (priority>>8) & 0xFF, 0, 0)))
+	    rc = DosSetPriority(PRTYS_THREAD, 0, priority & 0xFF, 0);
+  }
+  if (switch_priority)
+      rc = DosExitMustComplete(&nesting);	/* Ignore errors */
+
+  /* The actual blocking call is made with "normal" priority.  This way we
+     should not bother with DosSleep(0) etc. to compensate for us interrupting
+     higher-priority threads.  The goal is to prohibit the system spending too
+     much time halt()ing, not to run us "no matter what". */
+  if (!e)					/* Wait for AsyncTimer event */
+      badrc = DosWaitEventSem(hevEvent1, SEM_INDEFINITE_WAIT);
+
+  if (e) ;				/* Do nothing */
+  else if (badrc == ERROR_INTERRUPT)
+     ret = 0;
+  else if (badrc)
+     e = "DosWaitEventSem";
+  if ((rc = DosCloseEventSem(hevEvent1)) && !e) { /* Get rid of semaphore */
+     e = "DosCloseEventSem";
+     badrc = rc;
+  }
+  if (e)
+     os2cp_croak(badrc, e);
+  return ret;
+}
+
+XS(XS_OS2_ms_sleep)		/* for testing only... */
+{
+    dXSARGS;
+    ULONG ms, lim;
+
+    if (items > 2 || items < 1)
+	Perl_croak_nocontext("Usage: OS2::ms_sleep(wait_ms [, high_priority_limit])");
+    ms = SvUV(ST(0));
+    lim = items > 1 ? SvUV(ST(1)) : ms + 1;
+    async_mssleep(ms, lim);
+    XSRETURN_EMPTY;
+}
+
 ULONG (*pDosTmrQueryFreq) (PULONG);
 ULONG (*pDosTmrQueryTime) (unsigned long long *);
 
@@ -2421,6 +2729,37 @@ XS(XS_OS2_Timer)
 	dXSTARG;
 
 	XSprePUSH; PUSHn(((NV)count)/freq);
+    }
+    XSRETURN(1);
+}
+
+XS(XS_OS2_msCounter)
+{
+    dXSARGS;
+
+    if (items != 0)
+	Perl_croak_nocontext("Usage: OS2::msCounter()");
+    {    
+	dXSTARG;
+
+	XSprePUSH; PUSHu(msCounter());
+    }
+    XSRETURN(1);
+}
+
+XS(XS_OS2__InfoTable)
+{
+    dXSARGS;
+    int is_local = 0;
+
+    if (items > 1)
+	Perl_croak_nocontext("Usage: OS2::_infoTable([isLocal])");
+    if (items == 1)
+	is_local = (int)SvIV(ST(0));
+    {    
+	dXSTARG;
+
+	XSprePUSH; PUSHu(InfoTable(is_local));
     }
     XSRETURN(1);
 }
@@ -3219,11 +3558,13 @@ typedef APIRET (*PELP)(PSZ path, ULONG type);
 #endif
 
 APIRET
-ExtLIBPATH(ULONG ord, PSZ path, IV type)
+ExtLIBPATH(ULONG ord, PSZ path, IV type, int fatal)
 {
     ULONG what;
-    PFN f = loadByOrdinal(ord, 1);	/* Guarantied to load or die! */
+    PFN f = loadByOrdinal(ord, fatal);	/* if fatal: load or die! */
 
+    if (!f)				/* Impossible with fatal */
+	return Perl_rc;
     if (type > 0)
 	what = END_LIBPATH;
     else if (type == 0)
@@ -3233,23 +3574,35 @@ ExtLIBPATH(ULONG ord, PSZ path, IV type)
     return (*(PELP)f)(path, what);
 }
 
-#define extLibpath(to,type) 						\
-    (CheckOSError(ExtLIBPATH(ORD_DosQueryExtLibpath, (to), (type))) ? NULL : (to) )
+#define extLibpath(to,type, fatal) 					\
+    (CheckOSError(ExtLIBPATH(ORD_DosQueryExtLibpath, (to), (type), fatal)) ? NULL : (to) )
 
-#define extLibpath_set(p,type) 					\
-    (!CheckOSError(ExtLIBPATH(ORD_DosSetExtLibpath, (p), (type))))
+#define extLibpath_set(p,type, fatal) 					\
+    (!CheckOSError(ExtLIBPATH(ORD_DosSetExtLibpath, (p), (type), fatal)))
+
+static void
+early_error(char *msg1, char *msg2, char *msg3)
+{	/* Buffer overflow detected; there is very little we can do... */
+    ULONG rc;
+
+    DosWrite(2, msg1, strlen(msg1), &rc);
+    DosWrite(2, msg2, strlen(msg2), &rc);
+    DosWrite(2, msg3, strlen(msg3), &rc);
+    DosExit(EXIT_PROCESS, 2);
+}
 
 XS(XS_Cwd_extLibpath)
 {
     dXSARGS;
     if (items < 0 || items > 1)
-	Perl_croak_nocontext("Usage: Cwd::extLibpath(type = 0)");
+	Perl_croak_nocontext("Usage: OS2::extLibpath(type = 0)");
     {
 	IV	type;
 	char	to[1024];
 	U32	rc;
 	char *	RETVAL;
 	dXSTARG;
+	STRLEN l;
 
 	if (items < 1)
 	    type = 0;
@@ -3258,9 +3611,13 @@ XS(XS_Cwd_extLibpath)
 	}
 
 	to[0] = 1; to[1] = 0;		/* Sometimes no error reported */
-	RETVAL = extLibpath(to, type);
+	RETVAL = extLibpath(to, type, 1);	/* Make errors fatal */
 	if (RETVAL && RETVAL[0] == 1 && RETVAL[1] == 0)
-	    Perl_croak_nocontext("panic Cwd::extLibpath parameter");
+	    Perl_croak_nocontext("panic OS2::extLibpath parameter");
+	l = strlen(to);
+	if (l >= sizeof(to))
+	    early_error("Buffer overflow while getting BEGIN/ENDLIBPATH: `",
+			to, "'\r\n");		/* Will not return */
 	sv_setpv(TARG, RETVAL);
 	XSprePUSH; PUSHTARG;
     }
@@ -3271,7 +3628,7 @@ XS(XS_Cwd_extLibpath_set)
 {
     dXSARGS;
     if (items < 1 || items > 2)
-	Perl_croak_nocontext("Usage: Cwd::extLibpath_set(s, type = 0)");
+	Perl_croak_nocontext("Usage: OS2::extLibpath_set(s, type = 0)");
     {
 	STRLEN n_a;
 	char *	s = (char *)SvPV(ST(0),n_a);
@@ -3285,11 +3642,72 @@ XS(XS_Cwd_extLibpath_set)
 	    type = SvIV(ST(1));
 	}
 
-	RETVAL = extLibpath_set(s, type);
+	RETVAL = extLibpath_set(s, type, 1);	/* Make errors fatal */
 	ST(0) = boolSV(RETVAL);
 	if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
     }
     XSRETURN(1);
+}
+
+ULONG
+fill_extLibpath(int type, char *pre, char *post, int replace, char *msg)
+{
+    char buf[2048], *to = buf, buf1[300], *s;
+    STRLEN l;
+    ULONG rc;
+
+    if (!pre && !post)
+	return 0;
+    if (pre) {
+	pre = dir_subst(pre, strlen(pre), buf1, sizeof buf1, dir_subst_pathlike, msg);
+	if (!pre)
+	    return ERROR_INVALID_PARAMETER;
+	l = strlen(pre);
+	if (l >= sizeof(buf)/2)
+	    return ERROR_BUFFER_OVERFLOW;
+	s = pre - 1;
+	while (*++s)
+	    if (*s == '/')
+		*s = '\\';			/* Be extra causious */
+	memcpy(to, pre, l);
+	if (!l || to[l-1] != ';')
+	    to[l++] = ';';
+	to += l;
+    }
+
+    if (!replace) {
+      to[0] = 1; to[1] = 0;		/* Sometimes no error reported */
+      rc = ExtLIBPATH(ORD_DosQueryExtLibpath, to, type, 0);	/* Do not croak */
+      if (rc)
+	return rc;
+      if (to[0] == 1 && to[1] == 0)
+	return ERROR_INVALID_PARAMETER;
+      to += strlen(to);
+      if (buf + sizeof(buf) - 1 <= to)	/* Buffer overflow */
+	early_error("Buffer overflow while getting BEGIN/ENDLIBPATH: `",
+		    buf, "'\r\n");		/* Will not return */
+      if (to > buf && to[-1] != ';')
+	*to++ = ';';
+    }
+    if (post) {
+	post = dir_subst(post, strlen(post), buf1, sizeof buf1, dir_subst_pathlike, msg);
+	if (!post)
+	    return ERROR_INVALID_PARAMETER;
+	l = strlen(post);
+	if (l + to - buf >= sizeof(buf) - 1)
+	    return ERROR_BUFFER_OVERFLOW;
+	s = post - 1;
+	while (*++s)
+	    if (*s == '/')
+		*s = '\\';			/* Be extra causious */
+	memcpy(to, post, l);
+	if (!l || to[l-1] != ';')
+	    to[l++] = ';';
+	to += l;
+    }
+    *to = 0;
+    rc = ExtLIBPATH(ORD_DosSetExtLibpath, buf, type, 0); /* Do not croak */
+    return rc;
 }
 
 /* Input: Address, BufLen
@@ -3302,9 +3720,6 @@ DeclOSFuncByORD(APIRET, _DosQueryModFromEIP,ORD_DosQueryModFromEIP,
 			(HMODULE * hmod, ULONG * obj, ULONG BufLen, PCHAR Buf,
 			ULONG * Offset, ULONG Address),
 			(hmod, obj, BufLen, Buf, Offset, Address))
-
-enum module_name_how { mod_name_handle, mod_name_shortname, mod_name_full,
-  mod_name_C_function = 0x100, mod_name_HMODULE = 0x200};
 
 static SV*
 module_name_at(void *pp, enum module_name_how how)
@@ -3350,9 +3765,6 @@ module_name_of_cv(SV *cv, enum module_name_how how)
     }
     return module_name_at(CvXSUB(SvRV(cv)), how);
 }
-
-/* Find module name to which *this* subroutine is compiled */
-#define module_name(how)	module_name_at(&module_name_at, how)
 
 XS(XS_OS2_DLLname)
 {
@@ -3589,6 +4001,8 @@ Xs_OS2_init(pTHX)
             newXS("File::Copy::syscopy", XS_File__Copy_syscopy, file);
             newXS("Cwd::extLibpath", XS_Cwd_extLibpath, file);
             newXS("Cwd::extLibpath_set", XS_Cwd_extLibpath_set, file);
+            newXS("OS2::extLibpath", XS_Cwd_extLibpath, file);
+            newXS("OS2::extLibpath_set", XS_Cwd_extLibpath_set, file);
 	}
         newXS("OS2::Error", XS_OS2_Error, file);
         newXS("OS2::Errors2Drive", XS_OS2_Errors2Drive, file);
@@ -3620,6 +4034,9 @@ Xs_OS2_init(pTHX)
         newXSproto("OS2::_headerInfo", XS_OS2__headerInfo, file, "$$;$$");
         newXSproto("OS2::libPath", XS_OS2_libPath, file, "");
         newXSproto("OS2::Timer", XS_OS2_Timer, file, "");
+        newXSproto("OS2::msCounter", XS_OS2_msCounter, file, "");
+        newXSproto("OS2::ms_sleep", XS_OS2_ms_sleep, file, "$;$");
+        newXSproto("OS2::_InfoTable", XS_OS2__InfoTable, file, ";$");
         newXSproto("OS2::incrMaxFHandles", XS_OS2_incrMaxFHandles, file, ";$");
         newXSproto("OS2::SysValues", XS_OS2_SysValues, file, ";$$");
         newXSproto("OS2::SysValues_set", XS_OS2_SysValues_set, file, "$$;$");
@@ -3740,6 +4157,12 @@ force_init_emx_runtime(EXCEPTIONREGISTRATIONRECORD *preg, ULONG flags)
     oldenv = pib->pib_pchenv;
     oldstack = tib->tib_pstack;
     oldstackend = tib->tib_pstacklimit;
+
+    if ( (char*)&s < (char*)oldstack + 4*1024 
+	 || (char *)oldstackend < (char*)oldstack + 52*1024 )
+	early_error("It is a lunacy to try to run EMX Perl ",
+		    "with less than 64K of stack;\r\n",
+		    "  at least with non-EMX starter...\r\n");
 
     /* Minimize the damage to the stack via reducing the size of argv. */
     if (flags & FORCE_EMX_INIT_CONTRACT_ARGV) {
@@ -3863,7 +4286,7 @@ extern ULONG __os_version();		/* See system.doc */
 void
 check_emx_runtime(char **env, EXCEPTIONREGISTRATIONRECORD *preg)
 {
-    ULONG v_crt, v_emx, count = 0, rc, rc1, maybe_inited = 0;
+    ULONG v_crt, v_emx, count = 0, rc = NO_ERROR, rc1, maybe_inited = 0;
     static HMTX hmtx_emx_init = NULLHANDLE;
     static int emx_init_done = 0;
 
@@ -4000,7 +4423,8 @@ Perl_OS2_init(char **env)
 void
 Perl_OS2_init3(char **env, void **preg, int flags)
 {
-    char *shell;
+    char *shell, *s;
+    ULONG rc;
 
     _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);
     MALLOC_INIT;
@@ -4009,15 +4433,20 @@ Perl_OS2_init3(char **env, void **preg, int flags)
 
     settmppath();
     OS2_Perl_data.xs_init = &Xs_OS2_init;
-    if ( (shell = getenv("PERL_SH_DRIVE")) ) {
+    if (perl_sh_installed) {
+	int l = strlen(perl_sh_installed);
+
+	New(1304, PL_sh_path, l + 1, char);
+	memcpy(PL_sh_path, perl_sh_installed, l + 1);
+    } else if ( (shell = getenv("PERL_SH_DRIVE")) ) {
 	New(1304, PL_sh_path, strlen(SH_PATH) + 1, char);
 	strcpy(PL_sh_path, SH_PATH);
 	PL_sh_path[0] = shell[0];
     } else if ( (shell = getenv("PERL_SH_DIR")) ) {
 	int l = strlen(shell), i;
-	if (shell[l-1] == '/' || shell[l-1] == '\\') {
+
+	while (l && (shell[l-1] == '/' || shell[l-1] == '\\'))
 	    l--;
-	}
 	New(1304, PL_sh_path, l + 8, char);
 	strncpy(PL_sh_path, shell, l);
 	strcpy(PL_sh_path + l, "/sh.exe");
@@ -4032,6 +4461,29 @@ Perl_OS2_init3(char **env, void **preg, int flags)
     os2_mytype = my_type();		/* Do it before morphing.  Needed? */
     os2_mytype_ini = os2_mytype;
     Perl_os2_initial_mode = -1;		/* Uninit */
+
+    s = getenv("PERL_BEGINLIBPATH");
+    if (s)
+      rc = fill_extLibpath(0, s, NULL, 1, "PERL_BEGINLIBPATH");
+    else
+      rc = fill_extLibpath(0, getenv("PERL_PRE_BEGINLIBPATH"), getenv("PERL_POST_BEGINLIBPATH"), 0, "PERL_(PRE/POST)_BEGINLIBPATH");
+    if (!rc) {
+	s = getenv("PERL_ENDLIBPATH");
+	if (s)
+	    rc = fill_extLibpath(1, s, NULL, 1, "PERL_ENDLIBPATH");
+	else
+	    rc = fill_extLibpath(1, getenv("PERL_PRE_ENDLIBPATH"), getenv("PERL_POST_ENDLIBPATH"), 0, "PERL_(PRE/POST)_ENDLIBPATH");
+    }
+    if (rc) {
+	char buf[1024];
+
+	snprintf(buf, sizeof buf, "Error setting BEGIN/ENDLIBPATH: %s\n",
+		 os2error(rc));
+	DosWrite(2, buf, strlen(buf), &rc);
+	exit(2);
+    }
+
+    _emxload_env("PERL_EMXLOAD_SECS");
     /* Some DLLs reset FP flags on load.  We may have been linked with them */
     _control87(MCW_EM, MCW_EM);
 }
@@ -4460,3 +4912,52 @@ int fork_with_resources()
   return rc;
 }
 
+/* APIRET  APIENTRY DosGetInfoSeg(PSEL pselGlobal, PSEL pselLocal); */
+
+ULONG _THUNK_FUNCTION(Dos16GetInfoSeg)(USHORT *pGlobal, USHORT *pLocal);
+
+APIRET  APIENTRY
+myDosGetInfoSeg(PGINFOSEG *pGlobal, PLINFOSEG *pLocal)
+{
+    APIRET rc;
+    USHORT gSel, lSel;		/* Will not cross 64K boundary */
+
+    rc = ((USHORT)
+          (_THUNK_PROLOG (4+4);
+           _THUNK_FLAT (&gSel);
+           _THUNK_FLAT (&lSel);
+           _THUNK_CALL (Dos16GetInfoSeg)));
+    if (rc)
+	return rc;
+    *pGlobal = MAKEPGINFOSEG(gSel);
+    *pLocal  = MAKEPLINFOSEG(lSel);
+    return rc;
+}
+
+static void
+GetInfoTables(void)
+{
+    ULONG rc = 0;
+
+    MUTEX_LOCK(&perlos2_state_mutex);
+    if (!gTable)
+      rc = myDosGetInfoSeg(&gTable, &lTable);
+    MUTEX_UNLOCK(&perlos2_state_mutex);
+    os2cp_croak(rc, "Dos16GetInfoSeg");
+}
+
+ULONG
+msCounter(void)
+{				/* XXXX Is not lTable thread-specific? */
+  if (!gTable)
+    GetInfoTables();
+  return gTable->SIS_MsCount;
+}
+
+ULONG
+InfoTable(int local)
+{
+  if (!gTable)
+    GetInfoTables();
+  return local ? (ULONG)lTable : (ULONG)gTable;
+}

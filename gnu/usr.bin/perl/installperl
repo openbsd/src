@@ -103,6 +103,7 @@ Usage $0: [switches]
             name.
   -p        Don't install the pod files. [This will break use diagnostics;]
   -netware  Install correctly on a Netware server.
+  -destdir  Prefix installation directories by this string.
 EOT
 	exit;
     }
@@ -128,7 +129,7 @@ close SCRIPTS;
 
 if ($scr_ext) { @scripts = map { "$_$scr_ext" } @scripts; }
 
-my @pods = $nopods ? () : (<pod/*.pod>);
+my @pods = $nopods ? () : (<pod/*.pod>, 'x2p/a2p.pod');
 
 # Specify here any .pm files that are actually architecture-dependent.
 # (Those included with XS extensions under ext/ are automatically
@@ -405,8 +406,8 @@ if ($Is_VMS) {  # We did core file selection during build
 }
 else {
     # [als] hard-coded 'libperl' name... not good!
-    #@corefiles = <*.h *.inc libperl*.*>;
-    @corefiles = <*.h *.inc>;
+    #@corefiles = <*.h *.inc libperl*.* perl*$Config{lib_ext}>;
+    @corefiles = <*.h *.inc perl*$Config{lib_ext}>;
     push(@corefiles,<libperl*.*>) unless defined($ENV{"NOLIBINSTALL"});
 
     # AIX needs perl.exp installed as well.
@@ -738,14 +739,16 @@ sub link {
 	$packlist->{$xto} = { from => $xfrom, type => 'link' };
     };
     if ($@) {
-	warn $@;
+	warn "Replacing link() with File::Copy::copy(): $@";
 	print $verbose ? "  cp $from $xto\n" : "  $xto\n" unless $silent;
 	print "  creating new version of $xto\n"
 		 if $Is_VMS and -e $to and !$silent;
-	File::Copy::copy($from, $to)
-	    ? $success++
-	    : warn "Couldn't copy $from to $to: $!\n"
-	  unless $nonono;
+	unless ($nonono or File::Copy::copy($from, $to) and ++$success) {
+	    # Might have been that F::C::c can't overwrite the target
+	    warn "Couldn't copy $from to $to: $!\n"
+		unless -f $to and (chmod(0666, $to), unlink $to)
+			and File::Copy::copy($from, $to) and ++$success;
+	}
 	$packlist->{$xto} = { type => 'file' };
     }
     $success;
@@ -768,9 +771,12 @@ sub copy {
     $xto =~ s/^\Q$destdir\E// if $destdir;
     print $verbose ? "  cp $from $xto\n" : "  $xto\n" unless $silent;
     print "  creating new version of $xto\n" if $Is_VMS and -e $to and !$silent;
-    File::Copy::copy($from, $to)
-	|| warn "Couldn't copy $from to $to: $!\n"
-      unless $nonono;
+    unless ($nonono or File::Copy::copy($from, $to)) {
+	# Might have been that F::C::c can't overwrite the target
+	warn "Couldn't copy $from to $to: $!\n"
+	    unless -f $to and (chmod(0666, $to), unlink $to)
+		   and File::Copy::copy($from, $to);
+    }
     $packlist->{$xto} = { type => 'file' };
 }
 
@@ -815,7 +821,7 @@ sub installlib {
     my $name = $_;
 
     # Ignore version control directories.
-    if (($name eq 'CVS' or $name eq 'RCS' or $name eq '.svn') and -d $name) {
+    if ($name =~ /^(?:CVS|RCS|SCCS|\.svn)\z/ and -d $name) {
 	$File::Find::prune = 1;
 	return;
     }
@@ -824,8 +830,15 @@ sub installlib {
     # .exists files, .PL files, and test files.
     return if $name =~ m{\.orig$|\.rej$|~$|^#.+#$|,v$|^\.exists|\.PL$|\.plc$|\.t$|^test\.pl$} ||
 	      $dir  =~ m{/t(?:/|$)};
-    # ignore the cpan script in lib/CPAN/bin (installed later with other utils)
-    return if $name eq 'cpan';
+
+    # XXX xsubpp back out of the list. prove now integrated. Out of order, so
+    # p4 will conflict on the next update to the following lines:
+
+    # ignore the cpan script in lib/CPAN/bin, the instmodsh and xsubpp
+    # scripts in lib/ExtUtils, and the prove script in lib/Test/Harness
+    # (they're installed later with other utils)
+    return if $name =~ /^(?:cpan|instmodsh|prove)\z/;
+
     # ignore the Makefiles
     return if $name =~ /^makefile$/i;
     # ignore the test extensions

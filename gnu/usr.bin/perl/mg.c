@@ -379,7 +379,7 @@ Perl_mg_free(pTHX_ SV *sv)
 	if (vtbl && vtbl->svt_free)
 	    CALL_FPTR(vtbl->svt_free)(aTHX_ sv, mg);
 	if (mg->mg_ptr && mg->mg_type != PERL_MAGIC_regex_global) {
-	    if (mg->mg_len > 0)
+	    if (mg->mg_len > 0 || mg->mg_type == PERL_MAGIC_utf8)
 		Safefree(mg->mg_ptr);
 	    else if (mg->mg_len == HEf_SVKEY)
 		SvREFCNT_dec((SV*)mg->mg_ptr);
@@ -392,10 +392,7 @@ Perl_mg_free(pTHX_ SV *sv)
     return 0;
 }
 
-
-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
 #include <signal.h>
-#endif
 
 U32
 Perl_magic_regdata_cnt(pTHX_ SV *sv, MAGIC *mg)
@@ -618,8 +615,12 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
 		  SetLastError(dwErr);
 	     }
 #else
-	     sv_setnv(sv, (NV)errno);
-	     sv_setpv(sv, errno ? Strerror(errno) : "");
+	     {
+		 int saveerrno = errno;
+		 sv_setnv(sv, (NV)errno);
+		 sv_setpv(sv, errno ? Strerror(errno) : "");
+		 errno = saveerrno;
+	     }
 #endif
 #endif
 #endif
@@ -1527,6 +1528,7 @@ Perl_magic_wipepack(pTHX_ SV *sv, MAGIC *mg)
     call_method("CLEAR", G_SCALAR|G_DISCARD);
     POPSTACK;
     LEAVE;
+
     return 0;
 }
 
@@ -1559,6 +1561,41 @@ int
 Perl_magic_existspack(pTHX_ SV *sv, MAGIC *mg)
 {
     return magic_methpack(sv,mg,"EXISTS");
+}
+
+SV *
+Perl_magic_scalarpack(pTHX_ HV *hv, MAGIC *mg)
+{
+    dSP;
+    SV *retval = &PL_sv_undef;
+    SV *tied = SvTIED_obj((SV*)hv, mg);
+    HV *pkg = SvSTASH((SV*)SvRV(tied));
+   
+    if (!gv_fetchmethod_autoload(pkg, "SCALAR", FALSE)) {
+        SV *key;
+        if (HvEITER(hv))
+            /* we are in an iteration so the hash cannot be empty */
+            return &PL_sv_yes;
+        /* no xhv_eiter so now use FIRSTKEY */
+        key = sv_newmortal();
+        magic_nextpack((SV*)hv, mg, key);
+        HvEITER(hv) = NULL;     /* need to reset iterator */
+        return SvOK(key) ? &PL_sv_yes : &PL_sv_no;
+    }
+   
+    /* there is a SCALAR method that we can call */
+    ENTER;
+    PUSHSTACKi(PERLSI_MAGIC);
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    PUSHs(tied);
+    PUTBACK;
+
+    if (call_method("SCALAR", G_SCALAR))
+        retval = *PL_stack_sp--; 
+    POPSTACK;
+    LEAVE;
+    return retval;
 }
 
 int
@@ -2075,7 +2112,8 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	break;
     case '\020':	/* ^P */
 	PL_perldb = SvIOK(sv) ? SvIVX(sv) : sv_2iv(sv);
-	if (PL_perldb && !PL_DBsingle)
+	if ((PERLDB_SUB || PERLDB_LINE || PERLDB_SUBLINE)
+		&& !PL_DBsingle)
 	    init_debugger();
 	break;
     case '\024':	/* ^T */

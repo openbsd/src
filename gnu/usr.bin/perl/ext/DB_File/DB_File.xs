@@ -3,8 +3,8 @@
  DB_File.xs -- Perl 5 interface to Berkeley DB 
 
  written by Paul Marquess <pmqs@cpan.org>
- last modified 22nd October 2002
- version 1.807
+ last modified 22nd December 2003
+ version 1.808
 
  All comments/suggestions/problems are welcome
 
@@ -107,6 +107,7 @@
                 Filter code can now cope with read-only $_
         1.806 - recursion detection beefed up.
         1.807 - no change
+        1.808 - leak fixed in ParseOpenInfo
 
 */
 
@@ -398,6 +399,7 @@ typedef DBT DBTKEY ;
 	      my_sv_setpvn(arg, name.data, name.size) ;			\
 	      TAINT;                                       	\
 	      SvTAINTED_on(arg);                                       	\
+	      SvUTF8_off(arg);                                       	\
 	      DBM_ckFilter(arg, filter_fetch_value,"filter_fetch_value") ; 	\
 	  }								\
 	}
@@ -412,6 +414,7 @@ typedef DBT DBTKEY ;
 		    sv_setiv(arg, (I32)*(I32*)name.data - 1); 		\
 	      TAINT;                                       	\
 	      SvTAINTED_on(arg);                                       	\
+	      SvUTF8_off(arg);                                       	\
 	      DBM_ckFilter(arg, filter_fetch_key,"filter_fetch_key") ; 	\
 	  } 								\
 	}
@@ -1489,8 +1492,10 @@ db_DoTie_(isHASH, dbtype, name=undef, flags=O_CREAT|O_RDWR, mode=0666, type=DB_H
 	        sv = ST(5) ;
 
 	    RETVAL = ParseOpenInfo(aTHX_ isHASH, name, flags, mode, sv) ;
-	    if (RETVAL->dbp == NULL)
+	    if (RETVAL->dbp == NULL) {
+	        Safefree(RETVAL);
 	        RETVAL = NULL ;
+	    }
 	}
 	OUTPUT:	
 	    RETVAL
@@ -1653,7 +1658,8 @@ unshift(db, ...)
 #endif
 	    for (i = items-1 ; i > 0 ; --i)
 	    {
-	        value.data = SvPV(ST(i), n_a) ;
+		DBM_ckFilter(ST(i), filter_store_value, "filter_store_value");
+	        value.data = SvPVbyte(ST(i), n_a) ;
 	        value.size = n_a ;
 	        One = 1 ;
 	        key.data = &One ;
@@ -1762,7 +1768,8 @@ push(db, ...)
 		    keyval = 0 ;
 	        for (i = 1 ; i < items ; ++i)
 	        {
-	            value.data = SvPV(ST(i), n_a) ;
+		    DBM_ckFilter(ST(i), filter_store_value, "filter_store_value");
+	            value.data = SvPVbyte(ST(i), n_a) ;
 	            value.size = n_a ;
 		    ++ keyval ;
 	            key.data = &keyval ;

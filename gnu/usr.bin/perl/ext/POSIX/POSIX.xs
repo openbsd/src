@@ -842,10 +842,12 @@ int_macro_int(sv, iv)
 
 int
 isalnum(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isalnum(*s))
 		RETVAL = 0;
@@ -854,10 +856,12 @@ isalnum(charstring)
 
 int
 isalpha(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isalpha(*s))
 		RETVAL = 0;
@@ -866,10 +870,12 @@ isalpha(charstring)
 
 int
 iscntrl(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!iscntrl(*s))
 		RETVAL = 0;
@@ -878,10 +884,12 @@ iscntrl(charstring)
 
 int
 isdigit(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isdigit(*s))
 		RETVAL = 0;
@@ -890,10 +898,12 @@ isdigit(charstring)
 
 int
 isgraph(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isgraph(*s))
 		RETVAL = 0;
@@ -902,10 +912,12 @@ isgraph(charstring)
 
 int
 islower(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!islower(*s))
 		RETVAL = 0;
@@ -914,10 +926,12 @@ islower(charstring)
 
 int
 isprint(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isprint(*s))
 		RETVAL = 0;
@@ -926,10 +940,12 @@ isprint(charstring)
 
 int
 ispunct(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!ispunct(*s))
 		RETVAL = 0;
@@ -938,10 +954,12 @@ ispunct(charstring)
 
 int
 isspace(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isspace(*s))
 		RETVAL = 0;
@@ -950,10 +968,12 @@ isspace(charstring)
 
 int
 isupper(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isupper(*s))
 		RETVAL = 0;
@@ -962,10 +982,12 @@ isupper(charstring)
 
 int
 isxdigit(charstring)
-	unsigned char *	charstring
+	SV *	charstring
+    PREINIT:
+	STRLEN	len;
     CODE:
-	unsigned char *s = charstring;
-	unsigned char *e = s + SvCUR(ST(0));
+	unsigned char *s = (unsigned char *) SvPV(charstring, len);
+	unsigned char *e = s + len;
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isxdigit(*s))
 		RETVAL = 0;
@@ -1805,10 +1827,24 @@ pause()
 SysRet
 setgid(gid)
 	Gid_t		gid
+    CLEANUP:
+#ifndef WIN32
+	if (RETVAL >= 0) {
+	    PL_gid  = getgid();
+	    PL_egid = getegid();
+	}
+#endif
 
 SysRet
 setuid(uid)
 	Uid_t		uid
+    CLEANUP:
+#ifndef WIN32
+	if (RETVAL >= 0) {
+	    PL_uid  = getuid();
+	    PL_euid = geteuid();
+	}
+#endif
 
 SysRetLong
 sysconf(name)

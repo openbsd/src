@@ -1318,6 +1318,7 @@ typedef NVTYPE NV;
 #       define Perl_atan2 atan2l
 #       define Perl_pow powl
 #       define Perl_floor floorl
+#       define Perl_ceil ceill
 #       define Perl_fmod fmodl
 #   endif
 /* e.g. libsunmath doesn't have modfl and frexpl as of mid-March 2000 */
@@ -1388,6 +1389,7 @@ long double modfl(long double, long double *);
 #   define Perl_atan2 atan2
 #   define Perl_pow pow
 #   define Perl_floor floor
+#   define Perl_ceil ceil
 #   define Perl_fmod fmod
 #   define Perl_modf(x,y) modf(x,y)
 #   define Perl_frexp(x,y) frexp(x,y)

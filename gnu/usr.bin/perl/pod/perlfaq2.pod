@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.20 $, $Date: 2003/01/26 17:50:56 $)
+perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
 
 =head1 DESCRIPTION
 
@@ -407,10 +407,9 @@ I<The Perl Journal> contains tutorials, demonstrations, case studies,
 announcements, contests, and much more.  I<TPJ> has columns on web
 development, databases, Win32 Perl, graphical programming, regular
 expressions, and networking, and sponsors the Obfuscated Perl Contest
-and the Perl Poetry Contests.  As of mid-2001, the dead tree version
-of TPJ will be published as a quarterly supplement of SysAdmin
-magazine ( http://www.sysadminmag.com/ ) For more details on TPJ,
-see http://www.tpj.com/
+and the Perl Poetry Contests.  Beginning in November 2002, TPJ moved to a 
+reader-supported monthly e-zine format in which subscribers can download 
+issues as PDF documents. For more details on TPJ, see http://www.tpj.com/
 
 Beyond this, magazines that frequently carry quality articles on
 Perl are I<The Perl Review> ( http://www.theperlreview.com ),

@@ -24,7 +24,7 @@ sub mv;
 # package has not yet been updated to work with Perl 5.004, and so it
 # would be a Bad Thing for the CPAN module to grab it and replace this
 # module.  Therefore, we set this module's version higher than 2.0.
-$VERSION = '2.06';
+$VERSION = '2.07';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -77,13 +77,12 @@ sub copy {
 	croak("'$from' and '$to' are identical (not copied)");
     }
 
-    if ($Config{d_symlink} && $Config{d_readlink} &&
-	!($^O eq 'Win32' || $^O eq 'os2' || $^O eq 'vms')) {
-	no warnings 'io'; # don't warn if -l on filehandle
-	if ((-e $from && -l $from) || (-e $to && -l $to)) {
-	    my @fs = stat($from);
+    if ((($Config{d_symlink} && $Config{d_readlink}) || $Config{d_link}) &&
+	!($^O eq 'MSWin32' || $^O eq 'os2' || $^O eq 'vms')) {
+	my @fs = stat($from);
+	if (@fs) {
 	    my @ts = stat($to);
-	    if (@fs && @ts && $fs[0] == $ts[0] && $fs[1] == $ts[1]) {
+	    if (@ts && $fs[0] == $ts[0] && $fs[1] == $ts[1]) {
 		croak("'$from' and '$to' are identical (not copied)");
 	    }
 	}

@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..19\n";
+print "1..25\n";
 
 print join(':',1..5) eq '1:2:3:4:5' ? "ok 1\n" : "not ok 1\n";
 
@@ -79,3 +79,13 @@ print join(":","-4".."0")      eq "-4:-3:-2:-1:0" ? "ok 16\n" : "not ok 16\n";
 print join(":","-4".."-0")     eq "-4:-3:-2:-1:0" ? "ok 17\n" : "not ok 17\n";
 print join(":","-4\n".."0\n")  eq "-4:-3:-2:-1:0" ? "ok 18\n" : "not ok 18\n";
 print join(":","-4\n".."-0\n") eq "-4:-3:-2:-1:0" ? "ok 19\n" : "not ok 19\n";
+
+# undef should be treated as 0 for numerical range
+print join(":",undef..2) eq '0:1:2' ? "ok 20\n" : "not ok 20\n";
+print join(":",-2..undef) eq '-2:-1:0' ? "ok 21\n" : "not ok 21\n";
+
+# undef should be treated as "" for magical range
+print join(":","".."B") eq '' ? "ok 22\n" : "not ok 22\n";
+print join(":",undef.."B") eq '' ? "ok 23\n" : "not ok 23\n";
+print join(":","B".."") eq '' ? "ok 24\n" : "not ok 24\n";
+print join(":","B"..undef) eq '' ? "ok 25\n" : "not ok 25\n";

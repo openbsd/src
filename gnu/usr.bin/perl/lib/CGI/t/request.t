@@ -2,7 +2,7 @@
 
 # Test ability to retrieve HTTP request info
 ######################### We start with some black magic to print on failure.
-use lib '../blib/lib','../blib/arch';
+use lib '.','../blib/lib','../blib/arch';
 
 BEGIN {$| = 1; print "1..33\n"; }
 END {print "not ok 1\n" unless $loaded;}

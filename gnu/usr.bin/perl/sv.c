@@ -4257,11 +4257,11 @@ Perl_sv_force_normal_flags(pTHX_ register SV *sv, U32 flags)
 	    char *pvx = SvPVX(sv);
 	    STRLEN len = SvCUR(sv);
             U32 hash   = SvUVX(sv);
+	    SvFAKE_off(sv);
+	    SvREADONLY_off(sv);
 	    SvGROW(sv, len + 1);
 	    Move(pvx,SvPVX(sv),len,char);
 	    *SvEND(sv) = '\0';
-	    SvFAKE_off(sv);
-	    SvREADONLY_off(sv);
 	    unsharepvn(pvx, SvUTF8(sv) ? -(I32)len : len, hash);
 	}
 	else if (IN_PERL_RUNTIME)
@@ -4649,6 +4649,7 @@ Perl_sv_magic(pTHX_ register SV *sv, SV *obj, int how, const char *name, I32 nam
 	    && how != PERL_MAGIC_bm
 	    && how != PERL_MAGIC_fm
 	    && how != PERL_MAGIC_sv
+	    && how != PERL_MAGIC_backref
 	   )
 	{
 	    Perl_croak(aTHX_ PL_no_modify);
@@ -5446,11 +5447,9 @@ S_utf8_mg_pos_init(pTHX_ SV *sv, MAGIC **mgp, STRLEN **cachep, I32 i, I32 *offse
     bool found = FALSE; 
 
     if (SvMAGICAL(sv) && !SvREADONLY(sv)) {
-        if (!*mgp) {
-            sv_magic(sv, 0, PERL_MAGIC_utf8, 0, 0);
-            *mgp = mg_find(sv, PERL_MAGIC_utf8);
-        }
-        assert(*mgp);
+	if (!*mgp)
+	    *mgp = sv_magicext(sv, 0, PERL_MAGIC_utf8, &PL_vtbl_utf8, 0, 0);
+	assert(*mgp);
 
         if ((*mgp)->mg_ptr)
             *cachep = (STRLEN *) (*mgp)->mg_ptr;
@@ -5542,6 +5541,12 @@ S_utf8_mg_pos(pTHX_ SV *sv, MAGIC **mgp, STRLEN **cachep, I32 i, I32 *offsetp, I
 		      /* Update the cache. */
 		      (*cachep)[i]   = (STRLEN)uoff;
 		      (*cachep)[i+1] = p - start;
+
+		      /* Drop the stale "length" cache */
+		      if (i == 0) {
+			  (*cachep)[2] = 0;
+			  (*cachep)[3] = 0;
+		      }
 
 		      found = TRUE;
 		 }
@@ -5689,44 +5694,44 @@ Perl_sv_pos_b2u(pTHX_ register SV* sv, I32* offsetp)
     if ((I32)len < *offsetp)
 	Perl_croak(aTHX_ "panic: sv_pos_b2u: bad byte offset");
     else {
-	 U8* send = s + *offsetp;
-	 MAGIC* mg = NULL;
-	 STRLEN *cache = NULL;
+	U8* send = s + *offsetp;
+	MAGIC* mg = NULL;
+	STRLEN *cache = NULL;
       
-	 len = 0;
+	len = 0;
 
-	 if (SvMAGICAL(sv) && !SvREADONLY(sv)) {
-	      mg = mg_find(sv, PERL_MAGIC_utf8);
-	      if (mg && mg->mg_ptr) {
-		   cache = (STRLEN *) mg->mg_ptr;
-                   if (cache[1] == (STRLEN)*offsetp) {
-                        /* An exact match. */
-                        *offsetp = cache[0];
+	if (SvMAGICAL(sv) && !SvREADONLY(sv)) {
+	    mg = mg_find(sv, PERL_MAGIC_utf8);
+	    if (mg && mg->mg_ptr) {
+		cache = (STRLEN *) mg->mg_ptr;
+		if (cache[1] == (STRLEN)*offsetp) {
+		    /* An exact match. */
+		    *offsetp = cache[0];
 
-			return;
-		   }
-		   else if (cache[1] < (STRLEN)*offsetp) {
-			/* We already know part of the way. */
-			len = cache[0];
-			s  += cache[1];
-			/* Let the below loop do the rest. */ 
-		   }
-		   else { /* cache[1] > *offsetp */
-			/* We already know all of the way, now we may
-			 * be able to walk back.  The same assumption
-			 * is made as in S_utf8_mg_pos(), namely that
-			 * walking backward is twice slower than
-			 * walking forward. */
-			STRLEN forw  = *offsetp;
-			STRLEN backw = cache[1] - *offsetp;
+		    return;
+		}
+		else if (cache[1] < (STRLEN)*offsetp) {
+		    /* We already know part of the way. */
+		    len = cache[0];
+		    s  += cache[1];
+		    /* Let the below loop do the rest. */ 
+		}
+		else { /* cache[1] > *offsetp */
+		    /* We already know all of the way, now we may
+		     * be able to walk back.  The same assumption
+		     * is made as in S_utf8_mg_pos(), namely that
+		     * walking backward is twice slower than
+		     * walking forward. */
+		    STRLEN forw  = *offsetp;
+		    STRLEN backw = cache[1] - *offsetp;
 
-			if (!(forw < 2 * backw)) {
-			     U8 *p = s + cache[1];
-			     STRLEN ubackw = 0;
+		    if (!(forw < 2 * backw)) {
+			U8 *p = s + cache[1];
+			STRLEN ubackw = 0;
 			     
-			     cache[1] -= backw;
+			cache[1] -= backw;
 
-			     while (backw--) {
+			while (backw--) {
 			    p--;
 			    while (UTF8_IS_CONTINUATION(*p)) {
 				p--;
@@ -5744,39 +5749,39 @@ Perl_sv_pos_b2u(pTHX_ register SV* sv, I32* offsetp)
 	    ASSERT_UTF8_CACHE(cache);
 	 }
 
-	 while (s < send) {
-	      STRLEN n = 1;
+	while (s < send) {
+	    STRLEN n = 1;
 
-	      /* Call utf8n_to_uvchr() to validate the sequence
-	       * (unless a simple non-UTF character) */
-	      if (!UTF8_IS_INVARIANT(*s))
-		   utf8n_to_uvchr(s, UTF8SKIP(s), &n, 0);
-	      if (n > 0) {
-		   s += n;
-		   len++;
-	      }
-	      else
-		   break;
-	 }
+	    /* Call utf8n_to_uvchr() to validate the sequence
+	     * (unless a simple non-UTF character) */
+	    if (!UTF8_IS_INVARIANT(*s))
+		utf8n_to_uvchr(s, UTF8SKIP(s), &n, 0);
+	    if (n > 0) {
+		s += n;
+		len++;
+	    }
+	    else
+		break;
+	}
 
-	 if (!SvREADONLY(sv)) {
-	      if (!mg) {
-		   sv_magic(sv, 0, PERL_MAGIC_utf8, 0, 0);
-		   mg = mg_find(sv, PERL_MAGIC_utf8);
-	      }
-	      assert(mg);
+	if (!SvREADONLY(sv)) {
+	    if (!mg) {
+		sv_magic(sv, 0, PERL_MAGIC_utf8, 0, 0);
+		mg = mg_find(sv, PERL_MAGIC_utf8);
+	    }
+	    assert(mg);
 
-	      if (!mg->mg_ptr) {
-		   Newz(0, cache, PERL_MAGIC_UTF8_CACHESIZE * 2, STRLEN);
-		   mg->mg_ptr = (char *) cache;
-	      }
-	      assert(cache);
+	    if (!mg->mg_ptr) {
+		Newz(0, cache, PERL_MAGIC_UTF8_CACHESIZE * 2, STRLEN);
+		mg->mg_ptr = (char *) cache;
+	    }
+	    assert(cache);
 
-	      cache[0] = len;
-	      cache[1] = *offsetp;
-	 }
+	    cache[0] = len;
+	    cache[1] = *offsetp;
+	}
 
-	 *offsetp = len;
+	*offsetp = len;
     }
 
     return;
@@ -6097,7 +6102,13 @@ Perl_sv_gets(pTHX_ register SV *sv, register PerlIO *fp, I32 append)
     I32 rspara = 0;
     I32 recsize;
 
-    SV_CHECK_THINKFIRST(sv);
+    if (SvTHINKFIRST(sv))
+	sv_force_normal_flags(sv, append ? 0 : SV_COW_DROP_PV);
+    /* XXX. If you make this PVIV, then copy on write can copy scalars read
+       from <>.
+       However, perlbench says it's slower, because the existing swipe code
+       is faster than copy on write.
+       Swings and roundabouts.  */
     (void)SvUPGRADE(sv, SVt_PV);
 
     SvSCREAM_off(sv);
@@ -8240,6 +8251,33 @@ S_expect_number(pTHX_ char** pattern)
 }
 #define EXPECT_NUMBER(pattern, var) (var = S_expect_number(aTHX_ &pattern))
 
+static char *
+F0convert(NV nv, char *endbuf, STRLEN *len)
+{
+    int neg = nv < 0;
+    UV uv;
+    char *p = endbuf;
+
+    if (neg)
+	nv = -nv;
+    if (nv < UV_MAX) {
+	nv += 0.5;
+	uv = (UV)nv;
+	if (uv & 1 && uv == nv)
+	    uv--;			/* Round to even */
+	do {
+	    unsigned dig = uv % 10;
+	    *--p = '0' + dig;
+	} while (uv /= 10);
+	if (neg)
+	    *--p = '-';
+	*len = endbuf - p;
+	return p;
+    }
+    return Nullch;
+}
+
+
 /*
 =for apidoc sv_vcatpvfn
 
@@ -8267,6 +8305,12 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const char *pat, STRLEN patlen, va_list *args, SV
     bool has_utf8; /* has the result utf8? */
     bool pat_utf8; /* the pattern is in utf8? */
     SV *nsv = Nullsv;
+    /* Times 4: a decimal digit takes more than 3 binary digits.
+     * NV_DIG: mantissa takes than many decimal digits.
+     * Plus 32: Playing safe. */
+    char ebuf[IV_DIG * 4 + NV_DIG + 32];
+    /* large enough for "%#.#f" --chip */
+    /* what about long double NVs? --jhi */
 
     has_utf8 = pat_utf8 = DO_UTF8(sv);
 
@@ -8302,6 +8346,48 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const char *pat, STRLEN patlen, va_list *args, SV
 	}
     }
 
+#ifndef USE_LONG_DOUBLE
+    /* special-case "%.<number>[gf]" */
+    if ( patlen <= 5 && pat[0] == '%' && pat[1] == '.'
+	 && (pat[patlen-1] == 'g' || pat[patlen-1] == 'f') ) {
+	unsigned digits = 0;
+	const char *pp;
+
+	pp = pat + 2;
+	while (*pp >= '0' && *pp <= '9')
+	    digits = 10 * digits + (*pp++ - '0');
+	if (pp - pat == (int)patlen - 1) {
+	    NV nv;
+
+	    if (args)
+		nv = (NV)va_arg(*args, double);
+	    else if (svix < svmax)
+		nv = SvNV(*svargs);
+	    else
+		return;
+	    if (*pp == 'g') {
+		/* Add check for digits != 0 because it seems that some
+		   gconverts are buggy in this case, and we don't yet have
+		   a Configure test for this.  */
+		if (digits && digits < sizeof(ebuf) - NV_DIG - 10) {
+		     /* 0, point, slack */
+		    Gconvert(nv, (int)digits, 0, ebuf);
+		    sv_catpv(sv, ebuf);
+		    if (*ebuf)	/* May return an empty string for digits==0 */
+			return;
+		}
+	    } else if (!digits) {
+		STRLEN l;
+
+		if ((p = F0convert(nv, ebuf + sizeof ebuf, &l))) {
+		    sv_catpvn(sv, p, l);
+		    return;
+		}
+	    }
+	}
+    }
+#endif /* !USE_LONG_DOUBLE */
+
     if (!args && svix < svmax && DO_UTF8(*svargs))
 	has_utf8 = TRUE;
 
@@ -8333,13 +8419,6 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const char *pat, STRLEN patlen, va_list *args, SV
 
 	char *eptr = Nullch;
 	STRLEN elen = 0;
-	/* Times 4: a decimal digit takes more than 3 binary digits.
-	 * NV_DIG: mantissa takes than many decimal digits.
-	 * Plus 32: Playing safe. */
-	char ebuf[IV_DIG * 4 + NV_DIG + 32];
-	/* large enough for "%#.#f" --chip */
-	/* what about long double NVs? --jhi */
-
 	SV *vecsv = Nullsv;
 	U8 *vecstr = Null(U8*);
 	STRLEN veclen = 0;
@@ -8688,23 +8767,23 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const char *pat, STRLEN patlen, va_list *args, SV
 	    else if (args) {
 		switch (intsize) {
 		case 'h':	iv = (short)va_arg(*args, int); break;
-		default:	iv = va_arg(*args, int); break;
 		case 'l':	iv = va_arg(*args, long); break;
 		case 'V':	iv = va_arg(*args, IV); break;
+		default:	iv = va_arg(*args, int); break;
 #ifdef HAS_QUAD
 		case 'q':	iv = va_arg(*args, Quad_t); break;
 #endif
 		}
 	    }
 	    else {
-		iv = SvIVx(argsv);
+		IV tiv = SvIVx(argsv); /* work around GCC bug #13488 */
 		switch (intsize) {
-		case 'h':	iv = (short)iv; break;
-		default:	break;
-		case 'l':	iv = (long)iv; break;
-		case 'V':	break;
+		case 'h':	iv = (short)tiv; break;
+		case 'l':	iv = (long)tiv; break;
+		case 'V':
+		default:	iv = tiv; break;
 #ifdef HAS_QUAD
-		case 'q':	iv = (Quad_t)iv; break;
+		case 'q':	iv = (Quad_t)tiv; break;
 #endif
 		}
 	    }
@@ -8772,23 +8851,23 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const char *pat, STRLEN patlen, va_list *args, SV
 	    else if (args) {
 		switch (intsize) {
 		case 'h':  uv = (unsigned short)va_arg(*args, unsigned); break;
-		default:   uv = va_arg(*args, unsigned); break;
 		case 'l':  uv = va_arg(*args, unsigned long); break;
 		case 'V':  uv = va_arg(*args, UV); break;
+		default:   uv = va_arg(*args, unsigned); break;
 #ifdef HAS_QUAD
-		case 'q':  uv = va_arg(*args, Quad_t); break;
+		case 'q':  uv = va_arg(*args, Uquad_t); break;
 #endif
 		}
 	    }
 	    else {
-		uv = SvUVx(argsv);
+		UV tuv = SvUVx(argsv); /* work around GCC bug #13488 */
 		switch (intsize) {
-		case 'h':	uv = (unsigned short)uv; break;
-		default:	break;
-		case 'l':	uv = (unsigned long)uv; break;
-		case 'V':	break;
+		case 'h':	uv = (unsigned short)tuv; break;
+		case 'l':	uv = (unsigned long)tuv; break;
+		case 'V':
+		default:	uv = tuv; break;
 #ifdef HAS_QUAD
-		case 'q':	uv = (Quad_t)uv; break;
+		case 'q':	uv = (Uquad_t)tuv; break;
 #endif
 		}
 	    }
@@ -8999,6 +9078,19 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const char *pat, STRLEN patlen, va_list *args, SV
 		PL_efloatbuf[0] = '\0';
 	    }
 
+	    if ( !(width || left || plus || alt) && fill != '0'
+		 && has_precis && intsize != 'q' ) {	/* Shortcuts */
+		/* See earlier comment about buggy Gconvert when digits,
+		   aka precis is 0  */
+		if ( c == 'g' && precis) {
+		    Gconvert((NV)nv, (int)precis, 0, PL_efloatbuf);
+		    if (*PL_efloatbuf)	/* May return an empty string for digits==0 */
+			goto float_converted;
+		} else if ( c == 'f' && !precis) {
+		    if ((eptr = F0convert(nv, ebuf + sizeof ebuf, &elen)))
+			break;
+		}
+	    }
 	    eptr = ebuf + sizeof ebuf;
 	    *--eptr = '\0';
 	    *--eptr = c;
@@ -9043,6 +9135,7 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const char *pat, STRLEN patlen, va_list *args, SV
 #else
 	    (void)sprintf(PL_efloatbuf, eptr, nv);
 #endif
+	float_converted:
 	    eptr = PL_efloatbuf;
 	    elen = strlen(PL_efloatbuf);
 	    break;
@@ -9654,7 +9747,7 @@ S_gv_share(pTHX_ SV *sstr, CLONE_PARAMS *param)
         GvHV(gv) = (HV*)sv;
     }
     else {
-        SvREADONLY_on(GvAV(gv));
+        SvREADONLY_on(GvHV(gv));
     }
 
     return sstr; /* he_dup() will SvREFCNT_inc() */
@@ -10616,9 +10709,10 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
     PL_debug		= proto_perl->Idebug;
 
 #ifdef USE_REENTRANT_API
-#ifdef DEBUGGING
-    PERL_SET_CONTEXT(proto_perl);
-#endif
+    /* XXX: things like -Dm will segfault here in perlio, but doing
+     *  PERL_SET_CONTEXT(proto_perl);
+     * breaks too many other things
+     */
     Perl_reentrant_init(aTHX);
 #endif
 

@@ -761,15 +761,17 @@ extra.pods: miniperl$(EXE_EXT)
 	done
 	-@rm -f pod/perlvms.pod
 	-@test -f vms/perlvms.pod && cd pod && $(LNS) ../vms/perlvms.pod perlvms.pod && cd .. && echo "pod/perlvms.pod" >> extra.pods
+	-@rm -f pod/perldelta.pod
+	-@test -f pod/perl583delta.pod && cd pod && $(LNS) perl583delta.pod perldelta.pod && cd .. && echo "pod/perldelta.pod" >> extra.pods
 
 extras.make: perl$(EXE_EXT)
-	-@test -s extras.lst && PATH=`pwd`:${PATH} PERL5LIB=`pwd`/lib $(LDLIBPTH) ./perl -Ilib -MCPAN -e '@ARGV&&make(@ARGV)' `cat extras.lst`
+	-@test -s extras.lst && PATH="`pwd`:${PATH}" PERL5LIB="`pwd`/lib" $(LDLIBPTH) ./perl -Ilib -MCPAN -e '@ARGV&&make(@ARGV)' `cat extras.lst`
 
 extras.test: perl$(EXE_EXT)
-	-@test -s extras.lst && PATH=`pwd`:${PATH} PERL5LIB=`pwd`/lib $(LDLIBPTH) ./perl -Ilib -MCPAN -e '@ARGV&&test(@ARGV)' `cat extras.lst`
+	-@test -s extras.lst && PATH="`pwd`:${PATH}" PERL5LIB="`pwd`/lib" $(LDLIBPTH) ./perl -Ilib -MCPAN -e '@ARGV&&test(@ARGV)' `cat extras.lst`
 
 extras.install: perl$(EXE_EXT)
-	-@test -s extras.lst && PATH=`pwd`:${PATH} PERL5LIB=`pwd`/lib $(LDLIBPTH) ./perl -Ilib -MCPAN -e '@ARGV&&install(@ARGV)' `cat extras.lst`
+	-@test -s extras.lst && PATH="`pwd`:${PATH}" PERL5LIB="`pwd`/lib" $(LDLIBPTH) ./perl -Ilib -MCPAN -e '@ARGV&&install(@ARGV)' `cat extras.lst`
 
 .PHONY: install install-strip install-all install-verbose install-silent \
 	no-install install.perl install.man install.html
@@ -778,21 +780,24 @@ META.yml:	Porting/makemeta Porting/Maintainers.pl Porting/Maintainers.pm
 	$(LDLIBPTH) ./miniperl -Ilib Porting/makemeta
 
 install-strip:
-	$(MAKE) STRIPFLAGS=-s install
+	$(MAKE) STRIPFLAGS=-s install DESTDIR="$(DESTDIR)"
 
 install install-all:
-	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS)
+	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) DESTDIR="$(DESTDIR)"
 
 install-verbose:
-	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) INSTALLFLAGS=-V
+	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) INSTALLFLAGS=-V DESTDIR="$(DESTDIR)"
 
 install-silent:
-	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) INSTALLFLAGS=-S
+	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) INSTALLFLAGS=-S DESTDIR="$(DESTDIR)"
 
 no-install:
-	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) INSTALLFLAGS=-n
+	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) INSTALLFLAGS=-n DESTDIR="$(DESTDIR)"
 
-install.perl:	all installperl
+# Set this to an empty string to avoid an attempt of rebuild before install
+INSTALL_DEPENDENCE = all
+
+install.perl:	$(INSTALL_DEPENDENCE) installperl
 	if [ -n "$(COMPILE)" ]; \
 	then \
 		cd utils; $(MAKE) compile; \

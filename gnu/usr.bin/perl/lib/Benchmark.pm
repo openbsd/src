@@ -432,7 +432,7 @@ our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 	      clearcache clearallcache disablecache enablecache);
 %EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.051;
+$VERSION = 1.052;
 
 # --- ':hireswallclock' special handling
 
@@ -890,7 +890,7 @@ sub cmpthese{
     @vals = sort { $a->[7] <=> $b->[7] } @vals;
 
     # If more than half of the rates are greater than one...
-    my $display_as_rate = $vals[$#vals>>1]->[7] > 1;
+    my $display_as_rate = @vals ? ($vals[$#vals>>1]->[7] > 1) : 0;
 
     my @rows;
     my @col_widths;

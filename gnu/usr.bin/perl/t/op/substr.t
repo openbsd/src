@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..176\n";
+print "1..177\n";
 
 #P = start of string  Q = start of substr  R = end of substr  S = end of string
 
@@ -601,4 +601,11 @@ ok 174, $x eq "\x{100}\x{200}\xFFb";
     }
     my $x = my $y = 'AB'; ss $x; ss $y;
     ok 176, $x eq $y;
+}
+
+# [perl #24605]
+{
+    my $x = "0123456789\x{500}";
+    my $y = substr $x, 4;
+    ok 177, substr($x, 7, 1) eq "7";
 }

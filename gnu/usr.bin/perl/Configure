@@ -18,9 +18,9 @@
 # you may fetch it yourself from your nearest archive site.)
 #
 
-# $Id: Head.U,v 3.0.1.9 1997/02/28 15:02:09 ram Exp $
+# $Id: Configure,v 1.12 2003/12/03 03:02:18 millert Exp $
 #
-# Generated on Thu Sep 18 09:10:02 EEST 2003 [metaconfig 3.0 PL70]
+# Generated on Fri Dec  5 12:57:38 MET 2003 [metaconfig 3.0 PL70]
 # (with additional metaconfig patches by perlbug@perl.org)
 
 cat >c1$$ <<EOF
@@ -1209,6 +1209,17 @@ elif test -d c:/. -o -n "$is_os2" ; then
 fi
 
 i_whoami=''
+ccname=''
+ccversion=''
+perllibs=''
+: set useposix=false in your hint file to disable the POSIX extension.
+useposix=true
+: set useopcode=false in your hint file to disable the Opcode extension.
+useopcode=true
+: Trailing extension.  Override this in a hint file, if needed.
+: Extra object files, if any, needed on this platform.
+archobjs=''
+archname=''
 : Possible local include directories to search.
 : Set locincpth to "" in a hint file to defeat local include searches.
 locincpth="/usr/local/include /opt/local/include /usr/gnu/include"
@@ -1217,12 +1228,6 @@ locincpth="$locincpth /opt/gnu/include /usr/GNU/include /opt/GNU/include"
 : no include file wanted by default
 inclwanted=''
 
-siteman1dir=''
-siteman3dir=''
-sitescript=''
-: Trailing extension.  Override this in a hint file, if needed.
-: Extra object files, if any, needed on this platform.
-archobjs=''
 groupstype=''
 libnames=''
 : change the next line if compiling for Xenix/286 on Xenix/386
@@ -1246,25 +1251,20 @@ plibpth=''
 libswanted=''
 : some systems want to use only the non-versioned libso:s
 ignore_versioned_solibs=''
-: full support for void wanted by default
-defvoidused=15
-
-ccname=''
-ccversion=''
-perllibs=''
-: set useposix=false in your hint file to disable the POSIX extension.
-useposix=true
-: set useopcode=false in your hint file to disable the Opcode extension.
-useopcode=true
+siteman1dir=''
+siteman3dir=''
+sitescript=''
 archname64=''
 ccflags_uselargefiles=''
 ldflags_uselargefiles=''
 libswanted_uselargefiles=''
 : set usemultiplicity on the Configure command line to enable multiplicity.
 : set usesocks on the Configure command line to enable socks.
-archname=''
 : set usethreads on the Configure command line to enable threads.
 usereentrant='undef'
+: full support for void wanted by default
+defvoidused=15
+
 : List of libraries we want.
 : If anyone needs extra -lxxx, put those in a hint file.
 libswanted="sfio socket bind inet nsl nm ndbm gdbm dbm db malloc dl dld ld sun"
@@ -3673,22 +3673,22 @@ set d_oldpthreads
 eval $setvar
 
 
-case "$usethreads" in
-"$define"|true|[yY]*)
 : Look for a hint-file generated 'call-back-unit'.  If the
 : user has specified that a threading perl is to be built,
 : we may need to set or change some other defaults.
-	if $test -f usethreads.cbu; then
-		echo "Your platform has some specific hints for threaded builds, using them..."
-		. ./usethreads.cbu
-	else
+if $test -f usethreads.cbu; then
+    echo "Your platform has some specific hints regarding threaded builds, using them..."
+    . ./usethreads.cbu
+else
+    case "$usethreads" in
+	"$define"|true|[yY]*)
 		$cat <<EOM
-(Your platform doesn't have any specific hints for threaded builds.
+(Your platform does not have any specific hints for threaded builds.
  Assuming POSIX threads, then.)
 EOM
-	fi
 	;;
-esac
+    esac
+fi
 
 cat <<EOM
 
@@ -4546,21 +4546,21 @@ case "$uselongdouble" in
 true|[yY]*) uselongdouble="$define" ;;
 esac
 
-case "$uselongdouble" in
-$define)
 : Look for a hint-file generated 'call-back-unit'.  If the
 : user has specified that long doubles should be used,
 : we may need to set or change some other defaults.
-	if $test -f uselongdouble.cbu; then
-		echo "Your platform has some specific hints for long doubles, using them..."
-		. ./uselongdouble.cbu
-	else
+if $test -f uselongdouble.cbu; then
+    echo "Your platform has some specific hints regarding long doubles, using them..."
+    . ./uselongdouble.cbu
+else
+    case "$uselongdouble" in
+	$define)
 		$cat <<EOM
-(Your platform doesn't have any specific hints for long doubles.)
+(Your platform does not have any specific hints for long doubles.)
 EOM
-	fi
 	;;
-esac
+    esac
+fi
 
 : Looking for optional libraries
 echo " "
@@ -5447,15 +5447,15 @@ EOM
 	;;
 esac
 
-case "$use64bitint" in
-"$define"|true|[yY]*)
 : Look for a hint-file generated 'call-back-unit'.  If the
 : user has specified that a 64-bit perl is to be built,
 : we may need to set or change some other defaults.
 	if $test -f use64bitint.cbu; then
-		echo "Your platform has some specific hints for 64-bit integers, using them..."
+	echo "Your platform has some specific hints regarding 64-bit integers, using them..."
 		. ./use64bitint.cbu
 	fi
+case "$use64bitint" in
+"$define"|true|[yY]*)
 	case "$longsize" in
 	4) case "$archname64" in
 	   '') archname64=64int ;;
@@ -5465,15 +5465,15 @@ case "$use64bitint" in
 	;;
 esac
 
-case "$use64bitall" in
-"$define"|true|[yY]*)
 : Look for a hint-file generated 'call-back-unit'.  If the
 : user has specified that a maximally 64-bit perl is to be built,
 : we may need to set or change some other defaults.
 	if $test -f use64bitall.cbu; then
-		echo "Your platform has some specific hints for 64-bit builds, using them..."
+	echo "Your platform has some specific hints regarding 64-bit builds, using them..."
 		. ./use64bitall.cbu
 	fi
+case "$use64bitall" in
+"$define"|true|[yY]*)
 	case "$longsize" in
 	4) case "$archname64" in
 	   ''|64int) archname64=64all ;;
@@ -8852,14 +8852,16 @@ EOM
 esac
 set uselargefiles
 eval $setvar
-case "$uselargefiles" in
-"$define")
 : Look for a hint-file generated 'call-back-unit'.  If the
 : user has specified that a large files perl is to be built,
 : we may need to set or change some other defaults.
+if $test -f uselargefiles.cbu; then
+	echo "Your platform has some specific hints regarding large file builds, using them..."
+	. ./uselargefiles.cbu
+fi
+case "$uselargefiles" in
+"$define")
 	if $test -f uselargefiles.cbu; then
-		echo "Your platform has some specific hints for large file builds, using them..."
-		. ./uselargefiles.cbu
 		echo " "
 		echo "Rechecking to see how big your file offsets are..." >&4
 		$cat >try.c <<EOCP
@@ -16953,10 +16955,10 @@ int main() {
     buf[1] = 0;
     buf[2] = 0;
     buf[3] = 1;
+    buf[4] = 0;
     buf[5] = 0;
     buf[6] = 0;
-    buf[7] = 0;
-    buf[8] = 1;
+    buf[7] = 1;
 
     for (i = 0; i < 4; i++) {
 	up = (U32*)(buf + i);

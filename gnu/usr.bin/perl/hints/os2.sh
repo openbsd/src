@@ -131,19 +131,23 @@ aout_lib_ext='.a'
 aout_ar='ar'
 aout_plibext='.a'
 aout_lddlflags="-Zdll $ld_dll_optimize"
+
+# -D__ST_MT_ERRNO__ allows a quick relink with -Zmtd to check problems
+# which may be due to linking with -Zmtd DLLs
+
 # Cannot have 32000K stack: get SYS0170  ?!
 if [ $emxcrtrev -ge 50 ]; then 
-    aout_ldflags='-Zexe -Zsmall-conv -Zstack 16000'
+    aout_ldflags='-Zexe -Zsmall-conv -Zstack 16000 -D__ST_MT_ERRNO__'
 else
-    aout_ldflags='-Zexe -Zstack 16000'
+    aout_ldflags='-Zexe -Zstack 16000 -D__ST_MT_ERRNO__'
 fi
 
 # To get into config.sh:
 aout_ldflags="$aout_ldflags"
 
 aout_d_fork='define'
-aout_ccflags="-DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I. $_defemxcrtrev"
-aout_cppflags="-DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I. $_defemxcrtrev"
+aout_ccflags="-DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I. $_defemxcrtrev -D__ST_MT_ERRNO__"
+aout_cppflags="-DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I. $_defemxcrtrev -D__ST_MT_ERRNO__"
 aout_use_clib='c'
 aout_usedl='undef'
 aout_archobjs="os2.o dl_os2.o"

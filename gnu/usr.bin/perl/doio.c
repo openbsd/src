@@ -48,9 +48,7 @@
 #  define OPEN_EXCL 0
 #endif
 
-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
 #include <signal.h>
-#endif
 
 bool
 Perl_do_open(pTHX_ GV *gv, register char *name, I32 len, int as_raw,
@@ -2290,8 +2288,9 @@ Perl_start_glob (pTHX_ SV *tmpglob, IO *io)
 		if (*cp == '?') *cp = '%';  /* VMS style single-char wildcard */
 	    while (ok && ((sts = lib$find_file(&wilddsc,&rsdsc,&cxt,
 					       &dfltdsc,NULL,NULL,NULL))&1)) {
-		end = rstr + (unsigned long int) *rslt;
-		if (!hasver) while (*end != ';') end--;
+		/* with varying string, 1st word of buffer contains result length */
+		end = rstr + *((unsigned short int*)rslt);
+		if (!hasver) while (*end != ';' && end > rstr) end--;
 		*(end++) = '\n';  *end = '\0';
 		for (cp = rstr; *cp; cp++) *cp = _tolower(*cp);
 		if (hasdir) {

@@ -2769,7 +2769,7 @@ $(MAKE_APERL_FILE) : $(FIRST_MAKEFILE)
     require File::Find;
     File::Find::find(sub {
 	return unless m/\Q$self->{LIB_EXT}\E$/;
-	return if m/^libperl/;
+	return if m/^libperl/ or m/^perl\Q$self->{LIB_EXT}\E$/;
 	# Skip purified versions of libraries (e.g., DynaLoader_pure_p1_c0_032.a)
 	return if m/_pure_\w+_\w+_\w+\.\w+$/ and -f "$File::Find::dir/.pure";
 

@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq3 - Programming Tools ($Revision: 1.35 $, $Date: 2003/08/24 05:26:59 $)
+perlfaq3 - Programming Tools ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
 
 =head1 DESCRIPTION
 
@@ -65,7 +65,7 @@ You can use the ExtUtils::Installed module to show all
 installed distributions, although it can take awhile to do
 its magic.  The standard library which comes with Perl just
 shows up as "Perl" (although you can get those with
-Mod::CoreList).
+Module::CoreList).
 
 	use ExtUtils::Installed;
 

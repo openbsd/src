@@ -2,6 +2,7 @@
 # Note that we cannot put hashbang to be extproc to make Configure work.
 
 use Config;
+use File::Compare;
 
 $dir = shift;
 $dir =~ s|/|\\|g ;
@@ -26,9 +27,11 @@ foreach $file (<$idir/*>) {
   $base =~ s|\.pl$||;
   #$file =~ s|/|\\|g ;
   warn "Clashing output name for $file, skipping" if $seen{$base}++;
-  print "Processing $file => $dir\\$base.cmd\n";
+  my $new = (-f "$dir/$base.cmd" ? '' : ' (new file)');
+  print "Processing $file => $dir/$base.cmd$new\n";
+  my $ext = ($new ? '.cmd' : '.tcm');
   open IN, '<', $file or warn, next;
-  open OUT, '>', "$dir/$base.cmd" or warn, next;
+  open OUT, '>', "$dir/$base$ext" or warn, next;
   my $firstline = <IN>;
   my $flags = '';
   $flags = $2 if $firstline =~ /^#!\s*(\S+)\s+-([^#]+?)\s*(#|$)/;
@@ -36,5 +39,16 @@ foreach $file (<$idir/*>) {
   print OUT $_ while <IN>;
   close IN or warn, next;
   close OUT or warn, next;
+  chmod 0444, "$dir/$base$ext";
+  next if $new;
+  if (compare "$dir/$base$ext", "$dir/$base.cmd") {	# different
+    chmod 0666, "$dir/$base.cmd";
+    unlink "$dir/$base.cmd";
+    rename "$dir/$base$ext", "$dir/$base.cmd";
+  } else {
+    chmod 0666, "$dir/$base$ext";
+    unlink "$dir/$base$ext";
+    print "...unchanged...\n";
+  }
 }
 

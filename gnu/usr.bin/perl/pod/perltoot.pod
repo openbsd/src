@@ -940,7 +940,8 @@ comes to the rescue here.
 This way it starts looking in my class's @ISA.  This only makes sense
 from I<within> a method call, though.  Don't try to access anything
 in SUPER:: from anywhere else, because it doesn't exist outside
-an overridden method call.
+an overridden method call. Note that C<SUPER> refers to the superclass of
+the current package, I<not> to the superclass of C<$self>.
 
 Things are getting a bit complicated here.  Have we done anything
 we shouldn't?  As before, one way to test whether we're designing

@@ -506,7 +506,16 @@ been wrapped here):
      PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
      text = NEWSV(1099,0);
-     sv_setpv(text, "When he is at a convenience store and the bill comes to some amount like 76 cents, Maynard is aware that there is something he *should* do, something that will enable him to get back a quarter, but he has no idea *what*.  He fumbles through his red squeezey changepurse and gives the boy three extra pennies with his dollar, hoping that he might luck into the correct amount.  The boy gives him back two of his own pennies and then the big shiny quarter that is his prize. -RICHH");
+     sv_setpv(text, "When he is at a convenience store and the "
+	"bill comes to some amount like 76 cents, Maynard is "
+	"aware that there is something he *should* do, something "
+	"that will enable him to get back a quarter, but he has "
+	"no idea *what*.  He fumbles through his red squeezey "
+	"changepurse and gives the boy three extra pennies with "
+	"his dollar, hoping that he might luck into the correct "
+	"amount.  The boy gives him back two of his own pennies "
+	"and then the big shiny quarter that is his prize. "
+	"-RICHH");
 
      if (match(text, "m/quarter/")) /** Does text contain 'quarter'? **/
  	printf("match: Text contains the word 'quarter'.\n\n");

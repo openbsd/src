@@ -17,9 +17,7 @@
 #include "perl.h"
 
 #ifndef PERL_MICRO
-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
 #include <signal.h>
-#endif
 #endif
 
 STATIC I32
@@ -670,6 +668,10 @@ Perl_do_join(pTHX_ register SV *sv, SV *del, register SV **mark, register SV **s
     }
 
     sv_setpv(sv, "");
+    /* sv_setpv retains old UTF8ness [perl #24846] */
+    if (SvUTF8(sv))
+	SvUTF8_off(sv);
+
     if (PL_tainting && SvMAGICAL(sv))
 	SvTAINTED_off(sv);
 

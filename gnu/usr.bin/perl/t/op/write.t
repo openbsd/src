@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..49\n";
+print "1..50\n";
 
 my $CAT = ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS') ? 'type'
 	: ($^O eq 'MacOS') ? 'catenate'
@@ -300,14 +300,24 @@ $v
     print `$CAT Op_write.tmp`;
 }
 
+{
+    # Bug #24774 format without trailing \n failed assertion
+    my @v = ('k');
+    eval "format OUT14 = \n@\n\@v";
+    open(OUT14, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+    write(OUT14);
+    close OUT14 or die "Could not close: $!";
+    print "ok 14\n";
+}
+
 #######################################
 # Easiest to add new tests above here #
 #######################################
 
-# 14..49: scary format testing from Merijn H. Brand
+# 15..50: scary format testing from Merijn H. Brand
 
-my $test = 14;
-my $tests = 49;
+my $test = 15;
+my $tests = 50;
 
 if ($^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'dos' || $^O eq 'MacOS' ||
     ($^O eq 'os2' and not eval '$OS2::can_fork')) {

@@ -31,7 +31,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  * that running config_h.SH again will wipe out any changes you've made.
  * For a more permanent change edit $CONFIG_SH and rerun config_h.SH.
  *
- * \$Id: Config_h.U,v 3.0.1.5 1997/02/28 14:57:43 ram Exp $
+ * \$Id: config_h.SH,v 1.7 2003/12/03 03:02:19 millert Exp $
  */
 
 /*
@@ -1400,6 +1400,18 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	for more details.
  */
 #$d_perl_otherlibdirs PERL_OTHERLIBDIRS "$otherlibdirs"		/**/
+
+/* INSTALL_PREFIX:
+ *	This symbol contains the "root" of installation tree for this package.
+ *	The program should be prepared to do ~ expansion.
+ */
+/* INSTALL_PREFIX_EXP:
+ *	This symbol contains the "root" of installation tree for this package
+ *	to be used in programs that are not prepared to deal with ~ expansion
+ *	at run-time.
+ */
+#define INSTALL_PREFIX "$installprefix"		/**/
+#define INSTALL_PREFIX_EXP "$installprefixexp"	/**/
 
 /* PRIVLIB:
  *	This symbol contains the name of the private library for this package.

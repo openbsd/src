@@ -202,13 +202,17 @@ disables any prototype checking on arguments you do provide.  This
 is partly for historical reasons, and partly for having a convenient way
 to cheat if you know what you're doing.  See L<Prototypes> below.
 
-Functions whose names are in all upper case are reserved to the Perl
-core, as are modules whose names are in all lower case.  A
-function in all capitals is a loosely-held convention meaning it
-will be called indirectly by the run-time system itself, usually
-due to a triggered event.  Functions that do special, pre-defined
-things include C<BEGIN>, C<CHECK>, C<INIT>, C<END>, C<AUTOLOAD>,
-C<CLONE> and C<DESTROY>--plus all functions mentioned in L<perltie>.
+Subroutines whose names are in all upper case are reserved to the Perl
+core, as are modules whose names are in all lower case.  A subroutine in
+all capitals is a loosely-held convention meaning it will be called
+indirectly by the run-time system itself, usually due to a triggered event.
+Subroutines that do special, pre-defined things include C<AUTOLOAD>, C<CLONE>,
+C<DESTROY> plus all functions mentioned in L<perltie> and L<PerlIO::via>.
+
+The C<BEGIN>, C<CHECK>, C<INIT> and C<END> subroutines are not so much
+subroutines as named special code blocks, of which you can have more
+than one in a package, and which you can B<not> call explicitely.  See
+L<perlmod/"BEGIN, CHECK, INIT and END">
 
 =head2 Private Variables via my()
 
@@ -440,18 +444,18 @@ via C<require> or C<use>, then this is probably just fine.  If it's
 all in the main program, you'll need to arrange for the C<my>
 to be executed early, either by putting the whole block above
 your main program, or more likely, placing merely a C<BEGIN>
-sub around it to make sure it gets executed before your program
+code block around it to make sure it gets executed before your program
 starts to run:
 
-    sub BEGIN {
+    BEGIN {
 	my $secret_val = 0;
 	sub gimme_another {
 	    return ++$secret_val;
 	}
     }
 
-See L<perlmod/"Package Constructors and Destructors"> about the
-special triggered functions, C<BEGIN>, C<CHECK>, C<INIT> and C<END>.
+See L<perlmod/"BEGIN, CHECK, INIT and END"> about the
+special triggered code blocks, C<BEGIN>, C<CHECK>, C<INIT> and C<END>.
 
 If declared at the outermost scope (the file scope), then lexicals
 work somewhat like C's file statics.  They are available to all

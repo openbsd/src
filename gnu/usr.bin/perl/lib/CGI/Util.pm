@@ -4,9 +4,10 @@ use strict;
 use vars qw($VERSION @EXPORT_OK @ISA $EBCDIC @A2E @E2A);
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(rearrange make_attributes unescape escape expires);
+@EXPORT_OK = qw(rearrange make_attributes unescape escape 
+		expires ebcdic2ascii ascii2ebcdic);
 
-$VERSION = '1.31';
+$VERSION = '1.4';
 
 $EBCDIC = "\t" ne "\011";
 if ($EBCDIC) {
@@ -266,6 +267,18 @@ sub expire_calc {
         return $time;
     }
     return (time+$offset);
+}
+
+sub ebcdic2ascii {
+  my $data = shift;
+  $data =~ s/(.)/chr $E2A[ord($1)]/ge;
+  $data;
+}
+
+sub ascii2ebcdic {
+  my $data = shift;
+  $data =~ s/(.)/chr $A2E[ord($1)]/ge;
+  $data;
 }
 
 1;

@@ -247,8 +247,8 @@ fi
 #'osfmach3ppc') ccdlflags='-Wl,-E' ;;
 #esac
 
-case "`uname -r`" in
-sparc-linux)
+case "`uname -m`" in
+sparc*)
 	case "$cccdlflags" in
 	*-fpic*) cccdlflags="`echo $cccdlflags|sed 's/-fpic/-fPIC/'`" ;;
 	*)	 cccdlflags="$cccdlflags -fPIC" ;;

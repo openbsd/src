@@ -47,6 +47,8 @@ SEE ALSO
     the Pod::Usage manpage, the pod2text(1) manpage
 
 AUTHOR
+    Please report bugs using http://rt.cpan.org.
+
     Brad Appleton <bradapp@enteract.com>
 
     Based on code for pod2text(1) written by Tom Christiansen

@@ -786,6 +786,9 @@ and in transliterations.
     \c[		control char    (ESC)
     \N{name}	named Unicode character
 
+B<NOTE>: Unlike C and other languages, Perl has no \v escape sequence for
+the vertical tab (VT - ASCII 11).
+
 The following escape sequences are available in constructs that interpolate
 but not in transliterations.
 

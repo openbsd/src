@@ -392,6 +392,7 @@ sub split_on_item {
     print "splitting files by item.\n" if $verbose && $#splititem >= 0;
     $pwd = getcwd();
     my $splitter = absolute_path($pwd, "$splitpod/splitpod");
+    my $perl = absolute_path($pwd, $^X);
     foreach my $pod (@splititem) {
 	# figure out the directory to split into
 	$pod      =~ s,^([^/]*)$,/$1,;
@@ -412,7 +413,7 @@ sub split_on_item {
 	    die "$0: error changing to directory $podroot/$dirname: $!\n";
 	die "$splitter not found. Use '-splitpod dir' option.\n"
 	    unless -f $splitter;
-	system($^X, $splitter, "../$filename") &&
+	system($perl, $splitter, "../$filename") &&
 	    warn "$0: error running '$splitter ../$filename'"
 		 ." from $podroot/$dirname";
     }

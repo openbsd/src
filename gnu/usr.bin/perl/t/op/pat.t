@@ -1691,10 +1691,11 @@ EOT
     print "not " if     $x =~ /[\x{100}]/;
     print "ok 604\n";
 
-    print "not " unless $x =~ /\p{InLatin1Supplement}/;
+    # the next two tests must be ignored on EBCDIC
+    print "not " unless $x =~ /\p{InLatin1Supplement}/ or ord("A") == 193;
     print "ok 605\n";
 
-    print "not " if     $x =~ /\P{InLatin1Supplement}/;
+    print "not " if     $x =~ /\P{InLatin1Supplement}/ and ord("A") != 193;
     print "ok 606\n";
 
     print "not " if     $x =~ /\p{InLatinExtendedA}/;
@@ -1909,7 +1910,8 @@ print "ok 663\n";
 print "not " unless chr(0xfb4f) =~ /\p{IsHebrew}/; # outside InHebrew
 print "ok 664\n";
 
-print "not " unless chr(0xb5) =~ /\p{IsGreek}/; # singleton (not in a range)
+# singleton (not in a range, this test must be ignored on EBCDIC)
+print "not " unless chr(0xb5) =~ /\p{IsGreek}/ or ord("A") == 193;
 print "ok 665\n";
 
 print "not " unless chr(0x37a) =~ /\p{IsGreek}/; # singleton

@@ -7,7 +7,7 @@ use File::Spec;
 use warnings;
 use strict;
 
-our $VERSION = '4.2';
+our $VERSION = '4.3';
 our @ISA     = qw(Exporter);
 our @EXPORT  = qw(validate);
 
@@ -50,7 +50,9 @@ The routine returns the number of warnings issued.
 
 =head1 AUTHOR
 
-Unknown.  Revised by Paul Grassie <F<grassie@perl.com>> in 2002.
+File::CheckTree was derived from lib/validate.pl which was
+written by Larry Wall.
+Revised by Paul Grassie <F<grassie@perl.com>> in 2002.
 
 =head1 HISTORY
 

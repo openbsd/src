@@ -1762,10 +1762,10 @@ are subject to the same restrictions as in the pass 2.
 =head2 Pluggable runops
 
 The compile tree is executed in a runops function.  There are two runops
-functions in F<run.c>.  C<Perl_runops_debug> is used with DEBUGGING and
-C<Perl_runops_standard> is used otherwise.  For fine control over the
-execution of the compile tree it is possible to provide your own runops
-function.
+functions, in F<run.c> and in F<dump.c>.  C<Perl_runops_debug> is used
+with DEBUGGING and C<Perl_runops_standard> is used otherwise.  For fine
+control over the execution of the compile tree it is possible to provide
+your own runops function.
 
 It's probably best to copy one of the existing runops functions and
 change it to suit your needs.  Then, in the BOOT section of your XS

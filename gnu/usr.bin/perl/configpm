@@ -227,15 +227,18 @@ open(MYCONFIG,"<myconfig.SH") || die "open myconfig.SH failed: $!";
 do { print CONFIG $_ } until !defined($_ = <MYCONFIG>) || /^\s*$/;
 close(MYCONFIG);
 
+# NB. as $summary is unique, we need to copy it in a lexical variable
+# before expanding it, because may have been made readonly if a perl
+# interpreter has been cloned.
+
 print CONFIG "\n!END!\n", <<'EOT';
-my $summary_expanded = 0;
+my $summary_expanded;
 
 sub myconfig {
-    return $summary if $summary_expanded;
-    $summary =~ s{\$(\w+)}
+    return $summary_expanded if $summary_expanded;
+    ($summary_expanded = $summary) =~ s{\$(\w+)}
 		 { my $c = $Config{$1}; defined($c) ? $c : 'undef' }ge;
-    $summary_expanded = 1;
-    $summary;
+    $summary_expanded;
 }
 
 our $Config_SH : unique = <<'!END!';

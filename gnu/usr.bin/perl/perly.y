@@ -477,7 +477,8 @@ method	:	METHOD
 subscripted:    star '{' expr ';' '}'        /* *main::{something} */
                         /* In this and all the hash accessors, ';' is
                          * provided by the tokeniser */
-			{ $$ = newBINOP(OP_GELEM, 0, $1, scalar($3)); }
+			{ $$ = newBINOP(OP_GELEM, 0, $1, scalar($3));
+			    PL_expect = XOPERATOR; }
 	|	scalar '[' expr ']'          /* $array[$element] */
 			{ $$ = newBINOP(OP_AELEM, 0, oopsAV($1), scalar($3)); }
 	|	term ARROW '[' expr ']'      /* somearef->[$element] */

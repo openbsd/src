@@ -65,12 +65,14 @@ in which case they are able to run arbitrary external code.
 
 =back
 
-The value of an expression containing tainted data will itself be
-tainted, even if it is logically impossible for the tainted data to
-affect the value.
+For efficiency reasons, Perl takes a conservative view of
+whether data is tainted.  If an expression contains tainted data,
+any subexpression may be considered tainted, even if the value
+of the subexpression is not itself affected by the tainted data.
 
 Because taintedness is associated with each scalar value, some
-elements of an array can be tainted and others not.
+elements of an array or hash can be tainted and others not.
+The keys of a hash are never tainted.
 
 For example:
 
@@ -133,7 +135,7 @@ To test whether a variable contains tainted data, and whose use would
 thus trigger an "Insecure dependency" message, you can use the
 tainted() function of the Scalar::Util module, available in your
 nearby CPAN mirror, and included in Perl starting from the release 5.8.0.
-Or you may be able to use the following I<is_tainted()> function.
+Or you may be able to use the following C<is_tainted()> function.
 
     sub is_tainted {
         return ! eval { eval("#" . substr(join("", @_), 0, 0)); 1 };
@@ -147,7 +149,8 @@ approach is used that if any tainted value has been accessed within the
 same expression, the whole expression is considered tainted.
 
 But testing for taintedness gets you only so far.  Sometimes you have just
-to clear your data's taintedness.  The only way to bypass the tainting
+to clear your data's taintedness.  Values may be untainted by using them
+as keys in a hash; otherwise the only way to bypass the tainting
 mechanism is by referencing subpatterns from a regular expression match.
 Perl presumes that if you reference a substring using $1, $2, etc., that
 you knew what you were doing when you wrote the pattern.  That means using
@@ -194,6 +197,26 @@ Unix and Unix-like environments impose a one-switch limit on the #!
 line, so you may need to use something like C<-wU> instead of C<-w -U>
 under such systems.  (This issue should arise only in Unix or
 Unix-like environments that support #! and setuid or setgid scripts.)
+
+=head2 Taint mode and @INC
+
+When the taint mode (C<-T>) is in effect, the "." directory is removed
+from C<@INC>, and the environment variables C<PERL5LIB> and C<PERLLIB>
+are ignored by Perl. You can still adjust C<@INC> from outside the
+program by using the C<-I> command line option as explained in
+L<perlrun>. The two environment variables are ignored because
+they are obscured, and a user running a program could be unaware that
+they are set, whereas the C<-I> option is clearly visible and
+therefore permitted.
+
+Another way to modify C<@INC> without modifying the program, is to use
+the C<lib> pragma, e.g.:
+
+  perl -Mlib=/foo program
+
+The benefit of using C<-Mlib=/foo> over C<-I/foo>, is that the former
+will automagically remove any duplicated directories, while the later
+will not.
 
 =head2 Cleaning Up Your Path
 

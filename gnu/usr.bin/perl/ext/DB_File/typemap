@@ -19,7 +19,7 @@ T_dbtkeydatum
 	DBT_clear($var) ;
 	if (SvOK($arg)){
 	    if (db->type != DB_RECNO) {
-	        $var.data = SvPV($arg, PL_na);
+	        $var.data = SvPVbyte($arg, PL_na);
 	        $var.size = (int)PL_na;
 	    }
 	    else {
@@ -32,7 +32,7 @@ T_dbtdatum
 	DBM_ckFilter($arg, filter_store_value, \"filter_store_value\");
 	DBT_clear($var) ;
 	if (SvOK($arg)) {
-	    $var.data = SvPV($arg, PL_na);
+	    $var.data = SvPVbyte($arg, PL_na);
 	    $var.size = (int)PL_na;
 	}
 

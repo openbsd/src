@@ -243,6 +243,9 @@ where that method is defined.
 	$foo->goo;
 	$foo->google;
 
+Note that C<SUPER> refers to the superclasses of the current package
+(C<Foo>), not to the superclasses of C<$self>.
+
 
 =head1 USING RELATIONSHIP WITH SDBM
 

@@ -20,6 +20,7 @@ Changes5.005		Differences between 5.004 and 5.005
 Changes5.6		Differences between 5.005 and 5.6
 Changes5.8		Differences between 5.6.0 and 5.8.0 (and maint-5.6)
 Changes5.8.1		Differences between 5.8.0 and 5.8.1
+Changes5.8.2		Differences between 5.8.1 and 5.8.2
 config_h.SH		Produces config.h
 configpm		Produces lib/Config.pm
 Configure		Portability tool
@@ -130,6 +131,7 @@ ext/ByteLoader/byterun.c	Runtime support for bytecode loader
 ext/ByteLoader/byterun.h	Header for byterun.c
 ext/ByteLoader/hints/sunos.pl	Hints for named architecture
 ext/ByteLoader/Makefile.PL	Bytecode loader makefile writer
+ext/Cwd/Changes			Cwd extension Changelog
 ext/Cwd/Cwd.xs			Cwd extension external subroutines
 ext/Cwd/Makefile.PL		Cwd extension makefile maker
 ext/Cwd/t/cwd.t			See if Cwd works
@@ -188,6 +190,7 @@ ext/Digest/MD5/MD5.xs		Digest::MD5 extension
 ext/Digest/MD5/README		Digest::MD5 extension Readme
 ext/Digest/MD5/t/align.t	See if Digest::MD5 extension works
 ext/Digest/MD5/t/badfile.t	See if Digest::MD5 extension works
+ext/Digest/MD5/t/bits.t		See if Digest::MD5 extension works
 ext/Digest/MD5/t/clone.t	See if Digest::MD5 extension works
 ext/Digest/MD5/t/files.t	See if Digest::MD5 extension works
 ext/Digest/MD5/t/md5-aaa.t	See if Digest::MD5 extension works
@@ -714,6 +717,7 @@ ext/threads/shared/t/no_share.t	Tests for disabled share on variables.
 ext/threads/shared/t/shared_attr.t	Test :shared attribute
 ext/threads/shared/t/sv_refs.t	thread shared variables
 ext/threads/shared/t/sv_simple.t	thread shared variables
+ext/threads/shared/t/wait.t	Test cond_wait and cond_timedwait
 ext/threads/shared/typemap	thread::shared types
 ext/threads/t/basic.t		ithreads
 ext/threads/t/end.t		Test end functions
@@ -761,8 +765,11 @@ ext/Unicode/Normalize/README	Unicode::Normalize
 ext/Unicode/Normalize/t/fcdc.t	Unicode::Normalize
 ext/Unicode/Normalize/t/form.t	Unicode::Normalize
 ext/Unicode/Normalize/t/func.t	Unicode::Normalize
+ext/Unicode/Normalize/t/illegal.t	Unicode::Normalize
 ext/Unicode/Normalize/t/norm.t	Unicode::Normalize
+ext/Unicode/Normalize/t/null.t	Unicode::Normalize
 ext/Unicode/Normalize/t/proto.t	Unicode::Normalize
+ext/Unicode/Normalize/t/short.t	Unicode::Normalize
 ext/Unicode/Normalize/t/split.t	Unicode::Normalize
 ext/Unicode/Normalize/t/test.t	Unicode::Normalize
 ext/util/make_ext		Used by Makefile to execute extension Makefiles
@@ -771,6 +778,7 @@ ext/XS/APItest/APItest.xs	XS::APItest extension
 ext/XS/APItest/Makefile.PL	XS::APItest extension
 ext/XS/APItest/MANIFEST		XS::APItest extension
 ext/XS/APItest/README		XS::APItest extension
+ext/XS/APItest/t/hash.t		XS::APItest extension
 ext/XS/APItest/t/printf.t	XS::APItest extension
 ext/XS/Typemap/Makefile.PL	XS::Typemap extension
 ext/XS/Typemap/README		XS::Typemap extension
@@ -1077,8 +1085,10 @@ lib/Devel/SelfStubber.pm	Generate stubs for SelfLoader.pm
 lib/Devel/SelfStubber.t		See if Devel::SelfStubber works
 lib/diagnostics.pm		Print verbose diagnostics
 lib/diagnostics.t		See if diagnostics.pm works
+lib/Digest/base.pm		Digest extensions
 lib/Digest.pm			Digest extensions
-lib/Digest.t			See if Digest extensions work
+lib/Digest/t/base.t		See if Digest extensions work
+lib/Digest/t/digest.t		See if Digest extensions work
 lib/DirHandle.pm		like FileHandle only for directories
 lib/DirHandle.t			See if DirHandle works
 lib/dotsh.pl			Code to "dot" in a shell script
@@ -1315,9 +1325,10 @@ lib/locale.t			See if locale support works
 lib/look.pl			A "look" equivalent
 lib/Math/BigFloat.pm		An arbitrary precision floating-point arithmetic package
 lib/Math/BigFloat/Trace.pm	bignum tracing
+lib/Math/BigInt/CalcEmu.pm	Pure Perl module to support Math::BigInt
 lib/Math/BigInt/Calc.pm		Pure Perl module to support Math::BigInt
 lib/Math/BigInt.pm		An arbitrary precision integer arithmetic package
-lib/Math/BigInt/Scalar.pm		Pure Perl module to support Math::BigInt
+lib/Math/BigInt/t/alias.inc	Support for BigInt tests
 lib/Math/BigInt/t/bare_mbf.t	Test MBF under Math::BigInt::BareCalc
 lib/Math/BigInt/t/bare_mbi.t	Test MBI under Math::BigInt::BareCalc
 lib/Math/BigInt/t/bare_mif.t	Rounding tests under BareCalc
@@ -1328,12 +1339,17 @@ lib/Math/BigInt/t/bigintpm.inc	Shared tests for bigintpm.t and sub_mbi.t
 lib/Math/BigInt/t/bigintpm.t	See if BigInt.pm works
 lib/Math/BigInt/t/bigints.t	See if BigInt.pm works
 lib/Math/BigInt/t/biglog.t	Test the log function
+lib/Math/BigInt/t/bigroot.t	Test the broot function
 lib/Math/BigInt/t/calling.t	Test calling conventions
 lib/Math/BigInt/t/config.t	Test Math::BigInt->config()
 lib/Math/BigInt/t/constant.t	Test Math::BigInt/BigFloat under :constant
+lib/Math/BigInt/t/const_mbf.t	Test Math::BigInt
 lib/Math/BigInt/t/downgrade.t	Test if use Math::BigInt(); under downgrade works
+lib/Math/BigInt/t/fallback.t	Test Math::BigInt
 lib/Math/BigInt/t/inf_nan.t	Special tests for inf and NaN handling
 lib/Math/BigInt/t/isa.t		Test for Math::BigInt inheritance
+lib/Math/BigInt/t/mbf_ali.t	Tests for BigFloat
+lib/Math/BigInt/t/mbi_ali.t	Tests for BigInt
 lib/Math/BigInt/t/mbimbf.inc	Actual BigInt/BigFloat accuracy, precision and fallback, round_mode tests
 lib/Math/BigInt/t/mbimbf.t	BigInt/BigFloat accuracy, precision and fallback, round_mode
 lib/Math/BigInt/t/mbi_rand.t	Test Math::BigInt randomly
@@ -1345,6 +1361,7 @@ lib/Math/BigInt/t/req_mbfi.t	test: require Math::BigFloat; ->binf();
 lib/Math/BigInt/t/req_mbfn.t	test: require Math::BigFloat; ->new();
 lib/Math/BigInt/t/req_mbfw.t	require Math::BigFloat; import ( with => );
 lib/Math/BigInt/t/require.t	Test if require Math::BigInt works
+lib/Math/BigInt/t/sub_ali.t	Tests for aliases in BigInt subclasses
 lib/Math/BigInt/t/sub_mbf.t	Empty subclass test of BigFloat
 lib/Math/BigInt/t/sub_mbi.t	Empty subclass test of BigInt
 lib/Math/BigInt/t/sub_mif.t	Test A & P with subclasses using mbimbf.inc
@@ -1579,6 +1596,7 @@ lib/Term/ReadLine.pm		Stub readline library
 lib/Term/ReadLine.t		See if Term::ReadLine works
 lib/Test/Builder.pm		For writing new test libraries
 lib/Test/Harness/Assert.pm	Test::Harness::Assert (internal use only)
+lib/Test/Harness/bin/prove	The prove harness utility
 lib/Test/Harness/Changes	Test::Harness
 lib/Test/Harness/Iterator.pm	Test::Harness::Iterator (internal use only)
 lib/Test/Harness.pm		A test harness
@@ -1587,9 +1605,11 @@ lib/Test/Harness/t/00compile.t	Test::Harness test
 lib/Test/Harness/t/assert.t	Test::Harness::Assert test
 lib/Test/Harness/t/base.t	Test::Harness test
 lib/Test/Harness/t/callback.t	Test::Harness test
+lib/Test/Harness/t/inc_taint.t	Test::Harness test
 lib/Test/Harness/t/nonumbers.t	Test::Harness test
 lib/Test/Harness/t/ok.t		Test::Harness test
 lib/Test/Harness/t/pod.t	Test::Harness test
+lib/Test/Harness/t/prove-switches.t	Test::Harness::Straps test
 lib/Test/Harness/t/strap-analyze.t	Test::Harness::Straps test
 lib/Test/Harness/t/strap.t		Test::Harness::Straps test
 lib/Test/Harness/t/test-harness.t	Test::Harness test
@@ -1739,15 +1759,20 @@ lib/Unicode/Collate/Changes	Unicode::Collate
 lib/Unicode/Collate/keys.txt	Unicode::Collate
 lib/Unicode/Collate.pm		Unicode::Collate
 lib/Unicode/Collate/README	Unicode::Collate
+lib/Unicode/Collate/t/altern.t	Unicode::Collate
 lib/Unicode/Collate/t/contract.t	Unicode::Collate
 lib/Unicode/Collate/t/hangtype.t	Unicode::Collate
 lib/Unicode/Collate/t/hangul.t	Unicode::Collate
+lib/Unicode/Collate/t/illegalp.t	Unicode::Collate
+lib/Unicode/Collate/t/illegal.t	Unicode::Collate
 lib/Unicode/Collate/t/index.t	Unicode::Collate
 lib/Unicode/Collate/t/normal.t	Unicode::Collate
+lib/Unicode/Collate/t/rearrang.t	Unicode::Collate
 lib/Unicode/Collate/t/test.t	Unicode::Collate
 lib/Unicode/Collate/t/trailwt.t	Unicode::Collate
 lib/Unicode/Collate/t/variable.t	Unicode::Collate
 lib/Unicode/Collate/t/version.t	Unicode::Collate
+lib/Unicode/Collate/t/view.t	Unicode::Collate
 lib/Unicode/README		Explanation what happened to lib/unicode.
 lib/Unicode/UCD.pm		Unicode character database
 lib/Unicode/UCD.t		See if Unicode character database works
@@ -2317,6 +2342,8 @@ pod/perl571delta.pod		Perl changes in version 5.7.1
 pod/perl572delta.pod		Perl changes in version 5.7.2
 pod/perl573delta.pod		Perl changes in version 5.7.3
 pod/perl581delta.pod		Perl changes in version 5.8.1
+pod/perl582delta.pod		Perl changes in version 5.8.2
+pod/perl583delta.pod		Perl changes in version 5.8.3
 pod/perl58delta.pod		Perl changes in version 5.8.0
 pod/perlapio.pod		Perl internal IO abstraction interface
 pod/perlapi.pod			Perl API listing (autogenerated)
@@ -2333,7 +2360,6 @@ pod/perldbmfilter.pod		Perl DBM filters
 pod/perldebguts.pod		Perl debugging guts and tips
 pod/perldebtut.pod		Perl debugging tutorial
 pod/perldebug.pod		Perl debugging
-pod/perldelta.pod		Perl changes since previous version
 pod/perldiag.pod		Perl diagnostic messages
 pod/perldoc.pod			Look up Perl documentation in Pod format
 pod/perldsc.pod			Perl data structures intro
@@ -2572,6 +2598,7 @@ t/lib/1_compile.t		See if the various libraries and extensions compile
 t/lib/commonsense.t		See if configuration meets basic needs
 t/lib/compmod.pl		Helper for 1_compile.t
 t/lib/Devel/switchd.pm		Module for t/run/switchd.t
+t/lib/Dev/Null.pm		Module for testing Test::Harness
 t/lib/dprof/test1_t		Perl code profiler tests
 t/lib/dprof/test1_v		Perl code profiler tests
 t/lib/dprof/test2_t		Perl code profiler tests
@@ -2602,6 +2629,7 @@ t/lib/MakeMaker/Test/Setup/Recurs.pm	MakeMaker test utilities
 t/lib/MakeMaker/Test/Utils.pm	MakeMaker test utilities
 t/lib/Math/BigFloat/Subclass.pm	Empty subclass of BigFloat for test
 t/lib/Math/BigInt/BareCalc.pm	Bigint's simulation of Calc
+t/lib/Math/BigInt/Scalar.pm	Pure Perl module to support Math::BigInt
 t/lib/Math/BigInt/Subclass.pm	Empty subclass of BigInt for test
 t/lib/Math/BigRat/Test.pm		Math::BigRat test helper
 t/lib/sample-tests/bailout		Test data for Test::Harness
@@ -2614,6 +2642,7 @@ t/lib/sample-tests/die_last_minute	Test data for Test::Harness
 t/lib/sample-tests/duplicates		Test data for Test::Harness
 t/lib/sample-tests/head_end		Test data for Test::Harness
 t/lib/sample-tests/head_fail		Test data for Test::Harness
+t/lib/sample-tests/inc_taint		Test data for Test::Harness
 t/lib/sample-tests/lone_not_bug		Test data for Test::Harness
 t/lib/sample-tests/no_nums		Test data for Test::Harness
 t/lib/sample-tests/no_output		Test data for Test::Harness
@@ -2628,6 +2657,7 @@ t/lib/sample-tests/skipall_nomsg	Test data for Test::Harness
 t/lib/sample-tests/skip_nomsg		Test data for Test::Harness
 t/lib/sample-tests/switches		Test data for Test::Harness
 t/lib/sample-tests/taint		Test data for Test::Harness
+t/lib/sample-tests/taint_warn		Test data for Test::Harness
 t/lib/sample-tests/todo			Test data for Test::Harness
 t/lib/sample-tests/todo_inline		Test data for Test::Harness
 t/lib/sample-tests/too_many		Test data for Test::Harness
@@ -2734,8 +2764,8 @@ t/op/grent.t			See if getgr*() functions work
 t/op/grep.t			See if grep() and map() work
 t/op/groups.t			See if $( works
 t/op/gv.t			See if typeglobs work
-t/op/hash.t			See if the complexity attackers are repelled
 t/op/hashassign.t		See if hash assignments work
+t/op/hash.t			See if the complexity attackers are repelled
 t/op/hashwarn.t			See if warnings for bad hash assignments work
 t/op/inccode.t			See if coderefs work in @INC
 t/op/inc.t			See if inc/dec of integers near 32 bit limit work
@@ -2789,17 +2819,18 @@ t/op/sleep.t			See if sleep works
 t/op/sort.t			See if sort works
 t/op/splice.t			See if splice works
 t/op/split.t			See if split works
+t/op/sprintf2.t			See if sprintf works
 t/op/sprintf.t			See if sprintf works
 t/op/srand.t			See if srand works
 t/op/stash.t			See if %:: stashes work
 t/op/stat.t			See if stat works
 t/op/study.t			See if study works
-t/op/sub.t			See if subroutines work
 t/op/sub_lval.t			See if lvalue subroutines work
 t/op/subst_amp.t		See if $&-related substitution works
 t/op/substr.t			See if substr works
 t/op/subst.t			See if substitution works
 t/op/subst_wamp.t		See if substitution works with $& present
+t/op/sub.t			See if subroutines work
 t/op/sysio.t			See if sysread and syswrite work
 t/op/taint.t			See if tainting works
 t/op/tiearray.t			See if tie for arrays works
@@ -2902,6 +2933,7 @@ utils/dprofpp.PL		Perl code profile post-processor
 utils/enc2xs.PL			Encode module generator
 utils/h2ph.PL			A thing to turn C .h files into perl .ph files
 utils/h2xs.PL			Program to make .xs files from C header files
+utils/instmodsh.PL		Give information about installed extensions
 utils/libnetcfg.PL		libnet
 utils.lst			Lists utilities bundled with Perl
 utils/Makefile			Extract the utility scripts
@@ -2911,7 +2943,9 @@ utils/perldoc.PL		A simple tool to find & display perl's documentation
 utils/perlivp.PL		installation verification procedure
 utils/piconv.PL			iconv(1), reinvented in perl
 utils/pl2pm.PL			A pl to pm translator
+utils/prove.PL			The prove harness utility
 utils/splain.PL			Stand-alone version of diagnostics.pm
+utils/xsubpp.PL			External subroutine preprocessor
 uts/sprintf_wrap.c		sprintf wrapper for UTS
 uts/strtol_wrap.c		strtol wrapper for UTS
 vmesa/Makefile			VM/ESA Makefile

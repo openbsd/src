@@ -59,6 +59,7 @@ PP(pp_regcreset)
     /* XXXX Should store the old value to allow for tie/overload - and
        restore in regcomp, where marked with XXXX. */
     PL_reginterp_cnt = 0;
+    TAINT_NOT;
     return NORMAL;
 }
 
@@ -158,14 +159,11 @@ PP(pp_substcont)
     char *orig = cx->sb_orig;
     register REGEXP *rx = cx->sb_rx;
     SV *nsv = Nullsv;
-
-    { 
-      REGEXP *old = PM_GETRE(pm);
-      if(old != rx) {
+    REGEXP *old = PM_GETRE(pm);
+    if(old != rx) {
 	if(old) 
-	  ReREFCNT_dec(old);
+	    ReREFCNT_dec(old);
 	PM_SETRE(pm,rx);
-      }
     }
 
     rxres_restore(&cx->sb_rxres, rx);
@@ -251,7 +249,8 @@ PP(pp_substcont)
 	    sv_pos_b2u(sv, &i);
 	mg->mg_len = i;
     }
-    ReREFCNT_inc(rx);
+    if (old != rx)
+	ReREFCNT_inc(rx);
     cx->sb_rxtainted |= RX_MATCH_TAINTED(rx);
     rxres_save(&cx->sb_rxres, rx);
     RETURNOP(pm->op_pmreplstart);
@@ -1005,6 +1004,16 @@ PP(pp_flip)
     }
 }
 
+/* This code tries to decide if "$left .. $right" should use the
+   magical string increment, or if the range is numeric (we make
+   an exception for .."0" [#18165]). AMS 20021031. */
+
+#define RANGE_IS_NUMERIC(left,right) ( \
+	SvNIOKp(left)  || (SvOK(left)  && !SvPOKp(left))  || \
+	SvNIOKp(right) || (SvOK(right) && !SvPOKp(right)) || \
+	(looks_like_number(left) && SvPOKp(left) && *SvPVX(left) != '0' && \
+	 looks_like_number(right)))
+
 PP(pp_flop)
 {
     dSP;
@@ -1020,15 +1029,7 @@ PP(pp_flop)
 	if (SvGMAGICAL(right))
 	    mg_get(right);
 
-	/* This code tries to decide if "$left .. $right" should use the
-	   magical string increment, or if the range is numeric (we make
-	   an exception for .."0" [#18165]). AMS 20021031. */
-
-	if (SvNIOKp(left) || !SvPOKp(left) ||
-	    SvNIOKp(right) || !SvPOKp(right) ||
-	    (looks_like_number(left) && *SvPVX(left) != '0' &&
-	     looks_like_number(right)))
-	{
+	if (RANGE_IS_NUMERIC(left,right)) {
 	    if (SvNV(left) < IV_MIN || SvNV(right) > IV_MAX)
 		DIE(aTHX_ "Range iterator outside integer range");
 	    i = SvIV(left);
@@ -1700,12 +1701,7 @@ PP(pp_enteriter)
 	cx->blk_loop.iterary = (AV*)SvREFCNT_inc(POPs);
 	if (SvTYPE(cx->blk_loop.iterary) != SVt_PVAV) {
 	    dPOPss;
-	    /* See comment in pp_flop() */
-	    if (SvNIOKp(sv) || !SvPOKp(sv) ||
-		SvNIOKp(cx->blk_loop.iterary) || !SvPOKp(cx->blk_loop.iterary) ||
-		(looks_like_number(sv) && *SvPVX(sv) != '0' &&
-		 looks_like_number((SV*)cx->blk_loop.iterary)))
-	    {
+	    if (RANGE_IS_NUMERIC(sv,(SV*)cx->blk_loop.iterary)) {
 		 if (SvNV(sv) < IV_MIN ||
 		     SvNV((SV*)cx->blk_loop.iterary) >= IV_MAX)
 		     DIE(aTHX_ "Range iterator outside integer range");
@@ -3559,7 +3555,7 @@ S_doparseform(pTHX_ SV *sv)
 
     /* estimate the buffer size needed */
     for (base = s; s <= send; s++) {
-	if (*s == '\n' || *s == '@' || *s == '^')
+	if (*s == '\n' || *s == '\0' || *s == '@' || *s == '^')
 	    maxops += 10;
     }
     s = base;

@@ -107,6 +107,9 @@ Freeware CD-ROM from Compaq.
     ftp://ftp.lp.se/vms/
     http://www.openvms.compaq.com/freeware/
 
+Recent versions of VMS tar on ODS-5 volumes may extract tape archive
+files with ^. escaped periods in them.  See below for further workarounds.
+
 =item 3  UNZIP.EXE for VMS
 
 A combination decompressor and archive reader/writer for *.zip files.  
@@ -150,6 +153,33 @@ VMSTAR.EXE on your VMS machine.
 If you want to include socket support, you'll need a TCP/IP stack and either
 DEC C, or socket libraries.  See the "Socket Support (optional)" topic 
 for more details.
+
+=head1 Unpacking the Perl source code
+
+You may need to set up a foreign symbol for the unpacking utility of choice.
+
+If you unpack a perl source kit with a name containing multiple periods on
+an ODS-5 volume using recent versions of vmstar (e.g. V3.4 or later) you may
+need to be especially careful in unpacking the tape archive file.  Try to use
+the ODS-2 compatability qualifiers such as:
+
+    vmstar /extract/verbose/ods2 perl-V^.VIII^.III.tar
+
+or:
+
+    vmstar -xvof perl-5^.8^.3.tar
+
+If you neglected to use the /ODS2 qualifier or the -o switch then you
+could rename the source directory:
+
+    set security/protection=(o:rwed) perl-5^.8^.3.dir
+    rename perl-5^.8^.3.dir perl-5_8_3.dir
+
+Perl on VMS as of 5.8.3 does not completely handle extended file
+parse styles such as are encountered on ODS-5.  While it can be built,
+installed, and run on ODS-5 filesystems; it may encounter
+trouble with characters that are otherwise illegal on ODS-2
+volumes (notably the ^. escaped period sequence).
 
 =head1 Configuring the Perl build
 
@@ -531,6 +561,12 @@ from CPAN can be just as bad (or worse), so watch out for them, too. Perl's
 configuration script will warn if it thinks you are too deep (at least on 
 a VAX or on Alpha versions of VMS prior to 7.2).  But MakeMaker will not 
 warn you if you start out building a module too deep in a directory.
+
+As noted above ODS-5 escape sequences such as ^. can break the perl
+build.  Solutions include renaming files and directories as needed or
+being careful to use the -o switch or /ODS2 qualifier with latter
+versions of the vmstar utility when unpacking perl or CPAN modules
+on ODS-5 volumes.
 
 Be sure that the process that you use to build perl has a PGFLQ greater
 than 100000.  Be sure to have a correct local time zone to UTC offset

@@ -253,22 +253,34 @@ rather than:
 This also has implications for the use of the SUPER:: qualifier
 (see L<perlobj>).
 
-=head2 Package Constructors and Destructors
+=head2 BEGIN, CHECK, INIT and END
 
-Four special subroutines act as package constructors and destructors.
-These are the C<BEGIN>, C<CHECK>, C<INIT>, and C<END> routines.  The
-C<sub> is optional for these routines.
+Four specially named code blocks are executed at the beginning and at the end
+of a running Perl program.  These are the C<BEGIN>, C<CHECK>, C<INIT>, and
+C<END> blocks.
 
-A C<BEGIN> subroutine is executed as soon as possible, that is, the moment
-it is completely defined, even before the rest of the containing file
-is parsed.  You may have multiple C<BEGIN> blocks within a file--they
-will execute in order of definition.  Because a C<BEGIN> block executes
-immediately, it can pull in definitions of subroutines and such from other
-files in time to be visible to the rest of the file.  Once a C<BEGIN>
-has run, it is immediately undefined and any code it used is returned to
-Perl's memory pool.  This means you can't ever explicitly call a C<BEGIN>.
+These code blocks can be prefixed with C<sub> to give the appearance of a
+subroutine (although this is not considered good style).  One should note
+that these code blocks don't really exist as named subroutines (despite
+their appearance). The thing that gives this away is the fact that you can
+have B<more than one> of these code blocks in a program, and they will get
+B<all> executed at the appropriate moment.  So you can't execute any of
+these code blocks by name.
 
-An C<END> subroutine is executed as late as possible, that is, after
+A C<BEGIN> code block is executed as soon as possible, that is, the moment
+it is completely defined, even before the rest of the containing file (or
+string) is parsed.  You may have multiple C<BEGIN> blocks within a file (or
+eval'ed string) -- they will execute in order of definition.  Because a C<BEGIN>
+code block executes immediately, it can pull in definitions of subroutines
+and such from other files in time to be visible to the rest of the compile
+and run time.  Once a C<BEGIN> has run, it is immediately undefined and any
+code it used is returned to Perl's memory pool.
+
+It should be noted that C<BEGIN> code blocks B<are> executed inside string
+C<eval()>'s.  The C<CHECK> and C<INIT> code blocks are B<not> executed inside
+a string eval, which e.g. can be a problem in a mod_perl environment.
+
+An C<END> code block is executed as late as possible, that is, after
 perl has finished running the program and just before the interpreter
 is being exited, even if it is exiting as a result of a die() function.
 (But not if it's polymorphing into another program via C<exec>, or
@@ -278,17 +290,22 @@ will execute in reverse order of definition; that is: last in, first
 out (LIFO).  C<END> blocks are not executed when you run perl with the
 C<-c> switch, or if compilation fails.
 
-Inside an C<END> subroutine, C<$?> contains the value that the program is
+Note that C<END> code blocks are B<not> executed at the end of a string
+C<eval()>: if any C<END> code blocks are created in a string C<eval()>,
+they will be executed just as any other C<END> code block of that package
+in LIFO order just before the interpreter is being exited.
+
+Inside an C<END> code block, C<$?> contains the value that the program is
 going to pass to C<exit()>.  You can modify C<$?> to change the exit
 value of the program.  Beware of changing C<$?> by accident (e.g. by
 running something via C<system>).
 
-C<CHECK> and C<INIT> blocks are useful to catch the transition between
+C<CHECK> and C<INIT> code blocks are useful to catch the transition between
 the compilation phase and the execution phase of the main program.
 
-C<CHECK> blocks are run just after the Perl compile phase ends and before
-the run time begins, in LIFO order.  C<CHECK> blocks are used in
-the Perl compiler suite to save the compiled state of the program.
+C<CHECK> code blocks are run just after the B<initial> Perl compile phase ends
+and before the run time begins, in LIFO order.  C<CHECK> code blocks are used
+in the Perl compiler suite to save the compiled state of the program.
 
 C<INIT> blocks are run just before the Perl runtime begins execution, in
 "first in, first out" (FIFO) order. For example, the code generators
@@ -300,6 +317,35 @@ C<END> work just as they do in B<awk>, as a degenerate case.
 Both C<BEGIN> and C<CHECK> blocks are run when you use the B<-c>
 switch for a compile-only syntax check, although your main code
 is not.
+
+The B<begincheck> program makes it all clear, eventually:
+
+  #!/usr/bin/perl
+
+  # begincheck
+
+  print         " 8. Ordinary code runs at runtime.\n";
+
+  END { print   "14.   So this is the end of the tale.\n" }
+  INIT { print  " 5. INIT blocks run FIFO just before runtime.\n" }
+  CHECK { print " 4.   So this is the fourth line.\n" }
+
+  print         " 9.   It runs in order, of course.\n";
+
+  BEGIN { print " 1. BEGIN blocks run FIFO during compilation.\n" }
+  END { print   "13.   Read perlmod for the rest of the story.\n" }
+  CHECK { print " 3. CHECK blocks run LIFO at compilation's end.\n" }
+  INIT { print  " 6.   Run this again, using Perl's -c switch.\n" }
+
+  print         "10.   This is anti-obfuscated code.\n";
+
+  END { print   "12. END blocks run LIFO at quitting time.\n" }
+  BEGIN { print " 2.   So this line comes out second.\n" }
+  INIT { print  " 7.   You'll see the difference right away.\n" }
+
+  print         "11.   It merely _looks_ like it should be confusing.\n";
+
+  __END__
 
 =head2 Perl Classes
 
@@ -337,7 +383,7 @@ create a file called F<Some/Module.pm> and start with this template:
         # set the version for version checking
         $VERSION     = 1.00;
         # if using RCS/CVS, this may be preferred
-        $VERSION = sprintf "%d.%03d", q$Revision: 1.1 $ =~ /(\d+)/g;
+        $VERSION = sprintf "%d.%03d", q$Revision: 1.7 $ =~ /(\d+)/g;
 
         @ISA         = qw(Exporter);
         @EXPORT      = qw(&func1 &func2 &func4);

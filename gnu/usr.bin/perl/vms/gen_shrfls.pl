@@ -39,7 +39,7 @@ require 5.000;
 
 $debug = $ENV{'GEN_SHRFLS_DEBUG'};
 
-print "gen_shrfls.pl Rev. 18-May-2001\n" if $debug;
+print "gen_shrfls.pl Rev. 18-Dec-2003\n" if $debug;
 
 if ($ARGV[0] eq '-f') {
   open(INP,$ARGV[1]) or die "Can't read input file $ARGV[1]: $!\n";
@@ -56,7 +56,8 @@ if ($ARGV[0] eq '-f') {
 $cc_cmd = shift @ARGV;
 
 # Someday, we'll have $GetSyI built into perl . . .
-$isvax = `\$ Write Sys\$Output F\$GetSyI(\"HW_MODEL\")` <= 1024;
+$isvax = `\$ Write Sys\$Output \(F\$GetSyI(\"HW_MODEL\") .LE. 1024 .AND. F\$GetSyI(\"HW_MODEL\") .GT. 0\)`;
+chomp $isvax;
 print "\$isvax: \\$isvax\\\n" if $debug;
 
 print "Input \$cc_cmd: \\$cc_cmd\\\n" if $debug;

@@ -1877,6 +1877,7 @@ Perl_newPROG(pTHX_ OP *o)
 	if (o->op_type == OP_STUB) {
 	    PL_comppad_name = 0;
 	    PL_compcv = 0;
+	    FreeOp(o);
 	    return;
 	}
 	PL_main_root = scope(sawparens(scalarvoid(o)));
@@ -4299,6 +4300,11 @@ Perl_newATTRSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 			     mod(scalarseq(block), OP_LEAVESUBLV));
     }
     else {
+	/* This makes sub {}; work as expected.  */
+	if (block->op_type == OP_STUB) {
+	    op_free(block);
+	    block = newSTATEOP(0, Nullch, 0);
+	}
 	CvROOT(cv) = newUNOP(OP_LEAVESUB, 0, scalarseq(block));
     }
     CvROOT(cv)->op_private |= OPpREFCOUNTED;
@@ -4797,7 +4803,8 @@ OP *
 Perl_ck_concat(pTHX_ OP *o)
 {
     OP *kid = cUNOPo->op_first;
-    if (kid->op_type == OP_CONCAT && !(kUNOP->op_first->op_flags & OPf_MOD))
+    if (kid->op_type == OP_CONCAT && !(kid->op_private & OPpTARGET_MY) &&
+	    !(kUNOP->op_first->op_flags & OPf_MOD))
         o->op_flags |= OPf_STACKED;
     return o;
 }
@@ -5329,8 +5336,7 @@ Perl_ck_fun(pTHX_ OP *o)
 					   
 				      }
 				      if (tmpstr) {
-					   name = savepv(SvPVX(tmpstr));
-					   len = strlen(name);
+					   name = SvPV(tmpstr, len);
 					   sv_2mortal(tmpstr);
 				      }
 				 }
@@ -6369,17 +6375,6 @@ Perl_peep(pTHX_ register OP *o)
 	    o->op_seq = PL_op_seqmax++;
 	    break;
 	case OP_STUB:
-	    if(!oldop &&
-	       o->op_next &&
-	       o->op_next->op_type == OP_LEAVESUB) {
-	      OP* newop = newSTATEOP(0, Nullch, 0);
-	       newop->op_next = o->op_next;
-	       o->op_next = 0;
-       	       op_free(o);
-	       o = newop;
-       	       ((UNOP*)o->op_next)->op_first = newop;	
-	       CvSTART(PL_compcv) = newop;	
-	    }
 	    if ((o->op_flags & OPf_WANT) != OPf_WANT_LIST) {
 		o->op_seq = PL_op_seqmax++;
 		break; /* Scalar stub must produce undef.  List stub is noop */

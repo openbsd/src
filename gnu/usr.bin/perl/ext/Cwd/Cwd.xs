@@ -206,6 +206,157 @@ err2:
 #endif
 }
 
+#ifndef getcwd_sv
+/* Taken from perl 5.8's util.c */
+int getcwd_sv(pTHX_ register SV *sv)
+{
+#ifndef PERL_MICRO
+
+#ifndef INCOMPLETE_TAINTS
+    SvTAINTED_on(sv);
+#endif
+
+#ifdef HAS_GETCWD
+    {
+	char buf[MAXPATHLEN];
+
+	/* Some getcwd()s automatically allocate a buffer of the given
+	 * size from the heap if they are given a NULL buffer pointer.
+	 * The problem is that this behaviour is not portable. */
+	if (getcwd(buf, sizeof(buf) - 1)) {
+	    STRLEN len = strlen(buf);
+	    sv_setpvn(sv, buf, len);
+	    return TRUE;
+	}
+	else {
+	    sv_setsv(sv, &PL_sv_undef);
+	    return FALSE;
+	}
+    }
+
+#else
+
+    Stat_t statbuf;
+    int orig_cdev, orig_cino, cdev, cino, odev, oino, tdev, tino;
+    int namelen, pathlen=0;
+    DIR *dir;
+    Direntry_t *dp;
+
+    (void)SvUPGRADE(sv, SVt_PV);
+
+    if (PerlLIO_lstat(".", &statbuf) < 0) {
+	SV_CWD_RETURN_UNDEF;
+    }
+
+    orig_cdev = statbuf.st_dev;
+    orig_cino = statbuf.st_ino;
+    cdev = orig_cdev;
+    cino = orig_cino;
+
+    for (;;) {
+	odev = cdev;
+	oino = cino;
+
+	if (PerlDir_chdir("..") < 0) {
+	    SV_CWD_RETURN_UNDEF;
+	}
+	if (PerlLIO_stat(".", &statbuf) < 0) {
+	    SV_CWD_RETURN_UNDEF;
+	}
+
+	cdev = statbuf.st_dev;
+	cino = statbuf.st_ino;
+
+	if (odev == cdev && oino == cino) {
+	    break;
+	}
+	if (!(dir = PerlDir_open("."))) {
+	    SV_CWD_RETURN_UNDEF;
+	}
+
+	while ((dp = PerlDir_read(dir)) != NULL) {
+#ifdef DIRNAMLEN
+	    namelen = dp->d_namlen;
+#else
+	    namelen = strlen(dp->d_name);
+#endif
+	    /* skip . and .. */
+	    if (SV_CWD_ISDOT(dp)) {
+		continue;
+	    }
+
+	    if (PerlLIO_lstat(dp->d_name, &statbuf) < 0) {
+		SV_CWD_RETURN_UNDEF;
+	    }
+
+	    tdev = statbuf.st_dev;
+	    tino = statbuf.st_ino;
+	    if (tino == oino && tdev == odev) {
+		break;
+	    }
+	}
+
+	if (!dp) {
+	    SV_CWD_RETURN_UNDEF;
+	}
+
+	if (pathlen + namelen + 1 >= MAXPATHLEN) {
+	    SV_CWD_RETURN_UNDEF;
+	}
+
+	SvGROW(sv, pathlen + namelen + 1);
+
+	if (pathlen) {
+	    /* shift down */
+	    Move(SvPVX(sv), SvPVX(sv) + namelen + 1, pathlen, char);
+	}
+
+	/* prepend current directory to the front */
+	*SvPVX(sv) = '/';
+	Move(dp->d_name, SvPVX(sv)+1, namelen, char);
+	pathlen += (namelen + 1);
+
+#ifdef VOID_CLOSEDIR
+	PerlDir_close(dir);
+#else
+	if (PerlDir_close(dir) < 0) {
+	    SV_CWD_RETURN_UNDEF;
+	}
+#endif
+    }
+
+    if (pathlen) {
+	SvCUR_set(sv, pathlen);
+	*SvEND(sv) = '\0';
+	SvPOK_only(sv);
+
+	if (PerlDir_chdir(SvPVX(sv)) < 0) {
+	    SV_CWD_RETURN_UNDEF;
+	}
+    }
+    if (PerlLIO_stat(".", &statbuf) < 0) {
+	SV_CWD_RETURN_UNDEF;
+    }
+
+    cdev = statbuf.st_dev;
+    cino = statbuf.st_ino;
+
+    if (cdev != orig_cdev || cino != orig_cino) {
+	Perl_croak(aTHX_ "Unstable directory path, "
+		   "current directory changed unexpectedly");
+    }
+
+    return TRUE;
+#endif
+
+#else
+    return FALSE;
+#endif
+}
+
+#endif
+
+
 MODULE = Cwd		PACKAGE = Cwd
 
 PROTOTYPES: ENABLE

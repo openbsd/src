@@ -19,7 +19,7 @@ You need a working and tested cross-compiler for your build
 and target combination.  The binary directory must be in
 your path.
 
-1)	You should be reading me (README) in perl-5.8.2/Cross
+1)	You should be reading me (README) in perl-5.8.3/Cross
 
 2)	Make sure you are in the Cross directory.
 
@@ -68,6 +68,7 @@ Should you wish to produce optimised binaries for different
 architectures you can add the appropriate compiler flags to
 the Makefile in a new ifeq ($(ARCH),...) ... endif block.
 
+
 Please refer to your cross-compiler documentation for details.
 
 
@@ -83,4 +84,4 @@ References
 ----------
 Redvers Davies <red@criticalintegration.com>
 Open Zaurus http://www.openzaurus.org/
-Perl OZ Packages http://www.openzaurus.org/official/testing/feed/
+Perl OZ Packages http://www.criticalintegration.com/perl-oz/

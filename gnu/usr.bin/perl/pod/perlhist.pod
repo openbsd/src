@@ -24,7 +24,8 @@ Perl history in brief, by Larry Wall:
 
 Larry Wall, Andy Dougherty, Tom Christiansen, Charles Bailey, Nick
 Ing-Simmons, Chip Salzenberg, Tim Bunce, Malcolm Beattie, Gurusamy
-Sarathy, Graham Barr, Jarkko Hietaniemi.
+Sarathy, Graham Barr, Jarkko Hietaniemi, Hugo van der Sanden,
+Michael Schwern, Rafael Garcia-Suarez, Nicholas Clark, Richard Clamp.
 
 =head2 PUMPKIN?
 
@@ -66,6 +67,7 @@ the strings?).
           1.001..10     1988-Jan-30
           1.011..14     1988-Feb-02
  Schwern  1.0.15        2002-Dec-18     Modernization
+ Richard  1.0.16        2003-Dec-18
 
  Larry   2.000          1988-Jun-05
 
@@ -346,7 +348,8 @@ the strings?).
           5.6.1-TRIAL3  2001-Mar-19
           5.6.1-foolish 2001-Apr-01     The "fools-gold" release.
           5.6.1         2001-Apr-08
- Rafael	  5.6.2		2003-???-??
+ Rafael   5.6.2-RC1     2003-Nov-08
+          5.6.2         2003-Nov-15     Fix new build issues
 
  Jarkko   5.7.0         2000-Sep-02     The 5.7 track: Development.
           5.7.1         2001-Apr-09
@@ -365,6 +368,8 @@ the strings?).
  Nicholas 5.8.2-RC1     2003-Oct-27
           5.8.2-RC2     2003-Nov-03
           5.8.2         2003-Nov-05
+          5.8.3-RC1     2004-Jan-07
+          5.8.3         2004-Jan-14
 
  Hugo     5.9.0         2003-Oct-27
 

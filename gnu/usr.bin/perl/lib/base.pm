@@ -2,7 +2,7 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.03';
+$VERSION = '2.04';
 
 # constant.pm is slow
 sub SUCCESS () { 1 }
@@ -113,7 +113,7 @@ sub inherit_fields {
     if( keys %$dfields ) {
         warn "$derived is inheriting from $base but already has its own ".
              "fields!\n".
-             "This will cause problems with pseudo-hashes.\n".
+             "This will cause problems.\n".
              "Be sure you use base BEFORE declaring fields\n";
     }
 
@@ -151,7 +151,7 @@ __END__
 
 =head1 NAME
 
-base - Establish IS-A relationship with base class at compile time
+base - Establish IS-A relationship with base classes at compile time
 
 =head1 SYNOPSIS
 
@@ -160,30 +160,28 @@ base - Establish IS-A relationship with base class at compile time
 
 =head1 DESCRIPTION
 
-Roughly similar in effect to
+Allows you to both load one or more modules, while setting up inheritance from
+those modules at the same time.  Roughly similar in effect to
 
+    package Baz;
     BEGIN {
         require Foo;
         require Bar;
         push @ISA, qw(Foo Bar);
     }
 
+If any of the listed modules are not loaded yet, I<base> silently attempts to
+C<require> them (and silently continues if the C<require> failed).  Whether to
+C<require> a base class module is determined by the absence of a global variable
+$VERSION in the base package.  If $VERSION is not detected even after loading
+it, <base> will define $VERSION in the base package, setting it to the string
+C<-1, set by base.pm>.
+
 Will also initialize the fields if one of the base classes has it.
-Multiple Inheritence of fields is B<NOT> supported, if two or more
+Multiple inheritence of fields is B<NOT> supported, if two or more
 base classes each have inheritable fields the 'base' pragma will
 croak.  See L<fields>, L<public> and L<protected> for a description of
 this feature.
-
-When strict 'vars' is in scope, I<base> also lets you assign to @ISA
-without having to declare @ISA with the 'vars' pragma first.
-
-If any of the base classes are not loaded yet, I<base> silently
-C<require>s them (but it won't call the C<import> method).  Whether to
-C<require> a base class package is determined by the absence of a global
-$VERSION in the base package.  If $VERSION is not detected even after
-loading it, I<base> will define $VERSION in the base package, setting it to
-the string C<-1, set by base.pm>.
-
 
 =head1 HISTORY
 
@@ -192,7 +190,7 @@ This module was introduced with Perl 5.004_04.
 
 =head1 CAVEATS
 
-Due to the limitations of the pseudo-hash implementation, you must use
+Due to the limitations of the implementation, you must use
 base I<before> you declare any of your own fields.
 
 

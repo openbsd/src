@@ -1,6 +1,6 @@
 package Tie::Hash;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 NAME
 
@@ -105,6 +105,13 @@ Delete the key I<key> from the tied hash I<this>.
 
 Clear all values from the tied hash I<this>.
 
+=item SCALAR this
+
+Returns what evaluating the hash in scalar context yields.
+
+B<Tie::Hash> does not implement this method (but B<Tie::StdHash>
+and B<Tie::ExtraHash> do).
+
 =back
 
 =head1 Inheriting from B<Tie::StdHash>
@@ -131,7 +138,7 @@ should operate on the hash referenced by the first argument:
 =head1 Inheriting from B<Tie::ExtraHash>
 
 The accessor methods assume that the actual storage for the data in the tied
-hash is in the hash referenced by C<(tied(%tiedhash))[0]>.  Thus overwritten
+hash is in the hash referenced by C<(tied(%tiedhash))-E<gt>[0]>.  Thus overwritten
 C<TIEHASH> method should return an array reference with the first
 element being a hash reference, and the remaining methods should operate on the
 hash C<< %{ $_[0]->[0] } >>:
@@ -156,15 +163,18 @@ same storage algorithm as in TIEHASH subroutine above.  Hence, a typical
 package inheriting from B<Tie::ExtraHash> does not need to overwrite this
 method.
 
-=head1 C<UNTIE> and C<DESTROY>
+=head1 C<SCALAR>, C<UNTIE> and C<DESTROY>
 
 The methods C<UNTIE> and C<DESTROY> are not defined in B<Tie::Hash>,
 B<Tie::StdHash>, or B<Tie::ExtraHash>.  Tied hashes do not require
 presense of these methods, but if defined, the methods will be called in
 proper time, see L<perltie>.
 
+C<SCALAR> is only defined in B<Tie::StdHash> and B<Tie::ExtraHash>.
+
 If needed, these methods should be defined by the package inheriting from
-B<Tie::Hash>, B<Tie::StdHash>, or B<Tie::ExtraHash>.
+B<Tie::Hash>, B<Tie::StdHash>, or B<Tie::ExtraHash>. See L<pertie/"SCALAR">
+to find out what happens when C<SCALAR> does not exist.
 
 =head1 MORE INFORMATION
 
@@ -230,6 +240,7 @@ sub NEXTKEY  { each %{$_[0]} }
 sub EXISTS   { exists $_[0]->{$_[1]} }
 sub DELETE   { delete $_[0]->{$_[1]} }
 sub CLEAR    { %{$_[0]} = () }
+sub SCALAR   { scalar %{$_[0]} }
 
 package Tie::ExtraHash;
 
@@ -241,5 +252,6 @@ sub NEXTKEY  { each %{$_[0][0]} }
 sub EXISTS   { exists $_[0][0]->{$_[1]} }
 sub DELETE   { delete $_[0][0]->{$_[1]} }
 sub CLEAR    { %{$_[0][0]} = () }
+sub SCALAR   { scalar %{$_[0][0]} }
 
 1;

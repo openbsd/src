@@ -3130,7 +3130,7 @@ win32_chsize(int fd, Off_t size)
 	do {
 	    count = extend >= sizeof(b) ? sizeof(b) : (size_t)extend;
 	    count = win32_write(fd, b, count);
-	    if (count < 0) {
+	    if ((int)count < 0) {
 		retval = -1;
 		break;
 	    }

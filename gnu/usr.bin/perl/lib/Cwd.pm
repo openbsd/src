@@ -1,5 +1,4 @@
 package Cwd;
-use 5.006;
 
 =head1 NAME
 
@@ -137,12 +136,14 @@ L<File::chdir>
 =cut
 
 use strict;
+use Exporter;
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
-our $VERSION = '2.08';
+$VERSION = '2.12';
 
-use base qw/ Exporter /;
-our @EXPORT = qw(cwd getcwd fastcwd fastgetcwd);
-our @EXPORT_OK = qw(chdir abs_path fast_abs_path realpath fast_realpath);
+@ISA = qw/ Exporter /;
+@EXPORT = qw(cwd getcwd fastcwd fastgetcwd);
+@EXPORT_OK = qw(chdir abs_path fast_abs_path realpath fast_realpath);
 
 # sys_cwd may keep the builtin command
 
@@ -150,16 +151,19 @@ our @EXPORT_OK = qw(chdir abs_path fast_abs_path realpath fast_realpath);
 # there is no sense to process the rest of the file.
 # The best choice may be to have this in BEGIN, but how to return from BEGIN?
 
-if ($^O eq 'os2' && defined &sys_cwd && defined &sys_abspath) {
+if ($^O eq 'os2') {
     local $^W = 0;
-    *cwd		= \&sys_cwd;
-    *getcwd		= \&cwd;
-    *fastgetcwd		= \&cwd;
-    *fastcwd		= \&cwd;
-    *abs_path		= \&sys_abspath;
-    *fast_abs_path	= \&abs_path;
-    *realpath		= \&abs_path;
-    *fast_realpath	= \&abs_path;
+
+    *cwd                = defined &sys_cwd ? \&sys_cwd : \&_os2_cwd;
+    *getcwd             = \&cwd;
+    *fastgetcwd         = \&cwd;
+    *fastcwd            = \&cwd;
+
+    *fast_abs_path      = \&sys_abspath if defined &sys_abspath;
+    *abs_path           = \&fast_abs_path;
+    *realpath           = \&fast_abs_path;
+    *fast_realpath      = \&fast_abs_path;
+
     return 1;
 }
 
@@ -190,6 +194,10 @@ unless ($pwd_cmd) {
         $pwd_cmd = 'pwd';
     }
 }
+
+# Lazy-load Carp
+sub _carp  { require Carp; Carp::carp(@_)  }
+sub _croak { require Carp; Carp::croak(@_) }
 
 # The 'natural and safe form' for UNIX (pwd may be setuid root)
 sub _backtick_pwd {
@@ -358,8 +366,7 @@ sub _perl_abs_path
 
     unless (@cst = stat( $start ))
     {
-	require Carp;
-	Carp::carp ("stat($start): $!");
+	_carp("stat($start): $!");
 	return '';
     }
     $cwd = '';
@@ -371,14 +378,12 @@ sub _perl_abs_path
 	local *PARENT;
 	unless (opendir(PARENT, $dotdots))
 	{
-	    require Carp;
-	    Carp::carp ("opendir($dotdots): $!");
+	    _carp("opendir($dotdots): $!");
 	    return '';
 	}
 	unless (@cst = stat($dotdots))
 	{
-	    require Carp;
-	    Carp::carp ("stat($dotdots): $!");
+	    _carp("stat($dotdots): $!");
 	    closedir(PARENT);
 	    return '';
 	}
@@ -392,8 +397,7 @@ sub _perl_abs_path
 	    {
 		unless (defined ($dir = readdir(PARENT)))
 	        {
-		    require Carp;
-		    Carp::carp ("readdir($dotdots): $!");
+		    _carp("readdir($dotdots): $!");
 		    closedir(PARENT);
 		    return '';
 		}
@@ -426,13 +430,11 @@ sub fast_abs_path {
     ($cwd)  = $cwd  =~ /(.*)/;
 
     if (!CORE::chdir($path)) {
- 	require Carp;
- 	Carp::croak ("Cannot chdir to $path: $!");
+ 	_croak("Cannot chdir to $path: $!");
     }
     my $realpath = getcwd();
     if (! ((-d $cwd) && (CORE::chdir($cwd)))) {
- 	require Carp;
- 	Carp::croak ("Cannot chdir back to $cwd: $!");
+ 	_croak("Cannot chdir back to $cwd: $!");
     }
     $realpath;
 }
@@ -461,8 +463,7 @@ sub _vms_abs_path {
     my $path = VMS::Filespec::pathify($_[0]);
     if (! defined $path)
 	{
-	require Carp;
-	Carp::croak("Invalid path name $_[0]")
+	_croak("Invalid path name $_[0]")
 	}
     return VMS::Filespec::rmsexpand($path);
 }
@@ -545,14 +546,6 @@ sub _epoc_cwd {
         *abs_path	= \&fast_abs_path;
         *realpath   = \&fast_abs_path;
     }
-    elsif ($^O eq 'os2') {
-        # sys_cwd may keep the builtin command
-        *cwd		= defined &sys_cwd ? \&sys_cwd : \&_os2_cwd;
-        *getcwd		= \&cwd;
-        *fastgetcwd	= \&cwd;
-        *fastcwd	= \&cwd;
-        *abs_path	= \&fast_abs_path;
-    }
     elsif ($^O eq 'dos') {
         *cwd		= \&_dos_cwd;
         *getcwd		= \&_dos_cwd;
@@ -573,6 +566,7 @@ sub _epoc_cwd {
         *fastgetcwd	= \&cwd;
         *fastcwd	= \&cwd;
         *abs_path	= \&fast_abs_path;
+        *realpath	= \&abs_path;
     }
     elsif ($^O eq 'epoc') {
         *cwd            = \&_epoc_cwd;

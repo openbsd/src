@@ -288,7 +288,7 @@ aout_clean:
 aout_install: perl_ aout_install.perl
 
 aout_install.perl: perl_ installperl
-	./perl_ installperl
+	./perl_ installperl --destdir="$(DESTDIR)"
 
 perlrexx: $(PERLREXX_DLL)
 	@sh -c true

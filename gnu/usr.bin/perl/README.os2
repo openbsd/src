@@ -869,7 +869,10 @@ compatibility with XFree86-OS/2). Get a corrected one from
 If you have I<exactly the same version of Perl> installed already,
 make sure that no copies or perl are currently running.  Later steps
 of the build may fail since an older version of F<perl.dll> loaded into
-memory may be found. 
+memory may be found.  Running C<make test> becomes meaningless, since
+the test are checking a previous build of perl (this situation is detected
+and reported by F<lib/os2_base.t> test).  Do not forget to unset
+C<PERL_EMXLOAD_SEC> in environment.
 
 Also make sure that you have F</tmp> directory on the current drive,
 and F<.> directory in your C<LIBPATH>. One may try to correct the
@@ -1088,6 +1091,433 @@ say, by doing
   make perl_dll
 
 first.
+
+=head1 Building a binary distribution
+
+[This section provides a short overview only...]
+
+Building should proceed differently depending on whether the version of perl
+you install is already present and used on your system, or is a new version
+not yet used.  The description below assumes that the version is new, so
+installing its DLLs and F<.pm> files will not disrupt the operation of your
+system even if some intermediate steps are not yet fully working.
+
+The other cases require a little bit more convoluted procedures.  Below I
+suppose that the current version of Perl is C<5.8.2>, so the executables are
+named accordingly.
+
+=over
+
+=item 1.
+
+Fully build and test the Perl distribution.  Make sure that no tests are
+failing with C<test> and C<aout_test> targets; fix the bugs in Perl and
+the Perl test suite detected by these tests.  Make sure that C<all_test>
+make target runs as clean as possible.  Check that C<os2/perlrexx.cmd>
+runs fine.
+
+=item 2.
+
+Fully install Perl, including C<installcmd> target.  Copy the generated DLLs
+to C<LIBPATH>; copy the numbered Perl executables (as in F<perl5.8.2.exe>)
+to C<PATH>; copy C<perl_.exe> to C<PATH> as C<perl_5.8.2.exe>.  Think whether
+you need backward-compatibility DLLs.  In most cases you do not need to install
+them yet; but sometime this may simplify the following steps.
+
+=item 3.
+
+Make sure that C<CPAN.pm> can download files from CPAN.  If not, you may need
+to manually install C<Net::FTP>.
+
+=item 4.
+
+Install the bundle C<Bundle::OS2_default>
+
+  perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_1
+
+This may take a couple of hours on 1GHz processor (when run the first time).
+And this should not be necessarily a smooth procedure.  Some modules may not
+specify required dependencies, so one may need to repeat this procedure several
+times until the results stabilize.
+
+  perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_2
+  perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_3
+
+Even after they stabilize, some tests may fail.
+
+Fix as many discovered bugs as possible.  Document all the bugs which are not
+fixed, and all the failures with unknown reasons.  Inspect the produced logs
+F<00cpan_i_1> to find suspiciously skipped tests, and other fishy events.
+
+Keep in mind that I<installation> of some modules may fail too: for example,
+the DLLs to update may be already loaded by F<CPAN.pm>.  Inspect the C<install>
+logs (in the example above F<00cpan_i_1> etc) for errors, and install things
+manually, as in
+
+  cd $CPANHOME/.cpan/build/Digest-MD5-2.31
+  make install
+
+Some distributions may fail some tests, but you may want to install them
+anyway (as above, or via C<force install> command of C<CPAN.pm> shell-mode).
+
+Since this procedure may take quite a long time to complete, it makes sense
+to "freeze" your CPAN configuration by disabling periodic updates of the
+local copy of CPAN index: set C<index_expire> to some big value (I use 365),
+then save the settings
+
+  CPAN> o conf index_expire 365
+  CPAN> o conf commit
+
+Reset back to the default value C<1> when you are finished.
+
+=item 5.
+
+When satisfied with the results, rerun the C<installcmd> target.  Now you
+can copy C<perl5.8.2.exe> to C<perl.exe>, and install the other OMF-build
+executables: C<perl__.exe> etc.  They are ready to be used.
+
+=item 6.
+
+Change to the C<./pod> directory of the build tree, download the Perl logo
+F<CamelGrayBig.BMP>, and run
+
+  ( perl2ipf > perl.ipf ) |& tee 00ipf
+  ipfc /INF perl.ipf |& tee 00inf
+
+This produces the Perl docs online book C<perl.INF>.  Install in on
+C<BOOKSHELF> path.
+
+=item 7.
+
+Now is the time to build statically linked executable F<perl_.exe> which
+includes newly-installed via C<Bundle::OS2_default> modules.  Doing testing
+via C<CPAN.pm> is going to be painfully slow, since it statically links
+a new executable per XS extension.
+
+Here is a possible workaround: create a toplevel F<Makefile.PL> in
+F<$CPANHOME/.cpan/build/> with contents being (compare with L<Making
+executables with a custom collection of statically loaded extensions>)
+
+  use ExtUtils::MakeMaker;
+  WriteMakefile NAME => 'dummy';
+
+execute this as
+
+  perl_5.8.2.exe Makefile.PL <nul |& tee 00aout_c1
+  make -k all test <nul |& 00aout_t1
+
+Again, this procedure should not be absolutely smooth.  Some C<Makefile.PL>'s
+in subdirectories may be buggy, and would not run as "child" scripts.  The
+interdependency of modules can strike you; however, since non-XS modules
+are already installed, the prerequisites of most modules have a very good
+chance to be present.
+
+If you discover some glitches, move directories of problematic modules to a
+different location; if these modules are non-XS modules, you may just ignore
+them - they are already installed; the remaining, XS, modules you need to
+install manually one by one.
+
+After each such removal you need to rerun the C<Makefile.PL>/C<make> process;
+usually this procedure converges soon.  (But be sure to convert all the
+necessary external C libraries from F<.lib> format to F<.a> format: run one of
+
+  emxaout foo.lib
+  emximp -o foo.a foo.lib
+
+whichever is appropriate.)  Also, make sure that the DLLs for external
+libraries are usable with with executables compiled without C<-Zmtd> options.
+
+When you are sure that only a few subdirectories
+lead to failures, you may want to add C<-j4> option to C<make> to speed up
+skipping subdirectories with already finished build.
+
+When you are satisfied with the results of tests, install the build C libraries
+for extensions:
+
+  make install |& tee 00aout_i
+
+Now you can rename the file F<./perl.exe> generated during the last phase
+to F<perl_5.8.2.exe>; place it on C<PATH>; if there is an inter-dependency
+between some XS modules, you may need to repeat the C<test>/C<install> loop
+with this new executable and some excluded modules - until the procedure
+converges.
+
+Now you have all the necessary F<.a> libraries for these Perl modules in the
+places where Perl builder can find it.  Use the perl builder: change to an
+empty directory, create a "dummy" F<Makefile.PL> again, and run
+
+  perl_5.8.2.exe Makefile.PL |& tee 00c
+  make perl		     |& tee 00p
+
+This should create an executable F<./perl.exe> with all the statically loaded
+extensions built in.  Compare the generated F<perlmain.c> files to make sure
+that during the iterations the number of loaded extensions only increases.
+Rename F<./perl.exe> to F<perl_5.8.2.exe> on C<PATH>.
+
+When it converges, you got a functional variant of F<perl_5.8.2.exe>; copy it
+to C<perl_.exe>.  You are done with generation of the local Perl installation.
+
+=item 8.
+
+Make sure that the installed modules are actually installed in the location
+of the new Perl, and are not inherited from entries of @INC given for
+inheritance from the older versions of Perl: set C<PERLLIB_582_PREFIX> to
+redirect the new version of Perl to a new location, and copy the installed
+files to this new location.  Redo the tests to make sure that the versions of
+modules inherited from older versions of Perl are not needed.
+
+Actually, the log output of L<pod2ipf> during the step 6 gives a very detailed
+info about which modules are loaded from which place; so you may use it as
+an additional verification tool.
+
+Check that some temporary files did not make into the perl install tree.
+Run something like this
+
+  pfind . -f "!(/\.(pm|pl|ix|al|h|a|lib|txt|pod|imp|bs|dll|ld|bs|inc|xbm|yml|cgi|uu|e2x|skip|packlist|eg|cfg|html|pub|enc|all|ini|po|pot)$/i or /^\w+$/") | less
+
+in the install tree (both top one and F<sitelib> one).
+
+Compress all the DLLs with F<lxlite>.  The tiny F<.exe> can be compressed with
+C</c:max> (the bug only appears when there is a fixup in the last 6 bytes of a
+page (?); since the tiny executables are much smaller than a page, the bug
+will not hit).  Do not compress C<perl_.exe> - it would not work under DOS.
+
+=item 9.
+
+Now you can generate the binary distribution.  This is done by running the
+test of the CPAN distribution C<OS2::SoftInstaller>.  Tune up the file
+F<test.pl> to suit the layout of current version of Perl first.  Do not
+forget to pack the necessary external DLLs accordingly.  Include the
+description of the bugs and test suite failures you could not fix.  Include
+the small-stack versions of Perl executables from Perl build directory.
+
+Include F<perl5.def> so that people can relink the perl DLL preserving
+the binary compatibility, or can create compatibility DLLs.  Include the diff
+files (C<diff -pu old new>) of fixes you did so that people can rebuild your
+version.  Include F<perl5.map> so that one can use remote debugging.
+
+=item 10.
+
+Share what you did with the other people.  Relax.  Enjoy fruits of your work.
+
+=item 11.
+
+Brace yourself for thanks, bug reports, hate mail and spam coming as result
+of the previous step.  No good deed should remain unpunished!
+
+=back
+
+=head1 Building custom F<.EXE> files
+
+The Perl executables can be easily rebuilt at any moment.  Moreover, one can
+use the I<embedding> interface (see L<perlembed>) to make very customized
+executables.
+
+=head2 Making executables with a custom collection of statically loaded extensions
+
+It is a little bit easier to do so while I<decreasing> the list of statically
+loaded extensions.  We discuss this case only here.
+
+=over
+
+=item 1.
+
+Change to an empty directory, and create a placeholder <Makefile.PL>:
+
+  use ExtUtils::MakeMaker;
+  WriteMakefile NAME => 'dummy';
+
+=item 2.
+
+Run it with the flavor of Perl (F<perl.exe> or F<perl_.exe>) you want to
+rebuild.
+
+  perl_ Makefile.PL
+
+=item 3.
+
+Ask it to create new Perl executable:
+
+  make perl
+
+(you may need to manually add C<PERLTYPE=-DPERL_CORE> to this commandline on
+some versions of Perl; the symptom is that the command-line globbing does not
+work from OS/2 shells with the newly-compiled executable; check with
+
+  .\perl.exe -wle "print for @ARGV" *
+
+).
+
+=item 4.
+
+The previous step created F<perlmain.c> which contains a list of newXS() calls
+near the end.  Removing unnecessary calls, and rerunning
+
+  make perl
+
+will produce a customized executable.
+
+=back
+
+=head2 Making executables with a custom search-paths
+
+The default perl executable is flexible enough to support most usages.
+However, one may want something yet more flexible; for example, one may want
+to find Perl DLL relatively to the location of the EXE file; or one may want
+to ignore the environment when setting the Perl-library search patch, etc.
+
+If you fill comfortable with I<embedding> interface (see L<perlembed>), such
+things are easy to do repeating the steps outlined in L<Making
+executables with a custom collection of statically loaded extensions>, and
+doing more comprehensive edits to main() of F<perlmain.c>.  The people with
+little desire to understand Perl can just rename main(), and do necessary
+modification in a custom main() which calls the renamed function in appropriate
+time.
+
+However, there is a third way: perl DLL exports the main() function and several
+callbacks to customize the search path.  Below is a complete example of a
+"Perl loader" which
+
+=over
+
+=item 1.
+
+Looks for Perl DLL in the directory C<$exedir/../dll>;
+
+=item 2.
+
+Prepends the above directory to C<BEGINLIBPATH>;
+
+=item 3.
+
+Fails if the Perl DLL found via C<BEGINLIBPATH> is different from what was
+loaded on step 1; e.g., another process could have loaded it from C<LIBPATH>
+or from a different value of C<BEGINLIBPATH>.  In these cases one needs to
+modify the setting of the system so that this other process either does not
+run, or loads the DLL from C<BEGINLIBPATH> with C<LIBPATHSTRICT=T> (available
+with kernels after September 2000).
+
+=item 4.
+
+Loads Perl library from C<$exedir/../dll/lib/>.
+
+=item 5.
+
+Uses Bourne shell from C<$exedir/../dll/sh/ksh.exe>.
+
+=back
+
+For best results compile the C file below with the same options as the Perl
+DLL.  However, a lot of functionality will work even if the executable is not
+an EMX applications, e.g., if compiled with
+
+  gcc -Wall -DDOSISH -DOS2=1 -O2 -s -Zomf -Zsys perl-starter.c -DPERL_DLL_BASENAME=\"perl312F\" -Zstack 8192 -Zlinker /PM:VIO
+
+Here is the sample C file:
+
+  #define INCL_DOS
+  #define INCL_NOPM
+  /* These are needed for compile if os2.h includes os2tk.h, not os2emx.h */
+  #define INCL_DOSPROCESS
+  #include <os2.h>
+
+  #include "EXTERN.h"
+  #define PERL_IN_MINIPERLMAIN_C
+  #include "perl.h"
+
+  static char *me;
+  HMODULE handle;
+
+  static void
+  die_with(char *msg1, char *msg2, char *msg3, char *msg4)
+  {
+     ULONG c;
+     char *s = " error: ";
+
+     DosWrite(2, me, strlen(me), &c);
+     DosWrite(2, s, strlen(s), &c);
+     DosWrite(2, msg1, strlen(msg1), &c);
+     DosWrite(2, msg2, strlen(msg2), &c);
+     DosWrite(2, msg3, strlen(msg3), &c);
+     DosWrite(2, msg4, strlen(msg4), &c);
+     DosWrite(2, "\r\n", 2, &c);
+     exit(255);
+  }
+
+  typedef ULONG (*fill_extLibpath_t)(int type, char *pre, char *post, int replace, char *msg);
+  typedef int (*main_t)(int type, char *argv[], char *env[]);
+  typedef int (*handler_t)(void* data, int which);
+
+  #ifndef PERL_DLL_BASENAME
+  #  define PERL_DLL_BASENAME "perl"
+  #endif
+
+  static HMODULE
+  load_perl_dll(char *basename)
+  {
+      char buf[300], fail[260];
+      STRLEN l, dirl;
+      fill_extLibpath_t f;
+      ULONG rc_fullname;
+      HMODULE handle, handle1;
+
+      if (_execname(buf, sizeof(buf) - 13) != 0)
+          die_with("Can't find full path: ", strerror(errno), "", "");
+      /* XXXX Fill `me' with new value */
+      l = strlen(buf);
+      while (l && buf[l-1] != '/' && buf[l-1] != '\\')
+          l--;
+      dirl = l - 1;
+      strcpy(buf + l, basename);
+      l += strlen(basename);
+      strcpy(buf + l, ".dll");
+      if ( (rc_fullname = DosLoadModule(fail, sizeof fail, buf, &handle)) != 0
+           && DosLoadModule(fail, sizeof fail, basename, &handle) != 0 )
+          die_with("Can't load DLL ", buf, "", "");
+      if (rc_fullname)
+          return handle;		/* was loaded with short name; all is fine */
+      if (DosQueryProcAddr(handle, 0, "fill_extLibpath", (PFN*)&f))
+          die_with(buf, ": DLL exports no symbol ", "fill_extLibpath", "");
+      buf[dirl] = 0;
+      if (f(0 /*BEGINLIBPATH*/, buf /* prepend */, NULL /* append */,
+            0 /* keep old value */, me))
+          die_with(me, ": prepending BEGINLIBPATH", "", "");
+      if (DosLoadModule(fail, sizeof fail, basename, &handle1) != 0)
+          die_with(me, ": finding perl DLL again via BEGINLIBPATH", "", "");
+      buf[dirl] = '\\';     
+      if (handle1 != handle) {
+          if (DosQueryModuleName(handle1, sizeof(fail), fail))
+              strcpy(fail, "???");
+          die_with(buf, ":\n\tperl DLL via BEGINLIBPATH is different: \n\t",
+                   fail,
+                   "\n\tYou may need to manipulate global BEGINLIBPATH and LIBPATHSTRICT"
+                   "\n\tso that the other copy is loaded via BEGINLIBPATH.");
+      }
+      return handle;
+  }
+
+  int
+  main(int argc, char **argv, char **env)
+  {
+      main_t f;
+      handler_t h;
+    
+      me = argv[0];
+      /**/
+      handle = load_perl_dll(PERL_DLL_BASENAME);
+
+      if (DosQueryProcAddr(handle, 0, "Perl_OS2_handler_install", (PFN*)&h))
+          die_with(PERL_DLL_BASENAME, ": DLL exports no symbol ", "Perl_OS2_handler_install", "");
+      if ( !h((void *)"~installprefix", Perlos2_handler_perllib_from)
+           || !h((void *)"~dll", Perlos2_handler_perllib_to)
+           || !h((void *)"~dll/sh/ksh.exe", Perlos2_handler_perl_sh) )
+          die_with(PERL_DLL_BASENAME, ": Can't install @INC manglers", "", "");
+
+      if (DosQueryProcAddr(handle, 0, "dll_perlmain", (PFN*)&f))
+          die_with(PERL_DLL_BASENAME, ": DLL exports no symbol ", "dll_perlmain", "");
+      return f(argc, argv, env);
+  }
+
 
 =head1 Build FAQ
 
@@ -2270,8 +2700,8 @@ have a low probability of affecting small programs.
 
 =head1 BUGS
 
-This description was not updated since 5.6.1, see F<os2/Changes> for
-more info.
+This description is not updated often (since 5.6.1?), see F<./os2/Changes>
+(L<perlos2delta>) for more info.
 
 =cut
 

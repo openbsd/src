@@ -220,7 +220,7 @@ sub expires {
 sub max_age {
   my $self = shift;
   my $expires = shift;
-  $self->{'max-age'} = CGI::Util::expire_calc($expires)-time if defined $expires;
+  $self->{'max-age'} = CGI::Util::expire_calc($expires)-time() if defined $expires;
   return $self->{'max-age'};
 }
 

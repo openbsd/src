@@ -446,3 +446,98 @@ sub FETCH
 }
 EXPECT
 ok
+########
+
+# test SCALAR method
+package TieScalar;
+
+sub TIEHASH {
+    my $pkg = shift;
+    bless { } => $pkg;
+}
+
+sub STORE {
+    $_[0]->{$_[1]} = $_[2];
+}
+
+sub FETCH {
+    $_[0]->{$_[1]}
+}
+
+sub CLEAR {
+    %{ $_[0] } = ();
+}
+
+sub SCALAR {
+    print "SCALAR\n";
+    return 0 if ! keys %{$_[0]};
+    sprintf "%i/%i", scalar keys %{$_[0]}, scalar keys %{$_[0]};
+}
+
+package main;
+tie my %h => "TieScalar";
+$h{key1} = "val1";
+$h{key2} = "val2";
+print scalar %h, "\n";
+%h = ();
+print scalar %h, "\n";
+EXPECT
+SCALAR
+2/2
+SCALAR
+0
+########
+
+# test scalar on tied hash when no SCALAR method has been given
+package TieScalar;
+
+sub TIEHASH {
+    my $pkg = shift;
+    bless { } => $pkg;
+}
+sub STORE {
+    $_[0]->{$_[1]} = $_[2];
+}
+sub FETCH {
+    $_[0]->{$_[1]}
+}
+sub CLEAR {
+    %{ $_[0] } = ();
+}
+sub FIRSTKEY {
+    my $a = keys %{ $_[0] };
+    print "FIRSTKEY\n";
+    each %{ $_[0] };
+}
+
+package main;
+tie my %h => "TieScalar";
+
+if (!%h) {
+    print "empty\n";
+} else {
+    print "not empty\n";
+}
+
+$h{key1} = "val1";
+print "not empty\n" if %h;
+print "not empty\n" if %h;
+print "-->\n";
+my ($k,$v) = each %h;
+print "<--\n";
+print "not empty\n" if %h;
+%h = ();
+print "empty\n" if ! %h;
+EXPECT
+FIRSTKEY
+empty
+FIRSTKEY
+not empty
+FIRSTKEY
+not empty
+-->
+FIRSTKEY
+<--
+not empty
+FIRSTKEY
+empty

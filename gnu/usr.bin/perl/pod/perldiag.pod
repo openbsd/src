@@ -1298,6 +1298,12 @@ there are neither package declarations nor a C<$VERSION>.
 long for Perl to handle.  You have to be seriously twisted to write code
 that triggers this error.
 
+=item DESTROY created new reference to dead object '%s'
+
+(F) A DESTROY() method created a new reference to the object which is
+just being DESTROYed. Perl is confused, and prefers to abort rather than
+to create a dangling reference.
+
 =item Did not produce a valid header
 
 See Server error.

@@ -156,10 +156,10 @@ perform the upgrade if necessary.  See C<svtype>.
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__) && !defined(PERL_GCC_PEDANTIC)
 #  define SvREFCNT_inc(sv)		\
     ({					\
-	SV *nsv = (SV*)(sv);		\
-	if (nsv)			\
-	     ATOMIC_INC(SvREFCNT(nsv));	\
-	nsv;				\
+	SV *_sv = (SV*)(sv);		\
+	if (_sv)			\
+	     ATOMIC_INC(SvREFCNT(_sv));	\
+	_sv;				\
     })
 #else
 #  ifdef USE_5005THREADS
@@ -1025,12 +1025,12 @@ scalar.
 
 #if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
 
-#  define SvIVx(sv) ({SV *nsv = (SV*)(sv); SvIV(nsv); })
-#  define SvUVx(sv) ({SV *nsv = (SV*)(sv); SvUV(nsv); })
-#  define SvNVx(sv) ({SV *nsv = (SV*)(sv); SvNV(nsv); })
-#  define SvPVx(sv, lp) ({SV *nsv = (sv); SvPV(nsv, lp); })
-#  define SvPVutf8x(sv, lp) ({SV *nsv = (sv); SvPVutf8(nsv, lp); })
-#  define SvPVbytex(sv, lp) ({SV *nsv = (sv); SvPVbyte(nsv, lp); })
+#  define SvIVx(sv) ({SV *_sv = (SV*)(sv); SvIV(_sv); })
+#  define SvUVx(sv) ({SV *_sv = (SV*)(sv); SvUV(_sv); })
+#  define SvNVx(sv) ({SV *_sv = (SV*)(sv); SvNV(_sv); })
+#  define SvPVx(sv, lp) ({SV *_sv = (sv); SvPV(_sv, lp); })
+#  define SvPVutf8x(sv, lp) ({SV *_sv = (sv); SvPVutf8(_sv, lp); })
+#  define SvPVbytex(sv, lp) ({SV *_sv = (sv); SvPVbyte(_sv, lp); })
 #  define SvTRUE(sv) (						\
     !sv								\
     ? 0								\
@@ -1047,7 +1047,7 @@ scalar.
 	    :   SvNOK(sv)					\
 		? SvNVX(sv) != 0.0				\
 		: sv_2bool(sv) )
-#  define SvTRUEx(sv) ({SV *nsv = (sv); SvTRUE(nsv); })
+#  define SvTRUEx(sv) ({SV *_sv = (sv); SvTRUE(_sv); })
 
 #else /* __GNUC__ */
 
@@ -1091,6 +1091,9 @@ scalar.
 #  endif /* USE_5005THREADS */
 #endif /* __GNU__ */
 
+#define SvIsCOW(sv)		((SvFLAGS(sv) & (SVf_FAKE | SVf_READONLY)) == \
+				    (SVf_FAKE | SVf_READONLY))
+#define SvIsCOW_shared_hash(sv)	(SvIsCOW(sv) && SvLEN(sv) == 0)
 
 /* flag values for sv_*_flags functions */
 #define SV_IMMEDIATE_UNREF	1

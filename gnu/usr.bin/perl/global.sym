@@ -665,3 +665,5 @@ Perl_PerlIO_get_cnt
 Perl_PerlIO_stdin
 Perl_PerlIO_stdout
 Perl_PerlIO_stderr
+Perl_hv_clear_placeholders
+Perl_hv_scalar

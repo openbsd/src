@@ -921,9 +921,6 @@ perl_destruct(pTHXx)
     SvREFCNT(&PL_sv_undef) = 0;
     SvREADONLY_off(&PL_sv_undef);
 
-    SvREFCNT(&PL_sv_placeholder) = 0;
-    SvREADONLY_off(&PL_sv_placeholder);
-
     Safefree(PL_origfilename);
     PL_origfilename = Nullch;
     Safefree(PL_reg_start_tmp);

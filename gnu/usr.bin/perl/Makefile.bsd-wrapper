@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.61 2004/02/08 00:15:18 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.62 2004/04/07 21:32:58 millert Exp $
 #
-# Build wrapper for Perl 5.8.2
+# Build wrapper for Perl 5.8.3
 #
 
 # To build a threaded perl, uncomment this.  Not stable on all platforms...
@@ -68,6 +68,8 @@ MANSRCALL=
     perl573delta 1		pod/perl573delta.pod \
     perl58delta 1		pod/perl58delta.pod \
     perl581delta 1		pod/perl581delta.pod \
+    perl582delta 1		pod/perl582delta.pod \
+    perl583delta 1		pod/perl583delta.pod \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
     perlartistic 1		pod/perlartistic.pod \
@@ -86,7 +88,6 @@ MANSRCALL=
     perldebguts 1		pod/perldebguts.pod \
     perldebtut 1		pod/perldebtut.pod \
     perldebug 1			pod/perldebug.pod \
-    perldelta 1			pod/perldelta.pod \
     perldiag 1			pod/perldiag.pod \
     perldoc 1			pod/perldoc.pod \
     perldsc 1			pod/perldsc.pod \
@@ -137,6 +138,7 @@ MANSRCALL=
     perlref 1			pod/perlref.pod \
     perlreftut 1		pod/perlreftut.pod \
     perlrequick	1		pod/perlrequick.pod \
+    perlreref 1			pod/perlreref.pod \
     perlretut 1			pod/perlretut.pod \
     perlrun 1			pod/perlrun.pod \
     perlsec 1			pod/perlsec.pod \
@@ -166,6 +168,7 @@ MANSRCALL=
     pod2usage 1			pod/pod2usage \
     podchecker 1		pod/podchecker \
     podselect 1			pod/podselect \
+    prove 1			lib/Test/Harness/bin/prove \
     s2p	1			x2p/s2p \
     splain 1			utils/splain \
     xsubpp 1			lib/ExtUtils/xsubpp \
@@ -217,6 +220,7 @@ MANSRCALL=
     Devel::Peek 3p		ext/Devel/Peek/Peek.pm \
     Devel::SelfStubber 3p	lib/Devel/SelfStubber.pm \
     Digest 3p			lib/Digest.pm \
+    Digest::base 3p		lib/Digest/base.pm \
     Digest::MD5 3p		ext/Digest/MD5/MD5.pm \
     DirHandle 3p		lib/DirHandle.pm \
     Dumpvalue 3p		lib/Dumpvalue.pm \
@@ -343,7 +347,7 @@ MANSRCALL=
     Math::BigFloat 3p		lib/Math/BigFloat.pm \
     Math::BigInt 3p		lib/Math/BigInt.pm \
     Math::BigInt::Calc 3p	lib/Math/BigInt/Calc.pm \
-    Math::BigInt::Scalar 3p	lib/Math/BigInt/Scalar.pm \
+    Math::BigInt::CalcEmu 3p	lib/Math/BigInt/CalcEmu.pm \
     Math::BigRat 3p		lib/Math/BigRat.pm \
     Math::Complex 3p		lib/Math/Complex.pm \
     Math::Trig 3p		lib/Math/Trig.pm \

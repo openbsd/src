@@ -7,13 +7,13 @@
  * that running config_h.SH again will wipe out any changes you've made.
  * For a more permanent change edit config.sh and rerun config_h.SH.
  *
- * $Id: Config_h.U,v 3.0.1.5 1997/02/28 14:57:43 ram Exp $
+ * $Id: config_H,v 1.6 2003/12/03 03:02:25 millert Exp $
  */
 
 /*
  * Package name      : perl5
  * Source directory  : .
- * Configuration time: Sun Nov  2 23:55:28 GMT 2003
+ * Configuration time: Wed Jan 14 15:58:57 GMT 2004
  * Configured by     : nick
  * Target system     : linux bagpuss.unfortu.net 2.4.19-rmk4 #3 fri oct 25 21:57:55 bst 2002 armv4l unknown 
  */
@@ -1338,8 +1338,8 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define ARCHLIB "/opt/perl/lib/5.8.2/armv4l-linux"		/**/
-#define ARCHLIB_EXP "/opt/perl/lib/5.8.2/armv4l-linux"		/**/
+#define ARCHLIB "/usr/local/lib/perl5/5.8.3/armv4l-linux"		/**/
+#define ARCHLIB_EXP "/usr/local/lib/perl5/5.8.3/armv4l-linux"		/**/
 
 /* BIN:
  *	This symbol holds the path of the bin directory where the package will
@@ -1349,8 +1349,8 @@
  *	This symbol is the filename expanded version of the BIN symbol, for
  *	programs that do not want to deal with that at run-time.
  */
-#define BIN "/opt/perl/bin"	/**/
-#define BIN_EXP "/opt/perl/bin"	/**/
+#define BIN "/usr/local/bin"	/**/
+#define BIN_EXP "/usr/local/bin"	/**/
 
 /* PERL_INC_VERSION_LIST:
  *	This variable specifies the list of subdirectories in over
@@ -1359,7 +1359,7 @@
  *	for a C initialization string.  See the inc_version_list entry
  *	in Porting/Glossary for more details.
  */
-#define PERL_INC_VERSION_LIST 0		/**/
+#define PERL_INC_VERSION_LIST "5.8.0/armv4l-linux","5.8.0","5.7.3","5.7.2","5.7.1","5.7.0","5.6.0","5.005",0		/**/
 
 /* INSTALL_USR_BIN_PERL:
  *	This symbol, if defined, indicates that Perl is to be installed
@@ -1377,6 +1377,18 @@
  */
 /*#define PERL_OTHERLIBDIRS " "		/ **/
 
+/* INSTALL_PREFIX:
+ *	This symbol contains the "root" of installation tree for this package.
+ *	The program should be prepared to do ~ expansion.
+ */
+/* INSTALL_PREFIX_EXP:
+ *	This symbol contains the "root" of installation tree for this package
+ *	to be used in programs that are not prepared to deal with ~ expansion
+ *	at run-time.
+ */
+#define INSTALL_PREFIX "/usr/local"		/**/
+#define INSTALL_PREFIX_EXP "/usr/local"	/**/
+
 /* PRIVLIB:
  *	This symbol contains the name of the private library for this package.
  *	The library is private in the sense that it needn't be in anyone's
@@ -1387,8 +1399,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/opt/perl/lib/5.8.2"		/**/
-#define PRIVLIB_EXP "/opt/perl/lib/5.8.2"		/**/
+#define PRIVLIB "/usr/local/lib/perl5/5.8.3"		/**/
+#define PRIVLIB_EXP "/usr/local/lib/perl5/5.8.3"		/**/
 
 /* SITEARCH:
  *	This symbol contains the name of the private library for this package.
@@ -1405,8 +1417,8 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define SITEARCH "/opt/perl/lib/site_perl/5.8.2/armv4l-linux"		/**/
-#define SITEARCH_EXP "/opt/perl/lib/site_perl/5.8.2/armv4l-linux"		/**/
+#define SITEARCH "/usr/local/lib/perl5/site_perl/5.8.3/armv4l-linux"		/**/
+#define SITEARCH_EXP "/usr/local/lib/perl5/site_perl/5.8.3/armv4l-linux"		/**/
 
 /* SITELIB:
  *	This symbol contains the name of the private library for this package.
@@ -1428,9 +1440,9 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/opt/perl/lib/site_perl/5.8.2"		/**/
-#define SITELIB_EXP "/opt/perl/lib/site_perl/5.8.2"		/**/
-#define SITELIB_STEM "/opt/perl/lib/site_perl"		/**/
+#define SITELIB "/usr/local/lib/perl5/site_perl/5.8.3"		/**/
+#define SITELIB_EXP "/usr/local/lib/perl5/site_perl/5.8.3"		/**/
+#define SITELIB_STEM "/usr/local/lib/perl5/site_perl"		/**/
 
 /* PERL_VENDORARCH:
  *	If defined, this symbol contains the name of a private library.
@@ -1677,7 +1689,7 @@
 #define HAS_UNAME		/**/
 /*#define HAS_PHOSTNAME	/ **/
 #ifdef HAS_PHOSTNAME
-#define PHOSTNAME ""	/* How to get the host name */
+#define PHOSTNAME "/bin/hostname"	/* How to get the host name */
 #endif
 
 /* HAS_GETNETBYADDR:
@@ -3273,7 +3285,7 @@
  *	script to make sure (one hopes) that it runs with perl and not
  *	some shell.
  */
-#define STARTPERL "#!/opt/perl/bin/perl"		/**/
+#define STARTPERL "#!/usr/local/bin/perl"		/**/
 
 /* HAS_STDIO_STREAM_ARRAY:
  *	This symbol, if defined, tells that there is an array
@@ -3373,7 +3385,7 @@
 /* PERL_XS_APIVERSION:
  *	This variable contains the version of the oldest perl binary
  *	compatible with the present perl.  perl.c:incpush() and
- *	lib/lib.pm will automatically search in /opt/perl/lib/site_perl/5.8.2/armv4l-linux for older
+ *	lib/lib.pm will automatically search in /usr/local/lib/perl5/site_perl/5.8.3/armv4l-linux for older
  *	directories across major versions back to xs_apiversion.
  *	This is only useful if you have a perl library directory tree
  *	structured like the default one.
@@ -3392,7 +3404,7 @@
  *	compatible with the present perl.  (That is, pure perl modules
  *	written for pm_apiversion will still work for the current
  *	version).  perl.c:incpush() and lib/lib.pm will automatically
- *	search in /opt/perl/lib/site_perl/5.8.2 for older directories across major versions
+ *	search in /usr/local/lib/perl5/site_perl/5.8.3 for older directories across major versions
  *	back to pm_apiversion.  This is only useful if you have a perl
  *	library directory tree structured like the default one.  The
  *	versioned site_perl library was introduced in 5.005, so that's
@@ -3402,7 +3414,7 @@
  *	(presumably) be similar.
  *	See the INSTALL file for how this works.
  */
-#define PERL_XS_APIVERSION "5.8.2"
+#define PERL_XS_APIVERSION "5.8.3"
 #define PERL_PM_APIVERSION "5.005"
 
 /* HAS_DRAND48_PROTO:

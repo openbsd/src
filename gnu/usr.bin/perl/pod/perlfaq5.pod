@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq5 - Files and Formats ($Revision: 1.28 $, $Date: 2003/01/26 17:45:46 $)
+perlfaq5 - Files and Formats ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
 
 =head1 DESCRIPTION
 
@@ -153,8 +153,10 @@ temporary files in one process, use a counter:
 
 =head2 How can I manipulate fixed-record-length files?
 
-The most efficient way is using pack() and unpack().  This is faster than
-using substr() when taking many, many strings.  It is slower for just a few.
+The most efficient way is using L<pack()|perlfunc/"pack"> and
+L<unpack()|perlfunc/"unpack">.  This is faster than using
+L<substr()|perlfunc/"substr"> when taking many, many strings.  It is
+slower for just a few.
 
 Here is a sample chunk of code to break up and put back together again
 some fixed-format input lines, in this case from the output of a normal,
@@ -162,22 +164,23 @@ Berkeley-style ps:
 
     # sample input line:
     #   15158 p5  T      0:00 perl /home/tchrist/scripts/now-what
-    $PS_T = 'A6 A4 A7 A5 A*';
-    open(PS, "ps|");
-    print scalar <PS>;
-    while (<PS>) {
-	($pid, $tt, $stat, $time, $command) = unpack($PS_T, $_);
-	for $var (qw!pid tt stat time command!) {
-	    print "$var: <$$var>\n";
+    my $PS_T = 'A6 A4 A7 A5 A*';
+    open my $ps, '-|', 'ps';
+    print scalar <$ps>;
+    my @fields = qw( pid tt stat time command );
+    while (<$ps>) {
+        my %process;
+        @process{@fields} = unpack($PS_T, $_);
+	for my $field ( @fields ) {
+	    print "$field: <$process{$field}>\n";
 	}
-	print 'line=', pack($PS_T, $pid, $tt, $stat, $time, $command),
-		"\n";
+	print 'line=', pack($PS_T, @process{@fields} ), "\n";
     }
 
-We've used C<$$var> in a way that forbidden by C<use strict 'refs'>.
-That is, we've promoted a string to a scalar variable reference using
-symbolic references.  This is okay in small programs, but doesn't scale
-well.   It also only works on global variables, not lexicals.
+We've used a hash slice in order to easily handle the fields of each row.
+Storing the keys in an array means it's easy to operate on them as a
+group or loop over them with for. It also avoids polluting the program
+with global variables and using symbolic references.
 
 =head2 How can I make a filehandle local to a subroutine?  How do I pass filehandles between subroutines?  How do I make an array of filehandles?
 

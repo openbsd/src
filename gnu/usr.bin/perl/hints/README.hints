@@ -303,6 +303,13 @@ variable in question is defined; however, this may change, so the scheme in
 hints/solaris_2.sh of checking to see if uselongdouble is defined is a good
 idea.
 
+=item Call status
+
+Call-backs are only called always, even if the value for the call-back is
+uset: UU/usethreads.cbu is called when Configure is about to deal with
+threads. All created call-backs from hints should thus check the status
+of the variable, and act upon it.
+
 =item Future status
 
 I hope this "call-back" scheme is simple enough to use but powerful

@@ -1,8 +1,8 @@
 # DB_File.pm -- Perl 5 interface to Berkeley DB 
 #
 # written by Paul Marquess (pmqs@cpan.org)
-# last modified 22nd October 2002
-# version 1.807
+# last modified 22nd December 2003
+# version 1.808
 #
 #     Copyright (c) 1995-2003 Paul Marquess. All rights reserved.
 #     This program is free software; you can redistribute it and/or
@@ -165,7 +165,7 @@ our ($db_version, $use_XSLoader, $splice_end_array);
 use Carp;
 
 
-$VERSION = "1.807" ;
+$VERSION = "1.808" ;
 
 {
     local $SIG{__WARN__} = sub {$splice_end_array = "@_";};
@@ -2233,7 +2233,7 @@ B<DB_File> comes with the standard Perl source distribution. Look in
 the directory F<ext/DB_File>. Given the amount of time between releases
 of Perl the version that ships with Perl is quite likely to be out of
 date, so the most recent version can always be found on CPAN (see
-L<perlmod/CPAN> for details), in the directory
+L<perlmodlib/CPAN> for details), in the directory
 F<modules/by-module/DB_File>.
 
 This version of B<DB_File> will work with either version 1.x, 2.x or
@@ -2278,14 +2278,14 @@ Berkeley DB authors or the author of DB_File. See L<"AUTHOR"> for details.
 
 =head1 SEE ALSO
 
-L<perl(1)>, L<dbopen(3)>, L<hash(3)>, L<recno(3)>, L<btree(3)>,
-L<dbmfilter>
+L<perl>, L<dbopen(3)>, L<hash(3)>, L<recno(3)>, L<btree(3)>,
+L<perldbmfilter>
 
 =head1 AUTHOR
 
 The DB_File interface was written by Paul Marquess
-E<lt>pmqs@cpan.org<gt>.
+E<lt>pmqs@cpan.orgE<gt>.
 Questions about the DB system itself may be addressed to
-E<lt>db@sleepycat.com<gt>.
+E<lt>db@sleepycat.comE<gt>.
 
 =cut

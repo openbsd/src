@@ -1,8 +1,8 @@
 ## Toplevel Makefile for cross-compilation of perl
 #
-## $Id: Makefile,v 1.4 2003/09/05 00:48:19 red Exp red $
+## $Id: Makefile,v 1.2 2003/12/03 03:02:24 millert Exp $
 
-export TOPDIR?=${shell pwd}
+export TOPDIR=${shell pwd}
 include $(TOPDIR)/config
 export CFLAGS
 export SYS=$(ARCH)-$(OS)
@@ -39,9 +39,15 @@ gen_patch:
 	diff -Bbur ../installperl installperl > installperl.patch
 
 patch:
-	cd .. ; patch -p1 < Cross/Makefile.SH.patch
-	cd .. ; patch -p1 < Cross/installperl.patch ; mv installperl installperl-patched
-	cd .. ; sed -e 's/XXSTRIPXX/$(SYS)/' installperl-patched > installperl
+	cd .. ; if [ ! -e ./CROSS_PATCHED ] ; then \
+		patch -p1 < Cross/Makefile.SH.patch; \
+		patch -p1 < Cross/installperl.patch ; mv installperl installperl-patched; \
+		sed -e 's/XXSTRIPXX/$(SYS)/' installperl-patched > installperl; \
+		touch CROSS_PATCHED ; fi
+
+dry_patch:
+	cd .. ;	patch --dry-run -p1 < Cross/Makefile.SH.patch; \
+		patch --dry-run -p1 < Cross/installperl.patch; \
 
 perl:
 	@echo Perl cross-build directory is $(TOPDIR)

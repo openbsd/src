@@ -193,7 +193,8 @@ C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 
 #define XSRETURN(off)					\
     STMT_START {					\
-	PL_stack_sp = PL_stack_base + ax + ((off) - 1);	\
+	IV tmpXSoff = (off);				\
+	PL_stack_sp = PL_stack_base + ax + (tmpXSoff - 1);	\
 	return;						\
     } STMT_END
 
@@ -212,23 +213,23 @@ C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 #ifdef XS_VERSION
 #  define XS_VERSION_BOOTCHECK \
     STMT_START {							\
-	SV *tmpsv; STRLEN n_a;						\
+	SV *_sv; STRLEN n_a;						\
 	char *vn = Nullch, *module = SvPV(ST(0),n_a);			\
 	if (items >= 2)	 /* version supplied as bootstrap arg */	\
-	    tmpsv = ST(1);						\
+	    _sv = ST(1);						\
 	else {								\
 	    /* XXX GV_ADDWARN */					\
-	    tmpsv = get_sv(Perl_form(aTHX_ "%s::%s", module,		\
+	    _sv = get_sv(Perl_form(aTHX_ "%s::%s", module,		\
 				vn = "XS_VERSION"), FALSE);		\
-	    if (!tmpsv || !SvOK(tmpsv))					\
-		tmpsv = get_sv(Perl_form(aTHX_ "%s::%s", module,	\
+	    if (!_sv || !SvOK(_sv))					\
+		_sv = get_sv(Perl_form(aTHX_ "%s::%s", module,	\
 				    vn = "VERSION"), FALSE);		\
 	}								\
-	if (tmpsv && (!SvOK(tmpsv) || strNE(XS_VERSION, SvPV(tmpsv, n_a))))	\
+	if (_sv && (!SvOK(_sv) || strNE(XS_VERSION, SvPV(_sv, n_a))))	\
 	    Perl_croak(aTHX_ "%s object version %s does not match %s%s%s%s %"SVf,\
 		  module, XS_VERSION,					\
 		  vn ? "$" : "", vn ? module : "", vn ? "::" : "",	\
-		  vn ? vn : "bootstrap parameter", tmpsv);		\
+		  vn ? vn : "bootstrap parameter", _sv);		\
     } STMT_END
 #else
 #  define XS_VERSION_BOOTCHECK
@@ -266,6 +267,8 @@ C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 	    SAVEINT(db->filtering) ;				\
 	    db->filtering = TRUE ;				\
 	    SAVESPTR(DEFSV) ;					\
+            if (name[7] == 's')                                 \
+                arg = newSVsv(arg);                             \
 	    DEFSV = arg ;					\
 	    SvTEMP_off(arg) ;					\
 	    PUSHMARK(SP) ;					\
@@ -275,6 +278,10 @@ C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 	    PUTBACK ;						\
 	    FREETMPS ;						\
 	    LEAVE ;						\
+            if (name[7] == 's'){                                \
+                arg = sv_2mortal(arg);                          \
+            }                                                   \
+            SvOKp(arg);                                         \
 	}
 
 #if 1		/* for compatibility */

@@ -1,5 +1,5 @@
 # -*- Mode: cperl; cperl-indent-level: 4 -*-
-# $Id: Harness.pm,v 1.7 2003/12/03 03:02:41 millert Exp $
+# $Id: Harness.pm,v 1.8 2004/04/07 21:33:06 millert Exp $
 
 package Test::Harness;
 
@@ -11,18 +11,38 @@ use Benchmark;
 use Config;
 use strict;
 
-use vars qw($VERSION $Verbose $Switches $Have_Devel_Corestack $Curtest
-            $Columns $verbose $switches $ML $Strap
-            @ISA @EXPORT @EXPORT_OK $Last_ML_Print
-           );
+use vars qw(
+    $VERSION 
+    @ISA @EXPORT @EXPORT_OK 
+    $Verbose $Switches $Debug
+    $verbose $switches $debug
+    $Have_Devel_Corestack
+    $Curtest
+    $Columns 
+    $ML $Last_ML_Print
+    $Strap
+);
+
+=head1 NAME
+
+Test::Harness - Run Perl standard test scripts with statistics
+
+=head1 VERSION
+
+Version 2.40
+
+    $Header: /home/cvs/src/gnu/usr.bin/perl/lib/Test/Attic/Harness.pm,v 1.8 2004/04/07 21:33:06 millert Exp $
+
+=cut
+
+$VERSION = '2.40';
 
 # Backwards compatibility for exportable variable names.
 *verbose  = *Verbose;
 *switches = *Switches;
+*debug    = *Debug;
 
 $Have_Devel_Corestack = 0;
-
-$VERSION = '2.30';
 
 $ENV{HARNESS_ACTIVE} = 1;
 
@@ -45,14 +65,10 @@ $Strap = Test::Harness::Straps->new;
 @EXPORT_OK = qw($verbose $switches);
 
 $Verbose  = $ENV{HARNESS_VERBOSE} || 0;
+$Debug    = $ENV{HARNESS_DEBUG} || 0;
 $Switches = "-w";
 $Columns  = $ENV{HARNESS_COLUMNS} || $ENV{COLUMNS} || 80;
 $Columns--;             # Some shells have trouble with a full line of text.
-
-
-=head1 NAME
-
-Test::Harness - run perl standard test scripts with statistics
 
 =head1 SYNOPSIS
 
@@ -163,12 +179,14 @@ emitted if the test script is skipped completely:
 
 =item B<Todo tests>
 
-If the standard output line contains the substring C< # TODO> after
+If the standard output line contains the substring C< # TODO > after
 C<not ok> or C<not ok NUMBER>, it is counted as a todo test.  The text
 afterwards is the thing that has to be done before this test will
 succeed.
 
   not ok 13 # TODO harness the power of the atom
+
+Note that the TODO must have a space after it. 
 
 =begin _deprecated
 
@@ -220,16 +238,14 @@ test script, please use a comment.
 
 =back
 
-
 =head2 Taint mode
 
-Test::Harness will honor the C<-T> in the #! line on your test files.  So
-if you begin a test with:
+Test::Harness will honor the C<-T> or C<-t> in the #! line on your
+test files.  So if you begin a test with:
 
     #!perl -T
 
 the test will be run with taint mode on.
-
 
 =head2 Configuration variables.
 
@@ -238,24 +254,25 @@ Test::Harness.  They are exported on request.
 
 =over 4
 
-=item B<$Test::Harness::verbose>
+=item B<$Test::Harness::Verbose>
 
-The global variable $Test::Harness::verbose is exportable and can be
-used to let runtests() display the standard output of the script
-without altering the behavior otherwise.
+The global variable C<$Test::Harness::Verbose> is exportable and can be
+used to let C<runtests()> display the standard output of the script
+without altering the behavior otherwise.  The F<prove> utility's C<-v>
+flag will set this.
 
 =item B<$Test::Harness::switches>
 
-The global variable $Test::Harness::switches is exportable and can be
+The global variable C<$Test::Harness::switches> is exportable and can be
 used to set perl command line options used for running the test
-script(s). The default value is C<-w>.
+script(s). The default value is C<-w>. It overrides C<HARNESS_SWITCHES>.
 
 =back
 
 
 =head2 Failure
 
-It will happen, your tests will fail.  After you mop up your ego, you
+It will happen: your tests will fail.  After you mop up your ego, you
 can begin examining the summary report:
 
   t/base..............ok
@@ -288,7 +305,7 @@ If the test exited with non-zero, this is its exit status.
 
 =item B<Wstat>
 
-The wait status of the test I<umm, I need a better explanation here>.
+The wait status of the test.
 
 =item B<Total>
 
@@ -388,9 +405,9 @@ sub _globdir {
 
   my($total, $failed) = _run_all_tests(@test_files);
 
-Runs all the given @test_files (as runtests()) but does it quietly (no
-report).  $total is a hash ref summary of all the tests run.  Its keys
-and values are this:
+Runs all the given C<@test_files> (as C<runtests()>) but does it
+quietly (no report).  $total is a hash ref summary of all the tests
+run.  Its keys and values are this:
 
     bonus           Number of individual todo tests unexpectedly passed
     max             Number of individual tests ran
@@ -404,8 +421,8 @@ and values are this:
     tests           Number of test files originally given
     skipped         Number of test files skipped
 
-If $total->{bad} == 0 and $total->{max} > 0, you've got a successful
-test.
+If C<< $total->{bad} == 0 >> and C<< $total->{max} > 0 >>, you've
+got a successful test.
 
 $failed is a hash ref of all the test scripts which failed.  Each key
 is the name of a test script, each value is another hash representing
@@ -419,7 +436,7 @@ how that script failed.  Its keys are these:
     percent     Percentage of tests which failed
     canon       List of tests which failed (as string).
 
-Needless to say, $failed should be empty if everything passed.
+C<$failed> should be empty if everything passed.
 
 B<NOTE> Currently this function is still noisy.  I'm working on it.
 
@@ -451,16 +468,21 @@ sub _run_all_tests {
 
     my $width = _leader_width(@tests);
     foreach my $tfile (@tests) {
+	if ( $Test::Harness::Debug ) {
+	    print "# Running: ", $Strap->_command_line($tfile), "\n";
+	}
+
         $Last_ML_Print = 0;  # so each test prints at least once
         my($leader, $ml) = _mk_leader($tfile, $width);
         local $ML = $ml;
+
         print $leader;
 
         $tot{files}++;
 
         $Strap->{_seen_header} = 0;
         my %results = $Strap->analyze_file($tfile) or
-          do { warn "$Strap->{error}\n";  next };
+          do { warn $Strap->{error}, "\n";  next };
 
         # state of the current test.
         my @failed = grep { !$results{details}[$_-1]{ok} }
@@ -526,7 +548,7 @@ sub _run_all_tests {
             }
             elsif($results{seen}) {
                 if (@{$test{failed}} and $test{max}) {
-                    my ($txt, $canon) = canonfailed($test{max},$test{skipped},
+                    my ($txt, $canon) = _canonfailed($test{max},$test{skipped},
                                                     @{$test{failed}});
                     print "$test{ml}$txt";
                     $failedtests{$tfile} = { canon   => $canon,
@@ -587,12 +609,12 @@ sub _run_all_tests {
 
   my($leader, $ml) = _mk_leader($test_file, $width);
 
-Generates the 't/foo........' $leader for the given $test_file as well
+Generates the 't/foo........' $leader for the given C<$test_file> as well
 as a similar version which will overwrite the current line (by use of
-\r and such).  $ml may be empty if Test::Harness doesn't think you're
+\r and such).  C<$ml> may be empty if Test::Harness doesn't think you're
 on TTY.
 
-The $width is the width of the "yada/blah.." string.
+The C<$width> is the width of the "yada/blah.." string.
 
 =cut
 
@@ -789,7 +811,7 @@ sub _dubious_return {
            $wstatus,$wstatus;
     print "\t\t(VMS status is $estatus)\n" if $^O eq 'VMS';
 
-    if (corestatus($wstatus)) { # until we have a wait module
+    if (_corestatus($wstatus)) { # until we have a wait module
         if ($Have_Devel_Corestack) {
             Devel::CoreStack::stack($^X);
         } else {
@@ -808,7 +830,7 @@ sub _dubious_return {
         else {
             push @{$test->{failed}}, $test->{'next'}..$test->{max};
             $failed = @{$test->{failed}};
-            (my $txt, $canon) = canonfailed($test->{max},$test->{skipped},@{$test->{failed}});
+            (my $txt, $canon) = _canonfailed($test->{max},$test->{skipped},@{$test->{failed}});
             $percent = 100*(scalar @{$test->{failed}})/$test->{max};
             print "DIED. ",$txt;
         }
@@ -878,7 +900,7 @@ sub _create_fmts {
 {
     my $tried_devel_corestack;
 
-    sub corestatus {
+    sub _corestatus {
         my($st) = @_;
 
         my $did_core;
@@ -898,7 +920,7 @@ sub _create_fmts {
     }
 }
 
-sub canonfailed ($$@) {
+sub _canonfailed ($$@) {
     my($max,$skipped,@failed) = @_;
     my %seen;
     @failed = sort {$a <=> $b} grep !$seen{$_}++, @failed;
@@ -966,8 +988,7 @@ __END__
 
 C<&runtests> is exported by Test::Harness by default.
 
-C<$verbose> and C<$switches> are exported upon request.
-
+C<$verbose>, C<$switches> and C<$debug> are exported upon request.
 
 =head1 DIAGNOSTICS
 
@@ -1027,6 +1048,13 @@ C<perlcc> before running it.
 B<NOTE> This currently only works when sitting in the perl source
 directory!
 
+=item C<HARNESS_DEBUG>
+
+If true, Test::Harness will print debugging information about itself as
+it runs the tests.  This is different from C<HARNESS_VERBOSE>, which prints
+the output from the test being run.  Setting C<$Test::Harness::Debug> will
+override this, or you can use the C<-d> switch in the F<prove> utility.
+
 =item C<HARNESS_FILELEAK_IN_DIR>
 
 When set to the name of a directory, harness will check after each
@@ -1052,9 +1080,17 @@ somewhat messy output).
 
 =item C<HARNESS_OK_SLOW>
 
-If true, the C<ok> messages are printed out only every second.
-This reduces output and therefore may for example help testing
-over slow connections.
+If true, the C<ok> messages are printed out only every second.  This
+reduces output and may help increase testing speed over slow
+connections, or with very large numbers of tests.
+
+=item C<HARNESS_PERL>
+
+Usually your tests will be run by C<$^X>, the currently-executing Perl.
+However, you may want to have it run by a different executable, such as
+a threading perl, or a different version.
+
+If you're using the F<prove> utility, you can use the C<--perl> switch.
 
 =item C<HARNESS_PERL_SWITCHES>
 
@@ -1065,7 +1101,8 @@ run all tests with all warnings enabled.
 =item C<HARNESS_VERBOSE>
 
 If true, Test::Harness will output the verbose results of running
-its tests.  Setting $Test::Harness::verbose will override this.
+its tests.  Setting C<$Test::Harness::verbose> will override this,
+or you can use the C<-v> switch in the F<prove> utility.
 
 =back
 
@@ -1164,5 +1201,23 @@ Clean up how the summary is printed.  Get rid of those damned formats.
 
 HARNESS_COMPILE_TEST currently assumes it's run from the Perl source
 directory.
+
+Please use the CPAN bug ticketing system at L<http://rt.cpan.org/>.
+You can also mail bugs, fixes and enhancements to 
+C<< <bug-test-harness@rt.cpan.org> >>.
+
+=head1 AUTHORS
+
+Original code by Michael G Schwern, maintained by Andy Lester.
+
+=head1 COPYRIGHT
+
+Copyright 2003 by Michael G Schwern C<< <schwern@pobox.com> >>,
+                  Andy Lester C<< <andy@petdance.com> >>.
+
+This program is free software; you can redistribute it and/or 
+modify it under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>.
 
 =cut

@@ -5,9 +5,9 @@ REALPERL = ../perl
 # Files to be built with variable substitution after miniperl is
 # available.  Dependencies handled manually below (for now).
 
-pl = c2ph.PL cpan.PL h2ph.PL h2xs.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL splain.PL perlcc.PL dprofpp.PL libnetcfg.PL piconv.PL enc2xs.PL
-plextract = c2ph cpan h2ph h2xs perlbug perldoc perlivp pl2pm splain perlcc dprofpp libnetcfg piconv enc2xs
-plextractexe = ./c2ph ./cpan ./h2ph ./h2xs ./perlbug ./perldoc ./perlivp ./pl2pm ./splain ./perlcc ./dprofpp ./libnetcfg ./piconv ./enc2xs
+pl = c2ph.PL cpan.PL h2ph.PL h2xs.PL instmodsh.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL prove.PL splain.PL perlcc.PL dprofpp.PL libnetcfg.PL piconv.PL enc2xs.PL xsubpp.PL
+plextract = c2ph cpan h2ph h2xs instmodsh perlbug perldoc perlivp pl2pm prove splain perlcc dprofpp libnetcfg piconv enc2xs xsubpp
+plextractexe = ./c2ph ./cpan ./h2ph ./h2xs ./instmodsh ./perlbug ./perldoc ./perlivp ./pl2pm ./prove ./splain ./perlcc ./dprofpp ./libnetcfg ./piconv ./enc2xs ./xsubpp
 
 all: $(plextract) 
 
@@ -35,11 +35,15 @@ h2ph:		h2ph.PL ../config.sh
 
 h2xs:		h2xs.PL ../config.sh
 
+instmodsh:	instmodsh.PL ../config.sh
+
 perlbug:	perlbug.PL ../config.sh ../patchlevel.h
 
 perldoc:	perldoc.PL ../config.sh
 
 perlivp:	perlivp.PL ../config.sh
+
+prove:		prove.PL ../config.sh
 
 pl2pm:		pl2pm.PL ../config.sh
 
@@ -54,6 +58,8 @@ libnetcfg:	libnetcfg.PL ../config.sh
 piconv:		piconv.PL ../config.sh
 
 enc2xs:		enc2xs.PL ../config.sh
+
+xsubpp:		xsubpp.PL ../config.sh
 
 clean:
 

@@ -542,53 +542,13 @@ XS(XS_Internals_SvREFCNT)	/* This is dangerous stuff. */
     XSRETURN_UNDEF; /* Can't happen. */
 }
 
-/* Maybe this should return the number of placeholders found in scalar context,
-   and a list of them in list context.  */
 XS(XS_Internals_hv_clear_placehold)
 {
     dXSARGS;
     HV *hv = (HV *) SvRV(ST(0));
-
-    /* I don't care how many parameters were passed in, but I want to avoid
-       the unused variable warning. */
-
-    items = (I32)HvPLACEHOLDERS(hv);
-
-    if (items) {
-        HE *entry;
-        I32 riter = HvRITER(hv);
-        HE *eiter = HvEITER(hv);
-        hv_iterinit(hv);
-        /* This may look suboptimal with the items *after* the iternext, but
-           it's quite deliberate. We only get here with items==0 if we've
-           just deleted the last placeholder in the hash. If we've just done
-           that then it means that the hash is in lazy delete mode, and the
-           HE is now only referenced in our iterator. If we just quit the loop
-           and discarded our iterator then the HE leaks. So we do the && the
-           other way to ensure iternext is called just one more time, which
-           has the side effect of triggering the lazy delete.  */
-        while ((entry = hv_iternext_flags(hv, HV_ITERNEXT_WANTPLACEHOLDERS))
-            && items) {
-            SV *val = hv_iterval(hv, entry);
-
-            if (val == &PL_sv_placeholder) {
-
-                /* It seems that I have to go back in the front of the hash
-                   API to delete a hash, even though I have a HE structure
-                   pointing to the very entry I want to delete, and could hold
-                   onto the previous HE that points to it. And it's easier to
-                   go in with SVs as I can then specify the precomputed hash,
-                   and don't have fun and games with utf8 keys.  */
-                SV *key = hv_iterkeysv(entry);
-
-                hv_delete_ent (hv, key, G_DISCARD, HeHASH(entry));
-                items--;
-            }
-        }
-        HvRITER(hv) = riter;
-        HvEITER(hv) = eiter;
-    }
-
+    if (items != 1)
+	Perl_croak(aTHX_ "Usage: UNIVERSAL::hv_clear_placeholders(hv)");
+    hv_clear_placeholders(hv);
     XSRETURN(0);
 }
 

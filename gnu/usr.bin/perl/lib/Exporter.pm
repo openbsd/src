@@ -9,7 +9,7 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.567';
+our $VERSION = '5.57';
 our (%Cache);
 $Carp::Internal{Exporter} = 1;
 
@@ -29,6 +29,11 @@ sub export {
 sub import {
   my $pkg = shift;
   my $callpkg = caller($ExportLevel);
+
+  if ($pkg eq "Exporter" and @_ and $_[0] eq "import") {
+    *{$callpkg."::import"} = \&import;
+    return;
+  }
 
   # We *need* to treat @{"$pkg\::EXPORT_FAIL"} since Carp uses it :-(
   my($exports, $fail) = (\@{"$pkg\::EXPORT"}, \@{"$pkg\::EXPORT_FAIL"});
@@ -101,6 +106,12 @@ In module YourModule.pm:
   package YourModule;
   require Exporter;
   @ISA = qw(Exporter);
+  @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
+
+or
+
+  package YourModule;
+  use Exporter 'import'; # gives you Exporter's import() method directly
   @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
 
 In other files which wish to use YourModule:
@@ -286,9 +297,21 @@ Instead, say the following:
 This will export the symbols one level 'above' the current package - ie: to 
 the program or module that used package A. 
 
-Note: Be careful not to modify '@_' at all before you call export_to_level
+Note: Be careful not to modify C<@_> at all before you call export_to_level
 - or people using your package will get very unexplained results!
 
+=head2 Exporting without inheriting from Exporter
+
+By including Exporter in your @ISA you inherit an Exporter's import() method
+but you also inherit several other helper methods which you probably don't
+want. To avoid this you can do
+
+  package YourModule;
+  use Exporter qw( import );
+
+which will export Exporter's own import() method into YourModule.
+Everything will work as before but you won't need to include Exporter in
+@YourModule::ISA.
 
 =head2 Module Version Checking
 
