@@ -131,6 +131,7 @@
 .	if "\\$1"0.9a"  \&\\*(tNNetBSD\\*(aa 0.9a\\*(aa\\$2
 .	if "\\$1"1.0"  \&\\*(tNNetBSD\\*(aa 1.0\\*(aa\\$2
 .	if "\\$1"1.0a"  \&\\*(tNNetBSD\\*(aa 1.0a\\*(aa\\$2
+.	if "\\$1"1.1"  \&\\*(tNNetBSD\\*(aa 1.1\\*(aa\\$2
 .\}
 .if \\n(.$==1 \{\
 .	if "\\$1"0.8"  \&\\*(tNNetBSD\\*(aa 0.8\\*(aa
@@ -139,6 +140,7 @@
 .	if "\\$1"0.9a"  \&\\*(tNNetBSD\\*(aa 0.9a\\*(aa
 .	if "\\$1"1.0"  \&\\*(tNNetBSD\\*(aa 1.0\\*(aa
 .	if "\\$1"1.0a"  \&\\*(tNNetBSD\\*(aa 1.0a\\*(aa
+.	if "\\$1"1.1"  \&\\*(tNNetBSD\\*(aa 1.1\\*(aa
 .\}
 ..
 .\" Ns At macro - AT&T UNIX
