@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.11 2004/04/08 14:32:47 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.12 2004/07/14 19:07:03 henning Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -213,7 +213,7 @@ priv_open_log(void)
 	int cmd, fd;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion\n", __func__);
+		errx(1, "%s: called from privileged portion", __func__);
 
 	cmd = PRIV_OPEN_LOG;
 	must_write(priv_fd, &cmd, sizeof(int));

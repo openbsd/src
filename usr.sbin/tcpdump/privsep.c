@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.10 2004/06/09 19:21:55 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.11 2004/07/14 19:07:03 henning Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -544,7 +544,7 @@ priv_init_done(void)
 	int ret;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion\n", __func__);
+		errx(1, "%s: called from privileged portion", __func__);
 
 	write_command(priv_fd, PRIV_INIT_DONE);
 	must_read(priv_fd, &ret, sizeof(int));
