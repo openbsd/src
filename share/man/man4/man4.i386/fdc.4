@@ -42,7 +42,7 @@
 .Nd NEC765 compatible floppy disk driver
 .Sh SYNOPSIS
 .Cd "fdc0 at isa? port 0x3f0 irq 6 drq 2"
-.Cd "fd* at fdc? drive ?"
+.Cd "fd* at fdc? drive ? flags Z"
 .Sh DESCRIPTION
 The
 .Nm fdc
@@ -74,16 +74,36 @@ The additional geometry types are as follows:
 .Pp
 The default geometry is the format specified in the BIOS, and
 is typically the largest supported format.
+.Pp
+Some floppy controllers do not respond correctly to probes, and
+the configuration file
+.Cm flags
+field can be used to specify a particular drive type, overriding the
+probed type.
+If the 0x10 bit is on, the low order three bits of the
+.Cm flags
+field encode the drive type, as follows:
+.Bl -tag -width xxxxxx -compact
+.It 1 2.88MB
+.It 2 1.44MB
+.It 3 1.2MB
+.It 4 720K
+.It 5 360K
+.It 6 1.2 MB japanese format
+.El
+.Pp
+If the 0x20 bit is on, the drive will be attached even
+if it was not found by the probe routine.
 .Sh BUGS
 The
 .Nm fdc 
-driver can interfere with other controllers namely some WD/SMC
+driver can interfere with other controllers, namely some WD/SMC
 network controllers fail to work when the probing mechanism
 in the 
 .Nm fdc 
 driver probes for a missing second floppy drive.
-In this case you should try recompiling the kernel with
-the replacing the relevant line with
+In this case you should try recompiling the kernel
+replacing the relevant line with
 .Cd "fd0 at fdc? drive ?".
 .Sh SEE ALSO
 .Xr intro 4 ,
