@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.1 2004/01/28 01:39:39 mickey Exp $
+#	$OpenBSD: Makefile.amd64,v 1.2 2004/01/28 02:55:57 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -143,7 +143,7 @@ clean::
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
-	    ${CFILES} ${AMD64}/amd64/swapgeneric.c ioconf.c param.c | \
+	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
