@@ -1,4 +1,4 @@
-/*	$OpenBSD: interfaces.c,v 1.9 1999/02/19 04:32:50 millert Exp $	*/
+/*	$OpenBSD: interfaces.c,v 1.10 1999/03/08 00:17:23 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.8
@@ -52,6 +52,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/ioctl.h>
 #if defined(HAVE_SYS_SOCKIO_H) && !defined(SIOCGIFCONF)
 #include <sys/sockio.h>
@@ -82,7 +83,7 @@ extern char *realloc	__P((VOID *, size_t));
 #endif /* !STDC_HEADERS && !__GNUC__ */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: interfaces.c,v 1.49 1999/02/03 04:32:15 millert Exp $";
+static const char rcsid[] = "$Sudo: interfaces.c,v 1.50 1999/02/26 06:19:49 millert Exp $";
 #endif /* lint */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.7 1999/02/19 04:32:49 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.8 1999/03/08 00:17:23 millert Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /*
@@ -389,16 +389,16 @@
 #define LOGGING SLOG_SYSLOG
 
 /* Define to be the syslog facility to use.  */
-#define LOGFAC LOG_LOCAL2
+#define LOGFAC LOG_AUTHPRIV
 
 /* Define to be the max chars per log line (for line wrapping).  */
 #define MAXLOGFILELEN 80
 
 /* Define if you want to ignore '.' and '' in $PATH */
-#define IGNORE_DOT_PATH 1
+/* #undef IGNORE_DOT_PATH */
 
 /* Define if you want "command not allowed" instead of "command not found" */
-/* #undef DONT_LEAK_PATH_INFO */
+#define DONT_LEAK_PATH_INFO 1
 
 /* Define SHORT_MESSAGE for a short lecture or NO_MESSAGE for none.  */
 #define SHORT_MESSAGE 1

@@ -1,3 +1,5 @@
+/*	$OpenBSD: parse.lex,v 1.9 1999/03/08 00:17:23 millert Exp $	*/
+
 %{
 /*
  *  CU sudo version 1.5.8
@@ -48,7 +50,7 @@
 #include "sudo.tab.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.lex,v 1.85 1999/02/03 04:32:16 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.lex,v 1.86 1999/03/07 23:34:31 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -122,7 +124,7 @@ WORD			[[:alnum:]_-]+
 			    return(COMMENT);
 			}			/* return comments */
 
-<GOTCMND>[^:\, \t\n]+ {
+<GOTCMND>[^\\:, \t\n]+ {
 			    LEXTRACE("ARG ");
 			    fill_args(yytext, yyleng, sawspace);
 			    sawspace = FALSE;
