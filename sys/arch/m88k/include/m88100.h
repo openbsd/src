@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.2 2004/08/01 17:18:05 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -25,8 +25,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef __MACHINE_M88100_H__
-#define __MACHINE_M88100_H__
+#ifndef __M88K_M88100_H__
+#define __M88K_M88100_H__
 
 /*
  *	88100 RISC definitions
@@ -56,4 +56,20 @@
 #define	DMT_DREGBITS(x)	(((x) & DMT_DREG) >> DMT_DREGSHIFT)
 #define	DMT_ENBITS(x)	(((x) & DMT_EN) >> DMT_ENSHIFT)
 
-#endif /* __MACHINE_M88100_H__ */
+#if defined(_KERNEL) && !defined(_LOCORE)
+void dae_print(unsigned *eframe);
+void data_access_emulation(unsigned *eframe);
+
+u_int32_t do_load_word(vaddr_t, int);
+u_int16_t do_load_half(vaddr_t, int);
+u_int8_t do_load_byte(vaddr_t, int);
+
+void do_store_word(vaddr_t, u_int32_t, int);
+void do_store_half(vaddr_t, u_int16_t, int);
+void do_store_byte(vaddr_t, u_int8_t, int);
+
+u_int32_t do_xmem_word(vaddr_t, u_int32_t, int);
+u_int8_t do_xmem_byte(vaddr_t, u_int8_t, int);
+#endif
+
+#endif /* __M88K_M88100_H__ */

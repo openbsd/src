@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.23 2004/07/28 12:28:48 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.24 2004/08/01 17:18:05 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -9,26 +9,7 @@
  * C prototypes for various routines defined in locore_* and friends
  */
 
-/* locore_asm_routines.S */
-
-unsigned int do_load_word(vaddr_t address,
-    boolean_t supervisor_mode);
-unsigned int do_load_half(vaddr_t address,
-    boolean_t supervisor_mode);
-unsigned int do_load_byte(vaddr_t address,
-    boolean_t supervisor_mode);
-
-void do_store_word(vaddr_t address, unsigned int data,
-    boolean_t supervisor_mode);
-void do_store_half(vaddr_t address, unsigned int data,
-    boolean_t supervisor_mode);
-void do_store_byte(vaddr_t address, unsigned int data,
-    boolean_t supervisor_mode);
-
-unsigned do_xmem_word(vaddr_t address, unsigned int data,
-    boolean_t supervisor_mode);
-unsigned do_xmem_byte(vaddr_t address, unsigned int data,
-    boolean_t supervisor_mode);
+/* subr.S */
 
 unsigned read_processor_identification_register(void);
 int badaddr(vaddr_t addr, int size);
@@ -40,9 +21,6 @@ int guarded_access(unsigned char *volatile address,
     unsigned len, u_char *vec);
 
 /* locore_c_routines.c */
-
-void dae_print(unsigned *eframe);
-void data_access_emulation(unsigned *eframe);
 
 unsigned getipl(void);
 

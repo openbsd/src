@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.2 2004/07/07 21:18:11 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.3 2004/08/01 17:18:05 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -37,12 +37,14 @@
 #include <machine/cpu_number.h>
 #include <machine/trap.h>
 
-/*****************************************************************************
+#ifdef	M88100
+
+/*
  * DO_LOAD_ADDRESS
  *
  * 	unsigned int do_load_word(address, supervisor_mode)
- *	vaddr_t address;		\\ in r2
- *	boolean_t supervisor_mode;	\\ in r3
+ *		vaddr_t address;		\\ in r2
+ *		boolean_t supervisor_mode;	\\ in r3
  *
  * Return the word at ADDRESS (from user space if SUPERVISOR_MODE is zero,
  * supervisor space if non-zero).
@@ -168,6 +170,8 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 	br	2f
 1:	xmem.bu	r3,r2,r0
 2:	jmp	r1
+
+#endif	/* M88100 */
 
 /*
  * Copy specified amount of data from user space into the kernel
