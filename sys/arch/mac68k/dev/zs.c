@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.1 1996/05/26 19:02:14 briggs Exp $	*/
+/*	$OpenBSD: zs.c,v 1.2 1996/06/08 16:01:42 briggs Exp $	*/
 /*	$NetBSD: zs.c,v 1.2 1996/05/23 05:18:48 briggs Exp $	*/
 
 /*
@@ -638,7 +638,7 @@ zscninit(struct consdev * cp)
 	 * number. :-)
          */
         zscnsetup();
-        printf("\nNetBSD/mac68k console\n");
+        printf("\nOpenBSD/mac68k console\n");
 }
 
 

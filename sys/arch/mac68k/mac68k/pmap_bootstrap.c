@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.4 1996/05/26 18:36:29 briggs Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.5 1996/06/08 16:02:23 briggs Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.26 1996/05/18 18:54:52 briggs Exp $	*/
 
 /* 
@@ -566,7 +566,7 @@ bootstrap_mac68k(tc)
 	caddr_t		oldROMBase;
 
 	if (mac68k_machine.do_graybars)
-		printf("Bootstrapping NetBSD/mac68k.\n");
+		printf("Bootstrapping OpenBSD/mac68k.\n");
 
 	oldROMBase = ROMBase;
 	mac68k_vidphys = videoaddr;
