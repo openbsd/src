@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshpty.c,v 1.10 2003/06/12 07:57:38 markus Exp $");
+RCSID("$OpenBSD: sshpty.c,v 1.11 2004/01/11 21:55:06 deraadt Exp $");
 
 #include <util.h>
 #include "sshpty.h"
@@ -37,8 +37,6 @@ RCSID("$OpenBSD: sshpty.c,v 1.10 2003/06/12 07:57:38 markus Exp $");
 int
 pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 {
-#if defined(HAVE_OPENPTY) || defined(BSD4_4)
-	/* openpty(3) exists in OSF/1 and some other os'es */
 	char buf[64];
 	int i;
 
@@ -49,125 +47,6 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 	}
 	strlcpy(namebuf, buf, namebuflen);	/* possible truncation */
 	return 1;
-#else /* HAVE_OPENPTY */
-#ifdef HAVE__GETPTY
-	/*
-	 * _getpty(3) exists in SGI Irix 4.x, 5.x & 6.x -- it generates more
-	 * pty's automagically when needed
-	 */
-	char *slave;
-
-	slave = _getpty(ptyfd, O_RDWR, 0622, 0);
-	if (slave == NULL) {
-		error("_getpty: %.100s", strerror(errno));
-		return 0;
-	}
-	strlcpy(namebuf, slave, namebuflen);
-	/* Open the slave side. */
-	*ttyfd = open(namebuf, O_RDWR | O_NOCTTY);
-	if (*ttyfd < 0) {
-		error("%.200s: %.100s", namebuf, strerror(errno));
-		close(*ptyfd);
-		return 0;
-	}
-	return 1;
-#else /* HAVE__GETPTY */
-#ifdef HAVE_DEV_PTMX
-	/*
-	 * This code is used e.g. on Solaris 2.x.  (Note that Solaris 2.3
-	 * also has bsd-style ptys, but they simply do not work.)
-	 */
-	int ptm;
-	char *pts;
-
-	ptm = open("/dev/ptmx", O_RDWR | O_NOCTTY);
-	if (ptm < 0) {
-		error("/dev/ptmx: %.100s", strerror(errno));
-		return 0;
-	}
-	if (grantpt(ptm) < 0) {
-		error("grantpt: %.100s", strerror(errno));
-		return 0;
-	}
-	if (unlockpt(ptm) < 0) {
-		error("unlockpt: %.100s", strerror(errno));
-		return 0;
-	}
-	pts = ptsname(ptm);
-	if (pts == NULL)
-		error("Slave pty side name could not be obtained.");
-	strlcpy(namebuf, pts, namebuflen);
-	*ptyfd = ptm;
-
-	/* Open the slave side. */
-	*ttyfd = open(namebuf, O_RDWR | O_NOCTTY);
-	if (*ttyfd < 0) {
-		error("%.100s: %.100s", namebuf, strerror(errno));
-		close(*ptyfd);
-		return 0;
-	}
-	/* Push the appropriate streams modules, as described in Solaris pts(7). */
-	if (ioctl(*ttyfd, I_PUSH, "ptem") < 0)
-		error("ioctl I_PUSH ptem: %.100s", strerror(errno));
-	if (ioctl(*ttyfd, I_PUSH, "ldterm") < 0)
-		error("ioctl I_PUSH ldterm: %.100s", strerror(errno));
-	if (ioctl(*ttyfd, I_PUSH, "ttcompat") < 0)
-		error("ioctl I_PUSH ttcompat: %.100s", strerror(errno));
-	return 1;
-#else /* HAVE_DEV_PTMX */
-#ifdef HAVE_DEV_PTS_AND_PTC
-	/* AIX-style pty code. */
-	const char *name;
-
-	*ptyfd = open("/dev/ptc", O_RDWR | O_NOCTTY);
-	if (*ptyfd < 0) {
-		error("Could not open /dev/ptc: %.100s", strerror(errno));
-		return 0;
-	}
-	name = ttyname(*ptyfd);
-	if (!name)
-		fatal("Open of /dev/ptc returns device for which ttyname fails.");
-	strlcpy(namebuf, name, namebuflen);
-	*ttyfd = open(name, O_RDWR | O_NOCTTY);
-	if (*ttyfd < 0) {
-		error("Could not open pty slave side %.100s: %.100s",
-		    name, strerror(errno));
-		close(*ptyfd);
-		return 0;
-	}
-	return 1;
-#else /* HAVE_DEV_PTS_AND_PTC */
-	/* BSD-style pty code. */
-	char buf[64];
-	int i;
-	const char *ptymajors = "pqrstuvwxyzabcdefghijklmnoABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	const char *ptyminors = "0123456789abcdef";
-	int num_minors = strlen(ptyminors);
-	int num_ptys = strlen(ptymajors) * num_minors;
-
-	for (i = 0; i < num_ptys; i++) {
-		snprintf(buf, sizeof buf, "/dev/pty%c%c", ptymajors[i / num_minors],
-			 ptyminors[i % num_minors]);
-		*ptyfd = open(buf, O_RDWR | O_NOCTTY);
-		if (*ptyfd < 0)
-			continue;
-		snprintf(namebuf, namebuflen, "/dev/tty%c%c",
-		    ptymajors[i / num_minors], ptyminors[i % num_minors]);
-
-		/* Open the slave side. */
-		*ttyfd = open(namebuf, O_RDWR | O_NOCTTY);
-		if (*ttyfd < 0) {
-			error("%.100s: %.100s", namebuf, strerror(errno));
-			close(*ptyfd);
-			return 0;
-		}
-		return 1;
-	}
-	return 0;
-#endif /* HAVE_DEV_PTS_AND_PTC */
-#endif /* HAVE_DEV_PTMX */
-#endif /* HAVE__GETPTY */
-#endif /* HAVE_OPENPTY */
 }
 
 /* Releases the tty.  Its ownership is returned to root, and permissions to 0666. */
