@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2002/01/31 00:01:59 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2002/01/31 22:36:14 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -96,6 +96,11 @@
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
+
+#ifdef USER_PCICONF
+#include "pci.h"
+cdev_decl(pci);
+#endif
 
 #include "rd.h"
 #include "ses.h"
@@ -209,7 +214,11 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 51 */
 #endif
+#ifdef USER_PCICONF
+	cdev_pci_init(NPCI,pci),	/* 52: PCI user */
+#else
 	cdev_notdef(),			/* 52 */
+#endif
 	cdev_notdef(),			/* 53 */
 	cdev_disk_init(NFD,fd),		/* 54: floppy disk */
 	cdev_notdef(),			/* 55 */
