@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.6 1998/01/22 23:40:22 deraadt Exp $
+.\"	$OpenBSD: fstat.1,v 1.7 1998/08/30 22:45:15 deraadt Exp $
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -185,7 +185,7 @@ is the socket type (stream, dgram, etc), and the third is the socket
 flags field (in hex).
 The remaining fields are protocol dependent.
 For tcp, it is the address of the tcpcb, and for udp, the inpcb (socket pcb).
-For unix domain sockets, its the address of the socket pcb and the address
+For unix domain sockets, it's the address of the socket pcb and the address
 of the connected pcb (if connected).
 Otherwise the protocol number and address of the socket itself are printed.
 The attempt is to make enough information available to 
@@ -219,7 +219,7 @@ of time.
 Moreover, because DNS resolution and YP lookups cause many of file
 descriptor changes,
 .Nm fstat
-does not attempt to translate the internet adress and port numbers into
+does not attempt to translate the internet address and port numbers into
 symbolic names.
 .Sh SEE ALSO
 .Xr netstat 1 ,
