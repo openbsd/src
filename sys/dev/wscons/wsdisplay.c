@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.2 2000/07/05 20:22:31 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.3 2000/07/19 13:58:17 art Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.36 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -79,7 +79,6 @@ struct wsscreen {
 	struct wsscreen_internal *scr_dconf;
 
 	struct tty *scr_tty;
-	struct timeout scr_rstrt;
 	int	scr_hold_screen;		/* hold tty output */
 
 	int scr_flags;
@@ -271,7 +270,6 @@ wsscreen_attach(sc, console, emul, type, cookie, ccol, crow, defattr)
 
 	scr->scr_tty = ttymalloc();
 	tty_attach(scr->scr_tty);
-	timeout_set(&scr->scr_rstrt, ttrstrt, scr->scr_tty);
 	scr->scr_hold_screen = 0;
 	if (WSSCREEN_HAS_EMULATOR(scr))
 		scr->scr_flags = 0;
@@ -293,7 +291,7 @@ wsscreen_detach(scr)
 	int ccol, crow; /* XXX */
 
 	if (WSSCREEN_HAS_TTY(scr)) {
-		timeout_del(&scr->scr_rstrt);
+		timeout_del(&scr->scr_tty->t_rstrt_to);
 		tty_detach(scr->scr_tty);
 		ttyfree(scr->scr_tty);
 	}
@@ -1207,7 +1205,7 @@ wsdisplaystart(tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout_add(&scr->scr_rstrt, (hz > 128) ? (hz / 128) : 1);
+		timeout_add(&tp->t_rstrt_to, (hz > 128) ? (hz / 128) : 1);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
@@ -1689,7 +1687,7 @@ wsdisplay_kbdholdscreen(dev, hold)
 		scr->scr_hold_screen = 1;
 	else {
 		scr->scr_hold_screen = 0;
-		timeout_add(&scr->scr_rstrt, 0);	/* "immediate" */
+		timeout_add(&scr->scr_tty->t_rstrt_to, 0); /* "immediate" */
 	}
 }
 
