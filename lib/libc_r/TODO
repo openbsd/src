@@ -81,6 +81,8 @@ This is a list of things that still need to be done:
 
 * What to do with gethostby*_r(3)?
 
+* Look into getpw*_r.
+
 * Some ideas:
   + http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
     http://www.cs.wustl.edu/~schmidt/TSS-pattern.ps.gz
@@ -93,4 +95,4 @@ This is a list of things that still need to be done:
 
 * Clean up the way that signals are delivered to threads. Yuk.
 
-$OpenBSD: TODO,v 1.13 2001/09/05 00:10:41 fgsch Exp $
+$OpenBSD: TODO,v 1.14 2001/09/05 02:41:13 fgsch Exp $
