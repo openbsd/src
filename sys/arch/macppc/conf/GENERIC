@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2003/05/02 00:53:27 jason Exp $g
+#	$OpenBSD: GENERIC,v 1.44 2003/06/05 05:17:04 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -54,6 +54,8 @@ ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 #ami*		at pci? dev ? function ?
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 pciide*		at pci? dev ? function ?
+kauaiata*	at pci? dev ? function ?	# Apple ATA 100
+wdc*		at kauaiata?  flags 0x0
 macobio0	at pci? dev ? function ?
 gem*		at pci? dev ? function ?	# GMAC ethernet
 hme*		at pci? dev ? function ?	# HME ethernet

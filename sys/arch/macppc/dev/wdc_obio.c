@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.8 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.9 2003/06/05 05:17:04 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -106,6 +106,7 @@ void	wdc_obio_dma_start(void *, int, int);
 int	wdc_obio_dma_finish(void *, int, int);
 void	wdc_obio_adjust_timing(struct channel_softc *);
 void	wdc_obio_ata4_adjust_timing(struct channel_softc *);
+void	wdc_obio_ata6_adjust_timing(struct channel_softc *);
 
 int
 wdc_obio_probe(parent, match, aux)
@@ -178,6 +179,9 @@ wdc_obio_attach(parent, self, aux)
 	cmdbase = ca->ca_reg[0];
 	cmdsize = ca->ca_reg[1];
 
+	printf("wdc_obio map %x %x %x %x\n", cmdbase, cmdsize, ca->ca_reg[2],
+	    ca->ca_reg[2]);
+
 	if (bus_space_map(chp->cmd_iot, cmdbase, cmdsize, 0, &chp->cmd_ioh) ||
 	    bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
 			/* WDC_AUXREG_OFFSET<<4 */ 0x160, 1, &chp->ctl_ioh))
@@ -196,8 +200,10 @@ wdc_obio_attach(parent, self, aux)
 	if (use_dma) {
 		sc->sc_dbdma = dbdma_alloc(sc->sc_dmat, WDC_DMALIST_MAX + 1);
 		sc->sc_dmacmd = sc->sc_dbdma->d_addr;
+
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
-					 ca->ca_reg[3]);
+		    ca->ca_reg[3]);
+
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.DMA_cap = 2;
 		if (strcmp(ca->ca_name, "ata-4") == 0) {
@@ -205,6 +211,12 @@ wdc_obio_attach(parent, self, aux)
 			    WDC_CAPABILITY_MODE;
 			sc->sc_wdcdev.UDMA_cap = 4;
 			sc->sc_wdcdev.set_modes = wdc_obio_ata4_adjust_timing;
+		}
+		if (strcmp(ca->ca_name, "ata-6") == 0) {
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA |
+			    WDC_CAPABILITY_MODE;
+			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.set_modes = wdc_obio_ata6_adjust_timing;
 		}
 	}
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
@@ -259,6 +271,53 @@ static const struct ide_timings udma_timing[] = {
 	{ 25, 100}      /* Mode 4 */
 };
 
+/* these number _guessed_ from linux driver. */
+static u_int32_t kauai_pio_timing[] = {
+	#if 0
+	/*120*/	0x04000148,	/* Mode 0 */
+	/*180*/	0x05000249,	/* Mode 1 */
+	/*240*/	0x0800038b,	/* Mode 2 */
+	/*360*/	0x08000392,	/* Mode 3 */
+	/*600*/	0x08000a92	/* Mode 4 */
+	#endif
+	/*120*/	0x06000246,	/* Mode 0 */
+	/*180*/	0x06000246,	/* Mode 1 */
+	/*240*/	0x06000246,	/* Mode 2 */
+	/*360*/	0x06000246,	/* Mode 3 */
+	/*600*/	0x06000246	/* Mode 4 */
+		
+};
+static u_int32_t kauai_dma_timing[] = {
+	#if 0
+	/*120*/	0x00148000,	/* Mode 0 */
+	/*150*/	0x00209000,	/* Mode 1 */
+	/*240*/	0x0030c000,	/* Mode 2 */
+	/*360*/	0x00492000,	/* Mode 3 */
+	/*480*/	0x00618000	/* Mode 4 */
+	#endif
+	/*120*/	0x00149000,	/* Mode 0 */
+	/*150*/	0x00149000,	/* Mode 1 */
+	/*240*/	0x00149000,	/* Mode 2 */
+	/*360*/	0x00149000,	/* Mode 3 */
+	/*480*/	0x00149000	/* Mode 4 */
+};
+static u_int32_t kauai_udma_timing[] = {
+	#if 0
+	/* 20*/	0x00002921,	/* Mode 0 */
+	/* 30*/	0x00002a30,	/* Mode 1 */
+	/* 45*/	0x00003a50,	/* Mode 2 */
+	/* 60*/	0x00004a60,	/* Mode 3 */
+	/* 90*/	0x00005d80,	/* Mode 4 */
+	/*120*/	0x000070c0	/* Mode 5 */
+	#endif
+	/* 20*/	0x00002921,	/* Mode 0 */
+	/* 30*/	0x00002921,	/* Mode 1 */
+	/* 45*/	0x00002921,	/* Mode 2 */
+	/* 60*/	0x00002921,	/* Mode 3 */
+	/* 90*/	0x00002921,	/* Mode 4 */
+	/*120*/	0x00002921	/* Mode 5 */
+};
+
 #define	TIME_TO_TICK(time)	howmany((time), 30)
 #define	PIO_REC_OFFSET	4
 #define	PIO_REC_MIN	1
@@ -270,6 +329,15 @@ static const struct ide_timings udma_timing[] = {
 #define	ATA4_TIME_TO_TICK(time)	howmany((time) * 1000, 7500)
 
 #define CONFIG_REG (0x200)		/* IDE access timing register */
+#define CONFIG_REG (0x200)		/* IDE access timing register */
+#define KAUAI_ULTRA_CONFIG (0x210)	/* secondary config register (kauai)*/
+
+#define KAUAI_PIO_MASK		0xff000fff
+#define KAUAI_DMA_MASK		0x00fff000
+#define KAUAI_UDMA_MASK		0x0000ffff
+#define KAUAI_UDMA_EN		0x00000001
+
+
 
 void
 wdc_obio_adjust_timing(chp)
@@ -422,6 +490,79 @@ wdc_obio_ata4_adjust_timing(chp)
 #if 0
 	printf("ata4 conf = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
 	    conf, cycle_tick, min_cycle, act_tick, min_active, inact_tick);
+#endif
+}
+
+void
+wdc_obio_ata6_adjust_timing(struct channel_softc *chp)
+{
+	struct ata_drive_datas *drvp;
+	u_int conf, conf1;
+	int drive;
+	int piomode = -1, dmamode = -1;
+	int udmamode = -1;
+
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		if (piomode == -1 || piomode > drvp->PIO_mode)
+			piomode = drvp->PIO_mode;
+		if (drvp->drive_flags & DRIVE_DMA) {
+			if (dmamode == -1 || dmamode > drvp->DMA_mode)
+				dmamode = drvp->DMA_mode;
+		}
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			if (udmamode == -1 || udmamode > drvp->UDMA_mode)
+				udmamode = drvp->UDMA_mode;
+		} else {
+			udmamode = -2;
+		}
+	}
+	if (piomode == -1)
+		return; /* No drive */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		if (drvp->drive_flags & DRIVE) {
+			drvp->PIO_mode = piomode;
+			if (drvp->drive_flags & DRIVE_DMA)
+				drvp->DMA_mode = dmamode;
+			if (drvp->drive_flags & DRIVE_UDMA) {
+				if (udmamode == -2) {
+					drvp->drive_flags &= ~DRIVE_UDMA;
+				} else {
+					drvp->UDMA_mode = udmamode;
+				}
+			}
+		}
+	}
+
+	if (udmamode == -2)
+		udmamode = -1;
+
+
+	conf = bus_space_read_4(chp->cmd_iot, chp->cmd_ioh, CONFIG_REG);
+	conf1 = bus_space_read_4(chp->cmd_iot, chp->cmd_ioh,
+	    KAUAI_ULTRA_CONFIG);
+
+	printf("ata6 conf old: 0x%x, %x", conf, conf1);
+	conf = (conf & ~KAUAI_PIO_MASK) | kauai_pio_timing[piomode];
+
+	if (dmamode != -1) {
+		conf = (conf & ~KAUAI_DMA_MASK) | kauai_dma_timing[dmamode];
+	}
+	if (udmamode != -1) {
+		conf1 = (conf1 & ~KAUAI_UDMA_MASK) |
+		    kauai_udma_timing[udmamode] | KAUAI_UDMA_EN;
+	} else 
+		conf1 = conf1 & ~KAUAI_UDMA_EN;
+
+	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, CONFIG_REG, conf);
+	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, KAUAI_ULTRA_CONFIG,
+	    conf1);
+#if 1
+	printf("new : 0x%x, %x\n", conf, conf1);
 #endif
 }
 
