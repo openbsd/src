@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.32 2002/04/30 01:12:28 art Exp $	*/
+/*	$OpenBSD: be.c,v 1.33 2002/08/08 03:32:00 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -37,6 +37,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -97,6 +98,8 @@ int	be_tcvr_read(struct besoftc *, u_int8_t);
 void	be_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int	be_ifmedia_upd(struct ifnet *);
 void	be_mcreset(struct besoftc *);
+void	betick(void *);
+void	be_tx_harvest(struct besoftc *);
 
 struct cfdriver be_cd = {
 	NULL, "be", DV_IFNET
@@ -139,6 +142,8 @@ beattach(parent, self, aux)
 	}
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	sc->sc_rev = getpropint(ca->ca_ra.ra_node, "board-version", -1);
+
+	timeout_set(&sc->sc_tick, betick, sc);
 
 	sc->sc_cr = mapiodev(&ca->ca_ra.ra_reg[0], 0, sizeof(struct be_cregs));
 	sc->sc_br = mapiodev(&ca->ca_ra.ra_reg[1], 0, sizeof(struct be_bregs));
@@ -250,12 +255,18 @@ bestart(ifp)
 {
 	struct besoftc *sc = (struct besoftc *)ifp->if_softc;
 	struct mbuf *m;
-	int bix, len;
+	int bix, len, cnt;
+
+	if (sc->sc_no_td > 0) {
+		/* Try to free previous stuff */
+		be_tx_harvest(sc);
+	}
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	bix = sc->sc_last_td;
+	cnt = sc->sc_no_td;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
@@ -289,13 +300,23 @@ bestart(ifp)
 		if (++bix == BE_TX_RING_MAXSIZE)
 			bix = 0;
 
-		if (++sc->sc_no_td == BE_TX_RING_SIZE) {
+		if (++cnt == BE_TX_RING_SIZE) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 	}
 
-	sc->sc_last_td = bix;
+	if (cnt > BE_TX_HIGH_WATER) {
+		/* turn on interrupt */
+		sc->sc_tx_intr = 1;
+		sc->sc_cr->timask = 0;
+	}
+
+	if (cnt != sc->sc_no_td) {
+		ifp->if_timer = 5;
+		sc->sc_last_td = bix;
+		sc->sc_no_td = cnt;
+	}
 }
 
 void
@@ -303,6 +324,10 @@ bestop(sc)
 	struct besoftc *sc;
 {
 	int tries;
+
+	sc->sc_arpcom.ac_if.if_timer = 0;
+	if (timeout_pending(&sc->sc_tick))
+		timeout_del(&sc->sc_tick);
 
 	tries = 32;
 	sc->sc_br->tx_cfg = 0;
@@ -360,7 +385,7 @@ beintr(v)
 	if (whyq & QEC_STAT_ER)
 		r |= beqint(sc, whyc);
 
-	if (whyq & QEC_STAT_TX && whyc & BE_CR_STAT_TXIRQ)
+	if (sc->sc_tx_intr && (whyq & QEC_STAT_TX) && (whyc & BE_CR_STAT_TXIRQ))
 		r |= betint(sc);
 
 	if (whyq & QEC_STAT_RX && whyc & BE_CR_STAT_RXIRQ)
@@ -424,31 +449,19 @@ beeint(sc, why)
 	return r;
 }
 
-/*
- * Transmit interrupt.
- */
-int
-betint(sc)
+void
+be_tx_harvest(sc)
 	struct besoftc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct be_bregs *br = sc->sc_br;
-	int bix;
+	int bix, cnt;
 	struct be_txd txd;
 
-	/*
-	 * Get collision counters
-	 */
-	ifp->if_collisions += br->nc_ctr + br->fc_ctr + br->ex_ctr + br->lt_ctr;
-	br->nc_ctr = 0;
-	br->fc_ctr = 0;
-	br->ex_ctr = 0;
-	br->lt_ctr = 0;
-
 	bix = sc->sc_first_td;
+	cnt = sc->sc_no_td;
 
 	for (;;) {
-		if (sc->sc_no_td <= 0)
+		if (cnt <= 0)
 			break;
 
 		txd.tx_flags = sc->sc_desc->be_txd[bix].tx_flags;
@@ -461,24 +474,35 @@ betint(sc)
 		if (++bix == BE_TX_RING_MAXSIZE)
 			bix = 0;
 
-		--sc->sc_no_td;
+		--cnt;
 	}
 
-	if (sc->sc_no_td == 0)
+	if (cnt <= 0)
 		ifp->if_timer = 0;
 
-	/*
-	 * If we freed up at least one descriptor and tx is blocked,
-	 * unblock it and start it up again.
-	 */
-	if (sc->sc_first_td != bix) {
+	if (sc->sc_no_td != cnt) {
 		sc->sc_first_td = bix;
-		if (ifp->if_flags & IFF_OACTIVE) {
-			ifp->if_flags &= ~IFF_OACTIVE;
-			bestart(ifp);
-		}
+		sc->sc_no_td = cnt;
+		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 
+	if (sc->sc_no_td < BE_TX_LOW_WATER) {
+		/* turn off interrupt */
+		sc->sc_tx_intr = 0;
+		sc->sc_cr->timask = 0xffffffff;
+	}
+}
+
+/*
+ * Transmit interrupt.
+ */
+int
+betint(sc)
+	struct besoftc *sc;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	bestart(ifp);
 	return (1);
 }
 
@@ -513,6 +537,29 @@ berint(sc)
 	sc->sc_last_rd = bix;
 
 	return 1;
+}
+
+void
+betick(vsc)
+	void *vsc;
+{
+	struct besoftc *sc = vsc;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct be_bregs *br = sc->sc_br;
+	int s;
+
+	s = splnet();
+	/*
+	 * Get collision counters
+	 */
+	ifp->if_collisions += br->nc_ctr + br->fc_ctr + br->ex_ctr + br->lt_ctr;
+	br->nc_ctr = 0;
+	br->fc_ctr = 0;
+	br->ex_ctr = 0;
+	br->lt_ctr = 0;
+	bestart(ifp);
+	splx(s);
+	timeout_add(&sc->sc_tick, hz);
 }
 
 int
@@ -706,7 +753,11 @@ beinit(sc)
 		    BE_BR_IMASK_DTIMEXP;
 
 	cr->rimask = 0;
-	cr->timask = 0;
+
+	/* disable tx interrupts initially */
+	cr->timask = 0xffffffff;
+	sc->sc_tx_intr = 0;
+
 	cr->qmask = 0;
 	cr->bmask = 0;
 
@@ -720,6 +771,9 @@ beinit(sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
+
+	timeout_add(&sc->sc_tick, hz);
+	bestart(ifp);
 }
 
 /*

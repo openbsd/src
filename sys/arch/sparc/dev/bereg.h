@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.10 2002/06/03 20:01:36 deraadt Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.11 2002/08/08 03:32:00 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -260,6 +260,8 @@ struct be_txd {
 #define BE_TX_RING_SIZE		32		/* power of 2, <= MAXSIZE */
 #define BE_RX_RING_SIZE		32		/* power of 2, <= MAXSIZE */
 #define BE_PKT_BUF_SZ		2048
+#define	BE_TX_HIGH_WATER	27		/* enable tx interrupt */
+#define	BE_TX_LOW_WATER		5		/* disable tx interrupt */
 
 #define	BE_TX_RING_MAXMASK	(BE_TX_RING_MAXSIZE-1)
 #define	BE_RX_RING_MAXMASK	(BE_RX_RING_MAXSIZE-1)
