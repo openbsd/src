@@ -1,0 +1,68 @@
+.\"	$OpenBSD: forward.5,v 1.1 2001/09/11 01:06:58 marc Exp $
+.\"
+.\"	Copyright (c) 2001 Marco S. Hyman
+.\"
+.\"	Permission to copy all or part of this material with or without
+.\"	modification for any purpose is granted provided that the above
+.\"	copyright notice and this paragraph are duplicated in all copies.
+.\"
+.\"	THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+.\"	IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+.\"	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+.\"
+.Dd August 1, 2001
+.Dt FORWARD 5
+.Os
+.Sh NAME
+.Nm .forward
+.Nd e-mail forwarding information file
+.Sh DESCRIPTION
+Users may put a file named
+.Pa .forward
+in their home directory.  If this file exists,
+.Nm sendmail
+(and sendmail-like mailers) will redirect mail for the user to the list of
+addresses found in the
+.Pa .forward
+file.
+.Pa .forward
+files must not be group or world writable.  The users home directory
+should not be group writable.   The
+.Pa .forward
+file must be owned by and readable by the indicated user.
+.Pp
+A
+.Pa .forward
+file contains one or more lines where each line is an e-mail address
+or the name of a private incoming mailer where incoming mail will be
+forwarded.  Examples:
+.Pp
+.Bd -literal -offset indent -compact
+# lines with # in the first column are ignored
+# empty lines are ignored
+# #@# with whitespace on both sides may be used to start a comment
+
+foo@bar.baz.com				#@# is a comment anywhere
+"| /usr/local/libexec/slocal -user foo"
+.Ed
+.Sh FILES
+.Bl -tag -width $HOME/.forward -compact
+.It Pa $HOME/.forward
+e-mail forwarding information
+.El
+.Sh SEE ALSO
+.Xr aliases 5
+.Rs
+.%T "Sendmail \- An Internetwork Mail Router"
+.%V SMM
+.%N \&No. 9 
+.Re
+.Rs
+.%T "Sendmail Installation and Operation Guide"
+.%V SMM
+.%N \&No. 8
+.Re
+.Pp
+http://www.sendmail.org/
+
+
