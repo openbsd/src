@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.11 2001/12/15 11:21:08 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.12 2001/12/16 21:48:48 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2847,14 +2847,17 @@ pmap_enter_ptpage(pmap, va)
 		    ("enter: stab %p refcnt %d\n",
 		    pmap->pm_stab, pmap->pm_sref));
 	}
-#if 0
-	/*
-	 * Flush stale TLB info.
-	 */
-	if (pmap == pmap_kernel())
-		TBIAS();
-	else
-		TBIAU();
+
+#if defined(M68060)
+	if (mmutype == MMU_68060) {
+		/*
+		 * Flush stale TLB info.
+		 */
+		if (pmap == pmap_kernel())
+			TBIAS();
+		else
+			TBIAU();
+	}
 #endif
 	pmap->pm_ptpages++;
 	splx(s);
