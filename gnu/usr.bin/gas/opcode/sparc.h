@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc.h,v 1.2 1998/02/15 18:50:09 niklas Exp $	*/
+/*	$OpenBSD: sparc.h,v 1.3 2001/09/06 22:57:26 fgsch Exp $	*/
 
 /* Table of opcodes for the sparc.
 	Copyright 1989, 1991, 1992 Free Software Foundation, Inc.
@@ -778,6 +778,8 @@ condfc("fbule",	"cb013", 0xe, 0),
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"1+i", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"i+1", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|RS1_G0,	"i", 0, v6 },
+
+{ "stbar",      F3(2, 0x28, 0)|RS1(0xf), F3(~2, ~0x28, ~0)|RD_G0|RS1(~0xf)|SIMM13(~0), "", 0, v8 },
 
 { "xnor",	F3(2, 0x07, 0), F3(~2, ~0x07, ~0)|ASI(~0),	"1,2,d", 0, v6 },
 { "xnor",	F3(2, 0x07, 1), F3(~2, ~0x07, ~1),		"1,i,d", 0, v6 },
