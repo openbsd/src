@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.14 2002/03/01 23:27:57 mickey Exp $
+#	$OpenBSD: GECKO,v 1.15 2002/03/15 22:51:27 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -44,14 +44,13 @@ com3	at harmony? irq 17	# Telephony ch#1
 #isdn	at gsc1 irq 18		# ISDN add-in card
 #SCSI Snoop irq 19
 fdc0	at gsc0	irq 20		# PC floppy controller (WD37C65C)
-pckbc0	at gsc0 offset 8000 irq 26
-pckbd0	at pckbc0		# PS/2 keyboard
-pms0	at pckbc0		# PS/2 mouse (shares irq w/ kbd)
+ps2p0	at gsc0 offset 0x8000 irq 26
+ps2p1	at gsc0 offset 0x8100	# mouse shares the same irq
 
 # MI devices
 wsdisplay*	at sti?
-wskbd*		at pckbd?
-wsmouse*	at pms?
+wskbd*		at ps2p0?
+wsmouse*	at ps2p1?
 
 option	FD_DEBUG
 fd0	at fdc0	drive ?	# floppy drives
