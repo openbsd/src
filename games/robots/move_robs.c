@@ -1,4 +1,4 @@
-/*	$OpenBSD: move_robs.c,v 1.3 1999/12/18 11:18:13 pjanzen Exp $	*/
+/*	$OpenBSD: move_robs.c,v 1.4 2001/08/12 19:19:40 pjanzen Exp $	*/
 /*	$NetBSD: move_robs.c,v 1.3 1995/04/22 10:08:59 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move_robs.c,v 1.3 1999/12/18 11:18:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move_robs.c,v 1.4 2001/08/12 19:19:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,12 +53,12 @@ move_robots()
 {
 	register COORD	*rp;
 
-# ifdef DEBUG
+#ifdef DEBUG
 	move(Min.y, Min.x);
 	addch(inch());
 	move(Max.y, Max.x);
 	addch(inch());
-# endif DEBUG
+#endif /* DEBUG */
 	for (rp = Robots; rp < &Robots[MAXROBOTS]; rp++) {
 		if (rp->y < 0)
 			continue;
@@ -106,14 +106,14 @@ move_robots()
 				Max.x = rp->x;
 		}
 
-# ifdef DEBUG
+#ifdef DEBUG
 	standout();
 	move(Min.y, Min.x);
 	addch(inch());
 	move(Max.y, Max.x);
 	addch(inch());
 	standend();
-# endif DEBUG
+#endif /* DEBUG */
 }
 
 /*
