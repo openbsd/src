@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.4 2001/07/25 15:18:14 markus Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.5 2001/08/23 19:44:28 niklas Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -265,6 +265,18 @@ responder_send_ATTR (struct message *msg)
   struct isakmp_cfg_attr *attr;
   struct sockaddr *sa;
   u_int32_t value;
+  char *id_string;
+
+  /*
+   * XXX I can only assume it is the client who was the initiator
+   * in phase 1, but I have not thought it through thoroughly.
+   */
+  id_string = ipsec_id_string (isakmp_sa->id_i, isakmp_sa->id_i_len);
+  if (!id_string)
+    {
+      log_print ("responder_send_ATTR: cannot parse client's ID");
+      goto fail;
+    }
 
   if (exchange->phase == 2)
     {
@@ -274,13 +286,13 @@ responder_send_ATTR (struct message *msg)
 	{
 	  log_error ("responder_send_ATTR: malloc (%d) failed",
 		     ISAKMP_HASH_SZ + hashsize);
-	  return -1;
+	  goto fail;
 	}
       if (message_add_payload (msg, ISAKMP_PAYLOAD_HASH, hashp,
 			       ISAKMP_HASH_SZ + hashsize, 1))
 	{
 	  free (hashp);
-	  return -1;
+	  goto fail;
 	}
     }
 
@@ -335,13 +347,13 @@ responder_send_ATTR (struct message *msg)
   if (!attrp)
     {
       log_error ("responder_send_ATTR: calloc (1, %d) failed", attrlen);
-      return -1;
+      goto fail;
     }
 
   if (message_add_payload (msg, ISAKMP_PAYLOAD_ATTRIBUTE, attrp, attrlen, 1))
     {
       free (attrp);
-      return -1;
+      goto fail;
     }
 
   SET_ISAKMP_ATTRIBUTE_TYPE (attrp, ISAKMP_CFG_REPLY);
@@ -356,8 +368,7 @@ responder_send_ATTR (struct message *msg)
 	{
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
-	  /* XXX The section should be tagged off the peer somehow.  */
-	  sa = conf_get_address ("ISAKMP-cfg", "Address");
+	  sa = conf_get_address (id_string, "Address");
 	  if (!sa)
 	    {
 	      /* XXX What to do?  */
@@ -394,8 +405,7 @@ responder_send_ATTR (struct message *msg)
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS:
-	  /* XXX The section should be tagged off the peer somehow.  */
-	  sa = conf_get_address ("ISAKMP-cfg", "Nameserver");
+	  sa = conf_get_address (id_string, "Nameserver");
 	  if (!sa)
 	    {
 	      /* XXX What to do?  */
@@ -420,8 +430,7 @@ responder_send_ATTR (struct message *msg)
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
-	  /* XXX The section should be tagged off the peer somehow.  */
-	  sa = conf_get_address ("ISAKMP-cfg", "WINS-server");
+	  sa = conf_get_address (id_string, "WINS-server");
 	  if (!sa)
 	    {
 	      /* XXX What to do?  */
@@ -445,8 +454,7 @@ responder_send_ATTR (struct message *msg)
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY:
-	  /* XXX The section should be tagged off the peer somehow.  */
-	  value = conf_get_num ("ISAKMP-cfg", "Lifetime", 1200);
+	  value = conf_get_num (id_string, "Lifetime", 1200);
 	  encode_32 (attrp + off + ISAKMP_ATTR_VALUE_OFF, value);
 	  break;
 
@@ -469,7 +477,7 @@ responder_send_ATTR (struct message *msg)
       if (!prf)
 	{
 	  /* XXX Log?  */
-	  return -1;
+	  goto fail;
 	}
       prf->Init (prf->prfctx);
       prf->Update (prf->prfctx, exchange->message_id,
@@ -480,6 +488,11 @@ responder_send_ATTR (struct message *msg)
     }
 
   return 0;
+
+ fail:
+  if (id_string)
+    free (id_string);
+  return -1;
 }
 
 /*
