@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.4 1999/07/18 16:45:41 deraadt Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.5 1999/07/18 18:00:02 deraadt Exp $	*/
 /*	$NetBSD: pmap.old.c,v 1.14 1996/11/13 21:13:10 cgd Exp $	*/
 
 /* 
@@ -1392,10 +1392,9 @@ ok:
 }
 
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(pmap)
+	register pmap_t pmap;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int iscurproc;
 
 #ifdef DEBUG
