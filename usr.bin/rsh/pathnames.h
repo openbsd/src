@@ -1,3 +1,4 @@
+/* *	$OpenBSD: pathnames.h,v 1.2 1996/06/26 05:38:48 deraadt Exp $*/
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +32,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 4/9/90
- *	$Id: pathnames.h,v 1.1.1.1 1995/10/18 08:46:03 deraadt Exp $
  */
 
 #define	_PATH_RLOGIN	"/usr/bin/rlogin"

@@ -1,3 +1,4 @@
+/*	$OpenBSD: acutab.c,v 1.2 1996/06/26 05:40:41 deraadt Exp $	*/
 /*	$NetBSD: acutab.c,v 1.3 1994/12/08 09:30:41 jtc Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)acutab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: acutab.c,v 1.3 1994/12/08 09:30:41 jtc Exp $";
+static char rcsid[] = "$OpenBSD: acutab.c,v 1.2 1996/06/26 05:40:41 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"

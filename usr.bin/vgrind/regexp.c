@@ -1,3 +1,4 @@
+/*	$OpenBSD: regexp.c,v 1.2 1996/06/26 05:42:29 deraadt Exp $	*/
 /*	$NetBSD: regexp.c,v 1.3 1994/11/17 08:28:02 jtc Exp $	*/
 
 /*
@@ -44,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: regexp.c,v 1.3 1994/11/17 08:28:02 jtc Exp $";
+static char rcsid[] = "$OpenBSD: regexp.c,v 1.2 1996/06/26 05:42:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: docmd.c,v 1.3 1996/06/26 05:37:38 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: docmd.c,v 1.2 1996/06/26 03:42:13 deraadt Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.3 1996/06/26 05:37:38 deraadt Exp $";
 #endif /* not lint */
 
 #include "defs.h"

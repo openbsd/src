@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.3 1996/02/15 05:02:23 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/06/26 05:35:55 deraadt Exp $
 
 PROG=	lock
 BINOWN= root

@@ -1,3 +1,5 @@
+/*	$OpenBSD: supfilesrv.c,v 1.3 1996/06/26 05:39:54 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -42,6 +44,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.3  1996/06/26 05:39:54  deraadt
+ * rcsid
+ *
  * Revision 1.2  1996/06/10 20:45:35  deraadt
  * hack: print hostname connection failed with
  *

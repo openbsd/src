@@ -1,3 +1,4 @@
+/*	$OpenBSD: xinstall.c,v 1.3 1996/06/26 05:44:05 deraadt Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.3 1996/06/26 05:44:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -300,6 +301,7 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	register int nr, nw;
 	int serrno;
 	char *p, buf[MAXBSIZE];
+	volatile size_t siz;
 
 	/*
 	 * Mmap and write if less than 8M (the limit is so we don't totally
@@ -310,7 +312,8 @@ copy(from_fd, from_name, to_fd, to_name, size)
 		if ((p = mmap(NULL, (size_t)size, PROT_READ,
 		    0, from_fd, (off_t)0)) == (char *)-1)
 			err(1, "%s", from_name);
-		if (write(to_fd, p, size) != size)
+		siz = (size_t)size;
+		if (write(to_fd, p, siz) != siz)
 			err(1, "%s", to_name);
 	} else {
 		while ((nr = read(from_fd, buf, sizeof(buf))) > 0)

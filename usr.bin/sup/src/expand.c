@@ -1,3 +1,5 @@
+/*	$OpenBSD: expand.c,v 1.2 1996/06/26 05:39:40 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.

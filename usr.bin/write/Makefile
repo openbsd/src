@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:47:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:43:59 deraadt Exp $
 
 PROG=	write
 BINMODE=2555

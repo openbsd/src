@@ -1,3 +1,5 @@
+/*	$OpenBSD: supcvers.c,v 1.2 1996/06/26 05:39:53 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -26,6 +28,9 @@
  **********************************************************************
  * HISTORY
  * $Log: supcvers.c,v $
+ * Revision 1.2  1996/06/26 05:39:53  deraadt
+ * rcsid
+ *
  * Revision 1.1  1995/12/16 11:46:59  deraadt
  * add sup to the tree
  *

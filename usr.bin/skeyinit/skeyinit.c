@@ -1,3 +1,4 @@
+/*	$OpenBSD: skeyinit.c,v 1.3 1996/06/26 05:39:24 deraadt Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)

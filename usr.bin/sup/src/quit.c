@@ -1,3 +1,5 @@
+/*	$OpenBSD: quit.c,v 1.2 1996/06/26 05:39:45 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -36,6 +38,9 @@
  **********************************************************************
  * HISTORY
  * $Log: quit.c,v $
+ * Revision 1.2  1996/06/26 05:39:45  deraadt
+ * rcsid
+ *
  * Revision 1.1  1995/12/16 11:46:49  deraadt
  * add sup to the tree
  *

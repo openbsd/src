@@ -1,3 +1,4 @@
+/*	$OpenBSD: mips.h,v 1.2 1996/06/26 05:33:55 deraadt Exp $	*/
 /*	$NetBSD: mips.h,v 1.3 1995/04/19 07:16:12 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/* * $OpenBSD: ipcrm.c,v 1.2 1996/06/26 05:34:35 deraadt Exp $*/
 /*
  * Copyright (c) 1994 Adam Glass
  * All rights reserved.
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ipcrm.c,v 1.1.1.1 1995/10/18 08:45:25 deraadt Exp $
  */
 
 #include <stdio.h>

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 1996/05/22 11:38:52 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 1996/06/26 05:33:40 deraadt Exp $
 
 PROG=	gencat
 NOMAN=

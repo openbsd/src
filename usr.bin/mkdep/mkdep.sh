@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+#	$OpenBSD: mkdep.sh,v 1.2 1996/06/26 05:37:08 deraadt Exp $
 #	$NetBSD: mkdep.sh,v 1.3 1994/12/23 07:35:02 jtc Exp $
 #
 # Copyright (c) 1991, 1993

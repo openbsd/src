@@ -1,3 +1,5 @@
+/*	$OpenBSD: gencat.c,v 1.4 1996/06/26 05:33:40 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.

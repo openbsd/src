@@ -1,3 +1,4 @@
+/* *	$OpenBSD: globals.h,v 1.2 1996/06/26 05:41:27 deraadt Exp $*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +32,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)globals.h	4.2 (Berkeley) 4/26/91
- *	$Id: globals.h,v 1.1.1.1 1995/10/18 08:46:22 deraadt Exp $
  */
 
 /*

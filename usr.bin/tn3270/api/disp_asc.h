@@ -1,3 +1,4 @@
+/* *	$OpenBSD: disp_asc.h,v 1.2 1996/06/26 05:41:07 deraadt Exp $*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +32,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disp_asc.h	4.2 (Berkeley) 4/26/91
- *	$Id: disp_asc.h,v 1.1.1.1 1995/10/18 08:46:19 deraadt Exp $
  */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_names.c,v 1.2 1996/06/26 05:40:22 deraadt Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $";
+static char rcsid[] = "$OpenBSD: get_names.c,v 1.2 1996/06/26 05:40:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

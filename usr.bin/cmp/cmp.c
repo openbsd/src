@@ -1,3 +1,4 @@
+/*      $OpenBSD: cmp.c,v 1.2 1996/06/26 05:32:05 deraadt Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $";
+static char rcsid[] = "$OpenBSD: cmp.c,v 1.2 1996/06/26 05:32:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 

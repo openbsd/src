@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:45:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:33:06 deraadt Exp $
 
 # Make up some fake test files that are easily produced.
 # By no means an exhaustive test!

@@ -1,3 +1,4 @@
+/*	$OpenBSD: sparc.h,v 1.2 1996/06/26 05:34:00 deraadt Exp $	*/
 /*	$NetBSD: sparc.h,v 1.3 1995/04/19 07:16:25 cgd Exp $	*/
 
 /*-

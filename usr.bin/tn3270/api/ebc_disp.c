@@ -1,3 +1,5 @@
+/*	$OpenBSD: ebc_disp.c,v 1.2 1996/06/26 05:41:08 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ebc_disp.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: ebc_disp.c,v 1.1.1.1 1995/10/18 08:46:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ebc_disp.c,v 1.2 1996/06/26 05:41:08 deraadt Exp $";
 #endif /* not lint */
 
 /*

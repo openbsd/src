@@ -1,3 +1,4 @@
+/* * $OpenBSD: names.h,v 1.2 1996/06/26 05:32:59 deraadt Exp $*/
 /*
  * Names.h - names and types used by ascmagic in file(1).
  * These tokens are here because they can appear anywhere in
@@ -10,7 +11,6 @@
  *
  * See LEGAL.NOTICE
  *
- * $Id: names.h,v 1.1.1.1 1995/10/18 08:45:09 deraadt Exp $
  */
 
 /* these types are used to index the table 'types': keep em in sync! */

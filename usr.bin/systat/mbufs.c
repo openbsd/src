@@ -1,3 +1,4 @@
+/*	$OpenBSD: mbufs.c,v 1.3 1996/06/26 05:40:08 deraadt Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.3 1996/06/26 05:40:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

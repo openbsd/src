@@ -1,3 +1,4 @@
+/*	$OpenBSD: parser2.c,v 1.2 1996/06/26 05:43:19 deraadt Exp $	*/
 /*	$NetBSD: parser2.c,v 1.3 1995/09/28 10:34:32 tls Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: parser2.c,v 1.3 1995/09/28 10:34:32 tls Exp $";
+static char rcsid[] = "$OpenBSD: parser2.c,v 1.2 1996/06/26 05:43:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 

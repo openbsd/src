@@ -1,3 +1,4 @@
+/*	$OpenBSD: lst.h,v 1.3 1996/06/26 05:36:35 deraadt Exp $	*/
 /*	$NetBSD: lst.h,v 1.6 1996/02/04 22:20:46 christos Exp $	*/
 
 /*

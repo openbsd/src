@@ -1,3 +1,4 @@
+/*	$OpenBSD: func.c,v 1.2 1996/06/26 05:44:13 deraadt Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.2 1996/06/26 05:44:13 deraadt Exp $";
 #endif
 
 #include <stdlib.h>

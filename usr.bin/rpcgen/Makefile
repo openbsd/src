@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:38:34 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1995/06/11 21:49:50 pk Exp $
 #
 PROG=	rpcgen

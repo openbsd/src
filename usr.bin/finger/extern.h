@@ -1,3 +1,5 @@
+/*	$OpenBSD: extern.h,v 1.2 1996/06/26 05:33:14 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: mset.c,v 1.2 1996/06/26 05:41:11 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mset.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: mset.c,v 1.1.1.1 1995/10/18 08:46:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mset.c,v 1.2 1996/06/26 05:41:11 deraadt Exp $";
 #endif /* not lint */
 
 /*

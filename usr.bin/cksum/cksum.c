@@ -1,3 +1,4 @@
+/*	$OpenBSD: cksum.c,v 1.2 1996/06/26 05:32:01 deraadt Exp $	*/
 /*	$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $	*/
 
 /*-
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $";
+static char rcsid[] = "$OpenBSD: cksum.c,v 1.2 1996/06/26 05:32:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tt.h,v 1.2 1996/06/26 05:43:24 deraadt Exp $	*/
 /*	$NetBSD: tt.h,v 1.3 1995/09/28 10:34:42 tls Exp $	*/
 
 /*

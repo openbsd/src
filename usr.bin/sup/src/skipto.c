@@ -1,3 +1,5 @@
+/*	$OpenBSD: skipto.c,v 1.2 1996/06/26 05:39:48 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.

@@ -1,3 +1,4 @@
+/* *	$OpenBSD: ktrace.h,v 1.2 1996/06/26 05:34:47 deraadt Exp $*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +32,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ktrace.h	8.1 (Berkeley) 6/6/93
- *	$Id: ktrace.h,v 1.1.1.1 1995/10/18 08:45:27 deraadt Exp $
  */
 
 #define DEF_POINTS (KTRFAC_SYSCALL | KTRFAC_SYSRET | KTRFAC_NAMEI | \

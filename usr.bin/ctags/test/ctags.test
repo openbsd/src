@@ -1,3 +1,4 @@
+/*	$OpenBSD: ctags.test,v 1.2 1996/06/26 05:32:32 deraadt Exp $	*/
 /*	$NetBSD: ctags.test,v 1.2 1995/03/26 20:14:14 glass Exp $	*/
 
 int	bar = (1 + 5);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: chpass.h,v 1.3 1996/06/26 05:31:55 deraadt Exp $	*/
 /*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
 
 /*

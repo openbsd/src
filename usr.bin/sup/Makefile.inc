@@ -1,2 +1,4 @@
+#	$OpenBSD: Makefile.inc,v 1.2 1996/06/26 05:39:36 deraadt Exp $
+
 
 CFLAGS+=-UCMUCS -UCMU -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR

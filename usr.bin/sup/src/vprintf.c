@@ -1,3 +1,5 @@
+/*	$OpenBSD: vprintf.c,v 1.2 1996/06/26 05:39:58 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -28,6 +30,9 @@
  **********************************************************************
  * HISTORY
  * $Log: vprintf.c,v $
+ * Revision 1.2  1996/06/26 05:39:58  deraadt
+ * rcsid
+ *
  * Revision 1.1  1995/12/16 11:47:03  deraadt
  * add sup to the tree
  *

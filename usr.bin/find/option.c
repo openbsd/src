@@ -1,3 +1,5 @@
+/*	$OpenBSD: option.c,v 1.2 1996/06/26 05:33:13 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: option.c,v 1.1.1.1 1995/10/18 08:45:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: option.c,v 1.2 1996/06/26 05:33:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

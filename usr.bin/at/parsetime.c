@@ -1,3 +1,4 @@
+/*	$OpenBSD: parsetime.c,v 1.3 1996/06/26 05:31:29 deraadt Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -119,7 +120,7 @@ static size_t sc_len;   /* scanner - lenght of token buffer */
 static int sc_tokid;	/* scanner - token id */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $";
+static char rcsid[] = "$OpenBSD: parsetime.c,v 1.3 1996/06/26 05:31:29 deraadt Exp $";
 #endif
 
 /* Local functions */

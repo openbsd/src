@@ -1,3 +1,4 @@
+/*	$OpenBSD: at.c,v 1.2 1996/06/26 05:31:27 deraadt Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -64,7 +65,7 @@
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.2 1996/06/26 05:31:27 deraadt Exp $";
 #endif
 
 char *no_export[] =

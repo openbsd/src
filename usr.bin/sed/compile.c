@@ -1,3 +1,5 @@
+/*	$OpenBSD: compile.c,v 1.2 1996/06/26 05:39:05 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -37,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: compile.c,v 1.1.1.1 1995/10/18 08:46:05 deraadt Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.2 1996/06/26 05:39:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

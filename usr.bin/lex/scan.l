@@ -1,3 +1,5 @@
+/*	$OpenBSD: scan.l,v 1.2 1996/06/26 05:35:42 deraadt Exp $	*/
+
 /* scan.l - scanner for flex input */
 
 %{
@@ -27,7 +29,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/scan.l,v 1.1.1.1 1995/10/18 08:45:32 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/scan.l,v 1.2 1996/06/26 05:35:42 deraadt Exp $ */
 
 #include "flexdef.h"
 #include "parse.h"

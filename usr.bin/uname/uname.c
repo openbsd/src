@@ -1,3 +1,5 @@
+/*	$OpenBSD: uname.c,v 1.2 1996/06/26 05:42:07 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
  * All rights reserved.
@@ -30,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: uname.c,v 1.1.1.1 1995/10/18 08:46:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uname.c,v 1.2 1996/06/26 05:42:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

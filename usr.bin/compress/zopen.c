@@ -1,3 +1,4 @@
+/*	$OpenBSD: zopen.c,v 1.2 1996/06/26 05:32:22 deraadt Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -41,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $";
+static char rcsid[] = "$OpenBSD: zopen.c,v 1.2 1996/06/26 05:32:22 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

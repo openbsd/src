@@ -1,3 +1,4 @@
+/*	$OpenBSD: iostat.c,v 1.5 1996/06/26 05:40:07 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.5 1996/06/26 05:40:07 deraadt Exp $";
 #endif not lint
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: pr_time.c,v 1.6 1996/06/26 05:42:43 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

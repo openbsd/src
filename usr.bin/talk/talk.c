@@ -1,3 +1,4 @@
+/*	$OpenBSD: talk.c,v 1.2 1996/06/26 05:40:26 deraadt Exp $	*/
 /*	$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)talk.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $";
+static char rcsid[] = "$OpenBSD: talk.c,v 1.2 1996/06/26 05:40:26 deraadt Exp $";
 #endif /* not lint */
 
 #include "talk.h"

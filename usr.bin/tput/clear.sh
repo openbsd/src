@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$OpenBSD: clear.sh,v 1.2 1996/06/26 05:41:46 deraadt Exp $
 #	$NetBSD: clear.sh,v 1.2 1994/12/07 08:49:09 jtc Exp $
 #
 # Copyright (c) 1989, 1993

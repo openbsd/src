@@ -1,3 +1,5 @@
+/*	$OpenBSD: getconf.c,v 1.3 1996/06/26 05:33:43 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: getconf.c,v 1.2 1996/05/04 09:15:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getconf.c,v 1.3 1996/06/26 05:33:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

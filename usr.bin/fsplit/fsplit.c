@@ -1,3 +1,5 @@
+/*	$OpenBSD: fsplit.c,v 1.2 1996/06/26 05:33:30 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: fsplit.c,v 1.4 1995/09/28 05:15:07 perry Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.2 1996/06/26 05:33:30 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>

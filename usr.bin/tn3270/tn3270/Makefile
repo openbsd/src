@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1996/06/02 20:22:33 tholo Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/06/26 05:41:33 deraadt Exp $
 
 .include "../../Makefile.inc"
 

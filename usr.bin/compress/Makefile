@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:32:19 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1995/03/26 09:44:29 glass Exp $
-#	@(#)Makefile	8.2 (Berkeley) 4/17/94
 
 PROG=	compress
 SRCS=	compress.c zopen.c

@@ -1,6 +1,6 @@
+/* * @(#)$OpenBSD: file.h,v 1.2 1996/06/26 05:32:57 deraadt Exp $*/
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.1.1.1 1995/10/18 08:45:09 deraadt Exp $
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.

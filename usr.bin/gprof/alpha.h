@@ -1,3 +1,4 @@
+/*	$OpenBSD: alpha.h,v 1.2 1996/06/26 05:33:47 deraadt Exp $	*/
 /*	$NetBSD: alpha.h,v 1.1 1995/04/19 07:24:21 cgd Exp $	*/
 
 /*-

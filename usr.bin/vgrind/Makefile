@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:42:28 deraadt Exp $
 #	$NetBSD: Makefile,v 1.5 1994/12/23 21:11:56 pk Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 PROG=	vfontedpr
 SRCS=	regexp.c vfontedpr.c

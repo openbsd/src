@@ -1,3 +1,4 @@
+/*	$OpenBSD: printgprof.c,v 1.2 1996/06/26 05:33:59 deraadt Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $";
+static char rcsid[] = "$OpenBSD: printgprof.c,v 1.2 1996/06/26 05:33:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 

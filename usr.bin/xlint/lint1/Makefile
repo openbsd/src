@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:44:07 deraadt Exp $
 #	$NetBSD: Makefile,v 1.3 1995/07/04 01:53:05 cgd Exp $
 
 PROG=	lint1

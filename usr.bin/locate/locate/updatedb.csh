@@ -1,5 +1,6 @@
 #!/bin/csh -f
 #
+#	$OpenBSD: updatedb.csh,v 1.2 1996/06/26 05:35:54 deraadt Exp $
 #	$NetBSD: updatedb.csh,v 1.7 1995/08/31 22:36:35 jtc Exp $
 #
 # Copyright (c) 1989, 1993

@@ -1,7 +1,7 @@
+# $OpenBSD: Localstuff,v 1.2 1996/06/26 05:33:03 deraadt Exp $
 
 #------------------------------------------------------------------------------
 # Localstuff:  file(1) magic for locally observed files
 #
-# $Id: Localstuff,v 1.1.1.1 1995/10/18 08:45:09 deraadt Exp $
 # Add any locally observed files here.  Remember:
 # text if readable, executable if runnable binary, data if unreadable.

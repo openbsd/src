@@ -1,3 +1,5 @@
+/*	$OpenBSD: quota.c,v 1.5 1996/06/26 05:38:01 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: quota.c,v 1.4 1996/04/25 11:04:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.5 1996/06/26 05:38:01 deraadt Exp $";
 #endif /* not lint */
 
 /*

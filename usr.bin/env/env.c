@@ -1,3 +1,5 @@
+/*	$OpenBSD: env.c,v 1.3 1996/06/26 05:32:40 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$NetBSD: env.c,v 1.9 1996/05/07 18:32:22 jtc Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.3 1996/06/26 05:32:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>

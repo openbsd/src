@@ -1,5 +1,6 @@
 #!/bin/csh -f
 #
+#	$OpenBSD: vgrind.sh,v 1.2 1996/06/26 05:42:31 deraadt Exp $
 #	$NetBSD: vgrind.sh,v 1.3 1994/11/17 08:28:06 jtc Exp $
 #
 # Copyright (c) 1980, 1993

@@ -1,3 +1,5 @@
+/*	$OpenBSD: display.c,v 1.3 1996/06/26 05:34:17 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: display.c,v 1.2 1996/05/21 21:51:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.3 1996/06/26 05:34:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

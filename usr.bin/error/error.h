@@ -1,3 +1,4 @@
+/*	$OpenBSD: error.h,v 1.2 1996/06/26 05:32:42 deraadt Exp $	*/
 /*	$NetBSD: error.h,v 1.3 1995/09/02 06:15:25 jtc Exp $	*/
 
 /*

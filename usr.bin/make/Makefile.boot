@@ -1,6 +1,6 @@
+#	$OpenBSD: Makefile.boot,v 1.2 1996/06/26 05:36:24 deraadt Exp $
 #	$NetBSD: Makefile.boot,v 1.5 1995/06/14 15:18:43 christos Exp $
 # a very simple makefile...
-#	$Id: Makefile.boot,v 1.1.1.1 1995/10/18 08:45:41 deraadt Exp $
 #
 # You only want to use this if you aren't running NetBSD.
 #

@@ -1,3 +1,4 @@
+/* *	$OpenBSD: defs.h,v 1.2 1996/06/26 05:37:37 deraadt Exp $*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +32,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/9/93
- *	$Id: defs.h,v 1.1 1996/02/03 12:11:53 dm Exp $
  */
 
 #include <sys/param.h>

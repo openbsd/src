@@ -1,3 +1,4 @@
+/*	$OpenBSD: ctags.c,v 1.2 1996/06/26 05:32:28 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $";
+static char rcsid[] = "$OpenBSD: ctags.c,v 1.2 1996/06/26 05:32:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>

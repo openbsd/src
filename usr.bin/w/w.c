@@ -1,3 +1,5 @@
+/*	$OpenBSD: w.c,v 1.4 1996/06/26 05:42:45 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

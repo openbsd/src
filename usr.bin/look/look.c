@@ -1,3 +1,4 @@
+/*	$OpenBSD: look.c,v 1.2 1996/06/26 05:36:06 deraadt Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $";
+static char rcsid[] = "$OpenBSD: look.c,v 1.2 1996/06/26 05:36:06 deraadt Exp $";
 #endif /* not lint */
 
 /*

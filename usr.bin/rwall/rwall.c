@@ -1,3 +1,5 @@
+/*	$OpenBSD: rwall.c,v 1.2 1996/06/26 05:38:58 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -40,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rwall.c,v 1.1.1.1 1995/10/18 08:46:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwall.c,v 1.2 1996/06/26 05:38:58 deraadt Exp $";
 #endif /* not lint */
 
 /*

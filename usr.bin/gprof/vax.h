@@ -1,3 +1,4 @@
+/*	$OpenBSD: vax.h,v 1.2 1996/06/26 05:34:03 deraadt Exp $	*/
 /*	$NetBSD: vax.h,v 1.4 1995/04/19 07:16:31 cgd Exp $	*/
 
 /*

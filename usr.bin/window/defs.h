@@ -1,3 +1,4 @@
+/*	$OpenBSD: defs.h,v 1.2 1996/06/26 05:43:13 deraadt Exp $	*/
 /*	$NetBSD: defs.h,v 1.3 1995/09/28 10:34:19 tls Exp $	*/
 
 /*

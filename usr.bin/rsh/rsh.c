@@ -1,3 +1,5 @@
+/*	$OpenBSD: rsh.c,v 1.4 1996/06/26 05:38:49 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,12 +41,12 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: rsh.c,v 1.3 1996/04/17 07:16:43 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.4 1996/06/26 05:38:49 deraadt Exp $";
 #endif /* not lint */
 
 /*
  * $Source: /home/cvs/src/usr.bin/rsh/Attic/rsh.c,v $
- * $Header: /home/cvs/src/usr.bin/rsh/Attic/rsh.c,v 1.3 1996/04/17 07:16:43 tholo Exp $
+ * $Header: /home/cvs/src/usr.bin/rsh/Attic/rsh.c,v 1.4 1996/06/26 05:38:49 deraadt Exp $
  */
 
 #include <sys/types.h>

@@ -1,11 +1,14 @@
+/* * $OpenBSD: patchlevel.h,v 1.3 1996/06/26 05:33:00 deraadt Exp $*/
 #define	FILE_VERSION_MAJOR	3
 #define	patchlevel		19
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * $Id: patchlevel.h,v 1.2 1995/12/14 03:30:04 deraadt Exp $
  *
  * $Log: patchlevel.h,v $
+ * Revision 1.3  1996/06/26 05:33:00  deraadt
+ * rcsid
+ *
  * Revision 1.2  1995/12/14 03:30:04  deraadt
  * update from netbsd
  *

@@ -1,3 +1,5 @@
+/*	$OpenBSD: scan.c,v 1.3 1996/06/26 05:39:46 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -28,6 +30,9 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.3  1996/06/26 05:39:46  deraadt
+ * rcsid
+ *
  * Revision 1.2  1996/04/17 17:24:13  dm
  * Shouldn't visually encode execute commands, only file names.
  *

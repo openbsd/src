@@ -1,3 +1,4 @@
+/* *	$OpenBSD: pathnames.h,v 1.2 1996/06/26 05:37:41 deraadt Exp $*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +32,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/9/93
- *	$Id: pathnames.h,v 1.1 1996/02/03 12:12:02 dm Exp $
  */
 
 #include <paths.h>

@@ -1,3 +1,4 @@
+/*	$OpenBSD: local.h,v 1.2 1996/06/26 05:43:16 deraadt Exp $	*/
 /*	$NetBSD: local.h,v 1.3 1995/09/28 10:34:26 tls Exp $	*/
 
 /*

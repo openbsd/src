@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+#	$OpenBSD: mkdep.gcc.sh,v 1.2 1996/06/26 05:37:07 deraadt Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993

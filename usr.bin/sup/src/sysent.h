@@ -1,3 +1,5 @@
+/*	$OpenBSD: sysent.h,v 1.2 1996/06/26 05:39:57 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -26,6 +28,9 @@
  **********************************************************************
  * HISTORY
  * $Log: sysent.h,v $
+ * Revision 1.2  1996/06/26 05:39:57  deraadt
+ * rcsid
+ *
  * Revision 1.1  1995/12/16 11:47:02  deraadt
  * add sup to the tree
  *

@@ -1,3 +1,4 @@
+/*	$OpenBSD: wrterm.c,v 1.2 1996/06/26 05:41:59 deraadt Exp $	*/
 /*	$NetBSD: wrterm.c,v 1.3 1994/12/07 05:08:16 jtc Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: wrterm.c,v 1.3 1994/12/07 05:08:16 jtc Exp $";
+static char rcsid[] = "$OpenBSD: wrterm.c,v 1.2 1996/06/26 05:41:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

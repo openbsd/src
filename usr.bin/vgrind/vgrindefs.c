@@ -1,3 +1,4 @@
+/*	$OpenBSD: vgrindefs.c,v 1.2 1996/06/26 05:42:32 deraadt Exp $	*/
 /*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $";
+static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.2 1996/06/26 05:42:32 deraadt Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ	1024

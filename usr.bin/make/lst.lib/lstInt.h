@@ -1,3 +1,4 @@
+/*	$OpenBSD: lstInt.h,v 1.3 1996/06/26 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.6 1995/11/10 21:27:27 cgd Exp $	*/
 
 /*

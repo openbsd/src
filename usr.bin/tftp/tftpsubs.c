@@ -1,3 +1,4 @@
+/*	$OpenBSD: tftpsubs.c,v 1.2 1996/06/26 05:40:36 deraadt Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $";
+static char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.2 1996/06/26 05:40:36 deraadt Exp $";
 #endif /* not lint */
 
 /* Simple minded read-ahead/write-behind subroutines for tftp user and

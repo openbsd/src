@@ -1,3 +1,4 @@
+/*      $OpenBSD: domacro.c,v 1.2 1996/06/26 05:33:34 deraadt Exp $      */
 /*      $NetBSD: domacro.c,v 1.5 1995/09/08 01:06:14 tls Exp $      */
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: domacro.c,v 1.5 1995/09/08 01:06:14 tls Exp $";
+static char rcsid[] = "$OpenBSD: domacro.c,v 1.2 1996/06/26 05:33:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: filesys-os.c,v 1.3 1996/06/26 05:38:21 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$Id: filesys-os.c,v 1.2 1996/06/13 22:23:06 deraadt Exp $";
+"$OpenBSD: filesys-os.c,v 1.3 1996/06/26 05:38:21 deraadt Exp $";
 
 static char sccsid[] = "@(#)filesys-os.c";
 

@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 1996/06/26 05:31:53 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1996/05/15 21:50:39 jtc Exp $
-#	@(#)Makefile	8.2 (Berkeley) 4/2/94
 
 PROG=	chpass
 SRCS=	chpass.c edit.c field.c pw_yp.c table.c util.c getpwent.c

@@ -1,3 +1,4 @@
+/*	$OpenBSD: lcmd.h,v 1.2 1996/06/26 05:43:14 deraadt Exp $	*/
 /*	$NetBSD: lcmd.h,v 1.3 1995/09/28 10:34:22 tls Exp $	*/
 
 /*

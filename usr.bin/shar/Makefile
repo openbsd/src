@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:39:12 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1994/12/22 12:30:52 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 MAN=	shar.1
 

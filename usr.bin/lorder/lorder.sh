@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$OpenBSD: lorder.sh,v 1.2 1996/06/26 05:36:09 deraadt Exp $
 #	$NetBSD: lorder.sh,v 1.3 1995/04/24 07:38:52 cgd Exp $
 #
 # Copyright (c) 1990, 1993

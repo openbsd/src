@@ -1,3 +1,4 @@
+/*	$OpenBSD: colcrt.c,v 1.2 1996/06/26 05:32:12 deraadt Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.2 1996/06/26 05:32:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 

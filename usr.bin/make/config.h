@@ -1,3 +1,4 @@
+/*	$OpenBSD: config.h,v 1.3 1996/06/26 05:36:28 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.5 1996/02/04 20:34:43 christos Exp $	*/
 
 /*

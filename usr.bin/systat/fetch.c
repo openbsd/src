@@ -1,3 +1,4 @@
+/*	$OpenBSD: fetch.c,v 1.2 1996/06/26 05:40:06 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.2 1995/01/20 08:51:56 jtc Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fetch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: fetch.c,v 1.2 1995/01/20 08:51:56 jtc Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.2 1996/06/26 05:40:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

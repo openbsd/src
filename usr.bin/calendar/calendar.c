@@ -1,3 +1,4 @@
+/*	$OpenBSD: calendar.c,v 1.2 1996/06/26 05:31:45 deraadt Exp $	*/
 /*	$NetBSD: calendar.c,v 1.8 1995/09/02 05:38:38 jtc Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-static char rcsid[] = "$NetBSD: calendar.c,v 1.8 1995/09/02 05:38:38 jtc Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.2 1996/06/26 05:31:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

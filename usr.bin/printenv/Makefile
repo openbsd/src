@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:45:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:37:56 deraadt Exp $
 
 PROG=	printenv
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ipcs.c,v 1.4 1996/06/26 05:34:37 deraadt Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*

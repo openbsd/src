@@ -1,3 +1,4 @@
+/*	$OpenBSD: ttymsg.c,v 1.2 1996/06/26 05:42:47 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $";
+static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.2 1996/06/26 05:42:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

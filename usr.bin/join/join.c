@@ -1,3 +1,5 @@
+/*	$OpenBSD: join.c,v 1.3 1996/06/26 05:34:39 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -43,7 +45,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";*/
-static char rcsid[] = "$Id: join.c,v 1.2 1995/12/22 19:02:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: join.c,v 1.3 1996/06/26 05:34:39 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

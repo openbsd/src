@@ -1,3 +1,5 @@
+/*	$OpenBSD: main.c,v 1.3 1996/06/26 05:39:07 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -43,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static char *rcsid = "$Id: main.c,v 1.2 1996/05/21 21:50:46 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.3 1996/06/26 05:39:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

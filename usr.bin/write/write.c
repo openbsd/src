@@ -1,3 +1,4 @@
+/*	$OpenBSD: write.c,v 1.4 1996/06/26 05:44:00 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.4 1996/06/26 05:44:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

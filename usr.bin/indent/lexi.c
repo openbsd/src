@@ -1,3 +1,5 @@
+/*	$OpenBSD: lexi.c,v 1.2 1996/06/26 05:34:31 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980 The Regents of the University of California.
@@ -35,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lexi.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: lexi.c,v 1.1.1.1 1995/10/18 08:45:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lexi.c,v 1.2 1996/06/26 05:34:31 deraadt Exp $";
 #endif /* not lint */
 
 /*

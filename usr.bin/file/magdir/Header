@@ -1,4 +1,6 @@
 #! file
+#	$OpenBSD: Header,v 1.2 1996/06/26 05:33:03 deraadt Exp $
+
 # Magic data for file(1) command.
 # Machine-genererated from src/cmd/file/magdir/*; edit there only!
 # Format is described in magic(files), where:

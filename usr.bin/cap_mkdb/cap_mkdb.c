@@ -1,3 +1,4 @@
+/*	$OpenBSD: cap_mkdb.c,v 1.2 1996/06/26 05:31:48 deraadt Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.2 1996/06/26 05:31:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

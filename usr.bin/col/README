@@ -1,3 +1,5 @@
+#	$OpenBSD: README,v 1.2 1996/06/26 05:32:08 deraadt Exp $
+
 #	@(#)README	8.1 (Berkeley) 6/6/93
 
 col - filter out reverse line feeds.
