@@ -1,0 +1,11 @@
+[[i > 0 && i < 3]P]s2
+[[i > 0 && i >= 3]P]s3
+[li 3>2e3 ]s1
+[[i == 0]P]s4
+[[1 ]P]s7
+[[* ]P]s8
+[[0 ]P]s5
+[li 1=7e8 ]s6
+[li 0<1e4 [ ]Pli 0=5e6 lips.lid1+sis.li 5>0]s0
+ 0dsis.li 5>0 
+q
