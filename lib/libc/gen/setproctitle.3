@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setproctitle.3,v 1.8 1999/07/09 13:35:18 aaron Exp $
+.\"	$OpenBSD: setproctitle.3,v 1.9 2000/07/07 00:13:56 aaron Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -73,3 +73,11 @@ The
 .Fn setproctitle
 function first appeared in
 .Nx 0.9a .
+.Sh CAVEATS
+Never pass a user-supplied string directly as a format without using %s,
+as an attacker can put format specifiers in that string to mangle your
+stack.
+Be sure to use the proper secure idiom:
+.Bd -literal -offset indent
+setproctitle("%s", string);
+.Ed
