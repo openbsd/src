@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.8 1997/08/25 23:11:12 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.9 1998/03/10 00:50:40 downsj Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.8 1997/08/25 23:11:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.9 1998/03/10 00:50:40 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,6 +93,8 @@ static time_t	snaptime;			/* if != 0, we will only
 						 * report users logged in
 						 * at this snapshot time
 						 */
+static int calculate = 0;
+static int seconds = 0;
 
 void	 addarg __P((int, char *));
 TTY	*addtty __P((char *));
@@ -116,7 +118,7 @@ main(argc, argv)
 
 	maxrec = -1;
 	snaptime = 0;
-	while ((ch = getopt(argc, argv, "0123456789f:h:t:d:T")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789cf:h:st:d:T")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -134,12 +136,18 @@ main(argc, argv)
 					exit(0);
 			}
 			break;
+		case 'c':
+			calculate++;
+			break;
 		case 'f':
 			file = optarg;
 			break;
 		case 'h':
 			hostconv(optarg);
 			addarg(HOST_TYPE, optarg);
+			break;
+		case 's':
+			seconds++;
 			break;
 		case 't':
 			addarg(TTY_TYPE, ttyconv(optarg));
@@ -148,12 +156,12 @@ main(argc, argv)
 			snaptime = dateconv(optarg);
 			break;
 		case 'T':
-			fulltime = -1;
+			fulltime = 1;
 			break;
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: last [-#] [-f file] [-T] [-t tty]"
+			    "usage: last [-#] [-cns] [-f file] [-T] [-t tty]"
 			    " [-h host] [-d [[yy]yy[mm[dd[hh]]]]mm[.ss]]"
 			    " [user ...]\n");
 			exit(1);
@@ -228,6 +236,7 @@ wtmp()
 	TTY	*T;			/* tty list entry */
 	struct stat	stb;		/* stat of file for size */
 	time_t	delta;			/* time difference */
+	time_t	total;
 	off_t	bl;
 	int	timesize;		/* how long time string gonna be */
 	int	bytes, wfd;
@@ -275,14 +284,23 @@ wtmp()
 				 * unless flagged for 
 				 */ 
 				if (want(bp, NO)) {
-					ct = ctime(&bp->ut_time);
+					if (seconds) {
+				printf("%-*.*s %-*.*s %-*.*s %ld \n",
+						UT_NAMESIZE, UT_NAMESIZE,
+						bp->ut_name, UT_LINESIZE,
+						UT_LINESIZE, bp->ut_line,
+						UT_HOSTSIZE, UT_HOSTSIZE,
+						bp->ut_host, bp->ut_time);
+					} else {
+						ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
-					    UT_NAMESIZE, UT_NAMESIZE,
-					    bp->ut_name, UT_LINESIZE,
-					    UT_LINESIZE, bp->ut_line,
-					    UT_HOSTSIZE, UT_HOSTSIZE,
-					    bp->ut_host, ct, timesize,
-					    timesize, ct + 11);
+						UT_NAMESIZE, UT_NAMESIZE,
+						bp->ut_name, UT_LINESIZE,
+						UT_LINESIZE, bp->ut_line,
+						UT_HOSTSIZE, UT_HOSTSIZE,
+						bp->ut_host, ct, timesize,
+						timesize, ct + 11);
+					}
 					if (maxrec != -1 && !--maxrec)
 						return;
 				}
@@ -295,12 +313,20 @@ wtmp()
 			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|')
 			    && !bp->ut_line[1]) {
 				if (want(bp, NO)) {
-					ct = ctime(&bp->ut_time);
+					if (seconds) {
+				printf("%-*.*s %-*.*s %-*.*s %ld \n",
+					UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
+					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+					UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
+					bp->ut_time);
+				    	} else {
+						ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
-				    UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
-				    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-				    UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
-				    ct, timesize, timesize, ct + 11);
+					UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
+					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+					UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
+					ct, timesize, timesize, ct + 11);
+				    	}
 					if (maxrec && !--maxrec)
 						return;
 				}
@@ -326,39 +352,70 @@ wtmp()
 			      (T->logout > snaptime || !T->logout ||
 			       T->logout < 0)))) {
 				snapfound = 1;
-				ct = ctime(&bp->ut_time);
+				if (seconds) {
+				printf("%-*.*s %-*.*s %-*.*s %ld ",
+					UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
+					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+					UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
+					bp->ut_time);
+				} else {
+					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s ",
 					UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
 					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
 					UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
 					ct, timesize, timesize, ct + 11);
+				}
 				if (!T->logout)
 					puts("  still logged in");
 				else {
 					if (T->logout < 0) {
 						T->logout = -T->logout;
 						printf("- %s", crmsg);
+					} else {
+						if (seconds) 
+							printf("- %ld",
+							    T->logout);
+						else
+							printf("- %*.*s",
+							    timesize, timesize,
+							    ctime(&T->logout)+11);
 					}
-					else
-						printf("- %*.*s",
-						    timesize, timesize,
-						    ctime(&T->logout)+11);
 					delta = T->logout - bp->ut_time;
-					if (delta < SECSPERDAY)
-						printf("  (%*.*s)\n",
-						    timesize, timesize,
-						    asctime(gmtime(&delta))+11);
-					else
-						printf(" (%ld+%*.*s)\n",
-						    delta / SECSPERDAY,
-						    timesize, timesize,
-						    asctime(gmtime(&delta))+11);
+					if (seconds)
+						printf("  (%ld)\n", delta);
+					else {
+						if (delta < SECSPERDAY)
+							printf("  (%*.*s)\n",
+							    timesize, timesize,
+							    asctime(gmtime(&delta))+11);
+						else
+							printf(" (%ld+%*.*s)\n",
+							    delta / SECSPERDAY,
+							    timesize, timesize,
+							    asctime(gmtime(&delta))+11);
+					}
+					if (calculate)
+						total += delta;
 				}
 				if (maxrec != -1 && !--maxrec)
 					return;
 			}
 			T->logout = bp->ut_time;
 		}
+	}
+	if (calculate) {
+		if ((total / SECSPERDAY) > 0) {
+			int days = (total / SECSPERDAY);
+			total -= (days * SECSPERDAY);
+
+			printf("\nTotal time: %d days, %*.*s\n",
+				days, timesize, timesize,
+				asctime(gmtime(&total))+11);
+		} else
+			printf("\nTotal time: %*.*s\n",
+				timesize, timesize,
+				asctime(gmtime(&total))+11);
 	}
 	ct = ctime(&buf[0].ut_time);
 	printf("\nwtmp begins %10.10s %*.*s \n", ct, timesize, timesize, ct + 11);
