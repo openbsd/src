@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.16 1999/08/16 08:49:05 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.17 1999/08/16 08:58:45 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -39,12 +39,8 @@
 #include <net/if_types.h>
 #include <net/if.h>
 #include <net/if_media.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#else
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
