@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.4 2002/07/19 12:31:59 dhartmei Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.5 2002/07/31 20:19:15 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,6 +54,8 @@
 
 #include "pfctl_parser.h"
 #include "pf_print_state.h"
+
+void	print_name(struct pf_addr *, struct pf_addr *, int);
 
 int
 unmask(struct pf_addr *m, u_int8_t af)

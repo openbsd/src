@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.136 2002/07/30 14:53:48 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.137 2002/07/31 20:19:14 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -131,6 +131,7 @@ struct peer {
 	struct node_port	*port;
 };
 
+int	yyerror(char *, ...);
 int	rule_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_nat *);
 int	rdr_consistent(struct pf_rdr *);
@@ -152,6 +153,15 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
 	    struct node_port *, struct node_uid *, struct node_gid *,
 	    struct node_icmp *);
 int	check_rulestate(int);
+int	kw_cmp(const void *, const void *);
+int	lookup(char *);
+int	lgetc(FILE *);
+int	lungetc(int, FILE *);
+int	findeol(void);
+int	yylex(void);
+struct	node_host *host(char *);
+int	atoul(char *, u_long *);
+
 
 struct sym {
 	struct sym *next;
@@ -163,10 +173,10 @@ struct sym *symhead = NULL;
 int	symset(const char *, const char *);
 char *	symget(const char *);
 
-void	ifa_load();
+void	ifa_load(void);
 int	ifa_exists(char *);
-struct node_host    *ifa_lookup(char *);
-struct node_host    *ifa_pick_ip(struct node_host *, u_int8_t);
+struct	node_host *ifa_lookup(char *);
+struct	node_host *ifa_pick_ip(struct node_host *, u_int8_t);
 
 typedef struct {
 	union {
@@ -2098,8 +2108,7 @@ check_rulestate(int desired_state)
 }
 
 int
-kw_cmp(k, e)
-	const void *k, *e;
+kw_cmp(const void *k, const void *e)
 {
 	return (strcmp(k, ((struct keywords *)e)->k_name));
 }
@@ -2236,7 +2245,7 @@ lungetc(int c, FILE *fin)
 }
 
 int
-findeol()
+findeol(void)
 {
 	int c;
 
