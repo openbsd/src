@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.21 2001/06/28 21:54:43 provos Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.22 2001/06/29 00:27:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -296,8 +296,8 @@ print_rdr(struct pf_rdr *r)
 	printf("\n");
 }
 
-char *pf_reasons[PFRES_MAX+2] = PFRES_NAMES;
-char *pf_fcounters[FCNT_MAX+2] = FCNT_NAMES;
+char *pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
+char *pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 
 void
 print_status(struct pf_status *s)
@@ -318,7 +318,7 @@ print_status(struct pf_status *s)
 		    s->pcounters[PF_OUT][PF_DROP]);
 		printf("States: %u\n", s->states);
 		printf("pf Counters\n");
-		for (i = 0; i < PFRES_MAX; i++)
+		for (i = 0; i < FCNT_MAX; i++)
 			printf("%30s %8lld\n", pf_fcounters[i],
 			    s->fcounters[i]);
 		printf("Counters\n");
