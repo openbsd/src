@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.5 1997/01/03 21:40:49 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.6 1997/04/06 09:15:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: create.c,v 1.5 1997/01/03 21:40:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: create.c,v 1.6 1997/04/06 09:15:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,12 @@ statd(t, parent, puid, pgid, pmode)
 	gid_t savegid = *pgid;
 	uid_t saveuid = *puid;
 	mode_t savemode = *pmode;
-	u_short maxgid, maxuid, maxmode, g[MAXGID], u[MAXUID], m[MAXMODE];
+	int maxgid;
+	int maxuid;
+	u_short maxmode;
+	gid_t g[MAXGID];
+	uid_t u[MAXUID];
+	mode_t m[MAXMODE];
 	static int first = 1;
 
 	if ((p = fts_children(t, 0)) == NULL) {
