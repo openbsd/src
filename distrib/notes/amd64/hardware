@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.41 2005/03/18 03:44:41 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.42 2005/03/18 04:00:58 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -400,7 +400,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		Atmel AT76C50x based USB 802.11b adapters
+		Atmel AT76C50x based USB IEEE 802.11b adapters
 		    3Com 3CRSHEW696
 		    AboCom BWU613
 		    Accton 2664W
@@ -445,7 +445,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Tekram U-300C
 		    Z-Com M4Y-750
 		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
-		  802.11b adapters
+		  IEEE 802.11b adapters
 		    3Com AirConnect 3CRWE777A
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
 		    Corega CGWLPCIA11
@@ -461,7 +461,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    US Robotics 2415 (rebadged WL11000P)
 		    Nortel E-mobility 211818-A
 		    Symbol LA4123
-		Intersil PRISM 2.5/3 based USB 802.11b adapters
+		Intersil PRISM 2.5/3 based USB IEEE 802.11b adapters
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
 		    AirVast WM168b

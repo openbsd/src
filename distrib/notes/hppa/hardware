@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.20 2005/03/08 10:58:50 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.21 2005/03/18 04:00:58 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -77,7 +77,7 @@ Supported devices {:-include-:}:
 	HIL keyboard (hilkbd), mouse and tablets (hilms)
 - Wireless Ethernet Adapters
 	Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
-	  based PCMCIA 802.11b adapters
+	  based PCMCIA IEEE 802.11b adapters
 	    3Com AirConnect 3CRWE737A
 	    ACTIONTEC HWC01170
 	    Addtron AWP-100

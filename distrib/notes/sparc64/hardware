@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.91 2005/03/18 03:44:41 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.92 2005/03/18 04:00:58 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -200,7 +200,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    Zt USB10/100
 
 	Wireless Ethernet Adapters
-		Atmel AT76C50x based USB 802.11b adapters
+		Atmel AT76C50x based USB IEEE 802.11b adapters
 		    3Com 3CRSHEW696
 		    AboCom BWU613
 		    Accton 2664W
@@ -244,7 +244,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    SMC 2662W-V4
 		    Tekram U-300C
 		    Z-Com M4Y-750
-		Intersil PRISM-2-3 based 802.11b Compact Flash adapters
+		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
 		  (will be detected as PCMCIA adapters)
 		    Buffalo AirStation
 		    D-Link DCF-660W
@@ -252,7 +252,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    Linksys WCF12
 		    Netgear MA701
 		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
-		  based PCMCIA 802.11b adapters
+		  based PCMCIA IEEE 802.11b adapters
 		    3Com AirConnect 3CRWE737A
 		    ACTIONTEC HWC01170
 		    Addtron AWP-100
@@ -298,7 +298,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    US Robotics 2410
 		    US Robotics 2445
 		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
-		  802.11b adapters [A] [B]
+		  IEEE 802.11b adapters [A] [B]
 		    3Com AirConnect 3CRWE777A
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
 		    Corega CGWLPCIA11
@@ -314,7 +314,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    US Robotics 2415 (rebadged WL11000P)
 		    Nortel E-mobility 211818-A
 		    Symbol LA4123
-		Intersil PRISM 2.5/3 based USB 802.11b adapters
+		Intersil PRISM 2.5/3 based USB IEEE 802.11b adapters
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
 		    AirVast WM168b

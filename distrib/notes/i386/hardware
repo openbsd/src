@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.191 2005/03/18 03:44:41 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.192 2005/03/18 04:00:58 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -499,18 +499,20 @@ Supported hardware {:-include-:}:
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		ADMtek ADM8211 based 802.11b CardBus adapters [A] [B] [C]
+		ADMtek ADM8211 based IEEE 802.11b CardBus adapters [A] [B] [C]
 		    3Com OfficeConnect 3CRSHPW796
 		    Blitz NetWave Point
 		    D-Link DWL-650 Rev. L1
 		    TrendNet TEW-221PC CardBus
-		ADMtek ADM8211 based 802.11b PCI adapters [A] [B] [C]
+		ADMtek ADM8211 based IEEE 802.11b PCI adapters [A] [B] [C]
 		    Belkin F5D6001 v2
 		    D-Link DWL-520 Rev. C1
 		    LanReady WP2000
 		    Xterasys XN2511B
-		Aironet 4500/4800 802.11b ISA PnP, PCMCIA and PCI [A] [B] [C]
-		Atheros AR521x based CardBus 802.11a/b/g adapters [A] [B] [C]
+		Aironet 4500/4800 IEEE 802.11FH/b ISA PnP, PCMCIA and PCI
+		  [A] [B] [C]
+		Atheros AR521x based CardBus IEEE 802.11a/b/g adapters
+		  [A] [B] [C]
 		    3Com 3CRPAG175
 		    Aztech WL830PC
 		    D-Link DWL-A650
@@ -539,7 +541,7 @@ Supported hardware {:-include-:}:
 		    Sony PCWA-C700
 		    Sony PCWA-C300S
 		    Sony PCWA-C500
-		Atheros AR521x based PCI 802.11a/b/g adapters [A] [B] [C]
+		Atheros AR521x based PCI IEEE 802.11a/b/g adapters [A] [B] [C]
 		    D-Link DWL-A520
 		    D-Link DWL-AG520
 		    D-Link DWL-G520
@@ -549,7 +551,7 @@ Supported hardware {:-include-:}:
 		    Netgear WG311
 		    Proxim Skyline 4032
 		    Senao NL-5354MP
-		Atmel AT76C50x based USB 802.11b adapters [G]
+		Atmel AT76C50x based USB IEEE 802.11b adapters [G]
 		    3Com 3CRSHEW696
 		    AboCom BWU613
 		    Accton 2664W
@@ -594,10 +596,10 @@ Supported hardware {:-include-:}:
 		    SMC 2662W-V4
 		    Tekram U-300C
 		    Z-Com M4Y-750
-		Intel PRO/Wireless 2100 802.11b adapters [G]
+		Intel PRO/Wireless 2100 IEEE 802.11b adapters [G]
 		Intel PRO/Wireless 2200BG/2225BG/2915ABG
-		  802.11a/b/g adapters [G]
-		Intersil PRISM-2-3 based 802.11b Compact Flash adapters
+		  IEEE 802.11a/b/g adapters [G]
+		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
 		(will be detected as PCMCIA adapters) [A] [B]
 		    Buffalo AirStation
 		    D-Link DCF-660W
@@ -605,7 +607,7 @@ Supported hardware {:-include-:}:
 		    Linksys WCF12
 		    Netgear MA701
 		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
-		  based PCMCIA 802.11b adapters [A] [B]
+		  based PCMCIA IEEE 802.11b adapters [A] [B]
 		    3Com AirConnect 3CRWE737A
 		    ACTIONTEC HWC01170
 		    Addtron AWP-100
@@ -651,7 +653,7 @@ Supported hardware {:-include-:}:
 		    US Robotics 2410
 		    US Robotics 2445
 		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
-		  802.11b adapters [A] [B]
+		  IEEE 802.11b adapters [A] [B]
 		    3Com AirConnect 3CRWE777A
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
 		    Corega CGWLPCIA11
@@ -667,7 +669,7 @@ Supported hardware {:-include-:}:
 		    US Robotics 2415 (rebadged WL11000P)
 		    Nortel E-mobility 211818-A
 		    Symbol LA4123
-		Intersil PRISM 2.5/3 based USB 802.11b adapters [A] [B]
+		Intersil PRISM 2.5/3 based USB IEEE 802.11b adapters [A] [B]
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
 		    AirVast WM168b
@@ -699,7 +701,7 @@ Supported hardware {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
-		Ralink RT2500 based CardBus 802.11b/g adapters [A] [B]
+		Ralink RT2500 based CardBus IEEE 802.11b/g adapters [A] [B]
 		    A-Link WL54PC
 		    Amigo AWI-914W
 		    AMIT WL531C
@@ -733,7 +735,7 @@ Supported hardware {:-include-:}:
 		    Unex MR054g-R02
 		    Zinwell ZWX-G160
 		    Zonet ZEW1500
-		Ralink RT2500 based PCI 802.11b/g adapters [A] [B]
+		Ralink RT2500 based PCI IEEE 802.11b/g adapters [A] [B]
 		    A-Link WL54H
 		    Amigo AWI-922W mini-PCI
 		    Amigo AWI-926W
@@ -779,7 +781,7 @@ Supported hardware {:-include-:}:
 		    Zinwell ZWX-G360 mini-PCI
 		    Zinwell ZWX-G361
 		    Zonet ZEW1600
-		Ralink RT2500 based USB 2.0 802.11b/g adapters [A] [B] [C]
+		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters [A] [B] [C]
 		    AMIT WL532U
 		    ASUS WL-167g
 		    Buffalo WLI-U2-KG54-AI
@@ -797,8 +799,8 @@ Supported hardware {:-include-:}:
 		    Repotec RP-WU0402
 		    Surecom EP-9001-g
 		    Zinwell ZWX-G261
-		Raytheon Raylink PCMCIA 802.11 FH adapters [A] [B] [C]
-		Realtek RTL8180L based CardBus 802.11b adapters [A] [B]
+		Raytheon Raylink PCMCIA IEEE 802.11 FH adapters [A] [B] [C]
+		Realtek RTL8180L based CardBus IEEE 802.11b adapters [A] [B]
 		    Belkin F5D6020 V3
 		    Corega CG-WLCB11V3
 		    D-Link DWL-610
