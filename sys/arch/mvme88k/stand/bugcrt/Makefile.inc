@@ -1,4 +1,6 @@
-BUG_CRT_DIR=${S}/arch/${MACHINE}/stand/bugcrt
+#	$OpenBSD: Makefile.inc,v 1.2 1998/08/22 09:16:46 smurph Exp $
+
+BUG_CRT_DIR=${S}/arch/mvme88k/stand/bugcrt
 
 BUGCRT_DIR!= cd ${BUG_CRT_DIR}; \
      printf "xxx:\n\techo \$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxx
