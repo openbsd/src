@@ -34,15 +34,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.1.1.1 1995/10/18 08:41:23 deraadt Exp $
+ *	$Id: SYS.h,v 1.2 1995/12/30 08:15:54 deraadt Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#ifdef __STDC__
+
+#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_ ## x),%eax; int $0x80; jc 2b
+#define	RSYSCALL(x)	SYSCALL(x); ret
+#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_ ## y),%eax; int $0x80; ret
+
+#else /* !__STDC__ */
+
 #define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; int $0x80; jc 2b
 #define	RSYSCALL(x)	SYSCALL(x); ret
 #define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; int $0x80; ret
-#define	CALL(x,y)	call PIC_PLT(_/**/y); addl $4*x,%esp
+
+#endif
 
 	.globl	cerror
