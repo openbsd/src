@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.2 1999/05/23 17:19:23 aaron Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.3 1999/06/06 15:34:57 deraadt Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.2 1999/05/23 17:19:23 aaron Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.3 1999/06/06 15:34:57 deraadt Exp $";
 #endif
 #endif
 
@@ -431,8 +431,7 @@ char   *pat;
 #endif
 #endif
     } else if ((mask = split_at(pat, '/'))) {	/* network/netmask */
-	if (dot_quad_addr(pat) == INADDR_NONE
-	    || dot_quad_addr(mask) == INADDR_NONE)
+	if (!dot_quad_addr_new(pat, NULL) || !dot_quad_addr_new(mask, NULL))
 	    tcpd_warn("%s/%s: bad net/mask pattern", pat, mask);
     } else if (STR_EQ(pat, "FAIL")) {		/* obsolete */
 	tcpd_warn("FAIL is no longer recognized");
