@@ -103,6 +103,9 @@ if_nameindex(void)
 		p += IFNAMSIZ;
 		sa = p;
 
+		if (sa->sa_len < sizeof(struct sockaddr))
+			sa->sa_len = sizeof(struct sockaddr);
+
 		if (len < sa->sa_len)
 			goto ret;
 		len -= sa->sa_len;
