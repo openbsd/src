@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.34 2003/06/26 21:36:39 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.35 2003/09/25 16:52:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: nlist.c,v 1.34 2003/06/26 21:36:39 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: nlist.c,v 1.35 2003/09/25 16:52:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,8 +165,18 @@ __aout_knlist(int fd, DB *db, int ksyms)
 		if (*p != '_') {
 			len = strlen(p) + 1;
 			if (len >= snamesize) {
-				snamesize = len + 1024;
-				sname = realloc(sname, snamesize);
+				char *newsname;
+				int newsnamesize = len + 1024;
+
+				newsname = realloc(sname, newsnamesize);
+				if (newsname == NULL) {
+					if (sname)
+						free(sname);
+					sname = NULL;
+				} else {
+					sname = newsname;
+					snamesize = newsnamesize;
+				}
 			}
 			if (sname == NULL)
 				errx(1, "cannot allocate memory");
@@ -594,8 +604,18 @@ __ecoff_knlist(int fd, DB *db, int ksyms)
 		/* Need to prepend a '_' */
 		len = strlen(&mappedfile[extstroff + esyms[i].es_strindex]) + 1;
 		if (len >= snamesize) {
-			snamesize = len + 1024;
-			sname = realloc(sname, snamesize);
+			char *newsname;
+			int newsnamesize = len + 1024;
+
+			newsname = realloc(sname, newsnamesize);
+			if (newsname == NULL) {
+				if (sname)
+					free(sname);
+				sname = NULL;
+			} else {
+				sname = newsname;
+				snamesize = newsnamesize;
+			}
 		}
 		if (sname == NULL)
 			errx(1, "cannot allocate memory");
