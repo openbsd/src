@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.118 2001/07/21 23:26:41 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.119 2001/07/25 12:22:28 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -57,6 +57,7 @@
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 
+#include <dev/rndvar.h>
 #include <net/pfvar.h>
 
 #include "bpfilter.h"
@@ -77,6 +78,12 @@ struct pf_tree_node {
 	struct pf_tree_node	*right;
 	int			 balance;
 };
+
+struct pf_port_node {
+	LIST_ENTRY(pf_port_node)	next;
+	u_int16_t			port;
+};
+LIST_HEAD(pf_port_list, pf_port_node);
 
 /*
  * Global variables
@@ -103,10 +110,10 @@ u_int32_t		 ticket_nats_active;
 u_int32_t		 ticket_nats_inactive;
 u_int32_t		 ticket_rdrs_active;
 u_int32_t		 ticket_rdrs_inactive;
-u_int16_t		 pf_next_port_tcp = 50001;
-u_int16_t		 pf_next_port_udp = 50001;
+struct pf_port_list	 pf_tcp_ports;
+struct pf_port_list	 pf_udp_ports;
 
-struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl;
+struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
 struct pool		 pf_rdr_pl, pf_state_pl;
 
 int			 pf_tree_key_compare(struct pf_tree_key *,
@@ -165,6 +172,12 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 			    u_short *, u_short *);
 
+int			 pf_get_sport(u_int8_t, u_int16_t, u_int16_t,
+			    u_int16_t *);
+void			 pf_put_sport(u_int8_t, u_int16_t);
+int			 pf_add_sport(struct pf_port_list *, u_int16_t);
+int			 pf_chk_sport(struct pf_port_list *, u_int16_t);
+
 #if NPFLOG > 0
 #define		 PFLOG_PACKET(x,a,b,c,d,e) \
 		do { \
@@ -177,6 +190,10 @@ void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 #else
 #define		 PFLOG_PACKET
 #endif
+
+#define		 STATE_TRANSLATE(s) \
+		    ( (s)->lan.addr != (s)->gwy.addr || \
+		      (s)->lan.port != (s)->gwy.port )
 
 int
 pf_tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
@@ -540,6 +557,9 @@ pf_purge_expired_states(void)
 			pf_tree_remove(&tree_lan_ext, NULL, &key);
 			if (pf_find_state(tree_lan_ext, &key) != NULL)
 				printf("pf: ERROR: remove failed\n");
+			if (STATE_TRANSLATE(cur->state))
+				pf_put_sport(cur->state->proto,
+					htons(cur->state->gwy.port));
 			/* free state */
 			pool_put(&pf_state_pl, cur->state);
 			/*
@@ -637,6 +657,8 @@ pfattach(int num)
 	    0, NULL, NULL, 0);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
 	    0, NULL, NULL, 0);
+	pool_init(&pf_sport_pl, sizeof(struct pf_port_node), 0, 0, 0, "pfsport",
+	    0, NULL, NULL, 0);
 
 	TAILQ_INIT(&pf_rules[0]);
 	TAILQ_INIT(&pf_rules[1]);
@@ -650,6 +672,9 @@ pfattach(int num)
 	pf_nats_inactive = &pf_nats[1];
 	pf_rdrs_active = &pf_rdrs[0];
 	pf_rdrs_inactive = &pf_rdrs[1];
+
+	LIST_INIT(&pf_tcp_ports);
+	LIST_INIT(&pf_udp_ports);
 
 	pf_normalize_init();
 }
@@ -1363,6 +1388,105 @@ pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 	return (0); /* never reached */
 }
 
+int
+pf_chk_sport(struct pf_port_list *plist, u_int16_t port)
+{
+	struct pf_port_node	*pnode;
+
+	LIST_FOREACH(pnode, plist, next) {
+		if (pnode->port == port)
+			return (1);
+	}
+
+	return (0);
+}
+
+int
+pf_add_sport(struct pf_port_list *plist, u_int16_t port)
+{
+	struct pf_port_node *pnode;
+
+	pnode = pool_get(&pf_sport_pl, M_NOWAIT);
+	if (pnode == NULL)
+		return (ENOMEM);
+
+	pnode->port = port;
+	LIST_INSERT_HEAD(plist, pnode, next);
+
+	return (0);
+}
+
+void
+pf_put_sport(u_int8_t proto, u_int16_t port)
+{
+	struct pf_port_list	*plist;
+	struct pf_port_node	*pnode;
+
+	if (proto == IPPROTO_TCP)
+		plist = &pf_tcp_ports;
+	else if (proto == IPPROTO_UDP)
+		plist = &pf_udp_ports;
+	else
+		return;
+
+	LIST_FOREACH(pnode, plist, next) {
+		if (pnode->port == port) {
+			LIST_REMOVE(pnode, next);
+			pool_put(&pf_sport_pl, pnode);
+			break;
+		}
+	}
+}
+
+int
+pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
+{
+	struct pf_port_list	*plist;
+        int             	step;
+        u_int16_t       	cut;
+
+	if (proto == IPPROTO_TCP)
+		plist = &pf_tcp_ports;
+	else if (proto == IPPROTO_UDP)
+		plist = &pf_udp_ports;
+	else
+		return (EINVAL);
+
+	/* port search; start random, step; similar 2 portloop in in_pcbbind */
+        if (low == high) {
+		*port = low;
+                if (! pf_chk_sport(plist, *port))
+			goto found;
+		return (1);
+        } else if (low < high) {
+                step = 1;
+                cut = arc4random() % (high - low) + low;
+        } else {
+                step = -1;
+                cut = arc4random() % (low - high) + high;
+        }
+
+        *port = cut - step;
+        do {
+                *port += step;
+                if (! pf_chk_sport(plist, *port))
+                        goto found;
+        } while (*port != low && *port != high);
+
+        step = -step;
+        *port = cut;
+        do {
+                *port += step;
+                if (! pf_chk_sport(plist, *port))
+                        goto found;
+        } while (*port != low && *port != high);
+
+	return (1);					/* none available */
+
+found:
+        return (pf_add_sport(plist, *port));
+}
+
 struct pf_nat *
 pf_get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t saddr, u_int32_t daddr)
 {
@@ -1424,10 +1548,10 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	struct pf_nat *nat = NULL;
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
-	u_int16_t bport, nport;
+	u_int16_t bport, nport = 0;
 	struct pf_rule *r, *rm = NULL;
 	u_short reason;
-	int rewrite = 0;
+	int rewrite = 0, error;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for NAT */
@@ -1435,9 +1559,12 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			bport = th->th_sport;
+			error = pf_get_sport(IPPROTO_TCP, 50001,
+			    65535, &nport);
+			if (error)
+				return (PF_DROP);
 			pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
-			    &h->ip_sum, &th->th_sum, nat->raddr,
-			    htons(pf_next_port_tcp));
+			    &h->ip_sum, &th->th_sum, nat->raddr, htons(nport));
 			rewrite++;
 		}
 	} else {
@@ -1498,19 +1625,25 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 				    rm->return_icmp & 255);
 		}
 
-		if (rm->action == PF_DROP)
+		if (rm->action == PF_DROP) {
+			if (nport && nat != NULL)
+				pf_put_sport(IPPROTO_TCP, nport);
 			return (PF_DROP);
+		}
 	}
 
-	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
+	if (((rm != NULL) && rm->keep_state) || nat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
 		struct pf_state *s;
 
 		len = h->ip_len - off - (th->th_off << 2);
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
-		if (s == NULL)
+		if (s == NULL) {
+			if (nport && nat != NULL)
+				pf_put_sport(IPPROTO_TCP, nport);
 			return (PF_DROP);
+		}
 
 		s->rule = rm;
 		s->log = rm && (rm->log & 2);
@@ -1518,15 +1651,12 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->direction = direction;
 		if (direction == PF_OUT) {
 			s->gwy.addr = h->ip_src.s_addr;
-			s->gwy.port = th->th_sport;
+			s->gwy.port = th->th_sport;		/* sport */
 			s->ext.addr = h->ip_dst.s_addr;
 			s->ext.port = th->th_dport;
 			if (nat != NULL) {
 				s->lan.addr = baddr;
 				s->lan.port = bport;
-				pf_next_port_tcp++;
-				if (pf_next_port_tcp == 65535)
-					pf_next_port_tcp = 50001;
 			} else {
 				s->lan.addr = s->gwy.addr;
 				s->lan.port = s->gwy.port;
@@ -1578,10 +1708,10 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	struct pf_nat *nat = NULL;
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
-	u_int16_t bport, nport;
+	u_int16_t bport, nport = 0;
 	struct pf_rule *r, *rm = NULL;
 	u_short reason;
-	int rewrite = 0;
+	int rewrite = 0, error;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for NAT */
@@ -1589,9 +1719,12 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			bport = uh->uh_sport;
+			error = pf_get_sport(IPPROTO_UDP, 50001,
+			    65535, &nport);
+			if (error)
+				return (PF_DROP);
 			pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
-			    &h->ip_sum, &uh->uh_sum, nat->raddr,
-			    htons(pf_next_port_udp));
+			    &h->ip_sum, &uh->uh_sum, nat->raddr, htons(nport));
 			rewrite++;
 		}
 	} else {
@@ -1649,8 +1782,11 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			    rm->return_icmp & 255);
 		}
 
-		if (rm->action == PF_DROP)
+		if (rm->action == PF_DROP) {
+			if (nport && nat != NULL)
+				pf_put_sport(IPPROTO_UDP, nport);
 			return (PF_DROP);
+		}
 	}
 
 	if ((rm != NULL && rm->keep_state) || nat != NULL || rdr != NULL) {
@@ -1660,8 +1796,11 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 		len = h->ip_len - off - sizeof(*uh);
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
-		if (s == NULL)
+		if (s == NULL) {
+			if (nport && nat != NULL)
+				pf_put_sport(IPPROTO_UDP, nport);
 			return (PF_DROP);
+		}
 
 		s->rule = rm;
 		s->log = rm && (rm->log & 2);
@@ -1675,9 +1814,6 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			if (nat != NULL) {
 				s->lan.addr = baddr;
 				s->lan.port = bport;
-				pf_next_port_udp++;
-				if (pf_next_port_udp == 65535)
-					pf_next_port_udp = 50001;
 			} else {
 				s->lan.addr = s->gwy.addr;
 				s->lan.port = s->gwy.port;
@@ -1965,8 +2101,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			(*state)->expire = pftv.tv_sec + 24*60*60;
 
 		/* translate source/destination address, if needed */
-		if ((*state)->lan.addr != (*state)->gwy.addr ||
-		    (*state)->lan.port != (*state)->gwy.port) {
+		if (STATE_TRANSLATE(*state)) {
 			if (direction == PF_OUT)
 				pf_change_ap(&h->ip_src.s_addr,
 				    &th->th_sport, &h->ip_sum,
@@ -2044,8 +2179,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 		(*state)->expire = pftv.tv_sec + 20;
 
 	/* translate source/destination address, if necessary */
-	if ((*state)->lan.addr != (*state)->gwy.addr ||
-	    (*state)->lan.port != (*state)->gwy.port) {
+	if (STATE_TRANSLATE(*state)) {
 		if (direction == PF_OUT)
 			pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
 			    &h->ip_sum, &uh->uh_sum,
@@ -2180,8 +2314,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				return (PF_DROP);
 			}
 
-			if ((*state)->lan.addr != (*state)->gwy.addr ||
-			    (*state)->lan.port != (*state)->gwy.port) {
+			if (STATE_TRANSLATE(*state)) {
 				if (direction == PF_IN) {
 					pf_change_icmp(&h2.ip_src.s_addr,
 					    &th.th_sport, &h->ip_dst.s_addr,
@@ -2230,8 +2363,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			if (*state == NULL)
 				return (PF_DROP);
 
-			if ((*state)->lan.addr != (*state)->gwy.addr ||
-			    (*state)->lan.port != (*state)->gwy.port) {
+			if (STATE_TRANSLATE(*state)) {
 				if (direction == PF_IN) {
 					pf_change_icmp(&h2.ip_src.s_addr,
 					    &uh.uh_sport, &h->ip_dst.s_addr,
