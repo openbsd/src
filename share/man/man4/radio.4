@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.4 2002/01/04 17:14:51 mickey Exp $
+.\"	$OpenBSD: radio.4,v 1.5 2002/01/07 18:37:45 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -31,7 +31,6 @@
 .Nm radio
 .Nd device-independent radio driver layer
 .Sh SYNOPSIS
-.Cd option RADIO_TEA5759
 .Pp
 .Cd "radio* at az0"
 .Cd "radio* at mr0"
@@ -49,17 +48,6 @@ The
 driver provides support for various FM radio cards.
 It provides an uniform programming interface layer above different underlying
 radio hardware drivers.
-.Pp
-Philips Semiconductors released two almost identical chips TEA5757 and
-TEA5759.
-The TEA5757 is used in FM-standards in which the local oscillator frequency
-is above the radio frequency (e.g. European and American standards).
-The TEA5759 is the version in which the oscillator frequency is below
-the radio frequency (e.g. Japanese standards).
-The option
-.Va RADIO_TEA5759
-changes the algotithm of frequency calculation for the tea5757 based cards
-to conform with the Japanese standards.
 .Pp
 For radio tuner controlling there is a single device file available:
 .Pa /dev/radio .
@@ -162,6 +150,38 @@ Informs whether the device receives a valid signal or noise.
 Informs whether the device receives a stereo or mono signal.
 .El
 .El
+.Sh CHIPSETS
+.Pp
+LM700x is a frequency synthesizer IC.
+The LM700x is programmed through a 24-bit write-only shift register.
+The first 14 bits are frequency data.
+The next 2 bits are LSI test bits, and should always be zero.
+The next 4 bits are band data and time base data.
+They can be programmed to force a given reference frequency, or they can be
+set to zero and the next 3 bits can be used to set the reference frequency.
+The final bit selects the divider selection, which is 1 for FM and 0 for AM.
+The LM700x chips are used in
+.Xr az 4
+and
+.Xr rt 4
+cards.
+.Pp
+The TEA5757; TEA5759 is a 44-pin integrated AM/FM stereo radio circuit.
+The radio part is based on the TEA5712.
+The TEA5757 is used in FM-standards in which the local oscillator frequency
+is above the radio frequency (e.g. European and American standards).
+The TEA5759 is the version in which the oscillator frequency is below
+the radio frequency (e.g. Japanese standards).
+To conform with the Japanese standards it is needed to set the flags least
+significant bit to 1.
+The TEA5757; TEA5759 has a 25-bit read-write shift register.
+The TEA5757 chips are used in
+.Xr mr 4 ,
+.Xr rtii 4 ,
+.Xr sf2r 4
+and
+.Xr sf4r 4
+cards.
 .Sh FILES
 .Bl -tag -width /dev/radio -compact
 .It Pa /dev/radio
@@ -189,7 +209,7 @@ driver was written by
 and
 .An Maxim Tsyplakov Aq tm@oganer.net .
 The man page was written by
-.An Maxim Tsyplakov Aq tm@oganer.net .
+.An Vladimir Popov Aq jumbo@narod.ru .
 .Sh HISTORY
 The
 .Nm
