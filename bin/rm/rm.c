@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.8 1999/01/02 08:30:27 weingart Exp $	*/
+/*	$OpenBSD: rm.c,v 1.9 1999/01/02 08:38:58 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.8 1999/01/02 08:30:27 weingart Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.9 1999/01/02 08:38:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -353,7 +353,7 @@ rm_overwrite(file, sbp)
 	}
 
 err:	eval = 1;
-	if(buf)
+	if (buf)
 		free(buf);
 	warn("%s", file);
 }
