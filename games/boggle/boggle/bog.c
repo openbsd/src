@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.11 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: bog.c,v 1.12 2003/04/07 00:34:15 tdeval Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.11 2002/12/06 21:48:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.12 2003/04/07 00:34:15 tdeval Exp $";
 #endif
 #endif /* not lint */
 
@@ -373,7 +373,8 @@ playgame()
 					exit(1);
 				}
 				pword[npwords++] = pwordsp;
-				(void) strcpy(pwordsp, buf);
+				strlcpy(pwordsp, buf,
+				    pwords + sizeof pwords - pwordsp);
 				pwordsp += len;
 				addword(buf);
 			}
