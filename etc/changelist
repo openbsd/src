@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.8 1999/09/13 23:32:05 pjanzen Exp $
+#	$OpenBSD: changelist,v 1.9 1999/09/25 21:48:28 pjanzen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -7,6 +7,7 @@
 /etc/aliases
 /etc/bootparams
 /etc/bootptab
+/etc/ccd.conf
 /etc/changelist
 /etc/crontab
 /etc/csh.cshrc
@@ -14,8 +15,11 @@
 /etc/csh.logout
 /etc/daily
 /etc/daily.local
+/etc/dhcpd.conf
 /etc/distfile
+/etc/dm.conf
 /etc/exports
+/etc/fbtab
 /etc/fstab
 /etc/ftpusers
 /etc/gettytab
@@ -24,10 +28,15 @@
 /etc/hosts.allow
 /etc/hosts.deny
 /etc/hosts.equiv
+/etc/hosts.lpd
 /etc/ifaliases
 /etc/inetd.conf
 /etc/ipf.rules
+/etc/ipnat.rules
+/etc/locate.rc
 /etc/mail.rc
+/etc/mailer.conf
+/etc/man.conf
 /etc/master.passwd
 /etc/monthly
 /etc/monthly.local
@@ -35,18 +44,19 @@
 /etc/myname
 /etc/named.boot
 /etc/netgroup
-/etc/newsyslog.conf
-/etc/ipnat.rules
 /etc/netstart
 /etc/networks
+/etc/newsyslog.conf
 /etc/passwd
 /etc/passwd.conf
 /etc/printcap
 /etc/protocols
+/etc/rbootd.conf
 /etc/rc
 /etc/rc.conf
 /etc/rc.local
 /etc/rc.securelevel
+/etc/rc.shutdown
 /etc/remote
 /etc/resolv.conf
 /etc/rpc
