@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipfstat.8,v 1.4 1996/07/10 03:53:50 ccappuc Exp $
+.\"	$OpenBSD: ipfstat.8,v 1.5 1996/07/10 03:58:41 ccappuc Exp $
 .\"
 .LP
 .TH ipfstat 8
@@ -9,7 +9,7 @@ ipfstat [-hIiovd:]
 .SH DESCRIPTION
 .LP
 .PP
-\fBipfstat examines /dev/kmem using the symbols \fB_fr_flags\fP,
+\fBipfstat\fP examines /dev/kmem using the symbols \fB_fr_flags\fP,
 \fB_frstats\fP, \fB_filterin\fP, and \fB_filterout\fP.
 To run and work, it needs to be able to read both /dev/kmem and the
 kernel itself.  The kernel name defaults to \fB_PATH_UNIX\fP and then
