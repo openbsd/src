@@ -33,7 +33,7 @@
 .Nm rc.conf
 .Nd system daemon configuration database
 .Sh DESCRIPTION
-This file contains a series of Bourne-shell syntax assinments
+This file contains a series of Bourne-shell syntax assignments
 that are used to configure the system daemons.
 It is not read by the kernel, but is sourced by various other files
 in the
@@ -41,15 +41,15 @@ in the
 series in order to set shell variables used therein
 to control the behaviour of the scripts.
 .Pp
-There are three sections to the file. The first is used to turn features
-on or off. For example, whether your system runs the 
+There are three sections in this file. The first is used to turn features
+on or off. For example, whether the system runs the 
 .Nm sendmail
 daemon is determined by the line in this section
 .Bd -literal -indent xxx
 sendmail_flags=NO
 .Ed
 .Pp
-If you edit this line to contain some valid sendmail daemon command-line
+If this line is edited to contain some valid sendmail daemon command-line
 flags, such as
 .Bd -literal -indent xxx
 sendmail_flags="-bd -q30m"
@@ -59,28 +59,33 @@ then the sendmail daemon will be started with those options.
 .Pp
 The second section contains some other programs that can either be run or not,
 but that don't need options. They can be set to YES or NO. For example,
-the distributed system contains the line
+the line
 .Bd -literal -indent xxx
 nfs_server=NO
 .Ed
 .Pp
-which prevents the NFS server daemons from starting. If you wish to 
-run NFS, you need to change this line's value from NO to YES,
-.Sy plus
-you also need to make whatever changes are needed for the server
-to have something to do (like, set up the exports file).
+prevents the NFS server daemons from starting.
+To run NFS, just change this line's value from NO to YES,
+.Sy and
+also make whatever changes are needed for the server
+to have something to do (set up the
+.Xr exports 5
+file etc.).
 .Pp
 The third section contains values that parameterize servers started by
 one of the first two sections, and are ignored if the corresponding
-server is not running. For example, if you enabled 
+server is not running. For example, if
 .Nm nfs_server ,
-you should also be aware of the value here
+is enabled, then the line
 .Bd -literal -indent xxx
 nfsd_flags="-tun 4"
 .Ed
+provides command-line arguments for the nfs server.
 .Pp
-which starts four copies of the server; on a busy file server you'd
-probably change to 8 or more.
+This particular line instructs 
+.Xr nfsd 8
+to start four copies of the server.
+On a busy file server, 8 (or more) copies are recommended.
 .Sh SEE ALSO
 .Xr init 8 ,
 .Xr rc 8 .

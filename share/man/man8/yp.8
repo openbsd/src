@@ -110,8 +110,9 @@ hosts file entries through the functions
 .Xr getpwent 3 ,
 .Xr getgrent 3
 and
-.Xr gethostbyname 3
-(as well as number of other databases and functions).
+.Xr gethostbyname 3 .
+A number of other databases can be network-managed as well,
+and have their respective functions.
 .Nm YP
 also provides hooks for numerous other client programs
 such as
@@ -126,7 +127,7 @@ of their maps through
 is used to initialize YP as a server or master.  This creates
 various files in
 .Pa /var/yp .
-If setup as a server, the required databases are automatically copied
+If setup as a client, the required databases are automatically copied
 from the specified server.
 .Pp
 The
