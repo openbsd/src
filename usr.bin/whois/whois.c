@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.9 1999/11/19 03:50:49 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.10 1999/11/19 03:57:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: whois.c,v 1.9 1999/11/19 03:50:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.10 1999/11/19 03:57:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ whois(name, sinp, flags)
 		if ((flags & WHOIS_INIC_FALLBACK) && !nhost && !nomatch &&
 		    (p = strstr(buf, "No match for \""))) {
 			p += sizeof("No match for \"") - 1;
-			if ((len = strcspn(p, "\"")) &&
+			if ((len = strcspn(p, "\"")) && len == strlen(name) &&
 			    strncasecmp(name, p, len) == 0)
 				nomatch = 1;
 		}
