@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.5 1997/04/24 18:30:44 deraadt Exp $
+#	$Id: ypinit.sh,v 1.6 1997/10/09 23:41:57 deraadt Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -10,6 +10,7 @@ YPXFR=/usr/sbin/ypxfr
 YP_DIR=/var/yp
 MAKEDBM=/usr/sbin/makedbm
 ERROR_EXISTS="NO"
+umask 077
 
 #set -xv
 
