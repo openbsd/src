@@ -2,7 +2,10 @@
 ./.profile
 ./dev/MAKEDEV.local
 ./etc/aliases
+./etc/amd
+./etc/amd/master
 ./etc/bootptab
+./etc/ccd.conf
 ./etc/changelist
 ./etc/csh.cshrc
 ./etc/csh.login
@@ -19,6 +22,9 @@
 ./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/inetd.conf
+./etc/kerberosIV/README
+./etc/kerberosIV/krb.conf
+./etc/kerberosIV/krb.realms
 ./etc/localtime
 ./etc/magic
 ./etc/mail.rc
@@ -36,6 +42,10 @@
 ./etc/newsyslog.conf
 ./etc/passwd
 ./etc/phones
+./etc/ppp/chap-secrets
+./etc/ppp/options
+./etc/ppp/options.leaf
+./etc/ppp/pap-secrets
 ./etc/printcap
 ./etc/protocols
 ./etc/pwd.db

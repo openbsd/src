@@ -6,15 +6,16 @@
 ./usr/games/battlestar
 ./usr/games/bcd
 ./usr/games/boggle
+./usr/games/bs
 ./usr/games/caesar
 ./usr/games/canfield
 ./usr/games/cfscores
-./usr/games/chess
 ./usr/games/cribbage
 ./usr/games/dm
 ./usr/games/factor
 ./usr/games/fish
 ./usr/games/fortune
+./usr/games/grdc
 ./usr/games/hack
 ./usr/games/hangman
 ./usr/games/hide/adventure
@@ -24,9 +25,9 @@
 ./usr/games/hide/battlestar
 ./usr/games/hide/bcd
 ./usr/games/hide/boggle
+./usr/games/hide/bs
 ./usr/games/hide/canfield
 ./usr/games/hide/cfscores
-./usr/games/hide/chess
 ./usr/games/hide/cribbage
 ./usr/games/hide/fish
 ./usr/games/hide/hack
@@ -111,7 +112,6 @@
 ./usr/share/games/fortune/startrek.dat
 ./usr/share/games/fortune/zippy
 ./usr/share/games/fortune/zippy.dat
-./usr/share/games/gnuchess.book
 ./usr/share/games/larn/larn.help
 ./usr/share/games/larn/larnmaze
 ./usr/share/games/larn/larnopts
@@ -160,7 +160,6 @@
 ./usr/share/man/cat6/boggle.0
 ./usr/share/man/cat6/caesar.0
 ./usr/share/man/cat6/canfield.0
-./usr/share/man/cat6/chess.0
 ./usr/share/man/cat6/cribbage.0
 ./usr/share/man/cat6/factor.0
 ./usr/share/man/cat6/fish.0
