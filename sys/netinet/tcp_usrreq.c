@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.2 1996/03/03 22:30:49 niklas Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.3 1996/03/14 08:11:54 tholo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -110,6 +110,12 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	if (inp == 0 && req != PRU_ATTACH) {
 		splx(s);
+		/*
+		 * The following corrects an mbuf leak under rare
+		 * circumstances
+		 */
+		if (m && (req == PRU_SEND || req == PRU_SENDOOB))
+			m_freem(m);
 		return (EINVAL);		/* XXX */
 	}
 	if (inp) {
