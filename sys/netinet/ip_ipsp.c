@@ -96,7 +96,6 @@ struct xformsw *xformswNXFORMSW = &xformsw[sizeof(xformsw)/sizeof(xformsw[0])];
 unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */ 
 
 static char *ipspkernfs = NULL;
-static int ipspkernfs_len = 0;
 int ipspkernfs_dirty = 1;
 
 /*
@@ -203,7 +202,7 @@ ipsp_kern(int off, char **bufp, int len)
     if ((!ipspkernfs_dirty) && (ipspkernfs))
     {
 	*bufp = ipspkernfs;
-	return ipspkernfs_len;
+	return strlen(ipspkernfs);
     }
     else
       ipspkernfs_dirty = 0;
@@ -233,8 +232,6 @@ ipsp_kern(int off, char **bufp, int len)
     if (!ipspkernfs)
       return 0;
 
-    ipspkernfs_len = k + 1;
-
     for (i = 0, k = 0; i < TDB_HASHMOD; i++)
       for (tdbp = tdbh[i]; tdbp != (struct tdb *) NULL; tdbp = tdbp->tdb_hnext)
       {
@@ -251,5 +248,5 @@ ipsp_kern(int off, char **bufp, int len)
 
     ipspkernfs[k] = '\0';
     *bufp = ipspkernfs;
-    return ipspkernfs_len;
+    return strlen(ipspkernfs);
 }
