@@ -1,4 +1,4 @@
-dnl	$OpenBSD: upgrade,v 1.20 2003/09/09 22:03:56 miod Exp $
+dnl	$OpenBSD: upgrade,v 1.21 2003/11/10 21:23:20 miod Exp $
 dnl OpenBSDUpgrade({:-the CD-ROM or an installation floppy as you would do for
 dnl a new installation-:})
 Due to the change from a.out to ELF binary format in OpenBSD OSREV,
@@ -62,6 +62,14 @@ order to be sure that /etc/rc.local or any other customization you have
 made to the system will still run:
 
   echo "kern.emul.aout=1" >> /etc/sysctl.conf
+
+
+ATTENTION! Several configuration files under /etc, such as /etc/login.conf,
+will refer to existinng a.out binaries. DO NOT UPGRADE YOUR SYSTEM UNLESS
+YOU HAVE ENABLED A.OUT EMULATION FIRST! After you merge configuration files
+changes and replace or remove your existing a.out binaries, it will be
+possible do disable a.out emulation.
+
 
 The upgrade is now possible. Boot from the CD-ROM or an installation
 floppy, as you would do for a new installation. 
