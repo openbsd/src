@@ -174,7 +174,6 @@
 ./usr/lib/perl5/site_perl/alpha-openbsd/net
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/bpfdesc.ph
-./usr/lib/perl5/site_perl/alpha-openbsd/net/encap.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_atm.ph

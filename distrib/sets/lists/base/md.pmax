@@ -209,7 +209,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/net
 ./usr/lib/perl5/site_perl/mips-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/bpfdesc.ph
-./usr/lib/perl5/site_perl/mips-openbsd/net/encap.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_atm.ph

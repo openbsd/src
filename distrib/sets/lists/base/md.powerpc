@@ -166,7 +166,6 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/bpfdesc.ph
-./usr/lib/perl5/site_perl/powerpc-openbsd/net/encap.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_atm.ph
