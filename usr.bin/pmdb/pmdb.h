@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.h,v 1.4 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: pmdb.h,v 1.5 2002/08/08 18:27:57 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -95,6 +95,7 @@ int process_getregs(struct pstate *, struct reg *);
 int cmd_process_run(int, char **, void *);
 int cmd_process_cont(int, char **, void *);
 int cmd_process_kill(int, char **, void *);
+int cmd_process_setenv(int, char **, void *);
 
 /* signal.c */
 void init_sigstate(struct pstate *);

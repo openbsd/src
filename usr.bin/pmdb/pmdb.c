@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.11 2002/07/22 23:26:05 fgsch Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.12 2002/08/08 18:27:57 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -56,6 +56,7 @@ struct clit cmds[] = {
 	{ "run", "run process", 0, 0, cmd_process_run, (void *)-1 },
 	{ "continue", "continue process", 0, 0, cmd_process_cont, (void *)-1 },
 	{ "kill", "kill process", 0, 0, cmd_process_kill, (void *)-1 },
+	{ "setenv", "set env variables", 2, 2, cmd_process_setenv, (void *)-1 },
 
 	/* signal handling commands. */
 	{ "signal", "ignore signal", 2, 2, cmd_signal_ignore, (void *)-1 },

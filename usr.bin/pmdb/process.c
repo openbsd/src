@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.9 2002/07/31 02:38:39 art Exp $	*/
+/*	$OpenBSD: process.c,v 1.10 2002/08/08 18:27:57 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -255,4 +255,13 @@ cmd_process_cont(int argc, char **argv, void *arg)
 	ps->ps_npc = 1;
 
 	return (1);
+}
+
+int
+cmd_process_setenv(int argc, char **argv, void *arg)
+{
+	if (setenv(argv[1], argv[2], 1))
+		err(1, "setenv");
+
+	return (0);
 }

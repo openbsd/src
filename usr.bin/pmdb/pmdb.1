@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmdb.1,v 1.8 2002/06/09 02:44:34 todd Exp $
+.\"	$OpenBSD: pmdb.1,v 1.9 2002/08/08 18:27:57 art Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -105,6 +105,11 @@ Sets the signal state for the specified signal to either ignore it and
 pass it to the process or to stop the process.
 .It sigstate
 Shows which signals are currently ignored.
+.It setenv Ar var Ar val
+Sets the environment variable
+.Ar var
+to the value
+.Ar val .
 .It break Ar symname|addr
 Sets a breakpoint at the symbol
 .Ar symname
