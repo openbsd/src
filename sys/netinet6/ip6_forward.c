@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.27 2003/08/07 09:11:53 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.28 2004/02/02 20:13:01 cedric Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #endif
 
 #ifdef IPSEC
+#include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/udp.h>
@@ -453,7 +454,7 @@ ip6_forward(m, srcrt)
 		}
 	}
 
-#if NPF > 0
+#if NPF > 0 || defined(IPSEC)
 senderr:
 #endif
 	if (mcopy == NULL)
