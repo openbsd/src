@@ -1,4 +1,4 @@
-/*	$Id: registerd.c,v 1.1.1.1 1995/12/14 06:52:36 tholo Exp $	*/
+/*	$Id: registerd.c,v 1.2 1995/12/29 09:50:32 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -106,9 +106,8 @@ main(argc, argv)
 
 	/* get encryption key */
 
-	(void) sprintf(keyfile, "%s%s%s",
+	(void) sprintf(keyfile, "%s/%s",
 		SERVER_KEYDIR,
-		CLIENT_KEYFILE,
 		inet_ntoa(sina.sin_addr));
 
 	if ((kf = open(keyfile, O_RDONLY)) < 0) {
