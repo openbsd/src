@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.11 1999/07/20 07:38:33 maja Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.12 2001/03/24 10:07:19 ho Exp $	*/
 /*	$NetBSD: kbd.c,v 1.28 1997/09/13 19:12:18 pk Exp $ */
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -383,6 +384,7 @@ struct kbd_softc {
 	struct	evvar k_events;		/* event queue state */
 	int	k_repeatc;		/* repeated character */
 	int	k_repeating;		/* we've called timeout() */
+	struct	timeout k_repeat_tmo;	/* for kbd_repeat() timeouts */
 } kbd_softc;
 
 /* Prototypes */
@@ -471,6 +473,8 @@ kbdattach(kbd)
 		printf("kbd: type = %d, layout = 0x%x\n",
 		    kbd_softc.k_state.kbd_id, kbd_softc.k_state.kbd_layout);
 	}
+
+	timeout_set(&k->k_repeat_tmo, kbd_repeat, k);
 }
 
 void
@@ -660,7 +664,7 @@ kbd_repeat(arg)
 
 	if (k->k_repeating && k->k_repeatc >= 0 && k->k_cons != NULL) {
 		ttyinput(k->k_repeatc, k->k_cons);
-		timeout(kbd_repeat, k, kbd_repeat_step);
+		timeout_add(&k->k_repeat_tmo, kbd_repeat_step);
 	}
 	splx(s);
 }
@@ -675,7 +679,7 @@ kbd_rint(c)
 
 	if (k->k_repeating) {
 		k->k_repeating = 0;
-		untimeout(kbd_repeat, k);
+		timeout_del(&k->k_repeat_tmo);
 	}
 
 	/*
@@ -736,7 +740,7 @@ kbd_rint(c)
 			ttyinput(c, k->k_cons);
 			k->k_repeating = 1;
 			k->k_repeatc = c;
-			timeout(kbd_repeat, k, kbd_repeat_start);
+			timeout_add(&k->k_repeat_tmo, kbd_repeat_start);
 		}
 		return;
 	}

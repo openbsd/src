@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.13 2001/02/20 19:39:33 mickey Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.14 2001/03/24 10:07:18 ho Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -1584,6 +1584,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 	volatile struct ie_cmd_common *cc = pcmd;
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	volatile int timedout = 0;
+	struct timeout chan_tmo;
 	extern int hz;
 
 	scb->ie_command = (u_short)cmd;
@@ -1602,7 +1603,8 @@ command_and_wait(sc, cmd, pcmd, mask)
 		 * According to the packet driver, the minimum timeout should
 		 * be .369 seconds, which we round up to .4.
 		 */
-		timeout(chan_attn_timeout, (caddr_t)&timedout, 2 * hz / 5);
+		timeout_set(&chan_tmo, chan_attn_timeout, (caddr_t)&timedout);
+		timeout_add(&chan_tmo, 2 * hz / 5);
 
 		/*
 		 * Now spin-lock waiting for status.  This is not a very nice
@@ -1615,7 +1617,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 			if ((cc->ie_cmd_status & mask) || timedout)
 				break;
 
-		untimeout(chan_attn_timeout, (caddr_t)&timedout);
+		timeout_del(&chan_tmo);
 
 		return timedout;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scf.c,v 1.2 1999/07/25 23:49:37 jason Exp $	*/
+/*	$OpenBSD: scf.c,v 1.3 2001/03/24 10:07:20 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -69,6 +69,7 @@ struct scf_softc {
 	struct	scf_regs *sc_regs;	/* our registers */
 	int	sc_open;
 	int	sc_tick;
+	struct	timeout sc_blink_tmo;	/* for scfblink() */
 };
 
 struct cfattach scf_ca = {
@@ -139,8 +140,10 @@ scfattach(parent, self, aux)
 	sc->sc_regs->led1 &= ~LED_MASK;
 	sc->sc_regs->ssldcr = 0;
 
-	if (sparc_led_blink)
+	if (sparc_led_blink) {
+		timeout_set(&sc->sc_blink_tmo, scfblink, 0);
 		scfblink(0);
+	}
 }
 
 int
@@ -293,5 +296,5 @@ scfblink(v)
 	sc->sc_tick++;
 
 	s = ((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1);
-	timeout(scfblink, 0, s);
+	timeout_add(&sc->sc_blink_tmo, s);
 }

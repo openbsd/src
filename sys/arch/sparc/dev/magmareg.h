@@ -171,8 +171,11 @@ struct mbpp_port {
 #define mp_timeout mp_param.bp_timeout
 #define mp_delay mp_param.bp_delay
 
-	u_char *mp_ptr;		/* pointer to io data */
-	int mp_cnt;		/* count of io chars */
+	u_char *mp_ptr;			/* pointer to io data */
+	int mp_cnt;			/* count of io chars */
+
+	struct timeout mp_timeout_tmo;	/* for mbpp_timeout() */
+	struct timeout mp_start_tmo;	/* for mbpp_start() */
 };
 
 #define MBPPF_OPEN	(1<<0)

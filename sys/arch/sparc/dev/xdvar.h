@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdvar.h,v 1.4 1997/08/08 08:25:37 downsj Exp $	*/
+/*	$OpenBSD: xdvar.h,v 1.5 2001/03/24 10:07:21 ho Exp $	*/
 /*	$NetBSD: xdvar.h,v 1.5 1996/03/31 22:38:56 pk Exp $	*/
 
 /*
@@ -158,6 +158,7 @@ struct xdc_softc {
   u_char ndone;                    /* number of done IORQs */
   u_char waithead;                 /* head of queue */
   u_char waitend;		   /* end of queue */
+  struct timeout xdc_tick_tmo;	   /* for xdc_tick() */
 };
 
 /*

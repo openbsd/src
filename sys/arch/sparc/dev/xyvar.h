@@ -1,4 +1,4 @@
-/*	$OpenBSD: xyvar.h,v 1.4 1997/08/08 08:25:41 downsj Exp $	*/
+/*	$OpenBSD: xyvar.h,v 1.5 2001/03/24 10:07:22 ho Exp $	*/
 /*	$NetBSD: xyvar.h,v 1.4 1996/03/31 22:39:04 pk Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ struct xyc_softc {
   struct xy_iorq *xy_chain[XYC_MAXIOPB];
 				   /* current chain */
   int no_ols;			   /* disable overlap seek for stupid 450s */
+  struct timeout xyc_tick_tmo;	   /* for xyc_tick() */   
 };
 
 /*
