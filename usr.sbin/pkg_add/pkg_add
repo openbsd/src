@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.7 2003/11/06 18:06:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.8 2003/11/06 18:12:07 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -126,6 +126,7 @@ sub can_install($)
 	return 1;
 }
 
+
 # This does pre_add a package: finding it and reading its package information
 sub pre_add($)
 {
@@ -137,6 +138,7 @@ sub pre_add($)
 		$pkgname1 = OpenBSD::PackageName->new($pkg);
 		return undef unless can_install($pkgname1->{pkgname});
 	}
+
 	my $handle = OpenBSD::PackageLocator->find($pkg);
 	if (!$handle) {
 		print "Can't find $pkg\n";
@@ -167,6 +169,55 @@ sub pre_add($)
 		return undef;
 	}
 	return $handle;
+}
+
+
+sub solve_dependencies
+{
+	my ($handle, @extra) = @_;
+	my $plist = $handle->{plist};
+	my $to_register = $handle->{solved_dependencies} = [];
+	my $to_install;
+
+	# do simple old style pkgdep first
+	my @deps = ();
+	for my $dep (@{$plist->{pkgdep}}) {
+		if (!is_installed($dep->{name})) {
+			push(@deps, $dep->{name});
+		}
+		push(@$to_register, $dep->{name});
+	}
+	for my $dep (@{$plist->{newdepend}}, @{$plist->{libdepend}}) {
+	    next if $dep->{name} ne $plist->pkgname();
+	    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, installed_packages());
+	    if (@candidates >= 1) {
+		    push(@$to_register, $candidates[0]);
+	    } else {
+	    	if (!defined $to_install) {
+			$to_install = {};
+			for my $fullname (@extra) {
+			    $to_install->{OpenBSD::PackageName::url2pkgname($fullname)} = $fullname;
+			}
+		}
+	    	# try against list of packages to install
+	    	my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, keys %{$to_install});
+		if (@candidates >= 1) {
+		    push(@deps, $to_install->{$candidates[0]});
+		    push(@$to_register, $candidates[0]);
+		} else {
+		    # okay, give up, use the default
+		    push(@deps, $dep->{def});
+		    push(@$to_register, $dep->{def});
+		}
+	    }
+	}
+
+	if (@{$to_register} > 0) {
+	    print "Dependencies resolve to: ", join(',', @$to_register);
+	    print " (todo: ", join(',', @deps), ")" if @deps > 0;
+	    print "\n";
+	}
+	return @deps;
 }
 
 sub register_installation
@@ -211,6 +262,7 @@ sub borked_installation
 	exit 1;
 }
 
+
 sub really_add($)
 {
 	my $handle = shift;
@@ -227,6 +279,7 @@ sub really_add($)
 		}
 	}
 	die if $collisions;
+
 	my $interrupted;
 	local $SIG{'INT'} = sub {
 		$interrupted = 1;
@@ -262,6 +315,7 @@ sub really_add($)
 			system($dir.INSTALL, $pkgname, "POST-INSTALL") == 0 or die "install script borked";
 		}
 	}
+
 	unlink($dir.CONTENTS);
 	if ($interrupted) {
 		borked_installation($plist, $dir);
@@ -281,7 +335,6 @@ my $cache={};
 
 MAINLOOP:
 while (my $pkg = shift @todo) {
-	print "Trying to add $pkg\n";
 	if (!defined $cache->{$pkg}) {
 		$cache->{$pkg} = pre_add($pkg);
 	}
@@ -294,56 +347,23 @@ while (my $pkg = shift @todo) {
 		$handle->close();
 		next;
 	}
-	if (defined $handle->{solved_dependencies}) {
-		for my $dep (@{$handle->{solved_dependencies}}) {
-			next if is_installed($dep);
-			print "Can't install $pkg: can't resolve $dep\n";
+	if (!defined $handle->{solved_dependencies}) {
+		my @deps = solve_dependencies($handle, @todo);
+		if (@deps > 0) {
+			unshift(@todo, @deps, $pkg);
 			next MAINLOOP;
 		}
-		for my $dep (@{$handle->{solved_dependencies}}) {
-			OpenBSD::PackingElement::PkgDep->add($plist, $dep);
-		}
-	} elsif ((defined $plist->{pkgdep}) or (defined $plist->{libdepend}) or (defined $plist->{newdepend})) {
-		# do simple old style pkgdep first
-		my @deps = ();
-		my @done_deps = ();
-		if (defined $plist->{pkgdep}) {
-			for my $dep (@{$plist->{pkgdep}}) {
-				if (is_installed($dep->{name})) {
-					push(@done_deps, $dep->{name});
-				} else {
-					push(@deps, $dep->{name});
-				}
-			}
-		} 
-		if (defined $plist->{newdepend}) {
-			for my $dep (@{$plist->{newdepend}}) {
-			    next if $dep->{name} ne $plist->pkgname();
-			    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, installed_packages());
-			    if (@candidates >= 1) {
-				    push(@done_deps, $candidates[0]);
-			    } else {
-				    push(@deps, $dep->{def});
-			    }
-		    	}
-		}
-		if (defined $plist->{libdepend}) {
-			for my $dep (@{$plist->{libdepend}}) {
-			    next if $dep->{name} ne $plist->pkgname();
-			    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, installed_packages());
-			    if (@candidates >= 1) {
-				    push(@done_deps, $candidates[0]);
-			    } else {
-				    push(@deps, $dep->{def});
-			    }
-			}
-		}
-		print "Dependencies. Done: ", join(',', @done_deps),
-			" Todo: ", join(',', @deps), "\n";
-		unshift(@todo, @deps, $pkg);
-		$handle->{solved_dependencies} = [];
-		push(@{$handle->{solved_dependencies}}, @done_deps, @deps);
-		next;
+	}
+
+	# verify dependencies and register them
+
+	for my $dep (@{$handle->{solved_dependencies}}) {
+		next if is_installed($dep);
+		print "Can't install $pkg: can't resolve $dep\n";
+		next MAINLOOP;
+	}
+	for my $dep (@{$handle->{solved_dependencies}}) {
+		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
 	}
 	really_add($handle);
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
