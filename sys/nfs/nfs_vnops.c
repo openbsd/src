@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.61 2004/06/24 19:35:26 tholo Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.62 2004/07/21 17:30:56 marius Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_lease_desc, nfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, nfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, nfs_poll },		/* poll */
-	{ &vop_kqfilter_desc, vop_generic_kqfilter },	/* kqfilter */
+	{ &vop_kqfilter_desc, nfs_kqfilter },	/* kqfilter */
 	{ &vop_revoke_desc, nfs_revoke },	/* revoke */
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
 	{ &vop_remove_desc, nfs_remove },	/* remove */
@@ -559,6 +559,9 @@ nfs_setattr(v)
 		np->n_size = np->n_vattr.va_size = tsize;
 		uvm_vnp_setsize(vp, np->n_size);
 	}
+
+	VN_KNOTE(vp, NOTE_ATTRIB); /* XXX setattrrpc? */
+
 	return (error);
 }
 
@@ -1235,6 +1238,9 @@ nfs_mknod(v)
 	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
 	if (!error)
 		vrele(newvp);
+
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+
 	return (error);
 }
 
@@ -1340,6 +1346,7 @@ again:
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vrele(dvp);
 	return (error);
 }
@@ -1414,6 +1421,10 @@ nfs_remove(v)
 	np->n_attrstamp = 0;
 	vrele(dvp);
 	vrele(vp);
+
+	VN_KNOTE(vp, NOTE_DELETE);
+	VN_KNOTE(dvp, NOTE_WRITE);
+
 	return (error);
 }
 
@@ -1504,6 +1515,7 @@ nfs_rename(v)
 	 */
 	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
 	    tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp)) {
+		VN_KNOTE(tvp, NOTE_DELETE);
 		vrele(tvp);
 		tvp = NULL;
 	}
@@ -1511,6 +1523,9 @@ nfs_rename(v)
 	error = nfs_renamerpc(fdvp, fcnp->cn_nameptr, fcnp->cn_namelen,
 		tdvp, tcnp->cn_nameptr, tcnp->cn_namelen, tcnp->cn_cred,
 		tcnp->cn_proc);
+
+	VN_KNOTE(fdvp, NOTE_WRITE);
+	VN_KNOTE(tdvp, NOTE_WRITE);
 
 	if (fvp->v_type == VDIR) {
 		if (tvp != NULL && tvp->v_type == VDIR)
@@ -1650,6 +1665,9 @@ nfs_link(v)
 		VTONFS(vp)->n_attrstamp = 0;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
+
+	VN_KNOTE(vp, NOTE_LINK);
+	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
@@ -1717,6 +1735,7 @@ nfs_symlink(v)
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
+	VN_KNOTE(dvp, NOTE_WRITE);
 	vrele(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
@@ -1801,8 +1820,10 @@ nfs_mkdir(v)
 	if (error) {
 		if (newvp)
 			vrele(newvp);
-	} else
+	} else {
+		VN_KNOTE(dvp, NOTE_WRITE|NOTE_LINK);
 		*ap->a_vpp = newvp;
+	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vrele(dvp);
 	return (error);
@@ -1850,6 +1871,10 @@ nfs_rmdir(v)
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
+
+	VN_KNOTE(dvp, NOTE_WRITE|NOTE_LINK);
+	VN_KNOTE(vp, NOTE_DELETE);
+
 	cache_purge(dvp);
 	cache_purge(vp);
 	vrele(vp);

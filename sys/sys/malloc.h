@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.72 2004/06/20 01:04:28 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.73 2004/07/21 17:30:56 marius Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -172,7 +172,10 @@
 #define	M_NTFSRDATA	134	/* NTFS resident data */
 #define	M_NTFSDECOMP	135	/* NTFS decompression temporary */
 #define	M_NTFSRUN	136	/* NTFS vrun storage */
-#define	M_LAST		137	/* Must be last type + 1 */
+
+#define	M_KEVENT	137	/* kqueue related */
+
+#define	M_LAST		138	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -298,6 +301,7 @@
 	"NTFS resident data ",	/* 134 M_NTFSRDATA */ \
 	"NTFS decomp",	/* 135 M_NTFSDECOMP */ \
 	"NTFS vrun",	/* 136 M_NTFSRUN */ \
+	"kqueue",	/* 137 M_KEVENT */ \
 }
 
 struct kmemstats {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.38 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.39 2004/07/21 17:30:55 marius Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ nfs_write(v)
 	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	daddr_t lbn, bn;
-	int n, on, error = 0;
+	int n, on, error = 0, extended = 0, wrotedta = 0, truncated = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
@@ -370,7 +370,9 @@ again:
 		if (uio->uio_offset + n > np->n_size) {
 			np->n_size = uio->uio_offset + n;
 			uvm_vnp_setsize(vp, (u_long)np->n_size);
-		}
+			extended = 1;
+		} else if (uio->uio_offset + n < np->n_size)
+			truncated = 1;
 
 		/*
 		 * If the new write will leave a contiguous dirty
@@ -407,6 +409,8 @@ again:
 			bp->b_validend = max(bp->b_validend, bp->b_dirtyend);
 		}
 
+		wrotedta = 1;
+
 		/*
 		 * Since this block is being modified, it must be written
 		 * again and not just committed.
@@ -429,6 +433,11 @@ again:
 			bdwrite(bp);
 		}
 	} while (uio->uio_resid > 0 && n > 0);
+
+	if (wrotedta)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0) |
+		    (truncated ? NOTE_TRUNCATE : 0));
+
 	return (0);
 }
 
