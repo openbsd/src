@@ -18,9 +18,9 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* We settle for little endian for now */
+/* We settle for big endian for now */
 
-#define TARGET_ENDIAN_DEFAULT 0
+#define TARGET_ENDIAN_DEFAULT MASK_BIG_ENDIAN
 
 /* Look for the include files in the system-defined places.  */
 

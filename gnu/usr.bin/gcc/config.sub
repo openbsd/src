@@ -435,6 +435,9 @@ case $basic_machine in
 		# We don't have specific support for Nexgen yet, so just call it a Pentium
 		basic_machine=i586-nexgen
 		;;
+	mips-pica-*)
+		basic_machine=mips-r4kle
+		;;
 	pn)
 		basic_machine=pn-gould
 		;;
