@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.23 1997/06/12 01:12:27 mickey Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.24 1997/06/23 09:28:57 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -507,7 +507,7 @@ main(argc, argv)
 	(void) fflush(stderr);
 
 	for (ttl = 1; ttl <= max_ttl; ++ttl) {
-		u_long lastaddr = 0;
+		in_addr_t lastaddr = 0;
 		int got_there = 0;
 		int unreachable = 0;
 		int timeout = 0;
@@ -797,13 +797,13 @@ packet_ok(buf, cc, from, seq)
 #ifndef ARCHAIC
 	if (verbose) {
 		int i;
-		u_long *lp = (u_long *)&icp->icmp_ip;
+		in_addr_t *lp = (in_addr_t *)&icp->icmp_ip;
 
 		Printf("\n%d bytes from %s", cc, inet_ntoa(from->sin_addr));
 		Printf(" to %s", inet_ntoa(ip->ip_dst));
 		Printf(": icmp type %d (%s) code %d\n", type, pr_type(type),
 		       icp->icmp_code);
-		for (i = 4; i < cc ; i += sizeof(long))
+		for (i = 4; i < cc ; i += sizeof(in_addr_t))
 			Printf("%2d: x%8.8lx\n", i, *lp++);
 	}
 #endif ARCHAIC

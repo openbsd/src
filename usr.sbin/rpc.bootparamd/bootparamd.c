@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.6 1997/01/17 07:14:26 millert Exp $
+ * $Id: bootparamd.c,v 1.7 1997/06/23 09:31:08 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -37,7 +37,8 @@ int	_rpcsvcdirty = 0;
 int	_rpcpmstart = 0;
 int     debug = 0;
 int     dolog = 0;
-unsigned long route_addr, inet_addr();
+in_addr_t route_addr;
+in_addr_t inet_addr();
 struct sockaddr_in my_addr;
 extern char *__progname;
 char   *bootpfile = _PATH_BOOTPARAMS;
@@ -134,7 +135,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	bp_whoami_arg *whoami;
 	struct svc_req *rqstp;
 {
-	long    haddr;
+	in_addr_t haddr;
 	static bp_whoami_res res;
 
 	if (debug)
