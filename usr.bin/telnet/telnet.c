@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.11 2000/11/10 15:33:13 provos Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.12 2001/11/03 00:07:53 hin Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ send_do(c, init)
     }
     NET2ADD(IAC, DO);
     NETADD(c);
-    printoption("SENT", DO, c);
+    printoption("SENT",DO, c);
 }
 
     void

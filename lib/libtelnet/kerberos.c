@@ -1,4 +1,4 @@
-/*     $OpenBSD: kerberos.c,v 1.8 2001/06/29 21:21:46 millert Exp $    */
+/*     $OpenBSD: kerberos.c,v 1.9 2001/11/03 00:07:52 hin Exp $    */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -116,7 +116,7 @@ static int auth_done; /* XXX */
 static int pack_cred(CREDENTIALS *cred, unsigned char *buf);
 static int unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred);
 
-static int
+int
 check_krb4_tickets() {
     int ret;
     int retval = 0;

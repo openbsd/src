@@ -142,3 +142,15 @@ int ofb64_keyid (int, unsigned char *, int *);
 void ofb64_printsub (unsigned char *, int, unsigned char *, int);
 
 #endif
+
+#ifdef KRB4
+int check_krb4_tickets();
+#else
+#define check_krb4_tickets() 0
+#endif
+
+#ifdef KRB5
+int check_krb5_tickets();
+#else
+#define check_krb5_tickets() 0
+#endif

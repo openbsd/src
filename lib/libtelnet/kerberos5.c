@@ -1,4 +1,4 @@
-/*     $OpenBSD: kerberos5.c,v 1.3 2001/06/28 14:22:16 hin Exp $       */
+/*     $OpenBSD: kerberos5.c,v 1.4 2001/11/03 00:07:52 hin Exp $       */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -120,7 +120,7 @@ static  krb5_ticket *ticket;
 static krb5_context context;
 static krb5_auth_context auth_context;
 
-static int
+int
 check_krb5_tickets()
 {
     krb5_error_code ret;
