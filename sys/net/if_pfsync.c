@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.5 2003/05/03 21:15:11 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.6 2003/06/21 09:07:01 djm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -284,8 +284,10 @@ pfsync_pack_state(action, st)
 		sp->expire = htonl(0);
 	else
 		sp->expire = htonl(st->expire - secs);
-	sp->packets = htonl(st->packets);
-	sp->bytes = htonl(st->bytes);
+	sp->packets[0] = htonl(st->packets[0]);
+	sp->packets[1] = htonl(st->packets[1]);
+	sp->bytes[0] = htonl(st->bytes[0]);
+	sp->bytes[1] = htonl(st->bytes[1]);
 	if (r == NULL)
 		sp->rule.nr = htonl(-1);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.156 2003/06/20 18:24:57 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.157 2003/06/21 09:07:01 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -458,8 +458,8 @@ struct pf_state {
 	struct ifnet	*rt_ifp;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
-	u_int32_t	 packets;
-	u_int32_t	 bytes;
+	u_int32_t	 packets[2];
+	u_int32_t	 bytes[2];
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;

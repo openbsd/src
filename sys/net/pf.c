@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.366 2003/06/20 18:24:57 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.367 2003/06/21 09:07:01 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2352,8 +2352,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->creation = time.tv_sec;
 		s->expire = time.tv_sec;
 		s->timeout = PFTM_TCP_FIRST_PACKET;
-		s->packets = 1;
-		s->bytes = pd->tot_len;
+		s->packets[0] = 1;
+		s->bytes[0] = pd->tot_len;
 
 		if ((pd->flags & PFDESC_TCP_NORM) && pf_normalize_tcp_init(m,
 		    off, pd, th, &s->src, &s->dst)) {
@@ -2623,8 +2623,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->creation = time.tv_sec;
 		s->expire = time.tv_sec;
 		s->timeout = PFTM_UDP_FIRST_PACKET;
-		s->packets = 1;
-		s->bytes = pd->tot_len;
+		s->packets[0] = 1;
+		s->bytes[0] = pd->tot_len;
 		if (pf_insert_state(s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
@@ -2872,8 +2872,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->creation = time.tv_sec;
 		s->expire = time.tv_sec;
 		s->timeout = PFTM_ICMP_FIRST_PACKET;
-		s->packets = 1;
-		s->bytes = pd->tot_len;
+		s->packets[0] = 1;
+		s->bytes[0] = pd->tot_len;
 		if (pf_insert_state(s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
@@ -3104,8 +3104,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->creation = time.tv_sec;
 		s->expire = time.tv_sec;
 		s->timeout = PFTM_OTHER_FIRST_PACKET;
-		s->packets = 1;
-		s->bytes = pd->tot_len;
+		s->packets[0] = 1;
+		s->bytes[0] = pd->tot_len;
 		if (pf_insert_state(s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			if (r->log)
@@ -3209,7 +3209,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	u_int16_t		 win = ntohs(th->th_win);
 	u_int32_t		 ack, end, seq;
 	u_int8_t		 sws, dws;
-	int			 ackskew;
+	int			 ackskew, dirndx;
 	int			 copyback = 0;
 	struct pf_state_peer	*src, *dst;
 
@@ -3225,9 +3225,11 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
 		dst = &(*state)->dst;
+		dirndx = 0;
 	} else {
 		src = &(*state)->dst;
 		dst = &(*state)->src;
+		dirndx = 1;
 	}
 
 	if ((*state)->src.state == PF_TCPS_PROXY_SRC) {
@@ -3425,8 +3427,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	    (ackskew <= (MAXACKWINDOW << sws))) {
 	    /* Acking not more than one window forward */
 
-		(*state)->packets++;
-		(*state)->bytes += pd->tot_len;
+		(*state)->packets[dirndx]++;
+		(*state)->bytes[dirndx] += pd->tot_len;
 
 		/* update max window */
 		if (src->max_win < win)
@@ -3507,12 +3509,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			printf("pf: loose state match: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d\n",
-			    seq, ack, pd->p_len, ackskew, (*state)->packets);
+			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d:%d\n",
+			    seq, ack, pd->p_len, ackskew, 
+			    (*state)->packets[0], (*state)->packets[1]);
 		}
 
-		(*state)->packets++;
-		(*state)->bytes += pd->tot_len;
+		(*state)->packets[dirndx]++;
+		(*state)->bytes[dirndx] += pd->tot_len;
 
 		/* update max window */
 		if (src->max_win < win)
@@ -3561,9 +3564,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			printf("pf: BAD state: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d "
+			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d:%d "
 			    "dir=%s,%s\n", seq, ack, pd->p_len, ackskew,
-			    ++(*state)->packets,
+			    (*state)->packets[0], (*state)->packets[1],
 			    direction == PF_IN ? "in" : "out",
 			    direction == (*state)->direction ? "fwd" : "rev");
 			printf("pf: State failure on: %c %c %c %c | %c %c\n",
@@ -3622,6 +3625,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	struct pf_state_peer	*src, *dst;
 	struct pf_tree_node	 key;
 	struct udphdr		*uh = pd->hdr.udp;
+	int			dirndx;
 
 	key.af = pd->af;
 	key.proto = IPPROTO_UDP;
@@ -3635,13 +3639,15 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
 		dst = &(*state)->dst;
+		dirndx = 0;
 	} else {
 		src = &(*state)->dst;
 		dst = &(*state)->src;
+		dirndx = 1;
 	}
 
-	(*state)->packets++;
-	(*state)->bytes += pd->tot_len;
+	(*state)->packets[dirndx]++;
+	(*state)->bytes[dirndx] += pd->tot_len;
 
 	/* update states */
 	if (src->state < PFUDPS_SINGLE)
@@ -3689,7 +3695,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 	struct pf_addr	*saddr = pd->src, *daddr = pd->dst;
 	u_int16_t	 icmpid, *icmpsum;
 	u_int8_t	 icmptype;
-	int		 state_icmp = 0;
+	int		 state_icmp = 0, dirndx;
 
 	switch (pd->proto) {
 #ifdef INET
@@ -3738,8 +3744,9 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		STATE_LOOKUP();
 
-		(*state)->packets++;
-		(*state)->bytes += pd->tot_len;
+		dirndx = (direction == (*state)->direction) ? 0 : 1;
+		(*state)->packets[dirndx]++;
+		(*state)->bytes[dirndx] += pd->tot_len;
 		(*state)->expire = time.tv_sec;
 		(*state)->timeout = PFTM_ICMP_ERROR_REPLY;
 
@@ -4212,6 +4219,7 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 {
 	struct pf_state_peer	*src, *dst;
 	struct pf_tree_node	 key;
+	int			dirndx;
 
 	key.af = pd->af;
 	key.proto = pd->proto;
@@ -4225,13 +4233,15 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 	if (direction == (*state)->direction) {
 		src = &(*state)->src;
 		dst = &(*state)->dst;
+		dirndx = 0;
 	} else {
 		src = &(*state)->dst;
 		dst = &(*state)->src;
+		dirndx = 1;
 	}
 
-	(*state)->packets++;
-	(*state)->bytes += pd->tot_len;
+	(*state)->packets[dirndx]++;
+	(*state)->bytes[dirndx] += pd->tot_len;
 
 	/* update states */
 	if (src->state < PFOTHERS_SINGLE)
