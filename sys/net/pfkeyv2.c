@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.81 2002/03/03 21:47:00 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.82 2002/05/31 01:42:17 angelos Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -791,7 +791,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 {
     int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST, delflag = 0, s;
     struct sockaddr_encap encapdst, encapnetmask, encapgw;
-    struct ipsec_policy *ipo;
+    struct ipsec_policy *ipo, *tmpipo;
     struct ipsec_acquire *ipa;
 
     struct pfkeyv2_socket *pfkeyv2_socket, *so = NULL;
@@ -917,6 +917,23 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
 	    sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
 						sizeof(struct sadb_address));
+
+	    /* Either all or none of the flow must be included */
+	    if ((headers[SADB_X_EXT_SRC_FLOW] ||
+		headers[SADB_X_EXT_PROTOCOL] ||
+		headers[SADB_X_EXT_DST_FLOW] ||
+		headers[SADB_X_EXT_SRC_MASK] ||
+		headers[SADB_X_EXT_DST_MASK]) &&
+		!(headers[SADB_X_EXT_SRC_FLOW] &&
+		headers[SADB_X_EXT_PROTOCOL] &&
+		headers[SADB_X_EXT_DST_FLOW] &&
+		headers[SADB_X_EXT_SRC_MASK] &&
+		headers[SADB_X_EXT_DST_MASK]))
+	    {
+		rval = EINVAL;
+		goto ret;
+	    }
+
 	    s = spltdb();
 
 	    /* Find TDB */
@@ -980,6 +997,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    PFKEYV2_AUTH_LOCAL);
 		import_auth(newsa, headers[SADB_X_EXT_REMOTE_AUTH],
 			    PFKEYV2_AUTH_REMOTE);
+		import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
+		    headers[SADB_X_EXT_SRC_FLOW], headers[SADB_X_EXT_SRC_MASK],
+		    headers[SADB_X_EXT_DST_FLOW], headers[SADB_X_EXT_DST_MASK],
+		    headers[SADB_X_EXT_PROTOCOL]);
+
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 		headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
@@ -1031,11 +1053,26 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    splx(s);
 	    break;
-
 	case SADB_ADD:
 	    ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
 	    sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
 						sizeof(struct sadb_address));
+
+	    /* Either all or none of the flow must be included */
+	    if ((headers[SADB_X_EXT_SRC_FLOW] ||
+		headers[SADB_X_EXT_PROTOCOL] ||
+		headers[SADB_X_EXT_DST_FLOW] ||
+		headers[SADB_X_EXT_SRC_MASK] ||
+		headers[SADB_X_EXT_DST_MASK]) &&
+		!(headers[SADB_X_EXT_SRC_FLOW] &&
+		headers[SADB_X_EXT_PROTOCOL] &&
+		headers[SADB_X_EXT_DST_FLOW] &&
+		headers[SADB_X_EXT_SRC_MASK] &&
+		headers[SADB_X_EXT_DST_MASK]))
+	    {
+		rval = EINVAL;
+		goto ret;
+	    }
 
 	    s = spltdb();
 
@@ -1106,6 +1143,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    PFKEYV2_AUTH_LOCAL);
 		import_auth(newsa, headers[SADB_X_EXT_REMOTE_AUTH],
 			    PFKEYV2_AUTH_REMOTE);
+		import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
+		    headers[SADB_X_EXT_SRC_FLOW], headers[SADB_X_EXT_SRC_MASK],
+		    headers[SADB_X_EXT_DST_FLOW], headers[SADB_X_EXT_DST_MASK],
+		    headers[SADB_X_EXT_PROTOCOL]);
+
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 		headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
@@ -1273,8 +1315,19 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    {
 		case SADB_SATYPE_UNSPEC:
 		    s = spltdb();
-		    while ((ipo = TAILQ_FIRST(&ipsec_policy_head)) != NULL)
-		      ipsec_delete_policy(ipo);
+
+		    /*
+		     * Go through the list of policies, delete those that
+		     * are not socket-attached.
+		     */
+		    for (ipo = TAILQ_FIRST(&ipsec_policy_head);
+			 ipo != NULL;
+			 ipo = tmpipo)
+		    {
+			tmpipo = TAILQ_NEXT(ipo, ipo_list);
+			if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
+			  ipsec_delete_policy(ipo);
+		    }
 		    splx(s);
 		    /* Fall through */
 		case SADB_SATYPE_AH:
@@ -1375,10 +1428,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	case SADB_X_ADDFLOW:
 	{
-	    union sockaddr_union *src, *dst, *srcmask, *dstmask, *ssrc;
 	    struct sadb_protocol *sab;
+	    union sockaddr_union *ssrc;
 	    struct route_enc re;
-	    u_int8_t transproto = 0;
 	    int exists = 0;
 
 	    sab = (struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE];
@@ -1408,89 +1460,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    else
 	      ssrc = NULL;
 
-	    src = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_FLOW] +
-					    sizeof(struct sadb_address));
-	    dst = (union sockaddr_union *) (headers[SADB_X_EXT_DST_FLOW] +
-					    sizeof(struct sadb_address));
-	    srcmask = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_MASK] +
-						sizeof(struct sadb_address));
-	    dstmask = (union sockaddr_union *) (headers[SADB_X_EXT_DST_MASK] +
-						sizeof(struct sadb_address));
-
-	    /*
-	     * Check that all the address families match. We know they are
-	     * valid and supported because pfkeyv2_parsemessage() checked that.
-	     */
-	    if ((src->sa.sa_family != dst->sa.sa_family) ||
-		(src->sa.sa_family != srcmask->sa.sa_family) ||
-		(src->sa.sa_family != dstmask->sa.sa_family))
-	    {
-		rval = EINVAL;
-		goto ret;
-	    }
-
-	    bzero(&encapdst, sizeof(struct sockaddr_encap));
-	    bzero(&encapnetmask, sizeof(struct sockaddr_encap));
-	    bzero(&encapgw, sizeof(struct sockaddr_encap));
-
-	    /* Transport protocol specified ? */
-	    if (headers[SADB_X_EXT_PROTOCOL])
-	      transproto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL])->sadb_protocol_proto;
-
-	    /* Generic netmask handling, works for IPv4 and IPv6 */
-	    rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
-	    rt_maskedcopy(&dst->sa, &dst->sa, &dstmask->sa);
-
-	    /* Setup the encap fields */
-	    encapdst.sen_family = encapnetmask.sen_family = PF_KEY;
-	    encapdst.sen_len = encapnetmask.sen_len = SENT_LEN;
-
-	    switch (src->sa.sa_family)
-	    {
-#ifdef INET
-		case AF_INET:
-		    encapdst.sen_type = SENT_IP4;
-		    encapdst.sen_direction = sab->sadb_protocol_direction;
-		    encapdst.sen_ip_src = src->sin.sin_addr;
-		    encapdst.sen_ip_dst = dst->sin.sin_addr;
-		    encapdst.sen_proto = transproto;
-		    encapdst.sen_sport = src->sin.sin_port;
-		    encapdst.sen_dport = dst->sin.sin_port;
-
-		    encapnetmask.sen_type = SENT_IP4;
-		    encapnetmask.sen_direction = 0xff;
-		    encapnetmask.sen_ip_src = srcmask->sin.sin_addr;
-		    encapnetmask.sen_ip_dst = dstmask->sin.sin_addr;
-                    encapnetmask.sen_sport = srcmask->sin.sin_port;
-                    encapnetmask.sen_dport = dstmask->sin.sin_port;
-                    if (transproto)
-                      encapnetmask.sen_proto = 0xff;
-		    break;
-#endif /* INET */
-
-#ifdef INET6
-		case AF_INET6:
-		    encapdst.sen_type = SENT_IP6;
-		    encapdst.sen_ip6_direction = sab->sadb_protocol_direction;
-		    encapdst.sen_ip6_src = src->sin6.sin6_addr;
-		    encapdst.sen_ip6_dst = dst->sin6.sin6_addr;
-		    encapdst.sen_ip6_proto = transproto;
-		    encapdst.sen_ip6_sport = src->sin6.sin6_port;
-		    encapdst.sen_ip6_dport = dst->sin6.sin6_port;
-
-		    encapnetmask.sen_type = SENT_IP6;
-		    encapnetmask.sen_ip6_direction = 0xff;
-		    encapnetmask.sen_ip6_src = srcmask->sin6.sin6_addr;
-		    encapnetmask.sen_ip6_dst = dstmask->sin6.sin6_addr;
-                    encapnetmask.sen_ip6_sport = srcmask->sin6.sin6_port;
-                    encapnetmask.sen_ip6_dport = dstmask->sin6.sin6_port;
-                    if (transproto)
-                      encapnetmask.sen_ip6_proto = 0xff;
-		    break;
-#endif /* INET6 */
-	    }
+	    import_flow(&encapdst, &encapnetmask,
+		headers[SADB_X_EXT_SRC_FLOW], headers[SADB_X_EXT_SRC_MASK],
+		headers[SADB_X_EXT_DST_FLOW], headers[SADB_X_EXT_DST_MASK],
+		headers[SADB_X_EXT_PROTOCOL]);
 
 	    /* Determine whether the exact same SPD entry already exists. */
+	    bzero(&encapgw, sizeof(struct sockaddr_encap));
             bzero(&re, sizeof(struct route_enc));
 	    bcopy(&encapdst, &re.re_dst, sizeof(struct sockaddr_encap));
 
@@ -1537,7 +1513,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    goto ret;
 		}
 
-		/* If we were asked to delete something non-existant, error */
+		/* If we were asked to delete something non-existant, error. */
 		splx(s);
 		rval = ESRCH;
 		break;
@@ -1562,6 +1538,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 
 		bzero(ipo, sizeof(struct ipsec_policy));
+		ipo->ipo_ref_count = 1;
 		TAILQ_INIT(&ipo->ipo_acquires);
 
 		/* Finish initialization of SPD entry */
@@ -1605,7 +1582,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		default:
                     if (!exists)
-			pool_put(&ipsec_policy_pool, ipo);
+		      pool_put(&ipsec_policy_pool, ipo);
                     else
 		      ipsec_delete_policy(ipo);
 
@@ -1620,22 +1597,15 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
             if (sunionp)
 	      bcopy(sunionp, &ipo->ipo_dst, sizeof(union sockaddr_union));
             else
-            {
-		bzero(&ipo->ipo_dst, sizeof(union sockaddr_union));
-                ipo->ipo_dst.sa.sa_family = src->sa.sa_family;
-                ipo->ipo_dst.sa.sa_len = src->sa.sa_len;
-            }
+	      bzero(&ipo->ipo_dst, sizeof(union sockaddr_union));
 
 	    if (ssrc)
 	      bcopy(ssrc, &ipo->ipo_src, sizeof(union sockaddr_union));
 	    else
-	    {
-		bzero(&ipo->ipo_src, sizeof(union sockaddr_union));
-		ipo->ipo_src.sa.sa_family = src->sa.sa_family;
-		ipo->ipo_src.sa.sa_len = src->sa.sa_len;
-	    }
+	      bzero(&ipo->ipo_src, sizeof(union sockaddr_union));
 
 	    ipo->ipo_sproto = SADB_X_GETSPROTO(smsg->sadb_msg_satype);
+
 	    if (ipo->ipo_srcid)
 	    {
 	        ipsp_reffree(ipo->ipo_srcid);
@@ -1844,6 +1814,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 {
     void *p, *headers[SADB_EXT_MAX + 1], *buffer = NULL;
     struct sadb_ident *srcid, *dstid;
+    struct sadb_x_cred *lcred, *lauth;
     struct sadb_comb *sadb_comb;
     struct sadb_address *sadd;
     struct sadb_prop *sa_prop;
@@ -1871,6 +1842,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
     if (ipo->ipo_dstid)
       i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
+
 
     /* Allocate */
     if (!(p = malloc(i, M_PFKEY, M_DONTWAIT)))
@@ -1946,6 +1918,49 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	dstid->sadb_ident_type = ipo->ipo_dstid->ref_type;
 	bcopy(ipo->ipo_dstid + 1, headers[SADB_EXT_IDENTITY_DST] +
 	      sizeof(struct sadb_ident), ipo->ipo_dstid->ref_len);
+    }
+
+    if (ipo->ipo_local_cred)
+    {
+	headers[SADB_X_EXT_LOCAL_CREDENTIALS] = p;
+	p += sizeof(struct sadb_x_cred) + PADUP(ipo->ipo_local_cred->ref_len);
+	lcred = (struct sadb_x_cred *) headers[SADB_X_EXT_LOCAL_CREDENTIALS];
+	lcred->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
+				 PADUP(ipo->ipo_local_cred->ref_len)) /
+				sizeof(u_int64_t);
+	switch (ipo->ipo_local_cred->ref_type)
+	{
+	case IPSP_CRED_KEYNOTE:
+	    lcred->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
+	    break;
+	case IPSP_CRED_X509:
+	    lcred->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
+	    break;
+	}
+	bcopy(ipo->ipo_local_cred + 1, headers[SADB_X_EXT_LOCAL_CREDENTIALS] +
+	      sizeof(struct sadb_x_cred), ipo->ipo_local_cred->ref_len);
+    }
+
+    if (ipo->ipo_local_auth)
+    {
+	headers[SADB_X_EXT_LOCAL_AUTH] = p;
+	p += sizeof(struct sadb_x_cred) + PADUP(ipo->ipo_local_auth->ref_len);
+	lauth = (struct sadb_x_cred *) headers[SADB_X_EXT_LOCAL_AUTH];
+	lauth->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
+				 PADUP(ipo->ipo_local_auth->ref_len)) /
+				sizeof(u_int64_t);
+	switch (ipo->ipo_local_auth->ref_type)
+	{
+	case IPSP_AUTH_PASSPHRASE:
+	    lauth->sadb_x_cred_type = SADB_X_AUTHTYPE_PASSPHRASE;
+	    break;
+	case IPSP_AUTH_RSA:
+	    lauth->sadb_x_cred_type = SADB_X_AUTHTYPE_RSA;
+	    break;
+	}
+
+	bcopy(ipo->ipo_local_auth + 1, headers[SADB_X_EXT_LOCAL_AUTH] +
+	      sizeof(struct sadb_x_cred), ipo->ipo_local_auth->ref_len);
     }
 
     headers[SADB_EXT_PROPOSAL] = p;
