@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir.c,v 1.1 1997/02/16 14:48:06 mickey Exp $	*/
+/*	$OpenBSD: readdir.c,v 1.2 1997/04/02 05:20:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -69,10 +69,12 @@ readdir(fd, dest)
 {
 	register struct open_file *f = &files[fd];
 
-	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
+	if (fd < 0 || fd >= SOPEN_MAX ||
+	    !((f = &files[fd])->f_flags & F_READ)) {
 		errno = EBADF;
 		return (-1);
 	}
+
 	if (f->f_flags & F_RAW) {
 		errno = EINVAL;
 		return (-1);
