@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 1997/07/14 08:14:55 downsj Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 2000/01/14 09:10:24 downsj Exp $	*/
 /*	$NetBSD: clock.c,v 1.3 1995/02/20 00:12:09 mycroft Exp $	*/
 
 /*
@@ -55,9 +55,11 @@ static int month_days[12] = {
 };
 
 u_char bbc_registers[13];
+void read_bbc();
 u_char read_bbc_reg();
 struct hil_dev *bbcaddr = BBCADDR;
 
+u_long
 getsecs()
 {
 	static int bbcinited = 0;
@@ -71,7 +73,7 @@ getsecs()
 	return(timbuf);
 }
 
-
+int
 bbc_to_gmt(timbuf)
 	u_long *timbuf;
 {
@@ -95,7 +97,7 @@ bbc_to_gmt(timbuf)
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
+	range_test(year, STARTOFTIME, 2038);	/* 2038 is the end of time. */
 
 	tmp = 0;
 
@@ -114,6 +116,7 @@ bbc_to_gmt(timbuf)
 	return(1);
 }
 
+void
 read_bbc()
 {
   	register int i, read_okay;

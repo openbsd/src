@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 1997/07/06 08:01:58 downsj Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 2000/01/14 09:09:47 downsj Exp $	*/
 /*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
 
 /*
@@ -481,7 +481,7 @@ bbc_to_gmt(timbuf)
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
+	range_test(year, STARTOFTIME, 2038);	/* 2038 is the end of time. */
 
 	tmp = 0;
 
