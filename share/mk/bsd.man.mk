@@ -2,6 +2,7 @@
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat
+NROFF?=		nroff
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -15,8 +16,8 @@ MANTARGET?=	cat
 	.cat7 .cat8
 
 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1:
-	@echo "nroff -mandoc ${.IMPSRC} > ${.TARGET}"
-	@nroff -mandoc ${.IMPSRC} > ${.TARGET} || ( rm -f ${.TARGET} ; false )
+	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
+	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || ( rm -f ${.TARGET} ; false )
 
 .if defined(MAN) && !empty(MAN)
 MANALL=	${MAN:S/.1$/.cat1/g:S/.2$/.cat2/g:S/.3$/.cat3/g:S/.4$/.cat4/g:S/.5$/.cat5/g:S/.6$/.cat6/g:S/.7$/.cat7/g:S/.8$/.cat8/g}
