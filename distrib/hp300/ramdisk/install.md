@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.10 1998/03/29 19:58:14 millert Exp $
+#	$OpenBSD: install.md,v 1.11 1998/08/23 17:48:52 kstailey Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -487,7 +487,7 @@ simple and rational way.
 __welcome_banner_1
 
 	else
-		echo "Welcome to the OpenBSD/alpha ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
+		echo "Welcome to the OpenBSD/hp300 ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your OpenBSD system in a
