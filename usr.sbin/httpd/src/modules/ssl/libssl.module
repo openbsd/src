@@ -85,14 +85,7 @@ ConfigStart
     #   
     #   find a reasonable Bourne Shell for sub-shell calls
     #
-    SH=sh
-    if [ -f /bin/bash ]; then
-        SH=/bin/bash
-    elif [ -f /bin/sh5 ]; then
-        SH=/bin/sh5
-    elif [ -f /bin/sh ]; then
-        SH=/bin/sh
-    fi
+    SH=/bin/sh
 
     #
     #   determine mod_ssl author version
