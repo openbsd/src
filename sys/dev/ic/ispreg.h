@@ -1,13 +1,14 @@
-/*	$NetBSD: ispreg.h,v 1.1.1.1 1997/03/12 20:44:51 cgd Exp $	*/
-
+/* $OpenBSD: ispreg.h,v 1.2 1999/03/17 05:26:09 mjacob Exp $ */
+/* release_03_16_99 */
 /*
  * Machine Independent (well, as best as possible) register
  * definitions for Qlogic ISP SCSI adapters.
  *
+ *---------------------------------------
  * Copyright (c) 1997 by Matthew Jacob
  * NASA/Ames Research Center
  * All rights reserved.
- *
+ *---------------------------------------
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,7 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
 #ifndef	_ISPREG_H
 #define	_ISPREG_H
 
@@ -57,60 +57,82 @@
  * Sad but true, different architectures have different offsets.
  */
 
-#define	BIU_REGS_OFF		0x00
+#define	BIU_REGS_OFF			0x00
 
-#define	 PCI_MBOX_REGS_OFF		0x70
+#define	PCI_MBOX_REGS_OFF		0x70
+#define	PCI_MBOX_REGS2100_OFF		0x10
 #define	SBUS_MBOX_REGS_OFF		0x80
 
-#define	 PCI_SXP_REGS_OFF		0x80
+#define	PCI_SXP_REGS_OFF		0x80
 #define	SBUS_SXP_REGS_OFF		0x200
 
-#define	 PCI_RISC_REGS_OFF		0x80
+#define	PCI_RISC_REGS_OFF		0x80
 #define	SBUS_RISC_REGS_OFF		0x400
+
+/* Bless me! Chip designers have putzed it again! */
+#define	ISP1080_DMA_REGS_OFF		0x60
+#define	DMA_REGS_OFF			0x00	/* same as BIU block */
 
 /*
  * NB:	The *_BLOCK definitions have no specific hardware meaning.
  *	They serve simply to note to the MD layer which block of
  *	registers offsets are being accessed.
  */
+#define	_NREG_BLKS	5
+#define	_BLK_REG_SHFT	13
+#define	_BLK_REG_MASK	(7 << _BLK_REG_SHFT)
+#define	BIU_BLOCK	(0 << _BLK_REG_SHFT)
+#define	MBOX_BLOCK	(1 << _BLK_REG_SHFT)
+#define	SXP_BLOCK	(2 << _BLK_REG_SHFT)
+#define	RISC_BLOCK	(3 << _BLK_REG_SHFT)
+#define	DMA_BLOCK	(4 << _BLK_REG_SHFT)
 
 /*
  * Bus Interface Block Register Offsets
  */
-#define	BIU_BLOCK	0x0100
+
 #define	BIU_ID_LO	BIU_BLOCK+0x0	/* R  : Bus ID, Low */
+#define		BIU2100_FLASH_ADDR	BIU_BLOCK+0x0
 #define	BIU_ID_HI	BIU_BLOCK+0x2	/* R  : Bus ID, High */
+#define		BIU2100_FLASH_DATA	BIU_BLOCK+0x2
 #define	BIU_CONF0	BIU_BLOCK+0x4	/* R  : Bus Configuration #0 */
 #define	BIU_CONF1	BIU_BLOCK+0x6	/* R  : Bus Configuration #1 */
+#define		BIU2100_CSR		BIU_BLOCK+0x6
 #define	BIU_ICR		BIU_BLOCK+0x8	/* RW : Bus Interface Ctrl */
 #define	BIU_ISR		BIU_BLOCK+0xA	/* R  : Bus Interface Status */
 #define	BIU_SEMA	BIU_BLOCK+0xC	/* RW : Bus Semaphore */
 #define	BIU_NVRAM	BIU_BLOCK+0xE	/* RW : Bus NVRAM */
-#define	CDMA_CONF	BIU_BLOCK+0x20	/* RW*: DMA Configuration */
-#define	CDMA_CONTROL	BIU_BLOCK+0x22	/* RW*: DMA Control */
-#define	CDMA_STATUS 	BIU_BLOCK+0x24	/* R  : DMA Status */
-#define	CDMA_FIFO_STS	BIU_BLOCK+0x26	/* R  : DMA FIFO Status */
-#define	CDMA_COUNT	BIU_BLOCK+0x28	/* RW*: DMA Transfer Count */
-#define	CDMA_ADDR0	BIU_BLOCK+0x2C	/* RW*: DMA Address, Word 0 */
-#define	CDMA_ADDR1	BIU_BLOCK+0x2E	/* RW*: DMA Address, Word 1 */
-/* these are for the 1040A cards */
-#define	CDMA_ADDR2	BIU_BLOCK+0x30	/* RW*: DMA Address, Word 2 */
-#define	CDMA_ADDR3	BIU_BLOCK+0x32	/* RW*: DMA Address, Word 3 */
-
-#define	DDMA_CONF	BIU_BLOCK+0x40	/* RW*: DMA Configuration */
-#define	DDMA_CONTROL	BIU_BLOCK+0x42	/* RW*: DMA Control */
-#define	DDMA_STATUS	BIU_BLOCK+0x44	/* R  : DMA Status */
-#define	DDMA_FIFO_STS	BIU_BLOCK+0x46	/* R  : DMA FIFO Status */
-#define	DDMA_COUNT_LO	BIU_BLOCK+0x48	/* RW*: DMA Xfer Count, Low */
-#define	DDMA_COUNT_HI	BIU_BLOCK+0x4A	/* RW*: DMA Xfer Count, High */
-#define	DDMA_ADDR0	BIU_BLOCK+0x4C	/* RW*: DMA Address, Word 0 */
-#define	DDMA_ADDR1	BIU_BLOCK+0x4E	/* RW*: DMA Address, Word 1 */
-/* these are for the 1040A cards */
-#define	DDMA_ADDR2	BIU_BLOCK+0x50	/* RW*: DMA Address, Word 2 */
-#define	DDMA_ADDR3	BIU_BLOCK+0x52	/* RW*: DMA Address, Word 3 */
-
 #define	DFIFO_COMMAND	BIU_BLOCK+0x60	/* RW : Command FIFO Port */
+#define		RDMA2100_CONTROL	DFIFO_COMMAND
 #define	DFIFO_DATA	BIU_BLOCK+0x62	/* RW : Data FIFO Port */
+
+/*
+ * Putzed DMA register layouts.
+ */
+#define	CDMA_CONF	DMA_BLOCK+0x20	/* RW*: DMA Configuration */
+#define		CDMA2100_CONTROL	CDMA_CONF
+#define	CDMA_CONTROL	DMA_BLOCK+0x22	/* RW*: DMA Control */
+#define	CDMA_STATUS 	DMA_BLOCK+0x24	/* R  : DMA Status */
+#define	CDMA_FIFO_STS	DMA_BLOCK+0x26	/* R  : DMA FIFO Status */
+#define	CDMA_COUNT	DMA_BLOCK+0x28	/* RW*: DMA Transfer Count */
+#define	CDMA_ADDR0	DMA_BLOCK+0x2C	/* RW*: DMA Address, Word 0 */
+#define	CDMA_ADDR1	DMA_BLOCK+0x2E	/* RW*: DMA Address, Word 1 */
+#define	CDMA_ADDR2	DMA_BLOCK+0x30	/* RW*: DMA Address, Word 2 */
+#define	CDMA_ADDR3	DMA_BLOCK+0x32	/* RW*: DMA Address, Word 3 */
+
+#define	DDMA_CONF	DMA_BLOCK+0x40	/* RW*: DMA Configuration */
+#define		TDMA2100_CONTROL	DDMA_CONF
+#define	DDMA_CONTROL	DMA_BLOCK+0x42	/* RW*: DMA Control */
+#define	DDMA_STATUS	DMA_BLOCK+0x44	/* R  : DMA Status */
+#define	DDMA_FIFO_STS	DMA_BLOCK+0x46	/* R  : DMA FIFO Status */
+#define	DDMA_COUNT_LO	DMA_BLOCK+0x48	/* RW*: DMA Xfer Count, Low */
+#define	DDMA_COUNT_HI	DMA_BLOCK+0x4A	/* RW*: DMA Xfer Count, High */
+#define	DDMA_ADDR0	DMA_BLOCK+0x4C	/* RW*: DMA Address, Word 0 */
+#define	DDMA_ADDR1	DMA_BLOCK+0x4E	/* RW*: DMA Address, Word 1 */
+/* these are for the 1040A cards */
+#define	DDMA_ADDR2	DMA_BLOCK+0x50	/* RW*: DMA Address, Word 2 */
+#define	DDMA_ADDR3	DMA_BLOCK+0x52	/* RW*: DMA Address, Word 3 */
+
 
 /*
  * Bus Interface Block Register Definitions
@@ -134,6 +156,22 @@
 #define	BIU_SBUS_CONF1_BURST8		0x0008 	/* Enable 8-byte  bursts */
 #define	BIU_PCI_CONF1_SXP		0x0008	/* SXP register select */
 
+#define	BIU_PCI1080_CONF1_SXP		0x0100	/* SXP bank select */
+#define	BIU_PCI1080_CONF1_DMA		0x0300	/* DMA bank select */
+
+ /* ISP2100 Bus Control/Status Register */
+
+#define	BIU2100_ICSR_REGBSEL		0x30	/* RW: register bank select */
+#define		BIU2100_RISC_REGS	(0 << 4)	/* RISC Regs */
+#define		BIU2100_FB_REGS		(1 << 4)	/* FrameBuffer Regs */
+#define		BIU2100_FPM0_REGS	(2 << 4)	/* FPM 0 Regs */
+#define		BIU2100_FPM1_REGS	(3 << 4)	/* FPM 1 Regs */
+#define	BIU2100_PCI64			0x04	/*  R: 64 Bit PCI slot */
+#define	BIU2100_FLASH_ENABLE		0x02	/* RW: Enable Flash RAM */
+#define	BIU2100_SOFT_RESET		0x01
+/* SOFT RESET FOR ISP2100 is same bit, but in this register, not ICR */
+
+
 /* BUS CONTROL REGISTER */
 #define	BIU_ICR_ENABLE_DMA_INT		0x0020	/* Enable DMA interrupts */
 #define	BIU_ICR_ENABLE_CDMA_INT		0x0010	/* Enable CDMA interrupts */
@@ -142,6 +180,25 @@
 #define	BIU_ICR_ENABLE_ALL_INTS		0x0002	/* Global enable all inter */
 #define	BIU_ICR_SOFT_RESET		0x0001	/* Soft Reset of ISP */
 
+#define	BIU2100_ICR_ENABLE_ALL_INTS	0x8000
+#define	BIU2100_ICR_ENA_FPM_INT		0x0020
+#define	BIU2100_ICR_ENA_FB_INT		0x0010
+#define	BIU2100_ICR_ENA_RISC_INT	0x0008
+#define	BIU2100_ICR_ENA_CDMA_INT	0x0004
+#define	BIU2100_ICR_ENABLE_RXDMA_INT	0x0002
+#define	BIU2100_ICR_ENABLE_TXDMA_INT	0x0001
+#define	BIU2100_ICR_DISABLE_ALL_INTS	0x0000
+
+#define	ENABLE_INTS(isp)	(isp->isp_type & ISP_HA_SCSI)?  \
+ ISP_WRITE(isp, BIU_ICR, BIU_ICR_ENABLE_RISC_INT | BIU_ICR_ENABLE_ALL_INTS) : \
+ ISP_WRITE(isp, BIU_ICR, BIU2100_ICR_ENA_RISC_INT | BIU2100_ICR_ENABLE_ALL_INTS)
+
+#define	INTS_ENABLED(isp)	((isp->isp_type & ISP_HA_SCSI)?  \
+ (ISP_READ(isp, BIU_ICR) & (BIU_ICR_ENABLE_RISC_INT|BIU_ICR_ENABLE_ALL_INTS)) :\
+ (ISP_READ(isp, BIU_ICR) & \
+	(BIU2100_ICR_ENA_RISC_INT|BIU2100_ICR_ENABLE_ALL_INTS)))
+
+#define	DISABLE_INTS(isp)	ISP_WRITE(isp, BIU_ICR, 0)
 
 /* BUS STATUS REGISTER */
 #define	BIU_ISR_DMA_INT			0x0020	/* DMA interrupt pending */
@@ -150,11 +207,25 @@
 #define	BIU_ISR_RISC_INT		0x0004	/* Risc interrupt pending */
 #define	BIU_ISR_IPEND			0x0002	/* Global interrupt pending */
 
+#define	BIU2100_ISR_INT_PENDING		0x8000	/* Global interrupt pending */
+#define	BIU2100_ISR_FPM_INT		0x0020	/* FPM interrupt pending */
+#define	BIU2100_ISR_FB_INT		0x0010	/* FB interrupt pending */
+#define	BIU2100_ISR_RISC_INT		0x0008	/* Risc interrupt pending */
+#define	BIU2100_ISR_CDMA_INT		0x0004	/* CDMA interrupt pending */
+#define	BIU2100_ISR_RXDMA_INT_PENDING	0x0002	/* Global interrupt pending */
+#define	BIU2100_ISR_TXDMA_INT_PENDING	0x0001	/* Global interrupt pending */
+
 
 /* BUS SEMAPHORE REGISTER */
 #define	BIU_SEMA_STATUS		0x0002	/* Semaphore Status Bit */
 #define	BIU_SEMA_LOCK  		0x0001	/* Semaphore Lock Bit */
 
+/* NVRAM SEMAPHORE REGISTER */
+#define	BIU_NVRAM_CLOCK		0x0001
+#define	BIU_NVRAM_SELECT	0x0002
+#define	BIU_NVRAM_DATAOUT	0x0004
+#define	BIU_NVRAM_DATAIN	0x0008
+#define		ISP_NVRAM_READ		6
 
 /* COMNMAND && DATA DMA CONFIGURATION REGISTER */
 #define	DMA_ENABLE_SXP_DMA		0x0008	/* Enable SXP to DMA Data */
@@ -175,6 +246,13 @@
 #define	DMA_CNTRL_CLEAR_FIFO		0x0004	/* Clear DMA FIFO */
 #define	DMA_CNTRL_RESET_INT		0x0002	/* Clear DMA interrupt */
 #define	DMA_CNTRL_STROBE		0x0001	/* Start DMA transfer */
+
+/*
+ * Variants of same for 2100
+ */
+#define	DMA_CNTRL2100_CLEAR_CHAN	0x0004
+#define	DMA_CNTRL2100_RESET_INT		0x0002
+
 
 
 /* DMA STATUS REGISTER */
@@ -232,13 +310,14 @@
  * Mailbox Block Register Offsets
  */
 
-#define	MBOX_BLOCK	0x0200
 #define	INMAILBOX0	MBOX_BLOCK+0x0
 #define	INMAILBOX1	MBOX_BLOCK+0x2
 #define	INMAILBOX2	MBOX_BLOCK+0x4
 #define	INMAILBOX3	MBOX_BLOCK+0x6
 #define	INMAILBOX4	MBOX_BLOCK+0x8
 #define	INMAILBOX5	MBOX_BLOCK+0xA
+#define	INMAILBOX6	MBOX_BLOCK+0xC
+#define	INMAILBOX7	MBOX_BLOCK+0xE
 
 #define	OUTMAILBOX0	MBOX_BLOCK+0x0
 #define	OUTMAILBOX1	MBOX_BLOCK+0x2
@@ -246,31 +325,17 @@
 #define	OUTMAILBOX3	MBOX_BLOCK+0x6
 #define	OUTMAILBOX4	MBOX_BLOCK+0x8
 #define	OUTMAILBOX5	MBOX_BLOCK+0xA
+#define	OUTMAILBOX6	MBOX_BLOCK+0xC
+#define	OUTMAILBOX7	MBOX_BLOCK+0xE
 
-/*
- * Mailbox Command Complete Status Codes
- */
-#define	MBOX_COMMAND_COMPLETE		0x4000
-#define	MBOX_INVALID_COMMAND		0x4001
-#define	MBOX_HOST_INTERFACE_ERROR	0x4002
-#define	MBOX_TEST_FAILED		0x4003
-#define	MBOX_COMMAND_ERROR		0x4005
-#define	MBOX_COMMAND_PARAM_ERROR	0x4006
-
-/*
- * Asynchronous event status codes
- */
-#define	ASYNC_BUS_RESET			0x8001
-#define	ASYNC_SYSTEM_ERROR		0x8002
-#define	ASYNC_RQS_XFER_ERR		0x8003
-#define	ASYNC_RSP_XFER_ERR		0x8004
-#define	ASYNC_QWAKEUP			0x8005
-#define	ASYNC_TIMEOUT_RESET		0x8006
+#define	OMBOX_OFFN(n)	(MBOX_BLOCK + (n * 2))
+#define	NMBOX(isp)	\
+	(((((isp)->isp_type & ISP_HA_SCSI) >= ISP_HA_SCSI_1040A) || \
+	 ((isp)->isp_type & ISP_HA_FC))? 8 : 6)
 
 /*
  * SXP Block Register Offsets
  */
-#define	SXP_BLOCK	0x0400
 #define	SXP_PART_ID		SXP_BLOCK+0x0	/* R  : Part ID Code */
 #define	SXP_CONFIG1		SXP_BLOCK+0x2	/* RW*: Configuration Reg #1 */
 #define	SXP_CONFIG2		SXP_BLOCK+0x4	/* RW*: Configuration Reg #2 */
@@ -441,7 +506,6 @@
 /*
  * RISC and Host Command and Control Block Register Offsets
  */
-#define	RISC_BLOCK	0x0800
 
 #define	RISC_ACC	RISC_BLOCK+0x0	/* RW*: Accumulator */
 #define	RISC_R1		RISC_BLOCK+0x2	/* RW*: GP Reg R1  */
@@ -467,7 +531,10 @@
 #define	RISC_LCR	RISC_BLOCK+0x2a	/* RW*: Loop Counter */
 #define	RISC_PC		RISC_BLOCK+0x2c	/* R  : Program Counter */
 #define	RISC_MTR	RISC_BLOCK+0x2e	/* RW*: Memory Timing */
+#define		RISC_MTR2100	RISC_BLOCK+0x30
+
 #define	RISC_EMB	RISC_BLOCK+0x30	/* RW*: Ext Mem Boundary */
+#define		DUAL_BANK	8
 #define	RISC_SP		RISC_BLOCK+0x32	/* RW*: Stack Pointer */
 #define	RISC_HRL	RISC_BLOCK+0x3e	/* R *: Hardware Rev Level */
 #define	HCCR		RISC_BLOCK+0x40	/* RW : Host Command & Ctrl */
@@ -486,6 +553,10 @@
 #define	RISC_PSR_ALU_MSB		0x0400
 #define	RISC_PSR_ALU_CARRY		0x0200
 #define	RISC_PSR_ALU_ZERO		0x0100
+
+#define	RISC_PSR_PCI_ULTRA		0x0080
+#define	RISC_PSR_SBUS_ULTRA		0x0020
+
 #define	RISC_PSR_DMA_INT		0x0010
 #define	RISC_PSR_SXP_INT		0x0008
 #define	RISC_PSR_HOST_INT		0x0004
@@ -508,6 +579,11 @@
 #define	PCI_HCCR_CMD_PARITY_ERR		0xE000	/* Generate parity error */
 #define	HCCR_CMD_TEST_MODE		0xF000	/* Set Test Mode */
 
+#define	ISP2100_HCCR_PARITY_ENABLE_2	0x0400
+#define	ISP2100_HCCR_PARITY_ENABLE_1	0x0200
+#define	ISP2100_HCCR_PARITY_ENABLE_0	0x0100
+#define	ISP2100_HCCR_PARITY		0x0001
+
 #define	PCI_HCCR_PARITY			0x0400	/* Parity error flag */
 #define	PCI_HCCR_PARITY_ENABLE_1	0x0200	/* Parity enable bank 1 */
 #define	PCI_HCCR_PARITY_ENABLE_0	0x0100	/* Parity enable bank 0 */
@@ -517,4 +593,119 @@
 #define	HCCR_PAUSE			0x0020	/* R  : RISC paused */
 
 #define	PCI_HCCR_BIOS			0x0001	/*  W : BIOS enable */
+
+/*
+ * Qlogic 1XXX NVRAM is an array of 128 bytes.
+ *
+ * Some portion of the front of this is for general host adapter properties
+ * This is followed by an array of per-target parameters, and is tailed off
+ * with a checksum xor byte at offset 127. For non-byte entities data is
+ * stored in Little Endian order.
+ */
+
+#define	ISP_NVRAM_SIZE	128
+ 
+#define	ISPBSMX(c, byte, shift, mask)		\
+	(((c)[(byte)] >> (shift)) & (mask))
+
+#define	ISP_NVRAM_VERSION(c)			(c)[4]
+#define	ISP_NVRAM_FIFO_THRESHOLD(c)		ISPBSMX(c, 5, 0, 0x03)
+#define	ISP_NVRAM_BIOS_DISABLE(c)		ISPBSMX(c, 5, 2, 0x01)
+#define	ISP_NVRAM_HBA_ENABLE(c)			ISPBSMX(c, 5, 3, 0x01)
+#define	ISP_NVRAM_INITIATOR_ID(c)		ISPBSMX(c, 5, 4, 0x0f)
+#define	ISP_NVRAM_BUS_RESET_DELAY(c)		(c)[6]
+#define	ISP_NVRAM_BUS_RETRY_COUNT(c)		(c)[7]
+#define	ISP_NVRAM_BUS_RETRY_DELAY(c)		(c)[8]
+#define	ISP_NVRAM_ASYNC_DATA_SETUP_TIME(c)	ISPBSMX(c, 9, 0, 0x0f)
+#define	ISP_NVRAM_REQ_ACK_ACTIVE_NEGATION(c)	ISPBSMX(c, 9, 4, 0x01)
+#define	ISP_NVRAM_DATA_LINE_ACTIVE_NEGATION(c)	ISPBSMX(c, 9, 5, 0x01)
+#define	ISP_NVRAM_DATA_DMA_BURST_ENABLE(c)	ISPBSMX(c, 9, 6, 0x01)
+#define	ISP_NVRAM_CMD_DMA_BURST_ENABLE(c)	ISPBSMX(c, 9, 7, 0x01)
+#define	ISP_NVRAM_TAG_AGE_LIMIT(c)		(c)[10]
+#define	ISP_NVRAM_LOWTRM_ENABLE(c)		ISPBSMX(c, 11, 0, 0x01)
+#define	ISP_NVRAM_HITRM_ENABLE(c)		ISPBSMX(c, 11, 1, 0x01)
+#define	ISP_NVRAM_PCMC_BURST_ENABLE(c)		ISPBSMX(c, 11, 2, 0x01)
+#define	ISP_NVRAM_ENABLE_60_MHZ(c)		ISPBSMX(c, 11, 3, 0x01)
+#define	ISP_NVRAM_SCSI_RESET_DISABLE(c)		ISPBSMX(c, 11, 4, 0x01)
+#define	ISP_NVRAM_ENABLE_AUTO_TERM(c)		ISPBSMX(c, 11, 5, 0x01)
+#define	ISP_NVRAM_FIFO_THRESHOLD_128(c)		ISPBSMX(c, 11, 6, 0x01)
+#define	ISP_NVRAM_AUTO_TERM_SUPPORT(c)		ISPBSMX(c, 11, 7, 0x01)
+#define	ISP_NVRAM_SELECTION_TIMEOUT(c)		(((c)[12]) | ((c)[13] << 8))
+#define	ISP_NVRAM_MAX_QUEUE_DEPTH(c)		(((c)[14]) | ((c)[15] << 8))
+#define	ISP_NVRAM_SCSI_BUS_SIZE(c)		ISPBSMX(c, 16, 0, 0x01)
+#define	ISP_NVRAM_SCSI_BUS_TYPE(c)		ISPBSMX(c, 16, 1, 0x01)
+#define	ISP_NVRAM_ADAPTER_CLK_SPEED(c)		ISPBSMX(c, 16, 2, 0x01)
+#define	ISP_NVRAM_SOFT_TERM_SUPPORT(c)		ISPBSMX(c, 16, 3, 0x01)
+#define	ISP_NVRAM_FLASH_ONBOARD(c)		ISPBSMX(c, 16, 4, 0x01)
+#define	ISP_NVRAM_FAST_MTTR_ENABLE(c)		ISPBSMX(c, 22, 0, 0x01)
+
+#define	ISP_NVRAM_TARGOFF			28
+#define	ISP_NVARM_TARGSIZE			6
+#define	_IxT(tgt, tidx)			\
+	(ISP_NVRAM_TARGOFF + (ISP_NVARM_TARGSIZE * (tgt)) + (tidx))
+#define	ISP_NVRAM_TGT_RENEG(c, t)		ISPBSMX(c, _IxT(t, 0), 0, 0x01)
+#define	ISP_NVRAM_TGT_QFRZ(c, t)		ISPBSMX(c, _IxT(t, 0), 1, 0x01)
+#define	ISP_NVRAM_TGT_ARQ(c, t)			ISPBSMX(c, _IxT(t, 0), 2, 0x01)
+#define	ISP_NVRAM_TGT_TQING(c, t)		ISPBSMX(c, _IxT(t, 0), 3, 0x01)
+#define	ISP_NVRAM_TGT_SYNC(c, t)		ISPBSMX(c, _IxT(t, 0), 4, 0x01)
+#define	ISP_NVRAM_TGT_WIDE(c, t)		ISPBSMX(c, _IxT(t, 0), 5, 0x01)
+#define	ISP_NVRAM_TGT_PARITY(c, t)		ISPBSMX(c, _IxT(t, 0), 6, 0x01)
+#define	ISP_NVRAM_TGT_DISC(c, t)		ISPBSMX(c, _IxT(t, 0), 7, 0x01)
+#define	ISP_NVRAM_TGT_EXEC_THROTTLE(c, t)	ISPBSMX(c, _IxT(t, 1), 0, 0xff)
+#define	ISP_NVRAM_TGT_SYNC_PERIOD(c, t)		ISPBSMX(c, _IxT(t, 2), 0, 0xff)
+#define	ISP_NVRAM_TGT_SYNC_OFFSET(c, t)		ISPBSMX(c, _IxT(t, 3), 0, 0x0f)
+#define	ISP_NVRAM_TGT_DEVICE_ENABLE(c, t)	ISPBSMX(c, _IxT(t, 3), 4, 0x01)
+#define	ISP_NVRAM_TGT_LUN_DISABLE(c, t)		ISPBSMX(c, _IxT(t, 3), 5, 0x01)
+
+/*
+ * Qlogic 2XXX NVRAM is an array of 256 bytes.
+ *
+ * Some portion of the front of this is for general RISC engine parameters,
+ * mostly reflecting the state of the last INITIALIZE FIRMWARE mailbox command.
+ *
+ * This is followed by some general host adapter parameters, and ends with
+ * a checksum xor byte at offset 255. For non-byte entities data is stored
+ * in Little Endian order.
+ */
+#define	ISP2100_NVRAM_SIZE	256
+/* ISP_NVRAM_VERSION is in same overall place */
+#define	ISP2100_NVRAM_RISCVER(c)		(c)[6]
+#define	ISP2100_NVRAM_OPTIONS(c)		(c)[8]
+#define	ISP2100_NVRAM_MAXFRAMELENGTH(c)		(((c)[10]) | ((c)[11] << 8))
+#define	ISP2100_NVRAM_MAXIOCBALLOCATION(c)	(((c)[12]) | ((c)[13] << 8))
+#define	ISP2100_NVRAM_EXECUTION_THROTTLE(c)	(((c)[14]) | ((c)[15] << 8))
+#define	ISP2100_NVRAM_RETRY_COUNT(c)		(c)[16]
+#define	ISP2100_NVRAM_RETRY_DELAY(c)		(c)[17]
+
+#define	ISP2100_NVRAM_NODE_NAME(c)	( \
+		(((u_int64_t)(c)[18]) << 56) | \
+		(((u_int64_t)(c)[19]) << 48) | \
+		(((u_int64_t)(c)[20]) << 40) | \
+		(((u_int64_t)(c)[21]) << 32) | \
+		(((u_int64_t)(c)[22]) << 24) | \
+		(((u_int64_t)(c)[23]) << 16) | \
+		(((u_int64_t)(c)[24]) <<  8) | \
+		(((u_int64_t)(c)[25]) <<  0))
+#define	ISP2100_NVRAM_HARDLOOPID(c)		(c)[26]
+
+#define	ISP2100_NVRAM_HBA_OPTIONS(c)		(c)[70]
+#define	ISP2100_NVRAM_HBA_DISABLE(c)		ISPBSMX(c, 70, 0, 0x01)
+#define	ISP2100_NVRAM_BIOS_DISABLE(c)		ISPBSMX(c, 70, 1, 0x01)
+#define	ISP2100_NVRAM_LUN_DISABLE(c)		ISPBSMX(c, 70, 2, 0x01)
+#define	ISP2100_NVRAM_ENABLE_SELECT_BOOT(c)	ISPBSMX(c, 70, 3, 0x01)
+#define	ISP2100_NVRAM_DISABLE_CODELOAD(c)	ISPBSMX(c, 70, 4, 0x01)
+#define	ISP2100_NVRAM_SET_CACHELINESZ(c)	ISPBSMX(c, 70, 5, 0x01)
+
+#define	ISP2100_NVRAM_BOOT_NODE_NAME(c)	( \
+		(((u_int64_t)(c)[72]) << 56) | \
+		(((u_int64_t)(c)[73]) << 48) | \
+		(((u_int64_t)(c)[74]) << 40) | \
+		(((u_int64_t)(c)[75]) << 32) | \
+		(((u_int64_t)(c)[76]) << 24) | \
+		(((u_int64_t)(c)[77]) << 16) | \
+		(((u_int64_t)(c)[78]) <<  8) | \
+		(((u_int64_t)(c)[79]) <<  0))
+
+#define	ISP2100_NVRAM_BOOT_LUN(c)		(c)[80]
+
 #endif	/* _ISPREG_H */
