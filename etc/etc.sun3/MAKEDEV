@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.30 2000/05/22 21:04:31 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.31 2000/06/19 01:44:56 miod Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,9 @@
 #	st*	SCSI tapes
 # Disks:
 #	sd*	SCSI disks
-#	fd*	Floppy disk drives (3 1/2", 5 1/4")
+#	cd*	SCSI cdrom drives
+#	xy*	Xylogics 450/451 disks
+#	rd*	"ramdisk" pseudo-disks
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
 # Pseudo terminals:
@@ -55,9 +57,7 @@
 #	cgtwo*	
 #	cgfour*	
 #	bpf*	Berkeley Packet Filter
-#	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	rd*	"ramdisk" pseudo-disks
 #	*random	inkernal random data source
 #	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
@@ -88,9 +88,24 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh $this std fd sd0 sd1 sd2 sd3 sd4 st0 st1 pty0 random ss0 uk0
+	sh $this std fd sd0 sd1 sd2 sd3 sd4 xy0 xy1 xy2 xy3
+	sh $this cd0 st0 st1 rd0
+	sh $this uk0 uk1
+	sh $this ss0 ss1
+	sh $this pty0 vnd0 vnd1 vnd2 vnd3 tun0 tun1 tun2 tun3
+	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this ipl xfs0
+	sh $this ipl
+	sh $this bwtwo0 cgtwo0 cgfour0
+	sh $this random local
+	sh $this xfs0
+	;;
+
+ramdisk)
+	sh $this std random
+	sh $this sd0 sd1 sd2 sd3 sd4 rd0 cd0 st0 st1
+#	sh $this xy0 xy1 xy2 xy3
+	sh $this bpf0
 	;;
 
 std)
@@ -235,7 +250,6 @@ rd*)
 	;;
 
 random|srandom|urandom|prandom|arandom)
-	rm -f random urandom srandom prandom arandom
 	mk  random c 72 0
 	mk srandom c 72 1
 	mk urandom c 72 2
@@ -255,10 +269,7 @@ ss*)
 	;;
 
 xfs*)
-	rm -f xfs$unit
-	mknod xfs$unit c 51 $unit 
-	chmod 600 xfs$unit 
-	chown root.wheel xfs$unit
+	mk xfs$unit c 51 $unit 600 wheel
 	;;
 
 local)
