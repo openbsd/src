@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.36 2004/09/15 01:01:31 mickey Exp $
+$OpenBSD: cpudevs,v 1.37 2004/09/15 20:15:41 mickey Exp $
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -200,7 +200,7 @@ board	HP899		0x5b1	899/K570 (BraveHawk 200 DC3)
 #board	HP		0x5b2	(BraveHawk 220 DC3)
 #board	HP		0x5b3	(FireHawk 200)
 board	HP800V2		0x5b4	800/V2500 (SPP2500)
-board	HP782		0x5b5	782/J2240 (SummitHawk U+)
+board	HP782_J2240	0x5b5	782/J2240 (SummitHawk U+)
 board	HP800K		0x5b6	800/K380/K580 (DragonHawk U+ 240 DC3)
 #board	HP		0x5b7	(DragonHawk U+ 240 DC3-)
 #board			0x5b8	SPP2250 240MHz processor
