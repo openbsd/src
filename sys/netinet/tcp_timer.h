@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.8 2002/03/08 03:49:58 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.9 2003/03/28 16:33:52 henning Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -112,7 +112,7 @@
 #define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
 
 #ifdef	TCPTIMERS
-char *tcptimers[] =
+const char *tcptimers[] =
     { "REXMT", "PERSIST", "KEEP", "2MSL" };
 #endif /* TCPTIMERS */
 
