@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.24 2002/09/13 18:50:09 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.25 2002/09/13 19:00:08 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -164,7 +164,7 @@ If this field is replaced by a
 then the size of
 the log file is not taken into account when determining when to trim the
 log file.
-By default, files smaller than 512 bytes are not rotated unless the 
+By default, files smaller than 512 bytes are not rotated unless the
 .Sq B
 (binary) flag is set.
 This prevents
@@ -229,7 +229,7 @@ Specify a command to run instead of sending a signal to the process.
 The command must be enclosed in double quotes
 .Pq Ql \&" ) .
 You cannot specify both a command and a PID file.
-.Em NOTE: 
+.Em NOTE:
 If you specify a command to be run,
 .Nm
 will not send a
