@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: rpc,v 1.2 1996/05/26 10:25:29 deraadt Exp $
+#	$OpenBSD: rpc,v 1.3 2001/11/19 03:03:33 deraadt Exp $
 # from: rpc 88/08/01 4.0 RPCSRC; from 1.12   88/02/07 SMI
 #
 portmapper	100000	portmap sunrpc
@@ -29,7 +29,7 @@ status		100024
 bootparam	100026
 ypupdated	100028	ypupdate
 keyserv		100029	keyserver
-tfsd		100037 
+tfsd		100037
 nsed		100038
 nsemntd		100039
 pcnfsd		150001	pcnfs

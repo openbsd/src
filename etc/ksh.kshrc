@@ -1,8 +1,8 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.7 2001/04/30 18:24:21 marc Exp $
+#	$OpenBSD: ksh.kshrc,v 1.8 2001/11/19 03:03:33 deraadt Exp $
 #
 # NAME:
-#	ksh.kshrc - global initialization for ksh 
+#	ksh.kshrc - global initialization for ksh
 #
 # DESCRIPTION:
 #	Each invocation of /bin/ksh processes the file pointed
@@ -26,9 +26,9 @@
 #	This file is provided in the hope that it will
 #	be of use.  There is absolutely NO WARRANTY.
 #	Permission to copy, redistribute or otherwise
-#	use this file is hereby granted provided that 
+#	use this file is hereby granted provided that
 #	the above copyright notice and this notice are
-#	left intact. 
+#	left intact.
 
 case "$-" in
 *i*)	# we are interactive
@@ -55,7 +55,7 @@ case "$-" in
 	tty=`tty`
 	tty=`basename $tty`
         TTY=${TTY:-$tty}
- 
+
 	set -o emacs
 
 	alias ls='ls -CF'
@@ -153,13 +153,13 @@ case "$-" in
 		alias df='df -k'
 		alias du='du -k'
 		;;
-	esac	
+	esac
 	alias rsize='eval `resize`'
 
 	case "$TERM" in
 	sun*|xterm*)
 		case $tty in
-		tty[p-w]*)		
+		tty[p-w]*)
 			case "$DISPLAY" in
 			"")
 				DISPLAY="`who | grep $TTY | sed -n 's/.*(\([^:)]*\)[:)].*/\1/p' | sed 's/\([a-zA-Z][^.]*\).*/\1/'`:0"
@@ -203,6 +203,6 @@ pre_path () {
 }
 # if $1 is in path, remove it
 del_path () {
-  no_path $* || eval ${2:-PATH}=`eval echo :'$'${2:-PATH}: | 
+  no_path $* || eval ${2:-PATH}=`eval echo :'$'${2:-PATH}: |
     sed -e "s;:$1:;:;g" -e "s;^:;;" -e "s;:\$;;"`
 }

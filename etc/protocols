@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.12 2000/12/21 14:48:26 reinhard Exp $
+#	$OpenBSD: protocols,v 1.13 2001/11/19 03:03:33 deraadt Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.isi.edu/in-notes/iana/assignments/protocol-numbers
@@ -109,4 +109,4 @@ gmtp	100	GMTP		# GMTP
 pim	103	PIM		# Protocol Independent Multicast
 ipcomp	108	IPComp		# IP Payload Compression Protocol
 vrrp	112	VRRP		# Virtual Router Redundancy Protocol
-reserved 255	Reserved	# 
+reserved 255	Reserved	#

@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.36 2001/10/24 03:27:32 mickey Exp $
+#	$OpenBSD: services,v 1.37 2001/11/19 03:03:33 deraadt Exp $
 #
 # Network services, Internet style
 #
@@ -223,7 +223,7 @@ rkinit		2108/tcp			# Kerberos remote kinit
 kx		2111/tcp			# X over kerberos
 kip		2112/tcp			# IP over kerberos
 kauth		2120/tcp			# Remote kauth
-# 
+#
 # AFS Services
 #
 afs3-fileserver		7000/udp	# AFS fileserver
