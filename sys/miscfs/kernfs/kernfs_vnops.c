@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.40 2004/06/24 19:35:24 tholo Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.41 2004/09/01 21:06:17 millert Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -632,8 +632,11 @@ kernfs_getattr(v)
 		vap->va_fileid = 3 + (kt - kern_targets);
 		total = 0;
 		while (buf = strbuf,
-		       nbytes = kernfs_xread(kt, total, &buf, sizeof(strbuf)))
+		       nbytes = kernfs_xread(kt, total, &buf, sizeof(strbuf))) {
+			if (total <= INT_MAX - nbytes)
+				break;		/* XXX - should use quad */
 			total += nbytes;
+		}
 		vap->va_size = total;
 	}
 
@@ -702,7 +705,8 @@ kernfs_read(v)
 	    len = kernfs_xread(kt, off, &buf, sizeof(strbuf))) {
 		if ((error = uiomove(buf, len, uio)) != 0)
 			return (error);
-		off += len;
+		if (off <= INT_MAX - len)
+			off += len;	/* XXX - should use quad */
 	}
 	return (0);
 }
