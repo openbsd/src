@@ -1,10 +1,10 @@
-/*	$OpenBSD: icmp6.h,v 1.5 2000/03/09 21:21:12 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.8 2000/02/28 10:59:30 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.6 2000/06/12 17:24:26 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.17 2000/06/11 17:23:40 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -141,6 +141,10 @@ struct icmp6_hdr {
 #define ICMP6_PARAMPROB_OPTION		2	/* unrecognized option */
 
 #define ICMP6_INFOMSG_MASK		0x80	/* all informational messages */
+
+#define ICMP6_NI_SUBJ_IPV6	0	/* Query Subject is an IPv6 address */
+#define ICMP6_NI_SUBJ_FQDN	1	/* Query Subject is a Domain name */
+#define ICMP6_NI_SUBJ_IPV4	2	/* Query Subject is an IPv4 address */
 
 #define ICMP6_NI_SUCESS		0	/* node information successful reply */
 #define ICMP6_NI_REFUSED	1	/* node information request is refused */
@@ -291,7 +295,7 @@ struct nd_opt_mtu {		/* MTU option */
 struct icmp6_namelookup {
 	struct icmp6_hdr 	icmp6_nl_hdr;
 	u_int8_t	icmp6_nl_nonce[8];
-	u_int32_t	icmp6_nl_ttl;
+	int32_t		icmp6_nl_ttl;
 #if 0
 	u_int8_t	icmp6_nl_len;
 	u_int8_t	icmp6_nl_name[3];
@@ -313,7 +317,6 @@ struct icmp6_nodeinfo {
 #define ni_cksum	icmp6_ni_hdr.icmp6_cksum
 #define ni_qtype	icmp6_ni_hdr.icmp6_data16[0]
 #define ni_flags	icmp6_ni_hdr.icmp6_data16[1]
-
 
 #define NI_QTYPE_NOOP		0 /* NOOP  */
 #define NI_QTYPE_SUPTYPES	1 /* Supported Qtypes */

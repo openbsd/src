@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.10 2000/05/18 13:28:06 itojun Exp $
-.\"	$KAME: ping6.8,v 1.19 2000/05/18 13:19:09 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.11 2000/06/12 17:24:27 itojun Exp $
+.\"     $KAME: ping6.8,v 1.23 2000/06/12 16:16:09 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -37,25 +37,51 @@
 .Tn ICMPv6 ECHO_REQUEST
 packets to network hosts
 .Sh SYNOPSIS
-.Nm
+.Nm ping6
 .\" without ipsec, or new ipsec
-.Op Fl dfnqRvw
+.Op Fl dfHnNqRvw
 .\" old ipsec
-.\" .Op Fl AdEfnqRvw
+.\" .Op Fl AdEfnNqRvw
+.Bk -words
 .Op Fl a Ar addrtype
+.Ek
+.Bk -words
 .Op Fl b Ar bufsiz
+.Ek
+.Bk -words
 .Op Fl c Ar count
+.Ek
+.Bk -words
 .Op Fl h Ar hoplimit
+.Ek
+.Bk -words
 .Op Fl I Ar interface
+.Ek
+.Bk -words
 .Op Fl i Ar wait
+.Ek
+.Bk -words
 .Op Fl l Ar preload
+.Ek
+.Bk -words
 .Op Fl p Ar pattern
+.Ek
+.\".Bk -words
 .\" new ipsec
 .\".Op Fl P Ar policy
+.\".Ek
+.Bk -words
 .Op Fl S Ar sourceaddr
+.Ek
+.Bk -words
 .Op Fl s Ar packetsize
+.Ek
+.Bk -words
 .Op Ar hops...
+.Ek
+.Bk -words
 .Ar host
+.Ek
 .Sh DESCRIPTION
 .Nm
 uses the
@@ -129,10 +155,15 @@ is printed, while for every
 .Tn ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
-Only the superuser may use this option.
+Only the super-user may use this option.
 .Bf -emphasis
 This can be very hard on a network and should be used with caution.
 .Ef
+.It Fl H
+Specifies to try reverse-lookup of IPv6 addresses.
+The
+.Nm
+command does not try reverse-lookup unless the option is specified.
 .It Fl h Ar hoplimit
 Set the IPv6 hoplimit.
 .It Fl I Ar interface
@@ -142,10 +173,9 @@ or link-local/site-local unicast address.
 .It Fl i Ar wait
 Wait
 .Ar wait
-seconds between sending each packet.
+seconds
+.Em between sending each packet .
 The default is to wait for one second between each packet.
-The wait time may be fractional, but only the superuser may specify
-a value less than one second.
 This option is incompatible with the
 .Fl f
 option.
@@ -156,10 +186,23 @@ is specified,
 .Nm ping
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
-Only the superuser may use this option.
+Only the super-user may use this option.
 .It Fl n
 Numeric output only.
 No attempt will be made to lookup symbolic names for host addresses.
+.It Fl N
+Probe node information multicast group
+.Pq Li ff02::2:xxxx:xxxx .
+.Ar host
+must be string hostname of the target
+.Pq must not be a numeric IPv6 address .
+Node information multicast group will be computed based on given
+.Ar host ,
+and will be used as the final destination.
+Since node information multicast group is a link-local multicast group,
+destination link needs to be specified by
+.Fl I
+option.
 .It Fl p Ar pattern
 You may specify up to 16
 .Dq pad
@@ -198,11 +241,12 @@ The option is meaningful only if the target
 is a neighbor.
 .It Fl S Ar sourceaddr
 Specifies the source address of request packets.
-The source address must be one of the unicast addresses of the sending
-node.
+The source address must be one of the unicast addresses of the sending node.
 If the outgoing interface is specified by the
 .Fl I
-option as well, the address must be assinged to the specified interface.
+option as well,
+.Ar sourceaddr
+needs to be an address assigned to the specified interface.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
@@ -228,8 +272,9 @@ has no effect if
 is specified.
 .It Fl W
 Same as
-.Fl w .
-This option was remained for backward compatibility.
+.Fl w ,
+but with old packet format based on 03 draft.
+This option is present for backward compatibility.
 .Fl s
 has no effect if
 .Fl w
