@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.28 1998/03/11 15:36:44 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.29 1998/04/02 10:50:31 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -458,7 +458,7 @@ loadblocknums(boot, devfd, dl)
 	}
 
 	if (verbose)
-		fprintf(stderr, "Using disk geometry of %u spt and %u tpc.\n",
+		fprintf(stderr, "Using disk geometry of %u sectors and %u heads.\n",
 			dl->d_nsectors, dl->d_secpercyl/dl->d_nsectors);
 	/*
 	 * Get the block numbers; we don't handle fragments
