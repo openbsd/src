@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.65 2003/05/14 01:39:51 frantzen Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.66 2003/06/03 12:30:33 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -84,6 +84,7 @@ void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 u_int16_t		 pf_tagname2tag(char *);
+void			 pf_tag2tagname(u_int16_t, char *);
 void			 pf_tag_unref(u_int16_t);
 void			 pf_tag_purge(void);
 
@@ -451,6 +452,18 @@ pf_tagname2tag(char *tagname)
 	tag->ref++;
 	TAILQ_INSERT_TAIL(&pf_tags, tag, entries);
 	return (tag->tag);
+}
+
+void
+pf_tag2tagname(u_int16_t tagid, char *p)
+{
+	struct pf_tagname	*tag;
+
+	TAILQ_FOREACH(tag, &pf_tags, entries)
+		if (tag->tag == tagid) {
+			strlcpy(p, tag->name, PF_TAG_NAME_SIZE);
+			return;
+		}
 }
 
 void
