@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1998/06/27 02:59:20 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1998/06/30 13:07:46 mickey Exp $
 
 CFLAGS=${DEBUG} -O2 -Wall -Werror
 CPPFLAGS+=-I${S} -I. -I${.CURDIR}
@@ -6,7 +6,7 @@ SACFLAGS=-nostdinc -fno-builtin
 SACFLAGS+=-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
 SACFLAGS+=-D_STANDALONE -I${SADIR}/libsa
 DEBUGFLAGS=-DDEBUG
-# DEBUGFLAGS+=-DEXEC_DEBUG
+DEBUGFLAGS+=-DEXEC_DEBUG
 # DEBUGFLAGS+=-DALLOC_TRACE
 # DEBUGFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG
 # DEBUGFLAGS+=-DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG
@@ -21,24 +21,6 @@ CLEANFILES+=	machine
 	@([ -h machine ] || ln -s $(S)/arch/hppa/include machine)
 .endif
 
-.if 0
-.if $(CC) != $(HOSTCC)
-.S.o .s.o:
-	@echo "${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	${AS} -o ${.TARGET}"
-	@${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	${AS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-.c.o:
-	${CC} -S ${CFLAGS} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC}
-	${AS} $*.s -o ${.TARGET}.o
-	@rm $*.s
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-.endif
-.endif
 .if exists(${SADIR}/libsa/libsa.a)
 LIBSA=${SADIR}/libsa/libsa.a
 .else
