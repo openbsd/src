@@ -23,7 +23,7 @@ documentation and/or software.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5c.c,v 1.11 1997/07/23 21:17:56 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: md5c.c,v 1.12 2000/03/28 17:35:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -51,8 +51,6 @@ typedef unsigned char *POINTER;
 #define S42 10
 #define S43 15
 #define S44 21
-
-static void MD5Transform __P ((u_int32_t [4], const unsigned char [64]));
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define Encode memcpy
@@ -228,7 +226,7 @@ MD5_CTX *context;					/* context */
 
 /* MD5 basic transformation. Transforms state based on block.
  */
-static void MD5Transform (state, block)
+void MD5Transform (state, block)
 u_int32_t state[4];
 const unsigned char block[64];
 {

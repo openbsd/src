@@ -22,7 +22,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md4c.c,v 1.11 1997/07/23 21:17:55 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: md4c.c,v 1.12 2000/03/28 17:35:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -46,8 +46,6 @@ typedef unsigned char *POINTER;
 #define S32 9
 #define S33 11
 #define S34 15
-
-static void MD4Transform __P ((u_int32_t [4], const unsigned char [64]));
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define Encode memcpy
@@ -218,7 +216,7 @@ MD4_CTX *context;					 /* context */
 
 /* MD4 basic transformation. Transforms state based on block.
  */
-static void MD4Transform (state, block)
+void MD4Transform (state, block)
 u_int32_t state[4];
 const unsigned char block[64];
 {

@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.14 1999/10/08 10:55:27 espie Exp $
+.\" 	$OpenBSD: mdX.3,v 1.15 2000/03/28 17:35:09 millert Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -15,6 +15,7 @@
 .Nm MDXInit ,
 .Nm MDXUpdate ,
 .Nm MDXFinal ,
+.Nm MDXTransform ,
 .Nm MDXEnd ,
 .Nm MDXFile ,
 .Nm MDXData
@@ -28,6 +29,8 @@
 .Fn MDXUpdate "MDX_CTX *context" "const unsigned char *data" "unsigned int len"
 .Ft void
 .Fn MDXFinal "unsigned char digest[16]" "MDX_CTX *context"
+.Ft void
+.Fn MDXTransform "u_int32_t state[4]" "unsigned char block[64]"
 .Ft "char *"
 .Fn MDXEnd "MDX_CTX *context" "char *buf"
 .Ft "char *"
@@ -68,6 +71,20 @@ When a null pointer is passed to
 as first argument only the final padding will be applied and the
 current context can still be used with
 .Fn MDXUpdate .
+.Pp
+The
+.Fn MDXTransform
+function is used by
+.Fn MDXUpdate
+to hash 512-bit blocks and forms the core of the algorithm.
+Most programs should use the interface provided by
+.Fn MDXInit ,
+.Fn MDXUpdate
+and
+.Fn MDXFinal
+instead of calling
+.Fn MDXTransform
+directly.
 .Pp
 .Fn MDXEnd
 is a wrapper for

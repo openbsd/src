@@ -1,5 +1,5 @@
 /* MD4.H - header file for MD4C.C
- * $OpenBSD: md4.h,v 1.4 1996/11/24 02:25:57 niklas Exp $
+ * $OpenBSD: md4.h,v 1.5 2000/03/28 17:35:07 millert Exp $
  */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
@@ -36,6 +36,7 @@ typedef struct MD4Context {
 void   MD4Init __P((MD4_CTX *));
 void   MD4Update __P((MD4_CTX *, const unsigned char *, size_t));
 void   MD4Final __P((unsigned char [16], MD4_CTX *));
+void   MD4Transform __P ((u_int32_t [4], const unsigned char [64]));
 char * MD4End __P((MD4_CTX *, char *));
 char * MD4File __P((char *, char *));
 char * MD4Data __P((const unsigned char *, size_t, char *));
