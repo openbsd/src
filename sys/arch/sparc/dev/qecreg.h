@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecreg.h,v 1.2 1998/08/26 00:57:05 jason Exp $	*/
+/*	$OpenBSD: qecreg.h,v 1.3 1998/11/02 05:50:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -38,8 +38,9 @@ struct qecregs {
 };
 
 /* qecregs.ctrl: control. */
-#define QEC_CTRL_MMODE		0x40000000	/* MACE qec mode */
-#define QEC_CTRL_BMODE		0x10000000	/* BE qec mode */
+#define QEC_CTRL_MODEMASK	0xf0000000	/* QEC mode: qe or be */
+#define QEC_CTRL_MMODE		0x40000000		/* MACE qec mode */
+#define QEC_CTRL_BMODE		0x10000000		/* BE qec mode */
 #define QEC_CTRL_EPAR		0x00000020	/* enable parity */
 #define QEC_CTRL_ACNTRL		0x00000018	/* sbus arbitration control */
 #define QEC_CTRL_B64		0x00000004	/* 64 byte dvma bursts */

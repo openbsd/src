@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.4 1998/10/21 04:12:10 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.5 1998/11/02 05:50:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -144,9 +144,6 @@ qeattach(parent, self, aux)
 	sc->sc_qec = qec;
 	sc->sc_qr = qec->sc_regs;
 	qestop(sc);
-
-	sc->sc_mem = qec->sc_buffer;
-	sc->sc_memsize = qec->sc_bufsiz;
 
 	sc->sc_channel = getpropint(ca->ca_ra.ra_node, "channel#", -1);
 	sc->sc_burst = qec->sc_burst;
@@ -676,25 +673,10 @@ qeinit(sc)
 {
 	struct qe_mregs *mr = sc->sc_mr;
 	struct qe_cregs *cr = sc->sc_cr;
-	struct qecregs *qr = sc->sc_qr;
+	struct qec_softc *qec = sc->sc_qec;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s = splimp();
 	int i;
-
-	/*
-	 * init QEC: 'qe' specific initializations
-	 */
-	qr->msize = sc->sc_memsize / 4;
-	qr->rsize = sc->sc_memsize / 8;
-	qr->tsize = sc->sc_memsize / 8;
-	qr->psize = QEC_PSIZE_2048;
-	if (sc->sc_burst & SBUS_BURST_64)
-		i = QEC_CTRL_B64;
-	else if (sc->sc_burst & SBUS_BURST_32)
-		i = QEC_CTRL_B32;
-	else
-		i = QEC_CTRL_B16;
-	qr->ctrl = QEC_CTRL_MMODE | i;
 
 	/*
 	 * Allocate descriptor ring and buffers, if not already done
@@ -733,8 +715,8 @@ qeinit(sc)
 	cr->timask = 0;
 	cr->qmask = 0;
 	cr->mmask = QE_CR_MMASK_RXCOLL;
-	cr->rxwbufptr = cr->rxrbufptr = sc->sc_channel * sc->sc_qr->msize;
-	cr->txwbufptr = cr->txrbufptr = cr->rxrbufptr + sc->sc_qr->rsize;
+	cr->rxwbufptr = cr->rxrbufptr = sc->sc_channel * qec->sc_msize;
+	cr->txwbufptr = cr->txrbufptr = cr->rxrbufptr + qec->sc_rsize;
 	cr->ccnt = 0;
 	cr->pipg = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.8 1998/10/19 05:39:30 jason Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.9 1998/11/02 05:50:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -36,14 +36,13 @@ struct besoftc {
 
 	struct	qec_softc *sc_qec;	/* QEC parent */
 	struct	qecregs *sc_qr;		/* QEC registers */
-	struct	be_bregs *sc_br;	/* registers */
-	struct	be_cregs *sc_cr;	/* registers */
-	struct	be_tregs *sc_tr;	/* registers */
+	struct	be_bregs *sc_br;	/* be registers */
+	struct	be_cregs *sc_cr;	/* channel registers */
+	struct	be_tregs *sc_tr;	/* transceiver registers */
 
-	void	*sc_mem;
-	int	sc_memsize;
 	u_int	sc_rev;
 
+	int	sc_channel;		/* channel number */
 	int	sc_promisc;
 	int	sc_burst;
 	int	sc_tcvr_type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecvar.h,v 1.5 1998/10/19 05:41:20 jason Exp $	*/
+/*	$OpenBSD: qecvar.h,v 1.6 1998/11/02 05:50:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -28,17 +28,22 @@
  */
 
 struct qec_softc {
-	struct	device sc_dev;		/* us as a device */
-	struct	sbusdev sc_sd;		/* sbus device */
-	struct	qecregs *sc_regs;	/* QEC registers */
-	int	sc_node;		/* PROM node ID */
-	int	sc_burst;		/* DVMA burst size in effect */
-	caddr_t	sc_buffer;		/* VA of the buffer we provide */
-	int	sc_bufsiz;		/* Size of buffer */
-	int	sc_nrange;		/* number of ranges */
-	int	sc_pri;
-	int	sc_nchannels;		/* number of channels on board */
+	struct	device	sc_dev;		/* us as a device */
+	struct	sbusdev	sc_sd;		/* sbus device */
+	struct	qecregs	*sc_regs;	/* QEC registers */
+	int		sc_node;	/* PROM node ID */
+	int		sc_burst;	/* DVMA burst size in effect */
+	int		sc_bufsiz;	/* Size of buffer */
+	int		sc_pri;		/* interrupt priority */
+	int		sc_nchannels;	/* number of channels on board */
+	int		sc_nrange;	/* number of ranges */
 	struct	rom_range *sc_range;	/* array of ranges */
+
+	/*
+	 * For use by children:
+	 */
+	u_int32_t	sc_msize;	/* qec buffer offset per channel */
+	u_int32_t	sc_rsize;	/* qec buffer size for receive */
 };
 
 void	qec_reset __P((struct qec_softc *));

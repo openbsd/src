@@ -1,4 +1,4 @@
-/*	$OpenBSD: qevar.h,v 1.1 1998/10/19 05:41:21 jason Exp $	*/
+/*	$OpenBSD: qevar.h,v 1.2 1998/11/02 05:50:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -38,8 +38,6 @@ struct qesoftc {
 	struct	qe_mregs *sc_mr;	/* MACE registers */
 	struct	qe_cregs *sc_cr;	/* Channel registers */
 
-	void	*sc_mem;
-	int	sc_memsize;
 	int	sc_channel;
 	u_int	sc_rev;
 
