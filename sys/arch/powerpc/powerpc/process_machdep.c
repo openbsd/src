@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.2 1996/12/28 06:22:16 rahnds Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.3 1998/08/07 02:22:08 rahnds Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <machine/reg.h>
 
 /*
  * Set the process's program counter.
@@ -60,4 +61,47 @@ process_sstep(p, sstep)
 	else
 		tf->srr1 &= ~PSL_SE;
 	return 0;
+}
+int
+process_read_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct trapframe *tf = trapframe(p);
+
+	bcopy(&(tf->fixreg[0]), &(regs->gpr[0]), sizeof(regs->gpr));
+	bzero(&(regs->fpr[0]), sizeof(regs->fpr));
+	/* 
+	 * need to do floating point here
+	 */
+	regs->pc  = tf->srr0;
+	regs->ps  = tf->srr1; /* is this the correct value for this ? */
+	regs->cnd = tf->cr;
+	regs->lr  = tf->lr;
+	regs->cnt = tf->ctr;
+	regs->xer = tf->xer;
+	regs->mq  = 0; /*  what should this really be? */
+
+	return (0);
+}
+int
+process_write_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct trapframe *tf = trapframe(p);
+
+	bcopy(&(regs->gpr[0]), &(tf->fixreg[0]), sizeof(regs->gpr));
+	/* 
+	 * need to do floating point here
+	 */
+	tf->srr0 = regs->pc;
+	tf->srr1 = regs->ps;  /* is this the correct value for this ? */
+	tf->cr   = regs->cnd;
+	tf->lr   = regs->lr;
+	tf->ctr  = regs->cnt;
+	tf->xer  = regs->xer;
+	/*  regs->mq = 0; what should this really be? */
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.1 1997/01/02 02:55:47 rahnds Exp $	*/
+/*	$OpenBSD: reg.h,v 1.2 1998/08/07 02:22:06 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,5 +41,22 @@
 #ifndef _POWERPC_REG_H_
 #define _POWERPC_REG_H_
 
-/* not supported yet */
+/*
+ * Struct reg, used for procfs and in signal contexts
+ * Note that in signal contexts, it's represented as an array.
+ * That array has to look exactly like 'struct reg' though.
+ */
+
+/* this table is set up to match what gdb expects */
+struct reg {
+	u_int32_t gpr[32];
+	u_int64_t fpr[32];
+	u_int32_t pc;
+	u_int32_t ps;
+	u_int32_t cnd;
+	u_int32_t lr;
+	u_int32_t cnt;
+	u_int32_t xer;
+	u_int32_t mq;
+};
 #endif /* !_POWERPC_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 1998/05/29 04:15:41 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1998/08/07 02:22:09 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -56,6 +56,34 @@
 
 volatile int want_resched;
 
+#ifdef PPC_WANT_BACKTRACE
+void dumpframe (u_int32_t pframe)
+{
+	u_int32_t nextframe;
+	u_int32_t lr;
+	int error;
+	if (error = copyin ((void *)pframe, &nextframe , 4) ){
+		printf("unable to read next frame @%x\n", pframe);
+		return;
+	}
+	if (error = copyin ((void *)(pframe+4), &lr , 4) ){
+		printf("unable to read lr @%x\n", pframe+4);
+		return;
+	}
+	printf("lr %x fp %x nfp %x\n", lr, pframe, nextframe);
+
+	if (nextframe != 0) {
+		dumpframe(nextframe);
+	}
+	return;
+}
+void
+ppc_dumpbt(struct trapframe *frame)
+{
+	dumpframe(frame->fixreg[1]);
+	return;
+}
+#endif
 void
 trap(frame)
 	struct trapframe *frame;
@@ -123,7 +151,11 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 				     trunc_page(frame->dar), ftype, FALSE)
 			    == KERN_SUCCESS)
 				break;
-printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
+printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
+/*
+ * keep this for later in case we want it later.
+ppc_dumpbt(frame);
+*/
 			sv.sival_int = frame->dar;
 			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 		}

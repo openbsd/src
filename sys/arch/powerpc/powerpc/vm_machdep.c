@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.3 1997/10/13 13:43:02 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.4 1998/08/07 02:22:10 rahnds Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -180,16 +180,15 @@ cpu_coredump(p, vp, cred, chdr)
 	struct trapframe *tf;
 	int error;
 	
-#if 0
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_POWERPC, 0);
+#if 1
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_ZERO, 0);
 	chdr->c_hdrsize = ALIGN(sizeof *chdr);
 	chdr->c_seghdrsize = ALIGN(sizeof cseg);
 	chdr->c_cpusize = sizeof md_core;
 
-	tf = trapframe(p);
-	bcopy(tf, &md_core.frame, sizeof md_core.frame);
+	process_read_regs(p, &md_core);
 	
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_POWERPC, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ZERO, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.1 1996/12/28 06:09:22 rahnds Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.2 1998/08/07 02:22:05 rahnds Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.7 1995/01/26 19:47:10 mycroft Exp $	*/
 
 /*
@@ -37,10 +37,10 @@
  * powerpc-dependent ptrace definitions
  */
 #define	PT_STEP		(PT_FIRSTMACH + 0)
-#if NOT_SUPPORTED
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 
+#if NOT_SUPPORTED
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 #endif
