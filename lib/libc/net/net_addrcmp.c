@@ -10,7 +10,6 @@ net_addrcmp(sa1, sa2)
 	struct sockaddr *sa1;
 	struct sockaddr *sa2;
 {
-	int r;
 
 	if (sa1->sa_len != sa2->sa_len)
 		return (sa1->sa_len < sa2->sa_len) ? -1 : 1;
