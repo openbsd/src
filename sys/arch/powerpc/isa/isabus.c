@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.10 1998/10/12 04:05:46 rahnds Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.11 1999/06/13 17:17:30 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -163,6 +163,9 @@ isabrmatch(parent, cfdata, aux)
 
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO)
+			return (1);
+		if (PCI_VENDOR(pa->pa_id) == 0x10ad &&
+		    PCI_PRODUCT(pa->pa_id) == 0x0565)
 			return (1);
 	}
 	return (0);
