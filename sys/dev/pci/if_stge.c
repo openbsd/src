@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.8 2004/10/03 07:55:54 grange Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.9 2004/11/10 10:18:31 grange Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.4 2001/07/25 15:44:48 thorpej Exp $	*/
 
 /*-
@@ -327,62 +327,25 @@ const struct mii_bitbang_ops stge_mii_bitbang_ops = {
 /*
  * Devices supported by this driver.
  */
-const struct stge_product {
-	pci_vendor_id_t		stge_vendor;
-	pci_product_id_t	stge_product;
-	const char		*stge_name;
-} stge_products[] = {
-	{ PCI_VENDOR_SUNDANCE,	PCI_PRODUCT_SUNDANCE_ST2021,
-	  "Sundance ST-2021 Gigabit Ethernet" },
-
-	{ PCI_VENDOR_TAMARACK,		PCI_PRODUCT_TAMARACK_TC9021,
-	  "Tamarack TC9021 Gigabit Ethernet" },
-
-	{ PCI_VENDOR_TAMARACK,		PCI_PRODUCT_TAMARACK_TC9021_ALT,
-	  "Tamarack TC9021 Gigabit Ethernet" },
-
+const struct pci_matchid stge_devices[] = {
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST2021 },
+	{ PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021 },
+	{ PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT },
 	/*
 	 * The Sundance sample boards use the Sundance vendor ID,
 	 * but the Tamarack product ID.
 	 */
-	{ PCI_VENDOR_SUNDANCE,	PCI_PRODUCT_TAMARACK_TC9021,
-	  "Sundance TC9021 Gigabit Ethernet" },
-
-	{ PCI_VENDOR_SUNDANCE,	PCI_PRODUCT_TAMARACK_TC9021_ALT,
-	  "Sundance TC9021 Gigabit Ethernet" },
-
-	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE550T,
-	  "D-Link DGE-550T Gigabit Ethernet" },
-
-	{ PCI_VENDOR_ANTARES,		PCI_PRODUCT_ANTARES_TC9021,
-	  "Antares Gigabit Ethernet" },
-
-	{ 0,				0,
-	  NULL },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_TAMARACK_TC9021 },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_TAMARACK_TC9021_ALT },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550T },
+	{ PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021 }
 };
-
-static const struct stge_product *
-stge_lookup(const struct pci_attach_args *pa)
-{
-	const struct stge_product *sp;
-
-	for (sp = stge_products; sp->stge_name != NULL; sp++) {
-		if (PCI_VENDOR(pa->pa_id) == sp->stge_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == sp->stge_product)
-			return (sp);
-	}
-	return (NULL);
-}
 
 int
 stge_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (stge_lookup(pa) != NULL)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, stge_devices,
+	    sizeof(stge_devices) / sizeof(stge_devices[0])));
 }
 
 void
@@ -399,17 +362,10 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
-	const struct stge_product *sp;
 	pcireg_t pmode;
 	int pmreg;
 
 	timeout_set(&sc->sc_timeout, stge_tick, sc);
-
-	sp = stge_lookup(pa);
-	if (sp == NULL) {
-		printf("\n");
-		panic("stge_attach: impossible");
-	}
 
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
@@ -475,7 +431,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s, rev. %d, %s\n", sp->stge_name, sc->sc_rev, intrstr);
+	printf(": %s", intrstr);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -576,8 +532,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_arpcom.ac_enaddr[5] = bus_space_read_2(sc->sc_st, sc->sc_sh,
 	    STGE_StationAddress2) >> 8;
 
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Read some important bits from the PhyCtrl register.
