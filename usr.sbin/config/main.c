@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2002/09/06 19:02:06 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2003/03/28 16:52:21 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ main(argc, argv)
 		(void)addmkoption(intern("PROF"), "-pg");
 		(void)addoption(intern("GPROF"), NULL);
 	} else {
-		int len = strlen(last_component) + 13;
+		int len = strlen(last_component) + 12;
 		p = emalloc(len);
 		(void)snprintf(p, len, "../compile/%s", last_component);
 	}
