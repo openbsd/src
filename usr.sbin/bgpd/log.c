@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.38 2004/06/01 20:27:24 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.39 2004/07/09 11:00:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,9 +199,11 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	va_start(ap, emsg);
-	vlog(LOG_DEBUG, emsg, ap);
-	va_end(ap);
+	if (debug) {
+		va_start(ap, emsg);
+		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
 }
 
 void
