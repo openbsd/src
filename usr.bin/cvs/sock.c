@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.2 2004/07/25 03:31:24 jfb Exp $	*/
+/*	$OpenBSD: sock.c,v 1.3 2004/08/02 17:30:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -57,6 +57,7 @@ static int cvs_sock = -1;
 static struct sockaddr_un cvs_sun;
 
 
+#ifdef CVSD
 /*
  * cvsd_sock_open()
  *
@@ -149,8 +150,9 @@ cvsd_sock_accept(int fd)
 
 	return (0);
 }
+#endif
 
-
+#ifdef CVS
 /*
  * cvs_sock_connect()
  *
@@ -158,11 +160,10 @@ cvsd_sock_accept(int fd)
  */
 
 int
-cvs_sock_connect(const char *cvsroot)
+cvs_sock_connect(const char *path)
 {
 	cvs_sun.sun_family = AF_LOCAL;
-	snprintf(cvs_sun.sun_path, sizeof(cvs_sun.sun_path), "%s/%s",
-	    cvsroot, CVSD_SOCK_PATH);
+	strlcpy(cvs_sun.sun_path, path, sizeof(cvs_sun.sun_path));
 
 	cvs_log(LP_INFO, "connecting to CVS server socket `%s'",
 	    cvs_sun.sun_path);
@@ -197,3 +198,4 @@ cvs_sock_disconnect(void)
 	if (close(cvs_sock) == -1)
 		cvs_log(LP_ERRNO, "failed to close local socket");
 }
+#endif
