@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.1 1996/04/22 01:27:55 deraadt Exp $
+.\"	$OpenBSD: mem.4,v 1.2 2000/04/27 00:35:55 deraadt Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mem.4	5.3 (Berkeley) 5/2/91
-.\"	$Id: mem.4,v 1.1 1996/04/22 01:27:55 deraadt Exp $
+.\"	$Id: mem.4,v 1.2 2000/04/27 00:35:55 deraadt Exp $
 .\"
 .Dd July 28, 1995
 .Dt MEM 4 arm
@@ -72,11 +72,16 @@ is
 .Dv UPAGES
 long, and ends at virtual
 address 0xfe000000.
+.Pp
+Writeability of these devices is controlled by the system
+.Xr securelevel 7 .
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/mem
 .It Pa /dev/kmem
 .El
+.Sh SEE ALSO
+.Xr securelevel 7
 .Sh HISTORY
 The
 .Nm mem ,

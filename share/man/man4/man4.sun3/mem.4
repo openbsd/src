@@ -65,11 +65,16 @@ On the
 .Tn Sun3 ,
 kernel virtual memory begins at
 .Ad 0x0E000000 .
+.Pp
+Writeability of these devices is controlled by the system
+.Xr securelevel 7 .
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It Pa /dev/mem
 .It Pa /dev/kmem
 .El
+.Sh SEE ALSO
+.Xr securelevel 7
 .Sh HISTORY
 The files
 .Nm mem

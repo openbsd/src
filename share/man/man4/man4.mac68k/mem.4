@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mem.4	8.1 (Berkeley) 6/5/93
-.\"	$OpenBSD: mem.4,v 1.1 1997/06/15 23:35:39 gene Exp $
+.\"	$OpenBSD: mem.4,v 1.2 2000/04/27 00:35:57 deraadt Exp $
 .\"	$NetBSD: mem.4,v 1.1 1997/06/08 17:40:57 ender Exp $
 .\"
 .Dd June 8, 1997
@@ -66,11 +66,16 @@ On the
 physical memory may be discontiguous;
 kernel virtual memory begins at
 .Ad 0x00000000 .
+.Pp
+Writeability of these devices is controlled by the system
+.Xr securelevel 7 .
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It Pa /dev/mem
 .It Pa /dev/kmem
 .El
+.Sh SEE ALSO
+.Xr securelevel 7
 .Sh HISTORY
 The files
 .Nm mem
