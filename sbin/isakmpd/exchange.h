@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.8 1999/04/05 20:58:28 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.21 1999/04/05 07:59:37 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.9 1999/04/19 21:03:35 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.22 1999/04/15 18:51:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -73,7 +73,7 @@ struct exchange {
    * if the finalization hook is called due to the exchange not running
    * to its end normally.
    */
-  void (*finalize) (void *, int);
+  void (*finalize) (struct exchange *, void *, int);
   void *finalize_arg;
 
   /* When several SA's are being negotiated we keep them here.  */
@@ -165,12 +165,16 @@ extern int exchange_add_certs (struct message *);
 extern void exchange_finalize (struct message *);
 extern void exchange_free (struct exchange *);
 extern void exchange_free_aca_list (struct exchange *);
-extern void exchange_establish (char *name, void (*) (void *, int), void *);
+extern void exchange_establish (char *name,
+				void (*) (struct exchange *, void *, int),
+				void *);
 extern void exchange_establish_p1 (struct transport *, u_int8_t, u_int32_t,
-				   char *, void *, void (*) (void *, int),
+				   char *, void *,
+				   void (*) (struct exchange *, void *, int),
 				   void *);
 extern void exchange_establish_p2 (struct sa *, u_int8_t, char *, void *,
-				   void (*) (void *, int), void *);
+				   void (*) (struct exchange *, void *, int),
+				   void *);
 extern int exchange_gen_nonce (struct message *, size_t);
 extern void exchange_init (void);
 extern struct exchange *exchange_lookup (u_int8_t *, int);
