@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2002/04/05 15:40:41 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.22 2002/04/08 17:02:44 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -63,6 +63,7 @@ gem*		at pci? disable dev ? function ?	# GMAC ethernet
 hme*		at pci? dev ? function ?	# HME ethernet
 dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 an*		at pci? dev ? function ?	# Cisco/Aironet
+wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
 iop*		at pci? dev ? function ?	# I2O processor
 ioprbs*		at iop? tid ?			# I2O arrays
 iopsp*		at iop? tid ?			# I2O SCSI pass-through
