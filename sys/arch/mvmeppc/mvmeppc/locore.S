@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 2002/07/24 02:29:57 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 2004/01/22 20:45:20 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -32,8 +32,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "machine/ipkdb.h"
-
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -54,10 +52,6 @@
 _C_LABEL(esym):		.long	0	/* end of symbol table */
 _C_LABEL(proc0paddr):	.long	0	/* proc0 p_addr */
 idle_u:			.long	0	/* fake uarea during idle after exit */
-
-	.globl _C_LABEL(where)
-	.type  _C_LABEL(where),@object
-_C_LABEL(where):	.long	0
 
 /*
  * Startup entry
@@ -98,58 +92,19 @@ start:
 	stw	8,_C_LABEL(proc0paddr)@l(9)
 	addi	1,8,USPACE-FRAMELEN	/* stackpointer for proc0 */
 	mr	4,1			/* end of mem reserved for kernel */
-	xor	0,0,0
+	li	0,0
 	stwu	0,-16(1)		/* end of stack chain */
 	
-	li	0, 2
-	lis	9,_C_LABEL(where)@ha
-	stw	0,_C_LABEL(where)@l(9)
-
 	lis	3,start@ha
 	addi	3,3,start@l
 	mr	5,6			/* args string */
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
-#if 0	
+#if 0
 	b	_C_LABEL(OF_exit)
+#else
+	/* XXX bugreturn */
 #endif	
-
-#define LED_ADDR 0x800008c0
-_ENTRY(_C_LABEL(led_dbg))
-	stwu	1,-32(1)
-	mflr	0
-	stw	0,36(1)
-
-	stw	4,8(1)
-	stw	5,12(1)
-	stw	6,16(1)
-	stw	7,20(1)
-	mfmsr	5
-
-	mr	6,5
-	ori	6,6,(PSL_IR|PSL_DR)@l	/* turn on MMU */
-	mtmsr	6
-	sync
-	isync
-
-	lis	4,LED_ADDR@ha
-	addi	4,4,LED_ADDR@l
-	li	7,0
-	ori	3,3,0x2000
-	sthbrx	3,7,4
-
-	sync
-	mtmsr	5
-	isync
-	lwz	4,8(1)
-	lwz	5,12(1)
-	lwz	6,16(1)
-	lwz	7,20(1)
-
-	lwz	0,36(1)
-	mtlr	0
-	addi	1,1,32
-	blr
 
 /*
  * No processes are runnable, so loop waiting for one.
@@ -157,7 +112,8 @@ _ENTRY(_C_LABEL(led_dbg))
  */
 _C_LABEL(idle):
 	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while manipulating runque */
+	/* disable interrupts while manipulating runque */
+	andi.	3,3,~PSL_EE@l
 	mtmsr	3
 
 	lis	8,_C_LABEL(whichqs)@ha
@@ -216,12 +172,13 @@ _ENTRY(_C_LABEL(cpu_switch))
 
 	mr	30,3
 	lis	3,_C_LABEL(curproc)@ha
-	xor	31,31,31
-	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	li	31,0
+	/* Zero to not accumulate cpu time */
+	stw	31,_C_LABEL(curproc)@l(3)
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 
-	xor	3,3,3
+	li	3,0
 	bl	_C_LABEL(lcsplx)
 	stw	3,PCB_SPL(31)		/* save spl */
 
@@ -255,12 +212,13 @@ _C_LABEL(sw1):
 	lis	3,0x80000000@ha
 	srw	3,3,10
 	andc	9,9,3
-	stw	9,_C_LABEL(whichqs)@l(8)		/* mark it empty */
+	stw	9,_C_LABEL(whichqs)@l(8)	/* mark it empty */
 
 1:
-	xor	3,3,3
+	/* just did this resched thing */
+	li	3,0
 	lis	4,_C_LABEL(want_resched)@ha
-	stw	3,_C_LABEL(want_resched)@l(4)	/* just did this resched thing */
+	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
 
@@ -286,8 +244,9 @@ _C_LABEL(sw1):
 	stw	1,PCB_SP(3)		/* save SP */
 
 switch_exited:
+	/* disable interrupts while actually switching */
 	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while actually switching */
+	andi.	3,3,~PSL_EE@l
 	mtmsr	3
 
 	lwz	4,P_ADDR(31)
@@ -295,8 +254,10 @@ switch_exited:
 	stw	4,_C_LABEL(curpcb)@l(5)		/* indicate new pcb */
 
 	lwz	5,PCB_PMR(4)
+
+	/* save real pmap pointer for spill fill */
 	lis	6,_C_LABEL(curpm)@ha
-	stwu	5,_C_LABEL(curpm)@l(6)		/* save real pmap pointer for spill fill */
+	stwu	5,_C_LABEL(curpm)@l(6)
 	stwcx.	5,0,6			/* clear possible reservation */
 
 	addic.	5,5,64
@@ -329,7 +290,7 @@ switch_return:
 	lwz	3,PCB_SPL(4)
 	bl	_C_LABEL(lcsplx)
 
-	mr	3,30			/* get curproc for special fork returns */
+	mr	3,30			/* curproc for special fork returns */
 
 	lwz	31,12(1)
 	lwz	30,8(1)
@@ -356,8 +317,7 @@ _C_LABEL(intr_depth):
 
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, ALI, the interrupts, and possibly the debugging traps
- * when using IPKDB).
+ * except ISI/DSI, ALI, the interrupts
  */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
@@ -368,7 +328,8 @@ _C_LABEL(trapcode):
 	stmw	28,tempsave(0)		/* free r28-r31 */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
-/* Test whether we already had PR set */
+
+	/* Test whether we already had PR set */
 	mfsrr1	31
 	mtcr	31
 	bc	4,17,1f			/* branch if PSL_PR is clear */
@@ -391,7 +352,8 @@ _C_LABEL(alitrap):
 	stmw    30,tempsave+16(0)
 	mflr    28                      /* save LR */
 	mfcr    29                      /* save CR */
-/* Test whether we already had PR set */
+
+	/* Test whether we already had PR set */
 	mfsrr1  31
 	mtcr    31
 	bc      4,17,1f                 /* branch if PSL_PR is clear */
@@ -416,6 +378,7 @@ _C_LABEL(dsitrap):
 	mfxer	30			/* save XER */
 	mtsprg	2,30			/* in SPRG2 */
 	mfsrr1	31			/* test kernel mode */
+#if 0
 	mtcr	31
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfdar	31			/* get fault address */
@@ -442,6 +405,7 @@ _C_LABEL(dsitrap):
 	lmw	28,disisave(0)		/* restore r28-r31 */
 	rfi				/* return to trapped code */
 1:
+#endif
 	mflr	28			/* save LR */
 	bla	s_dsitrap
 _C_LABEL(dsisize) =	.-_C_LABEL(dsitrap)
@@ -457,6 +421,7 @@ _C_LABEL(isitrap):
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	mfsrr1	31			/* test kernel mode */
+#if 0
 	mtcr	31
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfsrr0	31			/* get fault address */
@@ -472,6 +437,7 @@ _C_LABEL(isitrap):
 	lmw	28,disisave(0)		/* restore r28-r31 */
 	rfi				/* return to trapped code */
 1:
+#endif
 	bla	s_isitrap
 _C_LABEL(isisize) =	.-_C_LABEL(isitrap)
 
@@ -691,7 +657,7 @@ _C_LABEL(tlbdsmiss):
 	beq+	8f
 9:	/* found, but protection violation (PP==00)*/
 	mfsrr1	3
-	lis	1,0xa00			/* indicate protection violation on store */
+	lis	1,0xa00		/* indicate protection violation on store */
 	b	1f
 7:	/* found, PP=1x */
 	mfspr	3,DMISS			/* get the miss address */
@@ -744,26 +710,6 @@ _C_LABEL(ddblow):
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif  /* DDB */
 
-#if NIPKDB > 0
-#define	ipkdbsave	0xde0		/* primary save area for IPKDB */
-/*
- * In case of IPKDB we want a separate trap catcher for it
- */
-.lcomm	ipkdbstk,INTSTK			/* ipkdb stack */
-
-	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
-	.type	_C_LABEL(ipkdblow),@function
-	.type	_C_LABEL(ipkdbsize),@object
-_C_LABEL(ipkdblow):
-	mtsprg	1,1			/* save SP */
-	stmw	28,ipkdbsave(0)		/* free r28-r31 */
-	lis	1,ipkdbstk+INTSTK@ha	/* get new SP */
-	addi	1,1,ipkdbstk+INTSTK@l
-	mflr	28
-	mfcr	29
-	bla	ipkdbtrap
-_C_LABEL(ipkdbsize) =	.-_C_LABEL(ipkdblow)
-#endif	/* NIPKDB > 0 */
 
 /*
  * FRAME_SETUP assumes:
@@ -863,10 +809,11 @@ disitrap:
 	mfdsisr	31
 	stmw	30,tempsave+16(0)
 realtrap:
-/* Test whether we already had PR set */
+	/* Test whether we already had PR set */
 	mfsrr1	1
 	mtcr	1
-	mfsprg	1,1			/* restore SP (might have been overwritten) */
+	/* restore SP (might have been overwritten) */
+	mfsprg	1,1
 	bc	4,17,s_trap		/* branch if PSL_PR is false */
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
@@ -882,7 +829,10 @@ s_trap:
 	FRAME_SETUP(tempsave)
 /* Now we can recover interrupts again: */
 	mfmsr	7
-	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)
+	mfsrr1	%r31
+	andi.	%r31,%r31,PSL_EE	/* restore EE from previous context */
+	or	%r7,%r7,%r31
+	ori	7,7,(PSL_ME|PSL_RI)
 	mtmsr	7
 	isync
 /* Call C trap code: */
@@ -927,7 +877,7 @@ _C_LABEL(fork_trampoline):
  * DSI second stage fault handler
  */
 s_dsitrap:
-	mfdsisr	31			/* test whether this may be a spill fault */
+	mfdsisr	31			/* test if this is spill fault */
 	mtcr	31
 	mtsprg	1,1			/* save SP */
 	bc	4,1,disitrap		/* branch if table miss is false */
@@ -982,7 +932,7 @@ s_pte_spill:
  * ISI second stage fault handler
  */
 s_isitrap:
-	mfsrr1	31			/* test whether this may be a spill fault */
+	mfsrr1	31			/* test if this may be a spill fault */
 	mtcr	31
 	mtsprg	1,1			/* save SP */
 	bc	4,1,disitrap		/* branch if table miss is false */
@@ -1134,166 +1084,7 @@ decrintr:
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 
-#ifdef DDB
-/*
- * Deliberate entry to ddbtrap
- */
-        .globl        _C_LABEL(ddb_trap)
-_C_LABEL(ddb_trap):
-        mtsprg        1,1
-        mfmsr        3
-        mtsrr1        3
-        andi.        3,3,~(PSL_EE|PSL_ME)@l
-        mtmsr        3                        /* disable interrupts */
-        isync
-        stmw        28,ddbsave(0)
-        mflr        28
-        li        29,EXC_BPT
-        mtlr        29
-        mfcr        29
-        mtsrr0        28
 
-/*
- * Now the ddb trap catching code.
- */
-ddbtrap:
-        FRAME_SETUP(ddbsave)
-/* Call C trap code: */
-        addi        3,1,8
-        bl        _C_LABEL(ddb_trap_glue)
-        or.        3,3,3
-        bne        ddbleave
-/* This wasn't for DDB, so switch to real trap: */
-        lwz        3,FRAME_EXC+8(1)        /* save exception */
-        stw        3,ddbsave+8(0)
-        FRAME_LEAVE(ddbsave)
-        mtsprg        1,1                        /* prepare for entrance to realtrap */
-        stmw        28,tempsave(0)
-        mflr        28
-        mfcr        29
-        lwz        31,ddbsave+8(0)
-        mtlr        31
-        b        realtrap
-ddbleave:
-        FRAME_LEAVE(ddbsave)
-        rfi
-#endif /* DDB */
-
-#if NIPKDB > 0
-/*
- * Deliberate entry to ipkdbtrap
- */
-	.globl	_C_LABEL(ipkdb_trap)
-	.type	_C_LABEL(ipkdb_trap),@function
-_C_LABEL(ipkdb_trap):
-	
-	mtsprg	2,2
-	mfmsr	3
-	mtsrr1	3
-	andi.	3,3,~(PSL_EE|PSL_ME)@l
-	mtmsr	3			/* disable interrupts */
-	isync
-	stmw	28,ipkdbsave(0)
-	mflr	28
-	li	29,EXC_BPT
-	mtlr	29
-	mfcr	29
-	mtsrr0	28
-
-/*
- * Now the ipkdb trap catching code.
- */
-ipkdbtrap:
-	FRAME_SETUP(ipkdbsave)
-/* Call C trap code: */
-	addi	3,1,8
-	bl	_C_LABEL(ipkdb_trap_glue)
-	or.	3,3,3
-	bne	ipkdbleave
-/* This wasn't for IPKDB, so switch to real trap: */
-	lwz	3,FRAME_EXC+8(1)	/* save exception */
-	stw	3,ipkdbsave+8(0)
-	FRAME_LEAVE(ipkdbsave)
-	mtsprg	1,1			/* prepare for entrance to realtrap */
-	stmw	28,tempsave(0)
-	mflr	28
-	mfcr	29
-	lwz	31,ipkdbsave+8(0)
-	mtlr	31
-	b	realtrap
-ipkdbleave:
-	FRAME_LEAVE(ipkdbsave)
-	rfi
-
-ipkdbfault:
-	ba	_C_LABEL(ipkdbfault)
-_C_LABEL(ipkdbfault):
-	mfsrr0	3
-	addi	3,3,4
-	mtsrr0	3
-	li	3,-1
-	rfi
-
-/*
- * int ipkdbfbyte(unsigned char *p)
- */
-	.globl	_C_LABEL(ipkdbfbyte)
-	.type	_C_LABEL(ipkdbfbyte),@function
-_C_LABEL(ipkdbfbyte):
-	li	9,EXC_DSI		/* establish new fault routine */
-	lwz	5,0(9)
-	lis	6,ipkdbfault@ha
-	lwz	6,ipkdbfault@l(6)
-	stw	6,0(9)
-#ifdef	IPKDBUSERHACK
-	lis	8,_C_LABEL(ipkdbsr)@ha
-	lwz	8,_C_LABEL(ipkdbsr)@l(8)
-	mtsr	USER_SR,8
-	isync
-#endif
-	dcbst	0,9			/* flush data... */
-	sync
-	icbi	0,9			/* and instruction caches */
-	lbz	3,0(3)			/* fetch data */
-	stw	5,0(9)			/* restore previous fault handler */
-	dcbst	0,9			/* and flush data... */
-	sync
-	icbi	0,9			/* and instruction caches */
-	blr
-
-/*
- * int ipkdbsbyte(unsigned char *p, int c)
- */
-	.globl	_C_LABEL(ipkdbsbyte)
-	.type	_C_LABEL(ipkdbsbyte),@function
-_C_LABEL(ipkdbsbyte):
-	li	9,EXC_DSI		/* establish new fault routine */
-	lwz	5,0(9)
-	lis	6,ipkdbfault@ha
-	lwz	6,ipkdbfault@l(6)
-	stw	6,0(9)
-#ifdef	IPKDBUSERHACK
-	lis	8,_C_LABEL(ipkdbsr)@ha
-	lwz	8,_C_LABEL(ipkdbsr)@l(8)
-	mtsr	USER_SR,8
-	isync
-#endif
-	dcbst	0,9			/* flush data... */
-	sync
-	icbi	0,9			/* and instruction caches */
-	mr	6,3
-	xor	3,3,3
-	stb	4,0(6)
-	dcbst	0,6			/* Now do appropriate flushes to data... */
-	sync
-	icbi	0,6			/* and instruction caches */
-	stw	5,0(9)			/* restore previous fault handler */
-	dcbst	0,9			/* and flush data... */
-	sync
-	icbi	0,9			/* and instruction caches */	
-	blr
-#endif	/* NIPKDB > 0 */
-	
 /*
  * int setfault()
  *
@@ -1315,7 +1106,7 @@ _C_LABEL(setfault):
 	stw	2,4(3)
 	stw	1,8(3)
 	stmw	12,12(3)
-	xor	3,3,3
+	li	%r3,0
 	blr
 
 /*
@@ -1363,6 +1154,7 @@ _C_LABEL(intrnames):
 	.string "irq56" "irq57" "irq58" "irq59"
 	.string "irq60" "irq61" "irq62" "irq63"
 	.string "clock" 
+	.string	"stat"
 	.space 512
 _C_LABEL(eintrnames):
 	.align 4
@@ -1388,4 +1180,51 @@ _C_LABEL(intrcnt):
 	.long 0,0,0,0
 	.long 0,0,0,0
 	.long 0
+	.long 0
 _C_LABEL(eintrcnt):
+
+#ifdef DDB
+/*
+ * Deliberate entry to ddbtrap
+ */
+        .globl        _C_LABEL(ddb_trap)
+_C_LABEL(ddb_trap):
+        mtsprg        1,1
+        mfmsr        3
+        mtsrr1        3
+        andi.        3,3,~(PSL_EE|PSL_ME)@l
+        mtmsr        3                        /* disable interrupts */
+        isync
+        stmw        28,ddbsave(0)
+        mflr        28
+        li        29,EXC_BPT
+        mtlr        29
+        mfcr        29
+        mtsrr0        28
+
+/*
+ * Now the ddb trap catching code.
+ */
+ddbtrap:
+        FRAME_SETUP(ddbsave)
+/* Call C trap code: */
+        addi        3,1,8
+        bl        _C_LABEL(ddb_trap_glue)
+        or.        3,3,3
+        bne        ddbleave
+/* This wasn't for DDB, so switch to real trap: */
+        lwz        3,FRAME_EXC+8(1)        /* save exception */
+        stw        3,ddbsave+8(0)
+        FRAME_LEAVE(ddbsave)
+        mtsprg        1,1		/* prepare for entrance to realtrap */
+        stmw        28,tempsave(0)
+        mflr        28
+        mfcr        29
+        lwz        31,ddbsave+8(0)
+        mtlr        31
+        b        realtrap
+ddbleave:
+        FRAME_LEAVE(ddbsave)
+        rfi
+#endif /* DDB */
+

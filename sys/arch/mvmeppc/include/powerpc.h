@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.3 2004/01/22 20:45:18 miod Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ extern  struct firmware *fw;
 
 #define ppc_exit() if (fw->exit != NULL) (fw->exit)()
 #define ppc_boot(x) if (fw->boot != NULL) (fw->boot)(x)
-#define ppc_vmon() if (fw->vmon != NULL) (fw->vmon)()
 #define ppc_nvram_rd(a) ({unsigned char val;		\
 		if (fw->nvram_rd !=NULL)		\
 			val = (fw->nvram_rd)(a);	\
