@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.4 1997/06/11 23:33:40 deraadt Exp $
+.\"	$OpenBSD: ddb.4,v 1.5 1997/06/12 02:55:48 mickey Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -159,6 +159,9 @@ It's best to enclose each expression in parentheses.
 .It set $<variable> [=] <expr>
 Set the named variable or register with the value of 'expr'.
 Valid variable names are described below.
+.It boot {sync,crash,dump}
+Reboot the machine with syncing disks, not syncing or dumping core, 
+syncing disk and dumping core, respectively.
 .It break[/u] <addr>[,<count>]
 Set a break point at 'addr'.
 If count is supplied, continues (count-1) times before stopping at the
@@ -198,6 +201,14 @@ Some machines (e.g., pmax) also count loads and stores.
 Warning: when counting, the debugger is really silently single-stepping.
 This means that single-stepping on low-level code may cause strange
 behavior.
+.It hangman [/s[0-9]]
+This is tiny and handy tool to anylyze random kernel hangs.
+It uses some sophisticated heuristics to spot the global symbol that
+caused the hang. Since the discovering algorythm is a probabilistic one
+you may spend substantial time to figure the exact symbol name.
+Hint: the
+.Xr nm 1
+may help.
 .It until[/p]
 Stop at the next call or return instruction.
 If 'p' option is specified, print the call nesting depth and the
