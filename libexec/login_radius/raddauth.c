@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.14 2003/07/06 21:54:38 deraadt Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.15 2004/03/03 22:05:15 jcs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -253,6 +253,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	vector[AUTH_VECTOR_LEN] = '\0';
 
 	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = servtimeout;
 	sa.sa_flags = 0;		/* don't restart system calls */
 	(void)sigaction(SIGALRM, &sa, NULL);
 retry:
