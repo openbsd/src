@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.61 2004/12/24 22:50:31 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.62 2004/12/26 22:39:58 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -177,14 +177,14 @@ _C_LABEL(kgdb_stack):
 #endif
 
 /*
- * _C_LABEL(cpcb) points to the current pcb (and hence u. area).
+ * cpcb points to the current pcb (and hence u. area).
  * Initially this is the special one.
  */
 	.globl	_C_LABEL(cpcb)
 _C_LABEL(cpcb):	.word	_C_LABEL(u0)
 
 /*
- * _C_LABEL(cputyp) is the current cpu type, used to distinguish between
+ * cputyp is the current cpu type, used to distinguish between
  * the many variations of different sun4* machines. It contains
  * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
  */
@@ -192,7 +192,7 @@ _C_LABEL(cpcb):	.word	_C_LABEL(u0)
 _C_LABEL(cputyp):
 	.word	1
 /*
- * _C_LABEL(cpumod) is the current cpu model, used to distinguish between variants
+ * cpumod is the current cpu model, used to distinguish between variants
  * in the Sun4 and Sun4M families. See /sys/arch/sparc/include/param.h for
  * possible values.
  */
@@ -200,7 +200,7 @@ _C_LABEL(cputyp):
 _C_LABEL(cpumod):
 	.word	1
 /*
- * _C_LABEL(mmumod) is the current mmu model, used to distinguish between the
+ * mmumod is the current mmu model, used to distinguish between the
  * various implementations of the SRMMU in the sun4m family of machines.
  * See /sys/arch/sparc/include/param.h for possible values.
  */
