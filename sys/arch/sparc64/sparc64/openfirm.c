@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.10 2004/08/08 20:11:32 miod Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.11 2005/03/13 17:33:12 deraadt Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -385,14 +385,10 @@ OF_call_method_1(char *method, int ihandle, int nargs, ...)
 	for (ip = (long *)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, unsigned long);
 	va_end(ap);
-	if (openfirmware(&args) == -1) {
-		va_end(ap);
+	if (openfirmware(&args) == -1)
 		return -1;
-	}
-	if (args.args_n_results[nargs]) {
-		va_end(ap);
+	if (args.args_n_results[nargs])
 		return -1;
-	}
 	return args.args_n_results[nargs + 1];
 }
 
