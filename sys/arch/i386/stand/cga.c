@@ -1,4 +1,4 @@
-/*	$OpenBSD: cga.c,v 1.3 1996/09/23 15:15:37 mickey Exp $	*/
+/*	$OpenBSD: cga.c,v 1.4 1996/09/23 15:23:32 mickey Exp $	*/
 /*	$NetBSD: cga.c,v 1.3 1994/10/27 04:21:51 cgd Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
  */
 
 #include <sys/param.h>
+#include <stand.h>
 #include <dev/ic/mc6845.h>
 
 #define	COL		80
@@ -48,7 +49,7 @@
 #define MONO_BUF	0xB0000
 #define CGA_BUF		0xB8000
 
-static u_char	att = 0x7 ;
+static u_char	att = 0x7;
 u_char *Crtat = (u_char *)CGA_BUF;
 
 static unsigned int addr_6845 = CGA_BASE;
@@ -144,4 +145,13 @@ sput(c)
 #endif
 
 	cursor((crtat-Crtat)/CHR);
+}
+
+void
+putchar(c)
+	int	c;
+{
+        if (c == '\n')
+		sput('\r');
+	sput(c);
 }

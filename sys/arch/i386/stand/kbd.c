@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.4 1996/09/23 14:46:51 mickey Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.5 1996/09/23 15:23:33 mickey Exp $	*/
 /*	$NetBSD: kbd.c,v 1.3 1994/10/27 04:21:56 cgd Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 
 typedef unsigned char u_char;
 
+void wait(int n);
 u_char inb();
 
 #ifdef notdef
@@ -270,4 +271,14 @@ reset_cpu() {
 	outb(KBCMDP,KBC_PULSE0);	/* Reset Command */
 	wait(4000000);
 	/* NOTREACHED */
+}
+
+void
+wait(n)
+	int	n;
+{
+	int v;
+
+	while(n-- && (v = scankbd()) == 0);
+	if (v) kbdreset();
 }
