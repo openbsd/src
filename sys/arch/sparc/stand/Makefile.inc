@@ -17,7 +17,9 @@ RELOC_SUN4C=	0x340000
 RELOC_SUN4M=	0x440000
 
 # Note: a `RELOC' value of 0x340000 seems to work on most machines
-RELOC?=		${RELOC_SUN4C}
+#RELOC?=		${RELOC_SUN4C}
+# but a bigger 'RELOC' is needed for ramdisk kernels, requires 8M memory...
+RELOC?=		0x740000
 
 INCLUDES+=	-I. -I${.CURDIR}/.. -I${S}/arch -I${S} -I${S}/lib/libsa
 DEFS+=		-DSTANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS
