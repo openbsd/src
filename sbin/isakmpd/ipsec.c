@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.28 2000/10/07 06:58:47 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.132 2000/10/06 23:49:39 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.29 2000/10/09 23:27:30 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.133 2000/10/09 22:08:29 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1327,6 +1327,10 @@ ipsec_esp_enckeylength (struct proto *proto)
     case IPSEC_ESP_3DES:
       return 24;
     case IPSEC_ESP_CAST:
+      if (!iproto->keylen)
+        return 32;
+      return iproto->keylen / 8;
+    case IPSEC_ESP_AES:
       if (!iproto->keylen)
 	return 16;
       /* Fallthrough */

@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.40 2000/10/07 07:00:08 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.47 2000/09/18 00:01:47 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.41 2000/10/09 23:27:31 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.48 2000/10/09 22:08:29 angelos Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
 .\" Copyright (c) 2000 Håkan Olsson.  All rights reserved.
@@ -88,7 +88,7 @@ For Main Mode:
 .Pp
 For Quick Mode:
 .Bd -filled -offset indent -compact
-.Ar QM-{ESP,AH}[-TRP]-{DES,3DES,CAST,BLF}[-{MD5,SHA}][-PFS]-SUITE
+.Ar QM-{ESP,AH}[-TRP]-{DES,3DES,CAST,BLF,AES}[-{MD5,SHA}][-PFS]-SUITE
 .Ed
 .Pp
 Example 1: 3DES-SHA means; 3DES encryption, SHA hash, and authorization by 
@@ -701,6 +701,14 @@ Protocols=		QM-ESP-3DES-SHA
 [QM-ESP-3DES-SHA-PFS-SUITE]
 Protocols=		QM-ESP-3DES-SHA-PFS
 
+# AES
+
+[QM-ESP-AES-SHA-SUITE]
+Protocols=              QM-ESP-AES-SHA
+
+[QM-ESP-3DES-SHA-PFS-SUITE]
+Protocols=              QM-ESP-AES-SHA-PFS
+
 # AH
 
 [QM-AH-MD5-SUITE]
@@ -753,6 +761,20 @@ Transforms=		QM-ESP-3DES-SHA-PFS-XF
 [QM-ESP-3DES-SHA-TRP]
 PROTOCOL_ID=		IPSEC_ESP
 Transforms=		QM-ESP-3DES-SHA-TRP-XF
+
+# AES
+
+[QM-ESP-AES-SHA]
+PROTOCOL_ID=		IPSEC_ESP
+Transforms=		QM-ESP-AES-SHA-XF
+
+[QM-ESP-AES-SHA-PFS]
+PROTOCOL_ID=		IPSEC_ESP
+Transforms=		QM-ESP-AES-SHA-PFS-XF
+
+[QM-ESP-AES-SHA-TRP]
+PROTOCOL_ID=		IPSEC_ESP
+Transforms=		QM-ESP-AES-SHA-TRP-XF
 
 # AH MD5
 
@@ -809,6 +831,27 @@ Life=			LIFE_600_SECS
 
 [QM-ESP-3DES-SHA-TRP-XF]
 TRANSFORM_ID=		3DES
+ENCAPSULATION_MODE=	TRANSPORT
+AUTHENTICATION_ALGORITHM=	HMAC_SHA
+Life=			LIFE_600_SECS
+
+# AES
+
+[QM-ESP-AES-SHA-XF]
+TRANSFORM_ID=		AES
+ENCAPSULATION_MODE=	TUNNEL
+AUTHENTICATION_ALGORITHM=	HMAC_SHA
+Life=			LIFE_600_SECS
+
+[QM-ESP-AES-SHA-PFS-XF]
+TRANSFORM_ID=		AES
+ENCAPSULATION_MODE=	TUNNEL
+AUTHENTICATION_ALGORITHM=	HMAC_SHA
+GROUP_DESCRIPTION=	MODP_1024
+Life=			LIFE_600_SECS
+
+[QM-ESP-AES-SHA-TRP-XF]
+TRANSFORM_ID=		AES
 ENCAPSULATION_MODE=	TRANSPORT
 AUTHENTICATION_ALGORITHM=	HMAC_SHA
 Life=			LIFE_600_SECS

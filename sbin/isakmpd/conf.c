@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.17 2000/10/07 06:59:05 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.36 2000/10/06 23:19:49 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2000/10/09 23:27:30 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.37 2000/10/09 22:08:29 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -307,7 +307,7 @@ conf_parse (int trans, char *buf, size_t sz)
  *  For main mode:
  *     {DES,BLF,3DES,CAST}-{MD5,SHA}[-{DSS,RSA_SIG}]
  *  For quick mode:
- *     QM-{ESP,AH}[-TRP]-{DES,3DES,CAST,BLF}[-{MD5,SHA}][-PFS]-SUITE
+ *     QM-{ESP,AH}[-TRP]-{DES,3DES,CAST,BLF,AES}[-{MD5,SHA}][-PFS]-SUITE
  * DH groups; currently always MODP_768 for MD5, and MODP_1024 for SHA.
  *
  * XXX We may want to support USE_BLOWFISH, USE_TRIPLEDES, etc...
@@ -347,13 +347,13 @@ conf_load_defaults (int tr)
   char *mm_enc[]    = { "DES_CBC", "BLOWFISH_CBC", "3DES_CBC",
 			"CAST_CBC", NULL };
   char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", NULL };
-  char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", NULL };
+  char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", "AES", NULL };
   char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "NONE", NULL };
 
   /* Abbreviations to make section names a bit shorter.  */
   char *mm_auth_p[] = { "", "-DSS", "-RSA_SIG", NULL };
   char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", NULL };
-  char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", NULL };
+  char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", "-AES", NULL };
   char *qm_hash_p[] = { "-MD5", "-SHA", "", NULL };
 
   /* Helper #defines, incl abbreviations.  */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.15 2000/10/07 06:59:56 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.45 2000/10/02 03:23:25 angelos Exp $ */
+/*	$OpenBSD: policy.c,v 1.16 2000/10/09 23:27:31 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.46 2000/10/09 22:08:29 angelos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -311,6 +311,10 @@ policy_callback (char *name)
 
 		case IPSEC_ESP_3DES:
 		  esp_enc_alg = "3des";
+		  break;
+
+		case IPSEC_ESP_AES:
+		  esp_enc_alg = "aes";
 		  break;
 
 		case IPSEC_ESP_RC5:
