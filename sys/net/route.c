@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.7 1997/12/31 04:25:13 mickey Exp $	*/
+/*	$OpenBSD: route.c,v 1.8 1999/01/07 22:18:59 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ ifa_ifwithroute(flags, dst, gateway)
 	if (ifa == NULL)
 		ifa = ifa_ifwithnet(gateway);
 	if (ifa == NULL) {
-		struct rtentry *rt = rtalloc1(dst, 0);
+		struct rtentry *rt = rtalloc1(gateway, 0);
 		if (rt == NULL)
 			return (NULL);
 		rt->rt_refcnt--;
