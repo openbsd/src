@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.189 1999/10/26 23:34:37 chris Exp 
+ *	OpenBSD: pcidevs,v 1.190 1999/10/28 21:55:15 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1279,7 +1279,7 @@
 #define	PCI_PRODUCT_SIS_5582	0x5582		/* 5582 */
 #define	PCI_PRODUCT_SIS_5591	0x5591		/* 5591 Host-PCI */
 #define	PCI_PRODUCT_SIS_5596	0x5596		/* 5596 */
-#define	PCI_PRODUCT_SIS_5597	0x5597		/* 5597 */
+#define	PCI_PRODUCT_SIS_5597	0x5597		/* 5597 Host Bridge */
 #define	PCI_PRODUCT_SIS_5598	0x5598		/* 5598 */
 #define	PCI_PRODUCT_SIS_6204	0x6204		/* 6204 */
 #define	PCI_PRODUCT_SIS_6205	0x6205		/* 6205 */

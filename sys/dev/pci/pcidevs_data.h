@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.189 1999/10/26 23:34:37 chris Exp 
+ *	OpenBSD: pcidevs,v 1.190 1999/10/28 21:55:15 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3126,7 +3126,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597,
 	    0,
 	    "SIS",
-	    "5597",
+	    "5597 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5598,
