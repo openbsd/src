@@ -1,8 +1,8 @@
-/*	$OpenBSD: ipsec.c,v 1.10 1999/03/31 20:29:37 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.87 1999/03/31 20:22:18 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.11 1999/04/02 01:09:07 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.89 1999/04/02 00:47:56 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -229,13 +229,12 @@ ipsec_sa_check_flow (struct sa *sa, void *v_arg)
 static void
 ipsec_finalize_exchange (struct message *msg)
 {
-  struct sa *isakmp_sa = msg->isakmp_sa;
-  struct ipsec_sa *isa = isakmp_sa->data;
+  struct sa *isakmp_sa;
+  struct ipsec_sa *isa;
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   struct sa *sa = 0, *old_sa;
   struct proto *proto, *last_proto = 0;
-  int initiator = exchange->initiator;
   struct timeval expiration;
   struct sockaddr *addr;
   int len;
@@ -243,9 +242,8 @@ ipsec_finalize_exchange (struct message *msg)
   switch (exchange->phase)
     {
     case 1:
-      /* Move over the name to the SA.  */
-      isakmp_sa->name = exchange->name;
-      exchange->name = 0;
+      isakmp_sa = msg->isakmp_sa;
+      isa = isakmp_sa->data;
 
       switch (exchange->type)
 	{
@@ -343,7 +341,7 @@ ipsec_finalize_exchange (struct message *msg)
 		  isa->dst_net = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
 		  isa->dst_mask = htonl (0xffffffff);
 		}
-	      else if (initiator)
+	      else if (exchange->initiator)
 		/* Initiator is source, responder is destination.  */
 		ipsec_set_network (ie->id_ci, ie->id_cr, isa);
 	      else
@@ -366,7 +364,6 @@ ipsec_finalize_exchange (struct message *msg)
 		  sa_mark_replaced (old_sa);
 		}
 	    }
-	  exchange->name = 0;
 	  break;
 	}
     }
