@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.2 2001/03/15 07:35:46 niklas Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.3 2001/08/19 16:25:00 art Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -108,6 +108,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	Elf_Sym *symp, *symtab_start, *symtab_end;
 	char *shstrtab, *strtab_start, *strtab_end;
 	int i;
+	char *errstr = "";
 
 	if (ALIGNED_POINTER(symtab, long) == 0) {
 		printf("[ %s symbol table has bad start address %p ]\n",
@@ -137,11 +138,15 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	 */
 	elf = (Elf_Ehdr *)symtab;
 	if (memcmp(elf->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    elf->e_ident[EI_CLASS] != ELFCLASS)
+	    elf->e_ident[EI_CLASS] != ELFCLASS) {
+		errstr = "bad magic";
 		goto badheader;
+	}
 
-	if (elf->e_machine != ELF_TARG_MACH)
+	if (elf->e_machine != ELF_TARG_MACH) {
+		errstr = "bad e_machine";
 		goto badheader;
+	}
 
 	/*
 	 * Find the section header string table (.shstrtab), and look up
@@ -170,11 +175,15 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	 */
 	if (symtab_start == NULL || strtab_start == NULL ||
 	    ALIGNED_POINTER(symtab_start, long) == 0 ||
-	    ALIGNED_POINTER(strtab_start, long) == 0)
+	    ALIGNED_POINTER(strtab_start, long) == 0) {
+		errstr = "symtab unaligned";
 		goto badheader;
+	}
 	for (symp = symtab_start; symp < symtab_end; symp++)
-		if (symp->st_name + strtab_start > strtab_end)
+		if (symp->st_name + strtab_start > strtab_end) {
+			errstr = "symtab corrupted";
 			goto badheader;
+		}
 
 	/*
 	 * Link the symbol table into the debugger.
@@ -190,7 +199,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	return (FALSE);
 
  badheader:
-	printf("[ %s ELF symbol table not valid ]\n", name);
+	printf("[ %s ELF symbol table not valid: %s ]\n", name, errstr);
 	return (FALSE);
 }
 
