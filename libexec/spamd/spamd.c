@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.74 2004/11/17 15:29:38 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.75 2005/03/11 23:09:53 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -105,16 +105,21 @@ char *reply = NULL;
 char *nreply = "450";
 char *spamd = "spamd IP-based SPAM blocker";
 int greypipe[2];
+int trappipe[2];
 FILE *grey;
+FILE *trapcfg;
 time_t passtime = PASSTIME;
 time_t greyexp = GREYEXP;
 time_t whiteexp = WHITEEXP;
+time_t trapexp = TRAPEXP;
 struct passwd *pw;
 pid_t jail_pid = -1;
+u_short cfg_port;
 
 extern struct sdlist *blacklists;
 
 int conffd = -1;
+int trapfd = -1;
 char *cb;
 size_t cbs, cbu;
 
@@ -171,9 +176,6 @@ parse_configline(char *line)
 	size_t au = 0;
 	int mdone = 0;
 
-	if (debug > 0)
-		printf("read config line %40s ...\n", line);
-
 	name = line;
 
 	for (cp = name; *cp && *cp != ';'; cp++)
@@ -227,7 +229,11 @@ parse_configline(char *line)
 		}
 	} while ((av[au++] = strsep(&cp, ";")) != NULL);
 
-	if (au < 2)
+	/* toss empty last entry to allow for trailing ; */
+	if (av[au - 1][0] == '\0');
+		au--;
+
+	if (au < 1)
 		goto parse_error;
 	else
 		sdl_add(name, msg, av, au - 1);
@@ -319,6 +325,26 @@ configdone:
 	cbu = 0;
 	close(conffd);
 	conffd = -1;
+}
+
+
+int
+read_configline(FILE *config)
+{
+	char *buf;
+	size_t len;
+
+	if ((buf = fgetln(config, &len))) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else
+			return(-1);	/* all valid lines end in \n */
+		parse_configline(buf);
+	} else {
+		syslog_r(LOG_DEBUG, &sdata, "read_configline: fgetln (%m)");
+		return(-1);
+	}
+	return(0);
 }
 
 int
@@ -907,7 +933,7 @@ main(int argc, char *argv[])
 	struct sockaddr_in lin;
 	int ch, s, s2, conflisten = 0, i, omax = 0, one = 1;
 	socklen_t sinlen;
-	u_short port, cfg_port;
+	u_short port;
 	struct servent *ent;
 	struct rlimit rlp;
 	char *bind_address = NULL;
@@ -1074,6 +1100,11 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "pipe (%m)");
 			exit(1);
 		}
+		/* open pipe to recieve spamtrap configs */
+		if (pipe(trappipe) == -1) {
+			syslog(LOG_ERR, "pipe (%m)");
+			exit(1);
+		}
 		jail_pid = fork();
 		switch(jail_pid) {
 		case -1:
@@ -1081,21 +1112,34 @@ main(int argc, char *argv[])
 			exit(1);
 		case 0:
 			/* child - continue */
-			close(greypipe[0]);
 			grey = fdopen(greypipe[1], "w");
 			if (grey == NULL) {
 				syslog(LOG_ERR, "fdopen (%m)");
 				_exit(1);
 			}
+			close(greypipe[0]);
+			trapfd = trappipe[0];
+			trapcfg = fdopen(trappipe[0], "r");
+			if (trapcfg == NULL) {
+				syslog(LOG_ERR, "fdopen (%m)");
+				_exit(1);
+			}
+			close(trappipe[1]);
 			goto jail;
 		}
 		/* parent - run greylister */
-		close(greypipe[1]);
 		grey = fdopen(greypipe[0], "r");
 		if (grey == NULL) {
 			syslog(LOG_ERR, "fdopen (%m)");
 			exit(1);
 		}
+		close(greypipe[1]);
+		trapcfg = fdopen(trappipe[1], "w");
+		if (trapcfg == NULL) {
+			syslog(LOG_ERR, "fdopen (%m)");
+			exit(1);
+		}
+		close(trappipe[0]);
 		return(greywatcher());
 		/* NOTREACHED */
 	}
@@ -1131,6 +1175,7 @@ jail:
 
 		max = MAX(s, conflisten);
 		max = MAX(max, conffd);
+		max = MAX(max, trapfd);
 
 		time(&t);
 		for (i = 0; i < maxcon; i++)
@@ -1184,6 +1229,8 @@ jail:
 			FD_SET(conflisten, fdsr);
 		else
 			FD_SET(conffd, fdsr);
+		if (trapfd != -1)
+			FD_SET(trapfd, fdsr);
 
 		if (writers == 0) {
 			tvp = NULL;
@@ -1242,10 +1289,10 @@ jail:
 				conffd = -1;
 			}
 		}
-		if (conffd != -1 && FD_ISSET(conffd, fdsr)) {
+		if (conffd != -1 && FD_ISSET(conffd, fdsr))
 			do_config();
-		}
-
+		if (trapfd != -1 && FD_ISSET(trapfd, fdsr))
+			read_configline(trapcfg);
 	}
 	exit(1);
 }

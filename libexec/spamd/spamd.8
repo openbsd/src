@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.52 2005/01/19 17:07:31 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.53 2005/03/11 23:09:53 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -337,6 +337,38 @@ should be used to update the whitelist entries in
 when connections are seen to pass to the real MTA on the
 .Em smtp
 port.
+.Sh GREYTRAPPING
+When greylisting with
+.Nm
+it may be useful to define
+.Em spamtrap
+destination addresses to catch spammers as they send mail from greylisted
+hosts.
+Such
+.Em spamtrap
+addresses affect only greylisted connections to
+.Nm
+and are used to temporarily blacklist a host that is obviously sending spam.
+Unused email addresses or email addresses on spammers' lists are very
+useful for this.
+When a host that is currently greylisted attempts to send mail to a
+.Em spamtrap
+address, it is blacklisted for 24 hours by adding the host to the
+.Nm
+blacklist
+.Em spamd-greytrap .
+Spamtrap addresses are added to the
+.Pa /var/db/spamd
+database with the following
+.Xr spamdb 8
+command:
+.Pp
+.Dl spamdb -T -a \&"<spamtrap@mydomain.org>\&"
+.Pp
+It should be entered exactly as the address will be used in the SMTP dialogue.
+See
+.Xr spamdb 8
+for further details.
 .Sh LOGGING
 .Nm
 sends log messages to

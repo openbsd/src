@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.11 2004/04/27 21:25:11 itojun Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.12 2005/03/11 23:09:53 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -28,11 +28,17 @@
 #include <string.h>
 #include <time.h>
 #include <netdb.h>
+#include <ctype.h>
 
 #include "grey.h"
 
+/* things we may add/delete from the db */
+#define WHITE 0
+#define TRAPHIT 1
+#define SPAMTRAP 2
+
 int
-dbupdate(char *dbname, char *ip, int add)
+dbupdate(char *dbname, char *ip, int add, int type)
 {
 	BTREEINFO	btreeinfo;
 	DBT		dbk, dbd;
@@ -51,17 +57,20 @@ dbupdate(char *dbname, char *ip, int add)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(ip, NULL, &hints, &res) != 0) {
-		warnx("invalid ip address %s", ip);
-		goto bad;
+	if (type == TRAPHIT || type == WHITE) {
+		if (getaddrinfo(ip, NULL, &hints, &res) != 0) {
+			warnx("invalid ip address %s", ip);
+			freeaddrinfo(res);
+			goto bad;
+		}
+		freeaddrinfo(res);
 	}
-	freeaddrinfo(res);
 	memset(&dbk, 0, sizeof(dbk));
 	dbk.size = strlen(ip);
 	dbk.data = ip;
 	memset(&dbd, 0, sizeof(dbd));
 	if (!add) {
-		/* remove whitelist entry */
+		/* remove entry */
 		r = db->get(db, &dbk, &dbd, 0);
 		if (r == -1) {
 			warn("db->get failed");
@@ -75,19 +84,39 @@ dbupdate(char *dbname, char *ip, int add)
 			goto bad;
 		}
 	} else {
-		/* add or update whitelist entry */
+		/* add or update entry */
 		r = db->get(db, &dbk, &dbd, 0);
 		if (r == -1) {
 			warn("db->get failed");
 			goto bad;
 		}
 		if (r) {
+			int i;
+
 			/* new entry */
 			memset(&gd, 0, sizeof(gd));
 			gd.first = now;
 			gd.bcount = 1;
-			gd.pass = now;
-			gd.expire = now + WHITEEXP;
+			switch (type) {
+			case WHITE:
+				gd.pass = now;
+				gd.expire = now + WHITEEXP;
+				break;
+			case TRAPHIT:
+				gd.expire = now + TRAPEXP;
+				gd.pcount = -1;
+				break;
+			case SPAMTRAP:
+				gd.expire = 0;
+				gd.pcount = -2;
+				/* ensure address is lower case*/
+				for (i = 0; ip[i] != '\0'; i++)
+					if (isupper(ip[i]))
+						ip[i] = tolower(ip[i]);
+				break;
+			default:
+				errx(-1, "unknown type %d", type);
+			}
 			memset(&dbk, 0, sizeof(dbk));
 			dbk.size = strlen(ip);
 			dbk.data = ip;
@@ -107,7 +136,23 @@ dbupdate(char *dbname, char *ip, int add)
 			}
 			memcpy(&gd, dbd.data, sizeof(gd));
 			gd.pcount++;
-			gd.expire = now + WHITEEXP;
+			switch (type) {
+			case WHITE:
+				gd.pass = now;
+				gd.expire = now + WHITEEXP;
+				break;
+			case TRAPHIT:
+				gd.expire = now + TRAPEXP;
+				gd.pcount = -1;
+				break;
+			case SPAMTRAP:
+				gd.expire = 0; /* XXX */
+				gd.pcount = -2;
+				break;
+			default:
+				errx(-1, "unknown type %d", type);
+			}
+
 			memset(&dbk, 0, sizeof(dbk));
 			dbk.size = strlen(ip);
 			dbk.data = ip;
@@ -161,11 +206,22 @@ dblist(char *dbname)
 		memcpy(a, dbk.data, dbk.size);
 		a[dbk.size]='\0';
 		cp = strchr(a, '\n');
-		if (cp == NULL)
-			/* this is a whitelist entry */
-			printf("WHITE|%s|||%d|%d|%d|%d|%d\n", a, gd.first,
-			    gd.pass, gd.expire, gd.bcount, gd.pcount);
-		else {
+		if (cp == NULL) {
+			/* this is a non-greylist entry */
+			switch (gd.pcount) {
+			case -1: /* spamtrap hit, with expiry time */
+				printf("TRAPPED|%s|%d\n", a, gd.expire);
+				break;
+			case -2: /* spamtrap address */
+				printf("SPAMTRAP|%s\n", a);
+				break;
+			default: /* whitelist */
+				printf("WHITE|%s|||%d|%d|%d|%d|%d\n", a,
+				    gd.first, gd.pass, gd.expire, gd.bcount,
+				    gd.pcount);
+				break;
+			}
+		} else {
 			char *from, *to;
 
 			/* greylist entry */
@@ -208,10 +264,10 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int ch, action = 0;
+	int ch, action = 0, type = WHITE;
 	char *ip = NULL;
 
-	while ((ch = getopt(argc, argv, "a:d:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:d:tT")) != -1) {
 		switch (ch) {
 		case 'a':
 			action = 1;
@@ -220,6 +276,12 @@ main(int argc, char **argv)
 		case 'd':
 			action = 2;
 			ip = optarg;
+			break;
+		case 't':
+			type = TRAPHIT;
+			break;
+		case 'T':
+			type = SPAMTRAP;
 			break;
 		default:
 			usage();
@@ -231,9 +293,9 @@ main(int argc, char **argv)
 	case 0:
 		return dblist(PATH_SPAMD_DB);
 	case 1:
-		return dbupdate(PATH_SPAMD_DB, ip, 1);
+		return dbupdate(PATH_SPAMD_DB, ip, 1, type);
 	case 2:
-		return dbupdate(PATH_SPAMD_DB, ip, 0);
+		return dbupdate(PATH_SPAMD_DB, ip, 0, type);
 	default:
 		errx(-1, "bad action");
 	}

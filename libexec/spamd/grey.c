@@ -1,7 +1,7 @@
-/*	$OpenBSD: grey.c,v 1.19 2004/12/04 00:24:42 moritz Exp $	*/
+/*	$OpenBSD: grey.c,v 1.20 2005/03/11 23:09:52 beck Exp $	*/
 
 /*
- * Copyright (c) 2004 Bob Beck.  All rights reserved.
+ * Copyright (c) 2004,2005 Bob Beck.  All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <db.h>
 #include <err.h>
 #include <errno.h>
@@ -41,23 +42,31 @@
 
 #include "grey.h"
 
-extern time_t passtime, greyexp, whiteexp;
+extern time_t passtime, greyexp, whiteexp, trapexp;
 extern struct syslog_data sdata;
 extern struct passwd *pw;
+extern u_short cfg_port;
 extern pid_t jail_pid;
+extern FILE * trapcfg;
 extern FILE * grey;
 extern int debug;
 
 size_t whitecount, whitealloc;
+size_t trapcount, trapalloc;
 char **whitelist;
+char **traplist;
+
+char *traplist_name = "spamd-greytrap";
+char *traplist_msg = "\"Your address %A has mailed to spamtraps here\\n\"";
+
 pid_t db_pid = -1;
 int pfdev;
+int spamdconf;
 
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
 	"spamd-white", "-T", "replace", "-f" "-", NULL
 };
-
 
 /* If the parent gets a signal, kill off the children and exit */
 /* ARGSUSED */
@@ -69,6 +78,25 @@ sig_term_chld(int sig)
 	if (jail_pid != -1)
 		kill(jail_pid, SIGTERM);
 	_exit(1);
+}
+
+/*
+ * Greatly simplified version from spamd_setup.c  - only
+ * sends one blacklist to an already open stream. Has no need
+ * to collapse cidr ranges since these are only ever single
+ * host hits.
+ */
+int
+configure_spamd(char **addrs, int count, FILE *sdc)
+{
+	int i;
+
+	fprintf(sdc, "%s;%s;", traplist_name, traplist_msg);
+	for (i = 0; i < count; i++)
+		fprintf(sdc, "%s/32;", addrs[i]);
+	fprintf(sdc, "\n");
+	fflush(sdc);
+	return(0);
 }
 
 int
@@ -140,7 +168,7 @@ configure_pf(char **addrs, int count)
 }
 
 void
-freewhiteaddr(void)
+freeaddrlists(void)
 {
 	int i;
 
@@ -150,6 +178,13 @@ freewhiteaddr(void)
 			whitelist[i] = NULL;
 		}
 	whitecount = 0;
+	if (traplist != NULL) {
+		for (i = 0; i < trapcount; i++) {
+			free(traplist[i]);
+			traplist[i] = NULL;
+		}
+	}
+	trapcount = 0;
 }
 
 /* validate, then add to list of addrs to whitelist */
@@ -189,6 +224,44 @@ addwhiteaddr(char *addr)
 	return(0);
 }
 
+/* validate, then add to list of addrs to traplist */
+int
+addtrapaddr(char *addr)
+{
+	struct addrinfo hints, *res;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		/*for now*/
+	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
+	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
+		if (trapcount == trapalloc) {
+			char **tmp;
+
+			tmp = realloc(traplist,
+			    (trapalloc + 1024) * sizeof(char *));
+			if (tmp == NULL) {
+				freeaddrinfo(res);
+				return(-1);
+			}
+			traplist = tmp;
+			trapalloc += 1024;
+		}
+		traplist[trapcount] = strdup(addr);
+		if (traplist[trapcount] == NULL) {
+			freeaddrinfo(res);
+			return(-1);
+		}
+		trapcount++;
+		freeaddrinfo(res);
+	} else
+		return(-1);
+	return(0);
+}
+
+
 int
 greyscan(char *dbname)
 {
@@ -197,6 +270,8 @@ greyscan(char *dbname)
 	DB		*db;
 	struct gdata	gd;
 	int		r;
+	char		*a = NULL;
+	size_t		asiz = 0;
 	time_t now = time(NULL);
 
 	/* walk db, expire, and whitelist */
@@ -211,30 +286,39 @@ greyscan(char *dbname)
 	memset(&dbd, 0, sizeof(dbd));
 	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
 	    r = db->seq(db, &dbk, &dbd, R_NEXT)) {
-		char a[128];
-
 		if ((dbk.size < 1) || dbd.size != sizeof(struct gdata)) {
-			db->close(db);
-			db = NULL;
-			return(-1);
+			goto bad;
 		}
+		if (asiz < dbk.size + 1) {
+			char *tmp;
+
+			tmp = realloc(a, dbk.size * 2);
+			if (tmp == NULL)
+				goto bad;
+			a = tmp;
+			asiz = dbk.size * 2;
+		}
+		memset(a, 0, asiz);
+		memcpy(a, dbk.data, dbk.size);
 		memcpy(&gd, dbd.data, sizeof(gd));
-		if (gd.expire <= now) {
+		if (gd.expire <= now && gd.pcount != -2) {
 			/* get rid of entry */
-			if (debug) {
-				memset(a, 0, sizeof(a));
-				memcpy(a, dbk.data, MIN(sizeof(a),
-				    dbk.size));
-				syslog_r(LOG_DEBUG, &sdata,
-				    "deleting %s from %s", a, dbname);
-			}
+			if (debug)
+				fprintf(stderr, "deleting %s\n", a);
 			if (db->del(db, &dbk, 0)) {
-				db->close(db);
-				db = NULL;
-				return(-1);
+				goto bad;
 			}
 			db->sync(db, 0);
-		} else if (gd.pass  <= now) {
+		} else if (gd.pcount == -1) {
+			/* this is a greytrap hit */
+			if ((addtrapaddr(a) == -1) &&
+			    db->del(db, &dbk, 0)) {
+				db->sync(db, 0);
+				goto bad;
+			}
+			if (debug)
+				fprintf(stderr, "trapped %s\n", a);
+		} else if (gd.pcount >= 0 && gd.pass <= now) {
 			int tuple = 0;
 			char *cp;
 
@@ -243,8 +327,6 @@ greyscan(char *dbname)
 			 * add address to whitelist
 			 * add an address-keyed entry to db
 			 */
-			memset(a, 0, sizeof(a));
-			memcpy(a, dbk.data, MIN(sizeof(a) - 1, dbk.size));
 			cp = strchr(a, '\n');
 			if (cp != NULL) {
 				tuple = 1;
@@ -281,14 +363,23 @@ greyscan(char *dbname)
 		}
 	}
 	configure_pf(whitelist, whitecount);
+	if (configure_spamd(traplist, trapcount, trapcfg) == -1)
+		syslog_r(LOG_DEBUG, &sdata, "configure_spamd failed");
+
 	db->close(db);
 	db = NULL;
-	freewhiteaddr();
+	freeaddrlists();
+	free(a);
+	a = NULL;
+	asiz = 0;
 	return(0);
  bad:
 	db->close(db);
 	db = NULL;
-	freewhiteaddr();
+	freeaddrlists();
+	free(a);
+	a = NULL;
+	asiz = 0;
 	return(-1);
 }
 
@@ -299,9 +390,11 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 	DBT		dbk, dbd;
 	DB		*db;
 	char		*key = NULL;
+	char		*trap = NULL;
+	char		*lookup;
 	struct gdata	gd;
-	time_t		now;
-	int		r;
+	time_t		now, expire;
+	int		i, r, spamtrap;
 
 	now = time(NULL);
 
@@ -312,9 +405,32 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		return(-1);
 	if (asprintf(&key, "%s\n%s\n%s", ip, from, to) == -1)
 		goto bad;
+	if (asprintf(&trap, "%s",to) == -1)
+		goto bad;
+	for (i = 0; trap[i] != '\0'; i++)
+		if (isupper(trap[i]))
+			trap[i] = tolower(trap[i]);
 	memset(&dbk, 0, sizeof(dbk));
-	dbk.size = strlen(key);
-	dbk.data = key;
+	dbk.size = strlen(trap);
+	dbk.data = trap;
+	memset(&dbd, 0, sizeof(dbd));
+	r = db->get(db, &dbk, &dbd, 0);
+	if (r == -1)
+		goto bad;
+	if (r) {
+		/* didn't exist - so this doesn't match a known spamtrap  */
+		spamtrap = 0;
+		lookup = key;
+		expire = greyexp;
+	} else {
+		/* To: address is a spamtrap, so add as a greytrap entry */
+		spamtrap = 1;
+		lookup = ip;
+		expire = trapexp;
+	}
+	memset(&dbk, 0, sizeof(dbk));
+	dbk.size = strlen(lookup);
+	dbk.data = lookup;
 	memset(&dbd, 0, sizeof(dbd));
 	r = db->get(db, &dbk, &dbd, 0);
 	if (r == -1)
@@ -324,11 +440,12 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		memset(&gd, 0, sizeof(gd));
 		gd.first = now;
 		gd.bcount = 1;
-		gd.pass = now + greyexp;
-		gd.expire = now + greyexp;
+		gd.pcount = spamtrap ? -1 : 0;
+		gd.pass = now + expire;
+		gd.expire = now + expire;
 		memset(&dbk, 0, sizeof(dbk));
-		dbk.size = strlen(key);
-		dbk.data = key;
+		dbk.size = strlen(lookup);
+		dbk.data = lookup;
 		memset(&dbd, 0, sizeof(dbd));
 		dbd.size = sizeof(gd);
 		dbd.data = &gd;
@@ -337,7 +454,8 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		if (r)
 			goto bad;
 		if (debug)
-			fprintf(stderr, "added %s\n", key);
+			fprintf(stderr, "added %s %s\n",
+			    spamtrap ? "greytrap entry for" : "", lookup);
 	} else {
 		/* existing entry */
 		if (dbd.size != sizeof(gd)) {
@@ -348,11 +466,12 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		}
 		memcpy(&gd, dbd.data, sizeof(gd));
 		gd.bcount++;
+		gd.pcount = spamtrap ? -1 : 0;
 		if (gd.first + passtime < now)
 			gd.pass = now;
 		memset(&dbk, 0, sizeof(dbk));
-		dbk.size = strlen(key);
-		dbk.data = key;
+		dbk.size = strlen(lookup);
+		dbk.data = lookup;
 		memset(&dbd, 0, sizeof(dbd));
 		dbd.size = sizeof(gd);
 		dbd.data = &gd;
@@ -361,16 +480,20 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		if (r)
 			goto bad;
 		if (debug)
-			fprintf(stderr, "updated %s\n", key);
+			fprintf(stderr, "updated %s\n", lookup);
 	}
 	free(key);
 	key = NULL;
+	free(trap);
+	trap = NULL;
 	db->close(db);
 	db = NULL;
 	return(0);
  bad:
 	free(key);
 	key = NULL;
+	free(trap);
+	trap = NULL;
 	db->close(db);
 	db = NULL;
 	return(-1);

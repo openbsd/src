@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.4 2004/04/25 17:32:16 itojun Exp $
+.\"	$OpenBSD: spamdb.8,v 1.5 2005/03/11 23:09:53 beck Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -22,10 +22,9 @@
 .Nd spamd database tool
 .Sh SYNOPSIS
 .Nm spamdb
-.Bk -words
-.Op Fl a Ar ip
-.Op Fl d Ar ip
-.Ek
+.Op Fl Tt
+.Op Fl a Ar key
+.Op Fl d Ar key
 .Sh DESCRIPTION
 .Nm
 manipulates the spamd database in
@@ -36,20 +35,46 @@ greylisting.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar ip
-Add or update a whitelist entry for IP address "ip".
+.It Fl a Ar key
+Add or update an entry for "key".
 Updates time last seen to now.
-.It Fl d Ar ip
-Delete a whitelist entry for IP address "ip".
+.It Fl d Ar key
+Delete an entry for "key".
+.It Fl T
+Add or delete the key as a SPAMTRAP entry.
+.It Fl t
+Add or delete the key as a TRAPPED entry.
 .El
 .Ss DATABASE OUTPUT FORMAT
 If invoked without any arguments,
 .Nm
 lists the contents of the database in a text format.
 The format is as follows:
-.Bd -literal -offset 4n
-type|source ip|from|to|first|pass|expire|block|pass
-.Ed
+For SPAMTRAP entries the format is:
+.Pp
+.Dl type|mailaddress
+.Pp
+where
+.Em type
+will be SPAMTRAP and
+.Em mailaddress
+will be the email address for which any connections received by
+.Xr spamd 8
+will be blacklisted if mail is sent to this address.
+For TRAPPED entries the format is:
+.Pp
+.Dl type|ip|expire
+.Pp
+where
+.Em type
+will be TRAPPED,
+.Em ip
+will be the IP address blacklisted due to hitting a spamtrap, and
+.Em expire
+will be when the IP is due to be removed from the blacklist.
+For GREY or WHITE entries, the format is:
+.Pp
+.Dl type|source ip|from|to|first|pass|expire|block|pass
 .Pp
 The fields are as follows:
 .Pp

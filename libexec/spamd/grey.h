@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.h,v 1.4 2004/10/05 21:04:36 beck Exp $	*/
+/*	$OpenBSD: grey.h,v 1.5 2005/03/11 23:09:53 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -20,6 +20,7 @@
 #define PASSTIME (60 * 25) /* pass after first retry seen after 25 mins */
 #define GREYEXP (60 * 60 * 4) /* remove grey entries after 4 hours */
 #define WHITEEXP (60 * 60 * 24 * 36) /* remove white entries after 36 days */
+#define TRAPEXP (60 * 60 * 24) /* hitting a spamtrap blacklists for a day */
 #define PATH_PFCTL "/sbin/pfctl"
 #define DB_SCAN_INTERVAL 60
 #define PATH_SPAMD_DB "/var/db/spamd"
@@ -29,7 +30,7 @@ struct gdata {
 	time_t pass;   /* when was it whitelisted */
 	time_t expire; /* when will we get rid of this entry */
 	int bcount;    /* how many times have we blocked it */
-	int pcount;    /* how many good connections have we seen after wl */
+	int pcount;    /* how many times passed, or -1 for spamtrap */
 };
 
 extern int greywatcher(void);
