@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.2 2001/09/12 22:57:30 miod Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -157,7 +157,6 @@ static const keysym_t akbd_keydesc_fr[] = {
     KC(30),	KS_dollar,	KS_asterisk,
     KC(33),	KS_dead_circumflex, KS_dead_diaeresis,
     KC(39),	KS_mu,		KS_percent,
-    KC(40),	KS_k,
     KC(41),	KS_m,
     KC(42),	KS_grave,	KS_sterling,
     KC(43),	KS_semicolon,	KS_period,
