@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.11 2001/06/27 05:44:49 nate Exp $ */
+/*	$OpenBSD: cl.c,v 1.12 2001/08/24 22:46:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -984,7 +984,7 @@ int
 clcngetc(dev)
 	dev_t dev;
 {
-	u_char val, reoir, licr, isrl, data, fifo_cnt;
+	u_char val, reoir, licr, isrl, data = 0, fifo_cnt;
 #if 0
 	u_char status;
 #endif
@@ -1852,31 +1852,7 @@ cl_break (sc, channel)
 	return;
 }
 
-void
-cl_dumpport0()
-{
-	cl_dumpport(0);
-	return;
-}
-void
-cl_dumpport1()
-{
-	cl_dumpport(1);
-	return;
-}
-void
-cl_dumpport2()
-{
-	cl_dumpport(2);
-	return;
-}
-void
-cl_dumpport3()
-{
-	cl_dumpport(3);
-	return;
-}
-
+#ifdef DEBUG
 void
 cl_dumpport(channel)
 	int channel;
@@ -1922,6 +1898,7 @@ cl_dumpport(channel)
 	rcor = cl_reg->cl_rcor;
 	tbpr = cl_reg->cl_tbpr;
 	rpilr = cl_reg->cl_rpilr;
+	rir = cl_reg->cl_rir;
 	ier = cl_reg->cl_ier;
 	ccr = cl_reg->cl_ccr;
 	tcor = cl_reg->cl_tcor;
@@ -1997,3 +1974,4 @@ cl_dumpport(channel)
 	printf("}\n");
 	return;
 }
+#endif
