@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.331 2000/10/12 17:40:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.333 2000/10/17 17:54:42 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4728,7 +4728,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
 	    0,
 	    "Triones Technologies",
-	    "HPT366 EIDE",
+	    "HPT366/370 EIDE",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,

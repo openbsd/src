@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.332 2000/10/13 00:37:02 aaron Exp $
+	$OpenBSD: pcidevs,v 1.333 2000/10/17 17:54:42 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1620,7 +1620,7 @@ product TRIDENT TGUI_9850	0x9850	TGUI 9850
 
 /* Triones/HighPoint Technologies products */
 product	TRIONES	HPT343		0x0003	HPT343 EIDE
-product	TRIONES HPT366		0x0004	HPT366 EIDE
+product	TRIONES HPT366		0x0004	HPT366/370 EIDE
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
