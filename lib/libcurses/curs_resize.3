@@ -1,0 +1,45 @@
+.TH wresize 3X ""
+
+.SH NAME
+\fBwresize\fR - resize a curses window
+
+.SH SYNOPSIS
+\fB#include <curses.h>\fR
+
+\fBint wresize(WINDOW *win, int lines, int columns);\fR
+
+.SH DESCRIPTION 
+The \fBwresize\fR function adjusts the dimensions of an \fBncurses\fR
+window to the specified values, reallocating storage as necessary.
+
+If either dimension is larger than the current values, the window's
+data is filled with blanks that have the current background rendition
+(as set by \fBwbkgndset\fR) merged into them.  If the current cursor
+position is outside the retained area of the window, the cursor is
+moved to within the nearest window edge.  Window data is otherwise
+preserved.
+
+This function will fail if either of the new dimensions less than or
+equal to zero, or if memory cannot be allocated or reallocated for the
+window.
+
+Note that \fBwresize\fR performs non-reentrant \fBmalloc\fR(3x)
+operations, so it isn't advisable to resize from within an interrupt handler.
+Instead, have your handler set an event flag to be interpreted next time
+around your program's command loop.
+
+.SH PORTABILITY
+This call was designed for \fBncurses\fR(3x), and is not found in SVr4
+curses, 4.4BSD curses, or any other previous version of curses.  It
+is recommended that you conditionalize all code depending on it with
+the symbol NCURSES.
+
+.SH RETURN VALUE
+The function returns the integer \fBERR\fR upon failure and \fBOK\fR
+on success.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:
