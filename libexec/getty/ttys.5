@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ttys.5	8.1 (Berkeley) 6/4/93
-.\"	$Id: ttys.5,v 1.1.1.1 1995/10/18 08:43:17 deraadt Exp $
+.\"	$Id: ttys.5,v 1.2 1996/08/26 07:21:04 deraadt Exp $
 .\"
 .Dd June 4, 1993
 .Dt TTYS 5
@@ -90,29 +90,40 @@ entry (see
 or specify a window system process that
 .Xr init 8
 will maintain for the terminal line.
-.Pp
-As flag values, the strings ``on'' and ``off'' specify that
+The following is a list of permitted flags for each tty:
+.Bl -tag -width xxxxxxx
+.It Ar on
+Specify that
 .Xr init
-should (should not) execute the command given in the second field,
-while ``secure'' (if ``on'' is also specified) allows users with a
-uid of 0 to login on
+should execute the command given in the second field.
+.It Ar off
+The opposite of on.
+.It Ar secure
+if
+.Ar on
+is also specified, allows users with a uid of 0 to login on
 this line.
-The flags ``local'', ``rtscts'', ``mdmbuf'', and ``softcar''
-modify the default behaviour of the terminal line, and their actions
-are driver dependent.
-The ``local'' flag causes the driver to
-treat the line as if it locally connected.
-The ``rtscts'' flag
-instructs the driver to use RTS/CTS hardware flow control, if
-possible.
-The ``mdmbuf'' flag instructs the driver to use
-DTR/DCD flow control, if possible.
-The ``softcar'' flag causes the driver to ignore
-hardware carrier on the line.
-These flag fields should not be quoted.
+.El
 .Pp
-The string ``window='' may be followed by a quoted command
-string which
+Additionally, the following flags modify the default behaviour
+of the terminal line.  Some of these flags may not be support by
+a terminal line driver.
+.Bl -tag -width xxxxxxx
+.It Ar local
+Treat the line as if it is locally connected.
+.It Ar rtscts
+Use RTS/CTS hardware flow control, if
+possible.
+.It Ar mdmbuf
+Use DTR/DCD flow control if possible.
+.It Ar softcar
+Ignore hardware carrier on the line.
+These flag fields should not be quoted.
+.El
+.Pp
+The string
+.Ar window=
+may be followed by a quoted command string which
 .Xr init
 will execute
 .Em before
