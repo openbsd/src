@@ -1,15 +1,16 @@
-/*	$OpenBSD: login_fbtab.c,v 1.6 1999/09/21 04:52:45 csapuntz Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.7 2001/06/03 15:32:57 deraadt Exp $	*/
 
 /************************************************************************
-* Copyright 1995 by Wietse Venema.  All rights reserved.
+* Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
+* files may be covered by other copyrights.
 *
 * This material was originally written and compiled by Wietse Venema at
 * Eindhoven University of Technology, The Netherlands, in 1990, 1991,
 * 1992, 1993, 1994 and 1995.
 *
-* Redistribution and use in source and binary forms are permitted
-* provided that this entire copyright notice is duplicated in all such
-* copies.
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that this entire copyright notice
+* is duplicated in all such copies.
 *
 * This software is provided "as is" and without any expressed or implied
 * warranties, including, without limitation, the implied warranties of
