@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.764 2004/09/22 09:05:34 grange Exp 
+ *	OpenBSD: pcidevs,v 1.765 2004/09/22 12:15:56 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1863,10 +1863,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CS4281 CrystalClear Audio",
 	},
 	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_1210SA,
-	    "SiI1210SA",
-	},
-	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
 	    "PCI0640",
 	},
@@ -1921,6 +1917,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3512,
 	    "SiI3512 SATA",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_1210SA,
+	    "1210SA",
 	},
 	{
 	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX,

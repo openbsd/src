@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.764 2004/09/22 09:05:34 grange Exp 
+ *	OpenBSD: pcidevs,v 1.765 2004/09/22 12:15:56 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -828,7 +828,6 @@
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear Audio */
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
-#define	PCI_PRODUCT_CMDTECH_1210SA	0x0240		/* SiI1210SA */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 #define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
@@ -845,6 +844,8 @@
 #define	PCI_PRODUCT_CMDTECH_3112	0x3112		/* SiI3112 SATA */
 #define	PCI_PRODUCT_CMDTECH_3114	0x3114		/* SiI3114 SATA */
 #define	PCI_PRODUCT_CMDTECH_3512	0x3512		/* SiI3512 SATA */
+/* Fake product id for SiI3112 found on Adaptec 1210SA */
+#define	PCI_PRODUCT_CMDTECH_1210SA	0x0240		/* 1210SA */
 
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX */
