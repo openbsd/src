@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.27 2004/08/03 13:34:48 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.28 2004/08/15 18:22:29 pedro Exp $  */
 
 /*
  *  Portions of this code are:
@@ -152,11 +152,13 @@ sched_sync(p)
 		/*
 		 * Push files whose dirty time has expired.
 		 */
+		s = splbio();
 		slp = &syncer_workitem_pending[syncer_delayno];
+
 		syncer_delayno += 1;
 		if (syncer_delayno == syncer_maxdelay)
 			syncer_delayno = 0;
-		s = splbio();
+
 		while ((vp = LIST_FIRST(slp)) != NULL) {
 			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT, p) != 0) {
 				/*
@@ -383,16 +385,25 @@ sync_inactive(v)
 	} */ *ap = v;
 
 	struct vnode *vp = ap->a_vp;
+	int s;
 
 	if (vp->v_usecount == 0) {
 		VOP_UNLOCK(vp, 0, ap->a_p);
 		return (0);
 	}
+
 	vp->v_mount->mnt_syncer = NULL;
+
+	s = splbio();
+
 	LIST_REMOVE(vp, v_synclist);
 	vp->v_bioflag &= ~VBIOONSYNCLIST;
+
+	splx(s);
+
 	vp->v_writecount = 0;
 	vput(vp);
+
 	return (0);
 }
 
