@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.65 2000/04/20 06:32:00 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.66 2001/02/12 07:03:13 fgsch Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2279,8 +2279,9 @@ sys_fsync(p, v, retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if ((error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p)) == 0 &&
-	    bioops.io_fsync != NULL)
+	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
+	if (error == 0 && bioops.io_fsync != NULL &&
+	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
 		error = (*bioops.io_fsync)(vp);
 
 	VOP_UNLOCK(vp, 0, p);
