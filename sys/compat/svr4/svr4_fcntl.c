@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_fcntl.c,v 1.3 1996/08/02 20:20:32 niklas Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -38,7 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
-
+#include <sys/poll.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -46,15 +47,12 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
-#include <compat/svr4/svr4_poll.h>
 
 static u_long svr4_to_bsd_cmd __P((u_long));
 static int svr4_to_bsd_flags __P((int));
 static int bsd_to_svr4_flags __P((int));
 static void bsd_to_svr4_flock __P((struct flock *, struct svr4_flock *));
 static void svr4_to_bsd_flock __P((struct svr4_flock *, struct flock *));
-static void svr4_pollscan __P((struct proc *, struct svr4_pollfd *, int,
-			       register_t *));
 
 static u_long
 svr4_to_bsd_cmd(cmd)
@@ -323,135 +321,4 @@ svr4_sys_fcntl(p, v, retval)
 	default:
 		return ENOSYS;
 	}
-}
-
-
-static void
-svr4_pollscan(p, pl, nfd, retval)
-	struct proc *p;
-	struct svr4_pollfd *pl;
-	int nfd;
-	register_t *retval;
-{
-	register struct filedesc *fdp = p->p_fd;
-	register int msk, i;
-	struct file *fp;
-	int n = 0;
-	static int flag[3] = { FREAD, FWRITE, 0 };
-	static int pflag[3] = { SVR4_POLLIN|SVR4_POLLRDNORM, 
-				SVR4_POLLOUT, SVR4_POLLERR };
-
-	/* 
-	 * XXX: We need to implement the rest of the flags.
-	 */
-	for (i = 0; i < nfd; i++) {
-		fp = fdp->fd_ofiles[pl[i].fd];
-		if (fp == NULL) {
-			if (pl[i].events & SVR4_POLLNVAL) {
-			    pl[i].revents |= SVR4_POLLNVAL;
-			    n++;
-			}
-			continue;
-		}
-		for (msk = 0; msk < 3; msk++) {
-			if (pl[i].events & pflag[msk]) {
-				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
-					pl[i].revents |= 
-						pflag[msk] & pl[i].events;
-					n++;
-				}
-			}
-		}
-	}
-	*retval = n;
-}
-
-
-/*
- * We are using the same mechanism as select only we encode/decode args
- * differently.
- */
-int
-svr4_sys_poll(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct svr4_sys_poll_args *uap = v;
-	int i, s;
-	int error, error2;
-	size_t sz = sizeof(struct svr4_pollfd) * SCARG(uap, nfds);
-	struct svr4_pollfd *pl;
-	int msec = SCARG(uap, timeout);
-	struct timeval atv;
-	int timo;
-	int ncoll;
-	extern int nselcoll, selwait;
-
-	pl = (struct svr4_pollfd *) malloc(sz, M_TEMP, M_WAITOK);
-
-	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
-		goto bad;
-
-	for (i = 0; i < SCARG(uap, nfds); i++) {
-		DPRINTF(("pollfd %d, %x\n", pl[i].fd, pl[i].events));
-		pl[i].revents = 0;
-	}
-
-	if (msec != -1) {
-		atv.tv_sec = msec / 1000;
-		atv.tv_usec = (msec - (atv.tv_sec * 1000)) * 1000;
-
-		if (itimerfix(&atv)) {
-			error = EINVAL;
-			goto done;
-		}
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		/*
-		 * Avoid inadvertently sleeping forever.
-		 */
-		if (timo == 0)
-			timo = 1;
-		splx(s);
-	} else
-		timo = 0;
-
-retry:
-	ncoll = nselcoll;
-	p->p_flag |= P_SELECT;
-	svr4_pollscan(p, pl, SCARG(uap, nfds), retval);
-	if (*retval)
-		goto done;
-	s = splhigh();
-	if (timo && timercmp(&time, &atv, >=)) {
-		splx(s);
-		goto done;
-	}
-	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
-		splx(s);
-		goto retry;
-	}
-	p->p_flag &= ~P_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "svr4_poll", timo);
-	splx(s);
-	if (error == 0)
-		goto retry;
-
-done:
-	p->p_flag &= ~P_SELECT;
-	/* poll is not restarted after signals... */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
-
-	if ((error2 = copyout(pl, SCARG(uap, fds), sz)) != 0)
-		error = error2;
-
-bad:
-	free((char *) pl, M_TEMP);
-
-	return (error);
 }

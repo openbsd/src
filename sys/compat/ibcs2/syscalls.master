@@ -1,4 +1,5 @@
-	$NetBSD: syscalls.master,v 1.8 1996/01/07 06:09:43 mycroft Exp $
+	$OpenBSD: syscalls.master,v 1.4 1996/08/02 20:20:28 niklas Exp $
+;	$NetBSD: syscalls.master,v 1.8 1996/01/07 06:09:43 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -35,7 +36,9 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 #include <sys/syscallargs.h>
+
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
@@ -157,8 +160,8 @@
 86	STD		{ int ibcs2_sys_putmsg(int fd, \
 			    struct ibcs2_stropts *ctl, \
 			    struct ibcs2_stropts *dat, int flags); }
-87	STD		{ int ibcs2_sys_poll(struct ibcs2_pollfd *fds, \
-			    long nfds, int timeout); }
+87	STD		{ int sys_poll(struct pollfd *fds, \
+			    unsigned long nfds, int timeout); }
 88	UNIMPL
 89	UNIMPL
 90	STD		{ int ibcs2_sys_symlink(char *path, char *link); }

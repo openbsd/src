@@ -1,3 +1,4 @@
+/*	$OpenBSD: osf1_misc.c,v 1.2 1996/08/02 20:20:29 niklas Exp $	*/
 /*	$NetBSD: osf1_misc.c,v 1.7 1995/10/07 06:53:04 mycroft Exp $	*/
 
 /*
@@ -542,6 +543,26 @@ osf1_sys_fcntl(p, v, retval)
 	}
 
 	return error;
+}
+
+int
+osf1_sys_poll(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct osf1_sys_poll_args /* {
+		syscallarg(struct pollfd *) fds;
+		syscallarg(unsigned int) nfds;
+		syscallarg(int) timeout;
+	} */ *uap = v;
+	struct sys_poll_args a;
+
+	SCARG(&a, fds) = fds;
+	SCARG(&a, nfds) = nfds;
+	SCARG(&a, timeout) = timeout;
+
+	return sys_poll(p, a, retval);
 }
 
 int

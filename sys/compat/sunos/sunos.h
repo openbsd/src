@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos.h,v 1.3 1996/05/10 12:50:22 deraadt Exp $	*/
+/*	$OpenBSD: sunos.h,v 1.4 1996/08/02 20:20:30 niklas Exp $	*/
 /*	$NetBSD: sunos.h,v 1.8 1996/05/05 16:07:43 veego Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
@@ -109,21 +109,6 @@ struct sunos_termios {
 #define SUNOS_TCSETSF	_IOW('T', 11, struct sunos_termios)
 #define SUNOS_TCSNDBRK	_IO('T', 12)
 #define SUNOS_TCDRAIN	_IO('T', 13)
-
-struct sunos_pollfd {
-	int	fd;
-	short	events;
-	short	revents;
-};
-#define SUNOS_POLLIN	0x0001
-#define SUNOS_POLLPRI	0x0002
-#define SUNOS_POLLOUT	0x0004
-#define SUNOS_POLLERR	0x0008
-#define SUNOS_POLLHUP	0x0010
-#define SUNOS_POLLNVAL	0x0020
-#define SUNOS_POLLRDNORM 0x0040
-#define SUNOS_POLLRDBAND 0x0080
-#define SUNOS_POLLWRBAND 0x0100
 
 /* Sun audio compatibility */
 struct sunos_audio_prinfo {

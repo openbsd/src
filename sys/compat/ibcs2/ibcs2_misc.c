@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_misc.c,v 1.6 1996/08/02 20:20:27 niklas Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.15 1996/05/03 17:05:25 christos Exp $	*/
 
 /*
@@ -1192,23 +1193,6 @@ ibcs2_sys_sysfs(p, v, retval)
 	case IBCS2_GETFSTYP:
 	case IBCS2_GETNFSTYP:
 	}
-	return EINVAL;		/* XXX - TODO */
-}
-
-int
-ibcs2_sys_poll(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#ifdef notyet
-	struct ibcs2_sys_poll_args /* {
-		syscallarg(struct ibcs2_pollfd *) fds;
-		syscallarg(long) nfds;
-		syscallarg(int) timeout;
-	} */ *uap = v;
-#endif
-
 	return EINVAL;		/* XXX - TODO */
 }
 

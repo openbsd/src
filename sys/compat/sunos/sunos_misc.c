@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.6 1996/05/02 13:07:19 deraadt Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.7 1996/08/02 20:20:31 niklas Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -101,8 +101,7 @@
 #include <vm/vm.h>
 
 static int sunstatfs __P((struct statfs *, caddr_t));
-static void sunos_pollscan __P((struct proc *, struct sunos_pollfd *, 
-				int, register_t *));
+
 int
 sunos_sys_wait4(p, v, retval)
 	struct proc *p;
@@ -1060,134 +1059,6 @@ sunos_sys_ptrace(p, v, retval)
 	SCARG(&pa, data) = SCARG(uap, data);
 
 	return sys_ptrace(p, &pa, retval);
-}
-
-static void
-sunos_pollscan(p, pl, nfd, retval)
-	struct proc *p;
-	struct sunos_pollfd *pl;
-	int nfd;
-	register_t *retval;
-{
-	register struct filedesc *fdp = p->p_fd;
-	register int msk, i;
-	struct file *fp;
-	int n = 0;
-	static int flag[3] = { FREAD, FWRITE, 0 };
-	static int pflag[3] = { SUNOS_POLLIN|SUNOS_POLLRDNORM, 
-				SUNOS_POLLOUT, SUNOS_POLLERR };
-
-	/* 
-	 * XXX: We need to implement the rest of the flags.
-	 */
-	for (i = 0; i < nfd; i++) {
-		fp = fdp->fd_ofiles[pl[i].fd];
-		if (fp == NULL) {
-			if (pl[i].events & SUNOS_POLLNVAL) {
-				pl[i].revents |= SUNOS_POLLNVAL;
-				n++;
-			}
-			continue;
-		}
-		for (msk = 0; msk < 3; msk++) {
-			if (pl[i].events & pflag[msk]) {
-				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
-					pl[i].revents |= 
-					    pflag[msk] & pl[i].events;
-					n++;
-				}
-			}
-		}
-	}
-	*retval = n;
-}
-
-
-/*
- * We are using the same mechanism as select only we encode/decode args
- * differently.
- */
-int
-sunos_sys_poll(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sunos_sys_poll_args *uap = v;
-	int i, s;
-	int error, error2;
-	size_t sz = sizeof(struct sunos_pollfd) * SCARG(uap, nfds);
-	struct sunos_pollfd *pl;
-	int msec = SCARG(uap, timeout);
-	struct timeval atv;
-	int timo;
-	int ncoll;
-	extern int nselcoll, selwait;
-
-	pl = (struct sunos_pollfd *) malloc(sz, M_TEMP, M_WAITOK);
-
-	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
-		goto bad;
-
-	for (i = 0; i < SCARG(uap, nfds); i++)
-		pl[i].revents = 0;
-
-	if (msec != -1) {
-		atv.tv_sec = msec / 1000;
-		atv.tv_usec = (msec - (atv.tv_sec * 1000)) * 1000;
-
-		if (itimerfix(&atv)) {
-			error = EINVAL;
-			goto done;
-		}
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		/*
-		 * Avoid inadvertently sleeping forever.
-		 */
-		if (timo == 0)
-			timo = 1;
-		splx(s);
-	} else
-		timo = 0;
-
-retry:
-	ncoll = nselcoll;
-	p->p_flag |= P_SELECT;
-	sunos_pollscan(p, pl, SCARG(uap, nfds), retval);
-	if (*retval)
-		goto done;
-	s = splhigh();
-	if (timo && timercmp(&time, &atv, >=)) {
-		splx(s);
-		goto done;
-	}
-	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
-		splx(s);
-		goto retry;
-	}
-	p->p_flag &= ~P_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "sunos_poll", timo);
-	splx(s);
-	if (error == 0)
-		goto retry;
-
-done:
-	p->p_flag &= ~P_SELECT;
-	/* poll is not restarted after signals... */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
-
-	if ((error2 = copyout(pl, SCARG(uap, fds), sz)) != 0)
-		error = error2;
-
-bad:
-	free((char *) pl, M_TEMP);
-
-	return (error);
 }
 
 /*
