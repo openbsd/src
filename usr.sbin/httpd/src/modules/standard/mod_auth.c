@@ -124,6 +124,8 @@ static char *get_pw(request_rec *r, char *user, char *auth_pwfile)
     char l[MAX_STRING_LEN];
     const char *rpw, *w;
 
+    ap_server_strip_chroot(auth_pwfile, 1);
+
     if (!(f = ap_pcfg_openfile(r->pool, auth_pwfile))) {
 	ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
 		    "Could not open password file: %s", auth_pwfile);
@@ -151,6 +153,8 @@ static table *groups_for_user(pool *p, char *user, char *grpfile)
     pool *sp;
     char l[MAX_STRING_LEN];
     const char *group_name, *ll, *w;
+
+    ap_server_strip_chroot(grpfile, 1);
 
     if (!(f = ap_pcfg_openfile(p, grpfile))) {
 /*add?	aplog_error(APLOG_MARK, APLOG_ERR, NULL,
