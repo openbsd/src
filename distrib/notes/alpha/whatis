@@ -1,2 +1,76 @@
 OpenBSD 2.1 is the first formal release of OpenBSD for the
 alpha processor.
+
+The worlds briefest but still comprehensive introduction to the Alpha:
+
+The Alpha (aka AXP) processor family was DEC's path in moving away from the
+VAX and PMAX (MIPS RISC) architectures to a new RISC family that could run
+VMS without major architectural changes and also support Ultrix/OSF/Digital
+Unix.  The first processors announced offered downright shocking processor
+clock rates and performance, though other workstations and now even Pentium
+based PC's have since surpassed the original performance figures.
+
+The Alpha processors basically fit into two families, the original 21064/21164
+family and the low-end 21066/21068 family.  The 21064 family has an uncommitted
+128-bit data path to memory and cache.  DEC has implemented quite a range of
+system designs using this family, with both PCI and Turbo-Channel expansion,
+and also multi-processor server systems.  As CPU performance has moved along,
+DEC has enhanced the original design with higher clock speeds, on-board L2
+cache and 4 vs. 2-issue superscalar processor core.
+
+The 21066 family is a lower end version intended mostly for use in personal
+workstations.  In contrast to the 21064 it has only a 64-bit path to external
+memory and cache, with a built-in PCI bus interface.  As a result of the
+nearrorwer data path, performance is about 2/3 that of the 21064 at the same
+clock speed.  DEC also hasn't done as much to enhance the speed or processor
+core and newer DEC designs are based on the 21064/21164 family with with PCI
+bus support chips, rather than the 21066.
+
+In the systems area, the 21064 based systems are common in the workplace and
+available though used workstation channels, but much of the recent interest
+in the Alpha family stems from the availability of the Multia/UDB systems and
+AXPpci33 motherboards in surplus channels at increasingly attractive prices.
+
+The Multia/UDB (same hardware, different software bundle) and AXPpci33 are
+based on the same 20164 reference design - the AXPpci33 is a "Baby AT"
+motherboard with PCI/ISA expansion slots, while the Multia/UDB is a very
+compact desktop system, with at most one PCI expansion slot, but with Video,
+Ethernet, PCMCIA slots and Audio built-in and also a SCSI hard drive and
+optional floppy drive.
+
+It is important to realize that in today's terms, these systems are
+comparable in performance to mid-range Pentium based PC's - they benchmark
+better than many more expensive systems on the used workstation market,
+but don't expect miracles in comparison to Pentium-Pro 200 MHz systems.
+Both systems are available with 166 MHz and 233 Mhz Alpha chips, but
+the 166 Mhz systems are much more common and 233 Mhz ones demand a
+substantial price premium.  So far, no source of cheap 233+ Mhz Alpha
+chips has turned up.
+
+Which system to select depends on your intended use.  The AXPpci33 boards
+are cheaper and allow more peripheral expansion, but you must add case,
+power supply, cache chips, memory, SCSI drive, ethernet and a video card
+to get you near the working equivalent of the Multia/UDB systems.
+
+The Multia/UDB systems come in several models.  While the box supports
+one PCI slot, for the systems that have an internal 3.5" hard drive, the
+PCI card area is blocked by the hard drive.  The SCSI controller is
+on a riser card that plugs into the PCI Bus on the mainboard and some
+versions of the riser don't make provision for an external SCSI bus
+connector or for the PCI expansion slot.  Some systems come with 3.5"
+2.88 MB floppy drives, but note that a low-profile note-book style drive
+with attached ribbon cable is required, rather than a standard PC style
+floppy drive.
+
+VX40 - These are the low-end systems, with a 166 MHz Alpha chip soldered
+       in and 256 K-byte cache soldered in.  The variants with no floppy,
+       no PCI bus and no external SCSI connector seem to be the most common.
+
+VX41 - These are the mid-range systems, most with socketed 166 MHz Alpha
+       chips and 256 K-byte of cache in a SIMM-socket.
+
+VX42 - These are the deluxe systems, essentially the same as as the VX41,
+       but all models have 233 Mhz Alpha chips and 512 K-byte cache.
+
+VX51 - This the the Pentium based member of the Multia family, and not
+       an alpha at all.
