@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.52 2004/06/20 17:17:35 ho Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.53 2004/06/23 00:56:45 ho Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -799,7 +799,7 @@ ike_phase_1_send_ID(struct message *msg)
 	int             initiator = exchange->initiator;
 	u_int8_t      **id;
 	size_t         *id_len;
-	char           *my_id = 0;
+	char           *my_id = 0, *data;
 	u_int8_t        id_type;
 
 	/* Choose the right fields to fill-in.  */
@@ -836,11 +836,52 @@ ike_phase_1_send_ID(struct message *msg)
 			    sockaddr_addrdata(src), sockaddr_addrlen(src));
 			break;
 
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+		case IPSEC_ID_IPV6_ADDR_SUBNET:
+			/* Network */
+			data = conf_get_str(my_id, "Network");
+			if (!data) {
+				log_print("ike_phase_1_send_ID: section %s "
+				    "has no \"Network\" tag", my_id);
+				return -1;
+			}
+			if (text2sockaddr(data, NULL, &src)) {
+				log_error("ike_phase_1_send_ID: "
+				    "text2sockaddr() failed");
+				return -1;
+			}
+			memcpy(buf + ISAKMP_ID_DATA_OFF,
+			    sockaddr_addrdata(src), sockaddr_addrlen(src));
+			free(src);
+			/* Netmask */
+			data = conf_get_str(my_id, "Netmask");
+			if (!data) {
+				log_print("ike_phase_1_send_ID: section %s "
+				    "has no \"Netmask\" tag", my_id);
+				return -1;
+			}
+			if (text2sockaddr(data, NULL, &src)) {
+				log_error("ike_phase_1_send_ID: "
+				    "text2sockaddr() failed");
+				return -1;
+			}
+			memcpy(buf + ISAKMP_ID_DATA_OFF +
+			    sockaddr_addrlen(src), sockaddr_addrdata(src),
+			    sockaddr_addrlen(src));
+			free(src);
+			break;
+
 		case IPSEC_ID_FQDN:
 		case IPSEC_ID_USER_FQDN:
 		case IPSEC_ID_KEY_ID:
-			memcpy(buf + ISAKMP_ID_DATA_OFF, conf_get_str(my_id,
-			    "Name"), sz - ISAKMP_ID_DATA_OFF);
+			data = conf_get_str(my_id, "Name");
+			if (!data) {
+				log_print("ike_phase_1_send_ID: section %s "
+				    "has no \"Name\" tag", my_id);
+				return -1;
+			}
+			memcpy(buf + ISAKMP_ID_DATA_OFF, data,
+			    sz - ISAKMP_ID_DATA_OFF);
 			break;
 
 		default:
