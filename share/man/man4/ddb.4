@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.28 2001/08/24 11:21:02 hugh Exp $
+.\"	$OpenBSD: ddb.4,v 1.29 2002/01/28 19:53:41 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -364,7 +364,7 @@ Valid variable names are described below.
 .It Ic boot Ar how
 Reboot the machine depending on
 .Ar how :
-.Bl -tag -width "boot crashx" -compact -indent offset
+.Bl -tag -width "boot poweroff" -compact -indent offset
 .It Ic boot sync
 Sync disks and reboot.
 .It Ic boot crash
@@ -373,6 +373,10 @@ Dump core and reboot.
 Sync disks, dump core and reboot.
 .It Ic boot halt
 Just halt.
+.It Ic boot reboot
+Just reboot.
+.It Ic boot poweroff
+Power down the machine whenever possible; if it fails, just halt.
 .El
 .\" --------------------
 .It Xo
@@ -624,6 +628,14 @@ command.
 Prints a detailed list of all extents.
 .\" --------------------
 .It Xo
+.Ic show malloc
+.Op Ar addr
+.Xc
+Prints malloc debugging information if available.
+If an optional address is specified, only information about that address
+is printed.
+.\" --------------------
+.It Xo
 .Ic show map
 .Op Cm /f
 .Ar addr
@@ -635,14 +647,6 @@ at
 If the
 .Cm /f
 modifier is specified the complete map is printed.
-.\" --------------------
-.It Xo
-.Ic show malloc
-.Op Ar addr
-.Xc
-Prints malloc debugging information if available.
-If an optional address is specified, only information about that address
-is printed.
 .\" --------------------
 .It Xo
 .Ic show object
@@ -658,6 +662,38 @@ If the
 modifier is specified the complete object is printed.
 .\" --------------------
 .It Xo
+.Ic show page
+.Op Cm /f
+.Ar addr
+.Xc
+Prints the
+.Li vm_page
+at
+.Ar addr .
+If the
+.Cm /f
+modifier is specified the complete object is printed.
+.\" --------------------
+.It Xo
+.Ic show pool
+.Op Cm /clp
+.Ar addr
+.Xc
+Prints the
+.Li pool
+at
+.Ar addr .
+Valid modifiers:
+.Bl -tag -width xxx -compact
+.It Cm /c
+Print the cachelist and its statistics for this pool.
+.It Cm /l
+Print the log entries for this pool.
+.It Cm /p
+Print the pagelist for this pool.
+.El
+.\" --------------------
+.It Xo
 .Ic show registers
 .Op Cm /u
 .Xc
@@ -670,6 +706,9 @@ Note: The
 .Cm /u
 modifier is not supported on every machine, in which case
 incorrect information may be displayed.
+.\" --------------------
+.It Ic show uvmexp
+Displays a selection of uvm counters and statistics.
 .\" --------------------
 .It Ic show watches
 Displays all watchpoints set with the
@@ -848,7 +887,9 @@ It may be followed by a ':' and  modifiers as described above.
 .Xr hangman 6 ,
 .Xr kgdb 7 ,
 .Xr sysctl 8 ,
-.Xr extent 9
+.Xr extent 9 ,
+.Xr pool 9 ,
+.Xr uvm 9
 .Sh HISTORY
 This kernel facility first appeared in MACH 2 operating system
 developed by CMU.
