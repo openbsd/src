@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.121 2004/10/14 17:10:17 mickey Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.122 2004/11/26 21:23:06 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -65,9 +65,7 @@
 #ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
 #endif
-#ifdef __HAVE_EVCOUNT
 #include <sys/evcount.h>
-#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -285,9 +283,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		case KERN_INTRCNT:
 		case KERN_WATCHDOG:
 		case KERN_EMUL:
-#ifdef __HAVE_EVCOUNT
 		case KERN_EVCOUNT:
-#endif
 #ifdef __HAVE_TIMECOUNTER
 		case KERN_TIMECOUNTER:
 #endif
@@ -529,11 +525,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (!error)
 			nmbclust_update();
 		return (error);
-#ifdef __HAVE_EVCOUNT
 	case KERN_EVCOUNT:
 		return (evcount_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-#endif
 #ifdef __HAVE_TIMECOUNTER
 	case KERN_TIMECOUNTER:
 		return (sysctl_tc(name + 1, namelen - 1, oldp, oldlenp,
@@ -1784,43 +1778,7 @@ sysctl_sysvipc(name, namelen, where, sizep)
 int
 sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
 {
-#ifdef __HAVE_EVCOUNT
 	return (evcount_sysctl(name, namelen, oldp, oldlenp, NULL, 0));
-#else
-	extern int intrcnt[], eintrcnt[];
-	extern char intrnames[], eintrnames[];
-	char *intrname;
-	int nintr, i;
-
-	nintr = (off_t)(eintrcnt - intrcnt);
-
-	if (name[0] != KERN_INTRCNT_NUM) {
-		if (namelen != 2)
-			return (ENOTDIR);
-		if (name[1] < 0 || name[1] >= nintr)
-			return (EINVAL);
-		i = name[1];
-	}
-
-	switch (name[0]) {
-	case KERN_INTRCNT_NUM:
-		return (sysctl_rdint(oldp, oldlenp, NULL, nintr));
-		break;
-	case KERN_INTRCNT_CNT:
-		return (sysctl_rdquad(oldp, oldlenp, NULL, intrcnt[i]));
-	case KERN_INTRCNT_NAME:
-		intrname = intrnames;
-		while (i > 0) {
-			intrname += strlen(intrname) + 1;
-			i--;
-			if (intrname > eintrnames)
-				return (EINVAL);
-		}
-		return (sysctl_rdstring(oldp, oldlenp, NULL, intrname));
-	default:
-		return (EOPNOTSUPP);
-	}
-#endif
 }
 
 int nsensors = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.4 2004/09/29 07:37:04 miod Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.5 2004/11/26 21:23:06 miod Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -31,8 +31,6 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-
-#ifdef __HAVE_EVCOUNT
 
 static TAILQ_HEAD(,evcount) evcount_list;
 static struct evcount *evcount_next_sync;
@@ -149,5 +147,3 @@ evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	return (error);
 }
-
-#endif /* __HAVE_EVCOUNT */

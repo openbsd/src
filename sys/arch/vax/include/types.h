@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.13 2004/07/07 23:10:45 deraadt Exp $	*/
+/*	$OpenBSD: types.h,v 1.14 2004/11/26 21:23:06 miod Exp $	*/
 /*	$NetBSD: types.h,v 1.14 1998/08/13 02:10:49 eeh Exp $	*/
 
 /*-
@@ -74,6 +74,5 @@ typedef unsigned long long      u_int64_t;
 typedef int32_t                 register_t;
 
 #define	__HAVE_DEVICE_REGISTER
-#define __HAVE_EVCOUNT
 
 #endif	/* _MACHTYPES_H_ */

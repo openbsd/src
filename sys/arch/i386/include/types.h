@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.12 1995/12/24 01:08:03 mycroft Exp $	*/
-/*	$OpenBSD: types.h,v 1.17 2004/11/02 21:20:59 miod Exp $	*/
+/*	$OpenBSD: types.h,v 1.18 2004/11/26 21:23:05 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,7 +71,6 @@ typedef	unsigned long long	 uint64_t;
 
 typedef int32_t			register_t;
 
-#define __HAVE_EVCOUNT
 #define __HAVE_CPUINFO
 #define __HAVE_MUTEX
 
