@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sectok.3,v 1.2 2001/08/03 19:23:38 millert Exp $
+.\"	$OpenBSD: sectok.3,v 1.3 2001/08/03 19:52:27 jakob Exp $
 .\"
 .\" Jim Rees <rees@umich.edu>
 .\" CITI Smartcard development <smartcards@umich.edu>
@@ -70,7 +70,7 @@ or a SW1/SW2 pair as specified in ISO 7816.
 .Pp
 .Fn sectok_open
 opens a connection to a smart card via serial port number
-.Fa ttyn .
+.Fa rn .
 Ports are
 numbered from 0, which corresponds to /dev/tty00 on UNIX.
 If there is no card in the reader,
@@ -81,6 +81,14 @@ is given, it will return immediately with error
 .Dv STENOCARD .
 .Fa swp
 points to a status word that will be set on return.
+.Pp
+.Fn sectok_friendly_open
+opens a connection to a smart card via a reader device name
+.Fa rn .
+Mapping from reader name to serial port number is the same as used in
+.Fn sectok_open .
+For other arguments and return values, see
+.Fn sectok_open .
 .Pp
 .Fn sectok_reset
 resets the card and returns the ATR in the buffer pointed to by
