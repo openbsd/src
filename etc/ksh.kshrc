@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.1 1996/08/14 08:28:04 downsj Exp $
+#	$OpenBSD: ksh.kshrc,v 1.2 1996/12/16 03:49:50 kstailey Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh 
@@ -54,7 +54,9 @@ case "$-" in
 	tty=`tty`
 	tty=`basename $tty`
         TTY=${TTY:-$tty}
-        
+	# console is the system console device
+	console=`sysctl machdep.console_device | cut -d' ' -f3`
+ 
 	set -o emacs
 
 	alias ls='ls -CF'
@@ -82,7 +84,7 @@ case "$-" in
 	case "$TERM" in
 	sun*)
 		# these are not as neat as their csh equivalents
-		if [ "$tty" != console ]; then
+		if [ "$tty" != "$console" ]; then
 			# ilabel
 			ILS='\033]L'; ILE='\033\\'
 			# window title bar
