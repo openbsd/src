@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.6 1999/02/15 19:04:20 millert Exp $
+.\"	$OpenBSD: getsockname.2,v 1.7 1999/02/15 21:48:57 millert Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -41,6 +41,7 @@
 .Nm getsockname
 .Nd get socket name
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn getsockname "int s" "struct sockaddr *name" "socklen_t *namelen"

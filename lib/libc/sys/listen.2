@@ -1,4 +1,4 @@
-.\"	$OpenBSD: listen.2,v 1.2 1996/03/19 23:15:16 niklas Exp $
+.\"	$OpenBSD: listen.2,v 1.3 1999/02/15 21:48:57 millert Exp $
 .\"	$NetBSD: listen.2,v 1.7 1996/02/16 20:38:45 phil Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -41,6 +41,7 @@
 .Nm listen
 .Nd listen for connections on a socket
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn listen "int s" "int backlog"
