@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.105 1999/03/16 08:34:40 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.106 1999/05/09 15:09:04 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1869,25 +1869,26 @@ init386(first_avail)
 #endif
 
 	/*
-	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map.  This is done before the addresses are
-	 * page rounded just to make sure we get them all.
-	 */
-	if (extent_alloc_region(iomem_ex, 0, IOM_BEGIN, EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
-	}
-
-	/*
 	 * BIOS leaves data in low memory and VM system doesn't work with
 	 * phys 0,  /boot leaves arguments at page 1.
 	 */
 #if !defined(MACHINE_NEW_NONCONTIG)
 	avail_next =
 #endif
-	avail_start = bootapiver >= 2? i386_round_page(bootargv+bootargc): NBPG;
+	avail_start = bootapiver & BAPIV_VECTOR?
+		i386_round_page(bootargv+bootargc): NBPG;
 	avail_end = extmem ? IOM_END + extmem * 1024
 		: cnvmem * 1024;	/* just temporary use */
+
+	/*
+	 * Allocate the physical addresses used by RAM from the iomem
+	 * extent map.  This is done before the addresses are
+	 * page rounded just to make sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, avail_start, IOM_BEGIN, EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
+	}
 
 	if (avail_end > IOM_END && extent_alloc_region(iomem_ex, IOM_END,
 	    (avail_end - IOM_END), EX_NOWAIT)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.5 1998/04/18 07:39:40 deraadt Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.6 1999/05/09 15:09:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -56,10 +56,15 @@
  *   FAX: (916)356-6100.
  */
 
+#include <sys/param.h>
 #include "libsa.h"
 #include <stand/boot/bootarg.h>
+
+#include <dev/isa/isareg.h>
+
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
+
 #include "debug.h"
 
 extern int debug;
@@ -117,15 +122,28 @@ apm_connect(ai)
 			    "=d" (ai->apm_data_base)
 			  : "0" (APM_PROT32_CONNECT), "1" (APM_DEV_APM_BIOS)
 			  : "cc");
+	if (f & 0xff)
+		return f >> 8;
+
 	ai->apm_entry    = BIOS_regs.biosr_bx;
-#if 0
-	ai->apm_code_len = BIOS_regs.biosr_si & 0xffff;
-	ai->apm_data_len = BIOS_regs.biosr_di & 0xffff;
-#else
-	ai->apm_code_len = 0x10000;
 	ai->apm_data_len = 0x10000;
-#endif
-	return (f & 0xff)? f >> 8 : 0;
+	ai->apm_code_len = 0x10000 - (ai->apm_code16_base & 0xffff);
+
+	/*
+	 * this is a hack to make all those weird boxes keeping
+	 * apm data in low mem work.
+	 */
+	if (!ai->apm_data_len ||
+	    ai->apm_data_base + ai->apm_data_len > IOM_END ||
+	    (ai->apm_data_base < IOM_BEGIN &&
+	     ai->apm_data_base + ai->apm_data_len > IOM_BEGIN))
+		ai->apm_data_len =
+		    0x10000 - (ai->apm_data_base & 0xffff);
+	if (ai->apm_data_base < BOOTARG_OFF)
+		ai->apm_data_len =
+		    NBPG - (ai->apm_data_base & PGOFSET);
+
+	return 0;
 }
 
 void
