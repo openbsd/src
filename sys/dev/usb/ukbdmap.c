@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.2 2000/11/08 18:10:38 aaron Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.3 2001/02/04 01:26:07 aaron Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.5 2000/04/27 15:26:49 augustss Exp $	*/
 
 /*
@@ -119,10 +119,10 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(72),			KS_Pause,
     KC(73),			KS_Insert, 
     KC(74),			KS_Home,
-    KC(75),			KS_Prior,
+    KC(75), KS_Cmd_ScrollBack,	KS_Prior,
     KC(76),			KS_Delete,
     KC(77),			KS_End,
-    KC(78),			KS_Next,
+    KC(78), KS_Cmd_ScrollFwd,	KS_Next,
     KC(79),			KS_Right,
     KC(80),			KS_Left,
     KC(81),			KS_Down,
