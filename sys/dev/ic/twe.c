@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.12 2001/07/04 22:53:24 espie Exp $	*/
+/*	$OpenBSD: twe.c,v 1.13 2001/09/24 06:52:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
@@ -58,7 +58,7 @@
 #define	TWE_D_MISC	0x0004
 #define	TWE_D_DMA	0x0008
 #define	TWE_D_AEN	0x0010
-int twe_debug = 0xffff;
+int twe_debug = 0;
 #else
 #define	TWE_DPRINTF(m,a)	/* m, a */
 #endif
@@ -141,6 +141,7 @@ twe_attach(sc)
 	int		error, i, retry, nunits, nseg;
 	const char	*errstr;
 	twe_lock_t	lock;
+	paddr_t		pa;
 
 	error = bus_dmamem_alloc(sc->dmat, sizeof(struct twe_cmd) * TWE_MAXCMDS,
 	    PAGE_SIZE, 0, sc->sc_cmdseg, 1, &nseg, BUS_DMA_NOWAIT);
@@ -179,8 +180,10 @@ twe_attach(sc)
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_free_ccb);
 
+	pa = sc->sc_cmdmap->dm_segs[0].ds_addr +
+	    sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);;
 	for (cmd = sc->sc_cmds + sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);
-	     cmd >= (struct twe_cmd *)sc->sc_cmds; cmd--) {
+	     cmd >= (struct twe_cmd *)sc->sc_cmds; cmd--, pa -= sizeof(*cmd)) {
 
 		cmd->cmd_index = cmd - (struct twe_cmd *)sc->sc_cmds;
 		ccb = &sc->sc_ccbs[cmd->cmd_index];
@@ -194,8 +197,8 @@ twe_attach(sc)
 		}
 		ccb->ccb_sc = sc;
 		ccb->ccb_cmd = cmd;
+		ccb->ccb_cmdpa = pa;
 		ccb->ccb_state = TWE_CCB_FREE;
-		ccb->ccb_cmdpa = kvtop((caddr_t)cmd);
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 	}
 
