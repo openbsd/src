@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.17 2001/07/12 05:17:05 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.18 2001/11/28 22:01:42 millert Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -168,51 +168,19 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.17 2001/07/12 05:17:05 deraadt Exp $";
+  "$OpenBSD: fmt.c,v 1.18 2001/11/28 22:01:42 millert Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
 
-/* Cater for BSD and non-BSD systems.
- * I hate the C preprocessor.
- */
-
-#undef HAVE_errx
-#undef HAVE_sysexits
-
-#ifdef unix
-# include <sys/param.h>
-# ifdef BSD
-#  define HAVE_errx
-#  if BSD >= 199306
-#   define HAVE_sysexits
-#  endif
-# endif
-#endif
-
-#ifdef HAVE_errx
-# include <err.h>
-#else
-# define errx(rc,str) { fprintf(stderr,"fmt: %s\n",str); exit(rc); }
-#endif
-
-#ifdef HAVE_sysexits
-# include <sysexits.h>
-#else
-# define EX_USAGE 1
-# define EX_NOINPUT 1
-# define EX_SOFTWARE 1
-# define EX_OSERR 1
-#endif
-
 #include <ctype.h>
+#include <err.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef NEED_getopt_h
-# include "getopt.h"
-#endif
+#include <sysexits.h>
+#include <unistd.h>
 
 /* Something that, we hope, will never be a genuine line length,
  * indentation etc.
@@ -225,21 +193,14 @@ static const char copyright[] =
  * If |fussyp==0| then we don't complain about non-numbers
  * (returning 0 instead), but we do complain about bad numbers.
  */
-size_t get_positive(const char *s, const char *err_mess, int fussyP) {
+static size_t
+get_positive(const char *s, const char *err_mess, int fussyP) {
   char *t;
   long result = strtol(s,&t,0);
   if (*t) { if (fussyP) goto Lose; else return 0; }
   if (result<=0) { Lose: errx(EX_USAGE, err_mess); }
   return (size_t) result;
 }
-
-/* Just for the sake of linguistic purity: */
-
-#ifdef BRITISH
-# define CENTER "centre"
-#else
-# define CENTER "center"
-#endif
 
 /* Global variables */
 
@@ -249,8 +210,8 @@ static size_t max_length=0;	/* Maximum length for output lines */
 static int coalesce_spaces_P=0;	/* Coalesce multiple whitespace -> ' ' ? */
 static int allow_indented_paragraphs=0;	/* Can first line have diff. ind.? */
 static int tab_width=8;		/* Number of spaces per tab stop */
-static int output_tab_width=0;	/* Ditto, when squashing leading spaces */
-static char *sentence_enders=".?!";	/* Double-space after these */
+static size_t output_tab_width=0;	/* Ditto, when squashing leading spaces */
+static const char *sentence_enders=".?!";	/* Double-space after these */
 static int grok_mail_headers=0;	/* treat embedded mail headers magically? */
 
 static int n_errors=0;		/* Number of failed files. Return on exit. */
@@ -262,16 +223,16 @@ static int output_in_paragraph=0;	/* Any of current para written out yet? */
 
 /* Prototypes */
 
-static void process_named_file (const char *);
-static void     process_stream (FILE *, const char *);
-static size_t    indent_length (const char *, size_t);
-static int     might_be_header (const char *);
-static void      new_paragraph (size_t, size_t);
-static void        output_word (size_t, size_t, const char *, size_t, size_t);
-static void      output_indent (size_t);
-static void      center_stream (FILE *, const char *);
-static char *         get_line (FILE *, size_t *);
-static void *         xrealloc (void *, size_t);
+static void process_named_file(const char *);
+static void     process_stream(FILE *, const char *);
+static size_t    indent_length(const char *, size_t);
+static int     might_be_header(const unsigned char *);
+static void      new_paragraph(size_t, size_t);
+static void        output_word(size_t, size_t, const char *, size_t, size_t);
+static void      output_indent(size_t);
+static void      center_stream(FILE *, const char *);
+static char *         get_line(FILE *, size_t *);
+static void *         xrealloc(void *, size_t);
 
 #define XMALLOC(x) xrealloc(0,x)
 
@@ -282,6 +243,9 @@ int
 main(int argc, char *argv[]) {
   int ch;			/* used for |getopt| processing */
 
+
+  (void)setlocale(LC_CTYPE, "");
+
   /* 1. Grok parameters. */
 
   while ((ch = getopt(argc, argv, "0123456789cd:hl:mpst:w:")) != -1)
@@ -290,8 +254,7 @@ main(int argc, char *argv[]) {
       centerP = 1;
       continue;
     case 'd':
-      sentence_enders = XMALLOC(strlen(optarg)+1);
-      strcpy(sentence_enders, optarg);	/* ok */
+      sentence_enders = optarg;
       continue;
     case 'l':
       output_tab_width
@@ -331,7 +294,7 @@ main(int argc, char *argv[]) {
       fprintf(stderr,
 "Usage:   fmt [-cmps] [-d chars] [-l num] [-t num]\n"
 "             [-w width | -width | goal [maximum]] [file ...]\n"
-"Options: -c     " CENTER " each line instead of formatting\n"
+"Options: -c     center each line instead of formatting\n"
 "         -d <chars> double-space after <chars> at line end\n"
 "         -l <n> turn each <n> spaces at start of line into a tab\n"
 "         -m     try to make sure mail header lines stay separate\n"
@@ -493,7 +456,7 @@ indent_length(const char *line, size_t length) {
  * conservative to avoid mangling ordinary civilised text.
  */
 static int
-might_be_header(const char *line) {
+might_be_header(const unsigned char *line) {
   if (!isupper(*line++)) return 0;
   while (*line && (isalnum(*line) || *line=='-')) ++line;
   return (*line==':' && isspace(line[1]));
