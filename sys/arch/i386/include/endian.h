@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.4 1996/11/25 13:11:24 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.5 1996/11/25 14:44:26 niklas Exp $	*/
 /*	$NetBSD: endian.h,v 1.16 1995/06/01 17:19:18 mycroft Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ __END_DECLS
 
 #if defined(_KERNEL) && !defined(I386_CPU)
 #define	__byte_swap_int32_variable(x) \
-({ register u_int32 __x = (x); \
+({ register u_int32_t __x = (x); \
    __asm ("bswap %1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
