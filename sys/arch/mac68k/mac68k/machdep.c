@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 1997/08/04 21:45:47 gene Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 1998/02/26 07:03:09 gene Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -1043,9 +1043,12 @@ nmihand(frame)
 		return;
 /*	regdump(&frame, 128);
 	dumptrace(); */
-#if DDB
+#ifdef DIAGNOSTIC
 	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);
-	Debugger();
+#endif
+#ifdef DDB
+	if (db_console)
+		Debugger();
 #endif
 	nmihanddeep = 0;
 }
