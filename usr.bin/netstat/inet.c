@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.89 2004/11/17 01:09:45 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.90 2005/01/14 15:00:44 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.89 2004/11/17 01:09:45 mcbride Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.90 2005/01/14 15:00:44 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static const char *rcsid = "$OpenBSD: inet.c,v 1.89 2004/11/17 01:09:45 mcbride 
 #include <netinet/icmp_var.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/pim_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_seq.h>
@@ -571,6 +572,43 @@ igmp_stats(u_long off, char *name)
 	p(igps_rcv_badreports, "\t%lu membership report%s received with invalid field(s)\n");
 	p(igps_rcv_ourreports, "\t%lu membership report%s received for groups to which we belong\n");
 	p(igps_snd_reports, "\t%lu membership report%s sent\n");
+#undef p
+#undef py
+}
+
+/*
+ * Dump PIM statistics structure.
+ */
+void
+pim_stats(u_long off, char *name)
+{
+	struct pimstat pimstat;
+
+	if (off == 0)
+		return;
+	if (kread(off, (char *)&pimstat, sizeof (pimstat)) != 0) {
+		/* XXX: PIM is probably not enabled in the kernel */
+		return;
+	}
+
+	printf("%s:\n", name);
+
+#define	p(f, m) if (pimstat.f || sflag <= 1) \
+	printf(m, pimstat.f, plural(pimstat.f))
+#define	py(f, m) if (pimstat.f || sflag <= 1) \
+	printf(m, pimstat.f, pimstat.f != 1 ? "ies" : "y")
+
+	p(pims_rcv_total_msgs, "\t%llu message%s received\n");
+	p(pims_rcv_total_bytes, "\t%llu byte%s received\n");
+	p(pims_rcv_tooshort, "\t%llu message%s received with too few bytes\n");
+	p(pims_rcv_badsum, "\t%llu message%s received with bad checksum\n");
+	p(pims_rcv_badversion, "\t%llu message%s received with bad version\n");
+	p(pims_rcv_registers_msgs, "\t%llu data register message%s received\n");
+	p(pims_rcv_registers_bytes, "\t%llu data register byte%s received\n");
+	p(pims_rcv_registers_wrongiif, "\t%llu data register message%s received on wrong iif\n");
+	p(pims_rcv_badregisters, "\t%llu bad register%s received\n");
+	p(pims_snd_registers_msgs, "\t%llu data register message%s sent\n");
+	p(pims_snd_registers_bytes, "\t%llu data register byte%s sent\n");
 #undef p
 #undef py
 }

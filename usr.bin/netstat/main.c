@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2004/06/29 08:18:20 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2005/01/14 15:00:44 mcbride Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.49 2004/06/29 08:18:20 henning Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.50 2005/01/14 15:00:44 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,8 @@ struct nlist nl[] = {
 	{ "_rawin6pcbtable" },
 #define N_PFSYNCSTAT	58
 	{ "_pfsyncstats" },
+#define N_PIMSTAT	59
+	{ "_pimstat" },
 	{ ""},
 };
 
@@ -218,6 +220,8 @@ struct protox {
 	  carp_stats,	"carp" },
 	{ -1,		N_PFSYNCSTAT,	1,	0,
 	  pfsync_stats,	"pfsync" },
+	{ -1,		N_PIMSTAT,	1,	0,
+	  pim_stats,	"pim" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
