@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.34 2002/05/17 00:55:54 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.35 2002/05/17 15:54:13 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -50,7 +50,7 @@ main(argc, argv)
 	int     argc;
 	char   *argv[];
 {
-	int     rval, i, l, n, defaultsetup, zerokey, hexmode, enable, convert;
+	int     rval, i, l, n, defaultsetup, rmkey, hexmode, enable, convert;
 	char	hostname[MAXHOSTNAMELEN];
 	char	seed[SKEY_MAX_SEED_LEN + 2], defaultseed[SKEY_MAX_SEED_LEN + 1];
 	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
@@ -58,7 +58,7 @@ main(argc, argv)
 	struct skey skey;
 	struct passwd *pp;
 
-	n = zerokey = hexmode = enable = convert = 0;
+	n = rmkey = hexmode = enable = convert = 0;
 	defaultsetup = 1;
 	ht = auth_type = NULL;
 
@@ -98,8 +98,8 @@ main(argc, argv)
 			case 'x':
 				hexmode = 1;
 				break;
-			case 'z':
-				zerokey = 1;
+			case 'r':
+				rmkey = 1;
 				break;
 			case 'n':
 				if (argv[++i] == NULL || argv[i][0] == '\0')
@@ -190,9 +190,20 @@ main(argc, argv)
 				err(1, "cannot open database");
 			break;
 		case 0:
-			/* comment out user if asked to */
-			if (zerokey)
-				exit(skeyzero(&skey));
+			/* remove user if asked to do so */
+			if (rmkey) {
+				if (snprintf(filename, sizeof(filename),
+				    "%s/%s", _PATH_SKEYDIR, pp->pw_name)
+				    >= sizeof(filename)) {
+					errno = ENAMETOOLONG;
+					err(1, "Cannot remove S/Key entry");
+				}
+				if (unlink(filename) != 0)
+					err(1, "Cannot remove S/Key entry");
+				printf("S/Key entry for %s removed.\n",
+				    pp->pw_name);
+				exit(0);
+			}
 
 			(void)printf("[Updating %s with %s]\n", pp->pw_name,
 			    ht ? ht : skey_get_algorithm());
@@ -229,8 +240,8 @@ main(argc, argv)
 			}
 			break;
 		case 1:
-			if (zerokey)
-				errx(1, "You have no entry to zero.");
+			if (rmkey)
+				errx(1, "You have no entry to remove.");
 			(void)printf("[Adding %s with %s]\n", pp->pw_name,
 			    ht ? ht : skey_get_algorithm());
 			if (snprintf(filename, sizeof(filename), "%s/%s",

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.22 2002/05/16 17:54:21 millert Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.23 2002/05/17 15:54:12 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -10,9 +10,9 @@
 .Nd change password or add user to S/Key authentication system
 .Sh SYNOPSIS
 .Nm skeyinit
+.Op Fl r
 .Op Fl s
 .Op Fl x
-.Op Fl z
 .Op Fl C
 .Op Fl D
 .Op Fl E
@@ -72,6 +72,8 @@ Enables access to the S/Key database.
 Only the superuser may use the
 .Fl E
 option.
+.It Fl r
+Removes the user's S/Key entry.
 .It Fl s
 Set secure mode where the user is expected to have used a secure
 machine to generate the first one-time password.
@@ -99,8 +101,6 @@ You can then "cut-and-paste" or type the words into the
 window.
 .It Fl x
 Displays pass phrase in hexadecimal instead of ASCII.
-.It Fl z
-Allows the user to zero their S/Key entry.
 .It Fl a Ar auth-type
 Specify an authentication type such as
 .Dq krb4
