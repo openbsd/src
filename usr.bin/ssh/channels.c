@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.37 2000/01/10 10:12:52 markus Exp $");
+RCSID("$Id: channels.c,v 1.38 2000/01/24 20:37:29 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -1077,9 +1077,7 @@ channel_input_port_open(int payload_len)
 			/* The port is not permitted. */
 			log("Received request to connect to %.100s:%d, but the request was denied.",
 			    host, host_port);
-			packet_start(SSH_MSG_CHANNEL_OPEN_FAILURE);
-			packet_put_int(remote_channel);
-			packet_send();
+			goto fail;
 		}
 	}
 
