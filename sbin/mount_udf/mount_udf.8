@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_udf.8,v 1.4 2005/04/01 16:21:27 jmc Exp $
+.\" $OpenBSD: mount_udf.8,v 1.5 2005/04/05 14:41:02 pedro Exp $
 .\" Written by Pedro Martelletto <pedro@openbsd.org> in March 2005.
 .\" Public domain.
 .Dd March 29, 2005
@@ -6,7 +6,7 @@
 .Os
 .Sh NAME
 .Nm mount_udf
-.Nd mount an UDF filesystem
+.Nd mount a UDF filesystem
 .Sh SYNOPSIS
 .Nm mount_udf
 .Op Fl o Ar options
@@ -44,7 +44,13 @@ man page for possible options and their meanings.
 .Xr mount 8 ,
 .Xr umount 8
 .Sh HISTORY
-The
-.Nm
-utility first appeared in
+UDF support first appeared in
+.Fx 5.0 ,
+and was then ported to
 .Ox 3.8 .
+.Sh AUTHORS
+.An Scott Long Aq scottl@freebsd.org 
+did the original work,
+.An Pedro Martelletto Aq pedro@openbsd.org
+adapted it to
+.Ox .
