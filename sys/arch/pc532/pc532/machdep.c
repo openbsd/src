@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1996/01/04 22:22:34 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1996/01/15 05:30:47 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -688,6 +688,7 @@ boot(howto)
 			dumppcb.pcb_ptb = _get_ptb0();
 			dumpsys();
 		}
+		doshutdownhooks();
 	}
 
 	printf("rebooting ...");
