@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.2 1998/09/27 20:23:02 millert Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.3 2001/01/17 19:22:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: lockspool.c,v 1.2 1998/09/27 20:23:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: lockspool.c,v 1.3 2001/01/17 19:22:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/signal.h>
@@ -101,7 +101,7 @@ unhold(sig)
 {
 
 	rellock();
-	exit(0);
+	_exit(0);
 }
 
 void
