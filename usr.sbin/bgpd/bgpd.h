@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.122 2004/05/07 10:06:15 djm Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.123 2004/05/17 12:39:32 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,6 +146,10 @@ struct filter_set {
 	struct in6_addr	nexthop6;
 	u_int8_t	prepend;
 	char		pftable[PFTABLE_LEN];
+	struct {
+		int	as;
+		int	type;
+	} community;
 };
 
 enum auth_method {
@@ -438,6 +442,7 @@ enum comp_ops {
 #define	SET_NEXTHOP6	0x08
 #define	SET_PREPEND	0x10
 #define	SET_PFTABLE	0x20
+#define	SET_COMMUNITY	0x40
 
 struct filter_peers {
 	u_int32_t	peerid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.110 2004/05/08 20:58:00 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.111 2004/05/17 12:39:32 djm Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -84,6 +84,7 @@ int	 symset(const char *, const char *, int);
 char	*symget(const char *);
 int	 atoul(char *, u_long *);
 int	 getcommunity(char *);
+int	 parsecommunity(char *, int *, int *);
 
 typedef struct {
 	union {
@@ -791,32 +792,13 @@ filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
 			$$.as.type = $1;
 		}
 		| COMMUNITY STRING	{
-			char	*p;
-			int	 i;
-
 			bzero(&$$, sizeof($$));
-			if ((p = strchr($2, ':')) == NULL) {
-				free($2);
-				yyerror("Bad community syntax");
-				YYERROR;
-			}
-			*p++ = 0;
-			if ((i = getcommunity($2)) == COMMUNITY_ERROR) {
-				free($2);
-				YYERROR;
-			}
-			if (i == 0 || i == USHRT_MAX) {
-				free($2);
-				yyerror("Bad community AS number");
-				YYERROR;
-			}
-			$$.community.as = i;
-			if ((i = getcommunity(p)) == COMMUNITY_ERROR) {
+			if (parsecommunity($2, &$$.community.as,
+			    &$$.community.type) == -1) {
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			$$.community.type = i;
 		}
 		;
 
@@ -876,6 +858,10 @@ filter_set_l	: filter_set_l comma filter_set_opt	{
 			if ($3.flags & SET_PFTABLE)
 				strlcpy($$.pftable, $3.pftable,
 				    sizeof($$.pftable));
+			if ($3.flags & SET_COMMUNITY) {
+				$$.community.as = $3.community.as;
+				$$.community.type = $3.community.type;
+			}
 		}
 		| filter_set_opt
 		;
@@ -915,6 +901,34 @@ filter_set_opt	: LOCALPREF number		{
 			if (pftable_add($2) != 0) {
 				yyerror("Couldn't register table");
 				YYERROR;
+			}
+		}
+		| COMMUNITY STRING		{
+			$$.flags = SET_COMMUNITY;
+			if (parsecommunity($2, &$$.community.as,
+			    &$$.community.type) == -1) {
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if ($$.community.as <= 0 || $$.community.as > 0xffff) {
+				yyerror("Invalid comminity");
+				YYERROR;
+			}
+			/* Don't allow setting of unknown well-known types */
+			if ($$.community.as == COMMUNITY_WELLKNOWN) {
+				switch ($$.community.type) {
+				case COMMUNITY_NO_EXPORT:
+				case COMMUNITY_NO_ADVERTISE:
+				case COMMUNITY_NO_EXPSUBCONFED:
+					/* valid */
+					break;
+				default:
+					/* unknown */
+					yyerror("Invalid well-known community");
+					YYERROR;
+					break;
+				}
 			}
 		}
 		;
@@ -1416,6 +1430,48 @@ getcommunity(char *s)
 		return (COMMUNITY_ERROR);
 	}
 	return (ulval);
+}
+
+int
+parsecommunity(char *s, int *as, int *type)
+{
+	char *p;
+	int i;
+
+	/* Well-known communities */
+	if (strcasecmp(s, "NO_EXPORT") == 0) {
+		*as = COMMUNITY_WELLKNOWN;
+		*type = COMMUNITY_NO_EXPORT;
+		return (0);
+	} else if (strcasecmp(s, "NO_ADVERTISE") == 0) {
+		*as = COMMUNITY_WELLKNOWN;
+		*type = COMMUNITY_NO_ADVERTISE;
+		return (0);
+	} else if (strcasecmp(s, "NO_EXPORT_SUBCONFED") == 0) {
+		*as = COMMUNITY_WELLKNOWN;
+		*type = COMMUNITY_NO_EXPSUBCONFED;
+		return (0);
+	}
+
+	if ((p = strchr(s, ':')) == NULL) {
+		yyerror("Bad community syntax");
+		return (-1);
+	}
+	*p++ = 0;
+
+	if ((i = getcommunity(s)) == COMMUNITY_ERROR)
+		return (-1);
+	if (i == 0 || i == USHRT_MAX) {
+		yyerror("Bad community AS number");
+		return (-1);
+	}
+	*as = i;
+
+	if ((i = getcommunity(p)) == COMMUNITY_ERROR)
+		return (-1);
+	*type = i;
+
+	return (0);
 }
 
 struct peer *

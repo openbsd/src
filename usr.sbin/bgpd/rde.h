@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.38 2004/05/07 10:06:15 djm Exp $ */
+/*	$OpenBSD: rde.h,v 1.39 2004/05/17 12:39:32 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -251,6 +251,7 @@ int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
 int		 aspath_match(struct aspath *, enum as_spec, u_int16_t);
 int		 community_match(void *, u_int16_t, int, int);
+int		 community_set(struct attr *, int, int);
 
 /* rde_rib.c */
 void		 path_init(u_int32_t);

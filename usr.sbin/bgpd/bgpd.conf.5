@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.24 2004/05/08 20:18:45 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.25 2004/05/17 12:39:32 djm Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -611,6 +611,22 @@ The following attributes can be modified:
 Set the
 .Em LOCAL_PREF
 .Em AS path attribute .
+.It Ar community
+Set the
+.Em COMMUNITIES
+.Em AS path attribute .
+Communities are specified as 
+.Ar asnum:local ,
+where
+.Ar asnum
+is an AS number and
+.Ar local
+is a locally-significant number between zero and 0xffff.
+Alternately, well-known communities may be specified by name: 
+.Em NO_EXPORT ,
+.Em NO_ADVERTISE ,
+or 
+.Em NO_EXPORT_SUBCONFED .
 .It Ar med
 Set the
 .Em MULTI_EXIT_DISC

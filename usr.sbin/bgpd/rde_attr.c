@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.29 2004/05/07 10:06:15 djm Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.30 2004/05/17 12:39:32 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -993,7 +993,7 @@ community_match(void *data, u_int16_t len, int as, int type)
 	u_int16_t	 eas, etype;
 
 	ENSURE((len & 0x3) == 0);
-	len >>= 2; /* devide by four */
+	len >>= 2; /* divide by four */
 
 	for (; len > 0; len--) {
 		eas = *p++;
@@ -1007,5 +1007,34 @@ community_match(void *data, u_int16_t len, int as, int type)
 			return 1;
 	}
 	return 0;
+}
+
+int
+community_set(struct attr *attr, int as, int type)
+{
+	u_int32_t *cdata = (u_int32_t*)attr->data;
+	unsigned int i, ncommunities = attr->len;
+
+	ENSURE((as & ~0xffff) == 0);
+	ENSURE((type & ~0xffff) == 0);
+	ENSURE((ncommunities & 0x3) == 0);
+	ncommunities >>= 2; /* divide by four */
+
+	for (i = 0; i < ncommunities; i++) {
+		if ((ntohl(cdata[i]) & 0xffff0000) == (unsigned)as << 16)
+			break;
+	}
+
+	if (i >= ncommunities) {
+		if (attr->len + 4 > 0xffff) /* overflow */
+			return (0);
+		attr->len += 4;
+		if ((cdata = realloc(attr->data, attr->len)) == NULL)
+			return (0);
+		attr->data = (void*)cdata;
+	}
+	cdata[i] = htonl(as << 16 | type);
+
+	return (1);
 }
 
