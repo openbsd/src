@@ -105,10 +105,10 @@
  * Software state per found chip.
  */
 struct zs_softc {
-	struct	device sc_dev;		/* base device */
-	struct	zsdevice *sc_zs;	/* chip registers */
+	struct	device sc_dev;			/* base device */
+	volatile struct zsdevice *sc_zs;	/* chip registers */
 	struct	evcnt sc_intrcnt;
-	struct	zs_chanstate sc_cs[2];	/* channel A and B software state */
+	struct	zs_chanstate sc_cs[2];		/* chan A/B software state */
 };
 
 /* Definition of the driver for autoconfig. */
@@ -144,7 +144,8 @@ static struct tty *zs_ctty;	/* console `struct tty *' */
 static int zs_consin = -1, zs_consout = -1;
 static int zscnputc __P((int));	/* console putc function */
 static volatile struct zschan *zs_conschan;
-static struct tty *zs_checkcons __P((struct zs_softc *, int, struct zs_chanstate *));
+static struct tty *zs_checkcons __P((struct zs_softc *, int,
+    struct zs_chanstate *));
 
 #ifdef KGDB
 /* KGDB stuff.  Must reboot to change zs_kgdbunit. */
@@ -153,8 +154,8 @@ static int zs_kgdb_savedspeed;
 static void zs_checkkgdb __P((int, struct zs_chanstate *, struct tty *));
 #endif
 
-extern struct zsdevice *findzs(int);
-static struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
+extern void *findzs __P((int));
+volatile static struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
 /*
  * Console keyboard L1-A processing is done in the hardware interrupt code,
@@ -235,7 +236,7 @@ zsattach(parent, dev, aux)
 	register int zs = dev->dv_unit, unit;
 	register struct zs_softc *sc;
 	register struct zs_chanstate *cs;
-	register struct zsdevice *addr;
+	register volatile struct zsdevice *addr;
 	register struct tty *tp, *ctp;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
@@ -243,7 +244,7 @@ zsattach(parent, dev, aux)
 	static int didintr, prevpri;
 
 	if ((addr = zsaddr[zs]) == NULL)
-		addr = zsaddr[zs] = findzs(zs);
+		addr = zsaddr[zs] = (volatile struct zsdevice *)findzs(zs);
 	if (ca->ca_bustype==BUS_MAIN)
 		if ((void *)addr != ra->ra_vaddr)
 			panic("zsattach");
@@ -373,7 +374,7 @@ zsconsole(tp, unit, out, fnstop)
 {
 	extern int (*v_putc)();
 	int zs;
-	struct zsdevice *addr;
+	volatile struct zsdevice *addr;
 
 	if (unit >= ZS_KBD)
 		panic("zsconsole");
@@ -381,7 +382,7 @@ zsconsole(tp, unit, out, fnstop)
 		zs_consout = unit;
 		zs = unit >> 1;
 		if ((addr = zsaddr[zs]) == NULL)
-			addr = zsaddr[zs] = findzs(zs);
+			addr = zsaddr[zs] = (volatile struct zsdevice *)findzs(zs);
 		zs_conschan = (unit & 1) == 0 ? &addr->zs_chan[ZS_CHAN_A] :
 		    &addr->zs_chan[ZS_CHAN_B];
 		v_putc = zscnputc;
@@ -703,6 +704,10 @@ zstty(dev)
 	return (cs->cs_ttyp);
 }
 
+static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
+
 /*
  * ZS hardware interrupt.  Scan all ZS channels.  NB: we know here that
  * channels are kept in (A,B) pairs.
@@ -724,9 +729,6 @@ zshard(intrarg)
 #define	b (a + 1)
 	register volatile struct zschan *zc;
 	register int rr3, intflags = 0, v, i;
-	static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
-	static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
-	static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
 
 #define ZSHARD_NEED_SOFTINTR	1
 #define ZSHARD_WAS_SERVICED	2
@@ -1525,7 +1527,7 @@ zs_kgdb_putc(arg, c)
 void
 zs_kgdb_init()
 {
-	struct zsdevice *addr;
+	volatile struct zsdevice *addr;
 	volatile struct zschan *zc;
 	int unit, zs;
 
@@ -1541,7 +1543,7 @@ zs_kgdb_init()
 	}
 	zs = unit >> 1;
 	if ((addr = zsaddr[zs]) == NULL)
-		addr = zsaddr[zs] = findzs(zs);
+		addr = zsaddr[zs] = (volatile struct zsdevice *)findzs(zs);
 	unit &= 1;
 	zc = unit == 0 ? &addr->zs_chan[ZS_CHAN_A] : &addr->zs_chan[ZS_CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);
