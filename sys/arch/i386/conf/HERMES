@@ -1,4 +1,4 @@
-#	$OpenBSD: HERMES,v 1.17 1999/02/28 15:54:31 kstailey Exp $
+#	$OpenBSD: HERMES,v 1.18 1999/08/15 00:05:33 kstailey Exp $
 #
 #	HERMES -- 450MHz Pentium II PCI, APM, PnP
 #
@@ -18,7 +18,7 @@ option		COLOR_KERNEL_FG="FG_GREEN"
 option		COLOR_KERNEL_BG="BG_BLACK"
 
 option		TIMEZONE=300	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=1		# daylight savings time used by RTC
 option		NTP		# High precision timekeeping support 
 
 option		SWAPPAGER	# paging; REQUIRED
@@ -113,12 +113,15 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+# IDE controllers
+pciide* at pci ? dev ? function ? flags 0x0000
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+# IDE hard drives
+wd*	at pciide? channel ? drive ? flags 0x0000
+
+# ATAPI<->SCSI
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
 
 joy*	at isapnp?
 
@@ -141,9 +144,9 @@ scsibus* at adv?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
+ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# unknown SCSI
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
 pseudo-device	loop	1		# network loopback
