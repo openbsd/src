@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ed.4,v 1.1.1.1 1995/10/18 08:44:29 deraadt Exp $
+.\"	$Id: ed.4,v 1.2 1996/05/04 13:03:37 deraadt Exp $
 .\"
 .Dd
 .Dt ED 4 i386
@@ -57,6 +57,42 @@ interface are:
 .It Novell NE1000
 .It Novell NE2000
 .El
+.Sh DIAGNOSTICS
+The DP8390 Ethernet chip implements a shared-memory ring-buffer
+to store incoming packets.  When this buffer overfills, the 
+.Nm
+driver produces a message similar to the following:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It ed1: warning - receiver ring buffer overrun
+.El
+.Pp
+The 16bit boards (8013 series) have 16k of memory as well as
+fast memory access speed.  Typical memory access speed on these
+boards is about 4MB/second.  These boards generally have no
+problems keeping up with full ethernet speed and the ring-buffer
+seldom overfills.
+.Pp
+However, the 8bit boards (3c503, and 8003) usually have
+only 8k bytes of shared memory.  This is only enough room for about
+4 full-size (1500 byte) packets.  This can sometimes be a problem,
+especially on the original WD8003E and 3c503, because these
+boards' shared-memory access speed is quite slow; typically
+only about 1MB/second.  The
+overhead of this slow memory access, and the fact that there is
+only room for 4 full-sized packets means that the ring-buffer
+will occassionally overrun.  When this happens, the board must
+be reset to avoid a lockup problem in early revision 8390's.
+Resetting the board causes all of the data in the ring-buffer
+to be lost, requiring it to be retransmitted/received, congesting
+the board further.  Because of this, maximum throughput
+on these boards is only about 400-600k per second.
+.Pp
+This problem is exasperated by NFS because the 8bit boards lack
+sufficient memory to support the default 8k byte packets that NFS and
+other protocols use as their default.  If these cards must be used
+with NFS, use the NFS -r and -w options to limit NFS's packet size.
+4096k byte packets generally work.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
