@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 2001/06/23 19:44:47 deraadt Exp $
+#	$OpenBSD: list,v 1.9 2001/07/26 20:21:17 deraadt Exp $
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
 SRCDIRS usr.sbin/pppd
@@ -95,7 +95,7 @@ SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/termcap.vt > usr/share/misc/ter
 # and the installation tools
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.instutils > .instutils
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/../install.md > install.md
+SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/install.md > install.md
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.sub > install.sub
