@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.9 2000/04/26 18:38:47 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.10 2000/04/26 18:39:29 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -162,6 +162,31 @@ pchbattach(parent, self, aux)
 	 */
 
 	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_RCC:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_RCC_ROSB4:
+		case PCI_PRODUCT_RCC_CNB20HE:
+		case PCI_PRODUCT_RCC_CNB20LE:
+			bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    0x44);
+
+			if (bdnum == 0)
+				break;
+			/*
+			 * This host bridge has a second PCI bus.
+			 * Configure it.
+			 */
+			printf(": has pci bus %d", bdnum);
+			pba.pba_busname = "pci";
+			pba.pba_iot = pa->pa_iot;
+			pba.pba_memt = pa->pa_memt;
+			pba.pba_dmat = pa->pa_dmat;
+			pba.pba_bus = bdnum;
+			pba.pba_pc = pa->pa_pc;
+			config_found(self, &pba, pchb_print);
+			break;
+		}
+		break;
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82443BX_AGP:     /* 82443BX AGP (PAC) */
