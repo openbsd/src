@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec2ntest.c,v 1.3 1998/12/21 01:02:30 niklas Exp $	*/
+/*	$OpenBSD: ec2ntest.c,v 1.4 2002/01/23 17:43:24 ho Exp $	*/
 /*	$EOM: ec2ntest.c,v 1.3 1998/07/16 09:21:59 niklas Exp $	*/
 
 /*
@@ -47,7 +47,9 @@
 #include "math_2n.h"
 #include "math_ec2n.h"
 
-#define CMP_FAIL(n,x) b2n_sprint (buf, n); if (strcmp (buf, (x))) \
+#define BUFSIZE 200
+
+#define CMP_FAIL(n,x) b2n_snprint (buf, BUFSIZE, n); if (strcmp (buf, (x))) \
     printf ("FAILED: %s != %s ", buf, x); else printf ("OKAY ");
 
 int
@@ -56,7 +58,7 @@ main (void)
   b2n_t k;
   ec2np_t p, q, r;
   ec2ng_t g;
-  char buf[200];
+  char buf[BUFSIZE];
 
   b2n_init (k);
   ec2np_init (p);

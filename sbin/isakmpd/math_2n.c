@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_2n.c,v 1.8 2001/04/09 22:09:52 ho Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.9 2002/01/23 17:43:24 ho Exp $	*/
 /*	$EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ b2n_print (b2n_ptr n)
 }
 
 int
-b2n_sprint (char *buf, b2n_ptr n)
+b2n_snprint (char *buf, size_t sz, b2n_ptr n)
 {
   int i, k, j, w, flag = 0;
   int left;
@@ -285,8 +285,8 @@ b2n_sprint (char *buf, b2n_ptr n)
 
   left = ((((7 + b2n_sigbit (n)) >> 3) - 1) % CHUNK_BYTES) + 1;
 
-  strcpy (buf, "0x"); k = 2;
-  for (i = 0; i < n->chunks; i++)
+  k = strlcpy (buf, "0x", sz);
+  for (i = 0; i < n->chunks && k < sz - 1; i++)
     {
       tmp = n->limp[n->chunks - 1 - i];
       memset (buffer, '0', sizeof (buffer));
@@ -297,7 +297,7 @@ b2n_sprint (char *buf, b2n_ptr n)
 	  tmp >>= 8;
 	}
 
-      for (j = (i == 0 ? left - 1: CHUNK_BYTES - 1); j >= 0; j--)
+      for (j = (i == 0 ? left - 1: CHUNK_BYTES - 1); j >= 0 && k < sz - 3; j--)
 	if (flag || (i == n->chunks - 1 && j == 0) ||
 	    buffer[2 * j] != '0' || buffer[2 * j + 1] != '0')
 	  {

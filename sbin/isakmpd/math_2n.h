@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_2n.h,v 1.4 1999/04/19 19:56:23 niklas Exp $	*/
+/*	$OpenBSD: math_2n.h,v 1.5 2002/01/23 17:43:24 ho Exp $	*/
 /*	$EOM: math_2n.h,v 1.9 1999/04/17 23:20:32 niklas Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ int b2n_set_null (b2n_ptr);
 int b2n_set_str (b2n_ptr, char *);
 int b2n_set_ui (b2n_ptr, unsigned int);
 u_int32_t b2n_sigbit (b2n_ptr);
-int b2n_sprint (char *, b2n_ptr);
+int b2n_snprint (char *, size_t, b2n_ptr);
 int b2n_sqrt (b2n_ptr, b2n_ptr, b2n_ptr);
 int b2n_square (b2n_ptr, b2n_ptr);
 #define b2n_sub b2n_add

@@ -1,4 +1,4 @@
-/*	$OpenBSD: b2ntest.c,v 1.5 2001/01/27 12:03:37 niklas Exp $	*/
+/*	$OpenBSD: b2ntest.c,v 1.6 2002/01/23 17:43:24 ho Exp $	*/
 /*	$EOM: b2ntest.c,v 1.4 1998/07/16 19:31:55 provos Exp $	*/
 
 /*
@@ -47,7 +47,9 @@
 
 #include "math_2n.h"
 
-#define CMP_FAIL(n,x) b2n_sprint (buf, n); if (strcmp (buf, (x))) \
+#define BUFSIZE 200
+
+#define CMP_FAIL(n,x) b2n_snprint (buf, BUFSIZE, n); if (strcmp (buf, (x))) \
     printf ("FAILED: %s != %s ", buf, x); else printf ("OKAY ");
 
 int
@@ -55,7 +57,7 @@ main (void)
 {
   int i;
   b2n_t n, m, d, r;
-  char buf[200];
+  char buf[BUFSIZE];
 
   b2n_init (n);
   b2n_init (m);
@@ -273,7 +275,7 @@ main (void)
 
   printf ("\nTesting: b2n_random: ");
   b2n_random (m, 155);
-  b2n_sprint (buf, m);
+  b2n_snprint (buf, BUFSIZE, m);
   printf ("%s, %d", buf, b2n_sigbit(m));
 
   printf ("\nTesting: b2n_sqrt: ");
