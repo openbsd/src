@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.2 1996/12/28 06:31:10 rahnds Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.3 1997/01/09 05:21:28 rahnds Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1996/09/30 16:35:00 ws Exp $	*/
 
 /*
@@ -65,8 +65,20 @@ alloc(size)
 		if (f == (void *)-1)
 			panic("alloc");
 		f->size = rsz;
-	} else
+	} else {
 		*fp = f->next;
+		if (f->size > roundup(size, NBPG)) {
+			/* if the buffer is larger than necessary, split it */
+			/* still rounding to page size */
+			struct ml *f1;
+			f1 = (struct ml *)((u_int)f + roundup(size, NBPG));
+			f1->size = f->size - roundup(size, NBPG);
+			f->size = roundup(size, NBPG);
+			/* put the unused portion back on free list */
+			f1->next = fl;
+			fl = f1;
+		}
+	}
 		
 	f->next = al;
 	al = f;
