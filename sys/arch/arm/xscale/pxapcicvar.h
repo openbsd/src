@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxapcicvar.h,v 1.2 2005/01/02 19:52:37 drahn Exp $ */
 struct pxapcic_socket {
         struct pxapcic_softc *sc;
         int socket;                     /* socket number */

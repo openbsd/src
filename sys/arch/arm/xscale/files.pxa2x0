@@ -1,3 +1,4 @@
+/*	$OpenBSD: files.pxa2x0,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -52,6 +53,10 @@ include	"dev/pcmcia/files.pcmcia"
 device pxapcic: pcmciabus
 attach pxapcic at pxaip
 file arch/arm/xscale/pxa2x0_pcic.c		pxapcic
+
+# onboard USB
+attach	ohci at pxaip with ohci_pxa
+file	arch/arm/xscale/pxa2x0_ohci.c		ohci
 
 # XXX this is a hack to use dev/pcmcia without fdc.c
 device	fdc

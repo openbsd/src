@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxa2x0reg.h,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*

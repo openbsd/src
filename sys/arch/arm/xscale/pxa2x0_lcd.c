@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*

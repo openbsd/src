@@ -1,3 +1,4 @@
+/*	$OpenBSD: sa11x0_ost.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
 /*	$NetBSD: sa11x0_ost.c,v 1.11 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*

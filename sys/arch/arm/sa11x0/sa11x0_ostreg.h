@@ -1,3 +1,4 @@
+/*	$OpenBSD: sa11x0_ostreg.h,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
 /*	$NetBSD: sa11x0_ostreg.h,v 1.1 2001/07/08 23:37:53 rjs Exp $	*/
 
 /*-

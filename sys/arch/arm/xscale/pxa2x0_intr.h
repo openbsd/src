@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxa2x0_intr.h,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */

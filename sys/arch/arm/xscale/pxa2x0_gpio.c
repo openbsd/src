@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
