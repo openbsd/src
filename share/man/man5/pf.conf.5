@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.129 2002/11/27 17:04:30 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.130 2002/11/27 17:52:53 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1141,10 +1141,11 @@ contain the necessary header information for the subprotocol that allows
 .Xr pf 4
 to filter on things such as TCP ports or to perform NAT.
 .Pp
-There are four options for handling fragments in the packet filter:
-.Pp
-Use scrub rules.  See the section on
-.Pa TRAFFIC NORMALIZATION.
+Besides the use of
+.Pa scrub
+rules as described in
+.Pa TRAFFIC NORMALIZATION
+above, there are three options for handling fragments in the packet filter
 .Pp
 The alternative is to filter individual fragments with filter rules.
 If no
@@ -1194,7 +1195,6 @@ also be adjusted.
 Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
 .Sh TRANSLATION EXAMPLES
-.Pa Binat
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (say Tomcat is not run as root,
 therefore lacks permission to bind to port 80).
