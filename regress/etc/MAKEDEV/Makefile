@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2001/09/07 17:17:44 todd Exp $
+# $OpenBSD: Makefile,v 1.5 2001/09/07 17:49:16 todd Exp $
 
 NOMAN=
 NOPROG=
@@ -9,6 +9,8 @@ MAKEDEVARCHS+=alpha amiga hp300 hppa i386 mac68k macppc mvme68k mvme88k
 MAKEDEVARCHS+=mvmeppc sparc sparc64 sun3 vax
 
 ETCSRCDIR?=	/usr/src/etc
+
+# test separate targets, all, ramdisk/raminst, std, etc
 
 t1: ${MAKEDEVARCHS}
 
@@ -26,7 +28,7 @@ ${MAKEDEVARCHS}:
 		sort +4 -n > ../t1.${.TARGET}.out
 
 clean:
-	for f in ${MAKEDEVARCHS}; do ${SUDO} rm -rf test.$$f; done
+	for f in ${MAKEDEVARCHS}; do rm -rf test.$$f; done
 
 .PHONY: t1 t2 t3 t4 t5 t6 t7 regress ${MAKEDEVARCHS}
 CLEANFILES+=t1.*.out
