@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.17 1997/05/28 21:28:36 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.18 1997/06/18 09:57:04 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.17 1997/05/28 21:28:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.18 1997/06/18 09:57:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -258,7 +258,7 @@ main(argc, argv)
 	 */
 	if (rval == 0 && getuid() == 0 &&
 	    (mountdfp = fopen(_PATH_MOUNTDPID, "r")) != NULL) {
-		if (fscanf(mountdfp, "%ld", &pid) == 1 &&
+		if (fscanf(mountdfp, "%d", &pid) == 1 &&
 		     pid > 0 && kill(pid, SIGHUP) == -1 && errno != ESRCH)
 			err(1, "signal mountd");
 		(void)fclose(mountdfp);
@@ -378,7 +378,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		return (0);
 	}
 
-	switch (pid = fork()) {
+	switch ((pid = fork())) {
 	case -1:				/* Error. */
 		warn("fork");
 		free(optbuf);
@@ -506,14 +506,14 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	/* Count the number of types. */
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++)
 		++nextcp;
 
 	/* Build an array of that many types. */
 	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
 		err(1, NULL);
 	av[0] = fslist;
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++) {
 		*nextcp = '\0';
 		av[i] = ++nextcp;
 	}
