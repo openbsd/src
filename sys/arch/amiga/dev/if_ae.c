@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ae.c,v 1.8 1996/08/23 18:53:04 niklas Exp $	*/
-/*	$NetBSD: if_ae.c,v 1.8.4.1 1996/05/26 17:26:41 is Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.9 1997/01/16 09:24:35 niklas Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.12 1996/12/23 09:10:13 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -83,6 +83,23 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#endif
+
+#if defined(CCITT) && defined(LLC)
+#include <sys/socketvar.h>  
+#include <netccitt/x25.h>
+#include <net/if_dl.h>
+#include <net/if_llc.h>
+#include <netccitt/dll.h>
+#include <netccitt/llc_var.h>
+#include <netccitt/pk.h> 
+#include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
+#endif  
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -969,11 +986,37 @@ aeioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
+#ifdef NS
+		case AF_NS:
+		    {
+			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host =
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+			else
+				wcopyto(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
+			aeinit(sc); /* does ae_setaddr() */
+			break;
+		    }
+#endif
 		default:
 			aeinit(sc);
 			break;
 		}
 		break;
+
+#if defined(CCITT) && defined(LLC)
+	case SIOCSIFCONF_X25:
+		ifp->if_flags |= IFF_UP;
+		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
+		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
+		if (error == 0)
+			aeinit(sc);
+		break;
+#endif /* CCITT && LLC */
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&

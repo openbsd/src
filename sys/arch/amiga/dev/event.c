@@ -1,4 +1,5 @@
-/*	$NetBSD: event.c,v 1.3.6.1 1996/05/31 09:17:39 is Exp $	*/
+/*	$OpenBSD: event.c,v 1.3 1997/01/16 09:24:00 niklas Exp $	*/
+/*	$NetBSD: event.c,v 1.5 1996/10/11 21:12:43 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_esreg.h,v 1.3 1997/01/16 09:24:44 niklas Exp $	*/
 /*	$NetBSD: if_esreg.h,v 1.4 1996/05/01 15:51:08 mhitch Exp $	*/
 
 /*

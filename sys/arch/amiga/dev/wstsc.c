@@ -1,5 +1,5 @@
-/*	$OpenBSD: wstsc.c,v 1.4 1996/11/23 21:45:23 kstailey Exp $	*/
-/*	$NetBSD: wstsc.c,v 1.12 1996/04/28 06:49:35 mhitch Exp $	*/
+/*	$OpenBSD: wstsc.c,v 1.5 1997/01/16 09:25:34 niklas Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.18 1996/12/23 09:10:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

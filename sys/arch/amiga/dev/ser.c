@@ -1,5 +1,5 @@
-/*	$OpenBSD: ser.c,v 1.5 1996/08/23 18:53:17 niklas Exp $	*/
-/*	$NetBSD: ser.c,v 1.34.4.1 1996/06/06 04:53:19 mhitch Exp $	*/
+/*	$OpenBSD: ser.c,v 1.6 1997/01/16 09:25:22 niklas Exp $	*/
+/*	$NetBSD: ser.c,v 1.39 1996/12/23 09:10:29 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -354,12 +354,16 @@ serclose(dev, flag, mode, p)
 	if (dev != kgdb_dev)
 #endif
 		custom.intena = INTF_RBF | INTF_TBE;	/* disable interrups */
-	custom.intreq = INTF_RBF | INTF_TBE;		/* clear int request */
+	custom.intreq = INTF_RBF | INTF_TBE;		/* clear intr req */
 
-	if ((tp->t_cflag & HUPCL) &&
-	    !(SWFLAGS(dev) & TIOCFLAG_SOFTCAR))
-		/* XXX perhaps only clear DTR */
-		(void) sermctl(dev, 0, DMSET);
+	/*
+	 * If the device is closed, it's close, no matter whether we deal with
+	 * modem control signals nor not.
+	 */
+#if 0
+	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
+	    (tp->t_state & TS_ISOPEN) == 0)
+#endif
 	ttyclose(tp);
 #if not_yet
 	if (tp != &ser_cons) {

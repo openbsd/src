@@ -1,5 +1,5 @@
-/*	$OpenBSD: fd.c,v 1.10 1996/11/23 21:45:08 kstailey Exp $	*/
-/*	$NetBSD: fd.c,v 1.32 1996/05/04 04:54:00 mhitch Exp $	*/
+/*	$OpenBSD: fd.c,v 1.11 1997/01/16 09:24:03 niklas Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 1996/12/23 09:09:59 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

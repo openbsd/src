@@ -1,5 +1,5 @@
-/*	$OpenBSD: zbus.c,v 1.7 1996/11/23 21:45:24 kstailey Exp $	*/
-/*	$NetBSD: zbus.c,v 1.19 1996/05/19 21:06:09 veego Exp $	*/
+/*	$OpenBSD: zbus.c,v 1.8 1997/01/16 09:25:35 niklas Exp $	*/
+/*	$NetBSD: zbus.c,v 1.31 1997/01/06 18:05:15 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -57,19 +57,22 @@ struct preconfdata {
  */
 static struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
-	{ "atfsc",	514,	84 },
 	{ "atzee",	513,	1 },
+	{ "atzsc",	514,	2 },
 	{ "atzsc",	514,	3 },
 	{ "bah",	514,	9 },	/* A2060 */
-	{ "le",		514,	112 },
 	{ "ql",		514,	69 },
 	{ "ql",		514,	70 },
+	{ "atfsc",	514,	84 },
+	{ "le",		514,	112 },
 	/* Ameristar */
 	{ "le",		1053,	1 },
 	{ "bah",	1053,	9 },	/* A2060 */
 	{ "es",		1053,	10 },
 	/* University of Lowell */
 	{ "grful",	1030,	0 },
+	/* DMI */
+	{ "grfrs",	2129,	1 },	/* Resolver graphics board */
 	/* Macrosystems */
 	{ "grfrt",	18260,	6 },
 	{ "grfrh",	18260,	16},	/* Retina BLT Z3 */
@@ -101,10 +104,11 @@ static struct aconfdata aconftab[] = {
 	/* Hydra */
 	{ "ed",		2121,	1 },
 	/* ASDG */
-	{ "ed",		9999,	9 },		/* XXXX */
+	{ "ed",		1023,	254 },
 	/* Village Tronic Ariadne */
 	{ "ae",		2167,	201},
 	/* bsc/Alf Data */
+	{ "Tandem",	2092,    6 },	/* Tandem AT disk controler */
 	{ "mfc",	2092,	16 },
 	{ "mfc",	2092,	17 },
 	{ "mfc",	2092,	18 },
@@ -122,21 +126,30 @@ static struct aconfdata aconftab[] = {
 	/* phase 5 digital products */
 	{ "flmem",	8512,	10},	/* FastlaneZ3 memory */
 	{ "flsc",	8512,	11},	/* FastlaneZ3 */
+	{ "cbsc",	8512,	12},	/* Cyberstorm Mk I SCSI */
+	{ "bzivsc",	8512,	17},	/* Blizzard IV SCSI */
+	{ "bztzsc", 	8512,	24},	/* Blizzard 2060 SCSI */
+	{ "cbiisc", 	8512,	25},	/* Cyberstorm Mk II SCSI */
 	{ "grfcv",	8512,	34},	/* CyberVison 64 */
-	/* Commodore Amiga */
-	{ "afsc",	514,	84},	/* A4091 SCSI HD Controller */
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 	/* Resource Management Force */
 	{ "qn",		2011,	2 },	/* QuickNet Ethernet */
 	/* ??? */
 	{ "empsc",	2171,	21 },	/* Emplant SCSI */
+	{ "empsc",	2171,	32 },	/* Emplant SCSI */
 	/* Tseng ET4000 boards */
 	{ "grfet",	2181,	0 },	/* oMniBus */
 	{ "grfet",	2167,	1 },	/* Domnio mem */
 	{ "grfet",	2167,	2 },	/* Domino regs */
 	{ "grfet",	2117,	3 },	/* Merlin mem */
-	{ "grfet",	2117,	4 }	/* Merlin regs */
+	{ "grfet",	2117,	4 },	/* Merlin regs */
+	/* Advanced Systems */
+	{ "nxsc",	2102,	1 },	/* Nexus SCSI board */
+	/* Masoboshi */
+	{ "mcsc",	8535,	4 },	/* Masoboshi Mastercard 702 */
+	/* Apollo */
+	{ "apssc",	8738,	35 }	/* Apollo '060 scsi */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 

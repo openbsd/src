@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.8 1996/06/04 13:28:39 niklas Exp $	*/
-/*	$NetBSD: clock.c,v 1.15 1996/05/10 14:30:53 is Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 1997/01/16 09:23:52 niklas Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 1997/01/02 20:59:42 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,8 +100,8 @@ struct clockframe hardclock_frame;
 
 int clockmatch __P((struct device *, void *, void *));
 void clockattach __P((struct device *, struct device *, void *));
+void calibrate_delay __P((struct device *));
 void cpu_initclocks __P((void));
-void setmicspertick __P((void));
 int clockintr __P((void *));
 
 struct cfattach clock_ca = {
@@ -117,11 +117,7 @@ clockmatch(pdp, match, auxp)
 	void *match, *auxp;
 {
 
-	if (matchname("clock", auxp)
-#ifdef DRACO
-	    && (is_draco() < 4)
-#endif
-	    )
+	if (matchname("clock", auxp))
 		return(1);
 	return(0);
 }
@@ -134,8 +130,11 @@ clockattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
+	char *clockchip;
 	unsigned short interval;
-	char cia;
+#ifdef DRACO
+	u_char dracorev;
+#endif
 
 	if (eclockfreq == 0)
 		eclockfreq = 715909;	/* guess NTSC */
@@ -143,17 +142,43 @@ clockattach(pdp, dp, auxp)
 	CLK_INTERVAL = (eclockfreq / 100);
 
 #ifdef DRACO
-	if (is_draco()) {
+	dracorev = is_draco();
+	if (dracorev >= 4) {
+		CLK_INTERVAL = (eclockfreq / 700);
+		clockchip = "QuickLogic";
+	} else if (dracorev) {
 		clockcia = (struct CIA *)CIAAbase;
-		cia = 'A';
+		clockchip = "CIA A";
 	} else 
 #endif
 	{
 		clockcia = (struct CIA *)CIABbase;
-		cia = 'B';
+		clockchip = "CIA B";
 	}
 
-	printf(": CIA %c system hz %d hardware hz %d\n", cia, hz, eclockfreq);
+	if (dp)
+		printf(": %s system hz %d hardware hz %d\n", clockchip, hz,
+#ifdef DRACO
+		dracorev >= 4 ? eclockfreq / 7 : eclockfreq);
+#else
+		eclockfreq);
+#endif
+
+#ifdef DRACO
+	if (dracorev >= 4) {
+		/* 
+		 * can't preload anything beforehand, timer is free_running;
+		 * but need this for delay calibration.
+		 */
+
+		draco_ioct->io_timerlo = CLK_INTERVAL & 0xff;
+		draco_ioct->io_timerhi = CLK_INTERVAL >> 8;
+
+		calibrate_delay(dp);
+
+		return;
+	}
+#endif
 
 	/*
 	 * stop timer A 
@@ -174,6 +199,13 @@ clockattach(pdp, dp, auxp)
 	 */
 	clockcia->talo = interval & 0xff;
 	clockcia->tahi = interval >> 8;
+
+	/*
+	 * start timer A in continuous mode
+	 */
+	clockcia->cra = (clockcia->cra & 0xc0) | 1;
+
+	calibrate_delay(dp);
 }
 
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
@@ -189,6 +221,65 @@ clockintr (arg)
 	return 0;
 }
 #endif
+
+/*
+ * Calibrate delay loop.
+ * We use two iterations because we don't have enough bits to do a factor of
+ * 8 with better than 1%.
+ *
+ * XXX Note that we MUST stay below 1 tick if using clkread(), even for 
+ * underestimated values of delaydivisor. 
+ *
+ * XXX the "ns" below is only correct for a shift of 10 bits, and even then
+ * off by 2.4%
+ */
+
+void calibrate_delay(dp)
+	struct device *dp;
+{
+	unsigned long t1, t2;
+	extern u_int32_t delaydivisor;
+		/* XXX this should be defined elsewhere */
+
+	if (dp)
+		printf("Calibrating delay loop... "); 
+
+	do {
+		t1 = clkread();
+		delay(1024);
+		t2 = clkread();
+	} while (t2 <= t1);
+	t2 -= t1;
+	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
+#ifdef DIAGNOSTIC
+	if (dp)
+		printf("\ndiff %ld us, new divisor %u/1024 us\n", t2,
+		    delaydivisor); 
+	do {
+		t1 = clkread();
+		delay(1024);
+		t2 = clkread();
+	} while (t2 <= t1);
+	t2 -= t1;
+	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
+	if (dp)
+		printf("diff %ld us, new divisor %u/1024 us\n", t2,
+		    delaydivisor); 
+#endif
+	do {
+		t1 = clkread();
+		delay(1024);
+		t2 = clkread();
+	} while (t2 <= t1);
+	t2 -= t1;
+	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
+#ifdef DIAGNOSTIC
+	if (dp)
+		printf("diff %ld us, new divisor ", t2);
+#endif
+	if (dp)
+		printf("%u/1024 us\n", delaydivisor); 
+}
 
 void
 cpu_initclocks()
@@ -217,7 +308,7 @@ cpu_initclocks()
 	 * and globally enable interrupts for ciab
 	 */
 #ifdef DRACO
-	if (is_draco())		/* we use cia a on DraCo */
+	if (dracorev)		/* we use cia a on DraCo */
 		*draco_intena |= DRIRQ_INT2;
 	else
 #endif
@@ -238,184 +329,41 @@ setstatclockrate(hz)
 u_long
 clkread()
 {
-	u_char hi, hi2, lo;
 	u_int interval;
-   
-	hi  = clockcia->tahi;
-	lo  = clockcia->talo;
-	hi2 = clockcia->tahi;
-	if (hi != hi2) {
-		lo = clockcia->talo;
-		hi = hi2;
-	}
+	u_char hi, hi2, lo;
 
-	interval = (CLK_INTERVAL - 1) - ((hi<<8) | lo);
+#ifdef DRACO
+	if (is_draco() >= 4) {
+		hi2 = draco_ioct->io_chiprev;	/* latch timer */
+		hi = draco_ioct->io_timerhi;
+		lo = draco_ioct->io_timerlo;
+		interval = ((hi<<8) | lo);
+		if (interval > CLK_INTERVAL)	/* timer underflow */
+			interval = 65536 + CLK_INTERVAL - interval;
+		else
+			interval = CLK_INTERVAL - interval;
+
+	} else
+#endif
+	{
+		hi  = clockcia->tahi;
+		lo  = clockcia->talo;
+		hi2 = clockcia->tahi;
+		if (hi != hi2) {
+			lo = clockcia->talo;
+			hi = hi2;
+		}
+
+		interval = (CLK_INTERVAL - 1) - ((hi<<8) | lo);
    
-	/*
-	 * should read ICR and if there's an int pending, adjust interval.
-	 * However, * since reading ICR clears the interrupt, we'd lose a
-	 * hardclock int, and * this is not tolerable.
-	 */
+		/*
+		 * should read ICR and if there's an int pending, adjust
+		 * interval. However, since reading ICR clears the interrupt,
+		 * we'd lose a hardclock int, and this is not tolerable.
+		 */
+	}
 
 	return((interval * tick) / CLK_INTERVAL);
-}
-
-u_int micspertick;
-
-/*
- * we set up as much of the CIAa as possible
- * as all access to chip memory are very slow.
- */
-void
-setmicspertick()
-{
-#ifdef DRACO
-	if (is_draco())
-		return;	/* XXX */
-#endif
-	micspertick = (1000000ULL << 20) / 715909;
-
-	/*
-	 * disable interrupts (just in case.)
-	 */
-	ciaa.icr = 0x3;
-
-	/*
-	 * stop both timers if not already
-	 */
-	ciaa.cra &= ~1;
-	ciaa.crb &= ~1;
-
-	/*
-	 * set timer B in "count timer A underflows" mode
-	 * set timer A in one-shot mode
-	 */
-	ciaa.crb = (ciaa.crb & 0x80) | 0x48;
-	ciaa.cra = (ciaa.cra & 0xc0) | 0x08;
-}
-
-/*
- * this function assumes that on any entry beyond the first
- * the following condintions exist:
- * Interrupts for Timers A and B are disabled.
- * Timers A and B are stoped. 
- * Timers A and B are in one-shot mode with B counting timer A underflows
- *
- */
-void
-delay(mic)
-	u_int mic;
-{
-	u_int temp;
-
-#ifdef DRACO
-	if (is_draco()) {
-		DELAY(mic);
-		return;
-	}
-#endif
-	if (micspertick == 0)
-		setmicspertick();
-
-	if (mic <= 1)
-		return;
-
-	/*
-	 * basically this is going to do an integer
-	 * usec / (1000000 / 715909) with no loss of
-	 * precision
-	 */
-	temp = mic >> 12;
-	asm("divul %3,%1:%0" : "=d" (temp) : "d" (mic >> 12), "0" (mic << 20),
-	    "d" (micspertick));
-
-	if ((temp & 0xffff0000) > 0x10000) {
-		mic = (temp >> 16) - 1;
-		temp &= 0xffff;
-
-		/*
-		 * set timer A in continous mode
-		 */
-		ciaa.cra = (ciaa.cra & 0xc0) | 0x00;
-	
-		/*
-		 * latch/load/start "counts of timer A underflows" in B
-		 */
-		ciaa.tblo = mic & 0xff;
-		ciaa.tbhi = mic >> 8;
-		
-		/*
-		 * timer A latches 0xffff
-		 * and start it.
-		 */
-		ciaa.talo = 0xff;
-		ciaa.tahi = 0xff;
-		ciaa.cra |= 1;
-
-		while (ciaa.crb & 1)
-			;
-
-		/* 
-		 * stop timer A 
-		 */
-		ciaa.cra &= ~1;
-
-		/*
-		 * set timer A in one shot mode
-		 */
-		ciaa.cra = (ciaa.cra & 0xc0) | 0x08;
-	} else if ((temp & 0xffff0000) == 0x10000) {
-		temp &= 0xffff;
-
-		/*
-		 * timer A is in one shot latch/load/start 1 full turn
-		 */
-		ciaa.talo = 0xff;
-		ciaa.tahi = 0xff;
-		while (ciaa.cra & 1)
-			;
-	}
-	if (temp < 1)
-		return;
-
-	/*
-	 * temp is now residual ammount, latch/load/start it.
-	 */
-	ciaa.talo = temp & 0xff;
-	ciaa.tahi = temp >> 8;
-	while (ciaa.cra & 1)
-		;
-}
-
-/*
- * Needs to be calibrated for use, its way off most of the time
- */
-void
-DELAY(mic)
-	u_int mic;
-{
-	u_long n;
-	short hpos;
-
-#ifdef DRACO
-	if (is_draco()) {
-		while (--mic > 0)
-			n = *draco_intena;
-		return;
-	}
-#endif
-	/*
-	 * this function uses HSync pulses as base units. The custom chips 
-	 * display only deals with 31.6kHz/2 refresh, this gives us a
-	 * resolution of 1/15800 s, which is ~63us (add some fuzz so we really
-	 * wait awhile, even if using small timeouts)
-	 */
-	n = mic/63 + 2;
-	do {
-		hpos = custom.vhposr & 0xff00;
-		while (hpos == (custom.vhposr & 0xff00))
-			;
-	} while (n--);
 }
 
 #if notyet
@@ -1078,5 +1026,5 @@ a2settod(tim)
 	rt->year2   = year2;
 	rt->control2 &= ~A2CONTROL1_HOLD;
 
-  return 1;
+	return 1;
 }

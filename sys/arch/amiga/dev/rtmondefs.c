@@ -1,3 +1,4 @@
+/*	$OpenBSD: rtmondefs.c,v 1.2 1997/01/16 09:25:12 niklas Exp $	*/
 /*	$NetBSD: rtmondefs.c,v 1.2 1994/10/26 02:04:33 cgd Exp $	*/
 
 static struct MonDef monitor_defs[] = {

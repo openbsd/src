@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_etreg.h,v 1.1.4.1 1996/05/27 01:12:13 is Exp $	*/
+/*	$OpenBSD: grf_etreg.h,v 1.3 1997/01/16 09:24:17 niklas Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.2 1996/06/09 13:21:11 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -49,14 +50,14 @@
  * fields for a text mode are present.
  */
 struct grfettext_mode {
-    	struct grfvideo_mode gv;
-    	unsigned short	fx; 	    /* font x dimension */
-    	unsigned short	fy; 	    /* font y dimension */
-    	unsigned short  cols;       /* screen dimensions */
-    	unsigned short	rows;
-    	void	    	*fdata;     /* font data */
-    	unsigned short	fdstart;
-    	unsigned short	fdend;
+	struct grfvideo_mode gv;
+	unsigned short	fx;		/* font x dimension */
+	unsigned short	fy;		/* font y dimension */
+	unsigned short	cols;		/* screen dimensions */
+	unsigned short	rows;
+	void		*fdata;		/* font data */
+	unsigned short	fdstart;
+	unsigned short	fdend;
 };
 
 
@@ -69,14 +70,14 @@ struct grfettext_mode {
 #define MERLIN		2117
 
 /* VGA controller types */
-#define ET4000      0
-#define ETW32       1
+#define ET4000	0
+#define ETW32	1
 
 /* DAC types */
-#define SIERRA11483 0    /* Sierra 11483 HiColor DAC */
-#define SIERRA15025 1    /* Sierra 15025 TrueColor DAC */
-#define MUSICDAC    2    /* MUSIC TrueColor DAC */
-#define MERLINDAC   3    /* Merlin's BrookTree TrueColor DAC */
+#define SIERRA11483	0	/* Sierra 11483 HiColor DAC */
+#define SIERRA15025	1	/* Sierra 15025 TrueColor DAC */
+#define MUSICDAC	2	/* MUSIC TrueColor DAC */
+#define MERLINDAC	3	/* Merlin's BrookTree TrueColor DAC */
 
 /* read VGA register */
 #define vgar(ba, reg) (*(((volatile unsigned char *)ba)+reg))
@@ -101,7 +102,7 @@ struct grfettext_mode {
 #define GREG_STATUS0_R		0x03C2
 #define GREG_STATUS1_R		0x03DA
 #define GREG_MISC_OUTPUT_R	0x03CC
-#define GREG_MISC_OUTPUT_W	0x03C2	
+#define GREG_MISC_OUTPUT_W	0x03C2
 #define GREG_FEATURE_CONTROL_R	0x03CA
 #define GREG_FEATURE_CONTROL_W	0x03DA
 #define GREG_POS		0x0102
@@ -114,7 +115,7 @@ struct grfettext_mode {
 
 /* ETW32 special */
 #define W32mappedRegs 0xfff00
-    
+
 /* MMU */
 #define MMU_APERTURE0 0x80000
 #define MMU_APERTURE1 0xa0000
@@ -177,9 +178,9 @@ struct grfettext_mode {
 #define	SEQ_ID_AUXILIARY_MODE	0x07
 
 /* don't know about them right now...
-#define TEXT_PLANE_CHAR	    0x01
-#define TEXT_PLANE_ATTR	    0x02
-#define TEXT_PLANE_FONT	    0x04
+#define TEXT_PLANE_CHAR		0x01
+#define TEXT_PLANE_ATTR		0x02
+#define TEXT_PLANE_FONT		0x04
 */
 
 /* CRT Controller: */
@@ -226,18 +227,20 @@ struct grfettext_mode {
 #define IMA_ADDRESS		0x217a
 #define IMA_ADDRESS_R		0x217b
 #define IMA_ADDRESS_W		0x217b
-#define IMA_STARTADDRESSLOW     0xf0
-#define IMA_STARTADDRESSMIDDLE  0xf1
-#define IMA_STARTADDRESSHIGH    0xf2
-#define IMA_TRANSFERLENGTHLOW   0xf3
-#define IMA_TRANSFERLENGTHHIGH  0xf4
-#define IMA_ROWOFFSETLOW        0xf5
-#define IMA_ROWOFFSETHIGH       0xf6
-#define IMA_PORTCONTROL         0xf7
+#define IMA_STARTADDRESSLOW	0xf0
+#define IMA_STARTADDRESSMIDDLE	0xf1
+#define IMA_STARTADDRESSHIGH	0xf2
+#define IMA_TRANSFERLENGTHLOW	0xf3
+#define IMA_TRANSFERLENGTHHIGH	0xf4
+#define IMA_ROWOFFSETLOW	0xf5
+#define IMA_ROWOFFSETHIGH	0xf6
+#define IMA_PORTCONTROL		0xf7
 
 /* Pass-through */
 #define PASS_ADDRESS		0x8000
 #define PASS_ADDRESS_W		0x8000
+#define PASS_ADDRESS_DOM	0xa000
+#define PASS_ADDRESS_DOMW	0xb000
 
 /* Video DAC */
 #define VDAC_ADDRESS		0x03c8
@@ -248,15 +251,15 @@ struct grfettext_mode {
 #define VDAC_MASK		0x03c6
 #define HDR			0x03c6	/* Hidden DAC register, 4 reads to access */
 
-#define VDAC_COMMAND 0x03c6
-#define VDAC_XINDEX 0x03c7
-#define VDAC_XDATA 0x03c8
+#define VDAC_COMMAND		0x03c6
+#define VDAC_XINDEX		0x03c7
+#define VDAC_XDATA		0x03c8
 
-#define MERLIN_VDAC_INDEX 0x01
-#define MERLIN_VDAC_COLORS 0x05
-#define MERLIN_VDAC_SPRITE 0x09
-#define MERLIN_VDAC_DATA 0x19
-#define MERLIN_SWITCH_REG 0x0401
+#define MERLIN_VDAC_INDEX	0x01
+#define MERLIN_VDAC_COLORS	0x05
+#define MERLIN_VDAC_SPRITE	0x09
+#define MERLIN_VDAC_DATA	0x19
+#define MERLIN_SWITCH_REG	0x0401
 
 #define WGfx(ba, idx, val) \
 	do { vgaw(ba, GCT_ADDRESS, idx); vgaw(ba, GCT_ADDRESS_W , val); } while (0)
@@ -295,65 +298,63 @@ struct grfettext_mode {
  * inline functions.
  */
 static inline void RegWakeup(volatile void *ba) {
-    	extern int ettype;
+	extern int ettype;
 
-    	switch (ettype) { 
-    	case OMNIBUS: 
-    	    	vgaw(ba, PASS_ADDRESS_W, 0x00); 
-    	    	break; 
-/*
-    	case DOMINO: 
-    	    	vgaw(ba, PASS_ADDRESS_W, 0x00); 
-    	    	break; 
-    	case MERLIN: 
-    	    	break; 
-*/
-    	} 
-    	delay(200000);
+	switch (ettype) {
+	    case OMNIBUS:
+		vgaw(ba, PASS_ADDRESS_W, 0x00);
+		break;
+	    case DOMINO:
+		vgaw(ba, PASS_ADDRESS_DOM, 0x00);
+		break;
+	    case MERLIN:
+		break;
+	} 
+	delay(200000);
 }
 
 
 static inline void RegOnpass(volatile void *ba) {
-    	extern int ettype;
+	extern int ettype;
 	extern unsigned char pass_toggle;
 	extern unsigned char Merlin_switch;
 
-    	switch (ettype) { 
-    	case OMNIBUS: 
-	  vgaw(ba, PASS_ADDRESS_W, 0x00); 
-	  break; 
-    	case DOMINO: 
-	  vgaw(ba, PASS_ADDRESS_W, 0x00); 
-	  break; 
-    	case MERLIN:
-	  Merlin_switch &= 0xfe;
-	  vgaw(ba, MERLIN_SWITCH_REG, Merlin_switch);
-    	    	break;
-    	} 
-    	pass_toggle = 1;
-    	delay(200000);
+	switch (ettype) {
+	    case OMNIBUS:
+		vgaw(ba, PASS_ADDRESS_W, 0x00);
+		break;
+	    case DOMINO:
+		vgaw(ba, PASS_ADDRESS_DOMW, 0x00);
+		break;
+	    case MERLIN:
+		Merlin_switch &= 0xfe;
+		vgaw(ba, MERLIN_SWITCH_REG, Merlin_switch);
+		break;
+	}
+	pass_toggle = 1;
+	delay(200000);
 }
 
 
 static inline void RegOffpass(volatile void *ba) {
-    	extern int ettype;
-    	extern unsigned char pass_toggle;
+	extern int ettype;
+	extern unsigned char pass_toggle;
 	extern unsigned char Merlin_switch;
 
-    	switch (ettype) { 
-    	case OMNIBUS: 
-    	    	vgaw(ba, PASS_ADDRESS_W, 0x01); 
-    	    	break; 
-    	case DOMINO: 
-    	    	vgaw(ba, PASS_ADDRESS_W, 0x00); 
-    	    	break; 
-    	case MERLIN:
-	  Merlin_switch |= 0x01;
-	  vgaw(ba, MERLIN_SWITCH_REG, Merlin_switch);
-    	    	break;
-    	} 
-    	pass_toggle = 0;
-    	delay(200000);
+	switch (ettype) {
+	    case OMNIBUS:
+		vgaw(ba, PASS_ADDRESS_W, 0x01);
+		break;
+	    case DOMINO:
+		vgaw(ba, PASS_ADDRESS_DOM, 0x00);
+		break;
+	    case MERLIN:
+		Merlin_switch |= 0x01;
+		vgaw(ba, MERLIN_SWITCH_REG, Merlin_switch);
+		break;
+	}
+	pass_toggle = 0;
+	delay(200000);
 }
 
 static inline unsigned char RAttr(volatile void * ba, short idx) {

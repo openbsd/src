@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.8 1996/05/29 10:15:50 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.35 1996/05/19 15:35:43 is Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 1997/01/16 09:25:46 niklas Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 1996/09/11 00:11:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,12 @@
  * Exported definitions unique to amiga/68k cpu support.
  */
 #include <machine/psl.h>
+
+/*
+ * Get common m68k CPU definitions.
+ */
+#include <m68k/cpu.h>
+#define	M68K_MMU_MOTOROLA
 
 /*
  * definitions of cpu-dependent requirements
@@ -123,86 +129,9 @@ int	want_resched;		/* resched() was called */
 #define	AMIGA_FPU40	(1L<<6)
 #define AMIGA_68060	(1L<<7)
 
-/* values for fputype */
-#define FPU_NONE	0
-#define FPU_68881	1
-#define FPU_68882	2
-#define FPU_68040	3
-
-/* values for mmutype (assigned for quick testing) */
-#define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
-#define	MMU_68851	1	/* Motorola 68851 */
-#define MMU_68040	-2	/* 68040 on-chip subsubset */
-
 #ifdef _KERNEL
-int machineid, mmutype, fputype;
+int machineid;
 #endif
-
-/*
- * 68851 and 68030 MMU
- */
-#define	PMMU_LVLMASK	0x0007
-#define	PMMU_INV	0x0400
-#define	PMMU_WP		0x0800
-#define	PMMU_ALV	0x1000
-#define	PMMU_SO		0x2000
-#define	PMMU_LV		0x4000
-#define	PMMU_BE		0x8000
-#define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-/* additional fields in the 68030 cache control register */
-#define	IC_BE		0x0010	/* instruction burst enable */
-#define	DC_ENABLE	0x0100	/* data cache enable */
-#define	DC_FREEZE	0x0200	/* data cache freeze */
-#define	DC_CE		0x0400	/* clear data cache entry */
-#define	DC_CLR		0x0800	/* clear entire data cache */
-#define	DC_BE		0x1000	/* data burst enable */
-#define	DC_WA		0x2000	/* write allocate */
-
-/* fields in the 68040 cache control register */
-#define	IC40_ENABLE	0x00008000	/* enable instruction cache */
-#define DC40_ENABLE	0x80000000	/* enable data cache */
-
-/* additional fields in the 68060 cache control register */
-
-#define DC60_NAD	0x40000000	/* no allocate mode, data cache */
-#define DC60_ESB	0x20000000	/* enable store buffer */
-#define DC60_DPI	0x10000000	/* disable CPUSH invalidation */
-#define DC60_FOC	0x08000000	/* four kB data cache mode (else 8) */
-
-#define IC60_EBC	0x00800000	/* enable branch cache */
-#define IC60_CABC	0x00400000	/* clear all branch cache entries */
-#define IC60_CUBC	0x00200000	/* clear user branch cache entries */
-
-#define IC60_NAI	0x00004000	/* no allocate mode, instr. cache */
-#define IC60_FIC	0x00002000	/* four kB instr. cache (else 8) */
-
-
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	CACHE_OFF	(DC_CLR|IC_CLR)
-#define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
-
-/* 68040 cache control */
-#define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
-#define	CACHE40_OFF	0x00000000
-
-#define CACHE60_ON	(CACHE40_ON |IC60_CABC|IC60_EBC|DC60_ESB)
-#define CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
 /*
  * CTL_MACHDEP definitions.

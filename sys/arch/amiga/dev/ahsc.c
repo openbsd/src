@@ -1,5 +1,5 @@
-/*	$OpenBSD: ahsc.c,v 1.4 1996/11/23 21:45:05 kstailey Exp $	*/
-/*	$NetBSD: ahsc.c,v 1.12 1996/04/21 21:10:49 veego Exp $	*/
+/*	$OpenBSD: ahsc.c,v 1.5 1997/01/16 09:23:43 niklas Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.18 1996/12/23 09:09:51 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

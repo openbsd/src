@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.17 1997/01/05 02:08:05 niklas Exp $
-#	$NetBSD: GENERIC,v 1.57.4.4 1996/09/06 00:34:18 jtc Exp $
+#	$OpenBSD: GENERIC,v 1.18 1997/01/16 09:23:37 niklas Exp $
+#	$NetBSD: GENERIC,v 1.67 1997/01/07 11:35:04 mrg Exp $
 
 #
 # GENERIC AMIGA
@@ -52,13 +52,14 @@ option		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 #option		DEBUG		# Add debugging statements
 #option		SYSCALL_DEBUG	# debug all syscalls.
 #option		SCSIDEBUG	# Add SCSI debugging statements
-#option		KGDB		# Kernel debugger (KGDB) support
 #option		PANICBUTTON	# Forced crash via keypress (???)
 
 #
 # Amiga specific options
 #
 option		MACHINE_NONCONTIG # Non-contiguous memory support
+# ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
+# before the 10 secondinterval ends, or that KBDRESET does work at all.
 #option		KBDRESET	# sync on Ctrl-Amiga-Amiga
 
 # These options improve performance with the built-in serial port
@@ -158,7 +159,8 @@ idesc0		at mainbus0		# A4000 & A1200 IDE
 afsc0		at zbus0		# A4091 scsi
 aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
-bzsc0		at zbus0		# Blizzard 1230 scsi
+bzsc0		at zbus0		# Blizzard 1230 I,II scsi 
+bztzsc0		at zbus0		# Blizzard 1230 IV / 1260 / 2060
 empsc0		at zbus0		# Emplant
 drsc0		at mainbus0		# DraCo scsi
 
@@ -177,6 +179,7 @@ scsibus*	at afsc0
 scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
+scsibus*	at bztzsc0
 scsibus*	at empsc0
 scsibus*	at drsc0
 
@@ -185,9 +188,9 @@ scsibus*	at drsc0
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
-ch*	at scsibus? target ? lun ?	# scsi cd changers
 ss*	at scsibus? target ? lun ?	# scsi scanners
-uk*	at scsibus? target ? lun ?	# unknown scsi
+ch*	at scsibus? target ? lun ?	# scsi autochangers
+uk*	at scsibus? target ? lun ?	# scsi unknown
 
 ggbus*	at zbus0			# Goldengate bridge
 isa*	at ggbus?

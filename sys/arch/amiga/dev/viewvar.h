@@ -1,3 +1,4 @@
+/*	$OpenBSD: viewvar.h,v 1.2 1997/01/16 09:25:30 niklas Exp $	*/
 /*	$NetBSD: viewvar.h,v 1.3 1994/10/26 02:05:08 cgd Exp $	*/
 
 /*

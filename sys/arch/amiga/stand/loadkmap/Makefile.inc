@@ -1,18 +1,15 @@
-# $OpenBSD: Makefile.inc,v 1.3 1996/10/04 23:31:23 niklas Exp $
-# $NetBSD: Makefile.inc,v 1.1.2.3 1996/06/25 01:13:36 jtc Exp $
+# $OpenBSD: Makefile.inc,v 1.4 1997/01/16 09:27:06 niklas Exp $
+# $NetBSD: Makefile.inc,v 1.2 1996/06/21 21:55:53 is Exp $
 
-BINDIR=	/usr/share/keymaps/amiga
+BINDIR=	${DESTDIR}/usr/share/keymaps/amiga
 NOMAN=
 CC=	${HOSTCC}
 
-all:	${MAP}
-
-${MAP}: ${PROG}
-	./${PROG} >${MAP}
-
-realinstall:
-.if !exists(${DESTDIR}${BINDIR})
-	mkdir -p ${DESTDIR}${BINDIR}
+# XXX making dirs should be handled by mtree
+realinstall: ${PROG}
+.if !exists(${BINDIR})
+	mkdir -p ${BINDIR}
 .endif
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 555 ${MAP} \
-	    ${DESTDIR}${BINDIR}
+	./${PROG} > ${BINDIR}/${MAP}
+	chmod 555 ${BINDIR}/${MAP}
+	chown ${BINOWN}.${BINGRP} ${BINDIR}/${MAP}

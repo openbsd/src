@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 1996/08/23 23:15:50 niklas Exp $
-# $NetBSD: Makefile,v 1.1.2.1 1996/06/08 15:44:55 is Exp $
+# $OpenBSD: Makefile,v 1.2 1997/01/16 09:26:18 niklas Exp $
+# $NetBSD: Makefile,v 1.3 1996/11/30 20:34:58 is Exp $
 
-SUBDIR=binpatch loadkmap
+SUBDIR=binpatch boot loadkmap
 
 .include <bsd.subdir.mk>

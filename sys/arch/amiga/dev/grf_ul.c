@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_ul.c,v 1.11 1996/11/24 20:23:49 niklas Exp $	*/
-/*	$NetBSD: grf_ul.c,v 1.17 1996/05/09 20:31:25 is Exp $	*/
+/*	$OpenBSD: grf_ul.c,v 1.12 1997/01/16 09:24:21 niklas Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.23 1996/12/23 09:10:10 veego Exp $	*/
 
 #define UL_DEBUG
 
@@ -17,8 +17,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Lutz Vieweg.
- * 4. The name of the author may not be used to endorse or promote products
+ *      This product includes software developed by Ignatios Souvatzis for
+ *      the NetBSD project.
+ * 4. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -912,7 +913,7 @@ ul_blank(gp, onoff, dev)
 	gsp->ctrl = (gsp->ctrl & ~(INCR | INCW)) | LBL;
 	gsp->hstadrh = 0xC000;
 	gsp->hstadrl = 0x0080;
-	if (*onoff)
+	if (*onoff > 0)
 		gsp->data |= 0x9000;
 	else
 		gsp->data &= ~0x9000;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys_machdep.c,v 1.4 1996/08/19 00:04:15 niklas Exp $	*/
-/*	$NetBSD: sys_machdep.c,v 1.14.4.1 1996/05/26 16:23:34 is Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.5 1997/01/16 09:23:29 niklas Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 1996/05/25 21:54:28 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: parioctl.h,v 1.2 1997/01/16 09:25:11 niklas Exp $	*/
 /*	$NetBSD: parioctl.h,v 1.5 1994/10/26 02:32:00 cgd Exp $	*/
 
 /*

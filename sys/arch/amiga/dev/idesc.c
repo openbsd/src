@@ -1,5 +1,5 @@
-/*	$OpenBSD: idesc.c,v 1.7 1996/11/23 21:45:19 kstailey Exp $	*/
-/*	$NetBSD: idesc.c,v 1.21.4.2 1996/05/30 03:20:14 mhitch Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.8 1997/01/16 09:24:34 niklas Exp $	*/
+/*	$NetBSD: idesc.c,v 1.29 1996/12/23 09:10:12 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

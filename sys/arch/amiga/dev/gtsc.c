@@ -1,5 +1,5 @@
-/*	$OpenBSD: gtsc.c,v 1.4 1996/11/23 21:45:17 kstailey Exp $	*/
-/*	$NetBSD: gtsc.c,v 1.15 1996/04/21 21:11:34 veego Exp $	*/
+/*	$OpenBSD: gtsc.c,v 1.5 1997/01/16 09:24:30 niklas Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.20 1996/12/23 09:10:11 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

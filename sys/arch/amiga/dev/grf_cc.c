@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cc.c,v 1.5 1996/11/24 20:23:41 niklas Exp $	*/
-/*	$NetBSD: grf_cc.c,v 1.19 1996/04/21 21:11:08 veego Exp $	*/
+/*	$OpenBSD: grf_cc.c,v 1.6 1997/01/16 09:24:08 niklas Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.23 1996/12/23 09:10:02 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

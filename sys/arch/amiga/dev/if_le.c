@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.5 1996/05/09 22:43:24 niklas Exp $	*/
-/*	$NetBSD: if_le.c,v 1.21 1996/05/07 00:35:07 thorpej Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.6 1997/01/16 09:24:45 niklas Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22 1996/12/23 09:10:18 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: amiga_init.c,v 1.13 1996/10/04 23:34:35 niklas Exp $	*/
-/*	$NetBSD: amiga_init.c,v 1.41.4.4 1996/08/03 00:56:12 jtc Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.14 1997/01/16 09:23:14 niklas Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.53 1996/11/30 01:20:14 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -924,14 +924,21 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		*draco_intpen = 0;
 		*draco_intfrc = 0;
 		ciaa.icr = 0x7f;			/* and keyboard */
-#if 0
 		ciab.icr = 0x7f;			/* and again */
-#endif
-		*(volatile u_int8_t *)(DRCCADDR + 
+
+		draco_ioct->io_control &=
+		    ~(DRCNTRL_KBDINTENA|DRCNTRL_FDCINTENA); /* and another */
+
+		draco_ioct->io_status2 &=
+		    ~(DRSTAT2_PARIRQENA|DRSTAT2_TMRINTENA); /* some more */
+
+		*(volatile u_int8_t *)(DRCCADDR + 1 +
 		    DRSUPIOPG*NBPG + 4*(0x3F8 + 1)) = 0; /* and com0 */
-		*(volatile u_int8_t *)(DRCCADDR +
+
+		*(volatile u_int8_t *)(DRCCADDR + 1 +
 		    DRSUPIOPG*NBPG + 4*(0x2F8 + 1)) = 0; /* and com1 */
 		
+		draco_ioct->io_control |= DRCNTRL_WDOGDIS; /* stop Fido */
 		*draco_misc &= ~1/*DRMISC_FASTZ2*/;
 
 	} else 
@@ -965,6 +972,7 @@ void
 start_c_cleanup()
 {
 	u_int *sg, *esg;
+	extern u_int32_t delaydivisor;
 
 	/*
 	 * remove shadow mapping of kernel?
@@ -975,6 +983,22 @@ start_c_cleanup()
 	esg = (u_int *)&sg[namigashdwpg];
 	while (sg < esg)
 		*sg++ = PG_NV;
+
+	/*
+	 * preliminary delay divisor value
+	 */
+
+	if (machineid & AMIGA_68060)
+		delaydivisor = (1024 * 1) / 80;	/* 80 MHz 68060 w. BTC */
+
+	else if (machineid & AMIGA_68040)
+		delaydivisor = (1024 * 3) / 40;	/* 40 MHz 68040 */
+
+	else if (machineid & AMIGA_68030)
+		delaydivisor = (1024 * 3) / 50;	/* 50 MHz 68030 */
+
+	else
+		delaydivisor = (1024 * 8) / 33; /* 33 MHz 68020 */
 }
 
 void
@@ -1057,12 +1081,12 @@ kernel_reload_write(uio)
 		/*
 		 * Pull in the exec header and check it.
 		 */
-		if ((error = uiomove((caddr_t)&kernel_exec, sizeof(kernel_exec),
-		     uio)) != 0)
+		if ((error = uiomove((caddr_t)&kernel_exec,
+		    sizeof(kernel_exec), uio)) != 0)
 			return(error);
 		printf("loading kernel %ld+%ld+%ld+%ld\n", kernel_exec.a_text,
-			kernel_exec.a_data, kernel_exec.a_bss,
-			esym == NULL ? 0 : kernel_exec.a_syms);
+		    kernel_exec.a_data, kernel_exec.a_bss,
+		    esym == NULL ? 0 : kernel_exec.a_syms);
 		/*
 		 * Looks good - allocate memory for a kernel image.
 		 */

@@ -1,3 +1,4 @@
+/* $OpenBSD: fbio.h,v 1.2 1997/01/16 09:25:51 niklas Exp $ */
 /* $NetBSD: fbio.h,v 1.1 1996/05/19 20:06:12 is Exp $ */
 
 /*

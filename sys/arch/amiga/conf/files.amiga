@@ -1,5 +1,5 @@
-#	$OpenBSD: files.amiga,v 1.18 1996/08/19 06:57:02 niklas Exp $
-#	$NetBSD: files.amiga,v 1.48 1996/05/19 21:04:50 veego Exp $
+#	$OpenBSD: files.amiga,v 1.19 1997/01/16 09:23:39 niklas Exp $
+#	$NetBSD: files.amiga,v 1.51 1996/12/16 16:17:31 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -160,6 +160,11 @@ device	mfcp
 attach	mfcp at mfc
 file	arch/amiga/dev/mfc.c		mfcs | mfcp needs-count
 
+# DraCo internal com port
+device	drcom: tty
+attach	drcom at mainbus
+file	arch/amiga/dev/drcom.c		drcom needs-count
+  
 include "../../../scsi/files.scsi"
 
 # wd 33c93 controllers
@@ -251,10 +256,15 @@ device	flsc: scsi, sfas
 attach	flsc at zbus
 file	arch/amiga/dev/flsc.c		flsc needs-flag
 
-# Blizzard1230
+# Blizzard1230-I,II
 device	bzsc: scsi, sfas
 attach	bzsc at zbus
 file	arch/amiga/dev/bzsc.c		bzsc needs-flag
+
+# Blizzard2060 scsi
+device	bztzsc: scsi, sfas
+attach	bztzsc at zbus
+file	arch/amiga/dev/bztzsc.c		bztzsc needs-flag
 
 # Amiga 4000/1200 IDE masquerading as SCSI
 device	idesc: scsi

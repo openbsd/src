@@ -1,3 +1,4 @@
+/*	$OpenBSD: fontdumper.c,v 1.2 1997/01/16 09:26:59 niklas Exp $	*/
 /*	$NetBSD: fontdumper.c,v 1.3 1994/10/26 02:06:59 cgd Exp $	*/
 
 /*

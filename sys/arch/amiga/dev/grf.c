@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf.c,v 1.7 1996/11/24 20:23:40 niklas Exp $	*/
-/*	$NetBSD: grf.c,v 1.27 1996/05/19 20:06:20 is Exp $	*/
+/*	$OpenBSD: grf.c,v 1.8 1997/01/16 09:24:07 niklas Exp $	*/
+/*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

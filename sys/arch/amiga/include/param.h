@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.7 1996/05/04 09:29:50 niklas Exp $	*/
-/*	$NetBSD: param.h,v 1.29 1996/04/21 21:13:20 veego Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 1997/01/16 09:25:58 niklas Exp $	*/
+/*	$NetBSD: param.h,v 1.30 1996/09/28 15:54:04 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

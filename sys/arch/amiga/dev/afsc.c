@@ -1,5 +1,5 @@
-/*	$OpenBSD: afsc.c,v 1.6 1996/11/23 21:45:05 kstailey Exp $	*/
-/*	$NetBSD: afsc.c,v 1.14 1996/04/21 21:10:48 veego Exp $	*/
+/*	$OpenBSD: afsc.c,v 1.7 1997/01/16 09:23:42 niklas Exp $	*/
+/*	$NetBSD: afsc.c,v 1.20 1996/12/23 09:09:49 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

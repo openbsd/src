@@ -1,4 +1,5 @@
-/*	$NetBSD: mscreg.h,v 1.4 1995/10/07 18:22:14 chopps Exp $ */
+/*	$OpenBSD: mscreg.h,v 1.2 1997/01/16 09:25:07 niklas Exp $ */
+/*	$NetBSD: mscreg.h,v 1.5 1996/12/09 17:24:58 is Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -46,8 +47,8 @@
  *    - Change to NetBSD style for integration in to the main tree. 950919
  */
 
-#define	NUMLINES	7		/* number of lines per card */
-#define	IOBUFLEN	256		/* number of bytes per buffer */
+#define	NUMLINES	7	/* number of lines per card */
+#define	IOBUFLEN	256	/* number of bytes per buffer */
 #define	IOBUFLENMASK	0xff	/* mask for maximum number of bytes */
 #define	IOBUFHIGHWATER	192	/* point at which to enable output */
 #define	IOBUFLOWWATER	128	/* point at which to wake output */
@@ -64,13 +65,15 @@ struct msccommon {
 	u_char Pad_a;
 	u_char TimerH;	/* timer value after speed check */
 	u_char TimerL;
+	u_char CDHead;	/* head pointer for CD message queue */
+	u_char CDTail;	/* tail pointer for CD message queue */
+	u_char CDStatus;
+	u_char Pad_b;
 };
 
 struct mscstatus {
 	u_char InHead;		/* input queue head */
 	u_char InTail;		/* input queue tail */
-	u_char Pad_a;		/* paddington */
-	u_char Pad_b;		/* paddington */
 	u_char OutDisable;	/* disables output */
 	u_char OutHead;		/* output queue head */
 	u_char OutTail;		/* output queue tail */
@@ -81,22 +84,22 @@ struct mscstatus {
 	u_char Command;		/* command byte - see MSCCMD */
 	u_char SoftFlow;	/* enables xon/xoff flow control */
 	/* private 65C02 fields: */
-	u_char chCD;		/* used to detect CD changes */
 	u_char XonOff;		/* stores XON/XOFF enable/disable */
-	u_char Pad_c;		/* paddington */
 };
 
-#define	MSC_MEMPAD	\
+#define	MSC_MEMPAD1	\
     (0x0200 - NUMLINES * sizeof(struct mscstatus) - sizeof(struct msccommon))
+#define	MSC_MEMPAD2	(0x2000 - NUMLINES * IOBUFLEN - IOBUFLEN)
 	
 struct mscmemory {
 	struct mscstatus Status[NUMLINES];	/* 0x0000-0x006f status areas */
-	struct msccommon Common;		/* 0x0070-0x0073 common flags */
-	u_char Dummy1[MSC_MEMPAD];		/* 0x00XX-0x01ff */
+	struct msccommon Common;		/* 0x0070-0x0077 common flags */
+	u_char Dummy1[MSC_MEMPAD1];		/* 0x00XX-0x01ff */
 	u_char OutBuf[NUMLINES][IOBUFLEN];	/* 0x0200-0x08ff output bufs */
 	u_char InBuf[NUMLINES][IOBUFLEN];	/* 0x0900-0x0fff input bufs */
 	u_char InCtl[NUMLINES][IOBUFLEN];	/* 0x1000-0x16ff control data */
-	u_char Dummy2[ 0x2000 - 7 * 0x0100];	/* 0x1700-0x2fff */
+	u_char CDBuf[IOBUFLEN];			/* 0x1700-0x17ff CD event buffer */
+	u_char Dummy2[MSC_MEMPAD2];		/* 0x1800-0x2fff */
 	u_char Code[0x1000];			/* 0x3000-0x3fff code area */
 	u_short InterruptAck;			/* 0x4000        intr ack */
 	u_char Dummy3[0x3ffe];			/* 0x4002-0x7fff */
@@ -107,16 +110,17 @@ struct mscmemory {
 						/*  6502 RESET line held high */
 };
 
-#undef MSC_MEMPAD
+#undef MSC_MEMPAD1
+#undef MSC_MEMPAD2
 
 struct mscdevice {
 	volatile struct mscmemory *board;	/* where the board is located */
 	int flags;			/* modem control flags */
 	int openflags;			/* flags for device open */
+	u_char unit;			/* which unit (ie. which board) */
 	u_char port;			/* which port on the board (0-6) */
 	u_char active;			/* does this port have hardware? */
 	u_char closing;			/* are we flushing before close? */
-	u_char paddington;		/* just for padding */
 	char tmpbuf[IOBUFLEN];		/* temp buffer for data transfers */
 };
 

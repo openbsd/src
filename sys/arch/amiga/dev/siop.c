@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop.c,v 1.8 1996/05/29 10:15:43 niklas Exp $	*/
-/*	$NetBSD: siop.c,v 1.33 1996/05/12 02:26:26 mhitch Exp $	*/
+/*	$OpenBSD: siop.c,v 1.9 1997/01/16 09:25:26 niklas Exp $	*/
+/*	$NetBSD: siop.c,v 1.35 1996/10/13 03:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

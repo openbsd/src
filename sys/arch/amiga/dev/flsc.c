@@ -1,5 +1,5 @@
-/*	$OpenBSD: flsc.c,v 1.6 1996/11/23 21:45:09 kstailey Exp $	*/
-/*	$NetBSD: flsc.c,v 1.5.4.3 1996/08/05 20:40:35 jtc Exp $	*/
+/*	$OpenBSD: flsc.c,v 1.7 1997/01/16 09:24:04 niklas Exp $	*/
+/*	$NetBSD: flsc.c,v 1.14 1996/12/23 09:10:00 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk

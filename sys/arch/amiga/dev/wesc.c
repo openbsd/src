@@ -1,5 +1,5 @@
-/*	$OpenBSD: wesc.c,v 1.5 1996/11/23 21:45:23 kstailey Exp $	*/
-/*	$NetBSD: wesc.c,v 1.13 1996/04/21 21:12:42 veego Exp $	*/
+/*	$OpenBSD: wesc.c,v 1.6 1997/01/16 09:25:33 niklas Exp $	*/
+/*	$NetBSD: wesc.c,v 1.19 1996/12/23 09:10:30 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

@@ -1,3 +1,4 @@
+/*	$OpenBSD: grfabs_ccreg.h,v 1.2 1997/01/16 09:24:27 niklas Exp $	*/
 /*	$NetBSD: grfabs_ccreg.h,v 1.6 1995/10/05 12:41:19 chopps Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: zbusvar.h,v 1.2 1997/01/16 09:25:36 niklas Exp $	*/
 /*	$NetBSD: zbusvar.h,v 1.1 1994/12/28 09:26:09 chopps Exp $	*/
 
 /*

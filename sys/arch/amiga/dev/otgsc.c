@@ -1,5 +1,5 @@
-/*	$OpenBSD: otgsc.c,v 1.4 1996/11/23 21:45:22 kstailey Exp $	*/
-/*	$NetBSD: otgsc.c,v 1.11 1996/04/21 21:12:16 veego Exp $	*/
+/*	$OpenBSD: otgsc.c,v 1.5 1997/01/16 09:25:08 niklas Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.17 1996/12/23 09:10:27 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

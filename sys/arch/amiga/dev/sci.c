@@ -1,5 +1,5 @@
-/*	$OpenBSD: sci.c,v 1.4 1996/05/29 10:15:40 niklas Exp $	*/
-/*	$NetBSD: sci.c,v 1.17 1996/05/12 02:26:19 mhitch Exp $	*/
+/*	$OpenBSD: sci.c,v 1.5 1997/01/16 09:25:19 niklas Exp $	*/
+/*	$NetBSD: sci.c,v 1.19 1996/10/13 03:07:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

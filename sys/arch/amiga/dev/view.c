@@ -1,5 +1,5 @@
-/*	$OpenBSD: view.c,v 1.2 1996/05/02 06:44:36 niklas Exp $	*/
-/*	$NetBSD: view.c,v 1.13 1996/04/21 21:12:39 veego Exp $	*/
+/*	$OpenBSD: view.c,v 1.3 1997/01/16 09:25:30 niklas Exp $	*/
+/*	$NetBSD: view.c,v 1.16 1996/10/13 03:07:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

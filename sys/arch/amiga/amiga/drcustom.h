@@ -1,6 +1,6 @@
 /* 
- * $OpenBSD: drcustom.h,v 1.3 1996/08/19 00:04:13 niklas Exp $
- * $NetBSD: drcustom.h,v 1.1.4.1 1996/06/21 06:42:44 jtc Exp $
+ * $OpenBSD: drcustom.h,v 1.4 1997/01/16 09:23:19 niklas Exp $
+ * $NetBSD: drcustom.h,v 1.3 1996/09/24 17:11:54 is Exp $
  * 
  * Motherboard addresses for the DraCo.
  *
@@ -66,7 +66,7 @@ struct drioct {
 #define DRCNTRL_FDCINTENA 1
 #define DRCNTRL_KBDDATOUT 2
 #define DRCNTRL_KBDCLKOUT 4
-#define DRCNTRL_WDOGENA 8
+#define DRCNTRL_WDOGDIS 8
 #define DRCNTRL_WDOGDAT 16
 #define DRCNTRL_KBDINTENA 32
 #define DRCNTRL_KBDKBDACK 64

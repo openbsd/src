@@ -1,5 +1,5 @@
-/*	$OpenBSD: genassym.c,v 1.6 1996/05/29 10:14:25 niklas Exp $	*/
-/*	$NetBSD: genassym.c,v 1.26 1996/05/09 20:30:37 is Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.7 1997/01/16 09:23:20 niklas Exp $	*/
+/*	$NetBSD: genassym.c,v 1.29 1996/12/17 07:32:55 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,6 +36,7 @@
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
  */
 
+#include <stdio.h>
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
@@ -43,7 +44,6 @@
 #include <sys/msgbuf.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
-#include <sys/systm.h>
 
 #include <vm/vm.h>
 
@@ -134,6 +134,10 @@ main()
 	printf("#define\tDC_CLEAR %d\n", DC_CLEAR);
 	printf("#define\tCACHE40_ON %d\n", CACHE40_ON);
 	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
+	printf("#define\tCACHE60_ON %d\n", CACHE60_ON);
+	printf("#define\tCACHE60_OFF %d\n", CACHE60_OFF);
+	printf("#define\tIC60_CUBC %d\n", IC60_CUBC);
+	printf("#define\tIC60_CABC %d\n", IC60_CABC);
 	printf("#define\tPG_V %d\n", PG_V);
 	printf("#define\tPG_NV %d\n", PG_NV);
 	printf("#define\tPG_RO %d\n", PG_RO);

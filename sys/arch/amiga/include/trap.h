@@ -1,3 +1,4 @@
+/*	$OpenBSD: trap.h,v 1.2 1997/01/16 09:26:12 niklas Exp $	*/
 /*	$NetBSD: trap.h,v 1.8 1995/02/12 19:19:39 chopps Exp $	*/
 
 #ifndef _MACHINE_TRAP_H_

@@ -1,3 +1,4 @@
+;	$OpenBSD: siop_script.ss,v 1.2 1997/01/16 09:25:29 niklas Exp $
 ;	$NetBSD: siop_script.ss,v 1.3 1995/08/18 15:28:11 chopps Exp $
 
 ;

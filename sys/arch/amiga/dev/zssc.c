@@ -1,5 +1,5 @@
-/*	$OpenBSD: zssc.c,v 1.8 1996/11/23 21:45:25 kstailey Exp $	*/
-/*	$NetBSD: zssc.c,v 1.16 1996/04/21 21:12:45 veego Exp $	*/
+/*	$OpenBSD: zssc.c,v 1.9 1997/01/16 09:25:37 niklas Exp $	*/
+/*	$NetBSD: zssc.c,v 1.22 1996/12/23 09:10:33 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

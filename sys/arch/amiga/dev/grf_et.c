@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_et.c,v 1.1.4.2 1996/06/04 09:01:21 is Exp $	*/
+/*	$OpenBSD: grf_et.c,v 1.5 1997/01/16 09:24:15 niklas Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.8 1996/12/23 09:10:06 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -235,13 +236,13 @@ grfetmatch(pdp, match, auxp)
 	/* Configure either registers or framebuffer in any order */
 	/* as said before, oMniBus does not support ProdID */
 	if (ettype == OMNIBUS) {
-		if (zap->size == 64*1024) {
+		if (zap->size == 64 * 1024) {
 			/* register area */
-			et_regaddr=zap->va;
+			et_regaddr = zap->va;
 		} else {
 			/* memory area */
-			et_fbaddr=zap->va;
-			et_fbsize=zap->size;
+			et_fbaddr = zap->va;
+			et_fbsize = zap->size;
 		}
 	} else {
 		if (zap->prodid == regprod) {
@@ -365,8 +366,8 @@ grfetattach(pdp, dp, auxp)
 
 int
 grfetprint(auxp, pnp)
-	void *auxp;
-	const char   *pnp;
+	void	*auxp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);
@@ -387,33 +388,40 @@ et_boardinit(gp)
 	RegOnpass(ba);
 
 	if (ettype == MERLIN) {
-	  /* Merlin needs some special initialisations */
-	  vgaw(ba, MERLIN_SWITCH_REG, 0);
-	  delay(20000);
-	  vgaw(ba, MERLIN_SWITCH_REG, 8);
-	  delay(20000);
-	  vgaw(ba, MERLIN_SWITCH_REG, 0);
-	  delay(20000);
-	  vgaw(ba, MERLIN_VDAC_DATA, 1);
-	  
-	  vgaw(ba, MERLIN_VDAC_INDEX, 0x00);
-	  vgaw(ba, MERLIN_VDAC_SPRITE,  0xff);
-	  vgaw(ba, MERLIN_VDAC_INDEX, 0x01);
-	  vgaw(ba, MERLIN_VDAC_SPRITE,  0x0f);
-	  vgaw(ba, MERLIN_VDAC_INDEX, 0x02);
-	  vgaw(ba, MERLIN_VDAC_SPRITE,  0x42);
-	  vgaw(ba, MERLIN_VDAC_INDEX, 0x03);
-	  vgaw(ba, MERLIN_VDAC_SPRITE,  0x00);
+		/* Merlin needs some special initialisations */
+		vgaw(ba, MERLIN_SWITCH_REG, 0);
+		delay(20000);
+		vgaw(ba, MERLIN_SWITCH_REG, 8);
+		delay(20000);
+		vgaw(ba, MERLIN_SWITCH_REG, 0);
+		delay(20000);
+		vgaw(ba, MERLIN_VDAC_DATA, 1);
 
-	  vgaw(ba, MERLIN_VDAC_DATA, 0);
+		vgaw(ba, MERLIN_VDAC_INDEX, 0x00);
+		vgaw(ba, MERLIN_VDAC_SPRITE,  0xff);
+		vgaw(ba, MERLIN_VDAC_INDEX, 0x01);
+		vgaw(ba, MERLIN_VDAC_SPRITE,  0x0f);
+		vgaw(ba, MERLIN_VDAC_INDEX, 0x02);
+		vgaw(ba, MERLIN_VDAC_SPRITE,  0x42);
+		vgaw(ba, MERLIN_VDAC_INDEX, 0x03);
+		vgaw(ba, MERLIN_VDAC_SPRITE,  0x00);
+
+		vgaw(ba, MERLIN_VDAC_DATA, 0);
 	}
 
 	
 	/* setup initial unchanging parameters */
 
-	vgaw(ba, GREG_HERCULESCOMPAT, 0x03);
+	vgaw(ba, GREG_HERCULESCOMPAT + ((ettype == DOMINO) ? 0x0fff : 0), 0x03);
 	vgaw(ba, GREG_DISPMODECONTROL, 0xa0);
 	vgaw(ba, GREG_MISC_OUTPUT_W, 0x63);
+
+	if (ettype == DOMINO)
+	{
+		vgaw(ba, CRT_ADDRESS, CRT_ID_VIDEO_CONFIG1);
+		vgaw(ba, CRT_ADDRESS_W + 0x0fff,
+		    0xc0 | vgar(ba, CRT_ADDRESS_R + 0x0fff));
+	}
 
 	WSeq(ba, SEQ_ID_RESET, 0x03);
 	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x21);	/* 8 dot, Display off */
@@ -480,17 +488,17 @@ et_boardinit(gp)
 	    case MERLIN:
 		vgaw(ba, MERLIN_VDAC_INDEX, 0);
 		for (x = 255; x >= 0; x--) {
-		    vgaw(ba, MERLIN_VDAC_COLORS, x);
-		    vgaw(ba, MERLIN_VDAC_COLORS, x);
-		    vgaw(ba, MERLIN_VDAC_COLORS, x);
+			vgaw(ba, MERLIN_VDAC_COLORS, x);
+			vgaw(ba, MERLIN_VDAC_COLORS, x);
+			vgaw(ba, MERLIN_VDAC_COLORS, x);
 		}
 		break;
 	    default:
 		vgaw(ba, VDAC_ADDRESS_W, 0);
 		for (x = 255; x >= 0; x--) {
-		    vgaw(ba, VDAC_DATA, x);
-		    vgaw(ba, VDAC_DATA, x);
-		    vgaw(ba, VDAC_DATA, x);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0), x);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0), x);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0), x);
 		}
 		break;
 	}
@@ -505,16 +513,16 @@ et_boardinit(gp)
 	/* card spezific initialisations */
 	switch(ettype) {
 	    case OMNIBUS:
-		etctype=et_getControllerType(gp);
-		etdtype=et_getDACType(gp);
+		etctype = et_getControllerType(gp);
+		etdtype = et_getDACType(gp);
 		break;
 	    case MERLIN:
-		etctype=ETW32;
-		etdtype=MERLINDAC;
-	break;
+		etctype = ETW32;
+		etdtype = MERLINDAC;
+		break;
 	    case DOMINO:
-		etctype=ET4000;
-		etdtype=SIERRA11483;
+		etctype = ET4000;
+		etdtype = SIERRA11483;
 		break;
 	}
 }
@@ -535,26 +543,26 @@ et_getvmode(gp, vm)
 		vm->depth = etconsole_mode.fy;
 	} else 
 #endif
-        {
-                if (vm->mode_num == 0)
-                        vm->mode_num = (monitor_current - monitor_def) + 1;
-                if (vm->mode_num < 1 || vm->mode_num > monitor_def_max)
-                        return (EINVAL);
-                gv = monitor_def + (vm->mode_num - 1);
-                if (gv->mode_num == 0)
-                        return (EINVAL);
+	{
+		if (vm->mode_num == 0)
+			vm->mode_num = (monitor_current - monitor_def) + 1;
+		if (vm->mode_num < 1 || vm->mode_num > monitor_def_max)
+			return (EINVAL);
+		gv = monitor_def + (vm->mode_num - 1);
+		if (gv->mode_num == 0)
+			return (EINVAL);
 
-                bcopy(gv, vm, sizeof(struct grfvideo_mode));
-        }
+		bcopy(gv, vm, sizeof(struct grfvideo_mode));
+	}
 
-        /* adjust internal values to pixel values */
+	/* adjust internal values to pixel values */
 
-        vm->hblank_start *= 8;
-        vm->hblank_stop *= 8;
-        vm->hsync_start *= 8;
-        vm->hsync_stop *= 8;
-        vm->htotal *= 8;
-        
+	vm->hblank_start *= 8;
+	vm->hblank_stop *= 8;
+	vm->hsync_start *= 8;
+	vm->hsync_stop *= 8;
+	vm->htotal *= 8;
+
 	return (0);
 }
 
@@ -589,13 +597,12 @@ et_off(gp)
 
 int
 et_blank(gp, on)
-        struct grf_softc *gp;
-        int *on;
+	struct grf_softc *gp;
+	int *on;
 {
-        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? 0x01 : 0x21);
-        return(0);
+	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
+	return(0);
 }
-        
 
 /*
  * Change the mode of the display.
@@ -609,7 +616,7 @@ et_mode(gp, cmd, arg, a2, a3)
 	u_long a2;
 	int a3;
 {
-	int     error;
+	int error;
 
 	switch (cmd) {
 	    case GM_GRFON:
@@ -689,7 +696,7 @@ et_ioctl(gp, cmd, data)
 	    case GRFIOCSETMON:
 		return (et_setmonitor(gp, (struct grfvideo_mode *) data));
 
-            case GRFIOCBLANK:
+	    case GRFIOCBLANK:
 		return (et_blank(gp, (int *)data));
 	}
 	return (EINVAL);
@@ -728,19 +735,19 @@ et_setmousepos(gp, data)
 	if (et_cursprite.pos.x == data->x && et_cursprite.pos.y == data->y)
 		return (0);
 
-        /* current and previous real coordinates */
+	/* current and previous real coordinates */
 	rx = data->x - et_cursprite.hot.x;
 	ry = data->y - et_cursprite.hot.y;
 	prx = et_cursprite.pos.x - et_cursprite.hot.x;
 	pry = et_cursprite.pos.y - et_cursprite.hot.y;
 
-        /* if we are/were on an edge, create (un)shifted bitmap --
-         * ripped out optimization (not extremely worthwhile,
-         * and kind of buggy anyhow).
-         */
+	/* if we are/were on an edge, create (un)shifted bitmap --
+	 * ripped out optimization (not extremely worthwhile,
+	 * and kind of buggy anyhow).
+	 */
 
-        /* do movement, save position */
-        et_writesprpos(ba, rx < 0 ? 0 : rx, ry < 0 ? 0 : ry);
+	/* do movement, save position */
+	et_writesprpos(ba, rx < 0 ? 0 : rx, ry < 0 ? 0 : ry);
 	et_cursprite.pos.x = data->x;
 	et_cursprite.pos.y = data->y;
 
@@ -785,18 +792,18 @@ et_setmonitor(gp, gv)
 {
 	struct grfvideo_mode *md;
 
-        if (!et_mondefok(gv))
-                return(EINVAL);
+	if (!et_mondefok(gv))
+		return(EINVAL);
 
 #ifdef TSENGCONSOLE
 	/* handle interactive setting of console mode */
 	if (gv->mode_num == 255) {
 		bcopy(gv, &etconsole_mode.gv, sizeof(struct grfvideo_mode));
-                etconsole_mode.gv.hblank_start /= 8;
-                etconsole_mode.gv.hblank_stop /= 8;
-                etconsole_mode.gv.hsync_start /= 8;
-                etconsole_mode.gv.hsync_stop /= 8;
-                etconsole_mode.gv.htotal /= 8;
+		etconsole_mode.gv.hblank_start /= 8;
+		etconsole_mode.gv.hblank_stop /= 8;
+		etconsole_mode.gv.hsync_start /= 8;
+		etconsole_mode.gv.hsync_stop /= 8;
+		etconsole_mode.gv.htotal /= 8;
 		etconsole_mode.rows = gv->disp_height / etconsole_mode.fy;
 		etconsole_mode.cols = gv->disp_width / etconsole_mode.fx;
 		if (!(gp->g_flags & GF_GRFON))
@@ -809,13 +816,13 @@ et_setmonitor(gp, gv)
 	md = monitor_def + (gv->mode_num - 1);
 	bcopy(gv, md, sizeof(struct grfvideo_mode));
 
-        /* adjust pixel oriented values to internal rep. */
+	/* adjust pixel oriented values to internal rep. */
 
-        md->hblank_start /= 8;
-        md->hblank_stop /= 8;
-        md->hsync_start /= 8;
-        md->hsync_stop /= 8;
-        md->htotal /= 8;
+	md->hblank_start /= 8;
+	md->hblank_stop /= 8;
+	md->hsync_start /= 8;
+	md->hsync_stop /= 8;
+	md->htotal /= 8;
 
 	return (0);
 }
@@ -827,9 +834,9 @@ et_getcmap(gfp, cmap)
 	struct grf_colormap *cmap;
 {
 	volatile unsigned char *ba;
-	u_char  red[256], green[256], blue[256], *rp, *gp, *bp;
-	short   x;
-	int     error;
+	u_char	red[256], green[256], blue[256], *rp, *gp, *bp;
+	short	x;
+	int	error;
 
 	if (cmap->count == 0 || cmap->index >= 256)
 		return 0;
@@ -855,11 +862,11 @@ et_getcmap(gfp, cmap)
 		} while (x-- > 0);
 		break;
 	    default:
-		vgaw(ba, VDAC_ADDRESS_W, cmap->index);
+		vgaw(ba, VDAC_ADDRESS_R+((ettype==DOMINO)?0x0fff:0), cmap->index);
 		do {
-			*rp++ = vgar(ba, VDAC_DATA) << etcmap_shift;
-			*gp++ = vgar(ba, VDAC_DATA) << etcmap_shift;
-			*bp++ = vgar(ba, VDAC_DATA) << etcmap_shift;
+			*rp++ = vgar(ba, VDAC_DATA+((ettype==DOMINO)?0x0fff:0)) << etcmap_shift;
+			*gp++ = vgar(ba, VDAC_DATA+((ettype==DOMINO)?0x0fff:0)) << etcmap_shift;
+			*bp++ = vgar(ba, VDAC_DATA+((ettype==DOMINO)?0x0fff:0)) << etcmap_shift;
 		} while (x-- > 0);
 		break;
 	}
@@ -880,9 +887,9 @@ et_putcmap(gfp, cmap)
 	struct grf_colormap *cmap;
 {
 	volatile unsigned char *ba;
-	u_char  red[256], green[256], blue[256], *rp, *gp, *bp;
-	short   x;
-	int     error;
+	u_char	red[256], green[256], blue[256], *rp, *gp, *bp;
+	short	x;
+	int	error;
 
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
@@ -908,7 +915,7 @@ et_putcmap(gfp, cmap)
 	bp = blue + cmap->index;
 
 	switch(ettype){
-	case MERLIN:
+	    case MERLIN:
 		vgaw(ba, MERLIN_VDAC_INDEX, cmap->index);
 		do {
 			vgaw(ba, MERLIN_VDAC_COLORS, *rp++);
@@ -916,12 +923,15 @@ et_putcmap(gfp, cmap)
 			vgaw(ba, MERLIN_VDAC_COLORS, *bp++);
 		} while (x-- > 0);
 		break;
-	default:
+	    default:
 		vgaw(ba, VDAC_ADDRESS_W, cmap->index);
 		do {
-			vgaw(ba, VDAC_DATA, *rp++ >> etcmap_shift);
-			vgaw(ba, VDAC_DATA, *gp++ >> etcmap_shift);
-			vgaw(ba, VDAC_DATA, *bp++ >> etcmap_shift);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
+			    *rp++ >> etcmap_shift);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
+			    *gp++ >> etcmap_shift);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
+			    *bp++ >> etcmap_shift);
 		} while (x-- > 0);
 		break;
 	}
@@ -964,14 +974,14 @@ static u_char et_clockdividers[ET_NUMCLOCKS] = {
 };
 
 static u_int et_clockfreqs[ET_NUMCLOCKS] = {
-	  6293750,  7080500,  7875000,  8125000,
-	  9000000,  9375000, 10000000, 11225000,
-	 12587500, 14161000, 15750000, 16250000,
-	 18000000, 18750000, 20000000, 22450000,
-	 25175000, 28322000, 31500000, 32500000,
-	 36000000, 37500000, 40000000, 44900000,
-	 50350000, 56644000, 63000000, 65000000,
-	 72000000, 75000000, 80000000, 89800000
+	 6293750,  7080500,  7875000,  8125000,
+	 9000000,  9375000, 10000000, 11225000,
+	12587500, 14161000, 15750000, 16250000,
+	18000000, 18750000, 20000000, 22450000,
+	25175000, 28322000, 31500000, 32500000,
+	36000000, 37500000, 40000000, 44900000,
+	50350000, 56644000, 63000000, 65000000,
+	72000000, 75000000, 80000000, 89800000
 };
 
 
@@ -987,7 +997,7 @@ et_CompFQ(fq, num, denom)
 		if (fq <= et_clockfreqs[i++]) {
 			break;
 		}
-	}	
+	}
 
 	*num = et_clocks[--i];
 	*denom = et_clockdividers[i];
@@ -1000,25 +1010,24 @@ int
 et_mondefok(gv)
 	struct grfvideo_mode *gv;
 {
-        
 	if (gv->mode_num < 1 || gv->mode_num > monitor_def_max)
-                if (gv->mode_num != 255 || gv->depth != 4)
-                        return(0);
+		if (gv->mode_num != 255 || gv->depth != 4)
+			return(0);
 
 	switch (gv->depth) {
 	    case 4:
-                if (gv->mode_num != 255)
-                        return(0);
+		if (gv->mode_num != 255)
+			return(0);
 	    case 1:
 	    case 8:
 	    case 15:
 	    case 16:
 	    case 24:
-                break;
+		break;
 	    default:
 		return (0);
 	}
-        return (1);
+	return (1);
 }
 
 
@@ -1191,18 +1200,18 @@ et_load_mon(gp, md)
 	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);
 
 	WCrt(ba, CRT_ID_OVERFLOW_HIGH,
-		((VBS & 0x400) ? 0x01 : 0x00) |
-		((VT  & 0x400) ? 0x02 : 0x00) |
-		((VDE & 0x400) ? 0x04 : 0x00) |
-		((VSS & 0x400) ? 0x08 : 0x00) |
-		0x10 |
-		(LACE ? 0x80 : 0x00));
+	    ((VBS & 0x400) ? 0x01 : 0x00) |
+	    ((VT  & 0x400) ? 0x02 : 0x00) |
+	    ((VDE & 0x400) ? 0x04 : 0x00) |
+	    ((VSS & 0x400) ? 0x08 : 0x00) |
+	    0x10 |
+	    (LACE ? 0x80 : 0x00));
 
-        WCrt(ba, CRT_ID_HOR_OVERFLOW,
-                ((HT  & 0x100) ? 0x01 : 0x00) |
-                ((HBS & 0x100) ? 0x04 : 0x00) |
-                ((HSS & 0x100) ? 0x10 : 0x00)
-        );
+	WCrt(ba, CRT_ID_HOR_OVERFLOW,
+	    ((HT  & 0x100) ? 0x01 : 0x00) |
+	    ((HBS & 0x100) ? 0x04 : 0x00) |
+	    ((HSS & 0x100) ? 0x10 : 0x00)
+	);
 
 	/* depth dependent stuff */
 
@@ -1381,9 +1390,12 @@ et_inittextmode(gp)
 		for (z = 0; z < 256; z++) {
 			y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
 	    
-			vgaw(ba, VDAC_DATA, etconscolors[y][0] >> etcmap_shift);
-			vgaw(ba, VDAC_DATA, etconscolors[y][1] >> etcmap_shift);
-			vgaw(ba, VDAC_DATA, etconscolors[y][2] >> etcmap_shift);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
+			    etconscolors[y][0] >> etcmap_shift);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
+			    etconscolors[y][1] >> etcmap_shift);
+			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
+			    etconscolors[y][2] >> etcmap_shift);
 		}
 		break;
 	}
@@ -1417,13 +1429,13 @@ et_getControllerType(gp)
 
 	*((unsigned long *)mmu) = 0;
 	*(mem + 0x13) = 0x38;
- 
+
 	*mmu = 0xff;
 
 	/* hide ACL */
 	WIma(ba, IMA_PORTCONTROL, 0x00);
 	WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xd3);
- 
+
 	return((*mem == 0xff) ? ETW32 : ET4000);
 }
 
@@ -1440,55 +1452,52 @@ et_getDACType(gp)
 
 	/* check for Sierra SC 15025 */
 
-  if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR));
-  vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
+	/* We MUST do 4 HW reads to switch into command mode */
+	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+		vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
 
-  vgaw(ba, VDAC_XINDEX, 9);
-  check.cc[0]=vgar(ba, VDAC_XDATA);
-  vgaw(ba, VDAC_XINDEX, 10);
-  check.cc[1]=vgar(ba, VDAC_XDATA);
-  vgaw(ba, VDAC_XINDEX, 11);
-  check.cc[2]=vgar(ba, VDAC_XDATA);
-  vgaw(ba, VDAC_XINDEX, 12);
-  check.cc[3]=vgar(ba, VDAC_XDATA);
-  
-  if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR));
-  vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
+	vgaw(ba, VDAC_XINDEX, 9);
+	check.cc[0] = vgar(ba, VDAC_XDATA);
+	vgaw(ba, VDAC_XINDEX, 10);
+	check.cc[1] = vgar(ba, VDAC_XDATA);
+	vgaw(ba, VDAC_XINDEX, 11);
+	check.cc[2] = vgar(ba, VDAC_XDATA);
+	vgaw(ba, VDAC_XINDEX, 12);
+	check.cc[3] = vgar(ba, VDAC_XDATA);
 
-  if(check.tt == 0x533ab141){
-    if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR));
-    vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
-   
-    /* switch to 8 bits per color */
-    vgaw(ba, VDAC_XINDEX, 8);
-    vgaw(ba, VDAC_XDATA, 1);
-    /* do not shift color values */
-    etcmap_shift = 0;
-    
-    if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR)); if(vgar(ba, HDR));
-    vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
-    
-    vgaw(ba, VDAC_MASK, 0xff);
-    return(SIERRA15025);
-  }
+	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+		vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
 
-  /* check for MUSIC DAC */
-  
-  if(vgar(ba, HDR));	/* We MUST do 4 HW reads to switch into command mode */
-  if(vgar(ba, HDR));
-  if(vgar(ba, HDR));
-  if(vgar(ba, HDR));
+	if (check.tt == 0x533ab141) {
+		if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+			vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
 
-  vgaw(ba, VDAC_COMMAND, 0x02); /* set some strange MUSIC mode (???) */
-  
-  vgaw(ba, VDAC_XINDEX, 0x01);
-  if(vgar(ba, VDAC_XDATA) == 0x01){
-    /* shift color values by 2 */
-    etcmap_shift = 2;
+		/* switch to 8 bits per color */
+		vgaw(ba, VDAC_XINDEX, 8);
+		vgaw(ba, VDAC_XDATA, 1);
+		/* do not shift color values */
+		etcmap_shift = 0;
 
-    vgaw(ba, VDAC_MASK, 0xff);
-    return(MUSICDAC);
-  }
+		if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+			vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
+
+		vgaw(ba, VDAC_MASK, 0xff);
+		return (SIERRA15025);
+	}
+
+	/* check for MUSIC DAC */
+
+	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+		vgaw(ba, VDAC_COMMAND, 0x02);	/* set some strange MUSIC mode (???) */
+
+	vgaw(ba, VDAC_XINDEX, 0x01);
+	if (vgar(ba, VDAC_XDATA) == 0x01) {
+		/* shift color values by 2 */
+		etcmap_shift = 2;
+
+		vgaw(ba, VDAC_MASK, 0xff);
+		return (MUSICDAC);
+}
 
 	/*
 	 * nothing else found, so let us pretend it is a stupid
@@ -1497,9 +1506,9 @@ et_getDACType(gp)
 
 	/* shift color values by 2 */
 	etcmap_shift = 2;
- 
+
 	vgaw(ba, VDAC_MASK, 0xff);
-	return(SIERRA11483);  
+	return(SIERRA11483);
 }
 
 #endif /* NGRFET */

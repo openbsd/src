@@ -1,4 +1,5 @@
-/*	$NetBSD: if_qnreg.h,v 1.1.2.1 1995/11/10 16:39:14 chopps Exp $	*/
+/*	$OpenBSD: if_qnreg.h,v 1.3 1997/01/16 09:24:48 niklas Exp $	*/
+/*	$NetBSD: if_qnreg.h,v 1.2 1995/11/30 00:57:04 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen

@@ -1,4 +1,5 @@
-/*	$NetBSD: grfioctl.h,v 1.11.6.1 1996/06/04 10:22:00 is Exp $	*/
+/*	$OpenBSD: grfioctl.h,v 1.3 1997/01/16 09:24:29 niklas Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.12 1996/06/03 18:55:08 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

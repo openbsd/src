@@ -1,5 +1,5 @@
-/*	$OpenBSD: device.h,v 1.3 1996/11/23 21:45:04 kstailey Exp $	*/
-/*	$NetBSD: device.h,v 1.5 1996/04/21 21:06:57 veego Exp $	*/
+/*	$OpenBSD: device.h,v 1.4 1997/01/16 09:23:17 niklas Exp $	*/
+/*	$NetBSD: device.h,v 1.6 1996/08/27 21:54:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

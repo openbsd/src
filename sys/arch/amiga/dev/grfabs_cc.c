@@ -1,5 +1,5 @@
-/*	$OpenBSD: grfabs_cc.c,v 1.4 1996/08/23 18:52:55 niklas Exp $	*/
-/*	$NetBSD: grfabs_cc.c,v 1.12.4.1 1996/05/28 20:46:04 is Exp $	*/
+/*	$OpenBSD: grfabs_cc.c,v 1.5 1997/01/16 09:24:25 niklas Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.15 1996/10/13 03:07:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

@@ -1,5 +1,5 @@
-#	$OpenBSD: DRACO,v 1.7 1996/12/11 23:06:34 niklas Exp $
-#	$NetBSD: DRACO,v 1.2.4.2 1996/09/06 00:28:31 jtc Exp $
+#	$OpenBSD: DRACO,v 1.8 1997/01/16 09:23:35 niklas Exp $
+#	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -23,10 +23,6 @@ option		DRACO
 option		"M68060"	# support for 060
 option		"M060SP"	# MC68060 software support (Required for 060)
 option		FPCOPROC	# Support for MC6888[12] (Required)
-
-#
-# pagers:
-#
 
 option		SWAPPAGER	# Pager for processes (Required)
 option		DEVPAGER	# Pager for devices (Required)
@@ -70,7 +66,7 @@ option		MSDOSFS		# MS-DOS filesystem
 #
 # Compatability options for various existing systems
 #
-#option		"COMPAT_10"	# compatability with older NetBSD release
+option		COMPAT_12
 #option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
 #option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 option		"COMPAT_NOMID"	# allow nonvalid machine id executables
@@ -95,7 +91,6 @@ option		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 #
 # Misc. debuging options
 #
-option		PANICWAIT	# Require keystroke to dump/reboot
 option		DEBUG		# Add debugging statements
 option		DDB		# Kernel debugger
 #option		SYSCALL_DEBUG	# debug all syscalls.
@@ -156,8 +151,10 @@ scsibus*	at drsc0
 # will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
-ss*	at scsibus? target ? lun ?	# scsi scanner
 cd*	at scsibus? target ? lun ?	# scsi cd's
+ss*	at scsibus? target ? lun ?	# scsi scanner
+ch*	at scsibus? target ? lun ?	# scsi autochangers
+uk*	at scsibus? target ? lun ?	# scsi unknown
 
 pseudo-device	pty 16			# pseudo terminals
 pseudo-device	loop			# network loopback

@@ -1,6 +1,6 @@
-/*	$OpenBSD: bzsc.c,v 1.4 1996/11/23 21:45:06 kstailey Exp $	*/
+/*	$OpenBSD: bzsc.c,v 1.5 1997/01/16 09:23:48 niklas Exp $	*/
 
-/*	$NetBSD: bzsc.c,v 1.7 1996/04/21 21:10:52 veego Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.14 1996/12/23 09:09:53 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -59,7 +59,7 @@
 #include <amiga/dev/bzscreg.h>
 #include <amiga/dev/bzscvar.h>
 
-int  bzscprint  __P((void *auxp, const char *)); 
+int  bzscprint  __P((void *auxp, const char *));
 void bzscattach __P((struct device *, struct device *, void *));
 int  bzscmatch  __P((struct device *, void *, void *));
 
@@ -104,15 +104,26 @@ bzscmatch(pdp, match, auxp)
 	void *match, *auxp;
 {
 	struct zbus_args *zap;
+	vu_char *ta;
 
 	if (!is_a1200())
 		return(0);
 
 	zap = auxp;
-	if (zap->manid == 0x2140 && zap->prodid == 11)
-		return(1);
+	if (zap->manid != 0x2140 || zap->prodid != 11)
+		return(0);
 
-	return(0);
+	ta = (vu_char *)(((char *)zap->va)+0x10010);
+	if (badbaddr((caddr_t)ta))
+		return(0);
+
+	*ta = 0;
+	*ta = 1;
+	DELAY(5);
+	if (*ta != 1)
+		return(0);
+
+	return(1);
 }
 
 void
@@ -336,7 +347,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 	if (l < 512)
 		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
 	else if (
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 		 ((mmutype == MMU_68040) && ((vm_offset_t)p >= 0xFFFC0000)) &&
 #endif
 		 ((vm_offset_t)p >= 0xFF000000)) {

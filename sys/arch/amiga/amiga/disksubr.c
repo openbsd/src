@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.7 1996/12/20 16:48:09 niklas Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.25 1996/04/30 05:00:51 mhitch Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 1997/01/16 09:23:18 niklas Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

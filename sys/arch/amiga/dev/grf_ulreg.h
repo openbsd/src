@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_ulreg.h,v 1.3 1995/12/31 01:22:03 chopps Exp $	*/
+/*	$OpenBSD: grf_ulreg.h,v 1.3 1997/01/16 09:24:22 niklas Exp $	*/
+/*	$NetBSD: grf_ulreg.h,v 1.4 1996/07/08 13:28:42 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ignatios Souvatzis
@@ -14,7 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Lutz Vieweg.
+ *      This product includes software developed by Ignatios Souvatzis
+ *      for the NetBSD project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -35,7 +37,7 @@
 
 struct gspregs {
 	/*
-	 * alas, they didn't invert the A1 bit, so be have to write the 
+	 * alas, they didn't invert the A1 bit, so we have to write the 
 	 * address pointer in two parts
 	 */
 	__volatile u_short hstadrl;

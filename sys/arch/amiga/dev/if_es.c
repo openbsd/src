@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_es.c,v 1.9 1996/05/09 22:40:01 niklas Exp $	*/
-/*	$NetBSD: if_es.c,v 1.13 1996/05/07 00:46:44 thorpej Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.10 1997/01/16 09:24:43 niklas Exp $	*/
+/*	$NetBSD: if_es.c,v 1.16 1996/12/23 09:10:17 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -58,6 +58,11 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #include <machine/cpu.h>
@@ -983,6 +988,23 @@ esioctl(ifp, command, data)
 			esinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
+#endif
+#ifdef NS
+		case AF_NS:
+		    {
+			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host =
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+			else
+				bcopy(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
+			/* Set new address. */
+			esinit(sc);
+			break;
+		    }
 #endif
 		default:
 			esinit(sc);

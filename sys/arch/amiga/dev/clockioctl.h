@@ -1,3 +1,4 @@
+/*	$OpenBSD: clockioctl.h,v 1.2 1997/01/16 09:23:53 niklas Exp $	*/
 /*	$NetBSD: clockioctl.h,v 1.2 1994/10/26 02:02:54 cgd Exp $	*/
 
 /*

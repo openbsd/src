@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ed.c,v 1.8 1996/10/04 15:11:40 niklas Exp $	*/
-/*	$NetBSD: if_ed.c,v 1.21 1996/05/07 00:46:41 thorpej Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.9 1997/01/16 09:24:40 niklas Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.24 1996/12/23 09:10:16 veego Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -38,6 +38,11 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -885,6 +890,24 @@ ed_ioctl(ifp, command, data)
 			ed_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
+#endif
+#ifdef NS
+		/* XXX - This code is probably wrong. */
+		case AF_NS:
+		    {
+			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host =
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+			else
+				bcopy(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
+			/* Set new address. */
+			ed_init(sc);
+			break;
+		    }
 #endif
 		default:
 			ed_init(sc);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: us-kbdmap.c,v 1.2 1996/10/04 22:35:42 niklas Exp $	*/
-/*	$NetBSD: us-kbdmap.c,v 1.3.6.1 1996/06/08 16:04:03 is Exp $	*/
+/*	$OpenBSD: us-kbdmap.c,v 1.3 1997/01/16 09:27:13 niklas Exp $	*/
+/*	$NetBSD: us-kbdmap.c,v 1.4 1996/06/08 15:29:04 is Exp $	*/
 
 #include "../../../dev/kbdmap.h"
 

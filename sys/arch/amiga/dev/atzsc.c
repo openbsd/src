@@ -1,5 +1,5 @@
-/*	$OpenBSD: atzsc.c,v 1.4 1996/11/23 21:45:06 kstailey Exp $	*/
-/*	$NetBSD: atzsc.c,v 1.16 1996/04/21 21:10:51 veego Exp $	*/
+/*	$OpenBSD: atzsc.c,v 1.5 1997/01/16 09:23:45 niklas Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.22 1996/12/23 09:09:52 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

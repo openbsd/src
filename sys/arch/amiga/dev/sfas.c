@@ -1,6 +1,5 @@
-/*    $OpenBSD: sfas.c,v 1.5 1996/05/02 06:44:31 niklas Exp $  */
-
-/*	$NetBSD: sfas.c,v 1.9 1996/04/23 22:53:23 veego Exp $	*/
+/*    $OpenBSD: sfas.c,v 1.6 1997/01/16 09:25:25 niklas Exp $  */
+/*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -369,7 +368,7 @@ sfas_scsicmd(struct scsi_xfer *xs)
  *  2) Out data source/destination is not in the u-stack area.
  */
 	if (!(flags & SCSI_POLL) && (
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	    ((mmutype == MMU_68040) && ((vm_offset_t)xs->data >= 0xFFFC0000)) &&
 #endif
 		       ((vm_offset_t)xs->data >= 0xFF000000))) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.8 1996/08/23 18:53:07 niklas Exp $  */
-/*	$NetBSD: ite.c,v 1.41.4.1 1996/06/06 04:53:13 mhitch Exp $	*/
+/*	$OpenBSD: ite.c,v 1.9 1997/01/16 09:24:50 niklas Exp $  */
+/*	$NetBSD: ite.c,v 1.47 1996/12/23 09:10:20 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,7 +163,7 @@ itematch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
+	struct cfdata *cfp = match;
 	struct grf_softc *gp;
 	int maj;
 	
@@ -172,7 +172,7 @@ itematch(pdp, match, auxp)
 	 * all that our mask allows (more than enough no one 
 	 * has > 32 monitors for text consoles on one machine)
 	 */
-	if (cdp->cf_unit >= sizeof(ite_confunits) * NBBY)
+	if (cfp->cf_unit >= sizeof(ite_confunits) * NBBY)
 		return(0);
 	/*
 	 * XXX
@@ -183,7 +183,7 @@ itematch(pdp, match, auxp)
 	for(maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == iteopen)
 			break;
-	gp->g_itedev = makedev(maj, cdp->cf_unit);
+	gp->g_itedev = makedev(maj, cfp->cf_unit);
 	return(1);
 }
 

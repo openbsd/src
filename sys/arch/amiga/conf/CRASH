@@ -1,4 +1,4 @@
-#	$OpenBSD: CRASH,v 1.6 1996/12/11 23:06:33 niklas Exp $
+#	$OpenBSD: CRASH,v 1.7 1997/01/16 09:23:34 niklas Exp $
 
 #
 # The first OpenBSD/Amiga "user" Neil Brewitt's GG2 + NE2000 equipped A3000
@@ -21,7 +21,6 @@ option		"M68030"	# support for 030
 option		FPCOPROC	# Support for MC6888[12] (Required)
 
 option		SWAPPAGER	# Pager for processes (Required)
-option		VNODEPAGER	# Pager for vnodes (Required)
 option		DEVPAGER	# Pager for devices (Required)
 
 #

@@ -1,3 +1,4 @@
+/*	$OpenBSD: dumpfont.c,v 1.2 1997/01/16 09:26:58 niklas Exp $	*/
 /*	$NetBSD: dumpfont.c,v 1.5 1994/10/26 02:06:57 cgd Exp $	*/
 
 /*

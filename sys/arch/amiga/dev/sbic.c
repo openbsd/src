@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbic.c,v 1.7 1996/05/29 10:15:38 niklas Exp $	*/
-/*	$NetBSD: sbic.c,v 1.25 1996/05/12 02:26:10 mhitch Exp $	*/
+/*	$OpenBSD: sbic.c,v 1.8 1997/01/16 09:25:16 niklas Exp $	*/
+/*	$NetBSD: sbic.c,v 1.28 1996/10/13 03:07:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1791,7 +1791,7 @@ sbicgo(dev, xs)
 	/*
 	 * push the data cache ( I think this won't work (EH))
 	 */
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040 && usedma && count) {
 		dma_cachectl(addr, count);
 		if (((u_int)addr & 0xF) || (((u_int)addr + count) & 0xF))
@@ -2279,10 +2279,11 @@ sbicnextstate(dev, csr, asr)
 		/*
 		 * check for overlapping cache line, flush if so
 		 */
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 		if (dev->sc_flags & SBICF_DCFLUSH) {
 #if 0
-			printf("sbic: 68040 DMA cache flush needs fixing? %x:%x\n",
+			printf("sbic: 68040/68060 DMA cache flush needs "
+			    "fixing? %x:%x\n",
 			    dev->sc_xs->data, dev->sc_xs->datalen);
 #endif
 		}
@@ -2558,10 +2559,12 @@ sbicnextstate(dev, csr, asr)
 			/*
 			 * check for overlapping cache line, flush if so
 			 */
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
+
 			if (dev->sc_flags & SBICF_DCFLUSH) {
 #if 0
-				printf("sibc: 68040 DMA cache flush needs fixing? %x:%x\n",
+				printf("sbic: 68040/060 DMA cache flush needs "
+				    "fixing? %x:%x\n",
 				    dev->sc_xs->data, dev->sc_xs->datalen);
 #endif
 			}

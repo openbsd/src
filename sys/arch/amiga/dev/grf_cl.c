@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cl.c,v 1.8 1996/11/24 20:23:42 niklas Exp $	*/
-/*      $NetBSD: grf_cl.c,v 1.11.4.1 1996/05/27 10:50:40 is Exp $        */
+/*	$OpenBSD: grf_cl.c,v 1.9 1997/01/16 09:24:10 niklas Exp $	*/
+/*      $NetBSD: grf_cl.c,v 1.18 1996/12/23 09:10:04 veego Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -161,7 +161,7 @@ static void *cl_fbaddr = 0;	/* framebuffer */
 static void *cl_regaddr = 0;	/* registers */
 static int cl_fbsize;		/* framebuffer size */
 
-/* current sprite info, if you add summport for multiple boards
+/* current sprite info, if you add support for multiple boards
  * make this an array or something
  */
 struct grf_spriteinfo cl_cursprite;
@@ -358,8 +358,8 @@ grfclattach(pdp, dp, auxp)
 
 int
 grfclprint(auxp, pnp)
-	void *auxp;
-	const char   *pnp;
+	void	*auxp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);
@@ -553,7 +553,7 @@ cl_blank(gp, on)
         struct grf_softc *gp;
         int *on;
 {
-        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? 0x01 : 0x21);
+        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
         return(0);
 }
         
@@ -1281,7 +1281,7 @@ cl_load_mon(gp, md)
 		sr15 = ((cl_fbsize / 0x100000 == 2) ? 0x38 : 0xb8);
 	    WSeq(ba, SEQ_ID_CONF_RBACK, 0x00);
 	} else {
-		sr15 = (TEXT || (gv->depth == 1)) ? 0x90 : 0xb0;
+		sr15 = (TEXT || (gv->depth == 1)) ? 0xd0 : 0xb0;
 	}
 	WSeq(ba, SEQ_ID_DRAM_CNTL, sr15);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);

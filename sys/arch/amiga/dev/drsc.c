@@ -1,4 +1,5 @@
-/*	$NetBSD: drsc.c,v 1.2 1996/05/19 19:03:01 is Exp $	*/
+/*	$OpenBSD: drsc.c,v 1.3 1997/01/16 09:23:58 niklas Exp $	*/
+/*	$NetBSD: drsc.c,v 1.9 1996/12/23 09:09:57 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -97,8 +98,9 @@ drscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = (struct cfdata *)match;
-	if (is_draco() && (cdp->cf_unit == 0))
+	struct cfdata *cfp = (struct cfdata *)match;
+
+	if (is_draco() && matchname(auxp, "drsc") && (cfp->cf_unit == 0))
 		return(1);
 	return(0);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: par.c,v 1.3 1996/05/02 06:44:24 niklas Exp $	*/
-/*	$NetBSD: par.c,v 1.13 1996/04/21 21:12:18 veego Exp $	*/
+/*	$OpenBSD: par.c,v 1.4 1997/01/16 09:25:09 niklas Exp $	*/
+/*	$NetBSD: par.c,v 1.16 1996/12/23 09:10:28 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.7 1996/11/28 23:33:03 niklas Exp $	*/
-/*	$NetBSD: trap.c,v 1.47 1996/05/10 14:31:08 is Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 1997/01/16 09:23:30 niklas Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 1996/11/13 06:22:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -481,7 +481,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		if (type == T_MMUFLT)
 			return;
 		userret(p, fp->f_pc, sticks); 
-		reutrn;
+		return;
 	}
 #else /* use hacky 386bsd_code */
 	if (rv == KERN_SUCCESS) {

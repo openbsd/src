@@ -1,3 +1,4 @@
+/*	$OpenBSD: gtscreg.h,v 1.2 1997/01/16 09:24:31 niklas Exp $	*/
 /*	$NetBSD: gtscreg.h,v 1.2 1994/10/26 02:03:39 cgd Exp $	*/
 
 /*

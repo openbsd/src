@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.12 1996/11/23 23:19:27 kstailey Exp $	*/
-/*	$NetBSD: locore.s,v 1.56.2.2 1996/06/14 11:20:45 is Exp $	*/
+/*	$OpenBSD: locore.s,v 1.13 1997/01/16 09:23:22 niklas Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@ L_base:
 #include <amiga/amiga/custom.h>
 #include "ser.h"
 #include "fd.h"
-	
+
 #ifdef DRACO
 #include <amiga/amiga/drcustom.h>
 #endif
@@ -71,7 +71,7 @@ L_base:
 #define INTREQRADDR(ar)	movl	_INTREQRaddr,ar
 #define INTREQWADDR(ar)	movl	_INTREQWaddr,ar
 #define INTENAWADDR(ar) movl	_INTENAWaddr,ar
-#define	INTENARADDR(ar)	movl	_INTENARaddr,ar
+#define INTENARADDR(ar)	movl	_INTENARaddr,ar
 
 	.text
 /*
@@ -130,10 +130,11 @@ _addrerr:
 	btst	#2,d0			| branch prediction error?
 	jeq	Lnobpe			
 	movc	cacr,d2
-	orl	#0x00400000,d2		| clear all branch cache entries
+	orl	#IC60_CABC,d2		| clear all branch cache entries
 	movc	d2,cacr
 	movl	d0,d1
 	andl	#0x7ffd,d1
+	addql	#1,L60bpe
 	jeq	Lbpedone
 Lnobpe:
 	movl	d0,sp@			| code is FSLW now.
@@ -220,18 +221,18 @@ Lbe10:
 Lbe10a:
 	ptestr	d0,a0@,#7		| do a table search
 	pmove	psr,sp@			| save result
-	movl	sp@,d1
-	btst	#26,d1			| invalid (incl. limit viol. and berr)?
+	movb	sp@,d1
+	btst	#2,d1			| invalid (incl. limit viol. and berr)?
 	jeq	Lmightnotbemerr		| no -> wp check
-	btst	#31,d1			| is it MMU table berr?
+	btst	#7,d1			| is it MMU table berr?
 	jeq	Lismerr			| no, must be fast
 	jra	Lisberr1		| real bus err needs not be fast.
 Lmightnotbemerr:
-	btst	#27,d1			| write protect bit set?
+	btst	#3,d1			| write protect bit set?
 	jeq	Lisberr1		| no: must be bus error
-					| ssw is in low word of d1
-	andw	#0xc0,d1		| Write protect is set on page:
-	cmpw	#0x40,d1		| was it read cycle?
+	movl	sp@,d0			| ssw into low word of d0
+	andw	#0xc0,d0		| Write protect is set on page:
+	cmpw	#0x40,d0		| was it read cycle?
 	jeq	Lisberr1		| yes, was not WPE, must be bus err
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
@@ -543,8 +544,7 @@ _DraCoLev2intr:
 
 	CIAAADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
-	tstb	d0			| check if CIAB was source
-	jeq	Ldrintrcommon
+	jge     Ldrintrcommon		| CIAA IR not set, go through isr chain
 	movel	_draco_intpen,a0
 |	andib	#4,a0@
 |XXX this would better be 
@@ -564,6 +564,41 @@ Ldraciaend:
 	moveml	sp@+,#0x0303
 	addql	#1,_cnt+V_INTR
 	jra	rei
+
+/* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
+	.globl _DraCoLev1intr
+	.globl _amiga_clk_interval
+_DraCoLev1intr:
+	moveml	#0xC0C0,sp@-
+	movl	_draco_ioct,a0
+	btst	#5,a0@(7)
+	jeq	Ldrintrcommon
+	btst	#4,a0@(7)	| this only happens during autoconfiguration,
+	jeq	Ldrintrcommon	| so test last.
+	movw	#PSL_HIGHIPL,sr	| run clock at high ipl
+Ldrclockretry:
+	lea	sp@(16),a1	| get pointer to PS
+	movl	a1,sp@-		| push pointer to PS, PC
+	jbsr	_hardclock
+	addql	#4,sp		| pop params
+	addql	#1,_intrcnt+32	| add another system clock interrupt
+
+	movl	_draco_ioct,a0
+	tstb	a0@(9)		| latch timer value
+	movw	a0@(11),d0	| can't use movpw here, might be 68060
+	movb	a0@(13),d0
+	addw	_amiga_clk_interval+2,d0
+	movb	d0,a0@(13)	| low byte: latch write value
+	movw	d0,a0@(11)	| ...and write it into timer
+	tstw	d0		| already positive?
+	jcs	Ldrclockretry	| we lost more than one tick, call us again.
+
+	clrb	a0@(9)		| reset timer irq
+
+	moveml	sp@+,#0x0303
+	addql	#1,_cnt+V_INTR
+	jra	rei
+
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
 	.globl _DraCoIntr
 _DraCoIntr:
@@ -671,8 +706,7 @@ _fake_lev6intr:
 
 	CIABADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
-	tstb	d0			| check if CIAB was source
-	jeq	Lchkexter		| no, go through isr chain
+	jge	Lchkexter		| CIAB IR not set, go through isr chain
 	INTREQWADDR(a0)
 #ifndef LEV6_DEFER
 	movew	#INTF_EXTER,a0@		| clear EXTER interrupt in intreq
@@ -983,7 +1017,7 @@ Lsetcpu040:
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	btst	#7,sp@(3)		| XXX
 	jeq	Lstartnot040
-	orl	#0x400000,d0		| XXX and clear all 060 branch cache 
+	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	movl	#_vectab,a0
@@ -1030,6 +1064,11 @@ Lunshadow:
 | is this needed? MLH
 	.word	0xf4f8		| cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,d0
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Lcacheon
+	movl	#CACHE60_ON,d0
+#endif
 Lcacheon:
 	movc	d0,cacr			| clear cache(s)
 /* final setup for C code */
@@ -1069,11 +1108,12 @@ Lcacheon:
 	jne	Lnoflush		| no, skip
 	.word	0xf478			| cpusha dc
 	.word	0xf498			| cinva ic
-	btst	#7,_machineid+3
-	jeq	Lnoflush
-	movc	cacr,d0
-	orl	#200000,d0
-	movc	d0,cacr
+| XXX dont need these; the cinva ic also clears the branch cache.
+|	btst	#7,_machineid+3
+|	jeq	Lnoflush
+|	movc	cacr,d0
+|	orl	#IC60_CUBC,d0
+|	movc	d0,cacr
 Lnoflush:
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
@@ -1229,8 +1269,8 @@ ENTRY(longjmp)
 
 /*
  * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrunqueue puts processes into queues, Remrq
+ * _whichqs tells which of the 32 queues _qs have processes
+ * in them.  Setrunqueue puts processes into queues, remrunqueue
  * removes them from queues.  The running process is on no queue,
  * other processes are on a queue related to p->p_priority, divided by 4
  * actually to shrink the 0-127 range of priorities into the 32 available
@@ -1274,7 +1314,7 @@ Lset2:
 	.even
 
 /*
- * Remrq(p)
+ * remrunqueue(p)
  *
  * Call should be made at spl6().
  */
@@ -1513,7 +1553,7 @@ Lres2:
 	btst	#7,_machineid+3
 	jeq	Lres3
 	movc	cacr,d2
-	orl	#0x00200000,d2		| clear user branch cache entries
+	orl	#IC60_CUBC,d2		| clear user branch cache entries
 	movc	d2,cacr
 #endif
 Lres3:
@@ -1712,7 +1752,7 @@ Ltbia040:
 	btst	#7,_machineid+3
 	jeq	Ltbiano60
 	movc	cacr,d0
-	orl	#0x400000,d0	| and clear all branch cache entries
+	orl	#IC60_CABC,d0		| and clear all branch cache entries
 	movc	d0,cacr
 #endif
 Ltbiano60:
@@ -1749,7 +1789,7 @@ Ltbis040:
 	btst	#7,_machineid+3
 	jeq	Ltbisno60
 	movc	cacr,d0
-	orl	#0x400000,d0	| and clear all branch cache entries
+	orl	#IC60_CABC,d0		| and clear all branch cache entries
 	movc	d0,cacr
 Ltbisno60:
 #endif
@@ -1781,7 +1821,7 @@ Ltbias040:
 	btst	#7,_machineid+3
 	jeq	Ltbiasno60
 	movc	cacr,d0
-	orl	#0x400000,d0	| and clear all branch cache entries
+	orl	#IC60_CABC,d0		| and clear all branch cache entries
 	movc	d0,cacr
 Ltbiasno60:
 #endif
@@ -1813,7 +1853,7 @@ Ltbiau040:
 	btst	#7,_machineid+3
 	jeq	Ltbiauno60
 	movc	cacr,d0
-	orl	#0x200000,d0	| but only user branch cache entries
+	orl	#IC60_CUBC,d0		| but only user branch cache entries
 	movc	d0,cacr
 Ltbiauno60:
 #endif
@@ -1991,11 +2031,11 @@ ENTRY(loadustp)
 #ifdef M68060
 Lldustp060:
 	movc	cacr,d1
-	orl	#0x200000,d1	| clear user branch cache entries
+	orl	#IC60_CUBC,d1		| clear user branch cache entries
 	movc	d1,cacr
 #endif
 Lldustp040:
-	.word	0x4e7b,0x0806	| movec d0,URP
+	.word	0x4e7b,0x0806		| movec d0,URP
 	rts
 
 /*
@@ -2022,7 +2062,7 @@ Lnot68851:
 #ifdef M68060
 Lflustp060:
 	movc	cacr,d1
-	orl	#0x200000,d1	| clear user branch cache entries
+	orl	#IC60_CUBC,d1		| clear user branch cache entries
 	movc	d1,cacr
 	rts
 #endif
@@ -2071,7 +2111,7 @@ ENTRY(m68881_save)
 	fsave	a0@			| save state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid
+	btst	#7,_machineid+3
 	jne	Lm68060fpsave
 #endif
 	tstb	a0@			| null state frame?
@@ -2098,7 +2138,7 @@ ENTRY(m68881_restore)
 	movl	sp@(4),a0		| save area pointer
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
-	btst	#7,_machineid
+	btst	#7,_machineid+3
 	jne	Lm68060fprestore
 #endif
 	tstb	a0@			| null state frame?
@@ -2331,11 +2371,45 @@ nullrp:	.long	0x7fff0001
 zero:	.long	0
 Ldorebootend:
 
+	.align 2
+	.globl _DELAY
+	.globl _delay
+	nop
+_delay:
+_DELAY:
+	movql #10,d1		| 2 +2
+	movl sp@(4),d0		| 4 +4
+	lsll d1,d0		| 8 +2
+	movl _delaydivisor,d1	| A +6
+Ldelay:				| longword aligned again.
+	subl d1,d0
+	jcc Ldelay
+	rts
+
+#ifdef M68060
+	.globl _intemu60, _fpiemu60, _fpdemu60, _fpeaemu60
+_intemu60:
+	addql	#1,L60iem
+	jra	_I_CALL_TOP+128+0x00
+_fpiemu60:
+	addql	#1,L60fpiem
+	jra	_FP_CALL_TOP+128+0x30
+_fpdemu60:
+	addql	#1,L60fpdem
+	jra	_FP_CALL_TOP+128+0x38
+_fpeaemu60:
+	addql	#1,L60fpeaem
+	jra	_FP_CALL_TOP+128+0x40
+#endif
 
 	.data
 	.space	NBPG
 tmpstk:
-	.globl	_mmutype,_protorp
+	.globl	_mmutype,_fputype,_protorp
+_mmutype:
+	.long	0
+_fputype:
+	.long	0
 _protorp:
 	.long	0x80000002,0	| prototype root pointer
 	.globl	_cold
@@ -2344,6 +2418,12 @@ _cold:
 	.globl	_proc0paddr
 _proc0paddr:
 	.long	0		| KVA of proc0 u-area
+	.globl _delaydivisor
+_delaydivisor:
+	.long	12		| should be enough for 80 MHz 68060
+				| will be adapted to other CPUs in
+				| start_c_cleanup and calibrated
+				| at clock attach time.
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
 fulltflush:
@@ -2376,6 +2456,13 @@ _intrnames:
 	.asciz	"lcl/zbus"	| 6: lcl/zorro lev6
 	.asciz	"buserr"	| 7: nmi: bus timeout
 #endif
+#ifdef M68060
+	.asciz	"60intemu"
+	.asciz	"60fpiemu"
+	.asciz	"60fpdemu"
+	.asciz	"60fpeaemu"
+	.asciz	"60bpe"
+#endif
 _eintrnames:
 	.align	2
 _intrcnt:
@@ -2383,5 +2470,12 @@ _intrcnt:
 #ifdef DRACO
 Drintrcnt:
 	.long	0,0,0,0,0,0,0
+#endif
+#ifdef M68060
+L60iem:		.long	0
+L60fpiem:	.long	0
+L60fpdem:	.long	0
+L60fpeaem:	.long	0
+L60bpe:		.long	0
 #endif
 _eintrcnt:

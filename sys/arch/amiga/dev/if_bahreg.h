@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_bahreg.h,v 1.2 1997/01/16 09:24:39 niklas Exp $ */
 /*	$NetBSD: if_bahreg.h,v 1.4 1995/06/07 00:16:59 cgd Exp $ */
 
 /*

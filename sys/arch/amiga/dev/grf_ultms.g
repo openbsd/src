@@ -15,6 +15,8 @@
 ;    documentation and/or other materials provided with the distribution.
 ; 3. All advertising materials mentioning features or use of this software
 ;    must display the following acknowledgement:
+;	This product contains software developed by Ignatios Souvatzis
+;	for the NetBSD project.
 ; 4. The name of the author may not be used to endorse or promote products
 ;    derived from this software withough specific prior written permission
 ;
@@ -33,11 +35,9 @@
 ; assembler code for the TMS34010 CPU/graphics processor. 
 ;
 ; Use Paul Mackerras' gspa assembler to transfer it to hex format, then
-; Ignatios Souvatzis' hex2c utility (available from the author) or a small 
-; perl script to transform that into the form of grf_ultmscode.h. 
+; Ignatios Souvatzis' gpsahextoc utility to convert it to grf_ultmscode.h. 
 ; 
-; A modified gspa for this purpose will be released as soon as this
-; procedure is cleaned up. 
+; This has been integrated into the OpenBSD/Amiga kernel build procedure.
 ;
 
 ; memory map:

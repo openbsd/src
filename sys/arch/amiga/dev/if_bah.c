@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_bah.c,v 1.6 1996/05/09 22:39:59 niklas Exp $ */
-/*	$NetBSD: if_bah.c,v 1.18 1996/05/07 00:46:39 thorpej Exp $ */
+/*	$OpenBSD: if_bah.c,v 1.7 1997/01/16 09:24:38 niklas Exp $ */
+/*	$NetBSD: if_bah.c,v 1.25 1996/12/23 09:10:15 veego Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -189,8 +189,8 @@ void	movepout __P((u_char *from, u_char __volatile *to, int len));
 void	movepin __P((u_char __volatile *from, u_char *to, int len));
 void	bah_srint __P((void *vsc, void *dummy));
 void	callstart __P((void *vsc, void *dummy));
-static	void bah_tint __P((struct bah_softc *, int));
-
+__inline static void bah_tint __P((struct bah_softc *, int));
+void	bah_reconwatch(void *);
 
 struct cfattach bah_zbus_ca = {
 	sizeof(struct bah_softc), bah_zbus_match, bah_zbus_attach
@@ -1048,10 +1048,8 @@ bahintr(arg)
 		sc->sc_arccom.ac_if.if_collisions++;
 
 		/*
-		 * If more than 2 seconds per reconfig:
-		 *	Reset time and counter.
-		 * else:
-		 *	If more than ARC_EXCESSIVE_RECONFIGS reconfigs
+! 		 * If less than 2 seconds per reconfig:
+! 		 *	If ARC_EXCESSIVE_RECONFIGS
 		 *	since last burst, complain and set treshold for
 		 *	warnings to ARC_EXCESSIVE_RECONS_REWARN.
 		 *
@@ -1063,24 +1061,19 @@ bahintr(arg)
 		 * time if necessary.
 		 */
 
+		untimeout(bah_reconwatch, (void *)sc);
 		newsec = time.tv_sec;
-		if (newsec - sc->sc_recontime > 2 * sc->sc_reconcount) {
-			sc->sc_recontime = newsec;
-			sc->sc_reconcount = 0;
-			sc->sc_reconcount_excessive = ARC_EXCESSIVE_RECONS;
-		} else if (++sc->sc_reconcount > sc->sc_reconcount_excessive) {
-			sc->sc_reconcount_excessive = 
-			    ARC_EXCESSIVE_RECONS_REWARN;
+		if ((newsec - sc->sc_recontime <= 2) && 
+		    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
 			log(LOG_WARNING,
 			    "%s: excessive token losses, cable problem?\n",
 			    sc->sc_dev.dv_xname);
-			sc->sc_recontime = newsec;
-			sc->sc_reconcount = 0;
 		}
+		sc->sc_recontime = newsec;
+		timeout(bah_reconwatch, (void *)sc, 15*hz);
 	}
 
 	if (maskedisr & ARC_RI) {
-
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
 		printf("%s: intr: hard rint, act %ld\n",
 		    sc->sc_dev.dv_xname, sc->sc_rx_act);
@@ -1089,50 +1082,69 @@ bahintr(arg)
 		buffer = sc->sc_rx_act;
 		/* look if buffer is marked invalid: */
 		if (sc->sc_base->buffers[buffer*512*2] == 0) {
-	/* invalid marked buffer (or illegally configured sender) */
+			/*
+			 * invalid marked buffer (or illegally configured
+			 * sender)
+			 */
 			log(LOG_WARNING, 
 			    "%s: spurious RX interrupt or sender 0 (ignored)\n",
 			    sc->sc_dev.dv_xname);
 			/*
 			 * restart receiver on same buffer.
+			 * XXX maybe better reset interface?
 			 */
 			sc->sc_base->command = ARC_RXBC(buffer);
-
-		} else if (++sc->sc_rx_fillcount > 1) {
-			sc->sc_intmask &= ~ARC_RI;
-			sc->sc_base->status = sc->sc_intmask;
 		} else {
+			if (++sc->sc_rx_fillcount > 1) {
+				sc->sc_intmask &= ~ARC_RI;
+				sc->sc_base->status = sc->sc_intmask;
+			} else {
 
-			buffer ^= 1;
-			sc->sc_rx_act = buffer;
+				buffer ^= 1;
+				sc->sc_rx_act = buffer;
 
-			/*
-			 * Start receiver on other receive buffer.
-			 * This also clears the RI interupt flag.
-			 */
-			sc->sc_base->command = ARC_RXBC(buffer);
-			/* we are in the RX intr, so mask is ok for RX */
-
+				/*
+				 * Start receiver on other receive buffer.
+				 * This also clears the RI interupt flag.
+				 */
+				sc->sc_base->command = ARC_RXBC(buffer);
+				/* in the RX intr, so mask is ok for RX */
+	
 #ifdef BAH_DEBUG
-			printf("%s: started rx for buffer %ld, status 0x%02x\n",
-			    sc->sc_dev.dv_xname, sc->sc_rx_act,
-			    sc->sc_base->status);
+				printf("%s: strt rx for buf %ld, stat 0x%02x\n",
+				    sc->sc_dev.dv_xname, sc->sc_rx_act,
+				    sc->sc_base->status);
+#endif
+			}
+	
+#ifdef BAHSOFTCOPY
+			/* this one starts a soft int to copy out of the hw */
+			add_sicallback((sifunc_t)bah_srint, sc,NULL);
+#else
+			/* this one does the copy here */
+			bah_srint(sc,NULL);
 #endif
 		}
-
-#ifdef BAHSOFTCOPY
-		/* this one starts a soft int to copy out of the hw */
-		add_sicallback((sifunc_t)bah_srint, sc,NULL);
-#else
-		/* this one does the copy here */
-		bah_srint(sc,NULL);
-#endif
+	}
+	if (maskedisr & ARC_TA) {
+		bah_tint(sc, isr);
 	}
 
-	if (maskedisr & ARC_TA) 
-		bah_tint(sc, isr);
-
 	return (1);
+}
+
+void
+bah_reconwatch(arg)
+	void *arg;
+{
+	struct bah_softc *sc = arg;
+
+	if (sc->sc_reconcount >= ARC_EXCESSIVE_RECONS) {
+		sc->sc_reconcount = 0;
+		log(LOG_WARNING, "%s: token valid again.\n",
+		    sc->sc_dev.dv_xname);
+	}
+	sc->sc_reconcount = 0;
 }
 
 /*
@@ -1147,11 +1159,13 @@ bah_ioctl(ifp, command, data)
 {
 	struct bah_softc *sc;
 	register struct ifaddr *ifa;
+	struct ifreq *ifr;
 	int s, error;
 
 	error = 0;
 	sc = ifp->if_softc;
 	ifa = (struct ifaddr *)data;
+	ifr = (struct ifreq *)data;
 	s = splnet();
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2) 
@@ -1192,7 +1206,13 @@ bah_ioctl(ifp, command, data)
 		} 
 		break;
 
-		/* Multicast not supported */
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		if (ifr->ifr_addr.sa_family == AF_INET)
+			error = 0;
+		else
+			error = EAFNOSUPPORT;
+		break;
 
 	default:
 		error = EINVAL;

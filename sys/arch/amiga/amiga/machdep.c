@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.15 1996/08/19 00:04:15 niklas Exp $	*/
-/*	$NetBSD: machdep.c,v 1.72.4.1 1996/05/26 16:23:23 is Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 1997/01/16 09:23:24 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 1996/12/17 07:32:54 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,6 +155,11 @@ void fdintr __P((int));
 #endif
 
 /*
+ * patched by some devices at attach time (currently, only drcom)
+ */
+u_int16_t amiga_ttyspl = PSL_S|PSL_IPL4;
+
+/*
  * Declare these as initialized data so we can patch them.
  */
 int	nswbuf = 0;
@@ -197,6 +202,7 @@ char machine[] = "amiga";
 struct isr *isr_ports;
 #ifdef DRACO
 struct isr *isr_slot3;
+struct isr *isr_supio;
 #endif
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 struct isr *isr_exter[7];
@@ -499,8 +505,8 @@ again:
 #endif
 	printf("avail mem = %ld (%ld pages)\n", ptoa(cnt.v_free_count),
 	    ptoa(cnt.v_free_count)/NBPG);
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	printf("using %d buffers containing %d bytes of memory\n", nbuf,
+	    bufpages * CLBYTES);
 	
 	/*
 	 * display memory configuration passed from loadbsd
@@ -511,9 +517,9 @@ again:
 			    memlist->m_seg[i].ms_start, 
 			    memlist->m_seg[i].ms_size);
 #if defined(MACHINE_NONCONTIG) && defined(DEBUG)
-	printf ("Physical memory segments:\n");
+	printf("Physical memory segments:\n");
 	for (i = 0; i < memlist->m_nseg && phys_segs[i].start; ++i)
-		printf ("Physical segment %d at %08lx size %ld offset %d\n", i,
+		printf("Physical segment %d at %08lx size %ld offset %d\n", i,
 		    phys_segs[i].start,
 		    (phys_segs[i].end - phys_segs[i].start) / NBPG,
 		    phys_segs[i].first_page);
@@ -522,6 +528,7 @@ again:
 #ifdef DEBUG_KERNEL_START
 	printf("calling initcpu...\n");
 #endif
+
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -595,7 +602,12 @@ setregs(p, pack, stack, retval)
  */
 char cpu_model[120];
 extern char version[];
- 
+
+#if defined(M68060)
+int m68060_pcr_init = 0x21;	/* make this patchable */
+#endif
+
+
 void
 identifycpu()
 {
@@ -640,7 +652,7 @@ identifycpu()
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		fpu = "/FPU";
-		fputype = FPU_68040;
+		fputype = FPU_68040; /* XXX */
 	} else if (machineid & AMIGA_68030) {
 		cpu_type = "m68030";	/* XXX */
 		mmu = "/MMU";
@@ -747,7 +759,9 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 
-/*printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
+#if 0
+printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
+#endif
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
@@ -772,13 +786,13 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+		    p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, sizeof(struct sigframe), B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
+			    p->p_pid, sig);
 #endif
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -807,8 +821,8 @@ sendsig(catcher, sig, mask, code)
 	 *	- FP coprocessor state
 	 */
 	kfp->sf_state.ss_flags = SS_USERREGS;
-	bcopy((caddr_t)frame->f_regs,
-	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
+	bcopy((caddr_t)frame->f_regs, (caddr_t)kfp->sf_state.ss_frame.f_regs,
+	    sizeof frame->f_regs);
 	if (ft >= FMT9) {
 #ifdef DEBUG
 		if (ft != FMT9 && ft != FMTA && ft != FMTB)
@@ -818,7 +832,7 @@ sendsig(catcher, sig, mask, code)
 		kfp->sf_state.ss_frame.f_format = frame->f_format;
 		kfp->sf_state.ss_frame.f_vector = frame->f_vector;
 		bcopy((caddr_t)&frame->F_u,
-		      (caddr_t)&kfp->sf_state.ss_frame.F_u, exframesize[ft]);
+		    (caddr_t)&kfp->sf_state.ss_frame.F_u, exframesize[ft]);
 		/*
 		 * Leave an indicator that we need to clean up the kernel
 		 * stack.  We do this by setting the "pad word" above the
@@ -834,7 +848,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
 			printf("sendsig(%d): copy out %d of frame %d\n",
-			       p->p_pid, exframesize[ft], ft);
+			    p->p_pid, exframesize[ft], ft);
 #endif
 	}
 #ifdef FPCOPROC
@@ -842,9 +856,9 @@ sendsig(catcher, sig, mask, code)
 	m68881_save(&kfp->sf_state.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %p\n",
-		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
-		       &kfp->sf_state.ss_fpstate);
+		printf("sendsig(%d): copy out FP state (%x) to %p\n", p->p_pid,
+		    *(u_int *)&kfp->sf_state.ss_fpstate,
+		    &kfp->sf_state.ss_fpstate);
 #endif
 #endif
 	/*
@@ -862,8 +876,8 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
-		       p->p_pid, sig, kfp->sf_scp, fp,
-		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
+		    p->p_pid, sig, kfp->sf_scp, fp, kfp->sf_sc.sc_sp,
+		    kfp->sf_sc.sc_ap);
 #endif
 	/*
 	 * Signal trampoline code is at base of user stack.
@@ -871,8 +885,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
+		printf("sendsig(%d): sig %d returns\n", p->p_pid, sig);
 #endif
 	free((caddr_t)kfp, M_TEMP);
 }
@@ -947,8 +960,8 @@ sys_sigreturn(p, v, retval)
 	flags = fuword((caddr_t)rf);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): sc_ap %x flags %x\n",
-		       p->p_pid, rf, flags);
+		printf("sigreturn(%d): sc_ap %x flags %x\n", p->p_pid, rf,
+		    flags);
 #endif
 	/*
 	 * fuword failed (bogus sc_ap value).
@@ -959,9 +972,9 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
-		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n", p->p_pid,
+		    &flags, scp->sc_sp, SCARG(uap, sigcntxp),
+		    (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
 	 * Restore most of the users registers except for A6 and SP
@@ -989,7 +1002,7 @@ sys_sigreturn(p, v, retval)
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
-			       p->p_pid, sz, tstate.ss_frame.f_format);
+			    p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
 #ifdef FPCOPROC
@@ -1001,8 +1014,8 @@ sys_sigreturn(p, v, retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
-		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
-		       &tstate.ss_fpstate);
+		    p->p_pid, *(u_int *)&tstate.ss_fpstate,
+		    &tstate.ss_fpstate);
 #endif
 #endif
 #ifdef DEBUG
@@ -1021,6 +1034,7 @@ bootsync(void)
 	if (waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
+
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
@@ -1261,10 +1275,6 @@ microtime(tvp)
 	splx(s);
 }
 
-#if defined(M68060)
-int m68060_pcr_init = 0x21;	/* make this patchable */
-#endif
-
 void
 initcpu()
 {
@@ -1275,7 +1285,8 @@ initcpu()
 
 #ifdef M68060
 #if defined(M060SP)
-	extern u_int8_t I_CALL_TOP[];
+	/*extern u_int8_t I_CALL_TOP[];*/
+	extern u_int8_t intemu60, fpiemu60, fpdemu60, fpeaemu60;
 	extern u_int8_t FP_CALL_TOP[];
 #else
 	extern u_int8_t illinst;
@@ -1284,7 +1295,8 @@ initcpu()
 #endif
 
 #ifdef DRACO
-	extern u_int8_t DraCoIntr, DraCoLev2intr;
+	extern u_int8_t DraCoIntr, DraCoLev1intr, DraCoLev2intr;
+	u_char dracorev;
 #endif
 
 #ifdef M68060
@@ -1294,12 +1306,17 @@ initcpu()
 #if defined(M060SP)
 
 		/* integer support */
-		vectab[61] = &I_CALL_TOP[128 + 0x00];
+		vectab[61] = &intemu60/*&I_CALL_TOP[128 + 0x00]*/;
 
 		/* floating point support */
-		vectab[11] = &FP_CALL_TOP[128 + 0x30];
-		vectab[55] = &FP_CALL_TOP[128 + 0x38];
-		vectab[60] = &FP_CALL_TOP[128 + 0x40];
+		/*
+		 * XXX maybe we really should run-time check for the
+		 * stack frame format here:
+		 */
+		vectab[11] = &fpiemu60/*&FP_CALL_TOP[128 + 0x30]*/;
+
+		vectab[55] = &fpdemu60/*&FP_CALL_TOP[128 + 0x38]*/;
+		vectab[60] = &fpeaemu60/*&FP_CALL_TOP[128 + 0x40]*/;
 
 		vectab[54] = &FP_CALL_TOP[128 + 0x00];
 		vectab[52] = &FP_CALL_TOP[128 + 0x08];
@@ -1315,10 +1332,20 @@ initcpu()
 	}
 #endif
 
+/*
+ * Vector initialization for special motherboards 
+ */
+
 #ifdef DRACO
-	if (is_draco()) {
-		vectab[24+1] = &DraCoIntr;
-		vectab[24+2] = &DraCoLev2intr;
+	dracorev = is_draco();
+	if (dracorev) {
+		if (dracorev >= 4) {
+			vectab[24+1] = &DraCoLev1intr;
+			vectab[24+2] = &DraCoIntr;
+		} else {
+			vectab[24+1] = &DraCoIntr;
+			vectab[24+2] = &DraCoLev2intr;
+		}
 		vectab[24+3] = &DraCoIntr;
 		vectab[24+4] = &DraCoIntr;
 		vectab[24+5] = &DraCoIntr;
@@ -1583,8 +1610,11 @@ add_isr(isr)
 		break;
 #ifdef DRACO
 	case 3:
-		panic("DraCo IPL3 not yet supported here");
 		p = &isr_slot3;
+		break;
+
+	case 5:
+		p = &isr_supio;
 		break;
 #endif
 	case 6:
@@ -1608,8 +1638,16 @@ add_isr(isr)
 	/* enable interrupt */
 #ifdef DRACO
 	if (is_draco())
-		*draco_intena |= isr->isr_ipl == 6 ?
-			DRIRQ_INT6 : DRIRQ_INT2;
+		switch(isr->isr_ipl) {
+			case 6:
+				*draco_intena |= DRIRQ_INT6;
+				break;
+			case 2:
+				*draco_intena |= DRIRQ_INT2;
+				break;
+			default:
+				break;
+		}
 	else 
 #endif
 		custom.intena = INTF_SETCLR |
@@ -1628,8 +1666,11 @@ remove_isr(isr)
 		break;
 #ifdef DRACO
 	case 3:
-		panic("DraCo IPL3 not yet supported here");
 		chain = &isr_slot3;
+		break;
+
+	case 5:
+		chain = &isr_supio;
 		break;
 #endif
 	case 6:
@@ -1648,6 +1689,7 @@ remove_isr(isr)
 		*p = q->isr_forw;
 	else
 		panic("remove_isr: handler not registered");
+	/* disable interrupt if no more handlers */
 	if (*chain == NULL)
 		switch (isr->isr_ipl) {
 		case 2:
@@ -1658,11 +1700,6 @@ remove_isr(isr)
 #endif
 				custom.intena = INTF_PORTS;
 			break;
-#ifdef DRACO
-		case 3:
-			panic("DraCo IPL3 not yet supported here");
-			break;
-#endif
 		case 6:
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 			if (isr->isr_mapped_ipl == isr_exter_lowipl) {
@@ -1801,6 +1838,16 @@ intrhand(sr)
 		if (ireq & INTF_VERTB)
 			vbl_handler();
 		break;
+#ifdef DRACO
+	case 5:
+		p = &isr_supio;
+		while ((q = *p) != NULL) {
+			if ((q->isr_intr)(q->isr_arg))
+				break;
+			p = &q->isr_forw;
+		}
+		break;
+#endif
 #if 0
 /* now dealt with in locore.s for speed reasons */
 	case 5:

@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rh.c,v 1.11 1996/11/24 20:23:47 niklas Exp $	*/
-/*	$NetBSD: grf_rh.c,v 1.17.4.3 1996/09/06 00:40:22 jtc Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.12 1997/01/16 09:24:18 niklas Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.26 1996/12/31 17:54:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -592,22 +592,18 @@ RZ3SetPalette (gp, colornum, red, green, blue)
 
 }
 
-/* XXXXXXXXX !! */
-static unsigned short xpan;
-static unsigned short ypan;
-
 void
 RZ3SetPanning (gp, xoff, yoff)
 	struct grf_softc *gp;
 	unsigned short xoff, yoff;
 {
 	volatile unsigned char *ba = gp->g_regkva;
+	struct grfinfo *gi = &gp->g_display;
 	const struct MonDef * md = (struct MonDef *) gp->g_data;
 	unsigned long off;
 
-	xpan = xoff;
-	ypan = yoff;
-
+	gi->gd_fbx = xoff;
+	gi->gd_fby = yoff;
 
         if (md->DEP > 8 && md->DEP <= 16) xoff *= 2;
         else if (md->DEP > 16) xoff *= 3;
@@ -640,27 +636,35 @@ RZ3SetHWCloc (gp, x, y)
 {
 	volatile unsigned char *ba = gp->g_regkva;
 	const struct MonDef *md = (struct MonDef *) gp->g_data;
-	volatile unsigned char *acm = ba + ACM_OFFSET;
+	/*volatile unsigned char *acm = ba + ACM_OFFSET;*/
+	struct grfinfo *gi = &gp->g_display;
 
-	if (x < xpan)
-		RZ3SetPanning(gp, x, ypan);
+	if (x < gi->gd_fbx)
+		RZ3SetPanning(gp, x, gi->gd_fby);
 
-	if (x >= (xpan+md->MW))
-		RZ3SetPanning(gp, (1 + x - md->MW) , ypan);
+	if (x >= (gi->gd_fbx+md->MW))
+		RZ3SetPanning(gp, (1 + x - md->MW) , gi->gd_fby);
 
-	if (y < ypan)
-		RZ3SetPanning(gp, xpan, y);
+	if (y < gi->gd_fby)
+		RZ3SetPanning(gp, gi->gd_fbx, y);
 
-	if (y >= (ypan+md->MH))
-		RZ3SetPanning(gp, xpan, (1 + y - md->MH));
+	if (y >= (gi->gd_fby+md->MH))
+		RZ3SetPanning(gp, gi->gd_fbx, (1 + y - md->MH));
 
-	x -= xpan;
-	y -= ypan;
+	x -= gi->gd_fbx;
+	y -= gi->gd_fby;
 
-	*(acm + (ACM_CURSOR_POSITION+0)) = x & 0xff;
+#if 1
+	WSeq(ba, SEQ_ID_CURSOR_X_LOC_HI, x >> 8);
+	WSeq(ba, SEQ_ID_CURSOR_X_LOC_LO, x & 0xff);
+	WSeq(ba, SEQ_ID_CURSOR_Y_LOC_HI, y >> 8);
+	WSeq(ba, SEQ_ID_CURSOR_Y_LOC_LO, y & 0xff);
+#else
 	*(acm + (ACM_CURSOR_POSITION+1)) = x >> 8;
-	*(acm + (ACM_CURSOR_POSITION+2)) = y & 0xff;
+	*(acm + (ACM_CURSOR_POSITION+0)) = x & 0xff;
 	*(acm + (ACM_CURSOR_POSITION+3)) = y >> 8;
+	*(acm + (ACM_CURSOR_POSITION+2)) = y & 0xff;
+#endif
 }
 
 u_short
@@ -890,7 +894,7 @@ rh_load_mon(gp, md)
 	WSeq(ba, SEQ_ID_ACM_APERTURE_1, 0x00);
 	WSeq(ba, SEQ_ID_ACM_APERTURE_2, 0x30);
 	WSeq(ba, SEQ_ID_ACM_APERTURE_3, 0x00);
-	WSeq(ba, SEQ_ID_MEMORY_MAP_CNTL, 0x07);
+	WSeq(ba, SEQ_ID_MEMORY_MAP_CNTL, 0x03);	/* was 7, but stupid cursor */
 
 	WCrt(ba, CRT_ID_END_VER_RETR, (md->VSE & 0xf) | 0x20);
 	WCrt(ba, CRT_ID_HOR_TOTAL, md->HT    & 0xff);
@@ -1152,8 +1156,8 @@ rh_load_mon(gp, md)
 
 		RZ3BitBlit(gp, &bb);
 
-		xpan = 0;
-		ypan = 0;
+		gi->gd_fbx = 0;
+		gi->gd_fby = 0;
 
 		return(1);
 	} else if (md->DEP == 16) {
@@ -1168,8 +1172,8 @@ rh_load_mon(gp, md)
 
 		RZ3BitBlit16(gp, &bb);
 
-		xpan = 0;
-		ypan = 0;
+		gi->gd_fbx = 0;
+		gi->gd_fby = 0;
 
 		return(1);
         } else if (md->DEP == 24) {
@@ -1184,8 +1188,8 @@ rh_load_mon(gp, md)
                 
                 RZ3BitBlit24(gp, &bb );
                 
-                xpan = 0;
-                ypan = 0;
+		gi->gd_fbx = 0;
+		gi->gd_fby = 0;
                 
                 return 1;
 	} else
@@ -1890,15 +1894,24 @@ rh_getspritepos (gp, pos)
 	struct grf_softc *gp;
 	struct grf_position *pos;
 {
+	struct grfinfo *gi = &gp->g_display;
+#if 1
+	volatile unsigned char *ba = gp->g_regkva;
+
+	pos->x = (RSeq(ba, SEQ_ID_CURSOR_X_LOC_HI) << 8) |
+	    RSeq(ba, SEQ_ID_CURSOR_X_LOC_LO);
+	pos->y = (RSeq(ba, SEQ_ID_CURSOR_Y_LOC_HI) << 8) |
+	    RSeq(ba, SEQ_ID_CURSOR_Y_LOC_LO);
+#else
 	volatile unsigned char *acm = gp->g_regkva + ACM_OFFSET;
 
 	pos->x = acm[ACM_CURSOR_POSITION + 0] +
 	    (acm[ACM_CURSOR_POSITION + 1] << 8);
 	pos->y = acm[ACM_CURSOR_POSITION + 2] +
 	    (acm[ACM_CURSOR_POSITION + 3] << 8);
-
-	pos->x += xpan;
-	pos->y += ypan;
+#endif
+	pos->x += gi->gd_fbx;
+	pos->y += gi->gd_fby;
 
 	return(0);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.15 1996/11/28 23:33:02 niklas Exp $	*/
-/*	$NetBSD: conf.c,v 1.36 1996/05/19 21:04:18 veego Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 1997/01/16 09:23:16 niklas Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -51,8 +51,6 @@
 #include <sys/bankeddev.h>
 #endif
 
-int	ttselect	__P((dev_t, int, struct proc *));
-
 #include "vnd.h"
 #include "sd.h"
 #include "cd.h"
@@ -65,6 +63,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #if 0
 #include "rd.h"
 #endif
+#include "ch.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -100,6 +99,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ms.h"
 #include "view.h"
 #include "mfcs.h"
+#include "drcom.h"
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "tun.h"
@@ -153,6 +153,8 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
 	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */
+	cdev_tty_init(NDRCOM,drcom),	/* 39: DraCo com ports */
+	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -222,9 +224,9 @@ static int chrtoblktab[] = {
 	/*  4 */	NODEV,
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
-	/*  7 */	8,
-	/*  8 */	4,
-	/*  9 */	7,
+	/*  7 */	8,		/* ccd */
+	/*  8 */	4,		/* sd */
+	/*  9 */	7,		/* cd */
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
@@ -233,9 +235,9 @@ static int chrtoblktab[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	2,
-	/* 19 */	6,
-	/* 20 */	5,
+	/* 18 */	2,		/* fd */
+	/* 19 */	6,		/* vnd */
+	/* 20 */	5,		/* st */
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
@@ -252,8 +254,10 @@ static int chrtoblktab[] = {
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
 	/* 36 */	NODEV,
-	/* 37 */	0,
-	/* 38 */	15,
+	/* 37 */	0,		/* wd */
+	/* 38 */	15,		/* acd */
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
 };
 
 /*

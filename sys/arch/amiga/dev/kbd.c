@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd.c,v 1.4 1996/05/29 10:15:33 niklas Exp $	*/
-/*	$NetBSD: kbd.c,v 1.22 1996/05/16 20:18:01 is Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.5 1997/01/16 09:24:55 niklas Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28 1996/12/23 09:10:22 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -152,7 +152,6 @@ kbdenable()
 			ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;
 						/* SP interrupt enable */
 			ciaa.cra &= ~(1<<6);	/* serial line == input */
-			printf("ok.\n");
 			break;
 		case 1:
 		case 2:
@@ -175,7 +174,6 @@ kbdenable()
 			while (draco_ioct->io_status & DRSTAT_KBDRECV) {
 				c = draco_ioct->io_kbddata;
 				draco_ioct->io_kbdrst = 0;
-				printf(".");
 				DELAY(2000);
 			}
 
@@ -335,7 +333,7 @@ kbdintr(mask)
 #ifdef DRACO
 /* maps MF-II keycodes to Amiga keycodes */
 
-u_char drkbdtab[] = {
+const u_char drkbdtab[] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x50,
 	0x45, 0xff, 0xff, 0xff, 0xff, 0x42, 0x00, 0x51,
 
