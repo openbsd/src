@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 1999/05/02 03:42:42 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 1999/05/21 17:06:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -72,68 +72,19 @@
 #endif
 #include "assym.h"
 
-	.import istackptr, data
-	.import tmp_saved_state, data
-	.import fpu_zero, data
-	.import	fpu_pcb, data
+	.import	$global$, data
 	.import pdc, data
 	.import	boothowto, data
 	.import	bootdev, data
 	.import	esym, data
-	.import istackptr, data
 	.import	curproc, code
+	.import	fpu_curproc, data
 	.import	want_resched, data
-/*
- * Declare data sections
- */
+	.import	proc0, data
+	.import	proc0paddr, data
+	.import	intr_recurse, data
 
-	.space  $PRIVATE$
-	.subspa $DATA$
-
-/*
- * allocate the interrupt stack and a page after it for a red zone...
- */
-	.align  NBPG
-	.export intstack_base,data
-intstack_base
-
-	.blockz INTSTACK_SIZE
-
-	.export intstack_top,data
-intstack_top
-
-	/* 
-	 * interrupt stack red zone
-	 */
-	.blockz NBPG
-	.align  NBPG
-
-dumpstk
-recoverstack
-panic_stack
-	.export panic_stack,data
-	.blockz 2 * NBPG
-	.align  NBPG
-
-#ifdef	GPROF
-	/*
-	 * We want these on 1 cache line to make the interrupt handler
-	 * as fast as possible.
-	 */
-	.align	32
-	.export profiling,data
-	.export s_lowpc,data
-	.export kcount,data
-	.export s_textsize,data
-profiling
-	.word	PROFILING_OFF
-s_lowpc
-	.word	0
-kcount
-	.word	0
-s_textsize
-	.word	0
-#endif
+	.import	panic, code
 
 /*
  * This is the starting location for the kernel
@@ -152,7 +103,7 @@ ENTRY(__start)
  */
 
 	/*
-	 * save the pdc, boothowto and bootdev arguments
+	 * save the pdc, boothowto, bootdev and esym arguments
 	 */
 	ldil	L%pdc,r1
 	stw	arg0,R%pdc(r1)
@@ -183,21 +134,22 @@ ENTRY(__start)
 	ldo	R%$global$(dp),dp
 
 	/*
-	 * establish an interrupt stack
-	 */
-	ldil	L%intstack_base,sp
-	ldo	R%intstack_base(sp),sp
-
-	/*
-	 * clear intstackptr to indicate that we are on the interrupt stack
-	 */
-	ldil	L%istackptr,t1
-	stw	r0,R%istackptr(t1)
-
-	/*
 	 * clear GCC frame pointer to avoid back-tracing off the end
 	 */
 	copy	r0,r4
+
+	/*
+	 * kernel stack lives here (arg3 is esym)
+	 * arg0 will be available space for hppa_init()
+	 */
+#define	PROC0STKSZ	5*NBPG
+	ldo	R%NBPG(arg3), sp
+	ldo	R%PROC0STKSZ(sp), arg0
+	ldil	L%proc0paddr, t1
+	stw	arg3, R%proc0paddr(t1)
+	stw	r0, TF_R2 +pcb_tf+u_pcb(sr0, arg3)
+	stw	dp, TF_R27+pcb_tf+u_pcb(sr0, arg3)
+	stw	sp, TF_R30+pcb_tf+u_pcb(sr0, arg3)
 
 	/*
 	 * We need to set the Q bit so that we can take TLB misses after we
@@ -220,15 +172,15 @@ $qisnowon
 	/* 
 	 * Initialize the external interrupt request register
 	 */
-	ldi    	-1,r1
-	mtctl   r1,eirr
+	/* ldi    	-1,r1 */
+	mtctl   r0,eirr
 
 	/*
 	 * load address of interrupt vector table
 	 */
-	ldil	L%$ivaaddr,r2
-	ldo     R%$ivaaddr(r2),r2
-	mtctl   r2,iva
+	ldil	L%$ivaaddr,t2
+	ldo     R%$ivaaddr(t2),t2
+	mtctl   t2,iva
 
 	/*
 	 * Create a stack frame for us to call C with. Clear out the previous
@@ -258,10 +210,10 @@ $qisnowon
 	 * get things ready for the kernel to run in virtual mode
 	 */
 	ldi	HPPA_PID_KERNEL,r1
-	mtctl	r1,cr8
-	mtctl	r1,cr9
-	mtctl	r1,cr12
-	mtctl	r1,cr13
+	mtctl	r1,pidr1
+	mtctl	r1,pidr2
+	mtctl	r1,pidr3
+	mtctl	r1,pidr4
 	mtsp	r0,sr0
 	mtsp	r0,sr1
 	mtsp	r0,sr2
@@ -299,7 +251,7 @@ $virtual_mode
 	/* have to call debugger from here, from virtual mode */
 	ldil	L%boothowto, r1
 	ldo	R%boothowto(r1), r1
-	bb,>=	r1,25,$noddb
+	bb,>=,n	r1,25,$noddb
 
 	ldil	L%Debugger, r1
 	ldo	R%Debugger(r1), r1
@@ -319,6 +271,7 @@ $noddb
 	nop
 
 	/* should never return... */
+	bv,n	(rp)
 EXIT(__start)
 
 /*
@@ -461,15 +414,14 @@ $syscall
 	stwm	arg3, 4(sr1, t3)
 
 	/* setup kernel context */
-	ldi	HPPA_SID_KERNEL, t4
-	mtctl	t4, sr0
-	mtctl	t4, sr1
-	mtctl	t4, sr2
-	mtctl	t4, sr3
-	mtctl	t4, sr4
-	mtctl	t4, sr5
-	mtctl	t4, sr6
-	mtctl	t4, sr7
+	mtctl	r0, sr0
+	mtctl	r0, sr1
+	mtctl	r0, sr2
+	mtctl	r0, sr3
+	mtctl	r0, sr4
+	mtctl	r0, sr5
+	mtctl	r0, sr6
+	mtctl	r0, sr7
 
 	/* leave pidr4 in user space so copy* work */
 	ldi	HPPA_PID_KERNEL, t4
@@ -574,7 +526,7 @@ $syscall_end
 
 #define	CTRAP(name, reason) \
 	.import	TLABEL(name), code	! \
-	nop				! \
+	mtctl	r1, tr7			! \
 	ldil	L%TLABEL(name), r1	! \
 	.call				! \
 	be	R%TLABEL(name)(sr4, r1)	! \
@@ -598,7 +550,11 @@ $ivaaddr
 	ATRAP(privr,T_PRIV_REG)	/* 11. privileged register trap */
 	ATRAP(ovrfl,T_OVERFLOW)	/* 12. overflow trap */
 	ATRAP(cond,T_CONDITION)	/* 13. conditional trap */
+#ifdef FPEMUL
+	CTRAP(excpt,T_EXCEPTION)/* 14. assist exception trap */
+#else
 	ATRAP(excpt,T_EXCEPTION)/* 14. assist exception trap */
+#endif
 	CTRAP(dtlb,T_DTLBMISS)	/* 15. data TLB miss fault */
 	CTRAP(itlb,T_ITLBMISS)	/* 16. ITLB non-access miss fault */
 	CTRAP(dtlb,T_DTLBMISS)	/* 17. DTLB non-access miss fault */
@@ -607,13 +563,19 @@ $ivaaddr
 	ATRAP(dbreak,T_DBREAK)	/* 19. data break trap */
 	CTRAP(tlbd,T_TLB_DIRTY)	/* 20. TLB dirty bit trap */
 	ATRAP(pageref,T_PAGEREF)/* 21. page reference trap */
-	ATRAP(emu,T_EMULATION)	/* 22. assist emulation trap */
+	CTRAP(emu,T_EMULATION)	/* 22. assist emulation trap */
 	ATRAP(hpl,T_HIGHERPL)	/* 23. higher-privelege transfer trap */
 	ATRAP(lpl,T_LOWERPL)	/* 24. lower-privilege transfer trap */
 	ATRAP(tknbr,T_TAKENBR)	/* 25. taken branch trap */
+#ifdef HP7100_CPU
 	ATRAP(datacc,T_DATACC)	/* 26. data access rights trap (T-chip) */
 	ATRAP(datapid,T_DATAPID)/* 27. data protection ID trap (T-chip) */
 	ATRAP(datal,T_DATALIGN)	/* 28. unaligned data ref trap (T-chip) */
+#else
+	ATRAP(unk26,26)
+	ATRAP(unk27,27)
+	ATRAP(unk28,28)
+#endif
 	ATRAP(unk29,29)
 	ATRAP(unk30,30)
 	ATRAP(unk31,31)
@@ -621,13 +583,138 @@ $ivaaddr
 	.align	32*32
 
 
-	.export	$trap$hpmc, code
+	.export	TLABEL(hpmc), code
 TLABEL(hpmc)
 	copy	%r0, arg0
 	b	boot
 	addi,tr 0,r0,arg0		; Skip first instr at target.
 	break	0,0
 
+	.export TLABEL(emu)
+TLABEL(emu)
+	/*
+	 * Switch FPU/SFU context
+	 *
+	 * isr:ior - data address
+	 * iir - instruction to emulate
+	 * iisq:iioq - address of instruction to emulate
+	 *
+	 * note: ISR and IOR contain valid data only if the
+	 *	 instruction is a coprocessor load or store.
+	 */
+	mtctl	t1, tr4
+	mtctl	t2, tr5
+	mtctl	t3, tr6
+	mtctl	t4, tr7
+
+	ldil	L%fpu_curproc, t1
+	ldw	R%fpu_curproc(t1), t1
+
+	mfctl	ccr, t3
+
+	ldil	L%curproc, t2
+	ldw	R%curproc(t2), t2
+
+	/* enable coprocessor */
+	depi	3, 25, 2, t3
+	mtctl	t3, ccr
+
+	comb,=,n t1, t2, $fpusw_done
+	comb,=,n r0, t1, $fpusw_nosave
+
+	ldw	p_addr(t1), t3
+	ldo	TF_FPREGS+pcb_tf+u_pcb(t3), t3
+
+	fstds,ma fr0 , 8(t3)	/* fr0 must be saved first */
+	fstds,ma fr1 , 8(t3)
+	fstds,ma fr2 , 8(t3)
+	fstds,ma fr3 , 8(t3)
+	fstds,ma fr4 , 8(t3)
+	fstds,ma fr5 , 8(t3)
+	fstds,ma fr6 , 8(t3)
+	fstds,ma fr7 , 8(t3)
+	fstds,ma fr8 , 8(t3)
+	fstds,ma fr9 , 8(t3)
+	fstds,ma fr10, 8(t3)
+	fstds,ma fr11, 8(t3)
+	fstds,ma fr12, 8(t3)
+	fstds,ma fr13, 8(t3)
+	fstds,ma fr14, 8(t3)
+	fstds,ma fr15, 8(t3)
+	fstds,ma fr16, 8(t3)
+	fstds,ma fr17, 8(t3)
+	fstds,ma fr18, 8(t3)
+	fstds,ma fr19, 8(t3)
+	fstds,ma fr20, 8(t3)
+	fstds,ma fr21, 8(t3)
+	fstds,ma fr22, 8(t3)
+	fstds,ma fr23, 8(t3)
+	fstds,ma fr24, 8(t3)
+	fstds,ma fr25, 8(t3)
+	fstds,ma fr26, 8(t3)
+	fstds,ma fr27, 8(t3)
+	fstds,ma fr28, 8(t3)
+	fstds,ma fr29, 8(t3)
+	fstds,ma fr30, 8(t3)
+	fstds    fr31, 8(t3)
+
+$fpusw_nosave
+
+	ldw	p_addr(t2), t3
+	ldo	31*8+TF_FPREGS+pcb_tf+u_pcb(t3), t3
+
+	fldds,ma -8(t3), fr31
+	fldds,ma -8(t3), fr30
+	fldds,ma -8(t3), fr29
+	fldds,ma -8(t3), fr28
+	fldds,ma -8(t3), fr27
+	fldds,ma -8(t3), fr26
+	fldds,ma -8(t3), fr25
+	fldds,ma -8(t3), fr24
+	fldds,ma -8(t3), fr23
+	fldds,ma -8(t3), fr22
+	fldds,ma -8(t3), fr21
+	fldds,ma -8(t3), fr20
+	fldds,ma -8(t3), fr19
+	fldds,ma -8(t3), fr18
+	fldds,ma -8(t3), fr17
+	fldds,ma -8(t3), fr16
+	fldds,ma -8(t3), fr15
+	fldds,ma -8(t3), fr14
+	fldds,ma -8(t3), fr13
+	fldds,ma -8(t3), fr12
+	fldds,ma -8(t3), fr11
+	fldds,ma -8(t3), fr10
+	fldds,ma -8(t3), fr9
+	fldds,ma -8(t3), fr8
+	fldds,ma -8(t3), fr7
+	fldds,ma -8(t3), fr6
+	fldds,ma -8(t3), fr5
+	fldds,ma -8(t3), fr4
+	fldds,ma -8(t3), fr3
+	fldds,ma -8(t3), fr2
+	fldds,ma -8(t3), fr1
+	fldds     0(t3), fr0	/* fr0 must be restored last */
+
+	ldil	L%fpu_curproc, t1
+	stw	t2, R%fpu_curproc(t1)
+
+$fpusw_done
+	mfctl	tr6, t3
+	mfctl	tr5, t2
+	rfi
+	mfctl	tr4, t1
+
+	.export TLABEL(excpt)
+	/*
+	 * Emulate FPU/SFU if none/disabled
+	 *
+	 * iisq:iioq - exception triggered instruction
+	 */
+TLABEL(excpt)
+
+	rfi
+	nop
 
 	/* Compute the hpt entry ptr */
 #if 1
@@ -794,48 +881,57 @@ $tlbret
 
 	.export	TLABEL(ibreak), code
 TLABEL(ibreak)
-	mfctl	iir, r16
-	extru	r16, 31, 5, r9
-	comib,<>,n HPPA_BREAK_KERNEL, r9, TLABEL(all)
+	mtctl	t1, tr6
+	mtctl	t2, tr5
+	mtctl	t3, tr4
+	mfctl	iir, t1
+	extru	t1, 31, 5, t2
+	comib,<>,n HPPA_BREAK_KERNEL, t2, $ibreak_bad
 
 	/* If this was called by a user process then always pass it to trap() */
-	mfctl	pcoq, r8
-	extru,=	r8, 31, 2, r0
-	b,n	TLABEL(all)
+	mfctl	pcoq, t2
+	extru,=	t2, 31, 2, r0
+	b,n	$ibreak_bad
 
 	/* don't accept breaks from data segments */
 	.import etext
-	ldil	L%etext, r9
-	ldo	R%etext(r9), r9
-	comb,<<,n r8, r9, TLABEL(all)
+	ldil	L%etext, t3
+	ldo	R%etext(t3), t3
+	comb,>>=,n t2, t3, $ibreak_bad
 
 	/* now process all those `break' calls we make */
-	extru	r16, 18, 13, r9
-	comib,<>,n HPPA_BREAK_GET_PSW, r9, $ibreak_ngetpsw
+	extru	t1, 18, 13, t2
+	comib,=,n HPPA_BREAK_GET_PSW, t2, $ibreak_getpsw
+	comib,=,n HPPA_BREAK_SET_PSW, t2, $ibreak_setpsw
 
+$ibreak_bad
+	/* illegal (unimplemented break entry point) */
+	mfctl	tr4, t3
+	mfctl	tr5, t2
+	b	TLABEL(all)
+	mfctl	tr6, t1
+
+$ibreak_getpsw
 	b	$ibreak_exit
 	mfctl	ipsw, ret0
 
-$ibreak_ngetpsw
-	comib,<>,n HPPA_BREAK_SET_PSW, r9, $ibreak_nsetpsw
-
+$ibreak_setpsw
 	mfctl	ipsw, ret0
 	b	$ibreak_exit
 	mtctl	arg0, ipsw
 
-$ibreak_nsetpsw
-	b	TLABEL(all)
-	nop
-
 $ibreak_exit
 	/* skip the break */
-	mfctl	pcoq, r8
-	mfctl	pcoq, r8
-	mtctl	r8, pcoq
-	add	r8, 4, r8
-	mtctl	r8, pcoq
-	rfir
-	nop
+	mtctl	r0, pcoq
+	mfctl	pcoq, t1
+	mtctl	t1, pcoq
+	ldo	4(t1), t1
+	mtctl	t1, pcoq
+	mfctl	tr4, t3
+	mfctl	tr5, t2
+	mfctl	tr6, t1
+	rfi
+	mfctl	tr7, r1
 
 
 	.export	TLABEL(all), code
@@ -848,34 +944,48 @@ TLABEL(all)
 	 *	psw = E(default), M(1 if HPMC, else 0)
 	 *	PL = 0
 	 *	r1, r8, r9, r16, r17, r24, r25 shadowed
-	 *	trap number in r1 (old r1 is saved in cr31)
+	 *	trap number in r1 (old r1 is saved in tr7)
 	 */
 
-	mtctl	arg0, tr2
-	mtctl	sp, tr3
-	copy	r1, arg0
-	mtctl	t1, tr4
-	mtctl	t2, tr5
+	mtctl	sp, tr4
+	mtctl	t1, tr5
+	mtctl	t2, tr6
 
+	ldil	L%intr_recurse, t1
+	ldw	R%intr_recurse(t1), t2
+	addi	1, t2, t2
+	stw	t2, R%intr_recurse(t1)
+	addib,= -1, t2, $trap_recurse
+
+	ldil	L%proc0paddr, t1
+	ldw	R%proc0paddr(t1), t1
+	ldw	TF_R30+pcb_tf+u_pcb(sr0, t1), sp
+
+	/* first level recursion always goes into pcb, if any */
+	ldil	L%curproc, t1
+	ldw	R%curproc(t1), t2
+	comb,=,n r0, t2, $trap_recurse
+
+	b	$trap_trap
+	ldw	p_md(t2), t2
+
+$trap_recurse
 	copy	sp, t2
-	ldo	TF_SIZE+FM_SIZE(sp), sp
-	stw	t2, FM_PSP(sp)
+	ldo	TF_SIZE(sp), sp
 
-	/*
-	 * now start saving the temporary registers into the saved state.
-	 * These four get us out of temporary registers
-	 */
-
-	mfctl	tr2,t1
-	stw	t1,TF_R26(t2)
-
-	mfctl	tr3,t1
-	stw	t1,TF_R30(t2)
+	/* t2 is (struct trapframe *) */
+$trap_trap
+	stw	arg0,TF_R26(t2)
+	copy	r1, arg0
+	mfctl	tr7, r1
 
 	mfctl	tr4,t1
-	stw	t1,TF_R22(t2)
+	stw	t1,TF_R30(t2)
 
 	mfctl	tr5,t1
+	stw	t1,TF_R22(t2)
+
+	mfctl	tr6,t1
 	stw	t1,TF_R21(t2)
 
 	/*
@@ -1085,28 +1195,21 @@ $trapnowvirt
 	ldo	R%$global$(dp),dp
 
 	/*
-	 * call the C routine trap. Interrupt type (arg0) was setup back before
-	 * the call to thandler.
+	 * call the C routine trap().
+	 * Trap type (arg0) was setup back in the beginning of the handler
 	 */
 	copy	t2, arg1
-	copy	t2, r4
 
-#if KGDB
-	/*
-	 * Artificially create another frame so that gdb will
-	 * show real trapped routine.
-	 */
-	stw	r2,FM_CRP-(FM_SIZE+ARG_SIZE)(sp)
-	stw	r3,-(FM_SIZE+ARG_SIZE)(sp)	/* this overwrites ARG11 */
-	ldo	-(FM_SIZE+ARG_SIZE)(sp),r3
+#ifdef DDB
+	/* TODO: setup a call frame */
 #endif
-
 	.import	trap, code
 	ldil	L%trap,t1
 	ldo	R%trap(t1),t1
+	copy	t2, r4
 	.call
-	blr     r0,rp
-	bv,n    0(t1)
+	blr	r0,rp
+	bv,n	r0(t1)
 
 	copy	r4, t3
 	/*
@@ -1398,7 +1501,6 @@ EXIT(spstrcpy)
 
 	.import	whichqs, data
 	.import	qs, data
-	.import	panic, code
 /*
  * setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
@@ -1421,7 +1523,7 @@ Lsetrunqueue_panic
 	ldo     R%panic(r1), r1
 	.call
 	blr     %r0, rp
-	bv,n    (r1)
+	bv,n    %r0(r1)
 Lsetrunqueue_ok
 #endif
 
@@ -1464,7 +1566,7 @@ Lremrunqueue_panic
 	ldo     R%panic(r1), r1
 	.call
 	blr     %r0, rp
-	bv,n    (r1)
+	bv,n    %r0(r1)
 Lrrqpstr
 	.asciz	"remrunqueue"
 remrunqueue_ok
@@ -1547,7 +1649,7 @@ switch_error
 	ldo     R%panic(arg1), arg1
 	.call
 	blr     %r0, rp
-	bv,n    (r1)
+	bv,n    %r0(r1)
 
 switch_panic	.asciz	"cpu_switch"
 link_ok
@@ -1622,29 +1724,23 @@ EXIT(cpu_switch)
  * restore proc0 context and go into cpu_switch to select the next runable
  * process.
  */
-	.import	proc0, data
 	.import	kernel_map, data
 	.import	uvmspace_free, code
 	.import	uvm_km_free, code
 ENTRY(switch_exit)
 
-	/* no curproc */
-	ldil	L%curproc, t1
-	stw	r0, R%curproc(t1)
-
-	ldil	L%proc0, arg0
-	ldo	R%proc0(t1), arg0
+	ldil	L%proc0, t2
+	ldo	R%proc0(t2), t2
 
 	/* setup kernel context */
-	ldi	HPPA_SID_KERNEL, t4
-	mtctl	t4, sr0
-	mtctl	t4, sr1
-	mtctl	t4, sr2
-	mtctl	t4, sr3
-	mtctl	t4, sr4
-	mtctl	t4, sr5
-	mtctl	t4, sr6
-	mtctl	t4, sr7
+	mtctl	r0, sr0
+	mtctl	r0, sr1
+	mtctl	r0, sr2
+	mtctl	r0, sr3
+	mtctl	r0, sr4
+	mtctl	r0, sr5
+	mtctl	r0, sr6
+	mtctl	r0, sr7
 
 	/* leave pidr4 in user space so copy* work */
 	ldi	HPPA_PID_KERNEL, t4
