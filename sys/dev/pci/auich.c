@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.10 2001/05/16 23:38:04 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.11 2001/06/06 22:11:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -383,8 +383,8 @@ auich_read_codec(v, reg, val)
 
 	if (i > 0) {
 		*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
-		DPRINTF(AUICH_DEBUG_CODECIO,
-		    ("auich_read_codec(%x, %x)\n", reg, *val));
+		DPRINTF(AUICH_DEBUG_CODECIO, ("%s: read_codec(%x, %x)\n",
+		    sc->sc_dev.dv_xname, reg, *val));
 
 		return 0;
 	} else {
@@ -403,13 +403,13 @@ auich_write_codec(v, reg, val)
 	struct auich_softc *sc = v;
 	int i;
 
-	DPRINTF(AUICH_DEBUG_CODECIO, ("auich_write_codec(%x, %x)\n", reg, val));
-
 	/* wait for an access semaphore */
 	for (i = AUICH_SEMATIMO; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_CAS) & 1; DELAY(1));
 
 	if (i > 0) {
+		DPRINTF(AUICH_DEBUG_CODECIO, ("%s: write_codec(%x, %x)\n",
+		    sc->sc_dev.dv_xname, reg, val));
 		bus_space_write_2(sc->iot, sc->mix_ioh, reg, val);
 		return 0;
 	} else {
