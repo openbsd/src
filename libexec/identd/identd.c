@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.28 2002/07/16 10:16:10 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.29 2002/07/16 10:21:20 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -150,13 +150,13 @@ main(int argc, char *argv[])
 	struct in6_addr laddr6, faddr6;
 	struct passwd *pwd;
 	struct group *grp;
-	int     background_flag = 0, timeout = 0, len, ch;
+	int     background_flag = 0, timeout = 0, ch;
 	char   *portno = "auth";
 	char   *bind_address = NULL;
 	uid_t   set_uid = 0;
 	gid_t   set_gid = 0;
 	extern char *optarg;
-	extern int optind;
+	size_t len;
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 	/*

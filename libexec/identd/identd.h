@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.h,v 1.11 2002/02/17 19:42:26 millert Exp $*/
+/*	$OpenBSD: identd.h,v 1.12 2002/07/16 10:21:20 deraadt Exp $*/
 
 /*
 **
@@ -14,11 +14,6 @@
 
 #ifndef __IDENTD_H__
 #define __IDENTD_H__
-
-extern char *version;
-
-extern char *path_unix;
-extern char *path_kmem;
 
 extern int verbose_flag;
 extern int debug_flag;
