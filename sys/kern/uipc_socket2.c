@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.30 2002/08/08 19:18:12 provos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.31 2002/08/26 16:39:25 dhartmei Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -758,6 +758,8 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		    (eor == 0 ||
 		    (((o = m->m_next) || (o = n)) &&
 		    o->m_type == m->m_type))) {
+			if (sb->sb_lastrecord == m)
+				sb->sb_lastrecord = m->m_next;
 			m = m_free(m);
 			continue;
 		}
