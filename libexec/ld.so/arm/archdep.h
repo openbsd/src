@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2004/02/07 06:00:49 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2004/02/10 14:12:22 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -46,6 +46,8 @@
 #ifndef DT_BIND_NOW
 #define DT_BIND_NOW 0
 #endif
+
+#define RTLD_TEXT_PLT
 
 /*
  *	The following functions are declared inline so they can

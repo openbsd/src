@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.71 2004/02/07 06:00:48 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.72 2004/02/10 14:12:22 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -205,7 +205,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	{
 		extern char *__got_start;
 		extern char *__got_end;
-#if !defined(__i386__) && !defined(__arm__)
+#ifndef RTLD_TEXT_PLT
 		extern char *__plt_start;
 		extern char *__plt_end;
 #endif
@@ -215,7 +215,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		    ELF_TRUNC((long)&__got_start, _dl_pagesz),
 		    GOT_PERMS);
 
-#if !defined(__i386__) && !defined(__arm__)
+#ifndef RTLD_TEXT_PLT
 		/* only for DATA_PLT or BSS_PLT */
 		_dl_mprotect((void *)ELF_TRUNC((long)&__plt_start, _dl_pagesz),
 		    ELF_ROUND((long)&__plt_end,_dl_pagesz) -

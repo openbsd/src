@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.8 2003/06/09 16:10:03 deraadt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.9 2004/02/10 14:12:22 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,6 +35,8 @@
 
 #define	RELTYPE	Elf32_Rela
 #define	RELSIZE	sizeof(Elf32_Rela)
+
+#define RTLD_TEXT_PLT
 
 #include <sys/mman.h>
 #include <elf_abi.h>
