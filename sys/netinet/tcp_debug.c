@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.17 2003/06/09 07:40:25 itojun Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.18 2003/06/09 10:12:52 itojun Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ tcp_trace(act, ostate, tp, headers, req, len)
 	switch (tp->pf) {
 #ifdef INET6
 	case PF_INET6:
-		if (ti) {
+		if (ti6) {
 			th = &ti6->ti6_t;
 			td->td_ti6 = *ti6;
 		} else
