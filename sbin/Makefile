@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2000/04/03 01:10:05 mickey Exp $
+#	$OpenBSD: Makefile,v 1.51 2000/05/18 14:01:00 espie Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck
@@ -29,18 +29,9 @@ SUBDIR+= mount_xfs
 # IPv6
 SUBDIR+= ping6 rtsol
 
-.if   make(clean) || make(cleandir) || make(obj)
-SUBDIR+= bim edlabel fdisk ancontrol wicontrol
-.elif ${MACHINE} == "i386"
-SUBDIR+= fdisk
-SUBDIR+= ancontrol wicontrol
-.elif (${MACHINE} == "arc") || (${MACHINE} == "powerpc") || (${MACHINE} == "alpha")
-SUBDIR+= fdisk
-.elif ${MACHINE} == "pc532"
-SUBDIR+= bim
-.elif (${MACHINE} == "sun3") || (${MACHINE} == "atari") || \
-      (${MACHINE} == "sparc")
-SUBDIR+= edlabel
-.endif
+# Man pages (and manpages to do)
+SUBDIR+= fdisk ancontrol wicontrol edlabel
+
+# Add bim if we resurrect pc532
 
 .include <bsd.subdir.mk>
