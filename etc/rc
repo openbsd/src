@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.162 2001/02/10 18:03:16 mickey Exp $
+#	$OpenBSD: rc,v 1.163 2001/02/22 08:03:22 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -357,7 +357,15 @@ fi
 
 if [ ! -f /etc/ssh_host_dsa_key ]; then
 	echo -n "ssh-keygen: generating new DSA host key... "
-	if /usr/bin/ssh-keygen -q -d -f /etc/ssh_host_dsa_key -N ''; then
+	if /usr/bin/ssh-keygen -q -t dsa -f /etc/ssh_host_dsa_key -N ''; then
+		echo done.
+	else
+		echo failed.
+	fi
+fi
+if [ ! -f /etc/ssh_host_rsa_key ]; then
+	echo -n "ssh-keygen: generating new RSA host key... "
+	if /usr/bin/ssh-keygen -q -t rsa -f /etc/ssh_host_rsa_key -N ''; then
 		echo done.
 	else
 		echo failed.
@@ -365,7 +373,7 @@ if [ ! -f /etc/ssh_host_dsa_key ]; then
 fi
 if [ ! -f /etc/ssh_host_key ]; then
 	echo -n "ssh-keygen: generating new RSA host key... "
-	if /usr/bin/ssh-keygen -q -f /etc/ssh_host_key -N ''; then
+	if /usr/bin/ssh-keygen -q -t rsa1 -f /etc/ssh_host_key -N ''; then
 		echo done.
 	else
 		echo failed.
