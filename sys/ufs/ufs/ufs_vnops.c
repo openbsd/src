@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.23 1999/01/16 12:56:27 niklas Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.24 1999/02/25 07:30:50 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -973,6 +973,10 @@ abortit:
 	 *    completing our work, the link count
 	 *    may be wrong, but correctable.
 	 */
+	if ((nlink_t)dp->i_ffs_nlink >= LINK_MAX) {
+		error = EMLINK;
+		goto bad;
+	}
 	ip->i_effnlink++;
 	ip->i_ffs_nlink++;
 	ip->i_flag |= IN_CHANGE;
