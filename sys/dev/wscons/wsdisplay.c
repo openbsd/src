@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.12 2001/02/10 19:42:06 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.13 2001/02/11 16:43:04 fgsch Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -107,7 +107,7 @@ static void wsdisplay_closescreen __P((struct wsdisplay_softc *,
 				       struct wsscreen *));
 int wsdisplay_delscreen __P((struct wsdisplay_softc *, int, int));
 
-#define WSDISPLAY_MAXSCREEN 8
+#define WSDISPLAY_MAXSCREEN 12
 
 struct wsdisplay_softc {
 	struct device sc_dv;
