@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.8 1999/03/02 15:12:00 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.31 1999/03/02 14:26:13 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.9 1999/03/31 23:47:12 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.32 1999/03/31 23:34:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -72,6 +72,7 @@ struct udp_transport {
   struct sockaddr_in src;
   struct sockaddr_in dst;
   int s;
+  LIST_ENTRY (udp_transport) link;
 };
 
 static struct transport *udp_clone (struct udp_transport *,
@@ -85,7 +86,7 @@ static int udp_send_message (struct message *);
 static void udp_get_dst (struct transport *, struct sockaddr **, int *);
 static void udp_get_src (struct transport *, struct sockaddr **, int *);
 
-struct transport_vtbl udp_transport_vtbl = {
+static struct transport_vtbl udp_transport_vtbl = {
   { 0 }, "udp",
   udp_create,
   udp_fd_set,
@@ -96,10 +97,25 @@ struct transport_vtbl udp_transport_vtbl = {
   udp_get_src
 };
 
+/* A list of UDP transports we listen for messages on.  */
+static LIST_HEAD (udp_listen_list, udp_transport) udp_listen_list;
+
 in_port_t udp_default_port = 0;
 in_port_t udp_bind_port = 0;
 static int udp_proto;
 static struct transport *default_transport;
+
+/* Find an UDP transport listening on ADDR:PORT.  */
+static struct udp_transport *
+udp_listen_lookup (in_addr_t addr, in_port_t port)
+{
+  struct udp_transport *u;
+
+  for (u = LIST_FIRST (&udp_listen_list); u; u = LIST_NEXT (u, link))
+    if (u->src.sin_addr.s_addr == addr && u->src.sin_port == port)
+      return u;
+  return 0;
+}
 
 /* Create a UDP transport structure bound to LADDR just for listening.  */
 static struct transport *
@@ -131,7 +147,7 @@ udp_make (struct sockaddr_in *laddr)
    * In order to have several bound specific address-port combinations
    * with the same port SO_REUSEADDR is needed.
    * If this is a wildcard socket and we are not listening there, but only
-   * sending from it make it is entirely reuseable with SO_REUSEPORT.
+   * sending from it make sure it is entirely reuseable with SO_REUSEPORT.
    */
   on = 1;
   if (setsockopt (s, SOL_SOCKET,
@@ -224,6 +240,7 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   struct conf_list *listen_on;
   struct conf_list_node *address;
   struct in_addr addr;
+  struct transport *t;
 
   /*
    * Well UDP is an internet protocol after all so drop other ifreqs.
@@ -271,8 +288,14 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 	return;
     }
 
-  /* XXX Deal with errors better.  */
-  udp_bind (if_addr, port);
+  t = udp_bind (if_addr, port);
+  if (!t)
+    {
+      log_print ("udp_bind_if: failed to create a socket on %x:%d",
+		 htons (if_addr), port);
+      return;
+    }
+  LIST_INSERT_HEAD (&udp_listen_list, (struct udp_transport *)t, link);
 }
 
 /*
@@ -282,6 +305,7 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 static struct transport *
 udp_create (char *name)
 {
+  struct udp_transport *u;
   struct sockaddr_in dst;
   char *addr_str, *port_str;
   in_addr_t addr;
@@ -296,6 +320,7 @@ udp_create (char *name)
     }
   else
     port = UDP_DEFAULT_PORT;
+  port = htons (port);
 
   addr_str = conf_get_str (name, "Address");
   addr = inet_addr (addr_str);
@@ -311,9 +336,26 @@ udp_create (char *name)
 #endif
   dst.sin_family = AF_INET;
   dst.sin_addr.s_addr = addr;
-  dst.sin_port = htons (port);
+  dst.sin_port = port;
 
-  return udp_clone ((struct udp_transport *)default_transport, &dst);
+  addr_str = conf_get_str (name, "Local-address");
+  if (!addr_str)
+    return udp_clone ((struct udp_transport *)default_transport, &dst);
+
+  addr = inet_addr (addr_str);
+  if (addr == INADDR_NONE)
+    {
+      log_print ("udp_create: inet_addr (\"%s\") failed", addr_str);
+      return 0;
+    }
+  u = udp_listen_lookup (addr, port);
+  if (!u)
+    {
+      log_print ("udp_create: %s:%d must exist as a listener too", addr_str,
+		 port);
+      return 0;
+    } 
+  return udp_clone (u, &dst);
 }
 
 /*
@@ -338,6 +380,8 @@ udp_init ()
       s = getservbyname("isakmp", "udp");
       port = s ? s->s_port : htons (UDP_DEFAULT_PORT);
     }
+
+  LIST_INIT (&udp_listen_list);
 
   /* Bind the ISAKMP UDP port on all network interfaces we have. */
   /* XXX need to check errors */
