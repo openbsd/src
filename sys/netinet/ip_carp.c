@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.90 2005/01/06 00:41:51 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.91 2005/01/06 00:46:58 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2036,15 +2036,17 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				((struct carp_softc *)ifp->if_softc
 				    )->sc_if.if_oerrors++;
 				carpstats.carps_onomem++;
-				return (ENOMEM);
+				return (ENOBUFS);
 			}
 			bcopy(&ifp, (caddr_t)(mtag + 1), 
 			    sizeof(struct ifnet *));
 			m_tag_prepend(m, mtag);
 		}
 		return (ifp0->if_output(ifp, m, sa, rt));
-	} else
+	} else {
+		m_freem(m);
 		return (EINVAL);
+	}
 }
 
 int
