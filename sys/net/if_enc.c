@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.14 1999/12/27 03:06:40 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.15 1999/12/27 04:35:09 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -379,21 +379,87 @@ caddr_t data;
 	    bcopy(&enc->sc_dst, &ifsa->sa_dst, enc->sc_dst.sa.sa_len);
 	    break;
 
-	case SIOCSENCSA:
+	case SIOCSENCCLEARSA:
 	    /* Check for superuser */
 	    if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 	      break;
 
-	    /* Check for valid TDB */
-	    s = spltdb();
+	    if (ifsa->sa_proto == 0)
+	    {
+		/* Clear SA if requested */
+		if (enc->sc_sproto != 0)
+		{
+		    s = spltdb();
+		    tdb = gettdb(enc->sc_spi, &enc->sc_dst, enc->sc_sproto);
+		    if (tdb != NULL)
+		      tdb->tdb_interface = 0;
+		    splx(s);
+		}
+		
+		bzero(&enc->sc_dst, sizeof(union sockaddr_union));
+		enc->sc_spi = 0;
+		enc->sc_sproto = 0;
+		break;
+	    }
 
-	    /* Clear interface pointer in pre-existing TDB */
+	    s = spltdb();
+	    tdb = gettdb(ifsa->sa_spi, &ifsa->sa_dst, ifsa->sa_proto);
+	    if (tdb == NULL)
+	    {
+		splx(s);
+		error = ENOENT;
+		break;
+	    }
+
+	    tdb->tdb_interface = 0;
+	    splx(s);
+	    break;
+
+	case SIOCSENCSRCSA:
+	    /* Check for superuser */
+	    if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+	      break;
+
+	    if (ifsa->sa_proto == 0)
+	    {
+		error = ENOENT;
+		break;
+	    }
+
+	    s = spltdb();
+	    tdb = gettdb(ifsa->sa_spi, &ifsa->sa_dst, ifsa->sa_proto);
+	    if (tdb == NULL)
+	    {
+		splx(s);
+		error = ENOENT;
+		break;
+	    }
+
+	    /* Is it already bound ? */
+	    if (tdb->tdb_interface)
+	    {
+		splx(s);
+		error = EEXIST;
+		break;
+	    }
+
+	    tdb->tdb_interface = (caddr_t) ifp;
+	    splx(s);
+	    break;
+
+	case SIOCSENCDSTSA:
+	    /* Check for superuser */
+	    if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+	      break;
+
+	    /* Check for pre-existing TDB */
 	    if (enc->sc_sproto != 0)
 	    {
-		tdb = gettdb(enc->sc_spi, &enc->sc_dst, enc->sc_sproto);
-		if (tdb)
-		  tdb->tdb_interface = NULL;
+		error = EEXIST;
+		break;
 	    }
+
+	    s = spltdb();
 
 	    if (ifsa->sa_proto != 0)
 	    {
@@ -406,23 +472,20 @@ caddr_t data;
 		}
 	    }
 	    else
-	      tdb = NULL;
-
-	    /* Clear SA if requested */
-	    if ((ifsa->sa_spi == 0) && (ifsa->sa_proto == 0))
 	    {
-		bzero(&enc->sc_dst, sizeof(union sockaddr_union));
+		/* Clear SA if requested */
+		if (enc->sc_sproto != 0)
+		{
+		    tdb = gettdb(enc->sc_spi, &enc->sc_dst, enc->sc_sproto);
+		    if (tdb != NULL)
+		      tdb->tdb_interface = 0;
+		}
+
+		bzero(&enc->sc_dst, sizeof(enc->sc_dst));
 		enc->sc_spi = 0;
 		enc->sc_sproto = 0;
 
 		splx(s);
-		break;
-	    }
-
-	    if (tdb == NULL)
-	    {
-		splx(s);
-		error = ENOENT;
 		break;
 	    }
 
