@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.7 1996/09/20 22:53:11 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.8 1996/09/25 11:39:56 niklas Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ tcpdropoldhalfopen(avoidtp, port)
 	u_int16_t port;
 {
 	register struct inpcb *inp;
-	register struct tcpcb *tp, *droptp = NULL;
+	register struct tcpcb *tp;
 	int ncheck = 40;
 	int s;
 
