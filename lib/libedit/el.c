@@ -294,8 +294,8 @@ el_source(el, fname)
 	    if (issetugid() != 0 || (ptr = getenv("HOME")) == NULL) 
 		return -1;
 	    fname = strncpy(path, ptr, MAXPATHLEN);
-	    (void) strncat(path, elpath, MAXPATHLEN);
 	    path[MAXPATHLEN-1] = '\0';
+	    (void) strncat(path, elpath, MAXPATHLEN - strlen(path));
 	}
     }
 
