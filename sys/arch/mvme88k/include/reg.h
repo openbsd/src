@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.7 2001/02/01 03:38:18 smurph Exp $ */
+/*	$OpenBSD: reg.h,v 1.8 2001/08/24 22:47:34 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -32,8 +32,6 @@
  */
 #ifndef _M88K_REG_H_
 #define _M88K_REG_H_
-
-#define r_
 
 /* This must always be an even number of words long */
 struct reg {
