@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.11 2000/05/28 02:24:43 art Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.12 2001/05/15 01:43:16 millert Exp $	*/
 /*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
@@ -144,10 +144,10 @@ sunos_sendsig(catcher, sig, mask, code, type, val)
 	} else
 		fp = (struct sunos_sigframe *)frame->f_regs[SP] - 1;
 #if defined(UVM)
-	if ((vm_offset_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)uvm_grow(p, (unsigned)fp);
 #else
-	if ((vm_offset_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #endif
 #ifdef DEBUG

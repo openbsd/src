@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops.c,v 1.1 1997/07/06 07:46:27 downsj Exp $	*/
+/*	$OpenBSD: cacheops.c,v 1.2 2001/05/15 01:43:15 millert Exp $	*/
 /*	$NetBSD: cacheops.c,v 1.1 1997/06/02 20:26:57 leo Exp $	*/
 
 /*-
@@ -316,7 +316,7 @@ void _DCFA()
 }
 
 void _TBIS(va)
-	vm_offset_t	va;
+	vaddr_t	va;
 {
 	switch (cputype) {
 	default:
@@ -343,29 +343,29 @@ void _TBIS(va)
 	}
 }
 
-void _DCIAS(va)
-	vm_offset_t	va;
+void _DCIAS(pa)
+	paddr_t	pa;
 {
 	switch (cputype) {
 	default:
 #ifdef M68020
 	case CPU_68020:
-		DCIAS_20(va);
+		DCIAS_20(pa);
 		break;
 #endif
 #ifdef M68030
 	case CPU_68030:
-		DCIAS_30(va);
+		DCIAS_30(pa);
 		break;
 #endif
 #ifdef M68040
 	case CPU_68040:
-		DCIAS_40(va);
+		DCIAS_40(pa);
 		break;
 #endif
 #ifdef M68060
 	case CPU_68060:
-		DCIAS_60(va);
+		DCIAS_60(pa);
 		break;
 #endif
 	}
@@ -388,109 +388,109 @@ void _DCPA()
 	}
 }
 
-void _ICPL(va)
-	vm_offset_t	va;
+void _ICPL(pa)
+	paddr_t	pa;
 {
 	switch (cputype) {
 	default:
 #ifdef M68040
 	case CPU_68040:
-		ICPL_40(va);
+		ICPL_40(pa);
 		break;
 #endif
 #ifdef M68060
 	case CPU_68060:
-		ICPL_60(va);
+		ICPL_60(pa);
 		break;
 #endif
 	}
 }
 
-void _ICPP(va)
-	vm_offset_t	va;
+void _ICPP(pa)
+	paddr_t	pa;
 {
 	switch (cputype) {
 	default:
 #ifdef M68040
 	case CPU_68040:
-		ICPP_40(va);
+		ICPP_40(pa);
 		break;
 #endif
 #ifdef M68060
 	case CPU_68060:
-		ICPP_60(va);
+		ICPP_60(pa);
 		break;
 #endif
 	}
 }
 
-void _DCPL(va)
-	vm_offset_t	va;
+void _DCPL(pa)
+	paddr_t	pa;
 {
 	switch (cputype) {
 	default:
 #ifdef M68040
 	case CPU_68040:
-		DCPL_40(va);
+		DCPL_40(pa);
 		break;
 #endif
 #ifdef M68060
 	case CPU_68060:
-		DCPL_60(va);
+		DCPL_60(pa);
 		break;
 #endif
 	}
 }
 
-void _DCPP(va)
-	vm_offset_t	va;
+void _DCPP(pa)
+	paddr_t	pa;
 {
 	switch (cputype) {
 	default:
 #ifdef M68040
 	case CPU_68040:
-		DCPP_40(va);
+		DCPP_40(pa);
 		break;
 #endif
 #ifdef M68060
 	case CPU_68060:
-		DCPP_60(va);
+		DCPP_60(pa);
 		break;
 #endif
 	}
 }
 
-void _DCFL(va)
-	vm_offset_t	va;
+void _DCFL(pa)
+	paddr_t	pa;
 {
 	switch (cputype) {
 	default:
 #ifdef M68040
 	case CPU_68040:
-		DCFL_40(va);
+		DCFL_40(pa);
 		break;
 #endif
 #ifdef M68060
 	case CPU_68060:
-		DCFL_60(va);
+		DCFL_60(pa);
 		break;
 #endif
 	}
 }
 
-void _DCFP(va)
-	vm_offset_t	va;
+void _DCFP(pa)
+	paddr_t	pa;
 {
 	switch (cputype) {
 	default:
 #ifdef M68040
 	case CPU_68040:
-		DCFP_40(va);
+		DCFP_40(pa);
 		break;
 #endif
 #ifdef M68060
 	case CPU_68060:
-		DCFP_60(va);
+		DCFP_60(pa);
 		break;
 #endif
 	}

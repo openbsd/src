@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 1997/06/09 23:04:26 denny Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2001/05/15 01:43:15 millert Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
@@ -165,9 +165,9 @@ const char *const fpcregs[3] = { "fpiar", "fpsr", "fpcr" };
 static char asm_buffer[256];
 static char info_buffer[256];
 
-vm_offset_t 
+db_addr_t 
 db_disasm(loc, moto_syntax)
-	vm_offset_t loc;
+	db_addr_t loc;
 	boolean_t moto_syntax;
 {
 	u_short opc;

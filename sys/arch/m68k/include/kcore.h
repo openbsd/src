@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.1 1996/04/19 16:08:13 niklas Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.2 2001/05/15 01:43:14 millert Exp $	*/
 /*	$NetBSD: kcore.h,v 1.1 1996/03/10 21:55:18 leo Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #define	NPHYS_RAM_SEGS	8
 
 typedef struct cpu_kcore_hdr {
-	vm_offset_t	kernel_pa;	/* Phys. address of kernel VA 0	*/
+	paddr_t		kernel_pa;	/* Phys. address of kernel VA 0	*/
 	st_entry_t	*sysseg_pa;	/* Phys. address of Sysseg	*/
 	int		mmutype;
 	phys_ram_seg_t	ram_segs[NPHYS_RAM_SEGS];

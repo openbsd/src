@@ -1,4 +1,4 @@
-/*	$OpenBSD: mappedcopy.c,v 1.3 2001/05/05 21:26:37 art Exp $	*/
+/*	$OpenBSD: mappedcopy.c,v 1.4 2001/05/15 01:43:16 millert Exp $	*/
 /*	$NetBSD: mappedcopy.c,v 1.1 1997/02/02 06:54:10 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,8 @@ mappedcopyin(fromp, top, count)
 	register void *fromp, *top;
 	register size_t count;
 {
-	register vm_offset_t kva, upa;
+	register vaddr_t kva;
+	register paddr_t upa;
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
@@ -93,7 +94,7 @@ mappedcopyin(fromp, top, count)
 	mappedcopyincount++;
 #endif
 
-	kva = (vm_offset_t)CADDR1;
+	kva = (vaddr_t)CADDR1;
 	off = (int)((u_long)fromp & PAGE_MASK);
 	alignable = (off == ((u_long)top & PAGE_MASK));
 	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
@@ -131,7 +132,8 @@ mappedcopyout(fromp, top, count)
 	register void *fromp, *top;
 	register size_t count;
 {
-	register vm_offset_t kva, upa;
+	register vaddr_t kva;
+	register paddr_t upa;
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
@@ -144,7 +146,7 @@ mappedcopyout(fromp, top, count)
 	mappedcopyoutcount++;
 #endif
 
-	kva = (vm_offset_t) CADDR2;
+	kva = (vaddr_t) CADDR2;
 	off = (int)((u_long)top & PAGE_MASK);
 	alignable = (off == ((u_long)fromp & PAGE_MASK));
 	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);

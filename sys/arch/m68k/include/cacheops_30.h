@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops_30.h,v 1.2 2001/01/15 19:50:37 deraadt Exp $	*/
+/*	$OpenBSD: cacheops_30.h,v 1.3 2001/05/15 01:43:14 millert Exp $	*/
 /*	$NetBSD: cacheops_30.h,v 1.1 1997/06/02 20:26:40 leo Exp $	*/
 
 /*-
@@ -53,10 +53,10 @@ TBIA_30()
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-void TBIS_30 __P((vm_offset_t));
+void TBIS_30 __P((vaddr_t));
 extern __inline__ void
 TBIS_30(va)
-	vm_offset_t	va;
+	vaddr_t	va;
 {
 	__asm __volatile (" pflush #0,#0,%0@;"
 			  " movc   %1,cacr" : : "a" (va), "d" (DC_CLEAR));

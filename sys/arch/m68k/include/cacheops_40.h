@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops_40.h,v 1.2 2001/01/15 19:50:37 deraadt Exp $	*/
+/*	$OpenBSD: cacheops_40.h,v 1.3 2001/05/15 01:43:14 millert Exp $	*/
 /*	$NetBSD: cacheops_40.h,v 1.1 1997/06/02 20:26:41 leo Exp $	*/
 
 /*-
@@ -50,12 +50,12 @@ TBIA_40()
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-void TBIS_40 __P((vm_offset_t));
+void TBIS_40 __P((vaddr_t));
 extern __inline__ void
 TBIS_40(va)
-	vm_offset_t	va;
+	vaddr_t	va;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register vaddr_t	r_va __asm("a0") = va;
 	int	tmp;
 
 	__asm __volatile (" movc   %1, dfc;"	/* select supervisor	*/
@@ -133,14 +133,14 @@ DCIU_40()
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIAS_40 __P((vm_offset_t));
+void DCIAS_40 __P((paddr_t));
 extern __inline__ void
-DCIAS_40(va)
-	vm_offset_t	va;
+DCIAS_40(pa)
+	paddr_t	pa;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_va)); /* cpushl dc,a0@ */
+	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
 }
 
 void PCIA_40 __P((void));
@@ -158,47 +158,47 @@ DCFA_40()
 }
 
 /* invalidate instruction physical cache line */
-void ICPL_40 __P((vm_offset_t));
+void ICPL_40 __P((paddr_t));
 extern __inline__ void
-ICPL_40(va)
-	vm_offset_t	va;
+ICPL_40(pa)
+	paddr_t	pa;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf488;" : : "a" (r_va)); /* cinvl ic,a0@ */
+	__asm __volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,a0@ */
 }
 
 /* invalidate instruction physical cache page */
-void ICPP_40 __P((vm_offset_t));
+void ICPP_40 __P((paddr_t));
 extern __inline__ void
-ICPP_40(va)
-	vm_offset_t	va;
+ICPP_40(pa)
+	paddr_t	pa;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf490;" : : "a" (r_va)); /* cinvp ic,a0@ */
+	__asm __volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,a0@ */
 }
 
 /* invalidate data physical cache line */
-void DCPL_40 __P((vm_offset_t));
+void DCPL_40 __P((paddr_t));
 extern __inline__ void
-DCPL_40(va)
-	vm_offset_t	va;
+DCPL_40(pa)
+	paddr_t	pa;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf448;" : : "a" (r_va)); /* cinvl dc,a0@ */
+	__asm __volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,a0@ */
 }
 
 /* invalidate data physical cache page */
-void DCPP_40 __P((vm_offset_t));
+void DCPP_40 __P((paddr_t));
 extern __inline__ void
-DCPP_40(va)
-	vm_offset_t	va;
+DCPP_40(pa)
+	paddr_t	pa;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf450;" : : "a" (r_va)); /* cinvp dc,a0@ */
+	__asm __volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,a0@ */
 }
 
 /* invalidate data physical all */
@@ -210,23 +210,23 @@ DCPA_40()
 }
 
 /* data cache flush line */
-void DCFL_40 __P((vm_offset_t));
+void DCFL_40 __P((paddr_t));
 extern __inline__ void
-DCFL_40(va)
-	vm_offset_t	va;
+DCFL_40(pa)
+	paddr_t	pa;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_va)); /* cpushl dc,a0@ */
+	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
 }
 
 /* data cache flush page */
-void DCFP_40 __P((vm_offset_t));
+void DCFP_40 __P((paddr_t));
 extern __inline__ void
-DCFP_40(va)
-	vm_offset_t	va;
+DCFP_40(pa)
+	paddr_t	pa;
 {
-	register vm_offset_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf470;" : : "a" (r_va)); /* cpushp dc,a0@ */
+	__asm __volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,a0@ */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 1997/07/06 07:46:25 downsj Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 2001/05/15 01:43:14 millert Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.20 1997/06/26 01:26:58 thorpej Exp $	*/
 
 /* 
@@ -45,7 +45,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 typedef struct trapframe db_regs_t;
 
