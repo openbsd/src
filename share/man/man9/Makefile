@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2002/06/21 07:40:14 weingart Exp $
+#	$OpenBSD: Makefile,v 1.53 2002/07/01 01:45:00 art Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -90,6 +90,10 @@ MLINKS+=hook_establish.9 hook_disestablish.9
 MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
 MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create_deferred.9
+MLINKS+=lock.9 lockinit.9 lock.9 lockmgr.9 lock.9 lockstatus.9 \
+	lock.9 lockmgr_printinfo.9 \
+	lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
+	lock.9 simple_lock_try.9 lock.9 simple_unlock.9
 MLINKS+=log.9 addlog.9
 MLINKS+=md5.9 MD5Init.9 md5.9 MD5Transform.9
 MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
@@ -122,10 +126,10 @@ MLINKS+=printf.9 sprintf.9 printf.9 vprintf.9 printf.9 uprintf.9 \
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=sleep.9 tsleep.9 sleep.9 wakeup.9
-MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
-	spl.9 splimp.9 spl.9 splnet.9 spl.9 splsched.9 spl.9 splserial.9 \
-	spl.9 splsoftclock.9 spl.9 splsoftnet.9 spl.9 splsoftserial.9 \
-	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splx.9
+MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
+	spl.9 splhigh.9 spl.9 splimp.9 spl.9 splnet.9 spl.9 splsched.9 \
+	spl.9 splserial.9 spl.9 splsoftclock.9 spl.9 splsoftnet.9 \
+	spl.9 splsoftserial.9 spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splx.9
 MLINKS+=startuphook_establish.9 startuphook_disestablish.9
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
