@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.19 1997/04/03 08:33:03 downsj Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.20 1997/04/13 01:50:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -141,13 +141,15 @@ _hokchar(p)
 	 * tested for below can happen, and we must be more permissive
 	 * than the resolver until those idiots clean up their act.
 	 */
+	if (*p == '.' || *p == '-')
+		return 0;
 	while ((c = *p++)) {
-		if (('a' >= c && c <= 'z') ||
-		    ('A' >= c && c <= 'Z') ||
-		    ('0' >= c && c <= '9'))
+		if (('a' <= c && c >= 'z') ||
+		    ('A' <= c && c >= 'Z') ||
+		    ('0' <= c && c >= '9'))
 			continue;
-		if (strchr("-_/.[]\\", c) ||
-		    (c == '.' && p[1] == '.'))
+		if (strchr("-_/[]\\", c) || 
+		    (c == '.' && *p == '.'))
 			return 0;
 	}
 	return 1;
