@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.8 2005/01/10 22:16:08 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.9 2005/01/13 20:47:57 drahn Exp $
 # $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
 #
 # GENERIC machine description file
@@ -84,6 +84,9 @@ pxagpio0	at pxaip?	# GPIO
 saost0		at pxaip? addr 0x40a00000 size 0x20
 ohci0		at pxaip? addr 0x4c000000 size 0x70 intr 3
 usb*		at ohci?
+
+# keyboard
+zkbd0		at pxaip? # mux 1
 
 # USB bus support
 usb*		at ohci?	flags 0x1
