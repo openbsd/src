@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.7 1998/11/20 02:42:15 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.8 1998/11/23 19:42:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -723,24 +723,16 @@ static void rl_rxeof(sc)
 
 		if (total_len > wrap) {
 			m = m_devget(rxbufpos, wrap, 0, ifp, NULL);
-			if (m == NULL) {
+			if (m == NULL)
 				ifp->if_ierrors++;
-				printf("%s: out of mbufs, tried to "
-					"copy %d bytes\n",
-					sc->sc_dev.dv_xname, wrap);
-			}
 			else
 				m_copyback(m, wrap, total_len - wrap,
 					sc->rl_cdata.rl_rx_buf);
 			cur_rx = (total_len - wrap);
 		} else {
 			m = m_devget(rxbufpos, total_len, 0, ifp, NULL);
-			if (m == NULL) {
+			if (m == NULL)
 				ifp->if_ierrors++;
-				printf("%s: out of mbufs, tried to "
-				"copy %d bytes\n",
-				sc->sc_dev.dv_xname, total_len);
-			}
 			cur_rx += total_len + 4;
 		}
 
@@ -963,17 +955,13 @@ static int rl_encap(sc, c, m_head)
 	m = m_head;
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL) {
-		printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
+	if (m_new == NULL)
 		return(1);
-	}
 	if (m_head->m_pkthdr.len > MHLEN) {
 		MCLGET(m_new, M_DONTWAIT);
 
 		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
-			printf("%s: no memory for tx list",
-					sc->sc_dev.dv_xname);
 			return(1);
 		}
 	}
@@ -1358,7 +1346,7 @@ rl_attach(parent, self, aux)
 		return;
 	}
 	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh)) {
-		printf(":can't map mem space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 	sc->sc_st = pa->pa_memt;
@@ -1426,7 +1414,7 @@ rl_attach(parent, self, aux)
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma_mem, kva,
 	    RL_RXBUFLEN + 16, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: cannot load dma map\n");
+		printf("\n%s: cannot load dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 16);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_mem);
