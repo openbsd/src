@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.11 2003/05/23 12:41:13 jmc Exp $
+.\"	$OpenBSD: editline.3,v 1.12 2003/08/08 07:46:30 jmc Exp $
 .\"	$NetBSD: editline.3,v 1.4 1997/01/14 04:17:23 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,10 +100,10 @@ similar to those found in
 These functions are available in the
 .Nm libedit
 library (which needs the
-.Nm libtermcap
+.Nm libcurses
 library).
 Programs should be linked with
-.Fl ledit ltermcap .
+.Fl ledit lcurses .
 .Sh LINE EDITING FUNCTIONS
 The line editing functions use a common data structure,
 .Fa editline ,
