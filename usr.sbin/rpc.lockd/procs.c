@@ -40,6 +40,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <string.h>
 
 
 #define	CLIENT_CACHE_SIZE	64	/* No. of client sockets cached	*/
