@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa.c,v 1.5 2003/01/15 22:05:06 mickey Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.6 2003/01/16 00:02:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Michael Shalayeff
@@ -33,11 +33,11 @@
 #include "pmdb.h"
 
 static const char *md_reg_names[] = {
+	"%pc", "%npc",
 	"%sar", "%r1",  "%rp",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
 	"%r8",  "%r9",  "%r10", "%r11", "%r12", "%r13", "%r14", "%r15",
 	"%r16", "%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23",
-	"%r24", "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
-	"%pc", "%npc"
+	"%r24", "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31"
 };
 
 struct md_def md_def = { md_reg_names, 34, 0 };
