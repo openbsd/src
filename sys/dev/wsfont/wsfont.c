@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.7 2002/10/12 01:09:45 krw Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.8 2003/05/10 18:30:21 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -93,6 +93,10 @@
 #endif
 
 #ifdef FONT_GALLANT12x22
+#define HAVE_FONT 1
+#endif
+
+#ifdef FONT_BOLD8x16
 #define HAVE_FONT 1
 #endif
 
