@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.21 2004/07/09 16:22:04 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.22 2004/09/14 23:26:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -645,6 +645,7 @@ sig_pass_to_chld(int sig)
 }
 
 /* When child dies, move into the shutdown state */
+/* ARGSUSED */
 static void
 sig_got_chld(int sig)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.82 2004/07/03 23:40:44 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.83 2004/09/14 23:25:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.82 2004/07/03 23:40:44 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.83 2004/09/14 23:25:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -980,6 +980,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 	reenter = 0;
 }
 
+/* ARGSUSED */
 void
 reapchild(int signo)
 {
@@ -1035,12 +1036,14 @@ dodie(int signo)
 	WantDie = signo;
 }
 
+/* ARGSUSED */
 void
 domark(int signo)
 {
 	MarkSet = 1;
 }
 
+/* ARGSUSED */
 void
 doinit(int signo)
 {
