@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_msdos.8,v 1.7 1995/03/18 14:57:36 cgd Exp $
+.\"	$NetBSD: mount_msdos.8,v 1.9 1995/11/29 15:11:37 ws Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -40,6 +40,9 @@
 .Op Fl u Ar uid
 .Op Fl g Ar gid
 .Op Fl m Ar mask
+.Op Fl s
+.Op Fl l
+.Op Fl 9
 .Pa special
 .Pa node
 .Sh DESCRIPTION
@@ -91,6 +94,31 @@ Only the nine low-order bits of
 are used.
 The default mask is taken from the
 directory on which the file system is being mounted.
+.It Fl s
+Force behaviour to
+ignore and not generate Win'95 long filenames.
+.It Fl l
+Force listing and generation of
+Win'95 long filenames
+and separate creation/modification/access dates.
+.Pp
+If neither
+.Fl s
+nor
+.Fl l
+are given,
+.Nm mount_msdos
+searches the root directory of the filesystem to
+be mounted for any existing Win'95 long filenames.
+If no such entries are found,
+.Fl s
+is the default. Otherwise
+.Fl l
+is assumed.
+.It Fl 9
+Ignore the special Win'95 directory entries even
+if deleting or renaming a file. This forces
+.Fl s .
 .El
 .Sh SEE ALSO
 .Xr mount 2 ,
@@ -98,14 +126,23 @@ directory on which the file system is being mounted.
 .Xr fstab 5 ,
 .Xr mount 8
 .Sh CAVEATS
-The
-.Nm msdos
-filesystem is not known to work reliably with filesystems created by versions
-of MS-DOS later than version 3.3.
+The use of the
+.Fl 9
+flag could result in damaged filesystems,
+albeit the damage is in part taken care of by
+procedures similar to the ones used in Win'95.
 .Pp
-The limitations on file names imposed by MS-DOS are strange, at best.
-For instance, they are
-limited to single-case, 8 character names with 3 character extensions.
+The default handling for
+.Fl s
+and
+.Fl l
+will result in empty filesystems to be populated
+with short filenames only. To generate long filenames
+on empty DOS filesystems use
+.Fl l .
+.Pp
+Note that Win'95 handles only access dates,
+but not access times.
 .Sh HISTORY
 The
 .Nm mount_msdos

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_msdos.c,v 1.10 1995/03/18 14:57:38 cgd Exp $	*/
+/*	$NetBSD: mount_msdos.c,v 1.11 1995/10/15 15:35:48 ws Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: mount_msdos.c,v 1.10 1995/03/18 14:57:38 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount_msdos.c,v 1.11 1995/10/15 15:35:48 ws Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -72,8 +72,17 @@ main(argc, argv)
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "u:g:m:o:")) != EOF) {
+	while ((c = getopt(argc, argv, "sl9u:g:m:o:")) != EOF) {
 		switch (c) {
+		case 's':
+			args.flags |= MSDOSFSMNT_SHORTNAME;
+			break;
+		case 'l':
+			args.flags |= MSDOSFSMNT_LONGNAME;
+			break;
+		case '9':
+			args.flags |= MSDOSFSMNT_NOWIN95;
+			break;
 		case 'u':
 			args.uid = a_uid(optarg);
 			set_uid = 1;
