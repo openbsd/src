@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1996/04/28 10:59:15 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.7 1996/06/11 10:07:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1148,6 +1148,26 @@ hardintr(pc, evec, frame)
 #endif /* !INTR_ASM */
 
 /*
+ * find a useable interrupt vector in the range start, end. It starts at
+ * the end of the range, and searches backwards (to increase the chances
+ * of not conflicting with more normal users)
+ */
+int
+intr_findvec(start, end)
+	int start, end;
+{
+	extern u_long *vectab[], hardtrap, badtrap;
+	int vec;
+
+	if (start < 0 || end > 255 || start > end)
+		return (-1);
+	for (vec = end; vec > start; --vec)
+		if (vectab[vec] == &badtrap || vectab[vec] == &hardtrap)
+			return (vec);
+	return (-1);
+}
+
+/*
  * Chain the interrupt handler in. But first check if the vector
  * offset chosen is legal. It either must be a badtrap (not allocated
  * for a `system' purpose), or it must be a hardtrap (ie. already
@@ -1177,24 +1197,6 @@ intr_establish(vec, ih)
 	} else
 		intrs[vec] = ih;
 	return (0);
-}
-
-/*
- * find a useable vector for devices that don't specify one
- */
-int
-intr_freevec()
-{
-	extern u_long *vectab[], hardtrap, badtrap;
-	int i;
-
-	for (i = 255; i; --i)
-		if (vectab[i] == &badtrap)
-			return (i);
-	for (i = 255; i; --i)
-		if (vectab[i] == &hardtrap)
-			return (i);
-	return (-1);
 }
 
 #ifdef DDB
