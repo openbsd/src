@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcvt.4,v 1.16 1999/10/01 10:00:41 aaron Exp $
+.\" $OpenBSD: pcvt.4,v 1.17 1999/10/07 18:37:54 wvdputte Exp $
 .\"
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
 .\"                           Joerg Wunsch and Holger Veit.
@@ -94,6 +94,13 @@ where
 .Em n
 can be from one to four on the standard system, and higher if you
 have created addition /dev/ttyC* entries.
+
+One can also cycle through all available screens by using
+.Em ALT+F12
+
+To use the scrollback feature, press
+.Em LEFT_SHIFT+PGUP/PGDN
+(more info further)
 
 .Ss Features
 .Bl -bullet
@@ -226,7 +233,11 @@ If enabled, the key combination
 .Aq Em Del
 invokes a CPU reset.
 .br
-Default: off
+Default: off (To change this, check
+.Nm sysctl.conf
+, set value of 
+.Em machdep.kbdreset
+to 1)
 
 .It Em PCVT_USEKBDSEC
 Do NOT override a security lock for the keyboard.
