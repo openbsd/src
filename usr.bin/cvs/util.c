@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2004/07/27 12:01:58 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2004/07/28 01:50:05 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -92,7 +92,6 @@ cvs_readrepo(const char *dir, char *dst, size_t len)
 	char repo_path[MAXPATHLEN];
 
 	snprintf(repo_path, sizeof(repo_path), "%s/CVS/Repository", dir);
-
 	fp = fopen(repo_path, "r");
 	if (fp == NULL) {
 		return (-1);
@@ -431,6 +430,7 @@ cvs_mkadmin(struct cvs_file *cdir, mode_t mode)
 	}
 	if (root->cr_dir)
 		fprintf(fp, "%s", root->cr_dir);
+	putc('\n', fp);
 	(void)fclose(fp);
 
 	if (cdir->cf_ddat->cd_repo != NULL) {
@@ -441,7 +441,7 @@ cvs_mkadmin(struct cvs_file *cdir, mode_t mode)
 			cvs_log(LP_ERRNO, "failed to open %s", path);
 			return (-1);
 		}
-		fprintf(fp, "%s", cdir->cf_ddat->cd_repo);
+		fprintf(fp, "%s\n", cdir->cf_ddat->cd_repo);
 		(void)fclose(fp);
 	}
 
