@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_seeprom.c,v 1.1 2003/12/24 22:45:45 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_seeprom.c,v 1.2 2004/10/12 22:09:37 krw Exp $	*/
 /*	$NetBSD: aic7xxx_seeprom.c,v 1.8 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*       
@@ -47,7 +47,7 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@netbsd.org>
  * 
- * $Id: aic7xxx_seeprom.c,v 1.1 2003/12/24 22:45:45 krw Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.2 2004/10/12 22:09:37 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -198,7 +198,7 @@ ahc_check_extport(struct ahc_softc *ahc, u_int *sxfrctl1)
 	if (!have_seeprom) {
 		if (bootverbose)
 			printf("%s: No SEEPROM available.\n", ahc_name(ahc));
-		ahc->flags |= AHC_USEDEFAULTS;
+		ahc->flags |= AHC_USEDEFAULTS | AHC_NO_BIOS_INIT;
 		free(ahc->seep_config, M_DEVBUF);
 		ahc->seep_config = NULL;
 		sc = NULL;
