@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.20 2003/04/06 06:12:01 pvalchev Exp $	*/
+/*	$OpenBSD: run.c,v 1.21 2003/04/28 03:07:40 tedu Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -831,7 +831,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			if (*s == '*') {
 				x = execute(a);
 				a = a->nnext;
-				sprintf(t-1, "%d", fmtwd=(int) getfval(x));
+				snprintf(t-1, fmt + fmtsz - (t-1), "%d", fmtwd=(int) getfval(x));
 				if (fmtwd < 0)
 					fmtwd = -fmtwd;
 				adjbuf(&buf, &bufsize, fmtwd+1+p-buf, recsize, &p, "format");
@@ -878,18 +878,19 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			n = fmtwd;
 		adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format");
 		switch (flag) {
-		case '?':	sprintf(p, "%s", fmt);	/* unknown, so dump it too */
+		case '?':	/* unknown, so dump it too */
+			snprintf(p, buf + bufsize - p, "%s", fmt);
 			t = getsval(x);
 			n = strlen(t);
 			if (fmtwd > n)
 				n = fmtwd;
 			adjbuf(&buf, &bufsize, 1+strlen(p)+n+p-buf, recsize, &p, "format");
 			p += strlen(p);
-			sprintf(p, "%s", t);
+			snprintf(p, buf + bufsize - p, "%s", t);
 			break;
-		case 'f':	sprintf(p, fmt, getfval(x)); break;
-		case 'd':	sprintf(p, fmt, (long) getfval(x)); break;
-		case 'u':	sprintf(p, fmt, (int) getfval(x)); break;
+		case 'f':	snprintf(p, buf + bufsize - p, fmt, getfval(x)); break;
+		case 'd':	snprintf(p, buf + bufsize - p, fmt, (long) getfval(x)); break;
+		case 'u':	snprintf(p, buf + bufsize - p, fmt, (int) getfval(x)); break;
 		case 's':
 			t = getsval(x);
 			n = strlen(t);
@@ -897,18 +898,18 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				n = fmtwd;
 			if (!adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, 0))
 				FATAL("huge string/format (%d chars) in printf %.30s... ran format() out of memory", n, t);
-			sprintf(p, fmt, t);
+			snprintf(p, buf + bufsize - p, fmt, t);
 			break;
 		case 'c':
 			if (isnum(x)) {
 				if (getfval(x))
-					sprintf(p, fmt, (int) getfval(x));
+					snprintf(p, buf + bufsize - p, fmt, (int) getfval(x));
 				else {
 					*p++ = '\0'; /* explicit null byte */
 					*p = '\0';   /* next output will start here */
 				}
 			} else
-				sprintf(p, fmt, getsval(x)[0]);
+				snprintf(p, buf + bufsize - p, fmt, getsval(x)[0]);
 			break;
 		default:
 			FATAL("can't happen: bad conversion %c in format()", flag);
@@ -1133,6 +1134,7 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 	Cell *x, *y, *z;
 	int n1, n2;
 	char *s;
+	size_t len;
 
 	x = execute(a[0]);
 	y = execute(a[1]);
@@ -1140,12 +1142,13 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 	getsval(y);
 	n1 = strlen(x->sval);
 	n2 = strlen(y->sval);
-	s = (char *) malloc(n1 + n2 + 1);
+	len = n1 + n2 + 1;
+	s = (char *) malloc(len);
 	if (s == NULL)
 		FATAL("out of space concatenating %.15s... and %.15s...",
 			x->sval, y->sval);
-	strcpy(s, x->sval);
-	strcpy(s+n1, y->sval);
+	strlcpy(s, x->sval, len);
+	strlcpy(s+n1, y->sval, len - n1);
 	tempfree(y);
 	z = gettemp();
 	z->sval = s;

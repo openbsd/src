@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.12 2003/04/04 00:42:34 deraadt Exp $	*/
+/*	$OpenBSD: lib.c,v 1.13 2003/04/28 03:07:40 tedu Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -433,7 +433,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			rec = patbeg + patlen;
 		} else {
 			   dprintf( ("no match %s\n", rec) );
-			strcpy(fr, rec);
+			strlcpy(fr, rec, fields + fieldssize - fr);
 			pfa->initstat = tempstat;
 			break;
 		}
