@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.61 1995/11/20 01:01:05 thorpej Exp $
+#	$NetBSD: files.oldconf,v 1.62 1996/02/03 00:23:51 mycroft Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -69,7 +69,6 @@ kern/sysv_msg.c		optional sysvmsg
 kern/sysv_sem.c		optional sysvsem
 kern/sysv_shm.c		optional sysvshm
 kern/tty.c		standard
-kern/tty_compat.c	standard
 kern/tty_conf.c		standard
 kern/tty_pty.c		optional pty device-driver
 kern/tty_subr.c		standard
