@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.26 2003/11/09 20:13:57 otto Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.27 2004/03/16 00:40:34 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.26 2003/11/09 20:13:57 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.27 2004/03/16 00:40:34 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -283,7 +283,12 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2)
 			    path1, path2);
 		return;
 	}
-	dp->d_status = diffreg(path1, path2, flags);
+	if (!S_ISREG(stb1.st_mode) && !S_ISDIR(stb1.st_mode))
+		dp->d_status = D_SKIPPED1;
+	else if (!S_ISREG(stb2.st_mode) && !S_ISDIR(stb2.st_mode))
+		dp->d_status = D_SKIPPED2;
+	else
+		dp->d_status = diffreg(path1, path2, flags);
 	if (!lflag)
 		print_status(dp->d_status, path1, path2, NULL);
 }
