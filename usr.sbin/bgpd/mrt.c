@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.39 2004/08/06 12:04:08 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.40 2004/08/10 13:46:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -102,9 +102,23 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 	DUMP_SHORT(buf, bgp->as);
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
-	DUMP_SHORT(buf, AFI_IPv4);
-	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
-	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+	switch (peer->local_addr.af) {
+	case AF_INET:
+		DUMP_SHORT(buf, AFI_IPv4);
+		DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
+		DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+		break;
+	case AF_INET6:
+		DUMP_SHORT(buf, AFI_IPv6);
+		if (buf_add(buf, &peer->local_addr.v6,
+		    sizeof(peer->local_addr.v6)) == -1 ||
+		    buf_add(buf, &peer->remote_addr.v6,
+		    sizeof(peer->remote_addr.v6)) == -1) {
+			log_warnx("mrt_dump_bgp_msg: buf_add error");
+			return (-1);
+		}
+		break;
+	}
 
 	if (buf_add(buf, pkg, pkglen) == -1) {
 		log_warnx("mrt_dump_bgp_msg: buf_add error");
@@ -140,9 +154,23 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 	DUMP_SHORT(buf, bgp->as);
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
-	DUMP_SHORT(buf, AFI_IPv4);
-	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
-	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+	switch (peer->local_addr.af) {
+	case AF_INET:
+		DUMP_SHORT(buf, AFI_IPv4);
+		DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
+		DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+		break;
+	case AF_INET6:
+		DUMP_SHORT(buf, AFI_IPv6);
+		if (buf_add(buf, &peer->local_addr.v6,
+		    sizeof(peer->local_addr.v6)) == -1 ||
+		    buf_add(buf, &peer->remote_addr.v6,
+		    sizeof(peer->remote_addr.v6)) == -1) {
+			log_warnx("mrt_dump_bgp_msg: buf_add error");
+			return (-1);
+		}
+		break;
+	}
 
 	DUMP_SHORT(buf, old_state);
 	DUMP_SHORT(buf, new_state);
