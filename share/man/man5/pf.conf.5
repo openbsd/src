@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.204 2003/03/04 21:03:46 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.205 2003/03/04 22:18:43 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -197,7 +197,9 @@ RFC 1918 style private network blocks.
 Later, addresses may be added to the rule with the following commands, so that
 traffic from these hosts can be dropped:
 .Bd -literal -offset indent
-.Cm # pfctl -t badhosts -Tadd 204.92.77.111
+.Xo Ic # pfctl -t badhosts -Tadd\ 
+.Ic 204.92.77.111
+.Xc
 .Ed
 .Pp
 When no active rules which refer to the badhosts table exist (such as when the
@@ -299,8 +301,11 @@ For example:
 .br
 .Bd -literal -offset indent
 .Ic set timeout tcp.established 3600
-.Ic set timeout { tcp.opening 30, tcp.closing 900 }
+.Xo Ic set timeout { tcp.opening 30,\ 
+.Ic tcp.closing 900 }
+.Xc
 .Ed
+.Pp
 .It Ar set loginterface
 Enable collection of packet and byte count statistics for the given interface.
 These statistics can be viewed using
@@ -319,6 +324,7 @@ One can disable the loginterface using:
 .Bd -literal -offset indent
 .Ic set loginterface none
 .Ed
+.Pp
 .It Ar set limit
 Sets hard limits on the memory pools used by the packet filter.
 See
@@ -345,8 +351,11 @@ rules) to 20000.
 .Pp
 These can be combined:
 .Bd -literal -offset indent
-.Ic set limit { states 20000, frags 20000 }
+.Xo Ic set limit { states 20000,\ 
+.Ic frags 20000 }
+.Xc
 .Ed
+.Pp
 .It Ar set optimization
 Optimize the engine for one of the following network environments:
 .Pp
@@ -373,8 +382,11 @@ network) and slightly increased processor utilization.
 For example:
 .Pp
 .Bd -literal -offset indent
-.Ic set optimization aggressive
+.Xo Ic set optimization\ 
+.Ic aggressive
+.Xc
 .Ed
+.Pp
 .It Ar set block-policy
 The
 .Ar block-policy
@@ -382,7 +394,7 @@ option sets the default behaviour for the packet
 .Ar block
 action:
 .Pp
-.Bl -tag -width xxxx -compact
+.Bl -tag -width xxxxxxxx -compact
 .It Ar drop
 Packet is silently dropped.
 .It Ar return
@@ -394,8 +406,11 @@ and all other packets are silently dropped.
 For example:
 .Pp
 .Bd -literal -offset indent
-.Ic set block-policy return
+.Xo Ic set block-policy\ 
+.Ic return
+.Xc
 .Ed
+.Pp
 .It Ar set require-order
 By default
 .Xr pfctl 8
@@ -481,7 +496,9 @@ dropped as well.
 .Pp
 For example,
 .Bd -literal -offset indent
-.Ic scrub in on $ext_if all fragment reassemble
+.Xo Ic scrub in on $ext_if all\ 
+.Ic fragment reassemble
+.Xc
 .Ed
 .Pp
 .Sh QUEUEING
@@ -572,7 +589,9 @@ should queue up to 5 Mbit/s in four second-level queues using
 Those four queues will be shown in a later example.
 .Bd -literal -offset indent
 .Xo Ic altq on dc0 cbq bandwidth 5Mb\ 
-.Ic queue { std, http, mail, ssh }
+.Xo Ic queue { std, http, mail,\ 
+.Ic ssh }
+.Xc
 .Xc
 .Ed
 .Pp
@@ -674,17 +693,38 @@ The queues may then be referenced by filtering rules (see
 below).
 .Pp
 .Bd -literal
-.Ic queue std bandwidth 10% cbq(default)
-.Ic queue http bandwidth 60% priority 2 cbq(borrow red) \e
-.Ic \  \  { employees, developers }
-.Ic queue \ developers bandwidth 75% cbq(borrow)
-.Ic queue \ employees bandwidth 15%
-.Ic queue mail bandwidth 10% priority 0 cbq(borrow ecn)
-.Ic queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
-.Ic queue \ ssh_interactive priority 7
-.Ic queue \ ssh_bulk priority 0
+.Xo Ic queue std bandwidth\ 
+.Ic 10% cbq(default)
+.Xc
+.Xo Ic queue http bandwidth 60%\ 
+.Ic priority 2 cbq(borrow red) \e
+.Xc
+.Xo Ic \  \  { employees,\ 
+.Ic developers }
+.Xc
+.Xo Ic queue \ developers bandwidth\ 
+.Ic 75% cbq(borrow)
+.Xc
+.Xo Ic queue \ employees\ 
+.Ic bandwidth 15%
+.Xc
+.Xo Ic queue mail bandwidth 10%\ 
+.Ic priority 0 cbq(borrow ecn)
+.Xc
+.Xo Ic queue ssh bandwidth 20%\ 
+.Ic cbq(borrow) { ssh_interactive,\ 
+.Ic ssh_bulk }
+.Xc
+.Xo Ic queue \ ssh_interactive\ 
+.Ic priority 7
+.Xc
+.Xo Ic queue \ ssh_bulk\ 
+.Ic priority 0
+.Xc
 .Pp
-.Ic block return out on dc0 inet all queue std
+.Xo Ic block return out on\ 
+.Ic dc0 inet all queue std
+.Xc
 .Xo Ic pass out on dc0 inet proto tcp from\ 
 .Ic $developerhosts to any port 80 \e
 .Xc
@@ -700,7 +740,9 @@ below).
 .Xo Ic pass out on dc0 inet proto tcp from\ 
 .Ic any to any port 25 \e
 .Xc
-.Ic \  \  keep state queue mail
+.Xo Ic \  \  keep state
+.Ic queue mail
+.Xc
 .Ed
 .Pp
 .Sh TRANSLATION
@@ -737,9 +779,16 @@ Although in theory any IP address can be used on the inside, it is strongly
 recommended that one of the address ranges defined by RFC 1918 be used.
 These netblocks are:
 .Bd -literal
-.Ic 10.0.0.0    - 10.255.255.255 (all of net 10, i.e., 10/8)
-.Ic 172.16.0.0  - 172.31.255.255 (i.e., 172.16/12)
-.Ic 192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
+.Xo Ic 10.0.0.0    - 10.255.255.255\ 
+.Ic (all of net 10, i.e.,\ 
+.Ic 10/8)
+.Xc
+.Xo Ic 172.16.0.0  - 172.31.255.255\ 
+.Ic (i.e., 172.16/12)
+.Xc
+.Xo Ic 192.168.0.0 - 192.168.255.255\ 
+.Ic (i.e., 192.168/16)
+.Xc
 .Ed
 .It Pa rdr
 The packet is redirected to another destination and possibly a
@@ -861,7 +910,9 @@ If no rule matches the packet, the default action is
 To block everything by default and only pass packets
 that match explicit rules, one uses
 .Bd -literal -offset indent
-.Ic block all
+.Xo Ic block\ 
+.Ic all
+.Xc
 .Ed
 .Pp
 as the first filter rule.
@@ -949,7 +1000,7 @@ addresses and ports.
 Addresses can be specified in CIDR notation (matching netblocks), as
 symbolic host names or interface names, or as any of the following keywords:
 .Pp
-.Bl -tag -width "<table>" -compact
+.Bl -tag -width xxxxxxxxxxxx -compact
 .It Ar any
 Any address.
 .It Ar no-route
@@ -959,7 +1010,8 @@ Any address that matches the given table.
 .El
 .Pp
 Interface names can have modifiers appended:
-.Bl -tag -width ":broadcast" -compact
+.Pp
+.Bl -tag -width xxxxxxxxxxxx -compact
 .It Ar :network
 Translates to the network(s) attached to the interface.
 .It Ar :broadcast
@@ -988,14 +1040,30 @@ see the file
 .Pp
 Ports and ranges of ports are specified by using these operators:
 .Bd -literal -offset indent
-.Cm = Li \  (equal)
-.Cm != Li \ (unequal)
-.Cm < Li \  (less than)
-.Cm <= Li \ (less than or equal)
-.Cm > Li \  (greater than)
-.Cm >= Li \ (greater than or equal)
-.Cm >< Li \ (range)
-.Cm <> Li \ (except range)
+.Xo Cm = Li\ 
+.Cm \  (equal)
+.Xc
+.Xo Cm != Li\ 
+.Cm \ (unequal)
+.Xc
+.Xo Cm < Li\ 
+.Cm \  (less than)
+.Xc
+.Xo Cm <= Li\ 
+.Cm \ (less than or equal)
+.Xc
+.Xo Cm > Li\ 
+.Cm \  (greater than)
+.Xc
+.Xo Cm >= Li\ 
+.Cm \ (greater than or equal)
+.Xc
+.Xo Cm >< Li\ 
+.Cm \ (range)
+.Xc
+.Xo Cm <> Li\ 
+.Cm \ (except range)
+.Xc
 .Ed
 .Pp
 .Cm ><
@@ -1017,12 +1085,24 @@ hence ports 1-1999 and 2005-65535.
 .Pp
 The host and port specifications are optional, as in the following examples:
 .Bd -literal -offset indent
-.Ic pass in all
-.Ic pass in from any to any
-.Ic pass in proto tcp from any port <= 1024 to any
-.Ic pass in proto tcp from any to any port 25
-.Ic pass in proto tcp from 10.0.0.0/8 port >1024 \e
-.Ic \  \  to ! 10.1.2.3 port != ssh
+.Xo Ic pass in\ 
+.Ic all
+.Xc
+.Xo Ic pass in from any\ 
+.Ic to any
+.Xc
+.Xo Ic pass in proto tcp from\ 
+.Ic any port <= 1024 to any
+.Xc
+.Xo Ic pass in proto tcp from\ 
+.Ic any to any port 25
+.Xc
+.Xo Ic pass in proto tcp from\ 
+.Ic 10.0.0.0/8 port >1024 \e
+.Xc
+.Xo Ic \  \  to ! \ 
+.Ic 10.1.2.3 port != ssh
+.Xc
 .Ed
 .It Ar all
 This is equivalent to "from any to any".
@@ -1078,9 +1158,15 @@ does not match forwarded packets.
 The following example allows only selected users to open outgoing
 connections:
 .Bd -literal -offset indent
-.Ic block out proto { tcp, udp } all
-.Ic pass \ out proto { tcp, udp } all \e
-.Ic \  user { < 1000, dhartmei } keep state
+.Xo Ic block out proto\ 
+.Ic { tcp, udp } all
+.Xc
+.Xo Ic pass \ out proto\ 
+.Ic { tcp, udp } all \e
+.Xc
+.Xo Ic \  user { < 1000,\ 
+.Ic dhartmei } keep state
+.Xc
 .Ed
 .It Ar flags <a>/<b> | /<b>
 This rule only applies to TCP packets that have the flags
@@ -1153,17 +1239,31 @@ The rule number.
 For example:
 .Pp
 .Bd -literal -offset indent
-.Ic ips = \&"{ 1.2.3.4, 1.2.3.5 }\&"
-.Ic pass in proto tcp from any to $ips \e
-.Ic \  \  port >1023 label \&"$dstaddr:$dstport\&"
+.Xo Ic ips = \&"{ 1.2.3.4,\ 
+.Ic 1.2.3.5 }\&"
+.Xc
+.Xo Ic pass in proto tcp from\ 
+.Ic any to $ips \e
+.Xc
+.Xo Ic \  \  port >1023\ 
+.Ic label \&"$dstaddr:$dstport\&"
+.Xc
 .Ed
 .Pp
 expands to
 .Bd -literal -offset indent
-.Ic pass in proto tcp from any to 1.2.3.4 \e
-.Ic \  \  port >1023 label \&"1.2.3.4:>1023\&"
-.Ic pass in proto tcp from any to 1.2.3.5 \e
-.Ic \  \  port >1023 label \&"1.2.3.5:>1023\&"
+.Xo Ic pass in proto tcp from\ 
+.Ic any to 1.2.3.4 \e
+.Xc
+.Xo Ic \  \  port >1023\ 
+.Ic label \&"1.2.3.4:>1023\&"
+.Xc
+.Xo Ic pass in proto tcp\ 
+.Ic from any to 1.2.3.5 \e
+.Xc
+.Xo Ic \  \  port >1023\ 
+.Ic label \&"1.2.3.5:>1023\&"
+.Xc
 .Ed
 .Pp
 The macro expansion for the
@@ -1183,8 +1283,12 @@ for setup details.
 For example:
 .Pp
 .Bd -literal -offset indent
-.Ic pass in proto tcp to port 25 queue mail
-.Ic pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
+.Xo Ic pass in proto tcp\ 
+.Ic to port 25 queue mail
+.Xc
+.Xo Ic pass in proto tcp to\ 
+.Ic port 22 queue(ssh_bulk, ssh_prio)
+.Xc
 .Ed
 .Pp
 .Sh ROUTING
@@ -1319,12 +1423,17 @@ searches in O(log2 n).
 .Pp
 For instance:
 .Bd -literal -offset indent
-.Ic block all
-.Xo Ic pass out proto tcp from any to any\ 
+.Xo Ic block\ 
+.Ic all
+.Xc
+.Xo Ic pass out proto tcp\ 
+.Ic from any to any\ 
 .Ic flags S/SA keep state
 .Xc
-.Xo Ic pass in \ proto tcp from any to any\ 
-.Ic port 25 flags S/SA keep state
+.Xo Ic pass in proto tcp \
+.Ic from any to any\ 
+.Ic port 25 flags\ 
+.Ic S/SA keep state
 .Xc
 .Ed
 .Pp
@@ -1365,7 +1474,8 @@ creates an ICMP state, and
 knows how to match ICMP replies to states.
 For example,
 .Bd -literal -offset indent
-.Xo Ic pass out inet proto icmp all icmp-type echoreq\ 
+.Xo Ic pass out inet proto\ 
+.Ic icmp all icmp-type echoreq\ 
 .Ic keep state
 .Xc
 .Ed
@@ -1455,9 +1565,15 @@ above.
 .Pp
 Multiple options can be specified, separated by commas:
 .Bd -literal
-.Ic pass in proto tcp from any to any \e
-.Ic \  \  port www flags S/SA keep state \e
-.Ic \  \  (max 100, tcp.established 60, tcp.closing 5)
+.Xo Ic pass in proto tcp\ 
+.Ic from any to any \e
+.Xc
+.Xo Ic \  \  port www flags\ 
+.Ic S/SA keep state \e
+.Xc
+.Xo Ic \  \  (max 100,\ 
+.Ic tcp.established 60, tcp.closing 5)
+.Xc
 .Ed
 .Sh BLOCKING SPOOFED TRAFFIC
 "Spoofing" is the faking of IP addresses, typically for malicious
@@ -1471,15 +1587,19 @@ any other interface.
 .Pp
 For example, the line
 .Bd -literal -offset indent
-.Ic antispoof for lo0
+.Xo Ic antispoof
+.Ic for lo0
+.Xc
 .Ed
 .Pp
 expands to
 .Bd -literal -offset indent
-.Xo Ic block in on ! lo0 inet from 127.0.0.1/8\ 
+.Xo Ic block in on ! lo0\ 
+.Ic inet from 127.0.0.1/8\ 
 .Ic to any
 .Xc
-.Xo Ic block in on ! lo0 inet6 from ::1\ 
+.Xo Ic block in on ! lo0\ 
+.Ic inet6 from ::1\ 
 .Ic to any
 .Xc
 .Ed
@@ -1490,15 +1610,20 @@ For example, assuming the interface wi0 had an IP address of 10.0.0.1 and a
 netmask of 255.255.255.0,
 the line
 .Bd -literal -offset indent
-.Ic antispoof for wi0 inet
+.Xo Ic antispoof for\ 
+.Ic wi0 inet
+.Xc
 .Ed
 .Pp
 expands to
 .Bd -literal -offset indent
-.Xo Ic block in on ! wi0 inet from 10.0.0.1/24\ 
+.Xo Ic block in on ! wi0\ 
+.Ic inet from 10.0.0.1/24\ 
 .Ic to any
 .Xc
-.Ic block in inet from 10.0.0.1 to any
+.Xo Ic block in inet\ 
+.Ic from 10.0.0.1 to any
+.Xc
 .Ed
 .Pp
 Caveat: Rules created by the
@@ -1652,12 +1777,24 @@ without reloading the main ruleset.
 For example,
 .Pp
 .Bd -literal -offset indent
-.Ic ext_if = \&"kue0\&"
-.Ic block on $ext_if all
-.Ic anchor spam
-.Ic pass out on $ext_if all keep state
-.Ic pass in  on $ext_if proto tcp from any \e
-.Ic \  \  to $ext_if port smtp keep state
+.Xo Ic ext_if =\ 
+.Ic \&"kue0\&"
+.Xc
+.Xo Ic block on\ 
+.Ic $ext_if all
+.Xc
+.Xo Ic anchor\ 
+.Ic spam
+.Xc
+.Xo Ic pass out on\ 
+.Ic $ext_if all keep state
+.Xc
+.Xo Ic pass in on $ext_if\ 
+.Ic proto tcp from any \e
+.Xc
+.Xo Ic \  \  to $ext_if\ 
+.Ic port smtp keep state
+.Xc
 .Ed
 .Pp
 blocks all packets on the external interface by default, then evaluates
@@ -1670,7 +1807,9 @@ incoming connections to port 25.
 .Xo Cm # echo \&"block in quick from\ 
 .Ic 1.2.3.4 to any\&" \&|
 .Xc
-.Ic \  \  pfctl -a spam:manual -f -
+.Xo Ic \  \  pfctl -a\ 
+.Ic spam:manual -f -
+.Xc
 .Ed
 .Pp
 loads a single ruleset containing a single rule into the
@@ -1688,7 +1827,9 @@ When parameters are used, the
 rule is only evaluated for matching packets.
 This allows conditional evaluation of named rulesets, like:
 .Bd -literal -offset indent
-.Ic block on $ext_if all
+.Xo Ic block on\ 
+.Ic $ext_if all
+.Xc
 .Xo Ic anchor spam proto tcp from any to\ 
 .Ic any port smtp
 .Xc
@@ -1708,7 +1849,9 @@ Hence,
 .Xo Ic # echo \&"block in quick from 1.2.3.4\ 
 .Ic to any" \&|
 .Xc
-.Ic \  \  pfctl -a spam:manual -f -
+.Xo Ic \  \  pfctl -a\ 
+.Ic spam:manual -f -
+.Xc
 .Ed
 .Pp
 will only block connections from 1.2.3.4 to port 25.
@@ -1790,13 +1933,17 @@ listening for outbound ftp sessions captured to port 8081.
 .Xo Ic nat on kue0 inet proto udp from\ 
 .Ic any port = isakmp to any -> (kue0) \e
 .Xc
-.Ic \  \  port 500
+.Xo Ic \  \  port\ 
+.Ic 500
+.Xc
 .Pp
 # BINAT
 # translate outgoing packets' source address (any protocol)
 # translate incoming packets' destination address to an internal machine
 # (bidirectional)
-.Ic binat on kue0 from 10.1.2.150 to any -> (kue0)
+.Xo Ic binat on kue0 from\ 
+.Ic 10.1.2.150 to any -> (kue0)
+.Xc
 .Pp
 # RDR
 # translate incoming packets' destination addresses
@@ -1804,11 +1951,15 @@ listening for outbound ftp sessions captured to port 8081.
 .Xo Ic rdr on kue0 inet proto tcp from any\ 
 .Ic to (kue0) port 8080 -> 10.1.2.151 \e
 .Xc
-.Ic \  \  port 22
+.Xo Ic \  \  port\ 
+.Ic 22
+.Xc
 .Xo Ic rdr on kue0 inet proto udp from any\ 
 .Ic to (kue0) port 8080 -> 10.1.2.151 \e
 .Xc
-.Ic \  \  port 53
+.Xo Ic \  \  port\ 
+.Ic 53
+.Xc
 .Pp
 # RDR
 # translate outgoing ftp control connections to send them to localhost
@@ -1825,16 +1976,24 @@ listening for outbound ftp sessions captured to port 8081.
 # and the private network is 10.0.0.0/8, for which we are doing NAT.
 .Pp
 # use a macro for the interface name, so it can be changed easily
-.Ic ext_if = \&"kue0\&"
+.Xo Ic ext_if =\ 
+.Ic \&"kue0\&"
+.Xc
 .Pp
 # normalize all incoming traffic
-.Ic scrub in on $ext_if all fragment reassemble
+.Xo Ic scrub in on $ext_if\
+.Ic all fragment reassemble
+.Xc
 .Pp
 # block and log everything by default
-.Ic block return log on $ext_if all
+.Xo Ic block return log\ 
+.Ic on $ext_if all
+.Xc
 .Pp
 # block anything coming from source we have no back routes for
-.Ic block in from no-route to any
+.Xo Ic block in from\ 
+.Ic no-route to any
+.Xc
 .Pp
 # block and log outgoing packets that do not have our address as source,
 # they are either spoofed or something is misconfigured (NAT disabled,
@@ -1844,7 +2003,9 @@ listening for outbound ftp sessions captured to port 8081.
 .Xc
 .Pp
 # silently drop broadcasts (cable modem noise)
-.Ic block in quick on $ext_if from any to 255.255.255.255
+.Xo Ic block in quick on $ext_if\ 
+.Ic from any to 255.255.255.255
+.Xc
 .Pp
 # block and log incoming packets from reserved address space and invalid
 # addresses, they are either spoofed or misconfigured, we cannot reply to
@@ -1852,7 +2013,9 @@ listening for outbound ftp sessions captured to port 8081.
 .Xo Ic block in log quick on $ext_if from\ 
 .Ic { 10.0.0.0/8, 172.16.0.0/12, \e
 .Xc
-.Ic \  \  192.168.0.0/16, 255.255.255.255/32 } to any
+.Xo Ic \  \  192.168.0.0/16,\ 
+.Ic 255.255.255.255/32 } to any
+.Xc
 .Pp
 # ICMP
 .Pp
@@ -1868,7 +2031,9 @@ listening for outbound ftp sessions captured to port 8081.
 # UDP
 .Pp
 # pass out all UDP connections and keep state
-.Ic pass out on $ext_if proto udp all keep state
+.Xo Ic pass out on $ext_if proto\ 
+.Ic udp all keep state
+.Xc
 .Pp
 # pass in certain UDP connections and keep state (DNS)
 .Xo Ic pass in on $ext_if proto udp from any\ 
@@ -1878,20 +2043,26 @@ listening for outbound ftp sessions captured to port 8081.
 # TCP
 .Pp
 # pass out all TCP connections and modulate state
-.Ic pass out on $ext_if proto tcp all modulate state
+.Xo Ic pass out on $ext_if proto\ 
+.Ic tcp all modulate state
+.Xc
 .Pp
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
 .Xo Ic pass in on $ext_if proto tcp from any\ 
 .Ic to any port { ssh, smtp, domain, \e
 .Xc
-.Ic \  \  auth } flags S/SA keep state
+.Xo Ic \  \  auth } flags S/SA\ 
+.Ic keep state
+.Xc
 .Pp
 # pass in data mode connections for ftp-proxy running on this host.
 # (see ftp-proxy(8) for details)
 .Xo Ic pass in on $ext_if proto tcp from any\ 
 .Ic to 157.161.48.183 port >= 49152 \e
 .Xc
-.Ic \  \  flags S/SA keep state
+.Xo Ic \  \  flags S/SA\ 
+.Ic keep state
+.Xc
 .Ed
 .Sh GRAMMAR
 Syntax for

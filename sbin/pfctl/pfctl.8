@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.84 2003/02/24 10:26:01 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.85 2003/03/04 22:18:43 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -116,7 +116,9 @@ rules from the main ruleset is described in
 .Bd -literal -offset indent
 Example:
 Show all filter rules inside anchor foo
-.Ic # pfctl -a foo -s rules
+.Xo Ic # pfctl -a\ 
+.Ic foo -s rules
+.Xc
 .Ed
 .It Fl A
 Load only the queue rules present in the rule file.
@@ -162,10 +164,14 @@ from the first host to the second host.
 .Bd -literal -offset indent
 Example:
 Kill all of the state entries originating from host
-.Ic # pfctl -k host
+.Xo Ic # pfctl -k\ 
+.Ic host
+.Xc
 .Pp
 Kill all of the state entries from host1 to host2
-.Ic # pfctl -k host1 -k host2
+.Xo Ic # pfctl -k host1\ 
+.Ic -k host2
+.Xc
 .Ed
 .It Fl h
 Help.
@@ -309,11 +315,16 @@ The following commands configure the firewall and send 10 pings to the ftp
 server:
 .Pp
 .Bd -literal -offset indent
-.Ic # printf \&"table <test> { ftp.openbsd.org }\en \e
-.Ic \  \  pass out to <test> keep state\en" Xo
+.Xo Ic # printf \&"table\ 
+.Ic <test> { ftp.openbsd.org }\en \e
+.Xc
+.Xo Ic \  \  pass out\ 
+.Ic to <test> keep state\en"\ 
 .Ic \&| pfctl -f-
 .Xc
-.Ic # ping -qc10 ftp.openbsd.org
+.Xo Ic # ping -qc10\ 
+.Ic ftp.openbsd.org
+.Xc
 .Ed
 .Pp
 We can now use the table
@@ -325,13 +336,27 @@ The time at which the current accounting started is also shown with the
 line.
 .Pp
 .Bd -literal -offset indent
-.Ic # pfctl -t test -vTshow
-.Ic \ \ 129.128.5.191
-.Ic \ \ \ \ Cleared: \ \ \ \ Thu Feb 13 18:55:18 2003
-.Ic \ \ \ \ In/Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Ic \ \ \ \ In/Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-.Ic \ \ \ \ Out/Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Ic \ \ \ \ Out/Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+.Xo Ic # pfctl -t\ 
+.Ic  test -vTshow
+.Xc
+.Xo Ic \ \ \ 
+.Ic 129.128.5.191
+.Xc
+.Xo Ic \ \ \ \ Cleared: \ \ \ \ Thu\ 
+.Ic  Feb 13 18:55:18 2003
+.Xc
+.Xo Ic \ \ \ \ In/Block\ 
+.Ic : \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ In/Pass\ 
+.Ic : \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ Out/Block\ 
+.Ic : \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ Out/Pass\ 
+.Ic : \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+.Xc
 .Ed
 .Pp
 Similarly, it is possible to view global information about the tables
@@ -345,18 +370,42 @@ the number of rules which reference the table, and the global
 packet statistics for the whole table:
 .Pp
 .Bd -literal -offset indent
-.Ic # pfctl -vvsTables
-.Ic --a-r   test
-.Ic \ \ \ \ Addresses: \ \ 1
-.Ic \ \ \ \ References: \ 1
-.Ic \ \ \ \ Cleared: \ \ \ \ Thu Feb 13 18:55:18 2003
-.Ic \ \ \ \ Evaluations: [\ NoMatch: 3496 \ \ \ \ Match: 1 \ \ \ \ \ \ \ ]
-.Ic \ \ \ \ In/Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Ic \ \ \ \ In/Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-.Ic \ \ \ \ In/XPass: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Ic \ \ \ \ Out/Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Ic \ \ \ \ Out/Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-.Ic \ \ \ \ Out/XPass: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+.Xo Ic # pfctl\ 
+.Ic -vvsTables
+.Xc
+.Xo Ic --a\ 
+.Ic -r   test
+.Xc
+.Xo Ic \ \ \ \ Addresses\ 
+.Ic : \ \ 1
+.Xc
+.Xo Ic \ \ \ \ References\ 
+.Ic : \ 1
+.Xc
+.Xo Ic \ \ \ \ Cleared\ 
+.Ic : \ \ \ \ Thu Feb 13 18:55:18 2003
+.Xc
+.Xo Ic \ \ \ \ Evaluations\ 
+.Ic : [\ NoMatch: 3496 \ \ \ \ Match: 1 \ \ \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ In\ 
+.Ic /Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ In\ 
+.Ic /Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ In\ 
+.Ic /XPass: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ Out\ 
+.Ic /Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ Out\ 
+.Ic /Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+.Xc
+.Xo Ic \ \ \ \ Out\ 
+.Ic /XPass: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+.Xc
 .Ed
 .Pp
 As we can see here, only one packet - the initial ping request - matched the
