@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.15 2001/01/28 19:34:27 niklas Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.16 2001/05/12 01:46:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.15 2001/01/28 19:34:27 niklas Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.16 2001/05/12 01:46:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -243,8 +243,7 @@ notify(utp, offset)
 	(void)tcgetattr(fileno(tp), &ttybuf);
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
-	(void)strncpy(name, utp->ut_name, sizeof(name) - 1);
-	name[sizeof(name) - 1] = '\0';
+	(void)strlcpy(name, utp->ut_name, sizeof(name));
 	(void)fprintf(tp, "%s\007New mail for %s@%.*s\007 has arrived:%s----%s",
 	    cr, name, (int)sizeof(hostname), hostname, cr, cr);
 	jkfprintf(tp, name, offset);
