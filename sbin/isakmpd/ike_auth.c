@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.37 2001/01/27 15:39:54 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.38 2001/03/27 18:47:09 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -213,7 +213,10 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  keyfile = privkeyfile;
 
 	  if (stat (keyfile, &sb) < 0)
-	    goto ignorekeynote;
+	    {
+	      free (keyfile);
+	      goto ignorekeynote;
+	    }
 
 	  fd = open (keyfile, O_RDONLY, 0);
 	  if (fd < 0)
