@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.18 2001/08/22 18:13:36 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.19 2001/08/22 20:59:14 ho Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -141,16 +141,9 @@ sysdep_cleartext (int fd, int af)
   } optsw[] =
     { 
       { IPPROTO_IP, IP_AUTH_LEVEL, IP_ESP_TRANS_LEVEL, IP_ESP_NETWORK_LEVEL,
-#ifdef IP_IPCOMP_LEVEL
-	IP_IPCOMP_LEVEL,
-#endif
-      },
+	IP_IPCOMP_LEVEL },
       { IPPROTO_IPV6, IPV6_AUTH_LEVEL, IPV6_ESP_TRANS_LEVEL,
-	IPV6_ESP_NETWORK_LEVEL,
-#ifdef IPV6_IPCOMP_LEVEL
-	IPV6_IPCOMP_LEVEL,
-#endif
-      },
+	IPV6_ESP_NETWORK_LEVEL, IPV6_IPCOMP_LEVEL },
     };
   
   if (app_none)
