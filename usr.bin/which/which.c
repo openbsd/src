@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.11 2003/06/17 21:56:26 millert Exp $	*/
+/*	$OpenBSD: which.c,v 1.12 2004/09/23 17:44:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint                                                              
-static const char rcsid[] = "$OpenBSD: which.c,v 1.11 2003/06/17 21:56:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: which.c,v 1.12 2004/09/23 17:44:47 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
@@ -38,7 +38,7 @@ static const char rcsid[] = "$OpenBSD: which.c,v 1.11 2003/06/17 21:56:26 miller
 extern char *__progname;
 
 int findprog(char *, char *, int, int);
-void usage(void);
+__dead void usage(void);
 
 /*
  * which(1) -- find an executable(s) in the user's path
@@ -121,10 +121,10 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 		if ((stat(prog, &sbuf) == 0) && S_ISREG(sbuf.st_mode) &&
 		    access(prog, X_OK) == 0) {
 			(void)puts(prog);
-			return(1);
+			return (1);
 		} else {
 			(void)printf("%s: Command not found.\n", prog);
-			return(0);
+			return (0);
 		}
 	}
 
@@ -142,7 +142,8 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 
 		if (plen + 1 + proglen >= sizeof(filename)) {
 			warnx("%s/%s: %s", p, prog, strerror(ENAMETOOLONG));
-			return(0);
+			free(path);
+			return (0);
 		}
 
 		snprintf(filename, sizeof(filename), "%s/%s", p, prog);
@@ -150,8 +151,10 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 		    access(filename, X_OK) == 0) {
 			(void)puts(filename);
 			rval = 1;
-			if (!allmatches)
-				return(rval);
+			if (!allmatches) {
+				free(path);
+				return (rval);
+			}
 		}
 	}
 	(void)free(path);
@@ -159,10 +162,10 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 	/* whereis(1) is silent on failure. */
 	if (!rval && progmode != PROG_WHEREIS)
 		(void)printf("%s: Command not found.\n", prog);
-	return(rval);
+	return (rval);
 }
 
-void
+__dead void
 usage(void)
 {
 	(void) fprintf(stderr, "Usage: %s [-a] name [...]\n", __progname);
