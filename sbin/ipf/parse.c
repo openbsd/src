@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 1996/06/23 14:30:55 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.5 1996/06/26 16:48:44 dm Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -1133,7 +1133,7 @@ struct	frentry	*fp;
 		if (code)
 			(void)printf("code %d ", code);
 	}
-	if (fp->fr_proto == IPPROTO_TCP && fp->fr_tcpf) {
+	if (fp->fr_proto == IPPROTO_TCP && (fp->fr_tcpf || fp->fr_tcpfm)) {
 		(void)printf("flags ");
 		for (s = flagset, t = flags; *s; s++, t++)
 			if (fp->fr_tcpf & *t)
