@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: setruid.3,v 1.5 1999/05/25 13:06:44 aaron Exp $
+.\"	$OpenBSD: setruid.3,v 1.6 2002/10/30 20:18:41 millert Exp $
 .\"
 .Dd April 19, 1991
 .Dt SETRUID 3
@@ -64,13 +64,21 @@ these functions return \-1.
 .Xr setegid 2 ,
 .Xr seteuid 2 ,
 .Xr setgid 2 ,
+.Xr setresgid 2 ,
+.Xr setresuid 2 ,
 .Xr setuid 2
 .Sh HISTORY
 The
 .Fn setruid
 and
 .Fn setrgid
-syscalls appeared in
-.Bx 4.2
-and were dropped in
+functions appeared in
+.Bx 4.2 .
+Semantically different versions appeared in
 .Bx 4.4 .
+The current versions, with the old semantics restored, are implemented via the
+.Xr setresgid 2
+and
+.Xr setresuid 2
+functions, which first appeared in
+.Ox 3.3 .
