@@ -1,4 +1,4 @@
-/*	$OpenBSD: todclock.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: todclock.c,v 1.4 2004/12/30 23:13:31 miod Exp $	*/
 /*	$NetBSD: todclock.c,v 1.4 2002/10/02 05:02:30 thorpej Exp $	*/
 
 /*
@@ -252,9 +252,11 @@ resettodr()
 	rtc.rtc_centi =
 	rtc.rtc_micro = 0;
 
+#ifdef DEBUG
 	printf("resettod: %02d/%02d/%02d%02d %02d:%02d:%02d\n", rtc.rtc_day,
 	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
 	    rtc.rtc_min, rtc.rtc_sec);
+#endif
 
 	s = splclock();
 	todclock_sc->sc_rtc_write(todclock_sc->sc_rtc_arg, &rtc);
