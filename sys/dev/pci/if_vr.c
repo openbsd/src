@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.29 2003/01/12 06:58:30 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.30 2003/02/09 10:53:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -87,7 +87,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <uvm/uvm_extern.h>              /* for vtophys */
+#include <uvm/uvm_extern.h>			/* for vtophys */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -213,11 +213,11 @@ vr_mii_send(sc, bits, cnt)
 	SIO_CLR(VR_MIICMD_CLK);
 
 	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
-                if (bits & i) {
+		if (bits & i) {
 			SIO_SET(VR_MIICMD_DATAIN);
-                } else {
+		} else {
 			SIO_CLR(VR_MIICMD_DATAIN);
-                }
+		}
 		DELAY(1);
 		SIO_CLR(VR_MIICMD_CLK);
 		DELAY(1);
@@ -551,8 +551,6 @@ vr_reset(sc)
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
-
-        return;
 }
 
 const struct pci_matchid vr_devices[] = {
@@ -907,8 +905,8 @@ void
 vr_rxeof(sc)
 	struct vr_softc		*sc;
 {
-        struct mbuf		*m;
-        struct ifnet		*ifp;
+	struct mbuf		*m;
+	struct ifnet		*ifp;
 	struct vr_chain_onefrag	*cur_rx;
 	int			total_len = 0;
 	u_int32_t		rxstat;
@@ -1360,6 +1358,16 @@ vr_init(xsc)
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		CSR_WRITE_1(sc, VR_PAR0 + i, sc->arpcom.ac_enaddr[i]);
+
+	/*
+	 * BCR0 and BCR1 can override the RXCFG and TXCFG registers,   
+	 * so we must set both.
+	 */
+	VR_CLRBIT(sc, VR_BCR0, VR_BCR0_RX_THRESH);
+	VR_SETBIT(sc, VR_BCR0, VR_BCR0_RXTHRESHSTORENFWD);
+ 
+	VR_CLRBIT(sc, VR_BCR1, VR_BCR1_TX_THRESH);
+	VR_SETBIT(sc, VR_BCR1, VR_BCR1_TXTHRESHSTORENFWD);
 
 	VR_CLRBIT(sc, VR_RXCFG, VR_RXCFG_RX_THRESH);
 	VR_SETBIT(sc, VR_RXCFG, VR_RXTHRESH_STORENFWD);
