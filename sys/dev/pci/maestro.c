@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.2 2001/01/12 17:38:30 espie Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.3 2001/01/16 12:07:19 espie Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -82,6 +82,9 @@ u_long maestrodma_effective;
 
 #define MAESTRO_BUFSIZ		0x4000
 #define lengthof(array)		(sizeof (array) / sizeof (array)[0])
+
+#define STEP_VOLUME		0x22
+#define MIDDLE_VOLUME		(STEP_VOLUME * 4)
 
 typedef struct salloc_pool {
 	struct salloc_zone {
@@ -405,8 +408,9 @@ maestro_attach(parent, self, aux)
 		goto bad;
 	}
 
-	/* XXX The first bytes of the allocated memory are not usable,
-	 * apparently. I suspect they get used to store status. ME
+	/* XXX 
+	 * The first byte of the allocated memory is not usable,
+	 * the WP sometimes uses it to store status.
 	 */
 	/* Make DMA memory pool */
 	if ((sc->dmapool = salloc_new(sc->dmabase+16, sc->dmasize-16,
@@ -421,19 +425,36 @@ maestro_attach(parent, self, aux)
 	maestro_init(sc);
 	maestro_read_codec(sc, 0, &cdata);
 	if (cdata == 0x80) {
-		printf("PT101 codec unsupported\n");
-		goto bad;
-	}
-
-	/* Attach the AC'97 */
-	sc->host_if.arg = sc;
-	sc->host_if.attach = maestro_attach_codec;
-	sc->host_if.read = maestro_read_codec;
-	sc->host_if.write = maestro_write_codec;
-	sc->host_if.reset = maestro_reset_codec;
-	if (ac97_attach(&sc->host_if) != 0) {
-		printf("couldn't attach codec\n");
-		goto bad;
+		printf("%s: PT101 codec unsupported, no mixer\n", 
+		    sc->dev.dv_xname);
+		/* Init values from Linux, no idea what this does. */
+		maestro_write_codec(sc, 0x2a, 0x0001);
+		maestro_write_codec(sc, 0x2C, 0x0000);
+		maestro_write_codec(sc, 0x2C, 0xFFFF);
+		maestro_write_codec(sc, 0x10, 0x9F1F);
+		maestro_write_codec(sc, 0x12, 0x0808);
+		maestro_write_codec(sc, 0x14, 0x9F1F);
+		maestro_write_codec(sc, 0x16, 0x9F1F);
+		maestro_write_codec(sc, 0x18, 0x0404);
+		maestro_write_codec(sc, 0x1A, 0x0000);
+		maestro_write_codec(sc, 0x1C, 0x0000);
+		maestro_write_codec(sc, 0x02, 0x0404);
+		maestro_write_codec(sc, 0x04, 0x0808);
+		maestro_write_codec(sc, 0x0C, 0x801F);
+		maestro_write_codec(sc, 0x0E, 0x801F);
+		/* no control over the mixer, sorry */
+		sc->codec_if = NULL;
+	} else {
+		/* Attach the AC'97 */
+		sc->host_if.arg = sc;
+		sc->host_if.attach = maestro_attach_codec;
+		sc->host_if.read = maestro_read_codec;
+		sc->host_if.write = maestro_write_codec;
+		sc->host_if.reset = maestro_reset_codec;
+		if (ac97_attach(&sc->host_if) != 0) {
+			printf("%s: couldn't attach codec\n", sc->dev.dv_xname);
+			goto bad;
+		}
 	}
 
 	sc->play.mode = MAESTRO_PLAY;
@@ -495,9 +516,9 @@ maestro_init(sc)
 	bus_space_write_2(sc->iot, sc->ioh, PORT_HOSTINT_CTRL, 0);
 	DELAY(10000);
 
-	/* Enable direct sound interruption. */
+	/* Enable direct sound and hardware volume control interruptions. */
 	bus_space_write_2(sc->iot, sc->ioh, PORT_HOSTINT_CTRL,
-	    HOSTINT_CTRL_DSOUND_INT_ENABLED);
+	    HOSTINT_CTRL_DSOUND_INT_ENABLED | HOSTINT_CTRL_HWVOL_ENABLED);
 
 	/* Setup Wave Processor. */
 
@@ -527,9 +548,13 @@ maestro_init(sc)
 	bus_space_write_1(sc->iot, sc->ioh, PORT_ASSP_CTRL_A, 0x03);
 	bus_space_write_1(sc->iot, sc->ioh, PORT_ASSP_CTRL_C, 0x00);
 
-	/*
-	 * Setup GPIO if needed (NEC systems) 
+	/* 
+	 * Reset hw volume to a known value so that we may handle diffs
+	 * off to AC'97.
 	 */
+
+	bus_space_write_1(sc->iot, sc->ioh, PORT_HWVOL_MASTER, MIDDLE_VOLUME);
+	/* Setup GPIO if needed (NEC systems) */
 	if (sc->flags & MAESTRO_FLAG_SETUPGPIO) {
 		/* Matthew Braithwaite <matt@braithwaite.net> reported that
 		 * NEC Versa LX doesn't need GPIO operation. */
@@ -623,9 +648,12 @@ maestro_set_port(self, cp)
 	void *self;
 	mixer_ctrl_t *cp;
 {
-	struct maestro_softc *sc = (struct maestro_softc *)self;
+	struct ac97_codec_if *c = ((struct maestro_softc *)self)->codec_if;
 
-	return (sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp));
+	if (c)
+		return (c->vtbl->mixer_set_port(c, cp));
+	else
+		return (ENXIO);
 }
 
 int
@@ -633,9 +661,12 @@ maestro_get_port(self, cp)
 	void *self;
 	mixer_ctrl_t *cp;
 {
-	struct maestro_softc *sc = (struct maestro_softc *)self;
+	struct ac97_codec_if *c = ((struct maestro_softc *)self)->codec_if;
 
-	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
+	if (c)
+		return (c->vtbl->mixer_get_port(c, cp));
+	else
+		return (ENXIO);
 }
 
 int
@@ -643,9 +674,12 @@ maestro_query_devinfo(self, cp)
 	void *self;
 	mixer_devinfo_t *cp;
 {
-	struct maestro_softc *sc = (struct maestro_softc *)self;
-	
-	return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, cp));
+	struct ac97_codec_if *c = ((struct maestro_softc *)self)->codec_if;
+
+	if (c)
+		return (c->vtbl->query_devinfo(c, cp));
+	else
+		return (ENXIO);
 }
 
 struct audio_encoding maestro_tab[] = { 
@@ -934,9 +968,9 @@ maestro_channel_start(ch)
 		wp_apu_write(sc, n+1, APUREG_POSITION, 0x8f00
 		    | (RADIUS_CENTERCIRCLE << APU_RADIUS_SHIFT)
 		    | (PAN_LEFT << APU_PAN_SHIFT));
-		wp_apu_write(sc, n, APUREG_FREQ_LOBYTE, APU_plus6dB
+		wp_apu_write(sc, n+1, APUREG_FREQ_LOBYTE, APU_plus6dB
 		    | ((ch->dv & 0xff) << APU_FREQ_LOBYTE_SHIFT));
-		wp_apu_write(sc, n, APUREG_FREQ_HIWORD, ch->dv >> 8);
+		wp_apu_write(sc, n+1, APUREG_FREQ_HIWORD, ch->dv >> 8);
 		if (ch->mode & MAESTRO_8BIT)
 			wp_apu_write(sc, n, APUREG_WAVESPACE, 
 			    ch->wpwa & 0xff00);
@@ -950,9 +984,9 @@ maestro_channel_start(ch)
 		wp_apu_write(sc, n, APUREG_POSITION, 0x8f00
 		    | (RADIUS_CENTERCIRCLE << APU_RADIUS_SHIFT)
 		    | (PAN_RIGHT << APU_PAN_SHIFT));
-		wp_apu_write(sc, n+1, APUREG_FREQ_LOBYTE, APU_plus6dB
+		wp_apu_write(sc, n, APUREG_FREQ_LOBYTE, APU_plus6dB
 		    | ((ch->dv & 0xff) << APU_FREQ_LOBYTE_SHIFT));
-		wp_apu_write(sc, n+1, APUREG_FREQ_HIWORD, ch->dv >> 8);
+		wp_apu_write(sc, n, APUREG_FREQ_HIWORD, ch->dv >> 8);
 		wc_ctrl_write(sc, n, wcreg);
 		wc_ctrl_write(sc, n+1, wcreg);
 		wp_apu_write(sc, n, APUREG_APUTYPE,
@@ -1202,7 +1236,8 @@ maestro_powerhook(why, self)
 		DELAY(100000);
 		maestro_init(sc);
 		/* Restore codec settings */
-		sc->codec_if->vtbl->restore_ports(sc->codec_if);
+		if (sc->codec_if)
+			sc->codec_if->vtbl->restore_ports(sc->codec_if);
 		if (sc->play.mode & MAESTRO_RUNNING)
 			maestro_channel_start(&sc->play);
 		if (sc->record.mode & MAESTRO_RUNNING)
@@ -1271,7 +1306,46 @@ maestro_intr(arg)
 
 	/* Acknowledge all. */
 	bus_space_write_2(sc->iot, sc->ioh, PORT_INT_STAT, 1);
-	bus_space_write_1(sc->iot, sc->ioh, PORT_HOSTINT_STAT, 0);
+	bus_space_write_1(sc->iot, sc->ioh, PORT_HOSTINT_STAT, status);
+
+	/* Hardware volume support */
+	if (status & HOSTINT_STAT_HWVOL && sc->codec_if != NULL) {
+		int n, i, delta, v;
+		mixer_ctrl_t hwvol;
+
+		n = bus_space_read_1(sc->iot, sc->ioh, PORT_HWVOL_MASTER);
+		/* Special case: Mute key */
+		if (n & 0x11) {
+			hwvol.type = AUDIO_MIXER_ENUM;
+			hwvol.dev = 
+			    sc->codec_if->vtbl->get_portnum_by_name(sc->codec_if,
+				AudioCoutputs, AudioNmaster, AudioNmute);
+			sc->codec_if->vtbl->mixer_get_port(sc->codec_if, &hwvol);
+			hwvol.un.ord = !hwvol.un.ord;
+		} else {
+			hwvol.type = AUDIO_MIXER_VALUE;
+			hwvol.un.value.num_channels = 2;
+			hwvol.dev = 
+			    sc->codec_if->vtbl->get_portnum_by_name(
+			    	sc->codec_if, AudioCoutputs, AudioNmaster, 
+				    NULL);
+			sc->codec_if->vtbl->mixer_get_port(sc->codec_if, &hwvol);
+			/* XXX AC'97 yields five bits for master volume. */
+			delta = (n - MIDDLE_VOLUME)/STEP_VOLUME * 8;
+			for (i = 0; i < hwvol.un.value.num_channels; i++) {
+				v = ((int)hwvol.un.value.level[i]) + delta;
+				if (v < 0)
+					v = 0;
+				else if (v > 255)
+					v = 255;
+				hwvol.un.value.level[i] = v;
+			}
+		}
+		sc->codec_if->vtbl->mixer_set_port(sc->codec_if, &hwvol);
+		/* Reset to compute next diffs */
+		bus_space_write_1(sc->iot, sc->ioh, PORT_HWVOL_MASTER, 
+		    MIDDLE_VOLUME);
+	}
 
 	if (sc->play.mode & MAESTRO_RUNNING)
 		maestro_channel_advance_dma(&sc->play);
