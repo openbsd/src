@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.33 2003/03/20 01:39:36 david Exp $
+.\"	$OpenBSD: spamd.8,v 1.34 2003/04/12 22:12:58 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -91,12 +91,15 @@ queue.
 .Nm
 is best started from
 .Xr rc 8
-and is used in conjunction with
+in conjunction with the
 .Xr spamd-setup 8
 which processes a list of spammers' addresses, and applies appropriate
 .Xr pfctl 8
 .Em rdr
 rules.
+.Xr spamd-setup 8
+is run from
+.Xr cron 8 .
 .Pp
 .Sh REDIRECTING SMTP CONNECTIONS
 With
