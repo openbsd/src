@@ -40,6 +40,7 @@
 #include "defs.h"
 #include <arpa/inet.h>
 #include <stdarg.h>
+#include <poll.h>
 
 #define DEFAULT_TIMEOUT	2	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 1	/* How many times to ask each router */
@@ -934,19 +935,13 @@ int main(argc, argv)
 
     /* Main receive loop */
     for(;;) {
-	fd_set		fds;
-	struct timeval 	tv;
+	struct pollfd	pfd[1];
 	int 		count, recvlen, dummy = 0;
 
-	FD_ZERO(&fds);
-	if (igmp_socket >= FD_SETSIZE)
-	    log(LOG_ERR, 0, "descriptor too big");
-	FD_SET(igmp_socket, &fds);
+	pfd[0].fd = igmp_socket;
+	pfd[0].events = POLLIN;
 
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-
-	count = select(igmp_socket + 1, &fds, 0, 0, &tv);
+	count = poll(pfd, 1, timeout * 1000);
 
 	if (count < 0) {
 	    if (errno != EINTR)

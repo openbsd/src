@@ -52,13 +52,14 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.17 2003/06/26 19:47:09 deraadt Exp $";
+    "@(#) $Id: mtrace.c,v 1.18 2003/08/19 19:08:38 deraadt Exp $";
 #endif
 
 #include <netdb.h>
 #include <sys/time.h>
 #include <memory.h>
 #include <string.h>
+#include <poll.h>
 #include <ctype.h>
 #include <sys/ioctl.h>
 #include "defs.h"
@@ -387,7 +388,6 @@ send_recv(dst, type, code, tries, save)
     int type, code, tries;
     struct resp_buf *save;
 {
-    fd_set  fds;
     struct timeval tq, tr, tv;
     struct ip *ip;
     struct igmp *igmp;
@@ -395,6 +395,7 @@ send_recv(dst, type, code, tries, save)
     int ipdatalen, iphdrlen, igmpdatalen;
     u_int32_t local, group;
     int datalen;
+    struct pollfd pfd[1];
     int count, recvlen, dummy = 0;
     int len;
     int i;
@@ -456,22 +457,19 @@ send_recv(dst, type, code, tries, save)
 	/*
 	 * Wait for response, discarding false alarms
 	 */
+	pfd[0].fd = igmp_socket;
+	pfd[0].events = POLLIN;
 	while (TRUE) {
-	    FD_ZERO(&fds);
-	    if (igmp_socket >= FD_SETSIZE)
-		log(LOG_ERR, 0, "descriptor too big");
-	    FD_SET(igmp_socket, &fds);
 	    gettimeofday(&tv, 0);
 	    tv.tv_sec = tq.tv_sec + timeout - tv.tv_sec;
 	    tv.tv_usec = tq.tv_usec - tv.tv_usec;
 	    if (tv.tv_usec < 0) tv.tv_usec += 1000000L, --tv.tv_sec;
 	    if (tv.tv_sec < 0) tv.tv_sec = tv.tv_usec = 0;
 
-	    count = select(igmp_socket + 1, &fds, (fd_set *)0, (fd_set *)0,
-			   &tv);
+	    count = poll(pfd, 1, tv.tv_sec * 1000);
 
 	    if (count < 0) {
-		if (errno != EINTR) perror("select");
+		if (errno != EINTR) perror("poll");
 		continue;
 	    } else if (count == 0) {
 		printf("* ");
