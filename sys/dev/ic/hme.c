@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.17 2002/08/06 20:02:26 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.18 2002/08/07 00:30:39 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -628,7 +628,7 @@ hme_start(ifp)
 {
 	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
 	struct mbuf *m;
-	int bix;
+	int bix, cnt = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -657,10 +657,13 @@ hme_start(ifp)
 
 		bus_space_write_4(sc->sc_bustag, sc->sc_etx, HME_ETXI_PENDING,
 		    HME_ETX_TP_DMAWAKEUP);
+		cnt++;
 	}
 
-	sc->sc_tx_prod = bix;
-	ifp->if_timer = 5;
+	if (cnt != 0) {
+		sc->sc_tx_prod = bix;
+		ifp->if_timer = 5;
+	}
 }
 
 /*
@@ -673,13 +676,14 @@ hme_tint(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	unsigned int ri, txflags;
 	struct hme_sxd *sd;
+	int cnt = sc->sc_tx_cnt;
 
 	/* Fetch current position in the transmit ring */
 	ri = sc->sc_tx_cons;
 	sd = &sc->sc_txd[ri];
 
 	for (;;) {
-		if (sc->sc_tx_cnt <= 0)
+		if (cnt <= 0)
 			break;
 
 		txflags = HME_XD_GETFLAGS(sc->sc_pci, sc->sc_rb.rb_txd, ri);
@@ -707,16 +711,18 @@ hme_tint(sc)
 		} else
 			sd++;
 
-		--sc->sc_tx_cnt;
+		--cnt;
+	}
+
+	if (cnt != sc->sc_tx_cnt) {
+		ifp->if_timer = 0;
+		sc->sc_tx_cnt = cnt;
 	}
 
 	/* Update ring */
 	sc->sc_tx_cons = ri;
 
 	hme_start(ifp);
-
-	if (sc->sc_tx_cnt == 0)
-		ifp->if_timer = 0;
 
 	return (1);
 }
