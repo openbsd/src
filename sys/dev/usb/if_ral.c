@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.21 2005/04/01 12:57:27 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.22 2005/04/01 13:13:42 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1958,6 +1958,7 @@ ural_init(struct ifnet *ifp)
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_wepkey *wk;
 	struct ural_rx_data *data;
 	uint16_t sta[11], tmp;
 	usbd_status error;
@@ -2006,6 +2007,15 @@ ural_init(struct ifnet *ifp)
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	ural_set_macaddr(sc, ic->ic_myaddr);
+
+	/*
+	 * Copy WEP keys into adapter's memory (SEC_CSR0 to SEC_CSR31).
+	 */
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		wk = &ic->ic_nw_keys[i];
+		ural_write_multi(sc, RAL_SEC_CSR0 + i * IEEE80211_KEYBUF_SIZE,
+		    wk->wk_key, IEEE80211_KEYBUF_SIZE);
+	}
 
 	/*
 	 * Open Tx and Rx USB bulk pipes.

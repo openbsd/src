@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralreg.h,v 1.4 2005/04/01 12:57:27 damien Exp $  */
+/*	$OpenBSD: if_ralreg.h,v 1.5 2005/04/01 13:13:43 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -68,6 +68,11 @@
 #define RAL_TXRX_CSR19	0x0466	/* Beacon/sync control */
 #define RAL_TXRX_CSR20	0x0468	/* Beacon alignment */
 #define RAL_TXRX_CSR21	0x046a	/* XXX not documented */
+
+/*
+ * Security registers.
+ */
+#define RAL_SEC_CSR0	0x0480	/* Shared key 0, word 0 */
 
 /*
  * PHY registers.
