@@ -13,13 +13,13 @@ Functions for computing 32-bit CRC.
 
 */
 
-/* RCSID("$Id: crc32.h,v 1.1 1999/09/26 20:53:35 deraadt Exp $"); */
+/* RCSID("$Id: crc32.h,v 1.2 1999/10/01 18:18:56 deraadt Exp $"); */
 
 #ifndef CRC32_H
 #define CRC32_H
 
 /* This computes a 32 bit CRC of the data in the buffer, and returns the
    CRC.  The polynomial used is 0xedb88320. */
-unsigned long crc32(const unsigned char *buf, unsigned int len);
+unsigned int crc32(const unsigned char *buf, unsigned int len);
 
 #endif /* CRC32_H */

@@ -6,7 +6,7 @@
 
    Kerberos v4 authentication and ticket-passing routines.
 
-   $Id: auth-krb4.c,v 1.3 1999/09/29 21:14:15 deraadt Exp $
+   $Id: auth-krb4.c,v 1.4 1999/10/01 18:18:40 deraadt Exp $
 */
 
 #include "includes.h"
@@ -56,7 +56,7 @@ int auth_krb4(const char *server_user, KTEXT auth, char **client)
   KTEXT_ST reply;
   char instance[INST_SZ];
   int r, s;
-  u_long cksum;
+  u_int cksum;
   Key_schedule schedule;
   struct sockaddr_in local, foreign;
   

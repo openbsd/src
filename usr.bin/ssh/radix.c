@@ -175,8 +175,8 @@ int creds_to_radix(CREDENTIALS *creds, unsigned char *buf)
 
   PUTLONG(creds->issue_date,p);
   {
-    unsigned long	endTime ;
-    endTime = (unsigned long)krb_life_to_time(creds->issue_date,
+    unsigned int	endTime ;
+    endTime = (unsigned int)krb_life_to_time(creds->issue_date,
 					      creds->lifetime);
     PUTLONG(endTime,p);
   }
@@ -229,7 +229,7 @@ int radix_to_creds(const char *buf, CREDENTIALS *creds)
   GETLONG(creds->issue_date,p);
   len -= 4;
   {
-    unsigned long	endTime;
+    unsigned int	endTime;
     GETLONG(endTime,p);
     len -= 4;
     creds->lifetime = krb_time_to_life(creds->issue_date, endTime);

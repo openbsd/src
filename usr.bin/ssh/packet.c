@@ -15,7 +15,7 @@ with the other side.  This same code is used both on client and server side.
 */
 
 #include "includes.h"
-RCSID("$Id: packet.c,v 1.6 1999/09/30 05:53:04 deraadt Exp $");
+RCSID("$Id: packet.c,v 1.7 1999/10/01 18:18:40 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -294,7 +294,7 @@ packet_send()
 {
   char buf[8], *cp;
   int i, padding, len;
-  unsigned long checksum;
+  unsigned int checksum;
   u_int32_t rand = 0;
 
   /* If using packet compression, compress the payload of the outgoing
@@ -437,7 +437,7 @@ packet_read_poll(int *payload_len_ptr)
   unsigned int len, padded_len;
   unsigned char *ucp;
   char buf[8], *cp;
-  unsigned long checksum, stored_checksum;
+  unsigned int checksum, stored_checksum;
   
  restart:
 

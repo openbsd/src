@@ -3,7 +3,7 @@
    crc32-function (including changing the interface). //ylo */
 
 #include "includes.h"
-RCSID("$Id: crc32.c,v 1.1 1999/09/26 20:53:35 deraadt Exp $");
+RCSID("$Id: crc32.c,v 1.2 1999/10/01 18:18:40 deraadt Exp $");
 
 #include "crc32.h"
 
@@ -47,7 +47,7 @@ RCSID("$Id: crc32.c,v 1.1 1999/09/26 20:53:35 deraadt Exp $");
   /*                                                                        */
   /*  --------------------------------------------------------------------  */
 
-static unsigned long crc32_tab[] = {
+static unsigned int crc32_tab[] = {
       0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
       0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
       0xe0d5e91eL, 0x97d2d988L, 0x09b64c2bL, 0x7eb17cbdL, 0xe7b82d07L,
@@ -104,10 +104,10 @@ static unsigned long crc32_tab[] = {
 
 /* Return a 32-bit CRC of the contents of the buffer. */
 
-unsigned long crc32(const unsigned char *s, unsigned int len)
+unsigned int crc32(const unsigned char *s, unsigned int len)
 {
   unsigned int i;
-  unsigned long crc32val;
+  unsigned int crc32val;
   
   crc32val = 0;
   for (i = 0;  i < len;  i ++)
