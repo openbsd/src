@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.39 2001/11/06 19:06:38 wilfried Exp $
+$OpenBSD: usbdevs,v 1.40 2001/11/25 20:11:17 mickey Exp $
 /* $NetBSD: usbdevs,v 1.194 2001/10/26 03:47:31 mycroft Exp $ */
 
 /*
@@ -831,6 +831,7 @@ product NETGEAR EA101X		0x1001	Ethernet
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
+product NIKON E880		0x0103	Digital Camera E880
 
 /* Olympus products */
 product OLYMPUS C700		0x0105	C-700 Ultra Zoom
