@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.4 1998/11/23 04:24:30 mickey Exp $
+$OpenBSD: cpudevs,v 1.5 1998/11/30 21:12:35 mickey Exp $
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,7 +40,7 @@ board	HP710		0x300	710 (Bushmaster)
 
 board	HP712_60	0x600	712/60 (Gekko)
 board	HP712_80	0x601	712/80 (Gekko)
-board	HP712_3		0x602	712/?? (Gekko)
+board	HP712_80i	0x602	712/80i (Gekko)
 board	HP712_100	0x605	712/100 (Gekko)
 
 board	HP715_33	0x311	715/33 (Scorpio)
@@ -115,14 +115,14 @@ type	faulty	31	broken
 cpu	HPPA11	4	PA-RISC 1.1
 
 memory	ARCH	0x8	architected memory module
-memory	PDEP	0x9	processor-dependent memory module
+memory	PDEP	0x9	pdep memory module
 
 other	SPECFB	0x48	Spectograph frame buffer
 other	SPECCTL	0x49	Spectograph control
 
 bha	DIO	0x03	DIO Bus Adapter
 bha	SGC	0x05	SGC Bus Adapter
-bha	GSC	0x07	GSC Bus AdapteR
+bha	GSC	0x07	GSC Bus Adapter
 bha	ASP	0x70	Core Bus Adapter (ASP)
 bha	EISA	0x76	EISA Bus Adapter
 bha	VME	0x78	VME Bus Adapter
