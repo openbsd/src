@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.24 1997/06/23 09:28:57 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.25 1997/06/28 20:19:02 denny Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -615,6 +615,7 @@ main(argc, argv)
 					Printf(" !<%d>", i - 1);
 					break;
 				}
+				break;
 			}
 			if (cc == 0) {
 				Printf(" *");
