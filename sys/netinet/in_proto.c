@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.9 1998/07/30 03:53:22 angelos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.10 1999/01/08 01:00:34 deraadt Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -35,6 +35,18 @@
  *
  *	@(#)in_proto.c	8.1 (Berkeley) 6/10/93
  */
+
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -93,6 +105,10 @@
 void	iplinit __P((void));
 #define ip_init	iplinit
 #endif
+
+#ifdef INET6
+#include <netinet6/ipv6_var.h>
+#endif /* INET6 */
 
 #ifdef IPSEC
 #include <net/encap.h>
@@ -193,6 +209,20 @@ struct protosw inetsw[] = {
   0,          0,              0,              0,
 },
 #endif
+#ifdef INET6
+/* IPv6 in IPv4 tunneled packets... */
+{ SOCK_RAW,   &inetdomain,    IPPROTO_IPV6,   PR_ATOMIC|PR_ADDR,
+  ipv6_input, rip_output,     ipv6_trans_ctlinput, rip_ctloutput,
+  rip_usrreq,
+  0,          0,              0,              0
+},
+/* IPv4 in IPv4 tunneled packets... */
+{ SOCK_RAW,   &inetdomain,    IPPROTO_IPV4,   PR_ATOMIC|PR_ADDR,
+  ipv4_input, 0,              0,              0,
+  0,
+  0,          0,              0,              0
+},
+#endif /* defined(INET6) */
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,
