@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.70 2001/06/27 02:13:43 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.71 2001/06/27 03:24:23 dugsong Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -153,6 +153,8 @@ int		 pf_test_udp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct udphdr *);
 int		 pf_test_icmp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct icmp *);
+int		 pf_test_other(int, struct ifnet *, struct mbuf *,
+		    struct ip *);
 struct pf_state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct tcphdr *);
 struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf *,
@@ -1576,6 +1578,36 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	return (PF_PASS);
 }
 
+int
+pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
+{
+	struct pf_rule *r, *rm = NULL;
+	
+	TAILQ_FOREACH(r, pf_rules_active, entries) {
+		if ((r->direction == direction) &&
+		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
+		    (!r->proto || (r->proto == h->ip_p)) &&
+		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
+			r->src.mask, h->ip_src.s_addr)) &&
+		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
+			r->dst.mask, h->ip_dst.s_addr))) {
+			rm = r;
+			if (r->quick)
+				break;
+		}
+	}
+	
+	if (rm != NULL) {
+		if (rm->log)
+			PFLOG_PACKET(h, m, AF_INET, direction,
+			    PFRES_MATCH, rm);
+		
+		if (rm->action != PF_PASS)
+			return (PF_DROP);
+	}
+	return (PF_PASS);
+}
+
 struct pf_state *
 pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct tcphdr *th)
@@ -2136,7 +2168,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 	}
 
 	default:
-		action = PF_PASS;
+		action = pf_test_other(dir, ifp, m, h);
 		break;
 	}
 
