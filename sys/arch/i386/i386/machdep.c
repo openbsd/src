@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.148 2001/02/04 17:28:17 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.149 2001/02/25 23:24:18 aaron Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -171,32 +171,6 @@
 #if NNPX > 0
 extern struct proc *npxproc;
 #endif
-
-#include "vga.h"
-#include "ega.h"
-#include "pcdisplay.h"
-#if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#if (NVGA > 0)
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
-#if (NEGA > 0)
-#include <dev/isa/egavar.h>
-#endif
-#if (NPCDISPLAY > 0)
-#include <dev/isa/pcdisplayvar.h>
-#endif
-#endif
-
-#include "pckbc.h"
-#if (NPCKBC > 0)
-#include <dev/isa/isareg.h>
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
-#endif
-#include "pckbd.h"	/* for pckbc_machdep_cnattach */
 
 #include "pc.h"
 #if (NPC > 0)
@@ -2390,32 +2364,7 @@ consinit()
 	if (initted)
 		return;
 	initted = 1;
-#if 0
 	cninit();
-#endif
-
-#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
-#if (NVGA > 0)
-	if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM, -1, 1))
-		goto dokbd;
-#endif
-#if (NEGA > 0)
-	if (!ega_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
-		goto dokbd;
-#endif
-#if (NPCDISPLAY > 0)
-	if (!pcdisplay_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
-		goto dokbd;
-#endif
-#if (NPC > 0)
-	pccnattach();
-#endif
-	if (0) goto dokbd;	/* XXX stupid gcc */
-dokbd:
-#if (NPCKBC > 0)
-	pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
-#endif
-#endif	/* PC | VGA | EGA | PCDISPLAY */
 }
 
 #if (NPCKBC > 0) && (NPCKBD == 0)
