@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.117 2004/09/14 23:18:58 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.118 2004/09/14 23:56:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -312,7 +312,7 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 			continue;
 
 		for (pdemask = 1, va = sva ? sva : 0;
-		    va < VM_MAX_KERNEL_ADDRESS; va += PAGE_SIZE) {
+		    va < 0xfffff000; va += PAGE_SIZE) {
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
 				if (!(pde = pmap_pde_get(pd, va))) {
@@ -526,8 +526,7 @@ pmap_bootstrap(vstart)
 	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, &t,
 	    pmap_sid2pid(HPPA_SID_KERNEL) |
 	    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0)
-		panic("pmap_bootstrap: cannot block map kernel text");
-	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count = atop(t);
+		printf("WARNING: cannot block map kernel text\n");
 
 	if (&__rodata_end < &__data_start) {
 		physical_steal = (vaddr_t)&__rodata_end;
@@ -1178,7 +1177,7 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	volatile pt_entry_t *pde;
-	pt_entry_t pte;
+	pt_entry_t pte, opte;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot));
@@ -1188,17 +1187,16 @@ pmap_kenter_pa(va, pa, prot)
 	if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va)) &&
 	    !(pde = pmap_pde_alloc(pmap_kernel(), va, NULL)))
 		panic("pmap_kenter_pa: cannot allocate pde for va=0x%lx", va);
-#ifdef DIAGNOSTIC
-	if ((pte = pmap_pte_get(pde, va)))
-		panic("pmap_kenter_pa: 0x%lx is already mapped %p:0x%x",
-		    va, pde, pte);
-#endif
-
+	opte = pmap_pte_get(pde, va);
 	pte = pa | PTE_PROT(TLB_WIRED | TLB_REFTRAP |
 	    pmap_prot(pmap_kernel(), prot));
 	if (pa >= HPPA_IOSPACE)
 		pte |= PTE_PROT(TLB_UNCACHABLE);
 	pmap_pte_set(pde, va, pte);
+	pmap_kernel()->pm_stats.wired_count++;
+	pmap_kernel()->pm_stats.resident_count++;
+	if (opte)
+		pmap_pte_flush(pmap_kernel(), va, opte);
 
 #ifdef PMAPDEBUG
 	{
