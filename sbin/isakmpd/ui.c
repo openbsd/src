@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.27 2002/03/17 21:48:06 angelos Exp $	*/
+/*	$OpenBSD: ui.c,v 1.28 2002/03/19 04:00:59 angelos Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -65,8 +65,6 @@ void daemon_shutdown_now (int);
 
 /* Report all SA configuration information. */
 void ui_report_sa (char *cmd);
-/* Issue SIGHUP. */
-void ui_sighup (char *cmd);
 
 char *ui_fifo = FIFO;
 int ui_socket;
