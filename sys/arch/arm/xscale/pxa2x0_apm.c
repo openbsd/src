@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.4 2005/02/22 21:53:03 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.5 2005/02/23 02:08:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -80,7 +80,6 @@ int	apm_battlow;		/* XXX unused */
 
 void	apm_power_info(struct pxa2x0_apm_softc *,
     struct apm_power_info *);
-void	apm_standby(struct pxa2x0_apm_softc *);
 void	apm_suspend(struct pxa2x0_apm_softc *);
 void	apm_resume(struct pxa2x0_apm_softc *);
 void	apm_periodic_check(struct pxa2x0_apm_softc *);
@@ -198,7 +197,6 @@ struct pxa2x0_memcfg pxa2x0_memcfg = {
 #define PI2C_VOLTAGE_LOW	0x13	/* 1.00V */
 #define PI2C_VOLTAGE_HIGH	0x1a	/* 1.35V */
 
-void	pxa2x0_apm_standby(struct pxa2x0_apm_softc *);
 void	pxa2x0_apm_sleep(struct pxa2x0_apm_softc *);
 
 void	pxa2x0_pi2c_open(bus_space_tag_t, bus_space_handle_t);
@@ -246,33 +244,6 @@ apm_power_info(struct pxa2x0_apm_softc *sc,
 }
 
 void
-apm_standby(struct pxa2x0_apm_softc *sc)
-{
-
-	dopowerhooks(PWR_STANDBY);
-
-	if (cold)
-		vfs_syncwait(0);
-
-	/*
-	 * Clear pending standby requests.  Do not enter standby mode if
-	 * suspend was requested in the meantime.
-	 */
-	apm_userstandbys = 0;
-	if (apm_suspends) {
-		/*
-		 * Arbitrary delay to avoid reinitializing some devices
-		 * too fast, since PWR_RESUME hooks will be run before
-		 * PWR_SUSPEND hooks.  Perhaps this is overly paranoid.
-		 */
-		delay(500000);
-		return;
-	}
-
-	pxa2x0_apm_standby((struct pxa2x0_apm_softc *)sc);
-}
-
-void
 apm_suspend(struct pxa2x0_apm_softc *sc)
 {
 
@@ -307,11 +278,8 @@ apm_periodic_check(struct pxa2x0_apm_softc *sc)
 	 * the processor run mode to avoid falling back to sleep after a
 	 * wake-up event.
 	 */
-	if (apm_suspends) {
+	if (apm_suspends || apm_userstandbys) {
 		apm_suspend(sc);
-		apm_resume(sc);
-	} else if (apm_userstandbys) {
-		apm_standby(sc);
 		apm_resume(sc);
 	}
 }
@@ -644,14 +612,6 @@ pxa2x0_wakeup_config(u_int32_t wsrc, int enable)
 	/* XXX do that just before suspend. */
 	pxa2x0_clkman_config(CKEN_KEY,
 	    (wsrc & PXA2X0_WAKEUP_KEYNS_ALL) != 0);
-}
-
-void
-pxa2x0_apm_standby(struct pxa2x0_apm_softc *sc)
-{
-
-	/* XXX standby mode is not supported. */
-	delay(1000000);
 }
 
 struct pxa2x0_sleep_data {
