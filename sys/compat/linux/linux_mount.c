@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_mount.c,v 1.3 1996/08/03 18:06:43 deraadt Exp $	*/
+/*	$OpenBSD: linux_mount.c,v 1.4 1996/10/16 12:25:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Erik Theisen
@@ -41,6 +41,8 @@
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_errno.h>
+#include <compat/linux/linux_signal.h>
+#include <compat/linux/linux_syscallargs.h>
 
 /*
  * These are just dummy mount/umount functions
@@ -52,27 +54,29 @@
  * emulation that mounts FSs.
  */
 int
-linux_sys_mount(p, uap, retval)
+linux_sys_mount(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_sys_mount_args /* {
 		syscallarg(char *) specialfile;
 		syscallarg(char *) dir;
 		syscallarg(char *) filesystemtype;
 		syscallarg(long) rwflag;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} *uap = v */ ;
         return EPERM;
 }
 
 int
-linux_sys_umount(p, uap, retval)
+linux_sys_umount(p, v, retval)
 	struct proc *p;
-	struct linux_sys_umount_args /* {
-		syscallarg(char *) specialfile;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct linux_sys_umount_args /* {
+		syscallarg(char *) specialfile;
+	} *uap = v */ ;
         return EPERM;
 }
