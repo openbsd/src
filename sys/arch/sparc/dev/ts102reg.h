@@ -1,3 +1,4 @@
+/*	$OpenBSD: ts102reg.h,v 1.3 2003/06/18 17:50:23 miod Exp $	*/
 /*	$NetBSD: ts102reg.h,v 1.7 2002/09/29 23:23:58 wiz Exp $ */
 
 /*-
