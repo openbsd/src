@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.4 2004/09/16 01:02:37 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.5 2004/09/16 01:06:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -132,16 +132,13 @@ imsg_create(struct imsgbuf *ibuf, int type, u_int32_t peerid,
 	hdr.type = type;
 	hdr.peerid = peerid;
 	hdr.pid = pid;
-	wbuf = buf_open(hdr.len);
-	if (wbuf == NULL) {
+	if ((wbuf = buf_open(hdr.len)) == NULL) {
 		log_warn("imsg_create: buf_open");
 		return (NULL);
 	}
-	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1) {
-		log_warnx("imsg_create: buf_add error");
-		buf_free(wbuf);
+	if (imsg_add(wbuf, &hdr, sizeof(hdr)) == -1)
 		return (NULL);
-	}
+
 	return (wbuf);
 }
 
