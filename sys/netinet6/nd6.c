@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.44 2002/05/29 13:57:57 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.45 2002/05/30 05:07:17 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ struct nd_prhead nd_prefix = { 0 };
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 static struct sockaddr_in6 all1_sa;
 
+static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 static void nd6_slowtimo(void *);
 
 struct timeout nd6_slowtimo_ch;
@@ -147,7 +148,9 @@ nd6_ifattach(ifp)
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
 	nd->flags = ND6_IFF_PERFORMNUD;
-	nd6_setmtu(ifp, nd);
+
+	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
+	nd6_setmtu0(ifp, nd);
 
 	return nd;
 }
@@ -159,16 +162,22 @@ nd6_ifdetach(nd)
 
 	free(nd, M_IP6NDP);
 }
-  
-/*
- * Reset ND level link MTU. This function is called when the physical MTU
- * changes, which means we might have to adjust the ND level MTU.
- */
+
 void
-nd6_setmtu(ifp, ndi)
+nd6_setmtu(ifp)
+	struct ifnet *ifp;
+{
+	nd6_setmtu0(ifp, ND_IFINFO(ifp));
+}
+
+void
+nd6_setmtu0(ifp, ndi)
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi;
 {
+	u_int32_t omaxmtu;
+
+	omaxmtu = ndi->maxmtu;
 
 	switch (ifp->if_type) {
 	case IFT_ARCNET:	/* XXX MTU handling needs more work */
@@ -188,10 +197,16 @@ nd6_setmtu(ifp, ndi)
 		break;
 	}
 
-	if (ndi->maxmtu < IPV6_MMTU) {
-		nd6log((LOG_INFO, "nd6_setmtu: "
-		    "link MTU on %s (%lu) is too small for IPv6\n",
-		    ifp->if_xname, (unsigned long)ndi->maxmtu));
+	/*
+	 * Decreasing the interface MTU under IPV6 minimum MTU may cause
+	 * undesirable situation.  We thus notify the operator of the change
+	 * explicitly.  The check for omaxmtu is necessary to restrict the
+	 * log to the case of changing the MTU, not initializing it. 
+	 */
+	if (omaxmtu >= IPV6_MMTU && ndi->maxmtu < IPV6_MMTU) {
+		log(LOG_NOTICE, "nd6_setmtu0: "
+		    "new link MTU on %s (%lu) is too small for IPv6\n",
+		    ifp->if_xname, (unsigned long)ndi->maxmtu);
 	}
 
 	if (ndi->maxmtu > in6_maxmtu)

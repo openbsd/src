@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.18 2002/05/29 09:33:55 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.19 2002/05/30 05:07:17 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ void nd6_option_init(void *, int, union nd_opts *);
 struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
 struct	rtentry *nd6_lookup(struct in6_addr *, int, struct ifnet *);
-void nd6_setmtu(struct ifnet *, struct nd_ifinfo *);
+void nd6_setmtu(struct ifnet *);
 void nd6_timer(void *);
 void nd6_purge(struct ifnet *);
 struct llinfo_nd6 *nd6_free(struct rtentry *);

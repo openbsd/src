@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.56 2002/05/29 02:51:37 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.57 2002/05/30 05:07:17 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -98,6 +98,7 @@
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_ifattach.h>
+#include <netinet6/nd6.h>
 #endif
 
 #if NBPFILTER > 0
@@ -119,14 +120,6 @@ int	ifqmaxlen = IFQ_MAXLEN;
 void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 void	if_detached_watchdog(struct ifnet *);
-
-#ifdef INET6
-/*
- * XXX: declare here to avoid to include many inet6 related files..
- * should be more generalized?
- */
-extern void nd6_setmtu(struct ifnet *);
-#endif 
 
 /*
  * Network interface utility routines.
