@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdarg.3,v 1.7 2000/10/26 00:37:03 aaron Exp $
+.\"	$OpenBSD: stdarg.3,v 1.8 2001/08/13 16:54:09 heko Exp $
 .\"	$NetBSD: stdarg.3,v 1.3 1994/11/30 15:24:37 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -124,8 +124,27 @@ to
 If there is no next argument, or if
 .Fa type
 is not compatible with the type of the actual next argument
-(as promoted according to the default argument promotions),
+(as promoted according to the default argument promotions, see below),
 random errors will occur.
+.Pp
+If the type in question is one that gets promoted, the promoted type
+should be used as the argument to
+.Fn va_arg .
+The following describes which types are promoted (and to what):
+.Bl -dash -compact
+.It
+.Va short
+is promoted to
+.Va int
+.It
+.Va float
+is promoted to
+.Va double
+.It
+.Va char
+is promoted to
+.Va int
+.El
 .Pp
 The first use of the
 .Fn va_arg
@@ -154,8 +173,9 @@ associated with each format character based on the type.
 void foo(char *fmt, ...)
 {
 	va_list ap;
-	int d;
-	char c, *p, *s;
+	int d, c;
+	char *s;
+	double f;
 
 	va_start(ap, fmt);
 	while (*fmt)
@@ -169,9 +189,12 @@ void foo(char *fmt, ...)
 			printf("int %d\en", d);
 			break;
 		case 'c':			/* char */
-			c = va_arg(ap, char);
+			c = va_arg(ap, int);	/* promoted */
 			printf("char %c\en", c);
 			break;
+		case 'f':			/* float */
+			f = va_arg(ap, double); /* promoted */
+			printf("float %f\en", f);
 		}
 	va_end(ap);
 }
