@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.294 2003/04/16 23:47:01 krw Exp $
+#	$OpenBSD: install.sub,v 1.295 2003/04/17 19:15:49 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -609,7 +609,7 @@ __EOT
 		ifconfig $_ifs delete down
 		rm /etc/dhclient.conf /etc/resolv.conf.tail
 		return 1
- 	fi
+	fi
 
 	# Move configuration files to where they will be copied to the
 	# installed system. Overwrites configuration information from last
@@ -634,13 +634,13 @@ configure_ifs() {
 	# Get and apply media options.
 	_media=$(ifconfig -m $_ifs | grep "media ")
 	if [[ -n $_media ]]; then
- 		cat << __EOT
+		cat << __EOT
 The default media for $_ifs is
 $(ifconfig -m $_ifs | sed -n '/supported/D;/media:/p')
 __EOT
 		ask "Do you want to change the default media?" n
- 		case $resp in
- 		y*|Y*)	cat << __EOT
+		case $resp in
+		y*|Y*)	cat << __EOT
 Supported media options for $_ifs are:
 $_media
 __EOT
@@ -649,9 +649,9 @@ __EOT
 			ifconfig $_ifs $_media down || return 1
 			;;
 		*)	_media=
- 			;;
- 		esac
- 	fi
+			;;
+		esac
+	fi
 
 	# Get address and mask.
 	_prompt="IP address for ${_ifs}?"
@@ -662,7 +662,7 @@ __EOT
 	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 			echo "DHCP not supported - no /sbin/dhclient found."
 			return 1
- 		fi
+		fi
 		dhcp_request $_ifs "$_name" || dhcp_request $_ifs || return 1
 		_config="dhcp NONE NONE"
 		# Fake address for the hosts file.
@@ -844,7 +844,7 @@ install_files () {
 	local _src=$1 _files=$2 _f _sets _get_sets
 
 	# Initialize _sets to the list of sets found in _src, and initialize
-	# _get_sets to the intersection of _sets and DEFAULTSETS. 
+	# _get_sets to the intersection of _sets and DEFAULTSETS.
 	#
 	# Sets will be installed in the order given in THESETS to ensure proper
 	# installation.  So, to minimize user confusion display the sets in the
@@ -1084,7 +1084,7 @@ install_mounted_fs() {
 		esac
 	done
 
-	install_files "file://$_dir" "`ls -l $_dir`" 
+	install_files "file://$_dir" "`ls -l $_dir`"
 }
 
 install_cdrom() {
@@ -1633,7 +1633,7 @@ check_fs() {
 # Extract fully qualified domain name from current hostname. If none is
 # currently set, use 'my.domain'.
 get_fqdn() {
- 	local _dn
+	local _dn
 
 	_dn=$(hostname)
 	_dn=${_dn#$(hostname -s)}
@@ -1772,7 +1772,7 @@ VERSION=33
 VNAME="$(( $VERSION / 10 )).$(( $VERSION % 10 ))"
 SETDIR="$VNAME/$ARCH"
 FTPDIR="pub/OpenBSD/$VNAME"
-OBSD="OpenBSD/$ARCH $VNAME" 
+OBSD="OpenBSD/$ARCH $VNAME"
 
 # Extract and save one boot's worth of dmesg
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
