@@ -88,6 +88,9 @@ struct induction
   unsigned maybe_dead : 1;	/* 1 if this giv might be dead.  In that case,
 				   we won't use it to eliminate a biv, it
 				   would probably lose. */
+  unsigned unrolled : 1;	/* 1 if new register has been allocated in
+				   unrolled loop.  */
+  unsigned shared : 1;
   int lifetime;			/* Length of life of this giv */
   int times_used;		/* # times this giv is used. */
   rtx derive_adjustment;	/* If nonzero, is an adjustment to be

@@ -3,32 +3,32 @@
 
  static FILE *
 #ifdef KR_headers
-unit_chk(unit, who) integer unit; char *who;
+unit_chk(Unit, who) integer Unit; char *who;
 #else
-unit_chk(integer unit, char *who)
+unit_chk(integer Unit, char *who)
 #endif
 {
-	if (unit >= MXUNIT || unit < 0)
+	if (Unit >= MXUNIT || Unit < 0)
 		f__fatal(101, who);
-	return f__units[unit].ufd;
+	return f__units[Unit].ufd;
 	}
 
  integer
 #ifdef KR_headers
-ftell_(unit) integer *unit;
+ftell_(Unit) integer *Unit;
 #else
-ftell_(integer *unit)
+ftell_(integer *Unit)
 #endif
 {
 	FILE *f;
-	return (f = unit_chk(*unit, "ftell")) ? ftell(f) : -1L;
+	return (f = unit_chk(*Unit, "ftell")) ? ftell(f) : -1L;
 	}
 
  int
 #ifdef KR_headers
-fseek_(unit, offset, xwhence) integer *unit, *offset, *xwhence;
+fseek_(Unit, offset, xwhence) integer *Unit, *offset, *xwhence;
 #else
-fseek_(integer *unit, integer *offset, integer *xwhence)
+fseek_(integer *Unit, integer *offset, integer *xwhence)
 #endif
 {
 	int whence;
@@ -49,6 +49,6 @@ fseek_(integer *unit, integer *offset, integer *xwhence)
 			break;
 		}
 
-	return	!(f = unit_chk(*unit, "fseek"))
+	return	!(f = unit_chk(*Unit, "fseek"))
 		|| fseek(f, *offset, whence) ? 1 : 0;
 	}

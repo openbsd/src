@@ -348,6 +348,27 @@ ffeglobal_pad_common (ffesymbol s, ffetargetAlign pad, ffewhereLine wl,
     }
 }
 
+/* Return a global for a promoted symbol (one that has heretofore
+   been assumed to be local, but since discovered to be global).  */
+
+ffeglobal
+ffeglobal_promoted (ffesymbol s)
+{
+#if FFEGLOBAL_ENABLED
+  ffename n;
+  ffeglobal g;
+
+  assert (ffesymbol_global (s) == NULL);
+
+  n = ffename_find (ffeglobal_filewide_, ffename_token (ffesymbol_name (s)));
+  g = ffename_global (n);
+
+  return g;
+#else
+  return NULL;
+#endif
+}
+
 /* ffeglobal_save_common -- Check SAVE status of common area
 
    ffesymbol s;	 // the common area

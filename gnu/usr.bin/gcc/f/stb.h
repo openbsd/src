@@ -1,5 +1,5 @@
 /* stb.h -- Private #include File (module.h template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -132,7 +132,6 @@ extern struct _ffestb_args_ ffestb_args;
 
 /* Declare functions with prototypes. */
 
-ffelexHandler ffestb_unimplemented (ffelexToken t);
 ffelexHandler ffestb_beru (ffelexToken t);
 ffelexHandler ffestb_block (ffelexToken t);
 ffelexHandler ffestb_blockdata (ffelexToken t);

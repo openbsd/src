@@ -1,0 +1,3 @@
+# Our header files are supposed to be correct, nein?
+FIXINCLUDES = 
+STMP_FIXPROTO =

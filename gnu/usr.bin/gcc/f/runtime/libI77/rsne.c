@@ -29,7 +29,7 @@
  typedef struct hashtab hashtab;
 
  static hashtab *nl_cache;
- static n_nlcache;
+ static int n_nlcache;
  static hashentry **zot;
  static int colonseen;
  extern ftnlen f__typesize[];

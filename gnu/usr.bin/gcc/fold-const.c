@@ -79,6 +79,7 @@ static tree range_test	PROTO((enum tree_code, tree, enum tree_code,
 static tree unextend	PROTO((tree, int, int, tree));
 static tree fold_truthop PROTO((enum tree_code, tree, tree, tree));
 static tree strip_compound_expr PROTO((tree, tree));
+static int multiple_of_p PROTO((tree, tree, tree));
 
 #ifndef BRANCH_COST
 #define BRANCH_COST 1
@@ -3064,6 +3065,106 @@ strip_compound_expr (t, s)
   return t;
 }
 
+/* Determine if first argument is a multiple of second argument.
+   Return 0 if it is not, or is not easily determined to so be.
+
+   An example of the sort of thing we care about (at this point --
+   this routine could surely be made more general, and expanded
+   to do what the *_DIV_EXPR's fold() cases do now) is discovering
+   that
+
+     SAVE_EXPR (I) * SAVE_EXPR (J * 8)
+
+   is a multiple of
+
+     SAVE_EXPR (J * 8)
+
+   when we know that the two `SAVE_EXPR (J * 8)' nodes are the
+   same node (which means they will have the same value at run
+   time, even though we don't know when they'll be assigned).
+
+   This code also handles discovering that
+
+     SAVE_EXPR (I) * SAVE_EXPR (J * 8)
+
+   is a multiple of
+
+     8
+
+   (of course) so we don't have to worry about dealing with a
+   possible remainder.
+
+   Note that we _look_ inside a SAVE_EXPR only to determine
+   how it was calculated; it is not safe for fold() to do much
+   of anything else with the internals of a SAVE_EXPR, since
+   fold() cannot know when it will be evaluated at run time.
+   For example, the latter example above _cannot_ be implemented
+   as
+
+     SAVE_EXPR (I) * J
+
+   or any variant thereof, since the value of J at evaluation time
+   of the original SAVE_EXPR is not necessarily the same at the time
+   the new expression is evaluated.  The only optimization of this
+   sort that would be valid is changing
+
+     SAVE_EXPR (I) * SAVE_EXPR (SAVE_EXPR (J) * 8)
+   divided by
+     8
+
+   to
+
+     SAVE_EXPR (I) * SAVE_EXPR (J)
+
+   (where the same SAVE_EXPR (J) is used in the original and the
+   transformed version).  */
+
+static int
+multiple_of_p (type, top, bottom)
+     tree type;
+     tree top;
+     tree bottom;
+{
+  if (operand_equal_p (top, bottom, 0))
+    return 1;
+
+  if (TREE_CODE (type) != INTEGER_TYPE)
+    return 0;
+
+  switch (TREE_CODE (top))
+    {
+    case MULT_EXPR:
+      return (multiple_of_p (type, TREE_OPERAND (top, 0), bottom)
+	      || multiple_of_p (type, TREE_OPERAND (top, 1), bottom));
+
+    case PLUS_EXPR:
+    case MINUS_EXPR:
+      return (multiple_of_p (type, TREE_OPERAND (top, 0), bottom)
+	      && multiple_of_p (type, TREE_OPERAND (top, 1), bottom));
+
+    case NOP_EXPR:
+      /* Punt if conversion from non-integral or wider integral type.  */
+      if ((TREE_CODE (TREE_TYPE (TREE_OPERAND (top, 0))) != INTEGER_TYPE)
+	  || (TYPE_PRECISION (type)
+	      < TYPE_PRECISION (TREE_TYPE (TREE_OPERAND (top, 0)))))
+	return 0;
+      /* Fall through. */
+    case SAVE_EXPR:
+      return multiple_of_p (type, TREE_OPERAND (top, 0), bottom);
+
+    case INTEGER_CST:
+      if ((TREE_CODE (bottom) != INTEGER_CST)
+	  || (tree_int_cst_sgn (top) < 0)
+	  || (tree_int_cst_sgn (bottom) < 0))
+	return 0;
+      return integer_zerop (const_binop (TRUNC_MOD_EXPR,
+					 top, bottom, 0));
+
+    default:
+      return 0;
+    }
+}
+
 /* Perform constant folding and related simplification of EXPR.
    The related simplifications include x*1 => x, x*0 => 0, etc.,
    and application of the associative law.
@@ -4009,6 +4110,13 @@ fold (expr)
     case ROUND_DIV_EXPR:
     case FLOOR_DIV_EXPR:
     case CEIL_DIV_EXPR:
+      if (integer_onep (arg1))
+	return non_lvalue (convert (type, arg0));
+      /* If arg0 is a multiple of arg1, then rewrite to the fastest div
+	 operation, EXACT_DIV_EXPR.  Otherwise, handle folding of
+	 general divide.  */
+      if (multiple_of_p (type, arg0, arg1))
+	return fold (build (EXACT_DIV_EXPR, type, arg0, arg1));
     case EXACT_DIV_EXPR:
       if (integer_onep (arg1))
 	return non_lvalue (convert (type, arg0));

@@ -1,5 +1,5 @@
 /* com.h -- Public #include File (module.h template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995-1997 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -138,6 +138,14 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #  error Cannot find a suitable type for FFECOM_f2cINTEGER
 #endif
 
+#if LONG_TYPE_SIZE == (FLOAT_TYPE_SIZE * 2)
+#  define FFECOM_f2cLONGINT FFECOM_f2ccodeLONG
+#elif LONG_LONG_TYPE_SIZE == (FLOAT_TYPE_SIZE * 2)
+#  define FFECOM_f2cLONGINT FFECOM_f2ccodeLONGLONG
+#else
+#  error Cannot find a suitable type for FFECOM_f2cLONGINT
+#endif
+
 #define FFECOM_f2cADDRESS FFECOM_f2ccodeCHARPTR
 #define FFECOM_f2cSHORTINT FFECOM_f2ccodeSHORT
 #define FFECOM_f2cREAL FFECOM_f2ccodeFLOAT
@@ -147,7 +155,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define FFECOM_f2cSHORTLOGICAL FFECOM_f2ccodeSHORT
 #define FFECOM_f2cLOGICAL1 FFECOM_f2ccodeCHAR
 #define FFECOM_f2cINTEGER1 FFECOM_f2ccodeCHAR
-#define FFECOM_f2cLONGINT FFECOM_f2ccodeLONGLONG
 
 /* These must be f2c's INTEGER type, to match runtime/f2c.h.in.  */
 
@@ -186,6 +193,14 @@ typedef enum
 #define BUILT_FOR_270 0
 #endif
 #endif	/* !defined (BUILT_FOR_270) */
+
+#ifndef BUILT_FOR_280
+#ifdef DECL_ONE_ONLY	/* In gcc/tree.h. */
+#define BUILT_FOR_280 1
+#else
+#define BUILT_FOR_280 0
+#endif
+#endif	/* !defined (BUILT_FOR_280) */
 
 typedef tree ffecomConstant;
 #define FFECOM_constantHOOK
@@ -230,6 +245,8 @@ extern tree ffecom_integer_zero_node;
 extern tree ffecom_integer_one_node;
 extern tree ffecom_tree_type[FFEINFO_basictype][FFEINFO_kindtype];
 extern ffecomSymbol ffecom_symbol_null_;
+extern ffeinfoKindtype ffecom_pointer_kind_;
+extern ffeinfoKindtype ffecom_label_kind_;
 
 extern int ffecom_f2c_typecode_[FFEINFO_basictype][FFEINFO_kindtype];
 extern tree ffecom_f2c_integer_type_node;
@@ -373,6 +390,8 @@ void warning (char *s, ...);
 #define ffecom_expr(e) (e)
 #define ffecom_init_0()
 #define ffecom_init_2()
+#define ffecom_label_kind() FFEINFO_kindtypeINTEGERDEFAULT
+#define ffecom_pointer_kind() FFEINFO_kindtypeINTEGERDEFAULT
 #define ffecom_ptr_to_expr(e) (e)
 #define ffecom_sym_commit(s)
 #define ffecom_sym_retract(s)
@@ -380,6 +399,8 @@ void warning (char *s, ...);
 
 #if FFECOM_targetCURRENT == FFECOM_targetGCC
 #define ffecom_f2c_typecode(bt,kt) ffecom_f2c_typecode_[(bt)][(kt)]
+#define ffecom_label_kind() ffecom_label_kind_
+#define ffecom_pointer_kind() ffecom_pointer_kind_
 #endif	/* FFECOM_targetCURRENT == FFECOM_targetGCC */
 
 #define ffecom_init_1()

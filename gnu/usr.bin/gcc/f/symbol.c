@@ -1,5 +1,5 @@
 /* Implementation of Fortran symbol manager
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -359,7 +359,6 @@ ffesymbol_check (ffesymbol s, ffelexToken t, bool maybe_intrin)
   ffeintrinGen gen;
   ffeintrinSpec spec;
   ffeintrinImp imp;
-  ffeinfoKind kind;
 
   if (!ffesrc_check_symbol ()
       || ((s->check_state != FFESYMBOL_checkstateNONE_)
@@ -377,7 +376,7 @@ ffesymbol_check (ffesymbol s, ffelexToken t, bool maybe_intrin)
 
   if (maybe_intrin
       && ffeintrin_is_intrinsic (ffelex_token_text (t), NULL, FALSE,
-				 &gen, &spec, &imp, &kind))
+				 &gen, &spec, &imp))
     {
       s->check_state = FFESYMBOL_checkstatePENDING_;
       s->check_token = ffelex_token_use (t);
@@ -861,6 +860,13 @@ ffesymbol_error (ffesymbol s, ffelexToken t)
   s->check_state = FFESYMBOL_checkstateCHECKED_;
   s = ffecom_sym_learned (s);
   ffesymbol_signal_unreported (s);
+}
+
+void
+ffesymbol_globalize (ffesymbol s)
+{
+  if (ffesymbol_global (s) == NULL)
+    ffesymbol_set_global (s, ffeglobal_promoted (s));
 }
 
 void

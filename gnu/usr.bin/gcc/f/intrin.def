@@ -1,23 +1,6 @@
 /* intrin.def -- Public #include File (module.h template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
-
-This file is part of GNU Fortran.
-
-GNU Fortran is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
-
-GNU Fortran is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with GNU Fortran; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.
+   The Free Software Foundation has released this file into the
+   public domain.
 
    Owning Modules:
       intrin.c
@@ -30,6 +13,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 DEFNAME	("ABORT",	"abort",	"Abort",	genNONE,	specABORT)	/* UNIX */
 DEFNAME	("ABS",	"abs",	"Abs",	genNONE,	specABS)
+DEFNAME	("ACCESS",	"access",	"Access",	genNONE,	specACCESS)	/* UNIX */
 DEFNAME	("ACHAR",	"achar",	"AChar",	genNONE,	specACHAR)	/* F90,	F2C */
 DEFNAME	("ACOS",	"acos",	"ACos",	genNONE,	specACOS)
 DEFNAME	("ACOSD",	"acosd",	"ACosD",	genNONE,	specACOSD)	/* VXT */
@@ -60,6 +44,12 @@ DEFNAME	("ATAN",	"atan",	"ATan",	genNONE,	specATAN)
 DEFNAME	("ATAN2",	"atan2",	"ATan2",	genNONE,	specATAN2)
 DEFNAME	("ATAN2D",	"atan2d",	"ATan2D",	genNONE,	specATAN2D)	/* VXT */
 DEFNAME	("ATAND",	"atand",	"ATanD",	genNONE,	specATAND)	/* VXT */
+DEFNAME	("BESJ0",	"besj0",	"BesJ0",	genNONE,	specBESJ0)	/* UNIX */
+DEFNAME	("BESJ1",	"besj1",	"BesJ1",	genNONE,	specBESJ1)	/* UNIX */
+DEFNAME	("BESJN",	"besjn",	"BesJN",	genNONE,	specBESJN)	/* UNIX */
+DEFNAME	("BESY0",	"besy0",	"BesY0",	genNONE,	specBESY0)	/* UNIX */
+DEFNAME	("BESY1",	"besy1",	"BesY1",	genNONE,	specBESY1)	/* UNIX */
+DEFNAME	("BESYN",	"besyn",	"BesYN",	genNONE,	specBESYN)	/* UNIX */
 DEFNAME	("BITEST",	"bitest",	"BITest",	genNONE,	specBITEST)	/* VXT */
 DEFNAME	("BIT_SIZE",	"bit_size",	"Bit_Size",	genNONE,	specBIT_SIZE)	/* F90 */
 DEFNAME	("BJTEST",	"bjtest",	"BJTest",	genNONE,	specBJTEST)	/* VXT */
@@ -75,8 +65,11 @@ DEFNAME	("CDSQRT",	"cdsqrt",	"CDSqRt",	genNONE,	specCDSQRT)	/* VXT */
 DEFNAME	("CEILING",	"ceiling",	"Ceiling",	genNONE,	specCEILING)	/* F90 */
 DEFNAME	("CEXP",	"cexp",	"CExp",	genNONE,	specCEXP)
 DEFNAME	("CHAR",	"char",	"Char",	genNONE,	specCHAR)
+DEFNAME	("CHDIR",	"chdir",	"ChDir",	genNONE,	specCHDIR)	/* UNIX */
+DEFNAME	("CHMOD",	"chmod",	"ChMod",	genNONE,	specCHMOD)	/* UNIX */
 DEFNAME	("CLOG",	"clog",	"CLog",	genNONE,	specCLOG)
 DEFNAME	("CMPLX",	"cmplx",	"Cmplx",	genNONE,	specCMPLX)
+DEFNAME	("COMPLEX",	"complex",	"Complex",	genNONE,	specCOMPLEX)
 DEFNAME	("CONJG",	"conjg",	"Conjg",	genNONE,	specCONJG)
 DEFNAME	("COS",	"cos",	"Cos",	genNONE,	specCOS)
 DEFNAME	("COSD",	"cosd",	"CosD",	genNONE,	specCOSD)	/* VXT */
@@ -85,6 +78,7 @@ DEFNAME	("COUNT",	"count",	"Count",	genNONE,	specCOUNT)	/* F90 */
 DEFNAME	("CSHIFT",	"cshift",	"CShift",	genNONE,	specCSHIFT)	/* F90 */
 DEFNAME	("CSIN",	"csin",	"CSin",	genNONE,	specCSIN)
 DEFNAME	("CSQRT",	"csqrt",	"CSqRt",	genNONE,	specCSQRT)
+DEFNAME	("CTIME",	"ctime",	"CTime",	genNONE,	specCTIME)	/* UNIX */
 DEFNAME	("DABS",	"dabs",	"DAbs",	genNONE,	specDABS)
 DEFNAME	("DACOS",	"dacos",	"DACos",	genNONE,	specDACOS)
 DEFNAME	("DACOSD",	"dacosd",	"DACosD",	genNONE,	specDACOSD)	/* VXT */
@@ -94,7 +88,14 @@ DEFNAME	("DATAN",	"datan",	"DATan",	genNONE,	specDATAN)
 DEFNAME	("DATAN2",	"datan2",	"DATan2",	genNONE,	specDATAN2)
 DEFNAME	("DATAN2D",	"datan2d",	"DATan2D",	genNONE,	specDATAN2D)	/* VXT */
 DEFNAME	("DATAND",	"datand",	"DATanD",	genNONE,	specDATAND)	/* VXT */
+DEFNAME	("DATE",	"date",		"Date",		genNONE,	specDATE)	/* VXT */
 DEFNAME	("DATE_AND_TIME",	"date_and_time",	"Date_and_Time",	genNONE,	specDATE_AND_TIME)	/* F90 */
+DEFNAME	("DBESJ0",	"dbesj0",	"DbesJ0",	genNONE,	specDBESJ0)	/* UNIX */
+DEFNAME	("DBESJ1",	"dbesj1",	"DbesJ1",	genNONE,	specDBESJ1)	/* UNIX */
+DEFNAME	("DBESJN",	"dbesjn",	"DbesJN",	genNONE,	specDBESJN)	/* UNIX */
+DEFNAME	("DBESY0",	"dbesy0",	"DbesY0",	genNONE,	specDBESY0)	/* UNIX */
+DEFNAME	("DBESY1",	"dbesy1",	"DbesY1",	genNONE,	specDBESY1)	/* UNIX */
+DEFNAME	("DBESYN",	"dbesyn",	"DbesYN",	genNONE,	specDBESYN)	/* UNIX */
 DEFNAME	("DBLE",	"dble",	"Dble",	genNONE,	specDBLE)
 DEFNAME	("DBLEQ",	"dbleq",	"DbleQ",	genNONE,	specDBLEQ)	/* VXT */
 DEFNAME	("DCMPLX",	"dcmplx",	"DCmplx",	genNONE,	specDCMPLX)	/* F2C,	VXT */
@@ -102,7 +103,7 @@ DEFNAME	("DCONJG",	"dconjg",	"DConjg",	genNONE,	specDCONJG)	/* F2C,	VXT */
 DEFNAME	("DCOS",	"dcos",	"DCos",	genNONE,	specDCOS)
 DEFNAME	("DCOSD",	"dcosd",	"DCosD",	genNONE,	specDCOSD)	/* VXT */
 DEFNAME	("DCOSH",	"dcosh",	"DCosH",	genNONE,	specDCOSH)
-DEFNAME	("DDIM",	"ddim",	"DDim",	genNONE,	specDDIM)
+DEFNAME	("DDIM",	"ddim",	"DDiM",	genNONE,	specDDIM)
 DEFNAME	("DERF",	"derf",	"DErF",	genNONE,	specDERF)	/* UNIX */
 DEFNAME	("DERFC",	"derfc",	"DErFC",	genNONE,	specDERFC)	/* UNIX */
 DEFNAME	("DEXP",	"dexp",	"DExp",	genNONE,	specDEXP)
@@ -111,7 +112,7 @@ DEFNAME	("DFLOTI",	"dfloti",	"DFlotI",	genNONE,	specDFLOTI)	/* VXT */
 DEFNAME	("DFLOTJ",	"dflotj",	"DFlotJ",	genNONE,	specDFLOTJ)	/* VXT */
 DEFNAME	("DIGITS",	"digits",	"Digits",	genNONE,	specDIGITS)	/* F90 */
 DEFNAME	("DIM",	"dim",	"DiM",	genNONE,	specDIM)
-DEFNAME	("DIMAG",	"dimag",	"DImag",	genNONE,	specDIMAG)	/* VXT */
+DEFNAME	("DIMAG",	"dimag",	"DImag",	genNONE,	specDIMAG)	/* F2C, VXT */
 DEFNAME	("DINT",	"dint",	"DInt",	genNONE,	specDINT)
 DEFNAME	("DLOG",	"dlog",	"DLog",	genNONE,	specDLOG)
 DEFNAME	("DLOG10",	"dlog10",	"DLog10",	genNONE,	specDLOG10)
@@ -130,29 +131,44 @@ DEFNAME	("DSQRT",	"dsqrt",	"DSqRt",	genNONE,	specDSQRT)
 DEFNAME	("DTAN",	"dtan",	"DTan",	genNONE,	specDTAN)
 DEFNAME	("DTAND",	"dtand",	"DTanD",	genNONE,	specDTAND)	/* VXT */
 DEFNAME	("DTANH",	"dtanh",	"DTanH",	genNONE,	specDTANH)
+DEFNAME	("DTIME",	"dtime",	"Dtime",	genNONE,	specDTIME)	/* UNIX */
 DEFNAME	("EOSHIFT",	"eoshift",	"EOShift",	genNONE,	specEOSHIFT)	/* F90 */
 DEFNAME	("EPSILON",	"epsilon",	"Epsilon",	genNONE,	specEPSILON)	/* F90 */
 DEFNAME	("ERF",	"erf",	"ErF",	genNONE,	specERF)	/* UNIX */
 DEFNAME	("ERFC",	"erfc",	"ErFC",	genNONE,	specERFC)	/* UNIX */
+DEFNAME	("ETIME",	"etime",	"ETime",	genNONE,	specETIME)	/* UNIX */
 DEFNAME	("EXIT",	"exit",	"Exit",	genNONE,	specEXIT)	/* UNIX */
 DEFNAME	("EXP",	"exp",	"Exp",	genNONE,	specEXP)
 DEFNAME	("EXPONENT",	"exponent",	"Exponent",	genNONE,	specEXPONENT)	/* F90 */
+DEFNAME	("FDATE",	"fdate",	"Fdate",	genNONE,	specFDATE)	/* UNIX */
+DEFNAME	("FGETC",	"fgetc",	"FGetC",	genNONE,	specFGETC)	/* UNIX */
 DEFNAME	("FLOAT",	"float",	"Float",	genNONE,	specFLOAT)
 DEFNAME	("FLOATI",	"floati",	"FloatI",	genNONE,	specFLOATI)	/* VXT */
 DEFNAME	("FLOATJ",	"floatj",	"FloatJ",	genNONE,	specFLOATJ)	/* VXT */
 DEFNAME	("FLOOR",	"floor",	"Floor",	genNONE,	specFLOOR)	/* F90 */
 DEFNAME	("FLUSH",	"flush",	"Flush",	genNONE,	specFLUSH)	/* UNIX */
+DEFNAME	("FNUM",	"fnum",	"FNum",	genNONE,	specFNUM)	/* UNIX */
 DEFNAME	("FPABSP",	"fpabsp",	"FPAbsP",	genFPABSP,	specNONE)	/* F2C */
 DEFNAME	("FPEXPN",	"fpexpn",	"FPExpn",	genFPEXPN,	specNONE)	/* F2C */
 DEFNAME	("FPFRAC",	"fpfrac",	"FPFrac",	genFPFRAC,	specNONE)	/* F2C */
 DEFNAME	("FPMAKE",	"fpmake",	"FPMake",	genFPMAKE,	specNONE)	/* F2C */
 DEFNAME	("FPRRSP",	"fprrsp",	"FPRRSp",	genFPRRSP,	specNONE)	/* F2C */
 DEFNAME	("FPSCAL",	"fpscal",	"FPScal",	genFPSCAL,	specNONE)	/* F2C */
+DEFNAME	("FPUTC",	"fputc",	"FPutC",	genNONE,	specFPUTC)	/* UNIX */
 DEFNAME	("FRACTION",	"fraction",	"Fraction",	genNONE,	specFRACTION)	/* F90 */
 DEFNAME	("FSEEK",	"fseek",	"FSeek",	genNONE,	specFSEEK)	/* UNIX */
+DEFNAME	("FSTAT",	"fstat",	"FStat",	genNONE,	specFSTAT)	/* UNIX */
 DEFNAME	("FTELL",	"ftell",	"FTell",	genNONE,	specFTELL)	/* UNIX */
+DEFNAME	("GERROR",	"gerror",	"GError",	genNONE,	specGERROR)	/* UNIX */
 DEFNAME	("GETARG",	"getarg",	"GetArg",	genNONE,	specGETARG)	/* UNIX */
+DEFNAME	("GETCWD",	"getcwd",	"GetCWD",	genNONE,	specGETCWD)	/* UNIX */
 DEFNAME	("GETENV",	"getenv",	"GetEnv",	genNONE,	specGETENV)	/* UNIX */
+DEFNAME	("GETGID",	"getgid",	"GetGId",	genNONE,	specGETGID)	/* UNIX */
+DEFNAME	("GETLOG",	"getlog",	"GetLog",	genNONE,	specGETLOG)	/* UNIX */
+DEFNAME	("GETPID",	"getpid",	"GetPId",	genNONE,	specGETPID)	/* UNIX */
+DEFNAME	("GETUID",	"getuid",	"GetUId",	genNONE,	specGETUID)	/* UNIX */
+DEFNAME	("GMTIME",	"gmtime",	"GMTime",	genNONE,	specGMTIME)	/* UNIX */
+DEFNAME	("HOSTNM",	"hostnm",	"HostNm",	genNONE,	specHOSTNM)	/* UNIX */
 DEFNAME	("HUGE",	"huge",	"Huge",	genNONE,	specHUGE)	/* F90 */
 DEFNAME	("IABS",	"iabs",	"IAbs",	genNONE,	specIABS)
 DEFNAME	("IACHAR",	"iachar",	"IAChar",	genNONE,	specIACHAR)	/* F90,	F2C */
@@ -162,10 +178,12 @@ DEFNAME	("IBCLR",	"ibclr",	"IBClr",	genNONE,	specIBCLR)	/* F90,	VXT */
 DEFNAME	("IBITS",	"ibits",	"IBits",	genNONE,	specIBITS)	/* F90,	VXT */
 DEFNAME	("IBSET",	"ibset",	"IBSet",	genNONE,	specIBSET)	/* F90,	VXT */
 DEFNAME	("ICHAR",	"ichar",	"IChar",	genNONE,	specICHAR)
+DEFNAME	("IDATE",	"idate",	"IDate",	genIDATE,	specNONE)	/* UNIX, VXT */
 DEFNAME	("IDIM",	"idim",	"IDiM",	genNONE,	specIDIM)
 DEFNAME	("IDINT",	"idint",	"IDInt",	genNONE,	specIDINT)
 DEFNAME	("IDNINT",	"idnint",	"IDNInt",	genNONE,	specIDNINT)
 DEFNAME	("IEOR",	"ieor",	"IEOr",	genNONE,	specIEOR)	/* F90,	VXT */
+DEFNAME	("IERRNO",	"ierrno",	"IErrNo",	genNONE,	specIERRNO)	/* UNIX */
 DEFNAME	("IFIX",	"ifix",	"IFix",	genNONE,	specIFIX)
 DEFNAME	("IIABS",	"iiabs",	"IIAbs",	genNONE,	specIIABS)	/* VXT */
 DEFNAME	("IIAND",	"iiand",	"IIAnd",	genNONE,	specIIAND)	/* VXT */
@@ -173,7 +191,7 @@ DEFNAME	("IIBCLR",	"iibclr",	"IIBClr",	genNONE,	specIIBCLR)	/* VXT */
 DEFNAME	("IIBITS",	"iibits",	"IIBits",	genNONE,	specIIBITS)	/* VXT */
 DEFNAME	("IIBSET",	"iibset",	"IIBSet",	genNONE,	specIIBSET)	/* VXT */
 DEFNAME	("IIDIM",	"iidim",	"IIDiM",	genNONE,	specIIDIM)	/* VXT */
-DEFNAME	("IIDINT",	"iidint",	"IIDint",	genNONE,	specIIDINT)	/* VXT */
+DEFNAME	("IIDINT",	"iidint",	"IIDInt",	genNONE,	specIIDINT)	/* VXT */
 DEFNAME	("IIDNNT",	"iidnnt",	"IIDNnt",	genNONE,	specIIDNNT)	/* VXT */
 DEFNAME	("IIEOR",	"iieor",	"IIEOr",	genNONE,	specIIEOR)	/* VXT */
 DEFNAME	("IIFIX",	"iifix",	"IIFix",	genNONE,	specIIFIX)	/* VXT */
@@ -185,6 +203,7 @@ DEFNAME	("IISHFT",	"iishft",	"IIShft",	genNONE,	specNONE)	/* VXT */
 DEFNAME	("IISHFTC",	"iishftc",	"IIShftC",	genNONE,	specIISHFTC)	/* VXT */
 DEFNAME	("IISIGN",	"iisign",	"IISign",	genNONE,	specIISIGN)	/* VXT */
 DEFNAME	("IMAG",	"imag",		"Imag",		genNONE,	specIMAG)	/* F2C */
+DEFNAME	("IMAGPART",	"imagpart",	"ImagPart",	genNONE,	specIMAGPART)	/* GNU */
 DEFNAME	("IMAX0",	"imax0",	"IMax0",	genNONE,	specIMAX0)	/* VXT */
 DEFNAME	("IMAX1",	"imax1",	"IMax1",	genNONE,	specIMAX1)	/* VXT */
 DEFNAME	("IMIN0",	"imin0",	"IMin0",	genNONE,	specIMIN0)	/* VXT */
@@ -195,9 +214,12 @@ DEFNAME	("ININT",	"inint",	"INInt",	genNONE,	specININT)	/* VXT */
 DEFNAME	("INOT",	"inot",	"INot",	genNONE,	specINOT)	/* VXT */
 DEFNAME	("INT",	"int",	"Int",	genNONE,	specINT)
 DEFNAME	("IOR",	"ior",	"IOr",	genNONE,	specIOR)	/* F90,	VXT */
+DEFNAME	("IRAND",	"irand",	"IRand",	genNONE,	specIRAND)	/* UNIX */
+DEFNAME	("ISATTY",	"isatty",	"IsaTty",	genNONE,	specISATTY)	/* UNIX */
 DEFNAME	("ISHFT",	"ishft",	"IShft",	genNONE,	specISHFT)	/* F90 */
 DEFNAME	("ISHFTC",	"ishftc",	"IShftC",	genNONE,	specISHFTC)	/* F90,	VXT */
 DEFNAME	("ISIGN",	"isign",	"ISign",	genNONE,	specISIGN)
+DEFNAME	("ITIME",	"itime",	"ITime",	genNONE,	specITIME)	/* UNIX */
 DEFNAME	("IZEXT",	"izext",	"IZExt",	genNONE,	specIZEXT)	/* VXT */
 DEFNAME	("JIABS",	"jiabs",	"JIAbs",	genNONE,	specJIABS)	/* VXT */
 DEFNAME	("JIAND",	"jiand",	"JIAnd",	genNONE,	specJIAND)	/* VXT */
@@ -205,7 +227,7 @@ DEFNAME	("JIBCLR",	"jibclr",	"JIBClr",	genNONE,	specJIBCLR)	/* VXT */
 DEFNAME	("JIBITS",	"jibits",	"JIBits",	genNONE,	specJIBITS)	/* VXT */
 DEFNAME	("JIBSET",	"jibset",	"JIBSet",	genNONE,	specJIBSET)	/* VXT */
 DEFNAME	("JIDIM",	"jidim",	"JIDiM",	genNONE,	specJIDIM)	/* VXT */
-DEFNAME	("JIDINT",	"jidint",	"JIDint",	genNONE,	specJIDINT)	/* VXT */
+DEFNAME	("JIDINT",	"jidint",	"JIDInt",	genNONE,	specJIDINT)	/* VXT */
 DEFNAME	("JIDNNT",	"jidnnt",	"JIDNnt",	genNONE,	specJIDNNT)	/* VXT */
 DEFNAME	("JIEOR",	"jieor",	"JIEOr",	genNONE,	specJIEOR)	/* VXT */
 DEFNAME	("JIFIX",	"jifix",	"JIFix",	genNONE,	specJIFIX)	/* VXT */
@@ -224,19 +246,25 @@ DEFNAME	("JMOD",	"jmod",	"JMod",	genNONE,	specJMOD)	/* VXT */
 DEFNAME	("JNINT",	"jnint",	"JNInt",	genNONE,	specJNINT)	/* VXT */
 DEFNAME	("JNOT",	"jnot",	"JNot",	genNONE,	specJNOT)	/* VXT */
 DEFNAME	("JZEXT",	"jzext",	"JZExt",	genNONE,	specJZEXT)	/* VXT */
+DEFNAME	("KILL",	"kill",		"Kill",		genNONE,	specKILL)	/* UNIX */
 DEFNAME	("KIND",	"kind",	"Kind",	genNONE,	specKIND)	/* F90 */
 DEFNAME	("LBOUND",	"lbound",	"LBound",	genNONE,	specLBOUND)	/* F90 */
 DEFNAME	("LEN",	"len",	"Len",	genNONE,	specLEN)
 DEFNAME	("LEN_TRIM",	"len_trim",	"Len_Trim",	genNONE,	specLEN_TRIM)	/* F90 */
 DEFNAME	("LGE",	"lge",	"LGe",	genNONE,	specLGE)
 DEFNAME	("LGT",	"lgt",	"LGt",	genNONE,	specLGT)
+DEFNAME	("LINK",	"link",	"Link",	genNONE,	specLINK)	/* UNIX */
 DEFNAME	("LLE",	"lle",	"LLe",	genNONE,	specLLE)
 DEFNAME	("LLT",	"llt",	"LLt",	genNONE,	specLLT)
+DEFNAME	("LNBLNK",	"lnblnk",	"LnBlnk",	genNONE,	specLNBLNK)	/* UNIX */
 DEFNAME	("LOC",	"loc",	"Loc",	genNONE,	specLOC)	/* VXT */
 DEFNAME	("LOG",	"log",	"Log",	genNONE,	specLOG)
 DEFNAME	("LOG10",	"log10",	"Log10",	genNONE,	specLOG10)
 DEFNAME	("LOGICAL",	"logical",	"Logical",	genNONE,	specLOGICAL)	/* F90 */
+DEFNAME	("LONG",	"long",	"Long",	genNONE,	specLONG)	/* UNIX */
 DEFNAME	("LSHIFT",	"lshift",	"LShift",	genNONE,	specLSHIFT)	/* F2C */
+DEFNAME	("LSTAT",	"lstat",	"LStat",	genNONE,	specLSTAT)	/* UNIX */
+DEFNAME	("LTIME",	"ltime",	"LTime",	genNONE,	specLTIME)	/* UNIX */
 DEFNAME	("MATMUL",	"matmul",	"MatMul",	genNONE,	specMATMUL)	/* F90 */
 DEFNAME	("MAX",	"max",	"Max",	genNONE,	specMAX)
 DEFNAME	("MAX0",	"max0",	"Max0",	genNONE,	specMAX0)
@@ -244,6 +272,7 @@ DEFNAME	("MAX1",	"max1",	"Max1",	genNONE,	specMAX1)
 DEFNAME	("MAXEXPONENT",	"maxexponent",	"MaxExponent",	genNONE,	specMAXEXPONENT)	/* F90 */
 DEFNAME	("MAXLOC",	"maxloc",	"MaxLoc",	genNONE,	specMAXLOC)	/* F90 */
 DEFNAME	("MAXVAL",	"maxval",	"MaxVal",	genNONE,	specMAXVAL)	/* F90 */
+DEFNAME	("MCLOCK",	"mclock",	"MClock",	genNONE,	specMCLOCK)	/* UNIX */
 DEFNAME	("MERGE",	"merge",	"Merge",	genNONE,	specMERGE)	/* F90 */
 DEFNAME	("MIN",	"min",	"Min",	genNONE,	specMIN)
 DEFNAME	("MIN0",	"min0",	"Min0",	genNONE,	specMIN0)
@@ -259,6 +288,7 @@ DEFNAME	("NINT",	"nint",	"NInt",	genNONE,	specNINT)
 DEFNAME	("NOT",	"not",	"Not",	genNONE,	specNOT)	/* F2C,	F90,	VXT */
 DEFNAME	("OR",	"or",	"Or",	genNONE,	specOR)	/* F2C */
 DEFNAME	("PACK",	"pack",	"Pack",	genNONE,	specPACK)	/* F90 */
+DEFNAME	("PERROR",	"perror",	"PError",	genNONE,	specPERROR)	/* UNIX */
 DEFNAME	("PRECISION",	"precision",	"Precision",	genNONE,	specPRECISION)	/* F90 */
 DEFNAME	("PRESENT",	"present",	"Present",	genNONE,	specPRESENT)	/* F90 */
 DEFNAME	("PRODUCT",	"product",	"Product",	genNONE,	specPRODUCT)	/* F90 */
@@ -294,41 +324,55 @@ DEFNAME	("QTAN",	"qtan",	"QTan",	genNONE,	specQTAN)	/* VXT */
 DEFNAME	("QTAND",	"qtand",	"QTanD",	genNONE,	specQTAND)	/* VXT */
 DEFNAME	("QTANH",	"qtanh",	"QTanH",	genNONE,	specQTANH)	/* VXT */
 DEFNAME	("RADIX",	"radix",	"Radix",	genNONE,	specRADIX)	/* F90 */
+DEFNAME	("RAND",	"rand",	"Rand",	genNONE,	specRAND)	/* UNIX */
 DEFNAME	("RANDOM_NUMBER",	"random_number",	"Random_Number",	genNONE,	specRANDOM_NUMBER)	/* F90 */
 DEFNAME	("RANDOM_SEED",	"random_seed",	"Random_Seed",	genNONE,	specRANDOM_SEED)	/* F90 */
 DEFNAME	("RANGE",	"range",	"Range",	genNONE,	specRANGE)	/* F90 */
 DEFNAME	("REAL",	"real",	"Real",	genNONE,	specREAL)
+DEFNAME	("REALPART",	"realpart",	"RealPart",	genNONE,	specREALPART)	/* GNU */
+DEFNAME	("RENAME",	"rename",	"Rename",	genNONE,	specRENAME)	/* UNIX */
 DEFNAME	("REPEAT",	"repeat",	"Repeat",	genNONE,	specREPEAT)	/* F90 */
 DEFNAME	("RESHAPE",	"reshape",	"Reshape",	genNONE,	specRESHAPE)	/* F90 */
 DEFNAME	("RRSPACING",	"rrspacing",	"RRSpacing",	genNONE,	specRRSPACING)	/* F90 */
 DEFNAME	("RSHIFT",	"rshift",	"RShift",	genNONE,	specRSHIFT)	/* F2C */
 DEFNAME	("SCALE",	"scale",	"Scale",	genNONE,	specSCALE)	/* F90 */
 DEFNAME	("SCAN",	"scan",	"Scan",	genNONE,	specSCAN)	/* F90 */
+DEFNAME	("SECNDS",	"secnds",	"Secnds",	genNONE,	specSECNDS)	/* VXT */
+DEFNAME	("SECOND",	"second",	"Second",	genSECOND,	specNONE)	/* UNIX */
 DEFNAME	("SELECTED_INT_KIND",	"selected_int_kind",	"Selected_Int_Kind",	genNONE,	specSEL_INT_KIND)	/* F90 */
 DEFNAME	("SELECTED_REAL_KIND",	"selected_real_kind",	"Selected_Real_Kind",	genNONE,	specSEL_REAL_KIND)	/* F90 */
 DEFNAME	("SET_EXPONENT",	"set_exponent",	"Set_Exponent",	genNONE,	specSET_EXPONENT)	/* F90 */
 DEFNAME	("SHAPE",	"shape",	"Shape",	genNONE,	specSHAPE)	/* F90 */
+DEFNAME	("SHORT",	"short",	"Short",	genNONE,	specSHORT)	/* UNIX */
 DEFNAME	("SIGN",	"sign",	"Sign",	genNONE,	specSIGN)
 DEFNAME	("SIGNAL",	"signal",	"Signal",	genNONE,	specSIGNAL)	/* UNIX */
 DEFNAME	("SIN",	"sin",	"Sin",	genNONE,	specSIN)
 DEFNAME	("SIND",	"sind",	"SinD",	genNONE,	specSIND)	/* VXT */
 DEFNAME	("SINH",	"sinh",	"SinH",	genNONE,	specSINH)
+DEFNAME	("SLEEP",	"sleep",	"Sleep",	genNONE,	specSLEEP)	/* UNIX */
 DEFNAME	("SNGL",	"sngl",	"Sngl",	genNONE,	specSNGL)
 DEFNAME	("SNGLQ",	"snglq",	"SnglQ",	genNONE,	specSNGLQ)	/* VXT */
 DEFNAME	("SPACING",	"spacing",	"Spacing",	genNONE,	specSPACING)	/* F90 */
 DEFNAME	("SPREAD",	"spread",	"Spread",	genNONE,	specSPREAD)	/* F90 */
 DEFNAME	("SQRT",	"sqrt",	"SqRt",	genNONE,	specSQRT)
+DEFNAME	("SRAND",	"srand",	"SRand",	genNONE,	specSRAND)	/* UNIX */
+DEFNAME	("STAT",	"stat",	"Stat",	genNONE,	specSTAT)	/* UNIX */
 DEFNAME	("SUM",	"sum",	"Sum",	genNONE,	specSUM)	/* F90 */
+DEFNAME	("SYMLNK",	"symlnk",	"SymLnk",	genNONE,	specSYMLNK)	/* UNIX */
 DEFNAME	("SYSTEM",	"system",	"System",	genNONE,	specSYSTEM)	/* UNIX */
 DEFNAME	("SYSTEM_CLOCK",	"system_clock",	"System_Clock",	genNONE,	specSYSTEM_CLOCK)	/* F90 */
 DEFNAME	("TAN",	"tan",	"Tan",	genNONE,	specTAN)
 DEFNAME	("TAND",	"tand",	"TanD",	genNONE,	specTAND)	/* VXT */
 DEFNAME	("TANH",	"tanh",	"TanH",	genNONE,	specTANH)
+DEFNAME	("TIME",	"time",	"Time",	genTIME,	specNONE)	/* UNIX, VXT */
 DEFNAME	("TINY",	"tiny",	"Tiny",	genNONE,	specTINY)	/* F90 */
 DEFNAME	("TRANSFER",	"transfer",	"Transfer",	genNONE,	specTRANSFER)	/* F90 */
 DEFNAME	("TRANSPOSE",	"transpose",	"Transpose",	genNONE,	specTRANSPOSE)	/* F90 */
 DEFNAME	("TRIM",	"trim",	"Trim",	genNONE,	specTRIM)	/* F90 */
+DEFNAME	("TTYNAM",	"ttynam",	"TtyNam",	genNONE,	specTTYNAM)	/* UNIX */
 DEFNAME	("UBOUND",	"ubound",	"UBound",	genNONE,	specUBOUND)	/* F90 */
+DEFNAME	("UMASK",	"umask",	"UMask",	genNONE,	specUMASK)	/* UNIX */
+DEFNAME	("UNLINK",	"unlink",	"Unlink",	genNONE,	specUNLINK)	/* UNIX */
 DEFNAME	("UNPACK",	"unpack",	"Unpack",	genNONE,	specUNPACK)	/* F90 */
 DEFNAME	("VERIFY",	"verify",	"Verify",	genNONE,	specVERIFY)	/* F90 */
 DEFNAME	("XOR",	"xor",	"XOr",	genNONE,	specXOR)	/* F2C */
@@ -348,31 +392,43 @@ DEFNAME	("ZSQRT",	"zsqrt",	"ZSqRt",	genNONE,	specZSQRT)	/* F2C */
    being used.  Also, this includes the placeholder intrinsics that
    have no specific versions, but we want to reserve the names for now.  */
 
-DEFGEN (FFEINTRIN_genFPABSP, "FPABSP",	/* F2C */
+DEFGEN (FPABSP, "FPABSP",	/* F2C */
     FFEINTRIN_specNONE,
     FFEINTRIN_specNONE
   )
-DEFGEN (FFEINTRIN_genFPEXPN, "FPEXPN",	/* F2C */
+DEFGEN (FPEXPN, "FPEXPN",	/* F2C */
     FFEINTRIN_specNONE,
     FFEINTRIN_specNONE
   )
-DEFGEN (FFEINTRIN_genFPFRAC, "FPFRAC",	/* F2C */
+DEFGEN (FPFRAC, "FPFRAC",	/* F2C */
     FFEINTRIN_specNONE,
     FFEINTRIN_specNONE
   )
-DEFGEN (FFEINTRIN_genFPMAKE, "FPMAKE",	/* F2C */
+DEFGEN (FPMAKE, "FPMAKE",	/* F2C */
     FFEINTRIN_specNONE,
     FFEINTRIN_specNONE
   )
-DEFGEN (FFEINTRIN_genFPRRSP, "FPRRSP",	/* F2C */
+DEFGEN (FPRRSP, "FPRRSP",	/* F2C */
     FFEINTRIN_specNONE,
     FFEINTRIN_specNONE
   )
-DEFGEN (FFEINTRIN_genFPSCAL, "FPSCAL",	/* F2C */
+DEFGEN (FPSCAL, "FPSCAL",	/* F2C */
     FFEINTRIN_specNONE,
     FFEINTRIN_specNONE
   )
-DEFGEN (FFEINTRIN_genNONE, "none",
+DEFGEN (IDATE, "IDATE (UNIX or VXT)",	/* UNIX/VXT */
+    FFEINTRIN_specIDATE,
+    FFEINTRIN_specIDATEVXT
+  )
+DEFGEN (SECOND, "SECOND (function or subroutine)",	/* UNIX/CRAY */
+    FFEINTRIN_specSECONDFUNC,
+    FFEINTRIN_specSECONDSUBR
+  )
+DEFGEN (TIME, "TIME (UNIX or VXT)",	/* UNIX/VXT */
+    FFEINTRIN_specTIME,
+    FFEINTRIN_specTIMEVXT
+  )
+DEFGEN (NONE, "none",
     FFEINTRIN_specNONE,
     FFEINTRIN_specNONE
   )
@@ -386,1844 +442,2228 @@ DEFGEN (FFEINTRIN_genNONE, "none",
    The second boolean argument specifies whether the intrinsic is
    allowed by the standard to be passed as an actual argument.  */
 
-DEFSPEC (FFEINTRIN_specABS,
+DEFSPEC (ABS,
     "ABS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impABS
   )
-DEFSPEC (FFEINTRIN_specACOS,
+DEFSPEC (ACOS,
     "ACOS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impACOS
   )
-DEFSPEC (FFEINTRIN_specAIMAG,
+DEFSPEC (AIMAG,
     "AIMAG",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impAIMAG
   )
-DEFSPEC (FFEINTRIN_specAINT,
+DEFSPEC (AINT,
     "AINT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impAINT
   )
-DEFSPEC (FFEINTRIN_specALOG,
+DEFSPEC (ALOG,
     "ALOG",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impALOG
   )
-DEFSPEC (FFEINTRIN_specALOG10,
+DEFSPEC (ALOG10,
     "ALOG10",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impALOG10
   )
-DEFSPEC (FFEINTRIN_specAMAX0,
+DEFSPEC (AMAX0,
     "AMAX0",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impAMAX0
   )
-DEFSPEC (FFEINTRIN_specAMAX1,
+DEFSPEC (AMAX1,
     "AMAX1",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impAMAX1
   )
-DEFSPEC (FFEINTRIN_specAMIN0,
+DEFSPEC (AMIN0,
     "AMIN0",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impAMIN0
   )
-DEFSPEC (FFEINTRIN_specAMIN1,
+DEFSPEC (AMIN1,
     "AMIN1",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impAMIN1
   )
-DEFSPEC (FFEINTRIN_specAMOD,
+DEFSPEC (AMOD,
     "AMOD",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impAMOD
   )
-DEFSPEC (FFEINTRIN_specANINT,
+DEFSPEC (ANINT,
     "ANINT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impANINT
   )
-DEFSPEC (FFEINTRIN_specASIN,
+DEFSPEC (ASIN,
     "ASIN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impASIN
   )
-DEFSPEC (FFEINTRIN_specATAN,
+DEFSPEC (ATAN,
     "ATAN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impATAN
   )
-DEFSPEC (FFEINTRIN_specATAN2,
+DEFSPEC (ATAN2,
     "ATAN2",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impATAN2
   )
-DEFSPEC (FFEINTRIN_specCABS,
+DEFSPEC (CABS,
     "CABS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCABS
   )
-DEFSPEC (FFEINTRIN_specCCOS,
+DEFSPEC (CCOS,
     "CCOS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCCOS
   )
-DEFSPEC (FFEINTRIN_specCEXP,
+DEFSPEC (CEXP,
     "CEXP",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCEXP
   )
-DEFSPEC (FFEINTRIN_specCHAR,
+DEFSPEC (CHAR,
     "CHAR",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCHAR
   )
-DEFSPEC (FFEINTRIN_specCLOG,
+DEFSPEC (CLOG,
     "CLOG",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCLOG
   )
-DEFSPEC (FFEINTRIN_specCMPLX,
+DEFSPEC (CMPLX,
     "CMPLX",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCMPLX
   )
-DEFSPEC (FFEINTRIN_specCONJG,
+DEFSPEC (CONJG,
     "CONJG",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCONJG
   )
-DEFSPEC (FFEINTRIN_specCOS,
+DEFSPEC (COS,
     "COS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCOS
   )
-DEFSPEC (FFEINTRIN_specCOSH,
+DEFSPEC (COSH,
     "COSH",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCOSH
   )
-DEFSPEC (FFEINTRIN_specCSIN,
+DEFSPEC (CSIN,
     "CSIN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCSIN
   )
-DEFSPEC (FFEINTRIN_specCSQRT,
+DEFSPEC (CSQRT,
     "CSQRT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impCSQRT
   )
-DEFSPEC (FFEINTRIN_specDABS,
+DEFSPEC (DABS,
     "DABS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDABS
   )
-DEFSPEC (FFEINTRIN_specDACOS,
+DEFSPEC (DACOS,
     "DACOS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDACOS
   )
-DEFSPEC (FFEINTRIN_specDASIN,
+DEFSPEC (DASIN,
     "DASIN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDASIN
   )
-DEFSPEC (FFEINTRIN_specDATAN,
+DEFSPEC (DATAN,
     "DATAN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDATAN
   )
-DEFSPEC (FFEINTRIN_specDATAN2,
+DEFSPEC (DATAN2,
     "DATAN2",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDATAN2
   )
-DEFSPEC (FFEINTRIN_specDBLE,
+DEFSPEC (DBLE,
     "DBLE",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDBLE
   )
-DEFSPEC (FFEINTRIN_specDCOS,
+DEFSPEC (DCOS,
     "DCOS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDCOS
   )
-DEFSPEC (FFEINTRIN_specDCOSH,
+DEFSPEC (DCOSH,
     "DCOSH",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDCOSH
   )
-DEFSPEC (FFEINTRIN_specDDIM,
+DEFSPEC (DDIM,
     "DDIM",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDDIM
   )
-DEFSPEC (FFEINTRIN_specDEXP,
+DEFSPEC (DEXP,
     "DEXP",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDEXP
   )
-DEFSPEC (FFEINTRIN_specDIM,
+DEFSPEC (DIM,
     "DIM",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDIM
   )
-DEFSPEC (FFEINTRIN_specDINT,
+DEFSPEC (DINT,
     "DINT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDINT
   )
-DEFSPEC (FFEINTRIN_specDLOG,
+DEFSPEC (DLOG,
     "DLOG",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDLOG
   )
-DEFSPEC (FFEINTRIN_specDLOG10,
+DEFSPEC (DLOG10,
     "DLOG10",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDLOG10
   )
-DEFSPEC (FFEINTRIN_specDMAX1,
+DEFSPEC (DMAX1,
     "DMAX1",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDMAX1
   )
-DEFSPEC (FFEINTRIN_specDMIN1,
+DEFSPEC (DMIN1,
     "DMIN1",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDMIN1
   )
-DEFSPEC (FFEINTRIN_specDMOD,
+DEFSPEC (DMOD,
     "DMOD",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDMOD
   )
-DEFSPEC (FFEINTRIN_specDNINT,
+DEFSPEC (DNINT,
     "DNINT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDNINT
   )
-DEFSPEC (FFEINTRIN_specDPROD,
+DEFSPEC (DPROD,
     "DPROD",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDPROD
   )
-DEFSPEC (FFEINTRIN_specDSIGN,
+DEFSPEC (DSIGN,
     "DSIGN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDSIGN
   )
-DEFSPEC (FFEINTRIN_specDSIN,
+DEFSPEC (DSIN,
     "DSIN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDSIN
   )
-DEFSPEC (FFEINTRIN_specDSINH,
+DEFSPEC (DSINH,
     "DSINH",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDSINH
   )
-DEFSPEC (FFEINTRIN_specDSQRT,
+DEFSPEC (DSQRT,
     "DSQRT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDSQRT
   )
-DEFSPEC (FFEINTRIN_specDTAN,
+DEFSPEC (DTAN,
     "DTAN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDTAN
   )
-DEFSPEC (FFEINTRIN_specDTANH,
+DEFSPEC (DTANH,
     "DTANH",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impDTANH
   )
-DEFSPEC (FFEINTRIN_specEXP,
+DEFSPEC (EXP,
     "EXP",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impEXP
   )
-DEFSPEC (FFEINTRIN_specFLOAT,
+DEFSPEC (FLOAT,
     "FLOAT",
     FALSE,
     FFEINTRIN_familyF77,
-    FFEINTRIN_impREAL
+    FFEINTRIN_impFLOAT
   )
-DEFSPEC (FFEINTRIN_specIABS,
+DEFSPEC (IABS,
     "IABS",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impIABS
   )
-DEFSPEC (FFEINTRIN_specICHAR,
+DEFSPEC (ICHAR,
     "ICHAR",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impICHAR
   )
-DEFSPEC (FFEINTRIN_specIDIM,
+DEFSPEC (IDIM,
     "IDIM",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impIDIM
   )
-DEFSPEC (FFEINTRIN_specIDINT,
+DEFSPEC (IDINT,
     "IDINT",
     FALSE,
     FFEINTRIN_familyF77,
-    FFEINTRIN_impINT
+    FFEINTRIN_impIDINT
   )
-DEFSPEC (FFEINTRIN_specIDNINT,
+DEFSPEC (IDNINT,
     "IDNINT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impIDNINT
   )
-DEFSPEC (FFEINTRIN_specIFIX,
+DEFSPEC (IFIX,
     "IFIX",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impINT
   )
-DEFSPEC (FFEINTRIN_specINDEX,
+DEFSPEC (INDEX,
     "INDEX",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impINDEX
   )
-DEFSPEC (FFEINTRIN_specINT,
+DEFSPEC (INT,
     "INT",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impINT
   )
-DEFSPEC (FFEINTRIN_specISIGN,
+DEFSPEC (ISIGN,
     "ISIGN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impISIGN
   )
-DEFSPEC (FFEINTRIN_specLEN,
+DEFSPEC (LEN,
     "LEN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impLEN
   )
-DEFSPEC (FFEINTRIN_specLGE,
+DEFSPEC (LGE,
     "LGE",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impLGE
   )
-DEFSPEC (FFEINTRIN_specLGT,
+DEFSPEC (LGT,
     "LGT",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impLGT
   )
-DEFSPEC (FFEINTRIN_specLLE,
+DEFSPEC (LLE,
     "LLE",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impLLE
   )
-DEFSPEC (FFEINTRIN_specLLT,
+DEFSPEC (LLT,
     "LLT",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impLLT
   )
-DEFSPEC (FFEINTRIN_specLOG,
+DEFSPEC (LOG,
     "LOG",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impLOG
   )
-DEFSPEC (FFEINTRIN_specLOG10,
+DEFSPEC (LOG10,
     "LOG10",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impLOG10
   )
-DEFSPEC (FFEINTRIN_specMAX,
+DEFSPEC (MAX,
     "MAX",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impMAX
   )
-DEFSPEC (FFEINTRIN_specMAX0,
+DEFSPEC (MAX0,
     "MAX0",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impMAX0
   )
-DEFSPEC (FFEINTRIN_specMAX1,
+DEFSPEC (MAX1,
     "MAX1",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impMAX1
   )
-DEFSPEC (FFEINTRIN_specMIN,
+DEFSPEC (MIN,
     "MIN",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impMIN
   )
-DEFSPEC (FFEINTRIN_specMIN0,
+DEFSPEC (MIN0,
     "MIN0",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impMIN0
   )
-DEFSPEC (FFEINTRIN_specMIN1,
+DEFSPEC (MIN1,
     "MIN1",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impMIN1
   )
-DEFSPEC (FFEINTRIN_specMOD,
+DEFSPEC (MOD,
     "MOD",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impMOD
   )
-DEFSPEC (FFEINTRIN_specNINT,
+DEFSPEC (NINT,
     "NINT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impNINT
   )
-DEFSPEC (FFEINTRIN_specREAL,
+DEFSPEC (REAL,
     "REAL",
     FALSE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impREAL
   )
-DEFSPEC (FFEINTRIN_specSIGN,
+DEFSPEC (SIGN,
     "SIGN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impSIGN
   )
-DEFSPEC (FFEINTRIN_specSIN,
+DEFSPEC (SIN,
     "SIN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impSIN
   )
-DEFSPEC (FFEINTRIN_specSINH,
+DEFSPEC (SINH,
     "SINH",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impSINH
   )
-DEFSPEC (FFEINTRIN_specSNGL,
+DEFSPEC (SNGL,
     "SNGL",
     FALSE,
     FFEINTRIN_familyF77,
-    FFEINTRIN_impREAL
+    FFEINTRIN_impSNGL
   )
-DEFSPEC (FFEINTRIN_specSQRT,
+DEFSPEC (SQRT,
     "SQRT",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impSQRT
   )
-DEFSPEC (FFEINTRIN_specTAN,
+DEFSPEC (TAN,
     "TAN",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impTAN
   )
-DEFSPEC (FFEINTRIN_specTANH,
+DEFSPEC (TANH,
     "TANH",
     TRUE,
     FFEINTRIN_familyF77,
     FFEINTRIN_impTANH
   )
 
-DEFSPEC (FFEINTRIN_specABORT,
+DEFSPEC (ABORT,
     "ABORT",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impABORT
   )
-DEFSPEC (FFEINTRIN_specACHAR,
+DEFSPEC (ACCESS,
+    "ACCESS",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impACCESS
+)
+DEFSPEC (ACHAR,
     "ACHAR",
     FALSE,
     FFEINTRIN_familyASC,
     FFEINTRIN_impACHAR
   )
-DEFSPEC (FFEINTRIN_specACOSD,
+DEFSPEC (ACOSD,
     "ACOSD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specADJUSTL,
+DEFSPEC (ADJUSTL,
     "ADJUSTL",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specADJUSTR,
+DEFSPEC (ADJUSTR,
     "ADJUSTR",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specAIMAX0,
+DEFSPEC (AIMAX0,
     "AIMAX0",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specAIMIN0,
+DEFSPEC (AIMIN0,
     "AIMIN0",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specAJMAX0,
+DEFSPEC (AJMAX0,
     "AJMAX0",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impAMAX0
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specAJMIN0,
+DEFSPEC (AJMIN0,
     "AJMIN0",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impAMIN0
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specALL,
+DEFSPEC (ALL,
     "ALL",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specALLOCATED,
+DEFSPEC (ALLOCATED,
     "ALLOCATED",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specAND,
+DEFSPEC (AND,
     "AND",
     FALSE,
     FFEINTRIN_familyF2C,
-    FFEINTRIN_impIAND
+    FFEINTRIN_impAND
   )
-DEFSPEC (FFEINTRIN_specANY,
+DEFSPEC (ANY,
     "ANY",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specASIND,
+DEFSPEC (ASIND,
     "ASIND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specASSOCIATED,
+DEFSPEC (ASSOCIATED,
     "ASSOCIATED",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specATAN2D,
+DEFSPEC (ATAN2D,
     "ATAN2D",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specATAND,
+DEFSPEC (ATAND,
     "ATAND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specBIT_SIZE,
+DEFSPEC (BESJ0,
+    "BESJ0",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impBESJ0
+)
+DEFSPEC (BESJ1,
+    "BESJ1",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impBESJ1
+)
+DEFSPEC (BESJN,
+    "BESJN",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impBESJN
+)
+DEFSPEC (BESY0,
+    "BESY0",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impBESY0
+)
+DEFSPEC (BESY1,
+    "BESY1",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impBESY1
+)
+DEFSPEC (BESYN,
+    "BESYN",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impBESYN
+)
+DEFSPEC (BIT_SIZE,
     "BIT_SIZE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impBIT_SIZE
   )
-DEFSPEC (FFEINTRIN_specBITEST,
+DEFSPEC (BITEST,
     "BITEST",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specBJTEST,
+DEFSPEC (BJTEST,
     "BJTEST",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impBTEST
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specBTEST,
+DEFSPEC (BTEST,
     "BTEST",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impBTEST
   )
-DEFSPEC (FFEINTRIN_specCDABS,
+DEFSPEC (CDABS,
     "CDABS",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impCDABS
   )
-DEFSPEC (FFEINTRIN_specCDCOS,
+DEFSPEC (CDCOS,
     "CDCOS",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impCDCOS
   )
-DEFSPEC (FFEINTRIN_specCDEXP,
+DEFSPEC (CDEXP,
     "CDEXP",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impCDEXP
   )
-DEFSPEC (FFEINTRIN_specCDLOG,
+DEFSPEC (CDLOG,
     "CDLOG",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impCDLOG
   )
-DEFSPEC (FFEINTRIN_specCDSIN,
+DEFSPEC (CDSIN,
     "CDSIN",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impCDSIN
   )
-DEFSPEC (FFEINTRIN_specCDSQRT,
+DEFSPEC (CDSQRT,
     "CDSQRT",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impCDSQRT
   )
-DEFSPEC (FFEINTRIN_specCEILING,
+DEFSPEC (CEILING,
     "CEILING",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specCOSD,
+DEFSPEC (CHDIR,
+    "CHDIR",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impCHDIR
+)
+DEFSPEC (CHMOD,
+    "CHMOD",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impCHMOD
+)
+DEFSPEC (COMPLEX,
+    "COMPLEX",
+    FALSE,
+    FFEINTRIN_familyGNU,
+    FFEINTRIN_impCOMPLEX
+  )
+DEFSPEC (COSD,
     "COSD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specCOUNT,
+DEFSPEC (COUNT,
     "COUNT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specCSHIFT,
+DEFSPEC (CSHIFT,
     "CSHIFT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDACOSD,
+DEFSPEC (CTIME,
+    "CTIME",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impCTIME
+)
+DEFSPEC (DACOSD,
     "DACOSD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDASIND,
+DEFSPEC (DASIND,
     "DASIND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDATAN2D,
+DEFSPEC (DATAN2D,
     "DATAN2D",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDATAND,
+DEFSPEC (DATAND,
     "DATAND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDATE_AND_TIME,
+DEFSPEC (DATE,
+    "DATE",
+    FALSE,
+    FFEINTRIN_familyVXT,
+    FFEINTRIN_impDATE
+)
+DEFSPEC (DATE_AND_TIME,
     "DATE_AND_TIME",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDBLEQ,
+DEFSPEC (DBESJ0,
+    "DBESJ0",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impDBESJ0
+)
+DEFSPEC (DBESJ1,
+    "DBESJ1",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impDBESJ1
+)
+DEFSPEC (DBESJN,
+    "DBESJN",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impDBESJN
+)
+DEFSPEC (DBESY0,
+    "DBESY0",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impDBESY0
+)
+DEFSPEC (DBESY1,
+    "DBESY1",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impDBESY1
+)
+DEFSPEC (DBESYN,
+    "DBESYN",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impDBESYN
+)
+DEFSPEC (DBLEQ,
     "DBLEQ",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDCMPLX,
+DEFSPEC (DCMPLX,
     "DCMPLX",
     FALSE,
-    FFEINTRIN_familyDCP,
+    FFEINTRIN_familyFVZ,
     FFEINTRIN_impDCMPLX
   )
-DEFSPEC (FFEINTRIN_specDCONJG,
+DEFSPEC (DCONJG,
     "DCONJG",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impDCONJG
   )
-DEFSPEC (FFEINTRIN_specDCOSD,
+DEFSPEC (DCOSD,
     "DCOSD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDERF,
+DEFSPEC (DERF,
     "DERF",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impDERF
   )
-DEFSPEC (FFEINTRIN_specDERFC,
+DEFSPEC (DERFC,
     "DERFC",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impDERFC
   )
-DEFSPEC (FFEINTRIN_specDFLOAT,
+DEFSPEC (DFLOAT,
     "DFLOAT",
     FALSE,
-    FFEINTRIN_familyF2C,
-    FFEINTRIN_impDBLE
+    FFEINTRIN_familyFVZ,
+    FFEINTRIN_impDFLOAT
   )
-DEFSPEC (FFEINTRIN_specDFLOTI,
+DEFSPEC (DFLOTI,
     "DFLOTI",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDFLOTJ,
+DEFSPEC (DFLOTJ,
     "DFLOTJ",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impDBLE
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDIGITS,
+DEFSPEC (DIGITS,
     "DIGITS",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDIMAG,
+DEFSPEC (DIMAG,
     "DIMAG",
     TRUE,
     FFEINTRIN_familyFVZ,
     FFEINTRIN_impDIMAG
   )
-DEFSPEC (FFEINTRIN_specDOT_PRODUCT,
+DEFSPEC (DOT_PRODUCT,
     "DOT_PRODUCT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDREAL,
+DEFSPEC (DREAL,
     "DREAL",
     FALSE,
-    FFEINTRIN_familyFVZ,
-    FFEINTRIN_impDBLE
+    FFEINTRIN_familyVXT,
+    FFEINTRIN_impDREAL
   )
-DEFSPEC (FFEINTRIN_specDSIND,
+DEFSPEC (DSIND,
     "DSIND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specDTAND,
+DEFSPEC (DTAND,
     "DTAND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specEOSHIFT,
+DEFSPEC (DTIME,
+    "DTIME",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impDTIME
+)
+DEFSPEC (EOSHIFT,
     "EOSHIFT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specEPSILON,
+DEFSPEC (EPSILON,
     "EPSILON",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specERF,
+DEFSPEC (ERF,
     "ERF",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impERF
   )
-DEFSPEC (FFEINTRIN_specERFC,
+DEFSPEC (ERFC,
     "ERFC",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impERFC
   )
-DEFSPEC (FFEINTRIN_specEXIT,
+DEFSPEC (ETIME,
+    "ETIME",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impETIME
+)
+DEFSPEC (EXIT,
     "EXIT",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impEXIT
   )
-DEFSPEC (FFEINTRIN_specEXPONENT,
+DEFSPEC (EXPONENT,
     "EXPONENT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specFLOATI,
+DEFSPEC (FDATE,
+    "FDATE",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impFDATE
+)
+DEFSPEC (FGETC,
+    "FGETC",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impFGETC
+)
+DEFSPEC (FLOATI,
     "FLOATI",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specFLOATJ,
+DEFSPEC (FLOATJ,
     "FLOATJ",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impREAL
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specFLOOR,
+DEFSPEC (FLOOR,
     "FLOOR",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specFLUSH,
+DEFSPEC (FLUSH,
     "FLUSH",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impFLUSH
   )
-DEFSPEC (FFEINTRIN_specFRACTION,
+DEFSPEC (FNUM,
+    "FNUM",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impFNUM
+)
+DEFSPEC (FPUTC,
+    "FPUTC",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impFPUTC
+)
+DEFSPEC (FRACTION,
     "FRACTION",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specFSEEK,
+DEFSPEC (FSEEK,
     "FSEEK",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impFSEEK
   )
-DEFSPEC (FFEINTRIN_specFTELL,
+DEFSPEC (FSTAT,
+    "FSTAT",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impFSTAT
+)
+DEFSPEC (FTELL,
     "FTELL",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impFTELL
   )
-DEFSPEC (FFEINTRIN_specGETARG,
+DEFSPEC (GERROR,
+    "GERROR",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impGERROR
+)
+DEFSPEC (GETARG,
     "GETARG",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impGETARG
   )
-DEFSPEC (FFEINTRIN_specGETENV,
+DEFSPEC (GETCWD,
+    "GETCWD",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impGETCWD
+)
+DEFSPEC (GETENV,
     "GETENV",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impGETENV
   )
-DEFSPEC (FFEINTRIN_specHUGE,
+DEFSPEC (GETGID,
+    "GETGID",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impGETGID
+)
+DEFSPEC (GETLOG,
+    "GETLOG",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impGETLOG
+)
+DEFSPEC (GETPID,
+    "GETPID",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impGETPID
+)
+DEFSPEC (GETUID,
+    "GETUID",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impGETUID
+)
+DEFSPEC (GMTIME,
+    "GMTIME",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impGMTIME
+)
+DEFSPEC (HOSTNM,
+    "HOSTNM",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impHOSTNM
+)
+DEFSPEC (HUGE,
     "HUGE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIACHAR,
+DEFSPEC (IACHAR,
     "IACHAR",
     FALSE,
     FFEINTRIN_familyASC,
     FFEINTRIN_impIACHAR
   )
-DEFSPEC (FFEINTRIN_specIAND,
+DEFSPEC (IAND,
     "IAND",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impIAND
   )
-DEFSPEC (FFEINTRIN_specIARGC,
+DEFSPEC (IARGC,
     "IARGC",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impIARGC
   )
-DEFSPEC (FFEINTRIN_specIBCLR,
+DEFSPEC (IBCLR,
     "IBCLR",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impIBCLR
   )
-DEFSPEC (FFEINTRIN_specIBITS,
+DEFSPEC (IBITS,
     "IBITS",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impIBITS
   )
-DEFSPEC (FFEINTRIN_specIBSET,
+DEFSPEC (IBSET,
     "IBSET",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impIBSET
   )
-DEFSPEC (FFEINTRIN_specIEOR,
+DEFSPEC (IDATE,
+    "IDATE (UNIX)",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impIDATE
+)
+DEFSPEC (IDATEVXT,
+    "IDATE (VXT)",
+    FALSE,
+    FFEINTRIN_familyVXT,
+    FFEINTRIN_impIDATEVXT
+)
+DEFSPEC (IEOR,
     "IEOR",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impIEOR
   )
-DEFSPEC (FFEINTRIN_specIIABS,
+DEFSPEC (IERRNO,
+    "IERRNO",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impIERRNO
+)
+DEFSPEC (IIABS,
     "IIABS",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIAND,
+DEFSPEC (IIAND,
     "IIAND",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIBCLR,
+DEFSPEC (IIBCLR,
     "IIBCLR",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIBITS,
+DEFSPEC (IIBITS,
     "IIBITS",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIBSET,
+DEFSPEC (IIBSET,
     "IIBSET",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIDIM,
+DEFSPEC (IIDIM,
     "IIDIM",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIDINT,
+DEFSPEC (IIDINT,
     "IIDINT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIDNNT,
+DEFSPEC (IIDNNT,
     "IIDNNT",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIEOR,
+DEFSPEC (IIEOR,
     "IIEOR",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIFIX,
+DEFSPEC (IIFIX,
     "IIFIX",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIINT,
+DEFSPEC (IINT,
     "IINT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIOR,
+DEFSPEC (IIOR,
     "IIOR",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIQINT,
+DEFSPEC (IIQINT,
     "IIQINT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIIQNNT,
+DEFSPEC (IIQNNT,
     "IIQNNT",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIISHFT,
+DEFSPEC (IISHFT,
     "IISHFT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIISHFTC,
+DEFSPEC (IISHFTC,
     "IISHFTC",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIISIGN,
+DEFSPEC (IISIGN,
     "IISIGN",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIMAG,
+DEFSPEC (IMAG,
     "IMAG",
     FALSE,
     FFEINTRIN_familyF2C,
-    FFEINTRIN_impAIMAG
+    FFEINTRIN_impIMAGPART
   )
-DEFSPEC (FFEINTRIN_specIMAX0,
+DEFSPEC (IMAGPART,
+    "IMAGPART",
+    FALSE,
+    FFEINTRIN_familyGNU,
+    FFEINTRIN_impIMAGPART
+  )
+DEFSPEC (IMAX0,
     "IMAX0",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIMAX1,
+DEFSPEC (IMAX1,
     "IMAX1",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIMIN0,
+DEFSPEC (IMIN0,
     "IMIN0",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIMIN1,
+DEFSPEC (IMIN1,
     "IMIN1",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIMOD,
+DEFSPEC (IMOD,
     "IMOD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specININT,
+DEFSPEC (ININT,
     "ININT",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specINOT,
+DEFSPEC (INOT,
     "INOT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specIOR,
+DEFSPEC (IOR,
     "IOR",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impIOR
   )
-DEFSPEC (FFEINTRIN_specISHFT,
+DEFSPEC (IRAND,
+    "IRAND",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impIRAND
+)
+DEFSPEC (ISATTY,
+    "ISATTY",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impISATTY
+)
+DEFSPEC (ISHFT,
     "ISHFT",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impISHFT
   )
-DEFSPEC (FFEINTRIN_specISHFTC,
+DEFSPEC (ISHFTC,
     "ISHFTC",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impISHFTC
   )
-DEFSPEC (FFEINTRIN_specIZEXT,
+DEFSPEC (ITIME,
+    "ITIME",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impITIME
+)
+DEFSPEC (IZEXT,
     "IZEXT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIABS,
+DEFSPEC (JIABS,
     "JIABS",
     TRUE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIABS
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIAND,
+DEFSPEC (JIAND,
     "JIAND",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIAND
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIBCLR,
+DEFSPEC (JIBCLR,
     "JIBCLR",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIBCLR
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIBITS,
+DEFSPEC (JIBITS,
     "JIBITS",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIBITS
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIBSET,
+DEFSPEC (JIBSET,
     "JIBSET",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIBSET
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIDIM,
+DEFSPEC (JIDIM,
     "JIDIM",
     TRUE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIDIM
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIDINT,
+DEFSPEC (JIDINT,
     "JIDINT",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impINT
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIDNNT,
+DEFSPEC (JIDNNT,
     "JIDNNT",
     TRUE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIDNINT
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIEOR,
+DEFSPEC (JIEOR,
     "JIEOR",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIEOR
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIFIX,
+DEFSPEC (JIFIX,
     "JIFIX",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impINT
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJINT,
+DEFSPEC (JINT,
     "JINT",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impINT
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIOR,
+DEFSPEC (JIOR,
     "JIOR",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impIOR
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIQINT,
+DEFSPEC (JIQINT,
     "JIQINT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJIQNNT,
+DEFSPEC (JIQNNT,
     "JIQNNT",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJISHFT,
+DEFSPEC (JISHFT,
     "JISHFT",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impISHFT
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJISHFTC,
+DEFSPEC (JISHFTC,
     "JISHFTC",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impISHFTC
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJISIGN,
+DEFSPEC (JISIGN,
     "JISIGN",
     TRUE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impISIGN
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJMAX0,
+DEFSPEC (JMAX0,
     "JMAX0",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impMAX0
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJMAX1,
+DEFSPEC (JMAX1,
     "JMAX1",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impMAX1
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJMIN0,
+DEFSPEC (JMIN0,
     "JMIN0",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impMIN0
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJMIN1,
+DEFSPEC (JMIN1,
     "JMIN1",
     FALSE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impMIN1
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJMOD,
+DEFSPEC (JMOD,
     "JMOD",
     TRUE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impMOD
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJNINT,
+DEFSPEC (JNINT,
     "JNINT",
     TRUE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impNINT
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJNOT,
+DEFSPEC (JNOT,
     "JNOT",
     TRUE,
     FFEINTRIN_familyVXT,
-    FFEINTRIN_impNOT
+    FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specJZEXT,
+DEFSPEC (JZEXT,
     "JZEXT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specKIND,
+DEFSPEC (KILL,
+    "KILL",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impKILL
+)
+DEFSPEC (KIND,
     "KIND",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specLBOUND,
+DEFSPEC (LBOUND,
     "LBOUND",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specLEN_TRIM,
+DEFSPEC (LINK,
+    "LINK",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impLINK
+)
+DEFSPEC (LEN_TRIM,
     "LEN_TRIM",
     FALSE,
     FFEINTRIN_familyF90,
-    FFEINTRIN_impNONE
+    FFEINTRIN_impLNBLNK
   )
-DEFSPEC (FFEINTRIN_specLOC,
+DEFSPEC (LNBLNK,
+    "LNBLNK",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impLNBLNK
+)
+DEFSPEC (LOC,
     "LOC",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impLOC
   )
-DEFSPEC (FFEINTRIN_specLOGICAL,
+DEFSPEC (LOGICAL,
     "LOGICAL",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specLSHIFT,
+DEFSPEC (LONG,
+    "LONG",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impLONG
+  )
+DEFSPEC (LSHIFT,
     "LSHIFT",
     FALSE,
     FFEINTRIN_familyF2C,
     FFEINTRIN_impLSHIFT
   )
-DEFSPEC (FFEINTRIN_specMATMUL,
+DEFSPEC (LSTAT,
+    "LSTAT",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impLSTAT
+)
+DEFSPEC (LTIME,
+    "LTIME",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impLTIME
+)
+DEFSPEC (MATMUL,
     "MATMUL",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMAXEXPONENT,
+DEFSPEC (MAXEXPONENT,
     "MAXEXPONENT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMAXLOC,
+DEFSPEC (MAXLOC,
     "MAXLOC",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMAXVAL,
+DEFSPEC (MAXVAL,
     "MAXVAL",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMERGE,
+DEFSPEC (MCLOCK,
+    "MCLOCK",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impMCLOCK
+)
+DEFSPEC (MERGE,
     "MERGE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMINEXPONENT,
+DEFSPEC (MINEXPONENT,
     "MINEXPONENT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMINLOC,
+DEFSPEC (MINLOC,
     "MINLOC",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMINVAL,
+DEFSPEC (MINVAL,
     "MINVAL",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMODULO,
+DEFSPEC (MODULO,
     "MODULO",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specMVBITS,
+DEFSPEC (MVBITS,
     "MVBITS",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impMVBITS
   )
-DEFSPEC (FFEINTRIN_specNEAREST,
+DEFSPEC (NEAREST,
     "NEAREST",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specNOT,
+DEFSPEC (NOT,
     "NOT",
     FALSE,
     FFEINTRIN_familyMIL,
     FFEINTRIN_impNOT
   )
-DEFSPEC (FFEINTRIN_specOR,
+DEFSPEC (OR,
     "OR",
     FALSE,
     FFEINTRIN_familyF2C,
-    FFEINTRIN_impIOR
+    FFEINTRIN_impOR
   )
-DEFSPEC (FFEINTRIN_specPACK,
+DEFSPEC (PACK,
     "PACK",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specPRECISION,
+DEFSPEC (PERROR,
+    "PERROR",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impPERROR
+)
+DEFSPEC (PRECISION,
     "PRECISION",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specPRESENT,
+DEFSPEC (PRESENT,
     "PRESENT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specPRODUCT,
+DEFSPEC (PRODUCT,
     "PRODUCT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQABS,
+DEFSPEC (QABS,
     "QABS",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQACOS,
+DEFSPEC (QACOS,
     "QACOS",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQACOSD,
+DEFSPEC (QACOSD,
     "QACOSD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQASIN,
+DEFSPEC (QASIN,
     "QASIN",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQASIND,
+DEFSPEC (QASIND,
     "QASIND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQATAN,
+DEFSPEC (QATAN,
     "QATAN",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQATAN2,
+DEFSPEC (QATAN2,
     "QATAN2",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQATAN2D,
+DEFSPEC (QATAN2D,
     "QATAN2D",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQATAND,
+DEFSPEC (QATAND,
     "QATAND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQCOS,
+DEFSPEC (QCOS,
     "QCOS",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQCOSD,
+DEFSPEC (QCOSD,
     "QCOSD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQCOSH,
+DEFSPEC (QCOSH,
     "QCOSH",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQDIM,
+DEFSPEC (QDIM,
     "QDIM",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQEXP,
+DEFSPEC (QEXP,
     "QEXP",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQEXT,
+DEFSPEC (QEXT,
     "QEXT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQEXTD,
+DEFSPEC (QEXTD,
     "QEXTD",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQFLOAT,
+DEFSPEC (QFLOAT,
     "QFLOAT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQINT,
+DEFSPEC (QINT,
     "QINT",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQLOG,
+DEFSPEC (QLOG,
     "QLOG",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQLOG10,
+DEFSPEC (QLOG10,
     "QLOG10",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQMAX1,
+DEFSPEC (QMAX1,
     "QMAX1",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQMIN1,
+DEFSPEC (QMIN1,
     "QMIN1",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQMOD,
+DEFSPEC (QMOD,
     "QMOD",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQNINT,
+DEFSPEC (QNINT,
     "QNINT",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQSIGN,
+DEFSPEC (QSIGN,
     "QSIGN",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQSIN,
+DEFSPEC (QSIN,
     "QSIN",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQSIND,
+DEFSPEC (QSIND,
     "QSIND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQSINH,
+DEFSPEC (QSINH,
     "QSINH",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQSQRT,
+DEFSPEC (QSQRT,
     "QSQRT",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQTAN,
+DEFSPEC (QTAN,
     "QTAN",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQTAND,
+DEFSPEC (QTAND,
     "QTAND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specQTANH,
+DEFSPEC (QTANH,
     "QTANH",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specRADIX,
+DEFSPEC (RADIX,
     "RADIX",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specRANDOM_NUMBER,
+DEFSPEC (RAND,
+    "RAND",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impRAND
+)
+DEFSPEC (RANDOM_NUMBER,
     "RANDOM_NUMBER",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specRANDOM_SEED,
+DEFSPEC (RANDOM_SEED,
     "RANDOM_SEED",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specRANGE,
+DEFSPEC (RANGE,
     "RANGE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specREPEAT,
+DEFSPEC (REALPART,
+    "REALPART",
+    FALSE,
+    FFEINTRIN_familyGNU,
+    FFEINTRIN_impREALPART
+  )
+DEFSPEC (RENAME,
+    "RENAME",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impRENAME
+)
+DEFSPEC (REPEAT,
     "REPEAT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specRESHAPE,
+DEFSPEC (RESHAPE,
     "RESHAPE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specRRSPACING,
+DEFSPEC (RRSPACING,
     "RRSPACING",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specRSHIFT,
+DEFSPEC (RSHIFT,
     "RSHIFT",
     FALSE,
     FFEINTRIN_familyF2C,
     FFEINTRIN_impRSHIFT
   )
-DEFSPEC (FFEINTRIN_specSCALE,
+DEFSPEC (SCALE,
     "SCALE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSCAN,
+DEFSPEC (SCAN,
     "SCAN",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSEL_INT_KIND,
+DEFSPEC (SECNDS,
+    "SECNDS",
+    FALSE,
+    FFEINTRIN_familyVXT,
+    FFEINTRIN_impSECNDS
+)
+DEFSPEC (SECONDFUNC,
+    "SECOND (function)",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impSECONDFUNC
+)
+DEFSPEC (SECONDSUBR,
+    "SECOND (subroutine)",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impSECONDSUBR
+)
+DEFSPEC (SEL_INT_KIND,
     "SEL_INT_KIND",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSEL_REAL_KIND,
+DEFSPEC (SEL_REAL_KIND,
     "SEL_REAL_KIND",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSET_EXPONENT,
+DEFSPEC (SET_EXPONENT,
     "SET_EXPONENT",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSHAPE,
+DEFSPEC (SHAPE,
     "SHAPE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSIGNAL,
+DEFSPEC (SHORT,
+    "SHORT",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impSHORT
+  )
+DEFSPEC (SIGNAL,
     "SIGNAL",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impSIGNAL
   )
-DEFSPEC (FFEINTRIN_specSIND,
+DEFSPEC (SIND,
     "SIND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSNGLQ,
+DEFSPEC (SLEEP,
+    "SLEEP",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impSLEEP
+)
+DEFSPEC (SNGLQ,
     "SNGLQ",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSPACING,
+DEFSPEC (SPACING,
     "SPACING",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSPREAD,
+DEFSPEC (SPREAD,
     "SPREAD",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSUM,
+DEFSPEC (SRAND,
+    "SRAND",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impSRAND
+)
+DEFSPEC (STAT,
+    "STAT",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impSTAT
+)
+DEFSPEC (SUM,
     "SUM",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specSYSTEM,
+DEFSPEC (SYMLNK,
+    "SYMLNK",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impSYMLNK
+)
+DEFSPEC (SYSTEM,
     "SYSTEM",
     FALSE,
     FFEINTRIN_familyF2U,
     FFEINTRIN_impSYSTEM
   )
-DEFSPEC (FFEINTRIN_specSYSTEM_CLOCK,
+DEFSPEC (SYSTEM_CLOCK,
     "SYSTEM_CLOCK",
     FALSE,
     FFEINTRIN_familyF90,
-    FFEINTRIN_impNONE
+    FFEINTRIN_impSYSTEM_CLOCK
   )
-DEFSPEC (FFEINTRIN_specTAND,
+DEFSPEC (TAND,
     "TAND",
     TRUE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specTINY,
+DEFSPEC (TIME,
+    "TIME (UNIX)",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impTIME
+)
+DEFSPEC (TIMEVXT,
+    "TIME (VXT)",
+    FALSE,
+    FFEINTRIN_familyVXT,
+    FFEINTRIN_impTIMEVXT
+)
+DEFSPEC (TINY,
     "TINY",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specTRANSFER,
+DEFSPEC (TRANSFER,
     "TRANSFER",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specTRANSPOSE,
+DEFSPEC (TRANSPOSE,
     "TRANSPOSE",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specTRIM,
+DEFSPEC (TRIM,
     "TRIM",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specUBOUND,
+DEFSPEC (TTYNAM,
+    "TTYNAM",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impTTYNAM
+)
+DEFSPEC (UBOUND,
     "UBOUND",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specUNPACK,
+DEFSPEC (UMASK,
+    "UMASK",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impUMASK
+)
+DEFSPEC (UNLINK,
+    "UNLINK",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impUNLINK
+)
+DEFSPEC (UNPACK,
     "UNPACK",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specVERIFY,
+DEFSPEC (VERIFY,
     "VERIFY",
     FALSE,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specXOR,
+DEFSPEC (XOR,
     "XOR",
     FALSE,
     FFEINTRIN_familyF2C,
-    FFEINTRIN_impIEOR
+    FFEINTRIN_impXOR
   )
-DEFSPEC (FFEINTRIN_specZABS,
+DEFSPEC (ZABS,
     "ZABS",
     TRUE,
-    FFEINTRIN_familyF2Z,
+    FFEINTRIN_familyF2C,
     FFEINTRIN_impCDABS
   )
-DEFSPEC (FFEINTRIN_specZCOS,
+DEFSPEC (ZCOS,
     "ZCOS",
     TRUE,
-    FFEINTRIN_familyF2Z,
+    FFEINTRIN_familyF2C,
     FFEINTRIN_impCDCOS
   )
-DEFSPEC (FFEINTRIN_specZEXP,
+DEFSPEC (ZEXP,
     "ZEXP",
     TRUE,
-    FFEINTRIN_familyF2Z,
+    FFEINTRIN_familyF2C,
     FFEINTRIN_impCDEXP
   )
-DEFSPEC (FFEINTRIN_specZEXT,
+DEFSPEC (ZEXT,
     "ZEXT",
     FALSE,
     FFEINTRIN_familyVXT,
     FFEINTRIN_impNONE
   )
-DEFSPEC (FFEINTRIN_specZLOG,
+DEFSPEC (ZLOG,
     "ZLOG",
     TRUE,
-    FFEINTRIN_familyF2Z,
+    FFEINTRIN_familyF2C,
     FFEINTRIN_impCDLOG
   )
-DEFSPEC (FFEINTRIN_specZSIN,
+DEFSPEC (ZSIN,
     "ZSIN",
     TRUE,
-    FFEINTRIN_familyF2Z,
+    FFEINTRIN_familyF2C,
     FFEINTRIN_impCDSIN
   )
-DEFSPEC (FFEINTRIN_specZSQRT,
+DEFSPEC (ZSQRT,
     "ZSQRT",
     TRUE,
-    FFEINTRIN_familyF2Z,
+    FFEINTRIN_familyF2C,
     FFEINTRIN_impCDSQRT
   )
-DEFSPEC (FFEINTRIN_specNONE,
+DEFSPEC (NONE,
     "none",
     FALSE,
     FFEINTRIN_familyNONE,
@@ -2251,7 +2691,11 @@ DEFSPEC (FFEINTRIN_specNONE,
    no need to complain about ambiguity if two different-typed intrinsic
    run-time implementations have the same compile-time implementation,
    as long as there's a straightforward way of determining which was
-   meant (done by ffeintrin_fulfill_generic).  */
+   meant (done by ffeintrin_fulfill_generic).  (Here `the same code at
+   compile time' may be the default dispatch defined by the
+   DEFIMP/DEFIMQ signatures -- see com.c.)  Fixme: Note that
+   currently, DEFIMQs have to be a subroutine or function to match
+   what the corresponding DEFIMP of the same name is. */
 
 /* The control string has the following format:
 
@@ -2259,7 +2703,7 @@ DEFSPEC (FFEINTRIN_specNONE,
 
    <return-type> is:
 
-     <return-base-type><return-kind-type>
+     <return-base-type><return-kind-type>[<return-modifier>]
 
    <return-base-type> is:
 
@@ -2277,11 +2721,19 @@ DEFSPEC (FFEINTRIN_specNONE,
    <return-kind-type> is:
 
      -    Subroutine
-     0    Decided by COL
+     =    Decided by COL
      1    (Default)
-     2    (COMPLEX*16, INTEGER*1, LOGICAL*1, REAL*8)
-     3    (INTEGER*2, LOGICAL*2)
+     2    (Twice the size of 1)
+     3    (Same size as CHARACTER*1)
+     4    (Twice the size of 2)
+     6    (Twice the size as 3)
      C    Like 1 (F77), except (F90), if COL is COMPLEX, uses kind type of COL
+     p    ffecom_pointer_kind_
+
+   <return-modifier> is:
+
+     *    Valid for <return-base-type> of `A' only, means program may
+          declare any length for return value, default being (*)
 
    <arglist-info> is:
 
@@ -2289,13 +2741,13 @@ DEFSPEC (FFEINTRIN_specNONE,
 
    <COL-spec> is:
 
-     -    No COL
-     *    All arguments form COL
-     1    Argument 1 forms COL
+     -    No COL (return-base-type and return-kind-type must be definitive)
+     *    All arguments form COL (must have more than one argument)
+     n    Argument n (0 for first arg, 1 for second, etc.) forms COL
 
    <argitem-info> is:
 
-     <name>=[<optionality>]<arg-base-type><arg-kind-type>[<arg-extra>]
+     <name>=[<optionality>]<arg-base-type><arg-kind-type>[<arg-len>][<arg-rank>][<arg-extra>]
 
    <name> is the standard keyword name for the argument.
 
@@ -2304,14 +2756,14 @@ DEFSPEC (FFEINTRIN_specNONE,
      ?    Argument is optional
      !    Like ?, but argument must be omitted if previous arg was COMPLEX
      +    One or more of these arguments must be specified
-     *    Zero or more of these arguments may be specified
-     n    Numbered names for arguments, one or more may be specified
-     p    Like n, but two or more may be specified
+     *    Zero or more of these arguments must be specified
+     n    Numbered names for arguments, one or more must be specified
+     p    Like n, but two or more must be specified
 
    <arg-base-type> is:
 
-     -    Any is valid (but see arg-kind-type)
-     A    Character
+     -    Any is valid (arg-kind-type is 0)
+     A    Character*(*)
      C    Complex
      I    Integer
      L    Logical
@@ -2319,34 +2771,46 @@ DEFSPEC (FFEINTRIN_specNONE,
      B    Boolean (I or L)
      F    Floating-point (C or R)
      N    Numeric (C, I, or R)
-     S    Scalar numeric (I or R; C mapped to R)
+     S    Scalar numeric (I or R)
+     g    GOTO label (alternate-return form of CALL) (arg-kind-type is 0)
+     s    Signal handler (INTEGER FUNCTION, SUBROUTINE or dummy/global
+          default INTEGER variable) (arg-kind-type is 0)
 
    <arg-kind-type> is:
 
-     0    Any is valid
+     *    Any is valid
      1    (Default)
-     2    (COMPLEX*16, INTEGER*1, LOGICAL*1, REAL*8)
-     3    (INTEGER*2, LOGICAL*2)
+     2    (Twice the size of 1)
+     3    (Same size as CHARACTER*1)
+     4    (Twice the size of 2)
+     6    (Twice the size as 3)
      A    Same as first argument
-     g    GOTO label (alternate-return form of CALL)
-     s    Signal handler (INTEGER FUNCTION, SUBROUTINE or dummy/global
-          default INTEGER variable) (arg-base-type * only)
+
+   <arg-len> is:
+
+          (Default) CHARACTER*(*)
+     [n]  CHARACTER*n
+
+   <arg-rank> is:
+
+          (default) Rank-0 (variable or array element)
+     (n)  Rank-1 array n elements long
+     &    Any (arg-extra is &)
 
    <arg-extra> is:
 
-          (default) Arg is (scalar) variable or constant
-     &    Arg can have its address taken (LOC(), for example)
-     g    GOTO label (alternate-return form of CALL)
-     s    Signal handler (see <arg-kind>)
+          (default) Arg is INTENT(IN)
+     i    Arg's attributes are all that matter (inquiry function)
      w    Arg is INTENT(OUT)
      x    Arg is INTENT(INOUT)
+     &    Arg can have its address taken (LOC(), for example)
 
 */
 
-DEFIMP	(ABS,		"ABS",		ABS,		"S0:*:A=N0")
-DEFIMP	(ACOS,		"ACOS",		ACOS,		"R0:*:X=R0")
-DEFIMP	(AIMAG,		"AIMAG",	AIMAG,		"R0:*:Z=C0")
-DEFIMP	(AINT,		"AINT",		AINT,		"R0:*:A=R0")
+DEFIMP	(ABS,		"ABS",		ABS,		"S=:0:A=N*")
+DEFIMP	(ACOS,		"ACOS",		ACOS,		"R=:0:X=R*")
+DEFIMP	(AIMAG,		"AIMAG",	AIMAG,		"RC:0:Z=C*")
+DEFIMP	(AINT,		"AINT",		AINT,		"R=:0:A=R*")
 DEFIMQ	(ALOG,		"ALOG",		ALOG,		"R1:-:X=R1",
 	LOG)
 DEFIMQ	(ALOG10,	"ALOG10",	ALOG10,		"R1:-:X=R1",
@@ -2361,23 +2825,23 @@ DEFIMQ	(AMIN1,		"AMIN1",	,		"R1:*:A=pR1",
 	MIN)
 DEFIMQ	(AMOD,		"AMOD",		AMOD,		"R1:*:A=R1,P=R1",
 	MOD)
-DEFIMP	(ANINT,		"ANINT",	ANINT,		"R0:*:A=R0")
-DEFIMP	(ASIN,		"ASIN",		ASIN,		"R0:*:X=R0")
-DEFIMP	(ATAN,		"ATAN",		ATAN,		"R0:*:X=R0")
-DEFIMP	(ATAN2,		"ATAN2",	ATAN2,		"R0:*:Y=R0,X=R0")
+DEFIMP	(ANINT,		"ANINT",	ANINT,		"R=:0:A=R*")
+DEFIMP	(ASIN,		"ASIN",		ASIN,		"R=:0:X=R*")
+DEFIMP	(ATAN,		"ATAN",		ATAN,		"R=:0:X=R*")
+DEFIMP	(ATAN2,		"ATAN2",	ATAN2,		"R=:*:Y=R*,X=R*")
 DEFIMQ	(CABS,		"CABS",		CABS,		"R1:-:A=C1",
 	ABS)
 DEFIMQ	(CCOS,		"CCOS",		CCOS,		"C1:-:X=C1",
 	COS)
 DEFIMQ	(CEXP,		"CEXP",		CEXP,		"C1:-:X=C1",
 	EXP)
-DEFIMP	(CHAR,		"CHAR",		,		"A1:-:I=I0")
+DEFIMP	(CHAR,		"CHAR",		,		"A1:-:I=I*")
 DEFIMQ	(CLOG,		"CLOG",		CLOG,		"C1:-:X=C1",
 	LOG)
-DEFIMP	(CMPLX,		"CMPLX",	,		"C1:*:X=N0,Y=!S0")
-DEFIMP	(CONJG,		"CONJG",	CONJG,		"C0:*:Z=C0")
-DEFIMP	(COS,		"COS",		COS,		"F0:*:X=F0")
-DEFIMP	(COSH,		"COSH",		COSH,		"R0:*:X=R0")
+DEFIMP	(CMPLX,		"CMPLX",	,		"C1:*:X=N*,Y=!S*")
+DEFIMP	(CONJG,		"CONJG",	CONJG,		"C=:0:Z=C*")
+DEFIMP	(COS,		"COS",		COS,		"F=:0:X=F*")
+DEFIMP	(COSH,		"COSH",		COSH,		"R=:0:X=R*")
 DEFIMQ	(CSIN,		"CSIN",		CSIN,		"C1:-:X=C1",
 	SIN)
 DEFIMQ	(CSQRT,		"CSQRT",	CSQRT,		"C1:-:X=C1",
@@ -2392,8 +2856,8 @@ DEFIMQ	(DATAN,		"DATAN",	DATAN,		"R2:-:X=R2",
 	ATAN)
 DEFIMQ	(DATAN2,	"DATAN2",	DATAN2,		"R2:*:Y=R2,X=R2",
 	ATAN2)
-DEFIMP	(DBLE,		"DBLE",		,		"R2:-:A=N0")
-DEFIMQ	(DCMPLX,	"DCMPLX",	,		"C2:*:X=N0,Y=!S0",
+DEFIMP	(DBLE,		"DBLE",		,		"R2:-:A=N*")
+DEFIMQ	(DCMPLX,	"DCMPLX",	,		"C2:*:X=N*,Y=!S*",
 	CMPLX)
 DEFIMQ	(DCOS,		"DCOS",		DCOS,		"R2:-:X=R2",
 	COS)
@@ -2403,7 +2867,7 @@ DEFIMQ	(DDIM,		"DDIM",		DDIM,		"R2:*:X=R2,Y=R2",
 	DIM)
 DEFIMQ	(DEXP,		"DEXP",		DEXP,		"R2:-:X=R2",
 	EXP)
-DEFIMP	(DIM,		"DIM",		DIM,		"S0:*:X=S0,Y=S0")
+DEFIMP	(DIM,		"DIM",		DIM,		"S=:*:X=S*,Y=S*")
 DEFIMQ	(DINT,		"DINT",		DINT,		"R2:-:A=R2",
 	AINT)
 DEFIMQ	(DLOG,		"DLOG",		DLOG,		"R2:-:X=R2",
@@ -2431,27 +2895,32 @@ DEFIMQ	(DTAN,		"DTAN",		DTAN,		"R2:-:X=R2",
 	TAN)
 DEFIMQ	(DTANH,		"DTANH",	DTANH,		"R2:-:X=R2",
 	TANH)
-DEFIMP	(EXP,		"EXP",		EXP,		"F0:*:X=F0")
+DEFIMP	(EXP,		"EXP",		EXP,		"F=:0:X=F*")
+DEFIMQ	(FLOAT,		"FLOAT",	,		"R1:-:A=I*",
+	REAL)
 DEFIMQ	(IABS,		"IABS",		IABS,		"I1:-:A=I1",
 	ABS)
-DEFIMP	(ICHAR,		"ICHAR",	,		"I1:-:C=A0")
+DEFIMP	(ICHAR,		"ICHAR",	,		"I1:-:C=A*")
 DEFIMQ	(IDIM,		"IDIM",		IDIM,		"I1:*:X=I1,Y=I1",
 	DIM)
+DEFIMQ	(IDINT,		"IDINT",	,		"I1:-:A=R2",
+	INT)
 DEFIMQ	(IDNINT,	"IDNINT",	IDNINT,		"I1:-:A=R2",
 	NINT)
-DEFIMP	(INDEX,		"INDEX",	INDEX,		"I1:*:String=A0,Substring=A0")
-DEFIMP	(INT,		"INT",		,		"I1:-:A=N0")
+DEFIMP	(INDEX,		"INDEX",	INDEX,		"I1:*:String=A*,Substring=A*")
+DEFIMP	(INT,		"INT",		,		"I1:-:A=N*")
 DEFIMQ	(ISIGN,		"ISIGN",	ISIGN,		"I1:*:A=I1,B=I1",
 	SIGN)
-DEFIMP	(LEN,		"LEN",		LEN,		"I1:-:String=A0")
+DEFIMP	(LEN,		"LEN",		LEN,		"I1:-:String=A*i")
 DEFIMP	(LGE,		"LGE",		LGE,		"L1:*:String_A=A1,String_B=A1")
 DEFIMP	(LGT,		"LGT",		LGT,		"L1:*:String_A=A1,String_B=A1")
 DEFIMP	(LLE,		"LLE",		LLE,		"L1:*:String_A=A1,String_B=A1")
 DEFIMP	(LLT,		"LLT",		LLT,		"L1:*:String_A=A1,String_B=A1")
-DEFIMP	(LOG,		"LOG",		,		"F0:*:X=F0")
-DEFIMP	(LOG10,		"LOG10",	,		"R0:*:X=R0")
-DEFIMP	(MAX,		"MAX",		,		"S0:*:A=pS0")
-DEFIMP	(MIN,		"MIN",		,		"S0:*:A=pS0")
+DEFIMP	(LOG,		"LOG",		,		"F=:0:X=F*")
+DEFIMP	(LOG10,		"LOG10",	,		"R=:0:X=R*")
+DEFIMP	(LONG,		"LONG",		,		"I1:-:A=I*")
+DEFIMP	(MAX,		"MAX",		,		"S=:*:A=pS*")
+DEFIMP	(MIN,		"MIN",		,		"S=:*:A=pS*")
 DEFIMQ	(MAX0,		"MAX0",		,		"I1:*:A=pI1",
 	MAX)
 DEFIMQ	(MAX1,		"MAX1",		,		"I1:*:A=pR1",
@@ -2460,21 +2929,30 @@ DEFIMQ	(MIN0,		"MIN0",		,		"I1:*:A=pI1",
 	MIN)
 DEFIMQ	(MIN1,		"MIN1",		,		"I1:*:A=pR1",
 	MIN)
-DEFIMP	(MOD,		"MOD",		MOD,		"S0:*:A=S0,P=S0")
-DEFIMP	(NINT,		"NINT",		NINT,		"I1:-:A=R0")
-DEFIMP	(REAL,		"REAL",		,		"RC:*:A=N0")
-DEFIMP	(SIGN,		"SIGN",		SIGN,		"S0:*:A=S0,B=S0")
-DEFIMP	(SIN,		"SIN",		SIN,		"F0:*:X=F0")
-DEFIMP	(SINH,		"SINH",		SINH,		"R0:*:X=R0")
-DEFIMP	(SQRT,		"SQRT",		SQRT,		"F0:*:X=F0")
-DEFIMP	(TAN,		"TAN",		TAN,		"R0:*:X=R0")
-DEFIMP	(TANH,		"TANH",		TANH,		"R0:*:X=R0")
+DEFIMP	(MOD,		"MOD",		MOD,		"S=:*:A=S*,P=S*")
+DEFIMP	(NINT,		"NINT",		NINT,		"I1:-:A=R*")
+DEFIMP	(REAL,		"REAL",		,		"RC:0:A=N*")
+DEFIMP	(SIGN,		"SIGN",		SIGN,		"S=:*:A=S*,B=S*")
+DEFIMP	(SIN,		"SIN",		SIN,		"F=:0:X=F*")
+DEFIMP	(SINH,		"SINH",		SINH,		"R=:0:X=R*")
+DEFIMQ	(SNGL,		"SNGL",		,		"R1:-:A=R2",
+	REAL)
+DEFIMP	(SQRT,		"SQRT",		SQRT,		"F=:0:X=F*")
+DEFIMP	(TAN,		"TAN",		TAN,		"R=:0:X=R*")
+DEFIMP	(TANH,		"TANH",		TANH,		"R=:0:X=R*")
 
 DEFIMP	(ABORT,		"ABORT",	ABORT,		"--:-:")
-DEFIMP	(ACHAR,		"ACHAR",	,		"A1:-:I=I0")
-DEFIMP	(AND,		"AND",		,		"B0:*:I=B0,J=B0")
-DEFIMP	(BIT_SIZE,	"BIT_SIZE",	,		"I0:*:I=I0")
-DEFIMP	(BTEST,		"BTEST",	,		"L1:*:I=I0,Pos=I0")
+DEFIMP  (ACCESS,	"ACCESS",	ACCESS,		"I1:-:Name=A1,Mode=A1")
+DEFIMP	(ACHAR,		"ACHAR",	,		"A1:-:I=I*")
+DEFIMP	(AND,		"AND",		,		"B=:*:I=B*,J=B*")
+DEFIMP	(BESJ0,		"BESJ0",	BESJ0,		"R=:0:X=R*")
+DEFIMP	(BESJ1,		"BESJ1",	BESJ1,		"R=:0:X=R*")
+DEFIMP	(BESJN,		"BESJN",	BESJN,		"R=:1:N=I*,X=R*")
+DEFIMP	(BESY0,		"BESY0",	BESY0,		"R=:0:X=R*")
+DEFIMP	(BESY1,		"BESY1",	BESY1,		"R=:0:X=R*")
+DEFIMP	(BESYN,		"BESYN",	BESYN,		"R=:1:N=I*,X=R*")
+DEFIMP	(BIT_SIZE,	"BIT_SIZE",	,		"I=:0:I=I*i")
+DEFIMP	(BTEST,		"BTEST",	,		"L1:*:I=I*,Pos=I*")
 DEFIMQ	(CDABS,		"CDABS",	CDABS,		"R2:-:A=C2",
 	ABS)
 DEFIMQ	(CDCOS,		"CDCOS",	CDCOS,		"C2:-:X=C2",
@@ -2487,40 +2965,109 @@ DEFIMQ	(CDSIN,		"CDSIN",	CDSIN,		"C2:-:X=C2",
 	SIN)
 DEFIMQ	(CDSQRT,	"CDSQRT",	CDSQRT,		"C2:-:X=C2",
 	SQRT)
+DEFIMP	(CHDIR,		"CHDIR",	CHDIR,		"--:-:Dir=A1,Status=?I1w")
+DEFIMP	(CHMOD,		"CHMOD",	CHMOD,		"--:-:Name=A1,Mode=A1,Status=?I*w")
+DEFIMP	(COMPLEX,	"COMPLEX",	,		"C=:*:Real=S*,Imag=S*")
+DEFIMP  (CTIME,		"CTIME",	CTIME,		"A1*:-:STime=I2")
+DEFIMP  (DATE,		"DATE",		DATE,		"--:-:Date=A1w")
+DEFIMQ	(DBESJ0,	"DBESJ0",	DBESJ0,		"R2:-:X=R2",
+         BESJ0)
+DEFIMQ	(DBESJ1,	"DBESJ1",	DBESJ1,		"R2:-:X=R2",
+         BESJ1)
+DEFIMQ	(DBESJN,	"DBESJN",	DBESJN,		"R2:-:N=I*,X=R2",
+         BESJN)
+DEFIMQ	(DBESY0,	"DBESY0",	DBESY0,		"R2:-:X=R2",
+         BESY0)
+DEFIMQ	(DBESY1,	"DBESY1",	DBESY1,		"R2:-:X=R2",
+         BESY1)
+DEFIMQ	(DBESYN,	"DBESYN",	DBESYN,		"R2:-:N=I*,X=R2",
+         BESYN)
 DEFIMQ	(DCONJG,	"DCONJG",	DCONJG,		"C2:-:Z=C2",
 	CONJG)
 DEFIMQ	(DERF,		"DERF",		DERF,		"R2:-:X=R2",
 	ERF)
 DEFIMQ	(DERFC,		"DERFC",	DERFC,		"R2:-:X=R2",
 	ERFC)
+DEFIMQ	(DFLOAT,	"DFLOAT",	,		"R2:-:A=I*",
+	REAL)
 DEFIMQ	(DIMAG,		"DIMAG",	DIMAG,		"R2:-:Z=C2",
 	AIMAG)
-DEFIMP	(ERF,		"ERF",		ERF,		"R0:-:X=R0")
-DEFIMP	(ERFC,		"ERFC",		ERFC,		"R0:-:X=R0")
-DEFIMP	(EXIT,		"EXIT",		EXIT,		"--:-:Status=?I0")
-DEFIMP	(FLUSH,		"FLUSH",	FLUSH,		"--:-:Unit=?I0")
-DEFIMP	(FSEEK,		"FSEEK",	FSEEK,		"--:-:Unit=I0,Offset=I0,Whence=I0,ErrLab=?-gg")
-DEFIMP	(FTELL,		"FTELL",	FTELL,		"I1:-:Unit=?I0")
-DEFIMP	(GETARG,	"GETARG",	GETARG,		"--:-:Pos=I0,Value=A1w")
+DEFIMQ	(DREAL,		"DREAL",	,		"R2:-:A=N*",
+	REAL)
+DEFIMP  (DTIME,		"DTIME",	DTIME,		"R1:-:TArray=R1(2)w")
+DEFIMP	(ERF,		"ERF",		ERF,		"R=:0:X=R*")
+DEFIMP	(ERFC,		"ERFC",		ERFC,		"R=:0:X=R*")
+DEFIMP  (ETIME,		"ETIME",	ETIME,		"R1:-:TArray=R1(2)w")
+DEFIMP	(EXIT,		"EXIT",		EXIT,		"--:-:Status=?I*")
+DEFIMP  (FDATE,		"FDATE",	FDATE,		"A1*:-:")
+DEFIMP  (FGET,		"FGET",		FGET,		"--:-:C=A1w,Status=?I*w")
+DEFIMP  (FGETC,		"FGETC",	FGETC,		"--:-:Unit=I*,C=A1w,Status=I*w")
+DEFIMP	(FLUSH,		"FLUSH",	FLUSH,		"--:-:Unit=?I*")
+DEFIMP  (FNUM,		"FNUM",		FNUM,		"I1:-:Unit=I*")
+DEFIMP  (FPUT,		"FPUT",		FPUT,		"--:-:C=A1,Status=?I*w")
+DEFIMP  (FPUTC,		"FPUTC",	FPUTC,		"--:-:Unit=I*,C=A1,Status=I*w")
+DEFIMP	(FSEEK,		"FSEEK",	FSEEK,		"--:-:Unit=I*,Offset=I*,Whence=I*,ErrLab=?g*")
+DEFIMP  (FSTAT,		"FSTAT",	FSTAT,		"I1:-:Unit=I*,SArray=I1(13)w")
+DEFIMP	(FTELL,		"FTELL",	FTELL,		"I1:-:Unit=I*")
+DEFIMP	(GERROR,	"GERROR",	GERROR,		"--:-:Message=A1w")
+DEFIMP	(GETARG,	"GETARG",	GETARG,		"--:-:Pos=I*,Value=A1w")
+DEFIMP	(GETCWD,	"GETCWD",	GETCWD,		"I1:-:Name=A1w")
+DEFIMP	(GETGID,	"GETGID",	GETGID,		"I1:-:")
+DEFIMP	(GETLOG,	"GETLOG",	GETLOG,		"--:-:Login=A1w")
+DEFIMP	(GETPID,	"GETPID",	GETPID,		"I1:-:")
+DEFIMP	(GETUID,	"GETUID",	GETUID,		"I1:-:")
 DEFIMP	(GETENV,	"GETENV",	GETENV,		"--:-:Name=A1,Value=A1w")
-DEFIMP	(IACHAR,	"IACHAR",	,		"I1:-:C=A0")
-DEFIMP	(IAND,		"IAND",		,		"I0:*:I=I0,J=I0")
+DEFIMP  (GMTIME,	"GMTIME",	GMTIME,		"--:-:STime=I1,TArray=I1(9)w")
+DEFIMP	(HOSTNM,	"HOSTNM",	HOSTNM,		"I1:-:Name=A1w")
+DEFIMP	(IACHAR,	"IACHAR",	,		"I1:-:C=A*")
+DEFIMP	(IAND,		"IAND",		,		"I=:*:I=I*,J=I*")
 DEFIMP	(IARGC,		"IARGC",	IARGC,		"I1:-:")
-DEFIMP	(IBCLR,		"IBCLR",	,		"I0:1:I=I0,Pos=I0")
-DEFIMP	(IBITS,		"IBITS",	,		"I0:1:I=I0,Pos=I0,Len=I0")
-DEFIMP	(IBSET,		"IBSET",	,		"I0:1:I=I0,Pos=I0")
-DEFIMP	(IEOR,		"IEOR",		,		"I0:*:I=I0,J=I0")
-DEFIMP	(IOR,		"IOR",		,		"I0:*:I=I0,J=I0")
-DEFIMP	(ISHFT,		"ISHFT",	,		"I0:1:I=I0,Shift=I0")
-DEFIMP	(ISHFTC,	"ISHFTC",	,		"I0:1:I=I0,Shift=I0,Size=I0")
-DEFIMP	(LOC,		"LOC",		,		"I1:-:Variable=-0&")
-DEFIMP	(LSHIFT,	"LSHIFT",	,		"I0:1:I=I0,Shift=I0")
-DEFIMP	(MVBITS,	"MVBITS",	,		"--:-:From=I0,FromPos=I0,Len=I0,TO=IAx,ToPos=I0")
-DEFIMP	(NOT,		"NOT",		,		"I0:*:I=I0")
-DEFIMP	(OR,		"OR",		,		"B0:*:I=B0,J=B0")
-DEFIMP	(RSHIFT,	"RSHIFT",	,		"I0:1:I=I0,Shift=I0")
-DEFIMP	(SIGNAL,	"SIGNAL",	,		"--:-:Number=I0,Handler=-ss")
-DEFIMP	(SYSTEM,	"SYSTEM",	,		"--:-:Command=A1,Status=?I1")
-DEFIMP	(XOR,		"XOR",		,		"B0:*:I=B0,J=B0")
+DEFIMP	(IBCLR,		"IBCLR",	,		"I=:0:I=I*,Pos=I*")
+DEFIMP	(IBITS,		"IBITS",	,		"I=:0:I=I*,Pos=I*,Len=I*")
+DEFIMP	(IBSET,		"IBSET",	,		"I=:0:I=I*,Pos=I*")
+DEFIMP  (IDATE,		"IDATE (UNIX)",	IDATE,		"--:-:TArray=I1(3)w")
+DEFIMP  (IDATEVXT,	"IDATE (VXT)",	VXTIDATE,	"--:-:D=I1w,M=I1w,Y=I1w")
+DEFIMP	(IEOR,		"IEOR",		,		"I=:*:I=I*,J=I*")
+DEFIMP	(IOR,		"IOR",		,		"I=:*:I=I*,J=I*")
+DEFIMP  (IERRNO,	"IERRNO",	IERRNO,		"I1:-:")
+DEFIMQ	(IMAGPART,	"IMAGPART",	,		"R=:0:Z=C*",
+	AIMAG)
+DEFIMP  (IRAND,		"IRAND",	IRAND,		"I1:-:Flag=?I*")
+DEFIMP  (ISATTY,	"ISATTY",	ISATTY,		"L1:-:Unit=I*")
+DEFIMP	(ISHFT,		"ISHFT",	,		"I=:0:I=I*,Shift=I*")
+DEFIMP	(ISHFTC,	"ISHFTC",	,		"I=:0:I=I*,Shift=I*,Size=I*")
+DEFIMP  (ITIME,		"ITIME",	ITIME,		"--:-:TArray=I1(3)w")
+DEFIMP  (KILL,		"KILL",		KILL,		"--:-:Pid=I*,Signal=I*,Status=?I*w")
+DEFIMP  (LINK,		"LINK",		LINK,		"--:-:Path1=A1,Path2=A1,Status=?I*w")
+DEFIMP  (LNBLNK,	"LNBLNK",	LNBLNK,		"I1:-:String=A1")
+DEFIMP  (LSTAT,		"LSTAT",	LSTAT,		"I1:-:File=A1,SArray=I1(13)w")
+DEFIMP  (LTIME,		"LTIME",	LTIME,		"--:-:STime=I1,TArray=I1(9)w")
+DEFIMP	(LOC,		"LOC",		,		"Ip:-:Entity=-*&&")
+DEFIMP	(LSHIFT,	"LSHIFT",	,		"I=:0:I=I*,Shift=I*")
+DEFIMP  (MCLOCK,	"MCLOCK",	MCLOCK,		"I2:-:")
+DEFIMP	(MVBITS,	"MVBITS",	,		"--:-:From=I*,FromPos=I*,Len=I*,TO=IAx,ToPos=I*")
+DEFIMP	(NOT,		"NOT",		,		"I=:0:I=I*")
+DEFIMP	(OR,		"OR",		,		"B=:*:I=B*,J=B*")
+DEFIMP	(PERROR,	"PERROR",	PERROR,		"--:-:String=A1")
+DEFIMP  (RAND,		"RAND",		RAND,		"R1:-:Flag=?I*")
+DEFIMP	(REALPART,	"REALPART",	,		"R=:0:Z=C*")
+DEFIMP  (RENAME,	"RENAME",	RENAME,		"--:-:Path1=A1,Path2=A1,Status=?I*w")
+DEFIMP	(RSHIFT,	"RSHIFT",	,		"I=:0:I=I*,Shift=I*")
+DEFIMP  (SECNDS,	"SECNDS",	SECNDS,		"R1:-:T=R1")
+DEFIMP  (SECONDFUNC,	"SECOND (function)",	SECOND,		"R1:-:")
+DEFIMP  (SECONDSUBR,	"SECOND (subroutine)",	SECOND,		"--:-:Seconds=R1w")
+DEFIMP	(SHORT,		"SHORT",	,		"I6:-:A=I*")
+DEFIMP	(SIGNAL,	"SIGNAL",	,		"--:-:Number=I*,Handler=s*")
+DEFIMP	(SLEEP,		"SLEEP",	SLEEP,		"--:-:Seconds=I1")
+DEFIMP  (SRAND,		"SRAND",	SRAND,		"--:-:Seed=I*")
+DEFIMP  (STAT,		"STAT",		STAT,		"I1:-:File=A1,SArray=I1(13)w")
+DEFIMP  (SYMLNK,	"SYMLNK",	SYMLNK,		"--:-:Path1=A1,Path2=A1,Status=?I*w")
+DEFIMP	(SYSTEM,	"SYSTEM",	SYSTEM,		"--:-:Command=A1,Status=?I1")
+DEFIMP	(SYSTEM_CLOCK,	"SYSTEM_CLOCK",	SYSTEM_CLOCK,	"--:-:Count=I1w,Rate=I1w,Max=I1w")
+DEFIMP	(TIME,		"TIME (UNIX)",	TIME,		"I2:-:")
+DEFIMP	(TIMEVXT,	"TIME (VXT)",	VXTTIME,	"--:-:Time=A1[8]w")
+DEFIMP  (TTYNAM,	"TTYNAM",	TTYNAM,		"A1*:-:Unit=I*")
+DEFIMP  (UMASK,		"UMASK",	UMASK,		"--:-:Mask=I*,Old=?I*w")
+DEFIMP	(UNLINK,	"UNLINK",	UNLINK,		"--:-:File=A1,Status=?I1w")
+DEFIMP	(XOR,		"XOR",		,		"B=:*:I=B*,J=B*")
 DEFIMP	(NONE,		"none",		,		"")
-

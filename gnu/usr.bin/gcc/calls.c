@@ -563,6 +563,8 @@ expand_call (exp, target, ignore)
 
   /* Nonzero if it is plausible that this is a call to alloca.  */
   int may_be_alloca;
+  /* Nonzero if this is a call to malloc or a related function. */
+  int is_malloc;
   /* Nonzero if this is a call to setjmp or a related function.  */
   int returns_twice;
   /* Nonzero if this is a call to `longjmp'.  */
@@ -851,6 +853,7 @@ expand_call (exp, target, ignore)
 
   returns_twice = 0;
   is_longjmp = 0;
+  is_malloc = 0;
 
   if (name != 0 && IDENTIFIER_LENGTH (DECL_NAME (fndecl)) <= 15)
     {
@@ -890,6 +893,10 @@ expand_call (exp, target, ignore)
       else if (tname[0] == 'l' && tname[1] == 'o'
 	       && ! strcmp (tname, "longjmp"))
 	is_longjmp = 1;
+      /* Only recognize malloc when alias analysis is enabled.  */
+      else if (tname[0] == 'm' && flag_alias_check
+	       && ! strcmp(tname, "malloc"))
+	is_malloc = 1;
     }
 
   if (may_be_alloca)
@@ -1362,7 +1369,7 @@ expand_call (exp, target, ignore)
 
   /* Now we are about to start emitting insns that can be deleted
      if a libcall is deleted.  */
-  if (is_const)
+  if (is_const || is_malloc)
     start_sequence ();
 
   /* If we have no actual push instructions, or shouldn't use them,
@@ -1950,6 +1957,20 @@ expand_call (exp, target, ignore)
 
       end_sequence ();
       emit_insns (insns);
+    }
+  else if (is_malloc)
+    {
+      rtx temp = gen_reg_rtx (GET_MODE (valreg));
+      rtx last, insns;
+
+      emit_move_insn (temp, valreg);
+      last = get_last_insn ();
+      REG_NOTES (last) = 
+	gen_rtx (EXPR_LIST, REG_NOALIAS, temp, REG_NOTES (last));
+      insns = get_insns ();
+      end_sequence ();
+      emit_insns (insns);
+      valreg = temp;
     }
 
   /* For calls to `setjmp', etc., inform flow.c it should complain

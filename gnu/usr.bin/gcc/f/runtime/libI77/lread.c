@@ -500,7 +500,7 @@ c_le(cilist *a)
 	if(f__curunit->ufd==NULL && fk_open(SEQ,FMT,a->ciunit))
 		err(a->cierr,102,"lio");
 	f__cf=f__curunit->ufd;
-	if(!f__curunit->ufmt) err(a->cierr,103,"lio")
+	if(!f__curunit->ufmt) err(a->cierr,103,"lio");
 	return(0);
 }
 #ifdef KR_headers
@@ -517,14 +517,14 @@ l_read(ftnint *number, char *ptr, ftnlen len, ftnint type)
 	{
 		if(f__lquit) return(0);
 		if(l_eof)
-			err(f__elist->ciend, EOF, "list in")
+			err(f__elist->ciend, EOF, "list in");
 		if(f__lcount == 0) {
 			f__ltype = 0;
 			for(;;)  {
 				GETC(ch);
 				switch(ch) {
 				case EOF:
-					err(f__elist->ciend,(EOF),"list in")
+					err(f__elist->ciend,(EOF),"list in");
 				case ' ':
 				case '\t':
 				case '\n':

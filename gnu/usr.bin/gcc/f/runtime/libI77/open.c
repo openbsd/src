@@ -82,7 +82,7 @@ integer f_open(olist *a)
 	struct stat stb;
 #endif
 	if(a->ounit>=MXUNIT || a->ounit<0)
-		err(a->oerr,101,"open")
+		err(a->oerr,101,"open");
 	if (!f__init)
 		f_init();
 	f__curunit = b = &f__units[a->ounit];
@@ -125,7 +125,7 @@ integer f_open(olist *a)
 	if (a->ofnm) {
 		g_char(a->ofnm,a->ofnmlen,buf);
 		if (!buf[0])
-			err(a->oerr,107,"open")
+			err(a->oerr,107,"open");
 		}
 	else
 		sprintf(buf, "fort.%ld", a->ounit);
@@ -139,7 +139,7 @@ integer f_open(olist *a)
 #else
 		if(stat(buf,&stb))
 #endif
-			err(a->oerr,errno,"open")
+			err(a->oerr,errno,"open");
 		break;
 	 case 's':
 	 case 'S':
@@ -158,7 +158,7 @@ integer f_open(olist *a)
 #else
 		if(!stat(buf,&stb))
 #endif
-			err(a->oerr,128,"open")
+			err(a->oerr,128,"open");
 		/* no break */
 	case 'r':	/* Fortran 90 replace option */
 	case 'R':
@@ -182,7 +182,7 @@ integer f_open(olist *a)
 #endif
 	if(f__isdev(buf))
 	{	b->ufd = fopen(buf,f__r_mode[ufmt]);
-		if(b->ufd==NULL) err(a->oerr,errno,buf)
+		if(b->ufd==NULL) err(a->oerr,errno,buf);
 	}
 	else {
 		if(!(b->ufd = fopen(buf, f__r_mode[ufmt]))) {
@@ -208,7 +208,7 @@ integer f_open(olist *a)
 	b->useek=f__canseek(b->ufd);
 #ifndef NON_UNIX_STDIO
 	if((b->uinode=f__inode(buf,&b->udev))==-1)
-		err(a->oerr,108,"open")
+		err(a->oerr,108,"open");
 #endif
 	if(b->useek)
 		if (a->orl)

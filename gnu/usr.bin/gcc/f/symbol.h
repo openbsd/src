@@ -1,5 +1,5 @@
 /* Interface definitions for Fortran symbol manager
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -79,7 +79,6 @@ enum _ffesymbol_checkstate_
 typedef enum _ffesymbol_checkstate_ ffesymbolCheckState_;
 #define ffesymbolCheckState_f_ ""
 
-#include "bad.h"
 #include "bld.h"
 #include "com.h"
 #include "equiv.h"
@@ -191,6 +190,7 @@ void ffesymbol_error (ffesymbol s, ffelexToken t);
 #define ffesymbol_funcresult(s) ((s)->func_result)
 #define ffesymbol_generic(s) ((s)->generic)
 #define ffesymbol_global(s) ((s)->global)
+void ffesymbol_globalize (ffesymbol s);
 #define ffesymbol_hook(s) ((s)->hook)
 #define ffesymbol_implementation(s) ((s)->implementation)
 #define ffesymbol_info(s) ((s)->info)
@@ -211,6 +211,7 @@ void ffesymbol_init_4 (void);
 #define ffesymbol_kind(s) ffeinfo_kind((s)->info)
 ffesymbol ffesymbol_lookup_local (ffelexToken t);
 #define ffesymbol_maxentrynum(s) ((s)->max_entry_num)
+#define ffesymbol_name(s) ((s)->name)
 #define ffesymbol_namelist(s) ((s)->namelist)
 #define ffesymbol_namelisted(s) ((s)->namelisted)
 #define ffesymbol_numentries(s) ((s)->num_entries)

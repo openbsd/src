@@ -1,6 +1,6 @@
-1996-03-05
+1997-02-28
 
-This directory contains the version 0.5.18 release of the GNU Fortran
+This directory contains the version 0.5.20 release of the GNU Fortran
 compiler.  The GNU Fortran compiler is free software.  See the file
 COPYING.g77 for copying permission.
 
@@ -14,11 +14,10 @@ which is the top-level directory containing the gcc back end, the
 gcc C front end, and other non-Fortran files, and gcc/f/, which
 contains all of the Fortran files.
 
-* To build GNU Fortran, you must have a recent gcc distribution,
-  such as version 2.6.3 or 2.7.0.  Do not attempt to use any version
-  of gcc prior to 2.6.2 or at or beyond 2.8.0 (or 3.0, etc.), because
-  this version of g77 is designed to work only with gcc versions 2.6.x
-  and 2.7.x.
+* To build GNU Fortran, you must have a source distribution of gcc
+  version 2.7.2.2.  Do not attempt to use any other version
+  of gcc, because this version of g77 is designed to work only with
+  gcc version 2.7.2.2.
 
 * Note that you must have source copies of these gcc distributions!!
   You cannot build g77 just using binaries of gcc.  Also, unless you
@@ -31,15 +30,15 @@ If you have just unpacked the g77 distribution, before proceeding,
 you must merge the contents of the g77 distribution with the appropriate
 gcc distribution on your system before proceeding.
 
-* Read and follow the instructions in g77-0.5.18/f/INSTALL that
+* Read and follow the instructions in g77-0.5.20/f/INSTALL that
   explain how to merge a g77 source directory into a gcc source
   directory.  You can use Info to read the same installation
   instructions via:
 
-    info -f g77-0.5.18/f/g77.info -n Unpacking
+    info -f g77-0.5.20/f/g77.info -n Unpacking
 
 The resulting directory layout includes the following, where gcc/ might be
-a link to, for example, gcc-2.7.2/:
+a link to, for example, gcc-2.7.2.2/:
 
     gcc/                    Non-Fortran files in gcc (not part of g77*.tar)
     gcc/README.g77          This file
@@ -48,6 +47,7 @@ a link to, for example, gcc-2.7.2/:
     gcc/f/runtime/          libf2c configuration and f2c.h file generation
     gcc/f/runtime/libF77/   Non-I/O portion of libf2c
     gcc/f/runtime/libI77/   I/O portion of libf2c
+    gcc/f/runtime/libU77/   Additional interfaces to libc for libf2c
 
 gcc/f/ as a whole contains the program GNU Fortran (g77), plus a portion
 of the separate program f2c, which is in gcc/f/runtime.  NOTE: The f2c
@@ -110,7 +110,7 @@ seen in gcc/f/DOC) listed in the ~fortran/.plan file.  Or:
 * Read gcc/f/BUGS, gcc/f/INSTALL, and gcc/f/NEWS at the very least!
   All users of g77 (not just installers) should read gcc/f/g77.info*
   as well, using the "more" command if the "info" command is
-  unavailable or they aren't used to using it.
+  unavailable or they aren't accustomed to using it.
 
 If you want to get into the FFE code, which lives entirely in gcc/f/, here
 are a few clues.  The file g77.c is the stand-alone source file for the

@@ -348,7 +348,7 @@ enum reg_note { REG_DEAD = 1, REG_INC = 2, REG_EQUIV = 3, REG_WAS_0 = 4,
 		REG_EQUAL = 5, REG_RETVAL = 6, REG_LIBCALL = 7,
 		REG_NONNEG = 8, REG_NO_CONFLICT = 9, REG_UNUSED = 10,
 		REG_CC_SETTER = 11, REG_CC_USER = 12, REG_LABEL = 13,
-		REG_DEP_ANTI = 14, REG_DEP_OUTPUT = 15 };
+		REG_DEP_ANTI = 14, REG_DEP_OUTPUT = 15, REG_NOALIAS = 16 };
 
 /* Define macros to extract and insert the reg-note kind in an EXPR_LIST.  */
 #define REG_NOTE_KIND(LINK) ((enum reg_note) GET_MODE (LINK))
@@ -430,7 +430,6 @@ extern char *reg_note_name[];
    i.e. the point just after all of the parms have been moved into
    their homes, etc.  */
 #define NOTE_INSN_FUNCTION_BEG -13
-
 
 #if 0 /* These are not used, and I don't know what they were for. --rms.  */
 #define NOTE_DECL_NAME(INSN) ((INSN)->fld[3].rtstr)
@@ -575,6 +574,7 @@ extern char *note_insn_name[];
 
 /* For a TRAP_IF rtx, TRAP_CONDITION is an expression.  */
 #define TRAP_CONDITION(RTX) ((RTX)->fld[0].rtx)
+#define TRAP_CODE(RTX) ((RTX)->fld[1].rtint)
 
 /* 1 in a SYMBOL_REF if it addresses this function's constants pool.  */
 #define CONSTANT_POOL_ADDRESS_P(RTX) ((RTX)->unchanging)
@@ -816,6 +816,16 @@ extern rtx gen_ble			PROTO((rtx));
 extern rtx eliminate_constant_term	PROTO((rtx, rtx *));
 extern rtx expand_complex_abs		PROTO((enum machine_mode, rtx, rtx, int));
 extern enum machine_mode choose_hard_reg_mode PROTO((int, int));
+extern int rtx_varies_p		PROTO((rtx));
+extern int may_trap_p		PROTO((rtx));
+extern int side_effects_p	PROTO((rtx));
+extern int volatile_refs_p	PROTO((rtx));
+extern int volatile_insn_p	PROTO((rtx));
+extern void remove_note		PROTO((rtx, rtx));
+extern void note_stores		PROTO((rtx, void (*)()));
+extern int refers_to_regno_p	PROTO((int, int, rtx, rtx *));
+extern int reg_overlap_mentioned_p PROTO((rtx, rtx));
+
 
 /* Maximum number of parallel sets and clobbers in any insn in this fn.
    Always at least 3, since the combiner could put that many togetherm
@@ -966,3 +976,10 @@ extern rtx *regno_reg_rtx;
    know what `enum tree_code' means.  */
 
 extern int rtx_to_tree_code	PROTO((enum rtx_code));
+
+extern int true_dependence	PROTO((rtx, enum machine_mode, rtx, int (*)()));
+extern int read_dependence	PROTO((rtx, rtx));
+extern int anti_dependence	PROTO((rtx, rtx));
+extern int output_dependence	PROTO((rtx, rtx));
+extern void init_alias_analysis	PROTO((void));
+extern void end_alias_analysis	PROTO((void));

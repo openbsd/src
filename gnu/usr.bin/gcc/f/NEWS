@@ -6,6 +6,211 @@ notice and permission notice.
 News About GNU Fortran
 **********************
 
+In 0.5.20:
+==========
+
+   * The `-fno-typeless-boz' option is now the default.
+
+     This option specifies that non-decimal-radix constants using the
+     prefixed-radix form (such as `Z'1234'') are to be interpreted as
+     `INTEGER' constants.  Specify `-ftypeless-boz' to cause such
+     constants to be interpreted as typeless.
+
+     (Version 0.5.19 introduced `-fno-typeless-boz' and its inverse.)
+
+   * Options `-ff90-intrinsics-enable' and `-fvxt-intrinsics-enable'
+     now are the defaults.
+
+     Some programs might use names that clash with intrinsic names
+     defined (and now enabled) by these options or by the new `libU77'
+     intrinsics.  Users of such programs might need to compile them
+     differently (using, for example, `-ff90-intrinsics-disable') or,
+     better yet, insert appropriate `EXTERNAL' statements specifying
+     that these names are not intended to be names of intrinsics.
+
+   * The `ALWAYS_FLUSH' macro is no longer defined when building
+     `libf2c', which should result in improved I/O performance,
+     especially over NFS.
+
+     *Note:* If you have code that depends on the behavior of `libf2c'
+     when built with `ALWAYS_FLUSH' defined, you will have to modify
+     `libf2c' accordingly before building it from this and future
+     versions of `g77'.
+
+   * Dave Love's implementation of `libU77' has been added to the
+     version of `libf2c' distributed with and built as part of `g77'.
+     `g77' now knows about the routines in this library as intrinsics.
+
+   * New option `-fvxt' specifies that the source file is written in
+     VXT Fortran, instead of GNU Fortran.
+
+   * The `-fvxt-not-f90' option has been deleted, along with its
+     inverse, `-ff90-not-vxt'.
+
+     If you used one of these deleted options, you should re-read the
+     pertinent documentation to determine which options, if any, are
+     appropriate for compiling your code with this version of `g77'.
+
+   * The `-fugly' option now issues a warning, as it likely will be
+     removed in a future version.
+
+     (Enabling all the `-fugly-*' options is unlikely to be feasible,
+     or sensible, in the future, so users should learn to specify only
+     those `-fugly-*' options they really need for a particular source
+     file.)
+
+   * The `-fugly-assumed' option, introduced in version 0.5.19, has
+     been changed to better accommodate old and new code.
+
+   * Make a number of fixes to the `g77' front end and the `gcc' back
+     end to better support Alpha (AXP) machines.  This includes
+     providing at least one bug-fix to the `gcc' back end for Alphas.
+
+   * Related to supporting Alpha (AXP) machines, the `LOC()' intrinsic
+     and `%LOC()' construct now return values of integer type that is
+     the same width (holds the same number of bits) as the pointer type
+     on the machine.
+
+     On most machines, this won't make a difference, whereas on Alphas,
+     the type these constructs return is `INTEGER*8' instead of the
+     more common `INTEGER*4'.
+
+   * Emulate `COMPLEX' arithmetic in the `g77' front end, to avoid bugs
+     in `complex' support in the `gcc' back end.  New option
+     `-fno-emulate-complex' causes `g77' to revert the 0.5.19 behavior.
+
+   * Fix bug whereby `REAL A(1)', for example, caused a compiler crash
+     if `-fugly-assumed' was in effect and A was a local (automatic)
+     array.  That case is no longer affected by the new handling of
+     `-fugly-assumed'.
+
+   * Fix `g77' command driver so that `g77 -o foo.f' no longer deletes
+     `foo.f' before issuing other diagnostics, and so the `-x' option
+     is properly handled.
+
+   * Enable inlining of subroutines and functions by the `gcc' back end.
+     This works as it does for `gcc' itself--program units may be
+     inlined for invocations that follow them in the same program unit,
+     as long as the appropriate compile-time options are specified.
+
+   * Dummy arguments are no longer assumed to potentially alias
+     (overlap) other dummy arguments or `COMMON' areas when any of
+     these are defined (assigned to) by Fortran code.
+
+     This can result in faster and/or smaller programs when compiling
+     with optimization enabled, though on some systems this effect is
+     observed only when `-fforce-addr' also is specified.
+
+     New options `-falias-check', `-fargument-alias',
+     `-fargument-noalias', and `-fno-argument-noalias-global' control
+     the way `g77' handles potential aliasing.
+
+   * The `CONJG()' and `DCONJG()' intrinsics now are compiled in-line.
+
+   * The bug-fix for 0.5.19.1 has been re-done.  The `g77' compiler has
+     been changed back to assume `libf2c' has no aliasing problems in
+     its implementations of the `COMPLEX' (and `DOUBLE COMPLEX')
+     intrinsics.  The `libf2c' has been changed to have no such
+     problems.
+
+     As a result, 0.5.20 is expected to offer improved performance over
+     0.5.19.1, perhaps as good as 0.5.19 in most or all cases, due to
+     this change alone.
+
+     *Note:* This change requires version 0.5.20 of `libf2c', at least,
+     when linking code produced by any versions of `g77' other than
+     0.5.19.1.  Use `g77 -v' to determine the version numbers of the
+     `libF77', `libI77', and `libU77' components of the `libf2c'
+     library.  (If these version numbers are not printed--in
+     particular, if the linker complains about unresolved references to
+     names like `g77__fvers__'--that strongly suggests your
+     installation has an obsolete version of `libf2c'.)
+
+   * New option `-fugly-assign' specifies that the same memory
+     locations are to be used to hold the values assigned by both
+     statements `I = 3' and `ASSIGN 10 TO I', for example.  (Normally,
+     `g77' uses a separate memory location to hold assigned statement
+     labels.)
+
+   * `FORMAT' and `ENTRY' statements now are allowed to precede
+     `IMPLICIT NONE' statements.
+
+   * Produce diagnostic for unsupported `SELECT CASE' on `CHARACTER'
+     type, instead of crashing, at compile time.
+
+   * Fix crashes involving diagnosed or invalid code.
+
+   * Change approach to building `libf2c' archive (`libf2c.a') so that
+     members are added to it only when truly necessary, so the user
+     that installs an already-built `g77' doesn't need to have write
+     access to the build tree (whereas the user doing the build might
+     not have access to install new software on the system).
+
+   * Support `gcc' version 2.7.2.2 (modified by `g77' into version
+     2.7.2.2.f.2), and remove support for prior versions of `gcc'.
+
+   * Upgrade to `libf2c' as of 1997-02-08, and fix up some of the build
+     procedures.
+
+   * Improve general build procedures for `g77', fixing minor bugs
+     (such as deletion of any file named `f771' in the parent directory
+     of `gcc/').
+
+   * Enable full support of `INTEGER*8' available in `libf2c' and
+     `f2c.h' so that `f2c' users may make full use of its features via
+     the `g77' version of `f2c.h' and the `INTEGER*8' support routines
+     in the `g77' version of `libf2c'.
+
+   * Improve `g77' driver and `libf2c' so that `g77 -v' yields version
+     information on the library.
+
+   * The `SNGL' and `FLOAT' intrinsics now are specific intrinsics,
+     instead of synonyms for the generic intrinsic `REAL'.
+
+   * New intrinsics have been added.  These are `REALPART', `IMAGPART',
+     `COMPLEX', `LONG', and `SHORT'.
+
+   * A new group of intrinsics, `gnu', has been added to contain the
+     new `REALPART', `IMAGPART', and `COMPLEX' intrinsics.  An old
+     group, `dcp', has been removed.
+
+   * Complain about industry-wide ambiguous references `REAL(EXPR)' and
+     `AIMAG(EXPR)', where EXPR is `DOUBLE COMPLEX' (or any complex type
+     other than `COMPLEX'), unless `-ff90' option specifies Fortran 90
+     interpretation or new `-fugly-complex' option, in conjunction with
+     `-fnot-f90', specifies `f2c' interpretation.
+
+   * Make improvements to diagnostics.
+
+   * Speed up compiler a bit.
+
+   * Improvements to documentation and indexing, including a new
+     chapter containing information on one, later more, diagnostics
+     that users are directed to pull up automatically via a message in
+     the diagnostic itself.
+
+     (Hence the menu item `M' for the node `Diagnostics' in the
+     top-level menu of the Info documentation.)
+
+In 0.5.19.1:
+============
+
+   * Code-generation bugs afflicting operations on complex data have
+     been fixed.
+
+     These bugs occurred when assigning the result of an operation to a
+     complex variable (or array element) that also served as an input
+     to that operation.
+
+     The operations affected by this bug were: `CONJG()', `DCONJG()',
+     `CCOS()', `CDCOS()', `CLOG()', `CDLOG()', `CSIN()', `CDSIN()',
+     `CSQRT()', `CDSQRT()', complex division, and raising a `DOUBLE
+     COMPLEX' operand to an `INTEGER' power.  (The related generic and
+     `Z'-prefixed intrinsics, such as `ZSIN()', also were affected.)
+
+     For example, `C = CSQRT(C)', `Z = Z/C', and `Z = Z**I' (where `C'
+     is `COMPLEX' and `Z' is `DOUBLE COMPLEX') have been fixed.
+
 In 0.5.19:
 ==========
 
@@ -100,7 +305,7 @@ In 0.5.18:
      `INTEGER*8', and their `LOGICAL' equivalents.  (This support works
      on most, maybe all, `gcc' targets.)
 
-     Thanks to Scott Snyder (`snyder@d0sgif.fnal.gov') for providing
+     Thanks to Scott Snyder (<snyder@d0sgif.fnal.gov>) for providing
      the patch for this!
 
      Among the missing elements from the support for these features are
@@ -110,7 +315,7 @@ In 0.5.18:
      type-declaration statements.  `BYTE' corresponds to `INTEGER*1',
      while `WORD' corresponds to `INTEGER*2'.
 
-     Thanks to Scott Snyder (`snyder@d0sgif.fnal.gov') for providing
+     Thanks to Scott Snyder (<snyder@d0sgif.fnal.gov>) for providing
      the patch for this!
 
    * The compiler code handling intrinsics has been largely rewritten
@@ -182,7 +387,7 @@ In 0.5.18:
      enhanced for Fortran, and N is `1' for the first Fortran patch for
      that version of `gcc', `2' for the second, and so on.
 
-     So, this introduces version `2.7.2.f.1' of `gcc'.
+     So, this introduces version 2.7.2.f.1 of `gcc'.
 
    * Make several improvements and fixes to diagnostics, including the
      removal of two that were inappropriate or inadequate.
@@ -206,7 +411,7 @@ In 0.5.18:
 
      This effort was inspired by a first pass at translating
      `g77-0.5.16/f/DOC' that was contributed to Craig by David Ronis
-     (`ronis@onsager.chem.mcgill.ca').
+     (<ronis@onsager.chem.mcgill.ca>).
 
    * New `-fno-second-underscore' option to specify that, when
      `-funderscoring' is in effect, a second underscore is not to be
@@ -231,7 +436,7 @@ In 0.5.18:
 
      Note that the email addresses related to `f2c' have changed--the
      distribution site now is named `netlib.bell-labs.com', and the
-     maintainer's new address is `dmg@bell-labs.com'.
+     maintainer's new address is <dmg@bell-labs.com>.
 
 In 0.5.17:
 ==========
@@ -443,7 +648,7 @@ In 0.5.16:
      `gcc/f/expr.c'.
 
    * Add warning to be printed for each invocation of the compiler if
-     the target machine `INTEGER', REAL, or `LOGICAL' size is not 32
+     the target machine `INTEGER', `REAL', or `LOGICAL' size is not 32
      bits, since `g77' is known to not work well for such cases (to be
      fixed in Version 0.6--*note Actual Bugs We Haven't Fixed Yet:
      Actual Bugs.).
@@ -604,7 +809,7 @@ In 0.5.14:
         - Hollerith "format specifications" in the form of arrays of
           non-character allowed.
 
-        - Warnings issued when non-blank truncation occurs when
+        - Warnings issued when non-space truncation occurs when
           converting to another type.
 
         - When specified as actual argument, now passed by reference to
@@ -615,7 +820,7 @@ In 0.5.14:
      *Warning:* `f2c' differs on the interpretation of `CALL FOO(1HX)',
      which it treats exactly the same as `CALL FOO('X')', but which the
      standard and `g77' treat as `CALL FOO(%REF('X   '))' (padded with
-     as many blanks as necessary to widen to `INTEGER'), essentially.
+     as many spaces as necessary to widen to `INTEGER'), essentially.
 
    * Changes and fixes to typeless-constant support:
 
@@ -660,5 +865,5 @@ In 0.5.14:
    * Generate better code for some kinds of array references.
 
    * Speed up lexing somewhat (this makes the compilation phase
-     noticably faster).
+     noticeably faster).
 

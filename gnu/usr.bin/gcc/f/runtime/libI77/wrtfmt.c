@@ -92,7 +92,7 @@ wrt_Z(Uint *n, int w, int minlen, ftnlen len)
 #endif
 {
 	register char *s, *se;
-	register i, w1;
+	register int i, w1;
 	static int one = 1;
 	static char hex[] = "0123456789ABCDEF";
 	s = (char *)n;

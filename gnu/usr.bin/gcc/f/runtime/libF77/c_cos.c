@@ -3,14 +3,19 @@
 #ifdef KR_headers
 extern double sin(), cos(), sinh(), cosh();
 
-VOID c_cos(r, z) complex *r, *z;
+VOID c_cos(resx, z) complex *resx, *z;
 #else
 #undef abs
 #include <math.h>
 
-void c_cos(complex *r, complex *z)
+void c_cos(complex *resx, complex *z)
 #endif
 {
-r->r = cos(z->r) * cosh(z->i);
-r->i = - sin(z->r) * sinh(z->i);
+complex res;
+
+res.r = cos(z->r) * cosh(z->i);
+res.i = - sin(z->r) * sinh(z->i);
+
+resx->r = res.r;
+resx->i = res.i;
 }

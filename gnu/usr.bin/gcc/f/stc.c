@@ -1,5 +1,5 @@
 /* stc.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995-1997 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -2686,16 +2686,16 @@ ffestc_order_entry_ ()
       goto recurse;		/* :::::::::::::::::::: */
 
     case FFESTV_stateSUBROUTINE0:
-    case FFESTV_stateSUBROUTINE1:
-      ffestw_set_state (ffestw_stack_top (), FFESTV_stateSUBROUTINE2);
+      ffestw_set_state (ffestw_stack_top (), FFESTV_stateSUBROUTINE1);
       break;
 
     case FFESTV_stateFUNCTION0:
-    case FFESTV_stateFUNCTION1:
-      ffestw_set_state (ffestw_stack_top (), FFESTV_stateFUNCTION2);
+      ffestw_set_state (ffestw_stack_top (), FFESTV_stateFUNCTION1);
       break;
 
+    case FFESTV_stateSUBROUTINE1:
     case FFESTV_stateSUBROUTINE2:
+    case FFESTV_stateFUNCTION1:
     case FFESTV_stateFUNCTION2:
     case FFESTV_stateSUBROUTINE3:
     case FFESTV_stateFUNCTION3:
@@ -2848,25 +2848,25 @@ ffestc_order_format_ ()
       goto recurse;		/* :::::::::::::::::::: */
 
     case FFESTV_statePROGRAM0:
-    case FFESTV_statePROGRAM1:
       ffestw_update (NULL);
-      ffestw_set_state (ffestw_stack_top (), FFESTV_statePROGRAM2);
+      ffestw_set_state (ffestw_stack_top (), FFESTV_statePROGRAM1);
       return FFESTC_orderOK_;
 
     case FFESTV_stateSUBROUTINE0:
-    case FFESTV_stateSUBROUTINE1:
       ffestw_update (NULL);
-      ffestw_set_state (ffestw_stack_top (), FFESTV_stateSUBROUTINE2);
+      ffestw_set_state (ffestw_stack_top (), FFESTV_stateSUBROUTINE1);
       return FFESTC_orderOK_;
 
     case FFESTV_stateFUNCTION0:
-    case FFESTV_stateFUNCTION1:
       ffestw_update (NULL);
-      ffestw_set_state (ffestw_stack_top (), FFESTV_stateFUNCTION2);
+      ffestw_set_state (ffestw_stack_top (), FFESTV_stateFUNCTION1);
       return FFESTC_orderOK_;
 
+    case FFESTV_statePROGRAM1:
     case FFESTV_statePROGRAM2:
+    case FFESTV_stateSUBROUTINE1:
     case FFESTV_stateSUBROUTINE2:
+    case FFESTV_stateFUNCTION1:
     case FFESTV_stateFUNCTION2:
     case FFESTV_statePROGRAM3:
     case FFESTV_stateSUBROUTINE3:
@@ -6309,6 +6309,7 @@ ffestc_R501_item (ffelexToken name, ffebld kind, ffelexToken kindt,
   ffestpDimtype nd;
   bool is_init = (init != NULL) || clist;
   bool is_assumed;
+  bool is_ugly_assumed;
   ffeinfoRank rank;
 
   ffestc_check_item_ ();
@@ -6335,7 +6336,11 @@ ffestc_R501_item (ffelexToken name, ffebld kind, ffelexToken kindt,
   if (is_assumed)
     na |= FFESYMBOL_attrsANYLEN;
 
-  nd = ffestt_dimlist_type (dims);
+  is_ugly_assumed = (ffe_is_ugly_assumed ()
+		     && ((sa & FFESYMBOL_attrsDUMMY)
+			 || (ffesymbol_where (s) == FFEINFO_whereDUMMY)));
+
+  nd = ffestt_dimlist_type (dims, is_ugly_assumed);
   switch (nd)
     {
     case FFESTP_dimtypeNONE:
@@ -6456,7 +6461,8 @@ ffestc_R501_item (ffelexToken name, ffebld kind, ffelexToken kindt,
 	{
 	  ffesymbol_set_dims (s, ffestt_dimlist_as_expr (dims, &rank,
 							 &array_size,
-							 &extents));
+							 &extents,
+							 is_ugly_assumed));
 	  ffesymbol_set_arraysize (s, array_size);
 	  ffesymbol_set_extents (s, extents);
 	  if (!(0 && ffe_is_90 ())
@@ -7206,6 +7212,7 @@ ffestc_R524_item (ffelexToken name, ffesttDimList dims)
   ffesymbolAttrs na;
   ffestpDimtype nd;
   ffeinfoRank rank;
+  bool is_ugly_assumed;
 
   ffestc_check_item_ ();
   assert (name != NULL);
@@ -7221,7 +7228,11 @@ ffestc_R524_item (ffelexToken name, ffesttDimList dims)
   /* First figure out what kind of object this is based solely on the current
      object situation (dimension list). */
 
-  nd = ffestt_dimlist_type (dims);
+  is_ugly_assumed = (ffe_is_ugly_assumed ()
+		     && ((sa & FFESYMBOL_attrsDUMMY)
+			 || (ffesymbol_where (s) == FFEINFO_whereDUMMY)));
+
+  nd = ffestt_dimlist_type (dims, is_ugly_assumed);
   switch (nd)
     {
     case FFESTP_dimtypeKNOWN:
@@ -7290,7 +7301,8 @@ ffestc_R524_item (ffelexToken name, ffesttDimList dims)
       ffesymbol_set_state (s, FFESYMBOL_stateSEEN);
       ffesymbol_set_dims (s, ffestt_dimlist_as_expr (dims, &rank,
 						     &array_size,
-						     &extents));
+						     &extents,
+						     is_ugly_assumed));
       ffesymbol_set_arraysize (s, array_size);
       ffesymbol_set_extents (s, extents);
       if (!(0 && ffe_is_90 ())
@@ -8221,6 +8233,7 @@ ffestc_R547_item_object (ffelexToken name, ffesttDimList dims)
   ffestpDimtype nd;
   ffebld e;
   ffeinfoRank rank;
+  bool is_ugly_assumed;
 
   if (ffestc_parent_ok_ && (ffestc_local_.common.symbol == NULL))
     ffestc_R547_item_cblock (NULL);	/* As if "COMMON [//] ...". */
@@ -8239,7 +8252,11 @@ ffestc_R547_item_object (ffelexToken name, ffesttDimList dims)
   /* First figure out what kind of object this is based solely on the current
      object situation (dimension list). */
 
-  nd = ffestt_dimlist_type (dims);
+  is_ugly_assumed = (ffe_is_ugly_assumed ()
+		     && ((sa & FFESYMBOL_attrsDUMMY)
+			 || (ffesymbol_where (s) == FFEINFO_whereDUMMY)));
+
+  nd = ffestt_dimlist_type (dims, is_ugly_assumed);
   switch (nd)
     {
     case FFESTP_dimtypeNONE:
@@ -8325,7 +8342,8 @@ ffestc_R547_item_object (ffelexToken name, ffesttDimList dims)
 	{
 	  ffesymbol_set_dims (s, ffestt_dimlist_as_expr (dims, &rank,
 							 &array_size,
-							 &extents));
+							 &extents,
+							 is_ugly_assumed));
 	  ffesymbol_set_arraysize (s, array_size);
 	  ffesymbol_set_extents (s, extents);
 	  if (!(0 && ffe_is_90 ())
@@ -11811,6 +11829,7 @@ ffestc_R1207_item (ffelexToken name)
       ffesymbol_set_attrs (s, na);
       ffesymbol_set_state (s, FFESYMBOL_stateSEEN);
       ffesymbol_set_explicitwhere (s, TRUE);
+      ffesymbol_globalize (s);
       ffesymbol_signal_unreported (s);
     }
 
@@ -11870,7 +11889,6 @@ ffestc_R1208_item (ffelexToken name)
   ffeintrinGen gen;
   ffeintrinSpec spec;
   ffeintrinImp imp;
-  ffeinfoKind kind;
 
   ffestc_check_item_ ();
   assert (name != NULL);
@@ -11890,7 +11908,7 @@ ffestc_R1208_item (ffelexToken name)
   else if (!(sa & ~FFESYMBOL_attrsTYPE))
     {
       if (ffeintrin_is_intrinsic (ffelex_token_text (name), name, TRUE,
-				  &gen, &spec, &imp, &kind)
+				  &gen, &spec, &imp)
 	  && ((imp == FFEINTRIN_impNONE)
 #if 0	/* Don't bother with this for now. */
 	      || ((ffeintrin_basictype (spec)
@@ -11902,13 +11920,6 @@ ffestc_R1208_item (ffelexToken name)
 #endif
 	      || !(sa & FFESYMBOL_attrsTYPE)))
 	na = sa | FFESYMBOL_attrsINTRINSIC;
-      else if (kind == FFEINFO_kindANY)
-	{			/* Already diagnosed. */
-	  na = sa | FFESYMBOL_attrsINTRINSIC | FFESYMBOL_attrsANY;
-	  ffesymbol_set_attrs (s, na);
-	  ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
-	  ffesymbol_set_info (s, ffeinfo_new_any ());
-	}
       else
 	na = FFESYMBOL_attrsetNONE;
     }
@@ -11932,7 +11943,7 @@ ffestc_R1208_item (ffelexToken name)
 			  ffeinfo_new (FFEINFO_basictypeNONE,
 				       FFEINFO_kindtypeNONE,
 				       0,
-				       kind,
+				       FFEINFO_kindNONE,
 				       FFEINFO_whereINTRINSIC,
 				       FFETARGET_charactersizeNONE));
       ffesymbol_set_explicitwhere (s, TRUE);
@@ -12352,6 +12363,7 @@ ffestc_R1226 (ffelexToken entryname, ffesttTokenList args,
 
   switch (ffestw_state (ffestw_stack_top ()))
     {
+    case FFESTV_stateFUNCTION1:
     case FFESTV_stateFUNCTION2:
     case FFESTV_stateFUNCTION3:
       in_func = TRUE;
@@ -12363,6 +12375,7 @@ ffestc_R1226 (ffelexToken entryname, ffesttTokenList args,
       in_spec = FALSE;
       break;
 
+    case FFESTV_stateSUBROUTINE1:
     case FFESTV_stateSUBROUTINE2:
     case FFESTV_stateSUBROUTINE3:
       in_func = FALSE;

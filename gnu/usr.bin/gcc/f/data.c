@@ -1,5 +1,5 @@
 /* data.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -287,7 +287,7 @@ ffedata_value (ffetargetIntegerDefault rpt, ffebld value, ffelexToken token)
 	{
 	  ffesymbol_signal_change (ffedata_symbol_);
 	  ffesymbol_update_init (ffedata_symbol_);
-	  if (ffe_is_90 ())
+	  if (1 || ffe_is_90 ())
 	    ffesymbol_update_save (ffedata_symbol_);
 #if FFEGLOBAL_ENABLED
 	  if (ffesymbol_common (ffedata_symbol_) != NULL)
@@ -1231,7 +1231,7 @@ ffedata_gather_ (ffestorag mst, ffestorag st)
   else
     {
       accter = ffestorag_accretion (mst);
-      assert (ffedata_storage_size_ == ffebld_accter_size (accter));
+      assert (ffedata_storage_size_ == (ffetargetOffset) ffebld_accter_size (accter));
       array = ffebld_accter (accter);
     }
 
@@ -1251,7 +1251,7 @@ ffedata_gather_ (ffestorag mst, ffestorag st)
 				   operation. */
       ffebit_count (ffebld_accter_bits (accter),
 		    offset, FALSE, units_expected, &actual);	/* How many FALSE? */
-      if (actual != units_expected)
+      if (units_expected != (ffetargetOffset) actual)
 	{
 	  ffebad_start (FFEBAD_DATA_MULTIPLE);
 	  ffebad_here (0, ffewhere_line_unknown (), ffewhere_column_unknown ());
@@ -1291,7 +1291,7 @@ ffedata_gather_ (ffestorag mst, ffestorag st)
 				   operation. */
       ffebit_count (ffebld_accter_bits (accter),
 		    offset, FALSE, units_expected, &actual);	/* How many FALSE? */
-      if (actual != units_expected)
+      if (units_expected != (ffetargetOffset) actual)
 	{
 	  ffebad_start (FFEBAD_DATA_MULTIPLE);
 	  ffebad_here (0, ffewhere_line_unknown (), ffewhere_column_unknown ());
@@ -1345,7 +1345,7 @@ ffedata_gather_ (ffestorag mst, ffestorag st)
 	      (*fn) (ptr1, ptr2, siz);	/* Does memcpy-like operation. */
 	      ffebit_count (ffebld_accter_bits (accter),	/* How many FALSE? */
 			    offset, FALSE, unexp, &actual);
-	      if (!whine && (actual != unexp))
+	      if (!whine && (unexp != (ffetargetOffset) actual))
 		{
 		  whine = TRUE;	/* Don't whine more than once for one gather. */
 		  ffebad_start (FFEBAD_DATA_MULTIPLE);
@@ -1608,7 +1608,7 @@ ffedata_value_ (ffebld value, ffelexToken token)
 	  else
 	    {
 	      accter = ffestorag_accretion (ffedata_storage_);
-	      assert (ffedata_storage_size_ == ffebld_accter_size (accter));
+	      assert (ffedata_storage_size_ == (ffetargetOffset) ffebld_accter_size (accter));
 	      array = ffebld_accter (accter);
 	    }
 
@@ -1627,7 +1627,7 @@ ffedata_value_ (ffebld value, ffelexToken token)
 	  ffebit_count (ffebld_accter_bits (accter),
 			offset, FALSE, units_expected,
 			&actual);	/* How many FALSE? */
-	  if (actual != units_expected)
+	  if (units_expected != (ffetargetOffset) actual)
 	    {
 	      ffebad_start (FFEBAD_DATA_MULTIPLE);
 	      ffebad_here (0, ffelex_token_where_line (token),
@@ -1744,7 +1744,7 @@ ffedata_value_ (ffebld value, ffelexToken token)
 	    {
 	      accter = ffesymbol_accretion (ffedata_symbol_);
 	      assert (ffedata_symbolsize_
-		      == ffebld_accter_size (accter));
+		      == (ffetargetOffset) ffebld_accter_size (accter));
 	      array = ffebld_accter (accter);
 	    }
 

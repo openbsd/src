@@ -1,3 +1,70 @@
+Wed Feb 26 13:09:33 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* reload.c (debug_reload): Fix format string to print
+	reload_nocombine[r].
+
+Sun Feb 23 15:26:53 1997  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* fold-const.c (multiple_of_p): Clean up and improve.
+	(fold): Clean up invocation of multiple_of_p.
+
+Sat Feb  8 04:53:27 1997  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	From <jfc@jfc.tiac.net> Fri, 07 Feb 1997 22:02:21 -0500:
+	* alias.c (init_alias_analysis): Reduce amount of time
+	needed to simplify the reg_base_value array in the
+	typical case (especially involving function inlining).
+
+Fri Jan 10 17:22:17 1997  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	Minor improvements/fixes to better alias handling:
+	* Makefile.in (alias.o): Fix typo in rule (was RLT_H).
+	* cse.c, sched.c: Fix up some indenting.
+	* toplev.c: Add -fargument-alias flag, so Fortran users
+	can turn C-style aliasing on once g77 defaults to
+	-fargument-noalias-global.
+
+	Integrate patch for better alias handling from
+	John Carr <jfc@mit.edu>:
+	* Makefile.in (OBJS, alias.o): New module and rule.
+	* alias.c: New source module.
+	* calls.c (expand_call): Recognize alias status of calls
+	to malloc().
+	* combine.c (distribute_notes): New REG_NOALIAS note.
+	* rtl.h (REG_NOALIAS): Ditto.
+	Many other changes for new alias.c module.
+	* cse.c: Many changes, and much code moved into alias.c.
+	* flags.h (flag_alias_check, flag_argument_noalias):
+	New flags.
+	* toplev.c: New flags and related options.
+	* local-alloc.c (validate_equiv_mem_from_store):
+	Caller of true_dependence changed.
+	* loop.c (NUM_STORES): Increase to 50 from 20.
+	(prescan_loop): "const" functions don't alter unknown addresses.
+	(invariant_p): Caller of true_dependence changed.
+	(record_giv): Zero new unrolled and shared flags.
+	(emit_iv_add_mult): Record base value for register.
+	* sched.c: Many changes, mostly moving code to alias.c.
+	(sched_note_set): SCHED_SORT macro def form, but not function,
+	inexplicably changed.
+	* unroll.c: Record base values for registers, etc.
+
+Fri Jan  3 04:01:00 1997  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* loop.c (check_final_value): Handle insns with no luid's
+	appropriately, instead of crashing on INSN_LUID macro
+	invocations.
+
+Mon Dec 23 00:49:19 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* config/alpha/alpha.md: Fix pattern that matches if_then_else
+	involving DF target, DF comparison, SF source.
+
+Fri Dec 20 15:42:52 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* fold-const.c (multiple_of_p): New function.
+	(fold): Use new function to turn *_DIV_EXPR into EXACT_DIV_EXPR.
+
 Sat Jun 29 12:33:39 1996  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
 
 	* Version 2.7.2.1 released.

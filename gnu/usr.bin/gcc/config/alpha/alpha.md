@@ -1745,9 +1745,9 @@
   [(set (match_operand:DF 0 "register_operand" "=f,f")
 	(if_then_else:DF 
 	 (match_operator 3 "signed_comparison_operator"
-			 [(match_operand:DF 1 "reg_or_fp0_operand" "fG,fG")
+			 [(match_operand:DF 4 "reg_or_fp0_operand" "fG,fG")
 			  (match_operand:DF 2 "fp0_operand" "G,G")])
-	 (float_extend:DF (match_operand:SF 4 "reg_or_fp0_operand" "fG,0"))
+	 (float_extend:DF (match_operand:SF 1 "reg_or_fp0_operand" "fG,0"))
 	 (match_operand:DF 5 "reg_or_fp0_operand" "0,fG")))]
   "TARGET_FP"
   "@

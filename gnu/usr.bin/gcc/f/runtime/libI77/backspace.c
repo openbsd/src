@@ -15,9 +15,9 @@ integer f_back(alist *a)
 	long x, y;
 	char buf[32];
 	if(a->aunit >= MXUNIT || a->aunit < 0)
-		err(a->aerr,101,"backspace")
+		err(a->aerr,101,"backspace");
 	b= &f__units[a->aunit];
-	if(b->useek==0) err(a->aerr,106,"backspace")
+	if(b->useek==0) err(a->aerr,106,"backspace");
 	if(b->ufd==NULL) {
 		fk_open(1, 1, a->aunit);
 		return(0);
@@ -29,7 +29,7 @@ integer f_back(alist *a)
 	if(b->uwrt) {
 		(void) t_runc(a);
 		if (f__nowreading(b))
-			err(a->aerr,errno,"backspace")
+			err(a->aerr,errno,"backspace");
 		}
 	if(b->url>0)
 	{
@@ -93,7 +93,7 @@ integer f_back(alist *a)
 			(void) fseek(b->ufd, 0L, SEEK_SET);
 			return(0);
 			}
-		else if(n<=0) err(a->aerr,(EOF),"backspace")
+		else if(n<=0) err(a->aerr,(EOF),"backspace");
 		(void) fseek(b->ufd, x, SEEK_SET);
 	}
 }

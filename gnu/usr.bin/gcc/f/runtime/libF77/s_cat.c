@@ -12,6 +12,8 @@
  extern void free();
  extern void exit_();
 #else
+#undef min
+#undef max
 #include <stdlib.h>
  extern char *F77_aloc(ftnlen, char*);
 #endif

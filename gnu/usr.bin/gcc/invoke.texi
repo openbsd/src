@@ -1,4 +1,4 @@
-@c Copyright (C) 1988, 89, 92, 93, 94, 1995 Free Software Foundation, Inc.
+@c Copyright (C) 1988, 89, 92-95, 1997 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -331,6 +331,8 @@ in addition to the above:
 -freg-struct-return  -fshared-data  -fshort-enums
 -fshort-double  -fvolatile  -fvolatile-global
 -fverbose-asm -fpack-struct +e0  +e1
+-fargument-alias  -fargument-noalias
+-fargument-noalias-global
 @end smallexample
 @end table
 
@@ -1956,6 +1958,10 @@ optimizations triggered by this option, and the
 @samp{-freduce-all-givs} and @samp{-frerun-loop-opt}
 options as well, were
 contributed by Toon Moene (@code{toon@@moene.indiv.nluug.nl}).
+
+These three options are intended to be removed someday, once
+they have helped determine the efficacy of various
+approaches to improving the performance of Fortran code.
 
 Please let us (@code{fortran@@gnu.ai.mit.edu})
 know how use of these options affects
@@ -4270,6 +4276,78 @@ compilation).
 
 With @samp{+e1}, G++ actually generates the code implementing virtual
 functions defined in the code, and makes them publicly visible.
+
+@cindex aliasing of parameters
+@cindex parameters, aliased
+@item -fargument-alias
+@item -fargument-noalias
+@item -fargument-noalias-global
+Specify the possible relationships among parameters and between
+parameters and global data.
+
+@samp{-fargument-alias} specifies that arguments (parameters) may
+alias each other and may alias global storage.
+@samp{-fargument-noalias} specifies that arguments do not alias
+each other, but may alias global storage.
+@samp{-fargument-noalias-global} specifies that arguments do not
+alias each other and do not alias global storage.
+
+For code written in C, C++, and Objective-C, @samp{-fargument-alias}
+is the default.
+For code written in Fortran, @samp{-fargument-noalias-global} is
+the default, though this is pertinent only on systems where
+@code{g77} is installed.
+(See the documentation for other compilers for information on the
+defaults for their respective languages.)
+
+Normally, @code{gcc} assumes that a write through a pointer
+passed as a parameter to the current function might modify a
+value pointed to by another pointer passed as a parameter, or
+in global storage.
+
+For example, consider this code:
+
+@example
+void x(int *i, int *j)
+@{
+  extern int k;
+
+  ++*i;
+  ++*j;
+  ++k;
+@}
+@end example
+
+When compiling the above function, @code{gcc} assumes that @samp{i} might
+be a pointer to the same variable as @samp{j}, and that either @samp{i},
+@samp{j}, or both might be a pointer to @samp{k}.
+
+Therefore, @code{gcc} does not assume it can generate code to read
+@samp{*i}, @samp{*j}, and @samp{k} into separate registers, increment
+each register, then write the incremented values back out.
+
+Instead, @code{gcc} must generate code that reads @samp{*i},
+increments it, and writes it back before reading @samp{*j},
+in case @samp{i} and @samp{j} are aliased, and, similarly,
+that writes @samp{*j} before reading @samp{k}.
+The result is code that, on many systems, takes longer to execute,
+due to the way many processors schedule instruction execution.
+
+Compiling the above code with the @samp{-fargument-noalias} option
+allows @code{gcc} to assume that @samp{i} and @samp{j} do not alias
+each other, but either might alias @samp{k}.
+
+Compiling the above code with the @samp{-fargument-noalias-global}
+option allows @code{gcc} to assume that no combination of @samp{i},
+@samp{j}, and @samp{k} are aliases for each other.
+
+@emph{Note:} Use the @samp{-fargument-noalias} and
+@samp{-fargument-noalias-global} options with care.
+While they can result in faster executables, they can
+also result in executables with subtle bugs, bugs that
+show up only when compiled for specific target systems,
+or bugs that show up only when compiled by specific versions
+of @code{g77}.
 @end table
 
 @node Environment Variables

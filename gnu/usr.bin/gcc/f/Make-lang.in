@@ -1,5 +1,5 @@
 # Top level makefile fragment for GNU Fortran.           -*-makefile-*-
-#   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+#   Copyright (C) 1995-1997 Free Software Foundation, Inc.
 
 #This file is part of GNU Fortran.
 
@@ -35,6 +35,8 @@
 # - making any compiler driver (eg: g77)
 # - the compiler proper (eg: f771)
 # - define the names for selecting the language in LANGUAGES.
+#
+# $(srcdir) must be set to the gcc/ source directory (not gcc/f/).
 
 # Extra flags to pass to recursive makes (and to sub-configure).
 # Use different quoting rules compared with FLAGS_TO_PASS so we can use
@@ -109,7 +111,7 @@ F77 f77: f771 f77-runtime
   f77.stage4 f77.distdir f77.rebuilt
 
 # Create the compiler driver for g77 (only if `f77' is in LANGUAGES).
-g77: f/g77.c $(CONFIG_H) $(LIBDEPS)
+g77: $(srcdir)/f/g77.c $(srcdir)/f/zzz.c $(CONFIG_H) $(LIBDEPS)
 	case '$(LANGUAGES)' in \
 	*f77*) \
 	  $(CC) $(ALL_CFLAGS) $(INCLUDES) $(LDFLAGS) \
@@ -118,22 +120,13 @@ g77: f/g77.c $(CONFIG_H) $(LIBDEPS)
 
 # Create a version of the g77 driver which calls the cross-compiler
 # (only if `f77' is in LANGUAGES).
-g77-cross: f/g77.c version.o $(LIBDEPS)
+g77-cross: $(srcdir)f/g77.c $(srcdir)/f/zzz.c version.o $(LIBDEPS)
 	case '$(LANGUAGES)' in \
 	*f77*) \
 	  $(CC) $(ALL_CFLAGS) $(INCLUDES) $(LDFLAGS) \
 	    -DGCC_NAME=\"$(GCC_CROSS_NAME)\" \
 	    -o $@ $(srcdir)/f/g77.c $(srcdir)/f/zzz.c $(LIBS) ;; \
 	esac
-
-# g77 documentation.
-$(build_infodir)/f/g77.info: f/g77.texi f/bugs.texi f/install.texi f/news.texi
-	$(MAKEINFO) -P$(srcdir)/f $(srcdir)/f/g77.texi \
-	   -o $(build_infodir)/f/g77.info
-
-# XXX OpenBSD What to do with dvi builds...?
-$(srcdir)/f/g77.dvi: f/g77.texi f/bugs.texi f/install.texi f/news.texi
-	$(TEXI2DVI) $(srcdir)/f/g77.texi
 
 F77_SRCS = \
  $(srcdir)/f/assert.j \
@@ -240,7 +233,7 @@ F77_SRCS = \
  $(srcdir)/f/zzz.h
 
 f771: $(P) $(F77_SRCS) $(LIBDEPS) stamp-objlist f/Makefile
-	$(MAKE) -f f/Makefile $(FLAGS_TO_PASS) VPATH=$(srcdir) srcdir=$(srcdir)/f f771
+	$(MAKE) -f f/Makefile $(FLAGS_TO_PASS) VPATH=$(srcdir) srcdir=$(srcdir) f771
 
 f/Makefile: $(srcdir)/f/Makefile.in $(srcdir)/configure
 	$(SHELL) config.status
@@ -254,7 +247,7 @@ f/Makefile: $(srcdir)/f/Makefile.in $(srcdir)/configure
 stmp-headers = stmp-headers	# to be overrideable in unsafe version
 # Depend on stmp-headers, not stmp-int-hdrs, since libF77 needs float.h.
 f77-runtime:  f/runtime/Makefile include/f2c.h $(stmp-headers) \
-  f/runtime/libF77/Makefile f/runtime/libI77/Makefile
+  f/runtime/libF77/Makefile f/runtime/libI77/Makefile f/runtime/libU77/Makefile
 	case "$(LANGUAGES)" in \
 	*f77*) top=`pwd`; \
 	  cd f/runtime && $(MAKE) \
@@ -274,12 +267,19 @@ f77-runtime-unsafe:
 # configure, not a Cygnus-type one.  It needs to be run *after* the
 # appropriate (cross-)compiler has been built, thus depend on GCC_PARTS.
 # NB, sh uses the *first* value of $a from `a=fred a=joe prog'.
-include/f2c.h f/runtime/Makefile \
-f/runtime/libF77/Makefile f/runtime/libI77/Makefile: \
+include/f2c.h \
+f/runtime/Makefile \
+f/runtime/libF77/Makefile \
+f/runtime/libI77/Makefile \
+f/runtime/libU77/Makefile: \
   $(srcdir)/f/runtime/f2c.h.in \
-  $(srcdir)/f/com.h f/proj.h $(srcdir)/f/runtime/Makefile.in \
+  $(srcdir)/f/com.h $(srcdir)/f/proj.h \
+  $(srcdir)/f/runtime/Makefile.in \
   $(srcdir)/f/runtime/libF77/Makefile.in \
   $(srcdir)/f/runtime/libI77/Makefile.in \
+  $(srcdir)/f/runtime/libU77/Makefile.in \
+  $(srcdir)/f/runtime/configure \
+  $(srcdir)/f/runtime/libU77/configure \
   $(GCC_PARTS)
 # The make "stage?" in compiler spec. is fully qualified as above
 	top=`pwd`; \
@@ -290,6 +290,14 @@ f/runtime/libF77/Makefile f/runtime/libI77/Makefile: \
 	     *) echo '$(GCC_FOR_TARGET)';; esac`" \
 	  $(F77_FLAGS_TO_PASS) CONFIG_SITE=/dev/null $(SHELL) \
 	  $${src}/f/runtime/configure --srcdir=$${src}/f/runtime
+	top=`pwd`; \
+	src=`cd $(srcdir); pwd`; \
+	  cd f/runtime/libU77; \
+	  CC="`case '$(GCC_FOR_TARGET)' in \
+	     './xgcc -B./') echo $${top}/xgcc -B$${top}/;; \
+	     *) echo '$(GCC_FOR_TARGET)';; esac`" \
+	  $(F77_FLAGS_TO_PASS) CONFIG_SITE=/dev/null $(SHELL) \
+	  $${src}/f/runtime/libU77/configure --srcdir=$${src}/f/runtime/libU77
 
 #For now, omit f2c stuff.  -- burley
 #f2c: stmp-headers f/f2c/Makefile
@@ -311,26 +319,56 @@ f77.start.encap: g77 maybe-f2c
 f77.rest.encap:
 
 f77.info: $(build_infodir)/f/g77.info
-# XXX OpenBSD What to do with dvi rules...?
+# XXX OpenBSD - what to do with dvi rules ...?
 f77.dvi: $(srcdir)/f/g77.dvi
 
-$(srcdir)/f/BUGS: f/bugs0.texi f/bugs.texi
-	cd $(srcdir)/f; $(MAKEINFO) -D BUGSONLY --no-header --no-split \
-	  --no-validate bugs0.texi -o BUGS
+# XXX OpenBSD - these are the documentation rules for OpenBSD - for now 
+#               we will only install the g77 info files - the original
+#               g77 documentation rules will follow then commented out
+# g77 documentation.
+$(build_infodir)/f/g77.info: f/g77.texi f/bugs.texi f/install.texi f/news.texi
+	$(MAKEINFO) -I$(srcdir)/f $(srcdir)/f/g77.texi \
+	  -o $(build_infodir)/f/g77.info
 
-$(srcdir)/f/INSTALL: f/install0.texi f/install.texi
-	cd $(srcdir)/f; $(MAKEINFO) -D INSTALLONLY --no-header --no-split \
-	  --no-validate install0.texi -o INSTALL
+# XXX OpenBSD - what to do with dvi rules ...?
+$(srcdir)/f/g77.dvi: f/g77.texi f/bugs.texi f/install.texi f/news.texi
+	$(TEXI2DVI) $(srcdir)/f/g77.texi
 
-$(srcdir)/f/NEWS: f/news0.texi f/news.texi
-	cd $(srcdir)/f; $(MAKEINFO) -D NEWSONLY --no-header --no-split \
-	  --no-validate news0.texi -o NEWS
+# XXX OpenBSD - these are the original g77-0.5.20 documentation rules
+# g77 documentation.
+#$(srcdir)/f/g77.info: f/g77.texi f/bugs.texi f/install.texi f/news.texi f/intdoc.texi
+#	cd $(srcdir)/f; $(MAKEINFO) g77.texi
+#
+#$(srcdir)/f/g77.dvi: f/g77.texi f/bugs.texi f/install.texi f/news.texi f/intdoc.texi
+#	cd $(srcdir)/f; $(TEXI2DVI) g77.texi
+#
+#$(srcdir)/f/intdoc.texi: f/intdoc
+#	f/intdoc > $(srcdir)/f/intdoc.texi
+#
+#f/intdoc: f/intdoc.c f/intdoc.h f/intrin.def f/intrin.h
+#	$(HOST_CC) $(HOST_CFLAGS) -W -Wall $(HOST_LDFLAGS) \
+#	      `echo $(srcdir)/f/intdoc.c | sed 's,^\./,,'` -o f/intdoc
+#
+#$(srcdir)/f/BUGS: f/bugs0.texi f/bugs.texi
+#	cd $(srcdir)/f; $(MAKEINFO) -D BUGSONLY --no-header --no-split \
+#	  --no-validate bugs0.texi -o BUGS
+#
+#$(srcdir)/f/INSTALL: f/install0.texi f/install.texi
+#	cd $(srcdir)/f; $(MAKEINFO) -D INSTALLONLY --no-header --no-split \
+#	  --no-validate install0.texi -o INSTALL
+#
+#$(srcdir)/f/NEWS: f/news0.texi f/news.texi
+#	cd $(srcdir)/f; $(MAKEINFO) -D NEWSONLY --no-header --no-split \
+#	  --no-validate news0.texi -o NEWS
 
-$(srcdir)/f/runtime/configure: f/runtime/configure.in
-	cd f/runtime && $(MAKE) rebuilt
+$(srcdir)/f/runtime/configure: $(srcdir)/f/runtime/configure.in 
+	cd f/runtime && $(MAKE) srcdir=../../$(srcdir)/f/runtime -f ../../$(srcdir)/f/runtime/Makefile.in rebuilt
+$(srcdir)/f/runtime/libU77/configure: $(srcdir)/f/runtime/libU77/configure.in
+	cd f/runtime && $(MAKE) srcdir=../../$(srcdir)/f/runtime -f ../../$(srcdir)/f/runtime/Makefile.in rebuilt
 
-f77.rebuilt: f/g77.info f/BUGS f/INSTALL f/NEWS f/runtime/configure
-	echo Fortran rebuildable files rebuilt.
+f77.rebuilt: $(srcdir)/f/g77.info $(srcdir)/f/BUGS $(srcdir)/f/INSTALL \
+  $(srcdir)/f/NEWS $(srcdir)/f/runtime/configure \
+  $(srcdir)/f/runtime/libU77/configure
 
 maybe-f2c:
 #For now, omit f2c stuff.  -- burley
@@ -469,17 +507,16 @@ f77.uninstall:
 
 f77.mostlyclean:
 	-rm -f f/*$(objext)
-	-rm -f f/fini f/f771 f/stamp-str f/str-*.h f/str-*.j
-	-cd f/runtime; $(MAKE) mostlyclean
+	-rm -f f/fini f/f771 f/stamp-str f/str-*.h f/str-*.j f/intdoc
+	-cd f/runtime; $(MAKE) -f ../../$(srcdir)/f/runtime/Makefile.in mostlyclean
 f77.clean:
-	-cd f/runtime; $(MAKE) mostlyclean
-	-$(MAKE) f77.mostlyclean
+	-cd f/runtime; $(MAKE) -f ../../$(srcdir)/f/runtime/Makefile.in clean
 f77.distclean:
-	-cd f/runtime; $(MAKE) distclean
-	-$(MAKE) f77.clean
+	-cd f/runtime; $(MAKE) -f ../../$(srcdir)/f/runtime/Makefile.in distclean
 	-rm -f f/Makefile
 # like gcc's extraclean, which does clean f/ for us, but not f/gbe,
-# f/runtime, f/runtime/libF77, and f/runtime/libI77, so do those.
+# f/runtime, f/runtime/libF77, f/runtime/libI77, and f/runtime/libU77,
+# so do those.
 f77.extraclean: f77.distclean
 	-rm -f f/*/=* f/*/"#"* f/*/*~*
 	-rm -f f/*/patch* f/*/*.orig f/*/*.rej
@@ -493,37 +530,46 @@ f77.extraclean: f77.distclean
 	-rm -f f/*/*/*lose f/*/*/*.s f/*/*/*.s[0-9] f/*/*/*.i
 # realclean is the pre-2.7.0 name for maintainer-clean
 f77.maintainer-clean f77.realclean: f77.distclean
-	-rm -f f/g77.info* f/g77.*aux f/TAGS f/BUGS f/INSTALL f/NEWS
+	-cd f/runtime; $(MAKE) -f ../../$(srcdir)/f/runtime/Makefile.in maintainer-clean
+	-$(MAKE) f77.maintainer-clean
+	-rm -f f/g77.info* f/g77.*aux f/TAGS f/BUGS f/INSTALL f/NEWS f/intdoc.texi
 
 # Stage hooks:
 # The main makefile has already created stage?/f.
 
 G77STAGESTUFF = f/*$(objext) f/fini f/stamp-str f/str-*.h f/str-*.j
 RUNTIMESTAGESTUFF = f/runtime/config.cache f/runtime/config.log \
-	f/runtime/config.status f/runtime/Makefile
+  f/runtime/config.status f/runtime/Makefile
 LIBF77STAGESTUFF = f/runtime/libF77/*$(objext) f/runtime/libF77/Makefile
 LIBI77STAGESTUFF = f/runtime/libI77/*$(objext) f/runtime/libI77/Makefile
+LIBU77STAGESTUFF = f/runtime/libU77/*$(objext) f/runtime/libU77/Makefile \
+  f/runtime/libU77/config.cache f/runtime/libU77/config.log \
+  f/runtime/libU77/config.status
 
 f77.stage1:
 	-mv $(G77STAGESTUFF) stage1/f
 	-mv $(RUNTIMESTAGESTUFF) stage1/f/runtime
 	-mv $(LIBF77STAGESTUFF) stage1/f/runtime/libF77
 	-mv $(LIBI77STAGESTUFF) stage1/f/runtime/libI77
+	-mv $(LIBU77STAGESTUFF) stage1/f/runtime/libU77
 f77.stage2:
 	-mv $(G77STAGESTUFF) stage2/f
 	-mv $(RUNTIMESTAGESTUFF) stage2/f/runtime
 	-mv $(LIBF77STAGESTUFF) stage2/f/runtime/libF77
 	-mv $(LIBI77STAGESTUFF) stage2/f/runtime/libI77
+	-mv $(LIBU77STAGESTUFF) stage2/f/runtime/libU77
 f77.stage3:
 	-mv $(G77STAGESTUFF) stage3/f
 	-mv $(RUNTIMESTAGESTUFF) stage3/f/runtime
 	-mv $(LIBF77STAGESTUFF) stage3/f/runtime/libF77
 	-mv $(LIBI77STAGESTUFF) stage3/f/runtime/libI77
+	-mv $(LIBU77STAGESTUFF) stage3/f/runtime/libU77
 f77.stage4:
 	-mv $(G77STAGESTUFF) stage4/f
 	-mv $(RUNTIMESTAGESTUFF) stage4/f/runtime
 	-mv $(LIBF77STAGESTUFF) stage4/f/runtime/libF77
 	-mv $(LIBI77STAGESTUFF) stage4/f/runtime/libI77
+	-mv $(LIBU77STAGESTUFF) stage4/f/runtime/libU77
 
 # Maintenance hooks:
 

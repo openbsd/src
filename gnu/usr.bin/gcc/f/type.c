@@ -37,7 +37,8 @@ ffetype_lookup_kind (ffetype base_type, int kind)
   return base_type->kinds_->type_[kind];
 }
 
-ffetype ffetype_lookup_star (ffetype base_type, int star)
+ffetype
+ffetype_lookup_star (ffetype base_type, int star)
 {
   if ((base_type->stars_ == NULL)
       || (star < 0)
@@ -47,7 +48,8 @@ ffetype ffetype_lookup_star (ffetype base_type, int star)
   return base_type->stars_->type_[star];
 }
 
-ffetype ffetype_new (void)
+ffetype
+ffetype_new (void)
 {
   ffetype type;
 
@@ -62,7 +64,8 @@ ffetype ffetype_new (void)
   return type;
 }
 
-void ffetype_set_kind (ffetype base_type, int kind, ffetype type)
+void
+ffetype_set_kind (ffetype base_type, int kind, ffetype type)
 {
   if (base_type->kinds_ == NULL)
     {
@@ -81,7 +84,8 @@ void ffetype_set_kind (ffetype base_type, int kind, ffetype type)
   base_type->kinds_->type_[kind] = type;
 }
 
-void ffetype_set_star (ffetype base_type, int star, ffetype type)
+void
+ffetype_set_star (ffetype base_type, int star, ffetype type)
 {
   if (base_type->stars_ == NULL)
     {

@@ -18,8 +18,8 @@ c_sue(cilist *a)
 	if(f__curunit->ufd==NULL && fk_open(SEQ,UNF,a->ciunit))
 		err(a->cierr,114,"sue");
 	f__cf=f__curunit->ufd;
-	if(f__curunit->ufmt) err(a->cierr,103,"sue")
-	if(!f__curunit->useek) err(a->cierr,103,"sue")
+	if(f__curunit->ufmt) err(a->cierr,103,"sue");
+	if(!f__curunit->useek) err(a->cierr,103,"sue");
 	return(0);
 }
 #ifdef KR_headers

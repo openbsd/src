@@ -1,5 +1,5 @@
 /* Implementation of Fortran lexer
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995-1997 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -61,6 +61,7 @@ static void ffelex_include_ (void);
 static bool ffelex_is_free_char_ctx_contin_ (ffewhereColumnNumber col);
 static bool ffelex_is_free_nonc_ctx_contin_ (ffewhereColumnNumber col);
 static void ffelex_next_line_ (void);
+static void ffelex_prepare_eos_ (void);
 static void ffelex_send_token_ (void);
 static ffelexHandler ffelex_swallow_tokens_ (ffelexToken t);
 static ffelexToken ffelex_token_new_ (void);
@@ -132,7 +133,7 @@ static ffewhereColumn ffelex_current_wc_;
    token.  */
 #define FFELEX_columnTOKEN_SIZE_ 63
 #if FFELEX_columnTOKEN_SIZE_ < FFEWHERE_indexMAX
-#error token size too small!
+#error "token size too small!"
 #endif
 
 /* Current token being lexed.  */
@@ -901,15 +902,17 @@ ffelex_file_push_ (int old_lineno, char *input_filename)
   if (input_file_stack)
     input_file_stack->name = input_filename;
 }
-
 #endif
-static void
-ffelex_finish_statement_ ()
-{
-  if ((ffelex_number_of_tokens_ == 0)
-      && (ffelex_token_->type == FFELEX_typeNONE))
-    return;			/* Don't have a statement pending. */
 
+/* Prepare to finish a statement-in-progress by sending the current
+   token, if any, then setting up EOS as the current token with the
+   appropriate current pointer.  The caller can then move the current
+   pointer before actually sending EOS, if desired, as it is in
+   typical fixed-form cases.  */
+
+static void
+ffelex_prepare_eos_ ()
+{
   if (ffelex_token_->type != FFELEX_typeNONE)
     {
       ffelex_backslash_ (EOF, 0);
@@ -949,6 +952,18 @@ ffelex_finish_statement_ ()
   ffelex_token_->type = FFELEX_typeEOS;
   ffelex_token_->where_line = ffewhere_line_use (ffelex_current_wl_);
   ffelex_token_->where_col = ffewhere_column_use (ffelex_current_wc_);
+}
+
+static void
+ffelex_finish_statement_ ()
+{
+  if ((ffelex_number_of_tokens_ == 0)
+      && (ffelex_token_->type == FFELEX_typeNONE))
+    return;			/* Don't have a statement pending. */
+
+  if (ffelex_token_->type != FFELEX_typeEOS)
+    ffelex_prepare_eos_ ();
+
   ffelex_permit_include_ = TRUE;
   ffelex_send_token_ ();
   ffelex_permit_include_ = FALSE;
@@ -1520,7 +1535,7 @@ ffelex_include_ ()
   if (card_length != 0)
     {
 #ifdef REDUCE_CARD_SIZE_AFTER_BIGGY	/* Define if occasional large lines. */
-#error need to handle possible reduction of card size here!!
+#error "need to handle possible reduction of card size here!!"
 #endif
       assert (ffelex_card_size_ >= card_length);	/* It shrunk?? */
       memcpy (ffelex_card_image_, card_image, card_length);
@@ -2054,11 +2069,11 @@ ffelex_file_fixed (ffewhereFile wf, FILE *f)
      label) aside from a positive continuation character might have meaning
      in the midst of a character or hollerith constant.
 
-     2. If a line has no explicit continuation character (a space in column 6
-     and first non-blank character past column 6 is not a digit 0-9), then
-     there are two possibilities:
+     2. If a line has no explicit continuation character (that is, it has a
+     space in column 6 and the first non-space character past column 6 is
+     not a digit 0-9), then there are two possibilities:
 
-     A. A label is present and/or a non-blank (and non-comment) character
+     A. A label is present and/or a non-space (and non-comment) character
      appears somewhere after column 6.	Terminate processing of the previous
      statement, if any, send the new label for the next statement, if any,
      and start processing a new statement with this non-blank character, if
@@ -2087,7 +2102,7 @@ ffelex_file_fixed (ffewhereFile wf, FILE *f)
     case '!':			/* ANSI Fortran 90 says ! in column 6 is
 				   continuation. */
       /* VXT Fortran says ! anywhere is comment, even column 6. */
-      if (ffe_is_vxt_not_90 () || (column != 5))
+      if (ffe_is_vxt () || (column != 5))
 	goto no_tokens_on_line;	/* :::::::::::::::::::: */
       goto got_a_continuation;	/* :::::::::::::::::::: */
 
@@ -2096,10 +2111,13 @@ ffelex_file_fixed (ffewhereFile wf, FILE *f)
 	goto some_other_character;	/* :::::::::::::::::::: */
       /* Fall through. */
       if (column == 5)
-	goto got_a_continuation;/* :::::::::::::::::::: */
-      /* This seems right to do. But it is close to call, since / * starting
-	 in column 6 will thus be interpreted as a continuation line
-	 beginning with '*'. */
+	{
+	  /* This seems right to do. But it is close to call, since / * starting
+	     in column 6 will thus be interpreted as a continuation line
+	     beginning with '*'. */
+
+	  goto got_a_continuation;/* :::::::::::::::::::: */
+	}
       /* Fall through. */
     case '\0':
       /* End of line.  Therefore may be continued-through line, so handle
@@ -2212,6 +2230,9 @@ ffelex_file_fixed (ffewhereFile wf, FILE *f)
 	 a statement.  That's because finishing a statement can trigger
 	 an impending INCLUDE, and that requires accurate line info being
 	 maintained by the lexer.  */
+
+      if (finish_statement)
+	ffelex_prepare_eos_ ();	/* Prepare EOS before we move current pointer. */
 
       ffewhere_line_kill (ffelex_current_wl_);
       ffewhere_column_kill (ffelex_current_wc_);
@@ -2506,7 +2527,7 @@ ffelex_file_fixed (ffewhereFile wf, FILE *f)
 	  break;
 
 	case '_':
-	  if (ffe_is_90 ())
+	  if (1 || ffe_is_90 ())
 	    {
 	      ffelex_token_->type = FFELEX_typeUNDERSCORE;
 	      ffelex_token_->where_line
@@ -3442,7 +3463,7 @@ ffelex_file_free (ffewhereFile wf, FILE *f)
 	  break;
 
 	case '_':
-	  if (ffe_is_90 ())
+	  if (1 || ffe_is_90 ())
 	    {
 	      ffelex_token_->type = FFELEX_typeUNDERSCORE;
 	      ffelex_token_->where_line

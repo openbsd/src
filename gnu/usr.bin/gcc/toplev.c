@@ -535,6 +535,17 @@ int flag_gnu_linker = 1;
 /* Tag all structures with __attribute__(packed) */
 int flag_pack_struct = 0;
 
+/* 1 if alias checking is on (by default, when -O).  */
+int flag_alias_check = 0;
+
+/* 0 if pointer arguments may alias each other.  True in C.
+   1 if pointer arguments may not alias each other but may alias
+   global variables.
+   2 if pointer arguments may not alias each other and may not
+   alias global variables.  True in Fortran.
+   This defaults to 0 for C.  */
+int flag_argument_noalias = 0;
+
 /* Table of language-independent -f options.
    STRING is the option name.  VARIABLE is the address of the variable.
    ON_VALUE is the value to store in VARIABLE
@@ -584,7 +595,11 @@ struct { char *string; int *variable; int on_value;} f_options[] =
   {"verbose-asm", &flag_verbose_asm, 1},
   {"gnu-linker", &flag_gnu_linker, 1},
   {"pack-struct", &flag_pack_struct, 1},
-  {"bytecode", &output_bytecode, 1}
+  {"bytecode", &output_bytecode, 1},
+  {"alias-check", &flag_alias_check, 1},
+  {"argument-alias", &flag_argument_noalias, 0},
+  {"argument-noalias", &flag_argument_noalias, 1},
+  {"argument-noalias-global", &flag_argument_noalias, 2}
 };
 
 /* Table of language-specific options.  */
@@ -3401,6 +3416,7 @@ main (argc, argv, envp)
 #ifdef CAN_DEBUG_WITHOUT_FP
       flag_omit_frame_pointer = 1;
 #endif
+      flag_alias_check = 1;
     }
 
   if (optimize >= 2)

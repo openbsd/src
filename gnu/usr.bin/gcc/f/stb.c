@@ -1,5 +1,5 @@
 /* stb.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -1847,19 +1847,6 @@ ffestb_subr_label_list_1_ (ffelexToken t)
       ffestb_subrargs_.label_list.ok = FALSE;
       return (ffelexHandler) (*ffestb_subrargs_.label_list.handler) (t);
     }
-}
-
-/* ffestb_unimplemented -- Report a not-implemented error for stmt
-
-   return ffestb_unimplemented;	 // to lexer after seeing EOS
-
-   Issue an error via ffest_ffebad_start and return via ffesta_zero.  */
-
-ffelexHandler
-ffestb_unimplemented (ffelexToken t)
-{
-  ffesta_ffebad_1t (FFEBAD_UNIMPL_STMT, ffesta_tokens[0]);
-  return (ffelexHandler) ffelex_swallow_tokens (t, (ffelexHandler) ffesta_zero);
 }
 
 /* ffestb_do -- Parse the DO statement
@@ -9076,14 +9063,12 @@ ffestb_R10012_ (ffelexToken t)
       return (ffelexHandler) ffestb_R10014_ (t);
 
     case FFELEX_typeCOMMA:
-      ffesta_confirmed ();
       ffebad_start (FFEBAD_FORMAT_EXTRA_COMMA);
       ffebad_here (0, ffelex_token_where_line (t), ffelex_token_where_column (t));
       ffebad_finish ();
       return (ffelexHandler) ffestb_R10012_;
 
     case FFELEX_typeCLOSE_PAREN:
-      ffesta_confirmed ();
       ffebad_start (FFEBAD_FORMAT_EXTRA_COMMA);
       ffebad_here (0, ffelex_token_where_line (t), ffelex_token_where_column (t));
       ffebad_finish ();
@@ -9119,7 +9104,7 @@ ffestb_R10012_ (ffelexToken t)
       return (ffelexHandler) ffestb_R100114_ (t);
 
     case FFELEX_typeQUOTE:
-      if (ffe_is_vxt_not_90 ())
+      if (ffe_is_vxt ())
 	break;			/* Error, probably something like FORMAT("17)
 				   = X. */
       ffelex_set_expecting_hollerith (-1, '\"',
@@ -9367,7 +9352,7 @@ ffestb_R10014_ (ffelexToken t)
       return (ffelexHandler) ffestb_R100111_;
 
     case FFELEX_typeQUOTE:
-      if (ffe_is_vxt_not_90 ())
+      if (ffe_is_vxt ())
 	break;			/* A totally bad character in a VXT FORMAT. */
       ffebad_start (FFEBAD_FORMAT_SPURIOUS_NUMBER);
       ffebad_here (0, ffelex_token_where_line (ffestb_local_.format.pre.t),
@@ -18002,13 +17987,13 @@ ffestb_V0201_ (ffelexToken ft, ffebld expr, ffelexToken t)
     {
     case FFELEX_typeEOS:
     case FFELEX_typeSEMICOLON:
-      if (!ffe_is_vxt_not_90 () && (expr != NULL)
+      if (!ffe_is_vxt () && (expr != NULL)
 	  && (ffebld_op (expr) == FFEBLD_opSYMTER))
 	break;
       comma = FALSE;
       /* Fall through. */
     case FFELEX_typeCOMMA:
-      if (!ffe_is_vxt_not_90 () && comma && (expr != NULL)
+      if (!ffe_is_vxt () && comma && (expr != NULL)
 	  && (ffebld_op (expr) == FFEBLD_opPAREN)
 	  && (ffebld_op (ffebld_left (expr)) == FFEBLD_opSYMTER))
 	break;
@@ -20379,13 +20364,9 @@ ffestb_R1229 (ffelexToken t)
   return (ffelexHandler) ffestb_subr_name_list_;
 
 bad_0:				/* :::::::::::::::::::: */
-  ffesta_ffebad_1st (FFEBAD_INVALID_STMT_FORM, "statement-function-definition", ffesta_tokens[0]);
-  return (ffelexHandler) ffelex_swallow_tokens (t, (ffelexHandler) ffesta_zero);
-
 bad_1:				/* :::::::::::::::::::: */
-  ffesta_ffebad_1st (FFEBAD_INVALID_STMT_FORM, "statement-function-definition", t);
-  return (ffelexHandler) ffelex_swallow_tokens (t,
-						(ffelexHandler) ffesta_zero);	/* Invalid second token. */
+  ffesta_ffebad_2t (FFEBAD_UNREC_STMT, ffesta_tokens[0], t);
+  return (ffelexHandler) ffelex_swallow_tokens (t, (ffelexHandler) ffesta_zero);
 }
 
 /* ffestb_R12291_ -- "STMTFUNCTION" OPEN_PAREN dummy-name-list CLOSE_PAREN
@@ -20421,7 +20402,7 @@ ffestb_R12291_ (ffelexToken t)
     }
 
 bad:				/* :::::::::::::::::::: */
-  ffesta_ffebad_1st (FFEBAD_INVALID_STMT_FORM, "statement-function-definition", t);
+  ffesta_ffebad_2t (FFEBAD_UNREC_STMT, ffesta_tokens[0], t);
   ffelex_token_kill (ffestb_subrargs_.name_list.close_paren);
   ffestt_tokenlist_kill (ffestb_subrargs_.name_list.args);
   return (ffelexHandler) ffelex_swallow_tokens (t, (ffelexHandler) ffesta_zero);

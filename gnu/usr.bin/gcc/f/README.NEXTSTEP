@@ -1,6 +1,0 @@
-THIS FILE HAS BEEN OBSOLETED in the GNU Fortran distribution as
-of version 0.5.18.  It will be removed in a future distribution.
-
-Its contents have been assimilated into the Info documentation,
-the source to which is in gcc/f/g77.texi.  In particular, see
-the node ``(g77)But-bugs''.

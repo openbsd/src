@@ -1,5 +1,5 @@
 /* equiv.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995-1997 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -69,6 +69,7 @@ static struct _ffeequiv_list_ ffeequiv_list_;
 
 /* Static functions (internal). */
 
+static void ffeequiv_destroy_ (ffeequiv eq);
 static void ffeequiv_layout_local_ (ffeequiv eq);
 static bool ffeequiv_offset_ (ffetargetOffset *offset, ffesymbol s,
 			      ffebld expr, bool subtract,
@@ -76,6 +77,30 @@ static bool ffeequiv_offset_ (ffetargetOffset *offset, ffesymbol s,
 
 /* Internal macros. */
 
+
+static void
+ffeequiv_destroy_ (ffeequiv victim)
+{
+  ffebld list;
+  ffebld item;
+  ffebld expr;
+
+  for (list = victim->list; list != NULL; list = ffebld_trail (list))
+    {
+      for (item = ffebld_head (list); item != NULL; item = ffebld_trail (item))
+	{
+	  ffesymbol sym;
+
+	  expr = ffebld_head (item);
+	  sym = ffeequiv_symbol (expr);
+	  if (sym == NULL)
+	    continue;
+	  if (ffesymbol_equiv (sym) != NULL)
+	    ffesymbol_set_equiv (sym, NULL);
+	}
+    }
+  ffeequiv_kill (victim);
+}
 
 /* ffeequiv_layout_local_ -- Lay out storage for local equivalenced vars
 
@@ -116,7 +141,7 @@ ffeequiv_layout_local_ (ffeequiv eq)
 
   if (ffeequiv_common (eq) != NULL)
     {				/* Put in common due to programmer error. */
-      ffeequiv_kill (eq);
+      ffeequiv_destroy_ (eq);
       return;
     }
 
@@ -151,10 +176,13 @@ ffeequiv_layout_local_ (ffeequiv eq)
 
 	  if (!ffeequiv_offset_ (&ign, root_sym, root_exp, FALSE, 0, FALSE))
 	    {
-	      ffesymbol_set_equiv (root_sym, NULL);	/* Equiv area slated for
-							   death. */
-	      root_sym = NULL;
-	      continue;		/* Something's wrong with eqv expr, try another. */
+	      /* We can't just eliminate this one symbol from the list
+		 of candidates, because it might be the only one that
+		 ties all these equivs together.  So just destroy the
+		 whole list.  */
+
+	      ffeequiv_destroy_ (eq);
+	      return;
 	    }
 
 	  break;	/* Use first valid eqv expr for root exp/sym. */
@@ -165,7 +193,7 @@ ffeequiv_layout_local_ (ffeequiv eq)
 
   if (root_sym == NULL)
     {
-      ffeequiv_kill (eq);
+      ffeequiv_destroy_ (eq);
       return;
     }
 
@@ -269,7 +297,7 @@ ffeequiv_layout_local_ (ffeequiv eq)
 	      rooted_exp = ffebld_head (item);
 	      rooted_sym = ffeequiv_symbol (rooted_exp);
 	      if ((rooted_sym == NULL)
-		  || (ffesymbol_equiv (rooted_sym) == NULL))
+		  || ((rooted_st = ffesymbol_storage (rooted_sym)) == NULL))
 		{
 		  rooted_sym = NULL;
 		  continue;	/* Ignore me. */
@@ -277,11 +305,6 @@ ffeequiv_layout_local_ (ffeequiv eq)
 
 	      need_storage = TRUE;	/* Somebody is likely to need
 					   storage. */
-	      if ((rooted_st = ffesymbol_storage (rooted_sym)) == NULL)
-		{
-		  rooted_sym = NULL;
-		  continue;	/* No storage for this guy, try another. */
-		}
 
 #if FFEEQUIV_DEBUG
 	      fprintf (stderr, "  Rooted: `%s' at %" ffetargetOffset_f "d\n",
@@ -384,6 +407,7 @@ ffeequiv_layout_local_ (ffeequiv eq)
 		  ffebad_start (FFEBAD_EQUIV_ALIGN);
 		  ffebad_string (ffesymbol_text (item_sym));
 		  ffebad_finish ();
+		  ffesymbol_set_equiv (item_sym, NULL);	/* Don't bother with me anymore. */
 		  continue;
 		}
 
@@ -495,11 +519,14 @@ ffeequiv_layout_local_ (ffeequiv eq)
 		      ffebad_finish ();
 		    }
 		}
+	      ffesymbol_set_equiv (item_sym, NULL);	/* Don't bother with me anymore. */
 	    }			/* (For every equivalence item in the list) */
 	  ffebld_set_head (list, NULL);	/* Don't do this list again. */
 	}			/* (For every equivalence list in the list of
 				   equivs) */
     } while (new_storage && need_storage);
+
+  ffesymbol_set_equiv (root_sym, NULL);	/* This one has storage now. */
 
   ffeequiv_kill (eq);		/* Fully processed, no longer needed. */
 
@@ -873,6 +900,31 @@ ffeequiv_kill (ffeequiv victim)
 {
   victim->next->previous = victim->previous;
   victim->previous->next = victim->next;
+  if (ffe_is_do_internal_checks ())
+    {
+      ffebld list;
+      ffebld item;
+      ffebld expr;
+
+      /* Assert that nobody our victim points to still points to it.  */
+
+      assert ((victim->common == NULL)
+	      || (ffesymbol_equiv (victim->common) == NULL));
+
+      for (list = victim->list; list != NULL; list = ffebld_trail (list))
+	{
+	  for (item = ffebld_head (list); item != NULL; item = ffebld_trail (item))
+	    {
+	      ffesymbol sym;
+
+	      expr = ffebld_head (item);
+	      sym = ffeequiv_symbol (expr);
+	      if (sym == NULL)
+		continue;
+	      assert (ffesymbol_equiv (sym) != victim);
+	    }
+	}
+    }
   malloc_kill_ks (ffe_pool_program_unit (), victim, sizeof (*victim));
 }
 

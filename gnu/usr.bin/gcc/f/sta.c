@@ -1,5 +1,5 @@
 /* sta.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995-1997 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -78,7 +78,7 @@ bool ffesta_line_has_semicolons = FALSE;
 					   the confirmed stmt and forget the
 					   rest.  */
 
-#define FFESTA_maxPOSSIBLES_ 100/* Never more than this # of possibles. */
+#define FFESTA_maxPOSSIBLES_ 8/* Never more than this # of possibles. */
 
 /* Internal typedefs. */
 
@@ -94,6 +94,7 @@ struct _ffesta_possible_
     ffestaPossible_ next;
     ffestaPossible_ previous;
     ffelexHandler handler;
+    bool named;
   };
 
 struct _ffesta_possible_root_
@@ -109,7 +110,7 @@ static bool ffesta_is_inhibited_ = FALSE;
 static ffelexToken ffesta_token_0_;	/* For use by ffest possibility
 					   handling. */
 static ffestaPossible_ ffesta_possibles_[FFESTA_maxPOSSIBLES_];
-static int ffesta_num_possibles_ = 0;	/* Next possibility to use. */
+static int ffesta_num_possibles_ = 0;	/* Number of possibilities. */
 static struct _ffesta_possible_root_ ffesta_possible_nonexecs_;
 static struct _ffesta_possible_root_ ffesta_possible_execs_;
 static ffestaPossible_ ffesta_current_possible_;
@@ -129,8 +130,7 @@ static bool ffesta_inhibit_confirmation_ = FALSE;
 
 /* Static functions (internal). */
 
-static void ffesta_add_possible_exec_ (ffelexHandler fn);
-static void ffesta_add_possible_nonexec_ (ffelexHandler fn);
+static void ffesta_add_possible_ (ffelexHandler fn, bool exec, bool named);
 static bool ffesta_inhibited_exec_transition_ (void);
 static void ffesta_reset_possibles_ (void);
 static ffelexHandler ffesta_save_ (ffelexToken t);
@@ -140,19 +140,16 @@ static ffelexHandler ffesta_send_two_ (ffelexToken t);
 #endif
 
 /* Internal macros. */
+
+#define ffesta_add_possible_exec_(fn) (ffesta_add_possible_ (fn, TRUE, TRUE))
+#define ffesta_add_possible_nonexec_(fn) (ffesta_add_possible_ (fn, FALSE, TRUE))
+#define ffesta_add_possible_unnamed_exec_(fn) (ffesta_add_possible_ (fn, TRUE, FALSE))
+#define ffesta_add_possible_unnamed_nonexec_(fn) (ffesta_add_possible_ (fn, FALSE, FALSE))
 
-
-/* ffesta_add_possible_exec_ -- Add possible executable statement to list
-
-   ffelexHandler ffestb_some_executable_stmt_handler_;
-   ffesta_add_possible_exec_(ffestb_some_executable_stmt_handler_);
-
-   Adds a possible statement to the list of executable statements, with the
-   specified statement handler as the recipient of the first token in the
-   statement.  */
+/* Add possible statement to appropriate list.  */
 
 static void
-ffesta_add_possible_exec_ (ffelexHandler fn)
+ffesta_add_possible_ (ffelexHandler fn, bool exec, bool named)
 {
   ffestaPossible_ p;
 
@@ -160,38 +157,21 @@ ffesta_add_possible_exec_ (ffelexHandler fn)
 
   p = ffesta_possibles_[ffesta_num_possibles_++];
 
-  p->next = (ffestaPossible_) &ffesta_possible_execs_.first;
-  p->previous = ffesta_possible_execs_.last;
+  if (exec)
+    {
+      p->next = (ffestaPossible_) &ffesta_possible_execs_.first;
+      p->previous = ffesta_possible_execs_.last;
+    }
+  else
+    {
+      p->next = (ffestaPossible_) &ffesta_possible_nonexecs_.first;
+      p->previous = ffesta_possible_nonexecs_.last;
+    }
   p->next->previous = p;
   p->previous->next = p;
 
   p->handler = fn;
-}
-
-/* ffesta_add_possible_nonexec_ -- Add possible nonexecutable statement to list
-
-   ffelexHandler ffestb_some_nonexecutable_stmt_handler_;
-   ffesta_add_possible_nonexec_(ffestb_some_nonexecutable_stmt_handler_);
-
-   Adds a possible statement to the list of nonexecutable statements, with the
-   specified statement handler as the recipient of the first token in the
-   statement.  */
-
-static void
-ffesta_add_possible_nonexec_ (ffelexHandler fn)
-{
-  ffestaPossible_ p;
-
-  assert (ffesta_num_possibles_ < FFESTA_maxPOSSIBLES_);
-
-  p = ffesta_possibles_[ffesta_num_possibles_++];
-
-  p->next = (ffestaPossible_) &ffesta_possible_nonexecs_.first;
-  p->previous = ffesta_possible_nonexecs_.last;
-  p->next->previous = p;
-  p->previous->next = p;
-
-  p->handler = fn;
+  p->named = named;
 }
 
 /* ffesta_inhibited_exec_transition_ -- Do exec transition while inhibited
@@ -390,15 +370,44 @@ ffesta_save_ (ffelexToken t)
 	  ffesta_tokens[0] = ffesta_token_0_;
 	  if (ffesta_confirmed_possible_ == NULL)
 	    {			/* No confirmed success, just use first
-				   possible. */
-	      ffesta_current_possible_ = ffesta_possible_nonexecs_.first;
-	      ffesta_current_handler_ = ffesta_current_possible_->handler;
-	      if (ffesta_current_handler_ == NULL)
+				   named possible, or first possible if
+				   no named possibles. */
+	      ffestaPossible_ possible = ffesta_possible_nonexecs_.first;
+	      ffestaPossible_ first = NULL;
+	      ffestaPossible_ first_named = NULL;
+	      ffestaPossible_ first_exec = NULL;
+
+	      for (;;)
 		{
-		  ffesta_current_possible_ = ffesta_possible_execs_.first;
-		  ffesta_current_handler_ = ffesta_current_possible_->handler;
-		  assert (ffesta_current_handler_ != NULL);
+		  if (possible->handler == NULL)
+		    {
+		      if (possible == (ffestaPossible_) &ffesta_possible_nonexecs_)
+			{
+			  possible = first_exec = ffesta_possible_execs_.first;
+			  continue;
+			}
+		      else
+			break;
+		    }
+		  if (first == NULL)
+		    first = possible;
+		  if (possible->named
+		      && (first_named == NULL))
+		    first_named = possible;
+
+		  possible = possible->next;
 		}
+
+	      if (first_named != NULL)
+		ffesta_current_possible_ = first_named;
+	      else if (ffesta_seen_first_exec
+		       && (first_exec != NULL))
+		ffesta_current_possible_ = first_exec;
+	      else
+		ffesta_current_possible_ = first;
+
+	      ffesta_current_handler_ = ffesta_current_possible_->handler;
+	      assert (ffesta_current_handler_ != NULL);
 	    }
 	  else
 	    {			/* Confirmed success, use it. */
@@ -569,7 +578,6 @@ static ffelexHandler
 ffesta_second_ (ffelexToken t)
 {
   ffelexHandler next;
-  bool include_only = FALSE;	/* Initially valid INCLUDE form when TRUE. */
   ffesymbol s;
 
   assert (ffelex_token_type (t) != FFELEX_typeNAMES);
@@ -584,6 +592,12 @@ ffesta_second_ (ffelexToken t)
 
   switch (ffesta_first_kw)
     {
+#if FFESTR_VXT
+    case FFESTR_firstACCEPT:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V019);
+      break;
+#endif
+
 #if FFESTR_F90
     case FFESTR_firstALLOCATABLE:
       ffestb_args.dimlist.len = FFESTR_firstlALLOCATABLE;
@@ -601,16 +615,75 @@ ffesta_second_ (ffelexToken t)
       break;
 #endif
 
+    case FFESTR_firstASSIGN:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R838);
+      break;
+
     case FFESTR_firstBACKSPACE:
       ffestb_args.beru.len = FFESTR_firstlBACKSPACE;
       ffestb_args.beru.badname = "BACKSPACE";
       ffesta_add_possible_exec_ ((ffelexHandler) ffestb_beru);
       break;
 
+    case FFESTR_firstBLOCK:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_block);
+      break;
+
+    case FFESTR_firstBLOCKDATA:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_blockdata);
+      break;
+
+    case FFESTR_firstBYTE:
+      ffestb_args.decl.len = FFESTR_firstlBYTE;
+      ffestb_args.decl.type = FFESTP_typeBYTE;
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
+      break;
+
+    case FFESTR_firstCALL:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R1212);
+      break;
+
+    case FFESTR_firstCASE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R810);
+      break;
+
+    case FFESTR_firstCHRCTR:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_chartype);
+      break;
+
+    case FFESTR_firstCLOSE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R907);
+      break;
+
+    case FFESTR_firstCOMMON:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R547);
+      break;
+
     case FFESTR_firstCMPLX:
       ffestb_args.decl.len = FFESTR_firstlCMPLX;
       ffestb_args.decl.type = FFESTP_typeCOMPLEX;
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
+      break;
+
+#if FFESTR_F90
+    case FFESTR_firstCONTAINS:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R1228);
+      break;
+#endif
+
+    case FFESTR_firstCONTINUE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R841);
+      break;
+
+    case FFESTR_firstCYCLE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R834);
+      break;
+
+    case FFESTR_firstDATA:
+      if (ffe_is_pedantic_not_90 ())
+	ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R528);
+      else
+	ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R528);
       break;
 
 #if FFESTR_F90
@@ -630,10 +703,27 @@ ffesta_second_ (ffelexToken t)
       break;
 #endif
 
+#if FFESTR_VXT
+    case FFESTR_firstDEFINEFILE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V025);
+      break;
+
+    case FFESTR_firstDELETE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V021);
+      break;
+#endif
     case FFESTR_firstDIMENSION:
       ffestb_args.R524.len = FFESTR_firstlDIMENSION;
       ffestb_args.R524.badname = "DIMENSION";
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R524);
+      break;
+
+    case FFESTR_firstDO:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_do);
+      break;
+
+    case FFESTR_firstDBL:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_double);
       break;
 
     case FFESTR_firstDBLCMPLX:
@@ -646,6 +736,14 @@ ffesta_second_ (ffelexToken t)
       ffestb_args.decl.len = FFESTR_firstlDBLPRCSN;
       ffestb_args.decl.type = FFESTP_typeDBLPRCSN;
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_dbltype);
+      break;
+
+    case FFESTR_firstDOWHILE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_dowhile);
+      break;
+
+    case FFESTR_firstELSE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_else);
       break;
 
     case FFESTR_firstELSEIF:
@@ -818,11 +916,25 @@ ffesta_second_ (ffelexToken t)
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_dummy);
       break;
 
+    case FFESTR_firstEQUIVALENCE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R544);
+      break;
+
+    case FFESTR_firstEXIT:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R835);
+      break;
+
     case FFESTR_firstEXTERNAL:
       ffestb_args.varlist.len = FFESTR_firstlEXTERNAL;
       ffestb_args.varlist.badname = "EXTERNAL";
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_varlist);
       break;
+
+#if FFESTR_VXT
+    case FFESTR_firstFIND:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V026);
+      break;
+#endif
 
       /* WARNING: don't put anything that might cause an item to precede
 	 FORMAT in the list of possible statements (it's added below) without
@@ -841,6 +953,19 @@ ffesta_second_ (ffelexToken t)
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_dummy);
       break;
 
+    case FFESTR_firstGOTO:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_goto);
+      break;
+
+    case FFESTR_firstIF:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_if);
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R840);
+      break;
+
+    case FFESTR_firstIMPLICIT:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_R539);
+      break;
+
     case FFESTR_firstINCLUDE:
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_S3P4);
       switch (ffelex_token_type (t))
@@ -849,12 +974,15 @@ ffesta_second_ (ffelexToken t)
 	case FFELEX_typeNAME:
 	case FFELEX_typeAPOSTROPHE:
 	case FFELEX_typeQUOTE:
-	  include_only = TRUE;
 	  break;
 
 	default:
 	  break;
 	}
+      break;
+
+    case FFESTR_firstINQUIRE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R923);
       break;
 
     case FFESTR_firstINTGR:
@@ -863,23 +991,17 @@ ffesta_second_ (ffelexToken t)
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
       break;
 
-    case FFESTR_firstBYTE:
-      ffestb_args.decl.len = FFESTR_firstlBYTE;
-      ffestb_args.decl.type = FFESTP_typeBYTE;
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
-      break;
-
-    case FFESTR_firstWORD:
-      ffestb_args.decl.len = FFESTR_firstlWORD;
-      ffestb_args.decl.type = FFESTP_typeWORD;
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
-      break;
-
 #if FFESTR_F90
     case FFESTR_firstINTENT:
       ffestb_args.varlist.len = FFESTR_firstlINTENT;
       ffestb_args.varlist.badname = "INTENT";
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_varlist);
+      break;
+#endif
+
+#if FFESTR_F90
+    case FFESTR_firstINTERFACE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R1202);
       break;
 #endif
 
@@ -895,6 +1017,32 @@ ffesta_second_ (ffelexToken t)
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
       break;
 
+#if FFESTR_VXT
+    case FFESTR_firstMAP:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V012);
+      break;
+#endif
+
+#if FFESTR_F90
+    case FFESTR_firstMODULE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_module);
+      break;
+#endif
+
+    case FFESTR_firstNAMELIST:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R542);
+      break;
+
+#if FFESTR_F90
+    case FFESTR_firstNULLIFY:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R624);
+      break;
+#endif
+
+    case FFESTR_firstOPEN:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R904);
+      break;
+
 #if FFESTR_F90
     case FFESTR_firstOPTIONAL:
       ffestb_args.varlist.len = FFESTR_firstlOPTIONAL;
@@ -902,6 +1050,11 @@ ffesta_second_ (ffelexToken t)
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_varlist);
       break;
 #endif
+
+    case FFESTR_firstPARAMETER:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R537);
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V027);
+      break;
 
     case FFESTR_firstPAUSE:
       ffestb_args.halt.len = FFESTR_firstlPAUSE;
@@ -916,13 +1069,23 @@ ffesta_second_ (ffelexToken t)
       break;
 #endif
 
+    case FFESTR_firstPRINT:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R911);
+      break;
+
 #if HARD_F90
     case FFESTR_firstPRIVATE:
       ffestb_args.varlist.len = FFESTR_firstlPRIVATE;
       ffestb_args.varlist.badname = "ACCESS";
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_varlist);
       break;
+#endif
 
+    case FFESTR_firstPROGRAM:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R1102);
+      break;
+
+#if HARD_F90
     case FFESTR_firstPUBLIC:
       ffestb_args.varlist.len = FFESTR_firstlPUBLIC;
       ffestb_args.varlist.badname = "ACCESS";
@@ -930,10 +1093,30 @@ ffesta_second_ (ffelexToken t)
       break;
 #endif
 
+    case FFESTR_firstREAD:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R909);
+      break;
+
     case FFESTR_firstREAL:
       ffestb_args.decl.len = FFESTR_firstlREAL;
       ffestb_args.decl.type = FFESTP_typeREAL;
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
+      break;
+
+#if FFESTR_VXT
+    case FFESTR_firstRECORD:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V016);
+      break;
+#endif
+
+#if FFESTR_F90
+    case FFESTR_firstRECURSIVE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_recursive);
+      break;
+#endif
+
+    case FFESTR_firstRETURN:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R1227);
       break;
 
     case FFESTR_firstREWIND:
@@ -942,10 +1125,40 @@ ffesta_second_ (ffelexToken t)
       ffesta_add_possible_exec_ ((ffelexHandler) ffestb_beru);
       break;
 
+#if FFESTR_VXT
+    case FFESTR_firstREWRITE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V018);
+      break;
+#endif
+
+    case FFESTR_firstSAVE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R522);
+      break;
+
+    case FFESTR_firstSELECT:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R809);
+      break;
+
+    case FFESTR_firstSELECTCASE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R809);
+      break;
+
+#if HARD_F90
+    case FFESTR_firstSEQUENCE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R423B);
+      break;
+#endif
+
     case FFESTR_firstSTOP:
       ffestb_args.halt.len = FFESTR_firstlSTOP;
       ffesta_add_possible_exec_ ((ffelexHandler) ffestb_halt);
       break;
+
+#if FFESTR_VXT
+    case FFESTR_firstSTRUCTURE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V003);
+      break;
+#endif
 
     case FFESTR_firstSUBROUTINE:
       ffestb_args.dummy.len = FFESTR_firstlSUBROUTINE;
@@ -962,11 +1175,39 @@ ffesta_second_ (ffelexToken t)
       break;
 #endif
 
+    case FFESTR_firstTYPE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V020);
+      break;
+
+#if FFESTR_F90
+    case FFESTR_firstTYPE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_type);
+      break;
+#endif
+
+#if HARD_F90
+    case FFESTR_firstTYPE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_typetype);
+      break;
+#endif
+
 #if FFESTR_VXT
     case FFESTR_firstUNLOCK:
       ffestb_args.beru.len = FFESTR_firstlUNLOCK;
       ffestb_args.beru.badname = "UNLOCK";
       ffesta_add_possible_exec_ ((ffelexHandler) ffestb_beru);
+      break;
+#endif
+
+#if FFESTR_VXT
+    case FFESTR_firstUNION:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V009);
+      break;
+#endif
+
+#if FFESTR_F90
+    case FFESTR_firstUSE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R1107);
       break;
 #endif
 
@@ -976,103 +1217,29 @@ ffesta_second_ (ffelexToken t)
       ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R524);
       break;
 
+    case FFESTR_firstVOLATILE:
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V014);
+      break;
+
+#if HARD_F90
+    case FFESTR_firstWHERE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_where);
+      break;
+#endif
+
+    case FFESTR_firstWORD:
+      ffestb_args.decl.len = FFESTR_firstlWORD;
+      ffestb_args.decl.type = FFESTP_typeWORD;
+      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_gentype);
+      break;
+
+    case FFESTR_firstWRITE:
+      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R910);
+      break;
+
     default:
-
-      /* For now, a decent error message for an unconfirmed stmt, rather than
-	 just whatever is at the top of the list. */
-
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_unimplemented);
       break;
     }
-
-  if (!include_only)
-    {
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_block);	/* BLOCK. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_blockdata);	/* BLOCKDATA. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_chartype);	/* CHARACTER. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_do);	/* DO. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_double);	/* DOUBLE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_dowhile);	/* DOWHILE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_else);	/* ELSE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_goto);	/* GOTO. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_if);	/* IF. */
-#if FFESTR_F90
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_module);	/* MODULE. */
-#endif
-#if FFESTR_F90
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_recursive);	/* RECURSIVE. */
-#endif
-#if FFESTR_F90
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_type);	/* TYPE. */
-#endif
-#if HARD_F90
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_typetype);	/* TYPE(). */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_where);	/* WHERE. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R423B);	/* SEQUENCE. */
-#endif
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R522);	/* SAVE. */
-      if (ffe_is_pedantic_not_90 ())
-	ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R528);	/* DATA. */
-      else
-	ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R528);	/* DATA. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R537);	/* PARAMETER. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_decl_R539);	/* IMPLICIT. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R542);	/* NAMELIST. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R544);	/* EQUIVALENCE. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R547);	/* COMMON. */
-#if FFESTR_F90
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R624);	/* NULLIFY. */
-#endif
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R809);	/* SELECTCASE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R810);	/* CASE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R834);	/* CYCLE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R835);	/* EXIT. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R838);	/* ASSIGN. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R840);	/* Arithmetic IF. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R841);	/* CONTINUE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R904);	/* OPEN. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R907);	/* CLOSE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R909);	/* READ. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R910);	/* WRITE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R911);	/* PRINT. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R923);	/* INQUIRE. */
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R1102);	/* PROGRAM. */
-#if FFESTR_F90
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R1107);	/* USE. */
-#endif
-#if FFESTR_F90
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R1202);	/* INTERFACE. */
-#endif
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R1212);	/* CALL. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R1227);	/* RETURN. */
-#if FFESTR_F90
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R1228);	/* CONTAINS. */
-#endif
-#if FFESTR_VXT
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V003);	/* STRUCTURE. */
-#endif
-#if FFESTR_VXT
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V009);	/* UNION. */
-#endif
-#if FFESTR_VXT
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V012);	/* MAP. */
-#endif
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V014);	/* VOLATILE. */
-#if FFESTR_VXT
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V016);	/* RECORD. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V018);	/* REWRITE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V019);	/* ACCEPT. */
-#endif
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V020);	/* TYPE. */
-#if FFESTR_VXT
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V021);	/* DELETE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V025);	/* DEFINEFILE. */
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_V026);	/* FIND. */
-#endif
-      ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_V027);	/* VXT PARAMETER. */
-    }
-  else
-    include_only = FALSE;
 
   /* Now check the default cases, which are always "live" (meaning that no
      other possibility can override them).  These are where the second token
@@ -1085,7 +1252,7 @@ ffesta_second_ (ffelexToken t)
       if (((s == NULL) || (ffesymbol_dims (s) == NULL))
 	  && !ffesta_seen_first_exec)
 	{			/* Not known as array; may be stmt function. */
-	  ffesta_add_possible_nonexec_ ((ffelexHandler) ffestb_R1229);
+	  ffesta_add_possible_unnamed_nonexec_ ((ffelexHandler) ffestb_R1229);
 
 	  /* If the symbol is (or will be due to implicit typing) of
 	     CHARACTER type, then the statement might be an assignment
@@ -1099,11 +1266,11 @@ ffesta_second_ (ffelexToken t)
 	  if (ffeimplic_peek_symbol_type (s,
 					ffelex_token_text (ffesta_token_0_))
 	      == FFEINFO_basictypeCHARACTER)
-	    ffesta_add_possible_exec_ ((ffelexHandler) ffestb_let);
+	    ffesta_add_possible_unnamed_exec_ ((ffelexHandler) ffestb_let);
 	}
       else			/* Not statement function if known as an
 				   array. */
-	ffesta_add_possible_exec_ ((ffelexHandler) ffestb_let);
+	ffesta_add_possible_unnamed_exec_ ((ffelexHandler) ffestb_let);
       break;
 
 #if FFESTR_F90
@@ -1113,7 +1280,7 @@ ffesta_second_ (ffelexToken t)
 #if FFESTR_F90
     case FFELEX_typePOINTS:
 #endif
-      ffesta_add_possible_exec_ ((ffelexHandler) ffestb_let);
+      ffesta_add_possible_unnamed_exec_ ((ffelexHandler) ffestb_let);
       break;
 
     case FFELEX_typeCOLON:
@@ -1163,6 +1330,7 @@ ffesta_second_ (ffelexToken t)
 	  assert (ffesta_current_handler_ != NULL);
 	  if (!ffesta_seen_first_exec)
 	    {			/* Need to do exec transition now. */
+	      ffesta_tokens[0] = ffesta_token_0_;
 	      if (!ffestc_exec_transition ())
 		goto no_stmts;	/* :::::::::::::::::::: */
 	    }

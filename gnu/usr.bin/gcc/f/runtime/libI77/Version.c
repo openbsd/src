@@ -1,9 +1,9 @@
-static char junk[] = "\n@(#) LIBI77 VERSION pjw,dmg-mods 19960925\n";
+static char junk[] = "\n@(#) LIBI77 VERSION pjw,dmg-mods 19961209\n";
 
 /*
 */
 
-char __G77_LIBI77_VERSION__[] = "0.5.19";
+char __G77_LIBI77_VERSION__[] = "0.5.20";
 
 /*
 2.01	$ format added
@@ -242,11 +242,15 @@ wrtfmt.c:
 		 integer*1 values trouble you when using a K&R C compiler,
 		 switch to an ANSI compiler or use a compiler flag that
 		 makes characters signed. */
+/* 9 Dec. 1996:	 d[fu]e.c, err.c: complain about non-positive rec=
+		 in direct read and write statements.
+		 ftell_.c: change param "unit" to "Unit" for -DKR_headers. */
 
 #include <stdio.h>
 
 void
-g77_libi77_version ()
+g77__ivers__ ()
 {
-  fprintf (stderr, "__G77_LIBI77_VERSION__: %s\n", __G77_LIBI77_VERSION__);
+  fprintf (stderr, "__G77_LIBI77_VERSION__: %s", __G77_LIBI77_VERSION__);
+  fputs (junk, stderr);
 }

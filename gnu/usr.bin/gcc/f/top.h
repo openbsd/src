@@ -1,5 +1,5 @@
 /* top.h -- Public #include File (module.h template V1.0)
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995-1997 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -82,6 +82,7 @@ extern bool ffe_is_do_internal_checks_;
 extern bool ffe_is_90_;
 extern bool ffe_is_automatic_;
 extern bool ffe_is_backslash_;
+extern bool ffe_is_emulate_complex_;
 extern bool ffe_is_underscoring_;
 extern bool ffe_is_second_underscore_;
 extern bool ffe_is_debug_kludge_;
@@ -99,12 +100,14 @@ extern bool ffe_is_typeless_boz_;
 extern bool ffe_is_pedantic_;
 extern bool ffe_is_saveall_;
 extern bool ffe_is_ugly_args_;
+extern bool ffe_is_ugly_assign_;
 extern bool ffe_is_ugly_assumed_;
 extern bool ffe_is_ugly_comma_;
+extern bool ffe_is_ugly_complex_;
 extern bool ffe_is_ugly_init_;
 extern bool ffe_is_ugly_logint_;
 extern bool ffe_is_version_;
-extern bool ffe_is_vxt_not_90_;
+extern bool ffe_is_vxt_;
 extern bool ffe_is_warn_implicit_;
 extern bool ffe_is_warn_surprising_;
 extern bool ffe_is_zeros_;
@@ -112,7 +115,7 @@ extern ffeCase ffe_case_intrin_;
 extern ffeCase ffe_case_match_;
 extern ffeCase ffe_case_source_;
 extern ffeCase ffe_case_symbol_;
-extern ffeIntrinsicState ffe_intrinsic_state_dcp_;
+extern ffeIntrinsicState ffe_intrinsic_state_gnu_;
 extern ffeIntrinsicState ffe_intrinsic_state_f2c_;
 extern ffeIntrinsicState ffe_intrinsic_state_f90_;
 extern ffeIntrinsicState ffe_intrinsic_state_mil_;
@@ -154,9 +157,9 @@ void ffe_terminate_4 (void);
 #define ffe_case_match() ffe_case_match_
 #define ffe_case_source() ffe_case_source_
 #define ffe_case_symbol() ffe_case_symbol_
-#define ffe_intrinsic_state_dcp() ffe_intrinsic_state_dcp_
 #define ffe_intrinsic_state_f2c() ffe_intrinsic_state_f2c_
 #define ffe_intrinsic_state_f90() ffe_intrinsic_state_f90_
+#define ffe_intrinsic_state_gnu() ffe_intrinsic_state_gnu_
 #define ffe_intrinsic_state_mil() ffe_intrinsic_state_mil_
 #define ffe_intrinsic_state_unix() ffe_intrinsic_state_unix_
 #define ffe_intrinsic_state_vxt() ffe_intrinsic_state_vxt_
@@ -166,6 +169,7 @@ void ffe_terminate_4 (void);
 #define ffe_is_debug_kludge() ffe_is_debug_kludge_
 #define ffe_is_do_internal_checks() ffe_is_do_internal_checks_
 #define ffe_is_dollar_ok() ffe_is_dollar_ok_
+#define ffe_is_emulate_complex() ffe_is_emulate_complex_
 #define ffe_is_f2c() ffe_is_f2c_
 #define ffe_is_f2c_library() ffe_is_f2c_library_
 #define ffe_is_ffedebug() ffe_is_ffedebug_
@@ -181,13 +185,15 @@ void ffe_terminate_4 (void);
 #define ffe_is_silent() ffe_is_silent_
 #define ffe_is_typeless_boz() ffe_is_typeless_boz_
 #define ffe_is_ugly_args() ffe_is_ugly_args_
+#define ffe_is_ugly_assign() ffe_is_ugly_assign_
 #define ffe_is_ugly_assumed() ffe_is_ugly_assumed_
 #define ffe_is_ugly_comma() ffe_is_ugly_comma_
+#define ffe_is_ugly_complex() ffe_is_ugly_complex_
 #define ffe_is_ugly_init() ffe_is_ugly_init_
 #define ffe_is_ugly_logint() ffe_is_ugly_logint_
 #define ffe_is_underscoring() ffe_is_underscoring_
 #define ffe_is_version() ffe_is_version_
-#define ffe_is_vxt_not_90() ffe_is_vxt_not_90_
+#define ffe_is_vxt() ffe_is_vxt_
 #define ffe_is_warn_implicit() ffe_is_warn_implicit_
 #define ffe_is_warn_surprising() ffe_is_warn_surprising_
 #define ffe_is_zeros() ffe_is_zeros_
@@ -199,9 +205,9 @@ void ffe_terminate_4 (void);
 #define ffe_set_case_match(f) (ffe_case_match_ = (f))
 #define ffe_set_case_source(f) (ffe_case_source_ = (f))
 #define ffe_set_case_symbol(f) (ffe_case_symbol_ = (f))
-#define ffe_set_intrinsic_state_dcp(s) (ffe_intrinsic_state_dcp_ = (s))
 #define ffe_set_intrinsic_state_f2c(s) (ffe_intrinsic_state_f2c_ = (s))
 #define ffe_set_intrinsic_state_f90(s) (ffe_intrinsic_state_f90_ = (s))
+#define ffe_set_intrinsic_state_gnu(s) (ffe_intrinsic_state_gnu_ = (s))
 #define ffe_set_intrinsic_state_mil(s) (ffe_intrinsic_state_mil_ = (s))
 #define ffe_set_intrinsic_state_unix(s) (ffe_intrinsic_state_unix_ = (s))
 #define ffe_set_intrinsic_state_vxt(s) (ffe_intrinsic_state_vxt_ = (s))
@@ -211,6 +217,7 @@ void ffe_terminate_4 (void);
 #define ffe_set_is_debug_kludge(f) (ffe_is_debug_kludge_ = (f))
 #define ffe_set_is_do_internal_checks(f) (ffe_set_is_do_internal_checks_ = (f))
 #define ffe_set_is_dollar_ok(f) (ffe_is_dollar_ok_ = (f))
+#define ffe_set_is_emulate_complex(f) (ffe_is_emulate_complex_ = (f))
 #define ffe_set_is_f2c(f) (ffe_is_f2c_ = (f))
 #define ffe_set_is_f2c_library(f) (ffe_is_f2c_library_ = (f))
 #define ffe_set_is_ffedebug(f) (ffe_is_ffedebug_ = (f))
@@ -225,13 +232,15 @@ void ffe_terminate_4 (void);
 #define ffe_set_is_silent(f) (ffe_is_silent_ = (f))
 #define ffe_set_is_typeless_boz(f) (ffe_is_typeless_boz_ = (f))
 #define ffe_set_is_ugly_args(f) (ffe_is_ugly_args_ = (f))
+#define ffe_set_is_ugly_assign(f) (ffe_is_ugly_assign_ = (f))
 #define ffe_set_is_ugly_assumed(f) (ffe_is_ugly_assumed_ = (f))
 #define ffe_set_is_ugly_comma(f) (ffe_is_ugly_comma_ = (f))
+#define ffe_set_is_ugly_complex(f) (ffe_is_ugly_complex_ = (f))
 #define ffe_set_is_ugly_init(f) (ffe_is_ugly_init_ = (f))
 #define ffe_set_is_ugly_logint(f) (ffe_is_ugly_logint_ = (f))
 #define ffe_set_is_underscoring(f) (ffe_is_underscoring_ = (f))
 #define ffe_set_is_version(f) (ffe_is_version_ = (f))
-#define ffe_set_is_vxt_not_90(f) (ffe_is_vxt_not_90_ = (f))
+#define ffe_set_is_vxt(f) (ffe_is_vxt_ = (f))
 #define ffe_set_is_warn_implicit(f) (ffe_is_warn_implicit_ = (f))
 #define ffe_set_is_warn_surprising(f) (ffe_is_warn_surprising_ = (f))
 #define ffe_set_is_zeros(f) (ffe_is_zeros_ = (f))
