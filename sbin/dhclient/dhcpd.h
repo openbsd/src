@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.6 2004/02/23 18:21:15 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.7 2004/02/23 19:19:12 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -538,36 +538,6 @@ struct lease *mockup_lease(struct packet *, struct shared_network *,
 /* bootp.c */
 void bootp(struct packet *);
 
-/* memory.c */
-void enter_host(struct host_decl *);
-struct host_decl *find_hosts_by_haddr(int, unsigned char *, int);
-struct host_decl *find_hosts_by_uid(unsigned char *, int);
-struct subnet *find_host_for_network(struct host_decl **, struct iaddr *,
-    struct shared_network *);
-void new_address_range(struct iaddr, struct iaddr, struct subnet *, int);
-extern struct subnet *find_grouped_subnet(struct shared_network *,
-    struct iaddr);
-extern struct subnet *find_subnet(struct iaddr);
-void enter_shared_network(struct shared_network *);
-int subnet_inner_than(struct subnet *, struct subnet *, int);
-void enter_subnet(struct subnet *);
-void enter_lease(struct lease *);
-int supersede_lease(struct lease *, struct lease *, int);
-void release_lease(struct lease *);
-void abandon_lease(struct lease *, char *);
-struct lease *find_lease_by_uid(unsigned char *, int);
-struct lease *find_lease_by_hw_addr(unsigned char *, int);
-struct lease *find_lease_by_ip_addr(struct iaddr);
-void uid_hash_add(struct lease *);
-void uid_hash_delete(struct lease *);
-void hw_hash_add(struct lease *);
-void hw_hash_delete(struct lease *);
-struct class *add_class(int, char *);
-struct class *find_class(int, unsigned char *, int);
-struct group *clone_group(struct group *, char *);
-void write_leases(void);
-void dump_subnets(void);
-
 /* alloc.c */
 VOIDPTR dmalloc(int, char *);
 void dfree(VOIDPTR, char *);
@@ -639,7 +609,6 @@ void discover_interfaces(int);
 struct interface_info *setup_fallback(void);
 void reinitialize_interfaces(void);
 void dispatch(void);
-int locate_network(struct packet *);
 void got_one(struct protocol *);
 void add_timeout(TIME, void (*)(void *), void *);
 void cancel_timeout(void (*)(void *), void *);

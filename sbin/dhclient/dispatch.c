@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.9 2004/02/23 18:29:33 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.10 2004/02/23 19:19:12 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -76,7 +76,6 @@ discover_interfaces(int state)
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
 	struct subnet *subnet;
-	struct shared_network *share;
 	struct sockaddr_in foo;
 	int ir;
 	struct ifreq *tif;
@@ -175,40 +174,6 @@ discover_interfaces(int state)
 			/* Grab the address... */
 			addr.len = 4;
 			memcpy(addr.iabuf, &foo.sin_addr.s_addr, addr.len);
-
-			/* If there's a registered subnet for this address,
-			   connect it together... */
-			if ((subnet = find_subnet(addr))) {
-				/* If this interface has multiple aliases
-				   on the same subnet, ignore all but the
-				   first we encounter. */
-				if (!subnet->interface) {
-					subnet->interface = tmp;
-					subnet->interface_address = addr;
-				} else if (subnet->interface != tmp)
-					warn("Multiple %s %s: %s %s",
-					    "interfaces match the",
-					    "same subnet",
-					    subnet->interface->name,
-					    tmp->name);
-				share = subnet->shared_network;
-				if (tmp->shared_network &&
-				    tmp->shared_network != share)
-					warn("Interface %s matches %s",
-					    tmp->name,
-					    "multiple shared networks");
-				else
-					tmp->shared_network = share;
-
-				if (!share->interface)
-					share->interface = tmp;
-				else if (share->interface != tmp)
-					warn("Multiple %s %s: %s %s",
-					    "interfaces match the",
-					    "same shared network",
-					    share->interface->name,
-					    tmp->name);
-			}
 		}
 	}
 
@@ -532,29 +497,6 @@ inactive:
 	return (0);
 active:
 	return (1);
-}
-
-int
-locate_network(struct packet *packet)
-{
-	struct iaddr ia;
-
-	/* If this came through a gateway, find the corresponding subnet... */
-	if (packet->raw->giaddr.s_addr) {
-		struct subnet *subnet;
-		ia.len = 4;
-		memcpy(ia.iabuf, &packet->raw->giaddr, 4);
-		subnet = find_subnet(ia);
-		if (subnet)
-			packet->shared_network = subnet->shared_network;
-		else
-			packet->shared_network = NULL;
-	} else
-		packet->shared_network = packet->interface->shared_network;
-
-	if (packet->shared_network)
-		return (1);
-	return (0);
 }
 
 void
