@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.6 1996/06/29 21:02:52 tholo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.7 1996/06/29 21:06:43 tholo Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -114,30 +114,30 @@ struct ctlname {
 #define	KERN_OSTYPE	 	 1	/* string: system version */
 #define	KERN_OSRELEASE	 	 2	/* string: system release */
 #define	KERN_OSREV	 	 3	/* int: system revision */
-#define	KERN_OSVERSION		 4	/* string: kernel build version */
-#define	KERN_VERSION	 	 5	/* string: compile time info */
-#define	KERN_MAXVNODES	 	 6	/* int: max vnodes */
-#define	KERN_MAXPROC	 	 7	/* int: max processes */
-#define	KERN_MAXFILES	 	 8	/* int: max open files */
-#define	KERN_ARGMAX	 	 9	/* int: max arguments to exec */
-#define	KERN_SECURELVL	 	10	/* int: system security level */
-#define	KERN_HOSTNAME		11	/* string: hostname */
-#define	KERN_HOSTID		12	/* int: host identifier */
-#define	KERN_CLOCKRATE		13	/* struct: struct clockrate */
-#define	KERN_VNODE		14	/* struct: vnode structures */
-#define	KERN_PROC		15	/* struct: process entries */
-#define	KERN_FILE		16	/* struct: file entries */
-#define	KERN_PROF		17	/* node: kernel profiling info */
-#define	KERN_POSIX1		18	/* int: POSIX.1 version */
-#define	KERN_NGROUPS		19	/* int: # of supplemental group ids */
-#define	KERN_JOB_CONTROL	20	/* int: is job control available */
-#define	KERN_SAVED_IDS		21	/* int: saved set-user/group-ID */
-#define	KERN_BOOTTIME		22	/* struct: time kernel was booted */
-#define	KERN_DOMAINNAME		23	/* string: (YP) domainname */
-#define	KERN_MAXPARTITIONS	24	/* int: number of partitions/disk */
-#define KERN_RAWPARTITION	25	/* int: raw partition number */
-#define	KERN_NTPTIME		26	/* struct: extended-precision time */
-#define	KERN_TIMEX		27	/* struct: ntp timekeeping state */
+#define	KERN_VERSION	 	 4	/* string: compile time info */
+#define	KERN_MAXVNODES	 	 5	/* int: max vnodes */
+#define	KERN_MAXPROC	 	 6	/* int: max processes */
+#define	KERN_MAXFILES	 	 7	/* int: max open files */
+#define	KERN_ARGMAX	 	 8	/* int: max arguments to exec */
+#define	KERN_SECURELVL	 	 9	/* int: system security level */
+#define	KERN_HOSTNAME		10	/* string: hostname */
+#define	KERN_HOSTID		11	/* int: host identifier */
+#define	KERN_CLOCKRATE		12	/* struct: struct clockrate */
+#define	KERN_VNODE		13	/* struct: vnode structures */
+#define	KERN_PROC		14	/* struct: process entries */
+#define	KERN_FILE		15	/* struct: file entries */
+#define	KERN_PROF		16	/* node: kernel profiling info */
+#define	KERN_POSIX1		17	/* int: POSIX.1 version */
+#define	KERN_NGROUPS		18	/* int: # of supplemental group ids */
+#define	KERN_JOB_CONTROL	19	/* int: is job control available */
+#define	KERN_SAVED_IDS		20	/* int: saved set-user/group-ID */
+#define	KERN_BOOTTIME		21	/* struct: time kernel was booted */
+#define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
+#define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
+#define KERN_RAWPARTITION	24	/* int: raw partition number */
+#define	KERN_NTPTIME		25	/* struct: extended-precision time */
+#define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
+#define	KERN_OSVERSION		27	/* string: kernel build version */
 #define	KERN_MAXID		28	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
@@ -145,7 +145,6 @@ struct ctlname {
 	{ "ostype", CTLTYPE_STRING }, \
 	{ "osrelease", CTLTYPE_STRING }, \
 	{ "osrevision", CTLTYPE_INT }, \
-	{ "osversion", CTLTYPE_STRING }, \
 	{ "version", CTLTYPE_STRING }, \
 	{ "maxvnodes", CTLTYPE_INT }, \
 	{ "maxproc", CTLTYPE_INT }, \
@@ -169,6 +168,7 @@ struct ctlname {
 	{ "rawpartition", CTLTYPE_INT }, \
 	{ "ntptime", CTLTYPE_STRUCT }, \
 	{ "timex", CTLTYPE_STRUCT }, \
+	{ "osversion", CTLTYPE_STRING }, \
 }
 
 /*
