@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.11 2002/04/29 22:07:56 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.12 2002/05/18 20:20:17 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ struct cfdriver vgafb_cd = {
 
 void vgafb_setcolor(struct vgafb_config *vc, unsigned int index, 
 		    u_int8_t r, u_int8_t g, u_int8_t b);
+void vgafb_restore_default_colors(struct vgafb_config *vc);
 
 struct vgafb_devconfig {
 	struct rasops_info dc_rinfo;    /* raster display data */
@@ -290,13 +291,17 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	vc->vc_at = 0x00 | 0xf;			/* black bg|white fg */
 	vc->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
 #endif
-	{ 
-	  int i;
-	  for (i = 0; i < 256; i++) {
-	     const u_char *color;
-	     color = &rasops_cmap[i*3];
-	     vgafb_setcolor(vc, i, color[0], color[1], color[2]);
-	  }
+	vgafb_restore_default_colors(vc);
+}
+
+void
+vgafb_restore_default_colors(struct vgafb_config *vc)
+{ 
+	int i;
+	for (i = 0; i < 256; i++) {
+		const u_char *color;
+		color = &rasops_cmap[i*3];
+		vgafb_setcolor(vc, i, color[0], color[1], color[2]);
 	}
 }
 
@@ -349,6 +354,20 @@ vgafb_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_PUTCMAP:
 		return vgafb_putcmap(vc, (struct wsdisplay_cmap *)data);
 
+	case WSDISPLAYIO_SMODE:
+		/* track the state of the display,
+		 * if returning to WSDISPLAYIO_MODE_EMUL
+		 * restore the last palette, workaround for 
+		 * bad accellerated X servers that does not restore
+		 * the correct palette.
+		 */
+
+		vgafb_restore_default_colors(vc);
+
+		/* now that we have done our work, let the wscons
+		 * layer handle this ioctl
+		 */
+		return -1;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_GCURPOS:
@@ -356,6 +375,7 @@ vgafb_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
+	default:
 		return -1; /* not supported yet */
 	}
 	
@@ -486,6 +506,7 @@ struct {
 	u_int8_t g;
 	u_int8_t b;
 } vgafb_color[256];
+
 void
 vgafb_setcolor(vc, index, r, g, b) 
 	struct vgafb_config *vc;
@@ -496,11 +517,11 @@ vgafb_setcolor(vc, index, r, g, b)
 	vc->vc_cmap_green[index] = g;
 	vc->vc_cmap_blue[index] = b;
 
-	vgafb_color[0].r = r;
-	vgafb_color[0].g = g;
-	vgafb_color[0].b = b;
+	vgafb_color[index].r = r;
+	vgafb_color[index].g = g;
+	vgafb_color[index].b = b;
 	OF_call_method_1("set-colors", cons_display_ofh, 3,
-	    &vgafb_color, index, 1);
+	    &vgafb_color[index], index, 1);
 }
 
 int
