@@ -1,10 +1,12 @@
-# -*- mode: Fundamental; tab-width: 4; -*-
-#	$OpenBSD: bsd.port.mk,v 1.8 1996/12/22 17:46:02 niklas Exp $
+#-*- mode: Fundamental; tab-width: 4; -*-
+# ex:ts=4
+#	$OpenBSD: bsd.port.mk,v 1.9 1996/12/25 20:10:09 imp Exp $
+#	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
 #
-# FreeBSD Id: bsd.port.mk,v 1.226 1996/09/24 06:48:22 asami Exp $
+# FreeBSD Id: bsd.port.mk,v 1.241 1996/12/25 02:27:44 imp Exp
 #
 # Please view me with 4 column tabs!
 
@@ -14,25 +16,34 @@
 #
 # MAINTAINER=	asami@FreeBSD.ORG
 #
+# OPENBSD_MAINTAINER=	imp@OpenBSD.ORG
+#
 
 # Supported Variables and their behaviors:
 #
 # Variables that typically apply to all ports:
 # 
-# PORTSDIR		- The root of the ports tree (default: /usr/ports).
+# OPSYS			- Portability clause.  This is the operating system the
+#				  makefile is being used on.  Automatically set to
+#				  "FreeBSD," "NetBSD," or "OpenBSD" as appropriate.
+# PORTSDIR		- The root of the ports tree.  Defaults:
+#					OpenBSD/FreeBSD: /usr/ports
+#					NetBSD: /usr/opt
 # DISTDIR 		- Where to get gzip'd, tarballed copies of original sources
-#				  (default: ${PORTSDIR}/distfiles/${DIST_SUBDIR}).
+#				  (default: ${PORTSDIR}/distfiles).
 # PREFIX		- Where to install things in general (default: /usr/local).
 # MASTER_SITES	- Primary location(s) for distribution files if not found
-#				  locally (default:
-#				   ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/)
+#				  locally.
 # PATCH_SITES	- Primary location(s) for distribution patch files
-#				  (see PATCHFILES below) if not found locally (default:
-#				   ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/)
+#				  (see PATCHFILES below) if not found locally.
 #
+# MASTER_SITE_BACKUP - Backup location(s) for distribution files and patch
+#				  files if not found locally and ${MASTER_SITES}/${PATCH_SITES}
+#				  (default:
+#				  ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/)
 # MASTER_SITE_OVERRIDE - If set, override the MASTER_SITES setting with this
 #				  value.
-# MASTER_SITE_FREEBSD - If set, only use the FreeBSD master repository for
+# MASTER_SITE_FREEBSD - If set, only use ${MASTER_SITE_BACKUP} for
 #				  MASTER_SITES.
 # PACKAGES		- A top level directory where all packages go (rather than
 #				  going locally to each port). (default: ${PORTSDIR}/packages).
@@ -40,8 +51,7 @@
 # XMKMF			- Set to path of `xmkmf' if not in $PATH (default: xmkmf -a ).
 # MAINTAINER	- The e-mail address of the contact person for this port
 #				  (default: ports@FreeBSD.ORG).
-# CATEGORIES	- A list of descriptive categories into which this port falls
-#				  (default: orphans).
+# CATEGORIES	- A list of descriptive categories into which this port falls.
 #
 # Variables that typically apply to an individual port.  Non-Boolean
 # variables without defaults are *mandatory*.
@@ -59,10 +69,13 @@
 #				  PATCH_SITES (see above).  They will automatically be
 #				  uncompressed before patching if the names end with
 #				  ".gz" or ".Z".
-# DIST_SUBDIR	- Suffix to ${DISTDIR} (see above).  If set, all ${DISTFILES} 
+# DIST_SUBDIR	- Suffix to ${DISTDIR}.  If set, all ${DISTFILES} 
 #				  and ${PATCHFILES} will be put in this subdirectory of
 #				  ${DISTDIR}.  Also they will be fetched in this subdirectory 
 #				  from FreeBSD mirror sites.
+# ALLFILES		- All of ${DISTFILES} and ${PATCHFILES}.
+# IGNOREFILES	- If some of the ${ALLFILES} are not checksum-able, set
+#				  this variable to their names.
 # PKGNAME		- Name of the package file to create if the DISTNAME 
 #				  isn't really relevant for the port/package
 #				  (default: ${DISTNAME}).
@@ -86,7 +99,7 @@
 #
 # NO_BUILD		- Use a dummy (do-nothing) build target.
 # NO_CONFIGURE	- Use a dummy (do-nothing) configure target.
-# NO_CDROM		- Use dummy (do-nothing) targets if FOR_CDROM is set.
+# NO_CDROM		- Port may not go on CDROM.  Set this string to reason.
 # NO_DESCRIBE	- Use a dummy (do-nothing) describe target.
 # NO_EXTRACT	- Use a dummy (do-nothing) extract target.
 # NO_INSTALL	- Use a dummy (do-nothing) install target.
@@ -96,7 +109,7 @@
 # NO_WRKDIR		- There's no work directory at all; port does this someplace
 #				  else.
 # NO_DEPENDS	- Don't verify build of dependencies.
-# BROKEN		- Port is broken.
+# BROKEN		- Port is broken.  Set this string to the reason why.
 # RESTRICTED	- Port is restricted.  Set this string to the reason why.
 # USE_GMAKE		- Says that the port uses gmake.
 # USE_IMAKE		- Says that the port uses imake.
@@ -183,13 +196,23 @@
 # PATCH_DEBUG	- If set, print out more information about the patches as
 #				  it attempts to apply them.
 #
-# Variables that serve as convenient "aliases" for your *-install targets:
-#
+# Variables that serve as convenient "aliases" for your *-install targets.
 # Use these like: "${INSTALL_PROGRAM} ${WRKSRC}/prog ${PREFIX}/bin".
+#
 # INSTALL_PROGRAM - A command to install binary executables.
 # INSTALL_SCRIPT - A command to install executable scripts.
 # INSTALL_DATA	- A command to install sharable data.
 # INSTALL_MAN	- A command to install manpages (doesn't compress).
+#
+# If your port doesn't automatically compress manpages, set the following.
+# Depending on the setting of NOMANCOMPRESS, the make rules will compress
+# the manpages for you.
+#
+# MAN<sect>		- A list of manpages, categorized by section.  For
+#				  example, if your port has "man/man1/foo.1" and
+#				  "man/mann/bar.n", set "MAN1=foo.1" and "MANN=bar.n".
+#				  The available sections chars are "123456789LN".
+# MANPREFIX		- The directory prefix for ${MAN<sect>} (default: ${PREFIX}).
 #
 # Default targets and their behaviors:
 #
@@ -223,19 +246,29 @@
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
 
+# Get the operating system type
+OPSYS!=	uname -s
+
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
-.include <bsd.own.mk>
+.if (${OPSYS} == "OpenBSD")
+NOMANCOMPRESS?=yes
+.endif
 
 # These need to be absolute since we don't know how deep in the ports
 # tree we are and thus can't go relative.  They can, of course, be overridden
-# by individual Makefiles.
+# by individual Makefiles or local system make configuration.
+.if (${OPSYS} == "NetBSD")
+PORTSDIR?=		${DESTDIR}/usr/opt
+.else
 PORTSDIR?=		${DESTDIR}/usr/ports
+.endif
 LOCALBASE?=		/usr/local
 X11BASE?=		/usr/X11R6
-DISTDIR?=		${PORTSDIR}/distfiles/${DIST_SUBDIR}
+DISTDIR?=		${PORTSDIR}/distfiles
+_DISTDIR?=		${DISTDIR}/${DIST_SUBDIR}
 PACKAGES?=		${PORTSDIR}/packages
 TEMPLATES?=		${PORTSDIR}/templates
 .if !defined(NO_WRKDIR)
@@ -286,14 +319,26 @@ DO_NADA?=		/usr/bin/true
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
 XMKMF?=			xmkmf -a
+.if exists(/usr/bin/md5)
+MD5?=			/usr/bin/md5
+.elif exists(/bin/md5)
 MD5?=			/bin/md5
+.elif exists(/usr/local/bin/md5)
+MD5?=			/usr/local/bin/md5
+.else
+MD5?=			/sbin/md5
+.endif
 MD5_FILE?=		${FILESDIR}/md5
 
 MAKE_FLAGS?=	-f
 MAKEFILE?=		Makefile
 MAKE_ENV+=		PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 
+.if (${OPSYS} == "OpenBSD")
 FETCH_CMD?=		/usr/bin/ftp
+.else
+FETCH_CMD?=		/usr/bin/fetch
+.endif
 
 TOUCH?=			/usr/bin/touch
 TOUCH_FLAGS?=	-f
@@ -320,7 +365,11 @@ PATCH_ARGS+=	-C
 PATCH_DIST_ARGS+=	-C
 .endif
 
+.if exists(/bin/tar)
 EXTRACT_CMD?=	/bin/tar
+.else
+EXTRACT_CMD?=	/usr/bin/tar
+.endif
 EXTRACT_SUFX?=	.tar.gz
 # Backwards compatability.
 .if defined(EXTRACT_ARGS)
@@ -357,7 +406,7 @@ INSTALL_MAN= \
 
 PKG_CMD?=		/usr/sbin/pkg_create
 .if !defined(PKG_ARGS)
-PKG_ARGS=		-v -c ${PKGDIR}/COMMENT -d ${PKGDIR}/DESCR -f ${PKGDIR}/PLIST -p ${PREFIX} -P "`${MAKE} package-depends|sort|uniq`"
+PKG_ARGS=		-v -c ${PKGDIR}/COMMENT -d ${PKGDIR}/DESCR -f ${PKGDIR}/PLIST -p ${PREFIX} -P "`${MAKE} package-depends|sort -u`"
 .if exists(${PKGDIR}/INSTALL)
 PKG_ARGS+=		-i ${PKGDIR}/INSTALL
 .endif
@@ -366,6 +415,9 @@ PKG_ARGS+=		-k ${PKGDIR}/DEINSTALL
 .endif
 .if exists(${PKGDIR}/REQ)
 PKG_ARGS+=		-r ${PKGDIR}/REQ
+.endif
+.if exists(${PKGDIR}/MESSAGE)
+PKG_ARGS+=		-D ${PKGDIR}/MESSAGE
 .endif
 .if !defined(NO_MTREE) && defined(MTREE_LOCAL)
 PKG_ARGS+=		-m ${MTREE_LOCAL}
@@ -385,17 +437,21 @@ MOTIFLIB?=	-L${X11BASE}/lib -lXm
 .endif
 
 ECHO?=		/bin/echo
-CAT+=		/bin/cat
+CAT?=		/bin/cat
 CP?=		/bin/cp
 SETENV?=	/usr/bin/env
 RM?=		/bin/rm
-MKDIR?=		/bin/mkdir
-GZCAT?=		/usr/bin/gzcat
-BASENAME?=	/usr/bin/basename
-SED?=		/usr/bin/sed
-CAT?=		/bin/cat
-GREP?=		/usr/bin/grep
+MKDIR?=		/bin/mkdir -p
+RMDIR?=		/bin/rmdir
 AWK?=		/usr/bin/awk
+BASENAME?=	/usr/bin/basename
+FALSE?=		/usr/bin/false
+GREP?=		/usr/bin/grep
+GZCAT?=		/usr/bin/gzcat
+GZIP?=		-9
+GZIP_CMD?=	/usr/bin/gzip -nf ${GZIP}
+GUNZIP_CMD?=	/usr/bin/gunzip -f
+SED?=		/usr/bin/sed
 
 # Used to print all the '===>' style prompts - override this to turn them off.
 ECHO_MSG?=		${ECHO}
@@ -403,9 +459,37 @@ ECHO_MSG?=		${ECHO}
 ALL_TARGET?=		all
 INSTALL_TARGET?=	install
 
-# If the user has this set, go to the FreeBSD respository for everything.
+# Popular master sites
+MASTER_SITE_XCONTRIB?=	\
+	ftp://ftp.x.org/contrib/${MASTER_SITE_SUBDIR}/ \
+	ftp://crl.dec.com/pub/X11/contrib/${MASTER_SITE_SUBDIR}/
+
+MASTER_SITE_GNU?=	\
+	ftp://prep.ai.mit.edu/pub/gnu/${MASTER_SITE_SUBDIR}/ \
+	ftp://wuarchive.wustl.edu/systems/gnu/${MASTER_SITE_SUBDIR}/
+
+MASTER_SITE_PERL_CPAN?=	\
+	ftp://ftp.digital.com/pub/plan/perl/CPAN/modules/by-module/${MASTER_SITE_SUBDIR}/ \
+	ftp://ftp.cdrom.com/pub/perl/CPAN/modules/by-module/${MASTER_SITE_SUBDIR}/
+
+MASTER_SITE_TEX_CTAN?=  \
+        ftp://ftp.cdrom.com/pub/tex/ctan/${MASTER_SITE_SUBDIR}/  \
+        ftp://wuarchive.wustl.edu/packages/TeX/${MASTER_SITE_SUBDIR}/  \
+        ftp://ftp.funet.fi/pub/TeX/CTAN/${MASTER_SITE_SUBDIR}/  \
+        ftp.tex.ac.uk/public/ctan/tex-archive/${MASTER_SITE_SUBDIR}/
+
+MASTER_SITE_SUNSITE?=	\
+	ftp://sunsite.unc.edu/pub/Linux/${MASTER_SITE_SUBDIR}/ \
+	ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/${MASTER_SITE_SUBDIR}/ \
+	ftp://ftp.funet.fi/pub/mirrors/sunsite.unc.edu/pub/Linux/${MASTER_SITE_SUBDIR}/
+
+# The primary backup site.
+MASTER_SITE_BACKUP?=	\
+	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
+
+# If the user has this set, go to the FreeBSD repository for everything.
 .if defined(MASTER_SITE_FREEBSD)
-MASTER_SITE_OVERRIDE=  ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
+MASTER_SITE_OVERRIDE=  ${MASTER_SITE_BACKUP}
 .endif
 
 # Empty declaration to avoid "variable MASTER_SITES recursive" error
@@ -414,8 +498,8 @@ PATCH_SITES?=
 # I guess we're in the master distribution business! :)  As we gain mirror
 # sites for distfiles, add them to this list.
 .if !defined(MASTER_SITE_OVERRIDE)
-MASTER_SITES+=	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
-PATCH_SITES+=	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
+MASTER_SITES+=	${MASTER_SITE_BACKUP}
+PATCH_SITES+=	${MASTER_SITE_BACKUP}
 .else
 MASTER_SITES:=	${MASTER_SITE_OVERRIDE} ${MASTER_SITES}
 PATCH_SITES:=	${MASTER_SITE_OVERRIDE} ${PATCH_SITES}
@@ -435,13 +519,46 @@ FETCH_BEFORE_ARGS+=	-l
 DISTFILES?=		${DISTNAME}${EXTRACT_SUFX}
 PKGNAME?=		${DISTNAME}
 
+ALLFILES?=	${DISTFILES} ${PATCHFILES}
+
+.if defined(IGNOREFILES)
+CKSUMFILES!=	\
+	for file in ${ALLFILES}; do \
+		ignore=0; \
+		for tmp in ${IGNOREFILES}; do \
+			if [ "$$file" = "$$tmp" ]; then \
+				ignore=1; \
+			fi; \
+		done; \
+		if [ "$$ignore" = 0 ]; then \
+			echo "$$file"; \
+		fi; \
+	done
+.else
+CKSUMFILES=		${ALLFILES}
+.endif
+
+# List of all files, with ${DIST_SUBDIR} in front.  Used for checksum.
+.if defined(DIST_SUBDIR)
+_CKSUMFILES?=	${CKSUMFILES:S/^/${DIST_SUBDIR}\//}
+_IGNOREFILES?=	${IGNOREFILES:S/^/${DIST_SUBDIR}\//}
+.else
+_CKSUMFILES?=	${CKSUMFILES}
+_IGNOREFILES?=	${IGNOREFILES}
+.endif
+
 # This is what is actually going to be extracted, and is overridable
 #  by user.
 EXTRACT_ONLY?=	${DISTFILES}
 
 # Documentation
 MAINTAINER?=	ports@FreeBSD.ORG
-CATEGORIES?=	orphans
+
+.if !defined(CATEGORIES)
+.BEGIN:
+	@${ECHO_MSG} "CATEGORIES is mandatory."
+	@${FALSE}
+.endif
 
 # Note this has to start with a capital letter (or more accurately, it
 #  shouldn't match "[a-z]*"), see the target "delete-package-links" below.
@@ -458,6 +575,38 @@ CONFIGURE_SCRIPT?=	configure
 .if defined(GNU_CONFIGURE)
 CONFIGURE_ARGS+=	--prefix=${PREFIX}
 HAS_CONFIGURE=		yes
+.endif
+
+MANPREFIX?=	${PREFIX}
+
+.for sect in 1 2 3 4 5 6 7 8 9
+MAN${sect}PREFIX?=	${MANPREFIX}
+.endfor
+MANLPREFIX?=	${MANPREFIX}
+MANNPREFIX?=	${MANPREFIX}
+
+MANLANG?=	""	# english only by default
+
+.for lang in ${MANLANG}
+
+.for sect in 1 2 3 4 5 6 7 8 9
+.if defined(MAN${sect})
+_MANPAGES+=	${MAN${sect}:S%^%${MAN${sect}PREFIX}/man/${lang}/man${sect}/%}
+.endif
+.endfor
+
+.if defined(MANL)
+_MANPAGES+=	${MANL:S%^%${MANLPREFIX}/man/${lang}/manl/%}
+.endif
+
+.if defined(MANN)
+_MANPAGES+=	${MANN:S%^%${MANNPREFIX}/man/${lang}/mann/%}
+.endif
+
+.endfor
+
+.if defined(_MANPAGES) && defined(MANCOMPRESSED)
+_MANPAGES:=	${_MANPAGES:S/$/.gz/}
 .endif
 
 .MAIN: all
@@ -483,28 +632,44 @@ HAS_CONFIGURE=		yes
 # Don't build a port if it's broken.
 ################################################################
 
-.if (defined(IS_INTERACTIVE) && defined(BATCH)) || \
-	(!defined(IS_INTERACTIVE) && defined(INTERACTIVE)) || \
-	(defined(REQUIRES_MOTIF) && !defined(HAVE_MOTIF)) || \
-	(defined(NO_CDROM) && defined(FOR_CDROM)) || \
-	(defined(RESTRICTED) && defined(NO_RESTRICTED)) || \
-	defined(BROKEN)
-IGNORE=	yes
+.if (defined(IS_INTERACTIVE) && defined(BATCH))
+IGNORE=	"is an interactive port"
+.elif (!defined(IS_INTERACTIVE) && defined(INTERACTIVE))
+IGNORE=	"is not an interactive port"
+.elif (defined(REQUIRES_MOTIF) && !defined(HAVE_MOTIF))
+IGNORE=	"requires Motif"
+.elif (defined(NO_CDROM) && defined(FOR_CDROM))
+IGNORE=	"may not be placed on a CDROM: ${NO_CDROM}"
+.elif (defined(RESTRICTED) && defined(NO_RESTRICTED))
+IGNORE=	"is restricted: ${RESTRICTED}"
+.elif defined(BROKEN)
+IGNORE=	"is marked as broken: ${BROKEN}"
 .endif
 
 .if defined(IGNORE)
-all:
-	@${DO_NADA}
-build:
-	@${DO_NADA}
-install:
-	@${DO_NADA}
+.if defined(IGNORE_SILENT)
+IGNORECMD=	${DO_NADA}
+.else
+IGNORECMD=	${ECHO_MSG} "===>  ${PKGNAME} ${IGNORE}."
+.endif
 fetch:
-	@${DO_NADA}
+	@${IGNORECMD}
+checksum:
+	@${IGNORECMD}
+extract:
+	@${IGNORECMD}
+patch:
+	@${IGNORECMD}
 configure:
-	@${DO_NADA}
+	@${IGNORECMD}
+all:
+	@${IGNORECMD}
+build:
+	@${IGNORECMD}
+install:
+	@${IGNORECMD}
 package:
-	@${DO_NADA}
+	@${IGNORECMD}
 .endif
 
 .if defined(ALL_HOOK)
@@ -539,6 +704,12 @@ is_depended:	${IS_DEPENDED_TARGET}
 # override from an individual Makefile.
 ################################################################
 
+# Disable checksum
+.if defined(NO_CHECKSUM) && !target(checksum)
+checksum: fetch
+	@${DO_NADA}
+.endif
+
 # Disable extract
 .if defined(NO_EXTRACT) && !target(extract)
 extract: checksum
@@ -549,16 +720,16 @@ makesum:
 	@${DO_NADA}
 .endif
 
+# Disable patch
+.if defined(NO_PATCH) && !target(patch)
+patch: extract
+	@${TOUCH} ${TOUCH_FLAGS} ${PATCH_COOKIE}
+.endif
+
 # Disable configure
 .if defined(NO_CONFIGURE) && !target(configure)
 configure: patch
 	@${TOUCH} ${TOUCH_FLAGS} ${CONFIGURE_COOKIE}
-.endif
-
-# Disable describe
-.if defined(NO_DESCRIBE) && !target(describe)
-describe:
-	@${DO_NADA}
 .endif
 
 # Disable build
@@ -567,22 +738,26 @@ build: configure
 	@${TOUCH} ${TOUCH_FLAGS} ${BUILD_COOKIE}
 .endif
 
-# Disable package
-.if defined(NO_PACKAGE) && !target(package)
-package:
-	@${DO_NADA}
-.endif
-
 # Disable install
 .if defined(NO_INSTALL) && !target(install)
 install: build
 	@${TOUCH} ${TOUCH_FLAGS} ${INSTALL_COOKIE}
 .endif
 
-# Disable patch
-.if defined(NO_PATCH) && !target(patch)
-patch: extract
-	@${TOUCH} ${TOUCH_FLAGS} ${PATCH_COOKIE}
+# Disable package
+.if defined(NO_PACKAGE) && !target(package)
+package:
+.if defined(IGNORE_SILENT)
+	@${DO_NADA}
+.else
+	@${ECHO_MSG} "===>  ${PKGNAME} may not be packaged: ${NO_PACKAGE}."
+.endif
+.endif
+
+# Disable describe
+.if defined(NO_DESCRIBE) && !target(describe)
+describe:
+	@${DO_NADA}
 .endif
 
 ################################################################
@@ -597,12 +772,12 @@ patch: extract
 
 .if !target(do-fetch)
 do-fetch:
-	@if [ ! -d ${DISTDIR} ]; then ${MKDIR} -p ${DISTDIR}; fi
-	@(cd ${DISTDIR}; \
+	@${MKDIR} ${_DISTDIR}
+	@(cd ${_DISTDIR}; \
 	 for file in ${DISTFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
 			if [ -h $$file -o -h `${BASENAME} $$file` ]; then \
-				${ECHO_MSG} ">> ${DISTDIR}/$$file is a broken symlink."; \
+				${ECHO_MSG} ">> ${_DISTDIR}/$$file is a broken symlink."; \
 				${ECHO_MSG} ">> Perhaps a filesystem (most likely a CD) isn't mounted?"; \
 				${ECHO_MSG} ">> Please correct this problem and try again."; \
 				exit 1; \
@@ -615,17 +790,16 @@ do-fetch:
 				fi \
 			done; \
 			${ECHO_MSG} ">> Couldn't fetch it - please try to retrieve this";\
-			${ECHO_MSG} ">> port manually into ${DISTDIR} and try again."; \
+			${ECHO_MSG} ">> port manually into ${_DISTDIR} and try again."; \
 			exit 1; \
 	    fi \
 	 done)
 .if defined(PATCHFILES)
-	@if [ ! -d ${DISTDIR} ]; then ${MKDIR} -p ${DISTDIR}; fi
-	@(cd ${DISTDIR}; \
+	@(cd ${_DISTDIR}; \
 	 for file in ${PATCHFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
 			if [ -h $$file -o -h `${BASENAME} $$file` ]; then \
-				${ECHO_MSG} ">> ${DISTDIR}/$$file is a broken symlink."; \
+				${ECHO_MSG} ">> ${_DISTDIR}/$$file is a broken symlink."; \
 				${ECHO_MSG} ">> Perhaps a filesystem (most likely a CD) isn't mounted?"; \
 				${ECHO_MSG} ">> Please correct this problem and try again."; \
 				exit 1; \
@@ -638,7 +812,7 @@ do-fetch:
 				fi \
 			done; \
 			${ECHO_MSG} ">> Couldn't fetch it - please try to retrieve this";\
-			${ECHO_MSG} ">> port manually into ${DISTDIR} and try again."; \
+			${ECHO_MSG} ">> port manually into ${_DISTDIR} and try again."; \
 			exit 1; \
 	    fi \
 	 done)
@@ -651,10 +825,10 @@ do-fetch:
 do-extract:
 .if !defined(NO_WRKDIR)
 	@${RM} -rf ${WRKDIR}
-	@${MKDIR} -p ${WRKDIR}
+	@${MKDIR} ${WRKDIR}
 .endif
 	@for file in ${EXTRACT_ONLY}; do \
-		if !(cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
+		if !(cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${_DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
 		then \
 			exit 1; \
 		fi \
@@ -667,7 +841,7 @@ do-extract:
 do-patch:
 .if defined(PATCHFILES)
 	@${ECHO_MSG} "===>  Applying distribution patches for ${PKGNAME}"
-	@(cd ${DISTDIR}; \
+	@(cd ${_DISTDIR}; \
 	  for i in ${PATCHFILES}; do \
 		if [ ${PATCH_DEBUG_TMP} = yes ]; then \
 			${ECHO_MSG} "===>   Applying distribution patch $$i" ; \
@@ -689,7 +863,7 @@ do-patch:
 				${ECHO_MSG} "===>   Perhaps you forgot the -P flag to cvs co or update?"; \
 			fi; \
 		else \
-			${ECHO_MSG} "===>  Applying FreeBSD patches for ${PKGNAME}" ; \
+			${ECHO_MSG} "===>  Applying ${OPSYS} patches for ${PKGNAME}" ; \
 			for i in ${PATCHDIR}/patch-*; do \
 				case $$i in \
 					*.orig|*~) \
@@ -697,7 +871,7 @@ do-patch:
 						;; \
 					*) \
 						if [ ${PATCH_DEBUG_TMP} = yes ]; then \
-							${ECHO_MSG} "===>   Applying FreeBSD patch $$i" ; \
+							${ECHO_MSG} "===>   Applying ${OPSYS} patch $$i" ; \
 						fi; \
 						${PATCH} ${PATCH_ARGS} < $$i; \
 						;; \
@@ -745,9 +919,9 @@ do-build:
 .if !target(do-install)
 do-install:
 	@if [ `/bin/sh -c umask` != 0022 ]; then \
-		${ECHO_MSG} "===> Warning: your umask is \"`/bin/sh -c umask`"\".; \
-		${ECHO_MSG} "     If this is not desired, set it to an appropriate value"; \
-		${ECHO_MSG} "     and install this port again by \`\`make reinstall''."; \
+		${ECHO_MSG} "===>  Warning: your umask is \"`/bin/sh -c umask`"\".; \
+		${ECHO_MSG} "      If this is not desired, set it to an appropriate value"; \
+		${ECHO_MSG} "      and install this port again by \`\`make reinstall''."; \
 	fi
 .if defined(USE_GMAKE)
 	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
@@ -770,7 +944,7 @@ do-package:
 		${ECHO_MSG} "===>  Building package for ${PKGNAME}"; \
 		if [ -d ${PACKAGES} ]; then \
 			if [ ! -d ${PKGREPOSITORY} ]; then \
-				if ! ${MKDIR} -p ${PKGREPOSITORY}; then \
+				if ! ${MKDIR} ${PKGREPOSITORY}; then \
 					${ECHO_MSG} ">> Can't create directory ${PKGREPOSITORY}."; \
 					exit 1; \
 				fi; \
@@ -794,7 +968,7 @@ package-links:
 	@${MAKE} ${.MAKEFLAGS} delete-package-links
 	@for cat in ${CATEGORIES}; do \
 		if [ ! -d ${PACKAGES}/$$cat ]; then \
-			if ! ${MKDIR} -p ${PACKAGES}/$$cat; then \
+			if ! ${MKDIR} ${PACKAGES}/$$cat; then \
 				${ECHO_MSG} ">> Can't create directory ${PACKAGES}/$$cat."; \
 				exit 1; \
 			fi; \
@@ -827,7 +1001,7 @@ _PORT_USE: .USE
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} build-depends lib-depends misc-depends
 .endif
 .if make(real-install)
-	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} run-depends
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} run-depends lib-depends
 .endif
 .if make(real-install)
 .if !defined(NO_MTREE)
@@ -857,7 +1031,20 @@ _PORT_USE: .USE
 		  X11BASE=${X11BASE} \
 			/bin/sh ${SCRIPTDIR}/${.TARGET:S/^real-/post-/}; \
 	fi
-.if make(real-install)  && !defined(NO_PKG_REGISTER)
+.if make(real-install) && defined(_MANPAGES)
+.if defined(MANCOMPRESSED) && defined(NOMANCOMPRESS)
+	@${ECHO_MSG} "===>   Uncompressing manual pages for ${PKGNAME}"
+.for manpage in ${_MANPAGES}
+	@${GUNZIP_CMD} ${manpage}
+.endfor
+.elif !defined(MANCOMPRESSED) && !defined(NOMANCOMPRESS)
+	@${ECHO_MSG} "===>   Compressing manual pages for ${PKGNAME}"
+.for manpage in ${_MANPAGES}
+	@${GZIP_CMD} ${manpage}
+.endfor
+.endif
+.endif
+.if make(real-install) && !defined(NO_PKG_REGISTER)
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} fake-pkg
 .endif
 .if !make(real-fetch) \
@@ -983,11 +1170,35 @@ pre-clean:
 
 .if !target(clean)
 clean: pre-clean
+.if !defined(NOCLEANDEPENDS)
+	@${MAKE} clean-depends
+.endif
 	@${ECHO_MSG} "===>  Cleaning for ${PKGNAME}"
 .if !defined(NO_WRKDIR)
-	@${RM} -rf ${WRKDIR}
+	@if [ -d ${WRKDIR} ]; then \
+		if [ -w ${WRKDIR} ]; then \
+			${RM} -rf ${WRKDIR}; \
+		else \
+			${ECHO_MSG} "===>   ${WRKDIR} not writable, skipping"; \
+		fi; \
+	fi
 .else
 	@${RM} -f ${WRKDIR}/.*_done
+.endif
+.endif
+
+.if !target(pre-distclean)
+pre-distclean:
+	@${DO_NADA}
+.endif
+
+.if !target(distclean)
+distclean: pre-distclean clean
+	@${ECHO_MSG} "===>  Dist cleaning for ${PKGNAME}"
+	@(cd ${_DISTDIR}; \
+	${RM} -f ${DISTFILES} ${PATCHFILES})
+.if defined(DIST_SUBDIR)
+	@${RMDIR} ${_DISTDIR}  
 .endif
 .endif
 
@@ -995,8 +1206,8 @@ clean: pre-clean
 
 .if !target(fetch-list)
 fetch-list:
-	@if [ ! -d ${DISTDIR} ]; then ${MKDIR} -p ${DISTDIR}; fi
-	@(cd ${DISTDIR}; \
+	@${MKDIR} ${_DISTDIR}
+	@(cd ${_DISTDIR}; \
 	 for file in ${DISTFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
 			for site in ${MASTER_SITES}; do \
@@ -1007,7 +1218,7 @@ fetch-list:
 		fi \
 	done)
 .if defined(PATCHFILES)
-	@(cd ${DISTDIR}; \
+	@(cd ${_DISTDIR}; \
 	 for file in ${PATCHFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
 			for site in ${PATCH_SITES}; do \
@@ -1024,12 +1235,15 @@ fetch-list:
 
 .if !target(makesum)
 makesum: fetch
-	@if [ ! -d ${FILESDIR} ]; then ${MKDIR} -p ${FILESDIR}; fi
+	@${MKDIR} ${FILESDIR}
 	@if [ -f ${MD5_FILE} ]; then ${RM} -f ${MD5_FILE}; fi
 	@(cd ${DISTDIR}; \
-	 for file in ${DISTFILES} ${PATCHFILES}; do \
+	 for file in ${_CKSUMFILES}; do \
 		${MD5} $$file >> ${MD5_FILE}; \
 	 done)
+	@for file in ${_IGNOREFILES}; do \
+		${ECHO} "MD5 ($$file) = IGNORE" >> ${MD5_FILE}; \
+	done
 .endif
 
 .if !target(checksum)
@@ -1037,22 +1251,38 @@ checksum: fetch
 	@if [ ! -f ${MD5_FILE} ]; then \
 		${ECHO_MSG} ">> No MD5 checksum file."; \
 	else \
-		(cd ${DISTDIR}; OK=""; \
-		  for file in ${DISTFILES} ${PATCHFILES}; do \
+		(cd ${DISTDIR}; OK="true"; \
+		  for file in ${_CKSUMFILES}; do \
 			CKSUM=`${MD5} < $$file`; \
 			CKSUM2=`${GREP} "($$file)" ${MD5_FILE} | ${AWK} '{print $$4}'`; \
 			if [ "$$CKSUM2" = "" ]; then \
-				${ECHO_MSG} ">> No checksum recorded for $$file"; \
+				${ECHO_MSG} ">> No checksum recorded for $$file."; \
+				OK="false"; \
+			elif [ "$$CKSUM2" = "IGNORE" ]; then \
+				${ECHO_MSG} ">> Checksum for $$file is set to IGNORE in md5 file even though"; \
+				${ECHO_MSG} "   the file is not in the "'$$'"{IGNOREFILES} list."; \
 				OK="false"; \
 			elif [ "$$CKSUM" != "$$CKSUM2" ]; then \
-				${ECHO_MSG} ">> Checksum mismatch for $$file"; \
+				${ECHO_MSG} ">> Checksum mismatch for $$file."; \
 				exit 1; \
 			fi; \
 		  done; \
-		  if [ "$$OK" = "" ]; then \
+		  for file in ${_IGNOREFILES}; do \
+			CKSUM2=`${GREP} "($$file)" ${MD5_FILE} | ${AWK} '{print $$4}'`; \
+			if [ "$$CKSUM2" = "" ]; then \
+				${ECHO_MSG} ">> No checksum recorded for $$file, file is in "'$$'"{IGNOREFILES} list."; \
+				OK="false"; \
+			elif [ "$$CKSUM2" != "IGNORE" ]; then \
+				${ECHO_MSG} ">> Checksum for $$file is not set to IGNORE in md5 file even though"; \
+				${ECHO_MSG} "   the file is in the "'$$'"{IGNOREFILES} list."; \
+				OK="false"; \
+			fi; \
+		  done; \
+		  if [ "$$OK" = "true" ]; then \
 			${ECHO_MSG} "Checksums OK."; \
 		  else \
-			${ECHO_MSG} "Checksums OK for files that have them."; \
+			${ECHO_MSG} "There may be some inconsistencies, make sure the Makefile and md5 file"; \
+			${ECHO_MSG} "(\"${MD5_FILE}\") are up to date."; \
 		  fi) ; \
 	fi
 .endif
@@ -1144,7 +1374,7 @@ _DEPENDS_USE:	.USE
 				notfound=1; \
 			fi; \
 		else \
-			if which -s "$$prog"; then \
+			if which "$$prog" > /dev/null 2>&1 ; then \
 				${ECHO_MSG} "===>  ${PKGNAME} depends on executable: $$prog - found"; \
 				notfound=0; \
 			else \
@@ -1222,11 +1452,30 @@ misc-depends:
 
 .endif
 
+.if !target(clean-depends)
+clean-depends:
+.if defined(FETCH_DEPENDS) || defined(BUILD_DEPENDS) || defined(LIB_DEPENDS) \
+	|| defined(RUN_DEPENDS)
+	@for i in ${FETCH_DEPENDS} ${BUILD_DEPENDS} ${LIB_DEPENDS} ${RUN_DEPENDS}; do \
+		dir=`${ECHO} $$i | ${SED} -e 's/.*://'`; \
+		if [ -d $$dir ] ; then (cd $$dir; ${MAKE} clean); fi \
+	done
+.endif
+.if defined(DEPENDS)
+	@for dir in ${DEPENDS}; do \
+		if [ -d $$dir ] ; then (cd $$dir; ${MAKE} clean); fi \
+	done
+.endif
+.endif
+
 .if !target(depends-list)
 depends-list:
-	@for i in ${FETCH_DEPENDS} ${BUILD_DEPENDS} ${LIB_DEPENDS} ${DEPENDS}; do \
+	@for i in ${FETCH_DEPENDS} ${BUILD_DEPENDS} ${LIB_DEPENDS}; do \
 		dir=`${ECHO} $$i | ${SED} -e 's/.*://'`; \
-		(cd $$dir ; ${MAKE} package-name depends-list); \
+		(cd $$dir; ${MAKE} package-name depends-list); \
+	done
+	@for dir in ${DEPENDS}; do \
+		(cd $$dir; ${MAKE} package-name depends-list); \
 	done
 .endif
 
@@ -1256,9 +1505,9 @@ describe:
 		${ECHO} -n "|/dev/null"; \
 	fi
 	@${ECHO} -n "|${MAINTAINER}|${CATEGORIES}|"
-	@cd ${.CURDIR} && ${ECHO} -n `make depends-list|sort|uniq`
+	@cd ${.CURDIR} && ${ECHO} -n `make depends-list|sort -u`
 	@${ECHO} -n "|"
-	@cd ${.CURDIR} && ${ECHO} -n `make package-depends|sort|uniq`
+	@cd ${.CURDIR} && ${ECHO} -n `make package-depends|sort -u`
 	@${ECHO} ""
 .endif
 
@@ -1288,7 +1537,7 @@ print-depends-list:
 .if defined(FETCH_DEPENDS) || defined(BUILD_DEPENDS) || \
 	defined(LIB_DEPENDS) || defined(DEPENDS)
 	@${ECHO} -n 'This port requires package(s) "'
-	@${ECHO} -n `make depends-list | sort | uniq`
+	@${ECHO} -n `make depends-list | sort -u`
 	@${ECHO} '" to build.'
 .endif
 .endif
@@ -1297,7 +1546,7 @@ print-depends-list:
 print-package-depends:
 .if defined(RUN_DEPENDS) || defined(LIB_DEPENDS) || defined(DEPENDS)
 	@${ECHO} -n 'This port requires package(s) "'
-	@${ECHO} -n `make package-depends | sort | uniq`
+	@${ECHO} -n `make package-depends | sort -u`
 	@${ECHO} '" to run.'
 .endif
 .endif
@@ -1309,13 +1558,13 @@ print-package-depends:
 .if !target(fake-pkg)
 fake-pkg:
 	@if [ ! -f ${PKGDIR}/PLIST -o ! -f ${PKGDIR}/COMMENT -o ! -f ${PKGDIR}/DESCR ]; then ${ECHO} "** Missing package files for ${PKGNAME} - installation not recorded."; exit 1; fi
-	@if [ ! -d ${PKG_DBDIR} ]; then ${RM} -f ${PKG_DBDIR}; ${MKDIR} -p ${PKG_DBDIR}; fi
+	@if [ ! -d ${PKG_DBDIR} ]; then ${RM} -f ${PKG_DBDIR}; ${MKDIR} ${PKG_DBDIR}; fi
 .if defined(FORCE_PKG_REGISTER)
 	@${RM} -rf ${PKG_DBDIR}/${PKGNAME}
 .endif
 	@if [ ! -d ${PKG_DBDIR}/${PKGNAME} ]; then \
 		${ECHO_MSG} "===>  Registering installation for ${PKGNAME}"; \
-		${MKDIR} -p ${PKG_DBDIR}/${PKGNAME}; \
+		${MKDIR} ${PKG_DBDIR}/${PKGNAME}; \
 		${PKG_CMD} ${PKG_ARGS} -O ${PKGFILE} > ${PKG_DBDIR}/${PKGNAME}/+CONTENTS; \
 		${CP} ${PKGDIR}/DESCR ${PKG_DBDIR}/${PKGNAME}/+DESC; \
 		${CP} ${PKGDIR}/COMMENT ${PKG_DBDIR}/${PKGNAME}/+COMMENT; \
@@ -1329,9 +1578,9 @@ fake-pkg:
 			${CP} ${PKGDIR}/REQ ${PKG_DBDIR}/${PKGNAME}/+REQ; \
 		fi; \
 	else \
-		${ECHO_MSG} "===> ${PKGNAME} is already installed - perhaps an older version?"; \
-		${ECHO_MSG} "     If so, you may wish to \`\`pkg_delete ${PKGNAME}'' and install"; \
-		${ECHO_MSG} "     this port again by \`\`make reinstall'' to upgrade it properly."; \
+		${ECHO_MSG} "===>  ${PKGNAME} is already installed - perhaps an older version?"; \
+		${ECHO_MSG} "      If so, you may wish to \`\`pkg_delete ${PKGNAME}'' and install"; \
+		${ECHO_MSG} "      this port again by \`\`make reinstall'' to upgrade it properly."; \
 	fi
 .endif
 
