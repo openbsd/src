@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.3 1996/08/01 05:26:03 tholo Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.4 1996/10/26 03:13:52 tholo Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #define	_POSIX_SAVED_IDS	/* saved set-user-ID and set-group-ID */
 
-#define	_POSIX_VERSION		198808L
+#define	_POSIX_VERSION		199009L
 #define	_POSIX2_VERSION		199212L
 
 /* execution-time symbolic constants */
@@ -53,7 +53,7 @@
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
-#define	_POSIX_VDISABLE		((unsigned char)'\377')
+#define	_POSIX_VDISABLE		'\377'
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
