@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.127 1999/08/15 09:53:36 millert Exp $
+#	$OpenBSD: install.sub,v 1.128 1999/09/23 18:57:39 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -69,7 +69,7 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=				# filled in below
-VERSION=24
+VERSION=26
 VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
