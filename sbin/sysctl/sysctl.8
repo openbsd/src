@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.69 2001/11/06 21:52:26 miod Exp $
+.\"	$OpenBSD: sysctl.8,v 1.70 2001/12/06 20:37:16 ericj Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -260,6 +260,9 @@ privilege can change the value.
 .It hw.disknames	string	no
 .It hw.diskcount	integer	no
 .It machdep.console_device	dev_t	no
+.It machdep.unaligned_print	integer	yes (alpha only)
+.It machdep.unaligned_fix	integer	yes (alpha only)
+.It machdep.unaligned_sigbus	integer	yes (alpha only)
 .It machdep.apmwarn	integer	yes (i386 only)
 .It machdep.apmhalt	integer	yes (i386 only)
 .It machdep.kbdreset	integer	yes (i386 only)
