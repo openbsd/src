@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.4 2000/01/08 01:39:24 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.5 2000/01/11 08:26:45 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -89,6 +89,10 @@
 
 #include <net/if_gre.h>
 
+#ifndef GRE_RECURSION_LIMIT
+#define GRE_RECURSION_LIMIT	3   /* How many levels of recursion allowed */
+#endif /* GRE_RECURSION_LIMIT */
+
 #define GREMTU 1450	/* XXX this is below the standard MTU of
                          1500 Bytes, allowing for headers, 
                          but we should possibly do path mtu discovery
@@ -102,7 +106,7 @@ struct gre_softc gre_softc[NGRE];
 /*
  * We can control the acceptance of GRE and MobileIP packets by
  * altering the sysctl net.inet.gre.allow and net.inet.mobileip.allow values
- * respectively.  Zero means drop them, all else is acceptance.
+ * respectively. Zero means drop them, all else is acceptance.
  */
 int gre_allow = 0;
 int ip_mobile_allow = 0;
@@ -159,6 +163,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	u_char ttl = 255;
 	u_short etype = 0;
 	struct mobile_h mob_h;
+	static int recursions = 0;	/* XXX MUTEX */
+
+	/* Try to limit infinite recursion through misconfiguration */
+	if (++recursions >= GRE_RECURSION_LIMIT) {
+		IF_DROP(&ifp->if_snd);
+		m_freem(m);
+		recursions = 0;
+		return (EIO);	/* Use the same as in if_gif.c */
+	}
 
 #if NBPFILTER >0
 	if (ifp->if_bpf)
@@ -169,6 +182,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	        if (ip_mobile_allow == 0) {
 		        IF_DROP(&ifp->if_snd);
 			m_freem(m);
+			recursions = 0;
 			return (EACCES);
 		}
 
@@ -185,6 +199,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			        m = m_pullup(m, sizeof(struct ip));
 			        if (m == 0) {
 					IF_DROP(&ifp->if_snd);
+					recursions = 0;
 					return (ENOBUFS);
 				}
 				else
@@ -195,6 +210,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 						     sizeof(inp->ip_hl << 2));
 					if (m == 0) {
 					        IF_DROP(&ifp->if_snd);
+						recursions = 0;
 						return (ENOBUFS);
 					}
 				}
@@ -231,6 +247,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				if (m0 == NULL) {
 					IF_DROP(&ifp->if_snd);
 					m_freem(m);
+					recursions = 0;
 					return (ENOBUFS);
 				}
 
@@ -261,12 +278,14 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		} else {  /* AF_INET */
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
+			recursions = 0;
 			return (EINVAL);
 		}
 	} else if (sc->g_proto == IPPROTO_GRE) {
 	        if (gre_allow == 0) {
 		        IF_DROP(&ifp->if_snd);
 			m_freem(m);
+			recursions = 0;
 			return (EACCES);
 		}
 
@@ -276,6 +295,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			        m = m_pullup(m, sizeof(struct ip));
 				if (m == 0) {
 				        IF_DROP(&ifp->if_snd);
+					recursions = 0;
 					return (ENOBUFS);
 				}
 			}
@@ -297,6 +317,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		default:
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
+			recursions = 0;
 			return (EAFNOSUPPORT);
 		}
 
@@ -305,11 +326,13 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		error = EINVAL;
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
+		recursions = 0;
 		return (error);
 	}
 			
 	if (m == NULL) {
 		IF_DROP(&ifp->if_snd);
+		recursions = 0;
 		return (ENOBUFS);
 	}
 
@@ -338,6 +361,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	error = ip_output(m, NULL, &sc->route, 0, NULL, NULL);
 	if (error)
 		ifp->if_oerrors++;
+	recursions = 0;
 	return (error);
 }
 
@@ -377,6 +401,12 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				}
 
 				gre_compute_route(sc);
+				if (sc->route.ro_rt == 0) {
+					sc->g_src.s_addr = INADDR_ANY;
+					sc->g_dst.s_addr = INADDR_ANY;
+					return EIO; /* Is this is good ? */
+				}
+
 				ifp->if_flags |= IFF_UP;
 			}
 		}
@@ -461,6 +491,12 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 
 			gre_compute_route(sc);
+			if (sc->route.ro_rt == 0)
+			{
+				sc->g_src.s_addr = INADDR_ANY;
+				sc->g_dst.s_addr = INADDR_ANY;
+				return EIO; /* Is this is good ? */
+			}
 			ifp->if_flags |= IFF_UP;
 		}
 		break;
@@ -525,6 +561,17 @@ gre_compute_route(struct gre_softc *sc)
 	rtalloc(ro);
 	if (ro->ro_rt == 0)
 		return;
+
+	/*
+	 * Check whether we just created a loop. An even more paranoid
+	 * check would be against all GRE interfaces, but that would
+	 * not allow people to link GRE tunnels.
+	 */
+	if (ro->ro_rt->rt_ifp == &sc->sc_if) {
+                RTFREE(ro->ro_rt);
+                ro->ro_rt = (struct rtentry *) 0;
+		return;
+	}
 
 	/*
 	 * now change it back - else ip_output will just drop 
