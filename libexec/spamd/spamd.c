@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.46 2003/09/26 01:58:55 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.47 2003/09/26 04:42:11 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -1013,11 +1013,9 @@ main(int argc, char *argv[])
 		if (FD_ISSET(s, fdsr)) {
 			sinlen = sizeof(sin);
 			s2 = accept(s, (struct sockaddr *)&sin, &sinlen);
-			if (s2 == -1) {
-				if (errno == EINTR)
-					continue;
-				err(1, "accept");
-			}
+			if (s2 == -1)
+				/* accept failed, they may try again */
+				continue;
 			for (i = 0; i < maxcon; i++)
 				if (con[i].fd == -1)
 					break;
@@ -1033,11 +1031,10 @@ main(int argc, char *argv[])
 			sinlen = sizeof(lin);
 			conffd = accept(conflisten, (struct sockaddr *)&lin,
 			    &sinlen);
-			if (conffd == -1) {
-				if (errno == EINTR)
-					continue;
-				err(1, "accept");
-			} else if (ntohs(lin.sin_port) >= IPPORT_RESERVED) {
+			if (conffd == -1) 
+				/* accept failed, they may try again */
+				continue;
+			else if (ntohs(lin.sin_port) >= IPPORT_RESERVED) {
 				close(conffd);
 				conffd = -1;
 			}
