@@ -1,5 +1,5 @@
-/*	$OpenBSD: mkheaders.c,v 1.7 1997/08/07 10:22:26 downsj Exp $	*/
-/*	$NetBSD: mkheaders.c,v 1.15 1997/07/18 11:27:37 jtk Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.8 1997/08/07 10:36:58 deraadt Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,12 +54,9 @@
 #include "config.h"
 
 static int emitcnt __P((struct nvlist *));
-static int emitlocs __P((void));
 static int emitopt __P((struct nvlist *));
 static int err __P((const char *, char *, FILE *));
-static int locators_print __P((const char *, void *, void *));
 static char *cntname __P((const char *));
-
 
 /*
  * Make headers containing counts, as needed.
@@ -81,9 +78,6 @@ mkheaders()
 	for (nv = defoptions; nv != NULL; nv = nv->nv_next)
 		if (emitopt(nv))
 			return (1);
-
-	if (emitlocs())
-		return (1);
 
 	return (0);
 }
@@ -186,128 +180,6 @@ writeit:
 		return (err("writ", fname, fp));
 	if (fclose(fp))
 		return (err("writ", fname, fp));
-	return (0);
-}
-
-/*
- * A callback function for walking the attribute hash table.
- * Emit CPP definitions of manifest constants for the locators on the
- * "name" attribute node (passed as the "value" parameter).
- */
-static int
-locators_print(name, value, arg)
-	const char *name;
-	void *value;
-	void *arg;
-{
-	struct attr *a;
-	register struct nvlist *nv;
-	register int i;
-	char *locdup, *namedup;
-	register char *cp;
-	FILE *fp = arg;
-
-	a = value;
-	if (a->a_locs) {
-		if (strchr(name, ' ') != NULL || strchr(name, '\t') != NULL)
-			/*
-			 * name contains a space; we can't generate
-			 * usable defines, so ignore it.
-			 */
-			return 0;
-		locdup = strdup(name);
-		for (cp = locdup; *cp; cp++)
-			if (islower(*cp))
-				*cp = toupper(*cp);
-		if (fprintf(fp, "extern const char *%scf_locnames[];\n",
-			    name) < 0)
-			return 1;
-		for (i = 0, nv = a->a_locs; nv; nv = nv->nv_next, i++) {
-			if (strchr(nv->nv_name, ' ') != NULL ||
-			    strchr(nv->nv_name, '\t') != NULL)
-				/*
-				 * name contains a space; we can't generate
-				 * usable defines, so ignore it.
-				 */
-				continue;
-			namedup = strdup(nv->nv_name);
-			for (cp = namedup; *cp; cp++)
-				if (islower(*cp))
-					*cp = toupper(*cp);
-			if (fprintf(fp, "#define %sCF_%s %d\n",
-				    locdup, namedup, i) < 0)
-				return 1;
-			if (nv->nv_str &&
-			    fprintf(fp,
-				    "#define %sCF_%s_DEFAULT %s\n",
-				    locdup, namedup, nv->nv_str) < 0)
-				return 1;
-			free(namedup);
-		}
-		free(locdup);
-	}
-	return 0;
-}
-
-/*
- * Build the "locators.h" file with manifest constants for all potential
- * locators in the configuration.  Do this by enumerating the attribute
- * hash table and emitting all the locators for each attribute.
- */
-static int
-emitlocs()
-{
-	struct nvlist *option;
-	char nbuf[BUFSIZ], obuf[BUFSIZ];
-	char *tfname, *nfname;
-	const char *n;
-	int count, rval;
-	FILE *tfp = NULL, *nfp = NULL;
-	
-	tfname = "tmp_locators.h";
-	if ((tfp = fopen(tfname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    tfname, strerror(errno));
-		return (1);
-	}
-
-	rval = ht_enumerate(attrtab, locators_print, tfp);
-	if (fclose(tfp) == EOF)
-		return(err("clos", tfname, NULL));
-
-	if ((tfp = fopen(tfname, "r")) == NULL)
-		goto moveit;
-
-	/*
-	 * Compare the new file to the old.
-	 */
-	nfname = "locators.h";
-	if ((nfp = fopen(nfname, "r")) == NULL)
-		goto moveit;
-
-	while (fgets(obuf, sizeof(obuf), tfp) != NULL) {
-		if (fgets(nbuf, sizeof(nbuf), nfp) == NULL)
-			goto moveit;
-
-		if (strcmp(obuf, nbuf) != 0)
-			goto moveit;
-	}
-	(void) fclose(nfp);
-	(void) fclose(tfp);
-	if (remove(tfname) == -1)
-		return(err("remov", tfname, NULL));
-	return (0);
-
-moveit:
-	/*
-	 * They're different, or the file doesn't exist.
-	 */
-	if (nfp)
-		(void) fclose(nfp);
-	if (tfp)
-		(void) fclose(tfp);
-	if (rename(tfname, nfname) == -1)
-		return(err("renam", tfname, NULL));
 	return (0);
 }
 
