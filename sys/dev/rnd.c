@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.71 2004/07/05 20:57:50 millert Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.72 2004/07/06 21:24:36 mickey Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -965,7 +965,7 @@ randomread(dev, uio, ioflag)
 	if (uio->uio_resid == 0)
 		return 0;
 
-	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
+	MALLOC(buf, u_int32_t *, POOLBYTES, M_TEMP, M_WAITOK);
 
 	while (!ret && uio->uio_resid > 0) {
 		int	n = min(POOLBYTES, uio->uio_resid);
@@ -1031,7 +1031,7 @@ randomread(dev, uio, ioflag)
 			ret = uiomove((caddr_t)buf, n, uio);
 	}
 
-	free(buf, M_TEMP);
+	FREE(buf, M_TEMP);
 	return ret;
 }
 
@@ -1134,7 +1134,7 @@ randomwrite(dev, uio, flags)
 	if (uio->uio_resid == 0)
 		return 0;
 
-	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
+	MALLOC(buf, u_int32_t *, POOLBYTES, M_TEMP, M_WAITOK);
 
 	while (!ret && uio->uio_resid > 0) {
 		u_short	n = min(POOLBYTES, uio->uio_resid);
@@ -1150,7 +1150,7 @@ randomwrite(dev, uio, flags)
 	if (minor(dev) == RND_ARND && !ret)
 		arc4random_initialized = 0;
 
-	free(buf, M_TEMP);
+	FREE(buf, M_TEMP);
 	return ret;
 }
 
