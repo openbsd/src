@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.181 2002/11/04 22:46:28 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.182 2002/11/07 17:47:33 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2916,6 +2916,14 @@ host(char *s, int mask)
 	int bits, error, v4mask, v6mask;
 	char *buf;
 
+	if (ifa_exists(s) || !strncmp(s, "self", IFNAMSIZ)) {
+		/* interface with this name exists */
+		h = ifa_lookup(s, PFCTL_IFLOOKUP_HOST);
+		if (h != NULL && mask > -1)
+			set_ipmask(h, mask);
+		return (h);
+	}
+
 	if (mask == -1) {
 		if (asprintf(&buf, "%s", s) == -1)
 			err(1, "host: malloc");
@@ -2928,14 +2936,6 @@ host(char *s, int mask)
 	} else {
 		yyerror("illegal mask");
 		return (NULL);
-	}
-
-	if (ifa_exists(s) || !strncmp(s, "self", IFNAMSIZ)) {
-		/* interface with this name exists */
-		h = ifa_lookup(s, PFCTL_IFLOOKUP_HOST);
-		if (h != NULL && mask > -1)
-			set_ipmask(h, mask);
-		return (h);
 	}
 
 	memset(&ina, 0, sizeof(struct in_addr));
