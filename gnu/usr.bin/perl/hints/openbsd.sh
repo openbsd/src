@@ -101,9 +101,6 @@ $define|true|[yY]*)
 	# any openbsd version dependencies with pthreads?
 	ccflags="-pthread $ccflags"
 	ldflags="-pthread $ldflags"
-	# Add -lpthread.  Also change from -lc to -lc_r
-	libswanted="$libswanted pthread"
-	libswanted=`echo " $libswanted "| sed -e 's/ c / c_r /' -e 's/^ //' -e 's/ $//'`
 	# This is strange.
 	usevfork="$undef"
 esac
