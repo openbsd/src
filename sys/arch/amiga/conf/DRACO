@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.10 1997/09/18 13:39:38 niklas Exp $
+#	$OpenBSD: DRACO,v 1.11 1997/09/19 17:16:16 niklas Exp $
 #	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
@@ -22,10 +22,6 @@ option		DRACO
 
 option		"M68060"	# support for 060
 option		"M060SP"	# MC68060 software support (Required for 060)
-option		FPCOPROC	# Support for MC6888[12] (Required)
-
-option		SWAPPAGER	# Pager for processes (Required)
-option		DEVPAGER	# Pager for devices (Required)
 
 #
 # Networking options

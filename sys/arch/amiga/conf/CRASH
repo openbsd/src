@@ -1,4 +1,4 @@
-#	$OpenBSD: CRASH,v 1.8 1997/03/25 16:53:57 niklas Exp $
+#	$OpenBSD: CRASH,v 1.9 1997/09/19 17:16:15 niklas Exp $
 
 #
 # The first OpenBSD/Amiga "user" Neil Brewitt's GG2 + NE2000 equipped A3000
@@ -18,10 +18,6 @@ options		TIMEZONE=300, DST=1
 #option		FPSP		# MC68040 floating point support
 option		"M68030"	# support for 030
 #option		"M68020"	# support for 020/851
-option		FPCOPROC	# Support for MC6888[12] (Required)
-
-option		SWAPPAGER	# Pager for processes (Required)
-option		DEVPAGER	# Pager for devices (Required)
 
 #
 # Networking options

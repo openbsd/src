@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 1997/09/18 13:39:37 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 1997/09/19 17:16:14 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -642,7 +642,6 @@ trap(type, code, v, frame)
 		v = frame.f_pc;
 		break;
 
-#ifdef FPCOPROC
 	/* 
 	 * User coprocessor violation
 	 */
@@ -678,7 +677,6 @@ trap(type, code, v, frame)
 	 */
 	case T_COPERR:
 		/*FALLTHROUGH*/
-#endif
 
 	/*
 	 * Kernel format error

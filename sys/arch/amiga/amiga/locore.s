@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.23 1997/09/18 13:39:35 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.24 1997/09/19 17:16:12 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -318,7 +318,6 @@ _fpunsupp:
  */
 	.globl	_fpfault
 _fpfault:
-#ifdef FPCOPROC
 	clrl	sp@-		| stack adjust count
 	moveml	#0xFFFF,sp@-	| save user registers
 	movl	usp,a0		| and save
@@ -344,9 +343,6 @@ Lfptnull:
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
 	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
-#else
-	jra	_badtrap	| treat as an unexpected trap
-#endif
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -1007,13 +1003,11 @@ Lunshadow:
 	movl	a2,a1@(PCB_USP)		| and save it
 	movl	a1,_curpcb		| proc0 is running
 	clrw	a1@(PCB_FLAGS)		| clear flags
-#ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
 |WRONG!	movl	a1,sp@-
 |	pea	a1@(PCB_FPCTX)
 |	jbsr	_m68881_restore		| restore it (does not kill a1)
 |	addql	#4,sp
-#endif
 
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
@@ -1311,7 +1305,6 @@ Lsw2:
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
-#ifdef FPCOPROC
 #ifdef FPU_EMULATE
 	tstl	_fputype		| do we have any FPU?
 	jeq	Lswnofpsave		| no, dont save
@@ -1341,7 +1334,6 @@ Lsavfp60:
 	fmovem	fpi,a2@(320)
 #endif
 Lswnofpsave:
-#endif
 
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
@@ -1404,7 +1396,6 @@ Lres5:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
-#ifdef FPCOPROC
 #ifdef FPU_EMULATE
 	tstl	_fputype		| do we _have_ any fpu?
 	jne	Lresnonofpatall
@@ -1444,7 +1435,6 @@ Lresfp60rest2:
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
 #endif
-#endif
 
 /*
  * savectx(pcb)
@@ -1457,7 +1447,6 @@ ENTRY(savectx)
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
-#ifdef FPCOPROC
 #ifdef FPU_EMULATE
 	tstl	_fputype
 	jeq	Lsavedone
@@ -1486,7 +1475,6 @@ Lsavctx60:
 	fmovem	fpcr,a0@(312)		| save FP control registers
 	fmovem	fpsr,a0@(316)
 	fmovem	fpi,a0@(320)
-#endif
 #endif
 Lsavedone:
 	moveq	#0,d0			| return 0
@@ -1919,7 +1907,6 @@ ENTRY(ploadw)
 Lploadw040:				| should 68040 do a ptest?
 	rts
 
-#ifdef FPCOPROC
 /*
  * Save and restore 68881 state.
  * Pretty awful looking since our assembler does not
@@ -1980,7 +1967,6 @@ Lm68060fprestore:
 Lm68060fprdone:
 	frestore a0@			| restore state
 	rts
-#endif
 #endif
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 1997/09/18 13:39:39 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.22 1997/09/19 17:16:17 niklas Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -32,7 +32,6 @@ option		M68040		# support for 040
 option		FPSP		# MC68040 floating point support
 option		M68030		# support for 030
 option		M68020		# support for 020/851
-option		FPCOPROC	# Support for MC6888[12] (Required)
 option		FPU_EMULATE	# FPU emulation
 
 #
