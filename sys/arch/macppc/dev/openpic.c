@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.26 2004/05/08 22:10:12 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.27 2004/06/28 02:49:10 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -190,9 +190,6 @@ fakeintr(void *arg)
 	return 0;
 }
 
-void nameinterrupt( int replace, char *newstr);
-
-
 /*
  * Register an interrupt handler.
  */
@@ -210,7 +207,6 @@ openpic_intr_establish(void *lcv, int irq, int type, int level,
 printf("mac_intr_establish, hI %d L %d ", irq, type);
 #endif
 
-	nameinterrupt(irq, name);
 	irq = mapirq(irq);
 #if 0
 printf("vI %d ", irq);
@@ -263,10 +259,10 @@ printf("vI %d ", irq);
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq, &evcount_intr);
 	*p = ih;
 
 	return (ih);
@@ -295,6 +291,8 @@ openpic_intr_disestablish(void *lcp, void *arg)
 		*p = q->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
+
+	evcount_detach(&ih->ih_count);
 	free((void *)ih, M_DEVBUF);
 
 	intr_calculatemasks();
@@ -597,7 +595,6 @@ ext_intr_openpic()
 
 	while (realirq != 255) {
 		irq = o_virq[realirq];
-		intrcnt[realirq]++;
 
 		/* XXX check range */
 
@@ -616,7 +613,8 @@ ext_intr_openpic()
 			while (ih) {
 				ppc_intr_enable(1);
 
-				(*ih->ih_fun)(ih->ih_arg);
+				if ((*ih->ih_fun)(ih->ih_arg))
+					ih->ih_count.ec_count++;
 
 				(void)ppc_intr_disable();
 				ih = ih->ih_next;

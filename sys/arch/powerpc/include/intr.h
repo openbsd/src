@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.25 2003/10/31 03:04:16 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.26 2004/06/28 02:49:10 aaron Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -50,7 +50,9 @@
 #define	IST_EDGE	2
 #define	IST_LEVEL	3
 
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
+
+#include <sys/evcount.h>
 
 #define PPC_NIRQ	66
 #define PPC_CLK_IRQ	64
@@ -158,13 +160,13 @@ set_sint(int pending)
  */
 
 struct intrhand {
-	struct	intrhand *ih_next;
-	int	(*ih_fun)(void *);
-	void    *ih_arg;
-	u_long  ih_count;
-	int     ih_level;
-	int     ih_irq;
-	char    *ih_what;
+	struct intrhand	*ih_next;
+	int		(*ih_fun)(void *);
+	void		*ih_arg;
+	struct evcount	ih_count;
+	int		ih_level;
+	int		ih_irq;
+	char		*ih_what;
 };
 extern int ppc_configed_intr_cnt;
 #define MAX_PRECONF_INTR 16

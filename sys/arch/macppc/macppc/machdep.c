@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2004/06/24 22:35:56 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2004/06/28 02:49:10 aaron Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -154,7 +154,6 @@ void dumpsys(void);
 void systype(char *name);
 int lcsplx(int ipl);	/* called from LCore */
 int power4e_get_eth_addr(void);
-void nameinterrupt(int replace, char *newstr);
 void ppc_intr_setup(intr_establish_t *establish,
     intr_disestablish_t *disestablish);
 void *ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type,
@@ -1384,34 +1383,4 @@ kcopy(const void *from, void *to, size_t size)
 	curproc->p_addr->u_pcb.pcb_onfault = oldh;
 
 	return 0;
-}
-
-void
-nameinterrupt(int replace, char *newstr)
-{
-#define NENTRIES 66
-	char intrname[NENTRIES][30];
-	char *p, *src;
-	int i;
-	extern char intrnames[];
-	extern char eintrnames[];
-
-	if (replace >= NENTRIES) {
-		return;
-	}
-	src = intrnames;
-
-	for (i = 0; i < NENTRIES; i++) {
-		src += strlcpy(intrname[i], src, 30);
-		src+=1; /* skip the NUL */
-	}
-
-	strlcat(intrname[replace], "/", sizeof intrname[replace]);
-	strlcat(intrname[replace], newstr, sizeof intrname[replace]);
-
-	p = intrnames;
-	for (i = 0; i < NENTRIES; i++) {
-		p += strlcpy(p, intrname[i], eintrnames - p);
-		p += 1; /* skip the NUL */
-	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2004/01/04 21:07:43 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2004/06/28 02:49:10 aaron Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -85,6 +86,11 @@ u_int64_t nexttimerevent, prevtb, nextstatevent;
 int statint;
 u_int32_t statvar;
 u_int32_t statmin;
+
+static struct evcount clk_count;
+static struct evcount stat_count;
+static int clk_irq = PPC_CLK_IRQ;
+static int stat_irq = PPC_STAT_IRQ;
 
 /*
  * For now we let the machine run with boot time, not changing the clock
@@ -245,7 +251,7 @@ decr_intr(struct clockframe *frame)
 	}
 
 	/* only count timer ticks for CLK_IRQ */
-	intrcnt[PPC_STAT_IRQ] += nstats;
+	stat_count.ec_count += nstats;
 
 	if (nexttimerevent < nextstatevent)
 		nextevent = nexttimerevent;
@@ -279,7 +285,7 @@ decr_intr(struct clockframe *frame)
 		while (lasttb < prevtb - ticks_per_intr) {
 			/* sync lasttb with hardclock */
 			lasttb += ticks_per_intr;
-			intrcnt[PPC_CLK_IRQ] ++;
+			clk_count.ec_count++;
 			hardclock(frame);
 		}
 
@@ -287,7 +293,7 @@ decr_intr(struct clockframe *frame)
 		while (lasttb < prevtb) {
 			/* sync lasttb with hardclock */
 			lasttb += ticks_per_intr;
-			intrcnt[PPC_CLK_IRQ] ++;
+			clk_count.ec_count++;
 			hardclock(frame);
 		}
 
@@ -338,6 +344,9 @@ cpu_initclocks()
 		nextevent = nexttimerevent;
 	else
 		nextevent = nextstatevent;
+
+	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
+	evcount_attach(&stat_count, "stat", (void *)&stat_irq, &evcount_intr);
 
 	ppc_mtdec(nextevent-lasttb);
 	ppc_intr_enable(intrstate);

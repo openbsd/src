@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.22 2003/12/20 22:40:26 miod Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.23 2004/06/28 02:49:10 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -215,8 +215,6 @@ fakeintr(void *arg)
 	return 0;
 }
 
-void nameinterrupt( int replace, char *newstr);
-
 /*
  * Register an interrupt handler.
  */
@@ -234,7 +232,6 @@ macintr_establish(void * lcv, int irq, int type, int level,
 printf("macintr_establish, hI %d L %d ", irq, type);
 printf("addr reg0 %x\n", INT_STATE_REG0);
 #endif
-	nameinterrupt(irq, name);
 	irq = mapirq(irq);
 #if 0
 printf("vI %d ", irq);
@@ -287,10 +284,10 @@ printf("vI %d ", irq);
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq, &evcount_intr);
 	*p = ih;
 
 	return (ih);
@@ -319,6 +316,8 @@ macintr_disestablish(void *lcp, void *arg)
 		*p = q->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
+
+	evcount_detach(&ih->ih_count);
 	free((void *)ih, M_DEVBUF);
 
 	intr_calculatemasks();
@@ -511,7 +510,6 @@ mac_ext_intr()
 
 start:
 	irq = 31 - cntlzw(int_state);
-	intrcnt[m_hwirq[irq]]++;
 
 	o_imen = imen_m;
 	r_imen = 1 << irq;
@@ -525,7 +523,8 @@ start:
 
 		ih = m_intrhand[irq];
 		while (ih) {
-			(*ih->ih_fun)(ih->ih_arg);
+			if ((*ih->ih_fun)(ih->ih_arg))
+				ih->ih_count.ec_count++;
 			ih = ih->ih_next;
 		}
 
