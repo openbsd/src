@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.10 2001/01/29 01:58:07 niklas Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.11 2001/05/01 13:26:59 art Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -479,13 +479,6 @@ struct filelist {
 };
 
 /*
- * these things had better be contiguous, because we're going to refer to the
- * end of dirbuf + 1 byte
- */
-struct dirent   dirbuf;
-char            dirdummy;
-
-/*
  * return list of file names that match the name in buf.
  * System V version.  listing is a flag indicating whether the
  * list is being used for printing a listing rather than
@@ -499,8 +492,9 @@ make_file_list(buf, listing)
 	int             listing;
 {
 	char           *dir, *file, *cp;
-	int             len, i, preflen;
-	int             fp;
+	int             len, preflen;
+	DIR	       *dirp;
+	struct dirent  *dent;
 	LIST           *last;
 	struct filelist *current;
 	char            prefixx[NFILEN + 1];
@@ -576,44 +570,43 @@ make_file_list(buf, listing)
 	 * every file in the directory is relatively expensive.
 	 */
 
-	fp = open(dir, 0);
-	if (fp < 0) {
+	dirp = opendir(dir);
+	if (dirp == NULL)
 		return (NULL);
-	}
 	last = NULL;
-	/* clear entry after last so we can treat d_name as ASCIZ */
-	dirbuf.d_name[MAXNAMLEN] = 0;
-	while (1) {
-		if (read(fp, &dirbuf, sizeof(struct dirent)) <= 0) {
-			break;
-		}
-		if (dirbuf.d_ino == 0)	/* entry not allocated */
+
+	while ((dent = readdir(dirp)) != NULL) {
+		if (dent->d_namlen < len || memcmp(cp, dent->d_name, len) != 0)
 			continue;
-		for (i = 0; i < len; ++i) {
-			if (cp[i] != dirbuf.d_name[i])
-				break;
-		}
-		if (i < len)
-			continue;
+
 		current = (struct filelist *) malloc(sizeof(struct filelist));
+		if (snprintf(current->fl_name, sizeof(current->fl_name),
+		    "%s%s", prefixx, dent->d_name) > sizeof(current->fl_name)) {
+			free(current);
+			continue;
+		}
 		current->fl_l.l_next = last;
 		current->fl_l.l_name = current->fl_name;
 		last = (LIST *) current;
-		strcpy(current->fl_name, prefixx);
-		strcat(current->fl_name, dirbuf.d_name);
 		if (listing) {
+			if (dent->d_type == DT_DIR) {
+				strcat(current->fl_name, "/");
+				continue;
+			} else if (dent->d_type != DT_UNKNOWN)
+				continue;
+
 			statbuf.st_mode = 0;
-			strcpy(statname, dir);
-			strcat(statname, "/");
-			strcat(statname, dirbuf.d_name);
-			stat(statname, &statbuf);
+			if (snprintf(statname, sizeof(statname), "%s/%s",
+			    dir, dent->d_name) > sizeof(statname) - 1) {
+				continue;
+			}
+			if (stat(statname, &statbuf) < 0)
+				continue;
 			if (statbuf.st_mode & 040000)
 				strcat(current->fl_name, "/");
-			else if (statbuf.st_mode & 0100)
-				strcat(current->fl_name, "*");
 		}
 	}
-	close(fp);
+	closedir(dirp);
 
 	return (last);
 }
