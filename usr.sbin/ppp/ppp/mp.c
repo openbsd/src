@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mp.c,v 1.6 1999/05/12 10:03:52 brian Exp $
+ *	$Id: mp.c,v 1.7 1999/05/28 08:03:53 brian Exp $
  */
 
 #include <sys/param.h>
@@ -494,6 +494,7 @@ mp_Assemble(struct mp *mp, struct mbuf *m, struct physical *p)
         log_Printf(LogDEBUG, "MP: Reassembled frags %ld-%lu, length %d\n",
                    first, (u_long)h.seq, mbuf_Length(q));
         link_PullPacket(&mp->link, MBUF_CTOP(q), q->cnt, mp->bundle);
+        mbuf_Free(q);
       }
 
       mp->seq.next_in = seq = inc_seq(mp->local_is12bit, h.seq);
