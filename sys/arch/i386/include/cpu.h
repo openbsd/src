@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.46 2003/03/28 00:49:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.47 2003/05/14 22:08:04 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -240,7 +240,8 @@ void	setconf(void);
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
 #define CPU_APMHALT		11	/* halt -p hack */
 #define CPU_USERLDT		12
-#define	CPU_MAXID		13	/* number of valid machdep ids */
+#define	CPU_LONGRUN		13	/* LongRun status */
+#define	CPU_MAXID		14	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -256,6 +257,7 @@ void	setconf(void);
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ "apmhalt", CTLTYPE_INT }, \
 	{ "userldt", CTLTYPE_INT }, \
+	{ "longrun", CTLTYPE_STRUCT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

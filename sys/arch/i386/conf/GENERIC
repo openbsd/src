@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.334 2003/04/25 22:03:42 grange Exp $
+#	$OpenBSD: GENERIC,v 1.335 2003/05/14 22:08:04 tedu Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -19,6 +19,7 @@ option		USER_PCICONF	# user-space PCI configuration
 #option		VM86		# Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
 option		APERTURE	# in-kernel aperture driver for XFree86
+option		LONGRUN		# Transmeta Longrun power management
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"pccom\"",KGDBADDR=0x2f8,KGDBRATE=9600

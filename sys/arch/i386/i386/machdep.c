@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.229 2003/05/13 03:49:04 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.230 2003/05/14 22:08:04 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -277,6 +277,8 @@ int	bus_mem_add_mapping(bus_addr_t, bus_size_t,
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int, paddr_t *, int *, int);
 
+int	longrun_sysctl(void *, size_t *, void *, size_t);
+
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
 #ifdef __i386__
@@ -318,6 +320,7 @@ void	cyrix6x86_cpu_setup(const char *, int, int);
 void	natsem6x86_cpu_setup(const char *, int, int);
 void	intel586_cpu_setup(const char *, int, int);
 void	intel686_cpu_setup(const char *, int, int);
+void	tm86_cpu_setup(const char *, int, int);
 char *	intel686_cpu_name(int);
 char *	cyrix3_cpu_name(int, int);
 void	viac3_rnd(void *);
@@ -914,9 +917,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"TMS5x00"		/* Default */
 			},
-			NULL
+			tm86_cpu_setup
 		},
-		/* Family 6, not yet available from Rise */
+		/* Family 6, not yet available from Transmeta */
 		{
 			CPUCLASS_686,
 			{
@@ -1243,6 +1246,18 @@ intel686_cpu_setup(cpu_device, model, step)
 	}
 #undef rdmsr
 #undef wrmsr
+}
+
+void
+tm86_cpu_setup(cpu_device, model, step)
+	const char *cpu_device;
+	int model, step;
+{
+#ifdef LONGRUN
+	extern int longrun_enabled;
+
+	longrun_enabled = 1;
+#endif
 }
 
 char *
@@ -2655,8 +2670,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &user_ldt_enable));
 #endif
+#ifdef LONGRUN
+	case CPU_LONGRUN:
+		return (longrun_sysctl(oldp, oldlenp, newp, newlen));
+#endif
 	default:
-		return EOPNOTSUPP;
+		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }
