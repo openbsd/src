@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.4 1999/02/05 04:09:07 angelos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.5 1999/02/09 20:43:44 kjell Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -214,7 +214,7 @@ should be chosen in random (ideally, using some true-random source like
 coin flipping). It is very important that the key is not guessable. One
 practical way of generating keys is by using the
 .Xr random 4
-device (e.g. dd if=/dev/urandom of=- bs=1024 count=1 | sha1 -)
+device (e.g. dd if=/dev/urandom bs=1024 count=1 | sha1)
 .It authkey
 The secret key material used for authentication
 if additional authentication in new esp mode is required. For
