@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.48 2001/04/09 22:09:53 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.49 2001/04/12 15:50:02 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -598,10 +598,9 @@ x509_hash_init ()
     {
       for (i = 0; i <= bucket_mask; i++)
         for (certh = LIST_FIRST (&x509_tab[i]); certh;
-             certh = LIST_NEXT (certh, link))
+             certh = LIST_FIRST (&x509_tab[i]))
 	  {
 	    LIST_REMOVE (certh, link);
-	    LC (X509_free, (certh->cert));
 	    free (certh);
 	  }
 
@@ -970,9 +969,27 @@ x509_cert_insert (int id, void *scert)
   return res;
 }
 
+static struct x509_hash *
+x509_hash_lookup (X509 *cert)
+{
+  int i;
+  struct x509_hash *certh;
+
+  for (i = 0; i <= bucket_mask; i++)
+    for (certh = LIST_FIRST (&x509_tab[i]); certh;
+	 certh = LIST_NEXT (certh, link))
+      if (certh->cert == cert)
+	return certh;
+  return 0;
+}
+
 void
 x509_cert_free (void *cert)
 {
+  struct x509_hash *certh = x509_hash_lookup ((X509 *)cert);
+
+  if (certh)
+    LIST_REMOVE (certh, link);
   LC (X509_free, ((X509 *)cert));
 }
 
