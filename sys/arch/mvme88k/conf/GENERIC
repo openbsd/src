@@ -1,14 +1,14 @@
-#	$OpenBSD: GENERIC,v 1.28 2001/12/19 07:04:41 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.29 2001/12/22 17:58:31 smurph Exp $
 
 machine		mvme88k 
 
 include "../../../conf/GENERIC"
 
 option		M88100		# support for mc88110 processor
-#option		M88110		# support for mc88110 processor
+option		M88110		# support for mc88110 processor
 option		MVME187		# support for 187 (M88100 required)
 option		MVME188		# support for 188 (M88100 required)
-#option		MVME197		# support for 197 (M88110 required)
+option		MVME197		# support for 197 (M88110 required)
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		BUGMAP		# use the Bug ROM VME mappings
 #option		DEBUG		# print debugging statements
