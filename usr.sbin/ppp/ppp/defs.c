@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: defs.c,v 1.8 2000/02/27 00:21:07 brian Exp $
+ *	$Id: defs.c,v 1.9 2000/02/27 01:34:04 brian Exp $
  */
 
 
@@ -297,7 +297,7 @@ MakeArgs(char *script, char **pvect, int maxargs, int flags)
   int nargs;
 
   nargs = 0;
-  while (*script) {
+  while (*script && *script != '#') {
     script += strspn(script, " \t");
     if (*script) {
       if (nargs >= maxargs - 1)

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: main.c,v 1.16 2000/02/27 00:21:08 brian Exp $
+ * $Id: main.c,v 1.17 2000/02/27 01:34:05 brian Exp $
  *
  *	TODO:
  */
@@ -466,6 +466,7 @@ main(int argc, char **argv)
           bundle->notify.fd = bgpipe[1];
         }
 
+        bundle_ChangedPID(bundle);
         bundle_LockTun(bundle);	/* we have a new pid */
       }
 

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.h,v 1.10 2000/02/27 00:21:06 brian Exp $
+ *	$Id: bundle.h,v 1.11 2000/02/27 01:34:04 brian Exp $
  */
 
 #define	PHASE_DEAD		0	/* Link is dead */
@@ -67,6 +67,7 @@ struct bundle {
   struct {
     char Name[20];            /* The /dev/XXXX name */
     int fd;                   /* The /dev/XXXX descriptor */
+    unsigned header : 1;      /* Family header sent & received ? */
   } dev;
 
   u_long bandwidth;           /* struct tuninfo speed */
@@ -187,3 +188,4 @@ extern void bundle_AdjustFilters(struct bundle *, struct in_addr *,
 extern void bundle_CalculateBandwidth(struct bundle *);
 extern void bundle_AutoAdjust(struct bundle *, int, int);
 extern int bundle_WantAutoloadTimer(struct bundle *);
+extern void bundle_ChangedPID(struct bundle *);

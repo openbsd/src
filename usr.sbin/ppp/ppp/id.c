@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: id.c,v 1.3 2000/01/07 03:26:54 brian Exp $
+ *	$Id: id.c,v 1.4 2000/02/27 01:34:04 brian Exp $
  */
 
 #include <sys/param.h>
@@ -38,7 +38,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>	/* setproctitle() under OpenBSD (+NetBSD ?)*/
+#include <stdlib.h>     /* setproctitle() under OpenBSD (+NetBSD ?)*/
 #include <string.h>
 #include <sysexits.h>
 #if defined(__FreeBSD__) && !defined(NOKLDLOAD)

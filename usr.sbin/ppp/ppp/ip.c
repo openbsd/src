@@ -17,16 +17,14 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.19 2000/02/27 00:21:08 brian Exp $
+ * $Id: ip.c,v 1.20 2000/02/27 01:34:04 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
  *		  and optionaly record it into log.
  */
 #include <sys/param.h>
-#if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <sys/socket.h>
-#endif
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -617,6 +615,7 @@ ip_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
   int nb, nw;
   struct tun_data tun;
   struct ip *pip;
+  char *data;
 
   if (bundle->ncp.ipcp.fsm.state != ST_OPENED) {
     log_Printf(LogWARN, "ip_Input: IPCP not open - packet dropped\n");
@@ -625,7 +624,6 @@ ip_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
   }
 
   m_settype(bp, MB_IPIN);
-  tun_fill_header(tun, AF_INET);
   nb = m_length(bp);
   if (nb > sizeof tun.data) {
     log_Printf(LogWARN, "ip_Input: %s: Packet too large (got %d, max %d)\n",
@@ -644,8 +642,14 @@ ip_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 
   ipcp_AddInOctets(&bundle->ncp.ipcp, nb);
 
-  nb += sizeof tun - sizeof tun.data;
-  nw = write(bundle->dev.fd, &tun, nb);
+  if (bundle->dev.header) {
+    tun.family = htonl(AF_INET);
+    nb += sizeof tun - sizeof tun.data;
+    data = (char *)&tun;
+  } else
+    data = tun.data;
+
+  nw = write(bundle->dev.fd, data, nb);
   if (nw != nb) {
     if (nw == -1)
       log_Printf(LogERROR, "ip_Input: %s: wrote %d, got %s\n",
