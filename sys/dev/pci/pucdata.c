@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.26 2003/06/25 09:06:07 henning Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.27 2003/06/25 09:09:53 henning Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -676,12 +676,12 @@ const struct puc_device_description puc_devices[] = {
 	/*
 	 * VScom PCI-200L has 2 x 16550 UARTS.
 	 * The board has a jumper which allows you to select a clock speed
-	 * of either 14.7456MHz or 1.8432MHz. By default it runs at 
+	 * of either 14.7456MHz or 1.8432MHz. By default it runs at
 	 * the fast speed.
 	 */
 	{   /* "VScom PCI-200L with 2 x 16550 UARTS" */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200L,	0, 0 },
-	    {	0xffff, 0xffff,					    	0, 0 },
+	    {	0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8},
@@ -695,7 +695,7 @@ const struct puc_device_description puc_devices[] = {
 	 */
 	{   /* "VScom PCI-210L" */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI210L,	0, 0 },
-	    {	0xffff, 0xffff,					    	0, 0 },
+	    {	0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
@@ -799,7 +799,7 @@ const struct puc_device_description puc_devices[] = {
 	{   /* "Lava Computers high-speed port", */
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_0,	0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
-	    {	
+	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ*4 },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ*4 },
 	    },
@@ -941,8 +941,8 @@ const struct puc_device_description puc_devices[] = {
 	    {   PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4018A,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-                { PUC_PORT_TYPE_LPT, 0x10, 0x00 },                              
-                { PUC_PORT_TYPE_LPT, 0x18, 0x00 },                              
+                { PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+                { PUC_PORT_TYPE_LPT, 0x18, 0x00 },
 	    },
 	},
 
@@ -975,7 +975,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
-	    }, 
+	    },
 	},
 
 	/*
@@ -995,7 +995,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
-	    }, 
+	    },
 	},
 
 	{   /* NULL, */
