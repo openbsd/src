@@ -1,0 +1,99 @@
+.\"
+.\" Copyright 1992, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
+.\"
+.\" This program is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2, or (at your option)
+.\" any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; see the file COPYING.  If not, write to the
+.\" Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+.\" Boston, MA 02111-1307, USA.
+.\"
+.Dd February 15, 2003
+.Dt RCS2LOG 1
+.Os
+.Sh NAME
+.Nm rcs2log
+.Nd RCS to ChangeLog generator
+.Sh SYNOPSIS
+.Nm rcs2log
+.Bk -words
+.Op Fl c Ar changelog
+.Op Fl h Ar hostname
+.Op Fl i Ar indent
+.Op Fl l Ar length
+.Op Fl R
+.Op Fl r Ar option
+.Op Fl t Ar tabwidth
+.Op Fl u Ar login<TAB>fullname<TAB>mailaddr
+.Op Fl v
+.Op Fl -help
+.Op Fl -version
+.Op Ar file ...
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+utility generates a change log prefix from RCS files (perhaps in the CVS
+repository) and the ChangeLog (if any).
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar changelog
+Output a change log prefix to
+.Ar changelog
+(default ChangeLog).
+.It Fl h Ar hostname
+Use
+.Ar hostname
+in change log entries (default current host).
+.It Fl i Ar indent
+Indent change log lines by
+.Ar indent
+spaces (default 8).
+.It Fl l Ar length
+Try to limit log lines to
+.Ar length
+characters (default 79).
+.It Fl R
+If no
+.Ar file Ns Li (s)
+are given and RCS is used, recurse through working directory.
+.It Fl r Ar option
+Pass
+.Ar option
+to subsidiary log command.
+.It Fl t Ar tabwidth
+Tab stops are every
+.Ar tabwidth
+characters (default 8).
+.It Fl u Ar "login<TAB>fullname<TAB>mailaddr"
+Assume
+.Ar login
+has
+.Ar fullname
+and
+.Ar mailaddr .
+.It Fl v
+Append RCS revision to file names in log lines.
+.It Fl -help
+Output help.
+.It Fl -version
+Output version number.
+.El
+.Sh SEE ALSO
+.Xr rcs 1 ,
+.Xr rcsintro 1 ,
+.Xr rlog 1 ,
+.Xr rcsfile 5
+.Sh AUTHORS
+Paul Eggert <eggert@twinsun.com>
+.Sh BUGS
+Report bugs to <bug-gnu-emacs@gnu.org>.

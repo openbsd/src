@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.36 2002/06/11 22:37:14 art Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.37 2003/02/16 18:28:41 deraadt Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
 
-MAN=	doc/info.1 doc/install-info.1 doc/makeinfo.1 doc/texi2dvi.1 
-MAN+= doc/texindex.1 doc/info.5 doc/texinfo.5
+MAN=	doc/info.1 doc/install-info.1 doc/makeinfo.1 doc/texi2dvi.1
+MAN+= doc/texindex.1 doc/info.5 doc/texinfo.5 doc/infokey.1
 
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
 	ACLOCAL=true AUTOHEADER=true AUTOCONF=true AUTOMAKE=true

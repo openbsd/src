@@ -1,0 +1,225 @@
+.\"
+.\" Copyright (C) 1992, 93, 96, 97, 98, 99, 2001, 02 Free Software
+.\" Foundation, Inc.
+.\"
+.\" Permission is granted to copy, distribute and/or modify this
+.\" document under the terms of the GNU Free Documentation License,
+.\" Version 1.1 or any later version published by the Free Software
+.\" Foundation; with no Invariant Sections, with the Front-Cover texts
+.\" being "A GNU Manual," and with the Back-Cover Texts as in (a)
+.\" below.  A copy of the license is included in the section entitled
+.\" "GNU Free Documentation License."
+.\"
+.\" (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+.\" modify this GNU Manual, like GNU software.  Copies published by
+.\" the Free Software Foundation raise funds for GNU development."
+.\"
+.Dd February 15, 2003
+.Dt INFOKEY 1
+.Os
+.Sh NAME
+.Nm infokey
+.Nd compile custom key bindings file
+.Sh SYNOPSIS
+.Nm infokey
+.Op Fl -help
+.Op Fl -version
+.Op Fl -output Ar file
+.Op Ar input file
+.Sh DESCRIPTION
+The
+.Nm
+utility compiles a source file
+.Po Pa $HOME/.infokey
+ by default
+.Pc
+containing
+.Xr info 1
+customizations into a binary format
+.Po Pa $HOME/.info
+ by default
+.Pc . 
+.Xr info 1
+reads the binary file at startup to override the
+default key bindings and variable definitions.
+.Pp
+Besides the standard
+.Fl -help
+and
+.Fl -version
+options, the only option is
+.Fl -output Ar file .
+This tells
+.Nm infokey
+to write the binary data to
+.Ar file
+instead of
+.Pa $HOME/.info .
+.Pp
+The format of the source file read by
+.Nm
+is most easily illustrated by example.
+For instance, here is a sample
+.Pa .infokey
+source file suitable for aficionados of
+.Xr vi 1
+or
+.Xr less 1 :
+.Pp
+.Bd -literal -offset indent
+#info
+j       next-line
+k       prev-line
+l       forward-char
+h       backward-char
+\\kd     next-line
+\\ku     prev-line
+\\kr     forward-char
+\\kl     backward-char
+\\       scroll-forward
+\\kD     scroll-forward-page-only
+b       scroll-backward
+\\kU     scroll-backward-page-only
+g       beginning-of-node
+\\kh     beginning-of-node
+G       end-of-node
+\\ke     end-of-node
+\\t      select-reference-this-line
+-       history-node
+n       next-node
+p       prev-node
+u       up-node
+t       top-node
+d       dir-node
+#var
+scroll-step=1
+.Ed
+.Pp
+The source file consists of one or more "sections".
+Each section starts with a line that identifies the type of section.
+Possible sections are:
+.Pp
+.Bl -tag -width Ds
+.It #info
+Key bindings for
+.Xr info 1
+windows.
+The start of this section is indicated by a line containing just `#info'
+by itself.
+If this is the first section in the source file,
+the `#info' line can be omitted.
+The rest of this section consists of lines of the form:
+
+    STRING whitespace ACTION [ whitespace [ # comment ] ] newline
+
+Whitespace is any sequence of one or more spaces and/or tabs.
+Comment is any sequence of any characters, excluding newline.
+.Pp
+STRING is the key sequence which invokes the action.
+ACTION is the name of an
+.Xr info 1
+command.
+The characters in STRING are interpreted literally or prefixed by a
+caret (`^') to indicate a control character.
+A backslash followed by certain characters specifies input keystrokes
+as follows:
+.Pp    
+`\\b'	Backspace
+.Pp
+`\\e'	Escape (ESC)
+.Pp
+`\\n'	Newline
+.Pp
+`\\r'	Return
+.Pp
+`\\t'	Tab
+.Pp
+`\\ku'	Up arrow
+.Pp
+`\\kd'	Down arrow
+.Pp
+`\\kl'	Left arrow
+.Pp
+`\\kr'	Right arrow
+.Pp
+`\\kU'	Page Up
+.Pp
+`\\kD'	Page Down
+.Pp
+`\\kh'	HOME
+.Pp
+`\\ke'	END
+.Pp
+`\\kx'	Delete (DEL)
+.Pp
+`\\mX'	Meta-X where X is any character as described above.
+.Pp
+Backslash followed by any other character indicates that character
+is to be taken literally.
+Characters which must be preceded by a backslash include
+caret, space, tab, and backslash itself.
+.Pp
+.It #echo-area
+Key bindings for the echo area.
+The start of this section is indicated by a line containing just
+`#echo-area' by itself.
+The rest of this section has a syntax identical to that for the key
+definitions for the
+.Xr info 1
+area, described above.
+.Pp
+.It #var
+Variable initializations.
+The start of this section is indicated by a line containing just `#var'
+by itself.
+Following this line is a list of variable assignments, one per line.
+Each line consists of a variable name followed by `=',
+followed by a value.
+There may be no whitespace between the variable name and the `=',
+and all characters following the `=',
+including whitespace, are included in the value.
+.El
+.Pp
+Blank lines and lines starting with `#' are ignored, except for the
+special section header lines.
+.Pp
+Key bindings defined in the
+.Pa .info
+file take precedence over info's default key bindings, whether or not
+.Cm --vi-keys
+is used.
+A default key binding may be disabled by overriding it in the
+.Pa .info
+file with the action `invalid'.
+In addition,
+.Em all
+default key bindings can be disabled by adding this line
+.Em anywhere
+in the relevant section:
+.Pp
+     #stop
+.Pp
+This will cause
+.Xr info 1
+to ignore all the default key commands for that section.
+.Pp
+.Sy Beware :
+`#stop' can be dangerous.
+Since it disables all default key bindings, you must supply enough new
+key bindings to enable all necessary actions.
+Failure to bind any key to the `quit' command, for example,
+can lead to frustration.
+.Pp
+The order in which key bindings are defined in the
+.Pa .info
+file is not important, except that the command summary produced by the
+`get-help-window' command only displays the
+.Em first
+key that is bound to each command.
+.Sh FILES
+$HOME/.infokey		Default souce file for customizations.
+$HOME/.info		Default binary file for customizations.
+.Sh SEE ALSO
+.Xr info 1
+.Sh BUGS
+bug-texinfo@gnu.org
