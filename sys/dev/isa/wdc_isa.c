@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.2 1999/07/22 04:32:38 csapuntz Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.3 1999/08/05 00:12:09 niklas Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -52,6 +52,12 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
+#ifdef __OpenBSD__
+#include "isadma.h"
+#else
+#define NISADMA 1
+#endif
+
 #define	WDC_ISA_REG_NPORTS	8
 #define	WDC_ISA_AUXREG_OFFSET	0x206
 #define	WDC_ISA_AUXREG_NPORTS	1 /* XXX "fdc" owns ports 0x3f7/0x377 */
@@ -82,10 +88,12 @@ struct cfattach wdc_isa_ca = {
 	sizeof(struct wdc_isa_softc), wdc_isa_probe, wdc_isa_attach
 };
 
+#if NISADMA > 0
 static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
 static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));
 static void 	wdc_isa_dma_start __P((void*, int, int, int));
 static int	wdc_isa_dma_finish __P((void*, int, int, int));
+#endif	/* NISADMA > 0 */
 
 int
 wdc_isa_probe(parent, match, aux)
@@ -97,10 +105,11 @@ wdc_isa_probe(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct channel_softc ch = { 0 };
+	struct channel_softc ch;
 	struct isa_attach_args *ia = aux;
 	int result = 0;
 
+	bzero(&ch, sizeof ch);
 	ch.cmd_iot = ia->ia_iot;
 	if (bus_space_map(ch.cmd_iot, ia->ia_iobase, WDC_ISA_REG_NPORTS, 0,
 	    &ch.cmd_ioh))
@@ -157,6 +166,7 @@ wdc_isa_attach(parent, self, aux)
 	    IPL_BIO, wdcintr, &sc->wdc_channel);
 #endif
 	if (ia->ia_drq != DRQUNK) {
+#if NISADMA > 0
 		sc->sc_drq = ia->ia_drq;
 
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
@@ -165,6 +175,10 @@ wdc_isa_attach(parent, self, aux)
 		sc->sc_wdcdev.dma_start = wdc_isa_dma_start;
 		sc->sc_wdcdev.dma_finish = wdc_isa_dma_finish;
 		wdc_isa_dma_setup(sc);
+#else	/* NISADMA > 0 */
+		printf("%s: ignoring drq, isa dma not supported",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+#endif	/* NISADMA > 0 */
 	}
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
 	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_32)
@@ -179,13 +193,14 @@ wdc_isa_attach(parent, self, aux)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->wdc_channel.ch_queue == NULL) {
 		printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
 	wdcattach(&sc->wdc_channel);
 	wdc_final_attach(&sc->wdc_channel);
 }
 
+#if NISADMA > 0
 static void
 wdc_isa_dma_setup(sc)
 	struct wdc_isa_softc *sc;
@@ -247,3 +262,4 @@ wdc_isa_dma_finish(v, channel, drive, read)
 #endif
 	return 0;
 }
+#endif	/* NISADMA > 0 */

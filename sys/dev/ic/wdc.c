@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.7 1999/07/23 08:34:15 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.8 1999/08/05 00:12:09 niklas Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -436,7 +436,7 @@ wdcattach(chp)
 		 * the config machinery will print
 		 * "atapibus at xxx not configured"
 		 */
-		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
+		bzero(&aa_link, sizeof(struct ata_atapi_attach));
 		aa_link.aa_type = T_ATAPI;
 		aa_link.aa_channel = chp->channel;
 		aa_link.aa_openings = 1;
@@ -452,7 +452,7 @@ wdcattach(chp)
 		    (DRIVE_ATA | DRIVE_OLD)) == 0) {
 			continue;
 		}
-		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
+		bzero(&aa_link, sizeof(struct ata_atapi_attach));
 		aa_link.aa_type = T_ATA;
 		aa_link.aa_channel = chp->channel;
 		aa_link.aa_openings = 1;
@@ -822,7 +822,7 @@ wdc_probe_caps(drvp)
 		 */
 		drvp->drive_flags |= DRIVE_CAP32;
 		ata_get_params(drvp, AT_POLL, &params2);
-		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
+		if (bcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 			printf("16-bit");
@@ -1366,7 +1366,7 @@ wdc_get_xfer(flags)
 	if ((xfer->c_flags & C_INUSE) != 0)
 		panic("wdc_get_xfer: xfer already in use\n");
 #endif
-	memset(xfer, 0, sizeof(struct wdc_xfer));
+	bzero(xfer, sizeof(struct wdc_xfer));
 	xfer->c_flags = C_INUSE;
 	return xfer;
 }

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.1 1999/07/18 21:25:17 csapuntz Exp $      */
+/*      $OpenBSD: ata.c,v 1.2 1999/08/05 00:12:09 niklas Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -74,9 +74,9 @@ ata_get_params(drvp, flags, prms)
 
 	WDCDEBUG_PRINT(("wdc_ata_get_parms\n"), DEBUG_FUNCS);
 
-	memset(tb, 0, DEV_BSIZE);
-	memset(prms, 0, sizeof(struct ataparams));
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	bzero(tb, DEV_BSIZE);
+	bzero(prms, sizeof(struct ataparams));
+	bzero(&wdc_c, sizeof(struct wdc_command));
 
 	if (drvp->drive_flags & DRIVE_ATA) {
 		wdc_c.r_command = WDCC_IDENTIFY;
@@ -107,7 +107,7 @@ ata_get_params(drvp, flags, prms)
 		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */
-		memcpy(prms, tb, sizeof(struct ataparams));
+		bcopy(tb, prms, sizeof(struct ataparams));
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/*
 		 * Shuffle string byte order.
@@ -146,7 +146,7 @@ ata_set_mode(drvp, mode, flags)
 	struct wdc_command wdc_c;
 
 	WDCDEBUG_PRINT(("wdc_ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	bzero(&wdc_c, sizeof(struct wdc_command));
 
 	wdc_c.r_command = SET_FEATURES;
 	wdc_c.r_st_bmask = 0;

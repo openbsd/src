@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.4 1999/07/22 04:36:47 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.5 1999/08/05 00:12:09 niklas Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -778,7 +778,7 @@ wdgetdefaultlabel(wd, lp)
 {
 
 	WDCDEBUG_PRINT(("wdgetdefaultlabel\n"), DEBUG_FUNCS);
-	memset(lp, 0, sizeof(struct disklabel));
+	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = wd->sc_params.atap_heads;
@@ -828,7 +828,7 @@ wdgetdisklabel(dev, wd, lp, clp, spoofonly)
 
 	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
-	memset(clp, 0, sizeof(struct cpu_disklabel));
+	bzero(clp, sizeof(struct cpu_disklabel));
 
 	wdgetdefaultlabel(wd, lp);
 
@@ -1293,7 +1293,7 @@ wd_flushcache(wd, flags)
 
 	if (wd->drvp->ata_vers < 4) /* WDCC_FLUSHCACHE is here since ATA-4 */
 		return;
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	bzero(&wdc_c, sizeof(struct wdc_command));
 	wdc_c.r_command = WDCC_FLUSHCACHE;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
@@ -1337,7 +1337,7 @@ wi_get()
 	int s;
 
 	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK);
-	memset(wi, 0, sizeof (struct wd_ioctl));
+	bzero(wi, sizeof (struct wd_ioctl));
 	s = splbio();
 	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);
@@ -1416,7 +1416,7 @@ wdioctlstrategy(bp)
 		goto bad;
 	}
 
-	memset(&wdc_c, 0, sizeof(wdc_c));
+	bzero(&wdc_c, sizeof(wdc_c));
 
 	/*
 	 * Abort if physio broke up the transfer
