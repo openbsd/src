@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.17 2000/05/01 20:49:11 millert Exp $
+.\"	$OpenBSD: adduser.8,v 1.18 2000/05/15 06:55:44 deraadt Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -141,7 +141,7 @@ They should be no longer than 8 characters (see BUGS section of
 .\" name limit and NIS. The NIS protocol mandates an 8-character username.
 If you need a longer login name for e-mail addresses,
 you can define an alias in
-.Pa /etc/aliases .
+.Pa /etc/mail/aliases .
 .It Sy fullname
 This should contain the user's first name and surname.
 The
