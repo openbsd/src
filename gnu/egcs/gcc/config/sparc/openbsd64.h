@@ -115,3 +115,5 @@ Boston, MA 02111-1307, USA.  */
     fprintf ((FILE), "\n");						\
   } while (0)
 
+/* problems occur if we're too liberal in preserve_subexpressions_p */
+#define	BROKEN_PRESERVE_SUBEXPRESSIONS_P

@@ -65,3 +65,5 @@ Boston, MA 02111-1307, USA.  */
 #undef DEFAULT_PCC_STRUCT_RETURN
 #define DEFAULT_PCC_STRUCT_RETURN 0
 
+/* problems occur if we're too liberal in preserve_subexpressions_p */
+#define	BROKEN_PRESERVE_SUBEXPRESSIONS_P

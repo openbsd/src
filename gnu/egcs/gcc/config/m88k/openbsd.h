@@ -67,3 +67,6 @@ Boston, MA 02111-1307, USA.  */
 /* Every structure or union's size must be a multiple of 2 bytes.  */
 #undef STRUCTURE_SIZE_BOUNDARY
 #define STRUCTURE_SIZE_BOUNDARY 16 
+
+/* problems occur if we're too liberal in preserve_subexpressions_p */
+#define	BROKEN_PRESERVE_SUBEXPRESSIONS_P
