@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2001/01/10 20:10:36 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2001/01/15 16:48:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.13 2001/01/10 20:10:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.14 2001/01/15 16:48:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ char *
 estrdup(char *s)
 {
 	char *p = strdup(s);
-	if (p)
+	if (!p)
 		err(1, "stdup");
 	return (p);
 }
