@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.24 2004/01/29 03:42:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2004/01/29 08:48:45 mickey Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -53,6 +53,6 @@ NOPROG=yes
 .endif
 
 MAN=	fdisk.8
-MANSUBDIR=i386 amd64 macppc pegosos alpha cats
+MANSUBDIR=i386 amd64 macppc pegasos alpha cats
 
 .include <bsd.prog.mk>
