@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:35 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2000/03/01 08:55:10 deraadt Exp $
 
 PROG	= kstash
 
@@ -8,7 +8,7 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/admin
 
 CFLAGS	+= -I. -I${KRBSRC}/lib/kadm -I${KRBSRC}/lib/kdb
-LDADD	+= ${LIBROKEN} -lkrb -lkafs -ldes -lkdb
+LDADD	+= ${LIBROKEN} -lkafs -lkdb -lkrb -ldes
 
 SRCS	= kstash.c
 

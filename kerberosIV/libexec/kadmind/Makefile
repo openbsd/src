@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:27 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2000/03/01 08:54:59 deraadt Exp $
 
 PROG	= kadmind
 
@@ -8,7 +8,7 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/kadmin
 
 CFLAGS	+= -I. -I${KRBSRC}/lib/kadm -I${KRBSRC}/lib/acl
-LDADD	+= ${LIBROKEN} -lkrb -lkdb -lkadm -ldes -lacl -lcom_err
+LDADD	+= ${LIBROKEN} -lacl -lkdb -lkadm -lkrb -ldes -lcom_err
 
 SRCS	= kadm_server.c kadm_funcs.c admin_server.c kadm_ser_wrap.c pw_check.c
 
