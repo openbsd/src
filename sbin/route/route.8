@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.36 2004/06/26 10:16:49 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.37 2004/06/26 13:53:55 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -38,7 +38,7 @@
 .Nd manually manipulate the routing tables
 .Sh SYNOPSIS
 .Nm route
-.Op Fl dnqv
+.Op Fl dnqSv
 .Ar command
 .Oo
 .Op Ar modifiers
@@ -63,20 +63,20 @@ programmatic interface discussed in
 .It Fl d
 Run in debug-only mode, i.e., don't actually modify the routing table.
 .It Fl n
-Bypasses attempts to print host and network names symbolically
+Bypass attempts to print host and network names symbolically
 when reporting actions.
 (The process of translating between symbolic
 names and numerical equivalents can be quite time consuming, and
 may require correct operation of the network; thus it may be expedient
 to forgo this, especially when attempting to repair networking operations.)
-.It Fl v
-(verbose) Print additional details.
 .It Fl q
 Suppress all output.
 .It Fl S
-Makes the
+Make the
 .Cm show
 command display the source selector part of the routes.
+.It Fl v
+(verbose) Print additional details.
 .El
 .Pp
 The
@@ -95,20 +95,24 @@ Change aspects of a route (such as its gateway).
 .It Cm get
 Lookup and display the route for a destination.
 .It Cm show
-Print out the route table similar to "netstat \-r" (see
+Print out the route table similar to "netstat -r" (see
 .Xr netstat 1 ) .
 .It Cm monitor
 Continuously report any changes to the routing information base,
 routing lookup misses, or suspected network partitionings.
 .El
 .Pp
-The monitor command has the syntax
+The
+.Cm monitor
+command has the syntax
 .Bd -filled -offset indent
 .Nm route Op Fl n
 .Cm monitor
 .Ed
 .Pp
-The flush command has the syntax
+The
+.Cm flush
+command has the syntax
 .Bd -filled -offset indent
 .Nm route Op Fl n
 .Cm flush
@@ -154,7 +158,7 @@ The optional modifiers
 and
 .Fl host
 cause the destination to be interpreted as a network or a host, respectively.
-Otherwise, type is chosen based on the following rules.
+Otherwise, type is chosen based on the following rules:
 .Pp
 The route is assumed to be to a network if any of the following apply to
 .Ar destination :
@@ -176,7 +180,7 @@ If
 .Ar destination
 is a valid IP address or host name it is presumed to be a route to a host.
 .Pp
-If none of the above apply
+If none of the above apply,
 .Nm
 prints an error message and exits.
 .Pp
@@ -224,7 +228,9 @@ One specifies an additional ensuing address parameter
 The implicit network mask generated in the
 .Dv AF_INET
 case
-can be overridden by making sure this option follows the destination parameter.
+can be overridden by making sure this option follows the
+.Ar destination
+parameter.
 .Fl prefixlen
 is also available for a similar purpose, for IPv6/v4.
 .Pp
@@ -287,21 +293,9 @@ work in a similar way to
 and
 .Fl netmask .
 For example:
-.Bd -filled -offset indent
-.Nm route
-.Cm add
-.Fl src
-180.83.46.98
-180.83.46.97
-.Ed
-.Bd -filled -offset indent -compact
-.Nm route
-.Cm add
-.Fl src
-192.168.10/24
-.Fl dst
-10.5.1/24
-180.83.46.97
+.Bd -literal -offset indent
+# route add src 180.83.46.98 180.83.46.97
+# route add src 192.168.10/24 dst 10.5.1/24 180.83.46.97
 .Ed
 .Pp
 In a
@@ -323,15 +317,15 @@ are looked up first as a network name using
 .Xr getnetbyname 3 .
 If this lookup fails,
 .Xr gethostbyname 3
-is then used to interpret the name a valid host name.
+is then used to interpret the name as a valid host name.
 .Pp
 .Nm
 uses a routing socket and the new message types
-RTM_ADD,
-RTM_DELETE,
-RTM_GET,
+.Dv RTM_ADD ,
+.Dv RTM_DELETE ,
+.Dv RTM_GET ,
 and
-RTM_CHANGE.
+.Dv RTM_CHANGE .
 As such, only the superuser may modify
 the routing tables.
 .Sh FILES
