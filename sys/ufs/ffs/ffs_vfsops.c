@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.63 2004/01/20 03:44:06 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.64 2004/01/25 20:02:52 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1168,6 +1168,7 @@ retry:
 	bzero((caddr_t)ip, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	ip->i_ump = ump;
+	VREF(ip->i_devvp);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;
@@ -1229,10 +1230,6 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
-	/*
-	 * Finish inode initialization now that aliasing has been resolved.
-	 */
-	VREF(ip->i_devvp);
 	/*
 	 * Set up a generation number for this inode if it does not
 	 * already have one. This should only happen on old filesystems.
