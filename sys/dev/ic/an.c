@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.29 2003/09/19 00:27:02 avsm Exp $	*/
+/*	$OpenBSD: an.c,v 1.30 2003/09/23 11:13:20 avsm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -240,15 +240,9 @@ an_attach(sc)
 	ifp->if_baudrate = 10000000;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if (sizeof(sc->an_config.an_nodename) < sizeof(AN_DEFAULT_NODENAME))
-		panic("AN_DEFAULT_NODENAME too long");
-
 	bzero(sc->an_config.an_nodename, sizeof(sc->an_config.an_nodename));
 	bcopy(AN_DEFAULT_NODENAME, sc->an_config.an_nodename,
 	    sizeof(AN_DEFAULT_NODENAME) - 1);
-
-	if (sizeof(sc->an_ssidlist.an_ssid1) < sizeof(AN_DEFAULT_NETNAME))
-		panic("AN_DEFAULT_NETNAME too long");
 
 	bzero(sc->an_ssidlist.an_ssid1, sizeof(sc->an_ssidlist.an_ssid1));
 	bcopy(AN_DEFAULT_NETNAME, sc->an_ssidlist.an_ssid1,
