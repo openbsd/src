@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.9 2004/12/08 20:23:06 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.10 2004/12/21 16:48:39 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,9 +29,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <sysexits.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "log.h"
@@ -41,9 +41,7 @@
 extern char *__progname;
 
 
-
 int  cvs_add_file (CVSFILE *, void *);
-
 
 
 /*
@@ -59,7 +57,7 @@ cvs_add(int argc, char **argv)
 	char *kflag, *msg;
 	struct cvsroot *root;
 
-	kflag = NULL;
+	kflag = msg = NULL;
 
 	while ((ch = getopt(argc, argv, "k:m:")) != -1) {
 		switch (ch) {
@@ -84,14 +82,24 @@ cvs_add(int argc, char **argv)
 	if (cvs_files == NULL)
 		return (EX_DATAERR);
 
-	cvs_file_examine(cvs_files, cvs_add_file, NULL);
-
 	root = CVS_DIR_ROOT(cvs_files);
 
-	for (i = 0; i < argc; i++)
-		cvs_sendarg(root, argv[i], 0);
-	if (cvs_sendreq(root, CVS_REQ_ADD, NULL) < 0)
-		return (-1);
+	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
+		return (EX_PROTOCOL);
+
+	cvs_file_examine(cvs_files, cvs_add_file, NULL);
+
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_senddir(root, cvs_files) < 0)
+			return (EX_PROTOCOL);
+
+		for (i = 0; i < argc; i++)
+			if (cvs_sendarg(root, argv[i], 0) < 0)
+				return (EX_PROTOCOL);
+
+		if (cvs_sendreq(root, CVS_REQ_ADD, NULL) < 0)
+			return (EX_PROTOCOL);
+	}
 
 	return (0);
 }
@@ -100,32 +108,32 @@ cvs_add(int argc, char **argv)
 int
 cvs_add_file(CVSFILE *cf, void *arg)
 {
+	int ret;
 	struct cvsroot *root;
 
-	if (cf->cf_type == DT_DIR) {
-		if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-			root = cf->cf_ddat->cd_root;
-			if ((cf->cf_parent == NULL) ||
-			    (root != cf->cf_parent->cf_ddat->cd_root)) {
-				cvs_connect(root);
-			}
-
-			cvs_senddir(root, cf);
-		}
-
-		return (0);
-	}
-
+	ret = 0;
 	root = CVS_DIR_ROOT(cf);
 
+	if (cf->cf_type == DT_DIR) {
+		if (root->cr_method != CVS_METHOD_LOCAL) {
+			if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+				    CVS_FILE_NAME(cf));
+			else
+				ret = cvs_senddir(root, cf);
+		}
+
+		return (ret);
+	}
+
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_sendreq(root, CVS_REQ_ISMODIFIED, CVS_FILE_NAME(cf));
+		cvs_sendreq(root, CVS_REQ_ADD, CVS_FILE_NAME(cf));
 	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for addition",
-		    cf->cf_name);
+		    CVS_FILE_NAME(cf));
 		cvs_log(LP_INFO, "use `%s commit' to add this file permanently",
 		    __progname);
 	}
 
-	return (0);
+	return (ret);
 }
