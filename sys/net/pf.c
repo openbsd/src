@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.250 2002/10/07 13:15:02 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.251 2002/10/07 13:18:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1737,7 +1737,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 		if (((*rm)->action == PF_DROP) &&
 		    (((*rm)->rule_flag & PFRULE_RETURNRST) ||
-		    ((*rm)->rule_flag & PFRULE_RETURNICMP))) {
+		    ((*rm)->rule_flag & PFRULE_RETURNICMP) ||
+		    ((*rm)->rule_flag & PFRULE_RETURN))) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL ||
 			    (binat != NULL && direction == PF_OUT)) {
@@ -1750,7 +1751,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				    &th->th_sum, &baddr, bport, 0, af);
 				rewrite++;
 			}
-			if ((*rm)->rule_flag & PFRULE_RETURNRST)
+			if (((*rm)->rule_flag & PFRULE_RETURNRST) ||
+			    ((*rm)->rule_flag & PFRULE_RETURN))
 				pf_send_reset(off, th, pd, af,
 				    (*rm)->return_ttl);
 			else if ((af == AF_INET) && (*rm)->return_icmp)
@@ -2001,7 +2003,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 
 		if (((*rm)->action == PF_DROP) && 
-		    ((*rm)->rule_flag & PFRULE_RETURNICMP)) {
+		    (((*rm)->rule_flag & PFRULE_RETURNICMP) ||
+		    ((*rm)->rule_flag & PFRULE_RETURN))) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL ||
 			    (binat != NULL && direction == PF_OUT)) {

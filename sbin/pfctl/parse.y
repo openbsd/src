@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.160 2002/10/07 13:15:02 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.161 2002/10/07 13:18:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -460,13 +460,21 @@ pfrule		: action dir logquick interface route af proto fromto
 			memset(&r, 0, sizeof(r));
 
 			r.action = $1.b1;
-			if ($1.b2) {
+			switch ($1.b2) {
+			case PFRULE_RETURNRST:
 				r.rule_flag |= PFRULE_RETURNRST;
 				r.return_ttl = $1.w;
-			} else {
+				break;
+			case PFRULE_RETURNICMP:
 				r.rule_flag |= PFRULE_RETURNICMP;
 				r.return_icmp = $1.w;
 				r.return_icmp6 = $1.w2;
+				break;
+			case PFRULE_RETURN:
+				r.rule_flag |= PFRULE_RETURN;
+				r.return_icmp = $1.w;
+				r.return_icmp6 = $1.w2;
+				break;
 			}
 			r.direction = $2;
 			r.log = $3.log;
@@ -567,39 +575,48 @@ action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 		;
 
 blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; $$.w2 = 0; }
-		| RETURNRST		{ $$.b2 = 1; $$.w = 0; $$.w2 = 0; }
+		| RETURNRST		{
+			$$.b2 = PFRULE_RETURNRST;
+			$$.w = 0; 
+			$$.w2 = 0; 
+		}
 		| RETURNRST '(' TTL number ')'	{
+			$$.b2 = PFRULE_RETURNRST;
 			$$.w = $4;
 			$$.w2 = 0;
-			$$.b2 = 1;
 		}
 		| RETURNICMP		{
-			$$.b2 = 0;
+			$$.b2 = PFRULE_RETURNICMP;
 			$$.w = returnicmpdefault;
 			$$.w2 = returnicmp6default;
 		}
 		| RETURNICMP6		{
-			$$.b2 = 0;
+			$$.b2 = PFRULE_RETURNICMP;
 			$$.w = returnicmpdefault;
 			$$.w2 = returnicmp6default;
 		}
 		| RETURNICMP '(' STRING ')'	{
+			$$.b2 = PFRULE_RETURNICMP;
 			if (!($$.w = parseicmpspec($3, AF_INET)))
 				YYERROR;
 			$$.w2 = returnicmp6default;
-			$$.b2 = 0;
 		}
 		| RETURNICMP6 '(' STRING ')'	{
+			$$.b2 = PFRULE_RETURNICMP;
 			$$.w = returnicmpdefault;
 			if (!($$.w2 = parseicmpspec($3, AF_INET6)))
 				YYERROR;
-			$$.b2 = 0;
 		}
 		| RETURNICMP '(' STRING comma STRING ')' {
+			$$.b2 = PFRULE_RETURNICMP;
 			if (!($$.w = parseicmpspec($3, AF_INET)))
 				YYERROR;
 			if (!($$.w2 = parseicmpspec($5, AF_INET6)));
-			$$.b2 = 0;
+		}
+		| RETURN {
+			$$.b2 = PFRULE_RETURN;
+			$$.w = returnicmpdefault;
+			$$.w2 = returnicmp6default;
 		}
 		;
 
