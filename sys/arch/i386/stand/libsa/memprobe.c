@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.12 1997/09/17 17:56:10 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.13 1997/10/12 20:14:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,7 +36,7 @@
 #include <machine/biosvar.h>
 #include "libsa.h"
 
-static int addrprobe __P((int));
+static int addrprobe __P((u_int));
 u_int cnvmem, extmem;
 
 void
@@ -78,9 +78,12 @@ memprobe()
  *
  * BTW: These machines are pretty broken IMHO.
  */
-static int addrprobe(int kloc){
-	volatile int *loc, i;
-	static const int pat[] = {
+static int
+addrprobe(kloc)
+	u_int kloc;
+{
+	__volatile u_int *loc, i;
+	static const u_int pat[] = {
 		0x00000000, 0xFFFFFFFF,
 		0x01010101, 0x10101010,
 		0x55555555, 0xCCCCCCCC
