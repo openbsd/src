@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.15 2003/06/02 05:09:14 deraadt Exp $ */
+/*	$OpenBSD: vme.c,v 1.16 2003/10/08 20:18:34 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -68,6 +68,8 @@ void vmeunmap(void *, int);
 int vmeprint(void *, const char *);
 
 static int vmebustype;
+
+struct vme2reg *sys_vme2;
 
 struct cfattach vme_ca = {
 	sizeof(struct vmesoftc), vmematch, vmeattach
@@ -344,7 +346,6 @@ vmeattach(parent, self, args)
 #if NMC > 0 || NPCCTWO > 0
 	struct vme2reg *vme2;
 #endif
-	int scon;
 
 	sc->sc_vaddr = ca->ca_vaddr;
 
@@ -353,8 +354,9 @@ vmeattach(parent, self, args)
 #if NPCC > 0
 	case BUS_PCC:
 		vme1 = (struct vme1reg *)sc->sc_vaddr;
-		scon = (vme1->vme1_scon & VME1_SCON_SWITCH);
-		printf(": %sscon\n", scon ? "" : "not ");
+		if (vme1->vme1_scon & VME1_SCON_SWITCH)
+			printf(": system controller");
+		printf("\n");
 		vme1chip_init(sc);
 		break;
 #endif
@@ -362,8 +364,9 @@ vmeattach(parent, self, args)
 	case BUS_MC:
 	case BUS_PCCTWO:
 		vme2 = (struct vme2reg *)sc->sc_vaddr;
-		scon = (vme2->vme2_tctl & VME2_TCTL_SCON);
-		printf(": %ssystem controller\n", scon ? "" : "not ");
+		if (vme2->vme2_tctl & VME2_TCTL_SCON)
+			printf(": system controller");
+		printf("\n");
 		vme2chip_init(sc);
 		break;
 #endif
@@ -445,6 +448,8 @@ vme2chip_init(sc)
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 	u_long ctl;
 
+	sys_vme2 = vme2;
+
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
 
@@ -500,7 +505,11 @@ vme2chip_init(sc)
 		vme2->vme2_irqen |= VME2_IRQ_AB;
 	}
 #endif
-	vme2->vme2_irqen = vme2->vme2_irqen | VME2_IRQ_ACF;
+	/*
+	 * Enable ACFAIL interrupt, but disable Timer 1 interrupt - we
+	 * prefer it without for delay().
+	 */
+	vme2->vme2_irqen = (vme2->vme2_irqen | VME2_IRQ_ACF) & ~VME2_IRQ_TIC1;
 }
 
 /*
