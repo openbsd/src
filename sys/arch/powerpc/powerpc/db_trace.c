@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 1998/09/09 04:39:56 rahnds Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 1999/07/05 20:24:29 rahnds Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /* 
@@ -125,12 +125,10 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 
-	while (1) {
-		addr = db_dumpframe(addr);
-		if (addr == 0) {
-			break;
-		}
+	if (have_addr == 0){
+		addr = ddb_regs.tf.fixreg[1];
 	}
-	for (i = count; i > 0 ; i--) {
+	while (addr != 0) {
+		addr = db_dumpframe(addr);
 	}
 }
