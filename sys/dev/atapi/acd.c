@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.11 1996/09/04 00:51:13 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.12 1996/09/04 22:13:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -1001,8 +1001,6 @@ acd_size(acd, flags)
 {
 	struct atapi_read_cd_capacity_data rdcap;
 	struct atapi_read_cd_capacity cmd;
-	u_long blksize;
-	u_long size;
 
 	if (acd->ad_link->quirks & AQUIRK_NOCAPACITY) {
 		/*
@@ -1036,8 +1034,9 @@ acd_size(acd, flags)
 	acd->params.blksize = _4btol((u_int8_t*)&rdcap.blksize);
 	acd->params.disksize = _4btol((u_int8_t*)&rdcap.size);
 
-	ATAPI_DEBUG_PRINT(("acd_size: %ld %ld\n",blksize,size));
-	return size;
+	ATAPI_DEBUG_PRINT(("acd_size: %ld %ld\n", acd->params.blksize,
+	    acd->params.disksize));
+	return acd->params.disksize;
 }
 
 /*
