@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2003/03/09 00:18:04 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 2004/06/29 04:07:49 millert Exp $
 
 # We only use these libs internally
 .if !make(install)
@@ -8,7 +8,7 @@ SUBDIR=
 .endif
 
 # The bits we install
-SUBDIR+=sendmail mailstats makemap praliases smrsh editmap cf/cf
+SUBDIR+= libmilter sendmail mailstats makemap praliases smrsh editmap cf/cf
 
 # Extra bits we don't build/install right now
 #SUBDIR+= mail.local rmail vacation
@@ -19,8 +19,3 @@ SUBDIR+= doc/op cf
 .endif
 
 .include <bsd.subdir.mk>
-
-# To build milter support define WANT_LIBMILTER in /etc/mk.conf (unsupported)
-.if defined(WANT_LIBMILTER)
-SUBDIR+= libmilter
-.endif
