@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.29 2002/06/14 21:35:01 todd Exp $
+.\"	$OpenBSD: config.8,v 1.30 2002/10/13 21:21:31 miod Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -251,7 +251,12 @@ decide what should happen.
 .El
 .Pp
 Many other statements exist, and the file format is fairly rich; for more
-information see the various configuration files included in the system.
+information see the various configuration files included in the system, as
+well as
+.Xr files.conf 5
+for the
+.Nm
+rules base.
 .Pp
 .Ss Kernel modification
 When
@@ -593,6 +598,7 @@ was given, else ignore changes).
 .Ed
 .Sh SEE ALSO
 .Xr options 4 ,
+.Xr files.conf 5 ,
 .Xr boot_config 8
 .Pp
 The SYNOPSIS portion of each device in section 4 of the manual.
