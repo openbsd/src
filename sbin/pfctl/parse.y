@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.318 2003/02/14 14:38:32 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.319 2003/02/16 15:11:09 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -477,6 +477,8 @@ string		: string STRING				{
 		;
 
 varset		: STRING PORTUNARY string		{
+			if ($2 != PF_OP_EQ)
+				YYERROR;
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
