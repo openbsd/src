@@ -109,6 +109,11 @@ struct	fpstate initfpstate = {
  *
  * Trap type 0 is taken over as an `Asynchronous System Trap'.
  * This is left-over Vax emulation crap that should be fixed.
+ *
+ * Note that some of the Sparc v8 traps are actually handled by
+ * the corresponding v7 routine, but listed here for completeness.
+ * The Fujitsu Turbo-Sparc Guide also alludes to several more
+ * unimplemented trap types, but doesn't give the nominal coding.
  */
 static const char T[] = "trap";
 const char *trap_type[] = {
@@ -140,14 +145,20 @@ const char *trap_type[] = {
 	"level 13 int",		/* 1d */
 	"level 14 int",		/* 1e */
 	"level 15 int",		/* 1f */
-	T, T, T, T, T, T, T, T,	/* 20..27 */
-	T, T, T, T, T, T, T, T,	/* 28..2f */
-	T, T, T, T, T, T,	/* 30..35 */
-	"cp disabled",		/* 36 */
-	T,			/* 37 */
+	"v8 r-reg error",	/* 20 */
+	"v8 text error",	/* 21 */
+	T, T,			/* 22..23 */
+	"v8 cp disabled",	/* 24 */
+	"v8 unimp flush",	/* 25 */
+	T, T,			/* 26..27 */
+	"v8 cp exception",	/* 28 */
+	"v8 data error",	/* 29 */
+	"v8 idiv by zero",	/* 2a */
+	"v8 store error",	/* 2b */
+	T, T, T, T,		/* 2c..2f */
+	T, T, T, T, T, T, T, T,	/* 30..37 */
 	T, T, T, T, T, T, T, T,	/* 38..3f */
-	"cp exception",		/* 40 */
-	T, T, T, T, T, T, T,	/* 41..47 */
+	T, T, T, T, T, T, T, T,	/* 40..48 */
 	T, T, T, T, T, T, T, T,	/* 48..4f */
 	T, T, T, T, T, T, T, T,	/* 50..57 */
 	T, T, T, T, T, T, T, T,	/* 58..5f */

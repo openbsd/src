@@ -52,6 +52,15 @@
 #ifndef	_MACHINE_TRAP_H
 #define	_MACHINE_TRAP_H
 
+/*
+ * vectors 0x00..0x1f are common to all sparc implementations, while
+ * vectors 0x20..0x2f are selectively implemented by some v8 cpu's
+ * either to support new instructions or simplify fault decoding.
+ * For sanity, these defines should match the layout of the trap
+ * table, but some cases may be treated in common.  The priorities
+ * listed are correct, but the v8 traps been inserted "between levels".
+ */
+
 /*	trap		vec	  (pri) description	*/
 #define	T_RESET		0x00	/* (1) not actually vectored; jumps to 0 */
 #define	T_TEXTFAULT	0x01	/* (2) address fault during instr fetch */
@@ -85,14 +94,16 @@
 #define	T_L13INT	0x1d	/* (15) level 13 interrupt */
 #define	T_L14INT	0x1e	/* (14) level 14 interrupt */
 #define	T_L15INT	0x1f	/* (13) level 15 interrupt */
-/*			0x20	   unused */
+#define T_RREGERROR	0x20	/* (?) r-register access error (v8?) */
+#define T_TEXTERROR	0x21	/* (<2) error during instruction access (v8) */
+/*			0x22	   unused */
 /*	through		0x23	   unused */
 #define	T_CPDISABLED	0x24	/* (5) coprocessor instr while disabled */
 /*			0x25	   unused */
 /*	through		0x27	   unused */
 #define	T_CPEXCEPTION	0x28	/* (9) coprocessor exception */
-/*			0x29	   unused */
-/*	through		0x2a	   unused */
+#define T_DATAERROR	0x29	/* (<9) error during data access (v8) */
+#define T_IDIV0		0x2a	/* (<11) integer divide by zero (v8) */
 #define T_STOREBUFFAULT	0x2b	/* SuperSPARC: Store buffer copy-back fault */
 /*			0x2c	   unused */
 /*	through		0x7f	   unused */

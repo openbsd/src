@@ -924,18 +924,18 @@ trapbase_sun4m:
 	HARDINT4M(13)			! 1d = level 13 interrupt
 	HARDINT4M(14)			! 1e = level 14 interrupt
 	VTRAP(15, nmi_sun4m)		! 1f = nonmaskable interrupt
-	UTRAP(0x20)
-	UTRAP(0x21)
+	UTRAP(0x20)				! 20 = r-reg access error ???
+	VTRAP(T_TEXTFAULT, memfault_sun4m)	! 21 = v8 instr. fetch error
 	UTRAP(0x22)
 	UTRAP(0x23)
-	TRAP(T_CPDISABLED)	! 24 = coprocessor instr, EC bit off in psr
-	UTRAP(0x25)
+	TRAP(T_CPDISABLED)			! 24 = coprocessor instr, EC off
+	UTRAP(0x25)				! 25 = unimplemented cache flush
 	UTRAP(0x26)
 	UTRAP(0x27)
-	TRAP(T_CPEXCEPTION)	! 28 = coprocessor exception
-	UTRAP(0x29)
-	UTRAP(0x2a)
-	VTRAP(T_STOREBUFFAULT, memfault_sun4m) ! 2b = SuperSPARC store buffer fault
+	TRAP(T_CPEXCEPTION)			! 28 = coprocessor exception
+	VTRAP(T_DATAFAULT, memfault_sun4m)	! 29 = v8 data fetch error
+	TRAP(T_DIV0)				! 2a = v8 int divide by zero
+	VTRAP(T_STOREBUFFAULT, memfault_sun4m)	! 2b = SS store buffer fault
 	UTRAP(0x2c)
 	UTRAP(0x2d)
 	UTRAP(0x2e)
@@ -3779,6 +3779,11 @@ _sigcode:
 1:
 	ldd	[%fp + 64], %o0		! sig, code
 	ld	[%fp + 76], %o3		! arg3
+#ifdef SIG_DEBUG
+	subcc	%o0, 32, %g0		! signals are 1-32
+	bgu	_suicide
+	 nop
+#endif
 	call	%g1			! (*sa->sa_handler)(sig,code,scp,arg3)
 	 add	%fp, 64 + 16, %o2	! scp
 
@@ -3822,6 +3827,13 @@ _sigcode:
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
+
+#ifdef SIG_DEBUG
+	.globl _suicide
+_suicide:
+	mov	139, %g1		! obsolete syscall, puke...
+	t	ST_SYSCALL
+#endif
 _esigcode:
 
 #ifdef COMPAT_SVR4
