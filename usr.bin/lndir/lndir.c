@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.13 2003/04/14 03:14:06 millert Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.14 2003/05/13 16:55:22 millert Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
 /* 
@@ -207,11 +207,10 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 	*p++ = '/';
 	n_dirs = fs->st_nlink;
 	while ((dp = readdir(df))) {
-		if (dp->d_name[strlen(dp->d_name) - 1] == '~')
+		if (dp->d_namlen == 0 || dp->d_name[dp->d_namlen - 1] == '~')
 			continue;
-		for (cur = exceptions; cur != (struct except *)NULL;
-		    cur = cur->next) {
-			if (!strcmp (dp->d_name, cur->name))
+		for (cur = exceptions; cur != NULL; cur = cur->next) {
+			if (!strcmp(dp->d_name, cur->name))
 				goto next;	/* can't continue */
 		}
 		strlcpy(p, dp->d_name, buf + sizeof(buf) - p);
