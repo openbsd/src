@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.15 2004/02/14 17:24:31 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.16 2004/02/16 19:01:02 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -19,13 +19,13 @@ dnl
 dnl
 dnl *** vax specific definitions
 dnl
-__devitem(dhu, dhu*, unibus dhu11)dnl
-__devitem(dmz, dmz*, unibus dmz32)dnl
-__devitem(dmf, dmf*, unibus dmf32)dnl
-__devitem(dh, dh*, {-unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)-})
+__devitem(dhu, dhu*, UNIBUS DHU11)dnl
+__devitem(dmz, dmz*, UNIBUS DMZ32)dnl
+__devitem(dmf, dmf*, UNIBUS DMF32)dnl
+__devitem(dh, dh*, {-UNIBUS DH11 and emulations (e.g. Able dmax, Emulex CS-11)-})dnl
 __devitem(vt, vt*, {-console-})dnl
-__devitem(dz, dz*, unibus dz11 and dz32)dnl
-__devitem(dl, dl*, unibus dl11)dnl
+__devitem(dz, dz*, UNIBUS DZ11 and DZ32)dnl
+__devitem(dl, dl*, UNIBUS DL11)dnl
 _mkdev(dz, dz*,
 {-case $U in
        [0-7])
@@ -100,61 +100,60 @@ dnl
 dnl
 _TITLE(make)
 _DEV(all)
+_DEV(ramdisk)
 _DEV(std)
-_DEV(loc)
+_DEV(local)
+_TITLE(dis)
+_DEV(ccd, 54, 17)
+_DEV(cd, 61, 22)
+_DEV(flo, 54, 16)
+_DEV(hk, 11, 3)
+_DEV(hd, 58, 19)
+_DEV(hp, 4, 0)
+_DEV(ra, 9, 9)
+_DEV(rb, 23, 11)
+_DEV(rd, 62, 23)
+_DEV(rl, 32, 14)
+_DEV(rx, 30, 12)
+_DEV(sd, 59, 20)
+_DEV(up, 13, 2)
+_DEV(vnd, 55, 18)
 _TITLE(tap)
-_DEV(st, 60, 21)
-_DEV(mt, 38, 15)
+_DEV(ch, 63)
 _DEV(ht, 5, 1)
+_DEV(mt, 38, 15)
+_DEV(st, 60, 21)
 _DEV(tm, 14, 5)
 _DEV(ts, 16, 6)
 _DEV(ut, 17, 10)
-_TITLE(dis)
-_DEV(hp, 4, 0)
-_DEV(hk, 11, 3)
-_DEV(up, 13, 2)
-_DEV(ra, 9, 9)
-_DEV(rb, 23, 11)
-_DEV(rx, 30, 12)
-_DEV(rl, 32, 14)
-_DEV(hd, 58, 19)
-_DEV(sd, 59, 20)
-_DEV(cd, 61, 22)
-_DEV(ch, 63)
-_DEV(ss, 64)
-_DEV(uk, 65)
-_DEV(rd, 62, 23)
-_DEV(flo, 54, 16)
-_DEV(vnd, 55, 18)
-_DEV(ccd, 54, 17)
-_TITLE(pty)
-_DEV(tty, 20)
-_DEV(pty, 21)
-_DEV(ptm, 75)
-_TITLE(prn)
 _TITLE(term)
-_DEV(dhu, 34)
 _DEV(dh, 12)
+_DEV(dhu, 34)
+_DEV(dl, 66)
 _DEV(dmf, 22)
 _DEV(dmz, 37)
-_DEV(vt, 68)
 _DEV(dz, 1)
-_DEV(dl, 66)
+_DEV(vt, 68)
+dnl _TITLE(prn)
+_TITLE(pty)
+_DEV(ptm, 75)
+_DEV(pty, 21)
+_DEV(tty, 20)
 _TITLE(spec)
-_DEV(oppr)
 _DEV(bpf, 56)
-_DEV(pf, 42)
-_DEV(lkm, 28)
-_DEV(tun, 57)
-_DEV(rnd, 67)
-_DEV(mag)
-_DEV(xfs, 51)
-_DEV(raid, 73, 25)
 _DEV(fdesc, 53)
+_DEV(lkm, 28)
+_DEV(pf, 42)
+_DEV(raid, 73, 25)
+_DEV(rnd, 67)
 _DEV(ses, 124)
+_DEV(ss, 64)
 _DEV(systrace, 49)
+_DEV(tun, 57)
+_DEV(uk, 65)
+_DEV(xfs, 51)
 dnl
-divert(7)dnl
+divert(__mddivert)dnl
 dnl
 ramdisk)
 	_recurse std random

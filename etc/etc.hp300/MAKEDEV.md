@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.16 2004/02/14 17:24:31 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.17 2004/02/16 19:01:01 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -41,49 +41,50 @@ _mkdev(st_hp300, ct*|mt*|st*,
 		;;
 	esac-})dnl
 __devitem(st_hp300, st*, Exabyte tape)dnl
-__devitem(grf, grf*, raw interface to HP300 graphics devices)dnl
-__devitem(ttye, ttye*, ite bitmapped consoles)dnl
+__devitem(grf, grf*, Raw interface to HP300 graphics devices)dnl
 dnl
 dnl
 _TITLE(make)
 _DEV(all)
+_DEV(ramdisk)
 _DEV(std)
 _DEV(local)
+_TITLE(dis)
+_DEV(ccd, 17, 5)
+_DEV(hd, 9, 2)
+_DEV(rd, 34, 8)
+_DEV(sd, 8, 4)
+_DEV(vnd, 19, 6)
 _TITLE(tap)
 _DEV(ct, 7, 0)
 _DEV(mt, 16, 1)
 _DEV(st_hp300, 20, 7)
-_TITLE(dis)
-_DEV(ccd, 17, 5)
-_DEV(hd, 9, 2)
-_DEV(sd, 8, 4)
-_DEV(vnd, 19, 6)
-_DEV(rd, 34, 8)
-_TITLE(termp)
+_TITLE(term)
+_DEV(apci)
 _DEV(dca, 12)
 _DEV(dcm, 15)
-_DEV(apci)
+dnl _TITLE(call)
 _TITLE(pty)
-_DEV(tty, 4)
-_DEV(pty, 5)
 _DEV(ptm, 52)
-_TITLE(prn)
-_DEV(ppi, 11)
-_TITLE(call)
-_TITLE(spec)
-_DEV(fdesc, 21)
+_DEV(pty, 5)
+_DEV(tty, 4)
+_TITLE(cons)
 _DEV(grf, 10)
 _DEV(ite)
-_DEV(hil, 14)
+_TITLE(prn)
+_DEV(ppi, 11)
+_TITLE(spec)
 _DEV(bpf, 22)
-_DEV(tun, 23)
-_DEV(pf, 33)
+_DEV(fdesc, 21)
+_DEV(hil, 14)
 _DEV(lkm, 24)
+_DEV(pf, 33)
 _DEV(rnd, 32)
-_DEV(xfs, 51)
+_DEV(tun, 23)
 _DEV(systrace, 50)
+_DEV(xfs, 51)
 dnl
-divert(7)dnl
+divert(__mddivert)dnl
 dnl
 ramdisk)
 	_recurse std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4

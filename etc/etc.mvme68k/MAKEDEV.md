@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.11 2004/02/14 17:24:31 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.12 2004/02/16 19:01:02 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -19,8 +19,8 @@ dnl
 dnl
 dnl *** mvme68k-specific devices
 dnl
-__devitem(mvme_tzs, ttya-d, standard serial ports)dnl
-__devitem(mvme_czs, cuaa-d, standard call-up devices)dnl
+__devitem(mvme_tzs, ttya-d, On-board serial ports)dnl
+__devitem(mvme_czs, cuaa-d, On-board call-up devices)dnl
 _mkdev(mvme_tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	case $u in
 	a) n=0 ;;
@@ -65,21 +65,21 @@ _mkdev(ttyw, {-ttyw*-}, {-u=${i#ttyw*}
 		;;
 	*) echo unknown tty device $i ;;
 	esac-})dnl
-__devitem(lp, par0, Printer port)dnl
+__devitem(lp, par0, On-board printer port)dnl
 _mkdev(lp, {-lp*-}, {-u=${i#lp*}
 	case $u in
 	0) M par$u c major_lp_c $u 600;;
 	*) echo unknown lp device $i ;;
 	esac-})dnl
-__devitem(sram, sram0, static memory access)dnl
+__devitem(sram, sram0, On-board static memory)dnl
 _mkdev(sram, sram0, {-M sram0 c major_sram_c 0 640 kmem-})dnl
-__devitem(nvram, nvram0, non-volatile memory access)dnl
+__devitem(nvram, nvram0, On-board non-volatile memory)dnl
 _mkdev(nvram, nvram0, {-M nvram0 c major_nvram_c 0 640 kmem-})dnl
-__devitem(flash, flash0, flash memory access)dnl
+__devitem(flash, flash0, On-board flash memory)dnl
 _mkdev(flash, flash0, {-M flash0 c major_flash_c 0 640 kmem-})dnl
-__devitem(vmes, vmes0, VMEbus access)dnl
+__devitem(vmes, vmes0, VMEbus D16 space)dnl
 _mkdev(vmes, vmes0, {-M vmes0 c major_vmes_c 0 640 kmem-})dnl
-__devitem(vmel, vmel0, VMEbus access)dnl
+__devitem(vmel, vmel0, VMEbus D32 space)dnl
 _mkdev(vmel, vmel0, {-M vmel0 c major_vmel_c 0 640 kmem-})dnl
 dnl
 dnl *** MAKEDEV itself
@@ -125,46 +125,46 @@ target(ramd, pty, 0)dnl
 _DEV(ramd)
 dnl
 _DEV(std)
-_DEV(loc)
+_DEV(local)
 dnl
-_TITLE(tap)
-_DEV(st, 20, 7)
 _TITLE(dis)
-_DEV(sd, 8, 4)
-_DEV(cd, 9, 8)
 _DEV(ccd, 17, 5)
-_DEV(vnd, 19, 6)
+_DEV(cd, 9, 8)
 _DEV(rd, 18, 9)
+_DEV(sd, 8, 4)
+_DEV(vnd, 19, 6)
+_TITLE(tap)
+_DEV(ch, 44)
+_DEV(st, 20, 7)
 _TITLE(term)
-_DEV(mvme_tzs, 12)
 _DEV(mvme_czs, 12)
+_DEV(mvme_tzs, 12)
 _DEV(cl, 13)
 _DEV(ttyw, 30)
 _TITLE(pty)
-_DEV(tty, 4)
-_DEV(pty, 5)
 _DEV(ptm, 52)
+_DEV(pty, 5)
+_DEV(tty, 4)
 _TITLE(prn)
 _DEV(lp, 28)
 _TITLE(spec)
-_DEV(uk, 41)
-_DEV(ss, 42)
-_DEV(ch, 44)
-_DEV(fdesc, 21)
 _DEV(bpf, 22)
-_DEV(tun, 23)
-_DEV(pf, 39)
-_DEV(lkm, 24)
-_DEV(rnd, 40)
-_DEV(xfs, 51)
-_DEV(sram, 7)
-_DEV(nvram, 10)
+_DEV(fdesc, 21)
 _DEV(flash, 11)
-_DEV(vmes, 32)
-_DEV(vmel, 31)
+_DEV(lkm, 24)
+_DEV(nvram, 10)
+_DEV(pf, 39)
+_DEV(rnd, 40)
+_DEV(sram, 7)
+_DEV(ss, 42)
 _DEV(systrace, 50)
+_DEV(tun, 23)
+_DEV(uk, 41)
+_DEV(vmel, 31)
+_DEV(vmes, 32)
+_DEV(xfs, 51)
 dnl
-divert(7)dnl
+divert(__mddivert)dnl
 dnl
 _std(1, 2, 43, 3, 6)
 	;;
