@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.4 2004/08/12 06:11:57 niklas Exp $ */	
+/* $OpenBSD: apicvec.s,v 1.5 2004/12/24 21:22:00 pvalchev Exp $ */	
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */	
 
 /*-
@@ -191,7 +191,7 @@ _C_LABEL(Xintr_/**/name/**/num):					\
 	testl	%ebx,%ebx						;\
 	jz	8f			/* oops, no handlers.. */	;\
 7:									 \
-	LOCK_KERNEL							;\
+	LOCK_KERNEL(IF_PPL(%esp))					;\
 	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	6f							;\
@@ -205,7 +205,7 @@ _C_LABEL(Xintr_/**/name/**/num):					\
 	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
 	adcl	$0,IH_COUNT+4(%ebx)					;\
 4:									 \
-	UNLOCK_KERNEL							;\
+	UNLOCK_KERNEL(IF_PPL(%esp))					;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\

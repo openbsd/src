@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.18 2004/07/20 20:16:44 art Exp $
+#	$OpenBSD: genassym.cf,v 1.19 2004/12/24 21:22:00 pvalchev Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,6 +119,10 @@ member	tf_err
 member	tf_eax
 member	tf_esp
 define	FRAMESIZE	sizeof(struct trapframe)
+
+# interrupt frame definitions
+struct intrframe
+member if_ppl
 
 # signal handling
 struct	sigframe	SIGF_

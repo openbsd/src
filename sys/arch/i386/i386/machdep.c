@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.313 2004/12/06 23:40:44 hshoexer Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.314 2004/12/24 21:22:00 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -4119,9 +4119,9 @@ splassert_check(int wantipl, const char *func)
 
 #ifdef MULTIPROCESSOR
 void
-i386_intlock(struct intrframe iframe)
+i386_intlock(int ipl)
 {
-	if (iframe.if_ppl < IPL_SCHED)
+	if (ipl < IPL_SCHED)
 #ifdef notdef
 		spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
 #else
@@ -4130,9 +4130,9 @@ i386_intlock(struct intrframe iframe)
 }
 
 void
-i386_intunlock(struct intrframe iframe)
+i386_intunlock(int ipl)
 {
-	if (iframe.if_ppl < IPL_SCHED)
+	if (ipl < IPL_SCHED)
 #ifdef notdef
 		spinlockmgr(&kernel_lock, LK_RELEASE, 0);
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.4 2004/06/28 02:00:20 deraadt Exp $	*/
+/*	$OpenBSD: vector.s,v 1.5 2004/12/24 21:22:00 pvalchev Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -60,11 +60,11 @@
 	.globl	_C_LABEL(isa_strayintr)
 
 #ifdef MULTIPROCESSOR
-#define LOCK_KERNEL	call _C_LABEL(i386_intlock)
-#define UNLOCK_KERNEL	call _C_LABEL(i386_intunlock)
+#define LOCK_KERNEL(ipl)	pushl ipl; call _C_LABEL(i386_intlock);	addl $4,%esp
+#define UNLOCK_KERNEL(ipl)	pushl ipl; call _C_LABEL(i386_intunlock); addl $4,%esp
 #else
-#define LOCK_KERNEL
-#define UNLOCK_KERNEL
+#define LOCK_KERNEL(ipl)
+#define UNLOCK_KERNEL(ipl)
 #endif
 
 #define voidop(num)
@@ -113,7 +113,7 @@ Xresume_/**/name/**/num/**/:						;\
 	testl	%ebx,%ebx						;\
 	jz	_C_LABEL(Xstray_/**/name/**/num)	/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
-	LOCK_KERNEL							;\
+	LOCK_KERNEL(IF_PPL(%esp))					;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	4f							;\
@@ -129,7 +129,7 @@ Xresume_/**/name/**/num/**/:						;\
 5:	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
-	UNLOCK_KERNEL							;\
+	UNLOCK_KERNEL(IF_PPL(%esp))					;\
 	STRAY_TEST			/* see if it's a stray */	;\
 6:	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
