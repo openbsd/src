@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.7 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.8 2002/03/26 01:28:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -59,9 +59,11 @@ struct vgafb_softc {
 	int sc_nscreens;
 	int sc_width, sc_height, sc_depth, sc_linebytes;
 	int sc_node, sc_ofhandle;
-	bus_space_tag_t sc_bt;
-	bus_space_handle_t sc_bh;
-	bus_addr_t sc_paddr;
+	bus_space_tag_t sc_mem_t;
+	bus_space_tag_t sc_io_t;
+	bus_space_handle_t sc_mem_h, sc_io_h, sc_mmio_h;
+	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr;
+	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size;
 	struct rcons sc_rcons;
 	struct raster sc_raster;
 	int sc_console;
@@ -98,6 +100,7 @@ struct wsscreen_list vgafb_screenlist = {
 	sizeof(vgafb_scrlist) / sizeof(struct wsscreen_descr *), vgafb_scrlist
 };
 
+int vgafb_mapregs(struct vgafb_softc *, struct pci_attach_args *);
 int vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int vgafb_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -163,7 +166,6 @@ vgafbattach(parent, self, aux)
 	struct vgafb_softc *sc = (struct vgafb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	bus_size_t memsize;
 	long defattr;
 
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
@@ -186,24 +188,15 @@ vgafbattach(parent, self, aux)
 
 	sc->sc_console = vgafb_is_console(sc->sc_node);
 
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, 0x10,
-	    &sc->sc_paddr, &memsize, NULL)) {
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	if (bus_space_map2(pa->pa_memt, SBUS_BUS_SPACE,
-	    sc->sc_paddr, memsize, 0, NULL, &sc->sc_bh)) {
-		printf(": can't map mem space\n");
-		goto fail;
-	}
-	sc->sc_bt = pa->pa_memt;
+	if (vgafb_mapregs(sc, pa))
+		return;
 
 	sc->sc_rcons.rc_sp = &sc->sc_raster;
 	sc->sc_raster.width = sc->sc_width;
 	sc->sc_raster.height = sc->sc_height;
 	sc->sc_raster.depth = sc->sc_depth;
 	sc->sc_raster.linelongs = sc->sc_linebytes / 4;
-	sc->sc_raster.pixels = (void *)sc->sc_bh;
+	sc->sc_raster.pixels = (void *)bus_space_vaddr(sc->sc_mem_t, sc->sc_mem_h);
 
 	if (sc->sc_console == 0 ||
 	    romgetcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
@@ -249,7 +242,6 @@ vgafbattach(parent, self, aux)
 	config_found(self, &waa, wsemuldisplaydevprint);
 
 	return;
-fail:
 }
 
 int
@@ -420,7 +412,7 @@ vgafb_mmap(v, off, prot)
 		return (-1);
 
 	if (off >= 0 && off < 0x800000) {
-		return (bus_space_mmap(sc->sc_bt, sc->sc_paddr, off, prot,
+		return (bus_space_mmap(sc->sc_mem_t, sc->sc_mem_h, off, prot,
 		    BUS_SPACE_MAP_LINEAR));
 	}
 
@@ -446,4 +438,85 @@ vgafb_is_console(node)
 	extern int fbnode;
 
 	return (fbnode == node);
+}
+
+int
+vgafb_mapregs(sc, pa)
+	struct vgafb_softc *sc;
+	struct pci_attach_args *pa;
+{
+	bus_addr_t ba;
+	bus_size_t bs;
+	int hasio = 0, hasmem = 0, hasmmio = 0; 
+	u_int32_t i, cf;
+
+	for (i = 0x10; i <= 0x18; i += 4) {
+		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
+		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
+			if (hasio)
+				continue;
+			if (pci_io_find(pa->pa_pc, pa->pa_tag, i,
+			    &sc->sc_io_addr, &sc->sc_io_size)) {
+				printf(": failed to find io at 0x%x\n", i);
+				continue;
+			}
+			if (bus_space_map(pa->pa_iot, sc->sc_io_addr,
+			    sc->sc_io_size, 0, &sc->sc_io_h)) {
+				printf(": can't map io space\n");
+				continue;
+			}
+			hasio = 1;
+		} else {
+			/* Memory mapping... framebuffer or mmio? */
+			if (pci_mem_find(pa->pa_pc, pa->pa_tag, i,
+			    &ba, &bs, NULL)) {
+				printf(": failed to find mem at 0x%x\n", i);
+				continue;
+			}
+
+			if (bs <= 0x10000) {	/* mmio */
+				if (hasmmio)
+					continue;
+				if (bus_space_map(pa->pa_memt, ba, bs, 0,
+				    &sc->sc_mmio_h)) {
+					printf(": can't map mmio space\n");
+					continue;
+				}
+				sc->sc_mmio_addr = ba;
+				sc->sc_mmio_size = bs;
+				hasmmio = 1;
+			} else {
+				if (hasmem)
+					continue;
+				if (bus_space_map2(pa->pa_memt, SBUS_BUS_SPACE,
+	    			    ba, bs, 0, NULL,
+				    &sc->sc_mem_h)) {
+					printf(": can't map mem space\n");
+					continue;
+				}
+				sc->sc_mem_addr = ba;
+				sc->sc_mem_size = bs;
+				hasmem = 1;
+			}
+		}
+	}
+
+	if (hasmmio == 0 || hasmem == 0 || hasio == 0) {
+		printf(": failed to find all ports\n");
+		goto fail;
+	}
+
+	sc->sc_mem_t = pa->pa_memt;
+	sc->sc_io_t = pa->pa_iot;
+
+	return (0);
+
+fail:
+	if (hasio)
+		bus_space_unmap(pa->pa_iot, sc->sc_io_h, sc->sc_io_size);
+	if (hasmmio)
+		bus_space_unmap(pa->pa_memt, sc->sc_mmio_h, sc->sc_mmio_size);
+	if (hasmem)
+		bus_space_unmap(pa->pa_memt, sc->sc_mem_h, sc->sc_mem_size);
+	return (1);
 }
