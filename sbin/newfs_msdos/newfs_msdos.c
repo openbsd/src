@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.1 1996/06/10 06:37:16 deraadt Exp $ */
+/*	$OpenBSD: newfs_msdos.c,v 1.2 1996/12/04 08:33:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Joerg Wunsch
@@ -203,13 +203,15 @@ main(argc, argv)
 	time_t  now;
 	int	c, i, fd, format = 0, rootdirsize;
 
-	while ((c = getopt(argc, argv, "s:L:")) != EOF)
+	while ((c = getopt(argc, argv, "s:L:t:")) != EOF)
 		switch (c) {
 		case 's':
 			format = atoi(optarg);
 			break;
 		case 'L':
 			label = optarg;
+			break;
+		case 't':	/* compat with "-t fstype" in newfs */
 			break;
 		case '?':
 		default:
