@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.2 1998/11/11 03:39:41 jason Exp $
+$OpenBSD: miidevs,v 1.3 1998/12/24 01:30:08 jason Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -46,6 +46,7 @@ oui AMD				0x00606e	Advanced Micro Devices
 oui ICS				0x00057d	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x1e0400	Level 1
+oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x0005be	Seeq
@@ -66,6 +67,9 @@ model INTEL I82555		0x0015 i82555 10/100 media interface
 
 /* Level 1 PHYs */
 model LEVEL1 LXT970		0x0000 LXT970 10/100 media interface
+
+/* Myson Technology PHYs */
+model MYSON MTD972		0x0000 MTD972 10/100 media interface
 
 /* National Semiconductor PHYs */
 model NATSEMI DP83840		0x0000 DP83840 10/100 media interface
