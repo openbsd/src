@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioskbd.S,v 1.7 1997/05/31 15:38:45 mickey Exp $	*/
+/*	$OpenBSD: bioskbd.S,v 1.8 1997/07/18 00:29:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,10 +34,10 @@
 
 #include <machine/asm.h>
 #define	_LOCORE
+#include <machine/biosvar.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
-#include "biosdev.h"
 #undef	_LOCORE
 
 /* 
@@ -69,7 +69,7 @@ ENTRY(kbd_putc)
 	movb	$0x0e, %ah
 	xorl	%ebx, %ebx
 	incl	%ebx
-	BIOSINT(0x10)		# display a byte
+	DOINT(0x10)		# display a byte
 	popl	%ebx
 	ret
 
@@ -81,7 +81,7 @@ ENTRY(kbd_getc)
 	pushl	%ebx
 	pushl	%ecx
 	xorl	%eax, %eax
-	BIOSINT(0x16)
+	DOINT(0x16)
 	movzbl	%al, %eax
 	popl	%ecx
 	popl	%ebx
@@ -96,7 +96,7 @@ ENTRY(kbd_ischar)
 	pushl	%ecx
 	xorl	%eax, %eax
 	incb	%ah
-	BIOSINT(0x16)
+	DOINT(0x16)
 	setnz	%al
 	movzbl	%al, %eax
 	popl	%ecx

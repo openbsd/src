@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.9 1997/05/30 02:21:51 mickey Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.10 1997/07/18 00:29:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,13 +34,13 @@
 
 #include <machine/asm.h>
 #define	_LOCORE
+#include <machine/biosvar.h>
 #include "debug_md.h"
-#include "biosdev.h"
 #undef	_LOCORE
 
 
 	.globl	_C_LABEL(errno)	/* XXX used for bios errors */
-
+	.globl	_C_LABEL(BIOS_regs)
 /*
  * int biosread(dev,cyl,head,sect,nsect,buf)
  *	read number of sectors from disk
@@ -67,8 +67,9 @@ ENTRY(biosread)
 	movl	%ebx, %edi	# split off for seg:off pair
 	andl	$0xf, %ebx	# atomic read for up to 64k
 	shrl	$4, %edi
+	movl	%edi, _C_LABEL(BIOS_regs)+BIOSR_ES
 
-	BIOSINT(0x13)
+	DOINT(0x13)
 	movb	$0, %al
 	jnc	1f
 	movb	%ah, %al
@@ -101,7 +102,7 @@ ENTRY(biosdinfo)
 
 	movb	8(%ebp), %dl		# drive #
 	movb	$0x08, %ah		# ask for disk info
-	BIOSINT(0x13)
+	DOINT(0x13)
 	movb	$1, %ah			# max head
 	movb	$18, %al		# max sector
 	jc	1f
@@ -129,7 +130,7 @@ ENTRY(biosdreset)
 
 	movb	$0x00, %ah		# reset disk system
 	movb	8(%ebp), %dl		# drive #
-	BIOSINT(0x13)
+	DOINT(0x13)
 
 	popl	%ecx
 	popl	%ebx
@@ -148,7 +149,7 @@ ENTRY(EDDcheck)
 	movb	$0x44, %ah
 	movw	$0x55aa, %bx
 	movl	8(%ebp), %edx
-	BIOSINT(0x13)
+	DOINT(0x13)
 	movl	$-1, %eax
 	jc	1f
 	cmpw	$0xaa55, %bx
@@ -192,7 +193,7 @@ ENTRY(EDDread)
 	movl	24(%ebp), %eax	/* buffer */
 	movl	%eax, 4(%esi)
 	movb	$0x42, %ah
-	BIOSINT(0x13)
+	DOINT(0x13)
 	jnc	1f
 	xorl	%eax, %eax
 

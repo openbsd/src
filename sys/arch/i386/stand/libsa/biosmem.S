@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosmem.S,v 1.3 1997/05/29 04:41:48 mickey Exp $	*/
+/*	$OpenBSD: biosmem.S,v 1.4 1997/07/18 00:29:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,11 +34,11 @@
 
 #include <machine/asm.h>
 #define	_LOCORE
-#include "biosdev.h"
+#include <machine/biosvar.h>
 #undef	_LOCORE
 
 ENTRY(biosmem)
 	pushl	%ebx
-	BIOSINT(0x12)
+	DOINT(0x12)
 	popl	%ebx
 	ret

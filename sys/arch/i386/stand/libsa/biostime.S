@@ -1,4 +1,4 @@
-/*	$OpenBSD: biostime.S,v 1.9 1997/07/08 03:41:00 mickey Exp $	*/
+/*	$OpenBSD: biostime.S,v 1.10 1997/07/18 00:29:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #define	_LOCORE
-#include "biosdev.h"
+#include <machine/biosvar.h>
 #undef	_LOCORE
 
 /*
@@ -58,7 +58,7 @@ ENTRY(usleep)
 	shrl	$16, %ecx
 
 	movb	$0x86, %ah
-	BIOSINT(0x15)
+	DOINT(0x15)
 #ifdef notdef
 	xorb	%al, %al
 	jnc	1f
@@ -81,7 +81,7 @@ ENTRY(biostime)
 	pushl	%ebx
 
 	movb	$0x02, %ah
-	BIOSINT(0x1a)
+	DOINT(0x1a)
 	movb	$1, %al
 	jc	1f
 
@@ -112,7 +112,7 @@ ENTRY(biosdate)
 	pushl	%ebx
 
 	movb	$0x04, %ah
-	BIOSINT(0x1a)
+	DOINT(0x1a)
 	movb	$1, %al
 	jc	1f
 
