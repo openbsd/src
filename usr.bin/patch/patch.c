@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.24 2003/07/22 20:17:06 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.25 2003/07/22 20:48:58 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.24 2003/07/22 20:17:06 millert Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.25 2003/07/22 20:48:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -37,6 +37,7 @@ static const char rcsid[] = "$OpenBSD: patch.c,v 1.24 2003/07/22 20:17:06 miller
 #include <assert.h>
 #include <ctype.h>
 #include <getopt.h>
+#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -69,8 +70,12 @@ static int	remove_empty_files = FALSE;
 /* TRUE if -R was specified on command line.  */
 static int	reverse_flag_specified = FALSE;
 
- /* buffer for stderr */
+/* buffer holding the name of the rejected patch file. */
+static char	rejname[NAME_MAX + 1];
+
+/* buffer for stderr */
 static char	serrbuf[BUFSIZ];
+
 
 /* Apply a set of diffs as appropriate. */
 
