@@ -1,0 +1,36 @@
+.\" $OpenBSD: le.4,v 1.1 2000/07/22 04:50:56 bjc Exp $
+.\"
+.Dd July 21, 2000
+.Dt LE 4 vax
+.Os
+.Sh NAME
+.Nm le
+.Nd AMD 7990 LANCE ethernet device
+.Sh SYNOPSIS
+.Cd "le* at vsbus? csr 0x200e0000    " Pq "VAXstation onboard"
+.Cd "le* at ibus?                    " Pq "MicroVAX ibus"
+.Sh DESCRIPTION
+The
+.Nm
+interface provides access to the 10 Mb/s
+.Tn Ethernet
+network through the 
+.Tn AMD
+Am7990 Local Area Network Controller for Ethernet
+.Pq Tn LANCE
+chipset.
+.Pp
+Different machine configurations have varying types of connectors.  The 
+following types can be found:
+.Pp
+.Bl -tag -width 10n
+.It AUI/DIX
+15-pin connector (10base5)
+.It BNC
+RG58 connector (10base2)
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifconfig 4 ,
+.Xr ifmedia 4 , 
+.Xr ze 4
