@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.6 2002/01/01 22:03:49 deraadt Exp $ */
+/* $OpenBSD: radioctl.c,v 1.7 2002/01/02 19:18:55 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -109,7 +109,7 @@ main(int argc, char **argv)
 	char *radiodev = NULL;
 	int rd = -1;
 
-	char optchar;
+	int optchar;
 	char *param = NULL;
 
 	int show_vars = 0;
@@ -118,10 +118,8 @@ main(int argc, char **argv)
 
 	int optv = 0;
 
-	if (argc < 2) {
+	if (argc < 2)
 		usage();
-		exit(1);
-	}
 
 	radiodev = getenv(RADIO_ENV);
 	if (radiodev == NULL)
@@ -186,8 +184,11 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	printf("Usage: %s [-f file] [-a] [-n] [-w name=value] [name]\n",
-	    __progname);
+	fprintf(stderr, "usage:  %s [-f file] [-n] variable ...\n"
+	    "        %s [-f file] [-n] -w variable=value ...\n"
+	    "        %s [-f file] [-n] -a\n",
+	    __progname, __progname, __progname);
+	exit(1);
 }
 
 static void
