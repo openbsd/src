@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.11 2002/08/09 20:26:45 jsyn Exp $ */
+/*	$OpenBSD: macros.h,v 1.12 2003/08/01 02:23:45 avsm Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -168,34 +168,12 @@ strlen(const char *cp)
 }
 
 static __inline__ char *
-strcat(char *cp, const char *c2)
-{
-        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r2;incl r2;
-                            locc $0,$65535,(%0);movc3 r2,(%1),(r1)"
-                        :
-                        : "r" (cp), "r" (c2)
-                        : "r0","r1","r2","r3","r4","r5","memory","cc");
-        return  cp;
-}
-
-static __inline__ char *
 strncat(char *cp, const char *c2, size_t count)
 {
         __asm__ __volatile("locc $0,%2,(%1);subl3 r0,%2,r2;
                             locc $0,$65535,(%0);movc3 r2,(%1),(r1);movb $0,(r3)"
                         :
                         : "r" (cp), "r" (c2), "g"(count)
-                        : "r0","r1","r2","r3","r4","r5","memory","cc");
-        return  cp;
-}
-
-static __inline__ char *
-strcpy(char *cp, const char *c2)
-{
-        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r2;
-                            movc3 r2,(%1),(%0);movb $0,(r3)"
-                        :
-                        : "r" (cp), "r" (c2)
                         : "r0","r1","r2","r3","r4","r5","memory","cc");
         return  cp;
 }
