@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.22 1999/02/09 18:11:12 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.23 1999/03/24 17:53:22 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ _msgbuf = KERNBASE
 
 	/* regular vectored traps */
 #define	VTRAP(type, label) \
-	mov (type), %l3; b label; mov %psr, %l0; nop
+	rd %wim, %l0; mov (type), %l3; b label; mov %psr, %l0
 
 	/* hardware interrupts (can be linked or made `fast') */
 #define	HARDINT44C(lev) \
