@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.84 2003/12/03 13:28:36 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.85 2003/12/07 15:30:24 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.84 2003/12/03 13:28:36 markus Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.85 2003/12/07 15:30:24 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -775,9 +775,7 @@ printif(struct ifreq *ifrm, int ifaliases)
 
 /*ARGSUSED*/
 void
-clone_create(addr, param)
-	const char *addr;
-	int param;
+clone_create(const char *addr, int param)
 {
 
 	/* We're called early... */
@@ -790,9 +788,7 @@ clone_create(addr, param)
 
 /*ARGSUSED*/
 void
-clone_destroy(addr, param)
-	const char *addr;
-	int param;
+clone_destroy(const char *addr, int param)
 {
 
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
