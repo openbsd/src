@@ -23,7 +23,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-bulk.mc,v 1.1 2002/07/03 16:06:19 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-bulk.mc,v 1.2 2005/01/06 17:21:03 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -33,7 +33,7 @@ dnl Override some default values
 define(`confDELIVERY_MODE', `q')dnl
 define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
-define(`confQUEUE_LA', `6')dnl
+define(`confQUEUE_LA', `25')dnl
 define(`confREFUSE_LA', `100')dnl
 dnl
 dnl Some alternate paths so we don't conflict with sendmail on port 25

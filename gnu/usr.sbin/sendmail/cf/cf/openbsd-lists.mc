@@ -4,11 +4,11 @@ divert(-1)
 #
 # This config handles incoming mail for openbsd.{org,com,net}
 # Mailing list fanout is handled by a separate exploder running on
-# port 24 that is fed by mj2.
+# port 24 that is fed by mj2 (see openbsd-bulk.mc).
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.15 2003/11/10 19:11:55 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.16 2005/01/06 17:21:03 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -18,8 +18,8 @@ dnl Override some default values
 define(`confPRIVACY_FLAGS', `authwarnings,needmailhelo,noexpn,novrfy,noetrn,noverb,nobodyreturn')dnl
 define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
-define(`confQUEUE_LA', `6')dnl
-define(`confREFUSE_LA', `100')dnl
+define(`confQUEUE_LA', `25')dnl
+define(`confREFUSE_LA', `50')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.
@@ -28,6 +28,9 @@ dnl
 dnl Keep host status on disk between sendmail runs in the .hoststat dir
 define(`confHOST_STATUS_DIRECTORY', `/var/spool/mqueue/.hoststat')dnl
 define(`confTO_HOSTSTATUS', `30m')dnl
+dnl
+dnl Just queue incoming messages, we have a queue runner for actual delivery
+define(`confDELIVERY_MODE', `q')dnl
 dnl
 dnl Wait at least 27 minutes before trying to redeliver a message.
 define(`confMIN_QUEUE_AGE', `27m')dnl
@@ -38,6 +41,14 @@ define(`confWORK_RECIPIENT_FACTOR', `0')dnl
 dnl
 dnl Reduce ClassFactor
 define(`confWORK_CLASS_FACTOR', `1000')dnl
+dnl
+dnl Simple queue group settings:
+dnl     run at most 10 concurrent processes for initial submission
+dnl     max of 3 queue runners.
+define(`confMAX_QUEUE_CHILDREN', `10')dnl
+define(`confMAX_RUNNERS_PER_QUEUE', `3')dnl
+define(`confFAST_SPLIT', `10')dnl
+QUEUE_GROUP(`mqueue', `P=/var/spool/mqueue, R=3, F=f')dnl
 dnl
 dnl Always use fully qualified domains
 FEATURE(always_add_domain)dnl
@@ -77,6 +88,9 @@ FEATURE(virtusertable)dnl
 dnl
 dnl Spam blocking features
 FEATURE(access_db)dnl
+dnl
+dnl milter-regex
+INPUT_MAIL_FILTER(`milter-regex', `S=local:/var/run/milter-regex/sock, T=S:30s;R:2m')dnl
 dnl
 dnl List the mailers we support
 FEATURE(`no_default_msa')dnl
@@ -149,8 +163,35 @@ LOCAL_RULESETS
 #
 HTo: $>CheckTo
 HMessage-Id: $>CheckMessageId
+HSubject: $>Check_Subject
 HContent-Type: $>CheckContentType
 HContent-Disposition:	$>CheckContentDisposition
+
+#
+# Beagle.k@mm worm detection (done in Check_Subject)
+# See http://securityresponse.symantec.com/avcenter/venc/data/w32.beagle.k@mm.html?Open
+#
+D{BKPat1}E-mail account disabling warning.
+D{BKPat2}E-mail account security warning.
+D{BKPat3}Email account utilization warning.
+D{BKPat4}Important notify about your e-mail account.
+D{BKPat5}Notify about using the e-mail account.
+D{BKPat6}Notify about your e-mail account utilization.
+D{BKPat7}Warning about your e-mail account.
+
+#
+# Sobig.F worm detection (done in Check_Subject)
+# See http://securityresponse.symantec.com/avcenter/venc/data/w32.sobig.f@mm.html
+#
+D{SBJPat1}Re: Details
+D{SBJPat2}Re: Approved
+D{SBJPat3}Re: Re: My details
+D{SBJPat4}Re: Thank You!
+D{SBJPat5}Re: That Movie
+D{SBJPat6}Re: Wicked screensaver
+D{SBJPat7}Re: Your application
+D{SBJPat8}Thank You!
+D{SBJPat9}Your details
 
 #
 # W32/Badtrans worm detection (done in CheckContentType)
@@ -181,6 +222,27 @@ R$*@$={RejectToDomains}		$#error $: "553 Header error"
 SCheckMessageId
 R< $+ @ $+ >			$@ OK
 R$*				$#error $: 553 Header Error
+
+#
+# Check Subject line for worm/virus telltales
+#
+SCheck_Subject
+R${SBJPat1}			$#discard $: discard
+R${SBJPat2}			$#discard $: discard
+R${SBJPat3}			$#discard $: discard
+R${SBJPat4}			$#discard $: discard
+R${SBJPat5}			$#discard $: discard
+R${SBJPat6}			$#discard $: discard
+R${SBJPat7}			$#discard $: discard
+R${SBJPat8}			$#discard $: discard
+R${SBJPat9}			$#discard $: discard
+R${BKPat1}			$#discard $: discard
+R${BKPat2}			$#discard $: discard
+R${BKPat3}			$#discard $: discard
+R${BKPat4}			$#discard $: discard
+R${BKPat5}			$#discard $: discard
+R${BKPat6}			$#discard $: discard
+R${BKPat7}			$#discard $: discard
 
 #
 # Check Content-Type header for worm/virus telltales
