@@ -1,4 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 1996/06/12 11:21:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/02/11 19:16:26 deraadt Exp $
+
+.if (${MACHINE_ARCH} == "vax")
+CFLAGS+=-O1
+.endif
 
 PROG=	scsi
 MAN=	scsi.8
