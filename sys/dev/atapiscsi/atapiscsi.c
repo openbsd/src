@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.33 2000/11/16 08:05:57 niklas Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.34 2000/12/19 05:10:06 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -782,10 +782,16 @@ wdc_atapi_real_start(chp, xfer, timeout)
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive,
 	    sc_xfer->flags), DEBUG_XFERS);
 
-	/* Adjust C_DMA, it may have changed if we are requesting sense */
+	/* 
+	 * Only set the DMA flag if the transfer is reasonably large.
+	 * At least one older drive failed to complete a 4 byte DMA transfer.
+	 */
+
+	/* Turn off DMA flag on REQUEST SENSE */
+
 	if (!(xfer->c_flags & C_POLL) && 
 	    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (xfer->c_bcount > 0 || (xfer->c_flags & C_SENSE)))
+	    (xfer->c_bcount > 100 || (xfer->c_flags & C_SENSE)))
 		xfer->c_flags |= C_DMA;
 	else
 		xfer->c_flags &= ~C_DMA;
@@ -1561,7 +1567,7 @@ wdc_atapi_reset_2(chp, xfer, timeout)
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	
 	if (timeout) {
-		printf("%s:%d:%d: reset failed\n",
+		printf("%s:%d:%d: soft reset failed\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel,
 		    xfer->drive);
 		sc_xfer->error = XS_SELTIMEOUT;
