@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdvar.h,v 1.6 2003/01/22 19:02:31 miod Exp $	*/
+/*	$OpenBSD: sunkbdvar.h,v 1.7 2003/05/17 04:53:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -50,5 +50,5 @@ extern struct wskbd_mapdata sunkbd5_keymapdata;
  */
 #define ISTYPE5(layout) ((layout) > 0x20)
 
-#define	MAXSUNLAYOUT	0x061
+#define	MAXSUNLAYOUT	0x062
 extern const int sunkbd_layouts[MAXSUNLAYOUT];
