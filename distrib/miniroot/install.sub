@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.103 1998/10/10 20:54:24 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.104 1998/10/11 02:50:47 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1400,7 +1400,7 @@ esac
 _partition_range=`md_get_partition_range`
 resp=""		# force one iteration
 while [ "X${resp}" = X"" ]; do
-	echo -n "Partition? [c] "
+	echo -n "CDROM partition to mount (normally \"c\")? [c] "
 	getresp "c"
 	case "$resp" in
 		$_partition_range)
@@ -1424,7 +1424,7 @@ ffs		Berkeley Fast Filesystem
 __install_cdrom_2
 resp=""		# force one iteration
 while [ "X${resp}" = X"" ]; do
-	echo -n "Which filesystem type? [cd9660] "
+	echo -n "Which filesystem type (Official OpenBSD CDROM are cd9660)? [cd9660] "
 	getresp "cd9660"
 	case "$resp" in
 		cd9660|ffs)

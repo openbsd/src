@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.39 1998/10/07 02:40:45 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.40 1998/10/11 02:50:47 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -323,7 +323,7 @@ case "$resp" in
 			_nam=`cat /tmp/myname`
 		fi
 		while [ "X${resp}" = X"" ]; do
-			echo -n "Enter system hostname (short form): [$_nam] "
+			echo -n "Enter system hostname (short form, ie. \"foo\"): [$_nam] "
 			getresp "$_nam"
 		done
 		hostname $resp
@@ -335,7 +335,7 @@ case "$resp" in
 			    sed -e 's/^domain //'`
 		fi
 		while [ "X${resp}" = X"" ]; do
-			echo -n "Enter DNS domain name: [$FQDN] "
+			echo -n "Enter DNS domain name (ie. \"bar.com\"): [$FQDN] "
 			getresp "$FQDN"
 		done
 		FQDN=$resp
