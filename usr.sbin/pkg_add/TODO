@@ -12,3 +12,12 @@
 Known update issues:
 - pkg_add -r can have two conflicting packages (or more) n-to-m updates
 should be handled.
+
+- don't store @pkgdep in packing-lists, makes for a lot of traffic, use
+separate +REQUIRE file instead. Issue: converting from the old model.
+
+- switch all runtime dependencies to @newdepend.  Stuff older @libdepend
+into newer @wantlib keyword.  Makes for more systematic handling (adjust
+RUN_DEPENDS to take wildcard pkgspec by default as well) and allows us
+to put all lib dependencies into a package: base system included.
+Issue (again): converting from the old model.
