@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.16 1998/02/08 22:41:34 tholo Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.17 1998/02/20 14:45:16 niklas Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ check_exec(p, epp)
 	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME;
 	/* first get the vnode */
 	if ((error = namei(ndp)) != 0)
-		return error;
+		return (error);
 	epp->ep_vp = vp = ndp->ni_vp;
 
 	/* check for regular file */
@@ -142,7 +142,7 @@ check_exec(p, epp)
 
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
+	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
 	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
@@ -163,7 +163,7 @@ check_exec(p, epp)
 		if (!newerror || error == ENOEXEC)
 			error = newerror;
 		if (epp->ep_flags & EXEC_DESTR && error != 0)
-			return error;
+			return (error);
 	}
 	if (!error) {
 		/* check that entry point is sane */
@@ -194,7 +194,7 @@ bad2:
 	VOP_UNLOCK(vp, 0, p);
 	vn_close(vp, FREAD, p->p_ucred, p);
 	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
-	return error;
+	return (error);
 
 bad1:
 	/*
@@ -203,7 +203,7 @@ bad1:
 	 */
 	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 	vput(vp);
-	return error;
+	return (error);
 }
 
 /*
@@ -275,7 +275,7 @@ sys_execve(p, v, retval)
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
-	argp = (char *) kmem_alloc_wait(exec_map, NCARGS);
+	argp = (char *)kmem_alloc_wait(exec_map, NCARGS);
 #ifdef DIAGNOSTIC
 	if (argp == (vm_offset_t) 0)
 		panic("execve: argp == NULL");
@@ -346,7 +346,7 @@ sys_execve(p, v, retval)
 		}
 	}
 
-	dp = (char *) ALIGN(dp);
+	dp = (char *)ALIGN(dp);
 
 	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
 
@@ -375,15 +375,15 @@ sys_execve(p, v, retval)
 		shmexit(p);
 #endif
 	vm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
-		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+	    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 
 	/* Now map address space */
-	vm->vm_taddr = (char *) pack.ep_taddr;
+	vm->vm_taddr = (char *)pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
-	vm->vm_daddr = (char *) pack.ep_daddr;
+	vm->vm_daddr = (char *)pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
-	vm->vm_maxsaddr = (char *) pack.ep_maxsaddr;
+	vm->vm_maxsaddr = (char *)pack.ep_maxsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -408,19 +408,18 @@ sys_execve(p, v, retval)
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
 
-	stack = (char *) (USRSTACK - len);
+	stack = (char *)(USRSTACK - len);
 	/* Now copy argc, args & environ to new stack */
 	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
 		goto exec_abort;
 
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo)))
+	if (copyout(&arginfo, (char *)PS_STRINGS, sizeof(arginfo)))
 		goto exec_abort;
 
 	/* copy out the process's signal trapoline code */
-	if (szsigcode && copyout((char *) pack.ep_emul->e_sigcode,
-				 ((char *) PS_STRINGS) - szsigcode,
-				 szsigcode))
+	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
+	    ((char *)PS_STRINGS) - szsigcode, szsigcode))
 		goto exec_abort;
 
 	fdcloseexec(p);		/* handle close on exec */
@@ -441,7 +440,7 @@ sys_execve(p, v, retval)
 	p->p_flag |= P_EXEC;
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
-		wakeup((caddr_t) p->p_pptr);
+		wakeup((caddr_t)p->p_pptr);
 	}
 
 	/*
@@ -494,7 +493,7 @@ sys_execve(p, v, retval)
 		splx(s);
 	}
 
-	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	kmem_free_wakeup(exec_map, (vm_offset_t)argp, NCARGS);
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
@@ -505,7 +504,7 @@ sys_execve(p, v, retval)
 		if((*pack.ep_emul->e_fixup)(p, &pack) != 0)
 			goto free_pack_abort;
 	}
-	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack, retval);
+	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack, retval);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -517,7 +516,7 @@ sys_execve(p, v, retval)
 	if (KTRPOINT(p, KTR_EMUL))
 		ktremul(p->p_tracep, p->p_emul->e_name);
 #endif
-	return 0;
+	return (0);
 
 bad:
 	/* free the vmspace-creation commands, and release their references */
@@ -535,7 +534,7 @@ bad:
 
 freehdr:
 	FREE(pack.ep_hdr, M_EXEC);
-	return error;
+	return (error);
 
 exec_abort:
 	/*
@@ -558,7 +557,7 @@ free_pack_abort:
 	exit1(p, -1);
 
 	/* NOTREACHED */
-	return 0;
+	return (0);
 }
 
 
@@ -577,7 +576,7 @@ copyargs(pack, arginfo, stack, argp)
 	int envc = arginfo->ps_nenvstr;
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
-		return NULL;
+		return (NULL);
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
 	sp = argp;
@@ -588,20 +587,20 @@ copyargs(pack, arginfo, stack, argp)
 	for (; --argc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+			return (NULL);
 
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+		return (NULL);
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+			return (NULL);
 
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+		return (NULL);
 
-	return cpp;
+	return (cpp);
 }
