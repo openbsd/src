@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.20 2003/06/17 06:21:56 jmc Exp $	*/
+/*	$OpenBSD: timed.c,v 1.21 2003/06/26 15:56:51 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -239,11 +239,9 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* choose a unique seed for random number generation */
-	(void)gettimeofday(&ntime, 0);
-
 	sequence = arc4random();     /* initial seq number */
 
+	gettimeofday(&ntime, 0);
 	/* rounds kernel variable time to multiple of 5 ms. */
 	ntime.tv_sec = 0;
 	ntime.tv_usec = -((ntime.tv_usec/1000) % 5) * 1000;
@@ -391,7 +389,6 @@ main(int argc, char **argv)
 
 	/* election timer delay in secs. */
 	delay2 = casual(MINTOUT, MAXTOUT);
-
 
 	if (!debug)
 		daemon(debug, 0);
@@ -718,10 +715,7 @@ pickslavenet(struct netinfo *ntp)
 long
 casual(long inf, long sup)
 {
-	double value;
-
-	value = ((double)(random() & 0x7fffffff)) / (0x7fffffff*1.0);
-	return(inf + (sup - inf)*value);
+	return (inf + random() % (sup - inf + 1));
 }
 
 char *
