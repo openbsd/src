@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.5 2000/09/20 22:25:26 pjanzen Exp $	*/
+/*	$OpenBSD: touch.c,v 1.6 2000/10/13 13:54:59 pjanzen Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.5 2000/09/20 22:25:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.6 2000/10/13 13:54:59 pjanzen Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -188,7 +188,7 @@ main(argc, argv)
 	exit(rval);
 }
 
-#define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 void
 stime_arg1(arg, tvp)
@@ -216,8 +216,7 @@ stime_arg1(arg, tvp)
 	yearset = 0;
 	switch(strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
-		t->tm_year = ATOI2(arg);
-		t->tm_year *= 100;
+		t->tm_year = ATOI2(arg) * 100 - TM_YEAR_BASE;
 		yearset = 1;
 		/* FALLTHOUGH */
 	case 10:			/* YYMMDDhhmm */
