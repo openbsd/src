@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.6 2003/12/26 00:29:11 miod Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.7 2004/01/04 20:05:38 pvalchev Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.6 2003/12/26 00:29:11 miod Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.7 2004/01/04 20:05:38 pvalchev Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -47,14 +47,14 @@ struct kframe {
 	char *argv[0];
 };
 
-__asm__ ("
-	.text
-	.align 8
-	.globl start
-start:
-	br.n	_start
-	 or	r2, r31, r0
-");
+__asm__ (
+"	.text\n"
+"	.align 8\n"
+"	.globl start\n"
+"start:\n"
+"	br.n	_start\n"
+"	 or	r2, r31, r0\n"
+);
 
 static void
 start(struct kframe *kfp)
