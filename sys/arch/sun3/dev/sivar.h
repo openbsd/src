@@ -1,3 +1,4 @@
+/*	$OpenBSD: sivar.h,v 1.3 2000/05/02 21:48:52 miod Exp $	*/
 /*	$NetBSD: sivar.h,v 1.3 1996/11/20 18:57:01 gwr Exp $	*/
 
 /*-
