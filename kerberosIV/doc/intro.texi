@@ -10,6 +10,8 @@ have been added. It currently runs on the following systems:
 
 @itemize @bullet
 @item
+OpenBSD 2.1 and newer (fully integrated)
+@item
 AIX 4.1, 4.2
 @item
 BSD/OS 2.0, 2.1
