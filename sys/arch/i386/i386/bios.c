@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.37 2000/10/21 17:43:50 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.38 2000/10/25 19:13:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -85,6 +85,9 @@ extern dev_t bootdev;
 
 #if NAPM > 0 || defined(DEBUG)
 bios_apminfo_t *apm;
+#endif
+#if NPCI > 0
+bios_pciinfo_t *bios_pciinfo;
 #endif
 bios_diskinfo_t *bios_diskinfo;
 bios_memmap_t	*bios_memmap;
@@ -261,6 +264,12 @@ bios_getopt()
 			printf(" cksumlen %d", bios_cksumlen);
 #endif
 			break;
+#if NPCI > 0
+		case BOOTARG_PCIINFO:
+			bios_pciinfo = (bios_pciinfo_t *)q->ba_arg;
+			printf(" pciinfo %p", bios_pciinfo);
+			break;
+#endif
 		case BOOTARG_CONSDEV:
 			if (q->ba_size >= sizeof(bios_consdev_t))
 			{

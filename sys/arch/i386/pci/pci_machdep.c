@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.16 2000/08/17 22:08:10 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.17 2000/10/25 19:13:12 mickey Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -94,6 +94,12 @@
 #include <machine/bus.h>
 #include <machine/pio.h>
 
+#include "bios.h"
+#if NBIOS > 0
+#include <machine/biosvar.h>
+extern bios_pciinfo_t *bios_pciinfo;
+#endif
+
 #include <i386/isa/icu.h>
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -135,8 +141,14 @@ pci_attach_hook(parent, self, pba)
 	struct pcibus_attach_args *pba;
 {
 
+#if NBIOS > 0
+	if (pba->pba_bus == 0)
+		printf(": configuration mode %d (%s)",
+			pci_mode, (bios_pciinfo?"bios":"no bios"));
+#else
 	if (pba->pba_bus == 0)
 		printf(": configuration mode %d", pci_mode);
+#endif
 }
 
 int
@@ -340,13 +352,31 @@ pci_mode_detect()
 	if (pci_mode != -1)
 		return pci_mode;
 
+#if NBIOS > 0
+	/*
+	 * If we have PCI info passed from the BIOS, use the mode given there
+	 * for all of this code.  If not, pass on through to the previous tests
+	 * to try and devine the correct mode.
+	 */
+	if (bios_pciinfo != NULL) {
+		if (bios_pciinfo->pci_chars & 0x2)
+			return (pci_mode = 2);
+
+		if (bios_pciinfo->pci_chars & 0x1)
+			return (pci_mode = 1);
+
+		/* We should never get here, but if we do, fall through... */
+	}
+#endif
+
 	/*
 	 * We try to divine which configuration mode the host bridge wants.  We
 	 * try mode 2 first, because our probe for mode 1 is likely to succeed
 	 * for mode 2 also.
 	 *
 	 * This should really be done using the PCI BIOS.  If we get here, the
-	 * PCI BIOS does not exist, or it was disabled in kernel config.
+	 * PCI BIOS does not exist, or the boot blocks did not provide the
+	 * information.
 	 */
 	outb(PCI_MODE2_ENABLE_REG, 0);
 	outb(PCI_MODE2_FORWARD_REG, 0);
