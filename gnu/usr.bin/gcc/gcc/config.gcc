@@ -821,8 +821,8 @@ hppa*-*-linux* | parisc*-*-linux*)
 	tmake_file="t-slibgcc-elf-ver t-linux pa/t-linux"
 	;;
 hppa*-*-openbsd*)
-	target_cpu_default="MASK_PA_11"
-	tmake_file=pa/t-bsd
+	target_cpu_default="MASK_PA_11 | MASK_NO_SPACE_REGS"
+	tmake_file="t-libc-ok t-openbsd t-openbsd-thread pa/t-openbsd"
 	;;
 hppa1.1-*-pro*)
 	target_cpu_default="(MASK_JUMP_IN_DELAY | MASK_PORTABLE_RUNTIME | MASK_GAS | MASK_NO_SPACE_REGS | MASK_SOFT_FLOAT)"
