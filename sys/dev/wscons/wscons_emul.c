@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.c,v 1.8 1997/07/28 13:54:22 kstailey Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.9 1997/07/31 04:10:24 kstailey Exp $	*/
 /*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
@@ -162,6 +162,8 @@ wscons_emul_input_normal(we, c)
 		/* else fall through; we're printing one out */
 
 	default:
+		if (c == '\0')
+			break;
 		(*we->ac_ef->wef_putstr)(we->ac_efa,
 		    we->ac_crow, we->ac_ccol, &c, 1);
 		we->ac_ccol++;
