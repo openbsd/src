@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.54 2005/03/16 22:50:08 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.55 2005/03/18 03:44:41 jsg Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -407,6 +407,8 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		Davicom DM9009, DM9100, DM9102, and DM9102A based PCI adapters
 		  (dc), including: [*]
 			Jaton XpressNet
+		Davicom DM9601 based USB adapters, including: [*]
+			Corega FEther USB-TXC
 		Digital DC2114x-based four port cards, (de) including:
 			Adaptec ANA-6944A
 			Cogent EM400
@@ -456,10 +458,17 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Netgear FA311
 			Netgear FA312
 			Netgear FA331
-		RealTek RTL8150L based USB adapters, including: [G]
-		    Melco Inc. LUA-KTX
-		    GreenHouse GH-USB100B
-		    Linksys USB100M
+		RealTek RTL8150L based USB adapters, including: [*]
+			Abocom RTL8151
+			GreenHouse GH-USB100B
+			GreenHouse GH-USB100B with HomePNA
+			Linksys USB100M
+			Longshine LCS-8138TX
+			Melco Inc. LUA-KTX
+			Micronet SP128AR
+			SMC 2208USB/ETH
+			TrendNet TU-ET100C
+			Zt USB10/100
 		SiS 900 and SiS 7016-based PCI adapters (sis), including: [*]
 			Mototech ME313
 			NetSurf NS-KFE30D

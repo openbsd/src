@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.190 2005/03/17 13:05:04 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.191 2005/03/18 03:44:41 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -332,7 +332,8 @@ Supported hardware {:-include-:}:
 		    SMC 2202USB
 		    SMC EZ Connect USB
 		    SOHOware NUB100
-		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		ASIX Electronics AX88172 USB Ethernet adapters,
+		  including: [A] [B] [C]
 		    ATEN UC210T
 		    Billionton Systems USB2AR
 		    Buffalo(MELCO) LUA-U2-KTX
@@ -360,12 +361,14 @@ Supported hardware {:-include-:}:
 		    CNet Pro110B
 		    Alfa Inc. GFC2204
 		Broadcom BCM4401 [A] [B] [C]
-		CATC USB-EL1210A-based USB adapters, including: [G]
+		CATC USB-EL1210A-based USB adapters, including: [A] [B] [C]
 		    CATC Netmate and Netmate II
 		    Belkin F5U011/F5U111
 		Davicom DM9009, DM9100, DM9102, and DM9102A based PCI adapters,
 		including:
 		    Jaton XpressNet
+		Davicom DM9601 based USB adapters, including: [A] [B] [C]
+		    Corega FEther USB-TXC
 		DEC EtherWORKS III adapters, including: [G]
 		    DEC DE203, DE204, DE205
 		Digital DC21x4x-based PCI Ethernet adapters, including:
@@ -455,10 +458,18 @@ Supported hardware {:-include-:}:
 		    Nortel BayStack 21
 		    OvisLink LEF-8129TX, LEF-8139TX
 		    SMC EZ Card 10/100 PCI 1211-TX
-		RealTek RTL8150L based USB adapters, including: [G]
-		    Melco Inc. LUA-KTX
+		RealTek RTL8150L based USB adapters, including: [A] [B] [C]
+		    Abocom RTL8151
 		    GreenHouse GH-USB100B
+		    GreenHouse GH-USB100B with HomePNA
 		    Linksys USB100M
+		    Longshine LCS-8138TX
+		    Melco Inc. LUA-KTX
+		    Micronet SP128AR
+		    OQO model 01 Ethernet
+		    SMC 2208USB/ETH
+		    TrendNet TU-ET100C
+		    Zt USB10/100
 		SiS 900 and SiS 7016-based PCI adapters, including: [B] [C]
 		    Mototech ME313
 		    NetSurf NS-KFE30D

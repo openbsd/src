@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.90 2005/03/17 13:05:04 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.91 2005/03/18 03:44:41 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -159,6 +159,8 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		CATC USB-EL1210A-based USB adapters, including:
 		    CATC Netmate and Netmate II
 		    Belkin F5U011/F5U111
+		Davicom DM9601 based USB adapters, including:
+		    Corega FEther USB-TXC
 		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
 		    3Com 3c19250
 		    3Com 3c460 HomeConnect
@@ -186,9 +188,16 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    Silicom U2E
 		    SMC 2102/2104USB
 		RealTek RTL8150L based USB adapters, including:
-		    Melco Inc. LUA-KTX
+		    Abocom RTL8151
 		    GreenHouse GH-USB100B
+		    GreenHouse GH-USB100B with HomePNA
 		    Linksys USB100M
+		    Longshine LCS-8138TX
+		    Melco Inc. LUA-KTX
+		    Micronet SP128AR
+		    SMC 2208USB/ETH
+		    TrendNet TU-ET100C
+		    Zt USB10/100
 
 	Wireless Ethernet Adapters
 		Atmel AT76C50x based USB 802.11b adapters
