@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.17 2002/01/16 20:50:16 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.18 2002/04/25 22:32:02 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -53,22 +53,6 @@ include <machine/reg.h>
 include <machine/pte.h>
 
 include <hp300/hp300/clockreg.h>
-
-# values for mmutype
-export	MMU_68040
-export	MMU_68030
-export	MMU_HP
-export	MMU_68851
-
-# values for cputype
-export	CPU_68020
-export	CPU_68030
-export	CPU_68040
-
-# values for fputype
-export	FPU_68881
-export	FPU_68882
-export	FPU_68040
 
 # values for machineid
 export	HP_320

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2001/11/17 21:35:12 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2002/04/25 22:32:02 miod Exp $
 #	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $
 
 #
@@ -85,8 +85,6 @@ export	PSL_USER
 
 # magic
 export	FC_CONTROL
-export	FC_SUPERD
-export	IC_CLEAR
 
 # sun3 control space
 export	CONTEXT_0

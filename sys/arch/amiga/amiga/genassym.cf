@@ -1,5 +1,5 @@
 #	$NetBSD: genassym.cf,v 1.3 1997/07/16 00:01:49 is Exp $
-#	$OpenBSD: genassym.cf,v 1.12 2001/12/06 23:24:34 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.13 2002/04/25 22:31:59 miod Exp $
 #
 # Copyright (c) 1982, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -54,28 +54,8 @@ include <machine/pte.h>
 include <amiga/amiga/cia.h>
 include <amiga/amiga/isr.h>
 
-# values for mmutype
-export	MMU_68851
-export	MMU_68030
-export	MMU_68040
-export	MMU_68060
-
-# values for cputype
-export	CPU_68020
-export	CPU_68030
-export	CPU_68040
-export	CPU_68060
-
 # values for ectype
 export	EC_NONE
-
-# values for fputype
-export	FPU_NONE
-export	FPU_68881
-export	FPU_68882
-export	FPU_68040
-export	FPU_68060
-export	FPU_UNKNOWN
 
 ifdef FPU_EMULATE
 export	FPU_EMULATE
@@ -115,20 +95,6 @@ define	SPL3		PSL_S | PSL_IPL3
 define	SPL4		PSL_S | PSL_IPL4
 define	SPL5		PSL_S | PSL_IPL5
 define	SPL6		PSL_S | PSL_IPL6
-
-# magic
-export	FC_SUPERD
-export	CACHE_ON
-export	CACHE_OFF
-export	CACHE_CLR
-export	IC_CLEAR
-export	DC_CLEAR
-export	CACHE40_ON
-export	CACHE40_OFF
-export	CACHE60_ON
-export	CACHE60_OFF
-export	IC60_CUBC
-export	IC60_CABC
 
 # pte/ste bits
 export	PG_V

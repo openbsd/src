@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.11 2001/11/17 21:35:12 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.12 2002/04/25 22:32:02 miod Exp $
 #	$NetBSD: genassym.cf,v 1.7 1998/01/06 08:46:16 thorpej Exp $
 
 #
@@ -53,33 +53,29 @@ include	<machine/psl.h>
 include	<machine/reg.h>
 include	<machine/pte.h>
 
+# proc fields and values
 struct	proc
 member	P_MD_REGS		p_md.md_regs
 member	P_MD_FLAGS		p_md.md_flags
 
-export	USPACE
-export	PGSHIFT
-export	USRSTACK
-
+# PSL values
 export	PSL_S
 export	PSL_IPL7
 export	PSL_LOWIPL	
 export	PSL_USER
-define	SPL1			(PSL_S | PSL_IPL1)
-define	SPL2			(PSL_S | PSL_IPL2)
+define	PSL_TS			PSL_T | PSL_S
+define	SPL1			PSL_S | PSL_IPL1
+define	SPL2			PSL_S | PSL_IPL2
 
-export	FC_SUPERD
-
-export	CACHE_ON
-export	CACHE_OFF
-export	CACHE_CLR
-export	CACHE40_ON
-export	CACHE40_OFF
-export	IC_CLEAR
-export	DC_CLEAR
-
+# pte/ste bits
 export	PG_FRAME
 
+# general constants
+export	USPACE
+export	PGSHIFT
+export	USRSTACK
+
+# pcb fields
 struct	pcb
 member	pcb_ps
 member	pcb_usp
@@ -87,18 +83,9 @@ member	pcb_regs
 member	PCB_FPCTX		pcb_fpregs
 define	SIZEOF_PCB		sizeof(struct pcb)
 
+# exception frame size
 define	FR_SIZE			sizeof(struct trapframe)
 
+# mac68k-specific
 define	CPUINFO_CLASS		offsetof(struct cpu_model_info, class)
 export	MACH_CLASSAV
-
-export	CPU_68020
-export	CPU_68030
-export	CPU_68040
-
-export	MMU_68851
-export	MMU_68030
-export	MMU_68040
-
-export	FPU_68882
-export	FPU_68040
