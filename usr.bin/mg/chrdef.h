@@ -1,4 +1,4 @@
-/*	$OpenBSD: chrdef.h,v 1.3 2001/01/29 01:58:06 niklas Exp $	*/
+/*	$OpenBSD: chrdef.h,v 1.4 2002/02/14 02:50:10 vincent Exp $	*/
 
 /*
  * sys/default/chardef.h: character set specific #defines for Mg 2a
@@ -20,19 +20,19 @@
  * understand the DEC multinational set, and let me ask
  * a slightly different set of questions.
  */
-#define _W	0x01		/* Word.			 */
-#define _U	0x02		/* Upper case letter.		 */
-#define _L	0x04		/* Lower case letter.		 */
-#define _C	0x08		/* Control.			 */
-#define _P	0x10		/* end of sentence punctuation	 */
-#define	_D	0x20		/* is decimal digit		 */
+#define _MG_W	0x01		/* Word.			 */
+#define _MG_U	0x02		/* Upper case letter.		 */
+#define _MG_L	0x04		/* Lower case letter.		 */
+#define _MG_C	0x08		/* Control.			 */
+#define _MG_P	0x10		/* end of sentence punctuation	 */
+#define	_MG_D	0x20		/* is decimal digit		 */
 
-#define ISWORD(c)	((cinfo[CHARMASK(c)]&_W)!=0)
-#define ISCTRL(c)	((cinfo[CHARMASK(c)]&_C)!=0)
-#define ISUPPER(c)	((cinfo[CHARMASK(c)]&_U)!=0)
-#define ISLOWER(c)	((cinfo[CHARMASK(c)]&_L)!=0)
-#define ISEOSP(c)	((cinfo[CHARMASK(c)]&_P)!=0)
-#define	ISDIGIT(c)	((cinfo[CHARMASK(c)]&_D)!=0)
+#define ISWORD(c)	((cinfo[CHARMASK(c)]&_MG_W)!=0)
+#define ISCTRL(c)	((cinfo[CHARMASK(c)]&_MG_C)!=0)
+#define ISUPPER(c)	((cinfo[CHARMASK(c)]&_MG_U)!=0)
+#define ISLOWER(c)	((cinfo[CHARMASK(c)]&_MG_L)!=0)
+#define ISEOSP(c)	((cinfo[CHARMASK(c)]&_MG_P)!=0)
+#define	ISDIGIT(c)	((cinfo[CHARMASK(c)]&_MG_D)!=0)
 #define TOUPPER(c)	((c)-0x20)
 #define TOLOWER(c)	((c)+0x20)
 
