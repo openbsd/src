@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.114 2004/10/20 12:56:39 jsg Exp $
+$OpenBSD: usbdevs,v 1.115 2004/10/22 13:04:32 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -373,6 +373,7 @@ vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor TSUNAMI		0x1241	Tsunami
 vendor BELKIN2		0x1293	Belkin Components
+vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor SHARK		0x13d2	Shark
 vendor SILICOM		0x1485	Silicom
@@ -382,6 +383,7 @@ vendor UMAX		0x1606	UMAX Data Systems
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
+vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor NHJ		0x2770  NHJ
@@ -444,6 +446,8 @@ product ACERP ACERSCAN_320U	0x2022	Acerscan 320U
 product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
 product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
 product ACERP ATAPI		0x6003	ATA/ATAPI
+product ACERP AWL300		0x9000	AWL300
+product ACERP AWL400		0x9001	AWL400
 
 /* Actiontec products */
 product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
@@ -486,6 +490,9 @@ product AGFA SNAPSCANE20	0x2091	SnapScan e20
 product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
+
+/* Aincomm products */
+product AINCOMM AWU2000B	0x1001	AWU2000B
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
@@ -538,6 +545,10 @@ product ATI2 205		0xa001	USB Cable 205
 product ATMEL UHB124		0x3301	UHB124 hub
 product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL DWL120		0x7602	DWL-120 Wireless
+product ATMEL BW002		0x7605	BW002
+product ATMEL WL1130		0x7613	WL-1130
+product ATMEL AT76C505A		0x7614	AT76C505A
+product ATMEL DWL_120		0x7603	DWL-120
 
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
@@ -1025,6 +1036,7 @@ product LACIE CDRW		0xa602	CD R/W
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash
+product LEXAR 2662WAR		0xa002	2662W-AR
 
 /* Lexmark products */
 product LEXMARK S2450		0x0009	Optra S 2450
@@ -1041,6 +1053,8 @@ product	LINKSYS	WUSB11_25	0x2212	WUSB11 802.11b v2.5
 product	LINKSYS	WUSB12_11	0x2213	WUSB12 802.11b v1.1
 product LINKSYS2 USB200M	0x2226	USB 2.0 10/100 ethernet controller
 product LINKSYS USB10TX2	0x400b	USB10TX
+product LINKSYS2 WUSB11		0x2219	WUSB11
+product LINKSYS3 WUSB11V28	0x2233	WUSB11-V28
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
