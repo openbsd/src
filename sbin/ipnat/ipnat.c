@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.7 1997/02/07 18:26:47 kstailey Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.8 1997/02/07 19:33:49 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -540,7 +540,7 @@ char *line;
 		ipn.in_flags = IPN_TCP;
 	else if (!strcasecmp(s, "udp"))
 		ipn.in_flags = IPN_UDP;
-	else if (!strcasecmp(s, "tcpudp"))
+	else if (!strcasecmp(s, "tcp/udp"))
 		ipn.in_flags = IPN_TCPUDP;
 	else {
 		fprintf(stderr, "expected protocol name - got \"%s\"\n", s);
