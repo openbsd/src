@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+# $OpenBSD: zdiff,v 1.2 2003/07/29 07:42:44 otto Exp $
+#
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
 # Permission to use, copy, modify, and distribute this software for any

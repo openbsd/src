@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+# $OpenBSD: zmore,v 1.4 2003/07/29 07:42:45 otto Exp $
+#
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
