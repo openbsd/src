@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 1996/07/31 12:29:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 1996/08/03 20:44:17 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -40,11 +40,11 @@ distribution: distrib-dirs
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
-	    chgrp ${BINOWN} ${DESTDIR}/etc/ttys && \
+	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
 	    chmod 644 ${DESTDIR}/etc/ttys
 	cat fbtab.head etc.${MACHINE}/fbtab fbtab.tail > ${DESTDIR}/etc/fbtab && \
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
-	    chgrp ${BINOWN} ${DESTDIR}/etc/fbtab && \
+	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
 	    chmod 644 ${DESTDIR}/etc/fbtab
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
