@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.7 2002/07/26 20:19:22 mickey Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.8 2002/07/26 21:33:28 mickey Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -131,10 +131,10 @@ struct shape {
 	int	off[3];	/* offsets to other blots if center is at (0,0) */
 };
 
-extern struct shape shapes[];
+extern const struct shape shapes[];
 
-extern struct shape *curshape;
-extern struct shape *nextshape;
+extern const struct shape *curshape;
+extern const struct shape *nextshape;
 
 /*
  * Shapes fall at a rate faster than once per second.
@@ -177,6 +177,6 @@ extern char	key_msg[100];
 extern int	showpreview;
 extern int	classic;
 
-int	fits_in(struct shape *, int);
-void	place(struct shape *, int, int);
+int	fits_in(const struct shape *, int);
+void	place(const struct shape *, int, int);
 void	stop(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.13 2002/07/26 20:19:22 mickey Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.14 2002/07/26 21:33:28 mickey Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -67,8 +67,8 @@ static char copyright[] =
 
 cell	board[B_SIZE];
 int	Rows, Cols;
-struct shape *curshape;
-struct shape *nextshape;
+const struct shape *curshape;
+const struct shape *nextshape;
 long	fallrate;
 int	score;
 gid_t	gid, egid;
@@ -77,7 +77,7 @@ int	showpreview, classic;
 
 static void	elide(void);
 static void	setup_board(void);
-struct shape	*randshape(void);
+const struct shape *randshape(void);
 void	onintr(int);
 void	usage(void);
 
@@ -125,10 +125,10 @@ elide()
 	}
 }
 
-struct shape *
+const struct shape *
 randshape()
 {
-	struct shape *tmp;
+	const struct shape *tmp;
 	int i, j;
 
 	tmp = &shapes[random() % 7];
@@ -293,7 +293,7 @@ main(argc, argv)
 		}
 		if (c == keys[1]) {
 			/* turn */
-			struct shape *new = &shapes[
+			const struct shape *new = &shapes[
 			    classic? curshape->rotc : curshape->rot];
 
 			if (fits_in(new, pos))

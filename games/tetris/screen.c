@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.9 2002/07/26 20:19:22 mickey Exp $	*/
+/*	$OpenBSD: screen.c,v 1.10 2002/07/26 21:33:28 mickey Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ static int
 	MSflag;			/* can move in standout mode */
 
 
-struct tcsinfo {	/* termcap string info; some abbrevs above */
+struct tcsinfo {		/* termcap string info; some abbrevs above */
 	char tcname[3];
 	char **tcaddr;
 } tcstrings[] = {
@@ -374,7 +374,7 @@ scr_update()
 	regcell so, cur_so = 0;
 	int i, ccol, j;
 	sigset_t sigset, osigset;
-	static struct shape *lastshape;
+	static const struct shape *lastshape;
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGTSTP);
