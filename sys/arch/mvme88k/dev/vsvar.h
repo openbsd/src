@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.11 2004/05/22 19:34:12 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.12 2004/05/22 21:00:44 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -126,6 +126,10 @@ struct vs_softc {
 #define	CRB_CLR_ER	crb_write(2, CRB_CRSW, CRSW & ~M_CRSW_ER)
 
 #define	THAW_REG	mcsb_read(2, MCSB_THAW)
-#define	THAW(x)		mcsb_write(2, MCSB_THAW, ((x) << 8) | M_THAW_TWQE)
+#define	THAW(x) \
+	do { \
+		mcsb_write(1, MCSB_THAW, (x) << 8); \
+		mcsb_write(1, MCSB_THAW + 1, M_THAW_TWQE); \
+	} while (0)
 
 #endif /* _M328VAR_H */
