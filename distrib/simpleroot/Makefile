@@ -36,7 +36,7 @@ all:
 	newfs ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 .ifdef BOOT_INSTALLBOOT
-	/usr/mdec/installboot -v ${MOUNT_POINT} ${BOOT_INSTALLBOOT} ${VND}
+	/usr/mdec/installboot -v ${MOUNT_POINT}/boot ${BOOT_INSTALLBOOT} ${VND}
 .endif
 	cd ${DESTDIR} && tar cf - `cat ${LIST}` | ( cd ${MOUNT_POINT}; \
 	  tar xpf - ) && \
