@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mscpbus.4,v 1.3 2003/03/06 17:59:21 jason Exp $
+.\"	$OpenBSD: mscpbus.4,v 1.4 2003/03/06 19:29:14 jason Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -57,14 +57,14 @@ The following devices are supported on
 .Bl -tag -width mt(4) -compact -offset indent
 .It Xr mt 4
 MSCP tape drive
-.\" no man page .It Xr ra 4
-.\" no man page MSCP disk drive
+.It Xr ra 4
+MSCP disk drive
 .It Xr rx 4
 MSCP floppy drive
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr mt 4 ,
 .\" no man page .Xr mtc 4 ,
-.\" no man page .Xr ra 4 ,
+.Xr ra 4 ,
 .Xr rx 4 ,
 .Xr uda 4

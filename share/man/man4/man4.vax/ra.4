@@ -1,0 +1,161 @@
+.\"	$OpenBSD: ra.4,v 1.1 2003/03/06 19:29:14 jason Exp $
+.\"
+.\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Jason L. Wright
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 6, 2003
+.Dt RA 4 VAX
+.Os
+.Sh NAME
+.Nm ra
+.Nd MSCP disk controller interface
+.Sh SYNOPSIS
+.Cd "ra* at mscpbus? drive?"
+.Sh DESCRIPTION
+The
+.Nm
+device provides access to MSCP disks such as:
+RC25, RX50, RD51, RD52, RD53, RA60, RA80, and RA81.
+.Sh FILES
+.Bl -tag -width /dev/rraXXXXX -compact
+.It Pa /dev/ra Ns Ar u Ns Ar p
+block mode
+.Tn MSCP
+disk unit
+.Ar u , 
+partition
+.Ar p
+.It Pa /dev/rra Ns Ar u Ns Ar p
+raw mode
+.Tn MSCP
+disk unit
+.Ar u ,
+partition
+.Ar p
+.Sm off
+.El
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "ra%d: don't have a partition table for %s; using (s,t,c)=(%d,%d,%d)"
+The controller found a drive whose media identifier (e.g. `RA 25')
+does not have a default partition table.
+A temporary partition
+table containing only an `a' partition has been created covering
+the entire disk, which has the indicated numbers of sectors per
+track (s), tracks per cylinder (t), and total cylinders (c).
+Give the pack a label with the
+.Xr disklabel 8
+utility.
+.Pp
+.It "ra%d: drive will not come on line"
+The drive will not come on line, probably because it is spun down.
+This should be preceded by a message giving details as to why the
+drive stayed off line.
+.Pp
+.It "uda%d: attempt to bring ra%d on line failed:  `detail'"
+The drive could not be brought on line.
+The
+.Em detail
+message tells why.
+.Pp
+.It "uda%d: ra%d: unknown type %d"
+The type index of the named drive is not known to the driver, so the
+drive will be ignored.
+.Pp
+.It "ra%d: changed types! was %d now %d"
+A drive somehow changed from one kind to another, e.g., from an
+.Tn RA80
+to an
+.Tn RA60 .
+The numbers printed are the encoded media identifiers (see
+.Ao Pa vax/mscp.h Ac
+for the encoding).
+The driver believes the new type.
+.Pp
+.It "ra%d: uda%d, unit %d, size = %d sectors"
+The named drive is on the indicated controller as the given unit,
+and has that many sectors of user-file area.
+This is printed during configuration.
+.Pp
+.It "ra%d: bad block report: %d"
+The drive has reported the given block as bad.
+If there are multiple bad blocks, the drive will report only the first;
+in this case this message will be followed by `+ others'.
+Get
+.Tn DEC
+to forward the
+block with
+.Tn EVRLK .
+.Pp
+.It "ra%d: serious exception reported"
+I have no idea what this really means.
+.Pp
+.It "ra%d: bad lbn (%d)?"
+The drive has reported an invalid command error, probably due to an
+invalid block number.
+If the lbn value is very much greater than the
+size reported by the drive, this is the problem.
+It is probably due to an improperly configured partition table.
+Other invalid commands indicate a bug in the driver, or hardware trouble.
+.Pp
+.It "ra%d: duplicate ONLINE ignored"
+The drive has come on-line while already on-line.
+This condition can probably be ignored (and has been).
+.Pp
+.It "ra%d: io done, but no buffer?"
+Hardware trouble, or a bug; the drive has finished an I/O
+request,
+but the response has an invalid (zero) command reference number.
+.Pp
+.It "ra%d: bogus REPLACE end"
+The drive has reported finishing a bad sector replacement, but the
+driver never issues bad sector replacement commands.
+The report is ignored.
+This is likely a hardware problem.
+.Pp
+.It "ra%d: unknown opcode 0x%x status 0x%x ignored"
+The drive has reported something that the driver cannot understand.
+Perhaps
+.Tn DEC
+has been inventive, or perhaps your hardware is ill.
+This is followed by a hex dump of the offending packet.
+.Pp
+.It "ra%d%c: hard error %sing fsbn %d [of %d-%d] (ra%d bn %d cn %d tn %d sn %d).
+"
+An unrecoverable error occurred during transfer of the specified
+filesystem block number(s),
+which are logical block numbers on the indicated partition.
+If the transfer involved multiple blocks, the block range is printed as well.
+The parenthesized fields list the actual disk sector number
+relative to the beginning of the drive,
+as well as the cylinder, track and sector number of the block.
+.El
+.Sh SEE ALSO
+.Xr mscpbus 4 ,
+.Xr uda 4
