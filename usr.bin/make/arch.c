@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.12 1998/07/02 20:47:25 millert Exp $	*/
+/*	$OpenBSD: arch.c,v 1.13 1998/07/13 00:41:34 millert Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.12 1998/07/02 20:47:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.13 1998/07/13 00:41:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -616,7 +616,7 @@ ArchStatMember (archive, member, hash)
 		if (fread (memName, elen, 1, arch) != 1)
 			goto badarch;
 		memName[elen] = '\0';
-		fseek (arch, -elen, 1);
+		fseek (arch, -elen, SEEK_CUR);
 		if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		    printf("ArchStat: Extended format entry for %s\n", memName);
 		}
@@ -628,7 +628,7 @@ ArchStatMember (archive, member, hash)
 	    memcpy ((Address)Hash_GetValue (he), (Address)&arh,
 		sizeof (struct ar_hdr));
 	}
-	fseek (arch, (size + 1) & ~1, 1);
+	fseek (arch, (size + 1) & ~1, SEEK_CUR);
     }
 
     fclose (arch);
@@ -848,7 +848,7 @@ ArchFindMember (archive, member, arhPtr, mode)
 		 * the file at the actual member, rather than its header, but
 		 * not here...
 		 */
-		fseek (arch, -sizeof(struct ar_hdr), 1);
+		fseek (arch, -sizeof(struct ar_hdr), SEEK_CUR);
 		return (arch);
 	    }
 	} else
@@ -878,10 +878,10 @@ ArchFindMember (archive, member, arhPtr, mode)
 		}
 		if (strncmp(ename, member, len) == 0) {
 			/* Found as extended name */
-			fseek (arch, -sizeof(struct ar_hdr) - elen, 1);
+			fseek (arch, -sizeof(struct ar_hdr) - elen, SEEK_CUR);
 			return (arch);
 		}
-		fseek (arch, -elen, 1);
+		fseek (arch, -elen, SEEK_CUR);
 		goto skip;
 	} else
 #endif
@@ -896,7 +896,7 @@ skip:
 	     */
 	    arhPtr->ar_size[sizeof(arhPtr->ar_size)-1] = '\0';
 	    size = (int) strtol(arhPtr->ar_size, NULL, 10);
-	    fseek (arch, (size + 1) & ~1, 1);
+	    fseek (arch, (size + 1) & ~1, SEEK_CUR);
 	}
     }
 
