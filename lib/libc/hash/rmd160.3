@@ -1,6 +1,6 @@
-.\"	$OpenBSD: rmd160.3,v 1.22 2004/04/28 16:54:57 millert Exp $
+.\"	$OpenBSD: rmd160.3,v 1.23 2004/04/29 15:51:16 millert Exp $
 .\"
-.\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd July 16, 1997
+.Dd April 29, 2004
 .Dt RMD160 3
 .Os
 .Sh NAME
@@ -41,11 +41,11 @@
 .Ft void
 .Fn RMD160Transform "u_int32_t state[5]" "const u_int8_t block[RMD160_BLOCK_LENGTH]"
 .Ft "char *"
-.Fn RMD160End "RMD160_CTX *context" "char buf[RMD160_DIGEST_STRING_LENGTH]"
+.Fn RMD160End "RMD160_CTX *context" "char *buf"
 .Ft "char *"
-.Fn RMD160File "char *filename" "char buf[RMD160_DIGEST_STRING_LENGTH]"
+.Fn RMD160File "char *filename" "char *buf"
 .Ft "char *"
-.Fn RMD160Data "const u_int8_t *data" "size_t len" "char buf[RMD160_DIGEST_STRING_LENGTH]"
+.Fn RMD160Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The RMD160 functions implement the 160-bit RIPE message digest hash algorithm
 (RMD-160).

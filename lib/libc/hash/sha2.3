@@ -1,6 +1,6 @@
-.\"	$OpenBSD: sha2.3,v 1.5 2003/10/03 13:57:39 jmc Exp $
+.\"	$OpenBSD: sha2.3,v 1.6 2004/04/29 15:51:16 millert Exp $
 .\"
-.\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -41,11 +41,11 @@
 .Ft void
 .Fn SHA256_Final "u_int8_t digest[SHA256_DIGEST_LENGTH]" "SHA256_CTX *context"
 .Ft "char *"
-.Fn SHA256_End "SHA256_CTX *context" "char buf[SHA256_DIGEST_STRING_LENGTH]"
+.Fn SHA256_End "SHA256_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA256_File "char *filename" "char buf[SHA256_DIGEST_STRING_LENGTH]"
+.Fn SHA256_File "char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA256_Data "u_int8_t *data" "u_int len" "char buf[SHA256_DIGEST_STRING_LENGTH]"
+.Fn SHA256_Data "u_int8_t *data" "u_int len" "char *buf"
 .Ft void
 .Fn SHA384_Init "SHA384_CTX *context"
 .Ft void
@@ -53,11 +53,11 @@
 .Ft void
 .Fn SHA384_Final "u_int8_t digest[SHA384_DIGEST_LENGTH]" "SHA384_CTX *context"
 .Ft "char *"
-.Fn SHA384_End "SHA384_CTX *context" "char buf[SHA384_DIGEST_STRING_LENGTH]"
+.Fn SHA384_End "SHA384_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA384_File "char *filename" "char buf[SHA384_DIGEST_STRING_LENGTH]"
+.Fn SHA384_File "char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA384_Data "u_int8_t *data" "size_t len" "char buf[SHA384_DIGEST_STRING_LENGTH]"
+.Fn SHA384_Data "u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA512_Init "SHA512_CTX *context"
 .Ft void
@@ -65,11 +65,11 @@
 .Ft void
 .Fn SHA512_Final "u_int8_t digest[SHA512_DIGEST_LENGTH]" "SHA512_CTX *context"
 .Ft "char *"
-.Fn SHA512_End "SHA512_CTX *context" "char buf[SHA512_DIGEST_STRING_LENGTH]"
+.Fn SHA512_End "SHA512_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA512_File "char *filename" "char buf[SHA512_DIGEST_STRING_LENGTH]"
+.Fn SHA512_File "char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA512_Data "u_int8_t *data" "size_t len" "char buf[SHA512_DIGEST_STRING_LENGTH]"
+.Fn SHA512_Data "u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The SHA2 functions implement the NIST Secure Hash Standard,
 FIPS PUB 180-2.

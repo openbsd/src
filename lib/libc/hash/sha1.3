@@ -1,6 +1,6 @@
-.\"	$OpenBSD: sha1.3,v 1.28 2004/04/28 16:54:57 millert Exp $
+.\"	$OpenBSD: sha1.3,v 1.29 2004/04/29 15:51:16 millert Exp $
 .\"
-.\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 .\" See http://csrc.nist.gov/publications/fips/fips180-1/fip180-1.txt
 .\" for the detailed standard
 .\"
-.Dd July 10, 1997
+.Dd April 29, 2004
 .Dt SHA1 3
 .Os
 .Sh NAME
@@ -41,11 +41,11 @@
 .Ft void
 .Fn SHA1Transform "u_int32_t state[5]" "u_int8_t buffer[SHA1_BLOCK_LENGTH]"
 .Ft "char *"
-.Fn SHA1End "SHA1_CTX *context" "char buf[SHA1_DIGEST_STRING_LENGTH]"
+.Fn SHA1End "SHA1_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA1File "char *filename" "char buf[SHA1_DIGEST_STRING_LENGTH]"
+.Fn SHA1File "char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA1Data "const u_int8_t *data" "u_int len" "char buf[SHA1_DIGEST_STRING_LENGTH]"
+.Fn SHA1Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The SHA1 functions implement the NIST Secure Hash Algorithm (SHA-1),
 FIPS PUB 180-1.

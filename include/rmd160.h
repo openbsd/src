@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.13 2004/04/26 19:38:12 millert Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.14 2004/04/29 15:51:16 millert Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -47,11 +47,11 @@ void	 RMD160Update(RMD160_CTX *, const u_int8_t *, u_int32_t)
 		__attribute__((__bounded__(__string__,2,3)));
 void	 RMD160Final(u_int8_t [RMD160_DIGEST_LENGTH], RMD160_CTX *)
 		__attribute__((__bounded__(__minbytes__,1,RMD160_DIGEST_LENGTH)));
-char	*RMD160End(RMD160_CTX *, char [RMD160_DIGEST_STRING_LENGTH])
+char	*RMD160End(RMD160_CTX *, char *)
 		__attribute__((__bounded__(__minbytes__,2,RMD160_DIGEST_STRING_LENGTH)));
-char	*RMD160File(char *, char [RMD160_DIGEST_STRING_LENGTH])
+char	*RMD160File(char *, char *)
 		__attribute__((__bounded__(__minbytes__,2,RMD160_DIGEST_STRING_LENGTH)));
-char	*RMD160Data(const u_int8_t *, size_t, char [RMD160_DIGEST_STRING_LENGTH])
+char	*RMD160Data(const u_int8_t *, size_t, char *)
 		__attribute__((__bounded__(__string__,1,2)))
 		__attribute__((__bounded__(__minbytes__,3,RMD160_DIGEST_STRING_LENGTH)));
 __END_DECLS

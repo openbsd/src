@@ -1,4 +1,4 @@
-/*	$OpenBSD: helper.c,v 1.3 2004/04/29 02:43:06 millert Exp $	*/
+/*	$OpenBSD: helper.c,v 1.4 2004/04/29 15:51:16 millert Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -10,7 +10,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: helper.c,v 1.3 2004/04/29 02:43:06 millert Exp $";
+static const char rcsid[] = "$OpenBSD: helper.c,v 1.4 2004/04/29 15:51:16 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -26,14 +26,14 @@ static const char rcsid[] = "$OpenBSD: helper.c,v 1.3 2004/04/29 02:43:06 miller
 
 /* ARGSUSED */
 char *
-HASHEnd(HASH_CTX *ctx, char buf[HASH_DIGEST_STRING_LENGTH])
+HASHEnd(HASH_CTX *ctx, char *buf)
 {
 	int i;
 	u_int8_t digest[HASH_DIGEST_LENGTH];
 	static const char hex[] = "0123456789abcdef";
 
 	if (buf == NULL && (buf = malloc(HASH_DIGEST_STRING_LENGTH)) == NULL)
-		return(NULL);
+		return (NULL);
 
 	HASHFinal(digest, ctx);
 	for (i = 0; i < HASH_DIGEST_LENGTH; i++) {
@@ -46,7 +46,7 @@ HASHEnd(HASH_CTX *ctx, char buf[HASH_DIGEST_STRING_LENGTH])
 }
 
 char *
-HASHFile(char *filename, char buf[HASH_DIGEST_STRING_LENGTH])
+HASHFile(char *filename, char *buf)
 {
 	u_char buffer[BUFSIZ];
 	HASH_CTX ctx;
@@ -55,7 +55,7 @@ HASHFile(char *filename, char buf[HASH_DIGEST_STRING_LENGTH])
 	HASHInit(&ctx);
 
 	if ((fd = open(filename, O_RDONLY)) < 0)
-		return(NULL);
+		return (NULL);
 
 	while ((num = read(fd, buffer, sizeof(buffer))) > 0)
 		HASHUpdate(&ctx, buffer, num);
@@ -67,7 +67,7 @@ HASHFile(char *filename, char buf[HASH_DIGEST_STRING_LENGTH])
 }
 
 char *
-HASHData(const u_char *data, size_t len, char buf[HASH_DIGEST_STRING_LENGTH])
+HASHData(const u_char *data, size_t len, char *buf)
 {
 	HASH_CTX ctx;
 

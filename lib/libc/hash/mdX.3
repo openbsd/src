@@ -6,9 +6,9 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.2 2004/04/29 13:33:58 jmc Exp $
+.\" 	$OpenBSD: mdX.3,v 1.3 2004/04/29 15:51:16 millert Exp $
 .\"
-.Dd October 9, 1996
+.Dd April 29, 2004
 .Dt MDX 3
 .Os
 .Sh NAME
@@ -32,11 +32,11 @@
 .Ft void
 .Fn MDXTransform "u_int32_t state[4]" "u_int8_t block[MDX_BLOCK_LENGTH]"
 .Ft "char *"
-.Fn MDXEnd "MDX_CTX *context" "char buf[MDX_DIGEST_STRING_LENGTH]"
+.Fn MDXEnd "MDX_CTX *context" "char *buf"
 .Ft "char *"
-.Fn MDXFile "char *filename" "char buf[MDX_DIGEST_STRING_LENGTH]"
+.Fn MDXFile "char *filename" "char *buf"
 .Ft "char *"
-.Fn MDXData "const u_int8_t *data" "unsigned int len" "char buf[MDX_DIGEST_STRING_LENGTH]"
+.Fn MDXData "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The MDX functions calculate a 128-bit cryptographic checksum (digest)
 for any number of input bytes.
