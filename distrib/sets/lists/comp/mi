@@ -4834,6 +4834,8 @@
 ./usr/share/man/cat9/autoconf.0
 ./usr/share/man/cat9/bcmp.0
 ./usr/share/man/cat9/bdevvp.0
+./usr/share/man/cat9/bintime.0
+./usr/share/man/cat9/binuptime.0
 ./usr/share/man/cat9/boot.0
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
@@ -4970,7 +4972,13 @@
 ./usr/share/man/cat9/fork1.0
 ./usr/share/man/cat9/free.0
 ./usr/share/man/cat9/get_random_bytes.0
+./usr/share/man/cat9/getbintime.0
+./usr/share/man/cat9/getbinuptime.0
 ./usr/share/man/cat9/getdevvp.0
+./usr/share/man/cat9/getmicrotime.0
+./usr/share/man/cat9/getmicrouptime.0
+./usr/share/man/cat9/getnanotime.0
+./usr/share/man/cat9/getnanouptime.0
 ./usr/share/man/cat9/getnewvnode.0
 ./usr/share/man/cat9/getsn.0
 ./usr/share/man/cat9/getsock.0
@@ -5045,9 +5053,12 @@
 ./usr/share/man/cat9/memcmp.0
 ./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/microtime.0
+./usr/share/man/cat9/microuptime.0
 ./usr/share/man/cat9/min.0
 ./usr/share/man/cat9/mono_time.0
 ./usr/share/man/cat9/namei.0
+./usr/share/man/cat9/nanotime.0
+./usr/share/man/cat9/nanouptime.0
 ./usr/share/man/cat9/panic.0
 ./usr/share/man/cat9/pfind.0
 ./usr/share/man/cat9/pgfind.0
