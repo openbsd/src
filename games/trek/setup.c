@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.2 1998/08/19 07:42:03 pjanzen Exp $	*/
+/*	$OpenBSD: setup.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.2 1998/08/19 07:42:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.2 1998/08/19 07:42:03 pjanzen Exp $
 **	Game restart and tournament games are handled here.
 */
 
-struct cvntab	Lentab[] =
+const struct cvntab	Lentab[] =
 {
 	{ "s",		"hort",		(cmdfun)1,	0 },
 	{ "m",		"edium",	(cmdfun)2,	0 },
@@ -70,7 +70,7 @@ struct cvntab	Lentab[] =
 	{ NULL,		NULL,		NULL,		0 }
 };
 
-struct cvntab	Skitab[] =
+const struct cvntab	Skitab[] =
 {
 	{ "n",		"ovice",	(cmdfun)1,	0 },
 	{ "f",		"air",		(cmdfun)2,	0 },
@@ -84,7 +84,7 @@ struct cvntab	Skitab[] =
 void
 setup()
 {
-	struct cvntab		*r;
+	const struct cvntab	*r;
 	register int		i, j;
 	double			f;
 	int			d;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: win.c,v 1.2 1998/08/19 07:42:18 pjanzen Exp $	*/
+/*	$OpenBSD: win.c,v 1.3 1999/07/31 18:49:00 pjanzen Exp $	*/
 /*	$NetBSD: win.c,v 1.3 1995/04/22 10:59:41 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: win.c,v 1.2 1998/08/19 07:42:18 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: win.c,v 1.3 1999/07/31 18:49:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ void
 win()
 {
 	long			s;
-	register struct cvntab	*p = NULL;
+	const struct cvntab	*p = NULL;
 	extern jmp_buf	env;
 
 	sleep(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: srscan.c,v 1.3 1999/03/12 03:02:44 pjanzen Exp $	*/
+/*	$OpenBSD: srscan.c,v 1.4 1999/07/31 18:49:00 pjanzen Exp $	*/
 /*	$NetBSD: srscan.c,v 1.3 1995/04/22 10:59:31 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: srscan.c,v 1.3 1999/03/12 03:02:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: srscan.c,v 1.4 1999/07/31 18:49:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: srscan.c,v 1.3 1999/03/12 03:02:44 pjanzen Exp 
 **	The current quadrant is filled in on the computer chart.
 */
 
-char	*Color[4] =
+const char	*const Color[4] =
 {
 	"GREEN",
 	"DOCKED",
@@ -75,10 +75,10 @@ srscan(f)
 {
 	register int	i, j;
 	register int	statinfo;
-	char		*s;
+	const char	*s;
 	int		percent;
 	struct quad	*q = NULL;
-	struct cvntab	*p;
+	const struct cvntab	*p;
 
 	if (f >= 0 && check_out(SRSCAN))
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lose.c,v 1.2 1998/08/19 07:41:46 pjanzen Exp $	*/
+/*	$OpenBSD: lose.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $	*/
 /*	$NetBSD: lose.c,v 1.3 1995/04/22 10:59:08 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lose.c,v 1.2 1998/08/19 07:41:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: lose.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$OpenBSD: lose.c,v 1.2 1998/08/19 07:41:46 pjanzen Exp $"
 **	actions which need be taken are taken.
 */
 
-char	*Losemsg[] =
+const char	*const Losemsg[] =
 {
 	"You ran out of time",
 	"You ran out of energy",

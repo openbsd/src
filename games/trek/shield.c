@@ -1,4 +1,4 @@
-/*	$OpenBSD: shield.c,v 1.2 1998/08/19 07:42:06 pjanzen Exp $	*/
+/*	$OpenBSD: shield.c,v 1.3 1999/07/31 18:49:00 pjanzen Exp $	*/
 /*	$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: shield.c,v 1.2 1998/08/19 07:42:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: shield.c,v 1.3 1999/07/31 18:49:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: shield.c,v 1.2 1998/08/19 07:42:06 pjanzen Exp 
 **	so you get partial hits.
 */
 
-struct cvntab Udtab[] =
+const struct cvntab Udtab[] =
 {
 	{ "u",		"p",		(cmdfun)1,	0 },
 	{ "d",		"own",		(cmdfun)0,	0 },
@@ -74,12 +74,12 @@ void
 shield(f)
 	int	f;
 {
-	register int	i;
-	struct cvntab	*r;
-	char		s[100];
-	char		*device, *dev2, *dev3;
-	int		ind;
-	char		*stat;
+	register int		i;
+	const struct cvntab	*r;
+	char			s[100];
+	const char		*device, *dev2, *dev3;
+	int			ind;
+	char			*stat;
 
 	if (f > 0 && (Ship.shldup || damaged(SRSCAN)))
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.3 1999/03/12 03:02:41 pjanzen Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.3 1999/03/12 03:02:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static int testterm __P((void));
 
 int
 getintpar(s)
-	char	*s;
+	const char	*s;
 {
 	register int	i;
 	int		n;
@@ -80,7 +80,7 @@ getintpar(s)
 
 double
 getfltpar(s)
-	char	*s;
+	const char	*s;
 {
 	register int		i;
 	double			d;
@@ -103,7 +103,7 @@ getfltpar(s)
  **	get yes/no parameter
  **/
 
-struct cvntab	Yntab[] =
+const struct cvntab	Yntab[] =
 {
 	{ "y",	"es",	(cmdfun)1,	1 },
 	{ "n",	"o",	(cmdfun)0,	0 },
@@ -112,9 +112,9 @@ struct cvntab	Yntab[] =
 
 int
 getynpar(s)
-	char	*s;
+	const char	*s;
 {
-	struct cvntab		*r;
+	const struct cvntab	*r;
 
 	r = getcodpar(s, Yntab);
 	return (r->value2);
@@ -125,15 +125,15 @@ getynpar(s)
  **	get coded parameter
  **/
 
-struct cvntab *
+const struct cvntab *
 getcodpar(s, tab)
-	char		*s;
-	struct cvntab	tab[];
+	const char		*s;
+	const struct cvntab	tab[];
 {
 	char				input[100];
-	register struct cvntab		*r;
+	const struct cvntab		*r;
 	int				flag;
-	register char			*p, *q;
+	const char			*p, *q;
 	int				c;
 	int				f;
 
@@ -206,10 +206,10 @@ getcodpar(s, tab)
 
 void
 getstrpar(s, r, l, t)
-	char	*s;
-	char	*r;
-	int	l;
-	char	*t;
+	const char	*s;
+	char		*r;
+	int		l;
+	const char	*t;
 {
 	register int	i;
 	char		format[20];

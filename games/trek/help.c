@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.2 1998/08/19 07:41:39 pjanzen Exp $	*/
+/*	$OpenBSD: help.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $	*/
 /*	$NetBSD: help.c,v 1.3 1995/04/22 10:59:01 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: help.c,v 1.2 1998/08/19 07:41:39 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: help.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ static char rcsid[] = "$OpenBSD: help.c,v 1.2 1998/08/19 07:41:39 pjanzen Exp $"
 **	to drop you.  After that, it's your problem.
 */
 
-char	*Cntvect[3] =
+const char	*const Cntvect[3] =
 {"first", "second", "third"};
 
 void

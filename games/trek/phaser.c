@@ -1,4 +1,4 @@
-/*	$OpenBSD: phaser.c,v 1.3 1999/03/12 03:02:43 pjanzen Exp $	*/
+/*	$OpenBSD: phaser.c,v 1.4 1999/07/31 18:48:59 pjanzen Exp $	*/
 /*	$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: phaser.c,v 1.3 1999/03/12 03:02:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: phaser.c,v 1.4 1999/07/31 18:48:59 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ static char rcsid[] = "$OpenBSD: phaser.c,v 1.3 1999/03/12 03:02:43 pjanzen Exp 
 **	Phasers spread slightly, even if you specify zero spread.
 */
 
-struct cvntab	Matab[] =
+const struct cvntab	Matab[] =
 {
 	{ "m",		"anual",	(cmdfun)1,	0 },
 	{ "a",		"utomatic",	(cmdfun)0,	0 },
@@ -109,7 +109,7 @@ phaser(v)
 	int			n;
 	int			hitreqd[NBANKS];
 	struct banks		bank[NBANKS];
-	struct cvntab		*ptr;
+	const struct cvntab	*ptr;
 
 	if (Ship.cond == DOCKED)
 	{

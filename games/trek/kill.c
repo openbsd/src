@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.2 1998/08/19 07:41:43 pjanzen Exp $	*/
+/*	$OpenBSD: kill.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $	*/
 /*	$NetBSD: kill.c,v 1.3 1995/04/22 10:59:06 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: kill.c,v 1.2 1998/08/19 07:41:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: kill.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,7 @@ kills(x, y, f)
 {
 	register struct quad	*q;
 	register struct event	*e;
-	register char		*name;
+	const char		*name;
 
 	if (f)
 	{

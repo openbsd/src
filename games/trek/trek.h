@@ -1,4 +1,4 @@
-/*	$OpenBSD: trek.h,v 1.4 1999/03/12 03:02:45 pjanzen Exp $	*/
+/*	$OpenBSD: trek.h,v 1.5 1999/07/31 18:49:00 pjanzen Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct quad		/* definition for each quadrant */
 */
 
 /* ascii names of systems */
-extern char	*Systemname[NINHAB];
+extern const char	*const Systemname[NINHAB];
 
 /* quadrant definition */
 struct quad	Quad[NQUADS][NQUADS];
@@ -133,11 +133,11 @@ char	Sect[NSECTS][NSECTS];
 /* device names */
 struct device
 {
-	char	*name;		/* device name */
-	char	*person;	/* the person who fixes it */
+	const char	*name;		/* device name */
+	const char	*person;	/* the person who fixes it */
 };
 
-struct device	Device[NDEV];
+const struct device	Device[NDEV];
 
 /***************************  EVENTS  ****************************/
 
@@ -215,8 +215,8 @@ struct xy
 };
 
 
-extern struct cvntab	Skitab[];
-extern struct cvntab	Lentab[];
+extern const struct cvntab	Skitab[];
+extern const struct cvntab	Lentab[];
 
 /*
  *	note that much of the stuff in the following structs CAN NOT
@@ -245,7 +245,7 @@ struct
 	int	secty;		/* sector y coord */
 	unsigned char	cond;	/* condition code */
 	char	sinsbad;	/* Space Inertial Navigation System condition */
-	char	*shipname;	/* name of current starship */
+	const char	*shipname;	/* name of current starship */
 	char	ship;		/* current starship */
 	int	distressed;	/* number of distress calls */
 }	Ship;
@@ -514,7 +514,7 @@ void snova __P((int, int ));
 void srscan __P((int));
 
 /* systemname.c */
-char *systemname __P((struct quad *));
+const char *systemname __P((const struct quad *));
 
 /* torped.c */
 void torped __P((int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: computer.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $	*/
+/*	$OpenBSD: computer.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $	*/
 /*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: computer.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: computer.c,v 1.4 1999/07/31 18:48:58 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ computer(v)
 	int			ix, iy;
 	register int		i, j;
 	int			tqx, tqy;
-	struct cvntab		*r;
+	const struct cvntab		*r;
 	int			cost;
 	int			course;
 	double			dist, time;
