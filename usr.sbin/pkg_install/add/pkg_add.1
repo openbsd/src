@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.10 1999/10/07 22:09:20 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.11 1999/10/07 22:22:58 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -52,7 +52,7 @@ package name itself plus the
 suffix) or an FTP location in the form of an URL. For example, the following
 is valid:
 .Pp
-.Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/zsh-3.0.6.tgz
+.Ic pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/m4-1.4.tgz
 .Pp
 If the given package names are not found in the current working directory,
 .Nm
