@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.51 2004/09/06 20:16:01 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.52 2004/09/28 14:06:33 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -149,6 +149,7 @@ Apple Airport:Hermes:macobio
 Adaptec AWN-8030:Prism-2.5:PCMCIA
 Asus SpaceLink WL-100:Prism-2.5:PCMCIA
 Belkin F5D6020 (version 1 only):Prism-2:PCMCIA
+Belkin F5D6001 (version 1 only):Prism-2:PCI
 Buffalo AirStation:Prism-2:PCMCIA
 Buffalo AirStation:Prism-2:CF
 Cabletron RoamAbout:Hermes:PCMCIA
