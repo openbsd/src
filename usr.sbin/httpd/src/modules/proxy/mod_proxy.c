@@ -247,6 +247,10 @@ static int proxy_fixup(request_rec *r)
 static void proxy_init(server_rec *r, pool *p)
 {
     ap_proxy_garbage_init(r, p);
+#ifdef EAPI
+    ap_hook_use("ap::mod_proxy::init", 
+                AP_HOOK_SIG3(void,ptr,ptr), AP_HOOK_ALL, r, p);
+#endif
 }
 
 #ifdef EAPI

@@ -1,4 +1,4 @@
-#!wml -oindex.html
+#!wml -o index.html
 
 #use "ssl_template.inc" title="Title Page" tag=title num=0 
 
@@ -17,7 +17,7 @@
         </tr>
         <tr>
         <td align=right>
-        <font face="Arial,Helvetica">mod_ssl version 2.5</font> &nbsp;&nbsp;
+        <font face="Arial,Helvetica">mod_ssl version 2.6</font> &nbsp;&nbsp;
         </td>
         </tr>
         </table>

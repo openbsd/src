@@ -2,19 +2,19 @@ Name: db_auth_module
 ConfigStart
     DB_VERSION=''
     DB_LIB=''
-    if sh helpers/TestCompile func db_create; then
+    if ./helpers/TestCompile func db_create; then
         DB_VERSION='Berkeley-DB/3.x'
-    elif sh helpers/TestCompile lib db db_create; then
+    elif ./helpers/TestCompile lib db db_create; then
         DB_VERSION='Berkeley-DB/3.x'
         DB_LIB='-ldb'
-    elif sh helpers/TestCompile func db_open; then
+    elif ./helpers/TestCompile func db_open; then
         DB_VERSION='Berkeley-DB/2.x'
-    elif sh helpers/TestCompile lib db db_open; then
+    elif ./helpers/TestCompile lib db db_open; then
         DB_VERSION='Berkeley-DB/2.x'
         DB_LIB='-ldb'
-    elif sh helpers/TestCompile func dbopen; then
+    elif ./helpers/TestCompile func dbopen; then
         DB_VERSION='Berkeley-DB/1.x'
-    elif sh helpers/TestCompile lib db dbopen; then
+    elif ./helpers/TestCompile lib db dbopen; then
         DB_VERSION='Berkeley-DB/1.x'
         DB_LIB='-ldb'
     fi

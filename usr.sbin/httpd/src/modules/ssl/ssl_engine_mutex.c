@@ -156,8 +156,10 @@ void ssl_mutex_file_create(server_rec *s, pool *p)
     ap_pclosef(p, mc->nMutexFD);
 
     /* make sure the childs have access to this file */
+#ifndef OS2
     if (geteuid() == 0 /* is superuser */)
         chown(mc->szMutexFile, ap_user_id, -1 /* no gid change */);
+#endif
 
     /* open the lockfile for real */
     if ((mc->nMutexFD = ap_popenf(p, mc->szMutexFile,

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.10 2000/01/28 18:39:57 beck Exp $
+# $OpenBSD: Configure,v 1.11 2000/03/19 11:16:52 beck Exp $
 ## ====================================================================
 ## Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
 ##
@@ -678,10 +678,17 @@ case "$PLAT" in
 	LIBS="$LIBS -lPW"
 	;;
     *-uts*)
-	OS='Amdahl UTS'
-	CFLAGS="$CFLAGS -Xa -eft -DUTS21 -DUSEBCOPY"
-	LIBS="$LIBS -lsocket -lbsd -la"
-	DEF_WANTHSREGEX=yes
+	PLATOSVERS=`echo $PLAT | sed 's/^.*,//'`
+	OS='Amdahl UTS $PLATOSVERS'
+	case "$PLATOSVERS" in
+	    2*) CFLAGS="$CFLAGS -Xa -eft -DUTS21 -DUSEBCOPY"
+	        LIBS="$LIBS -lsocket -lbsd -la"
+	        DEF_WANTHSREGEX=yes
+	        ;;
+	    *)  CFLAGS="$CFLAGS -Xa -DSVR4"
+	        LIBS="$LIBS -lsocket -lnsl"
+	        ;;
+	esac
 	;;
     *-ultrix)
 	OS='ULTRIX'
@@ -1221,7 +1228,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    # Older SINIX machines must be linked as "shared core"-Apache
 	    case $CC in
 		*/gcc|gcc ) CFLAGS_SHLIB="-fpic" ;;
-		*/cc|cc   ) CFLAGS_SHLIB="-KPIC" ;;
+		*)          CFLAGS_SHLIB="-KPIC" ;;
 	    esac
 	    LDFLAGS_SHLIB="-G"
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
@@ -1843,7 +1850,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=11
+	V=1 R=3 P=12
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi

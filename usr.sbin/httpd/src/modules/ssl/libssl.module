@@ -142,11 +142,11 @@ ConfigStart
         my_rule_SSL_CONSERVATIVE=$SSL_CONSERVATIVE
         my_rule_SSL_VENDOR=$SSL_VENDOR
     else
-        my_rule_SSL_COMPAT=`sh helpers/CutRule SSL_COMPAT $file`
-        my_rule_SSL_SDBM=`sh helpers/CutRule SSL_SDBM $file`
-        my_rule_SSL_EXPERIMENTAL=`sh helpers/CutRule SSL_EXPERIMENTAL $file`
-        my_rule_SSL_CONSERVATIVE=`sh helpers/CutRule SSL_CONSERVATIVE $file`
-        my_rule_SSL_VENDOR=`sh helpers/CutRule SSL_VENDOR $file`
+        my_rule_SSL_COMPAT=`./helpers/CutRule SSL_COMPAT $file`
+        my_rule_SSL_SDBM=`./helpers/CutRule SSL_SDBM $file`
+        my_rule_SSL_EXPERIMENTAL=`./helpers/CutRule SSL_EXPERIMENTAL $file`
+        my_rule_SSL_CONSERVATIVE=`./helpers/CutRule SSL_CONSERVATIVE $file`
+        my_rule_SSL_VENDOR=`./helpers/CutRule SSL_VENDOR $file`
     fi
 
     #
@@ -208,7 +208,7 @@ ConfigStart
         if [ ".$DBM_LIB" != . ]; then
             LIBS_ORIG="$LIBS"
             LIBS="$LIBS $DBM_LIB"
-            if sh helpers/TestCompile func dbm_open; then
+            if ./helpers/TestCompile func dbm_open; then
                 SSL_DBM_NAME="Configured DBM ($DBM_LIB)"
                 SSL_DBM_FLAG="$DBM_LIB"
             fi
@@ -216,13 +216,13 @@ ConfigStart
         fi
         #   2. check for various vendor DBM libs
         if [ ".$SSL_DBM_NAME" = . ]; then
-            if sh helpers/TestCompile func dbm_open; then
+            if ./helpers/TestCompile func dbm_open; then
                 SSL_DBM_NAME='Vendor DBM (libc)'
                 SSL_DBM_FLAG=''
-            elif sh helpers/TestCompile lib dbm dbm_open; then
+            elif ./helpers/TestCompile lib dbm dbm_open; then
                 SSL_DBM_NAME='Vendor DBM (libdbm)'
                 SSL_DBM_FLAG='-ldbm'
-            elif sh helpers/TestCompile lib ndbm dbm_open; then
+            elif ./helpers/TestCompile lib ndbm dbm_open; then
                 SSL_DBM_NAME='Vendor DBM (libndbm)'
                 SSL_DBM_FLAG='-lndbm'
             fi
@@ -272,7 +272,11 @@ ConfigStart
     if [ ".$SSL_BASE" = . ]; then
         SSL_BASE=`egrep '^SSL_BASE=' $file | tail -1 | awk -F= '{print $2}'`
         if [ ".$SSL_BASE" = . ]; then
-            SSL_BASE="/usr/local/ssl"
+            if [ -d /usr/local/ssl ]; then
+                SSL_BASE="/usr/local/ssl"
+            else
+                SSL_BASE="SYSTEM"
+            fi
         fi
     fi
     case $SSL_BASE in
@@ -391,10 +395,10 @@ ConfigStart
             exit 1
         fi
     else
-        if [ -f "$SSL_BASE/libssl.a" ]; then
+        if [ -f "$SSL_BASE/libssl.a" -o -f "$SSL_BASE/libssl.so" ]; then
             SSL_LIBDIR='$(SSL_BASE)'
             my_real_ssl_libdir="$SSL_BASE"
-        elif [ -f "$SSL_BASE/lib/libssl.a" ]; then
+        elif [ -f "$SSL_BASE/lib/libssl.a" -o -f "$SSL_BASE/lib/libssl.so" ]; then
             SSL_LIBDIR='$(SSL_BASE)/lib'
             my_real_ssl_libdir="$SSL_BASE/lib"
         else

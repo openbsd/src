@@ -1,5 +1,5 @@
 #ifndef AP_EBCDIC_H
-#define AP_EBCDIC_H  "$Id: ebcdic.h,v 1.2 2000/01/25 18:30:05 beck Exp $"
+#define AP_EBCDIC_H  "$Id: ebcdic.h,v 1.3 2000/03/19 11:17:32 beck Exp $"
 
 #include <sys/types.h>
 

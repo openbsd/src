@@ -137,7 +137,6 @@ void ssl_hook_NewConnection(conn_rec *conn)
     char *cpVHostMD5;
     X509 *xs;
     int rc;
-    int n;
 
     /*
      * Get context
@@ -170,8 +169,7 @@ void ssl_hook_NewConnection(conn_rec *conn)
     /*
      * Seed the Pseudo Random Number Generator (PRNG)
      */
-    n = ssl_rand_seed(srvr, conn->pool, SSL_RSCTX_CONNECT);
-    ssl_log(srvr, SSL_LOG_TRACE, "Seeding PRNG with %d bytes of entropy", n);
+    ssl_rand_seed(srvr, conn->pool, SSL_RSCTX_CONNECT, "");
 
     /*
      * Create a new SSL connection with the configured server SSL context and

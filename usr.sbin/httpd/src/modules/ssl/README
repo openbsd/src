@@ -7,7 +7,7 @@
  mod_ssl                               ``Ralf Engelschall has released an
  Apache Interface to OpenSSL             excellent module that integrates
  http://www.modssl.org/                  Apache and SSLeay.''                 
- Version 2.5                                               -- Tim J. Hudson
+ Version 2.6                                               -- Tim J. Hudson
                                            
  SYNOPSIS
 

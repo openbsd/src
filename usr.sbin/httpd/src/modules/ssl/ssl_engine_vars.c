@@ -296,7 +296,7 @@ static char *ssl_var_lookup_ssl(pool *p, conn_rec *c, char *var)
         result = ssl_var_lookup_ssl_version(p, var+8);
     }
     else if (ssl != NULL && strcEQ(var, "PROTOCOL")) {
-        result = SSL_get_version(ssl);
+        result = (char *)SSL_get_version(ssl);
     }
     else if (ssl != NULL && strcEQ(var, "SESSION_ID")) {
         SSL_SESSION *pSession = SSL_get_session(ssl);

@@ -135,24 +135,19 @@ module MODULE_VAR_EXPORT status_module;
  *command-related code. This is here to prevent use of ExtendedStatus
  * without status_module included.
  */
-static const char *set_extended_status(cmd_parms *cmd, void *dummy, char *arg) 
+static const char *set_extended_status(cmd_parms *cmd, void *dummy, int arg) 
 {
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
         return err;
     }
-    if (!strcasecmp(arg, "off") || !strcmp(arg, "0")) {
-	ap_extended_status = 0;
-    }
-    else {
-	ap_extended_status = 1;
-    }
+    ap_extended_status = arg;
     return NULL;
 }
 
 static const command_rec status_module_cmds[] =
 {
-    { "ExtendedStatus", set_extended_status, NULL, RSRC_CONF, TAKE1,
+    { "ExtendedStatus", set_extended_status, NULL, RSRC_CONF, FLAG,
       "\"On\" to enable extended status information, \"Off\" to disable" },
     {NULL}
 };
@@ -618,9 +613,10 @@ static int status_handler(request_rec *r)
 			format_byte_out(r, bytes);
 			ap_rputs(")\n", r);
 			ap_rprintf(r, " <i>%s {%s}</i> <b>[%s]</b><br>\n\n",
-			    score_record.client,
+			    ap_escape_html(r->pool, score_record.client),
 			    ap_escape_html(r->pool, score_record.request),
-			    vhost ? vhost->server_hostname : "(unavailable)");
+			    vhost ? ap_escape_html(r->pool, 
+				vhost->server_hostname) : "(unavailable)");
 		    }
 		    else {		/* !no_table_report */
 #ifndef NO_PRETTYPRINT
@@ -707,8 +703,9 @@ static int status_handler(request_rec *r)
 #else
 			    ap_rprintf(r,
 			     "<td>%s<td nowrap>%s<td nowrap>%s</tr>\n\n",
-			     score_record.client,
-			     vhost ? vhost->server_hostname : "(unavailable)",
+			     ap_escape_html(r->pool, score_record.client),
+			     vhost ? ap_escape_html(r->pool, 
+				vhost->server_hostname) : "(unavailable)",
 			     ap_escape_html(r->pool, score_record.request));
 #endif
 		    }		/* no_table_report */

@@ -36,7 +36,7 @@ update: clean
 	        n=0; \
 	        while [ 1 ]; do \
 	            hash="`$$ssl_program crl -noout -hash <$$file`"; \
-	            if [ -r "$$hash.$$n" ]; then \
+	            if [ -r "$$hash.r$$n" ]; then \
 	                n=`expr $$n + 1`; \
 	            else \
 	                echo dummy |\

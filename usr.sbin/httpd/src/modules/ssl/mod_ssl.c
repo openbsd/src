@@ -74,7 +74,7 @@
  *  identify the module to SCCS `what' and RCS `ident' commands
  */
 static char const sccsid[] = "@(#) mod_ssl/" MOD_SSL_VERSION " >";
-static char const rcsid[]  = "$Id: mod_ssl.c,v 1.3 2000/01/25 18:29:53 beck Exp $";
+static char const rcsid[]  = "$Id: mod_ssl.c,v 1.4 2000/03/19 11:17:20 beck Exp $";
 
 /*
  *  the table of configuration directives we provide
@@ -153,6 +153,36 @@ static command_rec ssl_config_cmds[] = {
     AP_SRV_CMD(Protocol, RAW_ARGS,
                "Enable or disable various SSL protocols"
                "(`[+-][SSLv2|SSLv3|TLSv1] ...' - see manual)")
+
+#ifdef SSL_EXPERIMENTAL
+    /* 
+     * Proxy configuration for remote SSL connections
+     */
+    AP_SRV_CMD(ProxyProtocol, RAW_ARGS,
+               "SSL Proxy: enable or disable SSL protocol flavors "
+               "(`[+-][SSLv2|SSLv3|TLSv1] ...' - see manual)")
+    AP_SRV_CMD(ProxyCipherSuite, TAKE1,
+               "SSL Proxy: colon-delimited list of permitted SSL ciphers "
+               "(`XXX:...:XXX' - see manual)")
+    AP_SRV_CMD(ProxyVerify, FLAG,
+               "SSL Proxy: whether to verify the remote certificate "
+               "(`on' or `off')")
+    AP_SRV_CMD(ProxyVerifyDepth, TAKE1,
+               "SSL Proxy: maximum certificate verification depth "
+               "(`N' - number of intermediate certificates)")
+    AP_SRV_CMD(ProxyCACertificateFile, TAKE1,
+               "SSL Proxy: file containing server certificates "
+               "(`/path/to/file' - PEM encoded certificates)")
+    AP_SRV_CMD(ProxyCACertificatePath, TAKE1,
+               "SSL Proxy: directory containing server certificates "
+               "(`/path/to/dir' - contains PEM encoded certificates)")
+    AP_SRV_CMD(ProxyMachineCertificateFile, TAKE1,
+               "SSL Proxy: file containing client certificates "
+               "(`/path/to/file' - PEM encoded certificates)")
+    AP_SRV_CMD(ProxyMachineCertificatePath, TAKE1,
+               "SSL Proxy: directory containing client certificates "
+               "(`/path/to/dir' - contains PEM encoded certificates)")
+#endif
 
     /*
      * Per-directory context configuration directives

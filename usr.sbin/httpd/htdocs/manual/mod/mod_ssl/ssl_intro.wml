@@ -7,7 +7,7 @@
 #use wml::std::toc style=nbsp
 
 <quotation width=400 
-           author="A. Tannenbaum, ``Introduction to Computer Networks''">
+           author="A. Tanenbaum, ``Introduction to Computer Networks''">
 ``The nice thing about standards is that there are so many to choose from.
 And if you really don't like all the standards you just have to wait another
 year until the one arises you are looking for.''

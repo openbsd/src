@@ -206,6 +206,18 @@ void *ssl_config_server_create(pool *p, server_rec *s)
     sc->szCARevocationFile     = NULL;
     sc->pRevocationStore       = NULL;
 
+#ifdef SSL_EXPERIMENTAL
+    sc->nProxyVerifyDepth             = UNSET;
+    sc->szProxyCACertificatePath      = NULL;
+    sc->szProxyCACertificateFile      = NULL;
+    sc->szProxyClientCertificateFile  = NULL;
+    sc->szProxyClientCertificatePath  = NULL;
+    sc->szProxyCipherSuite            = NULL;
+    sc->nProxyProtocol                = SSL_PROTOCOL_ALL & ~SSL_PROTOCOL_TLSV1;
+    sc->bProxyVerify                  = UNSET;
+    sc->pSSLProxyCtx                  = NULL;
+#endif
+
     (void)memset(sc->szPublicCertFile, 0, SSL_AIDX_MAX*sizeof(char *));
     (void)memset(sc->szPrivateKeyFile, 0, SSL_AIDX_MAX*sizeof(char *));
     (void)memset(sc->pPublicCert, 0, SSL_AIDX_MAX*sizeof(X509 *));
@@ -262,6 +274,18 @@ void *ssl_config_server_merge(pool *p, void *basev, void *addv)
     ap_hook_use("ap::mod_ssl::vendor::config_server_merge",
                 AP_HOOK_SIG5(void,ptr,ptr,ptr,ptr), AP_HOOK_MODE_ALL,
                 p, base, add, new);
+#endif
+
+#ifdef SSL_EXPERIMENTAL
+    cfgMergeInt(nProxyVerifyDepth);
+    cfgMergeString(szProxyCACertificatePath);
+    cfgMergeString(szProxyCACertificateFile);
+    cfgMergeString(szProxyClientCertificateFile);
+    cfgMergeString(szProxyClientCertificatePath);
+    cfgMergeString(szProxyCipherSuite);
+    cfgMerge(nProxyProtocol, (SSL_PROTOCOL_ALL & ~SSL_PROTOCOL_TLSV1));
+    cfgMergeBool(bProxyVerify);
+    cfgMerge(pSSLProxyCtx, NULL);
 #endif
 
     return new;
@@ -443,6 +467,12 @@ const char *ssl_cmd_SSLRandomSeed(
         pRS->nSrc   = SSL_RSSRC_EXEC;
         pRS->cpPath = ap_pstrdup(mc->pPool, ap_server_root_relative(cmd->pool, arg2+5));
     }
+#if SSL_LIBRARY_VERSION >= 0x00905100
+    else if (strlen(arg2) > 4 && strEQn(arg2, "egd:", 4)) {
+        pRS->nSrc   = SSL_RSSRC_EGD;
+        pRS->cpPath = ap_pstrdup(mc->pPool, ap_server_root_relative(cmd->pool, arg2+4));
+    }
+#endif
     else if (strcEQ(arg2, "builtin")) {
         pRS->nSrc   = SSL_RSSRC_BUILTIN;
         pRS->cpPath = NULL;
@@ -871,4 +901,134 @@ const char *ssl_cmd_SSLProtocol(
     sc->nProtocol = options;
     return NULL;
 }
+
+#ifdef SSL_EXPERIMENTAL
+
+const char *ssl_cmd_SSLProxyProtocol(
+    cmd_parms *cmd, char *struct_ptr, const char *opt)
+{
+    SSLSrvConfigRec *sc;
+    ssl_proto_t options, thisopt;
+    char action;
+    char *w;
+
+    sc = mySrvConfig(cmd->server);
+    options = SSL_PROTOCOL_NONE;
+    while (opt[0] != NUL) {
+        w = ap_getword_conf(cmd->pool, &opt);
+
+        action = NUL;
+        if (*w == '+' || *w == '-')
+            action = *(w++);
+
+        if (strcEQ(w, "SSLv2"))
+            thisopt = SSL_PROTOCOL_SSLV2;
+        else if (strcEQ(w, "SSLv3"))
+            thisopt = SSL_PROTOCOL_SSLV3;
+        else if (strcEQ(w, "TLSv1"))
+            thisopt = SSL_PROTOCOL_TLSV1;
+        else if (strcEQ(w, "all"))
+            thisopt = SSL_PROTOCOL_ALL;
+        else
+            return ap_pstrcat(cmd->pool, "SSLProxyProtocol: "
+                              "Illegal protocol '", w, "'", NULL);
+        if (action == '-')
+            options &= ~thisopt;
+        else if (action == '+')
+            options |= thisopt;
+        else
+            options = thisopt;
+    }
+    sc->nProxyProtocol = options;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLProxyCipherSuite(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->szProxyCipherSuite = arg;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLProxyVerify(
+    cmd_parms *cmd, char *struct_ptr, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->bProxyVerify = (flag ? TRUE : FALSE);
+    return NULL;
+}
+
+const char *ssl_cmd_SSLProxyVerifyDepth(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    int d;
+
+    d = atoi(arg);
+    if (d < 0)
+        return "SSLProxyVerifyDepth: Invalid argument";
+    sc->nProxyVerifyDepth = d;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLProxyCACertificateFile(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    char *cpPath;
+
+    cpPath = ap_server_root_relative(cmd->pool, arg);
+    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
+        return ap_pstrcat(cmd->pool, "SSLProxyCACertificateFile: file '",
+                          cpPath, "' not exists or empty", NULL);
+    sc->szProxyCACertificateFile = cpPath;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLProxyCACertificatePath(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    char *cpPath;
+
+    cpPath = ap_server_root_relative(cmd->pool, arg);
+    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISDIR, cpPath))
+        return ap_pstrcat(cmd->pool, "SSLProxyCACertificatePath: directory '",
+                          cpPath, "' does not exists", NULL);
+    sc->szProxyCACertificatePath = cpPath;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLProxyMachineCertificateFile(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    char *cpPath;
+
+    cpPath = ap_server_root_relative(cmd->pool, arg);
+    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
+        return ap_pstrcat(cmd->pool, "SSLProxyMachineCertFile: file '",
+                          cpPath, "' not exists or empty", NULL);
+    sc->szProxyClientCertificateFile = cpPath;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLProxyMachineCertificatePath(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    char *cpPath;
+
+    cpPath = ap_server_root_relative(cmd->pool, arg);
+    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISDIR, cpPath))
+        return ap_pstrcat(cmd->pool, "SSLProxyMachineCertPath: directory '",
+                          cpPath, "' does not exists", NULL);
+    sc->szProxyClientCertificatePath = cpPath;
+    return NULL;
+}
+
+#endif /* SSL_EXPERIMENTAL */
 

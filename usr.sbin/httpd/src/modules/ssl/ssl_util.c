@@ -241,7 +241,7 @@ int ssl_util_ppopen_child(void *cmd, child_info *pinfo)
     }
 #elif defined(OS2)
     /* IBM OS/2 */
-    execl(SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
+    spawnl(P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
 #else
     /* Standard Unix */
     execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, NULL);
@@ -269,7 +269,7 @@ char *ssl_util_readfilter(server_rec *s, pool *p, char *cmd)
         return NULL;
     for (k = 0;    read(fileno(fp), &c, 1) == 1
                 && (k < MAX_STRING_LEN-1)       ; ) {
-        if (c == '\n')
+        if (c == '\n' || c == '\r')
             break;
         buf[k++] = c;
     }

@@ -82,11 +82,15 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <time.h>
 #ifndef WIN32
 #include <sys/time.h>
 #endif
-#include <sys/stat.h>
+#ifdef WIN32
+#include <wincrypt.h>
+#endif
 
 /* OpenSSL headers */
 #include <openssl/ssl.h>
@@ -497,6 +501,9 @@ typedef enum {
     SSL_RSSRC_BUILTIN = 1,
     SSL_RSSRC_FILE    = 2,
     SSL_RSSRC_EXEC    = 3
+#if SSL_LIBRARY_VERSION >= 0x00905100
+   ,SSL_RSSRC_EGD     = 4
+#endif
 } ssl_rssrc_t;
 typedef struct {
     ssl_rsctx_t  nCtx;
@@ -572,6 +579,19 @@ typedef struct {
     char        *szCARevocationPath;
     char        *szCARevocationFile;
     X509_STORE  *pRevocationStore;
+#ifdef SSL_EXPERIMENTAL
+    /* Configuration details for proxy operation */
+    ssl_proto_t  nProxyProtocol;
+    int          bProxyVerify;
+    int          nProxyVerifyDepth;
+    char        *szProxyCACertificatePath;
+    char        *szProxyCACertificateFile;
+    char        *szProxyClientCertificateFile;
+    char        *szProxyClientCertificatePath;
+    char        *szProxyCipherSuite;
+    SSL_CTX     *pSSLProxyCtx;
+    STACK_OF(X509_INFO) *skProxyClientCerts;
+#endif
 #ifdef SSL_VENDOR
     ap_ctx      *ctx;
 #endif
@@ -637,6 +657,16 @@ const char  *ssl_cmd_SSLProtocol(cmd_parms *, char *, const char *);
 const char  *ssl_cmd_SSLOptions(cmd_parms *, SSLDirConfigRec *, const char *);
 const char  *ssl_cmd_SSLRequireSSL(cmd_parms *, SSLDirConfigRec *, char *);
 const char  *ssl_cmd_SSLRequire(cmd_parms *, SSLDirConfigRec *, char *);
+#ifdef SSL_EXPERIMENTAL
+const char  *ssl_cmd_SSLProxyProtocol(cmd_parms *, char *, const char *);
+const char  *ssl_cmd_SSLProxyCipherSuite(cmd_parms *, char *, char *);
+const char  *ssl_cmd_SSLProxyVerify(cmd_parms *, char *, int);
+const char  *ssl_cmd_SSLProxyVerifyDepth(cmd_parms *, char *, char *);
+const char  *ssl_cmd_SSLProxyCACertificatePath(cmd_parms *, char *, char *);
+const char  *ssl_cmd_SSLProxyCACertificateFile(cmd_parms *, char *, char *);
+const char  *ssl_cmd_SSLProxyMachineCertificatePath(cmd_parms *, char *, char *);
+const char  *ssl_cmd_SSLProxyMachineCertificateFile(cmd_parms *, char *, char *);
+#endif
 
 /*  module initialization  */
 void         ssl_init_Module(server_rec *, pool *);
@@ -753,12 +783,12 @@ char        *ssl_var_lookup(pool *, server_rec *, conn_rec *, request_rec *, cha
 void         ssl_io_register(void);
 void         ssl_io_unregister(void);
 long         ssl_io_data_cb(BIO *, int, const char *, int, long, long);
-#ifdef SSL_EXPERIMENTAL
+#ifndef SSL_CONSERVATIVE
 void         ssl_io_suck(request_rec *, SSL *);
 #endif
 
 /*  PRNG  */
-int          ssl_rand_seed(server_rec *, pool *, ssl_rsctx_t);
+int          ssl_rand_seed(server_rec *, pool *, ssl_rsctx_t, char *);
 
 /*  Extensions  */
 void         ssl_ext_register(void);

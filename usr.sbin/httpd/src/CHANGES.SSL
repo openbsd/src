@@ -17,12 +17,154 @@
   _INTENTIONALLY_ no contributor names attached to the entries. Instead all
   contributors are listed in the CREDITS file.
 
+      ____    __   
+     |___ \  / /_  
+       __) || '_ \ 
+      / __/ | (_) |
+  __ |_____(_)___/____________________________________________
+
+  Changes with mod_ssl 2.6.2 (29-Feb-2000 to 02-Mar-2000)
+
+   *) Updated the conf/ssl.crt/ca-bundle.crt file (containing the CA
+      Root Certificates of over 60 popular CAs) to the contents extracted
+      from Netscape Communicator 4.72's cert7.db file.
+
+   *) Fixed compilation of the new HTTPS proxy code (SSL_EXPERIMENTAL):
+      The SSL_VENDOR was required without need if SSL_EXPERIMENTAL was
+      enabled. This is now fixed and only SSL_EXPERIMENTAL is requied again
+      for the new HTTPS proxy stuff.
+
+   *) Added an FAQ entry about the "less entropy for the PRNG"
+      problem which now becomes "popular" ;) with OpenSSL 0.9.5.
+
+   *) Fixed conf/ssl.crl/Makefile: the files which have to be
+      checked for existance are named foo.rNNN and not just foo.NNN
+
+   *) Fixed a typo related to a RAND_status call in ssl_engine_rand.c
+      which was introduced in 2.6.1 and which caused mod_ssl fail to
+      compile if OpenSSL >= 0.9.5 was used [Sorry, my gcc hasn't catched
+      this typo :-(...]
+
+   *) Added also some random files which exists under Mach/Rhapshody
+      platforms to the list of files in src/support/mkcert.sh to make
+      sure enough entropy is available on these platforms under "make
+      certificate" with OpenSSL 0.9.5
+
+   *) Enhanced SSLRequire (SH2) -> SSLRequireSSL (mod_ssl)
+      directive compatibility mapping.
+
+  Changes with mod_ssl 2.6.1 (25-Feb-2000 to 29-Feb-2000)
+
+   *) Added support for OpenSSL 0.9.5's RAND_egd() which is now used
+      to read entropy from the EGD Unix domain socket if `SSLRandSeed
+      egd:/path/to/socket' is configured. 
+
+   *) Extended builtin PRNG seeding with a run-time stack based source.
+      This way the builtin source now creates more entropy and usually
+      enough to make OpenSSL >= 0.9.5 happy again. If OpenSSL is still not
+      happy (i.e. still not sufficient entropy exists), a warning message
+      is logged by mod_ssl now.
+
+   *) Fixed Tanenbaum's name on the quote in ssl_intro.wml
+
+   *) Updated Thawte's sxnet stuff for latest OpenSSL.
+
+   *) Allow mod_ssl to compile also under Win32 & VC++ 6.0
+   
+   *) Fix OS/2 support and this way make mod_ssl again work
+      also under this platform.
+
+  Changes with mod_ssl 2.6.0 (24-Feb-2000 to 25-Feb-2000)
+
+   *) Merged in enhanced HTTPS Proxy Support which is derived from
+      Stronghold 2.x and was originally contributed by C2Net over one
+      year ago. This is still _EXPERIMENTAL_ stuff, so it is entirely
+      wrapped with SSL_EXPERIMENTAL sections and has to be abled under
+      built-time with --enable-rule=SSL_EXPERIMENTAL. Then the following
+      new configuration directives are provided to fine-tune the HTTPS
+      proxy support:
+
+          o  SSLProxyProtocol [+-][SSLv2|SSLv3|TLSv1] ...
+             (enable or disable SSL protocol flavors)
+          o  SSLProxyCipherSuite XXX:...:XXX
+             (colon-delimited list of permitted SSL ciphers)
+          o  SSLProxyVerify on|off
+             (whether to verify the remote certificate)
+          o  SSLProxyVerifyDepth N
+             (maximum certificate verification depth)
+          o  SSLProxyCACertificateFile /path/to/file
+             (file containing server certificates)
+          o  SSLProxyCACertificatePath /path/to/dir
+             (directory containing server certificates)
+          o  SSLProxyMachineCertificateFile /path/to/file
+             (file containing client certificates)
+          o  SSLProxyMachineCertificatePath /path/to/dir
+             (directory containing client certificates)
+
+      This stuff is declared experimental, because it was still _NOT_
+      tested in depth and is still _UNDOCUMENTED_. So keep in mind what
+      SSL_EXPERIMENTAL means and use this with care!
+
+   *) Extended the EAPI patches to mod_proxy to allow the new
+      HTTPS proxy support to be merged in.
+
+   *) Fixed ssl_io_suck() prototype scope in mod_ssl.h by changing
+      the old #ifdef SSL_EXPERIMENTAL to the now correct #ifndef
+      SSL_CONSERVATIVE.
+
+   *) Added "cons" and "nocons" development target to
+      src/modules/ssl/Makefile.tmpl.
+
+   *) Upgraded to Apache version 1.3.12.
+
+
       ____    ____  
      |___ \  | ___| 
        __) | |___ \ 
       / __/ _ ___) |
   __ |_____(_)____/___________________________________________
                
+  Changes with mod_ssl 2.5.1 (22-Jan-2000 to 24-Feb-2000)
+
+   *) Made sure OpenSSL's Pseudo Random Number Generator (PRNG) is
+      seeded already before the temporary RSA keys are generated.
+
+   *) Fixed possible security hole in mkcert.sh script (make
+      certificate) by making sure we already generate the foo.key files
+      with proper umask instead of chmod them later (and this way
+      perhaps too late).
+
+   *) Fixed memory leak caused by not-freed SSL_CTX in the HTTPS proxy
+      support (ssl_engine_ext.c/mod_proxy).
+
+   *) Fixed quotation author in ssl_glossary.html: it's Richard Nixon,
+      as Lukas Bradley pointed out.
+
+   *) Use "/usr/local/ssl" as the default for $SSL_BASE only if this
+      path really exists. Else use "SYSTEM" and this way be more
+      flexible. This is especially interesting for RedHat/RPM users
+      where OpenSSL stays often directly under /usr.
+
+   *) Make sure libssl.module also detects OpenSSL correctly
+      if OpenSSL was built as shared libraries (.so)
+   
+   *) Let configure script more accurately check for -h, -v and
+      -q options on command line.
+
+   *) Make `SSLSessionCache none' really work as expected.
+
+   *) Added support for the latest OpenSSL snapshot (>= version 0.9.4).
+
+   *) Removed the removal of "#ifdef lint.. #endif" lines from
+      src/modules/ssl/Makefile.tmpl to make the life of the 
+      OpenBSD guys easier in the future.
+
+   *) Removed Unix Bourne-Shell construct "2>&1" from Win32's
+      configure.bat script because Win32 hates this.
+   
+   *) Fixed ApacheCore.def for Win32: Some numbers occured 
+      multiple times.
+
   Changes with mod_ssl 2.5.0 (08-Jan-2000 to 22-Jan-2000)
 
    *) Switched the old "POST for HTTPS" support code from

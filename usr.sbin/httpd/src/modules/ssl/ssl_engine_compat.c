@@ -78,6 +78,7 @@
  * The mapping of obsolete directives to official ones...
  */
 
+static char *ssl_compat_RequireSSL(pool *, const char *, const char *, const char *);
 static char *ssl_compat_SSLSessionLockFile(pool *, const char *, const char *, const char *);
 static char *ssl_compat_SSLCacheDisable(pool *, const char *, const char *, const char *);
 static char *ssl_compat_SSLRequireCipher(pool *, const char *, const char *, const char *);
@@ -152,22 +153,38 @@ static struct {
     CRM_ENTRY( CRM_CMD("SSLClientCAfile"),           CRM_SUB("SSLCACertificateFile")          )
     CRM_ENTRY( CRM_CMD("SSLSessionLockFile"),        CRM_CAL(ssl_compat_SSLSessionLockFile)   )
     CRM_ENTRY( CRM_CMD("SSLCacheDisable"),           CRM_CAL(ssl_compat_SSLCacheDisable)      )
-    CRM_ENTRY( CRM_CMD("RequireSSL"),                CRM_SUB("SSLRequireSSL")                 )
+    CRM_ENTRY( CRM_CMD("RequireSSL"),                CRM_CAL(ssl_compat_RequireSSL)           )
     CRM_ENTRY( CRM_CMD("SSLCipherList"),             CRM_SUB("SSLCipherSuite")                )
     CRM_ENTRY( CRM_CMD("SSLErrorFile"),              CRM_LOG("Not needed for mod_ssl")        )
     CRM_ENTRY( CRM_CMD("SSLRoot"),                   CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSL_CertificateLogDir"),     CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("AuthCertDir"),               CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSL_Group"),                 CRM_LOG("Not supported by mod_ssl")      )
+#ifndef SSL_EXPERIMENTAL
     CRM_ENTRY( CRM_CMD("SSLProxyMachineCertPath"),   CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSLProxyMachineCertFile"),   CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSLProxyCACertificatePath"), CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSLProxyCACertificateFile"), CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSLProxyVerifyDepth"),       CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSLProxyCipherList"),        CRM_LOG("Not supported by mod_ssl")      )
+#else
+    CRM_ENTRY( CRM_CMD("SSLProxyCipherList"),        CRM_SUB("SSLProxyCipherSuite")           )
+#endif
 
     CRM_END
 };
+
+static char *ssl_compat_RequireSSL(
+    pool *p, const char *oline, const char *cmd, const char *args)
+{
+    char *cp;
+    
+    for (cp = (char *)args; ap_isspace(*cp); cp++)
+        ;
+    if (strcEQ(cp, "on"))
+        return "SSLRequireSSL";
+    return "";
+}
 
 static char *ssl_compat_SSLSessionLockFile(
     pool *p, const char *oline, const char *cmd, const char *args)

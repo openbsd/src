@@ -123,7 +123,6 @@ void ssl_init_Module(server_rec *s, pool *p)
     SSLSrvConfigRec *sc;
     server_rec *s2;
     char *cp;
-    int n;
 
     mc->nInitCount++;
 
@@ -152,6 +151,10 @@ void ssl_init_Module(server_rec *s, pool *p)
             sc->nVerifyClient = SSL_CVERIFY_NONE;
         if (sc->nVerifyDepth == UNSET)
             sc->nVerifyDepth = 1;
+#ifdef SSL_EXPERIMENTAL
+        if (sc->nProxyVerifyDepth == UNSET)
+            sc->nProxyVerifyDepth = 1;
+#endif
         if (sc->nSessionCacheTimeout == UNSET)
             sc->nSessionCacheTimeout = SSL_SESSION_CACHE_TIMEOUT;
         if (sc->nPassPhraseDialogType == SSL_PPTYPE_UNSET)
@@ -265,8 +268,7 @@ void ssl_init_Module(server_rec *s, pool *p)
     /*
      * Seed the Pseudo Random Number Generator (PRNG)
      */
-    n = ssl_rand_seed(s, p, SSL_RSCTX_STARTUP);
-    ssl_log(s, SSL_LOG_INFO, "Init: Seeding PRNG with %d bytes of entropy", n);
+    ssl_rand_seed(s, p, SSL_RSCTX_STARTUP, "Init: ");
 
     /*
      *  allocate the temporary RSA keys and DH params
@@ -342,12 +344,19 @@ void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
     /* Generate Keys and Params */
     if (action == SSL_TKP_GEN) {
 
-        ssl_log(s, SSL_LOG_INFO, "Init: Generating temporary RSA private keys (512/1024 bits)");
+        /* seed PRNG */
+        ssl_rand_seed(s, p, SSL_RSCTX_STARTUP, "Init: ");
 
         /* generate 512 bit RSA key */
+        ssl_log(s, SSL_LOG_INFO, "Init: Generating temporary RSA private keys (512/1024 bits)");
         if ((rsa = RSA_generate_key(512, RSA_F4, NULL, NULL)) == NULL) {
             ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 512 bit RSA private key");
+#if 0
             ssl_die();
+#else 
+	    ssl_log(s, SSL_LOG_ERROR, "Init: You probably have no RSA support in libcrypto. See ssl(8)");
+	    return;
+#endif	
         }
         asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "RSA:512");
         asn1->nData  = i2d_RSAPrivateKey(rsa, NULL);
@@ -540,7 +549,7 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
      * Configure additional context ingredients
      */
     SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE);
-    if (mc->nSessionCacheMode == SSL_SCMODE_UNSET)
+    if (mc->nSessionCacheMode == SSL_SCMODE_NONE)
         SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
     else
         SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER);

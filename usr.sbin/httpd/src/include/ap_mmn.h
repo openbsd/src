@@ -226,6 +226,7 @@
  *                        ap_base64encode_len(), ap_base64decode(),
  *                        ap_base64decode_binary(), ap_base64decode_len(),
  *                        ap_pbase64decode(), ap_pbase64encode()
+ * 19990320.7           - add ap_strcasestr()
  */
 
 /* 
@@ -249,7 +250,7 @@
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
 #define MODULE_MAGIC_NUMBER_MAJOR 19990320
 #endif
-#define MODULE_MAGIC_NUMBER_MINOR 6                     /* 0...n */
+#define MODULE_MAGIC_NUMBER_MINOR 7                     /* 0...n */
 #define MODULE_MAGIC_NUMBER MODULE_MAGIC_NUMBER_MAJOR	/* backward compat */
 
 /* Useful for testing for features. */

@@ -74,12 +74,13 @@
 static int ssl_rand_choosenum(int, int);
 static int ssl_rand_feedfp(pool *, FILE *, int);
 
-int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx)
+int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
 {
     SSLModConfigRec *mc;
     array_header *apRandSeed;
     ssl_randseed_t *pRandSeeds;
     ssl_randseed_t *pRandSeed;
+    unsigned char stackdata[256];
     int nReq, nDone;
     FILE *fp;
     int i, n, l;
@@ -114,6 +115,17 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx)
                 nDone += ssl_rand_feedfp(p, fp, pRandSeed->nBytes);
                 ssl_util_ppclose(s, p, fp);
             }
+#if SSL_LIBRARY_VERSION >= 0x00905100
+            else if (pRandSeed->nSrc == SSL_RSSRC_EGD) {
+                /*
+                 * seed in contents provided by the external
+                 * Entropy Gathering Daemon (EGD)
+                 */
+                if ((n = RAND_egd(pRandSeed->cpPath)) == -1)
+                    continue;
+                nDone += n;
+            }
+#endif
             else if (pRandSeed->nSrc == SSL_RSSRC_BUILTIN) {
                 /*
                  * seed in the current time (usually just 4 bytes)
@@ -130,6 +142,13 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx)
                 l = sizeof(pid_t);
                 RAND_seed((unsigned char *)&pid, l);
                 nDone += l;
+                
+                /*
+                 * seed in some current state of the run-time stack (128 bytes)
+                 */
+                n = ssl_rand_choosenum(0, sizeof(stackdata)-128-1);
+                RAND_seed(stackdata+n, 128);
+                nDone += 128;
 
                 /*
                  * seed in an 1KB extract of the current scoreboard
@@ -142,6 +161,12 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx)
             }
         }
     }
+    ssl_log(s, SSL_LOG_INFO, "%sSeeding PRNG with %d bytes of entropy", prefix, nDone);
+
+#if SSL_LIBRARY_VERSION >= 0x00905100
+    if (RAND_status() == 0)
+        ssl_log(s, SSL_LOG_WARN, "%sPRNG still contains not sufficient entropy!", prefix);
+#endif
     return nDone;
 }
 

@@ -171,6 +171,16 @@ ssl_expr_parse.c ssl_expr_parse.h: ssl_expr_parse.y
 	sed -e 's;yy;ssl_expr_yy;g' \
 	    <y.tab.h >ssl_expr_parse.h && rm -f y.tab.h
 
+nocons:
+	@$(MAKE) $(MFLAGS) $(MFLAGS_STATIC) \
+	     SSL_CFLAGS="`echo $(SSL_CFLAGS) |\
+	     sed -e 's;-DSSL_CONSERVATIVE;;'`" all
+
+cons:
+	@$(MAKE) $(MFLAGS) $(MFLAGS_STATIC) \
+	     SSL_CFLAGS="`echo $(SSL_CFLAGS) |\
+	     sed -e 's;-DSSL_CONSERVATIVE;;' \
+	         -e 's;^;-DSSL_CONSERVATIVE ;'`" all
 noexp:
 	@$(MAKE) $(MFLAGS) $(MFLAGS_STATIC) \
 	     SSL_CFLAGS="`echo $(SSL_CFLAGS) |\

@@ -69,7 +69,7 @@ author.
     <a name="<get-var ref>"></a>
     <strong id="faq">%body</strong>\
     &nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.5/ssl_faq.html#<get-var ref>"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.6/ssl_faq.html#<get-var ref>"><b>L</b></a>]
     <p>
 <restore toc>
 <restore ref>
@@ -365,6 +365,29 @@ configuration directive?
     ./configure ...</code>'' when building Apache or use option
     <b>-d</b> when starting <code>httpd</code>.
 
+<faq ref="entropy" toc="PRNG and not enough entropy?">
+When I fire up the server, mod_ssl stops with the error
+"Failed to generate temporary 512 bit RSA private key", why?
+And a "PRNG not seeded" error occurs if I try "make certificate".
+</faq>
+
+    Cryptographic software needs a source of unpredictable data
+    to work correctly. Many open source operating systems provide
+    a "randomness device" that serves this purpose (usually named
+    <code>/dev/random</code>). On other systems, applications have to
+    seed the OpenSSL Pseudo Random Number Generator (PRNG) manually with
+    appropriate data before generating keys or performing public key
+    encryption. As of version 0.9.5, the OpenSSL functions that need
+    randomness report an error if the PRNG has not been seeded with
+    at least 128 bits of randomness. So mod_ssl has to provide enough
+    entropy to the PRNG to work correctly. For this one has to use the
+    <code>SSLRandSeed</code> directives (to solve the run-time problem)
+    and create a <code>$HOME/.rnd</code> file to make sure enough
+    entropy is available also for the "<code>make certificate</code>"
+    step (in case the "<code>make certificate</code>" procedure is not
+    able to gather enough entropy theirself by searching for system
+    files).
+ 
 </ul>
 
 <p>
@@ -1051,8 +1074,8 @@ In case of problems you should search here first.
 <p>
 <ol>
 <li><em>Answers in the User Manual's F.A.Q. List (this)</em><br>
-    <a href="http://www.modssl.org/docs/2.5/ssl_faq.html">
-    http://www.modssl.org/docs/2.5/ssl_faq.html</a><br>
+    <a href="http://www.modssl.org/docs/2.6/ssl_faq.html">
+    http://www.modssl.org/docs/2.6/ssl_faq.html</a><br>
     First look inside the F.A.Q. (this text), perhaps your problem is such
     popular that it was already answered a lot of times in the past.
 <p>

@@ -87,7 +87,7 @@
  * Name: digest_auth_module
  * ConfigStart
 
-    RULE_DEV_RANDOM=`sh helpers/CutRule DEV_RANDOM $file`
+    RULE_DEV_RANDOM=`./helpers/CutRule DEV_RANDOM $file`
     if [ "$RULE_DEV_RANDOM" = "default" ]; then
 	if [ -r "/dev/random" ]; then
 	    RULE_DEV_RANDOM="/dev/random"

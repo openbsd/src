@@ -626,10 +626,11 @@ The following <em>source</em> variants are available:
     On some platforms like FreeBSD one can even control how the entropy is
     actually generated, i.e. by which system interrupts. More details one can
     find under <i>rndcontrol(8)</i> on those platforms. Alternatively, when
-    your system lacks such a random device, you can use tool like <a
-    href="http://www.lothar.com/tech/crypto/">EGD</a> (Entropy Gathering
-    Daemon) and run it's client program with the
-    <code>exec:/path/to/program/</code> variant (see below).
+    your system lacks such a random device, you can use tool
+    like <a href="http://www.lothar.com/tech/crypto/">EGD</a>
+    (Entropy Gathering Daemon) and run it's client program with the
+    <code>exec:/path/to/program/</code> variant (see below) or use
+    <code>egd:/path/to/egd-socket</code> (see below).
 <p>
 <li><code>exec:/path/to/program</code>
     <p>
@@ -644,6 +645,14 @@ The following <em>source</em> variants are available:
     which is based on the AT&amp;T <em>truerand</em> library). Using this in
     the connection context slows down the server too dramatically, of course.
     So usually you should avoid using external programs in that context.
+<p>
+<li><code>egd:/path/to/egd-socket</code> (Unix only)
+    <p>
+    This variant uses the Unix domain socket of the
+    external Entropy Gathering Daemon (EGD) (see <a
+    href="http://www.lothar.com/tech/crypto/">http://www.lothar.com/tech
+    /crypto/</a>) to seed the PRNG. Use this if no random device exists
+    on your platform.
 </ul>
 <p>
 Example:
@@ -2485,7 +2494,7 @@ if (document.images) {
         <td>        <table width="598">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
-        <a href="http://www.modssl.org/">mod_ssl</a> 2.5, User Manual<br>
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.6, User Manual<br>
         The Apache Interface to OpenSSL
         </font>
         </td>

@@ -248,7 +248,7 @@ void ssl_io_suck(request_rec *r, SSL *ssl)
     return;
 }
     
-/* the SSL_read replacement routine which known about the suck buffer */
+/* the SSL_read replacement routine which knows about the suck buffer */
 static int ssl_io_suck_read(SSL *ssl, char *buf, int len)
 {
     ap_ctx *actx;

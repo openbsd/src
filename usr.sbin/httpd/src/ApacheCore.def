@@ -360,17 +360,17 @@ EXPORTS
 	ap_SHA1Final   @355
 	ap_sha1_base64   @356
         ap_send_error_response @357
-	ap_add_config_define   @357
-	ap_global_ctx   @358
-	ap_ctx_new   @359
-	ap_ctx_get   @360
-	ap_ctx_set   @361
-	ap_hook_init   @362
-	ap_hook_kill   @363
-	ap_hook_configure   @364
-	ap_hook_register_I   @365
-	ap_hook_unregister_I   @366
-	ap_hook_status   @367
-	ap_hook_use   @368
-	ap_hook_call   @369
+	ap_add_config_define   @358
+	ap_global_ctx   @359
+	ap_ctx_new   @360
+	ap_ctx_get   @361
+	ap_ctx_set   @362
+	ap_hook_init   @363
+	ap_hook_kill   @364
+	ap_hook_configure   @365
+	ap_hook_register_I   @366
+	ap_hook_unregister_I   @367
+	ap_hook_status   @368
+	ap_hook_use   @369
+	ap_hook_call   @370
 

@@ -72,7 +72,13 @@ DIFS='
 ##
 ##  avoid brain dead shells on Ultrix and friends
 ##
-test -f /bin/sh5 && exec /bin/sh5 $0 "$@"
+if [ -f /bin/sh5 ]; then
+    if [ ".$APACI_SH5_UPGRADE_STEP" != .done ]; then
+         APACI_SH5_UPGRADE_STEP=done
+         export APACI_SH5_UPGRADE_STEP
+         exec /bin/sh5 $0 "$@"
+    fi
+fi
 
 ##
 ##  the paths to the Apache source tree
@@ -423,7 +429,10 @@ do
             echo " --libexecdir=DIR       install program  executables in DIR"
             echo " --mandir=DIR           install manual pages in DIR"
             echo " --sysconfdir=DIR       install configuration files in DIR"
-            echo " --datadir=DIR          install read-only  data files in DIR"
+            echo " --datadir=DIR          install read-only data files in DIR"
+            echo " --iconsdir=DIR         install read-only icon files in DIR"
+            echo " --htdocsdir=DIR        install read-only document files in DIR"
+            echo " --cgidir=DIR           install read-only cgi files in DIR"
             echo " --includedir=DIR       install includes files in DIR"
             echo " --localstatedir=DIR    install modifiable data files in DIR"
             echo " --runtimedir=DIR       install runtime data in DIR"
@@ -448,7 +457,7 @@ do
             echo " --without-confadjust   disable the user/situation adjustments in config"
             echo " --without-execstrip    disable the stripping of executables on installation"
             echo " --server-uid=UID       set the user ID the web server should run as [nobody]"
-            echo " --server-gid=GID       set the group ID the web server UID is a memeber of [-1]"
+            echo " --server-gid=GID       set the group ID the web server UID is a memeber of [#-1]"
             echo ""
             echo "suEXEC options:"
             echo " --enable-suexec        enable the suEXEC feature"

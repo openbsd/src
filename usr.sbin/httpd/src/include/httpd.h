@@ -269,7 +269,7 @@ extern "C" {
 
 /* The path to the suExec wrapper, can be overridden in Configuration */
 #ifndef SUEXEC_BIN
-#define SUEXEC_BIN  HTTPD_ROOT "/sbin/suexec"
+#define SUEXEC_BIN  HTTPD_ROOT "/bin/suexec"
 #endif
 
 /* The default string lengths */
@@ -439,6 +439,12 @@ extern "C" {
 #endif /* default limit on number of request header fields */
 
 /*
+ * The default default character set name to add if AddDefaultCharset is 
+ * enabled.  Overridden with AddDefaultCharsetName.
+ */
+#define DEFAULT_ADD_DEFAULT_CHARSET_NAME "iso-8859-1"
+
+/*
  * The below defines the base string of the Server: header. Additional
  * tokens can be added via the ap_add_version_component() API call.
  *
@@ -451,7 +457,7 @@ extern "C" {
  * Example: "Apache/1.1.0 MrWidget/0.1-alpha" 
  */
 
-#define SERVER_BASEVERSION "Apache/1.3.11"	/* SEE COMMENTS ABOVE */
+#define SERVER_BASEVERSION "Apache/1.3.12"	/* SEE COMMENTS ABOVE */
 #define SERVER_VERSION  SERVER_BASEVERSION
 enum server_token_type {
     SrvTk_MIN,		/* eg: Apache/1.3.0 */
@@ -470,7 +476,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  * Always increases along the same track as the source branch.
  * For example, Apache 1.4.2 would be '10402100', 2.5b7 would be '20500007'.
  */
-#define APACHE_RELEASE 10311100
+#define APACHE_RELEASE 10312100
 
 #define SERVER_PROTOCOL "HTTP/1.1"
 #ifndef SERVER_SUPPORT
@@ -1046,6 +1052,7 @@ API_EXPORT(char *) ap_make_full_path(pool *a, const char *dir, const char *f);
 API_EXPORT(int) ap_is_matchexp(const char *str);
 API_EXPORT(int) ap_strcmp_match(const char *str, const char *exp);
 API_EXPORT(int) ap_strcasecmp_match(const char *str, const char *exp);
+API_EXPORT(char *) ap_strcasestr(const char *s1, const char *s2);
 API_EXPORT(char *) ap_pbase64decode(pool *p, const char *bufcoded);
 API_EXPORT(char *) ap_pbase64encode(pool *p, char *string); 
 API_EXPORT(char *) ap_uudecode(pool *p, const char *bufcoded);
