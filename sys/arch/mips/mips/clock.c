@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
+/*	$OpenBSD: clock.c,v 1.7 2000/02/04 17:09:06 imp Exp $	*/
 /*
  * Copyright (c) 1997 Per Fogelstrom.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $
+ *      $Id: clock.c,v 1.7 2000/02/04 17:09:06 imp Exp $
  */
 
 #include <sys/param.h>
@@ -109,6 +109,9 @@ clockmatch(parent, cfdata, aux)
 {
 	struct cfdata *cf;
 	struct confargs *ca;
+#ifdef arc
+	struct isa_attach_args *ia = aux;
+#endif
 
 	cf = cfdata;
 	ca = aux;
@@ -126,6 +129,9 @@ clockmatch(parent, cfdata, aux)
 
 	case DESKSTATION_RPC44:
 	case DESKSTATION_TYNE:
+		ia->ia_iosize = 0x10;
+		ia->ia_msize = 0;
+		/* FALLTHROUGH */
 	case ALGOR_P4032:
 	case ALGOR_P5064:
 		break;
