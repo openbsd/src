@@ -1,4 +1,4 @@
-/* $OpenBSD: wscons_rinit.c,v 1.7 2000/05/16 23:49:11 mickey Exp $ */
+/* $OpenBSD: wscons_rinit.c,v 1.8 2000/09/06 01:39:16 rahnds Exp $ */
 /* $NetBSD: wscons_rinit.c,v 1.2 1998/05/14 20:49:56 drochner Exp $ */
 
 /*
@@ -104,6 +104,13 @@ rcons_init(rc, mrow, mcol)
 	struct raster *rp = rc->rc_sp;
 	int i;
 
+	/* force decent minimums */
+	if (mrow < 25) {
+		mrow = 25;
+	}
+	if (mcol < 80) {
+		mcol = 80;
+	}
 	rcons_initfont(rc, &gallant19);
 
 	i = rp->height / rc->rc_font->height;
@@ -111,6 +118,16 @@ rcons_init(rc, mrow, mcol)
 
 	i = rp->width / rc->rc_font->width;
 	rc->rc_maxcol = min(i, mcol);
+	if ( rc->rc_maxcol < 80 ) {
+		/* font too big, try smaller font */
+		rcons_initfont(rc, &fontdata8x16);
+
+		i = rp->height / rc->rc_font->height;
+		rc->rc_maxrow = min(i, mrow);
+
+		i = rp->width / rc->rc_font->width;
+		rc->rc_maxcol = min(i, mcol);
+	}
 
 	/* Center emulator screen (but align x origin to 32 bits) */
 	rc->rc_xorigin =
