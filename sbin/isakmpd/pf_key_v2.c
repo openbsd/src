@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.123 2003/04/14 10:14:16 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.124 2003/04/14 10:22:13 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -465,7 +465,7 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
 
   for (i = 0; i < cnt; i++)
     {
-      snprintf (header, 80, "pf_key_v2_write: iov[%d]", i);
+      snprintf (header, sizeof header, "pf_key_v2_write: iov[%d]", i);
       LOG_DBG_BUF ((LOG_SYSDEP, 80, header, (u_int8_t *)iov[i].iov_base,
 		    iov[i].iov_len));
     }
@@ -2367,7 +2367,7 @@ pf_key_v2_conf_refinc (int af, char *section)
   if (num == 0)
     return 0;
 
-  snprintf (conn, 22, "%d", num + 1);
+  snprintf (conn, sizeof conn, "%d", num + 1);
   conf_set (af, section, "Refcount", conn, 1, 0);
   return 0;
 }
@@ -2395,7 +2395,7 @@ pf_key_v2_conf_refhandle (int af, char *section)
   else
     if (num != 0)
       {
-	snprintf (conn, 22, "%d", num - 1);
+	snprintf (conn, sizeof conn, "%d", num - 1);
 	conf_set (af, section, "Refcount", conn, 1, 0);
       }
 
@@ -2880,15 +2880,17 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   u_int16_t sport = 0, dport = 0;
   u_int8_t tproto = 0;
   char tmbuf[sizeof sport * 3 + 1], *xform;
+  int connlen;
 #if defined (SADB_X_CREDTYPE_NONE)
   struct sadb_x_cred *cred = 0, *sauth = 0;
 #endif
 
   /* This needs to be dynamically allocated. */
-  conn = malloc (22);
+  connlen = 22;
+  conn = malloc (connlen);
   if (!conn)
     {
-      log_error ("pf_key_v2_acquire: malloc (22) failed");
+      log_error ("pf_key_v2_acquire: malloc (%d) failed", connlen);
       return;
     }
 
@@ -3484,8 +3486,9 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   /* Get a new connection sequence number. */
   for (;; connection_seq++)
     {
-      snprintf (conn, 22, "Connection-%u", connection_seq);
-      snprintf (configname, 30, "Config-Phase2-%u", connection_seq);
+      snprintf (conn, connlen, "Connection-%u", connection_seq);
+      snprintf (configname, sizeof configname, "Config-Phase2-%u",
+		connection_seq);
 
       /* Does it exist ? */
       if (!conf_get_str (conn, "Phase")
@@ -3549,7 +3552,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
 
   /* Set the sequence number. */
-  snprintf (lname, 100, "%u", msg->sadb_msg_seq);
+  snprintf (lname, sizeof lname, "%u", msg->sadb_msg_seq);
   if (conf_set (af, conn, "Acquire-ID", lname, 0, 0))
     {
       conf_end (af, 0);
@@ -3557,8 +3560,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
 
   /* Set Phase 2 IDs -- this is the Local-ID section. */
-  snprintf (lname, 100, "Phase2-ID:%s/%s/%u/%u", ssflow, ssmask, tproto,
-	    sport);
+  snprintf (lname, sizeof lname, "Phase2-ID:%s/%s/%u/%u", ssflow, ssmask,
+	    tproto, sport);
   if (conf_set (af, conn, "Local-ID", lname, 0, 0))
     {
       conf_end (af, 0);
@@ -3616,8 +3619,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     pf_key_v2_conf_refinc (af, lname);
 
   /* Set Remote-ID section. */
-  snprintf (dname, 100, "Phase2-ID:%s/%s/%u/%u", sdflow, sdmask, tproto,
-	    dport);
+  snprintf (dname, sizeof dname, "Phase2-ID:%s/%s/%u/%u", sdflow, sdmask,
+	    tproto, dport);
   if (conf_set (af, conn, "Remote-ID", dname, 0, 0))
     {
       conf_end (af, 0);
@@ -3731,7 +3734,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  goto fail;
 	}
 
-      snprintf (confname, 120, "ISAKMP-Configuration-%s", peer);
+      snprintf (confname, sizeof confname, "ISAKMP-Configuration-%s", peer);
       if (conf_set (af, peer, "Configuration", confname, 0, 0))
         {
 	  conf_end (af, 0);
