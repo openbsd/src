@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.36 2003/09/05 06:29:18 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.37 2003/09/05 12:27:47 jmc Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -32,8 +32,7 @@
 .Os
 .Sh NAME
 .Nm ftp-proxy
-.Nd
-Internet File Transfer Protocol proxy server.
+.Nd Internet File Transfer Protocol proxy server
 .Sh SYNOPSIS
 .Nm ftp-proxy
 .Op Fl AnrVw
@@ -61,57 +60,68 @@ The options are as follows:
 .It Fl A
 Permit only anonymous FTP connections.
 The proxy will allow connections to log in to other sites as the user
-"ftp" or "anonymous" only.
+.Qq ftp
+or
+.Qq anonymous
+only.
 Any attempt to log in as another user will be blocked by the proxy.
 .It Fl D Ar debuglevel
 Specify a debug level, where the proxy emits verbose debug output
 into
 .Xr syslogd 8
-at level LOG_DEBUG.
+at level
+.Dv LOG_DEBUG .
 Meaningful values of debuglevel are 0-3, where 0 is no debug output and
 3 is lots of debug output, the default being 0.
 .It Fl g Ar group
 Specify the named group to drop group privileges to, after doing
 .Xr pf 4
 lookups which require root.
-By default
-.Nm ftp-proxy
+By default,
+.Nm
 uses the default group of the user it drops privilege to.
 .It Fl m Ar minport
 Specify the lower end of the port range the proxy will use for all
 data connections it establishes.
 The default is
-.Ev IPPORT_HIFIRSTAUTO
-defined in <netinet/in.h>
+.Dv IPPORT_HIFIRSTAUTO
+defined in
+.Aq Pa netinet/in.h
 as 49152.
 .It Fl M Ar maxport
 Specify the upper end of the port range the proxy will use for the
 data connections it establishes.
 The default is
-.Ev IPPORT_HILASTAUTO
-defined in <netinet/in.h>
+.Dv IPPORT_HILASTAUTO
+defined in
+.Aq Pa netinet/in.h
 as 65535.
 .It Fl n
-Activate network address translation mode.
+Activate network address translation
+.Pq NAT
+mode.
 In this mode, the proxy will not attempt to proxy passive mode
-(PASV or EPSV) data connections.
+.Pq PASV or EPSV
+data connections.
 In order for this to work, the machine running the proxy will need to
 be forwarding packets and doing network address translation to allow
 the outbound passive connections from the client to reach the server.
 See
 .Xr pf.conf 5
-for more details on nat.
-The proxy only ignores passive mode data connections when using this flag,
+for more details on NAT.
+The proxy only ignores passive mode data connections when using this flag;
 it will still proxy PORT and EPRT mode data connections.
 Without this flag,
-.Nm ftp-proxy
+.Nm
 does not require any IP forwarding or NAT beyond the
 .Em rdr
 necessary to capture the FTP control connection.
 .It Fl r
-Use reverse host (reverse DNS) lookups for logging and libwrap use.
-By default the proxy does not look up hostnames for libwrap or logging
-purposes.
+Use reverse host
+.Pq reverse DNS
+lookups for logging and libwrap use.
+By default,
+the proxy does not look up hostnames for libwrap or logging purposes.
 .It Fl t Ar timeout
 Specifies a timeout, in seconds.
 The proxy will exit and close open connections if it sees no data
@@ -121,28 +131,28 @@ The default is 0, which means the proxy will not time out.
 Specify the named user to drop privilege to, after doing
 .Xr pf 4
 lookups which require root privilege.
-By default
-.Nm ftp-proxy
+By default,
+.Nm
 drops privilege to the user
 .Em proxy .
 .Pp
 Running as root means that the source of data connections the proxy makes
 for PORT and EPRT will be the RFC mandated port 20.
-When running as a non-root user the source of the data connections from
-.Nm ftp-proxy
+When running as a non-root user, the source of the data connections from
+.Nm
 will be chosen randomly from the range
-.Nm minport
+.Ar minport
 to
-.Nm maxport
-as described below.
+.Ar maxport
+as described above.
 .It Fl V
 Be verbose.
 With this option the proxy logs the control commands
 sent by clients and the replies sent by the servers to
-.Xr syslogd 8
+.Xr syslogd 8 .
 .It Fl w
 Use the tcp wrapper access control library
-.Xr hosts_access 3
+.Xr hosts_access 3 ,
 allowing connections to be allowed or denied based on the tcp wrapper's
 .Xr hosts.allow 5
 and
@@ -162,23 +172,23 @@ rule.
 A typical way to do this would be to use a
 .Xr pf.conf 5
 rule such as
-.Pp
-.Bd -literal
-  int_if = xl0
-  rdr on $int_if proto tcp from any to any port 21 -> 127.0.0.1 port 8021
+.Bd -literal -offset 2n
+int_if = xl0
+rdr on $int_if proto tcp from any to any port 21 -> 127.0.0.1 port 8021
 .Ed
 .Pp
 .Xr inetd 8
 must then be configured to run
-.Nm ftp-proxy
+.Nm
 on the port from above using
-.Pp
-  127.0.0.1:8021 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
+.Bd -literal -offset 2n
+127.0.0.1:8021 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
+.Ed
 .Pp
 in
 .Xr inetd.conf 5 .
 .Pp
-.Nm ftp-proxy
+.Nm
 accepts the redirected control connections and forwards them
 to the server.
 The proxy replaces the address and port number that the client
@@ -189,27 +199,32 @@ proxy forwards it to the client.
 The
 .Xr pf.conf 5
 rules need to let pass connections to these proxy ports
-(see options -u, -m and -M above) in on the external interface.
+(see options
+.Fl u , m ,
+and
+.Fl M
+above) in on the external interface.
 The following example allows only ports 49152 to 65535 to pass in
 statefully:
-.Bd -literal
-  block in on $ext_if proto tcp all
-  pass  in on $ext_if inet proto tcp from any to $ext_if \\
-      port > 49151 keep state
+.Bd -literal -offset indent
+block in on $ext_if proto tcp all
+pass  in on $ext_if inet proto tcp from any to $ext_if \e
+    port > 49151 keep state
 .Ed
 .Pp
 Alternatively, rules can make use of the fact that by default,
-.Nm ftp-proxy
-runs as user "proxy" to allow the backchannel connections, as in the
-following example:
-.Bd -literal
-  block in on $ext_if proto tcp all
-  pass  in on $ext_if inet proto tcp from any to $ext_if \\
-      user proxy keep state
+.Nm
+runs as user
+.Qq proxy
+to allow the backchannel connections, as in the following example:
+.Bd -literal -offset indent
+block in on $ext_if proto tcp all
+pass  in on $ext_if inet proto tcp from any to $ext_if \e
+    user proxy keep state
 .Ed
 .Pp
 These examples do not cover the connections from the proxy to the
-foreign ftp server.
+foreign FTP server.
 If one does not pass outgoing connections by default additional rules
 are needed.
 .Sh SEE ALSO
@@ -223,10 +238,13 @@ are needed.
 .Xr pfctl 8 ,
 .Xr syslogd 8
 .Sh BUGS
-Extended Passive mode (EPSV) is not supported by the proxy and will
-not work unless the proxy is run in network address translation mode.
+Extended Passive mode
+.Pq EPSV
+is not supported by the proxy and will not work unless the proxy is run
+in network address translation mode.
 When not in network address translation mode, the proxy returns an error
-to the client, hopefully forcing the client to revert to Passive mode (PASV)
+to the client, hopefully forcing the client to revert to passive mode
+.Pq PASV
 which is supported.
 EPSV will work in network address translation mode, assuming a
 .Xr pf.conf 5
