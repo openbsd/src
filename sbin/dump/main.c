@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1996/09/14 03:26:02 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1996/09/14 19:28:58 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ int	cartridge = 0;	/* Assume non-cartridge tape */
 long	dev_bsize = 1;	/* recalculated below */
 long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
-gid_t	gid, egid;	/* real, effective gid */
 
 static long numarg __P((char *, long, long));
 static void obsolete __P((int *, char **[]));
@@ -108,10 +107,6 @@ main(argc, argv)
 	register int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
-
-	gid = getgid();
-	egid = getegid();
-	setegid(gid);
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);

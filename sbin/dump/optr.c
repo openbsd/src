@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.10 1996/09/14 03:26:02 millert Exp $	*/
+/*	$OpenBSD: optr.c,v 1.11 1996/09/14 19:29:00 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.10 1996/09/14 03:26:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.11 1996/09/14 19:29:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,6 @@ static char rcsid[] = "$OpenBSD: optr.c,v 1.10 1996/09/14 03:26:02 millert Exp $
 void	alarmcatch __P((/* int, int */));
 int	datesort __P((const void *, const void *));
 static	void sendmes __P((char *, char *));
-
-extern gid_t gid, egid;
 
 /*
  *	Query the operator; This previously-fascist piece of code
