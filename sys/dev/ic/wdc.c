@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.22 2000/10/28 18:08:46 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.23 2000/10/29 18:42:49 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -91,9 +91,10 @@
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
-#include "atapiscsi.h"
-#include <dev/ic/wdcdbg.h>
 
+#include "atapiscsi.h"
+
+#define WDCDEBUG
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
@@ -112,7 +113,23 @@ int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
 void  wdc_kill_pending __P((struct channel_softc *));
 
+
+#define DEBUG_INTR   0x01
+#define DEBUG_XFERS  0x02
+#define DEBUG_STATUS 0x04
+#define DEBUG_FUNCS  0x08
+#define DEBUG_PROBE  0x10
+#define DEBUG_STATUSX 0x20
+#define DEBUG_SDRIVE 0x40
+#define DEBUG_DETACH 0x80
+
+#ifdef WDCDEBUG
 int wdcdebug_mask = 0;
+int wdc_nxfer = 0;
+#define WDCDEBUG_PRINT(args, level)  if (wdcdebug_mask & (level)) printf args
+#else
+#define WDCDEBUG_PRINT(args, level)
+#endif
 
 int at_poll = AT_POLL;
 
@@ -386,26 +403,26 @@ wdc_preata_drive(chp, drive)
 
 {
 	if (wdc_floating_bus(chp, drive)) {
-		WDCDEBUG_PRINT_PROBE(("%s:%d:%d: floating bus detected\n",
+		WDCDEBUG_PRINT(("%s:%d:%d: floating bus detected\n",
 		    chp->wdc->sc_dev.dv_xname,
-		    chp->channel, drive));
+		    chp->channel, drive), DEBUG_PROBE);
 		return 0;
 	}
 
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 	delay(100);
 	if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY, 10000) != 0) {
-		WDCDEBUG_PRINT_PROBE(("%s:%d:%d: not ready\n",
+		WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
 		    chp->wdc->sc_dev.dv_xname,
-		    chp->channel, drive));
+		    chp->channel, drive), DEBUG_PROBE);
 		return 0;
 	}
 	
 	CHP_WRITE_REG(chp, wdr_command, WDCC_RECAL);
 	if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY, 10000) != 0) {
-		WDCDEBUG_PRINT_PROBE(("%s:%d:%d: WDCC_RECAL failed\n",
+		WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 		    chp->wdc->sc_dev.dv_xname,
-		    chp->channel, drive));
+		    chp->channel, drive), DEBUG_PROBE);
 		return 0;
 	}
 
@@ -432,9 +449,9 @@ wdc_ata_present(chp, drive)
 	time_to_done = wdc_wait_for_status(chp, WDCS_DRDY, WDCS_DRDY, 1000);
       	if (time_to_done == -1) return 0;
 
-	WDCDEBUG_PRINT_PROBE(("%s:%d:%d: waiting for ready %d msec\n",
+	WDCDEBUG_PRINT(("%s:%d:%d: waiting for ready %d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	    chp->channel, drive, time_to_done));
+	    chp->channel, drive, time_to_done), DEBUG_PROBE);
 
 	/* 
 	   This section has been disabled because my Promise Ultra/66
@@ -463,22 +480,21 @@ wdc_ata_present(chp, drive)
 	time_to_done = wdc_wait_for_status(chp, 0, 0, 1000);
 
 	if (time_to_done == -1) {
-		WDCDEBUG_PRINT_PROBE((
-		    "%s:%d:%d: timeout waiting for NOP to complete\n", 
+		WDCDEBUG_PRINT(("%s:%d:%d: timeout waiting for NOP to complete\n", 
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, drive));
+		    chp->channel, drive), DEBUG_PROBE);
 		return 0;
 	}
 
-	WDCDEBUG_PRINT_PROBE(("%s:%d:%d: NOP completed in %d msec\n",
+	WDCDEBUG_PRINT(("%s:%d:%d: NOP completed in %d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	    chp->channel, drive, time_to_done));
+	    chp->channel, drive, time_to_done), DEBUG_PROBE);
 
 	if (!(chp->ch_status & WDCS_ERR) &&
 	    !(chp->ch_error & WDCE_ABRT)) {
-		WDCDEBUG_PRINT_PROBE(("%s:%d:%d: NOP command did not ABORT command\n",
+		WDCDEBUG_PRINT(("%s:%d:%d: NOP command did not ABORT command\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, drive));
+		    chp->channel, drive), DEBUG_PROBE);
 		return 0;
 	}
 #endif
@@ -521,9 +537,9 @@ wdcprobe(chp)
 		delay(10);
 		st1 = CHP_READ_REG(chp, wdr_status);
 
-		WDCDEBUG_PRINT_PROBE(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
+		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, st0, st1));
+		    chp->channel, st0, st1), DEBUG_PROBE);
 
 		/* 
 		   If the status is 0x7f or 0xff, then it's
@@ -544,9 +560,9 @@ wdcprobe(chp)
 	delay(2000);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
-	WDCDEBUG_PRINT_PROBE(("%s:%d: after reset, ret_value=0x%d\n",
+	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    ret_value));
+	    ret_value), DEBUG_PROBE);
 
 	if (ret_value == 0)
 		return 0;
@@ -568,10 +584,10 @@ wdcprobe(chp)
 		cl = CHP_READ_REG(chp, wdr_cyl_lo);
 		ch = CHP_READ_REG(chp, wdr_cyl_hi);
 
-		WDCDEBUG_PRINT_PROBE(("%s:%d:%d: after reset, st=0x%x, sc=0x%x"
+		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%x, sc=0x%x"
 		    " sn=0x%x cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	    	    chp->channel, drive, st0, sc, sn, cl, ch));
+	    	    chp->channel, drive, st0, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
 		 * This is a simplification of the test in the ATAPI
 		 * spec since not all drives seem to set the other regs
@@ -589,12 +605,12 @@ wdcprobe(chp)
 		}
 	}
 
-
+#ifdef WDCDEBUG
 	if ((chp->ch_flags & WDCF_VERBOSE_PROBE) ||
 	    (chp->wdc &&
 	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
 		wdcdebug_mask &= ~DEBUG_PROBE;
-
+#endif
 	return (ret_value);	
 }
 
@@ -650,10 +666,10 @@ wdcattach(chp)
 		return;
 	}
 
-
+#ifdef WDCDEBUG
 	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
 		wdcdebug_mask |= DEBUG_PROBE;
-
+#endif
 
 	/* init list only once */
 	if (inited == 0) {
@@ -688,9 +704,9 @@ wdcattach(chp)
 		} else {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
-			WDCDEBUG_PRINT_PROBE(("%s:%d:%d: IDENTIFY failed\n",
+			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
 			    chp->wdc->sc_dev.dv_xname,
-			    chp->channel, i));
+			    chp->channel, i), DEBUG_PROBE);
 
 			if (!wdc_preata_drive(chp, i))
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
@@ -699,8 +715,9 @@ wdcattach(chp)
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
 	channel_flags = (ctrl_flags >> (NBBY * chp->channel)) & 0xff;
 
-	WDCDEBUG_PRINT_PROBE(("wdcattach: ch_drive_flags 0x%x 0x%x\n",
-	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags));
+	WDCDEBUG_PRINT(("wdcattach: ch_drive_flags 0x%x 0x%x\n",
+	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
+	    DEBUG_PROBE);
 
 	/* If no drives, abort here */
 	if ((chp->ch_drive[0].drive_flags & DRIVE) == 0 &&
@@ -781,10 +798,10 @@ wdcattach(chp)
 #endif
 
  exit:
-
+#ifdef WDCDEBUG
 	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
 		wdcdebug_mask &= ~DEBUG_PROBE;
-
+#endif
 	return;
 }
 
@@ -991,10 +1008,10 @@ __wdcwait_reset(chp, drv_mask)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
-	WDCDEBUG_PRINT_PROBE(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x, "
+	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x, "
 			"reset time=%d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    st0, st1, timeout*WDCDELAY/1000));
+	    st0, st1, timeout*WDCDELAY/1000), DEBUG_PROBE);
 
 	return drv_mask;
 }
