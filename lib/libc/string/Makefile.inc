@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2003/02/20 03:20:09 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2004/05/03 19:56:08 millert Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string ${LIBCSRCDIR}/string
 
 SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strerror_r.c strlcat.c strmode.c strsignal.c strtok.c strxfrm.c \
-	__strerror.c __strsignal.c
+	__strsignal.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
