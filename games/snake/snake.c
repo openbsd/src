@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.7 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: snake.c,v 1.8 2003/06/03 03:01:41 millert Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.7 2002/12/06 21:48:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.8 2003/06/03 03:01:41 millert Exp $";
 #endif
 #endif /* not lint */
 

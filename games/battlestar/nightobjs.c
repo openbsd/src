@@ -1,4 +1,4 @@
-/*	$OpenBSD: nightobjs.c,v 1.5 1999/09/25 20:30:46 pjanzen Exp $	*/
+/*	$OpenBSD: nightobjs.c,v 1.6 2003/06/03 03:01:38 millert Exp $	*/
 /*	$NetBSD: nightobjs.c,v 1.3 1995/03/21 15:07:46 cgd Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)nightobjs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: nightobjs.c,v 1.5 1999/09/25 20:30:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: nightobjs.c,v 1.6 2003/06/03 03:01:38 millert Exp $";
 #endif
 #endif /* not lint */
 
