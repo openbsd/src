@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.22 2003/05/13 22:45:06 miod Exp $
+#	$OpenBSD: RAMDISKB,v 1.23 2004/01/16 09:27:40 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -51,7 +51,7 @@ cpu*	at	mainbus0
 
 # PCI host bus adapter support
 #apecs*	at	mainbus?
-cia*	at	mainbus?
+#cia*	at	mainbus?
 #lca*	at	mainbus?
 irongate* at	mainbus?
 tsc*	at	mainbus0
@@ -59,14 +59,14 @@ tsp*	at	tsc?
 
 # PCI bus support
 #pci*	at	apecs?
-pci*	at	cia?
+#pci*	at	cia?
 #pci*	at	lca?
 pci*	at	irongate?
 pci*	at	tsp?
 pci*	at	ppb?
 
 # PCI devices
-#ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
+ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 #dc*	at	pci? dev ? function ?		# 21143, "tulip" clone ethernet
 fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
@@ -111,7 +111,7 @@ pckbd*	at	pckbc?				# PC keyboard (kbd port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
-vga*	at	isa?				# ISA (EISA: XXX) VGA
+#vga*	at	isa?				# ISA (EISA: XXX) VGA
 #we0	at 	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 #we1	at 	isa? port 0x300 iomem 0xcc000 irq 10	#
 #ec0	at 	isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
@@ -133,6 +133,7 @@ wd*	at pciide? channel ? drive ? flags 0x0000
 
 # SCSI bus support
 #scsibus* at	asc?
+scsibus* at	ahc?
 scsibus* at	siop?
 scsibus* at	isp?
 
