@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.19 1996/08/16 08:32:54 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.20 1996/08/28 09:55:00 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.19 1996/08/16 08:32:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.20 1996/08/28 09:55:00 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -167,6 +167,7 @@ int	options;
 int	timingout;
 struct	servent *sp;
 char	*curdom;
+int	uid;
 
 #ifndef OPEN_MAX
 #define OPEN_MAX	64
@@ -306,12 +307,21 @@ main(argc, argv, envp)
 	argc -= optind;
 	argv += optind;
 
+	uid = getuid();
+	if (uid != 0)
+		CONFIG = NULL;
 	if (argc > 0)
 		CONFIG = argv[0];
+	if (CONFIG == NULL) {
+		fprintf(stderr, "%s: non-root must specify a config file\n",
+		    progname);
+		exit(1);
+	}
 
 	if (debug == 0) {
 		daemon(0, 0);
-		(void) setlogin("");
+		if (uid == 0)
+			(void) setlogin("");
 	}
 	openlog(progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	logpid();
@@ -473,7 +483,11 @@ main(argc, argv, envp)
 						recv(0, buf, sizeof (buf), 0);
 					_exit(1);
 				}
-				if (pwd->pw_uid) {
+				if (uid != 0) {
+					/* a user running private inetd */
+					if (uid != pwd->pw_uid)
+						_exit(1);
+				} else if (pwd->pw_uid) {
 					if (setlogin(sep->se_user) < 0)
 						syslog(LOG_ERR,
 						    "%s: setlogin: %m",
@@ -644,7 +658,7 @@ config()
 			strncpy(sep->se_ctrladdr_un.sun_path, sep->se_service, n);
 			sep->se_ctrladdr_un.sun_family = AF_UNIX;
 			sep->se_ctrladdr_size = n +
-					sizeof sep->se_ctrladdr_un.sun_family;
+			    sizeof sep->se_ctrladdr_un.sun_family;
 			setup(sep);
 			break;
 		case AF_INET:
@@ -658,8 +672,8 @@ config()
 					rp = getrpcbyname(sep->se_service);
 					if (rp == 0) {
 						syslog(LOG_ERR,
-							"%s: unknown service",
-							sep->se_service);
+						    "%s: unknown service",
+						    sep->se_service);
 						continue;
 					}
 					sep->se_rpcprog = rp->r_number;
@@ -673,7 +687,7 @@ config()
 
 				if (!port) {
 					sp = getservbyname(sep->se_service,
-								sep->se_proto);
+					    sep->se_proto);
 					if (sp == 0) {
 						syslog(LOG_ERR,
 						    "%s/%s: unknown service",
@@ -803,7 +817,7 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 		 */
 		sep->se_ctrladdr_in.sin_port = 0;
 		if (sep->se_user && (pwd = getpwnam(sep->se_user)) &&
-		    pwd->pw_uid == 0 && getuid() == 0)
+		    pwd->pw_uid == 0 && uid == 0)
 			r = bindresvport(sep->se_fd, &sep->se_ctrladdr_in);
 		else {
 			r = bind(sep->se_fd, &sep->se_ctrladdr,
@@ -868,11 +882,13 @@ register_rpc(sep)
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
 		if (debug)
 			fprintf(stderr, "pmap_set: %u %u %u %u\n",
-			sep->se_rpcprog, n, pp->p_proto, ntohs(sin.sin_port));
+			    sep->se_rpcprog, n, pp->p_proto,
+			    ntohs(sin.sin_port));
 		(void)pmap_unset(sep->se_rpcprog, n);
 		if (!pmap_set(sep->se_rpcprog, n, pp->p_proto, ntohs(sin.sin_port)))
 			syslog(LOG_ERR, "pmap_set: %u %u %u %u: %m",
-			sep->se_rpcprog, n, pp->p_proto, ntohs(sin.sin_port));
+			    sep->se_rpcprog, n, pp->p_proto,
+			    ntohs(sin.sin_port));
 	}
 #endif /* RPC */
 }
@@ -887,10 +903,10 @@ unregister_rpc(sep)
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
 		if (debug)
 			fprintf(stderr, "pmap_unset(%u, %u)\n",
-				sep->se_rpcprog, n);
+			    sep->se_rpcprog, n);
 		if (!pmap_unset(sep->se_rpcprog, n))
 			syslog(LOG_ERR, "pmap_unset(%u, %u)\n",
-				sep->se_rpcprog, n);
+			    sep->se_rpcprog, n);
 	}
 #endif /* RPC */
 }
