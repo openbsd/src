@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_endwin.c,v 1.5 1998/07/23 21:18:43 millert Exp $	*/
+/*	$OpenBSD: lib_endwin.c,v 1.6 1998/09/17 04:14:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_endwin.c,v 1.14 1998/02/11 12:13:54 tom Exp $")
+MODULE_ID("$From: lib_endwin.c,v 1.15 1998/09/12 22:50:25 tom Exp $")
 
 int
 endwin(void)
@@ -52,10 +52,11 @@ endwin(void)
 	T((T_CALLED("endwin()")));
 
 	if (SP) {
-	  SP->_endwin = TRUE;
-	  SP->_mouse_wrap(SP);
-	  _nc_screen_wrap();
-	  _nc_mvcur_wrap();	/* wrap up cursor addressing */
+		SP->_endwin = TRUE;
+		SP->_mouse_wrap(SP);
+		_nc_screen_wrap();
+		_nc_mvcur_wrap();	/* wrap up cursor addressing */
+		NC_BUFFERED(FALSE);
 	}
 
 	returnCode(reset_shell_mode());

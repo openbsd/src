@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.8 1998/09/13 19:16:25 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.9 1998/09/17 04:14:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.109 1998/09/05 22:10:02 tom Exp $
+ * $From: curses.priv.h,v 1.110 1998/09/12 22:50:21 tom Exp $
  *
  *	curses.priv.h
  *
@@ -662,6 +662,10 @@ extern void _nc_synchook(WINDOW *win);
 #if USE_SIZECHANGE
 extern void _nc_update_screensize(void);
 #endif
+
+#define NC_BUFFERED(flag) \
+	if ((SP->_setbuf == 0) != flag) \
+		_nc_set_buffer(SP->_ofp, flag)
 
 /*
  * On systems with a broken linker, define 'SP' as a function to force the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_set_term.c,v 1.6 1998/07/23 21:19:22 millert Exp $	*/
+/*	$OpenBSD: lib_set_term.c,v 1.7 1998/09/17 04:14:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_set_term.c,v 1.39 1998/05/30 23:44:18 Todd.Miller Exp $")
+MODULE_ID("$From: lib_set_term.c,v 1.40 1998/09/12 23:16:41 tom Exp $")
 
 /*
  * If the output file descriptor is connected to a tty (the typical case) it
@@ -76,6 +76,30 @@ MODULE_ID("$From: lib_set_term.c,v 1.39 1998/05/30 23:44:18 Todd.Miller Exp $")
  * performed on the stream." (ISO 7.9.5.6.)
  *
  * Grrrr...
+ *
+ * On a lighter note, many implementations do in fact allow an application to
+ * reset the buffering after it has been written to.  We try to do this because
+ * otherwise we leave stdout in buffered mode after endwin() is called.  (This
+ * also happens with SVr4 curses).
+ *
+ * There are pros/cons:
+ *
+ * con:
+ *	There is no guarantee that we can reestablish buffering once we've
+ *	dropped it.
+ *
+ *	We _may_ lose data if the implementation does not coordinate this with
+ *	fflush.
+ *
+ * pro:
+ *	An implementation is more likely to refuse to change the buffering than
+ *	to do it in one of the ways mentioned above.
+ *
+ *	The alternative is to have the application try to change buffering
+ *	itself, which is certainly no improvement.
+ *
+ * Just in case it does not work well on a particular system, the calls to
+ * change buffering are all via the macro NC_BUFFERED.
  */
 void _nc_set_buffer(FILE *ofp, bool buffered)
 {
@@ -95,9 +119,9 @@ void _nc_set_buffer(FILE *ofp, bool buffered)
 
 #if HAVE_SETVBUF
 #ifdef SETVBUF_REVERSED	/* pre-svr3? */
-	(void) setvbuf(ofp, buf_ptr, buf_len, buf_len ? _IOFBF : _IONBF);
+	(void) setvbuf(ofp, buf_ptr, buf_len, buf_len ? _IOFBF : _IOLBF);
 #else
-	(void) setvbuf(ofp, buf_ptr, buf_len ? _IOFBF : _IONBF, buf_len);
+	(void) setvbuf(ofp, buf_ptr, buf_len ? _IOFBF : _IOLBF, buf_len);
 #endif
 #elif HAVE_SETBUFFER
 	(void) setbuffer(ofp, buf_ptr, (int)buf_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.c,v 1.4 1998/07/24 17:08:22 millert Exp $	*/
+/*	$OpenBSD: panel.c,v 1.5 1998/09/17 04:14:49 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -42,7 +42,7 @@ MODULE_ID("$From: panel.c,v 1.15 1998/02/11 12:14:01 tom Exp $")
 #ifndef TRACE_TXT
 const char *_nc_my_visbuf(const void *ptr)
 {
-	char temp[40];
+	char temp[32];
 	if (ptr != 0)
 		snprintf(temp, sizeof(temp), "ptr:%p", ptr);
 	else

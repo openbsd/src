@@ -1,4 +1,5 @@
-.\" $OpenBSD: form.3tbl,v 1.2 1998/07/24 02:36:56 millert Exp $
+'\" t
+.\" $OpenBSD: form.3tbl,v 1.3 1998/09/17 04:14:33 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,8 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-'\" t
-.\" $From: form.3x,v 1.9 1998/03/11 21:12:53 juergen Exp $
+.\" $From: form.3x,v 1.10 1998/08/27 21:21:04 Rick.Ohnemus Exp $
 .TH form 3 ""
 .SH NAME
 \fBform\fR - curses extension for programming forms

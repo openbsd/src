@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_doupdate.c,v 1.9 1998/09/13 19:16:27 millert Exp $	*/
+/*	$OpenBSD: lib_doupdate.c,v 1.10 1998/09/17 04:14:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -77,7 +77,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_doupdate.c,v 1.103 1998/08/15 23:34:47 tom Exp $")
+MODULE_ID("$From: lib_doupdate.c,v 1.104 1998/09/12 22:50:39 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -521,6 +521,7 @@ struct tms before, after;
 		T(("coming back from shell mode"));
 		reset_prog_mode();
 
+		NC_BUFFERED(TRUE);
 		_nc_mvcur_resume();
 		_nc_screen_resume();
 		SP->_mouse_resume(SP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.10 1998/07/23 21:19:03 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.11 1998/09/17 04:14:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -155,7 +155,7 @@
 #include <term.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_mvcur.c,v 1.50 1998/02/11 12:13:56 tom Exp $")
+MODULE_ID("$From: lib_mvcur.c,v 1.52 1998/09/12 23:03:26 tom Exp $")
 
 #define STRLEN(s)       (s != 0) ? strlen(s) : 0
 
@@ -952,17 +952,7 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
     baudrate();
 
     _nc_mvcur_init();
-#if HAVE_SETVBUF || HAVE_SETBUFFER
-    /*
-     * Undo the effects of our optimization hack, otherwise our interactive
-     * prompts don't flush properly.
-     */
-#if HAVE_SETVBUF
-    (void) setvbuf(SP->_ofp, malloc(BUFSIZ), _IOLBF, BUFSIZ);
-#elif HAVE_SETBUFFER
-    (void) setbuffer(SP->_ofp, malloc(BUFSIZ), BUFSIZ);
-#endif
-#endif /* HAVE_SETVBUF || HAVE_SETBUFFER */
+    NC_BUFFERED(FALSE);
 
     (void) puts("The mvcur tester.  Type ? for help");
 
@@ -1059,7 +1049,7 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	}
 	else if (buf[0] == 'i')
 	{
-	     dump_init((char *)NULL, F_TERMINFO, S_TERMINFO, 70, 0);
+	     dump_init((char *)NULL, F_TERMINFO, S_TERMINFO, 70, 0, FALSE);
 	     dump_entry(&cur_term->type, 0, 0);
 	     putchar('\n');
 	}

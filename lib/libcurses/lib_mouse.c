@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.6 1998/09/13 19:16:27 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.7 1998/09/17 04:14:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -422,8 +422,8 @@ static bool _nc_mouse_parse(int runcount)
     if (runcount == 1)
     {
 	TR(MY_TRACE, ("_nc_mouse_parse: returning simple mouse event %s at slot %ld",
-	    _tracemouse(prev),
-	    (long) (prev - events)));
+	   _tracemouse(prev),
+	   (long) (prev - events)));
 	return (prev->id >= 0)
 		? ((prev->bstate & eventmask) ? TRUE : FALSE)
 		: FALSE;
