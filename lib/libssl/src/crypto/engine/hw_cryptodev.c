@@ -112,17 +112,32 @@ static struct {
  * Return a fd if /dev/crypto seems usable, 0 otherwise.
  */
 static int
+open_dev_crypto()
+{
+	static int fd = -1;
+
+	if (fd == -1) {
+		if (fd = open("/dev/crypto", O_RDWR, 0) == -1)
+			return (-1);
+		/* close on exec */
+		if (fcntl(fd, F_SETFD, 1) == -1) {
+			close(fd);
+			fd = -1;
+			return (-1);
+		}
+	}
+	return (fd);
+}
+
+static int
 get_dev_crypto()
 {
 	int fd, retfd;
 
-	if ((fd = open("/dev/crypto", O_RDWR, 0)) == -1)
+	if ((fd = open_dev_crypto()) == -1)
 		return (-1);
-	if (ioctl(fd, CRIOGET, &retfd) == -1) {
-		close(fd);
+	if (ioctl(fd, CRIOGET, &retfd) == -1)
 		return (-1);
-	}
-	close(fd);
 
 	/* close on exec */
 	if (fcntl(retfd, F_SETFD, 1) == -1) {
