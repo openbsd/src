@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.103 2002/06/17 08:05:47 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.104 2002/07/03 00:19:33 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1848,7 +1848,7 @@ ubsec_kprocess_modexp(sc, krp)
 	else
 		shiftbits = normbits - nbits;
 
-	me->me_modbits = normbits;
+	me->me_modbits = nbits;
 	me->me_shiftbits = shiftbits;
 
 	/* Sanity check: result bits must be >= true modulus bits. */
