@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.21 2002/04/16 20:07:07 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.22 2002/10/15 15:56:16 millert Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 5.6.0;
+require 5.006_000;
 
 use strict;
 use File::Find;
