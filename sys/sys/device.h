@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.11 1997/08/07 10:22:51 downsj Exp $	*/
+/*	$OpenBSD: device.h,v 1.12 1997/08/07 10:34:48 downsj Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -94,9 +94,8 @@ struct cfdata {
 	int	cf_flags;		/* flags from config */
 	short	*cf_parents;		/* potential parents */
 	int	cf_locnames;		/* start of names */
-	void	(**cf_ivstubs)__P((void));
-					/* config-generated vectors, if any */
-	const char **cf_locnames;	/* locator names (machine dependent) */
+	void	(**cf_ivstubs)		/* config-generated vectors, if any */
+			__P((void));
 };
 extern struct cfdata cfdata[];
 #define FSTATE_NOTFOUND	0	/* has not been found */
