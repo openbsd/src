@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.48 2004/07/21 17:05:40 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.49 2004/07/22 06:13:08 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -111,7 +111,7 @@ sys_opipe(p, v, retval)
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
 
-	fdplock(fdp, p);
+	fdplock(fdp);
 
 	rpipe = pool_get(&pipe_pool, PR_WAITOK);
 	error = pipe_create(rpipe);

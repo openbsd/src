@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.115 2004/07/18 12:05:07 avsm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.116 2004/07/22 06:13:08 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -899,7 +899,7 @@ sys_open(p, v, retval)
 	struct flock lf;
 	struct nameidata nd;
 
-	fdplock(fdp, p);
+	fdplock(fdp);
 
 	if ((error = falloc(p, &fp, &indx)) != 0)
 		goto out;
@@ -1063,7 +1063,7 @@ sys_fhopen(p, v, retval)
 	if ((flags & O_CREAT))
 		return (EINVAL);
 
-	fdplock(fdp, p);
+	fdplock(fdp);
 	if ((error = falloc(p, &fp, &indx)) != 0) {
 		fp = NULL;
 		goto bad;

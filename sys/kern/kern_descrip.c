@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.68 2004/01/12 18:06:51 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.69 2004/07/22 06:13:08 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ restart:
 	if ((fp = fd_getfile(fdp, old)) == NULL)
 		return (EBADF);
 	FREF(fp);
-	fdplock(fdp, p);
+	fdplock(fdp);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
 		FRELE(fp);
 		if (error == ENOSPC) {
@@ -275,7 +275,7 @@ restart:
 		return (0);
 	}
 	FREF(fp);
-	fdplock(fdp, p);
+	fdplock(fdp);
 	if (new >= fdp->fd_nfiles) {
 		if ((error = fdalloc(p, new, &i)) != 0) {
 			FRELE(fp);
@@ -333,7 +333,7 @@ restart:
 			error = EINVAL;
 			break;
 		}
-		fdplock(fdp, p);
+		fdplock(fdp);
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
 			if (error == ENOSPC) {
 				fdexpand(p);
@@ -601,7 +601,7 @@ sys_close(p, v, retval)
 
 	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
-	fdplock(fdp, p);
+	fdplock(fdp);
 	error = fdrelease(p, fd);
 	fdpunlock(fdp);
 
@@ -1304,7 +1304,7 @@ sys_closefrom(struct proc *p, void *v, register_t *retval)
 	u_int startfd, i;
 
 	startfd = SCARG(uap, fd);
-	fdplock(fdp, p);
+	fdplock(fdp);
 
 	if (startfd > fdp->fd_lastfile) {
 		fdpunlock(fdp);

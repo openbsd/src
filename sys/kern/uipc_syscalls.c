@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.59 2004/04/12 23:58:10 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.60 2004/07/22 06:13:08 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ sys_socket(p, v, retval)
 	struct file *fp;
 	int fd, error;
 
-	fdplock(fdp, p);
+	fdplock(fdp);
 
 	if ((error = falloc(p, &fp, &fd)) != 0)
 		goto out;
@@ -210,7 +210,7 @@ sys_accept(p, v, retval)
 	/* Take note if socket was non-blocking. */
 	nflag = (fp->f_flag & FNONBLOCK);
 
-	fdplock(p->p_fd, p);
+	fdplock(p->p_fd);
 	if ((error = falloc(p, &fp, &tmpfd)) != 0) {
 		/*
 		 * Probably ran out of file descriptors. Put the
@@ -344,7 +344,7 @@ sys_socketpair(p, v, retval)
 	if (error)
 		goto free1;
 
-	fdplock(fdp, p);
+	fdplock(fdp);
 	if ((error = falloc(p, &fp1, &fd)) != 0)
 		goto free2;
 	sv[0] = fd;
@@ -941,7 +941,7 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	error = copyout((caddr_t)fds, (caddr_t)SCARG(uap, fdp),
 	    2 * sizeof (int));
 	if (error) {
-		fdplock(p->p_fd, p);
+		fdplock(p->p_fd);
 		fdrelease(p, fds[0]);
 		fdrelease(p, fds[1]);
 		fdpunlock(p->p_fd);

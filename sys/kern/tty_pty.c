@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.24 2004/07/21 12:10:20 art Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.25 2004/07/22 06:13:08 tedu Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1133,7 +1133,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	error = 0;
 	switch (cmd) {
 	case PTMGET:
-		fdplock(fdp, p);
+		fdplock(fdp);
 		/* Grab two filedescriptors. */
 		if ((error = falloc(p, &cfp, &cindx)) != 0) {
 			fdpunlock(fdp);
