@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.77 2004/04/25 18:40:42 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.78 2004/04/25 19:24:52 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -591,17 +591,15 @@ remove_stale_rulesets(void)
 static int
 change_filter(int add, const char *luser, const char *ipsrc)
 {
-	char	*pargv[13]= {
+	char	*pargv[13] = {
 		"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor:ruleset",
 		"-D", "user_ip=X", "-D", "user_id=X", "-f",
 		"file", NULL
 	};
-	char	*fdpath = NULL;
-	char	*userstr= NULL;
-	char	*ipstr = NULL;
-	char	*rsn = NULL;
-	char	*fn = NULL;
-	int	pid, s;
+	char	*fdpath = NULL, *userstr = NULL, *ipstr = NULL;
+	char	*rsn = NULL, *fn = NULL;
+	pid_t	pid;
+	int	s;
 
 	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
 		syslog(LOG_ERR, "invalid luser/ipsrc");
@@ -619,6 +617,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 
 	if (add) {
 		struct stat sb;
+
 		if (asprintf(&fn, "%s/%s/authpf.rules", PATH_USER_DIR, luser)
 		    == -1)
 			goto no_mem;
@@ -632,11 +631,11 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	pargv[5] = rsn;
 	pargv[7] = userstr;
 	pargv[9] = ipstr;
-	if (!add) {
-		pargv[11]="/dev/null";
-	} else {
-		pargv[11]=fn;
-	}
+	if (!add)
+		pargv[11] = "/dev/null";
+	else
+		pargv[11] = fn;
+
 	switch (pid = fork()) {
 	case -1:
 		err(1, "fork failed");
@@ -644,6 +643,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		execvp(PATH_PFCTL, pargv);
 		err(1, "exec of %s failed", PATH_PFCTL);
 	}
+
 	/* parent */
 	waitpid(pid, &s, 0);
 	if (s != 0) {
@@ -652,7 +652,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 			goto error;
 		}
 	}
-		
+
 	if (add) {
 		gettimeofday(&Tstart, NULL);
 		syslog(LOG_INFO, "allowing %s, user %s", ipsrc, luser);
