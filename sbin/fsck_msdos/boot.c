@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 1999/08/30 20:27:45 espie Exp $	*/
+/*	$OpenBSD: boot.c,v 1.6 2001/07/03 13:03:44 ian Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.5 1999/08/30 20:27:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.6 2001/07/03 13:03:44 ian Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ readboot(dosfs, boot)
 	}
 
 	if (block[510] != 0x55 || block[511] != 0xaa) {
-		pfatal("Invalid signature in boot block: %02x%02x", block[511], block[510]);
+		pfatal("Invalid signature in boot block: %02x%02x\n", block[511], block[510]);
 		return FSFATAL;
 	}
 
@@ -96,7 +96,7 @@ readboot(dosfs, boot)
 		/* check version number: */
 		if (block[42] || block[43]) {
 			/* Correct?				XXX */
-			pfatal("Unknown filesystem version: %x.%x",
+			pfatal("Unknown filesystem version: %x.%x\n",
 			       block[43], block[42]);
 			return FSFATAL;
 		}
@@ -160,7 +160,7 @@ readboot(dosfs, boot)
 		}
 		if (memcmp(block, backup, DOSBOOTBLOCKSIZE)) {
 			/* Correct?					XXX */
-			pfatal("backup doesn't compare to primary bootblock");
+			pfatal("backup doesn't compare to primary bootblock\n");
 			return FSFATAL;
 		}
 		/* Check backup FSInfo?					XXX */
@@ -173,11 +173,11 @@ readboot(dosfs, boot)
 	    - CLUST_FIRST * boot->SecPerClust;
 
 	if (boot->BytesPerSec % DOSBOOTBLOCKSIZE != 0) {
-		pfatal("Invalid sector size: %u", boot->BytesPerSec);
+		pfatal("Invalid sector size: %u\n", boot->BytesPerSec);
 		return (FSFATAL);
 	}
 	if (boot->SecPerClust == 0) {
-		pfatal("Invalid cluster size: %u", boot->SecPerClust);
+		pfatal("Invalid cluster size: %u\n", boot->SecPerClust);
 		return (FSFATAL);
 	}
 	if (boot->Sectors) {
@@ -194,7 +194,7 @@ readboot(dosfs, boot)
 	else if (boot->NumClusters < (CLUST_RSRVD&CLUST16_MASK))
 		boot->ClustMask = CLUST16_MASK;
 	else {
-		pfatal("Filesystem too big (%u clusters) for non-FAT32 partition",
+		pfatal("Filesystem too big (%u clusters) for non-FAT32 partition\n",
 		       boot->NumClusters);
 		return FSFATAL;
 	}

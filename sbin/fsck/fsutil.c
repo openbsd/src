@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.3 2001/05/15 22:03:03 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.4 2001/07/03 13:03:44 ian Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -116,10 +116,8 @@ vmsg(fatal, fmt, ap)
 
 	(void) vprintf(fmt, ap);
 
-	if (fatal && preen)
-		(void) printf("\n");
-
 	if (fatal && preen) {
+		(void) printf("\n");
 		(void) printf(
 		    "%s: UNEXPECTED INCONSISTENCY; RUN %s MANUALLY.\n",
 		    dev, __progname);
