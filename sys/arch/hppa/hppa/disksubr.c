@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.2 1999/06/12 17:51:31 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.3 1999/06/12 17:52:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -595,7 +595,6 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	int *cylp;
 	int spoofonly;
 {
-	struct lifdir *p;
 	int fsoff;
 
 	/* read LIF volume header */
