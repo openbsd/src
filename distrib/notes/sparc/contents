@@ -5,9 +5,6 @@ as follows:
 .../2.1/sparc/
 		INSTALL.sparc	Installation notes; this file
 
-		floppy.fs	The sparc boot and installation
-				floppy; see below.
-
                 kc21.fs		The sparc boot floppy; see below.
 		inst21.fs	The sparc installation floppy; see below.
 		upgr21.fs	The sparc upgrade floppy; see below.
@@ -54,8 +51,8 @@ These bootable images are also useful as "failsafe" boots for system
 maintenance and disaster recovery.
 
 The kernel and boot images are provided for net booting installations.
-The OpenBSD bootblocks will work with the provided miniroot images,
-while Sun bootblocks require a separate kernel image and root filesystem.
+While the OpenBSD bootblocks will work with the provided miniroot images,
+Sun bootblocks require a separate kernel image and root filesystem.
 
 
 Bootable installation/upgrade floppies:

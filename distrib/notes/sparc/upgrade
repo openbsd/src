@@ -1,6 +1,16 @@
-To upgrade to OpenBSD 2.1 from a previous version follow the instructions
-in the section "Installing OpenBSD", but run the script `upgrade.sh'
-instead of `install.sh'.
+To upgrade to OpenBSD 2.1 from a previous version start with the general
+instructions in the section "Installing OpenBSD".
+
+If you are upgrading with the miniroot or the new single floppy image,
+select the (U)pdate option rather than the (I)nstall option at the prompt
+in the inststall process. 
+
+If you are using the old multi-floppy installsyion procedure, use the
+"upgr21.fs" floppy rather than the "inst21.fs" floppy when prompted to
+put in the filesystem diskette.  When you arrive at the shell prompt,
+run the "upgrade" script rather than "install" script.
 
 The upgrade script will use the existing disk partitions to install the
-new system in, and also preserves the files in `/etc'.
+new system in, and also preserves files in `/etc' which you are likely
+to have customized since a previous installation.
+

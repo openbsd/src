@@ -93,6 +93,11 @@ OpenBSD 2.1 kernel in this distribution, please visit the OpenBSD web
 page (http://www.openbsd.org) and the mailing lists to review the current
 status and check for updates.
 
+If you have Sparc hardware you can donate or make available at nominal
+cost, please mention this on the lists, many things aren't being tested
+or developed simply because devlopers usually have only a Sparcstation
+at hand, not an array of systems.
+
 Your support in terms of documenting previously unknown problems with
 OpenBSD/sparc, helping debug known problems, implementng missing pieces,
 and testing OpenBSD on various architectures is actively encouraged.
