@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.42 2005/03/27 17:11:13 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.43 2005/03/31 15:31:22 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2311,9 +2311,7 @@ void
 em_initialize_receive_unit(struct em_softc *sc)
 {
 	u_int32_t	reg_rctl;
-#if 0
 	u_int32_t	reg_rxcsum;
-#endif
 	struct ifnet	*ifp;
 	u_int64_t	bus_addr;
 
@@ -2378,13 +2376,11 @@ em_initialize_receive_unit(struct em_softc *sc)
 		reg_rctl |= E1000_RCTL_LPE;
 
 	/* Enable 82543 Receive Checksum Offload for TCP and UDP */
-#if 0
 	if (sc->hw.mac_type >= em_82543) {
 		reg_rxcsum = E1000_READ_REG(&sc->hw, RXCSUM);
 		reg_rxcsum |= (E1000_RXCSUM_IPOFL | E1000_RXCSUM_TUOFL);
 		E1000_WRITE_REG(&sc->hw, RXCSUM, reg_rxcsum);
 	}
-#endif
 
 	/* Enable Receives */
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
