@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.96 2001/05/11 15:34:02 art Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.97 2001/05/29 21:35:16 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.97 2001/05/29 21:35:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,14 +118,11 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
+#include <bsd_auth.h>
 
 #if defined(TCPWRAPPERS)
 #include <tcpd.h>
 #endif	/* TCPWRAPPERS */
-
-#if defined(SKEY)
-#include <skey.h>
-#endif
 
 #include "pathnames.h"
 #include "extern.h"
@@ -192,17 +189,13 @@ char	*guestpw;
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static struct utmp utmp;	/* for utmp */
-static  login_cap_t *lc;
+static	login_cap_t *lc;
+static	auth_session_t *as;
 
 #if defined(TCPWRAPPERS)
 int	allow_severity = LOG_INFO;
 int	deny_severity = LOG_NOTICE;
 #endif	/* TCPWRAPPERS */
-
-#if defined(KERBEROS)
-int	notickets = 1;
-char	*krbtkfile_env = NULL;
-#endif
 
 char	*ident = NULL;
 
@@ -260,7 +253,6 @@ static void	 replydirname __P((const char *, const char *));
 static void	 send_data __P((FILE *, FILE *, off_t, off_t, int));
 static struct passwd *
 		 sgetpwnam __P((char *));
-static char	*sgetsave __P((char *));
 static void	 reapchild __P((int));
 static int	 check_host __P((struct sockaddr *));
 static void	 usage __P((void));
@@ -639,28 +631,10 @@ static void
 sigquit(signo)
 	int signo;
 {
-	
+
 	sigprocmask(SIG_BLOCK, &allsigs, NULL);
 	syslog(LOG_ERR, "got signal %s", sys_signame[signo]);
 	dologout(1);
-}
-
-/*
- * Helper function for sgetpwnam().
- */
-static char *
-sgetsave(s)
-	char *s;
-{
-	char *new = malloc((unsigned) strlen(s) + 1);
-
-	if (new == NULL) {
-		perror_reply(421, "Local resource failure: malloc");
-		dologout(1);
-		/* NOTREACHED */
-	}
-	(void) strcpy(new, s);
-	return (new);
 }
 
 /*
@@ -672,28 +646,22 @@ static struct passwd *
 sgetpwnam(name)
 	char *name;
 {
-	static struct passwd save;
-	struct passwd *p;
+	static struct passwd *save;
+	struct passwd *pw;
 
-	if ((p = getpwnam(name)) == NULL)
-		return (p);
-	if (save.pw_name) {
-		free(save.pw_name);
-		memset(save.pw_passwd, 0, strlen(save.pw_passwd));
-		free(save.pw_passwd);
-		free(save.pw_class);
-		free(save.pw_gecos);
-		free(save.pw_dir);
-		free(save.pw_shell);
+	if ((pw = getpwnam(name)) == NULL)
+		return (pw);
+	if (save) {
+		memset(save->pw_passwd, 0, strlen(save->pw_passwd));
+		free(save);
 	}
-	save = *p;
-	save.pw_name = sgetsave(p->pw_name);
-	save.pw_passwd = sgetsave(p->pw_passwd);
-	save.pw_class = sgetsave(p->pw_class);
-	save.pw_gecos = sgetsave(p->pw_gecos);
-	save.pw_dir = sgetsave(p->pw_dir);
-	save.pw_shell = sgetsave(p->pw_shell);
-	return (&save);
+	save = pw_dup(pw);
+	if (save == NULL) {
+		perror_reply(421, "Local resource failure: malloc");
+		dologout(1);
+		/* NOTREACHED */
+	}
+	return (save);
 }
 
 static int login_attempts;	/* number of failed login attempts */
@@ -715,12 +683,8 @@ void
 user(name)
 	char *name;
 {
-	char *cp, *shell;
-
-	if (lc) {
-		login_close(lc);
-		lc = NULL;
-	}
+	char *cp, *shell, *style;
+	char *class = NULL;
 
 	if (logged_in) {
 		if (guest) {
@@ -730,8 +694,17 @@ user(name)
 			reply(530, "Can't change user from chroot user.");
 			return;
 		}
+		login_close(lc);
+		lc = NULL;
+		if (as) {
+			auth_close(as);
+			as = NULL;
+		}
 		end_login();
 	}
+
+	if ((style = strchr(name, ':')) != NULL)
+		*style++ = 0;
 
 	guest = 0;
 	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
@@ -743,7 +716,7 @@ user(name)
 			askpasswd = 1;
 			lc = login_getclass(pw->pw_class);
 			reply(331,
-			    "Guest login ok, type your name as password.");
+			"Guest login ok, send your email address as password.");
 		} else
 			reply(530, "User %s unknown.", name);
 		if (!askpasswd && logging)
@@ -751,41 +724,65 @@ user(name)
 			    "ANONYMOUS FTP LOGIN REFUSED FROM %s", remotehost);
 		return;
 	}
-	if (anon_only && !checkuser(_PATH_FTPCHROOT, name)) {
-		reply(530, "Sorry, only anonymous ftp allowed.");
-		return;
-	}
 
+	shell = _PATH_BSHELL;
 	if ((pw = sgetpwnam(name))) {
-		if ((shell = pw->pw_shell) == NULL || *shell == 0)
-			shell = _PATH_BSHELL;
+		class = pw->pw_class;
+		if (pw->pw_shell != NULL && *pw->pw_shell != '\0')
+			shell = pw->pw_shell;
 		while ((cp = getusershell()) != NULL)
 			if (strcmp(cp, shell) == 0)
 				break;
+		shell = cp;
 		endusershell();
+	}
 
-		if (cp == NULL || checkuser(_PATH_FTPUSERS, name)) {
+	/* Get login class; if invalid style treat like unknown user. */
+	lc = login_getclass(class);
+	if (lc && (style = login_getstyle(lc, style, "auth-ftp")) == NULL) {
+		login_close(lc);
+		lc = NULL;
+		pw = NULL;
+	}
+
+	/* Do pre-authentication setup. */
+	if (lc && ((as = auth_open()) == NULL ||
+	    auth_setitem(as, AUTHV_STYLE, style) < 0 ||
+	    auth_setitem(as, AUTHV_NAME, name) < 0 ||
+	    auth_setitem(as, AUTHV_CLASS, class)) < 0) {
+		if (as) {
+			auth_close(as);
+			as = NULL;
+		}
+		login_close(lc);
+		lc = NULL;
+		reply(421, "Local resource failure");
+		return;
+	}
+	if (logging)
+		strlcpy(curname, name, sizeof(curname));
+
+	dochroot = (lc && login_getcapbool(lc, "ftp-chroot", 0)) ||
+	    checkuser(_PATH_FTPCHROOT, name);
+	if (anon_only && !dochroot) {
+		reply(530, "Sorry, only anonymous ftp allowed.");
+		return;
+	}
+	if (pw) {
+		if ((!shell && !dochroot) || checkuser(_PATH_FTPUSERS, name)) {
 			reply(530, "User %s access denied.", name);
 			if (logging)
 				syslog(LOG_NOTICE,
 				    "FTP LOGIN REFUSED FROM %s, %s",
 				    remotehost, name);
-			pw = (struct passwd *) NULL;
+			pw = NULL;
 			return;
 		}
-		lc = login_getclass(pw->pw_class);
 	}
-	if (logging)
-		strlcpy(curname, name, sizeof(curname));
-#ifdef SKEY
-	if (!skey_haskey(name)) {
-		char *myskey, *skey_keyinfo __P((char *name));
 
-		myskey = skey_keyinfo(name);
-		reply(331, "Password [ %s ] for %s required.",
-		    myskey ? myskey : "error getting challenge", name);
-	} else
-#endif
+	if (as != NULL && (cp = auth_challenge(as)) != NULL)
+		reply(331, cp);
+	else
 		reply(331, "Password required for %s.", name);
 
 	askpasswd = 1;
@@ -853,7 +850,7 @@ void
 pass(passwd)
 	char *passwd;
 {
-	int rval, flags;
+	int authok, flags;
 	FILE *fp;
 	static char homedir[MAXPATHLEN];
 	char *dir, rootdir[MAXPATHLEN];
@@ -864,42 +861,19 @@ pass(passwd)
 	}
 	askpasswd = 0;
 	if (!guest) {		/* "ftp" is only account allowed no password */
+		authok = 0;
 		if (pw == NULL) {
 			useconds_t us;
 
 			/* Sleep between 1 and 3 seconds to emulate a crypt. */
 			us = arc4random() % 3000000;
 			usleep(us);
-			rval = 1;	/* failure below */
-			goto skip;
+		} else {
+			authok = auth_userresponse(as, passwd, 0);
+			auth_close(as);
+			as = NULL;
 		}
-#if defined(KERBEROS)
-		rval = klogin(pw, "", hostname, passwd);
-		if (rval == 0)
-			goto skip;
-#endif
-#ifdef SKEY
-		if (skey_haskey(pw->pw_name) == 0 &&
-		   (skey_passcheck(pw->pw_name, passwd) != -1)) {
-			rval = 0;
-			goto skip;
-		}
-#endif
-		/* the strcmp does not catch null passwords! */
-		if (strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd) ||
-		    *pw->pw_passwd == '\0') {
-			rval = 1;	 /* failure */
-			goto skip;
-		}
-		rval = 0;
-
-skip:
-		/*
-		 * If rval == 1, the user failed the authentication check
-		 * above.  If rval == 0, either Kerberos or local authentication
-		 * succeeded.
-		 */
-		if (rval) {
+		if (authok == 0) {
 			reply(530, "Login incorrect.");
 			if (logging)
 				syslog(LOG_NOTICE,
@@ -914,11 +888,32 @@ skip:
 			}
 			return;
 		}
-	} else {
+	} else if (lc != NULL) {
 		/* Save anonymous' password. */
 		guestpw = strdup(passwd);
 		if (guestpw == (char *)NULL)
 			fatal("Out of memory");
+
+		if ((as = auth_open()) == NULL)
+			fatal("Out of memory");
+		auth_setoption(as, "FTPD_HOST",
+		    multihome ? dhostname : hostname);
+		authok = auth_approval(as, lc, pw->pw_name, "ftp");
+		auth_close(as);
+		as = NULL;
+		if (authok == 0) {
+			syslog(LOG_INFO|LOG_AUTH,
+			    "FTP LOGIN FAILED (HOST) as %s: approval failure.",
+			    pw->pw_name);
+			reply(530, "Approval failure.\n");
+			exit(0);
+		}
+	} else {
+		syslog(LOG_INFO|LOG_AUTH,
+		    "FTP LOGIN CLASS %s MISSING for %s: approval failure.",
+		    pw->pw_class, pw->pw_name);
+		reply(530, "Permission denied.\n");
+		exit(0);
 	}
 	login_attempts = 0;		/* this time successful */
 	if (setegid((gid_t)pw->pw_gid) < 0) {
@@ -953,8 +948,6 @@ skip:
 
 	logged_in = 1;
 
-	dochroot = login_getcapbool(lc, "ftp-chroot", 0) ||
-	    checkuser(_PATH_FTPCHROOT, pw->pw_name);
 	if ((dir = login_getcapstr(lc, "ftp-dir", NULL, NULL))) {
 		char *newdir;
 
@@ -1283,12 +1276,12 @@ getdatasock(mode)
 	 * in heavy-load situations.
 	 */
 	on = 1;
-	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, (char *)&on, sizeof on) < 0)
+	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, (char *)&on, sizeof(on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (TCP_NOPUSH): %m");
 #endif
 #ifdef SO_SNDBUF
 	on = 65536;
-	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&on, sizeof on) < 0)
+	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&on, sizeof(on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_SNDBUF): %m");
 #endif
 
@@ -1845,20 +1838,27 @@ reply(n, fmt, va_alist)
 	va_dcl
 #endif
 {
+	char *buf, *p, *next;
 	va_list ap;
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	(void)printf("%d ", n);
-	(void)vprintf(fmt, ap);
-	(void)printf("\r\n");
-	(void)fflush(stdout);
-	if (debug) {
-		syslog(LOG_DEBUG, "<--- %d ", n);
-		vsyslog(LOG_DEBUG, fmt, ap);
+	if (vasprintf(&buf, fmt, ap) == -1 || buf == NULL) {
+		printf("412 Local resource failure: malloc\r\n");
+		fflush(stdout);
+		dologout(1);
 	}
+	next = buf;
+	while ((p = strsep(&next, "\n\r"))) {
+		printf("%d%s %s\r\n", n, (next != '\0') ? "-" : "", p);
+		if (debug)
+			syslog(LOG_DEBUG, "<--- %d%s %s", n,
+			    (next != '\0') ? "-" : "", p);
+	}
+	(void)fflush(stdout);
+	free(buf);
 }
 
 void
@@ -2019,7 +2019,7 @@ pwd()
 {
 	char path[MAXPATHLEN];
 
-	if (getcwd(path, sizeof path) == (char *)NULL)
+	if (getcwd(path, sizeof(path)) == NULL)
 		reply(550, "Can't get current directory: %s.", strerror(errno));
 	else
 		replydirname(path, "is current directory.");
@@ -2086,10 +2086,6 @@ dologout(status)
 		ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
-#if defined(KERBEROS)
-		if (!notickets && krbtkfile_env)
-			unlink(krbtkfile_env);
-#endif
 	}
 	/* beware of flushing buffers after a SIGPIPE */
 	_exit(status);
@@ -2715,9 +2711,9 @@ logxfer(name, size, start)
 		if (vpw == NULL)
 			return;
 
-		snprintf(path, sizeof path, "%s/%s", dir, name);
+		snprintf(path, sizeof(path), "%s/%s", dir, name);
 		if (realpath(path, rpath) == NULL)
-			strlcpy(rpath, path, sizeof rpath);
+			strlcpy(rpath, path, sizeof(rpath));
 		strvis(vpath, rpath, VIS_SAFE|VIS_NOSLASH);
 
 		strvis(vremotehost, remotehost, VIS_SAFE|VIS_NOSLASH);

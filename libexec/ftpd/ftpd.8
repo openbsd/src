@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.39 2001/04/24 12:54:42 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.40 2001/05/29 21:35:16 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -186,7 +186,7 @@ prints it when that directory is entered.
 The ftp server currently supports the following ftp requests.
 The case of the requests is ignored.
 .Bl -column "Request" -offset indent
-.It Request Ta "Description"
+.It Sy Request Ta Sy Description
 .It ABOR Ta "abort previous command"
 .It ACCT Ta "specify account (ignored)"
 .It ALLO Ta "allocate storage (vacuously)"
@@ -194,8 +194,12 @@ The case of the requests is ignored.
 .It CDUP Ta "change to parent of current working directory"
 .It CWD Ta "change working directory"
 .It DELE Ta "delete a file"
+.It EPSV Ta "prepare for server-to-server transfer"
+.It EPRT Ta "specify data connection port"
 .It HELP Ta "give help information"
 .It LIST Ta "give list files in a directory" Pq Dq Li "ls -lgA"
+.It LPSV Ta "prepare for server-to-server transfer"
+.It LPRT Ta "specify data connection port"
 .It MKD Ta "make a directory"
 .It MDTM Ta "show last modification time of file"
 .It MODE Ta "specify data transfer" Em mode
@@ -266,25 +270,35 @@ This allows users to utilize the metacharacters
 .Dq Li \&*?[]{}~ .
 .Pp
 .Nm
+authenticates users by using the service and type of
+.Ar ftp ,
+as defined in the
+.Pa /etc/login.conf
+file (see
+.Xr login.conf 5 ) .
+An authentication style
+may be specified by appending with a colon (
+.Do
+:
+.Dc
+)
+following the authentication style, i.e.
+.Dq joe:skey .
+The allowed authentication styles for
+.Nm
+may be explicitly specified by the
+.Dq auth-ftpd
+entry in
+.Pa /etc/login.conf .
+.Pp
+.Nm
 authenticates users according to five rules.
 .Pp
 .Bl -enum -offset indent
 .It
-The login name must be in the password data base,
-.Pa /etc/pwd.db ,
-and not have a null password.
+The login name must be in the password database and not have a null password.
 In this case a password must be provided by the client before any
 file operations may be performed.
-If the user has an S/Key key, the response from a successful USER
-command will include an S/Key challenge.
-The client may choose to respond with a PASS command giving either a
-standard password or an S/Key one-time password.
-The server will automatically determine which type of
-password it has been given and attempt to authenticate accordingly.
-See
-.Xr skey 1
-for more information on S/Key authentication.
-S/Key is a Trademark of Bellcore.
 .It
 The login name must not appear in the file
 .Pa /etc/ftpusers .
@@ -319,7 +333,35 @@ to log in by specifying any password (by convention an email address for
 the user should be used as the password).
 .El
 .Pp
-In the last case,
+Once a user is authenticated the user must be approved by any approval
+script defined (see
+.Xr login.conf ) .
+If a valid approval script (by either :approve=...: or :approve-ftp=...:
+for the user's class) is defined then it is run and must exit with a 0
+(success) status.  When
+.Nm
+is running under the
+.Fl D
+flag (and debugging is not turned on) then the approval script will be
+called with at least the following variables specified via the
+.Fl v
+option (see
+.Xr login.conf 5 )
+to the approve script:
+.Bl -column "Variable" -offset indent
+.It Sy Variable Ta Sy Description
+.It FTPD_HOST Ta "The server's (virtual) hostname"
+.El
+.Pp
+For example (the line is broken to fit the page):
+.sp
+.Bd -ragged -offset indent
+.Pa /usr/libexec/auth/approve_ftpd Fl v
+FTPD_HOST=ftp.mycompany.com \\
+.Dl Ar username Ar class Ar service
+.Ed
+.Pp
+When the user logs in to the anonymous ftp account,
 .Nm
 takes special measures to restrict the client's access privileges.
 The server performs a
@@ -366,7 +408,7 @@ These files should be mode 444.
 .It Pa ~ftp/pub
 Make this directory mode 555 and owned by
 .Dq root .
-This is traditionally where publically accessible files are
+This is traditionally where publicly accessible files are
 stored for download.
 .El
 .Pp
@@ -433,6 +475,10 @@ The
 .Nm
 daemon uses the following ftp specific parameters:
 .Bl -tag -width ftp-chroot
+.It Pa auth-ftp
+The list of authentication types available to this class.
+See
+.Xr login.conf 5 .
 .It Pa ftp-chroot
 A boolean value.
 If set, users in this class will be automatically chrooted to login
@@ -451,7 +497,7 @@ will be expanded based on the contents of the password database.
 .It Pa /etc/ftpusers
 list of unwelcome/restricted users
 .It Pa /etc/ftpchroot
-list of normal users who should be chroot'd
+list of normal users who should be chrooted
 .It Pa /etc/ftpwelcome
 welcome notice
 .It Pa /etc/motd
@@ -469,7 +515,10 @@ log file for anonymous downloads
 .Xr ftp 1 ,
 .Xr skey 1 ,
 .Xr who 1 ,
+.Xr chroot 2 ,
+.Xr login.conf 5 ,
 .Xr shells 5 ,
+.Xr inetd 8 ,
 .Xr syslogd 8
 .Sh HISTORY
 The
