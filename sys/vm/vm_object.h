@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.h,v 1.3 1996/08/02 00:06:02 niklas Exp $	*/
+/*	$OpenBSD: vm_object.h,v 1.4 1996/12/24 20:14:32 niklas Exp $	*/
 /*	$NetBSD: vm_object.h,v 1.16 1995/03/29 22:10:28 briggs Exp $	*/
 
 /* 
@@ -110,6 +110,7 @@ struct vm_object {
 #define OBJ_CANPERSIST	0x0001	/* allow to persist */
 #define OBJ_INTERNAL	0x0002	/* internally created object */
 #define OBJ_ACTIVE	0x0004	/* used to mark active objects */
+#define OBJ_FADING	0x0008	/* tell others that the object is going away */
 
 TAILQ_HEAD(vm_object_hash_head, vm_object_hash_entry);
 
