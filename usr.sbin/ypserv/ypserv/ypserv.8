@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.10 1998/09/01 16:38:25 deraadt Exp $
+.\"	$OpenBSD: ypserv.8,v 1.11 1999/03/01 06:02:50 aaron Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -35,13 +35,13 @@
 .Nm ypserv
 .Nd YP server daemon
 .Sh SYNOPSIS
-.Nm ypserv
+.Nm
 .Op Fl 1
 .Op Fl a Ar aclfile
 .Op Fl d
 .Op Fl x
 .Sh DESCRIPTION
-.Nm Ypserv
+.Nm
 is a fundamental part of the network information system called YP.
 This server provides information from YP maps to the YP clients
 on the network.
@@ -49,64 +49,71 @@ on the network.
 A YP map is stored on the server as a
 .Xr db 3
 database. A number of YP maps is grouped together in a domain.
-.Ar Ypserv
+.Nm
 determines the domains it serves by looking for a directory with
 the domain name in 
-.Ar /var/yp .
+.Pa /var/yp .
 .Pp
 YP hasn't been known for high security through the years. In recent years
 security has improved by restricting access to the server. In SunOS 4.1
 has a new file occurred named
-.Ar /var/yp/securenet .
+.Pa /var/yp/securenet .
 It contains networks the server can assume is secure. For information about
 file format see
 .Xr securenet 5 .
 .Pp
 Before the author of this server had seen 
 .Xr securenet 5
-another format was implemented
-.Xr ypserv.acl 5 .
+another format,
+.Xr ypserv.acl 5 ,
+was implemented.
 This file format makes it possible to allow and deny hosts and networks
 access to the server. This file can have any name since it's given by
 the argument to
 .Fl a 
 (use full path). 
 .Pp
-The file used can be reread by sending a SIGHUP to ypserv. The process pid
+The file used can be reread by sending a
+.Dv SIGHUP
+to
+.Nm ypserv .
+The process PID
 can be found in the file
-.Nm /var/run/ypserv.pid
-.
+.Pa /var/run/ypserv.pid .
 .Pp
 If a host isn't secure all queries to the server will result in a YP_NODOM
 result.
 .Pp
 If the file
-.Nm /var/yp/ypserv.log
+.Pa /var/yp/ypserv.log
 exists then messages will be written to the file.
 .Pp
 If a directory named the same as the system domainname exists in
-.Nm /var/yp/
-(ie. the domainname is
-.Nm foo
-and directory
-.Nm /var/yp/foo
-exists), then ypserv will be automatically started at boot time.
+.Pa /var/yp
+(i.e., the domainname is
+.Dq foo
+and the directory
+.Pa /var/yp/foo
+exists), then
+.Nm
+will be automatically started at boot time.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl 1
-Allow ypserv to answer old YP version 1 requests.
+Allow
+.Nm
+to answer old YP version 1 requests.
 .It Fl a Ar aclfile
 Don't use 
-.Ar /var/yp/securenet .
-Use another file with another file format. For futher information see
-man page for
-.Ar ypserv.acl .
+.Pa /var/yp/securenet .
+Use another file with a different file format. For further information see
+.Xr ypserv.acl 5 .
 .It Fl d
 Use Internet Domain Name System. If a query to map
-.Ar hosts.byname
+.Dq hosts.byname
 or
-.Ar hosts.byaddr
+.Dq hosts.byaddr
 fails, make a DNS query and return the result if successful.
 Alternately, if these maps were built on the YP master using
 .Nm makedbm
@@ -117,7 +124,7 @@ then DNS queries will be done without needing to specify
 Terminate the server after processing
 .Ar aclfile
 or
-.Ar /var/yp/securenet .
+.Pa /var/yp/securenet .
 .El
 .Sh FILES
 .Bl -tag -width /var/yp/ypserv.log -compact
@@ -126,9 +133,9 @@ or
 .It Pa /var/run/ypserv.pid
 .El
 .Sh SEE ALSO
-.Xr yp 8 ,
-.Xr ypserv.acl 5 ,
+.Xr ypbind 1 ,
 .Xr securenet 5 ,
-.Xr ypbind 1 
+.Xr ypserv.acl 5 ,
+.Xr yp 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>
