@@ -38,7 +38,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.2 1995/10/28 23:09:43 deraadt Exp $
+ *      $Id: trap.c,v 1.3 1995/10/29 00:46:10 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -399,11 +399,6 @@ trap(statusReg, causeReg, vadr, pc, args)
 		printf("vm_fault(%x (pmap %x), %x (%x), %x, %d) -> %x at pc %x\n",
 		       map, &vm->vm_pmap, va, vadr, ftype, FALSE, rv, pc);
 #endif
-/*XXXX*/
-if(rv != KERN_SUCCESS) {
-	printf("vm_fault(%x (pmap %x), %x (%x), %x) at pc %x\n",
-	       map, &vm->vm_pmap, va, vadr, ftype, pc);
-}
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
