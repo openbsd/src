@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_exec.h,v 1.3 1999/02/10 08:07:19 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_exec.h,v 1.4 2001/02/02 05:21:47 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,6 +91,8 @@
 
 /* String table offset. */
 #define	FREEBSD_N_STROFF(ex) 	(FREEBSD_N_SYMOFF(ex) + (ex).a_syms)
+
+#define FREEBSD_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 15 / sizeof(char *))
 
 #define	FREEBSD_AOUT_HDR_SIZE	sizeof(struct exec)
 
