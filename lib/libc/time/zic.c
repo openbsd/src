@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zic.c	7.107";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.19 2003/04/05 04:16:09 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.20 2003/04/06 00:44:36 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -961,22 +961,25 @@ const int		nfields;
 {
 	register int	i;
 	static char *	buf;
+	size_t		len;
 
 	if (nfields < ZONE_MINFIELDS || nfields > ZONE_MAXFIELDS) {
 		error(_("wrong number of fields on Zone line"));
 		return FALSE;
 	}
 	if (strcmp(fields[ZF_NAME], TZDEFAULT) == 0 && lcltime != NULL) {
-		buf = erealloc(buf, (int) (132 + strlen(TZDEFAULT)));
-		(void) sprintf(buf,
+		len = 132 + strlen(TZDEFAULT);
+		buf = erealloc(buf, len);
+		(void) snprintf(buf, len,
 _("\"Zone %s\" line and -l option are mutually exclusive"),
 			TZDEFAULT);
 		error(buf);
 		return FALSE;
 	}
 	if (strcmp(fields[ZF_NAME], TZDEFRULES) == 0 && psxrules != NULL) {
-		buf = erealloc(buf, (int) (132 + strlen(TZDEFRULES)));
-		(void) sprintf(buf,
+		len = 132 + strlen(TZDEFRULES);
+		buf = erealloc(buf, len);
+		(void) snprintf(buf, len,
 _("\"Zone %s\" line and -p option are mutually exclusive"),
 			TZDEFRULES);
 		error(buf);
@@ -985,10 +988,10 @@ _("\"Zone %s\" line and -p option are mutually exclusive"),
 	for (i = 0; i < nzones; ++i)
 		if (zones[i].z_name != NULL &&
 			strcmp(zones[i].z_name, fields[ZF_NAME]) == 0) {
-				buf = erealloc(buf, (int) (132 +
-					strlen(fields[ZF_NAME]) +
-					strlen(zones[i].z_filename)));
-				(void) sprintf(buf,
+				len = 132 + strlen(fields[ZF_NAME]) +
+					strlen(zones[i].z_filename);
+				buf = erealloc(buf, len);
+				(void) snprintf(buf, len,
 _("duplicate zone name %s (file \"%s\", line %d)"),
 					fields[ZF_NAME],
 					zones[i].z_filename,
@@ -1417,6 +1420,7 @@ const char * const	name;
 	static struct tzhead	tzh;
 	time_t			ats[TZ_MAX_TIMES];
 	unsigned char		types[TZ_MAX_TIMES];
+	size_t			len;
 
 	/*
 	** Sort.
@@ -1461,9 +1465,10 @@ const char * const	name;
 		ats[i] = attypes[i].at;
 		types[i] = attypes[i].type;
 	}
-	fullname = erealloc(fullname,
-		(int) (strlen(directory) + 1 + strlen(name) + 1));
-	(void) sprintf(fullname, "%s/%s", directory, name);
+	len = strlen(directory) + 1 + strlen(name) + 1;
+	fullname = erealloc(fullname, len);
+		
+	(void) snprintf(fullname, len, "%s/%s", directory, name);
 	/*
 	** Remove old file, if any, to snap links.
 	*/
@@ -1905,11 +1910,13 @@ const char * const	type;
 {
 	static char *	buf;
 	int		result;
+	size_t		len;
 
 	if (type == NULL || *type == '\0')
 		return TRUE;
-	buf = erealloc(buf, (int) (132 + strlen(yitcommand) + strlen(type)));
-	(void) sprintf(buf, "%s %d %s", yitcommand, year, type);
+	len = 132 + strlen(yitcommand) + strlen(type);
+	buf = erealloc(buf, len);
+	(void) snprintf(buf, len, "%s %d %s", yitcommand, year, type);
 	result = system(buf);
 	if (WIFEXITED(result)) switch (WEXITSTATUS(result)) {
 		case 0:

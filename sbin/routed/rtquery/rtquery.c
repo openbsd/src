@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.12 2003/04/04 00:46:24 deraadt Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.13 2003/04/06 00:45:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -492,16 +492,22 @@ rip_input(struct sockaddr_in *from,
 			if (mask != 0) {
 				sp = &net_buf[strlen(net_buf)];
 				if (IMSG.rip_vers == RIPv1) {
-					sprintf(sp," mask=%#x ? ",mask);
+					snprintf(sp,
+					    net_buf + sizeof net_buf - sp,
+					    " mask=%#x ? ",mask);
 					mask = 0;
 				} else if (mask + dmask == 0) {
 					for (i = 0;
 					    (i != 32 && ((1<<i)&mask) == 0);
 					    i++)
 						continue;
-					sprintf(sp, "/%d",32-i);
+					snprintf(sp,
+					    net_buf + sizeof net_buf - sp,
+					    "/%d",32-i);
 				} else
-					sprintf(sp," (mask %#x)", mask);
+					snprintf(sp,
+					    net_buf + sizeof net_buf - sp,
+					    " (mask %#x)", mask);
 			}
 
 			if (!nflag) {

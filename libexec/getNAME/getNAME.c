@@ -1,4 +1,4 @@
-/*	$OpenBSD: getNAME.c,v 1.10 2002/07/03 23:39:03 deraadt Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.11 2003/04/06 00:45:12 deraadt Exp $	*/
 /*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static char rcsid[] = "$OpenBSD: getNAME.c,v 1.10 2002/07/03 23:39:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getNAME.c,v 1.11 2003/04/06 00:45:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ newman:
 		trimln(headbuf);
 		for (loc = strchr(headbuf, ' '); loc; loc = strchr(loc, ' '))
 			if (loc[1] == ',')
-				strcpy(loc, &loc[1]);
+				memmove(loc, &loc[1], strlen(&loc[1])+1);
 			else
 				loc++;
 		if (headbuf[0] != '.') {
@@ -228,7 +228,7 @@ newman:
 			 * Get rid of quotes in macros.
 			 */
 			for (loc = strchr(&headbuf[4], '"'); loc; ) {
-				strcpy(loc, &loc[1]);
+				memmove(loc, &loc[1], strlen(&loc[1])+1);
 				loc = strchr(loc, '"');
 			}
 			/*
