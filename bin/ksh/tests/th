@@ -364,6 +364,7 @@ run_test
 	    $len = index($rest, $c, 1) - 1;
 	    $name = substr($rest, 1, $len);
 	    $rest = substr($rest, 2 + $len);
+	    $perm = oct($perm) if $perm =~ /^\d+$/;
 	    if ($type eq 'file') {
 		return undef if !&write_file($name, $rest);
 		if (!chmod($perm, $name)) {
@@ -550,7 +551,7 @@ scrub_dir
     local($file);
 
     if (!opendir(DIR, $dir)) {
-	print STDERR "$prog: couldn't open direcotry $dir - $!\n";
+	print STDERR "$prog: couldn't open directory $dir - $!\n";
 	return undef;
     }
     while ($file = readdir(DIR)) {
