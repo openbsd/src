@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.18 1999/07/14 23:15:49 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.19 1999/12/08 23:49:07 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -96,6 +96,7 @@ char *fsrtoname __P((int, int, int, char *));
 void cache_print __P((struct cpu_softc *));
 void cpu_spinup __P((struct cpu_softc *));
 void fpu_init __P((struct cpu_softc *));
+void replacemul __P((void));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
 #define	IU_VERS(psr)	(((psr) >> 24) & 0xf)
@@ -346,6 +347,7 @@ cache_print(sc)
 void cpumatch_unknown __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_sun4 __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_sun4c __P((struct cpu_softc *, struct module_info *, int));
+void cpumatch_ms __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_viking __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_hypersparc __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_turbosparc __P((struct cpu_softc *, struct module_info *, int));
@@ -711,7 +713,7 @@ getcacheinfo_obp(sc, node)
 struct module_info module_ms1 = {
 	CPUTYP_MS1,
 	VAC_NONE,
-	0,
+	cpumatch_ms,
 	getcacheinfo_obp,
 	0,
 	ms1_mmu_enable,
@@ -735,7 +737,7 @@ ms1_mmu_enable()
 struct module_info module_ms2 = {		/* UNTESTED */
 	CPUTYP_MS2,
 	VAC_WRITETHROUGH,
-	0,
+	cpumatch_ms,
 	getcacheinfo_obp,
 	0, /* was swift_hotfix, */
 	0,
@@ -754,7 +756,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 struct module_info module_swift = {		/* UNTESTED */
 	CPUTYP_MS2,
 	VAC_WRITETHROUGH,
-	0,
+	cpumatch_ms,
 	getcacheinfo_obp,
 	swift_hotfix,
 	0,
@@ -768,6 +770,15 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line
 };
+
+void
+cpumatch_ms(sc, mp, node)
+	struct cpu_softc *sc;
+	struct module_info *mp;
+	int	node;
+{
+	replacemul();
+}
 
 void
 swift_hotfix(sc)
@@ -810,6 +821,8 @@ cpumatch_viking(sc, mp, node)
 	struct module_info *mp;
 	int	node;
 {
+	replacemul();
+
 	if (node == 0)
 		viking_hotfix(sc);
 }
@@ -889,6 +902,8 @@ cpumatch_hypersparc(sc, mp, node)
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
 	printf("warning: hypersparc support still under construction\n");
+
+	replacemul();
 }
 
 void
@@ -976,6 +991,8 @@ cpumatch_turbosparc(sc, mp, node)
 	sc->vcache_flush_region = 0;
 	sc->vcache_flush_context = 0;
 	sc->pcache_flush_line = 0;
+
+	replacemul();
 }
 
 void
@@ -1244,4 +1261,28 @@ fsrtoname(impl, vers, fver, buf)
 			return (p->name);
 	sprintf(buf, "version 0x%x", fver);
 	return (buf);
+}
+
+void
+replacemul()
+{
+	extern void *_umulreplace, *_umulreplace_end;
+	extern void *_mulreplace, *_mulreplace_end;
+	extern char *_mul, *_umul;
+	int i, j, s;
+
+	/*
+	 * Whack the slow sun4/sun4c umul/mul functions with
+	 * fast V8 ones
+	 */
+	s = splhigh();
+	for (i = 0; i < _umulreplace_end - _umulreplace; i += 4) {
+		j = ((int *)_umulreplace)[i];
+		pmap_writetext(_umul + (i<<2), j);
+	}
+	for (i = 0; i < _mulreplace_end - _mulreplace; i += 4) {
+		j = ((int *)_mulreplace)[i];
+		pmap_writetext(_mul + (i<<2), j);
+	}
+	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 1999/12/07 00:49:07 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.33 1999/12/08 23:49:07 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -286,15 +286,6 @@ bootstrap()
 		extern void setpte4m __P((u_int, u_int));
 		extern struct timer_4m *timerreg_4m;
 		extern struct counter_4m *counterreg_4m;
-		extern void *_umulreplace, *_umul, *_umulreplace_end;
-		extern void *_mulreplace, *_mul, *_mulreplace_end;
-
-		/*
-		 * Whack the slow sun4/sun4c umul/mul functions with
-		 * fast V8 ones
-		 */
-		bcopy(_umulreplace, _umul, _umulreplace_end-_umulreplace);
-		bcopy(_mulreplace, _mul, _mulreplace_end-_mulreplace);
 
 		if ((node = opennode("/obio/interrupt")) == 0)
 		    if ((node=search_prom(findroot(),"interrupt"))==0)
