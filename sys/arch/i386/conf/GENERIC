@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.130 1999/09/19 16:38:42 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.131 1999/09/26 17:53:12 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -236,7 +236,7 @@ ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 ax*	at pci? dev ? function ?		# ASIX AX88140A ethernet
 
 # Media Independent Interface (mii) drivers
-#exphy*	at mii? phy ?				# 3Com internal PHYs
+exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
 icsphy*	at mii? phy ?				# ICS 1890 PHYs
 #lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
