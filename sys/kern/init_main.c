@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.7 1996/05/06 09:56:20 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.8 1996/05/07 15:23:35 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84 1996/04/22 01:38:12 christos Exp $	*/
 
 /*
@@ -171,17 +171,18 @@ main(framep)
 	 */
 	p = &proc0;
 	curproc = p;
+
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
 	 */
+	config_init();		/* init autoconfiguration data structures */
 	consinit();
 	printf(copyright);
 
 	vm_mem_init();
 	kmeminit();
 	disk_init();		/* must come before autoconfiguration */
-	config_init();		/* init autoconfiguration data structures */
 	cpu_startup();
 
 	/*

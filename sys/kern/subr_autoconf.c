@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.5 1996/04/29 14:17:45 hvozda Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.6 1996/05/07 15:23:36 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -91,7 +91,9 @@ struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
 
 /*
- * Initialize autoconfiguration data structures.
+ * Initialize autoconfiguration data structures.  This occurs before console
+ * initialization as that might require use of this subsystem.  Furthermore
+ * this means that malloc et al. isn't yet available.
  */
 void
 config_init()
