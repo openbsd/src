@@ -61,7 +61,9 @@
 int verbose = 0;
 
 void usage __P((void));
+int config __P((char *, char *, int));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -97,6 +99,7 @@ main(argc, argv)
 	exit(rv);
 }
 
+int
 config(dev, file, action)
 	char *dev;
 	char *file;
@@ -137,7 +140,7 @@ config(dev, file, action)
 			printf("%s: %d bytes on %s\n", dev, vndio.vnd_size,
 			    file);
 	}
-done:
+
 	fclose(f);
 	fflush(stdout);
 	return (rv < 0);
