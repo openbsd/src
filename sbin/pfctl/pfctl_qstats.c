@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.11 2003/01/24 11:20:46 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.12 2003/01/27 19:37:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -176,13 +176,13 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 	if (*root == NULL)
 		*root = node;
 	else if (!altq.parent[0]) {
-		struct pf_altq_node *prev = *root;
+		struct pf_altq_node	*prev = *root;
 
 		while (prev->next != NULL)
 			prev = prev->next;
 		prev->next = node;
 	} else {
-		struct pf_altq_node *parent;
+		struct pf_altq_node	*parent;
 
 		parent = pfctl_find_altq_node(*root, altq.parent, altq.ifname);
 		if (parent == NULL)
@@ -321,7 +321,7 @@ void
 pfctl_free_altq_node(struct pf_altq_node *node)
 {
 	while (node != NULL) {
-		struct pf_altq_node *prev;
+		struct pf_altq_node	*prev;
 
 		if (node->children != NULL)
 			pfctl_free_altq_node(node->children);
