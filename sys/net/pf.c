@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.18 2001/06/25 00:02:54 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.19 2001/06/25 00:14:57 niklas Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -65,9 +65,9 @@ struct tree_node {
 		u_int8_t	 proto;
 	}			 key;
 	struct state		*state;
-	signed char		 balance;
 	struct tree_node	*left;
 	struct tree_node	*right;
+	signed char		 balance;
 };
 
 /*
@@ -97,53 +97,51 @@ struct pool		pf_state_pl;
  * Prototypes
  */
 
-signed char	 tree_key_compare (struct tree_key *a, struct tree_key *b);
-void		 tree_rotate_left (struct tree_node **p);
-void		 tree_rotate_right (struct tree_node **p);
-int		 tree_insert (struct tree_node **p, struct tree_key *key,
-		    struct state *state);
-int		 tree_remove (struct tree_node **p, struct tree_key *key);
-struct state	*find_state (struct tree_node *p, struct tree_key *key);
-void		 insert_state (struct state *state);
-void		 purge_expired_states (void);
-void		 print_ip (struct ifnet *ifp, struct ip *h);
-void		 print_host (u_int32_t a, u_int16_t p);
-void		 print_state (int direction, struct state *s);
-void		 print_flags (u_int8_t f);
-void		 pfattach (int num);
-int		 pfopen (dev_t dev, int flags, int fmt, struct proc *p);
-int		 pfclose (dev_t dev, int flags, int fmt, struct proc *p);
-int		 pfioctl (dev_t dev, u_long cmd, caddr_t addr, int flags,
-		    struct proc *p);
-u_int16_t	 fix (u_int16_t cksum, u_int16_t old, u_int16_t new);
-void		 change_ap (u_int32_t *a, u_int16_t *p, u_int16_t *ic, u_int16_t
-		    *pc, u_int32_t an, u_int16_t pn);
-void		 change_a (u_int32_t *a, u_int16_t *c, u_int32_t an);
-void		 change_icmp (u_int32_t *ia, u_int16_t *ip, u_int32_t *oa,
-		    u_int32_t na, u_int16_t np, u_int16_t *pc, u_int16_t *h2c,
-		    u_int16_t *ic, u_int16_t *hc);
-void		 send_reset (int direction, struct ifnet *ifp, struct ip *h,
-		    int off, struct tcphdr *th);
-int		 match_addr (u_int8_t n, u_int32_t a, u_int32_t m, u_int32_t b);
-int		 match_port (u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p);
-struct nat	*get_nat (struct ifnet *ifp, u_int8_t proto, u_int32_t addr);
-struct rdr	*get_rdr (struct ifnet *ifp, u_int8_t proto, u_int32_t addr,
-		    u_int16_t port);
-int		 pf_test_tcp (int direction, struct ifnet *ifp, int,
-		    struct ip *h, struct tcphdr *th);
-int		 pf_test_udp (int direction, struct ifnet *ifp, int,
-		    struct ip *h, struct udphdr *uh);
-int		 pf_test_icmp (int direction, struct ifnet *ifp, int,
-		    struct ip *h, struct icmp *ih);
-struct state	*pf_test_state_tcp (int direction, struct ifnet *ifp,
-		    struct mbuf **, int, struct ip *h, struct tcphdr *th);
-struct state	*pf_test_state_udp (int direction, struct ifnet *ifp,
-		    struct mbuf **, int, struct ip *h, struct udphdr *uh);
-struct state	*pf_test_state_icmp (int direction, struct ifnet *ifp,
-		    struct mbuf **, int, struct ip *h, struct icmp *ih);
-inline void	*pull_hdr (struct ifnet *ifp, struct mbuf **m, int, int, int,
-		    struct ip *h, int *action);
-int		 pf_test (int direction, struct ifnet *ifp, struct mbuf **m);
+signed char	 tree_key_compare(struct tree_key *, struct tree_key *);
+void		 tree_rotate_left(struct tree_node **);
+void		 tree_rotate_right(struct tree_node **);
+int		 tree_insert(struct tree_node **, struct tree_key *,
+		    struct state *);
+int		 tree_remove(struct tree_node **, struct tree_key *);
+struct state	*find_state(struct tree_node *, struct tree_key *);
+void		 insert_state(struct state *);
+void		 purge_expired_states(void);
+void		 print_ip(struct ifnet *, struct ip *);
+void		 print_host(u_int32_t, u_int16_t);
+void		 print_state(int, struct state *);
+void		 print_flags(u_int8_t);
+void		 pfattach(int);
+int		 pfopen(dev_t, int, int, struct proc *);
+int		 pfclose(dev_t, int, int, struct proc *);
+int		 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
+u_int16_t	 fix(u_int16_t, u_int16_t, u_int16_t);
+void		 change_ap(u_int32_t *, u_int16_t *, u_int16_t *, u_int16_t *,
+		    u_int32_t, u_int16_t);
+void		 change_a(u_int32_t *, u_int16_t *, u_int32_t);
+void		 change_icmp(u_int32_t *, u_int16_t *, u_int32_t *, u_int32_t,
+		    u_int16_t, u_int16_t *, u_int16_t *, u_int16_t *,
+		    u_int16_t *);
+void		 send_reset(int, struct ifnet *, struct ip *, int,
+		    struct tcphdr *);
+int		 match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
+int		 match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
+struct nat	*get_nat(struct ifnet *, u_int8_t, u_int32_t);
+struct rdr	*get_rdr(struct ifnet *, u_int8_t, u_int32_t, u_int16_t);
+int		 pf_test_tcp(int, struct ifnet *, int, struct ip *,
+		    struct tcphdr *);
+int		 pf_test_udp(int, struct ifnet *, int, struct ip *,
+		    struct udphdr *);
+int		 pf_test_icmp(int, struct ifnet *, int, struct ip *,
+		    struct icmp *);
+struct state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf **, int,
+		    struct ip *, struct tcphdr *);
+struct state	*pf_test_state_udp(int, struct ifnet *, struct mbuf **, int,
+		    struct ip *, struct udphdr *);
+struct state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **, int,
+		    struct ip *, struct icmp *);
+void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, int,
+		    struct ip *, int *);
+int		 pf_test(int, struct ifnet *, struct mbuf **);
 
 inline signed char
 tree_key_compare(struct tree_key *a, struct tree_key *b)
@@ -153,26 +151,26 @@ tree_key_compare(struct tree_key *a, struct tree_key *b)
 	 * minimize the number of average compares. what is faster?
 	 */
 	if (a->proto   < b->proto  )
-		return -1;
+		return (-1);
 	if (a->proto   > b->proto  )
-		return  1;
+		return ( 1);
 	if (a->addr[0] < b->addr[0])
-		return -1;
+		return (-1);
 	if (a->addr[0] > b->addr[0])
-		return  1;
+		return ( 1);
 	if (a->addr[1] < b->addr[1])
-		return -1;
+		return (-1);
 	if (a->addr[1] > b->addr[1])
-		return  1;
+		return ( 1);
 	if (a->port[0] < b->port[0])
-		return -1;
+		return (-1);
 	if (a->port[0] > b->port[0])
-		return  1;
+		return ( 1);
 	if (a->port[1] < b->port[1])
-		return -1;
+		return (-1);
 	if (a->port[1] > b->port[1])
-		return  1;
-	return 0;
+		return ( 1);
+	return (0);
 }
 
 inline void
@@ -215,7 +213,7 @@ tree_insert(struct tree_node **p, struct tree_key *key, struct state *state)
 	if (*p == NULL) {
 		*p = pool_get(&pf_tree_pl, PR_NOWAIT);
 		if (*p == NULL) {
-			return 0;
+			return (0);
 		}
 		bcopy(key, &(*p)->key, sizeof(struct tree_key));
 		(*p)->state = state;
@@ -245,7 +243,7 @@ tree_insert(struct tree_node **p, struct tree_key *key, struct state *state)
 			}
 		}
 	}
-	return deltaH;
+	return (deltaH);
 }
 
 int
@@ -255,7 +253,7 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 	signed char c;
 
 	if (*p == NULL)
-		return 0;
+		return (0);
 	c = tree_key_compare(key, &(*p)->key);
 	if (c < 0) {
 		if (tree_remove(&(*p)->left, key)) {
@@ -318,7 +316,7 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 			}
 		}
 	}
-	return deltaH;
+	return (deltaH);
 }
 
 inline struct state *
@@ -329,7 +327,7 @@ find_state(struct tree_node *p, struct tree_key *key)
 	while (p && (c = tree_key_compare(&p->key, key)))
 		p = (c > 0) ? p->left : p->right;
 	status.state_searches++;
-	return p ? p->state : NULL;
+	return (p ? p->state : NULL);
 }
 
 void
@@ -513,18 +511,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	int s;
 
 	if (!(flags & FWRITE))
-		return EACCES;
+		return (EACCES);
 	
 	if ((cmd != DIOCSTART) && (cmd != DIOCSTOP) && (cmd != DIOCCLRSTATES)) {
 		ub = (struct pfioc *)addr;
 		if (ub == NULL)
-			return EINVAL;
+			return (EINVAL);
 		kb = malloc(ub->size, M_DEVBUF, M_NOWAIT);
 		if (kb == NULL)
-			return ENOMEM;
+			return (ENOMEM);
 		if (copyin(ub->buffer, kb, ub->size)) {
 			free(kb, M_DEVBUF);
-			return EIO;
+			return (EIO);
 		}
 	}
 
@@ -760,7 +758,7 @@ done:
 			error = EIO;
 		free(kb, M_DEVBUF);
 	}
-	return error;
+	return (error);
 }
 
 inline u_int16_t
@@ -769,7 +767,7 @@ fix(u_int16_t cksum, u_int16_t old, u_int16_t new)
 	u_int32_t l = cksum + old - new;
 	l = (l >> 16) + (l & 65535); 
 	l = l & 65535;
-	return l ? l : 65535;
+	return (l ? l : 65535);
 }  
 
 void
@@ -903,7 +901,7 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
 inline int
 match_addr(u_int8_t n, u_int32_t a, u_int32_t m, u_int32_t b)
 {
-	return n == !((a & m) == (b & m));
+	return (n == !((a & m) == (b & m)));
 }
 
 inline int
@@ -913,19 +911,19 @@ match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 	case 1:
 		return (p >= a1) && (p <= a2);
 	case 2:
-		return p == a1;
+		return (p == a1);
 	case 3:
-		return p != a1;
+		return (p != a1);
 	case 4:
-		return p <  a1;
+		return (p <  a1);
 	case 5:
-		return p <= a1;
+		return (p <= a1);
 	case 6:
-		return p >  a1;
+		return (p >  a1);
 	case 7:
-		return p >= a1;
+		return (p >= a1);
 	}
-	return 0; /* never reached */
+	return (0); /* never reached */
 }
 
 struct nat *
@@ -941,7 +939,7 @@ get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 		else
 			n = n->next;
 	}
-	return nm;
+	return (nm);
 }
 
 struct rdr *
@@ -957,7 +955,7 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 		else
 			r = r->next;
 	}
-	return rm;
+	return (rm);
 }
 
 int
@@ -1042,11 +1040,11 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 			change_ap(&h->ip_dst.s_addr, &th->th_dport,
 			    &h->ip_sum, &th->th_sum, baddr, bport);
 		send_reset(direction, ifp, h, off, th);
-		return PF_DROP;
+		return (PF_DROP);
 	}
 
 	if ((rm != NULL) && (rm->action == PF_DROP))
-		return PF_DROP;
+		return (PF_DROP);
 
 	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
 		/* create new state */
@@ -1056,7 +1054,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		len = h->ip_len - off - (th->th_off << 2);
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			return PF_DROP;
+			return (PF_DROP);
 		}
 		s->proto	= IPPROTO_TCP;
 		s->direction	= direction;
@@ -1101,7 +1099,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		insert_state(s);
 	}
 
-	return PF_PASS;
+	return (PF_PASS);
 }
 
 int
@@ -1168,7 +1166,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	}
 
 	if (rm != NULL && rm->action != PF_PASS)
-		return PF_DROP;
+		return (PF_DROP);
 
 	if ((rm != NULL && rm->keep_state) || nat != NULL || rdr != NULL) {
 		/* create new state */
@@ -1178,7 +1176,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		len = h->ip_len - off - 8;
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			return PF_DROP;
+			return (PF_DROP);
 		}
 		s->proto	= IPPROTO_UDP;
 		s->direction	= direction;
@@ -1223,7 +1221,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		insert_state(s);
 	}
 
-	return PF_PASS;
+	return (PF_PASS);
 }
 
 int
@@ -1276,7 +1274,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	}
 
 	if (rm != NULL && rm->action != PF_PASS)
-		return PF_DROP;
+		return (PF_DROP);
 
 	if ((rm != NULL && rm->keep_state) || nat != NULL) {
 		/* create new state */
@@ -1288,7 +1286,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		id = ih->icmp_hun.ih_idseq.icd_id;
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			return PF_DROP;
+			return (PF_DROP);
 		}
 		s->proto	= IPPROTO_ICMP;
 		s->direction	= direction;
@@ -1320,7 +1318,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		insert_state(s);
 	}
 
-	return PF_PASS;
+	return (PF_PASS);
 }
 
 struct state *
@@ -1423,9 +1421,9 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			s = NULL;
 		}
 
-		return s;
+		return (s);
 	}
-	return NULL;
+	return (NULL);
 }
 
 struct state *
@@ -1483,9 +1481,9 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 				    s->lan.addr, s->lan.port);
 		}
 
-		return s;
+		return (s);
 	}
-	return NULL;
+	return (NULL);
 }
 
 struct state *
@@ -1532,9 +1530,9 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 					    s->lan.addr);
 			}
 
-			return s;
+			return (s);
 		}
-		return NULL;
+		return (NULL);
 
 	} else {
 
@@ -1551,7 +1549,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		h2 = pull_hdr(ifp, m, 0, off, sizeof(*h2), h, &dummy);
 		if (!h2) {
 			printf("packetfilter: ICMP error message too short\n");
-			return NULL;
+			return (NULL);
 		}
 
 		/* offset of protocol header that follows h2 */
@@ -1583,7 +1581,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			s = find_state((direction == PF_IN) ? tree_ext_gwy :
 			    tree_lan_ext, &key);
 			if (s == NULL)
-				return NULL;
+				return (NULL);
 
 			src = (direction == s->direction) ?  &s->dst : &s->src;
 
@@ -1594,7 +1592,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 				print_state(direction, s);
 				print_flags(th->th_flags);
 				printf(" seq=%lu\n", seq);
-				return NULL;
+				return (NULL);
 			}
 
 			if (s->lan.addr != s->gwy.addr ||
@@ -1613,7 +1611,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 					    &h->ip_sum);
 				}
 			}
-			return s;
+			return (s);
 			break;
 		}
 		case IPPROTO_UDP: {
@@ -1638,7 +1636,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			s = find_state(direction == PF_IN ? tree_ext_gwy :
 			    tree_lan_ext, &key);
 			if (s == NULL)
-				return NULL;
+				return (NULL);
 
 			if (s->lan.addr != s->gwy.addr ||
 			    s->lan.port != s->gwy.port) {
@@ -1656,14 +1654,14 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 					    &h->ip_sum);
 				}
 			}
-			return s;
+			return (s);
 			break;
 		}
 		default:
 			printf("packetfilter: ICMP error message for bad proto\n");
-			return NULL;
+			return (NULL);
 		}
-		return NULL;
+		return (NULL);
 
 	}
 }
@@ -1672,7 +1670,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
  * ipoff and off are measured from the start of the mbuf chain.
  * h must be at "ipoff" on the mbuf chain.
  */
-inline void *
+void *
 pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
     struct ip *h, int *action)
 {
@@ -1694,13 +1692,13 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
 			printf("packetfilter: dropping following fragment");
 			print_ip(ifp, h);
 		}
-		return NULL;
+		return (NULL);
 	}
 	if ((*m)->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
 		*action = PF_DROP;
 		printf("packetfilter: dropping short packet");
 		print_ip(ifp, h);
-		return NULL;
+		return (NULL);
 	}
 	/*
 	 * XXX should use m_copydata, but NAT portion tries to touch mbuf
@@ -1711,9 +1709,9 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
 		printf("packetfilter: pullup proto header failed\n");
 		*action = PF_DROP;
 		*m = NULL;
-		return NULL;
+		return (NULL);
 	}
-	return mtod(n, char *) + newoff;
+	return (mtod(n, char *) + newoff);
 }
 
 int
@@ -1724,7 +1722,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	int off;
 
 	if (!status.running)
-		return PF_PASS;
+		return (PF_PASS);
 
 #ifdef DIAGNOSTIC
 	if (((*m)->m_flags & M_PKTHDR) == 0)
@@ -1801,5 +1799,5 @@ done:
 		status.bytes[direction] += h->ip_len;
 		status.packets[direction][action]++;
 	}
-	return action;
+	return (action);
 }
