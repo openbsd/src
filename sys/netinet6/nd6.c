@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.30 2001/03/08 09:03:06 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.136 2001/03/06 12:26:07 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.31 2001/03/21 21:57:10 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1649,8 +1649,19 @@ fail:
 		ln->ln_state = newstate;
 
 		if (ln->ln_state == ND6_LLINFO_STALE) {
+			/*
+			 * XXX: since nd6_output() below will cause
+			 * state tansition to DELAY and reset the timer,
+			 * we must set the timer now, although it is actually
+			 * meaningless.
+			 */
+			ln->ln_expire = time_second + nd6_gctimer;
+
 			if (ln->ln_hold) {
 #ifdef OLDIP6OUTPUT
+				ln->ln_asked = 0;
+				ln->ln_state = ND6_LLINFO_DELAY;
+				ln->ln_expire = time_second + nd6_delay;
 				(*ifp->if_output)(ifp, ln->ln_hold,
 						  rt_key(rt), rt);
 #else
@@ -1662,9 +1673,8 @@ fail:
 					   (struct sockaddr_in6 *)rt_key(rt),
 					   rt);
 #endif
-				ln->ln_hold = 0;
+				ln->ln_hold = NULL;
 			}
-			ln->ln_expire = time_second + nd6_gctimer;
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */
 			ln->ln_expire = time_second;
