@@ -47,7 +47,7 @@ case $machine in
         fixincludes=fixinc.interix
         ;;
 
-    i?86-*-openbsd*)
+    *-*-openbsd*)
         fixincludes=fixinc.wrap
         ;;
 
