@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.38 2002/12/20 07:48:00 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.39 2003/11/18 06:08:18 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -63,12 +63,14 @@
 /*
  * Pool resource management utility.
  *
- * Memory is allocated in pages which are split into pieces according
- * to the pool item size. Each page is kept on a list headed by `pr_pagelist'
- * in the pool structure and the individual pool items are on a linked list
- * headed by `ph_itemlist' in each page header. The memory for building
- * the page list is either taken from the allocated pages themselves (for
- * small pool items) or taken from an internal pool of page headers (`phpool').
+ * Memory is allocated in pages which are split into pieces according to
+ * the pool item size. Each page is kept on one of three lists in the
+ * pool structure: `pr_emptypages', `pr_fullpages' and `pr_partpages',
+ * for empty, full and partially-full pages respectively. The individual
+ * pool items are on a linked list headed by `ph_itemlist' in each page
+ * header. The memory for building the page list is either taken from
+ * the allocated pages themselves (for small pool items) or taken from
+ * an internal pool of page headers (`phpool').
  */
 
 /* List of all pools */
@@ -88,16 +90,15 @@ struct simplelock pool_head_slock = SIMPLELOCK_INITIALIZER;
 
 struct pool_item_header {
 	/* Page headers */
-	TAILQ_ENTRY(pool_item_header)
+	LIST_ENTRY(pool_item_header)
 				ph_pagelist;	/* pool page list */
 	TAILQ_HEAD(,pool_item)	ph_itemlist;	/* chunk list for this page */
-	LIST_ENTRY(pool_item_header)
-				ph_hashlist;	/* Off-page page headers */
+	SPLAY_ENTRY(pool_item_header)
+				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
 	struct timeval		ph_time;	/* last referenced */
 };
-TAILQ_HEAD(pool_pagelist,pool_item_header);
 
 struct pool_item {
 #ifdef DIAGNOSTIC
@@ -107,9 +108,6 @@ struct pool_item {
 	/* Other entries use only this list entry */
 	TAILQ_ENTRY(pool_item)	pi_list;
 };
-
-#define	PR_HASH_INDEX(pp,addr) \
-	(((u_long)(addr) >> (pp)->pr_alloc->pa_pageshift) & (PR_HASHTABSIZE - 1))
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
 	((pp)->pr_nitems < (pp)->pr_minitems)
@@ -165,14 +163,18 @@ void	pool_cache_do_invalidate(struct pool_cache *, int,
 
 int	pool_catchup(struct pool *);
 void	pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
+void	pool_update_curpage(struct pool *);
 void	pool_do_put(struct pool *, void *);
 void	pr_rmpage(struct pool *, struct pool_item_header *,
     struct pool_pagelist *);
+int	pool_chk_page(struct pool *, const char *, struct pool_item_header *);
 
 void	*pool_allocator_alloc(struct pool *, int);
 void	pool_allocator_free(struct pool *, void *);
 
+void pool_print_pagelist(struct pool_pagelist *, int (*)(const char *, ...));
 void pool_print1(struct pool *, const char *, int (*)(const char *, ...));
+
 
 /*
  * Pool log entry. An array of these is allocated in pool_init().
@@ -292,24 +294,34 @@ pr_enter_check(struct pool *pp, int (*pr)(const char *, ...))
 #define	pr_enter_check(pp, pr)
 #endif /* POOL_DIAGNOSTIC */
 
+static __inline int
+phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
+{
+	if (a->ph_page < b->ph_page)
+		return (-1);
+	else if (a->ph_page > b->ph_page)
+		return (1);
+	else
+		return (0);
+}
+
+SPLAY_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
+SPLAY_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
+
 /*
  * Return the pool page header based on page address.
  */
 static __inline struct pool_item_header *
 pr_find_pagehead(struct pool *pp, caddr_t page)
 {
-	struct pool_item_header *ph;
+	struct pool_item_header *ph, tmp;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
 		return ((struct pool_item_header *)(page + pp->pr_phoffset));
 
-	for (ph = LIST_FIRST(&pp->pr_hashtab[PR_HASH_INDEX(pp, page)]);
-	     ph != NULL;
-	     ph = LIST_NEXT(ph, ph_hashlist)) {
-		if (ph->ph_page == page)
-			return (ph);
-	}
-	return (NULL);
+	tmp.ph_page = page;
+	ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
+	return ph;
 }
 
 /*
@@ -339,13 +351,13 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	/*
 	 * Unlink a page from the pool and release it (or queue it for release).
 	 */
-	TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
+	LIST_REMOVE(ph, ph_pagelist);
 	if (pq) {
-		TAILQ_INSERT_HEAD(pq, ph, ph_pagelist);
+		LIST_INSERT_HEAD(pq, ph, ph_pagelist);
 	} else {
 		pool_allocator_free(pp, ph->ph_page);
 		if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
-			LIST_REMOVE(ph, ph_hashlist);
+			SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
 			s = splhigh();
 			pool_put(&phpool, ph);
 			splx(s);
@@ -354,18 +366,7 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	pp->pr_npages--;
 	pp->pr_npagefree++;
 
-	if (pp->pr_curpage == ph) {
-		/*
-		 * Find a new non-empty page header, if any.
-		 * Start search from the page head, to increase the
-		 * chance for "high water" pages to be freed.
-		 */
-		TAILQ_FOREACH(ph, &pp->pr_pagelist, ph_pagelist)
-			if (TAILQ_FIRST(&ph->ph_itemlist) != NULL)
-				break;
-
-		pp->pr_curpage = ph;
-	}
+	pool_update_curpage(pp);
 }
 
 /*
@@ -378,7 +379,7 @@ void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
-	int off, slack, i;
+	int off, slack;
 
 #ifdef POOL_DIAGNOSTIC
 	/*
@@ -425,7 +426,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	/*
 	 * Initialize the pool structure.
 	 */
-	TAILQ_INIT(&pp->pr_pagelist);
+	LIST_INIT(&pp->pr_emptypages);
+	LIST_INIT(&pp->pr_fullpages);
+	LIST_INIT(&pp->pr_partpages);
 	TAILQ_INIT(&pp->pr_cachelist);
 	pp->pr_curpage = NULL;
 	pp->pr_npages = 0;
@@ -468,9 +471,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		/* The page header will be taken from our page header pool */
 		pp->pr_phoffset = 0;
 		off = palloc->pa_pagesz;
-		for (i = 0; i < PR_HASHTABSIZE; i++) {
-			LIST_INIT(&pp->pr_hashtab[i]);
-		}
+		SPLAY_INIT(&pp->pr_phtree);
 	}
 
 	/*
@@ -566,8 +567,10 @@ pool_destroy(struct pool *pp)
 #endif
 
 	/* Remove all pages */
-	while ((ph = TAILQ_FIRST(&pp->pr_pagelist)) != NULL)
+	while ((ph = LIST_FIRST(&pp->pr_emptypages)) != NULL)
 		pr_rmpage(pp, ph, NULL);
+	KASSERT(LIST_EMPTY(&pp->pr_fullpages));
+	KASSERT(LIST_EMPTY(&pp->pr_partpages));
 
 	/* Remove from global pool list */
 	simple_lock(&pool_head_slock);
@@ -595,7 +598,7 @@ pool_set_drain_hook(struct pool *pp, void (*fn)(void *, int), void *arg)
 	pp->pr_drain_hook_arg = arg;
 }
 
-static __inline struct pool_item_header *
+static struct pool_item_header *
 pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
 {
 	struct pool_item_header *ph;
@@ -781,7 +784,6 @@ pool_get(struct pool *pp, int flags)
 		/* Start the allocation process over. */
 		goto startover;
 	}
-
 	if (__predict_false((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL)) {
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
@@ -822,9 +824,16 @@ pool_get(struct pool *pp, int flags)
 			panic("pool_get: nidle inconsistent");
 #endif
 		pp->pr_nidle--;
+
+		/*
+		 * This page was previously empty.  Move it to the list of
+		 * partially-full pages.  This page is already curpage.
+		 */
+		LIST_REMOVE(ph, ph_pagelist);
+		LIST_INSERT_HEAD(&pp->pr_partpages, ph, ph_pagelist);
 	}
 	ph->ph_nmissing++;
-	if (TAILQ_FIRST(&ph->ph_itemlist) == NULL) {
+	if (TAILQ_EMPTY(&ph->ph_itemlist)) {
 #ifdef DIAGNOSTIC
 		if (__predict_false(ph->ph_nmissing != pp->pr_itemsperpage)) {
 			pr_leave(pp);
@@ -834,23 +843,12 @@ pool_get(struct pool *pp, int flags)
 		}
 #endif
 		/*
-		 * Find a new non-empty page header, if any.
-		 * Start search from the page head, to increase
-		 * the chance for "high water" pages to be freed.
-		 *
-		 * Migrate empty pages to the end of the list.  This
-		 * will speed the update of curpage as pages become
-		 * idle.  Empty pages intermingled with idle pages
-		 * is no big deal.  As soon as a page becomes un-empty,
-		 * it will move back to the head of the list.
+		 * This page is now full.  Move it to the full list
+		 * and select a new current page.
 		 */
-		TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
-		TAILQ_INSERT_TAIL(&pp->pr_pagelist, ph, ph_pagelist);
-		TAILQ_FOREACH(ph, &pp->pr_pagelist, ph_pagelist)
-			if (TAILQ_FIRST(&ph->ph_itemlist) != NULL)
-				break;
-
-		pp->pr_curpage = ph;
+		LIST_REMOVE(ph, ph_pagelist);
+		LIST_INSERT_HEAD(&pp->pr_fullpages, ph, ph_pagelist);
+		pool_update_curpage(pp);
 	}
 
 	pp->pr_nget++;
@@ -949,18 +947,15 @@ pool_do_put(struct pool *pp, void *v)
 	}
 
 	/*
-	 * If this page is now complete, do one of two things:
+	 * If this page is now empty, do one of two things:
 	 *
-	 *	(1) If we have more pages than the page high water
-	 *	    mark, free the page back to the system.
+	 *	(1) If we have more pages than the page high water mark,
+	 *	    free the page back to the system.
 	 *
-	 *	(2) Move it to the end of the page list, so that
-	 *	    we minimize our chances of fragmenting the
-	 *	    pool.  Idle pages migrate to the end (along with
-	 *	    completely empty pages, so that we find un-empty
-	 *	    pages more quickly when we update curpage) of the
-	 *	    list so they can be more easily swept up by
-	 *	    the pagedaemon when pages are scarce.
+	 *	(2) Otherwise, move the page to the empty page list.
+	 *
+	 * Either way, select a new current page (so we use a partially-full
+	 * page if one is available).
 	 */
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
@@ -968,8 +963,8 @@ pool_do_put(struct pool *pp, void *v)
 		    (pp->pr_alloc->pa_flags & PA_WANT) != 0) {
 			pr_rmpage(pp, ph, NULL);
 		} else {
-			TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
-			TAILQ_INSERT_TAIL(&pp->pr_pagelist, ph, ph_pagelist);
+			LIST_REMOVE(ph, ph_pagelist);
+			LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
 
 			/*
 			 * Update the timestamp on the page.  A page must
@@ -980,31 +975,19 @@ pool_do_put(struct pool *pp, void *v)
 			s = splclock();
 			ph->ph_time = mono_time;
 			splx(s);
-
-			/*
-			 * Update the current page pointer.  Just look for
-			 * the first page with any free items.
-			 *
-			 * XXX: Maybe we want an option to look for the
-			 * page with the fewest available items, to minimize
-			 * fragmentation?
-			 */
-			TAILQ_FOREACH(ph, &pp->pr_pagelist, ph_pagelist)
-				if (TAILQ_FIRST(&ph->ph_itemlist) != NULL)
-					break;
-
-			pp->pr_curpage = ph;
 		}
+		pool_update_curpage(pp);
 	}
+
 	/*
-	 * If the page has just become un-empty, move it to the head of
-	 * the list, and make it the current page.  The next allocation
-	 * will get the item from this page, instead of further fragmenting
-	 * the pool.
+	 * If the page was previously completely full, move it to the
+	 * partially-full list and make it the current page.  The next
+	 * allocation will get the item from this page, instead of
+	 * further fragmenting the pool.
 	 */
 	else if (ph->ph_nmissing == (pp->pr_itemsperpage - 1)) {
-		TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
-		TAILQ_INSERT_HEAD(&pp->pr_pagelist, ph, ph_pagelist);
+		LIST_REMOVE(ph, ph_pagelist);
+		LIST_INSERT_HEAD(&pp->pr_partpages, ph, ph_pagelist);
 		pp->pr_curpage = ph;
 	}
 }
@@ -1103,18 +1086,16 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 #endif
 
-	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
-		LIST_INSERT_HEAD(&pp->pr_hashtab[PR_HASH_INDEX(pp, cp)],
-		    ph, ph_hashlist);
-
 	/*
 	 * Insert page header.
 	 */
-	TAILQ_INSERT_HEAD(&pp->pr_pagelist, ph, ph_pagelist);
+	LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
 	TAILQ_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
 	memset(&ph->ph_time, 0, sizeof(ph->ph_time));
+	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
+		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
 	pp->pr_nidle++;
 
@@ -1162,7 +1143,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 
 /*
  * Used by pool_get() when nitems drops below the low water mark.  This
- * is used to catch up nitmes with the low water mark.
+ * is used to catch up pr_nitems with the low water mark.
  *
  * Note 1, we never wait for memory here, we let the caller decide what to do.
  *
@@ -1199,6 +1180,16 @@ pool_catchup(struct pool *pp)
 	}
 
 	return (error);
+}
+
+void
+pool_update_curpage(struct pool *pp)
+{
+
+	pp->pr_curpage = LIST_FIRST(&pp->pr_partpages);
+	if (pp->pr_curpage == NULL) {
+		pp->pr_curpage = LIST_FIRST(&pp->pr_emptypages);
+	}
 }
 
 void
@@ -1285,6 +1276,7 @@ pool_reclaim(struct pool *pp)
 	struct pool_cache *pc;
 	struct timeval curtime;
 	struct pool_pagelist pq;
+	struct timeval diff;
 	int s;
 
 	if (pp->pr_drain_hook != NULL) {
@@ -1298,7 +1290,7 @@ pool_reclaim(struct pool *pp)
 		return (0);
 	pr_enter(pp, file, line);
 
-	TAILQ_INIT(&pq);
+	LIST_INIT(&pq);
 
 	/*
 	 * Reclaim items from the pool's caches.
@@ -1310,42 +1302,40 @@ pool_reclaim(struct pool *pp)
 	curtime = mono_time;
 	splx(s);
 
-	for (ph = TAILQ_FIRST(&pp->pr_pagelist); ph != NULL; ph = phnext) {
-		phnext = TAILQ_NEXT(ph, ph_pagelist);
+	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
+		phnext = LIST_NEXT(ph, ph_pagelist);
 
 		/* Check our minimum page claim */
 		if (pp->pr_npages <= pp->pr_minpages)
 			break;
 
-		if (ph->ph_nmissing == 0) {
-			struct timeval diff;
-			timersub(&curtime, &ph->ph_time, &diff);
-			if (diff.tv_sec < pool_inactive_time)
-				continue;
+		KASSERT(ph->ph_nmissing == 0);
+		timersub(&curtime, &ph->ph_time, &diff);
+		if (diff.tv_sec < pool_inactive_time)
+			continue;
 
-			/*
-			 * If freeing this page would put us below
-			 * the low water mark, stop now.
-			 */
-			if ((pp->pr_nitems - pp->pr_itemsperpage) <
-			    pp->pr_minitems)
-				break;
+		/*
+		 * If freeing this page would put us below
+		 * the low water mark, stop now.
+		 */
+		if ((pp->pr_nitems - pp->pr_itemsperpage) <
+		    pp->pr_minitems)
+			break;
 
-			pr_rmpage(pp, ph, &pq);
-		}
+		pr_rmpage(pp, ph, &pq);
 	}
 
 	pr_leave(pp);
 	simple_unlock(&pp->pr_slock);
-	if (TAILQ_EMPTY(&pq))
+	if (LIST_EMPTY(&pq))
 		return (0);
-	while ((ph = TAILQ_FIRST(&pq)) != NULL) {
-		TAILQ_REMOVE(&pq, ph, ph_pagelist);
+	while ((ph = LIST_FIRST(&pq)) != NULL) {
+		LIST_REMOVE(ph, ph_pagelist);
 		pool_allocator_free(pp, ph->ph_page);
 		if (pp->pr_roflags & PR_PHINPAGE) {
 			continue;
 		}
-		LIST_REMOVE(ph, ph_hashlist);
+		SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
 		s = splhigh();
 		pool_put(&phpool, ph);
 		splx(s);
@@ -1402,14 +1392,35 @@ pool_printit(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 }
 
 void
+pool_print_pagelist(struct pool_pagelist *pl, int (*pr)(const char *, ...))
+{
+	struct pool_item_header *ph;
+#ifdef DIAGNOSTIC
+	struct pool_item *pi;
+#endif
+
+	LIST_FOREACH(ph, pl, ph_pagelist) {
+		(*pr)("\t\tpage %p, nmissing %d, time %lu,%lu\n",
+		    ph->ph_page, ph->ph_nmissing,
+		    (u_long)ph->ph_time.tv_sec,
+		    (u_long)ph->ph_time.tv_usec);
+#ifdef DIAGNOSTIC
+		TAILQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
+			if (pi->pi_magic != PI_MAGIC) {
+				(*pr)("\t\t\titem %p, magic 0x%x\n",
+				    pi, pi->pi_magic);
+			}
+		}
+#endif
+	}
+}
+
+void
 pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
 	struct pool_cache *pc;
 	struct pool_cache_group *pcg;
-#ifdef DIAGNOSTIC
-	struct pool_item *pi;
-#endif
 	int i, print_log = 0, print_pagelist = 0, print_cache = 0;
 	char c;
 
@@ -1440,29 +1451,22 @@ pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 	if (print_pagelist == 0)
 		goto skip_pagelist;
 
-	if ((ph = TAILQ_FIRST(&pp->pr_pagelist)) != NULL)
-		(*pr)("\n\tpage list:\n");
-	for (; ph != NULL; ph = TAILQ_NEXT(ph, ph_pagelist)) {
-		(*pr)("\t\tpage %p, nmissing %d, time %lu,%lu\n",
-		    ph->ph_page, ph->ph_nmissing,
-		    (u_long)ph->ph_time.tv_sec,
-		    (u_long)ph->ph_time.tv_usec);
-#ifdef DIAGNOSTIC
-		TAILQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
-			if (pi->pi_magic != PI_MAGIC) {
-				(*pr)("\t\t\titem %p, magic 0x%x\n",
-				    pi, pi->pi_magic);
-			}
-		}
-#endif
-	}
+	if ((ph = LIST_FIRST(&pp->pr_emptypages)) != NULL)
+		(*pr)("\n\tempty page list:\n");
+	pool_print_pagelist(&pp->pr_emptypages, pr);
+	if ((ph = LIST_FIRST(&pp->pr_fullpages)) != NULL)
+		(*pr)("\n\tfull page list:\n");
+	pool_print_pagelist(&pp->pr_fullpages, pr);
+	if ((ph = LIST_FIRST(&pp->pr_partpages)) != NULL)
+		(*pr)("\n\tpartial-page list:\n");
+	pool_print_pagelist(&pp->pr_partpages, pr);
+
 	if (pp->pr_curpage == NULL)
 		(*pr)("\tno current page\n");
 	else
 		(*pr)("\tcurpage %p\n", pp->pr_curpage->ph_page);
 
- skip_pagelist:
-
+skip_pagelist:
 	if (print_log == 0)
 		goto skip_log;
 
@@ -1472,8 +1476,7 @@ pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 	else
 		pr_printlog(pp, NULL, pr);
 
- skip_log:
-
+skip_log:
 	if (print_cache == 0)
 		goto skip_cache;
 
@@ -1489,9 +1492,59 @@ pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 		}
 	}
 
- skip_cache:
-
+skip_cache:
 	pr_enter_check(pp, pr);
+}
+
+int
+pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
+{
+	struct pool_item *pi;
+	caddr_t page;
+	int n;
+
+	page = (caddr_t)((u_long)ph & pp->pr_alloc->pa_pagemask);
+	if (page != ph->ph_page &&
+	    (pp->pr_roflags & PR_PHINPAGE) != 0) {
+		if (label != NULL)
+			printf("%s: ", label);
+		printf("pool(%p:%s): page inconsistency: page %p;"
+		       " at page head addr %p (p %p)\n", pp,
+			pp->pr_wchan, ph->ph_page,
+			ph, page);
+		return 1;
+	}
+
+	for (pi = TAILQ_FIRST(&ph->ph_itemlist), n = 0;
+	     pi != NULL;
+	     pi = TAILQ_NEXT(pi,pi_list), n++) {
+
+#ifdef DIAGNOSTIC
+		if (pi->pi_magic != PI_MAGIC) {
+			if (label != NULL)
+				printf("%s: ", label);
+			printf("pool(%s): free list modified: magic=%x;"
+			       " page %p; item ordinal %d;"
+			       " addr %p (p %p)\n",
+				pp->pr_wchan, pi->pi_magic, ph->ph_page,
+				n, pi, page);
+			panic("pool");
+		}
+#endif
+		page =
+		    (caddr_t)((u_long)pi & pp->pr_alloc->pa_pagemask);
+		if (page == ph->ph_page)
+			continue;
+
+		if (label != NULL)
+			printf("%s: ", label);
+		printf("pool(%p:%s): page inconsistency: page %p;"
+		       " item ordinal %d; addr %p (p %p)\n", pp,
+			pp->pr_wchan, ph->ph_page,
+			n, pi, page);
+		return 1;
+	}
+	return 0;
 }
 
 int
@@ -1501,55 +1554,25 @@ pool_chk(struct pool *pp, const char *label)
 	int r = 0;
 
 	simple_lock(&pp->pr_slock);
-
-	TAILQ_FOREACH(ph, &pp->pr_pagelist, ph_pagelist) {
-		struct pool_item *pi;
-		int n;
-		caddr_t page;
-
-		page = (caddr_t)((vaddr_t)ph & pp->pr_alloc->pa_pagemask);
-		if (page != ph->ph_page &&
-		    (pp->pr_roflags & PR_PHINPAGE) != 0) {
-			if (label != NULL)
-				printf("%s: ", label);
-			printf("pool(%p:%s): page inconsistency: page %p;"
-			       " at page head addr %p (p %p)\n", pp,
-				pp->pr_wchan, ph->ph_page,
-				ph, page);
-			r++;
-			goto out;
-		}
-
-		for (pi = TAILQ_FIRST(&ph->ph_itemlist), n = 0;
-		     pi != NULL;
-		     pi = TAILQ_NEXT(pi,pi_list), n++) {
-
-#ifdef DIAGNOSTIC
-			if (pi->pi_magic != PI_MAGIC) {
-				if (label != NULL)
-					printf("%s: ", label);
-				printf("pool(%s): free list modified: magic=%x;"
-				       " page %p; item ordinal %d;"
-				       " addr %p (p %p)\n",
-					pp->pr_wchan, pi->pi_magic, ph->ph_page,
-					n, pi, page);
-				panic("pool");
-			}
-#endif
-			page = (caddr_t)((vaddr_t)pi & pp->pr_alloc->pa_pagemask);
-			if (page == ph->ph_page)
-				continue;
-
-			if (label != NULL)
-				printf("%s: ", label);
-			printf("pool(%p:%s): page inconsistency: page %p;"
-			       " item ordinal %d; addr %p (p %p)\n", pp,
-				pp->pr_wchan, ph->ph_page,
-				n, pi, page);
-			r++;
+	LIST_FOREACH(ph, &pp->pr_emptypages, ph_pagelist) {
+		r = pool_chk_page(pp, label, ph);
+		if (r) {
 			goto out;
 		}
 	}
+	LIST_FOREACH(ph, &pp->pr_fullpages, ph_pagelist) {
+		r = pool_chk_page(pp, label, ph);
+		if (r) {
+			goto out;
+		}
+	}
+	LIST_FOREACH(ph, &pp->pr_partpages, ph_pagelist) {
+		r = pool_chk_page(pp, label, ph);
+		if (r) {
+			goto out;
+		}
+	}
+
 out:
 	simple_unlock(&pp->pr_slock);
 	return (r);

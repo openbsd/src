@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.63 2003/10/08 22:23:56 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.64 2003/11/18 06:08:19 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -85,9 +85,10 @@
 #include <sys/shm.h>
 #endif
 
-#define RB_AUGMENT(x) uvm_rb_augment(x)
 #define UVM_MAP
 #include <uvm/uvm.h>
+#undef RB_AUGMENT
+#define RB_AUGMENT(x) uvm_rb_augment(x)
 
 #ifdef DDB
 #include <uvm/uvm_ddb.h>

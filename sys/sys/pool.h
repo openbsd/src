@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.14 2002/12/20 07:48:01 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.15 2003/11/18 06:08:18 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -54,8 +54,7 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/time.h>
-
-#define PR_HASHTABSIZE		8
+#include <sys/tree.h>
 
 struct pool_cache {
 	TAILQ_ENTRY(pool_cache)
@@ -97,11 +96,17 @@ struct pool_allocator {
 	int pa_pageshift;
 };
 
+LIST_HEAD(pool_pagelist,pool_item_header);
+
 struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
-	TAILQ_HEAD(,pool_item_header)
-			pr_pagelist;	/* Allocated pages */
+	struct pool_pagelist
+			pr_emptypages;	/* Empty pages */
+	struct pool_pagelist
+			pr_fullpages;	/* Full pages */
+	struct pool_pagelist
+			pr_partpages;	/* Partially-allocated pages */
 	struct pool_item_header	*pr_curpage;
 	TAILQ_HEAD(,pool_cache)
 			pr_cachelist;	/* Caches for this pool */
@@ -144,8 +149,7 @@ struct pool {
 	 */
 	struct simplelock	pr_slock;
 
-	LIST_HEAD(,pool_item_header)		/* Off-page page headers */
-			pr_hashtab[PR_HASHTABSIZE];
+	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
