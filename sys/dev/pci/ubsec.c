@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.35 2001/01/11 18:52:53 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.36 2001/01/11 18:56:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -585,9 +585,6 @@ ubsec_process(crp)
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		q->q_src_m = (struct mbuf *)crp->crp_buf;
 		q->q_dst_m = (struct mbuf *)crp->crp_buf;
-	} if (crp->crp_flags & CRYPTO_F_IOV) {
-		q->q_src = (struct criov *)crp->crp_buf;
-		q->q_dst = (struct criov *)crp->crp_buf;
 	} else {
 		err = EINVAL;
 		goto errout;	/* XXX only handle mbufs right now */
@@ -649,35 +646,17 @@ ubsec_process(crp)
 				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
 			}
 
-			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
-				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copyback(q->q_src_m, enccrd->crd_inject,
-					    8, (caddr_t)q->q_ctx.pc_iv);
-				else if (crp->crp_flags & CRYPTO_F_IOV) {
-					if (crp->crp_iv == NULL) {
-						err = EINVAL;
-						goto errout;
-					}
-					bcopy(crp->crp_iv,
-					    (caddr_t)q->q_ctx.pc_iv, 8);
-				}
-			}
-			
+			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
+				m_copyback(q->q_src_m, enccrd->crd_inject,
+				    8, (caddr_t)q->q_ctx.pc_iv);
 		} else {
 			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
-			else if (crp->crp_flags & CRYPTO_F_IMBUF)
+			else
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (caddr_t)q->q_ctx.pc_iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				if (crp->crp_iv == NULL) {
-					err = EINVAL;
-					goto errout;
-				}
-				bcopy(crp->crp_iv, (caddr_t)q->q_ctx.pc_iv, 8);
-			}
 		}
 
 		q->q_ctx.pc_deskey[0] = ses->ses_deskey[0];
@@ -740,12 +719,8 @@ ubsec_process(crp)
 	}
 	q->q_ctx.pc_offset = coffset >> 2;
 
-	if (crp->crp_flags & CRYPTO_F_IMBUF)
-		q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
-		    q->q_src_packl, MAX_SCATTER, &nicealign);
-	else if (crp->crp_flags & CRYPTO_F_IOV)
-		q->q_src_l = iov2pages(q->q_src, &q->q_src_npa, q->q_src_packp,
-		    q->q_src_packl, MAX_SCATTER, &nicealign);
+	q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
+	    q->q_src_packl, MAX_SCATTER, &nicealign);
 	if (q->q_src_l == 0) {
 		err = ENOMEM;
 		goto errout;
@@ -823,10 +798,7 @@ ubsec_process(crp)
 		    q->q_mcr->mcr_opktbuf.pb_next);
 #endif
 	} else {
-		if (!nicealign && (crp->crp_flags & CRYPTO_F_IOV)) {
-			err = EINVAL;
-			goto errout;
-		} else if (!nicealign && (crp->crp_flags & CRYPTO_F_IMBUF)) {
+		if (!nicealign) {
 			int totlen, len;
 			struct mbuf *m, *top, **mp;
 
@@ -877,12 +849,8 @@ ubsec_process(crp)
 		} else
 			q->q_dst_m = q->q_src_m;
 
-		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
-			    q->q_dst_packp, q->q_dst_packl, MAX_SCATTER, NULL);
-		else if (crp->crp_flags & CRYPTO_F_IOV)
-			q->q_dst_l = iov2pages(q->q_dst, &q->q_dst_npa,
-			    q->q_dst_packp, q->q_dst_packl, MAX_SCATTER, NULL);
+		q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
+		    q->q_dst_packp, q->q_dst_packl, MAX_SCATTER, NULL);
 
 #ifdef UBSEC_DEBUG
 		printf("dst skip: %d\n", dskip);
@@ -961,7 +929,7 @@ errout:
 	if (q != NULL) {
 		if (q->q_mcr)
 			free(q->q_mcr, M_DEVBUF);
-		if (q->q_dst_m && q->q_src_m != q->q_dst_m)
+		if (q->q_src_m != q->q_dst_m)
 			m_freem(q->q_dst_m);
 		free(q, M_DEVBUF);
 	}
@@ -989,15 +957,9 @@ ubsec_callback(q)
 			if (crd->crd_alg != CRYPTO_DES_CBC &&
 			    crd->crd_alg != CRYPTO_3DES_CBC)
 				continue;
-			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - 8, 8,
-				    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				/* XXX need last 8 bytes of encrypted data, and shove
-				 * it into ses_iv */
-				/* MISSING bcopy */
-			}
+			m_copydata((struct mbuf *)crp->crp_buf,
+			    crd->crd_skip + crd->crd_len - 8, 8,
+			    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
 			break;
 		}
 	}
@@ -1006,11 +968,8 @@ ubsec_callback(q)
 		if (crd->crd_alg != CRYPTO_MD5_HMAC &&
 		    crd->crd_alg != CRYPTO_SHA1_HMAC)
 			continue;
-		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copyback((struct mbuf *)crp->crp_buf,
-			    crd->crd_inject, 12, (caddr_t)q->q_macbuf);
-		else if (crp->crp_flags & CRYPTO_F_IOV && crp->crp_mac)
-			bcopy((caddr_t)q->q_macbuf, crp->crp_mac, 12);
+		m_copyback((struct mbuf *)crp->crp_buf,
+		    crd->crd_inject, 12, (caddr_t)q->q_macbuf);
 		break;
 	}
 
