@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.27 2001/05/06 00:47:46 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.28 2001/05/11 06:38:47 angelos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ char buckstring[16 * sizeof("123456,")];
 int buckstring_init = 0;
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 char *memname[] = INITKMEMNAMES;
+char *memall = NULL;
 #endif
 
 #ifdef MALLOC_DEBUG
@@ -487,7 +488,8 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
         struct kmembuckets kb;
         int i, siz;
 
-	if (namelen != 2 && name[0] != KERN_MALLOC_BUCKETS)
+	if (namelen != 2 && name[0] != KERN_MALLOC_BUCKETS &&
+	    name[0] != KERN_MALLOC_KMEMNAMES)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -509,6 +511,51 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 		kb.kb_next = kb.kb_last = 0;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb,
 					sizeof(kb)));
+	case KERN_MALLOC_KMEMSTATS:
+#ifdef KMEMSTATS
+		if ((name[1] < 0) || (name[1] >= M_LAST))
+			return (EINVAL);
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+					&kmemstats[name[1]],
+					sizeof(struct kmemstats)));
+#else
+		return (EOPNOTSUPP);
+#endif
+	case KERN_MALLOC_KMEMNAMES:
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
+		/*
+		 * XXX We should use a spinlock here, since
+		 * multiple processes could conceivably be "stuck"
+		 * waiting for memory to become available.
+		 */
+	        if (memall == NULL) {
+			int totlen;
+
+			/* Figure out how large a buffer we need */
+			for (totlen = 1, i = 0; i < M_LAST; i++)
+				if (memname[i])
+					totlen += strlen(memname[i]) + 1;
+				else
+					totlen++;
+
+			memall = malloc(totlen + M_LAST, M_TEMP, M_WAITOK);
+			bzero(memall, totlen + M_LAST);
+
+		        for (siz = 0, i = 0; i < M_LAST; i++)
+			        siz += sprintf(memall + siz, "%s,",
+					       memname[i] ? memname[i] : "");
+
+			memall[siz - 1] = '\0'; /* Remove trailing comma */
+
+			/* Now, convert all spaces to underscores */
+			for (i = 0; i < totlen; i++)
+				if (memall[i] == ' ')
+					memall[i] = '_';
+		}
+	        return (sysctl_rdstring(oldp, oldlenp, newp, memall));
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 	        return (EOPNOTSUPP);
 	}

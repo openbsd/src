@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.42 2001/05/07 22:16:35 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.43 2001/05/11 06:38:47 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -60,6 +60,8 @@
 #include <sys/sysctl.h>
 #include <sys/msgbuf.h>
 #include <sys/dkstat.h>
+#include <sys/vmmeter.h>
+#include <sys/namei.h>
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
@@ -72,6 +74,10 @@
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
+
+extern struct forkstat forkstat;
+extern struct nchstats nchstats;
+extern int nselcoll;
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -237,7 +243,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF ||
-	    name[0] == KERN_MALLOCSTATS))
+			      name[0] == KERN_MALLOCSTATS))
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -259,6 +265,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxfiles));
 	case KERN_ARGMAX:
 		return (sysctl_rdint(oldp, oldlenp, newp, ARG_MAX));
+	case KERN_NSELCOLL:
+		return (sysctl_rdint(oldp, oldlenp, newp, nselcoll));
 	case KERN_SECURELVL:
 		level = securelevel;
 		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &level)) ||
@@ -367,6 +375,12 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_CPTIME:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cp_time,
 		    sizeof(cp_time)));
+	case KERN_NCHSTATS:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &nchstats,
+		    sizeof(struct nchstats)));
+	case KERN_FORKSTAT:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &forkstat,
+		    sizeof(struct forkstat)));
 	default:
 		return (EOPNOTSUPP);
 	}
