@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.12 2002/06/05 21:09:02 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.13 2002/06/07 19:29:00 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -82,11 +82,11 @@ The policy is specified via the following grammar:
 .Bd -literal -offset AAA
 filter = expression "then" action errorcode
 expression = symbol | "not" expression | "(" expression ")" |
-	expression "and" expression | expression "or" expression
+    expression "and" expression | expression "or" expression
 symbol = string typeoff "match" cmdstring |
-	string typeoff "eq" cmdstring |	string typeoff "neq" cmdstring |
-	string typeoff "sub" cmdstring | string typeoff "nsub" cmdstring |
-	string typeoff "inpath" cmdstring | "true"
+    string typeoff "eq" cmdstring | string typeoff "neq" cmdstring |
+    string typeoff "sub" cmdstring | string typeoff "nsub" cmdstring |
+    string typeoff "inpath" cmdstring | "true"
 typeoff = /* empty */ | "[" number "]"
 action = "permit" | "deny"
 errorcode = /* empty */ | "[" string "]"
@@ -95,6 +95,22 @@ errorcode = /* empty */ | "[" string "]"
 The
 .Va cmd-string
 is an arbitrary string enclosed with quotation marks.
+The
+.Va errorcode
+is used to return an
+.Xr errno 2
+value to the system call when using a
+.Va deny
+action.  The value
+.Do
+inherit
+.Dc
+has a special meaning when used with a
+.Va permit
+rule for the
+.Va execve
+system call.
+In that case, the current policy is inherited for the new binary.
 .Pp
 Policy entries may contain an appended predicate.
 Predicates have the following format:
