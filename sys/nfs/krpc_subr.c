@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.8 1998/02/23 09:46:53 deraadt Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.9 1998/02/28 14:03:08 deraadt Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ krpc_portmap(sin,  prog, vers, portp)
 
 	sin->sin_port = htons(PMAPPORT);
 	error = krpc_call(sin, PMAPPROG, PMAPVERS,
-					  PMAPPROC_GETPORT, &m, NULL);
+	    PMAPPROC_GETPORT, &m, NULL);
 	if (error) 
 		return error;
 
@@ -196,14 +196,14 @@ krpc_call(sa, prog, vers, func, data, from_p)
 {
 	struct socket *so;
 	struct sockaddr_in *sin;
-	struct mbuf *m, *nam, *mhead, *from;
+	struct mbuf *m, *nam, *mhead, *from, *mopt;
 	struct rpc_call *call;
 	struct rpc_reply *reply;
 	struct uio auio;
 	int error, rcvflg, timo, secs, len;
 	static u_int32_t xid = 0;
 	u_int32_t newxid;
-	u_int16_t tport;
+	int *ip;
 
 	/*
 	 * Validate address family.
@@ -263,19 +263,35 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	sin->sin_len = m->m_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
-	/* XXX should do random allocation */
-	tport = IPPORT_RESERVED;
-	do {
-		tport--;
-		sin->sin_port = htons(tport);
-		error = sobind(so, m);
-	} while (error == EADDRINUSE &&
-			 tport > IPPORT_RESERVED / 2);
+
+	MGET(mopt, M_WAIT, MT_SOOPTS);
+	mopt->m_len = sizeof(int);
+	ip = mtod(mopt, int *);
+	*ip = IP_PORTRANGE_LOW;
+	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
+	if (error)
+		goto out;
+
+	MGET(m, M_WAIT, MT_SONAME);
+	sin = mtod(m, struct sockaddr_in *);
+	sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = INADDR_ANY;
+	sin->sin_port = htons(0);
+	error = sobind(so, m);
 	m_freem(m);
 	if (error) {
 		printf("bind failed\n");
 		goto out;
 	}
+
+	MGET(mopt, M_WAIT, MT_SOOPTS);
+	mopt->m_len = sizeof(int);
+	ip = mtod(mopt, int *);
+	*ip = IP_PORTRANGE_DEFAULT;
+	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
+	if (error)
+		goto out;
 
 	/*
 	 * Setup socket address for the server.
@@ -286,8 +302,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 		goto out;
 	}
 	sin = mtod(nam, struct sockaddr_in *);
-	bcopy((caddr_t)sa, (caddr_t)sin,
-		  (nam->m_len = sa->sin_len));
+	bcopy((caddr_t)sa, (caddr_t)sin, (nam->m_len = sa->sin_len));
 
 	/*
 	 * Prepend RPC message header.
