@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.81 2004/01/10 20:28:48 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.82 2004/01/10 22:25:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1469,11 +1469,9 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			    imsg.hdr.len < IMSG_HEADER_SIZE +
 			    MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER)
 				logit(LOG_CRIT, "RDE sent invalid update");
-#if 0
 			else
 				session_update(imsg.hdr.peerid, imsg.data,
 				    imsg.hdr.len - IMSG_HEADER_SIZE);
-#endif
 			break;
 		default:
 			break;
