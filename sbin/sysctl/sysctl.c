@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.87 2003/04/07 23:10:46 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.88 2003/04/25 20:27:19 grange Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.87 2003/04/07 23:10:46 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.88 2003/04/25 20:27:19 grange Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ int	Aflag, aflag, nflag, wflag;
 #define	UNSIGNED	0x00000200
 #define	KMEMBUCKETS	0x00000400
 #define	LONGARRAY	0x00000800
-#define KMEMSTATS	0x00001000
+#define	KMEMSTATS	0x00001000
 
 /* prototypes */
 void debuginit(void);
