@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 1997/09/12 09:30:56 maja Exp $ */
+/*	$OpenBSD: pmap.c,v 1.10 1997/10/02 19:51:50 niklas Exp $ */
 /*	$NetBSD: pmap.c,v 1.37 1997/07/25 21:54:48 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -52,12 +52,12 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 
+extern int bufcalc __P((void));
 
 static	pt_entry_t *pmap_virt2pte __P((pmap_t, u_int));
 static	pv_entry_t alloc_pv_entry __P((void));
 static	void	free_pv_entry __P((pv_entry_t));
 static	int	remove_pmap_from_mapping __P((pv_entry_t, pmap_t));
-
 
 #define ISTACK_SIZE (4 * NBPG)
 #define PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PGSHIFT))
@@ -163,6 +163,12 @@ pmap_bootstrap()
 	sysptsize += ((USRPTSIZE * 4) / NBPG) * maxproc;
 	/* Kernel stacks per process */
 	sysptsize += UPAGES * maxproc;
+	/* Buffer cache */
+	sysptsize += bufcalc() * CLSIZE;
+	/* mbufs */
+	sysptsize += VM_MBUF_SIZE / NBPG;
+	/* physio space */
+	sysptsize += VM_PHYS_SIZE / NBPG;
 
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
