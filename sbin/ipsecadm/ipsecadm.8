@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.28 2000/09/19 08:38:40 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.29 2000/09/19 08:50:56 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -128,7 +128,13 @@ Allowed modifiers are:
 and
 .Fl keyfile .
 .It group
-Group two SAs together.
+Group two SAs together, such that whenever the first one is applied, the
+second one will be applied as well (SA bundle).
+Arbitrarily long SA bundles can thus be created.
+Note that the last SA in the bundle is the one that is applied last.
+Thus, if an ESP and an AH SA are bundled together (in that order), then
+the resulting packet will have an AH header, followed by an ESP header,
+followed by the encrypted payload.
 Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
