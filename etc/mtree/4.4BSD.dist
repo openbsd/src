@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.171 2004/12/31 00:12:54 miod Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.172 2005/03/15 18:13:42 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1141,6 +1141,18 @@ amd64
 i386
 
 # ./usr/share/man/cat2/i386
+..
+
+# ./usr/share/man/cat2/cats
+cats
+
+# ./usr/share/man/cat2/cats
+..
+
+# ./usr/share/man/cat2/zaurus
+zaurus
+
+# ./usr/share/man/cat2/zaurus
 ..
 
 # ./usr/share/man/cat2
