@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2003/05/17 20:18:54 mdw Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.9 2000/08/16 11:29:42 pk Exp $ */
 
 /*
@@ -254,7 +254,7 @@ struct sparc_insn sparc_i[] = {
 
 	/* Branch on Integer Register with Prediction "BPr" */
 	{(FORMAT2(0, 3) | RCOND2(1)), "brz", "ap,1l"},
-	{(FORMAT2(0, 3) | A(1) | P(1) | RCOND2(2)), "brlex", "ap,1l"},
+	{(FORMAT2(0, 3) | RCOND2(2)), "brlez", "ap,1l"},
 	{(FORMAT2(0, 3) | RCOND2(3)), "brlz", "ap,1l"},
 	{(FORMAT2(0, 3) | RCOND2(5)), "brnz", "ap,1l"},
 	{(FORMAT2(0, 3) | RCOND2(6)), "brgz", "ap,1l"},
@@ -572,7 +572,7 @@ struct sparc_insn sparc_i[] = {
 	{FORMAT3(2, OP3_X(2,14), 1), "popc", "id"},
 
 	{FORMAT3(2, OP3_X(3,14), 0), "done", ""},
-	{FORMAT3(2, OP3_X(3,14)|FCN(1), 1), "retry", ""},
+	{FORMAT3(2, OP3_X(3,14), 0)|FCN(1), "retry", ""},
 
 	{FORMAT3(2, OP3_X(0,15), 0), "sdiv", "12d"},
 	{FORMAT3(2, OP3_X(0,15), 1), "sdiv", "1id"},
@@ -930,6 +930,12 @@ db_disasm(loc, altfmt)
 			   ((bitmask>>19) & 0x3f) == 0x35) /* XXX */ {
 			/* fmov */
 			you_lose &= (FORMAT3(0x3,0x3f,0x1) | COND2(1,0xf));
+		} else if (((bitmask>>30) & 0x3) == 0x2 &&
+			   ((bitmask>>13) & 0x1) == 0 &&
+			   ((((bitmask>>19) & 0x3f) == OP3_X(3,1)) ||
+			   (((bitmask>>19) & 0x3f) == OP3_X(3,14)))) /* XXX */ {
+			/* saved/done/retry/restored */
+			you_lose &= (FORMAT3(0x3,0x3f,0x1)) | FCN(0x1f);
 		} else {
 			you_lose &= (FORMAT3(0x3,0x3f,0x1));
 		}
