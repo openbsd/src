@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.4 1996/06/04 13:40:13 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.5 1996/08/04 01:30:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -74,6 +74,11 @@ void	cross_io_write_multi_1 __P((bus_io_handle_t, bus_io_size_t,
 void	cross_io_write_multi_2 __P((bus_io_handle_t, bus_io_size_t,
 	    const u_int16_t *, bus_io_size_t));
 
+void	cross_io_read_raw_multi_2 __P((bus_io_handle_t, bus_io_size_t,
+	    u_int8_t *, bus_io_size_t));
+void	cross_io_write_raw_multi_2 __P((bus_io_handle_t, bus_io_size_t,
+	    const u_int8_t *, bus_io_size_t));
+
 /*
  * Note that the following unified access functions are prototyped for the
  * I/O access case.  We use casts to get type correctness.
@@ -129,8 +134,11 @@ struct amiga_bus_chipset cross_chipset = {
 	0 /* bc_mem_write_4 */, 0 /* bc_mem_write_8 */,
 
 	/* These are extensions to the general NetBSD bus interface.  */
-	swap, 0 /* bc_to_host_4 */, 0 /* bc_to_host_8 */,
-	swap, 0 /* bc_from_host_4 */, 0 /* bc_from_host_8 */,
+	cross_io_read_raw_multi_2,
+	0 /* bc_io_read_raw_multi_4 */, 0 /* bc_io_read_raw_multi_8 */,
+
+	cross_io_write_raw_multi_2,
+	0 /* bc_io_write_raw_multi_4 */, 0 /* bc_io_write_raw_multi_8 */,
 };
 
 struct cfattach cross_ca = {
@@ -289,6 +297,21 @@ cross_io_read_multi_2(handle, addr, buf, cnt)
 		*buf++ = cross_read_2(handle, addr);
 }
 
+void
+cross_io_read_raw_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int8_t *buf;
+	bus_io_size_t cnt;
+{
+	u_int16_t *buf16 = (u_int16_t *)buf;
+
+	while (cnt) {
+		cnt -= 2;
+		*buf16++ = swap(cross_read_2(handle, addr));
+	}
+}
+
 __inline void
 cross_write_1(handle, addr, val)
 	bus_io_handle_t handle;
@@ -334,6 +357,21 @@ cross_io_write_multi_2(handle, addr, buf, cnt)
 {
 	while (cnt--)
 		cross_write_2(handle, addr, *buf++);
+}
+
+void
+cross_io_write_raw_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	const u_int8_t *buf;
+	bus_io_size_t cnt;
+{
+	const u_int16_t *buf16 = (const u_int16_t *)buf;
+
+	while (cnt) {
+		cnt -= 2;
+		cross_write_2(handle, addr, swap(*buf16++));
+	}
 }
 
 static cross_int_map[] = {

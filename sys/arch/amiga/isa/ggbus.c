@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.4 1996/06/04 13:40:14 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.5 1996/08/04 01:30:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -87,6 +87,11 @@ __inline u_int16_t ggbus_read_2 __P((bus_io_handle_t, bus_io_size_t));
 __inline void ggbus_write_1 __P((bus_io_handle_t, bus_io_size_t, u_int8_t));
 __inline void ggbus_write_2 __P((bus_io_handle_t, bus_io_size_t, u_int16_t));
 
+void	ggbus_io_read_raw_multi_2 __P((bus_io_handle_t, bus_io_size_t,
+	    u_int8_t *, bus_io_size_t));
+void	ggbus_io_write_raw_multi_2 __P((bus_io_handle_t, bus_io_size_t,
+	    const u_int8_t *, bus_io_size_t));
+
 /*
  * In order to share the access function implementations for I/O and memory
  * access we cast the functions for the memory access case.  These typedefs
@@ -130,9 +135,11 @@ struct amiga_bus_chipset ggbus1_chipset = {
 	0 /* bc_mem_write_1 */, 0 /* bc_mem_write_2 */,
 	0 /* bc_mem_write_4 */, 0 /* bc_mem_write_8 */,
 
-	/* These are extensions to the general NetBSD bus interface.  */
-	swap, 0 /* bc_to_host_4 */, 0 /* bc_to_host_8 */,
-	swap, 0 /* bc_from_host_4 */, 0 /* bc_from_host_8 */,
+	0 /* bc_io_read_raw_multi_2 */,
+	0 /* bc_io_read_raw_multi_4 */, 0 /* bc_io_read_raw_multi_8 */,
+
+	0 /* bc_io_write_raw_multi_2 */,
+	0 /* bc_io_write_raw_multi_4 */, 0 /* bc_io_write_raw_multi_8 */,
 };
 
 /* Golden Gate II.  */
@@ -155,9 +162,11 @@ struct amiga_bus_chipset ggbus2_chipset = {
 	(bus_mem_write_1_t)ggbus_write_1, (bus_mem_write_2_t)ggbus_write_2,
 	0 /* bc_mem_write_4 */, 0 /* bc_mem_write_8 */,
 
-	/* These are extensions to the general NetBSD bus interface.  */
-	swap, 0 /* bc_to_host_4 */, 0 /* bc_to_host_8 */,
-	swap, 0 /* bc_from_host_4 */, 0 /* bc_from_host_8 */,
+	ggbus_io_read_raw_multi_2,
+	0 /* bc_io_read_raw_multi_4 */, 0 /* bc_io_read_raw_multi_8 */,
+
+	ggbus_io_write_raw_multi_2,
+	0 /* bc_io_write_raw_multi_4 */, 0 /* bc_io_write_raw_multi_8 */,
 };
 
 struct cfattach ggbus_ca = {
@@ -287,7 +296,7 @@ ggbus_read_2(handle, addr)
 	bus_io_handle_t handle;
 	bus_io_size_t addr;
 {
-	return swap(*(volatile u_int16_t *)(handle + 2 * addr));
+	return *(volatile u_int16_t *)(handle + 2 * addr);
 }
 
 void
@@ -312,6 +321,21 @@ ggbus_io_read_multi_2(handle, addr, buf, cnt)
 		*buf++ = ggbus_read_2(handle, addr);
 }
 
+void
+ggbus_io_read_raw_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int8_t *buf;
+	bus_io_size_t cnt;
+{
+	u_int16_t *buf16 = (u_int16_t *)buf;
+
+	while (cnt) {
+		cnt -= 2;
+		*buf16++ = swap(ggbus_read_2(handle, addr));
+	}
+}
+
 __inline void
 ggbus_write_1(handle, addr, val)
 	bus_io_handle_t handle;
@@ -330,7 +354,7 @@ ggbus_write_2(handle, addr, val)
 	bus_io_size_t addr;
 	u_int16_t val;
 {
-	*(volatile u_int16_t *)(handle + 2 * addr) = swap(val);
+	*(volatile u_int16_t *)(handle + 2 * addr) = val;
 }
 
 void
@@ -353,6 +377,21 @@ ggbus_io_write_multi_2(handle, addr, buf, cnt)
 {
 	while (cnt--)
 		ggbus_write_2(handle, addr, *buf++);
+}
+
+void
+ggbus_io_write_raw_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	const u_int8_t *buf;
+	bus_io_size_t cnt;
+{
+	const u_int16_t *buf16 = (const u_int16_t *)buf;
+
+	while (cnt) {
+		cnt -= 2;
+		ggbus_write_2(handle, addr, swap(*buf16++));
+	}
 }
 
 static ggbus_int_map[] = {
