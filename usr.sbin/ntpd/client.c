@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.16 2004/07/07 08:07:02 alexander Exp $ */
+/*	$OpenBSD: client.c,v 1.17 2004/07/08 01:20:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,6 +159,10 @@ client_dispatch(struct ntp_peer *p)
 			    log_sockaddr((struct sockaddr *)&fsa));
 		p->trustlevel++;
 	}
+
+	log_debug("received reply from %s: offset %f delay %f",
+	    log_sockaddr((struct sockaddr *)&fsa), p->reply[p->shift].offset,
+	    p->reply[p->shift].delay);
 
 	if (++p->shift >= OFFSET_ARRAY_SIZE)
 		p->shift = 0;
