@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.133 1999/10/12 17:06:56 jason Exp $
+#	$OpenBSD: GENERIC,v 1.134 1999/10/26 13:12:49 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -81,6 +81,8 @@ pcmcia*	at pcic? controller ? socket ?
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?
 
+puc*	at pci?				# PCI "universal" communication device
+
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 isapnp0	at isa?
@@ -104,6 +106,7 @@ pccom*	at ast? slave ?
 #pccom*	at rtfps? slave ?
 pccom*	at pcmcia? function ?		# PCMCIA modems/serial ports
 pccom*	at isapnp?
+pccom*	at puc? port ?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines

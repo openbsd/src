@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.58 1999/10/06 07:36:55 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.59 1999/10/26 13:14:35 downsj Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -129,8 +129,7 @@ define pckbd { [irq = -1], [port = -1] }
 device	pccom: tty
 attach	pccom at isa with pccom_isa
 attach	pccom at commulti with pccom_commulti
-#attach	pccom at pcmcia with pccom_pcmcia
-file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia) needs-flag
+file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia | pccom_puc) needs-flag
 
 # PC console support a la "pccons"
 device	pc: tty, pckbd
@@ -267,6 +266,14 @@ file	dev/isa/i82365_isa.c		pcic_isa
 
 # Code common to ISA and ISAPnP attachments
 file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
+
+#
+# Machine-independent PUC drivers
+#
+include "dev/puc/files.puc"
+
+# i386-specific PUC drivers
+attach	pccom at puc with pccom_puc
 
 # PCMCIA wants to be probed as late as possible.
 
