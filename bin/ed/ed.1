@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.43 2003/09/02 18:09:43 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.44 2003/09/25 14:08:56 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ itself.
 Upon quitting
 .Nm ed ,
 any changes not explicitly saved with a
-.Em w
+.Ic w
 command are lost.
 .Pp
 Editing is done in two distinct modes:
@@ -65,23 +65,23 @@ In this mode, commands are read from the standard input and
 executed to manipulate the contents of the editor buffer.
 .Pp
 A typical command might look like:
-.Bd -literal -offset indent
-,s/old/new/g
-.Ed
+.Pp
+.Dl ,s/old/new/g
 .Pp
 which replaces all occurrences of the string
-.Pa old
+.Qq old
 with
-.Pa new .
+.Qq new .
 .Pp
 When an input command, such as
-.Em a
-(append),
-.Em i
-(insert),
+.Ic a
+.Pq append ,
+.Ic i
+.Pq insert ,
 or
-.Em c
-(change) is given,
+.Ic c
+.Pq change
+is given,
 .Nm
 enters input mode.
 This is the primary means of adding text to a file.
@@ -96,14 +96,14 @@ All
 .Nm
 commands operate on whole lines or ranges of lines; e.g.,
 the
-.Em d
+.Ic d
 command deletes lines; the
-.Em m
+.Ic m
 command moves lines, and so on.
 It is possible to modify only a portion of a line by means of replacement,
 as in the example above.
 However, even here, the
-.Em s
+.Ic s
 command is applied to whole lines at a time.
 .Pp
 In general,
@@ -111,9 +111,8 @@ In general,
 commands consist of zero or more line addresses, followed by a single
 character command and possibly additional parameters; i.e.,
 commands have the structure:
-.Bd -literal -offset indent
-[address [,address]]command[parameters]
-.Ed
+.Pp
+.Dl [address [,address]]command[parameters]
 .Pp
 The address(es) indicate the line or range of lines to be affected by the
 command.
@@ -125,7 +124,8 @@ The options are as follows:
 .It Fl
 Same as the
 .Fl s
-option (deprecated).
+option
+.Pq deprecated .
 .It Fl s
 Suppress diagnostics.
 This should be used if
@@ -134,12 +134,12 @@ standard input is from a script.
 .It Fl x
 Prompt for an encryption key to be used in subsequent reads and writes
 (see the
-.Em x
+.Ic x
 command).
 .It Fl p Ar string
 Specifies a command prompt.
 This may be toggled on and off with the
-.Em P
+.Ic P
 command.
 .It Ar file
 Specifies the name of a file to read.
@@ -174,19 +174,19 @@ In general, the current address is set to the last line affected by a command.
 A line address is
 constructed from one of the bases in the list below, optionally followed
 by a numeric offset.
-The offset may include any combination of digits, operators (i.e.,
-.Em + ,
-.Em - ,
+The offset may include any combination of digits, operators (e.g.,
+.Ql + ,
+.Ql - ,
 and
-.Em ^ ) ,
+.Ql ^ ) ,
 and whitespace.
 Addresses are read from left to right, and their values are computed
 relative to the current address.
 .Pp
 One exception to the rule that addresses represent line numbers is the
 address
-.Em 0
-(zero).
+.Ad 0
+.Pq zero .
 This means
 .Dq before the first line ,
 and is legal wherever it makes sense.
@@ -197,11 +197,12 @@ value of the second.
 If only one address is given in a range,
 then the second address is set to the given address.
 If an
-.Em n Ns No -tuple
+.Ar n Ns -tuple
 of addresses is given where
-.Em n > 2 ,
+.Ar n
+\*(Gt 2,
 then the corresponding range is determined by the last two addresses in the
-.Em n Ns No -tuple.
+.Ar n Ns -tuple .
 If only one address is expected, then the last address is used.
 .Pp
 Each address in a comma-delimited range is interpreted relative to the
@@ -212,66 +213,72 @@ relative to the first.
 .Pp
 The following address symbols are recognized:
 .Bl -tag -width Ds
-.It Em \&.
-The current line (address) in the buffer.
-.It Em $
+.It \&.
+The current line
+.Pq address
+in the buffer.
+.It $
 The last line in the buffer.
-.It Em n
+.It Ar n
 The
-.Em n Ns No th
-line in the buffer where
-.Em n
+.Ar n Ns th
+line in the buffer, where
+.Ar n
 is a number in the range
-.Em [0,$] .
-.It Em - No or Em ^
+.Ad [0,$] .
+.It - or ^
 The previous line.
 This is equivalent to
-.Em -1
+.Ad \-1
 and may be repeated with cumulative effect.
-.It Em -n No or Em ^n
+.It Xo
+.Pf - Ns Ar n No or\ \&
+.Pf ^ Ns Ar n
+.Xc
 The
-.Em n Ns No th
+.Ar n Ns th
 previous line, where
-.Em n
+.Ar n
 is a non-negative number.
-.It Em +
+.It +
 The next line.
 This is equivalent to
-.Em +1
+.Ad +1
 and may be repeated with cumulative effect.
-.It Em +n
+.It + Ns Ar n
 The
-.Em n Ns No th
+.Ar n Ns th
 next line, where
-.Em n
+.Ar n
 is a non-negative number.
-.It Em \&, No or Em %
+.It \&, or %
 The first through last lines in the buffer.
 This is equivalent to the address range
-.Em 1,$ .
-.It Em \&;
+.Ad 1,$ .
+.It \&;
 The current through last lines in the buffer.
 This is equivalent to the address range
-.Em .,$ .
-.It Em / Ns No re Ns Em /
+.Ad .,$ .
+.It / Ns Ar re Ns /
 The next line containing the regular expression
-.Em re .
+.Ar re .
 The search wraps to the beginning of the buffer and continues down to the
 current line, if necessary.
-.Em //
+.Qq //
 repeats the last search.
-.It Em \&? Ns No re Ns Em \&?
+.It ? Ns Ar re Ns ?
 The previous line containing the regular expression
-.Em re .
+.Ar re .
 The search wraps to the end of the buffer and continues up to the
 current line, if necessary.
-.Em ??\&
+.Qq ??
 repeats the last search.
-.It Em \&\' Ns No lc
+.It \&' Ns Ar lc
 The line previously marked by a
-.Em k
-(mark) command, where
-.Em lc
+.Ic k
+.Pq mark
+command, where
+.Ar lc
 is a lower case letter.
 .El
 .Ss REGULAR EXPRESSIONS
@@ -279,14 +286,13 @@ Regular expressions are patterns used in selecting text.
 For example, the
 .Nm
 command
-.Bd -literal -offset indent
-g/string/
-.Ed
+.Pp
+.Dl g/string/
 .Pp
 prints all lines containing
-.Em string .
+.Qq string .
 Regular expressions are also used by the
-.Em s
+.Ic s
 command for selecting old text to be replaced with new.
 .Pp
 In addition to specifying string literals, regular expressions can
@@ -298,150 +304,159 @@ a line, then the leftmost longest match is the one selected.
 .Pp
 The following symbols are used in constructing regular expressions:
 .Bl -tag -width Dsasdfsd
-.It Em c
+.It Ar c
 Any character
-.Em c
+.Ar c
 not listed below, including
-.Em { Ns No ,
-.Em } Ns No ,
-.Em \&( Ns No ,
-.Em \&) Ns No ,
-.Em < Ns No ,
+.Sq { ,
+.Sq } ,
+.Sq \&( ,
+.Sq \&) ,
+.Sq \*(Lt ,
 and
-.Em >
+.Sq \*(Gt
 matches itself.
-.It Em \ec
+.It \e Ns Ar c
 Any backslash-escaped character
-.Em c Ns No ,
+.Ar c ,
 except for
-.Em { Ns No ,
-.Em } Ns No ,
-.Em \&( Ns No ,
-.Em \&) Ns No ,
-.Em < Ns No , and
-.Em >
+.Sq { ,
+.Sq } ,
+.Sq \&( ,
+.Sq \&) ,
+.Sq \*(Lt ,
+and
+.Sq \*(Gt
 matches itself.
-.It Em \&.
+.It \&.
 Matches any single character.
-.It Em [char-class]
+.It [ Ns Ar char-class Ns ]
 Matches any single character in
-.Em char-class .
+.Ar char-class .
 To include a
 .Ql \&]
 in
-.Em char-class Ns No ,
+.Ar char-class ,
 it must be the first character.
 A range of characters may be specified by separating the end characters
 of the range with a
 .Ql - ;
 e.g.,
-.Em a-z
+.Ar a-z
 specifies the lower case characters.
 The following literal expressions can also be used in
-.Em char-class
+.Ar char-class
 to specify sets of characters:
-.Pp
-.Em \ \ [:alnum:]\ \ [:cntrl:]\ \ [:lower:]\ \ [:space:]
-.Em \ \ [:alpha:]\ \ [:digit:]\ \ [:print:]\ \ [:upper:]
-.Em \ \ [:blank:]\ \ [:graph:]\ \ [:punct:]\ \ [:xdigit:]
+.Bd -unfilled -offset indent
+[:alnum:] [:cntrl:] [:lower:] [:space:]
+[:alpha:] [:digit:] [:print:] [:upper:]
+[:blank:] [:graph:] [:punct:] [:xdigit:]
+.Ed
 .Pp
 If
 .Ql -
 appears as the first or last character of
-.Em char-class Ns No ,
+.Ar char-class ,
 then it matches itself.
 All other characters in
-.Em char-class
+.Ar char-class
 match themselves.
 .Pp
 Patterns in
-.Em char-class
+.Ar char-class
 of the form
-.Em [.col-elm.] No or Em [=col-elm=]
+.Eo [.
+.Ar col-elm
+.Ec .]\&
+or
+.Eo [=
+.Ar col-elm
+.Ec =]\&
 where
-.Em col-elm
+.Ar col-elm
 is a collating element are interpreted according to
-.Xr locale 5
-(not currently supported).
+.Xr setlocale 3
+.Pq not currently supported .
 See
 .Xr regex 3
 for an explanation of these constructs.
-.It Em [^char-class]
+.It [^ Ns Ar char-class Ns ]
 Matches any single character, other than newline, not in
-.Em char-class Ns No .
-.Em char-class
+.Ar char-class .
+.Ar char-class
 is defined as above.
-.It Em ^
+.It ^
 If
-.Em ^
+.Sq ^
 is the first character of a regular expression, then it
 anchors the regular expression to the beginning of a line.
 Otherwise, it matches itself.
-.It Em $
+.It $
 If
-.Em $
+.Sq $
 is the last character of a regular expression,
 it anchors the regular expression to the end of a line.
 Otherwise, it matches itself.
-.It Em \e<
+.It \e\*(Lt
 Anchors the single character regular expression or subexpression
 immediately following it to the beginning of a word.
-(This may not be available.)
-.It Em \e>
+.Pq This may not be available.
+.It \e\*(Gt
 Anchors the single character regular expression or subexpression
 immediately following it to the end of a word.
-(This may not be available.)
-.It Em \e( Ns No re Ns Em \e)
+.Pq This may not be available.
+.It \e( Ns Ar re Ns \e)
 Defines a subexpression
-.Em re .
+.Ar re .
 Subexpressions may be nested.
 A subsequent backreference of the form
-.Em \en Ns No ,
+.Pf \e Ns Ar n ,
 where
-.Em n
+.Ar n
 is a number in the range [1,9], expands to the text matched by the
-.Em n Ns No th
+.Ar n Ns th
 subexpression.
 For example, the regular expression
-.Em \e(.*\e)\e1
+.Ar \e(.*\e)\e1
 matches any string consisting of identical adjacent substrings.
 Subexpressions are ordered relative to their left delimiter.
-.It Em *
+.It *
 Matches the single character regular expression or subexpression
 immediately preceding it zero or more times.
 If
-.Em *
+.Sq *
 is the first character of a regular expression or subexpression,
 then it matches itself.
 The
-.Em *
+.Sq *
 operator sometimes yields unexpected results.
 For example, the regular expression
-.Em b*
+.Ar b*
 matches the beginning of the string
-.Em abbb
+.Qq abbb
 (as opposed to the substring
-.Em bbb ) ,
+.Qq bbb ) ,
 since a null match is the only leftmost match.
 .Sm off
-.It Xo Em \e{ No n,m
-.Em \e}\ \e{ No n, Em \e}\ \&
-.Em \e{ No n Em \e}
+.It Xo
+.Pf \e{ Ar n , m No \e}\ \&
+.Pf \e{ Ar n , No \e}\ \&
+.Pf \e{ Ar n No \e}
 .Xc
 .Sm on
 Matches the single character regular expression or subexpression
 immediately preceding it at least
-.Em n
+.Ar n
 and at most
-.Em m
+.Ar m
 times.
 If
-.Em m
+.Ar m
 is omitted, then it matches at least
-.Em n
+.Ar n
 times.
 If the comma is also omitted, then it matches exactly
-.Em n
+.Ar n
 times.
 .El
 .Pp
@@ -459,146 +474,156 @@ each line except for the last must be terminated with a backslash
 .Pp
 In general, at most one command is allowed per line.
 However, most commands accept a print suffix, which is any of
-.Em p No (print),
-.Em l No (list),
+.Ic p
+.Pq print ,
+.Ic l
+.Pq list ,
 or
-.Em n No (enumerate),
+.Ic n
+.Pq enumerate ,
 to print the last line affected by the command.
 .Pp
-An interrupt (typically ^C) has the effect of aborting the current command
+An interrupt
+.Pq typically ^C
+has the effect of aborting the current command
 and returning the editor to command mode.
 .Pp
 .Nm
 recognizes the following commands.
 The commands are shown together with
-the default address or address range supplied if none is
-specified (in parentheses), and other possible arguments on the right.
+the default address or address range supplied if none is specified
+.Pq in parentheses ,
+and other possible arguments on the right.
 .Bl -tag -width Dxxs
-.It (.) Ns Em a
+.It (.) Ns Ic a
 Appends text to the buffer after the addressed line.
 Text is entered in input mode.
 The current address is set to last line entered.
-.It (.,.) Ns Em c
+.It (.,.) Ns Ic c
 Changes lines in the buffer.
 The addressed lines are deleted from the buffer,
 and text is appended in their place.
 Text is entered in input mode.
 The current address is set to last line entered.
-.It (.,.) Ns Em d
+.It (.,.) Ns Ic d
 Deletes the addressed lines from the buffer.
 If there is a line after the deleted range, then the current address is set
 to this line.
 Otherwise the current address is set to the line before the deleted range.
-.It Em e No file
+.It Ic e Ar file
 Edits
-.Em file Ns No ,
+.Ar file ,
 and sets the default filename.
 If
-.Em file
+.Ar file
 is not specified, then the default filename is used.
 Any lines in the buffer are deleted before the new file is read.
 The current address is set to the last line read.
-.It Em e No !command
+.It Ic e No ! Ns Ar command
 Edits the standard output of
-.Em !command Ns No ,
+.No ! Ns Ar command ,
 (see
-.Em !\&
-command below).
+.Ic \&! Ns Ar command
+below).
 The default filename is unchanged.
 Any lines in the buffer are deleted before the output of
-.Em command
+.Ar command
 is read.
 The current address is set to the last line read.
-.It Em E No file
+.It Ic E Ar file
 Edits
-.Em file
+.Ar file
 unconditionally.
 This is similar to the
-.Em e
+.Ic e
 command, except that unwritten changes are discarded without warning.
 The current address is set to the last line read.
-.It Em f No file
+.It Ic f Ar file
 Sets the default filename to
-.Em file Ns No .
+.Ar file .
 If
-.Em file
+.Ar file
 is not specified, then the default unescaped filename is printed.
-.It (1,$) Ns Em g Ns No /re/command-list
+.Sm off
+.It Xo
+.Pf (1,$) Ic g No /
+.Ar re No / Ar command-list
+.Xc
+.Sm on
 Applies
-.Em command-list
+.Ar command-list
 to each of the addressed lines matching a regular expression
-.Em re Ns No .
+.Ar re .
 The current address is set to the line currently matched before
-.Em command-list
-is executed.
+command-list is executed.
 At the end of the
-.Em g
-command, the current address is set to the last line affected by
-.Em command-list Ns No .
+.Ic g
+command, the current address is set to the last line affected by command-list.
 .Pp
 Each command in
-.Em command-list
+.Ar command-list
 must be on a separate line,
-and every line except for the last must be terminated by
-.Em \e No (backslash).
+and every line except for the last must be terminated by a backslash
+.Pq Sq \e .
 Any commands are allowed, except for
-.Em g Ns No ,
-.Em G Ns No ,
-.Em v Ns No ,
+.Ic g ,
+.Ic G ,
+.Ic v ,
 and
-.Em V Ns No .
-A newline alone in
-.Em command-list
-is equivalent to a
-.Em p
+.Ic V .
+A newline alone in command-list is equivalent to a
+.Ic p
 command.
-.It (1,$) Ns Em G Ns No /re/
+.Sm off
+.It (1,$) Ic G No / Ar re No /
+.Sm on
 Interactively edits the addressed lines matching a regular expression
-.Em re Ns No .
+.Ar re .
 For each matching line, the line is printed, the current address is set,
 and the user is prompted to enter a
-.Em command-list Ns No .
+.Ar command-list .
 At the end of the
-.Em g
-command, the current address is set to the last line affected by (the last)
-.Em command-list Ns No .
+.Ic g
+command, the current address is set to the last line affected by
+.Pq the last
+command-list.
 .Pp
 The format of
-.Em command-list
+.Ar command-list
 is the same as that of the
-.Em g
+.Ic g
 command.
 A newline alone acts as a null command list.
 A single
-.Em &
+.Sq &
 repeats the last non-null command list.
-.It Em H
+.It Ic H
 Toggles the printing of error explanations.
 By default, explanations are not printed.
 It is recommended that
 .Nm
 scripts begin with this command to aid in debugging.
-.It Em h
+.It Ic h
 Prints an explanation of the last error.
-.It (.) Ns Em i
+.It (.) Ns Ic i
 Inserts text in the buffer before the current line.
 Text is entered in input mode.
 The current address is set to the last line entered.
-.It (.,.+1) Ns Em j
+.It (.,.+1) Ns Ic j
 Joins the addressed lines.
 The addressed lines are deleted from the buffer and replaced by a single
 line containing their joined text.
 The current address is set to the resultant line.
-.It (.) Ns Em klc
+.It (.) Ns Ic k Ns Ar lc
 Marks a line with a lower case letter
-.Em lc Ns No \&.
+.Ar lc .
 The line can then be addressed as
-.Em \&'lc
+.Ic ' Ns Ar lc
 (i.e., a single quote followed by
-.Em lc Ns No )
+.Ar lc )
 in subsequent commands.
 The mark is not cleared until the line is deleted or otherwise modified.
-.It (.,.) Ns Em l
+.It (.,.) Ns Ic l
 Prints the addressed lines unambiguously.
 If a single line fills more than one screen (as might be the case
 when viewing a binary file, for instance), a
@@ -607,259 +632,278 @@ prompt is printed on the last line.
 .Nm
 waits until the RETURN key is pressed before displaying the next screen.
 The current address is set to the last line printed.
-.It (.,.) Ns Em m Ns No (.)
+.It (.,.) Ns Ic m Ns (.)
 Moves lines in the buffer.
 The addressed lines are moved to after the
 right-hand destination address, which may be the address
-.Em 0
-(zero).
+.Ad 0
+.Pq zero .
 The current address is set to the last line moved.
-.It (.,.) Ns Em n
+.It (.,.) Ns Ic n
 Prints the addressed lines along with their line numbers.
 The current address is set to the last line printed.
-.It (.,.) Ns Em p
+.It (.,.) Ns Ic p
 Prints the addressed lines.
 The current address is set to the last line printed.
-.It Em P
+.It Ic P
 Toggles the command prompt on and off.
 Unless a prompt was specified by with command-line option
-.Fl p Ar string Ns No ,
+.Fl p Ar string ,
 the command prompt is by default turned off.
-.It Em q
+.It Ic q
 Quits
 .Nm ed .
-.It Em Q
+.It Ic Q
 Quits
 .Nm
 unconditionally.
 This is similar to the
-.Em q
+.Ic q
 command, except that unwritten changes are discarded without warning.
-.It ($) Ns Em r No file
+.It ($) Ns Ic r Ar file
 Reads
-.Em file
+.Ar file
 to after the addressed line.
 If
-.Em file
+.Ar file
 is not specified, then the default filename is used.
 If there was no default filename prior to the command,
 then the default filename is set to
-.Em file Ns No .
+.Ar file .
 Otherwise, the default filename is unchanged.
 The current address is set to the last line read.
-.It ($) Ns Em r No !command
+.It ($) Ns Ic r No ! Ns Ar command
 Reads to after the addressed line the standard output of
-.Em !command Ns No ,
-(see the
-.Em !\&
-command below).
+.Pf ! Ns Ar command ,
+(see
+.Ic \&! Ns Ar command
+below).
 The default filename is unchanged.
 The current address is set to the last line read.
 .Sm off
-.It Xo (.,.) Em s No /re/replacement/ , \ (.,.)
-.Em s No /re/replacement/ Em g , No \ (.,.)
-.Em s No /re/replacement/ Em n
+.It Xo
+.Pf (.,.) Ic s No / Ar re
+.No / Ar replacement No /\ \&
+.Pf (.,.) Ic s No / Ar re
+.No / Ar replacement No / Ic g\ \&
+.No (.,.) Ic s No / Ar re
+.No / Ar replacement No / Ar n
 .Xc
 .Sm on
 Replaces text in the addressed lines matching a regular expression
-.Em re
+.Ar re
 with
-.Em replacement Ns No .
+.Ar replacement .
 By default, only the first match in each line is replaced.
 If the
-.Em g
-(global) suffix is given, then every match to be replaced.
+.Ic g
+.Pq global
+suffix is given, then every match is replaced.
 The
-.Em n
+.Ar n
 suffix, where
-.Em n
+.Ar n
 is a positive number, causes only the
-.Em n Ns No th
+.Ar n Ns th
 match to be replaced.
 It is an error if no substitutions are performed on any of the addressed
 lines.
 The current address is set the last line affected.
 .Pp
-.Em re
+.Ar re
 and
-.Em replacement
+.Ar replacement
 may be delimited by any character other than space and newline
 (see the
-.Em s
+.Ic s
 command below).
 If one or two of the last delimiters is omitted, then the last line
 affected is printed as though the print suffix
-.Em p
+.Ic p
 were specified.
 .Pp
 An unescaped
 .Ql \e
 in
-.Em replacement
+.Ar replacement
 is replaced by the currently matched text.
 The character sequence
-.Em \em Ns No ,
+.Pf \e Ns Ar m ,
 where
-.Em m
+.Ar m
 is a number in the range [1,9], is replaced by the
-.Em m Ns No th
+.Ar m Ns th
 backreference expression of the matched text.
 If
-.Em replacement
+.Ar replacement
 consists of a single
 .Ql % ,
 then
-.Em replacement
+.Ar replacement
 from the last substitution is used.
 Newlines may be embedded in
-.Em replacement
+.Ar replacement
 if they are escaped with a backslash
 .Pq Ql \e .
-.It (.,.) Ns Em s
+.It (.,.) Ns Ic s
 Repeats the last substitution.
 This form of the
-.Em s
+.Ic s
 command accepts a count suffix
-.Em n Ns No ,
+.Ar n ,
 or any combination of the characters
-.Em r Ns No ,
-.Em g Ns No ,
+.Ic r ,
+.Ic g ,
 and
-.Em p Ns No .
+.Ic p .
 If a count suffix
-.Em n
+.Ar n
 is given, then only the
-.Em n Ns No th
+.Ar n Ns th
 match is replaced.
 The
-.Em r
-suffix causes
-the regular expression of the last search to be used instead of
-that of the last substitution.
+.Ic r
+suffix causes the regular expression of the last search to be used
+instead of that of the last substitution.
 The
-.Em g
+.Ic g
 suffix toggles the global suffix of the last substitution.
 The
-.Em p
+.Ic p
 suffix toggles the print suffix of the last substitution.
 The current address is set to the last line affected.
-.It (.,.) Ns Em t Ns No (.)
-Copies (i.e., transfers) the addressed lines to after the right-hand
-destination address, which may be the address
-.Em 0
-(zero).
+.It (.,.) Ns Ic t Ns (.)
+Copies
+.Pq i.e., transfers
+the addressed lines to after the right-hand destination address,
+which may be the address
+.Ad 0
+.Pq zero .
 The current address is set to the last line copied.
-.It Em u
+.It Ic u
 Undoes the last command and restores the current address
 to what it was before the command.
 The global commands
-.Em g Ns No ,
-.Em G Ns No ,
-.Em v Ns No ,
+.Ic g ,
+.Ic G ,
+.Ic v ,
 and
-.Em V
+.Ic V
 are treated as a single command by undo.
-.Em u
+.Ic u
 is its own inverse.
-.It (1,$) Ns Em v Ns No /re/command-list
+.Sm off
+.It Xo
+.Pf (1,$) Ic v No / Ar re
+.Pf / Ar command-list
+.Xc
+.Sm on
 Applies
-.Em command-list
+.Ar command-list
 to each of the addressed lines not matching a regular expression
-.Em re Ns No .
+.Ar re .
 This is similar to the
-.Em g
+.Ic g
 command.
-.It (1,$) Ns Em V Ns No /re/
+.Sm off
+.It Xo
+.Pf (1,$) Ic V No /
+.Ar re No /
+.Xc
+.Sm on
 Interactively edits the addressed lines not matching a regular expression
-.Em re Ns No .
+.Ar re .
 This is similar to the
-.Em G
+.Ic G
 command.
-.It (1,$) Ns Em w No file
+.It (1,$) Ns Ic w Ar file
 Writes the addressed lines to
-.Em file Ns No .
+.Ar file .
 Any previous contents of
-.Em file
+.Ar file
 are lost without warning.
 If there is no default filename, then the default filename is set to
-.Em file Ns No ,
+.Ar file ,
 otherwise it is unchanged.
 If no filename is specified, then the default filename is used.
 The current address is unchanged.
-.It (1,$) Ns Em wq No file
+.It (1,$) Ns Ic wq Ar file
 Writes the addressed lines to
-.Em file Ns No ,
+.Ar file ,
 and then executes a
-.Em q
+.Ic q
 command.
-.It (1,$) Ns Em w No !command
+.It (1,$) Ns Ic w No ! Ns Ar command
 Writes the addressed lines to the standard input of
-.Em !command Ns No ,
-(see the
-.Em !\&
-command below).
+.Pf ! Ns Ar command ,
+(see
+.Ic \&! Ns Ar command
+below).
 The default filename and current address are unchanged.
-.It (1,$) Ns Em W No file
+.It (1,$) Ns Ic W Ar file
 Appends the addressed lines to the end of
-.Em file Ns No .
+.Ar file .
 This is similar to the
-.Em w
+.Ic w
 command, except that the previous contents of file are not clobbered.
 The current address is unchanged.
-.It Em x
+.It Ic x
 Prompts for an encryption key which is used in subsequent reads and writes.
 If a newline alone is entered as the key, then encryption is turned off.
 Otherwise, echoing is disabled while a key is read.
 Encryption/decryption is done using the
 .Xr bdes 1
 algorithm.
-.It (.+1) Ns Em z Ns No n
+.It (.+1) Ns Ic z Ns Ar n
 Scrolls
-.Em n
+.Ar n
 lines at a time starting at addressed line.
 If
-.Em n
+.Ar n
 is not specified, then the current window size is used.
 The current address is set to the last line printed.
-.It ($) Ns Em =
+.It ($) Ns Ic =
 Prints the line number of the addressed line.
-.It (.+1) Ns Em newline
+.It (.+1) Ns newline
 Prints the addressed line, and sets the current address to that line.
-.It Em \&! Ns No command
+.It Ic \&! Ns Ar command
 Executes
-.Em command
+.Ar command
 via
 .Xr sh 1 .
 If the first character of
-.Em command
+.Ar command
 is
-.Em \&! Ns No ,
+.Sq !\& ,
 then it is replaced by text of the previous
-.Em !command Ns No .
+.Ic \&! Ns Ar command .
 .Nm
 does not process
-.Em command
+.Ar command
 for
-.Em \e
-(backslash) escapes.
+.Sq \e
+.Pq backslash
+escapes.
 However, an unescaped
-.Em %
+.Sq %
 is replaced by the default filename.
 When the shell returns from execution, a
-.Em !\&
+.Sq \&!
 is printed to the standard output.
 The current line is unchanged.
 .El
 .Sh LIMITATIONS
 .Nm
 processes
-.Em file
+.Ar file
 arguments for backslash escapes, i.e., in a filename,
 any characters preceded by a backslash
 .Pq Ql \e
 are interpreted literally.
 .Pp
-If a text (non-binary) file is not terminated by a newline character,
+If a text
+.Pq non-binary
+file is not terminated by a newline character,
 then
 .Nm
 appends one on reading/writing it.
@@ -879,29 +923,31 @@ attempts to write the buffer if the terminal hangs up
 When an error occurs,
 .Nm
 prints a
-.Dq \&?
+.Sq \&?
 and either returns to command mode or exits if its input is from a script.
 An explanation of the last error can be printed with the
-.Em h
-(help) command.
+.Ic h
+.Pq help
+command.
 .Pp
 Since the
-.Em g
-(global) command masks any errors from failed searches and substitutions,
+.Ic g
+.Pq global
+command masks any errors from failed searches and substitutions,
 it can be used to perform conditional operations in scripts; e.g.,
-.Bd -literal -offset indent
-g/old/s//new/
-.Ed
+.Pp
+.Dl g/old/s//new/
 .Pp
 replaces any occurrences of
-.Em old
+.Qq old
 with
-.Em new Ns No .
+.Qq new .
 .Pp
 If the
-.Em u
-(undo) command occurs in a global command list, then
-the command list is executed only once.
+.Ic u
+.Pq undo
+command occurs in a global command list,
+then the command list is executed only once.
 .Pp
 If diagnostics are not disabled, attempting to quit
 .Nm
@@ -915,7 +961,7 @@ but any changes to the buffer are lost.
 .Xr vi 1 ,
 .Xr regex 3
 .Pp
-USD:09-10
+USD:09\-10
 .Rs
 .%A B. W. Kernighan
 .%A P. J. Plauger
