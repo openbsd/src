@@ -1,4 +1,4 @@
-/*	$OpenBSD: idesc.c,v 1.8 1997/01/16 09:24:34 niklas Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.9 1997/01/18 12:26:30 niklas Exp $	*/
 /*	$NetBSD: idesc.c,v 1.29 1996/12/23 09:10:12 veego Exp $	*/
 
 /*
@@ -237,7 +237,6 @@ struct idec_softc
 
 int ide_scsicmd __P((struct scsi_xfer *));
 
-int idescprint __P((void *auxp, const char *));
 void idescattach __P((struct device *, struct device *, void *));
 int idescmatch __P((struct device *, void *, void *));
 
@@ -421,20 +420,7 @@ idescattach(pdp, dp, auxp)
 	/*
 	 * attach all "scsi" units on us
 	 */
-	config_found(dp, &sc->sc_link, idescprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-idescprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 /*

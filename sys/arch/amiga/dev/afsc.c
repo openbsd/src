@@ -1,4 +1,4 @@
-/*	$OpenBSD: afsc.c,v 1.7 1997/01/16 09:23:42 niklas Exp $	*/
+/*	$OpenBSD: afsc.c,v 1.8 1997/01/18 12:26:21 niklas Exp $	*/
 /*	$NetBSD: afsc.c,v 1.20 1996/12/23 09:09:49 veego Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int afscprint __P((void *auxp, const char *));
 void afscattach __P((struct device *, struct device *, void *));
 int afscmatch __P((struct device *, void *, void *));
 int afsc_dmaintr __P((void *));
@@ -170,20 +169,7 @@ afscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, afscprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-afscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 int

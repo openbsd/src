@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlhsc.c,v 1.5 1997/01/16 09:25:02 niklas Exp $	*/
+/*	$OpenBSD: mlhsc.c,v 1.6 1997/01/18 12:26:34 niklas Exp $	*/
 /*	$NetBSD: mlhsc.c,v 1.16 1996/12/23 09:10:25 veego Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int mlhscprint __P((void *auxp, const char *));
 void mlhscattach __P((struct device *, struct device *, void *));
 int mlhscmatch __P((struct device *, void *, void *));
 
@@ -153,22 +152,8 @@ mlhscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, mlhscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-mlhscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 int
 mlhsc_dma_xfer_in (dev, len, buf, phase)

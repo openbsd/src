@@ -1,4 +1,4 @@
-/*	$OpenBSD: zssc.c,v 1.9 1997/01/16 09:25:37 niklas Exp $	*/
+/*	$OpenBSD: zssc.c,v 1.10 1997/01/18 12:26:37 niklas Exp $	*/
 /*	$NetBSD: zssc.c,v 1.22 1996/12/23 09:10:33 veego Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int  zsscprint __P((void *auxp, const char *));
 void zsscattach __P((struct device *, struct device *, void *));
 int  zsscmatch __P((struct device *, void *, void *));
 int  zssc_dmaintr __P((void *));
@@ -145,22 +144,8 @@ zsscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, zsscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-zsscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 /*
  * Level 6 interrupt processing for the Progressive Peripherals Inc

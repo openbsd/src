@@ -1,4 +1,4 @@
-/*	$OpenBSD: wstsc.c,v 1.5 1997/01/16 09:25:34 niklas Exp $	*/
+/*	$OpenBSD: wstsc.c,v 1.6 1997/01/18 12:26:36 niklas Exp $	*/
 /*	$NetBSD: wstsc.c,v 1.18 1996/12/23 09:10:31 veego Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int wstscprint __P((void *auxp, const char *));
 void wstscattach __P((struct device *, struct device *, void *));
 int wstscmatch __P((struct device *, void *, void *));
 
@@ -178,20 +177,7 @@ wstscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, wstscprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-wstscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 int

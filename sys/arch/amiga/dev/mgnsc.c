@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgnsc.c,v 1.9 1996/11/23 21:45:21 kstailey Exp $	*/
+/*	$OpenBSD: mgnsc.c,v 1.10 1997/01/18 12:26:32 niklas Exp $	*/
 /*	$NetBSD: mgnsc.c,v 1.18 1996/04/21 21:12:11 veego Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int mgnscprint __P((void *auxp, const char *));
 void mgnscattach __P((struct device *, struct device *, void *));
 int mgnscmatch __P((struct device *, void *, void *));
 int mgnsc_dmaintr __P((void *));
@@ -146,20 +145,7 @@ mgnscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, mgnscprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-mgnscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 /*

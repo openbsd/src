@@ -1,4 +1,4 @@
-/*	$OpenBSD: bztzsc.c,v 1.1 1997/01/16 09:23:49 niklas Exp $	*/
+/*	$OpenBSD: bztzsc.c,v 1.2 1997/01/18 12:26:26 niklas Exp $	*/
 /*	$NetBSD: bztzsc.c,v 1.2 1996/12/23 09:09:54 veego Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <amiga/dev/bztzscreg.h>
 #include <amiga/dev/bztzscvar.h>
 
-int  bztzscprint  __P((void *auxp, const char *));
 void bztzscattach __P((struct device *, struct device *, void *));
 int  bztzscmatch  __P((struct device *, void *, void *));
 
@@ -201,19 +200,7 @@ bztzscattach(pdp, dp, auxp)
 	printf("\n");
 
 /* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, bztzscprint);
-}
-
-/* print diag if pnp is NULL else just extra */
-int
-bztzscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-
-	return(QUIET);
+	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
 }
 
 int

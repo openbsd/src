@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzsc.c,v 1.5 1997/01/16 09:23:48 niklas Exp $	*/
+/*	$OpenBSD: bzsc.c,v 1.6 1997/01/18 12:26:25 niklas Exp $	*/
 
 /*	$NetBSD: bzsc.c,v 1.14 1996/12/23 09:09:53 veego Exp $	*/
 
@@ -59,7 +59,6 @@
 #include <amiga/dev/bzscreg.h>
 #include <amiga/dev/bzscvar.h>
 
-int  bzscprint  __P((void *auxp, const char *));
 void bzscattach __P((struct device *, struct device *, void *));
 int  bzscmatch  __P((struct device *, void *, void *));
 
@@ -194,19 +193,7 @@ bzscattach(pdp, dp, auxp)
 	add_isr(&sc->sc_softc.sc_isr);
 
 	/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, bzscprint);
-}
-
-/* print diag if pnp is NULL else just extra */
-int
-bzscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-
-	return(QUIET);
+	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
 }
 
 int
