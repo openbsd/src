@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.53 2004/01/04 19:39:46 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.54 2004/01/05 16:21:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -431,6 +431,18 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 				logit(LOG_CRIT, "reload request not from SE");
 			else
 				reconfig = 1;
+			break;
+		case IMSG_CTL_FIB_COUPLE:
+			if (idx != PFD_PIPE_SESSION)
+				logit(LOG_CRIT, "couple request not from SE");
+			else
+				kroute_fib_couple();
+			break;
+		case IMSG_CTL_FIB_DECOUPLE:
+			if (idx != PFD_PIPE_SESSION)
+				logit(LOG_CRIT, "decouple request not from SE");
+			else
+				kroute_fib_decouple();
 			break;
 		default:
 			break;
