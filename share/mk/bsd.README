@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.17 1998/11/22 17:45:09 espie Exp $
+#	$OpenBSD: bsd.README,v 1.18 1998/12/19 05:13:02 millert Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -144,7 +144,7 @@ MANDIR		Base path for manual installation. [/usr/share/man/cat]
 
 MANGRP		Manual group. [bin]
 
-MANOWN		Manual owner. [bin]
+MANOWN		Manual owner. [root]
 
 MANMODE		Manual mode. [${NONBINMODE}]
 
@@ -163,7 +163,7 @@ DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
 
 DOCGRP		Documentation group. [bin]
 
-DOCOWN		Documentation owner. [bin]
+DOCOWN		Documentation owner. [root]
 
 DOCMODE		Documentation mode. [${NONBINMODE}]
 
@@ -172,7 +172,7 @@ NLSDIR		Base path for National Language Support files installation.
 
 NLSGRP		National Language Support files group. [bin]
 
-NLSOWN		National Language Support files owner. [bin]
+NLSOWN		National Language Support files owner. [root]
 
 NLSMODE		National Language Support files mode. [${NONBINMODE}]
 
