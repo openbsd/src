@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.42 2001/07/05 07:29:59 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.43 2001/08/11 05:26:59 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2161,7 +2161,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
       return 0;
     }
 
-  *cert = calloc (sb.st_size, sizeof (char));
+  *cert = calloc (sb.st_size + 1, sizeof (char));
   if (*cert == NULL)
     {
       log_error ("keynote_cert_obtain: failed to allocate %d bytes",
