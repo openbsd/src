@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.8 2002/02/17 23:01:19 maja Exp $ */
+/*	$OpenBSD: ukc.h,v 1.9 2002/03/23 13:30:24 espie Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -53,7 +53,9 @@
 #define I_NMBCLUSTERS	18
 #define I_BUFCACHEPCT	19
 #define I_NKMEMPG	20
-#define NLENTRIES	21
+#define I_SHMSEG	21
+#define I_SHMMAXPGS	22
+#define NLENTRIES	23
 
 #ifdef UKC_MAIN
 struct nlist nl[] = {
@@ -78,6 +80,8 @@ struct nlist nl[] = {
 	{ "_nmbclust" },
 	{ "_bufcachepercent" },
 	{ "_nkmempages" },
+	{ "_shmseg" },
+	{ "_shmmaxpgs" },
 	{ NULL },
 };
 struct nlist knl[] = {
@@ -102,6 +106,8 @@ struct nlist knl[] = {
 	{ "_nmbclust" },
 	{ "_bufcachepercent" },
 	{ "_nkmempages" },
+	{ "_shmseg" },
+	{ "_shmmaxpgs" },
 	{ NULL },
 };
 int	maxdev = 0;
@@ -137,7 +143,7 @@ int	more();
 void	pnum(int);
 void	pdevnam(short);
 void	pdev(short);
-int	number(char *, int *);
+int	number(const char *, int *);
 int	device(char *, int *, short *, short *);
 int	attr(char *, int *);
 void	modify(char *, int *);

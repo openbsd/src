@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.8 2001/12/10 23:15:34 deraadt Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.9 2002/03/23 13:30:24 espie Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.8 2001/12/10 23:15:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.9 2002/03/23 13:30:24 espie Exp $";
 #endif
 
 #include <sys/types.h>
@@ -253,7 +253,7 @@ pdev(devno)
 
 int
 number(c, val)
-	char *c;
+	const char *c;
 	int *val;
 {
 	u_int num = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.7 2002/02/17 23:01:19 maja Exp $ */
+/*	$OpenBSD: cmd.c,v 1.8 2002/03/23 13:30:24 espie Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.7 2002/02/17 23:01:19 maja Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.8 2002/03/23 13:30:24 espie Exp $";
 #endif
 
 #include <sys/types.h>
@@ -48,45 +48,46 @@ static char rcsid[] = "$OpenBSD: cmd.c,v 1.7 2002/02/17 23:01:19 maja Exp $";
 #include "exec.h"
 
 extern int ukc_mod_kernel;
+static void int_variable_adjust(const cmd_t *, int, const char *);
 
 /* Our command table */
 cmd_table_t cmd_table[] = {
-	{"help",   Xhelp,	"\t\t",		"Command help list"},
-	{"add",	   Xadd,	"dev\t\t",	"Add a device"},
-	{"base",   Xbase,	"8|10|16\t\t",	"Base on large numbers"},
-	{"change", Xchange,	"devno|dev\t",	"Change device"},
+	{"help",   Xhelp,	"",		"Command help list"},
+	{"add",	   Xadd,	"dev",		"Add a device"},
+	{"base",   Xbase,	"8|10|16",	"Base on large numbers"},
+	{"change", Xchange,	"devno|dev",	"Change device"},
 	{"disable",Xdisable,	"attr val|devno|dev",	"Disable device"},
 	{"enable", Xenable,	"attr val|devno|dev",	"Enable device"},
-	{"find",   Xfind,	"devno|dev\t",	"Find device"},
-	{"list",   Xlist,	"\t\t",		"List configuration"},
-	{"lines",  Xlines,	"count\t\t",	"# of lines per page"},
-	{"show",   Xshow,	"[attr [val]]\t",	"Show attribute"},
-	{"exit",   Xexit,	"\t\t",		"Exit, without saving changes"},
-	{"quit",   Xquit,	"\t\t",		"Quit, saving current changes"},
-	{"timezone", Xtimezone,	"[mins [dst]]\t",	"Show/change timezone"},
-	{"nmbclust", Xnmbclusters, "[number]\t",	"Show/change NMBCLUSTERS"},
-	{"cachepct", Xbufcachepct, "[number]\t",	"Show/change BUFCACHEPERCENT"},
-	{"nkmempg", Xnkmempg,	"[number]\t",	"Show/change NKMEMPAGES"},
+	{"find",   Xfind,	"devno|dev",	"Find device"},
+	{"list",   Xlist,	"",		"List configuration"},
+	{"lines",  Xlines,	"count",	"# of lines per page"},
+	{"show",   Xshow,	"[attr [val]]",	"Show attribute"},
+	{"exit",   Xexit,	"",		"Exit, without saving changes"},
+	{"quit",   Xquit,	"",		"Quit, saving current changes"},
+	{"timezone", Xtimezone,	"[mins [dst]]",	"Show/change timezone"},
+	{"nmbclust", Xnmbclusters, "[number]",	"Show/change NMBCLUSTERS"},
+	{"cachepct", Xbufcachepct, "[number]",	"Show/change BUFCACHEPERCENT"},
+	{"nkmempg", Xnkmempg,	"[number]",	"Show/change NKMEMPAGES"},
+	{"shmseg", Xshmseg,	"[number]",	"Show/change SHMSEG"},
+	{"shmmaxpgs", Xshmmaxpgs,"[number]",	"Show/change SHMMAXPGS"},
 	{NULL,     NULL,	NULL,		NULL}
 };
 
 int
-Xhelp(cmd)
-	cmd_t *cmd;
+Xhelp(cmd_t *cmd)
 {
 	cmd_table_t *cmd_table = cmd->table;
 	int i;
 
 	/* Hmm, print out cmd_table here... */
 	for (i = 0; cmd_table[i].cmd != NULL; i++)
-		printf("\t%s\t%s\t%s\n", cmd_table[i].cmd,
+		printf("\t%-12s%-20s%s\n", cmd_table[i].cmd,
 		       cmd_table[i].opt, cmd_table[i].help);
 	return (CMD_CONT);
 }
 
 int
-Xadd(cmd)
-	cmd_t *cmd;
+Xadd(cmd_t *cmd)
 {
 	short unit, state;
 	int a;
@@ -101,8 +102,7 @@ Xadd(cmd)
 }
 
 int
-Xbase(cmd)
-	cmd_t *cmd;
+Xbase(cmd_t *cmd)
 {
 	int a;
 
@@ -120,8 +120,7 @@ Xbase(cmd)
 }
 
 int
-Xchange(cmd)
-	cmd_t *cmd;
+Xchange(cmd_t *cmd)
 {
 	short unit, state;
 	int a;
@@ -138,8 +137,7 @@ Xchange(cmd)
 }
 
 int
-Xdisable(cmd)
-	cmd_t *cmd;
+Xdisable(cmd_t *cmd)
 {
 	short unit, state;
 	int a;
@@ -158,8 +156,7 @@ Xdisable(cmd)
 }
 
 int
-Xenable(cmd)
-	cmd_t *cmd;
+Xenable(cmd_t *cmd)
 {
 	short unit, state;
 	int a;
@@ -178,8 +175,7 @@ Xenable(cmd)
 }
 
 int
-Xfind(cmd)
-	cmd_t *cmd;
+Xfind(cmd_t *cmd)
 {
 	short unit, state;
 	int a;
@@ -196,8 +192,7 @@ Xfind(cmd)
 }
 
 int
-Xlines(cmd)
-	cmd_t *cmd;
+Xlines(cmd_t *cmd)
 {
 	int a;
 
@@ -211,8 +206,7 @@ Xlines(cmd)
 }
 
 int
-Xlist(cmd)
-	cmd_t *cmd;
+Xlist(cmd_t *cmd)
 {
 	struct cfdata *cd;
 	int	i = 0;
@@ -239,8 +233,7 @@ Xlist(cmd)
 }
 
 int
-Xshow(cmd)
-	cmd_t *cmd;
+Xshow(cmd_t *cmd)
 {
 	if (strlen(cmd->args) == 0)
 		show();
@@ -250,24 +243,21 @@ Xshow(cmd)
 }
 
 int
-Xquit(cmd)
-	cmd_t *cmd;
+Xquit(cmd_t *cmd)
 {
 	/* Nothing to do here */
 	return (CMD_SAVE);
 }
 
 int
-Xexit(cmd)
-	cmd_t *cmd;
+Xexit(cmd_t *cmd)
 {
 	/* Nothing to do here */
 	return (CMD_EXIT);
 }
 
 int
-Xtimezone(cmd)
-	cmd_t *cmd;
+Xtimezone(cmd_t *cmd)
 {
 	struct timezone *tz;
 	int	num;
@@ -296,86 +286,61 @@ Xtimezone(cmd)
 	}
 	return (CMD_CONT);
 }
-int
-Xnmbclusters(cmd)
-	cmd_t *cmd;
-{
-	int *pnmbclusters,num;
 
-	if (nl[I_NMBCLUSTERS].n_type != 0) {
+void
+int_variable_adjust(const cmd_t *cmd, int idx, const char *name)
+{
+	int *v, num;
+
+	if (nl[idx].n_type != 0) {
 		ukc_mod_kernel = 1;
 
-		pnmbclusters = (int *)adjust((caddr_t)(nl[I_NMBCLUSTERS].
-	                n_value));
+		v = (int *)adjust((caddr_t)(nl[idx].n_value));
 
 		if (strlen(cmd->args) == 0) {
-			printf("nmbclusters = %d\n", *pnmbclusters);
+			printf("%s = %d\n", name, *v);
 		} else {
 			if (number(cmd->args, &num) == 0) {
-				*pnmbclusters = num;
-				printf("nmbclusters = %d\n", *pnmbclusters);
+				*v = num;
+				printf("%s = %d\n", name, *v);
 			} else
 				printf("Unknown argument\n");
 		}
 	} else
-		printf("\
-This kernel does not support modification of NMBCLUSTERS.\n");
+		printf("This kernel does not support modification of %s.\n", 
+		    name);
+}
 
+int
+Xnmbclusters(cmd_t *cmd)
+{
+	int_variable_adjust(cmd, I_NMBCLUSTERS, "nmbclusters");
 	return (CMD_CONT);
 }
 
 int
-Xbufcachepct(cmd)
-	cmd_t *cmd;
+Xbufcachepct(cmd_t *cmd)
 {
-	int *pbufcachepct,num;
-
-	if (nl[I_BUFCACHEPCT].n_type != 0) {
-		ukc_mod_kernel = 1;
-
-		pbufcachepct = (int *)adjust((caddr_t)(nl[I_BUFCACHEPCT].
-		                n_value));
-
-		if (strlen(cmd->args) == 0) {
-			printf("bufcachepercent = %d\n", *pbufcachepct);
-		} else {
-			if (number(cmd->args, &num) == 0) {
-				*pbufcachepct = num;
-				printf("bufcachepercent = %d\n", *pbufcachepct);
-			} else
-				printf("Unknown argument\n");
-		}
-	} else
-		printf("\
-This kernel does not support modification of BUFCACHEPERCENT.\n");
-
+	int_variable_adjust(cmd, I_BUFCACHEPCT, "bufcachepercent");
 	return (CMD_CONT);
 }
 
 int
-Xnkmempg(cmd)
-	cmd_t *cmd;
+Xnkmempg(cmd_t *cmd)
 {
-	int *pnkmempg,num;
-
-	if (nl[I_NKMEMPG].n_type != 0) {
-		ukc_mod_kernel = 1;
-
-		pnkmempg = (int *)adjust((caddr_t)(nl[I_NKMEMPG].
-			    n_value));
-
-		if (strlen(cmd->args) == 0) {
-			printf("nkmempages = %d\n", *pnkmempg);
-		} else {
-			if (number(cmd->args, &num) == 0) {
-				*pnkmempg = num;
-				printf("nkmempages = %d\n", *pnkmempg);
-			} else
-				printf("Unknown argument\n");
-		}
-	} else
-		printf("\
-This kernel does not support modification of NKMEMPAGES.\n");
-
+	int_variable_adjust(cmd, I_NKMEMPG, "nkmempages");
 	return (CMD_CONT);
+}
+
+int
+Xshmseg(cmd_t *cmd)
+{
+	int_variable_adjust(cmd, I_SHMSEG, "shmseg");
+	return (CMD_CONT);
+}
+
+int
+Xshmmaxpgs(cmd_t *cmd)
+{
+	int_variable_adjust(cmd, I_SHMMAXPGS, "shmmaxpgs");
 }

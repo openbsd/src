@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.8 2002/02/17 23:01:19 maja Exp $ */
+/*	$OpenBSD: ukc.c,v 1.9 2002/03/23 13:30:24 espie Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.8 2002/02/17 23:01:19 maja Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.9 2002/03/23 13:30:24 espie Exp $";
 #endif
 
 #include <sys/types.h>
@@ -55,6 +55,14 @@ void	init(void);
 void	usage(void);
 
 int	ukc_mod_kernel = 0;
+
+static void
+check_int(int idx, const char *name)
+{
+	if (nl[idx].n_type == 0)
+		printf("WARNING this kernel doesn't support modification "
+		    "of %s.\n", name);
+}
 
 int
 ukc(file, outfile, uflag, force)
@@ -140,17 +148,11 @@ WARNING this kernel doesn't support pseudo devices.\n");
 		nopdev = 1;
 	}
 
-	if (nl[I_NMBCLUSTERS].n_type == 0)
-		printf("\
-WARNING this kernel doesn't support modification of NMCLUSTERS.\n");
-
-	if (nl[I_BUFCACHEPCT].n_type == 0)
-		printf("\
-WARNING this kernel doesn't support modification of BUFCACHEPERCENT.\n");
-
-	if (nl[I_NKMEMPG].n_type == 0)
-		printf("\
-WARNING this kernel doesn't support modification of NKMEMPAGES.\n");
+	check_int(I_NMBCLUSTERS, "NMCLUSTERS");
+	check_int(I_BUFCACHEPCT, "BUFCACHEPERCENT");
+	check_int(I_NKMEMPG, "NKMEMPAGES");
+	check_int(I_SHMSEG, "SHMSEG");
+	check_int(I_SHMMAXPGS, "SHMMAXPGS");
 
 	init();
 
