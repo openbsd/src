@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sun3,v 1.14 2000/07/14 14:21:12 miod Exp $
+#	$OpenBSD: files.sun3,v 1.15 2000/08/28 21:51:03 miod Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -186,6 +186,7 @@ major	{vnd=5}	# vnode pseudo-device
 major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
 major	{rd=13}	# RAM disk (for mini-kernel)
+major	{cd=18}	# CD-ROM drives
 
 # Compatibility modules
 
