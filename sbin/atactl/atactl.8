@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.13 2002/04/30 04:25:28 fgsch Exp $
+.\"	$OpenBSD: atactl.8,v 1.14 2002/06/08 12:50:42 gluk Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ is specified without a
 the
 .Cm identify
 command is implied.
+.Sh COMMANDS
 .Pp
 .Cm identify
 .Pp
@@ -251,6 +252,11 @@ Disables support for SMART on the specified device.
 Note that this means that the device will no longer record any SMART
 information.
 .Pp
+Note that SMART
+.Em must
+be enabled while executing the next described commands or the device will
+return an error.
+.Pp
 .Cm smartstatus
 .Pp
 Reads the reliability status of the specified device.
@@ -259,9 +265,82 @@ that one of its thresholds is exceeded (a strong indication of imminent
 failure), the warning
 .Sq SMART threshold exceeded!
 is printed to stderr and a status of 2 is returned.
-Note that SMART
-.Em must
-be enabled or the device will return an error.
+.Pp
+.Cm smartautosave
+.Ar enable | disable
+.Pp
+Enables/disables attribute autosave feature on the specified device.
+.Pp
+.Cm smartoffline
+.Ar subcommand
+.Pp
+Causes the specified device to immediately initiate the optional set of
+activities that collect SMART data in off-line mode and then save this data
+to the device's non-volatile memory, or execute a self-diagnostic test
+routines in either captive or off-line mode.
+The
+.Ar subcommand
+may be one of the following:
+.Bl -inset -offset indent
+.It Em collect
+start SMART off-line data collection immediately;
+.It Em shortoffline
+execute SMART short self-test routine immediately in off-line mode;
+.It Em extenoffline
+execute SMART extended self-test routine immediately in off-line mode;
+.It Em abort
+abort off-line mode self-test routine;
+.It Em shortcaptive
+execute SMART short self-test routine immediately in captive mode;
+.It Em extencaptive
+execute SMART extended self-test routine immediately in captive mode.
+.El
+.Pp
+Note that executing self-test routines in captive mode causes the device to
+be not accessible until the routine completes.
+This option is therefore
+.Em not recommended
+unless the implications are understood.
+.Pp
+.Cm smartread
+.Pp
+Reads various SMART information from the specified device and prints it to
+stdout.
+.Pp
+.Cm smartreadlog
+.Ar log
+.Pp
+Reads specified
+.Ar log
+and prints it to stdout.
+The
+.Ar log
+may by one of the following:
+.Bl -inset -offset indent
+.It Em directory
+error log directory;
+.It Em summary
+summary error log;
+.It Em comp
+comprehensive error log;
+.It Em selftest
+self-test log.
+.El
+.Pp
+.Cm readattr
+.Pp
+Displays attributes thresholds and values for the specified device.
+Besides attributes values device vendor can provide additional information
+shown in the last column ``Raw''.
+Attributes names can be completely wrong since they vary between vendors and
+even models, so don't rely on it.
+SMART must be enabled while executing this command or the device will return
+an error.
+.Pp
+SMART commands and
+.Cm readattr
+command are for experts only.
+If you can't understand its meaning don't ask us, read ATA working drafts.
 .Pp
 .Cm writecachedisable
 .Pp
@@ -346,9 +425,6 @@ command is rather ugly.
 Disabling read look-head with the
 .Cm readaheaddisable
 might cause problems with mounted filesystems on that device.
-.Pp
-There is no support for reading SMART logs or initiating a SMART
-selftest.
 .Pp
 There is no support for the Secure Mode commands (in particular the
 Security Erase Unit).
