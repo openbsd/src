@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.121 2002/11/24 19:09:46 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.122 2002/11/28 01:54:58 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -179,7 +179,7 @@ if [ ! -f /etc/fstab ]; then
 			_mp=${_mount_points[$_i]}
 
 			# Get the mount point from the user
-			ask "Mount point for ${_pp} (size=${_ps}k), none or done?" "$_mp"
+			ask "Mount point for ${_pp} (size=${_ps}k)? (or 'none' or 'done')" "$_mp"
 			case $resp in
 			"")	;;
 			none)	_mp=
@@ -339,10 +339,10 @@ _oifs=$IFS
 IFS=
 resp=
 while [ -z "$resp" ]; do
-	askpass "Password for root account (will not echo):"
+	askpass "Password for root account? (will not echo)"
 	_password=$resp
 
-	askpass "Password (again):"
+	askpass "Password for root account? (again)"
 	if [ "$_password" != "$resp" ]; then
 		echo "Passwords do not match, try again."
 		resp=

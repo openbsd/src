@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.275 2002/11/28 01:11:05 krw Exp $
+#	$OpenBSD: install.sub,v 1.276 2002/11/28 01:54:58 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -87,7 +87,7 @@
 
 set_term() {
 	[ "$TERM" ] && return
-	ask "Specify terminal type:" ${MDTERM:-vt220}
+	ask "Terminal type?" ${MDTERM:-vt220}
 	TERM=$resp
 	export TERM
 
@@ -523,7 +523,7 @@ configure_ifs() {
 	# Get IP address
 	resp=
 	while [ -z "$resp" ] ; do
-		ask "IP address for ${_if_name}${_dhcp_prompt}?" "$_if_ip"
+		ask "IP address for ${_if_name}?${_dhcp_prompt}" "$_if_ip"
 		if [ ! -x /sbin/dhclient -a "$resp" == "dhcp" ]; then
 			echo "DHCP is not supported."
 			resp=
@@ -553,7 +553,7 @@ __EOT
 Supported media options for $_if_name are:
 $_mediaopts
 __EOT
-			ask "Enter media options for $_if_name:"
+			ask "Media options for $_if_name?"
 			_if_extra=$resp
 			;;
 		*)	;;
@@ -1040,7 +1040,7 @@ install_url() {
 		if [ "$_ftp_server_login" != "anonymous" ]; then
 			resp=
 			while [ -z "$resp" ] ; do
-				askpass "Password (will not echo):"
+				askpass "Password? (will not echo)"
 			done
 			_ftp_server_password=$resp
 		fi
@@ -1079,7 +1079,7 @@ install_mounted_fs() {
 	local _mp=$1 _dir=$2
 	
 	while : ; do
-		ask "Specify pathname to the sets: (or 'done')" "$_dir"
+		ask "Pathname to the sets? (or 'done')" "$_dir"
 		case $resp in
 		done)	return
 			;;
@@ -1418,7 +1418,7 @@ set_timezone() {
 		_zonepath=${_zonepath}${resp}
 
 		while [ -d "$_zonepath" ]; do
-			ask "Select a sub-timezone of '${_zonepath#$_zoneroot}' ('?' for list):"
+			ask "What sub-timezone of '${_zonepath#$_zoneroot}' are you in? ('?' for list)"
 			if [ "$resp" = "?" ]; then
 				ls -F ${_zonepath}
 			else
@@ -1694,7 +1694,7 @@ get_fqdn() {
 		sed "s/\\(.*\\)[[:space:]]\\(.*\\)\$/\\1 \\2.$FQDN \\2/" $2 > $2.new
 		mv $2.new $2
 	else
-		ask "Enter DNS domain name (e.g. 'bar.com'):" "$FQDN"
+		ask "DNS domain name? (e.g. 'bar.com')" "$FQDN"
 		FQDN=$resp
 	fi
 }
@@ -1763,7 +1763,7 @@ __EOT
 			: ${_resp:=none}
 		fi
 	fi
-	ask "Enter IP address of default route:" "$resp"
+	ask "IP address of default route?" "$resp"
 	if [ "$resp" != "none" ]; then
 		route delete default > /dev/null 2>&1
 		if route add default $resp > /dev/null ; then
@@ -1783,7 +1783,7 @@ __EOT
 			fi
 		done
 	fi
-	ask "Enter IP address of primary nameserver:" "$resp"
+	ask "IP address of primary nameserver?" "$resp"
 	if [ "$resp" != "none" ]; then
 		echo "search $FQDN" > /tmp/resolv.conf
 		for n in `echo ${resp}`; do
