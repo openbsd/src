@@ -1,0 +1,82 @@
+#	$OpenBSD: IMP3,v 1.1 1998/05/05 05:44:09 imp Exp $
+#
+#	Generic configuration file for MIPS R4x00 ARC Systems
+#
+
+machine		arc mips
+
+include "../../../conf/GENERIC"
+
+maxusers	32
+
+# MD options
+option		NATIVE_ELF	# Arc systems uses ELF as native format
+
+# Specify storage configuration (its a joke..)
+config		bsd	swap generic
+
+#
+# Definition of system
+#
+mainbus0	at root
+cpu*		at mainbus0
+
+#### Main local buses
+
+pica*		at mainbus0	# ACER Pica systems local bus.
+isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
+
+#### PICA bus devices
+
+clock0		at pica?
+pc0		at pica?
+pms0		at pica?
+com0		at pica?
+com1		at pica?
+lpt0		at pica?
+sn0		at pica?
+
+fdc0		at pica?
+fd*		at fdc? drive ?
+
+asc0		at pica?
+scsibus* 	at asc?
+
+#### ISA Bus.
+
+isa*		at isabr?
+
+clock0		at isa? port 0x70 irq 0
+
+pc0    		at isa? port 0x60 irq 1         # generic PC console device
+com0		at isa? port 0x3f8 irq 4
+com1		at isa? port 0x2f8 irq 3
+com2		at isa? port 0x3e8 irq 4
+com3		at isa? port 0x2e8 irq 3
+ast0		at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+com*		at ast? slave ?
+lpt0		at isa? port 0x378 irq 7
+
+wdc0		at isa? port 0x1f0 irq 14	# ST506, ESDI, IDE controllers
+wdc1		at isa? port 0x170 irq 15
+wd*		at wdc? drive ?
+
+atapibus*	at wdc?
+acd*		at atapibus? drive?
+
+ep0		at isa? port ? irq ?           # 3C509 ethernet cards
+ed0    		at isa? port 0x300 iomem 0xd0000 irq 5  # WD/SMC, 3C503,
+# iy0		at isa? port 0x300 irq 11	# Intel etherexpress pro/10+
+joy0		at isa? port 0x201
+
+btl0		at isa? port 0x330 irq ? drq ?
+scsibus* 	at btl?
+
+#### SCSI Bus devices
+
+sd*		at scsibus? target ? lun ?
+st*		at scsibus? target ? lun ?
+cd*		at scsibus? target ? lun ?
+ch*		at scsibus? target ? lun ?
+ss*		at scsibus? target ? lun ?
+uk*		at scsibus? target ? lun ?
