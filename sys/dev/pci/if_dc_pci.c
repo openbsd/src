@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.24 2002/02/17 05:12:56 nate Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.25 2002/02/17 05:27:39 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -128,11 +128,7 @@ dc_pci_match(parent, match, aux)
 	for (t = dc_devs; t->dc_vid != 0; t++) {
 		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->dc_did)) {
-#if defined(__alpha__)
-			return (1);
-#else
 			return (2);
-#endif
 		}
 	}
 
