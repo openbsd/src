@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.9 2000/04/18 03:01:32 aaron Exp $
+.\"	$OpenBSD: inet.3,v 1.10 2000/04/21 15:38:17 aaron Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -172,14 +172,14 @@ That is, little-endian bytes are ordered from right to left.
 .Pp
 When a three part address is specified, the last
 part is interpreted as a 16-bit quantity and placed
-in the right-most two bytes of the network address.
+in the rightmost two bytes of the network address.
 This makes the three part address format convenient
 for specifying Class B network addresses as
 .Dq Li 128.net.host .
 .Pp
 When a two part address is supplied, the last part
 is interpreted as a 24-bit quantity and placed in
-the right most three bytes of the network address.
+the rightmost three bytes of the network address.
 This makes the two part address format convenient
 for specifying Class A network addresses as
 .Dq Li net.host .
