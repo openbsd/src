@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.5 2004/07/09 10:56:35 henning Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.6 2004/07/09 14:56:57 jaredy Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -28,10 +28,17 @@ daemon implements the Network Time Protocol
 version 4.
 This manual page describes the format of its configuration file,
 .Nm .
-The settings are as follows:
-.Bl -tag -width "listenonXX"
-.It Ar listen on
-Specify a local IP address the
+.Pp
+The configuration file has the following format:
+.Pp
+Empty lines and lines beginning with the
+.Sq #
+character are ignored.
+.Pp
+The possible keywords are as follows:
+.Bl -tag -width Ds
+.It Ic listen on Ar address
+Specify a local IP address or a hostname the
 .Xr ntpd 8
 daemon should listen on.
 It can appear multiple times:
@@ -50,28 +57,28 @@ listen on *
 listen on 127.0.0.1
 listen on ::1
 .Ed
-.It Ar server
+.It Ic server Ar address
 Specify the IP address or the hostname of an NTP
-server to syncronize to.
-If the hostname resolves to multiple IPv4 and/or IPv6 adresses,
+server to synchronize to.
+If the hostname resolves to multiple IPv4 and/or IPv6 addresses,
 .Xr ntpd 8
 uses the first address.
 If it does not get a reply,
 .Xr ntpd 8
-retries with the next address and continues to do so unless a working address
+retries with the next address and continues to do so until a working address
 is found.
 For example:
 .Bd -literal -offset indent
 server 10.0.0.2
 server ntp.example.org
 .Ed
-.It Ar servers
+.It Ic servers Ar address
 As with
-.Ar server ,
-specify the IP address or hostname of an ntp server to synchronize to.
-Should the hostname resolve to multiple IP adresses,
+.Cm server ,
+specify the IP address or hostname of an NTP server to synchronize to.
+Should the hostname resolve to multiple IP addresses,
 .Xr ntpd 8
-will try synchronize to all of them.
+will try to synchronize to all of them.
 For example:
 .Bd -literal -offset indent
 servers pool.ntp.org
@@ -80,7 +87,7 @@ servers pool.ntp.org
 .Sh FILES
 .Bl -tag -width "/etc/ntpd.conf" -compact
 .It Pa /etc/ntpd.conf
-.Nm
+.Xr ntpd 8
 configuration file
 .El
 .Sh SEE ALSO
