@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2000/04/27 02:34:50 bjc Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2000/10/04 04:03:10 bjc Exp $
 #	$NetBSD: Makefile.inc,v 1.2 1999/07/18 05:55:45 abs Exp $
 
-XXRPB=0x1F4240
-RELOC=0x2f0000
+XXRPB=0x354240
+RELOC=0x39F000
 .PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common
 
 CPPFLAGS+=-I${.CURDIR}/../../../../ -I${.CURDIR}/../../ -I${.CURDIR}/../common -I${.CURDIR}/../../include
