@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.8 1997/05/02 20:56:18 grr Exp $
+#	$OpenBSD: install.sub,v 1.9 1997/05/03 07:45:10 tholo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ if [ X$EDITOR = X ]; then
 	else
 		EDITOR=ed
 	fi
+	export EDITOR
 fi
 
 # get a reponse with default[s]
@@ -1157,7 +1158,7 @@ __get_timezone_1
 			if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
 				TZ="$_a"
 				echo "You have selected timezone \"$_a\"".
-				break 2
+				return
 			fi
 			echo "'/usr/share/zoneinfo/$_a' is not a valid timezone on this system."
 			;;
@@ -1202,18 +1203,23 @@ __install_sets_1
 			case "$resp" in
 			d*|D*)
 				install_disk
+				resp=d
 				;;
 			f*|F*)
 				install_ftp
+				resp=f
 				;;
 			t*|T*)
 				install_tape
+				resp=t
 				;;
 			c*|C*)
 				install_cdrom
+				resp=c
 				;;
 			n*|N*)
 				install_nfs
+				resp=n
 				;;
 			*)
 				echo "Invalid response: $resp"
