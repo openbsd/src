@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.11 2002/07/23 14:19:46 art Exp $	*/
+/*	$OpenBSD: types.h,v 1.12 2002/10/06 19:58:31 art Exp $	*/
 /*	$NetBSD: types.h,v 1.11 1996/12/10 23:19:38 pk Exp $	*/
 
 /*
@@ -84,6 +84,5 @@ typedef	unsigned long long	 uint64_t;
 
 typedef int32_t			register_t;
 
-#define __HAVE_SPLASSERT
 
 #endif	/* _MACHTYPES_H_ */
