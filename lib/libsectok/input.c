@@ -1,4 +1,4 @@
-/* $Id: input.c,v 1.7 2001/07/30 20:05:39 rees Exp $ */
+/* $Id: input.c,v 1.8 2001/08/02 17:02:05 rees Exp $ */
 
 /*
 copyright 2001
@@ -44,10 +44,11 @@ such damages.
 #include <System/Unix/unix_string.h>
 #include <UI/UIAll.h>
 #include "field.h"
-#endif
+#else
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
+#endif
+#include <ctype.h>
 
 #include "sectok.h"
 

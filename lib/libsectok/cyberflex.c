@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.9 2001/07/30 20:05:39 rees Exp $ */
+/* $Id: cyberflex.c,v 1.10 2001/08/02 17:02:05 rees Exp $ */
 
 /*
 copyright 2000
@@ -46,9 +46,9 @@ such damages.
 #else
 #include <stdlib.h>
 #include <unistd.h>
-#endif
 #include <stdio.h>
 #include <string.h>
+#endif
 
 #include "sectok.h"
 

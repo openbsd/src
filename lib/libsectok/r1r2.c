@@ -1,4 +1,4 @@
-/* $Id: r1r2.c,v 1.7 2001/08/02 15:09:35 rees Exp $ */
+/* $Id: r1r2.c,v 1.8 2001/08/02 17:02:05 rees Exp $ */
 
 /*
 copyright 1999
@@ -42,8 +42,9 @@ such damages.
 #include <System/Unix/unix_string.h>
 #include <UI/UIAll.h>
 #include "field.h"
-#endif
+#else
 #include <stdio.h>
+#endif
 
 #include "sectok.h"
 

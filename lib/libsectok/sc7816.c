@@ -1,4 +1,4 @@
-/* $Id: sc7816.c,v 1.7 2001/07/30 20:05:39 rees Exp $ */
+/* $Id: sc7816.c,v 1.8 2001/08/02 17:02:05 rees Exp $ */
 
 /*
 copyright 2000
@@ -48,9 +48,9 @@ such damages.
 #else
 #include <stdlib.h>
 #include <unistd.h>
-#endif
 #include <stdio.h>
 #include <string.h>
+#endif
 
 #ifdef SCPERF
 #define SCPERF_FIRST_APPEARANCE

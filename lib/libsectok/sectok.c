@@ -1,4 +1,4 @@
-/* $Id: sectok.c,v 1.9 2001/07/30 20:05:39 rees Exp $ */
+/* $Id: sectok.c,v 1.10 2001/08/02 17:02:05 rees Exp $ */
 
 /*
 copyright 2000
@@ -45,7 +45,6 @@ such damages.
 #include <System/Unix/unix_string.h>
 #include <UI/UIAll.h>
 #include "field.h"
-#include <stdio.h>
 #undef open
 #else
 #include <sys/types.h>

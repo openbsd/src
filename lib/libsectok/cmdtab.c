@@ -1,4 +1,4 @@
-/* $Id: cmdtab.c,v 1.5 2001/07/30 20:05:39 rees Exp $ */
+/* $Id: cmdtab.c,v 1.6 2001/08/02 17:02:05 rees Exp $ */
 
 /*
 copyright 1999
@@ -42,8 +42,9 @@ such damages.
 #include <System/Unix/unix_string.h>
 #include <UI/UIAll.h>
 #include "field.h"
-#endif
+#else
 #include <stdio.h>
+#endif
 
 #include "sectok.h"
 
