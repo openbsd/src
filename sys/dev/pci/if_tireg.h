@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.15 2004/08/05 19:57:17 brad Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.16 2004/11/02 21:18:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1033,7 +1033,7 @@ struct ti_ring_data {
  * no attempt is made to allocate physically contiguous memory.
  * 
  */
-#ifdef __alpha__ /* XXX - should be conditional on pointer size */
+#ifdef __LP64__
 #define TI_NTXSEG      30
 #else
 #define TI_NTXSEG      31
