@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.41 2003/08/21 14:00:28 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.42 2003/11/17 19:05:03 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -233,6 +233,7 @@ HTDOCS= \
 CGIFILES=	cgi-bin/printenv cgi-bin/test-cgi	
 
 MANUALFILES= \
+	manual/FAQ.html \
 	manual/howto/auth.html \
 	manual/howto/htaccess.html \
 	manual/howto/cgi.html.en \
@@ -502,7 +503,9 @@ MANUALFILES= \
 	manual/mod/mod_negotiation.html.html \
 	manual/mod/mod_negotiation.html.ja.jis \
 	manual/mod/mod_proxy.html \
-	manual/mod/mod_rewrite.html \
+	manual/mod/mod_rewrite.html.en \
+	manual/mod/mod_rewrite.html.html \
+	manual/mod/mod_rewrite.html.ja.jis \
 	manual/mod/mod_setenvif.html.en \
 	manual/mod/mod_setenvif.html.html \
 	manual/mod/mod_so.html.en \
