@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.20 1997/04/19 21:01:12 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.21 1997/06/02 03:08:55 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.20 1997/04/19 21:01:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.21 1997/06/02 03:08:55 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -156,6 +156,11 @@ main(argc, argv)
 		syslog(LOG_ERR, "couldn't get local hostname: %m");
 	else
 		domain = strchr(localhost, '.');
+	if (domain) {
+		domain++;
+		if (*domain && strchr(domain, '.') == NULL)
+			domain = localhost;
+	}
 
 	fflag = hflag = pflag = 0;
 	uid = getuid();
@@ -169,7 +174,7 @@ main(argc, argv)
 				errx(1, "-h option: %s", strerror(EPERM));
 			hflag = 1;
 			if (domain && (p = strchr(optarg, '.')) &&
-			    strcasecmp(p, domain) == 0)
+			    strcasecmp(p+1, domain) == 0)
 				*p = 0;
 			hostname = optarg;
 			break;
