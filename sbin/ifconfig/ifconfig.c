@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.17 1998/07/07 07:26:15 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.18 1998/07/09 06:12:09 deraadt Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.17 1998/07/07 07:26:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.18 1998/07/09 06:12:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -399,9 +399,8 @@ printif(ifrm, ifaliases)
 	for (i = 0; i < ifc.ifc_len; ) {
 		ifrp = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
 		i += sizeof(ifrp->ifr_name) +
-			(ifrp->ifr_addr.sa_len > sizeof(struct sockaddr)
-				? ifrp->ifr_addr.sa_len
-				: sizeof(struct sockaddr));
+		    (ifrp->ifr_addr.sa_len > sizeof(struct sockaddr) ?
+		    ifrp->ifr_addr.sa_len : sizeof(struct sockaddr));
 
 		if (ifrm && strncmp(ifrm->ifr_name, ifrp->ifr_name,
 		    sizeof(ifrp->ifr_name)))
