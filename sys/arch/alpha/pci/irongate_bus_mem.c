@@ -80,13 +80,16 @@ irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 	 * allocate RAM out of the extent map.
 	 */
 	for (i = 0; i < mem_cluster_cnt; i++) {
+		u_quad_t size;
+
+		size = mem_clusters[i].size & ~PAGE_MASK;
+
 		error = extent_alloc_region(CHIP_MEM_EXTENT(v),
-		    mem_clusters[i].start, mem_clusters[i].size,
+		    mem_clusters[i].start, size,
 		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 		if (error) {
-			printf("WARNING: unable reserve RAM at 0x%lx - 0x%lx\n",
-			    mem_clusters[i].start,
-			    mem_clusters[i].start + (mem_clusters[i].size - 1));
+			printf("WARNING: unable to reserve RAM at 0x%lx - 0x%lx (%d)\n",
+			    mem_clusters[i].start, size, error);
 		}
 	}
 }
