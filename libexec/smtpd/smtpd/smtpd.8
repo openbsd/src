@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.5 1997/12/13 20:19:43 deraadt Exp $
+.\"	$Id: smtpd.8,v 1.6 1997/12/14 01:05:30 deraadt Exp $
 .Dd Dec 10, 1997
 .Dt SMTPD 8
 .Os OpenBSD
@@ -75,7 +75,7 @@ dropped from any client feeding
 .Nm smtpd
 a suspicious hostname, FROM:, or RCPT: line containing characters
 indicative of an attempt to do something evil, or any message headers
-that aren't 8bit clean. The default is to log such occuurances and
+that aren't 8bit clean. The default is to log such occurances and
 substitute for the offending characters, but not drop the connection.
 .It Fl s
 Specify 
