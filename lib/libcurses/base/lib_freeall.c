@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_freeall.c,v 1.1 1999/01/18 19:09:45 millert Exp $	*/
+/*	$OpenBSD: lib_freeall.c,v 1.2 1999/05/08 20:29:00 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <term.h>
+#include <term_entry.h>
 
 #if HAVE_NC_FREEALL
 
@@ -41,7 +41,7 @@
 extern int malloc_errfd;	/* FIXME */
 #endif
 
-MODULE_ID("$From: lib_freeall.c,v 1.13 1998/11/12 19:42:42 Alexander.V.Lukyanov Exp $")
+MODULE_ID("$From: lib_freeall.c,v 1.14 1999/04/03 23:17:06 tom Exp $")
 
 static void free_slk(SLK *p)
 {
@@ -49,16 +49,6 @@ static void free_slk(SLK *p)
 		FreeIfNeeded(p->ent);
 		FreeIfNeeded(p->buffer);
 		free(p);
-	}
-}
-
-void _nc_free_termtype(struct termtype *p, int base)
-{
-	if (p != 0) {
-		FreeIfNeeded(p->term_names);
-		FreeIfNeeded(p->str_table);
-		if (base)
-			free(p);
 	}
 }
 
@@ -121,7 +111,8 @@ void _nc_freeall(void)
 	}
 
 	if (cur_term != 0) {
-		_nc_free_termtype(&(cur_term->type), TRUE);
+		_nc_free_termtype(&(cur_term->type));
+		free(cur_term);
 	}
 
 #ifdef TRACE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: read_termcap.c,v 1.3 1999/05/08 20:29:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -62,7 +62,7 @@
 #include <fcntl.h>
 #endif
 
-MODULE_ID("$From: read_termcap.c,v 1.41 1999/02/27 22:12:54 tom Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.43 1999/04/10 20:52:52 tom Exp $")
 
 #ifndef PURE_TERMINFO
 

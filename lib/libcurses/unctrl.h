@@ -1,4 +1,4 @@
-/*	$OpenBSD: unctrl.h,v 1.4 1998/07/23 21:20:08 millert Exp $	*/
+/*	$OpenBSD: unctrl.h,v 1.5 1999/05/08 20:28:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -47,7 +47,7 @@
 #define _UNCTRL_H	1
 
 #undef  NCURSES_VERSION
-#define NCURSES_VERSION "4.2"
+#define NCURSES_VERSION "5.0"
 
 #ifdef __cplusplus
 extern "C" {

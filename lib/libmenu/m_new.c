@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_new.c,v 1.4 1998/07/24 16:39:09 millert Exp $	*/
+/*	$OpenBSD: m_new.c,v 1.5 1999/05/08 20:29:04 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_new.c,v 1.7 1998/02/11 12:13:49 tom Exp $")
+MODULE_ID("$From: m_new.c,v 1.8 1999/03/28 18:10:31 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -59,6 +59,7 @@ MENU *new_menu(ITEM ** items)
   if (menu)
     {
       *menu = _nc_Default_Menu;
+      menu->status = 0;
       menu->rows = menu->frows;
       menu->cols = menu->fcols;
       if (items && *items)

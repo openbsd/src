@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc_ttype.c,v 1.1 1999/03/02 06:23:28 millert Exp $	*/
+/*	$OpenBSD: alloc_ttype.c,v 1.2 1999/05/08 20:29:00 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$Id: alloc_ttype.c,v 1.1 1999/03/02 06:23:28 millert Exp $")
+MODULE_ID("$From: alloc_ttype.c,v 1.6 1999/03/01 22:10:44 tom Exp $")
 
 #if NCURSES_XNAMES
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: free_ttype.c,v 1.1 1999/03/02 06:23:28 millert Exp $	*/
+/*	$OpenBSD: free_ttype.c,v 1.2 1999/05/08 20:29:01 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$Id: free_ttype.c,v 1.1 1999/03/02 06:23:28 millert Exp $")
+MODULE_ID("$From: free_ttype.c,v 1.2 1999/03/01 00:30:35 tom Exp $")
 
 void _nc_free_termtype(TERMTYPE *ptr)
 {

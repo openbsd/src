@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.11 1999/03/02 06:23:27 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.12 1999/05/08 20:28:59 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -59,6 +59,7 @@
 #define HAVE_ERRNO 1
 #define HAVE_FCNTL_H 1
 #define HAVE_FORM_H 1
+#define HAVE_GETCWD 1
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GETTTYNAM 1
 #define HAVE_ISASCII 1
@@ -109,7 +110,7 @@
 /* #define PURE_TERMINFO 1 */
 #define RETSIGTYPE void
 #define STDC_HEADERS 1
-#define SYSTEM_NAME "openbsd2.4"
+#define SYSTEM_NAME "openbsd2.5"
 #define TERMINFO_DIRS "/usr/share/terminfo"
 #define TYPEOF_CHTYPE long
 #define USE_DATABASE 1
