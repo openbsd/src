@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.3 1998/05/22 07:09:09 millert Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.4 2002/06/26 06:08:30 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.3 1998/05/22 07:09:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.4 2002/06/26 06:08:30 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	int buflen;		/* size of buffer */
 {
 	register HEADER *hp;
-	register u_char *cp;
+	register u_char *cp, *ep;
 	register int n;
 	u_char *dnptrs[20], **dpp, **lastdnptr;
 
@@ -123,7 +123,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	hp->rd = (_res.options & RES_RECURSE) != 0;
 	hp->rcode = NOERROR;
 	cp = buf + HFIXEDSZ;
-	buflen -= HFIXEDSZ;
+	ep = buf + buflen;
 	dpp = dnptrs;
 	*dpp++ = buf;
 	*dpp++ = NULL;
@@ -134,12 +134,12 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	switch (op) {
 	case QUERY:	/*FALLTHROUGH*/
 	case NS_NOTIFY_OP:
-		if ((buflen -= QFIXEDSZ) < 0)
+		if (ep - cp < QFIXEDSZ)
 			return (-1);
-		if ((n = dn_comp(dname, cp, buflen, dnptrs, lastdnptr)) < 0)
+		if ((n = dn_comp(dname, cp, ep - cp - QFIXEDSZ, dnptrs,
+		    lastdnptr)) < 0)
 			return (-1);
 		cp += n;
-		buflen -= n;
 		__putshort(type, cp);
 		cp += INT16SZ;
 		__putshort(class, cp);
@@ -150,12 +150,11 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		/*
 		 * Make an additional record for completion domain.
 		 */
-		buflen -= RRFIXEDSZ;
-		n = dn_comp((char *)data, cp, buflen, dnptrs, lastdnptr);
+		n = dn_comp((char *)data, cp, ep - cp - RRFIXEDSZ, dnptrs,
+		    lastdnptr);
 		if (n < 0)
 			return (-1);
 		cp += n;
-		buflen -= n;
 		__putshort(T_NULL, cp);
 		cp += INT16SZ;
 		__putshort(class, cp);
@@ -171,7 +170,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		/*
 		 * Initialize answer section
 		 */
-		if (buflen < 1 + RRFIXEDSZ + datalen)
+		if (ep - cp < 1 + RRFIXEDSZ + datalen)
 			return (-1);
 		*cp++ = '\0';	/* no domain name */
 		__putshort(type, cp);
