@@ -4,19 +4,48 @@ fairly simple to replace the ARC firmware with the SRM version.
 You can get replacement firmware either from a firmware update
 CD or via ftp from ftp://ftp.digital.com/pub/DEC/Alpha/firmware/.
 
-As of May, 1997, the latest firmware version available for
-ftp is version 3.9.  To update an alpha with an axppci33
-motherboard from ARC firmware to SRM one would ftp to
-ftp.digital.com and download
-    /pub/DEC/Alpha/firmware/v3.9/decaxppci33/decaxppci33_v1_6.exe
-then copy it to a FAT-formatted (ie: DOS) floppy with the name
-FWUPDATE.EXE.  Now that you have your new firmware on a floppy
-you just need to insert it into your machine's floppy drive and
-turn on the machine.  To actually update the firmware you need to
-choose the "Supplementary menu" from the ARC console and then
-"Install new firmware".  After fwupdate.exe is done loading from
-the floppy, enter "update srm" at the prompt and hit return.
-After the update is complete you may want to verify the update
-(if this was not done automatically) by entering "verify srm" at
-the prompt.  Once this is done you can enter "exit" and cycle power
-on your machine.  When it reboots you should be in the SRM console.
+Acquiring and updating firmware:
+    As of May, 1997, the latest firmware version available for
+    ftp is version 3.9.  To update an alpha with an axppci33
+    motherboard from ARC firmware to SRM one would ftp to
+    ftp.digital.com and download
+	/pub/DEC/Alpha/firmware/v3.9/decaxppci33/decaxppci33_v1_6.exe
+    then copy it to a FAT-formatted (ie: DOS) floppy with the name
+    FWUPDATE.EXE.  Now that you have your new firmware on a floppy
+    you just need to insert it into your machine's floppy drive and
+    turn on the machine.  To actually update the firmware you need to
+    choose the "Supplementary menu" from the ARC console and then
+    "Install new firmware".  After fwupdate.exe is done loading from
+    the floppy, enter "update srm" at the prompt and hit return.
+    After the update is complete you may want to verify the update
+    (if this was not done automatically) by entering "verify srm" at
+    the prompt.  Once this is done you can enter "exit" and cycle power
+    on your machine.  When it reboots you should be in the SRM console.
+
+    Note that the procedure for updating SRM firmware from an
+    existing version of the SRM console is different.  Please see
+    the README files that come with the firmware update for details.
+
+Using the SRM console:
+    This is not intended to be an exhaustive guide on using the
+    SRM firmware console.  It should, however, give you enough
+    information to boot OpenBSD/alpha.
+
+    To see a list of devices connected to your alpha, you can
+    use the "show device" command.  For booting the devices you
+    are interested in are "dva0" (the floppy drive) and
+    "dka*" (the disk drives).
+
+    You can set ROM variables by saying "set VARIABLE VALUE".
+    Some variables you will want to set:
+	auto_action	Determines what happens when you turn power
+			on, halt, or crash your machine.  Valid
+			values include "halt", "boot", and "restart".
+			Most users will want to set this to "boot".
+	bootdef_dev	Default boot device (or list of devices).
+	boot_file	Name of the kernel to boot.  If you don't set
+			this "bsd" will be loaded.
+	boot_osflags	Flags to pass in to the kernel.  For multiuser
+			boot this needs to be set to "-a".
+    To see a list of all variables on your machine use the "show"
+    command with no arguments.
