@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.21 1997/03/26 01:53:48 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.22 1997/03/29 23:54:20 briggs Exp $	*/
 /*	$NetBSD: cd.c,v 1.92 1996/05/05 19:52:50 christos Exp $	*/
 
 /*
@@ -1120,7 +1120,7 @@ cd_size(cd, flags)
 	 */
 	if (scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), CDRETRIES,
-	    2000, NULL, flags | SCSI_DATA_IN) != 0)
+	    20000, NULL, flags | SCSI_DATA_IN) != 0)
 		return 0;
 
 	blksize = _4btol(rdcap.length);
