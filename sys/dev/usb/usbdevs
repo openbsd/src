@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.23 2000/10/13 04:29:49 aaron Exp $
+$OpenBSD: usbdevs,v 1.24 2000/11/06 20:08:57 mickey Exp $
 /* $NetBSD: usbdevs,v 1.88 2000/04/03 12:09:43 augustss Exp $ */
 
 /*
@@ -335,6 +335,7 @@ product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
 
 /* Creative Labs products */
 product CREATIVELABS NOMAD_II	0x1002	Nomad II
+product CREATIVELABS NOMAD_IIMG	0x4004	Nomad II MG
 
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
