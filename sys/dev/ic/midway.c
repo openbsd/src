@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.7 1996/06/29 23:22:31 chuck Exp $	*/
-/*	(sync'd to midway.c 1.56)	*/
+/*	$OpenBSD: midway.c,v 1.8 1996/07/03 17:21:19 chuck Exp $	*/
+/*	(sync'd to midway.c 1.57)	*/
 
 /*
  *
@@ -81,11 +81,18 @@
 #define INLINE inline
 #endif /* EN_DEBUG */
 
+#ifdef __FreeBSD__
+#include "en.h"
+#endif
+
+#if NEN > 0 || !defined(__FreeBSD__)
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
 #include <sys/device.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -106,12 +113,21 @@
 #endif
 
 
-#ifndef sparc
+#if !defined(sparc) && !defined(__FreeBSD__)
 #include <machine/bus.h>
 #endif
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/ic/midwayreg.h>
 #include <dev/ic/midwayvar.h>
+#elif defined(__FreeBSD__)
+#include <machine/cpufunc.h>            /* for rdtsc proto for clock.h below */
+#include <machine/clock.h>              /* for DELAY */
+#include <pci/midwayreg.h>
+#include <pci/midwayvar.h>
+#include <vm/pmap.h>			/* for vtophys proto */
+#define IFF_NOTRAILERS 0
+#endif
 
 /*
  * params
@@ -311,9 +327,8 @@ u_int32_t r, v;
  * prototypes
  */
 
-void	en_attach __P((struct en_softc *));
 STATIC	int en_b2sz __P((int));
-#ifdef EN_DEBUG
+#ifdef EN_DDBHOOK
 int	en_dump __P((int,int));
 int	en_dumpmem __P((int,int,int));
 #endif
@@ -322,13 +337,11 @@ STATIC	int en_dmaprobe_doit __P((struct en_softc *, u_int8_t *,
 							u_int8_t *, int));
 STATIC	int en_dqneed __P((struct en_softc *, caddr_t, u_int));
 STATIC	void en_init __P((struct en_softc *));
-int	en_intr __P((void *));
-STATIC	int en_ioctl __P((struct ifnet *, u_long, caddr_t));
+STATIC	int en_ioctl __P((struct ifnet *, EN_IOCTL_CMDT, caddr_t));
 STATIC	int en_k2sz __P((int));
 STATIC	void en_loadvc __P((struct en_softc *, int));
 STATIC	void en_mfix __P((struct en_softc *, struct mbuf *));
 STATIC	struct mbuf *en_mget __P((struct en_softc *, u_int, u_int *));
-STATIC	void en_reset __P((struct en_softc *));
 STATIC	int en_rxctl __P((struct en_softc *, struct atm_pseudoioctl *, int));
 STATIC	void en_txdma __P((struct en_softc *, int));
 STATIC	void en_txlaunch __P((struct en_softc *, int, struct en_launch *));
@@ -518,9 +531,7 @@ struct en_softc *sc;
 
 {
   struct ifnet *ifp = &sc->enif;
-  bus_mem_addr_t membase;
-  const char *intrstr;
-  int retval, sz;
+  int sz;
   u_int32_t reg, lcv, check, ptr, sav, midvloc;
 
   /*
@@ -579,7 +590,9 @@ done_probe:
    * link into network subsystem and prepare card
    */
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
   bcopy(sc->sc_dev.dv_xname, sc->enif.if_xname, IFNAMSIZ);
+#endif
   sc->enif.if_softc = sc;
   ifp->if_flags = IFF_SIMPLEX|IFF_NOTRAILERS;
   ifp->if_ioctl = en_ioctl;
@@ -745,6 +758,7 @@ struct en_softc *sc;
  * en_dmaprobe_doit: do actual testing
  */
 
+int
 en_dmaprobe_doit(sc, sp, dp, wmtry)
 
 struct en_softc *sc;
@@ -866,7 +880,7 @@ int wmtry;
 STATIC int en_ioctl(ifp, cmd, data)
 
 struct ifnet *ifp;
-u_long cmd;
+EN_IOCTL_CMDT cmd;
 caddr_t data;
 
 {
@@ -876,8 +890,9 @@ caddr_t data;
     struct atm_pseudoioctl *api = (struct atm_pseudoioctl *)data;
 #ifdef NATM
     struct atm_rawioctl *ario = (struct atm_rawioctl *)data;
+    int slot;
 #endif
-    int s, error = 0, slot;
+    int s, error = 0;
 
     s = splnet();
 
@@ -1061,7 +1076,7 @@ int on;
  * must en_init to recover.
  */
 
-STATIC void en_reset(sc)
+void en_reset(sc)
 
 struct en_softc *sc;
 
@@ -1140,7 +1155,7 @@ struct en_softc *sc;
 
 {
   int vc, slot;
-  u_int32_t reg, loc;
+  u_int32_t loc;
 
   if ((sc->enif.if_flags & IFF_UP) == 0) {
 #ifdef EN_DEBUG
@@ -1313,7 +1328,7 @@ struct ifnet *ifp;
 
       if (atm_vpi || atm_vci > MID_N_VC) {
 	printf("%s: output vpi=%d, vci=%d out of card range, dropping...\n", 
-		ifp->if_xname, atm_vpi, atm_vci);
+		sc->sc_dev.dv_xname, atm_vpi, atm_vci);
 	m_freem(m);
 	continue;
       }
@@ -1485,7 +1500,7 @@ int chan;
   struct mbuf *tmp;
   struct atm_pseudohdr *ap;
   struct en_launch launch;
-  int datalen, dtqneed, len, ncells, needalign;
+  int datalen, dtqneed, len, ncells;
   u_int8_t *cp;
 
 #ifdef EN_DEBUG
@@ -1893,7 +1908,7 @@ done:
  * interrupt handler
  */
 
-int en_intr(arg)
+EN_INTR_TYPE en_intr(arg)
 
 void *arg;
 
@@ -1907,7 +1922,7 @@ void *arg;
   reg = EN_READ(sc, MID_INTACK);
 
   if ((reg & MID_INT_ANY) == 0) 
-    return(0); /* not us */
+    EN_INTR_RET(0); /* not us */
 
 #ifdef EN_DEBUG
   printf("%s: interrupt=0x%b\n", sc->sc_dev.dv_xname, reg, MID_INTBITS);
@@ -1929,7 +1944,7 @@ void *arg;
     en_reset(sc);
     en_init(sc);
 #endif
-    return(1);
+    EN_INTR_RET(1); /* for us */
   }
 
   /*******************
@@ -2143,7 +2158,7 @@ void *arg;
   sc->vtrash += MID_VTRASH(reg);
 #endif
 
-  return(1);
+  EN_INTR_RET(1); /* for us */
 }
 
 
@@ -2720,3 +2735,6 @@ int unit, addr, len;
   return(0);
 }
 #endif
+
+
+#endif /* NEN > 0 || !defined(__FreeBSD__) */

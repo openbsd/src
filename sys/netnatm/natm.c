@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.c,v 1.1 1996/06/30 21:40:12 chuck Exp $	*/
+/*	$OpenBSD: natm.c,v 1.2 1996/07/03 17:24:29 chuck Exp $	*/
 
 /*
  *
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/domain.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
@@ -48,6 +49,7 @@
 
 #include <net/if.h>
 #include <net/if_atm.h>
+#include <net/netisr.h>
 #include <net/radix.h>
 #include <net/route.h>
 
@@ -65,12 +67,18 @@ u_long natm0_recvspace = 16*1024;
  * user requests
  */
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int natm_usrreq(so, req, m, nam, control, p)
+#elif defined(__FreeBSD__)
+int natm_usrreq(so, req, m, nam, control)
+#endif
 
 struct socket *so;
 int req;
 struct mbuf *m, *nam, *control;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 struct proc *p;
+#endif
 
 {
   int error = 0, s, s2;
@@ -82,7 +90,7 @@ struct proc *p;
   struct ifnet *ifp;
   int proto = so->so_proto->pr_protocol;
 
-  s = splsoftnet();
+  s = SPLSOFTNET();
 
   npcb = (struct natmpcb *) so->so_pcb;
 
@@ -109,7 +117,7 @@ struct proc *p;
           break;
       }
 
-      so->so_pcb = npcb = npcb_alloc(M_WAITOK);
+      so->so_pcb = (caddr_t) (npcb = npcb_alloc(M_WAITOK));
       npcb->npcb_socket = so;
 
       break;
@@ -259,9 +267,15 @@ struct proc *p;
 
     case PRU_PEERADDR:			/* fetch peer's address */
       snatm = mtod(nam, struct sockaddr_natm *);
+      bzero(snatm, sizeof(*snatm));
       nam->m_len = snatm->snatm_len = sizeof(*snatm);
       snatm->snatm_family = AF_NATM;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
       bcopy(npcb->npcb_ifp->if_xname, snatm->snatm_if, sizeof(snatm->snatm_if));
+#elif defined(__FreeBSD__)
+      sprintf(snatm->snatm_if, "%s%d", npcb->npcb_ifp->if_name,
+			npcb->npcb_ifp->if_unit);
+#endif
       snatm->snatm_vci = npcb->npcb_vci;
       snatm->snatm_vpi = npcb->npcb_vpi;
       break;
@@ -395,6 +409,11 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
 
   goto next;
 }
+
+#if defined(__FreeBSD__)
+NETISR_SET(NETISR_NATM, natmintr);
+#endif
+
 
 /* 
  * natm0_sysctl: not used, but here in case we want to add something

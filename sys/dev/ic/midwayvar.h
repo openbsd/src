@@ -1,4 +1,4 @@
-/*	$OpenBSD: midwayvar.h,v 1.5 1996/06/29 23:22:35 chuck Exp $	*/
+/*	$OpenBSD: midwayvar.h,v 1.6 1996/07/03 17:21:18 chuck Exp $	*/
 
 /*
  *
@@ -57,6 +57,39 @@
 #endif
 #define EN_MAXNRX       ((2048-(EN_NTX*EN_TXSZ))/EN_RXSZ)
 				/* largest possible NRX (depends on RAM size) */
+
+
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
+#define EN_INTR_TYPE int
+#define EN_INTR_RET(X) return(X)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+#define EN_IOCTL_CMDT u_long
+#elif defined(__bsdi__)
+#define EN_IOCTL_CMDT int
+#endif
+
+#elif defined(__FreeBSD__)
+
+#define EN_INTR_TYPE void
+#define EN_INTR_RET(X) return
+#define EN_IOCTL_CMDT int
+
+struct device {
+  char dv_xname[IFNAMSIZ];
+};
+
+#define DV_IFNET 1
+
+struct cfdriver {
+  int zero;
+  char *name;
+  int one;
+  int cd_ndevs;
+  void *cd_devs[NEN];
+};
+
+#endif
+
 
 /*
  * softc
@@ -159,4 +192,5 @@ struct en_softc {
  */
 
 void	en_attach __P((struct en_softc *));
-int	en_intr __P((void *));
+EN_INTR_TYPE	en_intr __P((void *));
+void	en_reset __P((struct en_softc *));

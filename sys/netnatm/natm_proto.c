@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm_proto.c,v 1.1 1996/06/30 21:40:14 chuck Exp $	*/
+/*	$OpenBSD: natm_proto.c,v 1.2 1996/07/03 17:24:29 chuck Exp $	*/
 
 /*
  *
@@ -37,6 +37,9 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
@@ -58,12 +61,18 @@ struct protosw natmsw[] = {
 { SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL5, PR_CONNREQUIRED,
   0,	0,	0,	0,
   natm_usrreq,
-  0,	0,	0,	0,	natm5_sysctl
+  0,	0,	0,	0,	
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	natm5_sysctl
+#endif
 },
 { SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL0, PR_CONNREQUIRED,
   0,	0,	0,	0,
   natm_usrreq,
-  0,	0,	0,	0,	natm0_sysctl
+  0,	0,	0,	0,	
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	natm0_sysctl
+#endif
 },
 };
 
@@ -90,3 +99,7 @@ void natm_init()
   bzero(&natmintrq, sizeof(natmintrq));
   natmintrq.ifq_maxlen = natmqmaxlen;
 }
+
+#if defined(__FreeBSD__)
+DOMAIN_SET(natm);
+#endif

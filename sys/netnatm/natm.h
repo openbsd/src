@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.h,v 1.1 1996/06/30 21:40:14 chuck Exp $	*/
+/*	$OpenBSD: natm.h,v 1.2 1996/07/03 17:24:30 chuck Exp $	*/
 
 /*
  *
@@ -56,6 +56,20 @@ struct sockaddr_natm {
   u_int8_t	snatm_vpi;		/* vpi */
 };
 
+
+#if defined(__FreeBSD__) && defined(KERNEL)
+
+#ifndef _KERNEL
+#define _KERNEL
+#endif
+
+#define SPLSOFTNET() splnet()
+
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
+
+#define SPLSOFTNET() splsoftnet()
+
+#endif
 
 #ifdef _KERNEL
 
@@ -124,8 +138,13 @@ void	npcb_free __P((struct natmpcb *, int));
 struct	natmpcb *npcb_add __P((struct natmpcb *, struct ifnet *, int, int));
 
 /* natm.c */
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int	natm_usrreq __P((struct socket *, int, struct mbuf *,
                              struct mbuf *, struct mbuf *, struct proc *));
+#elif defined(__FreeBSD__)
+int	natm_usrreq __P((struct socket *, int, struct mbuf *,
+                             struct mbuf *, struct mbuf *));
+#endif
 int	natm0_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	natm5_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	natmintr __P((void));

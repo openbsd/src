@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm_pcb.c,v 1.1 1996/06/30 21:40:13 chuck Exp $	*/
+/*	$OpenBSD: natm_pcb.c,v 1.2 1996/07/03 17:24:29 chuck Exp $	*/
 
 /*
  *
@@ -38,6 +38,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
