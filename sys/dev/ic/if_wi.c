@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.83 2002/10/11 15:04:44 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.84 2002/10/11 15:31:25 markus Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.83 2002/10/11 15:04:44 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.84 2002/10/11 15:31:25 markus Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1926,15 +1926,15 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
                 sc->wi_icv += 0x000100;
 
 	/* prepend 24bit IV to tx key, byte order does not matter */
+	bzero(key, sizeof(key));
 	key[0] = sc->wi_icv >> 16;
 	key[1] = sc->wi_icv >> 8;
 	key[2] = sc->wi_icv;
 
-	klen = sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen +
-	    IEEE80211_WEP_IVLEN;
-	klen = (klen >= RC4KEYLEN) ? RC4KEYLEN : RC4KEYLEN/2;
+	klen = sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen;
 	bcopy((char *)&sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keydat,
-	    (char *)key + IEEE80211_WEP_IVLEN, klen - IEEE80211_WEP_IVLEN);
+	    (char *)key + IEEE80211_WEP_IVLEN, klen);
+	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
 
 	/* rc4 keysetup */
 	x = y = 0;
