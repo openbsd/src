@@ -4,7 +4,7 @@
  *
  * This code was written for BSD/OS in Athens, Greece, in November 1995.
  *
- * Ported to NetBSD, with additional transforms, in December 1996,
+ * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis, kermit@forthnet.gr.
  *
  * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
