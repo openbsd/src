@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.6 1996/08/24 04:56:36 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.7 1996/09/20 22:53:10 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -49,6 +49,12 @@
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+
+#ifndef SOMINCONN
+#define SOMINCONN 80
+#endif /* SOMINCONN */
+int	somaxconn = SOMAXCONN;
+int	sominconn = SOMINCONN;
 
 /*
  * Socket operation routines.
@@ -131,9 +137,11 @@ solisten(so, backlog)
 	}
 	if (so->so_q == 0)
 		so->so_options |= SO_ACCEPTCONN;
-	if (backlog < 0)
-		backlog = 0;
-	so->so_qlimit = min(backlog, SOMAXCONN);
+	if (backlog < 0 || backlog > somaxconn)
+		backlog = somaxconn;
+	if (backlog < sominconn)
+		backlog = sominconn;
+	so->so_qlimit = backlog;
 	splx(s);
 	return (0);
 }

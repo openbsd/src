@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.11 1996/08/08 06:36:45 tholo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.12 1996/09/20 22:53:09 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -204,6 +204,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	int error, level, inthostid;
 	extern char ostype[], osrelease[], osversion[], version[];
+	extern int somaxconn, sominconn;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF))
@@ -289,6 +290,10 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, RAW_PART));
 	case KERN_NTPTIME:
 		return (sysctl_ntptime(oldp, oldlenp));
+	case KERN_SOMAXCONN:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &somaxconn));
+	case KERN_SOMINCONN:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &sominconn));
 	default:
 		return (EOPNOTSUPP);
 	}

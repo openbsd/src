@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.4 1996/09/12 06:19:57 tholo Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.5 1996/09/20 22:53:13 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -232,11 +232,13 @@ struct	tcpstat {
  */
 			/* enable/disable RFC1323 timestamps/scaling */
 #define	TCPCTL_RFC1323		1
-#define	TCPCTL_MAXID		2
+#define	TCPCTL_KEEPINITTIME	2
+#define	TCPCTL_MAXID		3
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "rfc1323",	CTLTYPE_INT }, \
+	{ "keepinittime",	CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -285,4 +287,5 @@ int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
+void	 tcpdropoldhalfopen __P((struct tcpcb *, u_int16_t));
 #endif

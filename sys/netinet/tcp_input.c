@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.6 1996/08/07 06:36:26 tholo Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.7 1996/09/20 22:53:11 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
+int	tcptv_keep_init = TCPTV_KEEP_INIT;
 
 extern u_long sb_max;
 
@@ -232,6 +233,51 @@ present:
 }
 
 /*
+ * First check for a port-specific bomb. We do not want to drop half-opens
+ * for other ports if this is the only port being bombed.  We only check
+ * the bottom 40 half open connections, to avoid wasting too much time.
+ *
+ * Or, otherwise it is more likely a generic syn bomb, so delete the oldest
+ * half-open connection.
+ */
+void
+tcpdropoldhalfopen(avoidtp, port)
+	struct tcpcb *avoidtp;
+	u_int16_t port;
+{
+	register struct inpcb *inp;
+	register struct tcpcb *tp, *droptp = NULL;
+	int ncheck = 40;
+	int s;
+
+	s = splnet();
+	inp = tcbtable.inpt_queue.cqh_first;
+	if (inp)                                                /* XXX */
+	for (; inp != (struct inpcb *)&tcbtable.inpt_queue && --ncheck;
+	    inp = inp->inp_queue.cqe_prev) {
+		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
+		    tp != avoidtp &&
+		    tp->t_state == TCPS_SYN_RECEIVED &&
+		    port == inp->inp_lport) {
+			tcp_close(tp);
+			goto done;
+		}
+	}
+
+	inp = tcbtable.inpt_queue.cqh_first;
+	if (inp)                                                /* XXX */
+	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
+	    inp = inp->inp_queue.cqe_prev) {
+		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
+		    tp != avoidtp &&
+		    tp->t_state == TCPS_SYN_RECEIVED)
+			break;
+	}
+done:
+	splx(s);
+}
+
+/*
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
  */
@@ -386,9 +432,16 @@ findpcb:
 			tcp_saveti = *ti;
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
-			so = sonewconn(so, 0);
-			if (so == 0)
-				goto drop;
+			struct socket *so1;
+
+			so1 = sonewconn(so, 0);
+			if (so1 == NULL) {
+				tcpdropoldhalfopen(tp, ti->ti_dport);
+				so1 = sonewconn(so, 0);
+				if (so1 == NULL)
+					goto drop;
+			}
+			so = so1;
 			/*
 			 * This is ugly, but ....
 			 *
@@ -630,7 +683,7 @@ findpcb:
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
 		tp->t_state = TCPS_SYN_RECEIVED;
-		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
+		tp->t_timer[TCPT_KEEP] = tcptv_keep_init;
 		dropsocket = 0;		/* committed to socket */
 		tcpstat.tcps_accepts++;
 		goto trimthenstep6;

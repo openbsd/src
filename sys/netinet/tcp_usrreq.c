@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.6 1996/07/29 22:01:51 niklas Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.7 1996/09/20 22:53:12 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
  * TCP protocol interface to socket abstraction.
  */
 extern	char *tcpstates[];
+extern	int tcptv_keep_init;
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -209,7 +210,7 @@ tcp_usrreq(so, req, m, nam, control)
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
+		tp->t_timer[TCPT_KEEP] = tcptv_keep_init;
 		tp->iss = tcp_iss;
 #ifdef TCP_COMPAT_42
 		tcp_iss += TCP_ISSINCR/2;
@@ -574,6 +575,9 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_RFC1323:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_do_rfc1323));
+	case TCPCTL_KEEPINITTIME:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcptv_keep_init));
 
 	default:
 		return (ENOPROTOOPT);

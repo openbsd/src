@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.9 1996/08/11 20:35:12 niklas Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.10 1996/09/20 22:53:05 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -138,7 +138,9 @@ struct ctlname {
 #define	KERN_NTPTIME		25	/* struct: extended-precision time */
 #define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
 #define	KERN_OSVERSION		27	/* string: kernel build version */
-#define	KERN_MAXID		28	/* number of valid kern ids */
+#define	KERN_SOMAXCONN		28	/* int: listen queue maximum */
+#define	KERN_SOMINCONN		29	/* int: half-open controllable param */
+#define	KERN_MAXID		30	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -169,6 +171,8 @@ struct ctlname {
 	{ "ntptime", CTLTYPE_STRUCT }, \
 	{ "timex", CTLTYPE_STRUCT }, \
 	{ "osversion", CTLTYPE_STRING }, \
+	{ "somaxconn", CTLTYPE_INT }, \
+	{ "sominconn", CTLTYPE_INT }, \
 }
 
 /*
