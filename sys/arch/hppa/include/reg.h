@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.8 2002/03/15 19:02:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -167,8 +167,9 @@
 #ifndef _LOCORE
 
 struct reg {
-	u_int32_t r_regs[HPPA_NREGS];
-	/* p'bably some cr* ? */
+	u_int32_t r_regs[HPPA_NREGS];	/* r0 is sar */
+	u_int32_t r_pc;
+	u_int32_t r_npc;
 };
 
 struct fpreg {

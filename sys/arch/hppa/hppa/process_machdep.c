@@ -1,7 +1,7 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2002/03/14 00:42:24 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2002/03/15 19:02:54 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1999-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,8 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -42,8 +42,41 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	bcopy (p->p_md.md_regs, regs, sizeof(*regs));
-	regs->r_regs[0] = 0;
+	regs->r_regs[ 0] = p->p_md.md_regs->tf_sar;
+	regs->r_regs[ 1] = p->p_md.md_regs->tf_r1;
+	regs->r_regs[ 2] = p->p_md.md_regs->tf_rp;
+	regs->r_regs[ 3] = p->p_md.md_regs->tf_r3;
+	regs->r_regs[ 4] = p->p_md.md_regs->tf_r4;
+	regs->r_regs[ 5] = p->p_md.md_regs->tf_r5;
+	regs->r_regs[ 6] = p->p_md.md_regs->tf_r6;
+	regs->r_regs[ 7] = p->p_md.md_regs->tf_r7;
+	regs->r_regs[ 8] = p->p_md.md_regs->tf_r8;
+	regs->r_regs[ 9] = p->p_md.md_regs->tf_r9;
+	regs->r_regs[10] = p->p_md.md_regs->tf_r10;
+	regs->r_regs[11] = p->p_md.md_regs->tf_r11;
+	regs->r_regs[12] = p->p_md.md_regs->tf_r12;
+	regs->r_regs[13] = p->p_md.md_regs->tf_r13;
+	regs->r_regs[14] = p->p_md.md_regs->tf_r14;
+	regs->r_regs[15] = p->p_md.md_regs->tf_r15;
+	regs->r_regs[16] = p->p_md.md_regs->tf_r16;
+	regs->r_regs[17] = p->p_md.md_regs->tf_r17;
+	regs->r_regs[18] = p->p_md.md_regs->tf_r18;
+	regs->r_regs[19] = p->p_md.md_regs->tf_t4;
+	regs->r_regs[20] = p->p_md.md_regs->tf_t3;
+	regs->r_regs[21] = p->p_md.md_regs->tf_t2;
+	regs->r_regs[22] = p->p_md.md_regs->tf_t1;
+	regs->r_regs[23] = p->p_md.md_regs->tf_arg3;
+	regs->r_regs[24] = p->p_md.md_regs->tf_arg2;
+	regs->r_regs[25] = p->p_md.md_regs->tf_arg1;
+	regs->r_regs[26] = p->p_md.md_regs->tf_arg0;
+	regs->r_regs[27] = p->p_md.md_regs->tf_dp;
+	regs->r_regs[28] = p->p_md.md_regs->tf_ret0;
+	regs->r_regs[29] = p->p_md.md_regs->tf_ret1;
+	regs->r_regs[30] = p->p_md.md_regs->tf_sp;
+	regs->r_regs[31] = p->p_md.md_regs->tf_r31;
+	regs->r_pc	 = p->p_md.md_regs->tf_iioq_head;
+	regs->r_npc	 = p->p_md.md_regs->tf_iioq_tail;
+
 	return 0;
 }
 
@@ -63,7 +96,41 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	bcopy (&regs[1], &p->p_md.md_regs->tf_r1, sizeof(*regs) - sizeof(*regs));
+	p->p_md.md_regs->tf_sar  = regs->r_regs[ 0];
+	p->p_md.md_regs->tf_r1   = regs->r_regs[ 1];
+	p->p_md.md_regs->tf_rp   = regs->r_regs[ 2];
+	p->p_md.md_regs->tf_r3   = regs->r_regs[ 3];
+	p->p_md.md_regs->tf_r4   = regs->r_regs[ 4];
+	p->p_md.md_regs->tf_r5   = regs->r_regs[ 5];
+	p->p_md.md_regs->tf_r6   = regs->r_regs[ 6];
+	p->p_md.md_regs->tf_r7   = regs->r_regs[ 7];
+	p->p_md.md_regs->tf_r8   = regs->r_regs[ 8];
+	p->p_md.md_regs->tf_r9   = regs->r_regs[ 9];
+	p->p_md.md_regs->tf_r10  = regs->r_regs[10];
+	p->p_md.md_regs->tf_r11  = regs->r_regs[11];
+	p->p_md.md_regs->tf_r12  = regs->r_regs[12];
+	p->p_md.md_regs->tf_r13  = regs->r_regs[13];
+	p->p_md.md_regs->tf_r14  = regs->r_regs[14];
+	p->p_md.md_regs->tf_r15  = regs->r_regs[15];
+	p->p_md.md_regs->tf_r16  = regs->r_regs[16];
+	p->p_md.md_regs->tf_r17  = regs->r_regs[17];
+	p->p_md.md_regs->tf_r18  = regs->r_regs[18];
+	p->p_md.md_regs->tf_t4   = regs->r_regs[19];
+	p->p_md.md_regs->tf_t3   = regs->r_regs[20];
+	p->p_md.md_regs->tf_t2   = regs->r_regs[21];
+	p->p_md.md_regs->tf_t1   = regs->r_regs[22];
+	p->p_md.md_regs->tf_arg3 = regs->r_regs[23];
+	p->p_md.md_regs->tf_arg2 = regs->r_regs[24];
+	p->p_md.md_regs->tf_arg1 = regs->r_regs[25];
+	p->p_md.md_regs->tf_arg0 = regs->r_regs[26];
+	p->p_md.md_regs->tf_dp   = regs->r_regs[27];
+	p->p_md.md_regs->tf_ret0 = regs->r_regs[28];
+	p->p_md.md_regs->tf_ret1 = regs->r_regs[29];
+	p->p_md.md_regs->tf_sp   = regs->r_regs[30];
+	p->p_md.md_regs->tf_r31  = regs->r_regs[31];
+	p->p_md.md_regs->tf_iioq_head = regs->r_pc;
+	p->p_md.md_regs->tf_iioq_tail = regs->r_npc;
+
 	return 0;
 }
 
