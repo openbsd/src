@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5crypt.c,v 1.12 2003/06/25 21:16:47 deraadt Exp $	*/
+/*	$OpenBSD: md5crypt.c,v 1.13 2003/08/07 00:30:21 deraadt Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.12 2003/06/25 21:16:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.13 2003/08/07 00:30:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -28,10 +28,7 @@ static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
 static void to64(char *, u_int32_t, int);
 
 static void
-to64(s, v, n)
-	char *s;
-	u_int32_t v;
-	int n;
+to64(char *s, u_int32_t v, int n)
 {
 	while (--n >= 0) {
 		*s++ = itoa64[v&0x3f];
@@ -48,9 +45,7 @@ to64(s, v, n)
 char *md5crypt(const char *pw, const char *salt);
 
 char *
-md5crypt(pw, salt)
-	register const char *pw;
-	register const char *salt;
+md5crypt(const char *pw, const char *salt)
 {
 	/*
 	 * This string is magic for this algorithm.  Having
@@ -151,7 +146,7 @@ md5crypt(pw, salt)
 	*p = '\0';
 
 	/* Don't leave anything around in vm they could use. */
-	memset(final,0,sizeof final);
+	memset(final, 0, sizeof final);
 
 	return passwd;
 }
