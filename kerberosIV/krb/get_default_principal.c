@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_default_principal.c,v 1.2 1997/12/09 07:57:16 art Exp $	*/
 /* $KTH: get_default_principal.c,v 1.10 1997/04/01 08:18:28 joda Exp $ */
 
 /*
@@ -66,8 +67,9 @@ krb_get_default_principal(char *name, char *instance, char *realm)
       return -1;
     }
 
-    strcpy(name, pw->pw_name);
-    strcpy(instance, "");
+    strncpy(name, pw->pw_name, ANAME_SZ);
+    name[ANAME_SZ-1] = '\0';
+    strncpy(instance, "", 2);
     krb_get_lrealm(realm, 1);
 
     if(strcmp(name, "root") == 0){
@@ -80,7 +82,7 @@ krb_get_default_principal(char *name, char *instance, char *realm)
       if(p){
 	strncpy (name, p, ANAME_SZ);
 	name[ANAME_SZ - 1] = '\0';
-	strcpy(instance, "root");
+	strncpy(instance, "root", 5);
       }
     }
     return 1;

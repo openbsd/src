@@ -1,3 +1,4 @@
+/*	$OpenBSD: send_to_kdc.c,v 1.5 1997/12/09 07:57:38 art Exp $	*/
 /* $KTH: send_to_kdc.c,v 1.47 1997/11/07 17:31:38 bg Exp $ */
 
 /* 
@@ -91,8 +92,10 @@ send_to_kdc(KTEXT pkt, KTEXT rpkt, char *realm)
      * If "realm" is non-null, use that, otherwise get the
      * local realm.
      */
-    if (realm)
-	strcpy(lrealm, realm);
+    if (realm != NULL){
+	strncpy(lrealm, realm, REALM_SZ);
+	lrealm[REALM_SZ-1] = '\0';
+    }
     else
 	if (krb_get_lrealm(lrealm,1)) {
 	    if (krb_debug)
@@ -163,6 +166,7 @@ send_to_kdc(KTEXT pkt, KTEXT rpkt, char *realm)
     retval = SKDC_RETRY;
 rtn:
     free(hosts);
+    hosts = NULL;
     return(retval);
 }
 
@@ -210,6 +214,8 @@ static int udptcp_recv(void *buf, size_t len, KTEXT rpkt)
 static int url_parse(const char *url, char *host, size_t len, short *port)
 {
     const char *p;
+    if (url == NULL || host == NULL)
+      return -1;
     if(strncmp(url, "http://", 7))
 	return -1;
     url += 7;
@@ -232,17 +238,24 @@ static int url_parse(const char *url, char *host, size_t len, short *port)
 static int http_connect(int s, struct sockaddr_in *adr)
 {
     char *proxy = getenv(PROXY_VAR);
-    char host[MAXHOSTNAMELEN + 1];
+    char host[MAXHOSTNAMELEN];
     short port;
     struct hostent *hp;
     struct sockaddr_in sin;
+
+    if (adr == NULL)
+      return -1;
+
     if(proxy == NULL)
 	return tcp_connect(s, adr);
+
     if(url_parse(proxy, host, sizeof(host), &port) < 0)
 	return -1;
+
     hp = gethostbyname(host);
     if(hp == NULL)
 	return -1;
+
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     memcpy(&sin.sin_addr, hp->h_addr, sizeof(sin.sin_addr));
@@ -257,19 +270,27 @@ static int http_send(int s, struct sockaddr_in* adr, KTEXT pkt)
 
     base64_encode(pkt->dat, pkt->length, &str);
     if(getenv(PROXY_VAR)){
-	asprintf(&msg, "GET http://%s:%d/%s HTTP/1.0\r\n\r\n",
-		 inet_ntoa(adr->sin_addr),
-		 ntohs(adr->sin_port),
-		 str);
+	if (asprintf(&msg, "GET http://%s:%d/%s HTTP/1.0\r\n\r\n",
+		     inet_ntoa(adr->sin_addr),
+		     ntohs(adr->sin_port),
+		     str) == -1)
+	    return -1;
     }else
-	asprintf(&msg, "GET %s HTTP/1.0\r\n\r\n", str);
+	if (asprintf(&msg, "GET %s HTTP/1.0\r\n\r\n", str) == -1){
+	    free(str);
+	    str = NULL;
+	    return -1;
+	}
     free(str);
+    str = NULL;
 	
     if(send(s, msg, strlen(msg), 0) != strlen(msg)){
 	free(msg);
+	msg = NULL;
 	return -1;
     }
     free(msg);
+    msg = NULL;
     return 0;
 }
 
@@ -282,12 +303,19 @@ static int http_recv(void *buf, size_t len, KTEXT rpkt)
     p = strstr(tmp, "\r\n\r\n");
     if(p == NULL){
 	free(tmp);
+	tmp = NULL;
 	return -1;
     }
     p += 4;
+    if (p >= tmp+len){
+	free(tmp);
+	tmp = NULL;
+	return -1;
+    }
     memcpy(rpkt->dat, p, (tmp + len) - p);
     rpkt->length = (tmp + len) - p;
     free(tmp);
+    tmp = NULL;
     return 0;
 }
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: realm_parse.c,v 1.2 1997/12/09 07:57:35 art Exp $	*/
 /* $KTH: realm_parse.c,v 1.10 1997/06/01 03:14:50 assar Exp $ */
 
 /*
@@ -55,6 +56,8 @@ realm_parse(char *realm, int length, const char *file)
 	p = strtok_r(tr, " \t\n\r", &unused);
 	if(p && strcasecmp(p, realm) == 0){
 	    fclose(F);
+	    if (realm == NULL)
+	      return -1;
 	    strncpy(realm, p, length);
 	    return 0;
 	}
@@ -73,7 +76,7 @@ krb_realm_parse(char *realm, int length)
     const char *dir = getenv("KRBCONFDIR");
 
     /* First try user specified file */
-    if (dir != 0) {
+    if (dir != 0 && getuid() != geteuid()) {
       char fname[MAXPATHLEN];
 
       if(k_concat(fname, sizeof(fname), dir, "/krb.conf", NULL) == 0)

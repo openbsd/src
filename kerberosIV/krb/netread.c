@@ -1,3 +1,4 @@
+/*	$OpenBSD: netread.c,v 1.3 1997/12/09 07:57:31 art Exp $	*/
 /* $KTH: netread.c,v 1.7 1997/06/19 23:56:44 assar Exp $ */
 
 /* 
@@ -38,6 +39,9 @@ krb_net_read (int fd, void *v, size_t len)
 {
     int cc, len2 = 0;
     char *buf = v;
+
+    if (buf == NULL)
+      return -1;
 
     do {
 	cc = read(fd, buf, len);

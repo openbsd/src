@@ -1,3 +1,4 @@
+/*	$OpenBSD: krb_err_txt.c,v 1.3 1997/12/09 07:57:24 art Exp $	*/
 /*     $KTH: krb_err_txt.c,v 1.12 1997/04/02 05:37:10 joda Exp $    */
 
 /* 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: getst.c,v 1.3 1997/12/09 07:57:19 art Exp $	*/
 /* $KTH: getst.c,v 1.6 1997/03/23 03:53:11 joda Exp $ */
 
 /* 

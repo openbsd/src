@@ -1,3 +1,4 @@
+/*	$OpenBSD: create_ticket.c,v 1.3 1997/12/09 07:57:12 art Exp $	*/
 /* $KTH: create_ticket.c,v 1.12 1997/04/01 08:18:21 joda Exp $ */
 
 /*

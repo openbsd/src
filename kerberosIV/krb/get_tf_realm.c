@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_tf_realm.c,v 1.3 1997/12/09 07:57:18 art Exp $	*/
 /* $KTH: get_tf_realm.c,v 1.5 1997/03/23 03:53:10 joda Exp $ */
 
 /* 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tf_util.c,v 1.3 1997/12/09 07:57:40 art Exp $	*/
 /* $KTH: tf_util.c,v 1.25 1997/11/04 09:44:28 bg Exp $ */
 
 /* 

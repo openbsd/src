@@ -1,3 +1,4 @@
+/*	$OpenBSD: mk_auth.c,v 1.2 1997/12/09 07:57:28 art Exp $	*/
 /* $KTH: mk_auth.c,v 1.4 1997/04/01 08:18:35 joda Exp $ */
 
 /*
@@ -63,11 +64,15 @@ krb_mk_auth(int32_t options,
   char realrealm[REALM_SZ];
   int ret;
   unsigned char *p;
+  char *tmp;
 
   if (options & KOPT_DONT_CANON)
-    strncpy(realinst, instance, sizeof(realinst));
+    tmp = instance;
   else
-    strncpy(realinst, krb_get_phost (instance), sizeof(realinst));
+    tmp = krb_get_phost (instance);
+
+  strncpy(realinst, tmp, sizeof(realinst));
+  realinst[sizeof(realinst) - 1] = '\0';
 
   if (realm == NULL) {
     ret = krb_get_lrealm (realrealm, 1);

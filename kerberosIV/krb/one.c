@@ -1,3 +1,4 @@
+/*	$OpenBSD: one.c,v 1.3 1997/12/09 07:57:32 art Exp $	*/
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: verify_user.c,v 1.2 1997/12/09 07:57:42 art Exp $	*/
 /* $KTH: verify_user.c,v 1.8 1997/04/01 08:18:46 joda Exp $ */
 
 /*

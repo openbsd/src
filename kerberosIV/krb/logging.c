@@ -1,3 +1,4 @@
+/*	$OpenBSD: logging.c,v 1.2 1997/12/09 07:57:27 art Exp $	*/
 /* $KTH: logging.c,v 1.14 1997/05/11 09:01:40 assar Exp $ */
 
 /*
@@ -87,7 +88,10 @@ krb_openlog(struct krb_log_facility *f,
 	    FILE *file,
 	    krb_log_func_t func)
 {
-    strcpy(f->filename, filename);
+    if (f == NULL)
+	return KFAILURE;
+    strncpy(f->filename, filename, MAXPATHLEN);
+    f->filename[MAXPATHLEN-1] = '\0';
     f->file = file;
     f->func = func;
     return KSUCCESS;

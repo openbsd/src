@@ -1,3 +1,4 @@
+/*	$OpenBSD: rd_safe.c,v 1.4 1997/12/09 07:57:34 art Exp $	*/
 /* $KTH: rd_safe.c,v 1.24 1997/04/19 23:18:20 joda Exp $ */
 
 /*
@@ -55,6 +56,9 @@ void
 fixup_quad_cksum(void *start, size_t len, des_cblock *key, 
 		 void *new_checksum, void *old_checksum, int little)
 {
+    if (old_checksum == NULL || new_checksum == NULL)
+	return;
+
     des_quad_cksum((des_cblock*)start, (des_cblock*)new_checksum, len, 2, key);
     if(HOST_BYTE_ORDER){
 	if(little){
@@ -117,6 +121,8 @@ krb_rd_safe(void *in, u_int32_t in_length, des_cblock *key,
     u_int32_t src_addr;
     int delta_t;
     
+    if (p == NULL)
+	return KFAILURE;
 
     pvno = *p++;
     if(pvno != KRB_PROT_VERSION)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: lifetime.c,v 1.4 1997/12/09 07:57:26 art Exp $	*/
 /* $KTH: lifetime.c,v 1.9 1997/05/02 14:29:18 assar Exp $ */
 
 /*
@@ -176,6 +177,9 @@ krb_atime_to_life(char *atime)
     char *cp;
     int colon = 0, plus = 0;
     int n = 0;
+
+    if (atime == NULL)
+      return 0;
 
     if (strcasecmp(atime, "forever") == 0)
 	return(TKTLIFENOEXPIRE);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_cred.c,v 1.3 1997/12/09 07:57:15 art Exp $	*/
 /* $KTH: get_cred.c,v 1.6 1997/05/30 17:38:29 bg Exp $ */
 
 /* 
@@ -41,7 +42,7 @@ krb_get_cred(char *service,	/* Service name */
     int tf_status;              /* return value of tf function calls */
     CREDENTIALS cr;
 
-    if (c == 0)
+    if (c == NULL)
         c = &cr;
 
     /* Open ticket file and lock it for shared reading */

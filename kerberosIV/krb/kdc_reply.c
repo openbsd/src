@@ -1,3 +1,4 @@
+/*	$OpenBSD: kdc_reply.c,v 1.2 1997/12/09 07:57:22 art Exp $	*/
 /* $KTH: kdc_reply.c,v 1.9 1997/04/15 21:52:14 assar Exp $ */
 
 /*
@@ -46,6 +47,9 @@ int
 kdc_reply_cred(KTEXT cip, CREDENTIALS *cred)
 {
     unsigned char *p = cip->dat;
+
+    if (cred == NULL || p == NULL)
+      return KFAILURE;
     
     memcpy(cred->session, p, 8);
     p += 8;

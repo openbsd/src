@@ -1,3 +1,4 @@
+/*	$OpenBSD: cr_err_reply.c,v 1.3 1997/12/09 07:57:10 art Exp $	*/
 /* $KTH: cr_err_reply.c,v 1.9 1997/04/01 08:18:19 joda Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: getrealm.c,v 1.7 1997/12/09 07:57:19 art Exp $	*/
 /* $KTH: getrealm.c,v 1.26 1997/10/08 22:51:13 joda Exp $ */
 
 /* 
@@ -100,7 +101,7 @@ open_krb_realms(void)
   const char *dir = getenv("KRBCONFDIR");
 
   /* First try user specified file */
-  if (dir != 0) {
+  if (dir != 0 && getuid() != geteuid()) {
     char fname[MAXPATHLEN];
 
     if(k_concat(fname, sizeof(fname), dir, "/krb.realms", NULL) == 0)
@@ -116,41 +117,44 @@ open_krb_realms(void)
 }
 
 static int
-file_find_realm(const char *phost, const char *domain, char *ret_realm)
+file_find_realm(const char *phost, const char *domain, 
+		char *ret_realm, size_t ret_realm_sz)
 {
     FILE *trans_file;
     char buf[1024];
-    char trans_host[MAXHOSTNAMELEN];
-    char trans_realm[REALM_SZ];
     int ret = -1;
     
     if ((trans_file = open_krb_realms()) == NULL)
 	return -1;
 
-    while (fgets(buf, sizeof(buf), trans_file)) {
+    while (fgets(buf, sizeof(buf), trans_file) != NULL) {
 	char *save = NULL;
-	char *tok = strtok_r(buf, " \t\r\n", &save);
-	if(tok == NULL)
-	    continue;
-	strncpy(trans_host, tok, MAXHOSTNAMELEN);
-	trans_host[MAXHOSTNAMELEN - 1] = 0;
+	char *tok;
+	char *tmp_host;
+	char *tmp_realm;
+
+        tok = strtok_r(buf, " \t\r\n", &save);
+        if(tok == NULL)
+            continue;
+	tmp_host = tok;
 	tok = strtok_r(NULL, " \t\r\n", &save);
 	if(tok == NULL)
 	    continue;
-	strcpy(trans_realm, tok);
-	trans_realm[REALM_SZ - 1] = 0;
-	if (!strcasecmp(trans_host, phost)) {
+	tmp_realm = tok;
+	if (strcasecmp(tmp_host, phost) == 0) {
 	    /* exact match of hostname, so return the realm */
-	    strcpy(ret_realm, trans_realm);
+	    strncpy(ret_realm, tmp_realm, ret_realm_sz);
+	    ret_realm[ret_realm_sz - 1] = '\0';
 	    ret = 0;
 	    break;
 	}
-	if ((trans_host[0] == '.') && domain) { 
+	if ((tmp_host[0] == '.') && domain) { 
 	    const char *cp = domain;
 	    do {
-		if(strcasecmp(trans_host, domain) == 0){
+		if(strcasecmp(tmp_host, domain) == 0){
 		    /* domain match, save for later */ 
-		    strcpy(ret_realm, trans_realm);
+		    strncpy(ret_realm, tmp_realm, ret_realm_sz);
+		    ret_realm[ret_realm_sz - 1] = '\0';
 		    ret = 0;
 		    break;
 		}
@@ -173,7 +177,7 @@ krb_realmofhost(const char *host)
 	
     domain = strchr(phost, '.');
 
-    if(file_find_realm(phost, domain, ret_realm) == 0)
+    if(file_find_realm(phost, domain, ret_realm, sizeof(ret_realm)) == 0)
 	return ret_realm;
 
     if(dns_find_realm(phost, ret_realm) >= 0)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rw.c,v 1.2 1997/12/09 07:57:37 art Exp $	*/
 /* $KTH: rw.c,v 1.8 1997/04/01 08:18:44 joda Exp $ */
 
 /*
@@ -51,6 +52,9 @@ krb_get_int(void *f, u_int32_t *to, int size, int lsb)
     int i;
     unsigned char *from = (unsigned char *)f;
 
+    if (from == NULL)
+      return 0;
+
     *to = 0;
     if(lsb){
 	for(i = size-1; i >= 0; i--)
@@ -67,6 +71,10 @@ krb_put_int(u_int32_t from, void *to, int size)
 {
     int i;
     unsigned char *p = (unsigned char *)to;
+
+    if (p == NULL)
+      return 0;
+
     for(i = size - 1; i >= 0; i--){
 	p[i] = from & 0xff;
 	from >>= 8;
@@ -81,6 +89,10 @@ int
 krb_get_address(void *from, u_int32_t *to)
 {
     unsigned char *p = (unsigned char*)from;
+
+    if (from == NULL || p == NULL)
+      return 0;
+
     *to = htonl((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
     return 4;
 }
@@ -94,6 +106,8 @@ krb_put_address(u_int32_t addr, void *to)
 int
 krb_put_string(char *from, void *to)
 {
+    if (to == NULL || from == NULL)
+	return 0;
     strcpy((char *)to, from);
     return strlen(from) + 1;
 }
@@ -109,6 +123,9 @@ krb_get_nir(void *from, char *name, char *instance, char *realm)
 {
     char *p = (char *)from;
 
+    if (p == NULL)
+	return 0;
+
     p += krb_get_string(p, name);
     p += krb_get_string(p, instance);
     if(realm)
@@ -120,6 +137,9 @@ int
 krb_put_nir(char *name, char *instance, char *realm, void *to)
 {
     char *p = (char *)to;
+    if (p == NULL)
+	return 0;
+
     p += krb_put_string(name, p);
     p += krb_put_string(instance, p);
     if(realm)

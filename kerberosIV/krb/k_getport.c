@@ -1,3 +1,4 @@
+/*	$OpenBSD: k_getport.c,v 1.2 1997/12/09 07:57:21 art Exp $	*/
 /* $KTH: k_getport.c,v 1.10 1997/04/01 08:18:30 joda Exp $ */
 
 /*

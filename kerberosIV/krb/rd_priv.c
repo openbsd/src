@@ -1,3 +1,4 @@
+/*	$OpenBSD: rd_priv.c,v 1.4 1997/12/09 07:57:33 art Exp $	*/
 /* $KTH: rd_priv.c,v 1.24 1997/05/14 17:53:29 joda Exp $ */
 
 /*
@@ -74,6 +75,9 @@ krb_rd_priv(void *in, u_int32_t in_length,
     int delta_t;
 
     unsigned char pvno, type;
+
+    if (p == NULL)
+      return KFAILURE;
 
     pvno = *p++;
     if(pvno != KRB_PROT_VERSION)

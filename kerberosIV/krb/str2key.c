@@ -1,3 +1,4 @@
+/*	$OpenBSD: str2key.c,v 1.5 1997/12/09 07:57:39 art Exp $	*/
 /* $KTH: str2key.c,v 1.10 1997/03/23 03:53:19 joda Exp $ */
 
 /* This defines the Andrew string_to_key function.  It accepts a password
@@ -11,7 +12,7 @@
 static void
 mklower(char *s)
 {
-    for (; *s; s++)
+    for (; s[0] != '\0'; s++)
         if ('A' <= *s && *s <= 'Z')
             *s = *s - 'A' + 'a';
 }
@@ -26,10 +27,11 @@ afs_cmu_StringToKey (char *str, char *cell, des_cblock *key)
     int   i;
     int   passlen;
 
-    memset (key, 0, sizeof(key));
+    memset(key, 0, sizeof(key));
     memset(password, 0, sizeof(password));
 
     strncpy (password, cell, 8);
+    password[8] = '\0';
     passlen = strlen (str);
     if (passlen > 8) passlen = 8;
 
@@ -70,6 +72,7 @@ afs_transarc_StringToKey (char *str, char *cell, des_cblock *key)
     int  passlen;
 
     strncpy (password, str, sizeof(password));
+    password[sizeof(password)-1] = '\0';
     if ((passlen = strlen (password)) < sizeof(password)-1)
         strncat (password, cell, sizeof(password)-passlen);
     if ((passlen = strlen(password)) > sizeof(password)) passlen = sizeof(password);

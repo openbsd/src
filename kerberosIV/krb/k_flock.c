@@ -1,3 +1,4 @@
+/*	$OpenBSD: k_flock.c,v 1.2 1997/12/09 07:57:20 art Exp $	*/
 /* $KTH: k_flock.c,v 1.8 1997/04/01 08:18:30 joda Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: krb_check_auth.c,v 1.2 1997/12/09 07:57:23 art Exp $	*/
 /* $KTH: krb_check_auth.c,v 1.4 1997/04/01 08:18:33 joda Exp $ */
 
 /*

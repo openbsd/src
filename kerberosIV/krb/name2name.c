@@ -1,3 +1,4 @@
+/*	$OpenBSD: name2name.c,v 1.2 1997/12/09 07:57:31 art Exp $	*/
 /* $KTH: name2name.c,v 1.15 1997/04/30 04:30:36 assar Exp $ */
 
 /*
@@ -51,6 +52,9 @@ krb_name_to_name(const char *host, char *phost, size_t phost_size)
     struct hostent *hp;
     struct in_addr adr;
     const char *tmp;
+
+    if (phost == NULL || phost_size == 0)
+      return 1;
     
     adr.s_addr = inet_addr(host);
     hp = gethostbyname(host);

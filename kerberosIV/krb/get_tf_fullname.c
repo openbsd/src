@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_tf_fullname.c,v 1.4 1997/12/09 07:57:18 art Exp $	*/
 /* $KTH: get_tf_fullname.c,v 1.6 1997/03/23 03:53:10 joda Exp $ */
 
 /* 
@@ -50,13 +51,19 @@ krb_get_tf_fullname(char *ticket_file, char *name, char *instance, char *realm)
 	((tf_status = tf_get_pinst(c.pinst)) != KSUCCESS))
 	return (tf_status);
     
-    if (name)
-	strcpy(name, c.pname);
-    if (instance)
-	strcpy(instance, c.pinst);
+    if (name != NULL){
+	strncpy(name, c.pname, ANAME_SZ);
+	name[ANAME_SZ-1] = '\0';
+    }
+    if (instance != NULL){
+	strncpy(instance, c.pinst, INST_SZ);
+	instance[INST_SZ-1] = '\0';
+    }
     if ((tf_status = tf_get_cred(&c)) == KSUCCESS) {
-	if (realm)
-	    strcpy(realm, c.realm);
+	if (realm != NULL){
+	    strncpy(realm, c.realm, REALM_SZ);
+	    realm[REALM_SZ-1] = '\0';
+	}
     }
     else {
 	if (tf_status == EOF)

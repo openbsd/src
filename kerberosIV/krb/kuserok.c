@@ -1,3 +1,4 @@
+/*	$OpenBSD: kuserok.c,v 1.4 1997/12/09 07:57:26 art Exp $	*/
 /* $KTH: kuserok.c,v 1.21 1997/04/01 08:18:35 joda Exp $ */
 
 /*
@@ -89,19 +90,26 @@ krb_kuserok(char *name, char *instance, char *realm, char *luser)
     char file[MAXPATHLEN];
     struct stat st;
 
+    if (luser == NULL)
+      return NOTOK;
+
     pwd = getpwnam(luser);
     if(pwd == NULL)
 	return NOTOK;
+
     if(krb_get_lrealm(lrealm, 1))
 	return NOTOK;
+
     if(pwd->pw_uid != 0 &&
        strcmp(name, luser) == 0 &&
        strcmp(instance, "") == 0 &&
        strcmp(realm, lrealm) == 0)
 	return OK;
-    strcpy(file, pwd->pw_dir);
-    strcat(file, "/.klogin");
-
+    strncpy(file, pwd->pw_dir, MAXPATHLEN);
+    file[MAXPATHLEN-1] = '\0';
+    strncat(file, "/.klogin", MAXPATHLEN);
+    file[MAXPATHLEN-1] = '\0';
+    
     f = fopen(file, "r");
     if(f == NULL)
 	return NOTOK;
@@ -136,7 +144,10 @@ krb_kuserok(char *name, char *instance, char *realm, char *luser)
 	if(strcmp(instance, finst))
 	    continue;
 	if(frealm[0] == 0)
-	    strcpy(frealm, lrealm);
+	  {
+	    strncpy(frealm, lrealm, REALM_SZ);
+	    frealm[REALM_SZ-1] = '\0';
+	  }
 	if(strcmp(realm, frealm))
 	    continue;
 	fclose(f);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rd_req.c,v 1.5 1997/12/09 07:57:34 art Exp $	*/
 /* $KTH: rd_req.c,v 1.24 1997/05/11 11:05:28 assar Exp $ */
 
 /*
@@ -217,9 +218,12 @@ krb_rd_req(KTEXT authent,	/* The received message */
             return(RD_AP_UNDEC);
         if ((status = krb_set_key((char*)skey, 0)))
 	    return(status);
-        strcpy(st_rlm, realm);
-        strcpy(st_nam, service);
-        strcpy(st_inst, instance);
+        strncpy(st_rlm, realm, REALM_SZ);
+	st_rlm[REALM_SZ-1] = '\0';
+        strncpy(st_nam, service, SNAME_SZ);
+	st_nam[SNAME_SZ-1] = '\0';
+        strncpy(st_inst, instance, INST_SZ);
+	st_inst[INST_SZ-1] = '\0';
     }
 
     tkt->length = *p++;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tkt_string.c,v 1.5 1997/12/09 07:57:41 art Exp $	*/
 /* $KTH: tkt_string.c,v 1.11 1997/10/24 10:18:07 assar Exp $ */
 
 /* 
@@ -44,7 +45,7 @@ tkt_string(void)
 {
     char *env;
 
-    if (!*krb_ticket_string) {
+    if (krb_ticket_string[0] == '\0') {
         if ((env = getenv("KRBTKFILE"))) {
 	    strncpy(krb_ticket_string, env,
 			   sizeof(krb_ticket_string)-1);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: unparse_name.c,v 1.2 1997/12/09 07:57:41 art Exp $	*/
 /* $KTH: unparse_name.c,v 1.7 1997/04/01 08:18:46 joda Exp $ */
 
 /*
@@ -59,11 +60,13 @@ krb_unparse_name_r(krb_principal *pr, char *fullname)
 {
     quote_string("'@\\", pr->name, fullname);
     if(pr->instance[0]){
-	strcat(fullname, ".");
+	strncat(fullname, ".", MAXPATHLEN);
+	fullname[MAXPATHLEN-1] = '\0';
 	quote_string("@\\", pr->instance, fullname + strlen(fullname));
     }
     if(pr->realm[0]){
-	strcat(fullname, "@");
+	strncat(fullname, "@", MAXPATHLEN);
+	fullname[MAXPATHLEN-1] = '\0';
 	quote_string("\\", pr->realm, fullname + strlen(fullname));
     }
     return fullname;
@@ -75,11 +78,16 @@ krb_unparse_name_long_r(char *name, char *instance, char *realm,
 {
     krb_principal pr;
     memset(&pr, 0, sizeof(pr));
-    strcpy(pr.name, name);
-    if(instance)
-	strcpy(pr.instance, instance);
-    if(realm)
-	strcpy(pr.realm, realm);
+    strncpy(pr.name, name, ANAME_SZ-1);
+    pr.name[ANAME_SZ-1] = '\0';
+    if(instance != NULL){
+	strncpy(pr.instance, instance, INST_SZ-1);
+	pr.instance[INST_SZ-1] = '\0';
+    }
+    if(realm != NULL){
+	strncpy(pr.realm, realm, REALM_SZ-1);
+	pr.realm[REALM_SZ-1] = '\0';
+    }
     return krb_unparse_name_r(&pr, fullname);
 }
 
@@ -96,10 +104,15 @@ krb_unparse_name_long(char *name, char *instance, char *realm)
 {
     krb_principal pr;
     memset(&pr, 0, sizeof(pr));
-    strcpy(pr.name, name);
-    if(instance)
-	strcpy(pr.instance, instance);
-    if(realm)
-	strcpy(pr.realm, realm);
+    strncpy(pr.name, name, ANAME_SZ-1);
+    pr.name[ANAME_SZ-1] = '\0';
+    if(instance != NULL){
+	strncpy(pr.instance, instance, INST_SZ-1);
+	pr.instance[INST_SZ-1] = '\0';
+    }
+    if(realm != NULL){
+	strncpy(pr.realm, realm, REALM_SZ-1);
+	pr.realm[REALM_SZ-1] = '\0';
+    }
     return krb_unparse_name(&pr);
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: krb_get_in_tkt.c,v 1.3 1997/12/09 07:57:25 art Exp $	*/
 /* $KTH: krb_get_in_tkt.c,v 1.22 1997/08/23 15:49:11 joda Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: sendauth.c,v 1.4 1997/12/09 07:57:38 art Exp $	*/
 /* $KTH: sendauth.c,v 1.15 1997/04/18 14:11:36 joda Exp $ */
 
 /* 
@@ -147,6 +148,8 @@ krb_sendauth(int32_t options,	/* bit-pattern of options */
 	    strncpy (inst, instance, sizeof(inst));
 	else
 	    strncpy (inst, krb_get_phost(instance), sizeof(inst));
+
+	inst[sizeof(inst)-1] = '\0';
 
 	ret = krb_get_cred (service, inst, realm, cred);
 	if (ret != KSUCCESS)

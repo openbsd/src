@@ -1,3 +1,4 @@
+/*	$OpenBSD: base64.c,v 1.2 1997/12/09 07:57:09 art Exp $	*/
 /* $KTH: base64.c,v 1.1 1997/08/27 22:41:56 joda Exp $ */
 
 /*
@@ -60,6 +61,9 @@ int base64_encode(const void *data, int size, char **str)
   unsigned char *q;
 
   p = s = (char*)malloc(size*4/3+4);
+  if (p == NULL || data == NULL || str == NULL)
+    return -1;
+
   q = (unsigned char*)data;
   i=0;
   for(i = 0; i < size;){

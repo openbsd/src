@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_svc_in_tkt.c,v 1.3 1997/12/09 07:57:17 art Exp $	*/
 /* $KTH: get_svc_in_tkt.c,v 1.8 1997/03/23 03:53:09 joda Exp $ */
 
 /* 

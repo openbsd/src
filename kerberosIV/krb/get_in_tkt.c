@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_in_tkt.c,v 1.6 1997/12/09 07:57:16 art Exp $	*/
 /* $KTH: get_in_tkt.c,v 1.19 1997/10/03 21:51:42 joda Exp $ */ 
 
 /* 
@@ -56,6 +57,7 @@ passwd_to_5key(char *user, char *instance, char *realm, void *passwd,
     des_string_to_key(p, key);
     memset(p, 0, len);
     free(p);
+    p = NULL;
     return 0;
 }
 
@@ -95,7 +97,7 @@ krb_get_pw_in_tkt(char *user, char *instance, char *realm, char *service,
     int code;
 
     /* Only request password once! */
-    if (!password) {
+    if (password == NULL) {
         if (des_read_pw_string(pword, sizeof(pword)-1, "Password: ", 0)){
 	    memset(pword, 0, sizeof(pword));
 	    return INTK_BADPW;

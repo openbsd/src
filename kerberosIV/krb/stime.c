@@ -1,3 +1,4 @@
+/*	$OpenBSD: stime.c,v 1.2 1997/12/09 07:57:39 art Exp $	*/
 /* $KTH: stime.c,v 1.6 1997/05/02 14:29:20 assar Exp $ */
 
 /*

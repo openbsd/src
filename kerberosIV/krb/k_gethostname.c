@@ -1,3 +1,4 @@
+/*	$OpenBSD: k_gethostname.c,v 1.2 1997/12/09 07:57:21 art Exp $	*/
 /* $KTH: k_gethostname.c,v 1.10 1997/03/23 03:53:12 joda Exp $ */
 
 /* 
@@ -36,5 +37,4 @@ int
 k_gethostname(char *name, int namelen)
 {
     return gethostname(name, namelen);
-
 }

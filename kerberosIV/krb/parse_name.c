@@ -1,3 +1,4 @@
+/*	$OpenBSD: parse_name.c,v 1.2 1997/12/09 07:57:33 art Exp $	*/
 /* $KTH: parse_name.c,v 1.4 1997/04/01 08:18:39 joda Exp $ */
 
 /*
@@ -47,11 +48,15 @@ krb_parse_name(const char *fullname, krb_principal *principal)
     char *ns, *np;
     enum {n, i, r} pos = n;
     int quote = 0;
+
+    if (principal == NULL)
+      return KFAILURE;
+
     ns = np = principal->name;
 
-    principal->name[0] = 0;
-    principal->instance[0] = 0;
-    principal->realm[0] = 0;
+    principal->name[0] = '\0';
+    principal->instance[0] = '\0';
+    principal->realm[0] = '\0';
 
     for(p = fullname; *p; p++){
 	if(np - ns == ANAME_SZ - 1) /* XXX they have the same size */
@@ -75,7 +80,7 @@ krb_parse_name(const char *fullname, krb_principal *principal)
 	    *np++ = *p;
     }
     *np = 0;
-    if(quote || principal->name[0] == 0)
+    if(quote || principal->name[0] == '\0')
 	return KNAME_FMT;
     return KSUCCESS;
 }
@@ -86,10 +91,14 @@ kname_parse(char *np, char *ip, char *rp, char *fullname)
     krb_principal p;
     int ret;
     if((ret = krb_parse_name(fullname, &p)) == 0){
-	strcpy(np, p.name);
-	strcpy(ip, p.instance);
-	if(p.realm[0])
-	    strcpy(rp, p.realm);
+	strncpy(np, p.name, ANAME_SZ);
+	np[ANAME_SZ-1] = '\0';
+	strncpy(ip, p.instance, INST_SZ);
+	ip[INST_SZ-1] = '\0';
+	if(p.realm[0] != '\0'){
+	    strncpy(rp, p.realm, REALM_SZ);
+	    rp[REALM_SZ-1] = '\0';
+	}
     }
     return ret;
 }
@@ -104,7 +113,7 @@ k_isname(char *s)
     char c;
     int backslash = 0;
 
-    if (!*s)
+    if (s[0] == '\0')
         return 0;
     if (strlen(s) > ANAME_SZ - 1)
         return 0;
@@ -177,7 +186,7 @@ k_isrealm(char *s)
     char c;
     int backslash = 0;
 
-    if (!*s)
+    if (s[0] == '\0')
         return 0;
     if (strlen(s) > REALM_SZ - 1)
         return 0;

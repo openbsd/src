@@ -1,3 +1,4 @@
+/*	$OpenBSD: mk_req.c,v 1.3 1997/12/09 07:57:29 art Exp $	*/
 /* $KTH: mk_req.c,v 1.17 1997/05/30 17:42:38 bg Exp $ */
 
 /*
@@ -155,8 +156,10 @@ krb_mk_req(KTEXT authent, char *service, char *instance, char *realm,
      */
 
     retval = krb_get_cred(KRB_TICKET_GRANTING_TICKET, realm, realm, 0);
-    if (retval == KSUCCESS)
+    if (retval == KSUCCESS){
       strncpy(myrealm, realm, REALM_SZ);
+      myrealm[REALM_SZ-1] = '\0';
+    }
     else
       retval = krb_get_tf_realm(TKT_FILE, myrealm);
     

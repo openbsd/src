@@ -1,3 +1,4 @@
+/*	$OpenBSD: create_death_packet.c,v 1.3 1997/12/09 07:57:11 art Exp $	*/
 /* $KTH: create_death_packet.c,v 1.8 1997/04/01 08:18:21 joda Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mk_err.c,v 1.3 1997/12/09 07:57:28 art Exp $	*/
 /* $KTH: mk_err.c,v 1.6 1997/03/23 03:53:14 joda Exp $ */
 
 /* 

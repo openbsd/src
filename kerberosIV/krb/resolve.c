@@ -1,3 +1,4 @@
+/*	$OpenBSD: resolve.c,v 1.2 1997/12/09 07:57:36 art Exp $	*/
 /* $KTH: resolve.c,v 1.12 1997/10/28 15:37:39 bg Exp $ */
 
 /*
@@ -84,18 +85,26 @@ void
 dns_free_data(struct dns_reply *r)
 {
     struct resource_record *rr;
-    if(r->q.domain)
+    if(r->q.domain){
 	free(r->q.domain);
+	r->q.domain = NULL;
+    }
     for(rr = r->head; rr;){
 	struct resource_record *tmp = rr;
-	if(rr->domain)
+	if(rr->domain){
 	    free(rr->domain);
-	if(rr->u.data)
+	    rr->domain = NULL;
+	}
+	if(rr->u.data){
 	    free(rr->u.data);
+	    rr->u.data = NULL;
+	}
 	rr = rr->next;
 	free(tmp);
+	tmp = NULL;
     }
     free (r);
+    r = NULL;
 }
 
 static struct dns_reply*
@@ -109,6 +118,10 @@ parse_reply(unsigned char *data, int len)
     struct resource_record **rr;
     
     r = (struct dns_reply*)malloc(sizeof(struct dns_reply));
+
+    if (r == NULL)
+      return NULL;
+
     memset(r, 0, sizeof(struct dns_reply));
 
     p = data;
@@ -170,7 +183,8 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.mx = (struct mx_record*)malloc(sizeof(struct mx_record) + 
 						    strlen(host));
 	    (*rr)->u.mx->preference = (p[0] << 8) | p[1];
-	    strcpy((*rr)->u.mx->domain, host);
+	    strncpy((*rr)->u.mx->domain, host, MAXHOSTNAMELEN);
+	    (*rr)->u.mx->domain[MAXHOSTNAMELEN-1] = '\0';
 	    break;
 	}
 	case T_SRV:{
@@ -185,7 +199,8 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.srv->priority = (p[0] << 8) | p[1];
 	    (*rr)->u.srv->weight = (p[2] << 8) | p[3];
 	    (*rr)->u.srv->port = (p[4] << 8) | p[5];
-	    strcpy((*rr)->u.srv->target, host);
+	    strncpy((*rr)->u.srv->target, host, MAXHOSTNAMELEN);
+	    (*rr)->u.srv->target[MAXHOSTNAMELEN-1] = '\0';
 	    break;
 	}
 	case T_TXT:{

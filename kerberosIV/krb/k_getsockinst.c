@@ -1,3 +1,4 @@
+/*	$OpenBSD: k_getsockinst.c,v 1.2 1997/12/09 07:57:22 art Exp $	*/
 /* $KTH: k_getsockinst.c,v 1.10 1997/05/02 14:29:17 assar Exp $ */
 
 /*
@@ -51,6 +52,9 @@ k_getsockinst(int fd, char *inst, size_t inst_size)
   struct sockaddr_in addr;
   int len = sizeof(addr);
   struct hostent *hnam;
+
+  if (inst == NULL)
+    return -1;
 
   if (getsockname(fd, (struct sockaddr *)&addr, &len) < 0)
     goto fail;

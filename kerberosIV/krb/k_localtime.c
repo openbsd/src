@@ -1,3 +1,4 @@
+/*	$OpenBSD: k_localtime.c,v 1.3 1997/12/09 07:57:22 art Exp $	*/
 /* $KTH: k_localtime.c,v 1.7 1997/04/01 08:18:31 joda Exp $ */
 
 /*

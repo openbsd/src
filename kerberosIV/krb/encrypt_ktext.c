@@ -1,3 +1,4 @@
+/*	$OpenBSD: encrypt_ktext.c,v 1.2 1997/12/09 07:57:14 art Exp $	*/
 /* $KTH: encrypt_ktext.c,v 1.4 1997/04/01 08:18:26 joda Exp $ */
 
 /*

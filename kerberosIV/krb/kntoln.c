@@ -1,3 +1,4 @@
+/*	$OpenBSD: kntoln.c,v 1.3 1997/12/09 07:57:23 art Exp $	*/
 /* $KTH: kntoln.c,v 1.7 1997/03/23 03:53:12 joda Exp $ */
 
 /* 
@@ -54,6 +55,9 @@ krb_kntoln(AUTH_DAT *ad, char *lname)
 {
     static char lrealm[REALM_SZ] = "";
 
+    if (ad == NULL || lname == NULL)
+      return KFAILURE;
+
     if (!(*lrealm) && (krb_get_lrealm(lrealm,1) == KFAILURE))
         return(KFAILURE);
 
@@ -61,7 +65,8 @@ krb_kntoln(AUTH_DAT *ad, char *lname)
         return(KFAILURE);
     if (strcmp(ad->prealm, lrealm))
         return(KFAILURE);
-    strcpy(lname, ad->pname);
+    strncpy(lname, ad->pname, ANAME_SZ);
+    lname[ANAME_SZ-1] = '\0';
     return(KSUCCESS);
 }
 
@@ -91,9 +96,9 @@ extern int errno;
 
 static char     lrealm[REALM_SZ] = "";
 
-an_to_ln(ad,lname)
-AUTH_DAT        *ad;
-char            *lname;
+int
+an_to_ln(AUTH_DAT        *ad,
+	 char            *lname)
 {
         static DBM *aname = NULL;
         char keyname[ANAME_SZ+INST_SZ+REALM_SZ+2];
@@ -125,17 +130,22 @@ strcmp(ad->prealm,lrealm)) {
                   return(KFAILURE);
                 }
                 /* Got it! */
-                strcpy(lname,val.dptr);
+                strncpy(lname, val.dptr, ANAME_SZ);
+		lname[ANAME_SZ-1] = '\0';
                 return(KSUCCESS);
-        } else strcpy(lname,ad->pname);
+        } else{
+	  strncpy(lname, ad->pname, ANAME_SZ);
+	  lname[ANAME_SZ-1] = '\0';
+	}
         return(KSUCCESS);
 }
 
-an_to_a(ad, str)
-        AUTH_DAT *ad;
-        char *str;
+int
+an_to_a(AUTH_DAT *ad,
+        char *str)
 {
-        strcpy(str, ad->pname);
+        strncpy(str, ad->pname, ANAME_SZ);
+	str[ANAME_SZ-1] = '\0';
         if(*ad->pinst) {
                 strcat(str, ".");
                 strcat(str, ad->pinst);
@@ -148,20 +158,23 @@ an_to_a(ad, str)
  * Parse a string of the form "user[.instance][@realm]" 
  * into a struct AUTH_DAT.
  */
-
-a_to_an(str, ad)
-        AUTH_DAT *ad;
-        char *str;
+int
+a_to_an(cahr *str, AUTH_DAT *ad)
 {
         char *buf = (char *)malloc(strlen(str)+1);
         char *rlm, *inst, *princ;
 
+	if (buf == NULL)
+	  return KFAILURE;
+
         if(!(*lrealm) && (krb_get_lrealm(lrealm,1) == KFAILURE)) {
                 free(buf);
+		buf = NULL;
                 return(KFAILURE);
         }
         /* destructive string hacking is more fun.. */
-        strcpy(buf, str);
+        strncpy(buf, str, strlen(str)+1);
+	buf[strlen(str)] = '\0';
 
         if (rlm = index(buf, '@')) {
                 *rlm++ = '\0';
@@ -175,6 +188,7 @@ a_to_an(str, ad)
         if (rlm) strcpy(ad->prealm, rlm);
         else strcpy(ad->prealm, lrealm);
         free(buf);
+	buf = NULL;
         return(KSUCCESS);
 }
 #endif

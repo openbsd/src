@@ -1,3 +1,4 @@
+/*	$OpenBSD: mk_safe.c,v 1.4 1997/12/09 07:57:30 art Exp $	*/
 /* $KTH: mk_safe.c,v 1.21 1997/04/19 23:18:03 joda Exp $ */
 
 /*
@@ -88,6 +89,9 @@ krb_mk_safe(void *in, void *out, u_int32_t length, des_cblock *key,
     struct timeval tv;
     unsigned char *start;
     u_int32_t src_addr;
+
+    if (p == NULL)
+      return 0;
 
     p += krb_put_int(KRB_PROT_VERSION, p, 1);
     p += krb_put_int(AUTH_MSG_SAFE, p, 1);

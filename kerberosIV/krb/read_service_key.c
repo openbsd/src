@@ -1,3 +1,4 @@
+/*	$OpenBSD: read_service_key.c,v 1.3 1997/12/09 07:57:35 art Exp $	*/
 /* $KTH: read_service_key.c,v 1.8 1997/03/23 03:53:16 joda Exp $ */
 
 /* 
@@ -73,7 +74,10 @@ read_service_key(char *service,	/* Service Name */
     int stab;
 
     if ((stab = open(file, O_RDONLY, 0)) < 0)
-        return(KFAILURE);
+        return KFAILURE;
+
+    if (instance == NULL)
+	return KFAILURE;
 
     wcard = (instance[0] == '*') && (instance[1] == '\0');
 
@@ -83,15 +87,15 @@ read_service_key(char *service,	/* Service Name */
         /* Vers number */
         if (read(stab, &vno, 1) != 1) {
 	    close(stab);
-            return(KFAILURE);
+            return KFAILURE;
 	}
         /* Key */
         if (read(stab,key,8) != 8) {
 	    close(stab);
-            return(KFAILURE);
+            return KFAILURE;
 	}
         /* Is this the right service */
-        if (strcmp(serv,service))
+        if (service != NULL && strcmp(serv,service))
             continue;
         /* How about instance */
         if (!wcard && strcmp(inst,instance))
@@ -99,7 +103,7 @@ read_service_key(char *service,	/* Service Name */
         if (wcard)
             strncpy(instance,inst,INST_SZ);
         /* Is this the right realm */
-        if (strcmp(rlm,realm)) 
+        if (realm != NULL && strcmp(rlm,realm)) 
 	    continue;
 
         /* How about the key version number */
@@ -107,7 +111,7 @@ read_service_key(char *service,	/* Service Name */
             continue;
 
         close(stab);
-        return(KSUCCESS);
+        return KSUCCESS;
     }
 
     /* Can't find the requested service */

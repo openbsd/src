@@ -1,3 +1,4 @@
+/*	$OpenBSD: k_concat.c,v 1.2 1997/12/09 07:57:20 art Exp $	*/
 /* $KTH: k_concat.c,v 1.5 1997/05/02 08:56:39 joda Exp $ */
 
 /*
@@ -87,11 +88,13 @@ k_vmconcat (char **s, size_t max_len, va_list args)
 	
 	if(max_len && len + n > max_len){
 	    free(p);
+	    p = NULL;
 	    return 0;
 	}
 	q = realloc(p, len + n);
 	if(q == NULL){
 	    free(p);
+	    p = NULL;
 	    return 0;
 	}
 	p = q;
@@ -113,4 +116,3 @@ k_mconcat (char **s, size_t max_len, ...)
     va_end(args);
     return ret;
 }
-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mk_priv.c,v 1.4 1997/12/09 07:57:29 art Exp $	*/
 /* $KTH: mk_priv.c,v 1.18 1997/04/01 08:18:37 joda Exp $ */
 
 /*
@@ -92,6 +93,9 @@ krb_mk_priv(void *in, void *out, u_int32_t length,
     struct timeval tv;
     u_int32_t src_addr;
     u_int32_t len;
+
+    if (p == NULL)
+      return 0;
 
     p += krb_put_int(KRB_PROT_VERSION, p, 1);
     p += krb_put_int(AUTH_MSG_PRIVATE, p, 1);

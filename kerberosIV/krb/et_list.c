@@ -1,3 +1,4 @@
+/*	$OpenBSD: et_list.c,v 1.2 1997/12/09 07:57:14 art Exp $	*/
 /* $KTH: et_list.c,v 1.12 1997/05/13 09:45:01 bg Exp $ */
 
 /*

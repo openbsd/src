@@ -1,3 +1,4 @@
+/*	$OpenBSD: get_host.c,v 1.2 1997/12/09 07:57:16 art Exp $	*/
 /* $KTH: get_host.c,v 1.31 1997/09/26 17:42:37 joda Exp $ */
 
 /*
@@ -52,13 +53,20 @@ free_hosts(struct host_list *h)
 {
     struct host_list *t;
     while(h){
-	if(h->this->realm)
+	if(h->this->realm != NULL)
+	  {
 	    free(h->this->realm);
-	if(h->this->host)
+	    h->this->realm = NULL;
+	  }
+	if(h->this->host != NULL)
+	  {
 	    free(h->this->host);
+	    h->this->host = NULL;
+	  }
 	t = h;
 	h = h->next;
 	free(t);
+	t=NULL;
     }
 }
 
@@ -67,6 +75,10 @@ parse_address(char *address, enum krb_host_proto *proto, char **host, int *port)
 {
     char *p, *q;
     int default_port = krb_port;
+
+    if (proto == NULL || address == NULL || port == NULL || host == NULL)
+      return -1;
+
     *proto = PROTO_UDP;
     if(strncmp(address, "http://", 7) == 0){
 	p = address + 7;
@@ -77,9 +89,9 @@ parse_address(char *address, enum krb_host_proto *proto, char **host, int *port)
 	if(p){
 	    char prot[32];
 	    struct protoent *pp;
-	    strncpy(prot, address, p - address);
-	    prot[p - address] = 0;
-	    if((pp = getprotobyname(prot))){
+	    strncpy(prot, address, MIN(p - address, 32));
+	    prot[ MIN(p - address, 32) ] = '\0';
+	    if((pp = getprotobyname(prot)) != NULL ){
 		switch(pp->p_proto){
 		case IPPROTO_UDP:
 		    *proto = PROTO_UDP;
@@ -99,10 +111,12 @@ parse_address(char *address, enum krb_host_proto *proto, char **host, int *port)
 	    p = address;
     }
     q = strchr(p, ':');
-    if(q){
+    if(q != NULL){
 	*host = (char*)malloc(q - p + 1);
+	if (*host == NULL)
+	  return -1;
 	strncpy(*host, p, q - p);
-	(*host)[q - p] = 0;
+	(*host)[q - p] = '\0';
 	q++;
 	{
 	    struct servent *sp = getservbyname(q, NULL);
@@ -128,10 +142,15 @@ add_host(char *realm, char *address, int admin, int validate)
     struct krb_host *host;
     struct host_list *p, **last = &hosts;
     host = (struct krb_host*)malloc(sizeof(struct krb_host));
-    parse_address(address, &host->proto, &host->host, &host->port);
+    if (host == NULL)
+	return 1;
+    if (parse_address(address, &host->proto, &host->host, &host->port))
+	return 1;
     if(validate && gethostbyname(host->host) == NULL){
 	free(host->host);
+	host->host = NULL;
 	free(host);
+	host = NULL;
 	return 1;
     }
     host->admin = admin;
@@ -141,19 +160,36 @@ add_host(char *realm, char *address, int admin, int validate)
 	   host->proto == p->this->proto &&
 	   host->port == p->this->port){
 	    free(host->host);
+	    host->host = NULL;
 	    free(host);
+	    host = NULL;
 	    return 1;
 	}
 	last = &p->next;
     }
     host->realm = strdup(realm);
+    if (host->realm == NULL){
+	free(host->host);
+	host->host = NULL;
+	free(host);
+	host = NULL;
+	return 1;
+    }
     p = (struct host_list*)malloc(sizeof(struct host_list));
+    if (p == NULL){
+	free(host->realm);
+	host->realm==NULL;
+	free(host->host);
+	host->host = NULL;
+	free(host);
+	host = NULL;
+	return 1;
+    }
     p->this = host;
     p->next = NULL;
     *last = p;
     return 0;
 }
-
 
 
 static int
@@ -165,12 +201,16 @@ read_file(const char *filename, const char *r)
     char scratch[1024];
     int n;
     int nhosts = 0;
+    FILE *f;
+
+    if (filename == NULL)
+	return -1;
     
-    FILE *f = fopen(filename, "r");
+    f = fopen(filename, "r");
     if(f == NULL)
 	return -1;
     while(fgets(line, sizeof(line), f)){
-	n = sscanf(line, "%s %s admin %s", realm, address, scratch);
+	n = sscanf(line, "%1024s %1024s admin %1024s", realm, address, scratch);
 	if(n == 2 || n == 3){
 	    if(strcmp(realm, r))
 		continue;
@@ -190,7 +230,7 @@ init_hosts(char *realm)
     char *dir = getenv("KRBCONFDIR");
 
     krb_port = ntohs(k_getportbyname (KRB_SERVICE, NULL, htons(KRB_PORT)));
-    if(dir){
+    if(dir && getuid() != geteuid()){
 	char file[MAXPATHLEN];
 	if(k_concat(file, sizeof(file), dir, "/krb.conf", NULL) == 0)
 	    read_file(file, realm);
@@ -206,6 +246,9 @@ srv_find_realm(char *realm, char *proto, char *service)
     char *domain;
     struct dns_reply *r;
     struct resource_record *rr;
+
+    if (proto == NULL || realm == NULL || service == NULL)
+	return;
     
     k_mconcat(&domain, 1024, service, ".", proto, ".", realm, ".", NULL);
     
@@ -217,6 +260,7 @@ srv_find_realm(char *realm, char *proto, char *service)
 	r = dns_lookup(domain, "txt");
     if(r == NULL){
 	free(domain);
+	domain = NULL;
 	return;
     }
     for(rr = r->head; rr; rr = rr->next){
@@ -235,6 +279,7 @@ srv_find_realm(char *realm, char *proto, char *service)
     }
     dns_free_data(r);
     free(domain);
+    domain = NULL;
 }
 
 struct krb_host*
@@ -246,7 +291,7 @@ krb_get_host(int nth, char *realm, int admin)
 	/* quick optimization */
 	if(realm && realm[0]){
 	    strncpy(orealm, realm, sizeof(orealm) - 1);
-	    orealm[sizeof(orealm) - 1] = 0;
+	    orealm[sizeof(orealm) - 1] = '\0';
 	}else{
 	    int ret = krb_get_lrealm(orealm, 1);
 	    if(ret != KSUCCESS)
@@ -268,7 +313,7 @@ krb_get_host(int nth, char *realm, int admin)
 	       servers */
 	    char host[REALM_SZ + sizeof("kerberos-XXXXX..")];
 	    int i = 0;
-	    sprintf(host, "kerberos.%s.", orealm);
+	    snprintf(host, sizeof(host), "kerberos.%s.", orealm);
 	    add_host(orealm, host, 1, 1);
 	    do{
 		i++;
@@ -294,7 +339,8 @@ krb_get_krbhst(char *host, char *realm, int nth)
     struct krb_host *p = krb_get_host(nth, realm, 0);
     if(p == NULL)
 	return KFAILURE;
-    strcpy(host, p->host);
+    strncpy(host, p->host, MAXHOSTNAMELEN);
+    host[MAXHOSTNAMELEN-1] = '\0';
     return KSUCCESS;
 }
 
@@ -304,6 +350,7 @@ krb_get_admhst(char *host, char *realm, int nth)
     struct krb_host *p = krb_get_host(nth, realm, 1);
     if(p == NULL)
 	return KFAILURE;
-    strcpy(host, p->host);
+    strncpy(host, p->host, MAXHOSTNAMELEN);
+    host[MAXHOSTNAMELEN-1] = '\0';
     return KSUCCESS;
 }

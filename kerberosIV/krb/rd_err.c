@@ -1,3 +1,4 @@
+/*	$OpenBSD: rd_err.c,v 1.3 1997/12/09 07:57:33 art Exp $	*/
 /* $KTH: rd_err.c,v 1.8 1997/04/01 08:18:40 joda Exp $ */
 
 /*
@@ -62,6 +63,9 @@ krb_rd_err(u_char *in, u_int32_t in_length, int32_t *code, MSG_DAT *m_data)
     
     unsigned char pvno, type;
     int little_endian;
+
+    if (p == NULL)
+      return KFAILURE;
 
     pvno = *p++;
     if(pvno != KRB_PROT_VERSION)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: netwrite.c,v 1.3 1997/12/09 07:57:32 art Exp $	*/
 /* $KTH: netwrite.c,v 1.8 1997/06/19 23:56:25 assar Exp $ */
 
 /* 
@@ -38,6 +39,9 @@ krb_net_write(int fd, const void *v, size_t len)
     int cc;
     int wrlen = len;
     const char *buf = (const char*)v;
+
+    if (buf == NULL)
+      return -1;
 
     do {
 	cc = write(fd, buf, wrlen);
