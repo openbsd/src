@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.10 2002/07/15 21:05:57 marc Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.11 2002/07/19 19:28:12 marc Exp $	*/
 /*	$NetBSD: ldd.c,v 1.12 1995/10/09 00:14:41 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -48,7 +48,7 @@
 extern void scan_library(int, struct exec *, const char *, const char *, const char *);
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
@@ -57,9 +57,7 @@ usage()
 }
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
 	char		*fmt1 = NULL, *fmt2 = NULL;
 	int		rval;

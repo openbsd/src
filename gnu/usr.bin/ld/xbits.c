@@ -1,4 +1,4 @@
-/* *	$OpenBSD: xbits.c,v 1.3 2002/07/15 21:05:56 marc Exp $*/
+/* *	$OpenBSD: xbits.c,v 1.4 2002/07/19 19:28:12 marc Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -50,18 +50,14 @@
 #include "ld.h"
 
 void
-swap_longs(lp, n)
-int	n;
-long	*lp;
+swap_longs(long *lp, int n)
 {
 	for (; n > 0; n--, lp++)
 		*lp = md_swap_long(*lp);
 }
 
 void
-swap_symbols(s, n)
-struct nlist *s;
-int n;
+swap_symbols(struct nlist *s, int n)
 {
 	for (; n; n--, s++) {
 		s->n_un.n_strx = md_swap_long(s->n_un.n_strx);
@@ -71,9 +67,7 @@ int n;
 }
 
 void
-swap_zsymbols(s, n)
-struct nzlist *s;
-int n;
+swap_zsymbols(struct nzlist *s, int n)
 {
 	for (; n; n--, s++) {
 		s->nz_strx = md_swap_long(s->nz_strx);
@@ -85,9 +79,7 @@ int n;
 
 
 void
-swap_ranlib_hdr(rlp, n)
-struct ranlib *rlp;
-int n;
+swap_ranlib_hdr(struct ranlib *rlp, int n)
 {
 	for (; n; n--, rlp++) {
 		rlp->ran_un.ran_strx = md_swap_long(rlp->ran_un.ran_strx);
@@ -96,8 +88,7 @@ int n;
 }
 
 void
-swap__dynamic(dp)
-struct _dynamic *dp;
+swap__dynamic(struct _dynamic *dp)
 {
 	dp->d_version = md_swap_long(dp->d_version);
 	dp->d_debug = (struct so_debug *)md_swap_long((long)dp->d_debug);
@@ -107,23 +98,19 @@ struct _dynamic *dp;
 }
 
 void
-swap_section_dispatch_table(sdp)
-struct section_dispatch_table *sdp;
+swap_section_dispatch_table(struct section_dispatch_table *sdp)
 {
 	swap_longs((long *)sdp, sizeof(*sdp)/sizeof(long));
 }
 
 void
-swap_so_debug(ddp)
-struct so_debug	*ddp;
+swap_so_debug(struct so_debug *ddp)
 {
 	swap_longs((long *)ddp, sizeof(*ddp)/sizeof(long));
 }
 
 void
-swapin_sod(sodp, n)
-struct sod *sodp;
-int n;
+swapin_sod(struct sod *sodp, int n)
 {
 	unsigned long	bits;
 
@@ -138,9 +125,7 @@ int n;
 }
 
 void
-swapout_sod(sodp, n)
-struct sod *sodp;
-int n;
+swapout_sod(struct sod *sodp, int n)
 {
 	unsigned long	bits;
 
@@ -155,9 +140,7 @@ int n;
 }
 
 void
-swap_rrs_hash(fsp, n)
-struct rrs_hash	*fsp;
-int n;
+swap_rrs_hash(struct rrs_hash *fsp, int n)
 {
 	for (; n; n--, fsp++) {
 		fsp->rh_symbolnum = md_swap_long(fsp->rh_symbolnum);

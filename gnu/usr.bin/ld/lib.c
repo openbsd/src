@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.8 2002/07/17 20:33:29 marc Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.9 2002/07/19 19:28:11 marc Exp $	- library routines*/
 /*
  */
 
@@ -36,9 +36,7 @@ static struct file_entry	*decode_library_subfile(int,
  */
 
 void
-search_library(fd, entry)
-	int		fd;
-	struct file_entry *entry;
+search_library(int fd, struct file_entry *entry)
 {
 	int member_length;
 	char *name;
@@ -71,11 +69,8 @@ search_library(fd, entry)
  */
 
 static struct file_entry *
-decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
-	int		fd;
-	struct file_entry *library_entry;
-	int		subfile_offset;
-	int	       *length_loc;
+decode_library_subfile(int fd, struct file_entry *library_entry,
+		       int subfile_offset, int *length_loc)
 {
 	int		bytes_read;
 	int		namelen;
@@ -166,10 +161,7 @@ static int	subfile_wanted_p(struct file_entry *);
  */
 
 static void
-symdef_library(fd, entry, member_length)
-	int		fd;
-	struct file_entry *entry;
-	int		member_length;
+symdef_library(int fd, struct file_entry *entry, int member_length)
 {
 	int	       *symdef_data = (int *) xmalloc(member_length);
 	struct ranlib  *symdef_base;
@@ -358,9 +350,7 @@ symdef_library(fd, entry, member_length)
  */
 
 static void
-linear_library(fd, entry)
-	int		fd;
-	struct file_entry *entry;
+linear_library(int fd, struct file_entry *entry)
 {
 	struct file_entry *prev = 0;
 	int    this_subfile_offset = SARMAG;
@@ -411,8 +401,7 @@ linear_library(fd, entry)
  */
 
 static int
-subfile_wanted_p(entry)
-	struct file_entry *entry;
+subfile_wanted_p(struct file_entry *entry)
 {
 	struct localsymbol	*lsp, *lspend;
 #ifdef DOLLAR_KLUDGE
@@ -582,9 +571,7 @@ subfile_wanted_p(entry)
  * open, on descriptor FD.
  */
 void
-read_shared_object(fd, entry)
-	struct file_entry *entry;
-	int fd;
+read_shared_object(int fd, struct file_entry *entry)
 {
 	struct _dynamic			dyn;
 	struct section_dispatch_table	sdt;
@@ -813,8 +800,7 @@ out:
 #undef minor
 
 int
-findlib(p)
-struct file_entry	*p;
+findlib(struct file_entry *p)
 {
 	int		i;
 	int		fd = -1;

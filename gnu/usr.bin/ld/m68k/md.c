@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.6 2002/07/15 21:05:57 marc Exp $*/
+/* *	$OpenBSD: md.c,v 1.7 2002/07/19 19:28:12 marc Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -46,9 +46,7 @@
  * from address ADDR
  */
 long
-md_get_addend(rp, addr)
-struct relocation_info	*rp;
-unsigned char		*addr;
+md_get_addend(struct relocation_info *rp, unsigned char	*addr)
 {
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
@@ -67,11 +65,8 @@ unsigned char		*addr;
  * Put RELOCATION at ADDR according to relocation record RP.
  */
 void
-md_relocate(rp, relocation, addr, relocatable_output)
-struct relocation_info	*rp;
-long			relocation;
-unsigned char		*addr;
-int			relocatable_output;
+md_relocate(struct relocation_info *rp, long relocation, unsigned char *addr,
+	    int relocatable_output)
 {
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
@@ -97,9 +92,7 @@ int			relocatable_output;
  * Set RRS relocation type.
  */
 int
-md_make_reloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+md_make_reloc(struct relocation_info *rp, struct relocation_info *r, int type)
 {
 	/* Relocation size */
 	r->r_length = rp->r_length;
@@ -121,10 +114,7 @@ int			type;
  * to the binder slot (which is at offset 0 of the PLT).
  */
 void
-md_make_jmpslot(sp, offset, index)
-jmpslot_t	*sp;
-long		offset;
-long		index;
+md_make_jmpslot(jmpslot_t *sp, long offset, long index)
 {
 	/*
 	 * On m68k machines, a long branch offset is relative to
@@ -149,10 +139,7 @@ long		index;
  * further RRS relocations will be necessary for such a jmpslot.
  */
 void
-md_fix_jmpslot(sp, offset, addr)
-jmpslot_t	*sp;
-long		offset;
-u_long		addr;
+md_fix_jmpslot(jmpslot_t *sp, long offset, u_long addr)
 {
 	u_long	fudge = addr - (sizeof(sp->opcode) + offset);
 
@@ -169,9 +156,8 @@ u_long		addr;
  * Update the relocation record for a RRS jmpslot.
  */
 void
-md_make_jmpreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+md_make_jmpreloc(struct relocation_info *rp, struct relocation_info *r,
+		 int type)
 {
 	jmpslot_t	*sp;
 
@@ -195,9 +181,8 @@ int			type;
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+md_make_gotreloc(struct relocation_info *rp, struct relocation_info *r,
+		 int type)
 {
 	r->r_baserel = 1;
 	if (type & RELTYPE_RELATIVE)
@@ -211,8 +196,7 @@ int			type;
  * Set relocation type for a RRS copy operation.
  */
 void
-md_make_cpyreloc(rp, r)
-struct relocation_info	*rp, *r;
+md_make_cpyreloc(struct relocation_info *rp, struct relocation_info *r)
 {
 	/* Relocation size */
 	r->r_length = 2;
@@ -221,9 +205,7 @@ struct relocation_info	*rp, *r;
 }
 
 void
-md_set_breakpoint(where, savep)
-long	where;
-long	*savep;
+md_set_breakpoint(long where, long *savep)
 {
 	*savep = *(long *)where;
 	*(short *)where = BPT;
@@ -235,9 +217,7 @@ long	*savep;
  * obtained from subsequent N_*() macro evaluations.
  */
 void
-md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
+md_init_header(struct exec *hp, int magic, int flags)
 {
 	if (oldmagic)
 		hp->a_midmag = oldmagic;
@@ -253,8 +233,7 @@ int		magic, flags;
  * Check for acceptable foreign machine Ids
  */
 int
-md_midcompat(hp)
-struct exec *hp;
+md_midcompat(struct exec *hp)
 {
 	int	mid = N_GETMID(*hp);
 
@@ -279,8 +258,7 @@ struct exec *hp;
  */
 
 void
-md_swapin_exec_hdr(h)
-struct exec *h;
+md_swapin_exec_hdr(struct exec *h)
 {
 	int skip = 0;
 
@@ -291,8 +269,7 @@ struct exec *h;
 }
 
 void
-md_swapout_exec_hdr(h)
-struct exec *h;
+md_swapout_exec_hdr(struct exec *h)
 {
 	/* NetBSD/OpenBSD: Always leave magic alone */
 	int skip = 1;
@@ -306,9 +283,7 @@ struct exec *h;
 
 
 void
-md_swapin_reloc(r, n)
-struct relocation_info *r;
-int n;
+md_swapin_reloc(struct relocation_info *r, int n)
 {
 	int	bits;
 
@@ -329,9 +304,7 @@ int n;
 }
 
 void
-md_swapout_reloc(r, n)
-struct relocation_info *r;
-int n;
+md_swapout_reloc(struct relocation_info *r, int n)
 {
 	int	bits;
 
@@ -352,9 +325,7 @@ int n;
 }
 
 void
-md_swapout_jmpslot(j, n)
-jmpslot_t	*j;
-int		n;
+md_swapout_jmpslot(jmpslot_t *j, int n)
 {
 	for (; n; n--, j++) {
 		j->opcode = md_swap_short(j->opcode);

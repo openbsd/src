@@ -1,4 +1,4 @@
-/* * $OpenBSD: symbol.c,v 1.5 2002/07/10 17:28:16 marc Exp $	- symbol table routines*/
+/* * $OpenBSD: symbol.c,v 1.6 2002/07/19 19:28:12 marc Exp $	- symbol table routines*/
 /*
  */
 
@@ -25,8 +25,7 @@ symbol	*got_symbol;		/* the symbol __GLOBAL_OFFSET_TABLE_ */
 symbol	*dynamic_symbol;	/* the symbol __DYNAMIC */
 
 void
-symtab_init(relocatable_output)
-	int	relocatable_output;
+symtab_init(int relocatable_output)
 {
 	/*
 	 * Put linker reserved symbols into symbol table.
@@ -74,8 +73,7 @@ symtab_init(relocatable_output)
  */
 
 int
-hash_string (key)
-     char *key;
+hash_string(char *key)
 {
 	char *cp;
 	int k;
@@ -94,8 +92,7 @@ hash_string (key)
  */
 
 symbol *
-getsym(key)
-	char *key;
+getsym(char *key)
 {
 	int hashval;
 	symbol *bp;
@@ -147,8 +144,7 @@ getsym(key)
 /* Like `getsym' but return 0 if the symbol is not already known.  */
 
 symbol *
-getsym_soft (key)
-	char *key;
+getsym_soft(char *key)
 {
 	int hashval;
 	symbol *bp;

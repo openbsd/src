@@ -1,4 +1,4 @@
-/*	$OpenBSD: md-static-funcs.c,v 1.2 1998/03/26 19:46:58 niklas Exp $	*/
+/*	$OpenBSD: md-static-funcs.c,v 1.3 2002/07/19 19:28:12 marc Exp $	*/
 
 
 /*
@@ -6,10 +6,7 @@
  * This *must* be a static function, so it is not called through a jmpslot.
  */
 static void
-md_relocate_simple(r, relocation, addr)
-struct relocation_info	*r;
-long			relocation;
-char			*addr;
+md_relocate_simple(struct relocation_info *r, long relocation, char *addr)
 {
 	if (r->r_relative) {
 		*(long *)addr += relocation;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.4 2002/07/15 21:05:57 marc Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.5 2002/07/19 19:28:12 marc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$OpenBSD: malloc.c,v 1.4 2002/07/15 21:05:57 marc Exp $";
+static char *rcsid = "$OpenBSD: malloc.c,v 1.5 2002/07/19 19:28:12 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -67,9 +67,6 @@ static char *rcsid = "$OpenBSD: malloc.c,v 1.4 2002/07/15 21:05:57 marc Exp $";
 #endif
 
 #define	NULL 0
-
-static void morecore();
-static int findbucket();
 
 /*
  * Pre-allocate mmap'ed pages
@@ -113,6 +110,9 @@ union	overhead {
 #define	RSLOP		0
 #endif
 
+static void morecore(int);
+static int findbucket(union overhead *freep, int srchlen);
+
 /*
  * nextf[i] is the pointer to the next free block of size 2^(i+3).  The
  * smallest allocatable block is 8 bytes.  The overhead information
@@ -150,8 +150,7 @@ botch(s)
 #endif
 
 void *
-malloc(nbytes)
-	size_t nbytes;
+malloc(size_t nbytes)
 {
 	union overhead *op;
 	int bucket, n;
@@ -236,8 +235,7 @@ malloc(nbytes)
  * Allocate more memory to the indicated bucket.
  */
 static void
-morecore(bucket)
-	int bucket;
+morecore(int bucket)
 {
 	union overhead *op;
 	int sz;				/* size of desired block */
@@ -280,8 +278,7 @@ morecore(bucket)
 }
 
 void
-free(cp)
-	void *cp;
+free(void *cp)
 {   
 	int size;
 	union overhead *op;
@@ -322,9 +319,7 @@ free(cp)
 int realloc_srchlen = 4;	/* 4 should be plenty, -1 =>'s whole list */
 
 void *
-realloc(cp, nbytes)
-	void *cp; 
-	size_t nbytes;
+realloc(void *cp, size_t nbytes)
 {   
 	u_int onb;
 	int i;
@@ -393,9 +388,7 @@ realloc(cp, nbytes)
  * Return bucket number, or -1 if not found.
  */
 static
-findbucket(freep, srchlen)
-	union overhead *freep;
-	int srchlen;
+findbucket(union overhead *freep, int srchlen)
 {
 	union overhead *p;
 	int i, j;
@@ -419,8 +412,7 @@ findbucket(freep, srchlen)
  * for each size category, the second showing the number of mallocs -
  * frees for each size category.
  */
-mstats(s)
-	char *s;
+mstats(char *s)
 {
 	int i, j;
 	union overhead *p;
@@ -446,8 +438,7 @@ mstats(s)
 
 
 static int
-morepages(n)
-int	n;
+morepages(int n)
 {
 	int	fd = -1;
 	int	offset;

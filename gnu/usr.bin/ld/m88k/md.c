@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.3 2002/07/15 21:05:57 marc Exp $*/
+/* *	$OpenBSD: md.c,v 1.4 2002/07/19 19:28:12 marc Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -46,9 +46,7 @@
  * from address ADDR
  */
 long
-md_get_addend(rp, addr)
-struct relocation_info_m88k	*rp;
-unsigned char		*addr;
+md_get_addend(struct relocation_info_m88k *rp, unsigned char *addr)
 {
 	return rp->r_addend;
 }
@@ -57,10 +55,8 @@ unsigned char		*addr;
  * Put RELOCATION at ADDR according to relocation record RP.
  */
 void
-md_relocate(rp, relocation, addr, relocatable_output)
-struct relocation_info_m88k	*rp;
-long			relocation;
-unsigned char		*addr;
+md_relocate(struct relocation_info_m88k	*rp, long relocation,
+	    unsigned char *addr, int relocatable_output)
 {
 	if (relocatable_output) {
 		/*
@@ -119,9 +115,8 @@ unsigned char		*addr;
  * Set RRS relocation type.
  */
 int
-md_make_reloc(rp, r, type)
-struct relocation_info_m88k	*rp, *r;
-int			type;
+md_make_reloc(struct relocation_info_m88k *rp, struct relocation_info_m88k *r,
+	      int type)
 {
 	r->r_address = rp->r_address;
 	r->r_type = rp->r_type;
@@ -140,10 +135,7 @@ int			type;
  * to the binder slot (which is at offset 0 of the PLT).
  */
 void
-md_make_jmpslot(sp, offset, index)
-jmpslot_t	*sp;
-long		offset;
-long		index;
+md_make_jmpslot(jmpslot_t *sp, long offset, long index)
 {
 	/*
 	 * On m68k machines, a long branch offset is relative to
@@ -168,10 +160,7 @@ long		index;
  * further RRS relocations will be necessary for such a jmpslot.
  */
 void
-md_fix_jmpslot(sp, offset, addr)
-jmpslot_t	*sp;
-long		offset;
-u_long		addr;
+md_fix_jmpslot(jmpslot_t *sp, long offset, u_long addr)
 {
 	u_long	fudge = addr - (sizeof(sp->opcode) + offset);
 
@@ -188,9 +177,8 @@ u_long		addr;
  * Update the relocation record for a RRS jmpslot.
  */
 void
-md_make_jmpreloc(rp, r, type)
-struct relocation_info_m88k	*rp, *r;
-int			type;
+md_make_jmpreloc(struct relocation_info_m88k *rp,
+		 struct relocation_info_m88k *r, int type)
 {
 	jmpslot_t	*sp;
 
@@ -220,9 +208,8 @@ exit (15);
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type)
-struct relocation_info_m88k	*rp, *r;
-int			type;
+md_make_gotreloc(struct relocation_info_m88k *rp,
+		 struct relocation_info_m88k *r, int type)
 {
 #if 0
 	r->r_baserel = 1;
@@ -240,8 +227,8 @@ exit (15);
  * Set relocation type for a RRS copy operation.
  */
 void
-md_make_cpyreloc(rp, r)
-struct relocation_info_m88k	*rp, *r;
+md_make_cpyreloc(struct relocation_info_m88k *rp,
+		 struct relocation_info_m88k *r)
 {
 	r->r_address = rp->r_address;
 	r->r_type = rp->r_type;
@@ -254,9 +241,7 @@ struct relocation_info_m88k	*rp, *r;
 }
 
 void
-md_set_breakpoint(where, savep)
-long	where;
-long	*savep;
+md_set_breakpoint(long where, long *savep)
 {
 	*savep = *(long *)where;
 	*(short *)where = BPT;
@@ -272,9 +257,7 @@ long	*savep;
  * obtained from subsequent N_*() macro evaluations.
  */
 void
-md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
+md_init_header(struct exec *hp, int magic, int flags)
 {
 	if (oldmagic)
 		hp->a_midmag = oldmagic;
@@ -290,8 +273,7 @@ int		magic, flags;
  * Check for acceptable foreign machine Ids
  */
 int
-md_midcompat(hp)
-struct exec *hp;
+md_midcompat(struct exec *hp)
 {
 	int	mid = N_GETMID(*hp);
 
@@ -311,8 +293,7 @@ struct exec *hp;
  */
 
 void
-md_swapin_exec_hdr(h)
-struct exec *h;
+md_swapin_exec_hdr(struct exec *h)
 {
 	int skip = 1;
 
@@ -323,8 +304,7 @@ struct exec *h;
 }
 
 void
-md_swapout_exec_hdr(h)
-struct exec *h;
+md_swapout_exec_hdr(struct exec *h)
 {
 	/* NetBSD: Always leave magic alone -- unless on little endian*/
 	int skip = 1;
@@ -338,9 +318,7 @@ struct exec *h;
 
 
 void
-md_swapin_reloc(r, n)
-struct relocation_info_m88k *r;
-int n;
+md_swapin_reloc(struct relocation_info_m88k *r, int n)
 {
 	struct r_relocation_info_m88k r_r;
 	int *rev_int;
@@ -388,9 +366,7 @@ printf("%08x: %5x %4x %4x\n",
 }
 
 void
-md_swapout_reloc(r, n)
-struct relocation_info_m88k *r;
-int n;
+md_swapout_reloc(struct relocation_info_m88k *r, int n)
 {
 	int *rev_int;
 	struct r_relocation_info_m88k r_r;
@@ -408,9 +384,7 @@ int n;
 }
 
 void
-md_swapout_jmpslot(j, n)
-jmpslot_t	*j;
-int		n;
+md_swapout_jmpslot(jmpslot_t *j, int n)
 {
 	for (; n; n--, j++) {
 		j->opcode = md_swap_short(j->opcode);
@@ -422,9 +396,7 @@ int		n;
 
 #else /* ! defined(NEEDSWAP) */
 void
-md_in_reloc(r, n)
-struct relocation_info_m88k *r;
-int n;
+md_in_reloc(struct relocation_info_m88k *r, int n)
 {
 	for (; n; n--, r++) {
 

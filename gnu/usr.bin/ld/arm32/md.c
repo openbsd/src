@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.c,v 1.1 1996/06/17 00:10:44 deraadt Exp $	*/
+/*	$OpenBSD: md.c,v 1.2 2002/07/19 19:28:12 marc Exp $	*/
 /*	$NetBSD$	*/
 
 /*
@@ -50,9 +50,7 @@
  * from address ADDR
  */
 long
-md_get_addend(rp, addr)
-struct relocation_info	*rp;
-unsigned char		*addr;
+md_get_addend(struct relocation_info *rp, unsigned char *addr)
 {
 	long rel;
 	
@@ -83,11 +81,8 @@ unsigned char		*addr;
 static struct relocation_info *rrs_reloc; /* HACK HACK HACK			XXX */
 
 void
-md_relocate(rp, relocation, addr, relocatable_output)
-struct relocation_info	*rp;
-long			relocation;
-unsigned char		*addr;
-int			relocatable_output;
+md_relocate(struct relocation_info *rp, long relocation, unsigned char *addr,
+	    int relocatable_output)
 {
 	if (rp == rrs_reloc	/* HACK HACK HACK			XXX */
 	    || (RELOC_PCREL_P(rp) && relocatable_output)) {
@@ -126,9 +121,7 @@ int			relocatable_output;
  * Set RRS relocation type.
  */
 int
-md_make_reloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+md_make_reloc(struct relocation_info *rp, struct relocation_info *r, int type)
 {
 	if (type == RELTYPE_EXTERN)
 		rrs_reloc = rp;	/* HACK HACK HACK			XXX */
@@ -150,10 +143,7 @@ int			type;
  * to the binder slot (which is at offset 0 of the PLT).
  */
 void
-md_make_jmpslot(sp, offset, index)
-jmpslot_t	*sp;
-long		offset;
-long		index;
+md_make_jmpslot(jmpslot_t *sp, long offset, long index)
 {
 	u_long	fudge = - (offset + 12);
 
@@ -168,10 +158,7 @@ long		index;
  * and by `ld.so' after resolving the symbol.
  */
 void
-md_fix_jmpslot(sp, offset, addr)
-jmpslot_t	*sp;
-long		offset;
-u_long		addr;
+md_fix_jmpslot(jmpslot_t *sp, long offset, u_long addr)
 {
 	/*
 	 * Generate the following sequence:
@@ -186,9 +173,8 @@ u_long		addr;
  * Update the relocation record for a RRS jmpslot.
  */
 void
-md_make_jmpreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+md_make_jmpreloc(struct relocation_info	*rp, struct relocation_info *r,
+		 int type)
 {
 	r->r_address += 8;
 	r->r_pcrel = 0;
@@ -203,9 +189,8 @@ int			type;
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+md_make_gotreloc(struct relocation_info *rp, struct relocation_info *r,
+		 int type)
 {
 	r->r_pcrel = 0;
 	r->r_length = 2;
@@ -219,8 +204,7 @@ int			type;
  * Set relocation type for a RRS copy operation.
  */
 void
-md_make_cpyreloc(rp, r)
-struct relocation_info	*rp, *r;
+md_make_cpyreloc(struct relocation_info *rp, struct relocation_info *r)
 {
 	r->r_pcrel = 0;
 	r->r_length = 2;
@@ -231,9 +215,7 @@ struct relocation_info	*rp, *r;
 }
 
 void
-md_set_breakpoint(where, savep)
-long	where;
-long	*savep;
+md_set_breakpoint(long where, long *savep)
 {
 	*savep = *(long *)where;
 	*(long *)where = TRAP;
@@ -246,9 +228,7 @@ long	*savep;
  * obtained from subsequent N_*() macro evaluations.
  */
 void
-md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
+md_init_header(struct exec *hp, int magic, int flags)
 {
 	N_SETMAGIC((*hp), magic, MID_ARM6, flags);
 
@@ -265,8 +245,7 @@ int		magic, flags;
  */
 
 void
-md_swapin_exec_hdr(h)
-struct exec *h;
+md_swapin_exec_hdr(struct exec *h)
 {
 	/* NetBSD: Always leave magic alone */
 	int skip = 1;
@@ -275,8 +254,7 @@ struct exec *h;
 }
 
 void
-md_swapout_exec_hdr(h)
-struct exec *h;
+md_swapout_exec_hdr(struct exec *h)
 {
 	/* NetBSD: Always leave magic alone */
 	int skip = 1;
@@ -286,9 +264,7 @@ struct exec *h;
 
 
 void
-md_swapin_reloc(r, n)
-struct relocation_info *r;
-int n;
+md_swapin_reloc(struct relocation_info *r, int n)
 {
 	int	bits;
 
@@ -307,9 +283,7 @@ int n;
 }
 
 void
-md_swapout_reloc(r, n)
-struct relocation_info *r;
-int n;
+md_swapout_reloc(struct relocation_info *r, int n)
 {
 	int	bits;
 
@@ -328,9 +302,7 @@ int n;
 }
 
 void
-md_swapout_jmpslot(j, n)
-jmpslot_t	*j;
-int		n;
+md_swapout_jmpslot(jmpslot_t *j, int n)
 {
 	for (; n; n--, j++) {
 		j->opcode1 = md_swap_long(j->opcode1);

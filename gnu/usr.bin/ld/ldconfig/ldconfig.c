@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.12 2002/07/17 20:33:29 marc Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.13 2002/07/19 19:28:12 marc Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -86,9 +86,7 @@ static int	readhints(void);
 static void	listhints(void);
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
 	int		i, c;
 	int		rval = 0;
@@ -171,9 +169,7 @@ char	*argv[];
 }
 
 int
-dodir(dir, silent)
-char	*dir;
-int	silent;
+dodir(char *dir, int silent)
 {
 	DIR		*dd;
 	struct dirent	*dp;
@@ -226,9 +222,7 @@ int	silent;
 }
 
 static void
-enter(dir, file, name, dewey, ndewey)
-char	*dir, *file, *name;
-int	dewey[], ndewey;
+enter(char *dir, char *file, char *name, int dewey[], int ndewey)
 {
 	struct shlib_list	*shp;
 
@@ -282,9 +276,7 @@ int	dewey[], ndewey;
 #endif
 
 int
-hinthash(cp, vmajor, vminor)
-char	*cp;
-int	vmajor, vminor;
+hinthash(char *cp, int vmajor, int vminor)
 {
 	int	k = 0;
 
@@ -300,7 +292,7 @@ int	vmajor, vminor;
 }
 
 int
-buildhints()
+buildhints(void)
 {
 	struct hints_header	hdr;
 	struct hints_bucket	*blist;
@@ -431,7 +423,7 @@ buildhints()
 }
 
 static int
-readhints()
+readhints(void)
 {
 	int			fd;
 	caddr_t			addr;
@@ -515,7 +507,7 @@ readhints()
 }
 
 static void
-listhints()
+listhints(void)
 {
 	struct shlib_list	*shp;
 	int			i;

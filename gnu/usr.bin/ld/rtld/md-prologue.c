@@ -1,4 +1,4 @@
-/*	$OpenBSD: md-prologue.c,v 1.3 2002/07/10 17:28:16 marc Exp $	*/
+/*	$OpenBSD: md-prologue.c,v 1.4 2002/07/19 19:28:12 marc Exp $	*/
 
 /*
  * rtld entry pseudo code - turn into assembler and tweak it
@@ -15,9 +15,7 @@ extern void	(*rtld)();
 extern void	(*binder())();
 
 void
-rtld_entry(version, crtp)
-int version;
-struct crt *crtp;
+rtld_entry(int version, struct crt *crtp)
 {
 	struct link_dynamic	*dp;
 	void			(*f)();
@@ -30,7 +28,7 @@ struct crt *crtp;
 }
 
 void
-binder_entry()
+binder_entry(void)
 {
 	extern int PC;
 	struct jmpslot	*sp;

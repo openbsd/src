@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.12 2002/07/15 21:05:56 marc Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.13 2002/07/19 19:28:12 marc Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -74,8 +74,7 @@ char	*standard_search_dirs[] = {
 
 
 void
-add_search_dir(name)
-	char	*name;
+add_search_dir(char *name)
 {
 	int i, len;
 
@@ -96,8 +95,7 @@ add_search_dir(name)
 }
 
 void
-remove_search_dir(name)
-	char	*name;
+remove_search_dir(char *name)
 {
 	int	i, len;
 
@@ -122,8 +120,7 @@ remove_search_dir(name)
 }
 
 void
-add_search_path(path)
-char	*path;
+add_search_path(char *path)
 {
 	char	*cp, *dup;
 
@@ -138,8 +135,7 @@ char	*path;
 }
 
 void
-remove_search_path(path)
-char	*path;
+remove_search_path(char *path)
 {
 	char	*cp, *dup;
 
@@ -154,7 +150,7 @@ char	*path;
 }
 
 void
-std_search_path()
+std_search_path(void)
 {
 	int	i, n;
 
@@ -171,9 +167,7 @@ std_search_path()
  */
 
 int
-getdewey(dewey, cp)
-int	dewey[];
-char	*cp;
+getdewey(int dewey[], char *cp)
 {
 	int	i, n;
 
@@ -202,9 +196,7 @@ char	*cp;
  * Return  0 if equal.
  */
 int
-cmpndewey(d1, n1, d2, n2)
-int	d1[], d2[];
-int	n1, n2;
+cmpndewey(int d1[], int n1, int d2[], int n2)
 {
 	int	i;
 
@@ -243,10 +235,7 @@ int	n1, n2;
 #undef minor
 
 char *
-findshlib(name, majorp, minorp, do_dot_a)
-char	*name;
-int	*majorp, *minorp;
-int	do_dot_a;
+findshlib(char *name, int *majorp, int *minorp, int do_dot_a)
 {
 	int		dewey[MAXDEWEY];
 	int		ndewey;

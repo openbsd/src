@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.7 2002/07/17 20:33:29 marc Exp $*/
+/* * $OpenBSD: warnings.c,v 1.8 2002/07/19 19:28:12 marc Exp $*/
 /*
  */
 
@@ -33,9 +33,7 @@ static int reported_undefineds;
  */
 
 void
-prline_file_name (entry, outfile)
-     struct file_entry *entry;
-     FILE *outfile;
+prline_file_name(struct file_entry *entry, FILE *outfile)
 {
 	print_file_name (entry, outfile);
 	fprintf (outfile, "\n");
@@ -46,9 +44,7 @@ prline_file_name (entry, outfile)
  */
 
 void
-print_file_name (entry, outfile)
-     struct file_entry *entry;
-     FILE *outfile;
+print_file_name(struct file_entry *entry, FILE *outfile)
 {
 	if (entry == NULL) {
 		fprintf (outfile, "NULL");
@@ -66,8 +62,7 @@ print_file_name (entry, outfile)
  */
 
 char *
-get_file_name (entry)
-     struct file_entry *entry;
+get_file_name(struct file_entry *entry)
 {
 	char *result, *supfile;
 
@@ -95,8 +90,7 @@ static void	describe_file_sections(struct file_entry *, FILE *);
 static void	list_file_locals(struct file_entry *, FILE *);
 
 void
-print_symbols(outfile)
-	FILE	       *outfile;
+print_symbols(FILE *outfile)
 {
 	fprintf(outfile, "\nFiles:\n\n");
 	each_file(describe_file_sections, (void *)outfile);
@@ -124,9 +118,7 @@ print_symbols(outfile)
 }
 
 static void
-describe_file_sections(entry, outfile)
-	struct file_entry *entry;
-	FILE	       *outfile;
+describe_file_sections(struct file_entry *entry, FILE *outfile)
 {
 	fprintf(outfile, "  ");
 	print_file_name(entry, outfile);
@@ -140,9 +132,7 @@ describe_file_sections(entry, outfile)
 }
 
 static void
-list_file_locals (entry, outfile)
-     struct file_entry *entry;
-     FILE *outfile;
+list_file_locals(struct file_entry *entry, FILE *outfile)
 {
 	struct localsymbol	*lsp, *lspend;
 
@@ -198,8 +188,7 @@ struct line_debug_entry
  */
 
 static int
-reloc_cmp(rel1, rel2)
-	struct relocation_info *rel1, *rel2;
+reloc_cmp(struct relocation_info *rel1, struct relocation_info *rel2)
 {
 	return RELOC_ADDRESS(rel1) - RELOC_ADDRESS(rel2);
 }
@@ -214,10 +203,7 @@ reloc_cmp(rel1, rel2)
  */
 
 static int
-next_debug_entry(use_data_symbols, state_pointer)
-	int use_data_symbols;
-	/* Next must be passed by reference! */
-	struct line_debug_entry state_pointer[3];
+next_debug_entry(int use_data_symbols, struct line_debug_entry state_pointer[3])
 {
 	struct line_debug_entry	*current = state_pointer,
 				*next = state_pointer + 1,
@@ -279,9 +265,7 @@ next_debug_entry(use_data_symbols, state_pointer)
  */
 
 static struct line_debug_entry *
-init_debug_scan(use_data_symbols, entry)
-	int			use_data_symbols;
-	struct file_entry	*entry;
+init_debug_scan(int use_data_symbols, struct file_entry *entry)
 {
 	struct localsymbol	*lsp, *lspend;
 	struct line_debug_entry *state_pointer, *current, *next, *source;
@@ -340,10 +324,7 @@ init_debug_scan(use_data_symbols, entry)
  */
 
 static int
-address_to_line(address, state_pointer)
-	unsigned long	address;
-/* Next must be passed by reference! */
-	struct line_debug_entry state_pointer[3];
+address_to_line(unsigned long address, struct line_debug_entry state_pointer[3])
 {
 	struct line_debug_entry	*current, *next, *tmp_pointer;
 	int			use_data_symbols;
@@ -396,11 +377,8 @@ address_to_line(address, state_pointer)
  */
 
 static void
-do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
-	struct file_entry *entry;
-	int		data_segment;
-	FILE	       *outfile;
-	unsigned char  *nlist_bitvector;
+do_relocation_warnings(struct file_entry *entry, int data_segment,
+		       FILE *outfile, unsigned char *nlist_bitvector)
 {
 	struct relocation_info	*rp, *erp;
 	int			start_of_segment;
@@ -535,9 +513,7 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
  */
 
 void
-do_file_warnings (entry, outfile)
-	struct file_entry	*entry;
-	FILE			*outfile;
+do_file_warnings(struct file_entry *entry, FILE *outfile)
 {
 	int	nsym;
 	int	i;
@@ -728,8 +704,7 @@ do_file_warnings (entry, outfile)
 }
 
 int
-do_warnings(outfile)
-	FILE	*outfile;
+do_warnings(FILE *outfile)
 {
 
 	list_unresolved_refs = !relocatable_output &&
