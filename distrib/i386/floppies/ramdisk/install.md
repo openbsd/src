@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.47 1999/04/02 05:17:38 millert Exp $
+#	$OpenBSD: install.md,v 1.48 1999/04/07 22:58:12 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -162,14 +162,14 @@ __EOT
 
 md_prep_disklabel()
 {
-	local _disk=$1 _flags
+	local _disk=$1
 
 	echo -n 'Do you want to use the *entire* disk for OpenBSD? [no] '
 	getresp "no"
 	case $resp in
-		yes|YES|y|Y)	_flags=-F ;;
+		y*|Y*)	md_prep_fdisk ${_disk} Y ;;
+		*)	md_prep_fdisk ${_disk} ;;
 	esac
-	md_prep_fdisk ${_disk} ${_flags}
 
 	cat << __EOT
 
@@ -207,7 +207,7 @@ partitions properly (ie. separating /,  /usr, /tmp, /var, /usr/local, and other
 things) just split the space into a root and swap partition for now.
 
 __EOT
-	disklabel ${_flags} -f /tmp/fstab.${_disk} -E ${_disk}
+	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
 }
 
 md_copy_kernel() {
