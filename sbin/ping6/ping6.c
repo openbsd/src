@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.19 2000/12/22 00:33:33 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.107 2000/12/22 00:32:44 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.20 2000/12/22 05:52:04 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.108 2000/12/22 05:51:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -597,6 +597,7 @@ main(argc, argv)
 	}
 
 	/* revoke root privilege */
+	seteuid(getuid());
 	setuid(getuid());
 
 	if (options & F_FLOOD && options & F_INTERVAL)
