@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.89 2002/11/23 07:52:54 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.90 2002/11/23 09:33:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -412,7 +412,7 @@ pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
 		}
 		bcopy(&pp.addr, pa, sizeof(struct pf_pooladdr));
 		TAILQ_INSERT_HEAD(&pool->list, pa, entries);
-	} 
+	}
 
 	return (0);
 }
@@ -445,7 +445,7 @@ pfctl_show_rules(int dev, int opts, int format)
 			warnx("DIOCGETRULE");
 			return (-1);
 		}
-	
+
 		if (pfctl_get_pool(dev, &pr.rule.rt_pool,
 		    nr, pr.ticket, PF_POOL_RULE_RT) != 0)
 			return (-1);
@@ -538,7 +538,7 @@ pfctl_show_nat(int dev)
 			warnx("DIOCGETRDR");
 			return (-1);
 		}
-		if (pfctl_get_pool(dev, &pr.rdr.rpool, nr, 
+		if (pfctl_get_pool(dev, &pr.rdr.rpool, nr,
 		    pr.ticket, PF_POOL_RDR_R) != 0)
 			return (-1);
 		print_rdr(&pr.rdr);
@@ -660,7 +660,7 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 
 	pf->paddr.af = af;
 	TAILQ_FOREACH(pa, &p->list, entries) {
-		memcpy(&pf->paddr.addr, pa, sizeof(struct pf_pooladdr)); 
+		memcpy(&pf->paddr.addr, pa, sizeof(struct pf_pooladdr));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (ioctl(pf->dev, DIOCADDADDR, &pf->paddr))
 				err(1, "DIOCADDADDR");

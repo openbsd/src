@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.109 2002/11/23 08:59:54 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.110 2002/11/23 09:33:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -400,7 +400,7 @@ print_pool(struct pf_pool *pool, sa_family_t af, int id)
 {
 	struct pf_pooladdr *pooladdr;
 
-	if ((TAILQ_FIRST(&pool->list) != NULL) && 
+	if ((TAILQ_FIRST(&pool->list) != NULL) &&
 	    TAILQ_NEXT(TAILQ_FIRST(&pool->list), entries) != NULL)
 		printf("{ ");
 	TAILQ_FOREACH(pooladdr, &pool->list, entries){
@@ -409,7 +409,7 @@ print_pool(struct pf_pool *pool, sa_family_t af, int id)
 		case PF_POOL_RDR_R:
 			print_addr(&pooladdr->addr, af);
 			break;
-		case PF_POOL_RULE_RT:	
+		case PF_POOL_RULE_RT:
 			printf("( %s", pooladdr->ifname);
 			if (! PF_AZERO(&pooladdr->addr.addr, af)) {
 				printf(" ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.17 2002/11/23 05:16:58 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.18 2002/11/23 09:37:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -172,23 +172,23 @@ pf_get_pool(u_int32_t ticket, u_int8_t r_id, u_int8_t r_num, u_int8_t active,
 	case PF_POOL_RULE_RT:
 		if (active) {
 			if (check_ticket && ticket != ticket_rules_active)
-				break;	
-			if (r_id & PF_POOL_LAST) 
+				break;
+			if (r_id & PF_POOL_LAST)
 				rule = TAILQ_LAST(pf_rules_active,
 				    pf_rulequeue);
 			else
 				rule = TAILQ_FIRST(pf_rules_active);
 		} else {
 			if (check_ticket && ticket != ticket_rules_inactive)
-				break;	
-			if (r_id & PF_POOL_LAST) 
+				break;
+			if (r_id & PF_POOL_LAST)
 				rule = TAILQ_LAST(pf_rules_inactive,
 				    pf_rulequeue);
 			else
 				rule = TAILQ_FIRST(pf_rules_inactive);
 		}
 		if (!(r_id & PF_POOL_LAST)) {
-			while ((rule != NULL) && (rule->nr < r_num)) 
+			while ((rule != NULL) && (rule->nr < r_num))
 				rule = TAILQ_NEXT(rule, entries);
 		}
 		if (rule == NULL)
@@ -199,15 +199,15 @@ pf_get_pool(u_int32_t ticket, u_int8_t r_id, u_int8_t r_num, u_int8_t active,
 	case PF_POOL_NAT_R:
 		if (active) {
 			if (check_ticket && ticket != ticket_nats_active)
-				break;	
-			if (r_id & PF_POOL_LAST) 
+				break;
+			if (r_id & PF_POOL_LAST)
 				nat = TAILQ_LAST(pf_nats_active, pf_natqueue);
 			else
 				nat = TAILQ_FIRST(pf_nats_active);
 		} else {
 			if (check_ticket && ticket != ticket_nats_inactive)
-				break;	
-			if (r_id & PF_POOL_LAST) 
+				break;
+			if (r_id & PF_POOL_LAST)
 				nat = TAILQ_LAST(pf_nats_inactive, pf_natqueue);
 			else
 				nat = TAILQ_FIRST(pf_nats_inactive);
@@ -218,7 +218,7 @@ pf_get_pool(u_int32_t ticket, u_int8_t r_id, u_int8_t r_num, u_int8_t active,
 				nr++;
 			}
 		}
-		if (nat == NULL) 
+		if (nat == NULL)
 			break;
 		return(&nat->rpool);
 		break;
@@ -226,15 +226,15 @@ pf_get_pool(u_int32_t ticket, u_int8_t r_id, u_int8_t r_num, u_int8_t active,
 	case PF_POOL_RDR_R:
 		if (active) {
 			if (check_ticket && ticket != ticket_rdrs_active)
-				break;	
-			if (r_id & PF_POOL_LAST) 
+				break;
+			if (r_id & PF_POOL_LAST)
 				rdr = TAILQ_LAST(pf_rdrs_active, pf_rdrqueue);
 			else
 				rdr = TAILQ_FIRST(pf_rdrs_active);
 		} else {
 			if (check_ticket && ticket != ticket_rdrs_inactive)
-				break;	
-			if (r_id & PF_POOL_LAST) 
+				break;
+			if (r_id & PF_POOL_LAST)
 				rdr = TAILQ_LAST(pf_rdrs_inactive, pf_rdrqueue);
 			else
 				rdr = TAILQ_FIRST(pf_rdrs_inactive);
@@ -245,7 +245,7 @@ pf_get_pool(u_int32_t ticket, u_int8_t r_id, u_int8_t r_num, u_int8_t active,
 				nr++;
 			}
 		}
-		if (rdr == NULL) 
+		if (rdr == NULL)
 			break;
 		return(&rdr->rpool);
 		break;
@@ -533,7 +533,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_status.states = states;
 			pf_status.since = time.tv_sec;
 			if (status_ifp != NULL)
-				strlcpy(pf_status.ifname, 
+				strlcpy(pf_status.ifname,
 				    status_ifp->if_xname, IFNAMSIZ);
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
 		}

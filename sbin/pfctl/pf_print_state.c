@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.10 2002/11/23 05:22:24 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.11 2002/11/23 09:33:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -122,7 +122,7 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 		struct pf_addr_wrap aw;
 
 		aw.addr = h->addr;
-		memset(&aw.mask, 0xff, sizeof(aw.mask)); 
+		memset(&aw.mask, 0xff, sizeof(aw.mask));
 		aw.addr_dyn = NULL;
 		print_addr(&aw, af);
 	}

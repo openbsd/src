@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.102 2002/11/23 05:16:58 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.103 2002/11/23 09:37:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -9,11 +9,11 @@
  * are met:
  *
  *    - Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer. 
+ *      notice, this list of conditions and the following disclaimer.
  *    - Redistributions in binary form must reproduce the above
  *      copyright notice, this list of conditions and the following
  *      disclaimer in the documentation and/or other materials provided
- *      with the distribution. 
+ *      with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -53,7 +53,7 @@ enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
 	  PFTM_OTHER_MULTIPLE=13, PFTM_FRAG=14, PFTM_INTERVAL=15, PFTM_MAX=16 };
 enum	{ PF_FASTROUTE=1, PF_ROUTETO=2, PF_DUPTO=3, PF_REPLYTO=4 };
 enum	{ PF_LIMIT_STATES=0, PF_LIMIT_FRAGS=1, PF_LIMIT_MAX=2 };
-enum    { PF_POOL_RULE_RT=0, PF_POOL_NAT_R=1, PF_POOL_RDR_R=2 }; 
+enum    { PF_POOL_RULE_RT=0, PF_POOL_NAT_R=1, PF_POOL_RDR_R=2 };
 #define PF_POOL_IDMASK		0x0f
 #define PF_POOL_LAST		0x10
 enum	{ PF_POOL_NONE=0, PF_POOL_BITMASK=1, PF_POOL_RANDOM=2,
@@ -246,7 +246,7 @@ struct pf_rule_addr {
 };
 
 struct pf_pooladdr {
-	struct pf_addr_wrap	 	 addr;
+	struct pf_addr_wrap		 addr;
 	TAILQ_ENTRY(pf_pooladdr)	 entries;
 	char				 ifname[IFNAMSIZ];
 	struct ifnet			*ifp;
@@ -615,7 +615,7 @@ struct pf_altq {
 
 struct pfioc_pooladdr {
 	u_int32_t		 ticket;
-	u_int32_t	 	 nr;
+	u_int32_t		 nr;
 	u_int32_t		 r_num;
 	u_int8_t		 r_id;
 	u_int8_t		 af;
@@ -623,12 +623,12 @@ struct pfioc_pooladdr {
 };
 
 struct pfioc_changeaddr {
-	u_int32_t	 	 action;
+	u_int32_t		 action;
 	u_int32_t		 r_num;
 	u_int8_t		 r_id;
 	u_int8_t		 af;
-	struct pf_pooladdr	 newaddr;	
-	struct pf_pooladdr	 oldaddr;	
+	struct pf_pooladdr	 newaddr;
+	struct pf_pooladdr	 oldaddr;
 };
 
 struct pfioc_rule {

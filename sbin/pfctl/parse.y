@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.201 2002/11/23 09:30:39 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.202 2002/11/23 09:33:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -270,7 +270,7 @@ typedef struct {
 		struct {
 			int		type;
 			struct pf_poolhashkey	*key;
-		} 			pooltype;
+		}			pooltype;
 		struct {
 			int			 action;
 			struct node_state_opt	*options;
@@ -315,7 +315,7 @@ typedef struct {
 %type	<v.icmp>	icmpspec icmp_list icmp6_list icmp_item icmp6_item
 %type	<v.fromto>	fromto
 %type	<v.peer>	ipportspec
-%type	<v.host>	ipspec xhost host address host_list 
+%type	<v.host>	ipspec xhost host address host_list
 %type	<v.host>	redir_host_list redirspec
 %type	<v.host>	route_host route_host_list routespec
 %type	<v.port>	portspec port_list port_item
@@ -453,7 +453,7 @@ scrubrule	: SCRUB dir interface af fromto nodf minttl maxmss fragcache
 
 			expand_rule(&r, $3, NULL, NULL,
 			    $5.src.host, $5.src.port, $5.dst.host, $5.dst.port,
-			    NULL, NULL, NULL); 
+			    NULL, NULL, NULL);
 		}
 		;
 
@@ -791,7 +791,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			}
 
 			expand_rule(&r, $4, $5.host, $7,
-			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port, 
+			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
 			    $9, $10, $12);
 		}
 		;
@@ -1615,10 +1615,10 @@ pooltype	: /* empty */			{ $$.type = PF_POOL_NONE; }
 			$$.key->key32[2] = arc4random();
 			$$.key->key32[3] = arc4random();
 		}
-		| SOURCEHASH KEY string		
+		| SOURCEHASH KEY string
 		{
 			MD5_CTX context;
-			
+
 			$$.key = calloc(1, sizeof(struct pf_poolhashkey));
 			if ($$.key == NULL)
 				err(1, "pooltype: calloc");
@@ -1627,7 +1627,7 @@ pooltype	: /* empty */			{ $$.type = PF_POOL_NONE; }
 			MD5Update(&context, $3, strlen($3));
 			MD5Final((unsigned char *)$$.key, &context);
 		}
-		| ROUNDROBIN 			{ $$.type = PF_POOL_ROUNDROBIN; }
+		| ROUNDROBIN			{ $$.type = PF_POOL_ROUNDROBIN; }
 		;
 
 staticport	: /* empty */			{ $$ = 0; }
@@ -1707,14 +1707,14 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 
 			if ($7->host->next) {
 				nat.rpool.opts = $8.type;
-				if (nat.rpool.opts == PF_POOL_NONE) 
+				if (nat.rpool.opts == PF_POOL_NONE)
 					nat.rpool.opts = PF_POOL_ROUNDROBIN;
 				if (nat.rpool.opts != PF_POOL_ROUNDROBIN) {
 					yyerror("nat: only round-robin valid "
 					    "for multiple redirection "
 					    "addresses");
 					YYERROR;
-				} 
+				}
 			} else {
 				if ((nat.af == AF_INET &&
 				    unmask(&$7->host->addr.mask,
@@ -1724,7 +1724,7 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 				    nat.af) == 128)) {
 					nat.rpool.opts = PF_POOL_NONE;
 				} else {
-					if ($8.type == PF_POOL_NONE) 
+					if ($8.type == PF_POOL_NONE)
 						nat.rpool.opts =
 						    PF_POOL_ROUNDROBIN;
 					else
@@ -1862,7 +1862,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
-				} 
+				}
 				free($10);
 			}
 
@@ -1904,7 +1904,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool poolt
 			rdr.dport2 = $10.b;
 			rdr.opts  |= $10.t;
 
-			if ($12.type == PF_POOL_NONE) 
+			if ($12.type == PF_POOL_NONE)
 				rdr.rpool.opts = PF_POOL_RANDOM;
 			else
 				rdr.rpool.opts = $12.type;
@@ -1921,7 +1921,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool poolt
 					yyerror("'rdr' rule requires '-> "
 					    "address'");
 					YYERROR;
-				} 
+				}
 				if (!rdr.af && !$11->host->ifindex)
 					rdr.af = $11->host->af;
 
@@ -1935,14 +1935,14 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool poolt
 			}
 			if ($11->host->next) {
 				rdr.rpool.opts = $12.type;
-				if (rdr.rpool.opts == PF_POOL_NONE) 
+				if (rdr.rpool.opts == PF_POOL_NONE)
 					rdr.rpool.opts = PF_POOL_ROUNDROBIN;
 				if (rdr.rpool.opts != PF_POOL_ROUNDROBIN) {
 					yyerror("nat: only round-robin valid "
 					    "for multiple redirection "
 					    "addresses");
 					YYERROR;
-				} 
+				}
 			} else {
 				if ((rdr.af == AF_INET &&
 				    unmask(&$11->host->addr.mask, rdr.af) == 32) ||
@@ -1950,7 +1950,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool poolt
 				    unmask(&$11->host->addr.mask, rdr.af) == 128)) {
 					rdr.rpool.opts = PF_POOL_NONE;
 				} else {
-					if ($12.type == PF_POOL_NONE) 
+					if ($12.type == PF_POOL_NONE)
 						rdr.rpool.opts =
 						    PF_POOL_ROUNDROBIN;
 					else
@@ -1987,7 +1987,7 @@ dport		: /* empty */			{
 		}
 		;
 
-route_host	: STRING			{ 
+route_host	: STRING			{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "route_host: calloc");
@@ -2003,7 +2003,7 @@ route_host	: STRING			{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| '(' STRING host ')'		{ 
+		| '(' STRING host ')'		{
 			$$ = $3;
 			if (($$->ifname = strdup($2)) == NULL) {
 				yyerror("routeto: strdup");
@@ -2019,13 +2019,13 @@ route_host	: STRING			{
 
 route_host_list	: route_host				{ $$ = $1; }
 		| route_host_list comma route_host	{
-			if ($1->af == 0) 
+			if ($1->af == 0)
 				$1->af = $3->af;
 			if ($1->af != $3->af) {
 				yyerror("all pool addresses must be in the "
 				    "same address family");
 				YYERROR;
-			} 
+			}
 			/* $3 may be a list, so use its tail pointer */
 			$1->tail->next = $3->tail;
 			$1->tail = $3->tail;
@@ -2051,17 +2051,17 @@ route		: /* empty */			{
 		| ROUTETO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_ROUTETO;
-			
+
 			if ($2->next) {
 				$$.pool_opts = $3.type;
-				if ($$.pool_opts == PF_POOL_NONE) 
+				if ($$.pool_opts == PF_POOL_NONE)
 					$$.pool_opts = PF_POOL_ROUNDROBIN;
 				if ($$.pool_opts != PF_POOL_ROUNDROBIN) {
 					yyerror("nat: only round-robin valid "
 					    "for multiple redirection "
 					    "addresses");
 					YYERROR;
-				} 
+				}
 			} else {
 				if (($2->af == AF_INET &&
 				    unmask(&$2->addr.mask, $2->af) == 32) ||
@@ -2069,7 +2069,7 @@ route		: /* empty */			{
 				    unmask(&$2->addr.mask, $2->af) == 128)) {
 					$$.pool_opts = PF_POOL_NONE;
 				} else {
-					if ($3.type == PF_POOL_NONE) 
+					if ($3.type == PF_POOL_NONE)
 						$$.pool_opts =
 						    PF_POOL_ROUNDROBIN;
 					else
@@ -2084,17 +2084,17 @@ route		: /* empty */			{
 		| REPLYTO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_REPLYTO;
-			
+
 			if ($2->next) {
 				$$.pool_opts = $3.type;
-				if ($$.pool_opts == PF_POOL_NONE) 
+				if ($$.pool_opts == PF_POOL_NONE)
 					$$.pool_opts = PF_POOL_ROUNDROBIN;
 				if ($$.pool_opts != PF_POOL_ROUNDROBIN) {
 					yyerror("nat: only round-robin valid "
 					    "for multiple redirection "
 					    "addresses");
 					YYERROR;
-				} 
+				}
 			} else {
 				if (($2->af == AF_INET &&
 				    unmask(&$2->addr.mask, $2->af) == 32) ||
@@ -2102,7 +2102,7 @@ route		: /* empty */			{
 				    unmask(&$2->addr.mask, $2->af) == 128)) {
 					$$.pool_opts = PF_POOL_NONE;
 				} else {
-					if ($3.type == PF_POOL_NONE) 
+					if ($3.type == PF_POOL_NONE)
 						$$.pool_opts =
 						    PF_POOL_ROUNDROBIN;
 					else
@@ -2117,17 +2117,17 @@ route		: /* empty */			{
 		| DUPTO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_DUPTO;
-			
+
 			if ($2->next) {
 				$$.pool_opts = $3.type;
-				if ($$.pool_opts == PF_POOL_NONE) 
+				if ($$.pool_opts == PF_POOL_NONE)
 					$$.pool_opts = PF_POOL_ROUNDROBIN;
 				if ($$.pool_opts != PF_POOL_ROUNDROBIN) {
 					yyerror("nat: only round-robin valid "
 					    "for multiple redirection "
 					    "addresses");
 					YYERROR;
-				} 
+				}
 			} else {
 				if (($2->af == AF_INET &&
 				    unmask(&$2->addr.mask, $2->af) == 32) ||
@@ -2135,7 +2135,7 @@ route		: /* empty */			{
 				    unmask(&$2->addr.mask, $2->af) == 128)) {
 					$$.pool_opts = PF_POOL_NONE;
 				} else {
-					if ($3.type == PF_POOL_NONE) 
+					if ($3.type == PF_POOL_NONE)
 						$$.pool_opts =
 						    PF_POOL_ROUNDROBIN;
 					else
@@ -2263,7 +2263,7 @@ nat_consistent(struct pf_nat *r)
 	int problems = 0;
 	struct pf_pooladdr *pa;
 
-	if (!r->af) { 
+	if (!r->af) {
 		TAILQ_FOREACH(pa, &r->rpool.list, entries) {
 			if (pa->addr.addr_dyn != NULL) {
 				yyerror("dynamic addresses require "
@@ -2290,7 +2290,7 @@ rdr_consistent(struct pf_rdr *r)
 	if (!r->af) {
 		if (r->saddr.addr_dyn != NULL || r->daddr.addr_dyn != NULL) {
 			yyerror("dynamic addresses require address family "
-			     "(inet/inet6)");
+			    "(inet/inet6)");
 			problems++;
 		} else {
 			TAILQ_FOREACH(pa, &r->rpool.list, entries) {
@@ -2834,7 +2834,7 @@ expand_nat(struct pf_nat *n,
 
 		if (nat_consistent(n) < 0 || error)
 			yyerror("skipping nat rule due to errors");
-		else {  
+		else {
 			pfctl_add_nat(pf, n);
 			added++;
 		}
@@ -2963,7 +2963,7 @@ lookup(char *s)
 		{ "any",	ANY},
 		{ "bandwidth",	BANDWIDTH},
 		{ "binat",	BINAT},
-		{ "bitmask", 	BITMASK},
+		{ "bitmask",	BITMASK},
 		{ "block",	BLOCK},
 		{ "block-policy", BLOCKPOLICY},
 		{ "borrow",	BORROW},
@@ -3573,16 +3573,16 @@ ifa_pick_ips(struct node_host *nh, sa_family_t af)
 			yyerror("address family not given and translation "
 			    "address expands to multiple address families");
 			return (NULL);
-		} 
+		}
 		h = NULL;
 		break;
 	}
-			
+
 	if (n == NULL)
 		yyerror("no translation address with matching address family "
 		    "found.");
 
-	while (h != NULL) {  
+	while (h != NULL) {
 		d = h;
 		h = h->next;
 		free(d);
