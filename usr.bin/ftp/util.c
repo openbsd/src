@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 1997/09/04 04:37:17 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 1997/09/11 01:55:16 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.13 1997/09/04 04:37:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.14 1997/09/11 01:55:16 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -208,6 +208,7 @@ login(host, user, pass)
 	char *acct;
 	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
 	char hostname[MAXHOSTNAMELEN];
+	struct passwd *pw;
 	int n, aflag = 0, retry = 0;
 
 	acct = NULL;
@@ -228,7 +229,12 @@ login(host, user, pass)
 		/*
 		 * Set up anonymous login password.
 		 */
-		user = getlogin();
+		if ((user = getlogin()) == NULL) {
+			if ((pw = getpwuid(getuid())) == NULL)
+				user = "anonymous";
+			else
+				user = pw->pw_name;
+		}
 		gethostname(hostname, MAXHOSTNAMELEN);
 #ifndef DONT_CHEAT_ANONPASS
 		/*
@@ -255,12 +261,8 @@ tryagain:
 	while (user == NULL) {
 		char *myname = getlogin();
 
-		if (myname == NULL) {
-			struct passwd *pp = getpwuid(getuid());
-
-			if (pp != NULL)
-				myname = pp->pw_name;
-		}
+		if (myname == NULL && (pw = getpwuid(getuid())) != NULL)
+			myname = pw->pw_name;
 		if (myname)
 			fprintf(ttyout, "Name (%s:%s): ", host, myname);
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.15 1997/09/04 04:37:15 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.16 1997/09/11 01:55:15 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.15 1997/09/04 04:37:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.16 1997/09/11 01:55:15 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -512,10 +512,10 @@ bad_ftp_url:
 			portnum = strchr(host, ':');
 			if (portnum != NULL)
 				*portnum++ = '\0';
-parsed_url:
 		} else {			/* classic style `host:file' */
 			dir = strchr(host, ':');
 		}
+parsed_url:
 		if (EMPTYSTRING(host)) {
 			rval = argpos + 1;
 			continue;
