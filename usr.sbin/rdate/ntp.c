@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.11 2002/07/31 12:48:46 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.12 2002/08/10 21:37:28 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -29,10 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -49,6 +48,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "ntpleaps.h"
 
 /*
@@ -243,7 +243,7 @@ write_packet(int fd, const struct sockaddr *peer, struct ntp_data *data)
 	int	length;
 
 	pack_ntp(transmit, NTP_PACKET_MIN, data);
-	length = sendto(fd, transmit, NTP_PACKET_MIN, 0, peer, peer->sa_len);
+	length = sendto(fd, transmit, NTP_PACKET_MIN, 0, peer, SA_LEN(peer));
 	if (length <= 0) {
 		warnx("Unable to send NTP packet to server");
 		return 1;

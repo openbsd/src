@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.3 2002/05/16 21:05:24 jakob Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.4 2002/08/10 21:37:28 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,22 +42,21 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.3 2002/05/16 21:05:24 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.4 2002/08/10 21:37:28 jakob Exp $";
 #endif
 #endif				/* lint */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+
 #include <stdio.h>
 #include <ctype.h>
 #include <err.h>
 #include <string.h>
-#include <sys/time.h>
-#include <sys/socket.h>
 #include <netdb.h>
-#include <netinet/in.h>
 #include <unistd.h>
-#include <util.h>
 #include <time.h>
 
 /* seconds from midnight Jan 1900 - 1970 */

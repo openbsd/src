@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.17 2002/07/27 20:11:34 jakob Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.18 2002/08/10 21:37:28 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,20 +42,26 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.17 2002/07/27 20:11:34 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rdate.c,v 1.18 2002/08/10 21:37:28 jakob Exp $";
 #endif
 #endif				/* lint */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
+
 #include <stdio.h>
 #include <ctype.h>
 #include <err.h>
 #include <string.h>
-#include <sys/time.h>
 #include <unistd.h>
-#include <util.h>
 #include <time.h>
+
+/* there are systems without libutil; for portability */
+#ifndef NO_UTIL
+#include <util.h>
+#else
+#define logwtmp(a,b,c)
+#endif
 
 void rfc868time_client (const char *, struct timeval *, struct timeval *);
 void ntp_client (const char *, struct timeval *, struct timeval *);
