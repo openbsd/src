@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.66 2001/06/07 22:41:00 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.67 2001/06/12 09:05:33 d Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -81,6 +81,7 @@ vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
 vendor LASAT			0x3401	Lasat
 vendor LEXARMEDIA		0x4e01	Lexar Media
+vendor ARCHOS			0x5241	Archos
 vendor DUAL			0x890f	Dual
 vendor COMPEX			0x8a01	Compex
 vendor MELCO			0x8a01	Melco Corporation
@@ -119,6 +120,9 @@ product AIRONET 350		0x000a Aironet 350
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
+
+/* Archos */
+product	ARCHOS ARC_ATAPI	0x0043 MiniCD
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650
