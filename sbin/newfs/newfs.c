@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.23 2001/04/03 22:59:35 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.24 2001/04/04 22:06:39 gluk Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.23 2001/04/03 22:59:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.24 2001/04/04 22:06:39 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,6 @@ void	fatal();
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag;			/* format as an 4.3BSD file system */
-int	Uflag;			/* enable soft updates for file system */
 int	fssize;			/* file system size */
 int	ntracks;		/* # tracks/cylinder */
 int	nsectors;		/* # sectors/track */
@@ -237,9 +236,6 @@ main(argc, argv)
 			disktype = optarg;
 			break;
 #endif
-		case 'U':
-			Uflag = 1;
-			break;
 		case 'a':
 			if ((maxcontig = atoi(optarg)) <= 0)
 				fatal("%s: bad maximum contiguous blocks\n",
@@ -723,7 +719,6 @@ struct fsoptions {
 #ifdef COMPAT
 	{ "-T disktype", 0 },
 #endif
-	{ "-U enable soft updates", 0 },
 	{ "-a maximum contiguous blocks", 1 },
 	{ "-b block size", 1 },
 	{ "-c cylinders/group", 1 },
