@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.8 1997/03/08 16:16:56 briggs Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.9 1997/03/12 13:15:58 briggs Exp $	*/
 /*	$NetBSD: nubus.c,v 1.32 1997/02/28 07:54:02 scottr Exp $	*/
 
 /*
@@ -51,9 +51,8 @@
 
 #include "nubus.h"
 
-#define DEBUG
 #ifdef DEBUG
-static int	nubus_debug = 0x07;
+static int	nubus_debug = 0x01;
 #define NDB_PROBE	0x1
 #define NDB_FOLLOW	0x2
 #define NDB_ARITH	0x4
@@ -241,14 +240,7 @@ probe_slot(slot, fmt)
 
 		rom_probe--;
 
-#ifdef DEBUG
-	if (nubus_debug & NDB_PROBE) {
-		printf("Peeking %p\n", rom_probe);
-	}
-#endif
 		data = nubus_peek((vm_offset_t) rom_probe, 1);
-
-		printf("data %u\n", data);
 
 		if (data == (u_int) -1)
 			continue;
@@ -713,10 +705,8 @@ nubus_peek(paddr, sz)
 	rv = -1;
 	switch (sz) {
 	case 1:
-		printf("checking badbaddr\n");
 		if (!badbaddr(va))
 			rv = *((u_char *) va);
-		printf("got back %d\n", rv);
 		break;
 	case 2:
 		if (!badwaddr(va))
@@ -731,12 +721,9 @@ nubus_peek(paddr, sz)
 		rv = -1;
 	}
 
-printf("setting_pte_back\n");
 	mac68k_set_pte(pgva, PG_NV);
-printf("TBIS\n");
 	TBIS(pgva);
 
-printf("returning %d\n", rv);
 	return rv;
 }
 
