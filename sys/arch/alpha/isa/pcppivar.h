@@ -1,3 +1,4 @@
+/*	$OpenBSD: pcppivar.h,v 1.2 1997/11/10 15:53:10 niklas Exp $	*/
 /*	$NetBSD: pcppivar.h,v 1.1 1996/11/25 03:26:37 cgd Exp $	*/
 
 /*

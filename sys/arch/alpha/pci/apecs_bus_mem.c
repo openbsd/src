@@ -1,3 +1,4 @@
+/*	$OpenBSD: apecs_bus_mem.c,v 1.2 1997/11/10 15:53:11 niklas Exp $	*/
 /*	$NetBSD: apecs_bus_mem.c,v 1.1 1996/11/25 03:42:11 cgd Exp $	*/
 
 /*

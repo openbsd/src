@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpuconf.h,v 1.2 1997/11/10 15:53:09 niklas Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.1 1996/11/12 05:14:40 cgd Exp $	*/
 
 /*

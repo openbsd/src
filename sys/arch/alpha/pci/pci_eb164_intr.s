@@ -1,3 +1,4 @@
+/*	$OpenBSD: pci_eb164_intr.s,v 1.2 1997/11/10 15:53:13 niklas Exp $	*/
 /*	$NetBSD: pci_eb164_intr.s,v 1.1 1996/11/25 03:47:07 cgd Exp $	*/
 
 /*

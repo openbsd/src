@@ -1,3 +1,4 @@
+/*	$OpenBSD: shared_intr.c,v 1.2 1997/11/10 15:53:08 niklas Exp $	*/
 /*	$NetBSD: shared_intr.c,v 1.1 1996/11/17 02:03:08 cgd Exp $	*/
 
 /*

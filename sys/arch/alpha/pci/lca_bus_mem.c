@@ -1,3 +1,4 @@
+/*	$OpenBSD: lca_bus_mem.c,v 1.2 1997/11/10 15:53:12 niklas Exp $	*/
 /*	$NetBSD: lca_bus_mem.c,v 1.1 1996/11/25 03:42:15 cgd Exp $	*/
 
 /*
