@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.8 1998/12/29 22:27:48 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.9 1999/02/24 22:03:25 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -12,13 +12,6 @@ defopt	HP7100LC
 defopt	HP7150
 defopt	HP7200
 defopt	FPEMUL
-
-# 
-# raster console routines
-#
-
-define  raster
-include "dev/rcons/files.rcons"
 
 # 
 # "workstation console" routines
@@ -59,7 +52,7 @@ define	gscbus	{ }
 # Mainbus
 #
 
-define	mainbus { }
+define	mainbus {[irq = -1]}
 device	mainbus
 attach	mainbus at root
 file	arch/hppa/hppa/mainbus.c	mainbus
@@ -92,7 +85,7 @@ device	eba: eisabus
 attach	eba at mainbus
 file	arch/hppa/dev/eba.c		eba
 
-device	sti: wsconsdev
+device	sti: wsemuldisplaydev
 attach	sti at mainbus
 file	arch/hppa/dev/sti.c		sti
 
@@ -130,12 +123,6 @@ file	arch/hppa/gsc/fdc_gsc.c		fdc
 #device	ie: ether, i82586
 attach	ie at gsc with ie_gsc
 file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
-file	dev/ic/i82586.c			ie
-
-#this is for ie debugging
-#device	iz: ether
-#attach	iz at gsc
-#file	arch/hppa/gsc/if_i596.c		iz
 
 device	siop: ncr53c7xx, scsi
 attach	siop at gsc
@@ -144,6 +131,9 @@ file	arch/hppa/gsc/siop_gsc.c	siop
 device	hil: tty
 attach	hil at gsc
 file	arch/hppa/gsc/hil.c		hil
+
+attach	pckbc at gsc with pckbc_gsc
+file	arch/hppa/gsc/pckbc_gsc.c	pckbc_gsc
 
 # these we don't know yet
 #device	medusa: fddi
@@ -156,10 +146,20 @@ file	arch/hppa/gsc/hil.c		hil
 #file	arch/hppa/gsc/myri.c		myri
 
 #
-# HP-UX binary compatibility
+# PC Keyboard controller (ps2)
+#
+
+include "dev/pckbc/files.pckbc"
+
+#
+# Compatibility
 #
 include "compat/hpux/files.hpux"
 file	arch/hppa/hppa/hpux_machdep.c		compat_hpux
+include "compat/osf1/files.osf1"
+file	arch/hppa/hppa/osf1_machdep.c		compat_osf1
+include	"compat/linux/files.linux"
+file	arch/hppa/hppa/linux_machdep.c		compat_linux
 
 # FP emulation
 include "arch/hppa/spmath/files.spmath"
@@ -174,13 +174,15 @@ file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/disksubr.c		disk
 file	arch/hppa/hppa/machdep.c
+file	arch/hppa/hppa/dma.c
 file	arch/hppa/hppa/pmap.c
 file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sys_machdep.c
 file	arch/hppa/hppa/trap.c
 file	arch/hppa/hppa/vm_machdep.c
-file	arch/hppa/dev/clock.c
+#file	arch/hppa/hppa/in_cksum.s		inet
 file	netinet/in_cksum.c			inet
+file	arch/hppa/dev/clock.c
 
 file	dev/cons.c
 file	dev/cninit.c
