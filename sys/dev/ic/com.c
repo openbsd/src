@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.72 2001/09/30 01:19:58 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.73 2001/09/30 15:07:52 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -115,7 +115,6 @@ struct cfdriver com_cd = {
 
 int	comdefaultrate = TTYDEF_SPEED;
 int	comconsaddr;
-int	comconsinit;
 int	comconsattached;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
@@ -180,14 +179,14 @@ comprobe1(iot, ioh)
 	bus_space_write_1(iot, ioh, com_lcr, 0);
 	bus_space_write_1(iot, ioh, com_iir, 0);
 	for (i = 0; i < 32; i++) {
-	    k = bus_space_read_1(iot, ioh, com_iir);
-	    if (k & 0x38) {
-		bus_space_read_1(iot, ioh, com_data); /* cleanup */
-	    } else
-		break;
+		k = bus_space_read_1(iot, ioh, com_iir);
+		if (k & 0x38) {
+			bus_space_read_1(iot, ioh, com_data); /* cleanup */
+		} else
+			break;
 	}
 	if (i >= 32)
-	    return 0;
+		return 0;
 
 	return 1;
 }
@@ -200,6 +199,10 @@ com_attach_subr(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t lcr;
 
+	sc->sc_ier = 0;
+	/* disable interrupts */
+	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+
 	if (sc->sc_iobase == comconsaddr) {
 		comconsattached = 1;
 
@@ -207,8 +210,7 @@ com_attach_subr(sc)
 		 * Need to reset baud rate, etc. of next print so reset
 		 * comconsinit.  Also make sure console is always "hardwired".
 		 */
-		delay(1000);			/* wait for output to finish */
-		comconsinit = 0;
+		delay(10000);			/* wait for output to finish */
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, COM_SW_SOFTCAR);
 	}
@@ -217,7 +219,6 @@ com_attach_subr(sc)
 	 * Probe for all known forms of UART.
 	 */
 	lcr = bus_space_read_1(iot, ioh, com_lcr);
-
 	bus_space_write_1(iot, ioh, com_lcr, 0xbf);
 	bus_space_write_1(iot, ioh, com_efr, 0);
 	bus_space_write_1(iot, ioh, com_lcr, 0);
@@ -264,7 +265,6 @@ com_attach_subr(sc)
 		}
 		bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
 	}
-
 	bus_space_write_1(iot, ioh, com_lcr, lcr);
 	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
 		u_int8_t scr0, scr1, scr2;
@@ -324,9 +324,8 @@ com_attach_subr(sc)
 	(void)bus_space_read_1(iot, ioh, com_data);
 	bus_space_write_1(iot, ioh, com_fifo, 0);
 
-	/* disable interrupts */
-	bus_space_write_1(iot, ioh, com_ier, 0);
-	bus_space_write_1(iot, ioh, com_mcr, 0);
+	sc->sc_mcr = 0;
+	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
 
 #ifdef KGDB
 	/*
@@ -1450,6 +1449,8 @@ com_common_putc(iot, ioh, c)
 		continue;
 
 	bus_space_write_1(iot, ioh, com_data, c);
+	bus_space_barrier(iot, ioh, 0, COM_NPORTS,
+	    (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE));
 
 	/* wait for this transmission to complete */
 	timo = 1500000;
@@ -1527,14 +1528,6 @@ comcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	bus_space_tag_t iot = comconsiot;
-	bus_space_handle_t ioh = comconsioh;
-
-	if (comconsinit == 0) {
-		cominit(iot, ioh, comdefaultrate);
-		comconsinit = 1;
-	}
-
 	com_common_putc(comconsiot, comconsioh, c);
 }
 
