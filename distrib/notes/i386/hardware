@@ -76,6 +76,7 @@ Supported devices {:-include-:}:
 		Intel EtherExpress 16
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)  [X SEE BELOW]
+		SMC EtherPower II (EPIC 10/100)
 		Novell NE1000, NE2000
 		Digital DEFPA PCI FDDI adapters
 		Intel EtherExpress 100 Fast Ethernet adapters.
@@ -235,6 +236,9 @@ Intel EtherExpress 100 Ethernet boards
 		fxp0	any	any 	[you must assign an interrupt in your
 					 PCI BIOS, or let it do so for you]
 
+SMC EtherPower II (EPIC) 10/100 Ethernet boards
+		tx0	any	any 	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]
 
 SPECIAL CARE FOR SMC ULTRA ELITE
 --------------------------------
