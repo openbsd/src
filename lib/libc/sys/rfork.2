@@ -1,97 +1,115 @@
-.\"	$OpenBSD: rfork.2,v 1.18 2003/06/01 21:23:15 jmc Exp $
+.\"	$OpenBSD: rfork.2,v 1.19 2003/06/18 11:05:21 jmc Exp $
 .\"
-.\" This manual page is taken directly from Plan9, and modified to
-.\" describe the actual OpenBSD implementation.  Permission for
-.\" use of this page comes from Rob Pike <rob@plan9.att.com>.
+.\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd January 12, 1996
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd June 17, 2003
 .Dt RFORK 2
 .Os
 .Sh NAME
 .Nm rfork
-.Nd manipulate process resources
+.Nd control new processes
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
 .Fd #include <unistd.h>
 .Ft int
 .Fn rfork "int flags"
 .Sh DESCRIPTION
-Forking, vforking or rforking is the only way new processes are created.
-The
-.Fa flags
-argument to
+The fork functions
+.Pf ( Xr fork 2 ,
+.Xr vfork 2
+and
+.Fn rfork )
+create new processes.
+The new process (child process) is an exact copy of the calling process
+(parent process), except as outlined in the
+.Xr fork 2
+manual page.
 .Fn rfork
-selects which resources of the
-invoking process (parent) are shared
-by the new process (child) or initialized to
-their default values.
-The resources include
-the open file descriptor table (which, when shared, permits processes
-to open and close files for other processes),
-and open files.
-.Fa flags
-is the logical
-.Tn OR
-of some subset of
-.Bl -tag -width "RFCNAMEG" -compact -offset indent
-.It Dv RFPROC
-If set a new process is created; otherwise changes affect the
-current process.
-The current implementation requires this flag to always be set.
-.It Dv RFNOWAIT
-If set, the child process will be dissociated from the parent.
-Upon exit the child will not leave a status for the parent to collect.
-See
-.Xr wait 2 .
-.It Xo Dv RFNAMEG , Dv RFCNAMEG ,
-.Dv RFENVG , Dv RFCENVG , Dv RFNOTEG
-.Xc
-These are Plan 9 specific flags, and not implemented.
+can be used to manipulate the resources of the parent process and the
+child process.
+Operations currently supported include whether to copy or share the file
+descriptor table between the two processes, whether to share the address
+space, and whether the parent should
+.Xr wait 2
+for the child process to
+.Xr _exit 2 .
+.Fn rfork
+takes a single argument,
+.Fa flags ,
+which controls which of these resources should be manipulated.
+They are defined in the header file
+.Aq Pa sys/param.h
+and are the logical OR of one or more of the following:
+.Pp
+.Bl -tag -width "RFNOWAIT"
+.It Dv RFNAMEG
+New Plan 9
+.Sq name space .
+This is a Plan 9 specific flag, and not implemented.
+.It Dv RFENVG
+Copy Plan 9
+.Sq env space .
+This is a Plan 9 specific flag, and not implemented.
 .It Dv RFFDG
-If set, the invoker's file descriptor table (see
-.Xr intro 2 )
-is copied; otherwise the two processes share a
-single table.
-.It Dv RFCFDG
-If set, the new process starts with a clean file descriptor table.
-Is mutually exclusive with
-.Dv RFFDG .
+Copy the parent's file descriptor table.
+If this flag is unset, the parent and child will share the parent's
+file descriptor table.
+May not be used in conjunction with
+.Dv RFCFDG .
+.It Dv RFNOTEG
+Create new Plan 9
+.Sq note group .
+This is a Plan 9 specific flag, and not implemented.
+.It Dv RFPROC
+Create a new process.
+The current implementation requires this flag to always be set.
 .It Dv RFMEM
-If set, the kernel will force sharing of the entire address space.
-The child
-will then inherit all the shared segments the parent process owns.
-Other segment types will be unaffected.
+The kernel forces sharing of the entire address space.
+The child will then inherit all the shared segments the parent process owns.
 Subsequent forks by the parent will then propagate the shared
 data and bss between children.
 The stack segment is always split.
-May be set only with
-.Dv RFPROC .
+.It Dv RFNOWAIT
+Parent need not
+.Xr wait 2
+on child.
+.It Dv RFCNAMEG
+Zero Plan 9
+.Sq name space .
+This is a Plan 9 specific flag, and not implemented.
+.It Dv RFCENVG
+Zero Plan 9
+.Sq env space .
+This is a Plan 9 specific flag, and not implemented.
+.It Dv RFCFDG
+Zero the child's file descriptor table (ie. start with a blank file
+descriptor table).
+May not be used in conjunction with
+.Dv RFFDG .
 .El
-.Pp
-File descriptors in a shared file descriptor table are kept
-open until either they are explicitly closed
-or all processes sharing the table exit.
-.Pp
-If
-.Dv RFPROC
-is set, the
-value returned in the parent process
-is the process ID
-of the child process; the value returned in the child is zero.
-Without
-.Dv RFPROC ,
-the return value is zero.
-Process ids range from 1 to the maximum integer
-.Li int
-value.
-.Fn rfork
-will sleep, if necessary, until required process resources are available.
+.Sh RETURN VALUES
+The parent process returns the process ID (PID) of the child process.
+The child process returns 0.
+The range of the process ID is defined in
+.Aq Pa sys/proc.h
+and is currently between 1 and 32766, inclusive.
 .Pp
 .Fn fork
 can be implemented as a call to
 .Fn rfork
-using "RFFDG|RFPROC"
-but isn't for backwards compatibility.
+using "RFFDG|RFPROC", but isn't for backwards compatibility.
 If a process has file descriptor table sharing active, setuid or setgid
 programs will not
 .Xr execve 2
@@ -100,25 +118,41 @@ with extra privileges.
 .Fn rfork
 will fail and no child process will be created if:
 .Bl -tag -width Er
+.It Bq Er ENOMEM
+Cannot allocate memory.
+The new process image required more memory than was allowed by the hardware or
+by system-imposed memory management constraints.
+A lack of swap space is normally temporary; however, a lack of core is not.
+Soft limits may be increased to their corresponding hard limits.
+.It Bq Er EINVAL
+Invalid argument.
+Some invalid argument was supplied.
 .It Bq Er EAGAIN
+Resource temporarily unavailable.
 The system-imposed limit on the total
 number of processes under execution would be exceeded.
 This limit is configuration-dependent.
 .It Bq Er EAGAIN
+Resource temporarily unavailable.
 The system-imposed limit
 .Dv MAXUPRC
-.Pq Aq Pa sys/param.h
-on the total number of
-processes under execution by a single user would be exceeded.
-.It Bq Er ENOMEM
-There is insufficient swap space for the new process.
+on the total number of processes under execution by a single user would be
+exceeded.
+.Dv MAXUPRC
+is currently defined in
+.Aq Pa sys/param.h
+as
+.Dv CHILD_MAX ,
+which is currently defined as 80 in
+.Aq Pa sys/limits.h .
 .El
 .Sh SEE ALSO
+.Xr _exit 2 ,
+.Xr execve 2 ,
 .Xr fork 2 ,
 .Xr intro 2 ,
-.Xr minherit 2 ,
 .Xr vfork 2
 .Sh HISTORY
 The
 .Fn rfork
-function first appeared in Plan9.
+function first appeared in Plan 9.
