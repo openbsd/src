@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.70 2003/05/15 00:28:53 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.71 2003/05/15 02:08:54 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -296,15 +296,15 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
       if (check_file_secrecy (keyfile, &fsize))
 	return 0;
 
-      keyh = BIO_new (BIO_s_file ());
+#if defined (USE_PRIVSEP)
+      /* XXX Try to find a better solution.  */
+      keyh = BIO_new (BIO_s_mem ());
       if (keyh == NULL)
 	{
 	  log_print ("ike_auth_get_key: "
-		     "BIO_new (BIO_s_file ()) failed");
+		     "BIO_new (BIO_s_mem ()) failed");
 	  return 0;
 	}
-#if defined (USE_PRIVSEP)
-      /* XXX Try to find a BIO_read_fd() function instead of this.  */
       fd = monitor_open (keyfile, O_RDONLY, 0);
       if (fd < 0)
 	{
@@ -330,7 +330,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  return 0;
 	}
       monitor_close (fd);
-      if (BIO_read (keyh, fdata, fsize) == -1)
+      if (BIO_write (keyh, fdata, fsize) == -1)
 	{
 	  log_print ("ike_auth_get_key: BIO_read () failed");
 	  BIO_free (keyh);
@@ -341,6 +341,13 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
       memset (fdata, 0, fsize);
       free (fdata);
 #else
+      keyh = BIO_new (BIO_s_file ());
+      if (keyh == NULL)
+	{
+	  log_print ("ike_auth_get_key: "
+		     "BIO_new (BIO_s_file ()) failed");
+	  return 0;
+	}
       if (BIO_read_filename (keyh, keyfile) == -1)
 	{
 	  log_print ("ike_auth_get_key: "
@@ -364,8 +371,8 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	}
 
       return rsakey;
-#endif
-#endif
+#endif /* USE_X509 */
+#endif /* USE_X509 || USE_KEYNOTE */
 
     default:
       log_print ("ike_auth_get_key: unknown key type %d", type);
