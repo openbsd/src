@@ -1,4 +1,4 @@
-$OpenBSD: TODO.users,v 1.5 1996/10/30 22:37:55 niklas Exp $
+$OpenBSD: TODO.users,v 1.6 1998/01/09 07:39:43 niklas Exp $
 $NetBSD: TODO.users,v 1.5 1996/10/01 21:24:37 cgd Exp $
 
 The OpenBSD/Alpha "User" To-Do List
@@ -28,8 +28,6 @@ Test programs; find and fix bugs.  In particular:
 
 Test TurboChannel option slot support.  Write TurboChannel option
 board drivers.  Test PMAD-A (TC le) driver.
-
-Make DDB work.
 
 Add isadma support.
 

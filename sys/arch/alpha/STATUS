@@ -1,4 +1,4 @@
-$OpenBSD: STATUS,v 1.6 1997/01/24 19:56:15 niklas Exp $
+$OpenBSD: STATUS,v 1.7 1998/01/09 07:39:44 niklas Exp $
 $NetBSD: STATUS,v 1.6 1996/11/26 15:58:04 cgd Exp $
 
 OpenBSD/Alpha's Status
@@ -51,7 +51,6 @@ Supported hardware:
 			Other NCR 53c8xx SCSI boards.
 
 		Things that ARE NOT supported at this time:
-			ISA VGA boards.
 			Sound hardware (including Windows Sound System
 			    built-in on some machines).
 			DEC ZLXp-E2 and ZLXp-E3 PCI video boards.
