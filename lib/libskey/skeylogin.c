@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.9 1996/10/14 03:09:13 millert Exp $
+ * $Id: skeylogin.c,v 1.10 1996/10/22 01:41:25 millert Exp $
  */
 
 #include <sys/param.h>
@@ -355,8 +355,34 @@ skey_authenticate(username)
 	/* Attempt an S/Key challenge */
 	i = skeychallenge(&skey, username, skeyprompt);
 
-	if (i == -2)
-		return 0;
+	/* Cons up a fake prompt if no entry in keys file */
+	if (i != 0) {
+		char *p, *u;
+
+		/* Base first 4 chars of seed on hostname */
+		if (gethostname(pbuf, sizeof(pbuf)) < 0)
+			strcpy(pbuf, "asjd");
+		p = &pbuf[4];
+		*p = '\0';
+
+		/* Base last 8 chars of seed on username */
+		u = username;
+		i = 8;
+		do {
+			if (*u == 0) {
+				/* Pad remainder with zeros */
+				while (--i >= 0)
+					*p++ = '0';
+				break;
+			}
+
+			*p++ = (*u++ % 10) + '0';
+		} while (--i != 0);
+		pbuf[12] = '\0';
+
+		(void)snprintf(skeyprompt, sizeof(skeyprompt), "otp-%s %d %s",
+		    skey_get_algorithm(), 99, pbuf);
+	}
 
 	(void)fprintf(stderr, "%s\n", skeyprompt);
 	(void)fflush(stderr);
