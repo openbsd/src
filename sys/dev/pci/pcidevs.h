@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.21 1997/11/07 08:07:30 niklas Exp 
+ *	OpenBSD: pcidevs,v 1.22 1998/01/02 08:34:31 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -495,6 +495,7 @@
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
+#define	PCI_VENDOR_STB	0x12d2		/* STB (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
@@ -969,4 +970,7 @@
 
 /* Ziatech products */
 #define	PCI_PRODUCT_ZIATECH_ZT8905	0x8905		/* PCI-ST32 Bridge */
+
+/* STB products */
+#define	PCI_PRODUCT_STB_RIVA128	0x0018		/* Velocity128 */
 

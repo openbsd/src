@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.21 1997/11/07 08:07:30 niklas Exp 
+ *	OpenBSD: pcidevs,v 1.22 1998/01/02 08:34:31 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1813,6 +1813,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ziatech",
 	    "PCI-ST32 Bridge",
+	},
+	{
+	    PCI_VENDOR_STB, PCI_PRODUCT_STB_RIVA128,
+	    0,
+	    "STB (2nd PCI Vendor ID)",
+	    "Velocity128",
 	},
 	{
 	    PCI_VENDOR_MARTINMARIETTA, 0,
@@ -4494,6 +4500,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_PICTUREEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Picture Elements",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_STB, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "STB (2nd PCI Vendor ID)",
 	    NULL,
 	},
 	{
