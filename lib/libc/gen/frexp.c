@@ -1,12 +1,8 @@
-/*	$OpenBSD: frexp.c,v 1.1 2004/02/02 16:09:45 drahn Exp $	*/
+/*	$OpenBSD: frexp.c,v 1.1 2005/02/01 15:12:28 millert Exp $	*/
 
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+/*-
+ * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,14 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -31,44 +24,47 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $FreeBSD: frexp.c,v 1.1 2004/07/18 21:23:39 das Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: frexp.c,v 1.1 2004/02/02 16:09:45 drahn Exp $";
+static char rcsid[] = "$OpenBSD: frexp.c,v 1.1 2005/02/01 15:12:28 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
-/*
- * Split the given value into a fraction in the range [0.5, 1.0) and
- * an exponent, such that frac * (2^exp) == value.  If value is 0,
- * return 0.
- */
 double
-frexp(value, eptr)
-	double value;
-	int *eptr;
+frexp(double v, int *ex)
 {
-	union {
+	union  {
 		double v;
 		struct ieee_double s;
 	} u;
 
-	if (value) {
-		/*
-		 * Fractions in [0.5..1.0) have an exponent of 2^-1.
-		 * Leave Inf and NaN alone, however.
-		 * WHAT ABOUT DENORMS?
-		 */
-		u.v = value;
-		if (u.s.dbl_exp != DBL_EXP_INFNAN) {
-			*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
+	u.v = v;
+	switch (u.s.dbl_exp) {
+	case 0:		/* 0 or subnormal */
+		if ((u.s.dbl_fracl | u.s.dbl_frach) == 0) {
+			*ex = 0;
+		} else {
+			/*
+			 * The power of 2 is arbitrary, any value from 54 to
+			 * 1024 will do.
+			 */
+			u.v *= 0x1.0p514;
+			*ex = u.s.dbl_exp - (DBL_EXP_BIAS - 1 + 514);
 			u.s.dbl_exp = DBL_EXP_BIAS - 1;
 		}
-		return (u.v);
-	} else {
-		*eptr = 0;
-		return ((double)0);
+		break;
+	case DBL_EXP_INFNAN:	/* Inf or NaN; value of *ex is unspecified */
+		break;
+	default:	/* normal */
+		*ex = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
+		u.s.dbl_exp = DBL_EXP_BIAS - 1;
+		break;
 	}
+	return (u.v);
 }
