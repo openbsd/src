@@ -27,7 +27,7 @@ option		NFSCLIENT
 option		NFSSERVER
 option		KTRACE
 
-config		bsd	root on rz2a swap on rz2b dumps on rz2b
+config		bsd	root on rz0a swap on rz0b and rz1b dumps on rz0b
 
 mainbus0	at root
 cpu*		at mainbus0
@@ -47,7 +47,9 @@ rz2		at oldscsibus? target ? drive ?
 rz3		at oldscsibus? target ? drive ?
 rz4		at oldscsibus? target ? drive ?
 rz5		at oldscsibus? target ? drive ?
+rz6		at oldscsibus? target ? drive ?
 tz0		at oldscsibus? target ? drive ?
+tz1		at oldscsibus? target ? drive ?
 
 pseudo-device	loop
 pseudo-device	fb		1

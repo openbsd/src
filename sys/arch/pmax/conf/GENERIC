@@ -121,7 +121,9 @@ rz2		at oldscsibus? target ? drive ?
 rz3		at oldscsibus? target ? drive ?
 rz4		at oldscsibus? target ? drive ?
 rz5		at oldscsibus? target ? drive ?
+rz6		at oldscsibus? target ? drive ?
 tz0		at oldscsibus? target ? drive ?
+tz1		at oldscsibus? target ? drive ?
 
 pseudo-device	loop		1
 pseudo-device	sl		1	# serial-line ip ports
