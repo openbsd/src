@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.7 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: prep,v 1.8 2004/03/25 08:38:52 tom Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -23,7 +23,7 @@ boot net ofwboot /bsd.rd (on Pegasos II)
 boot /dev/pci/ide/disk@0,0:3,ofwboot /bsd /bsd
 		(After installation, boot /bsd from the primary
 		 device on the first ATA bus. On Pegasos I, the /bsd
-		 needs to be specified TWICE because openfirmware seems
+		 needs to be specified TWICE because OpenFirmware seems
 		 to lose the first argument)
 
 printenv	(print current machine variables)

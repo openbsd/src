@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.12 2004/03/23 17:37:02 jmc Exp $
+dnl	$OpenBSD: prep,v 1.13 2004/03/25 08:38:52 tom Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -115,7 +115,7 @@ press and hold down the Alt/Option key during reboot, and select which
 presented. Note that OpenBSD does not currently show up in this boot
 selector except for the installation CD-ROM. This works on most machines
 this has been tested with, but does not work on a Rev C (333MHz) iMac;
-perhaps this feature was added to the Openfirmware ROM after that
+perhaps this feature was added to the OpenFirmware ROM after that
 machine.
 
 

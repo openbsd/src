@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.8 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: prep,v 1.9 2004/03/25 08:38:52 tom Exp $
 Before installing OpenBSD on your machine, you will want to check your
 machine's NVRAM settings, from the BUG.
 
@@ -43,7 +43,7 @@ the SET command.
 Some models also require specific preparation:
 MVME147:
 	Make sure the word at memory FFFE0764 is correct. Its value should
-	be zero if you don't have any VMEBus memory cards. You can change
+	be zero if you don't have any VMEbus memory cards. You can change
 	its value with the MM command.
 
 If you plan to permanently boot from the network, make sure your ENV settings

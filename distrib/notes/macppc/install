@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.21 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: install,v 1.22 2004/03/25 08:38:52 tom Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -106,7 +106,7 @@ OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
 	correct this.  Note that you should make OpenBSD be the active
 	partition at least until the install has been completed.
 
-OpenBSDInstallPart4({:-If you have DOS or Linux
+OpenBSDInstallPart4({:- If you have DOS or Linux
 	partitions defined on the disk, these will usually show up as
 	partition 'h', 'i' and so on.
 

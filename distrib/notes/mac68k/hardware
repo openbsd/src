@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.19 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.20 2004/03/25 08:38:52 tom Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 6MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 100MB partition by installing just the minimum sets.
@@ -26,7 +26,7 @@ machine.
 	Color Classic, Classic II, LC520, LC550, Performa 4xx,  LCII,
 	LCIII, MacTV, Quadra 610, Quadra 700, Quadra 650, Quadra 800,
 	Quadra 840AV, some Duo Series,
-	Powerbook 180 and 180c, PB140, PB145, PB145B, PB160, PB170, PB165,
+	PowerBook 180 and 180c, PB140, PB145, PB145B, PB160, PB170, PB165,
 	PB165c
 
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.7 2004/01/05 22:16:46 miod Exp $
+dnl	$OpenBSD: hardware,v 1.8 2004/03/25 08:38:52 tom Exp $
 OpenBSD/MACHINE OSREV runs on the systems built around the following
 MVME boards:
 
@@ -9,7 +9,7 @@ Besides various Motorola complete systems (M8120, MVME187-based series
 900, etc), OpenBSD/MACHINE also runs on the MVME187-based Triton Dolphin
 System 100.
 
-The minimal configuration requires 16MB of RAM and ~250M of disk space.
+The minimal configuration requires 16MB of RAM and ~250MB of disk space.
 To install the entire system requires much more disk space, and to
 compile the system, more RAM is recommended.
 

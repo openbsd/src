@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.7 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: install,v 1.8 2004/03/25 08:38:52 tom Exp $
 OpenBSDInstallShortPrelude
 
 Currently only MBR partitioning is supported; RDB support may be added
@@ -37,7 +37,7 @@ dnl XXX is this true?
 	Note that you should make OpenBSD be the active partition at
 	least until the install has been completed.
 
-OpenBSDInstallPart4({:-If you have MorphOS
+OpenBSDInstallPart4({:- If you have MorphOS
 	partitions defined on the disk, these will usually show up as
 	partition 'h', 'i' and so on.
 

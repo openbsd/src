@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.41 2004/03/23 01:04:24 krw Exp $
+dnl	$OpenBSD: hardware,v 1.42 2004/03/25 08:38:52 tom Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -352,7 +352,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			LinkSys USB100TX, USB100H1 and USB10TA
 			Melco Inc. LUA-TX
 			Siemens SpeedStream USB
-			Smartbridces smartNIC 2
+			SmartBridges smartNIC 2
 			SMC 2202USB
 			SMC EZ Connect USB
 			SOHOware NUB100

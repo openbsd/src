@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.149 2004/03/23 13:50:08 nick Exp $
+dnl	$OpenBSD: hardware,v 1.150 2004/03/25 08:38:52 tom Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -121,7 +121,7 @@ Supported hardware {:-include-:}:
 		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160 [A] [B] [C]
 		AMD Am53c974 PCscsi-PCI SCSI controllers, including: [A] [B] [C]
 		    Tekram DC-390
-		Buslogic BT-54x (Adaptec AHA-154x clones) [B] [C]
+		BusLogic BT-54x (Adaptec AHA-154x clones) [B] [C]
 		BusLogic 445, 74x, 9xx  (but not the new "FlashPoint" series
 		    of BusLogic SCSI adapters) [B] [C]
 		Initio INIC-940 and INIC-950 based PCI SCSI host
@@ -318,7 +318,7 @@ Supported hardware {:-include-:}:
 		    LinkSys USB100TX, USB100H1 and USB10TA
 		    Melco Inc. LUA-TX
 		    Siemens SpeedStream USB
-		    Smartbridces smartNIC 2
+		    SmartBridges smartNIC 2
 		    SMC 2202USB
 		    SMC EZ Connect USB
 		    SOHOware NUB100

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.55 2004/03/17 14:20:56 jmc Exp $
+dnl	$OpenBSD: m4.common,v 1.56 2004/03/25 08:38:51 tom Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -936,7 +936,7 @@ does not run OpenBSD you might save the MAKEDEV output:
 
 and then tailor it for your server operating system before running it.  Note
 that MAKEDEV is written specifically for ksh, and may not work on any other
-bourne shell.
+Bourne shell.
 
 There will be error messages about unknown users and groups. These errors are
 inconsequential for the purpose of installing OpenBSD. However, you may

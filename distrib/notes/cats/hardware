@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.6 2004/03/23 01:04:24 krw Exp $
+dnl	$OpenBSD: hardware,v 1.7 2004/03/25 08:38:52 tom Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -94,7 +94,7 @@ Supported devices {:-include-:}:
 		    LinkSys USB100TX, USB100H1 and USB10TA
 		    Melco Inc. LUA-TX
 		    Siemens SpeedStream USB
-		    Smartbridces smartNIC 2
+		    SmartBridges smartNIC 2
 		    SMC 2202USB
 		    SMC EZ Connect USB
 		    SOHOware NUB100

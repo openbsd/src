@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.61 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.62 2004/03/25 08:38:52 tom Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -282,7 +282,7 @@ OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
 		Ethernet problems.
 	- sun4d -- SPARCcenter 2000, SPARCserver 1000
 		XDBus and multiprocessor support issues.
-	- sun4u (Ultrasparcs)
+	- sun4u (UltraSPARCs)
 		These machines are supported by the OpenBSD/sparc64 port.
 	- clones that are significantly different from the Sun systems
 		(e.g. K-Bus based Solbourne)
