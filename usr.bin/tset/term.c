@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.4 1997/07/25 22:13:24 mickey Exp $	*/
+/*	$OpenBSD: term.c,v 1.5 1998/04/25 04:30:38 millert Exp $	*/
 /*	$NetBSD: term.c,v 1.6 1994/12/07 05:08:12 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: term.c,v 1.4 1997/07/25 22:13:24 mickey Exp $";
+static char rcsid[] = "$OpenBSD: term.c,v 1.5 1998/04/25 04:30:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -139,11 +139,10 @@ askuser(dflt)
 			(void)fprintf(stderr, "Terminal type? [%s] ", dflt);
 		else
 			(void)fprintf(stderr, "Terminal type? ");
-		(void)fflush(stderr);
 
 		if (fgets(answer, sizeof(answer), stdin) == NULL) {
 			if (dflt == NULL) {
-				(void)fprintf(stderr, "\n");
+				(void)putc('\n', stderr);
 				exit(1);
 			}
 			return (dflt);

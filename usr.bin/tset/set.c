@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.2 1996/06/26 05:41:56 deraadt Exp $	*/
+/*	$OpenBSD: set.c,v 1.3 1998/04/25 04:30:37 millert Exp $	*/
 /*	$NetBSD: set.c,v 1.6 1994/12/07 05:08:10 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
 #endif
-static char rcsid[] = "$OpenBSD: set.c,v 1.2 1996/06/26 05:41:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: set.c,v 1.3 1998/04/25 04:30:37 millert Exp $";
 #endif /* not lint */
 
 #include <termios.h>
@@ -273,7 +273,6 @@ set_init()
 
 	if (settle) {
 		(void)putc('\r', stderr);
-		(void)fflush(stderr);
 		(void)sleep(1);			/* Settle the terminal. */
 	}
 }
@@ -321,7 +320,7 @@ set_tabs()
 			/* Set the tab. */
 			tputs(set_tab, 0, outc);
 		}
-		putc('\r', stderr);
+		(void)putc('\r', stderr);
 		return (1);
 	}
 	return (0);
