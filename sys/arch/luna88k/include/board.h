@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.3 2004/06/14 12:57:02 aoyama Exp $	*/
+/*	$OpenBSD: board.h,v 1.4 2004/08/02 08:33:29 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -45,9 +45,6 @@
 #define U(num)  num/**/U
 #endif
 #define UDEFINED
-
-#define MAX_CPUS	4		/* maximum cpus on the board */
-#define MAX_CMMUS	8		/* maximum cmmus on the board */
 
 /* machtype values */
 #define LUNA_88K	1
