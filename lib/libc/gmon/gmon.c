@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: gmon.c,v 1.5 1995/11/21 22:23:47 jtc Exp $";
 #include <limits.h>
 #include <unistd.h>
 
-extern char *minbrk asm ("minbrk");
+extern char *minbrk __asm ("minbrk");
 
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
