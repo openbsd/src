@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 1999/11/16 10:49:56 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 1999/11/16 12:21:41 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -354,7 +354,6 @@ char	*ctxbusyvector;		/* [4m] tells what contexts are busy (XXX)*/
 #endif
 
 caddr_t	vpage[2];		/* two reserved MD virtual pages */
-caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 caddr_t	vdumppages;		/* 32KB worth of reserved dump pages */
 
 smeg_t		tregion;	/* [4/3mmu] Region for temporary mappings */
@@ -2784,8 +2783,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * the next whole page) and continuing through the number
 	 * of available pages are free, but they start at a higher
 	 * virtual address.  This gives us two mappable MD pages
-	 * for pmap_zero_page and pmap_copy_page, and one MI page
-	 * for /dev/mem, all with no associated physical memory.
+	 * for pmap_zero_page and pmap_copy_page, and some pages
+	 * for dumpsys(), all with no associated physical memory.
 	 */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	avail_start = (paddr_t)p - KERNBASE;
@@ -2793,7 +2792,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	i = (int)p;
 	vpage[0] = p, p += NBPG;
 	vpage[1] = p, p += NBPG;
-	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
 	virtual_avail = (vaddr_t)p;
@@ -3182,13 +3180,12 @@ pmap_bootstrap4m(void)
 
 	/*
 	 * Reserve virtual address space for two mappable MD pages
-	 * for pmap_zero_page and pmap_copy_page, one MI page
-	 * for /dev/mem, and some more for dumpsys().
+	 * for pmap_zero_page and pmap_copy_page, and some more for
+	 * dumpsys().
 	 */
 	q = p;
 	vpage[0] = p, p += NBPG;
 	vpage[1] = p, p += NBPG;
-	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
 	virtual_avail = (vaddr_t)p;
