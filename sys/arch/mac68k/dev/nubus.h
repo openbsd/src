@@ -1,5 +1,5 @@
-/*	$OpenBSD: nubus.h,v 1.14 1997/05/01 18:32:50 briggs Exp $	*/
-/*	$NetBSD: nubus.h,v 1.24 1997/05/01 18:17:18 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.15 1997/05/02 00:59:51 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.25 1997/05/02 00:54:28 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -60,6 +60,7 @@
 #define    NUBUS_DRHW_MICRON	0x0146
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
+#define	   NUBUS_DRHW_RPC8XJ	0x040B	/* Radius PrecisionColor 8xj */
 #define	   NUBUS_DRHW_FIILX	0x0417	/* Futura II LX */
 #define	   NUBUS_DRHW_FIISXDSP	0x042F	/* Futura II SX/DSP */
 
