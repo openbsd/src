@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2004/01/05 19:14:41 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.30 2004/01/05 22:57:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -33,10 +33,11 @@
 #include <string.h>
 
 #include "bgpd.h"
+#include "mrt.h"
 #include "session.h"
 
 static struct bgpd_config	*conf;
-static struct mrt_config	*mrtconf;
+static struct mrt_head		*mrtconf;
 static struct peer		*peer_l;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
@@ -57,7 +58,7 @@ int	 yylex(void);
 
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
-int		 add_mrtconfig(enum mrtdump_type, char *, time_t);
+int		 add_mrtconfig(enum mrt_type, char *, time_t);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -88,10 +89,10 @@ typedef struct {
 %token	GROUP NEIGHBOR
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE
 %token	ERROR
-%token	MRTDUMP
+%token	DUMP MSG IN TABLE
 %token	LOG UPDATES
 %token	<v.string>	STRING
-%type	<v.number>	number yesno
+%type	<v.number>	number optnumber yesno
 %type	<v.string>	string
 %type	<v.addr>	address
 %%
@@ -177,21 +178,26 @@ conf_main	: AS number		{
 		| LOG UPDATES		{
 			conf->log |= BGPD_LOG_UPDATES;
 		}
-		/*
-		 *  XXX this is bad.
-		 *  a) number should be optional
-		 *  b) there are multiple dump types
-		 */
-		| MRTDUMP STRING STRING number	{
-			if (strcmp($2, "table") == 0) {
-				if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4) == -1)
-					YYERROR;
-			} else {
-				yyerror("unknown mrtdump type %s", $2);
+		| DUMP MSG STRING IN STRING optnumber	{
+			int action;
+
+			if (!strcmp($3, "all"))
+				action = MRT_ALL_IN;
+			else if (!strcmp($3, "filtered"))
+				action = MRT_FILTERED_IN;
+			else {
+				yyerror("unknown mrt msg dump type");
 				YYERROR;
 			}
+			if (add_mrtconfig(action, $5, $6) == -1)
+				YYERROR;
 		}
-		;
+		| DUMP TABLE STRING optnumber		{
+			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4) == -1)
+				YYERROR;
+		}
+
+;
 
 address		: STRING		{
 			int	n;
@@ -209,6 +215,10 @@ address		: STRING		{
 
 optnl		: '\n' optnl
 		|
+		;
+
+optnumber	: /* empty */		{ $$ = 0; }
+		| number
 		;
 
 neighbor	: NEIGHBOR address optnl '{' optnl {
@@ -326,14 +336,16 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "AS",			AS},
 		{ "descr",		DESCR},
+		{ "dump",		DUMP},
 		{ "fib-update",		FIBUPDATE},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
+		{ "in",			IN},
 		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
 		{ "log",		LOG},
 		{ "min",		YMIN},
-		{ "mrtdump",		MRTDUMP},
+		{ "msg",		MSG},
 		{ "multihop",		MULTIHOP},
 		{ "neighbor",		NEIGHBOR},
 		{ "on",			ON},
@@ -341,6 +353,7 @@ lookup(char *s)
 		{ "remote-as",		REMOTEAS},
 		{ "router-id",		ROUTERID},
 		{ "set",		SET},
+		{ "table",		TABLE},
 		{ "updates",		UPDATES},
 	};
 	const struct keywords	*p;
@@ -549,13 +562,13 @@ top:
 
 int
 parse_config(char *filename, struct bgpd_config *xconf,
-    struct mrt_config *xmconf, struct peer **xpeers)
+    struct mrt_head *xmconf, struct peer **xpeers)
 {
 	struct sym	*sym, *next;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
-	if ((mrtconf = calloc(1, sizeof(struct mrt_config))) == NULL)
+	if ((mrtconf = calloc(1, sizeof(struct mrt_head))) == NULL)
 		fatal(NULL);
 	LIST_INIT(mrtconf);
 
@@ -734,21 +747,21 @@ new_group(void)
 }
 
 int
-add_mrtconfig(enum mrtdump_type type, char *name, time_t timeout)
+add_mrtconfig(enum mrt_type type, char *name, time_t timeout)
 {
-	struct mrtdump_config	*m, *n;
+	struct mrt	*m, *n;
 
 	LIST_FOREACH(m, mrtconf, list) {
-		if (m->type == type) {
+		if (m->conf.type == type) {
 			yyerror("only one mrtdump per type allowed.");
 			return (-1);
 		}
 	}
 
-	if ((n = calloc(1, sizeof(struct mrtdump_config))) == NULL)
+	if ((n = calloc(1, sizeof(struct mrt))) == NULL)
 		fatal("add_mrtconfig");
 
-	n->type = MRT_TABLE_DUMP;
+	n->conf.type = type;
 	n->msgbuf.sock = -1;
 	if (strlcpy(n->name, name, sizeof(n->name)) >= sizeof(n->name)) {
 		yyerror("filename \"%s\" too long: max %u",

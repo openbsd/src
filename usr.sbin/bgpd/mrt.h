@@ -1,7 +1,7 @@
-/*	$OpenBSD: mrt.h,v 1.6 2004/01/02 00:13:32 deraadt Exp $ */
+/*	$OpenBSD: mrt.h,v 1.7 2004/01/05 22:57:58 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
+ * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,9 @@
 
 #include "bgpd.h"
 
+/* In cases of failure wait at least MRT_MIN_RETRY. */
+#define MRT_MIN_RETRY	300
+
 /*
  * MRT binary packet format as used by zebra.
  * For more info see:
@@ -30,12 +33,17 @@
  * http://www.quagga.net/docs/docs-multi/Packet-Binary-Dump-Format.html
  */
 
-struct mrt_header {
-	u_int32_t	timestamp;
-	u_int16_t	type;
-	u_int16_t	subtype;
-	u_int32_t	length;		/* length of packet including header */
-};
+/*
+ * MRT header:
+ * +--------+--------+--------+--------+
+ * |             timestamp             |
+ * +--------+--------+--------+--------+
+ * |      type       |     subtype     |
+ * +--------+--------+--------+--------+
+ * |               length              | length of packet including header
+ * +--------+--------+--------+--------+
+ */
+#define MRT_HEADER_SIZE		12
 
 enum MRT_MSG_TYPES {
 	MSG_NULL,
@@ -54,47 +62,6 @@ enum MRT_MSG_TYPES {
 	MSG_PROTOCOL_BGP4MP=16	/* 16 zebras own packet format */
 };
 
-#define MRT_HEADER_SIZE		sizeof(struct mrt_header)
-#define MRT_DUMP_HEADER_SIZE	22	/* sizeof(struct mrt_dump_v4_header) */
-#define MRT_BGP4MP_HEADER_SIZE	\
-	sizeof(struct mrt_bgp4mp_header) + \
-	sizeof(struct mrt_bgp4mp_IPv4)
-/*
- * format for routing table dumps in mrt format.
- * Type MSG_TABLE_DUMP and subtype is address family (IPv4)
- */
-struct mrt_dump_v4_header {
-	u_int16_t	view;	/* normally 0 */
-	u_int16_t	seqnum;	/* simple counter for this dump */
-	u_int32_t	prefix;
-	u_int8_t	prefixlen;
-	u_int8_t	status;	/* default seems to be 1 */
-	u_int32_t	originated; /* seems to be time of last update */
-	u_int32_t	peer_ip;
-	u_int16_t	peer_as;
-	u_int16_t	attr_len;
-	/* bgp attributes attr_len bytes long */
-};
-
-/*
- * format for routing table dumps in mrt format.
- * Type MSG_TABLE_DUMP and subtype is address family (IPv6)
- */
-struct mrt_dump_v6_header {
-	u_int16_t	view;	/* normally 0 */
-	u_int16_t	seqnum;	/* simple counter for this dump */
-	u_int32_t	prefix[4];
-	u_int8_t	prefixlen;
-	u_int8_t	status;	/* default seems to be 1 */
-	u_int32_t	originated; /* seems to be time of last update */
-	u_int32_t	peer_ip[4];
-	u_int16_t	peer_as;
-	u_int16_t	attr_len;
-	/* bgp attributes attr_len bytes long */
-};
-
-
-
 /*
  * Main zebra dump format is in MSG_PROTOCOL_BGP4MP exceptions are table dumps
  * that are normaly saved as MSG_TABLE_DUMP.
@@ -107,79 +74,106 @@ enum MRT_BGP4MP_TYPES {
 	BGP4MP_SNAPSHOT=3
 };
 
-/* if type PROTOCOL_BGP4MP and
- * subtype BGP4MP_STATE_CHANGE or BGP4MP_MESSAGE  */
-struct mrt_bgp4mp_header {
-	u_int16_t	source_as;
-	u_int16_t	dest_as;
-	u_int16_t	if_index;
-	u_int16_t	afi;
-	/*
-	 * Next comes either a struct mrt_bgp4mp_IPv4 or a
-	 * struct mrt_bgp4mp_IPv6 dependent on afi type.
-	 *
-	 * Last but not least the payload.
-	 */
-};
+/* size of the BGP4MP headers without payload */
+#define MRT_BGP4MP_HEADER_SIZE	16
 
-/* if afi = 4 */
-struct mrt_bgp4mp_IPv4 {
-	u_int32_t	source_ip;
-	u_int32_t	dest_ip;
-};
-
-/* if afi = 6 */
-struct mrt_bgp4mp_IPv6 {
-	u_int32_t	source_ip[4];
-	u_int32_t	dest_ip[4];
-};
-
-/*
- * payload of a BGP4MP_STATE_CHANGE packet
- */
-struct mrt_bgp4mp_state_data {
-	u_int16_t	old_state;	/* as in RFC 1771 */
-	u_int16_t	new_state;
-};
-
-/*
+/* If the type is PROTOCOL_BGP4MP and the subtype is either BGP4MP_STATE_CHANGE
+ * or BGP4MP_MESSAGE the message consists of a common header plus the payload.
+ * Header format:
+ * 
+ * +--------+--------+--------+--------+
+ * |    source_as    |     dest_as     |
+ * +--------+--------+--------+--------+
+ * |    if_index     |       afi       |
+ * +--------+--------+--------+--------+
+ * |             source_ip             |
+ * +--------+--------+--------+--------+
+ * |              dest_ip              |
+ * +--------+--------+--------+--------+
+ * |      message specific payload ...
+ * +--------+--------+--------+--------+
+ *
+ * The source_ip and dest_ip are dependant of the afi type. For IPv6 source_ip
+ * and dest_ip are both 16 bytes long.
+ *
+ * Payload of a BGP4MP_STATE_CHANGE packet:
+ *
+ * +--------+--------+--------+--------+
+ * |    old_state    |    new_state    |
+ * +--------+--------+--------+--------+
+ *
+ * The state values are the same as in RFC 1771.
+ *
  * The payload of a BGP4MP_MESSAGE is the full bgp message with header.
  */
 
-/* if type PROTOCOL_BGP4MP, subtype BGP4MP_ENTRY */
-struct mrt_bgp4mp_entry_header {
-	u_int16_t	view;
-	u_int16_t	status;
-	u_int32_t	originated;	/* time last change */
-	u_int16_t	afi;
-	u_int8_t	safi;
-	u_int8_t	nexthop_len;
-	/*
-	 * u_int32_t nexthop    for IPv4 or
-	 * u_int32_t nexthop[4] for IPv6
-	 * u_int8_t  prefixlen
-	 * variable prefix (prefixlen bits long rounded to the next octet)
-	 * u_int16_t attrlen
-	 * variable length bgp attributes attrlen bytes long
-	 */
-};
+/*
+ * The "new" table dump format consists of messages of type PROTOCOL_BGP4MP
+ * and subtype BGP4MP_ENTRY.
+ *
+ * +--------+--------+--------+--------+
+ * |      view       |     status      |
+ * +--------+--------+--------+--------+
+ * |            originated             |
+ * +--------+--------+--------+--------+
+ * |       afi       |  safi  | nhlen  |
+ * +--------+--------+--------+--------+
+ * |              nexthop              |
+ * +--------+--------+--------+--------+
+ * |  plen  |  prefix variable  ...    |
+ * +--------+--------+--------+--------+
+ * |    attr_len     | bgp attributes
+ * +--------+--------+--------+--------+
+ *  bgp attributes, attr_len bytes long
+ * +--------+--------+--------+--------+
+ *   ...                      |
+ * +--------+--------+--------+
+ *
+ * View is normaly 0 and originated the time of last change.
+ * The status seems to be 1 by default but probably something to indicate
+ * the status of a prefix would be more useful.
+ * The format of the nexthop address is defined via the afi value. For IPv6
+ * the nexthop field is 16 bytes long.
+ * The prefix field is as in the bgp update message variable length. It is
+ * plen bits long but rounded to the next octet.
+ */
 
 /*
- * What is this for?
- * if type MSG_PROTOCOL_BGP and subtype MSG_BGP_SYNC OR
- * if type MSG_PROTOCOL_BGP4MP and subtype BGP4MP_SNAPSHOT
+ * Format for routing table dumps in "old" mrt format.
+ * Type MSG_TABLE_DUMP and subtype is AFI_IPv4 (1) for IPv4 and AFI_IPv6 (2)
+ * for IPv6. In the IPv6 case prefix and peer_ip are both 16 bytes long.
+ *
+ * +--------+--------+--------+--------+
+ * |      view       |      seqnum     |
+ * +--------+--------+--------+--------+
+ * |               prefix              |
+ * +--------+--------+--------+--------+
+ * |  plen  | status |    originated
+ * +--------+--------+--------+--------+
+ *      originated   |     peer_ip
+ * +--------+--------+--------+--------+
+ *       peer_ip     |     peer_as     |
+ * +--------+--------+--------+--------+
+ * |    attr_len     | bgp attributes
+ * +--------+--------+--------+--------+
+ *  bgp attributes, attr_len bytes long
+ * +--------+--------+--------+--------+
+ *   ...                      |
+ * +--------+--------+--------+
+ *
+ *
+ * View is normaly 0 and seqnum just a simple counter for this dump.
+ * The status seems to be 1 by default but probably something to indicate
+ * the status of a prefix would be more useful.
  */
-struct mrt_bgp_sync_header {
-	u_int16_t	view;
-	char		filename[2]; /* variable */
-};
+
+/* size of the dump header until attr_len */
+#define MRT_DUMP_HEADER_SIZE	22
 
 /*
  * OLD MRT message headers. These structs are here for completion but
  * will not be used to generate dumps. It seems that nobody uses those.
- */
-
-/*
+ *
  * Only for bgp messages (type 5, 9 and 10)
  * Nota bene for bgp dumps MSG_PROTOCOL_BGP4MP should be used.
  */
@@ -192,47 +186,110 @@ enum MRT_BGP_TYPES {
 	MSG_BGP_SYNC
 };
 
-/* if type MSG_PROTOCOL_BGP and subtype MSG_BGP_UPDATE */
-struct mrt_bgp_update_header {
-	u_int16_t	source_as;
-	u_int32_t	source_ip;
-	u_int16_t	dest_as;
-	u_int32_t	dest_ip;
-	/* bgp update packet */
+/* if type MSG_PROTOCOL_BGP and subtype MSG_BGP_UPDATE
+ *
+ * +--------+--------+--------+--------+
+ * |    source_as    |    source_ip
+ * +--------+--------+--------+--------+
+ *      source_ip    |    dest_as      |
+ * +--------+--------+--------+--------+
+ * |               dest_ip             |
+ * +--------+--------+--------+--------+
+ * | bgp update packet with header et
+ * +--------+--------+--------+--------+
+ *   al. (variable length) ...
+ * +--------+--------+--------+--------+
+ *
+ * For IPv6 the type is MSG_PROTOCOL_BGP4PLUS and the subtype remains
+ * MSG_BGP_UPDATE. The sourec_ip and dest_ip are again extended to 16 bytes.
+ */
+
+/*
+ * For subtype MSG_BGP_STATECHANGE (for all BGP types or just for the
+ * MSG_PROTOCOL_BGP4PLUS case? Unclear.)
+ *
+ * +--------+--------+--------+--------+
+ * |    source_as    |    source_ip
+ * +--------+--------+--------+--------+
+ *      source_ip    |    old_state    |
+ * +--------+--------+--------+--------+
+ * |    new_state    |
+ * +--------+--------+
+ *
+ * State are defined in RFC 1771.
+ */
+
+/*
+ * if type MSG_PROTOCOL_BGP and subtype MSG_BGP_SYNC OR
+ * if type MSG_PROTOCOL_BGP4MP and subtype BGP4MP_SNAPSHOT
+ * What is this for?
+ *
+ * +--------+--------+--------+--------+
+ * |      view       |    filename
+ * +--------+--------+--------+--------+
+ *    filename variable length zero
+ * +--------+--------+--------+--------+
+ *    terminated ... |   0    |
+ * +--------+--------+--------+
+ */
+
+#define	MRT_FILE_LEN	512
+enum mrt_type {
+	MRT_NONE,
+	MRT_TABLE_DUMP,
+	MRT_FILTERED_IN,
+	MRT_ALL_IN,
+	MRT_SESSION_IN,
+	MRT_SESSION_OUT
 };
 
-/* if type MSG_PROTOCOL_BGP4PLUS and subtype MSG_BGP_UPDATE */
-struct mrt_bgp_update_plus_header {
-	u_int16_t	source_as;
-	u_int32_t	source_ip[4];
-	u_int16_t	dest_as;
-	u_int32_t	dest_ip[4];
-	/* bgp update packet */
+enum mrt_state {
+	MRT_STATE_STOPPED,
+	MRT_STATE_RUNNING,
+	MRT_STATE_OPEN,
+	MRT_STATE_CLOSE,
+	MRT_STATE_REOPEN,
+	MRT_STATE_TOREMOVE,
+	MRT_STATE_REMOVE
 };
 
-/* for subtype MSG_BGP_STATECHANGE (for all BGP types ???) */
-struct mrt_bgp_state_header {
-	u_int16_t	source_as;
-	u_int32_t	source_ip[4];
-	u_int16_t	old_state;	/* as in RFC 1771 ??? */
-	u_int16_t	new_state;
+struct mrt_config {
+	enum mrt_type		 type;
+	u_int32_t		 id;
+	u_int32_t		 peer_id;
+	struct msgbuf		*msgbuf;
 };
 
-/* pseudo predeclarations */
+struct mrt {
+	struct mrt_config	 conf;
+	time_t			 ReopenTimer;
+	time_t			 ReopenTimerInterval;
+	enum mrt_state		 state;
+	struct msgbuf		 msgbuf;
+	struct imsgbuf		*ibuf;
+	char			 name[MRT_FILE_LEN];	/* base file name */
+	char			 file[MRT_FILE_LEN];	/* actual file name */
+	LIST_ENTRY(mrt)		 list;
+};
+
+
 struct prefix;
 struct pt_entry;
-struct mrt {
-	struct msgbuf	*msgbuf;
-	u_int32_t	 id;
-};
 
 /* prototypes */
-int	mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t, int,
-    struct peer_config *, struct bgpd_config *);
+int	mrt_dump_bgp_msg(struct mrt_config *, void *, u_int16_t, int,
+	    struct peer_config *, struct bgpd_config *);
+int	mrt_dump_state(struct mrt_config *, u_int16_t, u_int16_t,
+	    struct peer_config *, struct bgpd_config *);
 void	mrt_clear_seq(void);
 void	mrt_dump_upcall(struct pt_entry *, void *);
-int	mrt_state(struct mrtdump_config *, enum imsg_type, struct imsgbuf *);
-int	mrt_alrm(struct mrt_config *, struct imsgbuf *);
-int	mrt_usr1(struct mrt_config *, struct imsgbuf *);
+void	mrt_init(struct imsgbuf *, struct imsgbuf *);
+void	mrt_abort(struct mrt *);
+int	mrt_queue(struct mrt_head *, struct imsg *);
+int	mrt_write(struct mrt *);
+int	mrt_select(struct mrt_head *, struct pollfd *, struct mrt **,
+	    int, int, int *);
+int	mrt_handler(struct mrt_head *);
+int	mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
 
 #endif

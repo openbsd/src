@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.56 2004/01/05 19:10:24 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.57 2004/01/05 22:57:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -39,11 +39,10 @@ void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
 int	check_child(pid_t, const char *);
-int	reconfigure(char *, struct bgpd_config *, struct mrt_config *,
+int	reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 	    struct peer *);
-int	dispatch_imsg(struct imsgbuf *, int, struct mrt_config *);
+int	dispatch_imsg(struct imsgbuf *, int, struct mrt_head *);
 
-int			mrtfd = -1;
 int			rfd = -1;
 volatile sig_atomic_t	mrtdump = 0;
 volatile sig_atomic_t	quit = 0;
@@ -67,10 +66,8 @@ sighdlr(int sig)
 		reconfig = 1;
 		break;
 	case SIGALRM:
-		mrtdump = 1;
-		break;
 	case SIGUSR1:
-		mrtdump = 2;
+		mrtdump = 1;
 		break;
 	}
 }
@@ -96,13 +93,13 @@ main(int argc, char *argv[])
 {
 	struct bgpd_config	 conf;
 	struct peer		*peer_l, *p, *next;
-	struct mrt_config	 mrtconf;
-	struct mrtdump_config	*mconf, *(mrt[POLL_MAX]);
+	struct mrt_head		 mrtconf;
+	struct mrt		*(mrt[POLL_MAX]);
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	int			 debug = 0;
-	int			 ch, i, j, n, nfds, csock;
+	int			 ch, csock, i, j, n, nfds, timeout;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
@@ -113,7 +110,6 @@ main(int argc, char *argv[])
 	log_init(1);		/* log to stderr until daemonized */
 
 	bzero(&conf, sizeof(conf));
-	bzero(&mrtconf, sizeof(mrtconf));
 	LIST_INIT(&mrtconf);
 	peer_l = NULL;
 
@@ -203,6 +199,7 @@ main(int argc, char *argv[])
 
 	imsg_init(&ibuf_se, pipe_m2s[0]);
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
+	mrt_init(&ibuf_rde, &ibuf_se);
 	if ((rfd = kroute_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
 		quit = 1;
 
@@ -223,12 +220,7 @@ main(int argc, char *argv[])
 		pfd[PFD_SOCK_ROUTE].fd = rfd;
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 		i = PFD_MRT_START;
-		LIST_FOREACH(mconf, &mrtconf, list)
-			if (mconf->msgbuf.queued > 0) {
-				pfd[i].fd = mconf->msgbuf.sock;
-				pfd[i].events |= POLLOUT;
-				mrt[i++] = mconf;
-			}
+		i = mrt_select(&mrtconf, pfd, mrt, i, POLL_MAX, &timeout);
 
 		if ((nfds = poll(pfd, i, INFTIM)) == -1)
 			if (errno != EINTR) {
@@ -270,9 +262,8 @@ main(int argc, char *argv[])
 
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
 			if (pfd[j].revents & POLLOUT) {
-				if ((n = msgbuf_write(&mrt[i]->msgbuf)) < 0) {
-					log_err("pipe write error (MRT)");
-					quit = 1;
+				if ((n = mrt_write(mrt[i])) < 0) {
+					log_err("mrt write error");
 				}
 			}
 		}
@@ -280,8 +271,6 @@ main(int argc, char *argv[])
 		if (reconfig) {
 			logit(LOG_CRIT, "rereading config");
 			reconfigure(conffile, &conf, &mrtconf, peer_l);
-			LIST_FOREACH(mconf, &mrtconf, list)
-				mrt_state(mconf, IMSG_NONE, &ibuf_rde);
 			reconfig = 0;
 		}
 
@@ -294,10 +283,7 @@ main(int argc, char *argv[])
 		}
 
 		if (mrtdump == 1) {
-			mrt_alrm(&mrtconf, &ibuf_rde);
-			mrtdump = 0;
-		} else if (mrtdump == 2) {
-			mrt_usr1(&mrtconf, &ibuf_rde);
+			mrt_handler(&mrtconf);
 			mrtdump = 0;
 		}
 	}
@@ -342,7 +328,7 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
-reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc,
+reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrtc,
     struct peer *peer_l)
 {
 	struct peer		*p, *next;
@@ -376,18 +362,12 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc,
 	return (0);
 }
 
-/*
- * XXX currently messages are only buffered for mrt files.
- */
 int
-dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
+dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 {
-	struct imsg		 imsg;
-	struct buf		*wbuf;
-	struct mrtdump_config	*m;
-	ssize_t			 len;
-	int			 n;
-	in_addr_t		 ina;
+	struct imsg	 imsg;
+	int		 n;
+	in_addr_t	 ina;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		return (-1);
@@ -407,27 +387,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 		switch (imsg.hdr.type) {
 		case IMSG_MRT_MSG:
 		case IMSG_MRT_END:
-			LIST_FOREACH(m, conf, list) {
-				if (m->id != imsg.hdr.peerid)
-					continue;
-				if (mrt_state(m, imsg.hdr.type, ibuf) == 0)
-					break;
-				if (m->msgbuf.sock == -1)
-					break;
-				len = imsg.hdr.len - IMSG_HEADER_SIZE;
-				wbuf = buf_open(len);
-				if (wbuf == NULL)
-					return (-1);
-				if (buf_add(wbuf, imsg.data, len) == -1) {
-					buf_free(wbuf);
-					return (-1);
-				}
-				if ((n = buf_close(&m->msgbuf, wbuf)) < 0) {
-					buf_free(wbuf);
-					return (-1);
-				}
-				break;
-			}
+			if (mrt_queue(mrtc, &imsg) == -1)
+				logit(LOG_CRIT, "mrt_queue failed.");
 			break;
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.64 2004/01/04 23:08:09 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.65 2004/01/05 22:57:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 #include "bgpd.h"
+#include "mrt.h"
 #include "session.h"
 
 #define	PFD_LISTEN	0
@@ -86,6 +87,9 @@ int			 sock = -1;
 int			 csock = -1;
 struct imsgbuf		 ibuf_rde;
 struct imsgbuf		 ibuf_main;
+
+int			 mrt_flagall = 0;
+struct mrt_config	 mrt_allin;
 
 void
 session_sighdlr(int sig)
@@ -656,6 +660,10 @@ change_state(struct peer *peer, enum session_state state,
 	}
 
 	log_statechange(peer, state, event);
+	if (mrt_flagall == 1)
+		mrt_dump_state(&mrt_allin, peer->state, state,
+		    &peer->conf, conf);
+	/* XXX mrt dump per peer */
 	peer->state = state;
 }
 
@@ -1143,6 +1151,9 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		    type, 1);
 		return (-1);
 	}
+	if (mrt_flagall == 1)
+		mrt_dump_bgp_msg(&mrt_allin, data, *len, 0, &peer->conf, conf);
+	/* XXX mrt dump per peer */
 	return (0);
 }
 
@@ -1282,6 +1293,7 @@ void
 session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 {
 	struct imsg		 imsg;
+	struct mrt_config	 mrt;
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
 	enum reconf_action	 reconf;
@@ -1382,6 +1394,21 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			nconf = NULL;
 			pending_reconf = 0;
 			logit(LOG_INFO, "SE reconfigured");
+			break;
+		case IMSG_MRT_REQ:
+			memcpy(&mrt, imsg.data, sizeof(mrt));
+			mrt.msgbuf = &ibuf_main.w;
+			if (mrt.type == MRT_ALL_IN) {
+				mrt_flagall = 1;
+				memcpy(&mrt_allin, &mrt, sizeof(mrt_allin));
+			}
+			break;
+		case IMSG_MRT_END:
+			memcpy(&mrt, imsg.data, sizeof(mrt));
+			if (mrt.type == MRT_ALL_IN) {
+				mrt_flagall = 0;
+				bzero(&mrt_allin, sizeof(mrt_allin));
+			}
 			break;
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.10 2003/12/26 17:13:52 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.11 2004/01/05 22:57:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -98,7 +98,7 @@ buf_write(int sock, struct buf *buf)
 	ssize_t	n;
 
 	if ((n = write(sock, buf->buf + buf->rpos,
-	    buf->size-buf->rpos)) == -1) {
+	    buf->size - buf->rpos)) == -1) {
 		if (errno == EAGAIN)	/* cannot write immediately */
 			return (0);
 		else
@@ -168,6 +168,45 @@ msgbuf_write(struct msgbuf *msgbuf)
 			return (0);
 	}
 	return (0);
+}
+
+int
+msgbuf_writebound(struct msgbuf *msgbuf)
+{
+	/*
+	 * possible race here
+	 * when we cannot write out data completely from a buffer,
+	 * we MUST return and NOT try to write out stuff from later buffers -
+	 * the socket might have become writeable again
+	 */
+	struct buf	*buf;
+	int		 n;
+
+	if (!msgbuf_unbounded(msgbuf))
+		return (1);
+
+	buf = TAILQ_FIRST(&msgbuf->bufs);
+	if ((n = buf_write(msgbuf->sock, buf)) < 0)
+		return (n);
+
+	if (n == 1) {	/* everything written out */
+		buf_dequeue(msgbuf, buf);
+		return (1);
+	} else
+		return (0);
+}
+
+int
+msgbuf_unbounded(struct msgbuf *msgbuf)
+{
+	struct buf	*buf;
+
+	/* return 1 if last buffer was not completely written. */
+	buf = TAILQ_FIRST(&msgbuf->bufs);
+	if (buf != NULL && buf->rpos != 0)
+		return (1);
+	else
+		return (0);
 }
 
 void

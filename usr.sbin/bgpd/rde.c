@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.45 2004/01/04 20:47:34 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.46 2004/01/05 22:57:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,9 @@ struct bgpd_config	*conf, *nconf;
 struct rde_peer_head	 peerlist;
 struct imsgbuf		 ibuf_se;
 struct imsgbuf		 ibuf_main;
+
+int			 mrt_flagfilter = 0;
+struct mrt_config	 mrt_filter;
 
 void
 rde_sighdlr(int sig)
@@ -211,7 +214,7 @@ void
 rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
-	struct mrt		 mrtdump;
+	struct mrt_config	 mrt;
 	struct peer_config	*pconf;
 	struct rde_peer		*p, *np;
 	int			 n;
@@ -270,15 +273,26 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			nexthop_update(imsg.data);
 			break;
 		case IMSG_MRT_REQ:
-			mrtdump.id = imsg.hdr.peerid;
-			mrtdump.msgbuf = &ibuf_main.w;
-			pt_dump(mrt_dump_upcall, &mrtdump);
-			/* FALLTHROUGH */
+			memcpy(&mrt, imsg.data, sizeof(mrt));
+			mrt.msgbuf = &ibuf_main.w;
+			if (mrt.type == MRT_TABLE_DUMP) {
+				mrt_clear_seq();
+				pt_dump(mrt_dump_upcall, &mrt);
+				if (imsg_compose(&ibuf_main, IMSG_MRT_END,
+				    mrt.id, NULL, 0) == -1)
+					fatalx("imsg_compose error");
+			} else if (mrt.type == MRT_FILTERED_IN) {
+				mrt_flagfilter = 1;
+				memcpy(&mrt_filter, &mrt, sizeof(mrt_filter));
+			}
+			break;
 		case IMSG_MRT_END:
+			memcpy(&mrt, imsg.data, sizeof(mrt));
 			/* ignore end message because a dump is atomic */
-			if (imsg_compose(&ibuf_main, IMSG_MRT_END,
-			    imsg.hdr.peerid, NULL, 0) == -1)
-				fatalx("imsg_compose error");
+			if (mrt.type == MRT_FILTERED_IN) {
+				mrt_flagfilter = 0;
+				bzero(&mrt_filter, sizeof(mrt_filter));
+			}
 			break;
 		default:
 			break;
@@ -307,6 +321,11 @@ rde_update_dispatch(struct imsg *imsg)
 		return (-1);
 	if (peer->state != PEER_UP)
 		return (-1);	/* peer is not yet up, cannot happen */
+
+	if (mrt_flagfilter == 1)
+		mrt_dump_bgp_msg(&mrt_filter, imsg->data,
+		    imsg->hdr.len - IMSG_HEADER_SIZE, UPDATE,
+		    &peer->conf, conf);
 
 	p = imsg->data;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.53 2004/01/05 16:21:14 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.54 2004/01/05 22:57:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -115,41 +115,6 @@ struct peer_config {
 	enum reconf_action	 reconf_action;
 };
 
-#define	MRT_FILE_LEN	512
-enum mrtdump_type {
-	MRT_NONE,
-	MRT_TABLE_DUMP
-/*
- *	MRT_UPDATE_START,
- *	MRT_SESSION_START,
- *	MRT_UPDATE_STOP,
- *	MRT_SESSION_STOP,
- */
-};
-
-enum mrtdump_state {
-	MRT_STATE_OPEN,
-	MRT_STATE_RUNNING,
-	MRT_STATE_DONE,
-	MRT_STATE_CLOSE,
-	MRT_STATE_REOPEN
-};
-
-LIST_HEAD(mrt_config, mrtdump_config);
-
-struct mrtdump_config {
-	enum mrtdump_type	 type;
-	u_int32_t		 id;
-	struct msgbuf		 msgbuf;
-	char			 name[MRT_FILE_LEN];	/* base file name */
-	char			 file[MRT_FILE_LEN];	/* actual file name */
-	time_t			 ReopenTimer;
-	time_t			 ReopenTimerInterval;
-	enum mrtdump_state	 state;
-	LIST_ENTRY(mrtdump_config)
-				 list;
-};
-
 /* ipc messages */
 
 #define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
@@ -196,6 +161,9 @@ struct imsg {
 	void		*data;
 };
 
+/* needed for session.h parse prototype */
+LIST_HEAD(mrt_head, mrt);
+
 /* error subcode for UPDATE; needed in SE and RDE */
 enum suberr_update {
 	ERR_UPD_ATTRLIST = 1,
@@ -237,6 +205,8 @@ void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 int		 msgbuf_write(struct msgbuf *);
+int		 msgbuf_writebound(struct msgbuf *);
+int		 msgbuf_unbounded(struct msgbuf *msgbuf);
 
 /* log.c */
 void		 log_init(int);
@@ -257,9 +227,6 @@ int	 imsg_read(struct imsgbuf *);
 int	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);
-
-/* mrt.c */
-int	 mrt_mergeconfig(struct mrt_config *, struct mrt_config *);
 
 /* kroute.c */
 int	kroute_init(int);

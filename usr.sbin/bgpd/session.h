@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.10 2004/01/04 20:07:30 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.11 2004/01/05 22:57:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -166,7 +166,7 @@ void		 log_notification(const struct peer *, u_int8_t, u_int8_t,
 void		 log_conn_attempt(const struct peer *, struct in_addr);
 
 /* parse.y */
-int	 parse_config(char *, struct bgpd_config *, struct mrt_config *,
+int	 parse_config(char *, struct bgpd_config *, struct mrt_head *,
 	    struct peer **);
 
 /* config.c */
