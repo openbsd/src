@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.69 2004/04/30 06:57:17 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.70 2004/05/09 06:07:42 otto Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1557,14 +1557,23 @@ May be unset or
 .Dv NULL
 if the shell doesn't know where it is.
 .It Ev RANDOM
-A simple random number generator.
+A random number generator.
 Every time
 .Ev RANDOM
-is referenced, it is assigned the next number in a random number series.
-The point in the series can be set by assigning a number to
+is referenced, it is assigned the next random number in the range
+0\-32767.
+By default,
+.Xr arc4random 3
+is used to produce values.
+If the variable
 .Ev RANDOM
-(see
-.Xr rand 3 ) .
+is assigned a value, the value is used as seed to
+.Xr srand 3
+and subsequent references of
+.Ev RANDOM
+will use
+.Xr rand 3
+to produce values, resulting in a predictable sequence.
 .It Ev REPLY
 Default parameter for the
 .Ic read
