@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.168 2005/01/22 13:00:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.169 2005/02/07 15:35:23 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -381,6 +381,9 @@ sub really_add($$)
 			};
 
 			delete_installed($op->pkgname());
+			if (defined $state->{updatedepends}) {
+				delete $state->{updatedepends}->{$op->pkgname()};
+			}
 			OpenBSD::PkgCfl::unregister($op, $state);
 		}
 		# Here there should be code to handle old libs
@@ -818,6 +821,11 @@ if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
 $state->delayed_output();
+if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
+	print "Forced updates, bogus dependencies for ", 
+	    join(' ', sort(keys %{$state->{updatedepends}})),
+	    " may remain\n";
+}
 if (defined $state->{forced}->{kitchensink}) {
 	print "Added:\n", (map { "\t$_\n" } sort keys %{$state->{installed}}), "\n";
 }

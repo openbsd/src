@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.50 2004/12/28 14:00:21 espie Exp $
+# $OpenBSD: Update.pm,v 1.51 2005/02/07 15:35:23 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -148,6 +148,8 @@ sub validate_depend
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
 		if ($state->{forced}->{updatedepends}) {
 		    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
+		    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
+		    $state->{forcedupdates}->{$wanting} = 1;
 		} else {
 		    $state->{okay} = 0;
 		    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match\n";
