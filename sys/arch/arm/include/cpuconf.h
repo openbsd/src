@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.2 2004/12/30 23:40:07 drahn Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -39,10 +39,6 @@
 #ifndef _ARM_CPUCONF_H_
 #define	_ARM_CPUCONF_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_cputypes.h"
-#endif /* _KERNEL_OPT */
-
 /*
  * IF YOU CHANGE THIS FILE, MAKE SURE TO UPDATE THE DEFINITION OF
  * "PMAP_NEEDS_PTE_SYNC" IN <arm/arm/pmap.h> FOR THE CPU TYPE
@@ -73,22 +69,19 @@
 /*
  * Step 2: Determine which ARM architecture versions are configured.
  */
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
+#if (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
 #define	ARM_ARCH_2	1
 #else
 #define	ARM_ARCH_2	0
 #endif
 
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_ARM6) || defined(CPU_ARM7))
+#if (defined(CPU_ARM6) || defined(CPU_ARM7))
 #define	ARM_ARCH_3	1
 #else
 #define	ARM_ARCH_3	0
 #endif
 
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
+#if (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
      defined(CPU_ARM10) || defined(CPU_SA110) || defined(CPU_SA1100) || \
      defined(CPU_SA1110) || defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
 #define	ARM_ARCH_4	1
@@ -96,8 +89,7 @@
 #define	ARM_ARCH_4	0
 #endif
 
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
+#if (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
      defined(CPU_XSCALE_PXA2X0))
 #define	ARM_ARCH_5	1
 #else
@@ -124,31 +116,27 @@
  *				MMU, but also has several extensions which
  *				require different PTE layout to use.
  */
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
+#if (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
 #define	ARM_MMU_MEMC		1
 #else
 #define	ARM_MMU_MEMC		0
 #endif
 
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
+#if (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
      defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM10))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
 #endif
 
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) ||\
+#if (defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) ||\
      defined(CPU_IXP12X0))
 #define	ARM_MMU_SA1		1
 #else
 #define	ARM_MMU_SA1		0
 #endif
 
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
+#if (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
      defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425))
 #define	ARM_MMU_XSCALE		1
 #else

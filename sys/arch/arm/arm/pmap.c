@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 2004/12/25 23:02:23 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 2004/12/30 23:40:08 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3323,11 +3323,7 @@ pmap_zero_page_xscale(struct vm_page *pg)
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bzero_page(cdstp);
-#if 0
 	xscale_cache_clean_minidata();
-#else
-	printf("xscale_cache_clean_minidata call\n");
-#endif
 }
 #endif /* ARM_MMU_XSCALE == 1 */
 
@@ -3476,11 +3472,7 @@ pmap_copy_page_xscale(struct vm_page *src_pg, struct vm_page *dst_pg)
 	cpu_cpwait();
 	bcopy_page(csrcp, cdstp);
 	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
-#if 0
 	xscale_cache_clean_minidata();
-#else
-	printf("xscale_cache_clean_minidata call\n");
-#endif
 }
 #endif /* ARM_MMU_XSCALE == 1 */
 
@@ -4882,20 +4874,16 @@ pmap_pte_init_xscale(void)
  *	caller to allocate the right amount of physically and
  *	virtually contiguous space.
  */
-vaddr_t xscale_minidata_clean_addr;
-vsize_t xscale_minidata_clean_size; /* already initialized */
+vaddr_t xscale_minidata_clean_addr = 1;
+vsize_t xscale_minidata_clean_size = 0x00000800; /* XXX already initialized */
 
 void
 xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 {
-	extern vaddr_t xscale_minidata_clean_addr;
-	extern vsize_t xscale_minidata_clean_size; /* already initialized */
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
 	pt_entry_t *pte;
 	vsize_t size;
 	uint32_t auxctl;
-	panic("xscale_setup_minidata: xscale_minidata_clean_size, "
-	    "xscale_minidata_clean_addr");
 
 	xscale_minidata_clean_addr = va;
 
