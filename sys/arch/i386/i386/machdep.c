@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.243 2003/09/11 19:46:22 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.244 2003/09/11 21:48:56 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -101,8 +101,7 @@
 #include <sys/msg.h>
 #endif
 
-#if defined(I686_CPU)
-/* YYY move */
+#ifdef CRYPTO
 #include <crypto/cryptodev.h>
 #endif
 
@@ -1097,6 +1096,7 @@ viac3_rnd(void *v)
 	splx(s);
 }
 
+#ifdef CRYPTO
 struct viac3_session {
 	u_int8_t ses_iv[16];
 	int ses_klen, ses_used;
@@ -1396,41 +1396,30 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 	/* Do the deed */
 	switch (type) {
 	case VIAC3_CRYPTOP_RNG:
-		__asm __volatile(
-			"rep;.byte 0x0F,0xA7,0xC0"
-			    :
-			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-			    : "memory", "cc");
+		__asm __volatile("rep;.byte 0x0F,0xA7,0xC0" :
+		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_ECB:
-		__asm __volatile(
-			"rep;.byte 0x0F,0xA7,0xC8"
-			    :
-			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-			    : "memory", "cc");
+		__asm __volatile("rep;.byte 0x0F,0xA7,0xC8" :
+		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_CBC:
-		__asm __volatile(
-			"rep;.byte 0x0F,0xA7,0xD0"
-			    :
-			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-			    : "memory", "cc");
+		__asm __volatile("rep;.byte 0x0F,0xA7,0xD0" :
+		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_CFB:
-		__asm __volatile(
-			"rep;.byte 0x0F,0xA7,0xE0"
-			    :
-			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-			    : "memory", "cc");
+		__asm __volatile("rep;.byte 0x0F,0xA7,0xE0" :
+		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_OFB:
-		__asm __volatile(
-			"rep;.byte 0x0F,0xA7,0xE8"
-			    :
-			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-			    : "memory", "cc");
+		__asm __volatile("rep;.byte 0x0F,0xA7,0xE8" :
+		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+		    : "memory", "cc");
 		break;
-	default:
 	}
 
 	/* XXX - should not be neeeded */
@@ -1439,8 +1428,9 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 
 	splx(s);
 }
+#endif /* CRYPTO */
 
-#endif
+#endif /* defined(I686_CPU) */
 
 void
 cyrix3_cpu_setup(cpu_device, model, step)
@@ -1501,6 +1491,7 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			printf(" RNG");
 		}
 
+#ifdef CRYPTO
 		/* Enable AES engine if present and disabled */
 		if (val & 0x40) {
 			if (!(val & 0x80)) {
@@ -1513,6 +1504,7 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			viac3_crypto_present = 1;
 			printf(" AES");
 		}
+#endif
 		printf("\n");
 		break;
 	}
