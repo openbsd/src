@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.11 2003/02/03 08:42:15 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.12 2003/04/27 16:02:08 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -70,6 +70,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
+	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = size;
 	if (ioctl(dev, DIOCRADDTABLES, &io))
 		return (-1);
@@ -90,6 +91,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
+	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = size;
 	if (ioctl(dev, DIOCRDELTABLES, &io))
 		return (-1);
@@ -110,6 +112,7 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
+	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = *size;
 	if (ioctl(dev, DIOCRGETTABLES, &io))
 		return (-1);
@@ -129,6 +132,7 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
+	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = *size;
 	if (ioctl(dev, DIOCRGETTSTATS, &io))
 		return (-1);
@@ -169,6 +173,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = size;
 	if (ioctl(dev, DIOCRADDADDRS, &io))
 		return (-1);
@@ -191,6 +196,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = size;
 	if (ioctl(dev, DIOCRDELADDRS, &io))
 		return (-1);
@@ -213,6 +219,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = size;
 	io.pfrio_size2 = (size2 != NULL) ? *size2 : 0;
 	if (ioctl(dev, DIOCRSETADDRS, &io))
@@ -242,6 +249,7 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = *size;
 	if (ioctl(dev, DIOCRGETADDRS, &io))
 		return (-1);
@@ -263,6 +271,7 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = *size;
 	if (ioctl(dev, DIOCRGETASTATS, &io))
 		return (-1);
@@ -284,6 +293,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = size;
 	if (ioctl(dev, DIOCRCLRASTATS, &io))
 		return (-1);
@@ -304,6 +314,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
+	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = size;
 	if (ioctl(dev, DIOCRCLRTSTATS, &io))
 		return (-1);
@@ -325,6 +336,7 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
+	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = size;
 	io.pfrio_setflag = setflag;
 	io.pfrio_clrflag = clrflag;
@@ -351,6 +363,7 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = size;
 	if (ioctl(dev, DIOCRTSTADDRS, &io))
 		return (-1);
@@ -406,6 +419,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
+	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = size;
 	io.pfrio_ticket = ticket;
 	if (ioctl(dev, DIOCRINADEFINE, &io))

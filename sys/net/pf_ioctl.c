@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.58 2003/04/11 14:40:57 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.59 2003/04/27 16:02:07 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1780,6 +1780,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRCLRTABLES: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != 0) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_clr_tables(&io->pfrio_ndel, io->pfrio_flags);
 		break;
 	}
@@ -1787,6 +1791,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRADDTABLES: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_table)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_add_tables(io->pfrio_buffer, io->pfrio_size,
 		    &io->pfrio_nadd, io->pfrio_flags);
 		break;
@@ -1795,6 +1803,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRDELTABLES: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_table)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_del_tables(io->pfrio_buffer, io->pfrio_size,
 		    &io->pfrio_ndel, io->pfrio_flags);
 		break;
@@ -1803,6 +1815,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRGETTABLES: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_table)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_get_tables(io->pfrio_buffer, &io->pfrio_size,
 		    io->pfrio_flags);
 		break;
@@ -1811,6 +1827,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRGETTSTATS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_tstats)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_get_tstats(io->pfrio_buffer, &io->pfrio_size,
 		    io->pfrio_flags);
 		break;
@@ -1819,6 +1839,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRCLRTSTATS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_table)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_clr_tstats(io->pfrio_buffer, io->pfrio_size,
 		    &io->pfrio_nzero, io->pfrio_flags);
 		break;
@@ -1827,6 +1851,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRSETTFLAGS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_table)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_set_tflags(io->pfrio_buffer, io->pfrio_size,
 		    io->pfrio_setflag, io->pfrio_clrflag, &io->pfrio_nchange,
 		    &io->pfrio_ndel, io->pfrio_flags);
@@ -1836,6 +1864,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRCLRADDRS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != 0) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_clr_addrs(&io->pfrio_table, &io->pfrio_ndel,
 		    io->pfrio_flags);
 		break;
@@ -1844,6 +1876,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRADDADDRS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_addr)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_add_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_nadd, io->pfrio_flags);
 		break;
@@ -1852,6 +1888,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRDELADDRS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_addr)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_del_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_ndel, io->pfrio_flags);
 		break;
@@ -1860,6 +1900,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRSETADDRS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_addr)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_set_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_size2, &io->pfrio_nadd,
 		    &io->pfrio_ndel, &io->pfrio_nchange, io->pfrio_flags);
@@ -1869,6 +1913,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRGETADDRS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_addr)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_get_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    &io->pfrio_size, io->pfrio_flags);
 		break;
@@ -1877,6 +1925,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRGETASTATS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_astats)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_get_astats(&io->pfrio_table, io->pfrio_buffer,
 		    &io->pfrio_size, io->pfrio_flags);
 		break;
@@ -1885,6 +1937,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRCLRASTATS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_addr)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_clr_astats(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_nzero, io->pfrio_flags);
 		break;
@@ -1893,6 +1949,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRTSTADDRS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_addr)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_tst_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_nmatch, io->pfrio_flags);
 		break;
@@ -1901,6 +1961,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRINABEGIN: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != 0) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_ina_begin(&io->pfrio_ticket, &io->pfrio_ndel,
 		    io->pfrio_flags);
 		break;
@@ -1909,6 +1973,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRINACOMMIT: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != 0) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_ina_commit(io->pfrio_ticket, &io->pfrio_nadd,
 		    &io->pfrio_nchange, io->pfrio_flags);
 		break;
@@ -1917,6 +1985,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCRINADEFINE: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
+		if (io->pfrio_esize != sizeof(struct pfr_addr)) {
+			error = ENODEV;
+			break;
+		}
 		error = pfr_ina_define(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_nadd, &io->pfrio_naddr,
 		    io->pfrio_ticket, io->pfrio_flags);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.140 2003/04/11 14:40:57 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.141 2003/04/27 16:02:08 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -479,13 +479,17 @@ TAILQ_HEAD(pf_anchorqueue, pf_anchor);
 #define PFR_TFLAG_ACTIVE	0x00000004
 #define PFR_TFLAG_INACTIVE	0x00000008
 #define PFR_TFLAG_REFERENCED	0x00000010
+#define PFR_TFLAG_REFDANCHOR	0x00000020
 #define PFR_TFLAG_USRMASK	0x00000003
-#define	PFR_TFLAG_SETMASK	0x0000001C
-#define PFR_TFLAG_ALLMASK	0x0000001F
+#define PFR_TFLAG_SETMASK	0x0000003C
+#define PFR_TFLAG_ALLMASK	0x0000003F
 
 struct pfr_table {
+	char			 pfrt_anchor[PF_ANCHOR_NAME_SIZE];
+	char			 pfrt_ruleset[PF_RULESET_NAME_SIZE];
 	char			 pfrt_name[PF_TABLE_NAME_SIZE];
 	u_int32_t		 pfrt_flags;
+	u_int8_t		 pfrt_fback;
 };
 
 enum { PFR_FB_NONE, PFR_FB_MATCH, PFR_FB_ADDED, PFR_FB_DELETED,
@@ -516,6 +520,8 @@ struct pfr_astats {
 	long		 pfras_tzero;
 };
 
+enum { PFR_REFCNT_RULE, PFR_REFCNT_ANCHOR, PFR_REFCNT_MAX };
+
 struct pfr_tstats {
 	struct pfr_table pfrts_t;
 	u_int64_t	 pfrts_packets[PFR_DIR_MAX][PFR_OP_TABLE_MAX];
@@ -524,7 +530,7 @@ struct pfr_tstats {
 	u_int64_t	 pfrts_nomatch;
 	long		 pfrts_tzero;
 	int		 pfrts_cnt;
-	int		 pfrts_refcnt;
+	int		 pfrts_refcnt[PFR_REFCNT_MAX];
 };
 #define	pfrts_name	pfrts_t.pfrt_name
 #define pfrts_flags	pfrts_t.pfrt_flags
@@ -850,6 +856,7 @@ struct pfioc_ruleset {
 struct pfioc_table {
 	struct pfr_table	 pfrio_table;
 	void			*pfrio_buffer;
+	int			 pfrio_esize;
 	int			 pfrio_size;
 	int			 pfrio_size2;
 	int			 pfrio_nadd;

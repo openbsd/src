@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.32 2003/04/04 01:46:04 deraadt Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.33 2003/04/27 16:02:08 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1706,7 +1706,7 @@ pfr_attach_table(char *name)
 			return NULL;
 		pfr_insert_ktable(kt);
 	}
-	if (!kt->pfrkt_refcnt++)
+	if (!kt->pfrkt_refcnt[PFR_REFCNT_RULE]++)
 		pfr_setflags_ktable(kt, kt->pfrkt_flags|PFR_TFLAG_REFERENCED);
 	return kt;
 }
@@ -1714,9 +1714,9 @@ pfr_attach_table(char *name)
 void
 pfr_detach_table(struct pfr_ktable *kt)
 {
-	if (kt->pfrkt_refcnt <= 0)
+	if (kt->pfrkt_refcnt[PFR_REFCNT_RULE] <= 0)
 		printf("pfr_detach_table: refcount = %d.\n",
-		    kt->pfrkt_refcnt);
-	else if (!--kt->pfrkt_refcnt)
+		    kt->pfrkt_refcnt[PFR_REFCNT_RULE]);
+	else if (!--kt->pfrkt_refcnt[PFR_REFCNT_RULE])
 		pfr_setflags_ktable(kt, kt->pfrkt_flags&~PFR_TFLAG_REFERENCED);
 }

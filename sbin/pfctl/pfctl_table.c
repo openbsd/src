@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.39 2003/04/25 19:07:28 pvalchev Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.40 2003/04/27 16:02:08 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -357,7 +357,7 @@ print_tstats(struct pfr_tstats *ts, int debug)
 		return;
 	print_table(&ts->pfrts_t, 1, debug);
 	printf("\tAddresses:   %d\n", ts->pfrts_cnt);
-	printf("\tReferences:  %d\n", ts->pfrts_refcnt);
+	printf("\tReferences:  %d\n", ts->pfrts_refcnt[PFR_REFCNT_RULE]);
 	printf("\tCleared:     %s", ctime(&time));
 	printf("\tEvaluations: [ NoMatch: %-18llu Match: %-18llu ]\n",
 	    ts->pfrts_nomatch, ts->pfrts_match);
