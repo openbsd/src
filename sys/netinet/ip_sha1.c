@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_sha1.c,v 1.4 1997/06/20 05:41:54 provos Exp $	*/
+/*	$OpenBSD: ip_sha1.c,v 1.5 1997/06/20 20:11:30 provos Exp $	*/
 
 /*
 SHA-1 in C
@@ -153,10 +153,12 @@ unsigned char finalcount[8];
         SHA1Update(context, (unsigned char *)"\0", 1);
     }
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
-    for (i = 0; i < 20; i++) {
-        digest[i] = (unsigned char)
-         ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
-    }
+
+    if (digest)
+      for (i = 0; i < 20; i++) {
+          digest[i] = (unsigned char)
+           ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
+      }
 #if 0	/* We want to use this for "keyfill" */
     /* Wipe variables */
     i = 0;
