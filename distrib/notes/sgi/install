@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.2 2004/08/26 13:31:12 pefo Exp $
+dnl	$OpenBSD: install,v 1.3 2004/08/26 18:46:22 pefo Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -16,22 +16,35 @@ designed to be loaded into the system by the ARCS firmware.
 Booting the ramdisk kernel can be done from the ARCS graphic console
 although it might be more convenient to use the serial console since
 the kernel currently only supports the serial console. Some systems
-come with the serial console but sometimes this must be changed.
+come with the serial console but enabled by default but sometimes this
+must be changed.
 
 To change to serial console, go into the ARCS Maintenance console. When
 the system starts up, press the ESC key or use the the mouse and click
 the STOP FOR MAINTENANCE button. Once in the System maintenance meny,
-select '5' to go into the Command monitor.
+select '5' to go into the Command monitor. If the installed disk does
+not contain a valid Volume Header and is bootable the Maintenance
+console will be entered by default.
 
-To switch the console to serial mode, change the console nvironment
+It may be necessary to do a reset of the environment to its default setting
+by entering the command:
+
+> resetenv
+
+
+To switch the console to serial mode, change the console environment
 variable:
 
 > setenv console d
 
-and reboot the system. A serial console at 9600B8N1 and nno flow control
+and reboot the system. A serial console at 9600B8N1 and no flow control
 should be attached to the serial port marked (1).
 
-When the message:
+If changing back to the graphics console is required do:
+
+> setenv console g
+
+After reboot, when the message:
         To perform system maintenance instead, press <Esc>
 is displayed, press the ESCAPE key to get into maintenance mode. Again,
 select '5' to get to the Command monitor.
@@ -42,11 +55,11 @@ needs to be changed. Set 'OSLoader' to 'boot'. By default it is set to
 to do this setup now so the system will diskboot once the 'reboot' command
 is entered after the installation is complete.
 
-To be able to boot, a bootp/dhcpd server needs to be set up. To find out
-the ethernet address for your system, use the 'printenv' command from the
-Command monitor. See the value of the eaddr variable. See the dhcpd(8)
+To be able to boot, a bootp/dhcpd server needs to be set up. See the dhcpd(8)
 man page for information on how to set up the dhcp server to respond to
-a bootp client.
+a bootp client. The dhcp server needs to know the ethernet address of the
+system. This address can be found by using the 'printenv' command and looking
+for the 'eaddr' variable.
 
 Loading the ramdisk kernel into your system is done with the appropriate
 ARCS boot command on Your system. Usually this is done by typing in the
