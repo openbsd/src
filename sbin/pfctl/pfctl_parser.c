@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.197 2004/05/05 23:16:03 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.198 2004/05/07 16:54:20 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1435,7 +1435,7 @@ host_dns(const char *s, int v4mask, int v6mask)
 	char			*p, *ps;
 
 	if ((ps = strdup(s)) == NULL)
-		err(1, "host_if: strdup");
+		err(1, "host_dns: strdup");
 	if ((p = strrchr(ps, ':')) != NULL && !strcmp(p, ":0")) {
 		noalias = 1;
 		*p = '\0';
@@ -1595,7 +1595,7 @@ pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor,
 		if (rs_num == p->rs_num && !strcmp(anchor, p->anchor) &&
 		    !strcmp(ruleset, p->ruleset))
 			return (p->ticket);
-	errx(1, "pfr_get_ticket: assertion failed");
+	errx(1, "pfctl_get_ticket: assertion failed");
 }
 
 int
