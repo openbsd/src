@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.h,v 1.2 1997/09/06 14:49:02 deraadt Exp $	*/
+/*	$OpenBSD: at.h,v 1.3 2003/05/14 02:02:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -77,13 +77,7 @@
 #define ATPROTO_DDP	0
 #define ATPROTO_AARP	254
 
-/*
- * Ethernet types, for DIX.
- * These should really be in some global header file, but we can't
- * count on them being there, and it's annoying to patch system files.
- */
-#define ETHERTYPE_AT	0x809B		/* AppleTalk protocol */
-#define ETHERTYPE_AARP	0x80F3		/* AppleTalk ARP */
+#include <net/ethertypes.h>
 
 #define DDP_MAXSZ	587
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.73 2003/03/16 05:20:27 margarida Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.74 2003/05/14 02:02:56 itojun Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.73 2003/03/16 05:20:27 margarida Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.74 2003/05/14 02:02:56 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ struct	iso_aliasreq	iso_addreq;
 struct	sockaddr_in	netmask;
 struct  netrange	at_nr;		/* AppleTalk net range */
 
-int	ipx_type = ETHERTYPE_II;
+int	ipx_type = IPX_ETHERTYPE_II;
 char	name[IFNAMSIZ];
 int	flags, setaddr, setipdst, doalias;
 u_long	metric, mtu;
@@ -274,11 +274,11 @@ const struct	cmd {
 	{ "phase",	NEXTARG,	0,		setatphase },
 	{ "snpaoffset",	NEXTARG,	0,		setsnpaoffset },
 	{ "nsellength",	NEXTARG,	0,		setnsellength },
-	{ "802.2",	ETHERTYPE_8022,	0,		setipxframetype },
-	{ "802.2tr",	ETHERTYPE_8022TR, 0,		setipxframetype },
-	{ "802.3",	ETHERTYPE_8023,	0,		setipxframetype },
-	{ "snap",	ETHERTYPE_SNAP,	0,		setipxframetype },
-	{ "EtherII",	ETHERTYPE_II,	0,		setipxframetype },
+	{ "802.2",	IPX_ETHERTYPE_8022,	0,	setipxframetype },
+	{ "802.2tr",	IPX_ETHERTYPE_8022TR, 0,	setipxframetype },
+	{ "802.3",	IPX_ETHERTYPE_8023,	0,	setipxframetype },
+	{ "snap",	IPX_ETHERTYPE_SNAP,	0,	setipxframetype },
+	{ "EtherII",	IPX_ETHERTYPE_II,	0,	setipxframetype },
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
 	{ "-vlandev",	1,		0,		unsetvlandev },
@@ -2166,11 +2166,11 @@ ipx_status(force)
 			int	type;
 			char	*name;
 		} *p, frames[] = {
-			{ ETHERTYPE_8022, "802.2" },
-			{ ETHERTYPE_8022TR, "802.2tr" },
-			{ ETHERTYPE_8023, "802.3" },
-			{ ETHERTYPE_SNAP, "SNAP" },
-			{ ETHERTYPE_II,  "EtherII" },
+			{ IPX_ETHERTYPE_8022, "802.2" },
+			{ IPX_ETHERTYPE_8022TR, "802.2tr" },
+			{ IPX_ETHERTYPE_8023, "802.3" },
+			{ IPX_ETHERTYPE_SNAP, "SNAP" },
+			{ IPX_ETHERTYPE_II,  "EtherII" },
 			{ 0, NULL }
 		};
 		for (p = frames; p->name && p->type != sipx->sipx_type; p++);

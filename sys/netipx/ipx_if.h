@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_if.h,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: ipx_if.h,v 1.5 2003/05/14 02:02:56 itojun Exp $	*/
 
 /*-
  *
@@ -74,12 +74,12 @@ struct	ipx_aliasreq {
 
 #define	IA_SIPX(ia) (&(((struct ipx_ifaddr *)(ia))->ia_addr))
 
-#define ETHERTYPE_8023	0x0001	/* Ethernet_802.3 */
-#define ETHERTYPE_8022	0x0004	/* Ethernet_802.2 */
-#define	ETHERTYPE_SNAP	0x0005	/* Ethernet_SNAP, internal use only */
-#define	ETHERTYPE_8022TR 0x0011	/* Ethernet_802.2 w/ trailers */
-#define ETHERTYPE_II	0x8137	/* Ethernet_II */
-#define ETHERTYPE_IPX	ETHERTYPE_II
+#define IPX_ETHERTYPE_8023	0x0001	/* Ethernet_802.3 */
+#define IPX_ETHERTYPE_8022	0x0004	/* Ethernet_802.2 */
+#define	IPX_ETHERTYPE_SNAP	0x0005	/* Ethernet_SNAP, internal use only */
+#define	IPX_ETHERTYPE_8022TR	0x0011	/* Ethernet_802.2 w/ trailers */
+#define IPX_ETHERTYPE_II	0x8137	/* Ethernet_II */
+#define IPX_ETHERTYPE_IPX	IPX_ETHERTYPE_II
 
 #ifdef	IPXIP
 struct ipxip_req {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.20 2003/04/04 20:25:07 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.21 2003/05/14 02:02:56 itojun Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -78,7 +78,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.20 2003/04/04 20:25:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.21 2003/05/14 02:02:56 itojun Exp $";
 #endif
 #endif
 
@@ -396,7 +396,7 @@ sipxfaddr(unit, network, node)
 
 		sipx->sipx_len     = sizeof(*sipx);
 		sipx->sipx_family  = AF_IPX;
-		sipx->sipx_type    = ETHERTYPE_II;
+		sipx->sipx_type    = IPX_ETHERTYPE_II;
 		sipx->sipx_port    = 0;
 		sipx->sipx_network = htonl (network);
 		memcpy (sipx->sipx_node, node, IPX_HOSTADDRLEN);
@@ -446,7 +446,7 @@ cipxfaddr(unit)
 
 		sipx->sipx_len     = sizeof(*sipx);
 		sipx->sipx_family  = AF_IPX;
-		sipx->sipx_type    = ETHERTYPE_II;
+		sipx->sipx_type    = IPX_ETHERTYPE_II;
 
 		/*
 		 *  Set the IPX device
