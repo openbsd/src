@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.2 1996/12/28 06:21:55 rahnds Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.3 1997/04/07 12:00:17 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.1 1996/09/30 16:34:43 ws Exp $	*/
 
 /*
@@ -334,13 +334,12 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
+#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int sz;
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
-	sz = howmany(bp->b_bcount, lp->d_secsize);
-
-	if (bp->b_blkno + sz > p->p_size) {
-		sz = p->p_size - bp->b_blkno;
+	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
+		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
 		if (sz == 0) {
 			/* If axactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -352,13 +351,12 @@ bounds_check_with_label(bp, lp, wlabel)
 			goto bad;
 		}
 		/* Otherwise truncate request. */
-		bp->b_bcount = sz * lp->d_secsize;
+		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset)
-			 / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
-
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	    lp->d_secpercyl;
 	return 1;
 
 bad:
