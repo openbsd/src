@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.1 2003/08/21 19:12:08 frantzen Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.2 2003/08/27 16:13:21 frantzen Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -372,16 +372,32 @@ pf_osfp_find(struct pf_osfp_list *list, struct pf_os_fingerprint *find,
 		MATCH_INT(PF_OSFP_WSCALE_MOD, PF_OSFP_WSCALE_DC, fp_wscale)
 		if ((f->fp_flags & PF_OSFP_WSIZE_DC) == 0) {
 			if (f->fp_flags & PF_OSFP_WSIZE_MSS) {
-				if (find->fp_mss == 0 ||
-				    find->fp_wsize % find->fp_mss ||
+				if (find->fp_mss == 0)
+					continue;
+
+/* Some "smart" NAT devices and DSL routers will tweak the MSS size and
+ * will set it to whatever is suitable for the link type.
+ */
+#define SMART_MSS	1460
+				if ((find->fp_wsize % find->fp_mss ||
 				    find->fp_wsize / find->fp_mss !=
-				    f->fp_wsize)
+				    f->fp_wsize) &&
+				    (find->fp_wsize % SMART_MSS ||
+				    find->fp_wsize / SMART_MSS !=
+				    f->fp_wsize))
 					continue;
 			} else if (f->fp_flags & PF_OSFP_WSIZE_MTU) {
-				if (find->fp_mss == 0 ||
-				    find->fp_wsize % (find->fp_mss + 40) ||
-				    find->fp_wsize / (find->fp_mss + 40) !=
-				    f->fp_wsize)
+				if (find->fp_mss == 0)
+					continue;
+
+#define MTUOFF	(sizeof(struct ip) + sizeof(struct tcphdr))
+#define SMART_MTU	(SMART_MSS + MTUOFF)
+				if ((find->fp_wsize % (find->fp_mss + MTUOFF) ||
+				    find->fp_wsize / (find->fp_mss + MTUOFF) !=
+				    f->fp_wsize) &&
+				    (find->fp_wsize % SMART_MTU ||
+				    find->fp_wsize / SMART_MTU !=
+				    f->fp_wsize))
 					continue;
 			} else if (f->fp_flags & PF_OSFP_WSIZE_MOD) {
 				if (f->fp_wsize == 0 || find->fp_wsize %
