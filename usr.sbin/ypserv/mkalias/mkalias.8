@@ -1,0 +1,93 @@
+.\"	$OpenBSD: mkalias.8,v 1.1 1997/07/26 12:12:28 maja Exp $
+.\" Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Mats O Jansson
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 21, 1997
+.Dt MKALIAS 8
+.Os
+.Sh NAME
+.Nm mkalias
+.Nd a YP map convertion program
+.Sh SYNOPSIS
+.Nm mkalias
+.Op Fl v
+.Op Fl e 
+.Op Fl E
+.Op Fl d
+.Op Fl u
+.Op Fl n
+.Ar input
+.Op Ar output
+.Sh DESCRIPTION
+.Nm Mkalias
+is used to convert a mail.aliases map to a mail.byaddr map. This is a
+a inverse map of user@host (or user!host) back to alias. 
+.Pp
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl v
+Verbose mode.
+.It Fl e
+Check host to verify that it exists.
+.It Fl E
+Same as
+.Fl e ,
+but also check for any MX-record.
+.It Fl d
+Assume Domain names are OK. Only useful together with
+.Fl e 
+or
+.Fl E .
+.It Fl u
+Assume UUCP names are OK. Only useful together with
+.Fl e 
+or
+.Fl E .
+.It Fl n
+Capitalize name. eg mats.o.jansson becomes Mats.O.Jansson.  
+.It Ar input
+Use this map as input
+.It Ar output
+Use this map as output. If the output map isn't given don't create database.
+Can be useful together with
+.Fl e 
+or
+.Fl E .
+.El
+.Sh BUGS
+.Nm mkalias
+on SunOS 4.1.x seems to have a
+.Fl s .
+Since I don't know what it is supposed to do I havn't implemented it. But it is accepted by the program.
+.Sh SEE ALSO
+.Xr yp 8 ,
+.Xr ypserv 8 
+.Sh AUTHOR
+Mats O Jansson <moj@stacken.kth.se>
