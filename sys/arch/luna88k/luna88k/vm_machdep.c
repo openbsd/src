@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2004/05/23 20:52:13 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2004/05/23 20:53:17 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -345,9 +345,8 @@ iomap_mapin(paddr_t pa, psize_t len, boolean_t canwait)
 	if (len == 0)
 		return NULL;
 
-	ppa = pa;
-	off = (u_long)ppa & PGOFSET;
-
+	ppa = trunc_page(pa);
+	off = pa & PGOFSET;
 	len = round_page(off + len);
 
 	s = splhigh();
@@ -360,15 +359,8 @@ iomap_mapin(paddr_t pa, psize_t len, boolean_t canwait)
 
 	cmmu_flush_tlb(cpu_number(), 1, iova, len);	/* necessary? */
 
-	ppa = trunc_page(ppa);
-
-#ifndef NEW_MAPPING
 	tva = iova;
-#else
-	tva = ppa;
-#endif
-
-	while (len>0) {
+	while (len != 0) {
 		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
 			   VM_PROT_WRITE | VM_PROT_READ,
 			   VM_PROT_WRITE | VM_PROT_READ | PMAP_WIRED);
@@ -377,12 +369,8 @@ iomap_mapin(paddr_t pa, psize_t len, boolean_t canwait)
 		ppa += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
-#ifndef NEW_MAPPING
-	return (iova + off);
-#else
-	return (pa + off);
-#endif
 
+	return (iova + off);
 }
 
 /*
