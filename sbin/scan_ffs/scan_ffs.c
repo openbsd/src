@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.3 1998/02/05 17:18:30 weingart Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.4 1998/03/28 01:18:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -35,8 +35,11 @@
 #include <sys/fcntl.h>
 #include <ufs/ffs/fs.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
+#include <err.h>
 #include <util.h>
 
 #define SBCOUNT 64		/* XXX - Should be configurable */
@@ -52,7 +55,7 @@ ufsscan(fd, beg, end, flags)
 	daddr_t beg, end;
 	int flags;
 {
-	static char *lastmount[MAXMNTLEN];
+	static char lastmount[MAXMNTLEN];
 	static u_int8_t buf[SBSIZE * SBCOUNT];
 	struct fs *sb;
 	daddr_t blk, lastblk;
