@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.14 1997/04/02 01:33:15 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.15 1997/04/02 18:28:48 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
 
-#define FDUNIT(dev)	((dev & 0x180) >> 7)
+#define FDUNIT(dev)	((dev & 0x80) >> 7)
 #define FDTYPE(dev)	((minor(dev) & 0x70) >> 4)
 #define FDPART(dev)	(minor(dev) & 0x0f)
 
@@ -468,10 +468,13 @@ fdcattach(parent, self, aux)
 
 	}
 
-	/* physical limit: four drives per controller. */
-	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
+	/*
+	 * physical limit: four drives per controller, but the dev_t
+	 * only has room for 2
+	 */
+	for (fa.fa_drive = 0; fa.fa_drive < 2; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
-	fa.fa_deftype = &fd_types[0];		/* XXX */
+		fa.fa_deftype = &fd_types[0];	/* XXX */
 		(void)config_found(self, (void *)&fa, fdprint);
 	}
 
@@ -877,7 +880,7 @@ fdopen(dev, flags, fmt, p)
 	if (fd->sc_dk.dk_openmask == 0)
 		fdgetdisklabel(dev);
 
-	pmask = (1 << DISKPART(dev));
+	pmask = (1 << FDPART(dev));
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -901,7 +904,7 @@ fdclose(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	int pmask = (1 << DISKPART(dev));
+	int pmask = (1 << FDPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
 
