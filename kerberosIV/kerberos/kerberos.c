@@ -1,4 +1,4 @@
-/*	$OpenBSD: kerberos.c,v 1.9 1997/12/15 05:09:39 art Exp $	*/
+/*	$OpenBSD: kerberos.c,v 1.10 1997/12/15 06:43:04 art Exp $	*/
 /* $KTH: kerberos.c,v 1.70 1997/09/26 18:06:38 joda Exp $ */
 
 
@@ -104,7 +104,8 @@ kerb_err_reply(int f, struct sockaddr_in *client, int err, char *string)
     static char e_msg[128];
 
     strncpy(e_msg, "\nKerberos error -- ", sizeof(e_msg));
-    strncat(e_msg, string, sizeof(e_msg));
+    if (strlen(e_msg) < sizeof(e_msg)) 
+	strncat(e_msg, string, sizeof(e_msg) - strlen(e_msg) - 1);
     e_msg[sizeof(e_msg) - 1] = '\0';
     cr_err_reply(e_pkt, req_name_ptr, req_inst_ptr, req_realm_ptr,
 		 req_time_ws, err, e_msg);
