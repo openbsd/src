@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: readfile.c,v 1.6 2002/05/27 19:49:58 deraadt Exp $";
+static char rcsid[] = "$Id: readfile.c,v 1.7 2002/12/06 02:17:42 deraadt Exp $";
 #endif
 
 
@@ -702,7 +702,7 @@ process_entry(host, src)
 		case E_BAD_VALUE:
 			msg = "bad value";
 		default:
-			msg = "unkown error";
+			msg = "unknown error";
 			break;
 		}						/* switch */
 		report(LOG_ERR, "in entry named \"%s\", symbol \"%s\": %s",

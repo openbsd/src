@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.9 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: config.c,v 1.10 2002/12/06 02:17:42 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: config.c,v 1.9 2002/06/09 08:13:08 todd Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.10 2002/12/06 02:17:42 deraadt Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -263,7 +263,7 @@ init_attributes(void)
 			 p3[i--] = 0;
 
 		    if ((tmpatt.type = parse_type(p3)) == -1) {
-			 log_print("Unkown attribute type %s for %s in init_attributes()", p3, name);
+			 log_print("Unknown attribute type %s for %s in init_attributes()", p3, name);
 			 continue;
 		    }
 
@@ -556,7 +556,7 @@ init_times(void)
 	  else if (!strcmp(p, CONFIG_SPI_LIFETIME))
 	       value = &spi_lifetime;
 	  else {
-	       log_print("unkown options %s in init_times()", p);
+	       log_print("unknown options %s in init_times()", p);
 	       continue;
 	  }
 
@@ -644,7 +644,7 @@ startup_parse(struct stateob *st, char *p2)
 		    else if(!strcmp(p, OPT_AUTH))
 			 st->flags |= IPSEC_OPT_AUTH;
 		    else {
-			 log_print("Unkown options %s in startup_parse()", p);
+			 log_print("Unknown options %s in startup_parse()", p);
 			 continue;
 		    }
 	       }

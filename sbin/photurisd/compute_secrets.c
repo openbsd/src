@@ -1,4 +1,4 @@
-/*	$OpenBSD: compute_secrets.c,v 1.6 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: compute_secrets.c,v 1.7 2002/12/06 02:17:42 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: compute_secrets.c,v 1.6 2002/06/09 08:13:08 todd Exp $";
+static char rcsid[] = "$OpenBSD: compute_secrets.c,v 1.7 2002/12/06 02:17:42 deraadt Exp $";
 #endif
 
 #define _SECRETS_C_
@@ -236,7 +236,7 @@ compute_session_key(struct stateob *st, u_int8_t *key,
 	  hash = get_hash(HASH_SHA1);
 	  break;
      default:
-	  log_print("Unkown scheme %d in compute_session_key()",
+	  log_print("Unknown scheme %d in compute_session_key()",
 		    ntohs(*((u_int16_t *)st->scheme)));
 	  return -1;
      }	

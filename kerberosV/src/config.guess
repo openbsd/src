@@ -756,7 +756,7 @@ main(argc, argv)
 #if defined(__GLIBC__)
   printf("%s %s\n", __libc_version, __libc_release);
 #else
-  printf("unkown\n");
+  printf("unknown\n");
 #endif
   return 0;
 }

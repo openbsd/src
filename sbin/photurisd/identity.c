@@ -1,4 +1,4 @@
-/*	$OpenBSD: identity.c,v 1.7 2002/06/10 19:58:20 espie Exp $	*/
+/*	$OpenBSD: identity.c,v 1.8 2002/12/06 02:17:42 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: identity.c,v 1.7 2002/06/10 19:58:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: identity.c,v 1.8 2002/12/06 02:17:42 deraadt Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -150,7 +150,7 @@ init_identities(char *name, struct identity *root)
 	       type = ID_LOOKUP;
 	       p += strlen(IDENT_LOOKUP);
 	  } else {
-	       log_print("Unkown tag %s in %s", p, file);
+	       log_print("Unknown tag %s in %s", p, file);
 	       continue;
 	  }
 		
@@ -489,7 +489,7 @@ struct idxform *get_hash(enum hashes hashtype)
      for (i=0; i<sizeof(idxform)/sizeof(idxform[0]); i++)
 	  if (hashtype == idxform[i].type)
 	       return &idxform[i];
-     log_print("Unkown hash type: %d in get_hash()", hashtype);
+     log_print("Unknown hash type: %d in get_hash()", hashtype);
      return NULL;
 }
 
@@ -501,7 +501,7 @@ create_verification_key(struct stateob *st, u_int8_t *buffer, u_int16_t *size,
      int id = owner ? *(st->oSPIidentchoice) : *(st->uSPIidentchoice);
 
      if ((hash = get_hash_id(id)) == NULL) {
-	  log_print("Unkown identity choice %d in create_verification_key", id);
+	  log_print("Unknown identity choice %d in create_verification_key", id);
           return -1;
      }
 
@@ -529,7 +529,7 @@ create_identity_verification(struct stateob *st, u_int8_t *buffer,
      struct idxform *hash;
 
      if ((hash = get_hash_id(*(st->oSPIidentchoice))) == NULL) {
-	  log_print("Unkown identity choice %d in create_verification_key",
+	  log_print("Unknown identity choice %d in create_verification_key",
 		    *(st->oSPIidentchoice));
           return 0;
      }
@@ -565,7 +565,7 @@ verify_identity_verification(struct stateob *st, u_int8_t *buffer,
      struct idxform *hash;
 
      if ((hash = get_hash_id(*(st->uSPIidentchoice))) == NULL) {
-	  log_print("Unkown identity choice %d in create_verification_key",
+	  log_print("Unknown identity choice %d in create_verification_key",
 		    *(st->uSPIidentchoice));
           return 0;
      }
