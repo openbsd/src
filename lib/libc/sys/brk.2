@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brk.2,v 1.6 1998/07/06 18:27:07 deraadt Exp $
+.\"	$OpenBSD: brk.2,v 1.7 1999/05/16 19:55:19 alex Exp $
 .\"	$NetBSD: brk.2,v 1.7 1995/02/27 12:31:57 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -135,9 +135,9 @@ to support the expansion.
 .Sh SEE ALSO
 .Xr execve 2 ,
 .Xr getrlimit 2 ,
-.Xr malloc 3 ,
 .Xr mmap 2 ,
-.Xr end 3
+.Xr end 3 ,
+.Xr malloc 3
 .Sh BUGS
 Setting the break may fail due to a temporary lack of
 swap space.  It is not possible to distinguish this

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.10 1998/07/10 07:06:18 deraadt Exp $
+.\"	$OpenBSD: msync.2,v 1.11 1999/05/16 19:55:30 alex Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -117,10 +117,10 @@ Writes are currently done synchronously even if the
 flag is specified.
 .Sh SEE ALSO
 .Xr madvise 2 ,
+.Xr mincore 2 ,
 .Xr minherit 2 ,
-.Xr munmap 2 ,
 .Xr mprotect 2 ,
-.Xr mincore 2
+.Xr munmap 2
 .Sh HISTORY
 The
 .Fn msync

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tx.4,v 1.2 1999/04/02 16:21:37 aaron Exp $
+.\"     $OpenBSD: tx.4,v 1.3 1999/05/16 19:56:40 alex Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -106,11 +106,11 @@ Failed to allocate memory for a received packet. Packet was dropped.
 While resetting, the driver failed to stop the device correctly. 
 .El
 .Sh SEE ALSO
-.Xr ifconfig 8 ,
+.Xr arp 4 ,
 .Xr ifmedia 4 ,
-.Xr intro 4 ,
 .Xr inet 4 ,
-.Xr arp 4
+.Xr intro 4 ,
+.Xr ifconfig 8
 .Sh BUGS
 The multicast packets filtering is not supported.
 Only one PHY has really been tested,

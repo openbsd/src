@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigsetmask.3,v 1.4 1999/02/27 21:54:52 deraadt Exp $
+.\"	$OpenBSD: sigsetmask.3,v 1.5 1999/05/16 19:54:44 alex Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGSETMASK 3
@@ -67,13 +67,13 @@ to be blocked.
 .Sh RETURN VALUES
 The previous set of masked signals is returned.
 .Sh SEE ALSO
-.Xr sigprocmask 2 ,
 .Xr kill 2 ,
 .Xr sigaction 2 ,
+.Xr sigprocmask 2 ,
 .Xr sigsuspend 2 ,
-.Xr sigvec 3 ,
 .Xr sigblock 3 ,
-.Xr sigsetops 3
+.Xr sigsetops 3 ,
+.Xr sigvec 3
 .Sh HISTORY
 The
 .Fn sigsetmask

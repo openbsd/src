@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.4 1998/09/06 22:23:19 aaron Exp $
+.\"	$OpenBSD: random.4,v 1.5 1999/05/16 19:56:35 alex Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -62,11 +62,11 @@ simple pseudo-random generator (as it is in the kernel).
 .It /dev/arandom
 aRC4 hashed data (as apposed to the {u,s}random, as they are MD5).
 .Sh SEE ALSO
-.Xr random 9 ,
+.Xr arc4random 3 ,
+.Xr md5 3 ,
 .Xr random 3 ,
 .Xr md5 9 ,
-.Xr md5 3 ,
-.Xr arc4random 3 .
+.Xr random 9
 .Sh FILES
 .Bl -tag -width /dev/srandom
 .It Pa /dev/random, /dev/srandom, /dev/urandom, /dev/prandom, /dev/arandom

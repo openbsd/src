@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.4 1999/01/21 04:50:07 marc Exp $
+.\"	$OpenBSD: zs.4,v 1.5 1999/05/16 19:57:23 alex Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project 
 .\" All rights reserved.
@@ -53,10 +53,10 @@ The first outgoing connection succeeds, but second and subsequent
 connections fail, apparently due to a getty hang. The hung getty apparently
 prevents the cua device from being re-opened.
 .Sh SEE ALSO
+.Xr ioctl 2 ,
 .Xr kbd 4 ,
 .Xr ms 4 ,
-.Xr tty 4 ,
-.Xr ioctl 2
+.Xr tty 4
 .Sh HISTORY
 The 
 .Nm

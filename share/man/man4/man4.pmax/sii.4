@@ -28,7 +28,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"	$NetBSD: sii.4,v 1.2 1997/10/13 11:23:58 lukem Exp $
-.\"	$OpenBSD: sii.4,v 1.2 1998/03/09 15:37:27 millert Exp $
+.\"	$OpenBSD: sii.4,v 1.3 1999/05/16 19:57:15 alex Exp $
 .\"
 .Dd August 6, 1996
 .Dt SII 4 pmax
@@ -59,13 +59,13 @@ chip only supports DMA to or from a fixed window in memory.
 The driver use this area as a bounce buffer,  copying data to and
 from the  DMA region.
 .Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
 .Xr intro 4 ,
 .Xr rz 4 ,
-.Xr tz 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
-.Xr cd 4 ,
-.Xr ch 4 .
+.Xr tz 4
 .Sh HISTORY
 The
 .Nm
