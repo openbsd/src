@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.14 2003/07/04 17:31:19 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.15 2003/08/18 16:56:02 tedu Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: perform.c,v 1.14 2003/07/04 17:31:19 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: perform.c,v 1.15 2003/08/18 16:56:02 tedu Exp $";
 #endif
 
 /* This is OpenBSD pkg_install, based on:
@@ -79,14 +79,19 @@ pkg_do(char *pkg)
 	int             code = 0;
 	char           *pkg2 = 0; /* hold full name of package, storage to free */
 	int             len;
+	int		isurl = 0;
 
 	set_pkg(pkg);
+
+	if (AllInstalled)
+		goto installed;
 
 	if (isURL(pkg)) {
 		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
 			strlcpy(fname, cp, sizeof(fname));
 			isTMP = TRUE;
 		}
+		isurl = 1;
 	} else if (fexists(pkg) && isfile(pkg)) {
 
 		if (*pkg != '/') {
@@ -101,19 +106,26 @@ pkg_do(char *pkg)
 		cp = fname;
 	} else {
 		if ((cp = fileFindByPath(NULL, pkg)) != NULL) {
-		    strlcpy(fname, cp, sizeof(fname));
-		    if (*cp != '/') {
-			if (!getcwd(fname, sizeof(fname))) {
-			    cleanup(0);
-			    err(1, "fatal error during execution: getcwd");
+			strlcpy(fname, cp, sizeof(fname));
+			if (isURL(fname) && (cp = fileGetURL(NULL, fname))
+			    != NULL) {
+				strlcpy(fname, cp, sizeof(fname));
+				isTMP = TRUE;
+				isurl = 1;
+			} else if (*cp != '/') {
+				if (!getcwd(fname, sizeof(fname))) {
+				    	cleanup(0);
+					err(1, "fatal error during execution: "
+					    "getcwd");
+				}
+				len = strlen(fname);
+				snprintf(&fname[len], sizeof(fname) - len,
+				    "/%s", cp);
 			}
-			len = strlen(fname);
-			snprintf(&fname[len], sizeof(fname) - len, "/%s", cp);
-		    }
 		}
 	}
 	if (cp) {
-		if (isURL(pkg)) {
+		if (isurl) {
 			/* file is already unpacked by fileGetURL() */
 			strlcpy(PlayPen, cp, PlayPenSize);
 		} else {
@@ -140,7 +152,9 @@ pkg_do(char *pkg)
 	 * It's not an uninstalled package, try and find it among the
 	 * installed
 	 */
-	else {
+	else
+installed:
+	{
 		char           *tmp;
 
 		if (!(tmp = getenv(PKG_DBDIR)))
