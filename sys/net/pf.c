@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.14 2001/06/24 23:43:59 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.15 2001/06/24 23:48:53 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -123,26 +123,26 @@ void		 change_icmp (u_int32_t *ia, u_int16_t *ip, u_int32_t *oa,
 		    u_int32_t na, u_int16_t np, u_int16_t *pc, u_int16_t *h2c,
 		    u_int16_t *ic, u_int16_t *hc);
 void		 send_reset (int direction, struct ifnet *ifp, struct ip *h,
-		    struct tcphdr *th);
+		    int off, struct tcphdr *th);
 int		 match_addr (u_int8_t n, u_int32_t a, u_int32_t m, u_int32_t b);
 int		 match_port (u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p);
 struct nat	*get_nat (struct ifnet *ifp, u_int8_t proto, u_int32_t addr);
 struct rdr	*get_rdr (struct ifnet *ifp, u_int8_t proto, u_int32_t addr,
 		    u_int16_t port);
-int		 pf_test_tcp (int direction, struct ifnet *ifp, struct ip *h,
-		    struct tcphdr *th);
-int		 pf_test_udp (int direction, struct ifnet *ifp, struct ip *h,
-		    struct udphdr *uh);
-int		 pf_test_icmp (int direction, struct ifnet *ifp, struct ip *h,
-		    struct icmp *ih);
-struct state	*pf_test_state_tcp (int direction, struct ifnet *ifp, struct ip *h,
-		    struct tcphdr *th);
-struct state	*pf_test_state_udp (int direction, struct ifnet *ifp, struct ip *h,
-		    struct udphdr *uh);
-struct state	*pf_test_state_icmp (int direction, struct ifnet *ifp,
+int		 pf_test_tcp (int direction, struct ifnet *ifp, int,
+		    struct ip *h, struct tcphdr *th);
+int		 pf_test_udp (int direction, struct ifnet *ifp, int,
+		    struct ip *h, struct udphdr *uh);
+int		 pf_test_icmp (int direction, struct ifnet *ifp, int,
 		    struct ip *h, struct icmp *ih);
-void		*pull_hdr (struct ifnet *ifp, struct mbuf **m, struct ip *h,
-		    int off, int *action, u_int8_t len);
+struct state	*pf_test_state_tcp (int direction, struct ifnet *ifp,
+		    struct mbuf **, int, struct ip *h, struct tcphdr *th);
+struct state	*pf_test_state_udp (int direction, struct ifnet *ifp,
+		    struct mbuf **, int, struct ip *h, struct udphdr *uh);
+struct state	*pf_test_state_icmp (int direction, struct ifnet *ifp,
+		    struct mbuf **, int, struct ip *h, struct icmp *ih);
+inline void	*pull_hdr (struct ifnet *ifp, struct mbuf **m, int, int, int,
+		    struct ip *h, int *action);
 int		 pf_test (int direction, struct ifnet *ifp, struct mbuf **m);
 
 inline signed char
@@ -815,7 +815,8 @@ change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
 }
 
 void
-send_reset(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
+send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
+    struct tcphdr *th)
 {
 	struct mbuf *m;
 	int len = sizeof(struct ip) + sizeof(struct tcphdr);
@@ -850,7 +851,7 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 		th2->th_seq = th->th_ack;
 		th2->th_flags = TH_RST;
 	} else {
-		int tlen = h->ip_len - ((h->ip_hl + th->th_off) << 2) +
+		int tlen = h->ip_len - off - (th->th_off << 2) +
 		    ((th->th_flags & TH_SYN) ? 1 : 0) +
 		    ((th->th_flags & TH_FIN) ? 1 : 0);
 		th2->th_ack = htonl(ntohl(th->th_seq) + tlen);
@@ -960,7 +961,8 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 }
 
 int
-pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
+pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
+    struct tcphdr *th)
 {
 	struct nat *nat = NULL;
 	struct rdr *rdr = NULL;
@@ -1013,7 +1015,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 
 	if ((rm != NULL) && rm->log) {
 		u_int32_t seq = ntohl(th->th_seq);
-		u_int16_t len = h->ip_len - ((h->ip_hl + th->th_off) << 2);
+		u_int16_t len = h->ip_len - off - (th->th_off << 2);
 
 		printf("packetfilter: @%u", mnr);
 		printf(" %s %s", rm->action ? "block" : "pass",
@@ -1039,7 +1041,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 		else if (rdr != NULL)
 			change_ap(&h->ip_dst.s_addr, &th->th_dport,
 			    &h->ip_sum, &th->th_sum, baddr, bport);
-		send_reset(direction, ifp, h, th);
+		send_reset(direction, ifp, h, off, th);
 		return PF_DROP;
 	}
 
@@ -1051,7 +1053,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 		u_int16_t len;
 		struct state *s;
 
-		len = h->ip_len - ((h->ip_hl + th->th_off) << 2);
+		len = h->ip_len - off - (th->th_off << 2);
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
 			return PF_DROP;
@@ -1103,7 +1105,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 }
 
 int
-pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
+pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
+    struct udphdr *uh)
 {
 	struct nat *nat = NULL;
 	struct rdr *rdr = NULL;
@@ -1172,7 +1175,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
 		u_int16_t len;
 		struct state *s;
 
-		len = h->ip_len - (h->ip_hl << 2) - 8;
+		len = h->ip_len - off - 8;
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
 			return PF_DROP;
@@ -1224,7 +1227,8 @@ pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
 }
 
 int
-pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
+pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
+    struct icmp *ih)
 {
 	struct nat *nat = NULL;
 	u_int32_t baddr;
@@ -1280,7 +1284,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
 		u_int16_t id;
 		struct state *s;
 
-		len = h->ip_len - (h->ip_hl << 2) - 8;
+		len = h->ip_len - off - 8;
 		id = ih->icmp_hun.ih_idseq.icd_id;
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
@@ -1320,7 +1324,8 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
 }
 
 struct state *
-pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
+pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
+    struct ip *h, struct tcphdr *th)
 {
 	struct state *s;
 	struct tree_key key;
@@ -1333,7 +1338,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 
 	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext, &key);
 	if (s != NULL) {
-		u_int16_t len = h->ip_len - ((h->ip_hl + th->th_off) << 2);
+		u_int16_t len = h->ip_len - off - (th->th_off << 2);
 		u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
 		struct state_peer *src, *dst;
 
@@ -1424,7 +1429,8 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 }
 
 struct state *
-pf_test_state_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
+pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
+    struct ip *h, struct udphdr *uh)
 {
 	struct state *s;
 	struct tree_key key;
@@ -1438,7 +1444,7 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr 
 	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext, &key);
 	if (s != NULL) {
 
-		u_int16_t len = h->ip_len - (h->ip_hl << 2) - 8;
+		u_int16_t len = h->ip_len - off - 8;
 
 		struct state_peer *src, *dst;
 		if (direction == s->direction) {
@@ -1483,9 +1489,10 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr 
 }
 
 struct state *
-pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
+pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
+    struct ip *h, struct icmp *ih)
 {
-	u_int16_t len = h->ip_len - (h->ip_hl << 2) - 8;
+	u_int16_t len = h->ip_len - off - sizeof(*ih);
 
 	if (ih->icmp_type != ICMP_UNREACH &&
 	    ih->icmp_type != ICMP_SOURCEQUENCH &&
@@ -1536,18 +1543,40 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 		 * Extract the inner TCP/UDP header and search for that state.
 		 */
 
-		struct ip *h2 = (struct ip *)(((char *)ih) + 8);
-		if (len < 28) {
+		struct ip *h2;
+		int off2;
+		int dummy;
+
+		off += 8;	/* offset of h2 in mbuf chain */
+		h2 = pull_hdr(ifp, m, 0, off, sizeof(*h2), h, &dummy);
+		if (!h2) {
 			printf("packetfilter: ICMP error message too short\n");
 			return NULL;
 		}
+		if (len < off2) {
+			printf("packetfilter: ICMP error message too short\n");
+			return NULL;
+		}
+
+		/* offset of protocol header that follows h2 */
+		off2 = off + (h2->ip_hl << 2);
+
 		switch (h2->ip_p) {
 		case IPPROTO_TCP: {
-			struct tcphdr *th = (struct tcphdr *)(((char *)h2) + 20);
-			u_int32_t seq = ntohl(th->th_seq);
+			struct tcphdr *th;
+			u_int32_t seq;
 			struct state *s;
 			struct tree_key key;
 			struct state_peer *src;
+
+			th = pull_hdr(ifp, m, off, off2, sizeof(*th), h2,
+			    &dummy);
+			if (!th) {
+				printf("packetfilter: "
+				    "ICMP error message too short\n");
+				return NULL;
+			}
+			seq = ntohl(th->th_seq);
 
 			key.proto   = IPPROTO_TCP;
 			key.addr[0] = h2->ip_dst.s_addr;
@@ -1592,9 +1621,17 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 			break;
 		}
 		case IPPROTO_UDP: {
-			struct udphdr *uh = (struct udphdr *)(((char *)h2) + 20);
+			struct udphdr *uh;
 			struct state *s;
 			struct tree_key key;
+
+			uh = pull_hdr(ifp, m, off, off2, sizeof(*uh), h2,
+			    &dummy);
+			if (!uh) {
+				printf("packetfilter: "
+				    "ICMP error message too short\n");
+				return NULL;
+			}
 
 			key.proto   = IPPROTO_UDP;
 			key.addr[0] = h2->ip_dst.s_addr;
@@ -1635,14 +1672,24 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 	}
 }
 
+/*
+ * ipoff and off are measured from the start of the mbuf chain.
+ * h must be at "ipoff" on the mbuf chain.
+ */
 inline void *
-pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off, int *action,
-    u_int8_t len)
+pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
+    struct ip *h, int *action)
 {
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
 	struct mbuf *n;
 	int newoff;
 
+	/* sanity check */
+	if (ipoff > off) {
+		printf("packetfilter: dropping following fragment");
+		*action = PF_DROP;
+		return NULL;
+	}
 	if (fragoff) {
 		if (fragoff >= len)
 			*action = PF_PASS;
@@ -1653,7 +1700,7 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off, int *action,
 		}
 		return NULL;
 	}
-	if ((*m)->m_pkthdr.len < off + len || h->ip_len < off + len) {
+	if ((*m)->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
 		*action = PF_DROP;
 		printf("packetfilter: dropping short packet");
 		print_ip(ifp, h);
@@ -1708,41 +1755,41 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	switch (h->ip_p) {
 
 	case IPPROTO_TCP: {
-		struct tcphdr *th = pull_hdr(ifp, m, h, off, &action,
-		    sizeof(*th));
+		struct tcphdr *th = pull_hdr(ifp, m, 0, off, sizeof(*th), h,
+		    &action);
 
 		if (th == NULL)
 			goto done;
-		if (pf_test_state_tcp(direction, ifp, h, th))
+		if (pf_test_state_tcp(direction, ifp, m, off, h, th))
 			action = PF_PASS;
 		else
-			action = pf_test_tcp(direction, ifp, h, th);
+			action = pf_test_tcp(direction, ifp, off, h, th);
 		break;
 	}
 
 	case IPPROTO_UDP: {
-		struct udphdr *uh = pull_hdr(ifp, m, h, off, &action,
-		    sizeof(*uh));
+		struct udphdr *uh = pull_hdr(ifp, m, 0, off, sizeof(*uh), h,
+		    &action);
 
 		if (uh == NULL)
 			goto done;
-		if (pf_test_state_udp(direction, ifp, h, uh))
+		if (pf_test_state_udp(direction, ifp, m, off, h, uh))
 			action = PF_PASS;
 		else
-			action = pf_test_udp(direction, ifp, h, uh);
+			action = pf_test_udp(direction, ifp, off, h, uh);
 		break;
 	}
 
 	case IPPROTO_ICMP: {
-		struct icmp *ih = pull_hdr(ifp, m, h, off, &action,
-		    sizeof(*ih));
+		struct icmp *ih = pull_hdr(ifp, m, 0, off, sizeof(*ih), h,
+		    &action);
 
 		if (ih == NULL)
 			goto done;
-		if (pf_test_state_icmp(direction, ifp, h, ih))
+		if (pf_test_state_icmp(direction, ifp, m, off, h, ih))
 			action = PF_PASS;
 		else
-			action = pf_test_icmp(direction, ifp, h, ih);
+			action = pf_test_icmp(direction, ifp, off, h, ih);
 		break;
 	}
 
