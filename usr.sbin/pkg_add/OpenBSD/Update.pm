@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.29 2004/11/13 12:49:58 espie Exp $
+# $OpenBSD: Update.pm,v 1.30 2004/11/13 12:53:01 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -344,7 +344,7 @@ sub save_old_libraries
 			$stub_list->to_installation();
 			$old_plist->to_installation();
 		}
-		add_installed($stubname);
+		add_installed($stub_name);
 
 		walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
 	}
