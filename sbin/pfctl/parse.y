@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.419 2003/11/06 15:13:22 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.420 2003/11/06 15:16:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3313,18 +3313,18 @@ expand_label_str(char *label, size_t len, const char *srch, const char *repl)
 	char *p, *q;
 
 	if ((tmp = calloc(1, len)) == NULL)
-		err(1, "expand_label_str");
+		err(1, "expand_label_str: calloc");
 	p = q = label;
 	while ((q = strstr(p, srch)) != NULL) {
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||
 		    (strlcat(tmp, repl, len) >= len))
-			err(1, "expand_label: label too long");
+			errx(1, "expand_label: label too long");
 		q += strlen(srch);
 		p = q;
 	}
 	if (strlcat(tmp, p, len) >= len)
-		err(1, "expand_label: label too long");
+		errx(1, "expand_label: label too long");
 	strlcpy(label, tmp, len);	/* always fits */
 	free(tmp);
 }
