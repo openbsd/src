@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.12 1999/09/30 05:53:04 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.13 1999/09/30 06:06:31 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -721,7 +721,7 @@ main(int ac, char **av)
   
   /* Handle the connection.   We pass as argument whether the connection
      came from a privileged port. */
-  do_connection(get_remote_port() < 1024);
+  do_connection(get_remote_port() < IPPORT_RESERVED);
 
 #ifdef KRB4
   /* Cleanup user's ticket cache file. */
