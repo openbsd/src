@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/16 22:33:16 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
@@ -67,7 +67,6 @@ extern gid_t egid;
 
 #define die()		((random() >> 3) % 6 + 1)
 #define sqr(a)		((a) * (a))
-#define abs(a)		((a) > 0 ? (a) : -(a))
 #define min(a,b)	((a) < (b) ? (a) : (b))
 
 #define grappled(a)	((a)->file->ngrap)
