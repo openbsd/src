@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.37 2000/01/10 04:36:16 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.38 2000/01/11 00:44:44 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -555,7 +555,7 @@ If the kernel has been compiled with the
 option,
 then debugging information will also be reported when this variable is set.
 .It Li ip.ipsec-acl
-If set to 1, incoming IPsec packets that are successfully
+If set to any non-zero value, incoming IPsec packets that are successfully
 decrypted/authenticated are further validated against a list of acceptable
 packet classes per Security Association.
 When using automated key management, such as
@@ -566,14 +566,107 @@ the acceptable packet classes should be set up automatically.
 When using manual keying, the appropriate entries have to be configured on a
 per-SA basis via
 .Xr ipsecadm 8 .
-If this value is set to 1 and no access control is configured, IPsec packets
-will be dropped.
+If this value is set to any non-zero value and no access control is
+configured, IPsec packets will be dropped.
 If set to 0, no testing of ingress packets will occur.
+The default value (for now) is 0.
 .It Li ip.ipsec-invalid-life
 The lifetime of embryonic Security Associations (SAs that key management
 daemons have reserved but not fully established yet) in seconds.
+If set to less than or equal to zero, embryonic SAs will not expire.
 The default value is 60.
-If set to zero or a negative value, embryonic SAs will not expire.
+.It Li ip.ipsec-pfs
+If set to any non-zero value, the kernel will ask the key management
+daemons to use Perfect Forward Secrecy when establishing IPsec
+Security Associations.
+Perfect Forward Secrecy makes IPsec Security Associations
+cryptographically distinct from each other, such that breaking the key
+for one such SA does not compromise any others.
+Requiring PFS for every security association significantly increases the
+computational load of
+.Xr isakmpd 8
+exchanges.
+The default value is 1.
+.It Li ip.ipsec-soft-allocs
+The number of IPsec flows that can use a security association before a
+message is sent by the kernel to key management for renegotiation
+of the security association.
+If set to less than or equal to zero, no message is sent to key
+management.
+The default value is 0.
+.It Li ip.ipsec-allocs
+The number of IPsec flows that can use a security association before
+it will expire.
+If set to less than or equal to zero, the security association will not
+expire because of this counter.
+The default value is 0.
+.It Li ip.ipsec-soft-bytes
+The number of bytes that will be processed by a security association
+before a message is sent by the kernel to key management for
+renegotiation of the security association.
+If set to less than or equal to zero, no message is sent to key
+management.
+The default value is 0.
+.It Li ip.ipsec-bytes
+The number of bytes that will be processed by a security association
+before it will expire.
+If set to less than or equal to zero, the security association will not
+expire because of this counter.
+The default value is 0.
+.It Li ip.ipsec-soft-timeout
+The number of seconds after a security association is established
+before a message is sent by the kernel to key management for
+renegotiation of the security association.
+If set to less than or equal to zero, no message is sent to key
+management.
+The default value is 80000 seconds.
+.It Li ip.ipsec-timeout
+The number of seconds after a security association is established
+before it will expire.
+If set to less than or equal to zero, the security association will
+not expire because of this timer.
+The default value is 86400 seconds.
+.It Li ip.ipsec-soft-firstuse
+The number of seconds after a security association is first used
+before a message is sent by the kernel to key management for
+renegotiation of the security association.
+If set to less than or equal to zero, no message is sent to key
+management.
+The default value is 3600 seconds.
+.It Li ip.ipsec-firstuse
+The number of seconds after a security association is first use before
+it will expire.
+If set to less than or equal to zero, the security association will
+not expire because of this timer.
+The default value is 7200 seconds.
+.It Li ip.ipsec-enc-alg
+This is the default encryption algorithm the kernel will instruct key
+management daemons to negotiate when establishing security
+associations on behalf of the kernel.
+Such security associations can occur as a result of a process having
+requested some security level through
+.Xr setsockopt 3 ,
+or as a result of dynamic
+.Xr vpn 8
+entries.
+Supported values are des, 3des, blowfish, cast128, and skipjack.
+If set to any other value, it is left to the key management daemons to
+select an encryption algorithm for the security association. 
+The default value is 3des.
+.It Li ip.ipsec-auth-alg
+This is the default authentication algorithm the kernel will instruct
+key management daemons to negotiate when establishing security
+associations on behalf of the kernel.  
+Such security associations can occur as a result of a process having
+requested some security level through
+.Xr setsockopt 3 ,
+or as a result of dynamic
+.Xr vpn 8
+entries.
+Supported values are hmac-md5, hmac-sha1, and hmac-ripemd160.
+If set to any other value, it is left to the key management daemons to
+select an authentiction algorithm for the security association. 
+The default value is hmac-sha1.
 .It Li ip4.allow
 If set to 0, incoming IPv4-in-IPv4 packets will not be processed.
 If set to any other value, processing will occur.
