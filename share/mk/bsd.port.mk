@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.59 1999/01/24 02:04:20 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.60 1999/02/03 17:53:13 rohee Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.59 1999/01/24 02:04:20 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.60 1999/02/03 17:53:13 rohee Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -106,6 +106,9 @@ REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # WRKSRC		- A subdirectory of ${WRKDIR} where the distribution actually
 #				  unpacks to.  (Default: ${WRKDIR}/${DISTNAME} unless
 #				  NO_WRKSUBDIR is set, in which case simply ${WRKDIR}).
+# WRKBUILD		- The directory where the port is actually built, useful for 
+#                 ports that need a separate directory (default: ${WRKSRC}).
+#				  This is intended for GNU configure.
 # DISTNAME		- Name of port or distribution.
 # DISTFILES		- Name(s) of archive file(s) containing distribution
 #				  (default: ${DISTNAME}${EXTRACT_SUFX}).
@@ -574,6 +577,8 @@ WRKSRC?=		${WRKDIR}
 WRKSRC?=		${WRKDIR}/${DISTNAME}
 .endif
 
+WRKBUILD?=		${WRKSRC}
+
 .if defined(WRKOBJDIR)
 __canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
 __canonical_CURDIR!=	cd ${.CURDIR}; pwd -P
@@ -706,7 +711,7 @@ INSTALL_TARGET+=	install.man
 # Popular master sites
 MASTER_SITE_XCONTRIB+=	\
 	ftp://crl.dec.com/pub/X11/contrib/%SUBDIR%/ \
-    ftp://ftp.eu.net/X11/contrib/%SUBDIR%/ \
+	ftp://ftp.eu.net/X11/contrib/%SUBDIR%/ \
 	ftp://ftp.uni-paderborn.de/pub/X11/contrib/%SUBDIR%/ \
 	ftp://ftp.x.org/contrib/%SUBDIR%/
 
@@ -857,8 +862,8 @@ HAS_CONFIGURE=		yes
 # Passed to most of script invocations
 SCRIPTS_ENV+= CURDIR=${.CURDIR} DISTDIR=${DISTDIR} \
           PATH=${PORTPATH} \
-		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} \
-		  SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
+		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} WRKBUILD=${WRKBUILD} \
+		  PATCHDIR=${PATCHDIR} SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
 		  PORTSDIR=${PORTSDIR} DEPENDS="${DEPENDS}" \
 		  PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE}
 
@@ -1002,7 +1007,7 @@ package:
 .if defined(ALL_HOOK)
 all:
 	@cd ${.CURDIR} && ${SETENV} CURDIR=${.CURDIR} DISTNAME=${DISTNAME} \
-	  DISTDIR=${DISTDIR} WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} \
+	  DISTDIR=${DISTDIR} WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} WRKBUILD=${WRKBUILD}\
 	  PATCHDIR=${PATCHDIR} SCRIPTDIR=${SCRIPTDIR} \
 	  FILESDIR=${FILESDIR} PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} \
 	  DEPENDS="${DEPENDS}" BUILD_DEPENDS="${BUILD_DEPENDS}" \
@@ -1242,7 +1247,7 @@ do-patch:
 # Configure
 
 .if !target(do-configure)
-do-configure:
+do-configure: ${WRKBUILD}
 .if defined(USE_AUTOCONF)
 	@cd ${AUTOCONF_DIR} && ${SETENV} ${AUTOCONF_ENV} ${AUTOCONF}
 .endif
@@ -1251,30 +1256,33 @@ do-configure:
 		  ${SCRIPTDIR}/configure; \
 	fi
 .if defined(HAS_CONFIGURE)
-	@(cd ${WRKSRC} && CC="${CC}" ac_cv_path_CC="${CC}" CFLAGS="${CFLAGS}" \
+	@(cd ${WRKBUILD} && CC="${CC}" ac_cv_path_CC="${CC}" CFLAGS="${CFLAGS}" \
 		CXX="${CXX}" ac_cv_path_CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" \
 		INSTALL="/usr/bin/install -c -o ${BINOWN} -g ${BINGRP}" \
 		INSTALL_PROGRAM="${INSTALL_PROGRAM}" INSTALL_MAN="${INSTALL_MAN}" \
 		INSTALL_SCRIPT="${INSTALL_SCRIPT}" INSTALL_DATA="${INSTALL_DATA}" \
-		${CONFIGURE_ENV} ./${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
+		${CONFIGURE_ENV} ${WRKSRC}/${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
 .endif
 .if defined(USE_IMAKE)
 	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${XMKMF})
 .endif
 .endif
 
+${WRKBUILD}:
+	${MKDIR} ${WRKBUILD}
+
 # Build
 
 .if !target(do-build)
 do-build:
-	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} ${MAKEFILE} ${ALL_TARGET})
+	@(cd ${WRKBUILD}; ${SETENV} ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} ${MAKEFILE} ${ALL_TARGET})
 .endif
 
 # Install
 
 .if !target(do-install)
 do-install:
-	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
+	@(cd ${WRKBUILD} && ${SETENV} ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
 .endif
 
 # Package
