@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1997/02/04 12:29:20 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.13 1997/02/04 17:23:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -549,7 +549,7 @@ copyfault:
 		register struct vmspace *vm = NULL;
 		register vm_map_t map;
 		int rv;
-		vm_prot_t ftype;
+		vm_prot_t ftype, vftype;
 		extern vm_map_t kernel_map;
 
 		/* vmspace only significant if T_USER */
@@ -574,9 +574,10 @@ copyfault:
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
-		if (WRFAULT(code))
+		if (WRFAULT(code)) {
+			vftype = VM_PROT_WRITE;
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
-		else
+		} else
 			ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
 
@@ -640,7 +641,7 @@ copyfault:
 			goto dopanic;
 		}
 		frame.f_pad = code & 0xffff;
-		ucode = ftype;
+		ucode = vftype;
 		typ = SEGV_MAPERR;
 		i = SIGSEGV;
 		break;

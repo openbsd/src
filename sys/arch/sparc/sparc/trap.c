@@ -776,7 +776,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	register struct vmspace *vm;
 	register vm_offset_t va;
 	register int rv;
-	vm_prot_t ftype;
+	vm_prot_t ftype, vftype;
 	int onfault;
 	u_quad_t sticks;
 #if DEBUG
@@ -928,6 +928,7 @@ static int lastdouble;
 	/* Now munch on protections... */
 
 	ftype = sfsr & SFSR_AT_STORE ? VM_PROT_READ|VM_PROT_WRITE:VM_PROT_READ;
+	vftype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE:VM_PROT_READ;
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
@@ -1016,7 +1017,7 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		trapsignal(p, SIGSEGV, ftype, SEGV_MAPERR, (caddr_t)sfva);
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, (caddr_t)sfva);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
