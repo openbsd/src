@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.27 2003/09/02 23:35:24 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.28 2003/10/16 05:27:33 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ again:
 	}
 #endif
 
-	error = poll(pfd, maxfd, 0);
+	error = poll(pfd, maxfd, INFTIM);
 	if (error < 0) {
 		if (errno == EINTR)
 			goto again;
