@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.10 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.11 2002/06/06 16:29:37 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1760,13 +1760,19 @@ bktr_get_info(void *v, struct radio_info *ri)
 
 #define	STATUSBIT_STEREO	0x10
 	ri->mute = (int)sc->audio_mute_state ? 1 : 0;
-	ri->stereo = (status & STATUSBIT_STEREO) ? 1 : 0;
 	ri->caps = RADIO_CAPS_DETECT_STEREO | RADIO_CAPS_HW_AFC;
 	ri->freq = tv->frequency * 10;
 	ri->info = (status & STATUSBIT_STEREO) ? RADIO_INFO_STEREO : 0;
 
 	/* not yet supported */
 	ri->volume = ri->rfreq = ri->lock = 0;
+
+	/*
+	 * The field ri->stereo is used to forcible switch to
+	 * mono/stereo, not as an indicator of received signal quality.
+	 * The ri->info is for that purpose.
+	 */
+	ri->stereo = 1; /* Can't switch to mono, always stereo */
 
 	return (0);
 }

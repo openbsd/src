@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsradio.c,v 1.5 2002/06/03 16:54:10 mickey Exp $	*/
+/*	$OpenBSD: fmsradio.c,v 1.6 2002/06/06 16:29:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
@@ -212,7 +212,7 @@ sf256pcs_probe(struct fms_softc *sc)
 	    radio->tea.ioh, radio->tea.offset),
 	    radio->tea.flags & TEA5757_TEA5759);
 	if (freq != radio->freq)
-			return TUNER_UNKNOWN;
+		return TUNER_UNKNOWN;
 
 	return TUNER_SF256PCS;
 }
@@ -298,7 +298,7 @@ sf256pcpr_probe(struct fms_softc *sc)
 	    radio->tea.ioh, radio->tea.offset),
 	    radio->tea.flags & TEA5757_TEA5759);
 	if (freq != radio->freq)
-			return TUNER_UNKNOWN;
+		return TUNER_UNKNOWN;
 
 	return TUNER_SF256PCPR;
 }
@@ -384,7 +384,7 @@ sf64pcr_probe(struct fms_softc *sc)
 	    radio->tea.ioh, radio->tea.offset),
 	    radio->tea.flags & TEA5757_TEA5759);
 	if (freq != radio->freq)
-			return TUNER_UNKNOWN;
+		return TUNER_UNKNOWN;
 
 	return TUNER_SF64PCR;
 }
@@ -509,9 +509,6 @@ fmsradio_get_info(void *v, struct radio_info *ri)
 	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 	u_int32_t buf;
 
-	if (radio->type == TUNER_UNKNOWN)
-		return (ENXIO);
-
 	ri->mute = radio->mute;
 	ri->volume = radio->vol ? 255 : 0;
 	ri->stereo = radio->stereo == TEA5757_STEREO ? 1 : 0;
@@ -560,9 +557,6 @@ fmsradio_set_info(void *v, struct radio_info *ri)
 	struct fms_softc *sc = v;
 	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 
-	if (radio->type == TUNER_UNKNOWN)
-		return (ENXIO);
-
 	radio->mute = ri->mute ? 1 : 0;
 	radio->vol = ri->volume ? 255 : 0;
 	radio->stereo = ri->stereo ? TEA5757_STEREO: TEA5757_MONO;
@@ -579,9 +573,6 @@ fmsradio_search(void *v, int f)
 {
 	struct fms_softc *sc = v;
 	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
-
-	if (radio->type == TUNER_UNKNOWN)
-		return (ENXIO);
 
 	tea5757_search(&radio->tea, radio->lock,
 			radio->stereo, f);
