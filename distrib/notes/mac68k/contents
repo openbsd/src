@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.38 2003/03/25 19:57:31 miod Exp $
+dnl	$OpenBSD: contents,v 1.39 2003/09/09 22:29:04 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -20,25 +20,25 @@ OpenBSDdistsets
 
 DistributionDescription(ten)
 
-OpenBSDbase(29.3,86.2,shared)
+OpenBSDbase(29.2,85.9,shared)
 
-OpenBSDcomp(15.4,46.7,shared)
+OpenBSDcomp(15.3,46.6,shared)
 
-OpenBSDetc(1.5,5.5)
+OpenBSDetc(1.6,6.3)
 
-OpenBSDgame(2.7,6.4)
+OpenBSDgame(2.6,6.3)
 
-OpenBSDman(6.1,21.6)
+OpenBSDman(6.0,21.5)
 
-OpenBSDmisc(1.9,6.3)
+OpenBSDmisc(1.9,6.5)
 
-OpenBSDxbase(7.2,20.9)
+OpenBSDxbase(7.8,22.9)
 
-OpenBSDxfont(32.3,35.9)
+OpenBSDxfont(32.9,36.6)
 
 OpenBSDxserv(0.5,1.1)
 
-OpenBSDxshare(1.6,7.8)
+OpenBSDxshare(1.7,8.6)
 
 The directory '../OSREV/MACHINE/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files are
@@ -51,13 +51,13 @@ files in this directory are as follows:
 		 start the operating system.  In all cases, you will need to
 		 download this file.
 
-	Installer_1.3.sea.hqx
+	Installer_1.2.sea.hqx
 		 This is the MacOS program used to install downloaded sets
 		 (such as those from the bins directory) onto a BSD partition.
 		 It is necessary in either the case of a fresh install or an
 		 upgrade.
 
-	Mkfs_1.47.sea.hqx
+	Mkfs_1.45.sea.hqx
 		 A MacOS program to build BSD filesystems on various
 		 partitions you have created (see below).  You will need this
 		 if you are performing a new installation.
