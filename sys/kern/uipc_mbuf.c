@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.11 1999/05/14 02:05:42 cmetz Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.12 1999/05/14 02:12:29 cmetz Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -860,7 +860,7 @@ m_zero(m)
 			    sizeof(struct pkthdr), MHLEN);
 		else
 			bzero((void *)m + sizeof(struct m_hdr), MLEN);
-		if ((m->m_flags & M_EXT) && !m->m_ext.ext_func &&
+		if ((m->m_flags & M_EXT) && 
 			!mclrefcnt[mtocl((m)->m_ext.ext_buf)])
 			bzero(m->m_ext.ext_buf, m->m_ext.ext_size);
 		m = m->m_next;
