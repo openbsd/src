@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.7 2001/02/09 19:59:10 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.8 2001/02/27 09:54:21 niklas Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -119,7 +119,6 @@ gre_input2(m , hlen, proto)
 	}
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
-	printf("%s\n", sc->sc_if.if_xname);
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
