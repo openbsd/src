@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atu.4,v 1.4 2004/11/13 19:01:45 deraadt Exp $
+.\"	$OpenBSD: atu.4,v 1.5 2004/11/17 14:14:05 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -55,9 +55,8 @@ it can receive either 802.11 or 802.3 frames.
 Transmit speed is selectable between 1Mbps fixed, 2Mbps fixed, 2Mbps
 with auto fallback, 5.5Mbps, 8Mbps, or 11Mbps depending on your hardware.
 .Pp
-Three different radio chipsets are used along with the device, each
+Four different radio chipsets are used along with the device, each
 requiring a different firmware.
-These firmwares are currently compiled into the driver.
 .Pp
 By default, the
 .Nm
@@ -147,6 +146,21 @@ Create a host-based wireless bridge to fxp0:
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr wicontrol 8
+.Sh FILES
+The driver needs a couple of firmware files which are loaded on
+demand when the device is attached.  
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/atu-license
+.It Pa /etc/firmware/atu-intersil-int
+.It Pa /etc/firmware/atu-intersil-ext
+.It Pa /etc/firmware/atu-rfmd-int
+.It Pa /etc/firmware/atu-rfmd-ext
+.It Pa /etc/firmware/atu-rfmd2958-int
+.It Pa /etc/firmware/atu-rfmd2958-ext
+.It Pa /etc/firmware/atu-rfmd2958smc-int
+.It Pa /etc/firmware/atu-rfmd2958smc-ext
+.El
 .Sh AUTHORS
 The
 .Nm
