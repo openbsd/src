@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.16 2002/02/13 08:33:47 mpech Exp $
+.\"	$OpenBSD: whois.1,v 1.17 2002/09/05 17:22:16 fgsch Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl adgimpqQrR
+.Op Fl adgilmpqQrR
 .Op Fl h Ar host
 .Ar name Op Ar ...
 .Sh DESCRIPTION
@@ -86,6 +86,10 @@ It contains network numbers and domain contact information for most of
 and
 .Tn \&.EDU
 domains.
+.It Fl l
+Use the Latin America and Caribbean Network Information Center
+.Pq Tn LACNIC
+database.
 .It Fl m
 Use the Route Arbiter Database
 .Pq Tn RADB

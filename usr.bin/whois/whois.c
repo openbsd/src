@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.15 2002/05/29 18:33:40 deraadt Exp $	*/
+/*	$OpenBSD: whois.c,v 1.16 2002/09/05 17:22:16 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: whois.c,v 1.15 2002/05/29 18:33:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.16 2002/09/05 17:22:16 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ static char rcsid[] = "$OpenBSD: whois.c,v 1.15 2002/05/29 18:33:40 deraadt Exp 
 #define	PNICHOST	"whois.apnic.net"
 #define	RUNICHOST	"whois.ripn.net"
 #define	MNICHOST	"whois.ra.net"
+#define LNICHOST	"whois.lacnic.net"
 #define	QNICHOST_TAIL	".whois-servers.net"
 #define	WHOIS_PORT	43
 
@@ -97,7 +98,7 @@ main(argc, argv)
 	qnichost = NULL;
 	flags = 0;
 	use_qnichost = 0;
-	while ((ch = getopt(argc, argv, "adgh:impqQrR")) != -1)
+	while ((ch = getopt(argc, argv, "adgh:ilmpqQrR")) != -1)
 		switch((char)ch) {
 		case 'a':
 			host = ANICHOST;
@@ -113,6 +114,9 @@ main(argc, argv)
 			break;
 		case 'i':
 			host = INICHOST;
+			break;
+		case 'l':
+			host = LNICHOST;
 			break;
 		case 'm':
 			host = MNICHOST;
@@ -304,6 +308,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: whois [-adgimpqQrR] [-h hostname] name ...\n");
+	    "usage: whois [-adgilmpqQrR] [-h hostname] name ...\n");
 	exit(EX_USAGE);
 }
