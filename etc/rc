@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.140 2000/06/13 18:29:48 deraadt Exp $
+#	$OpenBSD: rc,v 1.141 2000/06/14 15:50:55 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -252,7 +252,7 @@ fi
 # $nfs_server is imported from /etc/rc.conf;
 # if $nfs_server == YES, the machine is setup for being an nfs server
 if [ X${nfs_server} = X"YES" -a -s /etc/exports -a \
-    `cat /etc/exports | sed -e '/^#/d' | wc -l` -ne 0 ]; then
+    `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ]; then
 	rm -f /var/db/mountdtab
 	echo -n > /var/db/mountdtab
 	echo -n ' mountd';		mountd
@@ -400,7 +400,7 @@ fi
 if [ "X${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
 	touch /var/db/dhcpd.leases
 	if [ -f /etc/dhcpd.interfaces ]; then
-		dhcpd_ifs=`cat /etc/dhcpd.interfaces | awk -F\# '{ print $1; }'`
+		dhcpd_ifs=`awk -F\# '{ print $1; }' < /etc/dhcpd.interfaces`
 	fi
 	echo -n ' dhcpd';	/usr/sbin/dhcpd ${dhcpd_flags} ${dhcpd_ifs}
 fi
