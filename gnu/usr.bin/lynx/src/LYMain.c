@@ -168,6 +168,8 @@ PUBLIC BOOLEAN LYJumpFileURL = FALSE;	 /* always FALSE the first time */
 PUBLIC BOOLEAN jump_buffer = JUMPBUFFER; /* TRUE if offering default shortcut */
 PUBLIC BOOLEAN goto_buffer = GOTOBUFFER; /* TRUE if offering default goto URL */
 PUBLIC BOOLEAN ftp_passive = FTP_PASSIVE; /* TRUE if doing ftp in passive mode */
+PUBLIC BOOLEAN ftp_local_passive;    /* TRUE for PASV for this server only */
+PUBLIC char *ftp_lasthost;           /* host of last ftp transaction */
 PUBLIC BOOLEAN recent_sizechange = FALSE;/* the window size changed recently? */
 PUBLIC int user_mode = NOVICE_MODE;
 PUBLIC BOOLEAN dump_output_immediately = FALSE;
@@ -663,6 +665,12 @@ PUBLIC int main ARGS2(
     FILE *fp;
     char filename[LY_MAXPATH];
     BOOL LYGetStdinArgs = FALSE;
+
+#ifndef DISABLE_FTP
+    /* malloc a sizeof(char) so 1st strcmp() won't dump in HTLoadFile() */
+    ftp_lasthost = (char *)malloc(sizeof(char));
+    *ftp_lasthost = NULL;
+#endif /* DISABLE_FTP */
 
 #ifdef    NOT_ASCII
     FixCharacters();

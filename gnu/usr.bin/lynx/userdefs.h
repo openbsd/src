@@ -498,7 +498,7 @@
  * If FTP_PASSIVE is set to TRUE here or in lynx.cfg, ftp transfers will
  * be done in passive mode.
  */
-#define FTP_PASSIVE	  FALSE
+#define FTP_PASSIVE	  TRUE
 
 /*****************************
  * JUMPFILE is the default local file checked for shortcut URLs when

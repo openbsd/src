@@ -170,6 +170,8 @@ extern BOOLEAN telnet_ok;
 extern BOOLEAN news_ok;
 extern BOOLEAN ftp_ok;
 extern BOOLEAN ftp_passive;	/* TRUE if we want to use passive mode ftp */
+extern BOOLEAN ftp_local_passive;
+extern char *ftp_lasthost;
 extern BOOLEAN rlogin_ok;
 extern BOOLEAN system_editor;     /* True if locked-down editor */
 extern BOOLEAN child_lynx;        /* TRUE to exit with an arrow */

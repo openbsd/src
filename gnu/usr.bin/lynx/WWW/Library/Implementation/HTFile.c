@@ -1848,6 +1848,7 @@ PUBLIC int HTLoadFile ARGS4(
 {
     char * filename = NULL;
     char * acc_method = NULL;
+    char * ftp_newhost;
     HTFormat format;
     char * nodename = NULL;
     char * newname = NULL;	/* Simplified name of file */
@@ -1886,7 +1887,21 @@ PUBLIC int HTLoadFile ARGS4(
 	FREE(nodename);
 	FREE(acc_method);
 #ifndef DISABLE_FTP
-	return HTFTPLoad(addr, anchor, format_out, sink);
+	ftp_newhost = HTParse(addr, "", PARSE_HOST);	/* HTParse mallocs */
+	if (strcmp(ftp_lasthost, ftp_newhost))
+		ftp_local_passive = ftp_passive;	/* set to default */
+
+	status = HTFTPLoad(addr, anchor, format_out, sink);
+
+	if ( ftp_passive == ftp_local_passive ) {
+		if (( status <= -4 ) || ( status == -1 )) {
+			ftp_local_passive = !ftp_passive;
+			status = HTFTPLoad(addr, anchor, format_out, sink);
+		}
+	}
+	free(ftp_lasthost);
+	ftp_lasthost = ftp_newhost;
+	return status;
 #else
 	return -1;
 #endif /* DISABLE_FTP */

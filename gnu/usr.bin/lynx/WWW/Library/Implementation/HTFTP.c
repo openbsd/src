@@ -2570,7 +2570,7 @@ PUBLIC int HTFTPLoad ARGS4(
 	if (status < 0)
 	    return status;
 
-	if (!ftp_passive) {
+	if (!ftp_local_passive) {
 	    status = get_listen_socket();
 	    if (status < 0) {
 		NETCLOSE (control->socket);
@@ -3133,7 +3133,7 @@ PUBLIC int HTFTPLoad ARGS4(
     }
 
 listen:
-    if (!ftp_passive) {
+    if (!ftp_local_passive) {
 	/* Wait for the connection */
 	struct sockaddr_in soc_address;
 	int	soc_addrlen=sizeof(soc_address);
@@ -3153,7 +3153,7 @@ listen:
 	}
 	CTRACE(tfp, "TCP: Accepted new socket %d\n", status);
 	data_soc = status;
-    } /* !ftp_passive */
+    } /* !ftp_local_passive */
 
     if (isDirectory) {
 	status = read_directory (anchor, name, format_out, sink);
