@@ -15,15 +15,12 @@
 <DIV ALIGN="CENTER">
  <IMG SRC="images/sub.gif" ALT="[APACHE DOCUMENTATION]">
  <H3>
-  Apache HTTP Server Version 1.2
+  Apache HTTP Server Version 1.3
  </H3>
 </DIV>
 
 
-<H1 ALIGN="CENTER">Compiling and Installing Apache 1.2</H1>
-
-<P>If you wish to download and install an earlier version of Apache please
-read <A HREF="install_1_1.html">Compiling and Installing Apache 1.1</A>.</P>
+<H1 ALIGN="CENTER">Compiling and Installing Apache 1.3</H1>
 
 UnixWare users will want to consult <A HREF="unixware.html">build notes</A>
 for various UnixWare versions before compiling.
@@ -34,7 +31,7 @@ Information on the latest version of Apache can be found on the Apache
 web server at <A
 HREF="http://www.apache.org/">http://www.apache.org/</A>.  This will
 list the current release, any more recent beta-test release, together
-with details of mirror web and anonymous ftp sites.  
+with details of mirror web and anonymous ftp sites.
 
 <P>
 
@@ -42,10 +39,10 @@ If you downloaded a binary distribution, skip to <A
 HREF="#install">Installing Apache</A>. Otherwise read the next section
 for how to compile the server.
 
-<h2>Compiling Apache</h2>
+<H2>Compiling Apache</H2>
 
 Compiling Apache consists of three steps: Firstly select which Apache
-<b>modules</b> you want to include into the server. Secondly create a
+<STRONG>modules</STRONG> you want to include into the server. Secondly create a
 configuration for your operating system. Thirdly compile the
 executable.
 <P>
@@ -57,7 +54,7 @@ directory of the Apache distribution. Change into this directory.
  <LI>
   Select modules to compile into Apache in the
   <CODE>Configuration</CODE> file. Uncomment lines corresponding to
-  those optional modules you wish to include (among the Module lines
+  those optional modules you wish to include (among the AddModule lines
   at the bottom of the file), or add new lines corresponding to
   additional modules you have downloaded or written. (See <A
   HREF="misc/API.html">API.html</A> for preliminary docs on how to
@@ -74,11 +71,11 @@ directory of the Apache distribution. Change into this directory.
  <LI>
   Configure Apache for your operating system. Normally you can just
   type run the <CODE>Configure</CODE> script as given below. However
-  if this fails or you have any special requirements (e.g. to include
+  if this fails or you have any special requirements (<EM>e.g.</EM>, to include
   an additional library required by an optional module) you might need
   to edit one or more of the following options in the
   <CODE>Configuration</CODE> file:
-    <CODE>EXTRA_CFLAGS, LIBS, LFLAGS, INCLUDES</CODE>.
+    <CODE>EXTRA_CFLAGS, LIBS, LDFLAGS, INCLUDES</CODE>.
   <P>
 
   Run the <CODE>Configure</CODE> script:
@@ -89,7 +86,12 @@ directory of the Apache distribution. Change into this directory.
      + configured for &lt;whatever&gt; platform
      + setting C compiler to &lt;whatever&gt; *
      + setting C compiler optimization-level to &lt;whatever&gt; *
-    %
+     + Adding selected modules
+     + doing sanity check on compiler and options
+    Creating Makefile in support
+    Creating Makefile in main
+    Creating Makefile in os/unix
+    Creating Makefile in modules/standard
    </PRE>
   </BLOCKQUOTE>
 
@@ -114,12 +116,13 @@ directory of the Apache distribution. Change into this directory.
 The modules we place in the Apache distribution are the ones we have
 tested and are used regularly by various members of the Apache
 development group.  Additional modules contributed by members or third
-parties with specific needs or functions are available at <A
-HREF="http://www.apache.org/dist/contrib/modules/">&lt;URL:http://www.apache.org/dist/contrib/modules/&gt;</a>.
+parties with specific needs or functions are available at
+&lt;<A HREF="http://www.apache.org/dist/contrib/modules/"
+    >http://www.apache.org/dist/contrib/modules/</A>&gt;.
 There are instructions on that page for linking these modules into the
 core Apache code.
 
-<h2><A NAME="install">Installing Apache</A></h2>
+<H2><A NAME="install">Installing Apache</A></H2>
 
 You will have a binary file called <CODE>httpd</CODE> in the
 <CODE>src</CODE> directory.  A binary distribution of Apache will
@@ -129,10 +132,12 @@ The next step is to install the program and configure it. Apache is
 designed to be configured and run from the same set of directories
 where it is compiled. If you want to run it from somewhere else, make
 a directory and copy the <CODE>conf</CODE>, <CODE>logs</CODE> and
-<CODE>icons</CODE> directories into it.  <P>
+<CODE>icons</CODE> directories into it.  In either case you should
+read the <A HREF="misc/security_tips.html#serverroot">security tips</A>
+describing how to set the permissions on the server root directory.<P>
 
 The next step is to edit the configuration files for the server. This
-consists of setting up various <B>directives</B> in up to three
+consists of setting up various <STRONG>directives</STRONG> in up to three
 central configuration files. By default, these files are located in
 the <CODE>conf</CODE> directory and are called <CODE>srm.conf</CODE>,
 <CODE>access.conf</CODE> and <CODE>httpd.conf</CODE>.  To help you get
@@ -149,34 +154,42 @@ file usually does not need editing.
 <P>
 
 First edit <CODE>httpd.conf</CODE>.  This sets up general attributes
-about the server: the port number, the user it runs as, etc.  Next
+about the server: the port number, the user it runs as, <EM>etc.</EM>  Next
 edit the <CODE>srm.conf</CODE> file; this sets up the root of the
 document tree, special functions like server-parsed HTML or internal
-imagemap parsing, etc.  Finally, edit the <CODE>access.conf</CODE>
+imagemap parsing, <EM>etc.</EM>  Finally, edit the <CODE>access.conf</CODE>
 file to at least set the base cases of access.
 
 <P>
 
 In addition to these three files, the server behavior can be configured
 on a directory-by-directory basis by using <CODE>.htaccess</CODE>
-files in directories accessed by the server. 
+files in directories accessed by the server.
+
+<H3>Set your system time properly!</H3>
+
+Proper operation of a public web server requires accurate time
+keeping, since elements of the HTTP protocol are expressed as the time
+of day.  So, it's time to investigate setting up NTP or some other
+time synchronization system on your Unix box, or whatever the
+equivalent on NT would be.
 
 <H3>Starting and Stopping the Server</H3>
 
 To start the server, simply run <CODE>httpd</CODE>. This will look for
 <CODE>httpd.conf</CODE> in the location compiled into the code (by
-default <CODE>/usr/locale/etc/httpd/conf/httpd.conf</CODE>). If
+default <CODE>/usr/local/apache/conf/httpd.conf</CODE>). If
 this file is somewhere else, you can give the real
 location with the -f argument. For example:
 
 <PRE>
-    /usr/local/etc/apache/src/httpd -f /usr/local/etc/apache/conf/httpd.conf
+    /usr/local/apache/httpd -f /usr/local/apache/conf/httpd.conf
 </PRE>
 
 If all goes well this will return to the command prompt almost
 immediately.  This indicates that the server is now up and running. If
 anything goes wrong during the initialization of the server you will
-see an error message on the screen. 
+see an error message on the screen.
 
 If the server started ok, you can now use your browser to
 connect to the server and read the documentation. If you are running
@@ -190,10 +203,10 @@ port of 80, a suitable URL to enter into your browser is
 <P>
 
 Note that when the server starts it will create a number of
-<i>child</i> processes to handle the requests. If you started Apache
+<EM>child</EM> processes to handle the requests. If you started Apache
 as the root user, the parent process will continue to run as root
 while the children will change to the user as given in the httpd.conf
-file. 
+file.
 
 <P>
 
@@ -216,7 +229,7 @@ this will be located in the file <CODE>error_log</CODE> in the
 If you want your server to continue running after a system reboot, you
 should add a call to <CODE>httpd</CODE> to your system startup files
 (typically <CODE>rc.local</CODE> or a file in an
-<CODE>rc.<I>N</I></CODE> directory). This will start Apache as root.
+<CODE>rc.<EM>N</EM></CODE> directory). This will start Apache as root.
 Before doing this ensure that your server is properly configured
 for security and access restrictions.
 
@@ -229,7 +242,7 @@ attempt to kill the child processes because they will be renewed by
 the parent.  A typical command to stop the server is:
 
 <PRE>
-    kill -TERM `cat /usr/local/etc/apache/logs/httpd.pid`
+    kill -TERM `cat /usr/local/apache/logs/httpd.pid`
 </PRE>
 
 <P>
@@ -251,9 +264,9 @@ the support programs, change into this directory and type
 </PRE>
 
 <HR>
-<H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.2
-</H3>
+ <H3 ALIGN="CENTER">
+  Apache HTTP Server Version 1.3
+ </H3>
 
 <A HREF="./"><IMG SRC="images/index.gif" ALT="Index"></A>
 

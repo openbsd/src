@@ -11,8 +11,8 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
-#include <regex.h>
 
+#include "hsregex.h"
 #include "utils.h"
 #include "regex2.h"
 
@@ -98,7 +98,7 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 
 /*
  - regexec - interface for matching
- = extern int regexec(const regex_t *, const char *, size_t, \
+ = API_EXPORT(int) regexec(const regex_t *, const char *, size_t, \
  =					regmatch_t [], int);
  = #define	REG_NOTBOL	00001
  = #define	REG_NOTEOL	00002
@@ -111,7 +111,8 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
  * when choosing which matcher to call.  Also, by this point the matchers
  * have been prototyped.
  */
-int				/* 0 success, REG_NOMATCH failure */
+ap_private_extern
+API_EXPORT(int)				/* 0 success, REG_NOMATCH failure */
 regexec(preg, string, nmatch, pmatch, eflags)
 const regex_t *preg;
 const char *string;

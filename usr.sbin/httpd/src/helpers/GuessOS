@@ -3,10 +3,12 @@
 # Simple OS/Platform guesser. Similar to config.guess but
 # much, much smaller. Since it was developed for use with
 # Apache, it follows under Apache's regular licensing
-# with one specific addition: Any changes or additions
-# to this script should be Emailed to the Apache
-# group (apache@apache.org) in general and to
-# Jim Jagielski (jim@jaguNET.com) in specific.
+# (see http://www.apache.org/docs/LICENSE)  with one specific
+# addition: Any changes or additions to this script should be
+# Emailed to the Apache group (apache@apache.org) in general
+# and to Jim Jagielski (jim@apache.org) in specific.
+#
+# Blame Jim; he wrote it (plus a cast of dozens)
 #
 # Be as similar to the output of config.guess/config.sub
 # as possible.
@@ -50,12 +52,20 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
+	    5)
+		if [ "x$VERSION" = "x7" ]; then
+		    echo "${MACHINE}-whatever-unixware7"; exit 0
+		fi
+		;;
 	esac
     fi
 fi
 # Now we simply scan though... In most cases, the SYSTEM info is enough
 #
 case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
+    MiNT:*)
+        echo "m68k-atari-mint"; exit 0
+	;;
     A/UX:*)
 	echo "m68k-apple-aux3"; exit 0
 	;;
@@ -74,18 +84,15 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     HP-UX:*)
 	HPUXVER=`echo ${RELEASE}|sed -e 's/[^.]*.[0B]*//'`
-	case "$HPUXVER" in
-	    10.*)
-		echo "${MACHINE}-hp-hpux10."; exit 0
-		;;
-	    *)
-		echo "${MACHINE}-hp-hpux"; exit 0
-		;;
-	esac
+	echo "${MACHINE}-hp-hpux${HPUXVER}"; exit 0
 	;;
 
     IRIX:*)
-	echo "${MACHINE}-sgi-irix"; exit 0
+	if [ -f /usr/lib32/mips4/libm.so ]; then
+	    echo "${MACHINE}-sgi-irix32"; exit 0
+	else
+	    echo "${MACHINE}-sgi-irix"; exit 0
+	fi
 	;;
 
     IRIX64:*)
@@ -113,11 +120,13 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     FreeBSD:*:*:*486*)
-	echo "i486-whatever-freebsd"; exit 0
+	FREEBSDVERS=`echo ${RELEASE}|sed -e 's/[-(].*//'`
+	echo "i486-whatever-freebsd${FREEBSDVERS}"; exit 0
 	;;
 
     FreeBSD:*)
-	echo "${MACHINE}-whatever-freebsd"; exit 0
+	FREEBSDVERS=`echo ${RELEASE}|sed -e 's/[-(].*//'`
+	echo "${MACHINE}-whatever-freebsd${FREEBSDVERS}"; exit 0
 	;;
 
     NetBSD:*:*:*486*)
@@ -137,14 +146,11 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     QNX:*)
-	case "$VERSION" in
-	    423)
-		echo "${MACHINE}-qssl-qnx32"
-		;;
-	    *)
-		echo "${MACHINE}-qssl-qnx"
-		;;
-	esac
+	if [ "$VERSION" -gt 422 ]; then
+	    echo "${MACHINE}-qssl-qnx32"
+	else
+	    echo "${MACHINE}-qssl-qnx"
+	fi
 	exit 0
 	;;
 
@@ -153,7 +159,13 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     SunOS:5.*)
-	echo "${MACHINE}-sun-solaris2"; exit 0
+	SOLVER=`echo ${RELEASE}|awk -F. '{
+	    if (NF < 3)
+		printf "2%s0\n",$2
+	    else
+	    	printf "2%s%s\n",$2,$3
+	}'`
+	echo "${MACHINE}-sun-solaris2.${SOLVER}"; exit 0
 	;;
 
     SunOS:*)
@@ -164,16 +176,25 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-sysv4"; exit 0
 	;;
 
+    unix:3.0.9*:*:88k)
+	echo "${MACHINE}-encore-sysv4"; exit 0
+	;;
+
     *:4*:R4*:m88k)
 	echo "${MACHINE}-whatever-sysv4"; exit 0
+	;;
+
+    UnixWare:5:99*:*)
+	# Gemini, beta release of next rev of unixware
+	echo "${MACHINE}-whatever-unixware212"; exit 0
 	;;
 
     DYNIX/ptx:4*:*)
 	echo "${MACHINE}-whatever-sysv4"; exit 0
 	;;
 
-    *:4.0:3.0:3[34]?? | *:4.0:3.0:3[34]??,*)
-	echo "i486-ncr-sysv4"; exit 0
+    *:4.0:3.0:[345][0-9]?? | *:4.0:3.0:3[34]??[/,]* | library:*)
+	echo "x86-ncr-sysv4"; exit 0
 	;;
 
     ULTRIX:*)
@@ -184,13 +205,13 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-sni-sysv4"; exit 0
 	;;
 
+    POSIX*BS2000)
+	echo "${MACHINE}-sni-sysv4"; exit 0
+	;;
+
     machten:*)
        echo "${MACHINE}-tenon-${SYSTEM}"; exit 0;
        ;;
-
-    library:*)
-	echo "${MACHINE}-ncr-sysv4"; exit 0
-	;;
 
     ConvexOS:*:11.*:*)
 	echo "${MACHINE}-v11-${SYSTEM}"; exit 0;
@@ -200,8 +221,29 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-ccur-sysv4"; exit 0;
 	;;
     
+    UNIX_SV:*)
+	if [ -d /usr/nec ];then
+		echo "mips-nec-sysv4"; exit 0;
+	fi
+	;;
+
     NonStop-UX:4.[02]*:[BC]*:*)
 	echo "${MACHINE}-tandem-sysv4"; exit 0;
+	;;
+
+    Rhapsody:*:*:*)
+	case "${MACHINE}" in
+	    Power*) MACHINE=powerpc ;;
+	esac
+	echo "${MACHINE}-apple-rhapsody${RELEASE}"; exit 0
+	;;
+
+    "RISC iX":*)
+	echo "arm-whatever-riscix"; exit 0;
+	;;
+
+    *:4.0:2:*)
+	echo "whatever-unisys-sysv4"; exit 0;
 	;;
 
 esac
@@ -223,7 +265,21 @@ fi
 ISNEXT=`hostinfo 2>/dev/null`
 case "$ISNEXT" in
     *NeXT*)
-	echo "whatever-next-nextstep"; exit 0
+#	echo "whatever-next-nextstep"; exit 0
+
+#	Swiped from a friendly uname clone for NEXT/OPEN Step.
+     	NEXTOSVER="`hostinfo | sed -n 's/.*NeXT Mach \([0-9\.]*\).*/\1/p'`"
+	if [ "$NEXTOSVER" -gt 3.3 ]
+     	then
+          NEXTOS="openstep"
+     	else
+          NEXTOS="nextstep"
+     	fi
+
+	NEXTREL="`hostinfo | sed -n 's/.*NeXT Mach \([0-9\.]*\).*/\1/p'`" 
+	NEXTARCH=`arch`
+	echo "${NEXTARCH}-next-${NEXTOS}${NEXTREL}" ; exit 0
+
 	;;
 esac
 

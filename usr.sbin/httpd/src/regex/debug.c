@@ -4,8 +4,8 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <regex.h>
 
+#include "hsregex.h"
 #include "utils.h"
 #include "regex2.h"
 #include "debug.ih"
@@ -234,7 +234,7 @@ int ch;
 {
 	static char buf[10];
 
-	if (isprint(ch) || ch == ' ')
+	if (ap_isprint(ch) || ch == ' ')
 		sprintf(buf, "%c", ch);
 	else
 		sprintf(buf, "\\%o", ch);

@@ -1,7 +1,7 @@
 The following document was written by Robert S. Thau (rst@ai.mit.edu) on the
 release of Apache 1.0.  Some details may have changed since then regarding the
 functions and names of modules, but the basic ideas are still intact.
-=================================================
+ =================================================
 
 The basic idea of the new Apache release is to make a modular
 "tinkertoy" server, to which people can easily add code which is

@@ -4,8 +4,8 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <regex.h>
 
+#include "hsregex.h"
 #include "utils.h"
 #include "regerror.ih"
 
@@ -55,10 +55,10 @@ static struct rerr {
 
 /*
  - regerror - the interface to error numbers
- = extern size_t regerror(int, const regex_t *, char *, size_t);
+ = API_EXPORT(size_t) regerror(int, const regex_t *, char *, size_t);
  */
 /* ARGSUSED */
-size_t
+API_EXPORT(size_t)
 regerror(errcode, preg, errbuf, errbuf_size)
 int errcode;
 const regex_t *preg;

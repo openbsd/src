@@ -1,8 +1,8 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<html>
-<head>
-<title>Apache module mod_info</title>
-</head>
+<HTML>
+<HEAD>
+<TITLE>Apache module mod_info</TITLE>
+</HEAD>
 
 <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 <BODY
@@ -15,13 +15,13 @@
 <DIV ALIGN="CENTER">
  <IMG SRC="../images/sub.gif" ALT="[APACHE DOCUMENTATION]">
  <H3>
-  Apache HTTP Server Version 1.2
+  Apache HTTP Server Version 1.3
  </H3>
 </DIV>
 
-<h1 ALIGN="CENTER">Module mod_info</h1>
+<H1 ALIGN="CENTER">Module mod_info</H1>
 
-This module is contained in the <code>mod_info.c</code> file.  It
+This module is contained in the <CODE>mod_info.c</CODE> file.  It
 provides a comprehensive overview of the server configuration
 including all installed modules and directives in the configuration
 files.  This module is not compiled into the
@@ -30,12 +30,17 @@ enable it, add the following line to the server build Configuration
 file, and rebuild the server:
 
 <PRE>
-Module info_module   mod_info.o
+AddModule modules/standard/mod_info.o
 </PRE>
+
+<H2>Directives</H2>
+<UL>
+<LI><A HREF="#addmoduleinfo">AddModuleInfo</A>
+</UL>
 
 <HR>
 <P>
-To configure it, add the following to your <code>access.conf</code> file.
+To configure it, add the following to your <CODE>access.conf</CODE> file.
 
 <PRE>
 &lt;Location /server-info&gt;
@@ -51,9 +56,9 @@ clause inside the
 <A
  HREF="core.html#location"
 >location</A>
-directive to limit access to your server configuration information.<p>
+directive to limit access to your server configuration information.<P>
 Once configured, the server information is obtained by accessing
-<tt>http://your.host.dom/server-info</tt><p>
+<TT>http://your.host.dom/server-info</TT><P>
 <BLOCKQUOTE>
  <STRONG>
   Note that the configuration files are read by the module at run-time,
@@ -74,9 +79,45 @@ Once configured, the server information is obtained by accessing
   </P>
  </STRONG>
 </BLOCKQUOTE>
+
 <HR>
+
+<H2><A NAME="addmoduleinfo">AddModuleInfo</A></H2>
+<A
+ HREF="directive-dict.html#Syntax"
+ REL="Help"
+><STRONG>Syntax:</STRONG></A> AddModuleInfo <EM>module-name string</EM><BR>
+<A
+ HREF="directive-dict.html#Context"
+ REL="Help"
+><STRONG>Context:</STRONG></A> server config, virtual host<BR>
+<A
+ HREF="directive-dict.html#Status"
+ REL="Help"
+><STRONG>Status:</STRONG></A> base<BR>
+<A
+ HREF="directive-dict.html#Module"
+ REL="Help"
+><STRONG>Module:</STRONG></A> mod_browser<BR>
+<A
+ HREF="directive-dict.html#Compatibility"
+ REL="Help"
+><STRONG>Compatibility:</STRONG></A> Apache 1.3 and above<P>
+
+This allows the content of <EM>string</EM> to be shown as
+HTML interpreted,
+<STRONG>Additional Information</STRONG> for the module <EM>module-name</EM>.
+Example:
+<BLOCKQUOTE>
+<PRE>
+AddModuleInfo mod_auth.c 'See &lt;A HREF="http://www.apache.org/docs/mod/mod_auth.html"&gt;http://www.apache.org/docs/mod/mod_auth.html&lt;/A&gt;'
+</PRE>
+</BLOCKQUOTE>
+
+<HR>
+
 <H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.2
+ Apache HTTP Server Version 1.3
 </H3>
 
 <A HREF="./"><IMG SRC="../images/index.gif" ALT="Index"></A>

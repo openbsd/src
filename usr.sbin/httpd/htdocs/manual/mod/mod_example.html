@@ -14,11 +14,11 @@
   <DIV ALIGN="CENTER">
  <IMG SRC="../images/sub.gif" ALT="[APACHE DOCUMENTATION]">
  <H3>
-  Apache HTTP Server Version 1.2
+  Apache HTTP Server Version 1.3
  </H3>
 </DIV>
 
-  <H1 ALIGN="CENTER">Module mod_example</h1>
+  <H1 ALIGN="CENTER">Module mod_example</H1>
   <P>
   This module is contained in the <CODE>modules/mod_example.c</CODE> file, and
   <STRONG>is not</STRONG> compiled in by default.  It illustrates many of
@@ -38,7 +38,7 @@
   </P>
   <P>
   The main file is <CODE>mod_example.c</CODE>, which illustrates all
-  the different callback mechanisms and call syntaces.  By no means does
+  the different callback mechanisms and call syntaxes.  By no means does
   an add-on module need to include routines for all of the callbacks -
   quite the contrary!
   </P>
@@ -53,11 +53,12 @@
   To include the example module in your server, follow the steps below:
   </P>
   <OL>
-   <LI>Uncomment the "Module example_module" line near the bottom of
+   <LI>Uncomment the "AddModule modules/example/mod_example" line near 
+    the bottom of
     the <CODE>src/Configuration</CODE> file.  If there isn't one, add
     it; it should look like this:
     <PRE>
-     Module example_module        modules/example/mod_example.o
+     AddModule modules/example/mod_example.o
     </PRE>
    </LI>
    <LI>Run the <CODE>src/Configure</CODE> script
@@ -122,28 +123,55 @@
    Example
   </A></H2>
   <P>
-  <STRONG>Syntax:</STRONG> Example
+  <A
+   HREF="directive-dict.html#Syntax"
+   REL="Help" 
+  ><STRONG>Syntax:</STRONG></A> Example
   <BR>
-  <STRONG>Default:</STRONG> None
+  <A
+   HREF="directive-dict.html#Default"
+   REL="Help" 
+  ><STRONG>Default:</STRONG></A> None
   <BR>
-  <STRONG>Context:</STRONG> server config, virtual host, directory, .htaccess
+  <A
+   HREF="directive-dict.html#Context"
+   REL="Help" 
+  ><STRONG>Context:</STRONG></A> server config, virtual host, directory,
+  .htaccess
   <BR>
-  <STRONG>Override:</STRONG> Options
+  <A
+   HREF="directive-dict.html#Override"
+   REL="Help" 
+  ><STRONG>Override:</STRONG></A> Options
   <BR>
-  <STRONG>Status:</STRONG> Extension
+  <A
+   HREF="directive-dict.html#Status"
+   REL="Help" 
+  ><STRONG>Status:</STRONG></A> Extension
   <BR>
-  <STRONG>Module:</STRONG> mod_example
+  <A
+   HREF="directive-dict.html#Module"
+   REL="Help" 
+  ><STRONG>Module:</STRONG></A> mod_example
+  <BR>
+  <A
+   HREF="directive-dict.html#Compatibility"
+   REL="Help" 
+  ><STRONG>Compatibility:</STRONG></A> <SAMP>Example</SAMP> is only
+   available in Apache 1.2 and later.
   </P>
   <P>
-  The Example directive activates the example module's content handler
+  The <SAMP>Example</SAMP> directive activates the example module's
+  content handler 
   for a particular location or file type.  It takes no arguments.  If
   you browse to an URL to which the example content-handler applies, you
   will get a display of the routines within the module and how and in
   what order they were called to service the document request.
   </P>
   <HR>
+
 <H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.2
+ Apache HTTP Server Version 1.3
 </H3>
 
 <A HREF="./"><IMG SRC="../images/index.gif" ALT="Index"></A>

@@ -14,7 +14,7 @@
 <DIV ALIGN="CENTER">
  <IMG SRC="../images/sub.gif" ALT="[APACHE DOCUMENTATION]">
  <H3>
-  Apache HTTP Server Version 1.2
+  Apache HTTP Server Version 1.3
  </H3>
 </DIV>
 
@@ -22,7 +22,7 @@
 
 Below is a set of newsgroup posts made by an engineer from DEC in
 response to queries about how to modify DEC's Digital Unix OS for more
-heavily loaded web sites.  Copied with permission.  
+heavily loaded web sites.  Copied with permission.
 
 <HR>
 
@@ -38,10 +38,10 @@ Date: Fri, 28 Jun 96 16:07:56 MDT<BR>
         mechanism.
 
 <LI>Patch ID OSF350-146 has been superseded by
-<blockquote>
+<BLOCKQUOTE>
                 Patch ID OSF350-195 for V3.2C<BR>
                 Patch ID OSF360-350195 for V3.2D
-</blockquote>
+</BLOCKQUOTE>
         Patch IDs for V3.2E and V3.2F should be available soon.
         There is no known reason why the Patch ID OSF360-350195
         won't work on these releases, but such use is not officially
@@ -56,7 +56,7 @@ From           mogul@pa.dec.com (Jeffrey Mogul)
 Organization   DEC Western Research
 Date           30 May 1996 00:50:25 GMT
 Newsgroups     <A HREF="news:comp.unix.osf.osf1">comp.unix.osf.osf1</A>
-Message-ID     <A HREF="news:4oirch$bc8@usenet.pa.dec.com">&lt;4oirch$bc8@usenet.pa.dec.com&gt;</A>
+Message-ID     &lt;4oirch$bc8@usenet.pa.dec.com&gt;
 Subject        Re: Web Site Performance
 References     1
 
@@ -69,8 +69,10 @@ In article &lt;skoogDs54BH.9pF@netcom.com&gt; skoog@netcom.com (Jim Skoog) write
 &gt;runing DEC UNIX 3.2C, which run DEC's seal firewall and behind
 &gt;that Alpha 1000 and 2100 webservers.
 
-Our experience (running such Web servers as <A HREF="http://altavista.digital.com">altavista.digital.com</A>
-and <A HREF="http://www.digital.com">www.digital.com</A>) is that there is one important kernel tuning
+Our experience (running such Web servers as <A
+ HREF="http://altavista.digital.com">altavista.digital.com</A>
+and <A HREF="http://www.digital.com"
+    >www.digital.com</A>) is that there is one important kernel tuning
 knob to adjust in order to get good performance on V3.2C.  You
 need to patch the kernel global variable "somaxconn" (use dbx -k
 to do this) from its default value of 8 to something much larger.
@@ -104,7 +106,8 @@ with no obvious performance bottlenecks at the millions-of-hits-per-day
 level.
 
 We have some Webstone performance results available at
-        <A HREF="http://www.digital.com/info/alphaserver/news/webff.html">http://www.digital.com/info/alphaserver/news/webff.html</A>
+        <A HREF="http://www.digital.com/info/alphaserver/news/webff.html"
+        >http://www.digital.com/info/alphaserver/news/webff.html</A>
 I'm not sure if these were done using V4.0 or an earlier version
 of Digital UNIX, although I suspect they were done using a test
 version of V4.0.
@@ -119,7 +122,7 @@ From           mogul@pa.dec.com (Jeffrey Mogul)
 Organization   DEC Western Research
 Date           31 May 1996 21:01:01 GMT
 Newsgroups     <A HREF="news:comp.unix.osf.osf1">comp.unix.osf.osf1</A>
-Message-ID     <A HREF="news:4onmmd$mmd@usenet.pa.dec.com">&lt;4onmmd$mmd@usenet.pa.dec.com&gt;</A>
+Message-ID     &lt;4onmmd$mmd@usenet.pa.dec.com&gt;
 Subject        Digital UNIX V3.2C Internet tuning patch info
 
 ----------------------------------------------------------------------------
@@ -142,7 +145,8 @@ so the description of the various tuning parameters in this README
 file might be useful to people running V4.0 systems.
 
 This patch kit does not appear to be available (yet?) from
-        <A HREF="http://www.service.digital.com/html/patch_service.html">http://www.service.digital.com/html/patch_service.html</A>
+        <A HREF="http://www.service.digital.com/html/patch_service.html"
+        >http://www.service.digital.com/html/patch_service.html</A>
 so I guess you'll have to call Digital's Customer Support to get it.
 
 -Jeff
@@ -213,7 +217,7 @@ TUNING
 
         tcp_keepinit            This is the amount of time a partially
                                 established connection will sit on the listen
-                                queue before timing out (e.g. if a client
+                                queue before timing out (<EM>e.g.</EM>, if a client
                                 sends a SYN but never answers our SYN/ACK).
                                 Partially established connections tie up slots
                                 on the listen queue.  If the queue starts to
@@ -281,8 +285,9 @@ sysconfig -q socket         -      -      X
 
 </PRE>
 <HR>
+
 <H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.2
+ Apache HTTP Server Version 1.3
 </H3>
 
 <A HREF="./"><IMG SRC="../images/index.gif" ALT="Index"></A>

@@ -1,5 +1,19 @@
 /*
  * First, the stuff that ends up in the outside-world include file
+ = #ifndef API_EXPORT
+ = #ifdef WIN32
+ = #define API_EXPORT(type)    __declspec(dllexport) type __stdcall
+ = #else
+ = #define API_EXPORT(type)    type
+ = #endif
+ = #endif
+ =
+ = #if defined(RHAPSODY) || defined(NEXT)
+ = #define ap_private_extern __private_extern__
+ = #else
+ = #define ap_private_extern
+ = #endif
+ =
  = typedef off_t regoff_t;
  = typedef struct {
  = 	int re_magic;
@@ -129,4 +143,4 @@ struct re_guts {
 
 /* misc utilities */
 #define	OUT	(CHAR_MAX+1)	/* a non-character value */
-#define	ISWORD(c)	(isalnum(c) || (c) == '_')
+#define	ISWORD(c)	(ap_isalnum(c) || (c) == '_')

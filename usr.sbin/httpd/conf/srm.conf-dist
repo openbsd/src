@@ -12,7 +12,7 @@
 # documents. By default, all requests are taken from this directory, but
 # symbolic links and aliases may be used to point to other locations.
 
-DocumentRoot /usr/local/etc/httpd/htdocs
+DocumentRoot @@ServerRoot@@/htdocs
 
 # UserDir: The name of the directory which is appended onto a user's home
 # directory if a ~user request is recieved.
@@ -84,12 +84,29 @@ HeaderName HEADER
 # IndexIgnore is a set of filenames which directory indexing should ignore
 # Format: IndexIgnore name1 name2...
 
-IndexIgnore */.??* *~ *# */HEADER* */README* */RCS
+IndexIgnore .??* *~ *# HEADER* README* RCS
 
 # AccessFileName: The name of the file to look for in each directory
 # for access control information.
 
 AccessFileName .htaccess
+
+# The following lines prevent .htaccess files from being viewed by
+# Web clients.  Since .htaccess files often contain authorization
+# information, access is disallowed for security reasons.  Comment
+# these lines out if you want Web visitors to see the contents of
+# .htaccess files.  If you change the AccessFileName directive above,
+# be sure to make the corresponding changes here.
+
+<Files .htaccess>
+order allow,deny
+deny from all
+</Files>
+
+# TypesConfig describes where the mime.types file (or equivalent) is
+# to be found.
+
+TypesConfig conf/mime.types
 
 # DefaultType is the default MIME type for documents which the server
 # cannot find the type of from filename extensions.
@@ -135,12 +152,12 @@ LanguagePriority en fr de
 # require it to be present in the URL.  So "/icons" isn't aliased in this
 # example.
 
-#Alias /icons/ /usr/local/etc/httpd/icons/
+Alias /icons/ @@ServerRoot@@/icons/
 
 # ScriptAlias: This controls which directories contain server scripts.
 # Format: ScriptAlias fakename realname
 
-#ScriptAlias /cgi-bin/ /usr/local/etc/httpd/cgi-bin/
+#ScriptAlias /cgi-bin/ @@ServerRoot@@/cgi-bin/
 
 # If you want to use server side includes, or CGI outside
 # ScriptAliased directories, uncomment the following lines.
@@ -148,6 +165,11 @@ LanguagePriority en fr de
 # AddType allows you to tweak mime.types without actually editing it, or to
 # make certain files to be certain types.
 # Format: AddType type/subtype ext1
+
+# For example, the PHP3 module (not part of the Apache distribution)
+# will typically use:
+#AddType application/x-httpd-php3 .phtml
+#AddType application/x-httpd-php3-source .phps
 
 # AddHandler allows you to map certain file extensions to "handlers",
 # actions unrelated to filetype. These can be either built into the server
@@ -204,3 +226,25 @@ LanguagePriority en fr de
 #    3) external redirects
 #ErrorDocument 402 http://some.other_server.com/subscription_info.html
 #
+
+# mod_mime_magic allows the server to use various hints from the file itself
+# to determine its type.
+#MimeMagicFile conf/magic
+
+# The following directives disable keepalives and HTTP header flushes.
+# The first directive disables it for Netscape 2.x and browsers which
+# spoof it. There are known problems with these.
+# The second directive is for Microsoft Internet Explorer 4.0b2
+# which has a broken HTTP/1.1 implementation and does not properly
+# support keepalive when it is used on 301 or 302 (redirect) responses.
+
+BrowserMatch "Mozilla/2" nokeepalive
+BrowserMatch "MSIE 4\.0b2;" nokeepalive downgrade-1.0 force-response-1.0
+
+# The following directive disables HTTP/1.1 responses to browsers which
+# are in violation of the HTTP/1.0 spec by not being able to grok a
+# basic 1.1 response.
+
+BrowserMatch "RealPlayer 4\.0" force-response-1.0
+BrowserMatch "Java/1\.0" force-response-1.0
+BrowserMatch "JDK/1\.0" force-response-1.0
