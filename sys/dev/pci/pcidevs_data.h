@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.362 2001/01/24 04:00:19 millert Exp 
+ *		OpenBSD: pcidevs,v 1.363 2001/01/24 11:06:24 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5109,6 +5109,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Fast Infrared Type O",
 	},
 	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NORTHBRIDGE,
+	    0,
+	    "Transmeta",
+	    "Virtual Northbridge",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_MEM1,
+	    0,
+	    "Transmeta",
+	    "Mem1",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_MEM2,
+	    0,
+	    "Transmeta",
+	    "Mem2",
+	},
+	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,
 	    0,
 	    "Trident",
@@ -8865,6 +8883,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_TRANSMETA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Transmeta",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_ROCKWELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Rockwell",
@@ -8958,6 +8982,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIIG, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "SIIG",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_KAWASAKI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Kawasaki",
 	    NULL,
 	},
 	{

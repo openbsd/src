@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.362 2001/01/24 04:00:19 millert Exp 
+ *		OpenBSD: pcidevs,v 1.363 2001/01/24 11:06:24 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -502,6 +502,7 @@
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
+#define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell */
 #define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Technologies */
 #define	PCI_VENDOR_ITEXPRESS	0x1283		/* ITExpress */
@@ -518,6 +519,7 @@
 #define	PCI_VENDOR_PE	0x1318		/* Packet Engines Inc. */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
+#define	PCI_VENDOR_KAWASAKI	0x136b		/* Kawasaki */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
@@ -1279,6 +1281,9 @@
 /* LuxSonor */
 #define	PCI_PRODUCT_LUXSONOR_LS242	0x0020		/* LS242 DVD Decoder */
 
+/* Kawasaki */
+/* product KAWASAKI HUH		0xff01	No idea */
+
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 98713 */
 #define	PCI_PRODUCT_MACRONIX_MX98715	0x0531		/* PMAC 98715 */
@@ -1687,6 +1692,11 @@
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC97	0x060f		/* ToPIC97 PCI-CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC100	0x0617		/* ToPIC100 PCI-CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_TFIRO	0x0701		/* Fast Infrared Type O */
+
+/* Transmeta products */
+#define	PCI_PRODUCT_TRANSMETA_NORTHBRIDGE	0x0395		/* Virtual Northbridge */
+#define	PCI_PRODUCT_TRANSMETA_MEM1	0x0396		/* Mem1 */
+#define	PCI_PRODUCT_TRANSMETA_MEM2	0x0397		/* Mem2 */
 
 /* Trident products */
 #define	PCI_PRODUCT_TRIDENT_4DWAVE_DX	0x2000		/* 4DWAVE DX */
