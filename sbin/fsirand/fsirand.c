@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.5 1997/02/09 01:10:17 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.6 1997/02/09 06:41:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.5 1997/02/09 01:10:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.6 1997/02/09 06:41:08 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
@@ -162,8 +162,8 @@ fsirand(device)
 	sblock = (struct fs *)&sbuftmp;
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-		if (lseek(devfd, (off_t)(dblk * bsize), SEEK_SET) < 0) {
-			warn("Can't seek to %qd", (off_t)(dblk * bsize));
+		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+			warn("Can't seek to %qd", (off_t)dblk * bsize);
 			return (1);
 		} else if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
 			warn("Can't read backup superblock %d on %s: %s",
@@ -226,8 +226,8 @@ fsirand(device)
 		/* Update superblock if appropriate */
 		if ((sblock->fs_inodefmt >= FS_44INODEFMT) && !printonly) {
 			dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-			if (lseek(devfd, (off_t)(dblk * bsize), SEEK_SET) < 0) {
-				warn("Can't seek to %qd", (off_t)(dblk * bsize));
+			if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+				warn("Can't seek to %qd", (off_t)dblk * bsize);
 				return (1);
 			} else if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
 				warn("Can't read backup superblock %d on %s: %s",
@@ -240,8 +240,8 @@ fsirand(device)
 
 		/* Read in inodes, then print or randomize generation nums */
 		dblk = fsbtodb(sblock, ino_to_fsba(sblock, inumber));
-		if (lseek(devfd, (off_t)(dblk * bsize), SEEK_SET) < 0) {
-			warn("Can't seek to %qd", (off_t)(dblk * bsize));
+		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+			warn("Can't seek to %qd", (off_t)dblk * bsize);
 			return (1);
 		} else if ((n = read(devfd, inodebuf, ibufsize)) != ibufsize) {
 			warnx("Can't read inodes: %s",
@@ -261,9 +261,9 @@ fsirand(device)
 
 		/* Write out modified inodes */
 		if (!printonly) {
-			if (lseek(devfd, (off_t)(dblk * bsize), SEEK_SET) < 0) {
+			if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
 				warn("Can't seek to %qd",
-				    (off_t)(dblk * bsize));
+				    (off_t)dblk * bsize);
 				return (1);
 			} else if ((n = write(devfd, inodebuf, ibufsize)) !=
 				 ibufsize) {
