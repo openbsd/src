@@ -24,7 +24,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.2 2001/02/04 15:32:25 stevesk Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.3 2001/02/06 22:05:25 djm Exp $");
 
 /* XXX: commandline mode */
 /* XXX: copy between two remote hosts (commandline) */
@@ -135,42 +135,51 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int in, out, i, debug_level, compress_flag;
+	int in, out, ch, debug_level, compress_flag;
 	pid_t sshpid;
-	char *cp;
+	char *host, *userhost;
 	LogLevel ll;
+	extern int optind;
+	extern char *optarg;
 
 	debug_level = compress_flag = 0;
-	for(i = 1; i < argc && argv[i][0] == '-'; i++) {
-		if (!strcmp(argv[i], "-v"))
-			debug_level = MIN(3, debug_level + 1);
-		else if (!strcmp(argv[i], "-C"))
+
+	while ((ch = getopt(argc, argv, "hCvo:")) != -1) {
+		switch (ch) {
+		case 'C':
 			compress_flag = 1;
-		else if (!strncmp(argv[i], "-o", 2)) {
-			make_ssh_args(argv[i]);
-		} else {
-			fprintf(stderr, "Unknown option \"%s\"\n", argv[i]);
+			break;
+		case 'v':
+			debug_level = MIN(3, debug_level + 1);
+			break;
+		case 'o':
+			make_ssh_args(optarg);
+			break;
+		case 'h':
+		default:
 			usage();
 		}
 	}
 
-	if (i == argc || argc > (i + 1))
+	if (optind == argc || argc > (optind + 1))
 		usage();
 
-	if ((cp = strchr(argv[i], '@')) == NULL)
-		cp = argv[i];
+	userhost = argv[optind];
+
+	if ((host = strchr(userhost, '@')) == NULL)
+		host = userhost;
 	else {
-		*cp = '\0';
-		if (!argv[i][0]) {
+		*host = '\0';
+		if (!userhost[0]) {
 			fprintf(stderr, "Missing username\n");
 			usage();
 		}
 		make_ssh_args("-l");
-		make_ssh_args(argv[i]);
-		cp++;
+		make_ssh_args(userhost);
+		host++;
 	}
 
-	if (!*cp) {
+	if (!*host) {
 		fprintf(stderr, "Missing hostname\n");
 		usage();
 	}
@@ -200,9 +209,9 @@ main(int argc, char **argv)
 
 	log_init(argv[0], ll, SYSLOG_FACILITY_USER, 1);
 
-	make_ssh_args(cp);
+	make_ssh_args(host);
 
-	fprintf(stderr, "Connecting to %s...\n", cp);
+	fprintf(stderr, "Connecting to %s...\n", host);
 
 	connect_to_server(make_ssh_args(NULL), &in, &out, &sshpid);
 
