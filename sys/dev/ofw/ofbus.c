@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofbus.c,v 1.6 1999/10/28 04:25:25 rahnds Exp $	*/
+/*	$OpenBSD: ofbus.c,v 1.7 2000/01/15 17:17:45 rahnds Exp $	*/
 /*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ ofrattach(parent, dev, aux)
 	ofbprint(ofp, 0);
 	printf("\n");
 
-	if ((l = OF_getprop(ofp->phandle, "name", ofname, sizeof ofname - 1)) < 0)
+	if ((l = OF_getprop(ofp->phandle, "model", ofname, sizeof ofname - 1)) < 0)
 	{
 		/* no system name? */
 	} else {
