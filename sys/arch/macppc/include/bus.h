@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2001/12/14 03:02:50 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -387,6 +387,8 @@ bus_space_copy_4 __P((void *v, bus_space_handle_t h1, bus_space_handle_t h2,
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
+#define BUS_DMA_READ            0x100
+
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
