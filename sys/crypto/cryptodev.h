@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.29 2002/05/18 17:00:33 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.30 2002/06/09 22:23:17 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -96,9 +96,9 @@
 #define CRYPTO_ALGORITHM_MAX	15 /* Keep updated - see below */
 
 /* Algorithm flags */
-#define	CRYPTO_ALG_FLAG_SUPPORTED	0x00000001 /* Algorithm is supported */
-#define	CRYPTO_ALG_FLAG_RNG_ENABLE	0x00000002 /* Has HW RNG for DH/DSA */
-#define	CRYPTO_ALG_FLAG_DSA_SHA		0x00000004 /* Can do SHA on msg */
+#define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
+#define	CRYPTO_ALG_FLAG_RNG_ENABLE	0x02 /* Has HW RNG for DH/DSA */
+#define	CRYPTO_ALG_FLAG_DSA_SHA		0x04 /* Can do SHA on msg */
 
 /* Standard initialization structure beginning */
 struct cryptoini {
