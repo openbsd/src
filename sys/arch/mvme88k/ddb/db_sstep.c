@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.4 1999/02/09 06:36:25 smurph Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.5 2001/03/07 23:58:36 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -208,12 +208,12 @@ next_instr_address(db_addr_t pc, unsigned delay_slot)
  *
  * If the instruction is not a control flow instruction, panic.
  */
-unsigned
-branch_taken(
-    unsigned inst,
-    unsigned pc,
-    db_expr_t (*func)(unsigned int, db_regs_t *),
-    db_regs_t *func_data)  /* 'opaque' */
+db_addr_t
+branch_taken(inst, pc, func, func_data)
+	u_int inst;
+	db_addr_t pc;
+	db_expr_t (*func) __P((db_regs_t *, int));
+	db_regs_t *func_data;
 {
 
   /* check if br/bsr */
@@ -244,7 +244,7 @@ branch_taken(
   /* check jmp/jsr case */
   /* check bits 5-31, skipping 10 & 11 */
   if ((inst & 0xfffff3e0U) == 0xf400c000U)
-    return (*func)(inst & 0x1f, func_data);  /* the register value */
+    return (*func)(func_data, inst & 0x1f);  /* the register value */
 
   panic("branch_taken");
   return 0; /* keeps compiler happy */
