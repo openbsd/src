@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.49 2003/01/04 01:12:08 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.50 2003/05/30 20:47:53 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -54,6 +54,9 @@
 #include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/extent.h>
+#include <sys/core.h>
+#include <sys/exec.h>
+#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -172,11 +175,48 @@ cpu_exit(struct proc *p)
 	/* NOTREACHED */
 }
 
+/*
+ * Dump the machine specific header information at the start of a core dump.
+ */
 int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred, struct core *corep)
+cpu_coredump(p, vp, cred, chdr)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	struct core *chdr;
 {
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p));
+	struct reg reg;
+	struct coreseg cseg;
+	int error;
+
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof(reg);
+
+	/* Save registers. */
+	error = process_read_regs(p, &reg);
+	if (error)
+		return error;
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
+	    NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&reg, sizeof(reg),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	if (error)
+		return error;
+
+	chdr->c_nseg++;
+	return 0;
 }
 
 /*
