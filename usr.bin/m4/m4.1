@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.9 2000/01/11 14:06:11 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.10 2000/03/10 19:07:20 aaron Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -26,17 +26,23 @@ the processed text to the standard output.
 Macro calls have the form name(argument1[, argument2, ..., argumentN]).
 .Pp
 There cannot be any space following the macro name and the open
-parenthesis '('.  If the macro name is not followed by an open
+parenthesis
+.Pq Ql ( .
+If the macro name is not followed by an open
 parenthesis it is processed with no arguments.
 .Pp
 Macro names consist of a leading alphabetic or underscore
 possibly followed by alphanumeric or underscore characters, e.g.,
-valid macro names match the pattern [a-zA-Z_][a-zA-Z0-9_]*.
+valid macro names match the pattern
+.Dq [a-zA-Z_][a-zA-Z0-9_]* .
 .Pp
-In arguments to macros, leading unquoted space, tab and newline
-characters are ignored.  To quote strings, use left and right single
-quotes (e.g., ` this is a string with a leading space').  You can change
-the quote characters with the
+In arguments to macros, leading unquoted space, tab, and newline
+.Pq Ql \en
+characters are ignored.
+To quote strings, use left and right single
+quotes (e.g.,
+.Sq \ this is a string with a leading space ) .
+You can change the quote characters with the
 .Ic changequote
 built-in macro.
 .Pp
@@ -50,7 +56,8 @@ The options are as follows:
 .Oc
 Define the symbol
 .Ar name
-to have some value (or NULL).
+to have some value (or
+.Dv NULL ) .
 .It Fl "U" Ns Ar "name"
 Undefine the symbol
 .Ar name .
@@ -60,38 +67,58 @@ Add directory
 to the include path.
 .Sh SYNTAX
 .Nm m4
-provides the following built-in macros.  They may be
-redefined, losing their original meaning.
-Return values are NULL unless otherwise stated.
+provides the following built-in macros.
+They may be redefined, losing their original meaning.
+Return values are null unless otherwise stated.
 .Bl -tag -width changequotexxx
 .It Ic changecom
-Change the start and end comment sequences.  The default is
-the pound sign `#' and the newline character.  With no arguments
-comments are turned off.  The maximum length for a comment marker is
-five characters.
+Change the start and end comment sequences.
+The default is the pound sign
+.Pq Ql #
+and the newline character.
+With no arguments comments are turned off.
+The maximum length for a comment marker is five characters.
 .It Ic changequote
 Defines the quote symbols to be the first and second arguments.
-The symbols may be up to five characters long.  If no arguments are
+The symbols may be up to five characters long.
+If no arguments are
 given it restores the default open and close single quotes.
 .It Ic decr
-Decrements the argument by 1.  The argument must be a valid numeric string.
+Decrements the argument by 1.
+The argument must be a valid numeric string.
 .It Ic define
 Define a new macro named by the first argument to have the
-value of the second argument.  Each occurrence of $n (where n
-is 0 through 9) is replaced by the n'th argument.  $0 is the name
-of the calling macro.  Undefined arguments are replaced by a
-NULL string.  $# is replaced by the number of arguments; $*
-is replaced by all arguments comma separated; $@ is the same
-as $* but all arguments are quoted against further expansion.
+value of the second argument.
+Each occurrence of
+.Ql $n
+(where
+.Ar n
+is 0 through 9) is replaced by the
+.Ar n Ns 'th
+argument.
+.Ql $0
+is the name of the calling macro.
+Undefined arguments are replaced by a null string.
+.Ql $#
+is replaced by the number of arguments;
+.Ql $*
+is replaced by all arguments comma separated;
+.Ql $@
+is the same as
+.Ql $*
+but all arguments are quoted against further expansion.
 .It Ic defn
-Returns the quoted definition for each argument.  This can be used to rename
+Returns the quoted definition for each argument.
+This can be used to rename
 macro definitions (even for built-in macros).
 .It Ic divert
 There are 10 output queues (numbered 0-9).
 At the end of processing
 .Nm m4
 concatenates all the queues in numerical order to produce the
-final output.  Initially the output queue is 0.  The divert
+final output.
+Initially the output queue is 0.
+The divert
 macro allows you to select a new output queue (an invalid argument
 passed to divert causes output to be discarded).
 .It Ic divnum
@@ -105,58 +132,78 @@ if no arguments are passed.
 Prints the first argument on the standard error output stream.
 .It Ic eval
 Computes the first argument as an arithmetic expression using 32-bit
-arithmetic.  Operators are the standard C ternary, arithmetic, logical,
-shift, relational, bitwise, and parentheses operators.  You can specify
-octal, decimal, and hexadecimal numbers as in C.  The second argument (if
-any) specifies the radix for the result and the third argument (if
-any) specifies the minimum number of digits in the result.
+arithmetic.
+Operators are the standard C ternary, arithmetic, logical,
+shift, relational, bitwise, and parentheses operators.
+You can specify
+octal, decimal, and hexadecimal numbers as in C.
+The second argument (if any)
+specifies the radix for the result and the third argument (if any)
+specifies the minimum number of digits in the result.
 .It Ic expr
 This is an alias for
 .Ic eval .
 .It Ic ifdef
 If the macro named by the first argument is defined then return the second
-argument, otherwise the third.  If there is no third argument,
-the value is NULL.  The word `unix' is predefined.
+argument, otherwise the third.
+If there is no third argument, the value is
+.Dv NULL .
+The word
+.Qq unix
+is predefined.
 .It Ic ifelse
 If the first argument matches the second argument then
 .Ic ifelse
 returns
-the third argument.  If the match fails the three arguments are
+the third argument.
+If the match fails the three arguments are
 discarded and the next three arguments are used until there is
-zero or one arguments left, either this last argument or NULL is
-returned if no other matches were found.
+zero or one arguments left, either this last argument or
+.Dv NULL
+is returned if no other matches were found.
 .It Ic include
 Returns the contents of the file specified in the first argument.
 If the file is not found as is, look through the include path:
 first the directories specified with
 .Fl I
 on the command line, then the environment variable
-.Va M4PATH ,
+.Ev M4PATH ,
 as a colon-separated list of directories.
 Include aborts with an error message if the file cannot be included.
 .It Ic incr
-Increments the argument by 1.  The argument must be a valid numeric string.
+Increments the argument by 1.
+The argument must be a valid numeric string.
 .It Ic index
 Returns the index of the second argument in the first argument (e.g.,
-index(the quick brown fox jumped, fox) returns 16).  If the second
-argument is not found index returns -1.
+.Ic index(the quick brown fox jumped, fox)
+returns 16).
+If the second
+argument is not found index returns \-1.
 .It Ic len
-Returns the number of characters in the first argument.  Extra arguments
+Returns the number of characters in the first argument.
+Extra arguments
 are ignored.
 .It Ic m4exit
 Immediately exits with the return value specified by the first argument,
 0 if none.
 .It Ic m4wrap
-Allows you to define what happens at the final EOF, usually for cleanup
-purposes (e.g., m4wrap("cleanup(tempfile)") causes the macro cleanup to be
+Allows you to define what happens at the final
+.Dv EOF ,
+usually for cleanup purposes (e.g.,
+.Ic m4wrap("cleanup(tempfile)")
+causes the macro cleanup to be
 invoked after all other processing is done.)
 .It Ic maketemp
-Translates the string XXXXX in the first argument with the current process
-ID leaving other characters alone.  This can be used to create unique
+Translates the string
+.Dq XXXXX 
+in the first argument with the current process
+ID leaving other characters alone.
+This can be used to create unique
 temporary file names.
 .It Ic paste
 Includes the contents of the file specified by the first argument without
-any macro processing.  Aborts with an error message if the file cannot be
+any macro processing.
+Aborts with an error message if the file cannot be
 included.
 .It Ic popdef
 Restores the
@@ -170,7 +217,8 @@ stack for later retrieval by
 .Ic popdef .
 .It Ic shift
 Returns all but the first argument, the remaining arguments are
-quoted and pushed back with commas in between.  The quoting
+quoted and pushed back with commas in between.
+The quoting
 nullifies the effect of the extra scan that will subsequently be
 performed.
 .It Ic sinclude
@@ -186,13 +234,15 @@ Returns a substring of the first argument starting at the offset specified
 by the second argument and the length specified by the third argument.
 If no third argument is present it returns the rest of the string.
 .It Ic syscmd
-Passes the first argument to the shell.  Nothing is returned.
+Passes the first argument to the shell.
+Nothing is returned.
 .It Ic sysval
 Returns the return value from the last
 .Ic syscmd .
 .It Ic translit
 Transliterate the characters in the first argument from the set
-given by the second argument to the set given by the third.  You cannot
+given by the second argument to the set given by the third.
+You cannot
 use
 .Xr tr 1
 style abbreviations.

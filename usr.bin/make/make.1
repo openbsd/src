@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.27 2000/01/19 17:28:52 espie Exp $
+.\"	$OpenBSD: make.1,v 1.28 2000/03/10 19:07:21 aaron Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -60,15 +60,15 @@ is a program designed to simplify the maintenance of other programs.
 Its input is a list of specifications as to the files upon which programs
 and other files depend.
 If the file
-.Ql Pa BSDmakefile
+.Pa BSDmakefile
 exists, it is read for this list of specifications.
 If it does not exist, the files
-.Ql Pa makefile
+.Pa makefile
 and
-.Ql Pa Makefile
+.Pa Makefile
 are tried in order.
 If the file
-.Ql Pa .depend
+.Pa .depend
 exists, it is read (see
 .Xr mkdep 1) .
 .Pp
@@ -107,8 +107,8 @@ Print debugging information about conditional evaluation.
 .It Ar d
 Print debugging information about directory searching and caching.
 .It Ar f
-Print debugging information about the execution of for loops. Currently a
-no-op.
+Print debugging information about the execution of for loops.
+Currently a no-op.
 .It Ar "g1"
 Print the input graph before making anything.
 .It Ar "g2"
@@ -131,9 +131,9 @@ Specify that environment variables override macro assignments within
 makefiles.
 .It Fl f Ar makefile
 Specify a makefile to read instead of the default
-.Ql Pa makefile
+.Pa makefile
 and
-.Ql Pa Makefile .
+.Pa Makefile .
 If
 .Ar makefile
 is
@@ -153,7 +153,8 @@ before each command line in the makefile.
 .It Fl j Ar max_jobs
 Specify the maximum number of jobs that
 .Nm
-may have running at any one time. Turns compatibility mode off, unless the
+may have running at any one time.
+Turns compatibility mode off, unless the
 .Ar B
 flag is also specified.
 .It Fl k
@@ -161,7 +162,8 @@ Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
 .It Fl m Ar directory
 Specify a directory in which to search for sys.mk and makefiles included
-via the <...> style.  Multiple directories can be added to form a search path.
+via the <...> style.
+Multiple directories can be added to form a search path.
 This path will override the default system include path:
 .Pa /usr/share/mk .
 Furthermore, the system include path will be appended to the search path used
@@ -183,8 +185,9 @@ up-to-date and 1, otherwise.
 .It Fl r
 Do not use the built-in rules specified in the system makefile.
 .It Fl S
-Stop processing when an error is encountered.  Default
-behavior. This is needed to negate the
+Stop processing when an error is encountered.
+Default behavior.
+This is needed to negate the
 .Fl k
 option during recursive builds.
 .It Fl s
@@ -456,7 +459,8 @@ First, if
 is defined,
 .Nm
 prepends its contents to the current directory name and tries for
-the resulting directory. If that fails,
+the resulting directory.
+If that fails,
 .Nm
 remains in the current directory.
 If
@@ -465,15 +469,18 @@ is not defined,
 .Nm
 checks
 .Ev MAKEOBJDIR
-and tries to change into that directory.  Should that fail,
+and tries to change into that directory.
+Should that fail,
 .Nm
-remains in the current directory.  If
+remains in the current directory.
+If
 .Ev MAKEOBJDIR
 is not defined, it tries to change into the directory named
 .Pa obj.${MACHINE}
 (see
 .Va MACHINE
-variable). If it still has found no special directory,
+variable).
+If it still has found no special directory,
 .Nm
 next tries the directory named
 .Pa obj .
@@ -491,7 +498,8 @@ The environment variable
 may contain anything that
 may be specified on
 .Nm make Ns 's
-command line. Its contents are stored in
+command line.
+Its contents are stored in
 .Nm make Ns 's
 .Va .MAKEFLAGS
 variable.
@@ -669,13 +677,16 @@ simple strings, are a regular expression (see
 .Xr regex 3 )
 and an
 .Xr ed 1 Ns \-style
-replacement string.  Normally, the first occurrence of the pattern in
-each word of the value is changed.  The
+replacement string.
+Normally, the first occurrence of the pattern in
+each word of the value is changed.
+The
 .Ql 1
 modifier causes the substitution to apply to at most one word; the
 .Ql g
 modifier causes the substitution to apply to as many instances of the
-search pattern as occur in the word or words it is found in.  Note that
+search pattern as occur in the word or words it is found in.
+Note that
 .Ql 1
 and
 .Ql g
@@ -697,7 +708,8 @@ do not contain the pattern matching character
 .Ar %
 then it is assumed that they are
 anchored at the end of each word, so only suffixes or entire
-words may be replaced. Otherwise
+words may be replaced.
+Otherwise
 .Ar %
 is the substring of
 .Ar old_string
@@ -705,7 +717,7 @@ to be replaced in
 .Ar new_string
 .El
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
-Makefile inclusion, conditional structures and for loops  reminiscent
+Makefile inclusion, conditional structures and for loops reminiscent
 of the C programming language are provided in
 .Nm make .
 All such structures are identified by a line beginning with a single
@@ -867,11 +879,14 @@ has been defined.
 .El
 .Pp
 .Ar expression
-may also be an arithmetic or string comparison.  Variable expansion is
+may also be an arithmetic or string comparison.
+Variable expansion is
 performed on both sides of the comparison, after which the integral
-values are compared.  A value is interpreted as hexadecimal if it is
+values are compared.
+A value is interpreted as hexadecimal if it is
 preceded by 0x, otherwise it is decimal; octal numbers are not supported.
-The standard C relational operators are all supported.  If after
+The standard C relational operators are all supported.
+If after
 variable expansion, either the left or right hand side of a
 .Ql Ic ==
 or
@@ -932,8 +947,8 @@ The syntax of a for loop is:
 .El
 After the for
 .Ar expression
-is evaluated, it is split into words. The
-iteration
+is evaluated, it is split into words.
+The iteration
 .Ar variable
 is successively set to each word, and substituted in the
 .Ic make-rules
@@ -996,7 +1011,8 @@ to them.
 If special
 .Ic .WAIT
 source is appears in a dependency line, the sources that precede it are
-made before the sources that succeed it in the line. Loops are not being
+made before the sources that succeed it in the line.
+Loops are not being
 detected and targets that form loops will be silently ignored.
 .El
 .Sh "SPECIAL TARGETS"
@@ -1032,7 +1048,8 @@ If no sources are specified, this is the equivalent of specifying the
 option.
 .It Ic .INCLUDES
 A list of suffixes that indicate files that can be included in a source
-file. The suffix must have already been declared with
+file.
+The suffix must have already been declared with
 .Ic .SUFFIXES ,
 any suffix so declared will have the directories on its search path (see
 .Ic .PATH )
@@ -1053,7 +1070,8 @@ does for include files, except that the flag used is
 .It Ic .MAIN
 If no target is specified when
 .Nm
-is invoked, this target will be built. This is always set, either
+is invoked, this target will be built.
+This is always set, either
 explicitly, or implicitly when
 .Nm
 selects the default target, to give the user a way to refer to the default
@@ -1094,7 +1112,8 @@ path if the file is not found there.
 .It Ic .PHONY
 Apply the
 .Ic .PHONY
-attribute to any specified sources. Targets with this attribute are always
+attribute to any specified sources.
+Targets with this attribute are always
 considered to be out of date.
 .It Ic .PRECIOUS
 Apply the
@@ -1188,7 +1207,8 @@ special target exists.
 .Pp
 The evaluation of
 .Ar expression
-in a test is very simple-minded. Currently, the only form that works is
+in a test is very simple-minded.
+Currently, the only form that works is
 .Ql .if ${VAR} op something
 For instance, you should write tests as
 .Ql .if ${VAR} = "string"
@@ -1213,7 +1233,8 @@ was truncated.
 Variable handling is incredibly inefficient.
 .Pp
 The handling of ; and other special characters in tests may be utterly
-bogus. For instance, in
+bogus.
+For instance, in
 .Bd -literal
 \&A=abcd;c.c
 \&.if ${A:R} == "abcd;c"
@@ -1221,7 +1242,8 @@ bogus. For instance, in
 .Pp
 the test will never match, even though the value is correct.
 .Pp
-The conditional handler is incredibly lame. Junk such as
+The conditional handler is incredibly lame.
+Junk such as
 .Bd -literal
 \&.if defined anything goes (A)
 .Ed
@@ -1239,6 +1261,8 @@ A+=$I
 A will evaluate to a b c d after the loop, not z b c d.
 .Sh SEE ALSO
 .Xr mkdep 1
+.Pp
+.%T "Make \- A Tutorial" .
 .Sh HISTORY
 A
 .Nm

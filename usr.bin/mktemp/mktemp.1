@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.14 2000/03/05 00:28:57 aaron Exp $
+.\"	$OpenBSD: mktemp.1,v 1.15 2000/03/10 19:07:22 aaron Exp $
 .\"
 .\" Copyright (c) 1996, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -41,16 +41,18 @@
 The
 .Nm mktemp
 utility takes the given file name template and overwrites a
-portion of it to create a unique file name.  The template may be
-any file name with some number of
+portion of it to create a unique file name.
+The template may be any file name with some number of
 .Ql X Ns s
 appended
 to it, for example
 .Pa /tmp/temp.XXXXXXXXXX .
+.Pp
 The trailing
 .Ql X Ns s
 are replaced with a combination of the the current process number and
-random letters.  The name chosen depends both on the number of
+random letters.
+The name chosen depends both on the number of
 .Ql X Ns s
 in the template and the number of collisions with pre-existing files.
 The number of unique file names
@@ -75,13 +77,14 @@ flag is given) and the filename is printed to standard output.
 .Nm mktemp
 is provided to allow shell scripts to safely use temporary files.
 Traditionally, many shell scripts take the name of the program with
-the PID as a suffix and use that as a temporary file name.  This
-kind of naming scheme is predictable and the race condition it creates
-is easy for an attacker to win.  A safer, though still inferior approach
-is to make a temporary directory using the same naming scheme.  While
-this does allow one to guarantee that a temporary file will not be
-subverted, it still allows a simple denial of service attack.  For these
-reasons it is suggested that
+the PID as a suffix and use that as a temporary file name.
+This kind of naming scheme is predictable and the race condition it creates
+is easy for an attacker to win.
+A safer, though still inferior approach
+is to make a temporary directory using the same naming scheme.
+While this does allow one to guarantee that a temporary file will not be
+subverted, it still allows a simple denial of service attack.
+For these reasons it is suggested that
 .Nm
 be used instead.
 .Pp
@@ -90,19 +93,22 @@ The options are as follows:
 .It Fl d
 Make a directory instead of a file.
 .It Fl q
-Fail silently if an error occurs.  This is useful if
+Fail silently if an error occurs.
+This is useful if
 a script does not want error output to go to standard error.
 .It Fl u
 Operate in
 .Dq unsafe
-mode.  The temp file will be unlinked before
+mode.
+The temp file will be unlinked before
 .Nm
-exits.  This is slightly better than
+exits.
+This is slightly better than
 .Fn mktemp 3
-but still introduces a race condition.  Use of this
-option is not encouraged.
+but still introduces a race condition.
+Use of this option is not encouraged.
 .El
-.Sh RETURN VALUES
+.Pp
 The
 .Nm
 utility
@@ -130,8 +136,8 @@ fi
 .Pp
 Or perhaps you don't want to exit if
 .Nm
-is unable to create the file.  In this case you can protect the
-part of the script thusly.
+is unable to create the file.
+In this case you can protect the part of the script thusly.
 .Bd -literal -offset indent
 TMPFILE=`mktemp /tmp/$0.XXXXXXXXXX` && {
 	# Safe to use $TMPFILE in this block

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.11 1999/09/16 09:37:44 deraadt Exp $
+.\"	$OpenBSD: man.1,v 1.12 2000/03/10 19:07:21 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,9 +171,11 @@ Another way of specifying the section, for compatibility with
 .Nm
 on other operating systems.
 .It Fl S Ar subsection
-Specifies the machine-dependent subsection.  This overrides the
+Specifies the machine-dependent subsection.
+This overrides the
 .Ev MACHINE
-environment variable.  See the
+environment variable.
+See the
 .Sx ENVIRONMENT
 section below.
 .It Fl w
@@ -209,6 +211,8 @@ not a valid section,
 .Nm
 assumes that the argument is the name of a manual page to be displayed.
 .Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm man :
 .Bl -tag -width MANPATHX
 .It Ev MACHINE
 As some manual pages are intended only for specific architectures,

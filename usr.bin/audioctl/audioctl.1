@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.8 2000/03/04 20:41:44 aaron Exp $
+.\" $OpenBSD: audioctl.1,v 1.9 2000/03/10 19:07:21 aaron Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,9 +97,12 @@ or
 .Pp
 .Dl (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
 .Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm audioctl :
 .Bl -tag -width AUDIOCTLDEVICE
 .It Ev AUDIOCTLDEVICE
-The audio control device to use.
+Audio control device to use.
+.El
 .Sh FILES
 .Bl -tag -width /dev/audioctl
 .It Pa /dev/audioctl

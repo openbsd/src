@@ -1,5 +1,6 @@
-.\" $OpenBSD: midiplay.1,v 1.4 1999/07/02 20:11:46 aaron Exp $
+.\" $OpenBSD: midiplay.1,v 1.5 2000/03/10 19:07:21 aaron Exp $
 .\" $NetBSD: midiplay.1,v 1.3 1998/08/13 18:26:36 augustss Exp $
+.\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -56,13 +57,14 @@ command plays MIDI files using the sequencer device.
 If no file name is given it will play from standard input, otherwise
 it will play the named files.
 .Pp
-The program accepts the following options:
+The options are as follows:
 .Bl -tag -width Fl
 .It Fl d Ar devno
 Specifies the number of the MIDI device used for output (as listed
 by the
 .Fl l
-flag).  The default is device 0.
+flag).
+The default is device 0.
 .It Fl f Ar file
 Specifies the name of the sequencer device.
 .It Fl l
@@ -72,9 +74,11 @@ Show MIDI file meta events (copyright, lyrics, etc).
 .It Fl q
 Do not play the MIDI file, just parse it.
 .It Fl t Ar tempo
-Specifies the tempo.  Default is 100.
+Specifies the tempo.
+Default is 100.
 .It Fl v
-Be verbose.  If the flag is repeated the verbosity increases.
+Be verbose.
+If the flag is repeated the verbosity increases.
 .It Fl x
 Play a small sample sound.
 .Sh FILES

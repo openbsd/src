@@ -1,4 +1,4 @@
-.\"	$OpenBSD: look.1,v 1.7 2000/03/06 03:17:39 aaron Exp $
+.\"	$OpenBSD: look.1,v 1.8 2000/03/10 19:07:20 aaron Exp $
 .\"	$NetBSD: look.1,v 1.3 1994/12/23 01:10:59 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -64,18 +64,19 @@ If
 .Ar file
 is not specified, the file
 .Pa /usr/share/dict/words
-is used. Only alphanumeric characters are compared and the case of
+is used.
+Only alphanumeric characters are compared and the case of
 alphabetic characters is ignored.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
-Dictionary character set and order, i.e. only alphanumeric characters
+Dictionary character set and order, i.e., only alphanumeric characters
 are compared.
 .It Fl f
 Ignore the case of alphabetic characters.
 .It Fl t Ar termchar
-Specify a string termination character, i.e. only the characters
+Specify a string termination character, i.e., only the characters
 in
 .Ar string
 up to and including the first occurrence of
@@ -86,7 +87,7 @@ are compared.
 The
 .Nm
 utility exits 0 if one or more lines were found and displayed,
-1 if no lines were found, and >1 if an error occurred.
+1 if no lines were found, or >1 if an error occurred.
 .Sh FILES
 .Bl -tag -width /usr/share/dict/words -compact
 .It Pa /usr/share/dict/words

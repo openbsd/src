@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.6 1999/06/05 01:21:34 aaron Exp $
+.\"	$OpenBSD: nc.1,v 1.7 2000/03/10 19:07:22 aaron Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -50,9 +50,11 @@ The
 (or
 .Nm netcat )
 utility is used for just about anything under the sun
-involving TCP or UDP.  It can open TCP connections, send UDP packets,
+involving TCP or UDP.
+It can open TCP connections, send UDP packets,
 listen on arbitrary TCP and UDP ports, do port scanning, and source
-routing.  Unlike
+routing.
+Unlike
 .Xr telnet 1 ,
 .Nm
 scripts nicely, and separates error messages onto standard error instead
@@ -62,11 +64,13 @@ does with some.
 .Pp
 Destination ports can be single integers, names as listed in
 .Xr services 5 ,
-or ranges.  Ranges are in the form nn-mm, and several separate ports and/or
+or ranges.
+Ranges are in the form nn-mm, and several separate ports and/or
 ranges may be specified on the command line.
 .Pp
 Common uses include:
-.Bl -bullet
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 simple TCP proxies
 .It
@@ -83,16 +87,19 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl e Ar command
 Execute the specified command, using data from the network for stdin,
-and sending stdout and stderr to the network.  This option is only present if
+and sending stdout and stderr to the network.
+This option is only present if
 .Nm
 was compiled with the GAPING_SECURITY_HOLE compile time option, since it
 allows users to make arbitrary programs available to anyone on the network.
 .It Fl g Ar intermediate-host
-Specifies a hop along a loose source routed path.  Can be used more than
-once to build a chain of hop points.
+Specifies a hop along a loose source routed path.
+Can be used more than once to build a chain of hop points.
 .It Fl G Ar pointer
-Positions the "hop counter" within the list of machines in the path of
-a source routed packet.  Must be a multiple of 4.
+Positions the
+.Dq hop counter
+within the list of machines in the path of a source routed packet.
+Must be a multiple of 4.
 .It Fl i Ar seconds
 Specifies a delay time interval between lines of text sent and received.
 Also causes a delay time between connections to multiple ports.
@@ -100,7 +107,8 @@ Also causes a delay time between connections to multiple ports.
 Is used to specify that
 .Nm
 should listen for an incoming connection, rather than initiate a
-connection to a remote host.  Any hostname/IP address and port arguments
+connection to a remote host.
+Any hostname/IP address and port arguments
 restrict the source of inbound connections to only that address and
 source port.
 .It Fl n
@@ -108,8 +116,17 @@ Do not do DNS lookups on any of the specified addresses or hostnames, or
 names of port numbers from /etc/services.
 .It Fl o Ar filename
 Create a hexadecimal log of data transferred in the specified file.
-Each line begins with ``<'' or ``>''.  ``<'' means "from the net" and ``>''
-means "to the net".
+Each line begins with
+.Ql <
+or
+.Ql > .
+.Ql <
+means
+.Dq from the net
+and
+.Ql >
+means
+.Dq to the net .
 .It Fl p Ar port
 Specifies the source port
 .Nm
@@ -127,9 +144,11 @@ to bring up a dummy interface with the desired source IP address.
 Causes
 .Nm
 to send RFC854 DON'T and WON'T responses to RFC854 DO
-and WILL requests.  This makes it possible to use
+and WILL requests.
+This makes it possible to use
 .Nm
-to script telnet sessions.  The presence of this option can be
+to script telnet sessions.
+The presence of this option can be
 enabled or disabled as a compile-time option.
 .It Fl u
 Use UDP instead of TCP.
@@ -139,9 +158,11 @@ will behave as if a connection is established until it receives an
 ICMP packet indicating that there is no program listening to what it
 sends.
 .It Fl v
-Verbose.  Cause
+Verbose.
+Cause
 .Nm
-to display connection information.  Using
+to display connection information.
+Using
 .Fl v
 more than once will cause
 .Nm
@@ -157,9 +178,8 @@ input closes.
 Specifies that
 .Nm
 should just scan for listening
-daemons, without sending any data to them.  Diagnostic messages about refused
-connections will not be
-displayed unless
+daemons, without sending any data to them.
+Diagnostic messages about refused connections with not be displayed unless
 .Fl v
 is specified twice.
 .Sh EXAMPLES
@@ -168,7 +188,8 @@ is specified twice.
 Wait for the user to type what would normally be command-line
 arguments in at stdin.
 .It Li "nc example.host 42"
-Open a TCP connection to port 42 of example.host.  If the connection
+Open a TCP connection to port 42 of example.host.
+If the connection
 fails, do not display any error messages, but simply exit.
 .It Li "nc -p 31337 example.host 42"
 Open a TCP connection to port 42 of example.host, and use port 31337

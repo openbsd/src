@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nice.1,v 1.6 1999/10/17 20:24:33 aaron Exp $
+.\"	$OpenBSD: nice.1,v 1.7 2000/03/10 19:07:22 aaron Exp $
 .\"	$NetBSD: nice.1,v 1.6 1995/08/31 23:30:57 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -67,15 +67,14 @@ A positive or negative decimal integer used to modify the system scheduling
 priority of
 .Ar utility .
 .El
-.Sh DIAGNOSTICS
+.Pp
 The
 .Nm
 utility shall exit with one of the following values:
-.Bl -tag -width indent
+.Pp
+.Bl -tag -width indent -offset indent -compact
 .It 1\-125
-An error occurred in the
-.Nm
-utility.
+An error occurred.
 .It 126
 The
 .Ar utility
@@ -112,8 +111,9 @@ utility appeared in
 .Sh BUGS
 .Nm
 is built into
-.Xr csh  1
-with a slightly different syntax than described here.  The form
+.Xr csh 1
+with a slightly different syntax than described here.
+The form
 .Ql nice +10
 nices to positive nice, and
 .Ql nice \-10

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.17 2000/03/05 00:28:53 aaron Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.18 2000/03/10 19:07:22 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -62,8 +62,8 @@
 .Nm
 is a program that should be scheduled to run periodically by
 .Xr cron 8 .
-When it is executed it archives log files if necessary.  If a log file
-is determined to require archiving,
+When it is executed it archives log files if necessary.
+If a log file is determined to require archiving,
 .Nm
 rearranges the files so that
 .Pa logfile
@@ -74,12 +74,49 @@ the last period's logs in it,
 .Pa logfile.1
 has the next to last
 period's logs in it, and so on, up to a user-specified number of
-archived logs.  Optionally the archived logs can be compressed to save
+archived logs.
+Optionally the archived logs can be compressed to save
 space.
 .Pp
-A log can be archived because of two reasons.  The log file can have
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f Ar config-file
+Use
+.Ar config-file
+instead of
+.Pa /etc/newsyslog.conf
+for the configuration file.
+.It Fl v
+Be verbose.
+In this mode it will print out each log and its
+reasons for either trimming that log or skipping it.
+.It Fl n
+Do not trim the logs, but instead print out what would be done if this option
+were not specified.
+.It Fl r
+Removes the restriction that
+.Nm
+must be running as root.
+Of course,
+.Nm
+will not be able to send a
+.Dv SIGHUP
+signal to
+.Xr syslogd 8 ,
+so this option should only be used in debugging.
+.It Fl m
+Monitoring mode; only entries marked with an
+.Sq M
+in flags are processed,
+and notifications sent if any have changed.
+Without this option, monitored entries are not processed.
+.El
+.Pp
+A log can be archived because of two reasons.
+The log file can have
 grown bigger than a preset size in kilobytes, or a preset number of
-hours may have elapsed since the last log archive.  The granularity of
+hours may have elapsed since the last log archive.
+The granularity of
 .Nm
 is dependent on how often it is scheduled to run in
 .Xr cron 8 .
@@ -89,27 +126,32 @@ without any ill effects.
 When starting up,
 .Nm
 reads in a configuration file to determine which logs should be looked
-at.  By default, this configuration file is
+at.
+By default, this configuration file is
 .Pa /etc/newsyslog.conf .
 Each line of the file contains information about a particular log file
 that should be handled by
 .Nm newsyslog .
 Each line has five mandatory fields and up to three optional fields, with a
-whitespace separating each field.  Blank lines or lines beginning with
-.Ql #
-are ignored.  The fields of the configuration file are as
+whitespace separating each field.
+Blank lines or lines beginning with a hash mark
+.Pq Ql #
+are ignored.
+The fields of the configuration file are as
 follows:
 .Bl -tag -width XXXXXXXXXXXXXXXX
 .It logfile name
 The full pathname of the system log file to be archived.
 .It owner.group of archives (optional)
-Specify an ownership and group for the archive file.  The
+Specify an ownership and group for the archive file.
+The
 .Ql \&.
 is essential, even if the
 .Ar owner
 or
 .Ar group
-field is left blank.  The fields may be numeric, or a name which is looked up
+field is left blank.
+The fields may be numeric, or a name which is looked up
 in the system password and group databases.
 .It mode of logfile & archives
 Octal mode of created log files and archives.
@@ -117,14 +159,15 @@ Octal mode of created log files and archives.
 Specify the number of archives to be kept besides the log file itself.
 .It size of archives
 When the size of the log file reaches this point, the log file becomes trimmed
-as described above.  If this field is replaced by a
+as described above.
+If this field is replaced by a
 .Ql * ,
 then the size of
 the log file is not taken into account when determining when to trim the
 log file.
 .It archive interval
-Specify the time separation between the trimming of the log file.  If this
-field is replaced by a
+Specify the time separation between the trimming of the log file.
+If this field is replaced by a
 .Ql * ,
 the number of hours since the last time the
 log was trimmed will not be taken into consideration.
@@ -132,26 +175,30 @@ log was trimmed will not be taken into consideration.
 The
 .Ar flags
 field specifies if the archives should have any special processing
-done to the archived log files.  The
+done to the archived log files.
+The
 .Sq Z
 flag will make the archive
 files compressed to save space using
 .Xr gzip 1
 or
 .Xr compress 1 ,
-depending on compilation options.  The
+depending on compilation options.
+The
 .Sq B
 flag means that the file is a
 binary file, and so the ASCII message which
 .Nm
 inserts to indicate the fact that the logs have been turned over
-should not be included.  The
+should not be included.
+The
 .Sq M
 flag marks this entry as a monitored
 log file.
 .It monitor notification (optional)
 Specify the account that should receive notification messages if this is
-a monitored log file.  Notification messages are sent as email; the operator
+a monitored log file.
+Notification messages are sent as email; the operator
 deserves what they get if they mark the
 .Xr sendmail 8
 log file as monitored.
@@ -161,53 +208,18 @@ Specify a file containing the PID of a process to send a
 signal to instead of
 .Pa /var/run/syslog.pid .
 .It signal (optional)
-Specify the signal to send to the process instead of SIGHUP.  Signal names
+Specify the signal to send to the process instead of
+.Dv SIGHUP .
+Signal names
 must start with
 .Dq SIG
-and be the signal name, not the number.  Eg.
+and be the signal name, not the number, e.g.,
 .Em SIGUSR1 .
 .It command (optional)
 Specify a command to run instead of sending a signal to the process.
-The command must be enclosed in double quotes ('"').  You cannot specify
-both a command and a pid file.
-.El
-.Pp
-The options are as follows:
-.Bl -tag -width XXX
-.It Fl f Ar config-file
-Instructs newsyslog to use
-.Ar config-file
-instead of
-.Pa /etc/newsyslog.conf
-for its configuration file.
-.It Fl v
-Places
-.Nm
-in verbose mode.  In this mode it will print out each log and its
-reasons for either trimming that log or skipping it.
-.It Fl n
-Causes
-.Nm
-not to trim the logs, but to print out what it would do if this option
-were not specified.
-.It Fl r
-Removes the restriction that
-.Nm
-must be running as root.  Of course,
-.Nm
-will not be able to send a
-.Dv SIGHUP
-signal to
-.Xr syslogd 8 ,
-so this option should only be used in debugging.
-.It Fl m
-Places
-.Nm
-in monitoring mode; only entries marked with an
-.Sq M
-in flags are processed,
-and notifications sent if any have changed.  Without this option, monitored
-entries are not processed.
+The command must be enclosed in double quotes
+.Pq Ql \&" ) .
+You cannot specify both a command and a PID file.
 .El
 .Sh FILES
 .Bl -tag -width /etc/newsyslog.conf
@@ -220,7 +232,7 @@ default configuration file
 .Xr syslog 3 ,
 .Xr syslogd 8
 .Sh AUTHOR
-.Bd -unfilled -offset indent
+.Bd -unfilled
 Theodore Ts'o, MIT Project Athena
 Copyright 1987, Massachusetts Institute of Technology
 .Ed

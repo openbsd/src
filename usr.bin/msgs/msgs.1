@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgs.1,v 1.8 2000/03/05 00:28:58 aaron Exp $
+.\"	$OpenBSD: msgs.1,v 1.9 2000/03/10 19:07:22 aaron Exp $
 .\"	$NetBSD: msgs.1,v 1.5 1995/09/28 06:57:39 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -78,8 +78,8 @@ is often used in login scripts.
 .It Fl h
 Print the first part of messages only.
 .It Fl r
-Disables the ability to save messages or enter the mailer.  It is
-assumed that the
+Disables the ability to save messages or enter the mailer.
+It is assumed that the
 .Ev PAGER
 environment is set to something secure.
 .It Fl l
@@ -106,7 +106,8 @@ file, useful for reviews of recent messages.
 .It Fl p
 Pipe long messages through the program specified by the
 .Ev PAGER
-environment variable. If
+environment variable.
+If
 .Ev PAGER
 is null or not defined,
 .Xr more 1
@@ -147,9 +148,15 @@ will pick up where it last left off.
 Append the current message to the file
 .Pa Messages
 in the current directory;
-`s\-' will save the previously displayed message. A `s' or `s\-' may
-be followed by a space and a file name to receive the message replacing
-the default ``Messages''.
+.Sq s\-
+will save the previously displayed message.
+An
+.Sq s
+or
+.Sq s\-
+may be followed by a space and a file name to receive the message replacing
+the default
+.Dq Messages .
 .It Ic m
 A copy of the specified message is placed in a temporary
 mailbox and
@@ -158,14 +165,20 @@ is invoked on that mailbox.
 .It Ic p
 The specified message is piped through the program specified by the
 .Ev PAGER
-environment variable. If
+environment variable.
+If
 .Ev PAGER
 is not defined,
 .Xr more 1
 is used.
 .El
 .Pp
-The commands `m', `p', and `s' all accept a numeric argument in place of the
+The commands
+.Ic m ,
+.Ic p ,
+and
+.Ic s
+all accept a numeric argument in place of the
 .Sq \&- .
 .Pp
 .Nm msgs
@@ -192,7 +205,8 @@ file the next time it is run.
 .Pp
 The
 .Fl s
-option is used for setting up the posting of messages.  The line
+option is used for setting up the posting of messages.
+The line
 .Pp
 .Dl msgs: \&"\&| /usr/bin/msgs \-s\&"
 .Pp
@@ -210,7 +224,8 @@ An entry with the
 .Fl c
 option should be placed in
 .Pa /etc/crontab
-to run every night.  This will remove all messages over 21 days old.
+to run every night.
+This will remove all messages over 21 days old.
 A different expiration may be specified on the command line to override
 the default.
 .Pp
@@ -226,7 +241,8 @@ uses the
 and
 .Ev TERM
 environment variables for the default home directory and
-terminal type. If defined and non-null, the
+terminal type.
+If defined and non-null, the
 .Ev PAGER
 variable is invoked as the pagination program.
 .Sh FILES

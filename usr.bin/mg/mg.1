@@ -13,12 +13,13 @@ is intended to be a small, fast, and portable editor for
 people who can't (or don't want to) run the real emacs for one
 reason or another, or are not familiar with the
 .Xr vi 1
-editor.  It is compatible with emacs because there shouldn't
+editor.
+It is compatible with emacs because there shouldn't
 be any reason to learn more editor types than emacs or
 .Xr vi 1 .
 .Pp
-Normal editing commands are very similar to Gnu Emacs.  In the
-following examples, ^X means control-X, and M-X means Meta-X,
+Normal editing commands are very similar to Gnu Emacs.
+In the following examples, ^X means control-X, and M-X means Meta-X,
 where the Meta key may be either a special key on your keyboard
 or the ALT key; otherwise ESC followed by the key X works as well.
 .Pp
@@ -78,11 +79,14 @@ For more key bindings, type
 .Nm
 differs primarily in not having special modes for tasks other than
 straight editing, e.g., mail and news, and in not having special modes that
-support various programming languages.  It does have text justification
-and auto-fill mode.  Since it is written completely in C, there is no
-language in which you can write extensions.  However, you can rebind
-keys and change some parameters.  There are no limits to line length
-or format.  Command, buffer, and file name completion and listing can
+support various programming languages.
+It does have text justification
+and auto-fill mode.
+Since it is written completely in C, there is no
+language in which you can write extensions.
+However, you can rebind keys and change some parameters.
+There are no limits to line length or format.
+Command, buffer, and file name completion and listing can
 be done using the spacebar and
 .Ql ? ,
 respectively.
@@ -102,12 +106,13 @@ is set to
 .Nm
 will use
 .Pa .mg-vt100
-as a startup file.  The terminal type startup file is used
-first.
+as a startup file.
+The terminal type startup file is used first.
 See the manual for a full list of the commands that can
 go in the files.
 .Pp
-Here's another example sequence that you may find useful.  By default,
+Here's another example sequence that you may find useful.
+By default,
 .Dq ()
 and
 .Dq []
@@ -134,7 +139,8 @@ terminal-specific startup file
 When you type
 .Ql ?
 to list possible file names, buffer names, etc.,
-a help buffer is created for the possibilities.  In Gnu Emacs,
+a help buffer is created for the possibilities.
+In Gnu Emacs,
 this buffer goes away the next time you type a real command.
 In
 .Nm mg ,

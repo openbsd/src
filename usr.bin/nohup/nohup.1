@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nohup.1,v 1.5 1999/06/05 01:21:35 aaron Exp $
+.\"	$OpenBSD: nohup.1,v 1.6 2000/03/10 19:07:23 aaron Exp $
 .\"	$NetBSD: nohup.1,v 1.5 1995/08/31 23:35:24 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -63,24 +63,12 @@ appended to the file
 in the current directory.
 If standard error is a terminal, it is directed to the same place
 as the standard output.
-.Sh ENVIRONMENT
-The following variable is utilized by
-.Nm nohup :
-.Bl -tag -width flag
-.It Ev HOME
-If the output file
-.Pa nohup.out
-cannot be created in the current directory, the
-.Nm nohup
-utility uses the directory named by
-.Ev HOME
-to create the file.
-.El
-.Sh DIAGNOSTICS
+.Pp
 The
 .Nm nohup
 utility shall exit with one of the following values:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It 126
 The
 .Ar utility
@@ -96,6 +84,19 @@ Otherwise, the exit status of
 .Nm nohup
 shall be that of
 .Ar utility .
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm nohup :
+.Bl -tag -width flag
+.It Ev HOME
+If the output file
+.Pa nohup.out
+cannot be created in the current directory, the
+.Nm nohup
+utility uses the directory named by
+.Ev HOME
+to create the file.
+.El
 .Sh SEE ALSO
 .Xr signal 3
 .Sh STANDARDS
