@@ -1,12 +1,12 @@
 #	from @(#)README	8.1 (Berkeley) 6/9/93
-#	$OpenBSD: README,v 1.4 1998/01/21 00:29:18 art Exp $
+#	$OpenBSD: README,v 1.5 2001/05/14 14:40:37 hin Exp $
 
 Notes about the contents of the /etc/kerberosIV directory:
 
-(please check /usr/share/info for more information about kerberos)
+(Please check the kth-krb infopage for more information about KerberosIV)
 
 The file master_key contains a copy of the master key under which the
-entire Kerberos database is encrypted.  Disclosing this key would be bad
+entire KerberosIV database is encrypted.  Disclosing this key would be bad
 news.  The reason it is stored in the filesystem is because the following
 programs need to inspect or modify the kereros database, and so the key
 must be available for them, (or else it would have to be typed in by
@@ -19,17 +19,17 @@ The srvtab file contains the encryption keys for each service on the local
 host.  Any host offering network services would have a key here, although
 many such files can be used.
 
-The principal.* files comprise the Kerberos database itself, and contain
+The principal.* files comprise the KerberosIV database itself, and contain
 keys for all principles, and should not be world-readable.
 
 The krb.conf file contains the configuration for this machine:
 1) which realm I'm in
-   if this line begins with '#', kerberos is disabled system-wide.
+   if this line begins with '#', KerberosIV is disabled system-wide.
 2) which servers I should talk to for _this_ realm
 3) which servers I should talk to for the following realms.
 
-The krb.realms file contains the name of Kerberos servers for
+The krb.realms file contains the name of KerberosIV servers for
 various (sub)domains.
 
-Kerberos log information it placed in /var/log/kerberos.log
+KerberosIV log information it placed in /var/log/kerberos.log
 (see /etc/rc to change it)
