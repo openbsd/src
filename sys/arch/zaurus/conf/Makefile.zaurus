@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.zaurus,v 1.1 2004/12/31 00:04:35 drahn Exp $
-#	$OpenBSD: Makefile.zaurus,v 1.1 2004/12/31 00:04:35 drahn Exp $
+#	$OpenBSD: Makefile.zaurus,v 1.2 2005/01/16 18:13:00 deraadt Exp $
+#	$OpenBSD: Makefile.zaurus,v 1.2 2005/01/16 18:13:00 deraadt Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -172,7 +172,7 @@ links:
 	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink makelinks
 
-SRCS=	${ARM}/arm/locore.S ${ARM}/arm/locore.S \
+SRCS=	${ARM}/arm/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${APMINC}
