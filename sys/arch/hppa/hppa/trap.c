@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 1999/05/03 16:33:10 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 1999/07/16 01:59:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -31,6 +31,7 @@
  */
 
 #define INTRDEBUG
+#define TRAPDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +42,8 @@
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/signal.h>
+
+#include <net/netisr.h>
 
 #include <vm/vm.h>
 #include <uvm/uvm.h>
@@ -99,6 +102,7 @@ static __inline void
 userret (struct proc *p, register_t pc, u_quad_t oticks)
 {
 	int sig;
+
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
@@ -143,18 +147,23 @@ trap(type, frame)
 	struct proc *p = curproc;
 	register vm_offset_t va;
 	register vm_map_t map;
+	register vm_prot_t vftype;
 	register pa_space_t space;
 	u_int opcode, t;
 	int ret;
+	union sigval sv;
+	int s;
 
 	va = frame->tf_ior;
 	space = (pa_space_t) frame->tf_isr;
+	opcode = frame->tf_iir;
+	vftype = FAULT_TYPE(opcode);
 
 	if (USERMODE(frame->tf_iioq_head)) {
 		type |= T_USER;
 		p->p_md.md_regs = frame;
 	}
-#ifdef DEBUG
+#ifdef TRAPDEBUG
 	if ((type & ~T_USER) != T_INTERRUPT)
 		printf("trap: %d, %s for %x:%x at %x:%x\n",
 		       type, trap_type[type & ~T_USER], space, va,
@@ -163,12 +172,13 @@ trap(type, frame)
 	switch (type) {
 	case T_NONEXIST:
 	case T_NONEXIST|T_USER:
-		/* we are screwd up by the central scrutinizer */
-		panic ("trap: zombie on the bridge!!!");
+		/* we've got screwed up by the central scrutinizer */
+		panic ("trap: zombie's on the bridge!!!");
 		break;
 
 	case T_RECOVERY:
 	case T_RECOVERY|T_USER:
+		/* XXX will implement later */
 		printf ("trap: handicapped");
 		break;
 
@@ -187,48 +197,76 @@ trap(type, frame)
 		}
 		if (t)
 			cpu_intr(t, frame);
-		return;
+		break;
 
 #ifdef DIAGNOSTIC
-	case T_IBREAK:
 	case T_HPMC:
+	case T_HPMC | T_USER:
+	case T_EXCEPTION:
+	case T_EMULATION:
 	case T_TLB_DIRTY:
+	case T_TLB_DIRTY | T_USER:
 		panic ("trap: impossible \'%s\' (%d)",
 			trap_type[type & ~T_USER], type);
 		break;
 #endif
 
-	case T_POWERFAIL:
-		break;
-
-	case T_LPMC:
-		break;
-
-	case T_PAGEREF:
-		break;
-
+	case T_DATALIGN:
 	case T_DBREAK:
+	case T_IBREAK:
 		if (kdb_trap (type, 0, frame))
 			return;
 		break;
 
-	case T_EXCEPTION:	/* co-proc assist trap */
+	case T_IBREAK | T_USER:
+	case T_DBREAK | T_USER:
+		/* pass to user debugger */
 		break;
 
-	case T_OVERFLOW:
-	case T_CONDITION:
+	case T_EMULATION | T_USER:
+	case T_EXCEPTION | T_USER:	/* co-proc assist trap */
+		sv.sival_int = frame->tf_ior;
+		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTINV, sv);
 		break;
 
-	case T_ILLEGAL:
-	case T_PRIV_OP:
-	case T_PRIV_REG:
-	case T_HIGHERPL:
-	case T_LOWERPL:
-	case T_TAKENBR:
+	case T_OVERFLOW | T_USER:
+		sv.sival_int = frame->tf_ior;
+		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
+		break;
+		
+	case T_CONDITION | T_USER:
 		break;
 
-	case T_IPROT:	case T_IPROT | T_USER:
-	case T_DPROT:	case T_DPROT | T_USER:
+	case T_ILLEGAL | T_USER:
+		sv.sival_int = frame->tf_ior;
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_ILLOPC, sv);
+		break;
+
+	case T_PRIV_OP | T_USER:
+		sv.sival_int = frame->tf_ior;
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, sv);
+		break;
+
+	case T_PRIV_REG | T_USER:
+		sv.sival_int = frame->tf_ior;
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVREG, sv);
+		break;
+
+		/* these should never got here */
+	case T_HIGHERPL | T_USER:
+	case T_LOWERPL | T_USER:
+		sv.sival_int = frame->tf_ior;
+		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_ACCERR, sv);
+		break;
+
+	case T_IPROT | T_USER:
+	case T_DPROT | T_USER:
+		sv.sival_int = va;
+		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
+		break;
+
+	case T_IPROT:
+	case T_DPROT:
 	case T_ITLBMISS:
 	case T_ITLBMISS | T_USER:
 	case T_ITLBMISSNA:
@@ -238,30 +276,108 @@ trap(type, frame)
 	case T_DTLBMISSNA:
 	case T_DTLBMISSNA | T_USER:
 		va = trunc_page(va);
-		opcode = frame->tf_iir;
 		map = &p->p_vmspace->vm_map;
 
-		ret = uvm_fault(map, va, FAULT_TYPE(opcode), FALSE);
-		if (ret != KERN_SUCCESS)
-			panic ("trap: uvm_fault(%p, %x, %d, %d): %d",
-			       map, va, FAULT_TYPE(opcode), 0, ret);
+		ret = uvm_fault(map, va, vftype, FALSE);
+		if (ret != KERN_SUCCESS) {
+			if (type & T_USER) {
+				sv.sival_int = frame->tf_ior;
+				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+			} else
+				panic ("trap: uvm_fault(%p, %x, %d, %d): %d",
+				       map, frame->tf_ior, vftype, 0, ret);
+		}
 		break;
 
+	case T_DATALIGN | T_USER:
+		sv.sival_int = frame->tf_ior;
+		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
+		break;
+
+	case T_LOWERPL:
+		/* do softint stuff here */
+		s = spl0();
+		if (sir & SIR_CLOCK) {
+			splclock();
+			sir &= ~SIR_CLOCK;
+			softclock();
+			spl0();
+		}
+
+		if (sir & SIR_NET) {
+			register int ni;
+			/* use atomic "load & clear" */
+			__asm __volatile ("ldcws 0(%1), %0"
+					  : "=r" (ni) : "r" (&netisr));
+			splnet();
+#define	DONET(m,c) if (ni & m) c()
+#if NETHER > 0
+			DONET (NETISR_ARP, arpintr);
+#endif
+#ifdef INET
+			DONET(NETISR_IP, ipintr);
+#endif
+#ifdef INET6
+			DONET(NETISR_IPV6, ipv6intr);
+#endif
+#ifdef NETATALK
+			DONET(NETISR_ATALK, atintr);
+#endif
+#ifdef IMP
+			DONET(NETISR_IMP, impintr);
+#endif
+#ifdef IPX
+			DONET(NETISR_IPX, ipxintr);
+#endif
+#ifdef NS
+			DONET(NETISR_NS, nsintr);
+#endif
+#ifdef ISO
+			DONET(NETISR_ISO, clnlintr);
+#endif
+#ifdef CCITT
+			DONET(NETISR_CCITT, ccittintr);
+#endif
+#ifdef NATM
+			DONET(NETISR_NATM, natmintr);
+#endif
+#include "ppp.h"
+#if NPPP > 0
+			DONET(NETISR_PPP, pppintr);
+#endif
+#include "bridge.h"
+#if NBRIDGE > 0
+			DONET(NETISR_BRIDGE, bridgeintr)
+#endif
+		}
+		splx(s);
+		break;
+
+	case T_OVERFLOW:
+	case T_CONDITION:
+	case T_ILLEGAL:
+	case T_PRIV_OP:
+	case T_PRIV_REG:
+	case T_HIGHERPL:
+	case T_TAKENBR:
+	case T_POWERFAIL:
+	case T_LPMC:
+	case T_PAGEREF:
 #ifdef HP7100_CPU
 	case T_DATACC:   case T_DATACC   | T_USER:
 	case T_DATAPID:  case T_DATAPID  | T_USER:
-	case T_DATALIGN: case T_DATALIGN | T_USER:
 		if (0 /* T-chip */) {
 			break;
 		}
 		/* FALLTHROUGH to unimplemented */
 #endif
-	case T_EMULATION:
-	case T_EMULATION | T_USER:
 	default:
 		panic ("trap: unimplemented \'%s\' (%d)",
 			trap_type[type & ~T_USER], type);
 	}
+
+	if (type & T_USER)
+		userret(p, p->p_md.md_regs->tf_iioq_head, 0);
 }
 
 void
