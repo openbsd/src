@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.14 2002/11/14 02:57:28 deraadt Exp $
+.\" $OpenBSD: mixerctl.1,v 1.15 2002/12/03 22:25:52 pvalchev Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 .Nm mixerctl
 .Op Fl f Ar file
 .Op Fl n
+.Op Fl v
 .Fl w
 .Ar name=value Op Ar ...
 .Sh DESCRIPTION
@@ -75,19 +76,19 @@ The options are as follows:
 Print all device variables and their current values.
 .It Fl w Ar name=value
 Attempt to set the specified variable
-.Ar name
-to
-.Ar value .
+.It Fl f Ar file
+Specify an alternative audio mixing device.
+.It Fl n
+Suppress printing of the variable name.
 .It Fl v
 Show the possible values of enumeration and set valued variables.
 Enumerated values are shown in
 .Dq []
 and set values are shown in
 .Dq {} .
-.It Fl f Ar file
-Specify an alternative audio mixing device.
-.It Fl n
-Suppress printing of the variable name.
+.Ar name
+to
+.Ar value .
 .El
 .Pp
 Values may be specified in either absolute or relative forms.
@@ -147,7 +148,7 @@ The audio mixer device to use.
 .Sh FILES
 .Bl -tag -width /dev/mixer
 .It Pa /dev/mixer
-mixer audio device
+default mixer audio device
 .El
 .Sh SEE ALSO
 .Xr audioctl 1 ,
