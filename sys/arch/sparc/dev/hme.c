@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.38 2002/07/17 02:46:52 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.39 2002/10/05 21:19:35 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -621,7 +621,7 @@ hme_poll_stop(sc)
 	    (HME_FLAG_POLLENABLE | HME_FLAG_POLL))
 		return;
 
-	/* Turn off MIF interrupts, and diable polling */
+	/* Turn off MIF interrupts, and disable polling */
 	tcvr->int_mask = 0xffff;
 	tcvr->cfg &= ~(TCVR_CFG_PENABLE);
 	sc->sc_flags &= ~(HME_FLAG_POLL);
