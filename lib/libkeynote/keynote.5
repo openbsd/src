@@ -1,0 +1,572 @@
+.\" $OpenBSD: keynote.5,v 1.1 1999/10/11 00:08:47 angelos Exp $
+.\"
+.\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+.\"
+.\" This code was written by Angelos D. Keromytis in Philadelphia, PA, USA,
+.\" in April-May 1998
+.\"
+.\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
+.\"      
+.\" Permission to use, copy, and modify this software without fee
+.\" is hereby granted, provided that this entire notice is included in
+.\" all copies of any software which is or includes a copy or
+.\" modification of this software.
+.\" You may use this code under the GNU public license if you so wish. Please
+.\" contribute changes back to the author.
+.\"
+.\" THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
+.\" IMPLIED WARRANTY. IN PARTICULAR, THE AUTHORS MAKES NO
+.\" REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
+.\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
+.\" PURPOSE.
+.\"
+.Dd October 10, 1999
+.Dt KeyNote 5
+.\" .TH KeyNote 5 local
+.Os
+.Sh NAME
+.Nm KeyNote
+.Nd assertion format
+.Sh SYNOPSIS
+.Bd -literal
+KeyNote-Version: 2
+Local-Constants: <assignments>
+Authorizer: <public key or tag>
+Licensees: <public key or tag expression>
+Comment: <comment text>
+Conditions: <logic predicates>
+Signature: <public key signature>
+.Ed
+.Sh DESCRIPTION
+For more details on
+.Nm KeyNote ,
+see RFC 2704.
+.Pp
+KeyNote assertions are divided into sections, called `fields', that
+serve various semantic functions. Each field starts with an
+identifying label at the beginning of a line, followed by the ":"
+character and the field's contents. There can be at most one field per
+line.
+.Pp
+A field may be continued over more than one line by indenting
+subsequent lines with at least one ASCII SPACE or TAB character.
+Whitespace (a SPACE, TAB, or NEWLINE character) separates tokens but
+is otherwise ignored outside of quoted strings. Comments with a
+leading octothorp character ('#') may begin in any column.
+.Pp
+One mandatory field is required in all assertions: Authorizer
+.Pp
+Six optional fields may also appear: Comment, Conditions,
+KeyNote-Version, Licensees, Local-Constants, Signature.
+.Pp
+All field names are case-insensitive. The "KeyNote-Version" field, if
+present, appears first. The "Signature" field, if present, appears
+last. Otherwise, fields may appear in any order. Each field may appear
+at most once in any assertion.
+.Pp
+Blank lines are not permitted in assertions. Multiple assertions
+stored in a file (e.g., in application policy configurations),
+therefore, can be separated from one another unambiguously by the use
+of blank lines between them.
+.Pp
+.Sh COMMENTS
+The octothorp character ("#", ASCII 35 decimal) can be used to
+introduce comments. Outside of quoted strings, all characters from the
+"#" character through the end of the current line are ignored.
+However, commented text is included in the computation of assertion
+signatures.
+.Pp
+.Sh STRINGS
+A `string' is a lexical object containing a sequence of characters.
+Strings may contain any non-NUL characters, including newlines and
+nonprintable characters. Strings may be given as literals, computed
+from complex expressions, or dereferenced from attribute names.
+.Sh STRING LITERALS
+A string literal directly represents the value of a string. String
+literals must be quoted by preceding and following them with the
+double-quote character (ASCII 34 decimal).
+.Pp
+A printable character may be `escaped' inside a quoted string literal
+by preceding it with the backslash character (ASCII 92 decimal) (e.g.,
+"like \\"this\\"."). This permits the inclusion of the double- quote and
+backslash characters inside string literals.
+.Pp
+A similar escape mechanism is also used to represent non-printable
+characters. "\\n" represents the newline character (ASCII character 10
+decimal), "\\r" represents the carriage-return character (ASCII
+character 13 decimal), "\\t" represents the tab character (ASCII
+character 9 decimal), and "\\f" represents the form-feed character
+(ASCII character 12 decimal). A backslash character followed by a
+newline suppresses all subsequent whitespace (including the newline)
+up to the next non-whitespace character (this allows the continuation
+of long string constants across lines). Un-escaped newline and return
+characters are illegal inside string literals.
+.Pp
+The constructs "\\0o", "\\0oo", and "\\ooo" (where o represents any
+octal digit) may be used to represent any non-NUL ASCII characters
+with their corresponding octal values (thus, "\\012" is the same as
+"\\n", "\\101" is "A", and "\\377" is the ASCII character 255 decimal).
+However, the NUL character cannot be encoded in this manner; "\\0",
+"\\00", and "\\000" are converted to the strings "0", "00", and "000"
+respectively.  Similarly, all other escaped characters have the
+leading backslash removed (e.g., "\\a" becomes "a", and "\\\\" becomes
+"\\").  The following four strings are equivalent:
+.Bd -literal
+        "this string contains a newline\\n followed by one space."
+        "this string contains a newline\\n \\
+        followed by one space."
+        "this str\\
+           ing contains a \\
+             newline\\n followed by one space."
+        "this string contains a newline\\012\\040followed by one space."
+.Ed
+.Pp
+.Sh STRING EXPRESSIONS
+In general, anywhere a quoted string literal is allowed, a `string
+expression' can be used. A string expression constructs a string from
+string constants, dereferenced attributes (described below), and a
+string concatenation operator. String expressions may be
+parenthesized.
+
+.Bd -literal
+       <StrEx>:: <StrEx> "." <StrEx>    /* String concatenation */
+               | <StringLiteral>        /* Quoted string */
+               | "(" <StrEx> ")"
+               | <DerefAttribute>
+               | "$" <StrEx> ;
+.Ed
+
+The "$" operator has higher precedence than the "." operator.
+.Pp
+.Sh DEREFERENCED ATTRIBUTES
+Action attributes provide the primary mechanism for applications to
+pass information to assertions. Attribute names are strings from a
+limited character set (see below), and attribute values are
+represented internally as strings. An attribute is dereferenced simply
+by using its name. In general, KeyNote allows the use of an attribute
+anywhere a string literal is permitted.
+.Pp
+Attributes are dereferenced as strings by default. When required,
+dereferenced attributes can be converted to integers or floating point
+numbers with the type conversion operators "@" and "&". Thus, an
+attribute named "foo" having the value "1.2" may be interpreted as the
+string "1.2" (foo), the integer value 1 (@foo), or the floating point
+value 1.2 (&foo).
+.Pp
+Attributes converted to integer and floating point numbers are
+represented according to the ANSI C `long' and `float' types,
+respectively. In particular, integers range from -2147483648 to
+2147483647, whilst floats range from 1.17549435E-38F to
+3.40282347E+38F.
+.Pp
+Any uninitialized attribute has the empty-string value when
+dereferenced as a string and the value zero when dereferenced as an
+integer or float.
+.Pp
+Attribute names may be given literally or calculated from string
+expressions and may be recursively dereferenced. In the simplest case,
+an attribute is dereferenced simply by using its name outside of
+quotes; e.g., the string value of the attribute named "foo" is by
+reference to `foo' (outside of quotes). The "$<StrEx>" construct
+dereferences the attribute named in the string expression <StrEx>. For
+example, if the attribute named "foo" contains the string "bar", the
+attribute named "bar" contains the string "xyz", and the attribute
+"xyz" contains the string "qua", the following string comparisons are
+all true:
+
+.Bd -literal
+    foo == "bar"
+    $("foo") == "bar"
+    $foo == "xyz"
+    $(foo) == "xyz"
+    $$foo == "qua"
+.Ed
+
+If <StrEx> evaluates to an invalid or uninitialized attribute name,
+its value is considered to be the empty string (or zero if used as a
+numeric).
+.Pp
+The <DerefAttribute> token is defined as:
+.Bd -literal
+      <DerefAttribute>:: <AttributeID> ;
+       <AttributeID>:: {Any string starting with a-z, A-Z, or the
+                        underscore character, followed by any number of
+                        a-z, A-Z, 0-9, or underscore characters} ;
+.Ed
+.Pp
+.Sh PRINCIPAL IDENTIFIERS
+Principals are represented as ASCII strings called `Principal
+Identifiers'. Principal Identifiers may be arbitrary labels whose
+structure is not interpreted by the KeyNote system or they may encode
+cryptographic keys that are used by KeyNote for credential signature
+verification.
+
+.Bd -literal
+       <PrincipalIdentifier>:: <OpaqueID>
+                             | <KeyID> ;
+.Ed
+.Pp
+.Sh OPAQUE PRINCIPAL IDENTIFIERS
+Principal Identifiers that are used by KeyNote only as labels are
+said to be `opaque'.  Opaque identifiers are encoded in assertions as
+strings (as defined above):
+
+.Bd -literal
+       <OpaqueID>:: <StrEx> ;
+.Ed
+
+Opaque identifier strings should not contain the ":" character.
+.Pp
+.Sh CRYPTOGRAPHIC PRINCIPAL IDENTIFIERS
+Principal Identifiers that are used by KeyNote as keys, e.g., to
+verify credential signatures, are said to be `cryptographic'.
+Cryptographic identifiers are also lexically encoded as strings:
+
+.Bd -literal
+       <KeyID>:: <StrEx> ;
+.Ed
+
+Unlike Opaque Identifiers, however, Cryptographic Identifier strings
+have a special form. To be interpreted by KeyNote (for signature
+verification), an identifier string should be of the form:
+
+.Bd -literal
+      <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
+.Ed
+
+"ALGORITHM" is an ASCII substring that describes the algorithms to be
+used in interpreting the key's bits. The ALGORITHM identifies the
+major cryptographic algorithm (e.g., RSA [RSA78], DSA [DSA94], etc.),
+structured format (e.g., PKCS1 [PKCS1]), and key bit encoding (e.g.,
+HEX or BASE64). By convention, the ALGORITHM substring starts with an
+alphabetic character and can contain letters, digits, underscores, or
+dashes (i.e., it should match the regular expression "[a-zA-Z][a-
+zA-Z0-9_-]*"). The IANA (or some other appropriate authority) will
+provide a registry of reserved algorithm identifiers.
+.Pp
+"ENCODEDBITS" is a substring of characters representing the key's
+bits, the encoding and format of which depends on the ALGORITHM. By
+convention, hexadecimal encoded keys use lower-case ASCII characters.
+.Pp
+Cryptographic Principal Identifiers are converted to a normalized
+canonical form for the purposes of any internal comparisons between
+them; see RFC 2704 for more details.
+.Pp
+.Sh KEYNOTE-VERSION FIELD
+The KeyNote-Version field identifies the version of the KeyNote
+assertion language under which the assertion was written. The
+KeyNote-Version field is of the form:
+
+.Bd -literal
+       <VersionField>:: "KeyNote-Version:" <VersionString> ;
+       <VersionString>:: <StringLiteral>
+                       | <IntegerLiteral> ;
+.Ed
+
+<VersionString> is an ASCII-encoded string. Assertions in production
+versions of KeyNote use decimal digits in the version representing the
+version number of the KeyNote language under which they are to be
+interpreted. Assertions written to conform with this document should
+be identified with the version string "2" (or the integer 2). The
+KeyNote-Version field, if included, should appear first.
+.Pp
+.Sh LOCAL-CONSTANTS FIELD
+This field adds or overrides action attributes in the current
+assertion only.  This mechanism allows the use of short names for
+(frequently lengthy) cryptographic principal identifiers, especially
+to make the Licensees field more readable.  The Local-Constants field
+is of the form:
+
+.Bd -literal
+       <LocalConstantsField>:: "Local-Constants:" <Assignments> ;
+       <Assignments>:: /* can be empty */
+                     | <AttributeID> "=" <StringLiteral> <Assignments> ;
+.Ed
+
+<AttributeID> is an attribute name from the action attribute
+namespace. The name is available for use as an attribute in any
+subsequent field. If the Local-Constants field defines more than one
+identifier, it can occupy more than one line and be indented.
+<StringLiteral> is a string literal as described previously.
+Attributes defined in the Local-Constants field override any
+attributes with the same name passed in with the action attribute set.
+.Pp
+An attribute may be initialized at most once in the Local-Constants
+field. If an attribute is initialized more than once in an assertion,
+the entire assertion is considered invalid and is not considered by
+the KeyNote compliance checker in evaluating queries.
+.Pp
+.Sh AUTHORIZER FIELD
+The Authorizer identifies the Principal issuing the assertion. This
+field is of the form:
+
+.Bd -literal
+       <AuthField>:: "Authorizer:" <AuthID> ;
+       <AuthID>:: <PrincipalIdentifier>
+                | <DerefAttribute> ;
+.Ed
+
+The Principal Identifier may be given directly or by reference to the
+attribute namespace.
+.Pp
+.Sh LICENSEES FIELD
+The Licensees field identifies the principals authorized by the
+assertion. More than one principal can be authorized, and
+authorization can be distributed across several principals through the
+use of `and' and threshold constructs. This field is of the form:
+
+.Bd -literal
+       <LicenseesField>:: "Licensees:" <LicenseesExpr> ;
+
+       <LicenseesExpr>::      /* can be empty */
+                         | <PrincExpr> ;
+
+       <PrincExpr>:: "(" <PrincExpr> ")"
+                     | <PrincExpr> "&&" <PrincExpr>
+                     | <PrincExpr> "||" <PrincExpr>
+                     | <K>"-of(" <PrincList> ")"        /* Threshold */
+                     | <PrincipalIdentifier>
+                     | <DerefAttribute> ;
+
+       <PrincList>:: <PrincipalIdentifier>
+                   | <DerefAttribute>
+                   | <PrincList> "," <PrincList> ;
+
+       <K>:: {Decimal number starting with a digit from 1 to 9} ;
+.Ed
+
+The "&&" operator has higher precedence than the "||" operator. <K> is
+an ASCII-encoded positive decimal integer. If a <PrincList> contains
+fewer than <K> principals, the entire assertion is omitted from
+processing.
+.Pp
+.Sh CONDITIONS FIELD
+This field gives the `conditions' under which the Authorizer trusts
+the Licensees to perform an action. `Conditions' are predicates that
+operate on the action attribute set. The Conditions field is of the
+form:
+
+.Bd -literal
+    <ConditionsField>:: "Conditions:" <ConditionsProgram> ;
+
+    <ConditionsProgram>:: /* Can be empty */
+                          | <Clause> ";" <ConditionsProgram> ;
+
+    <Clause>:: <Test> "->" "{" <ConditionsProgram> "}"
+             | <Test> "->" <Value>
+             | <Test> ;
+
+    <Value>:: <StrEx> ;
+
+    <Test>:: <RelExpr> ;
+
+    <RelExpr>:: "(" <RelExpr> ")"        /* Parentheses */
+              | <RelExpr> "&&" <RelExpr> /* Logical AND */
+              | <RelExpr> "||" <RelExpr> /* Logical OR */
+              | "!" <RelExpr>         /* Logical NOT */
+              | <IntRelExpr>
+              | <FloatRelExpr>
+              | <StringRelExpr>
+              | "true"        /* case insensitive */
+              | "false" ;     /* case insensitive */
+
+    <IntRelExpr>:: <IntEx> "==" <IntEx>
+                 | <IntEx> "!=" <IntEx>
+                 | <IntEx> "<" <IntEx>
+                 | <IntEx> ">" <IntEx>
+                 | <IntEx> "<=" <IntEx>
+                 | <IntEx> ">=" <IntEx> ;
+
+    <FloatRelExpr>:: <FloatEx> "<" <FloatEx>
+                   | <FloatEx> ">" <FloatEx>
+                   | <FloatEx> "<=" <FloatEx>
+                   | <FloatEx> ">=" <FloatEx> ;
+
+    <StringRelExpr>:: <StrEx> "==" <StrEx>  /* String equality */
+                    | <StrEx> "!=" <StrEx>  /* String inequality */
+                    | <StrEx> "<" <StrEx>   /* Alphanum. comparisons */
+                    | <StrEx> ">" <StrEx>
+                    | <StrEx> "<=" <StrEx>
+                    | <StrEx> ">=" <StrEx>
+                    | <StrEx> "~=" <RegExpr> ; /* Reg. expr. matching */
+
+    <IntEx>:: <IntEx> "+" <IntEx>        /* Integer */
+            | <IntEx> "-" <IntEx>
+            | <IntEx> "*" <IntEx>
+            | <IntEx> "/" <IntEx>
+            | <IntEx> "%" <IntEx>
+            | <IntEx> "^" <IntEx>        /* Exponentiation */
+            | "-" <IntEx>
+            | "(" <IntEx> ")"
+            | <IntegerLiteral>
+            | "@" <StrEx> ;
+
+    <FloatEx>:: <FloatEx> "+" <FloatEx>  /* Floating point */
+              | <FloatEx> "-" <FloatEx>
+              | <FloatEx> "*" <FloatEx>
+              | <FloatEx> "/" <FloatEx>
+              | <FloatEx> "^" <FloatEx> /* Exponentiation */
+              | "-" <FloatEx>
+              | "(" <FloatEx> ")"
+              | <FloatLiteral>
+              | "&" <StrEx> ;
+
+    <IntegerLiteral>:: {Decimal number of at least one digit} ;
+    <FloatLiteral>:: <IntegerLiteral>"."<IntegerLiteral> ;
+
+    <StringLiteral> is a quoted string as defined in previously
+    <AttributeID> is defined previously.
+.Ed
+
+The operation precedence classes are (from highest to lowest):
+
+.Bd -literal
+        { (, ) }
+        {unary -, @, &, $}
+        {^}
+        {*, /, %}
+        {+, -, .}
+.Ed
+
+Operators in the same precedence class are evaluated left-to-right.
+.Pp
+Note the inability to test for floating point equality, as most
+floating point implementations (hardware or otherwise) do not
+guarantee accurate equality testing.
+.Pp
+Also note that integer and floating point expressions can only be used
+within clauses of condition fields, but in no other KeyNote field.
+.Pp
+The keywords "true" and "false" are not reserved; they can be used as
+attribute or principal identifier names (although this practice makes
+assertions difficult to understand and is discouraged).
+.Pp
+<RegExpr> is a standard regular expression, conforming to the POSIX
+1003.2 regular expression syntax and semantics (see
+.Xr regex 3 ).
+.Pp
+Any string expression (or attribute) containing the ASCII
+representation of a numeric value can be converted to an integer or
+float with the use of the "@" and "&" operators, respectively. Any
+fractional component of an attribute value dereferenced as an integer
+is rounded down. If an attribute dereferenced as a number cannot be
+properly converted (e.g., it contains invalid characters or is empty)
+its value is considered to be zero.
+.Pp
+.Sh COMMENT FIELD
+The Comment field allows assertions to be annotated with information
+describing their purpose. It is of the form:
+
+.Bd -literal
+       <CommentField>:: "Comment:" <text> ;
+.Ed
+
+No interpretation of the contents of this field is performed by
+KeyNote. Note that this is one of two mechanisms for including
+comments in KeyNote assertions; comments can also be inserted anywhere
+in an assertion's body by preceding them with the "#" character
+(except inside string literals).
+.Pp
+.Sh SIGNATURE FIELD
+The Signature field identifies a signed assertion and gives the
+encoded digital signature of the principal identified in the
+Authorizer field. The Signature field is of the form:
+
+.Bd -literal
+       <SignatureField>:: "Signature:" <Signature> ;
+       <Signature>:: <StrEx> ;
+.Ed
+
+The <Signature> string should be of the form:
+
+.Bd -literal
+       <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
+.Ed
+
+The formats of the "ALGORITHM" and "ENCODEDBITS" substrings are as
+described for Cryptographic Principal Identifiers. The algorithm name
+should be the same as that of the principal appearing in the
+Authorizer field. The IANA (or some other suitable authority) will
+provide a registry of reserved names. It is not necessary that the
+encodings of the signature and the authorizer key be the same.
+.Pp
+If the signature field is included, the principal named in the
+Authorizer field must be a Cryptographic Principal Identifier, the
+algorithm must be known to the KeyNote implementation, and the
+signature must be correct for the assertion body and authorizer key.
+.Pp
+The signature is computed over the assertion text, beginning with the
+first field (including the field identifier string), up to (but not
+including) the Signature field identifier. The newline preceding the
+signature field identifier is the last character included in signature
+calculation. The signature is always the last field in a KeyNote
+assertion. Text following this field is not considered part of the
+assertion.
+.Pp
+.Sh EXAMPLES
+Note that the keys and signatures in these examples are fictional, and
+generally much shorter than would be required for real security, in
+the interest of readability.
+.Bd -literal
+           Authorizer: "POLICY"
+           Licensees: "RSA:abc123"
+
+           KeyNote-Version: 2
+           Local-Constants: Alice="DSA:4401ff92"  # Alice's key
+                            Bob="RSA:d1234f"      # Bob's key
+           Authorizer: "RSA:abc123"
+           Licensees: Alice || Bob
+           Conditions: (app_domain == "RFC822-EMAIL") &&
+                       (address ~=   # only applies to one domain
+                         "^.*@keynote\\.research\\.att\\.com$") ->
+			"true";
+           Signature: "RSA-SHA1:213354f9"
+
+           KeyNote-Version: 2
+           Authorizer: "DSA:4401ff92"  # the Alice CA
+           Licensees: "DSA:12340987"   # mab's key
+           Conditions: ((app_domain == "RFC822-EMAIL") -> {
+	                        (name == "M. Blaze" || name == "") &&
+		                (address ==
+                                    "mab@keynote.research.att.com"));
+				(name == "anonymous") -> "logandaccept";
+			}
+
+           Signature: "DSA-SHA1:ab23487"
+
+           KeyNote-Version: "2"
+           Authorizer: "DSA:4401ff92"   # the Alice CA
+           Licensees: "DSA:abc991" ||   # jf's DSA key
+                      "RSA:cde773" ||   # jf's RSA key
+                      "BFIK:fd091a"     # jf's BFIK key
+           Conditions: ((app_domain == "RFC822-EMAIL") &&
+                        (name == "J. Feigenbaum" || name == "") &&
+                        (address == "jf@keynote.research.att.com"));
+           Signature: "DSA-SHA1:8912aa"
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr keynote 1 ,
+.Xr keynote 3 ,
+.Xr keynote 4
+.Bl -tag -width "AAAAAAA"
+.It ``The KeyNote Trust-Management System, Version 2'' 
+M. Blaze, J. Feigenbaum, A. D. Keromytis,
+Internet Drafts, RFC 2704.
+.It ``Decentralized Trust Management'' 
+M. Blaze, J. Feigenbaum, J. Lacy,
+1996 IEEE Conference on Privacy and Security
+.It ``Compliance-Checking in the PolicyMaker Trust Management System''
+M. Blaze, J. Feigenbaum, M. Strauss,
+1998 Financial Crypto Conference
+.El
+.Sh AUTHOR
+Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+.Sh WEB PAGE
+http://www.cis.upenn.edu/~keynote
+.Sh BUGS
+None that we know of.
+If you find any, please report them at
+.Bd -literal -offset indent -compact
+keynote@research.att.com
+.Ed
