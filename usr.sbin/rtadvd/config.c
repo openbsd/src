@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.15 2002/05/29 14:34:05 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.16 2002/06/08 18:11:13 itojun Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -590,6 +590,7 @@ delete_prefix(struct rainfo *rai, struct prefix *prefix)
 static int
 init_prefix(struct in6_prefixreq *ipr)
 {
+#if 0
 	int s;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
@@ -622,6 +623,13 @@ init_prefix(struct in6_prefixreq *ipr)
 
 	close(s);
 	return 0;
+#else
+	ipr->ipr_vltime = DEF_ADVVALIDLIFETIME;
+	ipr->ipr_pltime = DEF_ADVPREFERREDLIFETIME;
+	ipr->ipr_raf_onlink = 1;
+	ipr->ipr_raf_auto = 1;
+	return 0;
+#endif
 }
 
 void
