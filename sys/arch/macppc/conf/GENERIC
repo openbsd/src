@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2002/03/22 19:19:52 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.16 2002/03/25 15:08:58 lebel Exp $
 #
 # PPC GENERIC config file
 #
@@ -107,6 +107,7 @@ zstty*		at zsc? channel ?
 
 awacs*		at macobio?			# Apple audio device
 audio*		at awacs?
+audio*		at uaudio?
 
 #scsibus*	at adv?
 #scsibus*	at ahc?
@@ -138,6 +139,7 @@ uhid*		at uhub? port ? configuration ?	# USB Generic HID devices
 ukbd*		at uhub? port ? configuration ?	# USB HID Keyboard devices
 ums*		at uhub? port ? configuration ?	# USB Mice
 wsmouse*	at ums? mux 0
+uaudio* 	at uhub? port ? configuration ? # USB Audio
 ulpt*		at uhub? port ? configuration ?	# USB Printer
 uscanner*	at uhub? port ?			# USB Scanner driver
 usscanner*	at uhub? port ?			# USB SCSI scanners
