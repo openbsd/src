@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.14 1996/04/29 14:13:15 hvozda Exp $	*/
-/*	$NetBSD: machdep.c,v 1.197 1996/04/12 08:44:40 mycroft Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1996/05/02 13:41:18 deraadt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199 1996/04/18 09:58:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -459,11 +459,10 @@ identifycpu()
 
 #if defined(I486_CPU) || defined(I586_CPU)
 	/*
-	 * On a 486 or above, enable ring 0 write protection and outer ring
-	 * alignment checking.
+	 * On a 486 or above, enable ring 0 write protection.
 	 */
 	if (cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP | CR0_AM);
+		lcr0(rcr0() | CR0_WP);
 #endif
 }
 
@@ -613,7 +612,7 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }

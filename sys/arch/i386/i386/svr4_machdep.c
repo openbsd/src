@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.4 1996/04/21 22:16:38 deraadt Exp $	*/
-/*	$NetBSD: svr4_machdep.c,v 1.22 1996/04/12 08:44:42 mycroft Exp $ */
+/*	$OpenBSD: svr4_machdep.c,v 1.5 1996/05/02 13:41:20 deraadt Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.23 1996/04/18 08:36:31 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -380,7 +380,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	tf->tf_eip = (int)(((char *)PS_STRINGS) -
 	     (svr4_esigcode - svr4_sigcode));
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
