@@ -1,0 +1,60 @@
+.\"   $OpenBSD: mavb.4,v 1.1 2005/01/02 22:05:57 kettenis Exp $
+.\"
+.\" Copyright (c) 2005 Mark Kettenis
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd January 2, 2005
+.Dt MAVB 4 sgi
+.Os
+.Sh NAME
+.Nm mavb
+.Nd Moosehead A/V Board audio driver
+.Sh SYNOPSIS
+.Cd "mavb0 at macebus0 sys 0x18 base 0x00300000 irq 7"
+.Cd "audio* at mavb?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Moosehead A/V Board found on SGI
+.Tn O2
+machines.
+.Pp
+The Moosehead A/V Board uses an AD1843 codec that supports 8- and
+16-bit audio sample recording and playback at rates from 5 to 54 khz,
+with 1 Hz resolution.  The
+.Nm
+driver also makes it possible to control the playback volume by using
+the buttons on the front of the
+.Tn O2 .
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr intro 4 ,
+.Xr macebus 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.7 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Mark Kettenis.
+.Sh CAVEATS
+The analog mixer in the AD1843 codec does not provide a master volume
+control.  Therefore, the
+.Tn O2
+volume buttons only control the output volume of the DAC.
+.Sh BUGS
+Currently only sample rates up to 48 kHz are supported.  Recording is
+not implemented yet.  The second DAC on the AD1843 codec sits idle.
