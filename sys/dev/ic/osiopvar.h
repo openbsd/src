@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.4 2003/05/06 22:01:43 mickey Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.5 2003/05/06 22:40:57 mickey Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -179,6 +179,7 @@ struct osiop_acb {
  */
 struct osiop_tinfo {
 	int cmds;		/* number of commands processed */
+	int senses;		/* number of sense requests */
 	int dconns;		/* number of disconnects */
 	int touts;		/* number of timeouts */
 	int perrs;		/* number of parity errors */

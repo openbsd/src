@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.10 2003/05/06 22:01:43 mickey Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.11 2003/05/06 22:40:57 mickey Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -755,6 +755,7 @@ FREE:
 		bus_dmamap_sync(sc->sc_dmat, acb->datadma,
 		    0, sizeof(xs->sense), BUS_DMASYNC_PREREAD);
 
+		sc->sc_tinfo[periph->target].senses++;
 		acb->status  = ACB_S_READY;
 		TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
 		if (((acb->xsflags & SCSI_POLL) == 0) && ((sc->sc_flags & OSIOP_NODMA) == 0))
