@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.10 1999/02/26 00:15:54 art Exp $	*/
+/*	$OpenBSD: popen.c,v 1.11 1999/12/08 13:15:21 itojun Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ static char rcsid[] = "$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $";
 #include <syslog.h>
 #include <unistd.h>
 
+#include <netinet/in.h>
 #include "extern.h"
 
 /*

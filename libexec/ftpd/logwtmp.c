@@ -51,6 +51,8 @@ static char rcsid[] = "$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $";
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <netinet/in.h>
 #include "extern.h"
 
 static int fd = -1;
