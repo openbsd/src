@@ -23,17 +23,20 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-TOUCH=	touch -f -c
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD=	ld.ok			# XXX TEMPORARY
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 PICA=	../..
 
-LD=ld.ok
-
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpica
-CFLAGS=         ${DEBUG} -O2 -Werror -mno-abicalls -mips2 -mcpu=r4000
+CFLAGS=		${DEBUG} -O2 -Werror -mno-abicalls -mips2 -mcpu=r4000
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ### find out what to use for libkern
@@ -57,8 +60,8 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
-USRLAND_C=	${CC} ${CFLAGS} -mabicalls ${CPPFLAGS} ${PROF} -c $<
-USRLAND_C_C=	${CC} ${CFLAGS} -mabicalls ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+USRLAND_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+USRLAND_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
@@ -96,7 +99,7 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 			${SYSTEM_OBJ} vers.o
 #
 SYSTEM_LD_TAIL=	chmod 755 $@; \
-		elf2ecoff ${@} ${@}.ecoff; \
+		elf2ecoff $@ $@.ecoff; \
 		size $@
 
 %LOAD
@@ -118,12 +121,12 @@ symbols.sort: ${PICA}/pica/symbols.raw
 	grep -v '^#' ${PICA}/pica/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${PICA}/pica/locore.S ${PICA}/include/machAsmDefs.h \
-	${PICA}/include/machConst.h ${PICA}/include/reg.h assym.h
+locore.o: ${PICA}/pica/locore.S ${PICA}/include/asm.h \
+	${PICA}/include/cpu.h ${PICA}/include/reg.h assym.h
 	${NORMAL_S} -mips3 ${PICA}/pica/locore.S
 
-fp.o: ${PICA}/pica/fp.S ${PICA}/include/machAsmDefs.h \
-	${PICA}/include/machConst.h ${PICA}/include/reg.h assym.h
+fp.o: ${PICA}/pica/fp.S ${PICA}/include/asm.h \
+	${PICA}/include/cpu.h ${PICA}/include/reg.h assym.h
 	${NORMAL_S} -mips3 ${PICA}/pica/fp.S
 
 # the following are necessary because the files depend on the types of
@@ -142,7 +145,7 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${PICA}/pica/genassym.c
-	${USRLAND_C_C}
+	${CC} ${INCLUDES} ${IDENT} -D_KERNEL -Dpica -c $<
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
