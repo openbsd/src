@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.38 2004/04/09 19:21:14 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.39 2005/03/02 15:42:08 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -250,7 +250,8 @@ There is no provision for the specification of a timezone.
 There is little point in specifying an explicit minutes or seconds
 component in the current implementation, since the only comparison is
 .Sq within the hour .
-.Ss ISO 8601 restricted time format
+.Pp
+.Sy ISO 8601 restricted time format:
 The lead-in character for a restricted
 .Tn ISO 8601
 time is an
@@ -297,7 +298,8 @@ are all equivalent:
 .It
 .Ql \&
 .El
-.Ss Day, week and month time format
+.Pp
+.Sy Day, week and month time format:
 The lead-in character for day, week and month specification is a
 .So Li \&$ Sc Ns -sign .
 The particular format of day, week and month specification is:
@@ -321,7 +323,8 @@ or
 .Em l
 to specify the last day of the month.
 .El
-.Ss Some examples:
+.Pp
+.Sy Some examples:
 .Bl -tag -width Ds -compact -offset indent
 .It Ar $D0
 rotate every night at midnight
