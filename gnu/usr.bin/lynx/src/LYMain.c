@@ -174,6 +174,8 @@ PUBLIC BOOLEAN LYJumpFileURL = FALSE;	 /* always FALSE the first time */
 PUBLIC BOOLEAN jump_buffer = JUMPBUFFER; /* TRUE if offering default shortcut */
 PUBLIC BOOLEAN goto_buffer = GOTOBUFFER; /* TRUE if offering default goto URL */
 PUBLIC BOOLEAN ftp_passive = FTP_PASSIVE; /* TRUE if doing ftp in passive mode */
+PUBLIC BOOLEAN ftp_local_passive;
+PUBLIC char *ftp_lasthost;
 PUBLIC BOOLEAN recent_sizechange = FALSE;/* the window size changed recently? */
 PUBLIC int user_mode = NOVICE_MODE;
 PUBLIC BOOLEAN dump_output_immediately = FALSE;
@@ -886,6 +888,12 @@ PRIVATE void free_lynx_globals NOARGS
 	#ifdef    NOT_ASCII
 	    FixCharacters();
 	#endif /* NOT_ASCII */
+
+	#ifndef DISABLE_FTP
+	    /* malloc a sizeof(char) so 1st strcmp() won't dump in HTLoadFile() */
+	    ftp_lasthost = (char *)malloc(sizeof(char));
+	    *ftp_lasthost = NULL;
+	#endif
 
 	#ifdef EXP_CHARSET_CHOICE
 	    memset((char*)charset_subsets, 0, sizeof(charset_subset_t)*MAXCHARSETS);

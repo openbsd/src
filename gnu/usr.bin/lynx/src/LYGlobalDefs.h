@@ -178,6 +178,8 @@ extern BOOLEAN emacs_keys;        /* TRUE to turn on emacs-like key movement */
 extern BOOLEAN error_logging;     /* TRUE to mail error messages */
 extern BOOLEAN ftp_ok;
 extern BOOLEAN ftp_passive;	/* TRUE if we want to use passive mode ftp */
+extern BOOLEAN ftp_local_passive;
+extern char *ftp_lasthost;
 extern BOOLEAN goto_buffer;     /* TRUE if offering default goto URL */
 extern BOOLEAN is_www_index;
 extern BOOLEAN jump_buffer;     /* TRUE if offering default shortcut */
