@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apxs.8,v 1.12 2004/12/07 15:48:57 jmc Exp $
+.\"	$OpenBSD: apxs.8,v 1.13 2004/12/07 22:00:04 jmc Exp $
 .\"
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
@@ -118,26 +118,24 @@
 .Sh DESCRIPTION
 .Nm
 is a tool for building and installing extension modules for the
-Apache HyperText Transfer Protocol (HTTP) server.
+Apache HyperText Transfer Protocol (HTTP) server,
+.Xr httpd 8 .
 This is achieved by building a
 Dynamic Shared Object (DSO)
 from one or more source or object files
-which can then be loaded into
-.Xr httpd 8
-at runtime via the
+which can then be loaded into httpd at runtime via the
 .Ic LoadModule
 directive from
 .Ic mod_so .
-So to use this extension mechanism,
-your platform has to support the DSO feature and your
-.Xr httpd 8
-binary has to be built with the
+To use this extension mechanism,
+your platform has to support the DSO feature
+and the httpd binary has to be built with the
 .Ic mod_so
 module.
 The
 .Nm
 tool automatically complains if this is not the case.
-You can check this yourself by manually running the command
+Check by manually running the following command:
 .Pp
 .Dl $ httpd -l
 .Pp
@@ -145,23 +143,23 @@ The module
 .Ic mod_so
 should be part of the displayed list.
 If these requirements are fulfilled,
-you can easily extend your Apache server's functionality by
-installing your own modules with the DSO mechanism,
+httpd's functionality can be extended by
+installing modules with the DSO mechanism,
 with the help of the
 .Nm
 tool:
 .Bd -literal -offset indent
-$ apxs -i -a -c mod_foo.c
-gcc -fpic -DSHARED_MODULE -I/path/to/apache/include -c mod_foo.c
-ld -Bshareable -o mod_foo.so mod_foo.o
-cp mod_foo.so /path/to/apache/libexec/mod_foo.so
-chmod 755 /path/to/apache/libexec/mod_foo.so
-[activating module `foo' in /path/to/apache/etc/httpd.conf]
-$ apachectl restart
-/path/to/apache/sbin/apachectl restart: httpd not running, trying to start
-[Tue Mar 31 11:27:55 1998] [debug] mod_so.c(303): loaded module foo_module
-/path/to/apache/sbin/apachectl restart: httpd started
-$ _
+# apxs -i -a -c mod_foo.c
+cc -O2 -pipe -DDEV_RANDOM=/dev/arandom -DMOD_SSL=208116 -DEAPI -DUSE_EXPAT -I../lib/expat-lite -DUSE_SETUSERCONTEXT -fPIC -DSHARED_MODULE -I/usr/lib/apache/include  -c mod_foo.c
+[activating module `foo' in /var/www/conf/httpd.conf]
+cp mod_foo.so /usr/lib/apache/modules/mod_foo.so
+chmod 755 /usr/lib/apache/modules/mod_foo.so
+cp /var/www/conf/httpd.conf /var/www/conf/httpd.conf.bak
+cp /var/www/conf/httpd.conf.new /var/www/conf/httpd.conf
+rm /var/www/conf/httpd.conf.new
+# apachectl restart
+/usr/sbin/apachectl restart: httpd not running, trying to start
+/usr/sbin/apachectl restart: httpd started
 .Ed
 .Pp
 The argument
@@ -177,11 +175,12 @@ whereas it just uses the object and archive files for the linking phase.
 But when using such pre-compiled objects,
 make sure they are compiled for Position Independent Code (PIC)
 to be able to use them for a DSO.
-For instance, with GCC you just have to always use
+For instance, with
+.Xr cc 1
+just use
 .Fl fpic .
 For other
-C compilers, please consult their manual
-pages or watch for the flags
+C compilers, please consult their manual pages or watch for the flags
 .Nm
 uses to compile the object files.
 .Pp
@@ -206,8 +205,8 @@ This activates the module by automatically adding a corresponding
 line to Apache's httpd.conf configuration file,
 or by enabling it if it already exists.
 .It Fl c
-This indicates the compilation operation.
-It first compiles the C source files (.c) of
+Compile.
+This option first compiles the C source files (.c) of
 .Ar file ...\&
 into corresponding object files (.o) and then builds a DSO in
 .Ar dsofile
@@ -219,7 +218,7 @@ option is specified,
 the output file is guessed from the first filename in
 .Ar file ...\&
 and thus usually defaults to
-.Ar mod_name.so
+.No mod_ Ns Ar name Ns \&.so
 .It Xo
 .Fl D
 .Ar variable Ns Op = Ns Ar value
@@ -227,23 +226,25 @@ and thus usually defaults to
 This option is directly passed through to the compilation command(s).
 Use this to add your own defines to the build process.
 .It Fl e
-This indicates the editing operation, which can be used with the
+Edit.
+This option can be used with the
 .Fl a
 and
 .Fl A
-options similarly to the
-.Fl i
-operation to edit Apache's httpd.conf configuration file,
+options to edit the
+configuration file,
+.Pa /var/www/conf/httpd.conf ,
 without attempting to install the module.
 .It Fl g
-This generates a subdirectory
+Template generation.
+This option generates a subdirectory
 .Ar name
 (see the
 .Fl n
 option)
 and two files:
 a sample module source file named
-.Pa mod_name.c
+.No mod_ Ns Ar name Ns \&.c ,
 which can be used as a template for creating your own modules or
 as a quick start for playing with the
 .Nm
@@ -255,8 +256,8 @@ for even easier building and installing of this module.
 This option is directly passed through to the compilation command(s).
 Use this to add your own include directories to search to the build process.
 .It Fl i
-This indicates the installation operation and installs one or more
-DSOs into the server's
+Install.
+This option installs one or more DSOs into the server's
 .Ar libexec
 directory.
 .It Fl L Ar libdir
@@ -290,7 +291,8 @@ the fallback name
 .Ar mod_unknown.so
 is used.
 .It Fl q
-Performs a query for
+Query.
+This option performs a query for
 .Nm apxs Ns 's
 knowledge about certain settings.
 The
@@ -320,90 +322,99 @@ This option passes
 .Ar compiler-flags
 as additional flags to the compiler command.
 Use this to add local compiler-specific options.
+This option may be specified multiple times
+in order to pass multiple flags.
 .It Fl Wl , Ns Ar linker-flags
 This option passes
 .Ar linker-flags
 as additional flags to the linker command.
 Use this to add local linker-specific options.
+This option may be specified multiple times
+in order to pass multiple flags.
 .El
 .Sh EXAMPLES
-Assume you have an Apache module named
+Assume you have a module named
 .Dq mod_foo.c
-available which should extend Apache's server functionality.
-To accomplish this you first have to compile
-the C source into a DSO suitable for loading into the Apache server
-under runtime via the following command:
+available which should extend httpd's functionality.
+To accomplish this,
+first compile the C source into a DSO
+suitable for loading into httpd at runtime via the following command:
 .Bd -literal -offset indent
-$ apxs -c mod_foo.c
-gcc -fpic -DSHARED_MODULE -I/path/to/apache/include -c mod_foo.c
-ld -Bshareable -o mod_foo.so mod_foo.o
-$ _
+# apxs -c mod_foo.c
+cc -O2 -pipe -DDEV_RANDOM=/dev/arandom -DMOD_SSL=208116 -DEAPI -DUSE_EXPAT -I../lib/expat-lite -DUSE_SETUSERCONTEXT -fPIC -DSHARED_MODULE -I/usr/lib/apache/include  -c mod_foo.c
+cc -shared -fPIC -DSHARED_MODULE -o mod_foo.so mod_foo.o
 .Ed
 .Pp
-Then you have to update the Apache configuration by making sure a
+Then a
 .Ic LoadModule
-directive is present to load this DSO.
+directive has to be added to httpd's configuration file to load the DSO.
 To simplify this step,
 .Nm
 provides an automatic way to install the DSO in the
 .Dq libexec
-directory and updating the httpd.conf file accordingly.
-This can be achieved by running:
+directory and update the httpd.conf file accordingly.
+This can be achieved by running the following:
 .Bd -literal -offset indent
-$ apxs -i -a mod_foo.c
-cp mod_foo.so /path/to/apache/libexec/mod_foo.so
-chmod 755 /path/to/apache/libexec/mod_foo.so
-[activating module `foo' in /path/to/apache/etc/httpd.conf]
-$ _
+$ apxs -i -a mod_foo.so
+[activating module `foo' in /var/www/conf/httpd.conf]
+cp mod_foo.so /usr/lib/apache/modules/mod_foo.so
+chmod 755 /usr/lib/apache/modules/mod_foo.so
+cp /var/www/conf/httpd.conf /var/www/conf/httpd.conf.bak
+cp /var/www/conf/httpd.conf.new /var/www/conf/httpd.conf
+rm /var/www/conf/httpd.conf.new
 .Ed
 .Pp
-This way a line named
+This way a line such as the following
+is added to the configuration file:
 .Pp
-.Dl LoadModule foo_module libexec/mod_foo.so
+.Dl LoadModule foo_module /usr/lib/apache/modules/mod_foo.so
 .Pp
-is added to the configuration file, if still not present.
-If you want this operation to be disabled, use the
+If you want the module added to the configuration file
+without it being enabled,
+use the
 .Fl A
-option, i.e.
+option instead:
 .Pp
-.Dl $ apxs -i -A mod_foo.c
+.Dl $ apxs -i -A mod_foo.so
 .Pp
 For a quick test of the
 .Nm
-mechanism you can create a sample Apache module
-template plus a corresponding
+mechanism,
+create a sample module template plus a corresponding
 .Ar Makefile
 via:
 .Bd -literal -offset indent
-$ apxs -g -n foo
+# apxs -g -n foo
 Creating [DIR]  foo
 Creating [FILE] foo/Makefile
 Creating [FILE] foo/mod_foo.c
-$ _
 .Ed
 .Pp
-Then you can immediately compile this sample module into a DSO and
-load it into the Apache server:
+The sample module can then be immediately compiled into a DSO
+and loaded into the httpd server:
 .Bd -literal -offset indent
 $ cd foo
 $ make all reload
-apxs -c mod_foo.c
-gcc -fpic -DSHARED_MODULE -I/path/to/apache/include -c mod_foo.c
-ld -Bshareable -o mod_foo.so mod_foo.o
-apxs -i -a -n "foo" mod_foo.so
-cp mod_foo.so /path/to/apache/libexec/mod_foo.so
-chmod 755 /path/to/apache/libexec/mod_foo.so
-[activating module `foo' in /path/to/apache/etc/httpd.conf]
+apxs -c    mod_foo.c
+cc -O2 -pipe -DDEV_RANDOM=/dev/arandom -DMOD_SSL=208116 -DEAPI -DUSE_EXPAT -I../lib/expat-lite -DUSE_SETUSERCONTEXT -fPIC -DSHARED_MODULE -I/usr/lib/apache/include  -c mod_foo.c
+cc -shared -fPIC -DSHARED_MODULE -o mod_foo.so mod_foo.o
+apxs -i -a -n 'foo' mod_foo.so
+[activating module `foo' in /var/www/conf/httpd.conf]
+cp mod_foo.so /usr/lib/apache/modules/mod_foo.so
+chmod 755 /usr/lib/apache/modules/mod_foo.so
+cp /var/www/conf/httpd.conf /var/www/conf/httpd.conf.bak
+cp /var/www/conf/httpd.conf.new /var/www/conf/httpd.conf
+rm /var/www/conf/httpd.conf.new
 apachectl restart
-/path/to/apache/sbin/apachectl restart: httpd not running, trying to start
-[Tue Mar 31 11:27:55 1998] [debug] mod_so.c(303): loaded module foo_module
-/path/to/apache/sbin/apachectl restart: httpd started
-$ _
+/usr/sbin/apachectl restart: httpd not running, trying to start
+/usr/sbin/apachectl restart: httpd started
 .Ed
 .Pp
-You can even use
 .Nm
-to compile complex modules outside the Apache source tree, like PHP3, because
+can even be used to compile complex modules
+outside the httpd source tree,
+like PHP3,
+because
 .Nm
 automatically recognizes C source files and object files.
 .Bd -literal -offset indent
@@ -412,11 +423,11 @@ $ ./configure --with-shared-apache=../apache-1.3
 $ apxs -c -o libphp3.so mod_php3.c libmodphp3-so.a
 gcc -fpic -DSHARED_MODULE -I/tmp/apache/include  -c mod_php3.c
 ld -Bshareable -o libphp3.so mod_php3.o libmodphp3-so.a
-$ _
 .Ed
 .Pp
 Only C source files are compiled,
 while remaining object files are used for the linking phase.
 .Sh SEE ALSO
 .Xr apachectl 1 ,
+.Xr cc 1 ,
 .Xr httpd 8
