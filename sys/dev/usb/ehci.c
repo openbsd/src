@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.11 2004/07/06 02:51:14 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.12 2004/07/06 02:51:46 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $	*/
 
 /*
@@ -766,9 +766,8 @@ ehci_idone(struct ehci_xfer *ex)
 		char sbuf[128];
 
 		bitmask_snprintf((u_int32_t)status,
-				 "\20\3MISSEDMICRO\4XACT\5BABBLE\6BABBLE"
-				 "\7HALTED",
-				 sbuf, sizeof(sbuf));
+				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
+				 "\3MISSED", sbuf, sizeof(sbuf));
 
 		DPRINTFN((status == EHCI_QTD_HALTED)*/*10*/2,
 			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
