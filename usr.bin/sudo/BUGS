@@ -1,17 +1,25 @@
-Known bugs in sudo version 1.6.3
+Known bugs in sudo version 1.6.4
 ================================
 
-1) "make install-man" should substitute correct paths into the
-    man pages themselves.
+1) Sudo should have an option to log when removing "dangerous"
+   environment variables.
 
-2) Sudo should log when removing "dangerous" envariables.
+2) On DUNIX in sia mode, hitting return at the prompt does not quit.
 
-3) configure variables that have been cached cannot be overridden
-   in subsequent configure runs, even if other --with-* options are
-   given.  This is a flaw in GNU autoconf.
+3) In parse.lex, '@' should not need to be a special character.
+   However, because lex does greedy matching, {WORD} will match
+   instead of the "^Defaults[:@]?" line.
 
-4) On DUNIX in sia mode, hitting return at the prompt does not quit.
+4) In list mode (sudo -l), characters escaped with a backslash
+   are shown verbatim with the backslash.
 
-5) In parse.lex, '@" should not need to be a special character.
-   For some reason, if it is not excluded from WORD, Defaults@ doesn't
-   match.
+5) Because the parser only does a single pass it is possible to
+   make a sudoers file where the "defaults" options are set after
+   a user's entry has been validated, changing the permissions for
+   the user.  The work-around is to put all 'defaults' entries
+   before the "User privilege specification" section but after all
+   the "alias specifications".  In the future the parser will
+   converted to a two-pass parser.
+
+For a list of things that are not bugs but that I would like to
+add / fix, please see the TODO file.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,50 +38,42 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
+#ifdef HAVE_STRING_H
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
+#endif /* HAVE_STRING_H */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-#include <malloc.h>
-#endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #include <ctype.h>
 #include <pwd.h>
 #include <time.h>
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 
 #include "sudo.h"
 #include "version.h"
 
-#ifndef STDC_HEADERS
-#ifndef __GNUC__	/* gcc has its own malloc */
-extern char *malloc	__P((size_t));
-#endif /* __GNUC__ */
-extern char *getenv	__P((const char *));
-extern int stat		__P((const char *, struct stat *));
-#endif /* !STDC_HEADERS */
-
-#if defined(POSIX_SIGNALS) && !defined(SA_RESETHAND)
-#define SA_RESETHAND    0
-#endif /* POSIX_SIGNALS && !SA_RESETHAND */
-
 #ifndef lint
-static const char rcsid[] = "$Sudo: visudo.c,v 1.126 2000/03/23 04:38:22 millert Exp $";
+static const char rcsid[] = "$Sudo: visudo.c,v 1.145 2001/12/14 19:52:48 millert Exp $";
 #endif /* lint */
 
 /*
@@ -91,6 +83,8 @@ static void usage		__P((void));
 static char whatnow		__P((void));
 static RETSIGTYPE Exit		__P((int));
 static void setup_signals	__P((void));
+static int run_command		__P((char *, char **));
+static int check_syntax		__P((int));
 int command_matches		__P((char *, char *, char *, char *));
 int addr_matches		__P((char *));
 int hostname_matches		__P((char *, char *, char *));
@@ -105,6 +99,11 @@ void yyrestart			__P((FILE *));
 extern FILE *yyin, *yyout;
 extern int errorlineno;
 extern int pedantic;
+extern int quiet;
+
+/* For getopt(3) */
+extern char *optarg;
+extern int optind;
 
 /*
  * Globals
@@ -115,7 +114,6 @@ char *stmp = _PATH_SUDOERS_TMP;
 struct sudo_user sudo_user;
 int parse_error = FALSE;
 
-
 int
 main(argc, argv)
     int argc;
@@ -123,9 +121,14 @@ main(argc, argv)
 {
     char buf[MAXPATHLEN*2];		/* buffer used for copying files */
     char *Editor;			/* editor to use */
+    char *UserEditor;			/* editor user wants to use */
+    char *EditorPath;			/* colon-separated list of editors */
+    char *av[4];			/* argument vector for run_command */
+    int checkonly;			/* only check existing file? */
     int sudoers_fd;			/* sudoers file descriptor */
     int stmp_fd;			/* stmp file descriptor */
     int n;				/* length parameter */
+    int ch;				/* getopt char */
     time_t now;				/* time now */
     struct stat stmp_sb, sudoers_sb;	/* to check for changes */
 
@@ -140,16 +143,33 @@ main(argc, argv)
     /*
      * Arg handling.
      */
-    while (--argc) {
-	if (!strcmp(argv[argc], "-V")) {
-	    (void) printf("visudo version %s\n", version);
-	    exit(0);
-	} else if (!strcmp(argv[argc], "-s")) {
-	    pedantic++;			/* strict mode */
-	} else {
-	    usage();
+    checkonly = 0;
+    while ((ch = getopt(argc, argv, "Vcf:sq")) != -1) {
+	switch (ch) {
+	    case 'V':
+		(void) printf("visudo version %s\n", version);
+		exit(0);
+	    case 'c':
+		checkonly++;		/* check mode */
+		break;
+	    case 'f':
+		sudoers = optarg;	/* sudoers file path */
+		easprintf(&stmp, "%s.tmp", optarg);
+		break;
+	    case 's':
+		pedantic++;		/* strict mode */
+		break;
+	    case 'q':
+		quiet++;		/* quiet mode */
+		break;
+	    default:
+		usage();
 	}
     }
+    argc -= optind;
+    argv += optind;
+    if (argc)
+	usage();
 
     /* Mock up a fake sudo_user struct. */
     user_host = user_shost = user_cmnd = "";
@@ -161,6 +181,9 @@ main(argc, argv)
 
     /* Setup defaults data structures. */
     init_defaults();
+
+    if (checkonly)
+	exit(check_syntax(quiet));
 
     /*
      * Open sudoers, lock it and stat it.  
@@ -224,34 +247,127 @@ main(argc, argv)
 	(void) close(stmp_fd);
 
     /*
-     * If we are allowing EDITOR and VISUAL envariables set Editor
-     * base on whichever exists...
+     * Check EDITOR and VISUAL environment variables to see which editor
+     * the user wants to use (we may not end up using it though).
+     * If the path is not fully-qualified, make it so and check that
+     * the specified executable actually exists.
      */
-    if (!def_flag(I_ENV_EDITOR) ||
-	(!(Editor = getenv("EDITOR")) && !(Editor = getenv("VISUAL"))))
-	Editor = estrdup(def_str(I_EDITOR));
+    if ((UserEditor = getenv("EDITOR")) == NULL || *UserEditor == '\0')
+	UserEditor = getenv("VISUAL");
+    if (UserEditor && *UserEditor == '\0')
+	UserEditor = NULL;
+    else if (UserEditor) {
+	if (find_path(UserEditor, &Editor, getenv("PATH")) == FOUND) {
+	    UserEditor = Editor;
+	} else {
+	    if (def_flag(I_ENV_EDITOR)) {
+		/* If we are honoring $EDITOR this is a fatal error. */
+		(void) fprintf(stderr,
+		    "%s: specified editor (%s) doesn't exist!\n",
+		    Argv[0], UserEditor);
+		Exit(-1);
+	    } else {
+		/* Otherwise, just ignore $EDITOR. */
+		UserEditor = NULL;
+	    }
+	}
+    }
+
+    /*
+     * See if we can use the user's choice of editors either because
+     * we allow any $EDITOR or because $EDITOR is in the allowable list.
+     */
+    Editor = NULL;
+    if (def_flag(I_ENV_EDITOR) && UserEditor)
+	Editor = UserEditor;
+    else if (UserEditor) {
+	struct stat editor_sb;
+	struct stat user_editor_sb;
+	char *base, *userbase;
+
+	if (stat(UserEditor, &user_editor_sb) != 0) {
+	    /* Should never happen since we already checked above. */
+	    (void) fprintf(stderr, "%s: unable to stat editor (%s): %s\n",
+		Argv[0], UserEditor, strerror(errno));
+	    Exit(-1);
+	}
+	EditorPath = estrdup(def_str(I_EDITOR));
+	Editor = strtok(EditorPath, ":");
+	do {
+	    /*
+	     * Both Editor and UserEditor should be fully qualified but
+	     * check anyway...
+	     */
+	    if ((base = strrchr(Editor, '/')) == NULL)
+		continue;
+	    if ((userbase = strrchr(UserEditor, '/')) == NULL) {
+		Editor = NULL;
+		break;
+	    }
+	    base++, userbase++;
+
+	    /*
+	     * We compare the basenames first and then use stat to match
+	     * for sure.
+	     */
+	    if (strcmp(base, userbase) == 0) {
+		if (stat(Editor, &editor_sb) == 0 && S_ISREG(editor_sb.st_mode)
+		    && (editor_sb.st_mode & 0000111) &&
+		    editor_sb.st_dev == user_editor_sb.st_dev &&
+		    editor_sb.st_ino == user_editor_sb.st_ino)
+		    break;
+	    }
+	} while ((Editor = strtok(NULL, ":")));
+	free(EditorPath);
+    }
+
+    /*
+     * Can't use $EDITOR, try each element of I_EDITOR until we
+     * find one that exists, is regular, and is executable.
+     */
+    if (Editor == NULL || *Editor == '\0') {
+	EditorPath = estrdup(def_str(I_EDITOR));
+	Editor = strtok(EditorPath, ":");
+	do {
+	    if (sudo_goodpath(Editor))
+		break;
+	} while ((Editor = strtok(NULL, ":")));
+
+	/* Bleah, none of the editors existed! */
+	if (Editor == NULL || *Editor == '\0') {
+	    (void) fprintf(stderr, "%s: no editor found (editor path = %s)\n",
+		Argv[0], def_str(I_EDITOR));
+	    Exit(-1);
+	}
+    }
 
     /*
      * Edit the temp file and parse it (for sanity checking)
      */
     do {
-	/*
-	 * Build up a buffer to execute
-	 */
-	if (strlen(Editor) + strlen(stmp) + 30 > sizeof(buf)) {
-	    (void) fprintf(stderr, "%s: Buffer too short (line %d).\n",
-			   Argv[0], __LINE__);
-	    Exit(-1);
-	}
-	if (parse_error == TRUE)
-	    (void) sprintf(buf, "%s +%d %s", Editor, errorlineno, stmp);
-	else
-	    (void) sprintf(buf, "%s %s", Editor, stmp);
+	char linestr[64];
 
-	/* Do the edit -- some SYSV editors exit with 1 instead of 0 */
+	/* Build up argument vector for the command */
+	if ((av[0] = strrchr(Editor, '/')) != NULL)
+	    av[0]++;
+	else
+	    av[0] = Editor;
+	n = 1;
+	if (parse_error == TRUE) {
+	    (void) snprintf(linestr, sizeof(linestr), "+%d", errorlineno);
+	    av[n++] = linestr;
+	}
+	av[n++] = stmp;
+	av[n++] = NULL;
+
+	/*
+	 * Do the edit:
+	 *  We cannot check the editor's exit value against 0 since
+	 *  XPG4 specifies that vi's exit value is a function of the
+	 *  number of errors during editing (?!?!).
+	 */
 	now = time(NULL);
-	n = system(buf);
-	if (n != -1 && ((n >> 8) == 0 || (n >> 8) == 1)) {
+	if (run_command(Editor, av) != -1) {
 	    /*
 	     * Sanity checks.
 	     */
@@ -298,8 +414,8 @@ main(argc, argv)
 	    }
 	} else {
 	    (void) fprintf(stderr,
-		"%s: Editor (%s) failed with exit status %d, %s unchanged.\n",
-		Argv[0], Editor, n, sudoers);
+		"%s: Editor (%s) failed, %s unchanged.\n", Argv[0],
+		    Editor, sudoers);
 	    Exit(-1);
 	}
 
@@ -352,31 +468,26 @@ main(argc, argv)
      */
     if (rename(stmp, sudoers)) {
 	if (errno == EXDEV) {
-	    char *tmpbuf;
-
 	    (void) fprintf(stderr,
 	      "%s: %s and %s not on the same filesystem, using mv to rename.\n",
 	      Argv[0], stmp, sudoers);
 
-	    /* Allocate just enough space for tmpbuf */
-	    n = sizeof(char) * (strlen(_PATH_MV) + strlen(stmp) +
-		  strlen(sudoers) + 4);
-	    if ((tmpbuf = (char *) malloc(n)) == NULL) {
-		(void) fprintf(stderr,
-			      "%s: Cannot alocate memory, %s unchanged: %s\n",
-			      Argv[0], sudoers, strerror(errno));
-		Exit(-1);
-	    }
+	    /* Build up argument vector for the command */
+	    if ((av[0] = strrchr(_PATH_MV, '/')) != NULL)
+		av[0]++;
+	    else
+		av[0] = _PATH_MV;
+	    av[1] = stmp;
+	    av[2] = sudoers;
+	    av[3] = NULL;
 
-	    /* Build up command and execute it */
-	    (void) sprintf(tmpbuf, "%s %s %s", _PATH_MV, stmp, sudoers);
-	    if (system(tmpbuf)) {
+	    /* And run it... */
+	    if (run_command(_PATH_MV, av)) {
 		(void) fprintf(stderr,
-			       "%s: Command failed: '%s', %s unchanged.\n",
-			       Argv[0], tmpbuf, sudoers);
+			       "%s: Command failed: '%s %s %s', %s unchanged.\n",
+			       Argv[0], _PATH_MV, stmp, sudoers, sudoers);
 		Exit(-1);
 	    }
-	    free(tmpbuf);
 	} else {
 	    (void) fprintf(stderr, "%s: Error renaming %s, %s unchanged: %s\n",
 				   Argv[0], stmp, sudoers, strerror(errno));
@@ -435,6 +546,18 @@ set_fqdn()
     return;
 }
 
+int
+user_is_exempt()
+{
+    return(TRUE);
+}
+
+void
+init_envtables()
+{
+    return;
+}
+
 /*
  * Assuming a parse error occurred, prompt the user for what they want
  * to do now.  Returns the first letter of their choice.
@@ -473,27 +596,89 @@ whatnow()
 static void
 setup_signals()
 {
-#ifdef POSIX_SIGNALS
-	struct sigaction action;		/* POSIX signal structure */
-#endif /* POSIX_SIGNALS */
+	sigaction_t sa;
 
 	/*
 	 * Setup signal handlers to cleanup nicely.
 	 */
-#ifdef POSIX_SIGNALS
-	(void) memset((VOID *)&action, 0, sizeof(action));
-	action.sa_handler = Exit;
-	action.sa_flags = SA_RESETHAND;
-	(void) sigaction(SIGTERM, &action, NULL);
-	(void) sigaction(SIGHUP, &action, NULL);
-	(void) sigaction(SIGINT, &action, NULL);
-	(void) sigaction(SIGQUIT, &action, NULL);
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = Exit;
+	(void) sigaction(SIGTERM, &sa, NULL);
+	(void) sigaction(SIGHUP, &sa, NULL);
+	(void) sigaction(SIGINT, &sa, NULL);
+	(void) sigaction(SIGQUIT, &sa, NULL);
+}
+
+static int
+run_command(path, argv)
+    char *path;
+    char **argv;
+{
+    int status;
+    pid_t pid;
+    sigset_t set, oset;
+
+    (void) sigemptyset(&set);
+    (void) sigaddset(&set, SIGCHLD);
+    (void) sigprocmask(SIG_BLOCK, &set, &oset);
+
+    switch (pid = fork()) {
+	case -1:
+	    (void) fprintf(stderr,
+		"%s: unable to run %s: %s\n", Argv[0], path, strerror(errno));
+	    Exit(-1);
+	    break;	/* NOTREACHED */
+	case 0:
+	    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
+	    execv(path, argv);
+	    (void) fprintf(stderr,
+		"%s: unable to run %s: %s\n", Argv[0], path, strerror(errno));
+	    _exit(127);
+	    break;	/* NOTREACHED */
+    }
+
+#ifdef sudo_waitpid
+    pid = sudo_waitpid(pid, &status, 0);
 #else
-	(void) signal(SIGTERM, Exit);
-	(void) signal(SIGHUP, Exit);
-	(void) signal(SIGINT, Exit);
-	(void) signal(SIGQUIT, Exit);
-#endif /* POSIX_SIGNALS */
+    pid = wait(&status);
+#endif
+
+    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
+
+    /* XXX - should use WEXITSTATUS() */
+    return(pid == -1 ? -1 : (status >> 8));
+}
+
+static int
+check_syntax(quiet)
+    int quiet;
+{
+
+    if ((yyin = fopen(sudoers, "r")) == NULL) {
+	if (!quiet)
+	    (void) fprintf(stderr, "%s: unable to open %s: %s\n", Argv[0],
+		sudoers, strerror(errno));
+	exit(1);
+    }
+    yyout = stdout;
+    init_parser();
+    if (yyparse() && parse_error != TRUE) {
+	if (!quiet)
+	    (void) fprintf(stderr,
+		"%s: failed to parse %s file, unknown error.\n",
+		Argv[0], sudoers);
+	parse_error = TRUE;
+    }
+    if (!quiet){
+	if (parse_error)
+	    (void) printf("parse error in %s near line %d\n", sudoers,
+		errorlineno);
+	else
+	    (void) printf("%s file parsed OK\n", sudoers);
+    }
+
+    return(parse_error == TRUE);
 }
 
 /*
@@ -520,6 +705,7 @@ Exit(sig)
 static void
 usage()
 {
-    (void) fprintf(stderr, "usage: %s [-s] [-V]\n", Argv[0]);
+    (void) fprintf(stderr, "usage: %s [-c] [-f sudoers] [-q] [-s] [-V]\n",
+	Argv[0]);
     exit(1);
 }

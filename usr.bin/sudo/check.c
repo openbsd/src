@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,34 +34,40 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/file.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <time.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 #include <pwd.h>
 #include <grp.h>
 
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.194 2000/02/15 23:36:03 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.202 2001/12/14 19:52:47 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -226,10 +232,10 @@ user_is_exempt()
     struct group *grp;
     char **gr_mem;
 
-    if (!def_str(I_EXEMPT_GRP))
+    if (!def_str(I_EXEMPT_GROUP))
 	return(FALSE);
 
-    if (!(grp = getgrnam(def_str(I_EXEMPT_GRP))))
+    if (!(grp = getgrnam(def_str(I_EXEMPT_GROUP))))
 	return(FALSE);
 
     if (user_gid == grp->gr_gid)
@@ -424,24 +430,29 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
      * If the file/dir exists, check its mtime.
      */
     if (status == TS_OLD) {
-	now = time(NULL);
-	if (def_ival(I_TS_TIMEOUT) && 
-	    now - sb.st_mtime < 60 * def_ival(I_TS_TIMEOUT)) {
-	    /*
-	     * Check for bogus time on the stampfile.  The clock may
-	     * have been set back or someone could be trying to spoof us.
-	     */
-	    if (sb.st_mtime > now + 60 * def_ival(I_TS_TIMEOUT) * 2) {
-		log_error(NO_EXIT,
-		    "timestamp too far in the future: %20.20s",
-		    4 + ctime(&sb.st_mtime));
-		if (timestampfile)
-		    (void) unlink(timestampfile);
-		else
-		    (void) rmdir(timestampdir);
-		status = TS_MISSING;
-	    } else
-		status = TS_CURRENT;
+	/* Negative timeouts only expire manually (sudo -k). */
+	if (def_ival(I_TIMESTAMP_TIMEOUT) < 0 && sb.st_mtime != 0)
+	    status = TS_CURRENT;
+	else {
+	    now = time(NULL);
+	    if (def_ival(I_TIMESTAMP_TIMEOUT) && 
+		now - sb.st_mtime < 60 * def_ival(I_TIMESTAMP_TIMEOUT)) {
+		/*
+		 * Check for bogus time on the stampfile.  The clock may
+		 * have been set back or someone could be trying to spoof us.
+		 */
+		if (sb.st_mtime > now + 60 * def_ival(I_TIMESTAMP_TIMEOUT) * 2) {
+		    log_error(NO_EXIT,
+			"timestamp too far in the future: %20.20s",
+			4 + ctime(&sb.st_mtime));
+		    if (timestampfile)
+			(void) unlink(timestampfile);
+		    else
+			(void) rmdir(timestampdir);
+		    status = TS_MISSING;
+		} else
+		    status = TS_CURRENT;
+	    }
 	}
     }
 

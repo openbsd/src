@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,52 +34,72 @@
 
 #include "config.h"
 
-#include <stdio.h>
-#ifdef STDC_HEADERS
-#include <stdlib.h>
-#endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <pwd.h>
-#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #ifdef HAVE_SYS_BSDTYPES_H
-#include <sys/bsdtypes.h>
+# include <sys/bsdtypes.h>
 #endif /* HAVE_SYS_BSDTYPES_H */
 #ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
+# include <sys/select.h>
 #endif /* HAVE_SYS_SELECT_H */
 #include <sys/time.h>
+#include <stdio.h>
+#ifdef STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif /* STDC_HEADERS */
+#ifdef HAVE_STRING_H
+# if defined(HAVE_MEMORY_H) && !defined(STDC_HEADERS)
+#  include <memory.h>
+# endif
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
+#endif /* HAVE_STRING_H */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#include <pwd.h>
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
 #ifdef HAVE_TERMIOS_H
-#include <termios.h>
+# include <termios.h>
 #else
-#ifdef HAVE_TERMIO_H
-#include <termio.h>
-#else
-#include <sgtty.h>
-#include <sys/ioctl.h>
-#endif /* HAVE_TERMIO_H */
+# ifdef HAVE_TERMIO_H
+#  include <termio.h>
+# else
+#  include <sgtty.h>
+#  include <sys/ioctl.h>
+# endif /* HAVE_TERMIO_H */
 #endif /* HAVE_TERMIOS_H */
 
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: tgetpass.c,v 1.95 2000/02/27 03:48:56 millert Exp $";
+static const char rcsid[] = "$Sudo: tgetpass.c,v 1.103 2001/12/17 23:56:47 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
-#define TCSASOFT	0
-#endif /* TCSASOFT */
+# define TCSASOFT	0
+#endif
+#ifndef ECHONL
+# define ECHONL	0
+#endif
+
+#ifndef _POSIX_VDISABLE
+# ifdef VDISABLE
+#  define _POSIX_VDISABLE	VDISABLE
+# else
+#  define _POSIX_VDISABLE	0
+# endif
+#endif
 
 /*
  * Abstract method of getting at the term flags.
@@ -96,7 +116,7 @@ static const char rcsid[] = "$Sudo: tgetpass.c,v 1.95 2000/02/27 03:48:56 miller
 # define TERM			termio
 # define tflags			c_lflag
 # define term_getattr(f, t)	ioctl(f, TCGETA, t)
-# define term_setattr(f, t)	ioctl(f, TCSETA, t)
+# define term_setattr(f, t)	ioctl(f, TCSETAF, t)
 # else
 #  define TERM			sgttyb
 #  define tflags		sg_flags
@@ -105,7 +125,10 @@ static const char rcsid[] = "$Sudo: tgetpass.c,v 1.95 2000/02/27 03:48:56 miller
 # endif /* HAVE_TERMIO_H */
 #endif /* HAVE_TERMIOS_H */
 
+static volatile sig_atomic_t signo;
+
 static char *tgetline __P((int, char *, size_t, int));
+static void handler __P((int));
 
 /*
  * Like getpass(3) but with timeout and echo flags.
@@ -116,10 +139,14 @@ tgetpass(prompt, timeout, flags)
     int timeout;
     int flags;
 {
-    struct TERM term, oterm;
-    int input, output;
+    sigaction_t sa, saveint, savehup, savequit, saveterm;
+    sigaction_t savetstp, savettin, savettou;
     static char buf[SUDO_PASS_MAX + 1];
+    int input, output, save_errno;
+    struct TERM term, oterm;
+    char *pass;
 
+restart:
     /* Open /dev/tty for reading/writing if possible else use stdin/stderr. */
     if ((flags & TGP_STDIN) ||
 	(input = output = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1) {
@@ -130,28 +157,72 @@ tgetpass(prompt, timeout, flags)
     if (prompt)
 	(void) write(output, prompt, strlen(prompt));
 
+    /*
+     * Catch signals that would otherwise cause the user to end
+     * up with echo turned off in the shell.  Don't worry about
+     * things like SIGALRM and SIGPIPE for now.
+     */
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;		/* don't restart system calls */
+    sa.sa_handler = handler;
+    (void) sigaction(SIGINT, &sa, &saveint);
+    (void) sigaction(SIGHUP, &sa, &savehup);
+    (void) sigaction(SIGQUIT, &sa, &savequit);
+    (void) sigaction(SIGTERM, &sa, &saveterm);
+    (void) sigaction(SIGTSTP, &sa, &savetstp);
+    (void) sigaction(SIGTTIN, &sa, &savettin);
+    (void) sigaction(SIGTTOU, &sa, &savettou);
+
     /* Turn echo off/on as specified by flags.  */
-    (void) term_getattr(input, &oterm);
-    (void) memcpy(&term, &oterm, sizeof(term));
-    if ((flags & TGP_ECHO) && !(term.tflags & ECHO))
-	term.tflags |= ECHO;
-    else if (!(flags & TGP_ECHO) && (term.tflags & ECHO))
-	term.tflags &= ~ECHO;
-    (void) term_setattr(input, &term);
+    if (term_getattr(input, &oterm) == 0) {
+	(void) memcpy(&term, &oterm, sizeof(term));
+	if (!(flags & TGP_ECHO))
+	    term.tflags &= ~(ECHO | ECHONL);
+#ifdef VSTATUS
+	term.c_cc[VSTATUS] = _POSIX_VDISABLE;
+#endif
+	(void) term_setattr(input, &term);
+    } else {
+	memset(&term, 0, sizeof(term));
+	memset(&oterm, 0, sizeof(oterm));
+    }
 
-    buf[0] = '\0';
-    tgetline(input, buf, sizeof(buf), timeout);
+    pass = tgetline(input, buf, sizeof(buf), timeout);
+    save_errno = errno;
 
-    /* Restore old tty flags.  */
-    (void) term_setattr(input, &oterm);
-
-    if (!(flags & TGP_ECHO))
+    if (!(term.tflags & ECHO))
 	(void) write(output, "\n", 1);
 
+    /* Restore old tty settings and signals. */
+    if (memcmp(&term, &oterm, sizeof(term)) != 0)
+	(void) term_setattr(input, &oterm);
+    (void) sigaction(SIGINT, &saveint, NULL);
+    (void) sigaction(SIGHUP, &savehup, NULL);
+    (void) sigaction(SIGQUIT, &savequit, NULL);
+    (void) sigaction(SIGTERM, &saveterm, NULL);
+    (void) sigaction(SIGTSTP, &savetstp, NULL);
+    (void) sigaction(SIGTTIN, &savettin, NULL);
+    (void) sigaction(SIGTTOU, &savettou, NULL);
     if (input != STDIN_FILENO)
 	(void) close(input);
 
-    return(buf);
+    /*
+     * If we were interrupted by a signal, resend it to ourselves
+     * now that we have restored the signal handlers.
+     */
+    if (signo) {
+	kill(getpid(), signo); 
+	switch (signo) {
+	    case SIGTSTP:
+	    case SIGTTIN:
+	    case SIGTTOU:
+		signo = 0;
+		goto restart;
+	}
+    }
+
+    errno = save_errno;
+    return(pass);
 }
 
 /*
@@ -164,15 +235,17 @@ tgetline(fd, buf, bufsiz, timeout)
     size_t bufsiz;
     int timeout;
 {
-    size_t left;
-    int n;
     fd_set *readfds = NULL;
     struct timeval tv;
-    char c;
+    size_t left;
     char *cp;
+    char c;
+    int n;
 
-    if (bufsiz == 0)
+    if (bufsiz == 0) {
+	errno = EINVAL;
 	return(NULL);			/* sanity */
+    }
 
     cp = buf;
     left = bufsiz;
@@ -195,10 +268,12 @@ tgetline(fd, buf, bufsiz, timeout)
 
 	    /* Make sure there is something to read (or timeout) */
 	    while ((n = select(fd + 1, readfds, 0, 0, &tv)) == -1 &&
-		errno == EINTR)
+		errno == EAGAIN)
 		;
-	    if (n == 0)
-		return(NULL);		/* timeout */
+	    if (n <= 0) {
+		free(readfds);
+		return(NULL);		/* timeout or interrupt */
+	    }
 
 	    /* Read a character, exit loop on error, EOF or EOL */
 	    n = read(fd, &c, 1);
@@ -209,10 +284,17 @@ tgetline(fd, buf, bufsiz, timeout)
 	free(readfds);
     } else {
 	/* Keep reading until out of space, EOF, error, or newline */
+	n = -1;
 	while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n' && c != '\r')
 	    *cp++ = c;
     }
     *cp = '\0';
 
-    return(cp == buf ? NULL : buf);
+    return(n == -1 ? NULL : buf);
+}
+
+static void handler(s)
+    int s;
+{
+    signo = s;
 }

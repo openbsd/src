@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,30 +34,40 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# if defined(HAVE_MEMORY_H) && !defined(STDC_HEADERS)
+#  include <memory.h>
+# endif
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <sys/param.h>
-#include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 #include <time.h>
+#include <signal.h>
 
 #include "sudo.h"
 #include "sudo_auth.h"
 #include "insults.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.19 2000/03/06 19:42:21 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.25 2001/12/14 19:52:54 millert Exp $";
 #endif /* lint */
 
 sudo_auth auth_switch[] = {
@@ -65,7 +75,7 @@ sudo_auth auth_switch[] = {
     AUTH_STANDALONE
 #else
 #  ifndef WITHOUT_PASSWD
-    AUTH_ENTRY(0, "passwd", NULL, NULL, passwd_verify, NULL)
+    AUTH_ENTRY(0, "passwd", passwd_init, NULL, passwd_verify, NULL)
 #  endif
 #  if defined(HAVE_GETPRPWNAM) && !defined(WITHOUT_PASSWD)
     AUTH_ENTRY(0, "secureware", secureware_init, NULL, secureware_verify, NULL)
@@ -99,11 +109,19 @@ verify_user(pw, prompt)
     struct passwd *pw;
     char *prompt;
 {
-    short counter = def_ival(I_PW_TRIES) + 1;
-    short success = AUTH_FAILURE;
-    short status;
+    int counter = def_ival(I_PASSWD_TRIES) + 1;
+    int success = AUTH_FAILURE;
+    int status;
+    int flags;
     char *p;
     sudo_auth *auth;
+    sigaction_t sa, osa;
+
+    /* Enable suspend during password entry. */
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = SIG_DFL;
+    (void) sigaction(SIGTSTP, &sa, &osa);
 
     /* Make sure we have at least one auth method. */
     if (auth_switch[0].name == NULL)
@@ -156,14 +174,14 @@ verify_user(pw, prompt)
 #ifdef AUTH_STANDALONE
 	p = prompt;
 #else
-	p = (char *) tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60,
+	p = (char *) tgetpass(prompt, def_ival(I_PASSWD_TIMEOUT) * 60,
 	    tgetpass_flags);
 	if (!p || *p == '\0')
 	    nil_pw = 1;
 #endif /* AUTH_STANDALONE */
 
 	/* Call authentication functions. */
-	for (auth = auth_switch; auth->name; auth++) {
+	for (auth = auth_switch; p && auth->name; auth++) {
 	    if (!IS_CONFIGURED(auth))
 		continue;
 
@@ -179,12 +197,13 @@ verify_user(pw, prompt)
 		goto cleanup;
 	}
 #ifndef AUTH_STANDALONE
-	(void) memset(p, 0, strlen(p));
+	if (p)
+	    (void) memset(p, 0, strlen(p));
 #endif
 
 	/* Exit loop on nil password, but give it a chance to match first. */
 	if (nil_pw) {
-	    if (counter == def_ival(I_PW_TRIES))
+	    if (counter == def_ival(I_PASSWD_TRIES))
 		exit(1);
 	    else
 		break;
@@ -211,14 +230,20 @@ cleanup:
 
     switch (success) {
 	case AUTH_SUCCESS:
+	    (void) sigaction(SIGTSTP, &osa, NULL);
 	    return;
 	case AUTH_FAILURE:
-	    log_error(NO_MAIL, "%d incorrect password attempt%s",
-		def_ival(I_PW_TRIES) - counter,
-		(def_ival(I_PW_TRIES) - counter == 1) ? "" : "s");
+	    if (def_flag(I_MAIL_BADPASS) || def_flag(I_MAIL_ALWAYS))
+		flags = 0;
+	    else
+		flags = NO_MAIL;
+	    log_error(flags, "%d incorrect password attempt%s",
+		def_ival(I_PASSWD_TRIES) - counter,
+		(def_ival(I_PASSWD_TRIES) - counter == 1) ? "" : "s");
 	case AUTH_FATAL:
 	    exit(1);
     }
+    /* NOTREACHED */
 }
 
 void
@@ -231,7 +256,7 @@ pass_warn(fp)
 	(void) fprintf(fp, "%s\n", INSULT);
     else
 #endif
-	(void) fprintf(fp, "%s\n", def_str(I_BADPASS_MSG));
+	(void) fprintf(fp, "%s\n", def_str(I_BADPASS_MESSAGE));
 }
 
 void

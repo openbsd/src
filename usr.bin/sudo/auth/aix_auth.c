@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,28 +34,34 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <sys/param.h>
-#include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 
 #include "sudo.h"
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: aix_auth.c,v 1.8 2000/02/27 03:49:05 millert Exp $";
+static const char rcsid[] = "$Sudo: aix_auth.c,v 1.11 2001/12/14 19:52:53 millert Exp $";
 #endif /* lint */
 
 int
@@ -67,8 +73,8 @@ aixauth_verify(pw, prompt, auth)
     char *message, *pass;
     int reenter = 1;
 
-    pass = tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags);
-    if (authenticate(pw->pw_name, pass, &reenter, &message) == 0)
+    pass = tgetpass(prompt, def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags);
+    if (pass && authenticate(pw->pw_name, pass, &reenter, &message) == 0)
 	return(AUTH_SUCCESS);
     else
 	return(AUTH_FAILURE);

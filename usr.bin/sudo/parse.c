@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway
@@ -37,19 +37,28 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
 # include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
+#ifdef HAVE_STRING_H
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
+#endif /* HAVE_STRING_H */
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
-# include <string.h>
-#endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-# include <strings.h>
-#endif /* HAVE_STRINGS_H */
 #ifdef HAVE_FNMATCH
 # include <fnmatch.h>
 #endif /* HAVE_FNMATCH_H */
@@ -59,25 +68,22 @@
 #include <ctype.h>
 #include <pwd.h>
 #include <grp.h>
-#include <sys/param.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <sys/stat.h>
-#if HAVE_DIRENT_H
+#ifdef HAVE_DIRENT_H
 # include <dirent.h>
 # define NAMLEN(dirent) strlen((dirent)->d_name)
 #else
 # define dirent direct
 # define NAMLEN(dirent) (dirent)->d_namlen
-# if HAVE_SYS_NDIR_H
+# ifdef HAVE_SYS_NDIR_H
 #  include <sys/ndir.h>
 # endif
-# if HAVE_SYS_DIR_H
+# ifdef HAVE_SYS_DIR_H
 #  include <sys/dir.h>
 # endif
-# if HAVE_NDIR_H
+# ifdef HAVE_NDIR_H
 #  include <ndir.h>
 # endif
 #endif
@@ -91,7 +97,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.130 2000/03/23 04:38:19 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.134 2001/12/14 19:52:48 millert Exp $";
 #endif /* lint */
 
 /*
@@ -112,11 +118,12 @@ static int has_meta	__P((char *));
  * allowed to run the specified command on this host as the target user.
  */
 int
-sudoers_lookup(sudo_mode)
-    int sudo_mode;
+sudoers_lookup(pwflag)
+    int pwflag;
 {
     int error;
     int pwcheck;
+    int nopass;
 
     /* Become sudoers file owner */
     set_perms(PERM_SUDOERS, 0);
@@ -130,8 +137,7 @@ sudoers_lookup(sudo_mode)
     init_parser();
 
     /* If pwcheck *could* be PWCHECK_ALL or PWCHECK_ANY, keep more state. */
-    if (!(sudo_mode & MODE_RUN) && sudo_mode != MODE_KILL &&
-	sudo_mode != MODE_INVALIDATE)
+    if (pwflag > 0)
 	keepall = TRUE;
 
     /* Need to be root while stat'ing things in the parser. */
@@ -149,21 +155,10 @@ sudoers_lookup(sudo_mode)
      * The pw options may have changed during sudoers parse so we
      * wait until now to set this.
      */
-    switch (sudo_mode) {
-	case MODE_VALIDATE:
-	    pwcheck = def_ival(I_VERIFYPW);
-	    break;
-	case MODE_LIST:
-	    pwcheck = def_ival(I_LISTPW);
-	    break;
-	case MODE_KILL:
-	case MODE_INVALIDATE:
-	    pwcheck = PWCHECK_NEVER;
-	    break;
-	default:
-	    pwcheck = 0;
-	    break;
-}
+    if (pwflag)
+	pwcheck = (pwflag == -1) ? PWCHECK_NEVER : def_ival(pwflag);
+    else
+	pwcheck = 0;
 
     /*
      * Assume the worst.  If the stack is empty the user was
@@ -186,13 +181,12 @@ sudoers_lookup(sudo_mode)
      * It is set for the "validate", "list" and "kill" pseudo-commands.
      * Always check the host and user.
      */
+    nopass = -1;
     if (pwcheck) {
-	int nopass, found;
+	int found;
 
 	if (pwcheck == PWCHECK_NEVER || !def_flag(I_AUTHENTICATE))
 	    nopass = FLAG_NOPASS;
-	else
-	    nopass = -1;
 	found = 0;
 	while (top) {
 	    if (host_matches == TRUE) {
@@ -241,7 +235,9 @@ sudoers_lookup(sudo_mode)
     /*
      * The user was not explicitly granted nor denied access.
      */
-    return(error);
+    if (nopass == -1)
+	nopass = 0;
+    return(error | nopass);
 }
 
 /*
@@ -387,8 +383,13 @@ addr_matches(n)
 	addr.s_addr = inet_addr(n);
 	if (strchr(m, '.'))
 	    mask.s_addr = inet_addr(m);
-	else
-	    mask.s_addr = (1 << atoi(m)) - 1;	/* XXX - better way? */
+	else {
+	    i = 32 - atoi(m);
+	    mask.s_addr = 0xffffffff;
+	    mask.s_addr >>= i;
+	    mask.s_addr <<= i;
+	    mask.s_addr = htonl(mask.s_addr);
+	}
 	*(m - 1) = '/';
 
 	for (i = 0; i < num_interfaces; i++)

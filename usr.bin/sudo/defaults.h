@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,22 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: defaults.h,v 1.16 2000/03/22 23:40:09 millert Exp $
+ * $Sudo: defaults.h,v 1.23 2001/12/14 19:54:56 millert Exp $
  */
 
 #ifndef _SUDO_DEFAULTS_H
 #define _SUDO_DEFAULTS_H
+
+struct list_member {
+    char *value;
+    struct list_member *next;
+};
+
+enum list_ops {
+    add,
+    delete,
+    freeall
+};
 
 /*
  * Structure describing compile-time and run-time options.
@@ -46,9 +57,10 @@ struct sudo_defs_types {
     char *desc;
     union {
 	int flag;
+	int ival;
 	char *str;
-	unsigned int ival;
 	mode_t mode;
+	struct list_member *list;
     } sd_un;
 };
 
@@ -59,18 +71,22 @@ struct sudo_defs_types {
  */
 #undef T_INT
 #define T_INT		0x001
+#undef T_UINT
+#define T_UINT		0x002
 #undef T_STR
-#define T_STR		0x002
+#define T_STR		0x003
 #undef T_FLAG
-#define T_FLAG		0x003
+#define T_FLAG		0x004
 #undef T_MODE
-#define T_MODE		0x004
+#define T_MODE		0x005
+#undef T_LIST
+#define T_LIST		0x006
 #undef T_LOGFAC
-#define T_LOGFAC	0x005
+#define T_LOGFAC	0x007
 #undef T_LOGPRI
-#define T_LOGPRI	0x006
+#define T_LOGPRI	0x008
 #undef T_PWFLAG
-#define T_PWFLAG	0x007
+#define T_PWFLAG	0x009
 #undef T_MASK
 #define T_MASK		0x0FF
 #undef T_BOOL
@@ -81,71 +97,10 @@ struct sudo_defs_types {
 /*
  * Indexes into sudo_defs_table
  */
-
-/* Integer versions of syslog options.  */
-#define	I_LOGFAC	0	/* syslog facility */
-#define	I_GOODPRI	1	/* syslog priority for successful auth */
-#define	I_BADPRI	2	/* syslog priority for unsuccessful auth */
-
-/* String versions of syslog options.  */
-#define	I_LOGFACSTR	3	/* syslog facility */
-#define	I_GOODPRISTR	4	/* syslog priority for successful auth */
-#define	I_BADPRISTR	5	/* syslog priority for unsuccessful auth */
-
-/* Booleans */
-#define I_LONG_OTP_PROMPT	6
-#define I_IGNORE_DOT		7
-#define I_MAIL_ALWAYS		8
-#define I_MAIL_NOUSER		9
-#define I_MAIL_NOHOST		10
-#define I_MAIL_NOPERMS		11
-#define I_TTY_TICKETS		12
-#define I_LECTURE		13
-#define I_AUTHENTICATE		14
-#define I_ROOT_SUDO		15
-#define I_LOG_HOST		16
-#define I_LOG_YEAR		17
-#define I_SHELL_NOARGS		18
-#define I_SET_HOME		19
-#define I_PATH_INFO		20
-#define I_FQDN			21
-#define I_INSULTS		22
-#define I_REQUIRETTY		23
-#define I_ENV_EDITOR		24
-#define I_ROOTPW		25
-#define I_RUNASPW		26
-#define I_TARGETPW		27
-#define I_LOGINCLASS		28
-#define I_LOGNAME		29
-
-/* Integer values */
-#define	I_LOGLEN	30	/* wrap log file line after N chars */
-#define	I_TS_TIMEOUT	31	/* timestamp stale after N minutes */
-#define	I_PW_TIMEOUT	32	/* exit if pass not entered in N minutes */
-#define	I_PW_TRIES	33	/* exit after N bad password tries */
-#define	I_UMASK		34	/* umask to use or 0777 to use user's */
-
-/* Strings */
-#define	I_LOGFILE	35	/* path to logfile (or NULL for none) */
-#define	I_MAILERPATH	36	/* path to sendmail or other mailer */
-#define	I_MAILERFLAGS	37	/* flags to pass to the mailer */
-#define	I_MAILTO	38	/* who to send bitch mail to */
-#define	I_MAILSUB	39	/* subject line of mail msg */
-#define	I_BADPASS_MSG	40	/* what to say when passwd is wrong */
-#define	I_TIMESTAMPDIR	41	/* path to timestamp dir */
-#define	I_EXEMPT_GRP	42	/* no password or PATH override for these */
-#define	I_PASSPROMPT	43	/* password prompt */
-#define	I_RUNAS_DEF	44	/* default user to run commands as */
-#define	I_SECURE_PATH	45	/* set $PATH to this if not NULL */
-#define	I_EDITOR	46	/* path to editor used by visudo */
-
-/* Integer versions of list/verify options */
-#define I_LISTPW	47
-#define I_VERIFYPW	48
-
-/* String versions of list/verify options */
-#define I_LISTPWSTR	49
-#define I_VERIFYPWSTR	50
+#include <def_data.h>
+#define I_LOGFAC	I_SYSLOG_IFAC
+#define I_GOODPRI	I_SYSLOG_IGOODPRI
+#define I_BADPRI	I_SYSLOG_IBADPRI 
 
 /*
  * Macros for accessing sudo_defs_table.
@@ -153,6 +108,7 @@ struct sudo_defs_types {
 #define def_flag(_i)	(sudo_defs_table[(_i)].sd_un.flag)
 #define def_ival(_i)	(sudo_defs_table[(_i)].sd_un.ival)
 #define def_str(_i)	(sudo_defs_table[(_i)].sd_un.str)
+#define def_list(_i)	(sudo_defs_table[(_i)].sd_un.list)
 #define def_mode(_i)	(sudo_defs_table[(_i)].sd_un.mode)
 
 /*

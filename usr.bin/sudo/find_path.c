@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,37 +34,34 @@
 
 #include "config.h"
 
-#include <stdio.h>
-#ifdef STDC_HEADERS
-#include <stdlib.h>
-#endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <stdio.h>
+#ifdef STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif /* STDC_HEADERS */
+#ifdef HAVE_STRING_H
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
+#endif /* HAVE_STRING_H */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#include <errno.h>
 
 #include "sudo.h"
 
-#ifndef STDC_HEADERS
-extern char *getenv	__P((const char *));
-extern char *strcpy	__P((char *, const char *));
-extern int fprintf	__P((FILE *, const char *, ...));
-extern ssize_t readlink	__P((const char *, VOID *, size_t));
-extern int stat		__P((const char *, struct stat *));
-extern int lstat	__P((const char *, struct stat *));
-#endif /* !STDC_HEADERS */
-
 #ifndef lint
-static const char rcsid[] = "$Sudo: find_path.c,v 1.95 2000/01/27 04:31:58 millert Exp $";
+static const char rcsid[] = "$Sudo: find_path.c,v 1.99 2001/12/14 19:52:47 millert Exp $";
 #endif /* lint */
 
 /*
@@ -75,13 +72,13 @@ static const char rcsid[] = "$Sudo: find_path.c,v 1.95 2000/01/27 04:31:58 mille
  * but it is in '.' and IGNORE_DOT is set.
  */
 int
-find_path(infile, outfile)
+find_path(infile, outfile, path)
     char *infile;		/* file to find */
     char **outfile;		/* result parameter */
+    char *path;			/* path to search */
 {
     static char command[MAXPATHLEN]; /* qualified filename */
     char *n;			/* for traversing path */
-    char *path = NULL;		/* contents of PATH env var */
     char *origpath;		/* so we can free path later */
     char *result = NULL;	/* result of path/file lookup */
     int checkdot = 0;		/* check current dir? */
@@ -104,13 +101,12 @@ find_path(infile, outfile)
 	    return(NOT_FOUND);
     }
 
-    /*
-     * Grab PATH out of the environment (or from the string table
-     * if SECURE_PATH is in effect) and make a local copy.
-     */
-    if (def_str(I_SECURE_PATH) && !user_is_exempt())
-	path = def_str(I_SECURE_PATH);
-    else if ((path = getenv("PATH")) == NULL)
+    /* Use PATH passed in unless SECURE_PATH is in effect.  */
+#ifdef SECURE_PATH
+    if (!user_is_exempt())
+	path = SECURE_PATH;
+#endif /* SECURE_PATH */
+    if (path == NULL)
 	return(NOT_FOUND);
     path = estrdup(path);
     origpath = path;

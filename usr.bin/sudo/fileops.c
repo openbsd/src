@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,26 +34,29 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
+#ifdef HAVE_FLOCK
+# include <sys/file.h>
+#endif /* HAVE_FLOCK */
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+# include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #include <fcntl.h>
 #include <time.h>
-#include <sys/types.h>
-#include <sys/param.h>
 #ifdef HAVE_UTIME
 # ifdef HAVE_UTIME_H
 #  include <utime.h>
 # endif /* HAVE_UTIME_H */
 #else
-#  include "emul/utime.h"
+# include "emul/utime.h"
 #endif /* HAVE_UTIME */
 
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: fileops.c,v 1.1 1999/08/07 09:59:43 millert Exp $";
+static const char rcsid[] = "$Sudo: fileops.c,v 1.3 2001/12/14 19:52:47 millert Exp $";
 #endif /* lint */
 
 /*
@@ -119,7 +122,7 @@ lock_file(fd, lockit)
 	    op = LOCK_EX | LOCK_NB;
 	    break;
 	case SUDO_UNLOCK:
-	    op = LOCK_EX;
+	    op = LOCK_UN;
 	    break;
     }
     return(flock(fd, op) == 0);

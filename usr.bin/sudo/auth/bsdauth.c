@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2000-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,22 +34,28 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <ctype.h>
-#include <sys/param.h>
-#include <sys/types.h>
 #include <pwd.h>
 
 #include <login_cap.h>
@@ -59,7 +65,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: bsdauth.c,v 1.3 2000/10/30 03:45:11 millert Exp $";
+static const char rcsid[] = "$Sudo: bsdauth.c,v 1.6 2001/12/14 19:52:53 millert Exp $";
 #endif /* lint */
 
 extern char *login_style;		/* from sudo.c */
@@ -122,10 +128,10 @@ bsdauth_verify(pw, prompt, auth)
      * S/Key.
      */
     if ((s = auth_challenge(as)) == NULL) {
-	pass = tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags);
+	pass = tgetpass(prompt, def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags);
     } else {
-	pass = tgetpass(s, def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags);
-	if (!pass || *pass == '\0') {
+	pass = tgetpass(s, def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags);
+	if (pass && *pass == '\0') {
 	    if ((prompt = strrchr(s, '\n')))
 		prompt++;
 	    else
@@ -139,16 +145,16 @@ bsdauth_verify(pw, prompt, auth)
 	    while (isspace(prompt[len]) || prompt[len] == ':')
 		prompt[len--] = '\0';
 	    easprintf(&s, "%s [echo on]: ", prompt);
-	    pass = tgetpass(s, def_ival(I_PW_TIMEOUT) * 60,
+	    pass = tgetpass(s, def_ival(I_PASSWD_TIMEOUT) * 60,
 		tgetpass_flags | TGP_ECHO);
 	    free(s);
 	}
     }
 
-    if (!pass || *pass == '\0')
-	nil_pw = 1;			/* empty password */
+    if (!pass || *pass == '\0')		/* ^C or empty password */
+	nil_pw = 1;
 
-    authok = auth_userresponse(as, pass, 1);
+    authok = pass ? auth_userresponse(as, pass, 1) : 0;
 
     /* restore old signal handler */
     (void)signal(SIGCHLD, childkiller);

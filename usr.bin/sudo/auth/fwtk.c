@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,21 +34,27 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <sys/param.h>
-#include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 
 #include <auth.h>
@@ -58,7 +64,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: fwtk.c,v 1.10 2000/02/27 03:49:06 millert Exp $";
+static const char rcsid[] = "$Sudo: fwtk.c,v 1.14 2001/12/14 19:52:53 millert Exp $";
 #endif /* lint */
 
 int
@@ -118,16 +124,23 @@ fwtk_verify(pw, prompt, auth)
     /* Get the password/response from the user. */
     if (strncmp(resp, "challenge ", 10) == 0) {
 	(void) snprintf(buf, sizeof(buf), "%s\nResponse: ", &resp[10]);
-	pass = tgetpass(buf, def_ival(I_PW_TIMEOUT) * 60,
-	    tgetpass_flags | TGP_ECHO);
+	pass = tgetpass(buf, def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags);
+	if (pass && *pass == '\0') {
+	    pass = tgetpass("Response [echo on]: ",
+		def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags | TGP_ECHO);
+	}
     } else if (strncmp(resp, "password", 8) == 0) {
-	pass = tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags);
+	pass = tgetpass(prompt, def_ival(I_PASSWD_TIMEOUT) * 60,
+	    tgetpass_flags);
     } else {
 	(void) fprintf(stderr, "%s: %s\n", Argv[0], resp);
 	return(AUTH_FATAL);
     }
-    if (!pass || *pass == '\0')
-	nil_pw = 1;			/* empty password */
+    if (!pass) {			/* ^C or error */
+	nil_pw = 1;
+	return(AUTH_FAILURE);
+    } else if (*pass == '\0')		/* empty password */
+	nil_pw = 1;
 
     /* Send the user's response to the server */
     (void) snprintf(buf, sizeof(buf), "response '%s'", pass);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,21 +34,30 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# if defined(HAVE_MEMORY_H) && !defined(STDC_HEADERS)
+#  include <memory.h>
+# endif
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <sys/param.h>
-#include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 
 #include <security/pam_appl.h>
@@ -57,12 +66,16 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: pam.c,v 1.15 2000/02/27 03:49:06 millert Exp $";
+static const char rcsid[] = "$Sudo: pam.c,v 1.23 2001/12/31 17:18:12 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
 			  struct pam_response **, VOID *));
 static char *def_prompt;
+
+#ifndef PAM_DATA_SILENT
+#define PAM_DATA_SILENT	0
+#endif
 
 int
 pam_init(pw, promptp, auth)
@@ -80,6 +93,9 @@ pam_init(pw, promptp, auth)
 	    "unable to initialize PAM");
 	return(AUTH_FATAL);
     }
+    if (strcmp(user_tty, "unknown"))
+	(void) pam_set_item(pamh, PAM_TTY, user_tty);
+
     auth->data = (VOID *) pamh;
     return(AUTH_SUCCESS);
 }
@@ -96,17 +112,19 @@ pam_verify(pw, prompt, auth)
 
     def_prompt = prompt;	/* for sudo_conv */
 
-    /* PAM_SILENT prevents error messages from going to syslog(3) */
-    if ((error = pam_authenticate(pamh, PAM_SILENT)) == PAM_SUCCESS)
-	return(AUTH_SUCCESS);
-
-    /* Any error other than PAM_AUTH_ERR or PAM_MAXTRIES is probably fatal.  */
-    if (error != PAM_AUTH_ERR && error != PAM_MAXTRIES) {
-	if ((s = pam_strerror(pamh, error)))
-	    log_error(NO_EXIT|NO_MAIL, "pam_authenticate: %s\n", s);
-	return(AUTH_FATAL);
+    /* PAM_SILENT prevents the authentication service from generating output. */
+    error = pam_authenticate(pamh, PAM_SILENT);
+    switch (error) {
+	case PAM_SUCCESS:
+	    return(AUTH_SUCCESS);
+	case PAM_AUTH_ERR:
+	case PAM_MAXTRIES:
+	    return(AUTH_FAILURE);
+	default:
+	    if ((s = pam_strerror(pamh, error)))
+		log_error(NO_EXIT|NO_MAIL, "pam_authenticate: %s", s);
+	    return(AUTH_FATAL);
     }
-    return(AUTH_FAILURE);
 }
 
 int
@@ -115,11 +133,59 @@ pam_cleanup(pw, auth)
     sudo_auth *auth;
 {
     pam_handle_t *pamh = (pam_handle_t *) auth->data;
+    int status = PAM_DATA_SILENT;
 
-    if (pam_end(pamh, (auth->status == AUTH_SUCCESS)) == PAM_SUCCESS)
+    /* Convert AUTH_FOO -> PAM_FOO as best we can. */
+    /* XXX - store real value somewhere in auth->data and use it */
+    switch (auth->status) {
+	case AUTH_SUCCESS:
+	    status |= PAM_SUCCESS;
+	    break;
+	case AUTH_FAILURE:
+	    status |= PAM_AUTH_ERR;
+	    break;
+	case AUTH_FATAL:
+	default:
+	    status |= PAM_ABORT;
+	    break;
+    }
+
+    if (pam_end(pamh, status) == PAM_SUCCESS)
 	return(AUTH_SUCCESS);
     else
 	return(AUTH_FAILURE);
+}
+
+int
+pam_prep_user(pw)
+    struct passwd *pw;
+{
+    struct pam_conv pam_conv;
+    pam_handle_t *pamh;
+    const char *s;
+    int error;
+
+    /* We need to setup a new PAM session for the user we are changing *to*. */
+    pam_conv.conv = sudo_conv;
+    if (pam_start("sudo", pw->pw_name, &pam_conv, &pamh) != PAM_SUCCESS) {
+	log_error(USE_ERRNO|NO_EXIT|NO_MAIL, 
+	    "unable to initialize PAM");
+	return(AUTH_FATAL);
+    }
+    (void) pam_set_item(pamh, PAM_RUSER, user_name);
+    if (strcmp(user_tty, "unknown"))
+	(void) pam_set_item(pamh, PAM_TTY, user_tty);
+
+    /* Set credentials (may include resource limits, device ownership, etc). */
+    if ((error = pam_setcred(pamh, PAM_ESTABLISH_CRED)) != PAM_SUCCESS) {
+	if ((s = pam_strerror(pamh, error)))
+	    log_error(NO_EXIT|NO_MAIL, "pam_setcred: %s", s);
+    }
+
+    if (pam_end(pamh, error) != PAM_SUCCESS)
+	return(AUTH_FAILURE);
+
+    return(error == PAM_SUCCESS ? AUTH_SUCCESS : AUTH_FAILURE);
 }
 
 /*
@@ -152,8 +218,8 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		    p = pm->msg;
 		/* Read the password. */
 		pr->resp = estrdup((char *) tgetpass(p,
-		    def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags));
-		if (*pr->resp == '\0')
+		    def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags));
+		if (pr->resp == NULL || *pr->resp == '\0')
 		    nil_pw = 1;		/* empty password */
 		break;
 	    case PAM_TEXT_INFO:

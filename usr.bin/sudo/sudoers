@@ -11,6 +11,8 @@
 
 # Cmnd alias specification
 
+# Defaults specification
+
 # User privilege specification
 root	ALL=(ALL) ALL
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996,1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,34 +39,44 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#ifdef HAVE_SETRLIMIT
+# include <sys/time.h>
+# include <sys/resource.h>
+#endif
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# if defined(HAVE_MEMORY_H) && !defined(STDC_HEADERS)
+#  include <memory.h>
+# endif
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <grp.h>
 #include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/param.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#ifdef HAVE_SETRLIMIT
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
 #if defined(HAVE_GETPRPWNAM) && defined(HAVE_SET_AUTH_PARAMETERS)
 # ifdef __hpux
 #  undef MAXINT
@@ -87,38 +97,26 @@
 #include "interfaces.h"
 #include "version.h"
 
-#ifndef STDC_HEADERS
-extern char *getenv	__P((char *));
-#endif /* STDC_HEADERS */
-
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.278 2000/03/24 20:13:12 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.311 2001/12/15 00:45:13 millert Exp $";
 #endif /* lint */
-
-/*
- * Local type declarations
- */
-struct env_table {
-    char *name;
-    int len;
-};
 
 /*
  * Prototypes
  */
-static int  parse_args			__P((void));
+static int init_vars			__P((int));
+static int parse_args			__P((void));
+static void check_sudoers		__P((void));
+static void initial_setup		__P((void));
+static void set_loginclass		__P((struct passwd *));
 static void usage			__P((int));
 static void usage_excl			__P((int));
-static void check_sudoers		__P((void));
-static int init_vars			__P((int));
-static void set_loginclass		__P((struct passwd *));
-static void add_env			__P((int));
-static void clean_env			__P((char **, struct env_table *));
-static void initial_setup		__P((void));
 static struct passwd *get_authpw	__P((void));
-extern struct passwd *sudo_getpwuid	__P((uid_t));
-extern struct passwd *sudo_getpwnam	__P((const char *));
 extern void list_matches		__P((void));
+extern char **rebuild_env		__P((int, char **));
+extern char **zero_env			__P((char **));
+extern struct passwd *sudo_getpwnam	__P((const char *));
+extern struct passwd *sudo_getpwuid	__P((uid_t));
 
 /*
  * Globals
@@ -134,7 +132,6 @@ struct interface *interfaces;
 int num_interfaces;
 int tgetpass_flags;
 extern int errorlineno;
-static char *runas_homedir = NULL;	/* XXX */
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
 static struct rlimit corelimit;
 #endif /* RLIMIT_CORE */
@@ -144,51 +141,23 @@ login_cap_t *lc;
 #ifdef HAVE_BSD_AUTH_H
 char *login_style;
 #endif /* HAVE_BSD_AUTH_H */
-
-/*
- * Table of "bad" envariables to remove and len for strncmp()
- */
-static struct env_table badenv_table[] = {
-    { "IFS=", 4 },
-    { "LOCALDOMAIN=", 12 },
-    { "RES_OPTIONS=", 12 },
-    { "HOSTALIASES=", 12 },
-    { "LD_", 3 },
-    { "_RLD", 4 },
-#ifdef __hpux
-    { "SHLIB_PATH=", 11 },
-#endif /* __hpux */
-#ifdef _AIX
-    { "LIBPATH=", 8 },
-#endif /* _AIX */
-#ifdef HAVE_KERB4
-    { "KRB_CONF", 8 },
-#endif /* HAVE_KERB4 */
-#ifdef HAVE_KERB5
-    { "KRB5_CONFIG", 11 },
-#endif /* HAVE_KERB5 */
-    { "ENV=", 4 },
-    { "BASH_ENV=", 9 },
-    { (char *) NULL, 0 }
-};
+void (*set_perms) __P((int, int));
 
 
 int
-main(argc, argv)
+main(argc, argv, envp)
     int argc;
     char **argv;
+    char **envp;
 {
     int validated;
     int fd;
     int cmnd_status;
     int sudo_mode;
-#ifdef POSIX_SIGNALS
-    sigset_t set, oset;
-#else
-    int omask;
-#endif /* POSIX_SIGNALS */
-    extern char **environ;
+    int pwflag;
+    sigaction_t sa;
     extern int printmatches;
+    extern char **environ;
 
     /* Must be done as the first thing... */
 #if defined(HAVE_GETPRPWNAM) && defined(HAVE_SET_AUTH_PARAMETERS)
@@ -197,6 +166,9 @@ main(argc, argv)
     initprivs();
 # endif
 #endif /* HAVE_GETPRPWNAM && HAVE_SET_AUTH_PARAMETERS */
+
+    /* Zero out the environment. */
+    environ = zero_env(envp);
 
     Argv = argv;
     Argc = argc;
@@ -207,28 +179,21 @@ main(argc, argv)
     }
 
     /*
-     * Block signals so the user cannot interrupt us at some point and
-     * avoid the logging.
+     * Ignore keyboard-generated signals so the user cannot interrupt
+     * us at some point and avoid the logging.
      */
-#ifdef POSIX_SIGNALS
-    (void) sigemptyset(&set);
-    (void) sigaddset(&set, SIGINT);
-    (void) sigaddset(&set, SIGQUIT);
-    (void) sigaddset(&set, SIGTSTP);
-    (void) sigprocmask(SIG_BLOCK, &set, &oset);
-#else
-    omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGTSTP));
-#endif /* POSIX_SIGNALS */
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = SIG_IGN;
+    (void) sigaction(SIGINT, &sa, NULL);
+    (void) sigaction(SIGQUIT, &sa, NULL);
+    (void) sigaction(SIGTSTP, &sa, NULL);
 
     /*
      * Setup signal handlers, turn off core dumps, and close open files.
      */
     initial_setup();
-
-    /*
-     * Set the prompt based on $SUDO_PROMPT (can be overridden by `-p')
-     */
-    user_prompt = getenv("SUDO_PROMPT");
+    setpwent();
 
     /* Parse our arguments. */
     sudo_mode = parse_args();
@@ -236,6 +201,10 @@ main(argc, argv)
     /* Setup defaults data structures. */
     init_defaults();
 
+    /* Load the list of local ip addresses and netmasks.  */
+    load_interfaces();
+
+    pwflag = 0;
     if (sudo_mode & MODE_SHELL)
 	user_cmnd = "shell";
     else
@@ -246,6 +215,8 @@ main(argc, argv)
 		    putchar('\n');
 		    dump_auth_methods();
 		    dump_defaults();
+		    dump_interfaces();
+		    dump_badenv();
 		}
 		exit(0);
 		break;
@@ -254,10 +225,12 @@ main(argc, argv)
 		break;
 	    case MODE_VALIDATE:
 		user_cmnd = "validate";
+		pwflag = I_VERIFYPW_I;
 		break;
 	    case MODE_KILL:
 	    case MODE_INVALIDATE:
 		user_cmnd = "kill";
+		pwflag = -1;
 		break;
 	    case MODE_LISTDEFS:
 		list_options();
@@ -265,6 +238,7 @@ main(argc, argv)
 		break;
 	    case MODE_LIST:
 		user_cmnd = "list";
+		pwflag = I_LISTPW_I;
 		printmatches = 1;
 		break;
 	}
@@ -273,18 +247,32 @@ main(argc, argv)
     if (user_cmnd == NULL && NewArgc == 0)
 	usage(1);
 
-    clean_env(environ, badenv_table);
-
     cmnd_status = init_vars(sudo_mode);
-
-    /* At this point, ruid == euid == 0 */
 
     check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
 
-    add_env(!(sudo_mode & MODE_SHELL));	/* add in SUDO_* envariables */
-
     /* Validate the user but don't search for pseudo-commands. */
-    validated = sudoers_lookup(sudo_mode);
+    validated = sudoers_lookup(pwflag);
+
+    /*
+     * Look up runas user passwd struct.  If we are given a uid then
+     * there may be no corresponding passwd(5) entry (which is OK).
+     */
+    if (**user_runas == '#') {
+	runas_pw = sudo_getpwuid(atoi(*user_runas + 1));
+	if (runas_pw == NULL) {
+	    runas_pw = emalloc(sizeof(struct passwd));
+	    (void) memset((VOID *)runas_pw, 0, sizeof(struct passwd));
+	    runas_pw->pw_uid = atoi(*user_runas + 1);
+	}
+    } else {
+	runas_pw = sudo_getpwnam(*user_runas);
+	if (runas_pw == NULL)
+	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %s!", *user_runas);
+    }
+
+    /* Customize environment and get rid of any nasty bits. */
+    environ = rebuild_env(sudo_mode, envp);
 
     /* This goes after the sudoers parse since we honor sudoers options. */
     if (sudo_mode == MODE_KILL || sudo_mode == MODE_INVALIDATE) {
@@ -303,12 +291,17 @@ main(argc, argv)
 	exit(1);
     }
 
+    /* If given the -P option, set the "preserve_groups" flag. */
+    if (sudo_mode & MODE_PRESERVE_GROUPS)
+	def_flag(I_PRESERVE_GROUPS) = TRUE;
+
     /* If no command line args and "set_home" is not set, error out. */
     if ((sudo_mode & MODE_IMPLIED_SHELL) && !def_flag(I_SHELL_NOARGS))
 	usage(1);
 
     /* May need to set $HOME to target user. */
-    if ((sudo_mode & MODE_SHELL) && def_flag(I_SET_HOME))
+    if (def_flag(I_ALWAYS_SET_HOME) ||
+	((sudo_mode & MODE_SHELL) && def_flag(I_SET_HOME)))
 	sudo_mode |= MODE_RESET_HOME;
 
     /* Bail if a tty is required and we don't have one.  */
@@ -348,28 +341,25 @@ main(argc, argv)
 	/* This *must* have been set if we got a match but... */
 	if (safe_cmnd == NULL) {
 	    log_error(MSG_ONLY,
-		"internal error, cmnd_safe never got set for %s; %s",
+		"internal error, safe_cmnd never got set for %s; %s",
 		user_cmnd,
 		"please report this error at http://courtesan.com/sudo/bugs/");
 	}
 
-	if (def_ival(I_LOGFACSTR))
-	    closelog();
+	/* Reset signal handlers before we exec. */
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = SIG_DFL;
+	(void) sigaction(SIGINT, &sa, NULL);
+	(void) sigaction(SIGQUIT, &sa, NULL);
+	(void) sigaction(SIGTSTP, &sa, NULL);
 
-	/* Reset signal mask before we exec. */
-#ifdef POSIX_SIGNALS
-	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
-#else
-	(void) sigsetmask(omask);
-#endif /* POSIX_SIGNALS */
+	/* Close the password file */
+	endpwent();
 
 	/* Override user's umask if configured to do so. */
 	if (def_ival(I_UMASK) != 0777)
 	    (void) umask(def_mode(I_UMASK));
-
-	/* Replace the PATH envariable with a secure one. */
-	if (def_str(I_SECURE_PATH) && !user_is_exempt())
-	    sudo_setenv("PATH", def_str(I_SECURE_PATH));
 
 	/* Restore coredumpsize resource limit. */
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
@@ -378,10 +368,6 @@ main(argc, argv)
 
 	/* Become specified user or root. */
 	set_perms(PERM_RUNAS, sudo_mode);
-
-	/* Set $HOME for `sudo -H'.  Only valid at PERM_RUNAS. */
-	if ((sudo_mode & MODE_RESET_HOME) && runas_homedir)
-	    sudo_setenv("HOME", runas_homedir);
 
 #ifndef PROFILING
 	if ((sudo_mode & MODE_BACKGROUND) && fork() > 0)
@@ -396,7 +382,7 @@ main(argc, argv)
 	 */
 	(void) fprintf(stderr, "%s: unable to exec %s: %s\n",
 	    Argv[0], safe_cmnd, strerror(errno));
-	exit(-1);
+	exit(127);
     } else if ((validated & FLAG_NO_USER) || (validated & FLAG_NO_HOST)) {
 	log_auth(validated, 1);
 	exit(1);
@@ -438,6 +424,7 @@ init_vars(sudo_mode)
     int sudo_mode;
 {
     char *p, thost[MAXHOSTNAMELEN];
+    int nohostname, rval;
 
     /* Sanity check command from user. */
     if (user_cmnd == NULL && strlen(NewArgv[0]) >= MAXPATHLEN) {
@@ -461,20 +448,22 @@ init_vars(sudo_mode)
      * "host" is the (possibly fully-qualified) hostname and
      * "shost" is the unqualified form of the hostname.
      */
-    if ((gethostname(thost, sizeof(thost)))) {
-	user_host = "localhost";
-	log_error(USE_ERRNO|MSG_ONLY, "can't get hostname");
-    } else
-	user_host = estrdup(thost);
-    if (def_flag(I_FQDN))
-	set_fqdn();
+    nohostname = gethostname(thost, sizeof(thost));
+    if (nohostname)
+	user_host = user_shost = "localhost";
     else {
-	if ((p = strchr(user_host, '.'))) {
-	    *p = '\0';
-	    user_shost = estrdup(user_host);
-	    *p = '.';
-	} else {
+	user_host = estrdup(thost);
+	if (def_flag(I_FQDN)) {
+	    /* Defer call to set_fqdn() until log_error() is safe. */
 	    user_shost = user_host;
+	} else {
+	    if ((p = strchr(user_host, '.'))) {
+		*p = '\0';
+		user_shost = estrdup(user_host);
+		*p = '.';
+	    } else {
+		user_shost = user_host;
+	    }
 	}
     }
 
@@ -503,8 +492,18 @@ init_vars(sudo_mode)
 	log_error(0, "uid %ld does not exist in the passwd file!",
 	    (long) pw.pw_uid);
     }
+    user_shell = sudo_user.pw->pw_shell;
 
     /* It is now safe to use log_error() and set_perms() */
+
+    /*
+     * Must defer set_fqdn() until it is safe to call log_error()
+     */
+    if (def_flag(I_FQDN))
+	set_fqdn();
+
+    if (nohostname)
+	log_error(USE_ERRNO|MSG_ONLY, "can't get hostname");
 
     /*
      * Get current working directory.  Try as user, fall back to root.
@@ -519,12 +518,6 @@ init_vars(sudo_mode)
 	}
     } else
 	set_perms(PERM_ROOT, sudo_mode);
-
-    /*
-     * Load the list of local ip addresses and netmasks into
-     * the interfaces array.
-     */
-    load_interfaces();
 
     /*
      * If we were given the '-s' option (run shell) we need to redo
@@ -550,10 +543,43 @@ init_vars(sudo_mode)
     set_loginclass(sudo_user.pw);
 
     /* Resolve the path and return. */
-    if ((sudo_mode & MODE_RUN))
-	return(find_path(NewArgv[0], &user_cmnd));
-    else
-	return(FOUND);
+    if ((sudo_mode & MODE_RUN)) {
+	/* XXX - should call this as runas user, not root. */
+	rval = find_path(NewArgv[0], &user_cmnd, user_path);
+	if (rval != FOUND) {
+	    /* Failed as root, try as invoking user. */
+	    set_perms(PERM_USER, sudo_mode);
+	    rval = find_path(NewArgv[0], &user_cmnd, user_path);
+	    set_perms(PERM_ROOT, sudo_mode);
+	}
+
+	/* set user_args */
+	if (NewArgc > 1) {
+	    char *to, **from;
+	    size_t size;
+
+	    /* If MODE_SHELL not set then NewArgv is contiguous so just count */
+	    if (!(sudo_mode & MODE_SHELL)) {
+		size = (size_t) (NewArgv[NewArgc-1] - NewArgv[1]) +
+			strlen(NewArgv[NewArgc-1]) + 1;
+	    } else {
+		for (size = 0, from = NewArgv + 1; *from; from++)
+		    size += strlen(*from) + 1;
+	    }
+
+	    /* alloc and copy. */
+	    to = user_args = (char *) emalloc(size);
+	    for (from = NewArgv + 1; *from; from++) {
+		(void) strcpy(to, *from);
+		to += strlen(*from);
+		*to++ = ' ';
+	    }
+	    *--to = '\0';
+	}
+    } else
+	rval = FOUND;
+
+    return(rval);
 }
 
 /*
@@ -623,7 +649,7 @@ parse_args()
 		    usage(1);
 
 		login_class = NewArgv[1];
-		def_flag(I_LOGINCLASS) = TRUE;
+		def_flag(I_USE_LOGINCLASS) = TRUE;
 
 		/* Shift Argv over and adjust Argc. */
 		NewArgc--;
@@ -684,6 +710,9 @@ parse_args()
 	    case 'H':
 		rval |= MODE_RESET_HOME;
 		break;
+	    case 'P':
+		rval |= MODE_PRESERVE_GROUPS;
+		break;
 	    case 'S':
 		tgetpass_flags |= TGP_STDIN;
 		break;
@@ -710,70 +739,6 @@ parse_args()
 	usage(1);
 
     return(rval);
-}
-
-/*
- * Add sudo-specific variables into the environment.
- * Sets ``cmnd_args'' as a side effect.
- */
-static void
-add_env(contiguous)
-    int contiguous;
-{
-    char idstr[MAX_UID_T_LEN + 1];
-    size_t size;
-    char *buf;
-
-    /* Add the SUDO_COMMAND envariable (cmnd + args). */
-    size = strlen(user_cmnd) + 1;
-    if (NewArgc > 1) {
-	char *to, **from;
-
-	if (contiguous) {
-	    size += (size_t) (NewArgv[NewArgc-1] - NewArgv[1]) +
-		    strlen(NewArgv[NewArgc-1]) + 1;
-	} else {
-	    for (from = &NewArgv[1]; *from; from++)
-		size += strlen(*from) + 1;
-	}
-
-	buf = (char *) emalloc(size);
-
-	/*
-	 * Copy the command and it's arguments info buf.
-	 */
-	(void) strcpy(buf, user_cmnd);
-	to = buf + strlen(user_cmnd);
-	for (from = &NewArgv[1]; *from; from++) {
-	    *to++ = ' ';
-	    (void) strcpy(to, *from);
-	    to += strlen(*from);
-	}
-    } else {
-	buf = user_cmnd;
-    }
-    sudo_setenv("SUDO_COMMAND", buf);
-    if (NewArgc > 1)
-	free(buf);
-
-    /* Grab a pointer to the flat arg string from the environment. */
-    if (NewArgc > 1 && (user_args = getenv("SUDO_COMMAND"))) {
-	if ((user_args = strchr(user_args, ' ')))
-	    user_args++;
-	else
-	    user_args = NULL;
-    }
-
-    /* Add the SUDO_USER, SUDO_UID, SUDO_GID environment variables. */
-    sudo_setenv("SUDO_USER", user_name);
-    (void) sprintf(idstr, "%ld", (long) user_uid);
-    sudo_setenv("SUDO_UID", idstr);
-    (void) sprintf(idstr, "%ld", (long) user_gid);
-    sudo_setenv("SUDO_GID", idstr);
-
-    /* Set PS1 if SUDO_PS1 is set. */
-    if ((buf = getenv("SUDO_PS1")))
-	sudo_setenv("PS1", buf);
 }
 
 /*
@@ -858,177 +823,8 @@ check_sudoers()
 }
 
 /*
- * Remove environment variables that match the entries in badenv_table.
- */
-static void
-clean_env(envp, badenv_table)
-    char **envp;
-    struct env_table *badenv_table;
-{
-    struct env_table *bad;
-    char **cur;
-
-    /*
-     * Remove any envars that match entries in badenv_table.
-     */
-    for (cur = envp; *cur; cur++) {
-	for (bad = badenv_table; bad->name; bad++) {
-	    if (strncmp(*cur, bad->name, bad->len) == 0) {
-		/* Got a match so remove it. */
-		char **move;
-
-		for (move = cur; *move; move++)
-		    *move = *(move + 1);
-
-		cur--;
-
-		break;
-	    }
-	}
-    }
-}
-
-/*
- * Set real and effective uids and gids based on perm.
- */
-void
-set_perms(perm, sudo_mode)
-    int perm;
-    int sudo_mode;
-{
-    struct passwd *pw;
-
-    /*
-     * First, set real & effective uids to root.
-     * If perm is PERM_ROOT then we don't need to do anything else.
-     */
-    if (setuid(0)) {
-	perror("setuid(0)");
-	exit(1);
-    }
-
-    switch (perm) {
-	case PERM_USER:
-    	    	    	        (void) setgid(user_gid);
-
-    	    	    	        if (seteuid(user_uid)) {
-    	    	    	            perror("seteuid(user_uid)");
-    	    	    	            exit(1);
-    	    	    	        }
-			      	break;
-				
-	case PERM_FULL_USER:
-    	    	    	        (void) setgid(user_gid);
-
-				if (setuid(user_uid)) {
-				    perror("setuid(user_uid)");
-				    exit(1);
-				}
-			      	break;
-
-	case PERM_RUNAS:
-				/* XXX - add group/gid support */
-				if (**user_runas == '#') {
-				    if (setuid(atoi(*user_runas + 1))) {
-					(void) fprintf(stderr,
-					    "%s: cannot set uid to %s: %s\n",
-					    Argv[0], *user_runas, strerror(errno));
-					exit(1);
-				    }
-				} else {
-				    if (!(pw = getpwnam(*user_runas))) {
-					(void) fprintf(stderr,
-					    "%s: no passwd entry for %s!\n",
-					    Argv[0], *user_runas);
-					exit(1);
-				    }
-
-				    /* Set $USER and $LOGNAME to target user */
-				    if (def_flag(I_LOGNAME)) {
-					sudo_setenv("USER", pw->pw_name);
-					sudo_setenv("LOGNAME", pw->pw_name);
-				    }
-
-#ifdef HAVE_LOGIN_CAP_H
-				    if (def_flag(I_LOGINCLASS)) {
-					/*
-					 * setusercontext() will set uid/gid/etc
-					 * for us so no need to do it below.
-					 */
-					if (setusercontext(lc, pw, pw->pw_uid,
-					    LOGIN_SETUSER|LOGIN_SETGROUP|LOGIN_SETRESOURCES|LOGIN_SETPRIORITY))
-					    log_error(
-						NO_MAIL|USE_ERRNO|MSG_ONLY,
-						"setusercontext() failed for login class %s",
-						login_class);
-					else
-					    break;
-				    }
-#endif /* HAVE_LOGIN_CAP_H */
-
-				    if (setgid(pw->pw_gid)) {
-					(void) fprintf(stderr,
-					    "%s: cannot set gid to %ld: %s\n",
-					    Argv[0], (long) pw->pw_gid,
-					    strerror(errno));
-					exit(1);
-				    }
-#ifdef HAVE_INITGROUPS
-				    /*
-				     * Initialize group vector only if are
-				     * going to run as a non-root user.
-				     */
-				    if (strcmp(*user_runas, "root") != 0 &&
-					initgroups(*user_runas, pw->pw_gid)
-					== -1) {
-					(void) fprintf(stderr,
-					    "%s: cannot set group vector: %s\n",
-					    Argv[0], strerror(errno));
-					exit(1);
-				    }
-#endif /* HAVE_INITGROUPS */
-				    if (setuid(pw->pw_uid)) {
-					(void) fprintf(stderr,
-					    "%s: cannot set uid to %ld: %s\n",
-					    Argv[0], (long) pw->pw_uid,
-					    strerror(errno));
-					exit(1);
-				    }
-				    if (sudo_mode & MODE_RESET_HOME)
-					runas_homedir = pw->pw_dir;
-				}
-				break;
-
-	case PERM_SUDOERS:
-				if (setgid(SUDOERS_GID)) {
-				    perror("setgid(SUDOERS_GID)");
-				    exit(1);
-				}
-
-				/*
-				 * If SUDOERS_UID == 0 and SUDOERS_MODE
-				 * is group readable we use a non-zero
-				 * uid in order to avoid NFS lossage.
-				 * Using uid 1 is a bit bogus but should
-				 * work on all OS's.
-				 */
-				if (SUDOERS_UID == 0) {
-				    if ((SUDOERS_MODE & 040) && seteuid(1)) {
-					perror("seteuid(1)");
-					exit(1);
-				    }
-				} else {
-				    if (seteuid(SUDOERS_UID)) {
-					perror("seteuid(SUDOERS_UID)");
-					exit(1);
-				    }
-				}
-			      	break;
-    }
-}
-
-/*
  * Close all open files (except std*) and turn off core dumps.
+ * Also sets the set_perms() pointer to the correct function.
  */
 static void
 initial_setup()
@@ -1037,9 +833,7 @@ initial_setup()
 #ifdef HAVE_SETRLIMIT
     struct rlimit rl;
 #endif
-#ifdef POSIX_SIGNALS
-    struct sigaction sa;
-#endif
+    sigaction_t sa;
 
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
     /*
@@ -1069,13 +863,18 @@ initial_setup()
 	(void) close(fd);
 
     /* Catch children as they die... */
-#ifdef POSIX_SIGNALS
-    (void) memset((VOID *)&sa, 0, sizeof(sa));
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
     sa.sa_handler = reapchild;
     (void) sigaction(SIGCHLD, &sa, NULL);
-#else
-    (void) signal(SIGCHLD, reapchild);
-#endif /* POSIX_SIGNALS */
+
+    /* Set set_perms pointer to the correct function */
+#if defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
+    if (sysconf(_SC_SAVED_IDS) == 1 && sysconf(_SC_VERSION) >= 199009)
+	set_perms = set_perms_posix;
+    else
+#endif
+	set_perms = set_perms_fallback;
 }
 
 #ifdef HAVE_LOGIN_CAP_H
@@ -1111,7 +910,8 @@ set_loginclass(pw)
     lc = login_getclass(login_class);
     if (!lc || !lc->lc_class || strcmp(lc->lc_class, login_class) != 0) {
 	log_error(errflags, "unknown login class: %s", login_class);
-	lc = login_getclass(NULL);	/* Fall back on default login class */
+	if (!lc)
+	    lc = login_getclass(NULL);	/* needed for login_getstyle() later */
     }
 }
 #else
@@ -1133,7 +933,7 @@ set_fqdn()
 
     if (def_flag(I_FQDN)) {
 	if (!(hp = gethostbyname(user_host))) {
-	    log_error(USE_ERRNO|MSG_ONLY|NO_EXIT,
+	    log_error(MSG_ONLY|NO_EXIT,
 		"unable to lookup %s via gethostbyname()", user_host);
 	} else {
 	    free(user_host);
@@ -1164,9 +964,9 @@ get_authpw()
 	if ((pw = sudo_getpwuid(0)) == NULL)
 	    log_error(0, "uid 0 does not exist in the passwd file!");
     } else if (def_ival(I_RUNASPW)) {
-	if ((pw = sudo_getpwnam(def_str(I_RUNAS_DEF))) == NULL)
+	if ((pw = sudo_getpwnam(def_str(I_RUNAS_DEFAULT))) == NULL)
 	    log_error(0, "user %s does not exist in the passwd file!",
-		def_str(I_RUNAS_DEF));
+		def_str(I_RUNAS_DEFAULT));
     } else if (def_ival(I_TARGETPW)) {
 	if (**user_runas == '#') {
 	    if ((pw = sudo_getpwuid(atoi(*user_runas + 1))) == NULL)
@@ -1204,7 +1004,7 @@ usage(exit_val)
 {
 
     (void) fprintf(stderr, "usage: sudo -V | -h | -L | -l | -v | -k | -K | %s",
-	"[-H] [-S] [-b] [-p prompt]\n            [-u username/#uid] ");
+	"[-H] [-P] [-S] [-b] [-p prompt]\n            [-u username/#uid] ");
 #ifdef HAVE_LOGIN_CAP_H
     (void) fprintf(stderr, "[-c class] ");
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway
@@ -37,19 +37,29 @@
 
 #include "config.h"
 
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
 # include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
+#ifdef HAVE_STRING_H
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
+#endif /* HAVE_STRING_H */
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
-# include <string.h>
-#endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-# include <strings.h>
-#endif /* HAVE_STRINGS_H */
 #ifdef HAVE_FNMATCH
 # include <fnmatch.h>
 #endif /* HAVE_FNMATCH_H */
@@ -59,13 +69,9 @@
 #include <ctype.h>
 #include <pwd.h>
 #include <grp.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <sys/stat.h>
 #include <dirent.h>
 
 #include "sudo.h"
@@ -77,8 +83,16 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.71 2000/03/23 04:38:22 millert Exp $";
+static const char rcsid[] = "$Sudo: testsudoers.c,v 1.75 2001/12/15 02:27:17 millert Exp $";
 #endif /* lint */
+
+
+/*
+ * Prototypes
+ */
+void init_parser	__P((void));
+void dumpaliases	__P((void));
+void set_perms_dummy	__P((int, int));
 
 /*
  * Globals
@@ -89,14 +103,9 @@ int parse_error = FALSE;
 int num_interfaces;
 struct interface *interfaces;
 struct sudo_user sudo_user;
+void (*set_perms) __P((int, int)) = set_perms_dummy;
 extern int clearaliases;
 extern int pedantic;
-
-/*
- * Prototypes for external functions
- */
-void init_parser	__P((void));
-void dumpaliases	__P((void));
 
 /*
  * Returns TRUE if "s" has shell meta characters in it,
@@ -190,8 +199,13 @@ addr_matches(n)
 	addr.s_addr = inet_addr(n);
 	if (strchr(m, '.'))
 	    mask.s_addr = inet_addr(m);
-	else
-	    mask.s_addr = (1 << atoi(m)) - 1;	/* XXX - better way? */
+	else {
+	    i = 32 - atoi(m);
+	    mask.s_addr = 0xffffffff;
+	    mask.s_addr >>= i;
+	    mask.s_addr <<= i;
+	    mask.s_addr = htonl(mask.s_addr);
+	}
 	*(m - 1) = '/';               
 
 	for (i = 0; i < num_interfaces; i++)
@@ -298,7 +312,7 @@ netgr_matches(netgr, host, shost, user)
 }
 
 void
-set_perms(i, j)
+set_perms_dummy(i, j)
     int i, j;
 {
     return;
@@ -306,6 +320,12 @@ set_perms(i, j)
 
 void
 set_fqdn()
+{
+    return;
+}
+
+void
+init_envtables()
 {
     return;
 }

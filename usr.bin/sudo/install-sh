@@ -1,7 +1,7 @@
 #! /bin/sh
 
 ## (From INN-1.4, written by Rich Salz)
-##  $Revision: 1.3 $
+##  $Revision: 1.4 $
 ##  A script to install files and directories.
 
 PROGNAME=`basename $0`
@@ -19,33 +19,29 @@ STRIP=strip
 WHOAMI=whoami
 
 ##  Some systems don't support -x, so we have to use -f.
-if [ ${CHOWN} = chown ] ; then
-    if [ -f /sbin/chown ] ; then
-	CHOWN=/sbin/chown
-    elif [ -f /etc/chown ] ; then
-	CHOWN=/etc/chown
-    elif [ -f /usr/sbin/chown ] ; then
-	CHOWN=/usr/sbin/chown
-    elif [ -f /usr/etc/chown ] ; then
-	CHOWN=/usr/etc/chown
+for d in /sbin /etc /usr/sbin /usr/etc; do
+    if [ -f $d/chown ]; then
+	CHOWN=${d}/chown
+	break
     fi
+done
+
+for d in /usr/bin /usr/ucb /usr/bsd; do
+    if [ -f $d/whoami ]; then
+	WHOAMI=${d}/whoami
+	break
+    fi
+done
+if [ X"$WHOAMI" = X"" ]; then
+    WHOAMI=id | sed -n 's/^[^(]*(\([^)]*\)).*/\1/p'
 fi
 
-if [ ${WHOAMI} = whoami ] ; then
-    if [ -f /usr/ucb/whoami ] ; then
-	WHOAMI=/usr/ucb/whoami
-    elif [ -f /usr/bin/whoami ] ; then
-	WHOAMI=/usr/bin/whoami
+for d in /usr/ccs/bin /usr/bin; do
+    if [ -f $d/strip ]; then
+	STRIP=${d}/strip
+	break
     fi
-fi
-
-if [ ${STRIP} = strip ] ; then
-    if [ -f /usr/ccs/bin/strip ] ; then
-	STRIP=/usr/ccs/bin/strip
-    elif [ -f /usr/bin/strip ] ; then
-	STRIP=/usr/bin/strip
-    fi
-fi
+done
 
 ##  Defaults.
 CHOWNIT=false
@@ -55,7 +51,15 @@ STRIPIT=false
 BACKIT=false
 TOUCHIT=true
 SAVESRC=false
-ROOT=unknown
+
+case `${WHOAMI}` in
+root)
+    ROOT=true
+    ;;
+*)
+    ROOT=false
+    ;;
+esac
 
 ##  Process JCL.
 MORETODO=true
@@ -83,35 +87,11 @@ while ${MORETODO} ; do
 	CHGROUPIT=true
 	;;
     X-G)
-	case ${ROOT} in
-	unknown)
-	    case `${WHOAMI}` in
-	    root)
-		ROOT=true
-		;;
-	    *)
-		ROOT=false
-		;;
-	    esac
-	    ;;
-	esac
 	GROUP="$2"
 	shift
 	${ROOT} && CHGROUPIT=true
 	;;
     X-G*)
-	case ${ROOT} in
-	unknown)
-	    case `${WHOAMI}` in
-	    root)
-		ROOT=true
-		;;
-	    *)
-		ROOT=false
-		;;
-	    esac
-	    ;;
-	esac
 	if ${ROOT} ; then
 	    GROUP=`expr "$1" : '-g\(.*\)'`
 	    CHGROUPIT=true
@@ -126,6 +106,15 @@ while ${MORETODO} ; do
 	MODE=`expr "$1" : '-m\(.*\)'`
 	CHMODIT=true
 	;;
+    X-M)
+	MODE="$2"
+	${ROOT} && CHMODIT=true
+	shift
+	;;
+    X-M*)
+	MODE=`expr "$1" : '-m\(.*\)'`
+	${ROOT} && CHMODIT=true
+	;;
     X-n)
 	TOUCHIT=false
 	;;
@@ -139,35 +128,11 @@ while ${MORETODO} ; do
 	CHOWNIT=true
 	;;
     X-O)
-	case ${ROOT} in
-	unknown)
-	    case `${WHOAMI}` in
-	    root)
-		ROOT=true
-		;;
-	    *)
-		ROOT=false
-		;;
-	    esac
-	    ;;
-	esac
 	OWNER="$2"
 	shift
 	${ROOT} && CHOWNIT=true
 	;;
     X-O*)
-	case ${ROOT} in
-	unknown)
-	    case `${WHOAMI}` in
-	    root)
-		ROOT=true
-		;;
-	    *)
-		ROOT=false
-		;;
-	    esac
-	    ;;
-	esac
 	if ${ROOT} ; then
 	    OWNER=`expr "$1" : '-o\(.*\)'`
 	    CHOWNIT=true

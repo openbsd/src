@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,21 +34,27 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
 #if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-#include <malloc.h>
+# include <malloc.h>
 #endif /* HAVE_MALLOC_H && !STDC_HEADERS */
-#include <sys/param.h>
-#include <sys/types.h>
 
 #include "sudo.h"
 
@@ -61,7 +67,7 @@ extern VOID *malloc	__P((size_t));
 extern char **Argv;		/* from sudo.c */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: alloc.c,v 1.8 1999/07/31 16:19:44 millert Exp $";
+static const char rcsid[] = "$Sudo: alloc.c,v 1.10 2001/12/14 19:52:47 millert Exp $";
 #endif /* lint */
 
 

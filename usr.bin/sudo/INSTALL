@@ -29,8 +29,7 @@ For most systems and configurations it is possible simply to:
        building sudo.  Before you actually run configure you
        should read the `Available configure options' section
        to see if there are any special options you may want
-       or need.  Also of interest may be the section on
-       `Mixing password authentication schemes'.
+       or need.
 
     4) Edit the configure-generated Makefile if you wish to
        change any of the default paths (alternately you could
@@ -240,7 +239,7 @@ Special features/options:
 	on some SysV-based OS's using STREAMS.
 
   --without-passwd
-	This option authentication via the passwd (or shadow) file.
+	This option excludes authentication via the passwd (or shadow) file.
 	It should only be used when another, alternate, authentication
 	scheme is in use.
 
@@ -258,7 +257,8 @@ The following options are also configurable at runtime:
   --with-logging=TYPE
 	How you want to do your logging.  You may choose "syslog", "file",
 	or "both".  Setting this to "syslog" is nice because you can keep all
-	of your sudo logs in one place (see the FAQ).  The default is "syslog".
+	of your sudo logs in one place (see the sample.syslog.conf file).
+	The default is "syslog".
 
   --with-logfac=FACILITY
 	Determines which syslog facility to log to.  This requires a 4.3BSD
@@ -385,7 +385,9 @@ The following options are also configurable at runtime:
 	just like the original sudo(8).  This is off by default.
 
   --with-all-insults
-	Include all the insult sets listed below.
+	Include all the insult sets listed below.  You must either specify
+	--with-insults or enable insults in the sudoers file for this to
+	have any effect.
 
   --with-classic-insults
 	Uses insults from sudo "classic."  If you just specify --with-insults
@@ -400,12 +402,13 @@ The following options are also configurable at runtime:
 
   --with-hal-insults
 	Uses 2001-like insults when an incorrect password is entered.
-	You must specify --with-insults as well for this to have any effect.
+	You must either specify --with-insults or enable insults in the
+	sudoers file for this to have any effect.
 
   --with-goons-insults
 	Insults the user with lines from the "Goon Show" when an incorrect
-	password is entered.  You must specify --with-insults as well for
-	this to have any effect.
+	password is entered.  You must either specify --with-insults or
+	enable insults in the sudoers file for this to have any effect.
 
   --with-secure-path[=path]
 	Path used for every command run from sudo(8).  If you don't trust the
@@ -420,15 +423,20 @@ The following options are also configurable at runtime:
 	Don't print the lecture the first time a user runs sudo.
 
   --with-editor=path
-	Specify the default editor used by visudo (and the only editor used
-	unless --with-env-editor is specified).  The default is the path
-	to vi on your system.
+	Specify the default editor path for use by visudo.  This may be
+	a single pathname or a colon-separated list of editors.  In
+	the latter case, visudo will choose the editor that matches
+	the user's USER environment variable or the first editor in
+	the list that exists.  The default is the path to vi on your system.
 
   --with-env-editor
 	Makes visudo consult the EDITOR and VISUAL environment variables before
-	falling back on the default editor.  Note that this may create a
-	security hole as most editors allow a user to get a shell (which would
-	be a root shell and hence, no logging).
+	falling back on the default editor list (as specified by --with-editor).
+	Note that this may create a security hole as it allows the user to
+	run any arbitrary command as root without logging.  A safer alternative
+	is to use a colon-separated list of editors with the --with-env-editor
+	option.  visudo will then only use the EDITOR or VISUAL if they match
+	a value specified via --with-editor.
 
   --disable-authentication
         By default, sudo requires the user to authenticate via a

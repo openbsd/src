@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo_auth.h,v 1.17 2000/10/29 22:30:22 millert Exp $
+ * $Sudo: sudo_auth.h,v 1.19 2001/12/14 19:55:01 millert Exp $
  */
 
 #ifndef SUDO_AUTH_H
@@ -80,6 +80,7 @@ int bsdauth_verify __P((struct passwd *pw, char *prompt, sudo_auth *auth));
 int bsdauth_cleanup __P((struct passwd *pw, sudo_auth *auth));
 
 /* Prototypes for normal methods */
+int passwd_init __P((struct passwd *pw, char **prompt, sudo_auth *auth));
 int passwd_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));
 int secureware_init __P((struct passwd *pw, char **prompt, sudo_auth *auth));
 int secureware_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));

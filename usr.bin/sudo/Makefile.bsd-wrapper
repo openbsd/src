@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2001/05/29 21:40:49 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2002/01/03 03:49:16 millert Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
+BINOWN=	root
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
 CONFIGURE_OPTS=	--prefix=/usr --with-devel --with-insults --with-bsdauth \
 		--with-env-editor --disable-path-info --with-logfac=authpriv
@@ -36,16 +37,12 @@ config: .FORCE
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CONFIG_FILES="Makefile config.h pathnames.h" \
-	${XCFLAGS} \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
+	${XCFLAGS} sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CONFIG_FILES="Makefile config.h pathnames.h" \
-	${XCFLAGS} \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
+	${XCFLAGS} sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
 
 .ifdef NOMAN
 maninstall:
@@ -53,9 +50,10 @@ maninstall:
 .endif
 
 install: maninstall
-	${MAKE} ${XCFLAGS} prefix=${DESTDIR}/usr sysconfdir=${DESTDIR}/etc \
-		bindir=${DESTDIR}/usr/bin INSTALL="${INSTALL} ${INSTALL_COPY}" \
-		install-binaries
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 4555 \
+	    sudo ${DESTDIR}/usr/bin/sudo
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    visudo ${DESTDIR}/usr/sbin/visudo
 
 clean cleandir:
 	 @test ! -e Makefile || ${MAKE} distclean

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,55 +43,125 @@ struct rtentry;
 
 #include "config.h"
 
-#include <stdio.h>
-#ifdef STDC_HEADERS
-#include <stdlib.h>
-#endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <netdb.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #if defined(HAVE_SYS_SOCKIO_H) && !defined(SIOCGIFCONF)
-#include <sys/sockio.h>
+# include <sys/sockio.h>
 #endif
+#include <stdio.h>
+#ifdef STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif /* STDC_HEADERS */
+#ifdef HAVE_STRING_H
+# if defined(HAVE_MEMORY_H) && !defined(STDC_HEADERS)
+#  include <memory.h>
+# endif
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
+#endif /* HAVE_STRING_H */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#include <netdb.h>
+#include <errno.h>
 #ifdef _ISC
-#include <sys/stream.h>
-#include <sys/sioctl.h>
-#include <sys/stropts.h>
-#include <net/errno.h>
-#define STRSET(cmd, param, len)	{strioctl.ic_cmd=(cmd);\
+# include <sys/stream.h>
+# include <sys/sioctl.h>
+# include <sys/stropts.h>
+# include <net/errno.h>
+# define STRSET(cmd, param, len) {strioctl.ic_cmd=(cmd);\
 				 strioctl.ic_dp=(param);\
 				 strioctl.ic_timout=0;\
 				 strioctl.ic_len=(len);}
 #endif /* _ISC */
 #ifdef _MIPS
-#include <net/soioctl.h>
+# include <net/soioctl.h>
 #endif /* _MIPS */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#ifdef HAVE_GETIFADDRS
+# include <ifaddrs.h>
+#endif
 
 #include "sudo.h"
 #include "interfaces.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: interfaces.c,v 1.59 1999/08/12 16:24:09 millert Exp $";
+static const char rcsid[] = "$Sudo: interfaces.c,v 1.62 2001/12/14 22:12:39 millert Exp $";
 #endif /* lint */
 
 
-#if defined(SIOCGIFCONF) && !defined(STUB_LOAD_INTERFACES)
+#ifdef HAVE_GETIFADDRS
+
+/*
+ * Allocate and fill in the interfaces global variable with the
+ * machine's ip addresses and netmasks.
+ */
+void
+load_interfaces()
+{
+    struct ifaddrs *ifa, *ifaddrs;
+    /* XXX - sockaddr_in6 sin6; */
+    struct sockaddr_in *sin;
+    int i;
+
+    if (getifaddrs(&ifaddrs))
+	return;
+
+    /* Allocate space for the interfaces list. */
+    for (ifa = ifaddrs; ifa -> ifa_next; ifa = ifa -> ifa_next) {
+	/* Skip interfaces marked "down" and "loopback". */
+	if (ifa->ifa_addr == NULL || !(ifa->ifa_flags & IFF_UP) ||
+	    (ifa->ifa_flags & IFF_LOOPBACK))
+	    continue;
+
+	switch(ifa->ifa_addr->sa_family) {
+	    /* XXX - AF_INET6 */
+	    case AF_INET:
+		num_interfaces++;
+		break;
+	}
+    }
+    interfaces =
+	(struct interface *) emalloc(sizeof(struct interface) * num_interfaces);
+
+    /* Store the ip addr / netmask pairs. */
+    for (ifa = ifaddrs, i = 0; ifa -> ifa_next; ifa = ifa -> ifa_next) {
+	/* Skip interfaces marked "down" and "loopback". */
+	if (ifa->ifa_addr == NULL || !(ifa->ifa_flags & IFF_UP) ||
+	    (ifa->ifa_flags & IFF_LOOPBACK))
+		continue;
+
+	switch(ifa->ifa_addr->sa_family) {
+	    /* XXX - AF_INET6 */
+	    case AF_INET:
+		sin = (struct sockaddr_in *)ifa->ifa_addr;
+		memcpy(&interfaces[i].addr, &sin->sin_addr,
+		    sizeof(struct in_addr));
+		sin = (struct sockaddr_in *)ifa->ifa_netmask;
+		memcpy(&interfaces[i].netmask, &sin->sin_addr,
+		    sizeof(struct in_addr));
+		i++;
+		break;
+	}
+    }
+    freeifaddrs(ifaddrs);
+}
+
+#elif defined(SIOCGIFCONF) && !defined(STUB_LOAD_INTERFACES)
+
 /*
  * Allocate and fill in the interfaces global variable with the
  * machine's ip addresses and netmasks.
@@ -238,3 +308,14 @@ load_interfaces()
 }
 
 #endif /* SIOCGIFCONF && !STUB_LOAD_INTERFACES */
+
+void
+dump_interfaces()
+{
+    int i;
+
+    puts("Local IP address and netmask pairs:");
+    for (i = 0; i < num_interfaces; i++)
+	printf("\t%s / 0x%x\n", inet_ntoa(interfaces[i].addr),
+	    ntohl(interfaces[i].netmask.s_addr));
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: interfaces.h,v 1.3 1999/07/31 16:19:46 millert Exp $
+ * $Sudo: interfaces.h,v 1.5 2001/12/14 19:54:56 millert Exp $
  */
 
 #ifndef _SUDO_INTERFACES_H
@@ -49,6 +49,7 @@ struct interface {
  * Prototypes for external functions.
  */
 void load_interfaces	__P((void));
+void dump_interfaces	__P((void));
 
 /*
  * Definitions for external variables.

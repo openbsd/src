@@ -1322,48 +1322,139 @@ Sudo 1.6.3p4 released.
 
 Sudo 1.6.3p5 released.
 
-415) Visudo now checks for the existence of an editor and gives a sensible
+415) Fix word splitting bug that caused a segv for very long command line args.
+
+Sudo 1.6.3p6 released.
+
+416) Fix negation of path-type Defaults entries in a boolean context.
+
+Sudo 1.6.3p7 released.
+
+417) Visudo now checks for the existence of an editor and gives a sensible
      error if it does not exist.
 
-416) The path to the editor for visudo is now a colon-separated list of
+418) The path to the editor for visudo is now a colon-separated list of
      allowable editors.  If the user has $EDITOR set and it matches
      one of the allowed editors that editor will be used.  If not,
      the first editor that actually exists is used.
 
-417) Visudo now does its own fork/exec instead of calling system(3).
+419) Visudo now does its own fork/exec instead of calling system(3).
 
-418) Call clean_env very early in main() for paranoia's sake.  Idea from
+420) Call clean_env very early in main() for paranoia's sake.  Idea from
      Marc Esipovich.
 
-419) Allow special characters (including '#') to be embedded in pathnames
+421) Allow special characters (including '#') to be embedded in pathnames
      if quoted by a '\\'.  The quoted chars will be dealt with by fnmatch().
      Unfortunately, 'sudo -l' still prints the '\\'.
 
-420) Added always_set_home option.
+422) Added always_set_home option.
 
-421) Strip NLSPATH and PATH_LOCALE out from the environment to prevent
+423) Strip NLSPATH and PATH_LOCALE out from the environment to prevent
      reading of protected files by a less priviledged user.
 
-422) Add support for BSD authentication and associated -a flag.
+424) Add support for BSD authentication and associated -a flag.
 
-423) Added check for _innetgr(3) since NCR systems have this instead
+425) Added check for _innetgr(3) since NCR systems have this instead
      of innetgr(3).
 
-424) Added stay_setuid option for systems that have libraries that perform
+426) Added stay_setuid option for systems that have libraries that perform
      extra paranoia checks in system libraries for setuid programs.
 
-425) Environment munging is now done by hand.  We build up a new environment
+427) Environment munging is now done by hand.  We build up a new environment
      and assign it to "environ".  This means we don't rely on getenv(3),
      putenv(3), or setenv(3).
 
-426) Added env_reset and env_keep options.  This allows the sysadmin to
-     force commands to run with a clean environment.  Any variable in
-     the env_keep list will not get cleared when the environment is reset
-     *or* purged of dangerous vars (e.g. LD_*).
-
-427) Added a class of environment variables that are only cleared if they
+428) Added a class of environment variables that are only cleared if they
      contain '/' or '%' characters.
 
-428) Fix word splitting bug that caused a segv for very long command line args.
+429) Use stashed user_gid when checking against exempt gid since sudo
+     sets its gid to SUDOERS_GID, making getgid() return that, not the
+     real gid.  Fixes problem with setting exempt group == SUDOERS_GID.
+     Fix from Paul Kranenburg.
 
-429) Fix negation of path-type Defaults entries in a boolean context.
+430) Fixed file locking in visudo on NeXT which has a broken lockf().
+     Patch from twetzel@gwdg.de.
+
+431) Regenerated configure script with autoconf-2.52 (required some
+     tweaking of configure.in and friends).
+
+432) Added mail_badpass option to send mail when the user does not
+     authenticate successfully.
+
+433) Added env_reset Defaults option to reset the environment to
+     a clean slate.  Also implemented env_keep Defaults option
+     to specify variables to be preserved when resetting the
+     environment.
+
+434) Added env_check and env_delete Defaults options to allow the admin
+     to modify the builtin list of environment variables to remove.
+
+435) If timestamp_timeout < 0 then the timestamp never expires.  This
+     allows users to manage their own timestamps and create or delete
+     them via 'sudo -v' and 'sudo -k' respectively.
+
+436) Authentication routines that use sudo's tgetpass() can now use
+     ^C or ^Z at the password prompt and sudo will act appropriately.
+
+437) Added a check-only mode to visudo to check an existing sudoers
+     file for sanity.
+
+438) Visudo can now edit an alternate sudoers file.
+
+439) If sudo is configured with S/Key support and the system has
+     skeyaccess(3) use that to determine whether or not to allow
+     a normal Unix password or just S/Key.
+
+440) Fixed CIDR handling in sudoers.
+
+441) Fixed a segv if the local hostname is not resolvable and
+     the 'fqdn' option is set.
+
+442) "listpw=never" was not having an effect for users who did not
+     appear in sudoers--now it does.
+
+443) The --without-sendmail option now works on systems with
+     a /usr/include/paths.h file that defines _PATH_SENDMAIL.
+
+444) Removed the "secure_path" Defaults option as it does not work and
+     cannot work until the parser is overhauled.
+
+445) Added new -P flag and "preserve_groups" sudoers option to cause
+     sudo to preserve the group vector instead of setting it to that
+     of the target user.  Previously, if the target user was root
+     the group vector was not changed.  Now it is always changed unless
+     the -P flag or "preserve_groups" option was given.
+
+446) If find_path() fails as root, try again as the invoking user (useful
+     for NFS).  Idea from Chip Capelik.
+
+447) Use setpwent()/endpwent() and its shadow equivalents to be sure
+     the passwd/shadow file gets closed.
+
+448) Use getifaddrs(3) to get the list of network interfaces if it is
+     available.
+
+449) Dump list of local IP addresses and environment variables to clear
+     when 'sudo -V' is run as root.
+
+450) Reorganized the lexer a bit and added more states.  Sudo now does a
+     better job of parsing command arguments in the sudoers file.
+
+451) Wrap each call to syslog() with openlog()/closelog() since some
+     things (such as PAM) may call closelog(3) behind sudo's back.
+
+452) The LOGNAME and USER environment variables are now set if the user
+     specified a target uid and that uid exists in the password database.
+
+453) configure will no longer add the -g flag to CFLAGS by default.
+
+454) Now call pam_setcreds() to setup creds for the target user when
+     PAM is in use.  On Linux this often sets resource limits.
+
+455) If "make install" is run by non-root and the destination dir
+     is writable, install things normally but don't set owner and mode.
+
+456) The Makefile now supports installing in a shadow hierarchy
+     specified via the DESTDIR variable.
+
+457) config.h.in is now generated by autoheader.

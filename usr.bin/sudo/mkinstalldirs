@@ -1,26 +1,66 @@
-#!/bin/sh
+#! /bin/sh
 # mkinstalldirs --- make directory hierarchy
 # Author: Noah Friedman <friedman@prep.ai.mit.edu>
 # Created: 1993-05-16
-# Last modified: 1994-03-25
 # Public domain
 
-errstatus=0
+# $Id: mkinstalldirs,v 1.2 2002/01/03 03:49:16 millert Exp $
 
-for file in ${1+"$@"} ; do 
+umask 022
+errstatus=0
+dirmode=""
+
+usage="\
+Usage: mkinstalldirs [-h] [--help] [-m mode] dir ..."
+
+# process command line arguments
+while test $# -gt 0 ; do
+   case "${1}" in
+     -h | --help | --h* )			# -h for help
+        echo "${usage}" 1>&2; exit 0 ;;
+     -m )					# -m PERM arg
+        shift
+        test $# -eq 0 && { echo "${usage}" 1>&2; exit 1; }
+        dirmode="${1}"
+        shift ;;
+     -- ) shift; break ;;			# stop option processing
+     -* ) echo "${usage}" 1>&2; exit 1 ;;	# unknown option
+     * )  break ;;				# first non-opt arg
+   esac
+done
+
+for file
+do
    set fnord `echo ":$file" | sed -ne 's/^:\//#/;s/^://;s/\// /g;s/^#/\//;p'`
    shift
 
    pathcomp=
-   for d in ${1+"$@"} ; do
+   for d
+   do
      pathcomp="$pathcomp$d"
      case "$pathcomp" in
        -* ) pathcomp=./$pathcomp ;;
      esac
 
      if test ! -d "$pathcomp"; then
-        echo "mkdir $pathcomp" 1>&2
-        mkdir "$pathcomp" || errstatus=$?
+        echo "mkdir $pathcomp"
+
+        mkdir "$pathcomp" || lasterr=$?
+
+        if test ! -d "$pathcomp"; then
+  	  errstatus=$lasterr
+	else
+	  if test ! -z "$dirmode"; then
+	     echo "chmod $dirmode $pathcomp"
+
+	     lasterr=""
+	     chmod $dirmode "$pathcomp" || lasterr=$?
+
+	     if test ! -z "$lasterr"; then
+	       errstatus=$lasterr
+	     fi
+	  fi
+        fi
      fi
 
      pathcomp="$pathcomp/"
@@ -29,4 +69,7 @@ done
 
 exit $errstatus
 
-# mkinstalldirs ends here
+# Local Variables:
+# mode:shell-script
+# sh-indentation:3
+# End:

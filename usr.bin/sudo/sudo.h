@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996,1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo.h,v 1.172 2000/03/07 04:29:46 millert Exp $
+ * $Sudo: sudo.h,v 1.182 2001/12/31 17:18:05 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -47,6 +47,9 @@
  */
 struct sudo_user {
     struct passwd *pw;
+    struct passwd *_runas_pw;
+    char *path;
+    char *shell;
     char *tty;
     char  cwd[MAXPATHLEN];
     char *host;
@@ -90,18 +93,19 @@ struct sudo_user {
 /*
  * Various modes sudo can be in (based on arguments) in octal
  */
-#define MODE_RUN                 00001
-#define MODE_VALIDATE            00002
-#define MODE_INVALIDATE          00004
-#define MODE_KILL                00010
-#define MODE_VERSION             00020
-#define MODE_HELP                00040
-#define MODE_LIST                00100
-#define MODE_LISTDEFS            00200
-#define MODE_BACKGROUND          00400
-#define MODE_SHELL               01000
-#define MODE_IMPLIED_SHELL       02000
-#define MODE_RESET_HOME          04000
+#define MODE_RUN                 000001
+#define MODE_VALIDATE            000002
+#define MODE_INVALIDATE          000004
+#define MODE_KILL                000010
+#define MODE_VERSION             000020
+#define MODE_HELP                000040
+#define MODE_LIST                000100
+#define MODE_LISTDEFS            000200
+#define MODE_BACKGROUND          000400
+#define MODE_SHELL               001000
+#define MODE_IMPLIED_SHELL       002000
+#define MODE_RESET_HOME          004000
+#define MODE_PRESERVE_GROUPS     010000
 
 /*
  * Used with set_perms()
@@ -119,18 +123,20 @@ struct sudo_user {
 #define user_passwd		(sudo_user.pw->pw_passwd)
 #define user_uid		(sudo_user.pw->pw_uid)
 #define user_gid		(sudo_user.pw->pw_gid)
-#define user_shell		(sudo_user.pw->pw_shell)
 #define user_dir		(sudo_user.pw->pw_dir)
+#define user_shell		(sudo_user.shell)
 #define user_tty		(sudo_user.tty)
 #define user_cwd		(sudo_user.cwd)
 #define user_runas		(sudo_user.runas)
 #define user_cmnd		(sudo_user.cmnd)
 #define user_args		(sudo_user.cmnd_args)
+#define user_path		(sudo_user.path)
 #define user_prompt		(sudo_user.prompt)
 #define user_host		(sudo_user.host)
 #define user_shost		(sudo_user.shost)
 #define safe_cmnd		(sudo_user.cmnd_safe)
 #define login_class		(sudo_user.class_name)
+#define runas_pw		(sudo_user._runas_pw)
 
 /*
  * We used to use the system definition of PASS_MAX or _PASSWD_LEN,
@@ -173,9 +179,6 @@ struct sudo_user {
 #ifndef HAVE_GETCWD
 char *getcwd		__P((char *, size_t size));
 #endif
-#if !defined(HAVE_PUTENV) && !defined(HAVE_SETENV)
-int putenv		__P((const char *));
-#endif
 #ifndef HAVE_SNPRINTF
 int snprintf		__P((char *, size_t, const char *, ...));
 #endif
@@ -192,13 +195,13 @@ int vasprintf		__P((char **, const char *, va_list));
 int strcasecmp		__P((const char *, const char *));
 #endif
 char *sudo_goodpath	__P((const char *));
-void sudo_setenv		__P((char *, char *));
 char *tgetpass		__P((const char *, int, int));
-int find_path		__P((char *, char **));
+int find_path		__P((char *, char **, char *));
 void check_user		__P((void));
 void verify_user	__P((struct passwd *, char *));
 int sudoers_lookup	__P((int));
-void set_perms		__P((int, int));
+void set_perms_posix	__P((int, int));
+void set_perms_fallback	__P((int, int));
 void remove_timestamp	__P((int));
 int check_secureware	__P((char *));
 void sia_attempt_auth	__P((void));
@@ -210,13 +213,16 @@ VOID *erealloc		__P((VOID *, size_t));
 char *estrdup		__P((const char *));
 int easprintf		__P((char **, const char *, ...));
 int evasprintf		__P((char **, const char *, va_list));
+void dump_badenv	__P((void));
 void dump_defaults	__P((void));
 void dump_auth_methods	__P((void));
+void init_envtables	__P((void));
 int lock_file		__P((int, int));
 int touch		__P((char *, time_t));
 int user_is_exempt	__P((void));
 void set_fqdn		__P((void));
 char *sudo_getepw	__P((struct passwd *));
+int pam_prep_user	__P((struct passwd *));
 YY_DECL;
 
 /* Only provide extern declarations outside of sudo.c. */
@@ -228,6 +234,8 @@ extern int Argc;
 extern char **Argv;
 extern FILE *sudoers_fp;
 extern int tgetpass_flags;
+
+extern void (*set_perms) __P((int, int));
 #endif
 extern int errno;
 

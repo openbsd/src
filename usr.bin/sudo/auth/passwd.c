@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,32 +34,51 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
-#include <stdlib.h>
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
 #endif /* STDC_HEADERS */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_STRING_H
-#include <string.h>
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif /* HAVE_STRINGS_H */
-#include <sys/param.h>
-#include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 
 #include "sudo.h"
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: passwd.c,v 1.7 2000/03/23 00:27:41 millert Exp $";
+static const char rcsid[] = "$Sudo: passwd.c,v 1.9 2001/12/14 19:52:53 millert Exp $";
 #endif /* lint */
 
 #define DESLEN			13
 #define HAS_AGEINFO(p, l)	(l == 18 && p[DESLEN] == ',')
+
+int
+passwd_init(pw, promptp, auth)
+    struct passwd *pw;
+    char **promptp;
+    sudo_auth *auth;
+{
+#ifdef HAVE_SKEYACCESS
+    if (skeyaccess(pw->pw_name, user_tty, NULL, NULL) == 0)
+	return(AUTH_FATAL);
+#endif
+    return(AUTH_SUCCESS);
+}
 
 int
 passwd_verify(pw, pass, auth)

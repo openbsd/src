@@ -1,0 +1,81 @@
+#!/usr/bin/perl -w
+#
+# Generate sudo_defs_table and associated defines
+#
+# Input should be formatted thusly:
+#
+# var_name
+#	TYPE
+#	description (or NULL)
+
+# Deal with optional -o (output) argument
+if ($#ARGV > 0 && $ARGV[0] eq "-o") {
+    shift;
+    $header = $cfile = shift;
+    $header .= '.h';
+    $cfile .= '.c';
+}
+die "usage: $0 input_file" unless $#ARGV == 0;
+
+$infile = $ARGV[0];
+if (!defined($header)) {
+    $header = $infile;
+    $header =~ s/(\.in)?$/.h/;
+}
+if (!defined($cfile)) {
+    $cfile = $infile;
+    $cfile =~ s/(\.in)?$/.c/;
+}
+
+open(IN, "<$infile") || die "$0: can't open $infile: $!\n";
+open(HEADER, ">$header") || die "$0: can't open $header: $!\n";
+open(CFILE, ">$cfile") || die "$0: can't open $cfile: $!\n";
+
+print CFILE "struct sudo_defs_types sudo_defs_table[] = {\n    {\n";
+
+$count = -1;
+while(<IN>) {
+    chomp;
+    next if /^\s*$/;
+    next if /^\s*#/;
+
+    if (/^\S/) {
+	# Print last record
+	&print_record() if defined($var);
+
+	$var = $_;
+	($type, $desc) = (undef, undef);
+	$count++;
+    } else {
+	s/^\s+//;
+	s/\s+$//;
+	die "$0: syntax error near line $.\n" if
+	    defined($type) && defined($desc);
+	next if /^NULL$/;
+	if (defined($type)) {
+	    # Strip leading and trailing double quote and escape the rest
+	    s/^"//;
+	    s/"$//;
+	    s/"/\\"/g;
+	    $desc = "\"$_\"";
+	} else {
+	    $type = $_;
+	}
+    }
+}
+&print_record();
+print CFILE "\tNULL, 0, NULL\n    }\n};\n";
+
+close(IN);
+close(HEADER);
+close(CFILE);
+
+sub print_record {
+    $defname = "I_" . uc($var);
+    printf HEADER "#define %-24s%d", $defname, $count;
+    #print HEADER "\t/* $desc */" if defined($desc);
+    print HEADER "\n";
+
+    $desc = "NULL" unless defined($desc);
+    print CFILE "\t\"$var\", $type,\n\t$desc\n    }, {\n";
+}
