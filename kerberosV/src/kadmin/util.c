@@ -539,7 +539,7 @@ foreach_principal(const char *exp,
 
 #include <setjmp.h>
 
-static sig_atomic_t num_intrs;
+static volatile sig_atomic_t num_intrs;
 static jmp_buf jmpbuf;
 
 static void
