@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.66 2000/03/30 04:53:36 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.67 2000/04/13 19:22:57 art Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -756,6 +756,8 @@ no_encap:
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
+		/* we must inherit MCAST and BCAST flags */
+		m->m_flags |= m0->m_flags & (M_MCAST|M_BCAST);
 		if (hlen > sizeof (struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
 			mhip->ip_hl = mhlen >> 2;
