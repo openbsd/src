@@ -1,11 +1,10 @@
-/*	$OpenBSD: key.h,v 1.1 2001/05/31 20:19:49 angelos Exp $	*/
-
+/*	$OpenBSD: key.h,v 1.2 2001/06/25 05:15:11 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
- * Copyright (c) 2000 Angelos D. Keromytis.
+ * Copyright (c) 2000-2001 Angelos D. Keromytis.
  *
- * Permission to use, copy, and modify this software without fee
+ * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
  * modification of this software.

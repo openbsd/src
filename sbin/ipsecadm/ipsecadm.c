@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.56 2001/06/08 19:39:02 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.57 2001/06/25 05:16:10 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -17,8 +17,9 @@
  *
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
- *	
- * Permission to use, copy, and modify this software without fee
+ * Copyright (c) 2001, Angelos D. Keromytis.
+ *
+ * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
  * modification of this software. 

@@ -1,5 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.2 2001/06/23 18:30:37 deraadt Exp $	*/
-
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.3 2001/06/25 05:14:00 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -8,7 +7,7 @@
  *
  * Copyright (c) 2001 Angelos D. Keromytis.
  *
- * Permission to use, copy, and modify this software without fee
+ * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
  * modification of this software.
