@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.9 2002/05/06 16:37:43 mickey Exp $ */
+/*	$OpenBSD: fms.c,v 1.10 2002/05/28 04:19:53 mickey Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -61,11 +61,6 @@
 #include <dev/auconv.h>
 
 #include <dev/ic/ac97.h>
-#if NRADIO > 0
-#include <sys/radioio.h>
-#include <dev/radio_if.h>
-#include <dev/pci/fmsradio.h>
-#endif /* NRADIO > 0 */
 #if 0
 #include <dev/ic/mpuvar.h>
 #endif
@@ -154,17 +149,6 @@ struct audio_hw_if fms_hw_if = {
 	fms_trigger_input
 };
 
-#if NRADIO > 0
-struct radio_hw_if fmsradio_hw_if = {
-	NULL,	/* open */
-	NULL,	/* close */
-	fmsradio_get_info,
-	fmsradio_set_info,
-	fmsradio_search
-};
-#endif /* NRADIO > 0 */
-
-
 int	fms_attach_codec(void *, struct ac97_codec_if *);
 int	fms_read_codec(void *, u_int8_t, u_int16_t *);
 int	fms_write_codec(void *, u_int8_t, u_int16_t);
@@ -199,18 +183,36 @@ fms_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct fms_softc *sc = (struct fms_softc *) self;
 	struct audio_attach_args aa;
-	const char *intrstr = NULL;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t pt = pa->pa_tag;
 	pci_intr_handle_t ih;
+	const char *intrstr;
+	u_int16_t k1;
 	int i;
 	
-	u_int16_t k1;
+	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
+	    &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize, 0)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 	
-	printf(": Forte Media FM-801\n");
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x30, 2,
+	    &sc->sc_mpu_ioh)) {
+		printf(": can't get mpu subregion handle\n");
+		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
+		return;
+	}
+
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x68, 4,
+	    &sc->sc_opl_ioh)) {
+		printf(": can't get opl subregion handle\n");
+		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
+		return;
+	}
 	
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -218,30 +220,17 @@ fms_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, fms_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc_ioh, sc->sc_ioaddr, sc->sc_iosize);
 		return;
 	}
 	
-	sc->sc_dmat = pa->pa_dmat;
-	
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
-	
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
-			   &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize, 0)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x30, 2, 
-				&sc->sc_mpu_ioh))
-		panic("fms_attach: can't get mpu subregion handle");
+	printf(": %s\n", intrstr);
 
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x68, 4,
-				&sc->sc_opl_ioh))
-		panic("fms_attach: can't get opl subregion handle");
+	sc->sc_dmat = pa->pa_dmat;
 
 	/* Disable legacy audio (SBPro compatibility) */
 	pci_conf_write(pc, pt, 0x40, 0);
@@ -269,14 +258,7 @@ fms_attach(parent, self, aux)
 	    FM_INTSTATUS_VOL);
 
 #if NRADIO > 0
-	sc->radio.tea.iot = sc->sc_iot;
-	sc->radio.tea.ioh = sc->sc_ioh;
-	sc->radio.tea.offset = FM_IO_CTL;
-	sc->radio.tea.flags = sc->sc_dev.dv_cfdata->cf_flags;
-
-	fmsradio_attach(&sc->radio, sc->sc_dev.dv_xname);
-	/* /dev/radio will attach anyway */
-	radio_attach_mi(&fmsradio_hw_if, sc, &sc->sc_dev);
+	fmsradio_attach(sc);
 #endif /* NRADIO > 0 */
 	
 	sc->host_if.arg = sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsreg.h,v 1.1 2002/05/06 16:37:43 mickey Exp $	*/
+/*	$OpenBSD: fmsreg.h,v 1.2 2002/05/28 04:19:53 mickey Exp $	*/
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -88,15 +88,13 @@
 #define FM_CODEC_DATA		0x2c
 
 #define FM_IO_CTL		0x52
-#define  FM_IO_GPIO			0xf000
-#define  FM_IO_GPIO0			0x0001
-#define  FM_IO_GPIO1			0x0002
-#define  FM_IO_GPIO2			0x0004
-#define  FM_IO_GPIO3			0x0008
-#define  FM_IO_GPIO0_IN			0x0100	/* 1 - input; 0 - output */
-#define  FM_IO_GPIO1_IN			0x0200
-#define  FM_IO_GPIO2_IN			0x0400
-#define  FM_IO_GPIO3_IN			0x0800
+#define  FM_IO_GPIO(x)			((x) << 12)
+#define  FM_IO_GPIO_ALL			FM_IO_GPIO(0xf)
+#define  FM_IO_GPIO_IN(x)		((x) << 8)
+#define  FM_IO_PIN0			0x0001
+#define  FM_IO_PIN1			0x0002
+#define  FM_IO_PIN2			0x0004
+#define  FM_IO_PIN3			0x0008
 
 #define FM_CARD_CTL		0x54
 

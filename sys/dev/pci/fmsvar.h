@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsvar.h,v 1.3 2002/05/06 16:37:43 mickey Exp $ */
+/*	$OpenBSD: fmsvar.h,v 1.4 2002/05/28 04:19:53 mickey Exp $ */
 /*	$NetBSD: fmsvar.h,v 1.1 1999/11/01 21:54:12 augustss Exp $	*/
 
 /*-
@@ -56,12 +56,10 @@ struct fms_softc {
 	bus_space_handle_t sc_mpu_ioh;
 	struct device * sc_mpu_dev;
 
+	void *radio;
+
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
-
-#if NRADIO > 0
-	struct fmsradio_if radio;
-#endif
 
 	struct fms_dma *sc_dmas;
 
@@ -79,5 +77,7 @@ struct fms_softc {
 	int sc_rec_flip;
 	u_int16_t sc_rec_reg;
 };
+
+int	fmsradio_attach(struct fms_softc *);
 
 #endif

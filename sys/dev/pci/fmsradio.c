@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsradio.c,v 1.2 2002/05/09 14:52:28 mickey Exp $	*/
+/*	$OpenBSD: fmsradio.c,v 1.3 2002/05/28 04:19:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
@@ -31,13 +31,12 @@
 /* Currently supported tuners:
  *  o SoundForte RadioLink SF64-PCR PCI Radio Card
  *  o SoundForte Quad X-treme SF256-PCP-R PCI Sound Card with FM Radio
- *  o SoundForte Theatre X-treme 5.1 SF256-PCS PCI Sound Card with FM Radio
+ *  o SoundForte Theatre X-treme 5.1 SF256-PCS-R PCI Sound Card with FM Radio
  */
-
-#include "radio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -54,7 +53,7 @@
 #include <dev/radio_if.h>
 
 #include <dev/ic/ac97.h>
-#include <dev/pci/fmsradio.h>
+
 #include <dev/pci/fmsreg.h>
 #include <dev/pci/fmsvar.h>
 
@@ -64,7 +63,6 @@
 #define TUNER_SF256PCPR		1
 #define TUNER_SF64PCR		2
 #define TUNER_SF256PCS		3
-#define TUNER_NOT_ATTACHED	0xFFFF
 
 #define SF64PCR_CAPS		RADIO_CAPS_DETECT_STEREO |	\
 				RADIO_CAPS_DETECT_SIGNAL |	\
@@ -83,96 +81,134 @@
 				RADIO_CAPS_HW_AFC |	\
 				RADIO_CAPS_LOCK_SENSITIVITY
 
-#define PCR_WREN_ON		(0 << 1)
-#define PCR_WREN_OFF		(1 << 1)
-#define PCR_CLOCK_ON		(1 << 0)
-#define PCR_CLOCK_OFF		(0 << 0)
-#define PCR_DATA_ON		(1 << 2)
-#define PCR_DATA_OFF		(0 << 2)
+#define PCR_WREN_ON		0
+#define PCR_WREN_OFF		FM_IO_PIN1
+#define PCR_CLOCK_ON		FM_IO_PIN0
+#define PCR_CLOCK_OFF		0
+#define PCR_DATA_ON		FM_IO_PIN2
+#define PCR_DATA_OFF		0
 
 #define PCR_SIGNAL		0x80
 #define PCR_STEREO		0x80
 #define PCR_INFO_SIGNAL		(1 << 24)
 #define PCR_INFO_STEREO		(1 << 25)
 
-#define PCPR_WREN_ON		(0 << 2)
-#define PCPR_WREN_OFF		(1 << 2)
-#define PCPR_CLOCK_ON		(1 << 0)
-#define PCPR_CLOCK_OFF		(0 << 0)
-#define PCPR_DATA_ON		(1 << 1)
-#define PCPR_DATA_OFF		(0 << 1)
+#define PCPR_WREN_ON		0
+#define PCPR_WREN_OFF		FM_IO_PIN2
+#define PCPR_CLOCK_ON		FM_IO_PIN0
+#define PCPR_CLOCK_OFF		0
+#define PCPR_DATA_ON		FM_IO_PIN1
+#define PCPR_DATA_OFF		0
 
-#define PCS_WREN_ON		(0 << 2)
-#define PCS_WREN_OFF		(1 << 2)
-#define PCS_CLOCK_ON		(1 << 3)
-#define PCS_CLOCK_OFF		(0 << 3)
-#define PCS_DATA_ON		(1 << 1)
-#define PCS_DATA_OFF		(0 << 1)
+#define PCS_WREN_ON		0
+#define PCS_WREN_OFF		FM_IO_PIN2
+#define PCS_CLOCK_ON		FM_IO_PIN3
+#define PCS_CLOCK_OFF		0
+#define PCS_DATA_ON		FM_IO_PIN1
+#define PCS_DATA_OFF		0
 
 /*
  * Function prototypes
  */
-void	fmsradio_set_mute(struct fmsradio_if *);
+void	fmsradio_set_mute(struct fms_softc *);
 
 void	sf64pcr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf64pcr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf64pcr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 u_int32_t	sf64pcr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	sf64pcr_probe(struct fmsradio_if *);
+int sf64pcr_probe(struct fms_softc *);
 
 void	sf256pcpr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf256pcpr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf256pcpr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 u_int32_t	sf256pcpr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	sf256pcpr_probe(struct fmsradio_if *);
+int sf256pcpr_probe(struct fms_softc *);
 
 void	sf256pcs_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf256pcs_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf256pcs_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 u_int32_t	sf256pcs_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	sf256pcs_probe(struct fmsradio_if *);
+int	sf256pcs_probe(struct fms_softc *);
+
+int	fmsradio_get_info(void *, struct radio_info *);
+int	fmsradio_set_info(void *, struct radio_info *);
+int	fmsradio_search(void *, int);
+
+struct radio_hw_if fmsradio_hw_if = {
+	NULL,   /* open */
+	NULL,   /* close */
+	fmsradio_get_info,
+	fmsradio_set_info,
+	fmsradio_search
+};
+
+struct fmsradio_if {
+	int			type; /* Card type */
+
+	int			mute;
+	u_int8_t		vol;
+	u_int32_t		freq;
+	u_int32_t		stereo;
+	u_int32_t		lock;
+
+	struct tea5757_t	tea;
+};
 
 int
-fmsradio_attach(struct fmsradio_if *sc, char *devname)
+fmsradio_attach(struct fms_softc *sc)
 {
-	sc->vol = 0;
-	sc->mute = 0;
-	sc->freq = MIN_FM_FREQ;
-	sc->stereo = TEA5757_STEREO;
-	sc->lock = TEA5757_S030;
+	struct fmsradio_if *r;
 
-	sc->card = TUNER_UNKNOWN;
-	if ((sc->card = sf64pcr_probe(sc)) == TUNER_SF64PCR)
-		printf("%s: SF64-PCR FM Radio\n", devname);
-	else if ((sc->card = sf256pcpr_probe(sc)) == TUNER_SF256PCPR)
-		printf("%s: SF256-PCP-R FM Radio\n", devname);
-	else if ((sc->card = sf256pcs_probe(sc)) == TUNER_SF256PCS)
-		printf("%s: SF256-PCS FM Radio\n", devname);
-	else {
-		sc->card = TUNER_NOT_ATTACHED;
-		return 0;
+	r = malloc(sizeof(struct fmsradio_if), M_DEVBUF, M_NOWAIT);
+	if (r == NULL) {
+		printf("%s: cannot allocate memory for FM tuner config\n",
+				sc->sc_dev.dv_xname);
+		return TUNER_UNKNOWN;
 	}
 
-	fmsradio_set_mute(sc);
+	r->tea.iot = sc->sc_iot;
+	r->tea.ioh = sc->sc_ioh;
+	r->tea.offset = FM_IO_CTL;
+	r->tea.flags = sc->sc_dev.dv_cfdata->cf_flags;
+	r->vol = 0;
+	r->mute = 0;
+	r->freq = MIN_FM_FREQ;
+	r->stereo = TEA5757_STEREO;
+	r->lock = TEA5757_S030;
 
-	return sc->card;
+	r->type = TUNER_UNKNOWN;
+	if ((r->type = sf64pcr_probe(sc)) == TUNER_SF64PCR)
+		printf("%s: SF64-PCR FM Radio\n", sc->sc_dev.dv_xname);
+	else if ((r->type = sf256pcpr_probe(sc)) == TUNER_SF256PCPR)
+		printf("%s: SF256-PCP-R FM Radio\n", sc->sc_dev.dv_xname);
+	else if ((r->type = sf256pcs_probe(sc)) == TUNER_SF256PCS)
+		printf("%s: SF256-PCS-R FM Radio\n", sc->sc_dev.dv_xname);
+	else
+		return TUNER_UNKNOWN;
+
+	fmsradio_set_mute(sc);
+	radio_attach_mi(&fmsradio_hw_if, sc, &sc->sc_dev);
+	return r->type;
 }
 
 /* SF256-PCS specific routines */
 int
-sf256pcs_probe(struct fmsradio_if *sc)
+sf256pcs_probe(struct fms_softc *sc)
 {
+	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 	u_int32_t freq;
 
-	sc->tea.init = sf256pcs_init;
-	sc->tea.rset = sf256pcs_rset;
-	sc->tea.write_bit = sf256pcs_write_bit;
-	sc->tea.read = sf256pcs_hw_read;
+	radio->tea.init = sf256pcs_init;
+	radio->tea.rset = sf256pcs_rset;
+	radio->tea.write_bit = sf256pcs_write_bit;
+	radio->tea.read = sf256pcs_hw_read;
 
-	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
-	freq = sf256pcs_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
-	if (tea5757_decode_freq(freq, sc->tea.flags & TEA5757_TEA5759)
-			!= sc->freq)
+	tea5757_set_freq(&radio->tea, radio->stereo,
+	    radio->lock, radio->freq);
+	freq = tea5757_decode_freq(sf256pcs_hw_read(radio->tea.iot,
+	    radio->tea.ioh, radio->tea.offset),
+	    radio->tea.flags & TEA5757_TEA5759);
+	if (freq != radio->freq)
 			return TUNER_UNKNOWN;
 
 	return TUNER_SF256PCS;
@@ -184,10 +220,10 @@ sf256pcs_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 	u_int32_t res = 0ul;
 	u_int16_t i, d;
 
-	d  = FM_IO_GPIO | PCS_WREN_OFF;
+	d  = FM_IO_GPIO(FM_IO_PIN1 | FM_IO_PIN2 | FM_IO_PIN3) | PCS_WREN_OFF;
 
 	/* Now read data in */
-	d |= FM_IO_GPIO1_IN | PCS_DATA_ON;
+	d |= FM_IO_GPIO_IN(PCS_DATA_ON) | PCS_DATA_ON;
 
 	bus_space_write_2(iot, ioh, offset, d | PCS_CLOCK_OFF);
 
@@ -197,19 +233,21 @@ sf256pcs_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 		res <<= 1;
 		bus_space_write_2(iot, ioh, offset, d | PCS_CLOCK_ON);
 		bus_space_write_2(iot, ioh, offset, d | PCS_CLOCK_OFF);
-		res |= bus_space_read_2(iot, ioh, offset) & PCS_DATA_ON ? 1 : 0;
+		res |= bus_space_read_2(iot, ioh, offset) &
+		   PCS_DATA_ON ? 1 : 0;
 	}
 
 	return (res & (TEA5757_DATA | TEA5757_FREQ));
 }
 
 void
-sf256pcs_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		int bit)
+sf256pcs_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t off, int bit)
 {
 	u_int16_t data, wren;
 
-	wren = FM_IO_GPIO | FM_IO_GPIO2_IN | PCS_WREN_ON;
+	wren  = FM_IO_GPIO(FM_IO_PIN1 | FM_IO_PIN2 | FM_IO_PIN3);
+	wren |= PCS_WREN_ON;
 	data = bit ? PCPR_DATA_ON : PCS_DATA_OFF;
 
 	bus_space_write_2(iot, ioh, off, PCS_CLOCK_OFF | wren | data);
@@ -218,10 +256,10 @@ sf256pcs_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 }
 
 void
-sf256pcs_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
-		u_int32_t d)
+sf256pcs_init(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t offset, u_int32_t d)
 {
-	d  = FM_IO_GPIO | FM_IO_GPIO1_IN;
+	d  = FM_IO_GPIO(FM_IO_PIN1 | FM_IO_PIN2 | FM_IO_PIN3);
 	d |= PCS_WREN_ON | PCS_DATA_OFF | PCS_CLOCK_OFF;
 
 	bus_space_write_2(iot, ioh, offset, d);
@@ -229,10 +267,10 @@ sf256pcs_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
 }
 
 void
-sf256pcs_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
-		u_int32_t d)
+sf256pcs_rset(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t offset, u_int32_t d)
 {
-	d  = FM_IO_GPIO | FM_IO_GPIO1_IN;
+	d  = FM_IO_GPIO(FM_IO_PIN1 | FM_IO_PIN2 | FM_IO_PIN3);
 	d |= PCS_WREN_OFF | PCS_DATA_OFF | PCS_CLOCK_OFF;
 
 	bus_space_write_2(iot, ioh, offset, d);
@@ -241,35 +279,38 @@ sf256pcs_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
 
 /* SF256-PCP-R specific routines */
 int
-sf256pcpr_probe(struct fmsradio_if *sc)
+sf256pcpr_probe(struct fms_softc *sc)
 {
+	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 	u_int32_t freq;
 
-	sc->tea.init = sf256pcpr_init;
-	sc->tea.rset = sf256pcpr_rset;
-	sc->tea.write_bit = sf256pcpr_write_bit;
-	sc->tea.read = sf256pcpr_hw_read;
+	radio->tea.init = sf256pcpr_init;
+	radio->tea.rset = sf256pcpr_rset;
+	radio->tea.write_bit = sf256pcpr_write_bit;
+	radio->tea.read = sf256pcpr_hw_read;
 
-	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
-	freq = sf256pcpr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
-	if (tea5757_decode_freq(freq, sc->tea.flags & TEA5757_TEA5759)
-			!= sc->freq)
+	tea5757_set_freq(&radio->tea, radio->stereo,
+	    radio->lock, radio->freq);
+	freq = tea5757_decode_freq(sf256pcpr_hw_read(radio->tea.iot,
+	    radio->tea.ioh, radio->tea.offset),
+	    radio->tea.flags & TEA5757_TEA5759);
+	if (freq != radio->freq)
 			return TUNER_UNKNOWN;
 
 	return TUNER_SF256PCPR;
 }
 
 u_int32_t
-sf256pcpr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
+sf256pcpr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t offset)
 {
 	u_int32_t res = 0ul;
 	u_int16_t i, d;
 
-	d  = FM_IO_GPIO;
-	d |= FM_IO_GPIO3_IN | PCPR_WREN_OFF;
+	d  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(PCPR_DATA_ON | FM_IO_PIN3);
 
 	/* Now read data in */
-	d |= FM_IO_GPIO1_IN | PCPR_DATA_ON;
+	d |= PCPR_WREN_OFF | PCPR_DATA_ON;
 
 	bus_space_write_2(iot, ioh, offset, d | PCPR_CLOCK_OFF);
 
@@ -279,19 +320,20 @@ sf256pcpr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset
 		res <<= 1;
 		bus_space_write_2(iot, ioh, offset, d | PCPR_CLOCK_ON);
 		bus_space_write_2(iot, ioh, offset, d | PCPR_CLOCK_OFF);
-		res |= bus_space_read_2(iot, ioh, offset) & PCPR_DATA_ON ? 1 : 0;
+		res |= bus_space_read_2(iot, ioh, offset) &
+		    PCPR_DATA_ON ? 1 : 0;
 	}
 
 	return (res & (TEA5757_DATA | TEA5757_FREQ));
 }
 
 void
-sf256pcpr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		int bit)
+sf256pcpr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t off, int bit)
 {
 	u_int16_t data, wren;
 
-	wren = FM_IO_GPIO | FM_IO_GPIO3_IN | PCPR_WREN_ON;
+	wren  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(FM_IO_PIN3) | PCPR_WREN_ON;
 	data = bit ? PCPR_DATA_ON : PCPR_DATA_OFF;
 
 	bus_space_write_2(iot, ioh, off, PCPR_CLOCK_OFF | wren | data);
@@ -300,10 +342,10 @@ sf256pcpr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 }
 
 void
-sf256pcpr_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
-		u_int32_t d)
+sf256pcpr_init(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t offset, u_int32_t d)
 {
-	d  = FM_IO_GPIO | FM_IO_GPIO3_IN;
+	d  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(FM_IO_PIN3);
 	d |= PCPR_WREN_ON | PCPR_DATA_OFF | PCPR_CLOCK_OFF;
 
 	bus_space_write_2(iot, ioh, offset, d);
@@ -311,10 +353,10 @@ sf256pcpr_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
 }
 
 void
-sf256pcpr_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
-		u_int32_t d)
+sf256pcpr_rset(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t offset, u_int32_t d)
 {
-	d  = FM_IO_GPIO | FM_IO_GPIO3_IN;
+	d  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(FM_IO_PIN3);
 	d |= PCPR_WREN_OFF | PCPR_DATA_OFF | PCPR_CLOCK_OFF;
 
 	bus_space_write_2(iot, ioh, offset, d);
@@ -323,19 +365,22 @@ sf256pcpr_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
 
 /* SF64-PCR specific routines */
 int
-sf64pcr_probe(struct fmsradio_if *sc)
+sf64pcr_probe(struct fms_softc *sc)
 {
+	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 	u_int32_t freq;
 
-	sc->tea.init = sf64pcr_init;
-	sc->tea.rset = sf64pcr_rset;
-	sc->tea.write_bit = sf64pcr_write_bit;
-	sc->tea.read = sf64pcr_hw_read;
+	radio->tea.init = sf64pcr_init;
+	radio->tea.rset = sf64pcr_rset;
+	radio->tea.write_bit = sf64pcr_write_bit;
+	radio->tea.read = sf64pcr_hw_read;
 
-	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
-	freq = sf64pcr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
-	if (tea5757_decode_freq(freq, sc->tea.flags & TEA5757_TEA5759)
-			!= sc->freq)
+	tea5757_set_freq(&radio->tea, radio->stereo,
+	    radio->lock, radio->freq);
+	freq = tea5757_decode_freq(sf64pcr_hw_read(radio->tea.iot,
+	    radio->tea.ioh, radio->tea.offset),
+	    radio->tea.flags & TEA5757_TEA5759);
+	if (freq != radio->freq)
 			return TUNER_UNKNOWN;
 
 	return TUNER_SF64PCR;
@@ -347,11 +392,10 @@ sf64pcr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 	u_int32_t res = 0ul;
 	u_int16_t d, i, ind = 0;
 
-	d  =  FM_IO_GPIO;
-	d |= FM_IO_GPIO3_IN | PCR_WREN_OFF;
+	d  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(PCR_DATA_ON | FM_IO_PIN3);
 
 	/* Now read data in */
-	d |= FM_IO_GPIO2_IN | PCR_DATA_ON;
+	d |= PCR_WREN_OFF | PCR_DATA_ON;
 
 	bus_space_write_2(iot, ioh, offset, d | PCR_CLOCK_OFF);
 	DELAY(4);
@@ -385,12 +429,12 @@ sf64pcr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 }
 
 void
-sf64pcr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		int bit)
+sf64pcr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t off, int bit)
 {
 	u_int16_t data, wren;
 
-	wren = FM_IO_GPIO | FM_IO_GPIO3_IN | PCR_WREN_ON;
+	wren  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(FM_IO_PIN3) | PCR_WREN_ON;
 	data = bit ? PCR_DATA_ON : PCR_DATA_OFF;
 
 	bus_space_write_2(iot, ioh, off, PCR_CLOCK_OFF | wren | data);
@@ -402,10 +446,10 @@ sf64pcr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 }
 
 void
-sf64pcr_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
-		u_int32_t d)
+sf64pcr_init(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t offset, u_int32_t d)
 {
-	d  = FM_IO_GPIO | FM_IO_GPIO3_IN;
+	d  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(FM_IO_PIN3);
 	d |= PCR_WREN_ON | PCR_DATA_ON | PCR_CLOCK_OFF;
 
 	bus_space_write_2(iot, ioh, offset, d);
@@ -413,8 +457,8 @@ sf64pcr_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
 }
 
 void
-sf64pcr_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
-		u_int32_t d)
+sf64pcr_rset(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t offset, u_int32_t d)
 {
 	/* Do nothing */
 	return;
@@ -426,62 +470,67 @@ sf64pcr_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
  * Mute/unmute
  */
 void
-fmsradio_set_mute(struct fmsradio_if *sc)
+fmsradio_set_mute(struct fms_softc *sc)
 {
+	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 	u_int16_t v, mute, unmute;
 
-	mute = unmute = FM_IO_GPIO;
-	switch (sc->card) {
+	switch (radio->type) {
 	case TUNER_SF256PCS:
-		mute |= FM_IO_GPIO1_IN;
-		unmute |= FM_IO_GPIO1_IN | FM_IO_GPIO2;
+		mute = FM_IO_GPIO(FM_IO_PIN1 | FM_IO_PIN2 | FM_IO_PIN3);
+		unmute = mute | PCS_WREN_OFF;
 		break;
 	case TUNER_SF256PCPR:
-		mute |= FM_IO_GPIO3_IN;
-		unmute |= FM_IO_GPIO3_IN | FM_IO_GPIO2;
+		mute  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(FM_IO_PIN3);
+		unmute = mute | PCPR_WREN_OFF;
 		break;
 	case TUNER_SF64PCR:
-		mute |= FM_IO_GPIO3_IN;
-		unmute |= FM_IO_GPIO3_IN | FM_IO_GPIO1;
+		mute  = FM_IO_GPIO_ALL | FM_IO_GPIO_IN(FM_IO_PIN3);
+		unmute = mute | PCR_WREN_OFF;
 		break;
 	default:
 		return;
 	}
-	v = (sc->mute || !sc->vol) ? mute : unmute;
-	bus_space_write_2(sc->tea.iot, sc->tea.ioh, sc->tea.offset, v);
+	v = (radio->mute || !radio->vol) ? mute : unmute;
+	bus_space_write_2(radio->tea.iot, radio->tea.ioh,
+	    radio->tea.offset, v);
 	DELAY(64);
-	bus_space_write_2(sc->tea.iot, sc->tea.ioh, sc->tea.offset, v);
+	bus_space_write_2(radio->tea.iot, radio->tea.ioh,
+	    radio->tea.offset, v);
 }
 
 int
 fmsradio_get_info(void *v, struct radio_info *ri)
 {
-	struct fms_softc *fms_sc = v;
-	struct fmsradio_if *sc = &fms_sc->radio;
+	struct fms_softc *sc = v;
+	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 	u_int32_t buf;
 
-	if (sc->card == TUNER_NOT_ATTACHED)
+	if (radio->type == TUNER_UNKNOWN)
 		return (ENXIO);
 
-	ri->mute = sc->mute;
-	ri->volume = sc->vol ? 255 : 0;
-	ri->stereo = sc->stereo == TEA5757_STEREO ? 1 : 0;
-	ri->lock = tea5757_decode_lock(sc->lock);
+	ri->mute = radio->mute;
+	ri->volume = radio->vol ? 255 : 0;
+	ri->stereo = radio->stereo == TEA5757_STEREO ? 1 : 0;
+	ri->lock = tea5757_decode_lock(radio->lock);
 
-	switch (sc->card) {
+	switch (radio->type) {
 	case TUNER_SF256PCS:
 		ri->caps = SF256PCS_CAPS;
-		buf = sf256pcs_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
+		buf = sf256pcs_hw_read(radio->tea.iot, radio->tea.ioh,
+		    radio->tea.offset);
 		ri->info = 0; /* UNSUPPORTED */
 		break;
 	case TUNER_SF256PCPR:
 		ri->caps = SF256PCPR_CAPS;
-		buf = sf256pcpr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
+		buf = sf256pcpr_hw_read(radio->tea.iot, radio->tea.ioh,
+		    radio->tea.offset);
 		ri->info = 0; /* UNSUPPORTED */
 		break;
 	case TUNER_SF64PCR:
 		ri->caps = SF64PCR_CAPS;
-		buf = sf64pcr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
+		buf = sf64pcr_hw_read(radio->tea.iot, radio->tea.ioh,
+		    radio->tea.offset);
 		ri->info  = buf & PCR_INFO_SIGNAL ? 0 : RADIO_INFO_SIGNAL;
 		ri->info |= buf & PCR_INFO_STEREO ? 0 : RADIO_INFO_STEREO;
 		break;
@@ -489,8 +538,8 @@ fmsradio_get_info(void *v, struct radio_info *ri)
 		break;
 	}
 
-	ri->freq = sc->freq = tea5757_decode_freq(buf,
-			sc->tea.flags & TEA5757_TEA5759);
+	ri->freq = radio->freq = tea5757_decode_freq(buf,
+			sc->sc_dev.dv_cfdata->cf_flags & TEA5757_TEA5759);
 
 	fmsradio_set_mute(sc);
 
@@ -503,18 +552,18 @@ fmsradio_get_info(void *v, struct radio_info *ri)
 int
 fmsradio_set_info(void *v, struct radio_info *ri)
 {
-	struct fms_softc *fms_sc = v;
-	struct fmsradio_if *sc = &fms_sc->radio;
+	struct fms_softc *sc = v;
+	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 
-	if (sc->card == TUNER_NOT_ATTACHED)
+	if (radio->type == TUNER_UNKNOWN)
 		return (ENXIO);
 
-	sc->mute = ri->mute ? 1 : 0;
-	sc->vol = ri->volume ? 255 : 0;
-	sc->stereo = ri->stereo ? TEA5757_STEREO: TEA5757_MONO;
-	sc->lock = tea5757_encode_lock(ri->lock);
-	ri->freq = sc->freq = tea5757_set_freq(&sc->tea,
-		sc->lock, sc->stereo, ri->freq);
+	radio->mute = ri->mute ? 1 : 0;
+	radio->vol = ri->volume ? 255 : 0;
+	radio->stereo = ri->stereo ? TEA5757_STEREO: TEA5757_MONO;
+	radio->lock = tea5757_encode_lock(ri->lock);
+	ri->freq = radio->freq = tea5757_set_freq(&radio->tea,
+		radio->lock, radio->stereo, ri->freq);
 	fmsradio_set_mute(sc);
 
 	return (0);
@@ -523,13 +572,14 @@ fmsradio_set_info(void *v, struct radio_info *ri)
 int
 fmsradio_search(void *v, int f)
 {
-	struct fms_softc *fms_sc = v;
-	struct fmsradio_if *sc = &fms_sc->radio;
+	struct fms_softc *sc = v;
+	struct fmsradio_if *radio = (struct fmsradio_if *)sc->radio;
 
-	if (sc->card == TUNER_NOT_ATTACHED)
+	if (radio->type == TUNER_UNKNOWN)
 		return (ENXIO);
 
-	tea5757_search(&sc->tea, sc->lock, sc->stereo, f);
+	tea5757_search(&radio->tea, radio->lock,
+			radio->stereo, f);
 	fmsradio_set_mute(sc);
 
 	return (0);
