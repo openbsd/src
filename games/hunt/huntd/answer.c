@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.5 1999/03/14 02:07:30 pjanzen Exp $	*/
+/*	$OpenBSD: answer.c,v 1.6 1999/03/22 00:29:15 pjanzen Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -57,8 +57,8 @@ answer_first()
 	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, newsock, 0);
 	fromhost(&ri);
 	if (hosts_access(&ri) == 0) {
+		logx(LOG_INFO, "rejected connection from %s", eval_client(&ri));
 		close(newsock);
-		logx(LOG_INFO, "rejected connection");
 		return;
 	}
 

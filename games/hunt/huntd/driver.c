@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.5 1999/03/14 02:07:30 pjanzen Exp $	*/
+/*	$OpenBSD: driver.c,v 1.6 1999/03/22 00:29:15 pjanzen Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -26,13 +26,10 @@
 #include "conf.h"
 #include "server.h"
 
-int	Seed = 0;
-
 char	*First_arg;		/* pointer to argv[0] */
 char	*Last_arg;		/* pointer to end of argv/environ */
 u_int16_t Server_port = HUNT_PORT;
 int	Server_socket;		/* test socket to answer datagrams */
-FLAG	inetd_spawned;		/* invoked via inetd */
 FLAG	should_announce = TRUE;	/* true if listening on standard port */
 u_short	sock_port;		/* port # of tcp listen socket */
 u_short	stat_port;		/* port # of statistics tcp socket */
@@ -373,9 +370,9 @@ init()
 	len = sizeof (struct sockaddr_in);
 	if (getsockname(STDIN_FILENO, (struct sockaddr *) &test_port, &len) >= 0
 	    && test_port.sin_family == AF_INET) {
-		/* We are probably running from inetd: */
-		inetd_spawned = TRUE;
+		/* We are probably running from inetd:  don't log to stderr */
 		Server_socket = STDIN_FILENO;
+		conf_logerr = 0;
 		if (test_port.sin_port != htons((u_short) Server_port)) {
 			should_announce = FALSE;
 			Server_port = ntohs(test_port.sin_port);
@@ -401,7 +398,7 @@ init()
 		Num_fds = Server_socket + 1;
 
 	/* Initialise the random seed: */
-	Seed = getpid() + time((time_t *) NULL);
+	srandom(getpid() + time((time_t *) NULL));
 
 	/* Dig the maze: */
 	makemaze();
@@ -852,8 +849,7 @@ rand_num(range)
 {
 	if (range == 0)
 		return 0;
-	Seed = Seed * 11109 + 13849;
-	return (((Seed >> 16) & 0xffff) % range);
+	return (random() % range);
 }
 
 /*
@@ -952,6 +948,7 @@ send_stats()
 	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, s, 0);
 	fromhost(&ri);
 	if (hosts_access(&ri) == 0) {
+		logx(LOG_INFO, "rejected connection from %s", eval_client(&ri));
 		close(s);
 		return;
 	}
@@ -1086,8 +1083,10 @@ handle_wkport(fd)
 	}
 
 	/* Do we allow access? */
-	if (hosts_access(&ri) == 0)
+	if (hosts_access(&ri) == 0) {
+		logx(LOG_INFO, "rejected connection from %s", eval_client(&ri));
 		return;
+	}
 
 	query = ntohs(query);
 

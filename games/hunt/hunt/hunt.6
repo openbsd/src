@@ -1,5 +1,5 @@
 .\"	$NetBSD: hunt.6,v 1.3 1997/10/10 16:32:30 lukem Exp $
-.\"	$OpenBSD: hunt.6,v 1.4 1999/03/14 02:07:30 pjanzen Exp $
+.\"	$OpenBSD: hunt.6,v 1.5 1999/03/22 00:29:10 pjanzen Exp $
 .\"
 .\"  hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -136,7 +136,7 @@ does, i.e.,
 .Ic k ,
 and
 .Ic l
-for left, down, up, right respectively.
+for left, down, up, right, respectively.
 To change which direction you're facing in the maze,
 use the upper case version of the movement key (i.e.,
 .Ic HJKL ) .
@@ -167,13 +167,13 @@ Throw very, very big bomb (Takes 361 charges)
 .It Ic @
 Throw biggest bomb (Takes 441 charges)
 .It Ic o
-Throw small slime (Takes 15 charges)
+Throw small slime (Takes 5 charges)
 .It Ic O
-Throw big slime (Takes 30 charges)
+Throw big slime (Takes 10 charges)
 .It Ic p
-Throw bigger slime (Takes 45 charges)
+Throw bigger slime (Takes 15 charges)
 .It Ic P
-Throw biggest slime (Takes 60 charges)
+Throw biggest slime (Takes 20 charges)
 .It Ic s
 Scan (show where other players are) (Takes 1 charge)
 .It Ic c
@@ -247,14 +247,19 @@ All explosions are centered around the square the shot hits and
 do the most damage in the center.
 .It
 Slime affects all squares it oozes over.
-The number of squares is equal to the number of charges used.
+The number of squares is equal to the number of charges used,
+multiplied by
+.Ft conf_slimefactor
+as set by
+.Xr huntd 6
+(default 3).
 .It
 One small mine and one large mine are placed in the maze for every new player.
 A mine has a 2% probability of tripping when you walk forward on to it;
 50% when going sideways;
 95% when backing up.
-Tripping a mine costs you 5 points or 10 points respectively.
-Defusing a mine is worth 1 charge or 9 charges respectively.
+Tripping a mine costs you 5 points or 10 points, respectively.
+Defusing a mine is worth 1 charge or 9 charges, respectively.
 .It
 You cannot see behind you.
 .It
