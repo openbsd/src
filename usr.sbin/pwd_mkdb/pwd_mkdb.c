@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.2 1996/04/23 21:55:49 deraadt Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.3 1996/05/04 08:13:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ main(argc, argv)
 	/* We don't care what the user wants. */
 	(void)umask(0);
 
-	pname = *argv;
+	pname = strdup(changedir(*argv, basedir));
 	/* Open the original password file */
 	if (!(fp = fopen(pname, "r")))
 		error(pname);
