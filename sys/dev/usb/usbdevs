@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.75 2003/12/23 21:51:57 drahn Exp $
+$OpenBSD: usbdevs,v 1.76 2003/12/24 15:23:02 todd Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -931,6 +931,7 @@ product KODAK DC265		0x0111	Digital Science DC265
 product KODAK DC290		0x0112	Digital Science DC290
 product KODAK DC240		0x0120	Digital Science DC240
 product KODAK DC280		0x0130	Digital Science DC280
+product KODAK DX4900		0x0550	EasyShare DX4900
 
 /* Konica Corp. Products */
 product KONICA CAMERA		0x0720	Digital Color Camera
