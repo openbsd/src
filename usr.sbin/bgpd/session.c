@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.202 2004/11/18 15:24:24 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.203 2004/11/18 15:42:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,7 +61,7 @@ int	session_setup_socket(struct peer *);
 void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
-int	session_capa_mp(struct buf *, u_int16_t, u_int8_t);
+int	session_capa_mp_add(struct buf *, u_int16_t, u_int8_t);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
 void	session_update(u_int32_t, void *, size_t);
@@ -532,8 +532,8 @@ init_peer(struct peer *p)
 {
 	p->fd = p->wbuf.fd = -1;
 	p->capa.announce = p->conf.capabilities;
-	p->capa.ann_mp_v4 = 1;
-	p->capa.ann_mp_v6 = 0;
+	p->capa.ann_mp_v4 = SAFI_UNICAST;
+	p->capa.ann_mp_v6 = SAFI_NONE;
 	p->capa.ann_refresh = 1;
 	if (p->conf.if_depend[0])
 		imsg_compose(ibuf_main, IMSG_IFINFO, 0, 0, -1,
@@ -1127,7 +1127,7 @@ session_tcp_established(struct peer *peer)
 }
 
 int
-session_capa_mp(struct buf *buf, u_int16_t afi, u_int8_t safi)
+session_capa_mp_add(struct buf *buf, u_int16_t afi, u_int8_t safi)
 {
 	u_int8_t		 capa_code, capa_len, pad = 0;
 	int			 errs = 0;
@@ -1204,9 +1204,11 @@ session_open(struct peer *p)
 
 		/* multiprotocol extensions, RFC 2858 */
 		if (p->capa.ann_mp_v4)
-			errs += session_capa_mp(buf, AFI_IPv4, SAFI_UNICAST);
+			errs += session_capa_mp_add(buf, AFI_IPv4,
+			    p->capa.ann_mp_v4);
 		if (p->capa.ann_mp_v6)
-			errs += session_capa_mp(buf, AFI_IPv6, SAFI_UNICAST);
+			errs += session_capa_mp_add(buf, AFI_IPv6,
+			    p->capa.ann_mp_v6);
 
 		/* route refresh, RFC 2918 */
 		if (p->capa.ann_refresh) {
@@ -1916,8 +1918,8 @@ parse_notification(struct peer *peer)
 			datalen -= capa_len;
 			switch (capa_code) {
 			case CAPA_MP:
-				peer->capa.ann_mp_v4 = 0;
-				peer->capa.ann_mp_v6 = 0;
+				peer->capa.ann_mp_v4 = SAFI_NONE;
+				peer->capa.ann_mp_v6 = SAFI_NONE;
 				log_peer_warnx(&peer->conf,
 				    "disabling multiprotocol capability");
 				break;
