@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_forward.c,v 1.15 2001/06/22 12:30:34 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.16 2001/07/18 09:56:49 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -413,14 +413,20 @@ ip6_forward(m, srcrt)
 	 */
 	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
-		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) != 0) {
+		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
+		    nd6_is_addr_neighbor((struct sockaddr_in6 *)&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
-			 * one, and the link attached to the interface is
-			 * point-to-point, then it will be highly probable
-			 * that a routing loop occurs. Thus, we immediately
-			 * drop the packet and send an ICMPv6 error message.
-			 *
+			 * one, the link attached to the interface is
+			 * point-to-point, and the IPv6 destination is
+			 * regarded as on-link on the link, then it will be
+			 * highly probable that the destination address does
+			 * not exist on the link and that the packet is going
+			 * to loop.  Thus, we immediately drop the packet and
+			 * send an ICMPv6 error message.
+			 * For other routing loops, we dare to let the packet
+			 * go to the loop, so that a remote diagnosing host
+			 * can detect the loop by traceroute.
 			 * type/code is based on suggestion by Rich Draves.
 			 * not sure if it is the best pick.
 			 */
