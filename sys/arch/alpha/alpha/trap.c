@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.33 2002/04/28 20:55:14 pvalchev Exp $ */
+/* $OpenBSD: trap.c,v 1.34 2002/04/29 00:30:36 pvalchev Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -299,7 +299,7 @@ trap(a0, a1, a2, entry, framep)
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
 #if	0
-/* This is to catch some wierd stuff on the UDB (mj) */
+/* This is to catch some weird stuff on the UDB (mj) */
 		if (framep->tf_regs[FRAME_PC] > 0 && 
 		    framep->tf_regs[FRAME_PC] < 0x120000000) {
 			printf("PC Out of Whack\n");
