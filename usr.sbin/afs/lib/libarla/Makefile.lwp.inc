@@ -33,6 +33,6 @@ process.S:
 	ln -s ${AFSSRC}/lwp/$$PROCESS_S process.S
 
 process.o: process.S
-	${CC} ${CFLAGS} -DHAVE_PIC -c process.S
+	${CC} ${CFLAGS} -DUSING_ASM -DHAVE_PIC -c process.S
 
 all:	lwp.h

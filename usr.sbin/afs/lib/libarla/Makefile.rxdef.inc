@@ -1,7 +1,15 @@
 ### rxdef stuff
+includes:	fs.h vldb.h cb.h pts.h bos.h volumeserver.h ubik.h bos.h ka.h
+
 ## No, cb.ss.c is _not_ a mistake. The _client_ is the callback server.
-SRCS		+= vldb.cs.c fs.cs.c cb.ss.c pts.cs.c \
-		   volumeserver.cs.c ubik.cs.c bos.cs.c ka.cs.c
+SRCS	+= vldb.cs.c \
+	   fs.cs.c \
+	   cb.ss.c \
+	   pts.cs.c \
+	   volumeserver.cs.c \
+	   ubik.cs.c \
+	   bos.cs.c \
+	   ka.cs.c
 
 CLEANFILES 	+= vldb.ss.c vldb.cs.c vldb.ydr.c vldb.ss.h vldb.cs.h vldb.h \
 		   fs.ss.c fs.cs.c fs.ydr.c fs.cs.h fs.ss.h fs.h \
