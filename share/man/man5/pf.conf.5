@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.3 2001/07/10 11:05:41 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.4 2001/07/16 14:25:39 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -50,10 +50,12 @@ rule      = action ( "in" | "out" )
 
 action    = "pass" | "block" [ return ] | "scrub" .
 return    = "return-rst" |
-            "return-icmp" [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
+            "return-icmp" [ "(" ( icmp-code-name | icmp-code-number ) ")" ]
+            .
 
 hosts     = "all" |
-            "from" ( "any" | host ) [ port ] "to" ( "any" | host ) [ port ].
+            "from" ( "any" | host ) [ port ] "to" ( "any" | host ) [ port ]
+            .
 host      = [ "!" ] address [ "/" mask-bits ] .
 port      = "port" ( unary-op | binary-op ) .
 unary-op  = ( "=" | "!=" | "<" | "<=" | ">" | ">=" )
@@ -66,12 +68,187 @@ flag-set  = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
 icmp-type = "icmp-type" ( icmp-type-name | icmp-type-number )
             [ "code" ( icmp-code-name | icmp-code-number ) ] .
 .Ed
+.Sh FILTER RULES
+Filter rules are loaded from a text file into the kernel using pfctl -R
+<file>, which replaces the active rule set with the new one. The active
+rule set can be displayed using pfctl -s r.
 .Pp
-Emtpy lines and lines beginning with the character `#' are ignored.
+For each packet processed by the packet filter, the filter rules are
+evaluated in sequential order, from first to last. Each rule either
+matches the packet or doesn't. The last matching rule decides what action
+is taken.
+.Pp
+If no rule matches the packet, the default action is pass. If you rather
+want to block everything by default and only pass packets that match
+explicit rules, you can achieve this by adding
+.Bd -literal
+    block in all
+    block out all
+.Ed
+.Pp
+as your first two rules.
+.Sh ACTIONS
+.Bl -tag -width Fl
+.It Li pass
+The packet is passed.
+.It Li block
+The packet is blocked. Optionally, the filter can return a TCP RST or
+ICMP UNREACHABLE packet to the sender, where applicable.
+.It Li scrub
+The packet is run through normalization/defragmentation. Scrub rules
+are not considered last matching rules.
+.El
+.Sh LOGGING
+.Bl -tag -width Fl
+.It Li log
+In addition to the action specified, a log message is generated.
+.It Li log-all
+Used with 'keep state' rules. Not only the packet that creates state
+is logged, but all packets of the connection.
+.El
+.Pp
+The log messages can be viewed with tcpdump:
+.Bd -literal
+    ifconfig pflog0 up
+    tcpdump -n -i pflog0
+.Ed
+.Sh QUICK
+If a packet matches a rule which has the 'quick' option set, this rule
+is considered the last matching rule, and evaluation of subsequent rules
+is skipped.
+.Sh PARAMETERS
+The rule parameters specify for what packets a rule applies. A packet
+always comes in on or goes out through one interface. Most parameters
+are optional. If a parameter is specified, the rule only applies to
+packets with matching attributes.
+.Ss in/out
+The rule applies to incoming or outgoing packets. Either in or out must
+be specified. To cover both directions, two rules are needed.
+.Ss on <interface>
+The rule applies only to packets coming in on or going out through this
+particular interface.
+.Ss proto <protocol>
+The rule applies only to packets of this protocol. Common protocols used
+here are tcp, udp and icmp.
+.Ss from <source> port <source> to <dest> port <dest>
+The rule applies only to packets with the specified source and destination
+addresses/ports. Addresses can be specified in CIDR notation (matching
+netblocks) and ports can be specified using these operators
+.Bd -literal
+    = (equal), != (unequal), < (lesser), <= (lesser or equal), > (greater),
+    >= (greater or equal), >< (range) and <> (except range).
+.Ed
+.Pp
+>< and <> are binary operators (they take two arguments), and the range
+doesn't include the limits, for instance:
+.Bl -tag -width Fl
+.It Li port 2000 >< 2004
+means 'all ports > 2000 and < 2004', hence ports 2001, 2002 and 2003.
+.It Li port 2000 <> 2004
+means 'all ports < 2000 or > 2004', hence ports 1-1999 and 2005-65535.
+.El
+.Pp
+The host and port specifications are optional, as the following examples
+show:
+.Bd -literal
+    pass in all
+    pass in from any to any
+    pass in from any port <= 1024 to any
+    pass in from any to any port = 25
+    pass in from 10.0.0.0/8 port > 1024 to ! 10.1.2.3 port != 22
+.Ed
+.Ss flags <a>[/<b>]
+The rule only applies to TCP packets that have the flags <a> set
+out of set <b>. Flags not specified in <b> are ignored.
+.Bl -tag -width Fl
+.It Li flags S/S
+Flag SYN is set. The other flags are ignored.
+.It Li flags S/SA
+Of SYN and ACK, exactly SYN is set. SYN, SYN+PSH, SYN+RST match, but
+SYN+ACK, ACK and ACK+RST don't. This is more restrictive than the
+previous example.
+.It Li flags S
+If the second set is not specified, it defaults to FSRPAU. Hence, only
+packets with SYN set and all other flags unset match this rule. This is
+more restrictive than the previous example.
+.El
+.Ss icmp-type <type> code <code>
+The rule only applies to ICMP packets with the specified type and code.
+This parameter is only valid for rules that cover protocol icmp.
+.Sh KEEP STATE
+pf is a stateful packet filter, which means it can track the state of
+a connection. Instead of passing all traffic to port 25, for instance,
+you can pass only the initial packet and keep state.
+.Pp
+If a packet matches a pass ... keep-state rule, the filter creates
+a state for this connection and automatically lets pass all following
+packets of that connection.
+.Pp
+Before any rules are evaluated, the filter checks whether the packet
+matches any state. If it does, the packet is passed without evaluation
+of any rules.
+.Pp
+States are removed after the connection is closed or has times out.
+.Pp
+This has several advantages. Comparing a packet to a state involves
+checking its sequence numbers. If the sequence numbers are outside
+the narrow windows of expected values, the packet is dropped. This
+prevents spoofing attacks, where the attacker sends packets with
+a fake source address/port but doesn't know the connection's sequence
+numbers.
+.Pp
+Also, looking up states is usually faster than evaluating rules. If
+you have 50 rules, all of them are evaluated sequentially in O(n).
+Even with 50'000 states, only 16 comparisons are needed to match a
+state, since states are stored in a binary search tree that allows
+searches in O(log2 n).
+.Pp
+It also makes writing rule sets easier, once you embrace the concept.
+You only filter the initial packets and keep state. All other packets
+are handled by states. For instance:
+.Bd -literal
+    block out all
+    block in  all
+    pass out proto tcp from any to any           flags S/SA keep state
+    pass in  proto tcp from any to any port = 25 flags S/SA keep state
+.Ed
+.Pp
+This rule set blocks everything by default. Only outgoing connections
+and incoming connection to port 25 are allowed. The inital packet of
+each connection has the SYN flag set, will be passed and creates
+state. All further packets of these connections are passed if they
+match a state.
+.Pp
+Specifying flags S/SA restricts state creation to the initial SYN
+packet of the TCP handshake. You can also be less restrictive, and
+allow state creation from intermediate (non-SYN) packets. This
+will cause pf to synchronize to existing connections, for instance
+if you flush the state table.
+.Pp
+For UDP, which is stateless by nature, keep state will create state
+as well. UDP packets are matched to states using only host addresses
+and ports.
+.Pp
+ICMP messages fall in two categories: ICMP error messages, which always
+refer to a TCP or UDP packet, are matched against the refered to connection.
+If you keep state on a TCP connection, and an ICMP source quench message
+refering to this TCP connection arrives, it will be matched to the right
+state and get passed.
+.Pp
+For ICMP queries, keep state creates an ICMP state, and pf knows how to
+match ICMP replies to states. For example
+.Bd -literal
+    pass out proto icmp all icmp-type echoreq keep state
+.Ed
+.Pp
+lets echo requests (pings) out, creates state, and matches incoming echo
+replies correctly to states.
+.Pp
+Note: nat/rdr rules (see nat.conf) implicitely create state for connections.
 .Sh EXAMPLES
 .Bd -literal
-# My external interface is kue0 (157.161.48.183, my only routable address) and
-# the private network is 10.0.0.0/8, for which i'm doing NAT.
+# My external interface is kue0 (157.161.48.183, my only routable address)
+# and the private network is 10.0.0.0/8, for which i'm doing NAT.
 
 # block and log everything by default
 #
@@ -82,9 +259,9 @@ block return-rst  in  log on kue0 proto tcp all
 block return-icmp out log on kue0 proto udp all
 block return-icmp in  log on kue0 proto udp all
 
-# block and log outgoing packets that don't have my address as source, they are
-# either spoofed or something is misconfigured (NAT disabled, for instance),
-# we want to be nice and don't send out garbage.
+# block and log outgoing packets that don't have my address as source,
+# they are either spoofed or something is misconfigured (NAT disabled,
+# for instance), we want to be nice and don't send out garbage.
 #
 block out log quick on kue0 from ! 157.161.48.183 to any
 
@@ -101,24 +278,24 @@ block in log quick on kue0 from 172.16.0.0/12      to any
 block in log quick on kue0 from 192.168.0.0/16     to any
 block in log quick on kue0 from 255.255.255.255/32 to any
 
-# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # ICMP
-# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------
 
 # pass out/in certain ICMP queries and keep state (ping)
 #
-# state matching is done on host addresses and ICMP id (not type/code), so
-# replies (like 0/0 for 8/0) will match queries
+# state matching is done on host addresses and ICMP id (not type/code),
+# so replies (like 0/0 for 8/0) will match queries
 #
-# ICMP error messages (which always refer to a TCP/UDP packet) are handled
-# by the TCP/UDP states
+# ICMP error messages (which always refer to a TCP/UDP packet) are
+# handled by the TCP/UDP states
 #
 pass out on kue0 proto icmp all icmp-type 8 code 0 keep state
 pass in  on kue0 proto icmp all icmp-type 8 code 0 keep state
 
-# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # UDP
-# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------
 
 # pass out all UDP connections and keep state
 #
@@ -128,9 +305,9 @@ pass out on kue0 proto udp all keep state
 #
 pass in on kue0 proto udp from any to any port = domain keep state
 
-# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # TCP
-# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------
 
 # pass out all TCP connections and keep state
 #
@@ -153,6 +330,9 @@ pass in on kue0 proto tcp from any to any port = auth   keep state
 .Xr nat.conf 5 ,
 .Xr services 5 ,
 .Xr pfctl 8
+.Pp
+http://www.obfuscation.org/ipf/ has an extensive filter rule tutorial
+which for the most part applies to pf as well.
 .Sh HISTORY
 The
 .Nm
