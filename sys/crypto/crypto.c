@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.22 2001/06/25 05:02:22 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.23 2001/06/25 17:52:36 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -279,6 +279,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 	}
 
 	crypto_drivers[driverid].cc_alg[alg] = 0;
+	crypto_drivers[driverid].cc_max_op_len[alg] = 0;
 
 	/* Was this the last algorithm ? */
 	for (i = 1; i <= CRYPTO_ALGORITHM_MAX; i++)
@@ -469,4 +470,34 @@ void
 crypto_done(struct cryptop *crp)
 {
 	crp->crp_callback(crp);
+}
+
+/*
+ * Return SYMMETRIC or PUBLIC_KEY, depending on the algorithm type.
+ */
+int
+crypto_check_alg(struct cryptoini *cri)
+{
+	switch (cri->cri_alg)
+	{
+	case CRYPTO_DES_CBC:
+	case CRYPTO_3DES_CBC:
+	case CRYPTO_BLF_CBC:
+	case CRYPTO_CAST_CBC:
+	case CRYPTO_SKIPJACK_CBC:
+	case CRYPTO_RIJNDAEL128_CBC:
+		return SYMMETRIC;
+	case CRYPTO_DH_SEND:
+	case CRYPTO_DH_RECEIVE:
+	case CRYPTO_RSA_ENCRYPT:
+	case CRYPTO_RSA_DECRYPT:
+	case CRYPTO_DSA_SIGN:
+	case CRYPTO_DSA_VERIFY:
+		return PUBLIC_KEY;
+	}
+
+#ifdef DIAGNOSTIC
+	panic("crypto_check_alg: unknown algorithm %d", cri->cri_alg);
+#endif
+	return -1;
 }

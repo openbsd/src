@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.8 2001/06/25 17:35:47 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.9 2001/06/25 17:52:37 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -359,6 +359,7 @@ int32_t	crypto_get_driverid(void);
 void	crypto_thread(void);
 int	crypto_invoke(struct cryptop *);
 void	crypto_done(struct cryptop *);
+int	crypto_check_alg(struct cryptoini *);
 
 struct mbuf;
 int	mbuf2pages __P((struct mbuf *, int *, long *, int *, int, int *));
