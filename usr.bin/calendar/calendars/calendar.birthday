@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.12 2001/11/30 19:37:13 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.13 2002/04/22 07:22:09 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -122,6 +122,7 @@
 04/15	Leonardo da Vinci born, 1452
 04/16	Charles (Charlie) Chaplin (Sir) born in London, 1889
 04/22	Kant born, 1724
+04/22	Lenin born, the best friend of all the children, 1870
 04/23	Shakespeare born, 1564
 04/28	James Monroe born, 1758
 04/29	Jules Henri Poincare born, 1854, founder of topology
