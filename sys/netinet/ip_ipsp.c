@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.155 2004/01/27 09:29:22 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.156 2004/02/15 12:44:24 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -318,10 +318,11 @@ gettdbbysrcdst(u_int32_t spi, union sockaddr_union *src,
 	hashval = tdb_hash(0, src, proto);
 
 	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
-		if ((spi == 0 || tdbp->tdb_spi == spi) &&
+		if (tdbp->tdb_sproto == proto &&
+		    (spi == 0 || tdbp->tdb_spi == spi) &&
+		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)) &&
-		    !bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)) &&
-		    (tdbp->tdb_sproto == proto))
+		    !bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))
 			break;
 
 	return tdbp;
