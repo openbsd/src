@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.18 2003/06/02 20:18:40 millert Exp $
+.\"	$OpenBSD: strftime.3,v 1.19 2004/04/14 07:56:40 otto Exp $
 .\"
 .Dd January 18, 1998
 .Dt STRFTIME 3
@@ -157,6 +157,9 @@ the week) as a decimal number (01-53).
 If the week containing January
 1 has four or more days in the new year, then it is week 1; otherwise
 it is week 53 of the previous year, and the next week is week 1.
+.It Cm \&%v
+is replaced by the date in the format
+.Dq Li "%e-%b-%Y" .
 .It Cm \&%W
 is replaced by the week number of the year (Monday as the first day of
 the week) as a decimal number (00-53).
@@ -212,6 +215,7 @@ The
 .Ql \&%k ,
 .Ql \&%l ,
 .Ql \&%s ,
+.Ql \&%v ,
 and
 .Ql \&%+
 conversion specifications are extensions.
