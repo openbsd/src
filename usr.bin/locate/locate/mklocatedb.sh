@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: mklocatedb.sh,v 1.4 1997/01/03 23:33:49 millert Exp $
+#	$OpenBSD: mklocatedb.sh,v 1.5 1997/04/02 08:35:00 deraadt Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # 
 # usage: mklocatedb [-presort] < filelist > database
 #
-# $Id: mklocatedb.sh,v 1.4 1997/01/03 23:33:49 millert Exp $
+# $Id: mklocatedb.sh,v 1.5 1997/04/02 08:35:00 deraadt Exp $
 
 
 # The directory containing locate subprograms
@@ -58,9 +58,9 @@ case X"$1" in
 	X-nosort|X-presort) sortcmd=cat; sortopt=;shift;; 
 esac
 
-bigrams=`mktemp ${TMPDIR=/tmp}/_bigrams.XXXXXX` || exit 1
+bigrams=`mktemp ${TMPDIR=/tmp}/_bigrams.XXXXXXXXXX` || exit 1
 trap 'rm -f $bigrams' 0 1 2 3 5 10 15
-filelist=`mktemp ${TMPDIR=/tmp}/_filelist.XXXXXX` || exit 1
+filelist=`mktemp ${TMPDIR=/tmp}/_filelist.XXXXXXXXXX` || exit 1
 trap 'rm -f $bigrams $filelist' 0 1 2 3 5 10 15
 
 if $sortcmd $sortopt > $filelist; then
