@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.73 1998/07/21 21:56:17 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.74 1998/07/23 08:45:34 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -48,10 +48,9 @@
  * List of known PCI vendors
  */
 
-#define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Lockheed Martin Corp */
+#define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
-#define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic Inc */
-#define	PCI_VENDOR_KOLTER	0x1001		/* KOLTER ELECTRONIC */
+#define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI Technologies */
 #define	PCI_VENDOR_ULSI	0x1003		/* ULSI Systems */
 #define	PCI_VENDOR_VLSI	0x1004		/* VLSI Technology */
@@ -333,7 +332,6 @@
 #define	PCI_VENDOR_EMC	0x1120		/* Emc */
 #define	PCI_VENDOR_ZILOG	0x1121		/* Zilog */
 #define	PCI_VENDOR_MULTITECH	0x1122		/* Multi-tech Systems */
-#define	PCI_VENDOR_EDI	0x1123		/* Excellent Design, Inc. */
 #define	PCI_VENDOR_LEUTRON	0x1124		/* Leutron Vision */
 #define	PCI_VENDOR_EUROCORE	0x1125		/* Eurocore/Vigra */
 #define	PCI_VENDOR_VIGRA	0x1126		/* Vigra */
@@ -341,7 +339,6 @@
 #define	PCI_VENDOR_FIRMWORKS	0x1129		/* Firmworks */
 #define	PCI_VENDOR_HERMES	0x112a		/* Hermes Electronics */
 #define	PCI_VENDOR_LINOTYPE	0x112b		/* Linotype */
-#define	PCI_VENDOR_ZENITH2	0x112c		/* Zenith Data Systems (2nd ID) */
 #define	PCI_VENDOR_RAVICAD	0x112d		/* Ravicad */
 #define	PCI_VENDOR_INFOMEDIA	0x112e		/* Infomedia Microelectronics */
 #define	PCI_VENDOR_IMAGINGTECH	0x112f		/* Imaging Technlogy */
@@ -356,7 +353,6 @@
 #define	PCI_VENDOR_ZIATECH	0x1138		/* Ziatech */
 #define	PCI_VENDOR_DYNPIC	0x1139		/* Dynamic Pictures */
 #define	PCI_VENDOR_FWB	0x113a		/* FWB */
-#define	PCI_VENDOR_NCD	0x113b		/* Network Computing Devices */
 #define	PCI_VENDOR_CYCLONE	0x113c		/* Cyclone Micro */
 #define	PCI_VENDOR_LEADINGEDGE	0x113d		/* Leading Edge */
 #define	PCI_VENDOR_SANYO	0x113e		/* Sanyo Electric */
@@ -389,7 +385,6 @@
 #define	PCI_VENDOR_MUTECH	0x1159		/* Mutech */
 #define	PCI_VENDOR_HARLEQUIN	0x115a		/* Harlequin */
 #define	PCI_VENDOR_PARALLAX	0x115b		/* Parallax Graphics */
-#define	PCI_VENDOR_PHOTRON	0x115c		/* Photron Ltd. */
 #define	PCI_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	PCI_VENDOR_PEERPROTO	0x115e		/* Peer Protocols */
 #define	PCI_VENDOR_MAXTOR	0x115f		/* Maxtor */
@@ -405,8 +400,6 @@
 #define	PCI_VENDOR_CDAC	0x1169		/* Centre for Dev. of Advanced Computing */
 #define	PCI_VENDOR_POLARIS	0x116a		/* Polaris Communications */
 #define	PCI_VENDOR_CONNECTWARE	0x116b		/* Connectware */
-#define	PCI_VENDOR_INTRES	0x116c		/* Intelligent Resources */
-#define	PCI_VENDOR_E4I	0x116e		/* Electronics for Imaging */
 #define	PCI_VENDOR_WSTECH	0x116f		/* Workstation Technology */
 #define	PCI_VENDOR_INVENTEC	0x1170		/* Inventec */
 #define	PCI_VENDOR_LOUGHSOUND	0x1171		/* Loughborough Sound Images */
@@ -419,11 +412,8 @@
 #define	PCI_VENDOR_ALFA	0x1178		/* Alfa */
 #define	PCI_VENDOR_TOSHIBA2	0x1179		/* Toshiba Info Systems (2nd ID) */
 #define	PCI_VENDOR_ATREND	0x117a		/* A-Trend Technology */
-#define	PCI_VENDOR_LGEI	0x117b		/* LG Electronics Inc. */
 #define	PCI_VENDOR_ATTO	0x117c		/* Atto Technology */
-#define	PCI_VENDOR_BND	0x117d		/* Becton & Dickinson */
 #define	PCI_VENDOR_TR	0x117e		/* T/R Systems */
-#define	PCI_VENDOR_ICS	0x117f		/* Integrated Circuit Systems */
 #define	PCI_VENDOR_RICOH	0x1180		/* Ricoh */
 #define	PCI_VENDOR_TELEMATICS	0x1181		/* Telematics International */
 #define	PCI_VENDOR_FUJIKURA	0x1183		/* Fujikura */
@@ -434,11 +424,9 @@
 #define	PCI_VENDOR_SHIMA	0x1188		/* Shima Seiki Manufacturing */
 #define	PCI_VENDOR_MATSUSHITA2	0x1189		/* Matsushita Electronics (2nd ID) */
 #define	PCI_VENDOR_HILEVEL	0x118a		/* HiLevel Technology */
-#define	PCI_VENDOR_HYPERTEC	0x118b		/* Hypertec Pty Ltd */
 #define	PCI_VENDOR_COROLLARY	0x118c		/* Corrollary */
 #define	PCI_VENDOR_BITFLOW	0x118d		/* BitFlow */
 #define	PCI_VENDOR_HERMSTEDT	0x118e		/* Hermstedt */
-#define	PCI_VENDOR_GREENLOGIC	0x118f		/* Green Logic */
 #define	PCI_VENDOR_ARTOP	0x1191		/* Artop Electric */
 #define	PCI_VENDOR_DENSAN	0x1192		/* Densan */
 #define	PCI_VENDOR_ZEINET	0x1193		/* Zeinet */
@@ -457,19 +445,17 @@
 #define	PCI_VENDOR_CONVEX	0x11a0		/* Convex Computer */
 #define	PCI_VENDOR_HAMAMATSU	0x11a1		/* Hamamatsu Photonics */
 #define	PCI_VENDOR_SIERRA2	0x11a2		/* Sierra Research & Technology (2nd ID) */
-#define	PCI_VENDOR_DEURETZBACHER	0x11a3		/* Deuretzbacher GmbH & Co. Eng. KG */
 #define	PCI_VENDOR_BARCO	0x11a4		/* Barco */
 #define	PCI_VENDOR_MICROUNITY	0x11a5		/* MicroUnity Systems Engineering */
 #define	PCI_VENDOR_PUREDATA	0x11a6		/* Pure Data */
 #define	PCI_VENDOR_POWERCC	0x11a7		/* Power Computing */
-#define	PCI_VENDOR_SYSTECH	0x11a8		/* Systech Corp. */
 #define	PCI_VENDOR_INNOSYS	0x11a9		/* InnoSys */
 #define	PCI_VENDOR_ACTEL	0x11aa		/* Actel */
 #define	PCI_VENDOR_GALILEO	0x11ab		/* Galileo Technology */
 #define	PCI_VENDOR_CANNON	0x11ac		/* Cannon IS */
 #define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On */
 #define	PCI_VENDOR_SCITEX	0x11ae		/* Scitex */
-#define	PCI_VENDOR_AVID	0x11af		/* Avid Technology Inc. */
+#define	PCI_VENDOR_PROLOG	0x11af		/* Pro-Log */
 #define	PCI_VENDOR_V3	0x11b0		/* V3 Semiconductor */
 #define	PCI_VENDOR_APRICOT	0x11b1		/* Apricot Computer */
 #define	PCI_VENDOR_KODAK	0x11b2		/* Eastman Kodak */
@@ -485,14 +471,9 @@
 #define	PCI_VENDOR_NETPERIPH	0x11bc		/* Network Peripherals */
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
 #define	PCI_VENDOR_IMI	0x11be		/* International Microcircuts */
-#define	PCI_VENDOR_ASTRODESIGN	0x11bf		/* Astrodesign Inc. */
-#define	PCI_VENDOR_HP2	0x11c0		/* Hewlett-Packard (2nd ID) */
-#define	PCI_VENDOR_ATT	0x11c1		/* AT&T Microelectronics */
-#define	PCI_VENDOR_SAND	0x11c2		/* Sand Microelectronics */
 #define	PCI_VENDOR_NEC2	0x11c3		/* NEC (2nd ID) */
 #define	PCI_VENDOR_DOCTECH	0x11c4		/* Document Technologies */
-#define	PCI_VENDOR_SHIVA	0x11c5		/* Shiva Corporation */
-#define	PCI_VENDOR_DSMFG	0x11c6		/* Dainippon Screen Mfg. Co */
+#define	PCI_VENDOR_SHIVA	0x11c5		/* Shiva */
 #define	PCI_VENDOR_DCMDATA	0x11c7		/* DCM Data Systems */
 #define	PCI_VENDOR_DOLPHIN	0x11c8		/* Dolphin Interconnect Solutions */
 #define	PCI_VENDOR_MRTMAGMA	0x11c9		/* Mesa Ridge Technologies (MAGMA) */
@@ -500,332 +481,43 @@
 #define	PCI_VENDOR_SPECIALIX	0x11cb		/* Specialix Research */
 #define	PCI_VENDOR_MKC	0x11cc		/* Michels & Kleberhoff Computer */
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
-#define	PCI_VENDOR_PRIMRATE	0x11ce		/* Primary Rate Inc */
-#define	PCI_VENDOR_PIONEER	0x11cf		/* Pioneer Electronic Corporation */
-#define	PCI_VENDOR_LORAL	0x11d0		/* Loral Frederal Systems - Manassas */
-#define	PCI_VENDOR_AURAVISION	0x11d1		/* AuraVision Corporation */
-#define	PCI_VENDOR_INTERCOM	0x11d2		/* Intercom Inc. */
-#define	PCI_VENDOR_TRANCELL	0x11d3		/* Trancell Systems Inc */
-#define	PCI_VENDOR_ANALOGDEV	0x11d4		/* Analog Devices */
-#define	PCI_VENDOR_IKON	0x11d5		/* Ikon Corporation */
-#define	PCI_VENDOR_TEKELEC	0x11d6		/* Tekelec Technologies */
-#define	PCI_VENDOR_TRENTONTERM	0x11d7		/* Trenton Terminals Inc */
-#define	PCI_VENDOR_ITD	0x11d8		/* Image Technologies Development */
-#define	PCI_VENDOR_TEC	0x11d9		/* Tec Corporation */
-#define	PCI_VENDOR_NOVELL	0x11da		/* Novell */
-#define	PCI_VENDOR_SEGA	0x11db		/* Sega Enterprises Ltd */
-#define	PCI_VENDOR_QUESTRA	0x11dc		/* Questra Corporation */
-#define	PCI_VENDOR_CROSSFIELD	0x11dd		/* Crosfield Electronics Ltd */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran */
-#define	PCI_VENDOR_NEWWAVE	0x11df		/* New Wave Pdg */
-#define	PCI_VENDOR_CRAYCOMM	0x11e0		/* Cray Communications A/S */
-#define	PCI_VENDOR_GPSI	0x11e1		/* Gec Plessey Semi Inc */
-#define	PCI_VENDOR_SAMSUNGISA	0x11e2		/* Samsung Information Systems America */
-#define	PCI_VENDOR_QUICKLOGIC	0x11e3		/* Quicklogic Corp */
-#define	PCI_VENDOR_2NDWAVE	0x11e4		/* Second Wave Inc */
-#define	PCI_VENDOR_IIXC	0x11E5		/* IIX Consulting */
-#define	PCI_VENDOR_MZSR	0x11e6		/* Mitsui-Zosen System Research */
-#define	PCI_VENDOR_TOSHIB3	0x11e7		/* Toshiba America, Elec. Co (3rd ID) */
-#define	PCI_VENDOR_DPS	0x11e8		/* Digital Processing Systems Inc */
-#define	PCI_VENDOR_HIGHWATER	0x11e9		/* Highwater Designs Ltd */
-#define	PCI_VENDOR_ELSAGDAILEY	0x11ea		/* Elsag Bailey */
-#define	PCI_VENDOR_FORMATION	0x11eb		/* Formation Inc */
-#define	PCI_VENDOR_CORECO	0x11ec		/* Coreco Inc */
-#define	PCI_VENDOR_MEDIAMATICS	0x11ed		/* Mediamatics */
-#define	PCI_VENDOR_DISYS	0x11ee		/* Dome Imaging Systems Inc */
-#define	PCI_VENDOR_NICOLETECH	0x11ef		/* Nicolet Technologies BV */
-#define	PCI_VENDOR_COMPUSHACK	0x11f0		/* Compu-Shack GmbH */
-#define	PCI_VENDOR_SYMBIOS2	0x11f1		/* Symbios Logic Inc (2nd ID) */
-#define	PCI_VENDOR_PICTURETEL2	0x11f2		/* Picture Tel Japan KK (2nd ID) */
-#define	PCI_VENDOR_KEITHLEY	0x11f3		/* Keithley Metrabyte */
-#define	PCI_VENDOR_KINETICSYS	0x11f4		/* Kinetic Systems Corporation */
-#define	PCI_VENDOR_COMPDEVS	0x11f5		/* Computing Devices Intl */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
-#define	PCI_VENDOR_SCIATLANTA	0x11f7		/* Scientific Atlanta */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
-#define	PCI_VENDOR_ICUBE	0x11F9		/* I-Cube Inc */
-#define	PCI_VENDOR_KASAN	0x11FA		/* Kasan Electronics Co Ltd */
-#define	PCI_VENDOR_DATEL	0x11FB		/* Datel Inc */
-#define	PCI_VENDOR_SILICONMAG	0x11FC		/* Silicon Magic */
-#define	PCI_VENDOR_HIGHSTREET	0x11FD		/* High Street Consultants */
-#define	PCI_VENDOR_COMTROL	0x11FE		/* Comtrol Corp */
-#define	PCI_VENDOR_SCION	0x11FF		/* Scion Corp */
-#define	PCI_VENDOR_CSS	0x1200		/* CSS Corp */
-#define	PCI_VENDOR_VISTA	0x1201		/* Vista Controls Corp */
-#define	PCI_VENDOR_NGC	0x1202		/* Network General Corp */
-#define	PCI_VENDOR_BAYER	0x1203		/* Bayer Corporation, Agfa Div */
-#define	PCI_VENDOR_LATTICE	0x1204		/* Lattice Semiconductor Corp */
-#define	PCI_VENDOR_ARRAY	0x1205		/* Array Corp */
-#define	PCI_VENDOR_AMDAHL	0x1206		/* Amdahl Corp */
-#define	PCI_VENDOR_PARSYTEC	0x1208		/* Parsytec GmbH */
-#define	PCI_VENDOR_SCISYS	0x1209		/* Sci Systems Inc */
-#define	PCI_VENDOR_SYNAPTEL	0x120A		/* Synaptel */
-#define	PCI_VENDOR_ADAPSOL	0x120B		/* Adaptive Solutions */
-#define	PCI_VENDOR_COMPRESLABS	0x120D		/* Compression Labs, Inc. */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
-#define	PCI_VENDOR_HPT	0x1210		/* Hyperparallel Technologies */
-#define	PCI_VENDOR_BRAINTECH	0x1211		/* Braintech Inc */
-#define	PCI_VENDOR_KINGSTON	0x1212		/* Kingston Technology Corp */
-#define	PCI_VENDOR_AISI	0x1213		/* Applied Intelligent Systems Inc */
-#define	PCI_VENDOR_PTI	0x1214		/* Performance Technologies Inc */
-#define	PCI_VENDOR_INTERWARE	0x1215		/* Interware Co Ltd */
-#define	PCI_VENDOR_PURUP	0x1216		/* Purup Prepress A/S */
 #define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
-#define	PCI_VENDOR_HYBRICON	0x1218		/* Hybricon Corporation */
-#define	PCI_VENDOR_1STVIRTUAL	0x1219		/* First Virtual Corporation */
-#define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive Inc */
-#define	PCI_VENDOR_ADM	0x121b		/* Advanced Telecommunications Modules */
-#define	PCI_VENDOR_NIPPON	0x121c		/* Nippon Texa Co Ltd */
-#define	PCI_VENDOR_LIPPERT	0x121d		/* Lippert Automationstechnik GmbH */
-#define	PCI_VENDOR_CSPI	0x121e		/* CSPI */
-#define	PCI_VENDOR_ARCUS	0x121f		/* Arcus Technology Inc */
+#define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
-#define	PCI_VENDOR_CONTEC	0x1221		/* Contec Co Ltd */
-#define	PCI_VENDOR_ANCOR	0x1222		/* Ancor Communications Inc */
-#define	PCI_VENDOR_HEURIKON	0x1223		/* Heurikon/Computer Products */
-#define	PCI_VENDOR_IACTIMAGES	0x1224		/* Interactive Images */
-#define	PCI_VENDOR_POWERIO	0x1225		/* Power I/O Inc. */
-#define	PCI_VENDOR_TECHSRC	0x1227		/* Tech-Source */
-#define	PCI_VENDOR_NEOAS	0x1228		/* Norsk Elektro Optikk A/S */
-#define	PCI_VENDOR_DATAKINESIS	0x1229		/* Data Kinesis Inc. */
-#define	PCI_VENDOR_INTELECOM	0x122A		/* Integrated Telecom */
-#define	PCI_VENDOR_LGIS	0x122B		/* LG Industrial Systems Co. Ltd. */
-#define	PCI_VENDOR_SICAN	0x122c		/* Sican GmbH */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
-#define	PCI_VENDOR_XYRATEX	0x122e		/* Xyratex */
-#define	PCI_VENDOR_ANDREW	0x122f		/* Andrew Corporation */
-#define	PCI_VENDOR_FISHCAMP	0x1230		/* Fishcamp Engineering */
-#define	PCI_VENDOR_WOODWARD	0x1231		/* Woodward McCoach Inc. */
-#define	PCI_VENDOR_GPT	0x1232		/* GPT Ltd. */
-#define	PCI_VENDOR_BUSTECH	0x1233		/* Bus-Tech Inc. */
-#define	PCI_VENDOR_TECHNICAL	0x1234		/* Technical Corp */
-#define	PCI_VENDOR_RMSI	0x1235		/* Risq Modular Systems Inc. */
-#define	PCI_VENDOR_SIGMAD	0x1236		/* Sigma Designs Corp. */
-#define	PCI_VENDOR_ALTATECH	0x1237		/* Alta Technology Corp. */
-#define	PCI_VENDOR_ADTRAN	0x1238		/* Adtran */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
-#define	PCI_VENDOR_VBISICOM	0x123A		/* Visicom Laboratories Inc. */
-#define	PCI_VENDOR_SEEQTECH	0x123B		/* Seeq Technology Inc. */
-#define	PCI_VENDOR_CENTSYS	0x123C		/* Century Systems Inc. */
-#define	PCI_VENDOR_EDTI	0x123D		/* Engineering Design Team Inc. */
-#define	PCI_VENDOR_CCUBE	0x123F		/* C-Cube Microsystems */
-#define	PCI_VENDOR_MARATHONTECH	0x1240		/* Marathon Technologies Corp. */
-#define	PCI_VENDOR_DSC	0x1241		/* DSC Communications */
-#define	PCI_VENDOR_DELPHAX	0x1243		/* Delphax */
-#define	PCI_VENDOR_AVM	0x1244		/* AVM */
-#define	PCI_VENDOR_APDSA	0x1245		/* APD S.A. */
-#define	PCI_VENDOR_DIPIXTECH	0x1246		/* Dipix Technologies Inc */
-#define	PCI_VENDOR_XYLON	0x1247		/* Xylon Research Inc. */
-#define	PCI_VENDOR_CDC	0x1248		/* Central Data Corp. */
-#define	PCI_VENDOR_SAMSUNG	0x1249		/* Samsung Electronics Co. Ltd. */
-#define	PCI_VENDOR_AEG	0x124A		/* AEG Electrocom GmbH */
-#define	PCI_VENDOR_GREENSPRING	0x124B		/* GreenSpring Computers */
-#define	PCI_VENDOR_SOLITRON	0x124C		/* Solitron Technologies Inc. */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
-#define	PCI_VENDOR_CYLINK	0x124E		/* Cylink */
-#define	PCI_VENDOR_INFORTREND	0x124F		/* Infortrend Technology Inc */
-#define	PCI_VENDOR_HITACHIMCSYS	0x1250		/* Hitachi Microcomputer System Ltd. */
-#define	PCI_VENDOR_VLSISOL	0x1251		/* VLSI Solution OY */
-#define	PCI_VENDOR_GUZIK	0x1253		/* Guzik Technical Enterprises */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
-#define	PCI_VENDOR_OPTIBASE	0x1255		/* Optibase Ltd. */
-#define	PCI_VENDOR_PSI	0x1256		/* Perceptive Solutions Inc. */
-#define	PCI_VENDOR_VERTEXNET	0x1257		/* Vertex Networks Inc. */
-#define	PCI_VENDOR_GILBARCO	0x1258		/* Gilbarco Inc. */
-#define	PCI_VENDOR_ALLIEDTEL	0x1259		/* Allied Telesyn International */
-#define	PCI_VENDOR_ABBPS	0x125a		/* ABB Power Systems */
-#define	PCI_VENDOR_ASIX	0x125b		/* Asix Electronics Corporation */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
-#define	PCI_VENDOR_ESSTECH	0x125D		/* ESS Technology */
-#define	PCI_VENDOR_SESRL	0x125E		/* Specialvideo Engineering SRL */
-#define	PCI_VENDOR_CTI	0x125F		/* Concurrent Technologies Inc. */
-#define	PCI_VENDOR_HARRIS	0x1260		/* Harris Semiconductor */
-#define	PCI_VENDOR_MATSISHITA3	0x1261		/* Matsushita-Kotobuki Electronics Industr */
-#define	PCI_VENDOR_ESC	0x1262		/* ES Computer Co. Ltd. */
-#define	PCI_VENDOR_SONIC	0x1263		/* Sonic Solutions */
-#define	PCI_VENDOR_AVAL	0x1264		/* Aval Nagasaki Corp. */
-#define	PCI_VENDOR_CASIO	0x1265		/* Casio Computer Co. Ltd. */
-#define	PCI_VENDOR_MICRODYNE	0x1266		/* Microdyne Corp. */
-#define	PCI_VENDOR_SATC	0x1267		/* S.A. Telecommunications */
-#define	PCI_VENDOR_TEKTRONIX	0x1268		/* Tektronix */
-#define	PCI_VENDOR_THOMSON	0x1269		/* Thomson-CSF/TTM */
-#define	PCI_VENDOR_LEXMARK	0x126A		/* Lexmark International Inc. */
-#define	PCI_VENDOR_ADAX	0x126B		/* Adax Inc. */
-#define	PCI_VENDOR_NORTHTELCOM	0x126C		/* Northern Telecom */
-#define	PCI_VENDOR_SPLASHTECH	0x126D		/* Splash Technology Inc. */
-#define	PCI_VENDOR_SMI	0x126E		/* Sumitomo Metal Industries Ltd. */
-#define	PCI_VENDOR_SILICONMOTION	0x126F		/* Silicon Motion */
-#define	PCI_VENDOR_OLYMPUSOPT	0x1270		/* Olympus Optical Co. Ltd. */
-#define	PCI_VENDOR_GWI	0x1271		/* GW Instruments */
-#define	PCI_VENDOR_TELEMATICS2	0x1272		/* Telematics International (2nd ID) */
-#define	PCI_VENDOR_HNS	0x1273		/* Hughes Network Systems */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
-#define	PCI_VENDOR_SNTI	0x1276		/* Switched Network Technologies Inc. */
-#define	PCI_VENDOR_COMSTREAM	0x1277		/* Comstream */
-#define	PCI_VENDOR_TPS	0x1278		/* Transtech Parallel Systems */
-#define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta Corporation */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
-#define	PCI_VENDOR_PIXERA	0x127B		/* Pixera Corp */
-#define	PCI_VENDOR_XPTSOLUTIONS	0x127C		/* Crosspoint Solutions Inc. */
-#define	PCI_VENDOR_VELA	0x127D		/* Vela Research */
-#define	PCI_VENDOR_WINNOV	0x127E		/* Winnov, L.P. */
-#define	PCI_VENDOR_FUJIFILM	0x127F		/* Fujifilm */
-#define	PCI_VENDOR_PSG	0x1280		/* Photoscript Group Ltd. */
-#define	PCI_VENDOR_YOKOGAWA	0x1281		/* Yokogawa Electronic Corp. */
-#define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Semiconductor Inc. */
-#define	PCI_VENDOR_ITE	0x1283		/* Integrated Technology Express Inc. */
-#define	PCI_VENDOR_SAHARANET	0x1284		/* Sahara Networks Inc. */
-#define	PCI_VENDOR_PLATFORMTECH	0x1285		/* Platform Technologies Inc. */
-#define	PCI_VENDOR_MAZET	0x1286		/* Mazet GmbH */
-#define	PCI_VENDOR_LUXSONOR	0x1287		/* LuxSonor Inc. */
-#define	PCI_VENDOR_TIMESTEP	0x1288		/* Timestep Corp. */
-#define	PCI_VENDOR_AVCTECH	0x1289		/* AVC Technology Inc. */
-#define	PCI_VENDOR_ASANTECH	0x128A		/* Asante Technologies Inc. */
-#define	PCI_VENDOR_TRANSWITCH	0x128B		/* Transwitch Corp. */
-#define	PCI_VENDOR_RETIX	0x128C		/* Retix Corp. */
-#define	PCI_VENDOR_G2NETS	0x128D		/* G2 Networks Inc. */
-#define	PCI_VENDOR_SAMHO	0x128E		/* Samho Multi Tech Ltd. */
-#define	PCI_VENDOR_TATENO	0x128F		/* Tateno Dennou Inc. */
-#define	PCI_VENDOR_SORD	0x1290		/* Sord Computer Corp. */
-#define	PCI_VENDOR_NCS	0x1291		/* NCS Computer Italia */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
-#define	PCI_VENDOR_MRT	0x1293		/* Media Reality Technology */
-#define	PCI_VENDOR_RHETORES	0x1294		/* Rhetorex Inc. */
-#define	PCI_VENDOR_IMAGINATION	0x1295		/* Imagenation Corporation */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
-#define	PCI_VENDOR_HOLCO	0x1297		/* Holco Enterprise */
-#define	PCI_VENDOR_SPELLCASTER	0x1298		/* Spellcaster Telecommunications Inc. */
-#define	PCI_VENDOR_KTLABS	0x1299		/* Knowledge Technology Laboratories */
-#define	PCI_VENDOR_VMETRO	0x129A		/* VMETRO */
-#define	PCI_VENDOR_IMAGEACCESS	0x129B		/* Image Access */
-#define	PCI_VENDOR_COMPCORE	0x129D		/* CompCore Multimedia Inc. */
-#define	PCI_VENDOR_JVC	0x129E		/* Victor Co. of Japan Ltd. */
-#define	PCI_VENDOR_OECMS	0x129F		/* OEC Medical Systems Inc. */
-#define	PCI_VENDOR_ABC	0x12A0		/* Allen Bradley Co. */
-#define	PCI_VENDOR_SIMPACT	0x12A1		/* Simpact Inc */
-#define	PCI_VENDOR_NGS	0x12A2		/* NewGen Systems Corp. */
-#define	PCI_VENDOR_LUCENT	0x12A3		/* Lucent Technologies */
-#define	PCI_VENDOR_NTT	0x12A4		/* NTT Electronics Technology Co. */
-#define	PCI_VENDOR_VDLTD	0x12A5		/* Vision Dynamics Ltd. */
-#define	PCI_VENDOR_SNETS	0x12A6		/* Scalable Networks Inc. */
-#define	PCI_VENDOR_AMO	0x12A7		/* AMO GmbH */
-#define	PCI_VENDOR_NEWSDATACOM	0x12A8		/* News Datacom */
-#define	PCI_VENDOR_XIOTECH	0x12A9		/* Xiotech Corp. */
-#define	PCI_VENDOR_SDL	0x12AA		/* SDL Communications Inc. */
-#define	PCI_VENDOR_YYECO	0x12AB		/* Yuan Yuan Enterprise Co. Ltd. */
-#define	PCI_VENDOR_MEASUREX	0x12AC		/* MeasureX Corp. */
-#define	PCI_VENDOR_MULTIDATA	0x12AD		/* Multidata GmbH */
-#define	PCI_VENDOR_ALTECON	0x12AE		/* lteon Networks Inc. */
-#define	PCI_VENDOR_TDK	0x12AF		/* TDK USA Corp. */
-#define	PCI_VENDOR_JORGESCI	0x12B0		/* Jorge Scientific Corp. */
-#define	PCI_VENDOR_GAMMALINK	0x12B1		/* GammaLink */
-#define	PCI_VENDOR_GSNET	0x12B2		/* General Signal Networks */
-#define	PCI_VENDOR_IFACE	0x12B3		/* Inter-Face Co. Ltd. */
-#define	PCI_VENDOR_FUTURETEL	0x12B4		/* Future Tel Inc. */
-#define	PCI_VENDOR_GRANITESYS	0x12B5		/* Granite Systems Inc. */
-#define	PCI_VENDOR_NATURAL	0x12B6		/* Natural Microsystems */
-#define	PCI_VENDOR_ACUMEN	0x12B7		/* Acumen */
-#define	PCI_VENDOR_KORG	0x12B8		/* Korg */
-#define	PCI_VENDOR_USR	0x12B9		/* US Robotics */
-#define	PCI_VENDOR_BITTWARE	0x12BA		/* Bittware Research Systems Inc */
-#define	PCI_VENDOR_NIPPONUS	0x12BB		/* Nippon Unisoft Corp. */
-#define	PCI_VENDOR_ARRAYMSYS	0x12BC		/* Array Microsystems */
-#define	PCI_VENDOR_COMPUTERM	0x12BD		/* Computerm Corp. */
-#define	PCI_VENDOR_ANCHOR	0x12BE		/* Anchor Chips Inc. */
-#define	PCI_VENDOR_FUJIFILMMD	0x12BF		/* Fujifilm Microdevices */
-#define	PCI_VENDOR_INFIMED	0x12C0		/* Infimed */
-#define	PCI_VENDOR_GMM	0x12C1		/* GMM Research Corp. */
-#define	PCI_VENDOR_MENTEC	0x12C2		/* Mentec Ltd. */
-#define	PCI_VENDOR_HOLTEK	0x12C3		/* Holtek Microelectronics Inc. */
-#define	PCI_VENDOR_CONNECT	0x12C4		/* Connect Tech Inc. */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
-#define	PCI_VENDOR_MITANI	0x12C6		/* Mitani Corp. */
-#define	PCI_VENDOR_DIALOGIC	0x12C7		/* Dialogic Corp. */
-#define	PCI_VENDOR_GFORCE	0x12C8		/* G Force Co. Ltd. */
-#define	PCI_VENDOR_GIGIOP	0x12C9		/* Gigi Operations */
-#define	PCI_VENDOR_ICE	0x12CA		/* Integrated Computing Engines, Inc. */
-#define	PCI_VENDOR_ANTEX	0x12CB		/* Antex Electronics Corp. */
-#define	PCI_VENDOR_PLUTO	0x12CC		/* Pluto Technologies International */
-#define	PCI_VENDOR_AIMS	0x12CD		/* Aims Lab */
-#define	PCI_VENDOR_NETSPEED	0x12CE		/* Netspeed Inc. */
-#define	PCI_VENDOR_PROPHET	0x12CF		/* Prophet Systems Inc. */
-#define	PCI_VENDOR_GDESYS	0x12D0		/* GDE Systems Inc. */
-#define	PCI_VENDOR_PSITECH	0x12D1		/* PsiTech */
 #define	PCI_VENDOR_STB2	0x12d2		/* STB (2nd ID) */
-#define	PCI_VENDOR_VINGMED	0x12D3		/* Vingmed Sound A/S */
-#define	PCI_VENDOR_DGMS	0x12D4		/* DGM & S */
-#define	PCI_VENDOR_EQUATOR	0x12D5		/* Equator Technologies */
-#define	PCI_VENDOR_ANALOGIC	0x12D6		/* Analogic Corp. */
-#define	PCI_VENDOR_BIOTRONIC	0x12D7		/* Biotronic SRL */
-#define	PCI_VENDOR_PERICOM	0x12D8		/* Pericom Semiconductor */
-#define	PCI_VENDOR_ACULAB	0x12D9		/* Aculab Plc. */
-#define	PCI_VENDOR_TRUETIME	0x12DA		/* True Time */
-#define	PCI_VENDOR_ANNAPOLIS	0x12DB		/* Annapolis Micro Systems Inc. */
-#define	PCI_VENDOR_SYMICRON	0x12DC		/* Symicron Computer Communication Ltd. */
-#define	PCI_VENDOR_MGI	0x12DD		/* Management Graphics Inc. */
-#define	PCI_VENDOR_RAINBOW	0x12DE		/* Rainbow Technologies */
-#define	PCI_VENDOR_SBSTECH	0x12DF		/* SBS Technologies Inc. */
-#define	PCI_VENDOR_CHASE	0x12E0		/* Chase Research PLC */
-#define	PCI_VENDOR_NINTENDO	0x12E1		/* Nintendo Co. Ltd. */
-#define	PCI_VENDOR_DATUM	0x12E2		/* Datum Inc., Bancomm-Timing Division */
-#define	PCI_VENDOR_IMATION	0x12E3		/* Imation Corp. - Medical Imaging Systems */
-#define	PCI_VENDOR_BROOKTROUT	0x12E4		/* Brooktrout Technology Inc. */
-#define	PCI_VENDOR_CIREL	0x12E6		/* Cirel Systems */
-#define	PCI_VENDOR_SEBRING	0x12E7		/* Sebring Systems Inc */
-#define	PCI_VENDOR_CRISC	0x12E8		/* CRISC Corp. */
-#define	PCI_VENDOR_GESN	0x12E9		/* GE Spacenet */
-#define	PCI_VENDOR_ZUKEN	0x12EA		/* Zuken */
-#define	PCI_VENDOR_AUREAL	0x12EB		/* Aureal Semiconductor */
-#define	PCI_VENDOR_3AINT	0x12EC		/* 3A International Inc. */
-#define	PCI_VENDOR_OPTIVISION	0x12ED		/* Optivision Inc. */
-#define	PCI_VENDOR_ORANGE	0x12EE		/* Orange Micro */
-#define	PCI_VENDOR_VIENNA	0x12EF		/* Vienna Systems */
-#define	PCI_VENDOR_PENTEK	0x12F0		/* Pentek */
-#define	PCI_VENDOR_SORENSON	0x12F1		/* Sorenson Vision Inc. */
-#define	PCI_VENDOR_GGI	0x12F2		/* Gammagraphx Inc. */
-#define	PCI_VENDOR_MEGATEL	0x12F4		/* Megatel */
-#define	PCI_VENDOR_FORKS2	0x12F5		/* Forks (2nd ID) */
-#define	PCI_VENDOR_DAWSON	0x12F6		/* Dawson France */
-#define	PCI_VENDOR_COGNEX	0x12F7		/* Cognex */
-#define	PCI_VENDOR_EDESIGN	0x12F8		/* Electronic-Design GmbH */
-#define	PCI_VENDOR_FOURFOLD	0x12F9		/* FourFold Technologies */
-#define	PCI_VENDOR_ESD	0x12FE		/* Electronic System Design GmbH */
-#define	PCI_VENDOR_RADISYS	0x1331		/* RadiSys Corporation */
-#define	PCI_VENDOR_VIDEOMAIL	0x1335		/* Videomail Inc. */
-#define	PCI_VENDOR_ODETICS	0x1347		/* Odetics */
-#define	PCI_VENDOR_ABBNP	0x135D		/* ABB Network Partner AB */
-#define	PCI_VENDOR_PATRIOTSCI	0x137E		/* Patriot Scientific Corp. */
-#define	PCI_VENDOR_CDI	0x1390		/* Concept Development Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd ID) */
-#define	PCI_VENDOR_CHAINTECH2	0x270f		/* ChainTech Computer (2nd ID) */
-#define	PCI_VENDOR_HANSOL	0x3000		/* Hansol Electronics Inc. */
-#define	PCI_VENDOR_PIS	0x3142		/* Post Impressions Systems */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd ID) */
-#define	PCI_VENDOR_COGETEC	0x4594		/* Cogetec Informatique Inc. */
-#define	PCI_VENDOR_UMAX	0x4680		/* UMAX Computer Corp. */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd ID) */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
-#define	PCI_VENDOR_TUB	0x5455		/* Technische Universtiaet Berlin */
-#define	PCI_VENDOR_CNET	0x5519		/* Cnet Technoliges, Inc. */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd ID) */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
 #define	PCI_VENDOR_QUANCM	0x8008		/* Quancm Electronic GmbH */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_TRIGEM2	0x8800		/* Trigem Computer (2nd ID) */
-#define	PCI_VENDOR_SILICONMAG2	0x8888		/* Silicon Magic (2nd ID) */
 #define	PCI_VENDOR_WINBOND2	0x8c4a		/* Winbond Electronics (2nd ID) */
 #define	PCI_VENDOR_COMPUTONE	0x8e0e		/* Computone Corperation */
 #define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
-#define	PCI_VENDOR_MOTIONENG	0xc0fe		/* Motion Engineering Inc. */
-#define	PCI_VENDOR_DY4S	0xd4d4		/* DY4 Systems Inc. */
-#define	PCI_VENDOR_TIGERJET	0xe159		/* Tiger Jet Network Inc */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
@@ -1006,8 +698,8 @@
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
-#define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
