@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.10 2000/10/10 15:16:02 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.11 2000/12/11 19:12:22 provos Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -186,5 +186,7 @@ void	icmp_input __P((struct mbuf *, ...));
 void	icmp_reflect __P((struct mbuf *));
 void	icmp_send __P((struct mbuf *, struct mbuf *));
 int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+struct rtentry *
+	icmp_mtudisc_clone(struct sockaddr *);
 void	icmp_mtudisc __P((struct icmp *));
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.30 2000/10/17 22:33:51 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.31 2000/12/11 19:12:22 provos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -747,23 +747,15 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	/* NOTREACHED */
 }
 
-void
-icmp_mtudisc(icp)
-	struct icmp *icp;
+struct rtentry *
+icmp_mtudisc_clone(struct sockaddr *dst)
 {
 	struct rtentry *rt;
-	struct sockaddr *dst = sintosa(&icmpsrc);
-	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
-	int    error;
-	
-	/* Table of common MTUs: */
+	int error;
 
-	static u_short mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
-				      4352, 2002, 1492, 1006, 508, 296, 68, 0};
-    
 	rt = rtalloc1(dst, 1);
 	if (rt == 0)
-		return;
+		return (NULL);
     
 	/* If we didn't get a host route, allocate one */
     
@@ -777,7 +769,7 @@ icmp_mtudisc(icp)
 		if (error) {
 			rtfree(rt);
 			rtfree(nrt);
-			return;
+			return (NULL);
 		}
 		nrt->rt_rmx = rt->rt_rmx;
 		rtfree(rt);
@@ -786,8 +778,28 @@ icmp_mtudisc(icp)
 	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
 	if (error) {
 		rtfree(rt);
-		return;
+		return (NULL);
 	}
+
+	return (rt);
+}
+
+void
+icmp_mtudisc(icp)
+	struct icmp *icp;
+{
+	struct rtentry *rt;
+	struct sockaddr *dst = sintosa(&icmpsrc);
+	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
+	
+	/* Table of common MTUs: */
+
+	static u_short mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
+				      4352, 2002, 1492, 1006, 508, 296, 68, 0};
+
+	rt = icmp_mtudisc_clone(dst);
+	if (rt == 0)
+		return;
 
 	if (mtu == 0) {
 		int i = 0;
@@ -831,8 +843,7 @@ icmp_mtudisc(icp)
 			rt->rt_rmx.rmx_mtu = mtu;
 	}
 
-	if (rt)
-		rtfree(rt);
+	rtfree(rt);
 }
 
 void
