@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmds.c,v 1.11 1997/01/28 20:48:40 millert Exp $      */
+/*      $OpenBSD: cmds.c,v 1.12 1997/01/29 22:11:36 millert Exp $      */
 /*      $NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.11 1997/01/28 20:48:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.12 1997/01/29 22:11:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -2072,7 +2072,8 @@ setpassive(argc, argv)
 {
 
 	passivemode = !passivemode;
-	printf("Passive mode %s.\n", onoff(passivemode));
+	if (verbose)
+		printf("Passive mode %s.\n", onoff(passivemode));
 	code = passivemode;
 }
 
