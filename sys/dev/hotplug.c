@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.1 2004/05/30 08:11:26 grange Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.2 2004/07/05 19:39:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -86,6 +86,9 @@ hotplug_device_detach(enum devclass class, char *name)
 int
 hotplug_put_event(struct hotplug_event *he)
 {
+	if (opened == 0)
+		return (0);
+
 	if (evqueue_count == HOTPLUG_MAXEVENTS) {
 		printf("hotplug: event lost, queue full\n");
 		return (1);
@@ -131,6 +134,10 @@ hotplugopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 hotplugclose(dev_t dev, int flag, int mode, struct proc *p)
 {
+	struct hotplug_event he;
+
+	while (hotplug_get_event(&he) == 1)
+		;
 	opened = 0;
 
 	return (0);
