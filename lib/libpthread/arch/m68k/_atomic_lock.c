@@ -1,7 +1,8 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 1998/11/20 11:15:36 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 1998/12/18 05:59:17 d Exp $	*/
 /*
  * Atomic lock for m68k
  */
+
 #include "spinlock.h"
 
 register_t
@@ -24,4 +25,11 @@ _atomic_lock(volatile register_t *lock)
 	__asm__("casl %0, %2, %1" : "=d"(old), "=m"(*lock)
 				  : "d"(1), "0"(old));
 	return old;
+}
+
+int
+_atomic_lock(volatile register_t *lock)
+{
+
+	return *lock;
 }

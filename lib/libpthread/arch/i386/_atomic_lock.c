@@ -1,6 +1,6 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 1998/11/20 11:15:36 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 1998/12/18 05:59:17 d Exp $	*/
 /*
- * Atomic lock aquire for i386.
+ * Atomic lock for i386
  */
 
 #include "spinlock.h"
@@ -23,4 +23,11 @@ _atomic_lock(volatile register_t *lock)
 	 * (ie its old value was 0) or 1 otherwise.
 	 */
 	return old;
+}
+
+int
+_atomic_is_locked(volatile register_t *lock)
+{
+
+	return *lock;
 }
