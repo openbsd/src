@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.15 2001/11/21 20:41:56 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.16 2001/11/28 01:04:34 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: tty.c,v 1.15 2001/11/21 20:41:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tty.c,v 1.16 2001/11/28 01:04:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ out:
 char *
 readtty(char *pr, char *src)
 {
-	struct sigaction act, oact;
+	struct sigaction act, saveint;
 	char ch, canonb[BUFSIZ];
 	char *cp, *cp2;
 	sigset_t oset;
@@ -227,7 +227,7 @@ readtty(char *pr, char *src)
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;		/* Note: will not restart syscalls */
 	act.sa_handler = ttyint;
-	(void)sigaction(SIGINT, &act, &oact);
+	(void)sigaction(SIGINT, &act, &saveint);
 	act.sa_handler = ttystop;
 	(void)sigaction(SIGTSTP, &act, NULL);
 	(void)sigaction(SIGTTOU, &act, NULL);
@@ -259,7 +259,7 @@ readtty(char *pr, char *src)
 	(void)sigaction(SIGTSTP, &act, NULL);
 	(void)sigaction(SIGTTOU, &act, NULL);
 	(void)sigaction(SIGTTIN, &act, NULL);
-	(void)sigaction(SIGTTIN, &oact, NULL);
+	(void)sigaction(SIGINT, &saveint, NULL);
 	if (cp2 == NULL)
 		return(NULL);			/* user hit ^C */
 	*cp2 = '\0';
