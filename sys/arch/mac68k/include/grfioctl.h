@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfioctl.h,v 1.3 1997/11/30 06:10:30 gene Exp $	*/
+/*	$OpenBSD: grfioctl.h,v 1.4 2003/04/03 06:47:58 jmc Exp $	*/
 /*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ struct grfmodes {
 };
 
 /*
- * BSD ioctls (first few match HP/UX ioctl()s.  In case we want
+ * BSD ioctls (first few match HP-UX ioctl()s.  In case we want
  * compatibility later, start our own at 16).
  */
 #define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
@@ -87,7 +87,7 @@ struct grfmodes {
  * depend on GRFIOCGINFO.
  */
 struct	grfinfo {
-	int	gd_id;			/* HPUX identifier */
+	int	gd_id;			/* HP-UX identifier */
 	caddr_t	gd_regaddr;		/* control registers physaddr */
 	int	gd_regsize;		/* control registers size */
 	caddr_t	gd_fbaddr;		/* frame buffer physaddr */
