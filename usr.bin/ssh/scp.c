@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.77 2001/07/18 16:45:52 mouring Exp $");
+RCSID("$OpenBSD: scp.c,v 1.78 2001/07/27 17:26:16 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -129,8 +129,10 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout, int argc)
 	int pin[2], pout[2], reserved[2];
 
 	if (verbose_mode)
-		fprintf(stderr, "Executing: program %s host %s, user %s, command %s\n",
-		    ssh_program, host, remuser ? remuser : "(unspecified)", cmd);
+		fprintf(stderr,
+		    "Executing: program %s host %s, user %s, command %s\n",
+		    ssh_program, host,
+		    remuser ? remuser : "(unspecified)", cmd);
 
 	/*
 	 * Reserve two descriptors so that the real pipes won't get
@@ -803,7 +805,8 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			count += amt;
 			do {
 				j = read(remin, cp, amt);
-				if (j == -1 && (errno == EINTR || errno == EAGAIN)) {
+				if (j == -1 && (errno == EINTR ||
+				    errno == EAGAIN)) {
 					continue;
 				} else if (j <= 0) {
 					run_err("%s", j ? strerror(errno) :
@@ -1092,8 +1095,10 @@ progressmeter(int flag)
 		i = barlength * ratio / 100;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		    "|%.*s%*s|", i,
-		    "*****************************************************************************"
-		    "*****************************************************************************",
+		    "***************************************"
+		    "***************************************"
+		    "***************************************"
+		    "***************************************",
 		    barlength - i, "");
 	}
 	i = 0;
