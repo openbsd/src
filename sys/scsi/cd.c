@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.18 1996/12/11 19:08:14 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.19 1996/12/24 01:33:33 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.92 1996/05/05 19:52:50 christos Exp $	*/
 
 /*
@@ -1053,6 +1053,8 @@ cdgetdisklabel(cd)
 	bzero(cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = cd->params.blksize;
+	if (lp->d_secsize > 2048)
+		lp->d_secsize = 2048;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = (cd->params.disksize / 100) + 1;

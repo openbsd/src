@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.17 1996/12/11 19:08:24 deraadt Exp $	*/
+/*	$OpenBSD: acd.c,v 1.18 1996/12/24 01:33:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -965,6 +965,8 @@ acdgetdisklabel(acd)
 	bzero(acd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = acd->params.blksize;
+	if (lp->d_secsize > 2048)
+		lp->d_secsize = 2048;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = (acd->params.disksize / 100) + 1;
@@ -1048,8 +1050,6 @@ acd_size(acd, flags)
 
 	ATAPI_DEBUG_PRINT(("acd_size: %ld %ld\n", acd->params.blksize,
 	    acd->params.disksize));
-	if (acd->params.blksize > 2048)
-		acd->params.blksize = 2048;
 	return acd->params.disksize;
 }
 
