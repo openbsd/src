@@ -1,8 +1,8 @@
-/*	$OpenBSD: cac.c,v 1.6 2001/08/16 17:26:51 brad Exp $	*/
+/*	$OpenBSD: cac.c,v 1.7 2001/10/18 20:24:10 mickey Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2001 Michael Shalayeff
  * All rights reserved.
  *
  * The SCSI emulation layer is derived from gdt(4) driver,
@@ -481,6 +481,7 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 		printf("%s: invalid request\n", sc->sc_dv.dv_xname);
 	}
 
+	cac_ccb_free(sc, ccb);
 	if (xs) {
 		if (error)
 			xs->error = XS_DRIVER_STUFFUP;
@@ -491,7 +492,6 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 
 		scsi_done(xs);
 	}
-	cac_ccb_free(sc, ccb);
 }
 
 /*
@@ -504,19 +504,10 @@ cac_ccb_alloc(struct cac_softc *sc, int nosleep)
 	int s;
 
 	s = splbio();
-
-	for (;;) {
-		if ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
-			break;
-		}
-		if (nosleep) {
-			ccb = NULL;
-			break;
-		}
-		tsleep(&sc->sc_ccb_free, PRIBIO, "cacccb", 0);
-	}
-
+	if ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free)) != NULL)
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
+	else
+		ccb = NULL;
 	splx(s);
 	return (ccb);
 }
@@ -532,8 +523,6 @@ cac_ccb_free(struct cac_softc *sc, struct cac_ccb *ccb)
 	ccb->ccb_flags = 0;
 	s = splbio();
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
-	if (SIMPLEQ_NEXT(ccb, ccb_chain) == NULL)
-		wakeup(&sc->sc_ccb_free);
 	splx(s);
 }
 
@@ -599,7 +588,7 @@ cac_scsi_cmd(xs)
 	u_int32_t blockno, blockcnt, size;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
-	int op, flags, s;
+	int op, flags, s, error;
 	const char *p;
 
 	if (target >= sc->sc_nunits || link->lun != 0) {
@@ -697,7 +686,7 @@ cac_scsi_cmd(xs)
 		}
 		bzero(&rcd, sizeof rcd);
 		_lto4b( CAC_GET2(dinfo->ncylinders) * CAC_GET1(dinfo->nheads) *
-		    CAC_GET1(dinfo->nsectors), rcd.addr);
+		    CAC_GET1(dinfo->nsectors) - 1, rcd.addr);
 		_lto4b(CAC_SECTOR_SIZE, rcd.length);
 		cac_copy_internal_data(xs, &rcd, sizeof rcd);
 		break;
@@ -723,30 +712,26 @@ cac_scsi_cmd(xs)
 		s = splbio();
 
 		flags = 0;
-		if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-			/* A read or write operation. */
-			if (xs->cmdlen == 6) {
-				rw = (struct scsi_rw *)xs->cmd;
-				blockno = _3btol(rw->addr) &
-				    (SRW_TOPADDR << 16 | 0xffff);
-				blockcnt = rw->length ? rw->length : 0x100;
-			} else {
-				rwb = (struct scsi_rw_big *)xs->cmd;
-				blockno = _4btol(rwb->addr);
-				blockcnt = _2btol(rwb->length);
-			}
-			size = CAC_GET2(dinfo->ncylinders) *
-			    CAC_GET1(dinfo->nheads) *
-			    CAC_GET1(dinfo->nsectors);
-			if (blockno >= size || blockno + blockcnt > size) {
-				splx(s);
-				printf("%s: out of bounds %u-%u >= %u\n",
-				    sc->sc_dv.dv_xname, blockno, blockcnt,
-				    size);
-				xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(xs);
-				return (COMPLETE);
-			}
+		/* A read or write operation. */
+		if (xs->cmdlen == 6) {
+			rw = (struct scsi_rw *)xs->cmd;
+			blockno = _3btol(rw->addr) &
+			    (SRW_TOPADDR << 16 | 0xffff);
+			blockcnt = rw->length ? rw->length : 0x100;
+		} else {
+			rwb = (struct scsi_rw_big *)xs->cmd;
+			blockno = _4btol(rwb->addr);
+			blockcnt = _2btol(rwb->length);
+		}
+		size = CAC_GET2(dinfo->ncylinders) *
+		    CAC_GET1(dinfo->nheads) * CAC_GET1(dinfo->nsectors);
+		if (blockno >= size || blockno + blockcnt > size) {
+			splx(s);
+			printf("%s: out of bounds %u-%u >= %u\n",
+			    sc->sc_dv.dv_xname, blockno, blockcnt, size);
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			return (COMPLETE);
 		}
 
 		switch (xs->cmd->opcode) {
@@ -762,11 +747,14 @@ cac_scsi_cmd(xs)
 			break;
 		}
 
-		if (cac_cmd(sc, op, xs->data, blockcnt * DEV_BSIZE, target,
-		    blockno, flags, xs)) {
+		if ((error = cac_cmd(sc, op, xs->data, blockcnt * DEV_BSIZE,
+		    target, blockno, flags, xs))) {
 
 			splx(s);
-			if (xs->flags & SCSI_POLL) {
+			if (error == ENOMEM) {
+				xs->error = XS_DRIVER_STUFFUP;
+				return (TRY_AGAIN_LATER);
+			} else if (xs->flags & SCSI_POLL) {
 				xs->error = XS_TIMEOUT;
 				return (TRY_AGAIN_LATER);
 			} else {
