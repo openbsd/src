@@ -1,4 +1,4 @@
-/*	$OpenBSD: psc.c,v 1.4 2004/11/26 21:21:28 miod Exp $	*/
+/*	$OpenBSD: psc.c,v 1.5 2004/12/08 20:35:03 miod Exp $	*/
 /*	$NetBSD: psc.c,v 1.5 1998/08/12 05:42:46 scottr Exp $	*/
 
 
@@ -147,7 +147,9 @@ static void
 psc_lev3_noint(arg)
 	void *arg;
 {
+#ifdef DEBUG
 	printf("psc_lev3_noint\n");
+#endif
 }
 
 int
@@ -204,7 +206,9 @@ int
 psc_lev4_noint(arg)
 	void *arg;
 {
+#ifdef DEBUG
 	printf("psc_lev4_noint: device %d\n", (int)arg);
+#endif
 	return 0;
 }
 
@@ -262,7 +266,9 @@ void
 psc_lev5_noint(arg)
 	void *arg;
 {
+#ifdef DEBUG
 	printf("psc_lev5_noint: device %d\n", (int)arg);
+#endif
 }
 
 int
@@ -319,5 +325,7 @@ void
 psc_lev6_noint(arg)
 	void *arg;
 {
+#ifdef DEBUG
 	printf("psc_lev6_noint: device %d\n", (int)arg);
+#endif
 }
