@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.7 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.8 2002/05/29 09:45:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.7 2002/02/16 21:28:08 millert Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.8 2002/05/29 09:45:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -155,7 +155,7 @@ top:
 		rval = read(tape, record, n);
 		if (rval < 0)
 			goto ioerror;
-		(void) sprintf(resp, "A%d\n", rval);
+		(void) snprintf(resp, sizeof resp, "A%d\n", rval);
 		(void) write(1, resp, strlen(resp));
 		(void) write(1, record, rval);
 		goto top;
@@ -178,7 +178,7 @@ top:
 		  if (ioctl(tape, MTIOCGET, (char *)&mtget) == -1)
 			goto ioerror;
 		  rval = sizeof (mtget);
-		  (void) sprintf(resp, "A%d\n", rval);
+		  (void) snprintf(resp, sizeof resp, "A%d\n", rval);
 		  (void) write(1, resp, strlen(resp));
 		  (void) write(1, (char *)&mtget, sizeof (mtget));
 		  goto top;
@@ -190,7 +190,7 @@ top:
 	}
 respond:
 	DEBUG1("rmtd: A %d\n", rval);
-	(void) sprintf(resp, "A%d\n", rval);
+	(void) snprintf(resp, sizeof resp, "A%d\n", rval);
 	(void) write(1, resp, strlen(resp));
 	goto top;
 ioerror:

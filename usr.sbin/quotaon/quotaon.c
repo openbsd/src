@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.13 2002/05/22 09:09:32 deraadt Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.14 2002/05/29 09:45:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -215,8 +215,10 @@ hasquota(fs, type, qfnamep, force)
 	static char buf[BUFSIZ];
 
 	if (!initname) {
-		sprintf(usrname, "%s%s", qfextension[USRQUOTA], qfname);
-		sprintf(grpname, "%s%s", qfextension[GRPQUOTA], qfname);
+		snprintf(usrname, sizeof usrname, "%s%s",
+		    qfextension[USRQUOTA], qfname);
+		snprintf(grpname, sizeof grpname, "%s%s",
+		    qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
 	strlcpy(buf, fs->fs_mntops, sizeof buf);
@@ -234,7 +236,8 @@ hasquota(fs, type, qfnamep, force)
 		*qfnamep = cp;
 		return (1);
 	}
-	(void) sprintf(buf, "%s/%s.%s", fs->fs_file, qfname, qfextension[type]);
+	(void) snprintf(buf, sizeof buf, "%s/%s.%s", fs->fs_file,
+	    qfname, qfextension[type]);
 	*qfnamep = buf;
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.8 2002/05/27 19:48:42 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.9 2002/05/29 09:45:08 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.8 2002/05/27 19:48:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.9 2002/05/29 09:45:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ BpfOpen()
 	 *  Open the first available BPF device.
 	 */
 	do {
-		(void) sprintf(bpfdev, _PATH_BPF, n++);
+		(void) snprintf(bpfdev, sizeof bpfdev, _PATH_BPF, n++);
 		BpfFd = open(bpfdev, O_RDWR);
 	} while (BpfFd < 0 && (errno == EBUSY || errno == EPERM));
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: standalone.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: standalone.c,v 1.3 2002/05/29 09:45:08 deraadt Exp $ */
 
 /*
  * Standalone POP server: accepts connections, checks the anti-flood limits,
@@ -62,7 +62,7 @@ static va_int child_pending;		/* Are any dead children waiting? */
 static void handle_child(int signum)
 {
 	int saved_errno;
-	int pid;
+	pid_t pid;
 	int i;
 
 	saved_errno = errno;
@@ -73,11 +73,11 @@ static void handle_child(int signum)
 		child_pending = 0;
 
 		while ((pid = waitpid(0, NULL, WNOHANG)) > 0)
-		for (i = 0; i < MAX_SESSIONS; i++)
-		if (sessions[i].pid == pid) {
-			sessions[i].pid = 0;
-			break;
-		}
+			for (i = 0; i < MAX_SESSIONS; i++)
+				if (sessions[i].pid == pid) {
+					sessions[i].pid = 0;
+					break;
+				}
 	}
 
 	if (signum) signal(SIGCHLD, handle_child);
@@ -115,7 +115,7 @@ int main(void)
 	int sock, new;
 	struct sockaddr_in addr;
 	int addrlen;
-	int pid;
+	pid_t pid;
 	struct tms buf;
 	clock_t now;
 	int i, j, n;
