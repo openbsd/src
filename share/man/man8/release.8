@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.16 2001/07/27 20:29:19 krw Exp $
+.\"	$OpenBSD: release.8,v 1.17 2001/09/18 03:59:16 marc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -95,9 +95,7 @@ tags use the commands:
 .Pp
 Replace
 .Va XF4SRC
-with the path to your
-.Tn X11R6
-sources.
+with the path to your X Window System sources.
 Replace
 .Va PORTSPATH
 with the path to your ports tree sources, typically
@@ -222,10 +220,8 @@ They are:
 .It Va DESTDIR
 This is the name of a directory which will be the root of a a complete
 .Ox
-installation, thus it must be on a disk partition large enough to
-store the entire operating system (less
-.Tn X11R6
-and any third party
+installation, thus it must be on a disk partition large enough to store the
+entire operating system (less the X Window System and any third party
 .Sq packages ) .
 The directory can be removed once the release is created.
 In any case the release process ensures the directory is empty before starting.
@@ -289,8 +285,7 @@ pretty much match the contents of the release
 At this point you have most of an
 .Ox
 release.
-The only thing missing is
-.Va X11R6
+The only thing missing is the X Window System
 (which is covered in the next section).
 .Ss "5. Build and install XF4"
 .Pp
@@ -305,14 +300,11 @@ directory mechanism that comes with Berkeley
 While the tree can be built in place, it's better to refrain from
 polluting the cvs sources.
 An alternate build location needs to be selected, large enough to hold the
-.Tn X11R6
-object files, libraries, and binaries.
+X Window System object files, libraries, and binaries.
 Call this location
 .Va XF4BLD .
 .Va XF4SRC
-is the path to your
-.Tn X11R6
-sources.
+is the path to your X Window System source files.
 Once you've selected
 .Va XF4BLD
 the build process is:
@@ -346,8 +338,7 @@ The above method mimics a
 in the
 .Pa /usr/src
 directory.
-.Pa X11R6
-is created and installed in
+The X Window System is created and installed in
 .Pa
 /usr/X11R6 .
 However, the install phase of the build does
@@ -363,7 +354,7 @@ to
 after the build.
 .Ss "6. Make and validate the XF4 release"
 .Pp
-.Va X11R6
+.Va XF4
 uses the same
 .Va DESTDIR
 and
@@ -398,8 +389,9 @@ The steps to build the release are (assuming you are still root, and still in
 .Li "unset RELEASEDIR DESTDIR"
 .El
 .Pp
-At this point you have both system and
-.Tn X11R6
+At this point you have both
+.Ox
+system and X Window System
 .Sq tarballs
 in your release directory.
 .Ss "7. Make the third party packages"
