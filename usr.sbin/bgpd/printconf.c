@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.18 2004/05/08 17:40:53 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.19 2004/05/08 18:23:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "bgpd.h"
 #include "mrt.h"
@@ -88,6 +89,7 @@ void
 print_mainconf(struct bgpd_config *conf)
 {
 	struct in_addr	ina;
+	struct in6_addr	ina6;
 
 	printf("AS %u\n", conf->as);
 	ina.s_addr = conf->bgpid;
@@ -109,7 +111,11 @@ print_mainconf(struct bgpd_config *conf)
 		printf("log updates\n");
 
 	if (conf->listen_addr.sin_addr.s_addr != INADDR_ANY)
-		printf("listen-on %s\n", inet_ntoa(conf->listen_addr.sin_addr));
+		printf("listen on %s\n", inet_ntoa(conf->listen_addr.sin_addr));
+
+	bzero(&ina6, sizeof(ina6));
+	if (bcmp(&ina6, &conf->listen6_addr.sin6_addr, sizeof(ina6)))
+		printf("listen on %s\n", log_sockaddr((struct sockaddr *)&conf->listen6_addr));
 }
 
 void
