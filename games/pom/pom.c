@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.5 1995/06/07 16:30:46 cgd Exp $	*/
+/*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pom.c,v 1.5 1995/06/07 16:30:46 cgd Exp $";
+static char rcsid[] = "$NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$NetBSD: pom.c,v 1.5 1995/06/07 16:30:46 cgd Exp $";
 #include <string.h>
 #include <tzfile.h>
 #include <math.h>
+#include <errno.h>
 
 #define	PI	  3.141592654
 #define	EPOCH	  85
@@ -78,7 +79,6 @@ double dtor(), potm(), adj360();
 
 main()
 {
-	extern int errno;
 	struct timeval tp;
 	struct timezone tzp;
 	struct tm *GMT, *gmtime();

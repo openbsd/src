@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.c,v 1.3 1995/03/21 15:08:52 cgd Exp $	*/
+/*    $NetBSD: instr.c,v 1.4 1996/02/06 22:47:18 jtc Exp $    */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,13 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: instr.c,v 1.3 1995/03/21 15:08:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: instr.c,v 1.4 1996/02/06 22:47:18 jtc Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
 
 #include <curses.h>
@@ -51,6 +50,7 @@ static char rcsid[] = "$NetBSD: instr.c,v 1.3 1995/03/21 15:08:52 cgd Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "deck.h"
 #include "cribbage.h"
@@ -59,7 +59,6 @@ static char rcsid[] = "$NetBSD: instr.c,v 1.3 1995/03/21 15:08:52 cgd Exp $";
 void
 instructions()
 {
-	extern int errno;
 	struct stat sb;
 	union wait pstat;
 	pid_t pid;

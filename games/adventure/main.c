@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1995/03/21 12:05:07 cgd Exp $	*/
+/*    $NetBSD: main.c,v 1.3 1996/02/06 22:47:06 jtc Exp $     */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.2 1995/03/21 12:05:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.3 1996/02/06 22:47:06 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,6 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	extern int errno;
 	register int i;
 	int rval,ll;
 	struct text *kk;

@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.3 1995/03/21 15:08:21 cgd Exp $	*/
+/*    $NetBSD: caesar.c,v 1.4 1996/02/06 22:47:15 jtc Exp $   */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: caesar.c,v 1.3 1995/03/21 15:08:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: caesar.c,v 1.4 1996/02/06 22:47:15 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$NetBSD: caesar.c,v 1.3 1995/03/21 15:08:21 cgd Exp $";
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define	LINELENGTH	2048
 #define	ROTATE(ch, perm) \
@@ -79,7 +80,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int errno;
 	register int ch, dot, i, nread, winnerdot;
 	register char *inbuf;
 	int obs[26], try, winner;

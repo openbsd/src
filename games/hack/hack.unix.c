@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.unix.c,v 1.3 1995/03/23 08:31:55 cgd Exp $";
+static char rcsid[] = "$NetBSD: hack.unix.c,v 1.4 1996/02/06 22:47:25 jtc Exp $";
 #endif /* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -158,7 +158,6 @@ veryold(fd) {
 	if(buf.st_size != sizeof(int)) return(0);	/* not an xlock file */
 	(void) time(&date);
 	if(date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
-		extern int errno;
 		int lockedpid;	/* should be the same size as hackpid */
 
 		if(read(fd, (char *)&lockedpid, sizeof(lockedpid)) !=
@@ -184,7 +183,7 @@ veryold(fd) {
 
 getlock()
 {
-	extern int errno, hackpid, locknum;
+      extern int hackpid, locknum;
 	register int i = 0, fd;
 
 	(void) fflush(stdout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.2 1995/04/22 07:42:34 cgd Exp $	*/
+/*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,7 +80,6 @@ rwait(tvp)
 {
 	int i;
 	struct timeval starttv, endtv, *s;
-	extern int errno;
 #define	NILTZ ((struct timezone *)0)
 
 	/*

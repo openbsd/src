@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.4 1995/03/21 15:09:05 cgd Exp $	*/
+/*    $NetBSD: dm.c,v 1.5 1996/02/06 22:47:20 jtc Exp $       */
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dm.c,v 1.4 1995/03/21 15:09:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: dm.c,v 1.5 1996/02/06 22:47:20 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,10 @@ static char rcsid[] = "$NetBSD: dm.c,v 1.4 1995/03/21 15:09:05 cgd Exp $";
 #include <time.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <errno.h>
 
 #include "pathnames.h"
 
-extern int errno;
 static time_t	now;			/* current time value */
 static int	priority = 0;		/* priority game runs at */
 static char	*game,			/* requested game */
