@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.22 1997/11/06 05:59:05 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.23 1997/11/11 11:20:32 niklas Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -72,8 +72,8 @@
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
 
-static int nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-		      struct proc *);
+int nfs_sysctl
+    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
 
 /*
  * nfs vfs operations.
@@ -96,8 +96,8 @@ struct vfsops nfs_vfsops = {
 extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 
-static struct mount *
-nfs_mount_diskless __P((struct nfs_dlmount *, char *, int, struct vnode **));
+struct mount *nfs_mount_diskless
+    __P((struct nfs_dlmount *, char *, int, struct vnode **));
 
 #define TRUE	1
 #define	FALSE	0
@@ -369,7 +369,7 @@ nfs_mountroot()
 /*
  * Internal version of mount system call for diskless setup.
  */
-static struct mount *
+struct mount *
 nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	struct nfs_dlmount *ndmntp;
 	char *mntname;
@@ -381,16 +381,9 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	struct mbuf *m;
 	int error;
 
-	vfs_rootmountalloc("nfs", mntname, &mp);
-	/* Create the mount point. */
-	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
-	    M_MOUNT, M_WAITOK);
-	if (mp == NULL)
-		panic("nfs_mountroot: malloc mount for %s", mntname);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
-
-	mp->mnt_op = &nfs_vfsops;
-	mp->mnt_flag = mntflag;
+	if (vfs_rootmountalloc("nfs", mntname, &mp))
+		panic("nfs_mount_diskless: vfs_rootmountalloc failed");
+	mp->mnt_flag |= mntflag;
 
 	/* Initialize mount args. */
 	bzero((caddr_t) &args, sizeof(args));
@@ -420,7 +413,7 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	if (m == NULL)
 		panic("nfs_mountroot: mget soname for %s", mntname);
 	bcopy((caddr_t)args.addr, mtod(m, caddr_t),
-	      (m->m_len = args.addr->sa_len));
+	    (m->m_len = args.addr->sa_len));
 
 	error = mountnfs(&args, mp, m, mntname, args.hostname, vpp);
 	if (error)
@@ -913,7 +906,7 @@ nfs_vget(mp, ino, vpp)
 /*
  * Do that sysctl thang...
  */
-static int
+int
 nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	   size_t newlen, struct proc *p)
 {
