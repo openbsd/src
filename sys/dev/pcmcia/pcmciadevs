@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.108 2004/01/24 23:13:55 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.109 2004/01/24 23:30:26 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -321,7 +321,9 @@ product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 product SIEMENS SS1021		0x0002 Siemens SpeedStream 1021
 
 /* Sierra */
+product SIERRA	A550		0xa550 A550
 product SIERRA	A555		0xa555 A555
+product SIERRA	A710		0xa710 A710/A750
 
 /* Socket Communications */
 product SOCKET EA_ETHER		0x0000 Socket Communications EA
