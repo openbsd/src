@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.23 2003/06/25 20:52:57 tedu Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.24 2004/01/21 21:00:14 tedu Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -524,6 +524,26 @@ dk_mountroot()
 #endif
 	}
 	return (*mountrootfn)();
+}
+
+struct bufq *
+bufq_default_alloc(void)
+{
+	struct bufq_default *bq;
+
+	bq = malloc(sizeof(*bq), M_DEVBUF, M_NOWAIT);
+	memset(bq, 0, sizeof(*bq));
+	bq->bufq.bufq_free = bufq_default_free;
+	bq->bufq.bufq_add = bufq_default_add;
+	bq->bufq.bufq_get = bufq_default_get;
+
+	return ((struct bufq *)bq);
+}
+
+void
+bufq_default_free(struct bufq *bq)
+{
+	free(bq, M_DEVBUF);
 }
 
 void

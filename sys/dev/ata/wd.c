@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.36 2004/01/16 21:00:57 grange Exp $ */
+/*	$OpenBSD: wd.c,v 1.37 2004/01/21 21:00:14 tedu Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -134,7 +134,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct bufq_default sc_q;
+	struct bufq *sc_q;
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transferred */
@@ -264,8 +264,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	char buf[41], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
-	wd->sc_q.bufq.bufq_get = bufq_default_get;
-	wd->sc_q.bufq.bufq_add = bufq_default_add;
+	wd->sc_q = BUFQ_ALLOC(0);
 
 	wd->openings = aa_link->aa_openings;
 	wd->drvp = aa_link->aa_drv_data;
@@ -405,7 +404,7 @@ wddetach(struct device *self, int flags)
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
-	while ((bp = BUFQ_GET(&sc->sc_q)) != NULL) {
+	while ((bp = BUFQ_GET(sc->sc_q)) != NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -430,6 +429,7 @@ wddetach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+	BUFQ_FREE(sc->sc_q);
 
 	return (0);
 }
@@ -490,7 +490,7 @@ wdstrategy(struct buf *bp)
 		goto done;
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	BUFQ_ADD(&wd->sc_q, bp);
+	BUFQ_ADD(wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	device_unref(&wd->sc_dev);
@@ -521,7 +521,7 @@ wdstart(void *arg)
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		if ((bp = BUFQ_GET(&wd->sc_q)) == NULL)
+		if ((bp = BUFQ_GET(wd->sc_q)) == NULL)
 			return;
 
 		/*
