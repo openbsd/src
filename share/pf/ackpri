@@ -1,10 +1,10 @@
-# $OpenBSD: ackpri,v 1.1 2003/03/02 12:19:58 dhartmei Exp $
+# $OpenBSD: ackpri,v 1.2 2003/03/10 14:24:33 henning Exp $
 
-# Use a simple priority queue to priorize empty (no payload) TCP ACKs,
+# Use a simple priority queue to prioritize empty (no payload) TCP ACKs,
 # which dramatically improves throughput on (asymmetric) links when the
 # reverse direction is saturated. The empty ACKs use an insignificant
 # part of the bandwidth, but if they get delayed, downloads suffer
-# badly, so priorize them.
+# badly, so prioritize them.
 
 # Example: 512/128 kbps ADSL. Download is 50 kB/s. When a concurrent
 # upload saturates the uplink, download drops to 7 kB/s. With the
