@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsort.1,v 1.9 2001/06/25 05:01:21 pvalchev Exp $
+.\"	$OpenBSD: tsort.1,v 1.10 2001/07/11 15:15:21 espie Exp $
 .\"	$NetBSD: tsort.1,v 1.6 1996/01/17 20:37:49 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -85,6 +85,7 @@ which holds an ordered list of nodes, to resolve ambiguities.
 In case of duplicates, the first entry is chosen.
 .It Fl l
 Search for and display the longest cycle.
+Can take a very long time, as it may need to solve an NP-complete problem.
 .It Fl q
 Do not display informational messages about cycles.  
 This is primarily intended for building libraries, where optimal ordering 
