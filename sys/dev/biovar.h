@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.4 2005/04/04 22:36:29 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.5 2005/04/06 02:11:25 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -189,6 +189,7 @@ typedef struct _bioc_blink {
 	u_int8_t opcode;
 #define BIOCSBLINK_BLINK   0x00
 #define BIOCSBLINK_UNBLINK 0x01
+#define BIOCSBLINK_ALERT   0x02
 	u_int8_t channel;
 	u_int8_t target;
 } bioc_blink;
