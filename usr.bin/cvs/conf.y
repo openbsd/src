@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.1 2004/07/25 03:29:34 jfb Exp $	*/
+/*	$OpenBSD: conf.y,v 1.2 2004/08/03 14:46:35 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -24,14 +24,19 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  *
  */
-%{
 /*
  * Configuration parser for the CVS daemon
+ *
+ * Thanks should go to Henning Brauer for providing insight on some
+ * questions I had regarding my grammar.
  */
+
+%{
 #include <sys/types.h>
 #include <sys/queue.h>
 
 #include <errno.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -41,7 +46,8 @@
 #include "cvsd.h"
 #include "cvs.h"
 #include "log.h"
-#include "event.h"
+#include "file.h"
+
 
 #define CVS_ACL_MAXRULES     256
 
@@ -98,6 +104,7 @@ typedef struct {
 
 
 int    lgetc    (FILE *);
+int    lungetc  (int, FILE *);
 
 
 int    yyerror  (const char *, ...);
@@ -113,6 +120,12 @@ int    cvs_acl_addrule   (struct acl_rule *);
 u_int  cvs_acl_matchuid  (struct acl_rule *, uid_t);
 u_int  cvs_acl_matchtag  (const char *, const char *);
 u_int  cvs_acl_matchpath (const char *, const char *);
+
+
+/* parse buffer for easier macro expansion */
+static char  *conf_pbuf = NULL;
+static int    conf_pbind = 0;
+
 
 
 static const char      *conf_file;
@@ -161,7 +174,11 @@ macro_assign	: STRING '=' STRING
 		}
 		;
 
-directive	: LISTEN address	{ cvsd_set(CVSD_SET_ADDR, $2); }
+directive	: LISTEN address
+		{
+			cvsd_set(CVSD_SET_ADDR, $2);
+			free($2);
+		}
 		| CVSROOT STRING
 		{
 			cvsd_set(CVSD_SET_ROOT, $2);
@@ -346,12 +363,23 @@ lgetc(FILE *f)
 {
 	int c;
 
+	/* check if we've got something in the parse buffer first */
+	if (conf_pbuf != NULL) {
+		c = conf_pbuf[conf_pbind++];
+		if (c != '\0')
+			return (c);
+
+		free(conf_pbuf);
+		conf_pbuf = NULL;
+		conf_pbind = 0;
+	}
+
 	c = getc(f);
 	if ((c == '\t') || (c == ' ')) {
 		do {
 			c = getc(f);
 		} while ((c == ' ') || (c == '\t'));
-		ungetc(c, f);
+		lungetc(c, f);
 		c = ' ';
 	}
 	else if (c == '\\')
@@ -362,11 +390,30 @@ lgetc(FILE *f)
 
 
 int
+lungetc(int c, FILE *f)
+{
+	if ((conf_pbuf != NULL) && (conf_pbind > 0)) {
+		conf_pbind--;
+		return (0);
+	}
+
+	return ungetc(c, f);
+
+
+}
+
+
+
+
+
+int
 yylex(void)
 {
 	int c;
 	char buf[1024], *bp, *ep;
+	const char *mval;
 
+lex_start:
 	bp = buf;
 	ep = buf + sizeof(buf) - 1;
 
@@ -381,23 +428,47 @@ yylex(void)
 			c = lgetc(conf_fin);
 		} while ((c != '\n') && (c != EOF));
 	}
-	else if (c == EOF)
+
+	if (c == EOF)
 		c = 0;
 	else if (c == '\n')
-		conf_lineno++;
-	else if (c != ',') {
+		yylval.lineno = conf_lineno++;
+	else if (c == '$') {
+		c = lgetc(conf_fin);
 		do {
-			*bp++ = c;
+			*bp++ = (char)c;
+			if (bp == ep) {
+				yyerror("macro name too long");
+				return (-1);
+			}
+			c = lgetc(conf_fin);
+		} while (isalnum(c) || c == '_');
+		lungetc(c, conf_fin);
+		*bp = '\0';
+
+		mval = cvs_conf_getmacro(buf);
+		if (mval == NULL) {
+			yyerror("undefined macro `%s'", buf);
+			return (-1);
+		}
+
+		conf_pbuf = strdup(mval);
+		conf_pbind = 0;
+		goto lex_start;
+	}
+	else if ((c == '=') || (c == ','))
+		; /* nothing */
+	else {
+		do {
+			*bp++ = (char)c;
 			if (bp == ep) {
 				yyerror("string too long");
 				return (-1);
 			}
 
 			c = lgetc(conf_fin);
-			if (c == EOF)
-				break;
 		} while ((c != EOF) && (c != ' ') && (c != '\n'));
-		ungetc(c, conf_fin);
+		lungetc(c, conf_fin);
 		*bp = '\0';
 		c = lookup(buf);
 		if (c == STRING) {
@@ -456,7 +527,6 @@ cvs_conf_setmacro(char *macro, char *val)
 	}
 
 	/* these strings were already dup'ed by the lexer */
-	printf("macro(%s) = `%s'\n", macro, val);
 	cmp->cm_name = macro;
 	cmp->cm_val = val;
 
@@ -557,24 +627,29 @@ u_int
 cvs_acl_eval(struct cvs_op *op)
 {
 	u_int res;
-	struct acl_rule *arp;
+	CVSFILE *cf;
+	struct acl_rule *rule;
 
 	/* deny by default */
 	res = acl_defact;
 
-	TAILQ_FOREACH(arp, &acl_rules, ar_list) {
-		if (((op->co_op != CVS_OP_ANY) && (op->co_op != arp->ar_op)) ||
-		    !cvs_acl_matchuid(arp, op->co_uid) ||
-		    !cvs_acl_matchtag(op->co_tag, arp->ar_tag) ||
-		    !cvs_acl_matchpath(op->co_path, arp->ar_path))
+	TAILQ_FOREACH(rule, &acl_rules, ar_list) {
+		if (((op->co_op != CVS_OP_ANY) && (op->co_op != rule->ar_op)) ||
+		    !cvs_acl_matchuid(rule, op->co_uid) ||
+		    !cvs_acl_matchtag(op->co_tag, rule->ar_tag))
 			continue;
 
-		res = arp->ar_act;
+		/* see if one of the files has a matching path */
+		TAILQ_FOREACH(cf, &(op->co_files), cf_list)
+			if (!cvs_acl_matchpath(cf->cf_path, rule->ar_path))
+				continue;
 
-		if (arp->ar_opts & CVS_ACL_LOGOPT)
-			cvs_log(LP_WARN, "act=%u, path=%s, tag=%s, uid=%u",
-			    op->co_op, op->co_path, op->co_tag, op->co_uid);
-		if (arp->ar_opts & CVS_ACL_QUICKOPT)
+		res = rule->ar_act;
+
+		if (rule->ar_opts & CVS_ACL_LOGOPT)
+			cvs_log(LP_WARN, "act=%u, tag=%s, uid=%u",
+			    op->co_op, op->co_tag, op->co_uid);
+		if (rule->ar_opts & CVS_ACL_QUICKOPT)
 			break;
 	}
 
@@ -648,7 +723,6 @@ cvs_acl_matchpath(const char *op_path, const char *acl_path)
 		return (0);
 	}
 
-	printf("comparing `%s' to `%s'\n", rop_path, acl_path);
 	len = strlen(rop_path);
 
 	if (strncmp(rop_path, acl_path, len) == 0)
