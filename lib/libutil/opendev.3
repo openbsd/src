@@ -1,4 +1,4 @@
-.\"	$OpenBSD: opendev.3,v 1.9 2000/04/30 17:37:46 millert Exp $
+.\"	$OpenBSD: opendev.3,v 1.10 2000/05/01 06:05:33 hugh Exp $
 .\"
 .\" Copyright (c) 2000, Todd C. Miller.  All rights reserved.
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -46,6 +46,15 @@ or
 for instance, which will be expanded to
 .Pa /dev/rsd0c
 on most architectures.
+.Pp
+Device name lookup is done by first checking
+.Fa path
+for a
+.Dq /
+and if one is found attempting to open that file.
+Otherwise
+.Fa /dev
+is searched for a matching device.
 .Pp
 The
 .Fa oflags
