@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.19 2003/05/18 20:32:36 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.20 2003/05/19 00:22:15 camield Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -59,10 +59,16 @@ union class_stats {
 	struct hfsc_classstats	hfsc_stats;
 };
 
+#define AVGN_MAX	8
+#define STAT_INTERVAL	5
+
 struct queue_stats {
 	union class_stats	 data;
-	struct timeval		 timestamp;
-	u_int8_t		 valid;
+	int			 avgn;
+	double			 avg_bytes;
+	double			 avg_packets;
+	u_int64_t		 prev_bytes;
+	u_int64_t		 prev_packets;
 };
 
 struct pf_altq_node {
@@ -70,7 +76,6 @@ struct pf_altq_node {
 	struct pf_altq_node	*next;
 	struct pf_altq_node	*children;
 	struct queue_stats	 qstats;
-	struct queue_stats	 qstats_last;
 };
 
 int			 pfctl_update_qstats(int, struct pf_altq_node **);
@@ -80,18 +85,14 @@ struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
 			    const char *, const char *);
 void			 pfctl_print_altq_node(int, const struct pf_altq_node *,
 			     unsigned, int);
-void			 print_cbqstats(struct queue_stats, struct queue_stats);
-void			 print_priqstats(struct queue_stats,
-			     struct queue_stats);
-void			 print_hfscstats(struct queue_stats,
-			     struct queue_stats);
+void			 print_cbqstats(struct queue_stats);
+void			 print_priqstats(struct queue_stats);
+void			 print_hfscstats(struct queue_stats);
 void			 pfctl_free_altq_node(struct pf_altq_node *);
 void			 pfctl_print_altq_nodestat(int,
 			    const struct pf_altq_node *);
 
-double	calc_interval(struct timeval *, struct timeval *);
-double	calc_rate(u_int64_t, u_int64_t, double);
-double	calc_pps(u_int64_t, u_int64_t, double);
+void			 update_avg(struct pf_altq_node *);
 
 int
 pfctl_show_altq(int dev, int opts, int verbose2)
@@ -106,7 +107,7 @@ pfctl_show_altq(int dev, int opts, int verbose2)
 
 	while (verbose2) {
 		printf("\n");
-		sleep(5);
+		sleep(STAT_INTERVAL);
 		if (pfctl_update_qstats(dev, &root))
 			return (-1);
 		for (node = root; node != NULL; node = node->next)
@@ -142,22 +143,20 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 		if (pa.altq.qid > 0) {
 			pq.nr = nr;
 			pq.ticket = pa.ticket;
-			pq.buf = &qstats;
-			pq.nbytes = sizeof(qstats);
+			pq.buf = &qstats.data;
+			pq.nbytes = sizeof(qstats.data);
 			if (ioctl(dev, DIOCGETQSTATS, &pq)) {
 				warn("DIOCGETQSTATS");
 				return (-1);
 			}
-			qstats.valid = 1;
-			gettimeofday(&qstats.timestamp, NULL);
 			if ((node = pfctl_find_altq_node(*root, pa.altq.qname,
 			    pa.altq.ifname)) != NULL) {
-				memcpy(&node->qstats_last, &node->qstats,
-				    sizeof(struct queue_stats));
-				memcpy(&node->qstats, &qstats,
-				    sizeof(qstats));
-			} else
+				memcpy(&node->qstats.data, &qstats.data,
+				    sizeof(qstats.data));
+				update_avg(node);
+			} else {
 				pfctl_insert_altq_node(root, pa.altq, qstats);
+			}
 		}
 	}
 	return (0);
@@ -200,6 +199,7 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 			prev->next = node;
 		}
 	}
+	update_avg(node);
 }
 
 struct pf_altq_node *
@@ -265,22 +265,20 @@ pfctl_print_altq_nodestat(int dev, const struct pf_altq_node *a)
 
 	switch (a->altq.scheduler) {
 	case ALTQT_CBQ:
-		print_cbqstats(a->qstats, a->qstats_last);
+		print_cbqstats(a->qstats);
 		break;
 	case ALTQT_PRIQ:
-		print_priqstats(a->qstats, a->qstats_last);
+		print_priqstats(a->qstats);
 		break;
 	case ALTQT_HFSC:
-		print_hfscstats(a->qstats, a->qstats_last);
+		print_hfscstats(a->qstats);
 		break;
 	}
 }
 
 void
-print_cbqstats(struct queue_stats cur, struct queue_stats last)
+print_cbqstats(struct queue_stats cur)
 {
-	double	interval;
-
 	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.cbq_stats.xmit_cnt.packets,
@@ -291,22 +289,17 @@ print_cbqstats(struct queue_stats cur, struct queue_stats last)
 	    cur.data.cbq_stats.qcnt, cur.data.cbq_stats.qmax,
 	    cur.data.cbq_stats.borrows, cur.data.cbq_stats.delays);
 
-	if (!last.valid)
+	if (cur.avgn < 2)
 		return;
 
-	interval = calc_interval(&cur.timestamp, &last.timestamp);
 	printf("  [ measured: %7.1f packets/s, %s/s ]\n",
-	    calc_pps(cur.data.cbq_stats.xmit_cnt.packets,
-		last.data.cbq_stats.xmit_cnt.packets, interval),
-	    rate2str(calc_rate(cur.data.cbq_stats.xmit_cnt.bytes,
-		last.data.cbq_stats.xmit_cnt.bytes, interval)));
+	    cur.avg_packets / STAT_INTERVAL,
+	    rate2str((8 * cur.avg_bytes) / STAT_INTERVAL));
 }
 
 void
-print_priqstats(struct queue_stats cur, struct queue_stats last)
+print_priqstats(struct queue_stats cur)
 {
-	double	interval;
-
 	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.priq_stats.xmitcnt.packets,
@@ -316,22 +309,17 @@ print_priqstats(struct queue_stats cur, struct queue_stats last)
 	printf("  [ qlength: %3d/%3d ]\n",
 	    cur.data.priq_stats.qlength, cur.data.priq_stats.qlimit);
 
-	if (!last.valid)
+	if (cur.avgn < 2)
 		return;
 
-	interval = calc_interval(&cur.timestamp, &last.timestamp);
 	printf("  [ measured: %7.1f packets/s, %s/s ]\n",
-	    calc_pps(cur.data.priq_stats.xmitcnt.packets,
-		last.data.priq_stats.xmitcnt.packets, interval),
-	    rate2str(calc_rate(cur.data.priq_stats.xmitcnt.bytes,
-		last.data.priq_stats.xmitcnt.bytes, interval)));
+	    cur.avg_packets / STAT_INTERVAL,
+	    rate2str((8 * cur.avg_bytes) / STAT_INTERVAL));
 }
 
 void
-print_hfscstats(struct queue_stats cur, struct queue_stats last)
+print_hfscstats(struct queue_stats cur)
 {
-	double	interval;
-
 	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.hfsc_stats.xmit_cnt.packets,
@@ -341,15 +329,12 @@ print_hfscstats(struct queue_stats cur, struct queue_stats last)
 	printf("  [ qlength: %3d/%3d ]\n",
 	    cur.data.hfsc_stats.qlength, cur.data.hfsc_stats.qlimit);
 
-	if (!last.valid)
+	if (cur.avgn < 2)
 		return;
 
-	interval = calc_interval(&cur.timestamp, &last.timestamp);
 	printf("  [ measured: %7.1f packets/s, %s/s ]\n",
-	    calc_pps(cur.data.hfsc_stats.xmit_cnt.packets,
-		last.data.hfsc_stats.xmit_cnt.packets, interval),
-	    rate2str(calc_rate(cur.data.hfsc_stats.xmit_cnt.bytes,
-		last.data.hfsc_stats.xmit_cnt.bytes, interval)));
+	    cur.avg_packets / STAT_INTERVAL,
+	    rate2str((8 * cur.avg_bytes) / STAT_INTERVAL));
 }
 
 void
@@ -366,33 +351,55 @@ pfctl_free_altq_node(struct pf_altq_node *node)
 	}
 }
 
-/* calculate interval in sec */
-double
-calc_interval(struct timeval *cur_time, struct timeval *last_time)
+void
+update_avg(struct pf_altq_node *a)
 {
-	double	sec;
+	struct queue_stats	*qs;
+	u_int64_t		 b, p;
+	int			 n;
 
-	sec = (double)(cur_time->tv_sec - last_time->tv_sec) +
-	    (double)(cur_time->tv_usec - last_time->tv_usec) / 1000000;
-	return (sec);
-}
+	if (a->altq.qid == 0)
+		return;
 
-/* calculate rate in bps */
-double
-calc_rate(u_int64_t new_bytes, u_int64_t last_bytes, double interval)
-{
-	double	rate;
+	qs = &a->qstats;
+	n = qs->avgn;
 
-	rate = (double)(new_bytes - last_bytes) * 8 / interval;
-	return (rate);
-}
+	switch (a->altq.scheduler) {
+	case ALTQT_CBQ:
+		b = qs->data.cbq_stats.xmit_cnt.bytes;
+		p = qs->data.cbq_stats.xmit_cnt.packets;
+		break;
+	case ALTQT_PRIQ:
+		b = qs->data.priq_stats.xmitcnt.bytes;
+		p = qs->data.priq_stats.xmitcnt.packets;
+		break;
+	case ALTQT_HFSC:
+		b = qs->data.hfsc_stats.xmit_cnt.bytes;
+		p = qs->data.hfsc_stats.xmit_cnt.packets;
+		break;
+	default:
+		b = 0;
+		p = 0;
+		break;
+	}
 
-/* calculate packets in second */
-double
-calc_pps(u_int64_t new_pkts, u_int64_t last_pkts, double interval)
-{
-	double	pps;
+	if (n == 0) {
+		qs->prev_bytes = b;
+		qs->prev_packets = p;
+		qs->avgn++;
+		return;
+	}
 
-	pps = (double)(new_pkts - last_pkts) / interval;
-	return (pps);
+	if (b >= qs->prev_bytes)
+		qs->avg_bytes = ((qs->avg_bytes * (n - 1)) +
+		    (b - qs->prev_bytes)) / n;
+
+	if (p >= qs->prev_packets)
+		qs->avg_packets = ((qs->avg_packets * (n - 1)) +
+		    (p - qs->prev_packets)) / n;
+
+	qs->prev_bytes = b;
+	qs->prev_packets = p;
+	if (n < AVGN_MAX)
+		qs->avgn++;
 }
