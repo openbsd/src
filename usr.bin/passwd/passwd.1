@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.11 2000/04/15 11:45:55 aaron Exp $
+.\"	$OpenBSD: passwd.1,v 1.12 2000/08/01 22:30:53 provos Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -65,6 +65,10 @@ Its total length must be less than
 (currently 128 characters).
 Numbers, upper case letters and meta-characters
 are encouraged.
+.Pp
+The quality of the password can be enforced by providing an external
+checking program in 
+.Xr passwd.conf 5 .
 .Pp
 The options are as follows:
 .Bl -tag -width flag
