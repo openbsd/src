@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2000/11/10 18:15:41 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2001/04/03 20:25:35 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -561,7 +561,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(%x (pmap %x), %x (%x), %x, %d) -> %x at pc %x\n",
-		       map, &vm->vm_pmap, va, vadr, ftype, FALSE, rv, pc);
+		       map, vm->vm_map.pmap, va, vadr, ftype, FALSE, rv, pc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
