@@ -1773,12 +1773,11 @@ md_assemble (str)
 
 	      case BFD_RELOC_LO16:
 		if (operand->flags & PPC_OPERAND_SIGNED) {
-			/* sign extend */
-			signed short i;
-			i = ex.X_add_number;
-			ex.X_add_number = (int) i;
+		  ex.X_add_number = (((ex.X_add_number & 0xffff)
+				      ^ 0x8000)
+				     - 0x8000);
 		} else {
-			ex.X_add_number &= 0xffff;
+		  ex.X_add_number &= 0xffff;
 		}
 		break;
 
