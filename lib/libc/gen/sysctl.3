@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.60 2001/01/04 06:14:37 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.61 2001/01/04 07:53:43 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -422,37 +422,14 @@ Return a comma-separated list of the bucket sizes used by the kernel.
 A node containing the statistics for the memory bucket of the
 specified size (in decimal notation, the number of bytes per bucket
 element, e.g., 16, 32, 128).
-The fifth level names are:
-.Bl -column "KERN_MALLOC_COULDFREEXXX" "quad" -offset indent
-.It Dv KERN_MALLOC_CALLS	node
-.It Dv KERN_MALLOC_ALLOC	node
-.It Dv KERN_MALLOC_FREE	node
-.It Dv KERN_MALLOC_ELEMENTS	node
-.It Dv KERN_MALLOC_HIWAT	node
-.It Dv KERN_MALLOC_COULDFREE	node
-.El
+Each node returns a
+.Li struct kmembuckets .
 .Pp
-The variables are as follows:
-.Bl -tag -width "123456"
-.It Dv KERN_MALLOC_CALLS
-Number of calls to the kernel allocator for this bucket size.
-.It Dv KERN_MALLOC_ALLOC
-Total number of blocks allocated from this bucket.
-.It Dv KERN_MALLOC_FREE
-Number of free elements on this bucket.
-.It Dv KERN_MALLOC_ELEMENTS
-Number of elements of this bucket size per memory cluster (the latter is
-usually defined as CLSIZE*NBPG).
-.It Dv KERN_MALLOC_HIWAT
-High watermark for this bucket size.
-.It Dv KERN_MALLOC_COULDFREE
-Number of times free elements exceeded high watermark.
-.El
-.Pp
-Note that bucket sizes are typically powers of 2.
 If a value is specified that does not correspond directly to a
 bucket size, the statistics for the closest larger bucket size will be
-displayed instead.
+returned instead.
+.Pp
+Note that bucket sizes are typically powers of 2.
 .El
 .Pp
 .It Dv KERN_PROF
