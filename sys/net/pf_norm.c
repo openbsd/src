@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.28 2002/05/21 08:42:35 espie Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.29 2002/06/07 21:14:02 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -65,6 +65,7 @@ struct pf_frent {
 #define PFFRAG_SEENLAST	0x0001		/* Seen the last fragment for this */
 
 struct pf_fragment {
+	RB_ENTRY(pf_fragment) fr_entry;
 	TAILQ_ENTRY(pf_fragment) frag_next;
 	struct in_addr	fr_src;
 	struct in_addr	fr_dst;
@@ -78,8 +79,14 @@ struct pf_fragment {
 
 TAILQ_HEAD(pf_fragqueue, pf_fragment)	pf_fragqueue;
 
+static __inline int	 pf_frag_compare(struct pf_fragment *,
+			    struct pf_fragment *);
+RB_HEAD(pf_frag_tree, pf_fragment)	pf_frag_tree;
+RB_PROTOTYPE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
+RB_GENERATE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
+
 /* Private prototypes */
-void			 pf_ip2key(struct pf_tree_key *, struct ip *);
+void			 pf_ip2key(struct pf_fragment *, struct ip *);
 void			 pf_remove_fragment(struct pf_fragment *);
 void			 pf_flush_fragments(void);
 void			 pf_free_fragment(struct pf_fragment *);
@@ -112,7 +119,6 @@ int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 #endif
 
 /* Globals */
-struct pf_tree_node	*tree_fragment;
 struct pool		 pf_frent_pl, pf_frag_pl;
 int			 pf_nfrents;
 extern int		 pftm_frag;	/* Fragment expire timeout */
@@ -131,6 +137,25 @@ pf_normalize_init(void)
 	TAILQ_INIT(&pf_fragqueue);
 }
 
+static __inline int	
+pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)
+{
+	int diff;
+	if ((diff = a->fr_id - b->fr_id))
+		return (diff);
+	else if ((diff = a->fr_p - b->fr_p))
+		return (diff);
+	else if (a->fr_src.s_addr < b->fr_src.s_addr)
+		return (-1);
+	else if (a->fr_src.s_addr > b->fr_src.s_addr)
+		return (1);
+	else if (a->fr_dst.s_addr < b->fr_dst.s_addr)
+		return (-1);
+	else if (a->fr_dst.s_addr > b->fr_dst.s_addr)
+		return (1);
+	return 0;
+}
+
 void
 pf_purge_expired_fragments(void)
 {
@@ -141,7 +166,7 @@ pf_purge_expired_fragments(void)
 		if (frag->fr_timeout > expire)
 			break;
 
-		DPFPRINTF(("expiring %p\n", frag));
+		DPFPRINTF(("expiring %d(%p)\n", frag->fr_id, frag));
 		pf_free_fragment(frag);
 	}
 }
@@ -188,26 +213,23 @@ pf_free_fragment(struct pf_fragment *frag)
 }
 
 void
-pf_ip2key(struct pf_tree_key *key, struct ip *ip)
+pf_ip2key(struct pf_fragment *key, struct ip *ip)
 {
-	key->proto = ip->ip_p;
-	key->af = AF_INET;
-	key->addr[0].addr32[0] = ip->ip_src.s_addr;
-	key->addr[1].addr32[0] = ip->ip_dst.s_addr;
-	key->port[0] = ip->ip_id;
-	key->port[1] = 0;
+	key->fr_p = ip->ip_p;
+	key->fr_id = ip->ip_id;
+	key->fr_src.s_addr = ip->ip_src.s_addr;
+	key->fr_dst.s_addr = ip->ip_dst.s_addr;
 }
 
 struct pf_fragment *
 pf_find_fragment(struct ip *ip)
 {
-	struct pf_tree_key key;
+	struct pf_fragment key;
 	struct pf_fragment *frag;
 
 	pf_ip2key(&key, ip);
 
-	frag = (struct pf_fragment *)pf_find_state(tree_fragment, &key);
-
+	frag = RB_FIND(pf_frag_tree, &pf_frag_tree, &key);
 	if (frag != NULL) {
 		frag->fr_timeout = time.tv_sec;
 		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
@@ -222,19 +244,8 @@ pf_find_fragment(struct ip *ip)
 void
 pf_remove_fragment(struct pf_fragment *frag)
 {
-	struct pf_tree_key key;
-
-	/* XXX keep in sync with pf_ip2key */
-	key.proto = frag->fr_p;
-	key.af = AF_INET;
-	key.addr[0].addr32[0] = frag->fr_src.s_addr;
-	key.addr[1].addr32[0] = frag->fr_dst.s_addr;
-	key.port[0] = frag->fr_id;
-	key.port[1] = 0;
-
-	pf_tree_remove(&tree_fragment, NULL, &key);
+	RB_REMOVE(pf_frag_tree, &pf_frag_tree, frag);
 	TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
-
 	pool_put(&pf_frag_pl, frag);
 }
 
@@ -256,8 +267,6 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
 	/* Create a new reassembly queue for this packet */
 	if (frag == NULL) {
-		struct pf_tree_key key;
-
 		frag = pool_get(&pf_frag_pl, PR_NOWAIT);
 		if (frag == NULL) {
 			pf_flush_fragments();
@@ -275,10 +284,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		frag->fr_timeout = time.tv_sec;
 		LIST_INIT(&frag->fr_queue);
 
-		pf_ip2key(&key, frent->fr_ip);
-
-		pf_tree_insert(&tree_fragment, NULL, &key,
-		    (struct pf_state *)frag);
+		RB_INSERT(pf_frag_tree, &pf_frag_tree, frag);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 
 		/* We do not have a previous fragment */
@@ -522,7 +528,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	frent->fr_m = m;
 
 	/* Might return a completely reassembled mbuf, or NULL */
-	DPFPRINTF(("reass frag %d @ %d\n", h->ip_id, fragoff));
+	DPFPRINTF(("reass frag %d @ %d-%d\n", h->ip_id, fragoff, max));
 	*m0 = m = pf_reassemble(m0, frag, frent, mff);
 
 	if (m == NULL)

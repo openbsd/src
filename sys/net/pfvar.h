@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.73 2002/05/19 22:31:28 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.74 2002/06/07 21:14:02 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,6 +35,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
 
 enum	{ PF_IN=0, PF_OUT=1 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2 };
@@ -292,7 +293,6 @@ struct pf_state_peer {
 };
 
 struct pf_state {
-	TAILQ_ENTRY(pf_state)	entries;
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
 	struct pf_state_host ext;
@@ -312,6 +312,16 @@ struct pf_state {
 	u_int8_t	 log;
 	u_int8_t	 allow_opts;
 };
+
+struct pf_tree_node {
+	RB_ENTRY(pf_tree_node) entry;
+	struct pf_state	*state;
+	struct pf_addr	 addr[2];
+	u_int16_t	 port[2];
+	u_int8_t	 af;
+	u_int8_t	 proto;
+};
+
 
 struct pf_nat {
 	char			 ifname[IFNAMSIZ];
@@ -363,13 +373,6 @@ struct pf_rdr {
 	u_int8_t		 ifnot;
 	u_int8_t		 opts;
 	u_int8_t		 no;
-};
-
-struct pf_tree_key {
-	struct pf_addr	 addr[2];
-	u_int16_t	 port[2];
-	u_int8_t	 proto;
-	u_int8_t	 af;
 };
 
 TAILQ_HEAD(pf_rulequeue, pf_rule);
@@ -616,14 +619,6 @@ int	pf_test(int, struct ifnet *, struct mbuf **);
 #ifdef INET6
 int	pf_test6(int, struct ifnet *, struct mbuf **);
 #endif /* INET */
-
-struct pf_tree_node;
-struct pf_state
-	*pf_find_state(struct pf_tree_node *, struct pf_tree_key *);
-int	pf_tree_insert(struct pf_tree_node **, struct pf_tree_node *,
-	    struct pf_tree_key *, struct pf_state *);
-int	pf_tree_remove(struct pf_tree_node **, struct pf_tree_node *,
-	    struct pf_tree_key *);
 
 int	pflog_packet(struct ifnet *, struct mbuf *, int, u_short, u_short,
 	    struct pf_rule *);
