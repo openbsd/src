@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.2,v 1.18 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: mount.2,v 1.19 2000/09/22 02:18:15 espie Exp $
 .\"	$NetBSD: mount.2,v 1.12 1996/02/29 23:47:48 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
@@ -120,6 +120,32 @@ specific arguments to mount.
 The currently supported types of filesystems and
 their type specific data are:
 .Pp
+.Dv MOUNT_ADOSFS
+.Bd -literal -offset indent -compact
+struct adosfs_args {
+    char	*fspec;	    /* blocks special holding fs to mount */
+    struct	export_args export;
+    			    /* network export information */
+    uid_t	uid;	    /* uid that owns adosfs files */
+    gid_t	gid;	    /* gid that owns adosfs files */
+    mode_t	mask;	    /* mask to be applied for adosfs perms */
+};
+.Ed
+.Pp
+.Dv MOUNT_CD9660
+.Bd -literal -offset indent -compact
+struct iso_args {
+    char	*fspec;	    /* block special device to mount */
+    struct	export_args export;
+    			    /* network export info */
+    int	flags;		    /* mounting flags, see below */
+};
+#define	ISOFSMNT_NORRIP	  0x00000001 /* disable Rock Ridge Ext.*/
+#define	ISOFSMNT_GENS	  0x00000002 /* enable generation numbers */
+#define	ISOFSMNT_EXTATT	  0x00000004 /* enable extended attributes */
+#define	ISOFSMNT_NOJOLIET 0x00000008 /* disable Joliet Ext.*/
+.Ed
+.Pp
 .Dv MOUNT_FFS
 .Bd -literal -offset indent -compact
 struct ufs_args {
@@ -128,6 +154,36 @@ struct ufs_args {
 };
 .Ed
 .Pp
+.Dv MOUNT_MFS
+.Bd -literal -offset indent -compact
+struct mfs_args {
+      char	*fspec;             /* name to export for statfs */
+      struct	export_args export; /* if we can export an MFS */
+      caddr_t	base;               /* base of filesystem in mem */
+      u_long	size;               /* size of filesystem */
+};
+.Ed
+.Pp
+.Dv MOUNT_MSDOS
+.Bd -literal -offset indent -compact
+struct msdosfs_args {
+	char	*fspec;	   /* blocks special holding fs to mount */
+	struct	export_args export;
+			   /* network export information */
+	uid_t	uid;	   /* uid that owns msdosfs files */
+	gid_t	gid;	   /* gid that owns msdosfs files */
+	mode_t  mask;	   /* mask to be applied for msdosfs perms */
+	int	flags;	   /* see below */
+};
+
+/*
+ * Msdosfs mount options:
+ */
+#define	MSDOSFSMNT_SHORTNAME 1  /* Force old DOS short names only */
+#define	MSDOSFSMNT_LONGNAME  2  /* Force Win'95 long names */
+#define	MSDOSFSMNT_NOWIN95   4  /* Completely ignore Win95 entries */
+#define	MSDOSFSMNT_GEMDOSFS  8  /* This is a gemdos-flavour */
+.Ed
 .Dv MOUNT_NFS
 .Bd -literal -offset indent -compact
 struct nfs_args {
@@ -153,16 +209,6 @@ struct nfs_args {
       int             acregmax;     /* ac file not recently modified */
       int             acdirmin;     /* ac for dir recently modified */
       int             acdirmax;     /* ac for dir not recently modified */
-};
-.Ed
-.Pp
-.Dv MOUNT_MFS
-.Bd -literal -offset indent -compact
-struct mfs_args {
-      char	*fspec;             /* name to export for statfs */
-      struct	export_args export; /* if we can export an MFS */
-      caddr_t	base;               /* base of filesystem in mem */
-      u_long	size;               /* size of filesystem */
 };
 .Ed
 .Pp
