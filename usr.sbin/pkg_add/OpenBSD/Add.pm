@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.19 2004/11/13 12:33:01 espie Exp $
+# $OpenBSD: Add.pm,v 1.20 2004/11/14 19:50:44 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -77,7 +77,7 @@ sub validate_plist($$)
 		next unless $item->IsFile();
 		my $fname = $destdir.$item->fullname();
 		if (OpenBSD::Vstat::vexists($fname)) {
-			push(@$colliding, $fname);
+			push(@$colliding, $item);
 			$problems++;
 		}
 		$totsize += $item->{size} if defined $item->{size};

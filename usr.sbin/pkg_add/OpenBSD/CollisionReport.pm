@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.2 2004/11/13 23:13:39 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.3 2004/11/14 19:50:44 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,7 @@ use OpenBSD::PackageInfo;
 sub collision_report($$)
 {
 	my ($list, $state) = @_;
-	my %todo = map {($_, 1)} @$list;
+	my %todo = map {($_->fullname(), $_->{md5})} @$list;
 	my $bypkg = {};
 	
 
@@ -52,8 +52,18 @@ sub collision_report($$)
 	    	print "\t$item ($pkg)\n";
 	    }
 	}
-	for my $item (sort keys %todo) {
-	    print "\t$item\n";
+	if (%todo) {
+		require OpenBSD::md5;
+		my $destdir = $state->{destdir};
+
+		for my $item (sort keys %todo) {
+		    my $md5 = OpenBSD::md5::fromfile($destdir.$item);
+		    if ($md5 eq $todo{$item}) {
+			print "\t$item (same md5)\n";
+		    } else {
+			print "\t$item (different md5)\n";
+		    }
+	    	}
 	}
 }
 
