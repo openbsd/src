@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlogin.1,v 1.5 1999/06/05 01:21:38 aaron Exp $
+.\"	$OpenBSD: rlogin.1,v 1.6 2000/03/10 20:17:50 aaron Exp $
 .\"	$NetBSD: rlogin.1,v 1.4 1995/08/18 15:07:35 pk Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -48,15 +48,16 @@
 .Op Fl l Ar username
 .Ar host
 .Sh DESCRIPTION
-.Nm rlogin
+.Nm
 starts a terminal session on a remote host
-.Ar host  .
+.Ar host .
 .Pp
-.Nm rlogin
+.Nm
 first attempts to use the Kerberos authorization mechanism, described below.
 If the remote host does not support Kerberos the standard Berkeley
 .Pa rhosts
 authorization mechanism is used.
+.Pp
 The options are as follows:
 .Bl -tag -width flag
 .It Fl 8
@@ -80,7 +81,9 @@ option turns off all Kerberos authentication.
 .It Fl L
 The
 .Fl L
-option allows the rlogin session to be run in ``litout'' (see
+option allows the rlogin session to be run in
+.Dq litout
+(see
 .Xr tty 4 )
 mode.
 .It Fl d
@@ -93,7 +96,8 @@ on the TCP sockets used for communication with the remote host.
 The
 .Fl e
 option allows user specification of the escape character, which is
-``~'' by default.
+.Ql ~
+by default.
 This specification may be as a literal character, or as an octal
 value in the form \ennn.
 .It Fl k Ar realm
@@ -103,7 +107,7 @@ option requests rlogin to obtain tickets for the remote host
 in realm
 .Ar realm
 instead of the remote host's realm as determined by
-.Xr krb_realmofhost  3  .
+.Xr krb_realmofhost 3 .
 .It Fl x
 The
 .Fl x
@@ -124,17 +128,27 @@ for the remote login.
 If this option is not specified, your local username will be used.
 .El
 .Pp
-A line of the form ``<escape char>.'' disconnects from the remote host.
-Similarly, the line ``<escape char>^Z'' will suspend the
-.Nm rlogin
-session, and ``<escape char><delayed-suspend char>'' suspends the
+A line of the form
+.Dq <escape char>.
+disconnects from the remote host.
+Similarly, the line
+.Dq <escape char>^Z
+will suspend the
+.Nm
+session, and
+.Dq <escape char><delayed-suspend char>
+suspends the
 send portion of the rlogin, but allows output from the remote system.
-By default, the tilde (``~'') character is the escape character, and
-normally control-Y (``^Y'') is the delayed-suspend character.
+By default, the tilde
+.Pq Ql ~
+character is the escape character, and
+normally control-Y
+.Pq Ql ^Y
+is the delayed-suspend character.
 .Pp
 All echoing takes place at the remote site, so that (except for delays)
 the
-.Nm rlogin
+.Nm
 is transparent.
 Flow control via ^S/^Q and flushing of input and output on interrupts
 are handled properly.
@@ -144,7 +158,7 @@ Each user may have a private authorization list in the file
 in their home directory.
 Each line in this file should contain a Kerberos principal name of the
 form
-.Ar principal.instance@realm  .
+.Ar principal.instance@realm .
 If the originating user is authenticated to one of the principals named
 in
 .Pa .klogin ,
@@ -157,7 +171,7 @@ there is no
 file.
 Otherwise a login and password will be prompted for on the remote machine
 as in
-.Xr login  1  .
+.Xr login 1 .
 To avoid certain security problems, the
 .Pa .klogin
 file must be owned by
@@ -165,10 +179,10 @@ the remote user.
 .Pp
 If Kerberos authentication fails, a warning message is printed and the
 standard Berkeley
-.Nm rlogin
+.Nm
 is used instead.
 .Sh ENVIRONMENT
-The following environment variable is utilized by
+The following environment variables affect the execution of
 .Nm rlogin :
 .Bl -tag -width TERM
 .It Ev TERM
@@ -187,7 +201,7 @@ command appeared in
 .Sh BUGS
 .Nm rlogin
 will be replaced by
-.Xr telnet  1
+.Xr telnet 1
 in the near future.
 .Pp
 More of the environment should be propagated.

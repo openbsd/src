@@ -1,4 +1,5 @@
-.\"	$OpenBSD: pr.1,v 1.10 2000/03/06 03:15:59 aaron Exp $
+.\"	$OpenBSD: pr.1,v 1.11 2000/03/10 20:17:49 aaron Exp $
+.\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,15 +100,13 @@ utility is a printing and pagination filter for text files.
 When multiple input files are specified, each is read, formatted,
 and written to standard output.
 By default, the input is separated into 66-line pages, each with
-.sp
-.in +2
-.ti -2
-\(bu A 5-line header with the page number, date, time, and
+.Bl -bullet -offset indent
+.It
+A 5-line header with the page number, date, time, and
 the pathname of the file.
-.sp
-.ti -2
-\(bu A 5-line trailer consisting of blank lines.
-.in -2
+.It
+A 5-line trailer consisting of blank lines.
+.El
 .Pp
 Optionally, the trailer can be replaced by a
 .Em <form-feed>
@@ -179,7 +178,8 @@ This option requires the use of the
 .Fl column
 option.
 .It Fl d
-Produce output that is double spaced. An extra
+Produce output that is double spaced.
+An extra
 .Em <newline>
 character is output following every
 .Em <newline>
@@ -285,7 +285,8 @@ output.
 If
 .Ar char
 (any nondigit character) is given, it is appended to the line number to
-separate it from whatever follows. The default for
+separate it from whatever follows.
+The default for
 .Ar char
 is a
 .Em <tab> .
@@ -338,14 +339,14 @@ If no
 operands are specified, or if a
 .Ar file
 operand is
-.Sq Fl ,
+.Dq - ,
 the standard input is used.
 The standard input is used only if no
 .Ar file
 operands are specified, or if a
 .Ar file
 operand is
-.Sq Fl .
+.Dq - .
 .El
 .Pp
 The
@@ -377,7 +378,8 @@ The interpretation of
 .Em <form-feed>s
 in the input stream is that they are special
 .Em <newline>s
-which have the side effect of causing a page break.  While this works
+which have the side effect of causing a page break.
+While this works
 correctly for all cases, strict interpretation also implies that the
 common convention of placing a
 .Em <form-feed>
@@ -407,7 +409,8 @@ does not apply to single-column output frequently results in formatting
 errors when input lines are longer than actual line width of the output device.
 .Pp
 The default width of 72 is archaic and non-obvious since it is normally
-ignored in the default single column mode.  Using the
+ignored in the default single column mode.
+Using the
 .Fl m
 option with one column provides a way to truncate single column output but
 there's no way to wrap long times to a fixed line width.

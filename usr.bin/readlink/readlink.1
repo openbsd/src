@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readlink.1,v 1.5 2000/03/05 00:28:53 aaron Exp $
+.\"	$OpenBSD: readlink.1,v 1.6 2000/03/10 20:17:50 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,11 +46,12 @@
 .Ar file
 .Sh DESCRIPTION
 The
-.Nm readlink
+.Nm
 utility when invoked with the pathname of a symbolic link as its
 argument dereferences the symbolic link and prints the name of target
-on standard output.  If readlink is invoked with an argument other
-than the pathname of a symbolic link, it exits with a non-zero exit
+on standard output.
+If readlink is invoked with an argument other
+than the pathname of a symbolic link, it exits with a nonzero exit
 code without printing anything.
 .Pp
 The options are as follows:
@@ -63,12 +64,12 @@ Do not print a trailing newline character.
 .El
 .Pp
 The
-.Nm readlink
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr readlink 2
 .Sh HISTORY
 The
-.Nm readlink
+.Nm
 utility first appeared in
 .Ox 2.1 .

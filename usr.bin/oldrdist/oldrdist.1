@@ -1,4 +1,5 @@
-.\"	$OpenBSD: oldrdist.1,v 1.6 2000/03/04 22:19:25 aaron Exp $
+.\"	$OpenBSD: oldrdist.1,v 1.7 2000/03/10 20:17:48 aaron Exp $
+.\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -67,7 +68,9 @@ Use the specified
 .Ar distfile .
 If
 .Ar distfile
-is `-', the standard input is used.
+is
+.Dq - ,
+the standard input is used.
 .El
 .Pp
 If either the
@@ -82,10 +85,10 @@ to use as the input.
 If no names are specified on the command line,
 .Nm rdist
 will update all of the files and directories listed in
-.Ar distfile  .
+.Ar distfile .
 Otherwise, the argument is taken to be the name of a file to be updated
-or the label of a command to execute. If label and file names conflict,
-it is assumed to be a label.
+or the label of a command to execute.
+If label and file names conflict, it is assumed to be a label.
 These may be used together to update specific files
 using specific commands.
 .Pp
@@ -95,7 +98,7 @@ Options specific to the second SYNOPSIS form:
 Forces
 .Nm rdist
 to interpret the remaining arguments as a small
-.Ar distfile  .
+.Ar distfile .
 .Pp
 The equivalent distfile is as follows.
 .Pp
@@ -114,65 +117,75 @@ The equivalent distfile is as follows.
 Options common to both forms:
 .Bl -tag -width Ic
 .It Fl b
-Binary comparison. Perform a binary comparison and update files if they differ
+Binary comparison.
+Perform a binary comparison and update files if they differ
 rather than comparing dates and sizes.
 .It Fl d Ar var=value
 Define
 .Ar var
 to have
-.Ar value  .
+.Ar value .
 The
 .Fl d
 option is used to define or override variable definitions in the
-.Ar distfile  .
+.Ar distfile .
 .Ar Value
 can be the empty string, one name, or a list of names surrounded by
 parentheses and separated by tabs and/or spaces.
 .It Fl h
-Follow symbolic links. Copy the file that the link points to rather than the
-link itself.
+Follow symbolic links.
+Copy the file that the link points to rather than the link itself.
 .It Fl i
 Ignore unresolved links.
 .Nm rdist
 will normally try to maintain the link structure of files being transferred
 and warn the user if all the links cannot be found.
 .It Fl m Ar host
-Limit which machines are to be updated. Multiple
+Limit which machines are to be updated.
+Multiple
 .Fl m
 arguments can be given to limit updates to a subset of the hosts listed in the
-.Ar distfile  .
+.Ar distfile .
 .It Fl n
-Print the commands without executing them. This option is
-useful for debugging
-.Ar distfile  .
+Print the commands without executing them.
+This option is useful for debugging
+.Ar distfile .
 .It Fl q
-Quiet mode. Files that are being modified are normally
-printed on standard output. The
+Quiet mode.
+Files that are being modified are normally printed on standard output.
+The
 .Fl q
 option suppresses this.
 .It Fl R
-Remove extraneous files. If a directory is being updated, any files that exist
+Remove extraneous files.
+If a directory is being updated, any files that exist
 on the remote host that do not exist in the master directory are removed.
 This is useful for maintaining truly identical copies of directories.
 .It Fl v
-Verify that the files are up to date on all the hosts. Any files
+Verify that the files are up to date on all the hosts.
+Any files
 that are out of date will be displayed but no files will be changed
 nor any mail sent.
 .It Fl w
-Whole mode. The whole file name is appended to the destination directory
-name. Normally, only the last component of a name is used when renaming files.
+Whole mode.
+The whole file name is appended to the destination directory
+name.
+Normally, only the last component of a name is used when renaming files.
 This will preserve the directory structure of the files being
-copied instead of flattening the directory structure. For example,
+copied instead of flattening the directory structure.
+For example,
 renaming a list of files such as ( dir1/f1 dir2/f2 ) to dir3 would create
 files dir3/dir1/f1 and dir3/dir2/f2 instead of dir3/f1 and dir3/f2.
 .It Fl y
-Younger mode. Files are normally updated if their
+Younger mode.
+Files are normally updated if their
 .Ar mtime
 and
 .Ar size
 (see
-.Xr stat  2  )
-disagree. The
+.Xr stat 2 )
+disagree.
+The
 .Fl y
 option causes
 .Nm rdist
@@ -185,7 +198,8 @@ A warning message is printed for files which are newer than the master copy.
 .Ar distfile
 contains a sequence of entries that specify the files
 to be copied, the destination hosts, and what operations to perform
-to do the updating. Each entry has one of the following formats:
+to do the updating.
+Each entry has one of the following formats:
 .Pp
 .Bd -literal -offset indent -compact
 <variable name> `=' <name list>
@@ -205,16 +219,23 @@ as the master copy for distribution.
 The
 .Ar destination list
 is the list of hosts to which these files are to be
-copied.  Each file in the source list is added to a list of changes
+copied.
+Each file in the source list is added to a list of changes
 if the file is out of date on the host which is being updated (second format) or
 the file is newer than the time stamp file (third format).
 .Pp
-Labels are optional. They are used to identify a command for partial updates.
+Labels are optional.
+They are used to identify a command for partial updates.
 .Pp
 Newlines, tabs, and blanks are only used as separators and are
-otherwise ignored. Comments begin with `#' and end with a newline.
+otherwise ignored.
+Comments begin with
+.Ql #
+and end with a newline.
 .Pp
-Variables to be expanded begin with `$' followed by one character or
+Variables to be expanded begin with
+.Ql $
+followed by one character or
 a name enclosed in curly braces (see the examples at the end).
 .Pp
 The source and destination lists have the following format:
@@ -226,18 +247,33 @@ or
 `(' <zero or more names separated by whitespace> `)'
 .Ed
 .Pp
-The shell meta-characters `[', `]', `{', `}', `*', and `?'
+The shell meta-characters
+.Ql [ ,
+.Ql \&] ,
+.Ql { ,
+.Ql } ,
+.Ql * ,
+and
+.Ql ?
 are recognized and expanded (on the local host only) in the same way as
-.Xr csh  1  .
+.Xr csh 1 .
 They can be escaped with a backslash.
-The `~' character is also expanded in the same way as
+The
+.Ql ~
+character is also expanded in the same way as
 .Xr csh 1
 but is expanded separately on the local and destination hosts.
 When the
 .Fl w
-option is used with a file name that begins with `~', everything except the
+option is used with a file name that begins with
+.Ql ~ ,
+everything except the
 home directory is appended to the destination name.
-File names which do not begin with `/' or `~' use the destination user's
+File names which do not begin with
+.Ql /
+or
+.Ql ~
+use the destination user's
 home directory as the root directory for the rest of the file name.
 .Pp
 The command list consists of zero or more commands of the following
@@ -266,32 +302,45 @@ the destination name is not specified,
 the source file name is used.
 Directories in the path name will be created if they
 do not exist on the remote host.
+.Pp
 To help prevent disasters, a non-empty directory on a target host will
 never be replaced with a regular file or a symbolic link.
-However, under the `\-R' option a non-empty directory will be removed
+However, under the
+.Fl R
+option a non-empty directory will be removed
 if the corresponding filename is completely absent on the master host.
 The
 .Ar options
-are `\-R', `\-h', `\-i', `\-v', `\-w', `\-y', and `\-b'
+are
+.Fl R ,
+.Fl h ,
+.Fl i ,
+.Fl v ,
+.Fl w ,
+.Fl y ,
+and
+.Fl b
 and have the same semantics as
 options on the command line except they only apply to the files
 in the source list.
 The login name used on the destination host is the same as the local host
-unless the destination name is of the format ``login@host''.
+unless the destination name is of the format
+.Dq login@host .
 .Pp
 The
 .Ic notify
 command is used to mail the list of files updated (and any errors
 that may have occurred) to the listed names.
-If no `@' appears in the name, the destination host is appended to
-the name
+If no
+.Ql @
+appears in the name, the destination host is appended to the name
 (e.g., name1@host, name2@host, ...).
 .Pp
 The
 .Ic except
 command is used to update all of the files in the source list except
 for the files listed in
-.Ar name list  .
+.Ar name list .
 This is usually used to copy everything in a directory except certain files.
 .Pp
 The
@@ -302,20 +351,26 @@ command except that
 .Ar pattern list
 is a list of regular expressions
 (see
-.Xr ed  1
+.Xr ed 1
 for details).
 If one of the patterns matches some string within a file name, that file will
 be ignored.
-Note that since `\e' is a quote character, it must be doubled to become
-part of the regular expression.  Variables are expanded in
+Note that since
+.Ql \e
+is a quote character, it must be doubled to become
+part of the regular expression.
+Variables are expanded in
 .Ar pattern list
-but not shell file pattern matching characters.  To include a `$', it
-must be escaped with `\e'.
+but not shell file pattern matching characters.
+To include a
+.Ql $ ,
+it must be escaped with
+.Ql \e .
 .Pp
 The
 .Ic special
 command is used to specify
-.Xr sh  1
+.Xr sh 1
 commands that are to be executed on the
 remote host after the file in
 .Ar name list
@@ -323,13 +378,17 @@ is updated or installed.
 If the
 .Ar name list
 is omitted then the shell commands will be executed
-for every file updated or installed.  The shell variable FILE is set
+for every file updated or installed.
+The shell variable FILE is set
 to the current filename before executing the commands in
-.Ar string  .
+.Ar string .
 .Ar string
-starts and ends with `"' and can cross multiple lines in
+starts and ends with
+.Ql \&"
+and can cross multiple lines in
 .Ar distfile .
-Multiple commands to the shell should be separated by `;'.
+Multiple commands to the shell should be separated by
+.Ql \&; .
 Commands are executed in the user's home directory on the host
 being updated.
 The
@@ -403,6 +462,9 @@ facility.
 .Nm rdist
 aborts on files which have a negative mtime (before Jan 1, 1970).
 .Pp
-There should be a `force' option to allow replacement of non-empty directories
-by regular files or symlinks.  A means of updating file modes and owners
+There should be a 
+.Dq force
+option to allow replacement of non-empty directories
+by regular files or symlinks.
+A means of updating file modes and owners
 of otherwise identical files is also needed.

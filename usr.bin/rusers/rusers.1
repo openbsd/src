@@ -1,4 +1,5 @@
-.\"	$OpenBSD: rusers.1,v 1.5 2000/03/05 00:28:54 aaron Exp $
+.\"	$OpenBSD: rusers.1,v 1.6 2000/03/10 20:17:51 aaron Exp $
+.\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -44,14 +45,14 @@
 .Op Ar host ...
 .Sh DESCRIPTION
 The
-.Nm rusers
+.Nm
 command produces output similar to
 .Xr who 1 ,
 but for the list of hosts or all machines on the local
 network. For each host responding to the rusers query,
 the hostname with the names of the users currently logged
 on is printed on each line. The
-.Nm rusers
+.Nm
 command will wait for
 one minute to catch late responders.
 .Pp
@@ -72,14 +73,15 @@ The
 .Xr rpc.rusersd 8
 daemon has not been started on the remote host.
 .It rusers: RPC: Timed out
-A communication error occurred.  Either the network is
-excessively congested, or the
+A communication error occurred.
+Either the network is excessively congested, or the
 .Xr rpc.rusersd 8
 daemon has terminated on the remote host.
 .It rusers: RPC: Port mapper failure - RPC: Timed out
 The remote host is not running the portmapper (see
 .Xr portmap 8 ),
-and cannot accommodate any RPC-based services.  The host may be down.
+and cannot accommodate any RPC-based services.
+The host may be down.
 .El
 .Sh SEE ALSO
 .Xr rwho 1 ,
@@ -89,7 +91,7 @@ and cannot accommodate any RPC-based services.  The host may be down.
 .Xr rpc.rusersd 8
 .Sh HISTORY
 The
-.Nm rusers
+.Nm
 command
 appeared in
 .Tn SunOS .

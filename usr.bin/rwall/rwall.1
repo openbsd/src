@@ -1,4 +1,5 @@
-.\"	$OpenBSD: rwall.1,v 1.3 1999/06/05 01:21:39 aaron Exp $
+.\"	$OpenBSD: rwall.1,v 1.4 2000/03/10 20:17:51 aaron Exp $
+.\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -44,7 +45,7 @@
 .Op Ar file
 .Sh DESCRIPTION
 The
-.Nm rwall
+.Nm
 command sends a message to the users logged into the specified host. The
 message to be sent can be typed in and terminated with EOF or it can
 be in a
@@ -56,14 +57,15 @@ The
 .Xr rpc.rwalld 8
 daemon has not been started on the remote host.
 .It rwall: RPC: Timed out
-A communication error occurred.  Either the network is
-excessively congested, or the
+A communication error occurred.
+Either the network is excessively congested, or the
 .Xr rpc.rwalld 8
 daemon has terminated on the remote host.
 .It rwall: RPC: Port mapper failure - RPC: Timed out
 The remote host is not running the portmapper (see
 .Xr portmap 8 ),
-and cannot accommodate any RPC-based services.  The host may be down.
+and cannot accommodate any RPC-based services.
+The host may be down.
 .El
 .Sh SEE ALSO
 .Xr wall 1 ,
@@ -71,7 +73,7 @@ and cannot accommodate any RPC-based services.  The host may be down.
 .Xr rpc.rwalld 8
 .Sh HISTORY
 The
-.Nm rwall
+.Nm
 command
 appeared in
 .Tn SunOS .

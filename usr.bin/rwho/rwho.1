@@ -1,4 +1,5 @@
-.\"	$OpenBSD: rwho.1,v 1.4 1999/06/05 01:21:39 aaron Exp $
+.\"	$OpenBSD: rwho.1,v 1.5 2000/03/10 20:17:51 aaron Exp $
+.\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -43,22 +44,22 @@
 .Op Fl a
 .Sh DESCRIPTION
 The
-.Nm rwho
+.Nm
 command produces output similar to
 .Xr who 1 ,
 but for all machines on the local network.
 If no report has been
 received from a machine for 11 minutes then
-.Nm rwho
+.Nm
 assumes the machine is down, and does not report users last known
 to be logged into that machine.
 .Pp
 If a user hasn't typed to the system for a minute or more, then
-.Nm rwho
-reports this idle time.  If a user hasn't typed to the system for
-an hour or more, then
-the user will be omitted from the output of
-.Nm rwho
+.Nm
+reports this idle time.
+If a user hasn't typed to the system for an hour or more,
+then the user will be omitted from the output of
+.Nm
 unless the
 .Fl a
 flag is given.
@@ -76,7 +77,7 @@ information about other machines
 .Xr rwhod 8
 .Sh HISTORY
 The
-.Nm rwho
+.Nm
 command
 appeared in
 .Bx 4.3 .

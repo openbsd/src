@@ -1,4 +1,5 @@
-.\"	$OpenBSD: rsh.1,v 1.5 1999/06/05 01:21:38 aaron Exp $
+.\"	$OpenBSD: rsh.1,v 1.6 2000/03/10 20:17:51 aaron Exp $
+.\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -46,20 +47,21 @@
 .Ar host
 .Op Ar command
 .Sh DESCRIPTION
-.Nm rsh
+.Nm
 executes
 .Ar command
 on
-.Ar host  .
+.Ar host .
 .Pp
-.Nm rsh
+.Nm
 copies its standard input to the remote command, the standard
 output of the remote command to its standard output, and the
 standard error of the remote command to its standard error.
 Interrupt, quit and terminate signals are propagated to the remote
 command;
-.Nm rsh
+.Nm
 normally terminates when the remote command does.
+.Pp
 The options are as follows:
 .Bl -tag -width flag
 .It Fl K
@@ -70,7 +72,7 @@ option turns off all Kerberos authentication.
 The
 .Fl d
 option turns on socket debugging (using
-.Xr setsockopt  2  )
+.Xr setsockopt 2 )
 on the
 .Tn TCP
 sockets used for communication with the remote host.
@@ -78,11 +80,11 @@ sockets used for communication with the remote host.
 The
 .Fl k
 option causes
-.Nm rsh
+.Nm
 to obtain tickets for the remote host in
 .Ar realm
 instead of the remote host's realm as determined by
-.Xr krb_realmofhost  3  .
+.Xr krb_realmofhost 3 .
 .It Fl l
 By default, the remote username is the same as the local username.
 The
@@ -90,7 +92,7 @@ The
 option allows the remote name to be specified.
 Kerberos authentication is used, and authorization is determined
 as in
-.Xr rlogin  1  .
+.Xr rlogin 1 .
 .It Fl n
 The
 .Fl n
@@ -111,7 +113,7 @@ This may introduce a significant delay in response time.
 If no
 .Ar command
 is specified, you will be logged in on the remote host using
-.Xr rlogin  1  .
+.Xr rlogin 1 .
 .Pp
 Shell meta-characters which are not quoted are interpreted on local machine,
 while quoted meta-characters are interpreted on the remote machine.
@@ -148,18 +150,18 @@ to
 .Xr rcmd 3
 .Sh HISTORY
 The
-.Nm rsh
+.Nm
 command appeared in
 .Bx 4.2 .
 .Sh BUGS
 If you are using
-.Xr csh  1
+.Xr csh 1
 and put a
-.Nm rsh
+.Nm
 in the background without redirecting its input away from the terminal,
 it will block even if no reads are posted by the remote command.
 If no input is desired you should redirect the input of
-.Nm rsh
+.Nm
 to
 .Pa /dev/null
 using the
@@ -168,16 +170,16 @@ option.
 .Pp
 You cannot run an interactive command
 (like
-.Xr rogue  6
+.Xr rogue 6
 or
-.Xr vi  1  )
+.Xr vi 1 )
 using
-.Nm rsh  ;
+.Nm rsh ;
 use
-.Xr rlogin  1
+.Xr rlogin 1
 instead.
 .Pp
 Stop signals stop the local
-.Nm rsh
+.Nm
 process only; this is arguably wrong, but currently hard to fix for reasons
 too complicated to explain here.

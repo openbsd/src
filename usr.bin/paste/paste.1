@@ -1,4 +1,5 @@
-.\"	$OpenBSD: paste.1,v 1.4 1999/06/05 01:21:36 aaron Exp $
+.\"	$OpenBSD: paste.1,v 1.5 2000/03/10 20:17:49 aaron Exp $
+.\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -59,7 +60,7 @@ of empty lines.
 .Pp
 The options are as follows:
 .Bl -tag -width Fl
-.It Fl d  Ar list
+.It Fl d Ar list
 Use one or more of the provided characters to replace the newline
 characters instead of the default tab.
 The characters in
@@ -105,11 +106,11 @@ option.
 .El
 .Pp
 If
-.Ql Fl
+.Dq -
 is specified for one or more of the input files, the standard
 input is used; standard input is read one line at a time, circularly,
 for each instance of
-.Ql Fl .
+.Dq - .
 .Pp
 The
 .Nm paste

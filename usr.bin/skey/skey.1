@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.1,v 1.18 1999/08/17 16:34:51 millert Exp $
+.\" $OpenBSD: skey.1,v 1.19 2000/03/10 20:17:52 aaron Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd October 28, 1993
@@ -47,16 +47,19 @@ Password sequence numbers count backwards.
 You can enter the passwords using small letters, even though
 .Nm skey
 prints them capitalized.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width XXXXXXX
 .It Fl n Ar count
 Prints out
 .Ar count
-one-time passwords.  The default is to print one.
+one-time passwords.
+The default is to print one.
 .It Fl p Ar password
 Uses
 .Ar password
-as the secret password.  Use of this option is discouraged as
+as the secret password.
+Use of this option is discouraged as
 your secret password could be visible in a process listing.
 .It Fl x
 Causes output to be in hexadecimal instead of ASCII.
@@ -69,7 +72,7 @@ Selects SHA-1 (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
 .It Fl rmd160
 Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
 .El
-.Sh EXAMPLE
+.Sh EXAMPLES
 .sp 0
     % skey 99 th91334
 .sp 0

@@ -1,4 +1,5 @@
-.\"	$OpenBSD: passwd.1,v 1.8 1999/06/05 01:21:36 aaron Exp $
+.\"	$OpenBSD: passwd.1,v 1.9 2000/03/10 20:17:49 aaron Exp $
+.\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -51,8 +52,8 @@
 .\" This should really be: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]]] [user]
 .Sh DESCRIPTION
 .Nm passwd
-changes the user's local, Kerberos, or YP password.  First, the user is prompted
-for their current password.
+changes the user's local, Kerberos, or YP password.
+First, the user is prompted for their current password.
 If the current password is correctly typed, a new password is
 requested.
 The new password must be entered twice to avoid typing errors.
@@ -64,15 +65,19 @@ Its total length must be less than
 (currently 128 characters).
 Numbers, upper case letters and meta-characters
 are encouraged.
+.Pp
+The options are as follows:
 .Bl -tag -width flag
 .It Fl l
 Causes the password to be updated only in the local
-password file.  When changing only the local password,
-.Xr pwd_mkdb  8
+password file.
+When changing only the local password,
+.Xr pwd_mkdb 8
 is used to update the password databases.
 .It Fl y
 Forces the YP password database entry to be changed, even if
-the user has an entry in the local database.  The
+the user has an entry in the local database.
+The
 .Xr rpc.yppasswdd 8
 daemon should be running on the YP master server.
 .It Fl k
@@ -91,10 +96,10 @@ flag is specified:
 .It Fl n Ar name
 Specifies a
 .Ar name
-that will be used as the principal name rather  than  the  username
+that will be used as the principal name rather than the username
 of the user running
 .Nm passwd .
-(This is determined from the ticket file  if  it exists;  otherwise,
+(This is determined from the ticket file if it exists; otherwise,
 it is determined from the Unix user ID.)
 .It Fl i Ar instance
 Specifies an
@@ -105,7 +110,7 @@ Specifies a
 .Ar realm
 instead of the local realm.
 .It Fl u Ar username[.instance][@realm]
-Specifies a fully qualified kerberos principal.
+Specifies a fully qualified Kerberos principal.
 .El
 .Pp
 This is the behavior if no flags are specified:
