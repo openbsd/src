@@ -1,3 +1,4 @@
+.\"	$OpenBSD: sysctl.8,v 1.6 1997/06/04 05:26:14 mickey Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -136,8 +137,8 @@ privilege can change the value.
 .It kern.sominconn	integer	yes
 .It kern.usermount	integer	yes
 .It vm.loadavg	struct	no
+.It vm.psstrings	integer	no
 .It fs.posix.setuid	integer	yes
-.It machdep.console_device	dev_t	no
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
 .It net.inet.ip.ttl	integer	yes
@@ -168,6 +169,7 @@ privilege can change the value.
 .It hw.physmem	integer	no
 .It hw.usermem	integer	no
 .It hw.pagesize	integer	no
+.It machdep.console_device	dev_t	no
 .It user.cs_path	string	no
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
@@ -234,6 +236,9 @@ fourth level IP identifiers
 definitions for fourth level ICMP identifiers
 .It Pa <netinet/udp_var.h>
 definitions for fourth level UDP identifiers
+.It Pa <netipx/ipx_var.h>
+definitions for third level IPX identifiers and
+fourth level IPX identifiers
 .It Pa <ddb/db_var.h>
 definitions for second level ddb identifiers
 .El
