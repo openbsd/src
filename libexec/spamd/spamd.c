@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.17 2003/03/02 23:55:11 cloder Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.18 2003/03/03 00:51:40 cloder Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -81,7 +81,7 @@ void     do_config(void);
 int      append_error_string (struct con *, size_t, char *, int, void *);
 void     build_reply(struct  con *);
 void     doreply(struct con *);
-void     setlog(char *, int, char *);
+void     setlog(char *, size_t, char *);
 void     initcon(struct con *, int, struct sockaddr_in *);
 void     closecon(struct con *);
 int      match(char *, char *);
@@ -99,7 +99,7 @@ extern struct sdlist *blacklists;
 
 int conffd = -1;
 char *cb;
-size_t cbs, cbu; 
+size_t cbs, cbu;
 
 time_t t;
 
@@ -203,7 +203,7 @@ parse_configline(char *line)
 		sdl_add(name, msg, av, au - 1);
 	return (0);
 
- parse_error:
+parse_error:
 	if (debug > 0)
 		printf("bogus config line - need 'tag;message;a/m;a/m;a/m...'\n");
 	return (-1);
@@ -230,7 +230,7 @@ parse_configs(void)
 		cb = tmp;
 	}
 	cb[cbu++] = '\0';
-	
+
 	start = cb;
 	end = start;
 	for (i = 0; i < cbu; i++) {
@@ -283,7 +283,7 @@ do_config(void)
 		cbu += n;
 	return;
 
- configdone:
+configdone:
 	cbu = 0;
 	close(conffd);
 	conffd = -1;
@@ -374,7 +374,7 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 		s++;
 	}
 	return (i);
- no_mem:
+no_mem:
 	/* Out of memory, free obuf and bail, caller must deal */
 	if (cp->osize)
 		free(cp->obuf);
@@ -452,7 +452,7 @@ doreply(struct con *cp)
 }
 
 void
-setlog(char *p, int l, char *f)
+setlog(char *p, size_t len, char *f)
 {
 	char *s;
 
@@ -462,7 +462,7 @@ setlog(char *p, int l, char *f)
 	s = strsep(&f, " \t");
 	if (s == NULL)
 		return;
-	strlcpy(p, s, l);
+	strlcpy(p, s, len);
 	s = strsep(&p, " \t\n\r");
 	if (s == NULL)
 		return;
@@ -679,7 +679,7 @@ handlew(struct con *cp, int one)
 			cp->ol -= n;
 		}
 	}
- handled:
+handled:
 	cp->w = t + 1;
 	if (cp->ol == 0) {
 		cp->w = 0;
