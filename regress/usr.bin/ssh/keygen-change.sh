@@ -1,4 +1,4 @@
-#	$OpenBSD: keygen-change.sh,v 1.1 2002/07/16 09:14:06 markus Exp $
+#	$OpenBSD: keygen-change.sh,v 1.2 2002/07/16 09:15:55 markus Exp $
 #	Placed in the Public Domain.
 
 tid="change passphrase for key"
@@ -19,5 +19,5 @@ for t in rsa dsa rsa1; do
 	else
 		fail "ssh-keygen for $t-key failed"
 	fi
-	rm -f $OBJ/$t-key
+	rm -f $OBJ/$t-key $OBJ/$t-key.pub
 done
