@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.20 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.21 2002/05/16 11:54:25 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.20 2002/02/16 21:27:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.21 2002/05/16 11:54:25 fgsch Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -61,13 +61,13 @@ static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.20 2002/02/16 21:27:50 mi
 #define _PASSWORD_LEN PASS_MAX
 #endif
 
-extern int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
-extern int pwd_check(struct passwd *, login_cap_t *, char *);
-extern int pwd_gettries(struct passwd *, login_cap_t *);
-extern void kbintr(int);
+extern int	pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
+extern int	pwd_check(struct passwd *, login_cap_t *, char *);
+extern int	pwd_gettries(struct passwd *, login_cap_t *);
+extern void	kbintr(int);
 
-char *ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
-struct passwd *ypgetpwnam(char *);
+char	       *ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
+struct passwd  *ypgetpwnam(char *);
 
 char *domain;
 
@@ -76,10 +76,14 @@ pw_error(name, err, eval)
 	char *name;
 	int err, eval;
 {
-	if (err) 
-		warn("%s", name);
+	if (err) {
+		if (name)
+			warn("%s", name);
+		else
+			warn(NULL);
+	}
 
-	warnx("YP passwd database unchanged.");
+	warnx("YP passwd database: unchanged.");
 	exit(eval);
 }
 
@@ -100,8 +104,9 @@ yp_passwd(username)
 	 * Get local domain
 	 */
 	if ((r = yp_get_default_domain(&domain)) != 0) {
-		warnx("can't get local YP domain. Reason: %s", yperr_string(r));
-		return(1);
+		warnx("can't get local YP domain. Reason: %s",
+		    yperr_string(r));
+		return (1);
 	}
 
 	/*
@@ -111,7 +116,7 @@ yp_passwd(username)
 	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
 		warnx("can't find the master YP server. Reason: %s",
 		    yperr_string(r));
-		return(1);
+		return (1);
 	}
 
 	/*
@@ -121,7 +126,7 @@ yp_passwd(username)
 	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
 		warnx("master YP server not running yppasswd daemon.");
 		warnx("Can't change password.");
-		return(1);
+		return (1);
 	}
 
 	/*
@@ -129,23 +134,24 @@ yp_passwd(username)
 	 */
 	if (rpcport >= IPPORT_RESERVED) {
 		warnx("yppasswd daemon is on an invalid port.");
-		return(1);
+		return (1);
 	}
 
 	/* Get user's login identity */
 	if (!(pw = ypgetpwnam(username))) {
 		warnx("unknown user %s.", username);
-		return(1);
+		return (1);
 	}
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
 		warnx("unable to get login class for user %s.", username);
-		return(1);
+		return (1);
 	}
-		
+
 	uid = getuid();
 	if (uid && uid != pw->pw_uid) {
-		warnx("you may only change your own password: %s", strerror(EACCES));
-		return(1);
+		warnx("you may only change your own password: %s",
+		    strerror(EACCES));
+		return (1);
 	}
 
 	/* prompt for new password */
@@ -158,13 +164,13 @@ yp_passwd(username)
 	yppasswd.newpw.pw_gecos = pw->pw_gecos;
 	yppasswd.newpw.pw_dir	= pw->pw_dir;
 	yppasswd.newpw.pw_shell	= pw->pw_shell;
-	
+
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client==NULL) {
 		warnx("cannot contact yppasswdd on %s: Reason: %s",
 		    master, yperr_string(YPERR_YPBIND));
 		free(yppasswd.newpw.pw_passwd);
-		return(YPERR_YPBIND);
+		return (YPERR_YPBIND);
 	}
 	client->cl_auth = authunix_create_default();
 	tv.tv_sec = 2;
@@ -176,12 +182,12 @@ yp_passwd(username)
 	else if (status) {
 		printf("Couldn't change YP password.\n");
 		free(yppasswd.newpw.pw_passwd);
-		return(1);
+		return (1);
 	}
-	printf("The YP password has been changed on %s, the master YP passwd server.\n",
-	    master);
+	printf("The YP password has been changed on %s, "
+	    "the master YP passwd server.\n", master);
 	free(yppasswd.newpw.pw_passwd);
-	return(0);
+	return (0);
 }
 
 char *
@@ -198,11 +204,11 @@ ypgetnewpasswd(pw, lc, old_pass)
 
 	saveint = signal(SIGINT, kbintr);
 	savequit = signal(SIGQUIT, kbintr);
-	
+
 	printf("Changing YP password for %s.\n", pw->pw_name);
 	if (old_pass) {
 		*old_pass = NULL;
-	
+
 		if (pw->pw_passwd[0]) {
 			p = getpass("Old password:");
 			if (strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
@@ -225,10 +231,11 @@ ypgetnewpasswd(pw, lc, old_pass)
 			pw_error(NULL, 0, 0);
 		}
 		if (strcmp(p, "s/key") == 0) {
-			printf("That password collides with a system feature. Choose another.\n");
+			printf("That password collides with a system feature. "
+			    "Choose another.\n");
 			continue;
 		}
-		if ((tries++ < pwd_tries || pwd_tries == 0) 
+		if ((tries++ < pwd_tries || pwd_tries == 0)
 		    && pwd_check(pw, lc, p) == 0)
 			continue;
 		strncpy(buf, p, sizeof buf-1);
@@ -237,10 +244,10 @@ ypgetnewpasswd(pw, lc, old_pass)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-        if( !pwd_gensalt( salt, _PASSWORD_LEN, pw, lc, 'y' )) {
-                (void)printf("Couldn't generate salt.\n");
-                pw_error(NULL, 0, 0);
-        }
+	if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, lc, 'y')) {
+		(void)printf("Couldn't generate salt.\n");
+		pw_error(NULL, 0, 0);
+	}
 	p = strdup(crypt(buf, salt));
 	if (p == NULL)
 		pw_error(NULL, 1, 1);
@@ -274,10 +281,10 @@ interpret(struct passwd *pwent, char *line)
 	pwent->pw_change = 0;
 	pwent->pw_expire = 0;
 	pwent->pw_class = "";
-	
+
 	/* line without colon separators is no good, so ignore it */
 	if(!strchr(p, ':'))
-		return(NULL);
+		return (NULL);
 
 	pwent->pw_name = p;
 	p = pwskip(p);
@@ -307,7 +314,7 @@ ypgetpwnam(nam)
 	static struct passwd pwent;
 	char *val;
 	int reason, vallen;
-	
+
 	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
 	    &val, &vallen);
 	switch(reason) {
@@ -327,7 +334,7 @@ ypgetpwnam(nam)
 	__yplin[vallen] = '\0';
 	free(val);
 
-	return(interpret(&pwent, __yplin));
+	return (interpret(&pwent, __yplin));
 }
 
 #endif	/* YP */
