@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.15 2001/01/26 22:29:17 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.16 2001/09/18 20:27:48 jason Exp 
  */
 
 /*
@@ -256,6 +256,11 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "TCM5095",
 	    EISA_PRODUCT_TCM5095,
+	},
+	{
+	    0,
+	    "TCM5098",
+	    EISA_PRODUCT_TCM5098,
 	},
 	{
 	    0,

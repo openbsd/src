@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.15 2001/01/26 22:29:17 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.16 2001/09/18 20:27:48 jason Exp 
  */
 
 /*
@@ -109,6 +109,7 @@
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
 #define	EISA_PRODUCT_TCM5094	"3Com 3C509-Combo Ethernet"
 #define	EISA_PRODUCT_TCM5095	"3Com 3C509-TPO Ethernet"
+#define	EISA_PRODUCT_TCM5098	"3Com 3C509-TP Ethernet"
 #define	EISA_PRODUCT_TCM5920	"3Com 3C592 Etherlink III"
 #define	EISA_PRODUCT_TCM5970	"3Com 3C597 Fast Etherlink TX"
 #define	EISA_PRODUCT_TCM5971	"3Com 3C597 Fast Etherlink T4"
