@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.68 2003/10/19 21:33:20 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.69 2003/10/20 07:12:39 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1335,7 +1335,7 @@ wdc_probe_caps(drvp, params)
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in
 		 * SET FEATURE, limit it to 7 (so limit i to 4).
-		 * If higther mode than 7 is found, abort.
+		 * If higher mode than 7 is found, abort.
 		 */
 		for (i = 7; i >= 0; i--) {
 			if ((params->atap_piomode_supp & (1 << i)) == 0)
