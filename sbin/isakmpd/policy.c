@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.26 2001/03/14 21:13:24 tholo Exp $	*/
+/*	$OpenBSD: policy.c,v 1.27 2001/04/05 23:18:53 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1512,7 +1512,7 @@ policy_init (void)
 {
   char *ptr, *policy_file;
   char **asserts;
-  struct stat st;
+  off_t sz;
   int fd, len, i;
 
   LOG_DBG ((LOG_POLICY, 30, "policy_init: initializing"));
@@ -1532,39 +1532,39 @@ policy_init (void)
     log_fatal ("policy_init: kn_init () failed");
 
   /* Get policy file from configuration.  */
-  policy_file = conf_get_str ("General", "policy-file");
+  policy_file = conf_get_str ("General", "Policy-file");
   if (!policy_file)
     policy_file = POLICY_FILE_DEFAULT;
+
+  /* Check file modes and collect file size */
+  if (check_file_secrecy (policy_file, &sz))
+    log_fatal ("policy_init: cannot read %s", policy_file);
 
   /* Open policy file.  */
   fd = open (policy_file, O_RDONLY);
   if (fd == -1)
     log_fatal ("policy_init: open (\"%s\", O_RDONLY) failed", policy_file);
 
-  /* Get size.  */
-  if (fstat (fd, &st) == -1)
-    log_fatal ("policy_init: fstat (%d, &st) failed", fd);
-
   /* Allocate memory to keep policies.  */
-  ptr = calloc (st.st_size + 1, sizeof (char));
+  ptr = calloc (sz + 1, sizeof (char));
   if (!ptr)
-    log_fatal ("policy_init: calloc (%d, %d) failed", st.st_size,
+    log_fatal ("policy_init: calloc (%d, %d) failed", sz + 1,
 	       sizeof (char));
 
   /* Just in case there are short reads...  */
-  for (len = 0; len < st.st_size; len += i)
+  for (len = 0; len < sz; len += i)
     {
-      i = read (fd, ptr + len, st.st_size - len);
+      i = read (fd, ptr + len, sz - len);
       if (i == -1)
 	log_fatal ("policy_init: read (%d, %p, %d) failed", fd, ptr + len,
-		   st.st_size - len);
+		   sz - len);
     }
 
   /* We're done with this.  */
   close (fd);
 
   /* Parse buffer, break up into individual policies.  */
-  asserts = LK (kn_read_asserts, (ptr, st.st_size, &i));
+  asserts = LK (kn_read_asserts, (ptr, sz, &i));
 
   /* Begone!  */
   free (ptr);
