@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispvar.h,v 1.19 2001/12/14 00:20:55 mjacob Exp $ */
+/*	$OpenBSD: ispvar.h,v 1.20 2002/05/17 01:36:35 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -54,7 +54,7 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	2
-#define	ISP_CORE_VERSION_MINOR	5
+#define	ISP_CORE_VERSION_MINOR	7
 
 /*
  * Vector for bus specific code to provide specific services.
@@ -73,7 +73,7 @@ struct ispmdvec {
 	void		(*dv_reset0) (struct ispsoftc *);
 	void		(*dv_reset1) (struct ispsoftc *);
 	void		(*dv_dregs) (struct ispsoftc *, const char *);
-	const u_int16_t	*dv_ispfw;	/* ptr to f/w */
+	u_int16_t	*dv_ispfw;	/* ptr to f/w */
 	u_int16_t	dv_conf1;
 	u_int16_t	dv_clock;	/* clock frequency */
 };
@@ -149,8 +149,12 @@ struct ispmdvec {
 #define	QENTRY_LEN			64
 /* Both request and result queue length must be a power of two */
 #define	RQUEST_QUEUE_LEN(x)		MAXISPREQUEST(x)
+#ifdef	ISP_TARGET_MODE
+#define	RESULT_QUEUE_LEN(x)		MAXISPREQUEST(x)
+#else
 #define	RESULT_QUEUE_LEN(x)		\
 	(((MAXISPREQUEST(x) >> 2) < 64)? 64 : MAXISPREQUEST(x) >> 2)
+#endif
 #define	ISP_QUEUE_ENTRY(q, idx)		((q) + ((idx) * QENTRY_LEN))
 #define	ISP_QUEUE_SIZE(n)		((n) * QENTRY_LEN)
 #define	ISP_NXT_QENTRY(idx, qlen)	(((idx) + 1) & ((qlen)-1))
@@ -242,6 +246,11 @@ typedef struct {
 #define	FC_PORT_ID		0x7f	/* Fabric Controller Special ID */
 #define	FC_SNS_ID		0x80	/* SNS Server Special ID */
 
+/* #define	ISP_USE_GA_NXT	1 */	/* Use GA_NXT with switches */
+#ifndef	GA_NXT_MAX
+#define	GA_NXT_MAX	256
+#endif
+
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
 				isp_gbspeed	: 2,
@@ -276,9 +285,12 @@ typedef struct {
 	 * to move around.
 	 */
 	struct lportdb {
-		u_int
+		u_int32_t
+					port_type	: 8,
+							: 4,
+					fc4_type	: 4,
 					loopid		: 8,
-							: 1,
+					last_fabric_dev	: 1,
 					force_logout	: 1,
 					was_fabric_dev	: 1,
 					fabric_dev	: 1,
@@ -295,6 +307,9 @@ typedef struct {
 	 */
 	caddr_t			isp_scratch;
 	ISP_DMA_ADDR_T		isp_scdma;
+#ifdef	ISP_FW_CRASH_DUMP
+	u_int16_t		*isp_dump_data;
+#endif
 } fcparam;
 
 #define	FW_CONFIG_WAIT		0
@@ -350,7 +365,8 @@ typedef struct ispsoftc {
 	u_int32_t		isp_maxluns;	/* maximum luns supported */
 
 	u_int32_t		isp_clock	: 8,	/* input clock */
-						: 5,
+						: 4,
+				isp_port	: 1,	/* 23XX only */
 				isp_failed	: 1,	/* board failed */
 				isp_open	: 1,	/* opened (ioctl) */
 				isp_touched	: 1,	/* board ever seen? */
@@ -371,6 +387,12 @@ typedef struct ispsoftc {
 	 */
 	u_int64_t		isp_intcnt;		/* total int count */
 	u_int64_t		isp_intbogus;		/* spurious int count */
+	u_int64_t		isp_intmboxc;		/* mbox completions */
+	u_int64_t		isp_intoasync;		/* other async */
+	u_int64_t		isp_rsltccmplt;		/* CMDs on result q */
+	u_int64_t		isp_fphccmplt;		/* CMDs via fastpost */
+	u_int16_t		isp_rscchiwater;
+	u_int16_t		isp_fpcchiwater;
 
 	/*
 	 * Volatile state
@@ -386,9 +408,15 @@ typedef struct ispsoftc {
 	volatile u_int16_t	isp_reqodx;	/* index of last ISP pickup */
 	volatile u_int16_t	isp_reqidx;	/* index of next request */
 	volatile u_int16_t	isp_residx;	/* index of next result */
+	volatile u_int16_t	isp_resodx;	/* index of next result */
+	volatile u_int16_t	isp_rspbsy;
 	volatile u_int16_t	isp_lasthdls;	/* last handle seed */
 	volatile u_int16_t	isp_mboxtmp[MAX_MAILBOX];
 	volatile u_int16_t	isp_lastmbxcmd;	/* last mbox command sent */
+	volatile u_int16_t	isp_mbxwrk0;
+	volatile u_int16_t	isp_mbxwrk1;
+	volatile u_int16_t	isp_mbxwrk2;
+	void *			isp_mbxworkp;
 
 	/*
 	 * Active commands are stored here, indexed by handle functions.
@@ -423,12 +451,13 @@ typedef struct ispsoftc {
 #define	ISP_CFG_TWOGB		0x20	/* force 2GB connection (23XX only) */
 #define	ISP_CFG_ONEGB		0x10	/* force 1GB connection (23XX only) */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
-#define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
 #define	ISP_CFG_PORT_PREF	0x0C	/* Mask for Port Prefs (2200 only) */
 #define	ISP_CFG_LPORT		0x00	/* prefer {N/F}L-Port connection */
 #define	ISP_CFG_NPORT		0x04	/* prefer {N/F}-Port connection */
 #define	ISP_CFG_NPORT_ONLY	0x08	/* insist on {N/F}-Port connection */
 #define	ISP_CFG_LPORT_ONLY	0x0C	/* insist on {N/F}L-Port connection */
+#define	ISP_CFG_OWNWWPN		0x100	/* override NVRAM wwpn */
+#define	ISP_CFG_OWNWWNN		0x200	/* override NVRAM wwnn */
 
 /*
  * Prior to calling isp_reset for the first time, the outer layer
@@ -508,6 +537,7 @@ typedef struct ispsoftc {
 #define	ISP_HA_FC_2100		0x10
 #define	ISP_HA_FC_2200		0x20
 #define	ISP_HA_FC_2300		0x30
+#define	ISP_HA_FC_2312		0x40
 
 #define	IS_SCSI(isp)	(isp->isp_type & ISP_HA_SCSI)
 #define	IS_1240(isp)	(isp->isp_type == ISP_HA_SCSI_1240)
@@ -523,7 +553,9 @@ typedef struct ispsoftc {
 #define	IS_FC(isp)	((isp)->isp_type & ISP_HA_FC)
 #define	IS_2100(isp)	((isp)->isp_type == ISP_HA_FC_2100)
 #define	IS_2200(isp)	((isp)->isp_type == ISP_HA_FC_2200)
-#define	IS_2300(isp)	((isp)->isp_type >= ISP_HA_FC_2300)
+#define	IS_23XX(isp)	((isp)->isp_type >= ISP_HA_FC_2300)
+#define	IS_2300(isp)	((isp)->isp_type == ISP_HA_FC_2300)
+#define	IS_2312(isp)	((isp)->isp_type == ISP_HA_FC_2312)
 
 /*
  * DMA cookie macros
@@ -552,6 +584,13 @@ void isp_init(struct ispsoftc *);
  * Reset the ISP and call completion for any orphaned commands.
  */
 void isp_reinit(struct ispsoftc *);
+
+#ifdef	ISP_FW_CRASH_DUMP
+/*
+ * Dump firmware entry point.
+ */
+void isp_fw_dump(struct ispsoftc *isp);
+#endif
 
 /*
  * Internal Interrupt Service Routine
@@ -763,6 +802,8 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
  *	MBOX_NOTIFY_COMPLETE(struct ispsoftc *)	notification of mbox cmd donee
  *	MBOX_RELEASE(struct ispsoftc *)		release lock on mailbox regs
  *
+ *	FC_SCRATCH_ACQUIRE(struct ispsoftc *)	acquire lock on FC scratch area
+ *	FC_SCRATCH_RELEASE(struct ispsoftc *)	acquire lock on FC scratch area
  *
  *	SCSI_GOOD	SCSI 'Good' Status
  *	SCSI_CHECK	SCSI 'Check Condition' Status
