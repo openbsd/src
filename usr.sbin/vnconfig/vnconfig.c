@@ -50,9 +50,11 @@
 
 #include <err.h>
 #include <errno.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <util.h>
 
 #define VND_CONFIG	1
@@ -61,7 +63,7 @@
 int verbose = 0;
 
 void usage __P((void));
-int config __P((char *, char *, int));
+int config __P((char *, char *, int, char *));
 
 int
 main(argc, argv)
@@ -69,8 +71,9 @@ main(argc, argv)
 	char **argv;
 {
 	int ch, rv, action = VND_CONFIG;
+	char *key = NULL;
 
-	while ((ch = getopt(argc, argv, "cuv")) != -1) {
+	while ((ch = getopt(argc, argv, "cuvk")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = VND_CONFIG;
@@ -80,6 +83,9 @@ main(argc, argv)
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'k':
+			key = getpass("Encryption key: ");
 			break;
 		default:
 		case '?':
@@ -91,19 +97,20 @@ main(argc, argv)
 	argv += optind;
 
 	if (action == VND_CONFIG && argc == 2)
-		rv = config(argv[0], argv[1], action);
+		rv = config(argv[0], argv[1], action, key);
 	else if (action == VND_UNCONFIG && argc == 1)
-		rv = config(argv[0], NULL, action);
+		rv = config(argv[0], NULL, action, key);
 	else
 		usage();
 	exit(rv);
 }
 
 int
-config(dev, file, action)
+config(dev, file, action, key)
 	char *dev;
 	char *file;
 	int action;
+	char *key;
 {
 	struct vnd_ioctl vndio;
 	FILE *f;
@@ -115,9 +122,12 @@ config(dev, file, action)
 	f = fopen(rdev, "rw");
 	if (f == NULL) {
 		warn(rdev);
-		return (1);
+		rv = -1;
+		goto out;
 	}
 	vndio.vnd_file = file;
+	vndio.vnd_key = key;
+	vndio.vnd_keylen = key == NULL ? 0 : strlen(key);
 
 	/*
 	 * Clear (un-configure) the device
@@ -143,6 +153,9 @@ config(dev, file, action)
 
 	fclose(f);
 	fflush(stdout);
+ out:
+	if (key)
+		memset(key, 0, strlen(key));
 	return (rv < 0);
 }
 
@@ -151,7 +164,7 @@ usage()
 {
 
 	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig -c [-v] rawdev regular-file\n",
+	    "usage: vnconfig -c [-vk] rawdev regular-file\n",
 	    "       vnconfig -u [-v] rawdev\n");
 	exit(1);
 }

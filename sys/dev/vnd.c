@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.23 1998/10/03 21:19:00 millert Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.24 2000/06/20 21:29:20 provos Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -82,6 +82,8 @@
 #include <sys/uio.h>
 #include <sys/conf.h>
 
+#include <crypto/blf.h>
+
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/vndioctl.h>
@@ -122,6 +124,7 @@ struct vnd_softc {
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct buf	 sc_tab;	/* transfer queue */
+	void		*sc_keyctx;	/* key context */
 };
 
 /* sc_flags */
@@ -150,9 +153,36 @@ void	vndthrottle __P((struct vnd_softc *, struct vnode *));
 void	vndiodone __P((struct buf *));
 void	vndshutdown __P((void));
 void	vndgetdisklabel __P((dev_t, struct vnd_softc *));
+void	vndencrypt __P((struct vnd_softc *, caddr_t, size_t, daddr_t, int));
 
 static	int vndlock __P((struct vnd_softc *));
 static	void vndunlock __P((struct vnd_softc *));
+
+void
+vndencrypt(vnd, addr, size, off, encrypt)
+     struct vnd_softc *vnd;
+     caddr_t addr;
+     size_t size;
+     daddr_t off;
+     int encrypt;
+{
+	int i, bsize;
+	u_char iv[8];
+	
+	bsize = dbtob(1);
+	for (i = 0; i < size/bsize; i++) {
+		bzero(iv, sizeof(iv));
+		bcopy((u_char *)&off, iv, sizeof(off));
+		blf_ecb_encrypt(vnd->sc_keyctx, iv, sizeof(iv));
+		if (encrypt)
+			blf_cbc_encrypt(vnd->sc_keyctx, iv, addr, bsize);
+		else
+			blf_cbc_decrypt(vnd->sc_keyctx, iv, addr, bsize);
+
+		addr += bsize;
+		off++;
+	}
+}
 
 void
 vndattach(num)
@@ -439,10 +469,23 @@ vndstrategy(bp)
 				auio.uio_rw = UIO_READ;
 				bp->b_error = VOP_READ(vnd->sc_vp, &auio, 0,
 				    vnd->sc_cred);
+				if (vnd->sc_keyctx)
+					vndencrypt(vnd,	bp->b_data,
+						   bp->b_bcount,
+						   bp->b_blkno, 0);
 			} else {
+				if (vnd->sc_keyctx)
+					vndencrypt(vnd, bp->b_data,
+						   bp->b_bcount, 
+						   bp->b_blkno, 1);
 				auio.uio_rw = UIO_WRITE;
 				bp->b_error = VOP_WRITE(vnd->sc_vp, &auio, 0,
 				    vnd->sc_cred);
+				/* Data in buffer cache needs to be in clear */
+				if (vnd->sc_keyctx)
+					vndencrypt(vnd, bp->b_data,
+						   bp->b_bcount,
+						   bp->b_blkno, 0);
 			}
 			vnd->sc_flags &= ~VNF_BUSY;
 			VOP_UNLOCK(vnd->sc_vp, 0, p);
@@ -553,6 +596,7 @@ vndstrategy(bp)
 			vndstart(vnd);
 		}
 		splx(s);
+
 		bn += sz;
 		addr += sz;
 	}
@@ -718,6 +762,8 @@ vndioctl(dev, cmd, addr, flag, p)
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return (EBUSY);
+		if (!(vnd->sc_flags & VNF_SIMPLE) && vio->vnd_keylen)
+			return (EINVAL);
 
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
@@ -748,6 +794,27 @@ vndioctl(dev, cmd, addr, flag, p)
 			vndunlock(vnd);
 			return(error);
 		}
+
+		if (vio->vnd_keylen) {
+			char *key;
+
+			key = malloc(vio->vnd_keylen, M_TEMP, M_WAITOK);
+			if ((error = copyin((caddr_t)vio->vnd_key, key,
+					    vio->vnd_keylen)) != 0) {
+				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
+						p->p_ucred, p);
+				vndunlock(vnd);
+				return(error);
+			}
+
+			vnd->sc_keyctx = malloc(sizeof(blf_ctx), M_DEVBUF,
+						M_WAITOK);
+			blf_key(vnd->sc_keyctx, key, vio->vnd_keylen);
+			bzero(key, vio->vnd_keylen);
+			free((caddr_t)key, M_TEMP);
+		} else
+			vnd->sc_keyctx = NULL;
+			
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
@@ -795,6 +862,9 @@ vndioctl(dev, cmd, addr, flag, p)
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: CLRed\n");
 #endif
+		/* Free crypto key */
+		if (vnd->sc_keyctx)
+			free((caddr_t)vnd->sc_keyctx, M_DEVBUF);
 
 		/* Detatch the disk. */
 		disk_detach(&vnd->sc_dk);
