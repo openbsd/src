@@ -1,4 +1,4 @@
-/*	$OpenBSD: except.c,v 1.7 2004/07/22 19:29:42 kettenis Exp $	*/
+/*	$OpenBSD: except.c,v 1.8 2004/10/10 03:06:42 mickey Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +8,7 @@
 #include <float.h>
 #include <err.h>
 
-volatile int signal_status;
+volatile sig_atomic_t signal_status;
 
 volatile const double one  = 1.0;
 volatile const double zero = 0.0;
