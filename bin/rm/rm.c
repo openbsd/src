@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.15 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: rm.c,v 1.16 2004/05/31 17:18:59 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.15 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.16 2004/05/31 17:18:59 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ int dflag, eval, fflag, iflag, Pflag, Wflag, stdin_ok;
 int	check(char *, char *, struct stat *);
 void	checkdot(char **);
 void	rm_file(char **);
-void	rm_overwrite(char *, struct stat *);
+int	rm_overwrite(char *, struct stat *);
 void	rm_tree(char **);
 void	usage(void);
 
@@ -224,7 +224,8 @@ rm_tree(char **argv)
 
 		default:
 			if (Pflag)
-				rm_overwrite(p->fts_accpath, NULL);
+				if (!rm_overwrite(p->fts_accpath, NULL))
+					continue;
 			if (!unlink(p->fts_accpath) ||
 			    (fflag && errno == ENOENT))
 				continue;
@@ -278,7 +279,8 @@ rm_file(char **argv)
 			rval = rmdir(f);
 		else {
 			if (Pflag)
-				rm_overwrite(f, &sb);
+				if (!rm_overwrite(f, &sb))
+					continue;
 			rval = unlink(f);
 		}
 		if (rval && (!fflag || errno != ENOENT)) {
@@ -298,8 +300,9 @@ rm_file(char **argv)
  * Also, this assumes a fixed-block file system (like FFS, or a V7 or a
  * System V file system).  In a logging file system, you'll have to have
  * kernel support.
+ * Returns 1 for success.
  */
-void
+int
 rm_overwrite(char *file, struct stat *sbp)
 {
 	struct stat sb;
@@ -315,11 +318,11 @@ rm_overwrite(char *file, struct stat *sbp)
 		sbp = &sb;
 	}
 	if (!S_ISREG(sbp->st_mode))
-		return;
+		return (1);
 	if (sbp->st_nlink > 1) {
 		warnx("%s (inode %u): not overwritten due to multiple links",
 		    file, sbp->st_ino);
-		return;
+		return (0);
 	}
 	if ((fd = open(file, O_WRONLY, 0)) == -1)
 		goto err;
@@ -327,7 +330,7 @@ rm_overwrite(char *file, struct stat *sbp)
 		goto err;
 	bsize = MAX(fsb.f_iosize, 1024);
 	if ((buf = malloc(bsize)) == NULL)
-		err(1, "malloc");
+		err(1, "%s: malloc", file);
 
 #define	PASS(byte) {							\
 	memset(buf, byte, bsize);					\
@@ -344,15 +347,19 @@ rm_overwrite(char *file, struct stat *sbp)
 	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))
 		goto err;
 	PASS(0xff);
-	if (!fsync(fd) && !close(fd)) {
-		free(buf);
-		return;
-	}
+	if (fsync(fd))
+		goto err;
+	close(fd);
+	free(buf);
+	return (1);
 
-err:	eval = 1;
+err:
+	close(fd);
+	eval = 1;
 	if (buf)
 		free(buf);
 	warn("%s", file);
+	return (0);
 }
 
 
