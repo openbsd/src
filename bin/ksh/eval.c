@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.8 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.9 1999/06/15 01:18:33 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -265,7 +265,7 @@ expand(cp, wp, f)
 					v.type = 10; /* not default */
 					v.name[0] = '\0';
 					v_evaluate(&v, substitute(sp, 0),
-						FALSE);
+						KSH_UNWIND_ERROR);
 					sp = strchr(sp, 0) + 1;
 					for (p = str_val(&v); *p; ) {
 						Xcheck(ds, dp);
@@ -398,12 +398,6 @@ expand(cp, wp, f)
 					st = st->prev;
 					continue;
 				  case '=':
-					if (st->var->flag & RDONLY)
-						/* XXX POSIX says this is only
-						 * fatal for special builtins
-						 */
-						errorf("%s: is read only",
-							st->var->name);
 					/* Restore our position and substitute
 					 * the value of st->var (may not be
 					 * the assigned value in the presence
@@ -414,10 +408,17 @@ expand(cp, wp, f)
 					 * global would cause with things
 					 * like x[i+=1] to be evaluated twice.
 					 */
+					/* Note: not exported by FEXPORT
+					 * in at&t ksh.
+					 */
+					/* XXX POSIX says readonly is only
+					 * fatal for special builtins (setstr
+					 * does readonly check).
+					 */
 					setstr(st->var, debunk(
 						(char *) alloc(strlen(dp) + 1,
-							ATEMP), dp));
-					/* SETSTR: fail operation */
+							ATEMP), dp),
+						KSH_UNWIND_ERROR);
 					x.str = str_val(st->var);
 					type = XSUB;
 					if (f&DOBLANK)

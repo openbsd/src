@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.5 1998/10/29 04:09:21 millert Exp $	*/
+/*	$OpenBSD: path.c,v 1.6 1999/06/15 01:18:35 millert Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
@@ -14,23 +14,26 @@
 
 /*
  * $Log: path.c,v $
+ * Revision 1.6  1999/06/15 01:18:35  millert
+ * patches from pdksh 5.2.13.11
+ *
  * Revision 1.5  1998/10/29 04:09:21  millert
  * Bug fixes from pdksh-unstable-5.2.13.4, including "official" versions of
  * some that we had already fixed locally.
- * o typeset -f FUNC doesn't print follows command (and expression) substitutions.
- * o when re-allocating memory, too much may be copied from old memory.
- * o set -o printed some options sans names.
- * o emacs mode: <esc>. in very fist command causes core dump.
- * o pdksh dumps core after a cd command.
- * o typeset -i reports on array elements that have no value
- * (at&t ksh reports on array base name - no index).
- * o ulimit -ctn unlimittttted kills shell (resource exceeded).
- * o ". /dev/null" says access denied.
- * o flag field in aliases incorrectly changed (all flags set instead of
- * clearing ISSET) in exec.c(flushcom).
- * o ${#array[*]} prints largest index instead of number of (set) elements
- * in an array (ksh88 does the former).
- * o sys_siglist[] doesn't always have NSIG non-null entries...
+ *  o typeset -f FUNC doesn't print follows command (and expression) substitutions.
+ *  o when re-allocating memory, too much may be copied from old memory.
+ *  o set -o printed some options sans names.
+ *  o emacs mode: <esc>. in very fist command causes core dump.
+ *  o pdksh dumps core after a cd command.
+ *  o typeset -i reports on array elements that have no value
+ *    (at&t ksh reports on array base name - no index).
+ *  o ulimit -ctn unlimittttted kills shell (resource exceeded).
+ *  o ". /dev/null" says access denied.
+ *  o flag field in aliases incorrectly changed (all flags set instead of
+ *    clearing ISSET) in exec.c(flushcom).
+ *  o ${#array[*]} prints largest index instead of number of (set) elements
+ *    in an array (ksh88 does the former).
+ *  o sys_siglist[] doesn't always have NSIG non-null entries...
  *
  * Revision 1.4  1998/06/25 19:02:14  millert
  * pdksh-5.2.13 + local changes
@@ -179,10 +182,10 @@ simplify_path(path)
 
 	if ((isrooted = ISROOTEDPATH(path)))
 		very_start++;
-#ifdef OS2
+#if defined (OS2) || defined (__CYGWIN__)
 	if (path[0] && path[1] == ':')	/* skip a: */
 		very_start += 2;
-#endif /* OS2 */
+#endif /* OS2 || __CYGWIN__ */
 
 	/* Before			After
 	 *  /foo/			/foo
@@ -192,12 +195,18 @@ simplify_path(path)
 	 *  ..				..
 	 *  ./foo			foo
 	 *  foo/../../../bar		../../bar
-	 * OS2:
+	 * OS2 and CYGWIN:
 	 *  a:/foo/../..		a:/
 	 *  a:.				a:
 	 *  a:..			a:..
 	 *  a:foo/../../blah		a:../blah
 	 */
+
+#ifdef __CYGWIN__
+       /* preserve leading double-slash on pathnames (for UNC paths) */
+       if (path[0] && ISDIRSEP(path[0]) && path[1] && ISDIRSEP(path[1]))
+               very_start++;
+#endif /* __CYGWIN__ */
 
 	for (cur = t = start = very_start; ; ) {
 		/* treat multiple '/'s as one '/' */

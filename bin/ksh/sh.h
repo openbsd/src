@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.8 1999/01/19 20:41:56 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.9 1999/06/15 01:18:36 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -239,6 +239,10 @@ extern int ksh_execve(char *cmd, char **args, char **env, int flags);
 # define ksh_jmp_buf		jmp_buf
 #endif /* HAVE_SIGSETJMP */
 
+#ifndef HAVE_DUP2
+extern int dup2 ARGS((int, int));
+#endif /* !HAVE_DUP2 */
+
 /* Find a integer type that is at least 32 bits (or die) - SIZEOF_* defined
  * by autoconf (assumes an 8 bit byte, but I'm not concerned).
  * NOTE: INT32 may end up being more than 32 bits.
@@ -290,15 +294,16 @@ extern int ksh_execve(char *cmd, char **args, char **env, int flags);
  * ISROOTEDPATH() means a .. as the first component is a no-op,
  * ISRELPATH() means $PWD can be tacked on to get an absolute path.
  *
- * OS	Path		ISABSPATH	ISROOTEDPATH	ISRELPATH
- * unix	/foo		yes		yes		no
- * unix	foo		no		no		yes
- * unix	../foo		no		no		yes
- * os2	a:/foo		yes		yes		no
- * os2	a:foo		no		no		no
- * os2	/foo		no		yes		no
- * os2	foo		no		no		yes
- * os2	../foo		no		no		yes
+ * OS		Path		ISABSPATH	ISROOTEDPATH	ISRELPATH
+ * unix		/foo		yes		yes		no
+ * unix		foo		no		no		yes
+ * unix		../foo		no		no		yes
+ * os2+cyg	a:/foo		yes		yes		no
+ * os2+cyg	a:foo		no		no		no
+ * os2+cyg	/foo		no		yes		no
+ * os2+cyg	foo		no		no		yes
+ * os2+cyg	../foo		no		no		yes
+ * cyg 		//foo		yes		yes		no
  */
 #ifdef OS2
 # define PATHSEP        ';'
@@ -320,9 +325,15 @@ extern char *ksh_strrchr_dirsep(const char *path);
 # define DIRSEP         '/'
 # define DIRSEPSTR      "/"
 # define ISDIRSEP(c)    ((c) == '/')
+#ifdef __CYGWIN__
+#  define ISABSPATH(s) \
+       (((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])) || ISDIRSEP((s)[0]))
+#  define ISRELPATH(s) (!(s)[0] || ((s)[1] != ':' && !ISDIRSEP((s)[0])))
+#else /* __CYGWIN__ */
 # define ISABSPATH(s)	ISDIRSEP((s)[0])
-# define ISROOTEDPATH(s) ISABSPATH(s)
 # define ISRELPATH(s)	(!ISABSPATH(s))
+#endif /* __CYGWIN__ */
+# define ISROOTEDPATH(s) ISABSPATH(s)
 # define FILECHCONV(c)	c
 # define FILECMP(s1, s2) strcmp(s1, s2)
 # define FILENCMP(s1, s2, n) strncmp(s1, s2, n)
@@ -422,6 +433,7 @@ EXTERN	struct env {
 /* struct env.flag values */
 #define EF_FUNC_PARSE	BIT(0)	/* function being parsed */
 #define EF_BRKCONT_PASS	BIT(1)	/* set if E_LOOP must pass break/continue on */
+#define EF_FAKE_SIGDIE	BIT(2)	/* hack to get info from unwind to quitenv */
 
 /* Do breaks/continues stop at env type e? */
 #define STOP_BRKCONT(t)	((t) == E_NONE || (t) == E_PARSE \
@@ -516,17 +528,19 @@ EXTERN	char	space [] I__(" ");
 EXTERN	char	newline [] I__("\n");
 EXTERN	char	slash [] I__("/");
 
-/* temp/here files. the file is removed when the struct is freed */
+enum temp_type {
+    TT_HEREDOC_EXP,	/* expanded heredoc */
+    TT_HIST_EDIT	/* temp file used for history editing (fc -e) */
+};
+typedef enum temp_type Temp_type;
+/* temp/heredoc files.  The file is removed when the struct is freed. */
 struct temp {
 	struct temp	*next;
 	struct shf	*shf;
 	int		pid;		/* pid of process parsed here-doc */
+	Temp_type	type;
 	char		*name;
 };
-
-/* here documents in functions are treated specially (the get removed when
- * shell exis) */
-EXTERN struct temp	*func_heredocs;
 
 /*
  * stdio and our IO routines
@@ -713,6 +727,10 @@ EXTERN	int	x_cols I__(80);	/* tty columns */
 #  define KSH_SYSTEM_PROFILE "/etc/profile"
 # endif /* __NeXT */
 #endif /* KSH_SYSTEM_PROFILE */
+
+/* Used by v_evaluate() and setstr() to control action when error occurs */
+#define KSH_UNWIND_ERROR	0	/* unwind the stack (longjmp) */
+#define KSH_RETURN_ERROR	1	/* return 1/0 for success/failure */
 
 #include "shf.h"
 #include "table.h"

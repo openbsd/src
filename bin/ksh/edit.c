@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.9 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.10 1999/06/15 01:18:33 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -42,9 +42,9 @@ static char vdisable_c;
 void
 x_init()
 {
-	/* set to -1 to force initial binding */
+	/* set to -2 to force initial binding */
 	edchars.erase = edchars.kill = edchars.intr = edchars.quit
-		= edchars.eof = -1;
+		= edchars.eof = -2;
 	/* default value for deficient systems */
 	edchars.werase = 027;	/* ^W */
 
@@ -287,6 +287,24 @@ x_mode(onoff)
 
 		set_tty(tty_fd, &cb, TF_WAIT);
 
+#ifdef __CYGWIN__
+		if (edchars.eof == '\0')
+			edchars.eof = '\4';
+#endif /* __CYGWIN__ */
+
+		/* Convert unset values to internal `unset' value */
+		if (edchars.erase == vdisable_c)
+			edchars.erase = -1;
+		if (edchars.kill == vdisable_c)
+			edchars.kill = -1;
+		if (edchars.intr == vdisable_c)
+			edchars.intr = -1;
+		if (edchars.quit == vdisable_c)
+			edchars.quit = -1;
+		if (edchars.eof == vdisable_c)
+			edchars.eof = -1;
+		if (edchars.werase == vdisable_c)
+			edchars.werase = -1;
 		if (memcmp(&edchars, &oldchars, sizeof(edchars)) != 0) {
 #ifdef EMACS
 			x_emacs_keys(&edchars);

@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.10 1999/01/19 20:41:50 millert Exp $
+$OpenBSD: BUG-REPORTS,v 1.11 1999/06/15 01:18:32 millert Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -86,8 +86,6 @@ problems believed to be fixed marked by x.
   parse the whole script before executing, so some syntax errors are not
   detected (if the shell exits before reading the whole file).
   [see Mail.XXX]
-
-* pdksh 5.2.12, - : MAILCHECK isn't preserved from the envirnment on startup.
 
 * pdksh 5.2.12, (reported by Michael Staats): emacs: file completion does
   not complete as much as possible when file is ~/something (will list
@@ -1341,3 +1339,19 @@ x pdksh 5.2.13.5, (reported with fix by Martin Lucina <mato@kotelna.sk>):
 x pdksh 5.2.13.5, (reported by Charles M. Hannum <root@ihack.net>): An exit
   trap set in a subshell is not executed (unless explicit exit used).
   [fixed in 5.2.14: exec.c(execute): changed exit(rv) to unwind(LEXIT).]
+
+x pdksh 5.2.12, - : MAILCHECK isn't preserved from the envirnment on startup.
+  [fixed in 5.2.14: changed main's initcoms[].]
+
+x pdksh 5.2.13, (reported by Marc Olzheim): time at the end of a pipeline
+  doesn't print anything.
+  [fixed in 5.2.14: exec.c(execute): clear XEXEC when calling timex().]
+
+x pdksh 5.2.13, (reported by David J. McMahon): here documents in subshells
+  don't work if the parent exits before the subshell.
+  [fixed in 5.2.14: heredocs now saved in memory, written to temp when needed.]
+
+x pdksh 5.2.13, (reported by Seiichi Namba): emacs: keys bound in .profile/$ENV
+  are overridden by stty settings (eg, binding ^U in .profile has no effect).
+  [fixed in 5.2.14: emacs.c: added x_bound array to track what user has set.]
+

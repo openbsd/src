@@ -1,6 +1,11 @@
 Version 5.2.14pre
 
 * bug fixes
+    * emacs: bind commands in .profile/$ENV no longer overridden by tty
+      settings.
+    * heredocs: now saved in memory to avoid temp files disappear too soon.
+    * time: commands at the end of a pipeline can now be timed.
+    * on startup: MAILCHECK,TMOUT,SECONDS values from environment are honoured.
     * trap: exit traps now executed in subshells (without explicit exit call).
     * eval: if given empty command, exist status is that of last command
       substitution (if any).
@@ -17,6 +22,9 @@ Version 5.2.14pre
       in the array (used to print largest index, not what ksh88 did).
     * job control: resuming suspended gnu su no longer hoses su'd shell.
     * job control: fixed possible core dump when waiting for jobs.
+
+* LINENO variable now supported.
+* port to cygwin environment on win95/winnt.
 
 
 Version 5.2.13
@@ -45,7 +53,7 @@ Version 5.2.13
     * editing: completion after "cmd " now completes files (was command).
 
 
-$OpenBSD: NEWS,v 1.9 1999/01/19 20:41:51 millert Exp $
+$OpenBSD: NEWS,v 1.10 1999/06/15 01:18:32 millert Exp $
 
 Version 5.2.12
 

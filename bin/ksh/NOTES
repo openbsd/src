@@ -1,11 +1,11 @@
-$OpenBSD: NOTES,v 1.6 1999/01/08 20:24:57 millert Exp $
+$OpenBSD: NOTES,v 1.7 1999/06/15 01:18:33 millert Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
     - set -t.
     - signals/traps not cleared during functions.
     - trap DEBUG, local ERR and EXIT traps in functions.
-    - ERRNO, LINENO parameters.
+    - ERRNO parameter.
     - doesn't have posix file globbing (eg, [[:alpha:]], etc.).
     - use of an `agent' to execute unreadable/setuid/setgid shell scripts
       (don't ask).
@@ -18,7 +18,7 @@ Known bugs (see also BUG-REPORTS and PROJECTS files):
 	  " \t\n") others lose their special meaning.  IFS/PATH taken care of,
 	  still need to sort out some others (eg, TMOUT).
     Parsing,Lexing:
-	- line numbers in errors are wrong for nested construct.  Need to
+	- line numbers in errors are wrong for nested constructs.  Need to
 	  keep track of the line a command started on (can use for LINENO
 	  parameter as well).
 	- a $(..) expression nested inside double quotes inside another $(..)
@@ -75,6 +75,11 @@ Known differences between pdksh & at&t ksh (that may change)
     - if the command 'sleep 5 && /bin/echo blah' is run interactively and
       is the sleep is stopped (^Z), the echo is run immediately in pdksh.
       In at&t ksh, the whole thing is stopped.
+    - LINENO:
+	- in ksh88 variable is always 1 (can't be changed) in interac mode;
+	  in pdksh it changes.
+	- Value of LINENO after it has been set by the script in one file
+	  is bizarre when used in another file.
 
 Known differences between pdksh & at&t ksh (that are not likely to change)
     - at&t ksh seems to catch or ignore SIGALRM - pdksh dies upon receipt

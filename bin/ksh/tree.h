@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.5 1999/01/19 20:41:56 millert Exp $	*/
+/*	$OpenBSD: tree.h,v 1.6 1999/06/15 01:18:36 millert Exp $	*/
 
 /*
  * command trees for compile/execute
@@ -27,6 +27,7 @@ struct op {
 					 * select, and functions;
 					 * path to execute for TEXEC
 					 */
+	int	lineno;			/* TCOM/TFUNC: LINENO for this */
 };
 
 /* Tree.type values */
@@ -76,8 +77,9 @@ struct op {
 struct ioword {
 	int	unit;	/* unit affected */
 	int	flag;	/* action (below) */
-	char	*name;	/* file name */
+	char	*name;	/* file name (unused if heredoc) */
 	char	*delim;	/* delimiter for <<,<<- */
+	char	*heredoc;/* content of heredoc */
 };
 
 /* ioword.flag - type of redirection */

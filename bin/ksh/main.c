@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1999/04/27 18:18:19 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1999/06/15 01:18:35 millert Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -24,10 +24,9 @@ static int	is_restricted ARGS((char *name));
  * shell initialization
  */
 
-static const char	initifs [] = "IFS= \t\n"; /* must be R/W */
+static const char initifs[] = "IFS= \t\n";
 
-static const	char   initsubs [] = 
-  "${PS2=> } ${PS3=#? } ${PS4=+ }";
+static const char initsubs[] = "${PS2=> } ${PS3=#? } ${PS4=+ }";
 
 static const char version_param[] =
 #ifdef KSH
@@ -37,27 +36,14 @@ static const char version_param[] =
 #endif /* KSH */
 	;
 
-/*
-MAILCHECK:
-    typeset -i MAILCHECK
-    : "${MAILCHECK=600}"
-SECONDS:
-    typeset -i SECONDS
-    initialize seconds to $SECONDS
-TMOUT:
-    typeset -i
-    do setspec
-*/
-
 static const char *const initcoms [] = {
 	"typeset", "-x", "SHELL", "PATH", "HOME", NULL,
 	"typeset", "-r", version_param, NULL,
 	"typeset", "-i", "PPID", NULL,
-	"typeset", "-i", "OPTIND=1",
+	"typeset", "-i", "OPTIND=1", NULL,
 #ifdef KSH
-	    "MAILCHECK=600", "RANDOM", "SECONDS=0", "TMOUT=0",
+	"eval", "typeset -i RANDOM MAILCHECK=\"${MAILCHECK-600}\" SECONDS=\"${SECONDS-0}\" TMOUT=\"${TMOUT-0}\"", NULL,
 #endif /* KSH */
-	    NULL,
 	"alias",
 	 /* Standard ksh aliases */
 	  "hash=alias -t",	/* not "alias -t --": hash -r needs to work */
@@ -188,8 +174,8 @@ main(argc, argv)
 	 */
 	{
 		struct tbl *vp = global("PATH");
-		/* SETSTR: can't fail */
-		setstr(vp, def_path);
+		/* setstr can't fail here */
+		setstr(vp, def_path, KSH_RETURN_ERROR);
 	}
 
 
@@ -255,16 +241,16 @@ main(argc, argv)
 		 * bogus value
 		 */
 		if (current_wd[0] || pwd != null)
-			/* SETSTR: can't fail */
-			setstr(pwd_v, current_wd);
+			/* setstr can't fail here */
+			setstr(pwd_v, current_wd, KSH_RETURN_ERROR);
 	}
 	ppid = getppid();
 	setint(global("PPID"), (long) ppid);
 #ifdef KSH
 	setint(global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
 #endif /* KSH */
-	/* SETSTR: can't fail */
-	setstr(global(version_param), ksh_version);
+	/* setstr can't fail here */
+	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
 
 	/* execute initialization statements */
 	for (wp = (char**) initcoms; *wp != NULL; wp++) {
@@ -284,8 +270,8 @@ main(argc, argv)
 		 */
 		if (!(vp->flag & ISSET)
 		    || (!ksheuid && !strchr(str_val(vp), '#')))
-			/* SETSTR: can't fail */
-			setstr(vp, safe_prompt);
+			/* setstr can't fail here */
+			setstr(vp, safe_prompt, KSH_RETURN_ERROR);
 	}
 
 	/* Set this before parsing arguments */
@@ -673,32 +659,10 @@ unwind(i)
 			ksh_siglongjmp(e->jbuf, i);
 			/*NOTREACHED*/
 
-		  case E_NONE: 	/* bottom of the stack */
-		  {
-			if (Flag(FTALKING))
-				hist_finish();
-			j_exit();
-			remove_temps(func_heredocs);
-			if (i == LINTR) {
-				int sig = exstat - 128;
-
-				/* ham up our death a bit (at&t ksh
-				 * only seems to do this for SIGTERM)
-				 * Don't do it for SIGQUIT, since we'd
-				 * dump a core..
-				 */
-				if (sig == SIGINT || sig == SIGTERM) {
-					setsig(&sigtraps[sig], SIG_DFL,
-						SS_RESTORE_CURR|SS_FORCE);
-					kill(0, sig);
-				}
-			}
-#ifdef MEM_DEBUG
-			chmem_allfree();
-#endif /* MEM_DEBUG */
-			exit(exstat);
-			/* NOTREACHED */
-		  }
+		  case E_NONE:
+			if (i == LINTR)
+				e->flags |= EF_FAKE_SIGDIE;
+			/* Fall through... */
 
 		  default:
 			quitenv();
@@ -729,9 +693,7 @@ quitenv()
 	register struct env *ep = e;
 	register int fd;
 
-	if (ep->oenv == NULL) /* cleanup_parents_env() was called */
-		exit(exstat);	/* exit child */
-	if (ep->oenv->loc != ep->loc)
+	if (ep->oenv && ep->oenv->loc != ep->loc)
 		popblock();
 	if (ep->savefd != NULL) {
 		for (fd = 0; fd < NUFILE; fd++)
@@ -742,6 +704,36 @@ quitenv()
 			shf_reopen(2, SHF_WR, shl_out);
 	}
 	reclaim();
+
+	/* Bottom of the stack.
+	 * Either main shell is exiting or cleanup_parents_env() was called.
+	 */
+	if (ep->oenv == NULL) {
+		if (ep->type == E_NONE) {	/* Main shell exiting? */
+			if (Flag(FTALKING))
+				hist_finish();
+			j_exit();
+			if (ep->flags & EF_FAKE_SIGDIE) {
+				int sig = exstat - 128;
+
+				/* ham up our death a bit (at&t ksh
+				 * only seems to do this for SIGTERM)
+				 * Don't do it for SIGQUIT, since we'd
+				 * dump a core..
+				 */
+				if (sig == SIGINT || sig == SIGTERM) {
+					setsig(&sigtraps[sig], SIG_DFL,
+						SS_RESTORE_CURR|SS_FORCE);
+					kill(0, sig);
+				}
+			}
+#ifdef MEM_DEBUG
+			chmem_allfree();
+#endif /* MEM_DEBUG */
+		}
+		exit(exstat);
+	}
+
 	e = e->oenv;
 	afree(ep, ATEMP);
 }
@@ -760,10 +752,13 @@ cleanup_parents_env()
 
 	/* close all file descriptors hiding in savefd */
 	for (ep = e; ep; ep = ep->oenv) {
-		if (ep->savefd)
+		if (ep->savefd) {
 			for (fd = 0; fd < NUFILE; fd++)
 				if (ep->savefd[fd] > 0)
 					close(ep->savefd[fd]);
+			afree(ep->savefd, &ep->area);
+			ep->savefd = (short *) 0;
+		}
 	}
 	e->oenv = (struct env *) 0;
 }
@@ -776,7 +771,6 @@ cleanup_proc_env()
 
 	for (ep = e; ep; ep = ep->oenv)
 		remove_temps(ep->temps);
-	remove_temps(func_heredocs);
 }
 
 /* remove temp files and free ATEMP Area */

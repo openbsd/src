@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.11 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.12 1999/06/15 01:18:33 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -34,7 +34,7 @@ c_shift(wp)
 	arg = wp[builtin_opt.optind];
 
 	if (arg) {
-		evaluate(arg, &val, FALSE);
+		evaluate(arg, &val, KSH_UNWIND_ERROR);
 		n = val;
 	} else
 		n = 1;
@@ -387,6 +387,7 @@ c_read(wp)
 				cp--;
 		Xput(cs, cp, '\0');
 		vp = global(*wp);
+		/* Must be done before setting export. */
 		if (vp->flag & RDONLY) {
 			shf_flush(shf);
 			bi_errorf("%s is read only", *wp);
@@ -394,7 +395,10 @@ c_read(wp)
 		}
 		if (Flag(FEXPORT))
 			typeset(*wp, EXPORT, 0, 0, 0);
-		setstr(vp, Xstring(cs, cp)); /* SETSTR: fail */
+		if (!setstr(vp, Xstring(cs, cp), KSH_RETURN_ERROR)) {
+		    shf_flush(shf);
+		    return 1;
+		}
 	}
 
 	shf_flush(shf);
@@ -424,13 +428,6 @@ c_eval(wp)
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
-	/* XXX what is this?
-	{
-	    int i;
-	    for (i = builtin_opt.optind; wp[i]; i++)
-		shellf("eval[%s]\n", wp[i]);
-	}
-	*/
 	s = pushs(SWORDS, ATEMP);
 	s->u.strv = wp + builtin_opt.optind;
 	/*

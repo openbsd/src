@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.7 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.8 1999/06/15 01:18:34 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -494,31 +494,35 @@ coproc_cleanup(reuse)
 }
 #endif /* KSH */
 
+
 /*
  * temporary files
  */
 
 struct temp *
-maketemp(ap)
+maketemp(ap, type, tlist)
 	Area *ap;
+	Temp_type type;
+	struct temp **tlist;
 {
 	static unsigned int inc;
 	struct temp *tp;
 	int len;
 	int fd;
 	char *path;
-	const char *tmp;
+	const char *dir;
 
-	tmp = tmpdir ? tmpdir : "/tmp";
+	dir = tmpdir ? tmpdir : "/tmp";
 	/* The 20 + 20 is a paranoid worst case for pid/inc */
-	len = strlen(tmp) + 3 + 20 + 20 + 1;
+	len = strlen(dir) + 3 + 20 + 20 + 1;
 	tp = (struct temp *) alloc(sizeof(struct temp) + len, ap);
 	tp->name = path = (char *) &tp[1];
 	tp->shf = (struct shf *) 0;
+	tp->type = type;
 	while (1) {
 		/* Note that temp files need to fit 8.3 DOS limits */
 		shf_snprintf(path, len, "%s/sh%05u.%03x",
-			tmp, (unsigned) procpid, inc++);
+			     dir, (unsigned) procpid, inc++);
 		/* Mode 0600 to be paranoid, O_TRUNC in case O_EXCL isn't
 		 * really there.
 		 */
@@ -535,12 +539,16 @@ maketemp(ap)
 		    && errno != EISDIR
 #endif /* EISDIR */
 			)
-			/* Error must be printed by called: don't know here if
+			/* Error must be printed by caller: don't know here if
 			 * errorf() or bi_errorf() should be used.
 			 */
 			break;
 	}
 	tp->next = NULL;
 	tp->pid = procpid;
+
+	tp->next = *tlist;
+	*tlist = tp;
+
 	return tp;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.6 1999/01/19 20:41:52 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.7 1999/06/15 01:18:34 millert Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -39,7 +39,7 @@ enum token {
 	/* things that don't appear in the opinfo[] table */
 	VAR, LIT, END, BAD
     };
-#define IS_BINOP(op) (((int)op) >= O_EQ && ((int)op) <= O_COMMA)
+#define IS_BINOP(op) (((int)op) >= (int)O_EQ && ((int)op) <= (int)O_COMMA)
 #define IS_ASSIGNOP(op)	((int)(op) >= (int)O_ASN && (int)(op) <= (int)O_BORASN)
 
 enum prec {
@@ -185,7 +185,7 @@ v_evaluate(vp, expr, error_ok)
 			curstate.evaling->flag &= ~EXPRINEVAL;
 		quitenv();
 		if (i == LAEXPR) {
-			if (error_ok)
+			if (error_ok == KSH_RETURN_ERROR)
 				return 0;
 			errorf(null);
 		}
@@ -208,8 +208,8 @@ v_evaluate(vp, expr, error_ok)
 	if (vp->flag & INTEGER)
 		setint_v(vp, v);
 	else
-		/* SETSTR: can't fail; if pretending, allow fail */
-		setstr(vp, str_val(v));
+		/* can fail if readony */
+		setstr(vp, str_val(v), error_ok);
 
 	quitenv();
 
@@ -482,6 +482,15 @@ token(es)
 				evalerr(es, ET_STR, "missing ]");
 			cp += len;
 		}
+#ifdef KSH
+		else if (c == '(' /*)*/ ) {
+		    /* todo: add math functions (all take single argument):
+		     * abs acos asin atan cos cosh exp int log sin sinh sqrt
+		     * tan tanh
+		     */
+		    ;
+		}
+#endif /* KSH */
 		if (es->noassign) {
 			es->val = tempvar();
 			es->val->flag |= EXPRLVALUE;
@@ -552,9 +561,9 @@ assign_check(es, op, vasn)
 	struct tbl *vasn;
 {
 	if (vasn->name[0] == '\0' && !(vasn->flag & EXPRLVALUE))
-		evalerr(es, ET_LVALUE, opinfo[op].name);
+		evalerr(es, ET_LVALUE, opinfo[(int) op].name);
 	else if (vasn->flag & RDONLY)
-		evalerr(es, ET_RDONLY, opinfo[op].name);
+		evalerr(es, ET_RDONLY, opinfo[(int) op].name);
 }
 
 static struct tbl *
@@ -590,7 +599,7 @@ intvar(es, vp)
 			evalerr(es, ET_RECURSIVE, vp->name);
 		es->evaling = vp;
 		vp->flag |= EXPRINEVAL;
-		v_evaluate(vq, str_val(vp), FALSE);
+		v_evaluate(vq, str_val(vp), KSH_UNWIND_ERROR);
 		vp->flag &= ~EXPRINEVAL;
 		es->evaling = (struct tbl *) 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.13 1999/01/19 20:41:55 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.14 1999/06/15 01:18:34 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -665,6 +665,7 @@ Done:
 
 		iop->name = (char *) 0;
 		iop->delim = (char *) 0;
+		iop->heredoc = (char *) 0;
 		Xfree(ws, wp);	/* free word */
 		yylval.iop = iop;
 		return REDIR;
@@ -783,46 +784,27 @@ gethere()
 
 static void
 readhere(iop)
-	register struct ioword *iop;
+	struct ioword *iop;
 {
-	struct shf *volatile shf;
-	struct temp *h;
 	register int c;
 	char *volatile eof;
 	char *eofp;
 	int skiptabs;
-	int i;
+	XString xs;
+	char *xp;
+	int xpos;
 
 	eof = evalstr(iop->delim, 0);
-
-	if (e->flags & EF_FUNC_PARSE) {
-		h = maketemp(APERM);
-		h->next = func_heredocs;
-		func_heredocs = h;
-	} else {
-		h = maketemp(ATEMP);
-		h->next = e->temps;
-		e->temps = h;
-	}
-	iop->name = h->name;
-	if (!(shf = h->shf))
-		yyerror("cannot create temporary file %s - %s\n",
-			h->name, strerror(errno));
-
-	newenv(E_ERRH);
-	i = ksh_sigsetjmp(e->jbuf, 0);
-	if (i) {
-		quitenv();
-		shf_close(shf);
-		unwind(i);
-	}
 
 	if (!(iop->flag & IOEVAL))
 		ignore_backslash_newline++;
 
+	Xinit(xs, xp, 256, ATEMP);
+
 	for (;;) {
 		eofp = eof;
 		skiptabs = iop->flag & IOSKIP;
+		xpos = Xsavepos(xs, xp);
 		while ((c = getsc()) != 0) {
 			if (skiptabs) {
 				if (c == '\t')
@@ -831,29 +813,30 @@ readhere(iop)
 			}
 			if (c != *eofp)
 				break;
+			Xcheck(xs, xp);
+			Xput(xs, xp, c);
 			eofp++;
 		}
 		/* Allow EOF here so commands with out trailing newlines
 		 * will work (eg, ksh -c '...', $(...), etc).
 		 */
-		if (*eofp == '\0' && (c == 0 || c == '\n'))
+		if (*eofp == '\0' && (c == 0 || c == '\n')) {
+			xp = Xrestpos(xs, xp, xpos);
 			break;
+		}
 		ungetsc(c);
-		shf_write(eof, eofp - eof, shf);
 		while ((c = getsc()) != '\n') {
 			if (c == 0)
 				yyerror("here document `%s' unclosed\n", eof);
-			shf_putc(c, shf);
+			Xcheck(xs, xp);
+			Xput(xs, xp, c);
 		}
-		shf_putc(c, shf);
+		Xcheck(xs, xp);
+		Xput(xs, xp, c);
 	}
-	shf_flush(shf);
-	if (shf_error(shf))
-		yyerror("error saving here document `%s': %s\n",
-			eof, strerror(shf_errno(shf)));
-	/*XXX add similar checks for write errors everywhere */
-	quitenv();
-	shf_close(shf);
+	Xput(xs, xp, '\0');
+	iop->heredoc = Xclose(xs, xp);
+
 	if (!(iop->flag & IOEVAL))
 		ignore_backslash_newline--;
 }

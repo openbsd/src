@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.7 1999/01/10 17:55:01 millert Exp $
+$OpenBSD: CONTRIBUTORS,v 1.8 1999/06/15 01:18:32 millert Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -93,8 +93,8 @@ Other contributors:
     * Stefan Dalibor (<Stefan.Dalibor@informatik.uni-erlangen.de>): fix for
       COLUMNS never being set in x_init().
     * Arnon Kanfi (<arnon@gilly.datatools.com>): fix for prompt.
-    * Marc Olzheim (<marcolz@stack.urc.tue.nl>): patches to ifdef KSH the
-      mail check code and aliases.
+    * Marc Olzheim (<marcolz@stack.nl>): patches to ifdef KSH the mail check
+      code and aliases; enum patches for old K&R compilers; handle missing dup2.
     * Lars Hecking (<lhecking@nmrc.ucc.ie>): fixes so shell compiles as sh
       again.
     * Bill Kish (<kish@browncow.com>): added prompt delimiter hack for
@@ -122,3 +122,6 @@ Other contributors:
       completion.
     * Martin Lucina <mato@kotelna.sk>: fix for argument parsing in exit command,
       fix for KSH_CHECK_H_TYPE.
+    * Mark Funkenhauser <mark@interix.com>: added $LINENO support.
+    * Corinna Vinschen <Corinna@Vinschen.de> and Steven Hein <ssh@sgi.com>:
+      port to cyngin environment on win95/winnt.

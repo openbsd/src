@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.7 1998/10/29 04:09:21 millert Exp $	*/
+/*	$OpenBSD: tree.c,v 1.8 1999/06/15 01:18:36 millert Exp $	*/
 
 /*
  * command tree climbing
@@ -173,22 +173,12 @@ ptree(t, indent, shf)
 		for (ioact = t->ioact; *ioact != NULL; ) {
 			struct ioword *iop = *ioact++;
 
-			/* name is 0 when tracing (set -x) */
-			if ((iop->flag & IOTYPE) == IOHERE && iop->name) {
-				struct shf *rshf;
-				char buf[1024];
-				int n;
-
+			/* heredoc is 0 when tracing (set -x) */
+			if ((iop->flag & IOTYPE) == IOHERE && iop->heredoc) {
 				tputc('\n', shf);
-				if ((rshf = shf_open(iop->name, O_RDONLY, 0, 0))) {
-					while ((n = shf_read(buf, sizeof(buf), rshf))
-										> 0)
-						shf_write(buf, n, shf);
-					shf_close(rshf);
-				} else
-					errorf("can't open %s - %s",
-						iop->name, strerror(errno));
-				fptreef(shf, indent, "%s", evalstr(iop->delim, 0));
+				shf_puts(iop->heredoc, shf);
+				fptreef(shf, indent, "%s",
+					evalstr(iop->delim, 0));
 				need_nl = 1;
 			}
 		}
@@ -523,6 +513,7 @@ tcopy(t, ap)
 
 	r->left = tcopy(t->left, ap);
 	r->right = tcopy(t->right, ap);
+	r->lineno = t->lineno;
 
 	return r;
 }
@@ -584,6 +575,10 @@ wdscan(wp, c)
 				nest--;
 			break;
 #endif /* KSH */
+		  default:
+			internal_errorf(0,
+				"wdscan: unknown char 0x%x (carrying on)",
+				wp[-1]);
 		}
 }
 
@@ -682,6 +677,8 @@ iocopy(iow, ap)
 			q->name = wdcopy(p->name, ap);
 		if (p->delim != (char *) 0)
 			q->delim = wdcopy(p->delim, ap);
+		if (p->heredoc != (char *) 0)
+			q->heredoc = str_save(p->heredoc, ap);
 	}
 	ior[i] = NULL;
 
@@ -737,6 +734,10 @@ iofree(iow, ap)
 	for (iop = iow; (p = *iop++) != NULL; ) {
 		if (p->name != NULL)
 			afree((void*)p->name, ap);
+		if (p->delim != NULL)
+			afree((void*)p->delim, ap);
+		if (p->heredoc != NULL)
+			afree((void*)p->heredoc, ap);
 		afree((void*)p, ap);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.10 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.11 1999/06/15 01:18:34 millert Exp $	*/
 
 /*
  * command history
@@ -225,8 +225,7 @@ c_fc(wp)
 
 	/* Run editor on selected lines, then run resulting commands */
 
-	tf = maketemp(ATEMP);
-	tf->next = e->temps; e->temps = tf;
+	tf = maketemp(ATEMP, TT_HIST_EDIT, &e->temps);
 	if (!(shf = tf->shf)) {
 		bi_errorf("cannot create temp file %s - %s",
 			tf->name, strerror(errno));
@@ -241,8 +240,8 @@ c_fc(wp)
 	}
 
 	if (!Flag(FSH)) {
-		/* SETSTR: ignore fail (arbitrary) */
-		setstr(local("_", FALSE), tf->name);
+		/* Ignore setstr errors here (arbitrary) */
+		setstr(local("_", FALSE), tf->name, KSH_RETURN_ERROR);
 	}
 
 	/* XXX: source should not get trashed by this.. */

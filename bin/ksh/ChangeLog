@@ -1,3 +1,156 @@
+Thu May 13 17:23:17 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* emacs.c(x_bound,bind_if_not_bound): new variable/fucntion.
+	* emacs.c(x_bind): set bit in x_bound[].
+	* emacs.c(x_emacs_keys): call bind_if_not_bound.
+
+Thu May 13 14:23:12 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* sh.h: ifdefs for __CYGWIN__ for path defines.
+	* path.c(simplify_path): ifdefs for __CYGWIN__; preserve leading
+	  double-slash on pathnames.
+	* c_ksh.c(c_cd): use cygwin_conv_to_full_posix_path().
+	* edit.c(x_mode): default eof char to ^D.
+
+	[fixes from Corinna Vinschen and Steven Hein, obtained from
+	 ftp://ftp.franken.de/pub/win32/develop/gnuwin32/cygwin/
+	    porters/Vinschen_Corinna/B20/]
+
+Wed May 12 12:30:09 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* exit.c(x_mode): set fields of edchars to -1 if corrisponding char
+	  is unset.
+	* exit.c(x_init): initialize edchars to -2, not -1.
+	* emacs.c(x_emacs_keys): check if char is >= 0 before setting.
+
+Wed May 12 11:31:24 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* shf.c(shf_write): don't buffer if buffer is empty and we're
+	  writting a large amount.
+	* shf.c(shf_open): changed to use shf_reopen instead of shf_fdopen
+	  so alloca failing won't lose the fd.
+
+Wed May 12 10:19:43 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* sh.h: deleted TT_HEREDOC_RAW define.
+	* tree.h(struct ioword): added heredoc field.
+	* tree.c(iocopy,iofree): copy/free heredoc field; remove special case
+	  for IOHERE and name field.
+	* tree.c(ptree): changed to use heredoc content string (not open temp).
+	* lex.c(yylex): initialize heredoc field.
+	* lex.c(readhere): save to string instead of a temp file.
+	* exec.c(herein): changed first are from file name to heredoc content
+	  string; changed all calls.  Changed to always create a new temp file
+	  and write content to it.
+
+Tue May 11 11:38:22 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* tree.c(iofree): free delim field; don't free name of IOHERE iowords.
+
+Tue May 11 10:57:53 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* sh.h(func_heredocs): deleted.
+	* sh.h(EF_FAKE_SIGDIE): added.
+	* lex.c(readhere): put function heredocs at bottom of env stack.
+	* main.c(quitenv,cleanup_proc_env): deleted remove_temps(func_heredocs)
+	  calls.
+
+	* main.c(quitenv): moved exit of no oenv to en after reclaim.
+	* main.c(cleanup_parents_env): free ep->savefd and set to 0.
+	* main.c(unwind,quitenv): moved code for E_NONE from unwind()
+	  to quitenv().
+
+Mon May 10 17:04:03 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* exec.c(herein): restore source to osource after yylex().
+
+Mon May 10 12:14:40 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* tree.c(iocopy): don't copy IOHERE name (it belongs to a struct temp).
+	* tree.c(wdscan): added default case to print internal error.
+
+Mon May 10 10:39:34 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* sh.h(Temp_type): new enum (TT_HEREDOC_RAW, TT_HEREDOC_EXP,
+	  TT_HIST_FILE).
+	* sh.h(struct temp): added type field.
+	* io.c(maketemp): added type and tlist arguments; changed
+	  all calls.
+
+Tue Apr 27 11:31:48 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* exec.c(execute): clear XEXEC in the call to timex() so time
+	  can be used at the end of a pipeline.
+
+Fri Apr 23 16:29:01 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* mail.c(mcheck): don't check if MAILCHECK is set, just check if
+	  mplist is null.
+	* mail.c(mcset): new function.
+	* var.c(setspec): case MAILCHECK: call mcset.
+	* var.c(unspecial): new function.
+	* var.c(unsetspec): call unspecial for LINENO, MAILCHECK, RANDOM,
+	  SECONDS, TMOUT.
+
+Fri Apr 23 15:34:39 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* main.c(initcoms): put MAILCHECK, SECONDS, TMOUT in an eval to
+	  preserve previous values.
+	* var.c(getspec): case V_SECONDS: don't do anything special if
+	  variable not set.
+
+Thu Apr 22 15:03:27 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* var.c(setstr): error if var is RDONLY.
+	* var.c(global): non-letter params: set RDONLY flag after setstr call.
+	* c_ksh.c(c_getopts), eval.c(expand), exec.c(execute):
+	  removed readonly check.
+
+	* sh.h(KSH_UNWIND_ERROR, KSH_RETURN_ERROR): new defines.
+	* var.c(setstr): added error_ok argument; changed all calls.
+	* c_ksh.c(c_getopts): clear READONLY and INTEGER flags for OPTARG;
+	  return non-zero if variable can't be set.
+	* var.c(typeset): if fake_assign fails, unset the variable's value
+	  and carry on for rest of array, then unwind.
+	* expr.c(expand,v_expand): changed all calls to use KSH_UNWIND_ERROR
+	  or KSH_RETURN_ERROR.
+
+Tue Apr 20 16:52:24 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* configure.in: added check dup2.
+	* sh.h: added dup2 prototype.
+	* aclocal.m4: replace AC_HEADER_DIRENT so it checks -lndir.
+
+	* missing.c(dup2): new function.
+	  Based on code from Marc Olzheim.
+
+Fri Apr 16 16:32:27 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* syn.c(lineno_offset): removed variable and all references.
+	* tree.c(tcopy): copy lineno field.
+	* var.c(user_lineno): new variable.
+	* var.c(setspec): added case for V_LINENO (sets user_lineno).
+	* var.c(getspec): V_LINENO: add in user_lineno.
+
+Fri Apr 16 15:26:26 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* tree.h(struct op): added lineno field.
+	* table.h(V_LINENO, current_lineno): new define/variable.
+	* exec.c(execute): set current_lineno for TCOM.
+	* syn.c(lineno_offset): new variable.
+	* syn.c(get_command): set t->lineno.
+	* syn.c(function_body): save/restore lineno_offset;
+	* syn.c(compile): initialize lineno_offset
+	* var.c(initvar,getspec): added V_LINENO entry.
+
+	Changes from Mark Funkenhauser.
+
+Fri Apr 16 12:18:08 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* expr.c,misc.c(getoptions): added int casts to avoid errors from
+	  old K&R compilers.
+	Fixes from Marc Olzheim.
+
 Fri Jan 15 12:51:53 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* expr.c: pass es as first param to all functions; deleted
@@ -333,7 +486,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.10 1999/01/19 20:41:51 millert Exp $
+$OpenBSD: ChangeLog,v 1.11 1999/06/15 01:18:32 millert Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

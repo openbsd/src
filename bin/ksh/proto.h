@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.6 1999/01/08 20:25:01 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.7 1999/06/15 01:18:35 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -134,7 +134,7 @@ void	coproc_write_close ARGS((int fd));
 int	coproc_getfd	ARGS((int mode, const char **emsgp));
 void	coproc_cleanup	ARGS((int reuse));
 #endif /* KSH */
-struct temp *maketemp	ARGS((Area *ap));
+struct temp *maketemp	ARGS((Area *ap, Temp_type type, struct temp **tlist));
 /* jobs.c */
 void 	j_init		ARGS((int mflagset));
 void 	j_exit		ARGS((void));
@@ -159,6 +159,7 @@ void 	pprompt		ARGS((const char *cp, int ntruncate));
 /* mail.c */
 #ifdef KSH
 void 	mcheck		ARGS((void));
+void 	mcset		ARGS((long interval));
 void 	mbset		ARGS((char *p));
 void 	mpset		ARGS((char *mptoparse));
 #endif /* KSH */
@@ -258,7 +259,7 @@ struct tbl *	global	ARGS((const char *n));
 struct tbl *	local	ARGS((const char *n, bool_t copy));
 char *	str_val		ARGS((struct tbl *vp));
 long 	intval		ARGS((struct tbl *vp));
-void 	setstr		ARGS((struct tbl *vq, const char *s));
+int 	setstr		ARGS((struct tbl *vq, const char *s, int error_ok));
 struct tbl *setint_v	ARGS((struct tbl *vq, struct tbl *vp));
 void 	setint		ARGS((struct tbl *vq, long n));
 int	getint		ARGS((struct tbl *vp, long *nump));

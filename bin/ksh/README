@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.7 1998/10/29 04:09:19 millert Exp $
+$OpenBSD: README,v 1.8 1999/06/15 01:18:33 millert Exp $
 
 Last updated October '97 for pdksh-5.2.13.
 	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
@@ -189,5 +189,9 @@ as well as the following, if relevant (if you aren't sure, include them)
 	  (eg, make distclean; ./configure --verbose)
 	* the contents of config.log (this is created by the configure script)
 	* if you are using gcc (the GNU C compiler), which version it is.
+
+BTW, the most frequently reported bug is
+	echo hi | read a; echo $a	# Does not print hi
+I'm aware of this and there is no need to report it.
 
 Michael Rendell, michael@cs.mun.ca

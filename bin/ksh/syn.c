@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.11 1998/10/29 04:09:21 millert Exp $	*/
+/*	$OpenBSD: syn.c,v 1.12 1999/06/15 01:18:36 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -227,6 +227,7 @@ get_command(cf)
 		REJECT;
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = newtp(TCOM);
+		t->lineno = source->line;
 		while (1) {
 			cf = (t->u.evalflags ? ARRAYVAR : 0)
 			     | (XPsize(args) == 0 ? ALIAS|VARASN : CMDWORD);
@@ -295,6 +296,7 @@ get_command(cf)
 						CHAR, 't', EOS };
 		/* Leave KEYWORD in syniocf (allow if (( 1 )) then ...) */
 		t = newtp(TCOM);
+		t->lineno = source->line;
 		ACCEPT;
 		XPput(args, wdcopy(let_cmd, ATEMP));
 		musthave(LWORD,LETEXPR);
@@ -551,6 +553,7 @@ function_body(name, ksh_func)
 	t = newtp(TFUNCT);
 	t->str = sname;
 	t->u.ksh_func = ksh_func;
+	t->lineno = source->line;
 
 	/* Note that POSIX allows only compound statements after foo(), sh and
 	 * at&t ksh allow any command, go with the later since it shouldn't
@@ -580,6 +583,7 @@ function_body(name, ksh_func)
 		t->left->args[1] = (char *) 0;
 		t->left->vars = (char **) alloc(sizeof(char *), ATEMP);
 		t->left->vars[0] = (char *) 0;
+		t->left->lineno = 1;
 	}
 	if (!old_func_parse)
 		e->flags &= ~EF_FUNC_PARSE;

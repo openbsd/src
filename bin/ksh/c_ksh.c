@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.11 1999/01/10 17:55:01 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.12 1999/06/15 01:18:33 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -7,6 +7,10 @@
 #include "sh.h"
 #include "ksh_stat.h"
 #include <ctype.h>
+
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+#endif /* __CYGWIN__ */
 
 int
 c_cd(wp)
@@ -129,7 +133,8 @@ c_cd(wp)
 	 * setting in at&t ksh)
 	 */
 	if (current_wd[0])
-		setstr(oldpwd_s, current_wd); /* SETSTR no die, don't set */
+		/* Ignore failure (happens if readonly or integer) */
+		setstr(oldpwd_s, current_wd, KSH_RETURN_ERROR);
 
 	if (!ISABSPATH(Xstring(xs, xp))) {
 #ifdef OS2
@@ -149,8 +154,15 @@ c_cd(wp)
 
 	/* Set PWD */
 	if (pwd) {
-		set_current_wd(pwd);
-		setstr(pwd_s, pwd);	/* SETSTR no die, leave unchanged */
+#ifdef __CYGWIN__
+		char ptmp[PATH];  /* larger than MAX_PATH */
+		cygwin_conv_to_full_posix_path(pwd, ptmp);
+#else /* __CYGWIN__ */
+		char *ptmp = pwd;
+#endif /* __CYGWIN__ */
+		set_current_wd(ptmp);
+		/* Ignore failure (happens if readonly or integer) */
+		setstr(pwd_s, ptmp, KSH_RETURN_ERROR);
 	} else {
 		set_current_wd(null);
 		pwd = Xstring(xs, xp);
@@ -1064,7 +1076,7 @@ c_let(wp)
 		bi_errorf("no arguments");
 	else
 		for (wp++; *wp; wp++)
-			if (!evaluate(*wp, &val, TRUE)) {
+			if (!evaluate(*wp, &val, KSH_RETURN_ERROR)) {
 				rv = 2;	/* distinguish error from zero result */
 				break;
 			} else
@@ -1297,8 +1309,9 @@ c_getopts(wp)
 	const char *options;
 	const char *var;
 	int	optc;
+	int	ret;
 	char	buf[3];
-	struct tbl *vq;
+	struct tbl *vq, *voptarg;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
@@ -1364,21 +1377,27 @@ c_getopts(wp)
 		user_opt.uoptind = user_opt.optind;
 	}
 
+	voptarg = global("OPTARG");
+	voptarg->flag &= ~RDONLY;	/* at&t ksh clears ro and int */
+	/* Paranoia: ensure no bizarre results. */
+	if (voptarg->flag & INTEGER)
+	    typeset("OPTARG", 0, INTEGER, 0, 0);
 	if (user_opt.optarg == (char *) 0)
-		unset(global("OPTARG"), 0);
+		unset(voptarg, 0);
 	else
-		setstr(global("OPTARG"), user_opt.optarg); /* SETSTR: no fail, cause exit code to be non-zero */
+		/* This can't fail (have cleared readonly/integer) */
+		setstr(voptarg, user_opt.optarg, KSH_RETURN_ERROR);
+
+	ret = 0;
 
 	vq = global(var);
-	if (vq->flag & RDONLY) {
-		bi_errorf("%s is readonly", var);
-		return 1;
-	}
+	/* Error message already printed (integer, readonly) */
+	if (!setstr(vq, buf, KSH_RETURN_ERROR))
+	    ret = 1;
 	if (Flag(FEXPORT))
 		typeset(var, EXPORT, 0, 0, 0);
-	setstr(vq, buf);	/* SETSTR: no fail, cause exit code to be !0 */
 
-	return optc < 0 ? 1 : 0;
+	return optc < 0 ? 1 : ret;
 }
 
 #ifdef EMACS

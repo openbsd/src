@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.8 1999/01/10 17:55:03 millert Exp $	*/
+/*	$OpenBSD: mail.c,v 1.9 1999/06/15 01:18:35 millert Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -27,9 +27,10 @@ typedef struct mbox {
  * same list is used for both since they are exclusive.
  */
 
-static mbox_t  *mplist;
-static mbox_t  mbox;
+static mbox_t	*mplist;
+static mbox_t	mbox;
 static time_t	mlastchkd;	/* when mail was last checked */
+static time_t	mailcheck_interval;
 
 static void     munset      ARGS((mbox_t *mlist)); /* free mlist and mval */
 static mbox_t * mballoc     ARGS((char *p, char *m)); /* allocate a new mbox */
@@ -40,21 +41,16 @@ mcheck()
 {
 	register mbox_t	*mbp;
 	time_t		 now;
-	long		 mailcheck;
 	struct tbl	*vp;
 	struct stat	 stbuf;
-
-	if (getint(global("MAILCHECK"), &mailcheck) < 0)
-		return;
 
 	now = time((time_t *) 0);
 	if (mlastchkd == 0)
 		mlastchkd = now;
-	if (now - mlastchkd >= mailcheck) {
+	if (now - mlastchkd >= mailcheck_interval) {
 		mlastchkd = now;
 
-		vp = global("MAILPATH");
-		if (vp && (vp->flag & ISSET))
+		if (mplist)
 			mbp = mplist;
 		else if ((vp = global("MAIL")) && (vp->flag & ISSET))
 			mbp = &mbox;
@@ -82,6 +78,13 @@ mcheck()
 			mbp = mbp->mb_next;
 		}
 	}
+}
+
+void
+mcset(interval)
+	long interval;
+{
+	mailcheck_interval = interval;
 }
 
 void
@@ -192,8 +195,8 @@ mbox_t	*mbp;
 	 */
 	if (!Flag(FSH))
 #endif
-		/* SETSTR: ignore fail (arbitrary; havn't checked at&t) */
-		setstr((vp = local("_", FALSE)), mbp->mb_path);
+		/* Ignore setstr errors here (arbitrary) */
+		setstr((vp = local("_", FALSE)), mbp->mb_path, KSH_RETURN_ERROR);
 
 	shellf("%s\n", substitute(mbp->mb_msg ? mbp->mb_msg : MBMESSAGE, 0));
 
