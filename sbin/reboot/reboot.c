@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.12 1998/07/12 07:17:28 angelos Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.13 1998/08/05 07:37:37 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.12 1998/07/12 07:17:28 angelos Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.13 1998/08/05 07:37:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,12 +202,12 @@ main(argc, argv)
 		sync();
 
 	/*
-	 * Wait for up to 30 seconds for processes that need a long 
+	 * Wait for up to 12 seconds for processes that need a long 
 	 * time to shut down (e.g., X servers on old slow notebook PCs with
 	 * only 8 MB of RAM and a slow disk; or databases), but probe at
 	 * 1 second intervals and continue immediately if none are left.
 	 */
-	for (i=0; i<30; ++i) {
+	for (i=0; i<12; ++i) {
 		if (kill(-1, 0) == -1) {
 			if (errno == ESRCH)
 				break;
