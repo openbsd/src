@@ -1,4 +1,4 @@
-/* $OpenBSD: wdcevent.h,v 1.2 2002/05/03 09:18:46 gluk Exp $ */
+/* $OpenBSD: wdcevent.h,v 1.3 2002/12/22 18:24:45 grange Exp $ */
 
 /*
  * Copyright (c) 2001 Constantine Sapuntzakis
@@ -29,7 +29,22 @@
 #ifndef WDCEVENT_H
 #define WDCEVENT_H
 
-void wdc_log(struct channel_softc *chp, int type, 
+enum wdcevent_type {
+	WDCEVENT_STATUS = 1,
+	WDCEVENT_ERROR,
+	WDCEVENT_ATAPI_CMD,
+	WDCEVENT_ATAPI_DONE,
+	WDCEVENT_ATA_SHORT,
+	WDCEVENT_ATA_LONG,
+	WDCEVENT_SET_DRIVE1,
+	WDCEVENT_SET_DRIVE0,
+	WDCEVENT_REG,
+	WDCEVENT_ATA_EXT
+};
+
+#ifdef _KERNEL
+
+void wdc_log(struct channel_softc *chp, enum wdcevent_type type,
     unsigned int size, char  val[]);
 
 static __inline void WDC_LOG_STATUS(struct channel_softc *chp,
@@ -38,12 +53,12 @@ static __inline void WDC_LOG_STATUS(struct channel_softc *chp,
 		return;
 	
 	chp->ch_prev_log_status = status;
-	wdc_log(chp, 1, 1, &status);
+	wdc_log(chp, WDCEVENT_STATUS, 1, &status);
 }
 
 static __inline void WDC_LOG_ERROR(struct channel_softc *chp,
     u_int8_t error) {
-	wdc_log(chp, 2, 1, &error);
+	wdc_log(chp, WDCEVENT_ERROR, 1, &error);
 }
 
 static __inline void WDC_LOG_ATAPI_CMD(struct channel_softc *chp, int drive,
@@ -54,17 +69,17 @@ static __inline void WDC_LOG_ATAPI_CMD(struct channel_softc *chp, int drive,
 	record[1] = flags & 0xff;
 	bcopy(cmd, &record[2], len);
 
-	wdc_log(chp, 3, len + 2, record);
+	wdc_log(chp, WDCEVENT_ATAPI_CMD, len + 2, record);
 }
 
 static __inline void WDC_LOG_ATAPI_DONE(struct channel_softc *chp, int drive,
     int flags, u_int8_t error) {
 	char record[3] = {flags >> 8, flags & 0xff, error};
-	wdc_log(chp, 4, 3, record);
+	wdc_log(chp, WDCEVENT_ATAPI_DONE, 3, record);
 }
 
 static __inline void WDC_LOG_ATA_CMDSHORT(struct channel_softc *chp, u_int8_t cmd) {
-	wdc_log(chp, 5, 1, &cmd);
+	wdc_log(chp, WDCEVENT_ATA_SHORT, 1, &cmd);
 }
 
 static __inline void WDC_LOG_ATA_CMDLONG(struct channel_softc *chp, 
@@ -73,12 +88,13 @@ static __inline void WDC_LOG_ATA_CMDLONG(struct channel_softc *chp,
 	char record[8] = { head, precomp, cylinhi, cylinlo,
 			   sector, count, command };
 
-	wdc_log(chp, 6, 7, record);
+	wdc_log(chp, WDCEVENT_ATA_LONG, 7, record);
 }
 
 static __inline void WDC_LOG_SET_DRIVE(struct channel_softc *chp,
     u_int8_t drive) {
-	wdc_log(chp, drive ? 7 : 8, 0, NULL);
+	wdc_log(chp, drive ? WDCEVENT_SET_DRIVE1 : WDCEVENT_SET_DRIVE0,
+	    0, NULL);
 }
 
 static __inline void WDC_LOG_REG(struct channel_softc *chp,
@@ -89,7 +105,7 @@ static __inline void WDC_LOG_REG(struct channel_softc *chp,
 	record[1] = (val >> 8);
 	record[2] = val & 0xff;
 
-	wdc_log(chp, 9, 3, record);
+	wdc_log(chp, WDCEVENT_REG, 3, record);
 }
 
 static __inline void WDC_LOG_ATA_CMDEXT(struct channel_softc *chp,
@@ -99,7 +115,9 @@ static __inline void WDC_LOG_ATA_CMDEXT(struct channel_softc *chp,
 	char record[9] = { lba_hi1, lba_hi2, lba_mi1, lba_mi2,
 			   lba_lo1, lba_lo2, count1, count2, command };
 
-	wdc_log(chp, 10, 9, record);
+	wdc_log(chp, WDCEVENT_ATA_EXT, 9, record);
 }
 
-#endif
+#endif	/* _KERNEL */
+
+#endif	/* WDCEVENT_H */

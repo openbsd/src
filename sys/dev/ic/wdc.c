@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.56 2002/12/19 16:32:59 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.57 2002/12/22 18:24:45 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -160,7 +160,7 @@ static int wdc_size = 16 * 1024;
 static int chp_idx = 1;
 
 void
-wdc_log(struct channel_softc *chp, int type, 
+wdc_log(struct channel_softc *chp, enum wdcevent_type type, 
     unsigned int size, char val[]) 
 {
 	unsigned int request_size;
