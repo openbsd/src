@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.14 2004/12/24 22:17:56 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.15 2004/12/30 17:29:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -162,7 +162,7 @@ void aic_timer_reset(aic_timer_t *, u_int, ahd_callback_t *, void *);
 void aic_scb_timer_reset(struct scb *, u_int);
 
 #define aic_timer_stop timeout_del
-
+#define aic_get_timeout(scb) ((scb)->xs->timeout)
 /*************************** Device Access ************************************/
 #define ahd_inb(ahd, port)					\
 	bus_space_read_1((ahd)->tags[(port) >> 8],		\

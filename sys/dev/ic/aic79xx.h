@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.17 2004/12/19 06:17:54 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.18 2004/12/30 17:29:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1095,6 +1095,8 @@ struct ahd_completion
 	uint8_t		valid_tag;
 };
 
+#define AIC_SCB_DATA(softc) (&(softc)->scb_data)
+
 struct ahd_softc {
 	struct device		sc_dev;
 	struct scsi_link	sc_channel;
@@ -1588,4 +1590,6 @@ int			ahd_print_register(ahd_reg_parse_entry_t *table,
 					   u_int *cur_column,
 					   u_int wrap_point);
 void			ahd_dump_scbs(struct ahd_softc *ahd);
+void			ahd_set_recoveryscb(struct ahd_softc *, struct scb *);
+
 #endif /* _AIC79XX_H_ */

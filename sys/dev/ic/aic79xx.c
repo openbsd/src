@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.24 2004/12/20 20:56:32 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.25 2004/12/30 17:29:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -253,11 +253,9 @@ u_int		ahd_resolve_seqaddr(struct ahd_softc *ahd,
 void		ahd_download_instr(struct ahd_softc *ahd,
 					   u_int instrptr, uint8_t *dconsts);
 int		ahd_probe_stack_size(struct ahd_softc *ahd);
-#if 0
 int		ahd_other_scb_timeout(struct ahd_softc *ahd,
 					      struct scb *scb,
 					      struct scb *other_scb);
-#endif
 int		ahd_scb_active_in_fifo(struct ahd_softc *ahd,
 					       struct scb *scb);
 void		ahd_run_data_fifo(struct ahd_softc *ahd,
@@ -8232,9 +8230,14 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		ahd_queue_scb(ahd, scb);
 		/*
 		 * Ensure we have enough time to actually
-		 * retrieve the sense.
+		 * retrieve the sense, but only schedule
+		 * the timer if we are not in recovery or
+		 * this is a recovery SCB that is allowed
+		 * to have an active timer.
 		 */
-		aic_scb_timer_reset(scb, 5 * 1000);
+		if (ahd->scb_data.recovery_scbs == 0
+		 || (scb->flags & SCB_RECOVERY_SCB) != 0)
+			aic_scb_timer_reset(scb, 5 * 1000);
 		break;
 	}
 	case SCSI_STATUS_OK:
@@ -9143,21 +9146,37 @@ ahd_dump_scbs(struct ahd_softc *ahd)
 void
 ahd_timeout(void *arg)
 {
-	struct  scb *scb;
+	struct scb *scb = (struct scb *)arg;
 	struct ahd_softc *ahd;
-	int s;
-#if 0
-	int found;
-	u_int	last_phase;
-	int target;
-	int lun;
-	int i;
-	int channel;
-#endif
-	int was_paused;
 
-	scb = (struct scb *)arg;
-	ahd = (struct ahd_softc *)scb->xs->sc_link->adapter_softc;
+	ahd = scb->ahd_softc;
+	if ((scb->flags & SCB_ACTIVE) != 0) {
+		if ((scb->flags & SCB_TIMEDOUT) == 0) {
+			LIST_INSERT_HEAD(&ahd->timedout_scbs, scb,
+					 timedout_links);
+			scb->flags |= SCB_TIMEDOUT;
+		}
+		ahd_recover_commands(ahd);
+	}
+}
+
+/*
+ * ahd_recover_commands determines if any of the commands that have currently
+ * timedout are the root cause for this timeout.  Innocent commands are given
+ * a new timeout while we wait for the command executing on the bus to timeout.
+ * This routine is invoked from a thread context so we are allowed to sleep.
+ * Our lock is not held on entry.
+ */
+void
+ahd_recover_commands(struct ahd_softc *ahd)
+{
+	struct	scb *scb;
+	struct	scb *active_scb;
+	long	s;
+	int	found;
+	int	was_paused;
+	u_int	active_scbptr;
+	u_int	last_phase;
 
 	ahd_lock(ahd, &s);
 
@@ -9174,23 +9193,22 @@ ahd_timeout(void *arg)
 
 	ahd_pause_and_flushwork(ahd);
 
-	if ((scb->flags & SCB_ACTIVE) == 0) {
+	if (LIST_EMPTY(&ahd->timedout_scbs) != 0) {
 		/*
-		 * The timed out commands have already
+		 * The timedout commands have already
 		 * completed.  This typically means
 		 * that either the timeout value was on
 		 * the hairy edge of what the device
 		 * requires or - more likely - interrupts
 		 * are not happening.
 		 */
-		printf("%s: Timed out SCBs already complete. "
+		printf("%s: Timedout SCBs already complete. "
 		       "Interrupts may not be functioning.\n", ahd_name(ahd));
 		ahd_unpause(ahd);
 		ahd_unlock(ahd, &s);
 		return;
 	}
 
-#if 0
 	/*
 	 * Determine identity of SCB acting on the bus.
 	 * This test only catches non-packetized transactions.
@@ -9216,7 +9234,7 @@ ahd_timeout(void *arg)
 		lun = SCB_GET_LUN(scb);
 
 		ahd_print_path(ahd, scb);
-		printf("SCB 0x%x - timed out\n", scb->hscb->tag);
+		printf("SCB %d - timed out\n", SCB_GET_TAG(scb));
 
 		if (scb->flags & (SCB_DEVICE_RESET|SCB_ABORT)) {
 			/*
@@ -9283,7 +9301,7 @@ bus_reset:
 			       "Identify Msg.\n", ahd_name(ahd));
 			goto bus_reset;
 		} else if (ahd_search_qinfifo(ahd, target, channel, lun,
-					      scb->hscb->tag, ROLE_INITIATOR,
+					      SCB_GET_TAG(scb), ROLE_INITIATOR,
 					      /*status*/0, SEARCH_COUNT) > 0) {
 
 			/*
@@ -9375,12 +9393,11 @@ bus_reset:
 		LIST_REMOVE(scb, timedout_links);
 		scb->flags &= ~SCB_TIMEDOUT;
 	}
-#endif
+
 	ahd_unpause(ahd);
 	ahd_unlock(ahd, &s);
 }
 
-#if 0
 /*
  * Re-schedule a timeout for the passed in SCB if we determine that some
  * other SCB is in the process of recovery or an SCB with a longer
@@ -9431,7 +9448,7 @@ ahd_other_scb_timeout(struct ahd_softc *ahd, struct scb *scb,
 
 	return (found != 0);
 }
-#endif
+
 /**************************** Flexport Logic **********************************/
 /*
  * Read count 16bit words from 16bit word address start_addr from the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.19 2004/12/28 04:12:24 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.20 2004/12/30 17:29:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -170,6 +170,7 @@ void
 ahd_done(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct scsi_xfer *xs = scb->xs;
+	struct scb *list_scb;
 	int s;
 
 	/* XXX in ahc there is some bus_dmamap_sync(PREREAD|PREWRITE); */
@@ -195,25 +196,29 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	 * out of our timeout.
 	 */
 	if ((scb->flags & SCB_RECOVERY_SCB) != 0) {
-		struct	scb *list_scb;
+		ahd->scb_data.recovery_scbs--;
 
-		/*
-		 * We were able to complete the command successfully,
-		 * so reinstate the timeouts for all other pending
-		 * commands.
-		 */
-		LIST_FOREACH(list_scb, &ahd->pending_scbs, pending_links) {
-			struct scsi_xfer *txs = list_scb->xs;
-			if (!(txs->flags & SCSI_POLL))
-				timeout_add(&list_scb->xs->stimeout,
-				    (list_scb->xs->timeout * hz)/1000);
-		}
-
-		if (aic_get_transaction_status(scb) != CAM_REQ_INPROG)
+		if (aic_get_transaction_status(scb) == CAM_BDR_SENT
+		 || aic_get_transaction_status(scb) == CAM_REQ_ABORTED)
 			aic_set_transaction_status(scb, CAM_CMD_TIMEOUT);
-		ahd_print_path(ahd, scb);
-		printf("%s: no longer in timeout, status = %x\n",
-		    ahd_name(ahd), xs->status);
+
+		if (ahd->scb_data.recovery_scbs == 0) {
+			/*
+			 * All recovery actions have completed successfully,
+			 * so reinstate the timeouts for all other pending
+			 * commands.
+			 */
+			LIST_FOREACH(list_scb, &ahd->pending_scbs,
+			    pending_links) {
+				if (!(list_scb->xs->flags & SCSI_POLL))
+					aic_scb_timer_reset(scb,
+					    aic_get_timeout(scb));
+			}
+
+			ahd_print_path(ahd, scb);
+			printf("%s: no longer in timeout, status = %x\n",
+			       ahd_name(ahd), aic_get_transaction_status(scb));
+		}
 	}
 
 	/* Translate the CAM status code to a SCSI error code. */
@@ -819,4 +824,24 @@ ahd_platform_flushwork(struct ahd_softc *ahd)
 {
 }
 
+void
+ahd_set_recoveryscb(struct ahd_softc *ahd, struct scb *scb)
+{
 
+	if ((scb->flags & SCB_RECOVERY_SCB) == 0) {
+		struct scb *list_scb;
+
+		scb->flags |= SCB_RECOVERY_SCB;
+
+		AIC_SCB_DATA(ahd)->recovery_scbs++;
+
+		/*
+		 * Go through all of our pending SCBs and remove
+		 * any scheduled timeouts for them.  We will reschedule
+		 * them after we've successfully fixed this problem.
+		 */
+		LIST_FOREACH(list_scb, &ahd->pending_scbs, pending_links) {
+			timeout_del(&list_scb->xs->stimeout);
+		}
+	}
+}
