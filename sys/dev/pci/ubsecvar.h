@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.29 2002/05/02 18:20:50 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.30 2002/05/06 15:42:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -86,6 +86,7 @@ struct ubsec_q2_modexp {
 	struct ubsec_dma_alloc		me_E;
 	struct ubsec_dma_alloc		me_C;
 	struct ubsec_dma_alloc		me_epb;
+	int				me_modbits;
 };
 
 #define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */

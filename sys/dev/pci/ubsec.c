@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.95 2002/05/02 19:03:35 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.96 2002/05/06 15:42:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -110,7 +110,6 @@ struct ubsec_softc *ubsec_kfind(struct cryptkop *);
 int	ubsec_kprocess_modexp(struct ubsec_softc *, struct cryptkop *);
 void	ubsec_kfree(struct ubsec_softc *, struct ubsec_q2 *);
 int	ubsec_kcopyin(struct crparam *, caddr_t, u_int, u_int *);
-int	ubsec_kcopyout(struct crparam *crpar, caddr_t, u_int);
 
 /* DEBUG crap... */
 void ubsec_dump_pb(struct ubsec_pktbuf *);
@@ -1379,6 +1378,11 @@ ubsec_callback2(sc, q)
 #endif
 	case UBS_CTXOP_MODEXP: {
 		struct ubsec_q2_modexp *me = (struct ubsec_q2_modexp *)q;
+		u_int rlen, clen;
+
+		rlen = (me->me_modbits + 7) / 8;
+		clen = (me->me_krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits + 7)
+		    / 8;
 
 		bus_dmamap_sync(sc->sc_dmat, me->me_M.dma_map,
 		    0, me->me_M.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1389,11 +1393,16 @@ ubsec_callback2(sc, q)
 		bus_dmamap_sync(sc->sc_dmat, me->me_epb.dma_map,
 		    0, me->me_epb.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-		if (ubsec_kcopyout(&me->me_krp->krp_param[UBS_MODEXP_PAR_C],
-		    me->me_C.dma_vaddr, me->me_C.dma_size))
+		if (clen < rlen)
 			me->me_krp->krp_status = E2BIG;
-		else
+		else {
+			caddr_t dst;
+
 			me->me_krp->krp_status = 0;
+			dst = me->me_krp->krp_param[UBS_MODEXP_PAR_C].crp_p;
+			bcopy(me->me_C.dma_vaddr, dst, rlen);
+			bzero(dst + rlen, clen - rlen);
+		}
 
 		crypto_kdone(me->me_krp);
 
@@ -1803,6 +1812,7 @@ ubsec_kprocess_modexp(sc, krp)
 	bzero(me, sizeof *me);
 	me->me_krp = krp;
 	me->me_q.q_type = UBS_CTXOP_MODEXP;
+	me->me_modbits = modbits;
 
 	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
 	    &me->me_q.q_mcr, 0)) {
@@ -1817,7 +1827,7 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, 1024 / 8, &me->me_M, 0)) {
+	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_M, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
@@ -1827,7 +1837,7 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, modbits/8, &me->me_C, 0)) {
+	if (ubsec_dma_malloc(sc, modbits / 8, &me->me_C, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
@@ -1951,27 +1961,6 @@ errout:
 	}
 	krp->krp_status = err;
 	crypto_kdone(krp);
-	return (0);
-}
-
-int
-ubsec_kcopyout(crpar, buf, bufsiz)
-	struct crparam *crpar;
-	caddr_t buf;
-	u_int bufsiz;
-{
-	u_int nbytes = (crpar->crp_nbits + 7) / 8;
-#ifdef UBSEC_DEBUG
-	u_int i;
-
-	for (i = 0; i < bufsiz; i++)
-		printf("%s%02x", (i == 0) ? "ko " : ":", (u_int8_t)buf[i]);
-	printf("\n");
-#endif
-
-	if (bufsiz > nbytes)
-		return (-1);
-	bcopy(buf, crpar->crp_p, bufsiz);
 	return (0);
 }
 
