@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.18 2001/01/24 09:38:04 hugh Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.19 2001/03/13 02:53:52 mickey Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -62,6 +62,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/timeout.h>
+
 struct commulti_attach_args {
 	int		ca_slave;		/* slave number */
 
@@ -79,6 +81,9 @@ struct com_softc {
 	void *sc_ih;
 	bus_space_tag_t sc_iot;
 	struct tty *sc_tty;
+	struct timeout sc_dtr_tmo;
+	struct timeout sc_diag_tmo;
+	struct timeout sc_poll_tmo;
 
 	int sc_overflows;
 	int sc_floods;
