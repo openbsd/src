@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.33 1999/08/05 18:08:55 jason Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.34 1999/08/08 21:46:15 niklas Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -290,6 +290,7 @@ epconfig(sc, chipset, enaddr)
 	ifp->if_watchdog = epwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
