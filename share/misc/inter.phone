@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.20 2001/07/16 18:05:29 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.21 2001/07/16 22:06:18 fgsch Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1021,9 +1021,9 @@
 52:684:Cabo San Lucas:Mexico
 53:::Cuba
 54:11:Buenos Aires:Argentina
-54:21:La Plata:Argentina
-54:41:Rosario:Argentina
-54:51:Cordoba:Argentina
+54:221:La Plata:Argentina
+54:341:Rosario:Argentina
+54:351:Cordoba:Argentina
 55:11:San Paulo:Brazil
 55:21:Rio de Janeiro:Brazil
 55:31:Belo Horizonte:Brazil
