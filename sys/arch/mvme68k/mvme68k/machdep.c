@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 1996/05/06 21:55:31 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.10 1996/05/08 02:10:54 mickey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1089,6 +1089,10 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct proc proc0;
+		/* do that another panic fly away */
+		if (curproc == NULL)
+			curproc = &proc0;
 		waittime = 0;
 		vfs_shutdown();
 		/*
