@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.10 2004/10/26 04:43:59 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.11 2004/10/28 02:58:33 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -732,6 +732,9 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	} else if (cfgp->Header.PageType == MPI_CONFIG_PAGETYPE_RAID_VOLUME &&
 	    cfgp->Header.PageNumber == 0) {
 		amt = sizeof (fCONFIG_PAGE_RAID_VOL_0);
+	} else if (cfgp->Header.PageType == MPI_CONFIG_PAGETYPE_RAID_PHYSDISK &&
+	    cfgp->Header.PageNumber == 0) {
+		amt = sizeof (fCONFIG_PAGE_RAID_PHYS_DISK_0);
 	}
 
 	bcopy(((caddr_t)req->req_vbuf)+CFG_DATA_OFF, hdr, amt);
@@ -968,45 +971,108 @@ mpt_read_config_info_raid(mpt_softc_t *mpt)
 {
 	int rv, i;
 
-	/* retrieve raid headers */
+	/* retrieve raid volume headers */
 	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_RAID_VOLUME, 0,
-	    0, &mpt->mpt_raid_page0.Header);
+	    0, &mpt->mpt_raidvol_page0.Header);
 	if (rv) {
-		mpt_prt(mpt, "Could not retrieve RAID Volume Page 0 Header.");
+		mpt_prt(mpt, "Could not retrieve RAID Volume Page 0 Header");
 		return (-1);
 	} else if (mpt->verbose > 1) {
 		mpt_print_header(mpt, "RAID Volume Header Page",
-		    &mpt->mpt_raid_page0.Header);
+		    &mpt->mpt_raidvol_page0.Header);
 	}
 
 	/* retrieve raid volume page using retrieved headers */
-	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_raid_page0.Header);
+	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_raidvol_page0.Header);
 	if (rv) {
 		mpt_prt(mpt, "Could not retrieve RAID Volume Page 0");
 		return (-1);
 	}
 
-	/* mpt->verbose = 2; */
+	/* retrieve raid physical disk header */
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_RAID_PHYSDISK, 0,
+	    0, &mpt->mpt_raidphys_page0.Header);
+	if (rv) {
+		mpt_prt(mpt, "Could not retrieve RAID Phys Disk Page 0 Header");
+		return (-1);
+	} else if (mpt->verbose > 1) {
+		mpt_print_header(mpt, "RAID Volume Physical Disk Page",
+		    &mpt->mpt_raidphys_page0.Header);
+	}
+
+	/* retrieve raid physical disk page using retrieved headers */
+	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_raidphys_page0.Header);
+	if (rv) {
+		mpt_prt(mpt, "Could not retrieve RAID Phys Disk Page 0");
+		return (-1);
+	}
+
 	if (mpt->verbose > 1) {
 		mpt_prt(mpt, "RAID Volume Page 0 data: %x %x %x %x %x"
 		    "%x %x %x %x",
-		    mpt->mpt_raid_page0.VolumeType,
-		    mpt->mpt_raid_page0.VolumeIOC,
-		    mpt->mpt_raid_page0.VolumeBus,
-		    mpt->mpt_raid_page0.VolumeID,
-		    mpt->mpt_raid_page0.VolumeStatus,
-		    mpt->mpt_raid_page0.VolumeSettings,
-		    mpt->mpt_raid_page0.MaxLBA,
-		    mpt->mpt_raid_page0.StripeSize,
-		    mpt->mpt_raid_page0.NumPhysDisks);
+		    mpt->mpt_raidvol_page0.VolumeType,
+		    mpt->mpt_raidvol_page0.VolumeIOC,
+		    mpt->mpt_raidvol_page0.VolumeBus,
+		    mpt->mpt_raidvol_page0.VolumeID,
+		    mpt->mpt_raidvol_page0.VolumeStatus,
+		    mpt->mpt_raidvol_page0.VolumeSettings,
+		    mpt->mpt_raidvol_page0.MaxLBA,
+		    mpt->mpt_raidvol_page0.StripeSize,
+		    mpt->mpt_raidvol_page0.NumPhysDisks);
 
-		for (i = 0; i < mpt->mpt_raid_page0.NumPhysDisks; i++) {
+		for (i = 0; i < mpt->mpt_raidvol_page0.NumPhysDisks; i++) {
 			mpt_prt(mpt, "RAID Volume Page 0 Physical Disk: %x %x",
-			    mpt->mpt_raid_page0.PhysDisk[i].PhysDiskNum,
-			    mpt->mpt_raid_page0.PhysDisk[i].PhysDiskMap);
+			    mpt->mpt_raidvol_page0.PhysDisk[i].PhysDiskNum,
+			    mpt->mpt_raidvol_page0.PhysDisk[i].PhysDiskMap);
 		}
+		printf("\n");
 	}
-	/* mpt->verbose = 1; */
+
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt, "RAID Phyical Disk Page 0 data: %x %x %x %x %x"
+		    "%x %x %x",
+		    mpt->mpt_raidphys_page0.PhysDiskNum,
+		    mpt->mpt_raidphys_page0.PhysDiskIOC,
+		    mpt->mpt_raidphys_page0.PhysDiskBus,
+		    mpt->mpt_raidphys_page0.PhysDiskID,
+		    mpt->mpt_raidphys_page0.PhysDiskSettings.SepID,
+		    mpt->mpt_raidphys_page0.PhysDiskSettings.SepBus,
+		    mpt->mpt_raidphys_page0.PhysDiskSettings.HotSparePool,
+		    mpt->mpt_raidphys_page0.PhysDiskSettings.PhysDiskSettings);
+
+		for (i = 0;
+		    i < sizeof(mpt->mpt_raidphys_page0.DiskIdentifier); i++) {
+			printf("%02x ",
+			    mpt->mpt_raidphys_page0.DiskIdentifier[i]);
+		}
+
+		/* does them all */
+		printf("\n");
+		mpt_prt(mpt, "RAID Phyical Disk Page 0 data: %s",
+		    mpt->mpt_raidphys_page0.InquiryData.VendorID);
+
+		for (i = 0;
+		    i < sizeof(mpt->mpt_raidphys_page0.InquiryData.Info); i++) {
+			printf("%02x ",
+			    mpt->mpt_raidphys_page0.InquiryData.Info[i]);
+		}
+
+		printf("\n");
+		mpt_prt(mpt, "RAID Phyical Disk Page 0 data: %x %x %x"
+		    "%x %x %x %x %x %x %x %x",
+		    mpt->mpt_raidphys_page0.PhysDiskStatus.Flags,
+		    mpt->mpt_raidphys_page0.PhysDiskStatus.State,
+		    mpt->mpt_raidphys_page0.MaxLBA,
+		    mpt->mpt_raidphys_page0.ErrorData.ErrorSenseKey,
+		    mpt->mpt_raidphys_page0.ErrorData.ErrorCdbByte,
+		    mpt->mpt_raidphys_page0.ErrorData.ErrorASCQ,
+		    mpt->mpt_raidphys_page0.ErrorData.ErrorASC,
+		    mpt->mpt_raidphys_page0.ErrorData.ErrorCount,
+		    mpt->mpt_raidphys_page0.ErrorData.SmartASCQ,
+		    mpt->mpt_raidphys_page0.ErrorData.SmartASC,
+		    mpt->mpt_raidphys_page0.ErrorData.SmartCount
+		    );
+	}
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.11 2004/10/26 04:43:59 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.12 2004/10/28 02:58:33 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -221,7 +221,6 @@ typedef struct mpt_softc {
 	uint16_t	mpt_ini_id;
 
 	/* Device configuration information */
-	/* union { is this right? */
 	struct {
 		struct mpt_spi_cfg {
 			fCONFIG_PAGE_SCSI_PORT_0	_port_page0;
@@ -254,8 +253,16 @@ typedef struct mpt_softc {
 
 		struct mpt_mfg_cfg {
 			fCONFIG_PAGE_MANUFACTURING_0 _mfg_page0;
+			fCONFIG_PAGE_MANUFACTURING_1 _mfg_page1;
+			fCONFIG_PAGE_MANUFACTURING_2 _mfg_page2;
+			fCONFIG_PAGE_MANUFACTURING_3 _mfg_page3;
+			fCONFIG_PAGE_MANUFACTURING_4 _mfg_page4;
 		} mfg;
 #define mpt_mfg_page0		cfg.mfg._mfg_page0
+#define mpt_mfg_page1		cfg.mfg._mfg_page1
+#define mpt_mfg_page2		cfg.mfg._mfg_page2
+#define mpt_mfg_page3		cfg.mfg._mfg_page3
+#define mpt_mfg_page4		cfg.mfg._mfg_page4
 
 		struct mpt_ioc_cfg {
 			fCONFIG_PAGE_IOC_0 _ioc_page0;
@@ -271,11 +278,11 @@ typedef struct mpt_softc {
 #define mpt_ioc_page4		cfg.ioc._ioc_page4
 
 		struct mpt_raid_cfg {
-			fCONFIG_PAGE_RAID_VOL_0 _raid_page0;
+			fCONFIG_PAGE_RAID_VOL_0 _raidvol_page0;
+			fCONFIG_PAGE_RAID_PHYS_DISK_0 _raidphys_page0;
 		} raid;
-#define mpt_raid_page0		cfg.raid._raid_page0
-
-
+#define mpt_raidvol_page0		cfg.raid._raidvol_page0
+#define mpt_raidphys_page0		cfg.raid._raidphys_page0
 	} cfg;
 
 	bus_space_tag_t		sc_st;
