@@ -2399,7 +2399,7 @@ rxi_ReceiveAckPacket(struct rx_call * call, struct rx_packet * np)
 
 	rx_packetread(np, rx_AckDataSize(ap->nAcks), 4, &maxPacketSize);
 	maxPacketSize = (unsigned long) ntohl(maxPacketSize);
-	dpf(("maxPacketSize=%ul\n", maxPacketSize));
+	dpf(("maxPacketSize=%lu\n", maxPacketSize));
 
 	/*
 	 * sanity check - peer might have restarted with different params.
