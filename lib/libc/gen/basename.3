@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: basename.3,v 1.5 1999/05/14 12:40:23 alex Exp $
+.\" $OpenBSD: basename.3,v 1.6 1999/05/25 13:06:45 aaron Exp $
 .\"
 .Dd August 17, 1997
 .Dt BASENAME 3
@@ -42,19 +42,24 @@ The
 function
 returns the last componenent from the pathname pointed to by
 .Ar path ,
-deleting any trailing '/' characters.  If
+deleting any trailing
+.Sq \&/
+characters.  If
 .Ar path
-consists entirely of '/' characters, a pointer to the string "/"
+consists entirely of
+.Sq \&/
+characters, a pointer to the string
+.Qq \&/
 is returned.  If
 .Ar path
-is a NULL pointer or the empty string, a pointer to the string "."
+is a NULL pointer or the empty string, a pointer to the string
+.Qq \&.
 is returned.
 .Sh RETURN VALUES
 On successful completion,
 .Fn basename
 returns a pointer to the last component of
-.Ar path.
-.Pp
+.Ar path .
 .Pp
 If
 .Fn basename

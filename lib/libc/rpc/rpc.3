@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.17 1999/05/24 12:15:33 aaron Exp $
+.\"	$OpenBSD: rpc.3,v 1.18 1999/05/25 13:06:45 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -1023,7 +1023,7 @@ will create a service on top of any open descriptor. Typically,
 this
 descriptor is a connected socket for a stream protocol such
 as
-.Tn TCP.
+.Tn TCP .
 .Fa sendsize
 and
 .Fa recvsize
@@ -1055,7 +1055,8 @@ if it fails.
 This allows the user to specify the maximun packet size for sending and
 receiving
 .Tn UDP-based
-.Tn RPC messages.
+.Tn RPC
+messages.
 .Pp
 .Fn xdr_accepted_reply
 is used for encoding

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmget.2,v 1.4 1999/03/02 15:40:37 aaron Exp $
+.\"	$OpenBSD: shmget.2,v 1.5 1999/05/25 13:06:47 aaron Exp $
 .\"	$NetBSD: shmget.2,v 1.2 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -46,15 +46,15 @@
 .Fn shmget
 returns the shared memory identifier associated with the key
 .Fa key .
-
+.Pp
 A shared memory segment is created if either
 .Fa key
 is equal to IPC_PRIVATE, or
 .Fa key
 does not have a shared memory segment identifier associated with it, and the IPC_CREAT
 bit is set in
-.Fa shmflg.
-
+.Fa shmflg .
+.Pp
 If a new shared memory segment is created, the data structure associated with it (the
 .Va shmid_ds
 structure, see
