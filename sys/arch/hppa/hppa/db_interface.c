@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 1999/06/22 17:58:27 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 1999/07/12 18:12:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -283,7 +283,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 #endif
 	}
 
-	if (count) {
+	if (count && pc) {
 		db_printsym(pc, DB_STGY_XTRN);
 		db_printf(":\n");
 	}
