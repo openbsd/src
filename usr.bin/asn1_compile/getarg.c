@@ -39,6 +39,7 @@ RCSID("$KTH: getarg.c,v 1.46 2002/08/20 16:23:07 joda Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "getarg.h"
 
 #define ISFLAG(X) ((X).type == arg_flag || (X).type == arg_negative_flag)
