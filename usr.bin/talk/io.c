@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 1998/04/28 22:13:28 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 1998/08/18 02:54:23 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: io.c,v 1.5 1998/04/28 22:13:28 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.6 1998/08/18 02:54:23 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -116,7 +116,7 @@ talk()
 			 * We can't make the tty non_blocking, because
 			 * curses's output routines would screw up
 			 */
-			ioctl(0, FIONREAD, (struct sgttyb *) &nb);
+			ioctl(0, FIONREAD, &nb);
 			nb = read(0, buf, nb);
 			display(&my_win, buf, nb);
 			/* might lose data here because sockt is non-blocking */
