@@ -307,6 +307,7 @@ enum machine_type {
   M_MIPS1 = 151,        /* MIPS R2000/R3000 binary */
   M_MIPS2 = 152,        /* MIPS R4000/R6000 binary */
   M_88K_OPENBSD = 153,	/* OpenBSD/m88k binary */
+  M_HPPA_OPENBSD = 154,	/* OpenBSD/hppa binary */
   M_SPARC64_NETBSD = 156, /* NetBSD/sparc64 binary */
   M_X86_64_NETBSD = 157, /* NetBSD/amd64 binary */
   M_SPARCLET_2 = 163,	/* 0xa3, reserved */

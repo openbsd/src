@@ -169,6 +169,8 @@ if test "${target}" = "${host}"; then
   hppa*-*-mpeix*)	COREFILE=hpux-core.lo ;;
   hppa*-*-bsd*)		COREFILE="hpux-core.lo hppabsd-core.lo"
 			COREFLAG="-DHPUX_CORE -DHPPABSD_CORE" ;;
+  hppa*-*-openbsd*)	COREFILE=netbsd-core.lo ;;
+
   i370-*-*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i370linux.h"'
