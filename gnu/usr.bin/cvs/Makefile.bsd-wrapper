@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 1997/04/19 21:26:13 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 1997/05/29 20:12:22 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,8 @@ MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8
 GNUCFLAGS=	CFLAGS="${CFLAGS}"
 CLEANFILES=	lib/getdate.c macintosh/Makefile os2/Makefile doc/CVSvn.texi \
                 doc/cvs.info doc/cvs.info-1 doc/cvs.info-2 doc/cvs.info-3 \
-                doc/cvs.info-4 doc/cvs.info-5 doc/cvs.info-6 doc/cvsclient.info
+                doc/cvs.info-4 doc/cvs.info-5 doc/cvs.info-6 doc/cvs.info-7 \
+		doc/cvs.info-8 doc/cvsclient.info
 
 .if (${KERBEROS} == "yes")
 KRB=--with-krb4=/usr
