@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.27 2003/04/06 18:54:20 ho Exp $	*/
+/*	$OpenBSD: locore.c,v 1.28 2003/04/08 14:53:11 hugh Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -57,6 +57,7 @@ void	main(void);
 extern	paddr_t avail_end;
 paddr_t	esym;
 u_int	proc0paddr;
+char	cpu_model[100];
 
 /*
  * The strict cpu-dependent information is set up here, in
@@ -87,7 +88,6 @@ extern struct cpu_dep ka680_calls;
 void
 start(struct rpb *prpb)
 {
-	extern char cpu_model[];
 	extern void *scratch;
 	struct pte *pt;
 
