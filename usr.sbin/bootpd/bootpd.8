@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootpd.8,v 1.5 1998/06/03 05:58:36 deraadt Exp $
+.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootpd.8,v 1.6 1998/11/14 21:18:20 millert Exp $
 .\"
 .TH BOOTPD 8 "November 06, 1993" "Carnegie Mellon University"
 .SH NAME
@@ -221,7 +221,7 @@ If
 .I bootpd
 is compiled with the -DDEBUG option, receipt of a SIGUSR1 signal causes
 it to dump its internal database to the file
-.I /etc/bootpd.dump
+.I /var/run/bootpd.dump
 or the dumpfile specified as a command line parameter.
 .PP
 During initialization, both programs
@@ -245,7 +245,7 @@ then the values default to boopts=67 and bootpc=68.
 Database file read by
 .IR bootpd .
 .TP
-/etc/bootpd.dump
+/var/run/bootpd.dump
 Debugging dump file created by
 .IR bootpd .
 .TP
