@@ -1,4 +1,4 @@
-/*	$Id: trap.c,v 1.3 1995/11/07 08:50:27 deraadt Exp $ */
+/*	$Id: trap.c,v 1.4 1995/11/23 13:14:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -163,6 +163,10 @@ void (*sir_routines[NSIR])();
 void *sir_args[NSIR];
 u_char next_sir;
 
+int writeback __P((struct frame *fp, int docachepush));
+static inline void userret __P((struct proc *p, struct frame *fp,
+    u_quad_t oticks, u_int faultaddr, int fromtrap));
+
 /*
  * trap and syscall both need the following work done before returning
  * to user mode.
@@ -254,9 +258,6 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-#ifdef DDB
-	extern int trap0, trap1, trap2, trap12, trap15, illinst;
-#endif
 	register struct proc *p;
 	register int i;
 	u_int ucode;
@@ -439,13 +440,8 @@ copyfault:
 	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* SUN trace trap */
 #ifdef DDB
-		if (type == T_TRAP15 ||
-		    (frame.f_pc != trap0 && frame.f_pc != trap1 &&
-		     frame.f_pc != trap2 && frame.f_pc != trap12 &&
-		     frame.f_pc != trap15 && frame.f_pc != illinst)) {
-			if (kdb_trap(type, &frame))
-				return;
-		}
+		if (kdb_trap(type, &frame))
+			return;
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
@@ -461,7 +457,7 @@ copyfault:
 		 * DONT trap on it..
 		 */
 		if (p->p_emul == &emul_sunos) {
-			userret(p, frame.f_pc, sticks);
+			userret(p, &frame, sticks, v, 1);
 			return;
 		}
 #endif
@@ -644,6 +640,7 @@ char wberrstr[] =
 	"WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
+int
 writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
