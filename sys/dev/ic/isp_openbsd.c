@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.4 1999/11/22 12:50:53 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.5 1999/11/22 22:34:30 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -206,9 +206,9 @@ ispcmd_slow(xs)
 	 * Have we completed discovery for this target on this adapter?
 	 */
 	sdp = isp->isp_param;
-	sdp += chan;
 	tgt = XS_TGT(xs);
 	chan = XS_CHANNEL(xs);
+	sdp += chan;
 	if ((xs->flags & SCSI_POLL) != 0 ||
 	    (isp->isp_osinfo.discovered[chan] & (1 << tgt)) != 0) {
 		return (ispcmd(xs));
