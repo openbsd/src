@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.19 2004/12/30 21:22:19 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.20 2004/12/30 21:26:15 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -54,13 +54,14 @@ caddr_t ledbase;	/* SPU LEDs mapping */
 extern vaddr_t CLKbase, MMUbase;
 extern char *extiobase;
 extern int maxmem;
+extern int eiomapsize;
 
 #define	RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 #define	PA2VA(v, t)	*((t*)((u_int)&(v)))
 
 #define	MACHINE_IIOMAPSIZE	IIOMAPSIZE
 #define	MACHINE_INTIOBASE	INTIOBASE
-#define	MACHINE_EIOMAPSIZE	EIOMAPSIZE
+#define	MACHINE_EIOMAPSIZE	RELOC(eiomapsize, int)
 
 #define	PMAP_MD_LOCALS		/* nothing */
 

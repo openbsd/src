@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2004/12/30 21:26:14 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -1243,9 +1243,11 @@ iounmap(kva, size)
 	int error;
 
 #ifdef DEBUG
+	extern int eiomapsize;
+
 	if (((int)kva & PGOFSET) || (size & PGOFSET))
 		panic("iounmap: unaligned");
-	if (kva < extiobase || kva >= extiobase + ctob(EIOMAPSIZE))
+	if (kva < extiobase || kva >= extiobase + ctob(eiomapsize))
 		panic("iounmap: bad address");
 #endif
 

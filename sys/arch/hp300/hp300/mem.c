@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.21 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.22 2004/12/30 21:26:15 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.25 1999/03/27 00:30:06 mycroft Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 
 extern u_int lowram;
 extern char *extiobase;
+extern int eiomapsize;
 static caddr_t devzeropage;
 
 #define	mmread	mmrw
@@ -167,7 +168,7 @@ mmrw(dev, uio, flags)
 			 */
 			if (ISIIOVA(v) ||
 			    ((caddr_t)v >= extiobase &&
-			    (caddr_t)v < (extiobase + (EIOMAPSIZE * NBPG))))
+			    (caddr_t)v < (extiobase + (eiomapsize * NBPG))))
 				return (EFAULT);
 
 			error = uiomove((caddr_t)v, c, uio);

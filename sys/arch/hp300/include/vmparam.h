@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2004/12/30 21:26:17 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
 
 /*
@@ -47,16 +47,6 @@
  */
 
 #include <m68k/vmparam.h>
-
-/*
- * External IO space map size.
- * By default we make it large enough to map up to 3 DIO-II devices and
- * the complete DIO space.  For a 320-only configuration (which has no
- * DIO-II) you could define a considerably smaller region.
- */
-#ifndef EIOMAPSIZE
-#define EIOMAPSIZE	3584		/* 14mb */
-#endif
 
 /*
  * Constants which control the way the VM system deals with memory segments.

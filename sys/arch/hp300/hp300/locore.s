@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.43 2004/12/24 22:50:29 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.44 2004/12/30 21:26:14 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
+#include <hp300/dev/dioreg.h>
 
 #define MMUADDR(ar)	movl	_C_LABEL(MMUbase),ar
 #define CLKADDR(ar)	movl	_C_LABEL(CLKbase),ar
@@ -317,6 +318,51 @@ Lis320:
 	 */
 
 Lstart1:
+	/*
+	 * Now we need to know how much space the external I/O map has to be.
+	 * This has to be done before pmap_bootstrap() is invoked, but since
+	 * we are not running in virtual mode and will cause several bus
+	 * errors while probing, it is easier to do this before setting up
+	 * our own vectors table.
+	 * Be careful, a1 is reserved at this point.
+	 */
+	clrl	d3
+
+	/*
+	 * Don't probe the DIO-I space. Since cards may claim memory outside
+	 * their range (frame buffers, for example), assume the whole 0-31
+	 * select code range is taken, i.e. 32 boards.
+	 */
+	addl	#(DIO_DEVSIZE * 32), d3
+
+	/*
+	 * Probe for DIO-II devices, select codes 132 to 255.
+	 */
+	RELOC(machineid,a0)
+	cmpl	#HP_320,a0@
+	jeq	eiodone			| HP 320 has nothing more
+
+	movl	#132, d2		| our select code...
+	movl	#DIOII_BASE, a0		| and first address
+dioloop:
+	ASRELOC(phys_badaddr, a3)
+	jbsr	a3@			| probe address (read ID)
+	movl	#DIOII_DEVSIZE, d1
+	tstl	d0			| success?
+	jne	1f			| no, skip
+	addl	d1, d3			| yes, count it
+1:
+	addl	d1, a0			| next slot address...
+	addql	#1, d2			| and slot number
+	cmpl	#256, d2
+	jne	dioloop
+
+eiodone:
+	moveq	#PGSHIFT, d2
+	lsrl	d2, d3			| convert from bytes to pages
+	RELOC(eiomapsize,a2)
+	movl	d3,a2@
+
 	/*
 	 * Now that we know what CPU we have, initialize the address error
 	 * and bus error handlers in the vector table:
@@ -1867,6 +1913,42 @@ Lm68881rdone:
 	rts
 
 /*
+ * Probe a memory address, and see if it causes a bus error.
+ * This function is only to be used in physical mode, and before our
+ * trap vectors are initialized.
+ * Invoke with address to probe in a0.
+ * Alters: a3 d0 d1
+ */
+#define	BUSERR	0xfffffffc
+ASLOCAL(phys_badaddr)
+	ASRELOC(_bsave,a3)
+	movl	BUSERR,a3@		| save ROM bus errror handler
+	ASRELOC(_ssave,a3)
+	movl	sp,a3@			| and current stack pointer
+	ASRELOC(catchbad,a3)
+	movl	a3,BUSERR		| plug in our handler
+	movw	a0@,d1			| access address
+	ASRELOC(_bsave,a3)		| no fault!
+	movl	a3@,BUSERR
+	clrl	d0			| return success
+	rts
+ASLOCAL(catchbad)
+	ASRELOC(_bsave,a3)		| got a bus error, so restore handler
+	movl	a1@,BUSERR
+	ASRELOC(_ssave,a3)
+	movl	a3@,sp			| and stack
+	moveq	#1,d0			| return fault
+	rts
+#undef	BUSERR
+
+	.data
+ASLOCAL(_bsave)
+	.long	0
+ASLOCAL(_ssave)
+	.long	0
+	.text
+	
+/*
  * Handle the nitty-gritty of rebooting the machine.
  * Basically we just turn off the MMU and jump to the appropriate ROM routine.
  * Note that we must be running in an address range that is mapped one-to-one
@@ -1979,6 +2061,9 @@ GLOBAL(intiolimit)
 
 GLOBAL(extiobase)
 	.long	0		| KVA of base of external IO space
+
+GLOBAL(eiomapsize)
+	.long	0		| size of external IO space in pages
 
 GLOBAL(CLKbase)
 	.long	0		| KVA of base of clock registers

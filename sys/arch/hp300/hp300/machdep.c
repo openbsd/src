@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2004/12/23 15:32:09 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.94 2004/12/30 21:26:14 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ extern struct emul emul_sunos;
  * DIOCSIZE bytes. Play safe and allow for twice this size.
  */
 char	extiospace[EXTENT_FIXED_STORAGE_SIZE(2 * DIOCSIZE / PAGE_SIZE)];
+extern int eiomapsize;
 
 /* prototypes for local functions */
 caddr_t	allocsys(caddr_t);
@@ -228,7 +229,7 @@ consinit()
 	 * Initialize the DIO resource map.
 	 */
 	extio = extent_create("extio",
-	    (u_long)extiobase, (u_long)extiobase + ctob(EIOMAPSIZE),
+	    (u_long)extiobase, (u_long)extiobase + ctob(eiomapsize),
 	    M_DEVBUF, extiospace, sizeof(extiospace), EX_NOWAIT);
 	    
 	/*
