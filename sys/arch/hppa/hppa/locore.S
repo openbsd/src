@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.42 2001/03/28 20:58:03 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.43 2001/03/29 00:03:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -99,19 +99,20 @@
 	.import	kpsw, data
 	.import	panic, code
 
-	.space $PRIVATE$
-	.subspa $BSS$
+	.section .bss
 	.export	pdc_stack, data
 pdc_stack
-	.block	4*NBPG
+	.comm	4*NBPG
 kernelmapped			/* set when kernel is mapped */
-	.block	4
+	.comm	4
 	.export fpu_csw, data
 fpu_csw
-	.block	4
+	.comm	4
 	.export	fpu_curpcb, data
 fpu_curpcb
-	.block	4
+	.comm	4
+
+	.text
 
 /*
  * This is the starting location for the kernel
@@ -333,6 +334,7 @@ ENTRY(pdc_call)
 	comb,=	r0, ret0, pdc_call_unmapped1
 	nop
 	ldil	L%pdc_stack, ret1
+	ldo	R%pdc_stack(ret1), ret1
 
 pdc_call_unmapped1
 	copy	sp, r1
