@@ -123,7 +123,6 @@ ep_pci_attach(parent, self, aux)
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
-	u_short conn = 0;
 	pcireg_t i;
 	char *model;
 	const char *intrstr = NULL;
@@ -142,17 +141,6 @@ ep_pci_attach(parent, self, aux)
 	sc->bustype = EP_BUS_PCI;
 
 	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
-
-	/*
-	 * Bits 13,12,9 of the isa adapter are the same as bits 
-	 * 5,4,3 of the pci adapter
-	 */
-	if (i & IS_PCI_AUI)
-		conn |= IS_AUI;
-	if (i & IS_PCI_BNC)
-		conn |= IS_BNC;
-	if (i & IS_PCI_UTP)
-		conn |= IS_UTP;
 
 	GO_WINDOW(0);
 
@@ -180,7 +168,7 @@ ep_pci_attach(parent, self, aux)
 
 	printf(": <%s> ", model);
 
-	epconfig(sc, conn);
+	epconfig(sc, EP_CHIPSET_VORTEX);
 
 	/* Enable the card. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

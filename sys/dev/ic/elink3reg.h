@@ -1,5 +1,5 @@
-/*	$OpenBSD: elink3reg.h,v 1.6 1996/11/28 23:27:50 niklas Exp $	*/
-/*	$NetBSD: elink3reg.h,v 1.5 1996/10/21 22:34:23 thorpej Exp $	*/
+/*	$OpenBSD: elink3reg.h,v 1.7 1997/07/30 11:12:23 niklas Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.13 1997/04/27 09:42:34 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -102,6 +102,12 @@
 	/* Read */
 #define EP_W3_FREE_TX		0x0c
 #define EP_W3_FREE_RX		0x0a
+	/* Read/Write, at least on busmastering cards. */
+#define EP_W3_INTERNAL_CONFIG	0x00	/* 32 bits */
+#define EP_W3_OTHER_INT		0x04	/*  8 bits */
+#define EP_W3_PIO_RESERVED	0x05	/*  8 bits */
+#define EP_W3_MAC_CONTROL	0x06	/* 16 bits */
+#define EP_W3_RESET_OPTIONS	0x08	/* 16 bits */
 
 /*
  * Window 4 registers. Diagnostics.
@@ -205,29 +211,53 @@
 #      define C_RX_EARLY	(u_short) (ACK_INTR|0x20)
 #      define C_INT_RQD		(u_short) (ACK_INTR|0x40)
 #      define C_UPD_STATS	(u_short) (ACK_INTR|0x80)
+
 #define SET_INTR_MASK		(u_short) (0x0e<<11)
+
+/* busmastering-cards only? */
+#define STATUS_ENABLE		(u_short) (0x0f<<11)
+
 #define SET_RD_0_MASK		(u_short) (0x0f<<11)
+
 #define SET_RX_FILTER		(u_short) (0x10<<11)
 #      define FIL_INDIVIDUAL	(u_short) (0x01)
 #      define FIL_MULTICAST	(u_short) (0x02)
 #      define FIL_BRDCST	(u_short) (0x04)
 #      define FIL_PROMISC	(u_short) (0x08)
+
 #define SET_RX_EARLY_THRESH	(u_short) (0x11<<11)
 #define SET_TX_AVAIL_THRESH	(u_short) (0x12<<11)
 #define SET_TX_START_THRESH	(u_short) (0x13<<11)
+#define START_DMA		(u_short) (0x14<<11)	/* busmaster-only */
+#  define START_DMA_TX		(START_DMA | 0x0))	/* busmaster-only */
+#  define START_DMA_RX		(START_DMA | 0x1)	/* busmaster-only */
 #define STATS_ENABLE		(u_short) (0x15<<11)
 #define STATS_DISABLE		(u_short) (0x16<<11)
 #define STOP_TRANSCEIVER	(u_short) (0x17<<11)
+
+/* Only on adapters that support power management: */
+#define POWERUP			(u_short) (0x1b<<11)
+#define POWERDOWN		(u_short) (0x1c<<11)
+#define POWERAUTO		(u_short) (0x1d<<11)
+
+/*
+ * Command parameter that disables threshold interrupts
+ *   PIO (3c509) cards use 2044.  The fifo word-oriented and 2044--2047 work.
+ *  "busmastering" cards need 8188.
+ * The implicit two-bit upshift done by busmastering cards means
+ * a value of 2047 disables threshold interrupts on both.
+ */
+#define EP_THRESH_DISABLE	2047
 
 /*
  * Status register. All windows.
  *
  *     15-13:  Window number(0-7).
  *     12:     Command_in_progress.
- *     11:     reserved.
+ *     11:     reserved / DMA in progress on busmaster cards.
  *     10:     reserved.
  *     9:      reserved.
- *     8:      reserved.
+ *     8:      reserved / DMA done on busmaster cards.
  *     7:      Update Statistics.
  *     6:      Interrupt Requested.
  *     5:      RX Early.
@@ -245,6 +275,8 @@
 #define S_RX_EARLY		(u_short) (0x0020)
 #define S_INT_RQD		(u_short) (0x0040)
 #define S_UPD_STATS		(u_short) (0x0080)
+#define S_DMA_DONE		(u_short) (0x0100)	/* DMA cards only */
+#define S_DMA_IN_PROGRESS	(u_short) (0x0800)	/* DMA cards only */
 #define S_COMMAND_IN_PROGRESS	(u_short) (0x1000)
 
 /*
@@ -298,6 +330,79 @@
 #define TXS_STATUS_OVERFLOW	0x04
 
 /*
+ * RX status
+ *   Window 1/Port 0x08.
+ */
+#define RX_BYTES_MASK			(u_short) (0x07ff)
+
+/*
+ * Internal Config and MAC control (Window 3)
+ * Window 3 / Port 0: 32-bit internal config register:
+ * bits  0-2:    fifo buffer ram  size
+ *         3:    ram width (word/byte)     (ro)
+ *       4-5:    ram speed
+ *       6-7:    rom size
+ *      8-15:   reserved
+ *          
+ *     16-17:   ram split (5:3, 3:1, or 1:1).
+ *     18-19:   reserved
+ *     20-22:   selected media type
+ *        21:   unused
+ *        24:  (nonvolatile) driver should autoselect media
+ *     25-31: reseerved
+ *
+ * The low-order 16 bits should generally not be changed by software.
+ * Offsets defined for two 16-bit words, to help out 16-bit busses.
+ */
+#define	CONFIG_RAMSIZE		(u_short) 0x0007
+#define	CONFIG_RAMSIZE_SHIFT	(u_short)      0
+
+#define	CONFIG_RAMWIDTH		(u_short) 0x0008
+#define	CONFIG_RAMWIDTH_SHIFT	(u_short)      3
+
+#define	CONFIG_RAMSPEED		(u_short) 0x0030
+#define	CONFIG_RAMSPEED_SHIFT	(u_short)      4
+#define	CONFIG_ROMSIZE		(u_short) 0x00c0
+#define	CONFIG_ROMSIZE_SHIFT	(u_short)      6
+
+/* Window 3/port 2 */
+#define	CONFIG_RAMSPLIT		(u_short) 0x0003
+#define	CONFIG_RAMSPLIT_SHIFT	(u_short)      0
+#define	CONFIG_MEDIAMASK	(u_short) 0x0070
+#define	CONFIG_MEDIAMASK_SHIFT	(u_short)      4
+
+/* Active media in EP_W3_RESET_OPTIONS mediamask bits */
+
+#define EPMEDIA_10BASE_T		(u_short)   0x00
+#define EPMEDIA_AUI			(u_short)   0x01
+#define EPMEDIA_RESV1			(u_short)   0x02
+#define EPMEDIA_10BASE_2		(u_short)   0x03
+#define EPMEDIA_100BASE_TX		(u_short)   0x04
+#define EPMEDIA_100BASE_FX		(u_short)   0x05
+#define EPMEDIA_MII			(u_short)   0x06
+#define EPMEDIA_100BASE_T4		(u_short)   0x07
+
+
+#define	CONFIG_AUTOSELECT	(u_short) 0x0100
+#define	CONFIG_AUTOSELECT_SHIFT	(u_short)      8
+
+/*
+ * RESET_OPTIONS (Window 4, on Demon/Vortex/Bomerang only)
+ * also mapped to PCI configuration space on PCI adaptors.
+ *
+ * (same register as  Vortex EP_W3_RESET_OPTIONS, mapped to pci-config space)
+ */
+#define EP_PCI_100BASE_T4		(1<<0)
+#define EP_PCI_100BASE_TX		(1<<1)
+#define EP_PCI_100BASE_FX		(1<<2)
+#define EP_PCI_10BASE_T			(1<<3)
+# define EP_PCI_UTP			EP_PCI_10BASE_T
+#define EP_PCI_BNC			(1<<4)
+#define EP_PCI_AUI 			(1<<5)
+#define EP_PCI_100BASE_MII		(1<<6)
+#define EP_PCI_INTERNAL_VCO		(1<<8)
+
+/*
  * FIFO Status (Window 4)
  *
  *   Supports FIFO diagnostics
@@ -337,28 +442,49 @@
 #define	FIFOS_TX_OVERRUN	(u_short) 0x0400
 
 /*
+ * ISA/eisa CONFIG_CNTRL media-present bits.
+ */
+#define EP_W0_CC_AUI 			(1<<13)
+#define EP_W0_CC_BNC 			(1<<12)
+#define EP_W0_CC_UTP 			(1<<9)
+
+
+/* EEPROM state flags/commands */
+#define EEPROM_BUSY			(1<<15)
+#define EEPROM_TST_MODE			(1<<14)
+#define READ_EEPROM			(1<<7)
+
+/* window 4, MEDIA_STATUS bits */
+#define SQE_ENABLE			0x08	/* Enables SQE on AUI ports */
+#define JABBER_GUARD_ENABLE		0x40
+#define LINKBEAT_ENABLE			0x80
+#define ENABLE_UTP			(JABBER_GUARD_ENABLE|LINKBEAT_ENABLE)
+#define DISABLE_UTP			0x0
+#define LINKBEAT_DETECT			0x800
+
+/*
+ * ep_connectors softc media-preset bitflags
+ */
+#define EPC_AUI				0x01
+#define EPC_BNC				0x02
+#define EPC_RESERVED			0x04
+#define EPC_UTP				0x08
+#define	EPC_100TX			0x10
+#define	EPC_100FX			0x20
+#define	EPC_MII				0x40
+#define	EPC_100T4			0x80
+
+/*
  * Misc defines for various things.
  */
 #define TAG_ADAPTER 			0xd0
 #define ACTIVATE_ADAPTER_TO_CONFIG 	0xff
 #define ENABLE_DRQ_IRQ			0x0001
 #define MFG_ID				0x506d	/* `TCM' */
-#define PROD_ID				0x5090
+#define PROD_ID_3C509			0x5090	/* 509[0-f] */
 #define GO_WINDOW(x) 			bus_space_write_2(sc->sc_iot, \
 				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
-#define AUI 				0x1
-#define BNC 				0x2
-#define UTP 				0x4
-#define IS_AUI 				(1<<13)
-#define IS_BNC 				(1<<12)
-#define IS_UTP 				(1<<9)
-#define EEPROM_BUSY			(1<<15)
-#define EEPROM_TST_MODE			(1<<14)
-#define READ_EEPROM			(1<<7)
-#define ENABLE_UTP			0xc0
-#define DISABLE_UTP			0x0
-#define RX_BYTES_MASK			(u_short) (0x07ff)
 
-#define IS_PCI_AUI 			(1<<5)
-#define IS_PCI_BNC 			(1<<4)
-#define IS_PCI_UTP 			(1<<3)
+/* Used to probe for large-packet support. */
+#define EP_LARGEWIN_PROBE		EP_THRESH_DISABLE
+#define EP_LARGEWIN_MASK		0xffc

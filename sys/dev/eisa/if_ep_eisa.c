@@ -1,6 +1,8 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.9 1996/10/21 22:31:04 thorpej Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.8 1997/07/30 11:12:25 niklas Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
@@ -94,7 +96,11 @@ ep_eisa_match(parent, match, aux)
 	/* must match one of our known ID strings */
 	if (strcmp(ea->ea_idstring, "TCM5091") &&
 	    strcmp(ea->ea_idstring, "TCM5092") &&
-	    strcmp(ea->ea_idstring, "TCM5093"))
+	    strcmp(ea->ea_idstring, "TCM5093") &&
+	    strcmp(ea->ea_idstring, "TCM5920") &&
+	    strcmp(ea->ea_idstring, "TCM5970") &&
+	    strcmp(ea->ea_idstring, "TCM5971") &&
+	    strcmp(ea->ea_idstring, "TCM5972"))
 		return (0);
 
 	return (1);
@@ -109,10 +115,11 @@ ep_eisa_attach(parent, self, aux)
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh;
-	u_int16_t k, conn = 0;
+	u_int16_t k;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
+	int chipset;
 	u_int irq;
 
 	/* Map i/o space. */
@@ -138,18 +145,32 @@ ep_eisa_attach(parent, self, aux)
 	/* Read the IRQ from the card. */
 	irq = bus_space_read_2(iot, ioh, EP_W0_RESOURCE_CFG) >> 12;
 
-	GO_WINDOW(0);
-	conn = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
-
+	chipset = EP_CHIPSET_3C509;	/* assume dumb chipset */
 	if (strcmp(ea->ea_idstring, "TCM5091") == 0)
 		model = EISA_PRODUCT_TCM5091;
 	else if (strcmp(ea->ea_idstring, "TCM5092") == 0)
 		model = EISA_PRODUCT_TCM5092;
 	else if (strcmp(ea->ea_idstring, "TCM5093") == 0)
 		model = EISA_PRODUCT_TCM5093;
+	else if (strcmp(ea->ea_idstring, "TCM5920") == 0) {
+		model = EISA_PRODUCT_TCM5920;
+		chipset = EP_CHIPSET_VORTEX;
+	}
+	else if (strcmp(ea->ea_idstring, "TCM5970") == 0) {
+		model = EISA_PRODUCT_TCM5970;
+		chipset = EP_CHIPSET_VORTEX;
+	}
+	else if (strcmp(ea->ea_idstring, "TCM5971") == 0) {
+		model = EISA_PRODUCT_TCM5971;
+		chipset = EP_CHIPSET_VORTEX;
+	}
+	else if (strcmp(ea->ea_idstring, "TCM5972") == 0) {
+		model = EISA_PRODUCT_TCM5972;
+		chipset = EP_CHIPSET_VORTEX;
+	}
 	else
 		model = "unknown model!";
-	printf(": <%s> ", model);
+	printf(": %s\n", model);
 
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("couldn't map interrupt (%u)\n", irq);
@@ -168,5 +189,5 @@ ep_eisa_attach(parent, self, aux)
 	if (intrstr != NULL)
 		printf("%s, ", intrstr);
 
-	epconfig(sc, conn);
+	epconfig(sc, chipset);
 }

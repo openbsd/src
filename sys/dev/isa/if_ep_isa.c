@@ -189,7 +189,7 @@ ep_isa_probe(parent, match, aux)
 			continue;
 
 		model = htons(epreadeeprom(iot, ioh, EEPROM_PROD_ID));
-		if ((model & 0xfff0) != PROD_ID) {
+		if ((model & 0xfff0) != PROD_ID_3C509) {
 #ifndef trusted
 			printf(
 			 "ep_isa_probe: ignoring model %04x\n", model);
@@ -254,7 +254,7 @@ ep_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	u_short conn = 0;
+	int chipset;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
@@ -264,12 +264,18 @@ ep_isa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
 
-	GO_WINDOW(0);
-	conn = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
-
-	printf(": <3Com 3C509 Ethernet> ");
-
-	epconfig(sc, conn);
+	chipset = (int)(long)ia->ia_aux;
+	if ((chipset & 0xfff0) == PROD_ID_3C509) {
+		printf(": 3Com 3C509 Ethernet\n");
+		epconfig(sc, EP_CHIPSET_3C509);
+	} else {
+		/*
+		 * XXX: Maybe a 3c515, but the check in ep_isa_probe looks
+		 * at the moment only for a 3c509.
+		 */
+		printf(": unknown 3Com Ethernet card: %04x\n", chipset);
+		epconfig(sc, EP_CHIPSET_UNKNOWN);
+	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, epintr, sc, sc->sc_dev.dv_xname);

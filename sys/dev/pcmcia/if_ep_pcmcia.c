@@ -1,5 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.6 1996/11/28 23:28:15 niklas Exp $       */
-/*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.7 1997/07/30 11:12:28 niklas Exp $       */
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -75,11 +74,11 @@ int ep_pcmcia_match __P((struct device *, void *, void *));
 void ep_pcmcia_attach __P((struct device *, struct device *, void *));
 int ep_pcmcia_detach __P((struct device *));
 
-static int ep_pcmcia_isasetup __P((struct device *, void *,
-				void *, struct pcmcia_link *));
-static int epmod __P((struct pcmcia_link *, struct device *,
-		      struct pcmcia_conf *, struct cfdata * cf));
-static int ep_remove __P((struct pcmcia_link *, struct device *));
+int ep_pcmcia_isasetup __P((struct device *, void *, void *,
+    struct pcmcia_link *));
+int epmod __P((struct pcmcia_link *, struct device *, struct pcmcia_conf *,
+    struct cfdata *));
+int ep_remove __P((struct pcmcia_link *, struct device *));
 
 struct cfattach ep_pcmcia_ca = {
 	sizeof(struct ep_softc), ep_pcmcia_match, ep_pcmcia_attach,
@@ -87,7 +86,7 @@ struct cfattach ep_pcmcia_ca = {
 };
 
 /* additional setup needed for pcmcia devices */
-static int
+int
 ep_pcmcia_isasetup(parent, match, aux, pc_link)
 	struct device	*parent;
 	void		*match;
@@ -126,7 +125,7 @@ ep_pcmcia_isasetup(parent, match, aux, pc_link)
 }
 
 /* modify config entry */
-static int
+int
 epmod(pc_link, self, pc_cf, cf)
 	struct pcmcia_link *pc_link;
 	struct device  *self;
@@ -137,14 +136,14 @@ epmod(pc_link, self, pc_cf, cf)
 /*	struct pcmciadevs *dev = pc_link->device;*/
 /*	struct ep_softc *sc = (void *) self;*/
 
-	if ((err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self,
-				     pc_cf, cf)) != 0) {
+	if ((err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self, pc_cf,
+	    cf)) != 0) {
 		printf("bus_config failed %d\n", err);
 		return err;
 	}
 
 	if (pc_cf->io[0].len > 0x10)
-	    pc_cf->io[0].len = 0x10;
+		pc_cf->io[0].len = 0x10;
 #if 0
 	pc_cf->cfgtype = DOSRESET;
 #endif
@@ -153,7 +152,7 @@ epmod(pc_link, self, pc_cf, cf)
 	return 0;
 }
 
-static int
+int
 ep_remove(pc_link, self)
 	struct pcmcia_link *pc_link;
 	struct device  *self;
@@ -203,7 +202,6 @@ ep_pcmcia_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	u_short conn = 0;
 
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
 		panic("ep_isa_attach: can't map i/o space");
@@ -211,12 +209,9 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	
-	GO_WINDOW(0);
-	conn = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
-
 	printf(": ");
 
-	epconfig(sc, conn);
+	epconfig(sc, EP_CHIPSET_3C509);
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
 	    IST_EDGE, IPL_NET, epintr, sc, sc->sc_dev.dv_xname);
 }

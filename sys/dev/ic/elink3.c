@@ -1,7 +1,8 @@
-/*	$OpenBSD: elink3.c,v 1.17 1997/01/05 04:03:26 deraadt Exp $	*/
-/*	$NetBSD: elink3.c,v 1.11 1996/10/21 22:34:21 thorpej Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.18 1997/07/30 11:12:22 niklas Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
@@ -44,7 +45,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
@@ -73,55 +73,147 @@
 #define ETHER_MAX_LEN   1518
 #define ETHER_ADDR_LEN  6
 
+/*
+ * Structure to map  media-present bits in boards to 
+ * ifmedia codes and printable media names. Used for table-driven
+ * ifmedia initialization.
+ */
+struct ep_media {
+	int	epm_eeprom_data;	/* bitmask for eeprom config */
+	int	epm_conn;		/* sc->ep_connectors code for medium */
+	char*	epm_name;		/* name of medium */
+	int	epm_ifmedia;		/* ifmedia word for medium */
+	int	epm_ifdata;
+};
+
+/*
+ * ep_media table for Vortex/Demon/Boomerang:
+ * map from media-present bits in register RESET_OPTIONS+2 
+ * to  ifmedia "media words" and printable names.
+ *
+ * XXX indexed directly by INTERNAL_CONFIG default_media field,
+ * (i.e., EPMEDIA_ constants)  forcing order of entries. 
+ *  Note that 3 is reserved.
+ */
+struct ep_media ep_vortex_media[8] = {
+  { EP_PCI_UTP,        EPC_UTP, "utp",	    /*IFM_ETHER|IFM_10_T*/0,
+       EPMEDIA_10BASE_T },
+  { EP_PCI_AUI,        EPC_AUI, "aui",	    /*IFM_ETHER|IFM_10_5*/0,
+       EPMEDIA_AUI },
+  { 0,                 0,  	"reserved", /*IFM_NONE*/0,  EPMEDIA_RESV1 },
+  { EP_PCI_BNC,        EPC_BNC, "bnc",	    /*IFM_ETHER|IFM_10_2*/0,
+       EPMEDIA_10BASE_2 },
+  { EP_PCI_100BASE_TX, EPC_100TX, "100-TX", /*IFM_ETHER|IFM_100_TX*/0,
+       EPMEDIA_100BASE_TX },
+  { EP_PCI_100BASE_FX, EPC_100FX, "100-FX", /*IFM_ETHER|IFM_100_FX*/0,
+       EPMEDIA_100BASE_FX },
+  { EP_PCI_100BASE_MII,EPC_MII,   "mii",    /*IFM_ETHER|IFM_100_TX*/0,
+       EPMEDIA_MII },
+  { EP_PCI_100BASE_T4, EPC_100T4, "100-T4", /*IFM_ETHER|IFM_100_T4*/0,
+       EPMEDIA_100BASE_T4 }
+};
+
+/*
+ * ep_media table for 3c509/3c509b/3c579/3c589:
+ * map from media-present bits in register CNFG_CNTRL
+ * (window 0, offset ?) to  ifmedia "media words" and printable names.
+ */
+struct ep_media ep_isa_media[3] = {
+  { EP_W0_CC_UTP,  EPC_UTP, "utp",   /*IFM_ETHER|IFM_10_T*/0, EPMEDIA_10BASE_T },
+  { EP_W0_CC_AUI,  EPC_AUI, "aui",   /*IFM_ETHER|IFM_10_5*/0, EPMEDIA_AUI },
+  { EP_W0_CC_BNC,  EPC_BNC, "bnc",   /*IFM_ETHER|IFM_10_2*/0, EPMEDIA_10BASE_2 },
+};
+
+#ifdef __NetBSD__
+/* Map vortex reset_options bits to if_media codes. */
+const u_int ep_default_to_media[8] = {
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_5,
+	0, 			/* reserved by 3Com */
+	IFM_ETHER | IFM_10_2,
+	IFM_ETHER | IFM_100_TX,
+	IFM_ETHER | IFM_100_FX,
+	IFM_ETHER | IFM_100_TX,	/* XXX really MII: need to talk to PHY */
+	IFM_ETHER | IFM_100_T4,
+};
+#endif
+
+/* Autoconfig defintion of driver back-end */
 struct cfdriver ep_cd = {
 	NULL, "ep", DV_IFNET
 };
 
-static void eptxstat __P((struct ep_softc *));
-static int epstatus __P((struct ep_softc *));
-void epinit __P((struct ep_softc *));
-int epioctl __P((struct ifnet *, u_long, caddr_t));
-void epstart __P((struct ifnet *));
-void epwatchdog __P((struct ifnet *));
-void epreset __P((struct ep_softc *));
-void epread __P((struct ep_softc *));
+#ifdef __NetBSD__
+void	ep_internalconfig __P((struct ep_softc *sc));
+#endif
+void	ep_vortex_probemedia __P((struct ep_softc *sc));
+void	ep_isa_probemedia __P((struct ep_softc *sc));
+void	eptxstat __P((struct ep_softc *));
+int	epstatus __P((struct ep_softc *));
+void	epinit __P((struct ep_softc *));
+int	epioctl __P((struct ifnet *, u_long, caddr_t));
+void	epstart __P((struct ifnet *));
+void	epwatchdog __P((struct ifnet *));
+void	epreset __P((struct ep_softc *));
+void	epshutdown __P((void *));
+void	epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
-void epmbuffill __P((void *));
-void epmbufempty __P((struct ep_softc *));
-void epsetfilter __P((struct ep_softc *));
-void epsetlink __P((struct ep_softc *));
+void	epmbuffill __P((void *));
+void	epmbufempty __P((struct ep_softc *));
+void	epsetfilter __P((struct ep_softc *));
+int	epsetmedia __P((struct ep_softc *, int));
+int	epbusyeeprom __P((struct ep_softc *));
+static inline void ep_complete_cmd __P((struct ep_softc *sc, u_int cmd,
+    u_int arg));
 
-static int epbusyeeprom __P((struct ep_softc *));
-
-void
-epconfig(sc, conn)
+/*
+ * Issue a (reset) command, and be sure it has completed.
+ * Used for commands that reset part or all of the  board.
+ * On newer hardware we could poll SC_COMMAND_IN_PROGRESS,
+ * but older hardware doesn't implement it and we must delay.
+ * It's easiest to just delay always.
+ */
+static inline void
+ep_complete_cmd(sc, cmd, arg)
 	struct ep_softc *sc;
-	u_int16_t conn;
+	u_int cmd, arg;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	bus_space_write_2(iot, ioh, cmd, arg);
+
+#ifdef notyet
+	/* if this adapter family has S_COMMAND_IN_PROGRESS, use it */
+	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
+		;
+	else
+#else
+	DELAY(100000);	/* need at least 1 ms, but be generous. */
+#endif
+}
+
+/*
+ * Back-end attach and configure.
+ */
+void
+epconfig(sc, chipset)
+	struct ep_softc *sc;
+	u_short chipset;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t i;
 
-	sc->ep_connectors = 0;
-	if (conn & IS_AUI) {
-		printf("aui");
-		sc->ep_connectors |= AUI;
-	}
-	if (conn & IS_BNC) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("bnc");
-		sc->ep_connectors |= BNC;
-	}
-	if (conn & IS_UTP) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("utp");
-		sc->ep_connectors |= UTP;
-	}
-	if (!sc->ep_connectors)
-		printf("no connectors!");
+	sc->ep_chipset = chipset;
+
+	/*
+	 * We could have been groveling around in other register
+	 * windows in the front-end; make sure we're in window 0
+	 * to read the EEPROM.
+	 */
+	GO_WINDOW(0);
 
 	/*
 	 * Read the station address from the eeprom
@@ -129,24 +221,60 @@ epconfig(sc, conn)
 	for (i = 0; i < 3; i++) {
 		u_int16_t x;
 		if (epbusyeeprom(sc))
-			return;
+			return;		/* XXX why is eeprom busy? */
 		bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
 		    READ_EEPROM | i);
 		if (epbusyeeprom(sc))
-			return;
+			return;		/* XXX why is eeprom busy? */
 		x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
 		sc->sc_arpcom.ac_enaddr[(i << 1)] = x >> 8;
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	bus_space_write_2(iot, ioh, EP_COMMAND, SET_TX_AVAIL_THRESH | 1800 );
+	/*
+	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards
+	 * allow FDDI-sized (4500) byte packets.  Commands only take an
+	 * 11-bit parameter, and  11 bits isn't enough to hold a full-size
+	 * packet length.
+	 * Commands to these cards implicitly upshift a packet size
+	 * or threshold by 2 bits. 
+	 * To detect  cards with large-packet support, we probe by setting
+	 * the transmit threshold register, then change windows and
+	 * read back the threshold register directly, and see if the
+	 * threshold value was shifted or not.
+	 */
+	bus_space_write_2(iot, ioh, EP_COMMAND,
+			  SET_TX_AVAIL_THRESH | EP_LARGEWIN_PROBE ); 
 	GO_WINDOW(5);
 	i = bus_space_read_2(iot, ioh, EP_W5_TX_AVAIL_THRESH);
 	GO_WINDOW(1);
-	if (i == 1800*4)
+	switch (i)  {
+	case EP_LARGEWIN_PROBE:
+	case (EP_LARGEWIN_PROBE & EP_LARGEWIN_MASK):
+		sc->txashift = 0;
+		break;
+
+	case (EP_LARGEWIN_PROBE << 2):
 		sc->txashift = 2;
+		/* XXX does the 3c515 support Vortex-style RESET_OPTIONS? */
+		break;
+
+	default:
+		printf("%s: wrote %d to TX_AVAIL_THRESH, read back %d. "
+		    "Interface disabled\n",
+		    sc->sc_dev.dv_xname, EP_THRESH_DISABLE, (int) i);
+		return;
+	}
+
+	/*
+	 * Ensure Tx-available interrupts are enabled for 
+	 * start the interface.
+	 * XXX should be in epinit()?
+	 */
+	bus_space_write_2(iot, ioh, EP_COMMAND,
+	    SET_TX_AVAIL_THRESH | (1600 >> sc->txashift));
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -159,15 +287,246 @@ epconfig(sc, conn)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	/*
+	 * Finish configuration: 
+	 * determine chipset if the front-end couldn't do so,
+	 * show board details, set media.
+	 */
+
+#ifdef __NetBSD__
+	/* print RAM size */
+	ep_internalconfig(sc);
+#endif
+	GO_WINDOW(0);
+
+#ifdef __NetBSD__
+	ifmedia_init(&sc->sc_media, 0, ep_media_change, ep_media_status);
+#endif
+
+	/*
+	 * If we've got an indirect (ISA, PCMCIA?) board, the chipset
+	 * is unknown.  If the board has large-packet support, it's a
+	 * Vortex/Boomerang, otherwise it's a 3c509.
+	 * XXX use eeprom capability word instead?
+	 */
+	if (sc->ep_chipset == EP_CHIPSET_UNKNOWN && sc->txashift)  {
+		printf("warning: unknown chipset, possibly 3c515?\n");
+#ifdef notyet
+		sc->sc_chipset = EP_CHIPSET_VORTEX;
+#endif	/* notyet */
+	}
+
+	/*
+	 * Ascertain which media types are present and inform ifmedia.
+	 */
+	switch (sc->ep_chipset) {
+	/* on a direct bus, the attach routine can tell, but check anyway. */
+	case EP_CHIPSET_VORTEX:
+	case EP_CHIPSET_BOOMERANG2:
+		ep_vortex_probemedia(sc);
+		break;
+
+	/* on ISA we can't yet tell 3c509 from 3c515. Assume the former. */
+	case EP_CHIPSET_3C509:
+	default:
+		ep_isa_probemedia(sc);
+		break;
+	}
+
+	GO_WINDOW(1);		/* Window 1 is operating window */
+
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
+	    sizeof (struct ether_header));
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
+
+	/*  Establish callback to reset card when we reboot. */
+	shutdownhook_establish(epshutdown, sc);
+
+	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
+}
+
+#ifdef __NetBSD__
+/* Is this info worth an extra line of dmesg output? */
+
+/*
+ * Show interface-model-independent info from window 3
+ * internal-configuration register.
+ */
+void
+ep_internalconfig(sc)
+	struct ep_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	u_int config0;
+	u_int config1;
+
+	int  ram_size, ram_width, ram_speed, rom_size, ram_split;
+	/*
+	 * NVRAM buffer Rx:Tx config names for busmastering cards
+	 * (Demon, Vortex, and later).
+	 */
+	const char *onboard_ram_config[] = {
+		"5:3", "3:1", "1:1", "(undefined)" };
+
+	GO_WINDOW(3);
+	config0 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG);
+	config1 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2);
+	GO_WINDOW(0);
+
+	ram_size  = (config0 & CONFIG_RAMSIZE) >> CONFIG_RAMSIZE_SHIFT;
+	ram_width = (config0 & CONFIG_RAMWIDTH) >> CONFIG_RAMWIDTH_SHIFT;
+	ram_speed = (config0 & CONFIG_RAMSPEED) >> CONFIG_RAMSPEED_SHIFT;
+	rom_size  = (config0 & CONFIG_ROMSIZE) >> CONFIG_ROMSIZE_SHIFT;
+
+	ram_split  = (config1 & CONFIG_RAMSPLIT) >> CONFIG_RAMSPLIT_SHIFT;
+
+	printf("%s: %dKB %s-wide FIFO, %s Rx:Tx split, ",
+	    sc->sc_dev.dv_xname, 8 << ram_size, (ram_width) ? "word" : "byte",
+	    onboard_ram_config[ram_split]);
+}
+#endif
+
+/*
+ * Find supported media on 3c509-generation hardware that doesn't have
+ * a "reset_options" register in window 3.
+ * Use the config_cntrl register  in window 0 instead.
+ * Used on original, 10Mbit ISA (3c509), 3c509B, and pre-Demon EISA cards
+ * that implement  CONFIG_CTRL.  We don't have a good way to set the
+ * default active mediuim; punt to ifconfig  instead.
+ *
+ * XXX what about 3c515, pcmcia 10/100?
+ */
+void
+ep_isa_probemedia(sc)
+	struct ep_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+#ifdef __NetBSD__
+	struct ifmedia *ifm = &sc->sc_media;
+#endif
+	int	conn, i;
+	u_int16_t ep_w0_config, port;
+
+	conn = 0;
+	GO_WINDOW(0);
+	ep_w0_config = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
+	for (i = 0; i < 3; i++) {
+		struct ep_media * epm = ep_isa_media + i;
+
+		if ((ep_w0_config & epm->epm_eeprom_data) != 0) {
+#ifdef __NetBSD__
+			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
+#endif
+			if (conn)
+				printf("/");
+			printf(epm->epm_name);
+			conn |= epm->epm_conn;
+		}
+	}
+	sc->ep_connectors = conn;
+
+	/* get default medium from EEPROM */
+	if (epbusyeeprom(sc))
+		return;		/* XXX why is eeprom busy? */
+	bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
+	    READ_EEPROM | EEPROM_ADDR_CFG);
+	if (epbusyeeprom(sc))
+		return;		/* XXX why is  eeprom busy? */
+	port = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
+	port = port >> 14;
+
+	printf(" (default %s)\n", ep_vortex_media[port].epm_name);
+#ifdef __NetBSD__
+	/* tell ifconfig what currently-active media is. */
+	ifmedia_set(ifm, ep_default_to_media[port]);
+#endif
+
+	/* XXX autoselect not yet implemented */
+}
+
+
+/*
+ * Find media present on large-packet-capable elink3 devices.
+ * Show onboard configuration of large-packet-capable elink3 devices
+ * (Demon, Vortex, Boomerang), which do not implement CONFIG_CTRL in window 0.
+ * Use media and card-version info in window 3 instead.
+ *
+ * XXX how much of this works with 3c515, pcmcia 10/100?
+ */
+void
+ep_vortex_probemedia(sc)
+	struct ep_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+#ifdef __NetBSD__
+	struct ifmedia *ifm = &sc->sc_media;
+#endif
+	u_int config1, conn;
+	int reset_options;
+	int default_media;	/* 3-bit encoding of default (EEPROM) media */
+	int autoselect;		/* boolean: should default to autoselect */
+	const char *medium_name;
+	register int i;
+
+	GO_WINDOW(3);
+	config1 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2);
+	reset_options  = (int)bus_space_read_1(iot, ioh, EP_W3_RESET_OPTIONS);
+	GO_WINDOW(0);
+
+	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
+        autoselect = (config1 & CONFIG_AUTOSELECT) >> CONFIG_AUTOSELECT_SHIFT;
+
+	/* set available media options */
+	conn = 0;
+	for (i = 0; i < 8; i++) {
+		struct ep_media * epm = ep_vortex_media + i;
+
+		if ((reset_options & epm->epm_eeprom_data) != 0) {
+			if (conn) printf("/");
+			printf(epm->epm_name);
+			conn |= epm->epm_conn;
+#ifdef __NetBSD__
+			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
+#endif	/* __NetBSD__ */
+		}
+	}
+
+	sc->ep_connectors = conn;
+
+	/* Show  eeprom's idea of default media.  */
+	medium_name = (default_media > 8)
+		? "(unknown/impossible media)"
+		: ep_vortex_media[default_media].epm_name;
+	printf(" default %s%s\n",
+	       medium_name,  (autoselect)? ", autoselect" : "" );
+
+#ifdef notyet	
+	/*
+	 * Set default: either the active interface the card
+	 * reads  from the EEPROM, or if autoselect is true,
+	 * whatever we find is actually connected. 
+	 *
+	 * XXX autoselect not yet implemented.
+	 */
+#endif	/* notyet */
+
+#ifdef __NetBSD__
+	/* tell ifconfig what currently-active media is. */
+	ifmedia_set(ifm, ep_default_to_media[default_media]);
+#endif	/* __NetBSD__ */
 }
 
 /*
+ * Bring device up.
+ *
  * The order in here seems important. Otherwise we may not receive
  * interrupts. ?!
  */
@@ -204,17 +563,25 @@ epinit(sc)
 		    sc->sc_arpcom.ac_enaddr[i]);
 
 	if (sc->bustype == EP_BUS_PCI || sc->bustype == EP_BUS_EISA)
-		/* Reset the station-address receive filter */
+		/*
+		 * Reset the station-address receive filter.
+		 * A bug workaround for busmastering  (Vortex, Demon) cards.
+		 */
 		for (i = 0; i < 6; i++)
-			bus_space_write_1(iot, ioh,EP_W2_RECVMASK_0 + i, 0);
+			bus_space_write_1(iot, ioh, EP_W2_RECVMASK_0 + i, 0);
 
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
-	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
 		bus_space_read_1(iot, ioh, EP_W1_TX_STATUS);
 
+	/* Set threshhold for for Tx-space avaiable interrupt. */
+	bus_space_write_2(iot, ioh, EP_COMMAND,
+	    SET_TX_AVAIL_THRESH | (1600 >> sc->txashift));
+
+	/* Enable interrupts. */
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK |
 	    S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_INTR_MASK |
@@ -229,7 +596,11 @@ epinit(sc)
 	bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR | 0xff);
 
 	epsetfilter(sc);
-	epsetlink(sc);
+#ifdef __NetBSD__
+	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
+#else
+	epsetmedia(sc, 0);	/* XXX */
+#endif
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_ENABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_ENABLE);
@@ -244,6 +615,11 @@ epinit(sc)
 	epstart(ifp);
 }
 
+/*
+ * Set multicast receive filter. 
+ * elink3 hardware has no selective multicast filter in hardware.
+ * Enable reception of all multicasts and filter in software.
+ */
 void
 epsetfilter(sc)
 	register struct ep_softc *sc;
@@ -257,13 +633,23 @@ epsetfilter(sc)
 	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
 }
 
-void
-epsetlink(sc)
-	register struct ep_softc *sc;
+/*
+ * Set active media to a specific given EPMEDIA_<> value.
+ * For vortex/demon/boomerang cards, update media field in w3_internal_config,
+ *       and power on selected transceiver.
+ * For 3c509-generation cards (3c509/3c579/3c589/3c509B),
+ *	update media field in w0_address_config, and power on selected xcvr.
+ */
+int
+epsetmedia(sc, medium)
+	struct ep_softc *sc;
+	int medium;
 {
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int w4_media;
+	int config0, config1;
 
 	/*
 	 * you can `ifconfig (link0|-link0) ep0' to get the following
@@ -273,32 +659,112 @@ epsetlink(sc)
 	 *	link1	if the card has a UTP connector, and link0 is
 	 *		set too, then you get the UTP port.
 	 */
+
+	/*
+	 * First, change the media-control bits in EP_W4_MEDIA_TYPE.
+	 */
+
+	 /* Turn everything off.  First turn off linkbeat and UTP. */
 	GO_WINDOW(4);
-	bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE, DISABLE_UTP);
-	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & BNC)) {
-		if (sc->bustype == EP_BUS_PCMCIA) {
-			GO_WINDOW(0);
-			bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,3<<14);
-			GO_WINDOW(1);
-		}
+	w4_media = bus_space_read_2(iot, ioh, EP_W4_MEDIA_TYPE);
+	w4_media =  w4_media & ~(ENABLE_UTP|SQE_ENABLE);
+	bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE, w4_media);
+
+	/* Turn off coax */
+	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
+	delay(1000);
+
+#ifndef __NetBSD__
+	/* XXX what media?  */
+	medium = 0;
+	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & EPC_BNC))
+		medium = EPMEDIA_10BASE_2;
+	else if (ifp->if_flags & IFF_LINK0)
+		if ((ifp->if_flags & IFF_LINK1) &&
+		    (sc->ep_connectors & EPC_UTP))
+			medium = EPMEDIA_10BASE_T;
+		else
+			medium = EPMEDIA_AUI;
+#endif
+
+	/*
+	 * Now turn on the selected media/transceiver.
+	 */
+	GO_WINDOW(4);
+	switch  (medium) {
+	case EPMEDIA_10BASE_T:
+		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
+		    w4_media | ENABLE_UTP);
+		break;
+
+	case EPMEDIA_10BASE_2:
 		bus_space_write_2(iot, ioh, EP_COMMAND, START_TRANSCEIVER);
-		delay(1000);
+		DELAY(1000);	/* 50ms not enmough? */
+		break;
+
+	/* XXX following only for new-generation cards */
+	case EPMEDIA_100BASE_TX:
+	case EPMEDIA_100BASE_FX:
+	case EPMEDIA_100BASE_T4:	/* XXX check documentation */
+		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
+		    w4_media | LINKBEAT_ENABLE);
+		DELAY(1000);	/* not strictly necessary? */
+		break;
+
+	case EPMEDIA_AUI:
+		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
+		    w4_media | SQE_ENABLE);
+		DELAY(1000);	/*  not strictly necessary? */
+		break;
+	case EPMEDIA_MII:
+		break;
+	default:
+#if defined(DEBUG)
+		printf("%s unknown media 0x%x\n", sc->sc_dev.dv_xname, medium);
+#endif
+		break;
+		
 	}
-	if (ifp->if_flags & IFF_LINK0) {
-		bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
-		delay(1000);
-		if ((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP)) {
-			if (sc->bustype == EP_BUS_PCMCIA) {
-				GO_WINDOW(0);
-				bus_space_write_2(iot, ioh,
-				    EP_W0_ADDRESS_CFG,0<<14);
-				GO_WINDOW(4);
-			}
-			bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
-			    ENABLE_UTP);
-		}
+
+	/*
+	 * Tell the chip which PHY [sic] to use.
+	 */
+	switch (sc->ep_chipset) {
+	case EP_CHIPSET_VORTEX:
+	case EP_CHIPSET_BOOMERANG2:
+		GO_WINDOW(3);
+		config0 = (u_int)bus_space_read_2(iot, ioh,
+		    EP_W3_INTERNAL_CONFIG);
+		config1 = (u_int)bus_space_read_2(iot, ioh,
+		    EP_W3_INTERNAL_CONFIG + 2);
+
+#if defined(DEBUG)
+		printf("%s:  read 0x%x, 0x%x from EP_W3_CONFIG register\n",
+		       sc->sc_dev.dv_xname, config0, config1);
+#endif
+		config1 = config1 & ~CONFIG_MEDIAMASK;
+		config1 |= (medium << CONFIG_MEDIAMASK_SHIFT);
+		
+#if defined(DEBUG)
+		printf("epsetmedia: %s: medium 0x%x, 0x%x to EP_W3_CONFIG\n",
+		    sc->sc_dev.dv_xname, medium, config1);
+#endif
+		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG, config0);
+		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2, config1);
+		break;
+
+	case EP_CHIPSET_3C509:
+		GO_WINDOW(0);
+		config0 = bus_space_read_2(iot, ioh, EP_W0_ADDRESS_CFG);
+		config0 &= 0x3fff;
+		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,
+		    config0 | (medium << 14));
+		DELAY(1000);
+		break;
 	}
-	GO_WINDOW(1);
+
+	GO_WINDOW(1);		/* Window 1 is operating window */
+	return (0);
 }
 
 /*
@@ -316,7 +782,7 @@ epstart(ifp)
 	int sh, len, pad;
 
 	/* Don't transmit if interface is busy or not running */
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 startagain:
@@ -353,7 +819,7 @@ startagain:
 		return;
 	} else {
 		bus_space_write_2(iot, ioh, EP_COMMAND,
-		    SET_TX_AVAIL_THRESH | (2044 >> sc->txashift));
+		    SET_TX_AVAIL_THRESH | EP_THRESH_DISABLE);
 	}
 
 	IF_DEQUEUE(&ifp->if_snd, m0);
@@ -361,7 +827,7 @@ startagain:
 		return;
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_TX_START_THRESH |
-	    (len / 4 + sc->tx_start_thresh));
+	    ((len / 4 + sc->tx_start_thresh) /*>> sc->txashift*/));
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -380,9 +846,9 @@ startagain:
 	if (EP_IS_BUS_32(sc->bustype)) {
 		for (m = m0; m; ) {
 			if (m->m_len > 3)
-				bus_space_write_multi_4(iot, ioh,
-				    EP_W1_TX_PIO_WR_1, mtod(m, u_int32_t *),
-				    m->m_len / 4);
+				bus_space_write_raw_multi_4(iot, ioh,
+				    EP_W1_TX_PIO_WR_1, mtod(m, u_int8_t *),
+				    m->m_len & ~3);
 			if (m->m_len & 3)
 				bus_space_write_multi_1(iot, ioh,
 				    EP_W1_TX_PIO_WR_1,
@@ -394,9 +860,9 @@ startagain:
 	} else {
 		for (m = m0; m; ) {
 			if (m->m_len > 1)
-				bus_space_write_multi_2(iot, ioh,
-				    EP_W1_TX_PIO_WR_1, mtod(m, u_int16_t *),
-				    m->m_len / 2);
+				bus_space_write_raw_multi_2(iot, ioh,
+				    EP_W1_TX_PIO_WR_1, mtod(m, u_int8_t *),
+				    m->m_len & ~1);
 			if (m->m_len & 1)
 				bus_space_write_1(iot, ioh, EP_W1_TX_PIO_WR_1,
 				     *(mtod(m, u_int8_t *) + m->m_len - 1));
@@ -424,12 +890,10 @@ readcheck:
 			 * completely busted?
 			 */
 			epread(sc);
-		}
-		else
+		} else
 			/* Got an interrupt, return to get it serviced. */
 			return;
-	}
-	else {
+	} else {
 		/* Check if we are stuck and reset [see XXX comment] */
 		if (epstatus(sc)) {
 			if (ifp->if_flags & IFF_DEBUG)
@@ -450,7 +914,7 @@ readcheck:
  *	It happens at times when there is a lot of broadcast traffic
  *	on the cable (once in a blue moon).
  */
-static int
+int
 epstatus(sc)
 	register struct ep_softc *sc;
 {
@@ -495,7 +959,7 @@ epstatus(sc)
 }
 
 
-static void
+void
 eptxstat(sc)
 	register struct ep_softc *sc;
 {
@@ -648,6 +1112,7 @@ again:
 
 	++ifp->if_ipackets;
 
+	/* We assume the header fit entirely in one mbuf. */
 	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
@@ -673,6 +1138,7 @@ again:
 	}
 #endif
 
+	/* We assume the header fit entirely in one mbuf. */
 	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
 
@@ -698,7 +1164,7 @@ again:
 		if (len & ERR_INCOMPLETE) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: adapter reset\n",
-				       sc->sc_dev.dv_xname);
+				    sc->sc_dev.dv_xname);
 			epreset(sc);
 			return;
 		}
@@ -780,9 +1246,9 @@ epget(sc, totlen)
 		if (EP_IS_BUS_32(sc->bustype)) {
 			if (len > 3) {
 				len &= ~3;
-				bus_space_read_multi_4(iot, ioh,
-				    EP_W1_RX_PIO_RD_1, mtod(m, u_int32_t *),
-				    len / 4);
+				bus_space_read_raw_multi_4(iot, ioh,
+				    EP_W1_RX_PIO_RD_1, mtod(m, u_int8_t *),
+				    len);
 			} else
 				bus_space_read_multi_1(iot, ioh,
 				    EP_W1_RX_PIO_RD_1, mtod(m, u_int8_t *),
@@ -790,9 +1256,9 @@ epget(sc, totlen)
 		} else {
 			if (len > 1) {
 				len &= ~1;
-				bus_space_read_multi_2(iot, ioh,
-				    EP_W1_RX_PIO_RD_1, mtod(m, u_int16_t *),
-				    len / 2);
+				bus_space_read_raw_multi_2(iot, ioh,
+				    EP_W1_RX_PIO_RD_1, mtod(m, u_int8_t *),
+				    len);
 			} else
 				*(mtod(m, u_int8_t *)) =
 				    bus_space_read_1(iot, ioh,
@@ -869,10 +1335,10 @@ epioctl(ifp, cmd, data)
 			/*
 			 * deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC,
-			 * IFF_LINK0, IFF_LINK1,
+			 * IFF_LINK0, IFF_LINK1.
 			 */
 			epsetfilter(sc);
-			epsetlink(sc);
+			epsetmedia(sc, 0);	/* XXX */
 		}
 		break;
 
@@ -938,14 +1404,29 @@ epstop(sc)
 		;
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_DISABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
-	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
+
+	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
+
 	bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_INTR_MASK);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RX_FILTER);
 
 	epmbufempty(sc);
+}
+
+/*
+ * Before reboots, reset card completely.
+ */
+void
+epshutdown(arg)
+	void *arg;
+{
+	register struct ep_softc *sc = arg;
+
+	epstop(sc);
+	ep_complete_cmd(sc, EP_COMMAND, GLOBAL_RESET);
 }
 
 /*
@@ -980,7 +1461,7 @@ epreadeeprom(iot, ioh, offset)
 	return (data);
 }
 
-static int
+int
 epbusyeeprom(sc)
 	struct ep_softc *sc;
 {
@@ -1000,8 +1481,8 @@ epbusyeeprom(sc)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
-	if (sc->bustype != EP_BUS_PCMCIA && j & EEPROM_TST_MODE) {
-		printf("\n%s: erase pencil mark, or disable plug-n-play mode!\n",
+	if (sc->bustype != EP_BUS_PCMCIA && (j & EEPROM_TST_MODE)) {
+		printf("\n%s: erase pencil mark, or disable PnP mode!\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
