@@ -1017,6 +1017,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/asioreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/bereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/cgsixreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/lebuffervar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/magmareg.ph

@@ -896,6 +896,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/sbus/asioreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/sbus/bereg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/sbus/cgsixreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/sbus/lebuffervar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/sbus/magmareg.ph

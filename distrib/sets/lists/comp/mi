@@ -591,6 +591,7 @@
 ./usr/include/dev/sbus
 ./usr/include/dev/sbus/asioreg.h
 ./usr/include/dev/sbus/bereg.h
+./usr/include/dev/sbus/cgsixreg.h
 ./usr/include/dev/sbus/cs4231var.h
 ./usr/include/dev/sbus/lebuffervar.h
 ./usr/include/dev/sbus/magmareg.h

@@ -1040,6 +1040,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/asioreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/bereg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/cgsixreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/lebuffervar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/magmareg.ph
