@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.29 2001/11/27 02:47:49 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.30 2002/02/08 19:05:25 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -258,9 +258,11 @@ bestart(ifp)
 	bix = sc->sc_last_td;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*
@@ -454,7 +456,6 @@ betint(sc)
 		if (txd.tx_flags & BE_TXD_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
 
 		if (++bix == BE_TX_RING_MAXSIZE)
@@ -463,14 +464,22 @@ betint(sc)
 		--sc->sc_no_td;
 	}
 
-	sc->sc_first_td = bix;
-
-	bestart(ifp);
-
 	if (sc->sc_no_td == 0)
 		ifp->if_timer = 0;
 
-	return 1;
+	/*
+	 * If we freed up at least one descriptor and tx is blocked,
+	 * unblock it and start it up again.
+	 */
+	if (sc->sc_first_td != bix) {
+		sc->sc_first_td = bix;
+		if (ifp->if_flags & IFF_OACTIVE) {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			bestart(ifp);
+		}
+	}
+
+	return (1);
 }
 
 /*
