@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.10 1999/09/30 17:08:52 deraadt Exp $");
+RCSID("$Id: sshconnect.c,v 1.11 1999/10/03 19:22:39 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -247,7 +247,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 	  restore_uid();
 
 	  /* Destroy the failed socket. */
-	  shutdown(sock, 2);
+	  shutdown(sock, SHUT_RDWR);
 	  close(sock);
 	}
       else
@@ -295,7 +295,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 	      /* Close the failed socket; there appear to be some problems 
 		 when reusing a socket for which connect() has already 
 		 returned an error. */
-	      shutdown(sock, 2);
+	      shutdown(sock, SHUT_RDWR);
 	      close(sock);
 	    }
 	  if (hp->h_addr_list[i])

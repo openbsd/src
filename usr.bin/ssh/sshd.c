@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.16 1999/10/03 04:21:08 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.17 1999/10/03 19:22:39 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -461,7 +461,7 @@ main(int ac, char **av)
       if (bind(listen_sock, (struct sockaddr *)&sin, sizeof(sin)) < 0)
 	{
 	  error("bind: %.100s", strerror(errno));
-	  shutdown(listen_sock, 2);
+	  shutdown(listen_sock, SHUT_RDWR);
 	  close(listen_sock);
 	  fatal("Bind to port %d failed.", options.port);
 	}
@@ -534,7 +534,7 @@ main(int ac, char **av)
 	      {
 		error("Connection from %.500s refused by tcp_wrappers.",
 		      eval_client(&req));
-		shutdown(newsock, 2);
+		shutdown(newsock, SHUT_RDWR);
 		close(newsock);
 		continue;
 	      }

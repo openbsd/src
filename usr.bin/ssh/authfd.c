@@ -14,7 +14,7 @@ Functions for connecting the local authentication agent.
 */
 
 #include "includes.h"
-RCSID("$Id: authfd.c,v 1.4 1999/09/30 08:34:24 deraadt Exp $");
+RCSID("$Id: authfd.c,v 1.5 1999/10/03 19:22:38 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -134,7 +134,7 @@ int ssh_get_authentication_connection_fd()
   PUT_16BIT(msg + 1, port);
   if (send(authfd, msg, 3, 0) < 0)
     {
-      shutdown(listen_sock, 2);
+      shutdown(listen_sock, SHUT_RDWR);
       close(listen_sock);
       ssh_close_authentication_socket(authfd);
       return -1;
@@ -154,7 +154,7 @@ int ssh_get_authentication_connection_fd()
 
   /* Close the socket we used for listening.  It is no longer needed.
      (The authentication fd and the new connection still remain open.) */
-  shutdown(listen_sock, 2);
+  shutdown(listen_sock, SHUT_RDWR);
   close(listen_sock);
   ssh_close_authentication_socket(authfd);
 
@@ -664,7 +664,7 @@ int ssh_remove_all_identities(AuthenticationConnection *auth)
 void ssh_close_authentication(AuthenticationConnection *auth)
 {
   /* Close the connection. */
-  shutdown(auth->fd, 2);
+  shutdown(auth->fd, SHUT_RDWR);
   close(auth->fd);
 
   /* Free the buffers. */

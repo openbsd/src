@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.9 1999/09/30 08:34:24 deraadt Exp $");
+RCSID("$Id: channels.c,v 1.10 1999/10/03 19:22:38 deraadt Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -188,7 +188,7 @@ void channel_free(int channel)
 {
   assert(channel >= 0 && channel < channels_alloc &&
 	 channels[channel].type != SSH_CHANNEL_FREE);
-  shutdown(channels[channel].sock, 2);
+  shutdown(channels[channel].sock, SHUT_RDWR);
   close(channels[channel].sock);
   buffer_free(&channels[channel].input);
   buffer_free(&channels[channel].output);
@@ -1074,7 +1074,7 @@ char *x11_create_display_inet(int screen_number)
       if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0)
 	{
 	  debug("bind port %d: %.100s", port, strerror(errno));
-	  shutdown(sock, 2);
+	  shutdown(sock, SHUT_RDWR);
 	  close(sock);
 	  continue;
 	}
@@ -1090,7 +1090,7 @@ char *x11_create_display_inet(int screen_number)
   if (listen(sock, 5) < 0)
     {
       error("listen: %.100s", strerror(errno));
-      shutdown(sock, 2);
+      shutdown(sock, SHUT_RDWR);
       close(sock);
       return NULL;
     }

@@ -360,7 +360,7 @@ void process_output(fd_set *writeset)
 #ifdef USE_PIPES
 	  close(fdin); 
 #else
-	  shutdown(fdin, 1); /* We will no longer send. */
+	  shutdown(fdin, SHUT_WR); /* We will no longer send. */
 #endif
 	  fdin = -1;
 	}
@@ -484,7 +484,7 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 #ifdef USE_PIPES
 	  close(fdin);
 #else
-	  shutdown(fdin, 1); /* We will no longer send. */
+	  shutdown(fdin, SHUT_WR); /* We will no longer send. */
 #endif
 	  fdin = -1;
 	}
@@ -566,7 +566,7 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 #ifdef USE_PIPES
     close(fdout);
 #else
-    shutdown(fdout, 0);
+    shutdown(fdout, SHUT_RD);
 #endif
   fdout = -1;
   fdout_eof = 1;
@@ -574,7 +574,7 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 #ifdef USE_PIPES
     close(fderr);
 #else
-    shutdown(fderr, 0);
+    shutdown(fderr, SHUT_RD);
 #endif
   fderr = -1;
   fderr_eof = 1;
@@ -582,7 +582,7 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 #ifdef USE_PIPES
     close(fdin);
 #else
-    shutdown(fdin, 1);
+    shutdown(fdin, SHUT_WR);
 #endif
   fdin = -1;
 
