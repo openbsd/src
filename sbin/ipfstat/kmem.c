@@ -21,7 +21,7 @@
 
 #ifndef lint
 static  char    sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static	char	rcsid[] = "$Id: kmem.c,v 1.4 1996/07/18 05:08:10 dm Exp $";
+static	char	rcsid[] = "$Id: kmem.c,v 1.5 1996/12/17 23:50:51 niklas Exp $";
 #endif
 
 static	int	kmemfd = -1;
@@ -38,7 +38,7 @@ int	openkmem()
 
 int	kmemcpy(buf, pos, n)
 register char	*buf;
-long	pos;
+u_long	pos;
 register int	n;
 {
 	register int	r;
