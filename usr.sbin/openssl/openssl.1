@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.22 2003/10/30 19:12:38 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.23 2003/11/21 15:12:31 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1986,17 +1986,18 @@ below.
 .Sh DHPARAM
 .Nm openssl dhparam
 .Bk -words
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl 2 | 5
+.Op Fl C
+.Op Fl check
 .Op Fl dsaparam
 .Op Fl noout
 .Op Fl text
-.Op Fl C
-.Op Fl 2 | 5
-.Op Fl rand Ar file ...
 .Op Fl engine Ar id
+.Op Fl in Ar filename
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar filename
+.Op Fl outform Ar DER | PEM
+.Op Fl rand Ar file ...
 .Op Ar numbits
 .Ek
 .Pp
@@ -2006,33 +2007,17 @@ command is used to manipulate DH parameter files.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-The argument
-.Ar DER
-uses an ASN1 DER encoded form compatible with the PKCS#3 DHparameter
-structure.
-The
-.Ar PEM
-form is the default format:
-it consists of the DER format base64 encoded with
-additional header and footer lines.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar filename
-This specifies the input
-.Ar filename
-to read parameters from or standard input if this option is not specified.
-.It Fl out Ar filename
-This specifies the output
-.Ar filename
-to write parameters to.
-Standard output is used if this option is not present.
-The output filename should
-.Em not
-be the same as the input filename.
+.It Fl 2 , 5
+The generator to use, either 2 or 5.
+2 is the default.
+If present, then the input file is ignored and parameters are generated instead.
+.It Fl C
+This option converts the parameters into C code.
+The parameters can then be loaded by calling the
+.Cm get_dh Ns Ar numbits Ns Li ()
+function.
+.It Fl check
+Check the DH parameters.
 .It Fl dsaparam
 If this option is used, DSA rather than DH parameters are read or created;
 they are converted to DH format.
@@ -2050,32 +2035,6 @@ which makes DH key exchange more efficient.
 Beware that with such DSA-style DH parameters,
 a fresh DH key should be created for each use to
 avoid small-subgroup attacks that may be possible otherwise.
-.It Fl 2 , 5
-The generator to use, either 2 or 5.
-2 is the default.
-If present, then the input file is ignored and parameters are generated instead.
-.It Fl rand Ar file ...
-A file or files containing random data used to seed the random number generator,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified, separated by a
-.Sq \&: .
-.It Ar numbits
-This argument specifies that a parameter set should be generated of size
-.Ar numbits .
-It must be the last option.
-If not present, then a value of 512 is used.
-If this value is present, then the input file is ignored and
-parameters are generated instead.
-.It Fl noout
-This option inhibits the output of the encoded version of the parameters.
-.It Fl text
-This option prints out the DH parameters in human readable form.
-.It Fl C
-This option converts the parameters into C code.
-The parameters can then be loaded by calling the
-.Cm get_dh Ns Ar numbits Ns Li ()
-function.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -2084,6 +2043,50 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl in Ar filename
+This specifies the input
+.Ar filename
+to read parameters from or standard input if this option is not specified.
+.It Fl inform Ar DER | PEM
+This specifies the input format.
+The argument
+.Ar DER
+uses an ASN1 DER encoded form compatible with the PKCS#3 DHparameter
+structure.
+The
+.Ar PEM
+form is the default format:
+it consists of the DER format base64 encoded with
+additional header and footer lines.
+.It Fl noout
+This option inhibits the output of the encoded version of the parameters.
+.It Ar numbits
+This argument specifies that a parameter set should be generated of size
+.Ar numbits .
+It must be the last option.
+If not present, then a value of 512 is used.
+If this value is present, then the input file is ignored and
+parameters are generated instead.
+.It Fl out Ar filename
+This specifies the output
+.Ar filename
+to write parameters to.
+Standard output is used if this option is not present.
+The output filename should
+.Em not
+be the same as the input filename.
+.It Fl outform Ar DER | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
+.It Fl rand Ar file ...
+A file or files containing random data used to seed the random number generator,
+or an EGD socket (see
+.Xr RAND_egd 3 ) .
+Multiple files can be specified, separated by a
+.Sq \&: .
+.It Fl text
+This option prints out the DH parameters in human readable form.
 .El
 .Sh DHPARAM WARNINGS
 The program
