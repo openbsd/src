@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.14 1997/09/07 20:08:53 millert Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.15 1999/12/06 01:47:58 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -136,14 +136,31 @@ int main(int argc, char **argv)
 	case 'f':	readcache = 0; break;
 	case 'q':	verbose = 0; break;
 
-	case 'm':	strcpy(outmkname, optarg); break;
-	case 'c':	strcpy(outcfname, optarg); break;
-	case 'e':	strcpy(execfname, optarg); break;
+	case 'm':
+	  if (strlcpy(outmkname, optarg, sizeof(outmkname)) >= 
+	      sizeof(outmkname))
+	    usage();
+	  break;
+	case 'c':
+	  if (strlcpy(outcfname, optarg, sizeof(outcfname)) >=
+	      sizeof(outcfname))
+	    usage();
+	  break;
+	case 'e':
+	  if (strlcpy(execfname, optarg, sizeof(execfname)) >=
+	      sizeof(execfname))
+	    usage();
+	  break;
 
-	case 'D':	strcpy(topdir, optarg); break;
-	case 'E' :	elf_names = 1; break;
-	case 'L':	strcpy(libdir, optarg); break;
-
+	case 'D':
+	  if (strlcpy(topdir, optarg, sizeof(topdir)) >= sizeof(topdir))
+	    usage();
+	  break;
+	case 'E':	elf_names = 1; break;
+	case 'L':
+	  if (strlcpy(libdir, optarg, sizeof(libdir)) >= sizeof(libdir))
+	    usage();
+	  break;
 	case '?':
 	default:	usage();
 	}
@@ -158,7 +175,9 @@ int main(int argc, char **argv)
      * generate filenames
      */
 
-    strcpy(infilename, argv[0]);
+    if (strlcpy(infilename, argv[0], sizeof(infilename)) >=
+	sizeof(infilename))
+      usage();
 
     /* confname = `basename infilename .conf` */
 
@@ -296,14 +315,25 @@ void add_srcdirs(int argc, char **argv)
 {
     int i;
     char tmppath[MAXPATHLEN];
+    int overflow;
 
     for(i=1;i<argc;i++) {
-	if (argv[i][0] == '/' || topdir[0] == '\0')
-		strcpy(tmppath, argv[i]);
-	else {
-		strcpy(tmppath, topdir);
-		strcat(tmppath, "/");
-		strcat(tmppath, argv[i]);
+        overflow = 0;
+        if (argv[i][0] == '/' || topdir[0] == '\0') {
+	     if (strlcpy(tmppath, argv[i], sizeof(tmppath)) >= sizeof(tmppath))
+	       overflow = 1;  
+	     continue;
+	} else {
+	     if (strlcpy(tmppath, topdir, sizeof(tmppath)) >= sizeof(tmppath)||
+		 strlcat(tmppath, "/", sizeof(tmppath)) >= sizeof(tmppath) ||
+		 strlcat(tmppath, argv[i], sizeof(tmppath)) >= sizeof(tmppath))
+	       overflow = 1;
+	}
+	if (overflow) {
+	     goterror = 1;
+	     fprintf(stderr, "%s:%d: `%.40s...' is too long, skipping it.\n",
+		     curfilename, linenum, argv[i]);
+	     continue;
 	}
 	if(is_dir(tmppath))
 	    add_string(&srcdirs, tmppath);
