@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_fdio.c,v 1.3 2001/10/26 14:31:31 art Exp $	*/
+/*	$OpenBSD: linux_fdio.c,v 1.4 2002/02/08 00:03:46 art Exp $	*/
 /*	$NetBSD: linux_fdio.c,v 1.1 2000/12/10 14:12:16 fvdl Exp $	*/
 
 /*
@@ -143,10 +143,6 @@ linux_ioctl_fdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 	default:
 		error = EINVAL;
 	}
-
-#ifdef notdef
-	FILE_UNUSE(fp, p);
-#endif
 
 	return 0;
 }

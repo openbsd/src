@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_hdio.c,v 1.2 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: linux_hdio.c,v 1.3 2002/02/08 00:03:46 art Exp $	*/
 /*	$NetBSD: linux_hdio.c,v 1.1 2000/12/10 14:12:17 fvdl Exp $	*/
 
 /*
@@ -174,10 +174,6 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 	case LINUX_HDIO_UNREGISTER_HWIF:
 		error = EINVAL;
 	}
-
-#ifdef notyet
-	FILE_UNUSE(fp, p);
-#endif
 
 	return error;
 }
