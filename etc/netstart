@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.78 2001/05/30 02:11:08 deraadt Exp $
+#	$OpenBSD: netstart,v 1.79 2001/07/03 03:28:19 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -23,9 +23,6 @@ hostname $hostname
 if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
 fi
-
-# pick up option configuration
-. /etc/rc.conf
 
 # set the address for the loopback interface
 # it will also initialize IPv6 address for lo0 (::1 and others).

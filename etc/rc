@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.176 2001/07/01 08:38:59 kjell Exp $
+#	$OpenBSD: rc,v 1.177 2001/07/03 03:28:19 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -108,6 +108,9 @@ umount -a >/dev/null 2>&1
 mount -a -t nonfs
 mount -uw /		# root on nfs requires this, others aren't hurt
 rm -f /fastboot		# XXX (root now writeable)
+
+# pick up option configuration
+. /etc/rc.conf
 
 # set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
 echo 'setting tty flags'
