@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.61 2004/03/11 17:20:33 millert Exp $	*/
+/*	$OpenBSD: apm.c,v 1.62 2004/05/27 08:19:59 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -347,6 +347,8 @@ apm_resume(sc, regs)
 	struct apm_softc *sc;
 	struct apmregs *regs;
 {
+	extern int perflevel;
+
 	apm_resumes = APM_RESUME_HOLDOFF;
 
 	/* they say that some machines may require reinitializing the clock */
@@ -359,6 +361,10 @@ apm_resume(sc, regs)
 	
 	/* acknowledge any rtc interrupt we may have missed */
 	rtcdrain(NULL);
+
+	/* restore hw.setperf */
+	if (cpu_setperf != NULL)
+		cpu_setperf(perflevel);
 }
 
 int

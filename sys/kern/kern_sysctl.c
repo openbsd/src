@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.108 2004/05/23 19:41:23 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.109 2004/05/27 08:19:59 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -100,6 +100,7 @@ int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 
 int (*cpu_cpuspeed)(int *);
 int (*cpu_setperf)(int);
+int perflevel = 100;
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -524,8 +525,6 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern char machine[], cpu_model[];
 	int err;
 	int cpuspeed;
-	static int perflevel = 100;
-	int operflevel;
 
 	/* all sysctl names at this level except sensors are terminal */
 	if (name[0] != HW_SENSORS && namelen != 1)
@@ -577,17 +576,17 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_SETPERF:
 		if (!cpu_setperf)
 			return (EOPNOTSUPP);
-		operflevel = perflevel;
 		err = sysctl_int(oldp, oldlenp, newp, newlen, &perflevel);
 		if (err)
 			return err;
-		if (perflevel == operflevel)
-			return (0);
 		if (perflevel > 100)
 			perflevel = 100;
 		if (perflevel < 0)
 			perflevel = 0;
-		return (cpu_setperf(perflevel));
+		if (newp)
+			return (cpu_setperf(perflevel));
+		else
+			return (0);
 	default:
 		return (EOPNOTSUPP);
 	}
