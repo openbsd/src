@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.4 1996/05/15 23:23:50 jtc Exp $	*/
+/*	$OpenBSD: vipw.c,v 1.11 2003/01/24 19:16:43 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -59,9 +59,7 @@ void	copyfile(int, int);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int pfd, tfd;
 	struct stat begin, end;
@@ -109,8 +107,7 @@ main(argc, argv)
 }
 
 void
-copyfile(from, to)
-	int from, to;
+copyfile(int from, int to)
 {
 	int nr, nw, off;
 	char buf[8*1024];
@@ -128,11 +125,11 @@ copyfile(from, to)
 
 	TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
-	(void) futimes(to, tv);
+	(void)futimes(to, tv);
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
