@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2004/02/28 18:12:21 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 2004/03/09 23:05:13 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -246,13 +246,11 @@ extern u_int32_t cpus_attached;
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func)(int);
+extern void delay(int);
 struct timeval;
-extern void (*microtime_func)(struct timeval *);
+extern void microtime(struct timeval *);
 
-#define DELAY(x)		(*delay_func)(x)
-#define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
+#define DELAY(x)		delay(x)
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2004/02/28 22:26:05 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2004/03/09 23:05:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -199,10 +199,6 @@ pid_t sigpid = 0;
 #endif
 
 extern	paddr_t avail_start, avail_end;
-
-void (*delay_func)(int) = i8254_delay;
-void (*microtime_func)(struct timeval *) = i8254_microtime;
-void (*initclock_func)(void) = i8254_initclocks;
 
 struct mtrr_funcs *mtrr_funcs;
 
@@ -847,7 +843,12 @@ boot(int howto)
 {
 
 	if (cold) {
-		howto |= RB_HALT;
+		/*
+		 * If the system is cold, just halt, unless the user
+		 * explicitly asked for reboot.
+		 */
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
 		goto haltsys;
 	}
 
@@ -1801,12 +1802,6 @@ microtime(struct timeval *tv)
 		mtv = *tv;
 }
 #endif
-
-void
-cpu_initclocks()
-{
-	(*initclock_func)();
-}
 
 #ifdef MULTIPROCESSOR
 void

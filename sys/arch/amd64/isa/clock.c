@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 2004/03/09 23:05:13 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -184,6 +184,8 @@ mc146818_write(sc, reg, datum)
 	DELAY(1);
 }
 
+static u_long rtclock_tval;
+
 /* minimal initialization, enough for delay() */
 void
 initrtclock()
@@ -204,6 +206,8 @@ initrtclock()
 	/* Correct rounding will buy us a better precision in timekeeping */
 	outb(IO_TIMER1+TIMER_CNTR0, tval % 256);
 	outb(IO_TIMER1+TIMER_CNTR0, tval / 256);
+
+	rtclock_tval = tval;
 }
 
 /*
@@ -310,9 +314,18 @@ gettick()
  * wave' mode counts at 2:1).
  */
 void
-i8254_delay(int n)
+delay(int n)
 {
 	int limit, tick, otick;
+	static const int delaytab[26] = {
+		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
+		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
+		24, 25, 27, 28, 29, 30,
+	};
+
+	/* allow DELAY() to be used before startrtclock() */
+	if (!rtclock_tval)
+		initrtclock();
 
 	/*
 	 * Read the counter first, so that the rest of the setup overhead is
@@ -320,34 +333,35 @@ i8254_delay(int n)
 	 */
 	otick = gettick();
 
+	if (n <= 25)
+		n = delaytab[n];
+	else {
 #ifdef __GNUC__
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
-	 * we can take advantage of the intermediate 64-bit quantity to prevent
-	 * loss of significance.
-	 */
-	n -= 5;
-	if (n < 0)
-		return;
-	__asm __volatile("mul %2\n\tdiv %3"
-			 : "=a" (n) 
-			 : "0" (n), "r" (TIMER_FREQ), "r" (1000000)
-			 : "%edx", "cc");
+		/*
+		 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler
+		 * code so we can take advantage of the intermediate 64-bit
+		 * quantity to prevent loss of significance.
+		 */
+		int m;
+		__asm __volatile("mul %3"
+				 : "=a" (n), "=d" (m)
+				 : "0" (n), "r" (TIMER_FREQ));
+		__asm __volatile("div %4"
+				 : "=a" (n), "=d" (m)
+				 : "0" (n), "1" (m), "r" (1000000));
 #else
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating point and
-	 * without any avoidable overflows.
-	 */
-	n -= 20;
-	{
+		/*
+		 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating
+		 * point and without any avoidable overflows.
+		 */
 		int sec = n / 1000000,
 		    usec = n % 1000000;
 		n = sec * TIMER_FREQ +
 		    usec * (TIMER_FREQ / 1000000) +
 		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
 		    usec * (TIMER_FREQ % 1000) / 1000000;
-	}
 #endif
+	}
 
 	limit = TIMER_FREQ / hz;
 
@@ -435,7 +449,7 @@ rtcdrain(void *v)
 }
 
 void
-i8254_initclocks()
+cpu_initclocks()
 {
 	static struct timeout rtcdrain_timeout;
 
