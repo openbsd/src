@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.19 1999/09/18 15:43:33 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.20 1999/09/19 16:16:49 kstailey Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -430,6 +430,21 @@ typedef struct {
 unsigned int elf_hash(const unsigned char *name);
 
 /*
+ * Note Definitions
+ */
+typedef struct {
+	Elf32_Word namesz;
+	Elf32_Word descsz;
+	Elf32_Word type;
+} Elf32_Note;
+
+typedef struct {
+	Elf64_Half namesz;
+	Elf64_Half descsz;
+	Elf64_Half type;
+} Elf64_Note;
+
+/*
  * XXX - these _KERNEL items aren't part of the ABI!
  */
 #if defined(_KERNEL) || defined(_DYN_LOADER)
@@ -485,6 +500,8 @@ void *elf64_copyargs __P((struct exec_package *, struct ps_strings *,
         void *, void *));
 int exec_elf64_fixup __P((struct proc *, struct exec_package *));
 char *elf64_check_brand __P((Elf64_Ehdr *));
+int elf64_os_pt_note __P((struct proc *, struct exec_package *, Elf64_Ehdr *,
+	char *, size_t, size_t));
 #endif
 #ifdef _KERN_DO_ELF
 int exec_elf_makecmds __P((struct proc *, struct exec_package *));

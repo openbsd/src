@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.3 1999/09/19 13:59:22 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.4 1999/09/19 16:16:49 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -521,16 +521,6 @@ exec_elf64_makecmds(p, epp)
 			     pp->p_filesz)) != 0)
 				goto bad;
 		}
-		if (pp->p_type == PT_NOTE) {
-			int max_brand = (EI_NIDENT - 1) - EI_BRAND;
-
-			if ((error = elf64_read_from(p, epp->ep_vp,
-			     pp->p_offset + 12, (caddr_t)&eh->e_ident[EI_BRAND],
-			     pp->p_filesz - 12 <= max_brand ?
-			     pp->p_filesz - 12 : max_brand)) != 0)
-				goto bad;
-			eh->e_ident[EI_NIDENT - 1] = '\0';
-		}
 	}
 
 	/*
@@ -699,6 +689,7 @@ exec_elf64_fixup(p, epp)
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	u_long	pos = epp->ep_interp_pos;
+	size_t len;
 
 	if(epp->ep_interp == 0) {
 		return (0);
@@ -725,12 +716,13 @@ exec_elf64_fixup(p, epp)
 	}
 	kill_vmcmds(&epp->ep_vmcmds);
 
+	a = ai;
+
 	/*
 	 * Push extra arguments on the stack needed by dynamically
 	 * linked binaries
 	 */
-	if(error == 0) {
-		a = ai;
+	if (error == 0) {
 
 		a->au_id = AUX_phdr;
 		a->au_v = ap->arg_phaddr;
@@ -759,13 +751,14 @@ exec_elf64_fixup(p, epp)
 		a->au_id = AUX_entry;
 		a->au_v = ap->arg_entry;
 		a++;
-
-		a->au_id = AUX_null;
-		a->au_v = 0;
-		a++;
-
-		error = copyout(ai, epp->ep_emul_argp, sizeof ai);
 	}
+
+	a->au_id = AUX_null;
+	a->au_v = 0;
+	a++;
+
+	len = (a - ai) * sizeof(AuxInfo);
+	error = copyout(ai, epp->ep_emul_argp, len);
 	free((char *)ap, M_TEMP);
 	free((char *)interp, M_TEMP);
 	return (error);
@@ -778,6 +771,67 @@ elf64_check_brand(eh)
 	if (eh->e_ident[EI_BRAND] == '\0')
 		return (NULL);
 	return (&eh->e_ident[EI_BRAND]);
+}
+
+int
+elf64_os_pt_note(p, epp, eh, os_name, name_size, desc_size)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf64_Ehdr *eh;
+	char *os_name;
+	size_t name_size, desc_size;
+{
+	Elf64_Phdr *hph, *ph;
+	Elf64_Note *np = NULL;
+	size_t phsize;
+	int error;
+
+	phsize = eh->e_phnum * sizeof(Elf64_Phdr);
+	hph = (Elf64_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	if ((error = elf64_read_from(p, epp->ep_vp, eh->e_phoff,
+	    (caddr_t)hph, phsize)) != 0)
+		goto out1;
+
+	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
+		if (ph->p_type != PT_NOTE ||
+		    ph->p_filesz < sizeof(Elf64_Note) + name_size)
+			continue;
+
+		np = (Elf64_Note *)malloc(ph->p_filesz, M_TEMP, M_WAITOK);
+		if ((error = elf64_read_from(p, epp->ep_vp, ph->p_offset,
+		    (caddr_t)np, ph->p_filesz)) != 0)
+			goto out2;
+
+#if 0
+		if (np->type != ELF_NOTE_TYPE_OSVERSION) {
+			free(np, M_TEMP);
+			np = NULL;
+			continue;
+		}
+#endif
+
+		/* Check the name and description sizes. */
+		if (np->namesz != name_size ||
+		    np->descsz != desc_size)
+			goto out3;
+
+		if (bcmp((np + 1), os_name, name_size))
+			goto out3;
+
+		/* XXX: We could check for the specific emulation here */
+		/* All checks succeeded. */
+		error = 0;
+		goto out2;
+	}
+
+out3:
+	error = ENOEXEC;
+out2:
+	if (np)
+		free(np, M_TEMP);
+out1:
+	free(hph, M_TEMP);
+	return error;
 }
 
 #endif /* _KERN_DO_ELF64 */
