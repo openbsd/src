@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.29 2002/04/22 04:27:37 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.30 2002/04/22 05:27:39 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -174,7 +174,6 @@ fbackupfile(const char *fn)
 	}
 	if (stat(fn, &sb) == -1) {
 		ewprintf("Can't stat %s : %s", fn, strerror(errno));
-		free(nname);
 		return (FALSE);
 	}
 
@@ -192,8 +191,8 @@ fbackupfile(const char *fn)
 	}
 	while ((nread = read(from, buf, sizeof(buf))) > 0) {
 		if (write(to, buf, nread) != nread) {
-			nread = -1;
-			break;
+		    nread = -1;
+		    break;
 		}
 	}
 	serrno = errno;
@@ -397,19 +396,49 @@ nohome:
 int
 copy(char *frname, char *toname)
 {
-	pid_t	pid;
-	int	status;
+	int ifd, ofd, n;
+	char buf[BUFSIZ];
+	mode_t mode = DEFFILEMODE;	/* XXX?? */
+	struct stat orig;
 
-	switch ((pid = vfork())) {
-	case -1:
-		return -1;
-	case 0:
-		execl("/bin/cp", "cp", frname, toname, (char *)NULL);
-		_exit(1);	/* shouldn't happen */
-	default:
-		waitpid(pid, &status, 0);
-		return (WIFEXITED(status) && WEXITSTATUS(status) == 0);
+	if ((ifd = open(frname, O_RDONLY)) == -1)
+		return (FALSE);
+	if (fstat(ifd, &orig) == -1) {
+		ewprintf("fstat: %s", strerror(errno));
+		close(ifd);
+		return (FALSE);
 	}
+
+	if ((ofd = open(toname, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1) {
+		close(ifd);
+		return (FALSE);
+	}
+	while ((n = read(ifd, buf, sizeof buf)) > 0) {
+		if (write(ofd, buf, n) != n) {
+			ewprintf("write error : %s", strerror(errno));
+			break;
+		}
+	}
+	if (fchmod(ofd, orig.st_mode) == -1)
+		ewprintf("Cannot set original mode : %s", strerror(errno));
+
+	if (n == -1) {
+		ewprintf("Read error : %s", strerror(errno));
+		close(ifd);
+		close(ofd);
+		return (FALSE);
+	}
+	/*
+	 * It is "normal" for this to fail since we can't garantee that
+	 * we will be running as root
+	 */
+	if (fchown(ofd, orig.st_uid, orig.st_gid) && errno != EPERM)
+		ewprintf("Cannot set owner : %s", strerror(errno));
+
+	(void) close(ifd);
+	(void) close(ofd);
+
+	return (TRUE);
 }
 
 /*
