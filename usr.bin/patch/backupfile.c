@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.9 2003/04/06 04:14:09 millert Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.10 2003/07/18 02:00:09 deraadt Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -14,7 +14,7 @@
    Some algorithms adapted from GNU Emacs. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: backupfile.c,v 1.9 2003/04/06 04:14:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: backupfile.c,v 1.10 2003/07/18 02:00:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,9 +54,7 @@ static char rcsid[] = "$OpenBSD: backupfile.c,v 1.9 2003/04/06 04:14:09 millert 
 #define ISDIGIT(c) (isascii (c) && isdigit (c))
 #endif
 
-#if defined (HAVE_UNISTD_H)
 #include <unistd.h>
-#endif
 
 #if defined (_POSIX_VERSION)
 /* POSIX does not require that the d_ino field be present, and some
@@ -73,11 +71,13 @@ enum backup_type backup_type = none;
    to numbered) backup file name. */
 char *simple_backup_suffix = "~";
 
-static char *concat ();
-char *find_backup_file_name ();
-static char *make_version_name ();
-static int max_backup_version ();
-static int version_number ();
+static char *concat(char *, char *);
+char *find_backup_file_name(char *);
+static char *make_version_name(char *, int);
+static int max_backup_version(char *, char *);
+static int version_number(char *, char *, int);
+static int argmatch(char *, char **);
+static void invalid_arg(char *, char *, int);
 
 #ifndef NODIR
 /* Return the name of the new backup file for file FILE,
@@ -125,11 +125,11 @@ max_backup_version (file, dir)
   int highest_version;
   int this_version;
   int file_name_length;
-  
+
   dirp = opendir (dir);
   if (!dirp)
     return 0;
-  
+
   highest_version = 0;
   file_name_length = strlen (file);
 
@@ -137,7 +137,7 @@ max_backup_version (file, dir)
     {
       if (!REAL_DIR_ENTRY (dp) || NLENGTH (dp) <= file_name_length)
 	continue;
-      
+
       this_version = version_number (file, dp->d_name, file_name_length);
       if (this_version > highest_version)
 	highest_version = this_version;
@@ -173,7 +173,7 @@ version_number (base, backup, base_length)
 {
   int version;
   char *p;
-  
+
   version = 0;
   if (!strncmp (base, backup, base_length) && ISDIGIT (backup[base_length]))
     {
@@ -213,9 +213,9 @@ argmatch (arg, optlist)
   int arglen;			/* Length of ARG. */
   int matchind = -1;		/* Index of first nonexact match. */
   int ambiguous = 0;		/* If nonzero, multiple nonexact match(es). */
-  
+
   arglen = strlen (arg);
-  
+
   /* Test all elements for either exact match or abbreviated matches.  */
   for (i = 0; optlist[i]; i++)
     {

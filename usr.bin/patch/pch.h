@@ -1,27 +1,27 @@
-/*	$OpenBSD: pch.h,v 1.2 1996/06/10 11:21:34 niklas Exp $ */
+/*	$OpenBSD: pch.h,v 1.3 2003/07/18 02:00:09 deraadt Exp $ */
 
 EXT FILE *pfp INIT(Nullfp);		/* patch file pointer */
 
-void re_patch();
-void open_patch_file();
-void set_hunkmax();
-void grow_hunkmax();
-bool there_is_another_patch();
-int intuit_diff_type();
-void next_intuit_at();
-void skip_to();
-bool another_hunk();
-bool pch_swap();
-char *pfetch();
-short pch_line_len();
-LINENUM pch_first();
-LINENUM pch_ptrn_lines();
-LINENUM pch_newfirst();
-LINENUM pch_repl_lines();
-LINENUM pch_end();
-LINENUM pch_context();
-LINENUM pch_hunk_beg();
-char pch_char();
-char *pfetch();
-char *pgets();
-void do_ed_script();
+void re_patch(void);
+void open_patch_file(char *);
+void set_hunkmax(void);
+void grow_hunkmax(void);
+bool there_is_another_patch(void);
+int intuit_diff_type(void);
+void next_intuit_at(long, long);
+void skip_to(long, long);
+bool another_hunk(void);
+bool pch_swap(void);
+char *pfetch(LINENUM);
+short pch_line_len(LINENUM);
+LINENUM pch_first(void);
+LINENUM pch_ptrn_lines(void);
+LINENUM pch_newfirst(void);
+LINENUM pch_repl_lines(void);
+LINENUM pch_end(void);
+LINENUM pch_context(void);
+LINENUM pch_hunk_beg(void);
+char pch_char(LINENUM);
+char *pfetch(LINENUM);
+char *pgets(char *, int, FILE *);
+void do_ed_script(void);
