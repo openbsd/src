@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.18 2002/02/03 01:51:00 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.19 2002/02/04 21:07:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -123,7 +123,7 @@ pdc_init()
 		conaddr = (u_long)pzd->pz_hpa + IOMOD_DEVOFFSET;
 		conunit = 0;
 		/* TODO detect the baud rate from layer[0] */
-		comdefaultrate = 9600;
+		comdefaultrate = B9600;
 	}
 #endif
 }
@@ -186,22 +186,20 @@ pdcopen(dev, flag, mode, p)
 	tp->t_param = pdcparam;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN|TS_CARR_ON;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG|CLOCAL;
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = 9600;
+		tp->t_ispeed = tp->t_ospeed = B9600;
 		ttsetwater(tp);
 
 		setuptimeout = 1;
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
 		splx(s);
-		return EBUSY;
+		return (EBUSY);
 	}
 	tp->t_state |= TS_CARR_ON;
-
 	splx(s);
 
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
