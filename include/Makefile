@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.128 2004/07/15 12:07:53 henning Exp $
+#	$OpenBSD: Makefile,v 1.129 2004/10/20 22:12:15 fgsch Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -34,7 +34,7 @@ LFILES=	errno.h fcntl.h syslog.h termios.h stdarg.h varargs.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	crypto ddb dev isofs miscfs net netatalk netccitt netinet altq \
-	netinet6 netipx netnatm netns nfs scsi sys ufs uvm xfs
+	netinet6 netipx netnatm netns net80211 nfs scsi sys ufs uvm xfs
 
 # Directories with an includes target
 RDIRS=	../lib/libpthread ../lib/libcompat ../lib/libcurses \
