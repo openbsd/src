@@ -24,7 +24,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
+
 #include <errno.h>
 #include <string.h>
 
@@ -55,12 +57,12 @@ mm_send_fd(int socket, int fd)
 	msg.msg_iovlen = 1;
 
 	if ((n = sendmsg(socket, &msg, 0)) == -1) {
-		log_error("%s: sendmsg(%d)", __func__, fd);
+		log_error("mm_send_fd: sendmsg(%d)", fd);
 		return -1;
 	}
 	if (n != 1) {
-		log_error("%s: sendmsg: expected sent 1 got %ld",
-		    __func__, (long)n);
+		log_error("mm_send_fd: sendmsg: expected sent 1 got %ld",
+		    (long)n);
 		return -1;
 	}
 	return 0;
@@ -85,21 +87,21 @@ mm_receive_fd(int socket)
 	msg.msg_controllen = sizeof tmp;
 
 	if ((n = recvmsg(socket, &msg, 0)) == -1) {
-		log_error("%s: recvmsg", __func__);
+		log_error("mm_receive_fd: recvmsg");
 		return -1;
 	}
 	if (n != 1) {
-		log_error("%s: recvmsg: expected received 1 got %ld", __func__,
+		log_error("mm_receive_fd: recvmsg: expected received 1 got %ld",
 		    (long)n);
 		return -1;
 	}
 	cmsg = CMSG_FIRSTHDR(&msg);
 	if (cmsg == NULL) {
-		log_error("%s: no message header", __func__);
+		log_error("mm_receive_fd: no message header");
 		return -1;
 	}
 	if (cmsg->cmsg_type != SCM_RIGHTS) {
-		log_error("%s: expected type %d got %d", __func__, SCM_RIGHTS,
+		log_error("mm_receive_fd: expected type %d got %d", SCM_RIGHTS,
 		    cmsg->cmsg_type);
 		return -1;
 	}
