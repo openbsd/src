@@ -67,5 +67,5 @@ krb_get_lrealm(r, n)
         return(KFAILURE);
     }
     (void) fclose(cnffile);
-    return(KSUCCESS);
+    return(*r == '#' ? KFAILURE : KSUCCESS);
 }
