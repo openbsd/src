@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.26 1997/11/30 05:15:27 deraadt Exp $
+#	$OpenBSD: BABY,v 1.27 1997/11/30 07:06:05 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -90,6 +90,9 @@ option	APM_NOIDLE
 isa0	at mainbus0
 eisa0	at mainbus0
 pci0	at mainbus0 bus ?
+
+option		PCIVERBOSE
+option		EISAVERBOSE
 
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
