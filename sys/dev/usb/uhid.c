@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhid.c,v 1.23 2002/07/25 04:07:33 nate Exp $ */
-/*	$NetBSD: uhid.c,v 1.52 2002/07/11 21:14:29 augustss Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.24 2002/11/11 02:32:32 nate Exp $ */
+/*	$NetBSD: uhid.c,v 1.55 2002/10/23 09:14:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,18 @@ struct uhid_softc {
 #define	UHID_BSIZE	1020	/* buffer size */
 
 #if defined(__NetBSD__)
-cdev_decl(uhid);
+dev_type_open(uhidopen);
+dev_type_close(uhidclose);
+dev_type_read(uhidread);
+dev_type_write(uhidwrite);
+dev_type_ioctl(uhidioctl);
+dev_type_poll(uhidpoll);
+dev_type_kqfilter(uhidkqfilter);
+
+const struct cdevsw uhid_cdevsw = {
+	uhidopen, uhidclose, uhidread, uhidwrite, uhidioctl,
+	nostop, notty, uhidpoll, nommap, uhidkqfilter,
+};
 #endif
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
@@ -157,7 +168,6 @@ uhid_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -188,9 +198,13 @@ USB_DETACH(uhid)
 	}
 
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&uhid_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == uhidopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ulpt.c,v 1.14 2002/10/12 01:09:44 krw Exp $ */
-/*	$NetBSD: ulpt.c,v 1.50 2002/07/11 21:14:31 augustss Exp $	*/
+/*	$OpenBSD: ulpt.c,v 1.15 2002/11/11 02:32:32 nate Exp $ */
+/*	$NetBSD: ulpt.c,v 1.55 2002/10/23 09:14:01 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -125,7 +125,15 @@ struct ulpt_softc {
 };
 
 #if defined(__NetBSD__)
-cdev_decl(ulpt);
+dev_type_open(ulptopen);
+dev_type_close(ulptclose);
+dev_type_write(ulptwrite);
+dev_type_ioctl(ulptioctl);
+
+const struct cdevsw ulpt_cdevsw = {
+	ulptopen, ulptclose, noread, ulptwrite, ulptioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 #elif defined(__FreeBSD__)
 Static d_open_t ulptopen;
 Static d_close_t ulptclose;
@@ -275,18 +283,19 @@ USB_ATTACH(ulpt)
 		}
 	}
 	if (sc->sc_out == -1) {
-		printf("%s: could not find bulk endpoint\n",
+		printf("%s: could not find bulk out endpoint\n",
 		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
-	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	if (usbd_get_quirks(dev)->uq_flags & UQ_BROKEN_BIDIR) {
 		/* This device doesn't handle reading properly. */
 		sc->sc_in = -1;
 	}
+
+	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
+	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	DPRINTFN(10, ("ulpt_attach: bulk=%d\n", sc->sc_out));
 
@@ -353,7 +362,6 @@ ulpt_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -391,9 +399,13 @@ USB_DETACH(ulpt)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&ulpt_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ulptopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

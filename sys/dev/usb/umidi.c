@@ -1,5 +1,5 @@
-/*	$OpenBSD: umidi.c,v 1.6 2002/07/25 04:07:33 nate Exp $	*/
-/*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $ */
+/*	$OpenBSD: umidi.c,v 1.7 2002/11/11 02:32:32 nate Exp $	*/
+/*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.

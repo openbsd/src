@@ -1,5 +1,5 @@
-/*	$OpenBSD: ugen.c,v 1.25 2002/07/25 04:07:32 nate Exp $ */
-/*	$NetBSD: ugen.c,v 1.59 2002/07/11 21:14:28 augustss Exp $	*/
+/*	$OpenBSD: ugen.c,v 1.26 2002/11/11 02:32:32 nate Exp $ */
+/*	$NetBSD: ugen.c,v 1.62 2002/10/23 09:13:59 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -121,7 +121,18 @@ struct ugen_softc {
 };
 
 #if defined(__NetBSD__)
-cdev_decl(ugen);
+dev_type_open(ugenopen);
+dev_type_close(ugenclose);
+dev_type_read(ugenread);
+dev_type_write(ugenwrite);
+dev_type_ioctl(ugenioctl);
+dev_type_poll(ugenpoll);
+dev_type_kqfilter(ugenkqfilter);
+
+const struct cdevsw ugen_cdevsw = {
+	ugenopen, ugenclose, ugenread, ugenwrite, ugenioctl,
+	nostop, notty, ugenpoll, nommap, ugenkqfilter,
+};
 #elif defined(__FreeBSD__)
 d_open_t  ugenopen;
 d_close_t ugenclose;
@@ -735,7 +746,6 @@ ugen_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -779,18 +789,18 @@ USB_DETACH(ugen)
 	}
 	splx(s);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&ugen_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ugenopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
-#elif defined(__FreeBSD__)
-	/* XXX not implemented yet */
-#endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));

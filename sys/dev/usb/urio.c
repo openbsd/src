@@ -1,5 +1,5 @@
-/*	$OpenBSD: urio.c,v 1.14 2002/07/25 04:07:33 nate Exp $	*/
-/*	$NetBSD: urio.c,v 1.12 2002/07/11 21:14:33 augustss Exp $ */
+/*	$OpenBSD: urio.c,v 1.15 2002/11/11 02:32:32 nate Exp $	*/
+/*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,16 @@ int	uriodebug = 0;
 
 
 #if defined(__NetBSD__)
-cdev_decl(urio);
+dev_type_open(urioopen);
+dev_type_close(urioclose);
+dev_type_read(urioread);
+dev_type_write(uriowrite);
+dev_type_ioctl(urioioctl);
+
+const struct cdevsw urio_cdevsw = {
+	urioopen, urioclose, urioread, uriowrite, urioioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 #elif defined(__FreeBSD__)
 d_open_t  urioopen;
 d_close_t urioclose;
@@ -256,9 +265,13 @@ USB_DETACH(urio)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&urio_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == urioopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

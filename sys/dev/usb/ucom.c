@@ -1,5 +1,5 @@
-/*	$OpenBSD: ucom.c,v 1.16 2002/07/25 04:07:32 nate Exp $ */
-/*	$NetBSD: ucom.c,v 1.43 2002/07/11 21:14:27 augustss Exp $	*/
+/*	$OpenBSD: ucom.c,v 1.17 2002/11/11 02:32:32 nate Exp $ */
+/*	$NetBSD: ucom.c,v 1.47 2002/10/23 09:13:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -144,7 +144,19 @@ struct ucom_softc {
 };
 
 #if defined(__NetBSD__)
-cdev_decl(ucom);
+dev_type_open(ucomopen);
+dev_type_close(ucomclose);
+dev_type_read(ucomread);
+dev_type_write(ucomwrite);
+dev_type_ioctl(ucomioctl);
+dev_type_stop(ucomstop);
+dev_type_tty(ucomtty);
+dev_type_poll(ucompoll);
+
+const struct cdevsw ucom_cdevsw = {
+	ucomopen, ucomclose, ucomread, ucomwrite, ucomioctl,
+	ucomstop, ucomtty, ucompoll, nommap, ttykqfilter, D_TTY
+};
 #endif
 
 Static void	ucom_cleanup(struct ucom_softc *);
@@ -240,10 +252,15 @@ USB_DETACH(ucom)
 	}
 	splx(s);
 
+#if defined(__NetBSD__)
+	/* locate the major number */
+	maj = cdevsw_lookup_major(&ucom_cdevsw);
+#else
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ucomopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
@@ -277,7 +294,6 @@ ucom_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

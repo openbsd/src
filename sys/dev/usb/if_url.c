@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_url.c,v 1.8 2002/09/29 22:49:10 jason Exp $ */
-/*	$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $	*/
+/*	$OpenBSD: if_url.c,v 1.9 2002/11/11 02:32:32 nate Exp $ */
+/*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -292,6 +292,10 @@ USB_ATTACH(url)
 	ifp->if_start = url_start;
 	ifp->if_ioctl = url_ioctl;
 	ifp->if_watchdog = url_watchdog;
+#if defined(__NetBSD__)
+	ifp->if_init = url_init;
+	ifp->if_stop = url_stop;
+#endif
 
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -540,7 +544,7 @@ url_init(struct ifnet *ifp)
 	eaddr = sc->sc_ac.ac_enaddr;
 #elif defined(__NetBSD__)
 	eaddr = LLADDR(ifp->if_sadl);
-#endif /* defined(__NetBSD__) */
+#endif
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		url_csr_write_1(sc, URL_IDR0 + i, eaddr[i]);
 
@@ -638,7 +642,7 @@ url_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->sc_ac.ec_if);
+		if_deactivate(GET_IFP(sc));
 		sc->sc_dying = 1;
 		break;
 	}

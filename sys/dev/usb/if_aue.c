@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_aue.c,v 1.28 2002/09/27 18:42:51 nate Exp $ */
-/*	$NetBSD: if_aue.c,v 1.80 2002/07/25 06:45:38 matt Exp $	*/
+/*	$OpenBSD: if_aue.c,v 1.29 2002/11/11 02:32:32 nate Exp $ */
+/*	$NetBSD: if_aue.c,v 1.81 2002/09/29 19:55:52 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.

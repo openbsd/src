@@ -1,5 +1,5 @@
-/*	$OpenBSD: umidivar.h,v 1.6 2002/09/08 01:09:07 deraadt Exp $ */
-/*	$NetBSD: umidivar.h,v 1.4 2002/07/11 21:14:32 augustss Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.7 2002/11/11 02:32:32 nate Exp $ */
+/*	$NetBSD: umidivar.h,v 1.5 2002/09/12 21:00:42 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
