@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.146 1999/10/26 22:56:54 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.147 1999/11/11 02:36:02 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -506,6 +506,7 @@ configure_ifs() {
 
 	local _up _if_name=$1 _if_ip _if_mask
 	local _if_symname _if_extra _hostname
+	local _dhcp_prompt
 
 	set -- `ifconfig $_if_name | sed -n '
 		1s/.*<UP,.*$/UP/p
@@ -525,11 +526,21 @@ configure_ifs() {
 		ifconfig $_if_name delete down
 	fi
 
+	if [ ! -x /sbin/dhclient ]; then
+		echo "DHCP install not supported"
+		echo
+	else
+		_dhcp_prompt=" (or 'dhcp')"
+	fi
+
 	# Get IP address
 	resp=		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "IP address (or 'dhcp') ? [$_if_ip] "
+		echo -n "IP address${_dhcp_prompt} ? [$_if_ip] "
 		getresp "$_if_ip"
+		if [ ! -x /sbin/dhclient -a "X$resp" == "Xdhcp" ]; then
+			resp=
+		fi
 		_if_ip=$resp
 	done
 
