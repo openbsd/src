@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.43 2004/12/26 21:22:14 miod Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.44 2005/04/01 02:54:57 tedu Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -644,13 +644,14 @@ nfssvc_nfsd(nsd, argp, p)
 		do {
 		    switch (cacherep) {
 		    case RC_DOIT:
-			if (writes_todo || (nd->nd_procnum == NFSPROC_WRITE &&
+			if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
+			    nd->nd_procnum == NFSPROC_WRITE &&
 			    nfsrvw_procrastinate > 0))
-			    error = nfsrv_writegather(&nd, slp,
-				nfsd->nfsd_procp, &mreq);
+				error = nfsrv_writegather(&nd, slp,
+				    nfsd->nfsd_procp, &mreq);
 			else
-			    error = (*(nfsrv3_procs[nd->nd_procnum]))(nd,
-				slp, nfsd->nfsd_procp, &mreq);
+				error = (*(nfsrv3_procs[nd->nd_procnum]))(nd,
+				    slp, nfsd->nfsd_procp, &mreq);
 			if (mreq == NULL)
 				break;
 			if (error) {
