@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xreg.h,v 1.4 2000/06/17 18:03:11 fgsch Exp $	*/
+/*	$OpenBSD: ncr53c9xreg.h,v 1.5 2001/08/21 14:22:27 jason Exp $	*/
 /*	$NetBSD: ncr53c9xreg.h,v 1.4 1997/05/17 20:56:55 pk Exp $	*/
 
 /*
@@ -252,3 +252,11 @@
 #define	 NCRAMDCFG4_RSVD	0x13	/*	Reserved		*/
 #define	 NCRAMDCFG4_RAE		0x08	/*	Active neg. REQ/ACK	*/
 #define	 NCRAMDCFG4_RADE	0x04	/*	Active neg. REQ/ACK/DAT	*/
+
+/*
+ * FAS366
+ */
+#define	NCR_RCL		NCR_TCH	/* Recommand counter low */
+#define	NCR_RCH		0xf	/* Recommand counter high */
+#define	NCR_UID		NCR_RCL	/* fas366 part-uniq id */
+

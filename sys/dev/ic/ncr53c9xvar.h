@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.7 2000/07/21 11:20:34 art Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.8 2001/08/21 14:22:27 jason Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -90,7 +90,8 @@
 #define	NCR_VARIANT_FAS408		6
 #define	NCR_VARIANT_FAS216		7
 #define	NCR_VARIANT_AM53C974		8
-#define	NCR_VARIANT_MAX			9
+#define	NCR_VARIANT_FAS366		9
+#define	NCR_VARIANT_MAX			10
 
 /*
  * ECB. Holds additional information for each SCSI command Comments: We
