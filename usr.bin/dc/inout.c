@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.4 2003/09/28 19:29:32 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.5 2003/09/30 18:33:35 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inout.c,v 1.4 2003/09/28 19:29:32 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inout.c,v 1.5 2003/09/30 18:33:35 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -216,25 +216,34 @@ read_string(struct source *src)
 {
 	int count, i, sz, new_sz, ch;
 	char *p;
+	bool escape;
 
+	escape = false;
 	count = 1;
 	i = 0;
 	sz = 15;
 	p = bmalloc(sz + 1);
 
 	while ((ch = (*src->vtable->readchar)(src)) != EOF) {
-		if (ch == '[')
-			count++;
-		else if (ch == ']')
-			count--;
-		if (count == 0)
-			break;
-		if (i == sz) {
-			new_sz = sz * 2;
-			p = brealloc(p, new_sz + 1);
-			sz = new_sz;
+		if (!escape) {
+			if (ch == '[')
+				count++;
+			else if (ch == ']')
+				count--;
+			if (count == 0)
+				break;
 		}
-		p[i++] = ch;
+		if (ch == '\\' && !escape)
+			escape = true;
+		else {
+			escape = false;
+			if (i == sz) {
+				new_sz = sz * 2;
+				p = brealloc(p, new_sz + 1);
+				sz = new_sz;
+			}
+			p[i++] = ch;
+		}
 	}
 	p[i] = '\0';
 	return p;

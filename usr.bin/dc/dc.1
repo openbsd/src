@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.4 2003/09/22 14:50:32 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.5 2003/09/30 18:33:35 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -189,7 +189,10 @@ If the top of the stack is a string, replace it with the integer 0.
 Puts the bracketed
 .Tn ASCII
 string onto the top of the stack.
-The brackets may be nested.
+If the string includes brackets, these must be properly balanced.
+The backslash character \e\ may be used as an escape character, making it
+possible to include unbalanced brackets in strings.
+To include a backslash into a string, use a double backslash.
 .It Xo
 .Cm < Ns Va x
 .Cm > Ns Va x
