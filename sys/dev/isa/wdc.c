@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.7 1996/09/09 05:29:16 mickey Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.8 1996/09/11 07:27:03 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -100,6 +100,8 @@ struct cfdriver wdc_cd = {
 int	wdc_ata_intr	__P((struct wdc_softc *,struct wdc_xfer *));
 void	wdcstart	__P((struct wdc_softc *));
 void	wdc_ata_start	__P((struct wdc_softc *,struct wdc_xfer *));
+int	wait_for_phase	__P((struct wdc_softc *, int));
+int	wait_for_unphase __P((struct wdc_softc *, int));
 void	wdc_atapi_start	__P((struct wdc_softc *,struct wdc_xfer *));
 int	wdcreset	__P((struct wdc_softc *));
 void	wdcrestart	__P((void *arg));
@@ -391,7 +393,7 @@ wdc_ata_start(wdc, xfer)
 		blkno = xfer->c_blkno+xfer->c_p_offset;
 		xfer->c_blkno = blkno / (d_link->sc_lp->d_secsize / DEV_BSIZE);
 	} else {
-		WDDEBUG_PRINT((" %d)%x", xfer->c_skip,
+		WDDEBUG_PRINT((" %d)0x%x", xfer->c_skip,
 		    bus_io_read_1(bc, ioh, wd_altsts)));
 	}
 
@@ -556,6 +558,48 @@ wdc_ata_start(wdc, xfer)
 	WDDEBUG_PRINT(("done\n"));
 }
 
+int
+wait_for_phase(wdc, wphase)
+	struct wdc_softc *wdc;
+	int wphase;
+{
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
+	int i, phase;
+
+	for (i = 20000; i; i--) {
+		phase = (bus_io_read_1(bc, ioh, wd_ireason) &
+		    (WDCI_CMD | WDCI_IN)) |
+		    (bus_io_read_1(bc, ioh, wd_status)
+		    & WDCS_DRQ);
+		if (phase == wphase)
+			break;
+		delay(10);
+	}
+	return (phase);
+}
+
+int
+wait_for_unphase(wdc, wphase)
+	struct wdc_softc *wdc;
+	int wphase;
+{
+	bus_chipset_tag_t bc = wdc->sc_bc;
+	bus_io_handle_t ioh = wdc->sc_ioh;
+	int i, phase;
+
+	for (i = 20000; i; i--) {
+		phase = (bus_io_read_1(bc, ioh, wd_ireason) &
+		    (WDCI_CMD | WDCI_IN)) |
+		    (bus_io_read_1(bc, ioh, wd_status)
+		    & WDCS_DRQ);
+		if (phase != wphase)
+			break;
+		delay(10);
+	}
+	return (phase);
+}
+
 void
 wdc_atapi_start(wdc, xfer)
 	struct wdc_softc *wdc;
@@ -591,23 +635,18 @@ wdc_atapi_start(wdc, xfer)
 		return;
 	}
 	if ((acp->flags & (ACAP_DRQ_INTR|ACAP_DRQ_ACCEL)) != ACAP_DRQ_INTR) {
-		int i, phase;
-		for (i=20000; i>0; --i) {
-			phase = (bus_io_read_1(bc, ioh, wd_ireason) &
-			    (WDCI_CMD | WDCI_IN)) |
-			    (bus_io_read_1(bc, ioh, wd_status)
-			    & WDCS_DRQ);
-			if (phase == PHASE_CMDOUT)
-				break;
-			delay(10);
-		}
-		if (phase != PHASE_CMDOUT ) {
-			printf("wdc_atapi_start: timout waiting PHASE_CMDOUT");
-			printf("(0x%x)\n", phase);
-			acp->status = ERROR;
-			wdc_atapi_done(wdc, xfer);
-			return;
-		}
+		if (!(wdc->sc_flags & WDCF_BROKENPOLL)) {
+			int phase = wait_for_phase(wdc, PHASE_CMDOUT);
+
+			if (phase != PHASE_CMDOUT) {
+				printf("wdc_atapi_start: timeout waiting PHASE_CMDOUT, got 0x%x\n", phase);
+
+				/* NEC SUCKS. */
+				wdc->sc_flags |= WDCF_BROKENPOLL;
+			}
+		} else
+			DELAY(10);	/* Simply pray for the data. */
+
 		bus_io_write_raw_multi_2(bc, ioh, wd_data, acp->command,
 		    acp->command_size);
 	}
@@ -894,7 +933,7 @@ wdcwait(wdc, mask)
 			break;
 		if (++timeout > WDCNDELAY) {
 #ifdef ATAPI_DEBUG2
-			printf("wdcwait: timeout, status %x\n", status);
+			printf("wdcwait: timeout, status 0x%x\n", status);
 #endif
 			return -1;
 		}
@@ -1379,11 +1418,11 @@ wdc_atapi_get_params(ab_link, drive, id)
 	}
 
 	/*
-	 * If there is only one ATAPI slave ion the bus,don't probe
+	 * If there is only one ATAPI slave on the bus, don't probe
 	 * drive 0 (master)
 	 */
 
-	if (wdc->sc_flags & WDCF_ONESLAVE && drive != 1)
+	if ((wdc->sc_flags & WDCF_ONESLAVE) && (drive != 1))
 		return 0;
 
 #ifdef ATAPI_DEBUG_PROBE
@@ -1443,10 +1482,14 @@ wdc_atapi_get_params(ab_link, drive, id)
 	len = bus_io_read_1(bc, ioh, wd_cyl_lo) + 256 *
 	    bus_io_read_1(bc, ioh, wd_cyl_hi);
 	if (len != sizeof(struct atapi_identify)) {
-		printf("Warning drive %d returned %d/%d of "
-		    "identify device data\n", drive, len,
-		    sizeof(struct atapi_identify));
-		excess = len - sizeof(struct atapi_identify);
+		if (len < 142) {	/* XXX */
+			printf("%s: drive %d returned %d/%d of identify device data, device unusuable\n", wdc->sc_dev.dv_xname, drive, len, sizeof(struct atapi_identify));
+
+			error = 0;
+			goto end;
+		}
+
+		excess = (len - sizeof(struct atapi_identify));
 		if (excess < 0)
 			excess = 0;
 	}
@@ -1476,7 +1519,8 @@ wdc_atapi_send_command_packet(ab_link, acp)
 	
 	if (flags & A_POLLED) {   /* Must use the queue and wdc_atapi_start */
 		struct wdc_xfer xfer_s;
-		int i;
+		int i, phase;
+
 #ifdef ATAPI_DEBUG_WDC
 		printf("wdc_atapi_send_cmd: "
 		    "flags %ld drive %d cmdlen %d datalen %d",
@@ -1510,36 +1554,20 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		}
 
 		/* Wait for cmd i/o phase. */
-		for (i = 20000; i > 0; --i) {
-			int phase;
-			phase = (bus_io_read_1(bc, ioh, wd_ireason) &
-			    (WDCI_CMD | WDCI_IN)) |
-			    (bus_io_read_1(bc, ioh, wd_status) & WDCS_DRQ);
-			if (phase == PHASE_CMDOUT)
-				break;
-			delay(10);
-		}
-#ifdef ATAPI_DEBUG_WDC
-		printf("Wait for cmd i/o phase: i = %d\n", i);
-#endif
+		phase = wait_for_phase(wdc, PHASE_CMDOUT);
+		if (phase != PHASE_CMDOUT)
+			printf("wdc_atapi_intr: got wrong phase (0x%x)\n",
+			    phase);
 
 		bus_io_write_raw_multi_2(bc, ioh, wd_data, acp->command,
 		    acp->command_size);
 
 		/* Wait for data i/o phase. */
-		for ( i= 20000; i > 0; --i) {
-			int phase;
-			phase = (bus_io_read_1(bc, ioh, wd_ireason) &
-			    (WDCI_CMD | WDCI_IN)) |
-			    (bus_io_read_1(bc, ioh, wd_status) & WDCS_DRQ);
-			if (phase != PHASE_CMDOUT)
-				break;
-			delay(10);
-		}
-
-#ifdef ATAPI_DEBUG_WDC
-		printf("Wait for data i/o phase: i = %d\n", i);
-#endif
+		phase = wait_for_unphase(wdc, PHASE_CMDOUT);
+		if (phase == PHASE_CMDOUT)
+			printf("wdc_atapi_intr: got wrong phase (0x%x)\n",
+			    phase);
+		
 		while (wdc_atapi_intr(wdc, xfer)) {
 			for (i = 2000; i > 0; --i)
 				if ((bus_io_read_1(bc, ioh, wd_status) &
@@ -1643,7 +1671,7 @@ again:
 			char *c = (char *)acp->command;   
 			printf("wdc_atapi_intr: cmd ");
 			for (i = 0; i < acp->command_size; i++)
-				printf("%x ", c[i]);
+				printf("0x%x ", c[i]);
 			printf("\n");
 		}
 #endif

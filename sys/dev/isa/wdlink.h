@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdlink.h,v 1.3 1996/08/07 01:53:03 downsj Exp $	*/
+/*	$OpenBSD: wdlink.h,v 1.4 1996/09/11 07:27:04 downsj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -60,6 +60,7 @@ struct wdc_softc {
 #define	WDCF_WANTED		0x08	/* XXX locking for wd_get_parms() */
 #define	WDCF_IRQ_WAIT		0x10	/* controller is waiting for irq */
 #define	WDCF_ONESLAVE		0x20	/* ctrl. has one ATAPI slave attached */
+#define WDCF_BROKENPOLL		0x40	/* or, generally fucked up */
 	int sc_errors;			/* errors during current transfer */
 	u_char sc_status;		/* copy of status register */
 	u_char sc_error;		/* copy of error register */
