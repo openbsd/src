@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.22 2004/08/20 15:51:53 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.23 2004/10/26 12:07:32 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -22,6 +22,7 @@
 .Nd control the Border Gateway Protocol daemon
 .Sh SYNOPSIS
 .Nm bgpctl
+.Op Fl n
 .Ar command
 .Op Ar arguments ...
 .Sh DESCRIPTION
@@ -35,6 +36,12 @@ minimum unambiguous prefix; for example,
 .Cm s s
 for
 .Cm show summary .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl n
+Show neighbors' IP-adresses instead of their description.
+.El
 .Pp
 The commands are as follows:
 .Bl -tag -width xxxxxx
