@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.65 2002/05/09 17:20:09 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.66 2002/05/14 02:16:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -80,12 +80,12 @@
 /*
  * hv-specific instructions
  */
-#define	DR_PAGE0	.word	0x04001200
-#define	DR_PAGE1	.word	0x04001240
-#define	MTCPU_T(x,t)	.word	0x04001400 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_T(r,x)	.word	0x04001400 | ((r) << 21) | (x)
-#define	MTCPU_C(x,t)	.word	0x04000240 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_C(r,x)	.word	0x04000600 | ((r) << 21) | ((x) << 16)
+#define	DR_PAGE0	.word	0x14001200
+#define	DR_PAGE1	.word	0x14001240
+#define	MTCPU_T(x,t)	.word	0x14001400 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_T(r,x)	.word	0x14001400 | ((r) << 21) | (x)
+#define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
 
 	.import	$global$, data
 	.import pdc, data
@@ -1389,7 +1389,6 @@ $dtlbna_t
  * possible optimizations:
  *	change pte to reduce number of shifts
  *	reorder to reduce stalls
- *	check if stwas is needed (if we changed the bits)
  */
 #define	TLB_PULL_L(bits)						! \
 	/* space:pgaddr -- r8:r9 */					! \
@@ -1431,6 +1430,7 @@ $tlbd_l
 	 * unreliable for the itlb miss handler
 	 */
 $itlb_l
+$itlbna_l
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0)
 	IITLBAF(17)
@@ -1438,7 +1438,6 @@ $itlb_l
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
-$itlbna_l
 $dtlbna_l
 $dtlb_l
 	TLB_STATS_PRE(dtlb)
@@ -1841,12 +1840,6 @@ LEAF_ENTRY(desidhash_l)
 	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
-	/* XXX disable all i-cache ops */
-	depi	0, DR0_PCXL_ISTRM_EN,1, t1
-	depi	0, DR0_PCXL_IPREF_EN,1, t1
-	depi	0, DR0_PCXL_L1ICACHE_EN,1, t1
-	depi	0, DR0_PCXL_L2IHASH_EN,1, t1
-	depi	0, DR0_PCXL_L2DHASH_EN,1, t1
 	sync
 	MTCPU_C(22,DR_CPUCFG)
 	nop
@@ -2251,11 +2244,12 @@ SUX(suswintr, sth)
 
 	.align	64
 
-LEAF_ENTRY(copy_on_fault)
-	stw	r1, PCB_ONFAULT+U_PCB(r31)
+LEAF_ENTRY($copy_on_fault)
+	stw	r1, PCB_ONFAULT+U_PCB(t4)
+ALTENTRY(copy_on_fault)		/* for kcopy() */
 	bv	0(rp)
 	ldi	EFAULT, %ret0
-EXIT(copy_on_fault)
+EXIT($copy_on_fault)
 
 /*
  * int spstrcpy (pa_space_t ssp, const void *src, pa_space_t dsp, void *dst,
@@ -2264,13 +2258,13 @@ EXIT(copy_on_fault)
  */
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
-	ldil	L%curproc, r31
-	ldw	R%curproc(r31), r31
-	ldw	P_ADDR(r31), r31
-	ldw	PCB_ONFAULT+U_PCB(r31), r1
-	ldil	L%copy_on_fault, t2
-	ldo	R%copy_on_fault(t2), t2
-	stw	t2, PCB_ONFAULT+U_PCB(r31)
+	ldil	L%curproc, t4
+	ldw	R%curproc(t4), t4
+	ldw	P_ADDR(t4), t4
+	ldw	PCB_ONFAULT+U_PCB(t4), r1
+	ldil	L%$copy_on_fault, t2
+	ldo	R%$copy_on_fault(t2), t2
+	stw	t2, PCB_ONFAULT+U_PCB(t4)
 
 	ldw	HPPA_FRAME_ARG(4)(sp), ret1
 	mfsp	sr2, ret0	/* XXX need this? */
@@ -2295,7 +2289,7 @@ $spstrcpy_exit
 	add,=	r0, arg0, r0
 	stw	arg1, 0(arg0)
 	bv	0(rp)
-	stw	r1, PCB_ONFAULT+U_PCB(r31)
+	stw	r1, PCB_ONFAULT+U_PCB(t4)
 EXIT(spstrcpy)
 
 
