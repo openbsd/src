@@ -80,7 +80,7 @@ to start the
 daemon at boot-time and listen for DHCP requests on the local network. To
 start it manually, execute the following commands:
 .Pp
-.D1 # touch /var/db/dhcp.leases
+.Dl # touch /var/db/dhcpd.leases
 .Dl # /usr/sbin/dhcpd -q [netif1 netif2 ...]
 .It
 Ensure the kernel has been compiled with BPF (Berkeley Packet Filter) support
