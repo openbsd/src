@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.34 2000/03/21 21:00:09 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.35 2000/03/25 04:57:51 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -867,7 +867,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     m_copyback(m, protoff, sizeof(u_int8_t), (u_char *) &ilen);
 
     /* Get crypto descriptors */
-    crp = crypto_getreq(esph && espx ? 2 : 0);
+    crp = crypto_getreq(esph && espx ? 2 : 1);
     if (crp == NULL)
     {
 	m_freem(m);
