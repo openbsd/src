@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2003/12/20 00:34:32 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.80 2004/01/16 23:40:17 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -540,12 +540,13 @@ identifycpu()
 	    "Motorola %s: %sMHz MC680%c0 CPU", suffix, speed, mc);
 	switch (mmutype) {
 #if defined(M68060) || defined(M68040)
-	case MMU_68060:
 	case MMU_68040:
 #ifdef FPSP
 		bcopy(&fpsp_tab, &fpvect_tab,
 				(&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
 #endif
+		/* FALLTHROUGH */
+	case MMU_68060:
 		strlcat(cpu_model, "+MMU", sizeof cpu_model);
 		break;
 #endif
