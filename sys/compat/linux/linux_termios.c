@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.13 2002/05/07 20:23:42 jasoni Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.14 2002/05/07 20:31:17 jasoni Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -63,13 +63,13 @@ static int linux_spmasks[] = {
 };
 
 static void linux_termio_to_bsd_termios(struct linux_termio *,
-	struct termios *);
+    struct termios *);
 static void bsd_termios_to_linux_termio(struct termios *,
-	struct linux_termio *);
+    struct linux_termio *);
 static void linux_termios_to_bsd_termios(struct linux_termios *,
-	struct termios *);
+    struct termios *);
 static void bsd_termios_to_linux_termios(struct termios *,
-	struct linux_termios *);
+    struct linux_termios *);
 
 /*
  * Deal with termio ioctl cruft. This doesn't look very good..
@@ -475,7 +475,8 @@ linux_ioctl_termios(p, v, retval)
                 
 	switch (com) {
 	case LINUX_TCGETS:
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts,
+		    p);
 		if (error)
 			goto out;
 		bsd_termios_to_linux_termios(&tmpbts, &tmplts);
@@ -488,7 +489,8 @@ linux_ioctl_termios(p, v, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts,
+		    p);
 		if (error)
 			goto out;
 		error = copyin(SCARG(uap, data), &tmplts, sizeof tmplts);
@@ -509,7 +511,8 @@ linux_ioctl_termios(p, v, retval)
 		error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&tmpbts, p);
 		goto out;
 	case LINUX_TCGETA:
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts,
+		    p);
 		if (error)
 			goto out;
 		bsd_termios_to_linux_termio(&tmpbts, &tmplt);
@@ -522,7 +525,8 @@ linux_ioctl_termios(p, v, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts,
+		    p);
 		if (error)
 			goto out;
 		error = copyin(SCARG(uap, data), &tmplt, sizeof tmplt);
