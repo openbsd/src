@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.20 2004/07/10 15:18:45 pedro Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.21 2004/07/11 00:11:50 pedro Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ union_unmount(mp, mntflags, p)
 	 * in the filesystem.
 	 */
 	for (freeing = 0; vflush(mp, um_rootvp, flags) != 0;) {
-		int n;
+		int n = 0;
 
 		/* count #vnodes held on mount list */
 		vfs_mount_foreach_vnode(mp, union_unmount_count_vnode, &n);
