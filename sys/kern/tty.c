@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.42 2001/03/01 20:54:34 provos Exp $	*/
+/*	$OpenBSD: tty.c,v 1.43 2001/03/02 08:04:04 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1080,7 +1080,7 @@ ttkqfilter(dev, kn)
 		return (1);
 	}
 
-	kn->kn_hook = (caddr_t)dev;
+	kn->kn_hook = (caddr_t)((u_long)dev);
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
@@ -1092,7 +1092,7 @@ ttkqfilter(dev, kn)
 void
 filt_ttyrdetach(struct knote *kn)
 {
-	dev_t dev = (dev_t)kn->kn_hook;
+	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
 	int s = spltty();
 
@@ -1103,7 +1103,7 @@ filt_ttyrdetach(struct knote *kn)
 int
 filt_ttyread(struct knote *kn, long hint)
 {
-	dev_t dev = (dev_t)kn->kn_hook;
+	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
 
 	kn->kn_data = ttnread(tp);
@@ -1117,7 +1117,7 @@ filt_ttyread(struct knote *kn, long hint)
 void
 filt_ttywdetach(struct knote *kn)
 {
-	dev_t dev = (dev_t)kn->kn_hook;
+	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
 	int s = spltty();
 
@@ -1130,7 +1130,7 @@ filt_ttywrite(kn, hint)
 	struct knote *kn;
 	long hint;
 {
-	dev_t dev = (dev_t)kn->kn_hook;
+	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
 
 	kn->kn_data = tp->t_outq.c_cc;
