@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.62 2001/05/29 12:53:42 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.63 2001/06/12 22:44:21 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -92,13 +92,19 @@
 #include "extern.h"
 #include "lst.h"
 #include "parsevar.h"
+#include "stats.h"
+#include "garray.h"
+
+
+static struct growableArray gsources, gtargets;
+#define SOURCES_SIZE	128
+#define TARGETS_SIZE	32
 
 static LIST	theParseIncPath;/* list of directories for "..." includes */
 static LIST	theSysIncPath;	/* list of directories for <...> includes */
 Lst sysIncPath = &theSysIncPath;
 Lst parseIncPath = &theParseIncPath;
 
-static LIST	    targets;	/* targets we're working on */
 #ifdef CLEANUP
 static LIST	    targCmds;	/* command lines for targets */
 #endif
@@ -201,9 +207,9 @@ static struct {
 
 static int ParseFindKeyword(const char *);
 static void ParseLinkSrc(GNode *, GNode *);
-static int ParseDoOp(void *, void *);
-static int ParseAddDep(void *, void *);
-static void ParseDoSrc(int, const char *, Lst);
+static int ParseDoOp(GNode *, int);
+static int ParseAddDep(GNode *, GNode *);
+static void ParseDoSrc(int, const char *);
 static int ParseFindMain(void *, void *);
 static void ParseAddDir(void *, void *);
 static void ParseClearPath(void *);
@@ -295,13 +301,11 @@ ParseLinkSrc(pgn, cgn)
  *---------------------------------------------------------------------
  */
 static int
-ParseDoOp(gnp, opp)
-    void	   *gnp;	/* The node to which the operator is to be
+ParseDoOp(gn, op)
+    GNode	   *gn;	/* The node to which the operator is to be
 				 * applied */
-    void	   *opp;	/* The operator to apply */
+    int	   	   op;	/* The operator to apply */
 {
-    GNode	   *gn = (GNode *)gnp;
-    int 	    op = *(int *)opp;
     /*
      * If the dependency mask of the operator and the node don't match and
      * the node has actually had an operator applied to it before, and
@@ -322,6 +326,7 @@ ParseDoOp(gnp, opp)
 	 * instance.  */
 	GNode		*cohort;
 	LstNode 	ln;
+	unsigned int i;
 
 	cohort = Targ_NewGN(gn->name);
 	/* Duplicate links to parents so graph traversal is simple. Perhaps
@@ -337,8 +342,10 @@ ParseDoOp(gnp, opp)
 	Lst_AtEnd(&gn->cohorts, cohort);
 
 	/* Replace the node in the targets list with the new copy */
-	ln = Lst_Member(&targets, gn);
-	Lst_Replace(ln, cohort);
+	for (i = 0; i < gtargets.n; i++)
+	    if (gtargets.a[i] == gn)
+		break;
+	gtargets.a[i] = cohort;
 	gn = cohort;
     }
     /* We don't want to nuke any previous flags (whatever they were) so we
@@ -364,13 +371,10 @@ ParseDoOp(gnp, opp)
  *---------------------------------------------------------------------
  */
 static int
-ParseAddDep(pp, sp)
-    void *pp;
-    void *sp;
+ParseAddDep(p, s)
+    GNode *p;
+    GNode *s;
 {
-    GNode *p = (GNode *)pp;
-    GNode *s = (GNode *)sp;
-
     if (p->order < s->order) {
 	/* XXX: This can cause loops, and loops can cause unmade targets,
 	 * but checking is tedious, and the debugging output can show the
@@ -399,10 +403,9 @@ ParseAddDep(pp, sp)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoSrc(tOp, src, allsrc)
+ParseDoSrc(tOp, src)
     int 	tOp;	/* operator (if any) from special targets */
     const char	*src;	/* name of the source to handle */
-    Lst 	allsrc; /* List of all sources to wait for */
 
 {
     GNode	*gn = NULL;
@@ -412,7 +415,7 @@ ParseDoSrc(tOp, src, allsrc)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		Lst_Find(&targets, ParseDoOp, &op);
+	    	Array_Find(&gtargets, ParseDoOp, op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -472,10 +475,7 @@ ParseDoSrc(tOp, src, allsrc)
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
-	    LstNode	ln;
-
-	    for (ln = Lst_First(&targets); ln != NULL; ln = Lst_Adv(ln))
-		ParseLinkSrc((GNode *)Lst_Datum(ln), gn);
+	    Array_ForEach(&gtargets, ParseLinkSrc, gn);
 	}
 	if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 	    GNode	*cohort;
@@ -486,10 +486,7 @@ ParseDoSrc(tOp, src, allsrc)
 		if (tOp) {
 		    cohort->type |= tOp;
 		} else {
-		    LstNode	ln;
-
-		    for (ln = Lst_First(&targets); ln != NULL; ln = Lst_Adv(ln))
-			ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
+		    Array_ForEach(&gtargets, ParseLinkSrc, cohort);
 		}
 	    }
 	}
@@ -497,9 +494,9 @@ ParseDoSrc(tOp, src, allsrc)
     }
 
     gn->order = waiting;
-    Lst_AtEnd(allsrc, gn);
+    Array_AtEnd(&gsources, gn);
     if (waiting) {
-	Lst_Find(allsrc, ParseAddDep, gn);
+    	Array_Find(&gsources, ParseAddDep, gn);
     }
 }
 
@@ -607,18 +604,13 @@ ParseDoDependency(line)
     LIST	    paths;	/* List of search paths to alter when parsing
 				 * a list of .PATH targets */
     int 	    tOp;	/* operator from special target */
-    LIST	    curTargs;	/* list of target names to be found and added
-				 * to the targets list */
-    LIST	    curSrcs;	/* list of sources in order */
-
     tOp = 0;
 
     specType = Not;
     waiting = 0;
     Lst_Init(&paths);
 
-    Lst_Init(&curTargs);
-    Lst_Init(&curSrcs);
+    Array_Reset(&gsources);
 
     do {
 	for (cp = line; *cp && !isspace(*cp) && *cp != '(';)
@@ -664,6 +656,8 @@ ParseDoDependency(line)
 		cp++;
 	    }
 	if (*cp == '(') {
+	    LIST temp;
+	    Lst_Init(&temp);
 	    /* Archives must be handled specially to make sure the OP_ARCHV
 	     * flag is set in their 'type' field, for one thing, and because
 	     * things like "archive(file1.o file2.o file3.o)" are permissible.
@@ -672,11 +666,13 @@ ParseDoDependency(line)
 	     * and places them on the given list, returning true if all
 	     * went well and false if there was an error in the
 	     * specification. On error, line should remain untouched.  */
-	    if (!Arch_ParseArchive(&line, &targets, NULL)) {
+	    if (!Arch_ParseArchive(&line, &temp, NULL)) {
 		Parse_Error(PARSE_FATAL,
 			     "Error in archive specification: \"%s\"", line);
 		return;
 	    } else {
+	    	AppendList2Array(&temp, &gtargets);
+		Lst_Destroy(&temp, NOFREE);
 		continue;
 	    }
 	}
@@ -746,12 +742,12 @@ ParseDoDependency(line)
 		    case Interrupt:
 			gn = Targ_FindNode(line, TARG_CREATE);
 			gn->type |= OP_NOTMAIN;
-			Lst_AtEnd(&targets, gn);
+			Array_AtEnd(&gtargets, gn);
 			break;
 		    case Default:
 			gn = Targ_NewGN(".DEFAULT");
 			gn->type |= OP_NOTMAIN|OP_TRANSFORM;
-			Lst_AtEnd(&targets, gn);
+			Array_AtEnd(&gtargets, gn);
 			DEFAULT = gn;
 			break;
 		    case NotParallel:
@@ -806,31 +802,35 @@ ParseDoDependency(line)
 		 * Dir module could have added a directory to the path...
 		 */
 		LIST	    emptyPath;
+		LIST	    curTargs;	/* list of target names to be found 
+					 * and added to the targets list */
 
 		Lst_Init(&emptyPath);
+		Lst_Init(&curTargs);
 		Dir_Expand(line, &emptyPath, &curTargs);
 		Lst_Destroy(&emptyPath, Dir_Destroy);
-	    } else {
-		/*
-		 * No wildcards, but we want to avoid code duplication,
-		 * so create a list with the word on it.
-		 */
-		Lst_AtEnd(&curTargs, line);
-	    }
-
 	    while ((targName = (char *)Lst_DeQueue(&curTargs)) != NULL) {
-		if (!Suff_IsTransform(targName)) {
+		    if (!Suff_IsTransform(targName))
 		    gn = Targ_FindNode(targName, TARG_CREATE);
-		} else {
+		    else
 		    gn = Suff_AddTransform(targName);
+
+		    if (gn != NULL)
+			Array_AtEnd(&gtargets, gn);
 		}
+		Lst_Destroy(&curTargs, NOFREE);
+	    } else {
+		if (!Suff_IsTransform(line))
+		    gn = Targ_FindNode(line, TARG_CREATE);
+		else
+		    gn = Suff_AddTransform(line);
 
 		if (gn != NULL)
-		    Lst_AtEnd(&targets, gn);
+		    Array_AtEnd(&gtargets, gn);
+		/* Don't need the list of target names anymore...  */
 	    }
-	} else if (specType == ExPath && *line != '.' && *line != '\0') {
+	} else if (specType == ExPath && *line != '.' && *line != '\0')
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
-	}
 
 	*cp = savec;
 	/*
@@ -857,12 +857,7 @@ ParseDoDependency(line)
 	line = cp;
     } while (*line != '!' && *line != ':' && *line);
 
-    /*
-     * Don't need the list of target names anymore...
-     */
-    Lst_Destroy(&curTargs, NOFREE);
-
-    if (!Lst_IsEmpty(&targets)) {
+    if (!Array_IsEmpty(&gtargets)) {
 	switch (specType) {
 	    default:
 		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
@@ -897,7 +892,7 @@ ParseDoDependency(line)
 
     cp++;			/* Advance beyond operator */
 
-    Lst_Find(&targets, ParseDoOp, &op);
+    Array_Find(&gtargets, ParseDoOp, op);
 
     /*
      * Get to the first source
@@ -1054,7 +1049,7 @@ ParseDoDependency(line)
 		}
 
 		while ((gn = (GNode *)Lst_DeQueue(&sources)) != NULL)
-		    ParseDoSrc(tOp, gn->name, &curSrcs);
+		    ParseDoSrc(tOp, gn->name);
 		cp = line;
 	    } else {
 		if (*cp) {
@@ -1062,7 +1057,7 @@ ParseDoDependency(line)
 		    cp += 1;
 		}
 
-		ParseDoSrc(tOp, line, &curSrcs);
+		ParseDoSrc(tOp, line);
 	    }
 	    while (*cp && isspace(*cp)) {
 		cp++;
@@ -1076,11 +1071,10 @@ ParseDoDependency(line)
 	 * absence of any user input, we want the first target on
 	 * the first dependency line that is actually a real target
 	 * (i.e. isn't a .USE or .EXEC rule) to be made.  */
-	Lst_Find(&targets, ParseFindMain, NULL);
+	Array_Find(&gtargets, ParseFindMain, NULL);
     }
 
     /* Finally, destroy the list of sources.  */
-    Lst_Destroy(&curSrcs, NOFREE);
 }
 
 /*-
@@ -1468,8 +1462,9 @@ ParseIsCond(linebuf, copy, line)
 static void
 ParseFinishDependency()
 {
-    Lst_Every(&targets, Suff_EndTransform);
-    Lst_Destroy(&targets, ParseHasCommands);
+    Array_Every(&gtargets, Suff_EndTransform);
+    Array_Every(&gtargets, ParseHasCommands);
+    Array_Reset(&gtargets);
 }
 
 static void
@@ -1480,7 +1475,7 @@ ParseDoCommands(line)
      * commands of all targets in the dependency spec */
     char *cmd = estrdup(line);
 
-    Lst_ForEach(&targets, ParseAddCmd, cmd);
+    Array_ForEach(&gtargets, ParseAddCmd, cmd);
 #ifdef CLEANUP
     Lst_AtEnd(&targCmds, cmd);
 #endif
@@ -1542,7 +1537,7 @@ Parse_File(name, stream)
 			char *end;
 
 			/* Need a new list for the target nodes.  */
-			Lst_Init(&targets);
+			Array_Reset(&gtargets);
 			inDependency = true;
 
 			dep = NULL;
@@ -1598,7 +1593,9 @@ Parse_Init()
     mainNode = NULL;
     Lst_Init(parseIncPath);
     Lst_Init(sysIncPath);
-    Lst_Init(&targets);
+    Array_Init(&gsources, SOURCES_SIZE);
+    Array_Init(&gtargets, TARGETS_SIZE);
+    
     LowParse_Init();
 #ifdef CLEANUP
     Lst_Init(&targCmds);
@@ -1610,7 +1607,6 @@ void
 Parse_End()
 {
     Lst_Destroy(&targCmds, (SimpleProc)free);
-    Lst_Destroy(&targets, NOFREE);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
     LowParse_End();

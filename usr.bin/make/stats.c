@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: stats.c,v 1.4 2001/06/05 11:59:54 espie Exp $ */
+/* $OpenBSD: stats.c,v 1.5 2001/06/12 22:44:22 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -123,6 +123,9 @@ print_stats()
 	(float)STAT_HASH_LENGTH/STAT_HASH_LOOKUP,
 	(float)STAT_HASH_POSITIVE/STAT_HASH_LOOKUP,
 	(float)STAT_HASH_ENTRIES/STAT_HASH_SIZE);
+#endif
+#ifdef STATS_GROW
+    fprintf(stderr, "Grow: %f\n", average_runs(STAT_GROWARRAY));
 #endif
     if (mmapped)
 	munmap(statarray, STAT_NUMBER * sizeof(unsigned long));
