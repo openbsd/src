@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.24 2001/06/05 08:01:07 angelos Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.25 2001/06/05 10:09:01 angelos Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -926,7 +926,7 @@ ike_phase_1_recv_ID (struct message *msg)
       sz = ipsec_id_size (rs, &id_type);
       if (sz == -1)
 	{
-	  log_error ("ike_phase_1_recv_ID: could not handle specified "
+	  log_print ("ike_phase_1_recv_ID: could not handle specified "
 		     "Remote-ID [%s]", rs);
 	  return -1;
 	}
@@ -944,7 +944,7 @@ ike_phase_1_recv_ID (struct message *msg)
 	  p = conf_get_str (rs, "Address");
 	  if (!p)
 	    {
-	      log_error ("ike_phase_1_recv_ID: failed to get Address in "
+	      log_print ("ike_phase_1_recv_ID: failed to get Address in "
 			 "Remote-ID section [%s]", rs);
 	      free (rid);
 	      return -1;
@@ -969,7 +969,7 @@ ike_phase_1_recv_ID (struct message *msg)
       if (bcmp(rid, payload->p + ISAKMP_ID_DATA_OFF, sz))
 	{
 	  free (rid);
-	  log_error ("ike_phase_1_recv_ID: received remote ID other than "
+	  log_print ("ike_phase_1_recv_ID: received remote ID other than "
 		     "expected %s", rs);
 	  return -1;
 	}
