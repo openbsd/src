@@ -1,3 +1,4 @@
+/* $OpenBSD: xfs_syscalls.h,v 1.4 2000/03/03 00:54:58 todd Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -36,7 +37,6 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_syscalls.h,v 1.3 1999/04/30 01:59:01 art Exp $ */
 
 #ifndef  __xfs_syscalls
 #define  __xfs_syscalls

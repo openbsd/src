@@ -1,3 +1,4 @@
+/*	$OpenBSD: aptck.in,v 1.2 2000/03/03 00:54:48 todd Exp $	*/
 /*	$NetBSD: aptck.in,v 1.1.1.1 1996/01/07 21:54:17 leo Exp $	*/
 
 /*
@@ -44,7 +45,7 @@ static void	usage   PROTO((void)) NORETURN;
 static void
 version()
 {
-	eprintf("%s\n", "$Revision: 1.1 $");
+	eprintf("%s\n", "$Revision: 1.2 $");
 	xexit(EXIT_SUCCESS);
 }
 

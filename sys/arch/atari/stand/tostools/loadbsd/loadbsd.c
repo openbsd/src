@@ -1,3 +1,4 @@
+/*	$OpenBSD: loadbsd.c,v 1.4 2000/03/03 00:54:49 todd Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.11 1996/01/09 09:55:15 leo Exp $	*/
 
 /*
@@ -52,7 +53,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.3 $";
+const char version[] = "$Revision: 1.4 $";
 
 /*
  * Default name of kernel to boot, large enough to patch

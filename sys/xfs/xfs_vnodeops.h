@@ -1,3 +1,4 @@
+/* $OpenBSD: xfs_vnodeops.h,v 1.2 2000/03/03 00:54:59 todd Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -36,7 +37,6 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_vnodeops.h,v 1.1 1999/04/30 01:59:02 art Exp $ */
 
 #ifndef _xfs_vnodeops_h
 #define _xfs_vnodeops_h

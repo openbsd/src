@@ -1,3 +1,4 @@
+/* $OpenBSD: exitos.S,v 1.2 2000/03/03 00:54:47 todd Exp $ */
 /* $NetBSD: exitos.S,v 1.1 1996/01/31 23:18:16 mark Exp $ */
 
 /*
@@ -45,7 +46,6 @@
  *
  * Based on kate/library/exitos.s
  *
- *    $Id: exitos.S,v 1.1.1.1 1996/04/24 11:08:32 deraadt Exp $
  *
  */
 

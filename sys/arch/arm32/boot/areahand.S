@@ -1,3 +1,4 @@
+/* $OpenBSD: areahand.S,v 1.2 2000/03/03 00:54:47 todd Exp $ */
 /* $NetBSD: areahand.S,v 1.1 1996/01/31 23:18:01 mark Exp $ */
 
 /*
@@ -43,7 +44,6 @@
  * Created      : 12/09/94
  * Last updated : 12/09/94
  *
- *    $Id: areahand.S,v 1.1.1.1 1996/04/24 11:08:31 deraadt Exp $
  */
 
 #include "regs.h"

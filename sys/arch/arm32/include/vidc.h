@@ -1,3 +1,4 @@
+/* $OpenBSD: vidc.h,v 1.2 2000/03/03 00:54:48 todd Exp $ */
 /* $NetBSD: vidc.h,v 1.2 1996/03/28 21:22:24 mark Exp $ */
 
 /*
@@ -45,7 +46,6 @@
  *
  * Based on kate/display/vidc.h
  *
- *    $Id: vidc.h,v 1.1.1.1 1996/04/24 11:08:46 deraadt Exp $
  */
 
 #ifndef __vidc_h

@@ -1,3 +1,4 @@
+/* $OpenBSD: strstr.c,v 1.2 2000/03/03 00:54:47 todd Exp $ */
 /* $NetBSD: strstr.c,v 1.1 1996/01/31 23:18:34 mark Exp $ */
 
 /*
@@ -37,7 +38,6 @@
  *
  *	from: strstr.c,v 1.4 1995/06/15 00:08:43 jtc Exp 
  *
- *	$Id: strstr.c,v 1.1.1.1 1996/04/24 11:08:32 deraadt Exp $
  */
 
 #include <sys/param.h>

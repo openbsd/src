@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile.mvme88k,v 1.8 2000/03/03 00:54:52 todd Exp $
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.mvme88k,v 1.7 1999/09/27 21:30:11 smurph Exp $
 #
 # Makefile for OpenBSD
 #

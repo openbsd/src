@@ -1,3 +1,4 @@
+/*	$OpenBSD: intr.c,v 1.6 2000/03/03 00:54:55 todd Exp $  */
 /*	$NetBSD: intr.c,v 1.5 1995/09/26 20:16:26 phil Exp $  */
 
 /*
@@ -29,7 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.5 1999/12/08 06:50:16 itojun Exp $
  */
 
 #define DEFINE_SPLX

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ncr.c,v 1.4 2000/03/03 00:54:54 todd Exp $ */
 /*	$NetBSD: ncr.c,v 1.21 1995/11/30 00:58:47 jtc Exp $ */
 
 /*
@@ -29,7 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ncr.c,v 1.3 1995/12/14 05:29:21 deraadt Exp $
  */
 
 #include <sys/param.h>

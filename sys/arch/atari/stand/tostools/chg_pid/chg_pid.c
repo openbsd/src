@@ -1,3 +1,4 @@
+/*	$OpenBSD: chg_pid.c,v 1.4 2000/03/03 00:54:48 todd Exp $	*/
 /*	$NetBSD: chg_pid.c,v 1.3 1996/01/09 09:55:06 leo Exp $	*/
 
 /*
@@ -95,7 +96,7 @@ int	read_block	PROTO((void *, int, int));
 int	write_block	PROTO((void *, int, int));
 void	set_csum	PROTO((char *));
 
-const char version[] = "$Revision: 1.3 $";
+const char version[] = "$Revision: 1.4 $";
 
 char	*Progname = NULL;		/* What are we called		*/
 int	t_flag    = 0;			/* Test -- don't actually do it	*/

@@ -1,3 +1,4 @@
+/* $OpenBSD: vmparam.h,v 1.2 2000/03/03 00:54:48 todd Exp $ */
 /* $NetBSD: vmparam.h,v 1.1 1996/01/31 23:23:37 mark Exp $ */
 
 /*
@@ -32,7 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: vmparam.h,v 1.1.1.1 1996/04/24 11:08:46 deraadt Exp $
  */
 
 #ifndef	_ARM32_VMPARAM_H_

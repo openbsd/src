@@ -1,3 +1,4 @@
+/*	$OpenBSD: autoconf.c,v 1.7 2000/03/03 00:54:53 todd Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -29,7 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.6 1999/09/27 19:13:20 smurph Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

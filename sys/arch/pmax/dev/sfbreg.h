@@ -1,3 +1,4 @@
+/*	$OpenBSD: sfbreg.h,v 1.5 2000/03/03 00:54:55 todd Exp $	*/
 /*-
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +35,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfbreg.h,v 1.4 1996/12/22 15:22:07 graichen Exp $
  */
 
 #define	SFB_OFFSET_VRAM		0x201000	/* from module's base */

@@ -1,3 +1,4 @@
+/* $OpenBSD: bcopy_page.S,v 1.2 2000/03/03 00:54:46 todd Exp $ */
 /* $NetBSD: bcopy_page.S,v 1.1 1996/01/31 23:15:17 mark Exp $ */
 
 /*
@@ -38,7 +39,6 @@
  * Created      : 08/04/95
  * Last updated : 12/05/95
  *
- *    $Id: bcopy_page.S,v 1.1.1.1 1996/04/24 11:08:23 deraadt Exp $
  */
 
 #include <machine/param.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: xfs_message.c,v 1.6 2000/03/03 00:54:58 todd Exp $	*/
+
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -45,7 +47,7 @@
 #include <xfs/xfs_vfsops.h>
 #include <xfs/xfs_vnodeops.h>
 
-RCSID("$Id: xfs_message.c,v 1.5 1999/06/03 19:49:38 art Exp $");
+RCSID("$OpenBSD: xfs_message.c,v 1.6 2000/03/03 00:54:58 todd Exp $");
 
 int
 xfs_message_installroot(int fd,

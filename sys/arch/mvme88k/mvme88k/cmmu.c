@@ -1,3 +1,4 @@
+/*	$OpenBSD: cmmu.c,v 1.6 2000/03/03 00:54:53 todd Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -28,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cmmu.c,v 1.5 1999/09/27 19:13:21 smurph Exp $
  */
 /*
  * Mach Operating System

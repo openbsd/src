@@ -1,3 +1,4 @@
+/* $OpenBSD: vconsole.h,v 1.2 2000/03/03 00:54:48 todd Exp $ */
 /* $NetBSD: vconsole.h,v 1.1 1996/01/31 23:23:29 mark Exp $ */
 
 /*
@@ -42,7 +43,6 @@
  * Created      : 18/09/94
  * Last updated : 10/01/96
  *
- *    $Id: vconsole.h,v 1.1.1.1 1996/04/24 11:08:46 deraadt Exp $
  */
 
 #ifdef _KERNEL

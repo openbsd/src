@@ -1,3 +1,4 @@
+/* $OpenBSD: coproc15.S,v 1.2 2000/03/03 00:54:46 todd Exp $ */
 /* $NetBSD: coproc15.S,v 1.1 1996/01/31 23:15:33 mark Exp $ */
 
 /*
@@ -45,7 +46,6 @@
  *
  * Based on arm/readcoproc15.S & arm/writecoproc15.S
  *
- *    $Id: coproc15.S,v 1.1.1.1 1996/04/24 11:08:24 deraadt Exp $
  */
 
 lr	.req	r14

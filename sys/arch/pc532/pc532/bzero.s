@@ -1,3 +1,4 @@
+/*	$OpenBSD: bzero.s,v 1.3 2000/03/03 00:54:55 todd Exp $	*/
 /*	$NetBSD: bzero.s,v 1.3 1996/01/26 08:11:47 phil Exp $	*/
 
 /* 
@@ -31,7 +32,6 @@
  * 	File: ns532/bzero.s
  *	Author: Tero Kivinen, Helsinki University of Technology 1992.
  *
- *	$Id: bzero.s,v 1.2 1996/01/31 06:36:15 deraadt Exp $
  */
 
 

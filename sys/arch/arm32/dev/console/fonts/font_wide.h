@@ -1,3 +1,4 @@
+/* $OpenBSD: font_wide.h,v 1.2 2000/03/03 00:54:48 todd Exp $ */
 /* $NetBSD: font_wide.h,v 1.1 1996/01/31 23:20:22 mark Exp $ */
 
 /*
@@ -45,7 +46,6 @@
  *
  * Based on kate/display/14widen.h
  *
- *    $Id: font_wide.h,v 1.1.1.1 1996/04/24 11:08:38 deraadt Exp $
  */
  
 unsigned char font_terminal_14widen_data[] = {

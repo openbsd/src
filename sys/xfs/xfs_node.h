@@ -1,3 +1,4 @@
+/* 	$OpenBSD: xfs_node.h,v 1.5 2000/03/03 00:54:58 todd Exp $	 */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -36,7 +37,6 @@
  * SUCH DAMAGE.
  */
 
-/* 	$Id: xfs_node.h,v 1.4 1999/04/30 01:59:01 art Exp $	 */
 
 #ifndef _xfs_xnode_h
 #define _xfs_xnode_h

@@ -1,3 +1,4 @@
+/* $OpenBSD: memset.S,v 1.2 2000/03/03 00:54:46 todd Exp $ */
 /* $NetBSD: memset.S,v 1.1 1996/01/31 23:16:35 mark Exp $ */
 
 /*
@@ -41,7 +42,6 @@
  * Created      : 16/05/95
  * Last updated : 16/05/95
  *
- *    $Id: memset.S,v 1.1.1.1 1996/04/24 11:08:28 deraadt Exp $
  */
 
 sp	.req	r13

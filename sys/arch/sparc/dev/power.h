@@ -1,3 +1,4 @@
+/*	$OpenBSD: power.h,v 1.2 2000/03/03 00:54:55 todd Exp $ */
 /*	$NetBSD: power.h,v 1.2 1996/05/16 15:56:57 abrown Exp $ */
 
 /*
@@ -38,7 +39,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: power.h,v 1.1 1996/08/11 05:34:25 deraadt Exp $
  *
  */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: filesystem.c,v 1.5 2000/03/03 00:54:55 todd Exp $	*/
 /*
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -30,7 +31,6 @@
  *
  *	filesystem.c
  *
- *	$Id: filesystem.c,v 1.4 1996/12/22 15:23:01 graichen Exp $
  */
 
 #include <stand.h>
