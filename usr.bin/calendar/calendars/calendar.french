@@ -1,7 +1,7 @@
 /*
  * French calendar file(s)
  *
- * $FreeBSD$
+ * $OpenBSD: calendar.french,v 1.2 2004/03/15 13:16:04 xsa Exp $
  */
 
 #ifndef _calendar_french_
