@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.55 2004/06/23 00:31:19 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.56 2004/06/23 08:12:33 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -225,6 +225,7 @@
 #define	EF_SR3		(EF_R0 + 5)
 #define	EF_FLAGS	EF_MODE
 
+#ifdef DEBUG
 	data
 	align 4
 ASLOCAL(sbadcpupanic)
@@ -232,14 +233,15 @@ ASLOCAL(sbadcpupanic)
 
 	text
 	align 8
-
 ASLOCAL(Lbadcpupanic)
 	subu	r31, r31, 32
 	or.u	r2, r0, hi16(_ASM_LABEL(sbadcpupanic))
 	bsr.n	_C_LABEL(panic)
 	 or	r2, r2, lo16(_ASM_LABEL(sbadcpupanic))
 	addu	r31, r31, 32
+#endif
 
+	text
 	align 8
 
 #ifdef M88110
@@ -752,12 +754,14 @@ GLOBAL(reset_handler)
 	or	r30, r31, r0
 
 	subu	r31, r31, 0x10	/* make some breathing space */
-	st	r30, r31, 0x0c	/* store frame pointer on the st */
+	st	r30, r31, 0x0c	/* store frame pointer on the stack */
+#ifdef DDB
 	st	r30, r31, 0x08	/* store again for the debugger to recognize */
 	or.u	r20,  r0, hi16(0x87654321)
 	or	r20, r20, lo16(0x87654321)
 	st	r20, r31, 0x04
 	st	r20, r31, 0x00
+#endif
 
 	CALL(_C_LABEL(error_fatal), r30, r30)
 
@@ -997,7 +1001,7 @@ ASLOCAL(m88100_setup_phase_one)
 	 */
 	subu	r31,  r31,  SIZEOF_EF		/* r31 now our E.F. */
 	st	FLAGS,r31,  REG_OFF(EF_FLAGS)	/* save flags */
-	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now r1 free)*/
+	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free)*/
 
 	ldcr	r1,   SR3			/* save previous SR3 */
 	st	r1,   r31,  REG_OFF(EF_SR3)
@@ -1136,10 +1140,14 @@ ASLOCAL(m88100_have_pcb)
 	bb1	eq,   TMP2, 2f
 	cmp	TMP2, TMP, 0x2				/* CPU2 ? */
 	bb1	eq,   TMP2, 3f
+#ifdef DEBUG
 	cmp	TMP2, TMP, 0x3				/* CPU3 ? */
 	bb1	eq,   TMP2, 4f
 	/* Arrrrg! bad cpu# */
 	br	_ASM_LABEL(Lbadcpupanic)
+#else
+	br	4f
+#endif
 	/* XXX WHAT ABOUT MODULES WITH SPLIT U/S CMMUS ??? */
 1:
 	/* must be CPU0 */
@@ -1643,7 +1651,7 @@ ASLOCAL(m88100_fpu_enable)
 	st	r30,  r31,  0	/* store frame pointer on the stack */
 #ifdef DDB
 	st	r30,  r31,  4	/* store it for the debugger to recognize */
-#endif /* DDB */
+#endif
 
 	ld	r2,   r30,  REG_OFF(EF_VECTOR)
 	bcnd.n	eq0,  r2,   8f			/* error exception */
@@ -1772,39 +1780,18 @@ ASLOCAL(m88100_return_code)
 1:
 
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r30)
+#ifdef M88110
 	br	_ASM_LABEL(check_ast)
+#else
+	/* FALLTHROUGH */
+#endif
 #endif /* M88100 */
 
 #ifdef M88110
 ASLOCAL(m88110_return_code)
 #define	FPTR	r14
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
-
-#if 0
-	/*
-	 * If it's the interrupt exception, enable interrupt.
-	 */
-
-	/*
-	 * Is it ever possible to have interrupt exception while EPSR has
-	 * it disabled? I don't think so.. XXX nivas
-	 *
-	 * On mc88110, you can.  The NMI interrupt. aka ABORT. XXX smurph
-	 */
-	ld	r2, FPTR, REG_OFF(EF_VECTOR)
-	cmp	r2, r2, 1	/* Is it an interrupt? */
-	bb1.n	ne, r2, 1f	/* If not, skip */
-
-	/* ...unless they were already disabled */
-	 ld	r2, FPTR, REG_OFF(EF_EPSR)
-	bb1.n	PSR_INTERRUPT_DISABLE_BIT, r2, 1f
-
-	 ldcr	r2, PSR
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	/* enable interrupts */
-	stcr	r2, PSR
-	FLUSH_PIPELINE
-1:
-#endif
+	/* FALLTHROUGH */
 #endif /* M88110 */
 
 /*
@@ -1921,7 +1908,6 @@ ASLOCAL(no_ast)
 	cmp	r1, r30, CPU_88110
 	bb1	ne, r1, 1f
 #endif
-	/* mc88110 needs the EXIP */
 	ld	r30, r31, REG_OFF(EF_ENIP)
 	ld	r1,  r31, REG_OFF(EF_EXIP)
 	stcr	r30, ENIP
@@ -1932,27 +1918,19 @@ ASLOCAL(no_ast)
 #endif
 #endif
 #ifdef M88100
-	st	r0, r31, REG_OFF(EF_IPFSR)
-	st	r0, r31, REG_OFF(EF_DPFSR)
-
 	/*
-	 * Note: no need to restore the SXIP.
-	 * When the "rte" causes execution to continue
-	 * first with the instruction pointed to by the NIP
-	 * and then the FIP.
-	 *
-	 * See MC88100 Risc Processor User's Manual, 2nd Edition,
-	 * section 6.4.3.1.2-4
+	 * RTE will cause execution to continue first with the
+	 * instruction pointed to by the NIP and then the FIP;
+	 * it is not necessary to restore XIP.
 	 */
+	stcr	r0,  SSBR
 	ld	r30, r31, REG_OFF(EF_SNIP)
 	ld	r1,  r31, REG_OFF(EF_SFIP)
-	stcr	r0,  SSBR
 	stcr	r30, SNIP
 	stcr	r1,  SFIP
 2:
 #endif
 	ld	r30, r31, REG_OFF(EF_EPSR)
-	ld	r1,  r31, REG_OFF(EF_MODE)
 	stcr	r30, EPSR
 
 	/* Now restore r1, r30, and r31 */
@@ -2275,12 +2253,14 @@ GLOBAL(m88110_reset_handler)
 	or	r30, r31, r0
 
 	subu	r31, r31, 0x10	/* make some breathing space */
-	st	r30, r31, 0x0c	/* store frame pointer on the st */
+	st	r30, r31, 0x0c	/* store frame pointer on the stack */
+#ifdef DDB
 	st	r30, r31, 0x08	/* store again for the debugger to recognize */
 	or.u	r20,  r0, hi16(0x87654321)
 	or	r20, r20, lo16(0x87654321)
 	st	r20, r31, 0x04
 	st	r20, r31, 0x00
+#endif
 
 	CALL(_C_LABEL(error_fatal), r30, r30)
 
@@ -2670,12 +2650,14 @@ ASLOCAL(m88110_fpu_enable)
 	st	r30,  r31,  0	/* store frame pointer on the stack */
 #ifdef DDB
 	st	r30,  r31,  4	/* store it again for the debugger */
-#endif /* DDB */
+#endif
 
 	ld	r2,   r30,  REG_OFF(EF_VECTOR)
 	bcnd.n	eq0,  r2,   8f
 	 ld	r14,  r30,  REG_OFF(EF_RET)	/* load return value XXX!!! */
 	cmp	r3,   r2,   1	/* is an interrupt? */
+	bb1.n	eq,   r3,   8f
+	 cmp	r3,   r2,   11	/* or NMI? */
 	bb1.n	eq,   r3,   8f
 
 #ifdef DDB
