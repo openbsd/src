@@ -1634,7 +1634,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	if (file_offset >= uvn->u_size) {
 			simple_unlock(&uvn->u_obj.vmobjlock);
 			UVMHIST_LOG(maphist,"<- BAD (size check)",0,0,0,0);
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 			printf("uvn_io: note: size check fired\n");
 #endif
 			return(VM_PAGER_BAD);
