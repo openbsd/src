@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ancontrol.8,v 1.1 2000/04/03 01:08:09 mickey Exp $
+.\"	$OpenBSD: ancontrol.8,v 1.2 2000/04/03 02:28:34 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu> All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .Dd September 10, 1999
 .Dt ANCONTROL 8
-.Os FreeBSD 3.0
+.Os
 .Sh NAME
 .Nm ancontrol
 .Nd configure Aironet 4500/4800 devices
@@ -97,9 +97,8 @@ This includes
 the station name, whether the station is operating in ad-hoc (point
 to point) or infrastructure mode, and the network name of a service
 set to join.
-The
 .Nm
-command can also be used to view the current NIC status, configuration
+can also be used to view the current NIC status, configuration
 and to dump out the values of the card's statistics counters.
 .Pp
 The
@@ -107,12 +106,12 @@ The
 argument given to
 .Nm
 should be the logical interface name associated with the Aironet
-device (an0, an1, etc...).
-.Sh OPTIONS
+device (e.g., an0, an1, etc...).
+.Pp
 The options are as follows:
 .Bl -tag -width Fl
 .It Fl i Ar iface Fl A
-Display the prefered access point list.
+Display the preferred access point list.
 The AP list can be used by
 stations to specify the MAC address of access points with which it
 wishes to associate.
@@ -125,7 +124,7 @@ be modified with the
 option.
 .It Fl i Ar iface Fl N
 Display the SSID list.
-This is a list of service set IDs (i.e. network names)
+This is a list of service set IDs (i.e., network names)
 with which the station wishes to associate.
 There may be up to three SSIDs
 in the list: the station will go through the list in ascending order and
@@ -133,27 +132,31 @@ associate with the first matching SSID that it finds.
 .It Fl i Ar iface Fl S
 Display NIC status information.
 This includes the current operating
-status, current BSSID, SSID, channel, beacon period and currently
+status, current BSSID, SSID, channel, beacon period, and currently
 associated access point.
 The operating mode indicates the state of
 the NIC, MAC status and receiver status.
-When the "synced" keyword
-appears, it means the NIC has successfully associated with an access
-point, associated with an ad-hoc "master" station, or become a "master"
+When the
+.Dq synced
+keyword appears, it means the NIC has successfully associated with an access
+point, associated with an ad-hoc
+.Dq master
+station, or become a
+.Dq master
 itself.
 The beacon period can be anything between 20 and 976 milliseconds.
 The default is 100.
 .It Fl i Ar iface Fl I
 Display NIC capability information.
 This shows the device type,
-frequency, speed and power level capablities and firmware revision levels.
+frequency, speed, and power level capablities and firmware revision levels.
 .It Fl i Ar iface Fl T
 Display the NIC's internal statistics counters.
 .It Fl i Ar iface Fl C
 Display current NIC configuration.
 This shows the current operation mode,
 receive mode, MAC address, power save settings, various timing settings,
-channel selection, diversity, transmit power and transmit speed.
+channel selection, diversity, transmit power, and transmit speed.
 .It Fl i Ar iface Fl t Ar 0|1|2|3|4
 Select transmit speed.
 The available settings are as follows:
@@ -186,7 +189,7 @@ Valid selections are as follows:
 Note that for IBSS (ad-hoc) mode, only PSP mode is supported, and only
 if the ATIM window is non-zero.
 .It Fl i Ar iface Fl a Ar AP "[-v 1|2|3|4]"
-Set prefered access point.
+Set preferred access point.
 The
 .Ar AP
 is specified as a MAC address consisting of 6 hexadecimal values
@@ -249,7 +252,8 @@ The
 .Ar station name
 can be any text string up to 16 characters in length.
 The default name
-is set by the driver to "FreeBSD."
+is set by the driver to
+.Qq OpenBSD .
 .It Fl i Ar iface Fl m Ar mac address
 Set the station address for the specified interface.
 The
@@ -259,7 +263,8 @@ e.g.: 00:60:1d:12:34:56.
 This programs the new address into the card
 and updates the interface as well.
 .It Fl i Ar iface Fl n Ar SSID "[-v 1|2|3]"
-Set the desired SSID (network name). There are three SSIDs which allows
+Set the desired SSID (network name).
+There are three SSIDs which allows
 the NIC to work with access points at several locations without needing
 to be reconfigured.
 The NIC checks each SSID in sequence when searching
@@ -286,7 +291,7 @@ vary depending on the actual NIC and can be viewed by dumping the
 device capabilities with the
 .Fl I
 flag.
-Typical values are 1, 5, 20, 50 and 100mW.
+Typical values are 1, 5, 20, 50, and 100mW.
 Selecting 0 sets
 the factory default.
 .It Fl i Ar iface Fl c Ar channel
@@ -298,7 +303,7 @@ The
 list of available frequencies is dependent on radio regulations specified
 by regional authorities.
 Recognized regulatory authorities include
-the FCC (United States), ETSI (Europe), France and Japan.
+the FCC (United States), ETSI (Europe), France, and Japan.
 Frequencies
 in the table are specified in Mhz.
 .Bd -filled -offset indent
@@ -324,8 +329,8 @@ in the table are specified in Mhz.
 If an illegal channel is specified, the
 NIC will revert to its default channel.
 For NICs sold in the United States
-and Europe, the default channel is 3. For NICs sold in France, the default
-channel is 11.
+and Europe, the default channel is 3.
+For NICs sold in France, the default channel is 11.
 For NICs sold in Japan, the only available channel is 14.
 Note that two stations must be set to the same channel in order to
 communicate.
@@ -352,11 +357,19 @@ Prints a list of available options and sample usage.
 .Sh SEE ALSO
 .Xr an 4 ,
 .Xr ifconfig 8
+.Sh AUTHORS
+The
+.Nm
+command was written by Bill Paul <wpaul@ee.columbia.edu> and ported to
+.Ox
+by Michael Shalayeff <mickey@openbsd.org> .
 .Sh HISTORY
 The
 .Nm
 command first appeared in
-.Fx 3.0 .
+.Fx 3.0
+and
+.Ox 2.7 .
 .Sh BUGS
 The statistics counters do not seem to show the amount of transmit
 and received frames as increasing.
@@ -364,11 +377,6 @@ This is likely due to the fact that
 the
 .Xr an 4
 driver uses unmodified packet mode instead of letting the NIC perform
-802.11/ethernet encapsulation itself.
+802.11/Ethernet encapsulation itself.
 .Pp
 Setting the channel does not seem to have any effect.
-.Sh AUTHOR
-The
-.Nm
-command was written by
-.An Bill Paul Aq wpaul@ee.columbia.edu .

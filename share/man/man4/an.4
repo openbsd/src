@@ -1,3 +1,5 @@
+.\"	$OpenBSD: an.4,v 1.2 2000/04/03 02:28:35 aaron Exp $
+.\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
 .\"
@@ -45,26 +47,21 @@ The
 .Nm
 driver provides support for Aironet Communications 4500 and 4800
 wireless network adapters.
-This includes the ISA, PCI and PCMCIA
-varieties.
+This includes the ISA, PCI, and PCMCIA varieties.
 The 4500 series adapters operate at 1 and 2Mbps while
-the 4800 series can operate at 1, 2, 5.5 and 11Mbps.
-The ISA, PCI
+the 4800 series can operate at 1, 2, 5.5, and 11Mbps.
+The ISA, PCI,
 and PCMCIA devices are all based on the same core PCMCIA modules
-and all have the same programming interface, however unlike the
+and all have the same programming interface.
+However, unlike the
 Lucent WaveLAN/IEEE cards, the ISA and PCI cards appear to the
-host as normal ISA and PCI devices and no not require any PCCARD
+host as normal ISA and PCI devices and do not require any PC Card
 support.
 .Pp
-The PCMCIA Aironet cards require pccard support, including the
-kernel pccard driver support and the
-.Xr pccardd 8
-daemon.
 ISA cards can either be configured to use ISA Plug and Play
 or to use a particular I/O address and IRQ
 by properly setting the DIP switches on the board.
-(The default
-switch setting is for plug and play.)
+(The default switch setting is for plug and play.)
 The
 .Nm
 driver has Plug and Play support and will work in either configuration,
@@ -76,10 +73,10 @@ probed and attached.
 .Pp
 All host/device interaction with the Aironet cards is via programmed I/O.
 The Aironet devices support 802.11 and 802.3 frames, power management,
-BSS (infrastructure) and IBSS (ad-hoc) operation modes.
+BSS (infrastructure), and IBSS (ad-hoc) operation modes.
 The
 .Nm
-driver encapsulates all IP and ARP traffic as 802.11 frames, however
+driver encapsulates all IP and ARP traffic as 802.11 frames, however,
 it can receive either 802.11 or 802.3 frames.
 Transmit speed is
 selectable between 1Mbps, 2Mbps, 5.5Mbps, 11Mbps or
@@ -98,7 +95,7 @@ the
 utility.
 .Pp
 For more information on configuring this device, see
-.Xr ifconfig 8
+.Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "an%d: init failed"
@@ -121,8 +118,12 @@ The
 .Nm
 device driver first appeared in
 .Fx 4.0 .
-.Sh AUTHOR
+.Ox
+support was added in
+.Ox 2.7 .
+.Sh AUTHORS
 The
 .Nm
-driver was written by
-.An Bill Paul Aq wpaul@ee.columbia.edu .
+driver was written by Bill Paul <wpaul@ee.columbia.edu> and ported to
+.Ox
+by Michael Shalayeff <mickey@openbsd.org>.
