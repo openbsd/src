@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.21 1998/02/08 22:37:01 tholo Exp $
+;	$OpenBSD: syscalls.master,v 1.22 1998/02/10 08:44:07 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -54,19 +54,19 @@
 4	STD		{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
 5	STD		{ int sys_open(const char *path, \
-			    int flags, ... mode_t mode); }
+			    int flags, ... int mode); }
 6	STD		{ int sys_close(int fd); }
 7	STD		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	COMPAT_43	{ int sys_creat(const char *path, mode_t mode); } ocreat
+8	COMPAT_43	{ int sys_creat(const char *path, int mode); } ocreat
 9	STD		{ int sys_link(const char *path, const char *link); }
 10	STD		{ int sys_unlink(const char *path); }
 11	OBSOL		execv
 12	STD		{ int sys_chdir(const char *path); }
 13	STD		{ int sys_fchdir(int fd); }
-14	STD		{ int sys_mknod(const char *path, mode_t mode, \
+14	STD		{ int sys_mknod(const char *path, int mode, \
 			    dev_t dev); }
-15	STD		{ int sys_chmod(const char *path, mode_t mode); }
+15	STD		{ int sys_chmod(const char *path, int mode); }
 16	STD		{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	STD		{ int sys_obreak(char *nsize); } break
@@ -138,7 +138,7 @@
 			    int count); }
 59	STD		{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
-60	STD		{ mode_t sys_umask(mode_t newmask); }
+60	STD		{ int sys_umask(int newmask); }
 61	STD		{ int sys_chroot(const char *path); }
 62	COMPAT_43	{ int sys_fstat(int fd, struct ostat *sb); } ofstat
 63	COMPAT_43	{ int sys_getkerninfo(int op, char *where, int *size, \
@@ -234,7 +234,7 @@
 122	STD		{ int sys_settimeofday(const struct timeval *tv, \
 			    const struct timezone *tzp); }
 123	STD		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
-124	STD		{ int sys_fchmod(int fd, mode_t mode); }
+124	STD		{ int sys_fchmod(int fd, int mode); }
 125	COMPAT_43	{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
 			    int flags, caddr_t from, int *fromlenaddr); } \
 			    orecvfrom
@@ -245,14 +245,14 @@
 			    otruncate
 130	COMPAT_43	{ int sys_ftruncate(int fd, long length); } oftruncate
 131	STD		{ int sys_flock(int fd, int how); }
-132	STD		{ int sys_mkfifo(const char *path, mode_t mode); }
+132	STD		{ int sys_mkfifo(const char *path, int mode); }
 133	STD		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    int tolen); }
 134	STD		{ int sys_shutdown(int s, int how); }
 135	STD		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	STD		{ int sys_mkdir(const char *path, mode_t mode); }
+136	STD		{ int sys_mkdir(const char *path, int mode); }
 137	STD		{ int sys_rmdir(const char *path); }
 138	STD		{ int sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
