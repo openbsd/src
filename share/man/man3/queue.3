@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.7 1999/09/05 15:55:46 espie Exp $
+.\"	$OpenBSD: queue.3,v 1.8 1999/09/08 08:20:49 espie Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -38,12 +38,26 @@
 .Dt QUEUE 3
 .Os
 .Sh NAME
+.Nm SLIST_ENTRY ,
+.Nm SLIST_HEAD ,
+.Nm SLIST_HEAD_INITIALIZER ,
+.Nm SLIST_FIRST ,
+.Nm SLIST_NEXT ,
+.Nm SLIST_END ,
+.Nm SLIST_EMPTY ,
+.Nm SLIST_FOREACH ,
+.Nm SLIST_INIT ,
+.Nm SLIST_INSERT_AFTER ,
+.Nm SLIST_INSERT_HEAD ,
+.Nm SLIST_REMOVE_HEAD ,
 .Nm LIST_ENTRY ,
 .Nm LIST_HEAD ,
 .Nm LIST_HEAD_INITIALIZER ,
 .Nm LIST_FIRST ,
 .Nm LIST_NEXT ,
 .Nm LIST_END ,
+.Nm LIST_EMPTY ,
+.Nm LIST_FOREACH ,
 .Nm LIST_INIT ,
 .Nm LIST_INSERT_AFTER ,
 .Nm LIST_INSERT_BEFORE ,
@@ -55,6 +69,8 @@
 .Nm SIMPLEQ_FIRST ,
 .Nm SIMPLEQ_NEXT ,
 .Nm SIMPLEQ_END ,
+.Nm SIMPLEQ_EMPTY ,
+.Nm SIMPLEQ_FOREACH ,
 .Nm SIMPLEQ_INIT ,
 .Nm SIMPLEQ_INSERT_HEAD ,
 .Nm SIMPLEQ_INSERT_TAIL ,
@@ -68,6 +84,8 @@
 .Nm TAILQ_END ,
 .Nm TAILQ_LAST ,
 .Nm TAILQ_PREV ,
+.Nm TAILQ_EMPTY ,
+.Nm TAILQ_FOREACH ,
 .Nm TAILQ_INIT ,
 .Nm TAILQ_INSERT_AFTER ,
 .Nm TAILQ_INSERT_BEFORE ,
@@ -82,15 +100,38 @@
 .Nm CIRCLEQ_END ,
 .Nm CIRCLEQ_NEXT ,
 .Nm CIRCLEQ_PREV ,
+.Nm CIRCLEQ_EMPTY ,
+.Nm CIRCLEQ_FOREACH ,
 .Nm CIRCLEQ_INIT ,
 .Nm CIRCLEQ_INSERT_AFTER ,
 .Nm CIRCLEQ_INSERT_BEFORE ,
 .Nm CIRCLEQ_INSERT_HEAD ,
 .Nm CIRCLEQ_INSERT_TAIL ,
 .Nm CIRCLEQ_REMOVE
-.Nd "implementations of lists, simple queues, tail queues, and circular queues"
+.Nd "implementations of singly-linked lists, doubly-linked lists, simple queues, tail queues, and circular queues"
 .Sh SYNOPSIS
 .Fd #include <sys/queue.h>
+.sp
+.Fn SLIST_ENTRY "TYPE"
+.Fn SLIST_HEAD "HEADNAME" "TYPE"
+.Fn SLIST_HEAD_INITIALIZER "SLIST_HEAD head"
+.Ft "struct TYPE *"
+.Fn SLIST_FIRST "SLIST_HEAD *head"
+.Ft "struct TYPE *"
+.Fn SLIST_NEXT "struct TYPE *listelm" "SLIST_ENTRY NAME"
+.Ft "struct TYPE *"
+.Fn SLIST_END "SLIST_HEAD *head"
+.Ft "bool"
+.Fn SLIST_EMPTY "SLIST_HEAD *head"
+.Fn SLIST_FOREACH "VARNAME" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
+.Ft void
+.Fn SLIST_INIT "SLIST_HEAD *head"
+.Ft void
+.Fn SLIST_INSERT_AFTER "struct TYPE *listelm" "struct TYPE *elm" "SLIST_ENTRY NAME"
+.Ft void
+.Fn SLIST_INSERT_HEAD "SLIST_HEAD *head" "struct TYPE *elm" "SLIST_ENTRY NAME"
+.Ft void
+.Fn SLIST_REMOVE_HEAD "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .sp
 .Fn LIST_ENTRY "TYPE"
 .Fn LIST_HEAD "HEADNAME" "TYPE"
@@ -101,6 +142,9 @@
 .Fn LIST_NEXT "struct TYPE *listelm" "LIST_ENTRY NAME"
 .Ft "struct TYPE *"
 .Fn LIST_END "LIST_HEAD *head"
+.Ft "bool"
+.Fn LIST_EMPTY "LIST_HEAD *head"
+.Fn LIST_FOREACH "VARNAME" "LIST_HEAD *head" "LIST_ENTRY NAME"
 .Ft void
 .Fn LIST_INIT "LIST_HEAD *head"
 .Ft void
@@ -183,65 +227,99 @@
 .Ft void
 .Fn CIRCLEQ_REMOVE "CIRCLEQ_HEAD *head" "struct TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Sh DESCRIPTION
-These macros define and operate on four types of data structures:
-lists, simple queues, tail queues, and circular queues.
-All structures except simple queues support the following functionality:
+These macros define and operate on five types of data structures:
+singly-linked lists, simple queues, lists, tail queues,
+and circular queues.
+All five structures support the following functionality:
 .Pp
 .Bl -enum -compact -offset indent
 .It
 Insertion of a new entry at the head of the list.
 .It
-Insertion of a new entry before or after any list element.
+Insertion of a new entry after any element in the list.
 .It
-Removal of any entry in the list.
+Removal of an entry from the head of the list.
 .It
 Forward traversal through the list.
 .El
 .Pp
-Lists support only the above functionality.
+Singly-linked lists are the simplest of the five data structures
+and support only the above functionality.
+Singly-linked lists are ideal for applications with large datasets
+and few or no removals,
+or for implementing a LIFO queue.
 .Pp
-Simple queues are simplified list structures in exchange for 
-restricted functionality:
-.Pp
-.Bl -enum -compact -offset indent
-.It
-Simple queue entries require only one pointer.
-.It
-Code is roughly twice as small and fast as lists.
-.It
-Entries can be added to the end of the queue.
-.It
-No insertion of a new entry before a list element.
-.It
-Only the first element can be removed.
-.El
+Simple queues add the following functionality:
 .Pp
 .Bl -enum -compact -offset indent
-.Pp
-Tail queues add the following functionality:
-.Bl -enum -offset indent
 .It
-Entries can be added to the end of the list.
+Entries can be added at the end of a list.
 .El
 .Pp
 However:
 .Pp
 .Bl -enum -compact -offset indent
 .It
-All list insertions and removals, except insertion before another element, must
-specify the head of the list.
+All list insertions must specify the head of the list.
 .It
 Each head entry requires two pointers rather than one.
 .It
 Code size is about 15% greater and operations run about 20% slower
-than lists.
+than singly-linked lists.
+.El
+.Pp
+Simple queues are ideal for applications with large datasets and
+few or no removals, or for implementing a FIFO queue.
+.Pp
+All doubly linked types of data structures (lists, tail queues, and circle
+queues) additionally allow:
+.Pp
+.Bl -enum -compact -offset indent
+.It
+Insertion of a new entry before any element in the list.
+.It
+Removal of any entry in the list.
+.El
+.Pp
+However:
+.Pp
+.Bl -enum -compact -offset indent
+.It
+Each elements requires two pointers rather than one.
+.It
+Code size and execution time of operations (except for removal) is about
+twice that of the singly-linked data-structures.
+.El
+.Pp
+Lists are the simplest of the doubly linked data structures and support
+only the above functionality over singly-linked lists.
+.Pp
+Tail queues add the following functionality:
+.Pp
+.Bl -enum -compact -offset indent
+.It
+Entries can be added at the end of a list.
+.It
+They may be traversed backwards, at a cost.
+.El
+.Pp
+However:
+.Pp
+.Bl -enum -compact -offset indent
+.It
+All list insertions and removals must specify the head of the list.
+.It
+Each head entry requires two pointers rather than one.
+.It
+Code size is about 15% greater and operations run about 20% slower
+than singly-linked lists.
 .El
 .Pp
 Circular queues add the following functionality:
 .Pp
 .Bl -enum -compact -offset indent
 .It
-Entries can be added to the end of a list.
+Entries can be added at the end of a list.
 .It
 They may be traversed backwards, from tail to head.
 .El
@@ -264,6 +342,7 @@ In the macro definitions,
 .Fa TYPE
 is the name tag of a user defined structure,
 that must contain a field of type
+.Li SLIST_ENTRY ,
 .Li LIST_ENTRY ,
 .Li SIMPLEQ_ENTRY ,
 .Li TAILQ_ENTRY ,
@@ -275,6 +354,7 @@ The argument
 .Fa HEADNAME
 is the name tag of a user defined structure that must be declared
 using the macros
+.Fn SLIST_HEAD ,
 .Fn LIST_HEAD ,
 .Fn SIMPLEQ_HEAD ,
 .Fn TAILQ_HEAD ,
@@ -282,6 +362,99 @@ or
 .Fn CIRCLEQ_HEAD .
 See the examples below for further explanation of how these
 macros are used.
+.Sh SINGLY_LINKED LISTS
+A singly-linked list is headed by a structure defined by the
+.Fn SLIST_HEAD
+macro.
+This structure contains a single pointer to the first element
+on the list.
+The elements are singly linked for minimum space and pointer manipulation
+overhead at the expense of O(n) removal for arbitrary elements.
+New elements can be added to the list after an existing element or
+at the head of the list.
+A
+.Fa SLIST_HEAD
+structure is declared as follows:
+.Bd -literal -offset indent
+SLIST_HEAD(HEADNAME, TYPE) head;
+.Ed
+.sp
+where
+.Fa HEADNAME
+is the name of the structure to be defined, and struct
+.Fa TYPE
+is the type of the elements to be linked into the list.
+A pointer to the head of the list can later be declared as:
+.Bd -literal -offset indent
+struct HEADNAME *headp;
+.Ed
+.sp
+(The names
+.Li head
+and
+.Li headp
+are user selectable.)
+.sp
+The 
+.Fa HEADNAME 
+facility is often not used, leading to the following bizarre code:
+.Bd -literal -offset indent
+SLIST_HEAD(, TYPE) head, *headp;
+.Ed
+.Pp
+The
+.Fn SLIST_ENTRY
+macro declares a structure that connects the elements in
+the list.
+.Pp
+The
+.Fn SLIST_INIT
+macro initializes the list referenced by
+.Fa head .
+.Pp
+The list can also be initialized statically by using the 
+.Fn SLIST_HEAD_INITIALIZER
+macro like this:
+.Bd -literal -offset indent
+SLIST_HEAD(HEADNAME, TYPE) head = SLIST_HEAD_INITIALIZER(head);
+.Ed
+.Pp
+The
+.Fn SLIST_INSERT_HEAD
+macro inserts the new element
+.Fa elm
+at the head of the list.
+.Pp
+The
+.Fn SLIST_INSERT_AFTER
+macro inserts the new element
+.Fa elm
+after the element
+.Fa listelm .
+.Pp
+The
+.Fn SLIST_REMOVE_HEAD
+macro removes the first element of the list pointed by
+.Fa head .
+.Pp
+The 
+.Fn SLIST_FIRST ,
+and
+.Fn SLIST_NEXT
+macros can be used to traverse the list:
+.Bd -literal -offset indent
+for (np = SLIST_FIRST(&head); np != NULL; np = SLIST_NEXT(np, NAME))
+.Ed
+Or, for simplicity, one can use the 
+.Fn SLIST_FOREACH
+macro:
+.Bd -literal -offset indent
+SLIST_FOREACH(np, head, NAME)
+.Ed
+.Pp
+The 
+.Fn SLIST_EMPTY
+macro should be used to check whether a simple list is empty.
 .Sh LISTS
 A list is headed by a structure defined by the
 .Fn LIST_HEAD
@@ -373,6 +546,16 @@ macros can be used to traverse the list:
 .Bd -literal -offset indent
 for (np = LIST_FIRST(&head); np != NULL; np = LIST_NEXT(np, NAME))
 .Ed
+Or, for simplicity, one can use the
+.Fn LIST_FOREACH
+macro:
+.Bd -literal -offset indent
+LIST_FOREACH(np, head, NAME)
+.Ed
+.Pp
+The 
+.Fn LIST_EMPTY
+macro should be used to check whether a list is empty.
 .Sh LIST EXAMPLE
 .Bd -literal
 LIST_HEAD(listhead, entry) head;
@@ -402,12 +585,12 @@ while (head.lh_first != NULL)		/* Delete. */
 .Ed
 .Sh SIMPLE QUEUES
 A simple queue is headed by a structure defined by the
-.Fn LIST_HEAD
+.Fn SIMPLEQ_HEAD
 macro.
 This structure contains a pair of pointers, 
 one to the first element in the simple queue and the other to 
 the last element in the simple queue.
-The elements are simply linked.
+The elements are singly linked.
 New elements can be added to the queue after an existing element,
 at the head of the queue or at the tail of the queue.
 A
@@ -479,6 +662,16 @@ The
 and
 .Fn SIMPLEQ_NEXT
 macros can be used to traverse the queue.
+The
+.Fn SIMPLEQ_FOREACH
+is used for queue traversal
+.Bd -literal -offset indent
+SIMPLEQ_FOREACH(np, head, NAME)
+.Ed
+.Pp
+The 
+.Fn SIMPLEQ_EMPTY
+macro should be used to check whether a list is empty.
 .Sh SIMPLE QUEUE EXAMPLE
 .Bd -literal
 SIMPLEQ_HEAD(listhead, entry) head = SIMPLEQ_HEAD_INITIALIZER(head);
@@ -591,6 +784,16 @@ The
 and
 .Fn TAILQ_PREV 
 macros can be used to traverse a tail queue.
+The
+.Fn TAILQ_FOREACH
+is used for tail queue traversal
+.Bd -literal -offset indent
+TAILQ_FOREACH(np, head, NAME)
+.Ed
+.Pp
+The 
+.Fn TAILQ_EMPTY
+macro should be used to check whether a tail queue is empty.
 .Sh TAIL QUEUE EXAMPLE
 .Bd -literal
 TAILQ_HEAD(tailhead, entry) head;
@@ -710,6 +913,16 @@ The
 and
 .Fn CIRCLEQ_PREV
 macros can be used to traverse a circular queue.
+The
+.Fn CIRCLEQ_FOREACH
+is used for circular queue forward traversal
+.Bd -literal -offset indent
+CIRCLEQ_FOREACH(np, head, NAME)
+.Ed
+.Pp
+The 
+.Fn CIRCLEQ_EMPTY
+macro should be used to check whether a circular queue is empty.
 .Sh CIRCULAR QUEUE EXAMPLE
 .Bd -literal
 CIRCLEQ_HEAD(circleq, entry) head;
@@ -747,6 +960,7 @@ while (CIRCLEQ_FIRST(&head) != CIRCLEQ_END(&head))
 .Ed
 .Sh NOTES
 The
+.Fn SLIST_END ,
 .Fn LIST_END ,
 .Fn SIMPLEQ_END 
 and
@@ -756,6 +970,26 @@ macros are provided for symetry with
 They expand to 
 .Dv NULL
 and don't serve any useful purpose.
+.Pp
+Trying to free a list in the following way is a common error:
+.Bd -literal -offset indent
+LIST_FOREACH(var, head, entry)
+	free(var);
+free(head);
+.Ed
+Since 
+.Va var
+is free'd, the 
+.Fn FOREACH 
+macro refers to a pointer that may have been reallocated already.
+Proper code needs a second variable.
+.Bd -literal -offset indent
+for (var = LIST_FIRST(head); var != LIST_END(head); var = nxt) {
+	nxt = LIST_NEXT(var);
+	free(var);
+}
+LIST_INIT(head);	/* to put the list back in order */
+.Ed
 .Sh HISTORY
 The
 .Nm queue
