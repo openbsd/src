@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: install,v 1.23 2002/12/30 11:13:01 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
@@ -137,7 +137,7 @@ OpenBSDNFSInstall
 
 OpenBSDDISKInstall({:-"hdN" or -:},{:-only -:})
 
-OpenBSDCommonFS
+OpenBSDCommonFS(NFS)
 
 OpenBSDCommonURL
 

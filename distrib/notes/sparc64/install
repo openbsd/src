@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.27 2002/10/03 00:19:49 miod Exp $
+dnl	$OpenBSD: install,v 1.28 2002/12/30 11:13:01 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -134,7 +134,7 @@ OpenBSDInstallPart4
 
 OpenBSDInstallPart5(sd0)
 
-OpenBSDInstallNet({:-CD-ROM, NFS, -:},nofloppy)
+OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
 
 OpenBSDFTPInstall
 
@@ -144,8 +144,6 @@ OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
 		
-OpenBSDNFSInstall
-
 OpenBSDDISKInstall({:-"wdN" or -:},{:-only -:})
 
 OpenBSDCommonFS

@@ -1,10 +1,9 @@
-dnl	$OpenBSD: xfer,v 1.17 2002/10/03 00:19:49 miod Exp $
+dnl	$OpenBSD: xfer,v 1.18 2002/12/30 11:13:01 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
 	FFS partitions
 	Tape
-	Remote NFS partition (NOT supported if booting from floppy)
 	FTP
 	HTTP
 
@@ -16,14 +15,11 @@ a floppy, hard drive, or compatible net boot server.
 
 In addition to the bootable image, you also need to consider how to
 access the binary distribution sets to actually install the system.
-If you have the OpenBSD CD-ROM distribution you can either access the
-CD-ROM directly from the bootable image or remotely mounted on another
-system via NFS.
 
 Although you can access the distribution sets directly from the CD-ROM or
 from one of the FTP mirrors over the internet, you may wish to transfer
-the sets to a local FTP or NFS server, or copy them to a partition on
-the target system's disk.
+the sets to a local FTP server, or copy them to a partition on the target
+system's disk.
 
 OpenBSDXferFloppyFromDOS
 
@@ -92,7 +88,5 @@ OpenBSDXferPrelude
 
 
 OpenBSDXferBareTape(xbase xfont xserv xshare)
-
-OpenBSDXferNFS
 
 OpenBSDXferFFS

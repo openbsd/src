@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.39 2002/11/07 22:38:36 mickey Exp $
+dnl	$OpenBSD: m4.common,v 1.40 2002/12/30 11:12:58 miod Exp $
 dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
@@ -543,11 +543,13 @@ define({:-OpenBSDDISKInstall-:},
 		For instructions on how to complete the installation from
 		the a local disk partition, see the next section.-:})dnl
 dnl
+dnl For arches where you can install from NFS, $1 should be set to "NFS",
+dnl otherwise there should be no parameter.
 define({:-OpenBSDCommonFS-:},
 {:-	Common file system installations:
 		The following instructions are common to installations
-		from local disk partitions, NFS mounted directories and
-		CD-ROMs.
+		from mounted disk partitions{:--:}ifelse(X$1,XNFS,{:-, NFS mounted directories and
+		CD-ROMs-:},{:- and CD-ROMs-:}).
 
 		A list of available distribution sets will be listed.
 		You may individually select distribution sets to install
