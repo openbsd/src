@@ -268,7 +268,7 @@ file_find_cell(kafs_data *data, const char *cell, char **realm, int exact)
 	|| (F = fopen(_PATH_ARLA_CELLSERVDB, "r"))
 	|| (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))) {
 #else
-    if (F = fopen(_PATH_ARLA_CELLSERVDB, "r")) {
+    if ((F = fopen(_PATH_ARLA_CELLSERVDB, "r"))) {
 #endif
 	while (fgets(buf, sizeof(buf), F)) {
 	    int cmp;
