@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.13 1998/11/17 19:23:03 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.14 1998/11/18 17:42:22 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -36,22 +36,18 @@
  *	@(#)tcp_var.h	8.3 (Berkeley) 4/10/94
  */
 
-#ifdef TCP_SACK
-struct sackblk
-{   
+struct sackblk {   
 	tcp_seq start;		/* start seq no. of sack block */
 	tcp_seq end; 		/* end seq no. */
 };  
     
-struct sackhole
-{   
+struct sackhole {   
 	tcp_seq start;      	/* start seq no. of hole */ 
 	tcp_seq end;        	/* end seq no. */
 	int dups;      		/* number of dup(s)acks for this hole */
 	tcp_seq rxmit;      	/* next seq. no in hole to be retransmitted */
 	struct sackhole *next;  /* next in list */
 };
-#endif
 
 /*
  * Kernel variables for tcp.
