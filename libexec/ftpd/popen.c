@@ -1,3 +1,4 @@
+/*	$OpenBSD: popen.c,v 1.4 1996/07/30 02:01:16 downsj Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
