@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 2000/06/20 21:29:35 miod Exp $
+#	$OpenBSD: list,v 1.4 2000/07/13 01:41:49 miod Exp $
 
 # Sun3 extra's
 LINK	instbin			sbin/disklabel
@@ -19,9 +19,9 @@ SYMLINK	/tmp	var/tmp
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# we need the contents of /usr/mdec (but not boot or binstall)
-COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
-SPECIAL	rm -f usr/mdec/binstall usr/mdec/installboot
+# we need the contents of /usr/mdec (but not installboot)
+COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
+COPY	${DESTDIR}/usr/mdec/ufsboot	usr/mdec/ufsboot
 
 # and a few useful bits of the termcap file (512K and still growing 8-)
 SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' -e '/^pc3|/,/:[ 	]*$/p' -e '/^pcvt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
