@@ -21,13 +21,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c595 100Base-TX",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T,
 	    0,
 	    "3Com",
 	    "3c595 100Base-T4",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595TM,
 	    0,
 	    "3Com",
 	    "3c595 100Base-T/MII",
@@ -39,7 +39,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c900 10Base-T",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900T,
 	    0,
 	    "3Com",
 	    "3c900 10Mbps-Combo",
@@ -51,7 +51,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c905 100Base-TX",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905T,
 	    0,
 	    "3Com",
 	    "3c905 100Base-T4",
