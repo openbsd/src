@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.8 2001/05/28 19:51:06 dugsong Exp $
+.\"	$OpenBSD: bpf.4,v 1.9 2001/06/22 12:15:44 mpech Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -769,7 +769,7 @@ pc += (A & X) ? jt : jf
 The return instructions terminate the filter program and specify the amount
 of packet to accept (i.e., they return the truncation amount).
 A return value of zero indicates that the packet should be ignored.
-The return value is either a constnat
+The return value is either a constant
 .Pf ( Dv BPF_K )
 of the accumulator
 .Pf ( Dv BPF_A ) .

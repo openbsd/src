@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.10 2000/12/31 00:25:38 angelos Exp $
+.\"	$OpenBSD: gif.4,v 1.11 2001/06/22 12:15:45 mpech Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,18 +69,18 @@ Also, the routing table may be used to route the packets toward the
 interface.
 .Pp
 Finally, the
-.Nm gif
+.Nm
 interface may be used as a
 .Xr bridge 4
 member.
 Ethernet frames forwarded by the bridge to the
-.Nm gif
+.Nm
 interface are encapsulated inside an IPv4 or IPv6 header (depending on
 how the interface is configured), with transport protocol number 97
 (etherip).
 IPv4 or IPv6 packets carrying transport protocol 97 are delivered to
 the
-.Nm gif
+.Nm
 interface whose "physical" addresses match the source/destination
 addresses of the packet (the source address of the packet must match
 the destination "physical" address, and vice versa).
@@ -138,6 +138,6 @@ When used in conjunction with the
 only one bridge tunnel may be operational for every pair of
 source/destination addresses.
 If more than one
-.Nm gif
+.Nm
 interface is configured with the same pair of outer addresses, the
 one with the lowest index number will receive all traffic.

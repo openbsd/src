@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.7 2000/12/15 14:31:20 aaron Exp $
+.\" $OpenBSD: gre.4,v 1.8 2001/06/22 12:15:45 mpech Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -57,10 +57,9 @@ Allow GRE packets in and out of the system.
 .It net.inet.mobileip.allow
 Allow MobileIP packets in and out of the system.
 .El
-.Pp
 .Sh DESCRIPTION
 The
-.Nm gre
+.Nm
 network interface allows tunnel construction using the Cisco GRE or
 the Mobile-IP (RFC 2004) encapsulation protocols.
 .Pp
@@ -185,13 +184,13 @@ The kernel must be set to forward datagrams by including option
 option to
 .Xr sysctl 8 .
 .Sh SEE ALSO
-.Xr netintro 4 ,
-.Xr ip 4 ,
 .Xr atalk 4 ,
 .Xr inet 4 ,
-.Xr ifconfig 8 ,
+.Xr ip 4 ,
+.Xr netintro 4 ,
 .Xr options 4 ,
 .Xr protocols 5 ,
+.Xr ifconfig 8 ,
 .Xr sysctl 8
 .Pp
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.

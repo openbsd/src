@@ -1,4 +1,4 @@
-.\" $OpenBSD: ss.4,v 1.7 2000/12/15 14:31:20 aaron Exp $
+.\" $OpenBSD: ss.4,v 1.8 2001/06/22 12:15:47 mpech Exp $
 .\"
 .\" Copyright (c) 1998 Kenneth Stailey and Ian Darwin
 .\"
@@ -41,7 +41,7 @@
 .Nm ss* at scsibus? target ? lun ?
 .Sh DESCRIPTION
 The
-.Nm ss
+.Nm
 device allows an application to set scanner parameters and retrieve
 image data from any of the supported scanners without having to be
 concerned with details of its particular command set.
@@ -58,7 +58,7 @@ Obviously a SCSI host adapter must be present in the config file
 before this device can be configured.
 .Pp
 If a count is given, that many
-.Nm ss
+.Nm
 devices will be configured into the kernel.
 .Sh IOCTLS
 This device provides the

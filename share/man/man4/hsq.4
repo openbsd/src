@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hsq.4,v 1.5 2001/04/03 13:15:00 aaron Exp $
+.\"	$OpenBSD: hsq.4,v 1.6 2001/06/22 12:15:45 mpech Exp $
 .\"	from: OpenBSD: ast.4,v 1.5 1999/07/09 13:35:43 aaron Exp
 .\"	from: NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp
 .\"
@@ -44,14 +44,13 @@
 .Os
 .Sh NAME
 .Nm hsq
-.Nd
-multiplexing serial communications interface
+.Nd multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "hsq0 at isa? port 0x140 irq 10"
 .Cd "pccom* at hsq? slave ?"
 .Sh DESCRIPTION
 The
-.Nm hsq
+.Nm
 driver provides support for Hostess (Comtrol Corporation,
 www.comtrol.com) and compatible boards that multiplex together
 up to four
@@ -94,6 +93,7 @@ the driver only with Hostess-compatible cards.
 .Bl -tag -width Pa
 .It Pa /dev/tty0?
 .It Pa /dev/cua0?
+.El
 .Sh SEE ALSO
 .Xr pccom 4
 .Sh HISTORY

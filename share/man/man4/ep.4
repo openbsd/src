@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.19 2000/10/18 16:32:11 aaron Exp $
+.\"	$OpenBSD: ep.4,v 1.20 2001/06/22 12:15:45 mpech Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Cd "ep* at isapnp?"
 .Sh DESCRIPTION
 The
-.Nm ep
+.Nm
 device driver supports the 3Com EtherLink III and Fast EtherLink III family
 of Ethernet cards. This includes, among others, the following models:
 .Pp
@@ -105,7 +105,9 @@ Note that the 100baseTX media type is only available if supported by the
 adapter. For more information on configuring this device, see
 .Xr ifconfig 8 .
 To view a list of media types and options supported by your card try
-``ifconfig -m <device>''. For example, ``ifconfig -m ep0''.
+.Dq ifconfig -m <device> .
+For example,
+.Dq ifconfig -m ep0 .
 .Pp
 If more than one of the supported cards is installed, they are probed for
 in the following order:

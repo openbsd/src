@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.12 2000/12/21 18:15:13 avsm Exp $
+.\"	$OpenBSD: raid.4,v 1.13 2001/06/22 12:15:46 mpech Exp $
 .\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
 .\"
 .\"
@@ -261,21 +261,19 @@ correct will be catastrophic should a component ever fail -- it is
 better to use RAID 0 and get the additional space and speed, than it
 is to use parity, but not keep the parity correct.  At least with RAID
 0 there is no perception of increased data security.
-.Pp
 .Sh FILES
 .Bl -tag -width /dev/XXrXraidX -compact
 .It Pa /dev/{,r}raid*
 .Nm
 device special files.
 .El
-.Pp
 .Sh SEE ALSO
+.Xr sd 4 ,
 .Xr MAKEDEV 8 ,
 .Xr config 8 ,
 .Xr fsck 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
-.Xr sd 4 ,
 .Xr raidctl 8
 .Sh HISTORY
 The

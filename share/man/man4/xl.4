@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.21 2001/03/01 16:11:20 aaron Exp $
+.\"	$OpenBSD: xl.4,v 1.22 2001/06/22 12:15:48 mpech Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -43,7 +43,7 @@
 .Cd "xl* at cardbus? dev ? function ?"
 .Sh DESCRIPTION
 The
-.Nm xl
+.Nm
 device driver supports the 3Com EtherLink XL and Fast EtherLink XL family
 of Ethernet cards, and embedded controllers based on the 3Com
 .Dq boomerang
@@ -139,7 +139,6 @@ To view a list of media types and options supported by your card try
 .Ic ifconfig -m <device> .
 For example,
 .Ic ifconfig -m xl0 .
-.Pp
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "xl%d: couldn't map memory"

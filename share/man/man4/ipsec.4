@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.40 2001/06/01 06:21:29 angelos Exp $
+.\" $OpenBSD: ipsec.4,v 1.41 2001/06/22 12:15:45 mpech Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -95,8 +95,7 @@ cracking the encryption, and that the traffic causes events favourable for him,
 like depositing money into his account.  We need to make sure he cannot just
 replay that traffic later. WARNING: as per the standards specification, replay
 protection is not performed when using manual-keyed IPsec (e.g., when using
-.Xr ipsecadm 8
-).
+.Xr ipsecadm 8 ) .
 .El
 .Pp
 .Tn IPsec
@@ -412,20 +411,19 @@ displays information about memory use by IPsec with the
 flag (look for ``tdb'' and ``xform'' allocations).
 .Sh BUGS
 There's a lot more to be said on this subject. This is just a beginning.
-.Br
 At the moment the socket options are not fully implemented.
 .Sh SEE ALSO
 .Xr enc 4 ,
 .Xr icmp 4 ,
 .Xr inet 4 ,
 .Xr ip 4 ,
-.Xr isakmpd 8 ,
 .Xr netintro 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr ipsecadm 8 ,
+.Xr isakmpd 8 ,
 .Xr photurisd 8 ,
-.Xr vpn 8 .
+.Xr vpn 8
 .Sh ACKNOWLEDGMENTS
 The authors of the
 .Tn IPsec
