@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.18 2003/03/04 21:47:08 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.19 2003/03/09 18:13:02 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.18 2003/03/04 21:47:08 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.19 2003/03/09 18:13:02 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -74,7 +74,7 @@ entry *
 load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	/* this function reads one crontab entry -- the next -- from a file.
 	 * it skips any leading blank lines, ignores comments, and returns
-	 * EOF if for any reason the entry can't be read and parsed.
+	 * NULL if for any reason the entry can't be read and parsed.
 	 *
 	 * the entry is also parsed here.
 	 *
@@ -165,7 +165,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		 * username/command.
 		 */
 		Skip_Blanks(ch, file);
-		if (ch == EOF) {
+		if (ch == EOF || ch == '\n') {
 			ecode = e_cmd;
 			goto eof;
 		}
@@ -241,11 +241,11 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		char		*username = cmd;	/* temp buffer */
 
 		Debug(DPARS, ("load_entry()...about to parse username\n"))
-		ch = get_string(username, MAX_COMMAND, file, " \t");
+		ch = get_string(username, MAX_COMMAND, file, " \t\n");
 
 		Debug(DPARS, ("load_entry()...got %s\n",username))
 		if (ch == EOF) {
-			ecode = e_cmd;
+			ecode = e_username;
 			goto eof;
 		}
 
@@ -256,7 +256,10 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		}
 		Debug(DPARS, ("load_entry()...uid %ld, gid %ld\n",
 			      (long)pw->pw_uid, (long)pw->pw_gid))
-	} else if (ch == '*') {
+	}
+
+	/* check for a command and catch a common typo (an extra '*') */
+	if (ch == EOF || ch == '\n' || ch == '*') {
 		ecode = e_cmd;
 		goto eof;
 	}
@@ -346,6 +349,10 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 			goto eof;
 		}
 		Skip_Blanks(ch, file)
+		if (ch == EOF || ch == '\n') {
+			ecode = e_cmd;
+			goto eof;
+		}
 	}
 	unget_char(ch, file);
 
@@ -383,10 +390,10 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	if (e->cmd)
 		free(e->cmd);
 	free(e);
+	while (ch != '\n' && !feof(file))
+		ch = get_char(file);
 	if (ecode != e_none && error_func)
 		(*error_func)(ecodes[(int)ecode]);
-	while (ch != EOF && ch != '\n')
-		ch = get_char(file);
 	return (NULL);
 }
 
@@ -415,7 +422,8 @@ get_list(bitstr_t *bits, int low, int high, const char *names[],
 	 */
 	done = FALSE;
 	while (!done) {
-		ch = get_range(bits, low, high, names, ch, file);
+		if (EOF == (ch = get_range(bits, low, high, names, ch, file)))
+			return (EOF);
 		if (ch == ',')
 			ch = get_char(file);
 		else
@@ -459,8 +467,10 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		if (ch != '-') {
 			/* not a range, it's a single number.
 			 */
-			if (EOF == set_element(bits, low, high, num1))
+			if (EOF == set_element(bits, low, high, num1)) {
+				unget_char(ch, file);
 				return (EOF);
+			}
 			return (ch);
 		} else {
 			/* eat the dash
@@ -506,8 +516,10 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 	 * designed then implemented by paul vixie).
 	 */
 	for (i = num1;  i <= num2;  i += num3)
-		if (EOF == set_element(bits, low, high, i))
+		if (EOF == set_element(bits, low, high, i)) {
+			unget_char(ch, file);
 			return (EOF);
+		}
 
 	return (ch);
 }
@@ -524,7 +536,7 @@ get_number(int *numptr, int low, const char *names[], char ch, FILE *file) {
 	all_digits = TRUE;
 	while (isalnum((unsigned char)ch)) {
 		if (++len >= MAX_TEMPSTR)
-			return (EOF);
+			goto bad;
 
 		*pc++ = ch;
 
@@ -535,7 +547,7 @@ get_number(int *numptr, int low, const char *names[], char ch, FILE *file) {
 	}
 	*pc = '\0';
 	if (len == 0)
-		return (EOF);
+		goto bad;
 
 	/* try to find the name in the name list
 	 */
@@ -558,7 +570,8 @@ get_number(int *numptr, int low, const char *names[], char ch, FILE *file) {
 		*numptr = atoi(temp);
 		return (ch);
 	}
-
+bad:
+	unget_char(ch, file);
 	return (EOF);
 }
 
