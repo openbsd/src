@@ -41,7 +41,7 @@ and are as follows:
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 11.1M gzipped, 33.7M uncompressed ]
+		[ 11.9M gzipped, 33.7M uncompressed ]
 
 	comp22.tar.gz	The OpenBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
@@ -90,7 +90,7 @@ and are as follows:
 		manual pages.  This set is highly recommended as
 		these programs are depended upon for such basic 
 		system functions as reading manual pages.
-		[ 945K gzipped, 3.5M uncompressed ]
+		[ 946K gzipped, 3.5M uncompressed ]
 
 The directory '../2.2/mac68k/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in

@@ -97,7 +97,7 @@ and are as follows:
 		base OpenBSD utilities that are necessary for the system
 		to run and be minimally functional.  It includes shared
 		library support, and excludes everything described below.
-		[ 12.3M gzipped, 39.7M uncompressed ]
+		[ 12.7M gzipped, 39.7M uncompressed ]
 
 	etc22	This distribution set contains the system configuration
 		files that reside in /etc and in several other places.
@@ -106,7 +106,7 @@ and are as follows:
 		upgrading.  (If you are upgrading, it's recommended that
 		you get a copy of this set and then CAREFULLY upgrade your
 		configuration files by hand.)
-		[ 96K gzipped, 500K uncompressed ]
+		[ 97K gzipped, 510K uncompressed ]
 
 	comp22	The OpenBSD/sparc Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN.
@@ -137,4 +137,5 @@ and are as follows:
 	text22	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
-		[ 993K gzipped, 3.7M uncompressed ]
+		[ 994K gzipped, 3.7M uncompressed ]
+

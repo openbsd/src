@@ -41,7 +41,7 @@ and are as follows:
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 13.9M gzipped, 47.4M uncompressed ]
+		[ 14.0M gzipped, 47.4M uncompressed ]
 
 	comp22	The OpenBSD/arc Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
@@ -61,7 +61,7 @@ and are as follows:
 		used if you are upgrading.  (If you are upgrading,
 		it's recommended that you get a copy of this set and
 		CAREFULLY upgrade your configuration files by hand.)
-		[ 93K gzipped, 490K uncompressed ]
+		[ 92K gzipped, 490K uncompressed ]
 
 	game22	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 7.1M uncompressed ]
@@ -76,10 +76,10 @@ and are as follows:
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
-		[ 1.7M gzipped, 5.8M uncompressed ]
+		[ 1.7M gzipped, 5.9M uncompressed ]
 
 	text22	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
-		[ 0.9M gzipped, 4.0M uncompressed ]
+		[ 958K gzipped, 4.0M uncompressed ]
 

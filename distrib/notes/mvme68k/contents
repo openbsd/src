@@ -60,7 +60,7 @@ and are as follows:
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
-		[ 1.8M gzipped, 9.1M uncompressed ]
+		[ 2.4M gzipped, 9.2M uncompressed ]
 
 	misc22	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
@@ -72,3 +72,4 @@ and are as follows:
 		including groff, all related programs, and their
 		manual pages.
 		[ 946K gzipped, 3.5M uncompressed ]
+
