@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ieee80211.h,v 1.9 2003/11/16 20:30:07 avsm Exp $	*/
+/*	$OpenBSD: if_ieee80211.h,v 1.10 2004/01/07 00:13:22 fgsch Exp $	*/
 /*	$NetBSD: if_ieee80211.h,v 1.36 2003/07/06 20:54:24 dyoung Exp $	*/
 
 /*-
@@ -549,6 +549,7 @@ struct ieee80211com {
 	struct ieee80211_wepkey	ic_nw_keys[IEEE80211_WEP_NKID];
 	int			ic_wep_txkey;	/* default tx key index */
 	void			*ic_wep_ctx;	/* wep crypt context */
+	int			ic_iv_flag;
 	u_int32_t		ic_iv;		/* initial vector for wep */
 	u_int32_t		ic_aid_bitmap[IEEE80211_MAX_AID / 32 + 1];
 	u_int16_t		ic_max_aid;
