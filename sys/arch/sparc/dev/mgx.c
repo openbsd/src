@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.1 2003/05/14 06:39:49 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.2 2003/05/15 04:59:50 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -84,6 +84,7 @@ struct mgx_softc {
 	struct	rom_reg sc_phys;
 	u_int8_t	sc_cmap[256 * 3];	/* shadow colormap */
 	volatile u_int8_t *sc_vidc;	/* ramdac registers */
+	u_int8_t	sc_vidctrl;	/* VIDC control word */
 
 	int	sc_nscreens;
 };
@@ -183,6 +184,10 @@ mgxattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_vidc = (volatile u_int8_t *)mapiodev(
 	    &ca->ca_ra.ra_reg[MGX_REG_VIDC], 0, PAGE_SIZE);
+	sc->sc_vidctrl = sc->sc_vidc[VIDC_DATA];
+
+	/* enable video */
+	mgx_burner(sc, 1, 0);
 
 	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
 
@@ -330,12 +335,11 @@ mgx_burner(void *v, u_int on, u_int flags)
 {
 	struct mgx_softc *sc = v;
 
-	/* A few magic constants here. Don't ask. */
-	sc->sc_vidc[VIDC_COMMAND] = 1;
+	sc->sc_vidc[VIDC_COMMAND] = 1;	/* trigger? */
 	if (on)
-		sc->sc_vidc[VIDC_DATA] = 0x01;
+		sc->sc_vidc[VIDC_DATA] = sc->sc_vidctrl & ~VD_DISABLEVIDEO;
 	else
-		sc->sc_vidc[VIDC_DATA] = 0x01 | VD_DISABLEVIDEO;
+		sc->sc_vidc[VIDC_DATA] = sc->sc_vidctrl | VD_DISABLEVIDEO;
 }
 
 /*
