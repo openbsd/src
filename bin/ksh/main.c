@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2004/01/08 05:43:14 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2004/06/07 23:20:46 deraadt Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 	}
 	ppid = getppid();
 	setint(global("PPID"), (long) ppid);
-#ifdef KSH
+#if defined(KSH) && !defined(__OpenBSD__)
 	setint(global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
 #endif /* KSH */
 	/* setstr can't fail here */
