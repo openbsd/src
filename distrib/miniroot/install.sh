@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.32 1998/09/25 02:23:52 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.33 1998/09/26 21:41:23 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -373,13 +373,21 @@ case "$resp" in
 			ns=""
 			for n in `grep '^nameserver ' /etc/resolv.conf | \
 			    sed -e 's/^nameserver //'`; do
-				ns="$ns $n"
+				if [ "X${ns}" = "X" ]; then
+					ns="$n"
+				else
+					ns="$ns $n"
+				fi
 			done
 		elif [ -f /tmp/resolv.conf ]; then
 			ns=""
 			for n in `grep '^nameserver ' /tmp/resolv.conf | \
 			    sed -e 's/^nameserver //'`; do
-				ns="$ns $n"
+				if [ "X${ns}" = "X" ]; then
+					ns="$n"
+				else
+					ns="$ns $n"
+				fi
 			done
 		fi
 		echo -n	"Enter IP address of primary nameserver: [$ns] "
