@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.47 1999/12/11 21:04:26 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.48 1999/12/16 05:17:36 mjacob Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -367,6 +367,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "JVC     ", "R2626           ", "1.55"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "CyberDrv", "", ""}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "PLEXTOR", "CD-ROM PX-40TS", "1.01"}, SDEV_NOSYNC},
 
  	{{T_OPTICAL, T_REMOV,
  	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
@@ -480,7 +482,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-2000        ", "2.09"}, SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "SONY    ", "SDT-5000        ", "3."},   SDEV_NOSYNCWIDE},
+	 "SONY    ", "SDT-5000        ", "3."},   SDEV_NOSYNC|SDEV_NOWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-5200        ", "3."},   SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
@@ -498,11 +500,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WANGTEK ", "5150ES SCSI",      ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WangDAT ", "Model 1300      ", "02.4"}, SDEV_NOSYNCWIDE},
+	 "WangDAT ", "Model 1300      ", "02.4"}, SDEV_NOSYNC|SDEV_NOWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WangDAT ", "Model 2600      ", "01.7"}, SDEV_NOSYNCWIDE},
+	 "WangDAT ", "Model 2600      ", "01.7"}, SDEV_NOSYNC|SDEV_NOWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
+	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNC|SDEV_NOWIDE},
 
 	{{T_SCANNER, T_FIXED,
 	 "RICOH   ", "IS60            ", "1R08"}, SDEV_NOLUNS},
@@ -731,6 +733,22 @@ scsi_probedev(scsi, target, lun)
 	    (caddr_t)scsi_quirk_patterns, 
 	    sizeof(scsi_quirk_patterns)/sizeof(scsi_quirk_patterns[0]),
 	    sizeof(scsi_quirk_patterns[0]), &priority);
+
+	/*
+	 * Based upon the inquiry flags we got back, and if we're
+	 * at SCSI-2 or better, set some limiting quirks.
+	 */
+	if ((inqbuf.version & SID_ANSII) >= 2) {
+		if ((inqbuf.flags & SID_CmdQue) == 0)
+			sc_link->quirks |= SDEV_NOTAGS;
+		if ((inqbuf.flags & SID_Sync) == 0) 
+			sc_link->quirks |= SDEV_NOSYNC;
+		if ((inqbuf.flags & SID_WBus16) == 0)
+			sc_link->quirks |= SDEV_NOWIDE;
+	}
+	/*
+	 * Now apply any quirks from the table.
+	 */
 	if (priority != 0)
 		sc_link->quirks |= finger->quirks;
 	if ((inqbuf.version & SID_ANSII) == 0 &&

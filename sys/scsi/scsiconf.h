@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.20 1999/11/22 12:55:16 mjacob Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.21 1999/12/16 05:17:36 mjacob Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -158,22 +158,24 @@ struct scsi_link {
 #define	SDEV_WAITING	 	0x0004	/* a process is waiting for this */
 #define	SDEV_OPEN	 	0x0008	/* at least 1 open session */
 #define	SDEV_DBX		0x00f0	/* debuging flags (scsi_debug.h) */
-#define SDEV_EJECTING		0x0100	/* eject on device close */
-#define SDEV_ATAPI              0x0200  /* device is ATAPI */
+#define	SDEV_EJECTING		0x0100	/* eject on device close */
+#define	SDEV_ATAPI              0x0200  /* device is ATAPI */
+#define	SDEV_2NDBUS		0x0400	/* device is a 'second' bus device */
 	u_int16_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE	      0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
-#define	SDEV_NOSYNCWIDE	      0x0002	/* does not grok SDTR or WDTR */
-#define	SDEV_NOLUNS	      0x0004	/* does not grok LUNs */
-#define	SDEV_FORCELUNS	      0x0008	/* prehistoric drive/ctlr groks LUNs */
-#define	SDEV_NOMODESENSE      0x0010	/* removable media/optical drives */
-#define	SDEV_NOSTARTUNIT      0x0020	/* do not issue start unit requests in sd.c */
-#define	SDEV_NOTAGS	      0x0040	/* lies about having tagged queueing */
-#define ADEV_NOSENSE          0x0080    /* No request sense - ATAPI */
-#define ADEV_LITTLETOC        0x0100    /* little-endian TOC - ATAPI */
-#define ADEV_NOCAPACITY       0x0200
-#define ADEV_NOTUR            0x0400
-#define ADEV_NODOORLOCK       0x0800
-#define SDEV_NOSYNCCACHE      0x1000    /* no SYNCHRONIZE_CACHE */
+#define	SDEV_NOSYNC	      0x0002	/* does not grok SDTR */
+#define	SDEV_NOWIDE	      0x0004	/* does not grok WDTR */
+#define	SDEV_NOTAGS	      0x0008	/* lies about having tagged queueing */
+#define	SDEV_NOLUNS	      0x0010	/* does not grok LUNs */
+#define	SDEV_FORCELUNS	      0x0020	/* prehistoric drive/ctlr groks LUNs */
+#define	SDEV_NOMODESENSE      0x0040	/* removable media/optical drives */
+#define	SDEV_NOSTARTUNIT      0x0080	/* do not issue start unit requests in sd.c */
+#define	SDEV_NOSYNCCACHE      0x0100    /* no SYNCHRONIZE_CACHE */
+#define	ADEV_NOSENSE          0x0200    /* No request sense - ATAPI */
+#define	ADEV_LITTLETOC        0x0400    /* little-endian TOC - ATAPI */
+#define	ADEV_NOCAPACITY       0x0800
+#define	ADEV_NOTUR            0x1000
+#define	ADEV_NODOORLOCK       0x2000
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
