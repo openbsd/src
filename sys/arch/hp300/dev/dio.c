@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.8 2003/05/10 21:11:12 deraadt Exp $	*/
+/*	$OpenBSD: dio.c,v 1.9 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -319,35 +319,23 @@ dio_devinfo(da, buf, buflen)
 /*
  * Establish an interrupt handler for a DIO device.
  */
-void *
-dio_intr_establish(func, arg, ipl, priority)
-	int (*func)(void *);
-	void *arg;
-	int ipl;
-	int priority;
+void
+dio_intr_establish(struct isr *isr, const char *name)
 {
-	void *ih;
+	intr_establish(isr, name);
 
-	ih = intr_establish(func, arg, ipl, priority);
-
-	if (priority == IPL_BIO)
+	if (isr->isr_priority == IPL_BIO)
 		dmacomputeipl();
-
-	return (ih);
 }
 
 /*
  * Remove an interrupt handler for a DIO device.
  */
 void
-dio_intr_disestablish(arg)
-	void *arg;
+dio_intr_disestablish(struct isr *isr)
 {
-	struct isr *isr = arg;
-	int priority = isr->isr_priority;
+	intr_disestablish(isr);
 
-	intr_disestablish(arg);
-
-	if (priority == IPL_BIO)
+	if (isr->isr_priority == IPL_BIO)
 		dmacomputeipl();
 }

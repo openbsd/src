@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2004/09/29 07:35:54 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/tty.h>
+#include <sys/evcount.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -88,6 +89,7 @@ static int month_days[12] = {
 u_char bbc_registers[13];
 struct hil_dev *bbcaddr = NULL;
 
+void	clockintr(struct clockframe *);
 void	statintr(struct clockframe *);
 
 void	hp300_calibrate_delay(void);
@@ -96,6 +98,9 @@ int	bbc_to_gmt(u_long *);
 void	read_bbc(void);
 u_char	read_bbc_reg(int);
 u_char	write_bbc_reg(int, u_int);
+
+struct evcount clockcnt;
+struct evcount statcnt;
 
 /*
  * Machine-dependent clock routines.
@@ -246,6 +251,9 @@ cpu_initclocks()
 	timer3min = statmin;
 	statprev = statint;
 
+	evcount_attach(&statcnt, "stat", NULL, &evcount_intr);
+	evcount_attach(&clockcnt, "clock", NULL, &evcount_intr);
+
 	/* finally, load hardware */
 	clk->clk_cr2 = CLK_CR1;
 	clk->clk_cr1 = CLK_RESET;
@@ -275,10 +283,19 @@ setstatclockrate(newhz)
 }
 
 /*
+ * Timer clock interrupt.
+ */
+void
+clockintr(fp)
+	struct clockframe *fp;
+{
+	clockcnt.ec_count++;
+	hardclock(fp);
+}
+
+/*
  * Statistics/profiling clock interrupt.  Compute a new interval.
  * Interrupt has already been cleared.
- *
- * DO THIS INLINE IN locore.s?
  */
 void
 statintr(fp)
@@ -306,6 +323,7 @@ statintr(fp)
 
 	asm volatile(" movpw %0,%1@(13)" : : "d" (newint), "a" (clk));
 	statprev = newint;
+	statcnt.ec_count++;
 	statclock(fp);
 }
 

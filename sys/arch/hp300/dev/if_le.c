@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.15 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.16 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.43 1997/05/05 21:05:32 thorpej Exp $	*/
 
 /*-
@@ -196,7 +196,11 @@ leattach(parent, self, aux)
 	am7990_config(sc);
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(leintr, sc, ipl, IPL_NET);
+	lesc->sc_isr.isr_func = leintr;
+	lesc->sc_isr.isr_arg = lesc;
+	lesc->sc_isr.isr_ipl = ipl;
+	lesc->sc_isr.isr_priority = IPL_NET;
+	dio_intr_establish(&lesc->sc_isr, self->dv_xname);
 	ler0->ler0_status = LE_IE;
 }
 
@@ -204,7 +208,8 @@ int
 leintr(arg)
 	void *arg;
 {
-	struct am7990_softc *sc = arg;
+	struct le_softc *lesc = (struct le_softc *)arg;
+	struct am7990_softc *sc = &lesc->sc_am7990;
 #ifdef USELEDS
 	u_int16_t isr;
 
@@ -220,5 +225,5 @@ leintr(arg)
 		ledcontrol(0, 0, LED_LANXMT);
 #endif /* USELEDS */
 
-	return (am7990_intr(sc));
+	return am7990_intr(sc);
 }

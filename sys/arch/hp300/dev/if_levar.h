@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_levar.h,v 1.6 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.7 2004/09/29 07:35:52 miod Exp $	*/
 /*	 $NetBSD: if_levar.h,v 1.8 1997/04/14 02:30:45 thorpej Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
  */
 struct	le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
+	struct	isr sc_isr;
 
 	struct	lereg0 *sc_r0;		/* DIO registers */
 	struct	lereg1 *sc_r1;		/* LANCE registers */

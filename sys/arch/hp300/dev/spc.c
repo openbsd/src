@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.8 2004/08/30 17:01:43 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.9 2004/09/29 07:35:52 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -67,6 +67,7 @@ void spc_dio_reset(struct spc_softc *);
 
 struct spc_dio_softc {
 	struct spc_softc sc_spc;	/* MI spc softc */
+	struct isr sc_isr;
 	volatile u_int8_t *sc_dregs;	/* Complete registers */
 
 	struct dmaqueue sc_dq;		/* DMA job queue */
@@ -156,7 +157,11 @@ spc_dio_attach(struct device *parent, struct device *self, void *aux)
 	hpspc_write(HPSCSI_CSR, 0x00);
 	hpspc_write(HPSCSI_HCONF, 0x00);
 
-	dio_intr_establish(spc_dio_intr, (void *)dsc, ipl, IPL_BIO);
+	dsc->sc_isr.isr_func = spc_dio_intr;
+	dsc->sc_isr.isr_arg = dsc;
+	dsc->sc_isr.isr_ipl = ipl;
+	dsc->sc_isr.isr_priority = IPL_BIO;
+	dio_intr_establish(&dsc->sc_isr, self->dv_xname);
 
 	spc_attach(sc);
 

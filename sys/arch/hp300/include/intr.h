@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2003/12/22 15:05:05 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2004/09/29 07:35:54 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -41,16 +41,8 @@
 #define	_HP300_INTR_H_
 
 #include <machine/psl.h>
-
-#ifdef _HP300_INTR_H_PRIVATE
+#include <sys/evcount.h>
 #include <sys/queue.h>
-
-/*
- * The location and size of the autovectored interrupt portion
- * of the vector table.
- */
-#define ISRLOC		0x18
-#define NISR		8
 
 struct isr {
 	LIST_ENTRY(isr) isr_link;
@@ -58,8 +50,8 @@ struct isr {
 	void		*isr_arg;
 	int		isr_ipl;
 	int		isr_priority;
+	struct evcount	isr_count;
 };
-#endif /* _HP300_INTR_H_PRIVATE */
 
 #ifdef _KERNEL
 /*
@@ -175,8 +167,8 @@ int	spl0(void);
 
 /* intr.c */
 void	intr_init(void);
-void	*intr_establish(int (*)(void *), void *, int, int);
-void	intr_disestablish(void *);
+void	intr_establish(struct isr *, const char *);
+void	intr_disestablish(struct isr *);
 void	intr_dispatch(int);
 void	intr_printlevels(void);
 #endif /* _KERNEL */

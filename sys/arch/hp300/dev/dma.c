@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.13 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: dma.c,v 1.14 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -79,14 +79,13 @@ struct dma_channel {
 
 struct dma_softc {
 	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
+	struct	isr sc_isr;
 	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
 #ifdef DEBUG
 	struct	timeout sc_timeout;		/* DMA timeout */
 #endif
 	TAILQ_HEAD(, dmaqueue) sc_queue;	/* job queue */
 	char	sc_type;			/* A, B, or C */
-	int	sc_ipl;				/* our interrupt level */
-	void	*sc_ih;				/* interrupt cookie */
 } dma_softc;
 
 /* types */
@@ -183,10 +182,18 @@ dmainit()
 	    rev, (rev == 'B') ? 16 : 32);
 
 	/*
+	 * Our interrupt level must be as high as the highest
+	 * device using DMA (i.e. splbio).
+	 */
+	sc->sc_isr.isr_ipl = PSLTOIPL(hp300_bioipl);
+
+	/*
 	 * Defer hooking up our interrupt until the first
 	 * DMA-using controller has hooked up theirs.
 	 */
-	sc->sc_ih = NULL;
+	sc->sc_isr.isr_func = NULL;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_priority = IPL_BIO;
 }
 
 /*
@@ -198,15 +205,11 @@ dmacomputeipl()
 {
 	struct dma_softc *sc = &dma_softc;
 
-	if (sc->sc_ih != NULL)
-		intr_disestablish(sc->sc_ih);
+	if (sc->sc_isr.isr_func != NULL)
+		intr_disestablish(&sc->sc_isr);
 
-	/*
-	 * Our interrupt level must be as high as the highest
-	 * device using DMA (i.e. splbio).
-	 */
-	sc->sc_ipl = PSLTOIPL(hp300_bioipl);
-	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, IPL_BIO);
+	sc->sc_isr.isr_func = dmaintr;
+	intr_establish(&sc->sc_isr, "dma");
 }
 
 int
@@ -336,8 +339,10 @@ dmago(unit, addr, count, flags)
 	char *dmaend = NULL;
 	int seg, tcount;
 
+#ifdef DIAGNOSTIC
 	if (count > MAXPHYS)
 		panic("dmago: count > MAXPHYS");
+#endif
 
 #if defined(HP320)
 	if (sc->sc_type == DMA_B && (flags & DMAGO_LWORD))
@@ -408,7 +413,7 @@ dmago(unit, addr, count, flags)
 	/*
 	 * Set up the command word based on flags
 	 */
-	dc->dm_cmd = DMA_ENAB | DMA_IPL(sc->sc_ipl) | DMA_START;
+	dc->dm_cmd = DMA_ENAB | DMA_IPL(sc->sc_isr.isr_ipl) | DMA_START;
 	if ((flags & DMAGO_READ) == 0)
 		dc->dm_cmd |= DMA_WRT;
 	if (flags & DMAGO_LWORD)
@@ -547,7 +552,7 @@ dmaintr(arg)
 			printf("dma channel %d: intr when armed\n", i);
 #endif
 		/*
-		 * Load the next segemnt, or finish up if we're done.
+		 * Load the next segment, or finish up if we're done.
 		 */
 		dc->dm_cur++;
 		if (dc->dm_cur <= dc->dm_last) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.16 2004/09/19 21:34:42 mickey Exp $	*/
+/*	$OpenBSD: apci.c,v 1.17 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -123,6 +123,7 @@
 
 struct apci_softc {
 	struct	device sc_dev;		/* generic device glue */
+	struct	isr sc_isr;
 	struct	apciregs *sc_apci;	/* device registers */
 	struct	tty *sc_tty;		/* tty glue */
 	struct	timeout sc_timeout;	/* timeout */
@@ -257,8 +258,11 @@ apciattach(parent, self, aux)
 		sc->sc_flags |= APCI_HASFIFO;
 
 	/* Establish our interrupt handler. */
-	frodo_intr_establish(parent, apciintr, sc, fa->fa_line,
-	    (sc->sc_flags & APCI_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
+	sc->sc_isr.isr_func = apciintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_priority =
+	    (sc->sc_flags & APCI_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF;
+	frodo_intr_establish(parent, fa->fa_line, &sc->sc_isr, self->dv_xname);
 
 	/* Set soft carrier if requested by operator. */
 	if (self->dv_cfdata->cf_flags)

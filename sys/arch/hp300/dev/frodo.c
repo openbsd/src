@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.3 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.4 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -67,8 +67,6 @@
  * in HP Apollo 9000/4xx workstations.
  */
 
-#define	_HP300_INTR_H_PRIVATE
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -84,20 +82,11 @@
 #include <hp300/dev/frodoreg.h>
 #include <hp300/dev/frodovar.h>
 
-/*
- * Description of a Frodo interrupt handler.
- */
-struct frodo_isr {
-	int	(*isr_func)(void *);
-	void	*isr_arg;
-	int	isr_priority;
-};
-
 struct frodo_softc {
 	struct device	sc_dev;		/* generic device glue */
 	volatile u_int8_t *sc_regs;	/* register base */
-	struct frodo_isr sc_intr[FRODO_NINTR]; /* interrupt handlers */
-	void		*sc_ih;		/* out interrupt cookie */
+	struct isr	*sc_intr[FRODO_NINTR]; /* interrupt handlers */
+	struct isr	sc_isr;		/* main interrupt handler */
 	int		sc_refcnt;	/* number of interrupt refs */
 };
 
@@ -178,7 +167,6 @@ frodoattach(parent, self, aux)
 
 	/* Clear all of the interrupt handlers. */
 	bzero(sc->sc_intr, sizeof(sc->sc_intr));
-	sc->sc_refcnt = 0;
 
 	/*
 	 * Disable all of the interrupt lines; we reenable them
@@ -200,7 +188,7 @@ frodoattach(parent, self, aux)
 	 * We defer hooking up our interrupt handler until
 	 * a subdevice hooks up theirs.
 	 */
-	sc->sc_ih = NULL;
+	sc->sc_refcnt = 0;
 
 	/* ... and attach subdevices. */
 	for (i = 0; frodo_subdevs[i].fa_name != NULL; i++) {
@@ -246,50 +234,45 @@ frodoprint(aux, pnp)
 }
 
 void
-frodo_intr_establish(frdev, func, arg, line, priority)
-	struct device *frdev;
-	int (*func)(void *);
-	void *arg;
-	int line;
-	int priority;
+frodo_intr_establish(struct device *frdev, int line, struct isr *isr,
+    const char *name)
 {
 	struct frodo_softc *sc = (struct frodo_softc *)frdev;
-	struct isr *isr = sc->sc_ih;
+	int priority = isr->isr_priority;
 
 	if (line < 0 || line >= FRODO_NINTR) {
-		printf("%s: bad interrupt line %d\n",
+		panic("%s: bad interrupt line %d",
 		    sc->sc_dev.dv_xname, line);
-		goto lose;
 	}
-	if (sc->sc_intr[line].isr_func != NULL) {
-		printf("%s: interrupt line %d already used\n",
+	if (sc->sc_intr[line] != NULL) {
+		panic("%s: interrupt line %d already used",
 		    sc->sc_dev.dv_xname, line);
-		goto lose;
 	}
-
-	/* Install the handler. */
-	sc->sc_intr[line].isr_func = func;
-	sc->sc_intr[line].isr_arg = arg;
-	sc->sc_intr[line].isr_priority = priority;
 
 	/*
 	 * If this is the first one, establish the frodo
 	 * interrupt handler.  If not, reestablish at a
 	 * higher priority if necessary.
 	 */
-	if (isr == NULL || isr->isr_priority < priority) {
-		if (isr != NULL)
-			intr_disestablish(isr);
-		sc->sc_ih = intr_establish(frodointr, sc, 5, priority);
+	if (sc->sc_isr.isr_priority < priority) {
+		if (sc->sc_refcnt != 0)
+			intr_disestablish(&sc->sc_isr);
+		sc->sc_isr.isr_func = frodointr;
+		sc->sc_isr.isr_arg = sc;
+		sc->sc_isr.isr_ipl = 5;
+		sc->sc_isr.isr_priority = priority;
+		intr_establish(&sc->sc_isr, sc->sc_dev.dv_xname);
 	}
 
 	sc->sc_refcnt++;
 
+	/* Install the handler. */
+	isr->isr_ipl = sc->sc_isr.isr_ipl;
+	evcount_attach(&isr->isr_count, name, &isr->isr_ipl, &evcount_intr);
+	sc->sc_intr[line] = isr;
+
 	/* Enable the interrupt line. */
 	frodo_imask(sc, (1 << line), 0);
-	return;
- lose:
-	panic("frodo_intr_establish");
 }
 
 void
@@ -298,33 +281,35 @@ frodo_intr_disestablish(frdev, line)
 	int line;
 {
 	struct frodo_softc *sc = (struct frodo_softc *)frdev;
-	struct isr *isr = sc->sc_ih;
 	int newpri;
 
-	if (sc->sc_intr[line].isr_func == NULL) {
-		printf("%s: no handler for line %d\n",
+	if (sc->sc_intr[line] == NULL) {
+		panic("%s: no handler for line %d",
 		    sc->sc_dev.dv_xname, line);
-		panic("frodo_intr_disestablish");
 	}
 
-	sc->sc_intr[line].isr_func = NULL;
+	sc->sc_intr[line] = NULL;
 	frodo_imask(sc, 0, (1 << line));
 
 	/* If this was the last, unhook ourselves. */
 	if (sc->sc_refcnt-- == 1) {
-		intr_disestablish(isr);
+		intr_disestablish(&sc->sc_isr);
 		return;
 	}
 
 	/* Lower our priority, if appropriate. */
 	for (newpri = 0, line = 0; line < FRODO_NINTR; line++)
-		if (sc->sc_intr[line].isr_func != NULL &&
-		    sc->sc_intr[line].isr_priority > newpri)
-			newpri = sc->sc_intr[line].isr_priority;
+		if (sc->sc_intr[line] != NULL &&
+		    sc->sc_intr[line]->isr_priority > newpri)
+			newpri = sc->sc_intr[line]->isr_priority;
 
-	if (newpri != isr->isr_priority) {
-		intr_disestablish(isr);
-		sc->sc_ih = intr_establish(frodointr, sc, 5, newpri);
+	if (newpri != sc->sc_isr.isr_priority) {
+		intr_disestablish(&sc->sc_isr);
+		sc->sc_isr.isr_func = frodointr;
+		sc->sc_isr.isr_arg = sc;
+		sc->sc_isr.isr_ipl = 5;
+		sc->sc_isr.isr_priority = newpri;
+		intr_establish(&sc->sc_isr, sc->sc_dev.dv_xname);
 	}
 }
 
@@ -333,7 +318,7 @@ frodointr(arg)
 	void *arg;
 {
 	struct frodo_softc *sc = arg;
-	struct frodo_isr *fisr;
+	struct isr *fisr;
 	int line, taken = 0;
 
 	/* Any interrupts pending? */
@@ -345,11 +330,18 @@ frodointr(arg)
 		 * Get pending interrupt; this also clears it for us.
 		 */
 		line = FRODO_IPEND(sc);
-		fisr = &sc->sc_intr[line];
-		if (fisr->isr_func == NULL ||
-		    (*fisr->isr_func)(fisr->isr_arg) == 0)
-			printf("%s: spurious interrupt on line %d\n",
+		fisr = sc->sc_intr[line];
+		if (fisr == NULL) {
+			printf("%s: unhandled interrupt on line %d\n",
 			    sc->sc_dev.dv_xname, line);
+		} else {
+			if ((*fisr->isr_func)(fisr->isr_arg) != 0) {
+				fisr->isr_count.ec_count++;
+			} else {
+				printf("%s: spurious interrupt on line %d\n",
+				    sc->sc_dev.dv_xname, line);
+			}
+		}
 		if (taken++ > 100)
 			panic("frodointr: looping!");
 	} while (FRODO_GETPEND(sc) != 0);

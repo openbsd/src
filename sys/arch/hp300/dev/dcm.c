@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.18 2004/09/19 21:34:42 mickey Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.19 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -217,6 +217,7 @@ static char iconv[16] = {
 
 struct	dcm_softc {
 	struct	device sc_dev;		/* generic device glue */
+	struct	isr sc_isr;
 	struct	dcmdevice *sc_dcm;	/* pointer to hardware */
 	struct	tty *sc_tty[NDCMPORT];	/* our tty instances */
 	struct	modemreg *sc_modem[NDCMPORT]; /* modem control */
@@ -352,7 +353,11 @@ dcmattach(parent, self, aux)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(dcmintr, sc, ipl, IPL_TTY);
+	sc->sc_isr.isr_func = dcmintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = ipl;
+	sc->sc_isr.isr_priority = IPL_TTY;
+	dio_intr_establish(&sc->sc_isr, self->dv_xname);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);
@@ -668,6 +673,7 @@ dcmintr(arg)
 		SEM_UNLOCK(dcm);
 		return (0);
 	}
+
 	for (i = 0; i < 4; i++) {
 		pcnd[i] = dcm->dcm_icrtab[i].dcm_data;
 		dcm->dcm_icrtab[i].dcm_data = 0;

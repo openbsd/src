@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhpib.c,v 1.12 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.13 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ struct	hpib_controller nhpib_controller = {
 
 struct nhpib_softc {
 	struct device sc_dev;		/* generic device glue */
+	struct isr sc_isr;
 	struct nhpibdevice *sc_regs;	/* device registers */
 	struct hpibbus_softc *sc_hpibbus; /* XXX */
 	struct timeout sc_read_to;	/* nhpibreadtimo timeout */
@@ -176,7 +177,11 @@ nhpibattach(parent, self, aux)
 	printf(" ipl %d: %s\n", ipl, desc);
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(nhpibintr, sc, ipl, IPL_BIO);
+	sc->sc_isr.isr_func = nhpibintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = ipl;
+	sc->sc_isr.isr_priority = IPL_BIO;
+	dio_intr_establish(&sc->sc_isr, self->dv_xname);
 
 	/* Initialize timeout structures */
 	timeout_set(&sc->sc_read_to, nhpibreadtimo, &sc->sc_hpibbus);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.19 2004/09/19 21:34:42 mickey Exp $	*/
+/*	$OpenBSD: dca.c,v 1.20 2004/09/29 07:35:52 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 
 struct	dca_softc {
 	struct device		sc_dev;		/* generic device glue */
+	struct isr		sc_isr;
 	struct dcadevice	*sc_dca;	/* pointer to hardware */
 	struct tty		*sc_tty;	/* our tty instance */
 	int			sc_oflows;	/* overflow counter */
@@ -233,8 +234,12 @@ dcaattach(parent, self, aux)
 		sc->sc_flags |= DCA_HASFIFO;
 
 	/* Establish interrupt handler. */
-	(void) dio_intr_establish(dcaintr, sc, ipl,
-	    (sc->sc_flags & DCA_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
+	sc->sc_isr.isr_func = dcaintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = ipl;
+	sc->sc_isr.isr_priority =
+	    (sc->sc_flags & DCA_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF;
+	dio_intr_establish(&sc->sc_isr, self->dv_xname);
 
 	sc->sc_flags |= DCA_ACTIVE;
 	if (self->dv_cfdata->cf_flags)

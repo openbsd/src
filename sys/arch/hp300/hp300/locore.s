@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.41 2004/07/22 19:36:38 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.42 2004/09/29 07:35:54 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1078,13 +1078,13 @@ Lnoleds1:
 	movl	d0,_ASM_LABEL(heartbeat)
 Lnoleds0:
 #endif /* USELEDS */
-	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
+	jbsr	_C_LABEL(clockintr)	| clockintr(&frame)
 	addql	#4,sp
 	CLKADDR(a0)
 Lrecheck:
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 	movb	a0@(CLKSR),d0		| see if anything happened
-	jmi	Lclkagain		|  while we were in hardclock/statintr
+	jmi	Lclkagain		|  while we were in clockintr/statintr
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 

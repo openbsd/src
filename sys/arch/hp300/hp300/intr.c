@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2003/11/06 21:09:34 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2004/09/29 07:35:54 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -41,8 +41,6 @@
  * Link and dispatch interrupts.
  */
 
-#define _HP300_INTR_H_PRIVATE
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -58,6 +56,13 @@ void	netintr(void);
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+
+/*
+ * The location and size of the autovectored interrupt portion
+ * of the vector table.
+ */
+#define ISRLOC		0x18
+#define NISR		8
 
 typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
@@ -159,28 +164,19 @@ intr_printlevels()
  * Establish an interrupt handler.
  * Called by driver attach functions.
  */
-void *
-intr_establish(func, arg, ipl, priority)
-	int (*func)(void *);
-	void *arg;
-	int ipl;
-	int priority;
+void
+intr_establish(struct isr *isr, const char *name)
 {
-	struct isr *newisr, *curisr;
+	struct isr *curisr;
 	isr_list_t *list;
 
-	if ((ipl < 0) || (ipl >= NISR))
-		panic("intr_establish: bad ipl %d", ipl);
+#ifdef DIAGNOSTIC
+	if (isr->isr_ipl < 0 || isr->isr_ipl >= NISR)
+		panic("intr_establish: bad ipl %d", isr->isr_ipl);
+#endif
 
-	newisr = (struct isr *)malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
-	if (newisr == NULL)
-		panic("intr_establish: can't allocate space for isr");
-
-	/* Fill in the new entry. */
-	newisr->isr_func = func;
-	newisr->isr_arg = arg;
-	newisr->isr_ipl = ipl;
-	newisr->isr_priority = priority;
+	evcount_attach(&isr->isr_count, name, &isr->isr_ipl,
+	    &evcount_intr);
 
 	/*
 	 * Some devices are particularly sensitive to interrupt
@@ -196,9 +192,9 @@ intr_establish(func, arg, ipl, priority)
 	 * additional work is necessary; we simply insert ourselves
 	 * at the head of the list.
 	 */
-	list = &isr_list[ipl];
+	list = &isr_list[isr->isr_ipl];
 	if (list->lh_first == NULL) {
-		LIST_INSERT_HEAD(list, newisr, isr_link);
+		LIST_INSERT_HEAD(list, isr, isr_link);
 		goto compute;
 	}
 
@@ -209,8 +205,8 @@ intr_establish(func, arg, ipl, priority)
 	 */
 	for (curisr = list->lh_first; curisr->isr_link.le_next != NULL;
 	    curisr = curisr->isr_link.le_next) {
-		if (newisr->isr_priority > curisr->isr_priority) {
-			LIST_INSERT_BEFORE(curisr, newisr, isr_link);
+		if (isr->isr_priority > curisr->isr_priority) {
+			LIST_INSERT_BEFORE(curisr, isr, isr_link);
 			goto compute;
 		}
 	}
@@ -219,25 +215,21 @@ intr_establish(func, arg, ipl, priority)
 	 * We're the least important entry, it seems.  We just go
 	 * on the end.
 	 */
-	LIST_INSERT_AFTER(curisr, newisr, isr_link);
+	LIST_INSERT_AFTER(curisr, isr, isr_link);
 
  compute:
 	/* Compute new interrupt levels. */
 	intr_computeipl();
-	return (newisr);
 }
 
 /*
  * Disestablish an interrupt handler.
  */
 void
-intr_disestablish(arg)
-	void *arg;
+intr_disestablish(struct isr *isr)
 {
-	struct isr *isr = arg;
-
+	evcount_detach(&isr->isr_count);
 	LIST_REMOVE(isr, isr_link);
-	free(isr, M_DEVBUF);
 	intr_computeipl();
 }
 
@@ -251,12 +243,14 @@ intr_dispatch(evec)
 {
 	struct isr *isr;
 	isr_list_t *list;
-	int handled, ipl, vec;
+	int handled, rc, ipl, vec;
 	static int straycount, unexpected;
 
 	vec = (evec & 0xfff) >> 2;
-	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
+#ifdef DIAGNOSTIC
+	if (vec < ISRLOC || vec >= (ISRLOC + NISR))
 		panic("isrdispatch: bad vec 0x%x", vec);
+#endif
 	ipl = vec - ISRLOC;
 
 	intrcnt[ipl]++;
@@ -272,8 +266,12 @@ intr_dispatch(evec)
 
 	handled = 0;
 	/* Give all the handlers a chance. */
-	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next)
-		handled |= (*isr->isr_func)(isr->isr_arg);
+	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next) {
+		rc = (*isr->isr_func)(isr->isr_arg);
+		if (rc > 0)
+			isr->isr_count.ec_count++;
+		handled |= rc;
+	}
 
 	if (handled)
 		straycount = 0;
