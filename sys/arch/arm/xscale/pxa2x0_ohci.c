@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.15 2005/03/30 14:24:39 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.16 2005/03/30 14:40:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -106,7 +106,7 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
+	sc->sc.sc_powerhook = powerhook_establish(pxaohci_power, &sc->sc);
 
 	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USBH1, IPL_USB,
 	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
