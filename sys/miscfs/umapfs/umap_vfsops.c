@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.12 1998/02/08 22:41:41 tholo Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.13 1999/03/18 08:34:18 art Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -92,6 +92,12 @@ umapfs_mount(mp, path, data, ndp, p)
 
 	printf("umapfs_mount(mp = %p)\n", mp);
 #endif
+
+	/*
+	 * Don't allow users to play with umapfs (when usermount is true).
+	 */
+	if (p->p_ucred->cr_uid != 0)
+		return EPERM;
 
 	/*
 	 * Update is a no-op
