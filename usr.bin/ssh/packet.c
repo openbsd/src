@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.43 2001/01/13 18:32:50 markus Exp $");
+RCSID("$OpenBSD: packet.c,v 1.44 2001/01/13 18:36:45 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -1233,6 +1233,10 @@ void
 packet_set_interactive(int interactive)
 {
 	static int called = 0;
+	int lowdelay = IPTOS_LOWDELAY;
+	int throughput = IPTOS_THROUGHPUT;
+	int on = 1;
+
 	if (called)
 		return;
 	called = 1;
@@ -1252,7 +1256,6 @@ packet_set_interactive(int interactive)
 		 * IPTOS_LOWDELAY and TCP_NODELAY.
 		 */
 		if (packet_connection_is_ipv4()) {
-			int lowdelay = IPTOS_LOWDELAY;
 			if (setsockopt(connection_in, IPPROTO_IP, IP_TOS,
 			    (void *) &lowdelay, sizeof(lowdelay)) < 0)
 				error("setsockopt IPTOS_LOWDELAY: %.100s",
@@ -1266,7 +1269,6 @@ packet_set_interactive(int interactive)
 		 * Set IP options for a non-interactive connection.  Use
 		 * IPTOS_THROUGHPUT.
 		 */
-		int throughput = IPTOS_THROUGHPUT;
 		if (setsockopt(connection_in, IPPROTO_IP, IP_TOS, (void *) &throughput,
 		    sizeof(throughput)) < 0)
 			error("setsockopt IPTOS_THROUGHPUT: %.100s", strerror(errno));
