@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.16 1997/05/05 00:35:36 tholo Exp $
+#	$OpenBSD: install.sub,v 1.17 1997/05/05 05:18:19 grr Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ if [ X$EDITOR = X ]; then
 	export EDITOR
 fi
 
+# Please don't use the 1 of n form below, good idea, wrong implementation!
 # get a reponse with default[s]
 getresp() {
 	valid="false"
