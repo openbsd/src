@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.7 2004/07/15 12:00:31 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.8 2004/07/15 12:08:14 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -890,16 +890,6 @@ atw_reset(struct atw_softc *sc)
 void
 atw_clear_sram(struct atw_softc *sc)
 {
-#if 0
-	for (addr = 0; addr < 448; addr++) {
-		ATW_WRITE(sc, ATW_WEPCTL,
-		    ATW_WEPCTL_WR | ATW_WEPCTL_UNKNOWN0	| addr);
-		DELAY(1000);
-		ATW_WRITE(sc, ATW_WESK, 0);
-		DELAY(1000); /* paranoia */
-	}
-	return;
-#endif
 	memset(sc->sc_sram, 0, sizeof(sc->sc_sram));
 	/* XXX not for revision 0x20. */
 	atw_write_sram(sc, 0, sc->sc_sram, sizeof(sc->sc_sram));
@@ -2371,8 +2361,6 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		panic("%s: unexpected state IEEE80211_S_INIT\n", __func__);
 		break;
 	case IEEE80211_S_SCAN:
-		memset(sc->sc_bssid, 0, IEEE80211_ADDR_LEN);
-		atw_write_bssid(sc);
 		timeout_add(&sc->sc_scan_to, atw_dwelltime * hz / 1000);
 		break;
 	case IEEE80211_S_RUN:
@@ -2413,7 +2401,12 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	else
 		atw_start_beacon(sc, 0);
 
-	return (*sc->sc_newstate)(ic, nstate, arg);
+	error = (*sc->sc_newstate)(ic, nstate, arg);
+
+	if (ostate == IEEE80211_S_INIT && nstate == IEEE80211_S_SCAN)
+		atw_write_bssid(sc);
+
+	return error;
 }
 
 /*
@@ -3350,6 +3343,9 @@ atw_start(struct ifnet *ifp)
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
 		} else {
+			/* send no data packets until we are associated */
+			if (ic->ic_state != IEEE80211_S_RUN)
+				break;
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
