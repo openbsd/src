@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.5 2001/08/09 00:03:12 millert Exp $	*/
+/*	$OpenBSD: ln.c,v 1.6 2001/08/09 03:33:17 millert Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: ln.c,v 1.5 2001/08/09 00:03:12 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ln.c,v 1.6 2001/08/09 03:33:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ linkit(target, source, isdir)
 	statf = hflag ? lstat : stat;
 
 	/* If the source is a directory, append the target's name. */
-	if (isdir || (!stat(source, &sb) && S_ISDIR(sb.st_mode))) {
+	if (isdir || (!statf(source, &sb) && S_ISDIR(sb.st_mode))) {
 		if ((p = strrchr(target, '/')) == NULL)
 			p = target;
 		else
@@ -173,7 +173,7 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-fhns] file1 file2\n\tln [-fhns] file ... directory\n",
+	    "usage: %s [-fhns] file1 file2\n\tln [-fs] file ... directory\n",
 	    __progname);
 	exit(1);
 }
