@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.5 1996/07/25 14:20:51 joshd Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.6 1997/01/15 03:19:24 kstailey Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.6 1996/05/07 02:40:51 thorpej Exp $	*/
 
 /*
@@ -787,7 +787,7 @@ pppinput(c, tp)
 {
     register struct ppp_softc *sc;
     struct mbuf *m;
-    int ilen, s;
+    int ilen, s = 0;
 
     sc = (struct ppp_softc *) tp->t_sc;
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
