@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.1,v 1.1 2005/02/19 22:15:41 millert Exp $
+.\"	$OpenBSD: getcap.1,v 1.2 2005/02/21 10:41:28 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -38,7 +38,7 @@ record ...
 .Sh DESCRIPTION
 The
 .Nm
-utility provides a simple method of querying a capability database such as
+utility provides a simple method for querying a capability database such as
 .Pa /etc/login.conf
 or
 .Pa /etc/printcap
@@ -61,11 +61,11 @@ capabilities database (i.e. literally), use a
 query instead.
 .It string
 A string capability (key=value).
-Note that the value printed has escape sequences expanded, see
+Note that the value printed has escape sequences expanded: see
 .Xr getcap 3
 for a list of valid escape sequences.
 To print the string exactly as it is listed in the
-capabilities database, use a  
+capabilities database, use a
 .Dq raw
 query instead.
 .It raw
@@ -75,7 +75,7 @@ for getting the raw, unformatted entry from the database.
 .El
 .Pp
 .Nm
-prints the value associated with the give key.
+prints the value associated with the given key.
 If more than one record is being searched, the value is prefixed
 with the record name (for records with multiple names, only the
 first is printed).
@@ -92,7 +92,7 @@ Return occurrences of
 .It Fl c Ar capability
 Return the raw value for the key
 .Ar capability ,
-which must include the type as the last character, e.g.
+which must include the type as the last character, e.g.\&
 .Dq foo=
 for the string
 .Sq foo .
@@ -112,13 +112,13 @@ Return occurrences of the string
 Only one of the
 .Fl b ,
 .Fl c ,
-.Fl n
+.Fl n ,
 and
-.Fl s 
+.Fl s
 options may be specified.
-If none are specified, the record will be dumped from the database as-is.
+If none are specified, the record will be dumped from the database as is.
 .Sh FILES
-.Bl -tag -width /etc/login.conf -compact
+.Bl -tag -width "/etc/login.confXX" -compact
 .It Pa /etc/login.conf
 login configuration
 .It Pa /etc/printcap
@@ -137,13 +137,13 @@ capability:
 .Pp
 Dump the
 .Dq default
-record in 
+record in
 .Xr login.conf 5 :
 .Pp
 .Dl "$ getcap -f /etc/login.conf default"
 .Pp
 Print all
-.Xr login.conf 5 :
+.Xr login.conf 5
 records with the
 .Dq localcipher
 capability:
@@ -181,4 +181,4 @@ The
 command appeared in
 .Ox 3.7 .
 .Sh AUTHORS
-Todd C. Miller
+.An Todd C. Miller
