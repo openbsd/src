@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.37 1996/08/27 14:46:54 shawn Exp $
+#	$OpenBSD: files,v 1.38 1996/08/29 07:40:25 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -69,7 +69,7 @@ pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
-pseudo-device rnd
+pseudo-device random
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
@@ -102,8 +102,8 @@ file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/mulaw.c			mulaw
-file dev/rnd.c				rnd			needs-flag
 file dev/vnd.c				vnd			needs-flag
+file dev/random.c			random			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660
