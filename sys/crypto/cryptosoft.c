@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.12 2000/06/20 05:40:38 angelos Exp $	*/
+/* $OpenBSD: cryptosoft.c,v 1.13 2000/07/21 00:02:20 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -325,10 +325,7 @@ swcr_authcompute(struct cryptodesc *crd, struct swcr_data *sw,
     bcopy(sw->sw_ictx, &ctx, axf->ctxsize);
 
     if (outtype == CRYPTO_BUF_CONTIG)
-    {
-	axf->Update(&ctx, buf + crd->crd_skip, crd->crd_len);
-	axf->Final(aalg, &ctx);
-    }
+      axf->Update(&ctx, buf + crd->crd_skip, crd->crd_len);
     else
     {
 	err = m_apply((struct mbuf *) buf, crd->crd_skip,
@@ -337,11 +334,8 @@ swcr_authcompute(struct cryptodesc *crd, struct swcr_data *sw,
 		      (caddr_t) &ctx);
 	if (err)
 	  return err;
-
-	axf->Final(aalg, &ctx);
     }
 
-    /* HMAC processing */
     switch (sw->sw_alg)
     {
 	case CRYPTO_MD5_HMAC96:
@@ -350,10 +344,20 @@ swcr_authcompute(struct cryptodesc *crd, struct swcr_data *sw,
 	    if (sw->sw_octx == NULL)
 	      return EINVAL;
 
+            axf->Final(aalg, &ctx);
 	    bcopy(sw->sw_octx, &ctx, axf->ctxsize);
 	    axf->Update(&ctx, aalg, axf->hashsize);
 	    axf->Final(aalg, &ctx);
 	    break;
+
+        case CRYPTO_MD5_KPDK:
+        case CRYPTO_SHA1_KPDK:
+	    if (sw->sw_octx == NULL)
+	      return EINVAL;
+
+	    axf->Update(&ctx, sw->sw_octx, sw->sw_klen);
+	    axf->Final(aalg, &ctx);
+            break;
     }
 
     /* Inject the authentication data */
@@ -541,6 +545,18 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		    return ENOBUFS;
 		}
 
+		/* Store the key so we can "append" it to the payload */
+		MALLOC((*swd)->sw_octx, u_int8_t *, cri->cri_klen / 8,
+		       M_XDATA, M_NOWAIT);
+		if ((*swd)->sw_octx == NULL)
+		{
+		    swcr_freesession(i);
+		    return ENOBUFS;
+		}
+
+		(*swd)->sw_klen = cri->cri_klen / 8;
+		bcopy(cri->cri_key, (*swd)->sw_octx, cri->cri_klen / 8);
+
 		axf->Init((*swd)->sw_ictx);
 		axf->Update((*swd)->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);
@@ -604,6 +620,21 @@ swcr_freesession(u_int64_t tid)
 	    case CRYPTO_MD5_HMAC96:
 	    case CRYPTO_SHA1_HMAC96:
 	    case CRYPTO_RIPEMD160_HMAC96:
+		axf = swd->sw_axf;
+
+		if (swd->sw_ictx)
+		{
+		    bzero(swd->sw_ictx, axf->ctxsize);
+		    FREE(swd->sw_ictx, M_XDATA);
+		}
+
+		if (swd->sw_octx)
+		{
+		    bzero(swd->sw_octx, axf->ctxsize);
+		    FREE(swd->sw_octx, M_XDATA);
+		}
+		break;
+
 	    case CRYPTO_MD5_KPDK:
 	    case CRYPTO_SHA1_KPDK:
 		axf = swd->sw_axf;
@@ -616,7 +647,7 @@ swcr_freesession(u_int64_t tid)
 
 		if (swd->sw_octx)
 		{
-		    bzero(swd->sw_octx, axf->ctxsize);
+		    bzero(swd->sw_octx, swd->sw_klen);
 		    FREE(swd->sw_octx, M_XDATA);
 		}
 		break;
