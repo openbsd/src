@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: alias_nbt.c,v 1.1 1998/08/31 00:22:10 brian Exp $
+ * $Id: alias_nbt.c,v 1.1 1998/08/31 08:16:33 brian Exp $
  *
  *  TODO:
  *       oClean up. 

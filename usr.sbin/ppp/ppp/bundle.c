@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.1 1998/08/31 00:22:16 brian Exp $
+ *	$Id: bundle.c,v 1.2 1998/08/31 08:16:34 brian Exp $
  */
 
 #include <sys/param.h>
@@ -37,9 +37,6 @@
 #include <netinet/ip.h>
 #include <sys/un.h>
 
-#ifndef NOALIAS
-#include <alias.h>
-#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -52,6 +49,13 @@
 #include <termios.h>
 #include <unistd.h>
 
+#ifndef NOALIAS
+#ifdef __OpenBSD__
+#include "alias.h"
+#else
+#include <alias.h>
+#endif
+#endif
 #include "defs.h"
 #include "command.h"
 #include "mbuf.h"

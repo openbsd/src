@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1998/08/31 00:43:56 deraadt Exp $
+#	$Id: Makefile,v 1.3 1998/08/31 08:16:25 brian Exp $
 
 PROG=	ppp
 SRCS=	arp.c async.c auth.c bundle.c cbcp.c ccp.c chap.c chat.c command.c \
@@ -30,12 +30,12 @@ CFLAGS+=-DRELEASE_CRUNCH
 CFLAGS+=-DNOALIAS
 .else
 .if !defined(RELEASE_CRUNCH)
-SRCS+=	alias_cmd.c
 .if (${OPSYS} == "OpenBSD")
-CFLAGS+=-I${.CURDIR}/../libalias
-LDADD+=	../libalias/libalias.a
-DPADD+= ../libalias/libalias.a
+CFLAGS+=-DNO_FW_PUNCH
+SRCS+=	alias.c alias_cmd.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
+	alias_nbt.c alias_util.c
 .else
+SRCS+=	alias_cmd.c
 LDADD+=	-lalias
 DPADD+= ${LIBALIAS}
 .endif
