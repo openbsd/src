@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.8 1996/09/11 07:27:03 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.9 1996/09/16 02:36:08 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -1309,7 +1309,8 @@ wdc_get_parms(d_link)
 
 	while ((wdc->sc_flags & WDCF_ACTIVE) != 0) {
 		wdc->sc_flags |= WDCF_WANTED;
-		if ((error = tsleep(wdc, PRIBIO | PCATCH, "wdprm", 0)) != 0) {
+		error = tsleep(wdc, PRIBIO | PCATCH, "wdprm", 0);
+		if (error != 0) {
 			splx(s);
 			return error;
 		}
@@ -1328,7 +1329,7 @@ wdc_get_parms(d_link)
 		    sizeof d_link->sc_lp->d_typename);
 		d_link->sc_lp->d_type = DTYPE_ST506;
 
-		strncpy(d_link->sc_params.wdp_model, "unknown",
+		strncpy(d_link->sc_params.wdp_model, "ST506/MFM",
 		    sizeof d_link->sc_params.wdp_model);
 		d_link->sc_params.wdp_config = WD_CFG_FIXED;
 		d_link->sc_params.wdp_cylinders = 1024;

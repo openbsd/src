@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.17 1996/08/07 01:53:01 downsj Exp $	*/
+/*	$OpenBSD: wd.c,v 1.18 1996/09/16 02:36:10 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -174,15 +174,17 @@ wdattach(parent, self, aux)
 	*q++ = '\0';
 
 	printf(": <%s>\n", buf);
-	printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
-	    self->dv_xname,
-	    d_link->sc_params.wdp_cylinders *
-	    (d_link->sc_params.wdp_heads * d_link->sc_params.wdp_sectors) /
-	    (1048576 / DEV_BSIZE),
-	    d_link->sc_params.wdp_cylinders,
-	    d_link->sc_params.wdp_heads,
-	    d_link->sc_params.wdp_sectors,
-	    DEV_BSIZE);
+	if (d_link->sc_lp->d_type != DTYPE_ST506) {
+		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+		    self->dv_xname,
+		    d_link->sc_params.wdp_cylinders *
+		    (d_link->sc_params.wdp_heads *
+		     d_link->sc_params.wdp_sectors) / (1048576 / DEV_BSIZE),
+		    d_link->sc_params.wdp_cylinders,
+		    d_link->sc_params.wdp_heads,
+		    d_link->sc_params.wdp_sectors,
+		    DEV_BSIZE);
+	}
 
 #if NISADMA > 0
 	if ((d_link->sc_params.wdp_capabilities & WD_CAP_DMA) != 0 &&
