@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.19 2002/06/09 08:13:06 todd Exp $
+$OpenBSD: DESIGN-NOTES,v 1.20 2002/06/10 18:11:11 ho Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -41,7 +41,6 @@ crypto.c	Generic cryptography.
 dh.c		Diffie-Hellman exchange logic.
 dnssec.c	IKE authentication using signed DNS KEY RRs.
 doi.c		Generic handling of different DOIs.
-dyn.c		Support for dynamic loading of executable code.
 exchange.c	Exchange state machinery.
 exchange_num.cst
 		Some constants used for exhange scripts.
@@ -69,7 +68,7 @@ isakmp_fld.fld	Generic packet layout.
 isakmp_num.cst	ISAKMP constants.
 isakmpd.c	Main loop.
 key.c		Generic key handling.
-libcrypto.c	Deal with both statically and dynamically loaded libcrypto.
+libcrypto.c	Initialize crypto (OpenSSL).
 log.c		Logging of exceptional or informational messages.
 math_2n.c	Polynomial math.
 math_ec2n.c	Elliptic curve math.
@@ -386,22 +385,6 @@ certificate.  It will insert the subjectAltname extension and sign it
 with the provided private Key.  The resulting certificate then needs
 to be stored in the directory pointed to by "Certs-directory" in
 section "X509-certificates".
-
-Dynamic loading
----------------
-
-There is some rudimentary support to dynamically load executable code.
-What you need to do in order to load code, is to make sure that your
-system supports dlopen(3) and then you write scripts like this:
-
-static struct dynload_script my_script[] = {
-  { LOAD, "libmine.so", &libmine },
-  { SYM, "MySymbol", &MySymbol }
-};
-
-and then call dyn_load (my_script).  Then libmine.so will be loaded, and
-external references resolved, and then the specified symbols will be looked
-up and their value put in the given pointer.
 
 License to use
 --------------
