@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.2 2002/02/25 19:51:51 maja Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.3 2002/02/25 20:23:33 maja Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -196,7 +196,7 @@ const keysym_t sunkbd_keydesc_sv_nodead[] = {
 const struct wscons_keydesc sunkbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	sunkbd_keydesc_us),
 	KBD_MAP(KB_SV,			KB_US,	sunkbd_keydesc_sv),
-	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	sunkbd_keydesc_sv),
+	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	sunkbd_keydesc_sv_nodead),
 	{0, 0, 0, 0},
 };
 
