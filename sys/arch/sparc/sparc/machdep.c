@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.86 2002/10/24 19:37:00 fgsch Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.87 2002/11/07 04:39:14 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -650,8 +650,9 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp;
+	struct sigcontext ksc;
 	struct trapframe *tf;
+	int error;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -662,29 +663,28 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
-	scp = SCARG(uap, sigcntxp);
-	if ((int)scp & 3 || uvm_useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
-		return (EINVAL);
+	if ((error = copyin(SCARG(uap, sigcntxp), &ksc, sizeof(ksc))) != 0)
+		return (error);
 	tf = p->p_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
 	 * verified.  pc and npc must be multiples of 4.  This is all
 	 * that is required; if it holds, just do it.
 	 */
-	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
+	if (((ksc.sc_pc | ksc.sc_npc) & 3) != 0)
 		return (EINVAL);
 	/* take only psr ICC field */
-	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (scp->sc_psr & PSR_ICC);
-	tf->tf_pc = scp->sc_pc;
-	tf->tf_npc = scp->sc_npc;
-	tf->tf_global[1] = scp->sc_g1;
-	tf->tf_out[0] = scp->sc_o0;
-	tf->tf_out[6] = scp->sc_sp;
-	if (scp->sc_onstack & 1)
+	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (ksc.sc_psr & PSR_ICC);
+	tf->tf_pc = ksc.sc_pc;
+	tf->tf_npc = ksc.sc_npc;
+	tf->tf_global[1] = ksc.sc_g1;
+	tf->tf_out[0] = ksc.sc_o0;
+	tf->tf_out[6] = ksc.sc_sp;
+	if (ksc.sc_onstack & 1)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask & ~sigcantmask;
+	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }
 
