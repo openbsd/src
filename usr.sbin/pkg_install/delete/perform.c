@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.6 1999/10/09 20:35:45 beck Exp $	*/
+/*	$OpenBSD: perform.c,v 1.7 2000/03/24 00:21:28 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1999/10/09 20:35:45 beck Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.7 2000/03/24 00:21:28 espie Exp $";
 #endif
 
 /*
@@ -24,6 +24,8 @@ static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1999/10/09 20:35:45 beck E
  *
  */
 
+#include <sys/param.h>
+#include <sys/mount.h>
 #include <err.h>
 #include "lib.h"
 #include "delete.h"
@@ -134,6 +136,20 @@ try_again:
 	warnx("package '%s' doesn't have a prefix", pkg);
 	return 1;
     }
+    {
+	struct statfs buffer;
+
+	if (statfs(p->name, &buffer) == -1) {
+	    warnx("package '%s' prefix (%s) does not exist", pkg, p->name);
+	    return 1;
+	}
+	if (buffer.f_flags & MNT_RDONLY) {
+	    warnx("package'%s' mount point %s is read-only", pkg,
+		buffer.f_mntonname);
+	    return 1;
+	}
+    }
+
     setenv(PKG_PREFIX_VNAME, p->name, 1);
     if (fexists(REQUIRE_FNAME)) {
 	if (Verbose)
