@@ -3508,7 +3508,8 @@ expand_keywords (rcs, ver, name, log, loglen, expand, buf, len, retbuf, retlen)
 	return;
     }
 
-    if (RCS_citag != NULL && keywords[KEYWORD_LOCALID].string == NULL) {
+    if (RCS_citag != NULL && *RCS_citag && *RCS_citag != '-'
+	&& keywords[KEYWORD_LOCALID].string == NULL) {
 	keywords[KEYWORD_LOCALID].string = RCS_citag;
 	keywords[KEYWORD_LOCALID].len = strlen(RCS_citag);
     }

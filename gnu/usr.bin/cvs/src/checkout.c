@@ -44,7 +44,7 @@ static int checkout_proc PROTO((int argc, char **argv, char *where,
 
 static const char *const checkout_usage[] =
 {
-    "Usage:\n  %s %s [-ANPRcflnps] [-r rev] [-D date] [-d dir]\n",
+    "Usage:\n  %s %s [-ANPRcflnps] [-t id] [-r rev] [-D date] [-d dir]\n",
     "    [-j rev1] [-j rev2] [-k kopt] modules...\n",
     "\t-A\tReset any sticky tags/date/kopts.\n",
     "\t-N\tDon't shorten module paths if -d specified.\n",
@@ -61,13 +61,14 @@ static const char *const checkout_usage[] =
     "\t-d dir\tCheck out into dir instead of module name.\n",
     "\t-k kopt\tUse RCS kopt -k option on checkout. (is sticky)\n",
     "\t-j rev\tMerge in changes made between current revision and rev.\n",
+    "\t-t id\tRCS identifier to expand on checkout.\n",
     "(Specify the --help global option for a list of other help options)\n",
     NULL
 };
 
 static const char *const export_usage[] =
 {
-    "Usage: %s %s [-NRfln] [-r rev] [-D date] [-d dir] [-k kopt] module...\n",
+    "Usage: %s %s [-NRfln] [-r rev] [-t id] [-D date] [-d dir] [-k kopt] module...\n",
     "\t-N\tDon't shorten module paths if -d specified.\n",
     "\t-f\tForce a head revision match if tag/date not found.\n",
     "\t-l\tLocal directory only, not recursive\n",
@@ -77,6 +78,7 @@ static const char *const export_usage[] =
     "\t-D date\tExport revisions as of date.\n",
     "\t-d dir\tExport into dir instead of module name.\n",
     "\t-k kopt\tUse RCS kopt -k option on checkout.\n",
+    "\t-t id\tRCS identifier to expand on export.\n",
     "(Specify the --help global option for a list of other help options)\n",
     NULL
 };
@@ -121,13 +123,13 @@ checkout (argc, argv)
     if (strcmp (command_name, "export") == 0)
     {
         m_type = EXPORT;
-	valid_options = "+Nnk:d:flRQqr:D:";
+	valid_options = "+Nnk:d:flRQqr:t:D:";
 	valid_usage = export_usage;
     }
     else
     {
         m_type = CHECKOUT;
-	valid_options = "+ANnk:d:flRpQqcsr:D:j:P";
+	valid_options = "+ANnk:d:flRpQqcsr:t:D:j:P";
 	valid_usage = checkout_usage;
     }
 
@@ -198,6 +200,11 @@ checkout (argc, argv)
 	    case 'r':
 		tag = optarg;
 		checkout_prune_dirs = 1;
+		break;
+	    case 't':
+		if (RCS_citag)
+		    free(RCS_citag);
+		RCS_citag = strdup(optarg);
 		break;
 	    case 'D':
 		date = Make_Date (optarg);

@@ -109,7 +109,7 @@ static time_t last_register_time;
 static const char *const update_usage[] =
 {
     "Usage: %s %s [-APCdflRp] [-k kopt] [-r rev] [-D date] [-j rev]\n",
-    "    [-I ign] [-W spec] [files...]\n",
+    "    [-I ign] [-W spec] [-t id] [files...]\n",
     "\t-A\tReset any sticky tags/date/kopts.\n",
     "\t-P\tPrune empty directories.\n",
     "\t-C\tOverwrite locally modified files with clean repository copies.\n",
@@ -124,6 +124,7 @@ static const char *const update_usage[] =
     "\t-j rev\tMerge in changes made between current revision and rev.\n",
     "\t-I ign\tMore files to ignore (! to reset).\n",
     "\t-W spec\tWrappers specification line.\n",
+    "\t-t id\tRCS identifier to expand on update.\n",
     "(Specify the --help global option for a list of other help options)\n",
     NULL
 };
@@ -148,7 +149,7 @@ update (argc, argv)
 
     /* parse the args */
     optind = 0;
-    while ((c = getopt (argc, argv, "+ApCPflRQqduk:r:D:j:I:W:")) != -1)
+    while ((c = getopt (argc, argv, "+ApCPflRQqduk:r:t:D:j:I:W:")) != -1)
     {
 	switch (c)
 	{
@@ -194,6 +195,11 @@ update (argc, argv)
 		break;
 	    case 'r':
 		tag = optarg;
+		break;
+	    case 't':
+		if (RCS_citag)
+		    free(RCS_citag);
+		RCS_citag = strdup(optarg);
 		break;
 	    case 'D':
 		date = Make_Date (optarg);

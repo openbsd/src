@@ -607,6 +607,16 @@ option, which you can specify to the
 of a
 .B cvs
 command!
+.TP
+\fB\-t\fP \fIid\fP
+Expand the RCS identifier specified by the
+.I id
+argument in addition to the default ``Id'' identifier.
+.B \-t
+is available with the
+.BR checkout ", " export ", and " update
+commands.  If the identifier name is specified as ``-'', no additional
+identifiers will be expanded.
 .SH "CVS COMMANDS"
 Here (finally) are details on all the
 .B cvs
