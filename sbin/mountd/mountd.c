@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.53 2003/01/05 22:41:36 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.54 2003/03/09 00:30:24 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -283,8 +283,10 @@ main(int argc, char *argv[])
 	} else {
 		pidfile = fopen(_PATH_MOUNTDPID, "w");
 	}
-	fprintf(pidfile, "%ld\n", (long)getpid());
-	fclose(pidfile);
+	if (pidfile) {
+		fprintf(pidfile, "%ld\n", (long)getpid());
+		fclose(pidfile);
+	}
 
 	signal(SIGHUP, (void (*)(int)) new_exportlist);
 	signal(SIGTERM, (void (*)(int)) send_umntall);
