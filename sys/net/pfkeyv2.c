@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.52 2000/12/14 18:07:29 provos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.53 2000/12/15 20:32:09 provos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -688,10 +688,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 		  {
 		       /* Check for specified satype */
 		      if ((1 << satype) & s->registration)
-		      {   /* Done */
 		          pfkey_sendup(s->socket, packet, 1);
-		          break;
-		      }
 		  }
 	      }
 
