@@ -109,11 +109,10 @@ a tape drive is not online or no disk pack is
 loaded on a drive.
 .It Er 7 E2BIG Em "Arg list too long" .
 The number of bytes used for the argument and environment
-list of the new process exceeded the current limit
-of 20480 bytes
-.Pf ( Dv NCARGS
-in
-.Aq Pa sys/param.h ) .
+list of the new process exceeded the limit
+.Pf Dv NCARGS
+(specified in
+.Aq Pa sys/param.h ).
 .It Er 8 ENOEXEC Em "Exec format error" .
 A request was made to execute a file
 that, although it has the appropriate permissions,
@@ -552,8 +551,7 @@ excluding 0 (NUL) and the
 .Tn ASCII
 code for
 .Ql \&/
-(slash).  (The parity bit,
-bit 7, must be 0.)
+(slash).
 .Pp
 Note that it is generally unwise to use
 .Ql \&* ,

@@ -54,6 +54,12 @@ Here the current core residency of the pages is returned
 in the character array 
 .Fa vec ,
 with a value of 1 meaning that the page is in-core.
+.Sh RETURN VALUES
+Upon successful completion,
+a value of 0 is returned.
+Otherwise, a value of -1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh SEE ALSO
 .Xr madvise 2 ,
 .Xr minherit 2 ,

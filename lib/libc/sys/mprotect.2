@@ -52,6 +52,12 @@ changes the specified pages to have protection
 .Fa prot .
 Not all implementations will guarantee protection on a page basis;
 the granularity of protection changes may be as large as an entire region.
+.Sh RETURN VALUES
+Upon successful completion,
+a value of 0 is returned.
+Otherwise, a value of -1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh SEE ALSO
 .Xr madvise 2 , 
 .Xr mincore 2 , 

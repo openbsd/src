@@ -67,6 +67,12 @@ will also take place at this time.
 Filesystem operations on a file that is mapped for shared modifications
 are unpredictable except after an
 .Fn msync .
+.Sh RETURN VALUES
+Upon successful completion,
+a value of 0 is returned.
+Otherwise, a value of -1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 The following errors may be reported:
 .Bl -tag -width Er

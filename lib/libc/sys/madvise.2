@@ -60,6 +60,12 @@ The known behaviors are given in
 #define	MADV_DONTNEED	4	/* don't need these pages */
 #define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
 .Ed
+.Sh RETURN VALUES
+Upon successful completion,
+a value of 0 is returned.
+Otherwise, a value of -1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh SEE ALSO
 .Xr mincore 2 ,
 .Xr minherit 2 ,
