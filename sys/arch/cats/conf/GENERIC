@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2005/01/14 12:21:02 grange Exp $
+#	$OpenBSD: GENERIC,v 1.20 2005/02/15 11:03:46 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -147,7 +147,9 @@ xl*	at pci?			# 3C9xx ethernet
 #lmc*	at pci?			# Lan Media Corp SSI/HSSI/DS3
 
 # MII/PHY support
+acphy*	at mii?			# Altima AC101 PHYs
 amphy*	at mii?			# AMD 79C873 PHYs
+bmtphy*	at mii?			# Broadcom 10/100 PHYs
 exphy*	at mii?			# 3Com internal PHYs
 icsphy* at mii?			# Integrated Circuit Systems ICS189x
 inphy*	at mii?			# Intel 82555 PHYs
@@ -156,10 +158,12 @@ lxtphy*	at mii?			# Level One LXT-970 PHYs
 nsphy*	at mii?			# NS83840 PHYs
 nsphyter* at mii?		# NS83843 PHYs
 qsphy*	at mii?			# Quality Semiconductor QS6612 PHYs
+rlphy* at mii?			# RealTek 8139 internal PHYs
 sqphy*	at mii?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii?			# ThunderLAN PHYs
 tqphy*	at mii?			# TDK Semiconductor PHYs
 ukphy*	at mii?			# generic unknown PHYs
+urlphy*	at mii?			# Realtek RTL8150L internal PHY
 
 # USB Controller and Devices
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.37 2004/12/08 08:05:44 dlg Exp $
+#	$OpenBSD: RAMDISK,v 1.38 2005/02/15 11:03:46 jsg Exp $
 #
 # PPC GENERIC config file
 #
@@ -71,6 +71,7 @@ wi*		at pci?		# WaveLAN IEEE 802.11DS
 # how many of these are needed?
 amphy*		at mii?		# AMD 79C873 PHYs
 dcphy*		at mii?		# Digital Clone PHYs
+acphy*		at mii?		# Altima AC101 PHYs
 exphy*		at mii?		# 3Com internal PHYs
 inphy*		at mii?		# Intel 82555 PHYs
 iophy*		at mii?		# Intel 82553 PHYs
@@ -81,11 +82,13 @@ nsphy*		at mii?		# NS83840 PHYs
 mtdphy*		at mii?		# Myson MTD972 PHYs
 #qsphy*		at mii?		# Quality Semiconductor QS6612 PHYs
 sqphy*		at mii?		# Seeq 80220/80221/80223 PHYs
+rlphy*		at mii?		# RealTek 8139 internal PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 #tqphy*		at mii?		# TDK Semiconductor PHYs
 brgphy*		at mii?		# Broadcom 10/100/1000 PHYs
 bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
+urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ukphy*		at mii?		# generic unknown PHYs
 

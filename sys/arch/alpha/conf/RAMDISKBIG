@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.49 2005/01/06 21:32:56 deraadt Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.50 2005/02/15 11:03:45 jsg Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -221,10 +221,13 @@ sqphy*	at mii?				# Seeq 8x220 PHYs
 rlphy*	at mii?				# RealTek 8139 internal PHYs
 mtdphy*	at mii?				# Myson MTD972 PHYs
 dcphy*	at mii?				# Digital Clone PHYs
+acphy*	at mii?				# Altima AC101 PHYs
 amphy*	at mii?				# AMD 79C873 PHYs
 tqphy*	at mii?				# TDK 78Q212x PHYs
+bmtphy*	at mii?				# Broadcom 10/100 PHYs
 brgphy*	at mii?				# Broadcom Gigabit PHYs
 xmphy*	at mii?				# XaQti XMAC-II PHYs
+urlphy*	at mii?				# Realtek RTL8150L internal PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 # ISA/EISA bus support

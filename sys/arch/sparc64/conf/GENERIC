@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.116 2005/01/14 12:21:02 grange Exp $
+#	$OpenBSD: GENERIC,v 1.117 2005/02/15 11:03:46 jsg Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -274,6 +274,7 @@ iophy*	at mii?				# Intel 82553 PHYs
 inphy*	at mii?				# Intel 82555 PHYs
 lxtphy*	at mii?				# Level1 LXT970 PHYs
 rlphy*	at mii?				# RealTek 8139 internal PHYs
+urlphy*	at mii?				# Realtek RTL8150L internal PHY
 ukphy*	at mii?				# Unknown PHYs
 
 # Framebuffers

@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.37 2004/12/30 02:18:16 dlg Exp $
+# 	$OpenBSD: RAMDISK,v 1.38 2005/02/15 11:03:46 jsg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -114,7 +114,9 @@ sd*	at scsibus?		# SCSI disks
 cd*	at scsibus?		# SCSI CD-ROMs
 
 # Media Independent Interface (mii) drivers)
+acphy*	at mii?			# Altima AC101 PHYs
 exphy*	at mii?			# 3Com internal PHYs
+bmtphy*	at mii?			# Broadcom 10/100 PHYs
 brgphy*	at mii?			# Broadcom PHYs
 nsphy*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
@@ -124,6 +126,8 @@ amphy*	at mii?			# AMD AM79c873 PHYs
 iophy*	at mii?			# Intel 82553 PHYs
 inphy*	at mii?			# Intel 82555 PHYs
 lxtphy*	at mii?			# Level1 LXT970 PHYs
+rlphy*	at mii?			# RealTek 8139 internal PHYs
+urlphy*	at mii?			# Realtek RTL8150L internal PHY
 ukphy*	at mii?			# Unknown PHYs
 
 # PCI USB Controllers
