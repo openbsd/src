@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2000/04/26 20:44:50 mickey Exp $
+#	$OpenBSD: Makefile,v 1.20 2000/04/26 21:21:38 mickey Exp $
 #       $NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -6,7 +6,7 @@
 MAN=	boot.9 copy.9 ctxsw.9 disk.9 disklabel.9 doshutdownhooks.9 \
 	fetch.9 fork1.9 \
 	extent.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 kthread.9 \
-	malloc.9 md5.9 microtime.9 panic.9 pfind.9 printf.9 \
+	malloc.9 md5.9 microtime.9 panic.9 pfind.9 pool.9 printf.9 \
 	psignal.9 ratecheck.9 resettodr.9 \
 	random.9 shutdownhook_establish.9 sleep.9 spl.9 store.9 style.9 \
 	time.9 timeout.9 vm_allocate.9 vm_map_copy.9 vm_deallocate.9 \
@@ -32,6 +32,9 @@ MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 MLINKS+=log.9 addlog.9
 MLINKS+=md5.9 MD5Init.9 md5.9 MD5Transform.9
 MLINKS+=pfind.9 pgfind.9
+MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
+	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
+	pool.9 pool_setlowat.9
 MLINKS+=printf.9 sprintf.9 printf.9 vprintf.9 printf.9 uprintf.9 \
 	printf.9 ttyprintf.9 printf.9 db_printf.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
