@@ -78,7 +78,7 @@ integer f_open(olist *a)
 #ifdef NON_UNIX_STDIO
 	FILE *tf;
 #else
-	int n;
+	int n, fd;
 	struct stat stb;
 #endif
 	if(a->ounit>=MXUNIT || a->ounit<0)
@@ -148,7 +148,10 @@ integer f_open(olist *a)
 		tmpnam(buf);
 #else
 		(void) strcpy(buf,"tmp.FXXXXXX");
-		(void) mktemp(buf);
+		fd = mkstemp(buf);
+		if (fd != -1)
+			close(fd);
+		break;
 #endif
 		goto replace;
 	case 'n':
