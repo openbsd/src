@@ -985,6 +985,7 @@
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fxp.0
 ./usr/share/man/cat4/gdt.0
+./usr/share/man/cat4/gem.0
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gtp.0
@@ -1233,7 +1234,6 @@
 ./usr/share/man/cat4/sparc64/creator.0
 ./usr/share/man/cat4/sparc64/ebus.0
 ./usr/share/man/cat4/sparc64/esp.0
-./usr/share/man/cat4/sparc64/gem.0
 ./usr/share/man/cat4/sparc64/hme.0
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
