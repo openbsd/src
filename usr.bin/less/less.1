@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.6 2003/09/02 18:50:06 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.7 2003/11/30 14:27:52 jmc Exp $
 .\"
 .\" Copyright (C) 2002  Mark Nudelman
 .\"
@@ -8,19 +8,19 @@
 .\" 1. Redistributions of source code must retain the above copyright
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice in the documentation and/or other materials provided with 
+.\"    notice in the documentation and/or other materials provided with
 .\"    the distribution.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
 .\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
-.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
-.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-.\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+.\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd January 17, 2003
@@ -1657,7 +1657,15 @@ The name of the editor (used for the v command).
 .El
 .Sh SEE ALSO
 .Xr lesskey 1
-.Sh WARNINGS
+.Sh AUTHORS
+.An Mark Nudelman Aq markn@greenwoodsoftware.com
+.Pp
+Send bug reports or comments to the above address or to
+.Aq bug\-less@gnu.org .
+.Pp
+For more information, see the less homepage at
+.Pa http://www.greenwoodsoftware.com/less .
+.Sh CAVEATS
 The = command and prompts (unless changed by -P)
 report the line numbers of the lines at the top and bottom of the screen,
 but the byte and percent of the line after the one at the bottom of the screen.
@@ -1708,26 +1716,19 @@ Redistributions of source code must retain the above copyright
 notice, this list of conditions and the following disclaimer.
 .It
 Redistributions in binary form must reproduce the above copyright
-notice in the documentation and/or other materials provided with 
+notice in the documentation and/or other materials provided with
 the distribution.
 .El
 .Pp
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR
 .Dq AS IS
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
-OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Sh AUTHORS
-.An Mark Nudelman Aq markn@greenwoodsoftware.com
-.br
-Send bug reports or comments to the above address or to bug-less@gnu.org.
-.br
-For more information, see the less homepage at
-.Pa http://www.greenwoodsoftware.com/less .
