@@ -7,7 +7,7 @@ MAXPAGESIZE=0x1000
 ARCH=hppa
 MACHINE=hppa1.1		# We use 1.1 specific features.
 NOP=0x08000240
-START="_start"
+ENTRY="__start"
 OTHER_READONLY_SECTIONS='.PARISC.unwind : { *(.PARISC.unwind) } '
 DATA_START_SYMBOLS='PROVIDE ($global$ = .);'
 DATA_PLT=
