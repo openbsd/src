@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.46 2005/02/12 15:32:11 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.47 2005/02/21 03:10:57 martin Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.46 2005/02/12 15:32:11 krw Exp $
+ * $Id: ahc_pci.c,v 1.47 2005/02/21 03:10:57 martin Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -75,7 +75,7 @@
 
 #include <dev/ic/smc93cx6var.h>
 
-#ifdef __hppa__
+#if defined (__hppa__) || (__macppc__)
 #define AHC_ALLOW_MEMIO
 #endif
 
