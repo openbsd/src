@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.118 2004/11/13 15:00:48 espie Exp $
+# $OpenBSD: pkg_add,v 1.119 2004/11/14 11:58:43 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -617,7 +617,7 @@ $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 
-if ($opt_x && !$state->{beverbose}) {
+if (!$opt_x && !$state->{beverbose}) {
 	OpenBSD::ProgressMeter::enable();
 }
 

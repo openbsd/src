@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.21 2004/11/11 12:15:28 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.22 2004/11/14 11:58:43 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd install software package distributions
 .Sh SYNOPSIS
 .Nm pkg_add
-.Op Fl aInrv
+.Op Fl acqInrvx
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl Q Ar quick-destdir
@@ -119,13 +119,18 @@ The options are as follows:
 .Bl -tag -width keyword
 .It Fl a
 Automated package installation, do not record packages as installed manually.
-.It Fl v
-Turn on verbose output.
+.It Fl c
+While replacing packages, delete extra configuration file in the old package, 
+mentioned as
+.Dl @extra file
+in the packing-list.
 .It Fl I
 If scripts exist for a given package, do not execute them.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
+.It Fl q
+Replace package quickly, do not bother checking md5s before removing files.
 .It Fl r
 Allow replacing existing packages.
 This is an experimental option for now:
@@ -134,6 +139,13 @@ proceed before removing the old package and adding the new one, and it
 should also handle shared libraries correctly.
 But this functionality has seen very little testing yet, and since it is
 rather powerful, it can break a system in a thorough way.
+.It Fl v
+Turn on verbose output.
+Several
+.Fl v
+turn on more verbose output.
+.It Fl x
+Disable progress-meter.
 .It Fl A Ar arch
 Assume
 .Ar arch
