@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.12 1997/06/06 11:12:13 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.13 1997/06/23 00:22:03 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -890,30 +890,37 @@ sosetopt(so, level, optname, m0)
 		case SO_RCVBUF:
 		case SO_SNDLOWAT:
 		case SO_RCVLOWAT:
+		    {
+			u_long cnt;
+
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
 				goto bad;
 			}
+			bufsize = *mtod(m, int *);
+			if ((long)cnt <= 0)
+				cnt = 1;
 			switch (optname) {
 
 			case SO_SNDBUF:
 			case SO_RCVBUF:
 				if (sbreserve(optname == SO_SNDBUF ?
 				    &so->so_snd : &so->so_rcv,
-				    (u_long) *mtod(m, int *)) == 0) {
+				    cnt) == 0) {
 					error = ENOBUFS;
 					goto bad;
 				}
 				break;
 
 			case SO_SNDLOWAT:
-				so->so_snd.sb_lowat = *mtod(m, int *);
+				so->so_snd.sb_lowat = (long)cnt;
 				break;
 			case SO_RCVLOWAT:
-				so->so_rcv.sb_lowat = *mtod(m, int *);
+				so->so_rcv.sb_lowat = (long)cnt;
 				break;
 			}
 			break;
+		    }
 
 		case SO_SNDTIMEO:
 		case SO_RCVTIMEO:
