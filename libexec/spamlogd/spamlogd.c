@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.7 2004/03/11 17:48:59 millert Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.8 2004/07/14 21:22:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -120,7 +120,7 @@ dbupdate(char *dbname, char *ip)
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-I] [-i netif]\n", __progname);
+	fprintf(stderr, "usage: %s [-I] [-i interface]\n", __progname);
 	exit(1);
 }
 
