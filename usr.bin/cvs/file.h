@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.3 2004/07/30 17:39:27 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.4 2004/08/02 13:54:02 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -88,6 +88,7 @@ struct cvs_dir {
 	char            *cd_repo;
 	CVSENTRIES      *cd_ent;
 	struct cvs_flist cd_files;
+	u_int            cd_nfiles;
 };
 
 

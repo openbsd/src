@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.15 2004/07/31 01:13:41 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.16 2004/08/02 13:54:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -97,7 +97,7 @@ TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
 static int        cvs_file_getdir  (CVSFILE *, int);
 static void       cvs_file_freedir (struct cvs_dir *);
-static int        cvs_file_sort    (struct cvs_flist *);
+static int        cvs_file_sort    (struct cvs_flist *, u_int);
 static int        cvs_file_cmp     (const void *, const void *);
 static CVSFILE*   cvs_file_alloc   (const char *, u_int);
 static CVSFILE*   cvs_file_lget    (const char *, int, CVSFILE *);
@@ -366,6 +366,7 @@ static int
 cvs_file_getdir(CVSFILE *cf, int flags)
 {
 	int ret, fd;
+	u_int ndirs;
 	long base;
 	void *dp, *ep;
 	char fbuf[2048], pbuf[MAXPATHLEN];
@@ -425,12 +426,15 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 			    cf->cf_path, ent->d_name);
 			cfp = cvs_file_lget(pbuf, flags, cf);
 			if (cfp != NULL) {
-				cfp->cf_parent = cf;
-				if (cfp->cf_type == DT_DIR) 
+				if (cfp->cf_type == DT_DIR) { 
 					TAILQ_INSERT_HEAD(&dirs, cfp, cf_list);
-				else
+					ndirs++;
+				}
+				else {
 					TAILQ_INSERT_HEAD(&(cdp->cd_files), cfp,
 					    cf_list);
+					cdp->cd_nfiles++;
+				}
 			}
 		}
 	} while (ret > 0);
@@ -442,11 +446,12 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	}
 
 	if (flags & CF_SORT) {
-		cvs_file_sort(&(cdp->cd_files));
-		cvs_file_sort(&dirs);
+		cvs_file_sort(&(cdp->cd_files), cdp->cd_nfiles);
+		cvs_file_sort(&dirs, ndirs);
 	}
 	TAILQ_FOREACH(cfp, &dirs, cf_list)
 		TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp, cf_list);
+	cdp->cd_nfiles += ndirs;
 
 	(void)close(fd);
 	cf->cf_ddat = cdp;
@@ -533,23 +538,36 @@ cvs_file_freedir(struct cvs_dir *cd)
 /*
  * cvs_file_sort()
  *
- * Sort a list of cvs file structures according to their filename.
+ * Sort a list of cvs file structures according to their filename.  The list
+ * <flp> is modified according to the sorting algorithm.  The number of files
+ * in the list must be given by <nfiles>.
+ * Returns 0 on success, or -1 on failure.
  */
 
 static int
-cvs_file_sort(struct cvs_flist *flp)
+cvs_file_sort(struct cvs_flist *flp, u_int nfiles)
 {
 	int i;
 	size_t nb;
-	CVSFILE *cf, *cfvec[256];
+	CVSFILE *cf, **cfvec;
+
+	cfvec = (CVSFILE **)calloc(nfiles, sizeof(CVSFILE *));
+	if (cfvec == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate sorting vector");
+		return (-1);
+	}
 
 	i = 0;
 	TAILQ_FOREACH(cf, flp, cf_list) {
-		cfvec[i++] = cf;
-		if (i == sizeof(cfvec)/sizeof(CVSFILE *)) {
+		if (i == (int)nfiles) {
 			cvs_log(LP_WARN, "too many files to sort");
+			/* rebuild the list and abort sorting */
+			while (--i >= 0)
+				TAILQ_INSERT_HEAD(flp, cfvec[i], cf_list);
+			free(cfvec);
 			return (-1);
 		}
+		cfvec[i++] = cf;
 
 		/* now unlink it from the list,
 		 * we'll put it back in order later
@@ -567,6 +585,7 @@ cvs_file_sort(struct cvs_flist *flp)
 	for (i = (int)nb - 1; i >= 0; i--)
 		TAILQ_INSERT_HEAD(flp, cfvec[i], cf_list);
 
+	free(cfvec);
 	return (0);
 }
 
