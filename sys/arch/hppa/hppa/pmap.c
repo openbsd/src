@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 1999/01/20 19:39:51 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 1999/02/01 20:29:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -111,7 +111,7 @@
  *	
  */
 /*
- * CAVAETS:
+ * CAVEATS:
  *
  *	PAGE_SIZE must equal NBPG
  *	Needs more work for MP support
@@ -139,29 +139,6 @@
 #include <machine/iomod.h>
 
 #ifdef PMAPDEBUG
-struct {
-	int kernel;	/* entering kernel mapping */
-	int user;	/* entering user mapping */
-	int pwchange;	/* no mapping change, just wiring or protection */
-	int wchange;	/* no mapping change, just wiring */
-	int mchange;	/* was mapped but mapping to different page */
-	int managed;	/* a managed page */
-	int firstpv;	/* first mapping for this PA */
-	int secondpv;	/* second mapping for this PA */
-	int ci;		/* cache inhibited */
-	int unmanaged;	/* not a managed page */
-	int flushes;	/* cache flushes */
-} enter_stats;
-struct {
-	int calls;
-	int removes;
-	int pvfirst;
-	int pvsearch;
-	int ptinvalid;
-	int uflushes;
-	int sflushes;
-} remove_stats;
-
 #define	PDB_FOLLOW	0x00000001
 #define	PDB_INIT	0x00000002
 #define	PDB_ENTER	0x00000004
@@ -503,7 +480,6 @@ pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv)
 #ifdef PMAPDEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter_pv: no entries yet\n");
-		enter_stats.firstpv++;
 #endif
 		hpv = npv = NULL;
 	} else {
@@ -522,10 +498,6 @@ pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv)
 		hpv = pv;
 		npv = pv->pv_next;
 		pv = pmap_alloc_pv();
-#ifdef PMAPDEBUG
-		if (!npv)
-			enter_stats.secondpv++;
-#endif
 	}
 	pv->pv_va = va;
 	pv->pv_pmap = pmap;
@@ -718,7 +690,7 @@ pmap_bootstrap(vstart, vend)
 	size = sizeof(struct hpt_entry) * hpt_hashsize;
 	addr = (addr + size-1) & ~(size-1);
 	TAILQ_INIT(&pv_page_freelist);
-#ifdef PMAPPMAPDEBUG
+#ifdef PMAPDEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_bootstrap: allocating %d pv_pages\n",
 		       (struct pv_page *)addr - pvp);
