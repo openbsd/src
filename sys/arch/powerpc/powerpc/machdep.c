@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2000/09/15 03:52:37 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2000/09/19 05:26:34 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ struct extent *devio_ex;
 static int devio_malloc_safe = 0;
 
 /* HACK - XXX */
-int segment8_mapped = 0;
+int segment8_a_mapped = 0;
 
 extern int OF_stdout;
 extern int where;
@@ -199,9 +199,13 @@ where = 3;
 	battable[0].batu = BATU(0x00000000);
 
 #if 1
-	battable[1].batl = BATL(0x80000000, BAT_I);
-	battable[1].batu = BATU(0x80000000);
-	segment8_mapped = 1;
+	battable[0x8].batl = BATL(0x80000000, BAT_I);
+	battable[0x8].batu = BATU(0x80000000);
+	battable[0x9].batl = BATL(0x90000000, BAT_I);
+	battable[0x9].batu = BATU(0x90000000);
+	battable[0xa].batl = BATL(0xa0000000, BAT_I);
+	battable[0xa].batu = BATU(0xa0000000);
+	segment8_a_mapped = 1;
 #if 0
 	if(system_type == POWER4e) {
 		/* Map ISA I/O */
@@ -225,7 +229,7 @@ where = 3;
 	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
-#if 1
+#if 0
 	__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
 		      :: "r"(battable[1].batl), "r"(battable[1].batu));
 	__asm__ volatile ("sync;isync");
@@ -1096,6 +1100,12 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	{
 		return error;
 	}
+	if ((bpa >= 0x80000000) && ((bpa+size) < 0xb0000000)) {
+		if (segment8_a_mapped) {
+			*bshp = bpa;
+			return 0;
+		}
+	}
 	if (error  = bus_mem_add_mapping(bpa, size, cacheable, bshp)) {
 		if (extent_free(devio_ex, bpa, size, EX_NOWAIT | 
 			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
@@ -1206,9 +1216,8 @@ mapiodev(pa, len)
 	spa = trunc_page(pa);
 	off = pa - spa;
 	size = round_page(off+len);
-	if ((pa >= 0x80000000) && ((pa+len) < 0x90000000)) {
-		extern int segment8_mapped;
-		if (segment8_mapped) {
+	if ((pa >= 0x80000000) && ((pa+len) < 0xb0000000)) {
+		if (segment8_a_mapped) {
 			return (void *)pa;
 		}
 	}
