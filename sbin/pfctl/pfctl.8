@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.96 2003/05/24 14:43:20 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.97 2003/05/24 17:50:16 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -136,7 +136,7 @@ in the ruleset.
 Enable the packet filter.
 .It Fl f Ar file
 Load the rules contained in
-.Ar file.
+.Ar file .
 This
 .Ar file
 may contain macros, tables, options, and normalization, queueing,
@@ -333,7 +333,9 @@ Each table maintains a set of counters that can be retrieved using the
 flag of
 .Nm pfctl .
 For example, the following commands define a wide open firewall which will keep
-track of packets going to or coming from the OpenBSD ftp server.
+track of packets going to or coming from the
+.Ox
+ftp server.
 The following commands configure the firewall and send 10 pings to the ftp
 server:
 .Bd -literal -offset indent
@@ -426,8 +428,8 @@ This flag can only be witnessed briefly during the loading of
 .It r
 For tables which are referenced (used) by rules.
 .It h
-This flag is set when a table in the main ruleset is hidden by one of more tables
-of the same name in sub-rulesets (anchors).
+This flag is set when a table in the main ruleset is hidden by one or more
+tables of the same name in sub-rulesets (anchors).
 .El
 .It Fl v
 Produce more verbose output.
