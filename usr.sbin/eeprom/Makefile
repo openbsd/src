@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2000/01/03 19:49:44 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/05/18 16:46:37 espie Exp $
 
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sun3"
 PROG=	eeprom
-MAN=	eeprom.8
 
 BINGRP=	kmem
 BINMODE=2555
@@ -12,12 +12,18 @@ CFLAGS+=-DTIME_WITH_SYS_TIME -DHAVE_SYS_TIMEB_H -DSTDC_HEADERS -DHAVE_BCOPY
 
 SRCS=	eehandlers.c getdate.c main.c
 
-.if ${MACHINE} == "sparc"
+.  if ${MACHINE} == "sparc"
 SRCS+=	ophandlers.c
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
-.endif
+.  endif
 
 CLEANFILES+=getdate.c y.tab.h
+.else
+NOPROG=yes
+.endif
+
+MAN=	eeprom.8
+MANSUBDIR=sparc sun3
 
 .include <bsd.prog.mk>
