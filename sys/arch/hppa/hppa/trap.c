@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.73 2004/04/21 23:09:30 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.74 2004/05/12 22:56:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -86,6 +86,42 @@ const char *trap_type[] = {
 int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 
 int want_resched, astpending;
+
+#define	frame_regmap(tf,r)	(((u_int *)(tf))[hppa_regmap[(r)]])
+u_char hppa_regmap[32] = {
+	offsetof(struct trapframe, tf_pad[0]) / 4,	/* r0 XXX */
+	offsetof(struct trapframe, tf_r1) / 4,
+	offsetof(struct trapframe, tf_rp) / 4,
+	offsetof(struct trapframe, tf_r3) / 4,
+	offsetof(struct trapframe, tf_r4) / 4,
+	offsetof(struct trapframe, tf_r5) / 4,
+	offsetof(struct trapframe, tf_r6) / 4,
+	offsetof(struct trapframe, tf_r7) / 4,
+	offsetof(struct trapframe, tf_r8) / 4,
+	offsetof(struct trapframe, tf_r9) / 4,
+	offsetof(struct trapframe, tf_r10) / 4,
+	offsetof(struct trapframe, tf_r11) / 4,
+	offsetof(struct trapframe, tf_r12) / 4,
+	offsetof(struct trapframe, tf_r13) / 4,
+	offsetof(struct trapframe, tf_r14) / 4,
+	offsetof(struct trapframe, tf_r15) / 4,
+	offsetof(struct trapframe, tf_r16) / 4,
+	offsetof(struct trapframe, tf_r17) / 4,
+	offsetof(struct trapframe, tf_r18) / 4,
+	offsetof(struct trapframe, tf_t4) / 4,
+	offsetof(struct trapframe, tf_t3) / 4,
+	offsetof(struct trapframe, tf_t2) / 4,
+	offsetof(struct trapframe, tf_t1) / 4,
+	offsetof(struct trapframe, tf_arg3) / 4,
+	offsetof(struct trapframe, tf_arg2) / 4,
+	offsetof(struct trapframe, tf_arg1) / 4,
+	offsetof(struct trapframe, tf_arg0) / 4,
+	offsetof(struct trapframe, tf_dp) / 4,
+	offsetof(struct trapframe, tf_ret0) / 4,
+	offsetof(struct trapframe, tf_ret1) / 4,
+	offsetof(struct trapframe, tf_sp) / 4,
+	offsetof(struct trapframe, tf_r31) / 4,
+};
 
 void
 userret(struct proc *p, register_t pc, u_quad_t oticks)
@@ -371,6 +407,14 @@ trap(type, frame)
 		}
 
 		ret = uvm_fault(map, hppa_trunc_page(va), fault, vftype);
+
+		/* dig probe insn */
+		if (ret && trapnum == T_DTLBMISSNA &&
+		    (frame->tf_iir & 0xfc001f80) == 0x04001180) {
+			frame_regmap(frame, frame->tf_iir & 0x1f) = 0;
+			frame->tf_ipsw |= PSL_N;
+			break;
+		}
 
 		/*
 		 * If this was a stack access we keep track of the maximum
