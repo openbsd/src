@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.5 2000/07/23 22:23:42 pjanzen Exp $	*/
+/*	$OpenBSD: message.c,v 1.6 2000/07/24 00:56:05 pjanzen Exp $	*/
 /*	$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ rgetchar()
 			break;
 #ifdef UNIX_BSD4_2
 		case '\032':
-			printf(CL);
+			printf("%s", CL);
 			fflush(stdout);
 			tstp();
 			break;
