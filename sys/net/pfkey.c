@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.10 2001/06/05 02:31:33 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.11 2001/06/08 03:58:48 angelos Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -70,22 +70,17 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/socket.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/socketvar.h>
-#include <sys/proc.h>
 #include <net/route.h>
-#include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <net/raw_cb.h>
-#include <netinet/ip_ipsp.h>
 
 #define PFKEY_PROTOCOL_MAX 3
 static struct pfkey_version *pfkey_versions[PFKEY_PROTOCOL_MAX+1] = { NULL, NULL, NULL, NULL };

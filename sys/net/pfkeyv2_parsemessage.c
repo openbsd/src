@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.25 2001/06/05 02:31:34 deraadt Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.26 2001/06/08 03:58:48 angelos Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -68,17 +68,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/socket.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/socketvar.h>
 #include <sys/proc.h>
-#include <net/route.h>
-#include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
