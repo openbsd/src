@@ -1,12 +1,11 @@
-#	$OpenBSD: list,v 1.9 2002/04/05 03:11:12 deraadt Exp $
+#	$OpenBSD: list,v 1.10 2002/04/19 23:23:15 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
 LINK	instbin			sbin/disklabel
-
-LINK instbin			usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK instbin			usr/bin/tset usr/bin/reset
-LINK instbin			usr/bin/less usr/bin/more
+LINK	instbin			usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK	instbin			usr/bin/tset usr/bin/reset
+LINK	instbin			usr/bin/less usr/bin/more
 SPECIAL /bin/rm instbin
 
 # Minimize use of MFS
