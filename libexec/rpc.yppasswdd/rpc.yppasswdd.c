@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: rpc.yppasswdd.c,v 1.3 1996/06/26 22:11:26 maja Exp $";
+static char rcsid[] = "$Id: rpc.yppasswdd.c,v 1.4 1997/04/23 09:33:43 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -91,17 +91,7 @@ main(argc, argv)
 			usage();
 	}
 
-	switch (fork()) {
-	case 0:
-		break;
-	case -1:
-		perror("fork");
-		exit(1);
-	default:
-		exit(0);
-	}
-
-	setsid();
+	(void) daemon(0, 0);
 	chdir("/etc");
 
 /*
