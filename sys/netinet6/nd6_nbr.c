@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.18 2001/11/30 07:59:17 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.19 2001/12/07 09:16:07 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ nd6_ns_input(m, off, icmp6len)
 	if (IN6_IS_ADDR_UNSPECIFIED(&saddr6)) {
 		/* dst has to be solicited node multicast address. */
 		if (daddr6.s6_addr16[0] == IPV6_ADDR_INT16_MLL
-		    /*don't check ifindex portion*/
+		    /* don't check ifindex portion */
 		    && daddr6.s6_addr32[1] == 0
 		    && daddr6.s6_addr32[2] == IPV6_ADDR_INT32_ONE
 		    && daddr6.s6_addr8[12] == 0xff) {
@@ -372,7 +372,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 
 	icmp6len = sizeof(*nd_ns);
 	m->m_pkthdr.len = m->m_len = sizeof(*ip6) + icmp6len;
-	m->m_data += max_linkhdr;	/*or MH_ALIGN() equivalent?*/
+	m->m_data += max_linkhdr;	/* or MH_ALIGN() equivalent? */
 
 	/* fill neighbor solicitation packet */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -422,7 +422,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		 * - saddr6 belongs to the outgoing interface.
 		 * Otherwise, we perform a scope-wise match.
 		 */
-		struct ip6_hdr *hip6;		/*hold ip6*/
+		struct ip6_hdr *hip6;		/* hold ip6 */
 		struct in6_addr *saddr6;
 
 		if (ln && ln->ln_hold) {
@@ -439,7 +439,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		else {
 			ia = in6_ifawithifp(ifp, &ip6->ip6_dst);
 			if (ia == NULL) {
-				m_freem(m);	/*XXX*/
+				m_freem(m);
 				return;
 			}
 			ip6->ip6_src = ia->ia_addr.sin6_addr;
@@ -607,7 +607,7 @@ nd6_na_input(m, off, icmp6len)
 		goto freeit;
 	}
 
-	/* Just for safety, maybe unnecessery. */
+	/* Just for safety, maybe unnecessary. */
 	if (ifa) {
 		log(LOG_ERR,
 		    "nd6_na_input: duplicate IP6 address %s\n",
@@ -1068,7 +1068,7 @@ nd6_dad_start(ifa, tick)
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
-	if (!tick) {
+	if (tick == NULL) {
 		nd6_dad_ns_output(dp, ifa);
 		nd6_dad_starttimer(dp, 
 		    nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000);
@@ -1184,7 +1184,7 @@ nd6_dad_timer(ifa)
 		}
 
 		if (dp->dad_ns_icount) {
-#if 0 /*heuristics*/
+#if 0 /* heuristics */
 			/*
 			 * if
 			 * - we have sent many(?) DAD NS, and

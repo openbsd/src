@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.19 2001/11/30 07:59:17 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.20 2001/12/07 09:16:07 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -263,7 +263,7 @@ ip6_forward(m, srcrt)
 			break;
 		default:
 			printf("ip6_output (ipsec): error code %d\n", error);
-			/*fall through*/
+			/* fall through */
 		case ENOENT:
 			/* don't show these error codes to the user */
 			break;
@@ -517,7 +517,6 @@ senderr:
 #endif
 	if (mcopy == NULL)
 		return;
-
 	switch (error) {
 	case 0:
 #if 1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.29 2001/07/18 12:50:44 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.30 2001/12/07 09:16:07 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -178,9 +178,9 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	/*
 	 * Make sure rt_ifa be equal to IFA, the second argument of the
 	 * function.
-	 * We need this because when we refer rt_ifa->ia6_flags in ip6_input,
-	 * we assume that the rt_ifa points to the address instead of the
-	 * loopback address.
+	 * We need this because when we refer to rt_ifa->ia6_flags in
+	 * ip6_input, we assume that the rt_ifa points to the address instead
+	 * of the loopback address.
 	 */
 	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa) {
 		IFAFREE(nrt->rt_ifa);
@@ -817,6 +817,7 @@ in6_control(so, cmd, data, ifp, p)
 			return(EOPNOTSUPP);
 		return((*ifp->if_ioctl)(ifp, cmd, data));
 	}
+
 	return(0);
 }
 
@@ -881,7 +882,7 @@ in6_purgeaddr(ifa, ifp)
 
 /*
  * SIOC[GAD]LIFADDR.
- *	SIOCGLIFADDR: get first address. (???)
+ *	SIOCGLIFADDR: get first address. (?)
  *	SIOCGLIFADDR with IFLR_PREFIX:
  *		get first address that matches the specified prefix.
  *	SIOCALIFADDR: add the specified address.
@@ -917,7 +918,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 	/* sanity checks */
 	if (!data || !ifp) {
 		panic("invalid argument to in6_lifaddr_ioctl");
-		/*NOTRECHED*/
+		/* NOTREACHED */
 	}
 
 	switch (cmd) {
@@ -925,7 +926,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 		/* address must be specified on GET with IFLR_PREFIX */
 		if ((iflr->flags & IFLR_PREFIX) == 0)
 			break;
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 		/* address must be specified on ADD and DELETE */
@@ -941,10 +942,10 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 		if (sa->sa_len && sa->sa_len != sizeof(struct sockaddr_in6))
 			return EINVAL;
 		break;
-	default: /*shouldn't happen*/
+	default: /* shouldn't happen */
 #if 0
 		panic("invalid cmd to in6_lifaddr_ioctl");
-		/*NOTREACHED*/
+		/* NOTREACHED */
 #else
 		return EOPNOTSUPP;
 #endif
@@ -1682,7 +1683,6 @@ in6_addr2scopeid(ifp, addr)
  * return length of part which dst and src are equal
  * hard coding...
  */
-
 int
 in6_matchlen(src, dst)
 struct in6_addr *src, *dst;
@@ -2006,7 +2006,6 @@ in6_ifawithscope(oifp, dst)
  * return the best address out of the same scope. if no address was
  * found, return the first valid address from designated IF.
  */
-
 struct in6_ifaddr *
 in6_ifawithifp(ifp, dst)
 	struct ifnet *ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.16 2001/06/09 06:43:38 angelos Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.17 2001/12/07 09:16:07 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -144,11 +144,6 @@ static mifi_t nummifs = 0;
 static mifi_t reg_mif_num = (mifi_t)-1;
 
 static struct pim6stat pim6stat;
-
-/*
- * one-back cache used by ipip_input to locate a tunnel's mif
- * given a datagram's src ip address.
- */
 static int pim6;
 
 /*
@@ -758,7 +753,8 @@ add_m6fc(mfccp)
 	if (nstl == 0) {
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc no upcall h %d o %s g %s p %x\n",
+			log(LOG_DEBUG,
+			    "add_m6fc no upcall h %d o %s g %s p %x\n",
 			    hash,
 			    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 			    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.10 2001/06/09 06:43:38 angelos Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.11 2001/12/07 09:16:07 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -209,7 +209,6 @@ mld6_input(m, off)
 		 * spec (RFC2710) does not explicitly
 		 * specify to discard the packet from a non link-local
 		 * source address. But we believe it's expected to do so.
-		 * XXX: do we have to allow :: as source?
 		 */
 		m_freem(m);
 		return;
@@ -285,7 +284,7 @@ mld6_input(m, off)
 					in6m->in6m_timer = 0; /* reset timer */
 					in6m->in6m_state = MLD6_IREPORTEDLAST;
 				}
-				else if (in6m->in6m_timer == 0 || /*idle state*/
+				else if (in6m->in6m_timer == 0 || /* idle */
 					in6m->in6m_timer > timer) {
 					in6m->in6m_timer =
 						MLD6_RANDOM_DELAY(timer);

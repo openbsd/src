@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.55 2001/11/30 07:59:17 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.56 2001/12/07 09:16:07 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ skip_ipsec2:;
 
 		/* Latch to PCB */
 		if (inp)
-		        tdb_add_inp(tdb, inp, 0);
+			tdb_add_inp(tdb, inp, 0);
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
@@ -817,9 +817,8 @@ skip_ipsec2:;
 		 * We eventually have sockaddr_in6 and use the sin6_scope_id
 		 * field of the structure here.
 		 * We rely on the consistency between two scope zone ids
-		 * of source add destination, which should already be assured
-		 * Larger scopes than link will be supported in the near
-		 * future.
+		 * of source and destination, which should already be assured.
+		 * Larger scopes than link will be supported in the future. 
 		 */
 		origifp = NULL;
 		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
@@ -969,7 +968,8 @@ skip_ipsec2:;
 
 		/*
 		 * Loop through length of segment after first fragment,
-		 * make new header and copy data of each part and link onto chain.
+		 * make new header and copy data of each part and link onto
+		 * chain.
 		 */
 		m0 = m;
 		for (off = hlen; off < tlen; off += len) {
@@ -1839,7 +1839,8 @@ ip6_setmoptions(optname, im6op, m)
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (suser(p->p_ucred, &p->p_acflag)) {
+			if (suser(p->p_ucred, &p->p_acflag))
+			{
 				error = EACCES;
 				break;
 			}
@@ -1943,7 +1944,8 @@ ip6_setmoptions(optname, im6op, m)
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
 		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
-			if (suser(p->p_ucred, &p->p_acflag)) {
+			if (suser(p->p_ucred, &p->p_acflag))
+			{
 				error = EACCES;
 				break;
 			}
