@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_newftyp.c,v 1.2 1998/07/24 02:36:48 millert Exp $	*/
+/*	$OpenBSD: fld_newftyp.c,v 1.3 1999/03/11 21:02:39 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -34,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_newftyp.c,v 1.2 1998/02/11 12:13:44 tom Exp $")
+MODULE_ID("$From: fld_newftyp.c,v 1.3 1999/03/03 16:22:27 juergen Exp $")
 
 static FIELDTYPE const default_fieldtype = {
   0,                   /* status                                      */
@@ -73,7 +73,7 @@ FIELDTYPE *new_fieldtype(
 {
   FIELDTYPE *nftyp = (FIELDTYPE *)0;
   
-  if ( (field_check) && (char_check) )
+  if ( (field_check) || (char_check) )
     {
       nftyp = (FIELDTYPE *)malloc(sizeof(FIELDTYPE));
       if (nftyp)
