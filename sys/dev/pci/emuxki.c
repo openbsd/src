@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.17 2004/04/14 17:06:17 brad Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.18 2004/04/14 21:36:41 mickey Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -408,10 +408,8 @@ emuxki_match(struct device *parent, void *match, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CREATIVELABS &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBLIVE ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBLIVE2)
-	{
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBLIVE2))
 		return (1);
-	}
 
 	return (0);
 }
