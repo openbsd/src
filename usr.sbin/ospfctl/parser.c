@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2005/01/28 17:26:05 norby Exp $ */
+/*	$OpenBSD: parser.c,v 1.3 2005/02/02 19:08:42 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -217,7 +217,7 @@ show_valid_args(const struct token table[])
 		case KEYWORD:
 		case FLAG:
 			fprintf(stderr, "  %s\n", table[i].keyword);
-			break; 
+			break;
 		case ADDRESS:
 			fprintf(stderr, "  <address>\n");
 			break;

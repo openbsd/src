@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.3 2005/02/02 18:52:32 henning Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.4 2005/02/02 19:08:42 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -73,7 +73,7 @@ imsg_event_add(struct imsgbuf *i)
 
 int
 main(int argc, char *argv[])
-{ 
+{
 	struct sockaddr_un	 sun;
 	struct parse_result	*res;
 	struct imsg		 imsg;
@@ -207,7 +207,7 @@ show_interface_msg(struct imsg *imsg)
 		    inet_ntoa(iface->addr),
 		    mask2prefixlen(iface->mask));
 		printf("Area %s\n", inet_ntoa(iface->area));
-		printf("  Router ID %s, network type %s, cost: %d\n", 
+		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    print_if_type(iface->type), iface->metric);
 		printf("  Transmit delay is %d sec, state %s, priority %d\n",
@@ -223,7 +223,7 @@ show_interface_msg(struct imsg *imsg)
 		    "hello %d, dead %d, wait %d, retransmit %d\n",
 		     iface->hello_interval, iface->dead_interval,
 		     iface->dead_interval, iface->rxmt_interval);
-		if (iface->hello_timer < 0) 
+		if (iface->hello_timer < 0)
 			printf("    Hello timer not running\n");
 		else
 			printf("    Hello timer due in %s\n",
@@ -238,7 +238,7 @@ show_interface_msg(struct imsg *imsg)
 		break;
 	}
 
-	return (0); 
+	return (0);
 }
 
 const char *
@@ -471,7 +471,7 @@ show_database_msg(struct imsg *imsg)
 		break;
 	}
 
-	return (0); 
+	return (0);
 }
 
 int

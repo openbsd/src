@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.49 2005/01/28 12:37:20 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.50 2005/02/02 19:03:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -461,15 +461,15 @@ priv_host_dns(char *name, u_int32_t peerid)
 void
 update_scale(double offset)
 {
-        if (offset < 0)
-                offset = -offset;
-  
-        if (offset > QSCALE_OFF_MAX)
-                conf->scale = 1;
-        else if (offset < QSCALE_OFF_MIN)
-                conf->scale = QSCALE_OFF_MAX / QSCALE_OFF_MIN;
-        else
-                conf->scale = QSCALE_OFF_MAX / offset;
+	if (offset < 0)
+		offset = -offset;
+
+	if (offset > QSCALE_OFF_MAX)
+		conf->scale = 1;
+	else if (offset < QSCALE_OFF_MIN)
+		conf->scale = QSCALE_OFF_MAX / QSCALE_OFF_MIN;
+	else
+		conf->scale = QSCALE_OFF_MAX / offset;
 }
 
 time_t
