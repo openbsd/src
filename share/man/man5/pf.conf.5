@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.315 2004/12/17 11:31:18 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.316 2004/12/18 00:23:31 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1955,7 +1955,7 @@ per source IP.
 Limits the maximum number of simultaneous TCP connections which have
 completed the 3-way handshake that a single host can make.
 .It Ar max-src-conn-rate <number> / <seconds>
-Limit the number of new connections over a time interval.
+Limit the rate of new connections over a time interval.
 The connection rate is an approximation calculated as a moving average.
 .El
 .Pp
@@ -1966,8 +1966,8 @@ With the
 state option, source IP addresses which hit either of the limits on
 established connections will be added to the named table.
 This table can be used in the ruleset to block further activity from
-the offending host, redirect it to a tarpit process, or restrict that
-host's bandwidth.
+the offending host, redirect it to a tarpit process, or restrict its
+bandwidth.
 .Pp
 The optional
 .Ar flush
