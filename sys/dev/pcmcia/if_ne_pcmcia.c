@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.13 1999/08/13 21:10:48 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.14 1999/08/15 05:32:13 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ struct ne2000dev {
     { PCMCIA_STR_AMBICOM_AMB8002T,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
-      0, 0x7f0, { 0x00, 0x00, 0xb2 } },
+      0, -1, { 0x00, 0x00, 0xb2 } },
 
     /*
      * You have to add new entries which contains
