@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrpcent.3,v 1.8 2003/02/18 07:47:00 jmc Exp $
+.\"	$OpenBSD: getrpcent.3,v 1.9 2003/05/30 22:12:43 jmc Exp $
 .\"
 .\" Sun RPC is a product of Sun Microsystems, Inc. and is provided for
 .\" unrestricted use provided that this legend is included on all tape
@@ -26,7 +26,7 @@
 .\" Sun Microsystems, Inc.
 .\" 2550 Garcia Avenue
 .\" Mountain View, California  94043
-.\" 
+.\"
 .Dd December 14, 1987
 .Dt GETRPCENT 3
 .Os
@@ -103,16 +103,16 @@ of the file until a matching rpc program name or
 program number is found, or until end-of-file is encountered.
 .Sh FILES
 .Pa /etc/rpc
-.Sh SEE ALSO
-.Xr rpc 5 ,
-.Xr rpcinfo 8 ,
-.Xr ypserv 8
 .Sh DIAGNOSTICS
 A
 .Dv NULL
 pointer is returned on
 .Dv EOF
 or error.
+.Sh SEE ALSO
+.Xr rpc 5 ,
+.Xr rpcinfo 8 ,
+.Xr ypserv 8
 .Sh BUGS
 All information
 is contained in a static area

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.14 2003/02/18 07:47:00 jmc Exp $
+.\"	$OpenBSD: xdr.3,v 1.15 2003/05/30 22:12:43 jmc Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .\" Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -27,7 +27,7 @@
 .\" Sun Microsystems, Inc.
 .\" 2550 Garcia Avenue
 .\" Mountain View, California  94043
-.\" 
+.\"
 .Dd February 16, 1988
 .Dt XDR 3
 .Os
@@ -300,7 +300,7 @@ stream
 .Dv XDR_ENCODE ,
 .Dv XDR_DECODE ,
 or
-.Dv XDR_FREE Ns ).
+.Dv XDR_FREE ) .
 .Pp
 .Fn xdr_opaque
 is a filter primitive that translates between fixed size opaque
@@ -456,7 +456,7 @@ stream (either
 .Dv XDR_ENCODE ,
 .Dv XDR_DECODE ,
 or
-.Dv XDR_FREE Ns ).
+.Dv XDR_FREE ) .
 Warning: the destroy routine associated with such
 .Tn XDR
 streams calls
@@ -532,7 +532,7 @@ If the discriminant is not found in the
 array, then the
 .Fn (*defaultarm)
 procedure is called (if it is not
-.Dv NULL Ns ).
+.Dv NULL ) .
 Returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_vector
