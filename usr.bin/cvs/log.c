@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.13 2005/03/28 22:46:09 jfb Exp $	*/
+/*	$OpenBSD: log.c,v 1.14 2005/04/06 18:39:35 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -285,18 +285,43 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 /*
  * cvs_printf()
  *
- * Wrapper function around printf() that prepends a 'M' or 'E' command when
+ * Wrapper function around printf() that prepends a 'M' command when
  * the program is acting as server.
  */
 int
 cvs_printf(const char *fmt, ...)
 {
 	int ret;
+	char *nstr, *dp, *sp;
 	va_list vap;
 
 	va_start(vap, fmt);
-	ret = vprintf(fmt, vap);
-	va_end(vap);
 
+	if (cvs_cmdop == CVS_OP_SERVER) {
+		ret = vasprintf(&nstr, fmt, vap);
+		if (ret != -1) {
+			for (dp = nstr; *dp != '\0';) {
+				sp = strchr(dp, '\n');
+				if (sp == NULL)
+					for (sp = dp; *sp != '\0'; sp++)
+						;
+
+				putc('M', stdout);
+				putc(' ', stdout);
+				fwrite(dp, sizeof(char), (size_t)(sp - dp),
+				    stdout);
+
+				if (*sp != '\n')
+					break;
+
+				putc('\n', stdout);
+				dp = sp + 1;
+			}
+			free(nstr);
+		}
+	} else
+		ret = vprintf(fmt, vap);
+
+	va_end(vap);
 	return (ret);
 }
