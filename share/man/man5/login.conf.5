@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.27 2003/06/03 11:34:02 hin Exp $
+.\" $OpenBSD: login.conf.5,v 1.28 2003/06/04 07:53:04 hin Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -92,18 +92,9 @@ file are either boolean or use a
 .Ql =
 to separate the capability from the value.
 The types are described after the capability table.
-.Bl -column alwaysuseklogin program xetcxmotd
+.Bl -column minpasswordlen program xetcxmotd
 .Sy Name	Type	Default	Description
 .\"
-.It alwaysuseklogin Ta bool Ta Dv false Ta
-Always check the 
-.Pa .klogin 
-file for kerberos style authentication.
-Normally this file is only checked if a non-null kerberos instance
-is provided (e.g.,
-.Li user.root ) .
-.\"
-.sp
 .It approve Ta program Ta "" Ta
 Default program to approve login.
 .\"
