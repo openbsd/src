@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.9 1998/03/19 21:21:44 angelos Exp $	*/
+/*	$OpenBSD: in.c,v 1.10 1998/03/20 02:45:06 deraadt Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -208,6 +208,18 @@ in_control(so, cmd, data, ifp)
 	case SIOCGIFNETMASK:
 	case SIOCGIFDSTADDR:
 	case SIOCGIFBRDADDR:
+		if (ia && satosin(&ifr->ifr_addr)->sin_addr.s_addr) {
+			struct in_ifaddr *ia2;
+
+			for (ia2 = ia; ia2; ia2 = ia2->ia_list.tqe_next) {
+				if (ia2->ia_ifp == ifp &&
+				    ia2->ia_addr.sin_addr.s_addr ==
+				    satosin(&ifr->ifr_addr)->sin_addr.s_addr)
+					break;
+			}
+			if (ia2 && ia2->ia_ifp == ifp)
+				ia = ia2;
+		}
 		if (ia == (struct in_ifaddr *)0)
 			return (EADDRNOTAVAIL);
 		break;
