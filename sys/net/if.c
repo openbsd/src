@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.81 2004/01/09 10:44:32 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.82 2004/01/15 10:47:55 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -252,6 +252,9 @@ if_attachsetup(ifp)
 #if NPF > 0
 	pfi_attach_ifnet(ifp);
 #endif
+
+	/* Announce the interface. */
+	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 }
 
 /*
@@ -573,6 +576,9 @@ do { \
 			(*dp->dom_ifdetach)(ifp,
 			    ifp->if_afdata[dp->dom_family]);
 	}
+
+	/* Announce that the interface is gone. */
+	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
 	splx(s);
 }
