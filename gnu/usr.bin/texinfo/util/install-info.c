@@ -1,7 +1,7 @@
 /* install-info -- create Info directory entry(ies) for an Info file.
    Copyright (C) 1996 Free Software Foundation, Inc.
 
-$Id: install-info.c,v 1.2 1997/01/04 20:31:05 kstailey Exp $
+$Id: install-info.c,v 1.3 1997/06/22 14:46:53 provos Exp $
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -733,8 +733,12 @@ For more information about these matters, see the files named COPYING.");
               if ((dir_lines[i].size
                    > (p - dir_lines[i].start + infilelen_sans_info))
                   && !strncmp (p, infile_sans_info, infilelen_sans_info)
-                  && p[infilelen_sans_info] == ')')
-                dir_lines[i].delete = 1;
+                  && (p[infilelen_sans_info] == ')' || 
+		      p[infilelen_sans_info] == '.' )) 
+		{
+		  dir_lines[i].delete = 1;
+		  something_deleted = 1;
+		}
             }
         }
       /* Treat lines that start with whitespace
@@ -743,10 +747,7 @@ For more information about these matters, see the files named COPYING.");
       else if (i > 0
                && (*dir_lines[i].start == ' '
                    || *dir_lines[i].start == '\t'))
-        {
           dir_lines[i].delete = dir_lines[i - 1].delete;
-          something_deleted = 1;
-        }
     }
 
   /* Finish the info about the end of the last node.  */
