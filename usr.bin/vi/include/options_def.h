@@ -1,3 +1,5 @@
+/*	$OpenBSD: options_def.h,v 1.4 2001/01/29 01:58:47 niklas Exp $	*/
+
 #define O_ALTWERASE 0
 #define O_AUTOINDENT 1
 #define O_AUTOPRINT 2

@@ -1,3 +1,5 @@
+#	$OpenBSD: nfs-0.d,v 1.2 2001/01/29 01:58:11 niklas Exp $
+
 # UDP NFS null-proc call; finds active NFS listeners on port 2049.
 # If you get *something* back, there's an NFS server there.
 

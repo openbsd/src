@@ -1,3 +1,5 @@
+/*	$OpenBSD: vs_relative.c,v 1.2 2001/01/29 01:58:55 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

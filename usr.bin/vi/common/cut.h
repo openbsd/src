@@ -1,3 +1,5 @@
+/*	$OpenBSD: cut.h,v 1.3 2001/01/29 01:58:29 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

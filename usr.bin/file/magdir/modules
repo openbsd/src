@@ -1,3 +1,5 @@
+#	$OpenBSD: modules,v 1.2 2001/01/29 01:57:57 niklas Exp $
+
 # Magic file entries for several module formats
 # by Claudio Matsuoka <claudio@pos.inf.ufpr.br>
 #

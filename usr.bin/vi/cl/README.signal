@@ -1,3 +1,5 @@
+#	$OpenBSD: README.signal,v 1.2 2001/01/29 01:58:26 niklas Exp $
+
 #	@(#)README.signal	10.1 (Berkeley) 6/23/95
 
 There are six (normally) asynchronous actions about which vi cares:

@@ -1,3 +1,5 @@
+/*	$OpenBSD: data.c,v 1.3 2001/01/29 01:58:11 niklas Exp $	*/
+
 /* primitive arbitrary-data frontend for netcat.  0.9 960226
    only handles one value per ascii line, but at least parses 0xNN too
    an input line containing "%r" during "-g" generates a random byte

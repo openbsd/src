@@ -1,3 +1,5 @@
+/*	$OpenBSD: kbd.h,v 1.4 2001/01/29 01:58:07 niklas Exp $	*/
+
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
  */

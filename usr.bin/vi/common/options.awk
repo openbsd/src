@@ -1,3 +1,5 @@
+#	$OpenBSD: options.awk,v 1.3 2001/01/29 01:58:31 niklas Exp $
+
 #	@(#)options.awk	10.1 (Berkeley) 6/8/95
  
 /^\/\* O_[0-9A-Z_]*/ {

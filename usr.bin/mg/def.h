@@ -1,3 +1,5 @@
+/*	$OpenBSD: def.h,v 1.6 2001/01/29 01:58:06 niklas Exp $	*/
+
 /*
  * This file is the general header file for all parts
  * of the Mg display editor. It contains all of the

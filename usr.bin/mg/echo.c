@@ -1,3 +1,5 @@
+/*	$OpenBSD: echo.c,v 1.4 2001/01/29 01:58:07 niklas Exp $	*/
+
 /*
  *	Echo line reading and writing.
  *

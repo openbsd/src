@@ -1,3 +1,5 @@
+/*	$OpenBSD: ttyio.c,v 1.13 2001/01/29 01:58:10 niklas Exp $	*/
+
 /*
  * POSIX terminal I/O.
  *

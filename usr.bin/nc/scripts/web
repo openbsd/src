@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: web,v 1.2 2001/01/29 01:58:13 niklas Exp $
+
 ## The web sucks.  It is a mighty dismal kludge built out of a thousand
 ## tiny dismal kludges all band-aided together, and now these bottom-line
 ## clueless pinheads who never heard of "TCP handshake" want to run

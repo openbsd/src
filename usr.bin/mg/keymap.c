@@ -1,3 +1,5 @@
+/*	$OpenBSD: keymap.c,v 1.5 2001/01/29 01:58:08 niklas Exp $	*/
+
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific 
  * parts of building the keymap has been moved to a better place.

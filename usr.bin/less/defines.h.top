@@ -1,3 +1,5 @@
+/*	$OpenBSD: defines.h.top,v 1.2 2001/01/29 01:58:01 niklas Exp $	*/
+
 /* Unix definition file for less.  -*- C -*-
  *
  * This file has 3 sections:

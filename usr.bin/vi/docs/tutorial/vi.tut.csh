@@ -1,4 +1,6 @@
 #!/bin/csh -f
+#	$OpenBSD: vi.tut.csh,v 1.2 2001/01/29 01:58:40 niklas Exp $
+
 #
 # This makes the user's EXINIT variable set to the 'correct' things.
 # I don't know what will happen if they also have a .exrc file!

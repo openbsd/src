@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: iscan,v 1.2 2001/01/29 01:58:12 niklas Exp $
+
 ## duplicate DaveG's ident-scan thingie using netcat.  Oooh, he'll be pissed.
 ## args: target port [port port port ...]
 ## hose stdout *and* stderr together.

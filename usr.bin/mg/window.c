@@ -1,3 +1,5 @@
+/*	$OpenBSD: window.c,v 1.5 2001/01/29 01:58:10 niklas Exp $	*/
+
 /*
  *		Window handling.
  */

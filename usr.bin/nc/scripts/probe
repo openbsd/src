@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: probe,v 1.2 2001/01/29 01:58:13 niklas Exp $
+
 ## launch a whole buncha shit at yon victim in no particular order; capture
 ## stderr+stdout in one place.  Run as root for rservice and low -p to work.
 ## Fairly thorough example of using netcat to collect a lot of host info.

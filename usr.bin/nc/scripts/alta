@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: alta,v 1.2 2001/01/29 01:58:12 niklas Exp $
+
 ## special handler for altavista, since they only hand out chunks of 10 at
 ## a time.  Tries to isolate out results without the leading/trailing trash.
 ## multiword arguments are foo+bar, as usual.

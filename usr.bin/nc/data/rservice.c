@@ -1,3 +1,5 @@
+/*	$OpenBSD: rservice.c,v 1.2 2001/01/29 01:58:12 niklas Exp $	*/
+
 /* generate ^@string1^@string2^@cmd^@ input to netcat, for scripting up
    rsh/rexec attacks.  Needs to be a prog because shells strip out nulls.
 

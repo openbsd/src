@@ -1,3 +1,5 @@
+/*	$OpenBSD: kbd.c,v 1.4 2001/01/29 01:58:07 niklas Exp $	*/
+
 /*
  *	Terminal independent keyboard handling.
  */

@@ -1,3 +1,5 @@
+.\"	$OpenBSD: vi.apwh.ms,v 1.3 2001/01/29 01:58:36 niklas Exp $
+.\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"

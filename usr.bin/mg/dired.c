@@ -1,3 +1,5 @@
+/*	$OpenBSD: dired.c,v 1.6 2001/01/29 01:58:06 niklas Exp $	*/
+
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
 

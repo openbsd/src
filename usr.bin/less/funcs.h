@@ -1,3 +1,5 @@
+/*	$OpenBSD: funcs.h,v 1.2 2001/01/29 01:58:01 niklas Exp $	*/
+
 	public void strtcpy ();
 	public char * save ();
 	public VOID_POINTER ecalloc ();

@@ -1,3 +1,5 @@
+/*	$OpenBSD: bitstring.h,v 1.2 2001/01/29 01:58:46 niklas Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

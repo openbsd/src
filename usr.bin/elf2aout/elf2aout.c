@@ -1,3 +1,5 @@
+/*	$OpenBSD: elf2aout.c,v 1.2 2001/01/29 01:57:56 niklas Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	Ted Lemon (hereinafter referred to as the author)

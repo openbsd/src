@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.19 2001/01/29 01:58:19 niklas Exp $
+
 .PATH:		${.CURDIR}/..
 
 LIB=	ssh

@@ -1,3 +1,5 @@
+#	$OpenBSD: pmap-mnt.d,v 1.2 2001/01/29 01:58:11 niklas Exp $
+
 # portmap request for mountd [or whatever; see where prog=MOUNT]
 # send to UDP 111 and hope it's not a logging portmapper!
 # split into longwords, since rpc apparently only deals with them

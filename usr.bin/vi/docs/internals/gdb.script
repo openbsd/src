@@ -1,3 +1,5 @@
+#	$OpenBSD: gdb.script,v 1.3 2001/01/29 01:58:38 niklas Exp $
+
 #	@(#)gdb.script	8.5 (Berkeley) 5/4/96
 
 # display the VI screen map

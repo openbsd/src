@@ -1,3 +1,5 @@
+/*	$OpenBSD: chrdef.h,v 1.3 2001/01/29 01:58:06 niklas Exp $	*/
+
 /*
  * sys/default/chardef.h: character set specific #defines for Mg 2a
  * Warning: System specific ones exist

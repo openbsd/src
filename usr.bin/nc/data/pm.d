@@ -1,3 +1,5 @@
+#	$OpenBSD: pm.d,v 1.2 2001/01/29 01:58:11 niklas Exp $
+
 # obligatory duplicate of dr delete's Livingston portmaster crash, aka
 # telnet break.  Fire into its telnet listener.  An *old* bug by now, but
 # consider the small window one might obtain from a slightly out-of-rev PM

@@ -1,3 +1,5 @@
+/*	$OpenBSD: modes.c,v 1.4 2001/01/29 01:58:09 niklas Exp $	*/
+
 /*
  * Commands to toggle modes.   Without an argument, these functions will 
  * toggle the given mode.  A negative or zero argument will turn the mode 

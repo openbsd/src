@@ -1,3 +1,5 @@
+/*	$OpenBSD: dir.c,v 1.4 2001/01/29 01:58:06 niklas Exp $	*/
+
 /*
  * Name:	MG 2a
  *		Directory management functions

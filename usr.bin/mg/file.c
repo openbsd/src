@@ -1,3 +1,5 @@
+/*	$OpenBSD: file.c,v 1.5 2001/01/29 01:58:07 niklas Exp $	*/
+
 /*
  *	File commands.
  */

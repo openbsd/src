@@ -1,3 +1,5 @@
+/*	$OpenBSD: com_extern.h,v 1.3 2001/01/29 01:58:47 niklas Exp $	*/
+
 #ifndef HAVE_BSEARCH
 void	*bsearch __P((const void *, const void *, size_t,
    size_t, int (*)(const void *, const void *)));

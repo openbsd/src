@@ -1,3 +1,5 @@
+/*	$OpenBSD: cl_extern.h,v 1.5 2001/01/29 01:58:46 niklas Exp $	*/
+
 #ifndef HAVE_CURSES_ADDNSTR
 int addnstr __P((char *, int));
 #endif

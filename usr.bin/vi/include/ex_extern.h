@@ -1,3 +1,5 @@
+/*	$OpenBSD: ex_extern.h,v 1.5 2001/01/29 01:58:47 niklas Exp $	*/
+
 int ex __P((SCR **));
 int ex_cmd __P((SCR *));
 int ex_range __P((SCR *, EXCMD *, int *));

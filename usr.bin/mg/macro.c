@@ -1,3 +1,5 @@
+/*	$OpenBSD: macro.c,v 1.4 2001/01/29 01:58:08 niklas Exp $	*/
+
 /*
  *	Keyboard macros.
  */

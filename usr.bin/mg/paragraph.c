@@ -1,3 +1,5 @@
+/*	$OpenBSD: paragraph.c,v 1.4 2001/01/29 01:58:09 niklas Exp $	*/
+
 /*
  * Code for dealing with paragraphs and filling. Adapted from MicroEMACS 3.6
  * and GNU-ified by mwm@ucbvax.	 Several bug fixes by blarson@usc-oberon.

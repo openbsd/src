@@ -1,3 +1,5 @@
+/*	$OpenBSD: ex_def.h,v 1.2 2001/01/29 01:58:47 niklas Exp $	*/
+
 #define C_SCROLL 0
 #define C_BANG 1
 #define C_HASH 2

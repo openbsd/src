@@ -1,3 +1,5 @@
+/*	$OpenBSD: perm.h,v 1.2 2001/01/29 01:57:55 niklas Exp $	*/
+
 /* 
  *  perm.h -  header for at(1)
  *  Copyright (C) 1994  Thomas Koenig

@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: webproxy,v 1.2 2001/01/29 01:58:13 niklas Exp $
+
 ## Web proxy, following the grand tradition of Web things being handled by
 ## gross scripts.  Uses netcat to listen on a high port [default 8000],
 ## picks apart requests and sends them on to the right place.  Point this

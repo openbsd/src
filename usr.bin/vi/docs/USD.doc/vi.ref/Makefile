@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.16 (Berkeley) 8/15/94
+#	$OpenBSD: Makefile,v 1.3 2001/01/29 01:58:35 niklas Exp $
+
 
 DIR=	usd/13.viref
 SRCS=	vi.ref ex.cmd.roff set.opt.roff vi.cmd.roff ref.so

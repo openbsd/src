@@ -1,3 +1,5 @@
+/*	$OpenBSD: basic.c,v 1.4 2001/01/29 01:58:06 niklas Exp $	*/
+
 /*
  *		Basic cursor motion commands.
  *

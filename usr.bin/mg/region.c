@@ -1,3 +1,5 @@
+/*	$OpenBSD: region.c,v 1.4 2001/01/29 01:58:09 niklas Exp $	*/
+
 /*
  *		Region based commands.
  * The routines in this file deal with the region, that magic space between 

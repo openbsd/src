@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/8/93
+#	$OpenBSD: Makefile,v 1.3 2001/01/29 01:58:33 niklas Exp $
+
 
 DIR=	usd/13.ex
 SRCS=	ex.rm

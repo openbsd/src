@@ -1,3 +1,5 @@
+/*	$OpenBSD: buffer.c,v 1.5 2001/01/29 01:58:06 niklas Exp $	*/
+
 /*
  *		Buffer handling.
  */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: vi_extern.h,v 1.6 2001/01/29 01:58:48 niklas Exp $	*/
+
 int cs_init __P((SCR *, VCS *));
 int cs_next __P((SCR *, VCS *));
 int cs_fspace __P((SCR *, VCS *));

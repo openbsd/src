@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 8/14/93
+#	$OpenBSD: Makefile,v 1.3 2001/01/29 01:58:36 niklas Exp $
+
 
 DIR=	usd/12.vi
 SRCS=	vi.in vi.chars

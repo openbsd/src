@@ -1,3 +1,5 @@
+/*	$OpenBSD: search.c,v 1.4 2001/01/29 01:58:09 niklas Exp $	*/
+
 /*
  *		Search commands.
  * The functions in this file implement the search commands (both plain and 

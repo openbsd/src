@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: irc,v 1.2 2001/01/29 01:58:12 niklas Exp $
+
 ## Shit-simple script to supply the "privmsg <recipient>" of IRC typein, and
 ## keep the connection alive.  Pipe this thru "nc -v -w 5 irc-server port".
 ## Note that this mechanism makes the script easy to debug without being live,

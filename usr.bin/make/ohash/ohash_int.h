@@ -1,3 +1,5 @@
+/*	$OpenBSD: ohash_int.h,v 1.2 2001/01/29 01:58:05 niklas Exp $	*/
+
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdlib.h>

@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile.os2,v 1.2 2001/01/29 01:58:00 niklas Exp $
+
 # Makefile for less.
 # OS/2 version, for emx+gcc compiler
 

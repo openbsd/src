@@ -1,3 +1,5 @@
+/*	$OpenBSD: word.c,v 1.4 2001/01/29 01:58:10 niklas Exp $	*/
+
 /*
  *		Word mode commands.
  * The routines in this file implement commands that work word at a time. 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: version.c,v 1.4 2001/01/29 01:58:10 niklas Exp $	*/
+
 /*
  * This file contains the string that get written
  * out by the emacs-version command.

@@ -1,3 +1,5 @@
+#	$OpenBSD: dns-any.d,v 1.2 2001/01/29 01:58:11 niklas Exp $
+
 # dns "any for ." query, to udp 53
 # if tcp: precede with 2 bytes of len:
 # 0

@@ -1,3 +1,5 @@
+#	$OpenBSD: README,v 1.10 2001/01/29 01:58:25 niklas Exp $
+
 #	@(#)README	8.149 (Berkeley) 7/14/97
 
 This is version 1.79 (7/14/97) of nex/nvi, a reimplementation of the ex/vi

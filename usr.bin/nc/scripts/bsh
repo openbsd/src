@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: bsh,v 1.2 2001/01/29 01:58:12 niklas Exp $
+
 ## a little wrapper to "password" and re-launch a shell-listener.
 ## Arg is taken as the port to listen on.  Define "NC" to point wherever.
 

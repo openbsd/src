@@ -1,3 +1,5 @@
+#	$OpenBSD: README,v 1.6 2001/01/29 01:58:25 niklas Exp $
+
 #	@(#)README	8.26 (Berkeley) 10/19/96
 
 Nvi uses the GNU autoconf program for configuration and compilation.  You

@@ -1,3 +1,5 @@
+/*	$OpenBSD: regexp.c,v 1.2 2001/01/29 01:58:04 niklas Exp $	*/
+
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
  *

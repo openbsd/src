@@ -1,3 +1,5 @@
+/*	$OpenBSD: re_search.c,v 1.7 2001/01/29 01:58:09 niklas Exp $	*/
+
 /*
  *	regular expression search commands for Mg
  *

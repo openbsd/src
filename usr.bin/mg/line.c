@@ -1,3 +1,5 @@
+/*	$OpenBSD: line.c,v 1.5 2001/01/29 01:58:08 niklas Exp $	*/
+
 /*
  *		Text line handling.
  * 

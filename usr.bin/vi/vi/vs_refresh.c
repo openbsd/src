@@ -1,3 +1,5 @@
+/*	$OpenBSD: vs_refresh.c,v 1.8 2001/01/29 01:58:55 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

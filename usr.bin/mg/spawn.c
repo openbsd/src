@@ -1,3 +1,5 @@
+/*	$OpenBSD: spawn.c,v 1.6 2001/01/29 01:58:09 niklas Exp $	*/
+
 /*
  * Spawn.  Actually just suspends Mg.
  * Assumes POSIX job control.

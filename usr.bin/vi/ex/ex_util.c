@@ -1,3 +1,5 @@
+/*	$OpenBSD: ex_util.c,v 1.4 2001/01/29 01:58:45 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

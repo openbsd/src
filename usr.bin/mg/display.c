@@ -1,3 +1,5 @@
+/*	$OpenBSD: display.c,v 1.4 2001/01/29 01:58:07 niklas Exp $	*/
+
 /*
  * The functions in this file handle redisplay. The
  * redisplay system knows almost nothing about the editing

@@ -1,3 +1,5 @@
+/*	$OpenBSD: cl_bsd.c,v 1.6 2001/01/29 01:58:27 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1995, 1996
  *	Keith Bostic.  All rights reserved.

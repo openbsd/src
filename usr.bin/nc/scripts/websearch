@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: websearch,v 1.2 2001/01/29 01:58:13 niklas Exp $
+
 ## Hit the major search engines.  Hose the [large] output to a file!
 ## autoconverts multiple arguments into the right format for given servers --
 ## usually worda+wordb, with certain lame exceptions like dejanews.

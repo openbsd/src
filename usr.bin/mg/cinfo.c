@@ -1,3 +1,5 @@
+/*	$OpenBSD: cinfo.c,v 1.3 2001/01/29 01:58:06 niklas Exp $	*/
+
 /*
  *		Character class tables.
  * Do it yourself character classification

@@ -1,3 +1,5 @@
+/*	$OpenBSD: cl_screen.c,v 1.12 2001/01/29 01:58:28 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
