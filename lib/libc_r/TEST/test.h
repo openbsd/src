@@ -41,6 +41,8 @@ __vpanic(type, errstr, filenm, lineno, fmt, ap)
 
 	_thread_dump_info();
 	_thread_sys__exit(1);
+
+	_thread_sys_write(2, "[locking]\n", 10);
 	while(1);
 }
 
