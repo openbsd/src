@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.5 1996/04/21 23:41:45 deraadt Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.6 1996/04/25 11:04:14 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -133,7 +133,8 @@ main(argc, argv)
 	setfsent();
 	while ((fs = getfsent()) != NULL) {
 		if (strcmp(fs->fs_vfstype, "ffs") &&
-		    strcmp(fs->fs_vfstype, "ufs"))
+		    strcmp(fs->fs_vfstype, "ufs") &&
+		    strcmp(fs->fs_vfstype, "mfs"))
 			continue;
 		if (aflag) {
 			if (gflag && hasquota(fs, GRPQUOTA, &qfnp))
