@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgid.2,v 1.6 1999/05/23 14:10:51 aaron Exp $
+.\"	$OpenBSD: getgid.2,v 1.7 1999/05/27 13:17:28 aaron Exp $
 .\"	$NetBSD: getgid.2,v 1.5 1995/02/27 12:32:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -63,7 +63,7 @@ during the execution of
 .Dq Em set-group-ID
 mode processes,
 .Fn getgid
-is used to determine the real-user-id of the calling process.
+is used to determine the real group ID of the calling process.
 .Sh ERRORS
 The
 .Fn getgid
@@ -76,8 +76,9 @@ indicate an error.
 .Xr setgid 2 ,
 .Xr setregid 2
 .Sh STANDARDS
+The
 .Fn getgid
 and
 .Fn getegid
-conform to 
+functions conform to 
 .St -p1003.1-88 .
