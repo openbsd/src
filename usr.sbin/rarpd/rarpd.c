@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.1.1.1 1995/10/18 08:48:02 deraadt Exp $";
+"@(#) $Id: rarpd.c,v 1.2 1995/11/15 07:04:09 deraadt Exp $";
 #endif
 
 
@@ -650,6 +650,7 @@ update_arptab(ep, ipaddr)
 	u_char *ep;
 	u_long  ipaddr;
 {
+#ifdef SIOCSARP
 	int     s;
 	struct arpreq request;
 	struct sockaddr_in *sin;
@@ -665,12 +666,14 @@ update_arptab(ep, ipaddr)
 	request.arp_ha.sa_len = 16; /* XXX */
 	bcopy((char *) ep, (char *) request.arp_ha.sa_data, 6);
 
-#if 0
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (ioctl(s, SIOCSARP, (caddr_t) & request) < 0) {
 		err(NONFATAL, "SIOCSARP: %s", strerror(errno));
 	}
 	(void) close(s);
+#else
+	if (arptab_set(ep, ipaddr) > 0)
+		syslog(LOG_ERR, "couldn't update arp table");
 #endif
 }
 /*
