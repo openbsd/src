@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.91 2002/11/24 13:26:29 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.92 2002/11/24 13:34:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -693,14 +693,14 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
 		if (pfctl_add_pool(pf, &n->rpool, n->af))
 			return (1);
-		memcpy(&pf->pnat->nat, n, sizeof(pf->pnat->nat));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			memcpy(&pf->pnat->nat, n, sizeof(pf->pnat->nat));
 			if (ioctl(pf->dev, DIOCADDNAT, pf->pnat))
 				err(1, "DIOCADDNAT");
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
-			print_nat(&pf->pnat->nat);
-		pfctl_clear_pool(&pf->pnat->nat.rpool);
+			print_nat(n);
+		pfctl_clear_pool(&n->rpool);
 	}
 	return (0);
 }
@@ -709,13 +709,13 @@ int
 pfctl_add_binat(struct pfctl *pf, struct pf_binat *b)
 {
 	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
-		memcpy(&pf->pbinat->binat, b, sizeof(pf->pbinat->binat));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			memcpy(&pf->pbinat->binat, b, sizeof(pf->pbinat->binat));
 			if (ioctl(pf->dev, DIOCADDBINAT, pf->pbinat))
 				err(1, "DIOCADDBINAT");
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
-			print_binat(&pf->pbinat->binat);
+			print_binat(b);
 	}
 	return (0);
 }
@@ -726,14 +726,14 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
 		if (pfctl_add_pool(pf, &r->rpool, r->af))
 			return (1);
-		memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
 			if (ioctl(pf->dev, DIOCADDRDR, pf->prdr))
 				err(1, "DIOCADDRDR");
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
-			print_rdr(&pf->prdr->rdr);
-		pfctl_clear_pool(&pf->prdr->rdr.rpool);
+			print_rdr(r);
+		pfctl_clear_pool(&r->rpool);
 	}
 	return (0);
 }
