@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.5 1996/03/03 17:19:45 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.6 1996/09/02 01:22:05 tholo Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <vm/vm.h>
 
 int	nprocs = 1;		/* process 0 */
+pid_t	lastpid;
 
 #define	ISFORK	0
 #define	ISVFORK	1
@@ -111,7 +112,7 @@ fork1(p1, forktype, rforkflags, retval)
 	register uid_t uid;
 	struct proc *newproc;
 	int count;
-	static int nextpid, pidchecked = 0;
+	static int pidchecked = 0;
 	int dupfd = 1, cleanfd = 0;
 
 	if (forktype == ISRFORK) {
@@ -156,40 +157,40 @@ fork1(p1, forktype, rforkflags, retval)
 
 	/*
 	 * Find an unused process ID.  We remember a range of unused IDs
-	 * ready to use (from nextpid+1 through pidchecked-1).
+	 * ready to use (from lastpid+1 through pidchecked-1).
 	 */
-	nextpid++;
+	lastpid++;
 retry:
 	/*
 	 * If the process ID prototype has wrapped around,
 	 * restart somewhat above 0, as the low-numbered procs
 	 * tend to include daemons that don't exit.
 	 */
-	if (nextpid >= PID_MAX) {
-		nextpid = 100;
+	if (lastpid >= PID_MAX) {
+		lastpid = 100;
 		pidchecked = 0;
 	}
-	if (nextpid >= pidchecked) {
+	if (lastpid >= pidchecked) {
 		int doingzomb = 0;
 
 		pidchecked = PID_MAX;
 		/*
 		 * Scan the active and zombie procs to check whether this pid
 		 * is in use.  Remember the lowest pid that's greater
-		 * than nextpid, so we can avoid checking for a while.
+		 * than lastpid, so we can avoid checking for a while.
 		 */
 		p2 = allproc.lh_first;
 again:
 		for (; p2 != 0; p2 = p2->p_list.le_next) {
-			while (p2->p_pid == nextpid ||
-			    p2->p_pgrp->pg_id == nextpid) {
-				nextpid++;
-				if (nextpid >= pidchecked)
+			while (p2->p_pid == lastpid ||
+			    p2->p_pgrp->pg_id == lastpid) {
+				lastpid++;
+				if (lastpid >= pidchecked)
 					goto retry;
 			}
-			if (p2->p_pid > nextpid && pidchecked > p2->p_pid)
+			if (p2->p_pid > lastpid && pidchecked > p2->p_pid)
 				pidchecked = p2->p_pid;
-			if (p2->p_pgrp->pg_id > nextpid && 
+			if (p2->p_pgrp->pg_id > lastpid && 
 			    pidchecked > p2->p_pgrp->pg_id)
 				pidchecked = p2->p_pgrp->pg_id;
 		}
@@ -203,7 +204,7 @@ again:
 	nprocs++;
 	p2 = newproc;
 	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_pid = nextpid;
+	p2->p_pid = lastpid;
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
