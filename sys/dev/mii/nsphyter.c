@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.1 1999/12/07 22:33:43 jason Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.2 2000/02/26 03:42:20 jason Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.1 1999/12/07 19:36:37 thorpej Exp $	*/
 
 /*-
@@ -139,12 +139,10 @@ nsphyterattach(parent, self, aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
 		mii_add_media(sc);
-	printf("\n");
 }
 
 int
