@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrcnt.h,v 1.5 1997/01/24 19:57:13 niklas Exp $	*/
+/*	$OpenBSD: intrcnt.h,v 1.6 2003/02/28 23:02:09 jason Exp $	*/
 /*	$NetBSD: intrcnt.h,v 1.7 1996/11/16 23:11:57 cgd Exp $	*/
 
 /*
@@ -124,12 +124,12 @@
 		ASCIZ "eb164 irq 23";
 
 #define INTRCNT_DEFINITION						\
-/* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x10 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x20 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x30 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x40 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x50 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+/* 0x00 */	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x10 */	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x20 */	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x30 */	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x40 */	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x50 */	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -148,5 +148,5 @@
 #define	INTRCNT_EB164_IRQ_LEN	24
 
 #ifndef _LOCORE
-extern volatile long intrcnt[];
+extern volatile int intrcnt[];
 #endif
