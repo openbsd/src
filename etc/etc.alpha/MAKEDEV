@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.20 1997/05/25 18:43:59 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 1997/07/06 18:13:34 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -47,6 +47,8 @@
 #	cd*	SCSI CD-ROM
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	wd*	IDE disks
+#	acd*	ATAPI CD-ROM
 #
 # Terminals:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
@@ -97,7 +99,7 @@ case $i in
 all)
 	sh MAKEDEV std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3 acd0 acd1
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
 	sh MAKEDEV mmclock kbd mouse lpa0 lpt0 random ipl
@@ -107,7 +109,8 @@ all)
 
 raminst)
 	sh MAKEDEV std
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 wd0 wd1 wd2 wd3 st0 st1
+	sh MAKEDEV cd0 cd1 acd0 acd1
 	sh MAKEDEV rd0
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 pty0
 	;;
@@ -137,12 +140,13 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|ccd*|rd*)
+sd*|wd*|ccd*|rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	rd*)	name=rd;	blk=6; chr=28;;
 	sd*)	name=sd;	blk=8; chr=8;;
 	ccd*)	name=ccd;	blk=7; chr=27;;
+	wd*)	name=wd;	blk=0; chr=36;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
@@ -229,10 +233,11 @@ vnd*)
 	umask 77
 	;;
 
-cd*)
+cd*|acd*)
 	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 	case $i in
 	cd*)	name=cd;	blk=3; chr=13;;
+	acd*)	name=acd;	blk=4; chr=37;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
