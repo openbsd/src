@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.11 2003/02/09 07:26:45 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.12 2003/03/14 10:47:46 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -5242,8 +5242,7 @@ are executed.
 .It set radius Op Ar config-file
 This command enables RADIUS support (if it's compiled in).
 .Ar config-file
-refers to the radius client configuration file as described in
-.Xr radius.conf 5 .
+refers to the radius client configuration file.
 If PAP, CHAP, MSCHAP or MSCHAPv2 are
 .Dq enable Ns No d ,
 .Nm
@@ -5867,7 +5866,6 @@ ifdef({LOCALRAD},{},{.Xr libradius 3 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
 .Xr protocols 5 ,
-.Xr radius.conf 5 ,
 .Xr resolv.conf 5 ,
 .Xr syslog.conf 5 ,
 .Xr adduser 8 ,
