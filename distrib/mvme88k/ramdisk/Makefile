@@ -17,7 +17,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /tmp/image.${PID}
-LISTFLOPPY=	${.CURDIR}/list_ramdisk
+LISTFLOPPY?=	${.CURDIR}/list_ramdisk
 
 .include "Makefile.inc"
 
