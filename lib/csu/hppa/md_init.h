@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2004/01/08 14:59:15 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2004/05/26 19:17:35 mickey Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -28,11 +28,9 @@
 #ifdef PIC
 #define MD_SECT_CALL_FUNC(section, func)			\
 	__asm (".section "#section",\"ax\",@progbits	\n"	\
-	"	stw	%r19,-32(%r30)			\n"	\
-	"	stw	%r4,-64(%r30)			\n"	\
 	"	bl	" #func ",%r2			\n"	\
-	"	copy 	%r19,%r4			\n"	\
-	"	copy 	%r4,%r19			\n"	\
+	"	stw	%r19,-80(%r30)			\n"	\
+	"	ldw	-80(%r30),%r19			\n"	\
 	"	.previous")
 #else
 #define MD_SECT_CALL_FUNC(section, func)			\
