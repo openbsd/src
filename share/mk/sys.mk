@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.10 1997/01/08 07:35:04 niklas Exp $
+#	$OpenBSD: sys.mk,v 1.11 1997/02/06 10:49:16 niklas Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -17,6 +17,7 @@ unix=		We run OpenBSD.
 AR?=		ar
 ARFLAGS?=	rl
 RANLIB?=	ranlib
+LORDER?=	lorder
 
 AS?=		as
 AFLAGS?=	${DEBUG}
