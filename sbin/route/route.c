@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.20 1997/06/24 03:15:23 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.21 1997/06/24 03:45:43 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.20 1997/06/24 03:15:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.21 1997/06/24 03:45:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -414,8 +414,7 @@ netname(sa)
 	char *cp = NULL;
 	static char line[MAXHOSTNAMELEN];
 	struct netent *np = 0;
-	in_addr_t net;
-	int mask, subnetshift;
+	in_addr_t net, mask, subnetshift;
 	char *ns_print();
 	char *ipx_print();
 
@@ -446,7 +445,7 @@ netname(sa)
 			 * width subnet fields.
 			 */
 			while (in.s_addr &~ mask)
-				mask = mask >> subnetshift;
+				mask = (int)mask >> subnetshift;
 			net = in.s_addr & mask;
 			while ((mask & 1) == 0)
 				mask >>= 1, net >>= 1;
