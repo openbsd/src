@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipcrm.1,v 1.8 2003/03/06 04:07:37 david Exp $
+.\" $OpenBSD: ipcrm.1,v 1.9 2003/09/02 09:48:04 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
@@ -33,6 +33,7 @@
 segments
 .Sh SYNOPSIS
 .Nm ipcrm
+.Bk -words
 .Op Fl q Ar msqid
 .Op Fl m Ar shmid
 .Op Fl s Ar semid
@@ -40,6 +41,7 @@ segments
 .Op Fl M Ar shmkey
 .Op Fl S Ar semkey
 .Ar ...
+.Ek
 .Sh DESCRIPTION
 .Nm
 removes the specified message queues, semaphores and shared memory
