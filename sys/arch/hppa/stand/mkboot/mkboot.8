@@ -1,2 +1,31 @@
-.\"	$OpenBSD: mkboot.8,v 1.2 2001/07/04 08:48:03 niklas Exp $
+.\"	$OpenBSD: mkboot.8,v 1.3 2002/11/10 20:59:21 mickey Exp $
 .\"
+.Dd November 11, 2002
+.Dt MKBOOT 8
+.Os
+.Sh NAME
+.Nm mkboot
+.Nd create LIF files
+.Sh SYNOPSIS
+.Nm mkboot
+.Op Fl v
+.Op Fl l Ar loadpoint
+.Ar program ... outfile
+.Sh DESCRIPTION
+Creates the LIF file containing the bootstrap
+.Ar program
+and possibly other programs to be used by the
+.Tn HP9000/700
+and
+.Tn HP9000/800
+systems.
+.Pp
+An argument to the
+.Fl l
+option specifies the load point for the boot program,
+with the default value of zero.
+.Sh HISTORY
+An
+.Nm
+utility forst appeared in
+.Ox 2.4 .
