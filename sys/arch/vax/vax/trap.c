@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.c,v 1.9 1997/10/08 07:12:08 niklas Exp $     */
+/*      $OpenBSD: trap.c,v 1.10 1998/05/11 16:19:13 niklas Exp $     */
 /*      $NetBSD: trap.c,v 1.28 1997/07/28 21:48:33 ragge Exp $     */
 
 /*
@@ -140,6 +140,7 @@ arithflt(frame)
 	extern vm_map_t	pte_map;
 	int	typ;
 	caddr_t	v;
+	union sigval sv;
 
 	if ((frame->psl & PSL_U) == PSL_U) {
 		type |= T_USER;
@@ -374,8 +375,10 @@ faulter:
 #endif
 	}
 bad:
-	if (trapsig)
-		trapsignal(curproc, sig, frame->code, typ, v);
+	if (trapsig) {
+		sv.sival_ptr = v;
+		trapsignal(curproc, sig, frame->code, typ, sv);
+	}
 uret:
 	userret(curproc, frame->pc, frame->psl);
 };
