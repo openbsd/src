@@ -682,9 +682,13 @@ print_insn_sparc (memaddr, info)
 	      unsigned long prev_insn;
 	      int errcode;
 
-	      errcode =
-		(*info->read_memory_func)
+	      if (memaddr >= 4)
+		errcode =
+		  (*info->read_memory_func)
 		  (memaddr - 4, buffer, sizeof (buffer), info);
+	      else
+		errcode = 1;
+
 	      prev_insn = getword (buffer);
 
 	      if (errcode == 0)
@@ -700,8 +704,12 @@ print_insn_sparc (memaddr, info)
 
 		  if (is_delayed_branch (prev_insn))
 		    {
-		      errcode = (*info->read_memory_func)
-			(memaddr - 8, buffer, sizeof (buffer), info);
+		      if (memaddr >= 8)
+			errcode = (*info->read_memory_func)
+			  (memaddr - 8, buffer, sizeof (buffer), info);
+		      else
+			errcode = 1;
+
 		      prev_insn = getword (buffer);
 		    }
 		}
