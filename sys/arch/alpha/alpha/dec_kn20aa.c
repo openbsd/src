@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn20aa.c,v 1.11 2000/11/16 23:32:20 ericj Exp $ */
+/* $OpenBSD: dec_kn20aa.c,v 1.12 2001/12/13 19:13:22 nate Exp $ */
 /* $NetBSD: dec_kn20aa.c,v 1.42 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -107,7 +107,7 @@ dec_kn20aa_cons_init()
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
-	case 2: 
+	case CTB_PRINTERPORT: 
 		/* serial console ... */
 		/* XXX */
 		{
@@ -126,7 +126,7 @@ dec_kn20aa_cons_init()
 			break;
 		}
 
-	case 3:
+	case CTB_GRAPHICS:
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_up1000.c,v 1.2 2001/04/17 14:51:32 art Exp $	*/
+/*	$OpenBSD: api_up1000.c,v 1.3 2001/12/13 19:13:22 nate Exp $	*/
 /* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -107,7 +107,7 @@ api_up1000_cons_init()
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
-	case 2: 
+	case CTB_PRINTERPORT: 
 		/* serial console ... */
 		/* XXX */
 		{
@@ -126,7 +126,7 @@ api_up1000_cons_init()
 			break;
 		}
 
-	case 3:
+	case CTB_GRAPHICS:
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */

@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.2 2000/11/16 23:32:20 ericj Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.3 2001/12/13 19:13:22 nate Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -104,7 +104,7 @@ dec_6600_cons_init()
 	tsp = tsp_init(0, tsp_console_hose);
 
 	switch (ctb->ctb_term_type) {
-	case 2: 
+	case CTB_PRINTERPORT: 
 		/* serial console ... */
 		assert(CTB_TURBOSLOT_HOSE(ctbslot) == 0);
 		/* XXX */
@@ -124,7 +124,7 @@ dec_6600_cons_init()
 			break;
 		}
 
-	case 3:
+	case CTB_GRAPHICS:
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
