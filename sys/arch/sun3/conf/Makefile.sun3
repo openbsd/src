@@ -112,11 +112,9 @@ assym.h: genassym
 # the compiler used as HOSTED_CC (must match the native compiler).
 # Often this is not possible at all, and you just have to build
 # the assym.h file by hand on some other machine. -gwr
-genassym: genassym.i
+genassym: ${SUN3}/sun3/genassym.c
+	${CC} ${CPPFLAGS} -E $< > $@.i
 	${HOSTED_CC} -o $@ $@.i
-
-genassym.i: ${SUN3}/sun3/genassym.c
-	${CC} ${CPPFLAGS} -E ${SUN3}/sun3/genassym.c > $@
 
 param.c: $S/conf/param.c
 	rm -f param.c
