@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.2 2004/05/20 04:35:47 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.3 2004/05/23 05:29:31 marco Exp $	*/
 /*
  * FreeBSD platform specific driver option settings, data structures,
  * function declarations and includes.
@@ -87,7 +87,8 @@
 #define offsetof(type, member)  ((size_t)(&((type *)0)->member))
 #endif
 
-/************************* Forward Declarations *******************************/typedef struct pci_attach_args * ahd_dev_softc_t;
+/************************* Forward Declarations *******************************/
+typedef struct pci_attach_args * ahd_dev_softc_t;
 
 /***************************** Bus Space/DMA **********************************/
 
@@ -420,7 +421,10 @@ ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
 		ahd->flags &= ~AHD_RESOURCE_SHORTAGE;
 	}
 
-	timeout_del(&scb->xs->stimeout);
+	if (!cold) {
+		/* we are no longer in autoconf */
+		timeout_del(&scb->xs->stimeout);
+	}
 
 	ahd_unlock(ahd, &s);
 }
