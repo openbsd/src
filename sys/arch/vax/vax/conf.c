@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2001/12/11 23:19:02 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.32 2001/12/13 09:20:47 hugh Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -150,7 +150,8 @@ struct bdevmajtpl {
 } bdevtpls[] = {
 	{ BDEV_HP,	0 },
 	{ BDEV_RK,	3 }, 
-	{ BDEV_IDC, 11 },
+	{ BDEV_UDA,	9 },
+	{ BDEV_IDC,	11 },
 	{ BDEV_RL,	14 },
 	{ BDEV_KDB,	16 },
 	{ BDEV_RD,	19 },
