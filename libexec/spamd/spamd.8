@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.1 2002/12/21 01:41:54 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.2 2002/12/21 18:18:38 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -34,6 +34,7 @@
 .Op Fl r Ar reply
 .Op Fl c Ar maxcon
 .Op Fl p Ar port
+.Op Fl n Ar name
 .Sh DESCRIPTION
 .Nm
 is a a fake
@@ -66,6 +67,8 @@ the Maximum number of concurrent connections to allow.
 Specify the port number that
 .Nm
 should operate on.
+.It Fl n
+The SMTP version banner that is reported upon initial connection.
 .El
 .Pp
 .Nm
@@ -124,4 +127,4 @@ The
 .Nm
 command
 appeared in
-.Tn OpenBSD 3.2.
+.Tn OpenBSD 3.3.
