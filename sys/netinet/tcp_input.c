@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.118 2002/08/08 17:07:32 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.119 2002/08/08 18:26:37 todd Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ present:
 		if (so->so_state & SS_CANTRCVMORE)
 			m_freem(q->ipqe_m);
 		else
-			sbappendstream(&so->so_rcv, q->ipqe_m);
+			sbappend(&so->so_rcv, q->ipqe_m);
 		pool_put(&ipqent_pool, q);
 		q = nq;
 	} while (q != NULL && q->ipqe_tcp->th_seq == tp->rcv_nxt);
@@ -1036,7 +1036,7 @@ findpcb:
 			 * to socket buffer.
 			 */
 			m_adj(m, iphlen + off);
-			sbappendstream(&so->so_rcv, m);
+			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, tiflags);
 			if (tp->t_flags & TF_ACKNOW)
@@ -2115,7 +2115,7 @@ dodata:							/* XXX */
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
 			m_adj(m, hdroptlen);
-			sbappendstream(&so->so_rcv, m);
+			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
