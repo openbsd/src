@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.56 2000/01/13 00:34:31 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.57 2000/01/13 05:03:45 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -550,6 +550,10 @@ extern int ipe4_zeroize(struct tdb *);
 extern int ipe4_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 extern void ipe4_input __P((struct mbuf *, ...));
 extern void ip4_input __P((struct mbuf *, ...));
+
+#ifdef INET6
+extern int ip4_input6 __P((struct mbuf *, int *, int));
+#endif /* INET */
 
 /* XF_ETHERIP */
 extern int etherip_output(struct mbuf *, struct tdb *, struct mbuf **,

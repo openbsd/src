@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.29 2000/01/09 23:42:37 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.30 2000/01/13 05:03:45 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -39,6 +39,9 @@
  * Encapsulation Security Payload Processing
  * Per RFC1827 (Atkinson, 1995)
  */
+
+#ifndef _NETINET_ESP_H_
+#define _NETINET_ESP_H_
 
 /* Various defines for the "new" ESP */
 #define ESP_NEW_ALEN		12	/* 96bits authenticator */
@@ -103,4 +106,5 @@ int	esp6_input __P((struct mbuf **, int *, int));
 
 extern int esp_enable;
 struct espstat espstat;
-#endif /* _Kernel */
+#endif /* _KERNEL */
+#endif _NETINET_ESP_H_

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.45 2000/01/02 09:31:03 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.46 2000/01/13 05:03:45 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -94,6 +94,18 @@
 int ip4_allow = 0;
 
 struct ip4stat ip4stat;
+
+#ifdef INET6
+/*
+ * Really only a wrapper for ip4_input(), for use with IPv6.
+ */
+int
+ip4_input6(struct mbuf *m, int *offp, int proto)
+{
+    ip4_input(m, *offp);
+    return IPPROTO_DONE;
+}
+#endif /* INET6 */
 
 /*
  * ip4_input gets called when we receive an IPv4 encapsulated packet,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.h,v 1.16 1999/12/09 09:02:59 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.h,v 1.17 2000/01/13 05:03:45 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -34,6 +34,9 @@
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
  */
+
+#ifndef _NETINET_IP4_H_
+#define _NETINET_IP4_H_
 
 /*
  * IP-inside-IP processing.
@@ -73,4 +76,5 @@ int	ip4_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 extern int ip4_allow;
 extern struct ip4stat ip4stat;
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IP4_H_ */

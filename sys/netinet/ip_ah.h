@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.22 2000/01/09 23:42:37 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.23 2000/01/13 05:03:45 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -39,6 +39,9 @@
  * Authentication Header Processing
  * Per RFC1826 (Atkinson, 1995)
  */
+
+#ifndef _NETINET_AH_H_
+#define _NETINET_AH_H_
 
 struct ah_old
 {
@@ -110,3 +113,4 @@ int	ah6_input __P((struct mbuf **, int *, int));
 extern int ah_enable;
 struct ahstat ahstat;
 #endif /* _KERNEL */
+#endif /* _NETINET_AH_H_ */
