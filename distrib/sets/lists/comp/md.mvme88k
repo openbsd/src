@@ -133,6 +133,8 @@
 ./usr/include/m88k/mmu.h
 ./usr/include/m88k/param.h
 ./usr/include/m88k/pcb.h
+./usr/include/m88k/pmap.h
+./usr/include/m88k/pmap_table.h
 ./usr/include/m88k/proc.h
 ./usr/include/m88k/profile.h
 ./usr/include/m88k/psl.h

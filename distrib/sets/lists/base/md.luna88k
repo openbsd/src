@@ -1485,6 +1485,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/mmu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/pcb.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/pmap.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/pmap_table.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/proc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/profile.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/psl.ph
