@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.43 2001/04/06 16:27:45 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.44 2001/04/29 00:37:11 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -445,7 +445,7 @@ ubsec_newsession(sidp, cri)
 			    sizeof(struct ubsec_session), M_DEVBUF, M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);
-			bcopy(sc->sc_sessions, ses, (sesn + 1) *
+			bcopy(sc->sc_sessions, ses, sesn *
 			    sizeof(struct ubsec_session));
 			bzero(sc->sc_sessions, sesn *
 			    sizeof(struct ubsec_session));
