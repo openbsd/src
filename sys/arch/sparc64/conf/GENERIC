@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.102 2004/09/23 17:34:15 jason Exp $
+#	$OpenBSD: GENERIC,v 1.103 2004/09/24 20:55:05 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -177,6 +177,7 @@ uperf*	at ebus?
 uperf*	at sbus?
 
 zs*	at sbus?
+zs*	at fhc?
 zstty*	at zs?
 zskbd*	at zs?
 wskbd*	at zskbd?
