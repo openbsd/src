@@ -58,6 +58,8 @@ static EVENT	*CollectTimeout;
 #define MS_HEADER	1	/* reading message header */
 #define MS_BODY		2	/* reading message body */
 
+#define MAXHDRLINES	512	/* max number of lines in the mail headers */
+
 void
 collect(fp, smtpmode, hdrp, e)
 	FILE *fp;
@@ -80,6 +82,7 @@ collect(fp, smtpmode, hdrp, e)
 	u_char peekbuf[8];
 	char dfname[MAXQFNAME];
 	char bufbuf[MAXLINE];
+	int numheaders = 0;
 	extern bool isheader __P((char *));
 	extern void tferror __P((FILE *volatile, ENVELOPE *));
 
@@ -329,6 +332,17 @@ nextstate:
 			{
 				mstate = MS_BODY;
 				goto nextstate;
+			}
+
+			/* check for unreasonable number of headers */
+			if (numheaders++ > MAXHDRLINES)
+			{
+				sm_syslog(LOG_NOTICE, e->e_id,
+				    "excessive headers from %s during message collect",
+				    CurHostName ? CurHostName : "<local machine>");
+				errno = 0;
+				usrerr("451 Excessive number of mail headers.");
+				goto readerr;
 			}
 
 			/* check for possible continuation line */
