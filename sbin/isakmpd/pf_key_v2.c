@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.14 1999/07/08 17:49:35 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.18 1999/07/08 16:48:40 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.15 1999/07/16 00:44:49 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.19 1999/07/16 00:29:11 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -890,19 +890,22 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
     goto cleanup;
   key = 0;
 
-  len = sizeof *key + PF_KEY_V2_ROUND (keylen);
-  key = malloc (len);
-  if (!key)
-    goto cleanup;
-  key->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
-  key->sadb_key_len = len / PF_KEY_V2_CHUNK;
-  key->sadb_key_bits = keylen * 8;
-  key->sadb_key_reserved = 0;
-  memcpy (key + 1, iproto->keymat[incoming], keylen);
-  if (pf_key_v2_msg_add (update, (struct sadb_ext *)key,
-			 PF_KEY_V2_NODE_MALLOCED) == -1)
-    goto cleanup;
-  key = 0;
+  if (keylen)
+    {
+      len = sizeof *key + PF_KEY_V2_ROUND (keylen);
+      key = malloc (len);
+      if (!key)
+	goto cleanup;
+      key->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
+      key->sadb_key_len = len / PF_KEY_V2_CHUNK;
+      key->sadb_key_bits = keylen * 8;
+      key->sadb_key_reserved = 0;
+      memcpy (key + 1, iproto->keymat[incoming], keylen);
+      if (pf_key_v2_msg_add (update, (struct sadb_ext *)key,
+			     PF_KEY_V2_NODE_MALLOCED) == -1)
+	goto cleanup;
+      key = 0;
+    }
 
   /* XXX Here can identity and sensitivity extensions be setup.  */
 
