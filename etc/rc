@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.262 2005/03/22 22:24:38 henning Exp $
+#	$OpenBSD: rc,v 1.263 2005/04/01 05:37:35 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -289,9 +289,9 @@ if [ -d /var/yp/binding -a X`domainname` != X ]; then
 			_host1=`ypmatch $_host1 hosts | cut -d'	' -f2`
 			_host2=`ypmatch $_host2 hosts | cut -d'	' -f2 | head -1`
 		else
-			_host1=`nslookup $_host1 | grep '^Name: ' | \
+			_host1=`echo $_host1 | nslookup | grep '^Name: ' | \
 			    sed -e 's/^Name:    //'`
-			_host2=`nslookup $_host2 | grep '^Name: ' | \
+			_host2=`echo $_host2 | nslookup | grep '^Name: ' | \
 			    sed -e 's/^Name:    //'`
 		fi
 		if [ "$_host2" = "$_host1" ]; then
