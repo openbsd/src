@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2003/02/04 12:34:36 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2003/02/04 19:59:56 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ MAN=	bin/check/named-checkconf.8 \
 	bin/check/named-checkzone.8 \
 	bin/dig/dig.1 \
 	bin/dig/host.1 \
-	bin/dig/nslookup.1 \
+	bin/dig/nslookup.8 \
 	bin/named/named.8 \
 	bin/nsupdate/nsupdate.8 \
 	bin/rndc/rndc-confgen.8 \
