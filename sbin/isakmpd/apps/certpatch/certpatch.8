@@ -1,4 +1,4 @@
-.\" $OpenBSD: certpatch.8,v 1.3 2000/02/01 02:46:17 niklas Exp $
+.\" $OpenBSD: certpatch.8,v 1.4 2000/03/23 21:10:20 aaron Exp $
 .\" $EOM: certpatch.8,v 1.4 2000/01/31 22:33:50 niklas Exp $
 .\"
 .\" Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -51,7 +51,8 @@
 .Nm
 alters PEM-encoded X.509 certificates by adding a subjectAltName extension
 containing an identity used by the signature-based authentication schemes
-of the ISAKMP protocol.  After the addition the certificate will be signed
+of the ISAKMP protocol.
+After the addition the certificate will be signed
 once again with the supplied CA signing key.
 .Pp
 The options are as follows:
@@ -59,25 +60,29 @@ The options are as follows:
 .It Fl t Ar identity-type
 If given, the
 .Fl t
-option specifies the type of the given identity.  Currently
+option specifies the type of the given identity.
+Currently
 .Li ip ,
 .Li fqdn ,
 and
 .Li ufqdn
-are recognized.  The default is
+are recognized.
+The default is
 .Li ip .
 .It Fl i Ar identity
 The
 .Fl i
 option takes an argument which is the identity to put into the
-subjectAltName field of the certificate.  If the identity-type is
+subjectAltName field of the certificate.
+If the identity-type is
 .Li ip ,
 this argument should be an IPv4 address in dotted decimal notation.
 .It Fl k Ar signing-key
 The
 .Fl k
 option specifies the key used for signing the certificate once the
-subjectAltName extension has been added.  The key is specified by
+subjectAltName extension has been added.
+The key is specified by
 the filename where it is stored in PEM format.
 .El
 .Sh SEE ALSO

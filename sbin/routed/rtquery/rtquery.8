@@ -1,3 +1,5 @@
+.\"	$OpenBSD: rtquery.8,v 1.12 2000/03/23 21:10:21 aaron Exp $
+.\"
 .Dd June 1, 1996
 .Dt RTQUERY 8
 .Os
@@ -20,7 +22,8 @@ for its routing table by sending a
 .Cm request
 or
 .Cm poll
-command.  The routing information in any routing
+command.
+The routing information in any routing
 .Dq response
 packets returned is displayed numerically and symbolically.
 .Pp
@@ -43,7 +46,8 @@ command is preferred over the
 .Cm request
 command because the response is not subject to Split Horizon and/or
 Poisoned Reverse, and because some versions of gated do not answer
-the Request command.  Routed does not answer the Poll command, but
+the Request command.
+Routed does not answer the Poll command, but
 recognizes Requests coming from
 .Nm
 and so answers completely.
@@ -52,8 +56,7 @@ and so answers completely.
 is also used to turn tracing on or off in
 .Xr routed 8 .
 .Pp
-Options supported by
-.Nm rtquery :
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
 Normally network and host numbers are displayed both symbolically
@@ -85,7 +88,8 @@ are generally ignored by the daemon except for a message in the system log.
 .El
 .Bl -tag -width Ds -offset indent-two
 .It Em on=tracefile
-Turn tracing on into the specified file.  That file must usually
+Turn tracing on into the specified file.
+That file must usually
 have been specified when the daemon was started or be the same
 as a fixed name, often
 .Pa /etc/routed.trace .

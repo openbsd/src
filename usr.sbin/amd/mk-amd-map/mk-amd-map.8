@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mk-amd-map.8	8.1 (Berkeley) 6/28/93
-.\"	$Id: mk-amd-map.8,v 1.5 1999/07/02 20:11:47 aaron Exp $
+.\"	$Id: mk-amd-map.8,v 1.6 2000/03/23 21:10:21 aaron Exp $
 .\"
 .Dd June 28, 1993
 .Dt MK-AMD-MAP 8
@@ -51,10 +51,11 @@ It reads input from the named file
 and outputs them to a correspondingly named
 hashed database.
 .Pp
-The
-.Fl p
-option prints the map on standard output instead of generating
-a database.  This is usually used to merge continuation lines
-into one physical line.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl p
+Print the map on standard output instead of generating a database.
+This is usually used to merge continuation lines into one physical line.
+.El
 .Sh SEE ALSO
 .Xr amd 8

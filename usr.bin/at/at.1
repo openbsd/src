@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.13 2000/03/04 21:12:00 aaron Exp $
+.\" $OpenBSD: at.1,v 1.14 2000/03/23 21:10:12 aaron Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -46,12 +46,13 @@ The related programs are as follows:
 .It Nm at
 Executes commands at a specified time.
 .It Nm atq
-Lists the user's pending jobs, unless the user is the super-user.
+Lists the user's pending jobs, unless the user is the superuser.
 In that case, all users' jobs are listed.
 .It Nm atrm
 Deletes jobs.
 .It Nm batch
-Executes commands when system load levels permit.  In other words, when
+Executes commands when system load levels permit.
+In other words, when
 the load average drops below 1.5, or the value specified in the invocation of
 .Nm atrun .
 .El
@@ -62,8 +63,8 @@ The options are as follows:
 Prints the version number to standard error.
 .It Fl q Ar queue
 Uses the specified queue.
-A queue designation consists of a single letter.  Valid queue designations
-range from
+A queue designation consists of a single letter.
+Valid queue designations range from
 .Sy a
 to
 .Sy z
@@ -104,8 +105,8 @@ An alias for
 .It Fl v
 For
 .Nm atq ,
-shows completed but not yet deleted jobs in the queue.  Otherwise
-shows the time the job will be executed.
+shows completed but not yet deleted jobs in the queue.
+Otherwise shows the time the job will be executed.
 .It Fl c
 Prints the jobs listed on the command line to standard output.
 .El
@@ -113,7 +114,8 @@ Prints the jobs listed on the command line to standard output.
 .Nm at
 allows some moderately complex
 .Ar time
-specifications.  It accepts times of the form
+specifications.
+It accepts times of the form
 .Ar HHMM
 or
 .Ar HH:MM
@@ -197,7 +199,8 @@ command invoked from a
 .Xr su 1
 shell will retain the current user ID.
 The user will be mailed standard error and standard output from his
-commands, if any. Mail will be sent using the command
+commands, if any.
+Mail will be sent using the command
 .Xr sendmail 8 .
 If
 .Nm at
@@ -205,7 +208,7 @@ is executed from a
 .Xr su 1
 shell, the owner of the login shell will receive the mail.
 .Pp
-The super-user may use these commands in any case.
+The superuser may use these commands in any case.
 For other users, permission to use at is determined by the files
 .Pa /var/at/at.allow
 and
@@ -219,10 +222,10 @@ If
 .Pa /var/at/at.allow
 does not exist,
 .Pa /var/at/at.deny
-is checked. Every username not mentioned in it is then allowed
-to use
+is checked.
+Every username not mentioned in it is then allowed to use
 .Nm at .
-If neither exists, only the super-user is allowed use of
+If neither exists, only the superuser is allowed use of
 .Nm at .
 .Pp
 An empty
@@ -272,7 +275,8 @@ batch system, such as
 .Nm nqs .
 .Pp
 .Nm atq
-always prints the year as two digits.  Since
+always prints the year as two digits.
+Since
 .Nm at
 only permits submission of jobs in the future, it is somewhat
 clear which century the job will run in.

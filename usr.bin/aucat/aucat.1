@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.7 1999/07/04 11:53:51 aaron Exp $
+.\"	$OpenBSD: aucat.1,v 1.8 2000/03/23 21:10:13 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
 .\"
@@ -50,7 +50,8 @@ utility reads files sequentially, writing them to
 .Pa /dev/audio .
 The
 .Ar file
-operands are processed in command line order.  If a Sun .au header is
+operands are processed in command line order.
+If a Sun .au header is
 detected it is skipped over and not copied to
 .Pa /dev/audio .
 Otherwise, the

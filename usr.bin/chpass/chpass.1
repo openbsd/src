@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.16 2000/03/22 02:42:34 aaron Exp $
+.\"	$OpenBSD: chpass.1,v 1.17 2000/03/23 21:10:13 aaron Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -141,8 +141,8 @@ Both of these fields should be unique across the system (and often
 across a group of systems) as they control file access.
 .Pp
 While it is possible to have multiple entries with identical login names
-and/or identical user IDs, it is usually a mistake to do so.  Routines
-that manipulate these files will often return only one of the multiple
+and/or identical user IDs, it is usually a mistake to do so.
+Routines that manipulate these files will often return only one of the multiple
 entries, and that one by random selection.
 .Pp
 The
@@ -176,8 +176,8 @@ is the year.
 .Pp
 The
 .Ar class
-field is currently unused.  In the near future it will be a key to
-a
+field is currently unused.
+In the near future it will be a key to a
 .Xr termcap 5
 style database of user attributes.
 .Pp

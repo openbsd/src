@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.15 1999/08/17 16:19:06 millert Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.16 2000/03/23 21:10:19 aaron Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -19,29 +19,31 @@
 .Oc
 .Op Ar user
 .Sh DESCRIPTION
-.Nm skeyinit
-initializes the system so you can use S/Key one-time passwords
-to login.  The program will ask you to enter a secret pass phrase;
+.Nm
+initializes the system so you can use S/Key one-time passwords to login.
+The program will ask you to enter a secret pass phrase;
 enter a phrase of several words in response. After the S/Key database
 has been updated you can login using either your regular password
 or using S/Key one-time passwords.
 .Pp
-.Nm skeyinit
+.Nm
 requires you to type a secret password, so it should be used
-only on a secure terminal.  For example, on the console of a
-workstation or over an encrypted network session.  If you are
-using
-.Nm skeyinit
+only on a secure terminal.
+For example, on the console of a
+workstation or over an encrypted network session.
+If you are using
+.Nm
 while logged in over an untrusted network, follow the instructions
 given below with the
 .Fl s
 option.
 .Pp
 Before initializing an S/Key entry, the user must authenticate
-using either a standard password or an S/Key challenge.  When used
-over an untrusted network, a password of
+using either a standard password or an S/Key challenge.
+When used over an untrusted network, a password of
 .Sq s/key
-should be used.  The user will then be presented with the standard
+should be used.
+The user will then be presented with the standard
 S/Key challenge and allowed to proceed if it is correct.
 .Sh OPTIONS
 .Bl -tag -width XXXXXXX
@@ -49,24 +51,28 @@ S/Key challenge and allowed to proceed if it is correct.
 Displays pass phrase in hexadecimal instead of ASCII.
 .It Fl s
 Set secure mode where the user is expected to have used a secure
-machine to generate the first one-time password.  Without the
+machine to generate the first one-time password.
+Without the
 .Fl s
 option the system will assume you are directly connected over secure
-communications and prompt you for your secret password.  The
+communications and prompt you for your secret password.
+The
 .Fl s
 option also allows one to set the seed and count for complete
-control of the parameters.  You can use
-.Dq skeyinit -s
+control of the parameters.
+You can use
+.Ic skeyinit -s
 in combination with the
 .Nm skey
 command to set the seed and count if you do not like the defaults.
 To do this run
-.Nm skeyinit
+.Nm
 in one window and put in your count and seed, then run
 .Nm skey
 in another window to generate the correct 6 English words for that
-count and seed.  You can then "cut-and-paste" or type the words into the
-.Nm skeyinit
+count and seed.
+You can then "cut-and-paste" or type the words into the
+.Nm
 window.
 .It Fl z
 Allows the user to zero their S/Key entry.
@@ -91,7 +97,8 @@ operated on.
 .Bl -tag -width "skey disabled"
 .It skey disabled
 .Pa /etc/skeykeys
-does not exist.  It must be created by the superuser in order to use
+does not exist.
+It must be created by the superuser in order to use
 .Nm skeyinit .
 .Sh FILES
 .Bl -tag -width /etc/skeykeys

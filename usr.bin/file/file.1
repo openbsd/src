@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.8 2000/03/06 02:38:19 aaron Exp $
+.\" $OpenBSD: file.1,v 1.9 2000/03/23 21:10:16 aaron Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .Dd July 30, 1997
 .Dt FILE 1
@@ -64,7 +64,7 @@ Any known file types appropriate to the system you are running on
 implement them)
 are intuited if they are defined in
 the system header file
-.Aq Pa sys/stat.h  .
+.Aq Pa sys/stat.h .
 .Pp
 The magic number tests are used to check for files with data in
 particular fixed formats.
@@ -186,7 +186,8 @@ in an existing magic file would have to be changed to
 >10     string  language\e impress      (imPRESS data)
 .Pp
 In addition, in this version, if a pattern string contains a backslash,
-it must be escaped.  For example
+it must be escaped.
+For example
 .Pp
 0       string          \ebegindata     Andrew Toolkit document
 .Pp
@@ -323,12 +324,13 @@ The author is not responsible for the consequences of use of this
 software, no matter how awful, even if they arise from flaws in it;
 .It
 The origin of this software must not be misrepresented, either by
-explicit claim or by omission.  Since few users ever read sources,
+explicit claim or by omission.
+Since few users ever read sources,
 credits must appear in the documentation;
 .It
 Altered versions must be plainly marked as such, and must not be
-misrepresented as being the original software.  Since few users
-ever read sources, credits must appear in the documentation;
+misrepresented as being the original software.
+Since few users ever read sources, credits must appear in the documentation;
 .It
 This notice may not be removed or altered.
 .El
@@ -410,7 +412,8 @@ for the offset value.
 Another optimization would be to sort
 the magic file so that we can just run down all the
 tests for the first byte, first word, first long, etc, once we
-have fetched it.  Complain about conflicts in the magic file entries.
+have fetched it.
+Complain about conflicts in the magic file entries.
 Make a rule that the magic entries sort based on file offset rather
 than position within the magic file?
 .Pp

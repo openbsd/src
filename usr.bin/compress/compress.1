@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.10 2000/03/05 20:09:21 aaron Exp $
+.\"	$OpenBSD: compress.1,v 1.11 2000/03/23 21:10:15 aaron Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -143,8 +143,8 @@ If it is increasing,
 continues to use the existing code dictionary.
 However, if the compression ratio decreases,
 .Nm
-discards the table of substrings and rebuilds it from scratch.  This allows
-the algorithm to adapt to the next
+discards the table of substrings and rebuilds it from scratch.
+This allows the algorithm to adapt to the next
 .Dq block
 of the file.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_fdesc.8,v 1.9 1999/07/21 01:07:54 deraadt Exp $
+.\"	$OpenBSD: mount_fdesc.8,v 1.10 2000/03/23 21:10:20 aaron Exp $
 .\"	$NetBSD: mount_fdesc.8,v 1.6 1995/12/17 18:50:19 ghudson Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -115,7 +115,7 @@ appear as symlinks to the relevant entry in the
 sub-directory.
 Opening them is equivalent to the following calls:
 .Bd -literal -offset indent
-fd = fcntl(STDIN_FILENO,  F_DUPFD, 0);
+fd = fcntl(STDIN_FILENO, F_DUPFD, 0);
 fd = fcntl(STDOUT_FILENO, F_DUPFD, 0);
 fd = fcntl(STDERR_FILENO, F_DUPFD, 0);
 .Ed

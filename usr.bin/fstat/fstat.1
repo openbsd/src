@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.16 2000/03/07 21:11:09 aaron Exp $
+.\"	$OpenBSD: fstat.1,v 1.17 2000/03/23 21:10:17 aaron Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,8 +78,8 @@ Extract the name list from the specified system instead of the default
 .It Fl n
 Numerical format.
 Print the device number (maj,min) of the file system
-the file resides in rather than the mount point name. For special
-files, print the
+the file resides in rather than the mount point name.
+For special files, print the
 device number that the special device refers to rather than the filename
 in
 .Pa /dev .
@@ -96,7 +96,7 @@ Most of these data structures are dynamically created or deleted and it is
 possible for them to disappear while
 .Nm fstat
 is running.
-This is normal and  unavoidable since the rest of the system is running while
+This is normal and unavoidable since the rest of the system is running while
 .Nm fstat
 itself is running.
 .It Ar file ...
@@ -144,7 +144,8 @@ major/minor number of the device that this file resides in.
 .It Li INUM
 The inode number of the file.
 .It Li MODE
-The mode of the file.  If the
+The mode of the file.
+If the
 .Fl n
 flag isn't specified, the mode is printed
 using a symbolic format (see
