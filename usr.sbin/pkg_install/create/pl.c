@@ -1,7 +1,7 @@
-/*	$OpenBSD: pl.c,v 1.2 1996/06/04 08:43:36 niklas Exp $	*/
+/*	$OpenBSD: pl.c,v 1.3 1998/06/23 23:17:22 millert Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pl.c,v 1.2 1996/06/04 08:43:36 niklas Exp $";
+static const char *rcsid = "$OpenBSD: pl.c,v 1.3 1998/06/23 23:17:22 millert Exp $";
 #endif
 
 /*
@@ -171,7 +171,7 @@ copy_plist(char *home, Package *plist)
 					 p->name);
 		    last_chdir = home;
 		}
-		if (add_count > maxargs - where_count)
+		if (add_count >= maxargs - where_count)
 		    barf("oops, miscounted strings!");
 		where_count += add_count;
 	    }
@@ -205,7 +205,7 @@ copy_plist(char *home, Package *plist)
 					 " -C %s %s",
 					 mythere ? mythere : where,
 					 p->name);
-		if (add_count > maxargs - where_count)
+		if (add_count >= maxargs - where_count)
 		    barf("oops, miscounted strings!");
 		where_count += add_count;
 		last_chdir = (mythere ? mythere : where);
