@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2001/08/19 17:06:42 miod Exp $
+#	$OpenBSD: GENERIC,v 1.29 2001/11/25 23:23:45 miod Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -28,7 +28,6 @@ option	 	HP433
 maxusers	32
 
 # Options for HP hardware
-option	 	FPSP		# floating point interface for 68040
 option	 	USELEDS		# make the lights twinkle
 #option		CONSCODE="9"	# force console at this select code
 option	 	UK_KEYBOARD	# include United Kingdom HIL keymap

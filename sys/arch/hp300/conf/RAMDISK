@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2001/10/10 23:43:42 millert Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2001/11/25 23:23:45 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -41,7 +41,6 @@ option		INET		# IP + ICMP + TCP + UDP
 option		BOOT_CONFIG	# add support for boot -c
 
 # Options for HP hardware
-option	 	FPSP		# floating point interface for 68040
 option	 	USELEDS		# make the lights twinkle
 #option		CONSCODE="9"	# force console at this select code
 option	 	UK_KEYBOARD	# include United Kingdom HIL keymap
