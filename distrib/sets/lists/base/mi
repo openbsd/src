@@ -1243,6 +1243,7 @@
 ./usr/sbin/apachectl
 ./usr/sbin/apxs
 ./usr/sbin/arp
+./usr/sbin/authpf
 ./usr/sbin/bootpd
 ./usr/sbin/bootpef
 ./usr/sbin/bootpgw

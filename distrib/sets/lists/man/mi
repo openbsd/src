@@ -1151,6 +1151,7 @@
 ./usr/share/man/cat4/pckbc.0
 ./usr/share/man/cat4/pckbd.0
 ./usr/share/man/cat4/pcmcia.0
+./usr/share/man/cat4/pcppi.0
 ./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
@@ -1597,6 +1598,7 @@
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/atrun.0
+./usr/share/man/cat8/authpf.0
 ./usr/share/man/cat8/badsect.0
 ./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/bootparamd.0

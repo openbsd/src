@@ -412,6 +412,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/gemvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/hmereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/hmevar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/ibm561reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/ibm561var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/if_wivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/lemacreg.ph
