@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.498 2002/04/02 13:00:11 nate Exp 
+ *		OpenBSD: pcidevs,v 1.499 2002/04/08 01:48:58 frantzen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1157,6 +1157,7 @@
 #define	PCI_PRODUCT_ESSTECH_ES1989M	0x1989		/* ES1989 Modem */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3	0x1998		/* Maestro 3 */
 #define	PCI_PRODUCT_ESSTECH_ES1983	0x1999		/* ES1983 Modem */
+#define	PCI_PRODUCT_ESSTECH_MAESTRO3_2	0x199a		/* Maestro 3 Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_ES336H_N	0x2808		/* ES366H Fax/Modem */
 #define	PCI_PRODUCT_ESSTECH_SUPERLINK	0x2838		/* ES2838/2839 SuperLink Modem */
 #define	PCI_PRODUCT_ESSTECH_2898	0x2898		/* ES2898 Modem */
