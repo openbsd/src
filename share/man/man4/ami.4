@@ -1,0 +1,36 @@
+.\"	$OpenBSD: ami.4,v 1.1 2001/03/09 11:22:35 mickey Exp $
+.\"
+.\" Copyright (c) 2001 Michael Shalayeff.  All rights reserved.
+.\"
+.\"
+.Dd March 9, 2001
+.Dt AMI 4
+.Os
+.Sh NAME
+.Nm ami
+.Nd American Megatrends Inc. MegaRAID Controllers
+.Sh SYNOPSIS
+.Cd "ami* at pci? dev ? function ?"
+.Cd "scsibus* at ami?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for MegaRAID family of raid controllers.
+.Pp
+These controllers support RAID 0, RAID 1, RAID 5, JBOD
+and superpositions of those configurations.
+All the RAID set volume management is done via the card BIOS.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Michael Shalayeff Aq mickey@opensbd.org .
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.9 .
