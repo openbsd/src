@@ -1,4 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.9 2003/02/08 21:37:04 millert Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.10 2003/02/11 18:29:17 mpech Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
 static const char copyright[] =
 "@(#) Copyright (c) 1988, 1993\n\
@@ -44,10 +43,11 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-static const char rcsid[] = "$OpenBSD: chroot.c,v 1.9 2003/02/08 21:37:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: chroot.c,v 1.10 2003/02/11 18:29:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>

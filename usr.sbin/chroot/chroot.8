@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.8,v 1.10 2003/02/08 21:37:04 millert Exp $
+.\"	$OpenBSD: chroot.8,v 1.11 2003/02/11 18:29:17 mpech Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,8 @@
 .Nd change root directory
 .Sh SYNOPSIS
 .Nm chroot
-.Op Fl u Ar user
 .Op Fl g Ar group,group,...
+.Op Fl u Ar user
 .Ar newroot
 .Op Ar command
 .Sh DESCRIPTION
@@ -60,6 +60,13 @@ command is restricted to the superuser.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl g Ar group,group,...
+Override the primary and supplemental group IDs.
+The primary group ID is set to the first group in the list.
+Any remaining groups are placed in the supplemental group ID vector.
+Each group listed must exist in the
+.Xr group 5
+databases.
 .It Fl u Ar user
 Set user ID to
 .Ar user
@@ -74,13 +81,6 @@ and
 databases unless overridden by the
 .Fl g
 option.
-.It Fl G Ar group,group,...
-Override the primary and supplemental group IDs.
-The primary group ID is set to the first group in the list.
-Any remaining groups are placed in the supplemental group ID vector.
-Each group listed must exist in the
-.Xr group 5
-databases.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width SHELL
