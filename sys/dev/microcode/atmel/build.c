@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.6 2004/11/21 19:26:01 grange Exp $	*/
+/*	$OpenBSD: build.c,v 1.7 2005/03/08 11:45:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -23,6 +23,10 @@
 #include "atmel_rfmd2958_fw.h"
 #include "atmel_rfmd_fw.h"
 
+#include "atmel_at76c503_i3863_fw.h"
+#include "atmel_at76c503_rfmd_acc_fw.h"
+#include "atmel_at76c505_rfmd.h"
+
 void
 output(const char *name, char *buf, int buflen)
 {
@@ -43,24 +47,39 @@ int
 main(int argc, char *argv[])
 {
 	output("atu-intersil-int", atmel_fw_intersil_int,
-	    sizeof atmel_fw_intersil_int);
+	    sizeof(atmel_fw_intersil_int));
 	output("atu-intersil-ext", atmel_fw_intersil_ext,
-	    sizeof atmel_fw_intersil_ext);
+	    sizeof(atmel_fw_intersil_ext));
 
 	output("atu-rfmd2958smc-int", atmel_fw_rfmd2958_smc_int,
-	    sizeof atmel_fw_rfmd2958_smc_int);
+	    sizeof(atmel_fw_rfmd2958_smc_int));
 	output("atu-rfmd2958smc-ext", atmel_fw_rfmd2958_smc_ext,
-	    sizeof atmel_fw_rfmd2958_smc_ext);
+	    sizeof(atmel_fw_rfmd2958_smc_ext));
 
 	output("atu-rfmd2958-int", atmel_fw_rfmd2958_int,
-	    sizeof atmel_fw_rfmd2958_int);
+	    sizeof(atmel_fw_rfmd2958_int));
 	output("atu-rfmd2958-ext", atmel_fw_rfmd2958_ext,
-	    sizeof atmel_fw_rfmd2958_ext);
+	    sizeof(atmel_fw_rfmd2958_ext));
 
 	output("atu-rfmd-int", atmel_fw_rfmd_int,
-	    sizeof atmel_fw_rfmd_int);
+	    sizeof(atmel_fw_rfmd_int));
 	output("atu-rfmd-ext", atmel_fw_rfmd_ext,
-	    sizeof atmel_fw_rfmd_ext);
+	    sizeof(atmel_fw_rfmd_ext));
 
-	return 0;
+	output("atu-at76c503-i3863-int", atmel_at76c503_i3863_fw_int,
+	    sizeof(atmel_at76c503_i3863_fw_int));
+	output("atu-at76c503-i3863-ext", atmel_at76c503_i3863_fw_ext,
+	    sizeof(atmel_at76c503_i3863_fw_ext));
+
+	output("atu-at76c503-rfmd-acc-int", atmel_at76c503_rfmd_acc_fw_int,
+	    sizeof(atmel_at76c503_rfmd_acc_fw_int));
+	output("atu-at76c503-rfmd-acc-ext", atmel_at76c503_rfmd_acc_fw_ext,
+	    sizeof(atmel_at76c503_rfmd_acc_fw_ext));
+
+	output("atu-at76c5050rfmd-int", atmel_at76c505_rfmd_fw_int,
+	    sizeof(atmel_at76c505_rfmd_fw_int));
+	output("atu-at76c5050rfmd-ext", atmel_at76c505_rfmd_fw_ext,
+	    sizeof(atmel_at76c505_rfmd_fw_ext));
+
+	return (0);
 }

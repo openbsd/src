@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2005/02/14 13:41:49 dlg Exp $
+# $OpenBSD: Makefile,v 1.9 2005/03/08 11:45:36 dlg Exp $
 
 NOPROG=
 NOMAN=
@@ -13,7 +13,10 @@ NOMAN=
 FIRM= 	atu-intersil-int atu-intersil-ext \
 	atu-rfmd-int atu-rfmd-ext \
 	atu-rfmd2958-int atu-rfmd2958-ext \
-	atu-rfmd2958smc-int atu-rfmd2958smc-ext
+	atu-rfmd2958smc-int atu-rfmd2958smc-ext \
+	atu-at76c503-i3863-int atu-at76c503-i3863-ext \
+	atu-at76c503-rfmd-acc-int atu-at76c503-rfmd-acc-ext \
+	atu-at76c5050rfmd-int atu-at76c5050rfmd-ext
 
 CLEANFILES+= ${FIRM} build
 
