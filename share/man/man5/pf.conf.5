@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.227 2003/04/29 12:44:14 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.228 2003/05/01 16:21:02 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2011,7 +2011,8 @@ rdr-rule       = [ no ] rdr [ on ifspec ] [ af ] [ protospec ]
                  [ portspec ] ] [ pooltype ]
 
 antispoof-rule = antispoof [ log ] [ quick ]
-                 for ( interface-name | { interface-list } ) [ af ]
+                 for ( interface-name | { interface-list } )
+                 [ af ] [ label ]
 
 table-rule     = table < tablename > [ tableopts-list ]
 tableopts-list = tableopts-list tableopts | tableopts
