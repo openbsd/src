@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.97 1999/09/27 08:11:51 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.98 1999/11/13 20:54:25 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -378,6 +378,7 @@ com/pccom	PNPC001	# Compaq 2400/9600 Modem (TBD)
 #com/pccom	SUP1310	# SupraExpress 336i PnP Modem
 #com/pccom	SUP1380 # SupraExpress 288i PnP Voice Modem
 #com/pccom	SUP1381 # SupraExpress 336i PnP Voice Modem
+#com/pccom	SUP2084	# SupraExpress 56i PnP Voice Modem
 #com/pccom	USR0001 # U.S. Robotics Inc., Sportster W
 #com/pccom	USR0002 # U.S. Robotics Inc. Sportster 33.
 #com/pccom	USR0006 # USR modem
