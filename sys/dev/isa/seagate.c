@@ -1,16 +1,16 @@
-/*	$OpenBSD: seagate.c,v 1.13 1999/01/31 14:56:01 espie Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.14 2001/01/29 06:49:26 mickey Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
  *
  * Copyright 1994, Charles Hannum (mycroft@ai.mit.edu)
  * Copyright 1994, Kent Palmkvist (kentp@isy.liu.se)
- * Copyright 1994, Robert Knier (rknier@qgraph.com) 
+ * Copyright 1994, Robert Knier (rknier@qgraph.com)
  * Copyright 1992, 1994 Drew Eckhardt (drew@colorado.edu)
  * Copyright 1994, Julian Elischer (julian@tfs.com)
  *
  * Others that has contributed by example code is
- * 		Glen Overby (overby@cray.com)
+ *		Glen Overby (overby@cray.com)
  *		Tatu Yllnen
  *		Brian E Litzinger
  *
@@ -39,13 +39,13 @@
 /*
  * kentp  940307 alpha version based on newscsi-03 version of Julians SCSI-code
  * kentp  940314 Added possibility to not use messages
- * rknier 940331 Added fast transfer code 
- * rknier 940407 Added assembler coded data transfers 
+ * rknier 940331 Added fast transfer code
+ * rknier 940407 Added assembler coded data transfers
  */
 
 /*
  * What should really be done:
- * 
+ *
  * Add missing tests for timeouts
  * Restructure interrupt enable/disable code (runs to long with int disabled)
  * Find bug? giving problem with tape status
@@ -63,7 +63,7 @@
  * It is therefore important to look at what numbers DOS thinks the
  * disk has. Use these to disklabel your disk in an appropriate manner
  */
- 
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@
 
 /******************************************************************************/
 
-/* scsi control block used to keep info about a scsi command */ 
+/* scsi control block used to keep info about a scsi command */
 struct sea_scb {
         u_char *data;			/* position in data buffer so far */
 	int datalen;			/* bytes remaining to transfer */
@@ -362,7 +362,7 @@ seaprobe(parent, match, aux)
 		return 0;
 	} else
 		sea->maddr = ISA_HOLE_VADDR(ia->ia_maddr);
-	
+
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
 		if (!bcmp(sea->maddr + signatures[i].offset,
@@ -403,7 +403,7 @@ seaprobe(parent, match, aux)
 		printf("%s: board RAM failure\n", sea->sc_dev.dv_xname);
 		return 0;
 	}
-  
+
 	ia->ia_drq = DRQUNK;
 	ia->ia_msize = 0x2000;
 	ia->ia_iosize = 0;
@@ -415,7 +415,7 @@ seaprint(aux, name)
 	void *aux;
 	const char *name;
 {
-	if (name != NULL)       
+	if (name != NULL)
 		printf("%s: scsibus ", name);
 	return UNCONF;
 }
@@ -441,7 +441,7 @@ seaattach(parent, self, aux)
 	sea->sc_link.adapter = &sea_switch;
 	sea->sc_link.device = &sea_dev;
 	sea->sc_link.openings = 1;
-  
+
 	printf("\n");
 
 	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
@@ -497,12 +497,12 @@ sea_init(sea)
 	struct sea_softc *sea;
 {
 	int i;
-  
+
 	/* Reset the scsi bus (I don't know if this is needed */
 	CONTROL = BASE_CMD | CMD_DRVR_ENABLE | CMD_RST;
 	delay(25);	/* hold reset for at least 25 microseconds */
 	CONTROL = BASE_CMD;
-	delay(10); 	/* wait a Bus Clear Delay (800 ns + bus free delay (800 ns) */
+	delay(10);	/* wait a Bus Clear Delay (800 ns + bus free delay (800 ns) */
 
 	/* Set our id (don't know anything about this) */
 	switch (sea->type) {
@@ -588,7 +588,8 @@ sea_scsi_cmd(xs)
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	if ((flags & SCSI_POLL) == 0) {
-		timeout(sea_timeout, scb, (xs->timeout * hz) / 1000);
+		timeout_set(&scb->xs->stimeout, sea_timeout, scb);
+		timeout_add(&scb->xs->stimeout, (xs->timeout * hz) / 1000);
 		splx(s);
 		return SUCCESSFULLY_QUEUED;
 	}
@@ -708,7 +709,7 @@ loop:
 				    (1 << scb->xs->sc_link->lun))) {
 					TAILQ_REMOVE(&sea->ready_list, scb,
 					    chain);
-	    
+
 					/* Re-enable interrupts. */
 					splx(s);
 
@@ -757,7 +758,7 @@ loop:
 				}
 			}
 		} /* if (!sea->nexus) */
-      
+
 		splx(s);
 		if (sea->nexus) {	/* we are connected. Do the task */
 			sea_information_transfer(sea);
@@ -818,7 +819,7 @@ sea_timeout(arg)
 	if (scb->flags & SCB_ABORTED) {
 		/* abort timed out */
 		printf(" AGAIN\n");
-	 	scb->xs->retries = 0;
+		scb->xs->retries = 0;
 		scb->flags |= SCB_ABORTED;
 		sea_done(sea, scb);
 	} else {
@@ -827,13 +828,15 @@ sea_timeout(arg)
 		scb->flags |= SCB_ABORTED;
 		sea_abort(sea, scb);
 		/* 2 secs for the abort */
-		if ((xs->flags & SCSI_POLL) == 0)
-			timeout(sea_timeout, scb, 2 * hz);
+		if ((xs->flags & SCSI_POLL) == 0) {
+			timeout_set(&scb->xs->stimeout, sea_timeout, scb);
+			timeout_add(&scb->xs->stimeout, 2 * hz);
+		}
 	}
 
 	splx(s);
 }
- 
+
 void
 sea_reselect(sea)
 	struct sea_softc *sea;
@@ -846,7 +849,7 @@ sea_reselect(sea)
 	u_char *data;
 	struct sea_scb *scb;
 	int abort = 0;
-  
+
 	if (!((target_mask = STATUS) & STAT_SEL)) {
 		printf("%s: wrong state 0x%x\n", sea->sc_dev.dv_xname,
 		    target_mask);
@@ -881,7 +884,7 @@ sea_reselect(sea)
 	len = 3;
 	data = msg;
 	phase = PH_MSGIN;
-	sea_transfer_pio(sea, &phase, &len, &data); 
+	sea_transfer_pio(sea, &phase, &len, &data);
 
 	if (MSG_ISIDENTIFY(msg[0])) {
 		printf("%s: expecting IDENTIFY message, got 0x%x\n",
@@ -1056,7 +1059,7 @@ sea_select(sea, scb)
 #else
 	    (BASE_CMD & ~CMD_INTR) | CMD_DRVR_ENABLE | CMD_SEL | CMD_ATTN;
 #endif
-	delay(1); 
+	delay(1);
 
 	/* wait for a bsy from target */
 	for (timeout = 0; timeout < 2000000L; timeout++)
@@ -1076,7 +1079,7 @@ sea_select(sea, scb)
 	CONTROL = (BASE_CMD & ~CMD_INTR) | CMD_DRVR_ENABLE | CMD_ATTN;
 #endif
 	delay(1);
-  
+
 	/* should start a msg_out phase */
 	for (timeout = 0; timeout < 2000000L; timeout++)
 		if (STATUS & STAT_REQ)
@@ -1101,7 +1104,7 @@ sea_select(sea, scb)
 	if (!(STATUS & STAT_BSY))
 		printf("%s: after successful arbitrate: no STAT_BSY!\n",
 		    sea->sc_dev.dv_xname);
-  
+
 	sea->nexus = scb;
 	sea->busy[scb->xs->sc_link->target] |= 1 << scb->xs->sc_link->lun;
 	/* This assignment should depend on possibility to send a message to target. */
@@ -1181,7 +1184,7 @@ sea_done(sea, scb)
 {
 	struct scsi_xfer *xs = scb->xs;
 
-	untimeout(sea_timeout, scb);
+	timeout_del(&scb->xs->stimeout);
 
 	xs->resid = scb->datalen;
 
@@ -1304,14 +1307,14 @@ sea_information_transfer(sea)
 					if ((tmp & PH_MASK) != phase)
 						break;
 					if (!(phase & STAT_IO)) {
-						int block = BLOCK_SIZE; 
+						int block = BLOCK_SIZE;
 						void *a = sea->maddr_dr;
 #ifdef SEA_ASSEMBLER
 						asm("shr $2, %%ecx\n\t\
 						    cld\n\t\
 						    rep\n\t\
 						    movsl" :
-						    "=S" (scb->data), 
+						    "=S" (scb->data),
 							"=c" (block) ,
 						    "=D" (a) :
 						    "0" (scb->data),
@@ -1323,7 +1326,7 @@ sea_information_transfer(sea)
 						    count++)
 							DATA = *(scb->data++);
 #endif
-					} else { 
+					} else {
 						int block = BLOCK_SIZE;
 						void *a = sea->maddr_dr;
 #ifdef SEA_ASSEMBLER
@@ -1346,7 +1349,7 @@ sea_information_transfer(sea)
 					scb->datalen -= BLOCK_SIZE;
 				}
 			}
-#endif 
+#endif
 			if (scb->datalen)
 				sea_transfer_pio(sea, &phase, &scb->datalen,
 				    &scb->data);
@@ -1369,7 +1372,7 @@ sea_information_transfer(sea)
 				s = splbio();
 				sea->nexus = NULL;
 				splx(s);
-				sea->busy[scb->xs->sc_link->target] &= 
+				sea->busy[scb->xs->sc_link->target] &=
 				    ~(1 << scb->xs->sc_link->lun);
 				CONTROL = BASE_CMD;
 				sea_done(sea, scb);
@@ -1411,11 +1414,11 @@ sea_information_transfer(sea)
 				printf("%s: sent message abort to target\n",
 				    sea->sc_dev.dv_xname);
 				s = splbio();
-				sea->busy[scb->xs->sc_link->target] &= 
+				sea->busy[scb->xs->sc_link->target] &=
 				    ~(1 << scb->xs->sc_link->lun);
 				sea->nexus = NULL;
 				scb->flags = SCB_ABORTED;
-				splx(s); 
+				splx(s);
 				/* enable interrupt from scsi */
 				sea_done(sea, scb);
 				return;
