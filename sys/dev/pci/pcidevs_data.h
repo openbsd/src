@@ -224,6 +224,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c595",
 	},
 	{
+	    PCI_VENDOR_CMD, PCI_PRODUCT_CMD_PCI0640,
+	    PCI_KNOWNDEV_UNSUPP,
+	    "CMD Technologies",
+	    "PCI to IDE Controller",
+	},
+	{
 	    PCI_VENDOR_OLDNCR, 0,
 	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
 	    "NCR",
@@ -341,6 +347,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_BIT3, 0,
 	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
 	    "Bit3 Computer Corp.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CMD, 0,
+	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
+	    "CMD Technologies",
 	    NULL,
 	},
 	{

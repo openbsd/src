@@ -60,6 +60,7 @@
 #define	PCI_VENDOR_APPLE	0x106B		/* Apple */
 #define	PCI_VENDOR_QLOGIC	0x1077		/* QLogic (??? XXX) */
 #define	PCI_VENDOR_BIT3	0x108A		/* Bit3 Computer Corp. */
+#define	PCI_VENDOR_CMD	0x1095		/* CMD Technologies */
 #define	PCI_VENDOR_CABLETRON	0x10B1		/* Cabletron */
 #define	PCI_VENDOR_3COM	0x10B7		/* 3Com */
 #define	PCI_VENDOR_CERN	0x10DC		/* CERN (??? XXX) */
@@ -127,3 +128,6 @@
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 */
 #define	PCI_PRODUCT_3COM_3C595	0x5950		/* 3c595 */
+
+/* CMD Technologies Products */
+#define	PCI_PRODUCT_CMD_PCI0640	0x0640		/* PCI to IDE Controller */

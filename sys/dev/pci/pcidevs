@@ -55,6 +55,7 @@ vendor MYLEX		0x1069		Mylex
 vendor APPLE		0x106B		Apple
 vendor QLOGIC		0x1077		QLogic	# ??? XXX
 vendor BIT3		0x108A		Bit3 Computer Corp.
+vendor CMD		0x1095		CMD Technologies
 vendor CABLETRON	0x10B1		Cabletron
 vendor 3COM		0x10B7		3Com
 vendor CERN		0x10DC		CERN	# ??? XXX
@@ -122,3 +123,6 @@ product S3 VISION864	0x88c0	UNSUPP	Vision 864
 /* 3COM Products */
 product	3COM 3C590	0x5900		3c590
 product	3COM 3C595	0x5950		3c595
+
+/* CMD Technologies Products */
+product CMD PCI0640	0x0640	UNSUPP	PCI to IDE Controller
