@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpcivar.h,v 1.1 2000/04/27 02:19:41 millert Exp $	*/
+/*	$OpenBSD: cmpcivar.h,v 1.2 2000/08/26 13:07:50 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -48,7 +48,7 @@ typedef struct cmpci_dmanode *cmpci_dmapool_t;
 
 
 /*
- * Mixer - SoundBraster16 Compatible
+ * Mixer - SoundBlaster16 Compatible
  */
 #define CMPCI_MASTER_VOL		0
 #define CMPCI_FM_VOL			1
