@@ -21,62 +21,77 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include "includes.h"
-RCSID("$OpenBSD: auth-chall.c,v 1.8 2001/05/18 14:13:28 markus Exp $");
+RCSID("$OpenBSD: auth-skey.c,v 1.12 2001/05/18 14:13:28 markus Exp $");
 
-#include "auth.h"
-#include "log.h"
+#ifdef SKEY
+
+#include <skey.h>
+
 #include "xmalloc.h"
+#include "auth.h"
 
-/* limited protocol v1 interface to kbd-interactive authentication */
-
-extern KbdintDevice *devices[];
-static KbdintDevice *device;
-
-char *
-get_challenge(Authctxt *authctxt)
+static void *
+skey_init_ctx(Authctxt *authctxt)
 {
-	char *challenge, *name, *info, **prompts;
-	u_int i, numprompts;
-	u_int *echo_on;
-
-	device = devices[0]; /* we always use the 1st device for protocol 1 */
-	if (device == NULL)
-		return NULL;
-	if ((authctxt->kbdintctxt = device->init_ctx(authctxt)) == NULL)
-		return NULL;
-	if (device->query(authctxt->kbdintctxt, &name, &info,
-	    &numprompts, &prompts, &echo_on)) {
-		device->free_ctx(authctxt->kbdintctxt);
-		authctxt->kbdintctxt = NULL;
-		return NULL;
-	}
-	if (numprompts < 1)
-		fatal("get_challenge: numprompts < 1");
-	challenge = xstrdup(prompts[0]);
-	for (i = 0; i < numprompts; i++)
-		xfree(prompts[i]);
-	xfree(prompts);
-	xfree(name);
-	xfree(echo_on);
-	xfree(info);
-
-	return (challenge);
+	return authctxt;
 }
-int
-verify_response(Authctxt *authctxt, const char *response)
+
+#define PROMPT "\nS/Key Password: "
+
+static int
+skey_query(void *ctx, char **name, char **infotxt, 
+    u_int* numprompts, char ***prompts, u_int **echo_on)
 {
-	char *resp[1];
-	int res;
+	Authctxt *authctxt = ctx;
+	char challenge[1024], *p;
+	int len;
+	struct skey skey;
 
-	if (device == NULL)
-		return 0;
-	if (authctxt->kbdintctxt == NULL)
-		return 0;
-	resp[0] = (char *)response;
-	res = device->respond(authctxt->kbdintctxt, 1, resp);
-	device->free_ctx(authctxt->kbdintctxt);
-	authctxt->kbdintctxt = NULL;
-	return res ? 0 : 1;
+	if (skeychallenge(&skey, authctxt->user, challenge) == -1)
+		return -1;
+
+	*name       = xstrdup("");
+	*infotxt    = xstrdup("");
+	*numprompts = 1;
+	*prompts = xmalloc(*numprompts * sizeof(char*));
+	*echo_on = xmalloc(*numprompts * sizeof(u_int));
+	(*echo_on)[0] = 0;
+
+	len = strlen(challenge) + strlen(PROMPT) + 1;
+	p = xmalloc(len);
+	p[0] = '\0';
+	strlcat(p, challenge, len);
+	strlcat(p, PROMPT, len);
+	(*prompts)[0] = p;
+
+	return 0;
 }
+
+static int
+skey_respond(void *ctx, u_int numresponses, char **responses)
+{
+	Authctxt *authctxt = ctx;
+ 
+	if (authctxt->valid &&
+	    numresponses == 1 && 
+	    skey_haskey(authctxt->pw->pw_name) == 0 &&
+	    skey_passcheck(authctxt->pw->pw_name, responses[0]) != -1)
+	    return 0;
+	return -1;
+}
+
+static void
+skey_free_ctx(void *ctx)
+{
+	/* we don't have a special context */
+}
+
+KbdintDevice skey_device = {
+	"skey",
+	skey_init_ctx,
+	skey_query,
+	skey_respond,
+	skey_free_ctx
+};
+#endif /* SKEY */
