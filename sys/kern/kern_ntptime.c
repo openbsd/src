@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ntptime.c,v 1.9 2001/02/13 20:59:15 art Exp $	*/
+/*	$OpenBSD: kern_ntptime.c,v 1.10 2001/07/04 23:00:58 espie Exp $	*/
 /*	$NetBSD: kern_ntptime.c,v 1.2 1996/03/07 14:31:20 christos Exp $	*/
 
 /******************************************************************************
@@ -71,7 +71,7 @@
  * The following variables are used by the hardclock() routine in the
  * kern_clock.c module and are described in that module. 
  */
-extern struct timeval time;	/* kernel time variable */
+extern volatile struct timeval time;	/* kernel time variable */
 extern int time_state;		/* clock state */
 extern int time_status;		/* clock status bits */
 extern long time_offset;	/* time adjustment (us) */
