@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.59 2004/04/25 18:50:01 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.60 2004/06/25 04:09:03 claudio Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-/* #include <netinet/if_ether.h> */
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
@@ -96,10 +96,14 @@
 #include <net/bpf.h>
 #endif
 
+/* for arc4random() */
+#include <dev/rndvar.h>
+
 #include <net/if_tun.h>
 
 struct tun_softc {
-	struct	ifnet tun_if;		/* the interface */
+	struct	arpcom arpcom;		/* ethernet common data */
+#define tun_if	arpcom.ac_if
 	u_short	tun_flags;		/* misc flags */
 	pid_t	tun_pgid;		/* the process group - if any */
 	uid_t	tun_siguid;		/* uid for process that set tun_pgid */
@@ -131,14 +135,14 @@ int	tunwrite(dev_t, struct uio *, int);
 int	tunpoll(dev_t, int, struct proc *);
 int	tunkqfilter(dev_t, struct knote *);
 int	tun_clone_create(struct if_clone *, int);
+int	tun_create(struct if_clone *, int, int);
 int	tun_clone_destroy(struct ifnet *);
 struct	tun_softc *tun_lookup(int);
 void	tun_wakeup(struct tun_softc *);
+int	tun_switch(struct tun_softc *, int);
 
 static int tuninit(struct tun_softc *);
-#ifdef ALTQ
 static void tunstart(struct ifnet *);
-#endif
 int	filt_tunread(struct knote *, long);
 int	filt_tunwrite(struct knote *, long);
 void	filt_tunrdetach(struct knote *);
@@ -168,8 +172,15 @@ tun_clone_create(ifc, unit)
 	struct if_clone *ifc;
 	int unit;
 {
+	return tun_create(ifc, unit, 0);
+}
+
+int
+tun_create(struct if_clone *ifc, int unit, int flags)
+{
 	struct tun_softc *tp;
 	struct ifnet *ifp;
+	u_int32_t macaddr_rnd;
 	int s;
 
 	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT);
@@ -180,33 +191,48 @@ tun_clone_create(ifc, unit)
 	tp->tun_unit = unit;
 	tp->tun_flags = TUN_INITED;
 
+	/* generate fake MAC address: 00 bd xx xx xx unit_no */
+	tp->arpcom.ac_enaddr[0] = 0x00;
+	tp->arpcom.ac_enaddr[1] = 0xbd;
+	/*
+	 * This no longer happens pre-scheduler so let's use the real
+	 * random subsystem instead of random().
+	 */
+	macaddr_rnd = arc4random();
+	bcopy(&macaddr_rnd, &tp->arpcom.ac_enaddr[2],
+	    sizeof(u_int32_t));
+	tp->arpcom.ac_enaddr[5] = (u_char)unit + 1;
+
 	ifp = &tp->tun_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name, 
 	    unit);
 	ifp->if_softc = tp;
-	ifp->if_mtu = TUNMTU;
 	ifp->if_ioctl = tun_ioctl;
 	ifp->if_output = tun_output;
-#ifdef ALTQ
 	ifp->if_start = tunstart;
-#endif
-	ifp->if_flags = IFF_POINTOPOINT;
-	ifp->if_type  = IFT_PROPVIRTUAL;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
-	ifp->if_hdrlen = sizeof(u_int32_t);
-	ifp->if_collisions = 0;
-	ifp->if_ierrors = 0;
-	ifp->if_oerrors = 0;
-	ifp->if_ipackets = 0;
-	ifp->if_opackets = 0;
-	ifp->if_ibytes = 0;
-	ifp->if_obytes = 0;
-	if_attach(ifp);
-	if_alloc_sadl(ifp);
+	if ((flags & TUN_LAYER2) == 0) {
+		tp->tun_flags &= ~TUN_LAYER2;
+		ifp->if_mtu = TUNMTU;
+		ifp->if_flags = IFF_POINTOPOINT;
+		ifp->if_type  = IFT_PROPVIRTUAL;
+		ifp->if_hdrlen = sizeof(u_int32_t);
+		if_attach(ifp);
+		if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
+		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
+	} else {
+		tp->tun_flags |= TUN_LAYER2;
+		ifp->if_flags =
+		    (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST|IFF_LINK0);
+		if_attach(ifp);
+		ether_ifattach(ifp);
+	}
+	/* force output function to our function */
+	ifp->if_output = tun_output;
+
 	s = splimp();
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
 	splx(s);
@@ -221,6 +247,8 @@ tun_clone_destroy(ifp)
 	struct tun_softc *tp = ifp->if_softc;
 	int s;
 
+	tun_wakeup(tp);
+
 	s = splhigh();
 	klist_invalidate(&tp->tun_rsel.si_note);
 	klist_invalidate(&tp->tun_wsel.si_note);
@@ -230,10 +258,9 @@ tun_clone_destroy(ifp)
 	LIST_REMOVE(tp, tun_list);
 	splx(s);
 
-	tun_wakeup(tp);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	if (tp->tun_flags & TUN_LAYER2)
+		ether_ifdetach(ifp);
+
 	if_detach(ifp);
 
 	free(tp, M_DEVBUF);
@@ -252,6 +279,41 @@ tun_lookup(unit)
 	return (NULL);
 }
 
+int
+tun_switch(struct tun_softc *tp, int flags)
+{
+	struct ifnet *ifp = &tp->tun_if;
+	int unit, open, r;
+
+	if ((tp->tun_flags & TUN_LAYER2) == (flags & TUN_LAYER2))
+		return (0);
+
+	/* tp will be removed so store unit number */
+	unit = tp->tun_unit;
+	open = tp->tun_flags & TUN_OPEN;
+	TUNDEBUG(("%s: switching to layer %d\n", ifp->if_xname,
+		    flags & TUN_LAYER2 ? 2 : 3));
+
+	/*
+	 * remove old device
+	 */
+	tun_clone_destroy(ifp);
+
+	/*
+	 * attach new interface
+	 */
+	r = tun_create(&tun_cloner, unit, flags);
+	if (open && r == 0) {
+		/* already opened before ifconfig tunX link0 */
+		if ((tp = tun_lookup(unit)) == NULL)
+			/* this should never fail */
+			return (ENXIO);
+		tp->tun_flags |= TUN_OPEN;
+		TUNDEBUG(("%s: already open\n", tp->tun_if.if_xname));
+	}
+	return (r);
+}
+
 /*
  * tunnel open - must be superuser & the device must be
  * configured in
@@ -264,7 +326,7 @@ tunopen(dev, flag, mode, p)
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
-	int error;
+	int error, s;
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
@@ -282,6 +344,12 @@ tunopen(dev, flag, mode, p)
 
 	ifp = &tp->tun_if;
 	tp->tun_flags |= TUN_OPEN;
+
+	/* automaticaly UP the interface on open */
+	s = splimp();
+	if_up(ifp);
+	splx(s);
+
 	TUNDEBUG(("%s: open\n", ifp->if_xname));
 	return (0);
 }
@@ -297,9 +365,11 @@ tunclose(dev, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
-	int	s;
-	struct tun_softc *tp;
-	struct ifnet	*ifp;
+	extern int if_detach_rtdelete(struct radix_node *, void *);
+	int			 s, i;
+	struct tun_softc	*tp;
+	struct ifnet		*ifp;
+	struct radix_node_head	*rnh;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
@@ -319,16 +389,30 @@ tunclose(dev, flag, mode, p)
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
 			/* find internet addresses and delete routes */
-			struct ifaddr *ifa;
+			struct ifaddr	*ifa = NULL;
+
 			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 #ifdef INET
 				if (ifa->ifa_addr->sa_family == AF_INET) {
 					rtinit(ifa, (int)RTM_DELETE,
-					       (tp->tun_flags & TUN_DSTADDR)?
-							RTF_HOST : 0);
+					    (tp->tun_flags & TUN_DSTADDR)?
+					    RTF_HOST : 0);
 				}
+				/* XXX INET6 */
 #endif
 			}
+			/*
+			 * Find and remove all routes which is using this
+			 * interface. Stolen from if.c if_detach().
+			 */
+			for (i = 1; i <= AF_MAX; i++) {
+				rnh = rt_tables[i];
+				if (rnh)
+					while ((*rnh->rnh_walktree)(rnh,
+					    if_detach_rtdelete, ifp) == EAGAIN)
+						;
+			}
+			ifp->if_flags &= ~IFF_RUNNING;
 		}
 		splx(s);
 	}
@@ -350,6 +434,7 @@ tuninit(tp)
 	TUNDEBUG(("%s: tuninit\n", ifp->if_xname));
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE; /* we are never active */
 
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR|TUN_BRDADDR);
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
@@ -407,32 +492,67 @@ tun_ioctl(ifp, cmd, data)
 	u_long	cmd;
 	caddr_t	data;
 {
+	struct tun_softc *tp = (struct tun_softc *)(ifp->if_softc);
+	struct ifreq *ifr = (struct ifreq *)data;
 	int	error = 0, s;
 
 	s = splimp();
+	if (tp->tun_flags & TUN_LAYER2)
+		if ((error = ether_ioctl(ifp, &tp->arpcom, cmd, data)) > 0) {
+			splx(s);
+			return (error);
+		}
 	switch(cmd) {
 	case SIOCSIFADDR:
-		tuninit((struct tun_softc *)(ifp->if_softc));
+		tuninit(tp);
 		TUNDEBUG(("%s: address set\n", ifp->if_xname));
+		if (tp->tun_flags & TUN_LAYER2)
+			switch (((struct ifaddr *)data)->ifa_addr->sa_family) {
+#ifdef INET
+			case AF_INET:
+				arp_ifinit(&tp->arpcom, (struct ifaddr *)data);
+				break;
+#endif
+			default:
+				break;
+			}
 		break;
 	case SIOCSIFDSTADDR:
-		tuninit((struct tun_softc *)(ifp->if_softc));
+		tuninit(tp);
 		TUNDEBUG(("%s: destination address set\n", ifp->if_xname));
 		break;
 	case SIOCSIFBRDADDR:
-		tuninit((struct tun_softc *)(ifp->if_softc));
+		tuninit(tp);
 		TUNDEBUG(("%s: broadcast address set\n", ifp->if_xname));
 		break;
 	case SIOCSIFMTU:
-		ifp->if_mtu = ((struct ifreq *)data)->ifr_mtu;
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > TUNMRU)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI: {
-		struct ifreq *ifr = (struct ifreq *)data;
 		if (ifr == 0) {
 			error = EAFNOSUPPORT;	   /* XXX */
 			break;
 		}
+
+		if (tp->tun_flags & TUN_LAYER2) {
+			error = (cmd == SIOCADDMULTI) ?
+			    ether_addmulti(ifr, &tp->arpcom) :
+			    ether_delmulti(ifr, &tp->arpcom);
+			if (error == ENETRESET) {
+				/*
+				 * Multicast list has changed; set the hardware
+				 * filter accordingly. The good thing is we do 
+				 * not have a hardware filter (:
+				 */
+				error = 0;
+			}
+			break;
+		}
+
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -450,6 +570,8 @@ tun_ioctl(ifp, cmd, data)
 	}
 
 	case SIOCSIFFLAGS:
+		error = tun_switch(tp,
+		    ifr->ifr_flags & IFF_LINK0 ? TUN_LAYER2 : 0);
 		break;
 	default:
 		error = EINVAL;
@@ -475,12 +597,16 @@ tun_output(ifp, m0, dst, rt)
 	TUNDEBUG(("%s: tun_output\n", ifp->if_xname));
 
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
-		TUNDEBUG(("%s: not ready 0%o\n", ifp->if_xname,
+		TUNDEBUG(("%s: not ready %#x\n", ifp->if_xname,
 			  tp->tun_flags));
 		m_freem (m0);
 		return EHOSTDOWN;
 	}
 
+	if (tp->tun_flags & TUN_LAYER2)
+		/* call ether_output and that will call tunstart at the end */
+		return (ether_output(ifp, m0, dst, rt));
+	
 	M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 	af = mtod(m0, u_int32_t *);
 	*af = htonl(dst->sa_family);
@@ -568,10 +694,6 @@ tunioctl(dev, cmd, data, flag, p)
 	        switch (*(int *)data & (IFF_POINTOPOINT|IFF_BROADCAST)) {
                 case IFF_POINTOPOINT:
                 case IFF_BROADCAST:
-                        if (tp->tun_if.if_flags & IFF_UP) {
-                                splx(s);
-                                return (EBUSY);
-                        }
                         tp->tun_if.if_flags &=
                                 ~(IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST);
                         tp->tun_if.if_flags |= *(int *)data;
@@ -609,6 +731,24 @@ tunioctl(dev, cmd, data, flag, p)
 	case TIOCGPGRP:
 		*(int *)data = tp->tun_pgid;
 		break;
+	case OSIOCGIFADDR:
+	case SIOCGIFADDR:
+		if (!(tp->tun_flags & TUN_LAYER2)) {
+			splx(s);
+			return (EINVAL);
+		}
+		bcopy(tp->arpcom.ac_enaddr, data,
+		    sizeof(tp->arpcom.ac_enaddr));
+		break;
+
+	case SIOCSIFADDR:
+		if (!(tp->tun_flags & TUN_LAYER2)) {
+			splx(s);
+			return (EINVAL);
+		}
+		bcopy(data, tp->arpcom.ac_enaddr,
+		    sizeof(tp->arpcom.ac_enaddr));
+		break;
 	default:
 		splx(s);
 		return (ENOTTY);
@@ -638,7 +778,7 @@ tunread(dev, uio, ioflag)
 	ifp = &tp->tun_if;
 	TUNDEBUG(("%s: read\n", ifp->if_xname));
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
-		TUNDEBUG(("%s: not ready 0%o\n", ifp->if_xname,
+		TUNDEBUG(("%s: not ready %#x\n", ifp->if_xname,
 			  tp->tun_flags));
 		return EHOSTDOWN;
 	}
@@ -710,7 +850,8 @@ tunwrite(dev, uio, ioflag)
 	ifp = &tp->tun_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
-	if (uio->uio_resid == 0 || uio->uio_resid > TUNMRU) {
+	if (uio->uio_resid == 0 || uio->uio_resid > ifp->if_mtu +
+	    (tp->tun_flags & TUN_LAYER2 ? ETHER_HDR_LEN : sizeof(*th))) {
 		TUNDEBUG(("%s: len=%d!\n", ifp->if_xname, uio->uio_resid));
 		return EMSGSIZE;
 	}
@@ -724,6 +865,14 @@ tunwrite(dev, uio, ioflag)
 
 	top = 0;
 	mp = &top;
+	if (tp->tun_flags & TUN_LAYER2) {
+		/*
+		 * Pad so that IP header is correctly aligned
+		 * this is neccessary for all strict aligned architectures.
+		 */
+		mlen -= ETHER_ALIGN;
+		m_adj(m, ETHER_ALIGN);
+	}
 	while (error == 0 && uio->uio_resid > 0) {
 		m->m_len = min(mlen, uio->uio_resid);
 		error = uiomove(mtod (m, caddr_t), m->m_len, uio);
@@ -752,6 +901,12 @@ tunwrite(dev, uio, ioflag)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
+	
+	if (tp->tun_flags & TUN_LAYER2) {
+		ether_input_mbuf(ifp, top);
+		ifp->if_ipackets++; /* ibytes are counted in ether_input */
+		return (0);
+	}
 
 	th = mtod(top, u_int32_t *);
 	/* strip the tunnel header */
@@ -820,7 +975,7 @@ tunwrite(dev, uio, ioflag)
 }
 
 /*
- * tunselect - the select interface, this is only useful on reads
+ * tunpoll - the poll interface, this is only useful on reads
  * really. The write detect always returns true, write never blocks
  * anyway, it either accepts the packet or drops it.
  */
@@ -883,7 +1038,7 @@ tunkqfilter(dev_t dev,struct knote *kn)
 	ifp = &tp->tun_if;
 
 	s = splimp();
-	TUNDEBUG(("%s: tunselect\n", ifp->if_xname));
+	TUNDEBUG(("%s: tunkqfilter\n", ifp->if_xname));
 	splx(s);
 
 	switch (kn->kn_filter) {
@@ -982,12 +1137,12 @@ filt_tunwrite(struct knote *kn, long hint)
 	return 1;
 }
 
-#ifdef ALTQ
 /*
  * Start packet transmission on the interface.
  * when the interface queue is rate-limited by ALTQ or TBR,
  * if_start is needed to drain packets from the queue in order
  * to notify readers when outgoing packets become ready.
+ * In layer 2 mode this function is called from ether_output.
  */
 static void
 tunstart(ifp)
@@ -996,11 +1151,20 @@ tunstart(ifp)
 	struct tun_softc *tp = ifp->if_softc;
 	struct mbuf *m;
 
-	if (!ALTQ_IS_ENABLED(&ifp->if_snd) && !TBR_IS_ENABLED(&ifp->if_snd))
+	if (!(tp->tun_flags & TUN_LAYER2) &&
+	    !ALTQ_IS_ENABLED(&ifp->if_snd) &&
+	    !TBR_IS_ENABLED(&ifp->if_snd))
 		return;
 
 	IFQ_POLL(&ifp->if_snd, m);
-	if (m != NULL)
-		tun_wakeup(tp);
-}
+	if (m != NULL) {
+		if (tp->tun_flags & TUN_LAYER2) {
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
 #endif
+			ifp->if_opackets++;
+		}
+		tun_wakeup(tp);
+	}
+}

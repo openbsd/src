@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.27 2003/12/08 10:03:43 markus Exp $
+.\"	$OpenBSD: tun.4,v 1.28 2004/06/25 04:09:02 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -53,13 +53,24 @@ interface can be created at runtime using the
 command or by opening the character special device
 .Pa /dev/tunN .
 .Pp
+Both layer 3 and layer 2 tunnenling is supported.
+Layer 3 tunneling is the default mode, to enable layer 2 tunneling mode the
+.Ar link0
+flag needs to be set with
+.Xr ifconfig 8 .
+In layer 2 mode the
+.Nm
+interface is simulating an Ethernet network interface.
+.Pp
 Each device has the exclusive open property; it cannot be opened
 if it is already open and in use by another process.
 Each read returns at most one packet; if insufficient
 buffer space is provided, the packet is truncated.
 Each write supplies exactly one packet.
 Each packet read or written is prefixed with a tunnel header consisting of
-a 4 byte network byte order integer containing the address family.
+a 4 byte network byte order integer containing the address family in the case
+of layer 3 tunneling.
+In layer 2 mode the 4 byte tunnel header is replaced with a Ethernet header.
 On the last close of the device, all packets are discarded,
 the device is marked down, and all routes via the device
 are removed.
@@ -120,13 +131,16 @@ Can be used to set non-blocking I/O.
 Can be used to cause signal
 .Dv SIGIO
 to be sent when a packet can be read.
-.It Dv TIOCSPGRP Fa int *pgpp
+.It Dv TIOCSPGRP Fa int *pgrp
 .It Dv TIOCGPGRP Fa int *pgrp
 Get or set the process group to which signals might be sent
 via
 .Dv FIOASYNC .
 .It Dv FIONREAD Fa int *count
 Gets the byte count of the next packet available to be read.
+.It Dv SIOCGIFADDR Fa struct ether_addr *addr
+.It Dv SIOCSIFADDR Fa struct ether_addr *addr
+Get or set the ethernet address of the device in layer 2 mode.
 .El
 .Sh FILES
 .Bl -tag -width /dev/tun* -compact
@@ -164,16 +178,18 @@ recognized.
 .Pp
 Ioctl commands may fail with:
 .Bl -tag -width Er
-.It Bq EBUSY
-.Dv TUNSIFMODE
-and the interface was up.
 .It Bq EINVAL
 Attempt to set both
 .Dv IFF_POINTOPOINT
 and
 .Dv IFF_BROADCAST
 with
-.Dv TUNSIFMODE .
+.Dv TUNSIFMODE 
+or using
+.Dv SIOCGIFADDR
+or
+.Dv SIOCSIFADDR
+in layer 3 mode.
 .It Bq ENOTTY
 Unrecognized ioctl command.
 .El
