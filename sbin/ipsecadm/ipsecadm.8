@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.63 2003/12/02 23:16:29 markus Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.64 2004/01/15 12:20:08 markus Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -286,8 +286,9 @@ Allowed modifiers are:
 .Fl oldah ,
 .Fl oldesp ,
 .Fl ip4 ,
+.Fl ipcomp ,
 and
-.Fl ipcomp .
+.Fl tcpmd5 .
 Default action is to flush all types of security associations
 from the kernel.
 .It show
@@ -298,8 +299,9 @@ Allowed modifiers are:
 .Fl oldah ,
 .Fl oldesp ,
 .Fl ip4 ,
+.Fl ipcomp ,
 and
-.Fl ipcomp .
+.Fl tcpmd5 .
 Default action is to show all types of security associations
 from the kernel.
 .It monitor
@@ -327,6 +329,14 @@ After this an IPCA/SA bundle must be created using the
 .Nm group
 keyword.
 The IPCA must be applied first.
+.It tcpmd5
+Set up a key for use by the RFC 2385 TCP MD5 option.
+Allowed modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl key ,
+and
+.Fl keyfile .
 .El
 .Pp
 If no command is given
@@ -709,6 +719,11 @@ Set up a bypass flow:
 .Bd -literal
 # ipsecadm flow -bypass -out \\
 	-addr 10.1.1.0/24 10.1.1.0/24
+.Ed
+.Pp
+Set up a key for the TCP MD5 option:
+.Bd -literal
+# ipsecadm tcpmd5 -src ::1 -dst ::1 -key deadbeef
 .Ed
 .Pp
 Delete all esp SAs and their flows and routing information:
