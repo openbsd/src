@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.18 2003/03/18 00:55:50 millert Exp $
+.\"	$OpenBSD: getpeername.2,v 1.19 2003/05/20 04:15:47 pjanzen Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -60,10 +60,10 @@ is used to determine the connecting client's IP address.
 takes three parameters:
 .Pp
 .Fa s
-Contains the file descriptor of the socket whose peer should be looked up.
+contains the file descriptor of the socket whose peer should be looked up.
 .Pp
 .Fa name
-Points to a
+points to a
 .Li sockaddr
 structure that will hold the address information for the connected peer.
 Normal use requires one to use a structure
