@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.3 2004/07/14 05:16:04 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.4 2004/07/14 19:03:00 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -64,13 +64,16 @@ cvs_ent_open(const char *dir, int flags)
 	CVSENTRIES *ep;
 
 	memset(mode, 0, sizeof(mode));
-	if (flags & O_RDONLY)
-		mode[0] = 'r';
-	else if (flags & O_WRONLY)
-		mode[0] = 'w';
-	else if (flags & O_RDWR) {
-		mode[0] = 'r';
+	switch (flags & O_ACCMODE) {
+	case O_RDWR:
 		mode[1] = '+';
+		/* fallthrough */
+	case O_RDONLY:
+		mode[0] = 'r';
+		break;
+	case O_WRONLY:
+		mode[0] = 'w';
+		break;
 	}
 
 	snprintf(entpath, sizeof(entpath), "%s/" CVS_PATH_ENTRIES, dir);
@@ -95,13 +98,8 @@ cvs_ent_open(const char *dir, int flags)
 		return (NULL);
 	}
 
-	ep->cef_nid = 0;
-	ep->cef_entries = NULL;
-	ep->cef_nbent = 0;
-
-	/* only keep a pointer to the open file if we're in writing mode */
-	if ((flags & O_WRONLY) || (flags & O_RDWR))
-		ep->cef_file = fp;
+	ep->cef_cur = NULL;
+	TAILQ_INIT(&(ep->cef_ent));
 
 	while (fgets(ebuf, sizeof(ebuf), fp) != NULL) {
 		len = strlen(ebuf);
@@ -111,14 +109,15 @@ cvs_ent_open(const char *dir, int flags)
 		if (ent == NULL)
 			continue;
 
-		if (cvs_ent_add(ep, ent) < 0) {
-			cvs_ent_close(ep);
-			ep = NULL;
-			break;
-		}
+		TAILQ_INSERT_TAIL(&(ep->cef_ent), ent, ce_list);
 	}
 
-	(void)fclose(fp);
+	/* only keep a pointer to the open file if we're in writing mode */
+	if ((flags & O_WRONLY) || (flags & O_RDWR))
+		ep->cef_file = fp;
+	else
+		(void)fclose(fp);
+
 	return (ep);
 }
 
@@ -161,15 +160,7 @@ cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 	}
 	fprintf(ef->cef_file, "%s\n", ent->ce_line);
 
-	tmp = realloc(ef->cef_entries, (ef->cef_nbent + 1) * sizeof(ent));
-	if (tmp == NULL) {
-		cvs_log(LP_ERRNO, "failed to resize entries buffer");
-		return (-1);
-	}
-
-	ef->cef_entries = (struct cvs_ent **)tmp;
-	ef->cef_entries[ef->cef_nbent++] = ent;
-
+	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
 	return (0);
 }
 
@@ -198,15 +189,7 @@ cvs_ent_addln(CVSENTRIES *ef, const char *line)
 	if (cvs_ent_get(ef, ent->ce_name) != NULL)
 		return (-1);
 
-	tmp = realloc(ef->cef_entries, (ef->cef_nbent + 1) * sizeof(ent));
-	if (tmp == NULL) {
-		cvs_log(LP_ERRNO, "failed to resize entries buffer");
-		return (-1);
-	}
-
-	ef->cef_entries = (struct cvs_ent **)tmp;
-	ef->cef_entries[ef->cef_nbent++] = ent;
-
+	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
 	return (0);
 }
 
@@ -223,11 +206,11 @@ struct cvs_ent*
 cvs_ent_get(CVSENTRIES *ef, const char *file)
 {
 	u_int i;
+	struct cvs_ent *ep;
 
-	for (i = 0; i < ef->cef_nbent; i++) {
-		if (strcmp(ef->cef_entries[i]->ce_name, file) == 0)
-			return ef->cef_entries[i]; 
-	}
+	TAILQ_FOREACH(ep, &(ef->cef_ent), ce_list)
+		if (strcmp(ep->ce_name, file) == 0)
+			return (ep);
 
 	return (NULL);
 }
@@ -236,16 +219,21 @@ cvs_ent_get(CVSENTRIES *ef, const char *file)
 /*
  * cvs_ent_next()
  *
+ * This function is used to iterate over the entries in an Entries file.  The
+ * first call will return the first entry of the file and each subsequent call
+ * will return the entry following the last one returned.
  * Returns a pointer to the cvs entry structure on success, or NULL on failure.
  */
 
 struct cvs_ent*
 cvs_ent_next(CVSENTRIES *ef)
 {
-	if (ef->cef_nid >= ef->cef_nbent)
-		return (NULL);
+	if (ef->cef_cur == NULL) {
+		ef->cef_cur = TAILQ_FIRST(&(ef->cef_ent));
+		return (ef->cef_cur);
+	}
 
-	return (ef->cef_entries[ef->cef_nid++]);
+	return TAILQ_NEXT(ef->cef_cur, ce_list);
 }
 
 

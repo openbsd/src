@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.3 2004/07/14 04:32:42 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.4 2004/07/14 19:03:00 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -258,16 +258,15 @@ struct cvs_ent {
 	char    *ce_timestamp;
 	char    *ce_opts;
 	char    *ce_tag;
+	TAILQ_ENTRY(cvs_ent) ce_list;
 };
 
 typedef struct cvs_entries {
 	char    *cef_path;
 	FILE    *cef_file;
 
-	u_int    cef_nid;  /* next entry index to return for next() */
-
-	struct cvs_ent **cef_entries;
-	u_int            cef_nbent;
+	TAILQ_HEAD(, cvs_ent) cef_ent;
+	struct cvs_ent       *cef_cur;
 } CVSENTRIES;
 
 
