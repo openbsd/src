@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)strftime.c	7.57";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.1 1998/01/19 00:07:43 millert Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.2 1998/02/14 21:03:48 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -93,11 +93,11 @@ static const struct lc_time_T	C_time_locale = {
 
 	/*
 	** c_fmt
-	** Note that
-	**	"%a %b %d %H:%M:%S %Y"
-	** is used by Solaris 2.3.
+	** XXX--Changed by millert from "%D %X"
+	**      to the more common "%a %b %d %H:%M:%S %Y"
+	**      used by everyone else.
 	*/
-	"%D %X",	/* %m/%d/%y %H:%M:%S */
+	"%a %b %d %H:%M:%S %Y",
 
 	/* am */
 	"AM",
