@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.70 2000/04/11 11:42:11 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.71 2000/04/29 14:02:59 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -630,7 +630,7 @@ static void
 sigquit(signo)
 	int signo;
 {
-	syslog(LOG_ERR, "got signal %s", strsignal(signo));
+	syslog(LOG_ERR, "got signal %s", strerror(signo));
 
 	dologout(1);
 }
