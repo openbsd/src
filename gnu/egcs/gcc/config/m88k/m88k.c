@@ -516,11 +516,11 @@ expand_block_move (dest_mem, src_mem, operands)
 			 bytes, align, 0);
 
 #if 0	/* XXX */
-  else if (constp && bytes <= best_from_align[target][align])
+  else if (constp && bytes <= best_from_align[target][align] && !TARGET_MEMCPY)
     block_move_no_loop (operands[0], dest_mem, operands[1], src_mem,
 			bytes, align);
 
-  else if (constp && align == 4 && TARGET_88100)
+  else if (constp && align == 4 && TARGET_88100 && !TARGET_MEMCPY)
     block_move_loop (operands[0], dest_mem, operands[1], src_mem,
 		     bytes, align);
 

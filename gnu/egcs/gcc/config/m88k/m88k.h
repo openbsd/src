@@ -224,6 +224,7 @@ extern char * reg_names[];
 #define MASK_WARN_PASS_STRUCT	0x00002000 /* Warn about passed structs */
 #define MASK_OPTIMIZE_ARG_AREA	0x00004000 /* Save stack space */
 #define MASK_NO_SERIALIZE_VOLATILE 0x00008000 /* Serialize volatile refs */
+#define MASK_MEMCPY             0x00010000 /* Always use memcpy for movstr */
 #define MASK_EITHER_LARGE_SHIFT	(MASK_TRAP_LARGE_SHIFT | \
 				 MASK_HANDLE_LARGE_SHIFT)
 #define MASK_OMIT_LEAF_FRAME_POINTER 0x00020000 /* omit leaf frame pointers */
@@ -248,6 +249,7 @@ extern char * reg_names[];
 #define TARGET_OPTIMIZE_ARG_AREA  (target_flags & MASK_OPTIMIZE_ARG_AREA)
 #define TARGET_SERIALIZE_VOLATILE (!(target_flags & MASK_NO_SERIALIZE_VOLATILE))
 
+#define TARGET_MEMCPY             (target_flags & MASK_MEMCPY)
 #define TARGET_EITHER_LARGE_SHIFT (target_flags & MASK_EITHER_LARGE_SHIFT)
 #define TARGET_OMIT_LEAF_FRAME_POINTER (target_flags & MASK_OMIT_LEAF_FRAME_POINTER)
 
@@ -281,6 +283,8 @@ extern char * reg_names[];
     { "serialize-volatile",		-MASK_NO_SERIALIZE_VOLATILE }, \
     { "omit-leaf-frame-pointer",	 MASK_OMIT_LEAF_FRAME_POINTER }, \
     { "no-omit-leaf-frame-pointer",     -MASK_OMIT_LEAF_FRAME_POINTER }, \
+    { "memcpy",                          MASK_MEMCPY }, \
+    { "no-memcpy",                      -MASK_MEMCPY }, \
     SUBTARGET_SWITCHES \
     /* Default switches */ \
     { "",				 TARGET_DEFAULT }, \
