@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.37 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.38 2004/02/10 10:06:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -145,12 +145,8 @@ struct {
 };
 
 /* prototypes */
-int clcnprobe(struct consdev *cp);
-int clcninit(struct consdev *cp);
+cons_decl(cl);
 int cl_instat(struct clsoftc *sc);
-int clcngetc(dev_t dev);
-void clcnputc(dev_t dev, u_char c);
-void clcnpollc(dev_t, int);
 u_char cl_clkdiv(int speed);
 u_char cl_clknum(int speed);
 u_char cl_clkrxtimeout(int speed);
@@ -915,7 +911,7 @@ clstop(tp, flag)
  * pcc2 space and Cirrus chip area.
  */
 
-int
+void
 clcnprobe(cp)
 	struct consdev *cp;
 {
@@ -926,7 +922,7 @@ clcnprobe(cp)
 	/* bomb if it'a a MVME188 */
 	if (brdtyp == BRD_188) {
 		cp->cn_pri = CN_DEAD;
-		return 0;
+		return;
 	}
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -934,11 +930,9 @@ clcnprobe(cp)
 			break;
 	cp->cn_dev = makedev (maj, 0);
 	cp->cn_pri = CN_NORMAL;
-
-	return 1;
 }
 
-int
+void
 clcninit(cp)
 	struct consdev *cp;
 {
@@ -977,7 +971,6 @@ clcninit(cp)
 	cl_reg->cl_lnxt  = 0x00;
 	cl_reg->cl_cpsr  = 0x00;
 #endif
-	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.27 2004/01/14 20:50:48 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.28 2004/02/10 10:06:48 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -94,11 +94,9 @@ struct cfdriver dart_cd = {
 };
 
 int dart_cons = -1;
+
 /* prototypes */
-int dartcnprobe(struct consdev *cp);
-int dartcninit(struct consdev *cp);
-int dartcngetc(dev_t dev);
-void dartcnputc(dev_t dev, char c);
+cons_decl(dart);
 int dart_speed(int);
 struct tty* darttty(dev_t);
 void dartstart(struct tty *);
@@ -239,7 +237,7 @@ dartattach(parent, self, aux)
 	dart_sv_reg.sv_imr  = IIPCHG;
 
 	if (dart_cons >= 0) {
-		printf(" console (tty%s) ", dart_cons == 0 ? "a" : "b");
+		printf(": console (tty%s) ", dart_cons == 0 ? "a" : "b");
 	}
 
 	dprintf(("\ndartattach: resetting port A\n"));
@@ -1140,7 +1138,7 @@ dartintr(arg)
  * supported.
  */
 
-int
+void
 dartcnprobe(cp)
 	struct consdev *cp;
 {
@@ -1148,7 +1146,7 @@ dartcnprobe(cp)
 
 	if (brdtyp != BRD_188) {
 		cp->cn_pri = CN_DEAD;
-		return 0;
+		return;
 	}
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -1157,15 +1155,13 @@ dartcnprobe(cp)
 
 	cp->cn_dev = makedev(maj, 0);
 	cp->cn_pri = CN_NORMAL;
-	return (1);
 }
 
-int
+void
 dartcninit(cp)
 	struct consdev *cp;
 {
 	dart_cons = A_PORT;
-	return 0;
 }
 
 void
