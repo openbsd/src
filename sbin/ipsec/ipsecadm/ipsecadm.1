@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.10 1998/05/24 13:29:00 provos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.11 1998/05/24 22:57:18 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -52,7 +52,7 @@ The possible commands are:
 .Pp
 .Bl -tag -width new_esp
 .It new esp
-Setup a SPI which uses the new esp transforms.
+Setup a Security Parameters Index (SPI) which uses the new esp transforms.
 Encryption and authentication algorithms can be applied.
 This is the default mode.
 Allowed
@@ -101,8 +101,8 @@ hashes will be used for authentication. Allowed modifiers are:
 and
 .Fl key .
 .It delspi
-The specified SA will be deleted. A SA consists of the
-destination address, SPI and security protocol. Allowed modifiers are:
+The specified Security Association (SA) will be deleted. An SA consists of
+the destination address, SPI and security protocol. Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
 .Fl proto .
@@ -141,7 +141,17 @@ defaults to new esp mode.
 The modifiers have the following meanings:
 .Bl -tag -width newpadding -offset indent
 .It src
-The source IP address for the SPI.
+The source IP address for the SPI. This is necessary for incoming
+SAs to avoid source address spoofing between mutually
+suspicious hosts that have established SAs with us. For outgoing SAs, this
+field is used if the SA is for packets that originate from this host, and 
+its purpose is to slightly speedup packet processing. If this field is
+zero (0.0.0.0), no spoofing check will be done for incoming SAs, and an
+extra routing lookup may be necessary for certain classes of packets that
+originate from the local machine and make use of the SA. The value in this
+field is not used when processing outgoing packets in
+.Xr vpn 8
+mode (encrypting/authenticating other hosts' packets).
 .It dst
 The destination IP address for the SPI.
 .It spi
