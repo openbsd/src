@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.4 2001/03/24 19:24:07 jakob Exp $ */
+/* $OpenBSD: main.c,v 1.5 2001/12/05 10:12:50 deraadt Exp $ */
 /* $NetBSD: main.c,v 1.1 1999/12/24 09:08:50 agc Exp $ */
 
 /*
@@ -88,16 +88,15 @@ main(int argc, char **argv)
 		for (matched = i = 0 ; i < cmdp->c_wc && i < MaxCmdWords ; i++) {
 			if (argc > i) {
 				if (strcmp((i == 0) ? __progname : argv[i],
-						cmdp->c_word[i]) == 0) {
+				    cmdp->c_word[i]) == 0) {
 					matched += 1;
-				} else {
+				} else
 					break;
-				}
 			}
 		}
-		if (matched == cmdp->c_wc && cmdp->c_func != NULL) {
-			return (*cmdp->c_func)(argc - (matched - 1), argv + (matched - 1));
-		}
+		if (matched == cmdp->c_wc && cmdp->c_func != NULL)
+			return (*cmdp->c_func)(argc - (matched - 1),
+			    argv + (matched - 1));
 	}
 	usermgmt_usage(__progname);
 	/* NOTREACHED */
