@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.55 2001/05/16 12:51:49 ho Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.56 2001/05/16 19:31:40 mickey Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1464,7 +1464,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.55 2001/05/16 12:51:49 ho Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.56 2001/05/16 19:31:40 mickey Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3661,7 +3661,9 @@ ncr_attach(parent, self, aux)
 #endif /*__mips__*/
 
 	np->sc_pc = pc;
-	np->ccb = (ccb_p) malloc (sizeof (struct ccb), M_DEVBUF, M_WAITOK);
+	np->ccb = (ccb_p) malloc (sizeof (struct ccb), M_DEVBUF, M_NOWAIT);
+	if (np->ccb == NULL)
+		return;
 #if defined(__mips__)
 	pci_sync_cache(pc, (vm_offset_t)np->ccb, sizeof (struct ccb));
 	np->ccb = (struct ccb *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, np->ccb));
