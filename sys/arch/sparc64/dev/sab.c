@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.1 2001/10/28 02:19:16 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.2 2002/01/17 05:39:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -77,6 +77,7 @@ struct sab_softc {
 	struct sabtty_softc *	sc_child[SAB_NCHAN];
 	u_int			sc_nchild;
 	void *			sc_softintr;
+	int			sc_node;
 };
 
 struct sabtty_attach_args {
@@ -100,9 +101,14 @@ struct sabtty_softc {
 #define	SABTTYF_DONE		0x02
 #define	SABTTYF_RINGOVERFLOW	0x04
 #define	SABTTYF_CDCHG		0x08
+#define	SABTTYF_CONS_IN		0x10
+#define	SABTTYF_CONS_OUT	0x20
 	u_int8_t		sc_rbuf[SABTTY_RBUF_SIZE];
 	u_int8_t		*sc_rend, *sc_rput, *sc_rget;
 };
+
+struct sabtty_softc *sabtty_cons_input;
+struct sabtty_softc *sabtty_cons_output;
 
 #define	SAB_READ(sc,r)		\
     bus_space_read_1((sc)->sc_bt, (sc)->sc_bh, (r))
@@ -114,6 +120,10 @@ void sab_attach __P((struct device *, struct device *, void *));
 int sab_print __P((void *, const char *));
 int sab_intr __P((void *));
 void sab_softintr __P((void *));
+struct sabtty_softc *sab_findsabtty __P((dev_t));
+void sab_cnputc __P((dev_t, int));
+int sab_cngetc __P((dev_t));
+void sab_cnpollc __P((dev_t, int));
 
 int sabtty_match __P((struct device *, void *, void *));
 void sabtty_attach __P((struct device *, struct device *, void *));
@@ -127,6 +137,7 @@ void sabtty_tec_wait __P((struct sabtty_softc *));
 void sabtty_reset __P((struct sabtty_softc *));
 void sabtty_flush __P((struct sabtty_softc *));
 int sabtty_speed __P((int));
+void sabtty_console_flags __P((struct sabtty_softc *));
 
 int sabttyopen __P((dev_t, int, int, struct proc *));
 int sabttyclose __P((dev_t, int, int, struct proc *));
@@ -135,6 +146,8 @@ int sabttywrite __P((dev_t, struct uio *, int));
 int sabttyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int sabttystop __P((struct tty *, int));
 struct tty *sabttytty __P((dev_t));
+void sabtty_cnputc __P((struct sabtty_softc *, int));
+int sabtty_cngetc __P((struct sabtty_softc *));
 
 struct cfattach sab_ca = {
 	sizeof(struct sab_softc), sab_match, sab_attach
@@ -208,6 +221,7 @@ sab_attach(parent, self, aux)
 	u_int i;
 
 	sc->sc_bt = ea->ea_bustag;
+	sc->sc_node = ea->ea_node;
 
 	/* Use prom mapping, if available. */
 	if (ea->ea_nvaddrs)
@@ -377,7 +391,45 @@ sabtty_attach(parent, self, aux)
 		return;
 	}
 
-	sabtty_reset(sc);
+	sabtty_console_flags(sc);
+
+	if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
+		char *acc;
+
+		switch (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
+		case SABTTYF_CONS_IN:
+			acc = "input";
+			break;
+		case SABTTYF_CONS_OUT:
+			acc = "output";
+			break;
+		case SABTTYF_CONS_IN|SABTTYF_CONS_OUT:
+		default:
+			acc = "i/o";
+			break;
+		}
+
+		/* Let current output drain */
+		DELAY(100000);
+
+		if (sc->sc_flags & SABTTYF_CONS_IN) {
+			sabtty_cons_input = sc;
+			cn_tab->cn_pollc = sab_cnpollc;
+			cn_tab->cn_getc = sab_cngetc;
+			cn_tab->cn_dev = makedev(77/*XXX*/, self->dv_unit);
+		}
+
+		if (sc->sc_flags & SABTTYF_CONS_OUT) {
+			sabtty_cons_output = sc;
+			cn_tab->cn_putc = sab_cnputc;
+			cn_tab->cn_dev = makedev(77/*XXX*/, self->dv_unit);
+		}
+		printf(": console %s", acc);
+	} else {
+		/* Not a console... */
+		sabtty_reset(sc);
+	}
+
 	printf("\n");
 }
 
@@ -1033,4 +1085,110 @@ sabtty_speed(rate)
 		}
 	}
 	return (-1);
+}
+
+void
+sabtty_cnputc(sc, c)
+	struct sabtty_softc *sc;
+	int c;
+{
+	sabtty_tec_wait(sc);
+	SAB_WRITE(sc, SAB_TIC, c);
+}
+
+int
+sabtty_cngetc(sc)
+	struct sabtty_softc *sc;
+{
+	return (-1);
+}
+
+struct sabtty_softc *
+sab_findsabtty(dev)
+	dev_t dev;
+{
+	struct sab_softc *bc;
+	int card = SAB_CARD(dev), port = SAB_PORT(dev);
+
+	if (card >= sab_cd.cd_ndevs || (bc = sab_cd.cd_devs[card]) == NULL)
+		return (NULL);
+	if (port >= bc->sc_nchild)
+		return (NULL);
+	return (bc->sc_child[port]);
+}
+
+void
+sab_cnputc(dev, c)
+	dev_t dev;
+	int c;
+{
+	struct sabtty_softc *sc = sabtty_cons_output;
+
+	if (sc == NULL) {
+		printf("sab_cnputc: invalid device\n");
+		return;
+	}
+	sabtty_cnputc(sc, c);
+}
+
+void
+sab_cnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+}
+
+int
+sab_cngetc(dev)
+	dev_t dev;
+{
+	struct sabtty_softc *sc = sabtty_cons_input;
+
+	if (sc == NULL) {
+		printf("sab_cngetc: invalid device\n");
+		return (-1);
+	}
+	return (sabtty_cngetc(sc));
+}
+
+void
+sabtty_console_flags(sc)
+	struct sabtty_softc *sc;
+{
+	int node, channel, cookie;
+	u_int chosen;
+	char buf[255];
+
+	node = sc->sc_parent->sc_node;
+	channel = sc->sc_portno;
+
+	chosen = OF_finddevice("/chosen");
+
+	/* Default to channel 0 if there are no explicit prom args */
+	cookie = 0;
+
+	if (node == OF_instance_to_package(OF_stdin())) {
+		if (OF_getprop(chosen, "input-device", buf,
+		    sizeof(buf)) != -1) {
+			if (strcmp("ttyb", buf) == 0)
+				cookie = 1;
+		}
+
+		if (channel == cookie)
+			sc->sc_flags |= SABTTYF_CONS_IN;
+	}
+
+	/* Default to same channel if there are no explicit prom args */
+
+	if (node == OF_instance_to_package(OF_stdout())) {
+		if (OF_getprop(chosen, "output-device", buf,
+		    sizeof(buf)) != -1) {
+			printf("Found output device: %s\n", buf);
+			if (strcmp("ttyb", buf) == 0)
+				cookie = 1;
+		}
+
+		if (channel == cookie)
+			sc->sc_flags |= SABTTYF_CONS_OUT;
+	}
 }
