@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.50 2004/10/28 04:55:52 jaredy Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.51 2004/11/05 14:56:31 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -803,7 +803,8 @@ and VAR is set to
 the substitution for $VAR results in four fields:
 .Sq A ,
 .Sq B ,
-.Sq ,\&
+.Sq
+(an empty field),
 and
 .Sq D .
 Note that if the
@@ -817,17 +818,17 @@ Also, note that the field splitting applies only to the immediate result of
 the substitution.
 Using the previous example, the substitution for $VAR:E
 results in the fields:
-.Dq A ,
-.Dq B ,
-.Dq ,
+.Sq A ,
+.Sq B ,
+.Sq ,
 and
-.Dq D:E ,
+.Sq D:E ,
 not
-.Dq A ,
-.Dq B ,
-.Dq ,
+.Sq A ,
+.Sq B ,
+.Sq ,
 and
-.Dq E .
+.Sq E .
 This behavior is POSIX compliant, but incompatible with some other shell
 implementations which do field splitting on the word which contained the
 substitution or use
