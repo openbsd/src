@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.11 2002/05/16 07:37:44 miod Exp $ */
+/*	$OpenBSD: db_disasm.c,v 1.12 2003/05/10 21:11:14 deraadt Exp $ */
 /*	$NetBSD: db_disasm.c,v 1.10 1998/04/13 12:10:27 ragge Exp $ */
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -317,7 +317,7 @@ get_operand(ib, size)
 		break;
 
 	case 4:		/* indexed */
-		sprintf(buf, "[%s]", my_db_regs[reg].name);
+		snprintf(buf, sizeof buf, "[%s]", my_db_regs[reg].name);
 		get_operand(ib, 0);
 		add_str(ib, buf);
 		break;
@@ -495,9 +495,9 @@ add_int(ib, i)
 	char		buf[32];
 
 	if (i < 100 && i > -100)
-		sprintf(buf, "%d", i);
+		snprintf(buf, sizeof buf, "%d", i);
 	else
-		sprintf(buf, "0x%x", i);
+		snprintf(buf, sizeof buf, "0x%x", i);
 	add_str(ib, buf);
 }
 
@@ -508,7 +508,7 @@ add_xint(ib, val)
 {
 	char		buf[32];
 
-	sprintf(buf, "0x%x", val);
+	snprintf(buf, sizeof buf, "0x%x", val);
 	add_str(ib, buf);
 }
 

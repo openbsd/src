@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.38 2002/11/22 23:08:49 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.39 2003/05/10 21:11:14 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -95,7 +95,7 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_CPU
 };
 
-char *fsrtoname(int, int, int, char *);
+char *fsrtoname(int, int, int, char *, size_t);
 void cache_print(struct cpu_softc *);
 void cpu_spinup(struct cpu_softc *);
 void fpu_init(struct cpu_softc *);
@@ -223,14 +223,14 @@ cpu_attach(parent, self, aux)
 		fpu_init(sc);
 		if (foundfpu)
 			fpuname = fsrtoname(sc->cpu_impl, sc->cpu_vers,
-			    sc->fpuvers, fpbuf);
+			    sc->fpuvers, fpbuf, sizeof fpbuf);
 	}
 	/* XXX - multi-processor: take care of `cpu_model' and `foundfpu' */
 
-	sprintf(model, "%s @ %s MHz, %s FPU", sc->cpu_name,
+	snprintf(model, sizeof model, "%s @ %s MHz, %s FPU", sc->cpu_name,
 	    clockfreq(sc->hz), fpuname);
 	printf(": %s", model);
-	sprintf(cpu_model, "%s, %s", mainbus_model, model);
+	snprintf(cpu_model, sizeof cpu_model, "%s, %s", mainbus_model, model);
 
 	if (cpu_hotfix[0])
 		printf("; %s", cpu_hotfix);
@@ -628,7 +628,8 @@ sun4_hotfix(sc)
 {
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
 		kvm_uncache((caddr_t)trapbase, 1);
-		sprintf(cpu_hotfix, "cache chip bug - trap page uncached");
+		snprintf(cpu_hotfix, sizeof cpu_hotfix,
+		    "cache chip bug - trap page uncached");
 	}
 
 }
@@ -1309,9 +1310,10 @@ static struct info fpu_types[] = {
 };
 
 char *
-fsrtoname(impl, vers, fver, buf)
+fsrtoname(impl, vers, fver, buf, buflen)
 	register int impl, vers, fver;
 	char *buf;
+	size_t buflen;
 {
 	register struct info *p;
 
@@ -1320,7 +1322,7 @@ fsrtoname(impl, vers, fver, buf)
 		    (p->iu_vers == vers || p->iu_vers == ANY) &&
 		    (p->fpu_vers == fver))
 			return (p->name);
-	sprintf(buf, "version 0x%x", fver);
+	snprintf(buf, buflen, "version 0x%x", fver);
 	return (buf);
 }
 

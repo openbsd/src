@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.7 2003/01/30 07:53:58 henric Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.8 2003/05/10 21:11:14 deraadt Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -599,7 +599,7 @@ prom_printf(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	len = vsprintf(buf, fmt, ap);
+	len = vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
 
 	OF_write(OF_stdout(), buf, len);

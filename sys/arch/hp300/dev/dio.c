@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.7 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: dio.c,v 1.8 2003/05/10 21:11:12 deraadt Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -283,7 +283,7 @@ dio_devinfo(da, buf, buflen)
 	 * consistent/reliable device ids.
 	 */
 	if (da->da_scode == 7 && internalhpib) {
-		sprintf(buf, DIO_DEVICE_DESC_IHPIB);
+		snprintf(buf, buflen, DIO_DEVICE_DESC_IHPIB);
 		return (buf);
 	}
 
@@ -300,7 +300,8 @@ dio_devinfo(da, buf, buflen)
 				}
 			} else {
 			foundit:
-				sprintf(buf, "%s", dio_devdescs[i].dd_desc);
+				snprintf(buf, buflen, "%s",
+				    dio_devdescs[i].dd_desc);
 				return (buf);
 			}
 		}
@@ -310,7 +311,7 @@ dio_devinfo(da, buf, buflen)
 	/*
 	 * Device is unknown.  Construct something reasonable.
 	 */
-	sprintf(buf, "device id = 0x%x secid = 0x%x",
+	snprintf(buf, buflen, "device id = 0x%x secid = 0x%x",
 	    da->da_id, da->da_secid);
 	return (buf);
 }

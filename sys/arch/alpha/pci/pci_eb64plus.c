@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.4 2002/06/25 21:33:21 miod Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.5 2003/05/10 21:11:12 deraadt Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -196,7 +196,7 @@ dec_eb64plus_intr_string(acv, ih)
 
         if (ih > EB64PLUS_MAX_IRQ)
                 panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
-        sprintf(irqstr, "eb64+ irq %ld", ih);
+        snprintf(irqstr, sizeof irqstr, "eb64+ irq %ld", ih);
         return (irqstr);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.23 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.24 2003/05/10 21:11:12 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ setroot()
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
-				strcpy(buf, bootdv->dv_xname);
+				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
 			}
 			if (len > 0 && buf[len - 1] == '*') {
@@ -704,7 +704,8 @@ setroot()
 			return;
 		}
 		bzero(buf, sizeof(buf));
-		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
+		snprintf(buf, sizeof buf, "%s%d", rootdevname,
+		    DISKUNIT(rootdev));
 		
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {

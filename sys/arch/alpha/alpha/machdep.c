@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.79 2002/12/17 23:11:31 millert Exp $ */
+/* $OpenBSD: machdep.c,v 1.80 2003/05/10 21:11:11 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1038,7 +1038,7 @@ alpha_unknown_sysname()
 {
 	static char s[128];		/* safe size */
 
-	sprintf(s, "%s family, unknown model variation 0x%lx",
+	snprintf(s, sizeof s, "%s family, unknown model variation 0x%lx",
 	    platform.family, hwrpb->rpb_variation & SV_ST_MASK);
 	return ((const char *)s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.19 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 2003/05/10 21:11:11 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -302,7 +302,8 @@ setroot()
 		unit = DISKUNIT(rootdev);
 		part = DISKPART(rootdev);
 
-		len = sprintf(buf, "%s%d", findblkname(majdev), unit);
+		len = snprintf(buf, sizeof buf, "%s%d",
+		    findblkname(majdev), unit);
 		if (len >= sizeof(buf))
 			panic("setroot: device name too long");
 
@@ -427,10 +428,11 @@ gotswap:
 		rootdevname = findblkname(major(rootdev));
 		if (rootdevname == NULL) {
 			/* Root on NFS or unknown device. */
-			strcpy(root_device, "??");
+			strlcpy(root_device, "??", sizeof root_device);
 		} else {
 			/* Root on known block device. */
-			sprintf(root_device, "%s%d%c", rootdevname,
+			snprintf(root_device, sizeof root_device,
+			    "%s%d%c", rootdevname,
 			    DISKUNIT(rootdev), DISKPART(rootdev) + 'a');
 		}
 			
@@ -447,7 +449,8 @@ gotswap:
 #endif
 	case DV_DISK:
 		mountroot = dk_mountroot;
-		sprintf(root_device, "%s%c", rootdv->dv_xname,
+		snprintf(root_device, sizeof root_device,
+		    "%s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
 		printf("root on %s", root_device);
 		if (nswapdev != NODEV)
