@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.1 1999/04/20 20:32:16 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.2 1999/04/20 21:33:35 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -108,7 +108,7 @@ hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
 com0	at gsc? irq 5	# RS/232 serial port
 com1	at gsc? irq 6	# RS/232 serial port
 lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
-ie0	at gsc? irq 8	# 82C5[89]6 ether
+#ie0	at gsc? irq 8	# 82C5[89]6 ether
 #siop0	at gsc? irq 9	# NCR 53C7xx
 #siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
 #scsibus* at siop?
@@ -116,11 +116,11 @@ ie0	at gsc? irq 8	# 82C5[89]6 ether
 #audio* at aone?
 #atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
 #audio* at atwo?
-pckbc*	at gsc? irq 27
-pckbd*	at pckbc?	# PS/2 keyboard
+#pckbc*	at gsc? irq 27
+#pckbd*	at pckbc?	# PS/2 keyboard
 #pms*	at pckbc?	# PS/2 mouse
-fdc*	at gsc?		# PC floppy controller (WD37C65C)
-option	FD_DEBUG
+#fdc*	at gsc?		# PC floppy controller (WD37C65C)
+#option	FD_DEBUG
 
 # EISA devices
 #vga*	at eisa? slot ?
@@ -141,7 +141,7 @@ scsibus* at bha?
 option	WSEMUL_DUMB
 #wsdisplay*	at vgafb?
 #wsdisplay*	at sti?
-wskbd*		at pckbd?
+#wskbd*		at pckbd?
 #wskbd*		at hkbd?
 #wsmouse*	at pms?
 #wsmouse*	at hms?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.12 1999/04/20 20:32:19 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.13 1999/04/20 21:33:10 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -11,7 +11,7 @@ maxusers 2 8 64
 # "workstation console" routines
 #
 
-include "dev/wscons/files.wscons"
+#include "dev/wscons/files.wscons"
 
 #
 # Machine-independent SCSI drivers
@@ -93,9 +93,9 @@ device	dino: pcibus
 attach	dino at mainbus
 file	arch/hppa/dev/dino.c		dino
 
-device	sti: wsemuldisplaydev
-attach	sti at mainbus
-file	arch/hppa/dev/sti.c		sti
+#device	sti: wsemuldisplaydev
+#attach	sti at mainbus
+#file	arch/hppa/dev/sti.c		sti
 
 ###
 
@@ -123,11 +123,11 @@ file	arch/hppa/gsc/com_gsc.c		com
 attach	lpt at gsc with lpt_gsc
 file	arch/hppa/gsc/lpt_gsc.c		lpt
 
-include "dev/fdc/files.fdc"
-major	{ fd = 7 }
-major	{ ft = 8 }
-attach	fdc at gsc with fdc_gsc
-file	arch/hppa/gsc/fdc_gsc.c		fdc
+#include "dev/fdc/files.fdc"
+#major	{ fd = 7 }
+#major	{ ft = 8 }
+#attach	fdc at gsc with fdc_gsc
+#file	arch/hppa/gsc/fdc_gsc.c		fdc
 
 #device	ie: ether, i82586
 attach	ie at gsc with ie_gsc
@@ -141,8 +141,8 @@ device	hil: tty
 attach	hil at gsc
 file	arch/hppa/gsc/hil.c		hil
 
-attach	pckbc at gsc with pckbc_gsc
-file	arch/hppa/gsc/pckbc_gsc.c	pckbc_gsc
+#attach	pckbc at gsc with pckbc_gsc
+#file	arch/hppa/gsc/pckbc_gsc.c	pckbc_gsc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
 device	aone: audio, mulaw, auconv
@@ -170,7 +170,7 @@ file	arch/hppa/gsc/atwo.c		atwo
 # PC Keyboard controller (ps2)
 #
 
-include "dev/pckbc/files.pckbc"
+#include "dev/pckbc/files.pckbc"
 
 #
 # Compatibility
