@@ -122,7 +122,7 @@ $(LIBNAME).dll: $(OBJS)
 		..\..\CoreR\ApacheCore.lib \
 		$(SSL_LIB)\ssleay32.lib \
 		$(SSL_LIB)\libeay32.lib \
-		wsock32.lib
+		wsock32.lib gdi32.lib
 
 clean:
 	-$(RM) $(LIBFILE)

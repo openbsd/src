@@ -81,7 +81,7 @@ static char *ssl_var_lookup_ssl_cert_chain(pool *p, STACK_OF(X509) *sk, char *va
 static char *ssl_var_lookup_ssl_cert_PEM(pool *p, X509 *xs);
 static char *ssl_var_lookup_ssl_cert_verify(pool *p, conn_rec *c);
 static char *ssl_var_lookup_ssl_cipher(pool *p, conn_rec *c, char *var);
-static void  ssl_var_lookup_ssl_cipher_bits(char *cipher, int *usekeysize, int *algkeysize);
+static void  ssl_var_lookup_ssl_cipher_bits(SSL *ssl, int *usekeysize, int *algkeysize);
 static char *ssl_var_lookup_ssl_version(pool *p, char *var);
 
 void ssl_var_register(void)
@@ -546,34 +546,24 @@ static char *ssl_var_lookup_ssl_cipher(pool *p, conn_rec *c, char *var)
 {
     char *result;
     BOOL resdup;
-    char *cipher;
     int usekeysize, algkeysize;
     SSL *ssl;
 
     result = NULL;
     resdup = TRUE;
 
-    if (strEQ(var, "")) {
-        ssl = ap_ctx_get(c->client->ctx, "ssl");
-        result = (char *)SSL_get_cipher_name(ssl);
-    }
-    else if (strcEQ(var, "_EXPORT")) {
-        ssl = ap_ctx_get(c->client->ctx, "ssl");
-        cipher = (char *)SSL_get_cipher_name(ssl);
-        ssl_var_lookup_ssl_cipher_bits(cipher, &usekeysize, &algkeysize);
+    ssl = ap_ctx_get(c->client->ctx, "ssl");
+    ssl_var_lookup_ssl_cipher_bits(ssl, &usekeysize, &algkeysize);
+
+    if (strEQ(var, ""))
+        result = (ssl != NULL ? (char *)SSL_get_cipher_name(ssl) : NULL);
+    else if (strcEQ(var, "_EXPORT"))
         result = (usekeysize < 56 ? "true" : "false");
-    }
     else if (strcEQ(var, "_USEKEYSIZE")) {
-        ssl = ap_ctx_get(c->client->ctx, "ssl");
-        cipher = (char *)SSL_get_cipher_name(ssl);
-        ssl_var_lookup_ssl_cipher_bits(cipher, &usekeysize, &algkeysize);
         result = ap_psprintf(p, "%d", usekeysize);
         resdup = FALSE;
     }
     else if (strcEQ(var, "_ALGKEYSIZE")) {
-        ssl = ap_ctx_get(c->client->ctx, "ssl");
-        cipher = (char *)SSL_get_cipher_name(ssl);
-        ssl_var_lookup_ssl_cipher_bits(cipher, &usekeysize, &algkeysize);
         result = ap_psprintf(p, "%d", algkeysize);
         resdup = FALSE;
     }
@@ -583,76 +573,15 @@ static char *ssl_var_lookup_ssl_cipher(pool *p, conn_rec *c, char *var)
     return result;
 }
 
-/*
- * This structure is used instead of SSL_get_cipher_bits() because
- * this OpenSSL function has rounding problems, but we want the
- * correct sizes.
- */
-static const struct {
-    char *szName;
-    int nUseKeySize;
-    int nAlgKeySize;
-} ssl_var_lookup_ssl_cipher_bits_rec[] = {
-
-    { TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5     /*EXP1024-RC4-MD5*/,    56, 128 },
-    { TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5 /*EXP1024-RC2-CBC-MD5*/,56, 128 },
-    { TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA    /*EXP1024-DES-CBC-SHA*/,56,  56 },
-
-    { SSL3_TXT_RSA_IDEA_128_SHA          /*IDEA-CBC-SHA*/,           128, 128 },
-    { SSL3_TXT_RSA_NULL_MD5              /*NULL-MD5*/,                 0,   0 },
-    { SSL3_TXT_RSA_NULL_SHA              /*NULL-SHA*/,                 0,   0 },
-    { SSL3_TXT_RSA_RC4_40_MD5            /*EXP-RC4-MD5*/,             40, 128 },
-    { SSL3_TXT_RSA_RC4_128_MD5           /*RC4-MD5*/,                128, 128 },
-    { SSL3_TXT_RSA_RC4_128_SHA           /*RC4-SHA*/,                128, 128 },
-    { SSL3_TXT_RSA_RC2_40_MD5            /*EXP-RC2-CBC-MD5*/,         40, 128 },
-    { SSL3_TXT_RSA_DES_40_CBC_SHA        /*EXP-DES-CBC-SHA*/,         40,  56 },
-    { SSL3_TXT_RSA_DES_64_CBC_SHA        /*DES-CBC-SHA*/ ,            56,  56 },
-    { SSL3_TXT_RSA_DES_192_CBC3_SHA      /*DES-CBC3-SHA*/ ,          168, 168 },
-    { SSL3_TXT_DH_DSS_DES_40_CBC_SHA     /*EXP-DH-DSS-DES-CBC-SHA*/,  40,  56 },
-    { SSL3_TXT_DH_DSS_DES_64_CBC_SHA     /*DH-DSS-DES-CBC-SHA*/,      56,  56 },
-    { SSL3_TXT_DH_DSS_DES_192_CBC3_SHA   /*DH-DSS-DES-CBC3-SHA*/,    168, 168 },
-    { SSL3_TXT_DH_RSA_DES_40_CBC_SHA     /*EXP-DH-RSA-DES-CBC-SHA*/,  40,  56 },
-    { SSL3_TXT_DH_RSA_DES_64_CBC_SHA     /*DH-RSA-DES-CBC-SHA*/,      56,  56 },
-    { SSL3_TXT_DH_RSA_DES_192_CBC3_SHA   /*DH-RSA-DES-CBC3-SHA*/,    168, 168 },
-    { SSL3_TXT_EDH_DSS_DES_40_CBC_SHA    /*EXP-EDH-DSS-DES-CBC-SHA*/, 40,  56 },
-    { SSL3_TXT_EDH_DSS_DES_64_CBC_SHA    /*EDH-DSS-DES-CBC-SHA*/,     56,  56 },
-    { SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA  /*EDH-DSS-DES-CBC3-SHA*/,   168, 168 },
-    { SSL3_TXT_EDH_RSA_DES_40_CBC_SHA    /*EXP-EDH-RSA-DES-CBC*/,     40,  56 },
-    { SSL3_TXT_EDH_RSA_DES_64_CBC_SHA    /*EDH-RSA-DES-CBC-SHA*/,     56,  56 },
-    { SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA  /*EDH-RSA-DES-CBC3-SHA*/,   168, 168 },
-    { SSL3_TXT_ADH_RC4_40_MD5            /*EXP-ADH-RC4-MD5*/,         40, 128 },
-    { SSL3_TXT_ADH_RC4_128_MD5           /*ADH-RC4-MD5*/,            128, 128 },
-    { SSL3_TXT_ADH_DES_40_CBC_SHA        /*EXP-ADH-DES-CBC-SHA*/,     40, 128 },
-    { SSL3_TXT_ADH_DES_64_CBC_SHA        /*ADH-DES-CBC-SHA*/,         56,  56 },
-    { SSL3_TXT_ADH_DES_192_CBC_SHA       /*ADH-DES-CBC3-SHA*/,       168, 168 },
-    { SSL3_TXT_FZA_DMS_NULL_SHA          /*FZA-NULL-SHA*/,             0,   0 },
-    { SSL3_TXT_FZA_DMS_FZA_SHA           /*FZA-FZA-CBC-SHA*/,          0,   0 },
-    { SSL3_TXT_FZA_DMS_RC4_SHA           /*FZA-RC4-SHA*/,            128, 128 },
-
-    { SSL2_TXT_IDEA_128_CBC_WITH_MD5     /*IDEA-CBC-MD5*/,           128, 128 },
-    { SSL2_TXT_DES_64_CFB64_WITH_MD5_1   /*DES-CFB-M1*/,              56,  56 },
-    { SSL2_TXT_RC2_128_CBC_WITH_MD5      /*RC2-CBC-MD5*/,            128, 128 },
-    { SSL2_TXT_DES_64_CBC_WITH_MD5       /*DES-CBC-MD5*/,             56,  56 },
-    { SSL2_TXT_DES_192_EDE3_CBC_WITH_MD5 /*DES-CBC3-MD5*/,           168, 168 },
-    { SSL2_TXT_RC4_64_WITH_MD5           /*RC4-64-MD5*/,              64,  64 },
-    { SSL2_TXT_NULL                      /*NULL*/,                     0,   0 },
-
-    { NULL,                                                            0,   0 }
-};
-
-static void ssl_var_lookup_ssl_cipher_bits(char *cipher, int *usekeysize, int *algkeysize)
+static void ssl_var_lookup_ssl_cipher_bits(SSL *ssl, int *usekeysize, int *algkeysize)
 {
-    int n;
+    SSL_CIPHER *cipher;
 
     *usekeysize = 0;
     *algkeysize = 0;
-    for (n = 0; ssl_var_lookup_ssl_cipher_bits_rec[n].szName; n++) {
-        if (strEQ(cipher, ssl_var_lookup_ssl_cipher_bits_rec[n].szName)) {
-            *algkeysize = ssl_var_lookup_ssl_cipher_bits_rec[n].nAlgKeySize;
-            *usekeysize = ssl_var_lookup_ssl_cipher_bits_rec[n].nUseKeySize;
-            break;
-        }
-    }
+    if (ssl != NULL)
+        if ((cipher = SSL_get_current_cipher(ssl)) != NULL)
+            *usekeysize = SSL_CIPHER_get_bits(cipher, algkeysize);
     return;
 }
 

@@ -151,7 +151,7 @@ void ssl_init_Module(server_rec *s, pool *p)
             sc->nVerifyClient = SSL_CVERIFY_NONE;
         if (sc->nVerifyDepth == UNSET)
             sc->nVerifyDepth = 1;
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
         if (sc->nProxyVerifyDepth == UNSET)
             sc->nProxyVerifyDepth = 1;
 #endif
@@ -353,10 +353,10 @@ void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
             ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 512 bit RSA private key");
 #if 0
             ssl_die();
-#else 
+#else
 	    ssl_log(s, SSL_LOG_ERROR, "Init: You probably have no RSA support in libcrypto. See ssl(8)");
 	    return;
-#endif	
+#endif
         }
         asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "RSA:512");
         asn1->nData  = i2d_RSAPrivateKey(rsa, NULL);
@@ -825,6 +825,12 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
                 "server certificate chain (%d CA certificate%s)", cpVHostID,
                 n, n == 1 ? "" : "s");
     }
+
+#ifdef SSL_VENDOR
+    ap_hook_use("ap::mod_ssl::vendor::configure_server",
+                AP_HOOK_SIG4(void,ptr,ptr,ptr), AP_HOOK_ALL, 
+                s, p, sc);
+#endif
 
     return;
 }

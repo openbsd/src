@@ -73,6 +73,20 @@
 #error "mod_ssl requires Extended API (EAPI)"
 #endif
 
+/* 
+ * Optionally enable the experimental stuff, but allow the user to
+ * override the decision which experimental parts are included by using
+ * CFLAGS="-DSSL_EXPERIMENTAL_xxxx_IGNORE".
+ */
+#ifdef SSL_EXPERIMENTAL
+#ifndef SSL_EXPERIMENTAL_PERDIRCA_IGNORE
+#define SSL_EXPERIMENTAL_PERDIRCA
+#endif
+#ifndef SSL_EXPERIMENTAL_PROXY_IGNORE
+#define SSL_EXPERIMENTAL_PROXY
+#endif
+#endif /* SSL_EXPERIMENTAL */
+
 /*
  * Power up our brain...
  */
@@ -90,6 +104,7 @@
 #endif
 #ifdef WIN32
 #include <wincrypt.h>
+#include <winsock2.h>
 #endif
 
 /* OpenSSL headers */
@@ -265,7 +280,7 @@
      __FreeBSD_version >= 300000) ||\
     (defined(LINUX) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) &&\
      LINUX >= 2 && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1) ||\
-    defined(SOLARIS2)
+    defined(SOLARIS2) || defined(__hpux)
 #define SSL_CAN_USE_SEM
 #define SSL_HAVE_IPCSEM
 #include <sys/types.h>
@@ -579,7 +594,7 @@ typedef struct {
     char        *szCARevocationPath;
     char        *szCARevocationFile;
     X509_STORE  *pRevocationStore;
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     /* Configuration details for proxy operation */
     ssl_proto_t  nProxyProtocol;
     int          bProxyVerify;
@@ -611,7 +626,7 @@ typedef struct {
     char         *szCipherSuite;
     ssl_verify_t  nVerifyClient;
     int           nVerifyDepth;
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PERDIRCA
     char         *szCACertificatePath;
     char         *szCACertificateFile;
 #endif
@@ -657,7 +672,7 @@ const char  *ssl_cmd_SSLProtocol(cmd_parms *, char *, const char *);
 const char  *ssl_cmd_SSLOptions(cmd_parms *, SSLDirConfigRec *, const char *);
 const char  *ssl_cmd_SSLRequireSSL(cmd_parms *, SSLDirConfigRec *, char *);
 const char  *ssl_cmd_SSLRequire(cmd_parms *, SSLDirConfigRec *, char *);
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
 const char  *ssl_cmd_SSLProxyProtocol(cmd_parms *, char *, const char *);
 const char  *ssl_cmd_SSLProxyCipherSuite(cmd_parms *, char *, char *);
 const char  *ssl_cmd_SSLProxyVerify(cmd_parms *, char *, int);
@@ -801,6 +816,7 @@ void         ssl_compat_variables(request_rec *);
 #endif
 
 /*  Utility Functions  */
+char        *ssl_util_server_root_relative(pool *, char *);
 char        *ssl_util_vhostid(pool *, server_rec *);
 void         ssl_util_strupper(char *);
 void         ssl_util_uuencode(char *, const char *, BOOL);

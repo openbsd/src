@@ -98,10 +98,10 @@ char       *SSL_make_ciphersuite(pool *, SSL *);
 BOOL        SSL_X509_isSGC(X509 *);
 BOOL        SSL_X509_getBC(X509 *, int *, int *);
 BOOL        SSL_X509_getCN(pool *, X509 *, char **);
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
 BOOL        SSL_load_CrtAndKeyInfo_file(pool *, STACK_OF(X509_INFO) *, char *);
 BOOL        SSL_load_CrtAndKeyInfo_path(pool *, STACK_OF(X509_INFO) *, char *);
-#endif
+#endif /* SSL_EXPERIMENTAL_PROXY */
 int         SSL_CTX_use_certificate_chain(SSL_CTX *, char *, int, int (*)());
 
 #endif /* SSL_UTIL_SSL_H */

@@ -82,6 +82,18 @@ ConfigStart
     SSL_LDFLAGS=''
     SSL_LIBS=''
 
+    #   
+    #   find a reasonable Bourne Shell for sub-shell calls
+    #
+    SH=sh
+    if [ -f /bin/bash ]; then
+        SH=/bin/bash
+    elif [ -f /bin/sh5 ]; then
+        SH=/bin/sh5
+    elif [ -f /bin/sh ]; then
+        SH=/bin/sh
+    fi
+
     #
     #   determine mod_ssl author version
     #
@@ -142,11 +154,11 @@ ConfigStart
         my_rule_SSL_CONSERVATIVE=$SSL_CONSERVATIVE
         my_rule_SSL_VENDOR=$SSL_VENDOR
     else
-        my_rule_SSL_COMPAT=`sh ./helpers/CutRule SSL_COMPAT $file`
-        my_rule_SSL_SDBM=`sh ./helpers/CutRule SSL_SDBM $file`
-        my_rule_SSL_EXPERIMENTAL=`sh ./helpers/CutRule SSL_EXPERIMENTAL $file`
-        my_rule_SSL_CONSERVATIVE=`sh ./helpers/CutRule SSL_CONSERVATIVE $file`
-        my_rule_SSL_VENDOR=`sh ./helpers/CutRule SSL_VENDOR $file`
+        my_rule_SSL_COMPAT=`$SH helpers/CutRule SSL_COMPAT $file`
+        my_rule_SSL_SDBM=`$SH helpers/CutRule SSL_SDBM $file`
+        my_rule_SSL_EXPERIMENTAL=`$SH helpers/CutRule SSL_EXPERIMENTAL $file`
+        my_rule_SSL_CONSERVATIVE=`$SH helpers/CutRule SSL_CONSERVATIVE $file`
+        my_rule_SSL_VENDOR=`$SH helpers/CutRule SSL_VENDOR $file`
     fi
 
     #
@@ -208,7 +220,7 @@ ConfigStart
         if [ ".$DBM_LIB" != . ]; then
             LIBS_ORIG="$LIBS"
             LIBS="$LIBS $DBM_LIB"
-            if sh ./helpers/TestCompile func dbm_open; then
+            if $SH helpers/TestCompile func dbm_open; then
                 SSL_DBM_NAME="Configured DBM ($DBM_LIB)"
                 SSL_DBM_FLAG="$DBM_LIB"
             fi
@@ -216,13 +228,13 @@ ConfigStart
         fi
         #   2. check for various vendor DBM libs
         if [ ".$SSL_DBM_NAME" = . ]; then
-            if sh ./helpers/TestCompile func dbm_open; then
+            if $SH helpers/TestCompile func dbm_open; then
                 SSL_DBM_NAME='Vendor DBM (libc)'
                 SSL_DBM_FLAG=''
-            elif sh ./helpers/TestCompile lib dbm dbm_open; then
+            elif $SH helpers/TestCompile lib dbm dbm_open; then
                 SSL_DBM_NAME='Vendor DBM (libdbm)'
                 SSL_DBM_FLAG='-ldbm'
-            elif sh ./helpers/TestCompile lib ndbm dbm_open; then
+            elif $SH helpers/TestCompile lib ndbm dbm_open; then
                 SSL_DBM_NAME='Vendor DBM (libndbm)'
                 SSL_DBM_FLAG='-lndbm'
             fi
@@ -517,7 +529,8 @@ ConfigStart
     #           needed (like on FreeBSD, Linux, etc.)
     #
     if [ ".$my_buildtype" = .DSO ]; then
-        case $CC in
+        my_CC=`echo "$CC" | sed -e 's/ .*//'`
+        case $my_CC in
             gcc|*/gcc|egcs|*/egcs|egcc|*/egcc|pgcc|*/pgcc )
                 gcclibdir="`$CC --print-libgcc-file-name | sed -e 's;/[^/]*$;;'`"
                 SSL_LIBS="$SSL_LIBS -L$gcclibdir -lgcc"

@@ -109,20 +109,29 @@
 
  EXPERIMENTAL CODE
 
- Experimental code is always encapsulated as
+ Experimental code is always encapsulated as following:
 
-   | #ifdef SSL_EXPERIMENTAL
+   | #ifdef SSL_EXPERIMENTAL_xxxx
    | ...
    | #endif
 
- blocks and only compiled in when this define is enabled with the APACI
- --enable-rule=SSL_EXPERIMENTAL option. Currently the following features are
- experimental:
+ This way it is only compiled in when this define is enabled with
+ the APACI --enable-rule=SSL_EXPERIMENTAL option and as long as the
+ C pre-processor variable SSL_EXPERIMENTAL_xxxx_IGNORE is _NOT_
+ defined (via CFLAGS). Or in other words: SSL_EXPERIMENTAL enables all
+ SSL_EXPERIMENTAL_xxxx variables, except if SSL_EXPERIMENTAL_xxxx_IGNORE
+ is already defined. Currently the following features are experimental:
 
-   o The ability to use SSLCACertificateFile and SSLCACertificatePath
+   o SSL_EXPERIMENTAL_PERDIRCA
+     The ability to use SSLCACertificateFile and SSLCACertificatePath
      in a per-directory context (.htaccess). This is provided by some nasty
      reconfiguration hacks until OpenSSL has better support for this. It
      should work on non-multithreaded platforms (all but Win32).
+
+   o SSL_EXPERIMENTAL_PROXY
+     The ability to use various additional SSLProxyXXX directives in
+     oder to control extended client functionality in the HTTPS proxy
+     code.
 
  VENDOR EXTENSIONS
 

@@ -131,7 +131,7 @@ void ssl_pphrase_Handle(server_rec *s, pool *p)
         if (sc->szPublicCertFile[0] == NULL) {
             ssl_log(pServ, SSL_LOG_ERROR,
                     "Init: Server %s should be SSL-aware but has no certificate configured "
-                    "[Hint: SSLCertifcateFile]", cpVHostID);
+                    "[Hint: SSLCertificateFile]", cpVHostID);
             ssl_die();
         }
         algoCert = SSL_ALGO_UNKNOWN;
@@ -386,7 +386,7 @@ void ssl_pphrase_Handle(server_rec *s, pool *p)
     return;
 }
 
-int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
+int ssl_pphrase_Handle_CB(char *buf, int bufsize, int verify)
 {
     SSLModConfigRec *mc = myModConfig();
     server_rec *s;
@@ -489,7 +489,7 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
          */
         prompt = "Enter pass phrase:";
         for (;;) {
-            if ((i = EVP_read_pw_string(buf, bufsize, prompt, ask_twice)) != 0) {
+            if ((i = EVP_read_pw_string(buf, bufsize, prompt, FALSE)) != 0) {
                 PEMerr(PEM_F_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
                 memset(buf, 0, (unsigned int)bufsize);
                 return (-1);

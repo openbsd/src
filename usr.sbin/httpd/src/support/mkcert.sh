@@ -96,9 +96,10 @@ fi
 #   (do not use /dev/random here, because this device 
 #   doesn't work as expected on all platforms)
 randfiles=''
-for file in /var/log/messages /var/adm/messages /var/log/system.log \
-            /kernel /vmunix /vmlinuz /mach /etc/hosts /etc/resolv.conf; do
-    if [ -f $file ]; then
+for file in /var/log/messages /var/adm/messages /var/log/system.log /var/wtmp \
+            /kernel /kernel/genunix /vmunix /vmlinuz /mach \
+            /etc/hosts /etc/group /etc/resolv.conf /bin/ls; do
+    if [ -r $file ]; then
         if [ ".$randfiles" = . ]; then
             randfiles="$file"
         else
@@ -112,7 +113,7 @@ if [ -f $HOME/.rnd ]; then
     RANDFILE="$HOME/.rnd"
 else
     RANDFILE=".mkcert.rnd"
-    touch $RANDFILE
+    (ps; date) >$RANDFILE
 fi
 export RANDFILE
 

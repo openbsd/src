@@ -185,7 +185,7 @@ void ssl_hook_NewConnection(conn_rec *conn)
         return;
     }
     SSL_clear(ssl);
-    cpVHostMD5 = ap_md5(conn->pool, cpVHostID);
+    cpVHostMD5 = ap_md5(conn->pool, (unsigned char *)cpVHostID);
     if (!SSL_set_session_id_context(ssl, (unsigned char *)cpVHostMD5, strlen(cpVHostMD5))) {
         ssl_log(conn->server, SSL_LOG_ERROR|SSL_ADD_SSLERR,
                 "Unable to set session id context to `%s'", cpVHostMD5);
@@ -637,7 +637,7 @@ int ssl_hook_Access(request_rec *r)
     int i;
     BOOL renegotiate;
     BOOL renegotiate_quick;
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PERDIRCA
     BOOL reconfigured_locations;
     STACK_OF(X509_NAME) *skCAList;
     char *cpCAPath;
@@ -704,7 +704,7 @@ int ssl_hook_Access(request_rec *r)
      */
     renegotiate            = FALSE;
     renegotiate_quick      = FALSE;
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PERDIRCA
     reconfigured_locations = FALSE;
 #endif
 
@@ -870,7 +870,7 @@ int ssl_hook_Access(request_rec *r)
      *  OpenSSL provides a SSL_load_verify_locations() function we've no other
      *  chance to provide this functionality...
      */
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PERDIRCA
     if (   (   dc->szCACertificateFile != NULL
             && (   sc->szCACertificateFile == NULL
                 || (   sc->szCACertificateFile != NULL
@@ -907,7 +907,7 @@ int ssl_hook_Access(request_rec *r)
         ssl_log(r->server, SSL_LOG_TRACE,
                 "Changed client verification locations will force renegotiation");
     }
-#endif /* SSL_EXPERIMENTAL */
+#endif /* SSL_EXPERIMENTAL_PERDIRCA */
 
 #ifdef SSL_CONSERVATIVE 
     /* 
@@ -1028,7 +1028,7 @@ int ssl_hook_Access(request_rec *r)
      * to the old values. This should be changed with forthcoming OpenSSL
      * versions when better functionality is avaiable.
      */
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PERDIRCA
     if (renegotiate && reconfigured_locations) {
         if (!SSL_CTX_load_verify_locations(ctx,
                 sc->szCACertificateFile, sc->szCACertificatePath)) {
@@ -1038,7 +1038,7 @@ int ssl_hook_Access(request_rec *r)
             return FORBIDDEN;
         }
     }
-#endif /* SSL_EXPERIMENTAL */
+#endif /* SSL_EXPERIMENTAL_PERDIRCA */
 
     /*
      * Check SSLRequire boolean expressions
@@ -1456,6 +1456,9 @@ int ssl_callback_SSLVerify(int ok, X509_STORE_CTX *ctx)
     if (   (   errnum == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
             || errnum == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN
             || errnum == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+#if SSL_LIBRARY_VERSION >= 0x00905000
+            || errnum == X509_V_ERR_CERT_UNTRUSTED
+#endif
             || errnum == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE  )
         && verify == SSL_CVERIFY_OPTIONAL_NO_CA                       ) {
         ssl_log(s, SSL_LOG_TRACE,

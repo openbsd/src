@@ -74,7 +74,7 @@
  *  identify the module to SCCS `what' and RCS `ident' commands
  */
 static char const sccsid[] = "@(#) mod_ssl/" MOD_SSL_VERSION " >";
-static char const rcsid[]  = "$Id: mod_ssl.c,v 1.4 2000/03/19 11:17:20 beck Exp $";
+static char const rcsid[]  = "$Id: mod_ssl.c,v 1.5 2000/06/30 05:35:10 beck Exp $";
 
 /*
  *  the table of configuration directives we provide
@@ -114,7 +114,7 @@ static command_rec ssl_config_cmds[] = {
     AP_SRV_CMD(CertificateChainFile, TAKE1,
                "SSL Server CA Certificate Chain file "
                "(`/path/to/file' - PEM encoded)")
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PERDIRCA
     AP_ALL_CMD(CACertificatePath, TAKE1,
                "SSL CA Certificate path "
                "(`/path/to/dir' - contains PEM encoded files)")
@@ -154,7 +154,7 @@ static command_rec ssl_config_cmds[] = {
                "Enable or disable various SSL protocols"
                "(`[+-][SSLv2|SSLv3|TLSv1] ...' - see manual)")
 
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     /* 
      * Proxy configuration for remote SSL connections
      */

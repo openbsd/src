@@ -645,7 +645,7 @@ And a "PRNG not seeded" error occurs if I try "make certificate".</strong>&nbsp;
     randomness report an error if the PRNG has not been seeded with
     at least 128 bits of randomness. So mod_ssl has to provide enough
     entropy to the PRNG to work correctly. For this one has to use the
-    <code>SSLRandSeed</code> directives (to solve the run-time problem)
+    <code>SSLRandomSeed</code> directives (to solve the run-time problem)
     and create a <code>$HOME/.rnd</code> file to make sure enough
     entropy is available also for the "<code>make certificate</code>"
     step (in case the "<code>make certificate</code>" procedure is not

@@ -219,7 +219,7 @@ static int   ssl_ext_mp_set_destport(request_rec *);
 static char *ssl_ext_mp_new_connection(request_rec *, BUFF *, char *);
 static void  ssl_ext_mp_close_connection(void *);
 static int   ssl_ext_mp_write_host_header(request_rec *, BUFF *, char *, int, char *);
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
 static void  ssl_ext_mp_init(server_rec *, pool *);
 static int   ssl_ext_mp_verify_cb(int, X509_STORE_CTX *);
 static int   ssl_ext_mp_clientcert_cb(SSL *, X509 **, EVP_PKEY **);
@@ -230,7 +230,7 @@ static int   ssl_ext_mp_clientcert_cb(SSL *, X509 **, EVP_PKEY **);
  */
 static void ssl_ext_mp_register(void)
 {
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     ap_hook_register("ap::mod_proxy::init",
                      ssl_ext_mp_init, AP_HOOK_NOCTX);
 #endif
@@ -249,7 +249,7 @@ static void ssl_ext_mp_register(void)
 
 static void ssl_ext_mp_unregister(void)
 {
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     ap_hook_unregister("ap::mod_proxy::init", ssl_ext_mp_init);
 #endif
     ap_hook_unregister("ap::mod_proxy::canon", ssl_ext_mp_canon);
@@ -266,7 +266,7 @@ static void ssl_ext_mp_unregister(void)
 /*
  * SSL proxy initialization
  */
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
 static void ssl_ext_mp_init(server_rec *s, pool *p)
 {
     SSLSrvConfigRec *sc;
@@ -400,7 +400,7 @@ static void ssl_ext_mp_init(server_rec *s, pool *p)
     }
     return;
 }
-#endif /* SSL_EXPERIMENTAL */
+#endif /* SSL_EXPERIMENTAL_PROXY */
 
 static int ssl_ext_mp_canon(request_rec *r, char *url)
 {
@@ -442,7 +442,7 @@ static int ssl_ext_mp_set_destport(request_rec *r)
 
 static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
 {
-#ifndef SSL_EXPERIMENTAL
+#ifndef SSL_EXPERIMENTAL_PROXY
     SSL_CTX *ssl_ctx;
 #endif
     SSL *ssl;
@@ -450,7 +450,7 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
     int rc;
     char *cpVHostID;
     char *cpVHostMD5;
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     SSLSrvConfigRec *sc;
     char *cp;
 #endif
@@ -461,7 +461,7 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
     /*
      * Find context
      */
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     sc = mySrvConfig(r->server);
 #endif
     cpVHostID = ssl_util_vhostid(r->pool, r->server);
@@ -469,7 +469,7 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
     /*
      * Create a SSL context and handle
      */
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     ssl = SSL_new(sc->pSSLProxyCtx);
 #else
     ssl_ctx = SSL_CTX_new(SSLv23_client_method());
@@ -482,7 +482,7 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
         return errmsg;
     }
     SSL_clear(ssl);
-    cpVHostMD5 = ap_md5(r->pool, cpVHostID);
+    cpVHostMD5 = ap_md5(r->pool, (unsigned char *)cpVHostID);
     if (!SSL_set_session_id_context(ssl, (unsigned char *)cpVHostMD5, strlen(cpVHostMD5))) {
         errmsg = ap_psprintf(r->pool, "Unable to set session id context to `%s': peer %s: %s",
                              cpVHostMD5, peer, ERR_reason_error_string(ERR_get_error()));
@@ -490,11 +490,11 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
         return errmsg;
     }
     SSL_set_fd(ssl, fb->fd);
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     SSL_set_app_data(ssl, fb->ctx);
 #endif
     ap_ctx_set(fb->ctx, "ssl", ssl);
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
     ap_ctx_set(fb->ctx, "ssl::proxy::server_rec", r->server);
     ap_ctx_set(fb->ctx, "ssl::proxy::peer", peer);
     ap_ctx_set(fb->ctx, "ssl::proxy::servername", cpVHostID);
@@ -511,7 +511,7 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
      * Establish the SSL connection
      */
     if ((rc = SSL_connect(ssl)) <= 0) {
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
         if ((cp = (char *)ap_ctx_get(fb->ctx, "ssl::proxy::verifyerror")) != NULL) {
             SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN); 
             SSL_smart_shutdown(ssl);
@@ -536,17 +536,23 @@ static void ssl_ext_mp_close_connection(void *_fb)
 {
     BUFF *fb = _fb;
     SSL *ssl;
+#ifndef SSL_EXPERIMENTAL_PROXY
     SSL_CTX *ctx;
+#endif
 
     ssl = ap_ctx_get(fb->ctx, "ssl");
     if (ssl != NULL) {
+#ifndef SSL_EXPERIMENTAL_PROXY
         ctx = SSL_get_SSL_CTX(ssl);
+#endif
         SSL_set_shutdown(ssl, SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
         SSL_smart_shutdown(ssl);
         SSL_free(ssl);
         ap_ctx_set(fb->ctx, "ssl", NULL);
+#ifndef SSL_EXPERIMENTAL_PROXY
         if (ctx != NULL)
             SSL_CTX_free(ctx);
+#endif
     }
     return;
 }
@@ -564,7 +570,7 @@ static int ssl_ext_mp_write_host_header(
     return DECLINED;
 }
 
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
 
 /* 
  * Callback for client certificate stuff.
@@ -684,6 +690,14 @@ static int ssl_ext_mp_verify_cb(int ok, X509_STORE_CTX *ctx)
     sc         = mySrvConfig(s);
 
     /*
+     * Unless stated otherwise by the configuration, we really don't
+     * care if the verification was okay or not, so lets return now
+     * before we do anything involving memory or time.
+     */
+    if (sc->bProxyVerify == FALSE)
+        return ok;
+                     
+    /*
      * Get verify ingredients
      */
     xs       = X509_STORE_CTX_get_current_cert(ctx);
@@ -740,7 +754,7 @@ static int ssl_ext_mp_verify_cb(int ok, X509_STORE_CTX *ctx)
     return (ok);
 }
 
-#endif /* SSL_EXPERIMENTAL */
+#endif /* SSL_EXPERIMENTAL_PROXY */
 
 /*  _________________________________________________________________
 **
@@ -775,6 +789,8 @@ static void ssl_ext_ms_display(request_rec *r, int no_table_report, int short_re
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
 
     if (sc == NULL)
+        return;
+    if (short_report)
         return;
     ap_rputs("<hr>\n", r);
     ap_rputs("<table cellspacing=0 cellpadding=0>\n", r);

@@ -109,6 +109,7 @@ void ssl_scache_kill(server_rec *s)
     ap_hook_use("ap::mod_ssl::vendor::scache_kill",
                 AP_HOOK_SIG1(void), AP_HOOK_ALL);
 #endif
+
     return;
 }
 
@@ -228,24 +229,19 @@ void ssl_scache_remove(server_rec *s, SSL_SESSION *pSession)
 void ssl_scache_expire(server_rec *s, time_t now)
 {
     SSLModConfigRec *mc = myModConfig();
-    SSLSrvConfigRec *sc = mySrvConfig(s);
-    static time_t last = 0;
 
     /*
-     * make sure the expiration for still not-accessed session
-     * cache entries is done only from time to time
-     */
-    if (now < last+sc->nSessionCacheTimeout)
-        return;
-    last = now;
-
-    /*
-     * Now perform the expiration 
+     * Pass through to the particular expiration functions
      */
     if (mc->nSessionCacheMode == SSL_SCMODE_DBM)
         ssl_scache_dbm_expire(s, now);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHM)
         ssl_scache_shm_expire(s, now);
+
+#ifdef SSL_VENDOR
+    ap_hook_use("ap::mod_ssl::vendor::scache_expire",
+                AP_HOOK_SIG3(void,ptr,int), AP_HOOK_ALL, s, now);
+#endif
 
     return;
 }
@@ -499,6 +495,8 @@ void ssl_scache_dbm_remove(server_rec *s, ssl_scinfo_t *SCI)
 void ssl_scache_dbm_expire(server_rec *s, time_t tNow)
 {
     SSLModConfigRec *mc = myModConfig();
+    SSLSrvConfigRec *sc = mySrvConfig(s);
+    static time_t tLast = 0;
     DBM *dbm;
     datum dbmkey;
     datum dbmval;
@@ -510,6 +508,14 @@ void ssl_scache_dbm_expire(server_rec *s, time_t tNow)
     datum *keylist;
     int keyidx;
     int i;
+
+    /*
+     * make sure the expiration for still not-accessed session
+     * cache entries is done only from time to time
+     */
+    if (tNow < tLast+sc->nSessionCacheTimeout)
+        return;
+    tLast = tNow;
 
     /*
      * Here we have to be very carefully: Not all DBM libraries are
@@ -818,6 +824,8 @@ void ssl_scache_shm_remove(server_rec *s, ssl_scinfo_t *SCI)
 void ssl_scache_shm_expire(server_rec *s, time_t tNow)
 {
     SSLModConfigRec *mc = myModConfig();
+    SSLSrvConfigRec *sc = mySrvConfig(s);
+    static time_t tLast = 0;
     table_linear_t iterator;
     time_t tExpiresAt;
     void *vpKey;
@@ -830,6 +838,14 @@ void ssl_scache_shm_expire(server_rec *s, time_t tNow)
     int nDeleted = 0;
     int bDelete;
     int rc;
+
+    /*
+     * make sure the expiration for still not-accessed session
+     * cache entries is done only from time to time
+     */
+    if (tNow < tLast+sc->nSessionCacheTimeout)
+        return;
+    tLast = tNow;
 
     ssl_mutex_on(s);
     if (table_first_r(mc->tSessionCacheDataTable, &iterator,

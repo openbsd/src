@@ -83,6 +83,7 @@ static char *ssl_compat_SSLSessionLockFile(pool *, const char *, const char *, c
 static char *ssl_compat_SSLCacheDisable(pool *, const char *, const char *, const char *);
 static char *ssl_compat_SSLRequireCipher(pool *, const char *, const char *, const char *);
 static char *ssl_compat_SSLBanCipher(pool *, const char *, const char *, const char *);
+static char *ssl_compat_SSL_SessionDir(pool *, const char *, const char *, const char *);
 static char *ssl_compat_words2list(pool *, const char *);
 
 #define CRM_BEGIN              /* nop */
@@ -136,7 +137,7 @@ static struct {
     CRM_ENTRY( CRM_CMD("SSL_ClientAuth"),          CRM_SUB("SSLVerifyClient")                 )
     CRM_ENTRY( CRM_CMD("SSL_X509VerifyDepth"),     CRM_SUB("SSLVerifyDepth")                  )
     CRM_ENTRY( CRM_CMD("SSL_FetchKeyPhraseFrom"),  CRM_LOG("Use SSLPassPhraseDialog instead") )
-    CRM_ENTRY( CRM_CMD("SSL_SessionDir"),          CRM_LOG("Use SSLSessionCache instead")     )
+    CRM_ENTRY( CRM_CMD("SSL_SessionDir"),          CRM_CAL(ssl_compat_SSL_SessionDir)         )
     CRM_ENTRY( CRM_CMD("SSL_Require"),             CRM_LOG("Use SSLRequire instead (Syntax!)"))
     CRM_ENTRY( CRM_CMD("SSL_CertFileType"),        CRM_LOG("Not supported by mod_ssl")        )
     CRM_ENTRY( CRM_CMD("SSL_KeyFileType"),         CRM_LOG("Not supported by mod_ssl")        )
@@ -160,7 +161,7 @@ static struct {
     CRM_ENTRY( CRM_CMD("SSL_CertificateLogDir"),     CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("AuthCertDir"),               CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSL_Group"),                 CRM_LOG("Not supported by mod_ssl")      )
-#ifndef SSL_EXPERIMENTAL
+#ifndef SSL_EXPERIMENTAL_PROXY
     CRM_ENTRY( CRM_CMD("SSLProxyMachineCertPath"),   CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSLProxyMachineCertFile"),   CRM_LOG("Not supported by mod_ssl")      )
     CRM_ENTRY( CRM_CMD("SSLProxyCACertificatePath"), CRM_LOG("Not supported by mod_ssl")      )
@@ -220,6 +221,16 @@ static char *ssl_compat_SSLBanCipher(pool *p, const char *oline, const char *cmd
     return ap_pstrcat(p, "SSLRequire not (%{SSL_CIPHER} in {",
                           ssl_compat_words2list(p, args),
                           "})", NULL);
+}
+
+static char *ssl_compat_SSL_SessionDir(
+    pool *p, const char *oline, const char *cmd, const char *args)
+{
+    char *cp;
+   
+    for (cp = (char *)args; ap_isspace(*cp); cp++)
+        ;
+    return ap_pstrcat(p, "SSLSessionCache dir:", cp, NULL);
 }
 
 static char *ssl_compat_words2list(pool *p, const char *oline)

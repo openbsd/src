@@ -23,6 +23,91 @@
       / __/ | (_) |
   __ |_____(_)___/____________________________________________
 
+  Changes with mod_ssl 2.6.4 (16-Apr-2000 to 01-May-2000)
+
+   *) Fixed Win32 build by adding gdi32.lib to the libraries
+      and an additional include for <winsock2.h>.
+
+   *) Added Equifax Secure CA certificates to ca-bundle.crt.
+
+   *) Let the pass phrase dialog force the prompt to occur only once
+      (no verification step), because mod_ssl uses the dialog only for
+      pass phrases which are required for reading private keys. This as a
+      side-effect should fix a problem under Win32 where a second prompt
+      occured for unknown reasons.
+
+   *) Added more compatibility to Stronghold v2's SSL_SessionCache.
+   
+   *) Added two more EAPI hools under SSL_VENDOR: one for overriding
+      ap_server_root_relative calls and one for hooking into the server
+      configuration step.
+
+   *) Fixed SSL display for mod_status in `short report' situation.
+
+   *) Made the SSL_EXPERIMENTAL stuff more flexible by checking
+      for particular subset SSL_EXPERIMENTAL_xxxx defines and let
+      SSL_EXPERIMENTAL define all those per default. This reduces the
+      amount of patching vendors have to do in order to just enable a
+      subset of the experimental code.
+
+   *) Added hint to INSTALL document about port specifiers in test URLs
+      (`:8080' and `:8443') if the installation is done under a non-root
+      user.
+
+   *) Fixed Win32's configure.bat: the check for OpenSSL
+      header and libraries is now extended.
+
+   *) Fixed --with-apxs under Solaris where libssl.module
+      has to know $CC in order to enable the libgcc.a workaround.
+
+   *) Fixed memory leak caused by not-freed SSL_CTX in the HTTPS proxy
+      support (ssl_engine_ext.c/mod_proxy) under _NOT_ SSL_EXPERIMENTAL.
+
+  Changes with mod_ssl 2.6.3 (02-Mar-2000 to 16-Apr-2000)
+
+   *) Moved the session cache expire time calculation and handling in
+      ssl_engine_scache.c down to the particular cache-type dependent
+      expire functions to allow a custom vendor supplied cache to perform
+      its own expire handling.
+
+   *) The sub-shells from libssl.module are now called with an
+      explicitly determined Bourne Shell (instead of the implicit she-bang
+      line). This both avoids problems on brain-dead platforms where
+      /bin/sh is broken (Ultrix, etc.) and workarounds a CVS problem in
+      OpenBSD where on read-only checkouts the x-bits sometimes get lost.
+
+   *) Do a slightly better initialization of the random file
+      in src/support/mkcert.sh if $HOME/.rnd doesn't exist.
+
+   *) Be aware of OpenSSL 0.9.5's X509_V_ERR_CERT_UNTRUSTED error.
+
+   *) Cleaned up and optimized ssl_engine_vars.c by kicking out the old
+      static cipher table and calculating the cipher bits dynamically. This
+      avoids lots of string comparisons, reduces further maintainance costs
+      and makes the code smaller.
+
+   *) Cleaned up pkg.contrib/truerand.c: volatile variables,
+      correct function return types, etc.
+
+   *) Fix HTTPS proxy support: if SSLProxyVerify is Off, we don't need
+      to log any errors if the certification fails. Additionally we now
+      don't free the proxy context after a connection, because we will need
+      it for the next proxy connection we make.
+
+   *) Activate `SSLMutex sem' also on HPUX.
+
+   *) Allow libssl.module to handle CFLAGS="cc -flags".
+
+   *) Fixed typo in ssl_intro.wml: "message" was written twice
+
+   *) Added two eval casts for ap_md5() calls.
+
+   *) Fixed typo in ssl_faq.wml: SSLRandSeed -> SSLRandomSeed.
+
+   *) Add final messages also under "configure --with-eapi-only" which
+      give a hint to proceed with --enable-module=so --enable-rule=EAPI in
+      the Apache source tree.
+
   Changes with mod_ssl 2.6.2 (29-Feb-2000 to 02-Mar-2000)
 
    *) Updated the conf/ssl.crt/ca-bundle.crt file (containing the CA

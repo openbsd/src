@@ -116,6 +116,20 @@
 **  _________________________________________________________________
 */
 
+char *ssl_util_server_root_relative(pool *p, char *arg)
+{
+    char *rv = NULL;
+
+#ifdef SSL_VENDOR
+    ap_hook_use("ap::mod_ssl::vendor::ssl_server_root_relative",
+                AP_HOOK_SIG3(ptr,ptr,ptr), AP_HOOK_ALL, &rv, p, arg);
+    if (rv != NULL)
+        return rv;
+#endif
+    rv = ap_server_root_relative(p, arg);
+    return rv;
+}
+
 char *ssl_util_vhostid(pool *p, server_rec *s)
 {
     char *id;

@@ -396,7 +396,7 @@ BOOL SSL_X509_getCN(pool *p, X509 *xs, char **cppCN)
 **  _________________________________________________________________
 */
 
-#ifdef SSL_EXPERIMENTAL
+#ifdef SSL_EXPERIMENTAL_PROXY
 
 BOOL SSL_load_CrtAndKeyInfo_file(pool *p, STACK_OF(X509_INFO) *sk, char *filename)
 {
@@ -447,7 +447,7 @@ BOOL SSL_load_CrtAndKeyInfo_path(pool *p, STACK_OF(X509_INFO) *sk, char *pathnam
     return ok;
 }              
 
-#endif /* SSL_EXPERIMENTAL */
+#endif /* SSL_EXPERIMENTAL_PROXY */
 
 /*  _________________________________________________________________
 **
