@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwrap.c,v 1.2 1996/07/22 10:10:39 deraadt Exp $	*/
+/*	$OpenBSD: bcwrap.c,v 1.3 1996/08/24 20:41:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -87,25 +87,23 @@ main(argc, argv)
 	width = pd[1];
 	rfds = (1 << 0) || (1 << pd[1]);
 	while (1) {
+		if (waitpid(pid, &stat, WNOHANG) > 0)
+			exit(WEXITSTATUS(stat));
 		switch (select(width, (fd_set *)&rfds, NULL, NULL, NULL)) {
 		case -1:
 		case 0:
 			break;
 		default:
 			if (rfds & (1<<0) == 0)
-				break;
-			n = read(0, buf, sizeof buf);
-			if (n == 0) {
-				close(pd[1]);
 				goto done;
-			}
+			n = read(0, buf, sizeof buf);
+			if (n == 0)
+				goto done;
 			off = 0;
 			while (off < n) {
 				res = write(pd[1], buf + off, n - off);
-				if (res == -1 && errno != EAGAIN) {
-					close(pd[1]);
+				if (res == -1 && errno != EAGAIN)
 					goto done;
-				}
 				off += res;
 			}
 		}
