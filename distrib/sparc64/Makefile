@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 2001/10/12 21:55:59 jason Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/11/07 07:45:34 deraadt Exp $
 
 # preserve order: 'miniroot' depends on 'bsd.rd'
-SUBDIR+= ramdisk ramdiskB bsd.rd miniroot
+SUBDIR+= ramdisk bsd.rd miniroot # ramdiskB
 
 .include <bsd.subdir.mk>
