@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.2 1998/03/09 02:45:50 millert Exp $
+.\"	$OpenBSD: de.4,v 1.3 1998/10/08 17:28:05 jason Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -37,11 +37,15 @@ DEC DC21x4x Ethernet device driver
 The
 .Nm
 driver provides support for the Ethernet adapters based on the Digital
-Equipment DC21x4x based self-contained Ethernet chips.
+Equipment DC21x4x based self-contained Ethernet chips and clones of
+those chips.
 .Pp
 It supports the DEC PCI DE435 card, DEC EISA DE425, DEC DE450, DEC DE500,
 SMC 8432, 9332 and 9334, Cogent EM100FX and EM440TX, Asante, 
-ZNYX ZX3xx, and others based on the 21040 and 21041 Ethernet controllers or
+ZNYX ZX3xx, Lite-On PNIC, Netgear FA310TX dev D1, and others based on
+the 21040 and 21041 Ethernet controllers,
+the LC82C168 Ethernet controller,
+or
 the 21140[A], 21141, 21142 and 21143 Fast 100Mbps Ethernet controllers.
 .Pp
 The
