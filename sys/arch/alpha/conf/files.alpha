@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.59 2002/06/30 16:24:40 miod Exp $
+#	$OpenBSD: files.alpha,v 1.60 2004/07/03 19:18:47 millert Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -136,15 +136,6 @@ device isabeep
 attach isabeep at pcppi
 
 include "dev/pckbc/files.pckbc"
-
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-# XXX conflicts with other ports; can't be in files.isa
-device	ed: ether, ifnet
-attach	ed at isa with ed_isa
-attach	ed at pcmcia with ed_pcmcia
-attach	ed at pci with ed_pci
-file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia | ed_pci) needs-flag
 
 # Floppy disk controller
 #device	fdc {drive = -1}: isa_dma
