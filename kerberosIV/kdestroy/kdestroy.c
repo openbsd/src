@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdestroy.c,v 1.5 1998/05/18 02:18:52 art Exp $	*/
+/*	$OpenBSD: kdestroy.c,v 1.6 1998/08/12 23:39:40 art Exp $	*/
 /*	$KTH: kdestroy.c,v 1.10 1998/05/13 22:44:24 assar Exp $		*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
@@ -64,8 +64,10 @@ struct getargs args[] = {
       "don't print any messages" },
     { NULL, 		'f',	arg_flag, 	&quiet_flag },
 #ifdef LEGACY_KDESTROY
-    { "unlog", 		't',	arg_flag,       &unlog_flag, 
-      "destroy tokens" },
+    { "unlog", 		0,	arg_flag, &unlog_flag,
+    "destroy tokens" },
+    { NULL, 		't',	arg_negative_flag, &unlog_flag,
+    "don't destroy tokens (default)" },
 #else
     { "unlog", 		't',	arg_negative_flag, &unlog_flag,
     "don't destroy tokens" },

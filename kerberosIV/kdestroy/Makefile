@@ -3,7 +3,7 @@
 PROG=	kdestroy
 SRCS=	kdestroy.c
 .PATH:  ${.CURDIR}/../roken
-SRCS+=	getarg.c
+SRCS+=	getarg.c get_window_size.c
 DPADD=	${LIBKRB} ${LIBDES}
 LDADD=	-lkrb -ldes -lkafs
 BINDIR=	/usr/bin

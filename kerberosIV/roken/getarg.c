@@ -1,7 +1,7 @@
-/*	$OpenBSD: getarg.c,v 1.1 1998/05/18 01:43:07 art Exp $	*/
+/*	$OpenBSD: getarg.c,v 1.2 1998/08/12 23:39:38 art Exp $	*/
 /*	$KTH: getarg.c,v 1.18 1998/01/22 20:23:16 joda Exp $		*/
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Hˆgskolan
+ * Copyright (c) 1997, 1998 Kungliga Tekniska HÅˆgskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -19,7 +19,7 @@
  * 3. All advertising materials mentioning features or use of this software 
  *    must display the following acknowledgement: 
  *      This product includes software developed by Kungliga Tekniska 
- *      Hˆgskolan and its contributors. 
+ *      HÅˆgskolan and its contributors. 
  *
  * 4. Neither the name of the Institute nor the names of its contributors 
  *    may be used to endorse or promote products derived from this software 
@@ -38,12 +38,14 @@
  * SUCH DAMAGE. 
  */
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include "getarg.h"
+#include "get_window_size.h"
 
 extern const char *__progname;
 
@@ -59,23 +61,50 @@ strupr(char *str)
     return str;
 }
 
+int
+strcpy_truncate (char *dst, const char *src, size_t dst_sz)
+{
+    int n;
+    char *p;
+
+    for (p = dst, n = 0;
+	 n + 1 < dst_sz && *src != '\0';
+	 ++p, ++src, ++n)
+	*p = *src;
+    *p = '\0';
+    if (*src == '\0')
+	return n;
+    else
+	return dst_sz;
+}
+
+int
+strcat_truncate(char *dst, const char *src, size_t dst_sz)
+{
+    int len = strlen(dst);
+
+    return len + strcpy_truncate(dst + len, src, MIN(dst_sz - len, dst_sz));
+}
+
 static size_t
-print_arg (FILE *stream, int mdoc, int longp, struct getargs *arg)
+print_arg (char *string, size_t len, int mdoc, int longp, struct getargs *arg)
 {
     const char *s;
+
+    *string = '\0';
 
     if (ISFLAG(*arg))
 	return 0;
 
     if(mdoc){
 	if(longp)
-	    fprintf(stream, "= Ns");
-	fprintf(stream, " Ar ");
+	    strcat_truncate(string, "= Ns", len);
+	strcat_truncate(string, " Ar ", len);
     }else
 	if (longp)
-	    putc ('=', stream);
+	    strcat_truncate (string, "=", len);
 	else
-	    putc (' ', stream);
+	    strcat_truncate (string, " ", len);
 
     if (arg->arg_help)
 	s = arg->arg_help;
@@ -86,7 +115,7 @@ print_arg (FILE *stream, int mdoc, int longp, struct getargs *arg)
     else
 	s = "<undefined>";
 
-    fprintf (stream, "%s", s);
+    strcat_truncate(string, s, len);
     return 1 + strlen(s);
 }
 
@@ -97,6 +126,7 @@ mandoc_template(struct getargs *args,
 {
     int i;
     char timestr[64], cmd[64];
+    char buf[128];
     const char *p;
     time_t t;
 
@@ -123,15 +153,28 @@ mandoc_template(struct getargs *args,
     printf(".Sh SYNOPSIS\n");
     printf(".Nm\n");
     for(i = 0; i < num_args; i++){
-	if(args[i].short_name){
-	    printf(".Op Fl %c", args[i].short_name);
-	    print_arg(stdout, 1, 0, args + i);
+	/* we seem to hit a limit on number of arguments if doing
+           short and long flags with arguments -- split on two lines */
+	if(ISFLAG(args[i]) || 
+	   args[i].short_name == 0 || args[i].long_name == NULL) {
+	    printf(".Op ");
+
+	    if(args[i].short_name) {
+		print_arg(buf, sizeof(buf), 1, 0, args + i);
+		printf("Fl %c%s", args[i].short_name, buf);
+		if(args[i].long_name)
+		    printf(" | ");
+	    }
+	    if(args[i].long_name) {
+		print_arg(buf, sizeof(buf), 1, 1, args + i);
+		printf("Fl -%s%s", args[i].long_name, buf);
+	    }
 	    printf("\n");
-	}
-	if(args[i].long_name){
-	    printf(".Op Fl -%s", args[i].long_name);
-	    print_arg(stdout, 1, 1, args + i);
-	    printf("\n");
+	} else {
+	    print_arg(buf, sizeof(buf), 1, 0, args + i);
+	    printf(".Oo Fl %c%s \\*(Ba Xo\n", args[i].short_name, buf);
+	    print_arg(buf, sizeof(buf), 1, 1, args + i);
+	    printf(".Fl -%s%s Oc\n.Xc\n", args[i].long_name, buf);
 	}
     /*
 	    if(args[i].type == arg_strings)
@@ -144,16 +187,21 @@ mandoc_template(struct getargs *args,
     printf("Supported options:\n");
     printf(".Bl -tag -width Ds\n");
     for(i = 0; i < num_args; i++){
+	printf(".It Xo\n");
 	if(args[i].short_name){
-	    printf(".It Fl %c", args[i].short_name);
-	    print_arg(stdout, 1, 0, args + i);
+	    printf(".Fl %c", args[i].short_name);
+	    print_arg(buf, sizeof(buf), 1, 0, args + i);
+	    printf("%s", buf);
+	    if(args[i].long_name)
+		printf(" Ns ,");
 	    printf("\n");
 	}
 	if(args[i].long_name){
-	    printf(".It Fl -%s", args[i].long_name);
-	    print_arg(stdout, 1, 1, args + i);
-	    printf("\n");
+	    printf(".Fl -%s", args[i].long_name);
+	    print_arg(buf, sizeof(buf), 1, 1, args + i);
+	    printf("%s\n", buf);
 	}
+	printf(".Xc\n");
 	if(args[i].help)
 	    printf("%s\n", args[i].help);
     /*
@@ -173,6 +221,16 @@ mandoc_template(struct getargs *args,
     printf(".\\\".Sh BUGS\n");
 }
 
+static int
+check_column(FILE *f, int col, int len, int columns)
+{
+    if(col + len > columns) {
+	fprintf(f, "\n");
+	col = fprintf(f, "  ");
+    }
+    return col;
+}
+
 void
 arg_printusage (struct getargs *args,
 		size_t num_args,
@@ -180,69 +238,79 @@ arg_printusage (struct getargs *args,
 {
     int i;
     size_t max_len = 0;
+    char buf[128];
+    int col = 0, columns;
+    struct winsize ws;
 
     if(getenv("GETARGMANDOC")){
 	mandoc_template(args, num_args, extra_string);
 	return;
     }
-    fprintf (stderr, "Usage: %s", __progname);
+    if(get_window_size(2, &ws) == 0)
+	columns = ws.ws_col;
+    else
+	columns = 80;
+    col = 0;
+    col += fprintf (stderr, "Usage: %s", __progname);
     for (i = 0; i < num_args; ++i) {
 	size_t len = 0;
 
 	if (args[i].long_name) {
-	    fprintf (stderr, " [--");
-	    if (args[i].type == arg_negative_flag) {
-		fprintf (stderr, "no-");
+	    buf[0] = '\0';
+	    strcat_truncate(buf, "[--", sizeof(buf));
+	    len += 2;
+	    if(args[i].type == arg_negative_flag) {
+		strcat_truncate(buf, "no-", sizeof(buf));
 		len += 3;
 	    }
-	    fprintf (stderr, "%s", args[i].long_name);
-	    len += 2 + strlen(args[i].long_name);
-	    len += print_arg (stderr, 0, 1, &args[i]);
-	    putc (']', stderr);
+	    strcat_truncate(buf, args[i].long_name, sizeof(buf));
+	    len += strlen(args[i].long_name);
+	    len += print_arg(buf + strlen(buf), sizeof(buf) - strlen(buf), 
+			     0, 1, &args[i]);
+	    strcat_truncate(buf, "]", sizeof(buf));
 	    if(args[i].type == arg_strings)
-		fprintf (stderr, "...");
+		strcat_truncate(buf, "...", sizeof(buf));
+	    col = check_column(stderr, col, strlen(buf) + 1, columns);
+	    col += fprintf(stderr, " %s", buf);
 	}
 	if (args[i].short_name) {
+	    snprintf(buf, sizeof(buf), "[-%c", args[i].short_name);
 	    len += 2;
-	    fprintf (stderr, " [-%c", args[i].short_name);
-	    len += print_arg (stderr, 0, 0, &args[i]);
-	    putc (']', stderr);
+	    len += print_arg(buf + strlen(buf), sizeof(buf) - strlen(buf), 
+			     0, 0, &args[i]);
+	    strcat_truncate(buf, "]", sizeof(buf));
 	    if(args[i].type == arg_strings)
-		fprintf (stderr, "...");
+		strcat_truncate(buf, "...", sizeof(buf));
+	    col = check_column(stderr, col, strlen(buf) + 1, columns);
+	    col += fprintf(stderr, " %s", buf);
 	}
 	if (args[i].long_name && args[i].short_name)
-	    len += 4;
-#ifndef MAX
-#define MAX(a,b) (a)>(b)?(a):(b)
-#endif
+	    len += 2; /* ", " */
 	max_len = MAX(max_len, len);
     }
-    if (extra_string)
+    if (extra_string) {
+	col = check_column(stderr, col, strlen(extra_string) + 1, columns);
 	fprintf (stderr, " %s\n", extra_string);
-    else
+    } else
 	fprintf (stderr, "\n");
     for (i = 0; i < num_args; ++i) {
 	if (args[i].help) {
 	    size_t count = 0;
 
 	    if (args[i].short_name) {
-		fprintf (stderr, "-%c", args[i].short_name);
-		count += 2;
-		count += print_arg (stderr, 0, 0, &args[i]);
+		count += fprintf (stderr, "-%c", args[i].short_name);
+		print_arg (buf, sizeof(buf), 0, 0, &args[i]);
+		count += fprintf(stderr, "%s", buf);
 	    }
-	    if (args[i].short_name && args[i].long_name) {
-		fprintf (stderr, " or ");
-		count += 4;
-	    }
+	    if (args[i].short_name && args[i].long_name)
+		count += fprintf (stderr, ", ");
 	    if (args[i].long_name) {
-		fprintf (stderr, "--");
-		if (args[i].type == arg_negative_flag) {
-		    fprintf (stderr, "no-");
-		    count += 3;
-		}
-		fprintf (stderr, "%s", args[i].long_name);
-		count += 2 + strlen(args[i].long_name);
-		count += print_arg (stderr, 0, 1, &args[i]);
+		count += fprintf (stderr, "--");
+		if (args[i].type == arg_negative_flag)
+		    count += fprintf (stderr, "no-");
+		count += fprintf (stderr, "%s", args[i].long_name);
+		print_arg (buf, sizeof(buf), 0, 1, &args[i]);
+		count += fprintf(stderr, "%s", buf);
 	    }
 	    while(count++ <= max_len)
 		putc (' ', stderr);
@@ -285,14 +353,13 @@ arg_match_long(struct getargs *args, size_t num_args,
 	    negate = 0;
 
 	    for (;;) {
-		if (strncmp (args[i].long_name, p, len) == 0) {
-		    current = &args[i];
-		    optarg  = p + len;
-		} else if (strncmp (args[i].long_name,
-				    p,
-				    p_len) == 0) {
-		    ++partial_match;
-		    partial = &args[i];
+		if (strncmp (args[i].long_name, p, p_len) == 0) {
+		    if(p_len == len)
+			current = &args[i];
+		    else {
+			++partial_match;
+			partial = &args[i];
+		    }
 		    optarg  = p + p_len;
 		} else if (ISFLAG(args[i]) && strncmp (p, "no-", 3) == 0) {
 		    negate = !negate;
@@ -306,13 +373,12 @@ arg_match_long(struct getargs *args, size_t num_args,
 		break;
 	}
     }
-    if (current == NULL) {
+    if (current == NULL)
 	if (partial_match == 1)
 	    current = partial;
 	else
 	    return ARG_ERR_NO_MATCH;
-    }
-
+    
     if(*optarg == '\0' && !ISFLAG(*current))
 	return ARG_ERR_NO_MATCH;
     switch(current->type){
