@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 1999/07/21 04:28:36 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 1999/08/14 03:18:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -94,11 +94,16 @@ struct db_variable db_regs[] = {
 	{ "r31",   (long *)&ddb_regs.tf_r31,   FCN_NULL },
 	{ "sar",   (long *)&ddb_regs.tf_sar,   FCN_NULL },
 
+	{ "eirr",  (long *)&ddb_regs.tf_eirr,  FCN_NULL },
 	{ "eiem",  (long *)&ddb_regs.tf_eiem,  FCN_NULL },
 	{ "iir",   (long *)&ddb_regs.tf_iir,   FCN_NULL },
 	{ "isr",   (long *)&ddb_regs.tf_isr,   FCN_NULL },
 	{ "ior",   (long *)&ddb_regs.tf_ior,   FCN_NULL },
 	{ "ipsw",  (long *)&ddb_regs.tf_ipsw,  FCN_NULL },
+	{ "iisqh", (long *)&ddb_regs.tf_iisq_head,  FCN_NULL },
+	{ "iioqh", (long *)&ddb_regs.tf_iioq_head,  FCN_NULL },
+	{ "iisqt", (long *)&ddb_regs.tf_iisq_tail,  FCN_NULL },
+	{ "iioqt", (long *)&ddb_regs.tf_iioq_tail,  FCN_NULL },
 
 	{ "sr0",   (long *)&ddb_regs.tf_sr0,   FCN_NULL },
 	{ "sr1",   (long *)&ddb_regs.tf_sr1,   FCN_NULL },
@@ -117,10 +122,6 @@ struct db_variable db_regs[] = {
 	{ "hptm",  (long *)&ddb_regs.tf_hptm,  FCN_NULL },
 	{ "vtop",  (long *)&ddb_regs.tf_vtop,  FCN_NULL },
 	{ "cr28",  (long *)&ddb_regs.tf_cr28,  FCN_NULL },
-#if 0
-	u_int	ccr;	/* cr10 */
-	u_int	tr2;	/* cr26 */
-#endif
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 int db_active = 0;
