@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.21 2001/12/09 20:48:17 mickey Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.22 2001/12/12 17:03:39 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -86,6 +86,21 @@ usage(void)
 	exit(1);
 }
 
+void
+error(const char *fmt, const char *arg)
+{
+	char buf[128];
+
+	if (debug)
+		err(1, fmt, arg);
+	else {
+		strlcpy(buf, fmt, sizeof(buf));
+		strlcat(buf, ": %m", sizeof(buf));
+		syslog(LOG_ERR, buf, arg);
+		exit(1);
+	}
+}
+
 
 /*
  * tell the driver if it should display messages or not.
@@ -168,7 +183,7 @@ bind_socket(const char *sockname)
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock == -1)
-		err(1, "cannot create local socket");
+		error("cannot create local socket", NULL);
 
 	s_un.sun_family = AF_UNIX;
 	strncpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
@@ -179,9 +194,9 @@ bind_socket(const char *sockname)
 	umask (077);
 
 	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
-		err(1, "cannot connect to APM socket");
+		error("cannot connect to APM socket", NULL);
 	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)
-		err(1, "cannot set socket mode/owner/group to 660/0/0");
+		error("cannot set socket mode/owner/group to 660/0/0", NULL);
 
 	listen(sock, 1);
 	socketname = strdup(sockname);
@@ -361,22 +376,22 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if ((ctl_fd = open(fname, O_RDWR)) == -1)
-		err(1, "cannot open device file `%s'", fname);
-
-	sock_fd = bind_socket(sockname);
-
 	if (debug)
 		openlog(__progname, LOG_CONS, LOG_LOCAL1);
 	else {
+		daemon(0, 0);
 		openlog(__progname, LOG_CONS, LOG_DAEMON);
 		setlogmask(LOG_UPTO(LOG_NOTICE));
-		daemon(0, 0);
 	}
 
 	(void) signal(SIGTERM, sigexit);
 	(void) signal(SIGHUP, sigexit);
 	(void) signal(SIGINT, sigexit);
+
+	if ((ctl_fd = open(fname, O_RDWR)) == -1)
+		error("cannot open device file `%s'", fname);
+
+	sock_fd = bind_socket(sockname);
 
 	power_status(ctl_fd, 1, 0);
 
@@ -397,19 +412,15 @@ main(int argc, char *argv[])
 		set_driver_messages(ctl_fd, APM_PRINT_OFF);
 
 	kq = kqueue();
-	if (kq <= 0) {
-		syslog(LOG_ERR, "kqueue: %m");
-		exit(1);
-	}
+	if (kq <= 0)
+		error("kqueue", NULL);
 
 	EV_SET(&ev[0], ctl_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
 	EV_SET(&ev[1], sock_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
-	if (kevent(kq, ev, 2, NULL, 0, &sts) < 0) {
-		syslog(LOG_ERR, "kevent: %m");
-		exit(1);
-	}
+	if (kevent(kq, ev, 2, NULL, 0, &sts) < 0)
+		error("kevent", NULL);
 
 	for (;;) {
 		int rv;
@@ -504,7 +515,7 @@ main(int argc, char *argv[])
 				break;
 			}
 	}
-	syslog(LOG_ERR, "kevent: %m");
+	error("kevent loop", NULL);
 
 	return 1;
 }
