@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 1999/04/20 19:25:02 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.8 1999/08/14 03:21:26 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -241,7 +241,7 @@ tf4	.reg	%fr8
 #define FM_ERP	-24
 #define FM_ESR4	-28
 #define FM_EDP	-32
-#define FM_SIZE	32
+#define FM_SIZE	48
 
 /*
  * frame must be rounded to double word
