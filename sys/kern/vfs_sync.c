@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.13 2001/02/21 23:24:30 csapuntz Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.14 2001/02/23 16:05:53 csapuntz Exp $  */
 
 /*
  *  Portions of this code are:
@@ -166,18 +166,31 @@ sched_sync(p)
 			syncer_delayno = 0;
 		splx(s);
 		while ((vp = LIST_FIRST(slp)) != NULL) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-			(void) VOP_FSYNC(vp, p->p_ucred, MNT_LAZY, p);
-			VOP_UNLOCK(vp, 0, p);
+			if (VOP_ISLOCKED(vp) == 0) {
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+				(void) VOP_FSYNC(vp, p->p_ucred, MNT_LAZY, p);
+				VOP_UNLOCK(vp, 0, p);
+			}
+			s = splbio();
 			if (LIST_FIRST(slp) == vp) {
+				/*
+				 * Note: disk vps can remain on the
+				 * worklist too with no dirty blocks, but 
+				 * since sync_fsync() moves it to a different 
+				 * slot we are safe.
+				 */
 				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
 				    vp->v_type != VBLK)
 					panic("sched_sync: fsync failed");
 				/*
-				 * Move ourselves to the back of the sync list.
+				 * Put us back on the worklist.  The worklist
+				 * routine will remove us from our current
+				 * position and then add us back in at a later
+				 * position.
 				 */
 				vn_syncer_add_to_worklist(vp, syncdelay);
 			}
+			splx(s);
 		}
 
 #ifdef FFS_SOFTUPDATES
