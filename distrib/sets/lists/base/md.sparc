@@ -26,7 +26,7 @@
 ./usr/lib/libpanel.so.0.0
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
-./usr/lib/libskey.so.0.4
+./usr/lib/libskey.so.1.0
 ./usr/lib/libss.so.4.0
 ./usr/lib/libstdc++.so.27.1
 ./usr/lib/libtelnet.so.1.0
@@ -283,9 +283,8 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/cpio.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/curses.ph
-./usr/lib/perl5/sparc-openbsd/5.003/des.ph
-./usr/lib/perl5/sparc-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/db.ph
+./usr/lib/perl5/sparc-openbsd/5.003/des.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/dirent.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/disktab.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/dlfcn.ph
@@ -301,12 +300,15 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/fstab.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/fts.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/glob.ph
+./usr/lib/perl5/sparc-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/grp.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/histedit.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/ieeefp.ph
+./usr/lib/perl5/sparc-openbsd/5.003/inttypes.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/iso646.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/kvm.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/langinfo.ph
+./usr/lib/perl5/sparc-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/limits.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/link.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/locale.ph
@@ -314,8 +316,6 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/ansi.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/asm.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/autoconf.ph
-./usr/lib/perl5/sparc-openbsd/5.003/machine/ioctl_fd.ph
-./usr/lib/perl5/sparc-openbsd/5.003/machine/kcore.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/bsd_audioio.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/bsd_openprom.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/cdefs.ph
@@ -337,8 +337,10 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/ieee.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/ieeefp.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/instr.ph
+./usr/lib/perl5/sparc-openbsd/5.003/machine/ioctl_fd.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/kbd.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/kbio.ph
+./usr/lib/perl5/sparc-openbsd/5.003/machine/kcore.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/limits.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/oldmon.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/openpromio.ph
@@ -420,6 +422,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/regex.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/regexp.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/resolv.ph
+./usr/lib/perl5/sparc-openbsd/5.003/rmd160.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/scsi.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/search.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/setjmp.ph
@@ -566,11 +569,10 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/zlib.ph
 ./usr/libexec/ld.so
 ./usr/mdec/binstall
-./usr/mdec/zboot
 ./usr/mdec/boot
 ./usr/mdec/bootxx
+./usr/mdec/zboot
 ./usr/sbin/eeprom
-./usr/sbin/installboot
 ./usr/sbin/fdformat
+./usr/sbin/installboot
 ./usr/sbin/screenblank
-./usr/lib/perl5/sparc-openbsd/5.003/rmd160.ph

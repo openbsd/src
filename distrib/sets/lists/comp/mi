@@ -173,7 +173,6 @@
 ./usr/include/dev/pcmcia/pcmcia_ioctl.h
 ./usr/include/dev/pcmcia/pcmciareg.h
 ./usr/include/dev/pcmcia/pcmciavar.h
-./usr/include/dev/pcmcia/if_wlpreg.h
 ./usr/include/dev/ramdisk.h
 ./usr/include/dev/rcons
 ./usr/include/dev/rcons/raster.h
