@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1996/09/26 04:39:17 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1996/09/27 06:09:00 etheisen Exp $
 
 #
 # less config
 #
 PREFIX=		/usr
+BINDIR=		$(PREFIX)/bin
 DATADIR=	$(PREFIX)/share/misc
 LESS_HLP=	more.help
 LIBS=		-ltermcap
@@ -21,7 +22,12 @@ WLDFLAGS=	LDFLAGS="$(LDSTATIC)"
 all: config.status gnu_build
 
 #
-# crunchgen
+# XXX - This is needed because crunchgen wasn't 
+#       designed to work with wrappers.  The
+#	default sys.mk SUFFIX rules were being
+#	invoked accidentally and crunchgen
+#	couldn't figure out what objects were
+#	needed.
 #
 OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 	command.o decode.o edit.o filename.o forwback.o \
@@ -29,7 +35,9 @@ OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 	lsystem.o mark.o optfunc.o option.o opttbl.o os.o \
 	output.o position.o prompt.o search.o signal.o \
 	tags.o ttyin.o version.o
-$(OBJS): config.status cg_build
+.SUFFIXES: .o .c
+.c.o: config.status
+	@$(MAKE) $(WCFLAGS) $(WLDFLAGS) LIBS=$(LIBS) datadir=$(DATADIR) LESS_HLP=$(LESS_HLP) $(.TARGET)
 
 .FORCE: .IGNORE
 
@@ -42,12 +50,6 @@ config.status:
 
 gnu_build:
 	$(MAKE) $(WCFLAGS) $(WLDFLAGS) LIBS=$(LIBS) datadir=$(DATADIR) LESS_HLP=$(LESS_HLP)
-
-#
-# crunchgen build
-#
-cg_build:
-	$(MAKE) $(WCFLAGS) $(WLDFLAGS) LIBS=$(LIBS) datadir=$(DATADIR) LESS_HLP=$(LESS_HLP) $(OBJS)
 
 install: gnu_install maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
@@ -65,7 +67,7 @@ install: gnu_install maninstall _SUBDIRUSE
 
 gnu_install:
 	$(MAKE) $(WCFLAGS) $(WLDFLAGS) LIBS=$(LIBS) LESS_HLP=$(LESS_HLP) \
-		bindir=$(DESTDIR)$(PREFIX)/bin \
+		bindir=$(DESTDIR)$(BINDIR) \
 		datadir=$(DESTDIR)$(PREFIX)/share/misc \
 		INSTALL_PROGRAM="install $(COPY) $(STRIP) -o $(BINOWN) -g $(BINGRP) -m $(BINMODE)" \
 		INSTALL_DATA="install $(COPY) -o ${BINOWN} -g ${BINGRP} -m 444" \
@@ -92,7 +94,6 @@ lint:
 tags:
 	# Nothing here so far...
 
-.include <bsd.prog.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
 .include <bsd.man.mk>
