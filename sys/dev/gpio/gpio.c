@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.3 2004/11/22 15:37:42 reyk Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.4 2004/11/23 21:18:37 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/gpio.h>
+#include <sys/vnode.h>
 
 #include <dev/gpio/gpiovar.h>
 
@@ -87,8 +88,19 @@ gpio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-gpio_detach(struct device *parent, int flags)
+gpio_detach(struct device *self, int flags)
 {
+	int maj, mn;
+
+	/* Locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == gpioopen)
+			break;
+
+	/* Nuke the vnodes for any open instances (calls close) */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
 	return (0);
 }
 
