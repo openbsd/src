@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2001/02/22 03:26:24 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2001/03/03 05:29:33 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ static struct mem_region *mem, *avail;
 	extern vm_offset_t pager_sva, pager_eva;
 #endif
 
-#if 1
+#if 0
 void
 dump_avail()
 {
@@ -587,7 +587,6 @@ avail_end = npgs * NBPG;
 		if (mp->size < s + HTABSIZE)
 			continue;
 		ptable = (pte_t *)(mp->start + s);
-dump_avail();
 		if (mp->size == s + HTABSIZE) {
 			if (s)
 				mp->size = s;
@@ -605,7 +604,6 @@ dump_avail();
 		}
 		mp->start += s + HTABSIZE;
 		mp->size -= s + HTABSIZE;
-dump_avail();
 		break;
 	}
 	if (!mp->size)
