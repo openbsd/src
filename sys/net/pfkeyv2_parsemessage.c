@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.28 2001/07/01 08:15:51 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.29 2001/07/01 08:21:15 angelos Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -745,7 +745,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 
 				if (i != j) {
 					DPRINTF(("pfkeyv2_parsemessage: actual"
-					    "identity length does not match "
+					    " identity length does not match "
 					    "expected length in identity "
 					    "extension header %d\n",
 					    sadb_ext->sadb_ext_type));
