@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.25 2002/07/08 20:00:18 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.26 2002/09/03 18:56:50 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -70,12 +70,12 @@
 #define	BS_CTRL_BE32		0x08000000	/* big-endian, 32bit bytes */
 #define	BS_CTRL_BE64		0x04000000	/* big-endian, 64bit bytes */
 #define	BS_CTRL_DMAERR		0x02000000	/* enable intr DMA error */
-#define	BS_CTRL_RNG_M		0x01800000	/* RND mode */
+#define	BS_CTRL_RNG_M		0x01800000	/* RNG mode */
 #define	BS_CTRL_RNG_1		0x00000000	/* 1bit rn/one slow clock */
 #define	BS_CTRL_RNG_4		0x00800000	/* 1bit rn/four slow clocks */
 #define	BS_CTRL_RNG_8		0x01000000	/* 1bit rn/eight slow clocks */
 #define	BS_CTRL_RNG_16		0x01800000	/* 1bit rn/16 slow clocks */
-#define	BN_CTRL_SWNORM		0x00400000	/* 582[01], sw normalization */
+#define	BS_CTRL_SWNORM		0x00400000	/* 582[01], sw normalization */
 #define	BS_CTRL_FRAG_M		0x0000ffff	/* output fragment size mask */
 
 /* BS_STAT - DMA Status */
