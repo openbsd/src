@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.60 2002/01/09 11:30:53 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.61 2002/03/11 22:22:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -56,7 +56,7 @@
 
 int		 unmask (struct pf_addr *, u_int8_t);
 void		 print_addr (struct pf_addr *, struct pf_addr *, u_int8_t);
-void		 print_host (struct pf_state_host *, u_int8_t);
+void		 print_host (struct pf_state_host *, u_int8_t, int);
 void		 print_seq (struct pf_state_peer *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 void		 print_flags (u_int8_t);
@@ -291,11 +291,31 @@ print_addr(struct pf_addr *addr, struct pf_addr *mask, u_int8_t af)
 }
 
 void
-print_host(struct pf_state_host *h, u_int8_t af)
+print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
+{
+	char buf[48];
+	const char *bf;
+	struct hostent *hp;
+
+	bf = inet_ntop(af, addr, buf, sizeof(buf));
+	hp = getpfhostname(bf); 
+	printf("%s", hp->h_name);
+	if (mask != NULL) {
+		if (!PF_AZERO(mask, af))
+			printf("/%u", unmask(mask, af));
+	}
+}
+
+void
+print_host(struct pf_state_host *h, u_int8_t af, int opts)
 {
 	u_int16_t p = ntohs(h->port);
 
-	print_addr(&h->addr, NULL, af);
+	if (opts & PF_OPT_USEDNS)
+		print_name(&h->addr, NULL, af);
+	else
+		print_addr(&h->addr, NULL, af);
+
 	if (p) {
 		if (af == AF_INET)
 			printf(":%u", p);
@@ -558,18 +578,18 @@ print_state(struct pf_state *s, int opts)
 		printf("%u ", s->proto);
 	if (PF_ANEQ(&s->lan.addr, &s->gwy.addr, s->af) ||
 	    (s->lan.port != s->gwy.port)) {
-		print_host(&s->lan, s->af);
+		print_host(&s->lan, s->af, opts);
 		if (s->direction == PF_OUT)
 			printf(" -> ");
 		else
 			printf(" <- ");
 	}
-	print_host(&s->gwy, s->af);
+	print_host(&s->gwy, s->af, opts);
 	if (s->direction == PF_OUT)
 		printf(" -> ");
 	else
 		printf(" <- ");
-	print_host(&s->ext, s->af);
+	print_host(&s->ext, s->af, opts);
 
 	printf("    ");
 	if (s->proto == IPPROTO_TCP) {
@@ -630,8 +650,10 @@ print_rule(struct pf_rule *r)
 
 			if (ic == NULL)
 				printf("(%u) ", r->return_icmp & 255);
-			else if ((r->af != AF_INET6 && ic->code != ICMP_UNREACH_PORT) ||
-			    (r->af == AF_INET6 && ic->code != ICMP6_DST_UNREACH_NOPORT))
+			else if ((r->af != AF_INET6 && ic->code !=
+			    ICMP_UNREACH_PORT) ||
+			    (r->af == AF_INET6 && ic->code !=
+			    ICMP6_DST_UNREACH_NOPORT))
 				printf("(%s) ", ic->name);
 			else
 				printf(" ");
@@ -772,4 +794,25 @@ parse_flags(char *s)
 			f |= 1 << (q - tcpflags);
 	}
 	return (f ? f : 63);
+}
+
+struct hostent *
+getpfhostname(const char *addr_str)
+{
+	unsigned long		 addr_num;
+	struct hostent		*hp;
+	static struct hostent	 myhp;
+
+	addr_num = inet_addr(addr_str);
+	if (addr_num == INADDR_NONE) {
+		myhp.h_name = (char *)addr_str;
+		hp = &myhp;
+		return (hp);
+	}
+	hp = gethostbyaddr((char *)&addr_num, sizeof(addr_num), AF_INET);
+	if (hp == NULL) {
+		myhp.h_name = (char *)addr_str;
+		hp = &myhp;
+	}
+	return (hp);
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.41 2002/02/26 07:25:33 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.42 2002/03/11 22:22:57 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -166,6 +166,8 @@ Currently the optimizations only encompass the state table timeouts but much
 more is planned in future revisions of the finite state machines (FSMs).
 .It Fl q
 Only print errors and warnings.
+.It Fl r
+Perform reverse DNS lookups on states when displaying them.
 .It Fl R Ar file
 Load a filter rules file into the filter.
 .It Fl s Ar modifier

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.14 2002/02/27 18:11:45 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.15 2002/03/11 22:22:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -39,6 +39,7 @@
 #define PF_OPT_NOACTION		0x0008
 #define PF_OPT_QUIET		0x0010
 #define PF_OPT_CLRRULECTRS	0x0020
+#define PF_OPT_USEDNS		0x0040
 
 struct pfctl {
 	int dev;
@@ -77,9 +78,10 @@ struct icmpcodeent {
 	u_int8_t code;
 };
 
-struct icmptypeent *geticmptypebynumber(u_int8_t, u_int8_t);
-struct icmptypeent *geticmptypebyname(char *, u_int8_t);
-struct icmpcodeent *geticmpcodebynumber(u_int8_t, u_int8_t, u_int8_t);
-struct icmpcodeent *geticmpcodebyname(u_long, char *, u_int8_t);
+struct icmptypeent	 *geticmptypebynumber(u_int8_t, u_int8_t);
+struct icmptypeent	 *geticmptypebyname(char *, u_int8_t);
+struct icmpcodeent	 *geticmpcodebynumber(u_int8_t, u_int8_t, u_int8_t);
+struct icmpcodeent	 *geticmpcodebyname(u_long, char *, u_int8_t);
+struct hostent		 *getpfhostname(const char *);
 
 #endif /* _PFCTL_PARSER_H_ */

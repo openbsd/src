@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.54 2002/02/28 15:51:17 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.55 2002/03/11 22:22:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -169,7 +169,7 @@ usage()
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dehnqv] [-F set] [-l interface] ",
+	fprintf(stderr, "usage: %s [-dehnqrv] [-F set] [-l interface] ",
 	    __progname);
 	fprintf(stderr, "[-N file] [-O level] [-R file] [-s set] [-t set] "
 	    "[-x level] [-z]\n");
@@ -817,7 +817,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hl:m:nN:O:R:s:t:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hl:m:nN:O:rR:s:t:vx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -853,6 +853,9 @@ main(int argc, char *argv[])
 		case 'O':
 			hintopt = optarg;
 			mode = O_RDWR;
+			break;
+		case 'r':
+			opts |= PF_OPT_USEDNS;
 			break;
 		case 'R':
 			rulesopt = optarg;
