@@ -652,3 +652,4 @@
 ./usr/share/info/ld.info-3
 ./usr/libdata/perl5/site_perl/alpha-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/swap.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/keynote.ph

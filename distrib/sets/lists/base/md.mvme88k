@@ -408,3 +408,4 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/pool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/keynote.ph

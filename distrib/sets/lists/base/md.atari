@@ -3,7 +3,7 @@
 ./usr/bin/ldd
 ./usr/include/m68k
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.21.2
+./usr/lib/libc.so.22.0
 ./usr/lib/libcurses.so.4.2
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -36,3 +36,4 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/pool.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/swap.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/keynote.ph
