@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.52 2004/05/16 02:06:10 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.53 2004/05/24 18:54:47 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -276,7 +276,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 
 	s = splnet();
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET) {
+		if (ifa->ifa_addr->sa_family == AF_INET && sc->sc_ifp != NULL) {
 			int count = carp_addrcount(
 			    (struct carp_if *)sc->sc_ifp->if_carp,
 			    ifatoia(ifa), CARP_COUNT_MASTER);
