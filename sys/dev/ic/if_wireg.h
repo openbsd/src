@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.6 2001/10/25 16:39:25 mickey Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.7 2001/10/25 19:40:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -263,8 +263,30 @@
 #define WI_AUX_OFFSET		0x3C
 #define WI_AUX_DATA		0x3E
 
-#define WI_COR_OFFSET		0x3E0
-#define WI_COR_VALUE		0x41
+#define WI_PLX_COR_OFFSET	0x3E0
+#define WI_PLX_COR_VALUE	0x41
+
+/*
+ * PCI Host Interface Registers (HFA3842 Specific)
+ * The value of all Register's Offset, such as WI_INFO_FID and WI_PARAM0,
+ * has doubled.
+ * About WI_PCI_COR: In this Register, only soft-reset bit implement; Bit(7).
+ */
+#define WI_PCI_COR		0x4C
+#define WI_PCI_HCR		0x5C
+#define WI_PCI_MASTER0_ADDRH	0x80
+#define WI_PCI_MASTER0_ADDRL	0x84
+#define WI_PCI_MASTER0_LEN	0x88
+#define WI_PCI_MASTER0_CON	0x8C
+
+#define WI_PCI_STATUS		0x98
+
+#define WI_PCI_MASTER1_ADDRH	0xA0
+#define WI_PCI_MASTER1_ADDRL	0xA4
+#define WI_PCI_MASTER1_LEN	0xA8
+#define WI_PCI_MASTER1_CON	0xAC
+
+#define WI_PCI_SOFT_RESET       (1 << 7)
 
 /*
  * One form of communication with the Hermes is with what Lucent calls
