@@ -1231,7 +1231,7 @@ main(int argc, char **argv)
 	    wrtermcap(tcapbuf);
 	    fputs("';\n", stdout);
 	}
-	(void)printf(t);
+	(void)fputs(t, stdout);
     }
 #else
     if (sflag) {
