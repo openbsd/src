@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.88 2003/04/03 07:56:28 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.89 2003/04/14 22:29:46 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -781,7 +781,7 @@ Leave empty if no message is needed.
 .It Ev MTREE_FILE
 .Xr mtree 8
 specification to check when creating a PLIST with the
-.Ar plist
+.Ar update-plist
 target.
 .Ev MTREE_FILE
 can hold a list of file names, to which
@@ -1698,7 +1698,7 @@ Note that libraries used only for
 do not need NEWDYNLIBDIR.
 .Pp
 The special
-.Ar plist
+.Ar update-plist
 target does a fairly good job of automatically generating PLIST and
 PFRAG.shared fragments.
 .Pp
