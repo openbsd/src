@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.28 2000/11/16 20:02:19 provos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.29 2001/01/23 02:18:55 itojun Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -271,6 +271,8 @@ soaccept(so, nam)
 	if ((so->so_state & SS_ISDISCONNECTED) == 0)
 		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT, NULL,
 		    nam, NULL);
+	else
+		nam->m_len = 0;
 	splx(s);
 	return (error);
 }
