@@ -1,8 +1,8 @@
-/*	$OpenBSD: exchange.c,v 1.12 1999/03/31 23:46:25 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.70 1999/03/31 23:32:30 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.13 1999/04/02 01:08:25 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.73 1999/04/02 00:39:57 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -286,8 +286,13 @@ exchange_run (struct message *msg)
 	      if (exchange->phase == 1 && msg->isakmp_sa)
 		{
 		  if (msg->isakmp_sa->last_sent_in_setup)
-		    message_free (msg->isakmp_sa->last_sent_in_setup);
+		    {
+		      exchange_release (msg->isakmp_sa->last_sent_in_setup
+					->exchange);
+		      message_free (msg->isakmp_sa->last_sent_in_setup);
+		    }
 		  msg->isakmp_sa->last_sent_in_setup = msg;
+		  exchange_reference (msg->exchange);
 		}
 
 	      /*
@@ -545,6 +550,7 @@ exchange_create (int phase, int initiator, int doi, int type)
   exchange = calloc (1, sizeof *exchange);
   if (!exchange)
     return 0;
+  exchange_reference (exchange);
   exchange->phase = phase;
   exchange->step = 0;
   exchange->initiator = initiator;
@@ -558,11 +564,14 @@ exchange_create (int phase, int initiator, int doi, int type)
   TAILQ_INIT (&exchange->aca_list);
 
   /* Allocate the DOI-specific structure and initialize it to zeroes.  */
-  exchange->data = calloc (1, exchange->doi->exchange_size);
-  if (!exchange->data)
+  if (exchange->doi->exchange_size)
     {
-      exchange_free (exchange);
-      return 0;
+      exchange->data = calloc (1, exchange->doi->exchange_size);
+      if (!exchange->data)
+	{
+	  exchange_free (exchange);
+	  return 0;
+	}
     }
 
   gettimeofday(&expiration, 0);
@@ -724,12 +733,15 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
       return;
     }
 
-  exchange->name = name ? strdup (name) : "<unnamed>";
-  if (!exchange->name)
+  if (name)
     {
-      /* XXX Log?  */
-      exchange_free (exchange);
-      return;
+      exchange->name = strdup (name);
+      if (!exchange->name)
+	{
+	  log_error ("exchange_establish_p1: strdup (\"%s\") failed", name);
+	  exchange_free (exchange);
+	  return;
+	}
     }
   exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
   exchange->finalize = finalize;
@@ -829,12 +841,15 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
       return;
     }
 
-  exchange->name = name ? strdup (name) : "<unnamed>";
-  if (!exchange->name)
+  if (name)
     {
-      /* XXX Log?  */
-      exchange_free (exchange);
-      return;
+      exchange->name = strdup (name);
+      if (!exchange->name)
+	{
+	  log_error ("exchange_establish_p2: strdup (\"%s\") failed", name);
+	  exchange_free (exchange);
+	  return;
+	}
     }
   exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
   exchange->finalize = finalize;
@@ -953,10 +968,10 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
   if (!exchange)
     return 0;
 
-  exchange->name = name ? strdup (name) : "<unnamed>";
+  exchange->name = strdup (name);
   if (!exchange->name)
     {
-      /* XXX Log?  */
+      log_error ("exchange_setup_p1: strdup (\"%s\") failed", name);
       exchange_free (exchange);
       return 0;
     }
@@ -1019,18 +1034,21 @@ exchange_report (void)
       exchange_dump ("exchange_report", exchange);
 }
 
-/*
- * Release all resources this exchange is using *except* for the "death"
- * event.  When removing an exchange from the expiration handler that event
- * will be dealt with therein instead.
- */
-static void
-exchange_free_aux (struct exchange *exchange)
+/* Add a reference to EXCHANGE.  */
+void exchange_reference (struct exchange *exchange)
 {
-  if (exchange->last_received)
-    message_free (exchange->last_received);
-  if (exchange->last_sent)
-    message_free (exchange->last_sent);
+  exchange->refcnt++;
+}
+
+/* Remove a reference to EXCHANGE, and deallocate if the last.  */
+void
+exchange_release (struct exchange *exchange)
+{
+  if (--exchange->refcnt)
+    return;
+
+  log_debug (LOG_MISC, 80, "exchange_release: freeing exchange %p", exchange);
+
   if (exchange->nonce_i)
     free (exchange->nonce_i);
   if (exchange->nonce_r)
@@ -1048,8 +1066,24 @@ exchange_free_aux (struct exchange *exchange)
   if (exchange->name)
     free (exchange->name);
   exchange_free_aca_list (exchange);
-  LIST_REMOVE (exchange, link);
   free (exchange);
+}
+
+/*
+ * Release all resources this exchange is using *except* for the "death"
+ * event.  When removing an exchange from the expiration handler that event
+ * will be dealt with therein instead.
+ */
+static void
+exchange_free_aux (struct exchange *exchange)
+{
+  if (exchange->last_received)
+    message_free (exchange->last_received);
+  if (exchange->last_sent)
+    message_free (exchange->last_sent);
+  LIST_REMOVE (exchange, link);
+
+  exchange_release (exchange);
 }
 
 /* Release all resources this exchange is using.  */
@@ -1098,7 +1132,7 @@ exchange_finalize (struct message *msg)
   for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = TAILQ_NEXT (sa, next))
     {
       /* Move over the name to the SA.  */
-      sa->name = exchange->name;
+      sa->name = exchange->name ? strdup (exchange->name) : 0;
 
       if (exchange->flags & EXCHANGE_FLAG_I_COMMITTED)
 	{
@@ -1307,6 +1341,7 @@ exchange_establish_finalize (void *arg)
     }
 
   exchange_establish_p2 (isakmp_sa, 0, name, 0, 0, 0);
+  free (name);
 }
 
 /*
@@ -1358,7 +1393,6 @@ exchange_establish (char *name, void (*finalize) (void *), void *arg)
       isakmp_sa = sa_lookup_by_name (peer, 1);
       if (!isakmp_sa)
 	{
-	  /* XXX We leak these names.  */
 	  name = strdup (name);
 	  if (!name)
 	    {
