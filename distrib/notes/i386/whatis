@@ -1,9 +1,13 @@
-For the i386, NetBSD 1.0 brings greatly improved performance, stability,
-and device support.  To complement the added device drivers, NetBSD
-1.0's i386 port has greatly improved device autoconfiguration,
-allowing it to correctly find more devices on more machines.  The
-final, and perhaps most important point about NetBSD 1.0's i386
-support is that it is fully backward compatible with old NetBSD
-binaries, so you don't need to recompile all your local programs.
-(Note, however, that because of the shared library support, you still
-have a lot to gain by doing so.)
+For the i386, NetBSD 1.1 brings greatly improved performance,
+stability, and device support. Emulation for several UN*X and UN*X
+like operating systems, including Linux and FreeBSD, has been added.
+Many new PCI devices are supported, such as cards based on the AMD
+PCnet-PCI Ethernet chip, the Digital DC21x4x family of Ethernet chips,
+and the Adaptec AIC7870 SCSI host adapter chip.  Some drivers such as
+"ccd" which previously only worked on other ports of NetBSD now work
+on the i386 port.  Though still not known to be entirely stable, the
+"ncr" driver for 53c8xx-series SCSI adapters has had substantial bugs
+and performance issues resolved.
+
+NetBSD 1.1 on i386 is also fully backward compatible with old NetBSD
+i386 binaries, so you don't need to recompile all your local programs.

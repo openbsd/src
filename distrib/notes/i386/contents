@@ -1,8 +1,8 @@
-The i386-specific portion of the NetBSD 1.0 release is found in the
+The i386-specific portion of the NetBSD 1.1 release is found in the
 "i386" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.0/i386/
+.../NetBSD-1.1/i386/
 			INSTALL		Installation notes; this file.
 
 			binary/		i386 binary distribution sets;
@@ -19,7 +19,7 @@ out as follows:
 					installation section, below.
 
 There are four i386 floppy images to be found in the "i386/floppy"
-subdirectory of the NetBSD 1.0 distribution.  Two of them are bootable
+subdirectory of the NetBSD 1.1 distribution.  Two of them are bootable
 kernel-copy floppies, one is an installation floppy, and one is an
 upgrade floppy.  They are all described in more detail below.  There
 are gzipped versions of each available, for easier downloading.  (The
@@ -36,41 +36,64 @@ Bootable Kernel-copy floppies:
 	disk.
 
 	There are two different kernel copy floppy images,
-	"kcaha-10.fs", and "kcbt-10.fs".  They are identical except
-	that the first has the driver for the Adaptec 1542 SCSI host
-	adapter and does not contain the driver for the Buslogic 74x
-	SCSI host adapters, and vice-versa for the second.  (All other
-	drivers are present on both disks.)
+        "kcadp11.fs", and "kcoth11.fs".  They are identical except
+        that the kcadp floppy has the drivers for the supported Adaptec SCSI
+        controllers -- the Adaptec 1520, 1522, 1540, 1542, 1740, 1742, 1744,
+        and 2940 SCSI host adapters and the AIC6x60 and AIC7870 chips on 
+	motherboards or other brands of SCSI controllers -- and does not
+        contain the drivers for any other SCSI host adapters, which
+        are in the kernel on the kcoth floppy.  (The kernels on the install
+        disks are otherwise identical.)
+
+        Please note that because of space considerations the kernel
+        copy floppies no longer contain drivers that are not needed
+        during installation -- in particular, no drivers needed to run
+        the X Window System are available in these kernels. It is
+        recommended that you configure a custom kernel following
+        installation.
+
+        For those that cannot configure a custom kernel, two "generic"
+        kernel images, named "netbsd-adp.gz" and "netbsd-oth.gz", have
+        been placed in the binaries directory. These are identical
+        except that "netbsd-adp.gz" contains support for Adaptec SCSI
+        controllers, but no other SCSI controllers, and
+        "netbsd-oth.gz" contains support only for SCSI controllers
+        other than the Adaptec. (These are similar in nature to the
+        kernels on the kernel copy floppies but with additional device
+        support.) It is strongly encouraged that you build a custom
+        kernel for your installation rather than use a prebuilt generic
+        kernel.
+        
 
 Installation floppy:
 
 	This disk contains the software necessary to prepare your hard
 	drive for NetBSD and install the NetBSD distribution. It is
 	not bootable, and must be used in conjunction with one of the
-	kernel-copy floppies.  This floppy is named "inst-10.fs".
+	kernel-copy floppies.  This floppy is named "inst-11.fs".
 
 Upgrade floppy:
 
 	This disk contains the software to be used in upgrading the
 	system from a previous version of NetBSD.  It is not bootable,
 	and must be used in conjunction with one of the kernel-copy
-	floppies.  This floppy is named "upgr-10.fs"
+	floppies.  This floppy is named "upgr11.fs"
 
 The NetBSD/i386 binary distribution sets contain the binaries which
-comprise the NetBSD 1.0 release for the i386.  There are seven binary
+comprise the NetBSD 1.1 release for the i386.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "i386/binary"
-subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
+subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 
-	base10	The NetBSD/i386 1.0 base binary distribution.  You
+	base11	The NetBSD/i386 1.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 6.2M gzipped, 16.7M uncompressed ]
+		[ 7.5M gzipped, 19.5M uncompressed ]
 
-	comp10	The NetBSD/i386 Compiler tools.  All of the tools
+	comp11	The NetBSD/i386 Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -79,45 +102,49 @@ subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
 		set).  This set also includes the manual pages for all
 		of the utilities it contains, as well as the system
 		call and library manual pages.
-		[ 4.2M gzipped, 12.9M uncompressed ]
+		[ 4.9M gzipped, 15.0M uncompressed ]
 
-	etc10	This distribution set contains the system
+	etc11	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
 		used if you are upgrading.  (If you are upgrading,
 		it's recommended that you get a copy of this set and
 		CAREFULLY upgrade your configuration files by hand.)
-		[ 50K gzipped, 263K uncompressed ]
+		[ 63K gzipped, 338K uncompressed ]
 
-	games10	This set includes the games and their manual pages.
-		[ 1.0M gzipped, 2.7M uncompressed ]
+	games11	This set includes the games and their manual pages.
+		[ 2.8M gzipped, 6.9M uncompressed ]
 
-	man10	This set includes all of the manual pages for the
+	man11	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
-		[ 0.7M gzipped, 2.8M uncompressed ]
+		[ 0.8M gzipped, 3.4M uncompressed ]
 
-	misc10	This set includes the system dictionaries (which are
+	misc11	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
-		[ 1.6M gzipped, 5.6M uncompressed ]
+		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text10	This set includes NetBSD's text processing tools,
+	text11	This set includes NetBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
-		[ 0.8M gzipped, 2.8M uncompressed ]
+		[ 0.8M gzipped, 2.9M uncompressed ]
 
-The i386 security distribution set is named "secr10" and can be found
-in the "i386/security" subdirectory of the NetBSD 1.0 distribution
+The i386 security distribution set is named "secr11" and can be found
+in the "i386/security" subdirectory of the NetBSD 1.1 distribution
 tree.  It contains crypt.c (the source file for the DES encryption
-algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete NetBSD distribution and that
-can legally obtain it.  (Remember, because of United States law, this
-distribution set may not be exported to locations outside of the
-United States and Canada.)  [ 114K gzipped, 253K uncompressed ]
+algorithm) and the binaries which depend on it, as well as the "bdes"
+DES encryption program.  You do not need this distribution set to use
+encrypted passwords in your password file; the "base11" distribution
+includes a crypt library which can perform only the decryption function.
+The "secr11" distribution set can be found only on those sites which
+carry the complete NetBSD distribution and which can legally obtain it.
+(Remember, because of United States law, this distribution set may not be
+exported to locations outside of the United States and Canada.)
+	[ 154K gzipped, 358K uncompressed ]
 
 The i386 binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set

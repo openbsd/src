@@ -76,5 +76,46 @@ Preparing you hard disk with HDToolBox:
 	Once this is done NetBSD/amiga will be able to recognize your
 	disks and which partitions it should use.
 
->>> Should the miniroot transfer to the swap partition instructions
->>> go here?
+Transferring the miniroot filesystem:
+
+	The NetBSD/amiga installation or upgrade now uses a "miniroot"
+	fileystem which is installed on the partition used by NetBSD
+	for swapping.  This removes the requirement of using a floppy
+	disk for the filesystem used by the installation or upgrade
+	process.  It also allows more utilities to be present on the
+	filesystem than would be available when using an 880K floppy
+	disk.
+
+	Once the hard disk has been prepared for NetBSD, the appropriate
+	miniroot filesystem (inst-11.fs for a new install or upgr-11.fs
+	for an upgrade) is transferred to the swap partition configured
+	during the hard disk prep (or the existing swap parition in
+	the case of an upgrade).  The xstreamtodev utility provided in
+	the "amiga/utilities" directory can be used on AmigaDOS to
+	transfer the filesystem for either a new installation or an
+	upgrade.  The filesystem can also be transferred on an existing
+	NetBSD system for an update by using dd.  This should only be
+	done after booting NetBSD into single-user state.  It may also
+	be possible to shutdown to single-user, providing that the
+	single-user state processes are not using the swap partition.
+
+	On AmigaDOS, the command:
+		xstreamtodev -input=inst-11.fs -rdb-name=<swap partition>
+	where <swap partition> is the name you gave to the NetBSD
+	partition to be used for swapping.  Use upgr-11.fs if you
+	are going to do an upgrade of an existing NetBSD system.  If
+	xstreamtodev is unable to determine the SCSI driver device
+	name or the unit number of the specified partition, you may
+	also need to include the option "-device=<driver.name>" and/or
+	"-unit=<SCSI unit number>".
+
+	To transfer the miniroot using NetBSD, you should be booted up
+	in single user state on the current NetBSD system, or use the
+	"shutdown now" command to shutdown to single-uyser state.  Then
+	copy the miniroot using dd:
+		dd if=upgr-11.fs of=/dev/rsd0b
+	where /dev/rsd0b should be the device path of the swap partition
+	your system is configured to use.  Once the file is copied,
+	reboot back to AmigaDOS to boot the upgrade kernel.  NOTE:  the
+	release kernel is a "generic" kernel, and requires that the
+	swap partition be on the same device as the root partition.

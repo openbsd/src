@@ -1,7 +1,6 @@
 NetBSD/amiga 1.1 runs on any amiga that has a 68020 or better CPU
 with some form of FPU and MMU.  The minimal configuration requires
 4M of RAM and about 65M of disk space.  To install the entire system
->>>                 ^^^
 requires much more disk space, and to run X or compile the system,
 more RAM is recommended.  (4M of RAM will actually allow you to
 compile, however it won't be speedy.  X really isn't usable on a
@@ -13,12 +12,15 @@ Here is a table of recommended HD partition sizes for a full install:
 	user (/usr)	65M	100M	45M 	80M
 	swap		----- 2M for every M ram -----
 	local (/local)	up to you
->>> adjust sizes?
+
 
 As you may note the recommended size of /usr is 20M greater than
 needed. This is to leave room for a kernel source and compile tree
 as you will probably want to compile your own kernel. (GENERIC is
 large and bulky to accommodate all people).
+
+If you only have 4M of fast memory, you should make your swap partition
+larger, as your system will be doing much more swapping.
 
 Supported devices include:
 	A4000/A1200 IDE controller.
@@ -34,12 +36,14 @@ Supported devices include:
 		GVP Spectrum.
 		Piccalo.
 		A2410.
+		Cybervision 64.
 	Ethernet controllers:
 		A2065 Ethernet
 		Hydra Ethernet
 		ASDG Ethernet
 		A4066 Ethernet
 		Ariadne Ethernet
+		Quicknet Ethernet
 	Arcnet controllers:
 		A2060 Arcnet
 	Tape drives:

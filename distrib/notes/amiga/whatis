@@ -1,4 +1,5 @@
 
->>> What should go here?
-This is the first public release of NetBSD for the Amiga line of
-computers.
+This is the second public release of NetBSD for the Amiga line of
+computers.  Several additional graphics and network boards are now
+supported.  Some of the SCSI drivers have been enhanced and (hopefully)
+improved.

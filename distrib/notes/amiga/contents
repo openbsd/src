@@ -6,8 +6,7 @@ out as follows:
 			binary/		amiga binary distribution sets;
 					see below.
 
-			floppies/	amiga installation and upgrade
->>>                     ^^^^^^^^ should this be miniroot/?
+			miniroot/	amiga installation and upgrade
 					file system images; see below.
 
 			security/	amiga security distribution;
@@ -17,8 +16,7 @@ out as follows:
 					installation utilities; see
 					installation section, below.
 
-There are two amiga file system images to be found in the "amiga/floppy"
->>>                                                              ^^^^^^
+There are two amiga file system images to be found in the "amiga/miniroot"
 subdirectory of the NetBSD 1.1 distribution.  One of them is a upgrade
 image and one is an installation image. They are described in more
 detail below.  There are gzipped versions of each available, for easier
@@ -43,16 +41,16 @@ Upgrade file system:
 
 	This file contains a BSD root file system setup to help
 	you upgrade a previous version of NetBSD.  This includes
-	converting existing partitions
-	and mounting your root and /usr partitions and getting
-	ready to extract (and possibly first fetching) the distribution
-	sets.  There is enough on this file system to allow you to
-	make a slip or ppp connection, configure an ethernet, mount an
-	NFS file system or ftp.  You can also load distribution sets from
-	a SCSI tape, from one of your existing AmigaDOS partitions, or
-	from an existing NetBSD partition.
+	converting existing partitions and mounting your root and
+	/usr partitions and getting ready to extract (and possibly
+	first fetching) the distribution sets.  There is enough on
+	this file system to allow you to make a slip or ppp connection,
+	configure an ethernet, mount an NFS file system or ftp.
+	You can also load distribution sets from a SCSI tape, from
+	one of your existing AmigaDOS partitions, or from an existing
+	NetBSD partition.
 
-	This file is named "inst-11.fs".
+	This file is named "upgr-11.fs".
 
 The NetBSD/amiga binary distribution sets contain the binaries which
 comprise the NetBSD 1.1 release for the amiga.  There are seven binary
@@ -66,8 +64,7 @@ subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 7M gzipped, 19M uncompressed ]
->>>               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		[ 7M gzipped, 20M uncompressed ]
 
 	comp11	The NetBSD/amiga Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
@@ -78,8 +75,7 @@ subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 		set).  This set also includes the manual pages for all
 		of the utilities it contains, as well as the system
 		call and library manual pages.
-		[ 4M gzipped, 12M uncompressed ]
->>>               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		[ 5M gzipped, 15M uncompressed ]
 
 	etc11	This distribution set contains the system
 		configuration files that reside in /etc and in several
@@ -88,32 +84,27 @@ subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 		used if you are upgrading.  (If you are upgrading,
 		it's recommended that you get a copy of this set and
 		CAREFULLY upgrade your configuration files by hand.)
-		[ 50K gzipped, 280K uncompressed ]
->>>               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		[ 60K gzipped, 340K uncompressed ]
 
 	games11	This set includes the games and their manual pages.
-		[ 1M gzipped, 3M uncompressed ]
->>>               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		[ 3M gzipped, 7M uncompressed ]
 
 	man11	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
-		[ 730K gzipped, 3M uncompressed ]
->>>               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		[ 850K gzipped, 3M uncompressed ]
 
 	misc11	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
-		[ 2M gzipped, 6M uncompressed ]
->>>               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		[ 2M gzipped, 7M uncompressed ]
 
 	text11	This set includes NetBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 784K gzipped, 3M uncompressed ]
->>>               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The amiga security distribution set is named "secr11" and can be found
 in the "amiga/security" subdirectory of the NetBSD 1.1 distribution
@@ -122,8 +113,7 @@ algorithm) and the binaries which depend on it.  It can only be found
 on those sites which carry the complete NetBSD distribution and that
 can legally obtain it.  (Remember, because of United States law, this
 distribution set may not be exported to locations outside of the
-United States and Canada.)  [ 119K gzipped, 300K uncompressed ]
->>>                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+United States and Canada.)  [ 128K gzipped, 307K uncompressed ]
 
 The amiga binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set

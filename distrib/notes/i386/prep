@@ -15,18 +15,33 @@ Second, if you are using a disk controller which supports disk
 geometry translation, be sure to use the same parameters for NetBSD as
 for DOS or the other operating systems installed on your disk.  If you
 do not, it will be much harder to make NetBSD properly coexist with
-them.
+them.  Utilities exist which will print out the disk geometry which DOS
+sees; some versions of DOS "fdisk" also do this.  If you have an "EIDE"
+hard disk, DOS and NetBSD probably won't see the same geometry, and you
+must be careful to find out the DOS geometry and tell NetBSD about it
+during the installation.
 
-Third, use the DOS "fdisk" program or another partition editor to
+Third (but related to the second point above), if you are using a hard
+disk with more sectors than DOS or your controller's BIOS supports without
+some kind of software translation utility or other kludge, you MUST
+BE SURE that all partitions which you want to boot from must start below
+cylinder 1024 by the BIOS's idea of the disk, and that all DOS partitions
+MUST EXIST ENTIRELY BELOW cylinder 1024, or you will either not be able to
+boot NetBSD, not be able to boot DOS, or you may experience data loss or
+filesystem corruption.  Be sure you aren't using geometry translation that
+you don't know about, but that the DOS "fdisk" program does!
+
+Fourth, use the DOS "fdisk" program or another partition editor to
 repartition your hard disk.  Create a partition of at least 40M in
-size, and note its starting offset and its length (preferably in units
-of disk sectors or cylinders).  You will need that information when
-installing NetBSD (and if the offset and length are not in those
-units, you will have to convert them).  Once you have created the new
-NetBSD partition, mark it as having a partition type of 0xA5 (165, in
-decimal).  If you used "fdisk" to partition your disk, you will
-probably have to use a different partition editor to mark the
-partition with the correct type.
+size (preferably much larger), and note its starting offset and its
+length (preferably in units of disk sectors or cylinders).  You will
+need that information when installing NetBSD (and if the offset and
+length are not in those units, you will have to convert them).  Once
+you have created the new NetBSD partition, mark it as having a
+partition type of 0xA5 (165, in decimal).  If you used "fdisk" to
+partition your disk, you will probably have to use a different
+partition editor to mark the partition with the correct type.
+
 
 Finally, do whatever is necessary to restore order to the partition
 you took space away from.  If it was a DOS partition, you probably

@@ -11,36 +11,48 @@ installed on your hard disk.  If you wish to stop the installation,
 you may hit Control-C at any prompt, but if you do, you'll have to
 begin again from scratch.
 
->>>	transfer installation file system to the swap partition.
->>>	Does this go here, or in the hard disk prep section?
+	Transfer the install miniroot filesystem onto the hard disk
+	partition used by NetBSD for swapping, as described in the
+	"Preparing your System for NetBSD Installation" section above.
 
->>>	Getting loadbsd, ixemul.library, and netbsd onto AmigaDOS
->>>	partition.
+	You then need to have "ixemul.library" in your LIBS: directory
+	on AmigaDOS.  You also need to have the "loadbsd" program
+	in your command path.  If AmigaDOS complains about loadbsd
+	not being an executable file, be sure that the "Execute"
+	protection bit is set.  If not, set it with the command:
+		Protect loadbsd add e
+
 	Next you need to get yourself into NetBSD by loading the
 	kernel from AmigaDOS with loadbsd like so:
 
 		loadbsd -b netbsd
 
+	If you have an AGA machine, and your monitor will handle
+	the dblNTSC mode, you may also include the "-A" option to
+	enable the dblNTSC display mode.
+
 	You should see the screen clear and some information about
 	your system as the kernel configures the hardware.  Note which
 	hard disk device(s) are configured (sd0, sd1, etc).  Then
 	you will be prompted for a root device.  At this time type
-	'sd0*'.
->>>	Need to document what device number to actually use.
+	'sd0*', where '0' is the device which contains the swap
+	partition you created during the hard disk preparation.
 
 	The system should continue to boot.  For now ignore WARNING:
-	messages about bad dates in clocks and swap space.  Eventually
->>>	                                       ^^^^^^^^^^???
-	you will be asked to enter the pathname of the shell, just
-	hit return.  After a short while you should see a welcome
-	message and a prompt, asking if you wish to proceed with the
-	installation.
+	messages about bad dates in clocks.  Eventually you will be
+	asked to enter the pathname of the shell, just hit return.
+	After a short while you should see a welcome message and a
+	prompt, asking if you wish to proceed with the installation.
 
 	If you wish to proceed, enter "y" and then return.
 
 	If you have configured your hard drive[s] correctly it
 	should find the drive and partition that you selected to
-	use as your root.
+	use as your root.  You will be prompted for which device
+	you want to use for your root.  If you have multiple disks
+	present with root partitions defined, you will need to be
+	sure you enter the device name of the correct partition you
+	want to install NetBSD on.
 
 	YOU ARE NOW AT THE POINT OF NO RETURN.  If you confirm that
 	you want to install NetBSD, your hard drive will be modified,
@@ -192,7 +204,6 @@ begin again from scratch.
 		for the installation files.  /mnt/usr/distrib is
 		suggested.
 
->>> Document using ppp or slip?
 		Configure the appropriate ethernet interface i.e. le0
 		if you have a 2065 or ed0 if you have a AMIGNET from
 		Hydra Systems.
@@ -210,6 +221,11 @@ begin again from scratch.
 		or with a special netmask
 
 			ifconfig ed0 128.32.240.167 netmask 0xffffff00
+
+		You should also be able to use SLIP or PPP as the network
+		connection.
+		[XXX instructions for ppp or slip would be usefull
+		perhaps the next release]
 
 		If the NFS server or FTP server is not on a directly-
 		connected network, you should set up a route to it
@@ -267,8 +283,9 @@ network configuration information.
 
 Once you have supplied `Configure' all that it requests, your machine
 will be configured well enough that when you reboot it it will
-almost be a completely functional NetBSD system.  Note you should
-ignore the errors from `chown' they will be corrected shortly.
+almost be a completely functional NetBSD system.
+
+>>> Copy the kernel from the miniroot filesystem at this point <<<
 
 Once you are done with `Configure', halt the system with the "halt"
 command (wait for "halted" to be displayed) and reboot.  Then again
@@ -282,18 +299,21 @@ like so:
 
 	mount -av
 
-Next you need to re-make your devices to get the ownership correct:
-
-	cd /dev
-	MAKEDEV all
->>> Is this step still needed? - check on it!
-
 Your system is now complete but not completely configured; you
 should adjust the /etc/sendmail.cf file as necessary to suit your
 site and/or disable sendmail and other network related programs.
 These things can be found in /etc/netstart.  Use vi, if you installed
 the man pages you can type `man vi' or `man ed' for instructions
 on how to use these somewhat non-intuitive editors.
+
+You should also put a copy of the netbsd kernel in your root partition.
+This can be done easily by mounting the AmigaDOS partition containing
+the kernel you used to start NetBSD and copying the "netbsd" file to
+the root:
+	mount -r -t ados /dev/sd0d /mnt
+	cp /mnt/netbsd /
+(where /dev/sd0d is the AmigaDOS partition where you have netbsd, and
+/mnt/netbsd is the appropriate path of the netbsd file).
 
 Once you are done with the rest of configuration unmount your file
 systems and halt your system, then reboot:
@@ -310,5 +330,3 @@ functional:
 
 When it boots off of the hard drive, you will have a complete
 NetBSD system!  CONGRATULATIONS! (You really deserve them!!!)
-
->>> Missing the step to transfer the netbsd kernel to /

@@ -3,22 +3,19 @@ to make users upgrade by compiling and installing the 1.1 sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  Because of the various changes to the system,
 the largest being the 64-bit file size support and shared libraries,
->>> just what are the major differences between 1.0 and 1.1??
 it is impractical to upgrade by recompiling from the sources and
 installing.
 
->>>  no kernel-copy!
-To do the upgrade, you must have the appropriate kernel-copy floppy
-image on a disk, and the upgr-11.fs floppy image on another.  You must
->>>
-also have at least the "base11" binary distribution set available,
-so that you can upgrade with it, using one of the upgrade methods
-described above.  Finally, you must have sufficient disk space
-available to install the new binaries.  Since the old binaries are
-being overwritten in place, you only need space for the new binaries,
-which weren't previously on the system.  If you have a few megabytes
-free on each of your root and /usr partitions, you should have enough
-space.
+To do the upgrade, you must have the NetBSD kernel on AmigaDOS and
+you must transfer the upgrade filesystem upgr-11.fs onto the swap
+partition of the NetBSD hard disk.  You must also have at least the
+"base11" binary distribution set available, so that you can upgrade
+with it, using one of the upgrade methods described above.  Finally,
+you must have sufficient disk space available to install the new
+binaries.  Since the old binaries are being overwritten in place,
+you only need space for the new binaries, which weren't previously
+on the system.  If you have a few megabytes free on each of your
+root and /usr partitions, you should have enough space.
 
 Since upgrading involves replacing the kernel, and most of the system
 binaries, it has the potential to cause data loss.  You are strongly
@@ -28,20 +25,24 @@ beginning the upgrade process.
 
 To upgrade your system, follow the following instructions:
 
->>>	transfer upgrade file system image to swap partition
->>>	should this be in the hard disk prep section?
+	Transfer the upgrade miniroot filesystem onto the hard disk
+	partition used by NetBSD for swapping, as described in the
+	"Preparing your System for NetBSD Installation" section above.
 
-	Boot your machine using of the appropriate kernel-copy floppy.
-	When presented with the boot prompt (the prompt begins with
-	"Boot" and ends with ":-"), hit return.
+	Now boot up NetBSD using the 1.1 kernel using the loadbsd
+	command:
 
-	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present, and that
->>>                              ^^^^^^^^^^^^^^^^^^^^^
-	init(8) cannot find /etc/rc.  Do not be alarmed, these are
->>>     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-	completely normal.  When you reach the prompt asking you for a
-	shell name, just hit return.
+		loadbsd -b netbsd
+
+	You should see the screen clear and some information about
+	your system as the kernel configures the hardware.  Note which
+	hard disk device is configured that contains your root and
+	swap partition.  When prompted for the root device, type
+	'sd0*' (replacing 0 with the disk number that NetBSD used for
+	your root/swap device).  The '*' character indicates that the
+	root filesystem is contained on the swap partition.
+	When you reach the prompt asking you for a shell name, just
+	hit return.
 
 	You will be presented with some information about the upgrade
 	process and a warning message, and will be asked if you wish
@@ -59,9 +60,6 @@ To upgrade your system, follow the following instructions:
 	probably do it manually after the install process is complete,
 	by using "fsck -c 2". Read the fsck(8) manual page for more
 	details.
->>>  Is this needed for 1.0 to 1.1 upgrade?  Or mention that the upgrade
->>>  should be done if it wasn't previously done?  [It shouldn't hurt
->>>  to run through the upgrade steps.]
 
 	The upgrade program will then check your root file system,
 	and, if you approved, will upgrade it to the new file system
@@ -78,7 +76,6 @@ To upgrade your system, follow the following instructions:
 	If you don't already have the NetBSD distribution sets on your
 	disk, look in the installation section for information on how
 	to transfer them to your disk.
->>> NetBSD or AmigaDOS partitions...
 
 	Once the distribution sets are transferred to your disk,
 	continue here.  (Obviously, if the NetBSD distribution sets
@@ -113,8 +110,9 @@ To upgrade your system, follow the following instructions:
 	up the installation, by remaking some system databases.  When
 	it is complete, you should use "halt" to halt the system.
 
->>>	transfer new kernel to /
-
+	You will probably also want to copy the release "netbsd" kernel
+	image to your root at some point.
+	
 Your system has now been upgraded to NetBSD 1.1.
 
 After a new kernel has been copied to your hard disk, your
@@ -150,7 +148,6 @@ After a new kernel has been copied to your hard disk, your
 	NFS.  (Note that the information for mounts of type "ufs",
 	i.e. Fast File Systems, are contained in the mount(8) man
 	page.)
->>> Is this needed for 1.0 -> 1.1 upgrade?
 
 	Finally, you will want to delete old binaries that were part
 	of the version of NetBSD that you upgraded from and have since

@@ -17,13 +17,13 @@ as the name implies, is a creation of the members of the network community
 and without the net it's likely that this release wouldn't have come
 about.
 
-NetBSD 1.1 is a evolutionary release which contains a over a year of
+NetBSD 1.1 is a evolutionary release which contains over a year of
 changes to the kernel, user-level utilities, and documentation.
 
 Continuing the multi-platform tradition, NetBSD has added ports to
 atari and mvme68k based machines.  Kernel interfaces have continued to
 be refined, and now several subsystems and device drivers are shared
-among the different ports.  We can look for this trend to continue.
+among the different ports.  You can look for this trend to continue.
 
 NetBSD 1.1 has significantly enhanced the binary emulation subsystem 
 (which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
@@ -35,10 +35,10 @@ NetBSD 1.1 is also the first release to see machine-independent disk
 striping.  The concatenated disk driver (ccd), which was previously
 supported only by the hp300 port, has been vastly improved.  Many
 bugs were fixed, and explicit references to device-dependent routines
-were removed and replaced by calls to the generic "vnode operation"
+removed and replaced by calls to the generic "vnode operation"
 routines.  In addition, several features were added, including partition
 support, dynamic configuration and unconfiguration via a user space system
-utility program, and virtually unlimiting the number of component devices.
+utility program, and virtually unlimited number of component devices.
 
 Many new user programs have been added in NetBSD 1.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
@@ -54,15 +54,15 @@ The Future of NetBSD:
 The NetBSD Foundation was recently incorporated as a non-profit
 organization.  It's purpose is to encourage, foster and promote the
 free exchange of computer software, namely the NetBSD Operating
-System.  The corporation will allow for many things to be handled more
+System.  The foundation will allow for many things to be handled more
 smoothly than could be done with our previous informal organization.
 In particular, it provides the framework to deal with other parties
-that wish to become involved in the NetBSD Project.
+that wish to become involved in the NetBSD Project. (IN WHAT WAY?  Money, donations, etc)
 
 We believe that the NetBSD Foundation will help improve the quality 
 of NetBSD by:
 
-	* having a better organization to keep track of development
+	* providing better organization to keep track of development
 	  efforts, including co-ordination with groups working in 
 	  related fields.
 
@@ -138,35 +138,39 @@ your fault, not ours.
 
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree.  They contain the 
-complete sources to the system, excluding those portions which should
-not be exported from the U.S.  (Those are contained in each
-architecture's "security" binary distribution set.)  The source
-distribution sets are as follows:
+complete sources to the system.  The source distribution sets 
+are as follows:
+
+	dsrc11	This set contains the "domestic" sources.  These
+		sources contain export-restricted encryption code
+		and should not be exported from the U.S.
+		[ 140K gzipped, 655K uncompressed ]
 
 	gsrc11	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
-		[ 7.7M gzipped, 32.0M uncompressed ]
+		[ 7.1M gzipped, 30.4M uncompressed ]
 
 	ksrc11	This set contains the sources to the NetBSD 1.1
 		kernel, config(8), config.old(8) and dbsym(8).
-		[ 4.5M gzipped, 20.8M uncompressed ]
+		[ 6.0M gzipped, 27.0M uncompressed ]
 
 	ssrc11	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
-		[ 2.3M gzipped, 8.5M uncompressed ]
+		[ 2.4M gzipped, 8.9M uncompressed ]
 
 	src11	This set contains all of the NetBSD 1.1 sources which
 		are not mentioned above.
-		[ 7.1M gzipped, 33.4M uncompressed ]
+		[ 9.3M gzipped, 41.6M uncompressed ]
 
 It is worth noting that unless all of the source distribution sets
-are installed, you can't rebuild and install the system from scratch,
-straight out of the box.  However, all that is required to rebuild the
-system in that case is a trivial modification to one Makefile.
+are installed (except the domestic set), you can't rebuild and install
+the system from scratch, straight out of the box.  However, all that is
+required to rebuild the system in that case is a trivial modification 
+to one Makefile.
 
 The source distribution sets are distributed as groups of files named
 "set_name.xx" where "set_name" is the distribution set name, and "xx"
@@ -289,10 +293,10 @@ Also, our thanks go to:
 for answering lots of questions, fixing bugs, and doing the various work
 they've done.
 
-UC Berkeley's Experimental Computing Facility has provided a home for
-sun-lamp, people to look after it, and a sense of humor.  Rob
-Robertson, too, has added his unique sense of humor to things, and for
-a long time provided the primary FTP site for NetBSD.
+UC Berkeley's Experimental Computing Facility provided a home for
+sun-lamp in the past, people to look after it, and a sense of humor.
+Rob Robertson, too, has added his unique sense of humor to things, and
+for a long time provided the primary FTP site for NetBSD.
 
 Without CVS, this project would be impossible to manage, so our hats
 go off to Brian Berliner, Jeff Polk, and the various other people
@@ -348,17 +352,21 @@ Steve Allen		<wormey@eskimo.com>
 John Brezak		<brezak@NetBSD.ORG>
 Dave Burgess		<burgess@cynjut.infonet.net>
 Hubert Feyrer		<hubert.feyrer@rz.uni-regensburg.de>
+Adam Glass		<glass@NetBSD.ORG>
 Brad Grantham		<grantham@tenon.com>
 Matthew Green		<mrg@eterna.com.au>
+Michael L. Hitch	<osymh@gemini.oscs.montana.edu>
 Lawrence Kesteloot	<kesteloo@cs.unc.edu>
 John Kohl 		<jtk@NetBSD.ORG>
 Paul Mackerras	 	<paulus@NetBSD.ORG>
 Neil J. McRae		<neil@domino.org>
+Perry Metzger		<perry@NetBSD.ORG>
 Herb Peyerl		<hpeyerl@beer.org>
 Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Scott Reynolds		<scottr@edsi.org>
+Thor Lancelot Simon	<tls@netbd.org>
 Wolfgang Solfrank	<ws@tools.de>
 Frank van der Linden	<fvdl@NetBSD.ORG>
 Christos Zoulas 	<christos@NetBSD.ORG>

@@ -1,14 +1,13 @@
-The upgrade to NetBSD 1.0 is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 1.0 sources, and
+The upgrade to NetBSD 1.1 is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the 1.1 sources, and
 it would be very difficult to even compile a set of instructions that
-allowed them to do so.  Because of the various changes to the system,
-the largest being the 64-bit file size support and shared libraries,
-it is impractical to upgrade by recompiling from the sources and
-installing.
+allowed them to do so.  Because of the many changes to the system, it
+is difficult impractical to upgrade by recompiling from the sources
+and installing.
 
 To do the upgrade, you must have the appropriate kernel-copy floppy
-image on a disk, and the upgr-10.fs floppy image on another.  You must
-also have at least the "base10" binary distribution set available,
+image on a disk, and the upgr11.fs floppy image on another.  You must
+also have at least the "base11" binary distribution set available,
 so that you can upgrade with it, using one of the upgrade methods
 described above.  Finally, you must have sufficient disk space
 available to install the new binaries.  Since the old binaries are
@@ -31,7 +30,7 @@ To upgrade your system, follow the following instructions:
 	"Boot" and ends with ":-"), hit return.
 
 	You will be prompted to insert a file system floppy.  Remove
-	the kernel-copy floppy and insert the upgr-10 floppy, then hit
+	the kernel-copy floppy and insert the upgr11 floppy, then hit
 	any key to continue booting.
 
 	While booting, you will probably see several warnings.  You
@@ -55,7 +54,8 @@ To upgrade your system, follow the following instructions:
 	If you don't have your file systems upgraded now, you should
 	probably do it manually after the install process is complete,
 	by using "fsck -c 2". Read the fsck(8) manual page for more
-	details.
+	details. Note that this step is only important when upgrading
+        from a pre-NetBSD 1.0 release.
 
 	The upgrade program will then check your root file system,
 	and, if you approved, will upgrade it to the new file system
@@ -91,13 +91,13 @@ To upgrade your system, follow the following instructions:
 
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base10" distribution set.  Once you
+	directory containing the "base11" distribution set.  Once you
 	are there, run the "Set_tmp_dir" command, and hit return at
 	the prompt to select the default answer for the temporary
 	directory's path name.  (It should be the path name of the
 	directory that you're in.)
 
-	Run the command "Extract base10" to upgrade the base
+	Run the command "Extract base11" to upgrade the base
 	distribution.
 
 	Repeat the above two steps for all of the sets you wish to
@@ -116,8 +116,8 @@ To upgrade your system, follow the following instructions:
 	up the installation, by remaking some system databases.  When
 	it is complete, you should use "halt" to halt the system.
 
-	When the system is halted, remove the "upgr-10" floppy from
-	the floppy drive, and replace it with the NetBSD 1.0
+	When the system is halted, remove the "upgr11" floppy from
+	the floppy drive, and replace it with the NetBSD 1.1
 	kernel-copy floppy that you previously booted from. Reboot
 	with that floppy.
 
@@ -146,20 +146,21 @@ To upgrade your system, follow the following instructions:
 	Once the system is halted, remove the kernel-copy floppy from
 	the floppy disk drive, and hit any key to reboot.
 
-Your system has now been upgraded to NetBSD 1.0.
+Your system has now been upgraded to NetBSD 1.1.
 
-After a new kernel has been copied to your hard disk, your
-	machine is a complete NetBSD 1.0 system.  However, that
+        After a new kernel has been copied to your hard disk, your
+	machine is a complete NetBSD 1.1 system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
 
 	First, if you did not upgrade your file systems to the new
-	file system format during the upgrade process, you may want to
-	do so now, with "fsck -c 2".  If you are unsure about the
-	process, it's suggested that you read the fsck(8) manual page.
+	file system format during the upgrade process, and you are
+        upgrading from a pre-1.0 NetBSD, you may want to do so now,
+        with "fsck -c 2".  If you are unsure about the process, it's
+        suggested that you read the fsck(8) manual page.
 
-	Second, you will probably want to get the etc10 distribution,
+	Second, you will probably want to get the etc11 distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes
@@ -175,16 +176,18 @@ After a new kernel has been copied to your hard disk, your
 	some of the configuration files.  The most notable change is
 	that the "options" given to many of the file systems in
 	/etc/fstab or by hand have changed, and some of the file
-	systems have changed names.  To find out what the new options
-	are, it's suggested that you read the manual page for the
-	file systems' mount commands, for example mount_nfs(8) for
-	NFS.  (Note that the information for mounts of type "ufs",
+	systems have changed names. *IMPORTANT*: ANY INSTANCES OF "ufs"
+        IN /etc/fstab MUST BE CHANGED TO "ffs".  To find out what the
+        new options are, it's suggested that you read the manual page
+        for the file systems' mount commands, for example mount_nfs(8)
+        for NFS.  (Note that the information for mounts of type "ffs",
 	i.e. Fast File Systems, are contained in the mount(8) man
 	page.)
 
 	Finally, you will want to delete old binaries that were part
 	of the version of NetBSD that you upgraded from and have since
-	been removed from the NetBSD distribution.  You might also
+	been removed from the NetBSD distribution.  If you are
+        upgrading from a pre-1.0 NetBSD, you might also
 	want to recompile any locally-built binaries, to take
 	advantage of the shared libraries.  (Note that any new
 	binaries that you build will be dynamically linked, and

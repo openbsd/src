@@ -1,8 +1,9 @@
-NetBSD/i386 1.0 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
+NetBSD/i386 1.1 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
 does NOT support MCA systems, such as some IBM PS/2 systems.  The
-minimal configuration requires 4M of RAM and 40M of disk space.  To
-install the entire system requires much more disk space, and to run X
+minimal configuration is said to require 4M of RAM and 50M of disk space,
+though we do not know of anyone running with a system quite this minimal today.
+To install the entire system requires much more disk space, and to run X
 or compile the system, more RAM is recommended.  (4M of RAM will
 actually allow you to run X and/or compile, but it won't be speedy.
 Note that until you have around 16M of RAM, getting more RAM is more
@@ -12,17 +13,30 @@ Supported devices include:
 	Floppy controllers.
 	MFM, ESDI, IDE, and RLL hard disk controllers.
 	SCSI host adapters:
-		Adaptec AHA-154xA, -B, -C, and -CF [only on kcaha floppy]
+			[Adaptec host adapters only on kcadp floppy]
+		Adaptec AHA-154xA, -B, -C, and -CF 
 		Adaptec AHA-174x
-		Adaptec AIC-6260- and AIC-6360-based boards, including
+		Adaptec AIC-6260 and AIC-6360 based boards, including
 			the Adaptec AHA-152x and the SoundBlaster SCSI
 			host adapter.  (Note that you cannot boot from
-			these boards if they do not have a boot ROM,
-			and many do not.)
-		Buslogic 54x [AHA-154x clones; only on kcaha floppy]
-		Buslogic 445, 74x, 9xx [only on kcbt floppy]
-		NCR 53C810 PCI SCSI host adapter
+			these boards if they do not have a boot ROM;
+			only the AHA-152x and motherboards using this chip
+			are likely to be bootable, consequently.)
+		Adaptec AHA-294x[W] cards and some onboard PCI designs using
+			the AIC7870 chip.  This driver does *not* currently
+			work with non-PCI AIC-7xxx boards or the Adaptec 3940.
+		Buslogic 54x (Adaptec AHA-154x clones; driver on kcadp floppy)
+
+			[Other host adapters only on kcoth floppy]
+		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
+			of BusLogic SCSI adapters)
+		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 		Ultrastor 14f, 34f, and (possibly) 24f
+		Seagate/Future Domain ISA SCSI adapter cards, including
+			ST01/02
+			Future Domain TMC-885
+			Future Domain TMC-950
+
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters NetBSD/i386 can work with
 		are supported by X.  See the XFree86 FAQ for more
@@ -31,35 +45,56 @@ Supported devices include:
 		8250/16450-based ports
 		16550-based ports
 		AST-style 4-port serial boards [*]
+		BOCA 8-port serial cards [*] 
+		Cyclades Cyclom-{4, 8, 16}Y serial boards [*]
 		IBM PC-RT 4-port serial boards [*]
 	Parallel ports.
-	Ethernet controllers:
+	Ethernet adapters:
+		AMD LANCE and PCnet-based ISA Ethernet adapters [*], including:
+			Novell NE1500T
+			Novell NE2100
+			Kingston 21xx
+		AMD PCnet-based PCI Ethernet adapters, including:
+			BOCALANcard/PCI
 		AT&T StarLAN 10, EN100, and StarLAN Fiber
-		3COM 3c501 [*]
+		3COM 3c501
 		3COM 3c503
 		3COM 3c505 [*]
 		3COM 3c507
-		3COM 3c509 and 3c579
-		Digital DEPCA [*]
+		3COM 3c509 and 3c579 (But not the PCI 3c59X series)
+		Digital DC21x4x-based PCI Ethernet adapters, including:
+			SMC EtherPower 10, 10/100 (PCI only!)
+			Znyx ZX34X
+			Cogent EM100
+			Digital DE450
+			Digital DE500
 		BICC Isolan [* and not recently tested]
+		Intel EtherExpress 16
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
 		Novell NE1000, NE2000
-		Novell NE2100 [* and not recently tested]
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
-			compatible) tape drives [*]
+			compatible) tape drives [*] [+]
 	CD-ROM drives:
-		Mitsumi CD-ROM drives [*]
+		Mitsumi CD-ROM drives [*] [+]
+			[Note: The Mitsumi driver device probe is known 
+			to cause trouble with several devices!]
 		Most SCSI CD-ROM drives
 	Mice:
-		"Logitech"-style bus mice [*]
-		"Microsoft"-style bus mice [*]
-		"PS/2"-style mice [*]
+		"Logitech"-style bus mice [*] [+]
+		"Microsoft"-style bus mice [*] [+]
+		"PS/2"-style mice [*] [+]
 		Serial mice (no kernel support necessary)
+	Sound Cards:
+		SoundBlaster [*] [+]
+		Gravis Ulrasound and Ultrasound Max [*] [+]
+			[The following drivers are not extensively tested]
+		Personal Sound System [*] [+]
+		Windows Sound System [*] [+]
+		ProAudio Spectrum [*] [+]
 	Miscellaneous:
-		SoundBlaster [*]
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
@@ -69,18 +104,31 @@ NetBSD normally allows more, though, so if you have more than one, you
 can use all of them by compiling a custom kernel once NetBSD is
 installed.
 
+Support for devices marked with "[+]" IS included in the "generic" kernels,
+although it is not in the kernels which are on the distribution floppies.
+
+
 Hardware the we do NOT currently support, but get many questions
 about:
 	Adaptec AIC-7770-based SCSI host adapters (including the
-		Adaptec AHA-274x, AHA-284x, and AHA-294x families).
-	Intel EtherExpress Ethernet boards.
+		Adaptec AHA-274x, AHA-284x families).
 	NCR 5380-based SCSI host adapters.
-	PCMCIA devices.
+	APM power management -- if your system supports it, turn it off!
+	PCMCIA ("PC Card") devices, including some miniature "IDE" hard disks.
 	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
 		that connect to the floppy disk controller.)
 	WD-7000 SCSI host adapters.
+	PCI-PCI bridges and cards which include them, such as the AHA-394x
+		SCSI host adapter and some DC21x4x-based multi-Ethernet cards.
+	3Com 3c59x series PCI Ethernet and Fast Ethernet adapters.
+	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
+		run fine using one processor only.)
+	Intel EtherExpress 100 Fast Ethernet adapters.
+	Digital DEFPA PCI FDDI adapters (support barely missed this release;
+		it works in other ports, and will work in this one in the
+		next release)
 
-We are planning future support for most of these devices.
+We are planning future support for many of these devices.
 
 To be detected by the distributed kernels, the devices must
 be configured as follows:
@@ -102,22 +150,22 @@ Floppy controller
 		fdc0	0x3f0	6	2	[supports two disks]
 
 AHA-154x, AHA-174x (in compatibility mode), or BT-54x SCSI host adapters
-		aha0	0x330	any	any	[only on kcaha kernel floppy]
+		aha0	0x330	any	any	[only on kcadp kernel floppy]
 
 AHA-174x SCSI host adapters (in enhanced mode)
-		ahb0	any	any	any
+		ahb0	any	any	any	[only on kcadp kernel floppy]
 
 BT445, BT74x, or BT9xx SCSI host adapters
-		bt0	0x330	any	any	[only on kcbt kernel floppy]
+		bt0	0x330	any	any	[only on kcoth kernel floppy]
 
 Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
-		uha0	0x330	any	any
+		uha0	0x330	any	any	[only on kcoth kernel floppy]
 
 AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
-		aic0	0x340	11	6
+		aic0	0x340	11	6	[only on kcadp kernel floppy]
 
-NCR 53C810 PCI SCSI host adapter
-		ncr0	any	any	any
+Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
+		ncr0	any	any	any	[only on kcoth kernel floppy]
 
 SCSI disks	sd0	first SCSI disk (by SCSI id)
 		sd1	second SCSI disk (by SCSI id)
@@ -141,3 +189,11 @@ Novell NE1000, or NE2000 Ethernet boards
 
 AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards
 		ie0	0x360	7		iomem 0xd0000
+
+PCNet-PCI based Ethernet boards; see above for partial list
+		le0	any	any	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]
+
+DC21x4x based Ethernet boards; see above for partial list
+		de0	any	any 	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]

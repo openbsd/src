@@ -6,19 +6,16 @@ Installation is supported from several media types, including:
 	FTP
 
 No matter which installation medium you choose, you'll need to have
-two floppy disks available (either 1.2M or 1.44 will work, though
-both should be the same type).  On the first, you'll put the
-kernel-copy image that's appropriate for your system.  On the second,
-you'll put the install or upgrade floppy image, depending on whether
-you're installing NetBSD for the first time, or upgrading a previous
-installation.
+two floppy disks (either 1.2M or 1.44 will work, though both should be
+the same type).  On the first, you'll put the kernel-copy image that's
+appropriate for your system.  On the second, you'll put the install or
+upgrade floppy image, depending on whether you're installing NetBSD
+for the first time, or upgrading a previous installation.
 
-If you are using an Adaptec AHA-154x or Buslogic BT-54x SCSI host
-adapter, you need the kcaha-10.fs kernel-copy image.  If you're using
-a Buslogic BT-445, BT-74x, or BT-9xx SCSI host adapter, you'll need
-the kcbt-10.fs image.  If you're using a disk controller other than
-those mentioned above, either kernel-copy disk image will work for
-you.
+If you are using an Adaptec SCSI host adapter, you need the kcadp11.fs
+kernel-copy image.  If you're using any other SCSI host adapter,
+you'll need the kcoth11.fs image.  If you're using a non-SCSI disk
+controller, either kernel-copy disk image will work for you.
 
 If you are using a UN*X-like system to write the floppy images to
 disks, you should use the "dd" command to copy the file system images
@@ -93,14 +90,14 @@ following:
 	(If you can't figure it out, ask your system administrator.)
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base10"
-	and "etc10" distributions on tape (in order to do the absolute
+	wish to place on the tape.  For instance, to put the "base11"
+	and "etc11" distributions on tape (in order to do the absolute
 	minimum installation to a new disk), you would do the
 	following:
 
-		cd .../NetBSD-1.0		# the top of the tree
+		cd .../NetBSD-1.1		# the top of the tree
 		cd i386/binary
-		tar cf <tape_device> base10 etc10
+		tar cf <tape_device> base11 etc11
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -176,7 +173,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base10" set somewhere in your file system.  If you wish,
+	"base11" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.
