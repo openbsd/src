@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.31 1999/08/20 17:00:37 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 1999/09/19 10:09:56 maja Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -110,13 +110,14 @@ case $i in
 
 all)
 	sh $this std rz0 rz1 rz2 rz3 rz4 rz5 rz6 tz0 tz1
-	sh $this std rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
+	sh $this rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
 	sh $this pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 #	sh $this tun0 tun1 tun2 tun3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 #	sh $this lkm local
 	sh $this xfs0
 	sh $this fb0 fb1 fb2
+	sh $this random
        ;;
 
 raminst)
@@ -383,11 +384,11 @@ pty*)
 
 random|srandom|urandom|prandom|arandom)
 	rm -f random urandom srandom prandom arandom
-	mknod  random c 89 0
-	mknod srandom c 89 1
-	mknod urandom c 89 2
-	mknod prandom c 89 3
-	mknod arandom c 89 4
+	mknod  random c 88 0
+	mknod srandom c 88 1
+	mknod urandom c 88 2
+	mknod prandom c 88 3
+	mknod arandom c 88 4
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
 	;;
