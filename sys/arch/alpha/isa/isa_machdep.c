@@ -28,7 +28,7 @@
  */
 
 /*
- * Machine-specific functions for PCI autoconfiguration.
+ * Machine-specific functions for ISA autoconfiguration.
  */
 
 #include <sys/types.h>
