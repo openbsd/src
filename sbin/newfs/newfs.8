@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.40 2004/08/15 12:20:47 otto Exp $
+.\"	$OpenBSD: newfs.8,v 1.41 2004/08/15 22:06:20 jmc Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -222,7 +222,7 @@ See
 for more details on how to set this option.
 .It Fl s Ar size
 The size of the file system in sectors.
-The maximum size of a file system is 2,147,483,647 (2^31 - 1) sectors,
+The maximum size of a file system is 2,147,483,647 (2^31 \- 1) sectors,
 which is slightly less than 1TB.
 .El
 .Pp
@@ -244,7 +244,7 @@ The size of a sector in bytes (almost never anything but 512).
 Used to describe perturbations in the media format to compensate for
 a slow controller.
 Track skew is the offset of sector 0 on track N relative to sector 0
-on track N-1 on the same cylinder.
+on track N\-1 on the same cylinder.
 .It Fl l Ar hardware sector interleave
 Used to describe perturbations in the media format to compensate for
 a slow controller.
