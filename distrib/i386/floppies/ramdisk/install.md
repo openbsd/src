@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 1997/05/04 04:51:28 tholo Exp $
+#	$OpenBSD: install.md,v 1.10 1997/05/07 06:05:58 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ md_prep_fdisk()
 	getresp ""
 
 	_done=0
-	while [ $_done eq 0 ]; do
+	while [ $_done = 0 ]; do
 		echo
 		cat << \__md_prep_fdisk_1
 
