@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.29 2000/11/24 14:36:35 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.30 2001/03/02 16:57:26 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ typedef struct {
 	struct Var_ *locals[LOCAL_SIZE];
 } SymTable;
 
-typedef struct hash GSymT;
+typedef struct ohash GSymT;
 /*-
  * The structure for an individual graph node. Each node has several
  * pieces of data associated with it.

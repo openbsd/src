@@ -1,4 +1,4 @@
-/* $OpenBSD: generate.c,v 1.1 2000/06/23 16:27:29 espie Exp $ */
+/* $OpenBSD: generate.c,v 1.2 2001/03/02 16:57:26 espie Exp $ */
 /* Written by Marc Espie 1999.  
  * Public domain.
  */
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 	printf("/* Generated file, do not edit */\n");
 	for (i = 0; i < sizeof(table)/sizeof(char *); i++) {
 		e = NULL;
-		v = hash_interval(table[i], &e);
+		v = ohash_interval(table[i], &e);
 		h = v % slots;
 		if (occupied[h]) {
 			fprintf(stderr, "Collision: %s / %s (%d)\n", occupied[h],

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.51 2000/12/07 00:15:43 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.52 2001/03/02 16:57:26 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: var.c,v 1.51 2000/12/07 00:15:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.52 2001/03/02 16:57:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,7 @@ typedef struct Var_ {
     char          name[1];	/* the variable's name */
 }  Var;
 
-static struct hash_info var_info = { 
+static struct ohash_info var_info = { 
 	offsetof(Var, name), 
     NULL, hash_alloc, hash_free, element_alloc };
 static int quick_lookup __P((const char *, const char **, u_int32_t *));
@@ -238,7 +238,7 @@ quick_lookup(name, end, pk)
 {
     size_t len;
 
-    *pk = hash_interval(name, end);
+    *pk = ohash_interval(name, end);
     len = *end - name;
 	/* substitute short version for long local name */
     switch (*pk % MAGICSLOTS) {		    /* MAGICSLOTS should be the    */
@@ -398,7 +398,7 @@ new_var(name, val)
     Var *v;
     const char *end = NULL;
 
-    v = hash_create_entry(&var_info, name, &end);
+    v = ohash_create_entry(&var_info, name, &end);
 
     if (val != NULL) {
     	size_t len = strlen(val);
@@ -417,7 +417,7 @@ getvar(ctxt, name, end, k)
     const char	*end;
     u_int32_t	k;
 {
-    return hash_find(ctxt, hash_lookup_interval(ctxt, name, end, k));
+    return ohash_find(ctxt, ohash_lookup_interval(ctxt, name, end, k));
 }
 
 /*-
@@ -547,7 +547,7 @@ VarAdd(name, val, ctxt)
     	Parse_Error(PARSE_FATAL, "Trying to set dynamic variable %s",
 	    v->name);
     else
-	hash_insert(ctxt, hash_lookup_interval(ctxt, name, end, k), v);
+	ohash_insert(ctxt, ohash_lookup_interval(ctxt, name, end, k), v);
     return v;
 }
 
@@ -591,7 +591,7 @@ Var_Delete(name, ctxt)
     if (DEBUG(VAR))
 	printf("%s:delete %s\n", context_name(ctxt), name);
     (void)quick_lookup(name, &end, &k);
-    v = hash_remove(ctxt, hash_lookup_interval(ctxt, name, end, k));
+    v = ohash_remove(ctxt, ohash_lookup_interval(ctxt, name, end, k));
 
     if (v != NULL)
 	VarDelete(v);
@@ -1119,9 +1119,9 @@ Var_Init()
     VAR_GLOBAL = &global_vars;
     VAR_CMD = &cmd_vars;
     VAR_ENV = &env_vars;
-    hash_init(VAR_GLOBAL, 10, &var_info);
-    hash_init(VAR_CMD, 5, &var_info);
-    hash_init(VAR_ENV, 5, &var_info);
+    ohash_init(VAR_GLOBAL, 10, &var_info);
+    ohash_init(VAR_CMD, 5, &var_info);
+    ohash_init(VAR_ENV, 5, &var_info);
     CTXT_GLOBAL = (SymTable *)VAR_GLOBAL;
     CTXT_CMD = (SymTable *)VAR_CMD;
     CTXT_ENV = (SymTable *)VAR_ENV;
@@ -1135,14 +1135,14 @@ Var_End()
     Var *v;
     unsigned int i;
 
-    for (v = hash_first(VAR_GLOBAL, &i); v != NULL; 
-	v = hash_next(VAR_GLOBAL, &i))
+    for (v = ohash_first(VAR_GLOBAL, &i); v != NULL; 
+	v = ohash_next(VAR_GLOBAL, &i))
 	    VarDelete(v);
-    for (v = hash_first(VAR_CMD, &i); v != NULL; 
-	v = hash_next(VAR_CMD, &i))
+    for (v = ohash_first(VAR_CMD, &i); v != NULL; 
+	v = ohash_next(VAR_CMD, &i))
 	    VarDelete(v);
-    for (v = hash_first(VAR_ENV, &i); v != NULL; 
-	v = hash_next(VAR_ENV, &i))
+    for (v = ohash_first(VAR_ENV, &i); v != NULL; 
+	v = ohash_next(VAR_ENV, &i))
 	    VarDelete(v);
 #endif
 }
@@ -1171,8 +1171,8 @@ Var_Dump(ctxt)
 	Var *v;
 	unsigned int i;
 
-	for (v = hash_first(ctxt, &i); v != NULL; 
-	    v = hash_next(ctxt, &i))
+	for (v = ohash_first(ctxt, &i); v != NULL; 
+	    v = ohash_next(ctxt, &i))
 		VarPrintVar(v);
 }
 
@@ -1195,8 +1195,8 @@ Var_AddCmdline(name)
 
     Buf_Init(&buf, MAKE_BSIZE);
 
-    for (v = hash_first(VAR_CMD, &i); v != NULL; 
-    	v = hash_next(VAR_CMD, &i)) {
+    for (v = ohash_first(VAR_CMD, &i); v != NULL; 
+    	v = ohash_next(VAR_CMD, &i)) {
 		/* We assume variable names don't need quoting */
 		Buf_AddString(&buf, v->name);
 		Buf_AddChar(&buf, '=');

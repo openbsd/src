@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.42 2000/11/27 20:37:16 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.43 2001/03/02 16:57:26 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.42 2000/11/27 20:37:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.43 2001/03/02 16:57:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,10 +148,10 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.42 2000/11/27 20:37:16 espie Exp $";
 #define MACHINE_ARCH TARGET_MACHINE_ARCH
 #endif
 
-static struct hash 	archives;   /* Archives we've already examined */
+static struct ohash 	archives;   /* Archives we've already examined */
 
 typedef struct Arch_ {
-    struct hash	  members;    /* All the members of this archive, as
+    struct ohash  members;    /* All the members of this archive, as
      			       * struct arch_member entries.  */
     char	  name[1];    /* Archive name */
 } Arch;
@@ -170,12 +170,12 @@ struct arch_member {
     char	  name[1];	/* Member name.  */
 };
 
-static struct hash_info members_info = {
+static struct ohash_info members_info = {
     offsetof(struct arch_member, name), NULL, 
     hash_alloc, hash_free, element_alloc 
 };
 
-static struct hash_info arch_info = {
+static struct ohash_info arch_info = {
     offsetof(Arch, name), NULL, hash_alloc, hash_free, element_alloc 
 };
 
@@ -215,7 +215,7 @@ new_arch_member(hdr, name)
     const char *end = NULL;
     struct arch_member *n;
 
-    n = hash_create_entry(&members_info, name, &end);
+    n = ohash_create_entry(&members_info, name, &end);
     /* XXX ar entries are NOT null terminated.  */
     memcpy(n->date, &(hdr->ar_date), AR_DATE_SIZE);
     n->date[AR_DATE_SIZE] = '\0';
@@ -248,11 +248,11 @@ ArchFree(ap)
     unsigned int i;
 
     /* Free memory from hash entries */
-    for (mem = hash_first(&a->members, &i); mem != NULL;
-    	mem = hash_next(&a->members, &i))
+    for (mem = ohash_first(&a->members, &i); mem != NULL;
+    	mem = ohash_next(&a->members, &i))
 	free(mem);
 
-    hash_delete(&a->members);
+    ohash_delete(&a->members);
     free(a);
 }
 #endif
@@ -550,8 +550,8 @@ read_archive(archive, end)
 	    return NULL;
     }
 
-    ar = hash_create_entry(&arch_info, archive, &end);
-    hash_init(&ar->members, 8, &members_info);
+    ar = ohash_create_entry(&arch_info, archive, &end);
+    ohash_init(&ar->members, 8, &members_info);
 
     for (;;) {
     	size_t 		n;
@@ -633,8 +633,8 @@ read_archive(archive, end)
 	    }
 #endif
 
-	    hash_insert(&ar->members,
-		hash_qlookup(&ar->members, memName),
+	    ohash_insert(&ar->members,
+		ohash_qlookup(&ar->members, memName),
 		    new_arch_member(&arh, memName));
 	}
 	if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0)
@@ -642,7 +642,7 @@ read_archive(archive, end)
     }
 
     fclose(arch);
-    hash_delete(&ar->members);
+    ohash_delete(&ar->members);
 #ifdef SVR4ARCHIVES
     efree(list.fnametab);
 #endif
@@ -693,8 +693,8 @@ ArchMTimeMember(archive, member, hash)
 	member = cp + 1;
 
     /* Try to find archive in cache.  */
-    slot = hash_qlookupi(&archives, archive, &end);
-    ar = hash_find(&archives, slot);
+    slot = ohash_qlookupi(&archives, archive, &end);
+    ar = ohash_find(&archives, slot);
 
     /* If not found, get it now.  */
     if (ar == NULL) {
@@ -714,22 +714,22 @@ ArchMTimeMember(archive, member, hash)
 	}
 	ar = read_archive(archive, end);
 	if (ar != NULL)
-	    hash_insert(&archives, slot, ar);
+	    ohash_insert(&archives, slot, ar);
     }
     /* If archive was found, get entry we seek.  */
     if (ar != NULL) {
 	struct arch_member *he;	      
 	end = NULL;
 
-	he = hash_find(&ar->members, hash_qlookupi(&ar->members, member, &end));
+	he = ohash_find(&ar->members, ohash_qlookupi(&ar->members, member, &end));
 	if (he != NULL)
 	    return mtime_of_member(he);
 	else {
 	    if (end - member > AR_NAME_SIZE) {
 		/* Try truncated name */
 	    	end = member + AR_NAME_SIZE;
-		he = hash_find(&ar->members,
-		    hash_qlookupi(&ar->members, member, &end));
+		he = ohash_find(&ar->members,
+		    ohash_qlookupi(&ar->members, member, &end));
 		if (he != NULL)
 		    return mtime_of_member(he);
 	    }
@@ -1237,7 +1237,7 @@ Arch_LibOODate (gn)
 void
 Arch_Init()
 {
-    hash_init(&archives, 4, &arch_info);
+    ohash_init(&archives, 4, &arch_info);
 }
 
 
@@ -1258,10 +1258,10 @@ Arch_End ()
     Arch *e;
     unsigned int i;
 
-    for (e = hash_first(&archives, &i); e != NULL; 
-    	e = hash_next(&archives, &i)) 
+    for (e = ohash_first(&archives, &i); e != NULL; 
+    	e = ohash_next(&archives, &i)) 
 	    ArchFree(e);
-    hash_delete(&archives);
+    ohash_delete(&archives);
 #endif
 }
 

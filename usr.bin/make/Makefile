@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2000/11/24 14:36:33 espie Exp $
+#	$OpenBSD: Makefile,v 1.25 2001/03/02 16:57:26 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR} -Wall -Wno-char-subscripts -Wstrict-prototypes
@@ -18,21 +18,6 @@ SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 .PATH:	${.CURDIR}/lst.lib
 
 
-make: libohash.a
-.PATH:  ${.CURDIR}/ohash
-CFLAGS+=-I${.CURDIR}/ohash
-LDADD=-L${.OBJDIR} -lohash
-
-LIBOBJS= hash_create_entry.o hash_delete.o hash_do.o hash_entries.o \
-    hash_enum.o hash_init.o hash_interval.o \
-    hash_lookup_interval.o hash_lookup_memory.o hash_lookup_string.o \
-    hash_qlookup.o hash_qlookupi.o
-
-libohash.a: ${LIBOBJS}
-	rm -f $@
-	ar cq $@ `lorder ${LIBOBJS}|tsort`
-	ranlib $@
-
 CLEANFILES+=generate hashconsts.h generate.o regress.o check
 
 CLEANFILES+=${LIBOBJS} libohash.a
@@ -45,10 +30,10 @@ MAGICSLOTS=34
 hashconsts.h: generate
 	${.OBJDIR}/generate ${MAGICSLOTS} >${.TARGET}
 
-generate: generate.o error.o libohash.a
+generate: generate.o error.o
 	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
 
-check: regress.o str.o error.o buf.o libohash.a
+check: regress.o str.o error.o buf.o
 	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
 
 regress: check

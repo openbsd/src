@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.29 2000/11/24 14:36:33 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.30 2001/03/02 16:57:26 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: dir.c,v 1.29 2000/11/24 14:36:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.30 2001/03/02 16:57:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ static char rcsid[] = "$OpenBSD: dir.c,v 1.29 2000/11/24 14:36:33 espie Exp $";
 
 LIST          dirSearchPath;	/* main search path */
 
-static struct hash   openDirectories;	/* cache all open directories */
+static struct ohash   openDirectories;	/* cache all open directories */
 
 /*
  * Variables for gathering statistics on the efficiency of the hashing
@@ -189,7 +189,7 @@ struct file_stamp {
 	char name[1];			/* ...for that file.  */
 };
 
-static struct hash mtimes;  /* Results of doing a last-resort stat in
+static struct ohash mtimes;  /* Results of doing a last-resort stat in
 			     * Dir_FindFile -- if we have to go to the
 			     * system to find the file, we might as well
 			     * have its mtime on record. XXX: If this is done
@@ -203,20 +203,20 @@ static struct hash mtimes;  /* Results of doing a last-resort stat in
  * - to collate files's last modification times (global mtimes)
  * - to collate file names (in each Path structure)
  * - to collate known directories (global openDirectories).  */
-static struct hash_info stamp_info = { offsetof(struct file_stamp, name),
+static struct ohash_info stamp_info = { offsetof(struct file_stamp, name),
     NULL, hash_alloc, hash_free, element_alloc };
 
-static struct hash_info file_info = { 0, 
+static struct ohash_info file_info = { 0, 
     NULL, hash_alloc, hash_free, element_alloc };
 
-static struct hash_info dir_info = { offsetof(Path, name), 
+static struct ohash_info dir_info = { offsetof(Path, name), 
     NULL, hash_alloc, hash_free, element_alloc };
 
 static void record_stamp __P((const char *, TIMESTAMP));
 static void add_file __P((Path *, const char *));
 static char *find_file_hash __P((Path *, const char *, const char *, u_int32_t));
 static struct file_stamp *find_stamp __P((const char *));
-static void free_hash __P((struct hash *));
+static void free_hash __P((struct ohash *));
 
 static Path *DirReaddir __P((const char *, const char *));
 static void DirMatchFiles __P((char *, Path *, Lst));
@@ -234,14 +234,14 @@ record_stamp(file, t)
     const char 		*end = NULL;
     struct file_stamp 	*n;
 
-    slot = hash_qlookupi(&mtimes, file, &end);
-    n = hash_find(&mtimes, slot);
+    slot = ohash_qlookupi(&mtimes, file, &end);
+    n = ohash_find(&mtimes, slot);
     if (n)
 	n->mtime = t;
     else {
-	n = hash_create_entry(&stamp_info, file, &end);
+	n = ohash_create_entry(&stamp_info, file, &end);
 	n->mtime = t;
-	hash_insert(&mtimes, slot, n);
+	ohash_insert(&mtimes, slot, n);
     }
 }
 		
@@ -249,7 +249,7 @@ static struct file_stamp *
 find_stamp(file)
     const char 		*file;
 {
-    return hash_find(&mtimes, hash_qlookup(&mtimes, file));
+    return ohash_find(&mtimes, ohash_qlookup(&mtimes, file));
 }
 
 static void
@@ -260,13 +260,13 @@ add_file(p, file)
     unsigned 		slot;
     const char 		*end = NULL;
     char 		*n;
-    struct hash		*h = &p->files;
+    struct ohash	*h = &p->files;
 
-    slot = hash_qlookupi(h, file, &end);
-    n = hash_find(h, slot);
+    slot = ohash_qlookupi(h, file, &end);
+    n = ohash_find(h, slot);
     if (n == NULL) {
-	n = hash_create_entry(&file_info, file, &end);
-	hash_insert(h, slot, n);
+	n = ohash_create_entry(&file_info, file, &end);
+	ohash_insert(h, slot, n);
     }
 }
 		
@@ -277,21 +277,21 @@ find_file_hash(p, file, e, hv)
     const char 		*e;
     u_int32_t		hv;
 {
-    struct hash 	*h = &p->files;
+    struct ohash 	*h = &p->files;
 
-    return hash_find(h, hash_lookup_interval(h, file, e, hv));
+    return ohash_find(h, ohash_lookup_interval(h, file, e, hv));
 }
 
 static void
 free_hash(h)
-    struct hash 	*h;
+    struct ohash 	*h;
 {
     void 		*e;
     unsigned 		i;
 
-    for (e = hash_first(h, &i); e != NULL; e = hash_next(h, &i))
+    for (e = ohash_first(h, &i); e != NULL; e = ohash_next(h, &i))
 	free(e);
-    hash_delete(h);
+    ohash_delete(h);
 }
 
 /*-
@@ -310,8 +310,8 @@ void
 Dir_Init()
 {
     Lst_Init(&dirSearchPath);
-    hash_init(&openDirectories, 4, &dir_info);
-    hash_init(&mtimes, 4, &stamp_info);
+    ohash_init(&openDirectories, 4, &dir_info);
+    ohash_init(&mtimes, 4, &stamp_info);
 
     dot = DirReaddir(".", NULL);
 
@@ -342,10 +342,10 @@ Dir_End()
     dot->refCount--;
     Dir_Destroy(dot);
     Lst_Destroy(&dirSearchPath, Dir_Destroy);
-    for (p = hash_first(&openDirectories, &i); p != NULL;
-    	p = hash_next(&openDirectories, &i))
+    for (p = ohash_first(&openDirectories, &i); p != NULL;
+    	p = ohash_next(&openDirectories, &i))
 	    Dir_Destroy(p);
-    hash_delete(&openDirectories);
+    ohash_delete(&openDirectories);
     free_hash(&mtimes);
 #endif
 }
@@ -423,8 +423,8 @@ DirMatchFiles (pattern, p, expansions)
 
     isDot = (*p->name == '.' && p->name[1] == '\0');
 
-    for (entry = hash_first(&p->files, &search); entry != NULL;
-	 entry = hash_next(&p->files, &search)) {
+    for (entry = ohash_first(&p->files, &search); entry != NULL;
+	 entry = ohash_next(&p->files, &search)) {
 	/* See if the file matches the given pattern. Note we follow the UNIX
 	 * convention that dot files will only be found if the pattern
 	 * begins with a dot (note also that as a side effect of the hashing
@@ -743,7 +743,7 @@ Dir_FindFile(name, path)
     }
 
     e = NULL;
-    hv = hash_interval(cp, &e);
+    hv = ohash_interval(cp, &e);
 
     if (DEBUG(DIR)) {
 	printf("Searching for %s...", name);
@@ -986,8 +986,8 @@ Dir_MTime(gn)
     } else
 	fullName = gn->path;
 
-    slot = hash_qlookup(&mtimes, fullName);
-    entry = hash_find(&mtimes, slot);
+    slot = ohash_qlookup(&mtimes, fullName);
+    entry = ohash_find(&mtimes, slot);
     if (entry != NULL) {
 	/* Only do this once -- the second time folks are checking to
 	 * see if the file was actually updated, so we need to actually go
@@ -997,7 +997,7 @@ Dir_MTime(gn)
 		    Targ_FmtTime(entry->mtime), fullName);
 	mtime = entry->mtime;
 	free(entry);
-	hash_remove(&mtimes, slot);
+	ohash_remove(&mtimes, slot);
     } else if (stat(fullName, &stb) == 0)
     	grab_stat(stb, mtime);
     else {
@@ -1026,16 +1026,16 @@ DirReaddir(name, end)
     struct dirent 	*dp;	/* entry in directory */
     unsigned int      	slot;
 
-    slot = hash_qlookupi(&openDirectories, name, &end);
-    p = hash_find(&openDirectories, slot);
+    slot = ohash_qlookupi(&openDirectories, name, &end);
+    p = ohash_find(&openDirectories, slot);
 
     if (p != NULL)
 	return p;
 
-    p = hash_create_entry(&dir_info, name, &end);
+    p = ohash_create_entry(&dir_info, name, &end);
     p->hits = 0;
     p->refCount = 0;
-    hash_init(&p->files, 4, &file_info);
+    ohash_init(&p->files, 4, &file_info);
 
     if (DEBUG(DIR)) {
 	printf("Caching %s...", p->name);
@@ -1062,7 +1062,7 @@ DirReaddir(name, end)
     if (DEBUG(DIR))
 	printf("done\n");
 
-    hash_insert(&openDirectories, slot, p);
+    ohash_insert(&openDirectories, slot, p);
     return p;
 }
 
@@ -1180,7 +1180,7 @@ Dir_Destroy (pp)
     Path    	  *p = (Path *) pp;
 
     if (--p->refCount == 0) {
-    	hash_remove(&openDirectories, hash_qlookup(&openDirectories, p->name));
+    	ohash_remove(&openDirectories, ohash_qlookup(&openDirectories, p->name));
 	free_hash(&p->files);
 	free(p);
     }
@@ -1254,8 +1254,8 @@ Dir_PrintDirectories()
 	      (hits+bigmisses+nearmisses ?
 	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
     printf ("# %-20s referenced\thits\n", "directory");
-    for (p = hash_first(&openDirectories, &i); p != NULL;
-    	p = hash_next(&openDirectories, &i))
+    for (p = ohash_first(&openDirectories, &i); p != NULL;
+    	p = ohash_next(&openDirectories, &i))
 	    printf("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
 }
 
