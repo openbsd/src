@@ -1,4 +1,4 @@
-.\"	$NetBSD: fish.6,v 1.4 1995/03/23 08:28:16 cgd Exp $
+.\"	$OpenBSD: fish.6,v 1.2 1998/08/22 09:10:12 pjanzen Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm fish 
 .Nd play ``Go Fish''
 .Sh SYNOPSIS
-.Nm fish 
+.Nm
 .Op Fl p
 .Sh DESCRIPTION
 .Nm Fish
@@ -48,11 +48,11 @@ is the game
 .Dq Go Fish ,
 a traditional children's card game.
 .Pp
-The computer deals the player and itself seven cards, and places
-the rest of the deck face-down (figuratively).
+The computer deals the player and itself seven cards each, and places
+the rest of the deck face-down (figuratively), to be drawn from later.
 The object of the game is to collect 
 .Dq books ,
-or all of the members of a single rank.
+or all of the cards of a given rank.
 For example, collecting four 2's would give the player a 
 .Dq book of 2's .
 .Pp
@@ -64,24 +64,23 @@ Professional mode.
 .Pp
 The computer makes a random decision as to who gets to start the
 game, and then the computer and player take turns asking each other
-for cards of a specified rank.
-If the asked player has any cards of the requested rank, they give
-them up to the asking player.
-A player must have at least one of the cards of the rank they request
-in their hand.
-When a player asks for a rank of which the other player has no
-cards, the asker is told to 
-.Dq Go Fish! .
-Then, the asker draws a card from the non-dealt cards.
-If they draw the card they asked for, they continue their turn, asking
-for more ranks from the other player.
-Otherwise, the other player gets a turn.
+for cards by rank.
+If the asked player has any cards of the requested rank, they must be given
+up to the asking player.
+There must be at least one card of the requested rank already in the asking
+player's hand.
+When the asked player has no
+cards of the requested rank, the asker is told to 
+.Dq Go Fish!
+Then, the asker draws a card from the deck.
+If the card drawn is of the rank asked for, the turn continues;
+otherwise, it becomes the other player's turn.
 .Pp
 When a player completes a book, either by getting cards from the
-other player or drawing from the deck, they set those cards aside and
+other player or by drawing from the deck, those cards are set aside and
 the rank is no longer in play.
 .Pp
-The game ends when either player no longer has any cards in their hand.
+The game ends when one player no longer has any cards.
 The player with the most books wins.
 .Pp
 .Nm Fish

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcd.6,v 1.4 1998/03/12 09:09:13 pjanzen Exp $
+.\"	$OpenBSD: bcd.6,v 1.5 1998/08/22 09:10:15 pjanzen Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,8 +55,8 @@ The
 .Nm ppt
 and
 .Nm morse
-commands read the given input and reformats it in the form of
-punched cards, paper tape or morse code respectively.
+commands read the given input and reformat it in the form of
+punched cards, paper tape, or morse code, respectively.
 Acceptable input are command line arguments or the standard input.
 .Pp
 Available option:
@@ -64,5 +64,7 @@ Available option:
 .It Fl s
 The
 .Fl s
-option for morse produces dots and dashes rather than words.
+option for 
+.Nm morse
+produces dots and dashes rather than words.
 .El
