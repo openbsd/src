@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.188 2002/03/22 23:29:28 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.189 2002/03/26 01:50:08 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -328,13 +328,10 @@ list_has_sets() {
 ftp_list_files() {
 	# log in via ftp to host $1 as user $2 with password $3
 	# and return a list of all files in the directory $4 on stdout
-	local _host=$1 _user="$2" _pass="$3" _dir=$4
 
-	shift; shift; shift; shift
-
-	ftp ${_ftp_active} -V -n $_host  << __ptf
-user "$_user" "$_pass"
-cd $_dir
+	ftp ${_ftp_active} -V -n "$1"  << __ptf
+user "$2" "$3"
+cd "$4"
 ls
 quit
 __ptf

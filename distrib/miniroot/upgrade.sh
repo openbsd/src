@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.22 2002/03/04 13:59:52 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.23 2002/03/26 01:50:08 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -102,19 +102,23 @@ while [ "X${resp}" = "X" ]; do
 	getresp "${ROOTDISK}a"
 	_root_filesystem="/dev/`basename $resp`"
 	if [ ! -b ${_root_filesystem} ]; then
-		echo "Sorry, ${resp} is not a block device."
+		echo "Sorry, ${_root_filesystem} is not a block device."
 		resp=
 	fi
 done
 
-echo	"Checking root filesystem..."
-if ! fsck -pf ${_root_filesystem}; then
-	echo	"ERROR: can't check root filesystem!"
+echo -n "Checking root filesystem (fsck -fp ${_root_filesystem}) ... "
+if fsck -fp ${_root_filesystem} > /dev/null 2>&1; then
+	echo	"OK."
+else
+	echo	"FAILED.\nYou must fsck ${_root_filesystem} manually."
 	exit 1
 fi
 
-echo	"Mounting root filesystem..."
-if ! mount -o ro ${_root_filesystem} /mnt; then
+echo -n "Mounting root filesystem ... "
+if mount -o ro ${_root_filesystem} /mnt; then
+	echo	"Done."
+else
 	echo	"ERROR: can't mount root filesystem!"
 	exit 1
 fi
