@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.6 2005/01/09 05:17:38 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.7 2005/01/10 23:42:22 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $"
 #include <machine/intr.h>
 #include <machine/bus.h>
 
+#include <arm/cpufunc.h>
+
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
@@ -72,6 +74,8 @@ struct pxagpio_softc {
 #else
 	struct gpio_irq_handler *sc_handlers[2];
 #endif
+	int npins;
+	int pxa27x_pins;
 };
 
 static int	pxagpio_match(struct device *, void *, void *);
@@ -150,6 +154,14 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": GPIO Controller\n");
 
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
+		sc->npins = GPIO_NPINS;
+		sc->pxa27x_pins = 1;
+	} else  {
+		sc->npins = GPIO_NPINS_25x;
+		sc->pxa27x_pins = 0;
+	}
+
 	if (bus_space_map(sc->sc_bust, pxa->pxa_addr, pxa->pxa_size, 0,
 	    &sc->sc_bush)) {
 		printf("%s: Can't map registers!\n", sc->sc_dev.dv_xname);
@@ -207,7 +219,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 
 #ifdef DEBUG
 #ifdef PXAGPIO_HAS_GPION_INTRS
-	if (gpio >= GPIO_NPINS)
+	if (gpio >= sc->npins)
 		panic("pxa2x0_gpio_intr_establish: bad pin number: %d", gpio);
 #else
 	if (gpio > 1)
@@ -388,7 +400,10 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 
 	gedr &= sc->sc_mask[bank];
 	ghp = &sc->sc_handlers[gpio_base];
-	pins = (gpio_base < 64) ? 32 : 17;
+	if (sc->pxa27x_pins == 1)
+		pins = (gpio_base < 96) ? 32 : 25;
+	else 
+		pins = (gpio_base < 64) ? 32 : 17;
 	handled = 0;
 
 	for (i = 0, mask = 1; i < pins && gedr; i++, ghp++, mask <<= 1) {
@@ -434,7 +449,7 @@ pxa2x0_gpio_get_function(u_int gpio)
 	struct pxagpio_softc *sc = pxagpio_softc;
 	u_int32_t rv, io;
 
-	KDASSERT(gpio < GPIO_NPINS);
+	KDASSERT(gpio < sc->npins);
 
 	rv = pxagpio_reg_read(sc, GPIO_FN_REG(gpio)) >> GPIO_FN_SHIFT(gpio);
 	rv = GPIO_FN(rv);
@@ -457,7 +472,7 @@ pxa2x0_gpio_set_function(u_int gpio, u_int fn)
 	u_int32_t rv, bit;
 	u_int oldfn;
 
-	KDASSERT(gpio < GPIO_NPINS);
+	KDASSERT(gpio < sc->npins);
 
 	oldfn = pxa2x0_gpio_get_function(gpio);
 

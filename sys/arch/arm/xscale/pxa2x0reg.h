@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.6 2005/01/09 05:29:42 drahn Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.7 2005/01/10 23:42:22 drahn Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -42,6 +42,8 @@
  *  Intel(r) PXA250 and PXA210 Application Processors
  *   Developer's Manual
  *  (278522-001.pdf)
+ *
+ *  Intel PXA 27x Processor Family Developers Manual (280000-002)
  */
 #ifndef _ARM_XSCALE_PXA2X0REG_H_
 #define _ARM_XSCALE_PXA2X0REG_H_
@@ -343,7 +345,8 @@ struct pxa2x0_dma_desc {
 #define	GPIO_IS_GPIO_IN(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_IN)
 #define	GPIO_IS_GPIO_OUT(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_OUT)
 
-#define	GPIO_NPINS    121
+#define	GPIO_NPINS_25x	85
+#define	GPIO_NPINS	121
 
 /*
  * memory controller
