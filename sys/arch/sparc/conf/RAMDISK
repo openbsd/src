@@ -159,8 +159,7 @@ ie0	at obio0 addr 0x06000000 level 6		# sun4/100 on-board
 
 # HappyMeal ethernet
 hme*	at sbus? slot ? offset ?
-
-# Media Independent Interface (mii) drivers
+# Media Independent Interface (mii) drivers (required for hme)
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 

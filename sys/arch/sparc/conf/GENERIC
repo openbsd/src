@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 1998/09/10 17:34:30 jason Exp $
+#	$OpenBSD: GENERIC,v 1.33 1998/09/16 23:13:51 jason Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -160,8 +160,7 @@ ie4	at vmes0 addr 0xff2dff02 level 5 vect 0x7c
 
 # HappyMeal ethernet
 hme*	at sbus? slot ? offset ?
-
-# Media Independent Interface (mii) drivers
+# Media Independent Interface (mii) drivers (required by hme)
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
