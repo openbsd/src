@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.64 1998/07/07 22:44:06 csapuntz Exp $
+$OpenBSD: pcidevs,v 1.65 1998/07/11 17:36:49 provos Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -840,6 +840,7 @@ product MATROX MYSTIQUE_220	0x051A	MGA 1064SG 220MHz
 product MATROX MILLENNIUM_II	0x051B	MGA Millennium II 2164W
 product MATROX MILLENNIUM_IIAGP	0x051F	MGA Millennium II 2164WA-B AGP
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
+product MATROX PRODUCTIVA	0x1001	MGA Productiva G100 AGP
 
 /* Mylex products */
 product MYLEX 960P		0x0001	DAC960P RAID controller

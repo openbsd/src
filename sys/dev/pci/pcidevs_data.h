@@ -1305,6 +1305,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA 1064SG",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PRODUCTIVA,
+	    0,
+	    "Matrox",
+	    "MGA Productiva G100 AGP",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
 	    0,
 	    "Mylex",
