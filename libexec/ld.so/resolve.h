@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.28 2003/09/02 15:17:51 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.29 2003/09/04 19:33:48 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -145,6 +145,8 @@ extern void _dl_md_reloc_got(elf_object_t *object, int lazy);
 
 Elf_Addr _dl_find_symbol(const char *name, elf_object_t *startlook,
     const Elf_Sym **ref, int flags, int sym_size, elf_object_t *object);
+Elf_Addr _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
+    elf_object_t *startlook, const Elf_Sym **ref, int flags, int req_size);
 /*
  * defines for _dl_find_symbol() flag field, three bits of meaning
  * myself	- clear: search all objects,	set: search only this object
@@ -208,5 +210,14 @@ extern char *_dl_debug;
 
 #define ELF_ROUND(x,malign) (((x) + (malign)-1) & ~((malign)-1))
 #define ELF_TRUNC(x,malign) ((x) & ~((malign)-1))
+
+/* symbol lookup cache */
+typedef struct sym_cache {
+	const Elf_Sym	*sym;
+	Elf_Addr	offset;
+	int flags;
+} sym_cache;
+
+extern sym_cache *_dl_symcache;
 
 #endif /* _RESOLVE_H_ */

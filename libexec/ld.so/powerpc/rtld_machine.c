@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.30 2003/09/02 15:17:52 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.31 2003/09/04 19:33:49 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -204,10 +204,11 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		if (ELF32_R_SYM(relas->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
-			ooff = _dl_find_symbol(symn, _dl_objects, &this,
-			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
+			ooff = _dl_find_symbol_bysym(object,
+			    ELF32_R_SYM(relas->r_info), _dl_objects,
+			    &this, SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
 			    ((type == RELOC_JMP_SLOT) ? SYM_PLT:SYM_NOTPLT),
-			    sym->st_size, object);
+			    sym->st_size);
 
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: %s :can't resolve reference '%s'\n",
@@ -393,12 +394,13 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 			    cobj = cobj->next) {
 				if (object != cobj) {
 					/* only look in this object */
-					src_loff = _dl_find_symbol(symn, cobj,
-					    &cpysrc,
+					src_loff = _dl_find_symbol_bysym(object,
+					    ELF32_R_SYM(relas->r_info),
+					    cobj, &cpysrc,
 					    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|
 					    ((type == RELOC_JMP_SLOT) ?
 					        SYM_PLT : SYM_NOTPLT),
-					    sym->st_size, object);
+					    sym->st_size);
 				}
 			}
 			if (cpysrc == NULL) {

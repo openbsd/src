@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.67 2003/09/02 15:17:51 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.68 2003/09/04 19:33:48 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -42,6 +42,7 @@
 #include "archdep.h"
 #include "resolve.h"
 #include "sod.h"
+#include "stdlib.h"
 
 /*
  * Local decls.
@@ -599,21 +600,50 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	 */
 }
 
+#define DL_SM_SYMBUF_CNT 512
+sym_cache _dl_sm_symcache_buffer[DL_SM_SYMBUF_CNT];
+
 void
 _dl_rtld(elf_object_t *object)
 {
+	size_t sz;
 	if (object->next)
 		_dl_rtld(object->next);
 
 	if (object->status & STAT_RELOC_DONE)
 		return;
 
+	sz = 0;
+	if (object->nchains < DL_SM_SYMBUF_CNT) {
+		_dl_symcache = _dl_sm_symcache_buffer;
+		DL_DEB(("using static buffer for %d entries\n",
+		    object->nchains));
+		_dl_memset(_dl_symcache, 0,
+		    sizeof (sym_cache) * object->nchains);
+	} else {
+		sz = ELF_ROUND(sizeof (sym_cache) * object->nchains,
+		    _dl_pagesz);
+		DL_DEB(("allocating symcache sz %x with mmap\n", sz));
+
+		_dl_symcache = (void *)_dl_mmap(0, sz, PROT_READ|PROT_WRITE,
+		    MAP_PRIVATE|MAP_ANON, -1, 0);
+		if (_dl_symcache == (void *)MAP_FAILED) {
+			sz = 0;
+			_dl_symcache = NULL;
+		}
+	}
 	/*
 	 * Do relocation information first, then GOT.
 	 */
 	_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
 	_dl_md_reloc_got(object, !(_dl_bindnow || object->dyn.bind_now));
+
+	if (_dl_symcache != NULL) {
+		if (sz != 0) 
+			_dl_munmap( _dl_symcache, sz);
+		_dl_symcache = NULL;
+	}
 	object->status |= STAT_RELOC_DONE;
 }
 

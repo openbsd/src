@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.29 2003/09/02 15:17:52 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.30 2003/09/04 19:33:50 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -272,11 +272,13 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				value += loff;
 			} else {
 				this = NULL;
-				ooff = _dl_find_symbol(symn, _dl_objects,
-				    &this, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
-				    ((type == R_TYPE(JMP_SLOT))?
-					SYM_PLT:SYM_NOTPLT),
-				    sym->st_size, object);
+				ooff = _dl_find_symbol_bysym(object,
+				    ELF_R_SYM(relas->r_info),
+				    _dl_objects, &this,
+				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
+				    ((type == R_TYPE(JMP_SLOT)) ?
+					SYM_PLT : SYM_NOTPLT),
+				    sym->st_size);
 				if (this == NULL) {
 resolve_failed:
 					_dl_printf("%s: %s: can't resolve "

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.20 2003/09/02 15:17:51 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.21 2003/09/04 19:33:48 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -187,6 +187,45 @@ _dl_lookup_object(const char *name)
 int find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
     int flags, const Elf_Sym **ref, const Elf_Sym **weak_sym,
     elf_object_t **weak_object);
+
+sym_cache *_dl_symcache;
+int _dl_symcachestat_hits;
+int _dl_symcachestat_lookups;
+
+Elf_Addr
+_dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
+    elf_object_t *startlook, const Elf_Sym **ref, int flags, int req_size)
+{
+	Elf_Addr ret;
+	const Elf_Sym *sym;
+	const char *symn;
+
+	_dl_symcachestat_lookups ++;
+	if ((_dl_symcache != NULL) &&
+	     (symidx < req_obj->nchains) &&
+	     (_dl_symcache[symidx].sym != NULL) &&
+	     (_dl_symcache[symidx].flags == flags)) {
+
+		_dl_symcachestat_hits++;
+		*ref = _dl_symcache[symidx].sym;
+		return _dl_symcache[symidx].offset;
+	}
+
+	sym = req_obj->dyn.symtab;
+	sym += symidx;
+	symn = req_obj->dyn.strtab + sym->st_name;
+
+	ret = _dl_find_symbol(symn, startlook, ref, flags, req_size, req_obj);
+
+	if ((_dl_symcache != NULL) &&
+	     (symidx < req_obj->nchains)) {
+		_dl_symcache[symidx].sym = *ref;
+		_dl_symcache[symidx].offset = ret;
+		_dl_symcache[symidx].flags = flags;
+	}
+
+	return ret;
+}
 
 Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,

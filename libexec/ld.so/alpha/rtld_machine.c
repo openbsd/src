@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.26 2003/09/02 15:17:51 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.27 2003/09/04 19:33:49 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -107,9 +107,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		this = NULL;
 		switch (ELF64_R_TYPE(relas->r_info)) {
 		case R_TYPE(REFQUAD):
-			ooff = _dl_find_symbol(symn, _dl_objects, &this,
+			ooff =  _dl_find_symbol_bysym(object,
+			    ELF64_R_SYM(relas->r_info), _dl_objects, &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym->st_size, object);
+			    sym->st_size);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr += ooff + this->st_value + relas->r_addend;
@@ -140,9 +141,10 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 			*r_addr = ooff + this->st_value + relas->r_addend;
 			break;
 		case R_TYPE(GLOB_DAT):
-			ooff = _dl_find_symbol(symn, _dl_objects, &this,
+			ooff =  _dl_find_symbol_bysym(object,
+			    ELF64_R_SYM(relas->r_info), _dl_objects, &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym->st_size, object);
+			    sym->st_size);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr = ooff + this->st_value + relas->r_addend;
