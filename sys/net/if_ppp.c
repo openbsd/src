@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.36 2003/08/15 20:32:19 tedu Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.37 2003/12/07 15:41:27 markus Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -158,8 +158,6 @@
 #include <net/ppp-comp.h>
 #endif
 
-struct	ppp_softc ppp_softc[NPPP];
-
 static int	pppsioctl(struct ifnet *, u_long, caddr_t);
 static void	ppp_requeue(struct ppp_softc *);
 static void	ppp_ccp(struct ppp_softc *, struct mbuf *m, int rcvd);
@@ -212,6 +210,11 @@ struct compressor *ppp_compressors[8] = {
 };
 #endif /* PPP_COMPRESS */
 
+int     ppp_clone_create(struct if_clone *, int);
+
+LIST_HEAD(, ppp_softc) ppp_softc_list;
+struct if_clone ppp_cloner =
+    IF_CLONE_INITIALIZER("ppp", ppp_clone_create, NULL);
 
 /*
  * Called from boot code to establish ppp interfaces.
@@ -219,34 +222,52 @@ struct compressor *ppp_compressors[8] = {
 void
 pppattach()
 {
+    LIST_INIT(&ppp_softc_list);
+    if_clone_attach(&ppp_cloner);
+}
+
+int
+ppp_clone_create(ifc, unit)
+    struct if_clone *ifc;
+    int unit;
+{
     extern int ifqmaxlen;
     register struct ppp_softc *sc;
-    register int i = 0;
+    int s;
 
-    for (sc = ppp_softc; i < NPPP; sc++) {
-	sc->sc_unit = i;	/* XXX */
-	snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "ppp%d", i++);
-	sc->sc_if.if_softc = sc;
-	sc->sc_if.if_mtu = PPP_MTU;
-	sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
-	sc->sc_if.if_type = IFT_PPP;
-	sc->sc_if.if_hdrlen = PPP_HDRLEN;
-	sc->sc_if.if_ioctl = pppsioctl;
-	sc->sc_if.if_output = pppoutput;
+    sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+    if (!sc)
+	return (ENOMEM);
+    bzero(sc, sizeof(*sc));
+
+    sc->sc_unit = unit;
+    snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",
+	ifc->ifc_name, unit);
+    sc->sc_if.if_softc = sc;
+    sc->sc_if.if_mtu = PPP_MTU;
+    sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
+    sc->sc_if.if_type = IFT_PPP;
+    sc->sc_if.if_hdrlen = PPP_HDRLEN;
+    sc->sc_if.if_ioctl = pppsioctl;
+    sc->sc_if.if_output = pppoutput;
 #ifdef ALTQ
-	sc->sc_if.if_start = ppp_ifstart;
+    sc->sc_if.if_start = ppp_ifstart;
 #endif
-	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, ifqmaxlen);
-	sc->sc_inq.ifq_maxlen = ifqmaxlen;
-	sc->sc_fastq.ifq_maxlen = ifqmaxlen;
-	sc->sc_rawq.ifq_maxlen = ifqmaxlen;
-	IFQ_SET_READY(&sc->sc_if.if_snd);
-	if_attach(&sc->sc_if);
-	if_alloc_sadl(&sc->sc_if);
+    IFQ_SET_MAXLEN(&sc->sc_if.if_snd, ifqmaxlen);
+    sc->sc_inq.ifq_maxlen = ifqmaxlen;
+    sc->sc_fastq.ifq_maxlen = ifqmaxlen;
+    sc->sc_rawq.ifq_maxlen = ifqmaxlen;
+    IFQ_SET_READY(&sc->sc_if.if_snd);
+    if_attach(&sc->sc_if);
+    if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
+    bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
 #endif
-    }
+    s = splimp();
+    LIST_INSERT_HEAD(&ppp_softc_list, sc, sc_list);
+    splx(s);
+
+    return (0);
 }
 
 /*
@@ -256,18 +277,18 @@ struct ppp_softc *
 pppalloc(pid)
     pid_t pid;
 {
-    int nppp, i;
+    int i;
     struct ppp_softc *sc;
 
-    for (nppp = 0, sc = ppp_softc; nppp < NPPP; nppp++, sc++)
+    LIST_FOREACH(sc, &ppp_softc_list, sc_list)
 	if (sc->sc_xfer == pid) {
 	    sc->sc_xfer = 0;
 	    return sc;
 	}
-    for (nppp = 0, sc = ppp_softc; nppp < NPPP; nppp++, sc++)
+    LIST_FOREACH(sc, &ppp_softc_list, sc_list)
 	if (sc->sc_devp == NULL)
 	    break;
-    if (nppp >= NPPP)
+    if (sc == NULL)
 	return NULL;
 
     sc->sc_flags = 0;
@@ -1060,14 +1081,13 @@ void
 pppintr()
 {
     struct ppp_softc *sc;
-    int i, s, s2;
+    int s, s2;
     struct mbuf *m;
 
     splassert(IPL_SOFTNET);
 
-    sc = ppp_softc;
     s = splsoftnet();	/* XXX - what's the point of this? see comment above */
-    for (i = 0; i < NPPP; ++i, ++sc) {
+    LIST_FOREACH(sc, &ppp_softc_list, sc_list) {
 	if (!(sc->sc_flags & SC_TBUSY)
 	    && (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0 || sc->sc_fastq.ifq_head)) {
 	    s2 = splimp();

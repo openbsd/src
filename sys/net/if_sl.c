@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.21 2003/08/15 20:32:19 tedu Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.22 2003/12/07 15:41:27 markus Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -174,8 +174,6 @@ Huh?  SLMTU way too small.
 #define	ABT_COUNT	3	/* count of escapes for abort */
 #define	ABT_WINDOW	(ABT_COUNT*2+2)	/* in seconds - time to count */
 
-struct sl_softc *sl_softc;
-int nsl;
 
 #define FRAME_END	 	0xc0		/* Frame End */
 #define FRAME_ESCAPE		0xdb		/* Frame Esc */
@@ -185,6 +183,12 @@ int nsl;
 static int slinit(struct sl_softc *);
 static struct mbuf *sl_btom(struct sl_softc *, int);
 
+int	sl_clone_create(struct if_clone *, int);
+
+LIST_HEAD(, sl_softc) sl_softc_list;
+struct if_clone sl_cloner =
+    IF_CLONE_INITIALIZER("sl", sl_clone_create, NULL);
+
 /*
  * Called from boot code to establish sl interfaces.
  */
@@ -192,34 +196,46 @@ void
 slattach(n)
 	int n;
 {
-	register struct sl_softc *sc;
-	register int i = 0;
-	
-	sl_softc = malloc(n * sizeof(struct sl_softc), M_DEVBUF, M_NOWAIT);
-	if (!sl_softc)
-		return;
-	nsl = n;
-	bzero(sl_softc, n * sizeof(struct sl_softc));
-	for (sc = sl_softc; i < nsl; sc++) {
-		sc->sc_unit = i;		/* XXX */
-		snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname,
-		    "sl%d", i++);
-		sc->sc_if.if_softc = sc;
-		sc->sc_if.if_mtu = SLMTU;
-		sc->sc_if.if_flags =
-		    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
-		sc->sc_if.if_type = IFT_SLIP;
-		sc->sc_if.if_ioctl = slioctl;
-		sc->sc_if.if_output = sloutput;
-		IFQ_SET_MAXLEN(&sc->sc_if.if_snd, 50);
-		sc->sc_fastq.ifq_maxlen = 32;
-		IFQ_SET_READY(&sc->sc_if.if_snd);
-		if_attach(&sc->sc_if);
-		if_alloc_sadl(&sc->sc_if);
+	LIST_INIT(&sl_softc_list);
+	if_clone_attach(&sl_cloner);
+}
+
+int
+sl_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct sl_softc *sc;
+	int s;
+
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	if (!sc)
+		return (ENOMEM);
+	bzero(sc, sizeof(*sc));
+
+	sc->sc_unit = unit;	/* XXX */
+	snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",
+	    ifc->ifc_name, unit);
+	sc->sc_if.if_softc = sc;
+	sc->sc_if.if_mtu = SLMTU;
+	sc->sc_if.if_flags =
+	    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
+	sc->sc_if.if_type = IFT_SLIP;
+	sc->sc_if.if_ioctl = slioctl;
+	sc->sc_if.if_output = sloutput;
+	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, 50);
+	sc->sc_fastq.ifq_maxlen = 32;
+	IFQ_SET_READY(&sc->sc_if.if_snd);
+	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
+	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
-	}
+	s = splimp();
+	LIST_INSERT_HEAD(&sl_softc_list, sc, sc_list);
+	splx(s);
+
+	return (0);
 }
 
 static int
@@ -258,7 +274,7 @@ slopen(dev, tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	register struct sl_softc *sc;
-	int i, error, s;
+	int error, s;
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
@@ -266,7 +282,7 @@ slopen(dev, tp)
 	if (tp->t_line == SLIPDISC)
 		return (0);
 
-	for (i = nsl, sc = sl_softc; i--; sc++)
+	LIST_FOREACH(sc, &sl_softc_list, sc_list)
 		if (sc->sc_ttyp == NULL) {
 			if (slinit(sc) == 0)
 				return (ENOBUFS);
