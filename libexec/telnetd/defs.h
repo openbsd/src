@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.3 1998/03/12 04:53:09 art Exp $	*/
+/*	$OpenBSD: defs.h,v 1.4 1998/05/08 19:47:05 deraadt Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/02/28 20:38:10 thorpej Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ typedef unsigned char cc_t;
 /*
  * I/O data buffers defines
  */
-#define	NETSLOP	64
+#define	NETSLOP	4096
 #ifdef CRAY
 #undef BUFSIZ
 #define BUFSIZ  2048
