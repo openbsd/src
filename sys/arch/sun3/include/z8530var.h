@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.7 1997/09/21 04:21:26 niklas Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.8 2001/08/18 22:37:40 art Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.5 1996/10/13 03:47:44 christos Exp $	*/
 
 /*
@@ -47,6 +47,10 @@
  */
 
 #include <dev/ic/z8530sc.h>
+struct zsc_softc {
+        struct  device zsc_dev;         /* required first: base device */
+        struct  zs_chanstate zsc_cs[2]; /* channel A and B soft state */
+};
 
 /*
  * Functions to read and write individual registers in a channel.
