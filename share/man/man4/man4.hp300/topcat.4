@@ -1,4 +1,4 @@
-.\"	$OpenBSD: topcat.4,v 1.7 2005/01/08 18:30:31 miod Exp $
+.\"	$OpenBSD: topcat.4,v 1.8 2005/01/08 19:46:51 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,17 +94,15 @@ driver, and the associated
 .Xr ite 4
 console framework.
 .Pp
-The Topcat, Catseye and Kathmandu display cards are not user configurable.
+The Topcat display cards are not user configurable.
 If one is present on a
 system, it will always have a frame buffer address of 0x200000 and a control
 register address of 0x560000.
-These are the
-.Tn HP
-series 300
-.Tn ITE
-(Internal
-Terminal Emulator) defaults.
-The device can also be used as a graphics output device.
+.Pp
+The Catseye and Kathmandu cards can be configured using the on-board 8 DIP
+switches selector to define the
+.Dq select code .
+A select code of 1 will use the same settings as the Topcat cards.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr dvbox 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hyper.4,v 1.4 2004/12/01 14:11:57 jmc Exp $
+.\"	$OpenBSD: hyper.4,v 1.5 2005/01/08 19:46:51 miod Exp $
 .\"
 .\" Copyright (c) 2003, Miodrag Vallat.
 .\" All rights reserved.
@@ -36,7 +36,7 @@ Hyperion frame buffer
 .Cd "hyper* at dio?"
 .Cd "grf*   at hyper?"
 .Sh DESCRIPTION
-The Hyperion is a monochrome frame buffer.
+The Hyperion is a monochrome, high-resolution frame buffer.
 .Pp
 The
 .Nm
@@ -45,6 +45,24 @@ driver provides a frame buffer abstraction to the
 driver, and the associated
 .Xr ite 4
 console framework.
+.Sh SELECT CODE
+The
+.Dq select code
+for the Hyperion card can be set with the JP01 and JP02 jumpers.
+These jumpers are located in the upper right corner of the board, when it is
+placed component side up, with the video connector to the left.
+Numbering the jumper pins from 1 to 3 from the left to right,
+the following combinations are available:
+.Bl -column "JP02" "JP01"
+.It Li "JP02" Ta "JP01" Ta "Select code"
+.It " "
+.It Li "1-2" Ta "1-2" Ta 135
+.It Li "1-2" Ta "2-3" Ta 134
+.It Li "2-3" Ta "1-2" Ta "133 (factory settings)"
+.It Li "2-3" Ta "2-3" Ta 132
+.El
+.Pp
+Leaving a jumper open is equivalent to shorting pins 1 and 2.
 .Sh SEE ALSO
 .Xr dvbox 4 ,
 .Xr gbox 4 ,
