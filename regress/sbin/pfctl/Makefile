@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.153 2003/05/26 06:03:53 henning Exp $
+# $OpenBSD: Makefile,v 1.154 2003/05/26 08:12:54 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -128,8 +128,7 @@ pfr${n}-update:
 
 pfr:		${PFR_TARGETS}
 pfr-update:	${PFR_UPDATES}
-REGRESS_TARGETS+=pfr
-UPDATE_TARGETS+=pfr-update
+NODEFAULT_TARGETS+=pfr
 
 .for n in ${PFOPT}
 PFOPT_TARGETS+=pfopt${n}
