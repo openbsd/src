@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.62 1999/12/27 03:05:52 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.63 2000/01/09 23:02:15 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -242,8 +242,8 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 	{
 	  case IPPROTO_UDP:
 	  case IPPROTO_TCP:
-	    dst->sen_sport = inp->inp_lport;
-	    dst->sen_dport = inp->inp_fport;
+	    dst->sen_sport = htons(inp->inp_lport);
+	    dst->sen_dport = htons(inp->inp_fport);
 	    break;
 	  default:
 	    dst->sen_sport = 0;
