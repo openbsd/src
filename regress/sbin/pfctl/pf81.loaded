@@ -1,9 +1,9 @@
 @0 pass inet6 from (lo0) to ::1
-  [ Skip steps: i=end d=end f=3 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=3 p=end sa=3 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 pass inet6 from (lo0) to ::2
-  [ Skip steps: i=end d=end f=3 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=3 p=end sa=3 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @2 pass inet6 from (lo0) to ::3
@@ -11,11 +11,11 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @3 pass inet from (lo0) to 0.0.0.1
-  [ Skip steps: i=end d=end f=6 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=6 p=end sa=6 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @4 pass inet from (lo0) to 0.0.0.2
-  [ Skip steps: i=end d=end f=6 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=6 p=end sa=6 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @5 pass inet from (lo0) to 0.0.0.3
@@ -23,47 +23,47 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @6 pass from <foo:*> to <bar1:*>
-  [ Skip steps: i=end d=end f=9 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=9 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @7 pass from <foo:*> to <bar2:*>
-  [ Skip steps: i=end d=end f=9 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=9 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @8 pass from <foo:*> to <bar3:*>
-  [ Skip steps: i=end d=end p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @9 pass inet6 from <foo:*> to ::1
-  [ Skip steps: i=end d=end f=12 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=12 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @10 pass inet6 from <foo:*> to ::2
-  [ Skip steps: i=end d=end f=12 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=12 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @11 pass inet6 from <foo:*> to ::3
-  [ Skip steps: i=end d=end p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @12 pass inet from <foo:*> to 0.0.0.1
-  [ Skip steps: i=end d=end f=15 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=15 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @13 pass inet from <foo:*> to 0.0.0.2
-  [ Skip steps: i=end d=end f=15 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=15 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @14 pass inet from <foo:*> to 0.0.0.3
-  [ Skip steps: i=end d=end p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @15 pass from <foo:*> to <bar1:*>
-  [ Skip steps: i=end d=end f=21 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=21 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @16 pass from <foo:*> to <bar2:*>
-  [ Skip steps: i=end d=end f=21 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=21 p=end sa=18 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @17 pass from <foo:*> to <bar3:*>
