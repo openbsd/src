@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.14 2003/06/03 15:20:41 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.15 2003/12/14 14:34:58 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,8 @@
 #include "app.h"
 #include "conf.h"
 #include "ipsec.h"
+#include <linux/pfkeyv2.h>
+#include <linux/ipsec.h>
 
 #ifdef USE_PF_KEY_V2
 #include "pf_key_v2.h"
@@ -80,7 +82,7 @@ sysdep_sa_len (struct sockaddr *sa)
       return sizeof (struct sockaddr_in6);
     default:
       log_print ("sysdep_sa_len: unknown sa family %d", sa->sa_family);
-    } 
+    }
   return sizeof (struct sockaddr_in);
 }
 
@@ -134,29 +136,47 @@ sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 int
 sysdep_cleartext (int fd, int af)
 {
+  struct sadb_x_policy pol_in = {
+    SADB_UPDATE,
+    SADB_EXT_SENSITIVITY,
+    IPSEC_POLICY_BYPASS,
+    IPSEC_DIR_INBOUND,
+    0,
+    0,
+    0
+  };
+  struct sadb_x_policy pol_out = {
+    SADB_UPDATE,
+    SADB_EXT_SENSITIVITY,
+    IPSEC_POLICY_BYPASS,
+    IPSEC_DIR_OUTBOUND,
+    0,
+    0,
+    0
+  };
+
   if (app_none)
     return 0;
 
-  if (!(af == AF_INET || af == AF_INET6)) 
+  if (!(af == AF_INET || af == AF_INET6))
     {
       log_print ("sysdep_cleartext: unsupported protocol family %d", af);
       return -1;
     }
 
-  if (setsockopt(fd, af == AF_INET ? IPPROTO_IP : IPPROTO_IPV6,
-		 af == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY,
-		 "\x2\x0\x12\x0\x4\x0\x1\x0"
-		 "\x0\x0\x0\x0\x0\x0\x0\x0", 16) < 0 ||
-      setsockopt(fd, af == AF_INET ? IPPROTO_IP : IPPROTO_IPV6,
-      		 af == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY,
-		 "\x2\x0\x12\x0\x4\x0\x2\x0"
-		 "\x0\x0\x0\x0\00\x0\x0\x0", 16) < 0)
+  if (setsockopt (fd, af == AF_INET ? IPPROTO_IP : IPPROTO_IPV6,
+		  af == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY,
+		  &pol_in, sizeof pol_in) < 0 ||
+      setsockopt (fd, af == AF_INET ? IPPROTO_IP : IPPROTO_IPV6,
+		  af == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY,
+		  &pol_out, sizeof pol_out) < 0)
     {
       log_error ("sysdep_cleartext: "
-		 "setsockopt (%d, IPPROTO_IP, IP_IPSEC_POLICY, ...) "
-		 "failed", fd);
-       return -1;
-    } 
+		 "setsockopt (%d, IPPROTO_IP%s, IP%s_IPSEC_POLICY, ...) "
+		 "failed", fd, af == AF_INET ? "" : "V6",
+		 af == AF_INET ? "" : "V6");
+      return -1;
+    }
   return 0;
 }
 
