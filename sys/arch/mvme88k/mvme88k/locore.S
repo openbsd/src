@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2001/03/09 05:44:41 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2001/03/12 22:56:17 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -62,11 +62,12 @@
 #endif /* ASSEMBLER */
 
 #include "assym.s"
-#include "machine/asm.h"
-#include "machine/trap.h"
-#include "machine/m88100.h"
-#include "machine/psl.h"
-#include "machine/vmparam.h"      /* INTSTACK_SIZE */
+#include "ksyms.h"
+#include <machine/asm.h>
+#include <machine/trap.h>
+#include <machine/m88100.h>
+#include <machine/psl.h>
+#include <machine/vmparam.h>      /* INTSTACK_SIZE */
 
 /***********************************************************************/
 
@@ -153,8 +154,10 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	st	r3,  r13, lo16(_bootaddr)
 	or.u	r13, r0,  hi16(_first_addr)
 	st	r4,  r13, lo16(_first_addr)
+#if defined(DDB) || NKSYMS > 0
 	or.u	r13, r0,  hi16(_esym)
 	st	r4,  r13, lo16(_esym)
+#endif
 	or.u	r13, r0,  hi16(_miniroot)
 	st	r5,  r13, lo16(_miniroot)
 	or.u	r13, r0,  hi16(_bootdev)
@@ -474,11 +477,11 @@ estack0:
 _kstack:
 	word	UADDR
 
-#ifdef DDB
+#if defined(DDB) || NKSYMS > 0
 	global	_esym
 _esym:
 	word 	0
-#endif /* DDB */
+#endif /* DDB || NKSYMS > 0 */
 
 	global	_intiobase, _intiolimit, _extiobase
 _intiobase:
