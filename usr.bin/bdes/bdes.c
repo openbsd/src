@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.12 2003/07/02 21:04:09 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.13 2003/11/15 00:23:02 tedu Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.12 2003/07/02 21:04:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.13 2003/11/15 00:23:02 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,8 @@ main(int ac, char *av[])
 		/*
 		 * get the key
 		 */
-		p = getpass("Enter key: ");
+		if ((p = getpass("Enter key: ")) == NULL)
+			err(1, "getpass");
 		/*
 		 * copy it, nul-padded, into the key area
 		 */
