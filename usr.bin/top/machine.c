@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.31 2003/06/13 21:52:24 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.32 2003/06/14 20:23:41 avsm Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -398,10 +398,10 @@ format_next_process(caddr_t handle, char *(*get_userid)())
 		char *comm = PP(pp, p_comm);
 		char buf[sizeof(PP(pp, p_comm))];
 
-		(void) strlcpy(buf, comm, sizeof comm);
+		(void) strlcpy(buf, comm, sizeof buf);
 		comm[0] = '<';
-		(void) strlcpy(&comm[1], buf, sizeof comm - 1);
-		(void) strlcat(comm, ">", sizeof comm);
+		(void) strlcpy(&comm[1], buf, sizeof buf - 1);
+		(void) strlcat(comm, ">", sizeof buf);
 	}
 	cputime = (PP(pp, p_uticks) + PP(pp, p_sticks) + PP(pp, p_iticks)) / stathz;
 
