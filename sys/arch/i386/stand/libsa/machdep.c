@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 1997/08/13 04:32:43 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 1997/08/21 20:36:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -63,6 +63,7 @@
 #include "debug.h"
 
 struct apm_connect_info apminfo;
+struct BIOS_regs	BIOS_regs;
 
 #ifdef DEBUG
 #define CKPT(c)	(*(u_int16_t*)0xb8148 = 0x4700 + (c))

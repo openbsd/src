@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.24 1997/08/12 19:30:13 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.25 1997/08/21 20:36:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -42,8 +42,6 @@
 #include "biosdev.h"
 
 extern int debug;
-
-struct BIOS_regs	BIOS_regs;
 
 struct biosdisk {
 	u_int	dinfo;
