@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.10 1995/04/12 21:23:24 mycroft Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.11 1996/01/09 21:23:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$NetBSD: dumpfs.c,v 1.10 1995/04/12 21:23:24 mycroft Exp $";
+static char rcsid[] = "$NetBSD: dumpfs.c,v 1.11 1996/01/09 21:23:36 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,8 +197,8 @@ dumpfs(name)
 		    afs.fs_cssize - i : afs.fs_bsize;
 		afs.fs_csp[j] = calloc(1, size);
 		if (lseek(fd,
-		    (off_t)((off_t)fsbtodb(&afs, (afs.fs_csaddr + j * afs.fs_frag)) *
-		    (off_t)dev_bsize), SEEK_SET) == (off_t)-1)
+		    (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j * afs.fs_frag))) *
+		    dev_bsize, SEEK_SET) == (off_t)-1)
 			goto err;
 		if (read(fd, afs.fs_csp[j], size) != size)
 			goto err;
@@ -239,7 +239,7 @@ dumpcg(name, fd, c)
 	int i, j;
 
 	printf("\ncg %d:\n", c);
-	if ((cur = lseek(fd, (off_t)((off_t)fsbtodb(&afs, cgtod(&afs, c)) * (off_t)dev_bsize),
+	if ((cur = lseek(fd, (off_t)(fsbtodb(&afs, cgtod(&afs, c))) * dev_bsize,
 	    SEEK_SET)) == (off_t)-1)
 		return (1);
 	if (read(fd, &acg, afs.fs_bsize) != afs.fs_bsize) {
