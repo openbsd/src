@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.6 2000/10/13 14:55:23 aaron Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.7 2000/10/14 15:44:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -92,15 +92,13 @@
 
 #include <dev/ic/xlreg.h>
 
-struct xl_pci_softc {
-	struct xl_softc sc_xl;
-	pci_chipset_tag_t sc_chiptag;
-	pcitag_t sc_pcitag;
-};
-
 int xl_pci_match	__P((struct device *, void *, void *));
 void xl_pci_attach	__P((struct device *, struct device *, void *));
 void xl_pci_intr_ack	__P((struct xl_softc *));
+
+struct cfattach xl_pci_ca = {
+	sizeof(struct xl_softc), xl_pci_match, xl_pci_attach,
+};
 
 int
 xl_pci_match(parent, match, aux)
@@ -147,7 +145,6 @@ xl_pci_attach(parent, self, aux)
 {
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct pci_attach_args *pa = aux;
-	struct xl_pci_softc *psc = (void *)self;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
@@ -268,9 +265,18 @@ xl_pci_attach(parent, self, aux)
 #endif
 
 	if (sc->xl_flags & XL_FLAG_FUNCREG) {
+		if (pci_mem_find(pc, pa->pa_tag, XL_PCI_FUNCMEM, &iobase,
+		    &iosize, NULL)) {
+			printf(": can't find func space\n");
+			return;
+		}
+		if (bus_space_map(pa->pa_memt, iobase, iosize, 0,
+		    &sc->xl_funch)) {
+			printf(": can't map func space\n");
+			return;
+		}
+		sc->xl_funct = pa->pa_memt;
 		sc->intr_ack = xl_pci_intr_ack;
-		psc->sc_chiptag = pa->pa_pc;
-		psc->sc_pcitag = pa->pa_tag;
 	}
 
 	/*
@@ -301,12 +307,6 @@ void
 xl_pci_intr_ack(sc)
 	struct xl_softc *sc;
 {
-	struct xl_pci_softc *psc = (struct xl_pci_softc *)sc;
-
-	pci_conf_write(psc->sc_chiptag, psc->sc_pcitag,
-	    XL_PCI_FUNCMEM + XL_PCI_INTR, XL_PCI_INTRACK);
+	bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_PCI_INTR,
+	    XL_PCI_INTRACK);
 }
-
-struct cfattach xl_pci_ca = {
-	sizeof(struct xl_pci_softc), xl_pci_match, xl_pci_attach,
-};
