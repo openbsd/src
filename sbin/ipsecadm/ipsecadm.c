@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.33 2000/03/28 14:30:51 jason Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.34 2000/04/21 17:32:24 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -180,29 +180,29 @@ void
 usage()
 {
     fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
-	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4\n"
+	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4,\n"
 	    "\t\t  flow, bind, flush\n"
 	    "\tPossible modifiers:\n"
-	    "\t  -enc <alg>\t\t\t encryption algorithm\n"
-	    "\t  -auth <alg>\t\t\t authentication algorithm\n"
-	    "\t  -src <ip>\t\t\t source address to be used\n"
-	    "\t  -halfiv\t\t\t use 4-byte IV in old ESP\n"
-	    "\t  -forcetunnel\t\t\t force IP-in-IP encapsulation\n"
-	    "\t  -dst <ip>\t\t\t destination address to be used\n"
-	    "\t  -proxy <ip>\t\t\t proxy address to be used\n"
-	    "\t  -spi <val>\t\t\t SPI to be used\n"
-	    "\t  -key <val>\t\t\t key material to be used\n"
-	    "\t  -authkey <val>\t\t key material for auth in new esp\n"
-	    "\t  -proto <val>\t\t\t security protocol\n"
-	    "\t  -chain\t\t\t SPI chain delete\n"
-	    "\t  -transport <val>\t\t protocol number for flow\n"
+	    "\t  -enc <alg>\t\t\tencryption algorithm\n"
+	    "\t  -auth <alg>\t\t\tauthentication algorithm\n"
+	    "\t  -src <ip>\t\t\tsource address to be used\n"
+	    "\t  -halfiv\t\t\tuse 4-byte IV in old ESP\n"
+	    "\t  -forcetunnel\t\t\tforce IP-in-IP encapsulation\n"
+	    "\t  -dst <ip>\t\t\tdestination address to be used\n"
+	    "\t  -proxy <ip>\t\t\tproxy address to be used\n"
+	    "\t  -spi <val>\t\t\tSPI to be used\n"
+	    "\t  -key <val>\t\t\tkey material to be used\n"
+	    "\t  -authkey <val>\t\tkey material for auth in new esp\n"
+	    "\t  -proto <val>\t\t\tsecurity protocol\n"
+	    "\t  -chain\t\t\tSPI chain delete\n"
+	    "\t  -transport <val>\t\tprotocol number for flow\n"
 	    "\t  -addr <ip> <net> <ip> <net>\t subnets for flow\n"
-	    "\t  -delete\t\t\t delete specified flow\n"
-	    "\t  -bypass\t\t\t create/delete a bypass flow\n"
-	    "\t  -sport\t\t\t source port for flow\n"
-	    "\t  -dport\t\t\t destination port for flow\n"
-	    "\t  -ingress\t\t\t flow is ingress access control entry\n"
-	    "\t  -[ah|esp|ip4]\t to flush a particular protocol\n"
+	    "\t  -delete\t\t\tdelete specified flow\n"
+	    "\t  -bypass\t\t\tcreate/delete a bypass flow\n"
+	    "\t  -sport\t\t\tsource port for flow\n"
+	    "\t  -dport\t\t\tdestination port for flow\n"
+	    "\t  -ingress\t\t\tflow is ingress access control entry\n"
+	    "\t  -[ah|esp|ip4]\t\t\tto flush a particular protocol\n"
 	    "\talso: dst2, spi2, proto2\n"
 	);
 }
