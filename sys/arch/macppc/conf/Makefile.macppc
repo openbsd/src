@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.3 2001/12/24 23:12:14 miod Exp $
+#	$OpenBSD: Makefile.macppc,v 1.4 2002/01/03 20:37:14 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -50,7 +50,7 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100074 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g -X -x
 
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}

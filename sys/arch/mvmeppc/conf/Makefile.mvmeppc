@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.5 2001/08/21 08:49:45 miod Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.6 2002/01/03 20:37:16 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -46,7 +46,7 @@ CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100074 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g -X -x
 
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}

@@ -27,7 +27,7 @@ CMACHFLAGS=	-Wa,-Av9a, -mno-fpu
 CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 LINKFLAGS=	-n -Ttext 01000000 -Tdata 01800000 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g -X -x
 
 HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
