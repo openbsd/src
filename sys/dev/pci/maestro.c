@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.1 2001/01/11 23:36:38 espie Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.2 2001/01/12 17:38:30 espie Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -123,6 +123,8 @@ struct maestro_softc {
 	pci_chipset_tag_t	pc;
 	pcitag_t		pt;
 
+#define MAESTRO_FLAG_SETUPGPIO	0x0001
+	int			flags;
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	bus_dma_tag_t		dmat;
@@ -138,7 +140,6 @@ struct maestro_softc {
 	struct ac97_host_if	host_if;
 	struct audio_device	*sc_audev;
 
-#define MAESTRO_FLAG_SETUPGPIO	0x0001
 	void			*powerhook;
 	int			suspend;
 
@@ -199,6 +200,7 @@ void 	maestro_channel_start __P((struct maestro_channel *));
 void 	maestro_channel_stop __P((struct maestro_channel *));
 void 	maestro_channel_advance_dma __P((struct maestro_channel *));
 
+int	maestro_get_flags __P((struct pci_attach_args *));
 
 void	ringbus_setdest __P((struct maestro_softc *, int, int));
 
@@ -267,16 +269,32 @@ struct {
 	int flags;
 } maestro_pcitab[] = {
 	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTROII,
-	  "ESS Technology Maestro-2",
-	  0 },
+	  "ESS Technology Maestro-2", 0 },
 	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
-	  "ESS Technology Maestro-2E",
-	  0 },
-	/* { 0x1285, 0x0100, "ESS Technology Maestro-1", 0 } */
-	/* { 0x1033, 0x8058, "NEC Versa(?)", MAESTRO_FLAG_SETUPGPIO } */
-	/* { 0x1033, 0x803c, "NEC VersaProNX VA26D", MAESTRO_FLAG_SETUPGPIO } */
+	  "ESS Technology Maestro-2E", 0 },
+	{ 0x1285, 0x0100, "ESS Technology Maestro-1", 0 },
+	{ PCI_VENDOR_NEC, 0x8058, "NEC Versa(?)", MAESTRO_FLAG_SETUPGPIO },
+	{ PCI_VENDOR_NEC, 0x803c, "NEC VersaProNX VA26D", MAESTRO_FLAG_SETUPGPIO }
 };
 #define NMAESTRO_PCITAB	lengthof(maestro_pcitab)
+
+int
+maestro_get_flags(pa)
+	struct pci_attach_args *pa;
+{
+	int i;
+
+	/* Distinguish audio devices from modems with the same manfid */
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_MULTIMEDIA)
+		return (-1);
+	if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_MULTIMEDIA_AUDIO)
+		return (-1);
+	for (i = 0; i < NMAESTRO_PCITAB; i++)
+		if (PCI_VENDOR(pa->pa_id) == maestro_pcitab[i].vendor &&
+		    PCI_PRODUCT(pa->pa_id) == maestro_pcitab[i].product)
+			return (maestro_pcitab[i].flags);
+	return (-1);
+}
 
 /* -----------------------------
  * Driver interface.
@@ -289,18 +307,12 @@ maestro_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	int i;
 
-	/* Distinguish audio devices from modems with the same manfid */
-	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_MULTIMEDIA)
+/* This is grossly inelegant, but we can't store results at match time. */
+	if (maestro_get_flags(pa) == -1)
 		return (0);
-	if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_MULTIMEDIA_AUDIO)
-		return (0);
-	for (i = 0; i < NMAESTRO_PCITAB; i++)
-		if (PCI_VENDOR(pa->pa_id) == maestro_pcitab[i].vendor &&
-		    PCI_PRODUCT(pa->pa_id) == maestro_pcitab[i].product)
-			return (1);
-	return (0);
+	else
+		return (1);
 }
 
 void
@@ -322,6 +334,7 @@ maestro_attach(parent, self, aux)
 
 	printf("\n");
 	sc->sc_audev = &maestro_audev;
+	sc->flags = maestro_get_flags(pa);
 
 	sc->pc = pa->pa_pc;
 	sc->pt = pa->pa_tag;
@@ -515,22 +528,18 @@ maestro_init(sc)
 	bus_space_write_1(sc->iot, sc->ioh, PORT_ASSP_CTRL_C, 0x00);
 
 	/*
-	 * Setup GPIO.
-	 * There seems to be a special case with NEC systems.
+	 * Setup GPIO if needed (NEC systems) 
 	 */
-
-#if 0
-	/* Matthew Braithwaite <matt@braithwaite.net> reported that
-	 * NEC Versa LX doesn't need GPIO operation. */
-	bus_space_write_2(sc->iot, sc->ioh, 
-	    PORT_GPIO_MASK, 0x9ff);
-	bus_space_write_2(sc->iot, sc->ioh, PORT_GPIO_DIR,
-	    bus_space_read_2(sc->iot, sc->ioh, 
-	    PORT_GPIO_DIR) | 0x600);
-	bus_space_write_2(sc->iot, sc->ioh, 
-	    PORT_GPIO_DATA, 0x200);
-
-#endif
+	if (sc->flags & MAESTRO_FLAG_SETUPGPIO) {
+		/* Matthew Braithwaite <matt@braithwaite.net> reported that
+		 * NEC Versa LX doesn't need GPIO operation. */
+		bus_space_write_2(sc->iot, sc->ioh, 
+		    PORT_GPIO_MASK, 0x9ff);
+		bus_space_write_2(sc->iot, sc->ioh, PORT_GPIO_DIR,
+		    bus_space_read_2(sc->iot, sc->ioh, PORT_GPIO_DIR) | 0x600);
+		bus_space_write_2(sc->iot, sc->ioh, 
+		    PORT_GPIO_DATA, 0x200);
+	}
 }
 
 /* -----------------------------
