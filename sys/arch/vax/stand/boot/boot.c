@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 2000/10/04 04:09:01 bjc Exp $ */
+/*	$OpenBSD: boot.c,v 1.5 2000/11/25 21:51:39 hugh Exp $ */
 /*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -97,7 +97,7 @@ Xmain()
 
 	askname = howto & RB_ASKNAME;
 	printf("\n\r>> OpenBSD/vax boot [%s %s] <<\n", __DATE__, __TIME__);
-	printf(">> Press any key to abort autoboot  ");
+	printf(">> Press enter to autoboot, or any other key to abort:  ");
 	sluttid = getsecs() + 5;
 	senast = 0;
 	skip = 0;
