@@ -1,4 +1,4 @@
-.\" $OpenBSD: passwd.conf.5,v 1.4 1997/12/02 10:57:36 provos Exp $
+.\" $OpenBSD: passwd.conf.5,v 1.5 1998/07/04 18:29:17 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -53,8 +53,14 @@ this file are:
 .Pp
 .Bl -tag -width localcipher -offset indent
 .It localcipher
-The cipher to use for local passwords. Possible values are: 'old', 'newsalt', 'md5'
-or 'blowfish,<rounds>' where rounds is a value between 4 and 31.
+The cipher to use for local passwords. Possible values are: 'old', 'newsalt,<rounds>', 'md5' or 'blowfish,<rounds>'.
+For 
+.Nm newsalt
+the value of rounds is a 32-bit integer with a minmum of 725 rounds.
+For
+.Nm blowfish
+the value can be between 4 and 31. It specifies the base 2 logarithm of
+the number of rounds.
 .It ypcipher
 The cipher to use for YP passwords. The possible values are the same as
 for localcipher.
