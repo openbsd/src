@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.100 2002/06/21 06:20:28 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.101 2002/06/21 07:30:09 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.100 2002/06/21 06:20:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.101 2002/06/21 07:30:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -645,11 +645,11 @@ doreap(void)
 			if (sep->se_wait == pid) {
 				if (WIFEXITED(status) && WEXITSTATUS(status))
 					syslog(LOG_WARNING,
-					    "%s: exit status 0x%x",
+					    "%s: exit status %d",
 					    sep->se_server, WEXITSTATUS(status));
 				else if (WIFSIGNALED(status))
 					syslog(LOG_WARNING,
-					    "%s: exit signal 0x%x",
+					    "%s: exit signal %d",
 					    sep->se_server, WTERMSIG(status));
 				sep->se_wait = 1;
 				fd_grow(&allsockp, &allsockn, sep->se_fd);
