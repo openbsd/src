@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.5 2002/05/07 18:29:18 nate Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.6 2002/06/18 00:59:16 nate Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.6 2001/01/23 21:56:17 augustss Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ USB_MATCH(uftdi)
 		     uaa->vendor, uaa->product));
 
 	if (uaa->vendor == USB_VENDOR_FTDI &&
-	    uaa->product == USB_PRODUCT_FTDI_SERIAL)
+	    uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX)
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
