@@ -1,4 +1,4 @@
-/*	$OpenBSD: colcrt.c,v 1.6 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: colcrt.c,v 1.7 2003/06/28 15:36:35 mickey Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: colcrt.c,v 1.6 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.7 2003/06/28 15:36:35 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ int	outcol;
 char	suppresul;
 char	printall;
 
-char	*progname;
 FILE	*f;
 
 void	pflush(int);
@@ -82,11 +81,12 @@ void	move(int, int);
 int
 main(int argc, char *argv[])
 {
-	int c;
+	extern char *__progname;
 	char *cp, *dp;
+	int c;
 
 	argc--;
-	progname = *argv++;
+	*argv++;
 	while (argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
 			case 0:
@@ -96,7 +96,9 @@ main(int argc, char *argv[])
 				printall = 1;
 				break;
 			default:
-				printf("usage: %s [ - ] [ -2 ] [ file ... ]\n", progname);
+				fprintf(stderr,
+				    "usage: %s [ - ] [ -2 ] [ file ... ]\n",
+				    __progname);
 				fflush(stdout);
 				exit(1);
 		}
@@ -108,8 +110,7 @@ main(int argc, char *argv[])
 			close(0);
 			if (!(f = fopen(argv[0], "r"))) {
 				fflush(stdout);
-				perror(argv[0]);
-				exit (1);
+				err(1, "fopen: %s", argv[0]);
 			}
 			argc--;
 			argv++;
