@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.62 2003/07/01 00:28:52 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.63 2003/07/09 07:18:50 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1044,7 +1044,8 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	/* Check for illegal packets */
 	if (ntohs(h->ip6_plen) == 0) {
 		/* jumbo payload option must be present */
-		if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET >= m->m_pkthdr.len)				goto drop;
+		if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET >= m->m_pkthdr.len)
+			goto drop;
 	} else if (sizeof(struct ip6_hdr) + ntohs(h->ip6_plen) !=
 	    m->m_pkthdr.len)
 		goto drop;
