@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.14 2000/06/18 17:31:11 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.15 2000/06/25 17:15:51 aaron Exp $	*/
 /*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  * When a user does a bind(2) or connect(2) with a port number of zero,
  * a non-conflicting local port address is chosen.
  *
- * The default range is IPPORT_ANONMIX to IPPORT_ANONMAX, although
+ * The default range is IPPORT_ANONMIN to IPPORT_ANONMAX, although
  * that is settable by sysctl(3); net.inet.ip.anonportmin and
  * net.inet.ip.anonportmax respectively.
  *
