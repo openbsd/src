@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.24 2001/09/29 01:23:54 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.25 2001/10/06 22:45:52 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -774,6 +774,10 @@ isp_pci_rd_isr_2300(struct ispsoftc *isp, u_int16_t *isrp,
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 	u_int32_t r2hisr;
 
+	if (!(BXR2(pcs, IspVirt2Off(isp, BIU_ISR)) & BIU2100_ISR_RISC_INT)) {
+		*isrp = 0;
+		return (0);
+	}
 	r2hisr = bus_space_read_4(pcs->pci_st, pcs->pci_sh,
 	    IspVirt2Off(pcs, BIU_R2HSTSLO));
 	isp_prt(isp, ISP_LOGDEBUG3, "RISC2HOST ISR 0x%x", r2hisr);

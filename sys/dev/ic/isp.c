@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.22 2001/09/01 07:16:39 mjacob Exp $ */
+/* 	$OpenBSD: isp.c,v 1.23 2001/10/06 22:45:52 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -64,8 +64,6 @@
 /*
  * Local static data
  */
-static const char warnlun[] =
-    "WARNING- cannot determine Expanded LUN capability- limiting to one LUN";
 static const char portshift[] =
     "Target %d Loop ID 0x%x (Port 0x%x) => Loop 0x%x (Port 0x%x)";
 static const char portdup[] =
@@ -161,7 +159,6 @@ isp_reset(struct ispsoftc *isp)
 
 	isp->isp_state = ISP_NILSTATE;
 
-
 	/*
 	 * Basic types (SCSI, FibreChannel and PCI or SBus)
 	 * have been set in the MD code. We figure out more
@@ -184,7 +181,13 @@ isp_reset(struct ispsoftc *isp)
 		/*
 		 * First see whether or not we're sitting in the ISP PROM.
 		 * If we've just been reset, we'll have the string "ISP   "
-		 * spread through outgoing mailbox registers 1-3.
+		 * spread through outgoing mailbox registers 1-3. We do
+		 * this for PCI cards because otherwise we really don't
+		 * know what state the card is in and we could hang if
+		 * we try this command otherwise.
+		 *
+		 * For SBus cards, we just do this because they almost
+		 * certainly will be running firmware by now.
 		 */
 		if (ISP_READ(isp, OUTMAILBOX1) != 0x4953 ||
 		    ISP_READ(isp, OUTMAILBOX2) != 0x5020 ||
@@ -194,10 +197,7 @@ isp_reset(struct ispsoftc *isp)
 			 */
 			ISP_WRITE(isp, HCCR, HCCR_CMD_RELEASE);
 			mbs.param[0] = MBOX_ABOUT_FIRMWARE;
-			isp_mboxcmd(isp, &mbs, MBOX_COMMAND_ERROR);
-			/*
-			 * This *shouldn't* fail.....
-			 */
+			isp_mboxcmd(isp, &mbs, MBLOGNONE);
 			if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
 				isp->isp_romfw_rev[0] = mbs.param[1];
 				isp->isp_romfw_rev[1] = mbs.param[2];
@@ -208,14 +208,22 @@ isp_reset(struct ispsoftc *isp)
 	}
 
 	DISABLE_INTS(isp);
+
 	/*
 	 * Set up default request/response queue in-pointer/out-pointer
 	 * register indices.
 	 */
-	isp->isp_rqstinrp = INMAILBOX4;
-	isp->isp_rqstoutrp = OUTMAILBOX4;
-	isp->isp_respinrp = OUTMAILBOX5;
-	isp->isp_respoutrp = INMAILBOX5;
+	if (IS_2300(isp)) {
+		isp->isp_rqstinrp = BIU_REQINP;
+		isp->isp_rqstoutrp = BIU_REQOUTP;
+		isp->isp_respinrp = BIU_RSPINP;
+		isp->isp_respoutrp = BIU_RSPOUTP;
+	} else {
+		isp->isp_rqstinrp = INMAILBOX4;
+		isp->isp_rqstoutrp = OUTMAILBOX4;
+		isp->isp_respinrp = OUTMAILBOX5;
+		isp->isp_respoutrp = INMAILBOX5;
+	}
 
 	/*
 	 * Put the board into PAUSE mode (so we can read the SXP registers
@@ -232,10 +240,6 @@ isp_reset(struct ispsoftc *isp)
 			btype = "2200";
 			break;
 		case ISP_HA_FC_2300:
-			isp->isp_rqstinrp = BIU_REQINP;
-			isp->isp_rqstoutrp = BIU_REQOUTP;
-			isp->isp_respinrp = BIU_RSPINP;
-			isp->isp_respoutrp = BIU_RSPOUTP;
 			btype = "2300";
 			break;
 		default:
@@ -544,15 +548,22 @@ again:
 	ISP_RESET1(isp);
 
 	/*
-	 * Wait for everything to finish firing up...
+	 * Wait for everything to finish firing up.
+	 *
+	 * Avoid doing this on the 2312 because you can generate a PCI
+	 * parity error (chip breakage).
 	 */
-	loops = MBOX_DELAY_COUNT;
-	while (ISP_READ(isp, OUTMAILBOX0) == MBOX_BUSY) {
-		USEC_DELAY(100);
-		if (--loops < 0) {
-			isp_prt(isp, ISP_LOGERR,
-			    "MBOX_BUSY never cleared on reset");
-			return;
+	if (IS_2300(isp)) {
+		USEC_DELAY(5);
+	} else {
+		loops = MBOX_DELAY_COUNT;
+		while (ISP_READ(isp, OUTMAILBOX0) == MBOX_BUSY) {
+			USEC_DELAY(100);
+			if (--loops < 0) {
+				isp_prt(isp, ISP_LOGERR,
+				    "MBOX_BUSY never cleared on reset");
+				return;
+			}
 		}
 	}
 
@@ -675,22 +686,52 @@ again:
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		return;
 	}
+
+	/*
+	 * The SBus firmware that we are using apparently does not return
+	 * major, minor, micro revisions in the mailbox registers, which
+	 * is really, really, annoying.
+	 */
+	if (isp->isp_bustype == ISP_BT_SBUS) {
+		if (dodnld) {
+#ifdef	ISP_TARGET_MODE
+			isp->isp_fwrev[0] = 7;
+			isp->isp_fwrev[1] = 55;
+#else
+			isp->isp_fwrev[0] = 1;
+			isp->isp_fwrev[1] = 37;
+#endif
+			isp->isp_fwrev[2] = 0;
+		} 
+	} else {
+		isp->isp_fwrev[0] = mbs.param[1];
+		isp->isp_fwrev[1] = mbs.param[2];
+		isp->isp_fwrev[2] = mbs.param[3];
+	}
 	isp_prt(isp, ISP_LOGCONFIG,
 	    "Board Type %s, Chip Revision 0x%x, %s F/W Revision %d.%d.%d",
 	    btype, isp->isp_revision, dodnld? "loaded" : "resident",
-	    mbs.param[1], mbs.param[2], mbs.param[3]);
+	    isp->isp_fwrev[0], isp->isp_fwrev[1], isp->isp_fwrev[2]);
+
 	if (IS_FC(isp)) {
-		isp_prt(isp, ISP_LOGCONFIG, "Firmware Attributes = 0x%x",
-		    mbs.param[6]);
+		/*
+		 * We do not believe firmware attributes for 2100 code less
+		 * than 1.17.0.
+		 */
+		if (IS_2100(isp) && 
+		   (ISP_FW_REVX(isp->isp_fwrev) < ISP_FW_REV(1, 17, 0))) {
+			FCPARAM(isp)->isp_fwattr = 0;
+		} else {
+			FCPARAM(isp)->isp_fwattr = mbs.param[6];
+			isp_prt(isp, ISP_LOGDEBUG0,
+			    "Firmware Attributes = 0x%x", mbs.param[6]);
+		}
 		if (ISP_READ(isp, BIU2100_CSR) & BIU2100_PCI64) {
 			isp_prt(isp, ISP_LOGCONFIG,
 			    "Installed in 64-Bit PCI slot");
 		}
 	}
 
-	isp->isp_fwrev[0] = mbs.param[1];
-	isp->isp_fwrev[1] = mbs.param[2];
-	isp->isp_fwrev[2] = mbs.param[3];
 	if (isp->isp_romfw_rev[0] || isp->isp_romfw_rev[1] ||
 	    isp->isp_romfw_rev[2]) {
 		isp_prt(isp, ISP_LOGCONFIG, "Last F/W revision was %d.%d.%d",
@@ -720,14 +761,14 @@ again:
 	/*
 	 * Okay- now that we have new firmware running, we now (re)set our
 	 * notion of how many luns we support. This is somewhat tricky because
-	 * if we haven't loaded firmware, we don't have an easy way of telling
-	 * how many luns we support.
-	 *
-	 * We'll make a simplifying assumption- if we loaded firmware, we
-	 * are running with expanded lun firmware, otherwise not.
+	 * if we haven't loaded firmware, we sometimes do not have an easy way
+	 * of knowing how many luns we support.
 	 *
 	 * Expanded lun firmware gives you 32 luns for SCSI cards and
 	 * 65536 luns for Fibre Channel cards.
+	 *
+	 * It turns out that even for QLogic 2100s with ROM 1.10 and above
+	 * we do get a firmware attributes word returned in mailbox register 6.
 	 *
 	 * Because the lun is in a a different position in the Request Queue
 	 * Entry structure for Fibre Channel with expanded lun firmware, we
@@ -739,18 +780,17 @@ again:
 	 * and released.
 	 */
 	if (touched == 0) {
-		if (dodnld) {
-			if (IS_SCSI(isp)) {
+		if (IS_SCSI(isp)) {
+			if (dodnld) {
 				isp->isp_maxluns = 32;
 			} else {
-				isp->isp_maxluns = 65536;
+				isp->isp_maxluns = 8;
 			}
 		} else {
-			if (IS_SCSI(isp)) {
-				isp->isp_maxluns = 8;
+			if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN) {
+				isp->isp_maxluns = 65536;
 			} else {
-				isp_prt(isp, ISP_LOGALL, warnlun);
-				isp->isp_maxluns = 1;
+				isp->isp_maxluns = 16;
 			}
 		}
 	}
@@ -1173,27 +1213,34 @@ isp_fibre_init(struct ispsoftc *isp)
 		 */
 		switch(isp->isp_confopts & ISP_CFG_PORT_PREF) {
 		case ISP_CFG_NPORT:
-			icbp->icb_xfwoptions = ICBXOPT_PTP_2_LOOP;
+			icbp->icb_xfwoptions |= ICBXOPT_PTP_2_LOOP;
 			break;
 		case ISP_CFG_NPORT_ONLY:
-			icbp->icb_xfwoptions = ICBXOPT_PTP_ONLY;
+			icbp->icb_xfwoptions |= ICBXOPT_PTP_ONLY;
 			break;
 		case ISP_CFG_LPORT_ONLY:
-			icbp->icb_xfwoptions = ICBXOPT_LOOP_ONLY;
+			icbp->icb_xfwoptions |= ICBXOPT_LOOP_ONLY;
 			break;
 		default:
-			icbp->icb_xfwoptions = ICBXOPT_LOOP_2_PTP;
+			icbp->icb_xfwoptions |= ICBXOPT_LOOP_2_PTP;
 			break;
 		}
 		if (IS_2300(isp)) {
 			if (isp->isp_revision < 2) {
 				icbp->icb_fwoptions &= ~ICBOPT_FAST_POST;
 			}
-			icbp->icb_xfwoptions |= ICBXOPT_RATE_AUTO;
+			if (isp->isp_confopts & ISP_CFG_ONEGB) {
+				icbp->icb_zfwoptions |= ICBZOPT_RATE_ONEGB;
+			} else if (isp->isp_confopts & ISP_CFG_TWOGB) {
+				icbp->icb_zfwoptions |= ICBZOPT_RATE_TWOGB;
+			} else {
+				icbp->icb_zfwoptions |= ICBZOPT_RATE_AUTO;
+			}
 		}
 	}
 
-	if (IS_2200(isp) || IS_2300(isp)) {
+	if ((IS_2200(isp) && ISP_FW_REVX(isp->isp_fwrev) >=
+	    ISP_FW_REV(2, 1, 26)) || IS_2300(isp)) {
 		/*
 		 * Turn on LIP F8 async event (1)
 		 * Turn on generate AE 8013 on all LIP Resets (2)
@@ -1547,6 +1594,20 @@ isp_fclink_test(struct ispsoftc *isp, int usdelay)
 not_on_fabric:
 		fcp->isp_onfabric = 0;
 		fcp->portdb[FL_PORT_ID].valid = 0;
+	}
+
+	fcp->isp_gbspeed = 1;
+	if (IS_2300(isp)) {
+		mbs.param[0] = MBOX_GET_SET_DATA_RATE;
+		mbs.param[1] = MBGSD_GET_RATE;
+		/* mbs.param[2] undefined if we're just getting rate */
+		isp_mboxcmd(isp, &mbs, MBLOGALL);
+		if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
+			if (mbs.param[1] == MBGSD_TWOGB) {
+				isp_prt(isp, ISP_LOGINFO, "2Gb link speed/s");
+				fcp->isp_gbspeed = 2;
+			}
+		}
 	}
 
 	isp_prt(isp, ISP_LOGINFO, topology, fcp->isp_loopid, fcp->isp_alpa,
@@ -2678,7 +2739,7 @@ isp_start(XS_T *xs)
 		reqp->req_lun_trn = XS_LUN(xs);
 		reqp->req_cdblen = XS_CDBLEN(xs);
 	} else {
-		if (isp->isp_maxluns > 16)
+		if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN)
 			t2reqp->req_scclun = XS_LUN(xs);
 		else
 			t2reqp->req_lun_trn = XS_LUN(xs);
@@ -2801,7 +2862,7 @@ isp_control(struct ispsoftc *isp, ispctl_t ctl, void *arg)
 		bus = XS_CHANNEL(xs);
 		mbs.param[0] = MBOX_ABORT;
 		if (IS_FC(isp)) {
-			if (isp->isp_maxluns > 16) {
+			if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN)  {
 				mbs.param[1] = tgt << 8;
 				mbs.param[4] = 0;
 				mbs.param[5] = 0;
@@ -3981,7 +4042,7 @@ static u_int16_t mbpscsi[] = {
 	ISPOPMAP(0x03, 0x07),	/* 0x05: MBOX_READ_RAM_WORD */
 	ISPOPMAP(0x3f, 0x3f),	/* 0x06: MBOX_MAILBOX_REG_TEST */
 	ISPOPMAP(0x03, 0x07),	/* 0x07: MBOX_VERIFY_CHECKSUM	*/
-	ISPOPMAP(0x01, 0x4f),	/* 0x08: MBOX_ABOUT_FIRMWARE */
+	ISPOPMAP(0x01, 0x0f),	/* 0x08: MBOX_ABOUT_FIRMWARE */
 	ISPOPMAP(0x00, 0x00),	/* 0x09: */
 	ISPOPMAP(0x00, 0x00),	/* 0x0a: */
 	ISPOPMAP(0x00, 0x00),	/* 0x0b: */
@@ -4177,7 +4238,7 @@ static u_int16_t mbpfc[] = {
 	ISPOPMAP(0x03, 0x07),	/* 0x05: MBOX_READ_RAM_WORD */
 	ISPOPMAP(0xff, 0xff),	/* 0x06: MBOX_MAILBOX_REG_TEST */
 	ISPOPMAP(0x03, 0x05),	/* 0x07: MBOX_VERIFY_CHECKSUM	*/
-	ISPOPMAP(0x01, 0x0f),	/* 0x08: MBOX_ABOUT_FIRMWARE */
+	ISPOPMAP(0x01, 0x4f),	/* 0x08: MBOX_ABOUT_FIRMWARE */
 	ISPOPMAP(0xdf, 0x01),	/* 0x09: LOAD RAM */
 	ISPOPMAP(0xdf, 0x01),	/* 0x0a: DUMP RAM */
 	ISPOPMAP(0x00, 0x00),	/* 0x0b: */
@@ -4209,7 +4270,7 @@ static u_int16_t mbpfc[] = {
 	ISPOPMAP(0x00, 0x00),	/* 0x25: */
 	ISPOPMAP(0x00, 0x00),	/* 0x26: */
 	ISPOPMAP(0x00, 0x00),	/* 0x27: */
-	ISPOPMAP(0x01, 0x3),	/* 0x28: MBOX_GET_FIRMWARE_OPTIONS */
+	ISPOPMAP(0x01, 0x03),	/* 0x28: MBOX_GET_FIRMWARE_OPTIONS */
 	ISPOPMAP(0x03, 0x07),	/* 0x29: MBOX_GET_PORT_QUEUE_PARAMS */
 	ISPOPMAP(0x00, 0x00),	/* 0x2a: */
 	ISPOPMAP(0x00, 0x00),	/* 0x2b: */
@@ -4262,7 +4323,7 @@ static u_int16_t mbpfc[] = {
 	ISPOPMAP(0x00, 0x00),	/* 0x5a: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5b: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5c: */
-	ISPOPMAP(0x00, 0x00),	/* 0x5d: */
+	ISPOPMAP(0x07, 0x03),	/* 0x5d: MBOX_GET_SET_DATA_RATE */
 	ISPOPMAP(0x00, 0x00),	/* 0x5e: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5f: */
 	ISPOPMAP(0xfd, 0x31),	/* 0x60: MBOX_INIT_FIRMWARE */
@@ -4393,7 +4454,7 @@ static char *fc_mbcmd_names[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	"GET/SET DATA RATE",
 	NULL,
 	NULL,
 	"INIT FIRMWARE",
@@ -5489,5 +5550,6 @@ isp_parse_nvram_2100(struct ispsoftc *isp, u_int8_t *nvram_data)
 		ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data);
 	fcp->isp_fwoptions = ISP2100_NVRAM_OPTIONS(nvram_data);
 	isp_prt(isp, ISP_LOGDEBUG0,
-	    "fwoptions from nvram are 0x%x", fcp->isp_fwoptions);
+	    "NVRAM: maxfrmlen %d execthrottle %d fwoptions 0x%x",
+	    fcp->isp_maxfrmlen, fcp->isp_execthrottle, fcp->isp_fwoptions);
 }

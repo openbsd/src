@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_target.h,v 1.7 2001/09/01 07:16:40 mjacob Exp $	*/
+/*	$OpenBSD: isp_target.h,v 1.8 2001/10/06 22:45:52 mjacob Exp $	*/
 
 /* @(#)isp_target.h 1.3 */
 /*
@@ -335,8 +335,8 @@ typedef struct {
  */
 #define	GET_IID_VAL(x)		(x & 0x3f)
 #define	GET_BUS_VAL(x)		((x >> 7) & 0x1)
-#define	SET_IID_VAL(y, x)	(y | (x & 0x3f))
-#define	SET_BUS_VAL(y, x)	(y | ((x & 0x1) << 7))
+#define	SET_IID_VAL(y, x)	y = ((y & ~0x3f) | (x & 0x3f))
+#define	SET_BUS_VAL(y, x)	y = ((y & 0x3f) | ((x & 0x1) << 7))
 
 /*
  * ct_flags values

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispvar.h,v 1.17 2001/09/01 07:16:40 mjacob Exp $ */
+/*	$OpenBSD: ispvar.h,v 1.18 2001/10/06 22:45:52 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -244,7 +244,7 @@ typedef struct {
 
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
-						: 2,
+				isp_gbspeed	: 2,
 				isp_iid_set	: 1,
 				loop_seen_once	: 1,
 				isp_loopstate	: 4,	/* Current Loop State */
@@ -257,7 +257,7 @@ typedef struct {
 	u_int8_t		isp_alpa;	/* ALPA */
 	u_int32_t		isp_portid;
 	volatile u_int16_t	isp_lipseq;	/* LIP sequence # */
-	u_int16_t		isp_xxxxxx;
+	u_int16_t		isp_fwattr;	/* firmware attributes */
 	u_int8_t		isp_execthrottle;
 	u_int8_t		isp_retry_delay;
 	u_int8_t		isp_retry_count;
@@ -419,6 +419,8 @@ typedef struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
+#define	ISP_CFG_TWOGB		0x20	/* force 2GB connection (23XX only) */
+#define	ISP_CFG_ONEGB		0x10	/* force 1GB connection (23XX only) */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
 #define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
 #define	ISP_CFG_PORT_PREF	0x0C	/* Mask for Port Prefs (2200 only) */
@@ -464,7 +466,13 @@ typedef struct ispsoftc {
 #define	ISP_CODE_ORG			0x1000	/* default f/w code start */
 #define	ISP_CODE_ORG_2300		0x0800	/* ..except for 2300s */
 #define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
+#define	ISP_FW_MAJOR(code)		((code >> 24) & 0xff)
+#define	ISP_FW_MINOR(code)		((code >> 16) & 0xff)
+#define	ISP_FW_MICRO(code)		((code >>  8) & 0xff)
 #define	ISP_FW_REVX(xp)			((xp[0]<<24) | (xp[1] << 16) | xp[2])
+#define	ISP_FW_MAJORX(xp)		(xp[0])
+#define	ISP_FW_MINORX(xp)		(xp[1])
+#define	ISP_FW_MICROX(xp)		(xp[2])
 
 /*
  * Bus (implementation) types
