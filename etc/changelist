@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.41 2005/02/07 06:01:07 david Exp $
+#	$OpenBSD: changelist,v 1.42 2005/02/07 06:45:17 david Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -8,6 +8,8 @@
 #
 
 /etc/Distfile
+/etc/adduser.conf
+/etc/adduser.message
 /etc/bgpd.conf
 /etc/boot.conf
 /etc/bootparams
@@ -23,6 +25,7 @@
 /etc/dhclient.conf
 /etc/dhcpd.conf
 /etc/dhcpd.interfaces
+/etc/disktab
 /etc/distfile
 /etc/ethers
 /etc/exports
@@ -38,6 +41,7 @@
 /etc/hosts.deny
 /etc/hosts.equiv
 /etc/hosts.lpd
+/etc/ifstated.conf
 /etc/inetd.conf
 +/etc/isakmpd/private/local.key
 /etc/isakmpd/private/local.pub
@@ -46,6 +50,18 @@
 /etc/login.conf
 /etc/lynx.cfg
 /etc/mail.rc
+/etc/mail/access
+/etc/mail/aliases
+/etc/mail/genericstable
+/etc/mail/helpfile
+/etc/mail/local-host-names
+/etc/mail/localhost.cf
+/etc/mail/mailertable
+/etc/mail/relay-domains
+/etc/mail/sendmail.cf
+/etc/mail/submit.cf
+/etc/mail/trusted-users
+/etc/mail/virtusertable
 /etc/mailer.conf
 /etc/man.conf
 /etc/master.passwd
@@ -67,7 +83,9 @@
 /etc/pf.conf
 /etc/pf.os
 /etc/phones
+/etc/portal.conf
 /etc/printcap
+/etc/profile
 /etc/protocols
 /etc/rbootd.conf
 /etc/rc
@@ -78,6 +96,7 @@
 /etc/rc.shutdown
 /etc/remote
 /etc/resolv.conf
+/etc/resolv.conf.tail
 +/etc/rndc.key
 /etc/rpc
 /etc/security
@@ -91,29 +110,20 @@
 /etc/ssh/ssh_config
 +/etc/ssh/ssh_host_dsa_key
 /etc/ssh/ssh_host_dsa_key.pub
-+/etc/ssh/ssh_host_rsa_key
-/etc/ssh/ssh_host_rsa_key.pub
 +/etc/ssh/ssh_host_key
 /etc/ssh/ssh_host_key.pub
++/etc/ssh/ssh_host_rsa_key
+/etc/ssh/ssh_host_rsa_key.pub
 /etc/ssh/sshd_config
 /etc/sudoers
-/etc/syslog.conf
+/etc/suid_profile
 /etc/sysctl.conf
+/etc/syslog.conf
 /etc/ttys
+/etc/usermgmt.conf
 /etc/weekly
 /etc/weekly.local
 /etc/wsconsctl.conf
-/etc/mail/access
-/etc/mail/aliases
-/etc/mail/helpfile
-/etc/mail/local-host-names
-/etc/mail/localhost.cf
-/etc/mail/mailertable
-/etc/mail/relay-domains
-/etc/mail/sendmail.cf
-/etc/mail/submit.cf
-/etc/mail/trusted-users
-/etc/mail/virtusertable
 /root/.cshrc
 /root/.klogin
 /root/.login
@@ -122,14 +132,16 @@
 /root/.shosts
 /root/.ssh/authorized_keys
 /root/.ssh/authorized_keys2
-/var/cron/allow
-/var/cron/deny
+/var/cron/at.allow
+/var/cron/at.deny
+/var/cron/cron.allow
+/var/cron/cron.deny
 /var/cron/tabs/root
 /var/named/etc/named.conf
 +/var/named/etc/rndc.key
-/var/www/conf/httpd.conf
-/var/www/conf/srm.conf
 /var/www/conf/access.conf
+/var/www/conf/httpd.conf
 /var/www/conf/mime.types
+/var/www/conf/srm.conf
 /var/yp/Makefile.main
 /var/yp/Makefile.yp
