@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.6 1997/05/01 22:14:44 niklas Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.7 1997/06/23 01:11:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$OpenBSD: yplib_host.c,v 1.6 1997/05/01 22:14:44 niklas Exp $";
+static char *rcsid = "$OpenBSD: yplib_host.c,v 1.7 1997/06/23 01:11:12 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ int usetcp;
 				server);
 	                exit(1);
 		}
-		rsrv_sin.sin_addr.s_addr = *(u_long*)h->h_addr;
+		rsrv_sin.sin_addr.s_addr = *(u_int32_t *)h->h_addr;
 	}
 
 	tv.tv_sec = 10;
