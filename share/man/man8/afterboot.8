@@ -671,6 +671,22 @@ Most people save their backup kernels as
 .Pa /bsd.1 ,
 .Pa /bsd.2 ,
 etc.
+.Pp
+It is not always necessary to recompile the kernel if only
+configuration changes are required.
+With
+.Xr config 8 ,
+you can change the device configuration in the kernel file directly:
+.Bd -literal 
+.Li #\  Ic config Fl e o Ar bsd.new /bsd
+OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
+    root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
+Enter 'help' for information
+ukc>
+.Pp
+Additionally, you can permantly save the changes made with UKC during boot
+time in the kernel image. 
+.Ed
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
