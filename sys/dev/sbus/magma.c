@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.6 2003/02/11 19:20:28 mickey Exp $	*/
+/*	$OpenBSD: magma.c,v 1.7 2003/03/27 17:39:05 jason Exp $	*/
 /*
  * magma.c
  *
@@ -78,7 +78,7 @@
  *
  *  Thanks to Bruce at Magma for telling me the hardware offsets.
  */
-static struct magma_board_info supported_cards[] = {
+static const struct magma_board_info supported_cards[] = {
 	{
 		"MAGMA_Sp", "MAGMA,4_Sp", "Magma 4 Sp", 4, 0,
 		1, 0xa000, 0xc000, 0xe000, { 0x8000, 0, 0, 0 },
@@ -306,7 +306,7 @@ magma_match(parent, vcf, aux)
 	void *vcf, *aux;
 {
 	struct sbus_attach_args *sa = aux;
-	struct magma_board_info *card;
+	const struct magma_board_info *card;
 
 	/* See if we support this device */
 	for (card = supported_cards; ; card++) {
@@ -327,7 +327,7 @@ magma_attach(parent, dev, aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct magma_softc *sc = (struct magma_softc *)dev;
-	struct magma_board_info *card;
+	const struct magma_board_info *card;
 	char magma_prom[40], *clockstr;
 	int chip, cd_clock;
 
