@@ -1,4 +1,4 @@
-.\"	$OpenBSD: networks.5,v 1.3 1998/03/16 05:06:47 millert Exp $
+.\"	$OpenBSD: networks.5,v 1.4 1998/05/12 09:15:18 deraadt Exp $
 .\"	$NetBSD: networks.5,v 1.3 1994/11/30 19:31:23 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -75,8 +75,19 @@ delimiter, newline, or comment character.
 .Pp
 The 
 .Nm networks
-file should be obsoleted by the network information faclities of the
-name server.
+file is largely obsoleted by the network information facilities of the
+name server in the following way:
+.Pp
+The system configuration file
+.Xr resolv.conf 5
+controls where host name information will be searched for.
+The mechanism provided permits the administrator to describe the
+databases to search; the databases currently known include
+.Xr yp 5 ,
+DNS
+and the
+.Xr hosts 5
+database.
 .Sh FILES
 .Bl -tag -width /etc/networks -compact
 .It Pa /etc/networks

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ethers.3,v 1.8 1998/03/17 23:58:20 millert Exp $
+.\"	$OpenBSD: ethers.3,v 1.9 1998/05/12 09:15:19 deraadt Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -64,6 +64,7 @@ The
 function looks up the given host name and writes the associated
 Ethernet address into the structure passed.  Both functions return
 zero if they find the requested host name or address, and -1 if not.
+.Pp
 Each call reads
 .Pa /etc/ethers 
 from the beginning; if a + appears alone on a line in the file, then

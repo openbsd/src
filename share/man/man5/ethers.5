@@ -10,7 +10,7 @@
 .Nd Ethernet host name data base
 .Sh DESCRIPTION
 The
-.Xr ethers
+.Nm ethers
 file maps Ethernet addresses to host names.
 Lines consist of an address and a host name, separated by any number of blanks and/or tab characters.
 A ``#'' indicates the beginning of a comment; characters up to the end of
@@ -21,6 +21,10 @@ Ethernet addresses are expressed as six hexadecimal numbers separated by colons.
 and
 .Xr ether_aton 3
 can read and produce this format.
+.Pp
+The
+.Nm ethers
+file has support for YP functionality.  For more information, see
 .Sh FILES
 .Bl -tag -width /etc/ethers -compact
 .It Pa /etc/ethers
