@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.c,v 1.11 2001/02/04 06:22:05 itojun Exp $	*/
-/*	$KAME: config.c,v 1.32 2001/02/01 09:12:08 jinmei Exp $	*/
+/*	$OpenBSD: config.c,v 1.12 2001/02/05 06:05:08 itojun Exp $	*/
+/*	$KAME: config.c,v 1.33 2001/02/05 05:52:13 k-sugyou Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -743,7 +743,7 @@ make_packet(struct rainfo *rainfo)
 		ndopt_mtu->nd_opt_mtu_type = ND_OPT_MTU;
 		ndopt_mtu->nd_opt_mtu_len = 1;
 		ndopt_mtu->nd_opt_mtu_reserved = 0;
-		ndopt_mtu->nd_opt_mtu_mtu = ntohl(rainfo->linkmtu);
+		ndopt_mtu->nd_opt_mtu_mtu = htonl(rainfo->linkmtu);
 		buf += sizeof(struct nd_opt_mtu);
 	}
 
@@ -753,7 +753,7 @@ make_packet(struct rainfo *rainfo)
 		ndopt_advint->nd_opt_adv_type = ND_OPT_ADVINTERVAL;
 		ndopt_advint->nd_opt_adv_len = 1;
 		ndopt_advint->nd_opt_adv_reserved = 0;
-		ndopt_advint->nd_opt_adv_interval = ntohl(rainfo->maxinterval *
+		ndopt_advint->nd_opt_adv_interval = htonl(rainfo->maxinterval *
 							  1000);
 		buf += sizeof(struct nd_opt_advinterval);
 	}
@@ -765,8 +765,8 @@ make_packet(struct rainfo *rainfo)
 		ndopt_hai->nd_opt_hai_type = ND_OPT_HOMEAGENT_INFO;
 		ndopt_hai->nd_opt_hai_len = 1;
 		ndopt_hai->nd_opt_hai_reserved = 0;
-		ndopt_hai->nd_opt_hai_preference = ntohs(rainfo->hapref);
-		ndopt_hai->nd_opt_hai_lifetime = ntohs(rainfo->hatime);
+		ndopt_hai->nd_opt_hai_preference = htons(rainfo->hapref);
+		ndopt_hai->nd_opt_hai_lifetime = htons(rainfo->hatime);
 		buf += sizeof(struct nd_opt_homeagent_info);
 	}
 #endif
@@ -811,8 +811,8 @@ make_packet(struct rainfo *rainfo)
 			 */
 			pltime = vltime;
 		}
-		ndopt_pi->nd_opt_pi_valid_time = ntohl(vltime);
-		ndopt_pi->nd_opt_pi_preferred_time = ntohl(pltime);
+		ndopt_pi->nd_opt_pi_valid_time = htonl(vltime);
+		ndopt_pi->nd_opt_pi_preferred_time = htonl(pltime);
 		ndopt_pi->nd_opt_pi_reserved2 = 0;
 		ndopt_pi->nd_opt_pi_prefix = pfx->prefix;
 
