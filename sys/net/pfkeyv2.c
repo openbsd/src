@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.92 2004/08/10 16:17:05 ho Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.93 2004/11/19 10:11:52 hshoexer Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -950,8 +950,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			newsa->tdb_satype = smsg->sadb_msg_satype;
 
 			if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype,
-			    &newsa->tdb_sproto, &alg)))
+			    &newsa->tdb_sproto, &alg))) {
+				tdb_free(freeme);
+				freeme = NULL;
 				goto splxret;
+			}
 
 			/* Initialize SA */
 			import_sa(newsa, headers[SADB_EXT_SA], &ii);
@@ -1004,7 +1007,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = tdb_init(newsa, alg, &ii);
 			if (rval) {
 				rval = EINVAL;
-				tdb_delete(freeme);
+				tdb_free(freeme);
 				freeme = NULL;
 				goto splxret;
 			}
@@ -1102,8 +1105,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 			newsa->tdb_satype = smsg->sadb_msg_satype;
 			if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype,
-			    &newsa->tdb_sproto, &alg)))
+			    &newsa->tdb_sproto, &alg))) {
+				tdb_free(freeme);
+				freeme = NULL;
 				goto splxret;
+			}
 
 			import_sa(newsa, headers[SADB_EXT_SA], &ii);
 			import_address((struct sockaddr *) &newsa->tdb_src,
@@ -1159,7 +1165,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = tdb_init(newsa, alg, &ii);
 			if (rval) {
 				rval = EINVAL;
-				tdb_delete(freeme);
+				tdb_free(freeme);
 				freeme = NULL;
 				goto splxret;
 			}

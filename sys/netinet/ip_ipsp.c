@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.159 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.160 2004/11/19 10:11:52 hshoexer Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -291,9 +291,8 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 	hashval = tdb_hash(spi, dst, proto);
 
 	for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
-		if ((tdbp->tdb_spi == spi) &&
-		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)) &&
-		    (tdbp->tdb_sproto == proto))
+		if ((tdbp->tdb_spi == spi) && (tdbp->tdb_sproto == proto) &&
+		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))
 			break;
 
 	return tdbp;
@@ -701,9 +700,7 @@ puttdb(struct tdb *tdbp)
 void
 tdb_delete(struct tdb *tdbp)
 {
-	struct ipsec_policy *ipo;
 	struct tdb *tdbpp;
-	struct inpcb *inp;
 	u_int32_t hashval;
 	int s;
 
@@ -763,6 +760,47 @@ tdb_delete(struct tdb *tdbp)
 	}
 
 	tdbp->tdb_snext = NULL;
+	tdb_free(tdbp);
+	tdb_count--;
+
+	splx(s);
+}
+
+/*
+ * Allocate a TDB and initialize a few basic fields.
+ */
+struct tdb *
+tdb_alloc(void)
+{
+	struct tdb *tdbp;
+
+	MALLOC(tdbp, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
+	bzero((caddr_t) tdbp, sizeof(struct tdb));
+
+	/* Init Incoming SA-Binding Queues. */
+	TAILQ_INIT(&tdbp->tdb_inp_out);
+	TAILQ_INIT(&tdbp->tdb_inp_in);
+
+	TAILQ_INIT(&tdbp->tdb_policy_head);
+
+	/* Record establishment time. */
+	tdbp->tdb_established = time_second;
+	tdbp->tdb_epoch = kernfs_epoch - 1;
+
+	/* Initialize timeouts. */
+	timeout_set(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
+	timeout_set(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
+	timeout_set(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
+	timeout_set(&tdbp->tdb_sfirst_tmo, tdb_soft_firstuse, tdbp);
+
+	return tdbp;
+}
+
+void
+tdb_free(struct tdb *tdbp)
+{
+	struct ipsec_policy *ipo;
+	struct inpcb *inp;
 
 	if (tdbp->tdb_xform) {
 		(*(tdbp->tdb_xform->xf_zeroize))(tdbp);
@@ -825,7 +863,7 @@ tdb_delete(struct tdb *tdbp)
 
 	if (tdbp->tdb_remote_cred) {
 		ipsp_reffree(tdbp->tdb_remote_cred);
-		tdbp->tdb_local_cred = NULL;
+		tdbp->tdb_remote_cred = NULL;
 	}
 
 	if ((tdbp->tdb_onext) && (tdbp->tdb_onext->tdb_inext == tdbp))
@@ -835,39 +873,6 @@ tdb_delete(struct tdb *tdbp)
 		tdbp->tdb_inext->tdb_onext = NULL;
 
 	FREE(tdbp, M_TDB);
-	tdb_count--;
-
-	splx(s);
-}
-
-/*
- * Allocate a TDB and initialize a few basic fields.
- */
-struct tdb *
-tdb_alloc(void)
-{
-	struct tdb *tdbp;
-
-	MALLOC(tdbp, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
-	bzero((caddr_t) tdbp, sizeof(struct tdb));
-
-	/* Init Incoming SA-Binding Queues. */
-	TAILQ_INIT(&tdbp->tdb_inp_out);
-	TAILQ_INIT(&tdbp->tdb_inp_in);
-
-	TAILQ_INIT(&tdbp->tdb_policy_head);
-
-	/* Record establishment time. */
-	tdbp->tdb_established = time_second;
-	tdbp->tdb_epoch = kernfs_epoch - 1;
-
-	/* Initialize timeouts. */
-	timeout_set(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
-	timeout_set(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
-	timeout_set(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
-	timeout_set(&tdbp->tdb_sfirst_tmo, tdb_soft_firstuse, tdbp);
-
-	return tdbp;
 }
 
 /*
