@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.31 2003/07/02 21:44:58 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.32 2003/07/16 18:02:35 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.31 2003/07/02 21:44:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.32 2003/07/16 18:02:35 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -432,10 +432,8 @@ recalc:
 		printf("cylinder groups must have at least %ld cylinders\n",
 			mincpg);
 		exit(25);
-	} else if (sblock.fs_cpg != cpg) {
-		if (!cpgflg)
-			printf("Warning: ");
-		else if (!mapcramped && !inodecramped)
+	} else if (cpgflg && sblock.fs_cpg != cpg) {
+		if (!mapcramped && !inodecramped)
 			exit(26);
 		if (mapcramped && inodecramped)
 			printf("Block size and bytes per inode restrict");

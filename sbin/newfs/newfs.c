@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.43 2003/07/02 21:44:58 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.44 2003/07/16 18:02:36 tedu Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.43 2003/07/02 21:44:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.44 2003/07/16 18:02:36 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,16 +98,16 @@ u_short	dkcksum(struct disklabel *);
  *	sectorsize <= DESFRAGSIZE <= DESBLKSIZE
  *	DESBLKSIZE / DESFRAGSIZE <= 8
  */
-#define	DFL_FRAGSIZE	1024
-#define	DFL_BLKSIZE	8192
+#define	DFL_FRAGSIZE	2048
+#define	DFL_BLKSIZE	16384
 
 /*
  * Cylinder groups may have up to many cylinders. The actual
  * number used depends upon how much information can be stored
- * on a single cylinder. The default is to use 16 cylinders
- * per group.
+ * on a single cylinder. The default is to use as many as
+ * possible.
  */
-#define	DESCPG		16	/* desired fs_cpg */
+#define	DESCPG		65536	/* desired fs_cpg */
 
 /*
  * ROTDELAY gives the minimum number of milliseconds to initiate
@@ -160,7 +160,7 @@ int	interleave;		/* hardware sector interleave */
 int	trackskew = -1;		/* sector 0 skew, per track */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
-int	cpg = DESCPG;		/* cylinders/cylinder group */
+int	cpg;			/* cylinders/cylinder group */
 int	cpgflg;			/* cylinders/cylinder group flag was given */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 	struct stat st;
 	struct statfs *mp;
 	struct rlimit rl;
-	int fsi = -1, fso, len, n, maxpartitions;
+	int fsi = -1, fso, len, n, ncyls, maxpartitions;
 	char *cp, *s1, *s2, *special, *opstring;
 #ifdef MFS
 	char mountfromname[BUFSIZ];
@@ -585,6 +585,16 @@ havelabel:
 		secpercyl *= blkpersec;
 		fssize *= blkpersec;
 		pp->p_size *= blkpersec;
+	}
+	ncyls = fssize / secpercyl;
+	if (ncyls == 0)
+		ncyls = 1;
+	if (cpg == 0)
+		cpg = DESCPG < ncyls ? DESCPG : ncyls;
+	else if (cpg > ncyls) {
+		cpg = ncyls;
+		printf("Number of cylinders restricts cylinders per group "
+		    "to %d.\n", cpg);
 	}
 	mkfs(pp, special, fsi, fso);
 	if (realsectorsize < DEV_BSIZE)
