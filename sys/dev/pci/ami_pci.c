@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.6 2001/06/23 21:24:58 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.7 2001/06/23 21:43:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -127,7 +127,6 @@ ami_pci_match(parent, match, aux)
 		return (0);
 
 	for (pami = ami_pci_devices; pami->vendor; pami++) {
-		printf("%lx %lx\n", pci_conf_read(pa->pa_pc, pa->pa_tag, AMI_PCI_SIG) & 0xffff, AMI_SIGNATURE);
 		if (pami->vendor == PCI_VENDOR(pa->pa_id) &&
 		    pami->product == PCI_PRODUCT(pa->pa_id) &&
 		    (!pami->flags & AMI_CHECK_SIGN ||
