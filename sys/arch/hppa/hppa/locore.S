@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.87 2002/09/12 05:31:34 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.88 2002/09/15 09:37:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1360,9 +1360,29 @@ ENTRY(TLABEL(all),0)
 	stw	t2, TF_IISQT(t3)
 	mtctl	r0, pcsq
 
+	/*
+	 * Set up the kernel stack pointer.  If the trap happened
+	 * while we were in unprivileged code, or in privileged
+	 * code in the SYSCALLGATE page, move to the kernel stack
+	 * in curproc's PCB; otherwise, start a new stack frame
+	 * on whatever kernel stack we're already on.
+	 *
+	 * This used to check only for a trap while we were in
+	 * unprivileged code, but this ignored the possibility
+	 * that a trap could come in during the period between
+	 * a gateway instruction to raise privilege and the
+	 * disabling of interrupts.  During this period we're
+	 * still on the user's stack, and we must move to the
+	 * kernel stack.
+	 *
+	 * - fredette@
+	 */
 	mfctl	pcoq, t1
+	ldil	L%SYSCALLGATE, t2
 	ldo	TF_PHYS-1(sp), sp
-	bb,>=	t1, 31, $trap_from_kernel
+	dep	t1, 31, PGSHIFT, t2
+	dep,<>	t1, 31, 2, r0
+	comb,<>	t1, t2, $trap_from_kernel
 	dep	r0, 31, 6, sp
 
 	mfctl	cr30, t2
