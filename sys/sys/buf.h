@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.18 2001/02/23 14:52:49 csapuntz Exp $	*/
+/*	$OpenBSD: buf.h,v 1.19 2001/02/24 10:37:09 deraadt Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -178,6 +178,16 @@ struct cluster_save {
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
+struct cluster_info {
+	daddr_t	ci_lastr;			/* last read (read-ahead) */
+	daddr_t	ci_lastw;			/* last write (write cluster) */
+	daddr_t	ci_cstart;			/* start block of cluster */
+	daddr_t	ci_lasta;			/* last allocation */
+	int	ci_clen;			/* length of current cluster */
+	int	ci_ralen;			/* Read-ahead length */
+	daddr_t	ci_maxra;			/* last readahead block */
+};
+
 #ifdef _KERNEL
 int	nbuf;			/* The number of buffer headers */
 struct	buf *buf;		/* The buffer headers. */
@@ -255,17 +265,6 @@ buf_countdeps(struct buf *bp, int i)
         else
                 return (0);
 }
-
-struct cluster_info {
-	daddr_t	ci_lastr;			/* last read (read-ahead) */
-	daddr_t	ci_lastw;			/* last write (write cluster) */
-	daddr_t	ci_cstart;			/* start block of cluster */
-	daddr_t	ci_lasta;			/* last allocation */
-	int	ci_clen;				/* length of current cluster */
-	int	ci_ralen;			/* Read-ahead length */
-	daddr_t	ci_maxra;			/* last readahead block */
-};
-
 
 int	cluster_read __P((struct vnode *, struct cluster_info *,
 			  u_quad_t, daddr_t, long,

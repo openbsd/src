@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.8 2001/02/23 14:42:38 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.9 2001/02/24 10:37:10 deraadt Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -40,6 +40,8 @@
  *
  *	@(#)cd9660_node.h	8.4 (Berkeley) 12/5/94
  */
+
+#include <sys/buf.h>
 
 /*
  * Theoretically, directories can be more than 2Gb in length,
