@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsort.1,v 1.15 2004/08/04 15:29:10 espie Exp $
+.\"	$OpenBSD: tsort.1,v 1.16 2004/08/04 15:30:06 espie Exp $
 .\"	$NetBSD: tsort.1,v 1.6 1996/01/17 20:37:49 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -41,19 +41,14 @@
 .Nd topological sort of a directed graph
 .Sh SYNOPSIS
 .Nm tsort
-.Op Fl f
+.Op Fl flqrvw
 .Op Fl h Ar file
-.Op Fl l
-.Op Fl q
-.Op Fl r
-.Op Fl v
-.Op Fl w
 .Op Ar file
 .Sh DESCRIPTION
 .Nm tsort
 takes a list of pairs of node names representing directed arcs in
 a graph and prints the nodes in topological order on standard output.
-That is: the input describes a partial ordering relation, from which
+That is, the input describes a partial ordering relation, from which
 .Nm
 computes a total order compatible with this partial ordering.
 .Pp
@@ -102,7 +97,7 @@ had to break.
 .El
 .Sh EXAMPLES
 Faced with the input:
-.Bd -literal
+.Bd -literal -offset indent
 a b
 b c
 b d
@@ -112,7 +107,7 @@ c e
 .Pp
 .Nm
 outputs:
-.Bd -literal
+.Bd -literal -offset indent
 a
 b
 c
@@ -123,7 +118,7 @@ f
 .Pp
 which is one total ordering compatible with the individual relations.
 There is no unicity, another compatible total ordering would be:
-.Bd -literal
+.Bd -literal -offset indent
 a
 b
 c
