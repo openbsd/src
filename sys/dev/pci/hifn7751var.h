@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.14 2000/04/13 22:34:09 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.15 2000/04/13 22:38:09 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -211,23 +211,6 @@ typedef struct hifn_command {
 #define HIFN_CRYPTO_SUCCESS	0
 #define HIFN_CRYPTO_BAD_INPUT	(-1)
 #define HIFN_CRYPTO_RINGS_FULL	(-2)
-
-
-/*
- *  Defines for the "config" parameter of hifn_command_t
- */
-#define HIFN_ENCODE		0x0001
-#define HIFN_DECODE		0x0002
-#define HIFN_CRYPT_3DES		0x0004
-#define HIFN_CRYPT_DES		0x0008
-#define HIFN_MAC_MD5		0x0010
-#define HIFN_MAC_SHA1		0x0020
-#define HIFN_MAC_TRUNC		0x0040
-#define HIFN_CRYPT_NEW_KEY	0x0080
-#define HIFN_MAC_NEW_KEY	0x0100
-
-#define HIFN_USING_CRYPT(f)	((f) & (HIFN_CRYPT_3DES|HIFN_CRYPT_DES))
-#define HIFN_USING_MAC(f)	((f) & (HIFN_MAC_MD5|HIFN_MAC_SHA1))
 
 /*
  *  Defines for the "result_flags" parameter of hifn_command_t.
