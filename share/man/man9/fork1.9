@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.8 2004/03/16 17:48:36 tedu Exp $
+.\"	$OpenBSD: fork1.9,v 1.9 2004/07/15 13:46:24 mpech Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,12 +87,12 @@ or abnormally), or makes a call to
 .Xr execve 2 .
 .It Dv FORK_SHAREFILES
 Let the child share the file descriptor table with the parent through
-.Xr fdshare 9 .
+fdshare().
 The default behavior is to copy the table through
-.Xr fdcopy 9 .
+fdcopy().
 .It Dv FORK_CLEANFILES
 The child starts with a clean file descriptor table created by
-.Xr fdinit 9 .
+fdinit().
 .It Dv FORK_NOZOMBIE
 The child will be dissociated from the parent and will not leave a status
 for the parent to collect.
