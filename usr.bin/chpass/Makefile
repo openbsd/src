@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2000/09/03 18:41:17 espie Exp $
+#	$OpenBSD: Makefile,v 1.9 2001/11/22 20:37:18 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -18,4 +18,4 @@ LDADD+= -lrpcsvc -lutil
 .include <bsd.prog.mk>
 
 getpwent.o: getpwent.c
-	${COMPILE.c} -UYP ${.IMPSRC}
+	${COMPILE.c} -UYP ${.CURDIR}/getpwent.c

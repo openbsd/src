@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2001/05/25 08:20:32 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/11/22 20:37:18 espie Exp $
 
 KRBDEPTH=	../..
 .include <${.CURDIR}/${KRBDEPTH}/Makefile.inc>
@@ -12,7 +12,7 @@ SRCS=	parse.c lex.l main.c hash.c symbol.c gen.c \
 CLEANFILES=	parse.[ch] lex.[ch]
 
 parse.h parse.c:	parse.y
-	${YACC} -d -o parse.c $<
+	${YACC} -d -o parse.c ${.ALLSRC}
 LDADD+=	${LIBROKEN}
 CFLAGS+= -I${KRB5SRC}/lib/asn1 -I. -I${KRB5SRC}/lib/roken
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2000/05/15 06:10:21 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2001/11/22 20:37:18 espie Exp $
 
 LIB=		objc
 
@@ -56,6 +56,7 @@ config.status: Makefile.in configure
 	cd $(EGCS_OBJDIR)/gcc && touch cc1obj
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	GNUSYSTEM_AUX_DIR=${GNUSYSTEM_AUX_DIR} \
 	r=$(EGCS_OBJDIR) \
 	/bin/sh ${.CURDIR}/configure \
 		--prefix=/usr --with-local-prefix=/usr ${CF} \
@@ -65,26 +66,26 @@ config.status: Makefile.in configure
 COMPILE.m=${COMPILE.c} -fgnu-runtime
 
 gc.o: gc.c
-	@echo "${COMPILE.m} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.m} ${.IMPSRC}  -o ${.TARGET}.o
+	@echo "${COMPILE.m} ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.m} ${.ALLSRC}  -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 	
 gc.go: gc.c
-	@echo "${COMPILE.m} -g ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.m} -g ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.m} -g ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.m} -g ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 gc.po: gc.c
-	@echo "${COMPILE.m} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.m} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.m} -p ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.m} -p ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 gc.so: gc.c
-	@echo "${COMPILE.m} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.m} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.m} ${PICFLAG} -DPIC ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.m} ${PICFLAG} -DPIC ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 

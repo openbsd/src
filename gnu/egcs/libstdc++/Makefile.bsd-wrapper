@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2000/08/25 14:36:39 maja Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2001/11/22 20:37:18 espie Exp $
 
 .if (${MACHINE_ARCH} == "mips")
 NOPIC=
@@ -110,50 +110,50 @@ $(QLIBIBERTY_OBJS) $(QLIBIBERTY_OBJS:.o=.go) $(QLIBIBERTY_OBJS:.o=.po) $(QLIBIBE
 	cd $(LIBIBERTY_DIR); $(MAKE) -f Makefile.bsd-wrapper
 
 stdexcepti.o:	stdexcepti.cc
-	@echo "${COMPILE.cc} -frtti ${.IMPSRC}"
-	@${COMPILE.cc} -frtti ${.IMPSRC} -frtti -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti ${.CURDIR}/stdexcepti.cc"
+	@${COMPILE.cc} -frtti ${.CURDIR}/stdexcepti.cc -frtti -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 stdexcepti.go: stdexcepti.cc
-	@echo "${COMPILE.cc} -frtti -g ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -frtti -g ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti -g ${.CURDIR}/stdexcepti.cc -o ${.TARGET}"
+	@${COMPILE.cc} -frtti -g ${.CURDIR}/stdexcepti.cc -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 stdexcepti.po: stdexcepti.cc
-	@echo "${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti -p ${.CURDIR}/stdexcepti.cc -o ${.TARGET}"
+	@${COMPILE.cc} -frtti -p ${.CURDIR}/stdexcepti.cc -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 stdexcepti.so: stdexcepti.cc
-	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.CURDIR}/stdexcepti.cc -o ${.TARGET}"
+	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.CURDIR}/stdexcepti.cc -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 typeinfoi.o: typeinfoi.cc $(.CURDIR)/std/typeinfo.h
-	@echo "${COMPILE.cc} -frtti ${.IMPSRC}"
-	@${COMPILE.cc} -frtti ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti ${.CURDIR}/typeinfoi.cc"
+	@${COMPILE.cc} -frtti ${.CURDIR}/typeinfoi.cc -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 typeinfoi.go: typeinfoi.cc $(.CURDIR)/std/typeinfo.h
-	@echo "${COMPILE.cc} -frtti -g ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -frtti -g ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti -g ${.CURDIR}/typeinfoi.cc -o ${.TARGET}"
+	@${COMPILE.cc} -frtti -g ${.CURDIR}/typeinfoi.cc -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 typeinfoi.po: typeinfoi.cc $(.CURDIR)/std/typeinfo.h
-	@echo "${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti -p ${.CURDIR}/typeinfoi.cc -o ${.TARGET}"
+	@${COMPILE.cc} -frtti -p ${.CURDIR}/typeinfoi.cc -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 typeinfoi.so: typeinfoi.cc $(.CURDIR)/std/typeinfo.h
-	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.CURDIR}/typeinfoi.cc -o ${.TARGET}"
+	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.CURDIR}/typeinfoi.cc -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
