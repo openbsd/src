@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.3 1996/04/21 23:40:17 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.4 1996/06/16 10:30:00 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.38 1996/03/17 06:29:27 cgd Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ static int emitcfdata __P((FILE *));
 static int emitexterns __P((FILE *));
 static int emithdr __P((FILE *));
 static int emitloc __P((FILE *));
+static int emitlocnames __P((FILE *));
 static int emitpseudo __P((FILE *));
 static int emitpv __P((FILE *));
 static int emitroots __P((FILE *));
@@ -94,7 +95,8 @@ mkioconf()
 	}
 	v = emithdr(fp);
 	if (v != 0 || emitvec(fp) || emitexterns(fp) || emitloc(fp) ||
-	    emitpv(fp) || emitcfdata(fp) || emitroots(fp) || emitpseudo(fp)) {
+	    emitlocnames(fp) || emitpv(fp) || emitcfdata(fp) ||
+	    emitroots(fp) || emitpseudo(fp)) {
 		if (v >= 0)
 			(void)fprintf(stderr,
 			    "config: error writing %s: %s\n",
@@ -198,6 +200,128 @@ static int loc[%d] = {", locators.used) < 0)
 	return (fprintf(fp, "\n};\n") < 0);
 }
 
+static int nlocnames, maxlocnames = 8;
+static char **locnames;
+
+short
+addlocname(name)
+	char *name;
+{
+	int i;
+
+	if (locnames == NULL || nlocnames+1 > maxlocnames) {
+		maxlocnames *= 4;
+		locnames = (char **)realloc(locnames, maxlocnames * sizeof(char *));
+	}
+	for (i = 0; i < nlocnames; i++)
+		if (strcmp(name, locnames[i]) == 0)
+			return (i);
+	/*printf("adding %s at %d\n", name, nlocnames);*/
+	locnames[nlocnames++] = name;
+	return (nlocnames - 1);
+}
+
+static int nlocnami, maxlocnami = 8;
+static short *locnami;
+
+void
+addlocnami(index)
+	short index;
+{
+	if (locnami == NULL || nlocnami+1 > maxlocnami) {
+		maxlocnami *= 4;
+		locnami = (short *)realloc(locnami, maxlocnami * sizeof(short));
+	}
+	locnami[nlocnami++] = index;
+}
+
+
+/*
+ * Emit locator names
+ * XXX the locnamp[] table is not compressed like it should be!
+ */
+static int
+emitlocnames(fp)
+	register FILE *fp;
+{
+	register struct devi **p, *i;
+	register struct nvlist *nv;
+	register struct attr *a;
+	int added, start;
+	int v, j, x;
+
+#if 1
+	addlocnami(-1);
+	for (p = packed; (i = *p) != NULL; p++) {
+		/*printf("child %s\n", i->i_name);*/
+
+		/* initialize all uninitialized parents */
+		for (x = 0; x < i->i_pvlen; x++) {
+			if (i->i_parents[x]->i_plocnami)
+				continue;
+			start = nlocnami;
+
+			/* add all the names */
+			a = i->i_atattr;
+			nv = a->a_locs;
+			added = 0;
+			for (nv = a->a_locs, v = 0; nv != NULL;
+			    nv = nv->nv_next, v++) {
+				addlocnami(addlocname(nv->nv_name));
+				added = 1;
+			}
+			/* terminate list of names */
+			if (added)
+				addlocnami(-1);
+			else
+				start--;
+
+			/*printf("bus %s starts at %d\n", i->i_parents[x]->i_name,
+			    start);*/
+			i->i_parents[x]->i_plocnami = start;
+
+		}
+	}
+	for (p = packed; (i = *p) != NULL; p++)
+		if (i->i_pvlen)
+			i->i_locnami = i->i_parents[0]->i_plocnami;
+#else
+	addlocnami(-1);
+	for (p = packed; (i = *p) != NULL; p++) {
+
+		i->i_locnami = nlocnami;
+
+		/* add all the names */
+		a = i->i_atattr;
+		nv = a->a_locs;
+		for (nv = a->a_locs, v = 0; nv != NULL; nv = nv->nv_next, v++)
+			addlocnami(addlocname(nv->nv_name));
+
+		/* terminate list of names */
+		addlocnami(-1);
+
+	}
+#endif
+	if (fprintf(fp, "\nchar *locnames[] = {\n") < 0)
+		return (1);
+	for (j = 0; j < nlocnames; j++)
+		if (fprintf(fp, "\t\"%s\",\n", locnames[j]) < 0)
+			return (1);
+	if (fprintf(fp, "};\n\n") < 0)
+		return (1);
+
+	if (fprintf(fp,
+	    "/* each entry is an index into locnames[]; -1 terminates */\n") < 0)
+		return (1);
+	if (fprintf(fp, "short locnamp[] = {") < 0)
+		return (1);
+	for (j = 0; j < nlocnami; j++)
+		if (fprintf(fp, "%s%d,", SEP(j, 8), locnami[j]) < 0)
+			return (1);
+	return (fprintf(fp, "\n};\n") < 0);
+}
+
+
 /*
  * Emit global parents-vector.
  */
@@ -236,7 +360,7 @@ emitcfdata(fp)
 #define STAR FSTATE_STAR\n\
 \n\
 struct cfdata cfdata[] = {\n\
-    /* attachment       driver        unit state loc   flags parents ivstubs */\n") < 0)
+    /* attachment       driver        unit  state loc     flags parents nm ivstubs */\n") < 0)
 		return (1);
 	for (p = packed; (i = *p) != NULL; p++) {
 		/* the description */
@@ -281,10 +405,11 @@ struct cfdata cfdata[] = {\n\
 		} else
 			loc = "loc";
 		if (fprintf(fp, "\
-    {&%s_ca,%s&%s_cd,%s%2d, %s, %7s, %#6x, pv+%2d, %s%d},\n",
+    {&%s_ca,%s&%s_cd,%s%2d, %s, %7s, %#4x, pv+%2d, %d, %s%d},\n",
 		    attachment, strlen(attachment) < 6 ? "\t\t" : "\t",
 		    basename, strlen(basename) < 3 ? "\t\t" : "\t", unit,
-		    state, loc, i->i_cfflags, i->i_pvoff, vs, v) < 0)
+		    state, loc, i->i_cfflags, i->i_pvoff, i->i_locnami,
+		    vs, v) < 0)
 			return (1);
 	}
 	return (fputs("    {0}\n};\n", fp) < 0);

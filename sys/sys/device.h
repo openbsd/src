@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.5 1996/04/29 14:17:53 hvozda Exp $	*/
+/*	$OpenBSD: device.h,v 1.6 1996/06/16 10:29:55 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct cfdata {
 	int	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
 	short	*cf_parents;		/* potential parents */
+	int	cf_locnames;		/* start of names */
 	void	(**cf_ivstubs)		/* config-generated vectors, if any */
 			__P((void));
 };
@@ -164,6 +165,7 @@ extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
 
 void config_init __P((void));
+void config_edit __P((void));
 void *config_search __P((cfmatch_t, struct device *, void *));
 void *config_rootsearch __P((cfmatch_t, char *, void *));
 struct device *config_found_sm __P((struct device *, void *, cfprint_t,

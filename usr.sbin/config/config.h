@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.3 1996/04/21 23:40:07 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.4 1996/06/16 10:29:58 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.23 1996/03/17 13:18:15 cgd Exp $	*/
 
 /*
@@ -180,7 +180,8 @@ struct devi {
 	short	i_locoff;	/* offset in locators.vec */
 	short	i_ivoff;	/* offset in interrupt vectors, if any */
 	struct	devi **i_parents;/* the parents themselves */
-
+	int	i_locnami;	/* my index into locnami[] */
+	int	i_plocnami;	/* parent's locnami[] index */
 };
 /* special units */
 #define	STAR	(-1)		/* unit number for, e.g., "sd*" */
