@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.50 2005/01/30 21:43:02 kettenis Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.51 2005/01/31 15:48:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -341,6 +341,7 @@ const struct ac97_codecid {
 	{ 0x30, 0xff, 0, 0,	"ALC101" },
 	{ 0x40, 0xff, 0, 0,	"ALC202" },
 	{ 0x50, 0xff, 0, 0,	"ALC250" },
+	{ 0x52, 0xff, 0, 0,	"ALC250A?" },
 	{ 0x60, 0xff, 0, 0,	"ALC655",	ac97_alc655_init },
 	{ 0x70, 0xff, 0, 0,	"ALC203" },
 	{ 0x80, 0xff, 0, 0,	"ALC658",	ac97_alc655_init },
@@ -370,6 +371,8 @@ const struct ac97_codecid {
 }, ac97_cx[] = {
 	{ 0x21, 0xff, 0, 0,	"HSD11246" },
 	{ 0x28, 0xf8, 7, 0,	"CX20468",	ac97_cx20468_init },
+}, ac97_dt[] = {
+	{ 0x00, 0xff, 0, 0,	"DT0398" },
 }, ac97_em[] = {
 	{ 0x23, 0xff, 0, 0,	"EM28023" },
 	{ 0x28, 0xff, 0, 0,	"EM28028" },
@@ -380,17 +383,26 @@ const struct ac97_codecid {
 }, ac97_ic[] = {
 	{ 0x01, 0xff, 0, 0,	"ICE1230" },
 	{ 0x11, 0xff, 0, 0,	"ICE1232" },
+	{ 0x14, 0xff, 0, 0,	"ICE1232A" },
 	{ 0x51, 0xff, 0, 0,	"VIA VT1616" },
 	{ 0x52, 0xff, 0, 0,	"VIA VT1616i" },
+}, ac97_it[] = {
+	{ 0x20, 0xff, 0, 0,	"ITE2226E" },
+	{ 0x60, 0xff, 0, 0,	"ITE2646E" },
 }, ac97_ns[] = {
 	{ 0x00,	0xff, 0, 0,	"LM454[03568]" },
 	{ 0x31,	0xff, 0, 0,	"LM4549" },
+	{ 0x40, 0xff, 0, 0,	"LM4540" },
+	{ 0x43, 0xff, 0, 0,	"LM4543" },
+	{ 0x46, 0xff, 0, 0,	"LM4546A" },
+	{ 0x48, 0xff, 0, 0,	"LM4548A" },
+	{ 0x49, 0xff, 0, 0,	"LM4549A" },
+	{ 0x50, 0xff, 0, 0,	"LM4550" },
 }, ac97_ps[] = {
 	{ 0x01,	0xff, 0, 0,	"UCB1510" },
 	{ 0x04,	0xff, 0, 0,	"UCB1400" },
 }, ac97_sl[] = {
-	{ 0x22,	0xff, 0, 0,	"Si3036" },
-	{ 0x23,	0xff, 0, 0,	"Si3038" },
+	{ 0x20,	0xe0, 0, 0,	"Si3036/38" },
 }, ac97_st[] = {
 	{ 0x00,	0xff, 0, 0,	"STAC9700" },
 	{ 0x04,	0xff, 0, 0,	"STAC970[135]" },
@@ -401,6 +413,9 @@ const struct ac97_codecid {
 	{ 0x50,	0xff, 0, 0,	"STAC9750/51" },
 	{ 0x52,	0xff, 0, 0,	"STAC9752/53" },
 	{ 0x56,	0xff, 0, 0,	"STAC9756/57" },
+	{ 0x58,	0xff, 0, 0,	"STAC9758/59" },
+	{ 0x60,	0xff, 0, 0,	"STAC9760/61" },
+	{ 0x62,	0xff, 0, 0,	"STAC9762/63" },
 	{ 0x66,	0xff, 0, 0,	"STAC9766/67" },
 	{ 0x84,	0xff, 0, 0,	"STAC9784/85" },
 }, ac97_vi[] = {
@@ -420,8 +435,11 @@ const struct ac97_codecid {
 	{ 0x03,	0xff, 0, 0,	"WM9704M/Q-0" }, /* & WM9703 */
 	{ 0x04,	0xff, 0, 0,	"WM9704M/Q-1" },
 	{ 0x05,	0xff, 0, 0,	"WM9705/10" },
+	{ 0x09,	0xff, 0, 0,	"WM9709" },
+	{ 0x12,	0xff, 0, 0,	"WM9711/12" },
 }, ac97_ym[] = {
 	{ 0x00, 0xff, 0, 0,	"YMF743-S" },
+	{ 0x02, 0xff, 0, 0,	"YMF752-S" },
 	{ 0x03, 0xff, 0, 0,	"YMF753-S" },
 };
 
@@ -440,10 +458,12 @@ const struct ac97_vendorid {
 	{ 0x434d4900, "C-Media Electronics",	cl(ac97_cm) },
 	{ 0x43525900, "Cirrus Logic",		cl(ac97_cs) },
 	{ 0x43585400, "Conexant",		cl(ac97_cx) },
+	{ 0x44543000, "Diamond Technology",	cl(ac97_dt) },
 	{ 0x454d4300, "eMicro",			cl(ac97_em) },
 	{ 0x45838300, "ESS Technology",		cl(ac97_es) },
 	{ 0x48525300, "Intersil",		cl(ac97_is) },
 	{ 0x49434500, "ICEnsemble",		cl(ac97_ic) },
+	{ 0x49544500, "ITE, Inc.",		cl(ac97_it) },
 	{ 0x4e534300, "National Semiconductor", cl(ac97_ns) },
 	{ 0x50534300, "Philips Semiconductor",	cl(ac97_ps) },
 	{ 0x53494c00, "Silicon Laboratory",	cl(ac97_sl) },
