@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.16 1998/10/19 05:39:29 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.17 1998/10/21 04:12:09 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -687,8 +687,6 @@ beinit(sc)
 	int i;
 
 	sc->sc_nticks = 0;
-
-	qec_reset(sc->sc_qec);
 
 	/*
 	 * init QEC: 'be' specific initializations

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.6 1998/10/19 05:41:20 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.7 1998/10/21 04:12:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -150,6 +150,8 @@ qecattach(parent, self, aux)
 		oca.ca_ra.ra_bp = NULL;
 
 	printf("\n");
+
+	qec_reset(sc);
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
