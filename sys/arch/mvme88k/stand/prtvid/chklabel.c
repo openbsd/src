@@ -1,3 +1,4 @@
+/*	$OpenBSD: chklabel.c,v 1.2 1998/08/22 08:49:16 smurph Exp $ */
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
