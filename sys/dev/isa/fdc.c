@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.8 1996/11/29 22:54:55 niklas Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.9 1996/11/30 09:34:42 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -272,8 +272,10 @@ fdcresult(fdc)
 				log(LOG_ERR, "fdcresult: overrun\n");
 				return -1;
 			}
-			fdc->sc_status[n++] = bus_space_read_1(iot, ioh, fddata);
+			fdc->sc_status[n++] =
+			    bus_space_read_1(iot, ioh, fddata);
 		}
+		delay(10);
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
 	return -1;
