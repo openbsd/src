@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2004/12/30 21:26:14 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 2005/01/09 00:09:51 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ static	struct device *getdisk(char *str, int len, int defpart,
 static	int findblkmajor(struct device *dv);
 static	char *findblkname(int);
 static	int getstr(char *cp, int size);  
+static	int device_match(const char *, const char *);
 
 int	mainbusmatch(struct device *, void *, void *);
 void	mainbusattach(struct device *, struct device *, void *);
@@ -299,6 +300,23 @@ cpu_configure()
  * Code to find and set the boot device
  **********************************************************************/
 
+static int
+device_match(const char *dvname, const char *template)
+{
+	size_t len = strlen(template);
+	char unit;
+
+	if (strncmp(dvname, template, len) != 0)
+		return (1);
+
+	/* Check that we are immediately followed by an unit number. */
+	unit = dvname[len];
+	if (unit < '0' || unit > '9')
+		return (1);
+
+	return (0);
+}
+
 /*
  * Register a device.  We're passed the device and the arguments
  * used to attach it.  This is used to find the boot device.
@@ -340,16 +358,16 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (strncmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    strncmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    strncmp(dev->dv_xname, "spc", 3) == 0) {
+	if (device_match(dev->dv_xname, "fhpib") == 0 ||
+	    device_match(dev->dv_xname, "nhpib") == 0 ||
+	    device_match(dev->dv_xname, "spc") == 0) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
 		goto linkup;
 	}
 
-	if (strncmp(dev->dv_xname, "hd", 2) == 0) {
+	if (device_match(dev->dv_xname, "hd") == 0) {
 		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
@@ -357,9 +375,9 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (strncmp(dev->dv_xname, "cd", 2) == 0 ||
-	    strncmp(dev->dv_xname, "sd", 2) == 0 ||
-	    strncmp(dev->dv_xname, "st", 2) == 0) {
+	if (device_match(dev->dv_xname, "cd") == 0 ||
+	    device_match(dev->dv_xname, "sd") == 0 ||
+	    device_match(dev->dv_xname, "st") == 0) {
 		struct scsibus_attach_args *sa = aux;
 
 		dd->dd_slave = sa->sa_sc_link->target;
@@ -376,13 +394,13 @@ device_register(dev, aux)
  linkup:
 	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
 
-	if (strncmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    strncmp(dev->dv_xname, "nhpib", 5) == 0) {
+	if (device_match(dev->dv_xname, "fhpib") == 0 ||
+	    device_match(dev->dv_xname, "nhpib") == 0) {
 		dev_data_insert(dd, &dev_data_list_hpib);
 		return;
 	}
 
-	if (strncmp(dev->dv_xname, "spc", 3) == 0) {
+	if (device_match(dev->dv_xname, "spc") == 0) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -864,8 +882,10 @@ findbootdev()
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 0 && strncmp(booted_device->dv_xname, "ct", 2)) ||
-		    (type == 2 && strncmp(booted_device->dv_xname, "hd", 2))) {
+		if ((type == 0 &&
+		     device_match(booted_device->dv_xname, "ct")) ||
+		    (type == 2 &&
+		     device_match(booted_device->dv_xname, "hd"))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -888,9 +908,9 @@ findbootdev()
 		/*
 		 * Sanity check.
 		 */
-		if (strncmp(booted_device->dv_xname, "cd", 2) != 0 &&
-		    strncmp(booted_device->dv_xname, "sd", 2) != 0 &&
-		    strncmp(booted_device->dv_xname, "st", 2) != 0) {
+		if (device_match(booted_device->dv_xname, "cd") != 0 &&
+		    device_match(booted_device->dv_xname, "sd") != 0 &&
+		    device_match(booted_device->dv_xname, "st") != 0) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -992,11 +1012,11 @@ setbootdev()
 	/*
 	 * Determine device type.
 	 */
-	if (strncmp(root_device->dv_xname, "hd", 2) == 0)
+	if (device_match(root_device->dv_xname, "hd") == 0)
 		type = 2;
-	else if (strncmp(root_device->dv_xname, "cd", 2) == 0 ||
-	    strncmp(root_device->dv_xname, "sd", 2) == 0 ||
-	    strncmp(root_device->dv_xname, "st", 2) == 0)
+	else if (device_match(root_device->dv_xname, "cd") == 0 ||
+	    device_match(root_device->dv_xname, "sd") == 0 ||
+	    device_match(root_device->dv_xname, "st") == 0)
 		/* force scsi disk regardless of the actual device */
 		type = 4;
 	else {
