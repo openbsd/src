@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.10 2001/11/13 19:09:59 dhartmei Exp $
+.\"	$OpenBSD: pf.4,v 1.11 2001/12/10 18:28:33 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -131,6 +131,8 @@ struct pfioc_rdr {
 .It Dv DIOCGETRDR      Fa "struct pfioc_rdr"
 .It Dv DIOCCLRSTATES
 Clears the state table.
+.It Dv DIOCADDSTATE    Fa "struct pfioc_state"
+Adds a state entry.
 .It Dv DIOCGETSTATE    Fa "struct pfioc_state"
 .Bd -literal
 struct pfioc_state {

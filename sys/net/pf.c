@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.177 2001/12/10 18:08:11 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.178 2001/12/10 18:28:32 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1023,26 +1023,24 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	/* XXX keep in sync with switch() below */
 	if (securelevel > 1)
 		switch (cmd) {
-		case DIOCSTART:
-		case DIOCSTOP:
-		case DIOCBEGINRULES:
-		case DIOCADDRULE:
-		case DIOCCOMMITRULES:
-		case DIOCBEGINNATS:
-		case DIOCADDNAT:
-		case DIOCCOMMITNATS:
-		case DIOCBEGINBINATS:
-		case DIOCADDBINAT:
-		case DIOCCOMMITBINATS:
-		case DIOCBEGINRDRS:
-		case DIOCADDRDR:
-		case DIOCCOMMITRDRS:
-		case DIOCCLRSTATES:
-		case DIOCCHANGERULE:
-		case DIOCCHANGENAT:
-		case DIOCCHANGEBINAT:
-		case DIOCCHANGERDR:
-		case DIOCSETTIMEOUT:
+		case DIOCGETRULES:
+		case DIOCGETRULE:
+		case DIOCGETNATS:
+		case DIOCGETNAT:
+		case DIOCGETBINATS:
+		case DIOCGETBINAT:
+		case DIOCGETRDRS:
+		case DIOCGETRDR:
+		case DIOCGETSTATE:
+		case DIOCSETSTATUSIF:
+		case DIOCGETSTATUS:
+		case DIOCCLRSTATUS:
+		case DIOCNATLOOK:
+		case DIOCSETDEBUG:
+		case DIOCGETSTATES:
+		case DIOCGETTIMEOUT:
+			break;
+		default:
 			return EPERM;
 		}
 
@@ -1912,6 +1910,27 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_status.states = 0;
 		splx(s);
 		break;
+	}
+
+	case DIOCADDSTATE: {
+		struct pfioc_state *ps = (struct pfioc_state *)addr;
+		struct pf_state *state;
+
+		state = pool_get(&pf_state_pl, PR_NOWAIT);
+		if (state == NULL) {
+			error = ENOMEM;
+			break;
+		}
+		s = splsoftnet();
+		microtime(&pftv);
+		bcopy(&ps->state, state, sizeof(struct pf_state));
+		state->rule = NULL;
+		state->creation = pftv.tv_sec;
+		state->expire += pftv.tv_sec;
+		state->packets = 0;
+		state->bytes = 0;
+		pf_insert_state(state);
+		splx(s);
 	}
 
 	case DIOCGETSTATE: {
