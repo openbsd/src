@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.39 1999/05/11 23:52:47 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.40 1999/05/11 23:57:44 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ struct ss_quirk_inquiry_pattern {
 };
 
 struct  quirkdata ss_gen_quirks = {
-	"generic", 0, 40, 0, 0, 0,
+	"generic", 0, 0, 0, 0, 0,
 	{0, 0}, 0, 0, GENERIC_SCSI2,
 	NULL, NULL, NULL
 };
@@ -378,9 +378,6 @@ ss_identify_scanner(ss, inqbuf)
 	} else {
 		printf("\n%s: generic scanner\n", ss->sc_dev.dv_xname);
 		bzero(&ss_gen_quirks, sizeof(ss_gen_quirks));
-#if 0
-		ss_gen_quirks.name = "generic";
-#endif
 		ss->quirkdata = &ss_gen_quirks;
 		ss->sio.scan_scanner_type = GENERIC_SCSI2;
 	}
