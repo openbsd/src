@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 1997/09/21 14:16:00 deraadt Exp $
+#	$OpenBSD: install.md,v 1.15 1997/09/26 19:51:12 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ md_installboot() {
 	echo "Installing boot block..."
 	cp /usr/mdec/boot /mnt/boot
 	sync; sync; sync
-	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot /dev/r${1}c
+	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
 }
 
 md_native_fstype() {
