@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.5 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.6 2002/08/12 00:41:11 miod Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -414,8 +414,19 @@ getchar()
 	if (promvec->pv_romvec_vers > 2)
 		while ((n = (*promvec->pv_v2devops.v2_read)
 			(*promvec->pv_v2bootargs.v2_fd0, (caddr_t)&c, 1)) != 1);
-	else
-		c = (*promvec->pv_getchar)();
+	else {
+                /* SUN4 PROM: must turn off local echo */
+                extern struct om_vector *oldpvec;
+                int saveecho = 0;
+
+                if (CPU_ISSUN4) {
+                        saveecho = *(oldpvec->echo);
+                        *(oldpvec->echo) = 0;
+                }       
+                c = (*promvec->pv_getchar)();
+                if (CPU_ISSUN4)
+                        *(oldpvec->echo) = saveecho;
+	}
 
 	if (c == '\r')
 		c = '\n';
