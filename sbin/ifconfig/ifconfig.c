@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.61 2002/04/10 18:52:27 millert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.62 2002/04/25 08:55:16 itojun Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.61 2002/04/10 18:52:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.62 2002/04/25 08:55:16 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ struct	ifaliasreq	addreq;
 #ifdef INET6
 struct	in6_ifreq	ifr6;
 struct	in6_ifreq	in6_ridreq;
-struct	in6_aliasreq	in6_addreq __attribute__((aligned(4)));
+struct	in6_aliasreq	in6_addreq;
 #endif
 struct	iso_ifreq	iso_ridreq;
 struct	iso_aliasreq	iso_addreq;
