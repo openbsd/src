@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.16 2004/05/25 09:36:48 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.17 2004/05/25 11:29:27 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -5827,7 +5827,7 @@ The process ID (PID) of the
 program connected to the tunN device, where
 .Sq N
 is the number of the device.
-.It Pa /var/run/ttyXX.if
+.It Pa /var/run/cuaXX.if
 The tun interface used by this port.
 Again, this file is only created in
 .Fl background ,
