@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.51 2002/01/07 16:16:32 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.52 2002/01/19 19:00:14 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -415,6 +415,8 @@ execsigs(p)
 	ps->ps_sigstk.ss_sp = 0;
 	ps->ps_flags = 0;
 	p->p_flag &= ~P_NOCLDWAIT;
+	if (ps->ps_sigact[SIGCHLD] == SIG_IGN)
+		ps->ps_sigact[SIGCHLD] = SIG_DFL;
 }
 
 /*
