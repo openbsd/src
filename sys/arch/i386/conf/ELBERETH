@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.1 1997/03/31 14:55:43 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.2 1997/04/07 13:30:24 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -12,7 +12,7 @@ makeoptions     CC="cc -Werror"
 options		I586_CPU	# CPU classes; at least one is REQUIRED
 
 options		XSERVER		# diddle with console driver
-option		INSECURE	# insecure; allow /dev/mem writing for X
+#option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	16		# estimated number of users
 options		TIMEZONE=300	# time zone to adjust RTC time by
@@ -43,8 +43,8 @@ options		COMPAT_SVR4	# binary compatibility with SVR4
 options		COMPAT_LINUX	# binary compatibility with Linux
 #options	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
-#options	VM86		# Virtual x86 mode; to be used by dos emualtors
-#options	USER_LDT	# user-settable LDT; used by WINE
+options		VM86		# Virtual x86 mode; to be used by dos emualtors
+options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
 
 options		FFS		# UFS
