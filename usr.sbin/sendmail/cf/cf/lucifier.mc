@@ -30,31 +30,78 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-include(`../m4/cf.m4')dnl
-VERSIONID(`$OpenBSD: lucifier.mc,v 1.1 1997/05/29 00:18:12 mickey Exp $')dnl
+include(`../m4/cf.m4')
+VERSIONID(`$OpenBSD: lucifier.mc,v 1.2 1998/03/25 16:50:03 mickey Exp $')
 OSTYPE(bsd4.4)dnl
+DOMAIN(generic)dnl
+
 MAILER(local)dnl
 MAILER(smtp)dnl
-MASQUERADE_AS(lucifier.dial-up.user.akula.net)dnl
-MASQUERADE_DOMAIN(lucifier.dial-up.user.akula.net)dnl
-FEATURE(allmasquerade)dnl
 
-define(`BITNET_RELAY', relay.uu.net)dnl
+dnl FEATURE(allmasquerade)dnl
+dnl MASQUERADE_AS(9netave.com)dnl
+dnl MASQUERADE_DOMAIN(9netave.com)dnl
 
+dnl FEATURE(always_add_domain)dnl
+FEATURE(mailertable)dnl
+FEATURE(virtusertable)dnl
+
+# hacks
+HACK(use_ip)dnl
+dnl HACK(use_names)dnl
+HACK(use_relayto)dnl
+
+define(`_CHECK_FROM_',1)dnl
+define(`_MAPS_RBL_',1)dnl
+define(`_IP_LOOKUP_',1)dnl
+define(`_DNSVALID_',1)dnl
+define(`_DNSRELAY_',1)dnl                                 
+
+HACK(check_mail3, `hash -a@JUNK /etc/mail/junk')dnl
+HACK(check_rcpt5, `hash -a@ALLOW /etc/mail/allow')dnl
+HACK(check_relay3)dnl
+
+# relays
+define(`UUCP_RELAY', ucbvax.Berkeley.EDU)dnl
+define(`BITNET_RELAY', mailhost.Berkeley.EDU)dnl
+define(`CSNET_RELAY', mailhost.Berkeley.EDU)dnl
+
+# other defines
+define(`confSMTP_LOGIN_MSG', `$j ESMTP spoken here; $b')
 define(`confAUTO_REBUILD', True)dnl
 define(`confCHECK_ALIASES', True)dnl
+define(`confTRY_NULL_MX_LIST', True)dnl
+define(`confCHECKPOINT_INTERVAL', `4')dnl
 
 define(`confMIN_FREE_BLOCKS', 1024)dnl
+define(`confMAX_MESSAGE_SIZE', 1000000)dnl
 define(`confSEPARATE_PROC', True)dnl
 define(`confBIND_OPTS', +AAONLY)dnl
 define(`confFORWARD_PATH', /var/forward/$u:$z/.forward.$w:$z/.forward)dnl
 define(`confUSE_ERRORS_TO', TRUE)dnl
-define(`confPRIVACY_FLAGS', `noexpn novrfy needmailhelo')
+define(`confPRIVACY_FLAGS', `authwarnings,noexpn,novrfy,needmailhelo,restrictmailq,restrictqrun')dnl
 
-define(`confDEF_CHAR_SET', `koi8-r')
-define(`confSEVEN_BIT_INPUT', False)
-define(`confEIGHT_BIT_HANDLING', `pass8')
+define(`confSMTP_MAILER', `smtp8')dnl
+define(`confDEF_CHAR_SET', `koi8-r')dnl
+define(`confSEVEN_BIT_INPUT', False)dnl
+define(`confEIGHT_BIT_HANDLING', `pass8')dnl
+define(`confME_TOO', `True')dnl
+define(`confNO_RCPT_ACTION', `add-to-undisclosed')dnl
 
-LOCAL_CONFIG
-O AliasFile=/home/majordomo/etc/aliases
+define(`confMCI_CACHE_TIMEOUT', `10m')dnl
+define(`confMIN_QUEUE_AGE', `30m')dnl
+define(`confMAX_DAEMON_CHILDREN', `128')dnl
+define(`confCONNECTION_THROTTLE_RATE', `1')dnl
 
+define(`confTO_CONNECT', `5m')dnl
+define(`confTO_COMMAND', `10m')dnl
+define(`confTO_DATABLOCK', `10m')dnl
+define(`confTO_DATAFINAL', `10m')dnl
+define(`confTO_HOSTSTATUS', `30m')dnl
+define(`confTO_IDENT', `15s')dnl
+define(`confTO_QUEUEWARN', `1d')dnl
+define(`confTO_QUEUEWARN_NORMAL', `1d')dnl
+define(`confTO_RCPT', `10m')dnl
+
+#LOCAL_CONFIG
+#O AliasFile=/home/majordomo/etc/aliases
