@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.4 1996/09/25 06:40:52 etheisen Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.5 1996/09/27 06:06:58 etheisen Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -518,7 +518,6 @@ void fillin_program(prog_t *p)
         }
     }
 
-    // emt
     /* We have a sourcedir and no explict objs, try */
     /* to find makefile and get objs from it. */
     if (p->srcdir && !p->objs) {
