@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isa.c,v 1.4 1999/01/02 01:33:39 niklas Exp $	*/
+/*	$OpenBSD: sb_isa.c,v 1.5 2001/11/01 17:14:10 millert Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ sbfind(parent, sc, ia)
 
 	sc->sc_iot = ia->ia_iot;
 
-	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
+	/* Map i/o space [we map 24 ports which is the max of the sb and pro] */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, SBP_NPORT, 0,
 	    &sc->sc_ioh))
 		return 0;
