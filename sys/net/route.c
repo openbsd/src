@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.2 1996/03/03 21:07:19 niklas Exp $	*/
+/*	$OpenBSD: route.c,v 1.3 1997/02/20 01:07:43 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -55,6 +55,10 @@
 
 #ifdef NS
 #include <netns/ns.h>
+#endif
+
+#ifdef IPSEC
+#include <net/encap.h>
 #endif
 
 #define	SA(p) ((struct sockaddr *)(p))
@@ -283,6 +287,18 @@ ifa_ifwithroute(flags, dst, gateway)
 	struct sockaddr	*dst, *gateway;
 {
 	register struct ifaddr *ifa;
+
+#ifdef IPSEC
+	/*
+	 * If the destination is a AF_ENCAP address, we'll look
+	 * for the existence of a encap interface number or address
+	 * in the options list of the gateway. By default, we'll return
+	 * encap0.
+	 */
+	if (dst && (dst->sa_family == AF_ENCAP))
+		return encap_findgwifa(gateway);
+#endif
+
 	if ((flags & RTF_GATEWAY) == 0) {
 		/*
 		 * If we are adding a route to an interface,

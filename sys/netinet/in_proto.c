@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.6 1996/10/08 07:33:25 niklas Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.7 1997/02/20 01:07:46 deraadt Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -94,6 +94,18 @@ void	iplinit __P((void));
 #define ip_init	iplinit
 #endif
 
+#ifdef IPSEC
+#include <net/encap.h>
+#include <netinet/ip_ipsp.h>
+
+extern void ah_input __P((struct mbuf *, ...));
+extern void esp_input __P((struct mbuf *, ...));
+extern int ah_output __P((struct mbuf *, struct sockaddr_encap *,
+    struct tdb *, struct mbuf **));
+extern int esp_output __P((struct mbuf *, struct sockaddr_encap *,
+    struct tdb *, struct mbuf **));
+#endif
+
 extern	struct domain inetdomain;
 
 struct protosw inetsw[] = {
@@ -128,7 +140,13 @@ struct protosw inetsw[] = {
   rip_usrreq,	/* XXX */
   0,		0,		0,		0,
 },
-#endif /* MROUTING */
+#elif defined(IPSEC)
+{ SOCK_RAW,     &inetdomain,    IPPROTO_IPIP,   PR_ATOMIC|PR_ADDR,
+  ipe4_input,   rip_output,     0,              rip_ctloutput,
+  rip_usrreq,   /* XXX */
+  0,            0,              0,              0,
+},
+#endif /* MROUTING/IPSEC */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -163,6 +181,18 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* NSIP */
+#ifdef IPSEC
+{ SOCK_RAW,   &inetdomain,    IPPROTO_AH,     PR_ATOMIC|PR_ADDR,
+  ah_input,   rip_output,     0,              rip_ctloutput,
+  rip_usrreq,
+  0,          0,              0,              0,
+},
+{ SOCK_RAW,   &inetdomain,    IPPROTO_ESP,    PR_ATOMIC|PR_ADDR,
+  esp_input,  rip_output,     0,              rip_ctloutput,
+  rip_usrreq,
+  0,          0,              0,              0,
+},
+#endif
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,

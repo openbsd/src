@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.6 1996/07/29 02:34:31 downsj Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.7 1997/02/20 01:08:06 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -61,6 +61,13 @@
 
 #include <machine/stdarg.h>
 
+#ifdef IPSEC
+#include <net/encap.h>
+#include <netinet/ip_ipsp.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
+#endif
+
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
@@ -96,6 +103,11 @@ ip_output(m0, va_alist)
 	int flags;
 	struct ip_moptions *imo;
 	va_list ap;
+#ifdef IPSEC
+	struct mbuf *mp;
+        struct udphdr *udp;
+        struct tcphdr *tcp;
+#endif
 
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
@@ -127,6 +139,174 @@ ip_output(m0, va_alist)
 	} else {
 		hlen = ip->ip_hl << 2;
 	}
+
+#ifdef IPSEC
+	/*
+	 * Check if the packet needs encapsulation
+	 */
+	if (!(flags & IP_ENCAPSULATED)) {
+		struct route_enc {
+			struct	rtentry *re_rt;
+			struct	sockaddr_encap re_dst;
+		} re0, *re = &re0;
+		struct sockaddr_encap *dst, *gw;
+		struct tdb *tdb;
+
+		bzero((caddr_t)re, sizeof (*re));
+		dst = (struct sockaddr_encap *)&re->re_dst;
+		dst->sen_family = AF_ENCAP;
+		dst->sen_len = SENT_IP4_LEN;
+		dst->sen_type = SENT_IP4;
+		dst->sen_ip_src = ip->ip_src;
+		dst->sen_ip_dst = ip->ip_dst;
+		dst->sen_proto = ip->ip_p;
+		
+		if ((m->m_len < hlen + 2*sizeof(u_int16_t)) &&
+		    ((m = m_pullup(m, hlen + 2*sizeof(u_int16_t))) == 0))
+			goto bad;
+
+		switch (ip->ip_p) {
+		case IPPROTO_TCP:
+			udp = (struct udphdr *) (mtod(m, u_char *) + hlen);
+			dst->sen_sport = ntohs(udp->uh_sport);
+			dst->sen_dport = ntohs(udp->uh_dport);
+			break;
+		case IPPROTO_UDP:
+			tcp = (struct tcphdr *) (mtod(m, u_char *) + hlen);
+			dst->sen_sport = ntohs(tcp->th_sport);
+			dst->sen_dport = ntohs(tcp->th_dport);
+			break;
+		default:
+			dst->sen_sport = 0;
+			dst->sen_dport = 0;
+		}
+		rtalloc((struct route *)re);
+		if (re->re_rt == NULL)
+			goto no_encap;
+
+		gw = (struct sockaddr_encap *)(re->re_rt->rt_gateway);
+		if (gw == NULL || gw->sen_type != SENT_IPSP) {
+#ifdef ENCDEBUG
+			if (encdebug)
+				printf("ip_output: no gw or gw data not IPSP\n");
+#endif ENCDEBUG
+			m_freem(m);
+			RTFREE(re->re_rt);
+			return EHOSTUNREACH;
+		}
+
+		ifp = re->re_rt->rt_ifp;
+
+		if (ip->ip_src.s_addr == INADDR_ANY) {
+			struct sockaddr_encap *sen;
+			struct sockaddr_in *sinp;
+
+			if (ifp->if_addrlist.tqh_first)
+				sen = (struct sockaddr_encap *)
+				    ifp->if_addrlist.tqh_first->ifa_addr;
+			else {
+#ifdef ENCDEBUG
+				if (encdebug)
+					printf("ip_output: interface %s has no default address\n",
+					    ifp->if_xname);
+#endif ENCDEBUG
+				return ENXIO;
+			}
+
+			if (sen->sen_family != AF_ENCAP) {
+#ifdef ENCDEBUG
+				if (encdebug)
+					printf("ip_output: %s does not have AF_ENCAP address\n",
+					    ifp->if_xname);
+#endif ENCDEBUG
+				m_freem(m);
+				RTFREE(re->re_rt);
+				return EHOSTDOWN;
+			}
+
+			if (sen->sen_type != SENT_DEFIF) {
+#ifdef ENCDEBUG
+				if (encdebug)
+					printf("ip_output: %s does not have SENT_DEFIF address\n",
+					    ifp->if_xname);
+#endif ENCDEBUG
+				m_freem(m);
+				RTFREE(re->re_rt);
+				return EHOSTDOWN;
+			}
+			sinp = (struct sockaddr_in *)&(sen->sen_dfl);
+			ip->ip_src = sinp->sin_addr;
+		}
+
+		if (hlen > sizeof (struct ip)) {	/* XXX IPOPT */
+			ip_stripoptions(m, (struct mbuf *)0);
+			hlen = sizeof (struct ip);
+		}
+
+#ifdef ENCDEBUG
+		if (encdebug)
+			printf("ip_output: encapsulating %x->%x through %x->%x\n",
+			    ip->ip_src.s_addr, ip->ip_dst.s_addr,
+			    gw->sen_ipsp_src, gw->sen_ipsp_dst);
+#endif
+		ip->ip_len = htons((u_short)ip->ip_len);
+		ip->ip_off = htons((u_short)ip->ip_off);
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(m, hlen);
+
+		/*
+		 * At this point we have an IPSP "gateway" (tunnel) spec.
+		 * Use the destination of the tunnel and the SPI to
+		 * look up the necessary Tunnel Control Block. Look it up,
+		 * and then pass it, along with the packet and the gw,
+		 * to the appropriate transformation.
+		 */
+
+		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst);
+
+#ifdef ENCDEBUG
+		if (encdebug)
+			printf("ip_output: tdb=0x%x, tdb->tdb_xform=0x%x, tdb->tdb_xform->xf_output=%x\n", tdb, tdb->tdb_xform, tdb->tdb_xform->xf_output);
+#endif ENCDEBUG
+
+		while (tdb && tdb->tdb_xform) {
+			m0 = NULL;
+#ifdef ENCDEBUG
+			if (encdebug)
+				printf("ip_output: calling %s\n",
+				    tdb->tdb_xform->xf_name);
+#endif ENCDEBUG
+			error = (*(tdb->tdb_xform->xf_output))(m, gw, tdb, &mp);
+			if (mp == NULL)
+				error = EFAULT;
+			if (error) {
+				RTFREE(re->re_rt);
+				return error;
+			}
+			tdb = tdb->tdb_onext;
+			m = mp;
+		}
+
+		/*
+		 * At this point, mp is pointing to an mbuf chain with the
+		 * processed packet. Call ourselves recursively, but
+		 * bypass the encap code.
+		 */
+
+		RTFREE(re->re_rt);
+
+		ip = mtod(m, struct ip *);
+		NTOHS(ip->ip_len);
+		NTOHS(ip->ip_off);
+
+		return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT, NULL);
+
+no_encap:
+		if (re->re_rt)
+			RTFREE(re->re_rt);
+	}
+#endif IPSEC
+
 	/*
 	 * Route packet.
 	 */

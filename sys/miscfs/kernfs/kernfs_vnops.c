@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.6 1997/01/15 03:06:28 kstailey Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.7 1997/02/20 01:08:12 deraadt Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -75,6 +75,10 @@ static int	ncpu = 1;	/* XXX */
 extern char machine[], cpu_model[];
 extern char ostype[], osrelease[];
 
+#ifdef IPSEC
+extern int ipsp_kern __P((int, char **, int));
+#endif
+
 struct kern_target {
 	u_char kt_type;
 	u_char kt_namlen;
@@ -90,6 +94,9 @@ struct kern_target {
 #define	KTT_MSGBUF	89
 #define KTT_USERMEM	91
 #define KTT_DOMAIN	95
+#ifdef IPSEC
+#define KTT_IPSECSPI	107
+#endif
 	u_char kt_tag;
 	u_char kt_vtype;
 	mode_t kt_mode;
@@ -124,6 +131,9 @@ struct kern_target {
      { DT_REG, N("time"),      0,            KTT_TIME,     VREG, READ_MODE  },
      { DT_REG, N("usermem"),   0,            KTT_USERMEM,  VREG, READ_MODE  },
      { DT_REG, N("version"),   version,      KTT_STRING,   VREG, READ_MODE  },
+#ifdef IPSEC
+     { DT_REG, N("ipsec"),     0,            KTT_IPSECSPI, VREG, READ_MODE  },
+#endif
 #undef N
 };
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
@@ -304,7 +314,10 @@ kernfs_xread(kt, off, bufp, len)
 	case KTT_USERMEM:
 		sprintf(*bufp, "%u\n", physmem - cnt.v_wire_count);
 		break;
-
+#ifdef IPSEC
+        case KTT_IPSECSPI:
+                return(ipsp_kern(off, bufp, len));
+#endif
 	default:
 		return (0);
 	}

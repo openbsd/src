@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.4 1996/05/10 12:31:19 deraadt Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.5 1997/02/20 01:08:04 deraadt Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -41,6 +41,10 @@
 #include <netinet/ip_mroute.h>
 
 #include <machine/stdarg.h>
+
+#ifdef IPSEC
+#include <dev/rndvar.h>
+#endif
 
 #define IP_MULTICASTOPTS 0
 #define	M_PULLUP(m, len) \
@@ -1393,7 +1397,11 @@ encap_send(ip, vifp, m)
 	 */
 	ip_copy = mtod(mb_copy, struct ip *);
 	*ip_copy = multicast_encap_iphdr;
+#ifdef IPSEC
+	get_random_bytes((void *)&(ip_copy->ip_id), sizeof(ip_copy->ip_id));
+#else
 	ip_copy->ip_id = htons(ip_id++);
+#endif
 	ip_copy->ip_len = len;
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
@@ -1439,16 +1447,19 @@ ipip_input(m, va_alist)
 	register int s;
 	register struct ifqueue *ifq;
 	register struct vif *vifp;
+	int isencaped = 0;
 	va_list ap;
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
 	va_end(ap);
 
+#ifndef IPSEC
 	if (!have_encap_tunnel) {
 		rip_input(m);
 		return;
 	}
+#endif
 
 	/*
 	 * dump the packet if it's not to a multicast destination or if
@@ -1458,6 +1469,10 @@ ipip_input(m, va_alist)
 	 * at most one tunnel with the remote site).
 	 */
 	if (!IN_MULTICAST(((struct ip *)((char *)ip + hlen))->ip_dst.s_addr)) {
+#ifdef IPSEC
+		isencaped = 1;
+		goto acceptedhere;
+#endif
 		++mrtstat.mrts_bad_tunnel;
 		m_freem(m);
 		return;
@@ -1485,10 +1500,16 @@ ipip_input(m, va_alist)
 	} else
 		vifp = last_encap_vif;
 
+acceptedhere:
 	m->m_data += hlen;
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
+#ifdef IPSEC
+	if (isencaped == 0)
+		m->m_pkthdr.rcvif = vifp->v_ifp;
+#else
 	m->m_pkthdr.rcvif = vifp->v_ifp;
+#endif
 	ifq = &ipintrq;
 	s = splimp();
 	if (IF_QFULL(ifq)) {

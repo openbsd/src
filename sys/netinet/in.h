@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.6 1996/07/29 02:34:29 downsj Exp $	*/
+/*	$OpenBSD: in.h,v 1.7 1997/02/20 01:07:45 deraadt Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
+#define	IPPROTO_ESP		50		/* Encap. Security Payload */
+#define	IPPROTO_AH		51		/* Authentication header */
 #define	IPPROTO_EON		80		/* ISO cnlp */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 
