@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.10 2004/11/06 12:19:17 espie Exp $
+# $OpenBSD: Update.pm,v 1.11 2004/11/07 12:19:20 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -41,6 +41,14 @@ sub register_libs
 sub updatable() { 1 }
 
 sub extract
+{
+}
+
+sub mark_lib
+{
+}
+
+sub unmark_lib
 {
 }
 
@@ -119,6 +127,20 @@ sub register_libs
 	}
 }
 
+sub mark_lib
+{
+	my ($self, $libs) = @_;
+	my $libname = $self->fullname();
+	$libs->{"$libname"} = 1;
+}
+
+sub unmark_lib
+{
+	my ($self, $libs) = @_;
+	my $libname = $self->fullname();
+	delete $libs->{"$libname"};
+}
+
 package OpenBSD::PackingElement::NewDepend;
 sub validate_depend
 {
@@ -174,6 +196,73 @@ sub can_do
 	return $state->{okay} ? $plist : 0;
 }
 
+# create a packing-list with only the libraries we want to keep around.
+sub split_libs
+{
+	my ($plist, $to_split) = @_;
+
+	my $items = [];
+
+	my $splitted = OpenBSD::PackingList->new();
+	OpenBSD::PackingElement::Name->add($splitted, "_libs-".$plist->pkgname());
+	# we conflict with the package we just removed...
+	OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname());
+
+	for my $item (@{$plist->{items}}) {
+		if ($item->isa("OpenBSD::PackingElement::Lib") &&
+		    defined $to_split->{$item->fullname()}) {
+		    	OpenBSD::PackingElement::Lib->add($splitted, $item->{name});
+		} elsif ($item->isa("OpenBSD::PackingElement::Cwd")) {
+			OpenBSD::PackingElement::Cwd->add($splitted, $item->{name});
+		} else {
+			push(@$items, $item);
+		}
+	}
+	$plist->{items} = $items;
+	return $splitted;
+}
+
+sub print_depends_closure
+{
+	my @todo = @_;
+	my $done = {};
+
+	while (my $pkg = shift @todo) {
+		$done->{$pkg} = 1;
+		my $r = OpenBSD::RequiredBy->new($pkg);
+		if (-f $$r) {
+			my $list = $r->list();
+			for my $pkg2 (@$list) {
+				next if $done->{$pkg2};
+				push(@todo, $pkg2);
+				print $pkg2, "\n";
+				$done->{$pkg2} = 1;
+			}
+		}
+	}
+}
+
+
+
+sub save_old_libraries
+{
+	my ($new_plist, $state) = @_;
+
+	my $old_plist = $new_plist->{replacing};
+	my $libs = {};
+
+	$old_plist->visit('mark_lib', $libs);
+	$new_plist->visit('unmark_lib', $libs);
+
+	if (%$libs) {
+		my $stub_list = split_libs($old_plist, $libs);
+		print_depends_closure($old_plist->pkgname());
+		$stub_list->write(\*STDOUT);
+		exit(1);
+	}
+}
+
+			
 sub verify_libs
 {
 	my ($plist, $state) = @_;
