@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2001/09/24 16:25:00 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.4 2001/09/24 23:40:56 art Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -90,6 +90,7 @@
 	
 /* Offset of ARGC from bottom of stack */
 #define	ARGC	(16*8)
+#define DL_DATA_SIZE (16*9)
 
 	.section	".text"
 	.align	16
@@ -98,15 +99,20 @@
 _dl_start:
 	sub	%g0, %g0, %fp		! clear frame
 	mov	%g1, %l1		! save ps_strings
-	sub	%sp, 16, %sp		! make room for return args
-	add	%sp, BIAS+ARGC, %l0	! l0 points to bottom of stack
+	sub	%sp, DL_DATA_SIZE, %sp	! make room for return args
+	add	%sp, BIAS, %o3
 
-	ldx	[%l0], %l3		! argc
+	add	%o3, DL_DATA_SIZE + ARGC, %l0
+	mov	0, %o2			! dynp = 0
+	call	_dl_boot_bind		! _dl_boot(argv,envp,loff,dynp,dl_data)
+	 mov	%l0, %o0
+
+	ldx	[%l0], %l3		! argc = *sp
 	sllx	%l3, 3, %l3		! argc *= sizeof(long)
 
-	addx	%l0, 8, %o0		! argv = [%l0 + 8]
+	addx	%l0, 8, %o0		! argv = [sp + argc]
 
-	addx	%l0, 16, %o1		! envp = %l0 + 16 +
+	addx	%l0, 16, %o1		! envp = sp + 16 +
 	addx	%o1, %l3, %o1		!	+ argc
 
 	subx	%l0, ARGC, %o4		! dl_data = sp
