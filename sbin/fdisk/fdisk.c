@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.37 2003/07/02 21:44:57 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.38 2004/01/07 16:28:52 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 
 	/* Parse mbr template, to pass on later */
 	if ((fd = open(mbrfile, O_RDONLY)) == -1) {
-		warn("Can not open MBR file");
+		warn("%s", mbrfile);
 		warnx("using builtin MBR");
 		memcpy(mbr_buf, builtin_mbr, sizeof(mbr_buf));
 	} else {
