@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.59 2004/08/02 22:16:43 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.60 2004/08/03 21:15:38 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -108,40 +108,52 @@ ASLOCAL(pfsr188_quad)
 	 * the trap will fault again, and we'll handle the remaining
 	 * exceptions here.
 	 *
+	 * However, to be sure we don't get fooled with already-processed
+	 * exceptions, we have to reset the fault status registers
+	 * after reading them.
+	 *
 	 * XXX It will probably be worth changing this so that we can
 	 * handle a bunch of CMMU faults at once in trap.c.
 	 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  1f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 1f
+	 st	r0,   TMP,  lo16(VME_CMMU_I0) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  1f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 1f
+	 st	r0,   TMP,  lo16(VME_CMMU_I1) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  1f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 1f
+	 st	r0,   TMP,  lo16(VME_CMMU_I2) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + 0x108
+	st	r0,   TMP,  lo16(VME_CMMU_I3) + 0x108
 1:
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 	
 	or.u	TMP,  r0,   hi16(VME_CMMU_D0)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  2f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 2f
+	 st	r0,   TMP,  lo16(VME_CMMU_D0) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_D1)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  2f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 2f
+	 st	r0,   TMP,  lo16(VME_CMMU_D1) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_D2)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  2f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 2f
+	 st	r0,   TMP,  lo16(VME_CMMU_D2) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_D3)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + 0x108
+	st	r0,   TMP,  lo16(VME_CMMU_D3) + 0x108
 2:
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
@@ -150,25 +162,33 @@ ASLOCAL(pfsr188_double)
 	/*
 	 * 4 CMMUs per CPU. Almost as simple as the 2 CMMUs per CPU
 	 * situation...
+	 *
+	 * However, to be sure we don't get fooled with already-processed
+	 * exceptions, we have to reset the fault status registers
+	 * after reading them.
 	 */
 	bcnd	ne0,  TMP,  5f
 
 	/* CPU 0 -> CMMU 0 and 1 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  1f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 1f
+	 st	r0,   TMP,  lo16(VME_CMMU_I0) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + 0x108
+	st	r0,   TMP,  lo16(VME_CMMU_I1) + 0x108
 1:
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 
 	or.u	TMP,  r0,   hi16(VME_CMMU_D0)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  2f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 2f
+	 st	r0,   TMP,  lo16(VME_CMMU_D0) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_D1)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + 0x108
+	st	r0,   TMP,  lo16(VME_CMMU_D1) + 0x108
 2:
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
@@ -177,26 +197,31 @@ ASLOCAL(pfsr188_double)
 	/* CPU 1 -> CMMU 2 and 3 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  1f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 1f
+	 st	r0,   TMP,  lo16(VME_CMMU_I2) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + 0x108
+	st	r0,   TMP,  lo16(VME_CMMU_I3) + 0x108
 1:
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 
 	or.u	TMP,  r0,   hi16(VME_CMMU_D2)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + 0x108
-	extu	TMP,  TMP2, 3<16>
-	bcnd	ne0,  TMP,  2f
+	extu	TMP3, TMP2, 3<16>
+	bcnd.n	ne0,  TMP3, 2f
+	 st	r0,   TMP,  lo16(VME_CMMU_D2) + 0x108
 	or.u	TMP,  r0,   hi16(VME_CMMU_D3)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + 0x108
+	st	r0,   TMP,  lo16(VME_CMMU_D3) + 0x108
 2:
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
 
 ASLOCAL(pfsr188_straight)
 	/*
-	 * We have the simple 2 CMMUs per CPU mapping. Pick our couple.
+	 * We have the simple 2 CMMUs per CPU mapping. Pick our couple;
+	 * no need to reset fault status registers in this case.
 	 */
 	bcnd	eq0,  TMP,  1f	/* CPU0 */
 	cmp	TMP2, TMP, 0x2
