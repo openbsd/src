@@ -15,30 +15,30 @@
 # provides another example.
 
 # The name of the remote system that we call.
-system uunet
+#system uunet
 
 # The login name and password are kept in the callout password file
 # (by default this is the file "call" in newconfigdir).
-call-login *
-call-password *
+#call-login *
+#call-password *
 
 # We can send anything at any time.
-time any
+#time any
 
 # During the day we only accept grade 'Z' or above; at other times
 # (not mentioned here) we accept all grades.  uunet queues up news
 # at grade 'd', which is lower than 'Z'.
-call-timegrade Z Wk0755-2305,Su1655-2305
+#call-timegrade Z Wk0755-2305,Su1655-2305
 
 # The phone number to call.
-phone 7389449
+#phone 7389449
 
 # uunet tends to be slow, so we increase the timeout
-chat-timeout 120
+#chat-timeout 120
 
 # The port we use to dial out.
-port serial
+#port serial
 
 # Increase the timeout and the number of retries.
-protocol-parameter g timeout 20
-protocol-parameter g retries 10
+#protocol-parameter g timeout 20
+#protocol-parameter g retries 10

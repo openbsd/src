@@ -17,4 +17,4 @@
 # to connect to the remote system.
 
 # The format is just system-name login-name password.
-uunet Uairs foobar
+#uunet Uairs foobar

@@ -1,8 +1,9 @@
 # This is the Makefile for Taylor UUCP
-# $Id: Makefile,v 1.1.1.1 1995/10/18 08:38:22 deraadt Exp $
+# $Id: Makefile,v 1.2 1996/12/08 22:39:31 tholo Exp $
 
 SUBDIR=		libunix libuucp libuuconf \
 		cu uuchk uucico uuconv uucp uulog uuname uupick uusched \
-		uustat uuto uux uuxqt
+		uustat uuto uux uuxqt \
+		sample
 
 .include <bsd.subdir.mk>
