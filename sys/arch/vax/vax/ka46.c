@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka46.c,v 1.6 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: ka46.c,v 1.7 2002/07/21 19:28:50 hugh Exp $	*/
 /*	$NetBSD: ka46.c,v 1.12 2000/03/04 07:27:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -160,9 +160,15 @@ ka46_steal_pages()
 	ka46_cache_enable();
 }
 
+#define	KA46_CPMBX	0x38
+#define	KA46_HLT_HALT	0xcf
+#define	KA46_HLT_BOOT	0x8b
+
 static void
 ka46_halt()
 {
+	if (((u_int8_t *) clk_page)[KA46_CPMBX] != KA46_HLT_HALT)
+		((u_int8_t *) clk_page)[KA46_CPMBX] = KA46_HLT_HALT;
 	asm("halt");
 }
 
@@ -170,5 +176,7 @@ static void
 ka46_reboot(arg)
 	int arg;
 {
+	if (((u_int8_t *) clk_page)[KA46_CPMBX] != KA46_HLT_BOOT)
+		((u_int8_t *) clk_page)[KA46_CPMBX] = KA46_HLT_BOOT;
 	asm("halt");
 }

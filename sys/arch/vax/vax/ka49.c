@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka49.c,v 1.6 2002/07/21 06:12:28 hugh Exp $	*/
+/*	$OpenBSD: ka49.c,v 1.7 2002/07/21 19:28:51 hugh Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -221,9 +221,15 @@ ka49_steal_pages()
 	ka49_cache_enable();
 }
 
+#define	KA49_CPMBX	0x38
+#define	KA49_HLT_HALT	0xcf
+#define	KA49_HLT_BOOT	0x8b
+
 static void
 ka49_halt()
 {
+	if (((u_int8_t *) clk_page)[KA49_CPMBX] != KA49_HLT_HALT)
+		((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_HALT;
 	asm("halt");
 }
 
@@ -231,5 +237,7 @@ static void
 ka49_reboot(arg)
 	int arg;
 {
+	if (((u_int8_t *) clk_page)[KA49_CPMBX] != KA49_HLT_BOOT)
+		((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_BOOT;
 	asm("halt");
 }
