@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.16 2003/06/18 08:30:36 deraadt Exp $
+.\"	$OpenBSD: sbus.4,v 1.17 2003/06/18 08:47:41 deraadt Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm sbus
-.Nd introduction to machine-independent sbus bus support and drivers
+.Nd introduction to sbus bus support and drivers
 .Sh SYNOPSIS
 .Cd "sbus* at mainbus?"
 .Cd "sbus* at iommu?"
@@ -61,7 +61,7 @@ specifications define the bus protocol as well as the electrical and
 mechanical properties of the extension slots.
 .Sh HARDWARE
 .Ox
-includes machine-independent
+includes the following
 .Nm
 drivers, sorted by device type and driver name:
 .Ss Audio interfaces
@@ -111,7 +111,7 @@ board.
 bridge.
 .El
 .Ss Graphics devices
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr agten 4
 Fujitsu AG-10e accelerated 24-bit color frame buffer.
 .It Xr bwtwo 4
