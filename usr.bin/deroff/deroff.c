@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.1 2002/02/28 06:58:21 millert Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.2 2002/02/28 07:20:21 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -76,7 +76,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: deroff.c,v 1.1 2002/02/28 06:58:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: deroff.c,v 1.2 2002/02/28 07:20:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -958,7 +958,7 @@ meputmac(char *cp, int constant)
 
 			case '"':
 				if (inquote && np[1] == '"') {
-					strcpy(np, np + 1);
+					memmove(np, np + 1, strlen(np + 1));
 					np++;
 					continue;
 				} else {
