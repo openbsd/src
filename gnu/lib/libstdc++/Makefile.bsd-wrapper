@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2004/02/09 02:29:26 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2004/03/19 16:16:55 miod Exp $
 
 LIBIBERTY_INCLUDES=${.CURDIR}/../libiberty/include
 LIBIBERTY_SRCDIR=${.CURDIR}/../libiberty/src
@@ -21,6 +21,8 @@ install:	all
 		install DESTDIR=${DESTDIR} INCLUDE_SUBDIR=
 # XXX
 	rm -f ${DESTDIR}/usr/lib/libstdc++.la ${DESTDIR}/usr/lib/libsupc++.la
+	chmod ${NONBINMODE} ${DESTDIR}/usr/lib/libstdc++.* \
+	    ${DESTDIR}/usr/lib/libsupc++.*
 
 #	cd ${.OBJDIR}/include && ${MAKE} ${MAKE_FLAGS} all
 
