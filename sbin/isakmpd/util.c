@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.8 2000/10/13 13:22:02 niklas Exp $	*/
-/*	$EOM: util.c,v 1.17 2000/10/13 13:04:16 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 2000/10/16 23:27:03 niklas Exp $	*/
+/*	$EOM: util.c,v 1.19 2000/10/14 23:40:08 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -71,6 +71,29 @@ decode_32 (u_int8_t *cp)
   return cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3];
 }
 
+u_int64_t
+decode_64 (u_int8_t *cp)
+{
+  return ((u_int64_t) cp[0] << 56) | ((u_int64_t) cp[1] << 48) |
+         ((u_int64_t) cp[2] << 40) | ((u_int64_t) cp[3] << 32) |
+         cp[4] << 24 | cp[5] << 16 | cp[6] << 8 | cp[7];
+}
+
+void
+decode_128 (u_int8_t *cp, u_int8_t *cpp)
+{
+  int i;
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+  for (i = 0; i < 16; i++)
+    cpp[i] = cp[15 - i];
+#elif BYTE_ORDER == BIG_ENDIAN
+  bcopy (cp, cpp, 16);
+#else
+#error "Byte order unknown!"
+#endif
+}
+
 void
 encode_16 (u_int8_t *cp, u_int16_t x)
 {
@@ -87,12 +110,41 @@ encode_32 (u_int8_t *cp, u_int32_t x)
   *cp = x & 0xff;
 }
 
+void
+encode_64 (u_int8_t *cp, u_int64_t x)
+{
+  *cp++ = x >> 56;
+  *cp++ = (x >> 48) & 0xff;
+  *cp++ = (x >> 40) & 0xff;
+  *cp++ = (x >> 32) & 0xff;
+  *cp++ = (x >> 24) & 0xff;
+  *cp++ = (x >> 16) & 0xff;
+  *cp++ = (x >> 8) & 0xff;
+  *cp = x & 0xff;
+}
+
+void
+encode_128 (u_int8_t *cp, u_int8_t *cpp)
+{
+    decode_128 (cpp, cp);
+}
+
 /* Check a buffer for all zeroes.  */
 int
 zero_test (const u_int8_t *p, size_t sz)
 {
   while (sz-- > 0)
     if (*p++ != 0)
+      return 0;
+  return 1;
+}
+
+/* Check a buffer for all ones.  */
+int
+ones_test (const u_int8_t *p, size_t sz)
+{
+  while (sz-- > 0)
+    if (*p++ != 0xff)
       return 0;
   return 1;
 }
