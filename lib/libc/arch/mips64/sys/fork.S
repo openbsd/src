@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: fork.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: fork.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSLEAF(fork)
@@ -47,6 +47,6 @@ SYSLEAF(fork)
 1:
 	j	ra
 2:
-	la	t9, _C_LABEL(cerror)
+	LA	t9, _C_LABEL(cerror)
 	jr	t9
 SYSEND(fork)

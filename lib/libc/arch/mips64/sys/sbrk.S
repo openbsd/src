@@ -34,27 +34,27 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.1 2004/08/11 17:31:00 pefo Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 	.globl	curbrk
 
 	.data
-curbrk:	.word	_C_LABEL(end)
+curbrk:	PTR_VAL	_C_LABEL(end)
 	.text
 
 LEAF(sbrk)
 	.set	reorder
-	lw	v1, curbrk
+	PTR_L	v1, curbrk
 	li	v0, SYS_break
-	addu	a0, a0, v1	# compute current break
+	PTR_ADDU a0, a0, v1	# compute current break
 	syscall
 
 	bne	a3, zero, 1f
 	move	v0, v1		# return old val of curbrk from above
-	sw	a0, curbrk	# save current val of curbrk from above
+	PTR_S	a0, curbrk	# save current val of curbrk from above
 	j	ra
 1:
-	la	t9, _C_LABEL(cerror)
+	LA	t9, _C_LABEL(cerror)
 	jr	t9
 END(sbrk)

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.1 2004/08/11 17:30:59 pefo Exp $ 
+ *      $OpenBSD: SYS.h,v 1.2 2004/09/07 13:48:26 pefo Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -70,7 +70,7 @@
 			__DO_SYSCALL(y);		\
 			bne	a3,zero,err;		\
 			j	ra;			\
-		err:	la	t9,_C_LABEL(cerror);	\
+		err:	LA	t9,_C_LABEL(cerror);	\
 			jr	t9;			\
 		__END2(p,x)
 

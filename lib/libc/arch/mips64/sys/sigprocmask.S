@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigprocmask.S,v 1.1 2004/08/11 17:31:00 pefo Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSLEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
@@ -54,6 +54,6 @@ out:
 	move	v0, zero
 	j	ra
 err:
-	la	t9, _C_LABEL(cerror)
+	LA	t9, _C_LABEL(cerror)
 	jr	t9
 SYSEND(sigprocmask)

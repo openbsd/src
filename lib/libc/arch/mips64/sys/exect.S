@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: exect.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSLEAF(exect)
@@ -44,6 +44,6 @@ SYSLEAF(exect)
 	bne	a3, zero, 1f
 	j	ra
 1:
-	la	t9, _C_LABEL(cerror)
+	LA	t9, _C_LABEL(cerror)
 	jr	t9
 SYSEND(exect)

@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigsuspend.S,v 1.1 2004/08/11 17:31:00 pefo Exp $"
+	.asciz "$OpenBSD: sigsuspend.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSLEAF(sigsuspend)
@@ -46,6 +46,6 @@ SYSLEAF(sigsuspend)
 	move	v0, zero		# should not happen
 	j	ra
 1:
-	la	t9, _C_LABEL(cerror)
+	LA	t9, _C_LABEL(cerror)
 	jr	t9
 SYSEND(sigsuspend)

@@ -1,4 +1,4 @@
-/*      $OpenBSD: setjmp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $ */
+/*      $OpenBSD: setjmp.S,v 1.2 2004/09/07 13:48:26 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.2 2004/09/07 13:48:26 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -45,7 +45,7 @@
  *
  */
 
-#define SETJMP_FRAMESZ	(FRAMESZ(CF_SZ) + 4 * REGSZ)
+#define SETJMP_FRAMESZ	(FRAMESZ(CF_SZ) + 6 * REGSZ)
 
 NON_LEAF(setjmp, SETJMP_FRAMESZ, ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
@@ -55,15 +55,19 @@ NON_LEAF(setjmp, SETJMP_FRAMESZ, ra)
 #endif
 	.set	reorder
 	REG_S	ra, CF_RA_OFFS(sp)		# save state
-	REG_S	a0, SETJMP_FRAMESZ(sp)
+	REG_S	a0, SETJMP_FRAMESZ-REGSZ(sp)
+
 	move	a0, zero			# get current signal mask
 	jal	sigblock
-	REG_L	v1, SETJMP_FRAMESZ(sp)		# v1 = jmpbuf
+
+	REG_L	v1, SETJMP_FRAMESZ-REGSZ(sp)	# v1 = jmpbuf
 	REG_S	v0, SC_MASK(v1)			# save sc_mask = sigblock(0)
+
 	move	a0, zero
 	PTR_ADD	a1, sp, FRAMESZ(CF_SZ)		# pointer to struct sigaltstack
 	jal	_thread_sys_sigaltstack
-	REG_L	a0, SETJMP_FRAMESZ(sp)		# restore jmpbuf
+
+	REG_L	a0, SETJMP_FRAMESZ-REGSZ(sp)		# restore jmpbuf
 	lw	v1, FRAMESZ(CF_SZ)+REGSZ+4(sp)	# get old ss_onstack
 	and	v1, v1, 1			# extract onstack flag
 	REG_S	v1, SC_ONSTACK(a0)		# save it in sc_onstack

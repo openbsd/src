@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: sigsetjmp.S,v 1.2 2004/09/07 13:48:26 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -47,10 +47,10 @@ LEAF(sigsetjmp)
 	.set	reorder
 	REG_S	a1, (_JBLEN*REGSZ)(a0)		# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
-	la	t9, _setjmp
+	LA	t9, _setjmp
 	jr t9
 
-1:	la	t9, setjmp
+1:	LA	t9, setjmp
 	jr t9
 END(sigsetjmp)
 
@@ -58,8 +58,8 @@ LEAF(siglongjmp)
 	.set	reorder
 	REG_L	t0, (_JBLEN*REGSZ)(a0)		# get "savemask"
 	bne	t0, 0x0, 1f			# restore signal mask?
-	la	t9, _longjmp
+	LA	t9, _longjmp
 	jr	t9
-1:	la	t9, longjmp
+1:	LA	t9, longjmp
 	jr	t9
 END(siglongjmp)

@@ -34,32 +34,32 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 	.globl	minbrk
 	.globl	curbrk
 
 	.data
-minbrk:	.word	_C_LABEL(end)
+minbrk:	PTR_VAL	_C_LABEL(end)
 	.text
 
 LEAF(brk)
 	.set	reorder
-	lw	v0, minbrk
+	PTR_L	v0, minbrk
 	bltu	a0, v0, 1f
-	la	t9, _brk
+	LA	t9, _brk
 	jr	t9
 1:
 	move	a0, v0		# dont allow break < minbrk
 	li	v0, SYS_break
 	syscall
 	bne	a3, zero, 2f
-	sw	a0, curbrk
+	PTR_S	a0, curbrk
 	move	v0, zero
 	j	ra
 2:
-	la	t9, _C_LABEL(cerror)
+	LA	t9, _C_LABEL(cerror)
 	jr	t9
 END(brk)
 
@@ -68,10 +68,10 @@ LEAF(_brk)
 	li	v0, SYS_break
 	syscall
 	bne	a3, zero, 1f
-	sw	a0, curbrk
+	PTR_S	a0, curbrk
 	move	v0, zero
 	j	ra
 1:
-	la	t9, _C_LABEL(cerror)
+	LA	t9, _C_LABEL(cerror)
 	jr	t9
-END(brk)
+END(_brk)
