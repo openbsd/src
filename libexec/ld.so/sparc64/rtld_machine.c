@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2001/09/26 14:57:56 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.8 2001/09/27 06:58:33 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -273,16 +273,37 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			sym += ELF_R_SYM(relas->r_info);
 			symn = object->dyn.strtab + sym->st_name;
 
-			this = NULL;
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
-			if (this == NULL) {
+			if (sym->st_shndx != SHN_UNDEF &&
+			    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+				value += loff;
+			} else {
+				this = NULL;
+				ooff = _dl_find_symbol(symn, _dl_objects,
+				    &this, 0, 1);
+				if (this == NULL) {
 resolve_failed:
-				_dl_printf("%s: %s :can't resolve reference '%s'\n",
-					_dl_progname, object->load_name, symn);
-				fails++;
-				continue;
+					_dl_printf("%s: %s :can't resolve "
+					    "reference '%s'\n",
+					    _dl_progname, object->load_name,
+					    symn);
+					fails++;
+					continue;
+				}
+#ifdef notyet
+/*
+ * XXX Hmm, we should change the API of _dl_find_symbol and do this in there,
+ * XXX or maybe make a wrapper.
+ */
+				if (this->st_size != sym->st_size &&
+				    sym->st_size != 0) {
+					_dl_printf("%s: %s : WARNING: "
+					    "symbol(%s) size mismatch ",
+					    _dl_progname, object->load_name,
+					    symn);
+					_dl_printf("relink your program\n");
+				}
+#endif
 			}
-
 			value += (Elf_Addr)(ooff + this->st_value);
 		}
 
