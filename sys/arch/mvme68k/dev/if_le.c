@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.5 1996/05/05 13:37:32 mickey Exp $ */
+/*	$OpenBSD: if_le.c,v 1.6 1996/05/06 21:53:39 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -818,9 +818,9 @@ leioctl(ifp, cmd, data)
 	register struct lereg1 *ler1;
 	int s = splnet(), error = 0;
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_ac, cmd, data)) > 0) {
 		splx(s);
-		retun error;
+		return error;
 	}
 
 	switch (cmd) {
