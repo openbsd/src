@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $OpenBSD: auth.h,v 1.7 2000/10/16 09:38:44 djm Exp $
+ * $OpenBSD: auth.h,v 1.8 2000/12/28 14:25:51 markus Exp $
  */
 #ifndef AUTH_H
 #define AUTH_H
@@ -31,6 +31,7 @@ struct Authctxt {
 	int success;
 	int valid;
 	int attempt;
+	int failures;
 	char *user;
 	char *service;
 	struct passwd *pw;
