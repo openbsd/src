@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.20 2003/08/19 14:30:11 mickey Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.21 2004/04/16 23:06:56 tedu Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.20 2003/08/19 14:30:11 mickey Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.21 2004/04/16 23:06:56 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,13 +193,14 @@ mbpr(u_long mbaddr, u_long mbpooladdr, u_long mclpooladdr)
 			    mbstat.m_mtypes[i],
 			    plural((int)mbstat.m_mtypes[i]), i);
 		}
-	printf("%lu/%lu/%lu mbuf cluster pages in use (current/peak/max)\n",
-	    (u_long)(mclpool.pr_npages - mclpool.pr_nidle),
-	    (u_long)mclpool.pr_hiwat, (u_long)mclpool.pr_maxpages);
+	printf("%lu/%lu/%lu mbuf clusters in use (current/peak/max)\n",
+	    (u_long)(mclpool.pr_nout),
+	    (u_long)(mclpool.pr_hiwat * mclpool.pr_itemsperpage),
+	    (u_long)(mclpool.pr_maxpages * mclpool.pr_itemsperpage));
 	totmem = (mbpool.pr_npages * page_size) +
 	    (mclpool.pr_npages * page_size);
-	totused = (mbpool.pr_nget - mbpool.pr_nput) * mbpool.pr_size +
-	    (mclpool.pr_nget - mclpool.pr_nput) * mclpool.pr_size;
+	totused = mbpool.pr_nout * mbpool.pr_size +
+	    mclpool.pr_nout * mclpool.pr_size;
 	totpct = (totmem == 0)? 0 : ((totused * 100)/totmem);
 	printf("%u Kbytes allocated to network (%d%% in use)\n",
 	    totmem / 1024, totpct);
