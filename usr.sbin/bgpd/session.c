@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.142 2004/04/16 04:52:26 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.143 2004/04/24 19:36:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,13 +45,14 @@
 #include "session.h"
 
 #define	PFD_LISTEN	0
-#define PFD_PIPE_MAIN	1
-#define PFD_PIPE_ROUTE	2
-#define	PFD_SOCK_CTL	3
-#define PFD_PEERS_START	4
+#define	PFD_LISTEN6	1
+#define PFD_PIPE_MAIN	2
+#define PFD_PIPE_ROUTE	3
+#define	PFD_SOCK_CTL	4
+#define PFD_PEERS_START	5
 
 void	session_sighdlr(int);
-int	setup_listener(void);
+int	setup_listener(struct sockaddr *);
 void	init_conf(struct bgpd_config *);
 void	init_peer(struct peer *);
 int	timer_due(time_t);
@@ -88,6 +89,7 @@ struct peer		*npeers;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
 int			 sock = -1;
+int			 sock6 = -1;
 int			 csock = -1;
 struct imsgbuf		 ibuf_rde;
 struct imsgbuf		 ibuf_main;
@@ -106,11 +108,14 @@ session_sighdlr(int sig)
 }
 
 int
-setup_listener(void)
+setup_listener(struct sockaddr *sa)
 {
 	int			 fd, opt;
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+	if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
+		return (-1);
+
+	if ((fd = socket(sa->sa_family, SOCK_STREAM, IPPROTO_TCP)) == -1)
 		return (fd);
 
 	opt = 1;
@@ -119,8 +124,7 @@ setup_listener(void)
 	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &opt, sizeof(opt)) == -1)
 		fatal("setsockopt TCP_MD5SIG");
 
-	if (bind(fd, (struct sockaddr *)&conf->listen_addr,
-	    sizeof(conf->listen_addr))) {
+	if (bind(fd, sa, sa->sa_len)) {
 		close(fd);
 		return (-1);
 	}
@@ -134,7 +138,6 @@ setup_listener(void)
 
 	return (fd);
 }
-
 
 int
 session_main(struct bgpd_config *config, struct peer *cpeers,
@@ -181,8 +184,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
-	if ((sock = setup_listener()) == -1)
-		fatalx("listener setup failed");
+	if ((sock = setup_listener((struct sockaddr *)&conf->listen_addr)) ==
+	    -1)
+		fatalx("IPv4 listener setup failed");
+	if ((sock6 = setup_listener((struct sockaddr *)&conf->listen6_addr)) ==
+	    -1)
+		fatalx("IPv6 listener setup failed");
 
 	if (pfkey_init() == -1)
 		fatalx("pfkey setup failed");
@@ -230,6 +237,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		bzero(&pfd, sizeof(pfd));
 		pfd[PFD_LISTEN].fd = sock;
 		pfd[PFD_LISTEN].events = POLLIN;
+		pfd[PFD_LISTEN6].fd = sock6;
+		pfd[PFD_LISTEN6].events = POLLIN;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.sock;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
@@ -342,6 +351,11 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		if (nfds > 0 && pfd[PFD_LISTEN].revents & POLLIN) {
 			nfds--;
 			session_accept(sock);
+		}
+
+		if (nfds > 0 && pfd[PFD_LISTEN6].revents & POLLIN) {
+			nfds--;
+			session_accept(sock6);
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLOUT)
@@ -875,12 +889,21 @@ session_setup_socket(struct peer *p)
 	int	pre = IPTOS_PREC_INTERNETCONTROL;
 	int	nodelay = 1;
 
-	if (p->conf.ebgp)
+	if (p->conf.ebgp && p->sa_remote.ss_family == AF_INET)
 		/* set TTL to foreign router's distance - 1=direct n=multihop */
 		if (setsockopt(p->sock, IPPROTO_IP, IP_TTL, &ttl,
 		    sizeof(ttl)) == -1) {
 			log_peer_warn(&p->conf,
 			    "session_setup_socket setsockopt TTL");
+			return (-1);
+		}
+
+	if (p->conf.ebgp && p->sa_remote.ss_family == AF_INET6)
+		/* set hoplimit to foreign router's distance */
+		if (setsockopt(p->sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &ttl,
+		    sizeof(ttl)) == -1) {
+			log_peer_warn(&p->conf,
+			    "session_setup_socket setsockopt hoplimit");
 			return (-1);
 		}
 
@@ -893,7 +916,8 @@ session_setup_socket(struct peer *p)
 	}
 
 	/* set precedence, see rfc1771 appendix 5 */
-	if (setsockopt(p->sock, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
+	if (p->sa_remote.ss_family == AF_INET &&
+	    setsockopt(p->sock, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
 		log_peer_warn(&p->conf,
 		    "session_setup_socket setsockopt TOS");
 		return (-1);

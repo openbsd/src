@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.107 2004/04/10 17:27:28 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.108 2004/04/24 19:36:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,7 @@ struct bgpd_config {
 	int			 flags;
 	int			 log;
 	struct sockaddr_in	 listen_addr;
+	struct sockaddr_in6	 listen6_addr;
 };
 
 struct buf_read {

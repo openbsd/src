@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.78 2004/03/11 19:01:08 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.79 2004/04/24 19:36:19 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -216,11 +216,20 @@ conf_main	: AS asnumber		{
 			conf->min_holdtime = $3;
 		}
 		| LISTEN ON address	{
-			if ($3.af != AF_INET) {
-				yyerror("listen-on takes an IPv4 address");
+			switch ($3.af) {
+			case AF_INET:
+				conf->listen_addr.sin_addr.s_addr =
+				    $3.v4.s_addr;
+				break;
+			case AF_INET6:
+				memcpy(&conf->listen6_addr.sin6_addr, &$3.v6,
+				    sizeof(conf->listen6_addr.sin6_addr));
+				break;
+			default:
+				yyerror("king bula does not like family %u",
+				    $3.af);
 				YYERROR;
 			}
-			conf->listen_addr.sin_addr.s_addr = $3.v4.s_addr;
 		}
 		| FIBUPDATE yesno		{
 			if ($2 == 0)
@@ -349,10 +358,6 @@ optnumber	: /* empty */		{ $$ = 0; }
 
 neighbor	: {	curpeer = new_peer(); }
 		    NEIGHBOR address optnl '{' optnl {
-			if ($3.af != AF_INET) {
-				yyerror("king bula sez: IPv4 transport only");
-				YYERROR;
-			}
 			memcpy(&curpeer->conf.remote_addr, &$3,
 			    sizeof(curpeer->conf.remote_addr));
 			if (get_id(curpeer)) {
@@ -421,6 +426,11 @@ peeropts	: REMOTEAS asnumber	{
 			free($2);
 		}
 		| LOCALADDR address	{
+			if ($2.af != curpeer->conf.remote_addr.af) {
+				yyerror("local-address and neighbor address "
+				    "must be of the same address family");
+				YYERROR;
+			}
 			memcpy(&curpeer->conf.local_addr, &$2,
 			    sizeof(curpeer->conf.local_addr));
 		}
@@ -1065,6 +1075,11 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	conf->listen_addr.sin_family = AF_INET;
 	conf->listen_addr.sin_addr.s_addr = INADDR_ANY;
 	conf->listen_addr.sin_port = htons(BGP_PORT);
+
+	bzero(&conf->listen6_addr, sizeof(conf->listen6_addr));
+	conf->listen6_addr.sin6_len = sizeof(conf->listen6_addr);
+	conf->listen6_addr.sin6_family = AF_INET6;
+	conf->listen6_addr.sin6_port = htons(BGP_PORT);
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);
