@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.68 2000/01/10 05:35:09 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.69 2000/01/10 06:59:22 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -369,14 +369,51 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 	tdb2.tdb_satype = get_sa_require(inp);
 
 	/* Always require PFS */
-	tdb2.tdb_flags |= TDBF_PFS; /* XXX Make this configurable */
+	if (ipsec_require_pfs)
+	  tdb2.tdb_flags |= TDBF_PFS;
 
-	/*
-	 * XXX Initialize:
-	 * XXX - Lifetime values
-	 * XXX - encalgxform/authalgxform
-	 * XXX from sysctl-controlled defaults
-	 */
+	/* Initialize expirations */
+	tdb2.tdb_soft_allocations = ipsec_soft_allocations;
+	tdb2.tdb_exp_allocations = ipsec_exp_allocations;
+	tdb2.tdb_soft_bytes = ipsec_soft_bytes;
+	tdb2.tdb_exp_bytes = ipsec_exp_bytes;
+	tdb2.tdb_soft_timeout = ipsec_soft_timeout;
+	tdb2.tdb_exp_timeout = ipsec_exp_timeout;
+	tdb2.tdb_soft_first_use = ipsec_soft_first_use;
+	tdb2.tdb_exp_first_use = ipsec_exp_first_use;
+
+	if (tdb2.tdb_satype & NOTIFY_SATYPE_CONF)
+	{
+	    if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
+	      tdb2.tdb_encalgxform = &enc_xform_des;
+	    else
+	      if (!strncasecmp(ipsec_def_enc, "3des", sizeof("3des")))
+		tdb2.tdb_encalgxform = &enc_xform_3des;
+	      else
+		if (!strncasecmp(ipsec_def_enc, "blowfish", sizeof("blowfish")))
+		  tdb2.tdb_encalgxform = &enc_xform_blf;
+		else
+		  if (!strncasecmp(ipsec_def_enc, "cast128", sizeof("cast128")))
+		    tdb2.tdb_encalgxform = &enc_xform_cast5;
+		  else
+		    if (!strncasecmp(ipsec_def_enc, "skipjack",
+				     sizeof("skipjack")))
+		      tdb2.tdb_encalgxform = &enc_xform_skipjack;
+	}
+
+	if (tdb2.tdb_satype & NOTIFY_SATYPE_AUTH)
+	{
+	    if (!strncasecmp(ipsec_def_auth, "hmac-md5", sizeof("hmac-md5")))
+	      tdb2.tdb_authalgxform = &auth_hash_hmac_md5_96;
+	    else
+	      if (!strncasecmp(ipsec_def_auth, "hmac-sha1",
+			       sizeof("hmac-sha1")))
+		tdb2.tdb_authalgxform = &auth_hash_hmac_sha1_96;
+	      else
+		if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
+				 sizeof("hmac_ripemd160")))
+		  tdb2.tdb_authalgxform = &auth_hash_hmac_ripemd_160_96;
+	}
 
 	/* XXX Initialize src_id/dst_id */
 

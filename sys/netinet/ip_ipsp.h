@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.54 2000/01/10 04:30:53 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.55 2000/01/10 06:59:23 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -104,8 +104,19 @@ union sockaddr_union
 #define SPI_RESERVED_MIN	1
 #define SPI_RESERVED_MAX	255
 
-/* How long are we going to keep embryonic SAs (default value) */
+/* sysctl default values */
 #define IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT	60	/* 1 minute */
+#define IPSEC_DEFAULT_PFS                       1
+#define IPSEC_DEFAULT_SOFT_ALLOCATIONS          0
+#define IPSEC_DEFAULT_EXP_ALLOCATIONS           0
+#define IPSEC_DEFAULT_SOFT_BYTES                0
+#define IPSEC_DEFAULT_EXP_BYTES                 0
+#define IPSEC_DEFAULT_SOFT_TIMEOUT              80000
+#define IPSEC_DEFAULT_EXP_TIMEOUT               86400
+#define IPSEC_DEFAULT_SOFT_FIRST_USE            3600
+#define IPSEC_DEFAULT_EXP_FIRST_USE             7200
+#define IPSEC_DEFAULT_DEF_ENC                   "3des"
+#define IPSEC_DEFAULT_DEF_AUTH                   "hmac-sha1"
 
 struct sockaddr_encap
 {
@@ -444,8 +455,30 @@ extern int encdebug;
 extern int ipsec_acl;
 extern int ipsec_keep_invalid;
 extern int ipsec_in_use;
+extern int ipsec_require_pfs;
+
 extern u_int8_t hmac_ipad_buffer[64];
 extern u_int8_t hmac_opad_buffer[64];
+extern int ipsec_soft_allocations;
+extern int ipsec_exp_allocations;
+extern int ipsec_soft_bytes;
+extern int ipsec_exp_bytes;
+extern int ipsec_soft_timeout;
+extern int ipsec_exp_timeout;
+extern int ipsec_soft_first_use;
+extern int ipsec_exp_first_use;
+extern char ipsec_def_enc[];
+extern char ipsec_def_auth[];
+
+extern struct enc_xform enc_xform_des;
+extern struct enc_xform enc_xform_3des;
+extern struct enc_xform enc_xform_blf;
+extern struct enc_xform enc_xform_cast5;
+extern struct enc_xform enc_xform_skipjack;
+
+extern struct auth_hash auth_hash_hmac_md5_96;
+extern struct auth_hash auth_hash_hmac_sha1_96;
+extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
 extern TAILQ_HEAD(expclusterlist_head, tdb) expclusterlist;
 extern TAILQ_HEAD(explist_head, tdb) explist;

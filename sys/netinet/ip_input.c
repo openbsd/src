@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.47 2000/01/10 04:30:52 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.48 2000/01/10 06:59:22 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -80,6 +80,17 @@
 int encdebug = 0;
 int ipsec_acl = 0;
 int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;
+int ipsec_require_pfs = IPSEC_DEFAULT_PFS;
+int ipsec_soft_allocations = IPSEC_DEFAULT_SOFT_ALLOCATIONS;
+int ipsec_exp_allocations = IPSEC_DEFAULT_EXP_ALLOCATIONS;
+int ipsec_soft_bytes = IPSEC_DEFAULT_SOFT_BYTES;
+int ipsec_exp_bytes = IPSEC_DEFAULT_EXP_BYTES;
+int ipsec_soft_timeout = IPSEC_DEFAULT_SOFT_TIMEOUT;
+int ipsec_exp_timeout = IPSEC_DEFAULT_EXP_TIMEOUT;
+int ipsec_soft_first_use = IPSEC_DEFAULT_SOFT_FIRST_USE;
+int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;
+char ipsec_def_enc[20];
+char ipsec_def_auth[20];
 
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -220,6 +231,9 @@ ip_init()
 		DP_SET(baddynamicports.tcp, defbaddynamicports_tcp[i]);
 	for (i = 0; defbaddynamicports_udp[i] != 0; i++)
 		DP_SET(baddynamicports.udp, defbaddynamicports_tcp[i]);
+
+	strncpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
+	strncpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -1498,6 +1512,40 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 				   &ipsec_keep_invalid));
+	case IPCTL_IPSEC_REQUIRE_PFS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_require_pfs));
+	case IPCTL_IPSEC_SOFT_ALLOCATIONS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_soft_allocations));
+	case IPCTL_IPSEC_ALLOCATIONS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_exp_allocations));
+	case IPCTL_IPSEC_SOFT_BYTES:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_soft_bytes));
+	case IPCTL_IPSEC_BYTES:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_exp_bytes));
+	case IPCTL_IPSEC_TIMEOUT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_exp_timeout));
+	case IPCTL_IPSEC_SOFT_TIMEOUT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_soft_timeout));
+	case IPCTL_IPSEC_SOFT_FIRSTUSE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_soft_first_use));
+	case IPCTL_IPSEC_FIRSTUSE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_exp_first_use));
+	case IPCTL_IPSEC_ENC_ALGORITHM:
+	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+				       ipsec_def_enc, sizeof(ipsec_def_enc)));
+	case IPCTL_IPSEC_AUTH_ALGORITHM:
+	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+				       ipsec_def_auth,
+				       sizeof(ipsec_def_auth)));
 	default:
 		return (EOPNOTSUPP);
 	}

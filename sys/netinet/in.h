@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.32 2000/01/10 04:30:52 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.33 2000/01/10 06:59:21 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -608,7 +608,18 @@ struct in6_pktinfo {
 #define IPCTL_GIF_TTL		13	/* default TTL for gif encap packet */
 #define IPCTL_IPSEC_ACL		14	/* ingress IPsec access control */
 #define IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT	15 /* new SA lifetime */
-#define	IPCTL_MAXID		16
+#define IPCTL_IPSEC_REQUIRE_PFS 16
+#define IPCTL_IPSEC_SOFT_ALLOCATIONS            17
+#define IPCTL_IPSEC_ALLOCATIONS 18
+#define IPCTL_IPSEC_SOFT_BYTES  19
+#define IPCTL_IPSEC_BYTES       20
+#define IPCTL_IPSEC_TIMEOUT     21
+#define IPCTL_IPSEC_SOFT_TIMEOUT 22
+#define IPCTL_IPSEC_SOFT_FIRSTUSE 23
+#define IPCTL_IPSEC_FIRSTUSE    24
+#define IPCTL_IPSEC_ENC_ALGORITHM 25
+#define IPCTL_IPSEC_AUTH_ALGORITHM 26
+#define	IPCTL_MAXID		27
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -627,6 +638,17 @@ struct in6_pktinfo {
 	{ "gifttl", CTLTYPE_INT }, \
 	{ "ipsec-acl", CTLTYPE_INT }, \
 	{ "ipsec-invalid-life", CTLTYPE_INT }, \
+	{ "ipsec-pfs", CTLTYPE_INT }, \
+	{ "ipsec-soft-allocs", CTLTYPE_INT }, \
+	{ "ipsec-allocs", CTLTYPE_INT }, \
+	{ "ipsec-soft-bytes", CTLTYPE_INT }, \
+	{ "ipsec-bytes", CTLTYPE_INT }, \
+	{ "ipsec-timeout", CTLTYPE_INT }, \
+	{ "ipsec-soft-timeout", CTLTYPE_INT }, \
+	{ "ipsec-soft-firstuse", CTLTYPE_INT }, \
+	{ "ipsec-firstuse", CTLTYPE_INT }, \
+	{ "ipsec-enc-alg", CTLTYPE_STRING }, \
+	{ "ipsec-auth-alg", CTLTYPE_STRING }, \
 }
 
 /* INET6 stuff */
