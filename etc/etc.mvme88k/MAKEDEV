@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.11 2004/02/10 01:31:20 millert Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.68 2004/02/10 01:31:20 millert Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.70 2004/02/13 23:34:13 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp 
 #
 #
@@ -41,7 +41,7 @@
 #	tty0*	MVME1x7 CL-CD2400 serial ports
 #	ttyv*	MVME332XT serial ports
 # Pseudo terminals:
-#	tty*	set of 16 slave psuedo terminals
+#	tty*	set of 16 slave pseudo terminals
 #	pty*	set of 16 master pseudo terminals
 #	ptm	pty master device
 # Special purpose devices:

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.pegasos/MAKEDEV.md,v 1.3 2004/02/10 01:31:20 millert Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.68 2004/02/10 01:31:20 millert Exp 
+#	OpenBSD: etc.pegasos/MAKEDEV.md,v 1.4 2004/02/13 23:34:21 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.70 2004/02/13 23:34:13 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp 
 #
 #
@@ -47,10 +47,9 @@
 #	wsmouse*	wscons mice
 #	wsmux	wscons keyboard/mouse mux devices
 # Terminal ports:
-#	ttyE?	Workstation console (framebuffer & keyboard) tty emulators
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 # Pseudo terminals:
-#	tty*	set of 16 slave psuedo terminals
+#	tty*	set of 16 slave pseudo terminals
 #	pty*	set of 16 master pseudo terminals
 #	ptm	pty master device
 # USB devices:
@@ -226,14 +225,6 @@ std)
 	M klog		c 6 0 600
 	M xf86		c 2 4 600
 	M reload	c 2 20 640 kmem
-	;;
-
-ttyE*)
-	type=E
-	case $type in
-	E)	major=25; minor=$unit ;;
-	esac
-	M tty$type$unit c $major $minor 660
 	;;
 
 radio*)
@@ -453,8 +444,8 @@ st*)
 	;;
 
 ramdisk)
-	R pty0 ttyE0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0 sd1
-	R sd2 sd3 sd4 bpf0 std
+	R pty0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0 sd1 sd2
+	R sd3 sd4 bpf0 std
 	;;
 
 local)
