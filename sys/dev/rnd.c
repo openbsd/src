@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.19 1997/06/10 18:55:30 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.20 1997/06/11 01:28:42 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -247,7 +247,7 @@
 #include <dev/rndioctl.h>
 
 #ifdef	DEBUG
-int	rnd_debug = 0x0100;
+int	rnd_debug = 0x0000;
 #define	RD_INPUT	0x000f	/* input data */
 #define	RD_OUTPUT	0x00f0	/* output data */
 #define	RD_WAIT		0x0100	/* sleep/wakeup for good data */
