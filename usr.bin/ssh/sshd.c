@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.20 1999/10/05 18:01:07 dugsong Exp $");
+RCSID("$Id: sshd.c,v 1.21 1999/10/05 18:34:55 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1445,6 +1445,7 @@ void do_authenticated(struct passwd *pw)
 	  }
 	  else {
 	    xfree(xauthfile);
+	    xauthfile = NULL;
 	  }
 	  break;
 #else /* XAUTH_PATH */
