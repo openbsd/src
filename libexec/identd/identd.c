@@ -1,7 +1,7 @@
 /*
-**	$Id: identd.c,v 1.3 1996/12/22 03:41:14 tholo Exp $
+**	$Id: identd.c,v 1.4 1997/07/23 20:36:27 kstailey Exp $
 **
-** identd.c                       A TCP/IP link identification protocol server
+** identd.c			  A TCP/IP link identification protocol server
 **
 ** This program is in the public domain and may be used freely by anyone
 ** who wants to. 
@@ -70,7 +70,7 @@ extern int errno;
 #endif
 
 #ifndef FD_ZERO
-#  define FD_ZERO(p)        bzero((char *)(p), sizeof(*(p)))
+#  define FD_ZERO(p)	    bzero((char *)(p), sizeof(*(p)))
 #endif
 
 extern char *version;
@@ -250,7 +250,7 @@ int main(argc,argv)
     switch (argv[i][1])
     {
       case 'b':    /* Start as standalone daemon */
-        background_flag = 1;
+	background_flag = 1;
 	break;
 
       case 'w':    /* Start from Inetd, wait mode */

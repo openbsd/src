@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.7 1997/07/08 20:47:51 kstailey Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.8 1997/07/23 20:36:32 kstailey Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.7 1997/07/08 20:47:51 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.8 1997/07/23 20:36:32 kstailey Exp $";
 #endif
 
 /*
@@ -374,7 +374,7 @@ havedisk()
 	if (kvm_nlist(kfd, nl) != 0) {
 		syslog(LOG_ERR, "can't get namelist");
 		exit (1);
-        }
+	}
 
 	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
 		     (char *)xfer, sizeof xfer) != sizeof xfer) {

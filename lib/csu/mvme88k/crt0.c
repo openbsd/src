@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 1997/06/24 17:15:51 tholo Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 1997/07/23 20:39:32 kstailey Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 1997/06/24 17:15:51 tholo Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.5 1997/07/23 20:39:32 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 
@@ -50,7 +50,7 @@ static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 1997/06/24 17:15:51 tholo Exp $";
  * and how we derive argc, argv, and envp from that:
  *
  *    +-------------------+ <-------------------------------------- r31
- *    | ARGC              | <- argc = r31[0];
+ *    | ARGC		  | <- argc = r31[0];
  *    +-------------------+ <- argv = &r31[1];
  *    | &(argument #1)    |
  *    +-------------------+
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 1997/06/24 17:15:51 tholo Exp $";
  *     -  - - - - - - -  - 
  *    | &(argument #ARGC) |
  *    +-------------------+
- *    | 0x00000000        | <- end-of-ARGV-list marker (redundant information).
+ *    | 0x00000000	  | <- end-of-ARGV-list marker (redundant information).
  *    +-------------------+ <- environ = envp =  &argv[argc+1];
  *    | &(env. var. #1)   |
  *    +-------------------+
@@ -66,7 +66,7 @@ static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 1997/06/24 17:15:51 tholo Exp $";
  *     -  - - - - - - -  - 
  *    | &(env. var. #N)   |
  *    +-------------------+
- *    | 0x00000000        | <- end-of-ENVP-list marker (not redundant!).
+ *    | 0x00000000	  | <- end-of-ENVP-list marker (not redundant!).
  *    +-------------------+
  *
  * We use 'start:' to grab r31 and and call real_start(argc, argv, envp).
@@ -78,9 +78,9 @@ static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 1997/06/24 17:15:51 tholo Exp $";
 
 #include "common.h"
 
-asm("       text                ");
-asm("       align  4            ");
-asm("start: global start        ");
+asm("	    text		");
+asm("	    align  4		");
+asm("start: global start	");
 asm("       ld     r2, r31,   0 "); /* First arg to real_start: argc */
 asm("       addu   r3, r31,   4 "); /* Second arg to real_start: argv */
 asm("       lda    r4,  r3  [r2]"); /* Third arg to real_start: envp, but.... */

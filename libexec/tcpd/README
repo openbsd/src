@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.2 1997/06/01 05:21:40 downsj Exp $
+$OpenBSD: README,v 1.3 1997/07/23 20:36:34 kstailey Exp $
 @(#) README 1.30 97/03/21 19:27:21
 
 This is the 7.6 version of the TCP/IP daemon wrapper package.
@@ -14,7 +14,7 @@ Announcements of new releases of this software are posted to Usenet
 (comp.security.unix, comp.unix.admin), to the cert-tools mailing list,
 and to a dedicated mailing list.  You can subscribe to the dedicated
 mailing list by sending an email message to majordomo@wzv.win.tue.nl
-with in the body (not subject):  subscribe tcp-wrappers-announce.
+with in the body (not subject):	 subscribe tcp-wrappers-announce.
 
 Table of contents
 -----------------
@@ -22,29 +22,29 @@ Table of contents
     1 - Introduction
     2 - Disclaimer
     3 - Tutorials
-                3.1 - How it works
-                3.2 - Where the logging information goes
+		3.1 - How it works
+		3.2 - Where the logging information goes
     4 - Features
-                4.1 - Access control
-                4.2 - Host name spoofing
-                4.3 - Host address spoofing
-                4.4 - Client username lookups
-                4.5 - Language extensions
+		4.1 - Access control
+		4.2 - Host name spoofing
+		4.3 - Host address spoofing
+		4.4 - Client username lookups
+		4.5 - Language extensions
 		4.6 - Multiple ftp/gopher/www archives on one host
 		4.7 - Banner messages
 		4.8 - Sequence number guessing
     5 - Other works
-                5.1 - Related documents
-                5.2 - Related software
+		5.1 - Related documents
+		5.2 - Related software
     6 - Limitations
-                6.1 - Known wrapper limitations
-                6.2 - Known system software bugs
+		6.1 - Known wrapper limitations
+		6.2 - Known system software bugs
     7 - Configuration and installation
-                7.1 - Easy configuration and installation
-                7.2 - Advanced configuration and installation
-                7.3 - Daemons with arbitrary path names
-                7.4 - Building and testing the access control rules
-                7.5 - Other applications
+		7.1 - Easy configuration and installation
+		7.2 - Advanced configuration and installation
+		7.3 - Daemons with arbitrary path names
+		7.4 - Building and testing the access control rules
+		7.5 - Other applications
     8 - Acknowledgements
 
 1 - Introduction
@@ -59,7 +59,7 @@ yourself lucky if you don't know what that means.
 
 The package provides tiny daemon wrapper programs that can be installed
 without any changes to existing software or to existing configuration
-files.  The wrappers report the name of the client host and of the
+files.	The wrappers report the name of the client host and of the
 requested service; the wrappers do not exchange information with the
 client or server applications, and impose no overhead on the actual
 conversation between the client and server applications.
@@ -123,18 +123,18 @@ the target host. The telnet server process connects the user to a login
 process. A few examples of client and server programs are shown in the
 table below:
 
-              client   server    application
-              --------------------------------
-              telnet   telnetd   remote login
-              ftp      ftpd      file transfer
-              finger   fingerd   show users
+	      client   server	 application
+	      --------------------------------
+	      telnet   telnetd	 remote login
+	      ftp      ftpd	 file transfer
+	      finger   fingerd	 show users
 
 The usual approach is to run one single daemon process that waits for
 all kinds of incoming network connections. Whenever a connection is
 established, this daemon (usually called inetd) runs the appropriate
 server program and goes back to sleep, waiting for other connections.
 
-The wrapper programs rely on a simple, but powerful mechanism.  Instead
+The wrapper programs rely on a simple, but powerful mechanism.	Instead
 of directly running the desired server program, the inetd is tricked
 into running a small wrapper program. The wrapper logs the client host
 name or address and performs some additional checks.  When all is well,
@@ -195,8 +195,8 @@ syslogd versions can even forward messages down a |pipeline.
 Older syslog implementations (still found on Ultrix systems) only
 support priority levels ranging from 9 (debug-level messages) to 0
 (alerts). All logging information of the specified priority level or
-more urgent is written to the same destination.  In the syslog.conf
-file, priority levels are specified in numerical form.  For example,
+more urgent is written to the same destination.	 In the syslog.conf
+file, priority levels are specified in numerical form.	For example,
 
     8/usr/spool/mqueue/syslog
 
@@ -209,7 +209,7 @@ priority levels.  Examples of message classes are: mail, daemon, auth
 and news. In the syslog.conf file, priority levels are specified with
 symbolic names: debug, info, notice, ..., emerg. For example,
 
-    mail.debug                  /var/log/syslog
+    mail.debug			/var/log/syslog
 
 causes all messages of class mail with priority debug (or more urgent)
 to be appended to the /var/log/syslog file.
@@ -234,7 +234,7 @@ run the program by hand (`syslogd -d') and see what really happens.
 --------------------
 
 When compiled with -DHOSTS_ACCESS, the wrapper programs support a
-simple form of access control.  Access can be controlled per host, per
+simple form of access control.	Access can be controlled per host, per
 service, or combinations thereof. The software provides hooks for the
 execution of shell commands when an access control rule fires; this
 feature may be used to install "booby traps".  For details, see the
@@ -325,7 +325,7 @@ system is up and running.
 This additional protection is not an invention of my own; it has been
 present for at least five years in the BSD rsh and rlogin daemons.
 Unfortunately, that feature was added *after* 4.3 BSD came out, so that
-very few, if any, UNIX vendors have adopted it.  Our site, and many
+very few, if any, UNIX vendors have adopted it.	 Our site, and many
 other ones, has been running these enhanced daemons for several years,
 and without any ill effects.
 
@@ -353,7 +353,7 @@ all you can be certain of is the network packet's destination address.
 -----------------------------
 
 The protocol proposed in RFC 931 provides a means to obtain the client
-user name from the client host.  The requirement is that the client
+user name from the client host.	 The requirement is that the client
 host runs an RFC 931-compliant daemon. The information provided by such
 a daemon is not intended to be used for authentication purposes, but it
 can provide additional information about the owner of a TCP connection.
@@ -400,7 +400,7 @@ server instead of the standard one; many others.
 
 The language extensions are not enabled by default because they
 introduce an incompatible change to the access control language
-syntax.  Instructions to enable the extensions are given in the
+syntax.	 Instructions to enable the extensions are given in the
 Makefile.
 
 4.6 - Multiple ftp/gopher/www archives on one host
@@ -608,7 +608,7 @@ library that comes with the nntp sources reportedly works well, too.
 -------------------------------
 
 Many UDP (and rpc/udp) daemons linger around for a while after they
-have serviced a request, just in case another request comes in.  In the
+have serviced a request, just in case another request comes in.	 In the
 inetd configuration file these daemons are registered with the `wait'
 option. Only the request that started such a daemon will be seen by the
 wrappers.  Such daemons are better protected with the securelib shared
@@ -623,7 +623,7 @@ rexd is less secure than a wildcard in /etc/hosts.equiv.
 Some RPC requests (for example: rwall, rup, rusers) appear to come from
 the server host. What happens is that the client broadcasts its request
 to all portmap daemons on its network; each portmap daemon forwards the
-request to a daemon on its own system. As far as the rwall etc.  daemons
+request to a daemon on its own system. As far as the rwall etc.	 daemons
 know, the request comes from the local host.
 
 Portmap and RPC (e.g. NIS and NFS) (in)security is a topic in itself.
@@ -651,7 +651,7 @@ wrapper's logging severity.
 On some systems, the optional RFC 931 etc. client username lookups may
 trigger a kernel bug.  When a client host connects to your system, and
 the RFC 931 connection from your system to that client is rejected by a
-router, your kernel may drop all connections with that client.  This is
+router, your kernel may drop all connections with that client.	This is
 not a bug in the wrapper programs: complain to your vendor, and don't
 enable client user name lookups until the bug has been fixed.
 
@@ -664,14 +664,14 @@ Reportedly, a fix for Ultrix is available (CXO-8919).
 The following procedure can be used (from outside the tue.nl domain) to
 find out if your kernel has the bug. From the system under test, do:
 
-        % ftp 131.155.70.19
+	% ftp 131.155.70.19
 
 This command attempts to make an ftp connection to our anonymous ftp
 server (ftp.win.tue.nl).  When the connection has been established, run
 the following command from the same system under test, while keeping
 the ftp connection open:
 
-        % telnet 131.155.70.19 111
+	% telnet 131.155.70.19 111
 
 Do not forget the `111' at the end of the command. This telnet command
 attempts to connect to our portmap process.  The telnet command should
@@ -710,16 +710,16 @@ When the `make' succeeds the result is five executables (six in case of
 Ultrix).
 
 You can use the `tcpdchk' program to identify the most common problems
-in your wrapper and inetd configuration files.  
+in your wrapper and inetd configuration files.	
 
 With the `tcpdmatch' program you can examine how the wrapper would
-react to specific requests for service.  
+react to specific requests for service.	 
 
 The `safe_finger' command should be used when you implement booby
-traps:  it gives better protection against nasty stuff that remote
+traps:	it gives better protection against nasty stuff that remote
 hosts may do in response to your finger probes.
 
-The `try-from' program tests the host and username lookup code.  Run it
+The `try-from' program tests the host and username lookup code.	 Run it
 from a remote shell command (`rsh host /some/where/try-from') and it
 should be able to figure out from what system it is being called.
 
@@ -782,12 +782,12 @@ When the `make' succeeds the result is five executables (six in case of
 Ultrix).
 
 You can use the `tcpdchk' program to identify the most common problems
-in your wrapper and inetd configuration files.  
+in your wrapper and inetd configuration files.	
 
 With the `tcpdmatch' program you can examine how the wrapper would
-react to specific requests for service.  
+react to specific requests for service.	 
 
-The `try-from' program tests the host and username lookup code.  Run it
+The `try-from' program tests the host and username lookup code.	 Run it
 from a remote shell command (`rsh host /some/where/try-from') and it
 should be able to figure out from what system it is being called.
 
@@ -822,12 +822,12 @@ install the wrapper set-uid.
 Then perform the following edits on the inetd configuration file
 (usually /etc/inetd.conf or /etc/inet/inetd.conf):
 
-    finger  stream  tcp     nowait  nobody  /usr/etc/in.fingerd     in.fingerd
-                                            ^^^^^^^^^^^^^^^^^^^
+    finger  stream  tcp	    nowait  nobody  /usr/etc/in.fingerd	    in.fingerd
+					    ^^^^^^^^^^^^^^^^^^^
 becomes:
 
-    finger  stream  tcp     nowait  nobody  /usr/etc/tcpd           in.fingerd
-                                            ^^^^^^^^^^^^^
+    finger  stream  tcp	    nowait  nobody  /usr/etc/tcpd	    in.fingerd
+					    ^^^^^^^^^^^^^
 Send a `kill -HUP' to the inetd process to make the change effective.
 Some IRIX inetd implementations require that you first disable the
 finger service (comment out the finger service and `kill -HUP' the
@@ -851,13 +851,13 @@ the services is systat, which is a kind of limited finger service.  If
 you want to monitor the systat service, install the miscd wrapper in a
 suitable place and update the inetd configuration file:
 
-    systat  stream  tcp     nowait  /suitable/place/miscd      systatd
+    systat  stream  tcp	    nowait  /suitable/place/miscd      systatd
 
 Ultrix 4.3 allows you to specify a user id under which the daemon will
 be executed. This feature is not documented in the manual pages.  Thus,
 the example would become:
 
-    systat  stream  tcp     nowait  nobody /suitable/place/miscd    systatd
+    systat  stream  tcp	    nowait  nobody /suitable/place/miscd    systatd
 
 Older Ultrix systems still run all their network daemons as root.
 
@@ -872,9 +872,9 @@ common directory, but sometimes that is not practical. Having soft
 links all over your file system is not a clean solution, either.
 
 Instead you can specify, in the inetd configuration file, an absolute
-path name for the daemon process name.  For example,
+path name for the daemon process name.	For example,
 
-    ntalk   dgram   udp     wait    root    /usr/etc/tcpd /usr/local/lib/ntalkd
+    ntalk   dgram   udp	    wait    root    /usr/etc/tcpd /usr/local/lib/ntalkd
 
 When the daemon process name is an absolute path name, tcpd ignores the
 value of the REAL_DAEMON_DIR constant, and uses the last path component
@@ -897,7 +897,7 @@ host names that you will have to build into your access control rules.
 The syntax of the access control rules is documented in the file
 hosts_access.5, which is in `nroff -man' format. This is a lengthy
 document, and no-one expects you to read it right away from beginning
-to end.  Instead, after reading the introductory section, skip to the
+to end.	 Instead, after reading the introductory section, skip to the
 examples at the end so that you get a general idea of the language.
 Then you can appreciate the detailed reference sections near the
 beginning of the document.
@@ -919,7 +919,7 @@ hosts.access and hosts.allow files in the current directory. This
 program is described in the tcpdchk.8 document (`nroff -man' format).
 
 The `tcpdmatch' command can be used to try out your local access
-control files.  The command syntax is:
+control files.	The command syntax is:
 
     tcpdmatch process_name hostname (e.g.: tcpdmatch in.tftpd localhost)
 
@@ -941,7 +941,7 @@ watch the process name that shows up in the logfile.  Alternatively,
 you can look up the name from the inetd configuration file. Coming back
 to the tftp example in the tutorial section above:
 
-    tftp  dgram  udp  wait  root  /usr/etc/tcpd  in.tftpd -s /tftpboot
+    tftp  dgram	 udp  wait  root  /usr/etc/tcpd	 in.tftpd -s /tftpboot
 
 This entry causes the inetd to run the wrapper program (tcpd) with a
 process name `in.tftpd'.  This is the name that the wrapper will use
@@ -977,7 +977,7 @@ In that case, sendmail should not be run as a stand-alone network
 listener, but it should be registered in the inetd configuration file.
 For example:
 
-    smtp    stream  tcp     nowait  root    /usr/etc/tcpd /usr/lib/sendmail -bs
+    smtp    stream  tcp	    nowait  root    /usr/etc/tcpd /usr/lib/sendmail -bs
 
 You will still need to run one sendmail background process to handle
 queued-up outgoing mail. A command like:
@@ -993,7 +993,7 @@ unprotected smtp daemons on the network.
 
 Many people contributed to the evolution of the programs, by asking
 inspiring questions, by suggesting features or bugfixes, or by
-submitting source code.  Nevertheless, all mistakes and bugs in the
+submitting source code.	 Nevertheless, all mistakes and bugs in the
 wrappers are my own.
 
 Thanks to Brendan Kehoe (cs.widener.edu), Heimir Sverrisson (hafro.is)
@@ -1007,7 +1007,7 @@ get the client IP address in case of datagram-oriented services, and
 suggested the optional shell command feature.  Shabbir Safdar
 (mentor.cc.purdue.edu) provided a first version of a much-needed manual
 page.  Granville Boman Goza, IV (sei.cmu.edu) suggested to use the
-client IP address even when the host name is available.  Casper H.S.
+client IP address even when the host name is available.	 Casper H.S.
 Dik (fwi.uva.nl) provided additional insight into DNS spoofing
 techniques.  The bogus daemon feature was inspired by code from Andrew
 Macpherson (BNR Europe Ltd).  Steve Bellovin (research.att.com)
@@ -1016,7 +1016,7 @@ insecurity. Risks of automated fingers were pointed out by Borja Marcos
 (we.lc.ehu.es). Brad Plecs (jhuspo.ca.jhu.edu) was kind enough to try
 my early TLI code and to work out how DG/UX differs from Solaris.
 
-John P.  Rouillard (cs.umb.edu) deserves special mention for his
+John P.	 Rouillard (cs.umb.edu) deserves special mention for his
 persistent, but constructive, nagging about wrong or missing things,
 and for trying out and discussing embryonic code or ideas.
 
@@ -1026,14 +1026,14 @@ Last but not least, Howard Chu (hanauma.jpl.nasa.gov), Darren Reed
 (engr.latech.edu), Chris Turbeville (cse.uta.edu), Paul Kranenburg
 (cs.few.eur.nl), Marc Boucher (cam.org), Dave Mitchell
 (dcs.shef.ac.uk), Andrew Maffei, Adrian van Bloois, Rop Gonggrijp, John
-C. Wingenbach, Everett F. Batey  and many, many others provided fixes,
+C. Wingenbach, Everett F. Batey	 and many, many others provided fixes,
 code fragments, or ideas for improvements.
 
-        Wietse Venema (wietse@wzv.win.tue.nl)
-        Department of Mathematics and Computing Science
-        Eindhoven University of Technology
-        P.O. Box 513
-        5600 MB Eindhoven
-        The Netherlands
+	Wietse Venema (wietse@wzv.win.tue.nl)
+	Department of Mathematics and Computing Science
+	Eindhoven University of Technology
+	P.O. Box 513
+	5600 MB Eindhoven
+	The Netherlands
 
 	Currently visiting IBM T.J. Watson Research, Hawthorne NY, USA.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.7 1997/07/14 01:40:39 millert Exp $	*/
+/*	$OpenBSD: utility.c,v 1.8 1997/07/23 20:36:36 kstailey Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.7 1997/07/14 01:40:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.8 1997/07/23 20:36:36 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -483,7 +483,7 @@ putf(cp, where)
 
 		case 'v':
 			puts(utsinfo.version);
-                        break;
+			break;
 		}
 		cp++;
 	}

@@ -1,7 +1,7 @@
 /*
-**	$Id: identd.h,v 1.1.1.1 1995/10/18 08:43:18 deraadt Exp $
+**	$Id: identd.h,v 1.2 1997/07/23 20:36:28 kstailey Exp $
 **
-** identd.h                 Common variables for the Pidentd daemon
+** identd.h		    Common variables for the Pidentd daemon
 **
 ** This program is in the public domain and may be used freely by anyone
 ** who wants to. 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.2 1996/07/01 11:04:57 downsj Exp $	*/
+/*	$OpenBSD: library.c,v 1.3 1997/07/23 20:36:30 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: library.c,v 1.2 1996/07/01 11:04:57 downsj Exp $";
+static char rcsid[] = "$OpenBSD: library.c,v 1.3 1997/07/23 20:36:30 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -152,7 +152,7 @@ get_superblock (fsp, sbp)
 	struct lfs *sbp;
 {
 	char mntfromname[MNAMELEN+1];
-        int fid;
+	int fid;
 
 	strcpy(mntfromname, "/dev/r");
 	strcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5);

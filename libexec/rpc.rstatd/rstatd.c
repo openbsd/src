@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rstatd.c,v 1.2 1997/04/03 19:03:09 kstailey Exp $";
+static char rcsid[] = "$Id: rstatd.c,v 1.3 1997/07/23 20:36:32 kstailey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,50 +49,50 @@ int closedown = 20;	/* how long to wait before going dormant */
 void
 cleanup()
 {
-        (void) pmap_unset(RSTATPROG, RSTATVERS_TIME);
-        (void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
-        (void) pmap_unset(RSTATPROG, RSTATVERS_ORIG);
-        exit(0);
+	(void) pmap_unset(RSTATPROG, RSTATVERS_TIME);
+	(void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
+	(void) pmap_unset(RSTATPROG, RSTATVERS_ORIG);
+	exit(0);
 }
 
 main(argc, argv)
-        int argc;
-        char *argv[];
+	int argc;
+	char *argv[];
 {
 	SVCXPRT *transp;
-        int sock = 0;
-        int proto = 0;
+	int sock = 0;
+	int proto = 0;
 	struct sockaddr_in from;
 	int fromlen;
-        
-        if (argc == 2)
-                closedown = atoi(argv[1]);
-        if (closedown <= 0)
-                closedown = 20;
 
-        /*
-         * See if inetd started us
-         */
+	if (argc == 2)
+		closedown = atoi(argv[1]);
+	if (closedown <= 0)
+		closedown = 20;
+
+	/*
+	 * See if inetd started us
+	 */
 	fromlen = sizeof(from);
-        if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
-                from_inetd = 0;
-                sock = RPC_ANYSOCK;
-                proto = IPPROTO_UDP;
-        }
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+		from_inetd = 0;
+		sock = RPC_ANYSOCK;
+		proto = IPPROTO_UDP;
+	}
 
-        if (!from_inetd) {
-                daemon(0, 0);
+	if (!from_inetd) {
+		daemon(0, 0);
 
-                (void)pmap_unset(RSTATPROG, RSTATVERS_TIME);
-                (void)pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
-                (void)pmap_unset(RSTATPROG, RSTATVERS_ORIG);
+		(void)pmap_unset(RSTATPROG, RSTATVERS_TIME);
+		(void)pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
+		(void)pmap_unset(RSTATPROG, RSTATVERS_ORIG);
 
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
 		(void) signal(SIGHUP, cleanup);
-        }
-        
-        openlog("rpc.rstatd", LOG_CONS|LOG_PID, LOG_DAEMON);
+	}
+
+	openlog("rpc.rstatd", LOG_CONS|LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {

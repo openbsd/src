@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_set_ioperm.c,v 1.2 1996/03/19 23:15:01 niklas Exp $	*/
+/*	$OpenBSD: i386_set_ioperm.c,v 1.3 1997/07/23 20:41:11 kstailey Exp $	*/
 /*	$NetBSD: i386_set_ioperm.c,v 1.2 1996/02/27 22:57:31 jtc Exp $	*/
 
 /*-
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	  This product includes software developed by the NetBSD
+ *	  Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.

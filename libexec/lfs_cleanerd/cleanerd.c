@@ -1,4 +1,4 @@
-/*	$OpenBSD: cleanerd.c,v 1.3 1997/01/15 23:41:00 millert Exp $	*/
+/*	$OpenBSD: cleanerd.c,v 1.4 1997/07/23 20:36:30 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";*/
-static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.3 1997/01/15 23:41:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.4 1997/07/23 20:36:30 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ clean_loop(fsp, nsegs, options)
 	u_long max_free_segs;
 	u_long db_per_seg;
 
-        /*
+	/*
 	 * Compute the maximum possible number of free segments, given the
 	 * number of free blocks.
 	 */
@@ -282,7 +282,7 @@ clean_loop(fsp, nsegs, options)
 		clean_fs(fsp, cost_benefit, nsegs, options);
 		return (1);
 	} else {
-	        /* 
+		/* 
 		 * We will also clean if the system is reasonably idle and
 		 * the total clean space is less then IDLE_LIM % of possible
 		 * clean space.
@@ -293,7 +293,7 @@ clean_loop(fsp, nsegs, options)
 		}
 		if (loadavg[ONE_MIN] == 0.0 && loadavg[FIVE_MIN] &&
 		    fsp->fi_cip->clean < max_free_segs * IDLE_LIM) {
-		        clean_fs(fsp, cost_benefit, nsegs, options);
+			clean_fs(fsp, cost_benefit, nsegs, options);
 			printf("Cleaner Running  at %s (system idle)\n",
 			    ctime(&now));
 			return (1);

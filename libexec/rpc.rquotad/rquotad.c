@@ -274,9 +274,9 @@ getfsquota(id, path, dqblk)
 		switch (read(fd, dqblk, sizeof(struct dqblk))) {
 		case 0:
 			/*
-                         * Convert implicit 0 quota (EOF)
-                         * into an explicit one (zero'ed dqblk)
-                         */
+			 * Convert implicit 0 quota (EOF)
+			 * into an explicit one (zero'ed dqblk)
+			 */
 			bzero((caddr_t) dqblk, sizeof(struct dqblk));
 			ret = 1;
 			break;

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.8 1997/06/02 08:12:10 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.9 1997/07/23 20:36:25 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,13 +75,13 @@ static char rcsid[] = "$Id: main.c,v 1.8 1997/06/02 08:12:10 deraadt Exp $";
 
 /* defines for auto detection of incoming PPP calls (->PAP/CHAP) */
 
-#define PPP_FRAME           0x7e  /* PPP Framing character */
-#define PPP_STATION         0xff  /* "All Station" character */
-#define PPP_ESCAPE          0x7d  /* Escape Character */
-#define PPP_CONTROL         0x03  /* PPP Control Field */
+#define PPP_FRAME	    0x7e  /* PPP Framing character */
+#define PPP_STATION	    0xff  /* "All Station" character */
+#define PPP_ESCAPE	    0x7d  /* Escape Character */
+#define PPP_CONTROL	    0x03  /* PPP Control Field */
 #define PPP_CONTROL_ESCAPED 0x23  /* PPP Control Field, escaped */
-#define PPP_LCP_HI          0xc0  /* LCP protocol - high byte */
-#define PPP_LCP_LOW         0x21  /* LCP protocol - low byte */
+#define PPP_LCP_HI	    0xc0  /* LCP protocol - high byte */
+#define PPP_LCP_LOW	    0x21  /* LCP protocol - low byte */
 
 struct termios tmode, omode;
 

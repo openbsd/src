@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.7 1997/07/14 01:40:38 millert Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.8 1997/07/23 20:36:35 kstailey Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.7 1997/07/14 01:40:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.8 1997/07/23 20:36:35 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1785,13 +1785,13 @@ start_login(host, autologin, name)
 	if (pty > 2)
 		close(pty);
 #endif
-        if (getent(defent, gettyname) == 1) {
-                char *cp = defstrs;
+	if (getent(defent, gettyname) == 1) {
+		char *cp = defstrs;
 
-                loginprog = getstr("lo", &cp);
-        }
-        if (loginprog == NULL)
-                loginprog = _PATH_LOGIN;
+		loginprog = getstr("lo", &cp);
+	}
+	if (loginprog == NULL)
+		loginprog = _PATH_LOGIN;
 	closelog();
 	/*
 	 * This sleep(1) is in here so that telnetd can
@@ -1799,10 +1799,10 @@ start_login(host, autologin, name)
 	 * the login banner message gets lost...
 	 */
 	sleep(1);
-        execv(loginprog, argv);
+	execv(loginprog, argv);
 
-        syslog(LOG_ERR, "%s: %m\n", loginprog);
-        fatalperror(net, loginprog);
+	syslog(LOG_ERR, "%s: %m\n", loginprog);
+	fatalperror(net, loginprog);
 	/*NOTREACHED*/
 }
 

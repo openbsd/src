@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.18 1997/06/29 11:10:30 provos Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.19 1997/07/23 20:36:34 kstailey Exp $";
 #endif /* not lint */
 
 /*
@@ -711,7 +711,7 @@ error(const char *fmt, ...)
 #else
 error(fmt, va_alist)
 	char *fmt;
-        va_dcl
+	va_dcl
 #endif
 {
 	va_list ap;

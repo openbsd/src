@@ -1,5 +1,5 @@
 /*	$NetBSD: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $	*/
-/*	$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:51 tholo Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 1997/07/23 20:39:31 kstailey Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:51 tholo Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 1997/07/23 20:39:31 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -45,7 +45,7 @@ extern void     _mcleanup __P((void));
 extern unsigned char    eprol asm ("eprol");
 extern unsigned char    etext;
 
-char                    **environ;
+char			**environ;
 static char		empty[1];
 char			*__progname = empty;
 

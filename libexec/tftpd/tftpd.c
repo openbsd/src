@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.7 1997/06/11 21:19:47 downsj Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.8 1997/07/23 20:36:37 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.7 1997/06/11 21:19:47 downsj Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.8 1997/07/23 20:36:37 kstailey Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -432,7 +432,7 @@ send_data:
 		}
 		read_ahead(file, pf->f_convert);
 		for ( ; ; ) {
-			alarm(rexmtval);        /* read the ack */
+			alarm(rexmtval);	/* read the ack */
 			n = recv(peer, ackbuf, sizeof (ackbuf), 0);
 			alarm(0);
 			if (n < 0) {
@@ -499,7 +499,7 @@ send_ack:
 			alarm(rexmtval);
 			n = recv(peer, dp, PKTSIZE, 0);
 			alarm(0);
-			if (n < 0) {            /* really? */
+			if (n < 0) {		/* really? */
 				syslog(LOG_ERR, "tftpd: read: %m\n");
 				goto abort;
 			}
@@ -514,19 +514,19 @@ send_ack:
 				/* Re-synchronize with the other side */
 				(void) synchnet(peer);
 				if (dp->th_block == (block-1))
-					goto send_ack;          /* rexmit */
+					goto send_ack;		/* rexmit */
 			}
 		}
 		/*  size = write(file, dp->th_data, n - 4); */
 		size = writeit(file, &dp, n - 4, pf->f_convert);
-		if (size != (n-4)) {                    /* ahem */
+		if (size != (n-4)) {			/* ahem */
 			if (size < 0) nak(errno + 100);
 			else nak(ENOSPACE);
 			goto abort;
 		}
 	} while (size == SEGSIZE);
 	write_behind(file, pf->f_convert);
-	(void) fclose(file);            /* close data file */
+	(void) fclose(file);		/* close data file */
 
 	ap->th_opcode = htons((u_short)ACK);    /* send the "final" ack */
 	ap->th_block = htons((u_short)(block));
@@ -536,7 +536,7 @@ send_ack:
 	alarm(rexmtval);
 	n = recv(peer, buf, sizeof (buf), 0); /* normally times out and quits */
 	alarm(0);
-	if (n >= 4 &&                   /* if read some data */
+	if (n >= 4 &&			/* if read some data */
 	    dp->th_opcode == DATA &&    /* and got a data block */
 	    block == dp->th_block) {	/* then my last ack was lost */
 		(void) send(peer, ackbuf, 4, 0);     /* resend final ack */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.40 1997/06/29 07:39:02 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.41 1997/07/23 20:36:24 kstailey Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ main(argc, argv, envp)
 	} else {
 		addrlen = sizeof(his_addr);
 		if (getpeername(0, (struct sockaddr *)&his_addr,
-			        &addrlen) < 0) {
+				&addrlen) < 0) {
 			syslog(LOG_ERR, "getpeername (%s): %m", argv[0]);
 			exit(1);
 		}
@@ -1542,7 +1542,7 @@ reply(int n, const char *fmt, ...)
 reply(n, fmt, va_alist)
 	int n;
 	char *fmt;
-        va_dcl
+	va_dcl
 #endif
 {
 	va_list ap;
@@ -1568,7 +1568,7 @@ lreply(int n, const char *fmt, ...)
 lreply(n, fmt, va_alist)
 	int n;
 	char *fmt;
-        va_dcl
+	va_dcl
 #endif
 {
 	va_list ap;

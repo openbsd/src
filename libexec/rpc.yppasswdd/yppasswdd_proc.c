@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_proc.c,v 1.3 1996/06/26 22:11:27 maja Exp $";
+static char rcsid[] = "$Id: yppasswdd_proc.c,v 1.4 1997/07/23 20:36:33 kstailey Exp $";
 #endif
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ int make_passwd __P((yppasswd *));
 int *
 yppasswdproc_update_1_svc(argp, rqstp, transp)
 	yppasswd *argp;
-        struct svc_req *rqstp;
+	struct svc_req *rqstp;
 	SVCXPRT *transp;
 {
 	static int res;

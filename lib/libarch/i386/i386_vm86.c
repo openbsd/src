@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_vm86.c,v 1.1 1996/03/19 23:15:03 niklas Exp $	*/
+/*	$OpenBSD: i386_vm86.c,v 1.2 1997/07/23 20:41:12 kstailey Exp $	*/
 /*	$NetBSD: i386_vm86.c,v 1.1 1996/02/21 00:21:56 jtk Exp $	*/
 
 /*-
@@ -18,7 +18,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
+ *	  This product includes software developed by the NetBSD 
  *	  Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its 
  *    contributors may be used to endorse or promote products derived 

@@ -1,7 +1,7 @@
 /*
-**	$Id: proxy.c,v 1.1.1.1 1995/10/18 08:43:18 deraadt Exp $
+**	$Id: proxy.c,v 1.2 1997/07/23 20:36:29 kstailey Exp $
 **
-** proxy.c                         This file implements the proxy() call.
+** proxy.c			   This file implements the proxy() call.
 **
 ** This program is in the public domain and may be used freely by anyone
 ** who wants to. 
