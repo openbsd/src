@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2000/06/25 20:31:08 espie Exp $
+#	$OpenBSD: Makefile,v 1.20 2000/07/17 23:01:20 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR} -Wall -Wno-char-subscripts -Wno-unused -Wstrict-prototypes#-Wmissing-prototypes -Wstrict-prototypes
@@ -32,6 +32,8 @@ libohash.a: ${LIBOBJS}
 	ar cq $@ `lorder ${LIBOBJS}|tsort`
 	ranlib $@
 
+CLEANFILES+=generate hashconsts.h generate.o regress.o check
+
 CLEANFILES+=${LIBOBJS} libohash.a
 CLEANFILES+= hashconsts.h generate.o generate
 
@@ -44,6 +46,12 @@ hashconsts.h: generate
 
 generate: generate.o error.o libohash.a
 	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
+
+check: regress.o str.o error.o buf.o libohash.a
+	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
+
+regress: check
+	${.OBJDIR}/check 
 
 # kludge for people who forget to make depend
 var.o: hashconsts.h

@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.13 2000/07/17 22:57:37 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.14 2000/07/17 23:01:20 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.13 2000/07/17 22:57:37 espie Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.14 2000/07/17 23:01:20 espie Exp $";
 #endif
 #endif				/* not lint */
 
@@ -223,102 +223,132 @@ done:	argv[argc] = (char *)NULL;
  *
  * See if a particular string matches a particular pattern.
  *
- * Results: Non-zero is returned if string matches pattern, 0 otherwise. The
+ * Results: TRUE is returned if string matches pattern, FALSE otherwise. The
  * matching operation permits the following special characters in the
  * pattern: *?\[] (see the man page for details on what these mean).
- *
- * Side effects: None.
  */
-int
+Boolean
 Str_Match(string, pattern)
-	const char *string;		/* String */
-	const char *pattern;		/* Pattern */
+    const char *string;			/* String */
+    const char *pattern;		/* Pattern */
 {
-	char c2;
-
-	for (;;) {
-		/*
-		 * See if we're at the end of both the pattern and the
-		 * string. If, we succeeded.  If we're at the end of the
-		 * pattern but not at the end of the string, we failed.
-		 */
-		if (*pattern == 0)
-			return(!*string);
-		if (*string == 0 && *pattern != '*')
-			return(0);
-		/*
-		 * Check for a "*" as the next pattern character.  It matches
-		 * any substring.  We handle this by calling ourselves
-		 * recursively for each postfix of string, until either we
-		 * match or we reach the end of the string.
-		 */
-		if (*pattern == '*') {
-			pattern += 1;
-			if (*pattern == 0)
-				return(1);
-			while (*string != 0) {
-				if (Str_Match(string, pattern))
-					return(1);
-				++string;
-			}
-			return(0);
+    while (*pattern != '\0') {
+	/* Check for a "*" as the next pattern character.  It matches
+	 * any substring.  We handle this by calling ourselves
+	 * recursively for each postfix of string, until either we
+	 * match or we reach the end of the string.  */
+	if (*pattern == '*') {
+	    pattern++;
+	    /* Skip over contiguous  sequences of `?*', so that recursive
+	     * calls only occur on `real' characters.  */
+	    while (*pattern == '?' || *pattern == '*') {
+		if (*pattern == '?') {
+		    if (*string == '\0')
+			return FALSE;
+		    else
+			string++;
 		}
-		/*
-		 * Check for a "?" as the next pattern character.  It matches
-		 * any single character.
-		 */
-		if (*pattern == '?')
-			goto thisCharOK;
-		/*
-		 * Check for a "[" as the next pattern character.  It is
-		 * followed by a list of characters that are acceptable, or
-		 * by a range (two characters separated by "-").
-		 */
-		if (*pattern == '[') {
-			++pattern;
-			for (;;) {
-				if ((*pattern == ']') || (*pattern == 0))
-					return(0);
-				if (*pattern == *string)
-					break;
-				if (pattern[1] == '-') {
-					c2 = pattern[2];
-					if (c2 == 0)
-						return(0);
-					if ((*pattern <= *string) &&
-					    (c2 >= *string))
-						break;
-					if ((*pattern >= *string) &&
-					    (c2 <= *string))
-						break;
-					pattern += 2;
-				}
-				++pattern;
-			}
-			while ((*pattern != ']') && (*pattern != 0))
-				++pattern;
-			goto thisCharOK;
+		pattern++;
+	    }
+	    if (*pattern == '\0')
+		return TRUE;
+	    for (; *string != '\0'; string++)
+		if (Str_Match(string, pattern))
+		    return TRUE;
+	    return FALSE;
+	} else if (*string == '\0') 
+	    return FALSE;
+	/* Check for a "[" as the next pattern character.  It is
+	 * followed by a list of characters that are acceptable, or
+	 * by a range (two characters separated by "-").  */
+	else if (*pattern == '[') {
+	    pattern++;
+	    if (*pattern == '\0')
+	    	return FALSE;
+	    if (*pattern == '!' || *pattern == '^') {
+		pattern++;
+		if (*pattern == '\0')
+			return FALSE;
+		/* Negative match */
+		for (;;) {
+		    if (*pattern == '\\') {
+			if (*++pattern == '\0')
+			    return FALSE;
+		    }
+		    if (*pattern == *string)
+			return FALSE;
+		    if (pattern[1] == '-') {
+			if (pattern[2] == '\0')
+			    return FALSE;
+			if (*pattern < *string && *string <= pattern[2])
+			    return FALSE;
+			if (pattern[2] <= *string && *string < *pattern)
+			    return FALSE;
+			pattern += 3;
+		    } else
+			pattern++;
+		    if (*pattern == '\0')
+		    	return FALSE;
+		    /* The test for ']' is done at the end so that ']'
+		     * can be used at the start of the range without '\' */
+		    if (*pattern == ']')
+		    	break;
 		}
-		/*
-		 * If the next pattern character is '/', just strip off the
-		 * '/' so we do exact matching on the character that follows.
-		 */
-		if (*pattern == '\\') {
-			++pattern;
-			if (*pattern == 0)
-				return(0);
+	    } else {
+		for (;;) {
+		    if (*pattern == '\\') {
+			if (*++pattern == '\0')
+			    return FALSE;
+		    }
+		    if (*pattern == *string)
+			break;
+		    if (pattern[1] == '-') {
+			if (pattern[2] == '\0')
+			    return FALSE;
+			if (*pattern < *string && *string <= pattern[2])
+			    break;
+			if (pattern[2] <= *string && *string < *pattern)
+			    break;
+			pattern += 3;
+		    } else
+			pattern++;
+		    /* The test for ']' is done at the end so that ']'
+		     * can be used at the start of the range without '\' */
+		    if (*pattern == '\0' || *pattern == ']')
+		    	return FALSE;
 		}
-		/*
-		 * There's no special character.  Just make sure that the
-		 * next characters of each string match.
-		 */
-		if (*pattern != *string)
-			return(0);
-thisCharOK:	++pattern;
-		++string;
+		/* Found matching character, skip over rest of class.  */
+		while (*pattern != ']') {
+		    if (*pattern == '\\')
+			pattern++;
+		    /* A non-terminated character class is ok.  */
+		    if (*pattern == '\0')
+			break;
+		    pattern++;
+		}
+	    }
 	}
+	/* '?' matches any single character, so shunt test.  */
+	else if (*pattern != '?') {
+	    /* If the next pattern character is '\', just strip off the
+	     * '\' so we do exact matching on the character that follows.  */
+	    if (*pattern == '\\') {
+		if (*++pattern == '\0')
+		    return FALSE;
+	    }
+	    /* There's no special character.  Just make sure that 
+	     * the next characters of each string match.  */
+	    if (*pattern != *string)
+		return FALSE;
+	}
+	pattern++;
+	string++;
+    }
+    if (*string == '\0')
+	return TRUE;
+    else
+	return FALSE;
 }
-
 
 /*-
  *-----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.40 2000/07/17 22:57:37 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.41 2000/07/17 23:01:20 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.40 2000/07/17 22:57:37 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.41 2000/07/17 23:01:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1887,53 +1887,19 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 		case 'N':
 		case 'M':
 		{
-		    char    *pattern;
-		    char    *cp2;
-		    Boolean copy;
-
-		    copy = FALSE;
 		    for (cp = tstr + 1;
 			 *cp != '\0' && *cp != ':' && *cp != endc;
-			 cp++)
-		    {
+			 cp++) {
 			if (*cp == '\\' && (cp[1] == ':' || cp[1] == endc)){
-			    copy = TRUE;
 			    cp++;
 			}
 		    }
 		    termc = *cp;
 		    *cp = '\0';
-		    if (copy) {
-			/*
-			 * Need to compress the \:'s out of the pattern, so
-			 * allocate enough room to hold the uncompressed
-			 * pattern (note that cp started at tstr+1, so
-			 * cp - tstr takes the null byte into account) and
-			 * compress the pattern into the space.
-			 */
-			pattern = emalloc(cp - tstr);
-			for (cp2 = pattern, cp = tstr + 1;
-			     *cp != '\0';
-			     cp++, cp2++)
-			{
-			    if ((*cp == '\\') &&
-				(cp[1] == ':' || cp[1] == endc)) {
-				    cp++;
-			    }
-			    *cp2 = *cp;
-			}
-			*cp2 = '\0';
-		    } else {
-			pattern = &tstr[1];
-		    }
-		    if (*tstr == 'M' || *tstr == 'm') {
-			newStr = VarModify(str, VarMatch, pattern);
-		    } else {
-			newStr = VarModify(str, VarNoMatch, pattern);
-		    }
-		    if (copy) {
-			free(pattern);
-		    }
+		    if (*tstr == 'M')
+			newStr = VarModify(str, VarMatch, tstr+1);
+		    else
+			newStr = VarModify(str, VarNoMatch, tstr+1);
 		    break;
 		}
 		case 'S':
