@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.22 1997/08/28 19:31:51 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.23 1997/08/28 19:39:20 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.22 1997/08/28 19:31:51 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.23 1997/08/28 19:39:20 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,6 +137,7 @@ int	Aflag, aflag, nflag, wflag;
 #define RNDSTATS	0x00000008
 #define BADDYNAMIC	0x00000010
 #define BIOSGEO		0x00000020
+#define BIOSDEV		0x00000040
 
 /* prototypes */
 void debuginit __P((void));
@@ -404,6 +405,10 @@ parse(string, flags)
 		if (mib[1] == CPU_BIOSGEOMETRY)
 			special |= BIOSGEO;
 #endif
+#ifdef CPU_BIOSDEV
+		if (mib[1] == CPU_BIOSDEV)
+			special |= BIOSDEV;
+#endif
 		break;
 
 	case CTL_FS:
@@ -495,8 +500,20 @@ parse(string, flags)
 
 		if (!nflag)
 			(void)printf("%s = ", string);
-		(void) printf("spt = %d, hpc = %d\n",
+		(void) printf("spt = %d, tpc = %d\n",
 			      BIOSNSECTS(geo), BIOSNHEADS(geo));
+		return;
+	}
+	if (special & BIOSDEV) {
+		int dev = *(int*)buf;
+
+		if (!nflag)
+			(void)printf("%s = ", string);
+		if (dev & 0x80)
+			dev = 'c' + dev & 0x7f;
+		else
+			dev += 'a';
+		(void) printf("%c:\n", dev);
 		return;
 	}
 	if (special & RNDSTATS) {
