@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.3 1997/01/07 05:37:35 tholo Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.4 1997/01/22 04:15:17 tholo Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -149,10 +149,6 @@ procfs_rwmem(p, uio)
 		 */
 		if (!error)
 			vm_map_lookup_done(tmap, out_entry);
-
-#ifdef __i386__
-		pmap_prefault(map, pageno, PAGE_SIZE);
-#endif
 
 		/*
 		 * Fault the page in...
