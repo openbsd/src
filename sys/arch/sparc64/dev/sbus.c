@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.10 2002/02/05 18:34:39 jason Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.11 2002/03/12 19:46:25 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -212,10 +212,7 @@ void sbus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
  */
 
 /* Translate Sbus interrupt level to processor IPL */
-static int intr_sbus2ipl_4c[] = {
-	0, 1, 2, 3, 5, 7, 8, 9
-};
-static int intr_sbus2ipl_4m[] = {
+static int intr_sbus2ipl_4u[] = {
 	0, 2, 3, 5, 7, 9, 11, 13
 };
 
@@ -293,9 +290,7 @@ sbus_attach(parent, self, aux)
 	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;		/* Find interrupt group no */
 
 	/* Setup interrupt translation tables */
-	sc->sc_intr2ipl = CPU_ISSUN4C
-				? intr_sbus2ipl_4c
-				: intr_sbus2ipl_4m;
+	sc->sc_intr2ipl = intr_sbus2ipl_4u;
 
 	/*
 	 * Record clock frequency for synchronous SCSI.
