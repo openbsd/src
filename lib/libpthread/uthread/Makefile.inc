@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.4 1999/01/08 04:59:49 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.4 1999/01/08 04:59:49 d Exp $
+#	$Id: Makefile.inc,v 1.5 1999/01/08 05:42:18 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1999/01/08 05:42:18 d Exp $
 
 # uthread sources
 .PATH: ${.CURDIR}/uthread
@@ -32,6 +32,7 @@ SRCS+= \
 	uthread_equal.c \
 	uthread_execve.c \
 	uthread_exit.c \
+	uthread_fchflags.c \
 	uthread_fchmod.c \
 	uthread_fchown.c \
 	uthread_fcntl.c \
@@ -40,6 +41,7 @@ SRCS+= \
 	uthread_find_thread.c \
 	uthread_flock.c \
 	uthread_fork.c \
+	uthread_fpathconf.c \
 	uthread_fstat.c \
 	uthread_fstatfs.c \
 	uthread_fsync.c \

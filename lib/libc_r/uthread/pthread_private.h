@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.7 1999/01/08 04:59:50 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.8 1999/01/08 05:42:18 d Exp $
  *
  */
 
@@ -595,7 +595,7 @@ void    (*_thread_sys_signal(int, void (*)(int)))(int);
 #ifdef  _SYS_STAT_H_
 int     _thread_sys_fchmod(int, mode_t);
 int     _thread_sys_fstat(int, struct stat *);
-int     _thread_sys_fchflags(int, u_long);
+int     _thread_sys_fchflags(int, unsigned int);
 #endif
 
 /* #include <sys/mount.h> */
@@ -699,6 +699,7 @@ int     _thread_sys_fchdir(int);
 int     _thread_sys_fchown(int, uid_t, gid_t);
 int     _thread_sys_fsync(int);
 int     _thread_sys_ftruncate(int, off_t);
+long	_thread_sys_fpathconf(int, int);
 int     _thread_sys_pause(void);
 int     _thread_sys_pipe(int *);
 int     _thread_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
