@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.8 1998/08/06 19:35:04 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.9 1999/02/26 03:22:00 art Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -386,7 +386,11 @@ ext2fs_chmod(vp, mode, cred, p)
 	ip->i_e2fs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	if ((vp->v_flag & VTEXT) && (ip->i_e2fs_mode & S_ISTXT) == 0)
+#if defined(UVM)
+		uvm_vnp_uncache(vp);
+#else
 		(void) vnode_pager_uncache(vp);
+#endif
 	return (0);
 }
 
