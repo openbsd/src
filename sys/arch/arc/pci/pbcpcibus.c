@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbcpcibus.c,v 1.6 1998/03/16 09:38:48 pefo Exp $ */
+/*	$OpenBSD: pbcpcibus.c,v 1.7 1998/03/25 11:52:48 pefo Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 Per Fogelstrom, Opsycon AB
@@ -151,7 +151,7 @@ pbcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_conf_read = pbc_conf_read;
 		lcp->lc_pc.pc_conf_write = pbc_conf_write;
 		lcp->lc_pc.pc_ether_hw_addr = pbc_ether_hw_addr;
-		lcp->lc_pc.pc_flush_cache = R4K_HitFlushDCache;
+		lcp->lc_pc.pc_sync_cache = R4K_HitFlushDCache;
 
 	        lcp->lc_pc.pc_intr_v = lcp;
 		lcp->lc_pc.pc_intr_map = pbc_intr_map;
