@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.25 2001/03/30 19:24:35 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.26 2001/04/05 10:52:45 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ m_copym(m, off0, len, wait)
 		if (n == NULL)
 			goto nospace;
 		if (copyhdr) {
-			M_COPY_PKTHDR(n, m);
+			M_DUP_PKTHDR(n, m);
 			if (len == M_COPYALL)
 				n->m_pkthdr.len -= off0;
 			else
@@ -410,7 +410,7 @@ m_copym2(m, off0, len, wait)
 		if (n == NULL)
 			goto nospace;
 		if (copyhdr) {
-			M_COPY_PKTHDR(n, m);
+			M_DUP_PKTHDR(n, m);
 			if (len == M_COPYALL)
 				n->m_pkthdr.len -= off0;
 			else
