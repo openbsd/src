@@ -155,7 +155,7 @@ VOP functions.
 The locking discipline for all currently defined VOP
 functions is described in the file
 .Pa sys/kern/vnode_if.src .
-Most VOP calls take a struct proc *p argument.
+Many VOP calls take a struct proc *p argument.
 This should be the current process.
 VOP calls are not safe to call in an interrupt context.
 .Pp
@@ -189,7 +189,7 @@ are called to get and set named extended file attributes (see
 .Xr extattr 9 ) .
 .Ar vp
 is the vnode for which to get or set the attribute.
-It should be locked.
+It must be locked.
 .Ar attrnamespace
 is an integer describing whether the attribute belongs in the
 user or system namespace.
@@ -204,7 +204,7 @@ in
 .Ar size
 if it is non-NULL.
 .Ar cred
-should be a pointer to the credentials used to access the file.
+is a pointer to the credentials used to access the file.
 .Sh VOP_LINK
 .Nm VOP_LINK
 increases the link count for the vnode
@@ -249,10 +249,8 @@ must be locked on entry and is unlocked on exit.
 .Nm VOP_READLINK
 reads a symbolic link and returns the target's name in
 .Ar uio .
-VOP_READLINK should only be called on symlinks,
-and
 .Ar vp
-is locked on entry and exit.
+is locked on entry and exit and must be a symlink.
 .Sh VOP_RECLAIM
 .Nm VOP_RECLAIM
 is used by
@@ -330,7 +328,7 @@ Note the asymmetry between vn_lock and VOP_UNLOCK.
 .Sh IMPLEMENTATION NOTES
 The
 .Nm VOP
-functions are mostly stubs which redirect their arguments to the
+functions are stubs which redirect their arguments to the
 appropriate function for each file system.
 In order to allow for layered file systems and generic bypass methods,
 all vnode operation implementing functions take only a single void *
