@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.10 1997/02/13 22:29:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.11 1997/02/13 22:33:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -255,7 +255,7 @@ rendezvous_request(xprt)
 		if (!getsockopt(sock, IPPROTO_IP, IP_OPTIONS, (char *)&opts,
 		    &optsize) && optsize != 0) {
 			for (i = 0; (void *)&opts.ipopt_list[i] - (void *)&opts <
-			    sizeof opts; ) {	
+			    optsize; ) {	
 				u_char c = (u_char)opts.ipopt_list[i];
 				if (c == IPOPT_LSRR || c == IPOPT_SSRR) {
 					close(sock);

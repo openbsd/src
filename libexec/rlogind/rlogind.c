@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.18 1997/02/13 22:29:10 deraadt Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.19 1997/02/13 22:33:11 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -270,7 +270,7 @@ doit(f, fromp)
 		if (getsockopt(0, ipproto, IP_OPTIONS, (char *)&opts,
 		    &optsize) == 0 && optsize != 0) {
 			for (i = 0; (void *)&opts.ipopt_list[i] - (void *)&opts <
-			    sizeof opts; ) {
+			    optsize; ) {
 				u_char c = (u_char)opts.ipopt_list[i];
 				if (c == IPOPT_LSRR || c == IPOPT_SSRR)
 					exit(1);
