@@ -32,13 +32,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fstab.c,v 1.7 1999/08/03 09:18:30 downsj Exp $";
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.8 1999/09/03 16:23:18 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
+
 #include <errno.h>
+#include <limits.h>
 #include <fstab.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,7 +60,9 @@ fstabscan()
 #define	MAXLINELENGTH	1024
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];
+	char *endp;
 	int typexx;
+	long l;
 
 	for (;;) {
 		if (!(cp = fgets(line, sizeof(line), _fs_fp)))
@@ -78,9 +82,17 @@ fstabscan()
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
 				    "ufs" : "swap";
 				if ((cp = strtok((char *)NULL, ":\n"))) {
-					_fs_fstab.fs_freq = atoi(cp);
+					l = strtol(cp, &endp, 10);
+					if (endp == cp || *endp != '\0' ||
+					    l < 0 || l >= INT_MAX)
+						goto bad;
+					_fs_fstab.fs_freq = l;
 					if ((cp = strtok((char *)NULL, ":\n"))) {
-						_fs_fstab.fs_passno = atoi(cp);
+						l = strtol(cp, &endp, 10);
+						if (endp == cp || *endp != '\0'
+						    || l < 0 || l >= INT_MAX)
+							goto bad;
+						_fs_fstab.fs_passno = l;
 						return(1);
 					}
 				}
@@ -99,9 +111,18 @@ fstabscan()
 		_fs_fstab.fs_freq = 0;
 		_fs_fstab.fs_passno = 0;
 		if ((cp = strtok((char *)NULL, " \t\n")) != NULL) {
-			_fs_fstab.fs_freq = atoi(cp);
-			if ((cp = strtok((char *)NULL, " \t\n")) != NULL)
-				_fs_fstab.fs_passno = atoi(cp);
+			l = strtol(cp, &endp, 10);
+			if (endp == cp || *endp != '\0' || l < 0 ||
+			    l >= INT_MAX)
+				goto bad;
+			_fs_fstab.fs_freq = l;
+			if ((cp = strtok((char *)NULL, " \t\n")) != NULL) {
+				l = strtol(cp, &endp, 10);
+				if (endp == cp || *endp != '\0' || l < 0 ||
+				    l >= INT_MAX)
+					goto bad;
+				_fs_fstab.fs_passno = l;
+			}
 		}
 		strncpy(subline, _fs_fstab.fs_mntops, sizeof subline-1);
 		subline[sizeof subline-1] = '\0';

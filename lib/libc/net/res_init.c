@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.16 1998/03/16 05:07:01 millert Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.17 1999/09/03 16:23:19 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.16 1998/03/16 05:07:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.17 1999/09/03 16:23:19 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -459,7 +459,8 @@ res_setoptions(options, source)
 	char *options, *source;
 {
 	char *cp = options;
-	int i;
+	char *endp;
+	long l;
 
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
@@ -472,15 +473,19 @@ res_setoptions(options, source)
 			cp++;
 		/* search for and process individual options */
 		if (!strncmp(cp, "ndots:", sizeof("ndots:") - 1)) {
-			i = atoi(cp + sizeof("ndots:") - 1);
-			if (i <= RES_MAXNDOTS)
-				_res.ndots = i;
-			else
-				_res.ndots = RES_MAXNDOTS;
+			char *p = cp + sizeof("ndots:") - 1;
+			l = strtol(p, &endp, 10);
+			if (l >= 0 && endp != p &&
+			    (*endp = '\0' || issapce(*endp))) {
+				if (l <= RES_MAXNDOTS)
+					_res.ndots = l;
+				else
+					_res.ndots = RES_MAXNDOTS;
 #ifdef DEBUG
-			if (_res.options & RES_DEBUG)
-				printf(";;\tndots=%d\n", _res.ndots);
+				if (_res.options & RES_DEBUG)
+					printf(";;\tndots=%d\n", _res.ndots);
 #endif
+			}
 		} else if (!strncmp(cp, "debug", sizeof("debug") - 1)) {
 #ifdef DEBUG
 			if (!(_res.options & RES_DEBUG)) {

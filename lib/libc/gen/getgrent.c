@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.9 1998/11/20 11:18:37 d Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.10 1999/09/03 16:23:18 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ static int	__ypcurrentlen;
 
 struct group *
 getgrent_r(p_gr)
-struct group * p_gr;
+struct group *p_gr;
 {
 	_THREAD_PRIVATE_MUTEX_LOCK(gr);
 	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL, p_gr))
@@ -121,7 +121,7 @@ getgrnam(name)
 struct group *
 getgrgid_r(gid, p_gr)
 	gid_t gid;
-	struct group * p_gr;
+	struct group *p_gr;
 {
 	int rval;
 
@@ -214,10 +214,11 @@ grscan(search, gid, name, p_gr)
 	register int search;
 	register gid_t gid;
 	register const char *name;
-	struct group * p_gr;
+	struct group *p_gr;
 {
 	register char *cp, **m;
-	char *bp;
+	char *bp, *endp;
+	u_long ul;
 #ifdef YP
 	char *key, *data;
 	int keylen, datalen;
@@ -343,8 +344,14 @@ grscan(search, gid, name, p_gr)
 						strsep(&bp, ":\n");
 					if (!(cp = strsep(&bp, ":\n")))
 						continue;
-					p_gr->gr_gid =
-						name ? atoi(cp) : gid;
+					if (name) {
+						ul = strtoul(cp, &endp, 10);
+						if (*endp != '\0' ||
+						    endp == cp || ul >= GID_MAX)
+							continue;
+						p_gr->gr_gid = ul;
+					} else
+						p_gr->gr_gid = gid;
 					goto found_it;
 				}
 				break;
@@ -370,7 +377,10 @@ parse:
 		p_gr->gr_passwd = strsep(&bp, ":\n");
 		if (!(cp = strsep(&bp, ":\n")))
 			continue;
-		p_gr->gr_gid = atoi(cp);
+		ul = strtoul(cp, &endp, 10);
+		if (endp == cp || *endp != '\0' || ul >= GID_MAX)
+			continue;
+		p_gr->gr_gid = ul;
 		if (search && name == NULL && p_gr->gr_gid != gid)
 			continue;
 	found_it:

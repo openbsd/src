@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservent.c,v 1.4 1998/03/16 05:07:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: getservent.c,v 1.5 1999/09/03 16:23:19 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,8 @@ endservent()
 struct servent *
 getservent()
 {
-	char *p, *cp, **q;
+	char *p, *cp, **q, *endp;
+	long l;
 	size_t len;
 
 	if (servf == NULL && (servf = fopen(_PATH_SERVICES, "r" )) == NULL)
@@ -103,7 +104,10 @@ again:
 	if (cp == NULL)
 		goto again;
 	*cp++ = '\0';
-	serv.s_port = htons((in_port_t)atoi(p));
+	l = strtol(p, &endp, 10);
+	if (endp == p || *endp != '\0' || l < 0 || l > USHRT_MAX)
+		goto again;
+	serv.s_port = htons((in_port_t)l);
 	serv.s_proto = cp;
 	q = serv.s_aliases = serv_aliases;
 	cp = strpbrk(cp, " \t");

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getprotoent.c,v 1.3 1998/03/16 05:06:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: getprotoent.c,v 1.4 1999/09/03 16:23:18 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,8 @@ endprotoent()
 struct protoent *
 getprotoent()
 {
-	char *p, *cp, **q;
+	char *p, *cp, **q, *endp;
+	long l;
 	size_t len;
 
 	if (protof == NULL && (protof = fopen(_PATH_PROTOCOLS, "r" )) == NULL)
@@ -102,7 +103,10 @@ again:
 	p = strpbrk(cp, " \t");
 	if (p != NULL)
 		*p++ = '\0';
-	proto.p_proto = atoi(cp);
+	l = strtol(cp, &endp, 10);
+	if (endp == cp || *endp != '\0' || l < 0 || l >= INT_MAX)
+		goto again;
+	proto.p_proto = l;
 	q = proto.p_aliases = proto_aliases;
 	if (p != NULL) {
 		cp = p;

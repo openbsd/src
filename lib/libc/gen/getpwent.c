@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.14 1998/08/14 21:39:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.15 1999/09/03 16:23:18 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -235,7 +235,8 @@ __ypparse(pw, s)
 struct passwd *pw;
 char *s;
 {
-	char *bp, *cp;
+	char *bp, *cp, *endp;
+	u_long ul;
 	int count = 0;
 
 	/* count the colons. */
@@ -251,19 +252,33 @@ char *s;
 	pw->pw_passwd = strsep(&bp, ":\n");
 	if (!(cp = strsep(&bp, ":\n")))
 		return 1;
-	pw->pw_uid = atoi(cp);
+	ul = strtoul(cp, &endp, 10);
+	if (endp == cp || *endp != '\0' || ul >= UID_MAX)
+		return 1;
+	pw->pw_uid = (uid_t)ul;
 	if (!(cp = strsep(&bp, ":\n")))
 		return 1;
-	pw->pw_gid = atoi(cp);
+	ul = strtoul(cp, &endp, 10);
+	if (endp == cp || *endp != '\0' || ul >= GID_MAX)
+		return 1;
+	pw->pw_gid = (gid_t)ul;
 	if (count == 9) {
+		long l;
+			
 		/* If the ypserv gave us all the fields, use them. */
 		pw->pw_class = strsep(&bp, ":\n");
 		if (!(cp = strsep(&bp, ":\n")))
 			return 1;
-		pw->pw_change = atoi(cp);
+		l = strtol(cp, &endp, 10);
+		if (endp == cp || *endp != '\0' || l >= INT_MAX || l <= INT_MIN)
+			return 1;
+		pw->pw_change = (time_t)l;
 		if (!(cp = strsep(&bp, ":\n")))
 			return 1;
-		pw->pw_expire = atoi(cp);
+		l = strtol(cp, &endp, 10);
+		if (endp == cp || *endp != '\0' || l >= INT_MAX || l <= INT_MIN)
+			return 1;
+		pw->pw_expire = (time_t)l;
 	} else {
 		/* ..else it is a normal ypserv. */
 		pw->pw_class = "";
