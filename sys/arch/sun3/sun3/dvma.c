@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.9 2001/05/30 20:40:03 miod Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.10 2001/06/11 01:30:13 miod Exp $	*/
 /*	$NetBSD: dvma.c,v 1.5 1996/11/20 18:57:29 gwr Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ dvma_malloc(bytes)
 
     if (!bytes)
 		return NULL;
-    new_size = m68k_round_page(bytes);
+    new_size = round_page(bytes);
 #ifdef UVM
     new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size);
 #else
@@ -151,7 +151,7 @@ dvma_free(addr, size)
 	caddr_t	addr;
 	size_t	size;
 {
-	vm_size_t sz = m68k_round_page(size);
+	vm_size_t sz = round_page(size);
 
 #ifdef UVM
 	uvm_km_free(phys_map, (vm_offset_t)addr, sz);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2001/06/08 08:09:29 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2001/06/11 01:30:13 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -1551,7 +1551,7 @@ pmap_next_page(paddr)
 {
 	/* Is it time to skip over the hole? */
 	if (avail_next == hole_start)
-		avail_next += m68k_round_page(hole_size);
+		avail_next += round_page(hole_size);
 
 	/* Any available memory remaining? */
 	if (avail_next >= avail_end)

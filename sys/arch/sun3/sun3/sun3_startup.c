@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.15 2001/05/30 20:35:43 miod Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.16 2001/06/11 01:30:13 miod Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -383,9 +383,9 @@ sun3_vm_init(kehp)
 	esym = end;
 	/* This will advance esym past the symbols. */
 	sun3_save_symtab(kehp);
-	virtual_avail = m68k_round_page(esym);
+	virtual_avail = round_page(esym);
 #else
-	virtual_avail = m68k_round_page(end);
+	virtual_avail = round_page(end);
 #endif
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
@@ -403,7 +403,7 @@ sun3_vm_init(kehp)
 		/* PROM version 1 or later. */
 		avail_end = *romp->memoryAvail;
 	}
-	avail_end = m68k_trunc_page(avail_end);
+	avail_end = trunc_page(avail_end);
 
 	/*
 	 * Steal some special-purpose, already mapped pages.
@@ -579,7 +579,7 @@ sun3_vm_init(kehp)
 
 	/* text */
 	va = (vm_offset_t) kernel_text;
-	eva = m68k_trunc_page(etext);
+	eva = trunc_page(etext);
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
@@ -593,7 +593,7 @@ sun3_vm_init(kehp)
 	}
 
 	/* data and bss */
-	eva = m68k_round_page(end);
+	eva = round_page(end);
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2001/05/30 20:37:54 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2001/06/11 01:30:13 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ bus_mapin(bustype, paddr, sz)
 	off = paddr & PGOFSET;
 	pa = paddr - off;
 	sz += off;
-	sz = m68k_round_page(sz);
+	sz = round_page(sz);
 
 	pmt = bustype_to_pmaptype[bustype];
 	pmt |= PMAP_NC;	/* non-cached */
