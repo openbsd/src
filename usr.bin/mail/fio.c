@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.20 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.21 2001/12/18 16:55:06 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: fio.c,v 1.20 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: fio.c,v 1.21 2001/12/18 16:55:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,21 +281,19 @@ setinput(struct message *mp)
 void
 makemessage(FILE *f, int omsgCount)
 {
-	size_t size = (msgCount + 1) * sizeof(struct message);
+	size_t size;
+	struct message *nmessage;
 
-	if (omsgCount) {
-		message = (struct message *)realloc(message, size);
-		if (message == 0)
-			errx(1, "Insufficient memory for %d messages\n",
-			    msgCount);
-	} else {
-		if (message != 0)
-			(void)free(message);
-		if ((message = (struct message *)malloc(size)) == NULL)
-			errx(1, "Insufficient memory for %d messages",
-			    msgCount);
-		dot = message;
-	}
+	size = (msgCount + 1) * sizeof(struct message);
+	nmessage = (struct message *)realloc(message, size);
+	if (nmessage == 0)
+		errx(1, "Insufficient memory for %d messages\n",
+		    msgCount);
+	if (omsgCount == 0 || message == NULL)
+		dot = nmessage;
+	else
+		dot = nmessage + (dot - message);
+	message = nmessage;
 	size -= (omsgCount + 1) * sizeof(struct message);
 	fflush(f);
 	(void)lseek(fileno(f), (off_t)sizeof(*message), 0);
