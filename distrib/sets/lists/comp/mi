@@ -814,13 +814,11 @@
 ./usr/include/netinet/udp.h
 ./usr/include/netinet/udp_var.h
 ./usr/include/netinet6
-./usr/include/netinet6/icmp6.h
 ./usr/include/netinet6/in6.h
 ./usr/include/netinet6/in6_gif.h
 ./usr/include/netinet6/in6_ifattach.h
 ./usr/include/netinet6/in6_prefix.h
 ./usr/include/netinet6/in6_var.h
-./usr/include/netinet6/ip6.h
 ./usr/include/netinet6/ip6_mroute.h
 ./usr/include/netinet6/ip6_var.h
 ./usr/include/netinet6/ip6protosw.h
