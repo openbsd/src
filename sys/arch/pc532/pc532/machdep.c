@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.2.1 1995/10/17 00:19:08 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.2 1995/11/22 20:36:08 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -673,6 +673,17 @@ boot(howto)
 		/*NOTREACHED*/
 	} else {
 		if (howto & RB_DUMP) {
+#if STACK_DUMP
+		  	/* dump the stack! */
+		        { int *fp = (int *)_get_fp();
+		            int i=0;
+		            while ((u_int)fp < (u_int)UPT_MIN_ADDRESS-40) {
+		              printf ("0x%x (@0x%x), ", fp[1], fp);
+		              fp = (int *)fp[0];
+		              if (++i == 3) { printf ("\n"); i=0; }
+		            }
+		        }
+#endif
 			savectx(&dumppcb, 0);
 			dumppcb.pcb_ptb = _get_ptb0();
 			dumpsys();
