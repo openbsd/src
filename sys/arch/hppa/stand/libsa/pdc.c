@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.5 1998/12/13 06:41:43 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.6 1998/12/13 06:45:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -422,7 +422,7 @@ fall(c_base, c_count, c_loop, c_stride, data)
  *
  * This routine is just a wrapper around the real cache flush routine.
  */
-struct pdc_cache pdc_cacheinfo __attribute__ ((aligned(8)));
+struct pdc_cache pdc_cacheinfo PDC_ALIGNMENT;
 
 void 
 fcacheall()
