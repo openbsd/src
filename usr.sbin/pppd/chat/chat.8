@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chat.8,v 1.13 2003/06/13 09:56:13 jmc Exp $
+.\"	$OpenBSD: chat.8,v 1.14 2004/04/03 21:53:15 jmc Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
@@ -195,7 +195,6 @@ If one is not received, a single return sequence is sent and then it will
 look for login: again.
 Should line noise obscure the first login prompt then sending the empty line
 will usually generate a login prompt again.
-.br
 .Sh COMMENTS
 Comments can be embedded in the chat script.
 A comment is a line which starts with the
@@ -211,7 +210,6 @@ you should quote the expect string.
 If you want to wait for a prompt that starts with a
 .Sq #
 (hash) character, you would have to write something like this:
-.Pp
 .Bd -literal -offset indent
 # Now wait for the prompt and send logout string
 \'# ' logout
@@ -385,7 +383,6 @@ disables it.
 With this keyword you can select which parts of the conversation should be
 visible.
 For instance, with the following script:
-.Pp
 .Bd -literal -offset indent
 ABORT   'BUSY'
 ABORT   'NO CARRIER'
@@ -429,7 +426,6 @@ As soon as the incoming call is connected, you should use the
 .Ic HANGUP ON
 directive to reinstall normal hangup signal behavior.
 Here is an example script:
-.Pp
 .Bd -literal -offset indent
 ABORT   'BUSY'
 \&''      ATZ
@@ -488,7 +484,6 @@ The expect and reply strings may contain escape sequences.
 All of the sequences are legal in the reply string.
 Many are legal in the expect string.
 Those which are not valid in the expect sequence are so indicated.
-.Pp
 .Bl -tag -width Ds
 .It ''
 Expects or sends a null string.
@@ -554,7 +549,6 @@ For example, the character DC1 (17) is shown as ^Q.
 The
 .Nm
 program will terminate with the following completion codes:
-.Pp
 .Bl -tag -width Ds
 .It 0
 The normal termination of the program.
