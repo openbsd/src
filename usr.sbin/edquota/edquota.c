@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.10 1996/06/19 13:27:16 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.11 1996/08/29 03:33:48 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -78,6 +78,17 @@ struct quotause {
 } *getprivs();
 #define	FOUND	0x01
 
+void
+usage()
+{
+	fprintf(stderr, "%s%s%s%s",
+		"Usage: edquota [-u] [-p username] username ...\n",
+		"\tedquota -g [-p groupname] groupname ...\n",
+		"\tedquota [-u] -t\n", "\tedquota -g -t\n");
+	exit(1);
+}
+
+int
 main(argc, argv)
 	register char **argv;
 	int argc;
@@ -163,20 +174,12 @@ main(argc, argv)
 	exit(0);
 }
 
-usage()
-{
-	fprintf(stderr, "%s%s%s%s",
-		"Usage: edquota [-u] [-p username] username ...\n",
-		"\tedquota -g [-p groupname] groupname ...\n",
-		"\tedquota [-u] -t\n", "\tedquota -g -t\n");
-	exit(1);
-}
-
 /*
  * This routine converts a name for a particular quota type to
  * an identifier. This routine must agree with the kernel routine
  * getinoquota as to the interpretation of quota types.
  */
+int
 getentry(name, quotatype)
 	char *name;
 	int quotatype;
@@ -224,7 +227,7 @@ getprivs(id, quotatype)
 	setfsent();
 	quphead = (struct quotause *)0;
 	qcmd = QCMD(Q_GETQUOTA, quotatype);
-	while (fs = getfsent()) {
+	while ((fs = getfsent())) {
 		if (strcmp(fs->fs_vfstype, "ffs") &&
 		    strcmp(fs->fs_vfstype, "ufs") &&
 		    strcmp(fs->fs_vfstype, "mfs"))
@@ -296,6 +299,7 @@ getprivs(id, quotatype)
 /*
  * Store the requested quota information.
  */
+void
 putprivs(id, quotatype, quplist)
 	long id;
 	int quotatype;
@@ -325,6 +329,7 @@ putprivs(id, quotatype, quplist)
 /*
  * Take a list of priviledges and get it edited.
  */
+int
 editit(tmpfile)
 	char *tmpfile;
 {
@@ -384,6 +389,7 @@ editit(tmpfile)
 /*
  * Convert a quotause list to an ASCII file.
  */
+int
 writeprivs(quplist, outfd, name, quotatype)
 	struct quotause *quplist;
 	int outfd;
@@ -418,6 +424,7 @@ writeprivs(quplist, outfd, name, quotatype)
 /*
  * Merge changes to an ASCII file into a quotause list.
  */
+int
 readprivs(quplist, infd)
 	struct quotause *quplist;
 	int infd;
@@ -527,6 +534,7 @@ readprivs(quplist, infd)
 /*
  * Convert a quotause list to an ASCII file of grace times.
  */
+int
 writetimes(quplist, outfd, quotatype)
 	struct quotause *quplist;
 	int outfd;
@@ -559,6 +567,7 @@ writetimes(quplist, outfd, quotatype)
 /*
  * Merge changes of grace times in an ASCII file into a quotause list.
  */
+int
 readtimes(quplist, infd)
 	struct quotause *quplist;
 	int infd;
@@ -653,6 +662,7 @@ cvtstoa(time)
 /*
  * Convert ASCII input times to seconds.
  */
+int
 cvtatos(time, units, seconds)
 	time_t time;
 	char *units;
@@ -678,6 +688,7 @@ cvtatos(time, units, seconds)
 /*
  * Free a list of quotause structures.
  */
+void
 freeprivs(quplist)
 	struct quotause *quplist;
 {
@@ -692,6 +703,7 @@ freeprivs(quplist)
 /*
  * Check whether a string is completely composed of digits.
  */
+int
 alldigits(s)
 	register char *s;
 {
@@ -708,6 +720,7 @@ alldigits(s)
 /*
  * Check to see if a particular quota is to be enabled.
  */
+int
 hasquota(fs, type, qfnamep)
 	register struct fstab *fs;
 	int type;
@@ -725,7 +738,7 @@ hasquota(fs, type, qfnamep)
 	}
 	strcpy(buf, fs->fs_mntops);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = index(opt, '='))
+		if ((cp = index(opt, '=')))
 			*cp++ = '\0';
 		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
 			break;
