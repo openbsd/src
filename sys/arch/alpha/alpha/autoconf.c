@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1998/03/17 01:41:26 angelos Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1998/07/01 02:29:39 angelos Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -90,7 +90,13 @@ configure()
 
 	parse_prom_bootdev();
 
-	(void)splhigh();
+        /*
+         * Disable interrupts during autoconfiguration.  splhigh() won't
+         * work, because it simply _raises_ the IPL, so if machine checks
+         * are disabled, they'll stay disabled.  Machine checks are needed
+         * during autoconfig.
+         */
+        (void)alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
@@ -131,12 +137,12 @@ struct nam2blk {
 	char *name;
 	int maj;
 } nam2blk[] = {
-	{ "wd",		0 },
 	{ "st",		2 },
 	{ "cd",		3 },
-	{ "acd",	4 },
 	{ "rd",		6 },
 	{ "sd",		8 },
+	{ "acd",	4 },
+	{ "wd",		0 },
 #if 0
 	{ "fd",		XXX },
 #endif
