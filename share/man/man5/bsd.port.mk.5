@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.129 2004/01/22 21:32:43 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.130 2004/01/28 22:09:10 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -204,6 +204,18 @@ hooks.
 .It Ar fake
 Do a fake port installation, that is, simulate the port installation under
 ${WRKINST}.
+There is no
+.Ev do-fake
+and
+.Ev post-fake
+hooks.
+.Ar fake
+actually uses
+.Ev pre-fake ,
+.Ev pre-install ,
+.Ev do-install
+and
+.Ev post-install .
 Described in a separate section below.
 .It Ar fetch
 Fetch the distribution files and patchfiles, using ${FETCH_CMD}.
@@ -587,8 +599,8 @@ Path to a local database that holds distribution files (usually a CD-ROM
 or other similar media), used to retrieve distribution files before going
 to the network.
 Defaults to
-.Pa /cdrom/distfiles
-if this path exists.
+.Pa /cdrom/distfiles .
+Set to empty to avoid checking any path.
 Distribution files are still copied or linked (see
 .Ev FETCH_SYMLINK_DISFILES )
 into
