@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 1997/10/21 01:32:31 millert Exp $
+#	$OpenBSD: Makefile,v 1.74 1997/10/21 15:31:18 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -136,7 +136,7 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/cron/log
 	${INSTALL} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 660 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 640 /dev/null \
 		${DESTDIR}/var/log/authlog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/daemon
