@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.10 2001/10/02 15:24:09 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.11 2001/10/03 18:18:01 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -106,6 +106,7 @@ int		gem_disable_tx(struct gem_softc *sc);
 void		gem_rxdrain(struct gem_softc *sc);
 int		gem_add_rxbuf(struct gem_softc *sc, int idx);
 void		gem_setladrf __P((struct gem_softc *));
+int		gem_encap __P((struct gem_softc *, struct mbuf *, u_int32_t *));
 
 /* MII methods & callbacks */
 static int	gem_mii_readreg __P((struct device *, int, int));
@@ -120,7 +121,7 @@ int		gem_put __P((struct gem_softc *, int, struct mbuf *));
 void		gem_read __P((struct gem_softc *, int, int));
 int		gem_eint __P((struct gem_softc *, u_int));
 int		gem_rint __P((struct gem_softc *));
-int		gem_tint __P((struct gem_softc *));
+int		gem_tint __P((struct gem_softc *, u_int32_t));
 void		gem_power __P((int, void *));
 
 static int	ether_cmp __P((u_char *, u_char *));
@@ -188,30 +189,6 @@ gem_config(sc)
 		printf("%s: unable to load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
-	}
-
-	/*
-	 * Initialize the transmit job descriptors.
-	 */
-	SIMPLEQ_INIT(&sc->sc_txfreeq);
-	SIMPLEQ_INIT(&sc->sc_txdirtyq);
-
-	/*
-	 * Create the transmit buffer DMA maps.
-	 */
-	for (i = 0; i < GEM_TXQUEUELEN; i++) {
-		struct gem_txsoft *txs;
-
-		txs = &sc->sc_txsoft[i];
-		txs->txs_mbuf = NULL;
-		if ((error = bus_dmamap_create(sc->sc_dmatag, MCLBYTES,
-		    GEM_NTXSEGS, MCLBYTES, 0, 0,
-		    &txs->txs_dmamap)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail_4;
-		}
-		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
 	/*
@@ -339,12 +316,6 @@ gem_config(sc)
 			bus_dmamap_destroy(sc->sc_dmatag,
 			    sc->sc_rxsoft[i].rxs_dmamap);
 	}
- fail_4:
-	for (i = 0; i < GEM_TXQUEUELEN; i++) {
-		if (sc->sc_txsoft[i].txs_dmamap != NULL)
-			bus_dmamap_destroy(sc->sc_dmatag,
-			    sc->sc_txsoft[i].txs_dmamap);
-	}
 	bus_dmamap_unload(sc->sc_dmatag, sc->sc_cddmamap);
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmatag, sc->sc_cddmamap);
@@ -363,9 +334,26 @@ gem_tick(arg)
 	void *arg;
 {
 	struct gem_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mac = sc->sc_h;
 	int s;
 
 	s = splimp();
+
+	/* unload collisions counters */
+	ifp->if_collisions +=
+	    bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_FIRST_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
+
+	/* clear the hardware counters */
+	bus_space_write_4(t, mac, GEM_MAC_NORM_COLL_CNT, 0);
+	bus_space_write_4(t, mac, GEM_MAC_FIRST_COLL_CNT, 0);
+	bus_space_write_4(t, mac, GEM_MAC_EXCESS_COLL_CNT, 0);
+	bus_space_write_4(t, mac, GEM_MAC_LATE_COLL_CNT, 0);
+
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
@@ -429,7 +417,8 @@ void
 gem_stop(struct ifnet *ifp, int disable)
 {
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
-	struct gem_txsoft *txs;
+	struct gem_sxd *sd;
+	u_int32_t i;
 
 	DPRINTF(sc, ("%s: gem_stop\n", sc->sc_dev.dv_xname));
 
@@ -443,15 +432,21 @@ gem_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Release any queued transmit buffers.
 	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
-		if (txs->txs_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmatag, txs->txs_dmamap);
-			m_freem(txs->txs_mbuf);
-			txs->txs_mbuf = NULL;
+	for (i = 0; i < GEM_NTXDESC; i++) {
+		sd = &sc->sc_txd[i];
+		if (sd->sd_map != NULL) {
+			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
+			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
+			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
+			sd->sd_map = NULL;
 		}
-		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
+		if (sd->sd_mbuf != NULL) {
+			m_freem(sd->sd_mbuf);
+			sd->sd_mbuf = NULL;
+		}
 	}
+	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 
 	if (disable) {
 		gem_rxdrain(sc);
@@ -616,8 +611,6 @@ gem_meminit(struct gem_softc *sc)
 	}
 	GEM_CDTXSYNC(sc, 0, GEM_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	sc->sc_txfree = GEM_NTXDESC;
-	sc->sc_txnext = 0;
 
 	/*
 	 * Initialize the receive descriptor and receive job
@@ -679,6 +672,7 @@ gem_ringsize(int sz)
 		v = GEM_RING_SZ_8192;
 		break;
 	default:
+		v = GEM_RING_SZ_32;
 		printf("gem: invalid Receive Descriptor ring size\n");
 		break;
 	}
@@ -755,11 +749,11 @@ gem_init(struct ifnet *ifp)
 	/* step 9. ETX Configuration: use mostly default values */
 
 	/* Enable DMA */
+	bus_space_write_4(t, h, GEM_TX_KICK, 0);
 	v = gem_ringsize(GEM_NTXDESC /*XXX*/);
 	bus_space_write_4(t, h, GEM_TX_CONFIG, 
 		v|GEM_TX_CONFIG_TXDMA_EN|
 		((0x400<<10)&GEM_TX_CONFIG_TXFIFO_TH));
-	bus_space_write_4(t, h, GEM_TX_KICK, sc->sc_txnext);
 
 	/* step 10. ERX Configuration */
 
@@ -898,336 +892,6 @@ gem_init_regs(struct gem_softc *sc)
 
 }
 
-
-
-void
-gem_start(ifp)
-	struct ifnet *ifp;
-{
-	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
-	struct mbuf *m0, *m;
-	struct gem_txsoft *txs, *last_txs;
-	bus_dmamap_t dmamap;
-	int error, firsttx, nexttx, lasttx, ofree, seg;
-
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-		return;
-
-	/*
-	 * Remember the previous number of free descriptors and
-	 * the first descriptor we'll use.
-	 */
-	ofree = sc->sc_txfree;
-	firsttx = sc->sc_txnext;
-
-	DPRINTF(sc, ("%s: gem_start: txfree %d, txnext %d\n",
-	    sc->sc_dev.dv_xname, ofree, firsttx));
-
-	/*
-	 * Loop through the send queue, setting up transmit descriptors
-	 * until we drain the queue, or use up all available transmit
-	 * descriptors.
-	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
-	       sc->sc_txfree != 0) {
-		/*
-		 * Grab a packet off the queue.
-		 */
-		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 == NULL)
-			break;
-		m = NULL;
-
-		dmamap = txs->txs_dmamap;
-
-		/*
-		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we were
-		 * short on resources.  In this case, we'll copy and try
-		 * again.
-		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m0,
-		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
-				    sc->sc_dev.dv_xname);
-				break;
-			}
-			if (m0->m_pkthdr.len > MHLEN) {
-				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					    "cluster\n", sc->sc_dev.dv_xname);
-					m_freem(m);
-					break;
-				}
-			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
-			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			error = bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				break;
-			}
-		}
-
-		/*
-		 * Ensure we have enough descriptors free to describe
-		 * the packet.
-		 */
-		if (dmamap->dm_nsegs > sc->sc_txfree) {
-			/*
-			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed to anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are no more slots left.
-			 *
-			 * XXX We could allocate an mbuf and copy, but
-			 * XXX it is worth it?
-			 */
-			ifp->if_flags |= IFF_OACTIVE;
-			bus_dmamap_unload(sc->sc_dmatag, dmamap);
-			if (m != NULL)
-				m_freem(m);
-			break;
-		}
-
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (m != NULL) {
-			m_freem(m0);
-			m0 = m;
-		}
-
-		/*
-		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
-		 */
-
-		/* Sync the DMA map. */
-		bus_dmamap_sync(sc->sc_dmatag, dmamap, 0, dmamap->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
-
-		/*
-		 * Initialize the transmit descriptors.
-		 */
-		for (nexttx = sc->sc_txnext, seg = 0;
-		     seg < dmamap->dm_nsegs;
-		     seg++, nexttx = GEM_NEXTTX(nexttx)) {
-			uint64_t flags;
-
-			/*
-			 * If this is the first descriptor we're
-			 * enqueueing, set the start of packet flag,
-			 * and the checksum stuff if we want the hardware
-			 * to do it.
-			 */
-			sc->sc_txdescs[nexttx].gd_addr =
-			    GEM_DMA_WRITE(sc, dmamap->dm_segs[seg].ds_addr);
-			flags = dmamap->dm_segs[seg].ds_len & GEM_TD_BUFSIZE;
-			if (nexttx == firsttx)
-				flags |= GEM_TD_START_OF_PACKET;
-			if (seg == dmamap->dm_nsegs - 1)
-				flags |= GEM_TD_END_OF_PACKET;
-			sc->sc_txdescs[nexttx].gd_flags =
-				GEM_DMA_WRITE(sc, flags);
-			lasttx = nexttx;
-		}
-
-#ifdef GEM_DEBUG
-		if (ifp->if_flags & IFF_DEBUG) {
-			printf("     gem_start %p transmit chain:\n", txs);
-			for (seg = sc->sc_txnext;; seg = GEM_NEXTTX(seg)) {
-				printf("descriptor %d:\t", seg);
-				printf("gd_flags:   0x%016llx\t", (long long)
-				    GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_flags));
-				printf("gd_addr: 0x%016llx\n", (long long)
-				    GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_addr));
-				if (seg == lasttx)
-					break;
-			}
-		}
-#endif
-
-		/* Sync the descriptors we're using. */
-		GEM_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-		/*
-		 * Store a pointer to the packet so we can free it later,
-		 * and remember what txdirty will be once the packet is
-		 * done.
-		 */
-		txs->txs_mbuf = m0;
-		txs->txs_firstdesc = sc->sc_txnext;
-		txs->txs_lastdesc = lasttx;
-		txs->txs_ndescs = dmamap->dm_nsegs;
-
-		/* Advance the tx pointer. */
-		sc->sc_txfree -= dmamap->dm_nsegs;
-		sc->sc_txnext = nexttx;
-
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
-		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
-
-		last_txs = txs;
-
-#if NBPFILTER > 0
-		/*
-		 * Pass the packet to any BPF listeners.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
-	}
-
-	if (txs == NULL || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-
-	if (sc->sc_txfree != ofree) {
-		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
-		    sc->sc_dev.dv_xname, lasttx, firsttx));
-		/*
-		 * The entire packet chain is set up.  
-		 * Kick the transmitter.
-		 */
-		DPRINTF(sc, ("%s: gem_start: kicking tx %d\n",
-			sc->sc_dev.dv_xname, nexttx));
-		bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK,
-			sc->sc_txnext);
-
-		/* Set a watchdog timer in case the chip flakes out. */
-		ifp->if_timer = 5;
-		DPRINTF(sc, ("%s: gem_start: watchdog %d\n",
-			sc->sc_dev.dv_xname, ifp->if_timer));
-	}
-}
-
-/*
- * Transmit interrupt.
- */
-int
-gem_tint(sc)
-	struct gem_softc *sc;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mac = sc->sc_h;
-	struct gem_txsoft *txs;
-	int txlast;
-
-
-	DPRINTF(sc, ("%s: gem_tint\n", sc->sc_dev.dv_xname));
-
-	/*
-	 * Unload collision counters
-	 */
-	ifp->if_collisions +=
-		bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
-		bus_space_read_4(t, mac, GEM_MAC_FIRST_COLL_CNT) +
-		bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
-		bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
-
-	/*
-	 * then clear the hardware counters.
-	 */
-	bus_space_write_4(t, mac, GEM_MAC_NORM_COLL_CNT, 0);
-	bus_space_write_4(t, mac, GEM_MAC_FIRST_COLL_CNT, 0);
-	bus_space_write_4(t, mac, GEM_MAC_EXCESS_COLL_CNT, 0);
-	bus_space_write_4(t, mac, GEM_MAC_LATE_COLL_CNT, 0);
-
-	/*
-	 * Go through our Tx list and free mbufs for those
-	 * frames that have been transmitted.
-	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		GEM_CDTXSYNC(sc, txs->txs_firstdesc,
-		    txs->txs_ndescs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
-#ifdef GEM_DEBUG
-		if (ifp->if_flags & IFF_DEBUG) {
-			int i;
-			printf("    txsoft %p transmit chain:\n", txs);
-			for (i = txs->txs_firstdesc;; i = GEM_NEXTTX(i)) {
-				printf("descriptor %d: ", i);
-				printf("gd_flags: 0x%016llx\t", (long long)
-					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
-				printf("gd_addr: 0x%016llx\n", (long long)
-					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
-				if (i == txs->txs_lastdesc)
-					break;
-			}
-		}
-#endif
-
-		/*
-		 * In theory, we could harveast some descriptors before
-		 * the ring is empty, but that's a bit complicated.
-		 *
-		 * GEM_TX_COMPLETION points to the last descriptor
-		 * processed +1.
-		 */
-		txlast = bus_space_read_4(t, mac, GEM_TX_COMPLETION);
-		DPRINTF(sc,
-			("gem_tint: txs->txs_lastdesc = %d, txlast = %d\n",
-				txs->txs_lastdesc, txlast));
-		if (txs->txs_firstdesc <= txs->txs_lastdesc) {
-			if ((txlast >= txs->txs_firstdesc) &&
-				(txlast <= txs->txs_lastdesc))
-				break;
-		} else {
-			/* Ick -- this command wraps */
-			if ((txlast >= txs->txs_firstdesc) ||
-				(txlast <= txs->txs_lastdesc))
-				break;
-		}
-
-		DPRINTF(sc, ("gem_tint: releasing a desc\n"));
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
-
-		sc->sc_txfree += txs->txs_ndescs;
-
-#ifdef DIAGNOSTIC
-		if (txs->txs_mbuf == NULL) {
-			panic("gem_txintr: null mbuf");
-		}
-#endif
-
-		bus_dmamap_sync(sc->sc_dmatag, txs->txs_dmamap,
-		    0, txs->txs_dmamap->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmatag, txs->txs_dmamap);
-		m_freem(txs->txs_mbuf);
-		txs->txs_mbuf = NULL;
-
-		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
-
-		ifp->if_opackets++;
-	}
-
-	DPRINTF(sc, ("gem_tint: GEM_TX_STATE_MACHINE %x "
-		"GEM_TX_DATA_PTR %llx "
-		"GEM_TX_COMPLETION %x\n",
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_STATE_MACHINE),
-		(long long)bus_space_read_8(sc->sc_bustag, sc->sc_h,
-			GEM_TX_DATA_PTR),
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_COMPLETION)));
-
-	gem_start(ifp);
-
-	if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) == NULL)
-		ifp->if_timer = 0;
-	DPRINTF(sc, ("%s: gem_tint: watchdog %d\n",
-		sc->sc_dev.dv_xname, ifp->if_timer));
-
-	return (1);
-}
-
 /*
  * Receive interrupt.
  */
@@ -1244,8 +908,6 @@ gem_rint(sc)
 	u_int64_t rxstat;
 	int i, len;
 
-	DPRINTF(sc, ("%s: gem_rint: sc_flags 0x%08x\n",
-		sc->sc_dev.dv_xname, sc->sc_flags));
 	/*
 	 * XXXX Read the lastrx only once at the top for speed.
 	 */
@@ -1420,10 +1082,8 @@ gem_intr(v)
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
 
-	if ((status & 
-		(GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME))
-		!= 0)
-		r |= gem_tint(sc);
+	if ((status & (GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME)) != 0)
+		r |= gem_tint(sc, status);
 
 	if ((status & (GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF)) != 0)
 		r |= gem_rint(sc);
@@ -1459,7 +1119,7 @@ gem_watchdog(ifp)
 	++ifp->if_oerrors;
 
 	/* Try to get more packets going. */
-	gem_start(ifp);
+	gem_init(ifp);
 }
 
 /*
@@ -1876,4 +1536,145 @@ chipit:
 	bus_space_write_4(t, h, GEM_MAC_HASH15, hash[15]);
 
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, v);
+}
+
+int
+gem_encap(sc, mhead, bixp)
+	struct gem_softc *sc;
+	struct mbuf *mhead;
+	u_int32_t *bixp;
+{
+	u_int64_t flags;
+	u_int32_t cur, frag, i;
+	bus_dmamap_t map;
+
+	cur = frag = *bixp;
+
+	if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, GEM_NTXDESC,
+	    MCLBYTES, 0, BUS_DMA_NOWAIT, &map) != 0) {
+		return (ENOBUFS);
+	}
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, mhead,
+	    BUS_DMA_NOWAIT) != 0) {
+		bus_dmamap_destroy(sc->sc_dmatag, map);
+		return (ENOBUFS);
+	}
+
+	if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
+		bus_dmamap_unload(sc->sc_dmatag, map);
+		bus_dmamap_destroy(sc->sc_dmatag, map);
+		return (ENOBUFS);
+	}
+
+	for (i = 0; i < map->dm_nsegs; i++) {
+		sc->sc_txdescs[frag].gd_addr =
+		    GEM_DMA_WRITE(sc, map->dm_segs[i].ds_addr);
+		flags = (map->dm_segs[i].ds_len & GEM_TD_BUFSIZE) |
+		    (i == 0 ? GEM_TD_START_OF_PACKET : 0) |
+		    ((i == (map->dm_nsegs - 1)) ? GEM_TD_END_OF_PACKET : 0);
+		sc->sc_txdescs[frag].gd_flags = GEM_DMA_WRITE(sc, flags);
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
+		    GEM_CDTXOFF(frag), sizeof(struct gem_desc),
+		    BUS_DMASYNC_PREWRITE);
+		cur = frag;
+		if (++frag == GEM_NTXDESC)
+			frag = 0;
+	}
+	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+	sc->sc_tx_cnt += map->dm_nsegs;
+	sc->sc_txd[cur].sd_map = map;
+	sc->sc_txd[cur].sd_mbuf = mhead;
+
+	bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK, frag);
+
+	*bixp = frag;
+
+	/* sync descriptors */
+
+	return (0);
+}
+
+/*
+ * Transmit interrupt.
+ */
+int
+gem_tint(sc, status)
+	struct gem_softc *sc;
+	u_int32_t status;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct gem_sxd *sd;
+	u_int32_t cons, hwcons;
+
+	hwcons = status >> 19;
+	cons = sc->sc_tx_cons;
+	while (cons != hwcons) {
+		sd = &sc->sc_txd[cons];
+		if (sd->sd_map != NULL) {
+			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
+			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
+			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
+			sd->sd_map = NULL;
+		}
+		if (sd->sd_mbuf != NULL) {
+			m_freem(sd->sd_mbuf);
+			sd->sd_mbuf = NULL;
+		}
+		sc->sc_tx_cnt--;
+		if (++cons == GEM_NTXDESC)
+			cons = 0;
+	}
+	sc->sc_tx_cons = cons;
+
+	gem_start(ifp);
+
+	if (sc->sc_tx_cnt == 0)
+		ifp->if_timer = 0;
+
+	return (1);
+}
+
+void
+gem_start(ifp)
+	struct ifnet *ifp;
+{
+	struct gem_softc *sc = ifp->if_softc;
+	struct mbuf *m;
+	u_int32_t bix;
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
+	bix = sc->sc_tx_prod;
+	while (sc->sc_txd[bix].sd_mbuf == NULL) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+#if NBPFILTER > 0
+		/*
+		 * If BPF is listening on this interface, let it see the
+		 * packet before we commit it to the wire.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
+		/*
+		 * Encapsulate this packet and start it going...
+		 * or fail...
+		 */
+		if (gem_encap(sc, m, &bix)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifp->if_timer = 5;
+	}
+
+	sc->sc_tx_prod = bix;
 }

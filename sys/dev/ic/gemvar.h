@@ -51,6 +51,11 @@
 #define	GEM_NTXDESC_MASK	(GEM_NTXDESC - 1)
 #define	GEM_NEXTTX(x)		((x + 1) & GEM_NTXDESC_MASK)
 
+struct gem_sxd {
+	struct mbuf *sd_mbuf;
+	bus_dmamap_t sd_map;
+};
+
 /*
  * Receive descriptor list size.  We have one Rx buffer per incoming
  * packet, so this logic is a little simpler.
@@ -79,20 +84,6 @@ struct gem_control_data {
 #define	GEM_CDOFF(x)		offsetof(struct gem_control_data, x)
 #define	GEM_CDTXOFF(x)		GEM_CDOFF(gcd_txdescs[(x)])
 #define	GEM_CDRXOFF(x)		GEM_CDOFF(gcd_rxdescs[(x)])
-
-/*
- * Software state for transmit jobs.
- */
-struct gem_txsoft {
-	struct mbuf *txs_mbuf;		/* head of our mbuf chain */
-	bus_dmamap_t txs_dmamap;	/* our DMA map */
-	int txs_firstdesc;		/* first descriptor in packet */
-	int txs_lastdesc;		/* last descriptor in packet */
-	int txs_ndescs;			/* number of descriptors */
-	SIMPLEQ_ENTRY(gem_txsoft) txs_q;
-};
-
-SIMPLEQ_HEAD(gem_txsq, gem_txsoft);
 
 /*
  * Software state for receive jobs.
@@ -169,7 +160,9 @@ struct gem_softc {
 	/*
 	 * Software state for transmit and receive descriptors.
 	 */
-	struct gem_txsoft sc_txsoft[GEM_TXQUEUELEN];
+	struct gem_sxd sc_txd[GEM_NTXDESC];
+	u_int32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
+
 	struct gem_rxsoft sc_rxsoft[GEM_NRXDESC];
 
 	/*
@@ -186,9 +179,6 @@ struct gem_softc {
 	u_int32_t		sc_tdctl_er;		/* conditional desc end-of-ring */
 
 	u_int32_t		sc_setup_fsls;	/* FS|LS on setup descriptor */
-
-	struct gem_txsq		sc_txfreeq;	/* free Tx descsofts */
-	struct gem_txsq		sc_txdirtyq;	/* dirty Tx descsofts */
 
 	int			sc_rxptr;		/* next ready RX descriptor/descsoft */
 
