@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.15 2002/03/14 15:42:43 jason Exp $
+#	$OpenBSD: files.sbus,v 1.16 2002/03/14 19:18:29 jason Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -83,3 +83,8 @@ device asio {}
 attach asio at sbus
 attach com at asio with com_asio
 file	dev/sbus/asio.c			asio | com_asio needs-flag
+
+device apio {}
+attach apio at sbus
+attach lpt at apio with lpt_apio
+file	dev/sbus/apio.c			apio | lpt_apio needs-flag
