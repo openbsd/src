@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.15 1998/12/22 15:40:30 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.16 1999/02/28 19:12:34 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -394,11 +394,13 @@ lematch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+#if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (!sbus_testdma((struct sbus_softc *)parent, ca))
 			return (0);
 		return (1);
 	}
+#endif
 
 	return (probeget(ra->ra_vaddr, 2) != -1);
 }

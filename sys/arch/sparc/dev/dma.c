@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.13 1998/11/11 00:50:31 jason Exp $	*/
+/*	$OpenBSD: dma.c,v 1.14 1999/02/28 19:12:32 jason Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -115,11 +115,13 @@ dmamatch(parent, vcf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
 	    strcmp("espdma", ra->ra_name))
 		return (0);
+#if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (!sbus_testdma((struct sbus_softc *)parent, ca))
 			return (0);
 		return (1);
 	}
+#endif
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 4) != -1);
 }
@@ -382,8 +384,10 @@ ledmamatch(parent, vcf, aux)
 
         if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+#if defined(SUN4C) || defined(SUN4M)
 	if (!sbus_testdma((struct sbus_softc *)parent, ca))
 		return(0);
+#endif
 	return (1);
 }
 

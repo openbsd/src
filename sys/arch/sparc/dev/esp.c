@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.14 1998/11/11 00:25:58 jason Exp $	*/
+/*	$OpenBSD: esp.c,v 1.15 1999/02/28 19:12:33 jason Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -192,11 +192,13 @@ espmatch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+#if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (!sbus_testdma((struct sbus_softc *)parent, ca))
 			return (0);
 		return (1);
 	}
+#endif
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
 }
