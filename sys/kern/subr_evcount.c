@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.1 2004/06/28 01:34:46 aaron Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.2 2004/06/28 01:59:57 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -102,9 +102,9 @@ evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	int error = 0, s, nintr, i;
 	struct evcount *ec;
-	int error = 0;
-	int nintr, i;
+	u_int64_t count;
 
 	if (newp != NULL)
 		return (EPERM);
@@ -134,7 +134,10 @@ evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		if (ec == NULL)
 			return (ENOENT);
 		/* XXX - bogus cast to int, but we can't do better. */
-		error = sysctl_rdint(oldp, oldlenp, NULL, (int)ec->ec_count);
+		s = splhigh();
+		count = ec->ec_count;
+		splx(s);
+		error = sysctl_rdint(oldp, oldlenp, NULL, (int)count);
 		break;
 	case KERN_INTRCNT_NAME:
 		if (ec == NULL)
@@ -165,12 +168,15 @@ void
 evcount_timeout(void *v)
 {
 	struct timeout *to = v;
+	int s;
 
+	s = splhigh();
 	if (evcount_next_sync == NULL)
 		evcount_next_sync = TAILQ_FIRST(&evcount_list);
 
 	evcount_sync(evcount_next_sync);
 	evcount_next_sync = TAILQ_NEXT(evcount_next_sync, next);
+	splx(s);
 
 	timeout_add(to, hz);
 }
@@ -180,6 +186,7 @@ void
 evcount_sync(struct evcount *ec)
 {
 #ifndef __LP64__
+	/* XXX race */
 	ec->ec_count += ec->ec_count32;
 	ec->ec_count32 = 0;
 #endif
