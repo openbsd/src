@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem1.c,v 1.2 1996/06/26 05:44:17 deraadt Exp $	*/
+/*	$OpenBSD: mem1.c,v 1.3 2001/05/11 16:06:06 art Exp $	*/
 /*	$NetBSD: mem1.c,v 1.2 1995/07/03 21:24:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem1.c,v 1.2 1996/06/26 05:44:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mem1.c,v 1.3 2001/05/11 16:06:06 art Exp $";
 #endif
 
 #include <sys/types.h>
@@ -181,7 +181,7 @@ xnewblk()
 	prot = PROT_READ | PROT_WRITE;
 	flags = MAP_ANON | MAP_PRIVATE;
 	mb->blk = mmap(NULL, mblklen, prot, flags, -1, (off_t)0);
-	if (mb->blk == (void *)-1)
+	if (mb->blk == MAP_FAILED)
 		err(1, "can't map memory");
 	if (ALIGN((u_long)mb->blk) != (u_long)mb->blk)
 		errx(1, "mapped address is not aligned");

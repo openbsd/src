@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem2.c,v 1.2 1996/06/26 05:44:25 deraadt Exp $	*/
+/*	$OpenBSD: mem2.c,v 1.3 2001/05/11 16:06:57 art Exp $	*/
 /*	$NetBSD: mem2.c,v 1.3 1995/10/02 17:27:11 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem2.c,v 1.2 1996/06/26 05:44:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mem2.c,v 1.3 2001/05/11 16:06:57 art Exp $";
 #endif
 
 #include <sys/param.h>
@@ -83,7 +83,7 @@ xalloc(sz)
 		prot = PROT_READ | PROT_WRITE;
 		flags = MAP_ANON | MAP_PRIVATE;
 		mbuf = mmap(NULL, mblklen, prot, flags, -1, (off_t)0);
-		if (mbuf == (void *)-1)
+		if (mbuf == MAP_FAILED)
 			err(1, "can't map memory");
 		if (ALIGN((u_long)mbuf) != (u_long)mbuf)
 			errx(1, "mapped address is not aligned");
