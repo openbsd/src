@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.27 2003/06/03 02:56:22 millert Exp $
+.\"	$OpenBSD: vmstat.8,v 1.28 2003/07/25 21:25:29 tedu Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -132,7 +132,9 @@ size of the free list
 Information about page faults and paging activity.
 These are averaged each five seconds, and given in units per second.
 .Pp
-.Bl -inset -width xxxxxx -compact
+.Bl -tag -width flt -compact
+.It Ar flt
+page faults
 .It Ar re
 page reclaims (simulating reference bits)
 .It Ar at
@@ -142,9 +144,9 @@ pages paged in
 .It Ar po
 pages paged out
 .It Ar fr
-pages freed per second
+pages freed
 .It Ar sr
-pages scanned by clock algorithm, per-second
+pages scanned by clock algorithm
 .El
 .Pp
 .It Ar disks
@@ -159,16 +161,16 @@ To force
 .Nm
 to display specific drives, their names may be supplied on the command line.
 .Pp
-.It Ar faults
+.It Ar traps
 Trap/interrupt rate averages per second over last 5 seconds.
 .Pp
 .Bl -inset -width xxxxxx -compact
-.It Ar in
+.It Ar int
 device interrupts per interval (including clock interrupts)
-.It Ar sy
+.It Ar sys
 system calls per interval
 .It Ar cs
-CPU context switch rate (switches/interval)
+\ \&CPU context switch rate (switches/interval)
 .El
 .Pp
 .It Ar cpu

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.78 2003/06/25 21:18:08 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.79 2003/07/25 21:25:29 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -444,11 +444,11 @@ printhdr(void)
 
 	(void)printf(" procs   memory        page%*s", 20, "");
 	if (ndrives > 0)
-		(void)printf("%s %*sfaults     cpu\n",
+		(void)printf("%s %*straps         cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
 		   ((ndrives > 1) ? ndrives * 4 - 4 : 0), "");
 	else
-		(void)printf("%*s  faults     cpu\n",
+		(void)printf("%*s  traps          cpu\n",
 		   ndrives * 3, "");
 
 	(void)printf(" r b w    avm    fre   flt  re  pi  po  fr  sr ");
@@ -457,7 +457,7 @@ printhdr(void)
 			(void)printf("%c%c%c ", dr_name[i][0],
 			    dr_name[i][1],
 			    dr_name[i][strlen(dr_name[i]) - 1]);
-	(void)printf("  in    sy   cs us sy id\n");
+	(void)printf(" int   sys   cs us sy id\n");
 	hdrcnt = winlines - 2;
 }
 
