@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.5 2001/11/19 09:01:29 deraadt Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.6 2002/03/26 02:22:41 ericj Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.5 2001/11/19 09:01:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.6 2002/03/26 02:22:41 ericj Exp $";
 #endif
 
 #include <sys/types.h>
@@ -82,22 +82,19 @@ main(argc, argv)
 {
 	FILE	*data_file;
 	char	 data_line[1024];
-	int	 usage = 0;
 	int	 line_no = 0;
 	int	 len;
 	char	*p, *k, *v;
 	struct in_addr host_addr;
 
-	if (argc > 2)
-		usage++;
-
-	if (usage) {
+	if (argc > 2) {
 		fprintf(stderr, "usage: stdhosts [file]\n");
 		exit(1);
 	}
 
 	if (argc == 2)
-		data_file = fopen(argv[argc-1], "r");
+		if ((data_file = fopen(argv[argc-1], "r")) == NULL)
+			err(1, "");
 	else
 		data_file = stdin;
   
