@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.2 2000/09/30 16:06:35 aaron Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.3 2001/01/30 06:50:12 aaron Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <dev/wscons/wsconsio.h>
 
-#define DEFDEV "/dev/ttyEcfg"
+#define DEFDEV "/dev/ttyCcfg"
 
 static void usage __P((void));
 int main __P((int, char**));

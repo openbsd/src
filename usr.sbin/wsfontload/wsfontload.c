@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.1 2000/07/02 01:29:44 mickey Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.2 2001/01/30 06:50:12 aaron Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <dev/wscons/wsconsio.h>
 
-#define DEFDEV		"/dev/ttyEcfg"
+#define DEFDEV		"/dev/ttyCcfg"
 #define DEFWIDTH	8
 #define DEFHEIGHT	16
 #define DEFENC		WSDISPLAY_FONTENC_ISO
