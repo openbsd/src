@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.22 1998/11/25 02:30:59 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.23 1998/11/25 09:56:51 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -634,7 +634,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 		tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	m_freem(m);
 	espstat.esps_toobig++;
-        return ENOBUFS;
+        return EMSGSIZE;
     }
 
     pad = (u_char *) m_pad(m, padding);
