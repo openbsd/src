@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.10 1996/03/26 22:50:34 niklas Exp $
+#	$OpenBSD: bsd.man.mk,v 1.11 1996/08/19 08:30:54 downsj Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -20,7 +20,7 @@ NROFF?=		nroff
 	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
 	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
-.if defined(MAN) && !empty(MAN)
+.if defined(MAN) && !empty(MAN) && !defined(MANALL)
 MANALL=	${MAN:S/.1$/.cat1/g:S/.2$/.cat2/g:S/.3$/.cat3/g:S/.4$/.cat4/g:S/.5$/.cat5/g:S/.6$/.cat6/g:S/.7$/.cat7/g:S/.8$/.cat8/g:S/.9$/.cat9/g}
 .endif
 
