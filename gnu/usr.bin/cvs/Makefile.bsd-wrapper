@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.43 2003/05/12 16:40:07 mho Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.44 2004/01/02 09:01:24 millert Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ config: .FORCE
 	-rm -f config.cache
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY}" \
 		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
 		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
 			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
@@ -42,6 +43,7 @@ config: .FORCE
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY}" \
 		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
 		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
 			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
