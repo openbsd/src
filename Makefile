@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.68 2001/06/26 15:33:28 hin Exp $
+#	$OpenBSD: Makefile,v 1.69 2001/06/26 18:00:16 brad Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -95,9 +95,6 @@ build:
 	    ${MAKE} -f Makefile.bsd-wrapper depend && \
 	    ${MAKE} -f Makefile.bsd-wrapper perl.lib && \
 	    exec ${SUDO} ${MAKE} -f Makefile.bsd-wrapper install.lib
-.if (${MACHINE_ARCH} == "mips")
-	ldconfig -R
-.endif
 	${MAKE} depend && ${MAKE} && exec ${SUDO} ${MAKE} install
 
 .if !defined(TARGET)
@@ -118,21 +115,14 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 CROSSPATH=	${PATH}:${CROSSDIR}/usr/bin
 
 cross-helpers:
-	mkdir -p ${CROSSDIR}
+	@-mkdir -p ${CROSSDIR}
 	echo _MACHINE_ARCH | \
 	    cat ${.CURDIR}/sys/arch/${TARGET}/include/param.h - | \
 	    ${CPP} -E -I${.CURDIR}/sys/arch | \
 	    sed -n '$$p' >${CROSSDIR}/TARGET_ARCH
-# GROSS KLUDGE  MACHINE_ARCH is mips, but we use mipsel for gnu tools.
-.if ${TARGET} == "arc" || ${TARGET} == "pmax"
-	eval `grep '^osr=' sys/conf/newvers.sh`; \
-	   sed "s/\$$/el-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
-	   ${CROSSDIR}/TARGET_CANON
-.else
 	eval `grep '^osr=' sys/conf/newvers.sh`; \
 	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
 	   ${CROSSDIR}/TARGET_CANON
-.endif
 
 cross-dirs:	${CROSSDIR}/stamp.dirs
 	@-mkdir -p ${CROSSDIR}
