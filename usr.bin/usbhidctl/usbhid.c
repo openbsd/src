@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.1 2001/09/02 17:55:29 pvalchev Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.2 2001/12/30 07:10:42 pvalchev Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.17 2001/03/28 03:17:42 simonb Exp $ */
 
 /*
@@ -51,7 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <usb.h>
+#include <usbhid.h>
 
 /* Parser tokens */
 #define DELIM_USAGE '.'
