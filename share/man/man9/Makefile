@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.43 2001/12/06 10:08:47 jjbg Exp $
+#	$OpenBSD: Makefile,v 1.44 2001/12/06 10:46:38 mickey Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	altq.9 audio.9 boot.9 bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 \
+MAN=	altq.9 audio.9 autoconf.9 \
+	boot.9 bus_dma.9 bus_space.9 \
+	config.9 copy.9 crypto.9 ctxsw.9 \
 	disk.9 disklabel.9 \
 	dohooks.9 dopowerhooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	fetch.9 fork1.9 extent.9 \
@@ -73,14 +75,17 @@ MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create_deferred.9
 MLINKS+=log.9 addlog.9
 MLINKS+=md5.9 MD5Init.9 md5.9 MD5Transform.9
-MLINKS+=mbuf.9 m_copym2.9 m_copym.9 m_free.9 MFREE.9 m_get.9 MGET.9 \
-	mbuf.9 m_getclr.9 m_gethdr.9 MGETHDR.9 m_prepend.9 M_PREPEND.9 \
-	mbuf.9 m_pulldown.9 m_pullup.9 m_pullup2.9 m_retry.9 m_retryhdr.9 \
-	mbuf.9 m_split.9 m_inject.9 m_getptr.9 m_adj.9 m_copyback.9 \
-	mbuf.9 m_freem.9 m_reclaim.9 m_copydata.9 m_cat.9 m_devget.9 \
-	mbuf.9 m_zero.9 m_apply.9 MEXTALLOC.9 MCLGET.9 MEXTADD.9 \
-	mbuf.9 M_ALIGN.9 MH_ALIGN.9 M_READONLY.9 M_LEADINGSPACE.9 \
-	mbuf.9 M_TRAILINGSPACE.9 MCHTYPE.9
+MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
+	mbuf.9 m_get.9 mbuf.9 MGET.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 \
+	mbuf.9 MGETHDR.9 mbuf.9 m_prepend.9 mbuf.9 M_PREPEND.9 \
+	mbuf.9 m_pulldown.9 mbuf.9 m_pullup.9 mbuf.9 m_pullup2.9 \
+	mbuf.9 m_retry.9 mbuf.9 m_retryhdr.9 mbuf.9 m_split.9 \
+	mbuf.9 m_inject.9 mbuf.9 m_getptr.9 mbuf.9 m_adj.9 mbuf.9 m_copyback.9 \
+	mbuf.9 m_freem.9 mbuf.9 m_reclaim.9 mbuf.9 m_copydata.9 \
+	mbuf.9 m_cat.9 mbuf.9 m_devget.9 mbuf.9 m_zero.9 mbuf.9 m_apply.9 \
+	mbuf.9 MEXTALLOC.9 mbuf.9 MCLGET.9 mbuf.9 MEXTADD.9 mbuf.9 M_ALIGN.9 \
+	mbuf.9 MH_ALIGN.9 mbuf.9 M_READONLY.9 mbuf.9 M_LEADINGSPACE.9 \
+	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 MCHTYPE.9
 MLINKS+=pfind.9 pgfind.9
 MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
