@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.201 2002/04/09 01:59:41 krw Exp $
+#	$OpenBSD: install.sub,v 1.202 2002/04/10 19:29:15 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -346,6 +346,20 @@ __EOT
 	done
 }
 
+makedev() {
+	local _d=$1
+
+	if [ ! -c /dev/r${_d}c ]; then
+		if [ -r /dev/MAKEDEV ]; then
+			(cd /dev; sh MAKEDEV $_d)
+		else
+			echo "Device nodes for $_d are missing, and MAKEDEV"
+			echo "does not exist to create them with.  Sorry."
+			false
+		fi
+	fi
+}
+
 getanotherdisk() {
 	cat << __EOT
 
@@ -361,6 +375,7 @@ __EOT
 		DISK=done
 	elif isin $resp $_DKDEVS ; then
 		DISK=$resp
+		makedev $resp || DISK=
 	else
 		echo "\nThe disk $resp does not exist."
 		DISK=
@@ -389,6 +404,7 @@ __EOT
 	getresp "$_defdsk"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK=$resp
+		makedev $resp || ROOTDISK=
 	else
 		echo "\nThe disk '$resp' does not exist."
 		ROOTDISK=
