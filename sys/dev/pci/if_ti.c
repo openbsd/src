@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.41 2002/12/04 17:32:30 nate Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.42 2003/02/20 18:08:43 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -743,7 +743,7 @@ int ti_newbuf_std(sc, i, m, dmamap)
 	if ((dmamap->dm_segs[0].ds_addr & ~(MCLBYTES - 1)) !=
 	    ((dmamap->dm_segs[0].ds_addr + dmamap->dm_segs[0].ds_len - 1) & 
 	     ~(MCLBYTES - 1)))
-	    panic("overwritten!!!\n");
+	    panic("overwritten!!!");
 
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.11 2003/01/13 07:16:20 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.12 2003/02/20 18:08:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -481,7 +481,7 @@ fwscsi_scsipi_request(struct scsipi_channel *channel,
 		DPRINTF(("Got set xfer mode\n"));
 		break;
 	default:
-		panic("Unknown request: %d\n", (int)req);
+		panic("Unknown request: %d", (int)req);
 	}
 }
 #else
