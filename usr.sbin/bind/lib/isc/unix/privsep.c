@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.1 2004/03/12 18:40:15 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.2 2004/03/19 20:36:28 canacar Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,7 @@ isc_priv_init(int lstderr)
 	signal(SIGALRM, sig_pass_to_chld);
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP,  sig_pass_to_chld);
+	signal(SIGINT,  sig_pass_to_chld);
 	signal(SIGCHLD, sig_got_chld);
 
 	/* Father - close unneeded sockets */
