@@ -1,5 +1,5 @@
-/*	$NetBSD: extern.h,v 1.11 1997/02/01 10:44:58 lukem Exp $	*/
-/*	$OpenBSD: extern.h,v 1.8 1997/02/05 04:55:15 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 1997/03/14 04:32:14 millert Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1997/03/13 06:23:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -53,7 +53,7 @@ void	cdup __P((int, char **));
 void	changetype __P((int, int));
 void	cmdabort __P((int));
 void	cmdscanner __P((int));
-int	command __P(());
+int	command __P((const char *, ...));
 #ifndef SMALLFTP
 unsigned char complete __P((EditLine *, int));
 #endif /* !SMALLFTP */
@@ -87,7 +87,7 @@ void	lpwd __P((int, char **));
 void	ls __P((int, char **));
 void	mabort __P((int));
 void	macdef __P((int, char **));
-void	makeargv __P(());
+void	makeargv __P((void));
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
@@ -96,6 +96,7 @@ void	modtime __P((int, char **));
 void	mput __P((int, char **));
 char   *onoff __P((int));
 void	newer __P((int, char **));
+void	page __P((int, char **));
 void    progressmeter __P((int));
 char   *prompt __P((void));
 void	proxabort __P((int));
@@ -112,7 +113,7 @@ void	quote1 __P((const char *, int, char **));
 void    recvrequest __P((const char *, const char *, const char *,
 	    const char *, int));
 void	reget __P((int, char **));
-char   *remglob __P((char **, int));
+char   *remglob __P((char **, int, char **));
 off_t	remotesize __P((const char *, int));
 time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
@@ -153,7 +154,7 @@ void	setverbose __P((int, char **));
 void	shell __P((int, char **));
 void	site __P((int, char **));
 void	sizecmd __P((int, char **));
-char   *slurpstring __P(());
+char   *slurpstring __P((void));
 void	status __P((int, char **));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));

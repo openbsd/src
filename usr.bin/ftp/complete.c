@@ -1,5 +1,5 @@
-/*	$OpenBSD: complete.c,v 1.3 1997/02/05 04:55:14 millert Exp $	*/
-/*	$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $	*/
+/*	$OpenBSD: complete.c,v 1.4 1997/03/14 04:32:13 millert Exp $	*/
+/*	$NetBSD: complete.c,v 1.3 1997/03/13 06:23:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.3 1997/02/05 04:55:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.4 1997/03/14 04:32:13 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -58,7 +58,7 @@ static int
 comparstr(a, b)
 	const void *a, *b;
 {
-	return strcmp(*(char **)a, *(char **)b);
+	return (strcmp(*(char **)a, *(char **)b));
 }
 
 /*
@@ -83,14 +83,14 @@ complete_ambiguous(word, list, words)
 
 	wordlen = strlen(word);
 	if (words->sl_cur == 0)
-		return CC_ERROR;	/* no choices available */
+		return (CC_ERROR);	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
 		strcpy(insertstr, words->sl_str[0]);
 		if (el_insertstr(el, insertstr + wordlen) == -1)
-			return CC_ERROR;
+			return (CC_ERROR);
 		else
-			return CC_REFRESH;
+			return (CC_REFRESH);
 	}
 
 	if (!list) {
@@ -108,19 +108,19 @@ complete_ambiguous(word, list, words)
 			strncpy(insertstr, lastmatch, matchlen);
 			insertstr[matchlen] = '\0';
 			if (el_insertstr(el, insertstr + wordlen) == -1)
-				return CC_ERROR;
+				return (CC_ERROR);
 			else	
 					/*
 					 * XXX: really want CC_REFRESH_BEEP
 					 */
-				return CC_REFRESH;
+				return (CC_REFRESH);
 		}
 	}
 
 	putchar('\n');
 	qsort(words->sl_str, words->sl_cur, sizeof(char *), comparstr);
 	list_vertical(words);
-	return CC_REDISPLAY;
+	return (CC_REDISPLAY);
 }
 
 /*
@@ -148,7 +148,7 @@ complete_command(word, list)
 
 	rv = complete_ambiguous(word, list, words);
 	sl_free(words, 0);
-	return rv;
+	return (rv);
 }
 
 /*
@@ -180,7 +180,7 @@ complete_local(word, list)
 	}
 
 	if ((dd = opendir(dir)) == NULL)
-		return CC_ERROR;
+		return (CC_ERROR);
 
 	words = sl_init();
 
@@ -202,7 +202,7 @@ complete_local(word, list)
 
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 1);
-	return rv;
+	return (rv);
 }
 
 /*
@@ -215,39 +215,50 @@ complete_remote(word, list)
 {
 	static StringList *dirlist;
 	static char	 lastdir[MAXPATHLEN];
-	static int	 ftpdslashbug;
 	StringList	*words;
 	char		 dir[MAXPATHLEN];
 	char		*file, *cp;
-	int		 i, offset;
+	int		 i;
 	unsigned char	 rv;
 
 	char *dummyargv[] = { "complete", dir, NULL };
 
-	offset = 0;
 	if ((file = strrchr(word, '/')) == NULL) {
-		strcpy(dir, ".");
+		(void)strcpy(dir, ".");
 		file = word;
 	} else {
-		if (file == word)
-			strcpy(dir, "/");
-		else {
-			offset = file - word;
-			strncpy(dir, word, offset);
-			dir[offset] = '\0';
-			offset++;
+		cp = file;
+		while (*cp == '/' && cp > word)
+			cp--;
+		if (cp == word) {
+			dir[0] = '/';
+			dir[1] = '\0';
+		} else {
+			(void)strncpy(dir, word, cp - word + 1);
+			dir[cp - word + 1] = '\0';
 		}
 		file++;
 	}
 
 	if (dirchange || strcmp(dir, lastdir) != 0) {	/* dir not cached */
+		char *emesg;
+		int dirlen, ftpdslashbug;
+
+		dirlen = strlen(dir);
+		ftpdslashbug = 0;
+		if (strcmp(dir, "/") == 0)
+			ftpdslashbug = 1;
+		else if (strcmp(dir, ".") == 0)
+			dirlen = 0;
+		else
+			dirlen++;
 		if (dirlist != NULL)
 			sl_free(dirlist, 1);
 		dirlist = sl_init();
 
-		ftpdslashbug = 0;
 		mflag = 1;
-		while ((cp = remglob(dummyargv, 0)) != NULL) {
+		emesg = NULL;
+		while ((cp = remglob(dummyargv, 0, &emesg)) != NULL) {
 			char *tcp;
 
 			if (!mflag)
@@ -259,33 +270,35 @@ complete_remote(word, list)
 			/*
 			 * Work around ftpd(1) bug, which puts a // instead
 			 * of / in front of each filename returned by "NLST /".
-			 * Without this, remote completes of / look ugly.
+			 * Without this, remote completes of / don't work.
+			 * However, only do this if the bug is present.
 			 */
-			if (dir[0] == '/' && dir[1] == '\0' &&
-			    cp[0] == '/' && cp[1] == '/') {
-				cp++;
-				ftpdslashbug = 1;
-			}
-			tcp = strdup(cp);
+			if (ftpdslashbug && (cp[dirlen] != '/'))
+				ftpdslashbug = 0;
+			tcp = strdup(cp + dirlen + ftpdslashbug);
 			if (tcp == NULL)
 				errx(1, "Can't allocate memory for remote dir");
 			sl_add(dirlist, tcp);
 		}
-		strcpy(lastdir, dir);
+		if (emesg != NULL) {
+			printf("\n%s\n", emesg);
+			return (CC_REDISPLAY);
+		}
+		(void)strcpy(lastdir, dir);
 		dirchange = 0;
 	}
 
 	words = sl_init();
 	for (i = 0; i < dirlist->sl_cur; i++) {
 		cp = dirlist->sl_str[i];
-		if (strlen(word) > strlen(cp))
+		if (strlen(file) > strlen(cp))
 			continue;
-		if (strncmp(word, cp, strlen(word)) == 0)
-			sl_add(words, cp + offset + ftpdslashbug);
+		if (strncmp(file, cp, strlen(file)) == 0)
+			sl_add(words, cp);
 	}
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 0);
-	return rv;
+	return (rv);
 }
 
 /*
@@ -306,7 +319,7 @@ complete(el, ch)
 	lf = el_line(el);
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
-		return CC_ERROR;
+		return (CC_ERROR);
 	strncpy(line, lf->buffer, len);
 	line[len] = '\0';
 	cursor_pos = line + (lf->cursor - lf->buffer);
@@ -315,7 +328,7 @@ complete(el, ch)
 	makeargv();			/* build argc/argv of current line */
 
 	if (cursor_argo >= sizeof(word))
-		return CC_ERROR;
+		return (CC_ERROR);
 
 	dolist = 0;
 			/* if cursor and word is same, list alternatives */
@@ -327,11 +340,11 @@ complete(el, ch)
 	word[cursor_argo] = '\0';
 
 	if (cursor_argc == 0)
-		return complete_command(word, dolist);
+		return (complete_command(word, dolist));
 
 	c = getcmd(margv[0]);
 	if (c == (struct cmd *)-1 || c == 0)
-		return CC_ERROR;
+		return (CC_ERROR);
 	celems = strlen(c->c_complete);
 
 		/* check for 'continuation' completes (which are uppercase) */
@@ -340,26 +353,26 @@ complete(el, ch)
 		cursor_argc = celems;
 
 	if (cursor_argc > celems)
-		return CC_ERROR;
+		return (CC_ERROR);
 
 	switch (c->c_complete[cursor_argc - 1]) {
 		case 'l':			/* local complete */
 		case 'L':
-			return complete_local(word, dolist);
+			return (complete_local(word, dolist));
 		case 'r':			/* remote complete */
 		case 'R':
 			if (!connected) {
-				puts("\nMust be connected to complete");
-				return CC_REDISPLAY;
+				puts("\nMust be connected to complete.");
+				return (CC_REDISPLAY);
 			}
-			return complete_remote(word, dolist);
+			return (complete_remote(word, dolist));
 		case 'c':			/* command complete */
 		case 'C':
-			return complete_command(word, dolist);
+			return (complete_command(word, dolist));
 		case 'n':			/* no complete */
 		default:
-			return CC_ERROR;
+			return (CC_ERROR);
 	}
 
-	return CC_ERROR;
+	return (CC_ERROR);
 }

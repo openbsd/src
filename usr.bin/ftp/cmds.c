@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmds.c,v 1.15 1997/02/05 04:55:12 millert Exp $	*/
-/*	$NetBSD: cmds.c,v 1.18 1997/02/01 10:44:54 lukem Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.16 1997/03/14 04:32:12 millert Exp $	*/
+/*	$NetBSD: cmds.c,v 1.19 1997/03/13 06:23:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.15 1997/02/05 04:55:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.16 1997/03/14 04:32:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ settype(argc, argv)
 		if (strcmp(argv[1], p->t_name) == 0)
 			break;
 	if (p->t_name == 0) {
-		printf("%s: unknown mode\n", argv[1]);
+		printf("%s: unknown mode.\n", argv[1]);
 		code = -1;
 		return;
 	}
@@ -150,7 +150,7 @@ changetype(newtype, show)
 		if (newtype == p->t_type)
 			break;
 	if (p->t_name == 0) {
-		printf("ftp: internal error: unknown type %d\n", newtype);
+		warnx("internal error: unknown type %d.", newtype);
 		return;
 	}
 	if (newtype == TYPE_L && bytename[0] != '\0')
@@ -326,7 +326,7 @@ mput(argc, argv)
 	if (proxy) {
 		char *cp, *tp2, tmpbuf[MAXPATHLEN];
 
-		while ((cp = remglob(argv, 0)) != NULL) {
+		while ((cp = remglob(argv, 0, NULL)) != NULL) {
 			if (*cp == '\0') {
 				mflag = 0;
 				continue;
@@ -575,7 +575,7 @@ mget(argc, argv)
 	mflag = 1;
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
-	while ((cp = remglob(argv, proxy)) != NULL) {
+	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
 		if (*cp == '\0') {
 			mflag = 0;
 			continue;
@@ -645,32 +645,32 @@ status(argc, argv)
 		pswitch(0);
 	}
 	printf("Passive mode: %s.\n", onoff(passivemode));
-	printf("Mode: %s; Type: %s; Form: %s; Structure: %s\n",
+	printf("Mode: %s; Type: %s; Form: %s; Structure: %s.\n",
 		modename, typename, formname, structname);
-	printf("Verbose: %s; Bell: %s; Prompting: %s; Globbing: %s\n",
+	printf("Verbose: %s; Bell: %s; Prompting: %s; Globbing: %s.\n",
 		onoff(verbose), onoff(bell), onoff(interactive),
 		onoff(doglob));
-	printf("Store unique: %s; Receive unique: %s\n", onoff(sunique),
+	printf("Store unique: %s; Receive unique: %s.\n", onoff(sunique),
 		onoff(runique));
-	printf("Preserve modification times: %s\n", onoff(preserve));
-	printf("Case: %s; CR stripping: %s\n", onoff(mcase), onoff(crflag));
+	printf("Preserve modification times: %s.\n", onoff(preserve));
+	printf("Case: %s; CR stripping: %s.\n", onoff(mcase), onoff(crflag));
 	if (ntflag) {
 		printf("Ntrans: (in) %s (out) %s\n", ntin, ntout);
 	}
 	else {
-		puts("Ntrans: off");
+		puts("Ntrans: off.");
 	}
 	if (mapflag) {
 		printf("Nmap: (in) %s (out) %s\n", mapin, mapout);
 	}
 	else {
-		puts("Nmap: off");
+		puts("Nmap: off.");
 	}
-	printf("Hash mark printing: %s; Mark count: %d; Progress bar: %s\n",
+	printf("Hash mark printing: %s; Mark count: %d; Progress bar: %s.\n",
 	    onoff(hash), mark, onoff(progress));
-	printf("Use of PORT cmds: %s\n", onoff(sendport));
+	printf("Use of PORT cmds: %s.\n", onoff(sendport));
 #ifndef SMALLFTP
-	printf("Command line editing: %s\n", onoff(editing));
+	printf("Command line editing: %s.\n", onoff(editing));
 #endif /* !SMALLFTP */
 	if (macnum > 0) {
 		puts("Macros:");
@@ -699,7 +699,7 @@ togglevar(argc, argv, var, mesg)
 		*var = 0;
 	} else {
 		printf("usage: %s [ on | off ]\n", argv[0]);
-		return -1;
+		return (-1);
 	}
 	if (mesg)
 		printf("%s %s.\n", mesg, onoff(*var));
@@ -769,7 +769,7 @@ sethash(argc, argv)
 	else {
 		int nmark = atol(argv[1]);
 		if (nmark < 1) {
-			printf("%s: bad bytecount value\n", argv[1]);
+			printf("%s: bad bytecount value.\n", argv[1]);
 			code = -1;
 			return;
 		}
@@ -923,7 +923,7 @@ cd(argc, argv)
 	r = command("CWD %s", argv[1]);
 	if (r == ERROR && code == 500) {
 		if (verbose)
-			puts("CWD command not recognized, trying XCWD");
+			puts("CWD command not recognized, trying XCWD.");
 		r = command("XCWD %s", argv[1]);
 	}
 	if (r == COMPLETE)
@@ -1002,7 +1002,7 @@ mdelete(argc, argv)
 	mflag = 1;
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
-	while ((cp = remglob(argv, 0)) != NULL) {
+	while ((cp = remglob(argv, 0, NULL)) != NULL) {
 		if (*cp == '\0') {
 			mflag = 0;
 			continue;
@@ -1036,7 +1036,7 @@ renamefile(argc, argv)
 		goto usage;
 	if ((argc < 3 && !another(&argc, &argv, "to-name")) || argc > 3) {
 usage:
-		printf("%s from-name to-name\n", argv[0]);
+		printf("usage: %s from-name to-name\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -1184,7 +1184,7 @@ shell(argc, argv)
 	(void)signal(SIGINT, old1);
 	(void)signal(SIGQUIT, old2);
 	if (pid == -1) {
-		warn("%s", "Try again later");
+		warn("Try again later");
 		code = -1;
 	}
 	else {
@@ -1252,7 +1252,7 @@ pwd(argc, argv)
 	 */
 	verbose = 1;
 	if (command("PWD") == ERROR && code == 500) {
-		puts("PWD command not recognized, trying XPWD");
+		puts("PWD command not recognized, trying XPWD.");
 		(void)command("XPWD");
 	}
 	verbose = oldverbose;
@@ -1292,7 +1292,7 @@ makedir(argc, argv)
 	}
 	if (command("MKD %s", argv[1]) == ERROR && code == 500) {
 		if (verbose)
-			puts("MKD command not recognized, trying XMKD");
+			puts("MKD command not recognized, trying XMKD.");
 		(void)command("XMKD %s", argv[1]);
 	}
 }
@@ -1314,7 +1314,7 @@ removedir(argc, argv)
 	}
 	if (command("RMD %s", argv[1]) == ERROR && code == 500) {
 		if (verbose)
-			puts("RMD command not recognized, trying XRMD");
+			puts("RMD command not recognized, trying XRMD.");
 		(void)command("XRMD %s", argv[1]);
 	}
 }
@@ -1372,7 +1372,8 @@ quote1(initial, argc, argv)
 	buf[sizeof(buf) - 1] = '\0';
 	if (argc > 1) {
 		len = strlen(buf);
-		len += strlen(strncpy(&buf[len], argv[1], sizeof(buf) - len - 1));
+		len += strlen(strncpy(&buf[len], argv[1],
+		    sizeof(buf) - len - 1));
 		for (i = 2; i < argc && len < sizeof(buf); i++) {
 			buf[len++] = ' ';
 			len += strlen(strncpy(&buf[len], argv[i],
@@ -1539,19 +1540,19 @@ doproxy(argc, argv)
 	}
 	c = getcmd(argv[1]);
 	if (c == (struct cmd *) -1) {
-		puts("?Ambiguous command");
+		puts("?Ambiguous command.");
 		(void)fflush(stdout);
 		code = -1;
 		return;
 	}
 	if (c == 0) {
-		puts("?Invalid command");
+		puts("?Invalid command.");
 		(void)fflush(stdout);
 		code = -1;
 		return;
 	}
 	if (!c->c_proxy) {
-		puts("?Invalid proxy command");
+		puts("?Invalid proxy command.");
 		(void)fflush(stdout);
 		code = -1;
 		return;
@@ -1563,7 +1564,7 @@ doproxy(argc, argv)
 	oldintr = signal(SIGINT, proxabort);
 	pswitch(1);
 	if (c->c_conn && !connected) {
-		puts("Not connected");
+		puts("Not connected.");
 		(void)fflush(stdout);
 		pswitch(0);
 		(void)signal(SIGINT, oldintr);
@@ -1668,7 +1669,7 @@ setnmap(argc, argv)
 		return;
 	}
 	if ((argc < 3 && !another(&argc, &argv, "mapout")) || argc > 3) {
-		printf("Usage: %s [mapin mapout]\n", argv[0]);
+		printf("usage: %s [mapin mapout]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -1798,7 +1799,8 @@ LOOP:
 						}
 					}
 					if (!*cp2) {
-						puts("nmap: unbalanced brackets");
+						puts(
+"nmap: unbalanced brackets.");
 						return (name);
 					}
 					match = 1;
@@ -1811,7 +1813,8 @@ LOOP:
 					      }
 					}
 					if (!*cp2) {
-						puts("nmap: unbalanced brackets");
+						puts(
+"nmap: unbalanced brackets.");
 						return (name);
 					}
 					break;
@@ -1897,7 +1900,7 @@ cdup(argc, argv)
 	r = command("CDUP");
 	if (r == ERROR && code == 500) {
 		if (verbose)
-			puts("CDUP command not recognized, trying XCUP");
+			puts("CDUP command not recognized, trying XCUP.");
 		r = command("XCUP");
 	}
 	if (r == COMPLETE)
@@ -1912,7 +1915,7 @@ restart(argc, argv)
 {
 
 	if (argc != 2)
-		puts("restart: offset not specified");
+		puts("restart: offset not specified.");
 	else {
 		restart_point = atol(argv[1]);
 		printf("Restarting at %qd. Execute get, put or append to"
@@ -1939,18 +1942,18 @@ macdef(argc, argv)
 	int c;
 
 	if (macnum == 16) {
-		puts("Limit of 16 macros have already been defined");
+		puts("Limit of 16 macros have already been defined.");
 		code = -1;
 		return;
 	}
 	if ((argc < 2 && !another(&argc, &argv, "macro name")) || argc > 2) {
-		printf("Usage: %s macro_name\n", argv[0]);
+		printf("usage: %s macro_name\n", argv[0]);
 		code = -1;
 		return;
 	}
-	if (interactive) {
-		puts("Enter macro line by line, terminating it with a null line");
-	}
+	if (interactive)
+		puts(
+"Enter macro line by line, terminating it with a null line.");
 	(void)strncpy(macros[macnum].mac_name, argv[1],
 	    sizeof(macros[macnum].mac_name) - 1);
 	macros[macnum].mac_name[sizeof(macros[macnum].mac_name) - 1] = '\0';
@@ -1961,7 +1964,7 @@ macdef(argc, argv)
 	tmp = macros[macnum].mac_start;
 	while (tmp != macbuf+4096) {
 		if ((c = getchar()) == EOF) {
-			puts("macdef: end of file encountered");
+			puts("macdef: end of file encountered.");
 			code = -1;
 			return;
 		}
@@ -1984,7 +1987,7 @@ macdef(argc, argv)
 		while ((c = getchar()) != '\n' && c != EOF)
 			/* LOOP */;
 		if (c == EOF || getchar() == '\n') {
-			puts("Macro not defined - 4k buffer exceeded");
+			puts("Macro not defined - 4K buffer exceeded.");
 			code = -1;
 			return;
 		}
@@ -2055,6 +2058,44 @@ newer(argc, argv)
 {
 
 	if (getit(argc, argv, -1, "w"))
-		printf("Local file \"%s\" is newer than remote file \"%s\"\n",
+		printf("Local file \"%s\" is newer than remote file \"%s\".\n",
 			argv[2], argv[1]);
+}
+
+/*
+ * Display one file through $PAGER (defaults to "more").
+ */
+void
+page(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int orestart_point, ohash, overbose;
+	char *p, *pager;
+
+	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
+		printf("usage: %s filename\n", argv[0]);
+		code = -1;
+		return;
+	}
+	if (!globulize(&argv[1])) {
+		code = -1;
+		return;
+	}
+	p = getenv("PAGER");
+	if (p == NULL)
+		p = PAGER;
+	if ((pager = malloc(strlen(p) + 2)) == NULL)
+		errx(1, "Can't allocate memory for $PAGER");
+	(void)sprintf(pager, "|%s", p);
+
+	orestart_point = restart_point;
+	ohash = hash;
+	overbose = verbose;
+	restart_point = hash = verbose = 0;
+	recvrequest("RETR", pager, argv[1], "r+w", 1);
+	(void)free(pager);
+	restart_point = orestart_point;
+	hash = ohash;
+	verbose = overbose;
 }

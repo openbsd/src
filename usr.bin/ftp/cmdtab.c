@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmdtab.c,v 1.6 1997/02/03 01:05:34 millert Exp $	*/
-/*	$NetBSD: cmdtab.c,v 1.12 1997/01/19 14:19:05 lukem Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.7 1997/03/14 04:32:12 millert Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.13 1997/03/13 06:23:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.6 1997/02/03 01:05:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.7 1997/03/14 04:32:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ char	newerhelp[] =	"get file if remote file is newer than local file ";
 char	nlisthelp[] =	"nlist contents of remote directory";
 char	nmaphelp[] =	"set templates for default file name mapping";
 char	ntranshelp[] =	"set translation table for default file name mapping";
+char	pagehelp[] =	"view a remote file through your pager";
 char	passivehelp[] =	"enter passive transfer mode";
 char	porthelp[] =	"toggle use of PORT cmd for each data connection";
 char	preservehelp[] ="toggle preservation of modification time of "
@@ -182,6 +183,7 @@ struct cmd cmdtab[] = {
 	{ "nmap",	nmaphelp,	0, 0, 1, CMPL0		setnmap },
 	{ "ntrans",	ntranshelp,	0, 0, 1, CMPL0		setntrans },
 	{ "open",	connecthelp,	0, 0, 1, CMPL0		setpeer },
+	{ "page",	pagehelp,	1, 1, 1, CMPL(r)	page },
 	{ "passive",	passivehelp,	0, 0, 0, CMPL0		setpassive },
 	{ "preserve",	preservehelp,	0, 0, 0, CMPL0		setpreserve },
 	{ "progress",	progresshelp,	0, 0, 0, CMPL0		setprogress },

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ruserpass.c,v 1.5 1997/02/03 01:05:44 millert Exp $	*/
-/*	$NetBSD: ruserpass.c,v 1.11 1997/01/19 14:19:16 lukem Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.6 1997/03/14 04:32:17 millert Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.12 1997/03/13 06:23:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.5 1997/02/03 01:05:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.6 1997/03/14 04:32:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ next:
 			}
 			if (macnum == 16) {
 				puts(
-"Limit of 16 macros have already been defined");
+"Limit of 16 macros have already been defined.");
 				goto bad;
 			}
 			tmp = macros[macnum].mac_name;
@@ -244,7 +244,7 @@ next:
 				tmp++;
 			}
 			if (tmp == macbuf + 4096) {
-				puts("4K macro buffer exceeded");
+				puts("4K macro buffer exceeded.");
 				goto bad;
 			}
 			break;

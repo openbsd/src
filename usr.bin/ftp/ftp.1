@@ -1,5 +1,5 @@
-.\" 	$OpenBSD: ftp.1,v 1.8 1997/02/18 18:04:28 kstailey Exp $
-.\" 	$NetBSD: ftp.1,v 1.17 1997/02/01 10:45:01 lukem Exp $
+.\" 	$OpenBSD: ftp.1,v 1.9 1997/03/14 04:32:15 millert Exp $
+.\" 	$NetBSD: ftp.1,v 1.18 1997/03/13 06:23:16 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd January 20, 1997
+.Dd February 23, 1997
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -62,7 +62,7 @@ ftp://\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
 .Nm ftp
 http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
-\fIhost\fR:\fI/path/file\fR[/]
+\fIhost\fR:[/\fIpath\fR/]\fIfile\fR[/]
 .Sh DESCRIPTION
 .Nm Ftp
 is the user interface to the
@@ -73,7 +73,9 @@ remote network site.
 .Pp
 The latter three usage formats will fetch a file using either the
 HTTP or FTP protocols into the current directory.
-This is ideal for scripts.
+This is ideal for scripts.  Refer to
+.Sx AUTO-FETCHING FILES
+below for more information.
 .Pp
 Options may be specified at the command line, or to the
 command interpreter.
@@ -85,7 +87,7 @@ to bypass normal login procedure, and use an anonymous login instead.
 .It Fl d
 Enables debugging.
 .It Fl e
-Suppress the use of editline(3).  Useful for Emacs ange-ftp.
+Disables command line editing.  Useful for Emacs ange-ftp.
 .It Fl g
 Disables file name globbing.
 .It Fl i
@@ -635,6 +637,13 @@ will also attempt to automatically log the user in to
 the
 .Tn FTP
 server (see below).
+.It Ic page Ar file
+Retrieve
+.Ic file
+and display with the program defined in
+.Ev PAGER 
+(which defaults to
+.Xr more 1 ).
 .It Ic passive
 Toggle passive mode.  If passive mode is turned on
 (default is off), the ftp client will
@@ -660,6 +669,15 @@ command by RFC 1123, some do not.)
 Toggle preservation of modification times on retrieved files.
 .It Ic progress
 Toggle display of transfer progress bar.
+The progress bar will be disabled for a transfer that has
+.Ar local-file
+as
+.Sq Fl
+or a command that starts with
+.Sq \&| .
+Refer to
+.Sx FILE NAMING CONVENTIONS
+for more information.
 .It Ic prompt
 Toggle interactive prompting.
 Interactive prompting
@@ -1013,6 +1031,24 @@ mode ready for further input.
 If successive auto-fetch ftp elements refer to the same host, then
 the connection is maintained between transfers, reducing overhead on
 connection creation and deletion.
+.Pp
+If
+.Ic file
+contains a glob character and globbing is enabled, 
+(see
+.Ic glob ),
+then the equivalent of
+.Ic "mget file"
+is performed.
+.Pp
+If the directory component of
+.Ic file
+contains no globbing characters,
+it is stored in the current directory as the
+.Xr basename 1
+of
+.Ic file .
+Otherwise, the remote name is used as the local name.
 .Sh ABORTING A FILE TRANSFER
 To abort a file transfer, use the terminal interrupt key
 (usually Ctrl-C).
@@ -1240,7 +1276,7 @@ supports interactive command line editing, via the
 library.
 It is enabled with the
 .Ic edit
-command, and is enabled by default.
+command, and is enabled by default if input is from a tty.
 Previous lines can be recalled and edited with the arrow keys,
 and other GNU Emacs-style editing keys may be used as well.
 .Pp
@@ -1269,6 +1305,10 @@ utilizes the following environment variables.
 For default location of a
 .Pa .netrc
 file, if one exists.
+.It Ev PAGER
+Used by
+.Ic page
+to display files.
 .It Ev SHELL
 For default shell.
 .It Ev http_proxy

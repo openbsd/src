@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp.c,v 1.12 1997/02/05 04:55:18 millert Exp $	*/
-/*	$NetBSD: ftp.c,v 1.22 1997/02/01 10:45:03 lukem Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.13 1997/03/14 04:32:16 millert Exp $	*/
+/*	$NetBSD: ftp.c,v 1.23 1997/03/13 06:23:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.12 1997/02/05 04:55:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.13 1997/03/14 04:32:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,11 @@ static char rcsid[] = "$OpenBSD: ftp.c,v 1.12 1997/02/05 04:55:18 millert Exp $"
 #include <string.h>
 #include <unistd.h>
 #include <utime.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
+#endif
 
 #include "ftp_var.h"
 
@@ -300,19 +304,29 @@ cmdabort(notused)
 
 /*VARARGS*/
 int
+#ifdef __STDC__
+command(const char *fmt, ...)
+#else
 command(va_alist)
-va_dcl
+	va_dcl
+#endif
 {
 	va_list ap;
-	char *fmt;
 	int r;
 	sig_t oldintr;
+#ifndef __STDC__
+	const char *fmt;
+#endif
 
 	abrtflag = 0;
 	if (debug) {
 		fputs("---> ", stdout);
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
 		va_start(ap);
-		fmt = va_arg(ap, char *);
+		fmt = va_arg(ap, const char *);
+#endif
 		if (strncmp("PASS ", fmt, 5) == 0)
 			fputs("PASS XXXX", stdout);
 		else if (strncmp("ACCT ", fmt, 5) == 0)
@@ -324,13 +338,17 @@ va_dcl
 		(void)fflush(stdout);
 	}
 	if (cout == NULL) {
-		warn("No control connection for command");
+		warnx("No control connection for command.");
 		code = -1;
 		return (0);
 	}
 	oldintr = signal(SIGINT, cmdabort);
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
 	va_start(ap);
 	fmt = va_arg(ap, char *);
+#endif
 	vfprintf(cout, fmt, ap);
 	va_end(ap);
 	fputs("\r\n", cout);
@@ -391,7 +409,7 @@ getreply(expecteof)
 				lostpeer();
 				if (verbose) {
 					puts(
-"421 Service not available, remote server has closed connection");
+"421 Service not available, remote server has closed connection.");
 					(void)fflush(stdout);
 				}
 				code = 421;
@@ -482,7 +500,7 @@ abortsend(notused)
 	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
-	puts("\nsend aborted\nwaiting for remote to finish abort");
+	puts("\nsend aborted\nwaiting for remote to finish abort.");
 	(void)fflush(stdout);
 	longjmp(sendabort, 1);
 }
@@ -499,11 +517,13 @@ sendrequest(cmd, local, remote, printnames)
 	sig_t oldinti, oldintr, oldintp;
 	off_t hashbytes;
 	char *lmode, buf[BUFSIZ], *bufp;
+	int oprogress;
 
 	hashbytes = mark;
 	direction = "sent";
 	bytes = 0;
 	filesize = -1;
+	oprogress = progress;
 	if (verbose && printnames) {
 		if (local && *local != '-')
 			printf("local: %s ", local);
@@ -535,14 +555,16 @@ sendrequest(cmd, local, remote, printnames)
 			(void)signal(SIGPIPE, oldintp);
 		if (oldinti)
 			(void)signal(SIGINFO, oldinti);
+		progress = oprogress;
 		code = -1;
 		return;
 	}
 	oldintr = signal(SIGINT, abortsend);
 	oldinti = signal(SIGINFO, psummary);
-	if (strcmp(local, "-") == 0)
+	if (strcmp(local, "-") == 0) {
 		fin = stdin;
-	else if (*local == '|') {
+		progress = 0;
+	} else if (*local == '|') {
 		oldintp = signal(SIGPIPE, SIG_IGN);
 		fin = popen(local + 1, "r");
 		if (fin == NULL) {
@@ -553,6 +575,7 @@ sendrequest(cmd, local, remote, printnames)
 			code = -1;
 			return;
 		}
+		progress = 0;
 		closefunc = pclose;
 	} else {
 		fin = fopen(local, "r");
@@ -581,6 +604,7 @@ sendrequest(cmd, local, remote, printnames)
 		if (oldintp)
 			(void)signal(SIGPIPE, oldintp);
 		code = -1;
+		progress = oprogress;
 		if (closefunc != NULL)
 			(*closefunc)(fin);
 		return;
@@ -605,6 +629,7 @@ sendrequest(cmd, local, remote, printnames)
 		if (rc < 0) {
 			warn("local: %s", local);
 			restart_point = 0;
+			progress = oprogress;
 			if (closefunc != NULL)
 				(*closefunc)(fin);
 			return;
@@ -612,6 +637,7 @@ sendrequest(cmd, local, remote, printnames)
 		if (command("REST %ld", (long) restart_point)
 			!= CONTINUE) {
 			restart_point = 0;
+			progress = oprogress;
 			if (closefunc != NULL)
 				(*closefunc)(fin);
 			return;
@@ -623,6 +649,7 @@ sendrequest(cmd, local, remote, printnames)
 		if (command("%s %s", cmd, remote) != PRELIM) {
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
+			progress = oprogress;
 			if (oldintp)
 				(void)signal(SIGPIPE, oldintp);
 			if (closefunc != NULL)
@@ -633,6 +660,7 @@ sendrequest(cmd, local, remote, printnames)
 		if (command("%s", cmd) != PRELIM) {
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
+			progress = oprogress;
 			if (oldintp)
 				(void)signal(SIGPIPE, oldintp);
 			if (closefunc != NULL)
@@ -716,6 +744,7 @@ sendrequest(cmd, local, remote, printnames)
 		break;
 	}
 	progressmeter(1);
+	progress = oprogress;
 	if (closefunc != NULL)
 		(*closefunc)(fin);
 	(void)fclose(dout);
@@ -730,6 +759,7 @@ sendrequest(cmd, local, remote, printnames)
 abort:
 	(void)signal(SIGINT, oldintr);
 	(void)signal(SIGINFO, oldinti);
+	progress = oprogress;
 	if (oldintp)
 		(void)signal(SIGPIPE, oldintp);
 	if (!cpend) {
@@ -760,7 +790,7 @@ abortrecv(notused)
 	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
-	puts("\nreceive aborted\nwaiting for remote to finish abort");
+	puts("\nreceive aborted\nwaiting for remote to finish abort.");
 	(void)fflush(stdout);
 	longjmp(recvabort, 1);
 }
@@ -779,11 +809,13 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	off_t hashbytes;
 	struct stat st;
 	time_t mtime;
+	int oprogress;
 
 	hashbytes = mark;
 	direction = "received";
 	bytes = 0;
 	filesize = -1;
+	oprogress = progress;
 	is_retr = strcmp(cmd, "RETR") == 0;
 	if (is_retr && verbose && printnames) {
 		if (local && *local != '-')
@@ -897,15 +929,17 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	din = dataconn("r");
 	if (din == NULL)
 		goto abort;
-	if (strcmp(local, "-") == 0)
+	if (strcmp(local, "-") == 0) {
 		fout = stdout;
-	else if (*local == '|') {
+		progress = 0;
+	} else if (*local == '|') {
 		oldintp = signal(SIGPIPE, SIG_IGN);
 		fout = popen(local + 1, "w");
 		if (fout == NULL) {
 			warn("%s", local+1);
 			goto abort;
 		}
+		progress = 0;
 		closefunc = pclose;
 	} else {
 		fout = fopen(local, lmode);
@@ -928,6 +962,10 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		}
 		bufsize = st.st_blksize;
 	}
+	if (!(st.st_mode & S_IFREG)) {
+		progress = 0;
+		preserve = 0;
+	}
 	progressmeter(-1);
 	switch (curtype) {
 
@@ -936,6 +974,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		if (restart_point &&
 		    lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
 			warn("local: %s", local);
+			progress = oprogress;
 			if (closefunc != NULL)
 				(*closefunc)(fout);
 			return;
@@ -988,6 +1027,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			if (fseek(fout, 0L, SEEK_CUR) < 0) {
 done:
 				warn("local: %s", local);
+				progress = oprogress;
 				if (closefunc != NULL)
 					(*closefunc)(fout);
 				return;
@@ -1022,8 +1062,8 @@ done:
 		}
 break2:
 		if (bare_lfs) {
-			printf("WARNING! %d bare linefeeds received in ASCII mode\n",
-			    bare_lfs);
+			printf(
+"WARNING! %d bare linefeeds received in ASCII mode.\n", bare_lfs);
 			puts("File may not have transferred correctly.");
 		}
 		if (hash && (!progress || filesize < 0)) {
@@ -1042,6 +1082,7 @@ break2:
 		break;
 	}
 	progressmeter(1);
+	progress = oprogress;
 	if (closefunc != NULL)
 		(*closefunc)(fout);
 	(void)signal(SIGINT, oldintr);
@@ -1061,16 +1102,19 @@ break2:
 				ut.actime = time(NULL);
 				ut.modtime = mtime;
 				if (utime(local, &ut) == -1)
-					printf("Can't change modification time on %s to %s",
+					printf(
+				"Can't change modification time on %s to %s",
 					    local, asctime(localtime(&mtime)));
 			}
 		}
 	}
 	return;
+
 abort:
 
 /* abort using RFC959 recommended IP,SYNC sequence */
 
+	progress = oprogress;
 	if (oldintp)
 		(void)signal(SIGPIPE, oldintp);
 	(void)signal(SIGINT, SIG_IGN);
@@ -1134,7 +1178,8 @@ initconn()
 
 		if (sscanf(pasv, "%d,%d,%d,%d,%d,%d",
 			   &a0, &a1, &a2, &a3, &p0, &p1) != 6) {
-			puts("Passive mode address scan failure. Shouldn't happen!");
+			puts(
+"Passive mode address scan failure. Shouldn't happen!");
 			goto bad;
 		}
 
@@ -1232,7 +1277,9 @@ dataconn(lmode)
 	const char *lmode;
 {
 	struct sockaddr_in from;
-	int s, fromlen = sizeof(from), tos;
+	int s, fromlen, tos;
+
+	fromlen = sizeof(from);
 
 	if (passivemode)
 		return (fdopen(data, lmode));
@@ -1405,7 +1452,7 @@ proxtrans(cmd, local, remote)
 	}
 	pswitch(0);
 	if (!connected) {
-		puts("No primary connection");
+		puts("No primary connection.");
 		pswitch(1);
 		code = -1;
 		return;
@@ -1572,6 +1619,14 @@ abort_remote(din)
 	char buf[BUFSIZ];
 	int nfnd;
 	struct fd_set mask;
+
+	if (cout == NULL) {
+		warnx("Lost control connection for abort.");
+		if (ptabflg)
+			code = -1;
+		lostpeer();
+		return;
+	}
 
 	/*
 	 * send IAC in urgent mode instead of DM because 4.3BSD places oob mark

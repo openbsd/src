@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.3 1997/02/05 04:55:21 millert Exp $	*/
-/*	$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 1997/03/14 04:32:18 millert Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1997/03/13 06:23:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.3 1997/02/05 04:55:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.4 1997/03/14 04:32:18 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -89,8 +89,8 @@ setpeer(argc, argv)
 	if (argc > 2) {
 		port = atoi(argv[2]);
 		if (port <= 0) {
-			printf("%s: bad port number-- %s\n", argv[1], argv[2]);
-			printf ("usage: %s host-name [port]\n", argv[0]);
+			printf("%s: bad port number '%s'.\n", argv[1], argv[2]);
+			printf("usage: %s host-name [port]\n", argv[0]);
 			code = -1;
 			return;
 		}
@@ -124,9 +124,9 @@ setpeer(argc, argv)
 		if (command("SYST") == COMPLETE && overbose) {
 			char *cp, c;
 			c = 0;
-			cp = strchr(reply_string+4, ' ');
+			cp = strchr(reply_string + 4, ' ');
 			if (cp == NULL)
-				cp = strchr(reply_string+4, '\r');
+				cp = strchr(reply_string + 4, '\r');
 			if (cp) {
 				if (cp[-1] == '.')
 					cp--;
@@ -170,7 +170,7 @@ setpeer(argc, argv)
 }
 
 /*
- * `Another' gets another argument, and stores the new argc and argv.
+ * `another' gets another argument, and stores the new argc and argv.
  * It reverts to the top level (via main.c's intr()) on EOF/error.
  *
  * Returns false if no new arguments have been added.
@@ -184,7 +184,7 @@ another(pargc, pargv, prompt)
 	int len = strlen(line), ret;
 
 	if (len >= sizeof(line) - 3) {
-		puts("sorry, arguments too long");
+		puts("sorry, arguments too long.");
 		intr();
 	}
 	printf("(%s) ", prompt);
@@ -201,10 +201,16 @@ another(pargc, pargv, prompt)
 	return (ret);
 }
 
+/*
+ * glob files given in argv[] from the remote server.
+ * if errbuf isn't NULL, store error messages there instead
+ * of writing to the screen.
+ */
 char *
-remglob(argv, doswitch)
+remglob(argv, doswitch, errbuf)
         char *argv[];
         int doswitch;
+	char **errbuf;
 {
         char temp[MAXPATHLEN];
         static char buf[MAXPATHLEN];
@@ -214,9 +220,8 @@ remglob(argv, doswitch)
         char *cp, *mode;
 
         if (!mflag) {
-                if (!doglob) {
+                if (!doglob)
                         args = NULL;
-                }
                 else {
                         if (ftemp) {
                                 (void)fclose(ftemp);
@@ -248,32 +253,41 @@ remglob(argv, doswitch)
 		if (temp[len-1] != '/')
 			temp[len++] = '/';
 		(void)strcpy(&temp[len], TMPFILE);
-;
                 if ((fd = mkstemp(temp)) < 0) {
                         warn("unable to create temporary file %s", temp);
                         return (NULL);
                 }
                 close(fd);
-                oldverbose = verbose, verbose = 0;
-                oldhash = hash, hash = 0;
-                if (doswitch) {
+		oldverbose = verbose;
+		verbose = (errbuf != NULL) ? -1 : 0;
+		oldhash = hash;
+		hash = 0;
+                if (doswitch)
                         pswitch(!proxy);
-                }
                 for (mode = "w"; *++argv != NULL; mode = "a")
-                        recvrequest ("NLST", temp, *argv, mode, 0);
-                if (doswitch) {
-                        pswitch(!proxy);
-                }
-                verbose = oldverbose; hash = oldhash;
+                        recvrequest("NLST", temp, *argv, mode, 0);
+		if ((code / 100) != COMPLETE) {
+			if (errbuf != NULL)
+				*errbuf = reply_string;
+		}
+		if (doswitch)
+			pswitch(!proxy);
+                verbose = oldverbose;
+		hash = oldhash;
                 ftemp = fopen(temp, "r");
                 (void)unlink(temp);
                 if (ftemp == NULL) {
-                        puts("can't find list of remote files, oops");
+			if (errbuf == NULL)
+				puts("can't find list of remote files, oops.");
+			else
+				*errbuf =
+				    "can't find list of remote files, oops.";
                         return (NULL);
                 }
         }
         if (fgets(buf, sizeof(buf), ftemp) == NULL) {
-                (void)fclose(ftemp), ftemp = NULL;
+                (void)fclose(ftemp);
+		ftemp = NULL;
                 return (NULL);
         }
         if ((cp = strchr(buf, '\n')) != NULL)
@@ -298,11 +312,11 @@ confirm(cmd, file)
 			return (0);
 		case 'p':
 			interactive = 0;
-			puts("Interactive mode: off");
+			puts("Interactive mode: off.");
 			break;
 		case 'a':
 			confirmrest = 1;
-			printf("Prompting off for duration of %s\n", cmd);
+			printf("Prompting off for duration of %s.\n", cmd);
 			break;
 	}
 	return (1);
@@ -355,7 +369,7 @@ remotesize(file, noisy)
 	if (command("SIZE %s", file) == COMPLETE)
 		sscanf(reply_string, "%*s %qd", &size);
 	else if (noisy && debug == 0)
-		printf("%s\n", reply_string);
+		puts(reply_string);
 	verbose = overbose;
 	return (size);
 }
@@ -390,7 +404,7 @@ remotemodtime(file, noisy)
 		timebuf.tm_isdst = -1;
 		rtime = mktime(&timebuf);
 		if (rtime == -1 && (noisy || debug != 0))
-			printf("Can't convert %s to a time\n", reply_string);
+			printf("Can't convert %s to a time.\n", reply_string);
 		else
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
 	} else if (noisy && debug == 0)

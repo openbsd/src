@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.21 1997/02/18 18:04:31 kstailey Exp $	*/
-/*	$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 1997/03/14 04:32:17 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1997/03/13 06:23:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.21 1997/02/18 18:04:31 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.22 1997/03/14 04:32:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,9 +92,11 @@ main(argc, argv)
 	preserve = 1;
 	verbose = 0;
 	progress = 0;
+#ifndef SMALLFTP
+	editing = 0;
+#endif
 	mark = HASHBYTES;
 	marg_sl = sl_init();
-	use_editline = 1;	/* use editline if possible */
 
 	cp = strrchr(argv[0], '/');
 	cp = (cp == NULL) ? argv[0] : cp + 1;
@@ -102,8 +104,14 @@ main(argc, argv)
 		passivemode = 1;
 
 	fromatty = isatty(fileno(stdin));
-	if (fromatty)
+	if (fromatty) {
 		verbose = 1;		/* verbose if from a tty */
+#ifndef SMALLFTP
+		editing = 1;		/* editing mode on if from a tty */
+#endif
+	}
+	if (isatty(fileno(stdout)))
+		progress = 1;		/* progress bar on if going to a tty */
 
 	while ((ch = getopt(argc, argv, "adeginpPr:tvV")) != -1) {
 		switch (ch) {
@@ -117,7 +125,9 @@ main(argc, argv)
 			break;
 
 		case 'e':
-			use_editline = 0;
+#ifndef SMALLFTP
+			editing = 0;
+#endif
 			break;
 
 		case 'g':
@@ -189,9 +199,7 @@ main(argc, argv)
 	}
 
 #ifndef SMALLFTP
-	editing = 0;			/* command line editing off */
-	if (fromatty && use_editline) {
-		editing = 1;		/* editing mode on if a tty */
+	if (fromatty) {
 		el = el_init(__progname, stdin, stdout); /* init editline */
 
 		hist = history_init();		/* init the builtin history */
@@ -337,7 +345,7 @@ cmdscanner(top)
 					break;
 				line[num] = '\0';
 			} else if (num == sizeof(line) - 2) {
-				puts("sorry, input line too long");
+				puts("sorry, input line too long.");
 				while ((num = getchar()) != '\n' && num != EOF)
 					/* void */;
 				break;
@@ -353,7 +361,7 @@ cmdscanner(top)
 				if (num == 0)
 					break;
 			} else if (num >= sizeof(line)) {
-				puts("sorry, input line too long");
+				puts("sorry, input line too long.");
 				break;
 			}
 			memcpy(line, buf, num);
@@ -375,11 +383,11 @@ cmdscanner(top)
 #endif /* !SMALLFTP */
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			puts("?Ambiguous command");
+			puts("?Ambiguous command.");
 			continue;
 		}
 		if (c == 0) {
-			puts("?Invalid command");
+			puts("?Invalid command.");
 			continue;
 		}
 		if (c->c_conn && !connected) {
@@ -652,7 +660,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adginprtvV] [host [port]]\n"
+	    "usage: %s [-adeginprtvV] [host [port]]\n"
 	    "       %s host:path[/]\n"
 	    "       %s ftp://host[:port]/path[/]\n"
 	    "       %s http://host[:port]/file\n",

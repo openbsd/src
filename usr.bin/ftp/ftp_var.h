@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp_var.h,v 1.8 1997/02/18 18:04:30 kstailey Exp $	*/
-/*	$NetBSD: ftp_var.h,v 1.13 1997/02/01 10:45:05 lukem Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.9 1997/03/14 04:32:16 millert Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.14 1997/03/13 06:23:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -57,6 +57,7 @@
 
 #define	FTP_PORT	21	/* default if getservbyname("ftp/tcp") fails */
 #define	HTTP_PORT	80	/* default if getservbyname("http/tcp") fails */
+#define PAGER		"more"	/* default pager if $PAGER isn't set */
 
 /*
  * Options and other state info.
@@ -68,7 +69,6 @@ int	sendport;		/* use PORT cmd for each data connection */
 int	verbose;		/* print messages coming back from server */
 int	connected;		/* connected to server */
 int	fromatty;		/* input is from a terminal */
-int	use_editline;		/* use the editline(3) routine for input */
 int	interactive;		/* interactively prompt on m* cmds */
 int	confirmrest;		/* confirm rest of current m* cmd */
 int	debug;			/* debugging level */

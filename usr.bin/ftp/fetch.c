@@ -1,5 +1,5 @@
-/*	$OpenBSD: fetch.c,v 1.3 1997/02/05 04:55:16 millert Exp $	*/
-/*	$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.4 1997/03/14 04:32:14 millert Exp $	*/
+/*	$NetBSD: fetch.c,v 1.3 1997/03/13 06:23:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.3 1997/02/05 04:55:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.4 1997/03/14 04:32:14 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -202,6 +202,8 @@ http_get(line)
 	for (i = 0, buflen = sizeof(buf), cp = buf; i < buflen; cp++, i++) {
 		if (read(s, cp, 1) != 1)
 			goto improper;
+		if (*cp == '\r')
+			continue;
 		if (*cp == '\n')
 			break;
 	}
@@ -224,6 +226,8 @@ http_get(line)
 	for (i = 0, buflen = sizeof(buf), cp = buf; i < buflen; cp++, i++) {
 		if (read(s, cp, 1) != 1)
 			goto improper;
+		if (*cp == '\r')
+			continue;
 		if (*cp == '\n' && c == '\n')
 			break;
 		c = *cp;
@@ -331,7 +335,7 @@ aborthttp(notused)
 {
 
 	alarmtimer(0);
-	puts("\nhttp fetch aborted");
+	puts("\nhttp fetch aborted.");
 	(void)fflush(stdout);
 	longjmp(httpabort, 1);
 }
@@ -359,6 +363,8 @@ auto_fetch(argc, argv)
 	char *xargv[5];
 	char *cp, *line, *host, *dir, *file, *portnum;
 	int rval, xargc, argpos;
+	int dirhasglob, filehasglob;
+	char rempath[MAXPATHLEN];
 
 	argpos = 0;
 
@@ -476,8 +482,18 @@ auto_fetch(argc, argv)
 			}
 		}
 
+		dirhasglob = filehasglob = 0;
+		if (doglob) {
+			if (! EMPTYSTRING(dir) &&
+			    strpbrk(dir, "*?[]{}") != NULL)
+				dirhasglob = 1;
+			if (! EMPTYSTRING(file) &&
+			    strpbrk(file, "*?[]{}") != NULL)
+				filehasglob = 1;
+		}
+
 		/* Change directories, if necessary. */
-		if (! EMPTYSTRING(dir)) {
+		if (! EMPTYSTRING(dir) && !dirhasglob) {
 			xargv[0] = "cd";
 			xargv[1] = dir;
 			xargv[2] = NULL;
@@ -496,13 +512,27 @@ auto_fetch(argc, argv)
 		if (!verbose)
 			printf("Retrieving %s/%s\n", dir ? dir : "", file);
 
-		/* Fetch the file. */
+		if (dirhasglob) {
+			snprintf(rempath, sizeof(rempath), "%s/%s", dir, file);
+			file = rempath;
+		}
+
+		/* Fetch the file(s). */
 		xargv[0] = "get";
 		xargv[1] = file;
 		xargv[2] = NULL;
-		get(2, xargv);
+		if (dirhasglob || filehasglob) {
+			int ointeractive;
 
-		if ((code / 100) != COMPLETE)	/* XXX: is this valid? */
+			ointeractive = interactive;
+			interactive = 0;
+			xargv[0] = "mget";
+			mget(2, xargv);
+			interactive = 1;
+		} else
+			get(2, xargv);
+
+		if ((code / 100) != COMPLETE)
 			rval = argpos + 1;
 	}
 	if (connected && rval != -1)

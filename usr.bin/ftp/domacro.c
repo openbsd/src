@@ -1,5 +1,5 @@
-/*	$OpenBSD: domacro.c,v 1.4 1997/02/03 01:05:36 millert Exp $	*/
-/*	$NetBSD: domacro.c,v 1.8 1997/01/19 14:19:08 lukem Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.5 1997/03/14 04:32:13 millert Exp $	*/
+/*	$NetBSD: domacro.c,v 1.9 1997/03/13 06:23:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: domacro.c,v 1.4 1997/02/03 01:05:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: domacro.c,v 1.5 1997/03/14 04:32:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ domacro(argc, argv)
 	struct cmd *c;
 
 	if (argc < 2 && !another(&argc, &argv, "macro name")) {
-		printf("Usage: %s macro_name.\n", argv[0]);
+		printf("usage: %s macro_name\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -121,11 +121,11 @@ TOP:
 		makeargv();
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			puts("?Ambiguous command");
+			puts("?Ambiguous command.");
 			code = -1;
 		}
 		else if (c == 0) {
-			puts("?Invalid command");
+			puts("?Invalid command.");
 			code = -1;
 		}
 		else if (c->c_conn && !connected) {
@@ -133,9 +133,8 @@ TOP:
 			code = -1;
 		}
 		else {
-			if (verbose) {
+			if (verbose)
 				puts(line);
-			}
 			(*c->c_handler)(margc, margv);
 			if (bell && c->c_bell) {
 				(void)putchar('\007');
