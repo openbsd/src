@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2001/01/27 00:58:23 niklas Exp $
+#	$OpenBSD: Makefile,v 1.64 2001/01/27 01:59:43 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -177,16 +177,15 @@ cross-binutils-new:	cross-dirs
 	    --disable-nls --disable-gdbtk --disable-commonbfdlib \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
 	    ${MAKE} CFLAGS=${CFLAGS} && ${MAKE} install && \
-	    for cmd in addr2line ar as gasp gdb ld nm objcopy objdump ranlib \
-	    readelf size strings strip; do \
-	    ln -sf `cat ${CROSSDIR}/TARGET_CANON`-$$cmd \
-	    ${CROSSDIR}/usr/bin/$$cmd; done)
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh \
 	    ${CROSSDIR}/usr/bin/lorder
 
 cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
 	cross-ranlib cross-nm
+	for cmd in ar as ld nm ranlib size strip; do \
+	    ln -sf $$cmd \
+	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd; done
 
 cross-gas:	cross-dirs
 	(cd ${.CURDIR}/gnu/usr.bin/gas; \
