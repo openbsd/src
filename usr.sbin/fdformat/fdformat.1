@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdformat.1,v 1.2 1997/06/24 09:53:46 downsj Exp $
+.\"	$OpenBSD: fdformat.1,v 1.3 1997/09/21 00:10:43 millert Exp $
 .\"
 .\" Copyright (C) 1993, 1994 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd September 16, 1993
-.Os OpenBSD
+.Os
 .Dt FDFORMAT 1
 .Sh NAME
 .Nm fdformat
@@ -53,9 +53,9 @@ formats a floppy disk at device
 .Ar Device_name
 should be a character device; it may be given either with a full path
 name of a raw device node for a floppy disk drive
-.Pq e.\ g. Pa /dev/rfd0 ,
+.Pq e.\ g. Pa /dev/rfd0c ,
 or default name in an abbreviated form
-.Pq e.\ g. Em fd0 .
+.Pq e.\ g. Em fd0c .
 In the latter case, the name is constructed by prepending
 .Pa /dev/r
 to the
@@ -68,7 +68,7 @@ are meaningless, since they're overridden by
 The options are as follows:
 .Bl -tag -width 10n -offset indent
 .It Fl q
-supress any normal output from the command, and don't ask the
+Suppress any normal output from the command, and don't ask the
 user for a confirmation whether to format the floppy disk at
 .Ar device_name .
 .It Fl n
@@ -115,14 +115,12 @@ appropriate information written to diagnostic output).
 .Xr fdc 4 .
 .Sh HISTORY
 .Nm Fdformat
-has been developed for 386BSD 0.1
-and upgraded to the new
+was developed for 386BSD 0.1 and upgraded to the new
 .Xr fd 4
-floppy disk driver. It later became part of the
-.Em FreeBSD
-system, release 1.1, and was then ported to OpenBSD 1.2.
+floppy disk driver. It later became part of
+FreeBSD 1.1, and was then ported to OpenBSD 1.2.
 .Sh AUTHOR
-The program has been contributed by
+The program was been contributed by
 .if n Joerg Wunsch,
 .if t J\(:org Wunsch,
 Dresden, with changes by Serge Vakulenko and Andrew A. Chernov, Moscow.
