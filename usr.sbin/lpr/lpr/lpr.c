@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.35 2004/04/14 20:52:20 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.36 2004/05/10 16:09:06 otto Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.35 2004/04/14 20:52:20 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.36 2004/05/10 16:09:06 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,8 @@ main(int argc, char **argv)
 		}
 		card('J', jobname);
 		card('C', class);
-		card('L', person);
+		if (!SH)
+			card('L', person);
 	}
 	if (iflag)
 		card('I', itoa(indent));
