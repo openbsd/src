@@ -24,6 +24,7 @@ if ($#ARGV >= 0) {
 	$bytecompile = 1 if $1 eq 'bytecompile';
 	$compile = 1 if $1 eq 'compile';
 	$taintwarn = 1 if $1 eq 'taintwarn';
+	$ENV{PERL_CORE_MINITEST} = 1 if $1 eq 'minitest';
 	if ($1 =~ /^deparse(,.+)?$/) {
 	    $deparse = 1;
 	    $deparse_opts = $1;
@@ -67,7 +68,8 @@ sub _find_tests {
     my($dir) = @_;
     opendir DIR, $dir or die "Trouble opening $dir: $!";
     foreach my $f (sort { $a cmp $b } readdir DIR) {
-        next if $f eq $curdir or $f eq $updir;
+        next if $f eq $curdir or $f eq $updir or
+	    $f =~ /^(?:CVS|RCS|SCCS|\.svn)$/;
 
         my $fullpath = File::Spec->catfile($dir, $f);
 
@@ -446,7 +448,12 @@ EOT
 	}
 	else {
 	    $next += 1;
-	    print "${te}FAILED at test $next\n";
+	    if ($next > $max) {
+	        print "${te}FAILED at test $next\tpossibly due to extra output\n";
+	    }
+	    else {
+		print "${te}FAILED at test $next\n";
+	    }
 	    $bad = $bad + 1;
 	    $_ = $test;
 	    if (/^base/) {

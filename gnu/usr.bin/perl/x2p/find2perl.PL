@@ -215,6 +215,7 @@ while (@ARGV) {
         my $prog = shift;
         $prog =~ s/'/\\'/g;
         $out .= tab . "eval {$prog}";
+	$print_needed = 0;
     } elsif ($_ eq 'depth') {
         $find = 'finddepth';
         next;
@@ -265,7 +266,9 @@ while (@ARGV) {
 }
 
 if ($print_needed) {
-    $out .= "\n" . tab . '&& print("$name\n")';
+    my $t = tab;
+    if ($t !~ /&&\s*$/) { $t .= '&& ' }
+    $out .= "\n" . $t . 'print("$name\n")';
 }
 
 
@@ -289,6 +292,14 @@ use vars qw/*name *dir *prune/;
 $declaresubs
 
 END
+
+if (exists $init{doexec}) {
+    print <<'END';
+use Cwd ();
+my $cwd = Cwd::cwd();
+
+END
+}  
 
 if (exists $init{ls}) {
     print <<'END';
@@ -357,9 +368,6 @@ END
 
 if (exists $init{doexec}) {
     print <<'END';
-
-use Cwd ();
-my $cwd = Cwd::cwd();
 
 sub doexec ($@) {
     my $ok = shift;

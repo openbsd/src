@@ -21,6 +21,8 @@ Changes5.6		Differences between 5.005 and 5.6
 Changes5.8		Differences between 5.6.0 and 5.8.0 (and maint-5.6)
 Changes5.8.1		Differences between 5.8.0 and 5.8.1
 Changes5.8.2		Differences between 5.8.1 and 5.8.2
+Changes5.8.3		Differences between 5.8.2 and 5.8.3
+Changes5.8.4		Differences between 5.8.3 and 5.8.4
 config_h.SH		Produces config.h
 configpm		Produces lib/Config.pm
 Configure		Portability tool
@@ -497,7 +499,7 @@ ext/IPC/SysV/SysV.xs		IPC::SysV extension Perl module
 ext/IPC/SysV/t/ipcsysv.t		See if IPC::SysV works
 ext/IPC/SysV/t/msg.t		IPC::SysV extension Perl module
 ext/IPC/SysV/t/sem.t		IPC::SysV extension Perl module
-ext/List/Util/ChangeLog		Util extension
+ext/List/Util/Changes		Util extension
 ext/List/Util/lib/List/Util.pm	List::Util
 ext/List/Util/lib/Scalar/Util.pm	Scalar::Util
 ext/List/Util/Makefile.PL	Util extension
@@ -530,6 +532,7 @@ ext/MIME/Base64/QuotedPrint.pm	MIME::Base64 extension
 ext/MIME/Base64/t/base64.t	See whether MIME::Base64 works
 ext/MIME/Base64/t/quoted-print.t	See whether MIME::QuotedPrint works
 ext/MIME/Base64/t/unicode.t	See whether MIME::Base64 works
+ext/MIME/Base64/t/warn.t	See whether MIME::Base64 works
 ext/NDBM_File/hints/cygwin.pl	Hint for NDBM_File for named architecture
 ext/NDBM_File/hints/dec_osf.pl	Hint for NDBM_File for named architecture
 ext/NDBM_File/hints/dynixptx.pl	Hint for NDBM_File for named architecture
@@ -658,11 +661,15 @@ ext/Storable/t/dclone.t		See if Storable works
 ext/Storable/t/downgrade.t	See if Storable works
 ext/Storable/t/forgive.t	See if Storable works
 ext/Storable/t/freeze.t		See if Storable works
+ext/Storable/t/HAS_HOOK.pm	For auto-requiring of modules for STORABLE_thaw
+ext/Storable/t/HAS_OVERLOAD.pm	For auto-requiring of mdoules for overload
 ext/Storable/t/integer.t	See if Storable works
 ext/Storable/t/interwork56.t	Test compatibility kludge for 64bit data under 5.6.x
+ext/Storable/t/just_plain_nasty.t	See if Storable works
 ext/Storable/t/lock.t		See if Storable works
 ext/Storable/t/make_56_interwork.pl	Make test data for interwork56.t
 ext/Storable/t/make_downgrade.pl	Make test data for downgrade.t
+ext/Storable/t/make_overload.pl	Make test data for overload.t
 ext/Storable/t/malice.t		See if Storable copes with corrupt files
 ext/Storable/t/overload.t	See if Storable works
 ext/Storable/t/recurse.t	See if Storable works
@@ -670,6 +677,7 @@ ext/Storable/t/restrict.t	See if Storable works
 ext/Storable/t/retrieve.t	See if Storable works
 ext/Storable/t/st-dump.pl	See if Storable works
 ext/Storable/t/store.t		See if Storable works
+ext/Storable/t/threads.t	Does Storable work with threads?
 ext/Storable/t/tied_hook.t	See if Storable works
 ext/Storable/t/tied_items.t	See if Storable works
 ext/Storable/t/tied.t		See if Storable works
@@ -750,6 +758,7 @@ ext/Time/HiRes/hints/dec_osf.pl		Hint for Time::HiRes for named architecture
 ext/Time/HiRes/hints/dynixptx.pl	Hint for Time::HiRes for named architecture
 ext/Time/HiRes/hints/irix.pl	Hint for Time::HiRes for named architecture
 ext/Time/HiRes/hints/sco.pl	Hints for Time::HiRes for named architecture
+ext/Time/HiRes/hints/solaris.pl	Hints for Time::HiRes for named architecture
 ext/Time/HiRes/hints/svr4.pl	Hints for Time::HiRes for named architecture
 ext/Time/HiRes/HiRes.pm		Time::HiRes extension
 ext/Time/HiRes/HiRes.xs		Time::HiRes extension
@@ -780,6 +789,7 @@ ext/XS/APItest/MANIFEST		XS::APItest extension
 ext/XS/APItest/README		XS::APItest extension
 ext/XS/APItest/t/hash.t		XS::APItest extension
 ext/XS/APItest/t/printf.t	XS::APItest extension
+ext/XS/APItest/t/push.t		XS::APItest extension
 ext/XS/Typemap/Makefile.PL	XS::Typemap extension
 ext/XS/Typemap/README		XS::Typemap extension
 ext/XS/Typemap/stdio.c		XS::Typemap extension
@@ -810,6 +820,8 @@ h2pl/tcbreak2			cbreak test routine using .pl
 handy.h				Handy definitions
 hints/3b1cc			Hints for named architecture
 hints/3b1.sh			Hints for named architecture
+hints/aix_3.sh			Hints for named architecture
+hints/aix_4.sh			Hints for named architecture
 hints/aix.sh			Hints for named architecture
 hints/altos486.sh		Hints for named architecture
 hints/amigaos.sh		Hints for named architecture
@@ -1079,6 +1091,21 @@ lib/CPAN/t/signature.t		CPAN signature test
 lib/CPAN/t/vcmp.t		See if CPAN the module works
 lib/ctime.pl			A ctime workalike
 lib/Cwd.pm			Various cwd routines (getcwd, fastcwd, chdir)
+lib/DBM_Filter/Changes		DBM Filter Change history
+lib/DBM_Filter/compress.pm	DBM Filter to compress keys/values
+lib/DBM_Filter/encode.pm	DBM Filter for encoding
+lib/DBM_Filter/int32.pm		DBM Filter for creating int32 keys/values
+lib/DBM_Filter/null.pm		DBM Filter for null termination
+lib/DBM_Filter.pm		DBM Filter module
+lib/DBM_Filter/t/01error.t	test DBM_Filter::null
+lib/DBM_Filter/t/02core.t	test DBM_Filter::null
+lib/DBM_Filter/t/compress.t	test DBM_Filter::compress
+lib/DBM_Filter/t/encode.t	test DBM_Filter::encode
+lib/DBM_Filter/t/int32.t	test DBM_Filter::int32
+lib/DBM_Filter/t/null.t		test DBM_Filter::null
+lib/DBM_Filter/t/utf8.t		test DBM_Filter::utf8
+lib/DBM_Filter/utf8.pm		DBM Filter for UTF-8 Encoding
+lib/dbm_filter_util.pl		Utility functions used by DBM Filter tests 
 lib/DB.pm			Debugger API (draft)
 lib/DB.t			See if DB works
 lib/Devel/SelfStubber.pm	Generate stubs for SelfLoader.pm
@@ -1122,7 +1149,7 @@ lib/ExtUtils/MakeMaker/Tutorial.pod	Writing a module with MakeMaker
 lib/ExtUtils/MakeMaker/vmsish.pm	Platform agnostic vmsish.pm
 lib/ExtUtils/Manifest.pm	Utilities to write MANIFEST files
 lib/ExtUtils/MANIFEST.SKIP	The default MANIFEST.SKIP
-lib/ExtUtils/META.yml	ExtUtils::MakeMaker metadata
+lib/ExtUtils/META.yml		ExtUtils::MakeMaker metadata
 lib/ExtUtils/Mkbootstrap.pm	Writes a bootstrap file (see MakeMaker)
 lib/ExtUtils/Mksymlists.pm	Writes a linker options file for extensions
 lib/ExtUtils/MM_Any.pm		MakeMaker methods for Any OS
@@ -1147,7 +1174,7 @@ lib/ExtUtils/t/00compile.t	See if MakeMaker modules compile
 lib/ExtUtils/t/00setup_dummy.t	Setup MakeMaker test module
 lib/ExtUtils/t/backwards.t	Check MakeMaker's backwards compatibility
 lib/ExtUtils/t/basic.t		See if MakeMaker can build a module
-lib/ExtUtils/t/bytes.t	Test ExtUtils::MakeMaker::bytes
+lib/ExtUtils/t/bytes.t		Test ExtUtils::MakeMaker::bytes
 lib/ExtUtils/t/Command.t	See if ExtUtils::Command works (Win32 only)
 lib/ExtUtils/t/Constant.t	See if ExtUtils::Constant works
 lib/ExtUtils/t/Embed.t		See if ExtUtils::Embed and embedding works
@@ -1268,11 +1295,17 @@ lib/hostname.pl			Old hostname code
 lib/I18N/Collate.pm		Routines to do strxfrm-based collation
 lib/I18N/Collate.t		See if I18N::Collate works
 lib/I18N/LangTags/ChangeLog	I18N::LangTags
+lib/I18N/LangTags/Detect.pm	Detect language preferences
 lib/I18N/LangTags/List.pm	List of tags for human languages
 lib/I18N/LangTags.pm		I18N::LangTags
 lib/I18N/LangTags/README	I18N::LangTags
-lib/I18N/LangTags/t/01test.t	See whether I18N::LangTags works
-lib/I18N/LangTags/t/02decency.t	See if I18N::LangTags::List::is_decent works
+lib/I18N/LangTags/t/01_about_verbose.t	See whether I18N::LangTags works
+lib/I18N/LangTags/t/05_main.t	See whether I18N::LangTags works
+lib/I18N/LangTags/t/07_listy.t	See whether I18N::LangTags works
+lib/I18N/LangTags/t/10_http.t	See whether I18N::LangTags works
+lib/I18N/LangTags/t/50_super.t	See whether I18N::LangTags works
+lib/I18N/LangTags/t/55_supers_strict.t	See whether I18N::LangTags works
+lib/I18N/LangTags/t/80_all_env.t	See whether I18N::LangTags works
 lib/if.pm			For "use if"
 lib/if.t			Tests for "use if"
 lib/importenv.pl		Perl routine to get environment into variables
@@ -1283,7 +1316,6 @@ lib/IPC/Open2.pm		Open a two-ended pipe
 lib/IPC/Open2.t			See if IPC::Open2 works
 lib/IPC/Open3.pm		Open a three-ended pipe!
 lib/IPC/Open3.t			See if IPC::Open3 works
-lib/IPC/SysV.t			See if IPC::SysV works
 lib/less.pm			For "use less"
 lib/less.t			See if less support works
 lib/lib_pm.PL			For "use lib", produces lib/lib.pm
@@ -1312,11 +1344,13 @@ lib/Locale/Maketext/Guts.pm	Locale::Maketext
 lib/Locale/Maketext.pm		Locale::Maketext
 lib/Locale/Maketext.pod		Locale::Maketext documentation
 lib/Locale/Maketext/README	Locale::Maketext
-lib/Locale/Maketext/t/00about.t	See if Locale::Maketext works
-lib/Locale/Maketext/t/01make.t	See if Locale::Maketext works
-lib/Locale/Maketext/t/02get.t	See if Locale::Maketext works
-lib/Locale/Maketext/t/03http.t	See if Locale::Maketext works
-lib/Locale/Maketext/t/90utf8.t	Locale::Maketext
+lib/Locale/Maketext/t/01_about_verbose.t	See if Locale::Maketext works
+lib/Locale/Maketext/t/10_make.t	See if Locale::Maketext works
+lib/Locale/Maketext/t/20_get.t	See if Locale::Maketext works
+lib/Locale/Maketext/t/40_super.t	See if Locale::Maketext works
+lib/Locale/Maketext/t/50_super.t	See if Locale::Maketext works
+lib/Locale/Maketext/t/60_super.t	See if Locale::Maketext works
+lib/Locale/Maketext/t/90_utf8.t	See if Locale::Maketext works
 lib/Locale/Maketext/TPJ13.pod	Locale::Maketext documentation article
 lib/locale.pm			For "use locale"
 lib/Locale/Script.pm		Locale::Codes
@@ -1345,6 +1379,7 @@ lib/Math/BigInt/t/config.t	Test Math::BigInt->config()
 lib/Math/BigInt/t/constant.t	Test Math::BigInt/BigFloat under :constant
 lib/Math/BigInt/t/const_mbf.t	Test Math::BigInt
 lib/Math/BigInt/t/downgrade.t	Test if use Math::BigInt(); under downgrade works
+lib/Math/BigInt/t/_e_math.t	Helper routine in BigFloat for _e math
 lib/Math/BigInt/t/fallback.t	Test Math::BigInt
 lib/Math/BigInt/t/inf_nan.t	Special tests for inf and NaN handling
 lib/Math/BigInt/t/isa.t		Test for Math::BigInt inheritance
@@ -1419,7 +1454,7 @@ lib/Memoize/t/tie_sdbm.t	Memoize SDBM interface test
 lib/Memoize/t/tie_storable.t	Memoize Storable interface test
 lib/Memoize/t/tie.t		Memoize tied file test
 lib/Memoize/t/unmemoize.t	Memoize 'unmemoize' function test
-lib/Net/ChangeLog.libnet	libnet
+lib/Net/Changes.libnet		libnet
 lib/Net/Cmd.pm			libnet
 lib/Net/Config.eg		libnet
 lib/Net/Config.pm		libnet
@@ -1470,6 +1505,7 @@ lib/Net/servent.pm		By-name interface to Perl's builtin getserv*
 lib/Net/servent.t		See if Net::servtent works
 lib/Net/SMTP.pm			libnet
 lib/Net/t/config.t		libnet
+lib/Net/t/datasend.t		libnet
 lib/Net/t/ftp.t			libnet
 lib/Net/t/hostname.t		libnet
 lib/Net/Time.pm			libnet
@@ -1511,6 +1547,7 @@ lib/Pod/ParseUtils.pm		Pod-Parser - pod utility functions
 lib/Pod/Perldoc/BaseTo.pm	utility module for perldoc
 lib/Pod/Perldoc/GetOptsOO.pm	options parsing for perldoc
 lib/Pod/Perldoc.pm		guts of the 'perldoc' utility
+lib/Pod/Perldoc/t/01_about_verbose.t	test Pod::Perldoc
 lib/Pod/Perldoc/t/checkerbasic.t	test Pod::Perldoc::ToChecker
 lib/Pod/Perldoc/ToChecker.pm	let perldoc check POD for errors
 lib/Pod/Perldoc/ToMan.pm	render POD as man pages
@@ -1552,6 +1589,7 @@ lib/Pod/t/text-errors.t		podlators test
 lib/Pod/t/text-options.t		podlators test
 lib/Pod/t/text.t		podlators test
 lib/Pod/t/Usage.t		See if Pod::Usage works
+lib/Pod/t/user.t		See if Pod::LaTeX works
 lib/Pod/t/utils.t		Test for Pod::ParseUtils
 lib/Pod/Usage.pm		Pod-Parser - print usage messages
 lib/pwd.pl			Routines to keep track of PWD environment variable
@@ -1656,8 +1694,10 @@ lib/Test/Simple/t/todo.t	Test::More test, TODO tests
 lib/Test/Simple/t/undef.t	Test::More test, undefs don't cause warnings
 lib/Test/Simple/t/useing.t	Test::More test, compile test
 lib/Test/Simple/t/use_ok.t	Test::More test, use_ok()
+lib/Test/t/05_about_verbose.t	See if Test works
 lib/Test/t/fail.t		See if Test works
 lib/Test/t/mix.t		See if Test works
+lib/Test/t/multiline.t		See if Test works
 lib/Test/t/onfail.t		See if Test works
 lib/Test/t/qr.t			See if Test works
 lib/Test/t/skip.t		See if Test works
@@ -1777,357 +1817,27 @@ lib/Unicode/README		Explanation what happened to lib/unicode.
 lib/Unicode/UCD.pm		Unicode character database
 lib/Unicode/UCD.t		See if Unicode character database works
 lib/unicore/ArabicShaping.txt	Unicode character database
-lib/unicore/ArabLink.pl		Unicode character database
-lib/unicore/ArabLnkGrp.pl	Unicode character database
 lib/unicore/BidiMirroring.txt	Unicode character database
-lib/unicore/Bidirectional.pl	Unicode character database
-lib/unicore/Blocks.pl		Unicode character database
 lib/unicore/Blocks.txt		Unicode character database
-lib/unicore/Canonical.pl	Unicode character database
 lib/unicore/CaseFolding.txt	Unicode character database
-lib/unicore/Category.pl		Unicode character database
-lib/unicore/CombiningClass.pl	Unicode character database
 lib/unicore/CompositionExclusions.txt	Unicode character database
-lib/unicore/Decomposition.pl	Unicode character database
 lib/unicore/EastAsianWidth.txt	Unicode character database
-lib/unicore/Exact.pl		Unicode character database
 lib/unicore/HangulSyllableType.txt	Unicode character database
 lib/unicore/Index.txt		Unicode character database
-lib/unicore/JamoShort.pl	Unicode character database
 lib/unicore/Jamo.txt		Unicode character database
-lib/unicore/Lbrk.pl		Unicode character database
-lib/unicore/lib/Alnum.pl	Unicode character database
-lib/unicore/lib/Alphabet.pl	Unicode character database
-lib/unicore/lib/Alpha.pl	Unicode character database
-lib/unicore/lib/Any.pl		Unicode character database
-lib/unicore/lib/Arabic.pl	Unicode character database
-lib/unicore/lib/Armenian.pl	Unicode character database
-lib/unicore/lib/AsciiHex.pl	Unicode character database
-lib/unicore/lib/ASCII.pl	Unicode character database
-lib/unicore/lib/Assigned.pl	Unicode character database
-lib/unicore/lib/Bengali.pl	Unicode character database
-lib/unicore/lib/BidiAL.pl	Unicode character database
-lib/unicore/lib/BidiAN.pl	Unicode character database
-lib/unicore/lib/BidiBN.pl	Unicode character database
-lib/unicore/lib/BidiB.pl	Unicode character database
-lib/unicore/lib/BidiCont.pl	Unicode character database
-lib/unicore/lib/BidiCS.pl	Unicode character database
-lib/unicore/lib/BidiEN.pl	Unicode character database
-lib/unicore/lib/BidiES.pl	Unicode character database
-lib/unicore/lib/BidiET.pl	Unicode character database
-lib/unicore/lib/BidiL.pl	Unicode character database
-lib/unicore/lib/BidiLRE.pl	Unicode character database
-lib/unicore/lib/BidiLRO.pl	Unicode character database
-lib/unicore/lib/BidiNSM.pl	Unicode character database
-lib/unicore/lib/BidiON.pl	Unicode character database
-lib/unicore/lib/BidiPDF.pl	Unicode character database
-lib/unicore/lib/BidiRLE.pl	Unicode character database
-lib/unicore/lib/BidiRLO.pl	Unicode character database
-lib/unicore/lib/BidiR.pl	Unicode character database
-lib/unicore/lib/BidiS.pl	Unicode character database
-lib/unicore/lib/BidiWS.pl	Unicode character database
-lib/unicore/lib/Blank.pl	Unicode character database
-lib/unicore/lib/Bopomofo.pl	Unicode character database
-lib/unicore/lib/Braille.pl	Unicode character database
-lib/unicore/lib/Buhid.pl	Unicode character database
-lib/unicore/lib/Canadian.pl	Unicode character database
-lib/unicore/lib/_CanonDC.pl	Unicode character database
-lib/unicore/lib/Canon.pl	Unicode character database
-lib/unicore/lib/_CaseIgn.pl	Unicode character database
-lib/unicore/lib/Cc.pl		Unicode character database
-lib/unicore/lib/Cf.pl		Unicode character database
-lib/unicore/lib/Cherokee.pl	Unicode character database
-lib/unicore/lib/Cn.pl		Unicode character database
-lib/unicore/lib/Cntrl.pl	Unicode character database
-lib/unicore/lib/_CombAbo.pl	Unicode character database
-lib/unicore/lib/Common.pl	Unicode character database
-lib/unicore/lib/Compat.pl	Unicode character database
-lib/unicore/lib/Co.pl		Unicode character database
-lib/unicore/lib/C.pl		Unicode character database
-lib/unicore/lib/Cs.pl		Unicode character database
-lib/unicore/lib/Cypriot.pl	Unicode character database
-lib/unicore/lib/Cyrillic.pl	Unicode character database
-lib/unicore/lib/Dash.pl		Unicode character database
-lib/unicore/lib/DCcircle.pl	Unicode character database
-lib/unicore/lib/DCcompat.pl	Unicode character database
-lib/unicore/lib/DCfinal.pl	Unicode character database
-lib/unicore/lib/DCfont.pl	Unicode character database
-lib/unicore/lib/DCfracti.pl	Unicode character database
-lib/unicore/lib/DCinitia.pl	Unicode character database
-lib/unicore/lib/DCisolat.pl	Unicode character database
-lib/unicore/lib/DCmedial.pl	Unicode character database
-lib/unicore/lib/DCnarrow.pl	Unicode character database
-lib/unicore/lib/DCnoBrea.pl	Unicode character database
-lib/unicore/lib/DCsmall.pl	Unicode character database
-lib/unicore/lib/DCsquare.pl	Unicode character database
-lib/unicore/lib/DCsub.pl	Unicode character database
-lib/unicore/lib/DCsuper.pl	Unicode character database
-lib/unicore/lib/DCvertic.pl	Unicode character database
-lib/unicore/lib/DCwide.pl	Unicode character database
-lib/unicore/lib/Deprecat.pl	Unicode character database
-lib/unicore/lib/Deseret.pl	Unicode character database
-lib/unicore/lib/Devanaga.pl	Unicode character database
-lib/unicore/lib/Diacriti.pl	Unicode character database
-lib/unicore/lib/Digit.pl	Unicode character database
-lib/unicore/lib/Ethiopic.pl	Unicode character database
-lib/unicore/lib/Extender.pl	Unicode character database
-lib/unicore/lib/Georgian.pl	Unicode character database
-lib/unicore/lib/Gothic.pl	Unicode character database
-lib/unicore/lib/Grapheme.pl	Unicode character database
-lib/unicore/lib/Graph.pl	Unicode character database
-lib/unicore/lib/Greek.pl	Unicode character database
-lib/unicore/lib/Gujarati.pl	Unicode character database
-lib/unicore/lib/Gurmukhi.pl	Unicode character database
-lib/unicore/lib/Hangul.pl	Unicode character database
-lib/unicore/lib/Han.pl		Unicode character database
-lib/unicore/lib/Hanunoo.pl	Unicode character database
-lib/unicore/lib/Hebrew.pl	Unicode character database
-lib/unicore/lib/HexDigit.pl	Unicode character database
-lib/unicore/lib/Hiragana.pl	Unicode character database
-lib/unicore/lib/Hyphen.pl	Unicode character database
-lib/unicore/lib/IdContin.pl	Unicode character database
-lib/unicore/lib/Ideograp.pl	Unicode character database
-lib/unicore/lib/IdsBinar.pl	Unicode character database
-lib/unicore/lib/IdStart.pl	Unicode character database
-lib/unicore/lib/IdsTrina.pl	Unicode character database
-lib/unicore/lib/InAegean.pl	Unicode character database
-lib/unicore/lib/InAlphab.pl	Unicode character database
-lib/unicore/lib/InArabi2.pl	Unicode character database
-lib/unicore/lib/InArabi3.pl	Unicode character database
-lib/unicore/lib/InArabic.pl	Unicode character database
-lib/unicore/lib/InArmeni.pl	Unicode character database
-lib/unicore/lib/InArrows.pl	Unicode character database
-lib/unicore/lib/InBasicL.pl	Unicode character database
-lib/unicore/lib/InBengal.pl	Unicode character database
-lib/unicore/lib/InBlockE.pl	Unicode character database
-lib/unicore/lib/InBopom2.pl	Unicode character database
-lib/unicore/lib/InBopomo.pl	Unicode character database
-lib/unicore/lib/InBoxDra.pl	Unicode character database
-lib/unicore/lib/InBraill.pl	Unicode character database
-lib/unicore/lib/InBuhid.pl	Unicode character database
-lib/unicore/lib/InByzant.pl	Unicode character database
-lib/unicore/lib/InCherok.pl	Unicode character database
-lib/unicore/lib/InCjkCo2.pl	Unicode character database
-lib/unicore/lib/InCjkCo3.pl	Unicode character database
-lib/unicore/lib/InCjkCo4.pl	Unicode character database
-lib/unicore/lib/InCjkCom.pl	Unicode character database
-lib/unicore/lib/InCjkRad.pl	Unicode character database
-lib/unicore/lib/InCjkSym.pl	Unicode character database
-lib/unicore/lib/InCjkUn2.pl	Unicode character database
-lib/unicore/lib/InCjkUn3.pl	Unicode character database
-lib/unicore/lib/InCjkUni.pl	Unicode character database
-lib/unicore/lib/InCombi2.pl	Unicode character database
-lib/unicore/lib/InCombi3.pl	Unicode character database
-lib/unicore/lib/InCombin.pl	Unicode character database
-lib/unicore/lib/InContro.pl	Unicode character database
-lib/unicore/lib/InCurren.pl	Unicode character database
-lib/unicore/lib/InCyprio.pl	Unicode character database
-lib/unicore/lib/InCyril2.pl	Unicode character database
-lib/unicore/lib/InCyrill.pl	Unicode character database
-lib/unicore/lib/InDesere.pl	Unicode character database
-lib/unicore/lib/InDevana.pl	Unicode character database
-lib/unicore/lib/InDingba.pl	Unicode character database
-lib/unicore/lib/InEnclo2.pl	Unicode character database
-lib/unicore/lib/InEnclos.pl	Unicode character database
-lib/unicore/lib/InEthiop.pl	Unicode character database
-lib/unicore/lib/InGenera.pl	Unicode character database
-lib/unicore/lib/InGeomet.pl	Unicode character database
-lib/unicore/lib/InGeorgi.pl	Unicode character database
-lib/unicore/lib/InGothic.pl	Unicode character database
-lib/unicore/lib/InGreekA.pl	Unicode character database
-lib/unicore/lib/InGreekE.pl	Unicode character database
-lib/unicore/lib/InGreek.pl	Unicode character database
-lib/unicore/lib/InGujara.pl	Unicode character database
-lib/unicore/lib/InGurmuk.pl	Unicode character database
-lib/unicore/lib/InHalfwi.pl	Unicode character database
-lib/unicore/lib/InHangu2.pl	Unicode character database
-lib/unicore/lib/InHangu3.pl	Unicode character database
-lib/unicore/lib/InHangul.pl	Unicode character database
-lib/unicore/lib/InHanuno.pl	Unicode character database
-lib/unicore/lib/InHebrew.pl	Unicode character database
-lib/unicore/lib/Inherite.pl	Unicode character database
-lib/unicore/lib/InHighPr.pl	Unicode character database
-lib/unicore/lib/InHighSu.pl	Unicode character database
-lib/unicore/lib/InHiraga.pl	Unicode character database
-lib/unicore/lib/InIdeogr.pl	Unicode character database
-lib/unicore/lib/InIpaExt.pl	Unicode character database
-lib/unicore/lib/InKanbun.pl	Unicode character database
-lib/unicore/lib/InKangxi.pl	Unicode character database
-lib/unicore/lib/InKannad.pl	Unicode character database
-lib/unicore/lib/InKatak2.pl	Unicode character database
-lib/unicore/lib/InKataka.pl	Unicode character database
-lib/unicore/lib/InKhmer.pl	Unicode character database
-lib/unicore/lib/InKhmerS.pl	Unicode character database
-lib/unicore/lib/InLao.pl	Unicode character database
-lib/unicore/lib/InLatin1.pl	Unicode character database
-lib/unicore/lib/InLatin2.pl	Unicode character database
-lib/unicore/lib/InLatin3.pl	Unicode character database
-lib/unicore/lib/InLatinE.pl	Unicode character database
-lib/unicore/lib/InLetter.pl	Unicode character database
-lib/unicore/lib/InLimbu.pl	Unicode character database
-lib/unicore/lib/InLinea2.pl	Unicode character database
-lib/unicore/lib/InLinear.pl	Unicode character database
-lib/unicore/lib/InLowSur.pl	Unicode character database
-lib/unicore/lib/InMalaya.pl	Unicode character database
-lib/unicore/lib/InMathe2.pl	Unicode character database
-lib/unicore/lib/InMathem.pl	Unicode character database
-lib/unicore/lib/InMisce2.pl	Unicode character database
-lib/unicore/lib/InMisce3.pl	Unicode character database
-lib/unicore/lib/InMisce4.pl	Unicode character database
-lib/unicore/lib/InMisce5.pl	Unicode character database
-lib/unicore/lib/InMiscel.pl	Unicode character database
-lib/unicore/lib/InMongol.pl	Unicode character database
-lib/unicore/lib/InMusica.pl	Unicode character database
-lib/unicore/lib/InMyanma.pl	Unicode character database
-lib/unicore/lib/InNumber.pl	Unicode character database
-lib/unicore/lib/InOgham.pl	Unicode character database
-lib/unicore/lib/InOldIta.pl	Unicode character database
-lib/unicore/lib/InOptica.pl	Unicode character database
-lib/unicore/lib/InOriya.pl	Unicode character database
-lib/unicore/lib/InOsmany.pl	Unicode character database
-lib/unicore/lib/InPhonet.pl	Unicode character database
-lib/unicore/lib/InPrivat.pl	Unicode character database
-lib/unicore/lib/InRunic.pl	Unicode character database
-lib/unicore/lib/InShavia.pl	Unicode character database
-lib/unicore/lib/InSinhal.pl	Unicode character database
-lib/unicore/lib/InSmallF.pl	Unicode character database
-lib/unicore/lib/InSpacin.pl	Unicode character database
-lib/unicore/lib/InSpecia.pl	Unicode character database
-lib/unicore/lib/InSupers.pl	Unicode character database
-lib/unicore/lib/InSuppl2.pl	Unicode character database
-lib/unicore/lib/InSuppl3.pl	Unicode character database
-lib/unicore/lib/InSuppl4.pl	Unicode character database
-lib/unicore/lib/InSuppl5.pl	Unicode character database
-lib/unicore/lib/InSupple.pl	Unicode character database
-lib/unicore/lib/InSyriac.pl	Unicode character database
-lib/unicore/lib/InTagalo.pl	Unicode character database
-lib/unicore/lib/InTagban.pl	Unicode character database
-lib/unicore/lib/InTags.pl	Unicode character database
-lib/unicore/lib/InTaiLe.pl	Unicode character database
-lib/unicore/lib/InTaiXua.pl	Unicode character database
-lib/unicore/lib/InTamil.pl	Unicode character database
-lib/unicore/lib/InTelugu.pl	Unicode character database
-lib/unicore/lib/InThaana.pl	Unicode character database
-lib/unicore/lib/InThai.pl	Unicode character database
-lib/unicore/lib/InTibeta.pl	Unicode character database
-lib/unicore/lib/InUgarit.pl	Unicode character database
-lib/unicore/lib/InUnifie.pl	Unicode character database
-lib/unicore/lib/InVaria2.pl	Unicode character database
-lib/unicore/lib/InVariat.pl	Unicode character database
-lib/unicore/lib/InYijing.pl	Unicode character database
-lib/unicore/lib/InYiRadi.pl	Unicode character database
-lib/unicore/lib/InYiSyll.pl	Unicode character database
-lib/unicore/lib/JoinCont.pl	Unicode character database
-lib/unicore/lib/Kannada.pl	Unicode character database
-lib/unicore/lib/Katakana.pl	Unicode character database
-lib/unicore/lib/Khmer.pl	Unicode character database
-lib/unicore/lib/Lao.pl		Unicode character database
-lib/unicore/lib/Latin.pl	Unicode character database
-lib/unicore/lib/Limbu.pl	Unicode character database
-lib/unicore/lib/LinearB.pl	Unicode character database
-lib/unicore/lib/Ll.pl		Unicode character database
-lib/unicore/lib/Lm.pl		Unicode character database
-lib/unicore/lib/LogicalO.pl	Unicode character database
-lib/unicore/lib/Lo.pl		Unicode character database
-lib/unicore/lib/Lowercas.pl	Unicode character database
-lib/unicore/lib/Lower.pl	Unicode character database
-lib/unicore/lib/L.pl		Unicode character database
-lib/unicore/lib/L_.pl		Unicode character database
-lib/unicore/lib/Lt.pl		Unicode character database
-lib/unicore/lib/Lu.pl		Unicode character database
-lib/unicore/lib/Malayala.pl	Unicode character database
-lib/unicore/lib/Math.pl		Unicode character database
-lib/unicore/lib/Mc.pl		Unicode character database
-lib/unicore/lib/Me.pl		Unicode character database
-lib/unicore/lib/Mirrored.pl	Unicode character database
-lib/unicore/lib/Mn.pl		Unicode character database
-lib/unicore/lib/Mongolia.pl	Unicode character database
-lib/unicore/lib/M.pl		Unicode character database
-lib/unicore/lib/Myanmar.pl	Unicode character database
-lib/unicore/lib/Nd.pl		Unicode character database
-lib/unicore/lib/Nl.pl		Unicode character database
-lib/unicore/lib/Nonchara.pl	Unicode character database
-lib/unicore/lib/No.pl		Unicode character database
-lib/unicore/lib/N.pl		Unicode character database
-lib/unicore/lib/Ogham.pl	Unicode character database
-lib/unicore/lib/OldItali.pl	Unicode character database
-lib/unicore/lib/Oriya.pl	Unicode character database
-lib/unicore/lib/Osmanya.pl	Unicode character database
-lib/unicore/lib/OtherAlp.pl	Unicode character database
-lib/unicore/lib/OtherDef.pl	Unicode character database
-lib/unicore/lib/OtherGra.pl	Unicode character database
-lib/unicore/lib/OtherIdS.pl	Unicode character database
-lib/unicore/lib/OtherLow.pl	Unicode character database
-lib/unicore/lib/OtherMat.pl	Unicode character database
-lib/unicore/lib/OtherUpp.pl	Unicode character database
-lib/unicore/lib/Pc.pl		Unicode character database
-lib/unicore/lib/Pd.pl		Unicode character database
-lib/unicore/lib/Pe.pl		Unicode character database
-lib/unicore/lib/Pf.pl		Unicode character database
-lib/unicore/lib/Pi.pl		Unicode character database
-lib/unicore/lib/Po.pl		Unicode character database
-lib/unicore/lib/P.pl		Unicode character database
-lib/unicore/lib/Print.pl	Unicode character database
-lib/unicore/lib/Ps.pl		Unicode character database
-lib/unicore/lib/Punct.pl	Unicode character database
-lib/unicore/lib/Quotatio.pl	Unicode character database
-lib/unicore/lib/Radical.pl	Unicode character database
-lib/unicore/lib/Runic.pl	Unicode character database
-lib/unicore/lib/Sc.pl		Unicode character database
-lib/unicore/lib/Shavian.pl	Unicode character database
-lib/unicore/lib/Sinhala.pl	Unicode character database
-lib/unicore/lib/Sk.pl		Unicode character database
-lib/unicore/lib/Sm.pl		Unicode character database
-lib/unicore/lib/SoftDott.pl	Unicode character database
-lib/unicore/lib/So.pl		Unicode character database
-lib/unicore/lib/SpacePer.pl	Unicode character database
-lib/unicore/lib/Space.pl	Unicode character database
-lib/unicore/lib/S.pl		Unicode character database
-lib/unicore/lib/Syriac.pl	Unicode character database
-lib/unicore/lib/Tagalog.pl	Unicode character database
-lib/unicore/lib/Tagbanwa.pl	Unicode character database
-lib/unicore/lib/TaiLe.pl	Unicode character database
-lib/unicore/lib/Tamil.pl	Unicode character database
-lib/unicore/lib/Telugu.pl	Unicode character database
-lib/unicore/lib/Terminal.pl	Unicode character database
-lib/unicore/lib/Thaana.pl	Unicode character database
-lib/unicore/lib/Thai.pl		Unicode character database
-lib/unicore/lib/Tibetan.pl	Unicode character database
-lib/unicore/lib/Title.pl	Unicode character database
-lib/unicore/lib/Ugaritic.pl	Unicode character database
-lib/unicore/lib/UnifiedI.pl	Unicode character database
-lib/unicore/lib/Uppercas.pl	Unicode character database
-lib/unicore/lib/Upper.pl	Unicode character database
-lib/unicore/lib/WhiteSpa.pl	Unicode character database
-lib/unicore/lib/Word.pl		Unicode character database
-lib/unicore/lib/XDigit.pl	Unicode character database
-lib/unicore/lib/Yi.pl		Unicode character database
-lib/unicore/lib/Zl.pl		Unicode character database
-lib/unicore/lib/Z.pl		Unicode character database
-lib/unicore/lib/Zp.pl		Unicode character database
-lib/unicore/lib/Zs.pl		Unicode character database
 lib/unicore/LineBreak.txt	Unicode character database
 lib/unicore/Makefile		Unicode character database
 lib/unicore/mktables		Unicode character database generator
-lib/unicore/Name.pl		Unicode character database
 lib/unicore/NamesList.txt	Unicode character database
 lib/unicore/NormalizationCorrections.txt	Unicode character database
-lib/unicore/Number.pl		Unicode character database
-lib/unicore/Properties		Built-in \p{...} / \P{...} property list
 lib/unicore/PropertyAliases.txt	Unicode character database
 lib/unicore/PropList.txt	Unicode character database
 lib/unicore/PropValueAliases.txt	Unicode character database
 lib/unicore/README.perl		Unicode character database
 lib/unicore/ReadMe.txt		Unicode character database info
-lib/unicore/Scripts.pl		Unicode character database
 lib/unicore/Scripts.txt		Unicode character database
 lib/unicore/SpecialCasing.txt	Unicode character database
-lib/unicore/StandardizedVariants.txt		Unicode character database
-lib/unicore/To/Digit.pl		Unicode character database
-lib/unicore/To/Fold.pl		Unicode character database
-lib/unicore/To/Lower.pl		Unicode character database
-lib/unicore/To/Title.pl		Unicode character database
-lib/unicore/To/Upper.pl		Unicode character database
+lib/unicore/StandardizedVariants.txt	Unicode character database
 lib/unicore/UnicodeData.txt	Unicode character database
 lib/unicore/version		The version of the Unicode
 lib/UNIVERSAL.pm		Base class for ALL classes
@@ -2146,7 +1856,6 @@ lib/vmsish.t			Tests for vmsish.pm
 lib/warnings.pm			For "use warnings"
 lib/warnings/register.pm	For "use warnings::register"
 lib/warnings.t			See if warning controls work
-lib/Win32.pod			Documentation for Win32 extras
 locale.c			locale-specific utility functions
 makeaperl.SH			perl script that produces a new perl binary
 makedef.pl			Create symbol export lists for linking
@@ -2344,6 +2053,8 @@ pod/perl573delta.pod		Perl changes in version 5.7.3
 pod/perl581delta.pod		Perl changes in version 5.8.1
 pod/perl582delta.pod		Perl changes in version 5.8.2
 pod/perl583delta.pod		Perl changes in version 5.8.3
+pod/perl584delta.pod		Perl changes in version 5.8.4
+pod/perl585delta.pod		Perl changes in version 5.8.5
 pod/perl58delta.pod		Perl changes in version 5.8.0
 pod/perlapio.pod		Perl internal IO abstraction interface
 pod/perlapi.pod			Perl API listing (autogenerated)
@@ -2444,12 +2155,14 @@ pod/splitpod			Splits perlfunc into multiple pod pages
 Policy_sh.SH		Hold site-wide preferences between Configure runs.
 Porting/apply		Apply patches sent by mail
 Porting/check83.pl	Check whether we are 8.3-friendly
+Porting/checkcase.pl	Check whether we are case-insensitive-fs-friendly
 Porting/checkURL.pl	Check whether we have working URLs
 Porting/checkVERSION.pl	Check whether we have $VERSIONs
 Porting/cmpVERSION.pl	Compare whether two trees have changed modules
 Porting/config_H	Sample config.h
 Porting/config.sh	Sample config.sh
 Porting/Contract	Social contract for contributed modules in Perl core
+Porting/corecpan.pl	Reports outdated dual-lived modules
 Porting/curliff.pl	Curliff or liff your curliffable files.
 Porting/findrfuncs	Find reentrant variants of functions used in an executable
 Porting/findvars	Find occurrences of words
@@ -2485,7 +2198,7 @@ pp_sys.c			Push/Pop code for system interaction
 proto.h				Prototypes
 qnx/ar				QNX implementation of "ar" utility
 qnx/cpp				QNX implementation of preprocessor filter
-README			The Instructions
+README				The Instructions
 README.aix			Perl notes for AIX
 README.amiga			Perl notes for AmigaOS
 README.apollo			Perl notes for Apollo DomainOS
@@ -2506,7 +2219,7 @@ README.ko			Perl for Korean (in EUC-KR)
 README.machten			Perl notes for Power MachTen
 README.macos			Perl notes for Mac OS (Classic)
 README.macosx			Perl notes for Mac OS X
-README.micro		Notes about microperl
+README.micro			Notes about microperl
 README.mint			Perl notes for MiNT
 README.mpeix			Perl notes for MPE/iX
 README.netware			Perl notes for NetWare
@@ -2523,7 +2236,7 @@ README.vmesa			Perl notes for VM/ESA
 README.vms			Perl notes for VMS
 README.vos			Perl notes for Stratus VOS
 README.win32			Perl notes for Windows
-README.Y2K		Notes about Year 2000 concerns
+README.Y2K			Notes about Year 2000 concerns
 reentr.c			Reentrant interfaces
 reentr.h			Reentrant interfaces
 reentr.inc			Reentrant interfaces
@@ -2573,6 +2286,7 @@ t/comp/require.t		See if require works
 t/comp/script.t			See if script invocation works
 t/comp/term.t			See if more terms work
 t/comp/use.t			See if pragmata work
+t/comp/utf.t			See if UTFs work
 t/harness			Finer diagnostics from test suite
 thrdvar.h			Per-thread variables
 thread.h			Threading header
@@ -2843,6 +2557,7 @@ t/op/universal.t		See if UNIVERSAL class works
 t/op/unshift.t			See if unshift works
 t/op/utf8decode.t		See if UTF-8 decoding works
 t/op/utfhash.t			See if utf8 keys in hashes behave
+t/op/utftaint.t			See if utf8 and taint work together
 t/op/vec.t			See if vectors work
 t/op/ver.t			See if v-strings and the %v format flag work
 t/op/wantarray.t		See if wantarray works
@@ -2887,6 +2602,7 @@ t/run/exit.t			Test perl's exit status.
 t/run/fresh_perl.t		Tests that require a fresh perl.
 t/run/noswitch.t		Test aliasing ARGV for other switch tests
 t/run/runenv.t			Test if perl honors its environment variables.
+t/run/switch0.t			Test the -0 switch
 t/run/switcha.t			Test the -a switch
 t/run/switchC.t			Test the -C switch
 t/run/switchd.t			Test the -d switch
@@ -2904,6 +2620,8 @@ t/TEST				The regression tester
 t/TestInit.pm			Preamble library for core tests
 t/test.pl			Simple testing library
 t/uni/case.pl			See if Unicode casing works
+t/uni/chomp.t			See if Unicode chomp works
+t/uni/class.t			See if Unicode classes work (\p)
 t/uni/fold.t			See if Unicode folding works
 t/uni/lower.t			See if Unicode casing works
 t/uni/sprintf.t			See if Unicode sprintf works
@@ -2914,6 +2632,7 @@ t/uni/tr_sjis.t			See if Unicode tr/// works
 t/uni/tr_utf8.t			See if Unicode tr/// works
 t/uni/upper.t			See if Unicode casing works
 t/uni/write.t			See if Unicode formats work
+t/win32/getosversion.t		Test if Win32::GetOSVersion() works
 t/win32/longpath.t		Test if Win32::GetLongPathName() works
 t/win32/system.t		See if system works in Win*
 t/win32/system_tests		Test runner for system.t
@@ -3022,6 +2741,9 @@ win32/config.vc			Win32 base line config.sh (Visual C++ build)
 win32/config.vc64		Win64 base line config.sh (Visual C++ build)
 win32/distclean.bat		Remove _ALL_ files not listed here in MANIFEST
 win32/dl_win32.xs		Win32 port
+win32/ext/Win32/Makefile.PL	Win32 extension makefile writer
+win32/ext/Win32/Win32.pm	Win32 extension Perl module
+win32/ext/Win32/Win32.xs	Win32 extension external subroutines
 win32/fcrypt.c			crypt() implementation
 win32/FindExt.pm		Scan for extensions
 win32/genmk95.pl		Perl code to generate command.com-usable makefile.95
@@ -3031,7 +2753,9 @@ win32/include/netdb.h		Win32 port
 win32/include/sys/socket.h	Win32 port
 win32/Makefile			Win32 makefile for NMAKE (Visual C++ build)
 win32/makefile.mk		Win32 makefile for DMAKE (BC++, VC++ builds)
+win32/makeico.pl		script to create perlexe.ico image file
 win32/mdelete.bat		multifile delete
+win32/perlexe.rc		associated perl binary with icon
 win32/perlglob.c		Win32 port
 win32/perlhost.h		Perl "host" implementation
 win32/perllib.c			Win32 port

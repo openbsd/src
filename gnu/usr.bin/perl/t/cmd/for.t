@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..13\n";
+print "1..14\n";
 
 for ($i = 0; $i <= 10; $i++) {
     $x[$i] = $i;
@@ -76,3 +76,22 @@ print $loop_count == 4 ? "ok" : "not ok", " 12\n";
 @a = (3,4);
 eval { @a = () for (1,2,@a) };
 print $@ =~ /Use of freed value in iteration/ ? "ok" : "not ok", " 13\n";
+
+# [perl #30061] double destory when same iterator variable (eg $_) used in
+# DESTROY as used in for loop that triggered the destroy
+
+{
+
+    my $x = 0;
+    sub X::DESTROY {
+	my $o = shift;
+	$x++;
+	1 for (1);
+    }
+
+    my %h;
+    $h{foo} = bless [], 'X';
+    delete $h{foo} for $h{foo}, 1;
+    print $x == 1 ? "ok" : "not ok", " 14 - double destroy, x=$x\n";
+}
+

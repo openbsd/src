@@ -417,9 +417,9 @@ Retrieves the value of a configurable limit on a file or directory.  This
 uses file descriptors such as those obtained by calling C<POSIX::open>.
 
 The following will determine the maximum length of the longest allowable
-pathname on the filesystem which holds C</tmp/foo>.
+pathname on the filesystem which holds C</var/foo>.
 
-	$fd = POSIX::open( "/tmp/foo", &POSIX::O_RDONLY );
+	$fd = POSIX::open( "/var/foo", &POSIX::O_RDONLY );
 	$path_max = POSIX::fpathconf( $fd, &POSIX::_PC_PATH_MAX );
 
 Returns C<undef> on failure.
@@ -919,7 +919,7 @@ See also L<perlfunc/sysopen>.
 
 Open a directory for reading.
 
-	$dir = POSIX::opendir( "/tmp" );
+	$dir = POSIX::opendir( "/var" );
 	@files = POSIX::readdir( $dir );
 	POSIX::closedir( $dir );
 
@@ -930,9 +930,9 @@ Returns C<undef> on failure.
 Retrieves the value of a configurable limit on a file or directory.
 
 The following will determine the maximum length of the longest allowable
-pathname on the filesystem which holds C</tmp>.
+pathname on the filesystem which holds C</var>.
 
-	$path_max = POSIX::pathconf( "/tmp", &POSIX::_PC_PATH_MAX );
+	$path_max = POSIX::pathconf( "/var", &POSIX::_PC_PATH_MAX );
 
 Returns C<undef> on failure.
 
@@ -1190,7 +1190,7 @@ See also L<Math::Trig>.
 
 This is functionally identical to Perl's builtin C<sleep()> function
 for suspending the execution of the current for process for certain
-number of seconds, see L<perlfunc/sleep>.  There is one signifanct 
+number of seconds, see L<perlfunc/sleep>.  There is one significant 
 difference, however: C<POSIX::sleep()> returns the number of
 B<unslept> seconds, while the C<CORE::sleep()> returns the
 number of slept seconds.

@@ -36,7 +36,7 @@ $Config{startperl}
 print OUT <<'!NO!SUBS!';
 
 # pod2man -- Convert POD data to formatted *roff input.
-# $Id: pod2man.PL,v 1.10 2002/07/15 05:45:56 eagle Exp $
+# $Id: pod2man.PL,v 1.7 2003/12/03 03:02:47 millert Exp $
 #
 # Copyright 1999, 2000, 2001 by Russ Allbery <rra@stanford.edu>
 #
@@ -64,7 +64,7 @@ my $stdin;
 # allowing short forms as well.  --lax is currently ignored.
 my %options;
 Getopt::Long::config ('bundling_override');
-GetOptions (\%options, 'section|s=s', 'release|r=s', 'center|c=s',
+GetOptions (\%options, 'section|s=s', 'release|r:s', 'center|c=s',
             'date|d=s', 'fixed=s', 'fixedbold=s', 'fixeditalic=s',
             'fixedbolditalic=s', 'name|n=s', 'official|o', 'quotes|q=s',
             'lax|l', 'help|h', 'verbose|v') or exit 1;

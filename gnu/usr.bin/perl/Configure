@@ -18,9 +18,9 @@
 # you may fetch it yourself from your nearest archive site.)
 #
 
-# $Id: Configure,v 1.12 2003/12/03 03:02:18 millert Exp $
+# $Id: Configure,v 1.13 2004/04/07 21:32:58 millert Exp $
 #
-# Generated on Fri Dec  5 12:57:38 MET 2003 [metaconfig 3.0 PL70]
+# Generated on Wed May 12 13:00:30 METDST 2004 [metaconfig 3.0 PL70]
 # (with additional metaconfig patches by perlbug@perl.org)
 
 cat >c1$$ <<EOF
@@ -942,6 +942,7 @@ freetype=''
 mallocobj=''
 mallocsrc=''
 malloctype=''
+usemallocwrap=''
 usemymalloc=''
 installman1dir=''
 man1dir=''
@@ -1173,8 +1174,6 @@ vendorscriptexp=''
 versiononly=''
 defvoidused=''
 voidflags=''
-pm_apiversion=''
-xs_apiversion=''
 yacc=''
 yaccflags=''
 CONFIG=''
@@ -2876,37 +2875,37 @@ ABYZ)
 	up='[:upper:]'
 	low='[:lower:]'
 	;;
-*)	# There is a discontinuity in EBCDIC between 'I' and 'J'
-        # (0xc9 and 0xd1), therefore that is a nice testing point.
-        if test "X$up" = X -o "X$low" = X; then
-	    case "`echo IJ | $tr '[I-J]' '[i-j]' 2>/dev/null`" in
-	    ij) up='[A-Z]'
-	        low='[a-z]'
+*)	# There is a discontinuity in EBCDIC between 'R' and 'S'
+	# (0xd9 and 0xe2), therefore that is a nice testing point.
+	if test "X$up" = X -o "X$low" = X; then
+	    case "`echo RS | $tr '[R-S]' '[r-s]' 2>/dev/null`" in
+	    rs) up='[A-Z]'
+		low='[a-z]'
 		;;
 	    esac
-        fi
+	fi
 	if test "X$up" = X -o "X$low" = X; then
-	    case "`echo IJ | $tr I-J i-j 2>/dev/null`" in
-	    ij) up='A-Z'
+	    case "`echo RS | $tr R-S r-s 2>/dev/null`" in
+	    rs) up='A-Z'
 		low='a-z'
 		;;
 	    esac
-        fi
+	fi
 	if test "X$up" = X -o "X$low" = X; then
-	    case "`echo IJ | od -x 2>/dev/null`" in
-	    *C9D1*|*c9d1*)
+	    case "`echo RS | od -x 2>/dev/null`" in
+	    *D9E2*|*d9e2*)
 		echo "Hey, this might be EBCDIC." >&4
 		if test "X$up" = X -o "X$low" = X; then
-		    case "`echo IJ | $tr '[A-IJ-RS-Z]' '[a-ij-rs-z]' 2>/dev/null`" in
-		    ij) up='[A-IJ-RS-Z]'
-		        low='[a-ij-rs-z]'
+		    case "`echo RS | $tr '[A-IJ-RS-Z]' '[a-ij-rs-z]' 2>/dev/null`" in
+		    rs) up='[A-IJ-RS-Z]'
+			low='[a-ij-rs-z]'
 			;;
 		    esac
 		fi
 		if test "X$up" = X -o "X$low" = X; then
-		    case "`echo IJ | $tr A-IJ-RS-Z a-ij-rs-z 2>/dev/null`" in
-		    ij) up='A-IJ-RS-Z'
-		        low='a-ij-rs-z'
+		    case "`echo RS | $tr A-IJ-RS-Z a-ij-rs-z 2>/dev/null`" in
+		    rs) up='A-IJ-RS-Z'
+			low='a-ij-rs-z'
 			;;
 		    esac
 		fi
@@ -2914,8 +2913,8 @@ ABYZ)
 	    esac
 	fi
 esac
-case "`echo IJ | $tr \"$up\" \"$low\" 2>/dev/null`" in
-ij)
+case "`echo RS | $tr \"$up\" \"$low\" 2>/dev/null`" in
+rs)
     echo "Using $up and $low to convert case." >&4
     ;;
 *)
@@ -3103,7 +3102,7 @@ EOM
 		domainos) osname=apollo
 			osvers="$3"
 			;;
-		dgux) osname=dgux 
+		dgux)	osname=dgux 
 			osvers="$3"
 			;;
 		dynixptx*) osname=dynixptx
@@ -3111,23 +3110,25 @@ EOM
 			;;
 		freebsd) osname=freebsd 
 			osvers="$3" ;;
-		genix) osname=genix ;;
-		hp*) osname=hpux 
+		genix)	osname=genix ;;
+		gnu)	osname=gnu
+			osvers="$3" ;;
+		hp*)	osname=hpux 
 			osvers=`echo "$3" | $sed 's,.*\.\([0-9]*\.[0-9]*\),\1,'`
 			;;
-		irix*) osname=irix
+		irix*)	osname=irix
 			case "$3" in
 			4*) osvers=4 ;;
 			5*) osvers=5 ;;
 			*)	osvers="$3" ;;
 			esac
 			;;
-		linux) osname=linux
+		linux)	osname=linux
 			case "$3" in
 			*)	osvers="$3" ;;
 			esac
 			;;
-		MiNT) osname=mint
+		MiNT)	osname=mint
 			;;
 		netbsd*) osname=netbsd
 			osvers="$3"
@@ -3458,12 +3459,15 @@ esac
 
 : who configured the system
 cf_time=`LC_ALL=C; LANGUAGE=C; export LC_ALL; export LANGUAGE; $date 2>&1`
-cf_by=`(logname) 2>/dev/null`
 case "$cf_by" in
 "")
-	cf_by=`(whoami) 2>/dev/null`
+	cf_by=`(logname) 2>/dev/null`
 	case "$cf_by" in
-	"") cf_by=unknown ;;
+	"")
+		cf_by=`(whoami) 2>/dev/null`
+		case "$cf_by" in
+		"") cf_by=unknown ;;
+		esac ;;
 	esac ;;
 esac
 
@@ -4704,6 +4708,7 @@ default|recommended)
 	2*) if test -d /etc/conf/kconfig.d &&
 			$contains _POSIX_VERSION $usrinc/sys/unistd.h >/dev/null 2>&1
 		then
+			# Interactive Systems (ISC) POSIX mode.
 			dflt="$dflt -posix"
 		fi
 		;;
@@ -4717,10 +4722,30 @@ default|recommended)
 		if $cc -O2 -fno-strict-aliasing -o gcctest gcctest.c; then
 			echo "Yes, it does." 2>&1
 			case "$ccflags" in
-			*strict-aliasing*) 
+			*strict-aliasing*)
 				echo "Leaving current flags $ccflags alone." 2>&1
 				;;
 			*) dflt="$dflt -fno-strict-aliasing" ;;
+			esac
+		else
+			echo "Nope, it doesn't, but that's ok." 2>&1
+		fi
+		;;
+	esac
+	# For gcc, adding -pipe speeds up compilations for some, but apparently
+	# some assemblers can't read from stdin.  (It also slows down compilations
+	# in other cases, but those are apparently rarer these days.)  AD 5/2004.
+	case "$gccversion" in
+	?*)	echo " "
+		echo "Checking if your compiler accepts -pipe" 2>&1
+		echo 'int main(void) { return 0; }' > gcctest.c
+		if $cc -O2 -pipe -o gcctest gcctest.c; then
+			echo "Yes, it does." 2>&1
+			case "$ccflags" in
+			*-pipe*)
+				echo "Leaving current flags $ccflags alone." 2>&1
+				;;
+			*) dflt="$dflt -pipe" ;;
 			esac
 		else
 			echo "Nope, it doesn't, but that's ok." 2>&1
@@ -4738,8 +4763,8 @@ for thisincl in $inclwanted; do
 	if $test -d $thisincl; then
 		if $test x$thisincl != x$usrinc; then
 			case "$dflt" in
-                        *" -I$thisincl "*);;
-                        *) dflt="$dflt -I$thisincl ";;
+			*" -I$thisincl "*);;
+			*) dflt="$dflt -I$thisincl ";;
 			esac
 		fi
 	fi
@@ -4870,7 +4895,7 @@ esac
 for thislibdir in $libpth; do
 	case " $loclibpth " in
 	*" $thislibdir "*)
-		case "$dflt " in 
+		case "$dflt " in
 		*"-L$thislibdir "*) ;;
 		*)  dflt="$dflt -L$thislibdir" ;;
 		esac
@@ -5450,10 +5475,10 @@ esac
 : Look for a hint-file generated 'call-back-unit'.  If the
 : user has specified that a 64-bit perl is to be built,
 : we may need to set or change some other defaults.
-	if $test -f use64bitint.cbu; then
+if $test -f use64bitint.cbu; then
 	echo "Your platform has some specific hints regarding 64-bit integers, using them..."
-		. ./use64bitint.cbu
-	fi
+	. ./use64bitint.cbu
+fi
 case "$use64bitint" in
 "$define"|true|[yY]*)
 	case "$longsize" in
@@ -5468,10 +5493,10 @@ esac
 : Look for a hint-file generated 'call-back-unit'.  If the
 : user has specified that a maximally 64-bit perl is to be built,
 : we may need to set or change some other defaults.
-	if $test -f use64bitall.cbu; then
+if $test -f use64bitall.cbu; then
 	echo "Your platform has some specific hints regarding 64-bit builds, using them..."
-		. ./use64bitall.cbu
-	fi
+	. ./use64bitall.cbu
+fi
 case "$use64bitall" in
 "$define"|true|[yY]*)
 	case "$longsize" in
@@ -5488,7 +5513,7 @@ $undef:$define)
 	cat >&4 <<EOF
 
 *** You have chosen to use 64-bit integers,
-*** but none cannot be found.
+*** but none can be found.
 *** Please rerun Configure without -Duse64bitint and/or -Dusemorebits.
 *** Cannot continue, aborting.
 
@@ -6256,6 +6281,27 @@ EOM
 esac
 
 
+: determine whether to use malloc wrapping
+echo " "
+case "$usemallocwrap" in
+[yY]*|true|$define)	dflt='y' ;;
+[nN]*|false|$undef)	dflt='n' ;;
+*)	case "$usedevel" in
+	[yY]*|true|$define)	dflt='y' ;;
+	*) dflt='n' ;;
+	esac
+	;;
+esac
+rp="Do you wish to wrap malloc calls to protect against potential overflows?"
+. ./myread
+usemallocwrap="$ans"
+case "$ans" in
+y*|true)
+	usemallocwrap="$define" ;;
+*)
+	usemallocwrap="$undef" ;;
+esac
+
 : determine which malloc to compile in
 echo " "
 case "$usemymalloc" in
@@ -6873,7 +6919,7 @@ EOM
 rp='List of earlier versions to include in @INC?'
 . ./myread
 case "$ans" in
-[Nn]one|''|' ') inc_version_list=' ' ;;
+[Nn]one|''|' '|$undef) inc_version_list=' ' ;;
 *) inc_version_list="$ans" ;;
 esac
 case "$inc_version_list" in
@@ -7623,11 +7669,9 @@ say "none".
 EOM
     case "$ccdlflags" in
     '') case "$osname" in
-		hpux)	dflt='-Wl,-E' ;;
-		linux)	dflt='-rdynamic' ;;
-		next)	dflt='none' ;;
-		sunos)	dflt='none' ;;
-		*)	dflt='none' ;;
+	    linux|hpux)	dflt='-Wl,-E' ;;
+	    next|sunos)	dflt='none' ;;
+	    *)		dflt='none' ;;
 	    esac ;;
     ' ')  dflt='none' ;;
     *)  dflt="$ccdlflags" ;;
@@ -10056,7 +10100,7 @@ int main()
 	i32  = ($xxx) g;
 
 	/* x86 processors will probably give 0x8000 0000, which is a
-       sign change.  We don't want that.  We want to mimic SPARC
+	   sign change.  We don't want that.  We want to mimic SPARC
 	   behavior here, which is to preserve the sign and give
 	   back 0x7fff ffff.
 	*/
@@ -18643,12 +18687,6 @@ rp="What is the type of process ids on this system?"
 set pid_t pidtype int stdio.h sys/types.h
 eval $typedef_ask
 
-: Find earliest binary compatible site_perl subdirectory perl can use.
-xs_apiversion=$version # The current site_perl version.
-: Find earliest pure perl site_perl subdirectory perl can use.
-: The versioned directories started at 5.005.
-pm_apiversion='5.005'
-
 : see if ar generates random libraries by itself
 echo " "
 echo "Checking how to generate random libraries on your machine..." >&4
@@ -21209,7 +21247,6 @@ pg='$pg'
 phostname='$phostname'
 pidtype='$pidtype'
 plibpth='$plibpth'
-pm_apiversion='$pm_apiversion'
 pmake='$pmake'
 pr='$pr'
 prefix='$prefix'
@@ -21364,6 +21401,7 @@ usefaststdio='$usefaststdio'
 useithreads='$useithreads'
 uselargefiles='$uselargefiles'
 uselongdouble='$uselongdouble'
+usemallocwrap='$usemallocwrap'
 usemorebits='$usemorebits'
 usemultiplicity='$usemultiplicity'
 usemymalloc='$usemymalloc'
@@ -21411,7 +21449,6 @@ versiononly='$versiononly'
 vi='$vi'
 voidflags='$voidflags'
 xlibpth='$xlibpth'
-xs_apiversion='$xs_apiversion'
 yacc='$yacc'
 yaccflags='$yaccflags'
 zcat='$zcat'

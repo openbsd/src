@@ -9,6 +9,7 @@ usemymalloc='n'
 
 ld=ld
 i_time='define'
+i_inttypes='undef'
 
 case "$cc" in
 *gcc*) ccflags="$ccflags -D_BSD_TYPES" ;;
@@ -18,7 +19,7 @@ case "$cc" in
    # 658: bit-field 'th_off' type required to be int, unsigned int, or signed int. <netinet/tcp.h>
    # 734: enum declaration must contain enum literals <sys/vnode.h>
    # 799: 'long long' is not standard ANSI.
-   ccflags="$ccflags -D_POSIX_SOURCE -ansiposix -D_BSD_TYPES -Olimit 4000 -woff 608,658,734,799"
+   ccflags="$ccflags -D_POSIX_SOURCE -ansiposix -D_BSD_TYPES -Olimit 4300 -woff 608,658,734,799"
 # Without this the cc thinks that a struct timeval * is not equivalent to
 # a struct timeval *.  Yeah, you read that right.
 pp_sys_cflags='ccflags="$ccflags -DPERL_IRIX5_SELECT_TIMEVAL_VOID_CAST"'

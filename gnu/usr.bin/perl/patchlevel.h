@@ -1,7 +1,7 @@
 /*    patchlevel.h
  *
  *    Copyright (C) 1993, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -15,7 +15,7 @@
 
 #define PERL_REVISION	5		/* age */
 #define PERL_VERSION	8		/* epoch */
-#define PERL_SUBVERSION	3		/* generation */
+#define PERL_SUBVERSION	5		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API

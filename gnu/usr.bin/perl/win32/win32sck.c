@@ -497,7 +497,11 @@ my_fstat(int fd, Stat_t *sbufptr)
     int osf;
     if (!wsock_started || IsWinNT()) {
 #if defined(WIN64) || defined(USE_LARGE_FILES)
+#if defined(__BORLANDC__) /* buk */
+	return win32_fstat(fd, sbufptr );
+#else
 	return _fstati64(fd, sbufptr);
+#endif
 #else
 	return fstat(fd, sbufptr);
 #endif
@@ -525,7 +529,11 @@ my_fstat(int fd, Stat_t *sbufptr)
 	}
     }
 #if defined(WIN64) || defined(USE_LARGE_FILES)
+#if defined(__BORLANDC__) /* buk */
+    return win32_fstat(fd, sbufptr );
+#else
     return _fstati64(fd, sbufptr);
+#endif
 #else
     return fstat(fd, sbufptr);
 #endif

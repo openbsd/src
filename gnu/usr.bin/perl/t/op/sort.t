@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 use warnings;
-print "1..58\n";
+print "1..75\n";
 
 # these shouldn't hang
 {
@@ -322,3 +322,75 @@ sub cxt_six { sort test_if_scalar 1,2 }
     @a = sort(routine(1));
     print "@a" eq "one two" ? "ok 58\n" : "not ok 58\n";
 }
+
+
+my $test = 59;
+sub ok {
+    print "not " unless $_[0] eq $_[1];
+    print "ok $test - $_[2]\n";
+    print "#[$_[0]] ne [$_[1]]\n" unless $_[0] eq $_[1];
+    $test++;
+}
+
+# check for in-place optimisation of @a = sort @a
+{
+    my ($r1,$r2,@a);
+    our @g;
+    @g = (3,2,1); $r1 = \$g[2]; @g = sort @g; $r2 = \$g[0];
+    ok "$r1-@g", "$r2-1 2 3", "inplace sort of global";
+
+    @a = qw(b a c); $r1 = \$a[1]; @a = sort @a; $r2 = \$a[0];
+    ok "$r1-@a", "$r2-a b c", "inplace sort of lexical";
+
+    @g = (2,3,1); $r1 = \$g[1]; @g = sort { $b <=> $a } @g; $r2 = \$g[0];
+    ok "$r1-@g", "$r2-3 2 1", "inplace reversed sort of global";
+
+    @g = (2,3,1);
+    $r1 = \$g[1]; @g = sort { $a<$b?1:$a>$b?-1:0 } @g; $r2 = \$g[0];
+    ok "$r1-@g", "$r2-3 2 1", "inplace custom sort of global";
+
+    sub mysort { $b cmp $a };
+    @a = qw(b c a); $r1 = \$a[1]; @a = sort mysort @a; $r2 = \$a[0];
+    ok "$r1-@a", "$r2-c b a", "inplace sort with function of lexical";
+
+    use Tie::Array;
+    my @t;
+    tie @t, 'Tie::StdArray';
+
+    @t = qw(b c a); @t = sort @t;
+    ok "@t", "a b c", "inplace sort of tied array";
+
+    @t = qw(b c a); @t = sort mysort @t;
+    ok "@t", "c b a", "inplace sort of tied array with function";
+
+    #  [perl #29790] don't optimise @a = ('a', sort @a) !
+
+    @g = (3,2,1); @g = ('0', sort @g);
+    ok "@g", "0 1 2 3", "un-inplace sort of global";
+    @g = (3,2,1); @g = (sort(@g),'4');
+    ok "@g", "1 2 3 4", "un-inplace sort of global 2";
+
+    @a = qw(b a c); @a = ('x', sort @a);
+    ok "@a", "x a b c", "un-inplace sort of lexical";
+    @a = qw(b a c); @a = ((sort @a), 'x');
+    ok "@a", "a b c x", "un-inplace sort of lexical 2";
+
+    @g = (2,3,1); @g = ('0', sort { $b <=> $a } @g);
+    ok "@g", "0 3 2 1", "un-inplace reversed sort of global";
+    @g = (2,3,1); @g = ((sort { $b <=> $a } @g),'4');
+    ok "@g", "3 2 1 4", "un-inplace reversed sort of global 2";
+
+    @g = (2,3,1); @g = ('0', sort { $a<$b?1:$a>$b?-1:0 } @g);
+    ok "@g", "0 3 2 1", "un-inplace custom sort of global";
+    @g = (2,3,1); @g = ((sort { $a<$b?1:$a>$b?-1:0 } @g),'4');
+    ok "@g", "3 2 1 4", "un-inplace custom sort of global 2";
+
+    @a = qw(b c a); @a = ('x', sort mysort @a);
+    ok "@a", "x c b a", "un-inplace sort with function of lexical";
+    @a = qw(b c a); @a = ((sort mysort @a),'x');
+    ok "@a", "c b a x", "un-inplace sort with function of lexical 2";
+}
+
+
+
+

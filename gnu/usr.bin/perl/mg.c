@@ -1,7 +1,7 @@
 /*    mg.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -643,8 +643,10 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
 	    sv_setsv(sv, &PL_sv_undef);
 	break;
     case '\017':		/* ^O & ^OPEN */
-	if (*(mg->mg_ptr+1) == '\0')
+	if (*(mg->mg_ptr+1) == '\0') {
 	    sv_setpv(sv, PL_osname);
+	    SvTAINTED_off(sv);
+	}
 	else if (strEQ(mg->mg_ptr, "\017PEN")) {
 	    if (!PL_compiling.cop_io)
 		sv_setsv(sv, &PL_sv_undef);
@@ -1934,14 +1936,14 @@ Perl_magic_killbackrefs(pTHX_ SV *sv, MAGIC *mg)
     SV **svp = AvARRAY(av);
     I32 i = AvFILLp(av);
     while (i >= 0) {
-	if (svp[i] && svp[i] != &PL_sv_undef) {
+	if (svp[i]) {
 	    if (!SvWEAKREF(svp[i]))
 		Perl_croak(aTHX_ "panic: magic_killbackrefs");
 	    /* XXX Should we check that it hasn't changed? */
 	    SvRV(svp[i]) = 0;
 	    (void)SvOK_off(svp[i]);
 	    SvWEAKREF_off(svp[i]);
-	    svp[i] = &PL_sv_undef;
+	    svp[i] = Nullsv;
 	}
 	i--;
     }
@@ -2096,12 +2098,14 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	break;
     case '\017':	/* ^O */
 	if (*(mg->mg_ptr+1) == '\0') {
-	    if (PL_osname)
+	    if (PL_osname) {
 		Safefree(PL_osname);
-	    if (SvOK(sv))
-		PL_osname = savepv(SvPV(sv,len));
-	    else
 		PL_osname = Nullch;
+	    }
+	    if (SvOK(sv)) {
+		TAINT_PROPER("assigning to $^O");
+		PL_osname = savepv(SvPV(sv,len));
+	    }
 	}
 	else if (strEQ(mg->mg_ptr, "\017PEN")) {
 	    if (!PL_compiling.cop_io)

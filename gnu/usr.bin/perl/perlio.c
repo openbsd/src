@@ -1,5 +1,5 @@
 /*
- * perlio.c Copyright (c) 1996-2002, Nick Ing-Simmons You may distribute
+ * perlio.c Copyright (c) 1996-2004, Nick Ing-Simmons You may distribute
  * under the terms of either the GNU General Public License or the
  * Artistic License, as specified in the README file.
  */
@@ -3691,6 +3691,7 @@ PerlIOBuf_write(pTHX_ PerlIO *f, const void *vbuf, Size_t count)
 {
     PerlIOBuf *b = PerlIOSelf(f, PerlIOBuf);
     const STDCHAR *buf = (const STDCHAR *) vbuf;
+    const STDCHAR *flushptr = buf;
     Size_t written = 0;
     if (!b->buf)
 	PerlIO_get_base(f);
@@ -3701,32 +3702,26 @@ PerlIOBuf_write(pTHX_ PerlIO *f, const void *vbuf, Size_t count)
 	    return 0;
 	}
     }	
+    if (PerlIOBase(f)->flags & PERLIO_F_LINEBUF) {
+	flushptr = buf + count;
+	while (flushptr > buf && *(flushptr - 1) != '\n')
+	    --flushptr;
+    }
     while (count > 0) {
 	SSize_t avail = b->bufsiz - (b->ptr - b->buf);
 	if ((SSize_t) count < avail)
 	    avail = count;
+	if (flushptr > buf && flushptr <= buf + avail)
+	    avail = flushptr - buf;
 	PerlIOBase(f)->flags |= PERLIO_F_WRBUF;
-	if (PerlIOBase(f)->flags & PERLIO_F_LINEBUF) {
-	    while (avail > 0) {
-		int ch = *buf++;
-		*(b->ptr)++ = ch;
-		count--;
-		avail--;
-		written++;
-		if (ch == '\n') {
-		    PerlIO_flush(f);
-		    break;
-		}
-	    }
-	}
-	else {
-	    if (avail) {
-		Copy(buf, b->ptr, avail, STDCHAR);
-		count -= avail;
-		buf += avail;
-		written += avail;
-		b->ptr += avail;
-	    }
+	if (avail) {
+	    Copy(buf, b->ptr, avail, STDCHAR);
+	    count -= avail;
+	    buf += avail;
+	    written += avail;
+	    b->ptr += avail;
+	    if (buf == flushptr)
+		PerlIO_flush(f);
 	}
 	if (b->ptr >= (b->buf + b->bufsiz))
 	    PerlIO_flush(f);
@@ -4718,9 +4713,16 @@ PerlIO_getname(PerlIO *f, char *buf)
     dTHX;
     char *name = NULL;
 #ifdef VMS
+    bool exported = FALSE;
     FILE *stdio = PerlIOSelf(f, PerlIOStdio)->stdio;
-    if (stdio)
+    if (!stdio) {
+	stdio = PerlIO_exportFILE(f,0);
+	exported = TRUE;
+    }
+    if (stdio) {
 	name = fgetname(stdio, buf);
+	if (exported) PerlIO_releaseFILE(f,stdio);
+    }
 #else
     Perl_croak(aTHX_ "Don't know how to get file name");
 #endif

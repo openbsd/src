@@ -1,6 +1,6 @@
 # Net::FTP.pm
 #
-# Copyright (c) 1995-8 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1995-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -22,7 +22,7 @@ use Net::Config;
 use Fcntl qw(O_WRONLY O_RDONLY O_APPEND O_CREAT O_TRUNC);
 # use AutoLoader qw(AUTOLOAD);
 
-$VERSION = "2.72"; # $Id: //depot/libnet/Net/FTP.pm#80 $
+$VERSION = "2.75";
 @ISA     = qw(Exporter Net::Cmd IO::Socket::INET);
 
 # Someday I will "use constant", when I am not bothered to much about
@@ -50,8 +50,14 @@ BEGIN {
 sub new
 {
  my $pkg  = shift;
- my $peer = shift;
- my %arg  = @_; 
+ my ($peer,%arg);
+ if (@_ % 2) {
+   $peer = shift ;
+   %arg  = @_;
+ } else {
+   %arg = @_;
+   $peer=delete $arg{Host};
+ }
 
  my $host = $peer;
  my $fire = undef;
@@ -123,6 +129,13 @@ sub new
 ##
 ## User interface methods
 ##
+
+
+sub host {
+ my $me = shift;
+ ${*$me}{'net_ftp_host'};
+}
+
 
 sub hash {
     my $ftp = shift;		# self
@@ -206,7 +219,7 @@ sub size {
   my $io;
   if($ftp->supported("SIZE")) {
     return $ftp->_SIZE($file)
-	? ($ftp->message =~ /(\d+)\s*$/)[0]
+	? ($ftp->message =~ /(\d+)\s*(bytes?\s*)?$/)[0]
 	: undef;
  }
  elsif($ftp->supported("STAT")) {
@@ -443,8 +456,8 @@ sub get
  croak("Bad remote filename '$remote'\n")
 	if $remote =~ /[\r\n]/s;
 
- ${*$ftp}{'net_ftp_rest'} = $where
-	if ($where);
+ ${*$ftp}{'net_ftp_rest'} = $where if defined $where;
+  my $rest = ${*$ftp}{'net_ftp_rest'};
 
  delete ${*$ftp}{'net_ftp_port'};
  delete ${*$ftp}{'net_ftp_pasv'};
@@ -460,7 +473,7 @@ sub get
   {
    $loc = \*FD;
 
-   unless(sysopen($loc, $local, O_CREAT | O_WRONLY | ($where ? O_APPEND : O_TRUNC)))
+   unless(sysopen($loc, $local, O_CREAT | O_WRONLY | ($rest ? O_APPEND : O_TRUNC)))
     {
      carp "Cannot open Local file $local: $!\n";
      $data->abort;
@@ -581,14 +594,14 @@ sub rmdir
 
     # Try to delete the contents
     # Get a list of all the files in the directory
-    my $filelist = $ftp->ls($dir);
+    my @filelist = grep { !/^\.{1,2}$/ } $ftp->ls($dir);
 
     return undef
-	unless $filelist && @$filelist; # failed, it is probably not a directory
+	unless @filelist; # failed, it is probably not a directory
 
     # Go thru and delete each file or the directory
     my $file;
-    foreach $file (map { m,/, ? $_ : "$dir/$_" } @$filelist)
+    foreach $file (map { m,/, ? $_ : "$dir/$_" } @filelist)
     {
 	next  # successfully deleted the file
 	    if $ftp->delete($file);
@@ -713,7 +726,7 @@ sub _store_cmd
    # _store_cmd call, figure out if the local file is a regular file(not
    # a pipe, or device) and if so get the file size from stat, and send
    # an ALLO command before sending the STOR, STOU, or APPE command.
-   my $size = -f $local && -s _; # no ALLO if sending data from a pipe
+   my $size = do { local $^W; -f $local && -s _ }; # no ALLO if sending data from a pipe
    $ftp->_ALLO($size) if $size;
   }
  croak("Bad remote filename '$remote'\n")
@@ -939,7 +952,7 @@ sub _dataconn
 
  if(defined ${*$ftp}{'net_ftp_pasv'})
   {
-   my @port = split(/,/,${*$ftp}{'net_ftp_pasv'});
+   my @port = map { 0+$_ } split(/,/,${*$ftp}{'net_ftp_pasv'});
 
    $data = $pkg->new(PeerAddr => join(".",@port[0..3]),
     	    	     PeerPort => $port[4] * 256 + $port[5],
@@ -1280,13 +1293,22 @@ this if you really know what you're doing).
 
 =over 4
 
-=item new (HOST [,OPTIONS])
+=item new ([ HOST ] [, OPTIONS ])
 
 This is the constructor for a new Net::FTP object. C<HOST> is the
 name of the remote host to which an FTP connection is required.
 
+C<HOST> is optional. If C<HOST> is not given then it may instead be
+passed as the C<Host> option described below. 
+
 C<OPTIONS> are passed in a hash like fashion, using key and value pairs.
 Possible options are:
+
+B<Host> - FTP host to connect to. It may be a single scalar, as defined for
+the C<PeerAddr> option in L<IO::Socket::INET>, or a reference to
+an array with hosts to try in turn. The L</host> method will return the value
+which was used to connect to the host.
+
 
 B<Firewall> - The name of a machine which acts as an FTP firewall. This can be
 overridden by an environment variable C<FTP_FIREWALL>. If specified, and the
@@ -1416,8 +1438,6 @@ C<mkdir> will attempt to create all the directories in the given path.
 
 Returns the full pathname to the new directory.
 
-=item ls ( [ DIR ] )
-
 =item alloc ( SIZE [, RECORD_SIZE] )
 
 The alloc command allows you to give the ftp server a hint about the size
@@ -1431,6 +1451,8 @@ The size of the file will be determined, and sent to the server
 automatically for normal files so that this method need only be called if
 you are transfering data from a socket, named pipe, or other stream not
 associated with a normal file.
+
+=item ls ( [ DIR ] )
 
 Get a directory listing of C<DIR>, or the current directory.
 
@@ -1761,12 +1783,8 @@ Roderick Schertler <roderick@gate.net> - for various inputs
 
 =head1 COPYRIGHT
 
-Copyright (c) 1995-1998 Graham Barr. All rights reserved.
+Copyright (c) 1995-2004 Graham Barr. All rights reserved.
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
-
-=for html <hr>
-
-I<$Id: //depot/libnet/Net/FTP.pm#80 $>
 
 =cut

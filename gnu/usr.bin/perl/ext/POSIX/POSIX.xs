@@ -1013,6 +1013,7 @@ localeconv()
 #ifdef HAS_LOCALECONV
 	struct lconv *lcbuf;
 	RETVAL = newHV();
+	sv_2mortal((SV*)RETVAL);
 	if ((lcbuf = localeconv())) {
 	    /* the strings */
 	    if (lcbuf->decimal_point && *lcbuf->decimal_point)
@@ -1805,7 +1806,18 @@ access(filename, mode)
 
 char *
 ctermid(s = 0)
-	char *		s = 0;
+	char *          s = 0;
+    CODE:
+#ifdef HAS_CTERMID_R
+	s = safemalloc((size_t) L_ctermid);
+#endif
+	RETVAL = ctermid(s);
+    OUTPUT:
+	RETVAL
+    CLEANUP:
+#ifdef HAS_CTERMID_R
+	Safefree(s);
+#endif
 
 char *
 cuserid(s = 0)
@@ -1863,3 +1875,18 @@ getcwd()
 	XSprePUSH; PUSHTARG;
       }
 
+SysRet
+lchown(uid, gid, path)
+       Uid_t           uid
+       Gid_t           gid
+       char *          path
+    CODE:
+#ifdef HAS_LCHOWN
+       /* yes, the order of arguments is different,
+        * but consistent with CORE::chown() */
+       RETVAL = lchown(path, uid, gid);
+#else
+       RETVAL = not_here("lchown");
+#endif
+    OUTPUT:
+       RETVAL

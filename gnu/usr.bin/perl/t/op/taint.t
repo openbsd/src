@@ -124,7 +124,7 @@ my $echo = "$Invoke_Perl $ECHO";
 
 my $TEST = catfile(curdir(), 'TEST');
 
-print "1..220\n";
+print "1..223\n";
 
 # First, let's make sure that Perl is checking the dangerous
 # environment variables. Maybe they aren't set yet, so we'll
@@ -1030,4 +1030,14 @@ else
     test 219, !tainted($1);
     ($r = $TAINT) =~ /($TAINT)/;
     test 220, tainted($1);
+
+    #  [perl #24674]
+    # accessing $^O  shoudn't taint it as a side-effect;
+    # assigning tainted data to it is now an error
+
+    test 221, !tainted($^O);
+    if (!$^X) { } elsif ($^O eq 'bar') { }
+    test 222, !tainted($^O);
+    eval '$^O = $^X';
+    test 223, $@ =~ /Insecure dependency in/;
 }

@@ -97,9 +97,11 @@ so that your constructors may be inherited:
     }
 
 Or if you expect people to call not just C<< CLASS->new() >> but also
-C<< $obj->new() >>, then use something like this.  The initialize()
-method used will be of whatever $class we blessed the
-object into:
+C<< $obj->new() >>, then use something like the following.  (Note that using
+this to call new() on an instance does not automatically perform any
+copying.  If you want a shallow or deep copy of an object, you'll have to
+specifically allow for that.)  The initialize() method used will be of
+whatever $class we blessed the object into:
 
     sub new {
 	my $this = shift;
@@ -485,9 +487,8 @@ if you don't care to leak.  For example, here's a self-referential
 node such as one might use in a sophisticated tree structure:
 
     sub new_node {
-	my $self = shift;
-	my $class = ref($self) || $self;
-	my $node = {};
+	my $class = shift;
+	my $node  = {};
 	$node->{LEFT} = $node->{RIGHT} = $node;
 	$node->{DATA} = [ @_ ];
 	return bless $node => $class;
@@ -535,15 +536,15 @@ two-phased garbage collection:
     warn "time to die...";
     exit;
 
-When run as F</tmp/test>, the following output is produced:
+When run as F</foo/test>, the following output is produced:
 
-    starting program at /tmp/test line 18.
-    CREATING SCALAR(0x8e5b8) at /tmp/test line 7.
-    CREATING SCALAR(0x8e57c) at /tmp/test line 7.
-    leaving block at /tmp/test line 23.
-    DESTROYING Subtle=SCALAR(0x8e5b8) at /tmp/test line 13.
-    just exited block at /tmp/test line 26.
-    time to die... at /tmp/test line 27.
+    starting program at /foo/test line 18.
+    CREATING SCALAR(0x8e5b8) at /foo/test line 7.
+    CREATING SCALAR(0x8e57c) at /foo/test line 7.
+    leaving block at /foo/test line 23.
+    DESTROYING Subtle=SCALAR(0x8e5b8) at /foo/test line 13.
+    just exited block at /foo/test line 26.
+    time to die... at /foo/test line 27.
     DESTROYING Subtle=SCALAR(0x8e57c) during global destruction.
 
 Notice that "global destruction" bit there?  That's the thread

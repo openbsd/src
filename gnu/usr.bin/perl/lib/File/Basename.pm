@@ -12,7 +12,8 @@ dirname - extract just the directory from a path
 
     use File::Basename;
 
-    ($name,$path,$suffix) = fileparse($fullname,@suffixlist)
+    ($name,$path,$suffix) = fileparse($fullname,@suffixlist);
+    $name = fileparse($fullname,@suffixlist);
     fileparse_set_fstype($os_string);
     $basename = basename($fullname,@suffixlist);
     $dirname = dirname($fullname);
@@ -69,6 +70,8 @@ C<@suffixlist>, you can remove file types or versions for examination.
 You are guaranteed that if you concatenate B<path>, B<name>, and
 B<suffix> together in that order, the result will denote the same
 file as the input file specification.
+
+In scalar context, fileparse() returns only the B<name> part of the filename.
 
 =back
 
@@ -142,7 +145,7 @@ our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-$VERSION = "2.72";
+$VERSION = "2.73";
 
 
 #   fileparse_set_fstype() - specify OS-based rules used in future

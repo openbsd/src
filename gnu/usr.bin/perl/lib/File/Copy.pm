@@ -24,7 +24,7 @@ sub mv;
 # package has not yet been updated to work with Perl 5.004, and so it
 # would be a Bad Thing for the CPAN module to grab it and replace this
 # module.  Therefore, we set this module's version higher than 2.0.
-$VERSION = '2.07';
+$VERSION = '2.08';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -274,11 +274,10 @@ File::Copy - Copy files or filehandles
 	copy("Copy.pm",\*STDOUT);
 	move("/dev1/fileA","/dev2/fileB");
 
-	use POSIX;
-	use File::Copy cp;
+	use File::Copy "cp";
 
 	$n = FileHandle->new("/a/file","r");
-	cp($n,"x");'
+	cp($n,"x");
 
 =head1 DESCRIPTION
 

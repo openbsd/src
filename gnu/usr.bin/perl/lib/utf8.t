@@ -37,7 +37,7 @@ no utf8; # Ironic, no?
 #
 #
 
-plan tests => 143;
+plan tests => 145;
 
 {
     # bug id 20001009.001
@@ -408,4 +408,20 @@ SKIP: {
     ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
     ok( utf8::is_utf8($b), " utf8::is_utf8 beyond"); # $b stays in UTF-8.
     ok( utf8::is_utf8($c), " utf8::is_utf8 unicode");
+}
+
+{
+    eval {utf8::encode("£")};
+    like($@, qr/^Modification of a read-only value attempted/,
+	 "utf8::encode should refuse to touch read-only values");
+}
+
+{
+    my $a = "456\xb6";
+    utf8::upgrade($a);
+
+    my $b = "123456\xb6";
+    $b =~ s/^...//;
+    utf8::upgrade($b);
+    is($b, $a, "utf8::upgrade OffsetOK");
 }

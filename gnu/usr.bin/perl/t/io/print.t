@@ -6,7 +6,8 @@ BEGIN {
 }
 
 use strict 'vars';
-use Errno;
+eval 'use Errno';
+die $@ if $@ and !$ENV{PERL_CORE_MINITEST};
 
 print "1..19\n";
 
@@ -40,6 +41,8 @@ print @x,"14\nok",@y;
     local $\ = "ok 17\n# null =>[\000]\nok 18\n";
     print "";
 }
+
+$\ = '';
 
 if (!exists &Errno::EBADF) {
     print "ok 19 # skipped: no EBADF\n";

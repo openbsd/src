@@ -58,13 +58,14 @@ my $Dest_dir = $opt_d || $Config{installsitearch};
 die "Destination directory $Dest_dir doesn't exist or isn't a directory\n"
     unless -d $Dest_dir;
 
-my @isatype = split(' ',<<END);
+my @isatype = qw(
 	char	uchar	u_char
 	short	ushort	u_short
 	int	uint	u_int
 	long	ulong	u_long
 	FILE	key_t	caddr_t
-END
+	float	double	size_t
+);
 
 my %isatype;
 @isatype{@isatype} = (1) x @isatype;
@@ -133,9 +134,9 @@ while (defined (my $file = next_file())) {
 		s/\(\w+\s*\(\*\)\s*\(\w*\)\)\s*(-?\d+)/$1/; # (int (*)(foo_t))0
 		if (s/^\(([\w,\s]*)\)//) {
 		    $args = $1;
-    	    	    my $proto = '() ';
+		    my $proto = '() ';
 		    if ($args ne '') {
-    	    	    	$proto = '';
+			$proto = '';
 			foreach my $arg (split(/,\s*/,$args)) {
 			    $arg =~ s/^\s*([^\s].*[^\s])\s*$/$1/;
 			    $curargs{$arg} = 1;
@@ -146,6 +147,7 @@ while (defined (my $file = next_file())) {
 		    s/^\s+//;
 		    expr();
 		    $new =~ s/(["\\])/\\$1/g;       #"]);
+		  EMIT:
 		    $new = reindent($new);
 		    $args = reindent($args);
 		    if ($t ne '') {
@@ -268,7 +270,7 @@ while (defined (my $file = next_file())) {
 	    } elsif(/^ident\s+(.*)/) {
 		print OUT $t, "# $1\n";
 	    }
-	} elsif(/^\s*(typedef\s*)?enum\s*(\s+[a-zA-Z_]\w*\s*)?/) {
+	} elsif (/^\s*(typedef\s*)?enum\s*(\s+[a-zA-Z_]\w*\s*)?/) { # { for vi
 	    until(/\{[^}]*\}.*;/ || /;/) {
 		last unless defined ($next = next_line($file));
 		chomp $next;
@@ -300,6 +302,75 @@ while (defined (my $file = next_file())) {
 			       "unless defined(\&$enum_name);\n");
 		}
 	    }
+	} elsif (/^(?:__extension__\s+)?(?:extern|static)\s+(?:__)?inline(?:__)?\s+/
+	    and !/;\s*$/ and !/{\s*}\s*$/)
+	{ # { for vi
+	    # This is a hack to parse the inline functions in the glibc headers.
+	    # Warning: massive kludge ahead. We suppose inline functions
+	    # are mainly constructed like macros.
+	    while (1) {
+		last unless defined ($next = next_line($file));
+		chomp $next;
+		undef $_, last if $next =~ /__THROW\s*;/
+			       or $next =~ /^(__extension__|extern|static)\b/;
+		$_ .= " $next";
+		print OUT "# $next\n" if $opt_D;
+		last if $next =~ /^}|^{.*}\s*$/;
+	    }
+	    next if not defined; # because it's only a prototype
+	    s/\b(__extension__|extern|static|(?:__)?inline(?:__)?)\b//g;
+	    # violently drop #ifdefs
+	    s/#\s*if.*?#\s*endif//g
+		and print OUT "# some #ifdef were dropped here -- fill in the blanks\n";
+	    if (s/^(?:\w|\s|\*)*\s(\w+)\s*//) {
+		$name = $1;
+	    } else {
+		warn "name not found"; next; # shouldn't occur...
+	    }
+	    my @args;
+	    if (s/^\(([^()]*)\)\s*(\w+\s*)*//) {
+		for my $arg (split /,/, $1) {
+		    if ($arg =~ /(\w+)\s*$/) {
+			$curargs{$1} = 1;
+			push @args, $1;
+		    }
+		}
+	    }
+	    $args = (
+		@args
+		? "local(" . (join ',', map "\$$_", @args) . ") = \@_;\n$t    "
+		: ""
+	    );
+	    my $proto = @args ? '' : '() ';
+	    $new = '';
+	    s/\breturn\b//g; # "return" doesn't occur in macros usually...
+	    expr();
+	    # try to find and perlify local C variables
+	    our @local_variables = (); # needs to be a our(): (?{...}) bug workaround
+	    {
+		use re "eval";
+		my $typelist = join '|', keys %isatype;
+		$new =~ s['
+		  (?:(?:un)?signed\s+)?
+		  (?:long\s+)?
+		  (?:$typelist)\s+
+		  (\w+)
+		  (?{ push @local_variables, $1 })
+		  ']
+		 [my \$$1]gx;
+		$new =~ s['
+		  (?:(?:un)?signed\s+)?
+		  (?:long\s+)?
+		  (?:$typelist)\s+
+		  ' \s+ &(\w+) \s* ;
+		  (?{ push @local_variables, $1 })
+		  ]
+		 [my \$$1;]gx;
+	     }
+	    $new =~ s/&$_\b/\$$_/g for @local_variables;
+	    $new =~ s/(["\\])/\\$1/g;       #"]);
+	    # now that's almost like a macro (we hope)
+	    goto EMIT;
 	}
     }
     $Is_converted{$file} = 1;
@@ -308,7 +379,7 @@ while (defined (my $file = next_file())) {
         $next = '';
     } else {
         print OUT "1;\n";
-    queue_includes_from($file) if ($opt_a);
+	queue_includes_from($file) if $opt_a;
     }
 }
 
@@ -380,10 +451,16 @@ sub expr {
         };
 	# Eliminate typedefs
 	/\(([\w\s]+)[\*\s]*\)\s*[\w\(]/ && do {
+	    my $doit = 1;
 	    foreach (split /\s+/, $1) {  # Make sure all the words are types,
-		last unless ($isatype{$_} or $_ eq 'struct' or $_ eq 'union');
+	        unless($isatype{$_} or $_ eq 'struct' or $_ eq 'union'){
+		    $doit = 0;
+		    last;
+		}
 	    }
-	    s/\([\w\s]+[\*\s]*\)// && next;      # then eliminate them.
+	    if( $doit ){
+		s/\([\w\s]+[\*\s]*\)// && next;      # then eliminate them.
+	    }
 	};
 	# struct/union member, including arrays:
 	s/^([_A-Z]\w*(\[[^\]]+\])?((\.|->)[_A-Z]\w*(\[[^\]]+\])?)+)//i && do {

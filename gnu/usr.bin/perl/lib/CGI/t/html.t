@@ -62,19 +62,20 @@ test(13,start_html() ."\n" eq <<END,"start_html()");
 </head><body>
 END
     ;
-test(14,start_html(-dtd=>"-//IETF//DTD HTML 3.2//FR",-lang=>'fr') ."\n" eq <<END,"start_html()");
-<!DOCTYPE html
-	PUBLIC "-//IETF//DTD HTML 3.2//FR">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head><title>Untitled Document</title>
-</head><body>
-END
-    ;
-test(15,start_html(-Title=>'The world of foo') ."\n" eq <<END,"start_html()");
+test(14,start_html(-Title=>'The world of foo') ."\n" eq <<END,"start_html()");
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head><title>The world of foo</title>
+</head><body>
+END
+    ;
+# Note that this test will turn off XHTML until we make a new CGI object.
+test(15,start_html(-dtd=>"-//IETF//DTD HTML 3.2//FR",-lang=>'fr') ."\n" eq <<END,"start_html()");
+<!DOCTYPE html
+	PUBLIC "-//IETF//DTD HTML 3.2//FR">
+<html lang="fr"><head><title>Untitled Document</title>
 </head><body>
 END
     ;

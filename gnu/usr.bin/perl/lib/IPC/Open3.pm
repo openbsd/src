@@ -9,7 +9,7 @@ require Exporter;
 use Carp;
 use Symbol qw(gensym qualify);
 
-$VERSION	= 1.0105;
+$VERSION	= 1.0106;
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open3);
 
@@ -95,7 +95,7 @@ The order of arguments differs from that of open2().
 # allow fd numbers to be used, by Frank Tobin
 # allow '-' as command (c.f. open "-|"), by Adam Spiers <perl@adamspiers.org>
 #
-# $Id: Open3.pm,v 1.7 2003/12/03 03:02:38 millert Exp $
+# $Id: Open3.pm,v 1.8 2004/08/09 18:09:35 millert Exp $
 #
 # usage: $pid = open3('wtr', 'rdr', 'err' 'some cmd and args', 'optarg', ...);
 #
@@ -197,6 +197,9 @@ sub _open3 {
 
     $kidpid = $do_spawn ? -1 : xfork;
     if ($kidpid == 0) {		# Kid
+	# A tie in the parent should not be allowed to cause problems.
+	untie *STDIN;
+	untie *STDOUT;
 	# If she wants to dup the kid's stderr onto her stdout I need to
 	# save a copy of her stdout before I put something else there.
 	if ($dad_rdr ne $dad_err && $dup_err

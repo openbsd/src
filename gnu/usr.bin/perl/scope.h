@@ -1,7 +1,7 @@
 /*    scope.h
  *
  *    Copyright (C) 1993, 1994, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, by Larry Wall and others
+ *    2000, 2001, 2002, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -150,14 +150,14 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 #define SAVEOP()	save_op()
 
 #define SAVEHINTS() \
-    STMT_START {				\
-	if (PL_hints & HINT_LOCALIZE_HH)	\
-	    save_hints();			\
-	else {					\
-	    SSCHECK(2);				\
-	    SSPUSHINT(PL_hints);		\
-	    SSPUSHINT(SAVEt_HINTS);		\
-	}					\
+    STMT_START {					\
+	SSCHECK(3);					\
+	if (PL_hints & HINT_LOCALIZE_HH) {		\
+	    SSPUSHPTR(GvHV(PL_hintgv));			\
+	    GvHV(PL_hintgv) = newHVhv(GvHV(PL_hintgv));	\
+	}						\
+	SSPUSHINT(PL_hints);				\
+	SSPUSHINT(SAVEt_HINTS);				\
     } STMT_END
 
 #define SAVECOMPPAD() \

@@ -60,6 +60,11 @@ fi
 # function in <sys/stat.h>.
 d_lstat=define
 
+# malloc wrap works
+case "$usemallocwrap" in
+'') usemallocwrap='define' ;;
+esac
+
 # The system malloc() is about as fast and as frugal as perl's.
 # Since the system malloc() has been the default since at least
 # 5.001, we might as well leave it that way.  --AD  10 Jan 2002
@@ -80,17 +85,15 @@ case "`${cc:-cc} -V 2>&1`" in
 esac
 
 case "$optimize" in
-'') # If we have modern enough gcc and well-supported enough CPU,
-    # crank up the optimization level.
-    case "`${cc:-gcc} -v 2>&1`" in
-    *"gcc version 2.95"*|*"gcc version 3."*)
-        case "`arch 2>&1`" in
-        i?86|ppc) optimize='-O3' ;;
-        esac
+# use -O2 by default ; -O3 doesn't seem to bring significant benefits with gcc
+'')
+    optimize='-O2'
+    case "`uname -m`" in
+        ppc*)
+            # on ppc, it seems that gcc (at least gcc 3.3.2) isn't happy
+	    # with -O2 ; so downgrade to -O1.
+            optimize='-O1'
         ;;
-    esac
-    case "$optimize" in
-    '') optimize='-O2' ;;
     esac
     ;;
 esac

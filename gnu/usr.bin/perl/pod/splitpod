@@ -5,12 +5,19 @@ use Pod::Functions;
 
 local $/ = '';
 
+$level = 0;
+
 $cur = '';
 while (<>) {
 
     next unless /^=(?!cut)/ .. /^=cut/;
 
-    if (/=item (\S+)/ and $1 ne '*') {
+    ++$level if /^=over/;
+    --$level if /^=back/;
+
+    # Ignore items that are nested within other items, e.g. don't split on the
+    # items nested within the pack() and sprintf() items in perlfunc.pod.
+    if (/=item (\S+)/ and $level == 1) {
 	my $item = $1;
 	s/=item //; 
 	$next{$cur} = $item;

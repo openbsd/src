@@ -276,6 +276,63 @@ some heuristic code which tries to disambiguate between "truly-void"
 and "old-practice-declared-as-void" functions. Hence your code is at
 mercy of this heuristics unless you use C<SV *> as return value.)
 
+=head2 Returning SVs, AVs and HVs through RETVAL
+
+When you're using RETVAL to return an C<SV *>, there's some magic
+going on behind the scenes that should be mentioned. When you're
+manipulating the argument stack using the ST(x) macro, for example,
+you usually have to pay special attention to reference counts. (For
+more about reference counts, see L<perlguts>.) To make your life
+easier, the typemap file automatically makes C<RETVAL> mortal when
+you're returning an C<SV *>. Thus, the following two XSUBs are more
+or less equivalent:
+
+  void
+  alpha()
+      PPCODE:
+          ST(0) = newSVpv("Hello World",0);
+          sv_2mortal(ST(0));
+          XSRETURN(1);
+  
+  SV *
+  beta()
+      CODE:
+          RETVAL = newSVpv("Hello World",0);
+      OUTPUT:
+          RETVAL
+
+This is quite useful as it usually improves readability. While
+this works fine for an C<SV *>, it's unfortunately not as easy
+to have C<AV *> or C<HV *> as a return value. You I<should> be
+able to write:
+
+  AV *
+  array()
+      CODE:
+          RETVAL = newAV();
+          /* do something with RETVAL */
+      OUTPUT:
+          RETVAL
+
+But due to an unfixable bug (fixing it would break lots of existing
+CPAN modules) in the typemap file, the reference count of the C<AV *>
+is not properly decremented. Thus, the above XSUB would leak memory
+whenever it is being called. The same problem exists for C<HV *>.
+
+When you're returning an C<AV *> or a C<HV *>, you have make sure
+their reference count is decremented by making the AV or HV mortal:
+
+  AV *
+  array()
+      CODE:
+          RETVAL = newAV();
+          sv_2mortal((SV*)RETVAL);
+          /* do something with RETVAL */
+      OUTPUT:
+          RETVAL
+
+And also remember that you don't have to do this for an C<SV *>.
+
 =head2 The MODULE Keyword
 
 The MODULE keyword is used to start the XS code and to specify the package

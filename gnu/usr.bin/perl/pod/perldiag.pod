@@ -1361,8 +1361,8 @@ See L<perlfunc/pack>.
 
 =item (Do you need to predeclare %s?)
 
-(S) This is an educated guess made in conjunction with the message "%s
-found where operator expected".  It often means a subroutine or module
+(S syntax) This is an educated guess made in conjunction with the message
+"%s found where operator expected".  It often means a subroutine or module
 name is being referenced that hasn't been declared yet.  This may be
 because of ordering problems in your file, or because of a missing
 "sub", "package", "require", or "use" statement.  If you're referencing
@@ -1382,8 +1382,8 @@ already been freed.
 
 =item elseif should be elsif
 
-(S) There is no keyword "elseif" in Perl because Larry thinks it's ugly.
-Your code will be interpreted as an attempt to call a method named
+(S syntax) There is no keyword "elseif" in Perl because Larry thinks it's
+ugly. Your code will be interpreted as an attempt to call a method named
 "elseif" for the class returned by the following block.  This is
 unlikely to be what you want.
 
@@ -1575,8 +1575,8 @@ when you meant
 
 =item %s found where operator expected
 
-(S) The Perl lexer knows whether to expect a term or an operator.  If it
-sees what it knows to be a term when it was expecting to see an
+(S syntax) The Perl lexer knows whether to expect a term or an operator.
+If it sees what it knows to be a term when it was expecting to see an
 operator, it gives you this warning.  Usually it indicates that an
 operator or delimiter was omitted, such as a semicolon.
 
@@ -1710,6 +1710,10 @@ characters in prototypes are $, @, %, *, ;, [, ], &, and \.
 
 (F) When using the C<sub> keyword to construct an anonymous subroutine,
 you must always specify a block of code. See L<perlsub>.
+
+=item Illegal declaration of subroutine %s
+
+(F) A subroutine was not declared correctly. See L<perlsub>.
 
 =item Illegal division by zero
 
@@ -2096,8 +2100,8 @@ can vary from one line to the next.
 
 =item (Missing operator before %s?)
 
-(S) This is an educated guess made in conjunction with the message "%s
-found where operator expected".  Often the missing operator is a comma.
+(S syntax) This is an educated guess made in conjunction with the message
+"%s found where operator expected".  Often the missing operator is a comma.
 
 =item Missing right brace on %s
 
@@ -2111,8 +2115,8 @@ were last editing.
 
 =item (Missing semicolon on previous line?)
 
-(S) This is an educated guess made in conjunction with the message "%s
-found where operator expected".  Don't automatically put a semicolon on
+(S syntax) This is an educated guess made in conjunction with the message
+"%s found where operator expected".  Don't automatically put a semicolon on
 the previous line just because you saw this message.
 
 =item Modification of a read-only value attempted
@@ -2607,6 +2611,11 @@ remaining memory (or virtual memory) to satisfy the request. However,
 the request was judged large enough (compile-time default is 64K), so a
 possibility to shut down by trapping this error is granted.
 
+=item Out of memory during %s extend
+
+(X) An attempt was made to extend an array, a list, or a string beyond
+the largest possible memory allocation.
+
 =item Out of memory during request for %s
 
 (X|F) The malloc() function returned 0, indicating there was
@@ -2746,6 +2755,10 @@ references to an object.
 =item panic: mapstart
 
 (P) The compiler is screwed up with respect to the map() function.
+
+=item panic: memory wrap
+
+(P) Something tried to allocate more memory than possible.
 
 =item panic: null array
 
@@ -3210,6 +3223,12 @@ expression compiler gave it.
 (P) A "can't happen" error, because safemalloc() should have caught it
 earlier.
 
+=item Repeated format line will never terminate (~~ and @# incompatible)
+
+(F) Your format containes the ~~ repeat-until-blank sequence and a
+numeric field that will never go blank so that the repetition never
+terminates. You might use ^# instead.  See L<perlform>.
+
 =item Reversed %s= operator
 
 (W syntax) You wrote your assignment operator backwards.  The = must
@@ -3657,6 +3676,11 @@ linkhood if the last stat that wrote to the stat buffer already went
 past the symlink to get to the real file.  Use an actual filename
 instead.
 
+=item The 'unique' attribute may only be applied to 'our' variables
+
+(F) Currently this attribute is not supported on C<my> or C<sub>
+declarations.  See L<perlfunc/our>.
+
 =item This Perl can't reset CRTL environ elements (%s)
 
 =item This Perl can't set CRTL environ elements (%s=%s)
@@ -3767,8 +3791,8 @@ C<$tr> or C<$y> may cause this error.
 
 =item Transliteration replacement not terminated
 
-(F) The lexer couldn't find the final delimiter of a tr/// or tr[][]
-construct.
+(F) The lexer couldn't find the final delimiter of a tr///, tr[][],
+y/// or y[][] construct.
 
 =item '%s' trapped by operation mask
 
@@ -4018,10 +4042,10 @@ Note that under some systems, like OS/2, there may be different flavors
 of Perl executables, some of which may support fork, some not. Try
 changing the name you call Perl by to C<perl_>, C<perl__>, and so on.
 
-=item Unsupported script encoding
+=item Unsupported script encoding %s
 
 (F) Your program file begins with a Unicode Byte Order Mark (BOM) which
-declares it to be in a Unicode encoding that Perl cannot yet read.
+declares it to be in a Unicode encoding that Perl cannot read.
 
 =item Unsupported socket function "%s" called
 

@@ -1905,17 +1905,17 @@ for site-wide changes).
 If your file system supports symbolic links, you can build Perl outside
 of the source directory by
 
-	mkdir /tmp/perl/build/directory
-	cd /tmp/perl/build/directory
+	mkdir perl/build/directory
+	cd perl/build/directory
 	sh /path/to/perl/source/Configure -Dmksymlinks ...
 
-This will create in /tmp/perl/build/directory a tree of symbolic links
+This will create in perl/build/directory a tree of symbolic links
 pointing to files in /path/to/perl/source.  The original files are left
 unaffected.  After Configure has finished, you can just say
 
 	make all test
 
-and Perl will be built and tested, all in /tmp/perl/build/directory.
+and Perl will be built and tested, all in perl/build/directory.
 [561]
 
 =item *

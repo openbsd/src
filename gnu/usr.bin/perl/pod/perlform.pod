@@ -29,8 +29,9 @@ Output record formats are declared as follows:
     FORMLIST
     .
 
-If name is omitted, format "STDOUT" is defined.  FORMLIST consists of
-a sequence of lines, each of which may be one of three types:
+If the name is omitted, format "STDOUT" is defined. A single "." in 
+column 1 is used to terminate a format.  FORMLIST consists of a sequence 
+of lines, each of which may be one of three types:
 
 =over 4
 
@@ -48,29 +49,106 @@ An argument line supplying values to plug into the previous picture line.
 
 =back
 
-Picture lines are printed exactly as they look, except for certain fields
-that substitute values into the line.  Each field in a picture line starts
-with either "@" (at) or "^" (caret).  These lines do not undergo any kind
-of variable interpolation.  The at field (not to be confused with the array
-marker @) is the normal kind of field; the other kind, caret fields, are used
-to do rudimentary multi-line text block filling.  The length of the field
-is supplied by padding out the field with multiple "E<lt>", "E<gt>", or "|"
-characters to specify, respectively, left justification, right
-justification, or centering.  If the variable would exceed the width
-specified, it is truncated.
+Picture lines contain output field definitions, intermingled with
+literal text. These lines do not undergo any kind of variable interpolation.
+Field definitions are made up from a set of characters, for starting and
+extending a field to its desired width. This is the complete set of
+characters for field definitions:
+  
+   @    start of regular field
+   ^    start of special field
+   <    pad character for left adjustification
+   |    pad character for centering
+   >    pad character for right adjustificat
+   #    pad character for a right justified numeric field
+   0    instead of first #: pad number with leading zeroes
+   .    decimal point within a numeric field
+   ...  terminate a text field, show "..." as truncation evidence
+   @*   variable width field for a multi-line value
+   ^*   variable width field for next line of a multi-line value
+   ~    suppress line with all fields empty
+   ~~   repeat line until all fields are exhausted
 
-As an alternate form of right justification, you may also use "#"
-characters (with an optional ".") to specify a numeric field. This way
-you can line up the decimal points. With a "0" (zero) instead of the
-first "#", the formatted number will be padded with leading zeroes if
-necessary. If any value supplied for these fields contains a newline,
-only the text up to the newline is printed. Finally, the special field
-"@*" can be used for printing multi-line, nontruncated values; it
-should appear by itself on a line.
+Each field in a picture line starts with either "@" (at) or "^" (caret),
+indicating what we'll call, respectively, a "regular" or "special" field.
+The choice of pad characters determines whether a field is textual or
+numeric. The tilde operators are not part of a field.  Let's look at
+the various possibilities in detail.
 
-The values are specified on the following line in the same order as
-the picture fields.  The expressions providing the values should be
-separated by commas.  The expressions are all evaluated in a list context
+
+=head2 Text Fields
+
+The length of the field is supplied by padding out the field with multiple 
+"E<lt>", "E<gt>", or "|" characters to specify a non-numeric field with,
+respectively, left justification, right justification, or centering. 
+For a regular field, the value (up to the first newline) is taken and
+printed according to the selected justification, truncating excess characters.
+If you terminate a text field with "...", three dots will be shown if
+the value is truncated. A special text field may be used to do rudimentary 
+multi-line text block filling; see L</Using Fill Mode> for details.
+
+   Example:
+      format STDOUT =
+      @<<<<<<   @||||||   @>>>>>>
+      "left",   "middle", "right"
+      .
+   Output:
+      left      middle    right
+
+
+=head2 Numeric Fields
+
+Using "#" as a padding character specifies a numeric field, with
+right justification. An optional "." defines the position of the
+decimal point. With a "0" (zero) instead of the first "#", the
+formatted number will be padded with leading zeroes if necessary.
+A special numeric field is blanked out if the value is undefined.
+If the resulting value would exceed the width specified the field is
+filled with "#" as overflow evidence.
+
+   Example:
+      format STDOUT =
+      @###   @.###   @##.###  @###   @###   ^####
+       42,   3.1415,  undef,    0, 10000,   undef
+      .
+   Output:
+        42   3.142     0.000     0   ####
+
+
+=head2 The Field @* for Variable Width Multi-Line Text
+
+The field "@*" can be used for printing multi-line, nontruncated
+values; it should (but need not) appear by itself on a line. A final
+line feed is chomped off, but all other characters are emitted verbatim.
+
+
+=head2 The Field ^* for Variable Width One-line-at-a-time Text
+
+Like "@*", this is a variable width field. The value supplied must be a 
+scalar variable. Perl puts the first line (up to the first "\n") of the 
+text into the field, and then chops off the front of the string so that 
+the next time the variable is referenced, more of the text can be printed. 
+The variable will I<not> be restored.
+
+   Example:
+      $text = "line 1\nline 2\nline 3";
+      format STDOUT =
+      Text: ^*
+            $text
+      ~~    ^*
+            $text
+      .
+   Output:
+      Text: line 1
+            line 2
+            line 3
+
+
+=head2 Specifying Values
+
+The values are specified on the following format line in the same order as
+the picture fields.  The expressions providing the values must be
+separated by commas.  They are all evaluated in a list context
 before the line is processed, so a single list expression could produce
 multiple list elements.  The expressions may be spread out to more than
 one line if enclosed in braces.  If so, the opening brace must be the first
@@ -83,29 +161,47 @@ means that, if, for example, the run-time environment happens to specify a
 German locale, "," will be used instead of the default ".".  See
 L<perllocale> and L<"WARNINGS"> for more information.
 
-Picture fields that begin with ^ rather than @ are treated specially.
-With a # field, the field is blanked out if the value is undefined.  For
-other field types, the caret enables a kind of fill mode.  Instead of an
-arbitrary expression, the value supplied must be a scalar variable name
-that contains a text string.  Perl puts as much text as it can into the
-field, and then chops off the front of the string so that the next time
+
+=head2 Using Fill Mode
+
+On text fields the caret enables a kind of fill mode.  Instead of an
+arbitrary expression, the value supplied must be a scalar variable
+that contains a text string.  Perl puts the next portion of the text into
+the field, and then chops off the front of the string so that the next time
 the variable is referenced, more of the text can be printed.  (Yes, this
 means that the variable itself is altered during execution of the write()
-call, and is not returned.)  Normally you would use a sequence of fields
-in a vertical stack to print out a block of text.  You might wish to end
-the final field with the text "...", which will appear in the output if
-the text was too long to appear in its entirety.  You can change which
-characters are legal to break on by changing the variable C<$:> (that's
-$FORMAT_LINE_BREAK_CHARACTERS if you're using the English module) to a
+call, and is not restored.)  The next portion of text is determined by
+a crude line breaking algorithm. You may use the carriage return character
+(C<\r>) to force a line break. You can change which characters are legal 
+to break on by changing the variable C<$:> (that's 
+$FORMAT_LINE_BREAK_CHARACTERS if you're using the English module) to a 
 list of the desired characters.
 
-Using caret fields can produce variable length records.  If the text
-to be formatted is short, you can suppress blank lines by putting a
-"~" (tilde) character anywhere in the line.  The tilde will be translated
-to a space upon output.  If you put a second tilde contiguous to the
-first, the line will be repeated until all the fields on the line are
-exhausted.  (If you use a field of the at variety, the expression you
-supply had better not give the same value every time forever!)
+Normally you would use a sequence of fields in a vertical stack associated 
+with the same scalar variable to print out a block of text. You might wish 
+to end the final field with the text "...", which will appear in the output 
+if the text was too long to appear in its entirety.  
+
+
+=head2 Suppressing Lines Where All Fields Are Void
+
+Using caret fields can produce lines where all fields are blank. You can
+suppress such lines by putting a "~" (tilde) character anywhere in the
+line.  The tilde will be translated to a space upon output.
+
+
+=head2 Repeating Format Lines
+
+If you put two contiguous tilde characters "~~" anywhere into a line,
+the line will be repeated until all the fields on the line are exhausted,
+i.e. undefined. For special (caret) text fields this will occur sooner or
+later, but if you use a text field of the at variety, the  expression you
+supply had better not give the same value every time forever! (C<shift(@f)>
+is a simple example that would work.)  Don't use a regular (at) numeric 
+field in such lines, because it will never go blank.
+
+
+=head2 Top of Form Processing
 
 Top-of-form processing is by default handled by a format with the
 same name as the current filehandle with "_TOP" concatenated to it.
@@ -338,11 +434,8 @@ block structure of the program, and, for historical reasons, formats
 exist outside that block structure.  See L<perllocale> for further
 discussion of locale handling.
 
-Inside of an expression, the whitespace characters \n, \t and \f are
-considered to be equivalent to a single space.  Thus, you could think
-of this filter being applied to each value in the format:
+Within strings that are to be displayed in a fixed length text field,
+each control character is substituted by a space. (But remember the
+special meaning of C<\r> when using fill mode.) This is done to avoid
+misalignment when control characters "disappear" on some output media.
 
- $value =~ tr/\n\t\f/ /;
-
-The remaining whitespace character, \r, forces the printing of a new
-line if allowed by the picture line.

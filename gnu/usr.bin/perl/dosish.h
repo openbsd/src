@@ -83,7 +83,12 @@
  *	information.
  */
 #if defined(WIN64) || defined(USE_LARGE_FILES)
+# if defined(__BORLANDC__) /* buk */
+#  include <sys\stat.h>
+#  define Stat_t struct stati64
+# else
 #define Stat_t struct _stati64
+# endif
 #else
 #if defined(UNDER_CE)
 #define Stat_t struct xcestat

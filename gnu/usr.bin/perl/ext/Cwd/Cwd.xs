@@ -208,7 +208,8 @@ err2:
 
 #ifndef getcwd_sv
 /* Taken from perl 5.8's util.c */
-int getcwd_sv(pTHX_ register SV *sv)
+#define getcwd_sv(a) Perl_getcwd_sv(aTHX_ a)
+int Perl_getcwd_sv(pTHX_ register SV *sv)
 {
 #ifndef PERL_MICRO
 
@@ -398,3 +399,40 @@ PPCODE:
     SvTAINTED_on(TARG);
 #endif
 }
+
+#ifdef WIN32
+
+void
+getdcwd(...)
+PPCODE:
+{
+    dXSTARG;
+    int drive;
+    char *dir;
+
+    /* Drive 0 is the current drive, 1 is A:, 2 is B:, 3 is C: and so on. */
+    if ( items == 0 ||
+        (items == 1 && (!SvOK(ST(0)) || (SvPOK(ST(0)) && !SvCUR(ST(0))))))
+        drive = 0;
+    else if (items == 1 && SvPOK(ST(0)) && SvCUR(ST(0)) &&
+             isALPHA(SvPVX(ST(0))[0]))
+        drive = toUPPER(SvPVX(ST(0))[0]) - 'A' + 1;
+    else
+        croak("Usage: getdcwd(DRIVE)");
+
+    /* Pass a NULL pointer as the second argument to have space allocated. */
+    if (dir = _getdcwd(drive, NULL, MAXPATHLEN)) {
+        sv_setpvn(TARG, dir, strlen(dir));
+        free(dir);
+        SvPOK_only(TARG);
+    }
+    else
+        sv_setsv(TARG, &PL_sv_undef);
+
+    XSprePUSH; PUSHTARG;
+#ifndef INCOMPLETE_TAINTS
+    SvTAINTED_on(TARG);
+#endif
+}
+
+#endif

@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: tr_eucjp.t,v 1.2 2003/12/03 03:02:49 millert Exp $
 #
 # This script is written intentionally in EUC-JP
 # -- dankogai
@@ -7,7 +7,7 @@
 BEGIN {
     if ($ENV{'PERL_CORE'}){
         chdir 't';
-        unshift @INC, '../lib';
+        @INC = '../lib';
     }
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bEncode\b/) {
@@ -22,16 +22,14 @@ BEGIN {
         print "1..0 # Skip: PerlIO required\n";
         exit 0;
     }
-    eval 'use Encode';
-    if ($@ =~ /dynamic loading not available/) {
-        print "1..0 # Skip: no dynamic loading, no Encode\n";
+    if ($ENV{PERL_CORE_MINITEST}) {
+        print "1..0 # Skip: no dynamic loading on miniperl, no Encode\n";
         exit 0;
     }
     $| = 1;
 }
 
 use strict;
-#use Test::More qw(no_plan);
 use Test::More tests => 6;
 use Encode;
 use encoding 'euc-jp';

@@ -33,7 +33,7 @@ use Carp;
 
 use vars qw/ $VERSION %HTML_Escapes @LatexSections /;
 
-$VERSION = '0.55';
+$VERSION = '0.56';
 
 # Definitions of =headN -> latex mapping
 @LatexSections = (qw/
@@ -856,7 +856,9 @@ on what these methods require.
 
 =item B<begin_pod>
 
-Writes the C<latex> preamble if requested.
+Writes the C<latex> preamble if requested. Only writes something
+if AddPreamble is true. Writes a standard header unless a UserPreamble
+is defined.
 
 =cut
 
@@ -881,40 +883,42 @@ __TEX_COMMENT__
   # If the caller has supplied one then we just use that
 
   my $preamble = '';
-  if (defined $self->UserPreamble) {
 
-    $preamble = $self->UserPreamble;
+  if ($self->AddPreamble) {
 
-    # Add the description of where this came from
-    $preamble .=  "\n$comment";
-    
+    if (defined $self->UserPreamble) {
 
-  } elsif ($self->AddPreamble) {
-    # Write our own preamble
+      $preamble = $self->UserPreamble;
 
-    # Code to initialise index making
-    # Use an array so that we can prepend comment if required
-    my @makeidx = (
-		   '\usepackage{makeidx}',
-		   '\makeindex',
-		  );
+      # Add the description of where this came from
+      $preamble .=  "\n$comment\n%%  Preamble supplied by user.\n\n";
 
-    unless ($self->MakeIndex) {
-      foreach (@makeidx) {
-	$_ = '%% ' . $_;
+    } else {
+
+      # Write our own preamble
+
+      # Code to initialise index making
+      # Use an array so that we can prepend comment if required
+      my @makeidx = (
+		     '\usepackage{makeidx}',
+		     '\makeindex',
+		    );
+
+      unless ($self->MakeIndex) {
+	foreach (@makeidx) {
+	  $_ = '%% ' . $_;
+	}
       }
-    }
-    my $makeindex = join("\n",@makeidx) . "\n";
+      my $makeindex = join("\n",@makeidx) . "\n";
 
+      # Table of contents
+      my $tableofcontents = '\tableofcontents';
 
-    # Table of contents
-    my $tableofcontents = '\tableofcontents';
+      $tableofcontents = '%% ' . $tableofcontents
+	unless $self->TableOfContents;
 
-    $tableofcontents = '%% ' . $tableofcontents
-      unless $self->TableOfContents;
-
-    # Roll our own
-    $preamble = << "__TEX_HEADER__";
+      # Roll our own
+      $preamble = << "__TEX_HEADER__";
 \\documentclass{article}
 \\usepackage[T1]{fontenc}
 \\usepackage{textcomp}
@@ -929,6 +933,7 @@ $tableofcontents
 
 __TEX_HEADER__
 
+    }
   }
 
   # Write the header (blank if none)
@@ -942,7 +947,8 @@ __TEX_HEADER__
 
 =item B<end_pod>
 
-Write the closing C<latex> code.
+Write the closing C<latex> code. Only writes something if AddPostamble
+is true. Writes a standard header unless a UserPostamble is defined.
 
 =cut
 
@@ -952,22 +958,22 @@ sub end_pod {
   # End string
   my $end = '';
 
-  # Use the user version of the postamble if deinfed
-  if (defined $self->UserPostamble) {
-    $end = $self->UserPostamble;
+  # Use the user version of the postamble if defined
+  if ($self->AddPostamble) {
 
-    $self->_output($end);
+    if (defined $self->UserPostamble) {
+      $end = $self->UserPostamble;
 
-  } elsif ($self->AddPostamble) {
+    } else {
 
-    # Check for index
-    my $makeindex = '\printindex';
+      # Check for index
+      my $makeindex = '\printindex';
 
-    $makeindex = '%% '. $makeindex  unless $self->MakeIndex;
+      $makeindex = '%% '. $makeindex  unless $self->MakeIndex;
 
-    $end = "$makeindex\n\n\\end{document}\n";
+      $end = "$makeindex\n\n\\end{document}\n";
+    }
   }
-
 
   $self->_output($end);
 
@@ -1837,20 +1843,21 @@ L<Pod::Parser>, L<Pod::Select>, L<pod2latex>
 
 =head1 AUTHORS
 
-Tim Jenness E<lt>t.jenness@jach.hawaii.eduE<gt>
+Tim Jenness E<lt>tjenness@cpan.orgE<gt>
 
 Bug fixes and improvements have been received from: Simon Cozens
 E<lt>simon@cozens.netE<gt>, Mark A. Hershberger
 E<lt>mah@everybody.orgE<gt>, Marcel Grunauer
 E<lt>marcel@codewerk.comE<gt>, Hugh S Myers
 E<lt>hsmyers@sdragons.comE<gt>, Peter J Acklam
-E<lt>jacklam@math.uio.noE<gt>, Sudhi Herle E<lt>sudhi@herle.netE<gt>
-and Ariel Scolnicov E<lt>ariels@compugen.co.ilE<gt>.
+E<lt>jacklam@math.uio.noE<gt>, Sudhi Herle E<lt>sudhi@herle.netE<gt>,
+Ariel Scolnicov E<lt>ariels@compugen.co.ilE<gt> and
+Adriano Rodrigues Ferreira E<lt>ferreira@triang.com.brE<gt>.
 
 
 =head1 COPYRIGHT
 
-Copyright (C) 2000-2003 Tim Jenness. All Rights Reserved.
+Copyright (C) 2000-2004 Tim Jenness. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -1859,7 +1866,7 @@ it under the same terms as Perl itself.
 
 =head1 REVISION
 
-$Id: LaTeX.pm,v 1.4 2003/12/03 03:02:40 millert Exp $
+$Id: LaTeX.pm,v 1.5 2004/08/09 18:09:45 millert Exp $
 
 =end __PRIVATE__
 

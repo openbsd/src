@@ -14,7 +14,7 @@ our($VERSION);
 use Carp;
 use Symbol;
 
-$VERSION = "1.122";
+$VERSION = "1.123";
 
 sub new {
     my $type = shift;
@@ -98,7 +98,8 @@ sub reader {
 	unless(ref($me) || ref($me = $me->new));
 
     my $fh  = ${*$me}[0];
-    my $pid = $me->_doit(0, $fh, @_)
+    my $pid;
+    $pid = $me->_doit(0, $fh, @_)
         if(@_);
 
     close ${*$me}[1];
@@ -121,7 +122,8 @@ sub writer {
 	unless(ref($me) || ref($me = $me->new));
 
     my $fh  = ${*$me}[1];
-    my $pid = $me->_doit(1, $fh, @_)
+    my $pid;
+    $pid = $me->_doit(1, $fh, @_)
         if(@_);
 
     close ${*$me}[0];

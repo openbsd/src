@@ -985,9 +985,10 @@ Further examples of process-scope changes include umask() and
 changing uids/gids.
 
 Thinking of mixing fork() and threads?  Please lie down and wait
-until the feeling passes-- but in case you really want to know,
-the semantics is that fork() duplicates all the threads.
-(In UNIX, at least, other platforms will do something different.)
+until the feeling passes.  Be aware that the semantics of fork() vary
+between platforms.  For example, some UNIX systems copy all the current
+threads into the child process, while others only copy the thread that
+called fork(). You have been warned!
 
 Similarly, mixing signals and threads should not be attempted.
 Implementations are platform-dependent, and even the POSIX

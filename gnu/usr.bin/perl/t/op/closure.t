@@ -13,7 +13,7 @@ BEGIN {
 
 use Config;
 
-print "1..185\n";
+print "1..187\n";
 
 my $test = 1;
 sub test (&) {
@@ -641,4 +641,27 @@ __EOF__
     END { 1 while unlink $progfile }
 }
 
+{
+    # bugid #24914 = used to coredump restoring PL_comppad in the
+    # savestack, due to the early freeing of the anon closure
 
+    my $got = runperl(stderr => 1, prog => 
+'sub d {die} my $f; $f = sub {my $x=1; $f = 0; d}; eval{$f->()}; print qq(ok\n)'
+    );
+    test { $got eq "ok\n" };
+}
+
+# After newsub is redefined outside the BEGIN, it's CvOUTSIDE should point
+# to main rather than BEGIN, and BEGIN should be freed.
+
+{
+    my $flag = 0;
+    sub  X::DESTROY { $flag = 1 }
+    {
+	my $x;
+	BEGIN {$x = \&newsub }
+	sub newsub {};
+	$x = bless {}, 'X';
+    }
+    test { $flag == 1 };
+}

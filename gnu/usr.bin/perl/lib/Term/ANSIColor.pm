@@ -1,5 +1,5 @@
 # Term::ANSIColor -- Color screen output using ANSI escape sequences.
-# $Id: ANSIColor.pm,v 1.5 2003/12/03 03:02:41 millert Exp $
+# $Id: ANSIColor.pm,v 1.6 2004/08/09 18:09:46 millert Exp $
 #
 # Copyright 1996, 1997, 1998, 2000, 2001, 2002
 #   by Russ Allbery <rra@stanford.edu> and Zenin <zenin@bawdycaste.com>
@@ -25,16 +25,16 @@ use Exporter ();
 @ISA         = qw(Exporter);
 @EXPORT      = qw(color colored);
 @EXPORT_OK   = qw(uncolor);
-%EXPORT_TAGS = (constants => [qw(CLEAR RESET BOLD UNDERLINE UNDERSCORE BLINK
-                                 REVERSE CONCEALED BLACK RED GREEN YELLOW
-                                 BLUE MAGENTA CYAN WHITE ON_BLACK ON_RED
-                                 ON_GREEN ON_YELLOW ON_BLUE ON_MAGENTA
+%EXPORT_TAGS = (constants => [qw(CLEAR RESET BOLD DARK UNDERLINE UNDERSCORE
+                                 BLINK REVERSE CONCEALED BLACK RED GREEN
+                                 YELLOW BLUE MAGENTA CYAN WHITE ON_BLACK
+                                 ON_RED ON_GREEN ON_YELLOW ON_BLUE ON_MAGENTA
                                  ON_CYAN ON_WHITE)]);
 Exporter::export_ok_tags ('constants');
 
 # Don't use the CVS revision as the version, since this module is also in Perl
 # core and too many things could munge CVS magic revision strings.
-$VERSION = 1.07;
+$VERSION = 1.08;
 
 ##############################################################################
 # Internal data structures
@@ -275,9 +275,9 @@ feature.
 
 Alternately, if you import C<:constants>, you can use the constants CLEAR,
 RESET, BOLD, DARK, UNDERLINE, UNDERSCORE, BLINK, REVERSE, CONCEALED, BLACK,
-RED, GREEN, YELLOW, BLUE, MAGENTA, ON_BLACK, ON_RED, ON_GREEN, ON_YELLOW,
-ON_BLUE, ON_MAGENTA, ON_CYAN, and ON_WHITE directly.  These are the same as
-color('attribute') and can be used if you prefer typing:
+RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, ON_BLACK, ON_RED, ON_GREEN,
+ON_YELLOW, ON_BLUE, ON_MAGENTA, ON_CYAN, and ON_WHITE directly.  These are
+the same as color('attribute') and can be used if you prefer typing:
 
     print BOLD BLUE ON_WHITE "Text\n", RESET;
 

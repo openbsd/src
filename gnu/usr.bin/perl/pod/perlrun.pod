@@ -819,13 +819,41 @@ values of @INC.
 
 =item B<-V:>I<name>
 
-Prints to STDOUT the value of the named configuration variable.
+Prints to STDOUT the value of the named configuration variable(s),
+with multiples when your query looks like a regex.
 For example,
 
-    $ perl -V:man.dir
+    $ perl -V:lib.
+	libs='-lnsl -lgdbm -ldb -ldl -lm -lcrypt -lutil -lc';
+	libc='/lib/libc-2.2.4.so';
+    $ perl -V:lib.*
+	libpth='/usr/local/lib /lib /usr/lib';
+	libs='-lnsl -lgdbm -ldb -ldl -lm -lcrypt -lutil -lc';
+	lib_ext='.a';
+	libc='/lib/libc-2.2.4.so';
+	libperl='libperl.a';
+	....
 
-will provide strong clues about what your MANPATH variable should
-be set to in order to access the Perl documentation.
+Additionally, extra colons can be used to control formatting.  A
+trailing colon suppresses the linefeed and terminator ';', allowing
+you to embed queries into shell commands.  (mnemonic: PATH separator
+':'.)
+
+    $ echo "compression-vars: " `perl -V:z.*: ` " are here !"
+    compression-vars:  zcat='' zip='zip'  are here !
+
+A leading colon removes the 'name=' part of the response, this allows
+you to map to the name you need.
+
+    $ echo "goodvfork="`./perl -Ilib -V::usevfork`
+    goodvfork=false;
+
+Leading and trailing colons can be used together if you need
+positional parameter values without the names.  Note that in the case
+below, the PERL_API params are returned in alphabetical order.
+
+    $ echo building_on `perl -V::osname: -V::PERL_API_.*:` now
+    building_on 'linux' '5' '1' '9' now
 
 =item B<-w>
 
@@ -853,6 +881,8 @@ See L<perllexwarn>.
 
 Disables all warnings regardless of C<use warnings> or C<$^W>.
 See L<perllexwarn>.
+
+=item B<-x>
 
 =item B<-x> I<directory>
 
@@ -965,7 +995,7 @@ Use with the same care as is reserved for nitroglycerin.
 
 =item :raw
 
-A pseudolayer that manipulates other layers.  Applying the <:raw>
+A pseudolayer that manipulates other layers.  Applying the C<:raw>
 layer is equivalent to calling C<binmode($fh)>.  It makes the stream
 pass each byte as-is without any translation.  In particular CRLF
 translation, and/or :utf8 intuited from locale are disabled.

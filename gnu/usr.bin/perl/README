@@ -2,7 +2,7 @@
 			    Perl Kit, Version 5
 
                 Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998
-                   1999, 2000, 2001, by Larry Wall and others
+           1999, 2000, 2001, 2002, 2003, 2004 by Larry Wall and others
 
 			    All rights reserved.
 
@@ -61,9 +61,6 @@ See pod/perlbook.pod for more information.
 Please read all the directions below before you proceed any further, and
 then follow them carefully.
 
-After you have unpacked your kit, you should have all the files listed
-in MANIFEST.
-
 Installation
 
 1) Detailed instructions are in the file "INSTALL", which you should
@@ -76,19 +73,12 @@ corresponding README.
 3) IMPORTANT!  Help save the world!  Communicate any problems and suggested
 patches to perlbug@perl.org so we can keep the world in sync.
 If you have a problem, there's someone else out there who either has had
-or will have the same problem.  It's usually helpful if you send the
-output of the "myconfig" script in the main perl directory.
-
-If you've succeeded in compiling perl, the perlbug script in the "utils"
-subdirectory can be used to help mail in a bug report.
-
-If possible, send in patches such that the patch program will apply them.
-Context diffs are the best, then normal diffs.  Don't send ed scripts--
-I've probably changed my copy since the version you have.
+or will have the same problem.  See the section on "Reporting Problems"
+in the INSTALL file.
 
 The latest versions of perl are always available on the various CPAN
 (Comprehensive Perl Archive Network) sites around the world.
-See <URL:http://www.cpan.org/src/>.
+See http://www.cpan.org/src/ .
 
 
 Just a personal note:  I want you to know that I create nice things like this

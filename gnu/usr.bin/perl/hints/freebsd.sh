@@ -269,3 +269,7 @@ EOM
 esac
 EOCBU
 
+# malloc wrap works
+case "$usemallocwrap" in
+'') usemallocwrap='define' ;;
+esac

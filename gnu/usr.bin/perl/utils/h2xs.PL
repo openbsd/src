@@ -492,7 +492,7 @@ See L<perlxs> and L<perlxstut> for additional details.
 use strict;
 
 
-my( $H2XS_VERSION ) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
+my( $H2XS_VERSION ) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $TEMPLATE_VERSION = '0.01';
 my @ARGS = @ARGV;
 my $compat_version = $];
@@ -701,7 +701,8 @@ $opt_c = $opt_f = 1 if $opt_X;
 
 $opt_t ||= 'IV';
 
-my %const_xsub = map { $_,1 } split(/,+/, $opt_s) if $opt_s;
+my %const_xsub;
+%const_xsub = map { $_,1 } split(/,+/, $opt_s) if $opt_s;
 
 my $extralibs = '';
 
@@ -899,7 +900,7 @@ if( @path_h ){
             next if $opt_e && $enum_name =~ /$opt_e/;
             my $val = 0;
             for my $item (split /,/, $enum_body) {
-                my ($key, $declared_val) = $item =~ /(\w*)\s*=\s*(.*)/;
+                my ($key, $declared_val) = $item =~ /(\w+)\s*=\s*(.*)/;
                 $val = length($declared_val) ? $declared_val : 1 + $val;
                 $seen_define{$key} = $declared_val;
                 $const_names{$key}++;
@@ -979,6 +980,8 @@ if( ! $opt_X ){  # use XS, unless it was disabled
       $c = new C::Scan 'filename' => $filename, 'filename_filter' => $filter,
 	'add_cppflags' => $addflags, 'c_styles' => \@styles;
       $c->set('includeDirs' => ["$Config::Config{archlib}/CORE", $cwd]);
+
+      $c->get('keywords')->{'__restrict'} = 1;
 
       push @$fdecls_parsed, @{ $c->get('parsed_fdecls') };
       push(@$fdecls, @{$c->get('fdecls')});
@@ -1307,7 +1310,8 @@ if ($opt_x && $opt_a) {
 my $licence_hash = $licence;
 $licence_hash =~ s/^/#/gm;
 
-my $pod = <<"END" unless $opt_P;
+my $pod;
+$pod = <<"END" unless $opt_P;
 ## Below is stub documentation for your module. You'd better edit it!
 #
 #=head1 NAME

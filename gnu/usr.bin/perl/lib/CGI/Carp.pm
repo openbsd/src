@@ -281,7 +281,7 @@ use File::Spec;
 
 $main::SIG{__WARN__}=\&CGI::Carp::warn;
 
-$CGI::Carp::VERSION    = '1.27';
+$CGI::Carp::VERSION    = '1.28';
 $CGI::Carp::CUSTOM_MSG = undef;
 
 
@@ -381,10 +381,11 @@ sub ineval {
 }
 
 sub die {
-  my ($arg) = @_;
-  realdie @_ if ineval;
+  my ($arg,@rest) = @_;
+  realdie ($arg,@rest) if ineval();
+
   if (!ref($arg)) {
-    $arg = join("", @_);
+    $arg = join("", ($arg,@rest));
     my($file,$line,$id) = id(1);
     $arg .= " at $file line $line." unless $arg=~/\n$/;
     &fatalsToBrowser($arg) if $WRAP;
@@ -443,8 +444,6 @@ END
   ;
   my $mod_perl = exists $ENV{MOD_PERL};
 
-  warningsToBrowser(1);    # emit warnings before dying
-
   if ($CUSTOM_MSG) {
     if (ref($CUSTOM_MSG) eq 'CODE') {
       print STDOUT "Content-type: text/html\n\n" 
@@ -501,6 +500,8 @@ END
         print STDOUT $mess;
     }
   }
+
+  warningsToBrowser(1);    # emit warnings before dying
 }
 
 # Cut and paste from CGI.pm so that we don't have the overhead of

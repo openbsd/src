@@ -1,7 +1,7 @@
 /*    pp.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -168,6 +168,12 @@ PP(pp_rv2gv)
 		    }
 		    if (SvTYPE(sv) < SVt_RV)
 			sv_upgrade(sv, SVt_RV);
+		    if (SvPVX(sv)) {
+			(void)SvOOK_off(sv);		/* backoff */
+			if (SvLEN(sv))
+			    Safefree(SvPVX(sv));
+			SvLEN(sv)=SvCUR(sv)=0;
+		    }
 		    SvRV(sv) = (SV*)gv;
 		    SvROK_on(sv);
 		    SvSETMAGIC(sv);
@@ -1380,13 +1386,46 @@ PP(pp_repeat)
 {
   dSP; dATARGET; tryAMAGICbin(repeat,opASSIGN);
   {
-    register IV count = POPi;
+    register IV count;
+    dPOPss;
+    if (SvGMAGICAL(sv))
+	 mg_get(sv);
+    if (SvIOKp(sv)) {
+	 if (SvUOK(sv)) {
+	      UV uv = SvUV(sv);
+	      if (uv > IV_MAX)
+		   count = IV_MAX; /* The best we can do? */
+	      else
+		   count = uv;
+	 } else {
+	      IV iv = SvIV(sv);
+	      if (iv < 0)
+		   count = 0;
+	      else
+		   count = iv;
+	 }
+    }
+    else if (SvNOKp(sv)) {
+	 NV nv = SvNV(sv);
+	 if (nv < 0.0)
+	      count = 0;
+	 else
+	      count = (IV)nv;
+    }
+    else
+	 count = SvIVx(sv);
     if (GIMME == G_ARRAY && PL_op->op_private & OPpREPEAT_DOLIST) {
 	dMARK;
 	I32 items = SP - MARK;
 	I32 max;
+	static const char oom_list_extend[] =
+	  "Out of memory during list extend";
 
 	max = items * count;
+	MEM_WRAP_CHECK_1(max, SV*, oom_list_extend);
+	/* Did the max computation overflow? */
+	if (items > 0 && max > 0 && (max < items || max < count))
+	   Perl_croak(aTHX_ oom_list_extend);
 	MEXTEND(MARK, max);
 	if (count > 1) {
 	    while (SP > MARK) {
@@ -1431,6 +1470,8 @@ PP(pp_repeat)
 	SV *tmpstr = POPs;
 	STRLEN len;
 	bool isutf;
+	static const char oom_string_extend[] =
+	  "Out of memory during string extend";
 
 	SvSetSV(TARG, tmpstr);
 	SvPV_force(TARG, len);
@@ -1439,6 +1480,10 @@ PP(pp_repeat)
 	    if (count < 1)
 		SvCUR_set(TARG, 0);
 	    else {
+		IV max = count * len;
+		if (len > ((MEM_SIZE)~0)/count)
+		     Perl_croak(aTHX_ oom_string_extend);
+	        MEM_WRAP_CHECK_1(max, char, oom_string_extend);
 		SvGROW(TARG, (count * len) + 1);
 		repeatcpy(SvPVX(TARG) + len, SvPVX(TARG), len, count - 1);
 		SvCUR(TARG) *= count;
@@ -2359,6 +2404,7 @@ PP(pp_complement)
 	register I32 anum;
 	STRLEN len;
 
+	(void)SvPV_nomg(sv,len); /* force check for uninit var */
 	SvSetSV(TARG, sv);
 	tmps = (U8*)SvPV_force(TARG, len);
 	anum = len;
@@ -2406,6 +2452,7 @@ PP(pp_complement)
 	      *result = '\0';
 	      result -= nchar;
 	      sv_setpvn(TARG, (char*)result, nchar);
+	      SvUTF8_off(TARG);
 	  }
 	  Safefree(result);
 	  SETs(TARG);
@@ -2772,7 +2819,9 @@ PP(pp_int)
 	 else preferring IV has introduced a subtle behaviour change bug. OTOH
 	 relying on floating point to be accurate is a bug.  */
 
-      if (SvIOK(TOPs)) {
+      if (!SvOK(TOPs))
+        SETu(0);
+      else if (SvIOK(TOPs)) {
 	if (SvIsUV(TOPs)) {
 	    UV uv = TOPu;
 	    SETu(uv);
@@ -2806,7 +2855,9 @@ PP(pp_abs)
       /* This will cache the NV value if string isn't actually integer  */
       IV iv = TOPi;
 
-      if (SvIOK(TOPs)) {
+      if (!SvOK(TOPs))
+        SETu(0);
+      else if (SvIOK(TOPs)) {
 	/* IVX is precise  */
 	if (SvIsUV(TOPs)) {
 	  SETu(TOPu);	/* force it to be numeric only */
@@ -3016,6 +3067,19 @@ PP(pp_substr)
 	if (utf8_curlen)
 	    sv_pos_u2b(sv, &pos, &rem);
 	tmps += pos;
+	/* we either return a PV or an LV. If the TARG hasn't been used
+	 * before, or is of that type, reuse it; otherwise use a mortal
+	 * instead. Note that LVs can have an extended lifetime, so also
+	 * dont reuse if refcount > 1 (bug #20933) */
+	if (SvTYPE(TARG) > SVt_NULL) {
+	    if ( (SvTYPE(TARG) == SVt_PVLV)
+		    ? (!lvalue || SvREFCNT(TARG) > 1)
+		    : lvalue)
+	    {
+		TARG = sv_newmortal();
+	    }
+	}
+
 	sv_setpvn(TARG, tmps, rem);
 #ifdef USE_LOCALE_COLLATE
 	sv_unmagic(TARG, PERL_MAGIC_collxfrm);
@@ -3052,8 +3116,6 @@ PP(pp_substr)
 		    sv_setpvn(sv,"",0);	/* avoid lexical reincarnation */
 	    }
 
-	    if (SvREFCNT(TARG) > 1)	/* don't share the TARG (#20933) */
-		TARG = sv_newmortal();
 	    if (SvTYPE(TARG) < SVt_PVLV) {
 		sv_upgrade(TARG, SVt_PVLV);
 		sv_magic(TARG, Nullsv, PERL_MAGIC_substr, Nullch, 0);
@@ -3764,7 +3826,10 @@ PP(pp_delete)
 	    SP = ORIGMARK;
 	else if (gimme == G_SCALAR) {
 	    MARK = ORIGMARK;
-	    *++MARK = *SP;
+	    if (SP > MARK)
+		*++MARK = *SP;
+	    else
+		*++MARK = &PL_sv_undef;
 	    SP = MARK;
 	}
     }
@@ -4621,7 +4686,7 @@ PP(pp_split)
 	    if (TOPs && !make_mortal)
 		sv_2mortal(TOPs);
 	    iters--;
-	    SP--;
+	    *SP-- = &PL_sv_undef;
 	}
     }
 

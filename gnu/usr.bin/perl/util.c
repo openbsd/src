@@ -1,7 +1,7 @@
 /*    util.c
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -72,7 +72,9 @@ Perl_safesysmalloc(MEM_SIZE size)
     else if (PL_nomemok)
 	return Nullch;
     else {
-	PerlIO_puts(Perl_error_log,PL_no_mem) FLUSH;
+	/* Can't use PerlIO to write as it allocates memory */
+	PerlLIO_write(PerlIO_fileno(Perl_error_log),
+		      PL_no_mem, strlen(PL_no_mem));
 	my_exit(1);
 	return Nullch;
     }
@@ -119,7 +121,9 @@ Perl_safesysrealloc(Malloc_t where,MEM_SIZE size)
     else if (PL_nomemok)
 	return Nullch;
     else {
-	PerlIO_puts(Perl_error_log,PL_no_mem) FLUSH;
+	/* Can't use PerlIO to write as it allocates memory */
+	PerlLIO_write(PerlIO_fileno(Perl_error_log),
+		      PL_no_mem, strlen(PL_no_mem));
 	my_exit(1);
 	return Nullch;
     }
@@ -171,7 +175,9 @@ Perl_safesyscalloc(MEM_SIZE count, MEM_SIZE size)
     else if (PL_nomemok)
 	return Nullch;
     else {
-	PerlIO_puts(Perl_error_log,PL_no_mem) FLUSH;
+	/* Can't use PerlIO to write as it allocates memory */
+	PerlLIO_write(PerlIO_fileno(Perl_error_log),
+		      PL_no_mem, strlen(PL_no_mem));
 	my_exit(1);
 	return Nullch;
     }
@@ -1222,8 +1228,9 @@ Perl_croak_nocontext(const char *pat, ...)
 =for apidoc croak
 
 This is the XSUB-writer's interface to Perl's C<die> function.
-Normally use this function the same way you use the C C<printf>
-function.  See C<warn>.
+Normally call this function the same way you call the C C<printf>
+function.  Calling C<croak> returns control directly to Perl,
+sidestepping the normal C order of execution. See C<warn>.
 
 If you want to throw an exception object, assign the object to
 C<$@> and then pass C<Nullch> to croak():
@@ -1308,9 +1315,8 @@ Perl_warn_nocontext(const char *pat, ...)
 /*
 =for apidoc warn
 
-This is the XSUB-writer's interface to Perl's C<warn> function.  Use this
-function the same way you use the C C<printf> function.  See
-C<croak>.
+This is the XSUB-writer's interface to Perl's C<warn> function.  Call this
+function the same way you call the C C<printf> function.  See C<croak>.
 
 =cut
 */

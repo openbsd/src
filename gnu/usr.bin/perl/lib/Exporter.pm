@@ -9,7 +9,7 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.57';
+our $VERSION = '5.58';
 our (%Cache);
 $Carp::Internal{Exporter} = 1;
 
@@ -212,9 +212,9 @@ need to know to use Exporter.
 
 =head2 Specialised Import Lists
 
-If the first entry in an import list begins with !, : or / then the
-list is treated as a series of specifications which either add to or
-delete from the list of names to import. They are processed left to
+If any of the entries in an import list begins with !, : or / then
+the list is treated as a series of specifications which either add to
+or delete from the list of names to import. They are processed left to
 right. Specifications are in the form:
 
     [!]name         This name only

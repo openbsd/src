@@ -26,6 +26,8 @@
 
 # 64-bitty by Jarkko Hietaniemi on 9/1998
 
+# Martin Pool added -shared for gcc on 2004-01-27
+
 # Use   sh Configure -Dcc='cc -n32' to try compiling with -n32.
 #     or -Dcc='cc -n32 -mips3' (or -mips4) to force (non)portability
 # Don't bother with -n32 unless you have the 7.1 or later compilers.
@@ -173,6 +175,9 @@ esac'
 	ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME"
        test -z "$optimize" && optimize="-O3"
 	usenm='undef'
+	# It seems gcc can build Irix shlibs, but of course it needs
+	# -shared.  Otherwise you get link errors looking for main().
+	lddlflags="$lddlflags -shared"
 	case "`uname -s`" in
 	# Without the -mabi=64 gcc in 64-bit IRIX has problems passing
 	# and returning small structures.  This affects inet_*() and semctl().

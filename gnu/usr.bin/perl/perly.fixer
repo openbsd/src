@@ -23,7 +23,7 @@ gnupatch=patch
 
 input=$1
 output=$2
-tmp=/tmp/f$$
+tmp=perly$$
 
 inputh=`echo $input|sed 's:\.c$:.h:'`
 if grep '^#ifdef PERL_CORE' $inputh; then

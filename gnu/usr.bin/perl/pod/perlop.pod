@@ -144,6 +144,17 @@ value.
     print $i++;  # prints 0
     print ++$j;  # prints 1
 
+Note that just as in C, Perl doesn't define B<when> the variable is
+incremented or decremented. You just know it will be done sometime 
+before or after the value is returned. This also means that modifying
+a variable twice in the same statement will lead to undefined behaviour.
+Avoid statements like:
+
+    $i = $i ++;
+    print ++ $i + $i ++;
+
+Perl will not guarantee what the result of the above statements is.
+
 The auto-increment operator has a little extra builtin magic to it.  If
 you increment a variable that is numeric, or that has ever been used in
 a numeric context, you get a normal increment.  If, however, the
@@ -238,7 +249,9 @@ Binary "x" is the repetition operator.  In scalar context or if the left
 operand is not enclosed in parentheses, it returns a string consisting
 of the left operand repeated the number of times specified by the right
 operand.  In list context, if the left operand is enclosed in
-parentheses, it repeats the list.
+parentheses, it repeats the list.  If the right operand is zero or
+negative, it returns an empty string or an empty list, depending on the
+context.
 
     print '-' x 80;		# print row of dashes
 
@@ -519,7 +532,27 @@ As a scalar operator:
         close ARGV if eof;             # reset $. each file
     }
 
-As a list operator:
+Here's a simple example to illustrate the difference between
+the two range operators:
+
+    @lines = ("   - Foo",
+              "01 - Bar",
+              "1  - Baz",
+              "   - Quux");
+
+    foreach(@lines)
+    {
+        if (/0/ .. /1/)
+        {
+            print "$_\n";
+        }
+    }
+
+This program will print only the line containing "Bar". If 
+the range operator is changed to C<...>, it will also print the 
+"Baz" line.
+
+And now some examples as a list operator:
 
     for (101 .. 200) { print; }	# print $_ 100 times
     @foo = @foo[0 .. $#foo];	# an expensive no-op
@@ -1160,10 +1193,10 @@ but leave its STDOUT to come out the old STDERR:
     $output = `cmd 3>&1 1>&2 2>&3 3>&-`;
 
 To read both a command's STDOUT and its STDERR separately, it's easiest
-and safest to redirect them separately to files, and then read from those
-files when the program is done:
+to redirect them separately to files, and then read from those files
+when the program is done:
 
-    system("program args 1>/tmp/program.stdout 2>/tmp/program.stderr");
+    system("program args 1>program.stdout 2>program.stderr");
 
 Using single-quote as a delimiter protects the command from Perl's
 double-quote interpolation, passing it on to the shell instead:

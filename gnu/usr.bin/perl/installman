@@ -91,6 +91,11 @@ while (<UTILS>) {
 	    my $new = "$opts{man1dir}/$what2.$opts{man1ext}";
 	    unlink($new);
 	    link($old, $new);
+	    my $xold = $old;
+	    $xold =~ s/^\Q$opts{'destdir'}\E// if $opts{'destdir'};
+	    my $xnew = $new;
+	    $xnew =~ s/^\Q$opts{'destdir'}\E// if $opts{'destdir'};
+	    $packlist->{$xnew} = { from => $xold, type => 'link' };
 	}
     }
 }

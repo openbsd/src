@@ -12,7 +12,7 @@ use Config;
 $Is_VMS = $^O eq 'VMS';
 $Is_MacOS = $^O eq 'MacOS';
 
-plan tests => 105;
+plan tests => 107;
 
 my $Perl = which_perl();
 
@@ -239,10 +239,14 @@ like( $@, qr/Bad filehandle:\s+afile/,          '       right error' );
 
 SKIP: {
     skip "This perl uses perlio", 1 if $Config{useperlio};
-    skip "This system doesn't understand EINVAL", 1 unless exists $!{EINVAL};
+    skip "miniperl cannot be relied on to load %Errno"
+	if $ENV{PERL_CORE_MINITEST};
+    # Force the reference to %! to be run time by writing ! as {"!"}
+    skip "This system doesn't understand EINVAL", 1
+	unless exists ${"!"}{EINVAL};
 
     no warnings 'io';
-    ok( !open(F,'>',\my $s) && $!{EINVAL}, 'open(reference) raises EINVAL' );
+    ok(!open(F,'>',\my $s) && ${"!"}{EINVAL}, 'open(reference) raises EINVAL');
 }
 
 {
@@ -302,3 +306,12 @@ SKIP: {
 	 'bad layer ":c" failure');
 }
 
+# [perl #28986] "open m" crashes Perl
+
+fresh_perl_like('open m', qr/^Search pattern not terminated at/,
+	{ stderr => 1 }, 'open m test');
+
+fresh_perl_is(
+    'sub f { open(my $fh, "xxx"); $fh = "f"; } f; f;print "ok"',
+    'ok', { stderr => 1 },
+    '#29102: Crash on assignment to lexical filehandle');

@@ -2,7 +2,7 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.04';
+$VERSION = '2.06';
 
 # constant.pm is slow
 sub SUCCESS () { 1 }
@@ -38,11 +38,26 @@ sub get_attr {
     return $Fattr->{$_[0]};
 }
 
-sub get_fields {
-    # Shut up a possible typo warning.
-    () = \%{$_[0].'::FIELDS'};
+if ($] < 5.009) {
+    *get_fields = sub {
+	# Shut up a possible typo warning.
+	() = \%{$_[0].'::FIELDS'};
+	my $f = \%{$_[0].'::FIELDS'};
 
-    return \%{$_[0].'::FIELDS'};
+	# should be centralized in fields? perhaps
+	# fields::mk_FIELDS_be_OK. Peh. As long as %{ $package . '::FIELDS' }
+	# is used here anyway, it doesn't matter.
+	bless $f, 'pseudohash' if (ref($f) ne 'pseudohash');
+
+	return $f;
+    }
+}
+else {
+    *get_fields = sub {
+	# Shut up a possible typo warning.
+	() = \%{$_[0].'::FIELDS'};
+	return \%{$_[0].'::FIELDS'};
+    }
 }
 
 sub import {
@@ -182,6 +197,17 @@ Multiple inheritence of fields is B<NOT> supported, if two or more
 base classes each have inheritable fields the 'base' pragma will
 croak.  See L<fields>, L<public> and L<protected> for a description of
 this feature.
+
+=head1 DIAGNOSTICS
+
+=over 4
+
+=item Base class package "%s" is empty.
+
+base.pm was unable to require the base package, because it was not
+found in your path.
+
+=back
 
 =head1 HISTORY
 

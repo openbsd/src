@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use strict;
 
-$Safe::VERSION = "2.10";
+$Safe::VERSION = "2.11";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -26,6 +26,7 @@ sub lexless_anon_sub {
 }
 
 use Carp;
+use Carp::Heavy;
 
 use Opcode 1.01, qw(
     opset opset_to_ops opmask_add

@@ -15,7 +15,7 @@ require DynaLoader;
 		 d_usleep d_ualarm d_gettimeofday d_getitimer d_setitimer
 		 d_nanosleep);
 	
-$VERSION = '1.52';
+$VERSION = '1.59';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -329,8 +329,16 @@ become negative just became negative.  Maybe your compiler is broken?
 =head1 CAVEATS
 
 Notice that the core C<time()> maybe rounding rather than truncating.
-What this means is that the core C<time()> may be reporting the time as one second
-later than C<gettimeofday()> and C<Time::HiRes::time()>.
+What this means is that the core C<time()> may be reporting the time
+as one second later than C<gettimeofday()> and C<Time::HiRes::time()>.
+
+Adjusting the system clock (either manually or by services like ntp)
+may cause problems, especially for long running programs that assume
+a monotonously increasing time (note that all platforms do not adjust
+time as gracefully as UNIX ntp does).  For example in Win32 (and derived
+platforms like Cygwin and MinGW) the Time::HiRes::time() may temporarily
+drift off from the system clock (and the original time())  by up to 0.5
+seconds. Time::HiRes will notice this eventually and recalibrate.
 
 =head1 AUTHORS
 
@@ -343,7 +351,7 @@ G. Aas <gisle@aas.no>
 
 Copyright (c) 1996-2002 Douglas E. Wegscheid.  All rights reserved.
 
-Copyright (c) 2002,2003 Jarkko Hietaniemi.  All rights reserved.
+Copyright (c) 2002,2003,2004 Jarkko Hietaniemi.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

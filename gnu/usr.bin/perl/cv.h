@@ -1,7 +1,7 @@
 /*    cv.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -83,7 +83,10 @@ Returns the stash of the CV.
 #define CVf_CLONED	0x0002	/* a clone of one of those */
 #define CVf_ANON	0x0004	/* CvGV() can't be trusted */
 #define CVf_OLDSTYLE	0x0008
-#define CVf_UNIQUE	0x0010	/* can't be cloned */
+#define CVf_UNIQUE	0x0010	/* sub is only called once (eg PL_main_cv,
+				 * require, eval). Not to be confused
+				 * with the GVf_UNIQUE flag associated
+				 * with the :unique attribute */
 #define CVf_NODEBUG	0x0020	/* no DB::sub indirection for this CV
 				   (esp. useful for special XSUBs) */
 #define CVf_METHOD	0x0040	/* CV is explicitly marked as a method */

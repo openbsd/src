@@ -1,7 +1,7 @@
 /*    gv.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -1242,7 +1242,8 @@ Perl_gp_free(pTHX_ GV *gv)
     if (gp->gp_refcnt == 0) {
 	if (ckWARN_d(WARN_INTERNAL))
 	    Perl_warner(aTHX_ packWARN(WARN_INTERNAL),
-			"Attempt to free unreferenced glob pointers");
+			"Attempt to free unreferenced glob pointers"
+                        pTHX__FORMAT pTHX__VALUE);
         return;
     }
     if (gp->gp_cv) {
@@ -1256,7 +1257,7 @@ Perl_gp_free(pTHX_ GV *gv)
     }
 
     if (gp->gp_sv) SvREFCNT_dec(gp->gp_sv);
-    if (gp->gp_sv) SvREFCNT_dec(gp->gp_av);
+    if (gp->gp_av) SvREFCNT_dec(gp->gp_av);
     if (gp->gp_hv) {
 	 if (PL_stashcache && HvNAME(gp->gp_hv))
 	      hv_delete(PL_stashcache,

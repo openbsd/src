@@ -1,7 +1,7 @@
 /*    toke.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -250,18 +250,23 @@ S_no_op(pTHX_ char *what, char *s)
     else
 	PL_bufptr = s;
     yywarn(Perl_form(aTHX_ "%s found where operator expected", what));
-    if (is_first)
-	Perl_warn(aTHX_ "\t(Missing semicolon on previous line?)\n");
-    else if (PL_oldoldbufptr && isIDFIRST_lazy_if(PL_oldoldbufptr,UTF)) {
-	char *t;
-	for (t = PL_oldoldbufptr; *t && (isALNUM_lazy_if(t,UTF) || *t == ':'); t++) ;
-	if (t < PL_bufptr && isSPACE(*t))
-	    Perl_warn(aTHX_ "\t(Do you need to predeclare %.*s?)\n",
-		t - PL_oldoldbufptr, PL_oldoldbufptr);
-    }
-    else {
-	assert(s >= oldbp);
-	Perl_warn(aTHX_ "\t(Missing operator before %.*s?)\n", s - oldbp, oldbp);
+    if (ckWARN_d(WARN_SYNTAX)) {
+	if (is_first)
+	    Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
+		    "\t(Missing semicolon on previous line?)\n");
+	else if (PL_oldoldbufptr && isIDFIRST_lazy_if(PL_oldoldbufptr,UTF)) {
+	    char *t;
+	    for (t = PL_oldoldbufptr; *t && (isALNUM_lazy_if(t,UTF) || *t == ':'); t++) ;
+	    if (t < PL_bufptr && isSPACE(*t))
+		Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
+			"\t(Do you need to predeclare %.*s?)\n",
+		    t - PL_oldoldbufptr, PL_oldoldbufptr);
+	}
+	else {
+	    assert(s >= oldbp);
+	    Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
+		    "\t(Missing operator before %.*s?)\n", s - oldbp, oldbp);
+	}
     }
     PL_bufptr = oldbp;
 }
@@ -1222,7 +1227,7 @@ S_scan_const(pTHX_ char *start)
 
     const char *leaveit =	/* set of acceptably-backslashed characters */
 	PL_lex_inpat
-	    ? "\\.^$@AGZdDwWsSbBpPXC+*?|()-nrtfeaxcz0123456789[{]} \t\n\r\f\v#"
+	    ? "\\.^$@AGZdDwWsSbBpPXC+*?|()-nrtfeaxz0123456789[{]} \t\n\r\f\v#"
 	    : "";
 
     if (PL_lex_inwhat == OP_TRANS && PL_sublex_info.sub_op) {
@@ -2424,8 +2429,12 @@ Perl_yylex(pTHX)
 	if (!PL_rsfp) {
 	    PL_last_uni = 0;
 	    PL_last_lop = 0;
-	    if (PL_lex_brackets)
-		yyerror("Missing right curly or square bracket");
+	    if (PL_lex_brackets) {
+ 	        if (PL_lex_formbrack)
+		    yyerror("Format not terminated");
+                else
+		    yyerror("Missing right curly or square bracket");
+	    }
             DEBUG_T( { PerlIO_printf(Perl_debug_log,
                         "### Tokener got EOF\n");
             } );
@@ -2521,8 +2530,13 @@ Perl_yylex(pTHX)
 		sv_setpv(PL_linestr,"");
 		TOKEN(';');	/* not infinite loop because rsfp is NULL now */
 	    }
-	    /* if it looks like the start of a BOM, check if it in fact is */
-	    else if (bof && (!*s || *(U8*)s == 0xEF || *(U8*)s >= 0xFE)) {
+	    /* If it looks like the start of a BOM or raw UTF-16,
+	     * check if it in fact is. */
+	    else if (bof &&
+		     (*s == 0 ||
+		      *(U8*)s == 0xEF ||
+		      *(U8*)s >= 0xFE ||
+		      s[1] == 0)) {
 #ifdef PERLIO_IS_STDIO
 #  ifdef __GNU_LIBRARY__
 #    if __GNU_LIBRARY__ == 1 /* Linux glibc5 */
@@ -3022,21 +3036,25 @@ Perl_yylex(pTHX)
 		    PL_lex_stuff = Nullsv;
 		}
 		else {
+		    if (len == 6 && strnEQ(s, "unique", len)) {
+			if (PL_in_my == KEY_our)
+#ifdef USE_ITHREADS
+			    GvUNIQUE_on(cGVOPx_gv(yylval.opval));
+#else
+			    ; /* skip to avoid loading attributes.pm */
+#endif
+			else 
+			    Perl_croak(aTHX_ "The 'unique' attribute may only be applied to 'our' variables");
+		    }
+
 		    /* NOTE: any CV attrs applied here need to be part of
 		       the CVf_BUILTIN_ATTRS define in cv.h! */
-		    if (!PL_in_my && len == 6 && strnEQ(s, "lvalue", len))
+		    else if (!PL_in_my && len == 6 && strnEQ(s, "lvalue", len))
 			CvLVALUE_on(PL_compcv);
 		    else if (!PL_in_my && len == 6 && strnEQ(s, "locked", len))
 			CvLOCKED_on(PL_compcv);
 		    else if (!PL_in_my && len == 6 && strnEQ(s, "method", len))
 			CvMETHOD_on(PL_compcv);
-		    else if (PL_in_my == KEY_our && len == 6 &&
-			     strnEQ(s, "unique", len))
-#ifdef USE_ITHREADS
-			GvUNIQUE_on(cGVOPx_gv(yylval.opval));
-#else
-			; /* skip that case to avoid loading attributes.pm */
-#endif
 		    /* After we've set the flags, it could be argued that
 		       we don't need to do the attributes.pm-based setting
 		       process, and shouldn't bother appending recognized
@@ -4656,8 +4674,8 @@ Perl_yylex(pTHX)
 	    if (isIDFIRST_lazy_if(s,UTF)) {
 		char *t;
 		for (d = s; isALNUM_lazy_if(d,UTF); d++) ;
-		t = skipspace(d);
-		if (strchr("|&*+-=!?:.", *t) && ckWARN_d(WARN_PRECEDENCE)
+		for (t=d; *t && isSPACE(*t); t++) ;
+		if ( *t && strchr("|&*+-=!?:.", *t) && ckWARN_d(WARN_PRECEDENCE)
 		    /* [perl #16184] */
 		    && !(t[0] == '=' && t[1] == '>')
 		) {
@@ -5065,8 +5083,12 @@ Perl_yylex(pTHX)
 
 		if (*s == ':' && s[1] != ':')
 		    PL_expect = attrful;
-		else if (!have_name && *s != '{' && key == KEY_sub)
-		    Perl_croak(aTHX_ "Illegal declaration of anonymous subroutine");
+		else if (*s != '{' && key == KEY_sub) {
+		    if (!have_name)
+			Perl_croak(aTHX_ "Illegal declaration of anonymous subroutine");
+		    else if (*s != ';')
+			Perl_croak(aTHX_ "Illegal declaration of subroutine %"SVf, PL_subname);
+		}
 
 		if (have_proto) {
 		    PL_nextval[PL_nexttoke].opval =
@@ -5502,7 +5524,9 @@ Perl_keyword(pTHX_ register char *d, I32 len)
 	    break;
 	case 6:
 	    if (strEQ(d,"exists"))		return KEY_exists;
-	    if (strEQ(d,"elseif")) Perl_warn(aTHX_ "elseif should be elsif");
+	    if (strEQ(d,"elseif") && ckWARN_d(WARN_SYNTAX))
+		Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
+			"elseif should be elsif");
 	    break;
 	case 8:
 	    if (strEQ(d,"endgrent"))		return -KEY_endgrent;
@@ -7577,20 +7601,23 @@ S_scan_formline(pTHX_ register char *s)
     register char *t;
     SV *stuff = newSVpvn("",0);
     bool needargs = FALSE;
+    bool eofmt = FALSE;
 
     while (!needargs) {
-	if (*s == '.' || *s == /*{*/'}') {
+	if (*s == '.') {
 	    /*SUPPRESS 530*/
 #ifdef PERL_STRICT_CR
 	    for (t = s+1;SPACE_OR_TAB(*t); t++) ;
 #else
 	    for (t = s+1;SPACE_OR_TAB(*t) || *t == '\r'; t++) ;
 #endif
-	    if (*t == '\n' || t == PL_bufend)
+	    if (*t == '\n' || t == PL_bufend) {
+	        eofmt = TRUE;
 		break;
+            }
 	}
 	if (PL_in_eval && !PL_rsfp) {
-	    eol = strchr(s,'\n');
+	    eol = memchr(s,'\n',PL_bufend-s);
 	    if (!eol++)
 		eol = PL_bufend;
 	}
@@ -7627,7 +7654,6 @@ S_scan_formline(pTHX_ register char *s)
 	    PL_last_lop = PL_last_uni = Nullch;
 	    if (!s) {
 		s = PL_bufptr;
-		yyerror("Format not terminated");
 		break;
 	    }
 	}
@@ -7656,7 +7682,8 @@ S_scan_formline(pTHX_ register char *s)
     }
     else {
 	SvREFCNT_dec(stuff);
-	PL_lex_formbrack = 0;
+	if (eofmt)
+	    PL_lex_formbrack = 0;
 	PL_bufptr = s;
     }
     return s;
@@ -7794,8 +7821,8 @@ Perl_yyerror(pTHX_ char *s)
                 (int)PL_multi_open,(int)PL_multi_close,(IV)PL_multi_start);
         PL_multi_end = 0;
     }
-    if (PL_in_eval & EVAL_WARNONLY)
-	Perl_warn(aTHX_ "%"SVf, msg);
+    if (PL_in_eval & EVAL_WARNONLY && ckWARN_d(WARN_SYNTAX))
+	Perl_warner(aTHX_ packWARN(WARN_SYNTAX), "%"SVf, msg);
     else
 	qerror(msg);
     if (PL_error_count >= 10) {
@@ -7819,72 +7846,94 @@ S_swallow_bom(pTHX_ U8 *s)
 {
     STRLEN slen;
     slen = SvCUR(PL_linestr);
-    switch (*s) {
+    switch (s[0]) {
     case 0xFF:
 	if (s[1] == 0xFE) {
-	    /* UTF-16 little-endian */
+	    /* UTF-16 little-endian? (or UTF32-LE?) */
 	    if (s[2] == 0 && s[3] == 0)  /* UTF-32 little-endian */
-		Perl_croak(aTHX_ "Unsupported script encoding");
+		Perl_croak(aTHX_ "Unsupported script encoding UTF32-LE");
 #ifndef PERL_NO_UTF16_FILTER
-	    DEBUG_p(PerlIO_printf(Perl_debug_log, "UTF-LE script encoding\n"));
+	    if (DEBUG_p_TEST || DEBUG_T_TEST) PerlIO_printf(Perl_debug_log, "UTF16-LE script encoding (BOM)\n");
 	    s += 2;
+	utf16le:
 	    if (PL_bufend > (char*)s) {
 		U8 *news;
 		I32 newlen;
 
 		filter_add(utf16rev_textfilter, NULL);
 		New(898, news, (PL_bufend - (char*)s) * 3 / 2 + 1, U8);
-		PL_bufend = (char*)utf16_to_utf8_reversed(s, news,
-						 PL_bufend - (char*)s - 1,
-						 &newlen);
-		Copy(news, s, newlen, U8);
-		SvCUR_set(PL_linestr, newlen);
-		PL_bufend = SvPVX(PL_linestr) + newlen;
-		news[newlen++] = '\0';
+		PL_bufend =
+		     (char*)utf16_to_utf8_reversed(s, news,
+						   PL_bufend - (char*)s - 1,
+						   &newlen);
+		sv_setpvn(PL_linestr, (const char*)news, newlen);
 		Safefree(news);
+		SvUTF8_on(PL_linestr);
+		s = (U8*)SvPVX(PL_linestr);
+		PL_bufend = SvPVX(PL_linestr) + newlen;
 	    }
 #else
-	    Perl_croak(aTHX_ "Unsupported script encoding");
+	    Perl_croak(aTHX_ "Unsupported script encoding UTF16-LE");
 #endif
 	}
 	break;
     case 0xFE:
-	if (s[1] == 0xFF) {   /* UTF-16 big-endian */
+	if (s[1] == 0xFF) {   /* UTF-16 big-endian? */
 #ifndef PERL_NO_UTF16_FILTER
-	    DEBUG_p(PerlIO_printf(Perl_debug_log, "UTF-16BE script encoding\n"));
+	    if (DEBUG_p_TEST || DEBUG_T_TEST) PerlIO_printf(Perl_debug_log, "UTF-16BE script encoding (BOM)\n");
 	    s += 2;
+	utf16be:
 	    if (PL_bufend > (char *)s) {
 		U8 *news;
 		I32 newlen;
 
 		filter_add(utf16_textfilter, NULL);
 		New(898, news, (PL_bufend - (char*)s) * 3 / 2 + 1, U8);
-		PL_bufend = (char*)utf16_to_utf8(s, news,
-						 PL_bufend - (char*)s,
-						 &newlen);
-		Copy(news, s, newlen, U8);
-		SvCUR_set(PL_linestr, newlen);
-		PL_bufend = SvPVX(PL_linestr) + newlen;
-		news[newlen++] = '\0';
+		PL_bufend =
+		     (char*)utf16_to_utf8(s, news,
+					  PL_bufend - (char*)s,
+					  &newlen);
+		sv_setpvn(PL_linestr, (const char*)news, newlen);
 		Safefree(news);
+		SvUTF8_on(PL_linestr);
+		s = (U8*)SvPVX(PL_linestr);
+		PL_bufend = SvPVX(PL_linestr) + newlen;
 	    }
 #else
-	    Perl_croak(aTHX_ "Unsupported script encoding");
+	    Perl_croak(aTHX_ "Unsupported script encoding UTF16-BE");
 #endif
 	}
 	break;
     case 0xEF:
 	if (slen > 2 && s[1] == 0xBB && s[2] == 0xBF) {
-	    DEBUG_p(PerlIO_printf(Perl_debug_log, "UTF-8 script encoding\n"));
+	    if (DEBUG_p_TEST || DEBUG_T_TEST) PerlIO_printf(Perl_debug_log, "UTF-8 script encoding (BOM)\n");
 	    s += 3;                      /* UTF-8 */
 	}
 	break;
     case 0:
-	if (slen > 3 && s[1] == 0 &&  /* UTF-32 big-endian */
-	    s[2] == 0xFE && s[3] == 0xFF)
-	{
-	    Perl_croak(aTHX_ "Unsupported script encoding");
+	if (slen > 3) {
+	     if (s[1] == 0) {
+		  if (s[2] == 0xFE && s[3] == 0xFF) {
+		       /* UTF-32 big-endian */
+		       Perl_croak(aTHX_ "Unsupported script encoding UTF32-BE");
+		  }
+	     }
+	     else if (s[2] == 0 && s[3] != 0) {
+		  /* Leading bytes
+		   * 00 xx 00 xx
+		   * are a good indicator of UTF-16BE. */
+		  if (DEBUG_p_TEST || DEBUG_T_TEST) PerlIO_printf(Perl_debug_log, "UTF-16BE script encoding (no BOM)\n");
+		  goto utf16be;
+	     }
 	}
+    default:
+	 if (slen > 3 && s[1] == 0 && s[2] != 0 && s[3] == 0) {
+		  /* Leading bytes
+		   * xx 00 xx 00
+		   * are a good indicator of UTF-16LE. */
+	      if (DEBUG_p_TEST || DEBUG_T_TEST) PerlIO_printf(Perl_debug_log, "UTF-16LE script encoding (no BOM)\n");
+	      goto utf16le;
+	 }
     }
     return (char*)s;
 }

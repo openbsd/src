@@ -138,7 +138,7 @@ If you used WinZip, this was already done for you.
    C. BUILD
 
 You'll need the C<nmake> utility, available at
-ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
+http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe
 or dmake, available on CPAN.
 http://search.cpan.org/dist/dmake/
 

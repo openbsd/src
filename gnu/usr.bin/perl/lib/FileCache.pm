@@ -1,6 +1,6 @@
 package FileCache;
 
-our $VERSION = 1.03;
+our $VERSION = '1.04_01';
 
 =head1 NAME
 
@@ -46,6 +46,9 @@ and subsequent openings. Most valid modes for 3-argument C<open> are supported
 namely; C<< '>' >>, C<< '+>' >>, C<< '<' >>, C<< '<+' >>, C<<< '>>' >>>,
 C< '|-' > and C< '-|' >
 
+To pass supplemental arguments to a program opened with C< '|-' > or C< '-|' >
+append them to the command string as you would system EXPR.
+
 Returns EXPR on success for convenience. You may neglect the
 return value and manipulate EXPR as the filehandle directly if you prefer.
 
@@ -56,17 +59,20 @@ do not do so if you are calling C<FileCache::cacheout> from a package other
 than which it was imported, or with another module which overrides C<close>.
 If you must, use C<FileCache::cacheout_close>.
 
+Although FileCache can be used with piped opens ('-|' or '|-') doing so is
+strongly discouraged.  If FileCache finds it necessary to close and then reopen
+a pipe, the command at the far end of the pipe will be reexecuted - the results
+of performing IO on FileCache'd pipes is unlikely to be what you expect.  The
+ability to use FileCache on pipes may be removed in a future release.
+
+FileCache does not store the current file offset if it finds it necessary to
+close a file.  When the file is reopened, the offset will be as specified by the
+original C<open> file mode.  This could be construed to be a bug.
+
 =head1 BUGS
 
 F<sys/param.h> lies with its C<NOFILE> define on some systems,
 so you may have to set I<maxopen> yourself.
-
-=head1 NOTES
-
-FileCache installs signal handlers for CHLD (a.k.a. CLD) and PIPE in the
-calling package to handle deceased children from 2-arg C<cacheout> with C<'|-'>
-or C<'-|'> I<expediently>. The children would otherwise be reaped eventually,
-unless you terminated before repeatedly calling cacheout.
 
 =cut
 
@@ -87,11 +93,6 @@ sub import {
     $pkg = caller(1);
     *{$pkg.'::cacheout'} = \&cacheout;
     *{$pkg.'::close'}    = \&cacheout_close;
-
-    # Reap our children
-    ${"$pkg\::SIG"}{'CLD'}  = 'IGNORE' if $Config{sig_name} =~ /\bCLD\b/;
-    ${"$pkg\::SIG"}{'CHLD'} = 'IGNORE' if $Config{sig_name} =~ /\bCHLD\b/;
-    ${"$pkg\::SIG"}{'PIPE'} = 'IGNORE' if $Config{sig_name} =~ /\bPIPE\b/;
 
     # Truth is okay here because setting maxopen to 0 would be bad
     return $cacheout_maxopen = $args{maxopen} if $args{maxopen};
@@ -135,9 +136,9 @@ sub cacheout {
     ($file, $mode) = ($mode, $file) if $narg == 1;
     croak "Invalid mode for cacheout" if $mode &&
       ( $mode !~ /^\s*(?:>>|\+?>|\+?<|\|\-|)|\-\|\s*$/ );
-    
+
     # Mode changed?
-    if( $isopen{$file} && ($mode||'>') ne $isopen{$file}->[2] ){
+    if( $isopen{$file} && ($mode||'>') ne $isopen{$file}->[1] ){
       &cacheout_close($file, 1);
     }
     

@@ -7,7 +7,7 @@
  * that running config_h.SH again will wipe out any changes you've made.
  * For a more permanent change edit undef and rerun config_h.SH.
  *
- * $Id: config_H.gc,v 1.6 2003/12/03 03:02:51 millert Exp $
+ * $Id: config_H.gc,v 1.7 2004/04/07 21:33:12 millert Exp $
  */
 
 /*
@@ -1344,7 +1344,7 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define ARCHLIB "c:\\perl\\5.8.3\\lib\\MSWin32-x86-multi-thread"		/**/
+#define ARCHLIB "c:\\perl\\5.8.5\\lib\\MSWin32-x86-multi-thread"		/**/
 /*#define ARCHLIB_EXP ""	/**/
 
 /* BIN:
@@ -1355,8 +1355,8 @@
  *	This symbol is the filename expanded version of the BIN symbol, for
  *	programs that do not want to deal with that at run-time.
  */
-#define BIN "c:\\perl\\5.8.3\\bin\\MSWin32-x86-multi-thread"	/**/
-#define BIN_EXP "c:\\perl\\5.8.3\\bin\\MSWin32-x86-multi-thread"	/**/
+#define BIN "c:\\perl\\5.8.5\\bin\\MSWin32-x86-multi-thread"	/**/
+#define BIN_EXP "c:\\perl\\5.8.5\\bin\\MSWin32-x86-multi-thread"	/**/
 
 /* PERL_INC_VERSION_LIST:
  *	This variable specifies the list of subdirectories in over
@@ -1393,8 +1393,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "c:\\perl\\5.8.3\\lib"		/**/
-#define PRIVLIB_EXP (win32_get_privlib("5.8.3"))	/**/
+#define PRIVLIB "c:\\perl\\5.8.5\\lib"		/**/
+#define PRIVLIB_EXP (win32_get_privlib("5.8.5"))	/**/
 
 /* SITEARCH:
  *	This symbol contains the name of the private library for this package.
@@ -1411,7 +1411,7 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define SITEARCH "c:\\perl\\site\\5.8.3\\lib\\MSWin32-x86-multi-thread"		/**/
+#define SITEARCH "c:\\perl\\site\\5.8.5\\lib\\MSWin32-x86-multi-thread"		/**/
 /*#define SITEARCH_EXP ""	/**/
 
 /* SITELIB:
@@ -1434,8 +1434,8 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "c:\\perl\\site\\5.8.3\\lib"		/**/
-#define SITELIB_EXP (win32_get_sitelib("5.8.3"))	/**/
+#define SITELIB "c:\\perl\\site\\5.8.5\\lib"		/**/
+#define SITELIB_EXP (win32_get_sitelib("5.8.5"))	/**/
 #define SITELIB_STEM ""		/**/
 
 /* PERL_VENDORARCH:
@@ -2155,6 +2155,11 @@
  *	This symbol, if defined, indicates that we're using our own malloc.
  */
 /*#define MYMALLOC			/**/
+
+/* PERL_MALLOC_WRAP:
+ *	This symbol, if defined, indicates that we'd like malloc wrap checks.
+ */
+#define PERL_MALLOC_WRAP		/**/
 
 /* CAN_PROTOTYPE:
  *	If defined, this macro indicates that the C compiler can handle
@@ -3356,41 +3361,6 @@
 #ifndef USE_SOCKS
 /*#define	USE_SOCKS		/**/
 #endif
-
-/* PERL_XS_APIVERSION:
- *	This variable contains the version of the oldest perl binary
- *	compatible with the present perl.  perl.c:incpush() and
- *	lib/lib.pm will automatically search in c:\\perl\\site\\5.8.3\\lib\\MSWin32-x86-multi-thread for older
- *	directories across major versions back to xs_apiversion.
- *	This is only useful if you have a perl library directory tree
- *	structured like the default one.
- *	See INSTALL for how this works.
- *	The versioned site_perl directory was introduced in 5.005,
- *	so that is the lowest possible value.
- *	Since this can depend on compile time options
- *	it is set by Configure.  Other non-default sources
- *	of potential incompatibility, such as multiplicity, threads,
- *	debugging, 64bits, sfio, etc., are not checked for currently,
- *	though in principle we could go snooping around in old
- *	Config.pm files.
- */
-/* PERL_PM_APIVERSION:
- *	This variable contains the version of the oldest perl
- *	compatible with the present perl.  (That is, pure perl modules
- *	written for pm_apiversion will still work for the current
- *	version).  perl.c:incpush() and lib/lib.pm will automatically
- *	search in c:\\perl\\site\\5.8.3\\lib for older directories across major versions
- *	back to pm_apiversion.  This is only useful if you have a perl
- *	library directory tree structured like the default one.  The
- *	versioned site_perl library was introduced in 5.005, so that's
- *	the default setting for this variable.  It's hard to imagine
- *	it changing before Perl6.  It is included here for symmetry
- *	with xs_apiveprsion -- the searching algorithms will
- *	(presumably) be similar.
- *	See the INSTALL file for how this works.
- */
-#define PERL_XS_APIVERSION "5.6.0"
-#define PERL_PM_APIVERSION "5.005"
 
 /* HAS_DRAND48_PROTO:
  *	This symbol, if defined, indicates that the system provides

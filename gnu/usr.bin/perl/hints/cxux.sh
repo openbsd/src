@@ -69,10 +69,9 @@ glibpth="/usr/sde/elf/usr/lib $glibpth"
 # to drag 'sigaction' into the perl main program is to make sure it gets
 # defined for the posix shared library (for some reason sigaction is static,
 # rather than being defined in libc.so.1). The 88110compat option makes sure
-# the code will run on both 88100 and 88110 machines. The define is added to
-# trigger a work around for a compiler bug which shows up in pp.c.
+# the code will run on both 88100 and 88110 machines.
 #
-cc='/bin/cc -Xa -Qtarget=M88110compat -DCXUX_BROKEN_CONSTANT_CONVERT'
+cc='/bin/cc -Xa -Qtarget=M88110compat'
 cccdlflags='-Zelf -Zpic'
 ccdlflags='-Zelf -Zlink=dynamic -Wl,-Bexport -u sigaction'
 lddlflags='-Zlink=so'

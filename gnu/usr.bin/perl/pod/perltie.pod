@@ -876,7 +876,7 @@ passed to the printf function.
     sub PRINTF {
         shift;
         my $fmt = shift;
-        print sprintf($fmt, @_)."\n";
+        print sprintf($fmt, @_);
     }
 
 =item READ this, LIST

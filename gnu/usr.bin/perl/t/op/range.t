@@ -1,6 +1,13 @@
 #!./perl
 
-print "1..25\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}   
+
+use Config;
+
+print "1..37\n";
 
 print join(':',1..5) eq '1:2:3:4:5' ? "ok 1\n" : "not ok 1\n";
 
@@ -47,12 +54,23 @@ print "not " unless join(",", @y) eq join(",", @x);
 print "ok 10\n";
 
 # check bounds
-@a = 0x7ffffffe..0x7fffffff;
-print "not " unless "@a" eq "2147483646 2147483647";
+if ($Config{ivsize} == 8) {
+  @a = eval "0x7ffffffffffffffe..0x7fffffffffffffff";
+  $a = "9223372036854775806 9223372036854775807";
+  @b = eval "-0x7fffffffffffffff..-0x7ffffffffffffffe";
+  $b = "-9223372036854775807 -9223372036854775806";
+}
+else {
+  @a = eval "0x7ffffffe..0x7fffffff";
+  $a = "2147483646 2147483647";
+  @b = eval "-0x7fffffff..-0x7ffffffe";
+  $b = "-2147483647 -2147483646";
+}
+
+print "not " unless "@a" eq $a;
 print "ok 11\n";
 
-@a = -0x7fffffff..-0x7ffffffe;
-print "not " unless "@a" eq "-2147483647 -2147483646";
+print "not " unless "@b" eq $b;
 print "ok 12\n";
 
 # check magic
@@ -83,9 +101,42 @@ print join(":","-4\n".."-0\n") eq "-4:-3:-2:-1:0" ? "ok 19\n" : "not ok 19\n";
 # undef should be treated as 0 for numerical range
 print join(":",undef..2) eq '0:1:2' ? "ok 20\n" : "not ok 20\n";
 print join(":",-2..undef) eq '-2:-1:0' ? "ok 21\n" : "not ok 21\n";
+print join(":",undef..'2') eq '0:1:2' ? "ok 22\n" : "not ok 22\n";
+print join(":",'-2'..undef) eq '-2:-1:0' ? "ok 23\n" : "not ok 23\n";
 
 # undef should be treated as "" for magical range
-print join(":","".."B") eq '' ? "ok 22\n" : "not ok 22\n";
-print join(":",undef.."B") eq '' ? "ok 23\n" : "not ok 23\n";
-print join(":","B".."") eq '' ? "ok 24\n" : "not ok 24\n";
-print join(":","B"..undef) eq '' ? "ok 25\n" : "not ok 25\n";
+print join(":", map "[$_]", "".."B") eq '[]' ? "ok 24\n" : "not ok 24\n";
+print join(":", map "[$_]", undef.."B") eq '[]' ? "ok 25\n" : "not ok 25\n";
+print join(":", map "[$_]", "B".."") eq '' ? "ok 26\n" : "not ok 26\n";
+print join(":", map "[$_]", "B"..undef) eq '' ? "ok 27\n" : "not ok 27\n";
+
+# undef..undef used to segfault
+print join(":", map "[$_]", undef..undef) eq '[]' ? "ok 28\n" : "not ok 28\n";
+
+# also test undef in foreach loops
+@foo=(); push @foo, $_ for undef..2;
+print join(":", @foo) eq '0:1:2' ? "ok 29\n" : "not ok 29\n";
+
+@foo=(); push @foo, $_ for -2..undef;
+print join(":", @foo) eq '-2:-1:0' ? "ok 30\n" : "not ok 30\n";
+
+@foo=(); push @foo, $_ for undef..'2';
+print join(":", @foo) eq '0:1:2' ? "ok 31\n" : "not ok 31\n";
+
+@foo=(); push @foo, $_ for '-2'..undef;
+print join(":", @foo) eq '-2:-1:0' ? "ok 32\n" : "not ok 32\n";
+
+@foo=(); push @foo, $_ for undef.."B";
+print join(":", map "[$_]", @foo) eq '[]' ? "ok 33\n" : "not ok 33\n";
+
+@foo=(); push @foo, $_ for "".."B";
+print join(":", map "[$_]", @foo) eq '[]' ? "ok 34\n" : "not ok 34\n";
+
+@foo=(); push @foo, $_ for "B"..undef;
+print join(":", map "[$_]", @foo) eq '' ? "ok 35\n" : "not ok 35\n";
+
+@foo=(); push @foo, $_ for "B".."";
+print join(":", map "[$_]", @foo) eq '' ? "ok 36\n" : "not ok 36\n";
+
+@foo=(); push @foo, $_ for undef..undef;
+print join(":", map "[$_]", @foo) eq '[]' ? "ok 37\n" : "not ok 37\n";

@@ -1,12 +1,12 @@
 #
-# $Id: UTF7.pm,v 1.2 2003/12/03 03:02:29 millert Exp $
+# $Id: UTF7.pm,v 1.3 2004/08/09 18:09:09 millert Exp $
 #
 package Encode::Unicode::UTF7;
 use strict;
 no warnings 'redefine';
 use base qw(Encode::Encoding);
 __PACKAGE__->Define('UTF-7');
-our $VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.3 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 use MIME::Base64;
 use Encode;
 
@@ -38,7 +38,8 @@ sub encode($$;$){
 	    if ($1 eq "+"){
 		$bytes .= "+-";
 	    }else{
-		my $base64 = encode_base64($e_utf16->encode($1), '');
+		my $s = $1;
+		my $base64 = encode_base64($e_utf16->encode($s), '');
 		$base64 =~ s/=+$//;
 		$bytes .= "+$base64-";
 	    }

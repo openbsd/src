@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 54;
+plan tests => 55;
 
 $FS = ':';
 
@@ -50,12 +50,12 @@ $_ = join(':', split(/:/,'1:2:3:4:5:6:::', 999));
 is($_ , '1:2:3:4:5:6:::');
 
 # Does assignment to a list imply split to one more field than that?
-if ($^O eq 'MSWin32') { $foo = `.\\perl -D1024 -e "(\$a,\$b) = split;" 2>&1` }
-elsif ($^O eq 'NetWare') { $foo = `perl -D1024 -e "(\$a,\$b) = split;" 2>&1` }
-elsif ($^O eq 'VMS')  { $foo = `./perl "-D1024" -e "(\$a,\$b) = split;" 2>&1` }
-elsif ($^O eq 'MacOS'){ $foo = `$^X "-D1024" -e "(\$a,\$b) = split;"` }
-else                  { $foo = `./perl -D1024 -e '(\$a,\$b) = split;' 2>&1` }
-ok($foo =~ /DEBUGGING/ || $foo =~ /SV = (VOID|IV\(3\))/);
+if ($^O eq 'MSWin32') { $foo = `.\\perl -Dt -e "(\$a,\$b) = split;" 2>&1` }
+elsif ($^O eq 'NetWare') { $foo = `perl -Dt -e "(\$a,\$b) = split;" 2>&1` }
+elsif ($^O eq 'VMS')  { $foo = `./perl "-Dt" -e "(\$a,\$b) = split;" 2>&1` }
+elsif ($^O eq 'MacOS'){ $foo = `$^X "-Dt" -e "(\$a,\$b) = split;"` }
+else                  { $foo = `./perl -Dt -e '(\$a,\$b) = split;' 2>&1` }
+ok($foo =~ /DEBUGGING/ || $foo =~ /\Qconst(IV(3))\E/);
 
 # Can we say how many fields to split to when assigning to a list?
 ($a,$b) = split(' ','1 2 3 4 5 6', 2);
@@ -289,3 +289,16 @@ ok(@ary == 3 &&
     $n = @a = split /,/,$p;
     is ($n, 0, '#21765 - pmreplroot hack used to return undef for 0 iters');
 }
+
+{
+    # [perl #28938]
+    # assigning off the end of the array after a split could leave garbage
+    # in the inner elements
+
+    my $x;
+    @a = split /,/, ',,,,,';
+    $a[3]=1;
+    $x = \$a[2];
+    is (ref $x, 'SCALAR', '#28938 - garbage after extend');
+}
+

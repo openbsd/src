@@ -32,7 +32,7 @@ datum	nextkey(datum key);
  * Set DBM_BUG_DUPLICATE_FREE in the extension hint file.
  */
 /* Close the previous dbm, and fail to open a new dbm */
-#define dbmclose()	((void) dbminit("/tmp/x/y/z/z/y"))
+#define dbmclose()	((void) dbminit("/non/exist/ent"))
 #endif
 
 #include <fcntl.h>

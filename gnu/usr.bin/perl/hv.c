@@ -1,7 +1,7 @@
 /*    hv.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -369,7 +369,7 @@ Perl_hv_fetch_ent(pTHX_ HV *hv, SV *keysv, I32 lval, register U32 hash)
 			   (lval ? HV_FETCH_LVALUE : 0), Nullsv, hash);
 }
 
-HE *
+STATIC HE *
 S_hv_fetch_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
 		  int flags, int action, SV *val, register U32 hash)
 {
@@ -870,7 +870,7 @@ Perl_hv_delete_ent(pTHX_ HV *hv, SV *keysv, I32 flags, U32 hash)
     return hv_delete_common(hv, keysv, NULL, 0, 0, flags, hash);
 }
 
-SV *
+STATIC SV *
 S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
 		   int k_flags, I32 d_flags, U32 hash)
 {
@@ -985,34 +985,21 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
 	    continue;
 	if ((HeKFLAGS(entry) ^ masked_flags) & HVhek_UTF8)
 	    continue;
-        if (k_flags & HVhek_FREEKEY)
-            Safefree(key);
 
 	/* if placeholder is here, it's already been deleted.... */
 	if (HeVAL(entry) == &PL_sv_placeholder)
 	{
-	    if (SvREADONLY(hv))
-		return Nullsv; /* if still SvREADONLY, leave it deleted. */
-
-           /* okay, really delete the placeholder. */
-           *oentry = HeNEXT(entry);
-           if (i && !*oentry)
-               xhv->xhv_fill--; /* HvFILL(hv)-- */
-           if (entry == xhv->xhv_eiter /* HvEITER(hv) */)
-               HvLAZYDEL_on(hv);
-           else
-               hv_free_ent(hv, entry);
-           xhv->xhv_keys--; /* HvKEYS(hv)-- */
-	   if (xhv->xhv_keys == 0)
-               HvHASKFLAGS_off(hv);
-           xhv->xhv_placeholders--;
-           return Nullsv;
+	  if (k_flags & HVhek_FREEKEY)
+            Safefree(key);
+	  return Nullsv;
 	}
 	else if (SvREADONLY(hv) && HeVAL(entry) && SvREADONLY(HeVAL(entry))) {
 	    S_hv_notallowed(aTHX_ k_flags, key, klen,
 			    "delete readonly key '%"SVf"' from"
 			    );
 	}
+        if (k_flags & HVhek_FREEKEY)
+            Safefree(key);
 
 	if (d_flags & G_DISCARD)
 	    sv = Nullsv;
@@ -1028,6 +1015,7 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
 	 * an error.
 	 */
 	if (SvREADONLY(hv)) {
+	    SvREFCNT_dec(HeVAL(entry));
 	    HeVAL(entry) = &PL_sv_placeholder;
 	    /* We'll be saving this slot, so the number of allocated keys
 	     * doesn't go down, but the number placeholders goes up */
@@ -1072,6 +1060,17 @@ S_hsplit(pTHX_ HV *hv)
     int longest_chain = 0;
     int was_shared;
 
+    /*PerlIO_printf(PerlIO_stderr(), "hsplit called for %p which had %d\n",
+      hv, (int) oldsize);*/
+
+    if (HvPLACEHOLDERS(hv) && !SvREADONLY(hv)) {
+      /* Can make this clear any placeholders first for non-restricted hashes,
+	 even though Storable rebuilds restricted hashes by putting in all the
+	 placeholders (first) before turning on the readonly flag, because
+	 Storable always pre-splits the hash.  */
+      hv_clear_placeholders(hv);
+    }
+	       
     PL_nomemok = TRUE;
 #if defined(STRANGE_MALLOC) || defined(MYMALLOC)
     Renew(a, PERL_HV_ARRAY_ALLOC_BYTES(newsize), char);
@@ -1501,42 +1500,48 @@ See Hash::Util::lock_keys() for an example of its use.
 void
 Perl_hv_clear_placeholders(pTHX_ HV *hv)
 {
-    I32 items;
-    items = (I32)HvPLACEHOLDERS(hv);
-    if (items) {
-        HE *entry;
-        I32 riter = HvRITER(hv);
-        HE *eiter = HvEITER(hv);
-        hv_iterinit(hv);
-        /* This may look suboptimal with the items *after* the iternext, but
-           it's quite deliberate. We only get here with items==0 if we've
-           just deleted the last placeholder in the hash. If we've just done
-           that then it means that the hash is in lazy delete mode, and the
-           HE is now only referenced in our iterator. If we just quit the loop
-           and discarded our iterator then the HE leaks. So we do the && the
-           other way to ensure iternext is called just one more time, which
-           has the side effect of triggering the lazy delete.  */
-        while ((entry = hv_iternext_flags(hv, HV_ITERNEXT_WANTPLACEHOLDERS))
-            && items) {
-            SV *val = hv_iterval(hv, entry);
+    I32 items = (I32)HvPLACEHOLDERS(hv);
+    I32 i = HvMAX(hv);
 
-            if (val == &PL_sv_placeholder) {
+    if (items == 0)
+	return;
 
-                /* It seems that I have to go back in the front of the hash
-                   API to delete a hash, even though I have a HE structure
-                   pointing to the very entry I want to delete, and could hold
-                   onto the previous HE that points to it. And it's easier to
-                   go in with SVs as I can then specify the precomputed hash,
-                   and don't have fun and games with utf8 keys.  */
-                SV *key = hv_iterkeysv(entry);
+    do {
+	/* Loop down the linked list heads  */
+	int first = 1;
+	HE **oentry = &(HvARRAY(hv))[i];
+	HE *entry = *oentry;
 
-                hv_delete_ent (hv, key, G_DISCARD, HeHASH(entry));
-                items--;
-            }
-        }
-        HvRITER(hv) = riter;
-        HvEITER(hv) = eiter;
-    }
+	if (!entry)
+	    continue;
+
+	for (; entry; entry = *oentry) {
+	    if (HeVAL(entry) == &PL_sv_placeholder) {
+		*oentry = HeNEXT(entry);
+		if (first && !*oentry)
+		    HvFILL(hv)--; /* This linked list is now empty.  */
+		if (HvEITER(hv))
+		    HvLAZYDEL_on(hv);
+		else
+		    hv_free_ent(hv, entry);
+
+		if (--items == 0) {
+		    /* Finished.  */
+		    HvTOTALKEYS(hv) -= HvPLACEHOLDERS(hv);
+		    if (HvKEYS(hv) == 0)
+			HvHASKFLAGS_off(hv);
+		    HvPLACEHOLDERS(hv) = 0;
+		    return;
+		}
+	    } else {
+		oentry = &HeNEXT(entry);
+		first = 0;
+	    }
+	}
+    } while (--i >= 0);
+    /* You can't get here, hence assertion should always fail.  */
+    assert (items == 0);
+    assert (0);
 }
 
 STATIC void
@@ -2016,9 +2021,10 @@ S_unshare_hek_or_pvn(pTHX_ HEK *hek, const char *str, I32 len, U32 hash)
     UNLOCK_STRTAB_MUTEX;
     if (!found && ckWARN_d(WARN_INTERNAL))
 	Perl_warner(aTHX_ packWARN(WARN_INTERNAL),
-                    "Attempt to free non-existent shared string '%s'%s",
+                    "Attempt to free non-existent shared string '%s'%s"
+                    pTHX__FORMAT,
                     hek ? HEK_KEY(hek) : str,
-                    (k_flags & HVhek_UTF8) ? " (utf8)" : "");
+                    ((k_flags & HVhek_UTF8) ? " (utf8)" : "") pTHX__VALUE);
     if (k_flags & HVhek_FREEKEY)
 	Safefree(str);
 }

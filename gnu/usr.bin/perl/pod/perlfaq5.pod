@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq5 - Files and Formats ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
+perlfaq5 - Files and Formats ($Revision: 1.7 $, $Date: 2004/04/07 21:33:08 $)
 
 =head1 DESCRIPTION
 
@@ -141,6 +141,7 @@ temporary files in one process, use a counter:
 	    my $count = 0;
 	    until (defined(fileno(FH)) || $count++ > 100) {
 		$base_name =~ s/-(\d+)$/"-" . (1 + $1)/e;
+		# O_EXCL is required for security reasons.
 		sysopen(FH, $base_name, O_WRONLY|O_EXCL|O_CREAT);
 	    }
 	    if (defined(fileno(FH))
@@ -427,8 +428,8 @@ To open file for update, file must not exist:
 
 To open a file without blocking, creating if necessary:
 
-    sysopen(FH, "/tmp/somefile", O_WRONLY|O_NDELAY|O_CREAT)
-	    or die "can't open /tmp/somefile: $!":
+    sysopen(FH, "/foo/somefile", O_WRONLY|O_NDELAY|O_CREAT)
+	    or die "can't open /foo/somefile: $!":
 
 Be warned that neither creation nor deletion of files is guaranteed to
 be an atomic operation over NFS.  That is, two processes might both
@@ -924,7 +925,7 @@ There's also a File::Tail module from CPAN.
 If you check L<perlfunc/open>, you'll see that several of the ways
 to call open() should do the trick.  For example:
 
-    open(LOG, ">>/tmp/logfile");
+    open(LOG, ">>/foo/logfile");
     open(STDERR, ">&LOG");
 
 Or even with a literal numeric descriptor:

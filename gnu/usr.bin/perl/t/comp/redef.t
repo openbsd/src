@@ -23,13 +23,13 @@ ok 1, $warn =~ s/Subroutine sub0 redefined[^\n]+\n//s;
 sub sub1    { 1 }
 sub sub1 () { 2 }
 
-ok 2, $warn =~ s/$NEWPROTO \Qsub main::sub1 vs ()\E[^\n]+\n//s;
+ok 2, $warn =~ s/$NEWPROTO \Qsub main::sub1: none vs ()\E[^\n]+\n//s;
 ok 3, $warn =~ s/Subroutine sub1 redefined[^\n]+\n//s;
 
 sub sub2     { 1 }
 sub sub2 ($) { 2 }
 
-ok 4, $warn =~ s/$NEWPROTO \Qsub main::sub2 vs ($)\E[^\n]+\n//s;
+ok 4, $warn =~ s/$NEWPROTO \Qsub main::sub2: none vs ($)\E[^\n]+\n//s;
 ok 5, $warn =~ s/Subroutine sub2 redefined[^\n]+\n//s;
 
 sub sub3 () { 1 }

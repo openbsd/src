@@ -7,93 +7,93 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require "./test.pl";
 }
 
-print "1..44\n";
+# Tests don't have names yet.
+# If you find tests are failing, please try adding names to tests to track
+# down where the failure is, and supply your new names as a patch.
+# (Just-in-time test naming)
+plan tests => 46;
 
 # numerics
-print ((0xdead & 0xbeef) == 0x9ead ? "ok 1\n" : "not ok 1\n");
-print ((0xdead | 0xbeef) == 0xfeef ? "ok 2\n" : "not ok 2\n");
-print ((0xdead ^ 0xbeef) == 0x6042 ? "ok 3\n" : "not ok 3\n");
-print ((~0xdead & 0xbeef) == 0x2042 ? "ok 4\n" : "not ok 4\n");
+ok ((0xdead & 0xbeef) == 0x9ead);
+ok ((0xdead | 0xbeef) == 0xfeef);
+ok ((0xdead ^ 0xbeef) == 0x6042);
+ok ((~0xdead & 0xbeef) == 0x2042);
 
 # shifts
-print ((257 << 7) == 32896 ? "ok 5\n" : "not ok 5\n");
-print ((33023 >> 7) == 257 ? "ok 6\n" : "not ok 6\n");
+ok ((257 << 7) == 32896);
+ok ((33023 >> 7) == 257);
 
 # signed vs. unsigned
-print ((~0 > 0 && do { use integer; ~0 } == -1)
-       ? "ok 7\n" : "not ok 7\n");
+ok ((~0 > 0 && do { use integer; ~0 } == -1));
 
 my $bits = 0;
 for (my $i = ~0; $i; $i >>= 1) { ++$bits; }
 my $cusp = 1 << ($bits - 1);
 
-print ((($cusp & -1) > 0 && do { use integer; $cusp & -1 } < 0)
-       ? "ok 8\n" : "not ok 8\n");
-print ((($cusp | 1) > 0 && do { use integer; $cusp | 1 } < 0)
-       ? "ok 9\n" : "not ok 9\n");
-print ((($cusp ^ 1) > 0 && do { use integer; $cusp ^ 1 } < 0)
-       ? "ok 10\n" : "not ok 10\n");
-print (((1 << ($bits - 1)) == $cusp &&
-	do { use integer; 1 << ($bits - 1) } == -$cusp)
-       ? "ok 11\n" : "not ok 11\n");
-print ((($cusp >> 1) == ($cusp / 2) &&
-       do { use integer; abs($cusp >> 1) } == ($cusp / 2))
-       ? "ok 12\n" : "not ok 12\n");
+
+ok (($cusp & -1) > 0 && do { use integer; $cusp & -1 } < 0);
+ok (($cusp | 1) > 0 && do { use integer; $cusp | 1 } < 0);
+ok (($cusp ^ 1) > 0 && do { use integer; $cusp ^ 1 } < 0);
+ok ((1 << ($bits - 1)) == $cusp &&
+    do { use integer; 1 << ($bits - 1) } == -$cusp);
+ok (($cusp >> 1) == ($cusp / 2) &&
+    do { use integer; abs($cusp >> 1) } == ($cusp / 2));
 
 $Aaz = chr(ord("A") & ord("z"));
 $Aoz = chr(ord("A") | ord("z"));
 $Axz = chr(ord("A") ^ ord("z"));
 
 # short strings
-print (("AAAAA" & "zzzzz") eq ($Aaz x 5) ? "ok 13\n" : "not ok 13\n");
-print (("AAAAA" | "zzzzz") eq ($Aoz x 5) ? "ok 14\n" : "not ok 14\n");
-print (("AAAAA" ^ "zzzzz") eq ($Axz x 5) ? "ok 15\n" : "not ok 15\n");
+is (("AAAAA" & "zzzzz"), ($Aaz x 5));
+is (("AAAAA" | "zzzzz"), ($Aoz x 5));
+is (("AAAAA" ^ "zzzzz"), ($Axz x 5));
 
 # long strings
 $foo = "A" x 150;
 $bar = "z" x 75;
 $zap = "A" x 75;
 # & truncates
-print (($foo & $bar) eq ($Aaz x 75 ) ? "ok 16\n" : "not ok 16\n");
+is (($foo & $bar), ($Aaz x 75 ));
 # | does not truncate
-print (($foo | $bar) eq ($Aoz x 75 . $zap) ? "ok 17\n" : "not ok 17\n");
+is (($foo | $bar), ($Aoz x 75 . $zap));
 # ^ does not truncate
-print (($foo ^ $bar) eq ($Axz x 75 . $zap) ? "ok 18\n" : "not ok 18\n");
+is (($foo ^ $bar), ($Axz x 75 . $zap));
 
 #
-print "ok \xFF\xFF\n" & "ok 19\n";
-print "ok 20\n" | "ok \0\0\n";
-print "o\000 \0001\000" ^ "\000k\0002\000\n";
+is ("ok \xFF\xFF\n" & "ok 19\n", "ok 19\n");
+is ("ok 20\n" | "ok \0\0\n", "ok 20\n");
+is ("o\000 \0001\000" ^ "\000k\0002\000\n", "ok 21\n");
 
 #
-print "ok \x{FF}\x{FF}\n" & "ok 22\n";
-print "ok 23\n" | "ok \x{0}\x{0}\n";
-print "o\x{0} \x{0}4\x{0}" ^ "\x{0}k\x{0}2\x{0}\n";
+is ("ok \x{FF}\x{FF}\n" & "ok 22\n", "ok 22\n");
+is ("ok 23\n" | "ok \x{0}\x{0}\n", "ok 23\n");
+is ("o\x{0} \x{0}4\x{0}" ^ "\x{0}k\x{0}2\x{0}\n", "ok 24\n");
 
 #
-print "ok 25\n" if sprintf("%vd", v4095 & v801) eq 801;
-print "ok 26\n" if sprintf("%vd", v4095 | v801) eq 4095;
-print "ok 27\n" if sprintf("%vd", v4095 ^ v801) eq 3294;
+is (sprintf("%vd", v4095 & v801), 801);
+is (sprintf("%vd", v4095 | v801), 4095);
+is (sprintf("%vd", v4095 ^ v801), 3294);
 
 #
-print "ok 28\n" if sprintf("%vd", v4095.801.4095 & v801.4095) eq '801.801';
-print "ok 29\n" if sprintf("%vd", v4095.801.4095 | v801.4095) eq '4095.4095.4095';
-print "ok 30\n" if sprintf("%vd", v801.4095 ^ v4095.801.4095) eq '3294.3294.4095';
+is (sprintf("%vd", v4095.801.4095 & v801.4095), '801.801');
+is (sprintf("%vd", v4095.801.4095 | v801.4095), '4095.4095.4095');
+is (sprintf("%vd", v801.4095 ^ v4095.801.4095), '3294.3294.4095');
 #
-print "ok 31\n" if sprintf("%vd", v120.300 & v200.400) eq '72.256';
-print "ok 32\n" if sprintf("%vd", v120.300 | v200.400) eq '248.444';
-print "ok 33\n" if sprintf("%vd", v120.300 ^ v200.400) eq '176.188';
+is (sprintf("%vd", v120.300 & v200.400), '72.256');
+is (sprintf("%vd", v120.300 | v200.400), '248.444');
+is (sprintf("%vd", v120.300 ^ v200.400), '176.188');
 #
 my $a = v120.300;
 my $b = v200.400;
 $a ^= $b;
-print "ok 34\n" if sprintf("%vd", $a) eq '176.188';
+is (sprintf("%vd", $a), '176.188');
 my $a = v120.300;
 my $b = v200.400;
 $a |= $b;
-print "ok 35\n" if sprintf("%vd", $a) eq '248.444';
+is (sprintf("%vd", $a), '248.444');
 
 #
 # UTF8 ~ behaviour
@@ -114,11 +114,7 @@ for (0x100...0xFFF) {
           if $a ne chr(~$_) or length($a) != 1 or ~$a ne chr($_);
   }
 }
-if (@not36) {
-    print "# test 36 failed\n";
-    print "not ";
-}
-print "ok 36\n";
+is (join (', ', @not36), '');
 
 my @not37;
 
@@ -138,14 +134,13 @@ for my $i (0xEEE...0xF00) {
     }
   }
 }
-if (@not37) {
-    print "# test 37 failed\n";
-    print "not ";
-}
-print "ok 37\n";
+is (join (', ', @not37), '');
 
-print "not " unless ~chr(~0) eq "\0" or $Is_EBCDIC;
-print "ok 38\n";
+SKIP: {
+  skip "EBCDIC" if $Is_EBCDIC;
+  is (~chr(~0), "\0");
+}
+
 
 my @not39;
 
@@ -155,11 +150,7 @@ for my $i (0x100..0x120) {
 	    if ~(chr($i)|chr($j)) ne (~chr($i)&~chr($j));
     }
 }
-if (@not39) {
-    print "# test 39 failed\n";
-    print "not ";
-}
-print "ok 39\n";
+is (join (', ', @not39), '');
 
 my @not40;
 
@@ -169,18 +160,21 @@ for my $i (0x100..0x120) {
 	    if ~(chr($i)&chr($j)) ne (~chr($i)|~chr($j));
     }
 }
-if (@not40) {
-    print "# test 40 failed\n";
-    print "not ";
-}
-print "ok 40\n";
+is (join (', ', @not40), '');
+
 
 # More variations on 19 and 22.
-print "ok \xFF\x{FF}\n" & "ok 41\n";
-print "ok \x{FF}\xFF\n" & "ok 42\n";
+is ("ok \xFF\x{FF}\n" & "ok 41\n", "ok 41\n");
+is ("ok \x{FF}\xFF\n" & "ok 42\n", "ok 42\n");
 
 # Tests to see if you really can do casts negative floats to unsigned properly
 $neg1 = -1.0;
-print ((~ $neg1 == 0) ? "ok 43\n" : "not ok 43\n");
+ok (~ $neg1 == 0);
 $neg7 = -7.0;
-print ((~ $neg7 == 6) ? "ok 44\n" : "not ok 44\n");
+ok (~ $neg7 == 6);
+
+
+$a = "\0\x{100}"; chop($a);
+ok(utf8::is_utf8($a)); # make sure UTF8 flag is still there
+$a = ~$a;
+is($a, "\xFF", "~ works with utf-8");

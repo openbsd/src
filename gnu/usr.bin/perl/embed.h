@@ -2,7 +2,7 @@
  *    embed.h
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -1553,6 +1553,9 @@
 #endif
 #ifdef PERL_CORE
 #define doparseform		S_doparseform
+#endif
+#ifdef PERL_CORE
+#define num_overflow		S_num_overflow
 #endif
 #ifdef PERL_CORE
 #define dopoptoeval		S_dopoptoeval
@@ -3969,13 +3972,13 @@
 #define nuke_stacks()		S_nuke_stacks(aTHX)
 #endif
 #ifdef PERL_CORE
-#define open_script(a,b,c,d)	S_open_script(aTHX_ a,b,c,d)
+#define open_script(a,b,c)	S_open_script(aTHX_ a,b,c)
 #endif
 #ifdef PERL_CORE
 #define usage(a)		S_usage(aTHX_ a)
 #endif
 #ifdef PERL_CORE
-#define validate_suid(a,b,c)	S_validate_suid(aTHX_ a,b,c)
+#define validate_suid(a,b)	S_validate_suid(aTHX_ a,b)
 #endif
 #  if defined(IAMSUID)
 #ifdef PERL_CORE
@@ -4068,6 +4071,9 @@
 #endif
 #ifdef PERL_CORE
 #define doparseform(a)		S_doparseform(aTHX_ a)
+#endif
+#ifdef PERL_CORE
+#define num_overflow		S_num_overflow
 #endif
 #ifdef PERL_CORE
 #define dopoptoeval(a)		S_dopoptoeval(aTHX_ a)
@@ -4399,7 +4405,7 @@
 #define not_a_number(a)		S_not_a_number(aTHX_ a)
 #endif
 #ifdef PERL_CORE
-#define visit(a)		S_visit(aTHX_ a)
+#define visit(a,b,c)		S_visit(aTHX_ a,b,c)
 #endif
 #ifdef PERL_CORE
 #define sv_add_backref(a,b)	S_sv_add_backref(aTHX_ a,b)

@@ -252,6 +252,9 @@ else {
 #				" some tests failed! (Installing anyway.)\n";
 } #if (!$Is_NetWare)
 
+# This will be used to store the packlist
+my $packlist = ExtUtils::Packlist->new("$installarchlib/.packlist");
+
 if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin) {
     my $perldll;
 
@@ -266,6 +269,7 @@ if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin) {
 		safe_unlink("$installbin/$_");
 		copy("$_", "$installbin/$_");
 		chmod(0755, "$installbin/$_");
+		$packlist->{"$installbin/$_"} = { type => 'file' };
 	    };
 	    open (LD2, ">$installbin/ld2");
 	    print LD2 <<SHELL;
@@ -302,10 +306,8 @@ SHELL
     safe_unlink("$installbin/$perldll");
     copy("$perldll", "$installbin/$perldll");
     chmod(0755, "$installbin/$perldll");
+    $packlist->{"$installbin/$perldll"} = { type => 'file' };
 } # if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin)
-
-# This will be used to store the packlist
-my $packlist = ExtUtils::Packlist->new("$installarchlib/.packlist");
 
 # Get the install command and flags from the environment
 my @installcmd = $ENV{"INSTALL"} || "install";
@@ -458,7 +460,7 @@ if (! $versiononly && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VM
 	link("$installbin/$perl_verbase$ver$exe_ext",
 		"$installbin/$perl$exe_ext");
     }
-    link("$installbin/s$perl_verbase$ver$exe_ext",
+    link("$installbin/$perl_verbase$ver$exe_ext",
 	    "$installbin/suid$perl$exe_ext")
       if $d_dosuid;
 }

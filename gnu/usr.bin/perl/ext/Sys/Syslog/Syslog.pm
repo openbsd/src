@@ -7,7 +7,7 @@ use Carp;
 @ISA = qw(Exporter DynaLoader);
 @EXPORT = qw(openlog closelog setlogmask syslog);
 @EXPORT_OK = qw(setlogsock);
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 # it would be nice to try stream/unix first, since that will be
 # most efficient. However streams are dodgy - see _syslog_send_stream
@@ -394,6 +394,7 @@ sub _syslog_send_socket {
 
 sub xlate {
     local($name) = @_;
+    return $name+0 if $name =~ /^\s*\d+\s*$/;
     $name = uc $name;
     $name = "LOG_$name" unless $name =~ /^LOG_/;
     $name = "Sys::Syslog::$name";

@@ -362,6 +362,11 @@ EOF
 esac
 EOCBU
 
+# malloc wrap works
+case "$usemallocwrap" in
+'') usemallocwrap='define' ;;
+esac
+
 cat > UU/uselongdouble.cbu <<'EOCBU'
 # This script UU/uselongdouble.cbu will get 'called-back' by Configure 
 # after it has prompted the user for whether to use long doubles.

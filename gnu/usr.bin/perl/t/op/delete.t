@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..36\n";
+print "1..37\n";
 
 # delete() on hash elements
 
@@ -120,4 +120,12 @@ print @{$refary[0]} == 1 ? "ok 35\n" : "not ok 35 @list\n";
 
     print "not " unless $a == $b && $b == $c;
     print "ok 36\n";
+}
+
+{
+    # [perl #29127] scalar delete of empty slice returned garbage
+    my %h;
+    my ($x,$y) = (1, scalar delete @h{()});
+    print "not " if defined $y;
+    print "ok 37\n";
 }

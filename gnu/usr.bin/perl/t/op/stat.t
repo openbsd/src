@@ -26,6 +26,7 @@ $Is_Solaris = $^O eq 'solaris';
 $Is_VMS     = $^O eq 'VMS';
 $Is_DGUX    = $^O eq 'dgux';
 $Is_MPRAS   = $^O =~ /svr4/ && -f '/etc/.relid';
+$Is_Rhapsody= $^O eq 'rhapsody';
 
 $Is_Dosish  = $Is_Dos || $Is_OS2 || $Is_MSWin32 || $Is_NetWare || $Is_Cygwin;
 
@@ -112,10 +113,11 @@ SKIP: {
             !isnt($mtime, $ctime, 'hard link ctime != mtime') ) {
             print STDERR <<DIAG;
 # Check if you are on a tmpfs of some sort.  Building in /tmp sometimes
-# has this problem.  Also building on the ClearCase VOBS filesystem may
+# has this problem.  Building on the ClearCase VOBS filesystem may also
 # cause this failure.
-# Darwins UFS doesn't have a ctime concept, and thus is
-# expected to fail this test.
+#
+# Darwin's UFS doesn't have a ctime concept, and thus is expected to fail
+# this test.
 DIAG
         }
     }
@@ -176,7 +178,7 @@ ok(-r $tmpfile,     '   -r');
 ok(-w $tmpfile,     '   -w');
 
 SKIP: {
-    skip "-x simply determins if a file ends in an executable suffix", 1
+    skip "-x simply determines if a file ends in an executable suffix", 1
       if $Is_Dosish || $Is_MacOS;
 
     ok(-x $tmpfile,     '   -x');
@@ -212,7 +214,7 @@ SKIP: {
       if $Is_MSWin32 || $Is_NetWare || $Is_Dos;
     skip "/dev isn't available to test against", 6
       unless -d '/dev' && -r '/dev' && -x '/dev';
-    skip "Skipping; unexpected ls output in MP-RAS", 6
+    skip "Skipping: unexpected ls output in MP-RAS", 6
       if $Is_MPRAS;
 
     my $LS  = $Config{d_readlink} ? "ls -lL" : "ls -l";
@@ -307,7 +309,7 @@ SKIP: {
 SKIP: {
     skip "These tests require a TTY", 4 if $ENV{PERL_SKIP_TTY_TEST};
 
-    my $TTY = $^O eq 'rhapsody' ? "/dev/ttyp0" : "/dev/tty";
+    my $TTY = $Is_Rhapsody ? "/dev/ttyp0" : "/dev/tty";
 
     SKIP: {
         skip "Test uses unixisms", 2 if $Is_MSWin32 || $Is_NetWare;

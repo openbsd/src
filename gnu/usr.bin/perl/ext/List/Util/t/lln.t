@@ -3,7 +3,7 @@
 
 
 #
-# $Id: lln.t,v 1.2 2003/12/03 03:02:31 millert Exp $
+# $Id: lln.t,v 1.3 2004/08/09 18:09:15 millert Exp $
 # Author: Slaven Rezic
 #
 
@@ -41,7 +41,7 @@ ok(!!looks_like_number("Inf"),	    $] >= 5.006001);
 ok(!!looks_like_number("Infinity"), $] >= 5.008);
 ok(!!looks_like_number("NaN"),	    $] >= 5.008);
 ok(!!looks_like_number("foo"),	    '');
-ok(!!looks_like_number(undef),	    1);
+ok(!!looks_like_number(undef),	    $] < 5.008005);
 # That's enough - we trust the perl core tests like t/base/num.t
 
 __END__

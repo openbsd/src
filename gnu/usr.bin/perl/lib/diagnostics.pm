@@ -168,7 +168,7 @@ use strict;
 use 5.006;
 use Carp;
 
-our $VERSION = 1.12;
+our $VERSION = 1.13;
 our $DEBUG;
 our $VERBOSE;
 our $PRETTY;
@@ -314,10 +314,10 @@ my %msg;
 	    sub noop   { return $_[0] }  # spensive for a noop
 	    sub bold   { my $str =$_[0];  $str =~ s/(.)/$1\b$1/g; return $str; } 
 	    sub italic { my $str = $_[0]; $str =~ s/(.)/_\b$1/g;  return $str; } 
-	    s/[BC]<(.*?)>/bold($1)/ges;
+	    s/C<<< (.*?) >>>|C<< (.*?) >>|[BC]<(.*?)>/bold($+)/ges;
 	    s/[LIF]<(.*?)>/italic($1)/ges;
 	} else {
-	    s/[BC]<(.*?)>/$1/gs;
+	    s/C<<< (.*?) >>>|C<< (.*?) >>|[BC]<(.*?)>/$+/gs;
 	    s/[LIF]<(.*?)>/$1/gs;
 	} 
 	unless (/^=/) {

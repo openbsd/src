@@ -7,7 +7,7 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-print "1..32\n";
+print "1..33\n";
 
 require "test.pl";
 
@@ -228,6 +228,19 @@ sub i_return_a_label {
 eval { goto +i_return_a_label; };
 print "not ";
 returned_label : print "ok 32 - done to returned_label\n";
+
+# [perl #29708] - goto &foo could leave foo() at depth two with
+# @_ == PL_sv_undef, causing a coredump
+
+
+my $r = runperl(
+    prog =>
+	'sub f { return if $d; $d=1; my $a=sub {goto &f}; &$a; f() } f(); print qq(ok\n)',
+    stderr => 1
+    );
+print "not " if $r ne "ok\n";
+print "ok 33 - avoid pad without an \@_\n";
+
 
 exit;
 

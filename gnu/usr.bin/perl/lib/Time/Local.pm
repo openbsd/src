@@ -7,7 +7,8 @@ use strict;
 use integer;
 
 use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK );
-$VERSION    = '1.07';
+$VERSION    = '1.10';
+$VERSION    = eval $VERSION;
 @ISA	= qw( Exporter );
 @EXPORT	= qw( timegm timelocal );
 @EXPORT_OK	= qw( timegm_nocheck timelocal_nocheck );
@@ -22,10 +23,23 @@ my $NextCentury  = $ThisYear - $ThisYear % 100;
 my $Century      = $NextCentury - 100;
 my $SecOff       = 0;
 
-my (%Options, %Cheat);
+my (%Options, %Cheat, %Min, %Max);
+my ($MinInt, $MaxInt);
 
-my $MaxInt = ((1<<(8 * $Config{intsize} - 2))-1)*2 + 1;
-my $MaxDay = int(($MaxInt-43200)/86400)-1;
+if ($^O eq 'MacOS') {
+    # time_t is unsigned...
+    $MaxInt = (1 << (8 * $Config{intsize})) - 1;
+    $MinInt = 0;
+} else {
+    $MaxInt = ((1 << (8 * $Config{intsize} - 2))-1)*2 + 1;
+    $MinInt = -$MaxInt - 1;
+}
+
+$Max{Day} = ($MaxInt >> 1) / 43200;
+$Min{Day} = ($MinInt)? -($Max{Day}+1) : 0;
+
+$Max{Sec} =  $MaxInt - 86400 * $Max{Day};
+$Min{Sec} =  $MinInt - 86400 * $Min{Day};
 
 # Determine the EPOC day for this machine
 my $Epoc = 0;
@@ -37,7 +51,6 @@ if ($^O eq 'vos') {
 elsif ($^O eq 'MacOS') {
   no integer;
 
-  $MaxDay *=2 if $^O eq 'MacOS';  # time_t unsigned ... quick hack?
   # MacOS time() is seconds since 1 Jan 1904, localtime
   # so we need to calculate an offset to apply later
   $Epoc = 693901;
@@ -68,6 +81,17 @@ sub _timegm {
 }
 
 
+sub _zoneadjust {
+    my ($day, $sec, $time) = @_;
+
+    $sec = $sec + _timegm(localtime($time)) - $time;
+    if ($sec >= 86400) { $day++; $sec -= 86400; }
+    if ($sec <  0)     { $day--; $sec += 86400; }
+
+    ($day, $sec);
+}
+
+
 sub timegm {
     my ($sec,$min,$hour,$mday,$month,$year) = @_;
 
@@ -81,7 +105,7 @@ sub timegm {
     unless ($Options{no_range_check}) {
 	if (abs($year) >= 0x7fff) {
 	    $year += 1900;
-	    croak "Cannot handle date ($sec, $min, $hour, $mday, $month, $year)";
+	    croak "Cannot handle date ($sec, $min, $hour, $mday, $month, *$year*)";
 	}
 
 	croak "Month '$month' out of range 0..11" if $month > 11 or $month < 0;
@@ -96,17 +120,23 @@ sub timegm {
     }
 
     my $days = _daygm(undef, undef, undef, $mday, $month, $year);
+    my $xsec = $sec + $SecOff + 60*$min + 3600*$hour;
 
-    unless ($Options{no_range_check} or abs($days) < $MaxDay) {
+    unless ($Options{no_range_check}
+        or  ($days > $Min{Day} or $days == $Min{Day} and $xsec >= $Min{Sec})
+       and  ($days < $Max{Day} or $days == $Max{Day} and $xsec <= $Max{Sec}))
+    {
+        warn "Day too small - $days > $Min{Day}\n" if $days < $Min{Day};
+        warn "Day too big - $days > $Max{Day}\n" if $days > $Max{Day};
+        warn "Sec too small - $days < $Min{Sec}\n" if $days < $Min{Sec};
+        warn "Sec too big - $days > $Max{Sec}\n" if $days > $Max{Sec};
 	$year += 1900;
 	croak "Cannot handle date ($sec, $min, $hour, $mday, $month, $year)";
     }
 
-    $sec += $SecOff + 60*$min + 3600*$hour;
-
     no integer;
 
-    $sec + 86400*$days;
+    $xsec + 86400 * $days;
 }
 
 
@@ -117,13 +147,22 @@ sub timegm_nocheck {
 
 
 sub timelocal {
-    no integer;
+    # Adjust Max/Min allowed times to fit local time zone and call timegm
+    local ($Max{Day}, $Max{Sec}) = _zoneadjust($Max{Day}, $Max{Sec}, $MaxInt);
+    local ($Min{Day}, $Min{Sec}) = _zoneadjust($Min{Day}, $Min{Sec}, $MinInt);
     my $ref_t = &timegm;
-    my $loc_t = _timegm(localtime($ref_t));
+
+    # Calculate first guess with a one-day delta to avoid localtime overflow
+    my $delta = ($_[5] < 100)? 86400 : -86400;
+    my $loc_t = _timegm(localtime( $ref_t + $delta )) - $delta;
 
     # Is there a timezone offset from GMT or are we done
     my $zone_off = $ref_t - $loc_t
 	or return $loc_t;
+
+    # This hack is needed to always pick the first matching time
+    # during a DST change when time would otherwise be ambiguous
+    $zone_off -= 3600 if ($delta > 0 && $ref_t >= 3600);
 
     # Adjust for timezone
     $loc_t = $ref_t + $zone_off;
@@ -135,11 +174,11 @@ sub timelocal {
     # Adjust for DST change
     $loc_t += $dst_off;
 
+    return $loc_t if $dst_off >= 0;
+
     # for a negative offset from GMT, and if the original date
     # was a non-extent gap in a forward DST jump, we should
     # now have the wrong answer - undo the DST adjust;
-
-    return $loc_t if $zone_off <= 0;
 
     my ($s,$m,$h) = localtime($loc_t);
     $loc_t -= $dst_off if $s != $_[0] || $m != $_[1] || $h != $_[2];
@@ -171,7 +210,7 @@ Time::Local - efficiently compute time from local and GMT time
 These routines are the inverse of built-in perl functions localtime()
 and gmtime().  They accept a date as a six-element array, and return
 the corresponding time(2) value in seconds since the system epoch
-(Midnight, January 1, 1970 UTC on Unix, for example).  This value can
+(Midnight, January 1, 1970 GMT on Unix, for example).  This value can
 be positive or negative, though POSIX only requires support for
 positive values, so dates before the system's epoch may not work on
 all operating systems.
@@ -214,7 +253,7 @@ values, the following conventions are followed:
 
 Years greater than 999 are interpreted as being the actual year,
 rather than the offset from 1900.  Thus, 1963 would indicate the year
-Martin Luther King won the Nobel prize, not the year 2863.
+Martin Luther King won the Nobel prize, not the year 3863.
 
 =item *
 
@@ -244,6 +283,39 @@ from Dec 1901 to Jan 2038.
 Both timelocal() and timegm() croak if given dates outside the supported
 range.
 
+=head2 Ambiguous Local Times (DST)
+
+Because of DST changes, there are many time zones where the same local
+time occurs for two different GMT times on the same day.  For example,
+in the "Europe/Paris" time zone, the local time of 2001-10-28 02:30:00
+can represent either 2001-10-28 00:30:00 GMT, B<or> 2001-10-28
+01:30:00 GMT.
+
+When given an ambiguous local time, the timelocal() function should
+always return the epoch for the I<earlier> of the two possible GMT
+times.
+
+=head2 Non-Existent Local Times (DST)
+
+When a DST change causes a locale clock to skip one hour forward,
+there will be an hour's worth of local times that don't exist.  Again,
+for the "Europe/Paris" time zone, the local clock jumped from
+2001-03-25 01:59:59 to 2001-03-25 03:00:00.
+
+If the timelocal() function is given a non-existent local time, it
+will simply return an epoch value for the time one hour later.
+
+=head2 Negative Epoch Values
+
+Negative epoch (time_t) values are not officially supported by the
+POSIX standards, so this module's tests do not test them.  On some
+systems, they are known not to work.  These include MacOS (pre-OSX)
+and Win32.
+
+On systems which do support negative epoch values, this module should
+be able to cope with dates before the start of the epoch, down the
+minimum value of time_t for the system.
+
 =head1 IMPLEMENTATION
 
 These routines are quite efficient and yet are always guaranteed to agree
@@ -264,15 +336,13 @@ also be correct.
 
 The whole scheme for interpreting two-digit years can be considered a bug.
 
-The proclivity to croak() is probably a bug.
-
 =head1 SUPPORT
 
-Support for this module is provided via the perl5-porters@perl.org
+Support for this module is provided via the datetime@perl.org
 email list.  See http://lists.perl.org/ for more details.
 
-Please submit bugs using the RT system at bugs.perl.org, the perlbug
-script, or as a last resort, to the perl5-porters@perl.org list.
+Please submit bugs using the RT system at rt.cpan.org, or as a last
+resort, to the datetime@perl.org list.
 
 =head1 AUTHOR
 

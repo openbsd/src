@@ -89,9 +89,12 @@ BEGIN {
     $::HaveSend = ($@ eq "");
     eval "use Mail::Util;";
     $::HaveUtil = ($@ eq "");
+    # use secure tempfiles wherever possible
+    eval "require File::Temp;";
+    $::HaveTemp = ($@ eq "");
 };
 
-my $Version = "1.34";
+my $Version = "1.35";
 
 # Changed in 1.06 to skip Mail::Send and Mail::Util if not available.
 # Changed in 1.07 to see more sendmail execs, and added pipe output.
@@ -130,6 +133,7 @@ my $Version = "1.34";
 # Changed in 1.32 Use File::Spec->tmpdir TJENNESS 20-08-2000
 # Changed in 1.33 Don't require -t STDOUT for -ok.
 # Changed in 1.34 Added Message-Id RFOLEY 18-06-2002 
+# Changed in 1.35 Use File::Temp (patch from Solar Designer) NWCLARK 28-02-2004
 
 # TODO: - Allow the user to re-name the file on mail failure, and
 #       make sure failure (transmission-wise) of Mail::Send is
@@ -958,10 +962,18 @@ EOF
 }
 
 sub filename {
-    my $dir = File::Spec->tmpdir();
-    $filename = "bugrep0$$";
-    $filename++ while -e File::Spec->catfile($dir, $filename);
-    $filename = File::Spec->catfile($dir, $filename);
+    if ($::HaveTemp) {
+	# Good. Use a secure temp file
+	my ($fh, $filename) = File::Temp::tempfile(UNLINK => 1);
+	close($fh);
+	return $filename;
+    } else {
+	# Bah. Fall back to doing things less securely.
+	my $dir = File::Spec->tmpdir();
+	$filename = "bugrep0$$";
+	$filename++ while -e File::Spec->catfile($dir, $filename);
+	$filename = File::Spec->catfile($dir, $filename);
+    }
 }
 
 sub paraprint {

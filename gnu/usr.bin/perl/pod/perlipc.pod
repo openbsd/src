@@ -1030,7 +1030,7 @@ Here's a sample Unix-domain client:
     use strict;
     my ($rendezvous, $line);
 
-    $rendezvous = shift || '/tmp/catsock';
+    $rendezvous = shift || 'catsock';
     socket(SOCK, PF_UNIX, SOCK_STREAM, 0)	|| die "socket: $!";
     connect(SOCK, sockaddr_un($rendezvous))	|| die "connect: $!";
     while (defined($line = <SOCK>)) {
@@ -1051,7 +1051,7 @@ to be on the localhost, and thus everything works right.
     sub spawn;  # forward declaration
     sub logmsg { print "$0 $$: @_ at ", scalar localtime, "\n" }
 
-    my $NAME = '/tmp/catsock';
+    my $NAME = 'catsock';
     my $uaddr = sockaddr_un($NAME);
     my $proto = getprotobyname('tcp');
 
@@ -1610,7 +1610,7 @@ A small example demonstrating SysV message queues:
     my $id = msgget(IPC_PRIVATE, IPC_CREAT | S_IRWXU);
 
     my $sent = "message";
-    my $type = 1234;
+    my $type_sent = 1234;
     my $rcvd;
     my $type_rcvd;
 
@@ -1657,15 +1657,6 @@ behaviour.  It's probably safest to assume broken SysV semantics for
 signals and to stick with simple TCP and UDP socket operations; e.g., don't
 try to pass open file descriptors over a local UDP datagram socket if you
 want your code to stand a chance of being portable.
-
-As mentioned in the signals section, because few vendors provide C
-libraries that are safely re-entrant, the prudent programmer will do
-little else within a handler beyond setting a numeric variable that
-already exists; or, if locked into a slow (restarting) system call,
-using die() to raise an exception and longjmp(3) out.  In fact, even
-these may in some cases cause a core dump.  It's probably best to avoid
-signals except where they are absolutely inevitable.  This
-will be addressed in a future release of Perl.
 
 =head1 AUTHOR
 

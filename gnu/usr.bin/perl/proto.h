@@ -2,7 +2,7 @@
  *    proto.h
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -1019,9 +1019,9 @@ STATIC void	S_init_postdump_symbols(pTHX_ int, char **, char **);
 STATIC void	S_init_predump_symbols(pTHX);
 STATIC void	S_my_exit_jump(pTHX) __attribute__((noreturn));
 STATIC void	S_nuke_stacks(pTHX);
-STATIC void	S_open_script(pTHX_ char *, bool, SV *, int *fd);
+STATIC void	S_open_script(pTHX_ char *, bool, SV *);
 STATIC void	S_usage(pTHX_ char *);
-STATIC void	S_validate_suid(pTHX_ char *, char*, int);
+STATIC void	S_validate_suid(pTHX_ char *, char*);
 #  if defined(IAMSUID)
 STATIC int	S_fd_on_nosuid_fs(pTHX_ int fd);
 #  endif
@@ -1064,7 +1064,8 @@ STATIC void*	S_docatch_body(pTHX);
 STATIC void*	S_vdocatch_body(pTHX_ va_list args);
 #endif
 STATIC OP*	S_dofindlabel(pTHX_ OP *o, char *label, OP **opstack, OP **oplimit);
-STATIC void	S_doparseform(pTHX_ SV *sv);
+STATIC OP*	S_doparseform(pTHX_ SV *sv);
+STATIC bool	S_num_overflow(NV value, I32 fldsize, I32 frcsize);
 STATIC I32	S_dopoptoeval(pTHX_ I32 startingblock);
 STATIC I32	S_dopoptolabel(pTHX_ char *label);
 STATIC I32	S_dopoptoloop(pTHX_ I32 startingblock);
@@ -1194,7 +1195,7 @@ STATIC void	S_del_xpvbm(pTHX_ XPVBM* p);
 STATIC void	S_del_xrv(pTHX_ XRV* p);
 STATIC void	S_sv_unglob(pTHX_ SV* sv);
 STATIC void	S_not_a_number(pTHX_ SV *sv);
-STATIC I32	S_visit(pTHX_ SVFUNC_t f);
+STATIC I32	S_visit(pTHX_ SVFUNC_t f, U32 flags, U32 mask);
 STATIC void	S_sv_add_backref(pTHX_ SV *tsv, SV *sv);
 STATIC void	S_sv_del_backref(pTHX_ SV *sv);
 #  ifdef DEBUGGING

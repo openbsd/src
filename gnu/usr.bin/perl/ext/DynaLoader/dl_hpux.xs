@@ -102,6 +102,19 @@ end:
         sv_setiv( ST(0), PTR2IV(obj) );
 
 
+int
+dl_unload_file(libref)
+    void *	libref
+  CODE:
+    DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_unload_file(%lx):\n", PTR2ul(libref)));
+    RETVAL = (shl_unload(libref) == 0 ? 1 : 0);
+    if (!RETVAL)
+	SaveError(aTHX_ "%s", Strerror(errno));
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, " retval = %d\n", RETVAL));
+  OUTPUT:
+    RETVAL
+
+
 void *
 dl_find_symbol(libhandle, symbolname)
     void *	libhandle

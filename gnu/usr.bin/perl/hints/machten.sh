@@ -1,7 +1,14 @@
 #! /bin/bash
 # machten.sh
 # This is for MachTen 4.1.4.  It might work on other versions and variants
-# too.  If it doesn't, tell me, and I'll try to fix it -- domo@computer.org
+# too.  MachTen is now obsolete, lacks many features expected in modern UNIX
+# implementations, and suffers from a number of bugs which are likely never
+# to be fixed. This means that, in the absence of extensive work on
+# this file and on the perl source code, versions of perl later than 5.6.x
+# cannot successfully be built on MachTen. This file enforces this
+# restriction. Should you wish to port a later version of perl to MachTen,
+# feel free to contact me for pointers.
+#                      -- Dominic Dunlop <domo@computer.org> 040213
 #
 # Users of earlier MachTen versions might need a fixed tr from ftp.tenon.com.
 # This should be described in the MachTen release notes.
@@ -15,6 +22,8 @@
 #	Martijn Koster <m.koster@webcrawler.com>
 #	Richard Yeh <rcyeh@cco.caltech.edu>
 #
+# Prevent building of perls later than 5.6.x, stating why -- see above.
+#                      -- Dominic Dunlop <domo@computer.org> 040213
 # Deny system's false claims to support mmap() and munmap(); note
 # also that Sys V IPC (re)disabled by jhi due to continuing inadequacy
 #                      -- Dominic Dunlop <domo@computer.org> 001111
@@ -44,8 +53,21 @@
 # Do not use perl's malloc; SysV IPC OK -- Neil Cutcliffe, Tenon 961030
 # File::Find's use of link count disabled by Dominic Dunlop 960528
 # Perl's use of sigsetjmp etc. disabled by Dominic Dunlop 960521
-#
-# Comments, questions, and improvements welcome!
+
+# Assume that PERL_REVISON in patchlevel.h is 5.
+# If you want to try building perl-5.8.x or later, set PERL_VERSION_SAFE_MAX
+# appropriately in your environment before running Configure.
+if [ `awk '$1=="#define" && $2=="PERL_VERSION"{print $3}' patchlevel.h` \
+      -gt ${PERL_VERSION_SAFE_MAX:-6} ]
+then
+    cat <<EOF >&4
+
+Perl versions greater than 5.6.x have not been ported to MachTen. If you
+wish to build a version from the 5.6 track, please see the notes in
+README.machten
+EOF
+    exit 1
+fi
 #
 # MachTen 4.1.1's support for shadow password file access is incomplete:
 # disable its use completely.
@@ -95,7 +117,7 @@ d_vfork=${d_vfork:-define}
 # Specify a high level of optimization (-O3 wouldn't do much more)
 optimize=${optimize:--O2 -fomit-frame-pointer}
 
-# Make symbol table listings les voluminous
+# Make symbol table listings less voluminous
 nmopts=-gp
 
 # Set reg_infty -- the maximum allowable number of repeats in regular

@@ -5,7 +5,7 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-print "1..68\n";
+print "1..69\n";
 
 require 'test.pl';
 
@@ -357,6 +357,16 @@ runperl(prog => 'sub f { my $x = shift; *z = $x; } f({}); f();');
 if ($? != 0) { print "not " };
 print "ok ",++$test," - coredump on typeglob = (SvRV && !SvROK)\n";
 
+# bug #27268: freeing self-referential typeglobs could trigger
+# "Attempt to free unreferenced scalar" warnings
+
+$result = runperl(
+    prog => 'use Symbol;my $x=bless \gensym,"t"; print;*$$x=$x',
+    stderr => 1
+);
+print "not " if length $result;
+print "ok ",++$test," - freeing self-referential typeglob\n";
+print "# got: $result\n" if length $result;
 
 # test global destruction
 

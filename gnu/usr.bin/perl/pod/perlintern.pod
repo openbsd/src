@@ -297,7 +297,7 @@ Locate the CV corresponding to the currently executing sub or eval.
 If db_seqp is non_null, skip CVs that are in the DB package and populate
 *db_seqp with the cop sequence number at the point that the DB:: code was
 entered. (allows debuggers to eval in the scope of the breakpoint rather
-than in in the scope of the debuger itself).
+than in in the scope of the debugger itself).
 
 	CV*	find_runcv(U32 *db_seqp)
 

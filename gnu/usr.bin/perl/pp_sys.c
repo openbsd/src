@@ -1,7 +1,7 @@
 /*    pp_sys.c
  *
  *    Copyright (C) 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -1327,7 +1327,7 @@ PP(pp_leavewrite)
 	    if (!IoTOP_NAME(io)) {
 		if (!IoFMT_NAME(io))
 		    IoFMT_NAME(io) = savepv(GvNAME(gv));
-		topname = sv_2mortal(Perl_newSVpvf(aTHX_ "%s_TOP", IoFMT_NAME(io)));
+		topname = sv_2mortal(Perl_newSVpvf(aTHX_ "%s_TOP", GvNAME(gv)));
 		topgv = gv_fetchpv(SvPVX(topname), FALSE, SVt_PVFM);
 		if ((topgv && GvFORM(topgv)) ||
 		  !gv_fetchpv("top",FALSE,SVt_PVFM))
@@ -1820,7 +1820,11 @@ PP(pp_send)
     }
 
     if (PerlIO_isutf8(IoIFP(io))) {
-	buffer = SvPVutf8(bufsv, blen);
+	if (!SvUTF8(bufsv)) {
+	    bufsv = sv_2mortal(newSVsv(bufsv));
+	    buffer = sv_2pvutf8(bufsv, &blen);
+	} else
+	    buffer = SvPV(bufsv, blen);
     }
     else {
 	 if (DO_UTF8(bufsv)) {

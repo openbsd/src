@@ -661,6 +661,10 @@ You can actually chomp anything that's an lvalue, including an assignment:
 If you chomp a list, each element is chomped, and the total number of
 characters removed is returned.
 
+If the C<encoding> pragma is in scope then the lengths returned are
+calculated from the length of C<$/> in Unicode characters, which is not
+always the same as the length of C<$/> in the native encoding.
+
 Note that parentheses are necessary when you're chomping anything
 that is not a simple variable.  This is because C<chomp $cwd = `pwd`;>
 is interpreted as C<(chomp $cwd) = `pwd`;>, rather than as
@@ -766,10 +770,10 @@ another C<open> on it, because C<open> will close it for you.  (See
 C<open>.)  However, an explicit C<close> on an input file resets the line
 counter (C<$.>), while the implicit close done by C<open> does not.
 
-If the file handle came from a piped open C<close> will additionally
-return false if one of the other system calls involved fails or if the
+If the file handle came from a piped open, C<close> will additionally
+return false if one of the other system calls involved fails, or if the
 program exits with non-zero status.  (If the only problem was that the
-program exited non-zero C<$!> will be set to C<0>.)  Closing a pipe
+program exited non-zero, C<$!> will be set to C<0>.)  Closing a pipe
 also waits for the process executing on the pipe to complete, in case you
 want to look at the output of the pipe afterwards, and
 implicitly puts the exit status value of that command into C<$?>.
@@ -2090,7 +2094,34 @@ IPs that the connection might have come in on.
 
 =item getsockopt SOCKET,LEVEL,OPTNAME
 
-Returns the socket option requested, or undef if there is an error.
+Queries the option named OPTNAME associated with SOCKET at a given LEVEL.
+Options may exist at multiple protocol levels depending on the socket
+type, but at least the uppermost socket level SOL_SOCKET (defined in the
+C<Socket> module) will exist. To query options at another level the
+protocol number of the appropriate protocol controlling the option
+should be supplied. For example, to indicate that an option is to be
+interpreted by the TCP protocol, LEVEL should be set to the protocol
+number of TCP, which you can get using getprotobyname.
+
+The call returns a packed string representing the requested socket option,
+or C<undef> if there is an error (the error reason will be in $!). What
+exactly is in the packed string depends in the LEVEL and OPTNAME, consult
+your system documentation for details. A very common case however is that
+the option is an integer, in which case the result will be an packed
+integer which you can decode using unpack with the C<i> (or C<I>) format.
+
+An example testing if Nagle's algorithm is turned on on a socket:
+
+    use Socket;
+
+    defined(my $tcp = getprotobyname("tcp"))
+	or die "Could not determine the protocol number for tcp";
+    # my $tcp = Socket::IPPROTO_TCP; # Alternative
+    my $packed = getsockopt($socket, $tcp, Socket::TCP_NODELAY)
+	or die "Could not query TCP_NODELAY SOCKEt option: $!";
+    my $nodelay = unpack("I", $packed);
+    print "Nagle's algorithm is turned ", $nodelay ? "off\n" : "on\n";
+
 
 =item glob EXPR
 
@@ -2144,22 +2175,13 @@ In scalar context, C<gmtime()> returns the ctime(3) value:
 
     $now_string = gmtime;  # e.g., "Thu Oct 13 04:54:34 1994"
 
-Also see the C<timegm> function provided by the C<Time::Local> module,
-and the strftime(3) function available via the POSIX module.
+If you need local time instead of GMT use the L</localtime> builtin. 
+See also the C<timegm> function provided by the C<Time::Local> module,
+and the strftime(3) and mktime(3) functions available via the L<POSIX> module.
 
-This scalar value is B<not> locale dependent (see L<perllocale>), but
-is instead a Perl builtin.  Also see the C<Time::Local> module, and the
-strftime(3) and mktime(3) functions available via the POSIX module.  To
-get somewhat similar but locale dependent date strings, set up your
-locale environment variables appropriately (please see L<perllocale>)
-and try for example:
-
-    use POSIX qw(strftime);
-    $now_string = strftime "%a %b %e %H:%M:%S %Y", gmtime;
-
-Note that the C<%a> and C<%b> escapes, which represent the short forms
-of the day of the week and the month of the year, may not necessarily
-be three characters wide in all locales.
+This scalar value is B<not> locale dependent (see L<perllocale>), but is
+instead a Perl builtin.  To get somewhat similar but locale dependent date
+strings, see the example in L</localtime>.
 
 =item goto LABEL
 
@@ -2526,17 +2548,20 @@ In scalar context, C<localtime()> returns the ctime(3) value:
 
     $now_string = localtime;  # e.g., "Thu Oct 13 04:54:34 1994"
 
-This scalar value is B<not> locale dependent, see L<perllocale>, but
-instead a Perl builtin.  Also see the C<Time::Local> module
-(to convert the second, minutes, hours, ... back to seconds since the
-stroke of midnight the 1st of January 1970, the value returned by
-time()), and the strftime(3) and mktime(3) functions available via the
-POSIX module.  To get somewhat similar but locale dependent date
-strings, set up your locale environment variables appropriately
-(please see L<perllocale>) and try for example:
+This scalar value is B<not> locale dependent but is a Perl builtin. For GMT
+instead of local time use the L</gmtime> builtin. See also the
+C<Time::Local> module (to convert the second, minutes, hours, ... back to
+the integer value returned by time()), and the L<POSIX> module's strftime(3)
+and mktime(3) functions.
+
+To get somewhat similar but locale dependent date strings, set up your
+locale environment variables appropriately (please see L<perllocale>) and
+try for example:
 
     use POSIX qw(strftime);
     $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
+    # or for GMT formatted appropriately for your locale:
+    $now_string = strftime "%a %b %e %H:%M:%S %Y", gmtime;
 
 Note that the C<%a> and C<%b>, the short forms of the day of the week
 and the month of the year, may not necessarily be three characters wide.
@@ -2928,7 +2953,7 @@ Examples:
     open(ARTICLE, "caesar <$article |")		# ditto
 	or die "Can't start caesar: $!";
 
-    open(EXTRACT, "|sort >/tmp/Tmp$$")		# $$ is our process id
+    open(EXTRACT, "|sort >Tmp$$")		# $$ is our process id
 	or die "Can't start sort: $!";
 
     # in memory files
@@ -2985,9 +3010,6 @@ C<STDERR> using various methods:
 
     print STDOUT "stdout 1\n";	# this works for
     print STDERR "stderr 1\n"; 	# subprocesses too
-
-    close STDOUT;
-    close STDERR;
 
     open STDOUT, ">&", $oldout or die "Can't dup \$oldout: $!";
     open STDERR, ">&OLDERR"    or die "Can't dup OLDERR: $!";
@@ -3238,6 +3260,11 @@ Multi-interpreter environments can come to being either through the
 fork() emulation on Windows platforms, or by embedding perl in a
 multi-threaded application.  The C<unique> attribute does nothing in
 all other environments.
+
+Warning: the current implementation of this attribute operates on the
+typeglob associated with the variable; this means that C<our $x : unique>
+also has the effect of C<our @x : unique; our %x : unique>. This may be
+subject to change.
 
 =item pack TEMPLATE,LIST
 
@@ -4248,6 +4275,8 @@ in the opposite order.
     undef $/;			# for efficiency of <>
     print scalar reverse <>;	# character tac, last line tsrif
 
+Used without arguments in scalar context, reverse() reverses C<$_>.
+
 This operator is also handy for inverting a hash, although there are some
 caveats.  If a value is duplicated in the original hash, only one of those
 can be represented as a key in the inverted hash.  Also, this has to
@@ -4436,7 +4465,8 @@ You can effect a sleep of 250 milliseconds this way:
     select(undef, undef, undef, 0.25);
 
 Note that whether C<select> gets restarted after signals (say, SIGALRM)
-is implementation-dependent.
+is implementation-dependent.  See also L<perlport> for notes on the
+portability of C<select>.
 
 B<WARNING>: One should not attempt to mix buffered I/O (like C<read>
 or <FH>) with C<select>, except as permitted by POSIX, and even
@@ -4869,8 +4899,9 @@ Example, assuming array lengths are passed before arrays:
 
 =item split
 
-Splits a string into a list of strings and returns that list.  By default,
-empty leading fields are preserved, and empty trailing ones are deleted.
+Splits the string EXPR into a list of strings and returns that list.  By
+default, empty leading fields are preserved, and empty trailing ones are
+deleted.  (If all fields are empty, they are considered to be trailing.)
 
 In scalar context, returns the number of fields found and splits into
 the C<@_> array.  Use of split in scalar context is deprecated, however,
@@ -5330,7 +5361,7 @@ as follows:
            = stat($filename);
 
 Not all fields are supported on all filesystem types.  Here are the
-meaning of the fields:
+meanings of the fields:
 
   0 dev      device number of filesystem
   1 ino      inode number
@@ -5348,13 +5379,13 @@ meaning of the fields:
 
 (The epoch was at 00:00 January 1, 1970 GMT.)
 
-(*) The ctime field is non-portable, in particular you cannot expect
+(*) The ctime field is non-portable.  In particular, you cannot expect
 it to be a "creation time", see L<perlport/"Files and Filesystems">
 for details.
 
-If stat is passed the special filehandle consisting of an underline, no
+If C<stat> is passed the special filehandle consisting of an underline, no
 stat is done, but the current contents of the stat structure from the
-last stat or filetest are returned.  Example:
+last C<stat>, C<lstat>, or filetest are returned.  Example:
 
     if (-x $file && (($d) = stat(_)) && $d < 0) {
 	print "$file is executable NFS file\n";
@@ -5399,7 +5430,7 @@ You can import symbolic mode constants (C<S_IF*>) and functions
     $is_setgid     =  S_ISDIR($mode);
 
 You could write the last two using the C<-u> and C<-d> operators.
-The commonly available S_IF* constants are
+The commonly available C<S_IF*> constants are
 
     # Permissions: read, write, execute, for user, group, others.
 
@@ -5420,7 +5451,7 @@ The commonly available S_IF* constants are
 
     S_IREAD S_IWRITE S_IEXEC
 
-and the S_IF* functions are
+and the C<S_IF*> functions are
 
     S_IMODE($mode)	the part of $mode containing the permission bits
 			and the setuid/setgid/sticky bits
@@ -5429,7 +5460,7 @@ and the S_IF* functions are
 			which can be bit-anded with e.g. S_IFREG
                         or with the following functions
 
-    # The operators -f, -d, -l, -b, -c, -p, and -s.
+    # The operators -f, -d, -l, -b, -c, -p, and -S.
 
     S_ISREG($mode) S_ISDIR($mode) S_ISLNK($mode)
     S_ISBLK($mode) S_ISCHR($mode) S_ISFIFO($mode) S_ISSOCK($mode)
@@ -5441,10 +5472,8 @@ and the S_IF* functions are
     S_ISENFMT($mode) S_ISWHT($mode)
 
 See your native chmod(2) and stat(2) documentation for more details
-about the S_* constants.
-
-To get status info for a symbolic link instead of the target file
-behind the link, use the C<lstat> function, see L</stat>.
+about the C<S_*> constants.  To get status info for a symbolic link
+instead of the target file behind the link, use the C<lstat> function.
 
 =item study SCALAR
 
@@ -5630,7 +5659,7 @@ using the C<|>-operator.
 
 Some of the most common values are C<O_RDONLY> for opening the file in
 read-only mode, C<O_WRONLY> for opening the file in write-only mode,
-and C<O_RDWR> for opening the file in read-write mode, and.
+and C<O_RDWR> for opening the file in read-write mode.
 
 For historical reasons, some values work on almost every system
 supported by perl: zero means read-only, one means write-only, and two
@@ -5647,10 +5676,15 @@ process's current C<umask>.
 
 In many systems the C<O_EXCL> flag is available for opening files in
 exclusive mode.  This is B<not> locking: exclusiveness means here that
-if the file already exists, sysopen() fails.  The C<O_EXCL> wins
-C<O_TRUNC>.
+if the file already exists, sysopen() fails.  C<O_EXCL> may not work
+on network filesystems, and has no effect unless the C<O_CREAT> flag
+is set as well.  Setting C<O_CREAT|O_EXCL> prevents the file from
+being opened if it is a symbolic link.  It does not protect against
+symbolic links in the file's path.
 
-Sometimes you may want to truncate an already-existing file: C<O_TRUNC>.
+Sometimes you may want to truncate an already-existing file.  This
+can be done using the C<O_TRUNC> flag.  The behavior of
+C<O_TRUNC> with C<O_RDONLY> is undefined.
 
 You should seldom if ever use C<0644> as argument to C<sysopen>, because
 that takes away the user's option to have a more permissive umask.
@@ -5761,9 +5795,10 @@ indicates a failure to start the program (inspect $! for the reason).
 Like C<exec>, C<system> allows you to lie to a program about its name if
 you use the C<system PROGRAM LIST> syntax.  Again, see L</exec>.
 
-Because C<system> and backticks block C<SIGINT> and C<SIGQUIT>,
-killing the program they're running doesn't actually interrupt
-your program.
+Since C<SIGINT> and C<SIGQUIT> are ignored during the execution of
+C<system>, if you expect your program to terminate on receipt of these
+signals you will need to arrange to do so yourself based on the return
+value.
 
     @args = ("command", "arg1", "arg2");
     system(@args) == 0
@@ -5782,7 +5817,6 @@ C<$?> like this:
     else {
 	printf "child exited with value %d\n", $? >> 8;
     }
-
 
 or more portably by using the W*() calls of the POSIX extension;
 see L<perlport> for more information.
@@ -5953,9 +5987,10 @@ package.
 =item time
 
 Returns the number of non-leap seconds since whatever time the system
-considers to be the epoch (that's 00:00:00, January 1, 1904 for Mac OS,
-and 00:00:00 UTC, January 1, 1970 for most other systems).
-Suitable for feeding to C<gmtime> and C<localtime>.
+considers to be the epoch, suitable for feeding to C<gmtime> and
+C<localtime>. On most systems the epoch is 00:00:00 UTC, January 1, 1970;
+a prominent exception being Mac OS Classic which uses 00:00:00, January 1,
+1904 in the current local time zone for its epoch.
 
 For measuring time in better granularity than one second,
 you may use either the Time::HiRes module (from CPAN, and starting from
@@ -6592,10 +6627,10 @@ and for other examples.
 
 =item wantarray
 
-Returns true if the context of the currently executing subroutine is
-looking for a list value.  Returns false if the context is looking
-for a scalar.  Returns the undefined value if the context is looking
-for no value (void context).
+Returns true if the context of the currently executing subroutine or
+eval() block is looking for a list value.  Returns false if the context is
+looking for a scalar.  Returns the undefined value if the context is
+looking for no value (void context).
 
     return unless defined wantarray;	# don't bother doing more
     my @a = complex_calculation();

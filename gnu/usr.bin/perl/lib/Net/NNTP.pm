@@ -14,15 +14,21 @@ use Carp;
 use Time::Local;
 use Net::Config;
 
-$VERSION = "2.22"; # $Id: //depot/libnet/Net/NNTP.pm#18 $
+$VERSION = "2.23";
 @ISA     = qw(Net::Cmd IO::Socket::INET);
 
 sub new
 {
  my $self = shift;
  my $type = ref($self) || $self;
- my $host = shift if @_ % 2;
- my %arg  = @_;
+ my ($host,%arg);
+ if (@_ % 2) {
+   $host = shift ;
+   %arg  = @_;
+ } else {
+   %arg = @_;
+   $host=delete $arg{Host};
+ }
  my $obj;
 
  $host ||= $ENV{NNTPSERVER} || $ENV{NEWSHOST};
@@ -79,6 +85,11 @@ sub new
  ${*$obj}{'net_nntp_post'} = $c == 200 ? 1 : 0;
 
  $obj;
+}
+
+sub host {
+ my $me = shift;
+ ${*$me}{'net_nntp_host'};
 }
 
 sub debug_text
@@ -712,12 +723,18 @@ in RFC977. C<Net::NNTP> inherits its communication methods from C<Net::Cmd>
 
 This is the constructor for a new Net::NNTP object. C<HOST> is the
 name of the remote host to which a NNTP connection is required. If not
-given two environment variables are checked, first C<NNTPSERVER> then
+given then it may be passed as the C<Host> option described below. If no host is passed
+then two environment variables are checked, first C<NNTPSERVER> then
 C<NEWSHOST>, then C<Net::Config> is checked, and if a host is not found
 then C<news> is used.
 
 C<OPTIONS> are passed in a hash like fashion, using key and value pairs.
 Possible options are:
+
+B<Host> - NNTP host to connect to. It may be a single scalar, as defined for
+the C<PeerAddr> option in L<IO::Socket::INET>, or a reference to
+an array with hosts to try in turn. The L</host> method will return the value
+which was used to connect to the host.
 
 B<Timeout> - Maximum time, in seconds, to wait for a response from the
 NNTP server, a value of zero will cause all IO operations to block.
@@ -839,6 +856,12 @@ C<postok> will return I<true> if the servers initial response indicated
 that it will allow posting.
 
 =item authinfo ( USER, PASS )
+
+Authenticates to the server (using AUTHINFO USER / AUTHINFO PASS)
+using the supplied username and password.  Please note that the
+password is sent in clear text to the server.  This command should not
+be used with valuable passwords unless the connection to the server is
+somehow protected.
 
 =item list ()
 

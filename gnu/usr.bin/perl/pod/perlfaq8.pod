@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq8 - System Interaction ($Revision: 1.17 $, $Date: 2003/01/26 17:44:04 $)
+perlfaq8 - System Interaction ($Revision: 1.6 $, $Date: 2003/12/03 03:02:45 $)
 
 =head1 DESCRIPTION
 
@@ -749,10 +749,10 @@ but leave its STDOUT to come out our old STDERR:
     while (<PH>) { }                            #    plus a read
 
 To read both a command's STDOUT and its STDERR separately, it's easiest
-and safest to redirect them separately to files, and then read from those
-files when the program is done:
+to redirect them separately to files, and then read from those files
+when the program is done:
 
-    system("program args 1>/tmp/program.stdout 2>/tmp/program.stderr");
+    system("program args 1>program.stdout 2>program.stderr");
 
 Ordering is important in all these examples.  That's because the shell
 processes file descriptor redirections in strictly left to right order.
@@ -1063,8 +1063,8 @@ O_NDELAY or O_NONBLOCK flag from the Fcntl module in conjunction with
 sysopen():
 
     use Fcntl;
-    sysopen(FH, "/tmp/somefile", O_WRONLY|O_NDELAY|O_CREAT, 0644)
-        or die "can't open /tmp/somefile: $!":
+    sysopen(FH, "/foo/somefile", O_WRONLY|O_NDELAY|O_CREAT, 0644)
+        or die "can't open /foo/somefile: $!":
 
 =head2 How do I install a module from CPAN?
 

@@ -1188,7 +1188,9 @@ S_study_chunk(pTHX_ RExC_state_t *pRExC_state, regnode **scanp, I32 *deltap, reg
 		if (  OP(oscan) == CURLYX && data
 		      && !(data->flags & SF_HAS_PAR)
 		      && !(data->flags & SF_HAS_EVAL)
-		      && !deltanext  ) {
+		      && !deltanext	/* atom is fixed width */
+		      && minnext != 0	/* CURLYM can't handle zero width */
+		) {
 		    /* XXXX How to optimize if data == 0? */
 		    /* Optimize to a simpler form.  */
 		    regnode *nxt = NEXTOPER(oscan) + EXTRA_STEP_2ARGS; /* OPEN */
@@ -3654,7 +3656,8 @@ S_regclass(pTHX_ RExC_state_t *pRExC_state)
 		}
 		RExC_parse = e + 1;
 		ANYOF_FLAGS(ret) |= ANYOF_UNICODE;
-		continue;
+		namedclass = ANYOF_MAX;  /* no official name, but it's named */
+		break;
 	    case 'n':	value = '\n';			break;
 	    case 'r':	value = '\r';			break;
 	    case 't':	value = '\t';			break;
@@ -4058,6 +4061,9 @@ S_regclass(pTHX_ RExC_state_t *pRExC_state)
 				ANYOF_BITMAP_SET(ret, value);
 		    }
 		    Perl_sv_catpvf(aTHX_ listsv, "!utf8::IsXDigit\n");
+		    break;
+		case ANYOF_MAX:
+		    /* this is to handle \p and \P */
 		    break;
 		default:
 		    vFAIL("Invalid [::] class");

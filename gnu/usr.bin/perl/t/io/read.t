@@ -1,6 +1,6 @@
 #!./perl
 
-# $RCSfile$
+# $RCSfile: read.t,v $
 
 BEGIN {
     chdir 't' if -d 't';
@@ -9,7 +9,8 @@ BEGIN {
 }
 
 use strict;
-use Errno;
+eval 'use Errno';
+die $@ if $@ and !$ENV{PERL_CORE_MINITEST};
 
 plan tests => 2;
 

@@ -167,15 +167,15 @@ the ODS-2 compatability qualifiers such as:
 
 or:
 
-    vmstar -xvof perl-5^.8^.3.tar
+    vmstar -xvof perl-5^.8^.5.tar
 
 If you neglected to use the /ODS2 qualifier or the -o switch then you
 could rename the source directory:
 
-    set security/protection=(o:rwed) perl-5^.8^.3.dir
-    rename perl-5^.8^.3.dir perl-5_8_3.dir
+    set security/protection=(o:rwed) perl-5^.8^.5.dir
+    rename perl-5^.8^.5.dir perl-5_8_5.dir
 
-Perl on VMS as of 5.8.3 does not completely handle extended file
+Perl on VMS as of 5.8.5 does not completely handle extended file
 parse styles such as are encountered on ODS-5.  While it can be built,
 installed, and run on ODS-5 filesystems; it may encounter
 trouble with characters that are otherwise illegal on ODS-2

@@ -4,6 +4,7 @@
 
 use strict;
 use Config;		# for config options in the makefile
+use File::Spec;
 use Getopt::Long;	# for command-line parsing
 use Cwd;
 use Pod::Html 'anchorify';
@@ -293,15 +294,6 @@ sub parse_command_line {
 }
 
 
-sub absolute_path {
-    my($cwd, $path) = @_;
-	return "$cwd/$path" unless $path =~ m:/:;
-    # add cwd if path is not already an absolute path
-    $path = "$cwd/$path" if (substr($path,0,1) ne '/');
-    return $path;
-}
-
-
 sub create_index {
     my($html, $dir) = @_;
     (my $pod = $dir) =~ s,^.*/,,;
@@ -391,8 +383,8 @@ sub split_on_item {
 
     print "splitting files by item.\n" if $verbose && $#splititem >= 0;
     $pwd = getcwd();
-    my $splitter = absolute_path($pwd, "$splitpod/splitpod");
-    my $perl = absolute_path($pwd, $^X);
+    my $splitter = File::Spec->rel2abs("$splitpod/splitpod", $pwd);
+    my $perl = File::Spec->rel2abs($^X, $pwd);
     foreach my $pod (@splititem) {
 	# figure out the directory to split into
 	$pod      =~ s,^([^/]*)$,/$1,;

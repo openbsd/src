@@ -1,7 +1,7 @@
 /*    op.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -100,6 +100,7 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On RV2[SG]V, don't create GV--in defined()*/
 				/*  On OP_DBSTATE, indicates breakpoint
 				 *    (runtime property) */
+				/*  On OP_AELEMFAST, indiciates pad var */
 
 /* old names; don't use in new code, but don't break them, either */
 #define OPf_LIST	OPf_WANT_LIST
@@ -143,8 +144,8 @@ Deprecated.  Use C<GIMME_V> instead.
 /* Private for OP_REPEAT */
 #define OPpREPEAT_DOLIST	64	/* List replication. */
 
-/* Private for OP_RV2?V, OP_?ELEM */
-#define OPpDEREF		(32|64)	/* Want ref to something: */
+/* Private for OP_RV2GV, OP_RV2SV, OP_AELEM, OP_HELEM, OP_PADSV */
+#define OPpDEREF		(32|64)	/* autovivify: Want ref to something: */
 #define OPpDEREF_AV		32	/*   Want ref to AV. */
 #define OPpDEREF_HV		64	/*   Want ref to HV. */
 #define OPpDEREF_SV		(32|64)	/*   Want ref to SV. */
@@ -171,6 +172,7 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpTARGET_MY		16	/* Target is PADMY. */
 
 /* Private for OP_CONST */
+#define	OPpCONST_SHORTCIRCUIT	4	/* eg the constant 5 in (5 || foo) */
 #define	OPpCONST_STRICT		8	/* bearword subject to strict 'subs' */
 #define OPpCONST_ENTERED	16	/* Has been entered as symbol. */
 #define OPpCONST_ARYBASE	32	/* Was a $[ translated to constant. */
@@ -193,6 +195,7 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpSORT_NUMERIC		1	/* Optimized away { $a <=> $b } */
 #define OPpSORT_INTEGER		2	/* Ditto while under "use integer" */
 #define OPpSORT_REVERSE		4	/* Descending sort */
+#define OPpSORT_INPLACE		8	/* sort in-place; eg @a = sort @a */
 /* Private for OP_THREADSV */
 #define OPpDONE_SVREF		64	/* Been through newSVREF once */
 

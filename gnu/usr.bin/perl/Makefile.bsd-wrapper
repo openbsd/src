@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.64 2004/07/11 16:26:27 pvalchev Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.65 2004/08/09 18:08:54 millert Exp $
 #
-# Build wrapper for Perl 5.8.3
+# Build wrapper for Perl 5.8.5
 #
 
 # To build a threaded perl, uncomment this.  Not stable on all platforms...
@@ -65,6 +65,8 @@ MANSRCALL=
     perl581delta 1		pod/perl581delta.pod \
     perl582delta 1		pod/perl582delta.pod \
     perl583delta 1		pod/perl583delta.pod \
+    perl584delta 1		pod/perl584delta.pod \
+    perl585delta 1		pod/perl585delta.pod \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
     perlartistic 1		pod/perlartistic.pod \
@@ -209,6 +211,12 @@ MANSRCALL=
     Cwd 3p			lib/Cwd.pm \
     DB 3p			lib/DB.pm \
     DB_File 3p			ext/DB_File/DB_File.pm \
+    DBM_Filter 3p		lib/DBM_Filter.pm \
+    DBM_Filter::compress 3p	lib/DBM_Filter/compress.pm \
+    DBM_Filter::encode 3p	lib/DBM_Filter/encode.pm \
+    DBM_Filter::int32 3p	lib/DBM_Filter/int32.pm \
+    DBM_Filter::null 3p		lib/DBM_Filter/null.pm \
+    DBM_Filter::utf8 3p		lib/DBM_Filter/utf8.pm
     Data::Dumper 3p		ext/Data/Dumper/Dumper.pm \
     Devel::DProf 3p		ext/Devel/DProf/DProf.pm \
     Devel::PPPort 3p		ext/Devel/PPPort/PPPort.pm \
@@ -311,6 +319,7 @@ MANSRCALL=
     Hash::Util 3p		lib/Hash/Util.pm \
     I18N::Collate 3p		lib/I18N/Collate.pm \
     I18N::LangTags 3p		lib/I18N/LangTags.pm \
+    I18N::LangTags::Detect 3p	lib/I18N/LangTags/Detect.pm \
     I18N::LangTags::List 3p	lib/I18N/LangTags/List.pm \
     I18N::Langinfo 3p		ext/I18N/Langinfo/Langinfo.pm \
     IO 3p			lib/IO.pm \
@@ -606,6 +615,57 @@ x2p/cflags:
 # Never try to regenerate perly.c or perly.h
 perly.c perly.h: perly.y
 	-@true
+
+# Work around a gcc bug on arm
+.if ${MACHINE_ARCH} == "arm"
+pp_hot.o: pp_hot.c
+	@echo "${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_hot.go: pp_hot.c
+	@echo "${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_hot.po: pp_hot.c
+	@echo "${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_hot.so: pp_hot.c
+	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_ctl.o: pp_ctl.c
+	@echo "${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_ctl.go: pp_ctl.c
+	@echo "${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_ctl.po: pp_ctl.c
+	@echo "${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_ctl.so: pp_ctl.c
+	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+.endif
 
 .ifdef NOMAN
 maninstall:

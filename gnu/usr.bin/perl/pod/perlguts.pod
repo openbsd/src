@@ -201,9 +201,22 @@ you can call:
     SvOK(SV*)
 
 The scalar C<undef> value is stored in an SV instance called C<PL_sv_undef>.
-Its address can be used whenever an C<SV*> is needed.
-However, you have to be careful when using C<&PL_sv_undef> as a value in AVs
-or HVs (see L<AVs, HVs and undefined values>).
+
+Its address can be used whenever an C<SV*> is needed. Make sure that
+you don't try to compare a random sv with C<&PL_sv_undef>. For example
+when interfacing Perl code, it'll work correctly for:
+
+  foo(undef);
+
+But won't work when called as:
+
+  $x = undef;
+  foo($x);
+
+So to repeat always use SvOK() to check whether an sv is defined.
+
+Also you have to be careful when using C<&PL_sv_undef> as a value in
+AVs or HVs (see L<AVs, HVs and undefined values>).
 
 There are also the two values C<PL_sv_yes> and C<PL_sv_no>, which contain
 boolean TRUE and FALSE values, respectively.  Like C<PL_sv_undef>, their
@@ -1380,11 +1393,12 @@ and C<num> is the number of elements the stack should be extended by.
 
 Now that there is room on the stack, values can be pushed on it using C<PUSHs>
 macro. The pushed values will often need to be "mortal" (See
-L</Reference Counts and Mortality>).
+L</Reference Counts and Mortality>):
 
     PUSHs(sv_2mortal(newSViv(an_integer)))
+    PUSHs(sv_2mortal(newSVuv(an_unsigned_integer)))
+    PUSHs(sv_2mortal(newSVnv(a_double)))
     PUSHs(sv_2mortal(newSVpv("Some String",0)))
-    PUSHs(sv_2mortal(newSVnv(3.141592)))
 
 And now the Perl program calling C<tzname>, the two values will be assigned
 as in:
@@ -1400,8 +1414,9 @@ This macro automatically adjust the stack for you, if needed.  Thus, you
 do not need to call C<EXTEND> to extend the stack.
 
 Despite their suggestions in earlier versions of this document the macros
-C<PUSHi>, C<PUSHn> and C<PUSHp> are I<not> suited to XSUBs which return
-multiple results, see L</Putting a C value on Perl stack>.
+C<(X)PUSH[iunp]> are I<not> suited to XSUBs which return multiple results.
+For that, either stick to the C<(X)PUSHs> macros shown above, or use the new
+C<m(X)PUSH[iunp]> macros instead; see L</Putting a C value on Perl stack>.
 
 For more information, consult L<perlxs> and L<perlxstut>.
 
@@ -1535,7 +1550,7 @@ corresponding parts of its I<target> and puts the I<target> on stack.
 
 The macro to put this target on stack is C<PUSHTARG>, and it is
 directly used in some opcodes, as well as indirectly in zillions of
-others, which use it via C<(X)PUSH[pni]>.
+others, which use it via C<(X)PUSH[iunp]>.
 
 Because the target is reused, you must be careful when pushing multiple
 values on the stack. The following code will not do what you think:
@@ -1547,12 +1562,30 @@ This translates as "set C<TARG> to 10, push a pointer to C<TARG> onto
 the stack; set C<TARG> to 20, push a pointer to C<TARG> onto the stack".
 At the end of the operation, the stack does not contain the values 10
 and 20, but actually contains two pointers to C<TARG>, which we have set
-to 20. If you need to push multiple different values, use C<XPUSHs>,
-which bypasses C<TARG>.
+to 20.
 
-On a related note, if you do use C<(X)PUSH[npi]>, then you're going to
+If you need to push multiple different values then you should either use
+the C<(X)PUSHs> macros, or else use the new C<m(X)PUSH[iunp]> macros,
+none of which make use of C<TARG>.  The C<(X)PUSHs> macros simply push an
+SV* on the stack, which, as noted under L</XSUBs and the Argument Stack>,
+will often need to be "mortal".  The new C<m(X)PUSH[iunp]> macros make
+this a little easier to achieve by creating a new mortal for you (via
+C<(X)PUSHmortal>), pushing that onto the stack (extending it if necessary
+in the case of the C<mXPUSH[iunp]> macros), and then setting its value.
+Thus, instead of writing this to "fix" the example above:
+
+    XPUSHs(sv_2mortal(newSViv(10)))
+    XPUSHs(sv_2mortal(newSViv(20)))
+
+you can simply write:
+
+    mXPUSHi(10)
+    mXPUSHi(20)
+
+On a related note, if you do use C<(X)PUSH[iunp]>, then you're going to
 need a C<dTARG> in your variable declarations so that the C<*PUSH*>
-macros can make use of the local variable C<TARG>.
+macros can make use of the local variable C<TARG>.  See also C<dTARGET>
+and C<dXSTARG>.
 
 =head2 Scratchpads
 

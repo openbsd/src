@@ -166,7 +166,7 @@ Return an empty list from an XSUB immediately.
 
 =head1 Variables created by C<xsubpp> and C<xsubpp> internal functions
 
-=for apidoc AmU||newXSproto
+=for apidoc AmU||newXSproto|char* name|XSUBADDR_t f|char* filename|const char *proto
 Used by C<xsubpp> to hook up XSUBs as Perl subs.  Adds Perl prototypes to
 the subs.
 

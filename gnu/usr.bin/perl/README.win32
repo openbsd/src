@@ -43,11 +43,10 @@ following compilers on the Intel x86 architecture:
 
       Borland C++		version 5.02 or later
       Microsoft Visual C++	version 4.2 or later
-      Mingw32 with GCC		version 2.95.2 or better
+      MinGW with gcc		gcc version 2.95.2 or later
 
-The last of these is a high quality freeware compiler.  Support
-for it is still experimental.  (Older versions of GCC are known
-not to work.)
+The last of these is a high quality freeware compiler.  Use version
+3.2.x or later for the best results with this compiler.
 
 This port can also be built on the Intel IA64 using:
 
@@ -138,24 +137,19 @@ The nmake that comes with the Platform SDK will suffice for building
 Perl.  Make sure you are building within one of the "Build Environment"
 shells available after you install the Platform SDK from the Start Menu.
 
-=item MinGW32 with gcc
+=item MinGW release 3 with gcc
 
-The latest release of MinGW (at the time of writing) is 2.0.0, which comes 
-with gcc-3.2, and can be downloaded here:
+The latest release of MinGW at the time of writing is 3.1.0, which comes 
+with gcc-3.2.3, and can be downloaded here:
 
-    http://sourceforge.net/projects/mingw
+    http://www.mingw.org/
 
-Perl compiles with earlier releases of gcc (2.95 and up) that can be
-downloaded from the same place. If you use gcc-3.2, comment out the
-line:
-
-    USE_GCC_V3_2	*= define
-
-in win32\makefile.mk
+Perl also compiles with earlier releases of gcc (2.95.2 and up).  See below
+for notes about using earlier versions of MinGW/gcc.
 
 You also need dmake.  See L</"Make"> above on how to get it.
 
-=item MinGW release 1
+=item MinGW release 1 with gcc
 
 The MinGW-1.1 bundle comes with gcc-2.95.3.
 
@@ -211,6 +205,13 @@ C++ 6.0 or newer.
 Edit the makefile.mk (or Makefile, if you're using nmake) and change 
 the values of INST_DRV and INST_TOP.   You can also enable various
 build flags.  These are explained in the makefiles.
+
+Note that it is generally not a good idea to try to build a perl with
+INST_DRV and INST_TOP set to a path that already exists from a previous
+build.  In particular, this may cause problems with the
+lib/ExtUtils/t/Embed.t test, which attempts to build a test program and
+may end up building against the installed perl's lib/CORE directory rather
+than the one being tested.
 
 You will have to make sure that CCTYPE is set correctly and that 
 CCHOME points to wherever you installed your compiler.
@@ -477,7 +478,7 @@ ensure Config.pm knows about it.  If you don't have nmake, you can
 either get dmake from the location mentioned earlier or get an
 old version of nmake reportedly available from:
 
-    ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
+ http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe
 
 Another option is to use the make written in Perl, available from
 CPAN.
@@ -757,6 +758,11 @@ currently be considered unsupported.
 Please send detailed descriptions of any problems and solutions that 
 you may find to <F<perlbug@perl.com>>, along with the output produced
 by C<perl -V>.
+
+=head1 ACKNOWLEDGEMENTS
+
+The use of a camel with the topic of Perl is a trademark
+of O'Reilly and Associates, Inc. Used with permission.
 
 =head1 AUTHORS
 

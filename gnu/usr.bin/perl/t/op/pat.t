@@ -6,7 +6,7 @@
 
 $| = 1;
 
-print "1..1055\n";
+print "1..1065\n";
 
 BEGIN {
     chdir 't' if -d 't';
@@ -1910,9 +1910,10 @@ print "ok 663\n";
 print "not " unless chr(0xfb4f) =~ /\p{IsHebrew}/; # outside InHebrew
 print "ok 664\n";
 
-# singleton (not in a range, this test must be ignored on EBCDIC)
-print "not " unless chr(0xb5) =~ /\p{IsGreek}/ or ord("A") == 193;
-print "ok 665\n";
+# # singleton (not in a range, this test must be ignored on EBCDIC)
+# print "not " unless chr(0xb5) =~ /\p{IsGreek}/ or ord("A") == 193;
+# print "ok 665\n";
+print "ok 665 # 0xb5 moved from Greek to Common with Unicode 4.0.1\n";
 
 print "not " unless chr(0x37a) =~ /\p{IsGreek}/; # singleton
 print "ok 666\n";
@@ -2237,10 +2238,11 @@ print "# some Unicode properties\n";
 }
 
 {
-    print "not " unless "a" =~ /\p{L&}/;
+    # L& and LC are the same
+    print "not " unless "a" =~ /\p{LC}/ and "a" =~ /\p{L&}/;
     print "ok 743\n";
 
-    print "not " if     "1" =~ /\p{L&}/;
+    print "not " if     "1" =~ /\p{LC}/ or "1" =~ /\p{L&}/;
     print "ok 744\n";
 }
 
@@ -3255,5 +3257,25 @@ for (120 .. 130) {
     }
 }
 
-# last test 1055
+# perl #25269: panic: pp_match start/end pointers
+ok("a-bc" eq eval {
+	my($x, $y) = "bca" =~ /^(?=.*(a)).*(bc)/;
+	"$x-$y";
+}, 'captures can move backwards in string');
 
+# perl #27940: \cA not recognized in character classes
+ok("a\cAb" =~ /\cA/, '\cA in pattern');
+ok("a\cAb" =~ /[\cA]/, '\cA in character class');
+ok("a\cAb" =~ /[\cA-\cB]/, '\cA in character class range');
+ok("abc" =~ /[^\cA-\cB]/, '\cA in negated character class range');
+ok("a\cBb" =~ /[\cA-\cC]/, '\cB in character class range');
+ok("a\cCbc" =~ /[^\cA-\cB]/, '\cC in negated character class range');
+ok("a\cAb" =~ /(??{"\cA"})/, '\cA in ??{} pattern');
+
+# perl #28532: optional zero-width match at end of string is ignored
+ok(("abc" =~ /^abc(\z)?/) && defined($1),
+    'optional zero-width match at end of string');
+ok(("abc" =~ /^abc(\z)??/) && !defined($1),
+    'optional zero-width match at end of string');
+
+# last test 1065

@@ -1,7 +1,7 @@
 /*    scope.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -619,6 +619,9 @@ Perl_save_aelem(pTHX_ AV *av, I32 idx, SV **sptr)
     SSPUSHINT(idx);
     SSPUSHPTR(SvREFCNT_inc(*sptr));
     SSPUSHINT(SAVEt_AELEM);
+    /* if it gets reified later, the restore will have the wrong refcnt */
+    if (!AvREAL(av) && AvREIFY(av))
+	SvREFCNT_inc(*sptr);
     save_scalar_at(sptr);
     sv = *sptr;
     /* If we're localizing a tied array element, this new sv
@@ -701,7 +704,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    value = (SV*)SSPOPPTR;
 	    gv = (GV*)SSPOPPTR;
 	    ptr = &GvSV(gv);
-	    SvREFCNT_dec(gv);
+	    av = (AV*)gv; /* what to refcnt_dec */
 	    goto restore_sv;
 	case SAVEt_GENERIC_PVREF:		/* generic pv */
 	    str = (char*)SSPOPPTR;
@@ -734,6 +737,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	case SAVEt_SVREF:			/* scalar reference */
 	    value = (SV*)SSPOPPTR;
 	    ptr = SSPOPPTR;
+	    av = Nullav; /* what to refcnt_dec */
 	restore_sv:
 	    sv = *(SV**)ptr;
 	    DEBUG_S(PerlIO_printf(Perl_debug_log,
@@ -763,12 +767,14 @@ Perl_leave_scope(pTHX_ I32 base)
 		 * mg_get() in save_scalar_at() croaked */
 		SvMAGIC(value) = 0;
 	    }
-	    SvREFCNT_dec(sv);
 	    *(SV**)ptr = value;
+	    SvREFCNT_dec(sv);
 	    PL_localizing = 2;
 	    SvSETMAGIC(value);
 	    PL_localizing = 0;
 	    SvREFCNT_dec(value);
+	    if (av) /* actually an av, hv or gv */
+		SvREFCNT_dec(av);
 	    break;
 	case SAVEt_AV:				/* array reference */
 	    av = (AV*)SSPOPPTR;
@@ -975,13 +981,14 @@ Perl_leave_scope(pTHX_ I32 base)
 	    value = (SV*)SSPOPPTR;
 	    i = SSPOPINT;
 	    av = (AV*)SSPOPPTR;
+	    if (!AvREAL(av) && AvREIFY(av)) /* undo reify guard */
+		SvREFCNT_dec(value);
 	    ptr = av_fetch(av,i,1);
 	    if (ptr) {
 		sv = *(SV**)ptr;
 		if (sv && sv != &PL_sv_undef) {
 		    if (SvTIED_mg((SV*)av, PERL_MAGIC_tied))
 			(void)SvREFCNT_inc(sv);
-		    SvREFCNT_dec(av);
 		    goto restore_sv;
 		}
 	    }
@@ -999,8 +1006,8 @@ Perl_leave_scope(pTHX_ I32 base)
 		    ptr = &HeVAL((HE*)ptr);
 		    if (SvTIED_mg((SV*)hv, PERL_MAGIC_tied))
 			(void)SvREFCNT_inc(*(SV**)ptr);
-		    SvREFCNT_dec(hv);
 		    SvREFCNT_dec(sv);
+		    av = (AV*)hv; /* what to refcnt_dec */
 		    goto restore_sv;
 		}
 	    }
@@ -1017,6 +1024,11 @@ Perl_leave_scope(pTHX_ I32 base)
 		GvHV(PL_hintgv) = NULL;
 	    }
 	    *(I32*)&PL_hints = (I32)SSPOPINT;
+	    if (PL_hints & HINT_LOCALIZE_HH) {
+		SvREFCNT_dec((SV*)GvHV(PL_hintgv));
+		GvHV(PL_hintgv) = (HV*)SSPOPPTR;
+	    }
+		    
 	    break;
 	case SAVEt_COMPPAD:
 	    PL_comppad = (PAD*)SSPOPPTR;

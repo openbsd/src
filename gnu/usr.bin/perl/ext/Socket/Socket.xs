@@ -298,16 +298,17 @@ sockaddr_family(sockaddr)
 
 void
 pack_sockaddr_un(pathname)
-	char *	pathname
+	SV *	pathname
 	CODE:
 	{
 #ifdef I_SYS_UN
 	struct sockaddr_un sun_ad; /* fear using sun */
 	STRLEN len;
+	char * pathname_pv;
 
 	Zero( &sun_ad, sizeof sun_ad, char );
 	sun_ad.sun_family = AF_UNIX;
-	len = strlen(pathname);
+	pathname_pv = SvPV(pathname,len);
 	if (len > sizeof(sun_ad.sun_path))
 	    len = sizeof(sun_ad.sun_path);
 #  ifdef OS2	/* Name should start with \socket\ and contain backslashes! */
@@ -315,16 +316,17 @@ pack_sockaddr_un(pathname)
 	    int off;
 	    char *s, *e;
 
-	    if (pathname[0] != '/' && pathname[0] != '\\')
-		croak("Relative UNIX domain socket name '%s' unsupported", pathname);
+	    if (pathname_pv[0] != '/' && pathname_pv[0] != '\\')
+		croak("Relative UNIX domain socket name '%s' unsupported",
+			pathname_pv);
 	    else if (len < 8
-		     || pathname[7] != '/' && pathname[7] != '\\'
-		     || !strnicmp(pathname + 1, "socket", 6))
+		     || pathname_pv[7] != '/' && pathname_pv[7] != '\\'
+		     || !strnicmp(pathname_pv + 1, "socket", 6))
 		off = 7;
 	    else
 		off = 0;		/* Preserve names starting with \socket\ */
 	    Copy( "\\socket", sun_ad.sun_path, off, char);
-	    Copy( pathname, sun_ad.sun_path + off, len, char );
+	    Copy( pathname_pv, sun_ad.sun_path + off, len, char );
 
 	    s = sun_ad.sun_path + off - 1;
 	    e = s + len + 1;
@@ -333,7 +335,7 @@ pack_sockaddr_un(pathname)
 		    *s = '\\';
 	}
 #  else	/* !( defined OS2 ) */
-	Copy( pathname, sun_ad.sun_path, len, char );
+	Copy( pathname_pv, sun_ad.sun_path, len, char );
 #  endif
 	if (0) not_here("dummy");
 	ST(0) = sv_2mortal(newSVpvn((char *)&sun_ad, sizeof sun_ad));
@@ -372,7 +374,10 @@ unpack_sockaddr_un(sun_sv)
 			AF_UNIX);
 	}
 	e = (char*)addr.sun_path;
-	while (*e && e < (char*)addr.sun_path + sizeof addr.sun_path)
+	/* On Linux, the name of abstract unix domain sockets begins
+	 * with a '\0', so allow this. */
+	while ((*e || (e == addr.sun_path && e[1] && sockaddrlen > 1))
+		&& e < (char*)addr.sun_path + sizeof addr.sun_path)
 	    ++e;
 	ST(0) = sv_2mortal(newSVpvn(addr.sun_path, e - (char*)addr.sun_path));
 #else

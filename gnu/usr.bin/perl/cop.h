@@ -1,7 +1,7 @@
 /*    cop.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -123,11 +123,20 @@ struct block_sub {
     PAD		*oldcomppad;
 };
 
-/* base for the next two macros. Don't use directly */
+/* base for the next two macros. Don't use directly.
+ * Note that the refcnt of the cv is incremented twice;  The CX one is
+ * decremented by LEAVESUB, the other by LEAVE. */
+
 #define PUSHSUB_BASE(cx)						\
 	cx->blk_sub.cv = cv;						\
 	cx->blk_sub.olddepth = CvDEPTH(cv);				\
-	cx->blk_sub.hasargs = hasargs;
+	cx->blk_sub.hasargs = hasargs;					\
+	if (!CvDEPTH(cv)) {						\
+	    (void)SvREFCNT_inc(cv);					\
+	    (void)SvREFCNT_inc(cv);					\
+	    SAVEFREESV(cv);						\
+	}
+
 
 #define PUSHSUB(cx)							\
 	PUSHSUB_BASE(cx)						\

@@ -383,7 +383,7 @@ create a file called F<Some/Module.pm> and start with this template:
         # set the version for version checking
         $VERSION     = 1.00;
         # if using RCS/CVS, this may be preferred
-        $VERSION = sprintf "%d.%03d", q$Revision: 1.7 $ =~ /(\d+)/g;
+        $VERSION = sprintf "%d.%03d", q$Revision: 1.8 $ =~ /(\d+)/g;
 
         @ISA         = qw(Exporter);
         @EXPORT      = qw(&func1 &func2 &func4);
@@ -539,11 +539,14 @@ between different threads. These threads can be used by using the C<threads>
 module or by doing fork() on win32 (fake fork() support). When a
 thread is cloned all Perl data is cloned, however non-Perl data cannot
 be cloned automatically.  Perl after 5.7.2 has support for the C<CLONE>
-special subroutine .  In C<CLONE> you can do whatever you need to do,
+special subroutine.  In C<CLONE> you can do whatever you need to do,
 like for example handle the cloning of non-Perl data, if necessary.
-C<CLONE> will be executed once for every package that has it defined
-(or inherits it).  It will be called in the context of the new thread,
-so all modifications are made in the new area.
+C<CLONE> will be called once as a class method for every package that has it
+defined (or inherits it).  It will be called in the context of the new thread,
+so all modifications are made in the new area.  Currently CLONE is called with
+no parameters other than the invocant package name, but code should not assume
+that this will remain unchanged, as it is likely that in future extra parameters
+will be passed in to give more information about the state of cloning.
 
 If you want to CLONE all objects you will need to keep track of them per
 package. This is simply done using a hash and Scalar::Util::weaken().

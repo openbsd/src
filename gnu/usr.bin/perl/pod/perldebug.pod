@@ -700,7 +700,7 @@ This module should implement a method named C<new> that returns an object
 with two methods: C<IN> and C<OUT>.  These should return filehandles to use
 for debugging input and output correspondingly.  The C<new> method should
 inspect an argument containing the value of C<$ENV{PERLDB_NOTTY}> at
-startup, or C<"/tmp/perldbtty$$"> otherwise.  This file is not 
+startup, or C<".perldbtty$$"> otherwise.  This file is not 
 inspected for proper ownership, so security hazards are theoretically
 possible.
 

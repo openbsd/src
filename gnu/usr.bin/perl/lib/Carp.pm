@@ -1,6 +1,6 @@
 package Carp;
 
-our $VERSION = '1.01';
+our $VERSION = '1.03';
 
 =head1 NAME
 
@@ -155,7 +155,12 @@ sub export_fail {
 # each function call on the stack.
 
 sub longmess {
-    { local $@; require Carp::Heavy; }	# XXX fix require to not clear $@?
+    {
+	local $@;
+	# XXX fix require to not clear $@?
+	# don't use require unless we need to (for Safe compartments)
+	require Carp::Heavy unless $INC{"Carp/Heavy.pm"};
+    }
     # Icky backwards compatibility wrapper. :-(
     my $call_pack = caller();
     if ($Internal{$call_pack} or $CarpInternal{$call_pack}) {
@@ -175,7 +180,12 @@ sub longmess {
 # you always get a stack trace
 
 sub shortmess {	# Short-circuit &longmess if called via multiple packages
-    { local $@; require Carp::Heavy; }	# XXX fix require to not clear $@?
+    {
+	local $@;
+	# XXX fix require to not clear $@?
+	# don't use require unless we need to (for Safe compartments)
+	require Carp::Heavy unless $INC{"Carp/Heavy.pm"};
+    }
     # Icky backwards compatibility wrapper. :-(
     my $call_pack = caller();
     local @CARP_NOT = caller();

@@ -12,7 +12,7 @@ use File::Spec::Functions qw(catfile catdir splitdir);
 use vars qw($VERSION @Pagers $Bindir $Pod2man
   $Temp_Files_Created $Temp_File_Lifetime
 );
-$VERSION = '3.12';
+$VERSION = '3.13';
 #..........................................................................
 
 BEGIN {  # Make a DEBUG constant very first thing...
@@ -1313,10 +1313,12 @@ sub check_file {
     unless( ref $self ) {
       # Should never get called:
       $Carp::Verbose = 1;
-      Carp::croak join '',
+      require Carp;
+      Carp::croak( join '',
         "Crazy ", __PACKAGE__, " error:\n",
         "check_file must be an object_method!\n",
         "Aborting"
+      );
     }
     
     if(length $dir and not -d $dir) {
