@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.4 1999/07/07 14:22:25 aaron Exp $
+.\"	$OpenBSD: openpty.3,v 1.5 1999/08/23 14:46:23 millert Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -149,15 +149,8 @@ or
 .Fn fork
 fails.
 .Sh FILES
-.Bl -tag -width /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef] -compact
-.It Pa /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef]
+.Bl -tag -width /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef] -compact
+.It Pa /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef]
 .El
 .Sh SEE ALSO
 .Xr fork 2
-.Sh BUGS
-The names of the virtual consoles for the i386 PCVT console driver
-conflict with what would be the seventh group of pseudo-ttys, so
-.Fn openpty
-skips
-.Pa /dev/[pt]tyv[0123456789abcdef]
-while looking for pseudo-ttys.
