@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 1997/04/14 17:49:58 michaels Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 1997/05/28 22:56:57 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
-int	physmem;		/* physical memory used by OpenBSD + some rsvd */
+int	physmem;		/* physical mem used by OpenBSD + some rsvd */
 int	firstusablepage;	/* first usable memory page */
 int	lastusablepage;		/* last usable memory page */
 int	resvmem;		/* amount of memory reserved for PROM */
@@ -323,7 +323,8 @@ alpha_init(pfn, ptb)
 				physmem += pgcnt(i);
 				firstusablepage =
 				    mddtp->mddt_clusters[i].mddt_pfn;
-				lastusablepage = firstusablepage + pgcnt(i) - 1;
+				lastusablepage =
+				    firstusablepage + pgcnt(i) - 1;
 			} else
 				unusedmem += pgcnt(i);
 		}
@@ -385,8 +386,8 @@ unknown_cputype:
 		printf("\n");
 		printf("Support for system type %d (%s family) is\n", cputype,
 		    cpu_fn_switch->family);
-		printf("not present in this kernel.  Build a kernel with \"options %s\"\n",
-		    cpu_fn_switch->option);
+		printf("not present in this kernel.  Build a kernel with "
+		    "\"options %s\"\n", cpu_fn_switch->option);
 		printf("to include support for this system type.\n");
 		printf("\n");
 		panic("support for system not present");
@@ -396,7 +397,8 @@ unknown_cputype:
 		strncpy(cpu_model, (*cpu_fn_switch->model_name)(),
 		    sizeof cpu_model - 1);
 	else {
-		strncpy(cpu_model, cpu_fn_switch->family, sizeof cpu_model - 1);
+		strncpy(cpu_model, cpu_fn_switch->family,
+		    sizeof cpu_model - 1);
 		strcat(cpu_model, " family");		/* XXX */
 	}
 	cpu_model[sizeof cpu_model - 1] = '\0';
@@ -513,7 +515,8 @@ unknown_cputype:
 	 */
 	proc0paddr->u_pcb.pcb_hw.apcb_ksp =
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
-	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
+	proc0.p_md.md_tf =
+	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
 #ifdef NEW_PMAP
 	pmap_activate(kernel_pmap, &proc0paddr->u_pcb.pcb_hw, 0);
@@ -1159,6 +1162,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		fsize += sizeof ksi;
 		rndfsize = ((fsize + 15) / 16) * 16;
 	}
+
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
