@@ -1,4 +1,5 @@
-/*	$OpenBSD: dhcpd.c,v 1.4 2004/04/14 02:13:37 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.5 2004/04/14 02:18:41 henning Exp $ */
+
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
  * The Internet Software Consortium.  All rights reserved.
@@ -52,15 +53,9 @@ u_int16_t local_port;
 u_int16_t remote_port;
 
 int log_priority;
-#ifdef DEBUG
-int log_perror = -1;
-#else
 int log_perror = 1;
-#endif
-
 char *path_dhcpd_conf = _PATH_DHCPD_CONF;
 char *path_dhcpd_db = _PATH_DHCPD_DB;
-char *path_dhcpd_pid = _PATH_DHCPD_PID;
 
 int main (argc, argv)
 	int argc;
@@ -70,13 +65,8 @@ int main (argc, argv)
 	struct servent *ent;
 	char *s, *appname;
 	int cftest = 0;
-#ifndef DEBUG
-	int pidfilewritten = 0;
-	int pid;
-	char pbuf [20];
-	int daemon = 1;
-#endif
 	int quiet = 0;
+	int daemonize = 1;
 
 	appname = strrchr (argv [0], '/');
 	if (!appname)
@@ -104,31 +94,21 @@ int main (argc, argv)
 			debug ("binding to user-specified port %d",
 			       ntohs (local_port));
 		} else if (!strcmp (argv [i], "-f")) {
-#ifndef DEBUG
-			daemon = 0;
-#endif
+			daemonize = 0;
 		} else if (!strcmp (argv [i], "-d")) {
-#ifndef DEBUG
-			daemon = 0;
-#endif
+			daemonize = 0;
 			log_perror = -1;
 		} else if (!strcmp (argv [i], "-cf")) {
 			if (++i == argc)
 				usage (appname);
 			path_dhcpd_conf = argv [i];
-		} else if (!strcmp (argv [i], "-pf")) {
-			if (++i == argc)
-				usage (appname);
-			path_dhcpd_pid = argv [i];
 		} else if (!strcmp (argv [i], "-lf")) {
 			if (++i == argc)
 				usage (appname);
 			path_dhcpd_db = argv [i];
                 } else if (!strcmp (argv [i], "-t")) {
 			/* test configurations only */
-#ifndef DEBUG
-			daemon = 0;
-#endif
+			daemonize = 0;
 			cftest = 1;
 			log_perror = -1;
 		} else if (!strcmp (argv [i], "-q")) {
@@ -187,69 +167,9 @@ int main (argc, argv)
 	/* Initialize icmp support... */
 	icmp_startup(1, lease_pinged);
 
-#ifndef DEBUG
-	if (daemon) {
-		/* First part of becoming a daemon... */
-		if ((pid = fork ()) == -1)
-			error ("Can't fork daemon: %m");
-		else if (pid)
-			exit (0);
-	}
-
-	/* Read previous pid file. */
-	if ((i = open (path_dhcpd_pid, O_RDONLY)) != -1) {
-		status = read (i, pbuf, (sizeof pbuf) - 1);
-		close (i);
-		pbuf [status] = 0;
-		pid = atoi (pbuf);
-
-		/* If the previous server process is not still running,
-		   write a new pid file immediately. */
-		if (pid && (pid == getpid () || kill (pid, 0) == -1)) {
-			unlink (path_dhcpd_pid);
-			if ((i = open (path_dhcpd_pid,
-				       O_WRONLY | O_CREAT, 0640)) != -1) {
-				snprintf (pbuf, sizeof(pbuf), "%d\n",
-				  (int)getpid ());
-				write (i, pbuf, strlen (pbuf));
-				close (i);
-				pidfilewritten = 1;
-			}
-		} else
-			error ("There's already a DHCP server running.\n");
-	}
-
-	/* If we were requested to log to stdout on the command line,
-	   keep doing so; otherwise, stop. */
-	if (log_perror == -1)
-		log_perror = 1;
-	else
-		log_perror = 0;
-
-	if (daemon) {
-		/* Become session leader and get pid... */
-		close (0);
-		close (1);
-		close (2);
-		pid = setsid ();
-	}
-
-	/* If we didn't write the pid file earlier because we found a
-	   process running the logged pid, but we made it to here,
-	   meaning nothing is listening on the bootp port, then write
-	   the pid file out - what's in it now is bogus anyway. */
-	if (!pidfilewritten) {
-		unlink (path_dhcpd_pid);
-		if ((i = open (path_dhcpd_pid,
-			       O_WRONLY | O_CREAT, 0640)) != -1) {
-			snprintf (pbuf, sizeof(pbuf), "%d\n",
-			  (int)getpid ());
-			write (i, pbuf, strlen (pbuf));
-			close (i);
-			pidfilewritten = 1;
-		}
-	}
-#endif /* !DEBUG */
+	log_perror = 0;
+	if (daemonize)
+		daemon(0, 0);
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
