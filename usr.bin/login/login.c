@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.22 1997/06/20 04:55:00 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.23 1997/11/04 19:01:05 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.22 1997/06/20 04:55:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.23 1997/11/04 19:01:05 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -312,6 +312,8 @@ main(argc, argv)
 #else
 			rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #endif
+		} else {
+			rval = pwcheck(username, p, salt, "*");
 		}
 		memset(p, 0, strlen(p));
 
