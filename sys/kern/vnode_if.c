@@ -5,7 +5,7 @@
  * Created from the file:
  *	OpenBSD: vnode_if.src,v 1.9 1998/12/05 16:54:02 csapuntz Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.5 1999/03/03 14:23:19 deraadt Exp 
+ *	OpenBSD: vnode_if.sh,v 1.6 1999/03/03 20:58:27 deraadt Exp 
  */
 
 /*
@@ -41,7 +41,6 @@
  * SUCH DAMAGE.
  */
 
-#define INTERNAL_VOP_NOT_INLINE
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -75,6 +74,15 @@ struct vnodeop_desc vop_islocked_desc = {
 	NULL,
 };
 
+int VOP_ISLOCKED(vp)
+	struct vnode *vp;
+{
+	struct vop_islocked_args a;
+	a.a_desc = VDESC(vop_islocked);
+	a.a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_islocked), &a));
+}
+
 int vop_lookup_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_lookup_args,a_dvp),
 	VDESC_NO_OFFSET
@@ -90,6 +98,19 @@ struct vnodeop_desc vop_lookup_desc = {
 	VOPARG_OFFSETOF(struct vop_lookup_args, a_cnp),
 	NULL,
 };
+
+int VOP_LOOKUP(dvp, vpp, cnp)
+	struct vnode *dvp;
+	struct vnode **vpp;
+	struct componentname *cnp;
+{
+	struct vop_lookup_args a;
+	a.a_desc = VDESC(vop_lookup);
+	a.a_dvp = dvp;
+	a.a_vpp = vpp;
+	a.a_cnp = cnp;
+	return (VCALL(dvp, VOFFSET(vop_lookup), &a));
+}
 
 int vop_create_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_create_args,a_dvp),
@@ -107,6 +128,24 @@ struct vnodeop_desc vop_create_desc = {
 	NULL,
 };
 
+int VOP_CREATE(dvp, vpp, cnp, vap)
+	struct vnode *dvp;
+	struct vnode **vpp;
+	struct componentname *cnp;
+	struct vattr *vap;
+{
+	struct vop_create_args a;
+	a.a_desc = VDESC(vop_create);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_create: dvp");
+#endif
+	a.a_vpp = vpp;
+	a.a_cnp = cnp;
+	a.a_vap = vap;
+	return (VCALL(dvp, VOFFSET(vop_create), &a));
+}
+
 int vop_mknod_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_mknod_args,a_dvp),
 	VDESC_NO_OFFSET
@@ -122,6 +161,24 @@ struct vnodeop_desc vop_mknod_desc = {
 	VOPARG_OFFSETOF(struct vop_mknod_args, a_cnp),
 	NULL,
 };
+
+int VOP_MKNOD(dvp, vpp, cnp, vap)
+	struct vnode *dvp;
+	struct vnode **vpp;
+	struct componentname *cnp;
+	struct vattr *vap;
+{
+	struct vop_mknod_args a;
+	a.a_desc = VDESC(vop_mknod);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_mknod: dvp");
+#endif
+	a.a_vpp = vpp;
+	a.a_cnp = cnp;
+	a.a_vap = vap;
+	return (VCALL(dvp, VOFFSET(vop_mknod), &a));
+}
 
 int vop_open_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_open_args,a_vp),
@@ -139,6 +196,21 @@ struct vnodeop_desc vop_open_desc = {
 	NULL,
 };
 
+int VOP_OPEN(vp, mode, cred, p)
+	struct vnode *vp;
+	int mode;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_open_args a;
+	a.a_desc = VDESC(vop_open);
+	a.a_vp = vp;
+	a.a_mode = mode;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_open), &a));
+}
+
 int vop_close_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_close_args,a_vp),
 	VDESC_NO_OFFSET
@@ -154,6 +226,21 @@ struct vnodeop_desc vop_close_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_CLOSE(vp, fflag, cred, p)
+	struct vnode *vp;
+	int fflag;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_close_args a;
+	a.a_desc = VDESC(vop_close);
+	a.a_vp = vp;
+	a.a_fflag = fflag;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_close), &a));
+}
 
 int vop_access_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_access_args,a_vp),
@@ -171,6 +258,24 @@ struct vnodeop_desc vop_access_desc = {
 	NULL,
 };
 
+int VOP_ACCESS(vp, mode, cred, p)
+	struct vnode *vp;
+	int mode;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_access_args a;
+	a.a_desc = VDESC(vop_access);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_access: vp");
+#endif
+	a.a_mode = mode;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_access), &a));
+}
+
 int vop_getattr_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_getattr_args,a_vp),
 	VDESC_NO_OFFSET
@@ -186,6 +291,21 @@ struct vnodeop_desc vop_getattr_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_GETATTR(vp, vap, cred, p)
+	struct vnode *vp;
+	struct vattr *vap;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_getattr_args a;
+	a.a_desc = VDESC(vop_getattr);
+	a.a_vp = vp;
+	a.a_vap = vap;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_getattr), &a));
+}
 
 int vop_setattr_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_setattr_args,a_vp),
@@ -203,6 +323,24 @@ struct vnodeop_desc vop_setattr_desc = {
 	NULL,
 };
 
+int VOP_SETATTR(vp, vap, cred, p)
+	struct vnode *vp;
+	struct vattr *vap;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_setattr_args a;
+	a.a_desc = VDESC(vop_setattr);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_setattr: vp");
+#endif
+	a.a_vap = vap;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_setattr), &a));
+}
+
 int vop_read_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_read_args,a_vp),
 	VDESC_NO_OFFSET
@@ -218,6 +356,24 @@ struct vnodeop_desc vop_read_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_READ(vp, uio, ioflag, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	int ioflag;
+	struct ucred *cred;
+{
+	struct vop_read_args a;
+	a.a_desc = VDESC(vop_read);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_read: vp");
+#endif
+	a.a_uio = uio;
+	a.a_ioflag = ioflag;
+	a.a_cred = cred;
+	return (VCALL(vp, VOFFSET(vop_read), &a));
+}
 
 int vop_write_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_write_args,a_vp),
@@ -235,6 +391,24 @@ struct vnodeop_desc vop_write_desc = {
 	NULL,
 };
 
+int VOP_WRITE(vp, uio, ioflag, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	int ioflag;
+	struct ucred *cred;
+{
+	struct vop_write_args a;
+	a.a_desc = VDESC(vop_write);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_write: vp");
+#endif
+	a.a_uio = uio;
+	a.a_ioflag = ioflag;
+	a.a_cred = cred;
+	return (VCALL(vp, VOFFSET(vop_write), &a));
+}
+
 int vop_lease_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_lease_args,a_vp),
 	VDESC_NO_OFFSET
@@ -250,6 +424,21 @@ struct vnodeop_desc vop_lease_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_LEASE(vp, p, cred, flag)
+	struct vnode *vp;
+	struct proc *p;
+	struct ucred *cred;
+	int flag;
+{
+	struct vop_lease_args a;
+	a.a_desc = VDESC(vop_lease);
+	a.a_vp = vp;
+	a.a_p = p;
+	a.a_cred = cred;
+	a.a_flag = flag;
+	return (VCALL(vp, VOFFSET(vop_lease), &a));
+}
 
 int vop_ioctl_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_ioctl_args,a_vp),
@@ -267,6 +456,25 @@ struct vnodeop_desc vop_ioctl_desc = {
 	NULL,
 };
 
+int VOP_IOCTL(vp, command, data, fflag, cred, p)
+	struct vnode *vp;
+	u_long command;
+	caddr_t data;
+	int fflag;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_ioctl_args a;
+	a.a_desc = VDESC(vop_ioctl);
+	a.a_vp = vp;
+	a.a_command = command;
+	a.a_data = data;
+	a.a_fflag = fflag;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_ioctl), &a));
+}
+
 int vop_select_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_select_args,a_vp),
 	VDESC_NO_OFFSET
@@ -282,6 +490,23 @@ struct vnodeop_desc vop_select_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_SELECT(vp, which, fflags, cred, p)
+	struct vnode *vp;
+	int which;
+	int fflags;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_select_args a;
+	a.a_desc = VDESC(vop_select);
+	a.a_vp = vp;
+	a.a_which = which;
+	a.a_fflags = fflags;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_select), &a));
+}
 
 int vop_revoke_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_revoke_args,a_vp),
@@ -299,6 +524,17 @@ struct vnodeop_desc vop_revoke_desc = {
 	NULL,
 };
 
+int VOP_REVOKE(vp, flags)
+	struct vnode *vp;
+	int flags;
+{
+	struct vop_revoke_args a;
+	a.a_desc = VDESC(vop_revoke);
+	a.a_vp = vp;
+	a.a_flags = flags;
+	return (VCALL(vp, VOFFSET(vop_revoke), &a));
+}
+
 int vop_mmap_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_mmap_args,a_vp),
 	VDESC_NO_OFFSET
@@ -314,6 +550,21 @@ struct vnodeop_desc vop_mmap_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_MMAP(vp, fflags, cred, p)
+	struct vnode *vp;
+	int fflags;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_mmap_args a;
+	a.a_desc = VDESC(vop_mmap);
+	a.a_vp = vp;
+	a.a_fflags = fflags;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_mmap), &a));
+}
 
 int vop_fsync_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_fsync_args,a_vp),
@@ -331,6 +582,24 @@ struct vnodeop_desc vop_fsync_desc = {
 	NULL,
 };
 
+int VOP_FSYNC(vp, cred, waitfor, p)
+	struct vnode *vp;
+	struct ucred *cred;
+	int waitfor;
+	struct proc *p;
+{
+	struct vop_fsync_args a;
+	a.a_desc = VDESC(vop_fsync);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_fsync: vp");
+#endif
+	a.a_cred = cred;
+	a.a_waitfor = waitfor;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_fsync), &a));
+}
+
 int vop_seek_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_seek_args,a_vp),
 	VDESC_NO_OFFSET
@@ -346,6 +615,21 @@ struct vnodeop_desc vop_seek_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_SEEK(vp, oldoff, newoff, cred)
+	struct vnode *vp;
+	off_t oldoff;
+	off_t newoff;
+	struct ucred *cred;
+{
+	struct vop_seek_args a;
+	a.a_desc = VDESC(vop_seek);
+	a.a_vp = vp;
+	a.a_oldoff = oldoff;
+	a.a_newoff = newoff;
+	a.a_cred = cred;
+	return (VCALL(vp, VOFFSET(vop_seek), &a));
+}
 
 int vop_remove_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_remove_args,a_dvp),
@@ -364,6 +648,25 @@ struct vnodeop_desc vop_remove_desc = {
 	NULL,
 };
 
+int VOP_REMOVE(dvp, vp, cnp)
+	struct vnode *dvp;
+	struct vnode *vp;
+	struct componentname *cnp;
+{
+	struct vop_remove_args a;
+	a.a_desc = VDESC(vop_remove);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_remove: dvp");
+#endif
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_remove: vp");
+#endif
+	a.a_cnp = cnp;
+	return (VCALL(dvp, VOFFSET(vop_remove), &a));
+}
+
 int vop_link_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_link_args,a_dvp),
 	VOPARG_OFFSETOF(struct vop_link_args,a_vp),
@@ -380,6 +683,22 @@ struct vnodeop_desc vop_link_desc = {
 	VOPARG_OFFSETOF(struct vop_link_args, a_cnp),
 	NULL,
 };
+
+int VOP_LINK(dvp, vp, cnp)
+	struct vnode *dvp;
+	struct vnode *vp;
+	struct componentname *cnp;
+{
+	struct vop_link_args a;
+	a.a_desc = VDESC(vop_link);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_link: dvp");
+#endif
+	a.a_vp = vp;
+	a.a_cnp = cnp;
+	return (VCALL(dvp, VOFFSET(vop_link), &a));
+}
 
 int vop_rename_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_rename_args,a_fdvp),
@@ -400,6 +719,28 @@ struct vnodeop_desc vop_rename_desc = {
 	NULL,
 };
 
+int VOP_RENAME(fdvp, fvp, fcnp, tdvp, tvp, tcnp)
+	struct vnode *fdvp;
+	struct vnode *fvp;
+	struct componentname *fcnp;
+	struct vnode *tdvp;
+	struct vnode *tvp;
+	struct componentname *tcnp;
+{
+	struct vop_rename_args a;
+	a.a_desc = VDESC(vop_rename);
+	a.a_fdvp = fdvp;
+	a.a_fvp = fvp;
+	a.a_fcnp = fcnp;
+	a.a_tdvp = tdvp;
+#ifdef DIAGNOSTIC
+	if ((tdvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(tdvp)) panic("vop_rename: tdvp");
+#endif
+	a.a_tvp = tvp;
+	a.a_tcnp = tcnp;
+	return (VCALL(fdvp, VOFFSET(vop_rename), &a));
+}
+
 int vop_mkdir_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_mkdir_args,a_dvp),
 	VDESC_NO_OFFSET
@@ -415,6 +756,24 @@ struct vnodeop_desc vop_mkdir_desc = {
 	VOPARG_OFFSETOF(struct vop_mkdir_args, a_cnp),
 	NULL,
 };
+
+int VOP_MKDIR(dvp, vpp, cnp, vap)
+	struct vnode *dvp;
+	struct vnode **vpp;
+	struct componentname *cnp;
+	struct vattr *vap;
+{
+	struct vop_mkdir_args a;
+	a.a_desc = VDESC(vop_mkdir);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_mkdir: dvp");
+#endif
+	a.a_vpp = vpp;
+	a.a_cnp = cnp;
+	a.a_vap = vap;
+	return (VCALL(dvp, VOFFSET(vop_mkdir), &a));
+}
 
 int vop_rmdir_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_rmdir_args,a_dvp),
@@ -433,6 +792,25 @@ struct vnodeop_desc vop_rmdir_desc = {
 	NULL,
 };
 
+int VOP_RMDIR(dvp, vp, cnp)
+	struct vnode *dvp;
+	struct vnode *vp;
+	struct componentname *cnp;
+{
+	struct vop_rmdir_args a;
+	a.a_desc = VDESC(vop_rmdir);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_rmdir: dvp");
+#endif
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_rmdir: vp");
+#endif
+	a.a_cnp = cnp;
+	return (VCALL(dvp, VOFFSET(vop_rmdir), &a));
+}
+
 int vop_symlink_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_symlink_args,a_dvp),
 	VDESC_NO_OFFSET
@@ -448,6 +826,26 @@ struct vnodeop_desc vop_symlink_desc = {
 	VOPARG_OFFSETOF(struct vop_symlink_args, a_cnp),
 	NULL,
 };
+
+int VOP_SYMLINK(dvp, vpp, cnp, vap, target)
+	struct vnode *dvp;
+	struct vnode **vpp;
+	struct componentname *cnp;
+	struct vattr *vap;
+	char *target;
+{
+	struct vop_symlink_args a;
+	a.a_desc = VDESC(vop_symlink);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_symlink: dvp");
+#endif
+	a.a_vpp = vpp;
+	a.a_cnp = cnp;
+	a.a_vap = vap;
+	a.a_target = target;
+	return (VCALL(dvp, VOFFSET(vop_symlink), &a));
+}
 
 int vop_readdir_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_readdir_args,a_vp),
@@ -465,6 +863,28 @@ struct vnodeop_desc vop_readdir_desc = {
 	NULL,
 };
 
+int VOP_READDIR(vp, uio, cred, eofflag, ncookies, cookies)
+	struct vnode *vp;
+	struct uio *uio;
+	struct ucred *cred;
+	int *eofflag;
+	int *ncookies;
+	u_long **cookies;
+{
+	struct vop_readdir_args a;
+	a.a_desc = VDESC(vop_readdir);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_readdir: vp");
+#endif
+	a.a_uio = uio;
+	a.a_cred = cred;
+	a.a_eofflag = eofflag;
+	a.a_ncookies = ncookies;
+	a.a_cookies = cookies;
+	return (VCALL(vp, VOFFSET(vop_readdir), &a));
+}
+
 int vop_readlink_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_readlink_args,a_vp),
 	VDESC_NO_OFFSET
@@ -480,6 +900,22 @@ struct vnodeop_desc vop_readlink_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_READLINK(vp, uio, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	struct ucred *cred;
+{
+	struct vop_readlink_args a;
+	a.a_desc = VDESC(vop_readlink);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_readlink: vp");
+#endif
+	a.a_uio = uio;
+	a.a_cred = cred;
+	return (VCALL(vp, VOFFSET(vop_readlink), &a));
+}
 
 int vop_abortop_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_abortop_args,a_dvp),
@@ -497,6 +933,17 @@ struct vnodeop_desc vop_abortop_desc = {
 	NULL,
 };
 
+int VOP_ABORTOP(dvp, cnp)
+	struct vnode *dvp;
+	struct componentname *cnp;
+{
+	struct vop_abortop_args a;
+	a.a_desc = VDESC(vop_abortop);
+	a.a_dvp = dvp;
+	a.a_cnp = cnp;
+	return (VCALL(dvp, VOFFSET(vop_abortop), &a));
+}
+
 int vop_inactive_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_inactive_args,a_vp),
 	VDESC_NO_OFFSET
@@ -512,6 +959,20 @@ struct vnodeop_desc vop_inactive_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_INACTIVE(vp, p)
+	struct vnode *vp;
+	struct proc *p;
+{
+	struct vop_inactive_args a;
+	a.a_desc = VDESC(vop_inactive);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_inactive: vp");
+#endif
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_inactive), &a));
+}
 
 int vop_reclaim_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reclaim_args,a_vp),
@@ -529,6 +990,17 @@ struct vnodeop_desc vop_reclaim_desc = {
 	NULL,
 };
 
+int VOP_RECLAIM(vp, p)
+	struct vnode *vp;
+	struct proc *p;
+{
+	struct vop_reclaim_args a;
+	a.a_desc = VDESC(vop_reclaim);
+	a.a_vp = vp;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_reclaim), &a));
+}
+
 int vop_lock_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_lock_args,a_vp),
 	VDESC_NO_OFFSET
@@ -544,6 +1016,19 @@ struct vnodeop_desc vop_lock_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_LOCK(vp, flags, p)
+	struct vnode *vp;
+	int flags;
+	struct proc *p;
+{
+	struct vop_lock_args a;
+	a.a_desc = VDESC(vop_lock);
+	a.a_vp = vp;
+	a.a_flags = flags;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_lock), &a));
+}
 
 int vop_unlock_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_unlock_args,a_vp),
@@ -561,6 +1046,19 @@ struct vnodeop_desc vop_unlock_desc = {
 	NULL,
 };
 
+int VOP_UNLOCK(vp, flags, p)
+	struct vnode *vp;
+	int flags;
+	struct proc *p;
+{
+	struct vop_unlock_args a;
+	a.a_desc = VDESC(vop_unlock);
+	a.a_vp = vp;
+	a.a_flags = flags;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_unlock), &a));
+}
+
 int vop_bmap_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_bmap_args,a_vp),
 	VDESC_NO_OFFSET
@@ -576,6 +1074,26 @@ struct vnodeop_desc vop_bmap_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_BMAP(vp, bn, vpp, bnp, runp)
+	struct vnode *vp;
+	daddr_t bn;
+	struct vnode **vpp;
+	daddr_t *bnp;
+	int *runp;
+{
+	struct vop_bmap_args a;
+	a.a_desc = VDESC(vop_bmap);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_bmap: vp");
+#endif
+	a.a_bn = bn;
+	a.a_vpp = vpp;
+	a.a_bnp = bnp;
+	a.a_runp = runp;
+	return (VCALL(vp, VOFFSET(vop_bmap), &a));
+}
 
 int vop_print_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_print_args,a_vp),
@@ -593,6 +1111,15 @@ struct vnodeop_desc vop_print_desc = {
 	NULL,
 };
 
+int VOP_PRINT(vp)
+	struct vnode *vp;
+{
+	struct vop_print_args a;
+	a.a_desc = VDESC(vop_print);
+	a.a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_print), &a));
+}
+
 int vop_pathconf_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_pathconf_args,a_vp),
 	VDESC_NO_OFFSET
@@ -608,6 +1135,19 @@ struct vnodeop_desc vop_pathconf_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_PATHCONF(vp, name, retval)
+	struct vnode *vp;
+	int name;
+	register_t *retval;
+{
+	struct vop_pathconf_args a;
+	a.a_desc = VDESC(vop_pathconf);
+	a.a_vp = vp;
+	a.a_name = name;
+	a.a_retval = retval;
+	return (VCALL(vp, VOFFSET(vop_pathconf), &a));
+}
 
 int vop_advlock_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_advlock_args,a_vp),
@@ -625,6 +1165,23 @@ struct vnodeop_desc vop_advlock_desc = {
 	NULL,
 };
 
+int VOP_ADVLOCK(vp, id, op, fl, flags)
+	struct vnode *vp;
+	caddr_t id;
+	int op;
+	struct flock *fl;
+	int flags;
+{
+	struct vop_advlock_args a;
+	a.a_desc = VDESC(vop_advlock);
+	a.a_vp = vp;
+	a.a_id = id;
+	a.a_op = op;
+	a.a_fl = fl;
+	a.a_flags = flags;
+	return (VCALL(vp, VOFFSET(vop_advlock), &a));
+}
+
 int vop_blkatoff_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_blkatoff_args,a_vp),
 	VDESC_NO_OFFSET
@@ -640,6 +1197,24 @@ struct vnodeop_desc vop_blkatoff_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_BLKATOFF(vp, offset, res, bpp)
+	struct vnode *vp;
+	off_t offset;
+	char **res;
+	struct buf **bpp;
+{
+	struct vop_blkatoff_args a;
+	a.a_desc = VDESC(vop_blkatoff);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_blkatoff: vp");
+#endif
+	a.a_offset = offset;
+	a.a_res = res;
+	a.a_bpp = bpp;
+	return (VCALL(vp, VOFFSET(vop_blkatoff), &a));
+}
 
 int vop_valloc_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_valloc_args,a_pvp),
@@ -657,6 +1232,24 @@ struct vnodeop_desc vop_valloc_desc = {
 	NULL,
 };
 
+int VOP_VALLOC(pvp, mode, cred, vpp)
+	struct vnode *pvp;
+	int mode;
+	struct ucred *cred;
+	struct vnode **vpp;
+{
+	struct vop_valloc_args a;
+	a.a_desc = VDESC(vop_valloc);
+	a.a_pvp = pvp;
+#ifdef DIAGNOSTIC
+	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp)) panic("vop_valloc: pvp");
+#endif
+	a.a_mode = mode;
+	a.a_cred = cred;
+	a.a_vpp = vpp;
+	return (VCALL(pvp, VOFFSET(vop_valloc), &a));
+}
+
 int vop_balloc_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_balloc_args,a_vp),
 	VDESC_NO_OFFSET
@@ -672,6 +1265,28 @@ struct vnodeop_desc vop_balloc_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
+	struct vnode *vp;
+	off_t startoffset;
+	int size;
+	struct ucred *cred;
+	int flags;
+	struct buf **bpp;
+{
+	struct vop_balloc_args a;
+	a.a_desc = VDESC(vop_balloc);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_balloc: vp");
+#endif
+	a.a_startoffset = startoffset;
+	a.a_size = size;
+	a.a_cred = cred;
+	a.a_flags = flags;
+	a.a_bpp = bpp;
+	return (VCALL(vp, VOFFSET(vop_balloc), &a));
+}
 
 int vop_reallocblks_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reallocblks_args,a_vp),
@@ -689,6 +1304,20 @@ struct vnodeop_desc vop_reallocblks_desc = {
 	NULL,
 };
 
+int VOP_REALLOCBLKS(vp, buflist)
+	struct vnode *vp;
+	struct cluster_save *buflist;
+{
+	struct vop_reallocblks_args a;
+	a.a_desc = VDESC(vop_reallocblks);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_reallocblks: vp");
+#endif
+	a.a_buflist = buflist;
+	return (VCALL(vp, VOFFSET(vop_reallocblks), &a));
+}
+
 int vop_vfree_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_vfree_args,a_pvp),
 	VDESC_NO_OFFSET
@@ -704,6 +1333,22 @@ struct vnodeop_desc vop_vfree_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_VFREE(pvp, ino, mode)
+	struct vnode *pvp;
+	ino_t ino;
+	int mode;
+{
+	struct vop_vfree_args a;
+	a.a_desc = VDESC(vop_vfree);
+	a.a_pvp = pvp;
+#ifdef DIAGNOSTIC
+	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp)) panic("vop_vfree: pvp");
+#endif
+	a.a_ino = ino;
+	a.a_mode = mode;
+	return (VCALL(pvp, VOFFSET(vop_vfree), &a));
+}
 
 int vop_truncate_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_truncate_args,a_vp),
@@ -721,6 +1366,26 @@ struct vnodeop_desc vop_truncate_desc = {
 	NULL,
 };
 
+int VOP_TRUNCATE(vp, length, flags, cred, p)
+	struct vnode *vp;
+	off_t length;
+	int flags;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_truncate_args a;
+	a.a_desc = VDESC(vop_truncate);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_truncate: vp");
+#endif
+	a.a_length = length;
+	a.a_flags = flags;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_truncate), &a));
+}
+
 int vop_update_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_update_args,a_vp),
 	VDESC_NO_OFFSET
@@ -737,6 +1402,24 @@ struct vnodeop_desc vop_update_desc = {
 	NULL,
 };
 
+int VOP_UPDATE(vp, access, modify, waitfor)
+	struct vnode *vp;
+	struct timespec *access;
+	struct timespec *modify;
+	int waitfor;
+{
+	struct vop_update_args a;
+	a.a_desc = VDESC(vop_update);
+	a.a_vp = vp;
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_update: vp");
+#endif
+	a.a_access = access;
+	a.a_modify = modify;
+	a.a_waitfor = waitfor;
+	return (VCALL(vp, VOFFSET(vop_update), &a));
+}
+
 int vop_whiteout_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_whiteout_args,a_dvp),
 	VDESC_NO_OFFSET
@@ -752,6 +1435,22 @@ struct vnodeop_desc vop_whiteout_desc = {
 	VOPARG_OFFSETOF(struct vop_whiteout_args, a_cnp),
 	NULL,
 };
+
+int VOP_WHITEOUT(dvp, cnp, flags)
+	struct vnode *dvp;
+	struct componentname *cnp;
+	int flags;
+{
+	struct vop_whiteout_args a;
+	a.a_desc = VDESC(vop_whiteout);
+	a.a_dvp = dvp;
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_whiteout: dvp");
+#endif
+	a.a_cnp = cnp;
+	a.a_flags = flags;
+	return (VCALL(dvp, VOFFSET(vop_whiteout), &a));
+}
 
 /* Special cases: */
 
@@ -770,6 +1469,15 @@ struct vnodeop_desc vop_strategy_desc = {
 	NULL,
 };
 
+int VOP_STRATEGY(bp)
+	struct buf *bp;
+{
+	struct vop_strategy_args a;
+	a.a_desc = VDESC(vop_strategy);
+	a.a_bp = bp;
+	return (VCALL(bp->b_vp, VOFFSET(vop_strategy), &a));
+}
+
 int vop_bwrite_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
@@ -784,6 +1492,15 @@ struct vnodeop_desc vop_bwrite_desc = {
 	VDESC_NO_OFFSET,
 	NULL,
 };
+
+int VOP_BWRITE(bp)
+	struct buf *bp;
+{
+	struct vop_bwrite_args a;
+	a.a_desc = VDESC(vop_bwrite);
+	a.a_bp = bp;
+	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
+}
 
 /* End of special cases. */
 
