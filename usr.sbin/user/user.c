@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.48 2003/06/10 20:03:56 millert Exp $ */
+/* $OpenBSD: user.c,v 1.49 2003/06/10 20:27:31 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -66,21 +66,21 @@ typedef struct range_t {
 typedef struct user_t {
 	int		u_flags;		/* see below */
 	uid_t		u_uid;			/* uid of user */
-	char		*u_password;		/* encrypted password */
-	char		*u_comment;		/* comment field */
-	char		*u_home;		/* home directory */
-	char		*u_primgrp;		/* primary group */
+	char	       *u_password;		/* encrypted password */
+	char	       *u_comment;		/* comment field */
+	char	       *u_home;		/* home directory */
+	char	       *u_primgrp;		/* primary group */
 	int		u_groupc;		/* # of secondary groups */
 	const char     *u_groupv[NGROUPS_MAX];	/* secondary groups */
-	char		*u_shell;		/* user's shell */
-	char		*u_basedir;		/* base directory for home */
-	char		*u_expire;		/* when password will expire */
-	char		*u_inactive;		/* when account will expire */
-	char		*u_skeldir;		/* directory for startup files */
-	char		*u_class;		/* login class */
+	char	       *u_shell;		/* user's shell */
+	char	       *u_basedir;		/* base directory for home */
+	char	       *u_expire;		/* when password will expire */
+	char	       *u_inactive;		/* when account will expire */
+	char	       *u_skeldir;		/* directory for startup files */
+	char	       *u_class;		/* login class */
 	unsigned int	u_rsize;		/* size of range array */
 	unsigned int	u_rc;			/* # of ranges */
-	range_t		*u_rv;			/* the ranges */
+	range_t	       *u_rv;			/* the ranges */
 	unsigned int	u_defrc;		/* # of ranges in defaults */
 	int		u_preserve;		/* preserve uids on deletion */
 } user_t;
@@ -159,6 +159,8 @@ enum {
 	MaxUserNameLen = _PW_NAME_LEN,
 	MaxCommandLen = 2048,
 	PasswordLength = _PASSWORD_LEN,
+
+	DES_Len = 13,
 
 	LowGid = DEF_LOWUID,
 	HighGid = DEF_HIGHUID
@@ -258,7 +260,7 @@ static int
 is_number(char *s)
 {
 	for ( ; *s ; s++) {
-		if (!isdigit(*s)) {
+		if (!isdigit((unsigned char) *s)) {
 			return 0;
 		}
 	}
@@ -558,7 +560,7 @@ append_group(char *user, int ngroups, const char **groups)
 static int
 valid_login(char *login_name)
 {
-	char	*cp;
+	unsigned char	*cp;
 
 	/* The first character cannot be a hyphen */
 	if (*login_name == '-')
@@ -571,7 +573,7 @@ valid_login(char *login_name)
 			return 0;
 		}
 	}
-	if (cp - login_name > MaxUserNameLen)
+	if ((char *)cp - login_name > MaxUserNameLen)
 		return 0;
 	return 1;
 }
@@ -580,14 +582,14 @@ valid_login(char *login_name)
 static int
 valid_group(char *group)
 {
-	char	*cp;
+	unsigned char	*cp;
 
 	for (cp = group ; *cp ; cp++) {
 		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
 			return 0;
 		}
 	}
-	if (cp - group > MaxUserNameLen)
+	if ((char *)cp - group > MaxUserNameLen)
 		return 0;
 	return 1;
 }
@@ -697,8 +699,8 @@ read_defaults(user_t *up)
 	size_t		lineno;
 	size_t		len;
 	FILE		*fp;
-	char		*cp;
-	char		*s;
+	unsigned char	*cp;
+	unsigned char	*s;
 
 	memsave(&up->u_primgrp, DEF_GROUP, strlen(DEF_GROUP));
 	memsave(&up->u_basedir, DEF_BASEDIR, strlen(DEF_BASEDIR));
@@ -814,13 +816,74 @@ getnextuid(int sync_uid_gid, uid_t *uid, uid_t low_uid, uid_t high_uid)
 	return 0;
 }
 
+/* structure which defines a password type */
+typedef struct passwd_type_t {
+	const char     *type;		/* optional type descriptor */
+	int		desc_length;	/* length of type descriptor */
+	int		length;		/* length of password */
+	const char     *regex;		/* regexp to output the password */
+	int		re_sub;		/* subscript of regexp to use */
+} passwd_type_t;
+
+static passwd_type_t	passwd_types[] = {
+	{ "$2a",	3,	54,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
+	{ "$1",		2,	34,	NULL,				0 },	/* MD5 */
+	{ "",		0,	DES_Len,NULL,				0 },	/* standard DES */
+	{ NULL,		-1,	-1,	NULL,				0 }	/* none - terminate search */
+};
+
+/* return non-zero if it's a valid password - check length for cipher type */
+static int
+valid_password_length(char *newpasswd)
+{
+	passwd_type_t  *pwtp;
+	regmatch_t	matchv[10];
+	regex_t		r;
+
+	for (pwtp = passwd_types ; pwtp->desc_length >= 0 ; pwtp++) {
+		if (strncmp(newpasswd, pwtp->type, pwtp->desc_length) == 0) {
+			if (pwtp->regex == NULL) {
+				return strlen(newpasswd) == pwtp->length;
+			}
+			(void) regcomp(&r, pwtp->regex, REG_EXTENDED);
+			if (regexec(&r, newpasswd, 10, matchv, 0) == 0) {
+				regfree(&r);
+				return (int)(matchv[pwtp->re_sub].rm_eo - matchv[pwtp->re_sub].rm_so + 1) == pwtp->length;
+			}
+			regfree(&r);
+		}
+	}
+	return 0;
+}
+
+/* look for a valid time, return 0 if it was specified but bad */
+static int
+scantime(time_t *tp, char *s)
+{
+	struct tm	tm;
+
+	*tp = 0;
+	if (s != NULL) {
+		(void) memset(&tm, 0, sizeof(tm));
+		if (strptime(s, "%c", &tm) != NULL) {
+			*tp = mktime(&tm);
+		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
+			*tp = mktime(&tm);
+		} else if (isdigit((unsigned char) s[0]) != NULL) {
+			*tp = atoi(s);
+		} else {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 /* add a user */
 static int
 adduser(char *login_name, user_t *up)
 {
 	struct group	*grp;
 	struct stat	st;
-	struct tm	tm;
 	time_t		expire;
 	time_t		inactive;
 	char		password[PasswordLength + 1];
@@ -922,49 +985,28 @@ adduser(char *login_name, user_t *up)
 		(void) snprintf(home, sizeof(home), "%s/%s", up->u_basedir,
 		    login_name);
 	}
-	inactive = 0;
-	if (up->u_inactive != NULL) {
-		(void) memset(&tm, 0, sizeof(tm));
-		if (strptime(up->u_inactive, "%c", &tm) != NULL) {
-			inactive = mktime(&tm);
-		} else if (strptime(up->u_inactive, "%B %d %Y", &tm) != NULL) {
-			inactive = mktime(&tm);
-		} else if (isdigit(up->u_inactive[0]) != NULL) {
-			inactive = atoi(up->u_inactive);
-		} else {
-			warnx("Warning: inactive time `%s' invalid, account expiry off",
+	if (!scantime(&inactive, up->u_inactive)) {
+		warnx("Warning: inactive time `%s' invalid, account expiry off",
 				up->u_inactive);
-		}
 	}
-	expire = 0;
-	if (up->u_expire != NULL) {
-		(void) memset(&tm, 0, sizeof(tm));
-		if (strptime(up->u_expire, "%c", &tm) != NULL) {
-			expire = mktime(&tm);
-		} else if (strptime(up->u_expire, "%B %d %Y", &tm) != NULL) {
-			expire = mktime(&tm);
-		} else if (isdigit(up->u_expire[0]) != NULL) {
-			expire = atoi(up->u_expire);
-		} else {
-			warnx("Warning: expire time `%s' invalid, password expiry off",
+	if (!scantime(&expire, up->u_expire)) {
+		warnx("Warning: expire time `%s' invalid, password expiry off",
 				up->u_expire);
-		}
 	}
 	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR)) {
 		warnx("Warning: home directory `%s' doesn't exist, and -m was"
 		    " not specified", home);
 	}
-	if (up->u_password != NULL &&
-	    strlen(up->u_password) <= PasswordLength) {
+	if (up->u_password != NULL && valid_password_length(up->u_password)) {
 		(void) strlcpy(password, up->u_password, sizeof(password));
 	} else {
-		(void) strlcpy(password, "*", sizeof(password));
+		(void) memset(password, '*', DES_Len);
+		password[DES_Len] = 0;
 		if (up->u_password != NULL) {
 			warnx("Password `%s' is invalid: setting it to `%s'",
 				up->u_password, password);
 		}
 	}
-
 	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
 	    login_name,
 	    password,
@@ -1142,7 +1184,6 @@ moduser(char *login_name, char *newlogin, user_t *up)
 {
 	struct passwd	*pwp;
 	struct group	*grp;
-	struct tm	tm;
 	const char	*homedir;
 	char		buf[LINE_MAX];
 	size_t		colonc, len, loginc;
@@ -1204,8 +1245,15 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags & F_PASSWORD) {
-			if (up->u_password != NULL && strlen(up->u_password) <= PasswordLength)
+			if (up->u_password != NULL) {
+				if (!valid_password_length(up->u_password)) {
+					(void) close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "Invalid password: `%s'",
+						up->u_password);
+				}
 				pwp->pw_passwd = up->u_password;
+			}
 		}
 		if (up->u_flags & F_UID) {
 			/* check uid isn't already allocated */
@@ -1237,27 +1285,13 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags & F_INACTIVE) {
-			(void) memset(&tm, 0, sizeof(tm));
-			if (strptime(up->u_inactive, "%c", &tm) != NULL) {
-				pwp->pw_change = mktime(&tm);
-			} else if (strptime(up->u_inactive, "%B %d %Y", &tm) != NULL) { 
-				pwp->pw_change = mktime(&tm);
-			} else if (isdigit(up->u_inactive[0]) != NULL) {
-				pwp->pw_change = atoi(up->u_inactive);
-			} else {
+			if (!scantime(&pwp->pw_change, up->u_inactive)) {
 				warnx("Warning: inactive time `%s' invalid, password expiry off",
 					up->u_inactive);
 			}
 		}
 		if (up->u_flags & F_EXPIRE) {
-			(void) memset(&tm, 0, sizeof(tm));
-			if (strptime(up->u_expire, "%c", &tm) != NULL) {
-				pwp->pw_expire = mktime(&tm);
-			} else if (strptime(up->u_expire, "%B %d %Y", &tm) != NULL) { 
-				pwp->pw_expire = mktime(&tm);
-			} else if (isdigit(up->u_expire[0]) != NULL) {
-				pwp->pw_expire = atoi(up->u_expire);
-			} else {
+			if (!scantime(&pwp->pw_expire, up->u_expire)) {
 				warnx("Warning: expire time `%s' invalid, password expiry off",
 					up->u_expire);
 			}
@@ -1769,7 +1803,8 @@ userdel(int argc, char **argv)
 	if (u.u_preserve) {
 		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
-		(void) strlcpy(password, "*", sizeof(password));
+		(void) memset(password, '*', DES_Len);
+		password[DES_Len] = 0;
 		memsave(&u.u_password, password, PasswordLength);
 		u.u_flags |= F_PASSWORD;
 		openlog("userdel", LOG_PID, LOG_USER);
