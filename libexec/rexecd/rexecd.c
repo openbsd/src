@@ -39,14 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.3 1996/07/22 01:59:20 deraadt Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.4 1996/07/28 06:33:16 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <netinet/in.h>
 #include <signal.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -55,10 +54,25 @@ static char rcsid[] = "$Id: rexecd.c,v 1.3 1996/07/22 01:59:20 deraadt Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <paths.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /*VARARGS1*/
 int error();
+
+char	username[20] = "USER=";
+char	homedir[MAXPATHLEN] = "HOME=";
+char	shell[64] = "SHELL=";
+char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
+char	*envinit[] =
+	    {homedir, shell, path, username, 0};
+char	**environ;
+char	*remote;
+
+struct	sockaddr_in asin = { AF_INET };
 
 /*
  * remote execute server:
@@ -73,26 +87,23 @@ main(argc, argv)
 	char **argv;
 {
 	struct sockaddr_in from;
+	struct hostent *hp;
 	int fromlen;
 
+	openlog(argv[0], LOG_PID, LOG_AUTH);
 	fromlen = sizeof (from);
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		(void)fprintf(stderr,
 		    "rexecd: getpeername: %s\n", strerror(errno));
 		exit(1);
 	}
+
+	hp = gethostbyaddr((char *) &from.sin_addr, sizeof(from.sin_addr),
+	    from.sin_family);
+	remote = strdup(hp ? hp->h_name : inet_ntoa(from.sin_addr));
+
 	doit(0, &from);
 }
-
-char	username[20] = "USER=";
-char	homedir[64] = "HOME=";
-char	shell[64] = "SHELL=";
-char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
-char	*envinit[] =
-	    {homedir, shell, path, username, 0};
-char	**environ;
-
-struct	sockaddr_in asin = { AF_INET };
 
 doit(f, fromp)
 	int f;
@@ -112,10 +123,10 @@ doit(f, fromp)
 	(void) signal(SIGTERM, SIG_DFL);
 #ifdef DEBUG
 	{ int t = open(_PATH_TTY, 2);
-	  if (t >= 0) {
-		ioctl(t, TIOCNOTTY, (char *)0);
-		(void) close(t);
-	  }
+		if (t >= 0) {
+			ioctl(t, TIOCNOTTY, (char *)0);
+			(void) close(t);
+		}
 	}
 #endif
 	dup2(f, 0);
@@ -161,6 +172,9 @@ doit(f, fromp)
 			exit(1);
 		}
 	}
+
+	syslog(LOG_INFO, "login from %s as %s", remote, user);
+
 	setegid(pwd->pw_gid);
 	seteuid(pwd->pw_uid);
 	if (chdir(pwd->pw_dir) < 0) {
@@ -228,6 +242,7 @@ doit(f, fromp)
 		cp++;
 	else
 		cp = pwd->pw_shell;
+	closelog();
 	execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
 	perror(pwd->pw_shell);
 	exit(1);
