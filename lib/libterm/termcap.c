@@ -44,6 +44,7 @@ static char rcsid[] = "$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $";
 #define	PBUFSIZ		512	/* max length of filename path */
 #define	PVECSIZ		32	/* max number of names in path */
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
