@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrs.c,v 1.7 1998/05/18 00:53:42 art Exp $	*/
+/*	$OpenBSD: getaddrs.c,v 1.8 1998/07/07 19:06:50 art Exp $	*/
 /*	$KTH: getaddrs.c,v 1.24 1998/04/26 15:10:44 joda Exp $		*/
 
 /*
@@ -63,10 +63,9 @@ int
 k_get_all_addrs (struct in_addr **l)
 {
      int fd;
-     char *inbuf = NULL;
+     char buf[BUFSIZ];
      struct ifreq ifreq;
      struct ifconf ifconf;
-     int len = 8192;
      int num, j;
      char *p;
      size_t sz;
@@ -76,28 +75,17 @@ k_get_all_addrs (struct in_addr **l)
 
      fd = socket(AF_INET, SOCK_DGRAM, 0);
      if (fd < 0)
-	 return -1;
+         return -1;
 
-     while (1) {
-	 ifconf.ifc_len = len;
-	 ifconf.ifc_buf = inbuf = realloc(inbuf, len);
-	 if (inbuf == NULL)
-	       err(1, "malloc");
-	 if (ioctl(fd, SIOCGIFCONF, &ifconf) < 0) {
-	   close(fd);
-	   free(inbuf);
-	   return -1;
-	 }
-	 if (ifconf.ifc_len + sizeof(ifreq) < len)
-	   break;
-	 len *= 2;
-     }
+     ifconf.ifc_len = sizeof(buf);
+     ifconf.ifc_buf = buf;
+     if(ioctl(fd, SIOCGIFCONF, &ifconf) < 0)
+         return -1;
 
      num = ifconf.ifc_len / sizeof(struct ifreq);
      *l = malloc(num * sizeof(struct in_addr));
      if(*l == NULL) {
 	 close(fd);
-	 free(inbuf);
 	 return -1;
      }
 
@@ -120,14 +108,11 @@ k_get_all_addrs (struct in_addr **l)
 	  }
      }
      if (j != num)
-	if ((*l = realloc (*l, j * sizeof(struct in_addr))) == NULL)
-	{
+	if ((*l = realloc (*l, j * sizeof(struct in_addr))) == NULL) {
 	    close(fd);
-	    free(inbuf);
 	    return -1;
 	}
      
-     free(inbuf);
      close(fd);
      return j;
 }

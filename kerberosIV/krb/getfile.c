@@ -1,4 +1,4 @@
-/*	$OpenBSD: getfile.c,v 1.2 1998/05/18 00:53:43 art Exp $	*/
+/*	$OpenBSD: getfile.c,v 1.3 1998/07/07 19:06:51 art Exp $	*/
 /*	$KTH: getfile.c,v 1.2 1998/04/04 17:56:35 assar Exp $	*/
 
 /*
@@ -41,15 +41,14 @@
 
 #include "krb_locl.h"
 
-int
-krb_get_krbconf(int num, char *buf, size_t len)
+static int
+get_file(const char **files, int num, const char *file, char *buf, size_t len)
 {
-    const char *files[] = KRB_CNF_FILES;
     const char *p, **q;
     int i = 0;
     if(!issetugid() && (p = getenv("KRBCONFDIR"))){
 	if(num == i){
-	    snprintf(buf, len, "%s/krb.conf", p);
+	    snprintf(buf, len, "%s/%s", p, file);
 	    return 0;
 	}
 	i++;
@@ -64,23 +63,23 @@ krb_get_krbconf(int num, char *buf, size_t len)
 }
 
 int
+krb_get_krbconf(int num, char *buf, size_t len)
+{
+    const char *files[] = KRB_CNF_FILES;
+    return get_file(files, num, "krb.conf", buf, len);
+}
+
+int
 krb_get_krbrealms(int num, char *buf, size_t len)
 {
     const char *files[] = KRB_RLM_FILES;
-    const char *p, **q;
-    int i = 0;
-    if(!issetugid() && (p = getenv("KRBCONFDIR"))){
-	if(num == i){
-	    snprintf(buf, len, "%s/krb.realms", p);
-	    return 0;
-	}
-	i++;
-    }
-    for(q = files; *q; q++, i++){
-	if(num == i){
-	    snprintf(buf, len, "%s", *q);
-	    return 0;
-	}
-    }
-    return -1;
+    return get_file(files, num, "krb.realms", buf, len);
+}
+
+int
+krb_get_krbextra(int num, char *buf, size_t len)
+{
+    const char *files[] = { "/etc/kerberosIV/krb.extra", "/etc/krb.extra",
+			    NULL };
+    return get_file(files, num, "krb.extra", buf, len);
 }

@@ -13,6 +13,7 @@ SRCS=	base64.c \
 	decomp_ticket.c \
 	dest_tkt.c \
 	encrypt_ktext.c \
+	extra.c \
 	get_ad_tkt.c \
 	get_cred.c \
 	get_default_principal.c \

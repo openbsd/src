@@ -1,5 +1,5 @@
-/*	$OpenBSD: lsb_addr_comp.c,v 1.3 1997/12/12 05:30:26 art Exp $	*/
-/* $KTH: lsb_addr_comp.c,v 1.9 1997/04/01 08:18:37 joda Exp $ */
+/*	$OpenBSD: lsb_addr_comp.c,v 1.4 1998/07/07 19:06:58 art Exp $	*/
+/*	$KTH: lsb_addr_comp.c,v 1.14 1998/05/26 20:37:32 joda Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -84,23 +84,60 @@ krb_lsb_antinet_ushort_cmp(u_int16_t x, u_int16_t y)
 u_int32_t
 lsb_time(time_t t, struct sockaddr_in *src, struct sockaddr_in *dst)
 {
+    int dir = 1;
+    const char *fw;
+
     /*
      * direction bit is the sign bit of the timestamp.  Ok until
      * 2038??
      */
+    if(krb_debug) {
+	krb_warning("lsb_time: src = %s:%u\n", 
+		    inet_ntoa(src->sin_addr), ntohs(src->sin_port));
+	krb_warning("lsb_time: dst = %s:%u\n", 
+		    inet_ntoa(dst->sin_addr), ntohs(dst->sin_port));
+    }
+
     /* For compatibility with broken old code, compares are done in VAX 
        byte order (LSBFIRST) */ 
     if (krb_lsb_antinet_ulong_less(src->sin_addr.s_addr, /* src < recv */ 
 				   dst->sin_addr.s_addr) < 0) 
-        t = -t;
+        dir = -1;
     else if (krb_lsb_antinet_ulong_less(src->sin_addr.s_addr, 
 					dst->sin_addr.s_addr)==0) 
         if (krb_lsb_antinet_ushort_less(src->sin_port, dst->sin_port) < 0)
-            t = -t;
+            dir = -1;
     /*
      * all that for one tiny bit!  Heaven help those that talk to
      * themselves.
      */
+    if(krb_get_config_bool("reverse_lsb_test")) {
+	if(krb_debug) 
+	    krb_warning("lsb_time: reversing direction: %d -> %d\n", dir, -dir);
+	dir = -dir;
+    }else if((fw = krb_get_config_string("firewall_address"))) {
+	struct in_addr fw_addr;
+	fw_addr.s_addr = inet_addr(fw);
+	if(fw_addr.s_addr != INADDR_NONE) {
+	    int a, b, c;
+	    krb_warning("lsb_time: fw = %s\n", inet_ntoa(fw_addr));
+	    /* negate if src < dst and firewall is outside the
+	       [src,dst] interval */
+	    a = (krb_lsb_antinet_ulong_less(src->sin_addr.s_addr,
+					    dst->sin_addr.s_addr) == -1);
+	    b = (krb_lsb_antinet_ulong_less(src->sin_addr.s_addr,
+					    fw_addr.s_addr) == 1);
+	    c = (krb_lsb_antinet_ulong_less(fw_addr.s_addr,
+					    dst->sin_addr.s_addr) == 1);
+	    if(a && (b || c)) {
+		if(krb_debug) 
+		    krb_warning("lsb_time: reversing direction: %d -> %d\n", 
+				dir, -dir);
+		dir = -dir;
+	    }
+	}
+    }
+    t = t * dir;
     t = t & 0xffffffff;
     return t;
 }

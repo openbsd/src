@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_in_tkt.c,v 1.9 1998/02/25 15:51:09 art Exp $	*/
+/*	$OpenBSD: get_in_tkt.c,v 1.10 1998/07/07 19:06:49 art Exp $	*/
 /* $KTH: get_in_tkt.c,v 1.19 1997/10/03 21:51:42 joda Exp $ */ 
 
 /*
@@ -160,4 +160,3 @@ krb_get_pw_in_tkt(char *user, char *instance, char *realm, char *service,
     return krb_get_pw_in_tkt2(user, instance, realm, 
 			      service, sinstance, life, password, NULL);
 }
-

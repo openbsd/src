@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_get_in_tkt.c,v 1.5 1998/05/18 00:53:48 art Exp $	*/
+/*	$OpenBSD: krb_get_in_tkt.c,v 1.6 1998/07/07 19:06:57 art Exp $	*/
 /*	$KTH: krb_get_in_tkt.c,v 1.25 1998/05/01 05:18:08 joda Exp $	*/
 
 /*
@@ -167,8 +167,7 @@ krb_decode_as_rep(char *user, char *instance, char *realm,
 	return INTK_ERR;	/* we need a better code here XXX */
 
     now = time(NULL);
-    if(getenv("KDC_TIMESYNC") && *getenv("KDC_TIMESYNC")) /* should it
-							     work like this? */
+    if(krb_get_config_bool("kdc_timesync"))
 	krb_set_kdc_time_diff(cred->issue_date - now);
     else if (abs((int)(now - cred->issue_date)) > CLOCK_SKEW)
 	return RD_AP_TIME; /* XXX should probably be better code */

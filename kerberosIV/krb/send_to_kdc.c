@@ -1,4 +1,4 @@
-/*	$OpenBSD: send_to_kdc.c,v 1.11 1998/05/18 00:53:58 art Exp $	*/
+/*	$OpenBSD: send_to_kdc.c,v 1.12 1998/07/07 19:07:01 art Exp $	*/
 /*	$KTH: send_to_kdc.c,v 1.54 1998/02/17 23:55:35 bg Exp $		*/
 
 /*
@@ -281,7 +281,7 @@ static int url_parse(const char *url, char *host, size_t len, short *port)
 
 static int http_connect(int s, struct sockaddr_in *adr)
 {
-    char *proxy = getenv(PROXY_VAR);
+    const char *proxy = krb_get_config_string(PROXY_VAR);
     char host[MAXHOSTNAMELEN];
     short port;
     struct hostent *hp;
@@ -323,7 +323,7 @@ static int http_send(int s, struct sockaddr_in* adr, KTEXT pkt)
     if(base64_encode(pkt->dat, pkt->length, &str) < 0)
 	return -1;
 
-    if(getenv(PROXY_VAR)){
+    if(krb_get_config_string(PROXY_VAR)){
 	if(krb_debug) {
 	    krb_warning("sending %d bytes to %s, tcp port %d (via proxy)\n", 
 			pkt->length,

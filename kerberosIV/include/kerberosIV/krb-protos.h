@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb-protos.h,v 1.3 1998/05/18 02:12:45 art Exp $	*/
+/*	$OpenBSD: krb-protos.h,v 1.4 1998/07/07 19:07:53 art Exp $	*/
 /*	$KTH: 	krb-protos.h,v 1.7 1998/04/04 17:56:36 assar Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 
 #include <stdarg.h>
 #include <time.h>
+#include <sys/time.h>
 
 #ifdef __GNUC__
 struct in_addr;
@@ -197,6 +198,9 @@ krb_decode_as_rep __P((
 	CREDENTIALS *cred));
 
 int
+krb_enable_debug __P((void));
+
+int
 krb_equiv __P((
 	u_int32_t a,
 	u_int32_t b));
@@ -213,16 +217,10 @@ krb_get_admhst __P((
 	int nth));
 
 int
-krb_get_krbconf __P((
-	int num,
-	char *buf,
-	size_t len));
+krb_get_config_bool __P((const char *variable));
 
-int
-krb_get_krbrealms __P((
-	int num,
-	char *buf,
-	size_t len));
+const char *
+krb_get_config_string __P((const char *variable));
 
 int
 krb_get_cred __P((
@@ -269,10 +267,31 @@ krb_get_int __P((
 	int lsb));
 
 int
+krb_get_kdc_time_diff __P((void));
+
+int
+krb_get_krbconf __P((
+	int num,
+	char *buf,
+	size_t len));
+
+int
+krb_get_krbextra __P((
+	int num,
+	char *buf,
+	size_t len));
+
+int
 krb_get_krbhst __P((
 	char *host,
 	char *realm,
 	int nth));
+
+int
+krb_get_krbrealms __P((
+	int num,
+	char *buf,
+	size_t len));
 
 int
 krb_get_lrealm __P((
@@ -336,6 +355,9 @@ int
 krb_get_tf_realm __P((
 	char *ticket_file,
 	char *realm));
+
+void
+krb_kdctimeofday __P((struct timeval *tv));
 
 int
 krb_kntoln __P((
@@ -534,6 +556,9 @@ krb_sendauth __P((
         struct sockaddr_in *faddr,
         char *version));
 
+void
+krb_set_kdc_time_diff __P((int diff));
+
 int
 krb_set_key __P((
 	void *key,
@@ -578,6 +603,15 @@ int
 krb_use_admin_server __P((int flag));
 
 int
+krb_verify_user __P((
+	char *name,
+	char *instance,
+	char *realm,
+	char *password,
+	int secure,
+	char *linstance));
+
+int
 krb_verify_user_srvtab __P((
 	char *name,
 	char *instance,
@@ -586,15 +620,6 @@ krb_verify_user_srvtab __P((
 	int secure,
 	char *linstance,
 	char *srvtab));
-
-int
-krb_verify_user __P((
-	char *name,
-	char *instance,
-	char *realm,
-	char *password,
-	int secure,
-	char *linstance));
 
 int
 kuserok __P((

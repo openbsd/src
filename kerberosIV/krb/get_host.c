@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_host.c,v 1.8 1998/05/18 00:53:39 art Exp $	*/
+/*	$OpenBSD: get_host.c,v 1.9 1998/07/07 19:06:47 art Exp $	*/
 /*	$KTH: get_host.c,v 1.37 1998/01/17 00:05:47 joda Exp $		*/
 
 /*
@@ -145,12 +145,19 @@ add_host(char *realm, char *address, int admin, int validate)
 	return 1;
     if(parse_address(address, &host->proto, &host->host, &host->port) < 0)
 	return 1;
-    if(validate && gethostbyname(host->host) == NULL){
-	free(host->host);
-	host->host = NULL;
-	free(host);
-	host = NULL;
-	return 1;
+    if (validate) {
+        if (krb_dns_debug)
+	    krb_warning("Getting host entry for %s...", host->host);
+	if(gethostbyname(host->host) == NULL) {
+	    if (krb_dns_debug)
+	        krb_warning("Didn't get it.\n");
+	    free(host->host);
+	    host->host = NULL;
+	    free(host);
+	    host = NULL;
+	    return 1;
+	} else if (krb_dns_debug)
+	    krb_warning("Got it.\n");
     }
     host->admin = admin;
     for(p = hosts; p; p = p->next){
@@ -188,7 +195,7 @@ add_host(char *realm, char *address, int admin, int validate)
     p->next = NULL;
     *last = p;
     return 0;
-}
+    }
 
 
 static int

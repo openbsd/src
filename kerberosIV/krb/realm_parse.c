@@ -1,4 +1,4 @@
-/*	$OpenBSD: realm_parse.c,v 1.4 1998/05/18 00:53:56 art Exp $	*/
+/*	$OpenBSD: realm_parse.c,v 1.5 1998/07/07 19:07:00 art Exp $	*/
 /*	$KTH: realm_parse.c,v 1.14 1997/12/15 17:19:13 assar Exp $	*/
 
 /*
@@ -56,8 +56,6 @@ realm_parse(char *realm, int length, const char *file)
 	p = strtok_r(tr, " \t\n\r", &unused);
 	if(p && strcasecmp(p, realm) == 0){
 	    fclose(F);
-	    if (realm == NULL)
-	      return -1;
 	    strncpy(realm, p, length);
 	    realm[length - 1] = '\0';
 	    return 0;

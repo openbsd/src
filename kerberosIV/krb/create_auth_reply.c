@@ -1,4 +1,4 @@
-/*	$OpenBSD: create_auth_reply.c,v 1.3 1997/12/09 07:57:11 art Exp $	*/
+/*	$OpenBSD: create_auth_reply.c,v 1.4 1998/07/07 19:06:44 art Exp $	*/
 /* $KTH: create_auth_reply.c,v 1.11 1997/04/01 08:18:20 joda Exp $ */
 
 /*
@@ -100,16 +100,11 @@ create_auth_reply(char *pname,	/* Principal's name */
     
     unsigned char *p = pkt->dat;
 
+    if(n != 0)
+	return NULL;
+
     p += krb_put_int(KRB_PROT_VERSION, p, 1);
     p += krb_put_int(AUTH_MSG_KDC_REPLY, p, 1);
-
-    if(n != 0){
-	/* barf on old code */
-	krb_warning("create_auth_reply: don't give me no krb3 crap!"
-		    " (n == %d)\n", n);
-	return NULL;
-    }
-
 
     p += krb_put_nir(pname, pinst, prealm, p);
 
