@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.8 2001/08/19 16:30:43 pjanzen Exp $	*/
+/*	$OpenBSD: primes.c,v 1.9 2001/08/19 22:50:57 pjanzen Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.8 2001/08/19 16:30:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.9 2001/08/19 22:50:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,9 +74,9 @@ static char rcsid[] = "$OpenBSD: primes.c,v 1.8 2001/08/19 16:30:43 pjanzen Exp 
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
-#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "primes.h"
@@ -237,6 +237,7 @@ primes(start, stop)
 	char *tab_lim;		/* the limit to sieve on the table */
 	const ubig *p;		/* prime table pointer */
 	ubig fact_lim;		/* highest prime for current block */
+	ubig mod;
 
 	/*
 	 * A number of systems can not convert double values into unsigned
@@ -317,13 +318,12 @@ primes(start, stop)
 		p = &prime[7];	/* 19 is next prime, pi(19)=7 */
 		do {
 			/* determine the factor's initial sieve point */
-			q = (char *)(start%factor); /* temp storage for mod */
-			if ((long)q & 0x1) {
-				q = &table[(factor-(long)q)/2];
-			} else {
-				q = &table[q ? factor-((long)q/2) : 0];
-			}
-			/* sive for our current factor */
+			mod = start % factor;
+			if (mod & 0x1)
+				q = &table[(factor - mod)/2];
+			else
+				q = &table[mod ? factor-(mod/2) : 0];
+			/* sieve for our current factor */
 			for ( ; q < tab_lim; q += factor) {
 				*q = '\0'; /* sieve out a spot */
 			}
