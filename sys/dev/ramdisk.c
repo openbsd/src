@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.8 1998/10/03 21:19:00 millert Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.9 1999/02/26 01:44:33 art Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -61,8 +61,13 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#else
 /* Don't want all those other VM headers... */
 extern vm_offset_t	 kmem_alloc __P((vm_map_t, vm_size_t));
+#endif
 
 #include <dev/ramdisk.h>
 
@@ -544,7 +549,11 @@ rd_ioctl_kalloc(sc, urd, proc)
 
 	/* Sanity check the size. */
 	size = urd->rd_size;
+#if defined(UVM)
+	addr = uvm_km_zalloc(kernel_map, size);
+#else
 	addr = kmem_alloc(kernel_map, size);
+#endif
 	if (!addr)
 		return ENOMEM;
 
