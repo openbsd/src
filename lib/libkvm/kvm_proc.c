@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.24 2004/06/15 03:52:59 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.25 2004/06/24 18:19:25 millert Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.24 2004/06/15 03:52:59 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.25 2004/06/24 18:19:25 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -909,7 +909,7 @@ kvm_arg_sysctl(kvm_t *kd, pid_t pid, int nchr, int env)
 	int mib[4], ret;
 	char *buf;
 
-	orglen = kd->nbpg;
+	orglen = env ? kd->nbpg : 8 * kd->nbpg;	/* XXX - should be ARG_MAX */
 	if (kd->argbuf == NULL &&
 	    (kd->argbuf = _kvm_malloc(kd, orglen)) == NULL)
 		return (NULL);
@@ -922,8 +922,8 @@ again:
 
 	len = orglen;
 	ret = (sysctl(mib, 4, kd->argbuf, &len, NULL, 0) < 0);
-	if (ret && errno == ENOMEM) {
-		orglen += kd->nbpg;
+	if (ret && errno == ENOMEM && env) {
+		orglen *= 2;
 		buf = _kvm_realloc(kd, kd->argbuf, orglen);
 		if (buf == NULL)
 			return (NULL);
