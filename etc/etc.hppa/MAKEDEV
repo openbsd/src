@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.14 2003/06/18 18:08:59 todd Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.15 2003/08/07 09:19:14 mickey Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.60 2003/06/18 18:08:59 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
 #
@@ -242,7 +242,7 @@ ch*)
 	;;
 
 xfs*)
-	M xfs$U c 31 $U 600
+	M xfs$U c 32 $U 600
 	;;
 
 *random)
