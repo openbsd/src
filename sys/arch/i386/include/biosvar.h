@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.36 2000/08/17 20:15:39 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.37 2000/08/17 22:08:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -236,7 +236,6 @@ int  bios32_service __P((u_int32_t, bios32_entry_t, bios32_entry_info_t));
 
 extern u_int bootapiver;
 extern bios_memmap_t *bios_memmap;
-extern bios_pciinfo_t *bios_pciinfo;
 
 #endif /* _KERNEL */
 #endif /* _LOCORE */
