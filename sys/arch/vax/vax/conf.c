@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2000/04/27 01:10:11 bjc Exp $ */
+/*	$OpenBSD: conf.c,v 1.19 2000/06/01 00:02:11 bjc Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -75,6 +75,7 @@ bdev_decl(mu);
 #define NCTU	0
 #endif
 bdev_decl(ctu);
+#include "rd.h"
 
 #include "ra.h"
 bdev_decl(ra);
@@ -151,7 +152,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 20: SCSI disk */
 	bdev_tape_init(NST,st),		/* 21: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 22: SCSI CD-ROM */
-	bdev_notdef(),		/* 23: was: memory disk driver */
+	bdev_disk_init(NRD,rd),		/* 23: ram disk driver */
 	bdev_disk_init(NRY,ry),		/* 24: VS3100 floppy */
 	bdev_disk_init(NRAID,raid),	/* 25: RAIDframe disk driver */
 };
@@ -323,6 +324,8 @@ cdev_decl(ry);
 cdev_decl(sd);
 cdev_decl(st);
 
+cdev_decl(rd);
+
 #include "ct.h"
 cdev_decl(ct);
 #include "dh.h"
@@ -421,6 +424,8 @@ cdev_decl(ss);
 #include "uk.h"
 cdev_decl(uk);
 
+bdev_decl(rd);
+
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
@@ -495,7 +500,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 59: SCSI disk */
 	cdev_tape_init(NST,st),		/* 60: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 61: SCSI CD-ROM */
-	cdev_notdef(),				/* 62: was: memory disk driver */
+	cdev_disk_init(NRD,rd),		/* 62: memory disk driver */
 	cdev_ch_init(NCH,ch),		/* 63: SCSI autochanger */
 	cdev_scanner_init(NSS,ss),	/* 64: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
