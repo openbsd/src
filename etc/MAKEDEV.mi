@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.21 2002/01/23 07:45:44 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -106,10 +106,10 @@ twrget(all,attyB,sd,5,6,7,8,9)dnl
 target(all,sd,0,1,2,3,4)dnl
 target(all,mcd,0)dnl
 twrget(all,fdesc,fd)dnl
-target(all,pty,0)dnl
-target(all,st,0)dnl
+target(all,pty,0,1)dnl
+target(all,st,0,1)dnl
 target(all,ch,0)dnl
-target(all,cd,0)dnl
+target(all,cd,0,1)dnl
 target(all,mcd,0)dnl
 target(all,std)dnl
 target(all,vnd,0,1,2,3)dnl
@@ -159,7 +159,7 @@ target(all,joy,0,1)dnl
 target(all,rnd,random)dnl
 target(all,ses,0)dnl
 target(all,uk,0)dnl
-target(all,ss,0)dnl
+target(all,ss,0,1)dnl
 target(all,st,0)dnl
 target(all,wt,0)dnl
 target(all,wdt,0)dnl
