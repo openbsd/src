@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdarg.3,v 1.10 2002/10/24 19:32:24 millert Exp $
+.\"	$OpenBSD: stdarg.3,v 1.11 2002/11/17 22:19:43 millert Exp $
 .\"	$NetBSD: stdarg.3,v 1.15 2002/08/18 08:57:07 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -132,10 +132,10 @@ is not compatible with the type of the actual next argument
 (as promoted according to the default argument promotions, see below),
 random errors will occur.
 .Pp
-If the type in question is one that gets promoted, the promoted type
-should be used as the argument to
+If the type in question is one that would normally be promoted, the
+promoted type should be used as the argument to
 .Fn va_arg .
-The following describes which types are promoted (and to what):
+The following describes which types should be promoted (and to what):
 .Bl -dash -compact
 .It
 .Va short
@@ -150,6 +150,11 @@ is promoted to
 is promoted to
 .Va int
 .El
+.Pp
+The same rules apply to unsigned versions of the above types, as well
+as their bit-type equivalents (e.g.
+.Dv int8_t and
+.Dv int16_t ) .
 .Pp
 The first use of the
 .Fn va_arg
