@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180.2.1 1995/10/15 22:11:38 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 1995/12/14 18:31:20 ghudson Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -694,6 +694,7 @@ boot(howto)
 	}
 	splhigh();
 	if (howto & RB_HALT) {
+		doshutdownhooks();
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -704,8 +705,8 @@ boot(howto)
 			dumppcb.pcb_cr3 = rcr3();
 			dumpsys();
 		}
+		doshutdownhooks();
 	}
-	doshutdownhooks();
 	printf("rebooting...\n");
 	cpu_reset();
 	for(;;) ;
