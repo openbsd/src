@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.39 2005/02/03 23:00:42 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.40 2005/02/25 20:30:36 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -387,7 +387,10 @@ main(int argc, char **argv)
 	/* setup signal handlers */
 	signal(SIGPIPE, SIG_IGN);
 
-	cvs_file_init();
+	if (cvs_file_init() < 0) {
+		cvs_log(LP_ERR, "failed to initialize file support");
+		exit(1);
+	}
 
 	ret = -1;
 
