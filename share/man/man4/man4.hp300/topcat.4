@@ -1,4 +1,4 @@
-.\"	$OpenBSD: topcat.4,v 1.8 2005/01/08 19:46:51 miod Exp $
+.\"	$OpenBSD: topcat.4,v 1.9 2005/01/11 22:34:13 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,18 +33,15 @@
 .\"
 .\"     from: @(#)tc.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 16, 2003
+.Dd January 11, 2005
 .Dt TOPCAT 4 hp300
 .Os
 .Sh NAME
 .Nm topcat
 .Nd
-.Tn HP98544
 Topcat,
-.Tn HP98550A
 Catseye
 and
-.Tn A1416A
 Kathmandu
 frame buffers
 .Sh SYNOPSIS
@@ -53,23 +50,16 @@ frame buffers
 .Cd "grf*    at topcat?"
 .Sh DESCRIPTION
 The
-.Tn HP98544 ,
-.Tn HP98545A
-and
-.Tn HP98547A
-Topcat,
+HP98543, HP98544, HP98545A and HP98547A Topcat,
 as well as the
-.Tn HP98548A ,
-.Tn HP98549A
-and
-.Tn HP98550A
-Catseye
+HP98548A, HP98549A and HP98550A Catseye
 and the
-.Tn A1416A
-Kathmandu
+A1416A Kathmandu
 are accelerated frame buffers, with the following resolution and color depth:
 .Pp
 .Bl -tag -width A1416A -offset indent -compact
+.It 98543
+512x400 4-bit color Topcat
 .It 98544
 1024x768 monochrome Topcat
 .It 98545A
