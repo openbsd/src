@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.17 2003/01/09 15:58:35 dhartmei Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.18 2003/01/10 13:21:35 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -73,7 +73,10 @@
 #define	AF_BITS(af)		(((af)==AF_INET)?32:128)
 #define	ADDR_NETWORK(ad)	((ad)->pfra_net < AF_BITS((ad)->pfra_af))
 #define	KENTRY_NETWORK(ke)	((ke)->pfrke_net < AF_BITS((ke)->pfrke_af))
+
 #define NO_ADDRESSES		(-1)
+#define ENQUEUE_UNMARKED_ONLY	(1)
+#define INVERT_NEG_FLAG		(1)
 
 struct pfr_walktree {
 	enum pfrw_op {
@@ -378,7 +381,7 @@ _skip:
 			if (copyout(&ad, addr+i, sizeof(ad)))
 				senderr(EFAULT);
 	}
-	pfr_enqueue_addrs(kt, &delq, &xdel, 1);
+	pfr_enqueue_addrs(kt, &delq, &xdel, ENQUEUE_UNMARKED_ONLY);
 	if ((flags & PFR_FLAG_FEEDBACK) && *size2) {
 		if (*size2 < size+xdel) {
 			*size2 = size+xdel;
@@ -398,7 +401,7 @@ _skip:
 			s = splsoftnet();
 		pfr_insert_kentries(kt, &addq, tzero);
 		pfr_remove_kentries(kt, &delq);
-		pfr_clstats_kentries(&changeq, tzero, 1);
+		pfr_clstats_kentries(&changeq, tzero, INVERT_NEG_FLAG);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	}
@@ -1350,10 +1353,10 @@ pfr_commit_ktable(struct pfr_ktable *kt, long tzero)
 				SLIST_INSERT_HEAD(&addq, p, pfrke_workq);
 			}
 		}
-		pfr_enqueue_addrs(kt, &delq, NULL, 1);
+		pfr_enqueue_addrs(kt, &delq, NULL, ENQUEUE_UNMARKED_ONLY);
 		pfr_insert_kentries(kt, &addq, tzero);
 		pfr_remove_kentries(kt, &delq);
-		pfr_clstats_kentries(&changeq, tzero, 1);
+		pfr_clstats_kentries(&changeq, tzero, INVERT_NEG_FLAG);
 		pfr_destroy_kentries(&garbageq);
 	} else {
 		/* kt cannot contain addresses */
