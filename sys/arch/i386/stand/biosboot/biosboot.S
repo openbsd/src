@@ -1,18 +1,18 @@
-/*	$OpenBSD: biosboot.S,v 1.9 1997/05/29 04:31:48 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.10 1997/07/28 23:02:17 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
 #include <machine/asm.h>
-#include <machine/specialreg.h>
-#define _LOCORE
-#include <machine/segments.h>
-#undef _LOCORE
+#include <assym.h>
 
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
-/* Better use 32, 48 does not seem to compile */
-#define	BLKCNT	20	/* Max without colliding with the partition table */
+#ifdef	DEBUG
+#define	BLKCNT	12	/* Max without colliding with the partition table */
+#else
+#define	BLKCNT	16
+#endif
 
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
@@ -27,8 +27,8 @@ OPENBSDPART=	0xA6	# OpenBSD partition type
 #ifdef DEBUG
 #define DBGMSG(msg)		\
 	movb    $msg, %al;	\
-	data32;			\
-	call    chr
+	.byte	0xe8;		\
+	.word	Lchr
 #define GO_RELOC	'R'	/* running relocated code */
 #define REAL2PROT	'P'	/* switch to protected mode */
 #else /* !DEBUG */
@@ -39,7 +39,37 @@ OPENBSDPART=	0xA6	# OpenBSD partition type
 
 	.globl	start
 start:
-	/* set up stack (%ss:%esp) */
+	jmp	1f
+
+	. = start + 3
+	.asciz	"OpenBSD"
+	/* BPB */
+	. = start + 0x0b
+bpb:	.word	DEV_BSIZE	/* sector size */
+	.byte	1		/* sectors/cluster */
+	.word	0		/* reserved sectors */
+	.byte	0		/* # of FAT */
+	.word	0		/* root entries */
+	.word	0		/* small sectors */
+	.byte	0xf8		/* media type (hd) */
+	.word	0		/* sectors/fat */
+	.word	0		/* sectors per track */
+	.word	0		/* # of heads */
+
+	/* EBPB */
+	. = start + 0x1c
+ebpb:	.long	16		/* hidden sectors */
+	.long	0		/* large sectors */
+	.word	0		/* physical disk */
+	.byte	0x29		/* signature, needed by NT */
+	.space	4, 0		/* volume serial number */
+	.asciz	"NO LABEL  "
+	.asciz	"UFS 4.4"
+
+	/* boot code */
+	. = start + 0x3e
+
+1:	/* set up stack (%ss:%esp) */
 	cli			/* disable interrupts w/o stack */
 	# movw	$BOOTREL, %ax
 	.byte	0xb8
@@ -94,8 +124,9 @@ start:
 
 	data32
 	movl	$1b, %esi
-	data32
-	call	message
+	# call	Lmessage
+	.byte	0xe8
+	.word	Lmessage - .
 
 	data32
 	xorl	%ebx, %ebx		/* put it at %es:0 */
@@ -127,8 +158,9 @@ start:
 
 3:	/* read next block */
 	movb	$'.', %al
-	data32
-	call	chr		/* show progress indicator */
+	# call	Lchr		/* show progress indicator */
+	.byte	0xe8
+	.word	Lchr
 
 	popl	%ax
 	movzbl	%al, %ax
@@ -139,8 +171,9 @@ start:
 
 	data32
 	movl    $2f, %esi	/* new line */
-	data32
-	call	message
+	# call	Lmessage
+	.byte	0xe8
+	.word	Lmessage - .
 
 	xorl	%si, %si
 	cld
@@ -154,8 +187,9 @@ start:
 	data32
 	movl	$1f, %esi
 halt:
-	data32
-	call	message
+	# call	Lmessage
+	.byte	0xe8
+	.word	Lmessage - .
 	cli
 	hlt
 1:	.ascii	"Bad magic"
@@ -217,9 +251,9 @@ halt:
 	/* not reached */
 
 #
-#	chr: write the character in %al to console
+#	Lchr: write the character in %al to console
 #
-chr:
+Lchr:
 	data32
 	pushl	%eax
 
@@ -250,7 +284,7 @@ chr:
 /*
  * Display string
  */
-message:
+Lmessage:
 	data32
 	pushl	%eax
 	cld
@@ -258,8 +292,9 @@ message:
 	lodsb			# load a byte into %al
 	testb	%al, %al
 	jz	1f
-	data32
-	call	chr
+	# call	Lchr
+	.byte	0xe8
+	.word	Lchr - .
 	jmp	1b
 1:
 	data32
@@ -298,7 +333,7 @@ _block_count:
 	.byte	BLKCNT	/* entries in _block_table */
 
 	. = 0x1b8
-	.space	4, 0	/* NT registry offset from James C. Cortilier III */
+	.space	4, 0	/* (MBR) NT registry offset from James C. Cortilier III */
 	. = 446
 	.globl	_partitions
 	/* throw in a partition in case we are block0 as well */
