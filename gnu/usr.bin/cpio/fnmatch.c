@@ -16,7 +16,7 @@ not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 #include <errno.h>
@@ -35,7 +35,7 @@ Cambridge, MA 02139, USA.  */
 #if defined (_LIBC) || !defined (__GNU_LIBRARY__)
 
 
-#if !defined(__GNU_LIBRARY__) && !defined(STDC_HEADERS)
+#ifndef errno
 extern int errno;
 #endif
 

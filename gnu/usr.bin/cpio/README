@@ -2,6 +2,21 @@ This is GNU cpio, a program to manage archives of files.
 As of version 2.0, it supports the features of the System V release 4
 cpio, including support for tar archives.
 
+This package also includes rmt, the remote tape server, and mt, a tape
+drive control program; these two programs will only be compiled if
+your system supports remote command execution, and tape drive control
+operations, respectively.
+
+See the file INSTALL for compilation and installation instructions for Unix.
+
+For non-Unix systems:
+
+makefile.pc is a makefile for Turbo C or C++ or Borland C++ on MS-DOS.
+
+makefile.os2 is a makefile for MS C and GNU C (emx/gcc) on OS/2.
+cpio.def is a linker definition file for the MS C OS/2 version.
+
+
 The main advantages of GNU cpio over Unix versions are:
 
 * It can access tape drives on other hosts using TCP/IP.

@@ -19,24 +19,33 @@ Cambridge, MA 02139, USA.  */
 
 #define	_FNMATCH_H	1
 
+#if defined(HAVE_SYS_CDEFS_H)
+#include <sys/cdefs.h>
+#endif
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
+#if !defined(HAVE_SYS_CDEFS_H)
 #if defined (__cplusplus) || (defined (__STDC__) && __STDC__)
-#if !(defined(_NetBSD__)  || defined(__OpenBSD__))
 #undef	__P
-#define	__P(args)	args
-#else
-#include <sys/cdefs.h>
-#endif
+#define	__P(protos)	protos
 #else /* Not C++ or ANSI C.  */
 #undef	__P
-#define	__P(args)	()
+#define	__P(protos)	()
 /* We can get away without defining `const' here only because in this file
    it is used only inside the prototype for `fnmatch', which is elided in
    non-ANSI C where `const' is problematical.  */
 #endif /* C++ or ANSI C.  */
+#endif
+
+
+/* We #undef these before defining them because some losing systems
+   (HP-UX A.08.07 for example) define these in <unistd.h>.  */
+#undef	FNM_PATHNAME
+#undef	FNM_NOESCAPE
+#undef	FNM_PERIOD
 
 /* Bits set in the FLAGS argument to `fnmatch'.  */
 #define	FNM_PATHNAME	(1 << 0) /* No wildcard can ever match `/'.  */

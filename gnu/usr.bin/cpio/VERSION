@@ -1,2 +1,0 @@
-/* The version number of cpio and mt. -- this is the same as "version.c"  */
-char *version_string = "version 2.3\n";
