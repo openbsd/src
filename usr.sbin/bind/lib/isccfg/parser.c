@@ -755,7 +755,7 @@ static cfg_type_t cfg_type_forwardtype = {
 };
 
 static const char *zonetype_enums[] = {
-	"master", "slave", "stub", "hint", "forward", NULL };
+	"master", "slave", "stub", "hint", "forward", "delegation-only", NULL };
 static cfg_type_t cfg_type_zonetype = {
 	"zonetype", parse_enum, print_ustring, &cfg_rep_string,
 	&zonetype_enums
@@ -955,6 +955,7 @@ zone_only_clauses[] = {
 	  CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_OBSOLETE },
 	{ "update-policy", &cfg_type_updatepolicy, 0 },
 	{ "database", &cfg_type_astring, 0 },
+	{ "delegation-only", &cfg_type_boolean, 0 },
 	/*
 	 * Note that the format of the check-names option is different between
 	 * the zone options and the global/view options.  Ugh.

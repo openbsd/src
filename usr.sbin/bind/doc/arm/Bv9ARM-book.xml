@@ -2706,6 +2706,13 @@ in remote servers, discovered by BIND 9 when trying to query
 those servers during resolution.
 </para></entry>
 </row>
+<row rowsep = "0">
+<entry colname = "1"><para><command>delegation-only</command></para></entry>
+<entry colname = "2"><para>Delegation only.  Logs queries that have have
+been forced to NXDOMAIN as the result of a delegation-only zone or
+a <command>delegation-only</command> in a hint or stub zone declartation.
+</para></entry>
+</row>
 </tbody>
 </tgroup></informaltable>
 </sect3>
@@ -4217,7 +4224,7 @@ view "external" {
 <sect2 id="zone_statement_grammar"><title><command>zone</command>
 Statement Grammar</title>
       <programlisting>zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> <optional>{ 
-    type ( master | slave | hint | stub | forward ) ;
+    type ( master | slave | hint | stub | forward | delegation-only ) ;
     <optional> allow-notify { <replaceable>address_match_list</replaceable> } ; </optional>
     <optional> allow-query { <replaceable>address_match_list</replaceable> } ; </optional>
     <optional> allow-transfer { <replaceable>address_match_list</replaceable> } ; </optional>
@@ -4227,6 +4234,7 @@ Statement Grammar</title>
     <optional> also-notify { <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
     <optional> check-names (<constant>warn</constant>|<constant>fail</constant>|<constant>ignore</constant>) ; </optional>
     <optional> dialup <replaceable>dialup_option</replaceable> ; </optional>
+    <optional> delegation-only <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> file <replaceable>string</replaceable> ; </optional>
     <optional> forward (<constant>only</constant>|<constant>first</constant>) ; </optional>
     <optional> forwarders { <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
@@ -4349,6 +4357,16 @@ list of root nameservers. If no hint zone is specified for class
 IN, the server uses a compiled-in default set of root servers hints.
 Classes other than IN have no built-in defaults hints.</para></entry>
 </row>
+<row rowsep = "0">
+<entry colname = "1"><para><varname>delegation-only</varname></para></entry>
+<entry colname = "2"><para>This is used to enforce the delegation only
+status of infrastructure zones (e.g. COM, NET, ORG).  Any answer that
+is received without a explicit or implict delegation in the authority
+section will be treated as NXDOMAIN.  This does not apply to the zone
+apex.  This SHOULD NOT be applied to leaf zones.</para>
+<para><varname>delegation-only</varname> has no effect on answers received
+from forwarders.</para></entry>
+</row>
 </tbody>
 </tgroup></informaltable></sect3>
 
@@ -4452,6 +4470,13 @@ with the distribution but none are linked in by default.</para>
 <varlistentry><term><command>dialup</command></term>
 <listitem><para>See the description of
 <command>dialup</command> in <xref linkend="boolean_options"/>.</para>
+</listitem></varlistentry>
+
+<varlistentry><term><command>delegation-only</command></term>
+<listitem><para>The flag only applies to hint and stub zones.  If set
+to <userinput>yes</userinput> then the zone will also be treated as if it
+is also a delegation-only type zone.
+</para>
 </listitem></varlistentry>
 
 <varlistentry><term><command>forward</command></term>

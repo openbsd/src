@@ -1,4 +1,29 @@
 
+	--- 9.2.2-P3 released ---
+
+1512.	[bug]		Extend the delegation-only logging to return query
+			type, class and responding nameserver.
+
+1511.	[bug]		delegation-only was generating false positives
+			on negative answers from subzones.
+
+	--- 9.2.2-P2 released ---
+
+1509.	[bug]		Hint zones should accept delegation-only.  Forward
+			zone should not accept delegation-only.
+
+1508.	[bug]		Don't apply delegation-only checks to answers from
+			forwarders.
+
+1507.	[bug]		Handle BIND 8 style returns to NS queries to parents
+			when making delegation-only checks.
+
+1506.	[bug]		Wrong return type for dns_view_isdelegationonly().
+
+	--- 9.2.2-P1 released ---
+
+1504.	[func]		New zone type "delegation-only".
+
 	--- 9.2.2 released ---
 
 1428.	[port]		hpux: temporary work around of hpux 11.11 interface

@@ -121,7 +121,10 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	ttl = maxttl;
 	trust = 0xffff;
 	isc_buffer_init(&buffer, data, sizeof(data));
-	result = dns_message_firstname(message, DNS_SECTION_AUTHORITY);
+	if (message->counts[DNS_SECTION_AUTHORITY])
+		result = dns_message_firstname(message, DNS_SECTION_AUTHORITY);
+	else
+		result = ISC_R_NOMORE;
 	while (result == ISC_R_SUCCESS) {
 		name = NULL;
 		dns_message_currentname(message, DNS_SECTION_AUTHORITY,
