@@ -71,7 +71,7 @@ dosave0(hu) int hu; {
 
 		if(tmp == dlevel || !level_exists[tmp]) continue;
 		glo(tmp);
-		if((ofd = open(lock, 0)) < 0) {
+		if((ofd = open(lock, O_RDONLY)) < 0) {
 		    if(!hu) pline("Error while saving: cannot read %s.", lock);
 		    (void) close(fd);
 		    (void) unlink(SAVEF);

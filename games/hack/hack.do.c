@@ -171,7 +171,7 @@ register boolean at_stairs;
 	else {
 		extern int hackpid;
 
-		if((fd = open(lock,0)) < 0) {
+		if((fd = open(lock, O_RDONLY)) < 0) {
 			pline("Cannot open %s .", lock);
 			pline("Probably someone removed it.");
 			done("tricked");

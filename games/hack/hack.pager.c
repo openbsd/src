@@ -301,7 +301,7 @@ boolean silent;
       {
 	/* use external pager; this may give security problems */
 
-	register int fd = open(fnam, 0);
+	register int fd = open(fnam, O_RDONLY);
 
 	if(fd < 0) {
 		if(!silent) pline("Cannot open %s.", fnam);

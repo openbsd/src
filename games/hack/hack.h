@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include <string.h>
+#include <fcntl.h>
 
 #define	Null(type)	((struct type *) 0)
 

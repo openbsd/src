@@ -8,6 +8,7 @@ static char rcsid[] = "$NetBSD: makedefs.c,v 1.4 1995/04/24 12:23:39 cgd Exp $";
 
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
 
 /* construct definitions of object constants */
 #define	LINSZ	1000
@@ -16,6 +17,7 @@ static char rcsid[] = "$NetBSD: makedefs.c,v 1.4 1995/04/24 12:23:39 cgd Exp $";
 int fd;
 char string[STRSZ];
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -27,7 +29,7 @@ register char *sp;
 		(void)fprintf(stderr, "usage: makedefs file\n");
 		exit(1);
 	}
-	if ((fd = open(argv[1], 0)) < 0) {
+	if ((fd = open(argv[1], O_RDONLY)) < 0) {
 		perror(argv[1]);
 		exit(1);
 	}

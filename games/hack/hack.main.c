@@ -251,7 +251,7 @@ char *argv[];
 	setftty();
 	(void) sprintf(SAVEF, "save/%d%s", getuid(), plname);
 	regularize(SAVEF+5);		/* avoid . or / in name */
-	if((fd = open(SAVEF,0)) >= 0 &&
+	if((fd = open(SAVEF, O_RDONLY)) >= 0 &&
 	   (uptodate(fd) || unlink(SAVEF) == 666)) {
 		(void) signal(SIGINT,done1);
 		pline("Restoring old save file...");
@@ -493,7 +493,7 @@ boolean wr;
 
 	    if(dir == NULL)
 		dir = ".";
-	    if((fd = open(RECORD, 2)) < 0) {
+	    if((fd = open(RECORD, O_RDWR)) < 0) {
 		printf("Warning: cannot write %s/%s", dir, RECORD);
 		getret();
 	    } else

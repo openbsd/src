@@ -217,7 +217,7 @@ getlock()
 	do {
 		if(locknum) lock[0] = 'a' + i++;
 
-		if((fd = open(lock, 0)) == -1) {
+		if((fd = open(lock, O_RDONLY)) == -1) {
 			if(errno == ENOENT) goto gotlock;    /* no such file */
 			perror(lock);
 			(void) unlink(LLOCK);
