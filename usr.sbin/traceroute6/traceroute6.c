@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.32 2003/01/21 08:00:08 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.33 2003/01/21 08:51:22 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ main(argc, argv)
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST];
 	char *ep;
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
-	size_t size = sizeof(max_hops);
+	size_t size;
 	u_long lport;
 	int minlen;
 
@@ -386,8 +386,9 @@ main(argc, argv)
 	seteuid(getuid());
 	setuid(getuid());
 
-	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_hops, &size,
-	    NULL, 0);
+	size = sizeof(i);
+	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &i, &size, NULL, 0);
+	max_hops = i;
 
 	/* set a minimum set of socket options */
 	on = 1;
