@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2004/01/17 22:42:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -31,5 +31,4 @@
  *	from: @(#)pathnames.h	5.2 (Berkeley) 4/9/90
  */
 
-#define	_PATH_RLOGIN	"/usr/bin/rlogin"
-#define	_PATH_TELNET	"/usr/bin/telnet"
+#define	_PATH_SSH	"/usr/bin/ssh"
