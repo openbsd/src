@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.9 2001/05/23 15:39:35 art Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.10 2001/05/23 15:46:25 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -326,6 +326,7 @@ addlinef(BUFFER *bp, char *fmt, ...)
 		return FALSE;
 	}
 	vsnprintf(lp->l_text, ntext, fmt, ap);
+	lp->l_used--;
 	va_end(ap);
 
 	bp->b_linep->l_bp->l_fp = lp;		/* Hook onto the end	 */
