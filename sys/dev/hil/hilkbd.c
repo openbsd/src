@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.6 2003/02/18 02:40:51 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.7 2003/02/18 23:48:20 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -140,11 +140,6 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Interpret the identification bytes, if any
 	 */
-	{
-		int i;
-		for (i = 0; i < ha->ha_infolen; i++)
-			printf(" %x", ha->ha_info[i]);
-	}
 	if (ha->ha_infolen > 2 && (ha->ha_info[1] & HIL_IOB) != 0) {
 		/* HILIOB_PROMPT is not always reported... */
 		sc->sc_numleds = (ha->ha_info[2] & HILIOB_PMASK) >> 4;
