@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.1 2001/06/25 23:05:17 provos Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.2 2001/06/26 15:40:29 provos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.1 2001/06/25 23:05:17 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.2 2001/06/26 15:40:29 provos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	u_int caplen = h->caplen;
 	const struct ip *ip;
 	const struct pfloghdr *hdr;
+	const char *reason;
 
 	ts_print(&h->ts);
 
@@ -79,8 +80,18 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	
 	hdr = (struct pfloghdr *)p;
 
-	printf("rule nr %d: %s %s on %s: ",
-	       ntohl(hdr->rnr),
+	switch(ntohs(hdr->reason)) {
+	case PFRES_MATCH:
+		reason = "";
+		break;
+
+	default:
+		reason = "(unknown)";
+		break;
+	}
+
+	printf("rule nr %d%s: %s %s on %s: ",
+	       ntohs(hdr->rnr), reason,
 	       ntohs(hdr->action) == PF_PASS ? "pass" : "block",
 	       ntohs(hdr->dir) == PF_OUT ? "out" : "in",
 	       hdr->ifname);
