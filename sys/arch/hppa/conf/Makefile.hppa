@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.2 1998/07/07 20:51:01 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.3 1998/10/30 19:45:35 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -21,12 +21,12 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-.if ${MACHINE} != "hppa"
+.if ${MACHINE_ARCH} != "hppa"
 CROSSDIR?=     /usr/cross/hppa
 
 .BEGIN:
 	CBIN=${CROSSDIR}/usr/bin; export CBIN; \
-	MACHINE="hppa" MACHINE_ARCH="hp700" AR=$$CBIN/ar AS=$$CBIN/as \
+	MACHINE="hp700" MACHINE_ARCH="hppa" AR=$$CBIN/ar AS=$$CBIN/as \
 	CC=$$CBIN/cc HOSTCC=cc LD=$$CBIN/ld NM=$$CBIN/nm \
 	RANLIB=$$CBIN/ranlib STRIP=$$CBIN/strip SIZE=$$CBIN/size ${MAKE} ${.TARGET}
 
@@ -53,8 +53,8 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float -mdisable-fpregs \
 		-mfast-indirect-calls -mpa-risc-1-0 -mportable-runtime
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-x -N -Ttext 12000 -e start
-STRIPFLAGS=	-d
+LINKFLAGS=	-T ${HPPA}/conf/ld.script
+STRIPFLAGS=	-g -X -x
 
 HOSTED_CC=	${HOSTCC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -90,13 +90,7 @@ HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 #%SFILES
 
-# load lines for config "xxx" will be emitted as:
-# xxx: ${SYSTEM_DEP} swapxxx.o
-#	${SYSTEM_LD_HEAD}
-#	${SYSTEM_LD} swapxxx.o
-#	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o ${FPSP} \
-		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
