@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.12 2002/08/28 03:30:27 itojun Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.13 2002/08/28 03:54:35 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -345,13 +345,13 @@ obsd_translate_flags(short flags)
 }
 
 static int
-obsd_translate_errno(int errno)
+obsd_translate_errno(int nerrno)
 {
-	return (errno);
+	return (nerrno);
 }
 
 static int
-obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
+obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
     short flags)
 {
 	struct systrace_answer ans;
@@ -360,7 +360,7 @@ obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
 	ans.stra_seqnr = seqnr;
 	ans.stra_policy = obsd_translate_policy(policy);
 	ans.stra_flags = obsd_translate_flags(flags);
-	ans.stra_error = obsd_translate_errno(errno);
+	ans.stra_error = obsd_translate_errno(nerrno);
 
 	if (ioctl(fd, STRIOCANSWER, &ans) == -1)
 		return (-1);
