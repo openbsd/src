@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.224 2003/04/19 21:58:06 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.225 2003/04/25 19:18:25 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1261,7 +1261,7 @@ For example:
 pass in proto tcp to port 25 queue mail
 pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
 .Ed
-.Pp
+.El
 .Sh ROUTING
 If a packet matches a rule with a route option set, the packet filter will
 route the packet according to the type of route option.
@@ -1524,6 +1524,7 @@ pass in proto tcp from any to any \e
       port www flags S/SA keep state \e
       (max 100, tcp.established 60, tcp.closing 5)
 .Ed
+.El
 .Sh BLOCKING SPOOFED TRAFFIC
 "Spoofing" is the faking of IP addresses, typically for malicious
 purposes.
