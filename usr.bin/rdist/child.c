@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: child.c,v 1.12 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,18 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include "defs.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: child.c,v 6.28 1996/02/22 19:30:09 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$From: child.c,v 1.3 1999/11/01 00:20:55 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: child.c,v 1.11 2002/06/12 06:07:16 mpech Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$OpenBSD: child.c,v 1.12 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
@@ -53,7 +56,6 @@ static char copyright[] =
  * Functions for rdist related to children
  */
 
-#include "defs.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #if	defined(NEED_SYS_SELECT_H)
@@ -82,17 +84,25 @@ int     		activechildren = 0;	/* Number of active children */
 extern int		maxchildren;		/* Max active children */
 static int 		needscan = FALSE;	/* Need to scan children */
 
+static void removechild(CHILD *);
+static CHILD *copychild(CHILD *);
+static void addchild(CHILD *);
+static void readchild(CHILD *);
+static pid_t waitproc(int *, int);
+static void reap(int);
+static void childscan(void);
+
 /*
  * Remove a child that has died (exited) 
  * from the list of active children
  */
-static void removechild(child)
-	CHILD *child;
+static void
+removechild(CHILD *child)
 {
 	CHILD *pc, *prevpc;
 
-	debugmsg(DM_CALL, "removechild(%s, %ld, %d) start",
-		 child->c_name, (long)child->c_pid, child->c_readfd);
+	debugmsg(DM_CALL, "removechild(%s, %d, %d) start",
+		 child->c_name, child->c_pid, child->c_readfd);
 
 	/*
 	 * Find the child in the list
@@ -103,8 +113,8 @@ static void removechild(child)
 			break;
 
 	if (pc == NULL)
-		error("RemoveChild called with bad child %s %ld %d",
-		      child->c_name, (long)child->c_pid, child->c_readfd);
+		error("RemoveChild called with bad child %s %d %d",
+		      child->c_name, child->c_pid, child->c_readfd);
 	else {
 		/*
 		 * Remove the child
@@ -144,8 +154,8 @@ static void removechild(child)
 /*
  * Create a totally new copy of a child.
  */
-static CHILD *copychild(child)
-	CHILD *child;
+static CHILD *
+copychild(CHILD *child)
 {
 	CHILD *newc;
 
@@ -163,8 +173,8 @@ static CHILD *copychild(child)
 /*
  * Add a child to the list of children.
  */			
-static void addchild(child)
-	CHILD *child;
+static void
+addchild(CHILD *child)
 {
 	CHILD *pc;
 
@@ -177,29 +187,28 @@ static void addchild(child)
 	++activechildren;
 
 	debugmsg(DM_MISC,
-		 "addchild() created '%s' pid %ld fd %d (active=%d)\n",
-		 child->c_name, (long)child->c_pid, child->c_readfd,
-		 activechildren);
+		 "addchild() created '%s' pid %d fd %d (active=%d)\n",
+		 child->c_name, child->c_pid, child->c_readfd, activechildren);
 }
 
 /*
  * Read input from a child process.
  */
-static void readchild(child)
-	CHILD *child;
+static void
+readchild(CHILD *child)
 {
 	char rbuf[BUFSIZ];
 	int amt;
 
-	debugmsg(DM_CALL, "[readchild(%s, %ld, %d) start]", 
-		 child->c_name, (long)child->c_pid, child->c_readfd);
+	debugmsg(DM_CALL, "[readchild(%s, %d, %d) start]", 
+		 child->c_name, child->c_pid, child->c_readfd);
 
 	/*
 	 * Check that this is a valid child.
 	 */
 	if (child->c_name == NULL || child->c_readfd <= 0) {
-		debugmsg(DM_MISC, "[readchild(%s, %ld, %d) bad child]",
-			 child->c_name, (long)child->c_pid, child->c_readfd);
+		debugmsg(DM_MISC, "[readchild(%s, %d, %d) bad child]",
+			 child->c_name, child->c_pid, child->c_readfd);
 		return;
 	}
 
@@ -208,24 +217,24 @@ static void readchild(child)
 	 */
 	while ((amt = read(child->c_readfd, rbuf, sizeof(rbuf))) > 0) {
 		/* XXX remove these debug calls */
-		debugmsg(DM_MISC, "[readchild(%s, %ld, %d) got %d bytes]", 
-			 child->c_name, (long)child->c_pid, child->c_readfd, amt);
+		debugmsg(DM_MISC, "[readchild(%s, %d, %d) got %d bytes]", 
+			 child->c_name, child->c_pid, child->c_readfd, amt);
 
 		(void) xwrite(fileno(stdout), rbuf, amt);
 
-		debugmsg(DM_MISC, "[readchild(%s, %ld, %d) write done]",
-			 child->c_name, (long)child->c_pid, child->c_readfd);
+		debugmsg(DM_MISC, "[readchild(%s, %d, %d) write done]",
+			 child->c_name, child->c_pid, child->c_readfd);
 	}
 
-	debugmsg(DM_MISC, "readchild(%s, %ld, %d) done: amt = %d errno = %d\n",
-		 child->c_name, (long)child->c_pid, child->c_readfd, amt, errno);
+	debugmsg(DM_MISC, "readchild(%s, %d, %d) done: amt = %d errno = %d\n",
+		 child->c_name, child->c_pid, child->c_readfd, amt, errno);
 
 	/* 
 	 * See if we've reached EOF 
 	 */
 	if (amt == 0)
-		debugmsg(DM_MISC, "readchild(%s, %ld, %d) at EOF\n",
-			 child->c_name, (long)child->c_pid, child->c_readfd);
+		debugmsg(DM_MISC, "readchild(%s, %d, %d) at EOF\n",
+			 child->c_name, child->c_pid, child->c_readfd);
 }
 
 /*
@@ -234,13 +243,12 @@ static void readchild(child)
  * a process does exit, then the pointer "statval" is set to the
  * exit status of the exiting process, if statval is not NULL.
  */
-static pid_t waitproc(statval, block)
-	int *statval;
-	int block;
+static pid_t
+waitproc(int *statval, int block)
 {
 	WAIT_ARG_TYPE status;
-	int exitval;
 	pid_t pid;
+	int exitval;
 
 	debugmsg(DM_CALL, "waitproc() %s, active children = %d...\n", 
 		 (block) ? "blocking" : "nonblocking", activechildren);
@@ -262,8 +270,8 @@ static pid_t waitproc(statval, block)
 	if (pid > 0 && exitval != 0) {
 		nerrs++;
 		debugmsg(DM_MISC, 
-			 "Child process %ld exited with status %d.\n",
-			 (long)pid, exitval);
+			 "Child process %d exited with status %d.\n",
+			 pid, exitval);
 	}
 
 	if (statval)
@@ -279,7 +287,8 @@ static pid_t waitproc(statval, block)
  * Check to see if any children have exited, and if so, read any unread
  * input and then remove the child from the list of children.
  */
-static void reap()
+static void
+reap(int dummy)
 {
 	CHILD *pc;
 	int save_errno = errno;
@@ -299,8 +308,8 @@ static void reap()
 		 */
 		pid = waitproc(&status, FALSE);
 		debugmsg(DM_MISC, 
-			 "reap() pid = %ld status = %d activechildren=%d\n",
-			 (long)pid, status, activechildren);
+			 "reap() pid = %d status = %d activechildren=%d\n",
+			 pid, status, activechildren);
 
 		/*
 		 * See if a child really exited
@@ -337,7 +346,8 @@ static void reap()
  * Scan the children list to find the child that just exited, 
  * read any unread input, then remove it from the list of active children.
  */
-static void childscan() 
+static void
+childscan(void)
 {
 	CHILD *pc, *nextpc;
 	
@@ -366,7 +376,8 @@ static void childscan()
  *
 #endif
  */
-extern void waitup()
+void
+waitup(void)
 {
 #if	defined(HAVE_SELECT)
 	int count;
@@ -446,8 +457,8 @@ extern void waitup()
 		if (pc->c_name && kill(pc->c_pid, 0) < 0 && 
 		    errno == ESRCH) {
 			debugmsg(DM_MISC, 
-				 "waitup() proc %ld (%s) died unexpectedly!",
-				 (long)pc->c_pid, pc->c_name);
+				 "waitup() proc %d (%s) died unexpectedly!",
+				 pc->c_pid, pc->c_name);
 			pc->c_state = PSdead;
 			needscan = TRUE;
 		}
@@ -478,9 +489,8 @@ extern void waitup()
 /*
  * Spawn (create) a new child process for "cmd".
  */
-extern int spawn(cmd, cmdlist)
-	struct cmd *cmd;
-	struct cmd *cmdlist;
+int
+spawn(struct cmd *cmd, struct cmd *cmdlist)
 {
 	pid_t pid;
 	int fildes[2];
@@ -573,9 +583,8 @@ extern int spawn(cmd, cmdlist)
 #if	NBIO_TYPE == NBIO_IOCTL
 #include <sys/ioctl.h>
 
-int setnonblocking(fd, flag)
-	int fd;
-	int flag;
+int
+setnonblocking(int fd, int flag)
 {
 	int state;
 
@@ -587,9 +596,8 @@ int setnonblocking(fd, flag)
 
 
 #if	NBIO_TYPE == NBIO_FCNTL
-int setnonblocking(fd, flag)
-	int fd;
-	int flag;
+int
+setnonblocking(int fd, int flag)
 {
 	int	mode;
 

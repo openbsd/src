@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.h,v 1.4 1998/06/26 21:20:49 millert Exp $	*/
+/*	$OpenBSD: filesys.h,v 1.1 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 
 /*
- * $From: filesys.h,v 6.19 1995/12/12 00:46:46 mcooper Exp $
+ * $From: filesys.h,v 1.2 1999/08/04 15:57:31 christos Exp $
  * @(#)filesys.h
  */
 
@@ -97,31 +97,25 @@
  * Stat Filesystem
  */
 #if 	defined(STATFS_TYPE)
-#if defined(ultrix)
+#  if defined(ultrix)
 	typedef struct fs_data		statfs_t;
 #	define f_bavail			fd_req.bfreen
 #	define f_bsize			fd_req.bsize
 #	define f_ffree			fd_req.gfree
-#else
-#if defined(_AIX) || STATFS_TYPE == STATFS_SYSV
+#  elif defined(_AIX) || STATFS_TYPE == STATFS_SYSV
 #	include <sys/statfs.h>
 	typedef struct statfs		statfs_t;
 #	define f_bavail			f_bfree
-#else
-#if defined(SVR4)
+#  elif defined(SVR4)
 #	include <sys/statvfs.h>
 	typedef struct statvfs		statfs_t;
 #	define statfs(mp,sb)		statvfs(mp,sb)
-#else
-#if defined(BSD386) || defined(__bsdi__) || defined(__OpenBSD__) || defined(FREEBSD) || STATFS_TYPE == STATFS_OSF1
+#  elif STATFS_TYPE == STATFS_44BSD || STATFS_TYPE == STATFS_OSF1
 	typedef struct statfs		statfs_t;
-#else
+#  else
 #	include <sys/vfs.h>
 	typedef struct statfs 		statfs_t;
-#endif	/* BSD386 */
-#endif	/* SVR4 */
-#endif	/* _AIX */
-#endif	/* ultrix */
+#  endif
 #endif	/* STATFS_TYPE */
 
 /*
@@ -162,9 +156,9 @@ struct mntinfo {
 /*
  * Declarations
  */
-FILE	       *setmountent();
-mntent_t       *getmountent();
-mntent_t       *newmountent();
-void		endmountent();
+FILE	       *setmountent(const char *, const char *);
+mntent_t       *getmountent(FILE *);
+mntent_t       *newmountent(const mntent_t *);
+void		endmountent(FILE *);
 
 #endif	/* __filesys_h__ */

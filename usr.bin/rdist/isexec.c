@@ -1,4 +1,4 @@
-/*	$OpenBSD: isexec.c,v 1.5 2002/05/09 19:13:02 millert Exp $	*/
+/*	$OpenBSD: isexec.c,v 1.6 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -32,24 +32,27 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "defs.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: isexec.c,v 6.21 1994/04/01 23:44:10 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$From: isexec.c,v 1.2 1999/08/04 15:57:33 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: isexec.c,v 1.5 2002/05/09 19:13:02 millert Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$OpenBSD: isexec.c,v 1.6 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)client.c";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)client.c";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
-
-#include "defs.h"
+static int _isexec(int);
 
 #if	EXE_TYPE == EXE_AOUT
 /*
@@ -57,8 +60,8 @@ static char copyright[] =
  */
 #include <a.out.h>
 
-static int _isexec(fd)
-	int fd;
+static int
+_isexec(int fd)
 {
 	struct exec ehdr;
 
@@ -141,8 +144,8 @@ typedef struct filehdr 	hdr_t;
 /*
  * System V style COFF and System V R4 style ELF
  */
-static int _isexec(fd)
-	int fd;
+static int
+_isexec(int fd)
 {
 	hdr_t hdr;
 
@@ -187,8 +190,8 @@ static int _isexec(fd)
 #define FAT_CIGAM 	0xbebafeca
 #endif
 
-static int _isexec(fd)
-	int fd;
+static int
+_isexec(int fd)
 {
 	struct mach_header ehdr;
 
@@ -221,8 +224,8 @@ static int _isexec(fd)
 
 #endif	/* hp9000s300 */
 
-static int _isexec(fd)
-	int fd;
+static int
+_isexec(int fd)
 {
 	struct header ehdr;
 
@@ -239,9 +242,8 @@ static int _isexec(fd)
 /*
  * Fake _isexec() call for unknown executable formats.
  */
-static int _isexec(fd)
-	/*ARGSUSED*/
-	int fd;
+static int
+_isexec(int fd)
 {
 	return(FALSE);
 }
@@ -250,9 +252,8 @@ static int _isexec(fd)
 /*
  * Determine whether 'file' is an executable or not.
  */
-extern int isexec(file, statp)
-	char *file;
-	struct stat *statp;
+int
+isexec(char *file, struct stat *statp)
 {
 	int fd, r;
 

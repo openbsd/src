@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.17 2003/05/06 22:10:11 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.18 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,18 +33,22 @@
  * SUCH DAMAGE.
  */
 
+#include "defs.h"
+#include "y.tab.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$From: client.c,v 1.13 1999/11/01 00:22:14 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: client.c,v 1.17 2003/05/06 22:10:11 millert Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$OpenBSD: client.c,v 1.18 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)client.c";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)client.c";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
@@ -53,8 +57,6 @@ static char copyright[] =
  * Routines used in client mode to communicate with remove server.
  */
 
-#include "defs.h"
-#include "y.tab.h"
 
 /*
  * Update status
@@ -63,7 +65,7 @@ static char copyright[] =
 #define US_NOENT	1	/* Entry does not exist */
 #define US_OUTDATE	2	/* Entry is out of date */
 #define US_DOCOMP	3	/* Do a binary comparison */
-#define US_MODE		4	/* Modes of file differ */
+#define US_CHMOG	4	/* Modes or ownership of file differ */
 
 struct	linkbuf *ihead = NULL;	/* list of files with more than one link */
 char	buf[BUFSIZ];		/* general purpose buffer */
@@ -74,14 +76,26 @@ char	*ptarget;		/* pointer to end of target name */
 char	*Tdest;			/* pointer to last T dest*/
 struct namelist	*updfilelist = NULL; /* List of updated files */
 
-static int sendit();
+static void runspecial(char *, opt_t, char *, int);
+static void addcmdspecialfile(char *, char *, int);
+static void freecmdspecialfiles(void);
+static struct linkbuf *linkinfo(struct stat *);
+static int sendhardlink(opt_t, struct linkbuf *, char *, int);
+static int sendfile(char *, opt_t, struct stat *, char *, char *, int);
+static int rmchk(opt_t);
+static int senddir(char *, opt_t, struct stat *, char *, char *, int);
+static int sendlink(char *, opt_t, struct stat *, char *, char *, int);
+static int update(char *, opt_t, struct stat *);
+static int dostat(char *, struct stat *, opt_t);
+static int statupdate(int, char *, opt_t, char *, int, struct stat *, char *, char *);
+static int fullupdate(int, char *, opt_t, char *, int, struct stat *, char *, char *);
+static int sendit(char *, opt_t, int);
 
 /*
  * return remote file pathname (relative from target)
  */
-char *remfilename(src, dest, path, rname, destdir)
-	char *src, *dest, *path, *rname;
-	int destdir;
+char *
+remfilename(char *src, char *dest, char *path, char *rname, int destdir)
 {
 	extern struct namelist *filelist;
 	char *lname, *cp;
@@ -109,7 +123,7 @@ char *remfilename(src, dest, path, rname, destdir)
 	if (path && *path) {
 		cp = strrchr(path, '/');
  		if (cp == NULL)
-			(void) snprintf(buff, sizeof buff, "%s/%s", dest, path);
+			(void) snprintf(buff, sizeof(buff), "%s/%s", dest, path);
 		else {
 			srclen = strlen(src);
 			pathlen = strlen(path);
@@ -127,14 +141,14 @@ char *remfilename(src, dest, path, rname, destdir)
 				}
 			}
 			if ((*cp != '/') && *cp)
-				(void) snprintf(buff, sizeof buff,
-				    "%s/%s", dest, cp);
+				(void) snprintf(buff, sizeof(buff), "%s/%s",
+						dest, cp);
 			else
-				(void) snprintf(buff, sizeof buff,
-				    "%s%s", dest, cp);
+				(void) snprintf(buff, sizeof(buff), "%s%s",
+						dest, cp);
 		}
 	} else
-		strlcpy(lname, dest, buf + sizeof buff - lname);
+		(void) strlcpy(lname, dest, buf + sizeof buff - lname);
 
 	debugmsg(DM_MISC, "remfilename: remote filename=%s\n", lname);
 
@@ -144,9 +158,8 @@ char *remfilename(src, dest, path, rname, destdir)
 /*
  * Return true if name is in the list.
  */
-int inlist(list, file)
-	struct namelist *list;
-	char *file;
+int
+inlist(struct namelist *list, char *file)
 {
 	struct namelist *nl;
 
@@ -159,11 +172,8 @@ int inlist(list, file)
 /*
  * Run any special commands for this file
  */
-static void runspecial(starget, opts, rname, destdir)
-	char *starget;
-	opt_t opts;
-	char *rname;
-	int destdir;
+static void
+runspecial(char *starget, opt_t opts, char *rname, int destdir)
 {
 	struct subcmd *sc;
 	extern struct subcmd *subcmds;
@@ -195,10 +205,8 @@ static void runspecial(starget, opts, rname, destdir)
  * If we're doing a target with a "cmdspecial" in it, then
  * save the name of the file being updated for use with "cmdspecial".
  */
-static void addcmdspecialfile(starget, rname, destdir)
-	char *starget;
-	char *rname;
-	int destdir;
+static void
+addcmdspecialfile(char *starget, char *rname, int destdir)
 {
 	char *rfile;
 	struct namelist *new;
@@ -228,7 +236,8 @@ static void addcmdspecialfile(starget, rname, destdir)
 /*
  * Free the file list
  */
-static void freecmdspecialfiles()
+static void
+freecmdspecialfiles(void)
 {
 	struct namelist *ptr, *save;
 
@@ -247,10 +256,8 @@ static void freecmdspecialfiles()
 /*
  * Run commands for an entire cmd
  */
-extern void runcmdspecial(cmd, filev, opts)
-	struct cmd *cmd;
-	char **filev;
-	opt_t opts;
+void
+runcmdspecial(struct cmd *cmd, opt_t opts)
 {
 	struct subcmd *sc;
 	struct namelist *f;
@@ -292,8 +299,8 @@ extern void runcmdspecial(cmd, filev, opts)
 /*
  * For security, reject filenames that contains a newline
  */
-int checkfilename(name)
-	char *name;
+int
+checkfilename(char *name)
 {
 	char *cp;
 
@@ -310,8 +317,8 @@ int checkfilename(name)
 	return(0);
 }
 
-void freelinkinfo(lp)
-	struct linkbuf *lp;
+void
+freelinkinfo(struct linkbuf *lp)
 {
 	if (lp->pathname)
 		free(lp->pathname);
@@ -325,8 +332,8 @@ void freelinkinfo(lp)
 /*
  * Save and retrieve hard link info
  */
-static struct linkbuf *linkinfo(statp)
-	struct stat *statp;
+static struct linkbuf *
+linkinfo(struct stat *statp)
 {
 	struct linkbuf *lp;
 
@@ -356,29 +363,31 @@ static struct linkbuf *linkinfo(statp)
 /*
  * Send a hardlink
  */
-static int sendhardlink(opts, lp, rname, destdir)
-	opt_t opts;
-	struct linkbuf *lp;
-	char *rname;
-	int destdir;
+static int
+sendhardlink(opt_t opts, struct linkbuf *lp, char *rname, int destdir)
 {
 	static char buff[MAXPATHLEN];
+	char *lname;	/* name of file to link to */
+	char ername[MAXPATHLEN*4], elname[MAXPATHLEN*4];
 
 	debugmsg(DM_MISC, 
 	       "sendhardlink: rname='%s' pathname='%s' src='%s' target='%s'\n",
-		 rname, lp->pathname ? lp->pathname : "(null)", lp->src
-		 ? lp->src : "(null)", lp->target ? lp->target : "(null)");
+		rname, lp->pathname ? lp->pathname : "",
+		lp->src ? lp->src : "", lp->target ? lp->target : "");
 		 
 	if (lp->target == NULL)
-		(void) sendcmd(C_RECVHARDLINK, "%o %s %s", 
-			       opts, lp->pathname, rname);
+		lname = lp->pathname;
 	else {
-		strlcpy(buff, remfilename(lp->src, lp->target, 
-		    lp->pathname, rname, destdir), sizeof buff);
-		debugmsg(DM_MISC, "sendhardlink: lname=%s\n", buff);
-		(void) sendcmd(C_RECVHARDLINK, "%o %s %s", 
-			       opts, buff, rname);
+		lname = buff;
+		strlcpy(lname, remfilename(lp->src, lp->target, 
+					  lp->pathname, rname, 
+					  destdir), sizeof(buff));
+		debugmsg(DM_MISC, "sendhardlink: lname=%s\n", lname);
 	}
+	ENCODE(elname, lname);
+	ENCODE(ername, rname);
+	(void) sendcmd(C_RECVHARDLINK, "%o %s %s", 
+		       opts, elname, ername);
 
 	return(response());
 }
@@ -386,15 +395,13 @@ static int sendhardlink(opts, lp, rname, destdir)
 /*
  * Send a file
  */
-static int sendfile(rname, opts, stb, user, group, destdir)
-	char *rname;
-	opt_t opts;
-	struct stat *stb;
-	char *user, *group;
-	int destdir;
+static int
+sendfile(char *rname, opt_t opts, struct stat *stb, char *user,
+	 char *group, int destdir)
 {
 	int goterr, f;
 	off_t i;
+	char ername[MAXPATHLEN*4];
 
 	if (stb->st_nlink > 1) {
 		struct linkbuf *lp;
@@ -411,18 +418,20 @@ static int sendfile(rname, opts, stb, user, group, destdir)
 	/*
 	 * Send file info
 	 */
+	ENCODE(ername, rname);
+
 	(void) sendcmd(C_RECVREG, "%o %04o %ld %ld %ld %s %s %s", 
-		       opts, stb->st_mode & 07777, 
-		       (long) stb->st_size, 
+		       opts, stb->st_mode & 07777, (long) stb->st_size, 
 		       stb->st_mtime, stb->st_atime,
-		       user, group, rname);
+		       user, group, ername);
 	if (response() < 0) {
 		(void) close(f);
 		return(-1);
 	}
 
-	debugmsg(DM_MISC, "Send file '%s' %d bytes\n", 
-		 rname, (long) stb->st_size);
+
+	debugmsg(DM_MISC, "Send file '%s' %ld bytes\n", rname,
+		 (long) stb->st_size);
 
 	/*
 	 * Set remote time out alarm handler.
@@ -434,12 +443,12 @@ static int sendfile(rname, opts, stb, user, group, destdir)
 	 */
 	goterr = 0;
 	for (i = 0; i < stb->st_size; i += BUFSIZ) {
-		int amt = BUFSIZ;
+		off_t amt = BUFSIZ;
 
 		(void) alarm(rtimeout);
 		if (i + amt > stb->st_size)
 			amt = stb->st_size - i;
-		if (read(f, buf, amt) != amt) {
+		if (read(f, buf, (size_t) amt) != (ssize_t) amt) {
 			error("%s: File changed size", target);
 			err();
 			++goterr;
@@ -451,8 +460,8 @@ static int sendfile(rname, opts, stb, user, group, destdir)
 			 * this situation gracefully.
 			 */
 		}
-		if (xwrite(rem_w, buf, amt) < 0) {
-		    	error("%s: Error writing to client: %s", 
+		if (xwrite(rem_w, buf, (size_t) amt) < 0) {
+			error("%s: Error writing to client: %s", 
 			      target, SYSERR);
 			err();
 			++goterr;
@@ -495,13 +504,14 @@ static int sendfile(rname, opts, stb, user, group, destdir)
  * Return 0 if nothing happened.
  * Return > 0 if anything is updated.
  */
-static int rmchk(opts)
-	opt_t opts;
+static int
+rmchk(opt_t opts)
 {
 	u_char *s;
 	struct stat stb;
 	int didupdate = 0;
 	int n;
+	char targ[MAXPATHLEN*4];
 
 	debugmsg(DM_CALL, "rmchk()\n");
 
@@ -526,8 +536,15 @@ static int rmchk(opts)
 			 * CC_NO -- file exists - DON'T remove.
 			 * CC_YES -- file doesn't exist - REMOVE.
 			 */
-			snprintf(ptarget, target + sizeof(target) - ptarget,
-			    "%s%s", (ptarget[-1] == '/' ? "" : "/"), s);
+			if (DECODE(targ, (char *) s) == -1) {
+				error("rmchk: cannot decode file");
+				return(-1);
+			}
+			(void) snprintf(ptarget,
+					sizeof(target) - (ptarget - target),
+					"%s%s", 
+				        (ptarget[-1] == '/' ? "" : "/"),
+				        targ);
 			debugmsg(DM_MISC, "check %s\n", target);
 			if (except(target))
 				(void) sendcmd(CC_NO, NULL);
@@ -577,18 +594,25 @@ static int rmchk(opts)
  * Return 0 if nothing happened.
  * Return > 0 if anything is updated.
  */
-static int senddir(rname, opts, stb, user, group, destdir)
-	char *rname;
-	opt_t opts;
-	struct stat *stb;
-	char *user, *group;
-	int destdir;
+static int
+senddir(char *rname, opt_t opts, struct stat *stb, char *user,
+	char *group, int destdir)
 {
 	DIRENTRY *dp;
 	DIR *d;
 	char *optarget, *cp;
 	int len;
 	int didupdate = 0;
+	char ername[MAXPATHLEN*4];
+
+	/*
+	 * Send recvdir command in recvit() format.
+	 */
+	ENCODE(ername, rname);
+	(void) sendcmd(C_RECVDIR, "%o %04o 0 0 0 %s %s %s", 
+		       opts, stb->st_mode & 07777, user, group, ername);
+	if (response() < 0)
+		return(-1);
 
 	/*
 	 * Don't descend into directory
@@ -596,26 +620,18 @@ static int senddir(rname, opts, stb, user, group, destdir)
 	if (IS_ON(opts, DO_NODESCEND))
 		return(0);
 
+	if (IS_ON(opts, DO_REMOVE))
+		if (rmchk(opts) > 0)
+			++didupdate;
+	
 	if ((d = opendir(target)) == NULL) {
 		error("%s: opendir failed: %s", target, SYSERR);
 		return(-1);
 	}
 
-	/*
-	 * Send recvdir command in recvit() format.
-	 */
-	(void) sendcmd(C_RECVDIR, "%o %04o 0 0 0 %s %s %s", 
-		       opts, stb->st_mode & 07777, user, group, rname);
-	if (response() < 0)
-		return(-1);
-
-	if (IS_ON(opts, DO_REMOVE))
-		if (rmchk(opts) > 0)
-			++didupdate;
-	
 	optarget = ptarget;
 	len = ptarget - target;
-	while ((dp = readdir(d))) {
+	while ((dp = readdir(d)) != NULL) {
 		if (!strcmp(dp->d_name, ".") ||
 		    !strcmp(dp->d_name, ".."))
 			continue;
@@ -628,8 +644,8 @@ static int senddir(rname, opts, stb, user, group, destdir)
 		if (ptarget[-1] != '/')
 			*ptarget++ = '/';
 		cp = dp->d_name;
-		while ((*ptarget++ = *cp++))
-			;
+		while ((*ptarget++ = *cp++) != '\0')
+			continue;
 		ptarget--;
 		if (sendit(dp->d_name, opts, destdir) > 0)
 			didupdate = 1;
@@ -648,18 +664,15 @@ static int senddir(rname, opts, stb, user, group, destdir)
 /*
  * Send a link
  */
-static int sendlink(rname, opts, stb, user, group, destdir)
-	char *rname;
-	opt_t opts;
-	struct stat *stb;
-	char *user;
-	char *group;
-	int destdir;
+static int
+sendlink(char *rname, opt_t opts, struct stat *stb, char *user,
+	 char *group, int destdir)
 {
 	int f, n;
 	static char tbuf[BUFSIZ];
 	char lbuf[MAXPATHLEN];
 	u_char *s;
+	char ername[MAXPATHLEN*4];
 
 	debugmsg(DM_CALL, "sendlink(%s, %x, stb, %d)\n", rname, opts, destdir);
 
@@ -673,11 +686,11 @@ static int sendlink(rname, opts, stb, user, group, destdir)
 	/*
 	 * Gather and send basic link info
 	 */
+	ENCODE(ername, rname);
 	(void) sendcmd(C_RECVSYMLINK, "%o %04o %ld %ld %ld %s %s %s", 
-		       opts, stb->st_mode & 07777, 
-		       (long) stb->st_size, 
+		       opts, stb->st_mode & 07777, (long) stb->st_size, 
 		       stb->st_mtime, stb->st_atime,
-		       user, group, rname);
+		       user, group, ername);
 	if (response() < 0)
 		return(-1);
 
@@ -690,8 +703,9 @@ static int sendlink(rname, opts, stb, user, group, destdir)
 		error("%s: readlink failed", target);
 		err();
 	}
-	(void) snprintf(tbuf, sizeof tbuf, "%.*s", (int) stb->st_size, lbuf);
-	(void) sendcmd(C_NONE, "%s\n", tbuf);
+	(void) snprintf(tbuf, sizeof(tbuf), "%.*s", (int) stb->st_size, lbuf);
+	ENCODE(ername, tbuf);
+	(void) sendcmd(C_NONE, "%s\n", ername);
 
 	if (n != stb->st_size) {
 		error("%s: file changed size", target);
@@ -765,12 +779,10 @@ static int sendlink(rname, opts, stb, user, group, destdir)
  *	US_NOENT	- remote doesn't exist
  *	US_OUTDATE	- out of date
  *	US_DOCOMP	- comparing binaries to determine if out of date
- *	US_MODE		- File modes do not match
+ *	US_CHMOG	- File modes or ownership do not match
  */
-static int update(rname, opts, statp)
-	char *rname;
-	opt_t opts;
-	struct stat *statp;
+static int
+update(char *rname, opt_t opts, struct stat *statp)
 {
 	off_t size;
 	time_t mtime;
@@ -779,6 +791,7 @@ static int update(rname, opts, statp)
 	char *owner = NULL, *group = NULL;
 	int done, n;
 	u_char *cp;
+	char ername[MAXPATHLEN*4];
 
 	debugmsg(DM_CALL, "update(%s, 0x%x, 0x%x)\n", rname, opts, statp);
 
@@ -791,7 +804,8 @@ static int update(rname, opts, statp)
 	/*
 	 * Check to see if the file exists on the remote machine.
 	 */
-	(void) sendcmd(C_QUERY, "%s", rname);
+	ENCODE(ername, rname);
+	(void) sendcmd(C_QUERY, "%s", ername);
 
 	for (done = 0; !done;) {
 		n = remline(cp = respbuff, sizeof(respbuff), TRUE);
@@ -843,7 +857,7 @@ static int update(rname, opts, statp)
 			/* Goto top of loop */
 
 		default:
-			error("update: unexpected response to query '%s'", cp);
+			error("update: unexpected response to query '%s'", respbuff);
 			return(US_NOTHING);
 		}
 	}
@@ -860,7 +874,7 @@ static int update(rname, opts, statp)
 	/*
 	 * Parse size
 	 */
-	size = strtol(cp, (char **)&cp, 10);
+	size = (off_t) strtol(cp, (char **)&cp, 10);
 	if (*cp++ != ' ') {
 		error("update: size not delimited");
 		return(US_NOTHING);
@@ -912,8 +926,8 @@ static int update(rname, opts, statp)
 
 	debugmsg(DM_MISC, "update(%s,) local mode %04o remote mode %04o\n", 
 		 rname, lmode, rmode);
-	debugmsg(DM_MISC, "update(%s,) size %d mtime %d owner '%s' grp '%s'\n",
-		 rname, (int) size, mtime, owner, group);
+	debugmsg(DM_MISC, "update(%s,) size %ld mtime %d owner '%s' grp '%s'\n",
+		 rname, (long) size, mtime, owner, group);
 
 	if (statp->st_mtime != mtime) {
 		if (statp->st_mtime < mtime && IS_ON(opts, DO_YOUNGER)) {
@@ -925,24 +939,18 @@ static int update(rname, opts, statp)
 		return(US_OUTDATE);
 	}
 
-	/*
-	 * If the mode of a file does not match the local mode, the
-	 * whole file is updated.  This is done both to insure that
-	 * a bogus version of the file has not been installed and to
-	 * avoid having to handle weird cases of chmod'ing symlinks 
-	 * and such.
-	 */
+	if (statp->st_size != size) {
+		debugmsg(DM_MISC, "size does not match (%ld != %ld).\n",
+			 (long) statp->st_size, (long) size);
+		return(US_OUTDATE);
+	} 
+
 	if (!IS_ON(opts, DO_NOCHKMODE) && lmode != rmode) {
 		debugmsg(DM_MISC, "modes do not match (%04o != %04o).\n",
 			 lmode, rmode);
-		return(US_OUTDATE);
+		return(US_CHMOG);
 	}
 
-	if (statp->st_size != size) {
-		debugmsg(DM_MISC, "size does not match (%d != %d).\n",
-			 (int) statp->st_size, size);
-		return(US_OUTDATE);
-	} 
 
 	/*
 	 * Check ownership
@@ -956,20 +964,21 @@ static int update(rname, opts, statp)
 					 "owner does not match (%s != %s).\n",
 					 getusername(statp->st_uid, 
 						     target, opts), owner);
-				return(US_OUTDATE);
+				return(US_CHMOG);
 			}
 		} else {
 			/* 
 			 * Check numerically.
 			 * Allow negative numbers.
 			 */
-			while (*owner && !isdigit(*owner) && (*owner != '-'))
+			while (*owner && !isdigit((unsigned char)*owner) &&
+			    (*owner != '-'))
 				++owner;
-			if (owner && atoi(owner) != statp->st_uid) {
+			if (owner && (UID_T) atoi(owner) != statp->st_uid) {
 				debugmsg(DM_MISC, 
 					 "owner does not match (%d != %s).\n",
 					 statp->st_uid, owner);
-				return(US_OUTDATE);
+				return(US_CHMOG);
 			}
 		}
 	} 
@@ -983,18 +992,19 @@ static int update(rname, opts, statp)
 					 "group does not match (%s != %s).\n",
 					 getgroupname(statp->st_gid, 
 						      target, opts), group);
-				return(US_OUTDATE);
+				return(US_CHMOG);
 			}
 		} else {	
 			/* Check numerically */
 			/* Allow negative gid */
-			while (*group && !isdigit(*group) && (*group != '-'))
+			while (*group && !isdigit((unsigned char) *group) &&
+			    (*group != '-'))
 				++group;
-			if (group && atoi(group) != statp->st_gid) {
+			if (group && (UID_T) atoi(group) != statp->st_gid) {
 				debugmsg(DM_MISC,
 					 "group does not match (%d != %s).\n",
 					 statp->st_gid, group);
-				return(US_OUTDATE);
+				return(US_CHMOG);
 			}
 		}
 	}
@@ -1005,10 +1015,8 @@ static int update(rname, opts, statp)
 /*
  * Stat a file
  */
-static int dostat(file, statbuf, opts)
-	char *file;
-	struct stat *statbuf;
-	opt_t opts;
+static int
+dostat(char *file, struct stat *statbuf, opt_t opts)
 {
 	int s;
 
@@ -1024,6 +1032,96 @@ static int dostat(file, statbuf, opts)
 }
 
 /*
+ * We need to just change file info.
+ */
+static int
+statupdate(int u, char *target, opt_t opts, char *rname, int destdir,
+	   struct stat *st, char *user, char *group)
+{
+	int rv = 0;
+	char ername[MAXPATHLEN*4];
+	int lmode = st->st_mode & 07777;
+
+	if (u == US_CHMOG) {
+		if (IS_ON(opts, DO_VERIFY)) {
+			message(MT_INFO,
+				"%s: need to change to perm %04o, owner %s, group %s",
+				target, lmode, user, group);
+			runspecial(target, opts, rname, destdir);
+		}
+		else {
+			message(MT_CHANGE, "%s: change to perm %04o, owner %s, group %s", 
+				target, lmode, user, group);
+			ENCODE(ername, rname);
+			(void) sendcmd(C_CHMOG, "%o %04o %s %s %s",
+				       opts, lmode, user, group, ername);
+			(void) response();
+		}
+		rv = 1;
+	}
+	return(rv);
+}
+
+
+/*
+ * We need to install/update:
+ */
+static int
+fullupdate(int u, char *target, opt_t opts, char *rname, int destdir,
+	   struct stat *st, char *user, char *group)
+{
+	/*
+	 * No entry - need to install
+	 */
+	if (u == US_NOENT) {
+		if (IS_ON(opts, DO_VERIFY)) {
+			message(MT_INFO, "%s: need to install", target);
+			runspecial(target, opts, rname, destdir);
+			return(1);
+		}
+		if (!IS_ON(opts, DO_QUIET))
+			message(MT_CHANGE, "%s: installing", target);
+		FLAG_OFF(opts, (DO_COMPARE|DO_REMOVE));
+	}
+
+	/*
+	 * Handle special file types, including directories and symlinks
+	 */
+	if (S_ISDIR(st->st_mode)) {
+		if (senddir(rname, opts, st, user, group, destdir) > 0)
+			return(1);
+		return(0);
+	} else if (S_ISLNK(st->st_mode)) {
+		if (u == US_NOENT)
+			FLAG_ON(opts, DO_COMPARE);
+		/*
+		 * Since we always send link info to the server
+		 * so the server can determine if the remote link
+		 * is correct, we never get any acknowledge meant
+		 * from the server whether the link was really
+		 * updated or not.
+		 */
+		(void) sendlink(rname, opts, st, user, group, destdir);
+		return(0);
+	} else if (S_ISREG(st->st_mode)) {		
+		if (u == US_OUTDATE) {
+			if (IS_ON(opts, DO_VERIFY)) {
+				message(MT_INFO, "%s: need to update", target);
+				runspecial(target, opts, rname, destdir);
+				return(1);
+			}
+			if (!IS_ON(opts, DO_QUIET))
+				message(MT_CHANGE, "%s: updating", target);
+		}
+		return (sendfile(rname, opts, st, user, group, destdir) == 0);
+	} else {
+		message(MT_INFO, "%s: unknown file type 0%o", target,
+			st->st_mode);
+		return(0);
+	}
+}
+
+/*
  * Transfer the file or directory in target[].
  * rname is the name of the file on the remote host.
  *
@@ -1031,16 +1129,12 @@ static int dostat(file, statbuf, opts)
  * Return 0 if nothing happened.
  * Return > 0 if anything is updated.
  */
-static int sendit(rname, opts, destdir)
-	char *rname;
-	opt_t opts;
-	int destdir;
+static int
+sendit(char *rname, opt_t opts, int destdir)
 {
 	static struct stat stb;
-	extern struct subcmd *subcmds;
 	char *user, *group;
 	int u, len;
-	int didupdate = 0;
 
 	/*
 	 * Remove possible accidental newline
@@ -1077,80 +1171,28 @@ static int sendit(rname, opts, destdir)
 		return(0);
 	}
 
-	/*
-	 * File mode needs changing
-	 */
-	if (u == US_MODE) {
-		if (IS_ON(opts, DO_VERIFY)) {
-			message(MT_INFO, "%s: need to chmod to %04o",
-				target, stb.st_mode & 07777);
-			runspecial(target, opts, rname, destdir);
-			return(1);
-		}
-		message(MT_CHANGE, "%s: chmod to %04o", 
-			target, stb.st_mode & 07777);
-		(void) sendcmd(C_CHMOD, "%o %04o %s",
-			       opts, stb.st_mode & 07777, rname);
-		(void) response();
-		return(1);
-	}
-
 	user = getusername(stb.st_uid, target, opts);
 	group = getgroupname(stb.st_gid, target, opts);
 
-	/*
-	 * No entry - need to install
-	 */
-	if (u == US_NOENT) {
-		if (IS_ON(opts, DO_VERIFY)) {
-			message(MT_INFO, "%s: need to install", target);
-			runspecial(target, opts, rname, destdir);
-			return(1);
-		}
-		if (!IS_ON(opts, DO_QUIET))
-			message(MT_CHANGE, "%s: installing", target);
-		FLAG_OFF(opts, (DO_COMPARE|DO_REMOVE));
-	}
+	if (u == US_CHMOG && IS_OFF(opts, DO_UPDATEPERM))
+		u = US_OUTDATE;
 
-	/*
-	 * Handle special file types, including directories and symlinks
-	 */
-	if (S_ISDIR(stb.st_mode)) {
-		if (senddir(rname, opts, &stb, user, group, destdir) > 0)
-			didupdate = 1;
-	} else if (S_ISLNK(stb.st_mode)) {
-		if (u != US_NOENT)
-			FLAG_ON(opts, DO_COMPARE);
-		/*
-		 * Since we always send link info to the server
-		 * so the server can determine if the remote link
-		 * is correct, we never get any acknowledge meant
-		 * from the server whether the link was really
-		 * updated or not.
-		 */
-		(void) sendlink(rname, opts, &stb, user, group, destdir);
-	} else if (S_ISREG(stb.st_mode)) {		
-		if (u == US_OUTDATE) {
-			if (IS_ON(opts, DO_VERIFY)) {
-				message(MT_INFO, "%s: need to update", target);
-				runspecial(target, opts, rname, destdir);
-				return(1);
-			}
-			if (!IS_ON(opts, DO_QUIET))
-				message(MT_CHANGE, "%s: updating", target);
-		}
-		if (sendfile(rname, opts, &stb, user, group, destdir) == 0)
-			didupdate = 1;
-	} else
-		error("%s: unknown file type", target);
+	if (u == US_NOENT || u == US_OUTDATE || u == US_DOCOMP)
+		return(fullupdate(u, target, opts, rname, destdir, &stb,
+				  user, group));
 
-	return(didupdate);
+	if (u == US_CHMOG)
+		return(statupdate(u, target, opts, rname, destdir, &stb,
+				  user, group));
+
+	return(0);
 }
 	
 /*
  * Remove temporary files and do any cleanup operations before exiting.
  */
-extern void cleanup()
+void
+cleanup(int dummy)
 {
 	char *file;
 #ifdef USE_STATDB
@@ -1159,7 +1201,7 @@ extern void cleanup()
 	(void) unlink(statfile);
 #endif
 
-	if ((file = getnotifyfile()))
+	if ((file = getnotifyfile()) != NULL)
 		(void) unlink(file);
 }
 
@@ -1172,14 +1214,13 @@ extern void cleanup()
  * Return 0 if nothing updated.
  * Return > 0 if something was updated.
  */
-extern int install(src, dest, ddir, destdir, opts)
-	char *src, *dest;
- 	int ddir, destdir;
-	opt_t opts;
+int
+install(char *src, char *dest, int ddir, int destdir, opt_t opts)
 {
 	static char destcopy[MAXPATHLEN];
 	char *rname;
 	int didupdate = 0;
+	char ername[MAXPATHLEN*4];
 
 	debugmsg(DM_CALL,
 		"install(src=%s,dest=%s,ddir=%d,destdir=%d,opts=%d) start\n",
@@ -1190,7 +1231,7 @@ extern int install(src, dest, ddir, destdir, opts)
 	if (IS_ON(opts, DO_WHOLE))
 		source[0] = CNULL;
 	else
-		(void) strlcpy(source, src, sizeof source);
+		(void) strlcpy(source, src, sizeof(source));
 
 	if (dest == NULL) {
 		FLAG_OFF(opts, DO_WHOLE); /* WHOLE only useful if renaming */
@@ -1205,7 +1246,7 @@ extern int install(src, dest, ddir, destdir, opts)
 		char *cp;
 
 		cp = getondistoptlist(opts);
-		(void) snprintf(buff, sizeof buff, "%s%s%s %s %s", 
+		(void) snprintf(buff, sizeof(buff), "%s%s%s %s %s", 
 			       IS_ON(opts, DO_VERIFY) ? "verify" : "install",
 			       (cp) ? " -o" : "", (cp) ? cp : "", 
 			       src, dest);
@@ -1250,10 +1291,11 @@ extern int install(src, dest, ddir, destdir, opts)
 	/*
 	 * Pass the destination file/directory name to remote.
 	 */
+	ENCODE(ername, dest);
  	if (ddir)
-		(void) sendcmd(C_DIRTARGET, "%o %s", opts, dest);
+		(void) sendcmd(C_DIRTARGET, "%o %s", opts, ername);
 	else
-		(void) sendcmd(C_TARGET, "%o %s", opts, dest);
+		(void) sendcmd(C_TARGET, "%o %s", opts, ername);
 	if (response() < 0)
 		return(-1);
 
@@ -1264,7 +1306,7 @@ extern int install(src, dest, ddir, destdir, opts)
 	 * hardlink info.
 	 */
 	if (destdir || (src && dest && strcmp(src, dest))) {
-		(void) strlcpy(destcopy, dest, sizeof destcopy);
+		(void) strlcpy(destcopy, dest, sizeof(destcopy));
 		Tdest = destcopy;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.13 2003/04/19 17:22:30 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.14 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -32,18 +32,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include "defs.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$From: server.c,v 1.10 1999/08/04 15:57:33 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: server.c,v 1.13 2003/04/19 17:22:30 millert Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$OpenBSD: server.c,v 1.14 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)server.c	5.3 (Berkeley) 6/7/86";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
@@ -51,8 +54,6 @@ static char copyright[] =
 /*
  * Server routines
  */
-
-#include "defs.h"
 
 char	tempname[sizeof _RDIST_TMP + 1]; /* Tmp file name */
 char	buf[BUFSIZ];		/* general purpose buffer */
@@ -65,11 +66,32 @@ static long min_freespace = 0;	/* Minimium free space on a filesystem */
 static long min_freefiles = 0;	/* Minimium free # files on a filesystem */
 int	oumask;			/* Old umask */
 
+static int cattarget(char *);
+static int setownership(char *, int, UID_T, GID_T, int);
+static int setfilemode(char *, int, int, int);
+static int fchog(int, char *, char *, char *, int);
+static int removefile(struct stat *, int);
+static void doclean(char *);
+static void clean(char *);
+static void dospecial(char *);
+static void docmdspecial(void);
+static void query(char *);
+static int chkparent(char *, opt_t);
+static char *savetarget(char *, opt_t);
+static void recvfile(char *, opt_t, int, char *, char *, time_t, time_t, off_t);
+static void recvdir(opt_t, int, char *, char *);
+static void recvlink(char *, opt_t, int, off_t);
+static void hardlink(char *);
+static void setconfig(char *);
+static void recvit(char *, int);
+static void dochmog(char *);
+static void settarget(char *, int);
+
 /*
  * Cat "string" onto the target buffer with error checking.
  */
-static int cattarget(string)
-	char *string;
+static int
+cattarget(char *string)
 {
 	if (strlen(string) + strlen(target) + 2 > sizeof(target)) {
 		message(MT_INFO, "target buffer is not large enough.");
@@ -80,8 +102,8 @@ static int cattarget(string)
 		return(-10);
 	}
 
-	(void) snprintf(ptarget, target + sizeof(target) - ptarget,
-	    "/%s", string);
+	(void) snprintf(ptarget, sizeof(target) - (ptarget - target),
+			"/%s", string);
 
 	return(0);
 }
@@ -89,47 +111,47 @@ static int cattarget(string)
 /*
  * Set uid and gid ownership of a file.
  */
-static int setownership(file, fd, uid, gid)
-	char *file;
-	int fd;
-	UID_T uid;
-	GID_T gid;
+static int
+setownership(char *file, int fd, UID_T uid, GID_T gid, int link)
 {
 	int status = -1;
 
 	/*
 	 * We assume only the Superuser can change uid ownership.
 	 */
-	if (getuid() == 0) {
-#if	defined(HAVE_FCHOWN)
-		if (fd != -1)
-			status = fchown(fd, (CHOWN_UID_T) uid, 
-					(CHOWN_GID_T) gid);
-#endif
-		if (status < 0)
-			status = chown(file, (CHOWN_UID_T) uid, 
-				       (CHOWN_GID_T) gid);
+	if (getuid() != 0) 
+		uid = -1;
 
-		if (status < 0) {
-			message(MT_NOTICE, "%s: chown %d:%d failed: %s", 
-				target, (UID_T) uid, (GID_T) gid, SYSERR);
-			return(-1);
-		}
-	} else {
-#if	defined(HAVE_FCHOWN)
-		if (fd != -1)
-			status = fchown(fd, (CHOWN_UID_T) -1, 
-					(CHOWN_GID_T) gid);
+	/*
+	 * If we are dealing with a symlink, only try to change it if
+	 * we have lchown, if we don't leave it alone.
+	 */
+#if	defined(HAVE_LCHOWN)
+	if (link)
+		status = lchown(file, (CHOWN_UID_T) uid, 
+				(CHOWN_GID_T) gid);
+#else
+	if (link)
+		return 0;
 #endif
-		if (status < 0)
-			status = chown(file, (CHOWN_UID_T) -1, 
-				       (CHOWN_GID_T) gid);
 
-		if (status < 0) {
+#if	defined(HAVE_FCHOWN)
+	if (fd != -1 && !link)
+		status = fchown(fd, (CHOWN_UID_T) uid, 
+				(CHOWN_GID_T) gid);
+#endif
+	if (status < 0 && !link)
+		status = chown(file, (CHOWN_UID_T) uid, 
+			       (CHOWN_GID_T) gid);
+
+	if (status < 0) {
+		if (uid == (UID_T) -1)
 			message(MT_NOTICE, "%s: chgrp %d failed: %s",
-				target, (GID_T) gid, SYSERR);
-			return(-1);
-		}
+				target, gid, SYSERR);
+		else
+			message(MT_NOTICE, "%s: chown %d.%d failed: %s", 
+				target, uid, gid, SYSERR);
+		return(-1);
 	}
 
 	return(0);
@@ -138,22 +160,32 @@ static int setownership(file, fd, uid, gid)
 /*
  * Set mode of a file
  */
-static int setfilemode(file, fd, mode)
-	char *file;
-	int fd;
-	int mode;
+static int
+setfilemode(char *file, int fd, int mode, int link)
 {
 	int status = -1;
 
 	if (mode == -1)
 		return(0);
 
+	/*
+	 * If we are dealing with a symlink, only try to change it if
+	 * we have lchown, if we don't leave it alone.
+	 */
+#if	defined(HAVE_LCHMOD)
+	if (link)
+		status = lchmod(file, mode);
+#else
+	if (link)
+		return 0;
+#endif
+
 #if	defined(HAVE_FCHMOD)
-	if (fd != -1)
+	if (fd != -1 && !link)
 		status = fchmod(fd, mode);
 #endif
 
-	if (status < 0)
+	if (status < 0 && !link)
 		status = chmod(file, mode);
 
 	if (status < 0) {
@@ -163,41 +195,16 @@ static int setfilemode(file, fd, mode)
 
 	return(0);
 }
-
-/*
- * Get group entry.  This routine takes a string argument (name).
- * If name is of form ":N" a lookup for gid N is done.
- * Otherwise a lookup by name is done.
- */
-static struct group *mygetgroup(name)
-	char *name;
-{
-    	struct group *gr;
-
-	if (*name == ':')
-	    	gr = getgrgid(atoi(name + 1));
-	else
-	    	gr = getgrnam(name);
-
-	return(gr);
-}
-
 /*
  * Change owner, group and mode of file.
  */
-static int fchog(fd, file, owner, group, mode)
-	int fd;
-	char *file, *owner, *group;
-	int mode;
+static int
+fchog(int fd, char *file, char *owner, char *group, int mode)
 {
-	struct group *gr = NULL;
-	static char last_group[128];
-	static char last_owner[128];
-	static GID_T last_gid = (GID_T)-2;
-	static UID_T last_uid = (UID_T)-2;
-	static GID_T last_primegid;
+	static struct group *gr = NULL;
 	extern char *locuser;
 	int i;
+	struct stat st;
 	UID_T uid;
 	GID_T gid;
 	GID_T primegid = (GID_T)-2;
@@ -206,8 +213,7 @@ static int fchog(fd, file, owner, group, mode)
 	if (userid == 0) {	/* running as root; take anything */
 		if (*owner == ':') {
 			uid = (UID_T) atoi(owner + 1);
-		} else if (last_uid == (UID_T)-2 ||
-			   strcmp(owner, last_owner) != 0) {
+		} else if (pw == NULL || strcmp(owner, pw->pw_name) != 0) {
 			if ((pw = getpwnam(owner)) == NULL) {
 				if (mode != -1 && IS_ON(mode, S_ISUID)) {
 					message(MT_NOTICE,
@@ -219,14 +225,11 @@ static int fchog(fd, file, owner, group, mode)
 					message(MT_NOTICE,
 					"%s: unknown login name \"%s\"",
 						target, owner);
-			} else {
-				uid	 = last_uid	 = pw->pw_uid;
-				primegid = last_primegid = pw->pw_gid;
-				strlcpy(last_owner, owner, sizeof last_owner);
-			}
+			} else
+				uid = pw->pw_uid;
 		} else {
-			uid = last_uid;
-			primegid = last_primegid;
+			uid = pw->pw_uid;
+			primegid = pw->pw_gid;
 		}
 		if (*group == ':') {
 			gid = (GID_T) atoi(group + 1);
@@ -248,14 +251,10 @@ static int fchog(fd, file, owner, group, mode)
 	}
 
 	gid = (GID_T) -1;
-	if (last_gid < (GID_T)0 || strcmp(group, last_group) != 0) {
-	        /*
-		 * Invalid cached values so we need to do a new lookup.
-		 */
-		if ((gr = mygetgroup(group))) {
-			last_gid = gid = gr->gr_gid;
-			strlcpy(last_group, gr->gr_name, sizeof last_group);
-		} else {
+	if (gr == NULL || strcmp(group, gr->gr_name) != 0) {
+		if ((*group == ':' && 
+		     (getgrgid(gid = atoi(group + 1)) == NULL))
+		    || ((gr = (struct group *)getgrnam(group)) == NULL)) {
 			if (mode != -1 && IS_ON(mode, S_ISGID)) {
 				message(MT_NOTICE, 
 				"%s: unknown group \"%s\", clearing setgid",
@@ -265,24 +264,15 @@ static int fchog(fd, file, owner, group, mode)
 				message(MT_NOTICE, 
 					"%s: unknown group \"%s\"",
 					target, group);
-		}
-	} else {
-	    	/*
-		 * Use the cached values.
-		 */
-		gid = last_gid;
-	}
+		} else
+			gid = gr->gr_gid;
+	} else
+		gid = gr->gr_gid;
 
-	/*
-	 * We need to check non-root users to make sure they're a member
-	 * of the group.  If they are not, we don't set that gid ownership.
-	 */
 	if (userid && gid >= 0 && gid != primegid) {
-		if (!gr)
-		    	gr = mygetgroup(group);
 		if (gr)
 			for (i = 0; gr->gr_mem[i] != NULL; i++)
-			    	if (strcmp(locuser, gr->gr_mem[i]) == 0)
+				if (strcmp(locuser, gr->gr_mem[i]) == 0)
 					goto ok;
 		if (mode != -1 && IS_ON(mode, S_ISGID)) {
 			message(MT_NOTICE, 
@@ -293,12 +283,16 @@ static int fchog(fd, file, owner, group, mode)
 		gid = (GID_T) -1;
 	}
 ok:
+	if (stat(file, &st) == -1) {
+		error("%s: Stat failed %s", file, SYSERR);
+		return -1;
+	}
 	/*
 	 * Set uid and gid ownership.  If that fails, strip setuid and
 	 * setgid bits from mode.  Once ownership is set, successful
 	 * or otherwise, set the new file mode.
 	 */
-	if (setownership(file, fd, uid, gid) < 0) {
+	if (setownership(file, fd, uid, gid, S_ISLNK(st.st_mode)) < 0) {
 		if (mode != -1 && IS_ON(mode, S_ISUID)) {
 			message(MT_NOTICE, 
 				"%s: chown failed, clearing setuid", target);
@@ -310,7 +304,7 @@ ok:
 			mode &= ~S_ISGID;
 		}
 	}
-	(void) setfilemode(file, fd, mode);
+	(void) setfilemode(file, fd, mode, S_ISLNK(st.st_mode));
 
 
 	return(0);
@@ -320,8 +314,8 @@ ok:
  * Remove a file or directory (recursively) and send back an acknowledge
  * or an error message.
  */
-static int removefile(statb)
-	struct stat *statb;
+static int
+removefile(struct stat *statb, int silent)
 {
 	DIR *d;
 	static DIRENTRY *dp;
@@ -333,11 +327,20 @@ static int removefile(statb)
 	switch (statb->st_mode & S_IFMT) {
 	case S_IFREG:
 	case S_IFLNK:
+	case S_IFCHR:
+	case S_IFBLK:
+#ifdef S_IFSOCK
+	case S_IFSOCK:
+#endif
+#ifdef S_IFIFO
+	case S_IFIFO:
+#endif
 		if (unlink(target) < 0) {
 			if (errno == ETXTBSY) {
-				message(MT_REMOTE|MT_NOTICE, 
-					"%s: unlink failed: %s",
-					target, SYSERR);
+				if (!silent)
+					message(MT_REMOTE|MT_NOTICE, 
+						"%s: unlink failed: %s",
+						target, SYSERR);
 				return(0);
 			} else {
 				error("%s: unlink failed: %s", target, SYSERR);
@@ -362,29 +365,33 @@ static int removefile(statb)
 
 	optarget = ptarget;
 	len = ptarget - target;
-	while ((dp = readdir(d))) {
+	while ((dp = readdir(d)) != NULL) {
 		if ((D_NAMLEN(dp) == 1 && dp->d_name[0] == '.') ||
 		    (D_NAMLEN(dp) == 2 && dp->d_name[0] == '.' &&
 		     dp->d_name[1] == '.'))
 			continue;
 
 		if (len + 1 + (int)strlen(dp->d_name) >= MAXPATHLEN - 1) {
-			message(MT_REMOTE|MT_WARNING, "%s/%s: Name too long", 
-				target, dp->d_name);
+			if (!silent)
+				message(MT_REMOTE|MT_WARNING, 
+					"%s/%s: Name too long", 
+					target, dp->d_name);
 			continue;
 		}
 		ptarget = optarget;
 		*ptarget++ = '/';
 		cp = dp->d_name;;
-		while ((*ptarget++ = *cp++))
-			;
+		while ((*ptarget++ = *cp++) != '\0')
+			continue;
 		ptarget--;
 		if (lstat(target, &stb) < 0) {
-			message(MT_REMOTE|MT_WARNING, "%s: lstat failed: %s", 
-				target, SYSERR);
+			if (!silent)
+				message(MT_REMOTE|MT_WARNING,
+					"%s: lstat failed: %s", 
+					target, SYSERR);
 			continue;
 		}
-		if (removefile(&stb) < 0)
+		if (removefile(&stb, 0) < 0)
 			++failures;
 	}
 	(void) closedir(d);
@@ -399,6 +406,10 @@ static int removefile(statb)
 		return(-1);
 	}
 removed:
+#if NEWWAY
+	if (!silent)
+		message(MT_CHANGE|MT_REMOTE, "%s: removed", target);
+#else
 	/*
 	 * We use MT_NOTICE instead of MT_CHANGE because this function is
 	 * sometimes called by other functions that are suppose to return a
@@ -406,6 +417,7 @@ removed:
 	 * the Rdist protocol is re-done.  Sigh.
 	 */
 	message(MT_NOTICE|MT_REMOTE, "%s: removed", target);
+#endif
 	return(0);
 }
 
@@ -413,8 +425,8 @@ removed:
  * Check the current directory (initialized by the 'T' command to server())
  * for extraneous files and remove them.
  */
-static void doclean(cp)
-	char *cp;
+static void
+doclean(char *cp)
 {
 	DIR *d;
 	DIRENTRY *dp;
@@ -422,6 +434,7 @@ static void doclean(cp)
 	char *optarget, *ep;
 	int len;
 	opt_t opts;
+	char targ[MAXPATHLEN*4];
 
 	opts = strtol(cp, &ep, 8);
 	if (*ep != CNULL) {
@@ -436,7 +449,7 @@ static void doclean(cp)
 
 	optarget = ptarget;
 	len = ptarget - target;
-	while ((dp = readdir(d))) {
+	while ((dp = readdir(d)) != NULL) {
 		if ((D_NAMLEN(dp) == 1 && dp->d_name[0] == '.') ||
 		    (D_NAMLEN(dp) == 2 && dp->d_name[0] == '.' &&
 		     dp->d_name[1] == '.'))
@@ -450,8 +463,8 @@ static void doclean(cp)
 		ptarget = optarget;
 		*ptarget++ = '/';
 		cp = dp->d_name;;
-		while ((*ptarget++ = *cp++))
-			;
+		while ((*ptarget++ = *cp++) != '\0')
+			continue;
 		ptarget--;
 		if (lstat(target, &stb) < 0) {
 			message(MT_REMOTE|MT_WARNING, "%s: lstat failed: %s", 
@@ -459,7 +472,8 @@ static void doclean(cp)
 			continue;
 		}
 
-		(void) sendcmd(CC_QUERY, "%s", dp->d_name);
+		ENCODE(targ, dp->d_name);
+		(void) sendcmd(CC_QUERY, "%s", targ);
 		(void) remline(cp = buf, sizeof(buf), TRUE);
 
 		if (*cp != CC_YES)
@@ -469,7 +483,7 @@ static void doclean(cp)
 			message(MT_REMOTE|MT_INFO, "%s: need to remove", 
 				target);
 		else
-			(void) removefile(&stb);
+			(void) removefile(&stb, 0);
 	}
 	(void) closedir(d);
 
@@ -480,8 +494,8 @@ static void doclean(cp)
 /*
  * Frontend to doclean().
  */
-static void clean(cp)
-	char *cp;
+static void
+clean(char *cp)
 {
 	doclean(cp);
 	(void) sendcmd(CC_END, NULL);
@@ -493,9 +507,14 @@ static void clean(cp)
  * We can't really set an alarm timeout here since we
  * have no idea how long the command should take.
  */
-static void dospecial(cmd)
-	char *cmd;
+static void
+dospecial(char *xcmd)
 {
+	char cmd[BUFSIZ];
+	if (DECODE(cmd, xcmd) == -1) {
+		error("dospecial: Cannot decode command.");
+		return;
+	}
 	runcommand(cmd);
 }
 
@@ -507,7 +526,8 @@ static void dospecial(cmd)
  * E_FILES.  When an RC_COMMAND is finally received, the E_FILES variable
  * is stuffed into our environment and a normal dospecial() command is run.
  */
-static void docmdspecial()
+static void
+docmdspecial(void)
 {
 	char *cp;
 	char *cmd, *env = NULL;
@@ -576,11 +596,17 @@ static void docmdspecial()
  *  QC_YES		- exists and its a directory or symbolic link
  *  QC_ERRMSGmessage 	- error message
  */
-static void query(name)
-	char *name;
+static void
+query(char *xname)
 {
 	static struct stat stb;
 	int s = -1, stbvalid = 0;
+	char name[MAXPATHLEN];
+
+	if (DECODE(name, xname) == -1) {
+		error("query: Cannot decode filename");
+		return;
+	}
 
 	if (catname && cattarget(name) < 0)
 		return;
@@ -641,9 +667,18 @@ static void query(name)
 	case S_IFLNK:
 	case S_IFDIR:
 	case S_IFREG:
+#ifdef notyet
+	case S_IFCHR:
+	case S_IFBLK:
+#ifdef S_IFSOCK
+	case S_IFSOCK:
+#endif
+#ifdef S_IFIFO
+	case S_IFIFO:
+#endif
+#endif
 		(void) sendcmd(QC_YES, "%ld %ld %o %s %s",
-			       (long) stb.st_size, 
-			       stb.st_mtime, 
+			       (long) stb.st_size, stb.st_mtime,
 			       stb.st_mode & 07777,
 			       getusername(stb.st_uid, target, options), 
 			       getgroupname(stb.st_gid, target, options));
@@ -659,9 +694,8 @@ static void query(name)
 /*
  * Check to see if parent directory exists and create one if not.
  */
-static int chkparent(name, opts)
-	char *name;
-	opt_t opts;
+static int
+chkparent(char *name, opt_t opts)
 {
 	char *cp;
 	struct stat stb;
@@ -697,8 +731,8 @@ static int chkparent(name, opts)
 /*
  * Save a copy of 'file' by renaming it.
  */
-static char *savetarget(file)
-	char *file;
+static char *
+savetarget(char *file, opt_t opts)
 {
 	static char savefile[MAXPATHLEN];
 
@@ -707,11 +741,38 @@ static char *savetarget(file)
 		return(NULL);
 	}
 
-	(void) snprintf(savefile, sizeof savefile, "%s%s", file, SAVE_SUFFIX);
+	if (IS_ON(opts, DO_HISTORY)) {
+		int i;
+		struct stat st;
+		/*
+		 * There is a race here, but the worst that can happen
+		 * is to lose a version of the file
+		 */
+		for (i = 1; i < 1000; i++) {
+			(void) snprintf(savefile, sizeof(savefile),
+					"%s;%.3d", file, i);
+			if (stat(savefile, &st) == -1 && errno == ENOENT)
+				break;
 
-	if (unlink(savefile) != 0 && errno != ENOENT) {
-		message(MT_NOTICE, "%s: remove failed: %s", savefile, SYSERR);
-		return(NULL);
+		}
+		if (i == 1000) {
+			message(MT_NOTICE, 
+			    "%s: More than 1000 versions for %s; reusing 1\n",
+				savefile, SYSERR);
+			i = 1;
+			(void) snprintf(savefile, sizeof(savefile),
+					"%s;%.3d", file, i);
+		}
+	}
+	else {
+		(void) snprintf(savefile, sizeof(savefile), "%s%s",
+				file, SAVE_SUFFIX);
+
+		if (unlink(savefile) != 0 && errno != ENOENT) {
+			message(MT_NOTICE, "%s: remove failed: %s",
+				savefile, SYSERR);
+			return(NULL);
+		}
 	}
 
 	if (rename(file, savefile) != 0 && errno != ENOENT) {
@@ -724,37 +785,13 @@ static char *savetarget(file)
 }
 
 /*
- * See if buf is all zeros (sparse check)
- */
-static int iszeros (buf, size)
-	char *buf;
-	off_t size;
-{
-    	while (size > 0) {
-	    if (*buf != CNULL)
-		return(0);
-	    buf++;
-	    size--;
-	}
-
-	return(1);
-}
-
-  
-/*
  * Receive a file
  */
-static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
-	/*ARGSUSED*/
-	char *new;
-	opt_t opts;
-	int mode;
-	char *owner, *group;
-	time_t mtime;
-	time_t atime;
-	off_t size;
+static void
+recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
+	 time_t mtime, time_t atime, off_t size)
 {
-	int f, wrerr, olderrno, lastwashole = 0, wassparse = 0;
+	int f, wrerr, olderrno;
 	off_t i;
 	char *cp;
 	char *savefile = NULL;
@@ -801,31 +838,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 		amt = BUFSIZ;
 		if (i + amt > size)
 			amt = size - i;
-		if (IS_ON(opts, DO_SPARSE) && iszeros(buf, amt)) {
-		    	if (lseek (f, amt, SEEK_CUR) < 0L) {
-			    	olderrno = errno;
-				wrerr++;
-			}
-			lastwashole = 1;
-			wassparse++;
-		} else {
-		    	if (wrerr == 0 && xwrite(f, buf, amt) != amt) {
-			    	olderrno = errno;
-				wrerr++;
-			}
-			lastwashole = 0;
-		}
-	}
-
-	if (lastwashole) {
-#if	defined(HAVE_FTRUNCATE)
-	    	if (write (f, "", 1) != 1 || ftruncate (f, size) < 0)
-#else
-		/* Seek backwards one character and write a null.  */
-		if (lseek (f, (off_t) -1, SEEK_CUR) < 0L
-		    || write (f, "", 1) != 1)
-#endif
-		{
+		if (wrerr == 0 && xwrite(f, buf, amt) != amt) {
 			olderrno = errno;
 			wrerr++;
 		}
@@ -861,6 +874,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 		errno = 0;
 		if ((f2 = fopen(new, "r")) == NULL) {
 			error("%s: open for read failed: %s", new, SYSERR);
+			(void) fclose(f1);
 			(void) close(f);
 			(void) unlink(new);
 			return;
@@ -916,7 +930,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 	 * Try to save target file from being over-written
 	 */
 	if (IS_ON(opts, DO_SAVETARGETS))
-		if ((savefile = savetarget(target)) == NULL) {
+		if ((savefile = savetarget(target, opts)) == NULL) {
 			(void) unlink(new);
 			return;
 		}
@@ -929,7 +943,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 		char *saveptr = ptarget;
 
 		ptarget = &target[strlen(target)];
-		removefile(&statbuff);
+		removefile(&statbuff, 0);
 		ptarget = saveptr;
 	}
 
@@ -937,36 +951,59 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 	 * Install new (temporary) file as the actual target
 	 */
 	if (rename(new, target) < 0) {
+		static char fmt[] = "%s -> %s: rename failed: %s";
+		struct stat stb;
 		/*
 		 * If the rename failed due to "Text file busy", then
 		 * try to rename the target file and retry the rename.
 		 */
-		if (errno == ETXTBSY) {
+		switch (errno) {
+		case ETXTBSY:
 			/* Save the target */
-			if ((savefile = savetarget(target)) != NULL) {
+			if ((savefile = savetarget(target, opts)) != NULL) {
 				/* Retry installing new file as target */
 				if (rename(new, target) < 0) {
-					error("%s -> %s: rename failed: %s",
-					      new, target, SYSERR);
+					error(fmt, new, target, SYSERR);
 					/* Try to put back save file */
 					if (rename(savefile, target) < 0)
-						error(
-					         "%s -> %s: rename failed: %s",
-						      savefile, target, 
-						      SYSERR);
+						error(fmt,
+						      savefile, target, SYSERR);
+					(void) unlink(new);
 				} else
 					message(MT_NOTICE, "%s: renamed to %s",
 						target, savefile);
+				/*
+				 * XXX: We should remove the savefile here.
+				 *	But we are nice to nfs clients and
+				 *	we keep it.
+				 */
 			}
-		} else {
-			error("%s -> %s: rename failed: %s", 
-			      new, target, SYSERR);
+			break;
+		case EISDIR:
+			/*
+			 * See if target is a directory and remove it if it is
+			 */
+			if (lstat(target, &stb) == 0) {
+				if (S_ISDIR(stb.st_mode)) {
+					char *optarget = ptarget;
+					for (ptarget = target; *ptarget;
+						ptarget++);
+					/* If we failed to remove, we'll catch
+					   it later */
+					(void) removefile(&stb, 1);
+					ptarget = optarget;
+				}
+			}
+			if (rename(new, target) >= 0)
+				break;
+			/*FALLTHROUGH*/
+
+		default:
+			error(fmt, new, target, SYSERR);
 			(void) unlink(new);
+			break;
 		}
 	}
-
-	if (wassparse)
-	    	message (MT_NOTICE, "%s: was sparse", target);
 
 	if (IS_ON(opts, DO_COMPARE))
 		message(MT_REMOTE|MT_CHANGE, "%s: updated", target);
@@ -977,10 +1014,8 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 /*
  * Receive a directory
  */
-static void recvdir(opts, mode, owner, group)
-	opt_t opts;
-	int mode;
-	char *owner, *group;
+static void
+recvdir(opt_t opts, int mode, char *owner, char *group)
 {
 	static char lowner[100], lgroup[100];
 	char *cp;
@@ -1040,20 +1075,22 @@ static void recvdir(opts, mode, owner, group)
 
 				o = (owner[0] == ':') ? opts & DO_NUMCHKOWNER :
 					opts;
-				if ((cp = getusername(stb.st_uid, target, o)))
+				if ((cp = getusername(stb.st_uid, target, o))
+				    != NULL)
 					if (strcmp(owner, cp))
 						(void) strlcpy(lowner, cp,
-						    sizeof lowner);
+						    sizeof(lowner));
 			}
 			if (!IS_ON(opts, DO_NOCHKGROUP) && group) {
 				int o;
 
 				o = (group[0] == ':') ? opts & DO_NUMCHKGROUP :
 					opts;
-				if ((cp = getgroupname(stb.st_gid, target, o)))
+				if ((cp = getgroupname(stb.st_gid, target, o))
+				    != NULL)
 					if (strcmp(group, cp))
 						(void) strlcpy(lgroup, cp,
-						    sizeof lgroup);
+						    sizeof(lgroup));
 			}
 
 			/*
@@ -1065,12 +1102,12 @@ static void recvdir(opts, mode, owner, group)
 				    (cp = getusername(stb.st_uid, 
 						      target, opts)))
 					(void) strlcpy(lowner, cp,
-					    sizeof lowner);
+					    sizeof(lowner));
 				if (lgroup[0] == CNULL && 
 				    (cp = getgroupname(stb.st_gid, 
 						       target, opts)))
 					(void) strlcpy(lgroup, cp,
-					    sizeof lgroup);
+					    sizeof(lgroup));
 
 				if (IS_ON(opts, DO_VERIFY))
 					message(MT_NOTICE,
@@ -1128,14 +1165,13 @@ static void recvdir(opts, mode, owner, group)
 /*
  * Receive a link
  */
-static void recvlink(new, opts, mode, size)
-	char *new;
-	opt_t opts;
-	int mode;
-	off_t size;
+static void
+recvlink(char *new, opt_t opts, int mode, off_t size)
 {
+	char tbuf[MAXPATHLEN];
 	struct stat stb;
 	char *optarget;
+	int uptodate;
 	off_t i;
 
 	/*
@@ -1146,6 +1182,27 @@ static void recvlink(new, opts, mode, size)
 
 	if (response() < 0) {
 		err();
+		return;
+	}
+
+	uptodate = 0;
+	if ((i = readlink(target, tbuf, sizeof(tbuf))) != -1) {
+		tbuf[i] = '\0';
+		if (i == size && strncmp(buf, tbuf, (int) size) == 0)
+			uptodate = 1;
+	}
+	mode &= 0777;
+
+	if (IS_ON(opts, DO_VERIFY) || uptodate) {
+		if (uptodate)
+			message(MT_REMOTE|MT_INFO, "");
+		else
+			message(MT_REMOTE|MT_INFO, "%s: need to update",
+				target);
+		if (IS_ON(opts, DO_COMPARE))
+			return;
+		(void) sendcmd(C_END, NULL);
+		(void) response();
 		return;
 	}
 
@@ -1162,37 +1219,13 @@ static void recvlink(new, opts, mode, size)
 	}
 
 	/*
-	 * Do comparison of what link is pointing to if enabled
-	 */
-	mode &= 0777;
-	if (IS_ON(opts, DO_COMPARE)) {
-		char tbuf[MAXPATHLEN];
-		
-		if ((i = readlink(target, tbuf, sizeof(tbuf)-1)) != -1)
-			tbuf[i] = '\0';
-		if (i != -1 && i == size && strncmp(buf, tbuf, (size_t) size) == 0) {
-			(void) unlink(new);
-			ack();
-			return;
-		}
-		if (IS_ON(opts, DO_VERIFY)) {
-			(void) unlink(new);
-			message(MT_REMOTE|MT_INFO, "%s: need to update",
-				target);
-			(void) sendcmd(C_END, NULL);
-			(void) response();
-			return;
-		}
-	}
-
-	/*
 	 * See if target is a directory and remove it if it is
 	 */
 	if (lstat(target, &stb) == 0) {
 		if (S_ISDIR(stb.st_mode)) {
 			optarget = ptarget;
 			for (ptarget = target; *ptarget; ptarget++);
-			if (removefile(&stb) < 0) {
+			if (removefile(&stb, 0) < 0) {
 				ptarget = optarget;
 				(void) unlink(new);
 				(void) sendcmd(C_END, NULL);
@@ -1215,10 +1248,7 @@ static void recvlink(new, opts, mode, size)
 		return;
 	}
 
-	if (IS_ON(opts, DO_COMPARE))
-		message(MT_REMOTE|MT_CHANGE, "%s: updated", target);
-	else
-	        ack();
+	message(MT_REMOTE|MT_CHANGE, "%s: updated", target);
 
 	/*
 	 * Indicate end of receive operation
@@ -1230,14 +1260,15 @@ static void recvlink(new, opts, mode, size)
 /*
  * Creat a hard link to existing file.
  */
-static void hardlink(cmd)
-	char *cmd;
+static void
+hardlink(char *cmd)
 {
 	struct stat stb;
 	int exists = 0;
-	char *oldname, *newname;
+	char *xoldname, *xnewname;
 	char *cp = cmd;
 	static char expbuf[BUFSIZ];
+	char oldname[BUFSIZ], newname[BUFSIZ];
 
 	/* Skip over opts */
 	(void) strtol(cp, &cp, 8);
@@ -1246,15 +1277,25 @@ static void hardlink(cmd)
 		return;
 	}
 
-	oldname = strtok(cp, " ");
-	if (oldname == NULL) {
+	xoldname = strtok(cp, " ");
+	if (xoldname == NULL) {
 		error("hardlink: oldname name not delimited");
 		return;
 	}
 
-	newname = strtok(NULL, " ");
-	if (newname == NULL) {
+	if (DECODE(oldname, xoldname) == -1) {
+		error("hardlink: Cannot decode oldname");
+		return;
+	}
+
+	xnewname = strtok(NULL, " ");
+	if (xnewname == NULL) {
 		error("hardlink: new name not specified");
+		return;
+	}
+
+	if (DECODE(newname, xnewname) == -1) {
+		error("hardlink: Cannot decode newname");
 		return;
 	}
 
@@ -1262,7 +1303,6 @@ static void hardlink(cmd)
 		error("hardlink: tilde expansion failed");
 		return;
 	}
-	oldname = expbuf;
 
 	if (catname && cattarget(newname) < 0) {
 		error("Cannot set newname target.");
@@ -1287,7 +1327,7 @@ static void hardlink(cmd)
 		error("%s: unlink failed: %s", target, SYSERR);
 		return;
 	}
-	if (link(oldname, target) < 0) {
+	if (link(expbuf, target) < 0) {
 		error("%s: cannot link to %s: %s", target, oldname, SYSERR);
 		return;
 	}
@@ -1302,8 +1342,8 @@ static void hardlink(cmd)
  *	SC_FREESPACE	- Set minimium free space of filesystem
  *	SC_FREEFILES	- Set minimium free number of files of filesystem
  */
-static void setconfig(cmd)
-	char *cmd;
+static void
+setconfig(char *cmd)
 {
 	char *cp = cmd;
 	char *estr;
@@ -1315,7 +1355,7 @@ static void setconfig(cmd)
 		 */
 		if (!fromhost) {
 			fromhost = xstrdup(cp);
-			message(MT_SYSLOG, "startup for %s",  fromhost);
+			message(MT_SYSLOG, "startup for %s", fromhost);
 #if defined(SETARGS) || defined(HAVE_SETPROCTITLE)
 			setproctitle("serving %s", cp);
 #endif /* SETARGS || HAVE_SETPROCTITLE */
@@ -1323,7 +1363,7 @@ static void setconfig(cmd)
 		break;
 
 	case SC_FREESPACE: 	/* Minimium free space */
-		if (!isdigit(*cp)) {
+		if (!isdigit((unsigned char)*cp)) {
 			fatalerr("Expected digit, got '%s'.", cp);
 			return;
 		}
@@ -1331,7 +1371,7 @@ static void setconfig(cmd)
 		break;
 
 	case SC_FREEFILES: 	/* Minimium free files */
-		if (!isdigit(*cp)) {
+		if (!isdigit((unsigned char)*cp)) {
 			fatalerr("Expected digit, got '%s'.", cp);
 			return;
 		}
@@ -1339,11 +1379,19 @@ static void setconfig(cmd)
 		break;
 
 	case SC_LOGGING:	/* Logging options */
-		if ((estr = msgparseopts(cp, TRUE))) {
+		if ((estr = msgparseopts(cp, TRUE)) != NULL) {
 			fatalerr("Bad message option string (%s): %s", 
 				 cp, estr);
 			return;
 		}
+		break;
+
+	case SC_DEFOWNER:
+		(void) strlcpy(defowner, cp, sizeof(defowner));
+		break;
+
+	case SC_DEFGROUP:
+		(void) strlcpy(defgroup, cp, sizeof(defgroup));
 		break;
 
 	default:
@@ -1355,9 +1403,8 @@ static void setconfig(cmd)
 /*
  * Receive something
  */
-static void recvit(cmd, type)
-	char *cmd;
-	int type;
+static void
+recvit(char *cmd, int type)
 {
 	int mode;
 	opt_t opts;
@@ -1365,6 +1412,7 @@ static void recvit(cmd, type)
 	time_t mtime, atime;
 	char *owner, *group, *file;
 	char new[MAXPATHLEN];
+	char fileb[MAXPATHLEN];
 	long freespace = -1, freefiles = -1;
 	char *cp = cmd;
 
@@ -1432,14 +1480,19 @@ static void recvit(cmd, type)
 	}
 
 	/*
-	 * Get file name.  Can't use strtok() since there could
+	 * Get file name. Can't use strtok() since there could
 	 * be white space in the file name.
 	 */
-	file = group + strlen(group) + 1;
-	if (file == NULL) {
+	if (DECODE(fileb, group + strlen(group) + 1) == -1) {
+		error("recvit: Cannot decode file name");
+		return;
+	}
+
+	if (fileb[0] == '\0') {
 		error("recvit: no file name");
 		return;
 	}
+	file = fileb;
 
 	debugmsg(DM_MISC,
 		 "recvit: opts = %04o mode = %04o size = %d mtime = %d",
@@ -1449,15 +1502,15 @@ static void recvit(cmd, type)
 		 owner, group, file, catname, (type == S_IFDIR) ? 1 : 0);
 
 	if (type == S_IFDIR) {
-		if (catname >= sizeof(sptarget)) {
+		if ((size_t) catname >= sizeof(sptarget)) {
 			error("%s: too many directory levels", target);
 			return;
 		}
 		sptarget[catname] = ptarget;
 		if (catname++) {
 			*ptarget++ = '/';
-			while ((*ptarget++ = *file++))
-			    ;
+			while ((*ptarget++ = *file++) != '\0')
+			    continue;
 			ptarget--;
 		}
 	} else {
@@ -1470,12 +1523,13 @@ static void recvit(cmd, type)
 		}
 		file = strrchr(target, '/');
 		if (file == NULL)
-			(void) strlcpy(new, tempname, sizeof new);
+			(void) strlcpy(new, tempname, sizeof(new));
 		else if (file == target)
-			(void) snprintf(new, sizeof new, "/%s", tempname);
+			(void) snprintf(new, sizeof(new), "/%s", tempname);
 		else {
 			*file = CNULL;
-			(void) snprintf(new, sizeof new, "%s/%s", target, tempname);
+			(void) snprintf(new, sizeof(new), "%s/%s", target,
+					tempname);
 			*file = '/';
 		}
 		(void) mktemp(new);
@@ -1535,14 +1589,93 @@ static void recvit(cmd, type)
 }
 
 /*
+ * Chmog something
+ */
+static void
+dochmog(char *cmd)
+{
+	int mode;
+	opt_t opts;
+	char *owner, *group, *file;
+	char *cp = cmd;
+	char fileb[MAXPATHLEN];
+
+	/*
+	 * Get rdist option flags
+	 */
+	opts = strtol(cp, &cp, 8);
+	if (*cp++ != ' ') {
+		error("dochmog: options not delimited");
+		return;
+	}
+
+	/*
+	 * Get file mode
+	 */
+	mode = strtol(cp, &cp, 8);
+	if (*cp++ != ' ') {
+		error("dochmog: mode not delimited");
+		return;
+	}
+
+	/*
+	 * Get file owner name
+	 */
+	owner = strtok(cp, " ");
+	if (owner == NULL) {
+		error("dochmog: owner name not delimited");
+		return;
+	}
+
+	/*
+	 * Get file group name
+	 */
+	group = strtok(NULL, " ");
+	if (group == NULL) {
+		error("dochmog: group name not delimited");
+		return;
+	}
+
+	/*
+	 * Get file name. Can't use strtok() since there could
+	 * be white space in the file name.
+	 */
+	if (DECODE(fileb, group + strlen(group) + 1) == -1) {
+		error("dochmog: Cannot decode file name");
+		return;
+	}
+
+	if (fileb[0] == '\0') {
+		error("dochmog: no file name");
+		return;
+	}
+	file = fileb;
+
+	debugmsg(DM_MISC,
+		 "dochmog: opts = %04o mode = %04o", opts, mode);
+	debugmsg(DM_MISC,
+	         "dochmog: owner = '%s' group = '%s' file = '%s' catname = %d",
+		 owner, group, file, catname);
+
+	if (catname && cattarget(file) < 0) {
+		error("Cannot set newname target.");
+		return;
+	}
+
+	(void) fchog(-1, target, owner, group, mode);
+
+	ack();
+}
+
+/*
  * Set target information
  */
-static void settarget(cmd, isdir)
-	char *cmd;
-	int isdir;
+static void
+settarget(char *cmd, int isdir)
 {
 	char *cp = cmd;
 	opt_t opts;
+	char file[BUFSIZ];
 
 	catname = isdir;
 
@@ -1555,6 +1688,11 @@ static void settarget(cmd, isdir)
 		return;
 	}
 	options = opts;
+
+	if (DECODE(file, cp) == -1) {
+		error("settarget: Cannot decode target name");
+		return;
+	}
 
 	/*
 	 * Handle target
@@ -1571,7 +1709,8 @@ static void settarget(cmd, isdir)
 /*
  * Cleanup in preparation for exiting.
  */
-extern void cleanup()
+void
+cleanup(int dummy)
 {
 	/* We don't need to do anything */
 }
@@ -1579,25 +1718,23 @@ extern void cleanup()
 /*
  * Server routine to read requests and process them.
  */
-extern void server()
+void
+server(void)
 {
 	static char cmdbuf[BUFSIZ];
 	char *cp;
 	int n;
 	extern jmp_buf finish_jmpbuf;
 
-	if (setjmp(finish_jmpbuf)) {
-		setjmp_ok = FALSE;
+	if (setjmp(finish_jmpbuf))
 		return;
-	}
-        setjmp_ok = TRUE;
 	(void) signal(SIGHUP, sighandler);
 	(void) signal(SIGINT, sighandler);
 	(void) signal(SIGQUIT, sighandler);
 	(void) signal(SIGTERM, sighandler);
 	(void) signal(SIGPIPE, sighandler);
 	(void) umask(oumask = umask(0));
-	(void) strlcpy(tempname, _RDIST_TMP, sizeof tempname);
+	(void) strlcpy(tempname, _RDIST_TMP, sizeof(tempname));
 	if (fromhost) {
 		message(MT_SYSLOG, "Startup for %s", fromhost);
 #if 	defined(SETARGS)
@@ -1611,20 +1748,17 @@ extern void server()
 	(void) sendcmd(S_VERSION, NULL);
 
 	if (remline(cmdbuf, sizeof(cmdbuf), TRUE) < 0) {
-		setjmp_ok = FALSE;
 		error("server: expected control record");
 		return;
 	}
 
-	if (cmdbuf[0] != S_VERSION || !isdigit(cmdbuf[1])) {
-		setjmp_ok = FALSE;
+	if (cmdbuf[0] != S_VERSION || !isdigit((unsigned char)cmdbuf[1])) {
 		error("Expected version command, received: \"%s\".", cmdbuf);
 		return;
 	}
 
 	proto_version = atoi(&cmdbuf[1]);
 	if (proto_version != VERSION) {
-		setjmp_ok = FALSE;
 		error("Protocol version %d is not supported.", proto_version);
 		return;
 	}
@@ -1637,10 +1771,8 @@ extern void server()
 	 */
 	for ( ; ; ) {
 		n = remline(cp = cmdbuf, sizeof(cmdbuf), TRUE);
-		if (n == -1) {		/* EOF */
-			setjmp_ok = FALSE;
+		if (n == -1)		/* EOF */
 			return;
-		}
 		if (n == 0) {
 			error("server: expected control record");
 			continue;
@@ -1703,11 +1835,9 @@ extern void server()
 			docmdspecial();
 			continue;
 
-#ifdef DOCHMOD
-	        case C_CHMOD:  		/* Set mode */
-			dochmod(cp);
+	        case C_CHMOG:  		/* Set owner, group, mode */
+			dochmog(cp);
 			continue;
-#endif /* DOCHMOD */
 
 		case C_ERRMSG:		/* Normal error message */
 			if (cp && *cp)
@@ -1717,7 +1847,6 @@ extern void server()
 		case C_FERRMSG:		/* Fatal error message */
 			if (cp && *cp)
 				message(MT_FERROR|MT_NOREMOTE, "%s", cp);
-			setjmp_ok = FALSE;
 			return;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.9 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,18 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include "defs.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: filesys.c,v 6.24 1996/01/30 01:57:07 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$From: filesys.c,v 1.2 1999/08/04 15:57:33 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: filesys.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$OpenBSD: filesys.c,v 1.9 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)filesys.c";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)filesys.c";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
@@ -54,8 +57,6 @@ static char copyright[] =
  * about mounted filesystems.
  */
 
-#include "defs.h"
-#include "filesys.h"
 
 jmp_buf env;
 
@@ -63,10 +64,8 @@ jmp_buf env;
  * Given a pathname, find the fullest component that exists.
  * If statbuf is not NULL, set it to point at our stat buffer.
  */
-char *find_file(pathname, statbuf, isvalid)
-	char *pathname;
-	struct stat *statbuf;
-	int *isvalid;
+char *
+find_file(char *pathname, struct stat *statbuf, int *isvalid)
 {
 	static char last_pathname[MAXPATHLEN];
 	static char file[MAXPATHLEN + 3];
@@ -92,7 +91,7 @@ char *find_file(pathname, statbuf, isvalid)
 		return(file);
 	}
 
-	if ((int)strlen(pathname) > sizeof(file)+3) {
+	if (strlen(pathname) > sizeof(file) + 3) {
 		error("%s: Name to large for buffer.", pathname);
 	        return(NULL);
 	}
@@ -100,18 +99,18 @@ char *find_file(pathname, statbuf, isvalid)
 	/*
 	 * Save for next time
 	 */
-	(void) strlcpy(last_pathname, pathname, sizeof last_pathname);
+	(void) strlcpy(last_pathname, pathname, sizeof(last_pathname));
 
 	if (*pathname == '/')
-	        (void) strlcpy(file, pathname, sizeof file);
+	        (void) strlcpy(file, pathname, sizeof(file));
 	else {
 		/*
 		 * Ensure we have a directory (".") in our path
 		 * so we have something to stat in case the file
 		 * does not exist.
 		 */
-	        (void) strlcpy(file, "./", sizeof file);
-		(void) strlcat(file, pathname, sizeof file);
+	        (void) strlcpy(file, "./", sizeof(file));
+		(void) strlcat(file, pathname, sizeof(file));
 	}
 
 	while (lstat(file, &filestat) != 0) {
@@ -124,12 +123,12 @@ char *find_file(pathname, statbuf, isvalid)
 			 * Normally we want to change /dir1/dir2/file
 			 * into "/dir1/dir2/."
 			 */
-			if ((p = (char *) strrchr(file, '/'))) {
+			if ((p = (char *) strrchr(file, '/')) != NULL) {
 				if (strcmp(p, "/.") == 0) {
-				    *p = CNULL;
+					*p = CNULL;
 				} else {
-				    *++p = '.';
-				    *++p = CNULL;
+					*++p = '.';
+					*++p = CNULL;
 				}
 			} else {
 				/*
@@ -182,9 +181,8 @@ char *find_file(pathname, statbuf, isvalid)
 /*
  * Find the device that "filest" is on in the "mntinfo" linked list.
  */
-mntent_t *findmnt(filest, mntinfo)
-	struct stat *filest;
-	struct mntinfo *mntinfo;
+mntent_t *
+findmnt(struct stat *filest, struct mntinfo *mntinfo)
 {
 	struct mntinfo *mi;
 
@@ -201,9 +199,8 @@ mntent_t *findmnt(filest, mntinfo)
 /*
  * Is "mnt" a duplicate of any of the mntinfo->mi_mnt elements?
  */
-int isdupmnt(mnt, mntinfo)
-	mntent_t *mnt;
-	struct mntinfo *mntinfo;
+int
+isdupmnt(mntent_t *mnt, struct mntinfo *mntinfo)
 {
 	struct mntinfo *m;
 
@@ -217,7 +214,8 @@ int isdupmnt(mnt, mntinfo)
 /*
  * Alarm clock
  */
-void wakeup()
+void
+wakeup(int dummy)
 {
 	debugmsg(DM_CALL, "wakeup() in filesys.c called");
 	longjmp(env, 1);
@@ -227,8 +225,8 @@ void wakeup()
  * Make a linked list of mntinfo structures.
  * Use "mi" as the base of the list if it's non NULL.
  */
-struct mntinfo *makemntinfo(mi) 
-	struct mntinfo *mi;
+struct mntinfo *
+makemntinfo(struct mntinfo *mi)
 {
 	FILE *mfp;
 	static struct mntinfo *mntinfo;
@@ -251,7 +249,7 @@ struct mntinfo *makemntinfo(mi)
 	}
 
 	mntinfo = mi;
-	while ((mnt = getmountent(mfp))) {
+	while ((mnt = getmountent(mfp)) != NULL) {
 		debugmsg(DM_MISC, "mountent = '%s' (%s)", 
 			 mnt->me_path, mnt->me_type);
 
@@ -284,7 +282,8 @@ struct mntinfo *makemntinfo(mi)
 		 * Add entry to list
 		 */
 		if (mntinfo) {
-			for (m = mntinfo; m->mi_nxt; m = m->mi_nxt);
+			for (m = mntinfo; m->mi_nxt; m = m->mi_nxt)
+				continue;
 			m->mi_nxt = newmi;
 		} else
 			mntinfo = newmi;
@@ -303,10 +302,8 @@ struct mntinfo *makemntinfo(mi)
  * If "statbuf" is not NULL it is used as the stat buffer too avoid
  * stat()'ing the file again back in server.c.
  */
-mntent_t *getmntpt(pathname, statbuf, isvalid)
-	char *pathname;
-	struct stat *statbuf;
-	int *isvalid;
+mntent_t *
+getmntpt(char *pathname, struct stat *statbuf, int *isvalid)
 {
 	static struct mntinfo *mntinfo = NULL;
 	static struct stat filestat;
@@ -334,16 +331,16 @@ mntent_t *getmntpt(pathname, statbuf, isvalid)
 	/*
 	 * Find the mnt that pathname is on.
 	 */
-	if ((mnt = findmnt(pstat, mntinfo)))
+	if ((mnt = findmnt(pstat, mntinfo)) != NULL)
 		return(mnt);
 
 	/*
 	 * We failed to find correct mnt, so maybe it's a newly
 	 * mounted filesystem.  We rebuild mntinfo and try again.
 	 */
-	if ((tmpmi = makemntinfo(mntinfo))) {
+	if ((tmpmi = makemntinfo(mntinfo)) != NULL) {
 		mntinfo = tmpmi;
-		if ((mnt = findmnt(pstat, mntinfo)))
+		if ((mnt = findmnt(pstat, mntinfo)) != NULL)
 			return(mnt);
 	}
 
@@ -357,10 +354,8 @@ mntent_t *getmntpt(pathname, statbuf, isvalid)
 /*
  * Is "path" NFS mounted?  Return 1 if it is, 0 if not, or -1 on error.
  */
-int is_nfs_mounted(path, statbuf, isvalid)
-	char *path;
-	struct stat *statbuf;
-	int *isvalid;
+int
+is_nfs_mounted(char *path, struct stat *statbuf, int *isvalid)
 {
 	mntent_t *mnt;
 
@@ -383,10 +378,8 @@ int is_nfs_mounted(path, statbuf, isvalid)
  * Is "path" on a read-only mounted filesystem?  
  * Return 1 if it is, 0 if not, or -1 on error.
  */
-int is_ro_mounted(path, statbuf, isvalid)
-	char *path;
-	struct stat *statbuf;
-	int *isvalid;
+int
+is_ro_mounted(char *path, struct stat *statbuf, int *isvalid)
 {
 	mntent_t *mnt;
 
@@ -404,11 +397,8 @@ int is_ro_mounted(path, statbuf, isvalid)
  * Is "path" a symlink?
  * Return 1 if it is, 0 if not, or -1 on error.
  */
-int is_symlinked(path, statbuf, isvalid)
-	/*ARGSUSED*/
-	char *path;
-	struct stat *statbuf;
-	int *isvalid;
+int
+is_symlinked(char *path, struct stat *statbuf, int *isvalid)
 {
 	static struct stat stb;
 
@@ -432,10 +422,8 @@ int is_symlinked(path, statbuf, isvalid)
  * Filesystem values < 0 indicate unsupported or unavailable
  * information.
  */
-int getfilesysinfo(file, freespace, freefiles)
-	char *file;
-	long *freespace;
-	long *freefiles;
+int
+getfilesysinfo(char *file, long *freespace, long *freefiles)
 {
 #if	defined(STATFS_TYPE)
 	static statfs_t statfsbuf;
@@ -457,7 +445,7 @@ int getfilesysinfo(file, freespace, freefiles)
 #if	STATFS_TYPE == STATFS_SYSV
 	r = statfs(mntpt, &statfsbuf, sizeof(statfs_t), 0);
 #endif
-#if	STATFS_TYPE == STATFS_BSD
+#if	STATFS_TYPE == STATFS_BSD || STATFS_TYPE == STATFS_44BSD
 	r = statfs(mntpt, &statfsbuf);
 #endif
 #if	STATFS_TYPE == STATFS_OSF1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.h,v 1.5 1998/06/26 21:21:24 millert Exp $	*/
+/*	$OpenBSD: version.h,v 1.6 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 
 /*
- * $From: version.h,v 6.31 1998/03/15 22:25:55 mcooper Exp $
+ * $From: version.h,v 1.2 1999/11/01 00:19:36 christos Exp $
  */
 
 /*
@@ -46,15 +46,16 @@
 /*
  * Distribution version.  The major distribution number should match
  * the protocol version number (VERSION) defined above.
+ * This is not true anymore for freerdist
  */
-#define DISTVERSION		"6.1"
+#define DISTVERSION		"0.92"
 
 /*
  * Patch level
  */
-#define PATCHLEVEL 		4
+#define PATCHLEVEL 		0
 
 /*
  * Distribution status
  */
-#define DISTSTATUS		"RELEASE"
+#define DISTSTATUS		"BETA"

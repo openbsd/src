@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.6 2003/05/06 22:10:11 millert Exp $	*/
+/*	$OpenBSD: gram.y,v 1.7 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -35,32 +35,31 @@
  * SUCH DAMAGE.
  */
 
+#include "defs.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: gram.y,v 6.29 1994/04/11 23:59:15 mcooper Exp mcooper $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$From: gram.y,v 1.3 1999/08/04 15:57:33 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: gram.y,v 1.6 2003/05/06 22:10:11 millert Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$OpenBSD: gram.y,v 1.7 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static	char *sccsid = "@(#)gram.y	5.2 (Berkeley) 85/06/21";
+static	char *sccsid __attribute__((__unused__)) =
+"@(#)gram.y	5.2 (Berkeley) 85/06/21";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
-/*
- * Tell defs.h not to include y.tab.h
- */
-#ifndef yacc
-#define yacc
-#endif
 
-#include "defs.h"
+static struct namelist *addnl __P((struct namelist *, struct namelist *));
+static struct namelist *subnl __P((struct namelist *, struct namelist *));
+static struct namelist *andnl __P((struct namelist *, struct namelist *));
+static int innl __P((struct namelist *nl, char *p));
 
-static struct namelist *addnl(), *subnl(), *andnl();
 struct	cmd *cmds = NULL;
 struct	cmd *last_cmd;
 struct	namelist *last_n;
@@ -169,7 +168,7 @@ cmdlist:	  /* VOID */ {
 		;
 
 cmd:		  INSTALL options opt_namelist ';' = {
-			register struct namelist *nl;
+			struct namelist *nl;
 
 			$1->sc_options = $2 | options;
 			if ($3 != NULL) {
@@ -248,11 +247,12 @@ opt_namelist:	  /* VOID */ = {
 int	yylineno = 1;
 extern	FILE *fin;
 
-yylex()
+int
+yylex(void)
 {
 	static char yytext[INMAX];
-	register int c;
-	register char *cp1, *cp2;
+	int c;
+	char *cp1, *cp2;
 	static char quotechars[] = "[]{}*?$";
 	
 again:
@@ -318,7 +318,7 @@ again:
 		if (c != '"')
 			yyerror("missing closing '\"'\n");
 		*cp1 = '\0';
-		yylval.string = makestr(yytext);
+		yylval.string = xstrdup(yytext);
 		return(STRING);
 
 	case ':':  /* : or :: */
@@ -360,9 +360,9 @@ again:
 		switch (yytext[1]) {
 		case 'o':
 			if (parsedistopts(&yytext[2], &opt, TRUE)) {
-				(void) snprintf(ebuf, sizeof ebuf,
-					       "Bad distfile options \"%s\".", 
-					       &yytext[2]);
+				(void) snprintf(ebuf, sizeof(ebuf),
+					        "Bad distfile options \"%s\".", 
+					        &yytext[2]);
 				yyerror(ebuf);
 			}
 			break;
@@ -385,8 +385,8 @@ again:
 		case 'r':	opt = DO_NODESCEND;		break;
 
 		default:
-			(void) snprintf(ebuf, sizeof ebuf,
-				"Unknown option \"%s\".", yytext);
+			(void) snprintf(ebuf, sizeof(ebuf),
+					"Unknown option \"%s\".", yytext);
 			yyerror(ebuf);
 		}
 
@@ -406,7 +406,7 @@ again:
 	else if (!strcmp(yytext, "cmdspecial"))
 		c = CMDSPECIAL;
 	else {
-		yylval.string = makestr(yytext);
+		yylval.string = xstrdup(yytext);
 		return(NAME);
 	}
 	yylval.subcmd = makesubcmd(c);
@@ -417,9 +417,7 @@ again:
  * XXX We should use strchr(), but most versions can't handle
  * some of the characters we use.
  */
-extern int any(c, str)
-	register int c;
-	register char *str;
+int any(int c, char *str)
 {
 	while (*str)
 		if (c == *str++)
@@ -431,13 +429,11 @@ extern int any(c, str)
  * Insert or append ARROW command to list of hosts to be updated.
  */
 void
-insert(label, files, hosts, subcmds)
-	char *label;
-	struct namelist *files, *hosts;
-	struct subcmd *subcmds;
+insert(char *label, struct namelist *files, struct namelist *hosts,
+    struct subcmd *subcmds)
 {
-	register struct cmd *c, *prev, *nc;
-	register struct namelist *h, *lasth;
+	struct cmd *c, *prev, *nc;
+	struct namelist *h, *lasth;
 
 	debugmsg(DM_CALL, "insert(%s, %x, %x, %x) start, files = %s", 
 		 label == NULL ? "(null)" : label,
@@ -486,13 +482,9 @@ insert(label, files, hosts, subcmds)
  * executed in the order they appear in the distfile.
  */
 void
-append(label, files, stamp, subcmds)
-	char *label;
-	struct namelist *files;
-	char *stamp;
-	struct subcmd *subcmds;
+append(char *label, struct namelist *files, char *stamp, struct subcmd *subcmds)
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	c = ALLOC(cmd);
 	c->c_type = DCOLON;
@@ -513,36 +505,18 @@ append(label, files, stamp, subcmds)
  * Error printing routine in parser.
  */
 void
-yyerror(s)
-	char *s;
+yyerror(char *s)
 {
 	error("Error in distfile: line %d: %s", yylineno, s);
-}
-
-/*
- * Return a copy of the string.
- */
-char *
-makestr(str)
-	char *str;
-{
-	char *cp;
-
-	cp = strdup(str);
-	if (cp == NULL)
-		fatalerr("ran out of memory");
-
-	return(cp);
 }
 
 /*
  * Allocate a namelist structure.
  */
 struct namelist *
-makenl(name)
-	char *name;
+makenl(char *name)
 {
-	register struct namelist *nl;
+	struct namelist *nl;
 
 	debugmsg(DM_CALL, "makenl(%s)", name == NULL ? "null" : name);
 
@@ -559,9 +533,7 @@ makenl(name)
  * Is the name p in the namelist nl?
  */
 static int
-innl(nl, p)
-	struct namelist *nl;
-	char *p;
+innl(struct namelist *nl, char *p)
 {
 	for ( ; nl; nl = nl->n_next)
 		if (!strcmp(p, nl->n_name))
@@ -573,8 +545,7 @@ innl(nl, p)
  * Join two namelists.
  */
 static struct namelist *
-addnl(n1, n2)
-	struct namelist *n1, *n2;
+addnl(struct namelist *n1, struct namelist *n2)
 {
 	struct namelist *nl, *prev;
 
@@ -597,8 +568,7 @@ addnl(n1, n2)
  * Copy n1 except for elements that are in n2.
  */
 static struct namelist *
-subnl(n1, n2)
-	struct namelist *n1, *n2;
+subnl(struct namelist *n1, struct namelist *n2)
 {
 	struct namelist *nl, *prev;
 
@@ -617,8 +587,7 @@ subnl(n1, n2)
  * Copy all items of n1 that are also in n2.
  */
 static struct namelist *
-andnl(n1, n2)
-	struct namelist *n1, *n2;
+andnl(struct namelist *n1, struct namelist *n2)
 {
 	struct namelist *nl, *prev;
 
@@ -636,11 +605,10 @@ andnl(n1, n2)
 /*
  * Make a sub command for lists of variables, commands, etc.
  */
-extern struct subcmd *
-makesubcmd(type)
-	int type;
+struct subcmd *
+makesubcmd(int type)
 {
-	register struct subcmd *sc;
+	struct subcmd *sc;
 
 	sc = ALLOC(subcmd);
 	sc->sc_type = type;

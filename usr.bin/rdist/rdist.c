@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.15 2003/05/06 22:10:11 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.16 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,25 +33,27 @@
  * SUCH DAMAGE.
  */
 
+#include "defs.h"
+#include "y.tab.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$From: rdist.c,v 1.6 2001/03/12 18:16:36 kim Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.15 2003/05/06 22:10:11 millert Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$OpenBSD: rdist.c,v 1.16 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)main.c	5.1 (Berkeley) 6/6/85";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
 
-#include "defs.h"
-#include "y.tab.h"
 #include <netdb.h>
 #include <sys/ioctl.h>
 
@@ -59,29 +61,27 @@ static char copyright[] =
  * Remote distribution program.
  */
 
-void		docmdargs(int, char **);
-void		usage(void);
-
 char   	       *distfile = NULL;		/* Name of distfile to use */
 int     	maxchildren = MAXCHILDREN;	/* Max no of concurrent PIDs */
 int		nflag = 0;			/* Say without doing */
 long		min_freespace = 0;		/* Min filesys free space */
 long		min_freefiles = 0;		/* Min filesys free # files */
 FILE   	       *fin = NULL;			/* Input file pointer */
-struct group   *gr = NULL;			/* Static area for getgrent */
 char		localmsglist[] = "stdout=all:notify=all:syslog=nerror,ferror";
 char   	       *remotemsglist = NULL;
 char		optchars[] = "A:a:bcd:DFf:hil:L:M:m:NnOo:p:P:qRrst:Vvwxy";
-FILE   	       *opendist();
 char	       *path_rdistd = _PATH_RDISTD;
 char	       *path_remsh = NULL;
+
+static void addhostlist(char *, struct namelist **);
+static void usage(void);
+int main(int, char **, char **);
 
 /*
  * Add a hostname to the host list
  */
-static void addhostlist(name, hostlist)
-	char *name;
-	struct namelist **hostlist;
+static void
+addhostlist(char *name, struct namelist **hostlist)
 {
 	struct namelist *ptr, *new;
 
@@ -102,28 +102,29 @@ static void addhostlist(name, hostlist)
 }
 
 int
-main(argc, argv, envp)
-	int argc;
-	char *argv[];
-	char **envp;
+main(int argc, char **argv, char **envp)
 {
+	extern char *__progname;
 	struct namelist *hostlist = NULL;
 	int x;
 	char *cp;
 	int cmdargs = 0;
 	int c;
 
-	/*
-	 * We initialize progname here instead of init() because
-	 * things in msgparseopts() need progname set.
-	 */
-	setprogname(argv);
+	progname = __progname;
 
-	if ((cp = msgparseopts(localmsglist, TRUE))) {
+	if ((cp = msgparseopts(localmsglist, TRUE)) != NULL) {
 		error("Bad builtin log option (%s): %s.", 
 		      localmsglist, cp);
 		usage();
 	}
+
+	if ((cp = getenv("RDIST_OPTIONS")) != NULL)
+		if (parsedistopts(cp, &options, TRUE)) {
+			error("Bad dist option environment string \"%s\".", 
+			      cp);
+			exit(1);
+		}
 
 	if (init(argc, argv, envp) < 0)
 		exit(1);
@@ -163,7 +164,7 @@ main(argc, argv, envp)
 	while ((c = getopt(argc, argv, optchars)) != -1)
 		switch (c) {
 		case 'l':
-			if ((cp = msgparseopts(optarg, TRUE))) {
+			if ((cp = msgparseopts(optarg, TRUE)) != NULL) {
 				error("Bad log option \"%s\": %s.", optarg,cp);
 				usage();
 			}
@@ -177,7 +178,7 @@ main(argc, argv, envp)
 		case 'a':
 		case 'M':
 		case 't':
-			if (!isdigit(*optarg)) {
+			if (!isdigit((unsigned char)*optarg)) {
 				error("\"%s\" is not a number.", optarg);
 				usage();
 			}
@@ -211,7 +212,8 @@ main(argc, argv, envp)
 
 		case 'D':
 			debug = DM_ALL;
-			if ((cp = msgparseopts("stdout=all,debug", TRUE))) {
+			if ((cp = msgparseopts("stdout=all,debug",
+			    TRUE)) != NULL) {
 				error("Enable debug messages failed: %s.", cp);
 				usage();
 			}
@@ -250,7 +252,7 @@ main(argc, argv, envp)
 				error("No path specified to \"-P\".");
 				usage();
 			}
-			if ((cp = searchpath(optarg)))
+			if ((cp = searchpath(optarg)) != NULL)
 				path_remsh = xstrdup(cp);
 			else {
 				error("No component of path \"%s\" exists.",
@@ -295,7 +297,7 @@ main(argc, argv, envp)
 		if ((cp = getenv("RSH")) != NULL && *cp != '\0')
 			path_remsh = cp;
 		else
-			path_remsh = _PATH_SSH;
+			path_remsh = _PATH_REMSH;
 	}
 
 	/*
@@ -325,8 +327,8 @@ main(argc, argv, envp)
 /*
  * Open a distfile
  */
-FILE *opendist(distfile)
-	char *distfile;
+FILE *
+opendist(char *distfile)
 {
 	char *file = NULL;
 	FILE *fp;
@@ -360,8 +362,8 @@ FILE *opendist(distfile)
 /*
  * Print usage message and exit.
  */
-void
-usage()
+static void
+usage(void)
 {
 	char *sopts = "cDFnv";
 
@@ -393,9 +395,7 @@ usage()
  * rcp like interface for distributing files.
  */
 void
-docmdargs(nargs, args)
-	int nargs;
-	char *args[];
+docmdargs(int nargs, char **args)
 {
 	struct namelist *nl, *prev;
 	char *cp;
@@ -442,19 +442,19 @@ docmdargs(nargs, args)
 	debugmsg(DM_MISC, "host = %s", getnlstr(hosts));
 
 	insert(NULL, files, hosts, cmds);
-	docmds(0, NULL, 0, (char **)NULL);
+	docmds(NULL, 0, NULL);
 }
 
 /*
  * Get a list of NAME blocks (mostly for debugging).
  */
-extern char *getnlstr(nl)
-	struct namelist *nl;
+char *
+getnlstr(struct namelist *nl)
 {
 	static char buf[16384];
-	int count = 0, len = 0;
+	size_t len = 0;
 
-	(void) snprintf(buf, sizeof buf, "(");
+	(void) snprintf(buf, sizeof(buf), "(");
 
 	while (nl != NULL) {
 		if (nl->n_name == NULL)
@@ -462,17 +462,16 @@ extern char *getnlstr(nl)
 		len += strlen(nl->n_name) + 2;
 		if (len >= sizeof(buf)) {
 			(void) strlcpy(buf,
-			    "getnlstr() Buffer not large enough",
-			    sizeof buf);
+				       "getnlstr() Buffer not large enough",
+				       sizeof(buf));
 			return(buf);
 		}
-		++count;
-		(void) strlcat(buf, " ", sizeof buf);
-		(void) strlcat(buf, nl->n_name, sizeof buf);
+		(void) strlcat(buf, " ", sizeof(buf));
+		(void) strlcat(buf, nl->n_name, sizeof(buf));
 		nl = nl->n_next;
 	}
 
-	(void) strlcat(buf, " )", sizeof buf);
+	(void) strlcat(buf, " )", sizeof(buf));
 
 	return(buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdistd.c,v 1.4 1998/06/26 21:20:51 millert Exp $	*/
+/*	$OpenBSD: rdistd.c,v 1.5 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,29 +33,33 @@
  * SUCH DAMAGE.
  */
 
+#include "defs.h"
+
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: rdistd.c,v 6.22 1995/12/11 23:37:35 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$From: rdistd.c,v 1.2 1999/08/04 15:57:33 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: rdistd.c,v 1.4 1998/06/26 21:20:51 millert Exp $";
+static char RCSid[] __attribute__((__unused__)) =
+"$OpenBSD: rdistd.c,v 1.5 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)rdistd.c";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)rdistd.c";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
-
-#include "defs.h"
+int main(int, char **, char **);
+static void usage(void);
 
 /*
  * Print usage message
  */
-static void usage()
+static void
+usage(void)
 {
 	fprintf(stderr, "usage: %s -S [ -DV ]\n", progname);
 	exit(1);
@@ -67,13 +71,13 @@ char	localmsglist[] = "syslog=ferror";
  * The Beginning
  */
 int
-main(argc, argv, envp)
-	int argc;
-	char **argv;
-	char **envp;
+main(int argc, char **argv, char **envp)
 {
+	extern char *__progname;
 	char *cp;
 	int c;
+
+	progname = __progname;
 
 	if (init(argc, argv, envp) < 0)
 		exit(1);
@@ -108,7 +112,7 @@ main(argc, argv, envp)
 	rem_w = fileno(stdout);
 
 	/* Set logging */
-	if ((cp = msgparseopts(localmsglist, TRUE)))
+	if ((cp = msgparseopts(localmsglist, TRUE)) != NULL)
 		fatalerr("Bad message logging option (%s): %s", 
 			 localmsglist, cp);
 

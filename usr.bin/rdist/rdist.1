@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.16 2003/04/25 14:53:03 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.17 2003/05/14 01:34:35 millert Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -330,6 +330,21 @@ master host, the remote target will be left a symbolic link.
 This behavior is generally considered a bug in the original version of
 .Nm rdist ,
 but is present to allow compatibility with older versions.
+.It Sy defgroup[=groupname]
+If the group of a file to be transferred does not exist on the destination
+host, use the specified group instead.
+If groupname is not specified, the
+.Em bin
+group is used.
+.It Sy defowner[=owner]
+If the owner of a file to be transferred does not exist on the destination
+host, use the specified owner instead.
+If owner is not specified, the user
+.Em bin
+is used.
+.It Sy updateperm
+Do not send the whole file when the size and the modification time match.
+Instead, just update the ownership, group, and permissions as necessary.
 .It Sy quiet
 Quiet mode.
 Files that are being modified are normally printed on standard output.
@@ -368,6 +383,21 @@ Any target file that is updated is first renamed from
 .Pa file
 to
 .Pa file.OLD .
+.It Sy history
+When
+.Sy savetargets
+and
+.Sy history
+are both defined then the target file that is updated is first renamed from
+.Pa file
+to
+.Pa file.NNN
+where NNN increases for each generation update.
+The first generation is 001, and the last is 999.
+After 999 generations, the counter is reset to 001 and 001 will get
+overwritten all the time.
+This is undesirable behavior, so some other method needs to be devised
+to clean up or limit the number of generations.
 .It Sy sparse
 Enable checking for sparse (aka
 .Dq wholely )
@@ -809,3 +839,11 @@ then
 .Nm
 will report missing links.
 Only one instance of a link should be listed in each target.
+.Pp
+The 
+.Sy defowner,
+.Sy defgroup,
+and
+.Sy updateperm
+options are extensions to the 6.1.0 protocol and will not work with earlier
+versions of rdist 6.

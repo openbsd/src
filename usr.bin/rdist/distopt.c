@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.7 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.8 2003/05/14 01:34:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,18 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include "defs.h"
 #ifndef lint
 #if 0
-static char RCSid[] = 
-"$From: distopt.c,v 6.10 1996/01/30 01:52:07 mcooper Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$From: distopt.c,v 1.5 1999/08/04 15:57:33 christos Exp $";
 #else
-static char RCSid[] = 
-"$OpenBSD: distopt.c,v 1.7 2003/04/05 20:31:58 deraadt Exp $";
+static char RCSid[] __attribute__((__unused__)) = 
+"$OpenBSD: distopt.c,v 1.8 2003/05/14 01:34:35 millert Exp $";
 #endif
 
-static char sccsid[] = "@(#)distopt.c";
+static char sccsid[] __attribute__((__unused__)) =
+"@(#)distopt.c";
 
-static char copyright[] =
+static char copyright[] __attribute__((__unused__)) =
 "@(#) Copyright (c) 1983 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* !lint */
@@ -53,45 +55,49 @@ static char copyright[] =
  * Dist Option functions
  */
 
-#include "defs.h"
 
 /*
  * Distfile Option Information
  */
 DISTOPTINFO distoptinfo[] = {
-	{ DO_CHKNFS,		"chknfs" },
-	{ DO_CHKREADONLY,	"chkreadonly" },
-	{ DO_CHKSYM,		"chksym" },
-	{ DO_COMPARE,		"compare" },
-	{ DO_FOLLOW,		"follow" },
-	{ DO_IGNLNKS,		"ignlnks" },
-	{ DO_NOCHKGROUP,	"nochkgroup" },
-	{ DO_NOCHKMODE,		"nochkmode" },
-	{ DO_NOCHKOWNER,	"nochkowner" },
-	{ DO_NODESCEND,		"nodescend" },
-	{ DO_NOEXEC,		"noexec" },
-	{ DO_NUMCHKGROUP,	"numchkgroup" },
-	{ DO_NUMCHKOWNER,	"numchkowner" },
-	{ DO_QUIET,		"quiet" },
-	{ DO_REMOVE,		"remove" },
-	{ DO_SAVETARGETS,	"savetargets" },
-	{ DO_SPARSE,            "sparse" },
-	{ DO_VERIFY,		"verify" },
-	{ DO_WHOLE,		"whole" },
-	{ DO_YOUNGER,		"younger" },
+	{ DO_CHKNFS,		"chknfs", 	NULL,		0},
+	{ DO_CHKREADONLY,	"chkreadonly",	NULL,		0},
+	{ DO_CHKSYM,		"chksym",	NULL,		0},
+	{ DO_DEFGROUP,		"defgroup",	defgroup,	sizeof(defgroup) },
+	{ DO_DEFOWNER,		"defowner",	defowner,	sizeof(defowner) },
+	{ DO_COMPARE,		"compare", 	NULL,		0},
+	{ DO_FOLLOW,		"follow", 	NULL,		0},
+	{ DO_HISTORY,		"history", 	NULL,		0},
+	{ DO_IGNLNKS,		"ignlnks",	NULL,		0},
+	{ DO_NOCHKGROUP,	"nochkgroup",	NULL,		0},
+	{ DO_NOCHKMODE,		"nochkmode",	NULL,		0},
+	{ DO_NOCHKOWNER,	"nochkowner",	NULL,		0},
+	{ DO_NODESCEND,		"nodescend",	NULL,		0},
+	{ DO_NOEXEC,		"noexec",	NULL,		0},
+	{ DO_NUMCHKGROUP,	"numchkgroup",	NULL,		0},
+	{ DO_NUMCHKOWNER,	"numchkowner",	NULL,		0},
+	{ DO_QUIET,		"quiet",	NULL,		0},
+	{ DO_REMOVE,		"remove",	NULL,		0},
+	{ DO_SAVETARGETS,	"savetargets",	NULL,		0},
+	{ DO_SPARSE,		"sparse",	NULL,		0},
+	{ DO_UPDATEPERM,	"updateperm",	NULL,		0},
+	{ DO_VERIFY,		"verify",	NULL,		0},
+	{ DO_WHOLE,		"whole",	NULL,		0},
+	{ DO_YOUNGER,		"younger",	NULL,		0},
 	{ 0 },
 };
 
 /*
  * Get a Distfile Option entry named "name".
  */
-extern DISTOPTINFO *getdistopt(name)
-	char *name;
+DISTOPTINFO *
+getdistopt(char *name, int *len)
 {
 	int i;
 
 	for (i = 0; distoptinfo[i].do_name; ++i)
-		if (strcasecmp(name, distoptinfo[i].do_name) == 0)
+		if (strncasecmp(name, distoptinfo[i].do_name,
+				*len = strlen(distoptinfo[i].do_name)) == 0)
 			return(&distoptinfo[i]);
 
 	return(NULL);
@@ -102,38 +108,33 @@ extern DISTOPTINFO *getdistopt(name)
  * If doerrs is true, print out own error message.  Returns
  * 0 on success.
  */
-extern int parsedistopts(str, optptr, doerrs)
-	char *str;
-	opt_t *optptr;
-	int doerrs;
+int
+parsedistopts(char *str, opt_t *optptr, int doerrs)
 {
 	char *string, *optstr;
 	DISTOPTINFO *distopt;
-	int negate;
+	int len;
 
-	/* strtok() is harmful */
+	/* strtok() is destructive */
 	string = xstrdup(str);
 
 	for (optstr = strtok(string, ","); optstr;
 	     optstr = strtok(NULL, ",")) {
-		if (strncasecmp(optstr, "no", 2) == 0)
-			negate = TRUE;
-		else
-			negate = FALSE;
-
-		/*
-		 * Try looking up option name.  If that fails
-		 * and the option starts with "no", strip "no"
-		 * from option and retry lookup.
-		 */
-		if ((distopt = getdistopt(optstr))) {
+		/* Try Yes */
+		if ((distopt = getdistopt(optstr, &len)) != NULL) {
 			FLAG_ON(*optptr, distopt->do_value);
+			if (distopt->do_arg && optstr[len] == '=')
+				(void) strlcpy(distopt->do_arg,
+				    &optstr[len + 1], distopt->arg_size);
 			continue;
 		}
-		if (negate && (distopt = getdistopt(optstr+2))) {
+
+		/* Try No */
+		if ((distopt = getdistopt(optstr+2, &len)) != NULL) {
 			FLAG_OFF(*optptr, distopt->do_value);
 			continue;
 		}
+
 		if (doerrs)
 			error("Dist option \"%s\" is not valid.", optstr);
 	}
@@ -147,19 +148,18 @@ extern int parsedistopts(str, optptr, doerrs)
 /*
  * Get a list of the Distfile Option Entries.
  */
-extern char *getdistoptlist()
+char *
+getdistoptlist(void)
 {
 	int i;
 	static char buf[1024];
 
 	for (i = 0, buf[0] = CNULL; distoptinfo[i].do_name; ++i) {
 		if (buf[0] == CNULL)
-			(void) strlcpy(buf, distoptinfo[i].do_name,
-			    sizeof buf);
+			(void) strlcpy(buf, distoptinfo[i].do_name, sizeof buf);
 		else {
 			(void) strlcat(buf, ",", sizeof buf);
-			(void) strlcat(buf, distoptinfo[i].do_name,
-			    sizeof buf);
+			(void) strlcat(buf, distoptinfo[i].do_name, sizeof buf);
 		}
 	}
 
@@ -170,8 +170,8 @@ extern char *getdistoptlist()
  * Get a list of the Distfile Option Entries for each enabled 
  * value in "opts".
  */
-extern char *getondistoptlist(opts)
-	opt_t opts;
+char *
+getondistoptlist(opt_t opts)
 {
 	int i;
 	static char buf[1024];
@@ -181,12 +181,14 @@ extern char *getondistoptlist(opts)
 			continue;
 
 		if (buf[0] == CNULL)
-			(void) strlcpy(buf, distoptinfo[i].do_name,
-			    sizeof buf);
+			(void) strlcpy(buf, distoptinfo[i].do_name, sizeof buf);
 		else {
 			(void) strlcat(buf, ",", sizeof buf);
-			(void) strlcat(buf, distoptinfo[i].do_name,
-			    sizeof buf);
+			(void) strlcat(buf, distoptinfo[i].do_name, sizeof buf);
+		}
+		if (distoptinfo[i].do_arg) {
+			(void) strlcat(buf, "=", sizeof buf);
+			(void) strlcat(buf, distoptinfo[i].do_arg, sizeof buf);
 		}
 	}
 
