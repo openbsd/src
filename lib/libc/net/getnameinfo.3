@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.26 2003/08/28 09:47:47 itojun Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.27 2003/08/28 10:16:38 jmc Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -283,22 +283,22 @@ and documented in
 The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh CAVEATS
-.Nm
+.Fn getnameinfo
 returns both numeric and FQDN notation of the address specified in
 .Fa sa .
 There is no return value that indicates if the string returned in
 .Fa host
 is a result of binary to numeric-text translation (like
-.Xr inet_ntop 3) ,
+.Xr inet_ntop 3 ) ,
 or the result of DNS reverse lookup.
-Therefore, malicious parties could set up PTR record like below:
+Therefore, malicious parties could set up a PTR record as below:
 .Bd -literal -offset indent
 1.0.0.127.in-addr.arpa. IN PTR  10.1.1.1
 .Ed
 .Pp
 and trick the caller of
-.Nm
-to believe that
+.Fn getnameinfo
+into believing that
 .Fa sa
 is
 .Li 10.1.1.1
@@ -306,10 +306,10 @@ when it actually is
 .Li 127.0.0.1 .
 .Pp
 To prevent such attacks, the use of
-.Li NI_NAMEREQD
-like below is recommended when you use the result of
-.Nm
-for access control purposes.
+.Dv NI_NAMEREQD
+is recommended when you use the result of
+.Fn getnameinfo
+for access control purposes:
 .Bd -literal -offset indent
 struct sockaddr *sa;
 socklen_t salen;
