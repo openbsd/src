@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
+/*	$OpenBSD: usage.c,v 1.3 2002/06/11 05:20:19 jsyn Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ hid_init(const char *hidname)
 			no = -1;
 		else if (sscanf(line, " 0x%x %[^\n]", &no, name) != 2 &&
 			 sscanf(line, " %d %[^\n]", &no, name) != 2)
-			errx(1, "file %s, line %d, syntax error\n",
+			errx(1, "file %s, line %d, syntax error",
 			     hidname, lineno);
 		for (p = name; *p; p++)
 			if (isspace(*p) || *p == '.')
@@ -104,7 +104,7 @@ hid_init(const char *hidname)
 			err(1, "strdup");
 		if (isspace(line[0])) {
 			if (!curpage)
-				errx(1, "file %s, line %d, syntax error\n",
+				errx(1, "file %s, line %d, syntax error",
 				     hidname, lineno);
 			if (curpage->pagesize >= curpage->pagesizemax) {
 				curpage->pagesizemax += 10;
@@ -158,7 +158,7 @@ hid_usage_page(int i)
 	int k;
 
 	if (!pages)
-		errx(1, "no hid table\n");
+		errx(1, "no hid table");
 
 	for (k = 0; k < npages; k++)
 		if (pages[k].usage == i)
@@ -201,7 +201,7 @@ hid_parse_usage_page(const char *name)
 	int k;
 
 	if (!pages)
-		errx(1, "no hid table\n");
+		errx(1, "no hid table");
 
 	for (k = 0; k < npages; k++)
 		if (strcmp(pages[k].name, name) == 0)
