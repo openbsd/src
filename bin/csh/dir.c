@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.9 2003/01/08 06:54:16 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.10 2003/05/08 19:52:56 vincent Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.9 2003/01/08 06:54:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.10 2003/05/08 19:52:56 vincent Exp $";
 #endif
 #endif /* not lint */
 
@@ -706,8 +706,8 @@ dcanon(cp, p)
 	    if (sp != cp && !adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
 			       sizeof tlink-1)) >= 0) {
+		tlink[cc] = '\0';
 		(void) Strlcpy(link, str2short(tlink), sizeof link/sizeof(Char));
-		link[cc] = '\0';
 
 		if (slash)
 		    *p = '/';
