@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.30 2000/01/31 10:00:05 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.31 2000/01/31 19:48:58 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -169,6 +169,7 @@ static int __inline
 apm_get_event(struct apmregs *r)
 {
 	int rv;
+	bzero(r, sizeof(*r));
 	rv = apmcall(APM_GET_PM_EVENT, 0, r);
 #ifdef APMDEBUG
 	if (r->bx)
