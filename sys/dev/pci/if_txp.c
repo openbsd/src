@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.43 2001/06/23 04:20:42 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.44 2001/06/23 04:44:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1348,6 +1348,9 @@ txp_start(ifp)
 		}
 #endif
 
+		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
+
 		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
 		for (i = 0; i < sd->sd_map->dm_nsegs; i++) {
 			if (++cnt >= (TX_ENTRIES - 4))
@@ -1872,6 +1875,7 @@ txp_capabilities(sc)
 #endif
 
 #if 0
+	/* not ready yet */
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPSEC) {
 		sc->sc_tx_capability |= OFFLOAD_IPSEC;
 		sc->sc_rx_capability |= OFFLOAD_IPSEC;
@@ -1880,13 +1884,9 @@ txp_capabilities(sc)
 #endif
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPCKSUM) {
-#if 0
 		sc->sc_tx_capability |= OFFLOAD_IPCKSUM;
-#endif
 		sc->sc_rx_capability |= OFFLOAD_IPCKSUM;
-#if 0
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
-#endif
 	}
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_TCPCKSUM) {
