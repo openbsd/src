@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.9 2004/05/10 05:35:14 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.10 2005/03/26 15:14:04 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -355,7 +355,6 @@ wsfont_find(name, width, height, stride)
 /*
  * Add a font to the list.
  */
-#ifdef notyet
 int
 wsfont_add(font, copy)
 	struct wsdisplay_font *font;
@@ -403,7 +402,6 @@ wsfont_add(font, copy)
 	splx(s);	
 	return (0);
 }
-#endif
 			
 /*
  * Remove a font.
