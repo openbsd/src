@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 1998/12/05 17:42:10 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 1998/12/23 17:53:54 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -27,6 +27,8 @@
 #ifndef	_MACHINE_INTR_H_
 #define	_MACHINE_INTR_H_
 
+#include <machine/psl.h>
+
 #define	CPU_NINTS	32
 
 /* hardwired clock int line */
@@ -50,27 +52,34 @@
 #if !defined(_LOCORE)
 /*
  * Define the machine-independent SPL routines in terms of splx().
- * To prevent cluttering the global spl() namespace, routines that
- * need machine-dependent SPLs should roll their own.
- *
- * If compiling with GCC, it's easy to inline spl's with constant
- * arguments.  However, when the argument can be variable, there
- * is little or no win; as a result, splx() is not inline'd.
  */
-#define __splhigh(splhval)	({				\
-	register u_int _ctl_r;					\
-	__asm __volatile("mfctl	%%cr15,%0" : "=r" (_ctl_r));	\
-	__asm __volatile("mtctl	%0,%%cr15" :: "r" (splhval));	\
-	__asm __volatile("rsm 1, %%r0"::);			\
-	_ctl_r;							\
+#define __splhigh(splhval)	({					\
+	register u_int _ctl_r;						\
+	__asm __volatile("mfctl	%%cr15,%0\n\t"				\
+			 "mtctl	%1,%%cr15\n\t"				\
+			 "rsm %2, %%r0"					\
+			: "=r" (_ctl_r): "r" (splhval), "i" (PSW_I));	\
+	_ctl_r;								\
 })
 
-#define __spllow(spllval)	({				\
-	register u_int _ctl_r;					\
-	__asm __volatile("mfctl	%%cr15,%0" : "=r" (_ctl_r));	\
-	__asm __volatile("mtctl	%0,%%cr15" :: "r" (spllval));	\
-	__asm __volatile("ssm 1, %%r0"::);			\
-	_ctl_r;							\
+#define __spllow(spllval)	({					\
+	register u_int _ctl_r;						\
+	__asm __volatile("mfctl	%%cr15,%0\n\t"				\
+			 "mtctl	%1,%%cr15\n\t"				\
+			 "ssm %2, %%r0"					\
+			: "=r" (_ctl_r): "r" (spllval), "i" (PSW_I));	\
+	_ctl_r;								\
+})
+
+#define	splx(splval)		({					\
+	register u_int _ctl_r;						\
+	__asm __volatile("rsm     %2,%%r0\n\t"				\
+			 "mfctl   %%cr15,%0\n\t"			\
+			 "mtctl   %1,%%cr15\n\t"			\
+			 "comiclr,= 0,%1,0\n\t"				\
+			 "ssm     %2,%%r0"				\
+			 : "=r" (_ctl_r): "r" (splval), "i" (PSW_I));	\
+	_ctl_r;								\
 })
 
 #define	spl0()		__spllow(INT_ALL)
@@ -84,7 +93,6 @@
 #define	splclock()	__spllow(0)
 #define	splstatclock()	__spllow(0)
 #define	splhigh()	__splhigh(0)
-int	splx __P((int));
 
 /* software interrupt register */
 extern u_int32_t sir;
