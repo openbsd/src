@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.35 2004/02/17 19:28:31 miod Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.36 2004/05/25 18:41:17 espie Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -148,27 +148,36 @@ Output line synchronization directives, suitable for
 provides the following built-in macros.
 They may be redefined, losing their original meaning.
 Return values are null unless otherwise stated.
-.Bl -tag -width changequotexxx
-.It Ic builtin
-Calls a built-in by its name, overriding possible redefinitions.
-.It Ic changecom
+.Bl -tag -width changequote
+.It Fn builtin name
+Calls a built-in by its 
+.Fa name , 
+overriding possible redefinitions.
+.It Fn changecom startcomment endcomment
 Change the start and end comment sequences.
 The default is the pound sign
 .Pq Sq #
 and the newline character.
 With no arguments comments are turned off.
 The maximum length for a comment marker is five characters.
-.It Ic changequote
+.It Fn changequote beginquote endquote
 Defines the quote symbols to be the first and second arguments.
 The symbols may be up to five characters long.
 If no arguments are
 given it restores the default open and close single quotes.
-.It Ic decr
-Decrements the argument by 1.
-The argument must be a valid numeric string.
-.It Ic define
-Define a new macro named by the first argument to have the
-value of the second argument.
+.It Fn decr arg
+Decrements the argument 
+.Fa arg 
+by 1.
+The argument 
+.Fa arg
+must be a valid numeric string.
+.It Fn define name value
+Define a new macro named by the first argument 
+.Fa name 
+to have the
+value of the second argument
+.Fa value .
 Each occurrence of
 .Sq $n
 (where
@@ -187,11 +196,11 @@ is replaced by all arguments comma separated;
 is the same as
 .Sq $*
 but all arguments are quoted against further expansion.
-.It Ic defn
+.It Fn defn name ...
 Returns the quoted definition for each argument.
 This can be used to rename
 macro definitions (even for built-in macros).
-.It Ic divert
+.It Fn divert num
 There are 10 output queues (numbered 0-9).
 At the end of processing
 .Nm m4
@@ -205,16 +214,16 @@ passed to divert causes output to be discarded).
 Returns the current output queue number.
 .It Ic dnl
 Discard input characters up to and including the next newline.
-.It Ic dumpdef
+.It Fn dumpdef name ...
 Prints the names and definitions for the named items, or for everything
 if no arguments are passed.
-.It Ic errprint
+.It Fn errprint msg
 Prints the first argument on the standard error output stream.
-.It Ic esyscmd
+.It Fn esyscmd cmd
 Passes its first argument to a shell and returns the shell's standard output.
 Note that the shell shares its standard input and standard error with
 .Nm m4 .
-.It Ic eval
+.It Fn eval expr
 Computes the first argument as an arithmetic expression using 32-bit
 arithmetic.
 Operators are the standard C ternary, arithmetic, logical,
@@ -224,10 +233,10 @@ octal, decimal, and hexadecimal numbers as in C.
 The second argument (if any)
 specifies the radix for the result and the third argument (if any)
 specifies the minimum number of digits in the result.
-.It Ic expr
+.It Fn expr expr
 This is an alias for
 .Ic eval .
-.It Ic ifdef
+.It Fn ifdef name yes no
 If the macro named by the first argument is defined then return the second
 argument, otherwise the third.
 If there is no third argument, the value is
@@ -235,17 +244,22 @@ If there is no third argument, the value is
 The word
 .Qq unix
 is predefined.
-.It Ic ifelse
-If the first argument matches the second argument then
-.Ic ifelse
+.It Fn ifelse a b yes ...
+If the first argument 
+.Fa a
+matches the second argument 
+.Fa b
+then
+.Fn ifelse
 returns
-the third argument.
+the third argument
+.Fa yes .
 If the match fails the three arguments are
 discarded and the next three arguments are used until there is
 zero or one arguments left, either this last argument or
 .Dv NULL
 is returned if no other matches were found.
-.It Ic include
+.It Fn include name
 Returns the contents of the file specified in the first argument.
 If the file is not found as is, look through the include path:
 first the directories specified with
@@ -254,44 +268,44 @@ on the command line, then the environment variable
 .Ev M4PATH ,
 as a colon-separated list of directories.
 Include aborts with an error message if the file cannot be included.
-.It Ic incr
+.It Fn incr arg
 Increments the argument by 1.
 The argument must be a valid numeric string.
-.It Ic index
+.It Fn index string substring
 Returns the index of the second argument in the first argument (e.g.,
 .Ic index(the quick brown fox jumped, fox)
 returns 16).
 If the second
 argument is not found index returns \-1.
-.It Ic indir
+.It Fn indir macro arg1 ...
 Indirectly calls the macro whose name is passed as the first argument,
 with the remaining arguments passed as first, ... arguments.
-.It Ic len
+.It Fn len arg
 Returns the number of characters in the first argument.
 Extra arguments
 are ignored.
-.It Ic m4exit
+.It Fn m4exit code
 Immediately exits with the return value specified by the first argument,
 0 if none.
-.It Ic m4wrap
+.It Fn m4wrap todo
 Allows you to define what happens at the final
 .Dv EOF ,
 usually for cleanup purposes (e.g.,
 .Ic m4wrap("cleanup(tempfile)")
 causes the macro cleanup to be
 invoked after all other processing is done).
-.It Ic maketemp
+.It Fn maketemp template
 Invokes
 .Xr mkstemp 3
 on the first argument, and returns the modified string.
 This can be used to create unique
 temporary file names.
-.It Ic paste
+.It Fn paste file
 Includes the contents of the file specified by the first argument without
 any macro processing.
 Aborts with an error message if the file cannot be
 included.
-.It Ic patsubst
+.It Fn patsubst string regexp replacement
 Substitutes a regular expression in a string with a replacement string.
 Usual substitution patterns apply: an ampersand
 .Pq Sq \&&
@@ -301,61 +315,61 @@ The string
 where
 .Sq #
 is a digit, is replaced by the corresponding back-reference.
-.It Ic popdef
+.It Fn popdef arg ...
 Restores the
 .Ic pushdef Ns ed
 definition for each argument.
-.It Ic pushdef
+.It Fn pushdef macro def
 Takes the same arguments as
 .Ic define ,
 but it saves the definition on a
 stack for later retrieval by
-.Ic popdef .
-.It Ic regexp
+.Fn popdef .
+.It Fn regexp string regexp replacement
 Finds a regular expression in a string.
 If no further arguments are given,
 it returns the first match position or \-1 if no match.
 If a third argument
 is provided, it returns the replacement string, with sub-patterns replaced.
-.It Ic shift
+.It Fn shift arg1 ...
 Returns all but the first argument, the remaining arguments are
 quoted and pushed back with commas in between.
 The quoting
 nullifies the effect of the extra scan that will subsequently be
 performed.
-.It Ic sinclude
+.It Fn sinclude file
 Similar to
 .Ic include ,
 except it ignores any errors.
-.It Ic spaste
+.It Fn spaste file
 Similar to
-.Ic paste ,
+.Fn paste ,
 except it ignores any errors.
-.It Ic substr
+.It Fn substr string offset length
 Returns a substring of the first argument starting at the offset specified
 by the second argument and the length specified by the third argument.
 If no third argument is present it returns the rest of the string.
-.It Ic syscmd
+.It Fn syscmd cmd
 Passes the first argument to the shell.
 Nothing is returned.
 .It Ic sysval
 Returns the return value from the last
 .Ic syscmd .
-.It Ic traceon
+.It Fn traceon arg ...
 Enables tracing of macro expansions for the given arguments, or for all
 macros if no argument is given.
-.It Ic traceoff
+.It Fn traceoff arg ...
 Disables tracing of macro expansions for the given arguments, or for all
 macros if no argument is given.
-.It Ic translit
+.It Fn translit string mapfrom mapto
 Transliterate the characters in the first argument from the set
 given by the second argument to the set given by the third.
 You cannot use
 .Xr tr 1
 style abbreviations.
-.It Ic undefine
+.It Fn undefine name1 ...
 Removes the definition for the macros specified by its arguments.
-.It Ic undivert
+.It Fn undivert arg ...
 Flushes the named output queues (or all queues if no arguments).
 .It Ic unix
 A pre-defined macro for testing the OS platform.
