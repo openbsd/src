@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.4 2003/09/20 06:28:24 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.5 2003/09/22 14:49:16 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.4 2003/09/20 06:28:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.5 2003/09/22 14:49:16 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -652,13 +652,16 @@ load(void)
 {
 	int		index;
 	struct value	*v, copy;
+	struct number	*n;
 
 	index = readch();
 	if (0 <= index && index < UCHAR_MAX) {
 		v = stack_tos(&bmachine.reg[index]);
-		if (v == NULL)
-			warnx("register '%c' (0%o) is empty", index, index);
-		else
+		if (v == NULL) {
+			n = new_number();
+			bn_check(BN_zero(n->number));
+			push_number(n);
+		} else
 			push(stack_dup_value(v, &copy));
 	} else
 		warnx("internal error: reg num = %d", index);
@@ -693,7 +696,6 @@ load_stack(void)
 		stack = &bmachine.reg[index];
 		value = NULL;
 		if (stack_size(stack) > 0) {
-			/*frame_free(stack);*/
 			value = stack_pop(stack);
 		}
 		if (value != NULL)
