@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: parse.yacc,v 1.3 1996/11/11 15:34:40 millert Exp $";
+static char rcsid[] = "$Id: parse.yacc,v 1.4 1996/11/12 07:23:22 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -133,7 +133,7 @@ extern int  netgr_matches	__P((char *, char *, char *));
 extern int  usergr_matches	__P((char *, char *));
 static int  find_alias		__P((char *, int));
 static int  add_alias		__P((char *, int));
-static int  more_aliases	__P((size_t));
+static int  more_aliases	__P((void));
 static void append		__P((char *, char **, size_t *, size_t *, int));
 static void expand_ca_list	__P((void));
 static void expand_match_list	__P((void));
@@ -625,7 +625,7 @@ static int add_alias(alias, type)
 	(void) sprintf(s, "Alias `%s' already defined", alias);
 	yyerror(s);
     } else {
-	if (naliases == nslots && !more_aliases(nslots)) {
+	if (naliases == nslots && !more_aliases()) {
 	    (void) sprintf(s, "Out of memory defining alias `%s'", alias);
 	    yyerror(s);
 	}
@@ -673,23 +673,15 @@ static int find_alias(alias, type)
  *  This function allocates more space for the aliases list.
  */
 
-static int more_aliases(nslots)
-    size_t nslots;
+static int more_aliases()
 {
-    aliasinfo *aip;
-
-    if (nslots == 0)
-	aip = (aliasinfo *) malloc(MOREALIASES * sizeof(*aip));
+    nslots += MOREALIASES;
+    if (nslots == MOREALIASES)
+	aliases = (aliasinfo *) malloc(nslots * sizeof(aliasinfo));
     else
-	aip = (aliasinfo *) realloc(aliases,
-				    (nslots + MOREALIASES) * sizeof(*aip));
+	aliases = (aliasinfo *) realloc(aliases, nslots * sizeof(aliasinfo));
 
-    if (aip != NULL) {
-	aliases = aip;
-	nslots += MOREALIASES;
-    }
-
-    return(aip != NULL);
+    return(aliases != NULL);
 }
 
 
