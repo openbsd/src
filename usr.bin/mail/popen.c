@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.33 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.34 2004/09/15 22:21:11 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: popen.c,v 1.33 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: popen.c,v 1.34 2004/09/15 22:21:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -344,6 +344,7 @@ delchild(struct child *cp)
 	child_freelist = cp;
 }
 
+/* ARGSUSED */
 void
 sigchild(int signo)
 {
@@ -352,8 +353,7 @@ sigchild(int signo)
 	struct child *cp;
 	int save_errno = errno;
 
-	while ((pid =
-	    waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
+	while ((pid = waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
 		cp = findchild(pid, 1);
 		if (!cp)
 			continue;
@@ -430,7 +430,6 @@ static int
 handle_spool_locks(int action)
 {
 	static FILE *lockfp = NULL;
-	static pid_t lock_pid;
 
 	if (action == 0) {
 		/* Clear the lock */
@@ -462,7 +461,6 @@ handle_spool_locks(int action)
 			lockfp = NULL;
 			return(0);
 		}
-		lock_pid = fp_head->pid;	/* new entries added at head */
 	} else {
 		(void)fprintf(stderr, "handle_spool_locks: unknown action %d\n",
 		    action);
