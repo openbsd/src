@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.3 1999/05/26 08:29:10 deraadt Exp $	*/
+/*	$OpenBSD: timer.c,v 1.4 2001/09/05 20:03:07 deraadt Exp $	*/
 /*	$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$OpenBSD: timer.c,v 1.3 1999/05/26 08:29:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: timer.c,v 1.4 2001/09/05 20:03:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ waitch(delay)
 	duration.tv_usec = delay;
 	FD_ZERO(&fdbits);
 	FD_SET(STDIN_FILENO, &fdbits);
-	return (select(32, &fdbits, NULL, NULL, &duration));
+	return (select(STDIN_FILENO+1, &fdbits, NULL, NULL, &duration));
 }
 
 void
@@ -122,5 +122,5 @@ delay(tenths)
 
 	duration.tv_usec = (tenths % 10 ) * 100000L;
 	duration.tv_sec = (long) (tenths / 10);
-	select(32, 0, 0, 0, &duration);
+	select(0, 0, 0, 0, &duration);
 }
