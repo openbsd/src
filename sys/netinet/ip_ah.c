@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.39 2000/06/06 04:49:29 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.40 2000/06/18 03:07:25 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -652,6 +652,7 @@ ah_input_cb(void *op)
     struct cryptop *crp;
     struct tdb *tdb;
     caddr_t ptr = 0;
+    int s, err;
 
     crp = (struct cryptop *) op;
     crd = crp->crp_desc;
@@ -661,6 +662,8 @@ ah_input_cb(void *op)
     protoff = tc->tc_protoff;
     ptr = tc->tc_ptr;
     m = (struct mbuf *) crp->crp_buf;
+
+    s = spltdb();
 
     tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
     FREE(tc, M_XDATA);
@@ -680,7 +683,10 @@ ah_input_cb(void *op)
 	  tdb->tdb_cryptoid = crp->crp_sid;
 
 	if (crp->crp_etype == EAGAIN)
-	  return crypto_dispatch(crp);
+        {
+            splx(s);
+            return crypto_dispatch(crp);
+        }
 
 	ahstat.ahs_noxform++;
 	DPRINTF(("ah_input_cb(): crypto error %d\n", crp->crp_etype));
@@ -729,9 +735,10 @@ ah_input_cb(void *op)
     m1 = m_getptr(m, skip, &roff);
     if (m1 == NULL)
     {
+	ahstat.ahs_hdrops++;
+        splx(s);
 	DPRINTF(("ah_input(): bad mbuf chain for packet in SA %s/%08x\n",
 		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-	ahstat.ahs_hdrops++;
 	m_freem(m);
 	return EINVAL;
     }
@@ -787,9 +794,13 @@ ah_input_cb(void *op)
 	  m->m_pkthdr.len -= rplen + ahx->authsize;
       }
 
-    return ipsec_common_input_cb(m, tdb, skip, protoff);
+    err = ipsec_common_input_cb(m, tdb, skip, protoff);
+    splx(s);
+    return err;
 
  baddone:
+    splx(s);
+
     if (m)
       m_freem(m);
 
@@ -1106,6 +1117,7 @@ ah_output_cb(void *op)
     struct tdb *tdb;
     caddr_t ptr = 0;
     struct mbuf *m;
+    int err, s;
 
     crp = (struct cryptop *) op;
     tc = (struct tdb_crypto *) crp->crp_opaque;
@@ -1113,6 +1125,8 @@ ah_output_cb(void *op)
     protoff = tc->tc_protoff;
     ptr = tc->tc_ptr;
     m = (struct mbuf *) crp->crp_buf;
+
+    s = spltdb();
 
     tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
     FREE(tc, M_XDATA);
@@ -1130,7 +1144,10 @@ ah_output_cb(void *op)
 	  tdb->tdb_cryptoid = crp->crp_sid;
 
 	if (crp->crp_etype == EAGAIN)
-          return crypto_dispatch(crp);
+        {
+            splx(s);
+            return crypto_dispatch(crp);
+        }
 
 	ahstat.ahs_noxform++;
 	DPRINTF(("ah_output_cb(): crypto error %d\n", crp->crp_etype));
@@ -1154,9 +1171,13 @@ ah_output_cb(void *op)
     FREE(ptr, M_XDATA);
     crypto_freereq(crp);
 
-    return ipsp_process_done(m, tdb);
+    err =  ipsp_process_done(m, tdb);
+    splx(s);
+    return err;
 
  baddone:
+    splx(s);
+
     if (m)
       m_freem(m);
 
