@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 1999/11/16 10:11:35 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 1999/11/16 10:49:56 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -380,9 +380,6 @@ paddr_t phys_avail;			/* first free physical page
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
 struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
-
-/*static*/ vaddr_t	virtual_avail;	/* first free virtual page number */
-/*static*/ vaddr_t	virtual_end;	/* last free virtual page number */
 
 static void pmap_page_upload __P((paddr_t));
 void pmap_pinit __P((pmap_t));
