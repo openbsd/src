@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmonyvar.h,v 1.2 2003/01/30 01:23:24 jason Exp $	*/
+/*	$OpenBSD: harmonyvar.h,v 1.3 2003/01/30 03:23:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -81,6 +81,8 @@ struct harmony_channel {
 
 struct harmony_softc {
 	struct device sc_dv;
+	struct audio_device sc_audev;
+
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.12 2003/01/30 01:23:24 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.13 2003/01/30 03:23:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -107,12 +107,6 @@ struct audio_hw_if harmony_sa_hw_if = {
 	harmony_get_props,
 	harmony_trigger_output,
 	harmony_trigger_input,
-};
-
-const struct audio_device harmony_device = {
-	"harmony",
-	"gsc",
-	"lasi",
 };
 
 int harmony_match(struct device *, void *, void *);
@@ -233,6 +227,12 @@ harmony_attach(parent, self, aux)
 
 	if ((rev & CS4215_REV_VER) >= CS4215_REV_VER_E)
 		sc->sc_hasulinear8 = 1;
+
+	strlcpy(sc->sc_audev.name, ga->ga_name, sizeof(sc->sc_audev.name));
+	sprintf(sc->sc_audev.version, "%u.%u;%u", ga->ga_type.iodc_sv_rev,
+	    ga->ga_type.iodc_model, ga->ga_type.iodc_revision);
+	strlcpy(sc->sc_audev.config, sc->sc_dv.dv_xname,
+	    sizeof(sc->sc_audev.config));
 
 	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
 }
@@ -588,7 +588,10 @@ harmony_halt_input(void *vsc)
 int
 harmony_getdev(void *vsc, struct audio_device *retp)
 {
-	*retp = harmony_device;
+	struct harmony_softc *sc = vsc;
+
+	*retp = sc->sc_audev;
+
 	return (0);
 }
 
