@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.7 2002/08/03 15:22:06 jason Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.8 2002/08/12 16:40:51 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -293,58 +293,6 @@ fpu_cleanup(p, fs)
 out:
 	fs->fs_qsize = 0;
 }
-
-#ifdef notyet
-/*
- * If we have no FPU at all (are there any machines like this out
- * there!?) we have to emulate each instruction, and we need a pointer
- * to the trapframe so that we can step over them and do FBfcc's.
- * We know the `queue' is empty, though; we just want to emulate
- * the instruction at tf->tf_pc.
- */
-fpu_emulate(p, tf, fs)
-	struct proc *p;
-	register struct trapframe *tf;
-#ifndef SUN4U
-	register struct fpstate *fs;
-#else /* SUN4U */
-	register struct fpstate64 *fs;
-#endif /* SUN4U */
-{
-
-	do {
-		fetch instr from pc
-		decode
-		if (integer instr) {
-			/*
-			 * We do this here, rather than earlier, to avoid
-			 * losing even more badly than usual.
-			 */
-			if (p->p_addr->u_pcb.pcb_uw) {
-				write_user_windows();
-				if (rwindow_save(p))
-					sigexit(p, SIGILL);
-			}
-			if (loadstore) {
-				do_it;
-				pc = npc, npc += 4
-			} else if (fbfcc) {
-				do_annul_stuff;
-			} else
-				return;
-		} else if (fpu instr) {
-			fe.fe_fsr = fs->fs_fsr &= ~FSR_CX;
-			error = fpu_execute(p, &fe, fs, instr);
-			switch (error) {
-				etc;
-			}
-		} else
-			return;
-		if (want to reschedule)
-			return;
-	} while (error == 0);
-}
-#endif
 
 /*
  * Compute offset given a register and type.  For 32 bit sparc, bits 1 and 0
