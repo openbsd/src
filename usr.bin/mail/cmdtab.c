@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmdtab.c,v 1.3 1996/06/11 12:53:35 deraadt Exp $	*/
-/*	$NetBSD: cmdtab.c,v 1.6 1996/06/08 19:48:15 christos Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.4 1997/07/13 21:21:10 millert Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.7 1996/12/28 07:10:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.3 1996/06/11 12:53:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.4 1997/07/13 21:21:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,5 +120,6 @@ const struct cmd cmdtab[] = {
 	{ "core",	core,		M|NOLIST,	0,	0 },
 	{ "#",		null,		M|NOLIST,	0,	0 },
 	{ "clobber",	clobber,	M|RAWLIST,	0,	1 },
+	{ "inc",	inc,		T|NOLIST,	0,	0 },
 	{ 0,		0,		0,		0,	0 }
 };

@@ -1,5 +1,5 @@
-/*	$OpenBSD: collect.c,v 1.5 1997/04/13 20:32:06 deraadt Exp $	*/
-/*	$NetBSD: collect.c,v 1.6 1996/06/08 19:48:16 christos Exp $	*/
+/*	$OpenBSD: collect.c,v 1.6 1997/07/13 21:21:10 millert Exp $	*/
+/*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.5 1997/04/13 20:32:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.6 1997/07/13 21:21:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,11 +87,14 @@ collect(hp, printheaders)
 	extern char *tempMail;
 	char getsub;
 	int omask;
+	int longline, lastlong, rc;	/* Can deal with lines > LINESIZE */
+
 #if __GNUC__
 	/* Avoid longjmp clobbering */
 	(void) &escape;
 	(void) &eofcount;
 	(void) &getsub;
+	(void) &longline;
 #endif
 
 	collf = NULL;
@@ -115,7 +118,7 @@ collect(hp, printheaders)
 
 	noreset++;
 	if ((collf = Fopen(tempMail, "w+")) == NULL) {
-		perror(tempMail);
+		warn(tempMail);
 		goto err;
 	}
 	unlink(tempMail);
@@ -140,6 +143,8 @@ collect(hp, printheaders)
 		escape = ESCAPE;
 	eofcount = 0;
 	hadintr = 0;
+	lastlong = 0;
+	longline = 0;
 
 	if (!setjmp(colljmp)) {
 		if (getsub)
@@ -153,11 +158,11 @@ collect(hp, printheaders)
 cont:
 		if (hadintr) {
 			fflush(stdout);
-			fprintf(stderr,
-			    "\n(Interrupt -- one more to kill letter)\n");
+			fputs("\n(Interrupt -- one more to kill letter)\n",
+			    stderr);
 		} else {
 			if (isatty(0)) {
-				printf("(continue)\n");
+				puts("(continue)");
 				fflush(stdout);
 			}
 		}
@@ -169,19 +174,22 @@ cont:
 		if (c < 0) {
 			if (value("interactive") != NOSTR &&
 			    value("ignoreeof") != NOSTR && ++eofcount < 25) {
-				printf("Use \".\" to terminate letter\n");
+				puts("Use \".\" to terminate letter");
 				continue;
 			}
 			break;
 		}
+		lastlong = longline;
+		longline = (c == LINESIZE - 1);
 		eofcount = 0;
 		hadintr = 0;
 		if (linebuf[0] == '.' && linebuf[1] == '\0' &&
-		    value("interactive") != NOSTR &&
+		    value("interactive") != NOSTR && !lastlong &&
 		    (value("dot") != NOSTR || value("ignoreeof") != NOSTR))
 			break;
-		if (linebuf[0] != escape || value("interactive") == NOSTR) {
-			if (putline(collf, linebuf) < 0)
+		if (linebuf[0] != escape || value("interactive") == NOSTR ||
+		    lastlong) {
+			if (putline(collf, linebuf, !longline) < 0)
 				goto err;
 			continue;
 		}
@@ -193,12 +201,12 @@ cont:
 			 * Otherwise, it's an error.
 			 */
 			if (c == escape) {
-				if (putline(collf, &linebuf[1]) < 0)
+				if (putline(collf, &linebuf[1], !longline) < 0)
 					goto err;
 				else
 					break;
 			}
-			printf("Unknown tilde escape.\n");
+			puts("Unknown tilde escape.");
 			break;
 		case 'C':
 			/*
@@ -280,7 +288,7 @@ cont:
 			while (isspace(*cp))
 				cp++;
 			if (*cp == '\0') {
-				printf("Interpolate what file?\n");
+				puts("Interpolate what file?");
 				break;
 			}
 			cp = expand(cp);
@@ -291,22 +299,24 @@ cont:
 				break;
 			}
 			if ((fbuf = Fopen(cp, "r")) == NULL) {
-				perror(cp);
+				warn(cp);
 				break;
 			}
 			printf("\"%s\" ", cp);
 			fflush(stdout);
 			lc = 0;
 			cc = 0;
-			while (readline(fbuf, linebuf, LINESIZE) >= 0) {
-				lc++;
-				if ((t = putline(collf, linebuf)) < 0) {
-					Fclose(fbuf);
+			while ((rc = readline(fbuf, linebuf, LINESIZE)) >= 0) {
+				if (rc != LINESIZE - 1)
+					lc++;
+				if ((t = putline(collf, linebuf,
+						 rc != LINESIZE-1)) < 0) {
+					(void)Fclose(fbuf);
 					goto err;
 				}
 				cc += t;
 			}
-			Fclose(fbuf);
+			(void)Fclose(fbuf);
 			printf("%d/%d\n", lc, cc);
 			break;
 		case 'w':
@@ -317,7 +327,7 @@ cont:
 			while (*cp == ' ' || *cp == '\t')
 				cp++;
 			if (*cp == '\0') {
-				fprintf(stderr, "Write what file!?\n");
+				fputs("Write what file!?\n", stderr);
 				break;
 			}
 			if ((cp = expand(cp)) == NOSTR)
@@ -340,12 +350,12 @@ cont:
 			goto cont;
 		case '?':
 			if ((fbuf = Fopen(_PATH_TILDE, "r")) == NULL) {
-				perror(_PATH_TILDE);
+				warn(_PATH_TILDE);
 				break;
 			}
 			while ((t = getc(fbuf)) != EOF)
 				(void) putchar(t);
-			Fclose(fbuf);
+			(void)Fclose(fbuf);
 			break;
 		case 'p':
 			/*
@@ -353,7 +363,7 @@ cont:
 			 * message without altering anything.
 			 */
 			rewind(collf);
-			printf("-------\nMessage contains:\n");
+			puts("-------\nMessage contains:");
 			puthead(hp, stdout, GTO|GSUBJECT|GCC|GBCC|GNL);
 			while ((t = getc(collf)) != EOF)
 				(void) putchar(t);
@@ -381,7 +391,7 @@ cont:
 	goto out;
 err:
 	if (collf != NULL) {
-		Fclose(collf);
+		(void)Fclose(collf);
 		collf = NULL;
 	}
 out:
@@ -395,7 +405,7 @@ out:
 	signal(SIGTTOU, savettou);
 	signal(SIGTTIN, savettin);
 	sigsetmask(omask);
-	return collf;
+	return(collf);
 }
 
 /*
@@ -420,11 +430,11 @@ exwrite(name, fp, f)
 	if (stat(name, &junk) >= 0 && (junk.st_mode & S_IFMT) == S_IFREG) {
 		if (!f)
 			fprintf(stderr, "%s: ", name);
-		fprintf(stderr, "File exists\n");
+		fputs("File exists\n", stderr);
 		return(-1);
 	}
 	if ((of = Fopen(name, "w")) == NULL) {
-		perror(NOSTR);
+		warn(NOSTR);
 		return(-1);
 	}
 	lc = 0;
@@ -435,12 +445,12 @@ exwrite(name, fp, f)
 			lc++;
 		(void) putc(c, of);
 		if (ferror(of)) {
-			perror(name);
-			Fclose(of);
+			warn(name);
+			(void)Fclose(of);
 			return(-1);
 		}
 	}
-	Fclose(of);
+	(void)Fclose(of);
 	printf("%d/%ld\n", lc, cc);
 	fflush(stdout);
 	return(0);
@@ -461,7 +471,7 @@ mesedit(fp, c)
 	if (nf != NULL) {
 		fseek(nf, 0L, 2);
 		collf = nf;
-		Fclose(fp);
+		(void)Fclose(fp);
 	}
 	(void) signal(SIGINT, sigint);
 }
@@ -483,7 +493,7 @@ mespipe(fp, cmd)
 	char *shell;
 
 	if ((nf = Fopen(tempEdit, "w+")) == NULL) {
-		perror(tempEdit);
+		warn(tempEdit);
 		goto out;
 	}
 	(void) unlink(tempEdit);
@@ -495,12 +505,12 @@ mespipe(fp, cmd)
 		shell = _PATH_CSHELL;
 	if (run_command(shell,
 	    0, fileno(fp), fileno(nf), "-c", cmd, NOSTR) < 0) {
-		(void) Fclose(nf);
+		(void)Fclose(nf);
 		goto out;
 	}
 	if (fsize(nf) == 0) {
 		fprintf(stderr, "No bytes from \"%s\" !?\n", cmd);
-		(void) Fclose(nf);
+		(void)Fclose(nf);
 		goto out;
 	}
 	/*
@@ -508,7 +518,7 @@ mespipe(fp, cmd)
 	 */
 	(void) fseek(nf, 0L, 2);
 	collf = nf;
-	(void) Fclose(fp);
+	(void)Fclose(fp);
 out:
 	(void) signal(SIGINT, sigint);
 }
@@ -532,7 +542,7 @@ forward(ms, fp, f)
 	struct ignoretab *ig;
 	char *tabst;
 
-	msgvec = (int *) salloc((msgCount+1) * sizeof *msgvec);
+	msgvec = (int *) salloc((msgCount+1) * sizeof(*msgvec));
 	if (msgvec == (int *) NOSTR)
 		return(0);
 	if (getmsglist(ms, msgvec, 0) < 0)
@@ -540,7 +550,7 @@ forward(ms, fp, f)
 	if (*msgvec == 0) {
 		*msgvec = first(0, MMNORM);
 		if (*msgvec == NULL) {
-			printf("No appropriate messages\n");
+			puts("No appropriate messages");
 			return(0);
 		}
 		msgvec[1] = NULL;
@@ -550,18 +560,18 @@ forward(ms, fp, f)
 	else if ((tabst = value("indentprefix")) == NOSTR)
 		tabst = "\t";
 	ig = isupper(f) ? NULL : ignore;
-	printf("Interpolating:");
+	fputs("Interpolating:", stdout);
 	for (; *msgvec != 0; msgvec++) {
 		struct message *mp = message + *msgvec - 1;
 
 		touch(mp);
 		printf(" %d", *msgvec);
 		if (send(mp, fp, ig, tabst) < 0) {
-			perror(tempMail);
+			warn(tempMail);
 			return(-1);
 		}
 	}
-	printf("\n");
+	putchar('\n');
 	return(0);
 }
 
@@ -649,6 +659,6 @@ savedeadletter(fp)
 		return;
 	while ((c = getc(fp)) != EOF)
 		(void) putc(c, dbuf);
-	Fclose(dbuf);
+	(void)Fclose(dbuf);
 	rewind(fp);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmd3.c,v 1.4 1997/05/30 08:51:35 deraadt Exp $	*/
-/*	$NetBSD: cmd3.c,v 1.5 1996/06/08 19:48:14 christos Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.5 1997/07/13 21:21:09 millert Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cmd3.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.4 1997/05/30 08:51:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.5 1997/07/13 21:21:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,13 +67,13 @@ shell(v)
 
 	(void) strcpy(cmd, str);
 	if (bangexp(cmd) < 0)
-		return 1;
+		return(1);
 	if ((shell = value("SHELL")) == NOSTR)
 		shell = _PATH_CSHELL;
 	(void) run_command(shell, 0, -1, -1, "-c", cmd, NOSTR);
 	(void) signal(SIGINT, sigint);
-	printf("!\n");
-	return 0;
+	puts("!");
+	return(0);
 }
 
 /*
@@ -92,7 +92,7 @@ dosh(v)
 	(void) run_command(shell, 0, -1, -1, NOSTR, NOSTR, NOSTR);
 	(void) signal(SIGINT, sigint);
 	putchar('\n');
-	return 0;
+	return(0);
 }
 
 /*
@@ -118,7 +118,7 @@ bangexp(str)
 		if (*cp == '!') {
 			if (n < strlen(lastbang)) {
 overf:
-				printf("Command buffer overflow\n");
+				puts("Command buffer overflow");
 				return(-1);
 			}
 			changed++;
@@ -145,8 +145,8 @@ overf:
 		fflush(stdout);
 	}
 	strcpy(str, bangbuf);
-	strncpy(lastbang, bangbuf, 128);
-	lastbang[128-1] = 0;
+	strncpy(lastbang, bangbuf, sizeof(lastbang) - 1);
+	lastbang[sizeof(lastbang) - 1] = '\0';
 	return(0);
 }
 
@@ -162,12 +162,12 @@ help(v)
 	register FILE *f;
 
 	if ((f = Fopen(_PATH_HELP, "r")) == NULL) {
-		perror(_PATH_HELP);
+		warn(_PATH_HELP);
 		return(1);
 	}
 	while ((c = getc(f)) != EOF)
 		putchar(c);
-	Fclose(f);
+	(void)Fclose(f);
 	return(0);
 }
 
@@ -187,10 +187,10 @@ schdir(v)
 		if ((cp = expand(*arglist)) == NOSTR)
 			return(1);
 	if (chdir(cp) < 0) {
-		perror(cp);
+		warn(cp);
 		return(1);
 	}
-	return 0;
+	return(0);
 }
 
 int
@@ -199,9 +199,9 @@ respond(v)
 {
 	int *msgvec = v;
 	if (value("Replyall") == NOSTR)
-		return (_respond(msgvec));
+		return(_respond(msgvec));
 	else
-		return (_Respond(msgvec));
+		return(_Respond(msgvec));
 }
 
 /*
@@ -219,7 +219,7 @@ _respond(msgvec)
 	struct header head;
 
 	if (msgvec[1] != 0) {
-		printf("Sorry, can't reply to multiple messages at once\n");
+		puts("Sorry, can't reply to multiple messages at once");
 		return(1);
 	}
 	mp = &message[msgvec[0] - 1];
@@ -246,7 +246,7 @@ _respond(msgvec)
 		np = cat(np, extract(rcv, GTO));
 	else if (np == NIL) {
 		if (replyto != NOSTR)
-			printf("Empty reply-to field -- replying to author\n");
+			puts("Empty reply-to field -- replying to author");
 		np = extract(rcv, GTO);
 	}
 	head.h_to = np;
@@ -279,15 +279,15 @@ reedit(subj)
 	char *newsubj;
 
 	if (subj == NOSTR)
-		return NOSTR;
+		return(NOSTR);
 	if ((subj[0] == 'r' || subj[0] == 'R') &&
 	    (subj[1] == 'e' || subj[1] == 'E') &&
 	    subj[2] == ':')
-		return subj;
+		return(subj);
 	newsubj = salloc(strlen(subj) + 5);
 	strcpy(newsubj, "Re: ");
 	strcpy(newsubj + 4, subj);
-	return newsubj;
+	return(newsubj);
 }
 
 /*
@@ -303,7 +303,7 @@ preserve(v)
 	register int *ip, mesg;
 
 	if (edit) {
-		printf("Cannot \"preserve\" in edit mode\n");
+		puts("Cannot \"preserve\" in edit mode");
 		return(1);
 	}
 	for (ip = msgvec; *ip != NULL; ip++) {
@@ -385,7 +385,7 @@ set(v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
 				s++;
-		ap = (char **) salloc(s * sizeof *ap);
+		ap = (char **) salloc(s * sizeof(*ap));
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
 				*p++ = vp->v_name;
@@ -407,7 +407,7 @@ set(v)
 		else
 			cp++;
 		if (equal(varbuf, "")) {
-			printf("Non-null variable name required\n");
+			puts("Non-null variable name required");
 			errs++;
 			continue;
 		}
@@ -473,7 +473,7 @@ group(v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
 				s++;
-		ap = (char **) salloc(s * sizeof *ap);
+		ap = (char **) salloc(s * sizeof(*ap));
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
 				*p++ = gh->g_name;
@@ -490,7 +490,7 @@ group(v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NOGRP) {
-		gh = (struct grouphead *) calloc(sizeof *gh, 1);
+		gh = (struct grouphead *) calloc(sizeof(*gh), 1);
 		gh->g_name = vcopy(gname);
 		gh->g_list = NOGE;
 		gh->g_link = groups[h];
@@ -504,7 +504,7 @@ group(v)
 	 */
 
 	for (ap = argv+1; *ap != NOSTR; ap++) {
-		gp = (struct group *) calloc(sizeof *gp, 1);
+		gp = (struct group *) calloc(sizeof(*gp), 1);
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
@@ -549,7 +549,7 @@ int
 null(v)
 	void *v;
 {
-	return 0;
+	return(0);
 }
 
 /*
@@ -563,13 +563,13 @@ file(v)
 	char **argv = v;
 
 	if (argv[0] == NOSTR) {
-		newfileinfo();
-		return 0;
+		newfileinfo(0);
+		return(0);
 	}
 	if (setfile(*argv) < 0)
-		return 1;
+		return(1);
 	announce();
-	return 0;
+	return(0);
 }
 
 /*
@@ -588,11 +588,11 @@ echo(v)
 		if ((cp = expand(cp)) != NOSTR) {
 			if (ap != argv)
 				putchar(' ');
-			printf("%s", cp);
+			fputs(cp, stdout);
 		}
 	}
 	putchar('\n');
-	return 0;
+	return(0);
 }
 
 int
@@ -601,9 +601,9 @@ Respond(v)
 {
 	int *msgvec = v;
 	if (value("Replyall") == NOSTR)
-		return (_Respond(msgvec));
+		return(_Respond(msgvec));
 	else
-		return (_respond(msgvec));
+		return(_respond(msgvec));
 }
 
 /*
@@ -630,7 +630,7 @@ _Respond(msgvec)
 		head.h_to = cat(head.h_to, extract(cp, GTO));
 	}
 	if (head.h_to == NIL)
-		return 0;
+		return(0);
 	mp = &message[msgvec[0] - 1];
 	if ((head.h_subject = hfield("subject", mp)) == NOSTR)
 		head.h_subject = hfield("subj", mp);
@@ -639,7 +639,7 @@ _Respond(msgvec)
 	head.h_bcc = NIL;
 	head.h_smopts = NIL;
 	mail1(&head, 1);
-	return 0;
+	return(0);
 }
 
 /*
@@ -654,7 +654,7 @@ ifcmd(v)
 	register char *cp;
 
 	if (cond != CANY) {
-		printf("Illegal nested \"if\"\n");
+		puts("Illegal nested \"if\"");
 		return(1);
 	}
 	cond = CANY;
@@ -686,7 +686,7 @@ elsecmd(v)
 
 	switch (cond) {
 	case CANY:
-		printf("\"Else\" without matching \"if\"\n");
+		puts("\"Else\" without matching \"if\"");
 		return(1);
 
 	case CSEND:
@@ -698,7 +698,7 @@ elsecmd(v)
 		break;
 
 	default:
-		printf("Mail's idea of conditions is screwed up\n");
+		puts("mail's idea of conditions is screwed up");
 		cond = CANY;
 		break;
 	}
@@ -714,7 +714,7 @@ endifcmd(v)
 {
 
 	if (cond == CANY) {
-		printf("\"Endif\" without matching \"if\"\n");
+		puts("\"Endif\" without matching \"if\"");
 		return(1);
 	}
 	cond = CANY;
@@ -738,14 +738,14 @@ alternates(v)
 			return(0);
 		for (ap = altnames; *ap; ap++)
 			printf("%s ", *ap);
-		printf("\n");
+		putchar('\n');
 		return(0);
 	}
 	if (altnames != 0)
 		free((char *) altnames);
-	altnames = (char **) calloc((unsigned) c, sizeof (char *));
+	altnames = (char **) calloc((unsigned) c, sizeof(char *));
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
-		cp = (char *) calloc((unsigned) strlen(*ap) + 1, sizeof (char));
+		cp = (char *) calloc((unsigned) strlen(*ap) + 1, sizeof(char));
 		strcpy(cp, *ap);
 		*ap2 = cp;
 	}

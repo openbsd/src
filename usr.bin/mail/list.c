@@ -1,5 +1,5 @@
-/*	$OpenBSD: list.c,v 1.4 1997/05/30 08:51:42 deraadt Exp $	*/
-/*	$NetBSD: list.c,v 1.4 1996/06/08 19:48:30 christos Exp $	*/
+/*	$OpenBSD: list.c,v 1.5 1997/07/13 21:21:14 millert Exp $	*/
+/*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)list.c	8.2 (Berkeley) 4/19/94";
+static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.4 1997/05/30 08:51:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.5 1997/07/13 21:21:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ getmsglist(buf, vector, flags)
 
 	if (msgCount == 0) {
 		*vector = 0;
-		return 0;
+		return(0);
 	}
 	if (markall(buf, flags) < 0)
 		return(-1);
@@ -145,7 +145,7 @@ markall(buf, f)
 		case TNUMBER:
 number:
 			if (star) {
-				printf("No numbers mixed with *\n");
+				puts("No numbers mixed with *");
 				return(-1);
 			}
 			mc++;
@@ -172,14 +172,14 @@ number:
 
 		case TPLUS:
 			if (beg != 0) {
-				printf("Non-numeric second argument\n");
+				puts("Non-numeric second argument");
 				return(-1);
 			}
 			i = valdot;
 			do {
 				i++;
 				if (i > msgCount) {
-					printf("Referencing beyond EOF\n");
+					puts("Referencing beyond EOF");
 					return(-1);
 				}
 			} while ((message[i - 1].m_flag & MDELETED) != f);
@@ -192,7 +192,7 @@ number:
 				do {
 					i--;
 					if (i <= 0) {
-						printf("Referencing before 1\n");
+						puts("Referencing before 1");
 						return(-1);
 					}
 				} while ((message[i - 1].m_flag & MDELETED) != f);
@@ -202,7 +202,7 @@ number:
 
 		case TSTRING:
 			if (beg != 0) {
-				printf("Non-numeric second argument\n");
+				puts("Non-numeric second argument");
 				return(-1);
 			}
 			other++;
@@ -229,14 +229,14 @@ number:
 
 		case TSTAR:
 			if (other) {
-				printf("Can't mix \"*\" with anything\n");
+				puts("Can't mix \"*\" with anything");
 				return(-1);
 			}
 			star++;
 			break;
 
 		case TERROR:
-			return -1;
+			return(-1);
 		}
 		tok = scan(&bufp);
 	}
@@ -250,7 +250,7 @@ number:
 				mc++;
 			}
 		if (mc == 0) {
-			printf("No applicable messages.\n");
+			puts("No applicable messages.");
 			return(-1);
 		}
 		return(0);
@@ -306,7 +306,7 @@ number:
 				namelist[0]);
 			for (np = &namelist[1]; *np != NOSTR; np++)
 				printf(", %s", *np);
-			printf("}\n");
+			puts("}");
 			return(-1);
 		}
 	}
@@ -334,11 +334,11 @@ number:
 		if (mp >= &message[msgCount]) {
 			register struct coltab *colp;
 
-			printf("No messages satisfy");
+			fputs("No messages satisfy", stdout);
 			for (colp = &coltab[0]; colp->co_char; colp++)
 				if (colp->co_bit & colmod)
 					printf(" :%c", colp->co_char);
-			printf("\n");
+			putchar('\n');
 			return(-1);
 		}
 	}
@@ -408,8 +408,7 @@ getrawlist(line, argv, argc)
 		if (*cp == '\0')
 			break;
 		if (argn >= argc - 1) {
-			printf(
-			"Too many elements in the list; excess discarded.\n");
+			puts("Too many elements in the list; excess discarded.");
 			break;
 		}
 		cp2 = linebuf;
@@ -480,7 +479,7 @@ getrawlist(line, argv, argc)
 		argv[argn++] = savestr(linebuf);
 	}
 	argv[argn] = NOSTR;
-	return argn;
+	return(argn);
 }
 
 /*
@@ -597,7 +596,7 @@ scan(sp)
 	}
 	if (quotec && c == 0) {
 		fprintf(stderr, "Missing %c\n", quotec);
-		return TERROR;
+		return(TERROR);
 	}
 	*sp = --cp;
 	*cp2 = '\0';
@@ -639,16 +638,16 @@ first(f, m)
 	register struct message *mp;
 
 	if (msgCount == 0)
-		return 0;
+		return(0);
 	f &= MDELETED;
 	m &= MDELETED;
 	for (mp = dot; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag & m) == f)
-			return mp - message + 1;
+			return(mp - message + 1);
 	for (mp = dot-1; mp >= &message[0]; mp--)
 		if ((mp->m_flag & m) == f)
-			return mp - message + 1;
-	return 0;
+			return(mp - message + 1);
+	return(0);
 }
 
 /*
@@ -663,7 +662,7 @@ matchsender(str, mesg)
 	register char *cp, *cp2, *backup;
 
 	if (!*str)	/* null string matches nothing instead of everything */
-		return 0;
+		return(0);
 	backup = cp2 = nameof(&message[mesg - 1], 0);
 	cp = str;
 	while (*cp2) {
@@ -675,6 +674,47 @@ matchsender(str, mesg)
 		}
 	}
 	return(*cp == 0);
+}
+
+/*
+ * See if the passed name received the passed message number.  Return true
+ * if so.
+ */
+
+static char *to_fields[] = { "to", "cc", "bcc", NULL };
+
+int
+matchto(str, mesg)
+	char *str;
+{
+	register struct message *mp;
+	register char *cp, *cp2, *backup, **to;
+
+	str++;
+
+	if (*str == 0)	/* null string matches nothing instead of everything */
+		return(0);
+
+	mp = &message[mesg-1];
+
+	for (to = to_fields; *to; to++) {
+		cp = str;
+		cp2 = hfield(*to, mp);
+		if (cp2 != NOSTR) {
+			backup = cp2;
+			while (*cp2) {
+				if (*cp == 0)
+					return(1);
+				if (raise(*cp++) != raise(*cp2++)) {
+					cp2 = ++backup;
+					cp = str;
+				}
+			}
+			if (*cp == 0)
+				return(1);
+		}
+	}
+	return(0);
 }
 
 /*
@@ -695,13 +735,12 @@ matchsubj(str, mesg)
 	register char *cp, *cp2, *backup;
 
 	str++;
-	if (strlen(str) == 0)
+	if (*str == '\0')
 		str = lastscan;
 	else {
-		strncpy(lastscan, str, sizeof lastscan-1);
-		lastscan[sizeof lastscan-1] = '\0';
+		strncpy(lastscan, str, sizeof(lastscan) - 1);
+		lastscan[sizeof(lastscan) - 1] = '\0';
 	}
-
 	mp = &message[mesg-1];
 	
 	/*
@@ -709,8 +748,12 @@ matchsubj(str, mesg)
 	 */
 
 	if (value("searchheaders") && (cp = strchr(str, ':'))) {
+		/* Check for special case "/To:" */
+		if (raise(str[0]) == 'T' && raise(str[1]) == 'O' &&
+		    str[2] == ':')
+			return(matchto(cp, mesg));
 		*cp++ = '\0';
-		cp2 = hfield(str, mp);
+		cp2 = hfield(*str ? str : "subject", mp);
 		cp[-1] = ':';
 		str = cp;
 	} else {
@@ -780,7 +823,7 @@ metamess(meta, f)
 		for (mp = &message[0]; mp < &message[msgCount]; mp++)
 			if ((mp->m_flag & MDELETED) == f)
 				return(mp - &message[0] + 1);
-		printf("No applicable messages\n");
+		puts("No applicable messages");
 		return(-1);
 
 	case '$':
@@ -790,11 +833,11 @@ metamess(meta, f)
 		for (mp = &message[msgCount-1]; mp >= &message[0]; mp--)
 			if ((mp->m_flag & MDELETED) == f)
 				return(mp - &message[0] + 1);
-		printf("No applicable messages\n");
+		puts("No applicable messages");
 		return(-1);
 
 	case '.':
-		/* 
+		/*
 		 * Current message.
 		 */
 		m = dot - &message[0] + 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.2 1996/06/11 12:53:50 deraadt Exp $	*/
+/*	$OpenBSD: send.c,v 1.3 1997/07/13 21:21:16 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.2 1996/06/11 12:53:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.3 1997/07/13 21:21:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,11 +94,11 @@ send(mp, obuf, doign, prefix)
 	 * Process headers first
 	 */
 	while (count > 0 && ishead) {
-		if (fgets(line, LINESIZE, ibuf) == NULL)
+		if (fgets(line, sizeof(line), ibuf) == NULL)
 			break;
 		count -= length = strlen(line);
 		if (firstline) {
-			/* 
+			/*
 			 * First line is the From line, so no headers
 			 * there to worry about
 			 */
@@ -183,11 +183,11 @@ send(mp, obuf, doign, prefix)
 				if (length > 1)
 					fputs(prefix, obuf);
 				else
-					(void) fwrite(prefix, sizeof *prefix,
+					(void) fwrite(prefix, sizeof(*prefix),
 							prefixlen, obuf);
-			(void) fwrite(line, sizeof *line, length, obuf);
+			(void) fwrite(line, sizeof(*line), length, obuf);
 			if (ferror(obuf))
-				return -1;
+				return(-1);
 		}
 	}
 	/*
@@ -197,7 +197,7 @@ send(mp, obuf, doign, prefix)
 		count--;		/* skip final blank line */
 	if (prefix != NOSTR)
 		while (count > 0) {
-			if (fgets(line, LINESIZE, ibuf) == NULL) {
+			if (fgets(line, sizeof(line), ibuf) == NULL) {
 				c = 0;
 				break;
 			}
@@ -209,26 +209,26 @@ send(mp, obuf, doign, prefix)
 			if (c > 1)
 				fputs(prefix, obuf);
 			else
-				(void) fwrite(prefix, sizeof *prefix,
+				(void) fwrite(prefix, sizeof(*prefix),
 						prefixlen, obuf);
-			(void) fwrite(line, sizeof *line, c, obuf);
+			(void) fwrite(line, sizeof(*line), c, obuf);
 			if (ferror(obuf))
-				return -1;
+				return(-1);
 		}
 	else
 		while (count > 0) {
 			c = count < LINESIZE ? count : LINESIZE;
-			if ((c = fread(line, sizeof *line, c, ibuf)) <= 0)
+			if ((c = fread(line, sizeof(*line), c, ibuf)) <= 0)
 				break;
 			count -= c;
-			if (fwrite(line, sizeof *line, c, obuf) != c)
-				return -1;
+			if (fwrite(line, sizeof(*line), c, obuf) != c)
+				return(-1);
 		}
 	if (doign == ignoreall && c > 0 && line[c - 1] != '\n')
 		/* no final blank line */
 		if ((c = getc(ibuf)) != EOF && putc(c, obuf) == EOF)
-			return -1;
-	return 0;
+			return(-1);
+	return(0);
 }
 
 /*
@@ -322,14 +322,14 @@ mail1(hp, printheaders)
 			if (value("askbcc") != NOSTR)
 				grabh(hp, GBCC);
 		} else {
-			printf("EOT\n");
+			puts("EOT");
 			(void) fflush(stdout);
 		}
 	if (fsize(mtf) == 0)
 		if (hp->h_subject == NOSTR)
-			printf("No message, no subject; hope that's ok\n");
+			puts("No message, no subject; hope that's ok");
 		else
-			printf("Null message body; hope that's ok\n");
+			puts("Null message body; hope that's ok");
 	/*
 	 * Now, take the user names from the combined
 	 * to and cc lists and do all the alias
@@ -338,7 +338,7 @@ mail1(hp, printheaders)
 	senderr = 0;
 	to = usermap(cat(hp->h_bcc, cat(hp->h_to, hp->h_cc)));
 	if (to == NIL) {
-		printf("No recipients specified\n");
+		puts("No recipients specified");
 		senderr++;
 	}
 	/*
@@ -353,17 +353,17 @@ mail1(hp, printheaders)
 		goto out;
 	fixhead(hp, to);
 	if ((mtf = infix(hp, mtf)) == NULL) {
-		fprintf(stderr, ". . . message lost, sorry.\n");
+		fputs(". . . message lost, sorry.\n", stderr);
 		return;
 	}
 	namelist = unpack(cat(hp->h_smopts, to));
 	if (debug) {
 		char **t;
 
-		printf("Sendmail arguments:");
+		fputs("Sendmail arguments:", stdout);
 		for (t = namelist; *t != NOSTR; t++)
 			printf(" \"%s\"", *t);
-		printf("\n");
+		putchar('\n');
 		goto out;
 	}
 	if ((cp = value("record")) != NOSTR)
@@ -375,7 +375,7 @@ mail1(hp, printheaders)
 	 */
 	pid = fork();
 	if (pid == -1) {
-		perror("fork");
+		warn("fork");
 		savedeadletter(mtf);
 		goto out;
 	}
@@ -394,7 +394,7 @@ mail1(hp, printheaders)
 		else
 			cp = _PATH_SENDMAIL;
 		execv(cp, namelist);
-		perror(cp);
+		warn(cp);
 		_exit(1);
 	}
 	if (value("verbose") != NOSTR)
@@ -402,7 +402,7 @@ mail1(hp, printheaders)
 	else
 		free_child(pid);
 out:
-	(void) Fclose(mtf);
+	(void)Fclose(mtf);
 }
 
 /*
@@ -445,12 +445,12 @@ infix(hp, fi)
 	register int c;
 
 	if ((nfo = Fopen(tempMail, "w")) == NULL) {
-		perror(tempMail);
+		warn(tempMail);
 		return(fi);
 	}
 	if ((nfi = Fopen(tempMail, "r")) == NULL) {
-		perror(tempMail);
-		(void) Fclose(nfo);
+		warn(tempMail);
+		(void)Fclose(nfo);
 		return(fi);
 	}
 	(void) rm(tempMail);
@@ -461,20 +461,20 @@ infix(hp, fi)
 		c = getc(fi);
 	}
 	if (ferror(fi)) {
-		perror("read");
+		warn("read");
 		rewind(fi);
 		return(fi);
 	}
 	(void) fflush(nfo);
 	if (ferror(nfo)) {
-		perror(tempMail);
-		(void) Fclose(nfo);
-		(void) Fclose(nfi);
+		warn(tempMail);
+		(void)Fclose(nfo);
+		(void)Fclose(nfi);
 		rewind(fi);
 		return(fi);
 	}
-	(void) Fclose(nfo);
-	(void) Fclose(fi);
+	(void)Fclose(nfo);
+	(void)Fclose(fi);
 	rewind(nfi);
 	return(nfi);
 }
@@ -555,18 +555,18 @@ savemail(name, fi)
 	time_t now;
 
 	if ((fo = Fopen(name, "a")) == NULL) {
-		perror(name);
-		return (-1);
+		warn(name);
+		return(-1);
 	}
 	(void) time(&now);
 	fprintf(fo, "From %s %s", myname, ctime(&now));
-	while ((i = fread(buf, 1, sizeof buf, fi)) > 0)
+	while ((i = fread(buf, 1, sizeof(buf), fi)) > 0)
 		(void) fwrite(buf, 1, i, fo);
 	(void) putc('\n', fo);
 	(void) fflush(fo);
 	if (ferror(fo))
-		perror(name);
-	(void) Fclose(fo);
+		warn(name);
+	(void)Fclose(fo);
 	rewind(fi);
-	return (0);
+	return(0);
 }

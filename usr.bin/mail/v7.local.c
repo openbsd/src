@@ -1,5 +1,5 @@
-/*	$OpenBSD: v7.local.c,v 1.6 1997/06/16 20:57:06 millert Exp $	*/
-/*	$NetBSD: v7.local.c,v 1.7 1996/06/08 19:48:44 christos Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.7 1997/07/13 21:21:18 millert Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: v7.local.c,v 1.6 1997/06/16 20:57:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: v7.local.c,v 1.7 1997/07/13 21:21:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ demail()
 {
 
 	if (value("keep") != NOSTR || rm(mailname) < 0)
-		close(creat(mailname, 0600));
+		(void)close(creat(mailname, 0600));
 }
 
 /*
@@ -95,11 +95,11 @@ username()
 	uid_t uid;
 
 	if ((np = getenv("USER")) != NOSTR)
-		return np;
+		return(np);
 	if ((np = getenv("LOGNAME")) != NOSTR)
-		return np;
+		return(np);
 	if ((np = getname(uid = getuid())) != NOSTR)
-		return np;
+		return(np);
 	printf("Cannot associate a name with uid %u\n", (unsigned)uid);
-	return NOSTR;
+	return(NOSTR);
 }

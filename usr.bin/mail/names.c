@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.3 1997/01/17 07:12:50 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.4 1997/07/13 21:21:15 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.3 1997/01/17 07:12:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.4 1997/07/13 21:21:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ nalloc(str, ntype)
 {
 	register struct name *np;
 
-	np = (struct name *) salloc(sizeof *np);
+	np = (struct name *) salloc(sizeof(*np));
 	np->n_flink = NIL;
 	np->n_blink = NIL;
 	np->n_type = ntype;
@@ -104,7 +104,7 @@ extract(line, ntype)
 	char nbuf[BUFSIZ];
 
 	if (line == NOSTR || *line == '\0')
-		return NIL;
+		return(NIL);
 	top = NIL;
 	np = NIL;
 	cp = line;
@@ -117,7 +117,7 @@ extract(line, ntype)
 		t->n_blink = np;
 		np = t;
 	}
-	return top;
+	return(top);
 }
 
 /*
@@ -139,7 +139,7 @@ detract(np, ntype)
 	ntype &= ~GCOMMA;
 	s = 0;
 	if (debug && comma)
-		fprintf(stderr, "detract asked to insert commas\n");
+		fputs("detract asked to insert commas\n", stderr);
 	for (p = np; p != NIL; p = p->n_flink) {
 		if (ntype && (p->n_type & GMASK) != ntype)
 			continue;
@@ -179,7 +179,7 @@ yankword(ap, wbuf)
 	cp = ap;
 	for (;;) {
 		if (*cp == '\0')
-			return NOSTR;
+			return(NOSTR);
 		if (*cp == '(') {
 			register int nesting = 0;
 
@@ -207,7 +207,7 @@ yankword(ap, wbuf)
 		for (cp2 = wbuf; *cp && !strchr(" \t,(", *cp); *cp2++ = *cp++)
 			;
 	*cp2 = '\0';
-	return cp;
+	return(cp);
 }
 
 /*
@@ -254,16 +254,16 @@ outof(names, fo, hp)
 
 		if (image < 0) {
 			if ((fout = Fopen(tempEdit, "a")) == NULL) {
-				perror(tempEdit);
+				warn(tempEdit);
 				senderr++;
 				goto cant;
 			}
 			image = open(tempEdit, 2);
 			(void) unlink(tempEdit);
 			if (image < 0) {
-				perror(tempEdit);
+				warn(tempEdit);
 				senderr++;
-				(void) Fclose(fout);
+				(void)Fclose(fout);
 				goto cant;
 			}
 			(void) fcntl(image, F_SETFD, 1);
@@ -275,8 +275,8 @@ outof(names, fo, hp)
 			(void) putc('\n', fout);
 			(void) fflush(fout);
 			if (ferror(fout))
-				perror(tempEdit);
-			(void) Fclose(fout);
+				warn(tempEdit);
+			(void)Fclose(fout);
 		}
 
 		/*
@@ -313,28 +313,30 @@ outof(names, fo, hp)
 		} else {
 			int f;
 			if ((fout = Fopen(fname, "a")) == NULL) {
-				perror(fname);
+				warn(fname);
 				senderr++;
 				goto cant;
 			}
 			if ((f = dup(image)) < 0) {
-				perror("dup");
+				warn("dup");
 				fin = NULL;
 			} else
 				fin = Fdopen(f, "r");
 			if (fin == NULL) {
-				fprintf(stderr, "Can't reopen image\n");
-				(void) Fclose(fout);
+				fputs("Can't reopen image\n", stderr);
+				(void)Fclose(fout);
 				senderr++;
 				goto cant;
 			}
 			rewind(fin);
 			while ((c = getc(fin)) != EOF)
 				(void) putc(c, fout);
-			if (ferror(fout))
-				senderr++, perror(fname);
-			(void) Fclose(fout);
-			(void) Fclose(fin);
+			if (ferror(fout)) {
+				senderr++;
+				warn(fname);
+			}
+			(void)Fclose(fout);
+			(void)Fclose(fin);
 		}
 cant:
 		/*
@@ -346,7 +348,7 @@ cant:
 		np = np->n_flink;
 	}
 	if (image >= 0) {
-		(void) close(image);
+		(void)close(image);
 		image = -1;
 	}
 	return(top);
@@ -364,14 +366,14 @@ isfileaddr(name)
 	register char *cp;
 
 	if (*name == '+')
-		return 1;
+		return(1);
 	for (cp = name; *cp; cp++) {
 		if (*cp == '!' || *cp == '%' || *cp == '@')
-			return 0;
+			return(0);
 		if (*cp == '/')
-			return 1;
+			return(1);
 	}
-	return 0;
+	return(0);
 }
 
 /*
@@ -508,7 +510,7 @@ unpack(np)
 	verbose = value("verbose") != NOSTR;
 	if (verbose)
 		extra++;
-	top = (char **) salloc((t + extra) * sizeof *top);
+	top = (char **) salloc((t + extra) * sizeof(*top));
 	ap = top;
 	*ap++ = "send-mail";
 	*ap++ = "-i";
@@ -651,7 +653,7 @@ count(np)
 	for (c = 0; np != NIL; np = np->n_flink)
 		if ((np->n_type & GDEL) == 0)
 			c++;
-	return c;
+	return(c);
 }
 
 /*
@@ -680,7 +682,7 @@ delname(np, name)
 			p->n_blink->n_flink = p->n_flink;
 			p->n_flink->n_blink = p->n_blink;
 		}
-	return np;
+	return(np);
 }
 
 /*
@@ -700,6 +702,6 @@ prettyprint(name)
 		fprintf(stderr, "%s(%d) ", np->n_name, np->n_type);
 		np = np->n_flink;
 	}
-	fprintf(stderr, "\n");
+	putc('\n', stderr);
 }
 */

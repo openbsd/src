@@ -1,5 +1,5 @@
-/*	$OpenBSD: head.c,v 1.2 1996/06/11 12:53:42 deraadt Exp $	*/
-/*	$NetBSD: head.c,v 1.5 1996/06/08 19:48:26 christos Exp $	*/
+/*	$OpenBSD: head.c,v 1.3 1997/07/13 21:21:13 millert Exp $	*/
+/*	$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)head.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: head.c,v 1.2 1996/06/11 12:53:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: head.c,v 1.3 1997/07/13 21:21:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,20 +67,20 @@ ishead(linebuf)
 	cp = linebuf;
 	if (*cp++ != 'F' || *cp++ != 'r' || *cp++ != 'o' || *cp++ != 'm' ||
 	    *cp++ != ' ')
-		return (0);
+		return(0);
 	parse(linebuf, &hl, parbuf);
 	if (hl.l_from == NOSTR || hl.l_date == NOSTR) {
 		fail(linebuf, "No from or date field");
-		return (0);
+		return(0);
 	}
 	if (!isdate(hl.l_date)) {
 		fail(linebuf, "Date field not legal date");
-		return (0);
+		return(0);
 	}
 	/*
 	 * I guess we got it!
 	 */
-	return (1);
+	return(1);
 }
 
 /*ARGSUSED*/
@@ -149,7 +149,7 @@ copyin(src, space)
 	while ((*cp++ = *src++) != '\0')
 		;
 	*space = cp;
-	return (top);
+	return(top);
 }
 
 /*
@@ -170,18 +170,21 @@ copyin(src, space)
  * 'N'	A new line
  */
 char ctype[] = "Aaa Aaa O0 00:00:00 0000";
-char ctype_without_secs[] = "Aaa Aaa O0 00:00 0000";
 char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
-char tmztype_without_secs[] = "Aaa Aaa O0 00:00 AAA 0000";
+/*
+ * Yuck.  If the mail file is created by Sys V (Solaris),
+ * there are no seconds in the time...
+ */
+char SysV_ctype[] = "Aaa Aaa O0 00:00 0000";
+char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
 
 int
 isdate(date)
 	char date[];
 {
 
-	return cmatch(date, ctype_without_secs) || 
-	       cmatch(date, tmztype_without_secs) || 
-	       cmatch(date, ctype) || cmatch(date, tmztype);
+	return(cmatch(date, ctype) || cmatch(date, tmztype)
+	    || cmatch(date, SysV_tmztype) || cmatch(date, SysV_ctype));
 }
 
 /*
@@ -197,37 +200,37 @@ cmatch(cp, tp)
 		switch (*tp++) {
 		case 'a':
 			if (!islower(*cp++))
-				return 0;
+				return(0);
 			break;
 		case 'A':
 			if (!isupper(*cp++))
-				return 0;
+				return(0);
 			break;
 		case ' ':
 			if (*cp++ != ' ')
-				return 0;
+				return(0);
 			break;
 		case '0':
 			if (!isdigit(*cp++))
-				return 0;
+				return(0);
 			break;
 		case 'O':
 			if (*cp != ' ' && !isdigit(*cp))
-				return 0;
+				return(0);
 			cp++;
 			break;
 		case ':':
 			if (*cp++ != ':')
-				return 0;
+				return(0);
 			break;
 		case 'N':
 			if (*cp++ != '\n')
-				return 0;
+				return(0);
 			break;
 		}
 	if (*cp || *tp)
-		return 0;
-	return (1);
+		return(0);
+	return(1);
 }
 
 /*
@@ -243,7 +246,7 @@ nextword(wp, wbuf)
 
 	if (wp == NOSTR) {
 		*wbuf = 0;
-		return (NOSTR);
+		return(NOSTR);
 	}
 	while ((c = *wp++) && c != ' ' && c != '\t') {
 		*wbuf++ = c;
@@ -260,6 +263,6 @@ nextword(wp, wbuf)
 	for (; c == ' ' || c == '\t'; c = *wp++)
 		;
 	if (c == 0)
-		return (NOSTR);
-	return (wp - 1);
+		return(NOSTR);
+	return(wp - 1);
 }

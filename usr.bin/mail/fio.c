@@ -1,5 +1,5 @@
-/*	$OpenBSD: fio.c,v 1.5 1997/05/30 08:51:39 deraadt Exp $	*/
-/*	$NetBSD: fio.c,v 1.5 1996/06/08 19:48:22 christos Exp $	*/
+/*	$OpenBSD: fio.c,v 1.6 1997/07/13 21:21:12 millert Exp $	*/
+/*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)fio.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.5 1997/05/30 08:51:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.6 1997/07/13 21:21:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,58 +61,63 @@ static char rcsid[] = "$OpenBSD: fio.c,v 1.5 1997/05/30 08:51:39 deraadt Exp $";
  * Set up the input pointers while copying the mail file into /tmp.
  */
 void
-setptr(ibuf)
+setptr(ibuf, offset)
 	register FILE *ibuf;
+	off_t offset;
 {
 	extern char *tmpdir;
 	register int c, count;
 	register char *cp, *cp2;
 	struct message this;
 	FILE *mestmp;
-	off_t offset;
 	int maybe, inhead;
 	char linebuf[LINESIZE], pathbuf[PATHSIZE];
+	int omsgCount;
 
 	/* Get temporary file. */
-	(void)snprintf(pathbuf, sizeof pathbuf, "%s/mail.XXXXXXXXXX", tmpdir);
-	if ((c = mkstemp(pathbuf)) == -1 ||
-	    (mestmp = Fdopen(c, "r+")) == NULL) {
-		(void)fprintf(stderr, "mail: can't open %s\n", pathbuf);
-		exit(1);
-	}
+	(void)snprintf(pathbuf, sizeof(pathbuf), "%s/mail.XXXXXXXXXX", tmpdir);
+	if ((c = mkstemp(pathbuf)) == -1 || (mestmp = Fdopen(c, "r+")) == NULL)
+		err(1, "can't open %s", pathbuf);
 	(void)unlink(pathbuf);
 
-	msgCount = 0;
+	if (offset == 0) {
+		msgCount = 0;
+	} else {
+		/* Seek into the file to get to the new messages */
+		(void) fseek(ibuf, offset, 0);
+		/*
+		 * We need to make "offset" a pointer to the end of
+		 * the temp file that has the copy of the mail file.
+		 * If any messages have been edited, this will be
+		 * different from the offset into the mail file.
+		 */
+		(void) fseek(otf, 0L, SEEK_END);
+		offset = ftell(otf);
+	}
+	omsgCount = msgCount;
 	maybe = 1;
 	inhead = 0;
-	offset = 0;
 	this.m_flag = MUSED|MNEW;
 	this.m_size = 0;
 	this.m_lines = 0;
 	this.m_block = 0;
 	this.m_offset = 0;
 	for (;;) {
-		if (fgets(linebuf, LINESIZE, ibuf) == NULL) {
-			if (append(&this, mestmp)) {
-				perror("temporary file");
-				exit(1);
-			}
-			makemessage(mestmp);
+		if (fgets(linebuf, sizeof(linebuf), ibuf) == NULL) {
+			if (append(&this, mestmp))
+				err(1, "temporary file");
+			makemessage(mestmp, omsgCount);
 			return;
 		}
 		count = strlen(linebuf);
-		(void) fwrite(linebuf, sizeof *linebuf, count, otf);
-		if (ferror(otf)) {
-			perror("/tmp");
-			exit(1);
-		}
-		linebuf[count - 1] = 0;
+		(void) fwrite(linebuf, sizeof(*linebuf), count, otf);
+		if (ferror(otf))
+			err(1, "/tmp");
+		linebuf[count - 1] = '\0';
 		if (maybe && linebuf[0] == 'F' && ishead(linebuf)) {
 			msgCount++;
-			if (append(&this, mestmp)) {
-				perror("temporary file");
-				exit(1);
-			}
+			if (append(&this, mestmp))
+				err(1, "temporary file");
 			this.m_flag = MUSED|MNEW;
 			this.m_size = 0;
 			this.m_lines = 0;
@@ -150,21 +155,25 @@ setptr(ibuf)
 /*
  * Drop the passed line onto the passed output buffer.
  * If a write error occurs, return -1, else the count of
- * characters written, including the newline.
+ * characters written, including the newline if requested.
  */
 int
-putline(obuf, linebuf)
+putline(obuf, linebuf, outlf)
 	FILE *obuf;
 	char *linebuf;
+	int   outlf;
 {
 	register int c;
 
 	c = strlen(linebuf);
-	(void) fwrite(linebuf, sizeof *linebuf, c, obuf);
-	(void) putc('\n', obuf);
+	(void) fwrite(linebuf, sizeof(*linebuf), c, obuf);
+	if (outlf) {
+		(void) putc('\n', obuf);
+		c++;
+	}
 	if (ferror(obuf))
-		return (-1);
-	return (c + 1);
+		return(-1);
+	return(c);
 }
 
 /*
@@ -182,11 +191,12 @@ readline(ibuf, linebuf, linesize)
 
 	clearerr(ibuf);
 	if (fgets(linebuf, linesize, ibuf) == NULL)
-		return -1;
+		return(-1);
+
 	n = strlen(linebuf);
 	if (n > 0 && linebuf[n - 1] == '\n')
 		linebuf[--n] = '\0';
-	return n;
+	return(n);
 }
 
 /*
@@ -200,10 +210,10 @@ setinput(mp)
 
 	fflush(otf);
 	if (fseek(itf, (long)positionof(mp->m_block, mp->m_offset), 0) < 0) {
-		perror("fseek");
+		warn("fseek");
 		panic("temporary file seek");
 	}
-	return (itf);
+	return(itf);
 }
 
 /*
@@ -211,24 +221,31 @@ setinput(mp)
  * a dynamically allocated message structure.
  */
 void
-makemessage(f)
+makemessage(f, omsgCount)
 	FILE *f;
+	int omsgCount;
 {
-	register size = (msgCount + 1) * sizeof (struct message);
+	register size = (msgCount + 1) * sizeof(struct message);
 
-	if (message != 0)
-		free((char *) message);
-	if ((message = (struct message *) malloc((unsigned) size)) == 0)
-		panic("Insufficient memory for %d messages", msgCount);
-	dot = message;
-	size -= sizeof (struct message);
+	if (omsgCount) {
+		message = (struct message *)realloc(message, (unsigned) size);
+		if (message == 0)
+			panic("Insufficient memory for %d messages\n", msgCount);
+	} else {
+		if (message != 0)
+			free((char *) message);
+		if ((message = (struct message *) malloc((unsigned) size)) == 0)
+			panic("Insufficient memory for %d messages", msgCount);
+		dot = message;
+	}
+	size -= (omsgCount + 1) * sizeof(struct message);
 	fflush(f);
-	(void) lseek(fileno(f), (off_t)sizeof *message, 0);
-	if (read(fileno(f), (char *) message, size) != size)
+	(void) lseek(fileno(f), (off_t)sizeof(*message), 0);
+	if (read(fileno(f), (void *) &message[omsgCount], size) != size)
 		panic("Message temporary file corrupted");
 	message[msgCount].m_size = 0;
 	message[msgCount].m_lines = 0;
-	Fclose(f);
+	(void)Fclose(f);
 }
 
 /*
@@ -240,7 +257,7 @@ append(mp, f)
 	struct message *mp;
 	FILE *f;
 {
-	return fwrite((char *) mp, sizeof *mp, 1, f) != 1;
+	return(fwrite((char *) mp, sizeof(*mp), 1, f) != 1);
 }
 
 /*
@@ -301,8 +318,8 @@ fsize(iob)
 	struct stat sbuf;
 
 	if (fstat(fileno(iob), &sbuf) < 0)
-		return 0;
-	return sbuf.st_size;
+		return(0);
+	return(sbuf.st_size);
 }
 
 /*
@@ -336,73 +353,73 @@ expand(name)
 	 */
 	switch (*name) {
 	case '%':
-		findmail(name[1] ? name + 1 : myname, xname, sizeof xname);
-		return savestr(xname);
+		findmail(name[1] ? name + 1 : myname, xname, sizeof(xname));
+		return(savestr(xname));
 	case '#':
 		if (name[1] != 0)
 			break;
 		if (prevfile[0] == 0) {
-			printf("No previous file\n");
-			return NOSTR;
+			puts("No previous file");
+			return(NOSTR);
 		}
-		return savestr(prevfile);
+		return(savestr(prevfile));
 	case '&':
 		if (name[1] == 0 && (name = value("MBOX")) == NOSTR)
 			name = "~/mbox";
 		/* fall through */
 	}
-	if (name[0] == '+' && getfold(cmdbuf, sizeof cmdbuf) >= 0) {
-		snprintf(xname, sizeof xname, "%s/%s", cmdbuf, name + 1);
+	if (name[0] == '+' && getfold(cmdbuf, sizeof(cmdbuf)) >= 0) {
+		snprintf(xname, sizeof(xname), "%s/%s", cmdbuf, name + 1);
 		name = savestr(xname);
 	}
 	/* catch the most common shell meta character */
 	if (name[0] == '~' && (name[1] == '/' || name[1] == '\0')) {
-		snprintf(xname, sizeof xname, "%s%s", homedir, name + 1);
+		snprintf(xname, sizeof(xname), "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
 	if (!anyof(name, "~{[*?$`'\"\\"))
-		return name;
+		return(name);
 	if (pipe(pivec) < 0) {
-		perror("pipe");
-		return name;
+		warn("pipe");
+		return(name);
 	}
-	snprintf(cmdbuf, sizeof cmdbuf, "echo %s", name);
+	snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
 	if ((shell = value("SHELL")) == NOSTR)
 		shell = _PATH_CSHELL;
 	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NOSTR);
 	if (pid < 0) {
-		close(pivec[0]);
-		close(pivec[1]);
-		return NOSTR;
+		(void)close(pivec[0]);
+		(void)close(pivec[1]);
+		return(NOSTR);
 	}
-	close(pivec[1]);
-	l = read(pivec[0], xname, BUFSIZ);
-	close(pivec[0]);
+	(void)close(pivec[1]);
+	l = read(pivec[0], xname, PATHSIZE);
+	(void)close(pivec[0]);
 	if (wait_child(pid) < 0 && wait_status.w_termsig != SIGPIPE) {
 		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
-		return NOSTR;
+		return(NOSTR);
 	}
 	if (l < 0) {
-		perror("read");
-		return NOSTR;
+		warn("read");
+		return(NOSTR);
 	}
 	if (l == 0) {
 		fprintf(stderr, "\"%s\": No match.\n", name);
-		return NOSTR;
+		return(NOSTR);
 	}
-	if (l == BUFSIZ) {
+	if (l == PATHSIZE) {
 		fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
-		return NOSTR;
+		return(NOSTR);
 	}
-	xname[l] = 0;
+	xname[l] = '\0';
 	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
 		;
 	cp[1] = '\0';
 	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
 		fprintf(stderr, "\"%s\": Ambiguous.\n", name);
-		return NOSTR;
+		return(NOSTR);
 	}
-	return savestr(xname);
+	return(savestr(xname));
 }
 
 /*
@@ -416,13 +433,13 @@ getfold(name, namelen)
 	char *folder;
 
 	if ((folder = value("folder")) == NOSTR)
-		return (-1);
+		return(-1);
 	if (*folder == '/') {
 		strncpy(name, folder, namelen-1);
 		name[namelen-1] = '\0';
 	} else
 		snprintf(name, namelen, "%s/%s", homedir, folder);
-	return (0);
+	return(0);
 }
 
 /*
@@ -438,8 +455,8 @@ getdeadletter()
 	else if (*cp != '/') {
 		char buf[PATHSIZE];
 
-		(void) snprintf(buf, sizeof buf, "~/%s", cp);
+		(void) snprintf(buf, sizeof(buf), "~/%s", cp);
 		cp = expand(buf);
 	}
-	return cp;
+	return(cp);
 }

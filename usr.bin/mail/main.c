@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.4 1997/01/15 23:42:50 millert Exp $	*/
-/*	$NetBSD: main.c,v 1.5 1996/06/08 19:48:31 christos Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1997/07/13 21:21:15 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -42,9 +42,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/01/15 23:42:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/07/13 21:21:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ main(argc, argv)
 	char *ef;
 	char nosrc = 0;
 	sig_t prevint;
+	char *rc;
 
 	/*
 	 * Set up a reasonable environment.
@@ -103,11 +104,9 @@ main(argc, argv)
 			 * articles have been read/deleted for netnews.
 			 */
 			Tflag = optarg;
-			if ((i = creat(Tflag, 0600)) < 0) {
-				perror(Tflag);
-				exit(1);
-			}
-			close(i);
+			if ((i = creat(Tflag, 0600)) < 0)
+				err(1, Tflag);
+			(void)close(i);
 			break;
 		case 'u':
 			/*
@@ -185,12 +184,11 @@ main(argc, argv)
 			bcc = cat(bcc, nalloc(optarg, GBCC));
 			break;
 		case '?':
-			fputs("\
-Usage: mail [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
+			fprintf(stderr, "\
+Usage: %s [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
             [- sendmail-options ...]\n\
-       mail [-iInNv] -f [name]\n\
-       mail [-iInNv] [-u user]\n",
-				stderr);
+       %s [-iInNv] -f [name]\n\
+       %s [-iInNv] [-u user]\n", __progname, __progname, __progname);
 			exit(1);
 		}
 	}
@@ -201,14 +199,10 @@ Usage: mail [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	/*
 	 * Check for inconsistent arguments.
 	 */
-	if (to == NIL && (subject != NOSTR || cc != NIL || bcc != NIL)) {
-		fputs("You must specify direct recipients with -s, -c, or -b.\n", stderr);
-		exit(1);
-	}
-	if (ef != NOSTR && to != NIL) {
-		fprintf(stderr, "Cannot give -f and people to send to.\n");
-		exit(1);
-	}
+	if (to == NIL && (subject != NOSTR || cc != NIL || bcc != NIL))
+		errx(1, "You must specify direct recipients with -s, -c, or -b");
+	if (ef != NOSTR && to != NIL)
+		errx(1, "Cannot give -f and people to send to");
 	tinit();
 	setscreensize();
 	input = stdin;
@@ -220,7 +214,9 @@ Usage: mail [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	 * Expand returns a savestr, but load only uses the file name
 	 * for fopen, so it's safe to do this.
 	 */
-	load(expand("~/.mailrc"));
+	if ((rc = getenv("MAILRC")) == 0)
+		rc = "~/.mailrc";
+	load(expand(rc));
 	if (!rcvmode) {
 		mail(to, cc, bcc, smopts, subject);
 		/*
@@ -266,7 +262,7 @@ hdrstop(signo)
 {
 
 	fflush(stdout);
-	fprintf(stderr, "\nInterrupt\n");
+	fputs("\nInterrupt\n", stderr);
 	longjmp(hdrjmp, 1);
 }
 

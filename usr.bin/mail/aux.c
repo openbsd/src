@@ -1,5 +1,5 @@
-/*	$OpenBSD: aux.c,v 1.4 1997/05/30 08:51:32 deraadt Exp $	*/
-/*	$NetBSD: aux.c,v 1.4 1996/06/08 19:48:10 christos Exp $	*/
+/*	$OpenBSD: aux.c,v 1.5 1997/07/13 21:21:08 millert Exp $	*/
+/*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.4 1997/05/30 08:51:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.5 1997/07/13 21:21:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ savestr(str)
 
 	if ((new = salloc(size)) != NOSTR)
 		bcopy(str, new, size);
-	return new;
+	return(new);
 }
 
 /*
@@ -85,7 +85,7 @@ save2str(str, old)
 		}
 		bcopy(str, new + oldsize, newsize);
 	}
-	return new;
+	return(new);
 }
 
 /*
@@ -115,7 +115,7 @@ panic(fmt, va_alist)
 	(void)fprintf(stderr, "panic: ");
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	(void)fprintf(stderr, "\n");
+	(void)putc('\n', stderr);
 	fflush(stderr);
 	abort();
 }
@@ -161,7 +161,7 @@ argcount(argv)
 
 	for (ap = argv; *ap++ != NOSTR;)
 		;	
-	return ap - argv - 1;
+	return(ap - argv - 1);
 }
 
 /*
@@ -181,16 +181,16 @@ hfield(field, mp)
 
 	ibuf = setinput(mp);
 	if ((lc = mp->m_lines - 1) < 0)
-		return NOSTR;
+		return(NOSTR);
 	if (readline(ibuf, linebuf, LINESIZE) < 0)
-		return NOSTR;
+		return(NOSTR);
 	while (lc > 0) {
 		if ((lc = gethfield(ibuf, linebuf, lc, &colon)) < 0)
-			return oldhfield;
+			return(oldhfield);
 		if ((hfield = ishfield(linebuf, colon, field)) != NULL)
 			oldhfield = save2str(hfield, oldhfield);
 	}
-	return oldhfield;
+	return(oldhfield);
 }
 
 /*
@@ -212,9 +212,9 @@ gethfield(f, linebuf, rem, colon)
 
 	for (;;) {
 		if (--rem < 0)
-			return -1;
+			return(-1);
 		if ((c = readline(f, linebuf, LINESIZE)) <= 0)
-			return -1;
+			return(-1);
 		for (cp = linebuf; isprint(*cp) && *cp != ' ' && *cp != ':';
 		     cp++)
 			;
@@ -248,7 +248,7 @@ gethfield(f, linebuf, rem, colon)
 			cp += c;
 		}
 		*cp = 0;
-		return rem;
+		return(rem);
 	}
 	/* NOTREACHED */
 }
@@ -268,12 +268,12 @@ ishfield(linebuf, colon, field)
 	*cp = 0;
 	if (strcasecmp(linebuf, field) != 0) {
 		*cp = ':';
-		return 0;
+		return(0);
 	}
 	*cp = ':';
 	for (cp++; *cp == ' ' || *cp == '\t'; cp++)
 		;
-	return cp;
+	return(cp);
 }
 
 /*
@@ -321,12 +321,12 @@ source(v)
 	if ((cp = expand(*arglist)) == NOSTR)
 		return(1);
 	if ((fi = Fopen(cp, "r")) == NULL) {
-		perror(cp);
+		warn(cp);
 		return(1);
 	}
 	if (ssp >= NOFILE - 1) {
-		printf("Too much \"sourcing\" going on.\n");
-		Fclose(fi);
+		puts("Too much \"sourcing\" going on.");
+		(void)Fclose(fi);
 		return(1);
 	}
 	sstack[ssp].s_file = input;
@@ -348,13 +348,13 @@ int
 unstack()
 {
 	if (ssp <= 0) {
-		printf("\"Source\" stack over-pop.\n");
+		puts("\"Source\" stack over-pop.");
 		sourcing = 0;
 		return(1);
 	}
-	Fclose(input);
+	(void)Fclose(input);
 	if (cond != CANY)
-		printf("Unmatched \"if\"\n");
+		puts("Unmatched \"if\"");
 	ssp--;
 	cond = sstack[ssp].s_cond;
 	loading = sstack[ssp].s_loading;
@@ -447,7 +447,7 @@ skip_comment(cp)
 			break;
 		}
 	}
-	return cp;
+	return(cp);
 }
 
 /*
@@ -574,9 +574,9 @@ name1(mp, reptype)
 	int first = 1;
 
 	if ((cp = hfield("from", mp)) != NOSTR)
-		return cp;
+		return(cp);
 	if (reptype == 0 && (cp = hfield("sender", mp)) != NOSTR)
-		return cp;
+		return(cp);
 	ibuf = setinput(mp);
 	namebuf[0] = '\0';
 	if (readline(ibuf, linebuf, LINESIZE) < 0)
@@ -606,10 +606,12 @@ newname:
 				break;
 			cp++;
 			if (first) {
-				strcpy(namebuf, cp);
+				cp2 = namebuf;
 				first = 0;
 			} else
-				strcpy(strrchr(namebuf, '!')+1, cp);
+				cp2 = strrchr(namebuf, '!') + 1;
+			strncpy(cp2, cp, sizeof(namebuf) - (cp2 - namebuf) - 2);
+			namebuf[sizeof(namebuf) - 2] = '\0';
 			strcat(namebuf, "!");
 			goto newname;
 		}
@@ -645,8 +647,8 @@ anyof(s1, s2)
 
 	while (*s1)
 		if (strchr(s2, *s1++))
-			return 1;
-	return 0;
+			return(1);
+	return(0);
 }
 
 /*
@@ -658,8 +660,8 @@ raise(c)
 {
 
 	if (islower(c))
-		return toupper(c);
-	return c;
+		return(toupper(c));
+	return(c);
 }
 
 /*
@@ -672,7 +674,7 @@ copy(s1, s2)
 
 	while ((*s2++ = *s1++) != '\0')
 		;
-	return s2 - 1;
+	return(s2 - 1);
 }
 
 /*
@@ -683,19 +685,19 @@ isign(field, ignore)
 	char *field;
 	struct ignoretab ignore[2];
 {
-	char realfld[BUFSIZ];
+	char realfld[LINESIZE];
 
 	if (ignore == ignoreall)
-		return 1;
+		return(1);
 	/*
 	 * Lower-case the string, so that "Status" and "status"
 	 * will hash to the same place.
 	 */
 	istrcpy(realfld, field);
 	if (ignore[1].i_count > 0)
-		return (!member(realfld, ignore + 1));
+		return(!member(realfld, ignore + 1));
 	else
-		return (member(realfld, ignore));
+		return(member(realfld, ignore));
 }
 
 int
@@ -708,6 +710,6 @@ member(realfield, table)
 	for (igp = table->i_head[hash(realfield)]; igp != 0; igp = igp->i_link)
 		if (*igp->i_field == *realfield &&
 		    equal(igp->i_field, realfield))
-			return (1);
-	return (0);
+			return(1);
+	return(0);
 }

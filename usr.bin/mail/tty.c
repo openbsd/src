@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.c,v 1.2 1996/06/11 12:53:52 deraadt Exp $	*/
-/*	$NetBSD: tty.c,v 1.5 1996/06/08 19:48:43 christos Exp $	*/
+/*	$OpenBSD: tty.c,v 1.3 1997/07/13 21:21:17 millert Exp $	*/
+/*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.2 1996/06/11 12:53:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.3 1997/07/13 21:21:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ grabh(hp, gflags)
 	sig_t saveint;
 #ifndef TIOCSTI
 	sig_t savequit;
+#else
+	int extproc, flag;
 #endif
 	sig_t savetstp;
 	sig_t savettou;
@@ -80,6 +82,9 @@ grabh(hp, gflags)
 	int errs;
 #ifdef __GNUC__
 	/* Avoid longjmp clobbering */
+#ifdef TIOCSTI
+	(void) &extproc;
+#endif
 	(void) &saveint;
 #endif
 
@@ -91,7 +96,7 @@ grabh(hp, gflags)
 	ttyset = 0;
 #endif
 	if (tcgetattr(fileno(stdin), &ttybuf) < 0) {
-		perror("tcgetattr");
+		warn("tcgetattr");
 		return(-1);
 	}
 	c_erase = ttybuf.c_cc[VERASE];
@@ -104,6 +109,14 @@ grabh(hp, gflags)
 	if ((savequit = signal(SIGQUIT, SIG_IGN)) == SIG_DFL)
 		signal(SIGQUIT, SIG_DFL);
 #else
+# ifdef	TIOCEXT
+	extproc = ((ttybuf.c_lflag & EXTPROC) ? 1 : 0);
+	if (extproc) {
+		flag = 0;
+		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+			warn("TIOCEXT: off");
+	}
+# endif	/* TIOCEXT */
 	if (setjmp(intjmp))
 		goto out;
 	saveint = signal(SIGINT, ttyint);
@@ -149,6 +162,14 @@ out:
 	if (ttyset)
 		tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 	signal(SIGQUIT, savequit);
+#else
+# ifdef	TIOCEXT
+	if (extproc) {
+		flag = 1;
+		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+			warn("TIOCEXT: on");
+	}
+# endif	/* TIOCEXT */
 #endif
 	signal(SIGINT, saveint);
 	return(errs);
@@ -177,7 +198,7 @@ readtty(pr, src)
 	fputs(pr, stdout);
 	fflush(stdout);
 	if (src != NOSTR && strlen(src) > BUFSIZ - 2) {
-		printf("too long to edit\n");
+		puts("too long to edit");
 		return(src);
 	}
 #ifndef TIOCSTI

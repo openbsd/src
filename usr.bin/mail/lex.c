@@ -1,5 +1,5 @@
-/*	$OpenBSD: lex.c,v 1.5 1997/05/30 08:51:40 deraadt Exp $	*/
-/*	$NetBSD: lex.c,v 1.7 1996/06/08 19:48:28 christos Exp $	*/
+/*	$OpenBSD: lex.c,v 1.6 1997/07/13 21:21:13 millert Exp $	*/
+/*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.5 1997/05/30 08:51:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.6 1997/07/13 21:21:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,36 +75,36 @@ setfile(name)
 	extern int errno;
 
 	if ((name = expand(name)) == NOSTR)
-		return -1;
+		return(-1);
 
 	if ((ibuf = Fopen(name, "r")) == NULL) {
 		if (!isedit && errno == ENOENT)
 			goto nomail;
-		perror(name);
+		warn(name);
 		return(-1);
 	}
 
 	if (fstat(fileno(ibuf), &stb) < 0) {
-		perror("fstat");
-		Fclose(ibuf);
-		return (-1);
+		warn("fstat");
+		(void)Fclose(ibuf);
+		return(-1);
 	}
 
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFDIR:
-		Fclose(ibuf);
+		(void)Fclose(ibuf);
 		errno = EISDIR;
-		perror(name);
-		return (-1);
+		warn(name);
+		return(-1);
 
 	case S_IFREG:
 		break;
 
 	default:
-		Fclose(ibuf);
+		(void)Fclose(ibuf);
 		errno = EINVAL;
-		perror(name);
-		return (-1);
+		warn(name);
+		return(-1);
 	}
 
 	/*
@@ -127,10 +127,10 @@ setfile(name)
 	if ((i = open(name, 1)) < 0)
 		readonly++;
 	else
-		close(i);
+		(void)close(i);
 	if (shudclob) {
-		fclose(itf);
-		fclose(otf);
+		(void)fclose(itf);
+		(void)fclose(otf);
 	}
 	shudclob = 1;
 	edit = isedit;
@@ -138,29 +138,62 @@ setfile(name)
 	if (name != mailname)
 		strcpy(mailname, name);
 	mailsize = fsize(ibuf);
-	if ((otf = fopen(tempMesg, "w")) == NULL) {
-		perror(tempMesg);
-		exit(1);
-	}
+	if ((otf = fopen(tempMesg, "w")) == NULL)
+		err(1, tempMesg);
 	(void) fcntl(fileno(otf), F_SETFD, 1);
-	if ((itf = fopen(tempMesg, "r")) == NULL) {
-		perror(tempMesg);
-		exit(1);
-	}
+	if ((itf = fopen(tempMesg, "r")) == NULL)
+		err(1, tempMesg);
 	(void) fcntl(fileno(itf), F_SETFD, 1);
 	rm(tempMesg);
-	setptr(ibuf);
+	setptr(ibuf, 0);
 	setmsize(msgCount);
-	Fclose(ibuf);
+	/*
+	 * New mail may have arrived while we were reading
+	 * the mail file, so reset mailsize to be where
+	 * we really are in the file...
+	 */
+	mailsize = ftell(ibuf);
+	(void)Fclose(ibuf);
 	relsesigs();
 	sawcom = 0;
 	if (!edit && msgCount == 0) {
 nomail:
 		fprintf(stderr, "No mail for %s\n", who);
-		return -1;
+		return(-1);
 	}
 	return(0);
 }
+
+/*
+ * Incorporate any new mail that has arrived since we first
+ * started reading mail.
+ */
+int
+incfile()
+{
+	int newsize;
+	int omsgCount = msgCount;
+	FILE *ibuf;
+
+	ibuf = Fopen(mailname, "r");
+	if (ibuf == NULL)
+		return(-1);
+	holdsigs();
+	newsize = fsize(ibuf);
+	if (newsize == 0)
+		return(-1);		/* mail box is now empty??? */
+	if (newsize < mailsize)
+		return(-1);		/* mail box has shrunk??? */
+	if (newsize == mailsize)
+		return(0);		/* no new mail */
+	setptr(ibuf, mailsize);
+	setmsize(msgCount);
+	mailsize = ftell(ibuf);
+	(void)Fclose(ibuf);
+	relsesigs();
+	return(msgCount - omsgCount);
+}
+
 
 int	*msgvec;
 int	reset_on_stop;			/* do a reset() if stopped */
@@ -196,6 +229,8 @@ commands()
 		 * string space, and flush the output.
 		 */
 		if (!sourcing && value("interactive") != NOSTR) {
+			if ((value("autoinc") != NOSTR) && (incfile() > 0))
+				puts("New mail has arrived.");
 			reset_on_stop = 1;
 			printf(prompt);
 		}
@@ -231,7 +266,7 @@ commands()
 			if (value("interactive") != NOSTR &&
 			    value("ignoreeof") != NOSTR &&
 			    ++eofloop < 25) {
-				printf("Use \"quit\" to quit.\n");
+				puts("Use \"quit\" to quit.");
 				continue;
 			}
 			break;
@@ -275,7 +310,7 @@ execute(linebuf, contxt)
 		;
 	if (*cp == '!') {
 		if (sourcing) {
-			printf("Can't \"!\" while sourcing\n");
+			puts("Can't \"!\" while sourcing");
 			goto out;
 		}
 		shell(cp+1);
@@ -344,7 +379,7 @@ execute(linebuf, contxt)
 		 * legal message.
 		 */
 		if (msgvec == 0) {
-			printf("Illegal use of \"message list\"\n");
+			puts("Illegal use of \"message list\"");
 			break;
 		}
 		if ((c = getmsglist(cp, msgvec, com->c_msgflag)) < 0)
@@ -355,7 +390,7 @@ execute(linebuf, contxt)
 			msgvec[1] = NULL;
 		}
 		if (*msgvec == NULL) {
-			printf("No applicable messages\n");
+			puts("No applicable messages");
 			break;
 		}
 		e = (*com->c_func)(msgvec);
@@ -367,7 +402,7 @@ execute(linebuf, contxt)
 		 * if none exist.
 		 */
 		if (msgvec == 0) {
-			printf("Illegal use of \"message list\"\n");
+			puts("Illegal use of \"message list\"");
 			break;
 		}
 		if (getmsglist(cp, msgvec, com->c_msgflag) < 0)
@@ -390,7 +425,7 @@ execute(linebuf, contxt)
 		 * A vector of strings, in shell style.
 		 */
 		if ((c = getrawlist(cp, arglist,
-				sizeof arglist / sizeof *arglist)) < 0)
+				sizeof(arglist) / sizeof(*arglist))) < 0)
 			break;
 		if (c < com->c_minargs) {
 			printf("%s requires at least %d arg(s)\n",
@@ -424,12 +459,12 @@ out:
 	 */
 	if (e) {
 		if (e < 0)
-			return 1;
+			return(1);
 		if (loading)
-			return 1;
+			return(1);
 		if (sourcing)
 			unstack();
-		return 0;
+		return(0);
 	}
 	if (com == NULL)
 		return(0);
@@ -455,7 +490,7 @@ setmsize(sz)
 
 	if (msgvec != 0)
 		free((char *) msgvec);
-	msgvec = (int *) calloc((unsigned) (sz + 1), sizeof *msgvec);
+	msgvec = (int *) calloc((unsigned) (sz + 1), sizeof(*msgvec));
 }
 
 /*
@@ -520,10 +555,10 @@ intr(s)
 	close_all_files();
 
 	if (image >= 0) {
-		close(image);
+		(void)close(image);
 		image = -1;
 	}
-	fprintf(stderr, "Interrupt\n");
+	fputs("Interrupt\n", stderr);
 	reset(0);
 }
 
@@ -571,7 +606,7 @@ announce()
 {
 	int vec[2], mdot;
 
-	mdot = newfileinfo();
+	mdot = newfileinfo(0);
 	vec[0] = mdot;
 	vec[1] = 0;
 	dot = &message[mdot - 1];
@@ -587,23 +622,24 @@ announce()
  * Return a likely place to set dot.
  */
 int
-newfileinfo()
+newfileinfo(omsgCount)
+	int omsgCount;
 {
 	register struct message *mp;
 	register int u, n, mdot, d, s;
-	char fname[PATHSIZE+1], zname[PATHSIZE+1], *ename;
+	char fname[PATHSIZE], zname[PATHSIZE], *ename;
 
-	for (mp = &message[0]; mp < &message[msgCount]; mp++)
+	for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
 		if (mp->m_flag & MNEW)
 			break;
 	if (mp >= &message[msgCount])
-		for (mp = &message[0]; mp < &message[msgCount]; mp++)
+		for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
 			if ((mp->m_flag & MREAD) == 0)
 				break;
 	if (mp < &message[msgCount])
 		mdot = mp - &message[0] + 1;
 	else
-		mdot = 1;
+		mdot = omsgCount + 1;
 	s = d = 0;
 	for (mp = &message[0], n = 0, u = 0; mp < &message[msgCount]; mp++) {
 		if (mp->m_flag & MNEW)
@@ -616,16 +652,17 @@ newfileinfo()
 			s++;
 	}
 	ename = mailname;
-	if (getfold(fname, sizeof fname) >= 0) {
-		strcat(fname, "/");
+	if (getfold(fname, sizeof(fname)) >= 0) {
+		strncat(fname, "/", sizeof(fname) - strlen(fname) - 1);
 		if (strncmp(fname, mailname, strlen(fname)) == 0) {
-			snprintf(zname, sizeof zname, "+%s", mailname + strlen(fname));
+			snprintf(zname, sizeof(zname), "+%s",
+			    mailname + strlen(fname));
 			ename = zname;
 		}
 	}
 	printf("\"%s\": ", ename);
 	if (msgCount == 1)
-		printf("1 message");
+		fputs("1 message", stdout);
 	else
 		printf("%d messages", msgCount);
 	if (n > 0)
@@ -637,8 +674,8 @@ newfileinfo()
 	if (s > 0)
 		printf(" %d saved", s);
 	if (readonly)
-		printf(" [Read only]");
-	printf("\n");
+		fputs(" [Read only]", stdout);
+	putchar('\n');
 	return(mdot);
 }
 
@@ -676,5 +713,5 @@ load(name)
 	loading = 0;
 	sourcing = 0;
 	input = oldin;
-	Fclose(in);
+	(void)Fclose(in);
 }

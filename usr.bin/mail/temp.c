@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.5 1997/03/29 03:01:47 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.6 1997/07/13 21:21:17 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: temp.c,v 1.5 1997/03/29 03:01:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: temp.c,v 1.6 1997/07/13 21:21:17 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <errno.h>
 #include "extern.h"
 
 /*
@@ -87,11 +86,8 @@ tinit()
 	 * do a spreserve() after us.
 	 */
 	if (myname != NOSTR) {
-		if (getuserid(myname) < 0) {
-			printf("\"%s\" is not a user of this system\n",
-			    myname);
-			exit(1);
-		}
+		if (getuserid(myname) < 0)
+			errx(1, "\"%s\" is not a user of this system", myname);
 	} else {
 		if ((cp = username()) == NOSTR) {
 			myname = "nobody";

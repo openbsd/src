@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.2 1996/06/11 12:53:38 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.3 1997/07/13 21:21:11 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.2 1996/06/11 12:53:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.3 1997/07/13 21:21:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ editor(v)
 {
 	int *msgvec = v;
 
-	return edit1(msgvec, 'e');
+	return(edit1(msgvec, 'e'));
 }
 
 /*
@@ -73,7 +73,7 @@ visual(v)
 {
 	int *msgvec = v;
 
-	return edit1(msgvec, 'v');
+	return(edit1(msgvec, 'v'));
 }
 
 /*
@@ -103,7 +103,7 @@ edit1(msgvec, type)
 			char *p;
 
 			printf("Edit message %d [ynq]? ", msgvec[i]);
-			if (fgets(buf, sizeof buf, stdin) == 0)
+			if (fgets(buf, sizeof(buf), stdin) == 0)
 				break;
 			for (p = buf; *p == ' ' || *p == '\t'; p++)
 				;
@@ -132,12 +132,12 @@ edit1(msgvec, type)
 					break;
 			}
 			if (ferror(otf))
-				perror("/tmp");
-			(void) Fclose(fp);
+				warn("/tmp");
+			(void)Fclose(fp);
 		}
 		(void) signal(SIGINT, sigint);
 	}
-	return 0;
+	return(0);
 }
 
 /*
@@ -160,11 +160,11 @@ run_editor(fp, size, type, readonly)
 	extern char *tempEdit;
 
 	if ((t = creat(tempEdit, readonly ? 0400 : 0600)) < 0) {
-		perror(tempEdit);
+		warn(tempEdit);
 		goto out;
 	}
 	if ((nf = Fdopen(t, "w")) == NULL) {
-		perror(tempEdit);
+		warn(tempEdit);
 		(void) unlink(tempEdit);
 		goto out;
 	}
@@ -181,13 +181,13 @@ run_editor(fp, size, type, readonly)
 		modtime = statb.st_mtime;
 	if (ferror(nf)) {
 		(void) Fclose(nf);
-		perror(tempEdit);
+		warn(tempEdit);
 		(void) unlink(tempEdit);
 		nf = NULL;
 		goto out;
 	}
 	if (Fclose(nf) < 0) {
-		perror(tempEdit);
+		warn(tempEdit);
 		(void) unlink(tempEdit);
 		nf = NULL;
 		goto out;
@@ -208,7 +208,7 @@ run_editor(fp, size, type, readonly)
 		goto out;
 	}
 	if (stat(tempEdit, &statb) < 0) {
-		perror(tempEdit);
+		warn(tempEdit);
 		goto out;
 	}
 	if (modtime == statb.st_mtime) {
@@ -219,11 +219,11 @@ run_editor(fp, size, type, readonly)
 	 * Now switch to new file.
 	 */
 	if ((nf = Fopen(tempEdit, "a+")) == NULL) {
-		perror(tempEdit);
+		warn(tempEdit);
 		(void) unlink(tempEdit);
 		goto out;
 	}
 	(void) unlink(tempEdit);
 out:
-	return nf;
+	return(nf);
 }

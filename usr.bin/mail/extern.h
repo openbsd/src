@@ -1,5 +1,5 @@
-/*	$OpenBSD: extern.h,v 1.5 1997/05/30 08:51:37 deraadt Exp $	*/
-/*	$NetBSD: extern.h,v 1.4 1996/06/08 19:48:21 christos Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 1997/07/13 21:21:12 millert Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.4 1996/06/08 19:48:21 christos Exp $
+ *	@(#)extern.h	8.2 (Berkeley) 4/20/95
+ *	$OpenBSD: extern.h,v 1.6 1997/07/13 21:21:12 millert Exp $
  */
 
 struct name;
@@ -158,6 +158,8 @@ struct ignoretab;
 int	 ignore1 __P((char *[], struct ignoretab *, char *));
 int	 igshow __P((struct ignoretab *, char *));
 void	 intr __P((int));
+int	 inc __P((void *));
+int	 incfile __P((void));
 int	 isdate __P((char []));
 int	 isdir __P((char []));
 int	 isfileaddr __P((char *));
@@ -173,7 +175,7 @@ struct var *
 int	 mail __P((struct name *,
 	    struct name *, struct name *, struct name *, char *));
 void	 mail1 __P((struct header *, int));
-void	 makemessage __P((FILE *));
+void	 makemessage __P((FILE *, int));
 void	 mark __P((int));
 int	 markall __P((char [], int));
 int	 matchsender __P((char *, int));
@@ -185,7 +187,7 @@ void	 mespipe __P((FILE *, char []));
 int	 messize __P((void *));
 int	 metamess __P((int, int));
 int	 more __P((void *));
-int	 newfileinfo __P((void));
+int	 newfileinfo __P((int));
 int	 next __P((void *));
 int	 null __P((void *));
 void	 panic __P((const char *, ...))
@@ -200,7 +202,7 @@ void	 prettyprint __P((struct name *));
 void	 printgroup __P((char []));
 void	 printhead __P((int));
 int	 puthead __P((struct header *, FILE *, int));
-int	 putline __P((FILE *, char *));
+int	 putline __P((FILE *, char *, int));
 int	 pversion __P((void *));
 void	 quit __P((void));
 int	 quitcmd __P((void *));
@@ -230,7 +232,7 @@ int	 sendmail __P((void *));
 int	 set __P((void *));
 int	 setfile __P((char *));
 void	 setmsize __P((int));
-void	 setptr __P((FILE *));
+void	 setptr __P((FILE *, off_t));
 void	 setscreensize __P((void));
 int	 shell __P((void *));
 void	 sigchild __P((int));
@@ -264,3 +266,5 @@ int	 visual __P((void *));
 int	 wait_child __P((int));
 int	 wait_command __P((int));
 int	 writeback __P((FILE *));
+
+extern char *__progname;

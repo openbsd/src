@@ -1,4 +1,4 @@
-/*	$OpenBSD: dotlock.c,v 1.1 1996/06/11 12:53:37 deraadt Exp $	*/
+/*	$OpenBSD: dotlock.c,v 1.2 1997/07/13 21:21:11 millert Exp $	*/
 /*	$NetBSD: dotlock.c,v 1.1 1996/06/08 19:48:19 christos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dotlock.c,v 1.1 1996/06/11 12:53:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dotlock.c,v 1.2 1997/07/13 21:21:11 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ create_exclusive(fname)
 	else
 		ptr++;
 
-	(void) snprintf(path, sizeof(path), "%.*s.%s.%x", 
+	(void) snprintf(path, sizeof(path), "%.*s.%s.%x",
 	    ptr - fname, fname, hostname, cookie);
 
 	/*
@@ -99,13 +99,13 @@ create_exclusive(fname)
 	for (ntries = 0; ntries < 5; ntries++) {
 		fd = open(path, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL|O_SYNC, 0);
 		if (fd != -1) {
-			(void) close(fd);
+			(void)close(fd);
 			break;
 		}
 		else if (errno == EEXIST)
 			continue;
 		else
-			return -1;
+			return(-1);
 	}
 
 	/*
@@ -129,15 +129,15 @@ create_exclusive(fname)
 	 */
 	if (st.st_nlink != 2) {
 		errno = EEXIST;
-		return -1;
+		return(-1);
 	}
-	return 0;
+	return(0);
 
 bad:
 	serrno = errno;
 	(void) unlink(path);
 	errno = serrno;
-	return -1;
+	return(-1);
 }
 
 int
@@ -166,13 +166,13 @@ dot_lock(fname, pollinterval, fp, msg)
 		(void) sigprocmask(SIG_BLOCK, &nset, &oset);
 		if (create_exclusive(path) != -1) {
 			(void) sigprocmask(SIG_SETMASK, &oset, NULL);
-			return 0;
+			return(0);
 		}
 		else
 			(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 
 		if (errno != EEXIST)
-			return -1;
+			return(-1);
 
 		if (fp && msg)
 		    (void) fputs(msg, fp);
@@ -180,7 +180,7 @@ dot_lock(fname, pollinterval, fp, msg)
 		if (pollinterval) {
 			if (pollinterval == -1) {
 				errno = EEXIST;
-				return -1;
+				return(-1);
 			}
 			sleep(pollinterval);
 		}
