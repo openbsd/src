@@ -2,7 +2,7 @@
 #
 # Overrides used for NetBSD source tree builds.
 
-CFLAGS+= -Werror
+#CFLAGS+= -Werror
 
 .if defined(PARALLEL)
 # Lex
