@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.8 2003/12/02 09:02:02 otto Exp $
+# $OpenBSD: Makefile,v 1.9 2003/12/09 12:49:01 otto Exp $
 
 BC=bc
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18
 
 # .in: input file
 # .out: desired result
@@ -24,6 +24,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17
 # t15: boolean and
 # t16: boolean or
 # t17: long var names
+# t18: towers of hanoi
 
 all: clean ${REGRESS_TARGET}
 

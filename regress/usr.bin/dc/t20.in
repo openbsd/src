@@ -1,0 +1,100 @@
+# $OpenBSD: t20.in,v 1.1 2003/12/09 12:46:32 otto Exp $
+#
+# Copyright (c) 2003 Amit Singh <amit_s@acm.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+#
+# The Towers Of Hanoi
+# dc (Unix Desk Calculator) version
+# http://hanoi.kernelthread.com
+#
+
+[ # move(from, to)
+    n           # print from
+    [ --> ]n    # print " --> "
+    p           # print to\n
+    sw          # p doesn't pop, so get rid of the value
+]sm
+
+[ # init(n)
+    sw          # tuck n away temporarily
+    9           # sentinel as bottom of stack
+    lw          # bring n back
+    1           # "from" tower's label
+    3           # "to" tower's label
+    0           # processed marker
+]si
+
+[ # Move()
+    lt          # push to
+    lf          # push from
+    lmx         # call move(from, to)
+]sM
+
+[ # code block <d>
+    ln          # push n
+    lf          # push from
+    lt          # push to
+    1           # push processed marker 1
+    ln          # push n
+    1           # push 1
+    -           # n - 1
+    lf          # push from
+    ll          # push left
+    0           # push processed marker 0
+]sd
+
+[ # code block <e>
+    ln          # push n
+    1           # push 1
+    -           # n - 1
+    ll          # push left
+    lt          # push to
+    0           # push processed marker 0
+]se
+
+[ # code block <x>
+    ln 1 =M
+    ln 1 !=d
+]sx
+
+[ # code block <y>
+    lMx
+    lex
+]sy
+
+[ # quit()
+    q           # exit the program
+]sq
+
+[ # run()
+    d 9 =q      # if stack empty, quit()
+    sp          # processed
+    st          # to
+    sf          # from
+    sn          # n
+    6           #
+    lf          #
+    -           #
+    lt          #
+    -           # 6 - from - to
+    sl          #
+    lp 0 =x     #
+    lp 0 !=y    #
+    lrx         # loop
+]sr
+
+5lix # init(n)
+lrx # run()
+

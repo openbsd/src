@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.9 2003/12/01 09:15:51 otto Exp $
+# $OpenBSD: Makefile,v 1.10 2003/12/09 12:46:32 otto Exp $
 
 DC=dc -x
 
 REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 \
-	t19
+	t19 t20
 
 # .in: input file
 # .out: desired result
@@ -26,6 +26,7 @@ REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 \
 # t17: test R (drop)
 # t18: read uninitialized and initialized array locations
 # t19: test extended registers
+# t20: towers of hanoi
 
 all: clean ${REGRESS_TARGET}
 
