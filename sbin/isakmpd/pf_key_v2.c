@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.68 2001/06/29 04:12:00 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.69 2001/06/29 05:17:57 itojun Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1497,6 +1497,9 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
 		u_int8_t srcid_type, u_int8_t *srcid, int srcid_len,
 		u_int8_t dstid_type, u_int8_t *dstid, int dstid_len)
 {
+#ifdef USE_DEBUG
+  char *laddr_str, *lmask_str, *raddr_str, *rmask_str;
+#endif
 #if defined (SADB_X_ADDFLOW) && defined (SADB_X_DELFLOW)
   struct sadb_msg msg;
 #ifdef SADB_X_EXT_FLOW_TYPE
@@ -1510,9 +1513,6 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   struct pf_key_v2_msg *flow = 0, *ret = 0;
   size_t len;
   int err;
-#ifdef USE_DEBUG
-  char *laddr_str, *lmask_str, *raddr_str, *rmask_str;
-#endif
 
 #if !defined (SADB_X_SAFLAGS_INGRESS_FLOW) && !defined (SADB_X_EXT_FLOW_TYPE)
   if (ingress)
@@ -1775,6 +1775,8 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   u_int8_t *policy_buf;
   size_t len;
   int err;
+  struct sockaddr_in *ip4_sa;
+  struct sockaddr_in6 *ip6_sa;
 
   msg.sadb_msg_type = delete ? SADB_X_SPDDELETE : SADB_X_SPDADD;
   msg.sadb_msg_satype = SADB_SATYPE_UNSPEC;
@@ -1807,12 +1809,12 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
     case AF_INET:
       ip4_sa = (struct sockaddr_in *)lmask;
       addr->sadb_address_prefixlen = 
-	pf_key_v2_mask_to_bits (ip4_sa->sin_addr.in_addr);
+	pf_key_v2_mask_to_bits (ip4_sa->sin_addr.s_addr);
       break;
     case AF_INET6:
       ip6_sa = (struct sockaddr_in6 *)lmask;
       addr->sadb_address_prefixlen = 
-	pf_key_v2_mask6_to_bits (ip6_sa->sin6_addr.in6_addr);
+	pf_key_v2_mask6_to_bits (&ip6_sa->sin6_addr.s6_addr[0]);
       break;
     }
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
@@ -1833,12 +1835,12 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
     case AF_INET:
       ip4_sa = (struct sockaddr_in *)rmask;
       addr->sadb_address_prefixlen = 
-	pf_key_v2_mask_to_bits (ip4_sa->sin_addr.in_addr);
+	pf_key_v2_mask_to_bits (ip4_sa->sin_addr.s_addr);
       break;
     case AF_INET6:
       ip6_sa = (struct sockaddr_in6 *)rmask;
       addr->sadb_address_prefixlen = 
-	pf_key_v2_mask6_to_bits (ip6_sa->sin6_addr.in6_addr);
+	pf_key_v2_mask6_to_bits (&ip6_sa->sin6_addr.s6_addr[0]);
       break;
     }
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
@@ -1893,10 +1895,10 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   switch (src->sa_family)
     {
     case AF_INET:
-      saddr = (struct sockaddr_in *)saddr + 1;
+      saddr = (struct sockaddr *)((struct sockaddr_in *)saddr + 1);
       break;
     case AF_INET6:
-      saddr = (struct sockaddr_in6 *)saddr + 1;
+      saddr = (struct sockaddr *)((struct sockaddr_in6 *)saddr + 1);
       break;
     }
   pf_key_v2_setup_sockaddr (saddr, dst, NULL, 0, 0);
