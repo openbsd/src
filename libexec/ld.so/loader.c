@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.61 2003/05/30 19:07:34 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.62 2003/06/03 18:04:08 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -282,6 +282,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			for (i = 0; i < libcnt; i++)
 				randomlist[i] = i;
 
+#ifdef NO_RANDOM_EXPOSES_BUGS_ELSEWHERE__
 			if (!_dl_norandom)
 				for (i = 1; i < libcnt; i++) {
 					unsigned int rnd;
@@ -295,6 +296,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 					randomlist[rnd] = randomlist[i];
 					randomlist[i] = cur;
 				}
+#endif /* NO_RANDOM_EXPOSES_BUGS_ELSEWHERE__ */
 
 			for (i = 0; i < libcnt; i++) {
 				elf_object_t *depobj;
