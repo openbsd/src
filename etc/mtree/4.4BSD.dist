@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.30 1997/02/28 11:42:56 niklas Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.31 1997/03/05 04:34:26 flipk Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1091,6 +1091,11 @@ sparc
 # ./usr/share/man/cat8/sun3
 sun3
 # ./usr/share/man/cat8/sun3
+..
+
+# ./usr/share/man/cat8/tahoe
+tahoe
+# ./usr/share/man/cat8/tahoe
 ..
 
 # ./usr/share/man/cat8/vax
