@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rayreg.h,v 1.3 2001/06/08 04:32:29 mickey Exp $	*/
+/*	$OpenBSD: if_rayreg.h,v 1.4 2001/06/08 17:48:22 mickey Exp $	*/
 /*	$NetBSD: if_rayreg.h,v 1.3 2000/08/10 11:48:46 ad Exp $	*/
 
 /* 
@@ -244,7 +244,7 @@ struct ray_startup_params_tail_5 {
 	u_int8_t	sp_privacy_must_start;
 	u_int8_t	sp_privacy_can_join;
 	u_int8_t	sp_basic_rate_set[8];
-} __attribute__((__packed__));
+};
 
 /* build 4 (webgear) tail to the startup params */
 struct ray_startup_params_tail_4 {
