@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.16 2003/11/17 18:57:05 henning Exp $ */
+/* $OpenBSD: http_core.c,v 1.17 2004/06/07 04:24:00 brad Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -237,6 +237,9 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
     }
     if (new->ap_auth_name) {
         conf->ap_auth_name = new->ap_auth_name;
+    }
+    if (new->ap_auth_nonce) {
+        conf->ap_auth_nonce = new->ap_auth_nonce;
     }
     if (new->ap_requires) {
         conf->ap_requires = new->ap_requires;
@@ -578,6 +581,31 @@ API_EXPORT(const char *) ap_auth_name(request_rec *r)
     conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
 						   &core_module); 
     return conf->ap_auth_name;
+}
+
+API_EXPORT(const char *) ap_auth_nonce(request_rec *r)
+{
+    core_dir_config *conf;
+    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+                                                   &core_module);
+    if (conf->ap_auth_nonce)
+       return conf->ap_auth_nonce;
+
+    /* Ideally we'd want to mix in some per-directory style
+     * information; as we are likely to want to detect replay
+     * across those boundaries and some randomness. But that
+     * is harder due to the adhoc nature of .htaccess memory
+     * structures, restarts and forks.
+     *
+     * But then again - you should use AuthDigestRealmSeed in your config
+     * file if you care. So the adhoc value should do.
+     */
+    return ap_psprintf(r->pool,"%pp%pp%pp%pp%pp",
+           (void *)&((r->connection->local_addr).sin_addr ),
+           (void *)ap_user_name,
+           (void *)ap_listeners,
+           (void *)ap_server_argv0,
+           (void *)ap_pid_fname);
 }
 
 API_EXPORT(const char *) ap_default_type(request_rec *r)
@@ -2834,6 +2862,28 @@ static const char *set_authname(cmd_parms *cmd, void *mconfig, char *word1)
     return NULL;
 }
 
+/*
+ * Load an authorisation nonce into our location configuration, and
+ * force it to be in the 0-9/A-Z realm.
+ */
+static const char *set_authnonce (cmd_parms *cmd, void *mconfig, char *word1)
+{
+    core_dir_config *aconfig = (core_dir_config *)mconfig;
+    size_t i;
+
+    aconfig->ap_auth_nonce = ap_escape_quotes(cmd->pool, word1);
+
+    if (strlen(aconfig->ap_auth_nonce) > 510)
+       return "AuthDigestRealmSeed length limited to 510 chars for browser compatibility";
+
+    for(i=0;i<strlen(aconfig->ap_auth_nonce );i++)
+       if (!ap_isalnum(aconfig->ap_auth_nonce [i]))
+         return "AuthDigestRealmSeed limited to 0-9 and A-Z range for browser compatibility";
+
+    return NULL;
+}
+
+
 #ifdef _OSD_POSIX /* BS2000 Logon Passwd file */
 static const char *set_bs2000_account(cmd_parms *cmd, void *dummy, char *name)
 {
@@ -3448,6 +3498,9 @@ static const command_rec core_cmds[] = {
   "An HTTP authorization type (e.g., \"Basic\")" },
 { "AuthName", set_authname, NULL, OR_AUTHCFG, TAKE1,
   "The authentication realm (e.g. \"Members Only\")" },
+{ "AuthDigestRealmSeed", set_authnonce, NULL, OR_AUTHCFG, TAKE1,
+  "An authentication token which should be different for each logical realm. "\
+  "A random value or the servers IP may be a good choise.\n" },
 { "Require", require, NULL, OR_AUTHCFG, RAW_ARGS,
   "Selects which authenticated users or groups may access a protected space" },
 { "Satisfy", satisfy, NULL, OR_AUTHCFG, TAKE1,
