@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.14 2003/06/26 08:01:54 tedu Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.15 2003/07/29 20:26:23 millert Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$OpenBSD: fsck.c,v 1.14 2003/06/26 08:01:54 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: fsck.c,v 1.15 2003/07/29 20:26:23 millert Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -95,7 +95,10 @@ main(int argc, char *argv[])
 
 	/* Increase our data size to the max */
 	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
-		rl.rlim_cur = rl.rlim_max;
+		if (geteuid() == 0)
+			rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
+		else
+			rl.rlim_cur = rl.rlim_max;
 		if (setrlimit(RLIMIT_DATA, &rl) < 0)
 			warn("Can't get resource limit to max data size");
 	} else
