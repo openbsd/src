@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.12 2004/10/04 15:19:04 millert Exp $	*/
+/*	$OpenBSD: sched.c,v 1.13 2004/10/21 20:57:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.12 2004/10/04 15:19:04 millert Exp $
+ *	$Id: sched.c,v 1.13 2004/10/21 20:57:08 millert Exp $
  */
 
 /*
@@ -45,8 +45,8 @@
 #include <signal.h>
 #include WAIT
 #include <setjmp.h>
-extern jmp_buf poll_intr;
-extern int poll_intr_valid;
+extern jmp_buf select_intr;
+extern int select_intr_valid;
 
 typedef struct pjob pjob;
 struct pjob {
@@ -232,8 +232,8 @@ sigchld(int sig)
 #ifdef SYS5_SIGNALS
 	signal(sig, sigchld);
 #endif /* SYS5_SIGNALS */
-	if (poll_intr_valid)
-		longjmp(poll_intr, sig);
+	if (select_intr_valid)
+		longjmp(select_intr, sig);
 	errno = save_errno;
 }
 
