@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.7 1997/11/06 05:58:25 csapuntz Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.8 1997/11/17 18:09:15 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -259,6 +259,9 @@ uipc_usrreq(so, req, m, nam, control)
 		((struct stat *) m)->st_dev = NODEV;
 		if (unp->unp_ino == 0)
 			unp->unp_ino = unp_ino++;
+		((struct stat *) m)->st_atimespec =
+		    ((struct stat *) m)->st_mtimespec =
+		    ((struct stat *) m)->st_ctimespec = unp->unp_ctime;
 		((struct stat *) m)->st_ino = unp->unp_ino;
 		return (0);
 
@@ -322,6 +325,7 @@ unp_attach(so)
 	struct socket *so;
 {
 	register struct unpcb *unp;
+	struct timeval tv;
 	int error;
 	
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -347,6 +351,8 @@ unp_attach(so)
 	bzero((caddr_t)unp, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, &unp->unp_ctime);
 	return (0);
 }
 
