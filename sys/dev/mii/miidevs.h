@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.15 2000/08/28 13:22:34 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.16 2001/02/18 20:58:02 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.13 2000/08/28 13:22:09 jason Exp 
+ *	OpenBSD: miidevs,v 1.14 2001/02/18 20:56:43 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -49,6 +49,7 @@
  * List of known MII OUIs
  */
 
+#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
@@ -66,6 +67,7 @@
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
+#define	MII_OUI_xxALTIMA	0x000895	/* Altima Communications */
 #define	MII_OUI_xxAMD	0x00606e	/* Advanced Micro Devices */
 
 #define	MII_OUI_xxINTEL	0x00f800	/* Intel (alt) */
@@ -98,6 +100,10 @@
 #define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
 #define	MII_MODEL_AMD_79C873phy	0x0036
 #define	MII_STR_AMD_79C873phy	"Am79C873 internal PHY"
+
+/* Altima Communications PHYs */
+#define	MII_MODEL_xxALTIMA_AC101	0x0021
+#define	MII_STR_xxALTIMA_AC101	"AC101 10/100 media interface"
 
 /* Broadcom Corp. PHYs */
 #define	MII_MODEL_BROADCOM_3C905C	0x0017
