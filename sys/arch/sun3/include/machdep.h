@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.3 1997/02/14 18:55:10 kstailey Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.4 1997/02/14 19:08:21 kstailey Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -136,6 +136,8 @@ void	sun3_mon_halt __P((void));
 void	sun3_mon_reboot __P((char *));
 void	sun3_pmeg_init __P((void));
 void	sun3_reserve_pmeg __P((int pmeg_num));
+
+void	spl0 __P((void));
 
 void	swapconf __P((void));
 void	swapgeneric __P((void));
