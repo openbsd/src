@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.19 2000/03/30 21:02:10 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.20 2000/04/02 00:03:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -371,7 +371,7 @@ sput (u_char *s, U_char kernel, int len, int page)
 			if(svsp->irm)
 				bcopy((svsp->Crtat + svsp->cur_offset),
 				    (svsp->Crtat + svsp->cur_offset) + 1,
-				    (((svsp->maxcol)-1) - svsp->col * CHR));
+				    (((svsp->maxcol)-1) - svsp->col) * CHR);
 
 			write_char(svsp, attrib, ch);
 			vt_selattr(svsp);
