@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2002/04/30 07:23:30 deraadt Exp $
+#	$OpenBSD: list,v 1.6 2002/04/30 07:33:12 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -47,7 +47,7 @@ LINK	instbin					usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/tar
 LINK	instbin					usr/sbin/chown
-# LINK	instbin					usr/sbin/bad144
+#LINK	instbin					usr/sbin/bad144
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
