@@ -157,20 +157,12 @@ main(int argc, char *argv[])
 		sp->to.sin_len = sizeof sp->to;
 	}
 
-	/* Get the current time... */
 	time(&cur_time);
-
-	/* Discover all the network interfaces. */
 	discover_interfaces(interfaces);
-
-	/* Set up the bootp packet handler... */
 	bootp_packet_handler = relay;
-
-	/* Become a daemon... */
 	if (!no_daemon)
 		daemon(0, 0);
 
-	/* Start dispatching packets and timeouts... */
 	dispatch();
 	/* not reached */
 
