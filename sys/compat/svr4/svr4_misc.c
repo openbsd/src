@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.18 1997/12/02 00:07:04 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.19 1997/12/12 06:22:51 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1348,7 +1348,7 @@ svr4_sys_setegid(p, v, retval)
         register_t *retval;
 {
         struct sys_setegid_args /* {
-                syscallarg(gid_t) egid;
+		syscallarg(gid_t) egid;
         } */ *uap = v;
 
 #if defined(COMPAT_LINUX) && defined(i386)
@@ -1370,6 +1370,8 @@ svr4_sys_setegid(p, v, retval)
 #endif
 		return (0);
 	}
+#else
+	(void) uap;
 #endif
         return sys_setegid(p, v, retval);
 }
