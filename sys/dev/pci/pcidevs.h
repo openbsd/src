@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.840 2005/03/07 13:28:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.841 2005/03/07 15:56:34 xsa Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2056,6 +2056,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5600	0x0312		/* GeForce FX 5600 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5200	0x0322		/* GeForce FX 5200 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200	0x0324		/* GeForce FX Go 5200 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200_2	0x0329		/* GeForce FX Go 5200 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5700LE	0x0343		/* GeForce FX 5700LE */
 
 /* Oak Technologies products */

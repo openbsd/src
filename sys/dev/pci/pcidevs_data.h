@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.840 2005/03/07 13:28:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.841 2005/03/07 15:56:34 xsa Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5888,6 +5888,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200,
+	    "GeForce FX Go 5200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200_2,
 	    "GeForce FX Go 5200",
 	},
 	{
