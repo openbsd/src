@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.4 2002/03/15 18:21:20 art Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.5 2002/03/19 23:10:57 drahn Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -253,6 +253,7 @@ cmd_show_backtrace(int argc, char **argv, void *arg)
 		if (name == NULL) {
 			snprintf(namebuf, sizeof(namebuf), "0x%lx", mfr.pc);
 			name = namebuf;
+			offs = 0;
 		}
 
 		printf("%s(", name);
@@ -261,7 +262,11 @@ cmd_show_backtrace(int argc, char **argv, void *arg)
 			if (j < mfr.nargs - 1)
 				printf(", ");
 		}
-		printf(")+0x%lx\n", offs);
+		if (offs == 0) {
+			printf(")\n", offs);
+		} else {
+			printf(")+0x%lx\n", offs);
+		}
 	}
 	return 0;
 }
