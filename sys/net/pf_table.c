@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.7 2003/01/01 15:26:17 cedric Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.8 2003/01/01 16:08:52 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -274,7 +274,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		p = pfr_lookup_addr(kt, &ad, 1);
 		if (flags & PFR_FLAG_FEEDBACK) {
 			ad.pfra_fback = (p == NULL) ? PFR_FB_NONE :
-			    	(p->pfrke_mark ? PFR_FB_DUPLICATE :
+				(p->pfrke_mark ? PFR_FB_DUPLICATE :
 					PFR_FB_DELETED);
 			if (copyout(&ad, addr+i, sizeof(ad)))
 				senderr(EFAULT);
@@ -282,7 +282,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		if (p != NULL) {
 			if (p->pfrke_mark)
 				continue;
-			p->pfrke_mark = 1;				
+			p->pfrke_mark = 1;
 			SLIST_INSERT_HEAD(&workq, p, pfrke_workq);
 			xdel++;
 		}

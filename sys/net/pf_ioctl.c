@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.38 2003/01/01 03:53:22 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.39 2003/01/01 16:07:01 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -156,7 +156,7 @@ pf_get_pool(char *anchorname, char *rulesetname, u_int32_t ticket,
 	if (ruleset == NULL)
 		return (NULL);
 	rs_num = pf_get_ruleset_number(rule_action);
-	if (rs_num >= PF_RULESET_MAX) 
+	if (rs_num >= PF_RULESET_MAX)
 		return (NULL);
 	if (active) {
 		if (check_ticket && ticket !=
