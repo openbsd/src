@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.52 2002/07/04 04:42:25 vincent Exp $ */
+/* $OpenBSD: netcat.c,v 1.53 2002/11/13 22:26:15 markus Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -709,6 +709,7 @@ help()
 	\t-4		Use IPv4\n\
 	\t-6		Use IPv6\n\
 	\t-U		Use UNIX domain socket\n\
+	\t-X vers\t	SOCKS version (4 or 5)\n\
 	\t-h		This help text\n\
 	\t-i secs\t	Delay interval for lines sent, ports scanned\n\
 	\t-k		Keep inbound sockets open for multiple connects\n\
@@ -721,7 +722,7 @@ help()
 	\t-u		UDP mode\n\
 	\t-v		Verbose\n\
 	\t-w secs\t	Timeout for connects and final net reads\n\
-	\t-x addr[:port]\tSpecify socks5 proxy address and port\n\
+	\t-x addr[:port]\tSpecify socks proxy address and port\n\
 	\t-z		Zero-I/O mode [used for scanning]\n\
 	Port numbers can be individual or ranges: lo-hi [inclusive]\n");
 	exit(1);
@@ -731,7 +732,7 @@ void
 usage(int ret)
 {
 	fprintf(stderr, "usage: nc [-46Uhklnrtuvz] [-i interval] [-p source port]\n");
-	fprintf(stderr, "\t  [-s ip address] [-w timeout] [-x proxy address [:port]]\n");
+	fprintf(stderr, "\t  [-s ip address] [-w timeout] [-X vers] [-x proxy address [:port]]\n");
 	fprintf(stderr, "\t  [hostname] [port[s...]]\n");
 	if (ret)
 		exit(1);
