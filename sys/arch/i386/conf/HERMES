@@ -1,23 +1,25 @@
+#	$OpenBSD: HERMES,v 1.17 1999/02/28 15:54:31 kstailey Exp $
 #
-#	HERMES -- Ken's 586/83 VLB OpenBSD 2.0 config file
+#	HERMES -- 450MHz Pentium II PCI, APM, PnP
 #
-# This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
-#
-# $OpenBSD: HERMES,v 1.16 1999/01/02 00:32:55 niklas Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
 makeoptions     CC="cc -Werror"
 
-option		I586_CPU	# CPU classes; at least one is REQUIRED
-
-option		XSERVER		# diddle with console driver
-option		APERTURE	# in-kernel XFree86 aperture driver
-option		PPP_BSDCOMP,PPP_DEFLATE
+option		I686_CPU	# CPU classes; at least one is REQUIRED
 
 maxusers	16		# estimated number of users
-option		TIMEZONE=0	# time zone to adjust RTC time by
+
+option		XSERVER		# diddle with console driver
+option		APERTURE	# in-kernel aperture driver for XFree86
+
+option		COLOR_KERNEL_FG="FG_GREEN"
+option		COLOR_KERNEL_BG="BG_BLACK"
+
+option		TIMEZONE=300	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
+option		NTP		# High precision timekeeping support 
 
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
@@ -44,81 +46,115 @@ option		COMPAT_LINUX	# binary compatibility with Linux
 #option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
-#option		VM86		# Virtual x86 mode; to be used by dos emualtors
-#option		USER_LDT	# user-settable LDT; used by WINE
+option		VM86		# Virtual x86 mode; to be used by dos emualtors
+option		USER_LDT	# user-settable LDT; used by WINE
 option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
 #option		QUOTA		# UFS quotas
-
-option		NFSCLIENT	# Network File System client
-option		NFSSERVER	# Network File System server
-
-#option		CD9660		# ISO 9660 + Rock Ridge file system
-#option		FDESC		# /dev/fd
-option		FIFO		# POSIX fifo support (in all file systems)
-option		KERNFS		# /kern
 option		MFS		# memory file system
+#option		EXT2FS		# Linux 2nd Extent-based filesystem
+option		CD9660		# ISO 9660 + Rock Ridge file system
+#option		FDESC		# /dev/fd
+option		FIFO		# FIFOs; multiuser fails without this
+option		KERNFS		# /kern
 option		MSDOSFS		# MS-DOS file system
-option		NULLFS		# mount directories on directories
+option		NULLFS		# loopback file system
 option		PORTAL		# dynamically created filesystem objects
-option		PROCFS		# access the insides of procs via the FS
+option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 #option		UNION		# union file system
+#option		XFS		# xfs filesystem
 
 option		INET		# IP + ICMP + TCP + UDP
 option		GATEWAY		# packet forwarding
 option		IPFILTER	# IP packet filter for security
-option		IPFILTER_LOG	# use /dev/ipl to log IPF
+option		IPFILTER_LOG	# use /dev/ipl
+option		IPSEC		# IPsec
 #option		NS		# XNS
+#option		NSIP		# XNS tunneling over IP
+#option		IPX		# IPX+SPX
+#option		IPXIP		# IPX tunneling over IP
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
-#option		"NMBCLUSTERS=1024"
+option		PPP_BSDCOMP	# PPP BSD compression
+option		PPP_DEFLATE
 
-config		bsd	root on sd0a swap on sd0b dumps on sd0b
+#option		NFSCLIENT	# Network File System client
+#option		NFSSERVER	# Network File System server
+
+config		bsd	root on sd0 swap on sd0 and wd0 dumps on sd0
 
 mainbus0 at root
 
 bios0	at mainbus0
-isa0	at mainbus0			# ISA and VL bus systems
+apm0	at bios0
+
+pci*	at mainbus0 bus ?
+option		PCIVERBOSE
+
+isa0	at mainbus0
 isadma0	at isa?
+isapnp0 at isa?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
-pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
+#pc0	at isa? port 0x60 irq 1		# generic PC console device
+vt0	at isa? port 0x60 irq 1
+
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 pccom1	at isa? port 0x2f8 irq 3
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
-lms0	at isa? port 0x23c irq 9	# Logitech bus mouse
-
-bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-scsibus* at bt?
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
-ss*	at scsibus? target ? lun ?	# SCSI scanners (hermes is the cradle)
-#uk*	at scsibus? target ? lun ?	# unknown SCSI
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-ne0	at isa? port 0x300 irq 10 iomem 0xd000	# Linksys Ether16 LAN
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+wdc1	at isa? port 0x170 irq 15
+wd*	at wdc? drive ?
 
-sb0	at isa? port 0x220 irq 5 drq 3	# SoundBlaster
-audio*  at sb?
+atapibus* at wdc?
+acd*	at atapibus? drive?
+
+joy*	at isapnp?
+
+sb*	at isapnp?
+opl*    at sb?				# OPL[23] FM syntheziers
+audio*	at sb?
+midi*	at sb?				# SB MPU401 port
+midi*   at opl?				# OPL FM synth
+
+pcppi0  at isa?
+sysbeep0        at pcppi?
+midi*	at pcppi?			# MIDI interface to the PC speaker
+#spkr0	at pcppi?			# built-in speaker
+
+ne0	at	isa? port 0x300 irq 10 # iomem 0xcc000	# Linksys Ether16 LAN
+#ne1	at	isa? port 0x300 irq 10 # iomem 0xd000	# Linksys Ether16 LAN
+
+adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
+scsibus* at adv?
+
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+#ss*	at scsibus? target ? lun ?	# SCSI scanners
+#uk*	at scsibus? target ? lun ?	# unknown SCSI
+#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 4		# packet filter (used by rarpd)
 #pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	1		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	enc	1		# encryption device
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	2		# paging to files; mount floppy images
+#pseudo-device	ksyms	1		# kernel symbols device
+pseudo-device	sequencer 1
