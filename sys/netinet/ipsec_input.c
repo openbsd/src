@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.59 2002/06/25 00:20:38 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.60 2002/06/25 00:38:54 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -110,7 +110,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	struct tdb *tdbp;
 	u_int32_t spi;
 	u_int16_t cpi;
-	int s;
+	int s, error;
 
 	IPSEC_ISTAT(espstat.esps_input, ahstat.ahs_input,
 	    ipcompstat.ipcomps_input);
