@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.369 2001/02/22 01:34:29 chris Exp 
+ *		OpenBSD: pcidevs,v 1.371 2001/03/02 09:36:22 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2087,7 +2087,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DS1",
 	},
 	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL,
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_1P,
 	    "Parallel",
 	},
 	{
@@ -2103,16 +2103,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Dual Parallel B",
 	},
 	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL,
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_2S,
 	    "Dual Serial",
 	},
 	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL1,
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_0,
 	    "Serial",
 	},
 	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL2,
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,
 	    "Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS950_0,
+	    "Quad Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS950_1,
+	    "Quad Serial",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
