@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.17 2001/10/25 19:03:49 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.18 2001/11/28 17:21:07 todd Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
 	  sis85c503_init },
 
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC756_PMC,
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC756_ISA,
 	  amd756_init },
 
 	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1543,
