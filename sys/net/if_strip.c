@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.7 1997/06/01 20:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.8 1997/06/20 09:30:55 deraadt Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -347,7 +347,7 @@ stripattach(n)
 
 	for (sc = st_softc; i < NSTRIP; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		sprintf(sc->sc_if.if_xname, "st%d", i++);
+		sprintf(sc->sc_if.if_xname, "strip%d", i++);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags = 0;
