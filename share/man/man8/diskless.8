@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.14 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: diskless.8,v 1.15 2001/09/20 15:39:57 miod Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -206,9 +206,9 @@ For example:
 # ln -s boot.net C0C5600C.SUN4
 .Ed
 .Pp
-For a Sun3 machine, the name would be just C0C5600C
-(the sun3 PROM does not append the architecture name). The name
-used is architecture dependent, it simply has to match what the
+Some architectures, such as the Sun3 and Ultrasparc machines, do not append the
+architecture name. It this case, the name would be just C0C5600C.
+The name used is architecture dependent, it simply has to match what the
 booting client's PROM wishes to it to be.
 If the client's PROM fails to fetch the expected file,
 .Xr tcpdump 8
