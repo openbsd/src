@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.2 1996/06/26 05:39:56 deraadt Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.3 1996/07/31 11:11:35 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -41,6 +41,9 @@
  **********************************************************************
  * HISTORY
  * $Log: supscan.c,v $
+ * Revision 1.3  1996/07/31 11:11:35  niklas
+ * Better use time_t instead of long when dealing with times
+ *
  * Revision 1.2  1996/06/26 05:39:56  deraadt
  * rcsid
  *
@@ -163,16 +166,14 @@ COLLECTION *firstC;			/* collection list pointer */
 char *collname;				/* collection name */
 char *basedir;				/* base directory name */
 char *prefix;				/* collection pathname prefix */
-long lasttime = 0;			/* time of last upgrade */
-long scantime;				/* time of this scan */
+time_t lasttime = 0;			/* time of last upgrade */
+time_t scantime;				/* time of this scan */
 int newonly = FALSE;			/* new files only */
 jmp_buf sjbuf;				/* jump location for errors */
 
 TREELIST *listTL;	/* list of all files specified by <coll>.list */
 TREE *listT;		/* final list of files in collection */
 TREE *refuseT = NULL;	/* list of all files specified by <coll>.list */
-
-long time ();
 
 /*************************************
  ***    M A I N   R O U T I N E    ***
@@ -190,13 +191,13 @@ char **argv;
 		basedir = c->Cbase;
 		prefix = c->Cprefix;
 		(void) chdir (basedir);
-		scantime = time ((long *)NULL);
+		scantime = time ((time_t *)NULL);
 		printf ("SUP Scan for %s starting at %s",collname,
 			ctime (&scantime));
 		(void) fflush (stdout);
 		if (!setjmp (sjbuf)) {
 			makescanlists (); /* record names in scan files */
-			scantime = time ((long *)NULL);
+			scantime = time ((time_t *)NULL);
 			printf ("SUP Scan for %s completed at %s",collname,
 				ctime (&scantime));
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.3 1996/06/26 05:39:54 deraadt Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.4 1996/07/31 11:11:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -44,6 +44,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.4  1996/07/31 11:11:31  niklas
+ * Better use time_t instead of long when dealing with times
+ *
  * Revision 1.3  1996/06/26 05:39:54  deraadt
  * rcsid
  *
@@ -281,7 +284,6 @@ static void quit(status) {};
 #endif	/* lint */
 
 extern int errno;
-long time ();
 uid_t getuid ();
 
 int maxchildren;
@@ -373,7 +375,7 @@ char **argv;
 	register int x,pid,signalmask;
 	struct sigvec chldvec,ignvec,oldvec;
 	void chldsig();
-	long tloc;
+	time_t tloc;
 
 	/* initialize global variables */
 	pgmversion = PGMVERSION;	/* export version number */
@@ -389,7 +391,7 @@ char **argv;
 #endif
 
 	logopen ("supfile");
-	tloc = time ((long *)NULL);
+	tloc = time ((time_t *)NULL);
 	loginfo ("SUP File Server Version %d.%d (%s) starting at %s",
 		PROTOVERSION,PGMVERSION,scmversion,fmttime (tloc));
 	if (live) {
@@ -614,7 +616,7 @@ char **argv;
 
 answer ()
 {
-	long starttime;
+	time_t starttime;
 	register int x;
 
 	progpid = fspid = getpid ();
@@ -629,7 +631,7 @@ answer ()
 	goawayreason = NULL;
 	donereason = NULL;
 	lockfd = -1;
-	starttime = time ((long *)NULL);
+	starttime = time ((time_t *)NULL);
 	if (!setjmp (sjbuf)) {
 		signon ();
 		setup ();
@@ -1323,13 +1325,13 @@ va_list ap;
  *****************************************/
 
 finishup (starttime)
-long starttime;
+time_t starttime;
 {
 	register int x = SCMOK;
 	char tmpbuf[BUFSIZ], *p, lognam[STRINGLENGTH];
 	int logfd;
 	struct stat sbuf;
-	long finishtime;
+	time_t finishtime;
 	char *releasename;
 
 	(void) netcrypt ((char *)NULL);
@@ -1368,7 +1370,7 @@ long starttime;
 	(void) sprintf (lognam,FILELOGFILE,collname);
 	if ((logfd = open(lognam,O_APPEND|O_WRONLY,0644)) < 0)
 		return; /* can not open file up...error */
-	finishtime = time ((long *)NULL);
+	finishtime = time ((time_t *)NULL);
 	p = tmpbuf;
 	(void) sprintf (p,"%s ",fmttime (lasttime));
 	p += strlen(p);
@@ -1693,7 +1695,7 @@ va_dcl
 }
 
 char *fmttime (time)
-long time;
+time_t time;
 {
 	static char buf[STRINGLENGTH];
 	int len;

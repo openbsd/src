@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.h,v 1.2 1996/06/26 05:39:56 deraadt Exp $	*/
+/*	$OpenBSD: supmsg.h,v 1.3 1996/07/31 11:11:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -35,6 +35,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supmsg.h,v $
+ * Revision 1.3  1996/07/31 11:11:34  niklas
+ * Better use time_t instead of long when dealing with times
+ *
  * Revision 1.2  1996/06/26 05:39:56  deraadt
  * rcsid
  *
@@ -153,7 +156,7 @@ EXTERN	char	*collname;		/* collection name */
 EXTERN	char	*basedir;		/* base directory */
 EXTERN	int	basedev;		/* base directory device */
 EXTERN	int	baseino;		/* base directory inode */
-EXTERN	long	lasttime;		/* time of last upgrade */
+EXTERN	time_t	lasttime;		/* time of last upgrade */
 EXTERN	int	listonly;		/* only listing files, no data xfer */
 EXTERN	int	newonly;		/* only send new files */
 EXTERN	char	*release;		/* release name */
@@ -178,7 +181,7 @@ EXTERN	TREE	*refuseT;		/* tree of files to refuse */
 
 /* msglist */
 EXTERN	TREE	*listT;			/* tree of files to list */
-EXTERN	long	scantime;		/* time that collection was scanned */
+EXTERN	time_t	scantime;		/* time that collection was scanned */
 
 /* msgneed */
 EXTERN	TREE	*needT;			/* tree of files to need */

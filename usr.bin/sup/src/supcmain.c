@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.2 1996/06/26 05:39:51 deraadt Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.3 1996/07/31 11:11:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -176,6 +176,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmain.c,v $
+ * Revision 1.3  1996/07/31 11:11:27  niklas
+ * Better use time_t instead of long when dealing with times
+ *
  * Revision 1.2  1996/06/26 05:39:51  deraadt
  * rcsid
  *
@@ -588,7 +591,7 @@ char **argv;
 	register struct passwd *pw;
 	register TREE *t;
 	TREE *collT;			/* collections we are interested in */
-	long timenow;			/* startup time */
+	time_t timenow;			/* startup time */
 	int checkcoll ();
 	int oflags,aflags;
 	int cwant;
@@ -704,7 +707,7 @@ char **argv;
 	if (cwant)  (void) Tprocess (collT,checkcoll);
 	Tfree (&collT);
 	if (firstC == NULL)  logquit (1,"No collections to upgrade");
-	timenow = time ((long *)NULL);
+	timenow = time ((time_t *)NULL);
 	if (*supfname == '\0')
 		p = "standard input";
 	else if (sysflag)

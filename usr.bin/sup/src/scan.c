@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.3 1996/06/26 05:39:46 deraadt Exp $	*/
+/*	$OpenBSD: scan.c,v 1.4 1996/07/31 11:11:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,6 +30,9 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.4  1996/07/31 11:11:24  niklas
+ * Better use time_t instead of long when dealing with times
+ *
  * Revision 1.3  1996/06/26 05:39:46  deraadt
  * rcsid
  *
@@ -186,8 +189,8 @@ extern TREE *refuseT;			/* files refused by client */
 extern char *collname;			/* collection name */
 extern char *basedir;			/* base directory name */
 extern char *prefix;			/* collection pathname prefix */
-extern long lasttime;			/* time of last upgrade */
-extern long scantime;			/* time of this scan */
+extern time_t lasttime;			/* time of last upgrade */
+extern time_t scantime;			/* time of this scan */
 extern int trace;			/* trace directories */
 extern int newonly;			/* new files only */
 
@@ -195,8 +198,6 @@ extern int newonly;			/* new files only */
 extern char *rcs_branch;
 extern int candorcs;
 #endif
-
-extern long time();
 
 /*************************************************
  ***   STATIC   R O U T I N E S    ***
@@ -443,7 +444,7 @@ char *listfile,*scanfile;
         
 	listT = NULL;
 	if (!getscanfile(scanfile)) {	/* check for pre-scanned file list */
-		scantime = time ((long *)NULL);
+		scantime = time ((time_t *)NULL);
 		doscan (listfile);	/* read list file and scan disk */
 	}
 }
@@ -970,7 +971,7 @@ char *scanfile;
 	if (rename (tname,fname) < 0)
 		goaway ("Can't change %s to %s",tname,fname);
 	(void) unlink (tname);
-	tbuf[0].tv_sec = time((long *)NULL);  tbuf[0].tv_usec = 0;
+	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = scantime;  tbuf[1].tv_usec = 0;
 	(void) utimes (fname,tbuf);
 }

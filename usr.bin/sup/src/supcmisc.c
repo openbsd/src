@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.2 1996/06/26 05:39:52 deraadt Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.3 1996/07/31 11:11:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -29,6 +29,9 @@
  **********************************************************************
  * HISTORY
  * $Log: supcmisc.c,v $
+ * Revision 1.3  1996/07/31 11:11:29  niklas
+ * Better use time_t instead of long when dealing with times
+ *
  * Revision 1.2  1996/06/26 05:39:52  deraadt
  * rcsid
  *
@@ -99,7 +102,7 @@ prtime ()
 {
 	char buf[STRINGLENGTH];
 	char relsufix[STRINGLENGTH];
-	long twhen;
+	time_t twhen;
 	int f;
 
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease)
@@ -271,7 +274,7 @@ va_dcl
 #endif
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
-	long tloc;
+	time_t tloc;
 	static FILE *noteF = NULL;	/* mail program on pipe */
 	va_list ap;
 
@@ -304,7 +307,7 @@ va_dcl
 			}
 		} else
 			noteF = stdout;
-		tloc = time ((long *)NULL);
+		tloc = time ((time_t *)NULL);
 		fprintf (noteF,"SUP Upgrade of %s at %s",
 			collrelname,ctime (&tloc));
 		(void) fflush (noteF);
@@ -331,7 +334,7 @@ int on;
 }
 
 char *fmttime (time)
-long time;
+time_t time;
 {
 	static char buf[STRINGLENGTH];
 	int len;

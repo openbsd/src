@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcdefs.h,v 1.2 1996/06/26 05:39:50 deraadt Exp $	*/
+/*	$OpenBSD: supcdefs.h,v 1.3 1996/07/31 11:11:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -35,6 +35,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supcdefs.h,v $
+ * Revision 1.3  1996/07/31 11:11:26  niklas
+ * Better use time_t instead of long when dealing with times
+ *
  * Revision 1.2  1996/06/26 05:39:50  deraadt
  * rcsid
  *
@@ -90,7 +93,6 @@
 extern int errno;
 extern uid_t getuid();
 extern gid_t getgid();
-extern long time();
 
 extern int PGMVERSION;
 
