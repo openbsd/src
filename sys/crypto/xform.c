@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.10 2001/06/27 04:57:08 angelos Exp $	*/
+/*	$OpenBSD: xform.c,v 1.11 2001/07/05 16:44:00 jjbg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -54,6 +54,7 @@
 #include <crypto/rijndael.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
+#include <crypto/deflate.h>
 
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
@@ -87,6 +88,9 @@ void rijndael128_zerokey(u_int8_t **);
 int MD5Update_int(void *, u_int8_t *, u_int16_t);
 int SHA1Update_int(void *, u_int8_t *, u_int16_t);
 int RMD160Update_int(void *, u_int8_t *, u_int16_t);
+
+u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
+u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
 
 /* Encryption instances */
 struct enc_xform enc_xform_des = {
@@ -177,6 +181,13 @@ struct auth_hash auth_hash_key_sha1 = {
 	0, 20, 20, sizeof(SHA1_CTX),
 	(void (*)(void *)) SHA1Init, SHA1Update_int,
 	(void (*)(u_int8_t *, void *)) SHA1Final 
+};
+
+/* Compression instance */
+struct comp_algo comp_algo_deflate = {
+	CRYPTO_DEFLATE_COMP, "Deflate",
+	90, deflate_compress,
+	deflate_decompress
 };
 
 /*
@@ -388,4 +399,26 @@ SHA1Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
 {
 	SHA1Update(ctx, buf, len);
 	return 0;
+}
+
+/*
+ * And compression
+ */
+
+u_int32_t
+deflate_compress(data, size, out)
+	u_int8_t *data;
+	u_int32_t size;
+	u_int8_t **out;
+{
+	return deflate_global(data, size, 0, out);
+}
+
+u_int32_t
+deflate_decompress(data, size, out)
+	u_int8_t *data;
+	u_int32_t size;
+	u_int8_t **out;
+{
+	return deflate_global(data, size, 1, out);
 }
