@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.77 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: sa.c,v 1.78 2004/04/07 20:04:34 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -1093,20 +1093,23 @@ void
 sa_teardown_all (void)
 {
   int i;
-  struct sa *sa;
+  struct sa *sa, *next = 0;
 
   LOG_DBG ((LOG_SA, 70, "sa_teardown_all:"));
   /* Get Phase 2 SAs.  */
   for (i = 0; i <= bucket_mask; i++)
-    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
-      if (sa->phase == 2)
-	{
-	  /* Teardown the phase 2 SAs by name, similar to ui_teardown.  */
-	  LOG_DBG ((LOG_SA, 70, "sa_teardown_all: tearing down SA %s",
-		    sa->name));
-	  connection_teardown (sa->name);
-	  sa_delete (sa, 1);
-	}
+    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = next)
+      {
+	next = LIST_NEXT (sa, link);
+	if (sa->phase == 2)
+	  {
+	    /* Teardown the phase 2 SAs by name, similar to ui_teardown.  */
+	    LOG_DBG ((LOG_SA, 70, "sa_teardown_all: tearing down SA %s",
+		      sa->name));
+	    connection_teardown (sa->name);
+	    sa_delete (sa, 1);
+	  }
+      }
 }
 
 /*
