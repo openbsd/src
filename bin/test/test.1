@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.11 2000/03/17 18:15:15 aaron Exp $
+.\"	$OpenBSD: test.1,v 1.12 2000/05/26 14:52:38 aaron Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -297,6 +297,11 @@ The
 operator has higher precedence than the
 .Fl o
 operator.
+.Pp
+Symbolic links are followed for all primaries except
+.Fl h
+and
+.Fl L .
 .Sh GRAMMAR AMBIGUITY
 The
 .Nm
