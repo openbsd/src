@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2001/06/25 02:29:56 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/06/27 02:29:22 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
-PROG=	ipropd-master
+PROG=	ipropd-slave
 MAN=	${PROG}.8
 
 SRCS=	ipropd_slave.c
