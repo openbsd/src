@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.36 2003/12/26 22:41:01 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.37 2003/12/26 23:50:35 jakob Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <poll.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -514,6 +515,7 @@ rde_update_log(const char *message,
     const struct in_addr *prefix, u_int8_t prefixlen)
 {
 	char *neighbor;
+	char *nexthop = NULL;
 
 	if (! (conf->log & BGPD_LOG_UPDATES))
 		return;
@@ -522,11 +524,18 @@ rde_update_log(const char *message,
 	if (neighbor == NULL)
 		return;
 
-	logit(LOG_DEBUG, "neighbor %s (AS%u) %s %s/%u",
+	if (attr != NULL) {
+		asprintf(&nexthop, " via %s", inet_ntoa(attr->nexthop));
+	}
+
+	logit(LOG_DEBUG, "neighbor %s (AS%u) %s %s/%u"
+	    "%s",
 	    neighbor, peer->conf.remote_as, message,
-	    inet_ntoa(*prefix), prefixlen);
+	    inet_ntoa(*prefix), prefixlen,
+	    nexthop);
 
 	free(neighbor);
+	free(nexthop);
 }
 
 /*
