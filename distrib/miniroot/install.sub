@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.190 2002/03/30 00:50:57 krw Exp $
+#	$OpenBSD: install.sub,v 1.191 2002/03/30 00:55:32 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -932,7 +932,7 @@ encode_for_url() {
 	#
 	# *NOTE* quotes around $1 are required to preserve trailing or
 	# embeddded blanks in usercodes and passwords!
-    
+
 	echo "$1" | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
 }
 
