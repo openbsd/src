@@ -1,4 +1,5 @@
-/*	$OpenBSD: SYS.h,v 1.2 1996/08/19 08:10:16 tholo Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.3 1996/11/13 20:46:47 niklas Exp $	*/
+/*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,24 +31,39 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#define CALLSYS(num)						\
-	CONST(num, v0);						\
-	call_pal 0x83;			/* op_callsys */	
-	
-#define	SYSCALL_NOLABEL(x)					\
-	CALLSYS(SYS_/**/x);					\
-	beq	a3, 9f;						\
-	br	gp, 8f;						\
-8:	SETGP(gp);						\
-	lda	at_reg, cerror;					\
-	jmp	zero, (at_reg);					\
-9:
 
-#define	SYSCALL(x)	LEAF(x, 0 /* XXX */); SYSCALL_NOLABEL(x);
-#define RSYSCALL(x)	SYSCALL(x); RET; END(x);
+#define	CALLSYS_ERROR(name)					\
+	CALLSYS_NOERROR(name);					\
+	br	gp, LLABEL(name,0);				\
+LLABEL(name,0):							\
+	LDGP(gp);						\
+	beq	a3, LLABEL(name,1);				\
+	jmp	zero, cerror;					\
+LLABEL(name,1):
 
-#define	PSEUDO(x,y)						\
-LEAF(x,0);				/* unknown # of args */	\
-	CALLSYS(SYS_/**/y);					\
+
+#define	SYSCALL(name)						\
+LEAF(name,0);				/* XXX # of args? */	\
+	CALLSYS_ERROR(name)
+
+#define	SYSCALL_NOERROR(name)					\
+LEAF(name,0);				/* XXX # of args? */	\
+	CALLSYS_NOERROR(name)
+
+
+#define RSYSCALL(name)						\
+	SYSCALL(name);						\
 	RET;							\
-END(x);
+END(name)
+
+#define RSYSCALL_NOERROR(name)					\
+	SYSCALL_NOERROR(name);					\
+	RET;							\
+END(name)
+
+
+#define	PSEUDO(label,name)					\
+LEAF(label,0);				/* XXX # of args? */	\
+	CALLSYS_NOERROR(name);					\
+	RET;							\
+END(label);
