@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.4 2003/01/31 22:50:19 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.5 2003/02/15 23:42:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -38,20 +38,12 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 
 #include <dev/cons.h>
-
-#include "sti.h"
-#if NSTI > 0
-#include <dev/ic/stireg.h>
-#include <dev/ic/stivar.h>
-#endif
-
-#if NGSCKBD > 0
-#endif
 
 #include "wsdisplay.h"
 #if NWSDISPLAY > 0
@@ -66,57 +58,33 @@
 cons_decl(ws);
 
 void
-wscnprobe(cp)
-	struct consdev *cp;
+wscnprobe(struct consdev *cp)
 {
-	int maj;
-
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
-
-	if (maj == nchrdev)
-		panic("wsdisplay is not in cdevsw[]");
-
-#if NSTI > 0
-	if (PAGE0->mem_cons.pz_class == PCL_DISPL) {
-
-	} else
-		return;
-#else
-	return;
-#endif
-#if NGSCKBD > 0
-	if (PAGE0->mem_kbd.pz_class == PCL_KEYBD) {
-
-	} else
-		return;
-#else
-	return;
-#endif
-
-	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_INTERNAL;
+	/*
+	 * Due to various device probe restrictions, the wscons console
+	 * can never be enabled early during boot.
+	 * It will be enabled as soon as enough wscons components get
+	 * attached.
+	 * So do nothing there, the switch will occur in
+	 * wsdisplay_emul_attach() later.
+	 */
 }
 
 void
-wscninit(cp)
-	struct consdev *cp;
+wscninit(struct consdev *cp)
 {
 }
 
 void
-wscnputc(dev, i)
-	dev_t dev;
-	char i;
+wscnputc(dev_t dev, int i)
 {
-	wsdisplay_cnputc(dev, (int)i);
+#if NWSDISPLAY > 0
+	wsdisplay_cnputc(dev, i);
+#endif
 }
 
 int
-wscngetc(dev)
-	dev_t dev;
+wscngetc(dev_t dev)
 {
 #if NWSKBD > 0
 	return (wskbd_cngetc(dev));
@@ -126,9 +94,7 @@ wscngetc(dev)
 }
 
 void
-wscnpollc(dev, on)
-	dev_t dev;
-	int on;
+wscnpollc(dev_t dev, int on)
 {
 #if NWSKBD > 0
 	wskbd_cnpollc(dev, on);

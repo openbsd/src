@@ -1,4 +1,4 @@
-/*	$OpenBSD: hildevs.h,v 1.1 2003/02/11 19:39:30 miod Exp $	*/
+/*	$OpenBSD: hildevs.h,v 1.2 2003/02/15 23:42:48 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -36,15 +36,14 @@ struct	hildevice {
 
 /* Arguments passed to attach routines */
 struct hil_attach_args {
-	struct confargs	ha_ca;
 	int		ha_code;	/* hil code */
 	int		ha_type;	/* hil device type */
+	int		ha_console;	/* console set to hil */
 	int		ha_infolen;	/* identify info length */
 	u_int8_t	ha_info[HILBUFSIZE];	/* identify info bits */
 #define	ha_id		ha_info[0]	/* hil probe id */
 
 	const char	*ha_descr;	/* device description */
-	int		ha_flags;	/* extra information */
 };
 
 /* ha_type values */

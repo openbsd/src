@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil_gsc.c,v 1.1 2003/02/11 19:44:23 miod Exp $	*/
+/*	$OpenBSD: hil_gsc.c,v 1.2 2003/02/15 23:42:45 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -67,6 +67,7 @@ hil_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hil_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;
+	int hil_is_console;
 
 	sc->sc_bst = ga->ga_iot;
 	if (bus_space_map(ga->ga_iot, ga->ga_hpa,
@@ -75,7 +76,10 @@ hil_gsc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	hil_attach(sc);
+	hil_is_console = ga->ga_dp.dp_mod == PAGE0->mem_kbd.pz_dp.dp_mod &&
+	    bcmp(ga->ga_dp.dp_bc, PAGE0->mem_kbd.pz_dp.dp_bc, 6) == 0;
+
+	hil_attach(sc, hil_is_console);
 
 	gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
 	    ga->ga_irq, hil_intr, sc, &sc->sc_dev);

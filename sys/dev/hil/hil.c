@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.2 2003/02/15 23:38:46 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.3 2003/02/15 23:42:48 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -125,7 +125,7 @@ hildatawait(struct hil_softc *sc)
  */
 
 void
-hil_attach(struct hil_softc *sc)
+hil_attach(struct hil_softc *sc, int hil_is_console)
 {
 	printf("\n");
 
@@ -137,7 +137,7 @@ hil_attach(struct hil_softc *sc)
 	sc->sc_cmddone = 0;
 	sc->sc_cmdbp = sc->sc_cmdbuf;
 	sc->sc_pollbp = sc->sc_pollbuf;
-	sc->sc_kbddev = 0;
+	sc->sc_console = hil_is_console;
 }
 
 /*
@@ -244,23 +244,12 @@ hil_attach_deferred(void *v)
 			if (sc->sc_cmdbuf[0] >= hd->minid &&
 			    sc->sc_cmdbuf[0] <= hd->maxid) {
 
+			ha.ha_console = sc->sc_console;
 			ha.ha_code = id;
 			ha.ha_type = hd->type;
 			ha.ha_descr = hd->descr;
 			ha.ha_infolen = len;
 			bcopy(sc->sc_cmdbuf, ha.ha_info, len);
-
-			if (ha.ha_type == HIL_DEVICE_KEYBOARD) {
-				/*
-				 * Currently, the first found hil keyboard will
-				 * be attached as a console keyboard.
-				 * This will change when we have hil at wax
-				 * attachment.
-				 */
-				ha.ha_flags = id == sc->sc_kbddev;
-			} else {
-				ha.ha_flags = 0;
-			}
 
 			config_found(&sc->sc_dev, &ha, hildevprint);
 		}
@@ -387,15 +376,7 @@ hilconfig(struct hil_softc *sc)
 #endif
 
 	/*
-	 * Locate the main keyboard device, if present.
-	 */
-	db = 0;
-	send_hil_cmd(sc, HIL_READKBDSADR, NULL, 0, &db);
-	sc->sc_kbddev = ffs((int)db);
-
-	/*
-	 * Put all keyboards in raw mode, in case we ended there after
-	 * a reconfigure event.
+	 * Put all keyboards in raw mode now.
 	 */
 	db = 0;
 	send_hil_cmd(sc, HIL_WRITEKBDSADR, &db, 1, NULL);

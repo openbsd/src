@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.1 2003/01/31 22:50:19 miod Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.2 2003/02/15 23:42:45 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -76,9 +76,10 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/autoconf.h>
+#include <machine/iomod.h>
 
 #include <hppa/dev/cpudevs.h>
 #include <hppa/gsc/gscbusvar.h>
@@ -268,7 +269,7 @@ probe_sendtmo(bus_space_tag_t iot, bus_space_handle_t ioh, int cmdbyte)
 		DELAY(500);
 	}
 
-	if (bus_space_read_1(iot, ioh, KBSTATP) & KBS_OCMD)
+	if (numtries <= 0)
 		return (1);
 
 	bus_space_write_1(iot, ioh, KBDATAP, cmdbyte);
@@ -407,7 +408,9 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_dv.dv_xname, gsc->sc_type, ident);
 	} else {
 #if (NGSCKBD > 0)
-		if (gsc->sc_type == PCKBC_KBD_SLOT)
+		if (gsc->sc_type == PCKBC_KBD_SLOT &&
+		    ga->ga_dp.dp_mod == PAGE0->mem_kbd.pz_dp.dp_mod &&
+		    bcmp(ga->ga_dp.dp_bc, PAGE0->mem_kbd.pz_dp.dp_bc, 6) == 0)
 			gsckbd_cnattach(t, PCKBC_KBD_SLOT);
 #endif
 		pckbc_attach_slot(sc, gsc->sc_type);

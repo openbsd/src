@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.3 2003/02/15 23:38:46 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.4 2003/02/15 23:42:48 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -99,6 +99,7 @@ struct wskbd_mapdata hilkbd_keymapdata = {
 void	hilkbd_bell(struct hil_softc *, u_int, u_int, u_int);
 void	hilkbd_callback(void *, u_int, u_int8_t *);
 void	hilkbd_decode(u_int8_t, u_int8_t, u_int *, int *);
+int	hilkbd_is_console(int);
 
 int
 hilkbdprobe(struct device *parent, void *match, void *aux)
@@ -149,7 +150,7 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	a.console = ha->ha_flags;
+	a.console = hilkbd_is_console(ha->ha_console);
 	a.keymap = &hilkbd_keymapdata;
 	a.accessops = &hilkbd_accessops;
 	a.accesscookie = sc;
@@ -291,4 +292,21 @@ hilkbd_decode(u_int8_t stat, u_int8_t data, u_int *type, int *key)
 {
 	*type = (data & 1) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*key = data >> 1;
+}
+
+int
+hilkbd_is_console(int hil_is_console)
+{
+	static int seen_hilkbd_console = 0;
+
+	/* if not first hil keyboard, then not the console */
+	if (seen_hilkbd_console)
+		return (0);
+
+	/* if PDC console does not match hil bus path, then not the console */
+	if (hil_is_console == 0)
+		return (0);
+
+	seen_hilkbd_console = 1;
+	return (1);
 }
