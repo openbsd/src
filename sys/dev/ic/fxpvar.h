@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.2 2000/04/26 19:12:08 chris Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.3 2000/07/20 16:22:26 ho Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -55,6 +55,7 @@ struct fxp_softc {
 	int need_mcsetup;		/* multicast filter needs programming */
 	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
 	struct fxp_stats *fxp_stats;	/* Pointer to interface stats */
+	struct timeout stats_update_to; /* Pointer to timeout structure */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
 	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */

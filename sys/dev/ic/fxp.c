@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.6 2000/06/03 02:55:04 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.7 2000/07/20 16:22:26 ho Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -421,6 +422,11 @@ fxp_attach_common(sc, enaddr, intrstr)
 	 * Add suspend hook, for similiar reasons..
 	 */
 	powerhook_establish(fxp_power, sc);
+
+	/*
+	 * Initialize timeout for statistics update.
+	 */
+	timeout_set(&sc->stats_update_to, fxp_stats_update, sc);
 
 	return (0);
 
@@ -935,7 +941,7 @@ fxp_stats_update(arg)
 	/*
 	 * Schedule another timeout one second from now.
 	 */
-	timeout(fxp_stats_update, sc, hz);
+	timeout_add(&sc->stats_update_to, hz);
 }
 
 /*
@@ -961,7 +967,7 @@ fxp_stop(sc, drain)
 	/*
 	 * Cancel stats updater.
 	 */
-	untimeout(fxp_stats_update, sc);
+	timeout_del(&sc->stats_update_to);
 
 	/*
 	 * Issue software reset
@@ -1177,7 +1183,7 @@ fxp_init(xsc)
 	/*
 	 * Start stats updater.
 	 */
-	timeout(fxp_stats_update, sc, hz);
+	timeout_add(&sc->stats_update_to, hz);
 }
 
 /*
