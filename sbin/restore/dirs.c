@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.4 1996/06/23 14:32:14 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.5 1996/06/25 01:12:10 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.4 1996/06/23 14:32:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.5 1996/06/25 01:12:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ extractdirs(genmode)
 	register struct dinode *ip;
 	struct inotab *itp;
 	struct direct nulldir;
+	int fd;
 
 	vprintf(stdout, "Extract directories from tape\n");
 	(void) sprintf(dirfile, "%s/rstdir%d", _PATH_TMP, dumpdate);
@@ -162,8 +163,11 @@ extractdirs(genmode)
 			exit(1);
 		}
 	}
-	df = fopen(dirfile, "w");
-	if (df == NULL) {
+	fd = -1;
+	if (fd = open(dirfile, O_RDWR|O_CREAT|O_EXCL, 0666) == -1 ||
+	    (df = fdopen(fd, "w")) == NULL) {
+		if (fd != -1)
+			close(fd);
 		fprintf(stderr,
 		    "restore: %s - cannot create directory temporary\n",
 		    dirfile);
@@ -181,8 +185,11 @@ extractdirs(genmode)
 				exit(1);
 			}
 		}
-		mf = fopen(modefile, "w");
-		if (mf == NULL) {
+		fd = -1;
+		if (fd = open(modefile, O_RDWR|O_CREAT|O_EXCL,
+		    0666) == -1 || (mf = fdopen(fd, "w")) == NULL) {
+			if (fd != -1)
+				close(fd);
 			fprintf(stderr,
 			    "restore: %s - cannot create modefile \n",
 			    modefile);
