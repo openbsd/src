@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.32 2001/05/14 12:11:52 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.33 2001/06/05 20:54:51 provos Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -448,6 +448,7 @@ int	vop_generic_islocked __P((void *));
 int	vop_generic_lock __P((void *));
 int	vop_generic_unlock __P((void *));
 int	vop_generic_revoke __P((void *));
+int	vop_generic_kqfilter __P((void *));
 
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));

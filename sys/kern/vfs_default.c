@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.4 2001/03/16 01:09:48 csapuntz Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.5 2001/06/05 20:54:52 provos Exp $  */
 
 
 /*
@@ -49,10 +49,14 @@
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/event.h>
 #include <miscfs/specfs/specdev.h>
 
 
 extern struct simplelock spechash_slock;
+
+int filt_generic_readwrite __P((struct knote *kn, long hint));
+void filt_generic_detach __P((struct knote *kn));
 
 /*
  * Eliminate all activity associated with  the requested vnode
@@ -251,4 +255,50 @@ vop_generic_islocked(v)
 	if (vp->v_vnlock == NULL)
 		return (0);
 	return (lockstatus(vp->v_vnlock));
+}
+
+struct filterops generic_filtops = 
+	{ 1, NULL, filt_generic_detach, filt_generic_readwrite };
+
+int
+vop_generic_kqfilter(v)
+	void *v;
+{
+	struct vop_kqfilter_args /* {
+		struct vnode *a_vp;
+		struct knote *a_kn;
+	} */ *ap = v;
+	struct knote *kn = ap->a_kn;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &generic_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	return (0);
+}
+
+void
+filt_generic_detach(struct knote *kn)
+{
+}
+
+int
+filt_generic_readwrite(struct knote *kn, long hint)
+{
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule 
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+        kn->kn_data = 0;
+        return (1);
 }
