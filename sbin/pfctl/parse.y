@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.54 2002/01/10 17:02:39 hugh Exp $	*/
+/*	$OpenBSD: parse.y,v 1.55 2002/01/11 22:26:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1165,6 +1165,11 @@ rule_consistent(struct pf_rule *r)
 	return (-problems);
 }
 
+struct keywords {
+	const char	*k_name;
+	int	 k_val;
+};
+
 #define CHECK_ROOT(T,r) \
 	do { \
 		if (r == NULL) { \
@@ -1331,13 +1336,17 @@ expand_rule(struct pf_rule *r,
 #undef CHECK_ROOT
 
 int
+kw_cmp(k, e)
+	const void *k, *e;
+{
+	return (strcmp(k, ((struct keywords *)e)->k_name));
+}
+
+int
 lookup(char *s)
 {
-	int i;
-	struct keywords {
-		char	*k_name;
-		int	 k_val;
-	} keywords[] = {
+	/* this has to be sorted always */
+	static const struct keywords keywords[] = {
 		{ "all",	ALL},
 		{ "allow-opts",	ALLOWOPTS},
 		{ "any",	ANY},
@@ -1345,14 +1354,14 @@ lookup(char *s)
 		{ "block",	BLOCK},
 		{ "code",	CODE},
 		{ "dup-to",	DUPTO},
-		{ "flags",	FLAGS},
 		{ "fastroute",	FASTROUTE},
+		{ "flags",	FLAGS},
 		{ "from",	FROM},
 		{ "icmp-type",	ICMPTYPE},
-		{ "ipv6-icmp-type", ICMP6TYPE},
 		{ "in",		IN},
 		{ "inet",	INET},
 		{ "inet6",	INET6},
+		{ "ipv6-icmp-type", ICMP6TYPE},
 		{ "keep",	KEEP},
 		{ "label",	LABEL},
 		{ "log",	LOG},
@@ -1377,20 +1386,21 @@ lookup(char *s)
 		{ "scrub",	SCRUB},
 		{ "state",	STATE},
 		{ "to",		TO},
-		{ NULL,		0 },
 	};
+	const struct keywords *p;
 
-	for (i = 0; keywords[i].k_name != NULL; i++) {
-		if (strcmp(s, keywords[i].k_name) == 0) {
-			if (debug > 1)
-				fprintf(stderr, "%s: %d\n", s,
-				    keywords[i].k_val);
-			return (keywords[i].k_val);
-		}
+	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
+	    sizeof(keywords[0]), kw_cmp);
+
+	if (p) {
+		if (debug > 1)
+			fprintf(stderr, "%s: %d\n", s, p->k_val);
+		return (p->k_val);
+	} else {
+		if (debug > 1)
+			fprintf(stderr, "string: %s\n", s);
+		return (STRING);
 	}
-	if (debug > 1)
-		fprintf(stderr, "string: %s\n", s);
-	return (STRING);
 }
 
 char	*parsebuf;
