@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.18 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.19 2003/03/30 23:11:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.18 2002/02/16 21:27:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.19 2003/03/30 23:11:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,9 @@ struct coldesc *clist;
 int ncols = 0;
 int ND = 10;			/* limit on number of -k options. */
 
-char devstdin[] = _PATH_STDIN;
-char toutpath[_POSIX_PATH_MAX];
+char *devstdin = _PATH_STDIN;
 char *tmpdir = _PATH_VARTMP;
+char toutpath[PATH_MAX];
 
 static void cleanup(void);
 static void onsig(int);

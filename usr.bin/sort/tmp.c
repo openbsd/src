@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmp.c,v 1.3 2000/06/30 16:00:23 millert Exp $	*/
+/*	$OpenBSD: tmp.c,v 1.4 2003/03/30 23:11:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)tmp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: tmp.c,v 1.3 2000/06/30 16:00:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: tmp.c,v 1.4 2003/03/30 23:11:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ ftmp()
 	sigset_t set, oset;
 	FILE *fp;
 	int fd;
-	char pathb[_POSIX_PATH_MAX], *path;
+	char pathb[PATH_MAX], *path;
 
 	path = pathb;
 	(void)snprintf(path, sizeof(pathb), "%s%s%s", tmpdir,
