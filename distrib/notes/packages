@@ -29,10 +29,12 @@ Installing applications from the CD-ROM package collection:
 	and supported architectures are:
 
 			i386	sparc	amiga	m68k	alpha	mips
-	emacs-20.2	yes	yes	yes	yes	yes	no
-	bash-2.01.1	yes	yes	yes	yes	yes	no
-	tcsh-6.07.02	yes	yes	yes	yes	yes	no
-	pine-3.96	yes	yes	yes	yes	yes	no
+  emacs-20.2		yes	yes	yes	yes	yes	no
+  bash-2.01.1		yes	yes	yes	yes	yes	no
+  tcsh-6.07.02		yes	yes	yes	yes	yes	no
+  pine-3.96		yes	yes	yes	yes	yes	no
+  ircii-2.8.2-epic3.004	yes	yes	yes	yes	yes	no
+  screen-3.7.4		yes	yes	no	yes	yes	no
 
 	(the amiga is treated specially due to its 8k hardware pagesize
 	aka NBPG, it's very well possible amiga will run the other m68k
