@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.11 2000/03/22 20:25:19 ericj Exp $	*/
+/*	$OpenBSD: script.c,v 1.12 2000/04/16 20:28:54 espie Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.11 2000/03/22 20:25:19 ericj Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.12 2000/04/16 20:28:54 espie Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,6 +81,8 @@ __dead	void done __P((int));
 	void fail __P((void));
 	void finish __P((int));
 	void scriptflush __P((int));
+	void handlesigwinch __P((int));
+
 
 int
 main(argc, argv)
@@ -126,6 +128,7 @@ main(argc, argv)
 	rtt.c_lflag &= ~ECHO;
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
 
+	(void)signal(SIGWINCH, handlesigwinch);
 	(void)signal(SIGCHLD, finish);
 	child = fork();
 	if (child < 0) {
@@ -170,6 +173,22 @@ finish(signo)
 
 	if (die)
 		done(e);
+	errno = save_errno;
+}
+
+void
+handlesigwinch(signo)
+	int signo;
+{
+	struct winsize win;
+	pid_t pgrp;
+	int save_errno = errno;
+
+	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &win) != -1) {
+	    ioctl(slave, TIOCSWINSZ, &win);
+	    if (ioctl(slave, TIOCGPGRP, &pgrp) != -1)
+	    	killpg(pgrp, SIGWINCH);
+	}
 	errno = save_errno;
 }
 
