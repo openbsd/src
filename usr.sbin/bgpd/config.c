@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2003/12/19 14:23:28 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.3 2003/12/23 01:06:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "bgpd.h"
@@ -65,6 +66,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 		conf->min_holdtime = xconf->min_holdtime;
 	if (!xconf->min_holdtime)
 		xconf->min_holdtime = conf->min_holdtime = MIN_HOLDTIME;
+
+	memcpy(&xconf->listen_addr, &conf->listen_addr,
+	    sizeof(xconf->listen_addr));
 
 	/*
 	 * as we cannot get the negotiated holdtime in the main process,

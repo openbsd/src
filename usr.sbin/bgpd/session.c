@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.27 2003/12/21 23:28:39 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.28 2003/12/23 01:06:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -97,8 +97,7 @@ session_sighdlr(int sig)
 int
 setup_listener(void)
 {
-	int			fd, opt;
-	struct sockaddr_in	addr;
+	int			 fd, opt;
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
 		return (fd);
@@ -106,12 +105,8 @@ setup_listener(void)
 	opt = 1;
 	setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
 
-	bzero(&addr, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr.sin_port = htons(BGP_PORT);
-
-	if (bind(fd, (struct sockaddr *)&addr, sizeof(addr))) {
+	if (bind(fd, (struct sockaddr *)&conf->listen_addr,
+	    sizeof(conf->listen_addr))) {
 		close(fd);
 		return (-1);
 	}
@@ -123,7 +118,7 @@ setup_listener(void)
 		close(fd);
 		return (-1);
 	}
-
+	
 	return (fd);
 }
 

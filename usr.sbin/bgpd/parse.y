@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2003/12/22 19:43:36 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.9 2003/12/23 01:06:21 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,8 @@ typedef struct {
 
 %}
 
-%token	SET AS BGPID HOLDTIME HOLDTIME_MIN
+%token	SET
+%token	AS BGPID HOLDTIME HOLDTIME_MIN LISTEN ON
 %token	GROUP NEIGHBOR
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP
 %token	ERROR
@@ -150,6 +151,9 @@ conf_main	: AS number		{
 				YYERROR;
 			}
 			conf->min_holdtime = $2;
+		}
+		| LISTEN ON address	{
+			conf->listen_addr.sin_addr.s_addr = $3.s_addr;
 		}
 		/*
 		 *  XXX this is bad.
@@ -300,10 +304,12 @@ lookup(char *s)
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
 		{ "holdtime_min",	HOLDTIME_MIN},
+		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
 		{ "mrtdump",		MRTDUMP},
 		{ "multihop",		MULTIHOP},
 		{ "neighbor",		NEIGHBOR},
+		{ "on",			ON},
 		{ "remote-as",		REMOTEAS},
 		{ "set",		SET},
 	};
@@ -527,6 +533,11 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	curgroup = NULL;
 	lineno = 1;
 	errors = 0;
+
+	conf->listen_addr.sin_len = sizeof(conf->listen_addr);
+	conf->listen_addr.sin_family = AF_INET;
+	conf->listen_addr.sin_addr.s_addr = INADDR_ANY;
+	conf->listen_addr.sin_port = htons(BGP_PORT);
 
 	if (strcmp(filename, "-") == 0) {
 		fin = stdin;

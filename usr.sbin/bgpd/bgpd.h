@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.13 2003/12/22 15:22:13 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.14 2003/12/23 01:06:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -99,6 +99,7 @@ struct bgpd_config {
 	u_int32_t		 bgpid;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
+	struct sockaddr_in	 listen_addr;
 	struct peer		*peers;
 };
 
