@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.4 1996/05/07 11:25:01 deraadt Exp $ */
+/*	$OpenBSD: prom.h,v 1.5 1996/05/10 03:19:34 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -166,3 +166,12 @@ struct mvmeprom_args {
 #define MVMEPROM_STATRET(ret) \
 	asm volatile ("movew ccr,%0": "=d" (ret)); \
 	return (!(ret & 0x4));		/* return a 'status' */
+
+#define MVMEPROM_REG_DEVLUN	"d0"
+#define MVMEPROM_REG_CTRLLUN	"d1"
+#define MVMEPROM_REG_FLAGS	"d4"
+#define MVMEPROM_REG_CTRLADDR	"a0"
+#define MVMEPROM_REG_ENTRY	"a1"
+#define MVMEPROM_REG_CONFBLK	"a2"
+#define MVMEPROM_REG_ARGSTART	"a5"
+#define MVMEPROM_REG_ARGEND	"a6"
