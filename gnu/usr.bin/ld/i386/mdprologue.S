@@ -1,4 +1,4 @@
-/* *	$OpenBSD: mdprologue.S,v 1.2 1998/03/26 19:46:42 niklas Exp $*/
+/* *	$OpenBSD: mdprologue.S,v 1.3 2001/09/05 08:22:36 espie Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -51,7 +51,7 @@ _rtl:					# crt0 calls us here
 	call	1f			# PIC function prologue
 1:
 	popl	%ebx
-	addl	$_GLOBAL_OFFSET_TABLE_+[.-1b],%ebx
+	addl	$__GLOBAL_OFFSET_TABLE_+[.-1b],%ebx
 
 	movl	12(%ebp),%eax		# Extract data from interface structure
 	movl	(%eax),%eax		# base address of ld.so (first field)
