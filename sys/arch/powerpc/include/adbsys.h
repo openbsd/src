@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.4 2001/06/29 16:22:10 maja Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.5 2001/07/01 04:31:23 drahn Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ typedef struct adb_dev_s{
 #define ADB_PBEXTKBD	24
 #define ADB_DESIGNKBD	27	/* XXX Needs to be verified XXX */
 #define ADB_PBJPKBD	30
+#define ADB_PBG4KBD	195
 #define ADB_IBITISOKBD	196
 #define ADB_PBG3JPKBD	201
 

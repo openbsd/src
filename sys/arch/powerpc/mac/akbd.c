@@ -227,6 +227,9 @@ akbdattach(parent, self, aux)
 	case ADB_PBG3JPKBD:
 		printf("PowerBook G3 keyboard (Japanese layout)\n");
 		break;
+	case ADB_PBG4KBD:
+		printf("PowerBook G4 keyboard (Inverted T)\n");
+		break;
 	case ADB_IBITISOKBD:
 		printf("iBook keyboard with inverted T (ISO layout)\n");
 	default:
