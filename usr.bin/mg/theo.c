@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.73 2004/10/01 11:03:08 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.74 2004/10/01 21:01:45 miod Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -137,6 +137,7 @@ static const char *talk[] = {
 	"Take a picture of my butt, it's what everyone wants.",
 	"you slackers don't deserve pictures yet",
 	"You guys are about four days behind on theo.c",
+	"I'm just talking.",
 	"Vegetarian my ass",
 	"Wait a minute, that's a McNally's!",
 	"Your connection is breaking up.",
@@ -145,12 +146,20 @@ static const char *talk[] = {
 	"I AM NEVER SATISFIED",
 	"don't they recognize their moral responsibility to entertain me?",
 	"#ifdef is for emacs developers.",
+	"Many well known people become net-kooks in their later life, because they lose touch with reality.",
 	"You're not allowed to have an opinion.",
 	"tweep tweep tweep",
+	"Quite frankly, SSE's alignment requirement is the most utterly retarded idea since eating your own shit.",
+	"Holy verbose prom startup Batman.",
+	"Do you think you are exempt from COMPILING BEFORE YOU COMMIT",
 	"I want to be REALLY COOL just like all the other developers!",
+	"I don't know what you are talking about.  Please tell me what you are talking about.",
+	"I avoid helping people who refuse to learn how to help themselves.",
 	"Any day now, when we sell out.",
 	"And there you have it.. the distinction between those people who are OpenBSD develepers and those who will never be able to be...",
+	"I don't mean this applies to everyone, but is there a high quantity of attention deficit disorder in our user community?  Or retards?",
 	"Have you been living in a cave, or are you just being a jerk?",
+	"If you want it, go do the stinking work yourself.",
 	"A burp means less gas later",
 	"optimism in man kind does not belong here"
 };
