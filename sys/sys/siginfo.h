@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.2 1997/01/27 03:18:09 deraadt Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.3 1997/01/27 23:21:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -184,8 +184,7 @@ typedef struct {
 	} _data;
 } siginfo_t;
 
-/* collides with select inside the kernel */
-#define si_pid_XXX	_data._proc._pid
+#define si_pid		_data._proc._pid
 
 #define si_status	_data._proc._pdata._cld._status
 #define si_stime	_data._proc._pdata._cld._stime

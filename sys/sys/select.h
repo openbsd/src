@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.2 1996/03/03 12:12:16 niklas Exp $	*/
+/*	$OpenBSD: select.h,v 1.3 1997/01/27 23:21:21 deraadt Exp $	*/
 /*	$NetBSD: select.h,v 1.10 1995/03/26 20:24:38 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
  * notified when I/O becomes possible.
  */
 struct selinfo {
-	pid_t	si_pid;		/* process to be notified */
+	pid_t	si_selpid;	/* process to be notified */
 	short	si_flags;	/* see below */
 };
 #define	SI_COLL	0x0001		/* collision occurred */

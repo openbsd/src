@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.6 1996/12/07 09:17:46 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.7 1997/01/27 23:21:18 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.27 1996/05/07 05:26:02 thorpej Exp $	*/
 
 /*
@@ -532,7 +532,7 @@ bpf_wakeup(d)
 #if BSD >= 199103
 	selwakeup(&d->bd_sel);
 	/* XXX */
-	d->bd_sel.si_pid = 0;
+	d->bd_sel.si_selpid = 0;
 #else
 	if (d->bd_selproc) {
 		selwakeup(d->bd_selproc, (int)d->bd_selcoll);

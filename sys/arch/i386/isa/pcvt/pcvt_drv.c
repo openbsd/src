@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.14 1996/06/10 07:35:40 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.15 1997/01/27 23:20:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -970,7 +970,7 @@ pcstart(register struct tty *tp)
 		goto out;
 
 	if (tp->t_outq.c_cc == 0 &&
-	    tp->t_wsel.si_pid == 0)
+	    tp->t_wsel.si_selpid == 0)
 	{
 		async_update();
 		goto low;
