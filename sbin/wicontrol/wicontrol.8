@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.1 1999/07/11 16:31:08 niklas Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.2 1999/09/23 04:12:03 alex Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -164,7 +164,7 @@ Set the
 for a specified interface. The legal values for
 .Ar port type
 are 1 (BSS mode) and 3 (ad-hoc) mode. In ad-hoc mode, the station can
-comminicate directly with any other stations within direct radio range
+communicate directly with any other stations within direct radio range
 (provided that they are also operating in ad-hoc mode). In BSS mode,
 hosts must associate with a service set controlled by an access point,
 which relays traffic between end stations. The default setting is 3
@@ -187,7 +187,7 @@ The
 can be any number from 350 to 2304. The default is 2304.
 .It Fl i Ar iface Fl r Ar RTS threshold
 Set the RTS/CTS threshold for a given interface. This controls the
-number of bytes used for the RTS/CTS handhake boundary. The
+number of bytes used for the RTS/CTS handshake boundary. The
 .Ar RTS threshold
 can be any value between 0 and 2047. The default is 2347.
 .It Fl i Ar iface Fl f Ar frequency

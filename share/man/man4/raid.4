@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.7 1999/07/30 14:45:31 peter Exp $
+.\"	$OpenBSD: raid.4,v 1.8 1999/09/23 04:12:04 alex Exp $
 .\"     $NetBSD: raid.4,v 1.5 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\"
@@ -137,7 +137,7 @@ The driver supports
 disks which are on-line, but are not
 actively used in an existing filesystem.  Should a disk fail, the
 driver is capable of reconstructing the failed disk onto a hot spare
-or back onto a replacment drive.
+or back onto a replacement drive.
 If the components are hot swapable, the failed disk can then be
 removed, a new disk put in it's place, and a copyback operation
 performed.  The copyback operation, as its name indicates, will copy
@@ -212,13 +212,13 @@ In all cases the
 .Sq raw
 partitions of the disks
 .Pa must not
-be combined.  Rather, each component parition should be offset by at least one
+be combined.  Rather, each component partition should be offset by at least one
 cylinder from the beginning of that component disk.  This ensures that
 the disklabels for the component disks do not conflict with the
 disklabel for the
 .Nm
 device.
-As well, all component paritions must be of the type
+As well, all component partitions must be of the type
 .Dv FS_BSDFFS .
 .Pp
 A more detailed treatment of actually using a

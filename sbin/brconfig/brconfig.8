@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.1 1999/09/01 03:28:01 deraadt Exp $
+.\"	$OpenBSD: brconfig.8,v 1.2 1999/09/23 04:12:02 alex Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -185,7 +185,7 @@ Finally, xl0 is marked so that it will not receive packets with
 destinations not found in the address cache of bridge0.
 This setup is the most secure,
 and means that bogus MAC addresses seen by the xl0 side of the bridge
-will not be propogated to the rest of the network.
+will not be propagated to the rest of the network.
 Also, no packets will be sent on xl0 segment by the bridge unless they are
 broadcast packets or are for 8:0:20:1e:2f:2b.
 .El

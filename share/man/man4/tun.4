@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.10 1999/06/05 13:18:33 aaron Exp $
+.\"	$OpenBSD: tun.4,v 1.11 1999/09/23 04:12:05 alex Exp $
 .Dd March 10, 1996
 .Dt TUN 4
 .Os
@@ -352,7 +352,7 @@ The process-group values for
 signals should be checked; as it stands, the driver can be used (by
 anyone who can open the control or data device) to send any desired
 signal to an arbitrary process or process group.  (Until this is fixed,
-you should be careful to set the permisison bits to allow only root to
+you should be careful to set the permission bits to allow only root to
 open the control device, and either do the same for the data device or
 leave the
 .Dv SUONLY

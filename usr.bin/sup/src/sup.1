@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sup.1,v 1.7 1999/06/05 01:21:41 aaron Exp $
+.\"	$OpenBSD: sup.1,v 1.8 1999/09/23 04:12:09 alex Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -25,6 +25,9 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .\" HISTORY
 .\" $Log: sup.1,v $
+.\" Revision 1.8  1999/09/23 04:12:09  alex
+.\" Typo fixes.
+.\"
 .\" Revision 1.7  1999/06/05 01:21:41  aaron
 .\" - remove trailing white space
 .\" - remove arguments from .Os macros
@@ -166,7 +169,7 @@ ports reserved for debugging purposes.
 The remaining flags affect all collections unless an explicit list
 of collections are given with the flags.  Multiple flags may be
 specified together that affect the same collections.  For the sake
-of convience, any flags that always affect all collections can be
+of convenience, any flags that always affect all collections can be
 specified with flags that affect only some collections.  For
 example,
 .B sup -sde=coll1,coll2
@@ -701,7 +704,7 @@ It should be noted that
 .I sup
 allows several different named collections to use the same base
 directory.  Separate encryption, remote host access, and file lists
-are used for each collection, since these files reside in subdirectorie
+are used for each collection, since these files reside in subdirectories
 .I <basedir>/sup/<coll.name>.
 
 The list file is a text file with one command on each line.

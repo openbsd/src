@@ -1,11 +1,11 @@
-.\" $OpenBSD: sigwait.3,v 1.7 1999/07/07 10:50:05 aaron Exp $
+.\" $OpenBSD: sigwait.3,v 1.8 1999/09/23 04:12:00 alex Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 20, 1998
 .Dt SIGWAIT 3
 .Os
 .Sh NAME
 .Nm sigwait
-.Nd synchonously accept a signal
+.Nd synchronously accept a signal
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft int
@@ -49,7 +49,7 @@ if more than a single thread is waiting is unspecified.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn sigwait
-stores the signal number of the recived signal at the location referenced by
+stores the signal number of the received signal at the location referenced by
 .Fa sig
 and returns zero.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.4 1999/06/05 13:18:39 aaron Exp $
+.\"	$OpenBSD: uda.4,v 1.5 1999/09/23 04:12:06 alex Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -252,7 +252,7 @@ The controller did not initialise within ten seconds.  A hardware
 problem, but it sometimes goes away if you try again.
 .Pp
 .It uda%d: init failed, sa=%b
-The controller refused to initalise.
+The controller refused to initialise.
 .Pp
 .It uda%d: controller hung
 The controller never finished initialisation.  Retrying may sometimes
@@ -568,7 +568,7 @@ never uses compare operations.
 Something went wrong reading or writing a data sector.  A `forced
 error' is a software-asserted error used to mark a sector that contains
 suspect data.  Rewriting the sector will clear the forced error.  This
-is normally set only during bad block replacment, and the driver does
+is normally set only during bad block replacement, and the driver does
 no bad block replacement, so these should not occur.  A `header
 compare' error probably means the block is shot.  A `sync timeout'
 presumably has something to do with sector synchronisation.

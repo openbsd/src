@@ -1,12 +1,12 @@
-.\"     $OpenBSD: ipsend.5,v 1.2 1999/06/05 22:17:08 aaron Exp $
+.\"     $OpenBSD: ipsend.5,v 1.3 1999/09/23 04:12:11 alex Exp $
 .TH IPSEND 5
 .SH NAME
 ipsend \- IP packet description language
 .SH DESCRIPTION
 The \fBipsend\fP program expects, with the \fB-L\fP option, input to be a
 text file which fits the grammar described below.  The purpose of this
-grammar is to allow IP packets to be described in an arbitary way which
-also allows encapsulation to be so done to an arbitary level.
+grammar is to allow IP packets to be described in an arbitrary way which
+also allows encapsulation to be so done to an arbitrary level.
 .SH GRAMMAR
 .LP
 .nf
@@ -315,7 +315,7 @@ bytes with any particular data).
 indicates that the string provided should be added to the current packet as
 data.  A string may be a consecutive list of characters and numbers (with
 no white spaces) or bounded by "'s (may not contain them, even if \\'d).
-The \\ charcater is recognised with the appropriate C escaped values, including
+The \\ character is recognised with the appropriate C escaped values, including
 octal numbers.
 .TP
 .B file <filename>

@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.5 1999/07/09 13:35:15 aaron Exp $
+.\" $OpenBSD: blowfish.3,v 1.6 1999/09/23 04:12:00 alex Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -65,7 +65,7 @@ function initializes the 4 8bit S-boxes and the 18 Subkeys with
 the hexadecimal digits of Pi. The key is used for further randomization.
 The first argument to
 .Fn blf_enc
-is the initalized state derived from
+is the initialized state derived from
 .Fn blf_key .
 The stream of 32-bit words is encrypted in Electronic Codebook
 Mode (ECB) and

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: spif.4,v 1.3 1999/07/09 13:35:42 aaron Exp $
+.\"     $OpenBSD: spif.4,v 1.4 1999/09/23 04:12:06 alex Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -74,7 +74,7 @@ well as automatic hardware (RTS/CTS) flow control.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "spif%d: ccr timeout"
-A timeout occured while writing to one of the CD180 registers.
+A timeout occurred while writing to one of the CD180 registers.
 .It "stty%d-%d: fifo overflow"
 Incoming characters were discarded because the driver's interrupt
 routine could not read them fast enough from the card.

@@ -34,7 +34,7 @@ The ca program uses the ssleay.conf file for most of its configuration
  -gencrl days    - Generate a new CRL, days is when the next CRL is due
 	This will generate a new certificate revocion list.
  -days arg       - number of days to certify the certificate for
-	When certifiying certificates, this is the number of days to use.
+	When certifying certificates, this is the number of days to use.
  -md arg         - md to use, one of md2, md5, sha or sha1
  -policy arg     - The CA 'policy' to support
 	I'll describe this later, but there are 2 policies definied in the 
@@ -46,7 +46,7 @@ The ca program uses the ssleay.conf file for most of its configuration
  -in file        - The input PEM encoded certificate request(s)
  -out file       - Where to put the output file(s)
  -outdir dir     - Where to put output certificates
-	The -out options concatinates all the output certificied
+	The -out options concatenates all the output
 	certificates to one file, -outdir puts them in a directory,
 	named by serial number.
  -infiles ....   - The last argument, requests to process
@@ -54,7 +54,7 @@ The ca program uses the ssleay.conf file for most of its configuration
 
 Just about all the above have default values defined in ssleay.conf.
 
-The key variables in ssleay.conf are (for the pariticular '-name' being 
+The key variables in ssleay.conf are (for the particular '-name' being 
 used, in the default, it is CA_default).
 
 dir is where all the CA database stuff is kept.
@@ -93,8 +93,8 @@ The org.Unit,Name does not have to be present and
 commonName              = supplied
 commonName must be supplied in the certificate request.
 
-For the 'policy_match' polocy, the order of the attributes in the 
-generated certiticate would be
+For the 'policy_match' policy, the order of the attributes in the 
+generated certificate would be
 countryName
 stateOrProvinceName
 organizationName
