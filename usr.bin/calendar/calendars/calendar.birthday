@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.20 2002/08/27 22:12:44 markus Exp $
+ * $OpenBSD: calendar.birthday,v 1.21 2002/10/15 15:07:39 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -265,6 +265,7 @@
 11/18	Imogene Coca born, 1908
 11/18	William S. Gilbert born, 1836
 11/20	Robert Fitzgerald Kennedy born, 1925
+11/24	Emir Kusturica born in Srajevo, Bosnia-Herzegovina, 1954
 11/25	Chaucer's death (according to tradition), 1400
 11/26	Charles Schulz born in Minneapolis, 1922
 11/26	Norbert Weiner born, 1894
