@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.2 1995/11/08 00:01:05 deraadt Exp $
+#	$Id: ypinit.sh,v 1.3 1996/03/02 03:01:40 dm Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -44,8 +44,8 @@ if [ $# -eq 3 ]
 then
 	if [ $1 = "-s" ]		# ypinit -s master_server domainname
 	then
-		DOMAIN=`${3}`
-		SERVERTYPE=MASTER
+		DOMAIN=${3}
+		SERVERTYPE=SLAVE
 		MASTER=${2}
 		ERROR=
 	fi
@@ -62,15 +62,6 @@ where -m is used to build a master YP server data base, and -s is used for" 1>&2
 a slave data base.  master_server must be an existing reachable YP server." 1>&2
 	exit 1
 fi
-
-# Just allow master server for now!
-
-#if [ "${SERVERTYPE}" != "MASTER" ];
-#then
-#	echo "Sorry, only master server is implemented. Support for slave server" 1>&2
-#	echo "needs support for map transfer which isn't implemented yet." 1>&2
-#	exit 1
-#fi
 
 # Check if domainname is set, don't accept an empty domainname
 
@@ -197,9 +188,12 @@ fi
 
 if [ "${SERVERTYPE}" = "SLAVE" ];
 then
-	
+
+	echo ""
+
 	for MAP in `${YPWHICH} -d ${DOMAIN} -m | cut -d\  -f1`
 	do
+		echo "Transfering ${MAP}..."
 		${YPXFR} -h ${MASTER} -c -d ${DOMAIN} ${MAP}
 
 		if [ $?  -ne 0 ]
@@ -208,4 +202,8 @@ then
 			exit 1
 		fi
 	done
+
+	echo ""
+	echo "Don't forget to update map ypservers on ${MASTER}."
+	exit 0
 fi

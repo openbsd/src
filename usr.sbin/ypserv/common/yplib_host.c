@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib_host.c,v 1.1 1995/11/01 16:56:18 deraadt Exp $";
+static char *rcsid = "$Id: yplib_host.c,v 1.2 1996/03/02 03:01:31 dm Exp $";
 #endif
 
 #include <sys/param.h>
@@ -102,7 +102,12 @@ u_short port;
 	tv.tv_sec = 10;
 	tv.tv_usec = 0;
 
+#if 0
 	client = clntudp_create(&rsrv_sin, program, version, tv, &rsrv_sock);
+#else
+	client = clnttcp_create(&rsrv_sin, program, version, &rsrv_sock,
+				0, 0);
+#endif
 	if (client == NULL) {
 		fprintf(stderr, "clntudp_create: no contact with host %s.\n",
 			server);

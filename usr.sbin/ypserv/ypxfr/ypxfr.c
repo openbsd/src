@@ -10,9 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Mats O Jansson
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypxfr.c,v 1.2 1996/01/20 00:38:49 chuck Exp $";
+static char rcsid[] = "$Id: ypxfr.c,v 1.3 1996/03/02 03:01:49 dm Exp $";
 #endif
 
 #include <stdio.h>
@@ -75,10 +77,10 @@ char *keystr,*valstr;
 	valstr[vallen] = '\0';
 
 	key.dptr = keystr;
-	key.dsize = strlen(keystr) + 1;
+	key.dsize = strlen(keystr);
 
 	val.dptr = valstr;
-	val.dsize = strlen(valstr) + 1;
+	val.dsize = strlen(valstr);
 	
 	ypdb_store(db, key, val, YPDB_INSERT);
 
@@ -92,7 +94,7 @@ char *map;
 u_long *lordernum;
 {
 	char map_path[1024];
-	char order_key[YP_LAST_LEN] = YP_LAST_KEY;
+	char order_key[] = YP_LAST_KEY;
 	char order[MAX_LAST_LEN+1];
 	struct stat finfo;
 	DBM *db;
@@ -231,16 +233,16 @@ u_long ordernum;
 {
 	char	datestr[10];
 	datum	key,val;
-	char	keystr[YP_LAST_LEN] = YP_LAST_KEY;
+	char	keystr[] = YP_LAST_KEY;
 	int	status;
 
 	sprintf(datestr, "%010d", ordernum);
 
 	key.dptr = keystr;
-	key.dsize = strlen(keystr) + 1;
+	key.dsize = strlen(keystr);
 	
 	val.dptr = datestr;
-	val.dsize = strlen(datestr) + 1;
+	val.dsize = strlen(datestr);
 	
 	status = ypdb_store(db, key, val, YPDB_INSERT);
 	if(status >= 0) {
@@ -258,7 +260,7 @@ char *domain;
 char *map;
 DBM *db;
 {
-	char	keystr[YP_MASTER_LEN] = YP_MASTER_KEY;
+	char	keystr[] = YP_MASTER_KEY;
 	char	*master;
 	int	status;
 	datum	key,val;
@@ -271,10 +273,10 @@ DBM *db;
 	
 	if(master != NULL) {
 	  key.dptr = keystr;
-	  key.dsize = strlen(keystr) + 1;
+	  key.dsize = strlen(keystr);
 	  
 	  val.dptr = master;
-	  val.dsize = strlen(master) + 1;
+	  val.dsize = strlen(master);
 	
 	  status = ypdb_store(db, key, val, YPDB_INSERT);
 	  if(status >= 0) {
@@ -294,7 +296,7 @@ char *domain;
 char *map;
 DBM *db;
 {
-	char	keystr[YP_INTERDOMAIN_LEN] = YP_INTERDOMAIN_KEY;
+	char	keystr[] = YP_INTERDOMAIN_KEY;
 	char	*value;
 	int	vallen;
 	int	status;
@@ -303,12 +305,12 @@ DBM *db;
 	/* Get INTERDOMAIN */
 
 	k.dptr = keystr;
-	k.dsize = strlen(keystr) + 1;
+	k.dsize = strlen(keystr);
 
-	status = yp_match_host(client, domain, map,
+	status = !yp_match_host(client, domain, map,
 			       k.dptr, k.dsize, &value, &vallen);
 	
-	if(status > 0) {
+	if(status > 0 && value) {
 		v.dptr = value;
 		v.dsize = vallen;
 		
@@ -332,7 +334,7 @@ char *domain;
 char *map;
 DBM *db;
 {
-	char	keystr[YP_SECURE_LEN] = YP_SECURE_KEY;
+	char	keystr[] = YP_SECURE_KEY;
 	char	*value;
 	int	vallen;
 	int	status;
@@ -341,7 +343,7 @@ DBM *db;
 	/* Get SECURE */
 
 	k.dptr = keystr;
-	k.dsize = strlen(keystr) + 1;
+	k.dsize = strlen(keystr);
 
 	status = yp_match_host(client, domain, map,
 			       k.dptr, k.dsize, &value, &vallen);
@@ -532,7 +534,7 @@ char *argv[];
 	        yplog("Connect host: %s", host); 
 
 		client = yp_bind_host(host,YPPROG,YPVERS,0);
-		
+
 		status = get_remote_ordernum(client,domain,map,
 					     ordernum,&new_ordernum);
 		
