@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.37 2003/05/03 21:15:11 deraadt Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.38 2003/05/13 00:55:12 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -78,7 +78,7 @@
 
 #include <net/if_vlan_var.h>
 
-struct	ifaddr	**ifnet_addrs;
+extern struct	ifaddr	**ifnet_addrs;
 
 struct ifvlan *ifv_softc;
 int nifvlan;
