@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.50 2000/11/24 14:29:56 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.51 2000/12/07 00:15:43 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: var.c,v 1.50 2000/11/24 14:29:56 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.51 2000/12/07 00:15:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -773,6 +773,7 @@ var_name_with_dollar(str, pos, ctxt, err, endc)
 	str = *pos;
 	for (; **pos != '$'; (*pos)++) {
 	    if (**pos == '\0' || **pos == endc || **pos == ':') {
+	    	Buf_AddInterval(&buf, str, *pos);
 		v = VarFind(Buf_Retrieve(&buf), ctxt, FIND_ENV | FIND_MINE);
 		Buf_Destroy(&buf);
 		return v;
