@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.24 2003/08/06 20:45:47 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.25 2003/08/06 20:46:36 millert Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: file.c,v 1.24 2003/08/06 20:45:47 millert Exp $";
+static const char rcsid[] = "$OpenBSD: file.c,v 1.25 2003/08/06 20:46:36 millert Exp $";
 #endif
 
 /*
@@ -365,6 +365,7 @@ fileFindByPath(char *base, char *fname)
 	if (ispkgpattern(fname)) {
 		if ((cp=findbestmatchingname(".",fname)) != NULL) {
 			strlcpy(tmp, cp, sizeof(tmp));
+			free(cp);
 			return tmp;
 		}
 	} else {
@@ -390,6 +391,7 @@ fileFindByPath(char *base, char *fname)
 					assert(s != NULL);
 					strlcpy(s+1, cp,
 						tmp + sizeof(tmp) - (s+1));
+					free(cp);
 					return tmp;
 				}
 			} else {
@@ -418,6 +420,7 @@ fileFindByPath(char *base, char *fname)
 				char *t;
 				t=strrchr(tmp, '/');
 				strlcpy(t+1, s, tmp + sizeof(tmp) - (t+1));
+				free(s);
 				return tmp;
 			}
 		} else {

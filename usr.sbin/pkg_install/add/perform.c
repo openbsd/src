@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.29 2003/08/01 08:56:01 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.30 2003/08/06 20:46:36 millert Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: perform.c,v 1.29 2003/08/01 08:56:01 espie Exp $";
+static const char rcsid[] = "$OpenBSD: perform.c,v 1.30 2003/08/06 20:46:36 millert Exp $";
 #endif
 
 /*
@@ -367,6 +367,7 @@ pkg_do(char *pkg)
 			    printf("\t`%s' loaded successfully\n", p->name);
 			/* Nuke the temporary playpen */
 			leave_playpen(cp);
+			free(cp);
 
 			restore_dirs(saved_Current, saved_Previous);
 		    }
@@ -511,6 +512,7 @@ pkg_do(char *pkg)
 		    char *t;
 		    t=strrchr(contents, '/');
 		    strlcpy(t+1, s, contents + sizeof(contents) - (t+1));
+		    free(s);
 		}else{
 		    errx(1,"Where did our dependency go?!");
 		    /* this shouldn't happen... X-) */
