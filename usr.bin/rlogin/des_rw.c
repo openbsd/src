@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_rw.c,v 1.7 1997/06/29 11:10:36 provos Exp $	*/
+/*	$OpenBSD: des_rw.c,v 1.8 2001/07/17 02:13:29 pvalchev Exp $	*/
 /*	$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)des_rw.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: des_rw.c,v 1.7 1997/06/29 11:10:36 provos Exp $";
+static char rcsid[] = "$OpenBSD: des_rw.c,v 1.8 2001/07/17 02:13:29 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,11 @@ static char rcsid[] = "$OpenBSD: des_rw.c,v 1.7 1997/06/29 11:10:36 provos Exp $
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+void	desrw_set_key __P((des_cblock *, des_key_schedule *));
+void	desrw_clear_key __P((void));
+int	des_read __P((int, char *, int));
+int	des_write __P((int, char *, int));
 
 static unsigned char	des_inbuf[10240], storage[10240], *store_ptr;
 static des_cblock 	*key;
