@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.38 1998/03/24 04:00:39 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.39 1998/03/28 04:29:11 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1005,10 +1005,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82437FX (Triton) PCI, Cache, and DRAM Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82471,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371,
 	    0,
 	    "Intel",
-	    "82471FB (Triton) PCI-ISA Bridge",
+	    "82371FB (Triton) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82438,
