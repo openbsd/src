@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfcmp.c,v 1.5 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: dfcmp.c,v 1.6 2002/09/20 19:26:59 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -126,8 +126,8 @@ dbl_fcmp(leftptr, rightptr, cond, status)
     else
 	{
 	/* Negative compare.  Signed or unsigned compares
- 	 * both work the same.  That distinction is only
- 	 * important when the sign bits differ. */
+	 * both work the same.  That distinction is only
+	 * important when the sign bits differ. */
 	if( Dbl_allp1(leftp1) > Dbl_allp1(rightp1) )
 	    {
 	    Set_status_cbit(Lessthan(cond));
@@ -151,4 +151,4 @@ dbl_fcmp(leftptr, rightptr, cond, status)
 	    }
 	}
 	return(NOEXCEPTION);
-    }
+}

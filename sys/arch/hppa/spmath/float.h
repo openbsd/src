@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.5 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: float.h,v 1.6 2002/09/20 19:26:59 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -470,4 +470,3 @@ typedef struct dint dbl_integer;
 #define Ext_negate(extent) \
     (int )Extall(extent) = 0 - (int )Extall(extent)
 #define Ext_setone_low(extent) Bitfield_deposit(1,31,1,extent)
-
