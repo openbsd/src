@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2001/08/06 19:03:33 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2001/08/10 15:05:48 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -90,6 +90,8 @@ dump_avail()
 }
 #endif
 
+struct pool pmap_vp_pool;
+
 int pmap_vp_valid(pmap_t pm, vaddr_t va);
 void pmap_vp_enter(pmap_t pm, vaddr_t va, paddr_t pa);
 int pmap_vp_remove(pmap_t pm, vaddr_t va);
@@ -164,10 +166,11 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, paddr_t pa)
 #endif
 		if (pm == pmap_kernel()) {
 			printf(" irk kernel allocating map?");
-		} else {
-			if (!(mem1 = (pmapv_t *)uvm_km_zalloc(kernel_map, NBPG)))
-				panic("pmap_vp_enter: uvm_km_zalloc() failed");
 		}
+		s = splimp();
+		mem1 = pool_get(&pmap_vp_pool, PR_NOWAIT);
+		splx(s);
+
 		pm->vps[idx] = mem1;
 #ifdef DEBUG
 		printf("got %x ", mem1);
@@ -189,6 +192,7 @@ pmap_vp_destroy(pm)
 	pmap_t pm;
 {
 	pmapv_t *vp1;
+	int s;
 	int sr;
 #ifdef SANITY
 	int idx1;
@@ -209,7 +213,9 @@ pmap_vp_destroy(pm)
 			}
 		}
 #endif
-		uvm_km_free(kernel_map, (vaddr_t)vp1, NBPG);
+		s = splimp();
+		pool_put(&pmap_vp_pool, vp1);
+		splx(s);
 		pm->vps[sr] = 0;
 	}
 }
@@ -710,6 +716,8 @@ pmap_init()
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
+	pool_init(&pmap_vp_pool, NBPG, 0, 0, 0, "ppvl",
+            0, NULL, NULL, M_VMPMAP);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
             0, NULL, NULL, M_VMPMAP);
 	pool_init(&pmap_po_pool, sizeof(struct pte_ovfl), 0, 0, 0, "popl",
