@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1997/06/18 01:52:27 angelos Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1997/06/29 20:18:01 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.10 1997/06/18 01:52:27 angelos Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.11 1997/06/29 20:18:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ struct nlist nl[] = {
 	{ "_espstat"},
 #define N_IP4STAT	38
 	{ "_ip4stat"},
-	"",
+	{ ""},
 };
 
 struct protox {
@@ -231,7 +231,6 @@ main(argc, argv)
 	extern int optind;
 	register struct protoent *p;
 	register struct protox *tp;	/* for printing cblocks & stats */
-	register char *cp;
 	int ch;
 	char *nlistf = NULL, *memf = NULL;
 	char buf[_POSIX2_LINE_MAX];
@@ -409,7 +408,7 @@ main(argc, argv)
 		setprotoent(1);
 		setservent(1);
 		/* ugh, this is O(MN) ... why do we do this? */
-		while (p = getprotoent()) {
+		while ((p = getprotoent())) {
 			for (tp = protox; tp->pr_name; tp++)
 				if (strcmp(tp->pr_name, p->p_name) == 0)
 					break;
@@ -520,11 +519,11 @@ name2protox(name)
 	 * Try to find the name in the list of "well-known" names. If that
 	 * fails, check if name is an alias for an Internet protocol.
 	 */
-	if (tp = knownname(name))
+	if ((tp = knownname(name)))
 		return (tp);
 
 	setprotoent(1);			/* make protocol lookup cheaper */
-	while (p = getprotoent()) {
+	while ((p = getprotoent())) {
 		/* assert: name not same as p->name */
 		for (alias = p->p_aliases; *alias; alias++)
 			if (strcmp(name, *alias) == 0) {

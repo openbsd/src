@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.2 1996/06/26 05:37:26 deraadt Exp $	*/
+/*	$OpenBSD: unix.c,v 1.3 1997/06/29 20:18:04 millert Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.2 1996/06/26 05:37:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.3 1997/06/29 20:18:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ unixdomainpr(so, soaddr)
 		    "Inode", "Conn", "Refs", "Nextref");
 		first = 0;
 	}
-	printf("%8x %-6.6s %6d %6d %8x %8x %8x %8x",
+	printf("%8p %-6.6s %6ld %6ld %8p %8p %8p %8p",
 	    soaddr, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
 	    unp->unp_vnode, unp->unp_conn,
 	    unp->unp_refs, unp->unp_nextref);

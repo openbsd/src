@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.10 1997/01/17 07:12:55 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.11 1997/06/29 20:17:58 millert Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.10 1997/01/17 07:12:55 millert Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.11 1997/06/29 20:17:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ static char *rcsid = "$OpenBSD: if.c,v 1.10 1997/01/17 07:12:55 millert Exp $";
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet/if_ether.h>
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #include <netipx/ipx.h>
@@ -142,7 +143,7 @@ intpr(interval, ifnetaddr)
 			*cp = '\0';
 			ifaddraddr = (u_long)ifnet.if_addrlist.tqh_first;
 		}
-		printf("%-5.5s %-5d ", name, ifnet.if_mtu);
+		printf("%-5.5s %-5ld ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
 			printf("%-11.11s ", "none");
 			printf("%-15.15s ", "none");
@@ -199,7 +200,7 @@ intpr(interval, ifnetaddr)
 				char netnum[8];
 
 				*(union ipx_net *) &net = sipx->sipx_addr.ipx_net;
-				sprintf(netnum, "%xH", ntohl(net));
+				sprintf(netnum, "%lxH", ntohl(net));
 				upHex(netnum);
 				printf("ipx:%-8s", netnum);
 				printf("%-17s ",
@@ -214,7 +215,7 @@ intpr(interval, ifnetaddr)
 				char netnum[8];
 
 				*(union ns_net *) &net = sns->sns_addr.x_net;
-				sprintf(netnum, "%xH", ntohl(net));
+				sprintf(netnum, "%lxH", ntohl(net));
 				upHex(netnum);
 				printf("ns:%-8s ", netnum);
 				printf("%-17s ",
@@ -229,7 +230,7 @@ intpr(interval, ifnetaddr)
 				if (sdl->sdl_type == IFT_ETHER ||
 				    sdl->sdl_type == IFT_FDDI)
 					printf("%-17.17s ",
-					    ether_ntoa(LLADDR(sdl)));
+					    ether_ntoa((struct ether_addr *)LLADDR(sdl)));
 				else {
 					cp = (char *)LLADDR(sdl);
 					n = sdl->sdl_alen;
@@ -254,7 +255,7 @@ intpr(interval, ifnetaddr)
 			}
 			ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 		}
-		printf("%8d %5d %8d %5d %5d",
+		printf("%8ld %5ld %8ld %5ld %5ld",
 		    ifnet.if_ipackets, ifnet.if_ierrors,
 		    ifnet.if_opackets, ifnet.if_oerrors,
 		    ifnet.if_collisions);
@@ -374,7 +375,7 @@ loop:
 			continue;
 		}
 		if (ip == interesting) {
-			printf("%8d %5d %8d %5d %5d",
+			printf("%8ld %5ld %8ld %5ld %5ld",
 				ifnet.if_ipackets - ip->ift_ip,
 				ifnet.if_ierrors - ip->ift_ie,
 				ifnet.if_opackets - ip->ift_op,

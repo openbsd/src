@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.12 1997/06/29 08:45:23 provos Exp $	*/
+/*	$OpenBSD: route.c,v 1.13 1997/06/29 20:18:03 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.12 1997/06/29 08:45:23 provos Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.13 1997/06/29 20:18:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static char *rcsid = "$OpenBSD: route.c,v 1.12 1997/06/29 08:45:23 provos Exp $"
 #include <net/route.h>
 #undef _KERNEL
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <netns/ns.h>
 
@@ -256,7 +257,7 @@ again:
 	kget(rn, rnode);
 	if (rnode.rn_b < 0) {
 		if (Aflag)
-			printf("%-8.8x ", rn);
+			printf("%-8.8lx ", rn);
 		if (rnode.rn_flags & RNF_ROOT) {
 			if (Aflag)
 				printf("(root node)%s",
@@ -271,11 +272,11 @@ again:
 			    0, 44);
 			putchar('\n');
 		}
-		if (rn = rnode.rn_dupedkey)
+		if ((rn = rnode.rn_dupedkey))
 			goto again;
 	} else {
 		if (Aflag && do_rtent) {
-			printf("%-8.8x ", rn);
+			printf("%-8.8lx ", rn);
 			p_rtnode();
 		}
 		rn = rnode.rn_r;
@@ -300,16 +301,16 @@ p_rtnode()
 			return;
 	} else {
 		sprintf(nbuf, "(%d)", rnode.rn_b);
-		printf("%6.6s %8.8x : %8.8x", nbuf, rnode.rn_l, rnode.rn_r);
+		printf("%6.6s %8.8lx : %8.8lx", nbuf, rnode.rn_l, rnode.rn_r);
 	}
 	while (rm) {
 		kget(rm, rmask);
 		sprintf(nbuf, " %d refs, ", rmask.rm_refs);
-		printf(" mk = %8.8x {(%d),%s",
+		printf(" mk = %8.8lx {(%d),%s",
 			rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask), 0, -1);
 		putchar('}');
-		if (rm = rmask.rm_mklist)
+		if ((rm = rmask.rm_mklist))
 			printf(" ->");
 	}
 	putchar('\n');
@@ -382,7 +383,7 @@ np_rtentry(rtm)
 	else {
 		p_sockaddr(sa, rtm->rtm_flags, 16);
 		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(u_int32_t);
+			sa->sa_len = sizeof(in_addr_t);
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
 		p_sockaddr(sa, 0, 18);
 	}
@@ -509,9 +510,9 @@ p_rtentry(rt)
 	p_sockaddr(sa, rt->rt_flags, WID_DST);
 	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
+	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6d ", rt->rt_rmx.rmx_mtu);
+		printf("%6ld ", rt->rt_rmx.rmx_mtu);
 	else
 		printf("%6s ", "-");
 	if (rt->rt_ifp) {
@@ -527,7 +528,7 @@ p_rtentry(rt)
 
 char *
 routename(in)
-	u_int32_t in;
+	in_addr_t in;
 {
 	register char *cp;
 	static char line[MAXHOSTNAMELEN + 1];
@@ -571,12 +572,12 @@ routename(in)
  */
 char *
 netname(in, mask)
-	u_int32_t in, mask;
+	in_addr_t in, mask;
 {
 	char *cp = 0;
 	static char line[MAXHOSTNAMELEN + 1];
 	struct netent *np = 0;
-	u_int32_t net, subnetshift;
+	in_addr_t net, subnetshift;
 
 	in = ntohl(in);
 	mask = ntohl(mask);
@@ -662,7 +663,7 @@ ns_print(sa)
 	register struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
 	struct ns_addr work;
 	union { union ns_net net_e; u_long long_e; } net;
-	u_short port;
+	in_port_t port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
 	register char *p; register u_char *q;
@@ -730,10 +731,10 @@ ipx_print(sa)
 	register struct sockaddr_ipx *sipx = (struct sockaddr_ipx*)sa;
 	struct ipx_addr work;
 	union { union ipx_net net_e; u_long long_e; } net;
-	u_short port;
+	in_port_t port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
-	register char *p; register u_char *q;
+	register char *q;
 
 	work = sipx->sipx_addr;
 	port = ntohs(work.ipx_port);
@@ -801,7 +802,7 @@ encap_print(rt)
 	printf("%-15s ", inet_ntoa(sen1.sen_ip_dst));
 	printf("%-15s %-5u %-5u ", inet_ntoa(sen2.sen_ip_dst),
 	    sen1.sen_dport, sen1.sen_proto);
-	printf("%-15s %08x %-u\n", inet_ntoa(sen3.sen_ipsp_dst),
+	printf("%-15s %08x %-lu\n", inet_ntoa(sen3.sen_ipsp_dst),
 	    ntohl(sen3.sen_ipsp_spi), rt->rt_use);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.6 1997/06/18 01:52:27 angelos Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.7 1997/06/29 20:18:02 millert Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -89,8 +89,8 @@ char	*ns_phost __P((struct sockaddr *));
 char	*ipx_phost __P((struct sockaddr *));
 void	upHex __P((char *));
 
-char	*routename __P((u_int32_t));
-char	*netname __P((u_int32_t, u_int32_t));
+char	*routename __P((in_addr_t));
+char	*netname __P((in_addr_t, in_addr_t));
 char	*ns_print __P((struct sockaddr *));
 char	*ipx_print __P((struct sockaddr *));
 void	routepr __P((u_long));
