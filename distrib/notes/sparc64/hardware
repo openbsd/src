@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.16 2002/02/07 08:57:28 miod Exp $
+dnl	$OpenBSD: hardware,v 1.17 2002/02/18 18:29:06 jason Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -76,6 +76,10 @@ Supported devices {:-include-:}:
 		Type 4, 5 and 6 keyboards on Zilog serial ports (zskbd)
 		Type 4, 5 and 6 keyboards on NS16550 serial ports (comkbd)
 		Type 6 keyboards on USB (ukbd)
+		PS/2 AT keyboards (pckbd)
+		Sun mice on Zilog serial ports (zstty)
+		Sun mice on NS16550 serial ports (com)
+		USB mice (ums)
 
 	Framebuffers:
 		SBUS framebuffers:
