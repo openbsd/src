@@ -1,12 +1,14 @@
-/*	$OpenBSD: sysdef.h,v 1.9 2001/05/24 03:05:26 mickey Exp $	*/
+/*	$OpenBSD: sysdef.h,v 1.10 2002/02/14 22:54:35 vincent Exp $	*/
 
 /*
  *		POSIX system header file
  */
+#include <sys/param.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #define	KBLOCK	8192		/* Kill grow.			 */
 #define	GOOD	0		/* Good exit status.		 */
