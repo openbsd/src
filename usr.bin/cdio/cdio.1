@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.27 2003/06/10 09:12:09 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.28 2004/07/30 11:59:03 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -38,7 +38,10 @@
 .Sh SYNOPSIS
 .Nm cdio
 .Op Fl sv
-.Op Fl d Ar host:port
+.Xo
+.Oo Fl d
+.Ar host : Ns Ar port Oc
+.Xc
 .Op Fl f Ar device
 .Op Ar command args ...
 .Sh DESCRIPTION
@@ -65,13 +68,10 @@ enters an interactive mode, reading commands from the standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl s
-Silent mode.
-Do not print table headers or human-readable comments.
-.It Fl v
-Verbose mode.
-Print as much information as possible.
-.It Fl d Ar host:port
+.It Xo
+.Fl d
+.Ar host : Ns Ar port
+.Xc
 Specifies cddb host (default: freedb.freedb.org:cddb).
 .It Fl f Ar device
 Specifies a device name such as
@@ -82,6 +82,12 @@ Both absolute and relative paths to
 .Pa /dev
 filenames are possible.
 The raw partition name is added if needed.
+.It Fl s
+Silent mode.
+Do not print table headers or human-readable comments.
+.It Fl v
+Verbose mode.
+Print as much information as possible.
 .El
 .Pp
 The available commands are listed below.
@@ -164,9 +170,9 @@ Print the table of contents.
 .It Ic cddb Op Ar n
 Print the table of contents after matching the disc with the cddb.
 In case of multiple matches, reissue the command with
-.Ar n
+.Ar n .
 .It Ic cdid
-Print the disc id that will be used for matching with the cddb.
+Print the disc ID that will be used for matching with the cddb.
 .It Ic status
 Print information about the disc:
 the current playing status and position,
@@ -199,6 +205,11 @@ Quit the program.
 .It Pa /dev/rcd0c
 .It Pa /dev/rmcd0c
 .El
+.Sh SEE ALSO
+.Xr aucat 1 ,
+.Xr audioctl 1 ,
+.Xr mixerctl 1 ,
+.Xr audio 4
 .Sh HISTORY
 The
 .Nm
