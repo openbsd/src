@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.18 1998/07/09 06:32:10 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.19 1998/07/16 18:55:59 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1676,8 +1676,8 @@ env_init()
 		if (strchr(hbuf, '.') == 0) {
 			struct hostent *he = gethostbyname(hbuf);
 			if (he != 0)
-				strncpy(hbuf, he->h_name, sizeof hbuf);
-			hbuf[256] = '\0';
+				strncpy(hbuf, he->h_name, sizeof hbuf-1);
+			hbuf[sizeof hbuf-1] = '\0';
 		}
 
 		asprintf (&cp, "%s%s", hbuf, cp2);
