@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.32 2001/01/26 12:12:51 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.33 2001/01/26 19:12:38 markus Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -45,7 +45,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#if defined(USE_KEYNOTE)
 #include <keynote.h>
+#endif
 #include <policy.h>
 
 #include "sysdep.h"
