@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.40 2004/08/10 22:21:31 jmc Exp $
+.\"	$OpenBSD: doc-common,v 1.41 2005/01/04 16:38:30 miod Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -193,6 +193,7 @@
 .	if "\\$3"tahoe" .as vT \ (Tahoe)
 .	if "\\$3"vax"   .as vT \ (VAX)
 .	if "\\$3"x68k"  .as vT \ (X68K)
+.	if "\\$3"zaurus"  .as vT \ (Zaurus)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
