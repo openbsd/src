@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readlink.1,v 1.8 2003/06/03 02:56:15 millert Exp $
+.\"	$OpenBSD: readlink.1,v 1.9 2005/04/03 19:00:01 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,11 @@ The
 utility when invoked with the pathname of a symbolic link as its
 argument dereferences the symbolic link and prints the name of target
 on standard output.
-If readlink is invoked with an argument other
+If the
+.Fl f
+option is not specified and
+.Nm
+is invoked with an argument other
 than the pathname of a symbolic link, it exits with a nonzero exit
 code without printing anything.
 .Pp
@@ -55,6 +59,11 @@ The options are as follows:
 .It Fl f
 Canonicalize by following every symlink in every component of the given
 path recursively.
+.Nm
+will resolve both absolute and relative paths and
+return the absolute pathname corresponding to
+.Ar file .
+The argument does not need to be a symbolic link.
 .It Fl n
 Do not print a trailing newline character.
 .El
@@ -63,7 +72,8 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
-.Xr readlink 2
+.Xr readlink 2 ,
+.Xr realpath 2
 .Sh HISTORY
 The
 .Nm
