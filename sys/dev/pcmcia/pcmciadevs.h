@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.68 2001/05/25 05:08:18 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.69 2001/05/27 19:49:32 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.63 2001/05/25 05:05:33 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.64 2001/05/27 19:49:01 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -66,6 +66,7 @@
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_GREYCELL	0x0143	/* Grey Cell */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
+#define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_SYMBOL	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent */
@@ -309,7 +310,11 @@
 #define	PCMCIA_CIS_NEWMEDIA2_BUSTOASTER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA2_BUSTOASTER	0x0001
 
-/* Nokia Products */
+/* Netgear */
+#define	PCMCIA_CIS_NETGEAR_FA410TXC	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NETGEAR_FA410TXC	0x4530
+
+/* Nokia */
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NOKIA_C020_WLAN	0x20c0
 
