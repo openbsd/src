@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.40 2000/03/23 21:39:56 aaron Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.41 2000/03/29 06:56:24 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -255,9 +255,6 @@ interface.
 Packets routed to this interface will be encapsulated in
 IPv4 or IPv6, depending on the source and destination address families.
 Both addresses must be of the same family.
-This flag obsoletes the old
-.Nm gifconfig
-command.
 .It Cm ipdst
 This is used to specify an Internet host who is willing to receive
 ip packets encapsulating NS packets bound for a remote network.
@@ -511,7 +508,6 @@ tried to alter an interface's configuration.
 .Xr ifmedia 4 ,
 .Xr netintro 4 ,
 .Xr brconfig 8 ,
-.Xr gifconfig 8 ,
 .Xr rc 8 ,
 .Xr routed 8
 .Sh HISTORY
