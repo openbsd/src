@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.3 2001/07/08 17:46:46 espie Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.4 2001/07/13 17:04:28 mickey Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -435,6 +435,8 @@ dpt_init(sc, intrstr)
 #ifdef __OpenBSD__
 		link->scsibus = i;
 		link->adapter_target = sc->sc_hbaid[i];
+		link->luns = ec->ec_maxlun + 1;
+		link->adapter_buswidth = ec->ec_maxtarget + 1;
 #endif /* __OpenBSD__ */
 		link->device = &dpt_dev;
 		link->adapter = &sc->sc_adapter;
