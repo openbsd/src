@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2003/02/27 21:22:14 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2003/08/22 19:17:22 millert Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
@@ -8,6 +8,7 @@ ENVDEF+=-DSM_OMIT_BOGUS_WARNINGS
 .endif
 ENVDEF+= -DNEWDB -DMAP_REGEX
 ENVDEF+= -DNETINET6 -DNEEDSGETIPNODE -DSM_CONF_SHM
+ENVDEF+= -D_FFR_QUEUERETURN_DSN
 .if (${YP:L} == "yes")
 ENVDEF+=-DNIS
 .endif
