@@ -190,9 +190,11 @@ End-display (matches \&.Bd).
 Begin-list.
 Create lists or columns. Options:
 .Bl -tag -width flag -compact
-.It Ar List-types
-.Bl -column xbullet -compact
+.It Em List-types
+.Bl -column "xbullet " -compact
 .It Fl bullet Ta "Bullet Item List"
+.It Fl dash Ta "Dash Item List"
+.It Fl hyphen Ta "(as per" Fl dash ")"
 .It Fl item Ta "Unlabeled List"
 .It Fl enum Ta "Enumerated List"
 .It Fl tag Ta "Tag Labeled List"
@@ -200,8 +202,9 @@ Create lists or columns. Options:
 .It Fl hang Ta "Hanging Labeled List"
 .It Fl ohang Ta "Overhanging Labeled List"
 .It Fl inset Ta "Inset or Run-on Labeled List"
+.It Fl column Ta "Multiple Columns"
 .El
-.It List-parameters
+.It Em List-parameters
 .Bl -tag -width "xcompact " -compact
 .It Fl offset
 (All lists.) See
