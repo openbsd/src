@@ -165,7 +165,6 @@ static	int newblk_lookup __P((struct fs *, ufs_daddr_t, int,
 static	int inodedep_lookup __P((struct fs *, ino_t, int, struct inodedep **));
 static	int pagedep_lookup __P((struct inode *, ufs_lbn_t, int,
 	    struct pagedep **));
-static	void pause_timer __P((void *));
 static	int request_cleanup __P((int, int));
 static	void add_to_worklist __P((struct worklist *));
 
@@ -4158,6 +4157,7 @@ request_cleanup(resource, islocked)
 	int islocked;
 {
 	struct proc *p = CURPROC;
+	int error;
 
 	/*
 	 * We never hold up the filesystem syncer process.
@@ -4195,17 +4195,12 @@ request_cleanup(resource, islocked)
 	 */
 	if (islocked == 0)
 		ACQUIRE_LOCK(&lk);
-	if (proc_waiting == 0) {
-		proc_waiting = 1;
-		timeout(pause_timer, NULL, tickdelay > 2 ? tickdelay : 2);
-	}
+
 	FREE_LOCK_INTERLOCKED(&lk);
-	(void) tsleep((caddr_t)&proc_waiting, PPAUSE | PCATCH, "softupdate", 0);
+	error = tsleep((caddr_t)&proc_waiting, PPAUSE | PCATCH, "softupdate", 
+		       tickdelay > 2 ? tickdelay : 2);
 	ACQUIRE_LOCK_INTERLOCKED(&lk);
-	if (proc_waiting) {
-		untimeout(pause_timer, NULL);
-		proc_waiting = 0;
-	} else {
+	if (error == EWOULDBLOCK) {
 		switch (resource) {
 
 		case FLUSH_INODES:
@@ -4220,19 +4215,6 @@ request_cleanup(resource, islocked)
 	if (islocked == 0)
 		FREE_LOCK(&lk);
 	return (1);
-}
-
-/*
- * Awaken processes pausing in request_cleanup and clear proc_waiting
- * to indicate that there is no longer a timer running.
- */
-void
-pause_timer(arg)
-	void *arg;
-{
-
-	proc_waiting = 0;
-	wakeup(&proc_waiting);
 }
 
 /*
