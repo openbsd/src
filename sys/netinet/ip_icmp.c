@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.44 2002/01/12 00:51:59 ericj Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.45 2002/01/21 05:33:14 itojun Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -368,32 +368,6 @@ icmp_input(m, va_alist)
 			break;
 
 		case ICMP_UNREACH_NEEDFRAG:
-#if 0 /*NRL INET6*/
-			if (icp->icmp_nextmtu) {
-				extern int ipv6_trans_mtu
-				    __P((struct mbuf **, int, int));
-				struct mbuf *m0 = m;
-
-				/*
-				 * Do cool v4-related path MTU, for now,
-				 * only v6-in-v4 can handle it.
-				 */
-				if (icmplen >= ICMP_V6ADVLENMIN &&
-				    icmplen >= ICMP_V6ADVLEN(icp) &&
-				    icp->icmp_ip.ip_p == IPPROTO_IPV6) {
-					/*
-					 * ipv6_trans_mtu returns 1 if
-					 * the mbuf is still intact.
-					 */
-					if (ipv6_trans_mtu(&m0,icp->icmp_nextmtu,
-					    hlen + ICMP_V6ADVLEN(icp))) {
-						m = m0;
-						goto raw;
-					} else
-						return;
-				}
-			}
-#endif /* INET6 */
 			code = PRC_MSGSIZE;
 			break;
 				

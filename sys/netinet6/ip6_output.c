@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.56 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.57 2002/01/21 05:33:14 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -398,61 +398,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			   nexthdrp, IPPROTO_DSTOPTS);
 		MAKE_CHAIN(exthdrs.ip6e_rthdr, mprev,
 			   nexthdrp, IPPROTO_ROUTING);
-
-#if 0 /*KAME IPSEC*/
-		if (!needipsec)
-			goto skip_ipsec2;
-
-		/*
-		 * pointers after IPsec headers are not valid any more.
-		 * other pointers need a great care too.
-		 * (IPsec routines should not mangle mbufs prior to AH/ESP)
-		 */
-		exthdrs.ip6e_dest2 = NULL;
-
-	    {
-		struct ip6_rthdr *rh = NULL;
-		int segleft_org = 0;
-		struct ipsec_output_state state;
-
-		if (exthdrs.ip6e_rthdr) {
-			rh = mtod(exthdrs.ip6e_rthdr, struct ip6_rthdr *);
-			segleft_org = rh->ip6r_segleft;
-			rh->ip6r_segleft = 0;
-		}
-
-		bzero(&state, sizeof(state));
-		state.m = m;
-		error = ipsec6_output_trans(&state, nexthdrp, mprev, sp, flags,
-			&needipsectun);
-		m = state.m;
-		if (error) {
-			/* mbuf is already reclaimed in ipsec6_output_trans. */
-			m = NULL;
-			switch (error) {
-			case EHOSTUNREACH:
-			case ENETUNREACH:
-			case EMSGSIZE:
-			case ENOBUFS:
-			case ENOMEM:
-				break;
-			default:
-				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
-			case ENOENT:
-				/* don't show these error codes to the user */
-				error = 0;
-				break;
-			}
-			goto bad;
-		}
-		if (exthdrs.ip6e_rthdr) {
-			/* ah6_output doesn't modify mbuf chain */
-			rh->ip6r_segleft = segleft_org;
-		}
-	    }
-skip_ipsec2:;
-#endif
 	}
 
 	/*
@@ -1381,18 +1326,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 # undef in6p_flags
 				break;
 
-#if 0 /*KAME IPSEC*/
-			case IPV6_IPSEC_POLICY:
-			    {
-				caddr_t req = NULL;
-				if (m != 0)
-					req = mtod(m, caddr_t);
-				error = ipsec6_set_policy(in6p, optname, req,
-				                          privileged);
-			    }
-				break;
-#endif /* IPSEC */
-
 			case IPSEC6_OUTSA:
 #ifndef IPSEC
 				error = EINVAL;
@@ -1604,21 +1537,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_LEAVE_GROUP:
 				error = ip6_getmoptions(optname, inp->inp_moptions6, mp);
 				break;
-
-#if 0 /*KAME IPSEC*/
-			case IPV6_IPSEC_POLICY:
-			  {
-				caddr_t req = NULL;
-				int len = 0;
-
-				if (m != 0) {
-					req = mtod(m, caddr_t);
-					len = m->m_len;
-				}
-				error = ipsec6_get_policy(in6p, req, mp);
-				break;
-			  }
-#endif /* IPSEC */
 
 			case IPSEC6_OUTSA:
 #ifndef IPSEC

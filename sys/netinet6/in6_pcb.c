@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.26 2001/06/05 02:31:37 deraadt Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.27 2002/01/21 05:33:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -257,36 +257,8 @@ in6_pcbbind(inp, nam)
 			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
 				return(EADDRNOTAVAIL);
 		}
-#if 0 /* we don't support it */
-		else if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-			struct sockaddr_in sin;
-
-			bzero(&sin, sizeof(sin));
-			sin.sin_port = 0;
-			sin.sin_len = sizeof(sin);
-			sin.sin_family = AF_INET;
-			sin.sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
-
-			/*
-			 * Yechhhh, because of upcoming call to
-			 * ifa_ifwithaddr(), which does bcmp's
-			 * over the PORTS as well.  (What about flow?)
-			 */
-			sin6->sin6_port = 0;
-			sin6->sin6_flowinfo = 0;
-			if (ifa_ifwithaddr((struct sockaddr *)sin6) == 0) {
-				if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) ||
-				    ifa_ifwithaddr((struct sockaddr *)&sin) == 0) {
-					return EADDRNOTAVAIL;
-				}
-			}
-		}
-#endif
 		if (lport) {
 			struct inpcb *t;
-#if 0 /* we don't support IPv4 mapped address */
-			struct in_addr fa,la;
-#endif
 
 			/*
 			 * Question:  Do we wish to continue the Berkeley
@@ -301,22 +273,10 @@ in6_pcbbind(inp, nam)
 			    (error = suser(p->p_ucred, &p->p_acflag)))
 				return error;
 
-#if 0 /* we don't support IPv4 mapped address */
-			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-				fa.s_addr = 0;
-				la.s_addr = sin6->sin6_addr.s6_addr32[3];
-				wild &= ~INPLOOKUP_IPV6;
-
-				t = in_pcblookup(head, (struct in_addr *)&fa, 0,
-				    (struct in_addr *)&la, lport, wild);
-			} else
-#endif
-			{
-				t = in_pcblookup(head,
-				    (struct in_addr *)&zeroin6_addr, 0,
-				    (struct in_addr *)&sin6->sin6_addr, lport,
-				    wild);
-			}
+			t = in_pcblookup(head,
+			    (struct in_addr *)&zeroin6_addr, 0,
+			    (struct in_addr *)&sin6->sin6_addr, lport,
+			    wild);
 
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
 				return EADDRINUSE;
