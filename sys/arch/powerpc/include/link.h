@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.1 2000/01/24 04:03:23 rahnds Exp $ */
+/*	$OpenBSD: link.h,v 1.2 2000/06/13 03:42:46 rahnds Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -121,5 +121,63 @@ struct link_map
     unsigned int l_init_called:1; /* Nonzero if DT_INIT function called.  */
     unsigned int l_init_running:1; /* Nonzero while DT_INIT function runs.  */
   };
+
+/* SOD information used by ldconfig and ld.so */
+/*
+ * Maximum number of recognized shared object version numbers.
+ */
+#define MAXDEWEY	8
+
+/*
+ * Header of the hints file.
+ */
+struct hints_header {
+	long		hh_magic;
+#define HH_MAGIC	011421044151
+	long		hh_version;	/* Interface version number */
+#define LD_HINTS_VERSION_1	1
+#define LD_HINTS_VERSION_2	2
+	long		hh_hashtab;	/* Location of hash table */
+	long		hh_nbucket;	/* Number of buckets in hashtab */
+	long		hh_strtab;	/* Location of strings */
+	long		hh_strtab_sz;	/* Size of strings */
+	long		hh_ehints;	/* End of hints (max offset in file) */
+	long		hh_dirlist;	/* Colon-separated list of srch dirs */
+};
+
+#define HH_BADMAG(hdr)	((hdr).hh_magic != HH_MAGIC)
+
+/*
+ * Hash table element in hints file.
+ */
+struct hints_bucket {
+	/* namex and pathx are indices into the string table */
+	int		hi_namex;		/* Library name */
+	int		hi_pathx;		/* Full path */
+	int		hi_dewey[MAXDEWEY];	/* The versions */
+	int		hi_ndewey;		/* Number of version numbers */
+#define hi_major hi_dewey[0]
+#define hi_minor hi_dewey[1]
+	int		hi_next;		/* Next in this bucket */
+};
+
+#define _PATH_LD_HINTS		"/var/run/ld.so.hints"
+
+/*
+ * A `Shared Object Descriptor' describes a shared object that is needed
+ * to complete the link edit process of the object containing it.
+ * A list of such objects (chained through `sod_next') is pointed at
+ * by `sdt_sods' in the section_dispatch_table structure.
+ */
+
+struct sod {	/* Shared Object Descriptor */
+	long	sod_name;		/* name (relative to load address) */
+	u_int	sod_library  : 1,	/* Searched for by library rules */
+		sod_reserved : 31;
+	short	sod_major;		/* major version number */
+	short	sod_minor;		/* minor version number */
+	long	sod_next;		/* next sod */
+};
+
 
 #endif /* !_POWERPC_LINK_H */
