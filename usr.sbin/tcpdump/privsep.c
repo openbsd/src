@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.8 2004/04/23 06:00:50 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.9 2004/05/15 13:13:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -81,7 +81,7 @@ static void	parent_open_bpf(int, int *);
 static void	parent_open_dump(int, const char *);
 static void	parent_open_output(int, const char *);
 static void	parent_setfilter(int, char *, int *);
-static void	parent_done_init(int, int *);
+static void	parent_init_done(int, int *);
 static void	parent_gethostbyaddr(int);
 static void	parent_ether_ntohost(int);
 static void	parent_getrpcbynumber(int);
@@ -232,9 +232,9 @@ priv_init(int argc, char **argv)
 			test_state(STATE_INIT, STATE_FILTER);
 			parent_setfilter(socks[0], cmdbuf, &bpfd);
 			break;
-		case PRIV_DONE_INIT:
+		case PRIV_INIT_DONE:
 			test_state(STATE_FILTER, STATE_RUN);
-			parent_done_init(socks[0], &bpfd);
+			parent_init_done(socks[0], &bpfd);
 			break;
 		case PRIV_GETHOSTBYADDR:
 			test_state(STATE_RUN, STATE_RUN);
@@ -352,11 +352,11 @@ parent_setfilter(int fd, char *cmdbuf, int *bpfd)
 }
 
 static void
-parent_done_init(int fd, int *bpfd)
+parent_init_done(int fd, int *bpfd)
 {
 	int ret;
 
-	logmsg(LOG_DEBUG, "[priv]: msg PRIV_DONE_INIT received");
+	logmsg(LOG_DEBUG, "[priv]: msg PRIV_INIT_DONE received");
 	
 	close(*bpfd);	/* done with bpf descriptor */
 	*bpfd = -1;
@@ -546,7 +546,7 @@ priv_init_done(void)
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion\n", __func__);
 
-	write_command(priv_fd, PRIV_DONE_INIT);
+	write_command(priv_fd, PRIV_INIT_DONE);
 	must_read(priv_fd, &ret, sizeof(int));
 }
 
@@ -652,7 +652,7 @@ priv_getprotoentry(char *name, size_t name_len, int *num)
  * the localtime for about one hour i.e. until one of the fields other
  * than seconds and minutes change. The check is done using gmtime
  * values since they are the same in parent and child.
- * XXX assumes timezone granularity is 1 hour.  */
+ * XXX assumes timezone granularity is 1 hour. */
 struct	tm *
 priv_localtime(const time_t *t)
 {
@@ -742,7 +742,7 @@ sig_got_chld(int sig)
 	errno = save_err;
 }
 
-/* Read all data or return 1 for error.  */
+/* Read all data or return 1 for error. */
 int
 may_read(int fd, void *buf, size_t n)
 {

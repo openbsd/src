@@ -37,7 +37,7 @@ enum cmd_types {
 	PRIV_GETPROTOENTRIES,	/* get the ip protocol entries table */
 	PRIV_LOCALTIME,		/* return localtime */
 	PRIV_GETLINES,		/* get lines from a file */
-	PRIV_DONE_INIT		/* signal that the initialization is done */
+       PRIV_INIT_DONE          /* signal that the initialization is done */
 };
 
 struct ether_addr;
