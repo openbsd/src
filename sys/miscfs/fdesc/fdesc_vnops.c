@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.4 1996/09/07 18:11:18 tholo Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.5 1996/09/10 16:44:22 niklas Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -64,7 +64,12 @@
 #include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/tty.h>
+
 #include <miscfs/fdesc/fdesc.h>
+
+#include <vm/vm.h>
+
+#include <sys/pipe.h>
 
 #define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
