@@ -1,5 +1,5 @@
-/*	$OpenBSD: mem.c,v 1.4 1997/02/21 08:55:13 niklas Exp $	*/
-/*	$NetBSD: mem.c,v 1.17 1996/04/23 05:14:40 veego Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 1997/09/09 10:56:17 niklas Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 1997/02/02 07:17:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@ caddr_t devzeropage;
 int mmopen __P((dev_t, int, int, struct proc *));
 int mmclose __P((dev_t, int, int, struct proc *));
 int mmrw __P((dev_t, struct uio *, int));
-int mmmmap __P((dev_t, vm_offset_t, int));
+int mmmmap __P((dev_t, int, int));
 
 /*ARGSUSED*/
 int
@@ -231,9 +231,8 @@ unlock:
 int
 mmmmap(dev, off, prot)
 	dev_t dev;
-	vm_offset_t off;
+	int off;
 	int prot;
 {
-
 	return (EOPNOTSUPP);
 }
