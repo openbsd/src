@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.6 1997/09/10 12:04:51 maja Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.7 1997/09/27 17:04:11 niklas Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -156,16 +156,22 @@ setroot()
 void
 swapconf()
 {
-        register struct swdevt *swp;
-        register int nblks;
+	struct swdevt *swp;
+	u_int maj;
+	int nblks;
 
-        for (swp = swdevt; swp->sw_dev; swp++)
-		if (swp->sw_dev != NODEV &&bdevsw[major(swp->sw_dev)].d_psize){
-                        nblks =
-                          (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-                        if (nblks != -1 &&
-                            (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-                                swp->sw_nblks = nblks;
-                }
-        dumpconf();
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+
+		maj = major(swp->sw_dev);
+		if (maj > nblkdev) /* paranoid? */
+			break;
+
+		if (bdevsw[maj].d_psize) {
+			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
+			if (nblks > 0 &&
+			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
+				swp->sw_nblks = nblks;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
+		}
+	}
 }
