@@ -1,7 +1,7 @@
-/*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.5 2002/02/03 01:50:20 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,8 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -67,10 +67,12 @@ struct lasi_softc {
 
 	struct lasi_hwr volatile *sc_hw;
 	struct lasi_trs volatile *sc_trs;
+	struct gsc_attach_args ga;	/* for deferred attach */
 };
 
 int	lasimatch __P((struct device *, void *, void *));
 void	lasiattach __P((struct device *, struct device *, void *));
+void	lasi_gsc_attach __P((struct device *));
 
 struct cfattach lasi_ca = {
 	sizeof(struct lasi_softc), lasimatch, lasiattach
@@ -110,7 +112,6 @@ lasiattach(parent, self, aux)
 {
 	register struct confargs *ca = aux;
 	register struct lasi_softc *sc = (struct lasi_softc *)self;
-	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
 	int s, in;
 
@@ -146,10 +147,22 @@ lasiattach(parent, self, aux)
 	sc->sc_ic.gsc_intr_check = lasi_intr_check;
 	sc->sc_ic.gsc_intr_ack = lasi_intr_ack;
 
-	ga.ga_ca = *ca;	/* clone from us */
-	ga.ga_name = "gsc";
-	ga.ga_ic = &sc->sc_ic;
-	config_found(self, &ga, gscprint);
+	sc->ga.ga_ca = *ca;	/* clone from us */
+	if (sc->sc_dev.dv_unit)
+		config_defer(self, lasi_gsc_attach);
+	else
+		lasi_gsc_attach(self);
+}
+
+void
+lasi_gsc_attach(self)
+	struct device *self;
+{
+	struct lasi_softc *sc = (struct lasi_softc *)self;
+
+	sc->ga.ga_name = "gsc";
+	sc->ga.ga_ic = &sc->sc_ic;
+	config_found(self, &sc->ga, gscprint);
 }
 
 void
