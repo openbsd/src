@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.14 1998/07/13 19:45:47 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.15 1998/07/19 15:32:24 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -204,17 +204,21 @@ linux_connect(p, uap, retval)
 
 	if (error == EISCONN) {
 		struct sys_getsockopt_args bga;
+#if 0
 		struct sys_fcntl_args fca;
+#endif
 		void *status, *statusl;
 		int stat, statl = sizeof stat;
 		caddr_t sg;
 
+#if 0
 		SCARG(&fca, fd) = lca.s;
 		SCARG(&fca, cmd) = F_GETFL;
 		SCARG(&fca, arg) = 0;
 		if (sys_fcntl(p, &fca, retval) == -1 ||
 		    (*retval & O_NONBLOCK) == 0)
 			return error;
+#endif
 
 		sg = stackgap_init(p->p_emul);
 		status = stackgap_alloc(&sg, sizeof stat);
