@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.h,v 1.3 2004/06/26 22:48:14 mcbride Exp $	*/
+/*	$OpenBSD: if_san_obsd.h,v 1.4 2004/12/07 06:10:24 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -65,19 +65,14 @@
 #define ifs_fr_pvc_info	data
 
 
-#define WANHDLC_CONF_INTERFACE	0x0001
-#define WANHDLC_CONF_CLOCKING	0x0002
-
-typedef struct {
-	unsigned long	mask;
-	char		interface;
-	unsigned	bps;
-} wan_dev_conf_t;
+#define SANCFG_LBO_FLAG		0x0001
+#define SANCFG_CLOCK_FLAG	0x0002
 
 typedef struct { int dummy; } cisco_proto, fr_proto, fr_proto_pvc;
 struct if_settings {
 	unsigned int	type;
 	unsigned int	data_length;
+	unsigned long	flags;
 	void*		data;
 };
 
@@ -86,7 +81,6 @@ typedef struct {
 	int		iface;
 	char		hwprobe[100];
 	sdla_te_cfg_t	te_cfg;
-	wan_dev_conf_t	devconf;
 	union {
 		cisco_proto	cisco;
 		fr_proto	fr;
@@ -106,5 +100,6 @@ int		 wanpipe_generic_close(struct ifnet *);
 int		 wanpipe_generic_input(struct ifnet *, struct mbuf *);
 int		 wanpipe_generic_tx_timeout(struct ifnet *);
 int		 wp_lite_set_proto(struct ifnet *, struct ifreq *);
+int		 wp_lite_set_te1_cfg(struct ifnet *, struct ifreq *);
 # endif
 #endif /* __IF_SAN_OBSD_H */

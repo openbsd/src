@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_front_end.h,v 1.3 2004/06/27 03:10:17 mcbride Exp $	*/
+/*	$OpenBSD: if_san_front_end.h,v 1.4 2004/12/07 06:10:24 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -38,10 +38,10 @@
 #define __IF_SAN_FRONT_END_H_
 
 /* The hardware media */
-#define WANOPT_MEDIA_NONE       0x00    /* Regular card */
-#define WANOPT_MEDIA_T1         0x01    /* T1 connection */
-#define WANOPT_MEDIA_E1         0x02    /* E1 connection */
-#define WANOPT_MEDIA_56K        0x03    /* 56K connection */
+#define WAN_MEDIA_NONE       0x00    /* Regular card */
+#define WAN_MEDIA_T1         0x01    /* T1 connection */
+#define WAN_MEDIA_E1         0x02    /* E1 connection */
+#define WAN_MEDIA_56K        0x03    /* 56K connection */
 
 /* settings for the 'adapter_type' */
 #define S508_ADPTR			0x0001	/* S508 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.c,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
+/*	$OpenBSD: if_san_te1.c,v 1.5 2004/12/07 06:10:24 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -1386,43 +1386,43 @@ InitTemplate(sdla_t *card)
 
 	if (IS_T1(&card->fe_te.te_cfg)) {
 		switch (te_cfg->lbo) {
-		case WANOPT_T1_LBO_0_DB:
+		case WAN_T1_LBO_0_DB:
 			tx_waveform = &t1_tx_waveform_lh_0db;
 			xlpg_scale = 0x0C;
 			break;
-		case WANOPT_T1_LBO_75_DB:
+		case WAN_T1_LBO_75_DB:
 			tx_waveform = &t1_tx_waveform_lh_75db;
 			xlpg_scale = 0x07;
 			break;
-		case WANOPT_T1_LBO_15_DB:
+		case WAN_T1_LBO_15_DB:
 			tx_waveform = &t1_tx_waveform_lh_15db;
 			xlpg_scale = 0x03;
 			break;
-		case WANOPT_T1_LBO_225_DB:
+		case WAN_T1_LBO_225_DB:
 			tx_waveform = &t1_tx_waveform_lh_225db;
 			xlpg_scale = 0x02;
 			break;
-		case WANOPT_T1_0_110:
+		case WAN_T1_0_110:
 			tx_waveform = &t1_tx_waveform_sh_110ft;
 			xlpg_scale = 0x0C;
 			break;
-		case WANOPT_T1_110_220:
+		case WAN_T1_110_220:
 			tx_waveform = &t1_tx_waveform_sh_220ft;
 			xlpg_scale = 0x10;
 			break;
-		case WANOPT_T1_220_330:
+		case WAN_T1_220_330:
 			tx_waveform = &t1_tx_waveform_sh_330ft;
 			xlpg_scale = 0x11;
 			break;
-		case WANOPT_T1_330_440:
+		case WAN_T1_330_440:
 			tx_waveform = &t1_tx_waveform_sh_440ft;
 			xlpg_scale = 0x12;
 			break;
-		case WANOPT_T1_440_550:
+		case WAN_T1_440_550:
 			tx_waveform = &t1_tx_waveform_sh_550ft;
 			xlpg_scale = 0x14;
 			break;
-		case WANOPT_T1_550_660:
+		case WAN_T1_550_660:
 			tx_waveform = &t1_tx_waveform_sh_660ft;
 			xlpg_scale = 0x15;
 			break;
@@ -1459,7 +1459,7 @@ InitLineReceiver(sdla_t *card)
 	if (IS_E1(&card->fe_te.te_cfg)) {
 		rlps_ram_table = e1_rlps_ram_table;
 	} else {
-		if (card->fe_te.te_cfg.high_impedance_mode == WANOPT_YES) {
+		if (card->fe_te.te_cfg.high_impedance_mode == WAN_YES) {
 			log(LOG_INFO, "%s: Setting to High-Impedance Mode!\n",
 					card->devname);
 			rlps_ram_table = t1_rlps_perf_mode_ram_table;
@@ -1779,7 +1779,7 @@ static void EnableAllChannels(sdla_t* card)
 
 	if (IS_E1(&card->fe_te.te_cfg)) {
 		int first_ts =
-			(card->fe_te.te_cfg.frame == WANOPT_FR_UNFRAMED) ?
+			(card->fe_te.te_cfg.frame == WAN_FR_UNFRAMED) ?
 					0 : 1;
 
 		DisableTxChannel(card, E1_FRAMING_TIMESLOT);
@@ -1806,7 +1806,7 @@ static int EnableTxChannel(sdla_t* card, int channel)
 {
 	sdla_te_cfg_t*	te_cfg = &card->fe_te.te_cfg;
 
-	if (te_cfg->lcode == WANOPT_LC_AMI) {
+	if (te_cfg->lcode == WAN_LC_AMI) {
 		/* ZCs=1 AMI*/
 		WRITE_TPSC_REG(REG_TPSC_DATA_CTRL_BYTE, channel,
 		    (((READ_TPSC_REG(REG_TPSC_DATA_CTRL_BYTE, channel) &
@@ -1905,13 +1905,13 @@ int sdla_te_defcfg(void *pte_cfg)
 {
 	sdla_te_cfg_t	*te_cfg = (sdla_te_cfg_t*)pte_cfg;
 
-	te_cfg->media = WANOPT_MEDIA_T1;
-	te_cfg->lcode = WANOPT_LC_B8ZS;
-	te_cfg->frame = WANOPT_FR_ESF;
-	te_cfg->lbo = WANOPT_T1_LBO_0_DB;
-	te_cfg->te_clock = WANOPT_NORMAL_CLK;
+	te_cfg->media = WAN_MEDIA_T1;
+	te_cfg->lcode = WAN_LC_B8ZS;
+	te_cfg->frame = WAN_FR_ESF;
+	te_cfg->lbo = WAN_T1_LBO_0_DB;
+	te_cfg->te_clock = WAN_NORMAL_CLK;
 	te_cfg->active_ch = ENABLE_ALL_CHANNELS;
-	te_cfg->high_impedance_mode = WANOPT_NO;
+	te_cfg->high_impedance_mode = WAN_NO;
 	return 0;
 }
 
@@ -1927,36 +1927,36 @@ int sdla_te_setcfg(void *pcard, struct ifmedia *ifm)
 		log(LOG_INFO, "%s: Setting T1 media type!\n",
 				card->devname);
 #endif /* DEBUG_INIT */
-		te_cfg->media = WANOPT_MEDIA_T1;
-		te_cfg->lcode = WANOPT_LC_B8ZS;
-		te_cfg->frame = WANOPT_FR_ESF;
+		te_cfg->media = WAN_MEDIA_T1;
+		te_cfg->lcode = WAN_LC_B8ZS;
+		te_cfg->frame = WAN_FR_ESF;
 		break;
 	case(IFM_TDM|IFM_TDM_T1_AMI):
 #ifdef DEBUG_INIT
 		log(LOG_INFO, "%s: Setting T1 AMI media type!\n",
 				card->devname);
 #endif /* DEBUG_INIT */
-		te_cfg->media = WANOPT_MEDIA_T1;
-		te_cfg->lcode = WANOPT_LC_AMI;
-		te_cfg->frame = WANOPT_FR_ESF;
+		te_cfg->media = WAN_MEDIA_T1;
+		te_cfg->lcode = WAN_LC_AMI;
+		te_cfg->frame = WAN_FR_ESF;
 		break;
 	case(IFM_TDM|IFM_TDM_E1):
 #ifdef DEBUG_INIT
 		log(LOG_INFO, "%s: Setting E1 media type!\n",
 				card->devname);
 #endif /* DEBUG_INIT */
-		te_cfg->media = WANOPT_MEDIA_E1;
-		te_cfg->lcode = WANOPT_LC_HDB3;
-		te_cfg->frame = WANOPT_FR_NCRC4;
+		te_cfg->media = WAN_MEDIA_E1;
+		te_cfg->lcode = WAN_LC_HDB3;
+		te_cfg->frame = WAN_FR_NCRC4;
 		break;
 	case(IFM_TDM|IFM_TDM_E1_AMI):
 #ifdef DEBUG_INIT
 		log(LOG_INFO, "%s: Setting E1 AMI media type!\n",
 				card->devname);
 #endif /* DEBUG_INIT */
-		te_cfg->media = WANOPT_MEDIA_E1;
-		te_cfg->lcode = WANOPT_LC_AMI;
-		te_cfg->frame = WANOPT_FR_NCRC4;
+		te_cfg->media = WAN_MEDIA_E1;
+		te_cfg->lcode = WAN_LC_AMI;
+		te_cfg->frame = WAN_FR_NCRC4;
 		break;
 	default:
 		log(LOG_INFO, "%s: Unsupported ifmedia type (%04X)\n",
@@ -2017,54 +2017,54 @@ sdla_te_config(void* card_id)
 	if (IS_T1(&card->fe_te.te_cfg)) {
 		log(LOG_DEBUG, "%s: Line decoding %s\n",
 			card->devname,
-			(te_cfg->lcode == WANOPT_LC_AMI) ? "AMI" : "B8ZS");
+			(te_cfg->lcode == WAN_LC_AMI) ? "AMI" : "B8ZS");
 		log(LOG_DEBUG, "%s: Frame type %s\n",
 			card->devname,
-			(te_cfg->frame == WANOPT_FR_ESF) ? "ESF" :
-			(te_cfg->frame == WANOPT_FR_D4) ? "D4" : "Unframed");
+			(te_cfg->frame == WAN_FR_ESF) ? "ESF" :
+			(te_cfg->frame == WAN_FR_D4) ? "D4" : "Unframed");
 		switch (te_cfg->lbo) {
-		case WANOPT_T1_LBO_0_DB:
+		case WAN_T1_LBO_0_DB:
 			log(LOG_DEBUG, "%s: LBO 0 dB\n", card->devname);
 			break;
-		case WANOPT_T1_LBO_75_DB:
+		case WAN_T1_LBO_75_DB:
 			log(LOG_DEBUG, "%s: LBO 7.5 dB\n", card->devname);
 			break;
-		case WANOPT_T1_LBO_15_DB:
+		case WAN_T1_LBO_15_DB:
 			log(LOG_DEBUG, "%s: LBO 15 dB\n", card->devname);
 			break;
-		case WANOPT_T1_LBO_225_DB:
+		case WAN_T1_LBO_225_DB:
 			log(LOG_DEBUG, "%s: LBO 22.5 dB\n", card->devname);
 			break;
-		case WANOPT_T1_0_110:
+		case WAN_T1_0_110:
 			log(LOG_DEBUG, "%s: LBO 0-110 ft.\n", card->devname);
 			break;
-		case WANOPT_T1_110_220:
+		case WAN_T1_110_220:
 			log(LOG_DEBUG, "%s: LBO 110-220 ft.\n", card->devname);
 			break;
-		case WANOPT_T1_220_330:
+		case WAN_T1_220_330:
 			log(LOG_DEBUG, "%s: LBO 220-330 ft.\n", card->devname);
 			break;
-		case WANOPT_T1_330_440:
+		case WAN_T1_330_440:
 			log(LOG_DEBUG, "%s: LBO 330-440 ft.\n", card->devname);
 			break;
-		case WANOPT_T1_440_550:
+		case WAN_T1_440_550:
 			log(LOG_DEBUG, "%s: LBO 440-550 ft.\n", card->devname);
 			break;
-		case WANOPT_T1_550_660:
+		case WAN_T1_550_660:
 			log(LOG_DEBUG, "%s: LBO 550-660 ft.\n",
 					card->devname);
 			break;
 		}
 	} else {
 		log(LOG_DEBUG, "%s: Line decoding %s\n", card->devname,
-		    (te_cfg->lcode == WANOPT_LC_AMI) ? "AMI" : "HDB3");
+		    (te_cfg->lcode == WAN_LC_AMI) ? "AMI" : "HDB3");
 		log(LOG_DEBUG, "%s: Frame type %s\n", card->devname,
-		    (te_cfg->frame == WANOPT_FR_CRC4) ? "CRC4" :
-		    (te_cfg->frame == WANOPT_FR_NCRC4) ? "non-CRC3" :
+		    (te_cfg->frame == WAN_FR_CRC4) ? "CRC4" :
+		    (te_cfg->frame == WAN_FR_NCRC4) ? "non-CRC3" :
 		    "Unframed");
 	}
 	log(LOG_DEBUG, "%s: Clock mode %s\n", card->devname,
-	    (te_cfg->te_clock == WANOPT_NORMAL_CLK) ? "Normal" : "Master");
+	    (te_cfg->te_clock == WAN_NORMAL_CLK) ? "Normal" : "Master");
 #endif /* DEBUG_INIT */
 
 	/* 1. Initiate software reset of the COMET */
@@ -2109,7 +2109,7 @@ sdla_te_config(void* card_id)
 	}
 
 	/* Set Line decoding (Reg. 0x10) */
-	if (te_cfg->lcode == WANOPT_LC_AMI) {
+	if (te_cfg->lcode == WAN_LC_AMI) {
 		WRITE_REG(REG_CDRC_CFG, BIT_CDRC_CFG_AMI);
 	} else {
 		WRITE_REG(REG_CDRC_CFG, 0x00);
@@ -2129,43 +2129,43 @@ sdla_te_config(void* card_id)
 	if (IS_E1(&card->fe_te.te_cfg)) {
 		/* Program the trasmitter framing and line decoding
 		** (Reg. 0x80) */
-		if (te_cfg->lcode == WANOPT_LC_AMI) {
+		if (te_cfg->lcode == WAN_LC_AMI) {
 			value |= BIT_E1_TRAN_AMI;
 		}
-		if (te_cfg->frame == WANOPT_FR_CRC4) {
+		if (te_cfg->frame == WAN_FR_CRC4) {
 			value |= BIT_E1_TRAN_GENCRC;
-		} else if (te_cfg->frame == WANOPT_FR_UNFRAMED) {
+		} else if (te_cfg->frame == WAN_FR_UNFRAMED) {
 			value |= BIT_E1_TRAN_FDIS;
 		}
 		/* E1 TRAN Configuration (Reg 0x80) */
 		WRITE_REG(REG_E1_TRAN_CFG, value);
 		/* Configure the receive framer (Reg 0x90) */
 		value = 0x00;
-		if (te_cfg->frame == WANOPT_FR_CRC4) {
+		if (te_cfg->frame == WAN_FR_CRC4) {
 			value |=
 				(BIT_E1_FRMR_CRCEN |
 				BIT_E1_FRMR_CASDIS |
 				BIT_E1_FRMR_REFCRCEN);
-		} else if (te_cfg->frame == WANOPT_FR_NCRC4) {
+		} else if (te_cfg->frame == WAN_FR_NCRC4) {
 			value |= BIT_E1_FRMR_CASDIS;
 		}
 		WRITE_REG(REG_E1_FRMR_CFG, value);
 	} else {
 		/* Set framing format & line decoding for transmitter
 		** (Reg 0x54) */
-		if (te_cfg->lcode == WANOPT_LC_B8ZS) {
+		if (te_cfg->lcode == WAN_LC_B8ZS) {
 			value |= BIT_T1_XBAS_B8ZS;
 		} else {
 			value |= BIT_T1_XBAS_ZCS0;
 		}
-		if (te_cfg->frame == WANOPT_FR_ESF) {
+		if (te_cfg->frame == WAN_FR_ESF) {
 			value |= BIT_T1_XBAS_ESF;
 		}
 		WRITE_REG(REG_T1_XBAS_CFG, value);
 
 		/* Program framing format for receiving (Reg. 0x48) */
 		value = 0x00;
-		if (te_cfg->frame == WANOPT_FR_ESF) {
+		if (te_cfg->frame == WAN_FR_ESF) {
 			value = BIT_T1_FRMR_ESF | BIT_T1_FRMR_ESFFA;
 		}
 		WRITE_REG(REG_T1_FRMR_CFG, value);
@@ -2173,7 +2173,7 @@ sdla_te_config(void* card_id)
 		/* Program the transmitter framing format and line deconding
 		** (Reg. 0x60) */
 		value = 0x00;
-		if (te_cfg->frame == WANOPT_FR_ESF) {
+		if (te_cfg->frame == WAN_FR_ESF) {
 			value = BIT_T1_ALMI_CFG_ESF;
 		}
 		WRITE_REG(REG_T1_ALMI_CFG, value);
@@ -2184,7 +2184,7 @@ sdla_te_config(void* card_id)
 		WRITE_REG(REG_SIGX_CFG, 0x00);
 	} else {
 		value = READ_REG(REG_SIGX_CFG);
-		if (te_cfg->frame == WANOPT_FR_ESF) {
+		if (te_cfg->frame == WAN_FR_ESF) {
 			value |= BIT_SIGX_ESF;
 		}
 		WRITE_REG(REG_SIGX_CFG, value);
@@ -2194,9 +2194,9 @@ sdla_te_config(void* card_id)
 	if (IS_E1(&card->fe_te.te_cfg)) {
 		value |= BIT_BTIF_RATE0;
 	}
-	if (te_cfg->lcode == WANOPT_LC_AMI) {
+	if (te_cfg->lcode == WAN_LC_AMI) {
 		value |= BIT_BTIF_NXDS0_0;
-	} else if (te_cfg->frame != WANOPT_FR_UNFRAMED) {
+	} else if (te_cfg->frame != WAN_FR_UNFRAMED) {
 		value |= BIT_BTIF_NXDS0_1;
 	}
 
@@ -2217,9 +2217,9 @@ sdla_te_config(void* card_id)
 	if (IS_E1(&card->fe_te.te_cfg)) {
 		value |= BIT_BRIF_RATE0;
 	}
-	if (te_cfg->lcode == WANOPT_LC_AMI) {
+	if (te_cfg->lcode == WAN_LC_AMI) {
 		value |= BIT_BRIF_NXDS0_0;
-	} else if (te_cfg->frame != WANOPT_FR_UNFRAMED) {
+	} else if (te_cfg->frame != WAN_FR_UNFRAMED) {
 		value |= BIT_BRIF_NXDS0_1;
 	}
 	if (adapter_type & A101_ADPTR_T1E1_MASK) {
@@ -2237,7 +2237,7 @@ sdla_te_config(void* card_id)
 	WRITE_REG(REG_BRIF_DATA_CFG, BIT_BRIF_DATA_TRI_0);
 
 	/* Set TJAT FIFO output clock signal (Reg 0x06) */
-	if (te_cfg->te_clock == WANOPT_NORMAL_CLK) {
+	if (te_cfg->te_clock == WAN_NORMAL_CLK) {
 		WRITE_REG(REG_TX_TIMING_OPT, BIT_TX_PLLREF1 | BIT_TX_TXELSTBYP);
 	} else {
 		WRITE_REG(REG_TX_TIMING_OPT,
@@ -2289,7 +2289,7 @@ sdla_te_config(void* card_id)
 	/* Configure the RJAT FIFO (Reg 0x17) */
 	WRITE_REG(REG_RJAT_CFG, BIT_RJAT_CENT);
 	/* Program Receive Options (Reg 0x02) */
-	if (te_cfg->frame == WANOPT_FR_UNFRAMED) {
+	if (te_cfg->frame == WAN_FR_UNFRAMED) {
 		WRITE_REG(REG_RECEIVE_OPT, BIT_RECEIVE_OPT_UNF);
 	} else {
 		WRITE_REG(REG_RECEIVE_OPT, 0x00);
@@ -3744,9 +3744,9 @@ sdla_te_udp(void *card_id, void *cmd, unsigned char *data)
 	switch (udp_cmd->wan_cmd_command) {
 	case WAN_GET_MEDIA_TYPE:
 		data[0] =
-		    IS_T1(&card->fe_te.te_cfg) ? WANOPT_MEDIA_T1 :
-		    IS_E1(&card->fe_te.te_cfg) ? WANOPT_MEDIA_E1 :
-		    WANOPT_MEDIA_NONE;
+		    IS_T1(&card->fe_te.te_cfg) ? WAN_MEDIA_T1 :
+		    IS_E1(&card->fe_te.te_cfg) ? WAN_MEDIA_E1 :
+		    WAN_MEDIA_NONE;
 		udp_cmd->wan_cmd_return_code = WAN_CMD_OK;
 		udp_cmd->wan_cmd_data_len = sizeof(unsigned char);
 		break;

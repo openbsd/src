@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.5 2004/11/10 10:14:47 grange Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.6 2004/12/07 06:10:24 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -339,6 +339,8 @@ wan_xilinx_init(sdla_t *card)
 	}
 	memset(sc, 0, sizeof(xilinx_softc_t));
 	ifp = (struct ifnet *)&sc->common.ifp;
+	ifp->if_softc = sc;
+	sc->common.card	= card;
 	if (wanpipe_generic_register(card, ifp, card->devname)) {
 		free(sc, M_DEVBUF);
 		return (NULL);
@@ -346,8 +348,6 @@ wan_xilinx_init(sdla_t *card)
 
 
 	strlcpy(sc->if_name, ifp->if_xname, IFNAMSIZ);
-	ifp->if_softc = sc;
-	sc->common.card	= card;
 	sc->first_time_slot=-1;
 	sc->time_slot_map = 0;
 

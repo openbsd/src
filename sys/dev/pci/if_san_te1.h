@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.h,v 1.3 2004/06/27 01:54:21 mcbride Exp $	*/
+/*	$OpenBSD: if_san_te1.h,v 1.4 2004/12/07 06:10:24 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -660,37 +660,37 @@
 
 
 /*The line code */
-#define WANOPT_LC_AMI           0x01
-#define WANOPT_LC_B8ZS          0x02
-#define WANOPT_LC_HDB3          0x03
+#define WAN_LC_AMI           0x01
+#define WAN_LC_B8ZS          0x02
+#define WAN_LC_HDB3          0x03
 
 /* Framing mode (T1/E1)/Unframed */
-#define WANOPT_FR_ESF           0x01
-#define WANOPT_FR_D4            0x02
-#define WANOPT_FR_ESF_JAPAN     0x03
-#define WANOPT_FR_CRC4          0x04
-#define WANOPT_FR_NCRC4         0x05
-#define WANOPT_FR_UNFRAMED	0x06
+#define WAN_FR_ESF           0x01
+#define WAN_FR_D4            0x02
+#define WAN_FR_ESF_JAPAN     0x03
+#define WAN_FR_CRC4          0x04
+#define WAN_FR_NCRC4         0x05
+#define WAN_FR_UNFRAMED	0x06
 
 /* For T1 only */
-#define WANOPT_T1_LBO_0_DB      0x01
-#define WANOPT_T1_LBO_75_DB     0x02
-#define WANOPT_T1_LBO_15_DB     0x03
-#define WANOPT_T1_LBO_225_DB    0x04
-#define WANOPT_T1_0_110         0x05
-#define WANOPT_T1_110_220       0x06
-#define WANOPT_T1_220_330       0x07
-#define WANOPT_T1_330_440       0x08
-#define WANOPT_T1_440_550       0x09
-#define WANOPT_T1_550_660       0x0A
+#define WAN_T1_LBO_0_DB      0x01
+#define WAN_T1_LBO_75_DB     0x02
+#define WAN_T1_LBO_15_DB     0x03
+#define WAN_T1_LBO_225_DB    0x04
+#define WAN_T1_0_110         0x05
+#define WAN_T1_110_220       0x06
+#define WAN_T1_220_330       0x07
+#define WAN_T1_330_440       0x08
+#define WAN_T1_440_550       0x09
+#define WAN_T1_550_660       0x0A
 
 /* For E1 only */
-#define WANOPT_E1_120           0x0B
-#define WANOPT_E1_75            0x0C
+#define WAN_E1_120           0x0B
+#define WAN_E1_75            0x0C
 
 /* Clocking Master/Normal */
-#define WANOPT_NORMAL_CLK	0x01
-#define WANOPT_MASTER_CLK	0x02
+#define WAN_NORMAL_CLK	0x01
+#define WAN_MASTER_CLK	0x02
 
 #define NUM_OF_T1_CHANNELS	24
 #define NUM_OF_E1_TIMESLOTS	31
@@ -801,12 +801,12 @@
 /* TE1 T1/E1 interrupt setting delay */
 #define INTR_TE1_TIMER		150	/* 50 ms */
 
-#define IS_T1(te_cfg)	((te_cfg)->media == WANOPT_MEDIA_T1)
-#define IS_E1(te_cfg)	((te_cfg)->media == WANOPT_MEDIA_E1)
+#define IS_T1(te_cfg)	((te_cfg)->media == WAN_MEDIA_T1)
+#define IS_E1(te_cfg)	((te_cfg)->media == WAN_MEDIA_E1)
 
 #define IS_TE1(te_cfg)	(IS_T1(te_cfg) || IS_E1(te_cfg))
 
-#define IS_TE1_UNFRAMED(card)   ((card)->te_cfg.frame == WANOPT_FR_UNFRAMED)
+#define IS_TE1_UNFRAMED(card)   ((card)->te_cfg.frame == WAN_FR_UNFRAMED)
 
 #define GET_TE_CHANNEL_RANGE(card)				\
 		(IS_T1(&card->te_cfg) ? NUM_OF_T1_CHANNELS :	\
@@ -824,35 +824,35 @@
 #define RAI_ALARM(val)		(val & BIT_RAI_ALARM) ? "ON" : "OFF"
 #define YEL_ALARM(val)		(val & BIT_YEL_ALARM) ? "ON" : "OFF"
 
-#define MEDIA_DECODE(val)	(val == WANOPT_MEDIA_T1) ? "T1" :	\
-				(val == WANOPT_MEDIA_E1) ? "E1" : "Unknown"
+#define MEDIA_DECODE(val)	(val == WAN_MEDIA_T1) ? "T1" :	\
+				(val == WAN_MEDIA_E1) ? "E1" : "Unknown"
 
-#define LCODE_DECODE(val)	(val == WANOPT_LC_AMI)  ? "AMI" :	\
-				(val == WANOPT_LC_B8ZS) ? "B8ZS" :	\
-				(val == WANOPT_LC_HDB3) ? "HDB3" : "Unknown"
+#define LCODE_DECODE(val)	(val == WAN_LC_AMI)  ? "AMI" :	\
+				(val == WAN_LC_B8ZS) ? "B8ZS" :	\
+				(val == WAN_LC_HDB3) ? "HDB3" : "Unknown"
 
-#define FRAME_DECODE(val)	(val == WANOPT_FR_ESF)		? "ESF"  : \
-				(val == WANOPT_FR_D4)		? "D4"   : \
-				(val == WANOPT_FR_CRC4)		? "CRC4" : \
-				(val == WANOPT_FR_NCRC4)	? "non-CRC4" :	\
-				(val == WANOPT_FR_UNFRAMED)	? \
+#define FRAME_DECODE(val)	(val == WAN_FR_ESF)		? "ESF"  : \
+				(val == WAN_FR_D4)		? "D4"   : \
+				(val == WAN_FR_CRC4)		? "CRC4" : \
+				(val == WAN_FR_NCRC4)	? "non-CRC4" :	\
+				(val == WAN_FR_UNFRAMED)	? \
 				    "Unframed" : "Unknown"
 
-#define TECLK_DECODE(val)	(val == WANOPT_NORMAL_CLK) ? "Normal" :	\
-				(val == WANOPT_MASTER_CLK) ? "Master" : \
+#define TECLK_DECODE(val)	(val == WAN_NORMAL_CLK) ? "Normal" :	\
+				(val == WAN_MASTER_CLK) ? "Master" : \
 				"Unknown"
 
 #define LBO_DECODE(val)		\
-	(val == WANOPT_T1_LBO_0_DB)	? "0db" :	\
-	(val == WANOPT_T1_LBO_75_DB)	? "7.5db" :	\
-	(val == WANOPT_T1_LBO_15_DB)	? "15dB" :	\
-	(val == WANOPT_T1_LBO_225_DB)	? "22.5dB" :	\
-	(val == WANOPT_T1_0_110)	? "0-110ft" :	\
-	(val == WANOPT_T1_110_220)	? "110-220ft" :	\
-	(val == WANOPT_T1_220_330)	? "220-330ft" :	\
-	(val == WANOPT_T1_330_440)	? "330-440ft" :	\
-	(val == WANOPT_T1_440_550)	? "440-550ft" :	\
-	(val == WANOPT_T1_550_660)	? "550-660ft" : "Unknown"
+	(val == WAN_T1_LBO_0_DB)	? "0db" :	\
+	(val == WAN_T1_LBO_75_DB)	? "7.5db" :	\
+	(val == WAN_T1_LBO_15_DB)	? "15dB" :	\
+	(val == WAN_T1_LBO_225_DB)	? "22.5dB" :	\
+	(val == WAN_T1_0_110)	? "0-110ft" :	\
+	(val == WAN_T1_110_220)	? "110-220ft" :	\
+	(val == WAN_T1_220_330)	? "220-330ft" :	\
+	(val == WAN_T1_330_440)	? "330-440ft" :	\
+	(val == WAN_T1_440_550)	? "440-550ft" :	\
+	(val == WAN_T1_550_660)	? "550-660ft" : "Unknown"
 
 
 /*

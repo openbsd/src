@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.5 2004/11/28 23:39:45 canacar Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.6 2004/12/07 06:10:24 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -116,6 +116,8 @@ wanpipe_generic_name(sdla_t *card, char *ifname)
 int
 wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 {
+	wanpipe_common_t*	common = WAN_IFP_TO_COMMON(ifp);
+
 	if (ifname == NULL || strlen(ifname) > IFNAMSIZ) {
 		return (-EINVAL);
 	} else {
@@ -124,6 +126,7 @@ wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_mtu = PP_MTU;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
+	common->protocol = IF_PROTO_CISCO;
 	((struct sppp *)ifp)->pp_flags |= PP_CISCO;
 	((struct sppp *)ifp)->pp_flags |= PP_KEEPALIVE;
 	((struct sppp *)ifp)->pp_framebytes = 3;
@@ -299,6 +302,10 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			err = wp_lite_set_proto(ifp, (struct ifreq*)data);
 			break;
 
+		case IF_IFACE_T1:
+		case IF_IFACE_E1:
+			err = wp_lite_set_te1_cfg(ifp, (struct ifreq*)data);
+			break;
 		default:
 			if (card->iface_ioctl) {
 				err = card->iface_ioctl(ifp, cmd,
@@ -369,8 +376,7 @@ wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 	return (0);
 }
 
-int
-wp_lite_set_proto(struct ifnet *ifp, struct ifreq *ifr)
+int wp_lite_set_proto(struct ifnet *ifp, struct ifreq *ifr)
 {
 	wanpipe_common_t	*common;
 	struct if_settings	*ifsettings;
@@ -386,12 +392,43 @@ wp_lite_set_proto(struct ifnet *ifp, struct ifreq *ifr)
 	case IF_PROTO_CISCO:
 		((struct sppp *)ifp)->pp_flags |= PP_CISCO;
 		((struct sppp *)ifp)->pp_flags |= PP_KEEPALIVE;
+		common->protocol = IF_PROTO_CISCO;
 		break;
 	case IF_PROTO_PPP:
 		((struct sppp *)ifp)->pp_flags &= ~PP_CISCO;
 		((struct sppp *)ifp)->pp_flags &= ~PP_KEEPALIVE;
+		common->protocol = IF_PROTO_PPP;
 		break;
 	}
 	err = sppp_ioctl(ifp, SIOCSIFFLAGS, ifr);
 	return (err);
 }
+
+int wp_lite_set_te1_cfg(struct ifnet *ifp, struct ifreq *ifr)
+{
+	sdla_t			*card;
+	struct if_settings	*ifsettings;
+	sdla_te_cfg_t		te_cfg;
+	int			 err = 0;
+
+	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
+		return (-EINVAL);
+	}
+	ifsettings = (struct if_settings*)ifr->ifr_data;
+	err = copyin(ifsettings->ifs_te1,
+			&te_cfg,
+			sizeof(sdla_te_cfg_t));
+
+	if (ifsettings->flags & SANCFG_CLOCK_FLAG){
+		card->fe_te.te_cfg.te_clock = te_cfg.te_clock;
+	}
+	switch (ifsettings->type) {
+	case IF_IFACE_T1:
+		if (ifsettings->flags & SANCFG_LBO_FLAG){
+			card->fe_te.te_cfg.lbo = te_cfg.lbo;
+		}
+		break;
+	}
+	return (err);
+}
+
