@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.22 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: ps.c,v 1.23 2001/09/27 12:53:47 mpech Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.22 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.23 2001/09/27 12:53:47 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ main(argc, argv)
 	}
 
 	kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
-	if (kd == 0)
+	if (kd == NULL && (nlistf != NULL || memf != NULL || swapf != NULL))
 		errx(1, "%s", errbuf);
 
 	setegid(getgid());
