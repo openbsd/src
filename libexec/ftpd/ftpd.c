@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.45 1997/12/12 08:55:09 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.46 1998/06/03 17:44:47 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -419,7 +419,7 @@ main(argc, argv, envp)
 	(void) signal(SIGTERM, sigquit);
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
-	if ((long)signal(SIGURG, myoob) < 0)
+	if (signal(SIGURG, myoob) == SIG_ERR)
 		syslog(LOG_ERR, "signal: %m");
 
 	addrlen = sizeof(ctrl_addr);
