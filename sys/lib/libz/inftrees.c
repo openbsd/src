@@ -1,4 +1,4 @@
-/*	$OpenBSD: inftrees.c,v 1.5 1997/11/07 15:57:50 niklas Exp $	*/
+/*	$OpenBSD: inftrees.c,v 1.6 1998/05/30 02:20:52 mickey Exp $	*/
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-1996 Mark Adler
@@ -29,8 +29,8 @@ local int huft_build OF((
     uIntf *,            /* code lengths in bits */
     uInt,               /* number of codes */
     uInt,               /* number of "simple" codes */
-    uIntf *,            /* list of base values for non-simple codes */
-    uIntf *,            /* list of extra bits for non-simple codes */
+    const uIntf *,      /* list of base values for non-simple codes */
+    const uIntf *,      /* list of extra bits for non-simple codes */
     inflate_huft * FAR*,/* result: starting table */
     uIntf *,            /* maximum lookup bits (returns actual) */
     z_streamp ));       /* for zalloc function */
@@ -41,18 +41,18 @@ local voidpf falloc OF((
     uInt));             /* size of item */
 
 /* Tables for deflate from PKZIP's appnote.txt. */
-local uInt cplens[31] = { /* Copy lengths for literal codes 257..285 */
+local const uInt cplens[31] = { /* Copy lengths for literal codes 257..285 */
         3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0};
         /* actually lengths - 2; also see note #13 above about 258 */
-local uInt cplext[31] = { /* Extra bits for literal codes 257..285 */
+local const uInt cplext[31] = { /* Extra bits for literal codes 257..285 */
         0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
         3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0, 192, 192}; /* 192==invalid */
-local uInt cpdist[30] = { /* Copy offsets for distance codes 0..29 */
+local const uInt cpdist[30] = { /* Copy offsets for distance codes 0..29 */
         1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
         257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
         8193, 12289, 16385, 24577};
-local uInt cpdext[30] = { /* Extra bits for distance codes */
+local const uInt cpdext[30] = { /* Extra bits for distance codes */
         0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
         7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
         12, 12, 13, 13};
@@ -102,8 +102,8 @@ local int huft_build(b, n, s, d, e, t, m, zs)
 uIntf *b;               /* code lengths in bits (all assumed <= BMAX) */
 uInt n;                 /* number of codes (assumed <= N_MAX) */
 uInt s;                 /* number of simple-valued codes (0..s-1) */
-uIntf *d;               /* list of base values for non-simple codes */
-uIntf *e;               /* list of extra bits for non-simple codes */  
+const uIntf *d;         /* list of base values for non-simple codes */
+const uIntf *e;         /* list of extra bits for non-simple codes */  
 inflate_huft * FAR *t;  /* result: starting table */
 uIntf *m;               /* maximum lookup bits, returns actual */
 z_streamp zs;           /* for zalloc function */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: infblock.c,v 1.3 1997/11/07 15:57:47 niklas Exp $	*/
+/*	$OpenBSD: infblock.c,v 1.4 1998/05/30 02:20:51 mickey Exp $	*/
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-1996 Mark Adler
@@ -14,7 +14,7 @@
 struct inflate_codes_state {int dummy;}; /* for buggy compilers */
 
 /* Table for deflate from PKZIP's appnote.txt. */
-local uInt border[] = { /* Order of the bit length code lengths */
+local const uInt border[] = { /* Order of the bit length code lengths */
         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
 /*
