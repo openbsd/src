@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 1998/02/26 07:03:09 gene Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 1998/02/26 15:45:10 gene Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -114,6 +114,7 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_var.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
