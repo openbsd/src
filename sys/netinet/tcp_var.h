@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.43 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.44 2002/06/09 16:26:11 itojun Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
 struct sackblk {
 	tcp_seq start;		/* start seq no. of sack block */
 	tcp_seq end; 		/* end seq no. */
-};  
+};
 
 struct sackhole {
-	tcp_seq start;		/* start seq no. of hole */ 
+	tcp_seq start;		/* start seq no. of hole */
 	tcp_seq end;		/* end seq no. */
 	int	dups;		/* number of dup(s)acks for this hole */
 	tcp_seq rxmit;		/* next seq. no in hole to be retransmitted */
@@ -328,13 +328,13 @@ struct	tcpstat {
 /*
  * Names for TCP sysctl objects.
  */
-			
+
 #define	TCPCTL_RFC1323		1 /* enable/disable RFC1323 timestamps/scaling */
 #define	TCPCTL_KEEPINITTIME	2 /* TCPT_KEEP value */
 #define TCPCTL_KEEPIDLE		3 /* allow tcp_keepidle to be changed */
 #define TCPCTL_KEEPINTVL	4 /* allow tcp_keepintvl to be changed */
-#define TCPCTL_SLOWHZ		5 /* return kernel idea of PR_SLOWHZ */ 
-#define TCPCTL_BADDYNAMIC	6 /* return bad dynamic port bitmap */ 
+#define TCPCTL_SLOWHZ		5 /* return kernel idea of PR_SLOWHZ */
+#define TCPCTL_BADDYNAMIC	6 /* return bad dynamic port bitmap */
 #define	TCPCTL_RECVSPACE	7 /* receive buffer space */
 #define	TCPCTL_SENDSPACE	8 /* send buffer space */
 #define	TCPCTL_IDENT		9 /* get connection owner */
@@ -395,7 +395,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
 void	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
-		int *, u_int32_t *, u_int32_t *); 
+		int *, u_int32_t *, u_int32_t *);
 void	 tcp_drain(void);
 void	 tcp_init(void);
 #if defined(INET6) && !defined(TCP6)
@@ -451,7 +451,7 @@ void	 tcp_print_holes(struct tcpcb *tp);
 #endif /* TCP_SACK */
 #if defined(TCP_SACK)
 int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
-u_long	 tcp_seq_subtract(u_long, u_long ); 
+u_long	 tcp_seq_subtract(u_long, u_long );
 #endif /* TCP_SACK */
 #ifdef TCP_SIGNATURE
 int	tcp_signature_apply(caddr_t, caddr_t, unsigned int);

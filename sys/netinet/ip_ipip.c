@@ -1,7 +1,7 @@
-/*	$OpenBSD: ip_ipip.c,v 1.23 2002/05/16 14:10:51 kjc Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.24 2002/06/09 16:26:10 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
- * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and
  * Niels Provos (provos@physnet.uni-hamburg.de).
  *
  * The original version of this code was written by John Ioannidis
@@ -22,7 +22,7 @@
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
@@ -130,7 +130,7 @@ ip4_input(struct mbuf *m, ...)
 /*
  * ipip_input gets called when we receive an IP{46} encapsulated packet,
  * either because we got it at a real interface, or because AH or ESP
- * were being used in tunnel mode (in which case the rcvif element will 
+ * were being used in tunnel mode (in which case the rcvif element will
  * contain the address of the encX interface associated with the tunnel.
  */
 
@@ -164,7 +164,7 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		break;
 #endif /* INET */
 
-#ifdef INET6   
+#ifdef INET6
         case 6:
 		hlen = sizeof(struct ip6_hdr);
 		break;
@@ -320,13 +320,13 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 			}
 		}
 	}
-    
+
 	/* Statistics */
 	ipipstat.ipips_ibytes += m->m_pkthdr.len - iphlen;
 
 	/*
 	 * Interface pointer stays the same; if no IPsec processing has
-	 * been done (or will be done), this will point to a normal 
+	 * been done (or will be done), this will point to a normal
 	 * interface. Otherwise, it'll point to an enc interface, which
 	 * will allow a packet filter to distinguish between secure and
 	 * untrusted packets.
@@ -394,7 +394,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct ip *ipo;
 #endif /* INET */
 
-#ifdef INET6    
+#ifdef INET6
 	struct ip6_hdr *ip6, *ip6o;
 #endif /* INET6 */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.10 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.11 2002/06/09 16:26:11 itojun Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ struct tcphdr {
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
 };
-#define th_reseqlen th_urp			/* TCP data length for 
+#define th_reseqlen th_urp			/* TCP data length for
 						   resequencing/reassembly */
 
 #define	TCPOPT_EOL		0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.44 2002/06/09 07:50:57 itojun Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.45 2002/06/09 16:26:10 itojun Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ in_arpinput(m)
 		  	if (rt->rt_flags & RTF_PERMANENT_ARP) {
 				log(LOG_WARNING,
 				   "arp: attempt to overwrite permanent "
-				   "entry for %s by %s on %s\n", 
+				   "entry for %s by %s on %s\n",
 				   inet_ntoa(isaddr),
 				   ether_sprintf(ea->arp_sha),
 				   ac->ac_if.if_xname);
@@ -606,7 +606,7 @@ in_arpinput(m)
 			} else {
 				log(LOG_INFO,
 				   "arp info overwritten for %s by %s on %s\n",
-			    	   inet_ntoa(isaddr), 
+			    	   inet_ntoa(isaddr),
 				   ether_sprintf(ea->arp_sha),
 				   ac->ac_if.if_xname);
 				rt->rt_expire = 1; /* no longer static */
@@ -888,8 +888,8 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 	struct in_addr *clnt_in;
 {
 	int result, count = 20;
-	
-	if (myip_initialized) 
+
+	if (myip_initialized)
 		return EIO;
 
 	myip_ifp = ifp;
@@ -903,7 +903,7 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 	revarp_in_progress = 0;
 	if (!myip_initialized)
 		return ENETUNREACH;
-	
+
 	bcopy((caddr_t)&srv_ip, serv_in, sizeof(*serv_in));
 	bcopy((caddr_t)&myip, clnt_in, sizeof(*clnt_in));
 	return 0;

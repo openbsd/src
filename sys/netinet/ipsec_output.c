@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.21 2002/02/19 21:11:22 miod Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.22 2002/06/09 16:26:11 itojun Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -234,7 +234,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 					return ENXIO;	/*?*/
 				}
 				ip6 = mtod(m, struct ip6_hdr *);
-				ip6->ip6_plen = htons(m->m_pkthdr.len 
+				ip6->ip6_plen = htons(m->m_pkthdr.len
 				    - sizeof(*ip6));
 			}
 #endif /* INET6 */
@@ -261,7 +261,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 					if ((m = m_pullup(m,
 					    sizeof(struct ip))) == NULL)
 						return ENOBUFS;
-		    
+
 				NTOHS(ip->ip_off);
 				ip->ip_off |= IP_DF;
 				HTONS(ip->ip_off);
@@ -445,7 +445,7 @@ ipsec_hdrsz(struct tdb *tdbp)
 		else
 			adjust = 2 * sizeof(u_int32_t) + tdbp->tdb_ivlen;
 		/* Authenticator */
-		if (tdbp->tdb_authalgxform != NULL) 
+		if (tdbp->tdb_authalgxform != NULL)
 			adjust += AH_HMAC_HASHLEN;
 		/* Padding */
 		adjust += tdbp->tdb_encalgxform->blocksize;
@@ -496,7 +496,7 @@ ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
 	int s;
 
 	s = spltdb();
-	
+
 	for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_DONE, NULL); mtag;
 	     mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_DONE, mtag)) {
 		tdbi = (struct tdb_ident *)(mtag + 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.21 2002/06/08 07:59:20 chris Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.22 2002/06/09 16:26:10 itojun Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ struct	ether_header {
  * Ethernet Address Resolution Protocol.
  *
  * See RFC 826 for protocol description.  Structure below is adapted
- * to resolving internet addresses.  Field names used correspond to 
+ * to resolving internet addresses.  Field names used correspond to
  * RFC 826.
  */
 struct	ether_arp {

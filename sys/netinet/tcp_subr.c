@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.63 2002/06/07 16:18:02 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.64 2002/06/09 16:26:11 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -34,11 +34,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
- * 
+ *
  * NRL grants permission for redistribution and use in source and binary
  * forms, with or without modification, of the software and documentation
  * created at NRL provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -53,7 +53,7 @@
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THE SOFTWARE PROVIDED BY NRL IS PROVIDED BY NRL AND CONTRIBUTORS ``AS
  * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -65,7 +65,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * The views and conclusions contained in the software and documentation
  * are those of the authors and should not be interpreted as representing
  * official policies, either expressed or implied, of the US Naval
@@ -198,7 +198,7 @@ tcp_init()
  *
  * To support IPv6 in addition to IPv4 and considering that the sizes of
  * the IPv4 and IPv6 headers are not the same, we now use a separate pointer
- * for the TCP header.  Also, we made the former tcpiphdr header pointer 
+ * for the TCP header.  Also, we made the former tcpiphdr header pointer
  * into just an IP overlay pointer, with casting as appropriate for v6. rja
  */
 struct mbuf *
@@ -233,7 +233,7 @@ tcp_template(tp)
 		 * The link header, network header, TCP header, and TCP options
 		 * all must fit in this mbuf. For now, assume the worst case of
 		 * TCP options size. Eventually, compute this from tp flags.
-		 */ 
+		 */
 		if (m->m_len + MAX_TCPOPTLEN + max_linkhdr >= MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
@@ -275,8 +275,8 @@ tcp_template(tp)
 			ip6->ip6_src = inp->inp_laddr6;
 			ip6->ip6_dst = inp->inp_faddr6;
 			ip6->ip6_flow = htonl(0x60000000) |
-			    (inp->inp_ipv6.ip6_flow & htonl(0x0fffffff));  
-						  
+			    (inp->inp_ipv6.ip6_flow & htonl(0x0fffffff));
+
 			ip6->ip6_nxt = IPPROTO_TCP;
 			ip6->ip6_plen = htons(sizeof(struct tcphdr)); /*XXX*/
 			ip6->ip6_hlim = in6_selecthlim(inp, NULL);	/*XXX*/
@@ -399,7 +399,7 @@ tcp_respond(tp, template, m, ack, seq, flags)
 	switch (af) {
 #ifdef INET6
 	case AF_INET6:
-		tlen += sizeof(struct tcphdr) + sizeof(struct ip6_hdr); 
+		tlen += sizeof(struct tcphdr) + sizeof(struct ip6_hdr);
 		th = (struct tcphdr *)((caddr_t)ti + sizeof(struct ip6_hdr));
 		break;
 #endif /* INET6 */
@@ -511,7 +511,7 @@ tcp_newtcpcb(struct inpcb *inp)
 #endif
 
 #ifdef INET6
-	if (inp->inp_flags & INP_IPV6) 
+	if (inp->inp_flags & INP_IPV6)
 		inp->inp_ipv6.ip6_hlim = ip6_defhlim;
 	else
 #endif /* INET6 */
@@ -588,7 +588,7 @@ tcp_close(struct tcpcb *tp)
 
 	/*
 	 * If we sent enough data to get some meaningful characteristics,
-	 * save them in the routing entry.  'Enough' is arbitrarily 
+	 * save them in the routing entry.  'Enough' is arbitrarily
 	 * defined as the sendpipesize (default 4K) * 16.  This would
 	 * give us 16 rtt samples assuming we only get one sample per
 	 * window (the usual case on a long haul net).  16 samples is
@@ -717,7 +717,7 @@ tcp_drain()
 }
 
 /*
- * Compute proper scaling value for receiver window from buffer space 
+ * Compute proper scaling value for receiver window from buffer space
  */
 
 void
@@ -756,7 +756,7 @@ tcp_notify(inp, error)
 	} else if (TCPS_HAVEESTABLISHED(tp->t_state) == 0 &&
 	    tp->t_rxtshift > 3 && tp->t_softerror)
 		so->so_error = error;
-	else 
+	else
 		tp->t_softerror = error;
 	wakeup((caddr_t) &so->so_timeo);
 	sorwakeup(so);
@@ -1010,7 +1010,7 @@ tcp_mtudisc_increase(inp, errno)
 		 */
 		if (rt->rt_flags & RTF_HOST)
 			in_rtchange(inp, errno);
-		
+
 		/* also takes care of congestion window */
 		tcp_mss(tp, -1);
 	}
@@ -1120,7 +1120,7 @@ tcp_rndiss_encrypt(val)
 	u_int16_t val;
 {
 	u_int16_t sum = 0, i;
-  
+
 	for (i = 0; i < TCP_RNDISS_ROUNDS; i++) {
 		sum += 0x79b9;
 		val ^= ((u_int16_t)tcp_rndiss_sbox[(val^sum) & 0x7f]) << 7;
@@ -1136,7 +1136,7 @@ tcp_rndiss_init()
 	get_random_bytes(tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox));
 
 	tcp_rndiss_reseed = time.tv_sec + TCP_RNDISS_OUT;
-	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000; 
+	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000;
 	tcp_rndiss_cnt = 0;
 }
 
@@ -1146,7 +1146,7 @@ tcp_rndiss_next()
         if (tcp_rndiss_cnt >= TCP_RNDISS_MAX ||
 	    time.tv_sec > tcp_rndiss_reseed)
                 tcp_rndiss_init();
-	
+
 	/* (arc4random() & 0x7fff) ensures a 32768 byte gap between ISS */
 	return ((tcp_rndiss_encrypt(tcp_rndiss_cnt++) | tcp_rndiss_msb) <<16) |
 		(arc4random() & 0x7fff);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.77 2002/05/31 04:43:26 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.78 2002/06/09 16:26:11 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -34,11 +34,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
- * 
+ *
  * NRL grants permission for redistribution and use in source and binary
  * forms, with or without modification, of the software and documentation
  * created at NRL provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -53,7 +53,7 @@
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THE SOFTWARE PROVIDED BY NRL IS PROVIDED BY NRL AND CONTRIBUTORS ``AS
  * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -65,7 +65,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * The views and conclusions contained in the software and documentation
  * are those of the authors and should not be interpreted as representing
  * official policies, either expressed or implied, of the US Naval
@@ -299,7 +299,7 @@ udp_input(struct mbuf *m, ...)
 			bzero(((struct ipovly *)ip)->ih_x1,
 			      sizeof ((struct ipovly *)ip)->ih_x1);
 			((struct ipovly *)ip)->ih_len = uh->uh_ulen;
-		
+
 			if ((uh->uh_sum = in_cksum(m, len +
 			    sizeof (struct ip))) != 0) {
 				udpstat.udps_badsum++;
@@ -475,7 +475,7 @@ udp_input(struct mbuf *m, ...)
 			ip6_savecontrol(inp, &opts, ipv6, m);
 #endif /* INET6 */
 		m_adj(m, iphlen);
-		if (sbappendaddr(&last->so_rcv, 
+		if (sbappendaddr(&last->so_rcv,
 		    &srcsa.sa, m, opts) == 0) {
 			udpstat.udps_fullsock++;
 			goto bad;
@@ -966,7 +966,7 @@ udp_output(struct mbuf *m, ...)
 	} else
 		ui->ui_sum = 0;
 	((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
-	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	
+	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;
 
 	udpstat.udps_opackets++;
@@ -1084,7 +1084,7 @@ udp_usrreq(so, req, m, addr, control)
 		break;
 
 	case PRU_CONNECT:
-#ifdef INET6 
+#ifdef INET6
 		if (inp->inp_flags & INP_IPV6) {
 			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
 				error = EISCONN;
@@ -1118,7 +1118,7 @@ udp_usrreq(so, req, m, addr, control)
 		break;
 
 	case PRU_DISCONNECT:
-#ifdef INET6 
+#ifdef INET6
 		if (inp->inp_flags & INP_IPV6) {
 			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
 				error = ENOTCONN;

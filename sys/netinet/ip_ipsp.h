@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.120 2002/05/31 02:39:53 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.121 2002/06/09 16:26:10 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -195,7 +195,7 @@ struct ipsec_policy {
 	u_int8_t		ipo_sproto;	/* ESP/AH; if zero, use system dflts */
 
 	int                     ipo_ref_count;
-       
+
 	struct tdb		*ipo_tdb;		/* Cached entry */
 
 	struct ipsec_ref	*ipo_srcid;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.2 2002/06/09 16:26:10 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -228,7 +228,7 @@ ipcomp_input_cb(op)
 	m = (struct mbuf *) crp->crp_buf;
 
 	s = spltdb();
-	
+
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	FREE(tc, M_XDATA);
 	if (tdb == NULL) {
@@ -338,7 +338,7 @@ ipcomp_input_cb(op)
 		/* Finally, let's relink */
 		m1->m_next = mo;
 	} else {
-		bcopy(mtod(m1, u_char *) + roff + hlen, 
+		bcopy(mtod(m1, u_char *) + roff + hlen,
 		      mtod(m1, u_char *) + roff,
 		      m1->m_len - (roff + hlen));
 		m1->m_len -= hlen;
@@ -452,8 +452,8 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 	default:
 		DPRINTF(
-		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n", 
-		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst), 
+		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
+		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ipcompstat.ipcomps_nopf++;
@@ -496,7 +496,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 		if (n == NULL) {
 			DPRINTF(
-			    ("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n", 
+			    ("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			ipcompstat.ipcomps_hdrops++;
 			m_freem(m);
@@ -547,8 +547,8 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 	default:
 		DPRINTF(
-		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n", 
-		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst), 
+		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
+		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ipcompstat.ipcomps_nopf++;
@@ -655,7 +655,7 @@ ipcomp_output_cb(cp)
 			return crypto_dispatch(crp);
 		}
 		ipcompstat.ipcomps_noxform++;
-		DPRINTF(("ipcomp_output_cb(): crypto error %d\n", 
+		DPRINTF(("ipcomp_output_cb(): crypto error %d\n",
 		    crp->crp_etype));
 
 		goto baddone;
@@ -698,8 +698,8 @@ ipcomp_output_cb(cp)
 
 	default:
 		DPRINTF(
-		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n", 
-		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst), 
+		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
+		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ipcompstat.ipcomps_nopf++;

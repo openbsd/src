@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.56 2002/06/09 00:58:33 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.57 2002/06/09 16:26:10 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -219,7 +219,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		return ENXIO;
 	}
 
-	if (tdbp->tdb_dst.sa.sa_family == AF_INET && 
+	if (tdbp->tdb_dst.sa.sa_family == AF_INET &&
 	    sproto != IPPROTO_IPCOMP) {
 		/*
 		 * XXX The fragment conflicts with scoped nature of
@@ -645,13 +645,13 @@ ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;
-    
+
 	switch (name[0]) {
 	case IPCOMPCTL_ENABLE:
 		return sysctl_int(oldp, oldlen, newp, newlen, &ipcomp_enable);
 	default:
 		return ENOPROTOOPT;
-	}	
+	}
 	/* NOTREACHED */
 }
 
@@ -775,7 +775,7 @@ ipcomp4_input_cb(struct mbuf *m, ...)
 {
 	struct ifqueue *ifq = &ipintrq;
 	int s = splimp();
-    
+
 	/*
 	 * Interface pointer is already in first mbuf; chop off the
 	 * `outer' header and reschedule.
@@ -784,7 +784,7 @@ ipcomp4_input_cb(struct mbuf *m, ...)
 		IF_DROP(ifq);
 		ipcompstat.ipcomps_qfull++;
 		splx(s);
-	
+
 		m_freem(m);
 		DPRINTF(("ipcomp4_input_cb(): dropped packet because of full IP queue\n"));
 		return ENOBUFS;
@@ -811,7 +811,7 @@ ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
 		int hlen = ip->ip_hl << 2;
 		u_int32_t spi, mtu;
 		ssize_t adjust;
-	
+
 		/* Find the right MTU. */
 		icp = (struct icmp *)((caddr_t) ip -
 		    offsetof(struct icmp, icmp_ip));
@@ -1030,7 +1030,7 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 
 		do {
 			protoff += l;
-			m_copydata(*mp, protoff, sizeof(ip6e), 
+			m_copydata(*mp, protoff, sizeof(ip6e),
 			    (caddr_t) &ip6e);
 			if (ip6e.ip6e_nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;

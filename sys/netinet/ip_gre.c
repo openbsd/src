@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.17 2002/04/03 20:37:28 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.18 2002/06/09 16:26:10 itojun Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -23,7 +23,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *    
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -90,7 +90,7 @@ static int gre_input2(struct mbuf *, int, u_char);
 /*
  * Decapsulate.
  * Does the real work and is called from gre_input() (above)
- * returns 0 if packet is not yet processed 
+ * returns 0 if packet is not yet processed
  * and 1 if it needs no further processing
  * proto is the protocol number of the "calling" foo_input()
  * routine.
@@ -188,8 +188,8 @@ gre_input2(m , hlen, proto)
 		/* others not yet supported */
 		return (0);
 	}
-		
-	m->m_data += hlen; 
+
+	m->m_data += hlen;
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
 
@@ -243,10 +243,10 @@ gre_input(struct mbuf *m, ...)
 	        m_freem(m);
 		return;
 	}
-	
+
 	ret = gre_input2(m, hlen, IPPROTO_GRE);
-	/* 
- 	 * ret == 0: packet not processed, but input from here
+	/*
+	 * ret == 0: packet not processed, but input from here
 	 * means no matching tunnel that is up is found,
 	 * so we can just free the mbuf and return.  It is also
 	 * possible that we received a WCCPv1-style GRE packet
@@ -258,7 +258,7 @@ gre_input(struct mbuf *m, ...)
 
 /*
  * Input routine for IPPRPOTO_MOBILE.
- * This is a little bit diffrent from the other modes, as the 
+ * This is a little bit diffrent from the other modes, as the
  * encapsulating header was not prepended, but instead inserted
  * between IP header and payload.
  */
@@ -292,7 +292,7 @@ gre_mobile_input(struct mbuf *m, ...)
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
 
-	sc->sc_if.if_ipackets++;  
+	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
 	if(ntohs(mip->mh.proto) & MOB_H_SBIT) {
@@ -304,7 +304,7 @@ gre_mobile_input(struct mbuf *m, ...)
 	}
 	mip->mi.ip_dst.s_addr = mip->mh.odst;
 	mip->mi.ip_p = (ntohs(mip->mh.proto) >> 8);
-	
+
 	if (gre_in_cksum((u_short *) &mip->mh,msiz) != 0) {
 		m_freem(m);
 		return;
@@ -347,8 +347,8 @@ gre_mobile_input(struct mbuf *m, ...)
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
-	} else { 
-		IF_ENQUEUE(ifq, m);  
+	} else {
+		IF_ENQUEUE(ifq, m);
 	}
 	splx(s);
 }
@@ -388,7 +388,7 @@ gre_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
         /* All sysctl names at this level are terminal. */
         if (namelen != 1)
                 return (ENOTDIR);
- 
+
         switch (name[0]) {
         case GRECTL_ALLOW:
                 return (sysctl_int(oldp, oldlenp, newp, newlen, &gre_allow));
@@ -412,7 +412,7 @@ ipmobile_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
         /* All sysctl names at this level are terminal. */
         if (namelen != 1)
                 return (ENOTDIR);
- 
+
         switch (name[0]) {
         case MOBILEIPCTL_ALLOW:
                 return (sysctl_int(oldp, oldlenp, newp, newlen,

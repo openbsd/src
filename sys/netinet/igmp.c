@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.14 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.15 2002/06/09 16:26:10 itojun Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -424,8 +424,8 @@ igmp_leavegroup(inm)
 		if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 		    (inm->inm_ifp->if_flags & IFF_LOOPBACK) == 0)
 			if (inm->inm_rti->rti_type != IGMP_v1_ROUTER)
- 				igmp_sendpkt(inm, IGMP_HOST_LEAVE_MESSAGE, 
- 				    INADDR_ALLROUTERS_GROUP);
+				igmp_sendpkt(inm, IGMP_HOST_LEAVE_MESSAGE,
+				    INADDR_ALLROUTERS_GROUP);
 		break;
 	case IGMP_LAZY_MEMBER:
 	case IGMP_AWAKENING_MEMBER:
@@ -492,7 +492,7 @@ void
 igmp_sendpkt(inm, type, addr)
 	struct in_multi *inm;
 	int type;
- 	in_addr_t addr;
+	in_addr_t addr;
 {
 	struct mbuf *m;
 	struct igmp *igmp;
@@ -519,11 +519,11 @@ igmp_sendpkt(inm, type, addr)
 	ip->ip_off = 0;
 	ip->ip_p = IPPROTO_IGMP;
 	ip->ip_src.s_addr = INADDR_ANY;
- 	if (addr) {
- 		ip->ip_dst.s_addr = addr;
- 	} else {
- 		ip->ip_dst = inm->inm_addr;
- 	}
+	if (addr) {
+		ip->ip_dst.s_addr = addr;
+	} else {
+		ip->ip_dst = inm->inm_addr;
+	}
 
 	m->m_data += sizeof(struct ip);
 	m->m_len -= sizeof(struct ip);

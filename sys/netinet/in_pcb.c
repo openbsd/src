@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.61 2002/05/31 02:39:25 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.62 2002/06/09 16:26:10 itojun Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -34,11 +34,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
- * 
+ *
  * NRL grants permission for redistribution and use in source and binary
  * forms, with or without modification, of the software and documentation
  * created at NRL provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -53,7 +53,7 @@
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THE SOFTWARE PROVIDED BY NRL IS PROVIDED BY NRL AND CONTRIBUTORS ``AS
  * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -65,7 +65,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * The views and conclusions contained in the software and documentation
  * are those of the authors and should not be interpreted as representing
  * official policies, either expressed or implied, of the US Naval
@@ -133,7 +133,7 @@ in_pcbinit(table, hashsize)
 }
 
 struct baddynamicports baddynamicports;
- 
+
 /*
  * Check if the specified port is invalid for dynamic allocation.
  */
@@ -432,7 +432,7 @@ in_pcbconnect(v, nam)
 		/* Cause an IPsec SA to be established. */
 		ipsp_spd_inp(NULL, AF_INET, 0, &error, IPSP_DIRECTION_OUT,
 		    NULL, inp, NULL);
-	}		
+	}
 #endif
 	return (0);
 }
@@ -477,7 +477,7 @@ in_pcbdetach(v)
 #ifdef INET6
 	if (inp->inp_flags & INP_IPV6)
 		ip6_freemoptions(inp->inp_moptions6);
-	else 
+	else
 #endif
 		ip_freemoptions(inp->inp_moptions);
 #ifdef IPSEC
@@ -510,7 +510,7 @@ in_setsockaddr(inp, nam)
 	struct mbuf *nam;
 {
 	register struct sockaddr_in *sin;
-	
+
 	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
 	bzero((caddr_t)sin, sizeof (*sin));
@@ -526,7 +526,7 @@ in_setpeeraddr(inp, nam)
 	struct mbuf *nam;
 {
 	register struct sockaddr_in *sin;
-	
+
 #ifdef INET6
 	if (sotopf(inp->inp_socket) == PF_INET6) {
 		in6_setpeeraddr(inp, nam);
@@ -670,9 +670,9 @@ in_losing(inp)
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
 		if (rt->rt_flags & RTF_DYNAMIC)
 			(void) rtrequest(RTM_DELETE, rt_key(rt),
-				rt->rt_gateway, rt_mask(rt), rt->rt_flags, 
+				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
 				(struct rtentry **)0);
-		else 
+		else
 		/*
 		 * A new route can be allocated
 		 * the next time output is attempted.
@@ -840,13 +840,13 @@ in_selectsrc(sin, ro, soopts, mopts, errorp)
 	struct in_ifaddr *ia;
 
 	ia = (struct in_ifaddr *)0;
-	/* 
+	/*
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
 	if (ro->ro_rt &&
 	    (satosin(&ro->ro_dst)->sin_addr.s_addr !=
-		sin->sin_addr.s_addr || 
+		sin->sin_addr.s_addr ||
 	    soopts & SO_DONTROUTE)) {
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = (struct rtentry *)0;

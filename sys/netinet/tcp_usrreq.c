@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.62 2002/06/07 16:18:02 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.63 2002/06/09 16:26:11 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -608,7 +608,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 				tp->t_flags &= ~TF_SIGNATURE;
 			break;
 #endif /* TCP_SIGNATURE */
- 		default:
+		default:
 			error = ENOPROTOOPT;
 			break;
 		}

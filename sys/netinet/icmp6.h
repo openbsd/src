@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.24 2002/06/09 02:11:47 jsyn Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.25 2002/06/09 16:26:10 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.71 2002/05/27 04:18:29 itojun Exp $	*/
 
 /*
@@ -519,7 +519,7 @@ struct icmp6stat {
 	 * for netinet6 code, it is already available in icp6s_outhist[].
 	 */
 	u_quad_t icp6s_reflect;
-	u_quad_t icp6s_inhist[256];	
+	u_quad_t icp6s_inhist[256];
 	u_quad_t icp6s_nd_toomanyopt;	/* too many ND options */
 	struct icmp6errstat icp6s_outerrhist;
 #define icp6s_odst_unreach_noroute \

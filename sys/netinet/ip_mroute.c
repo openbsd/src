@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.25 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.26 2002/06/09 16:26:10 itojun Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)ip_mroute.c 8.2 (Berkeley) 11/15/93
- * $Id: ip_mroute.c,v 1.25 2002/03/15 18:19:52 millert Exp $
+ * $Id: ip_mroute.c,v 1.26 2002/06/09 16:26:10 itojun Exp $
  */
 
 /*
@@ -130,7 +130,7 @@ struct timeout	tbf_timeout;
 
 /*
  * Define the token bucket filter structures
- * qtable   -> each interface has an associated queue of pkts 
+ * qtable   -> each interface has an associated queue of pkts
  */
 
 struct pkt_queue qtable[MAXVIFS][MAXQSIZE];
@@ -197,7 +197,7 @@ struct ip multicast_encap_iphdr = {
 	sizeof(struct ip),		/* total length */
 	0,				/* id */
 	0,				/* frag offset */
-	ENCAP_TTL, ENCAP_PROTO,	
+	ENCAP_TTL, ENCAP_PROTO,
 	0,				/* checksum */
 };
 
@@ -477,7 +477,7 @@ ip_mrouter_done()
 	register struct vif *vifp;
 	int i;
 	int s;
-	
+
 	s = splsoftnet();
 
 	/* Clear out all the vifs currently in use. */
@@ -490,9 +490,9 @@ ip_mrouter_done()
 	bzero((caddr_t)qtable, sizeof(qtable));
 	numvifs = 0;
 	pim_assert = 0;
-	
+
 	timeout_del(&upcalls_timeout);
-	
+
 	/*
 	 * Free all multicast forwarding cache entries.
 	 */
@@ -501,24 +501,24 @@ ip_mrouter_done()
 
 		for (rt = mfchashtbl[i].lh_first; rt; rt = nrt) {
 			nrt = rt->mfc_hash.le_next;
-			
+
 			expire_mfc(rt);
 		}
 	}
 
 	free(mfchashtbl, M_MRTABLE);
 	mfchashtbl = 0;
-	
+
 	/* Reset de-encapsulation cache. */
 	have_encap_tunnel = 0;
-	
+
 	ip_mrouter = NULL;
-	
+
 	splx(s);
-	
+
 	if (mrtdebug)
 		log(LOG_DEBUG, "ip_mrouter_done\n");
-	
+
 	return (0);
 }
 
@@ -579,7 +579,7 @@ add_vif(m)
 	struct ifnet *ifp;
 	struct ifreq ifr;
 	int error, s;
-	
+
 	if (m == 0 || m->m_len < sizeof(struct vifctl))
 		return (EINVAL);
 
@@ -590,13 +590,13 @@ add_vif(m)
 	vifp = &viftable[vifcp->vifc_vifi];
 	if (vifp->v_lcl_addr.s_addr != 0)
 		return (EADDRINUSE);
-	
+
 	/* Find the interface with an address in AF_INET family. */
 	sin.sin_addr = vifcp->vifc_lcl_addr;
 	ifa = ifa_ifwithaddr(sintosa(&sin));
 	if (ifa == 0)
 		return (EADDRNOTAVAIL);
-	
+
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
 		if (vifcp->vifc_flags & VIFF_SRCRT) {
 			log(LOG_ERR, "Source routed tunnels not supported.\n");
@@ -623,7 +623,7 @@ add_vif(m)
 		/* Make sure the interface supports multicast. */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0)
 			return (EOPNOTSUPP);
-		
+
 		/* Enable promiscuous reception of all IP multicasts. */
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
@@ -632,13 +632,13 @@ add_vif(m)
 		if (error)
 			return (error);
 	}
-	
+
 	s = splsoftnet();
 	/* Define parameters for the tbf structure. */
 	vifp->v_tbf.q_len = 0;
 	vifp->v_tbf.n_tok = 0;
 	vifp->v_tbf.last_pkt_t = 0;
-	
+
 	vifp->v_flags = vifcp->vifc_flags;
 	vifp->v_threshold = vifcp->vifc_threshold;
 	vifp->v_lcl_addr = vifcp->vifc_lcl_addr;
@@ -655,20 +655,20 @@ add_vif(m)
 	vifp->v_bytes_in = 0;
 	vifp->v_bytes_out = 0;
 	splx(s);
-	
+
 	/* Adjust numvifs up if the vifi is higher than numvifs. */
 	if (numvifs <= vifcp->vifc_vifi)
 		numvifs = vifcp->vifc_vifi + 1;
-	
+
 	if (mrtdebug)
 		log(LOG_DEBUG, "add_vif #%d, lcladdr %x, %s %x, thresh %x, rate %d\n",
-		    vifcp->vifc_vifi, 
+		    vifcp->vifc_vifi,
 		    ntohl(vifcp->vifc_lcl_addr.s_addr),
 		    (vifcp->vifc_flags & VIFF_TUNNEL) ? "rmtaddr" : "mask",
 		    ntohl(vifcp->vifc_rmt_addr.s_addr),
 		    vifcp->vifc_threshold,
-		    vifcp->vifc_rate_limit);    
-	
+		    vifcp->vifc_rate_limit);
+
 	return (0);
 }
 
@@ -706,7 +706,7 @@ del_vif(m)
 	register struct vif *vifp;
 	register vifi_t vifi;
 	int s;
-	
+
 	if (m == 0 || m->m_len < sizeof(vifi_t))
 		return (EINVAL);
 
@@ -717,24 +717,24 @@ del_vif(m)
 	vifp = &viftable[*vifip];
 	if (vifp->v_lcl_addr.s_addr == 0)
 		return (EADDRNOTAVAIL);
-	
+
 	s = splsoftnet();
-	
+
 	reset_vif(vifp);
-	
+
 	bzero((caddr_t)qtable[*vifip], sizeof(qtable[*vifip]));
-	
+
 	/* Adjust numvifs down */
 	for (vifi = numvifs; vifi > 0; vifi--)
 		if (viftable[vifi-1].v_lcl_addr.s_addr != 0)
 			break;
 	numvifs = vifi;
-	
+
 	splx(s);
-	
+
 	if (mrtdebug)
 		log(LOG_DEBUG, "del_vif %d, numvifs %d\n", *vifip, numvifs);
-	
+
 	return (0);
 }
 
@@ -826,7 +826,7 @@ add_mfc(m)
 		return (0);
 	}
 
-	/* 
+	/*
 	 * Find the entry for which the upcall was made and update
 	 */
 	nstl = 0;
@@ -879,7 +879,7 @@ add_mfc(m)
 			    ntohl(mfccp->mfcc_origin.s_addr),
 			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 			    mfccp->mfcc_parent);
-	
+
 		rt = (struct mfc *)malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
 		if (rt == NULL) {
 			splx(s);
@@ -894,7 +894,7 @@ add_mfc(m)
 		rt->mfc_wrong_if = 0;
 		timerclear(&rt->mfc_last_assert);
 		update_mfc(mfccp, rt);
-	    
+
 		/* insert new entry at head of hash chain */
 		LIST_INSERT_HEAD(&mfchashtbl[hash], rt, mfc_hash);
 	}
@@ -905,7 +905,7 @@ add_mfc(m)
 
 #ifdef UPCALL_TIMING
 /*
- * collect delay statistics on the upcalls 
+ * collect delay statistics on the upcalls
  */
 static void collate(t)
 register struct timeval *t;
@@ -913,16 +913,16 @@ register struct timeval *t;
     register u_int32_t d;
     register struct timeval tp;
     register u_int32_t delta;
-    
+
     microtime(&tp);
-    
+
     if (timercmp(t, &tp, <)) {
 	TV_DELTA(tp, *t, delta);
-	
+
 	d = delta >> 10;
 	if (d > 50)
 	    d = 50;
-	
+
 	++upcall_data[d];
     }
 }
@@ -1116,7 +1116,7 @@ ip_mforward(m, ifp)
 	    splx(s);
 	    return (ENOBUFS);
 	}
-	    
+
 	/* is there an upcall waiting for this packet? */
 	hash = MFCHASH(ip->ip_src.s_addr, ip->ip_dst.s_addr);
 	for (rt = mfchashtbl[hash].lh_first; rt; rt = rt->mfc_hash.le_next) {
@@ -1150,12 +1150,12 @@ ip_mforward(m, ifp)
 		return (ENOBUFS);
 	    }
 
-	    /* 
-	     * Send message to routing daemon to install 
+	    /*
+	     * Send message to routing daemon to install
 	     * a route into the kernel table
 	     */
 	    sin.sin_addr = ip->ip_src;
-	    
+
 	    im = mtod(mm, struct igmpmsg *);
 	    im->im_msgtype	= IGMPMSG_NOCACHE;
 	    im->im_mbz		= 0;
@@ -1313,7 +1313,7 @@ ip_mdq(m, ifp, rt)
 	/* came in the wrong interface */
 	if (mrtdebug & DEBUG_FORWARD)
 	    log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p\n",
-		ifp, vifi, vifi >= numvifs ? 0 : viftable[vifi].v_ifp); 
+		ifp, vifi, vifi >= numvifs ? 0 : viftable[vifi].v_ifp);
 	++mrtstat.mrts_wrong_if;
 	++rt->mfc_wrong_if;
 	/*
@@ -1342,7 +1342,7 @@ ip_mdq(m, ifp, rt)
 		}
 
 		rt->mfc_last_assert = now;
-		
+
 		im = mtod(mm, struct igmpmsg *);
 		im->im_msgtype	= IGMPMSG_WRONGVIF;
 		im->im_mbz	= 0;
@@ -1387,7 +1387,7 @@ ip_mdq(m, ifp, rt)
 #ifdef RSVP_ISI
 /*
  * check if a vif number is legal/ok. This is used by ip_output, to export
- * numvifs there, 
+ * numvifs there,
  */
 int
 legal_vif_num(vif)
@@ -1446,7 +1446,7 @@ encap_send(ip, vifp, m)
 	mb_copy->m_data += max_linkhdr;
 	mb_copy->m_pkthdr.len = len;
 	mb_copy->m_len = sizeof(multicast_encap_iphdr);
-	
+
 	if ((mb_copy->m_next = m_copy(m, 0, M_COPYALL)) == NULL) {
 		m_freem(mb_copy);
 		return;
@@ -1457,7 +1457,7 @@ encap_send(ip, vifp, m)
 	mb_copy = m_pullup(mb_copy, i);
 	if (mb_copy == NULL)
 		return;
-	
+
 	/*
 	 * fill in the encapsulating IP header.
 	 */
@@ -1467,7 +1467,7 @@ encap_send(ip, vifp, m)
 	ip_copy->ip_len = len;
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
-	
+
 	/*
 	 * turn the encapsulated IP header back into a valid one.
 	 */
@@ -1483,7 +1483,7 @@ encap_send(ip, vifp, m)
 	ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
 	mb_copy->m_data -= sizeof(multicast_encap_iphdr);
 #endif
-	
+
 	if (vifp->v_rate_limit <= 0)
 		tbf_send_packet(vifp, mb_copy);
 	else
@@ -1523,7 +1523,7 @@ ipip_mroute_input(struct mbuf *m, ...)
 	 */
 	if (ip->ip_src.s_addr != last_encap_src) {
 		register struct vif *vife;
-	
+
 		vifp = viftable;
 		vife = vifp + numvifs;
 		for (; vifp < vife; vifp++)
@@ -1611,11 +1611,11 @@ tbf_control(vifp, m, ip, p_len)
 	}
 }
 
-/* 
+/*
  * adds a packet to the queue at the interface
  */
 static void
-tbf_queue(vifp, m, ip) 
+tbf_queue(vifp, m, ip)
     register struct vif *vifp;
     register struct mbuf *m;
     register struct ip *ip;
@@ -1635,7 +1635,7 @@ tbf_queue(vifp, m, ip)
 }
 
 
-/* 
+/*
  * processes the queue at the interface
  */
 static void
@@ -1669,7 +1669,7 @@ tbf_process_q(vifp)
     splx(s);
 }
 
-/* 
+/*
  * removes the jth packet from the queue at the interface
  */
 static void
@@ -1682,7 +1682,7 @@ tbf_dequeue(vifp, j)
 
     for (i=j+1; i <= vifp->v_tbf.q_len - 1; i++) {
 	qtable[index][i-1] = qtable[index][i];
-    }		
+    }
     qtable[index][i-1].pkt_m = NULL;
     qtable[index][i-1].pkt_len = NULL;
     qtable[index][i-1].pkt_ip = NULL;
@@ -1699,7 +1699,7 @@ tbf_reprocess_q(arg)
 {
 	register struct vif *vifp = arg;
 
-	if (ip_mrouter == NULL) 
+	if (ip_mrouter == NULL)
 		return;
 
 	tbf_update_tokens(vifp);
@@ -1803,7 +1803,7 @@ priority(vifp, ip)
     register int prio;
 
     /* temporary hack; may add general packet classifier some day */
-    
+
     /*
      * The UDP port space is divided up into four priority ranges:
      * [0, 16384)     : unclassified - lowest priority
@@ -1838,7 +1838,7 @@ priority(vifp, ip)
 }
 
 /*
- * End of token bucket filter modifications 
+ * End of token bucket filter modifications
  */
 
 #ifdef RSVP_ISI
@@ -2050,7 +2050,7 @@ rsvp_input(m, ifp)
     else
 	if (rsvpdebug)
 	    printf("rsvp_input: send packet up\n");
-    
+
     splx(s);
 }
 #endif /* RSVP_ISI */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.8 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.9 2002/06/09 16:26:10 itojun Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.10 1996/02/13 23:42:55 christos Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -71,7 +71,7 @@ struct mfcctl {
 	vifi_t	 mfcc_parent;		/* incoming vif */
 	u_int8_t mfcc_ttls[MAXVIFS];	/* forwarding ttls on vifs */
 };
-  
+
 /*
  * Argument structure used by mrouted to get src-grp pkt counts.
  */
@@ -82,7 +82,7 @@ struct sioc_sg_req {
 	u_long	bytecnt;
 	u_long	wrong_if;
 };
-  
+
 /*
  * Argument structure used by mrouted to get vif pkt counts.
  */
@@ -113,7 +113,7 @@ struct mrtstat {
 	u_long	mrts_pkt2large;     	/* pkts dropped - size > BKT SIZE */
 	u_long	mrts_upq_sockfull;	/* upcalls dropped - socket full */
 };
-  
+
 
 #ifdef _KERNEL
 
@@ -150,7 +150,7 @@ struct vif {
 
 /*
  * The kernel's multicast forwarding cache entry structure.
- * (A field for the type of service (mfc_tos) is to be added 
+ * (A field for the type of service (mfc_tos) is to be added
  * at a future point.)
  */
 struct mfc {
@@ -197,13 +197,13 @@ struct rtdetq {
 
 #define	MFCTBLSIZ	256
 #define	MAX_UPQ		4		/* max. no of pkts in upcall Q */
-  
+
 /*
- * Token bucket filter code 
+ * Token bucket filter code
  */
 #define	MAX_BKT_SIZE    10000		/* 10K bytes size */
 #define	MAXQSIZE        10		/* max. no of pkts in token queue */
-  
+
 /*
  * Queue structure at each vif
  */
@@ -212,7 +212,7 @@ struct pkt_queue {
 	struct	  mbuf *pkt_m;		/* pointer to packet mbuf */
 	struct	  ip *pkt_ip;		/* pointer to ip header */
 };
-  
+
 int	ip_mrouter_set(int, struct socket *, struct mbuf **);
 int	ip_mrouter_get(int, struct socket *, struct mbuf **);
 int	mrt_ioctl(u_long, caddr_t);

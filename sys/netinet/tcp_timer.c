@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.29 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.30 2002/06/09 16:26:11 itojun Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ tcp_timer_rexmt(void *arg)
 	    tp->t_rttmin, TCPTV_REXMTMAX);
 	TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
-	/* 
+	/*
 	 * If we are losing and we are trying path MTU discovery,
 	 * try turning it off.  This will avoid black holes in
 	 * the network which suppress or fail to send "packet
@@ -312,7 +312,7 @@ tcp_timer_rexmt(void *arg)
 	 * size increase exponentially with time.  If the
 	 * window is larger than the path can handle, this
 	 * exponential growth results in dropped packet(s)
-	 * almost immediately.  To get more time between 
+	 * almost immediately.  To get more time between
 	 * drops but still "push" the network to take advantage
 	 * of improving conditions, we switch from exponential
 	 * to linear window opening at some threshhold size.

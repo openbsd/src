@@ -1,15 +1,15 @@
-/*	$OpenBSD: ip_ether.h,v 1.12 2002/03/14 01:27:11 millert Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.13 2002/06/09 16:26:10 itojun Exp $ */
 /*
- * The author of this code is Angelos D. Keromytis (angelos@adk.gr) 
+ * The author of this code is Angelos D. Keromytis (angelos@adk.gr)
  *
  * This code was written by Angelos D. Keromytis in October 1999.
  *
  * Copyright (C) 1999-2001 Angelos D. Keromytis.
- *	
+ *
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
