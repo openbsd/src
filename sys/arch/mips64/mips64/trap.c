@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2004/10/30 14:49:39 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 2004/11/09 19:06:18 kettenis Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -150,7 +150,7 @@ extern void MipsFPTrap(u_int, u_int, u_int, union sigval);
 
 register_t trap(struct trap_frame *);
 int cpu_singlestep(struct proc *);
-u_long MipsEmulateBranch(struct trap_frame *, long, int, long);
+u_long MipsEmulateBranch(struct trap_frame *, long, int, u_int);
 
 /*
  * Handle an exception.
@@ -901,11 +901,11 @@ trapDump(msg)
  * Return the resulting PC as if the branch was executed.
  */
 unsigned long
-MipsEmulateBranch(framePtr, instPC, fpcCSR, instptr)
+MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 	struct trap_frame *framePtr;
 	long instPC;
 	int fpcCSR;
-	long instptr;
+	u_int curinst;
 {
 	InstFmt inst;
 	unsigned long retAddr;
@@ -916,8 +916,8 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, instptr)
 	((unsigned long)InstPtr + 4 + ((short)inst.IType.imm << 2))
 
 
-	if (instptr) {
-		inst = *(InstFmt *)&instptr;
+	if (curinst) {
+		inst = *(InstFmt *)&curinst;
 	}
 	else {
 		inst = *(InstFmt *)instPC;
