@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.14 2004/11/10 14:01:25 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.15 2004/11/11 12:19:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -778,7 +778,8 @@ axe_rxstart(struct ifnet *ifp)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
-	    c, mtod(c->axe_mbuf, char *), AXE_BUFSZ, USBD_SHORT_XFER_OK,
+	    c, c->axe_buf, AXE_BUFSZ,
+	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(c->axe_xfer);
 	axe_unlock_mii(sc);
@@ -1142,8 +1143,9 @@ axe_init(void *xsc)
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
 		c = &sc->axe_cdata.axe_rx_chain[i];
 		usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
-		    c, mtod(c->axe_mbuf, char *), AXE_BUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axe_rxeof);
+		    c, c->axe_buf, AXE_BUFSZ,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    USBD_NO_TIMEOUT, axe_rxeof);
 		usbd_transfer(c->axe_xfer);
 	}
 
