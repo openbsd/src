@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.25 2004/09/14 22:29:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -151,7 +151,7 @@ cpuattach(parent, self, aux)
 
 	if (pdc_btlb.finfo.num_c)
 		printf(", %u BTLB\n", pdc_btlb.finfo.num_c);
-	else
+	else if (pdc_btlb.finfo.num_i || pdc_btlb.finfo.num_d)
 		printf(", %u/%u D/I BTLBs\n",
 		    pdc_btlb.finfo.num_i, pdc_btlb.finfo.num_d);
 
