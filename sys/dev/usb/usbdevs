@@ -1,5 +1,5 @@
-	$OpenBSD: usbdevs,v 1.3 1999/08/27 09:08:03 fgsch Exp $
-/*	$NetBSD: usbdevs,v 1.39 1999/08/25 23:23:17 augustss Exp $	*/
+	$OpenBSD: usbdevs,v 1.4 1999/08/29 10:31:13 fgsch Exp $
+/*	$NetBSD: usbdevs,v 1.40 1999/08/28 10:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,37 +43,41 @@
  */
 
 vendor NEC		0x0409	NEC
-vendor KODAK		0x040a	Eastman Kodak co.
+vendor KODAK		0x040a	Eastman Kodak Corp.
 vendor CATC		0x0423	Computer Access Technology Corp.
 vendor GRAVIS		0x0428	Advanced Gravis Computer Tech. Ltd.
-vendor NANAO		0x0440	NANAO Corporation
+vendor NANAO		0x0440	NANAO Corp.
+vendor THRUST		0x044f	Thrustmaster
 vendor TI		0x0451  Texas Instruments
 vendor GENIUS		0x0458	KYE Systems Corp.
 vendor MICROSOFT	0x045e	Microsoft
 vendor KENSINGTON	0x0461	Primax Electronics
-vendor CHERRY		0x046a	Cherry Mikroschalter GMBH
+vendor CHERRY		0x046a	Cherry Mikroschalter GmbH
 vendor LOGITECH		0x046d	Logitech Inc.
 vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix Corp.
+vendor LUCENT		0x047e	Lucent
 vendor STMICRO		0x0483	STMicroelectronics
 vendor ACER		0x04a5	Acer Peripheral Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
-vendor KONICA		0x04c8	Konica Corporation
+vendor KONICA		0x04c8	Konica Corp.
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor BROTHER		0x04f9	Brother Industries Corp.
 vendor JAZZ		0x04fa	Dallas Semiconductor
 vendor KAWATSU		0x050f	Kawatsu Semiconductor, Inc.
 vendor AKS		0x0529	Fast Security AG
 vendor VISION		0x0533	Alcatel Mobile Phones
-vendor ATEN		0x0557	ATEN International Co. ltd.
-vendor PERACOM		0x0565	Peracom Networks, Inc.
-vendor WACOM		0x056a	WACOM Co. Ltd.
+vendor ATEN		0x0557	ATEN International Corp. Ltd.
+vendor PERACOM		0x0565	Peracom Networks Inc.
+vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor EIZO		0x056d	EIZO
-vendor AGILER		0x056e	Elecom Co., Ltd.
-vendor IOMEGA		0x059b	Iomega Corporation
+vendor AGILER		0x056e	Elecom Corp. Ltd.
+vendor ROCKFIRE		0x0583	Rockfire
+vendor IOMEGA		0x059b	Iomega Corp.
+vendor OMNIVISION	0x05a9	OmniVision
 vendor BELKIN		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor EIZONANAO	0x05e7	EIZO Nanao
@@ -104,7 +108,10 @@ product CATC ANDROMEDA		0x1237	Andromeda hub
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
-/* Unixtar products */
+/* Thrustmaster products */
+product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
+
+/* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub
 
 /* Genius products */
@@ -124,7 +131,7 @@ product KENSINGTON MOUSEINABOX	0x4d02	Mouse-in-a-Box
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
 product CHERRY MY3000HUB	0x0003	My3000 hub
 
-/* Behavior Technology Corporation products */
+/* Behavior Technology Computer products */
 product BTC BTC7932		0x6782	Keyboard with mouse port
 
 /* Philips products */
@@ -133,6 +140,9 @@ product PHILIPS HUB		0x0201	hub
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
+
+/* Lucent products */
+product LUCENT EVALKIT		0x1001	USS-720 evaluation kit
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
@@ -144,12 +154,12 @@ product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 product CYPRESS MOUSE		0x0001	mouse
 
 /* Epson products */
-product EPSON PRINTER3		0x0003	printer adapter
+product EPSON PRINTER3		0x0003	ISD USB Smart Cable
 
 /* 3Com products */
-product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice USB Modem
+product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
-/* Konica Corporation Products */
+/* Konica Corp. Products */
 product KONICA CAMERA		0x0720	Digital Color Camera
 
 /* Shuttle Technology products */
@@ -186,8 +196,14 @@ product EIZO MONITOR		0x0001	monitor
 /* Agiler products */
 product AGILER MOUSE29UO	0x0002	mouse 29UO
 
+/* Rockfire products */
+product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
+
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
+
+/* OmniVision Technologies Inc. products */
+product OMNIVISION OV511	0x0511	OV511 Camera
 
 /* Belkin products */
 product BELKIN F5U002		0x0002	Parallel printer adapter
@@ -207,7 +223,7 @@ product CHIC MOUSE1		0x0001	mouse
 product MACALLY MOUSE1		0x0101	mouse
 
 /* MultiTech products */
-product MULTITECH MT5634ZBA	0xf101	MT5634ZBA
+product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
 
 /* ADS products */
 product ADS ENET		0x0008	Ethernet adapter
