@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.83 1998/09/15 21:48:27 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.84 1998/09/17 00:44:35 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -551,6 +551,10 @@ configure_ifs() {
 	_interface_ip=$2
 	_interface_mask=$3
 
+	if [ $_up = "UP" ]; then
+		ifconfig $_interface_name delete down
+	fi
+
 	# Get IP address
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
@@ -605,37 +609,27 @@ configure_ifs() {
 	# Configure the interface.  If it
 	# succeeds, add it to the permanent
 	# network configuration info.
-	if [ $_up != "UP" ]; then
-		if [ "$_interface_ip" = "dhcp" ]; then
-			if dhclient ${_interface_name} ; then
-				echo "DHCP configuration of $_interface_name successful."
-				addifconfig \
-					${_interface_name} \
-					${_interface_symname} \
-					${_interface_ip}
-				return 0
-			fi
-		else
-			ifconfig ${_interface_name} down
-			if ifconfig ${_interface_name} inet \
-			    ${_interface_ip} \
-			    netmask ${_interface_mask} ${_interface_extra} up ; then
-				addifconfig \
-				    ${_interface_name} \
-				    ${_interface_symname} \
-				    ${_interface_ip} \
-				    ${_interface_mask} "${_interface_extra}"
-				return 0
-			fi
+	if [ "$_interface_ip" = "dhcp" ]; then
+		if dhclient ${_interface_name} ; then
+			echo "DHCP configuration of $_interface_name successful."
+			addifconfig \
+				${_interface_name} \
+				${_interface_symname} \
+				${_interface_ip}
+			return 0
 		fi
 	else
-		echo "Interface ${_interface_name} is already active."
-		echo "Just saving configuration on new root filesystem."
-		addifconfig \
-		    ${_interface_name} \
-		    ${_interface_symname} \
+		ifconfig ${_interface_name} down
+		if ifconfig ${_interface_name} inet \
 		    ${_interface_ip} \
-		    ${_interface_mask} "${_interface_extra}"
+		    netmask ${_interface_mask} ${_interface_extra} up ; then
+			addifconfig \
+			    ${_interface_name} \
+			    ${_interface_symname} \
+			    ${_interface_ip} \
+			    ${_interface_mask} "${_interface_extra}"
+			return 0
+		fi
 	fi
 	return 1
 }
