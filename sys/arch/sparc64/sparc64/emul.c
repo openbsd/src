@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.10 2003/07/13 07:00:47 jason Exp $	*/
+/*	$OpenBSD: emul.c,v 1.11 2003/07/14 00:05:35 jason Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -49,9 +49,8 @@
 #include <sparc64/sparc64/cpuvar.h>
 #include <uvm/uvm_extern.h>
 
-#define DEBUG_EMUL
 #ifdef DEBUG_EMUL
-# define DPRINTF(a) uprintf a
+# define DPRINTF(a) printf a
 #else
 # define DPRINTF(a)
 #endif
@@ -180,14 +179,14 @@ muldiv(tf, code, rd, rs1, rs2)
 	op.num = code->i_op3.i_op3;
 
 #ifdef DEBUG_EMUL
-	uprintf("muldiv 0x%x: %c%s%s %c%d, %c%d, ", code->i_int,
+	printf("muldiv 0x%x: %c%s%s %c%d, %c%d, ", code->i_int,
 	    "us"[op.bits.sgn], op.bits.div ? "div" : "mul",
 	    op.bits.cc ? "cc" : "", REGNAME(code->i_op3.i_rd),
 	    REGNAME(code->i_op3.i_rs1));
 	if (code->i_loadstore.i_i)
-		uprintf("0x%x\n", *rs2);
+		printf("0x%x\n", *rs2);
 	else
-		uprintf("%c%d\n", REGNAME(code->i_asi.i_rs2));
+		printf("%c%d\n", REGNAME(code->i_asi.i_rs2));
 #endif
 
 	if (op.bits.div) {
@@ -198,7 +197,7 @@ muldiv(tf, code, rd, rs1, rs2)
 			 *	It should be easy to fix by passing struct
 			 *	proc in here.
 			 */
-			DPRINTF(("emulinstr: avoid zerodivide\n"));
+			DPRINTF(("muldiv: avoid zerodivide\n"));
 			return EINVAL;
 		}
 		*rd = *rs1 / *rs2;
@@ -296,12 +295,12 @@ fixalign(p, tf)
 	write_user_windows();
 
 	if ((error = readgpreg(tf, code.i_op3.i_rs1, &rs1)) != 0) {
-		DPRINTF(("emulinstr: read rs1 %d\n", error));
+		DPRINTF(("fixalign: read rs1 %d\n", error));
 		return error;
 	}
 
 	if ((error = decodeaddr(tf, &code, &rs2)) != 0) {
-		DPRINTF(("emulinstr: decode addr %d\n", error));
+		DPRINTF(("fixalign: decode addr %d\n", error));
 		return error;
 	}
 
@@ -309,14 +308,14 @@ fixalign(p, tf)
 	rs1 += rs2;
 
 #ifdef DEBUG_EMUL
-	uprintf("memalign 0x%x: %s%c%c %c%d, %c%d, ", code.i_int,
+	printf("memalign 0x%x: %s%c%c %c%d, %c%d, ", code.i_int,
 	    op.bits.st ? "st" : "ld", "us"[op.bits.sgn],
 	    "w*hd"[op.bits.sz], op.bits.fl ? 'f' : REGNAME(code.i_op3.i_rd),
 	    REGNAME(code.i_op3.i_rs1));
 	if (code.i_loadstore.i_i)
-		uprintf("0x%llx\n", (unsigned long long)rs2);
+		printf("0x%llx\n", (unsigned long long)rs2);
 	else
-		uprintf("%c%d\n", REGNAME(code.i_asi.i_rs2));
+		printf("%c%d\n", REGNAME(code.i_asi.i_rs2));
 #endif
 #ifdef DIAGNOSTIC
 	if (op.bits.fl && p != fpproc)
@@ -416,48 +415,48 @@ emulinstr(pc, tf)
 	error = copyin((caddr_t) pc, &code.i_int, sizeof(code.i_int));
 	if (error != 0) {
 		DPRINTF(("emulinstr: Bad instruction fetch\n"));
-		return SIGILL;
+		return (SIGILL);
 	}
 
 	/* Only support format 2 */
 	if (code.i_any.i_op != 2) {
 		DPRINTF(("emulinstr: Not a format 2 instruction\n"));
-		return SIGILL;
+		return (SIGILL);
 	}
 
 	write_user_windows();
 
 	if ((error = readgpreg(tf, code.i_op3.i_rs1, &rs1)) != 0) {
 		DPRINTF(("emulinstr: read rs1 %d\n", error));
-		return SIGILL;
+		return (SIGILL);
 	}
 
 	if ((error = decodeaddr(tf, &code, &rs2)) != 0) {
 		DPRINTF(("emulinstr: decode addr %d\n", error));
-		return SIGILL;
+		return (SIGILL);
 	}
 
 	switch (code.i_op3.i_op3) {
 	case IOP3_FLUSH:
 /*		cpuinfo.cache_flush((caddr_t)(rs1 + rs2), 4); XXX */
-		return 0;
+		return (0);
 
 	default:
 		if ((code.i_op3.i_op3 & 0x2a) != 0xa) {
 			DPRINTF(("emulinstr: Unsupported op3 0x%x\n",
 			    code.i_op3.i_op3));
-			return SIGILL;
+			return (SIGILL);
 		}
 		else if ((error = muldiv(tf, &code, &rd, &rs1, &rs2)) != 0)
-			return SIGFPE;
+			return (SIGFPE);
 	}
 
 	if ((error = writegpreg(tf, code.i_op3.i_rd, &rd)) != 0) {
 		DPRINTF(("muldiv: write rd %d\n", error));
-		return SIGILL;
+		return (SIGILL);
 	}
 
-	return 0;
+	return (0);
 }
 
 #define	SIGN_EXT13(v)	(((int64_t)(v) << 51) >> 51)
