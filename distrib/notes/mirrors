@@ -57,7 +57,6 @@ Germany:
 ftp://ftp.de.openbsd.org/pub/unix/OpenBSD (Berlin)
 ftp://ftp.freenet.de/pub/ftp.openbsd.org/pub/OpenBSD (Duesseldorf)
 ftp://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
-ftp://ftp.gigabell.net/pub/OpenBSD (Frankfurt)
 ftp://ftp.leo.org/pub/OpenBSD (Muenchen)
 ftp://ftp.fh-wolfenbuettel.de/pub/os/openbsd (Wolfenbuettel)
 
@@ -131,7 +130,7 @@ ftp://sunsite.cnlab-switch.ch/pub/OpenBSD (Zurich)
 Taiwan:
 
 ftp://openbsd.csie.nctu.edu.tw/pub/OpenBSD
-ftp://ftp.cdpa.nsysu.edu.tw/pub/OpenBSD
+ftp://openbsd.nsysu.edu.tw/pub/OpenBSD
 ftp://ftp.tku.edu.tw/pub/OpenBS (TamSui)
 
 Thailand:
@@ -142,7 +141,6 @@ United Kingdom:
 
 ftp://sunsite.org.uk/Mirrors/ftp.openbsd.org/pub/OpenBSD (London)
 ftp://ftp.plig.org/pub/OpenBSD (London)
-ftp://ftp.knowledge.com/pub/mirrors/OpenBSD (London)
 
 USA:
 
