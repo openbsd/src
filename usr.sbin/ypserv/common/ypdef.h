@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ypdef.h,v 1.1 1995/11/01 16:56:17 deraadt Exp $
+ *	$Id: ypdef.h,v 1.2 1996/01/20 00:29:39 chuck Exp $
  */
 
 #ifndef _YPDEF_H_
@@ -38,19 +38,19 @@
 
 #define YP_DB_PATH "/var/yp"
 #define YP_LAST_KEY        "YP_LAST_MODIFIED"
-#define YP_LAST_LEN	   sizeof(YP_LAST_KEY)
+#define YP_LAST_LEN	   (sizeof(YP_LAST_KEY)-1)
 #define YP_INPUT_KEY       "YP_INPUT_FILE"
-#define YP_INPUT_LEN	   sizeof(YP_INPUT_KEY)
+#define YP_INPUT_LEN	   (sizeof(YP_INPUT_KEY)-1)
 #define YP_OUTPUT_KEY      "YP_OUTPUT_FILE"
-#define YP_OUTPUT_LEN	   sizeof(YP_OUTPUT_KEY)
+#define YP_OUTPUT_LEN	   (sizeof(YP_OUTPUT_KEY)-1)
 #define YP_MASTER_KEY      "YP_MASTER_NAME"
-#define YP_MASTER_LEN	   sizeof(YP_MASTER_KEY)
+#define YP_MASTER_LEN	   (sizeof(YP_MASTER_KEY)-1)
 #define YP_DOMAIN_KEY      "YP_DOMAIN_NAME"
-#define YP_DOMAIN_LEN	   sizeof(YP_DOMAIN_KEY)
+#define YP_DOMAIN_LEN	   (sizeof(YP_DOMAIN_KEY)-1)
 #define YP_INTERDOMAIN_KEY "YP_INTERDOMAIN"
-#define YP_INTERDOMAIN_LEN sizeof(YP_INTERDOMAIN_KEY)
+#define YP_INTERDOMAIN_LEN (sizeof(YP_INTERDOMAIN_KEY)-1)
 #define YP_SECURE_KEY      "YP_SECURE"
-#define YP_SECURE_LEN      sizeof(YP_SECURE_KEY)
+#define YP_SECURE_LEN      (sizeof(YP_SECURE_KEY)-1)
 
 #define MAX_LAST_LEN 10
 #define MAX_MASTER_LEN 255
