@@ -26,11 +26,15 @@ Boston, MA 02111-1307, USA.  */
 
 /* fixme: bsd, svr1-3 use int, not pid_t */
 
-integer
-G77_kill_0 (const integer * pid, const integer * signum)
+#ifdef KR_headers
+integer G77_kill_0 (pid, signum)
+     integer *pid, *signum;
+#else
+integer G77_kill_0 (const integer *pid, const integer *signum)
+#endif
 {
 #if defined (HAVE_KILL)
-  return kill ((pid_t) * pid, *signum) ? errno : 0;
+  return kill ((pid_t) *pid, *signum) ? errno : 0;
 #else
   errno = ENOSYS;
   return -1;

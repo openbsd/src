@@ -33,8 +33,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Reported by wd42ej@sgi83.wwb.noaa.gov (Russ Jones AUTO-Sun3) on AIX. */
 
-longint
-G77_mclock_0 (void)
+#ifdef KR_headers
+longint G77_mclock_0 ()
+#else
+longint G77_mclock_0 (void)
+#endif
 {
 #if HAVE_CLOCK
   return clock ();

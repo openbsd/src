@@ -6,19 +6,33 @@
 
 static integer memfailure = 3;
 
+#ifdef KR_headers
+extern char *malloc();
+extern void G77_exit_0 ();
+
+ char *
+F77_aloc(Len, whence) integer Len; char *whence;
+#else
 #include <stdlib.h>
-extern void G77_exit_0 (integer *);
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void G77_exit_0 (integer*);
+#ifdef __cplusplus
+	}
+#endif
 
-char *
-F77_aloc (integer Len, char *whence)
+ char *
+F77_aloc(integer Len, char *whence)
+#endif
 {
-  char *rv;
-  unsigned int uLen = (unsigned int) Len;	/* for K&R C */
+	char *rv;
+	unsigned int uLen = (unsigned int) Len;	/* for K&R C */
 
-  if (!(rv = (char *) malloc (uLen)))
-    {
-      fprintf (stderr, "malloc(%u) failure in %s\n", uLen, whence);
-      G77_exit_0 (&memfailure);
-    }
-  return rv;
-}
+	if (!(rv = (char*)malloc(uLen))) {
+		fprintf(stderr, "malloc(%u) failure in %s\n",
+			uLen, whence);
+		G77_exit_0 (&memfailure);
+		}
+	return rv;
+	}

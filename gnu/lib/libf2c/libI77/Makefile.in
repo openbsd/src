@@ -38,12 +38,12 @@ CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 @SET_MAKE@
 
-SHELL = @SHELL@
+SHELL = /bin/sh
 
 #### End of system configuration section. ####
 
 ALL_CFLAGS = -I. -I$(srcdir) -I$(G2C_H_DIR) -I$(F2C_H_DIR) $(CPPFLAGS) \
-             $(DEFS) $(WARN_CFLAGS) $(CFLAGS)
+             $(DEFS) $(CFLAGS)
 
 .SUFFIXES:
 .SUFFIXES: .c .lo

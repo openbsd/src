@@ -1,7 +1,10 @@
 #include "f2c.h"
 
-integer
-i_mod (integer * a, integer * b)
+#ifdef KR_headers
+integer i_mod(a,b) integer *a, *b;
+#else
+integer i_mod(integer *a, integer *b)
+#endif
 {
-  return (*a % *b);
+return( *a % *b);
 }

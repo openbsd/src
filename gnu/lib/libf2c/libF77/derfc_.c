@@ -1,9 +1,14 @@
 #include "f2c.h"
 
-extern double erfc (double);
+#ifdef KR_headers
+extern double erfc();
 
-double
-G77_derfc_0 (doublereal * x)
+double G77_derfc_0 (x) doublereal *x;
+#else
+extern double erfc(double);
+
+double G77_derfc_0 (doublereal *x)
+#endif
 {
-  return (erfc (*x));
+return( erfc(*x) );
 }

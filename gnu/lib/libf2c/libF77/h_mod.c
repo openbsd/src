@@ -1,7 +1,10 @@
 #include "f2c.h"
 
-shortint
-h_mod (short *a, short *b)
+#ifdef KR_headers
+shortint h_mod(a,b) short *a, *b;
+#else
+shortint h_mod(short *a, short *b)
+#endif
 {
-  return (*a % *b);
+return( *a % *b);
 }

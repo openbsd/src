@@ -1,6 +1,9 @@
-const char __LIBF77_VERSION__[] = "@(#) LIBF77 VERSION 20000929\n";
-extern const char __LIBI77_VERSION__[];
-extern const char __LIBU77_VERSION__[];
+static char junk[] = "\n@(#)LIBF77 VERSION 20000929\n";
+
+/*
+*/
+
+char __G77_LIBF77_VERSION__[] = "3.2.2 20030422 (release)";
 
 /*
 2.00	11 June 1980.  File version.c added to library.
@@ -84,11 +87,6 @@ extern const char __LIBU77_VERSION__[];
 void
 g77__fvers__ ()
 {
-  fputs ("GNU Fortran library.\n", stderr);
-#if defined __GNUC__ && defined __VERSION__
-  fprintf (stderr, "Compiled by GCC %s\n", __VERSION__);
-#endif
-  fputs (__LIBF77_VERSION__, stderr);
-  fputs (__LIBI77_VERSION__, stderr);
-  fputs (__LIBU77_VERSION__, stderr);
+  fprintf (stderr, "__G77_LIBF77_VERSION__: %s", __G77_LIBF77_VERSION__);
+  fputs (junk, stderr);
 }

@@ -140,8 +140,7 @@ integer access_ (const char *name, const char *mode, ftnlen Lname, ftnlen Lmode)
 #endif
 
 #ifdef Lalarm
-integer alarm_ (integer *seconds, sig_proc proc,
-		integer *status __attribute__ ((__unused__))) {
+integer alarm_ (integer *seconds, sig_proc proc, integer *status) {
     extern integer G77_alarm_0 (integer *seconds, sig_proc proc);
     return G77_alarm_0 (seconds, proc);
 }

@@ -31,18 +31,27 @@ Boston, MA 02111-1307, USA.  */
 
 /* Note this is per SunOS -- other s may have no arg. */
 
-integer
-G77_irand_0 (integer * flag)
+#ifdef KR_headers
+integer G77_irand_0 (flag)
+  integer *flag;
+#else
+integer G77_irand_0 (integer *flag)
+#endif
 {
-  switch (*flag)
-    {
-    case 0:
-      break;
-    case 1:
-      srand (0);		/* Arbitrary choice of initialiser. */
-      break;
-    default:
-      srand (*flag);
-    }
+  switch (*flag) {
+  case 0:
+    break;
+  case 1:
+    srand (0);			/* Arbitrary choice of initialiser. */
+    break;
+  default:
+    srand (*flag);
+  }
   return rand ();
 }
+
+
+
+
+
+
