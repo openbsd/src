@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.8 1998/02/02 23:08:56 millert Exp $
+#	$OpenBSD: weekly,v 1.9 1999/08/04 17:55:16 mickey Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -24,7 +24,8 @@ if [ -f /var/db/locate.database ]; then
 	if [ $? -eq 0 ]; then
 		trap 'rm -f $TMP' 0 1 15
 		echo "Rebuilding locate database:"
-		echo "/usr/libexec/locate.updatedb --fcodes=-" | \
+		UPDATEDB="/usr/libexec/locate.updatedb"
+		echo "${UPDATEDB} --fcodes=- --tmpdir=${TMPDIR:-/tmp}" | \
 		    nice -5 su -m nobody 2>/dev/null 1>$TMP
 		if [ -s "$TMP" ]; then
 			chmod 444 $TMP
