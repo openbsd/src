@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.9 1997/10/21 15:24:31 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.10 1997/10/25 08:58:49 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -199,7 +199,6 @@ acd*	at atapibus? drive?
 
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-option ED_DEBUG
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 ed1	at isa? port 0x240 iomem 0xd8000 irq 9	#   ethernet cards
 ed2	at isa? port 0x300 iomem 0xcc000 irq 10
