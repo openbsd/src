@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.24 2004/11/21 18:48:10 grange Exp $
+dnl	$OpenBSD: hardware,v 1.25 2004/12/02 01:58:25 pvalchev Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -508,6 +508,9 @@ dnl		    US Robotics 2445 PCMCIA
 		    Linksys EG1032v2 (1000baseT)
 		    Linksys EG1064v2 (1000baseT)
 		    SMC 9452TX (1000baseT)
+		VIA Networking VT6122 based PCI adapters, including:
+		    ZyXEL GN650-T 64-bit PCI Gigabit Ethernet NIC (ZX1701)
+		    ZyXEL GN670-T 32-bit PCI Gigabit Ethernet NIC (ZX1702)
 	ATM Adapters
 		Efficient Networks EN-155 and Adaptec ANA-590X ATM
 		interfaces
