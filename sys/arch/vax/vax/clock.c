@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.7 1997/05/29 00:05:13 niklas Exp $	 */
-/*	$NetBSD: clock.c,v 1.18 1996/10/13 03:35:33 christos Exp $	 */
+/*	$OpenBSD: clock.c,v 1.8 1997/09/10 12:04:42 maja Exp $	 */
+/*	$NetBSD: clock.c,v 1.20 1997/04/18 18:49:37 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,9 +36,10 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <dev/clock_subr.h>
+
 #include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/uvax.h>
 #include <machine/clock.h>
 #include <machine/cpu.h>
 
@@ -104,7 +105,7 @@ inittodr(fs_time)
 {
 	int rv;
 
-	rv = (*cpu_calls[vax_cputype].cpu_clkread) (fs_time);
+	rv = (*dep_call->cpu_clkread) (fs_time);
 	switch (rv) {
 
 	case CLKREAD_BAD: /* No useable information from system clock */
@@ -139,7 +140,7 @@ inittodr(fs_time)
 void
 resettodr()
 {
-	(*cpu_calls[vax_cputype].cpu_clkwrite)();
+	(*dep_call->cpu_clkwrite)();
 }
 /*
  * A delayloop that delays about the number of milliseconds that is
@@ -149,32 +150,7 @@ void
 delay(i)
 	int i;
 {
-	int	mul;
-
-	switch (vax_cputype) {
-#if VAX750 || VAX630 || VAX410
-	case VAX_750:
-	case VAX_78032:
-		mul = 1; /* <= 1 VUPS */
-		break;
-#endif
-#if VAX780 || VAX8200
-	case VAX_780:
-	case VAX_8200:
-		mul = 2; /* <= 2 VUPS */
-		break;
-#endif
-#if VAX650
-	case VAX_650:
-		mul = 3; /* <= 3 VUPS */
-		break;
-#endif
-	default:	/* Would be enough... */
-	case VAX_8600:
-		mul = 6; /* <= 6 VUPS */
-		break;
-	}
-	asm ("1: sobgtr %0, 1b" : : "r" (mul * i));
+	asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
 
 #if VAX750 || VAX780 || VAX8200 || VAX8600 || VAX8800
@@ -279,65 +255,71 @@ generic_clkwrite()
 
 #if VAX630 || VAX410 || VAX43 || VAX8200
 
-static int dagar[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+volatile short *clk_page;	/* where the chip is mapped in virtual memory */
+int	clk_adrshift;	/* how much to multiply the in-page address with */
+int	clk_tweak;	/* Offset of time into word. */
 
-/*
- * Returns the number of days in month based on the current year.
- */
+#define	REGPEEK(off)	(clk_page[off << clk_adrshift] >> clk_tweak)
+#define	REGPOKE(off, v)	(clk_page[off << clk_adrshift] = ((v) << clk_tweak))
+
 int
-daysinmonth(m, y)
-	int m, y;
+chip_clkread(base)
+	time_t base;
 {
-	if (m == 2 && IS_LEAPYEAR(y))
-		return 29;
-	else
-		return dagar[m - 1];
-}
+	struct clock_ymdhms c;
+	int timeout = 1<<15, s;
 
-/*
- * Converts chiptime (year/month/day/hour/min/sek) and returns ticks.
- */
-long
-chiptotime(c)
-	struct chiptime *c;
-{
-	int num, i;
+#ifdef DIAGNOSTIC
+	if (clk_page == 0)
+		panic("trying to use unset chip clock page");
+#endif
 
-	num = c->sec;
-	num += c->min * SEC_PER_MIN;
-	num += c->hour * SEC_PER_HOUR;
-	num += (c->day - 1) * SEC_PER_DAY;
-	for(i = c->mon - 1; i > 0; i--)
-		num += daysinmonth(i, c->year) * SEC_PER_DAY;
-	num += yeartonum(c->year);
-
-	return num;
-}
-
-/*
- * Reads the system time and puts it into a chiptime struct.
- */
-void
-timetochip(c)
-	struct chiptime *c;
-{
-	int tid = time.tv_sec, i, j;
-
-	c->year = numtoyear(tid);
-	tid -= yeartonum(c->year);
-
-	c->mon = 1;
-	while(tid >= (j = (daysinmonth(c->mon, c->year) * SEC_PER_DAY))) {
-		c->mon++;
-		tid -= j;
+	if ((REGPEEK(CSRD_OFF) & CSRD_VRT) == 0) {
+		printf("WARNING: TOY clock not marked valid");
+		return CLKREAD_BAD;
 	}
-	c->day = (tid / SEC_PER_DAY) + 1;
-	tid %= SEC_PER_DAY;
+	while (REGPEEK(CSRA_OFF) & CSRA_UIP)
+		if (--timeout == 0) {
+			printf ("TOY clock timed out");
+			return CLKREAD_BAD;
+		}
 
-	c->hour = tid / SEC_PER_HOUR;
-	tid %= SEC_PER_HOUR;
+	s = splhigh();
+	c.dt_year = REGPEEK(YR_OFF) + 1970;
+	c.dt_mon = REGPEEK(MON_OFF);
+	c.dt_day = REGPEEK(DAY_OFF);
+	c.dt_wday = REGPEEK(WDAY_OFF);
+	c.dt_hour = REGPEEK(HR_OFF);
+	c.dt_min = REGPEEK(MIN_OFF);
+	c.dt_sec = REGPEEK(SEC_OFF);
+	splx(s);
 
-	c->min = tid / SEC_PER_MIN;
-	c->sec = tid % SEC_PER_MIN;
+	time.tv_sec = clock_ymdhms_to_secs(&c);
+	return CLKREAD_OK;
 }
+
+void
+chip_clkwrite()
+{
+	struct clock_ymdhms c;
+
+#ifdef DIAGNOSTIC
+	if (clk_page == 0)
+		panic("trying to use unset chip clock page");
+#endif
+
+	REGPOKE(CSRB_OFF, CSRB_SET);
+
+	clock_secs_to_ymdhms(time.tv_sec, &c);
+
+	REGPOKE(YR_OFF, c.dt_year - 1970);
+	REGPOKE(MON_OFF, c.dt_mon);
+	REGPOKE(DAY_OFF, c.dt_day);
+	REGPOKE(WDAY_OFF, c.dt_wday);
+	REGPOKE(HR_OFF, c.dt_hour);
+	REGPOKE(MIN_OFF, c.dt_min);
+	REGPOKE(SEC_OFF, c.dt_sec);
+
+	REGPOKE(CSRB_OFF, CSRB_DM|CSRB_24);
+};
 #endif

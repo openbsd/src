@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka820.c,v 1.2 1997/05/29 00:05:22 niklas Exp $	*/
-/*	$NetBSD: ka820.c,v 1.3 1996/10/13 03:35:51 christos Exp $	*/
+/*	$OpenBSD: ka820.c,v 1.3 1997/09/10 12:04:49 maja Exp $	*/
+/*	$NetBSD: ka820.c,v 1.5 1997/04/18 18:49:34 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -61,13 +61,27 @@
 #include <arch/vax/bi/bireg.h>
 #include <arch/vax/bi/bivar.h>
 
-struct ka820clock *ka820clock_ptr;
 struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
 void *bi_nodebase;	/* virtual base address for all possible bi nodes */
 
 static int ka820_match __P((struct device *, void *, void *));
 static void ka820_attach __P((struct device *, struct device *, void*));
+
+struct	cpu_dep ka820_calls = {
+	ka820_steal_pages,
+	generic_clock,
+	ka820_mchk,
+	ka820_memerr,
+	NULL,
+	chip_clkread,
+	chip_clkwrite,
+	3,      /* ~VUPS */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+
+};
 
 struct cfattach cpu_bi_ca = {
 	sizeof(struct device), ka820_match, ka820_attach
@@ -95,6 +109,8 @@ ka820_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
 	extern	struct ivec_dsp idsptch;
+	extern	short *clk_page;
+	extern	int clk_adrshift, clk_tweak;
 	struct scb *sb;
 	int	junk, i, j;
 
@@ -106,8 +122,10 @@ ka820_steal_pages()
 	 */
 	sb = (void *)avail_start;
 	MAPPHYS(junk, j, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
-	MAPVIRT(ka820clock_ptr, 1);
-	pmap_map((vm_offset_t)ka820clock_ptr, (vm_offset_t)KA820_CLOCKADDR,
+	clk_adrshift = 0;	/* clk regs are addressed at short's */
+	clk_tweak = 1; 		/* ...but not exactly in each short */
+	MAPVIRT(clk_page, 1);
+	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA820_CLOCKADDR,
 	    KA820_CLOCKADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(ka820port_ptr, 1);
@@ -174,80 +192,6 @@ ka820_attach(parent, self, aux)
 	ka820port_ptr->csr = csr;
 	ba->ba_node->biic.bi_intrdes = ba->ba_intcpu;
 	ba->ba_node->biic.bi_csr |= BICSR_SEIE | BICSR_HEIE;
-}
-
-/* Set system time from clock */
-/* ARGSUSED */
-ka820_clkread(base)
-	time_t base;
-{
-	struct chiptime c;
-	int s, rv;
-
-	rv = CLKREAD_OK;
-	/* I wish I knew the differences between these */
-	if ((ka820clock_ptr->csr3 & KA820CLK_3_VALID) == 0) {
-		printf("WARNING: TOY clock not marked valid\n");
-		rv = CLKREAD_WARN;
-	}
-	if ((ka820clock_ptr->csr1 & KA820CLK_1_GO) != KA820CLK_1_GO) {
-		printf("WARNING: TOY clock stopped\n");
-		rv = CLKREAD_WARN;
-	}
-	/* THIS IS NOT RIGHT (clock may change on us) */
-	s = splhigh();
-	while (ka820clock_ptr->csr0 & KA820CLK_0_BUSY)
-		/* void */;
-	c.sec = ka820clock_ptr->sec;
-	c.min = ka820clock_ptr->min;
-	c.hour = ka820clock_ptr->hr;
-	c.day = ka820clock_ptr->day;
-	c.mon = ka820clock_ptr->mon;
-	c.year = ka820clock_ptr->yr;
-	splx(s);
-
-	/* the darn thing needs tweaking! */
-	c.sec >>= 1;		/* tweak */
-	c.min >>= 1;		/* tweak */
-	c.hour >>= 1;		/* tweak */
-	c.day >>= 1;		/* tweak */
-	c.mon >>= 1;		/* tweak */
-	c.year >>= 1;		/* tweak */
-
-	time.tv_sec = chiptotime(&c);
-	return (time.tv_sec ? rv : CLKREAD_BAD);
-}
-
-/* store time into clock */
-void
-ka820_clkwrite()
-{
-	struct chiptime c;
-	int s;
-
-	timetochip(&c);
-
-	/* play it again, sam (or mike or kirk or ...) */
-	c.sec <<= 1;		/* tweak */
-	c.min <<= 1;		/* tweak */
-	c.hour <<= 1;		/* tweak */
-	c.day <<= 1;		/* tweak */
-	c.mon <<= 1;		/* tweak */
-	c.year <<= 1;		/* tweak */
-
-	s = splhigh();
-	ka820clock_ptr->csr1 = KA820CLK_1_SET;
-	while (ka820clock_ptr->csr0 & KA820CLK_0_BUSY)
-		/* void */;
-	ka820clock_ptr->sec = c.sec;
-	ka820clock_ptr->min = c.min;
-	ka820clock_ptr->hr = c.hour;
-	ka820clock_ptr->day = c.day;
-	ka820clock_ptr->mon = c.mon;
-	ka820clock_ptr->yr = c.year;
-	/* should we set a `rate'? */
-	ka820clock_ptr->csr1 = KA820CLK_1_GO;
-	splx(s);
 }
 
 /*

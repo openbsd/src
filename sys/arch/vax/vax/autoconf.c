@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1997/05/29 00:05:12 niklas Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.20 1997/01/11 13:50:20 ragge Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1997/09/10 12:04:42 maja Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1997/03/22 12:51:00 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,15 +31,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+
+#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/sid.h>
@@ -50,106 +49,16 @@
 #include <machine/ka820.h>
 #include <machine/ka750.h>
 #include <machine/ka650.h>
-#include <machine/uvax.h>
 #include <machine/clock.h>
 
 #include <vax/vax/gencons.h>
 
-#include <vm/vm.h>
-
+struct cpu_dep *dep_call;
 struct nexus *nexus;
+int	mastercpu;	/* chief of the system */
+struct device *booted_from;
 
 #define BACKPLANE	0
-#define BIBUSS		1
-#define SBIBUSS		2
-#define VSBUSS		4
-
-int	mastercpu;	/* chief of the system */
-
-#if defined(VAX630) || defined(VAX410) || defined(VAX43) || defined(VAX46)
-#define VAX_uVAX
-#endif
-
-#ifdef VAX8600 /* XXX These are in ka860 also */
-void	ka86_conf __P((struct device *, struct device *, void *));
-void	ka86_memenable __P((struct sbi_attach_args *, struct device *));
-void	ka86_memerr __P((void));
-int	ka86_mchk __P((caddr_t));
-void	ka86_steal_pages __P((void));
-#endif
-#ifdef VAX780 /* XXX These are in ka780 also */
-void	ka780_conf __P((struct device *, struct device *, void *));
-void	ka780_memenable __P((struct sbi_attach_args *, void *));
-void	ka780_memerr __P((void));
-int	ka780_mchk __P((caddr_t));
-void	ka780_steal_pages __P((void));
-#endif
-
-struct	cpu_dep cpu_calls[]={
-		/* Type 0,noexist */
-	{NULL, NULL, NULL, NULL, NULL },
-#ifdef	VAX780	/* Type 1, 11/{780,782,785} */
-	{ka780_steal_pages,generic_clock, ka780_mchk, ka780_memerr, ka780_conf,
-	    generic_clkread, generic_clkwrite},
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef	VAX750	/* Type 2, 11/750 */
-	{ka750_steal_pages,generic_clock, ka750_mchk, ka750_memerr, ka750_conf,
-	    generic_clkread, generic_clkwrite},
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef	VAX730	/* Type 3, 11/{730,725}, ceauciesco-vax */
-	{NULL, NULL, NULL, NULL, NULL },
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef	VAX8600 /* Type 4, 8600/8650 (11/{790,795}) */
-	{ka86_steal_pages, generic_clock, ka86_mchk, ka86_memerr, ka86_conf,
-	    generic_clkread, generic_clkwrite},
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef	VAX8200 /* Type 5, 8200, 8300, 8350 */
-	{ka820_steal_pages, generic_clock, ka820_mchk, ka820_memerr, NULL,
-	    ka820_clkread, ka820_clkwrite},
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef	VAX8800 /* Type 6, 85X0, 8700, 88X0 */
-	{NULL, generic_clock, NULL, NULL, NULL },
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef	VAX610	/* Type 7, KA610 */
-	{NULL, NULL, NULL, NULL, NULL },
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef	VAX630	/* Type 8, KA630 or KA410 (uVAX II) */
-	{uvax_steal_pages, no_nicr_clock, uvax_mchk, uvax_memerr, uvax_conf,
-	    uvax_clkread, uvax_clkwrite},
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-		/* Type 9, not used */
-	{NULL, NULL, NULL, NULL, NULL },
-#ifdef	VAX650	/* Type 10, KA65X (uVAX III) */
-	{uvaxIII_steal_pages, no_nicr_clock, uvaxIII_mchk, uvaxIII_memerr,
-	    uvaxIII_conf, generic_clkread, generic_clkwrite},
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-#ifdef VAX_uVAX /* Type 11, RIGEL */
-	{uvax_steal_pages, no_nicr_clock, uvax_mchk, uvax_memerr, uvax_conf,
-	    uvax_clkread, uvax_clkwrite},
-#else
-	{NULL, NULL, NULL, NULL, NULL },
-#endif
-};
-
-void	gencnslask __P((void));
 
 void
 configure()
@@ -171,10 +80,6 @@ configure()
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
 	 */
-	gencnslask(); /* XXX inte g|ras h{r */
-#if VAX410 || VAX43
-	dzcnslask(); /* XXX inte g|ras h{r */
-#endif
 	swapconf();
 	cold = 0;
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
@@ -183,6 +88,7 @@ configure()
 int	printut __P((void *, const char *));
 int	backplane_match __P((struct device *, void *, void *));
 void	backplane_attach __P((struct device *, struct device *, void *));
+
 int
 printut(aux, hej)
 	void *aux;
@@ -367,7 +273,7 @@ cpu_attach(parent, self, aux)
 	struct	device	*parent, *self;
 	void	*aux;
 {
-	(*cpu_calls[vax_cputype].cpu_conf)(parent, self, aux);
+	(*dep_call->cpu_conf)(parent, self, aux);
 }
 
 int	mem_match __P((struct  device  *, void	*, void *));

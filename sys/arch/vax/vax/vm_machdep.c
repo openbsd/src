@@ -1,5 +1,5 @@
-/*      $OpenBSD: vm_machdep.c,v 1.9 1997/05/28 23:31:16 niklas Exp $       */
-/*      $NetBSD: vm_machdep.c,v 1.30 1997/01/11 11:23:09 ragge Exp $       */
+/*      $OpenBSD: vm_machdep.c,v 1.10 1997/09/10 12:04:53 maja Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.31 1997/03/09 16:00:06 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -598,9 +598,12 @@ vmapbuf(bp, len)
         tmap = vm_map_pmap(phys_map);
         len = len >> PGSHIFT;
         while (len--) {
+		volatile int i = *(int *)faddr;
+
                 pa = pmap_extract(fmap, faddr);
                 if (pa == 0)
-                        panic("vmapbuf: null page frame for %x", faddr);
+                       	panic("vmapbuf: null page frame for %x", faddr);
+
                 pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
                            VM_PROT_READ|VM_PROT_WRITE, TRUE);
                 faddr += NBPG;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka650.c,v 1.4 1997/05/29 00:05:21 niklas Exp $	*/
-/*	$NetBSD: ka650.c,v 1.7 1997/01/11 11:31:57 ragge Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.5 1997/09/10 12:04:47 maja Exp $	*/
+/*	$NetBSD: ka650.c,v 1.9 1997/02/19 10:04:16 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -51,10 +51,12 @@
 #include <vm/vm_kern.h>
 
 #include <machine/ka650.h>
+#include <machine/clock.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/mtpr.h>
 #include <machine/nexus.h>
+#include <machine/sid.h>
 
 struct	ka650_merr *ka650merr_ptr;
 struct	ka650_cbd *ka650cbd_ptr;
@@ -63,8 +65,25 @@ struct	ka650_ipcr *ka650ipcr_ptr;
 int	*KA650_CACHE_ptr;
 static	int subtyp;
 
-void	ka650encache __P((void));
-void	ka650discache __P((void));
+#define	CACHEOFF	0
+#define	CACHEON		1
+
+void	ka650setcache __P((int));
+
+struct	cpu_dep	ka650_calls = {
+	uvaxIII_steal_pages,
+	no_nicr_clock,
+	uvaxIII_mchk,
+	uvaxIII_memerr,
+	uvaxIII_conf,
+	generic_clkread,
+	generic_clkwrite,
+	4,      /* ~VUPS */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+
+};
 
 /*
  * uvaxIII_conf() is called by cpu_attach to do the cpu_specific setup.
@@ -75,14 +94,37 @@ uvaxIII_conf(parent, self, aux)
 	void	*aux;
 {
 	extern	char cpu_model[];
+	int syssub = GETSYSSUBT(subtyp);
+	char *str;
 
 	/*
 	 * There are lots of different MicroVAX III models, we should
-	 * check which here. but that later...
+	 * check which hereas there are some differences in the setup code
+	 * that depends on this.
 	 */
-	strcpy(cpu_model,"MicroVAX III");
-	printf(": %s\n", cpu_model);
-	ka650encache();
+	strcpy(cpu_model,"MicroVAX ");
+	switch (syssub) {
+	case VAX_SIE_KA640:
+		str = "3300/3400";
+		break;
+
+	case VAX_SIE_KA650:
+		str = "3500/3600";
+		break;
+
+	case VAX_SIE_KA655:
+		str = "3800/3900";
+		break;
+
+	default:
+		str = "III";
+		break;
+	}
+	strcat(cpu_model, str);
+	printf(": %s\n",cpu_model);
+	printf("%s: CVAX microcode rev %d Firmware rev %d\n", self->dv_xname,
+	    (vax_cpudata & 0xff), GETFRMREV(subtyp));
+	ka650setcache(CACHEON);
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
 		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
@@ -145,12 +187,12 @@ uvaxIII_memerr()
 	if (ka650cbd.cbd_cacr & CACR_CPE) {
 		printf("cache 2 tag parity error: ");
 		if (time.tv_sec - cache2tag < 7) {
-			ka650discache();
+			ka650setcache(CACHEOFF);
 			printf("cacheing disabled\n");
 		} else {
 			cache2tag = time.tv_sec;
 			printf("flushing cache\n");
-			ka650encache();
+			ka650setcache(CACHEON);
 		}
 	}
 	m = ka650merr.merr_errstat;
@@ -235,11 +277,11 @@ uvaxIII_mchk(cmcf)
 		cdalerr = time.tv_sec;
 	}
 	if (time.tv_sec - i < 7) {
-		ka650discache();
+		ka650setcache(CACHEOFF);
 		printf(" parity error:	cacheing disabled\n");
 	} else {
 		printf(" parity error:	flushing cache\n");
-		ka650encache();
+		ka650setcache(CACHEON);
 	}
 	/*
 	 * May be able to recover if type is 1-4, 0x80 or 0x81, but
@@ -262,20 +304,24 @@ uvaxIII_mchk(cmcf)
  * Enable 1st level cache too.
  */
 void
-ka650encache()
+ka650setcache(state)
 {
 	register int i;
 
-	ka650discache();
-	for (i = 0; i < (KA650_CACHESIZE / sizeof(KA650_CACHE_ptr[0])); i += 2)
-		KA650_CACHE_ptr[i] = 0;
-	ka650cbd_ptr->cbd_cacr = CACR_CEN;
-	mtpr(CADR_SEN2 | CADR_SEN1 | CADR_CENI | CADR_CEND, PR_CADR);
-}
-
-void
-ka650discache()
-{
+	/*
+	 * Before doing anything, disable the cache.
+	 */
 	mtpr(0, PR_CADR);
 	ka650cbd_ptr->cbd_cacr = CACR_CPE;
+
+	/*
+	 * Check what we want to do, enable or disable.
+	 */
+	if (state == CACHEON) {
+		for (i = 0; i < (KA650_CACHESIZE / sizeof(KA650_CACHE_ptr[0]));
+		    i += 2)
+			KA650_CACHE_ptr[i] = 0;
+		ka650cbd_ptr->cbd_cacr = CACR_CEN;
+		mtpr(CADR_SEN2 | CADR_SEN1 | CADR_CENI | CADR_CEND, PR_CADR);
+	}
 }

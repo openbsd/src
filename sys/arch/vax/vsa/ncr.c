@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr.c,v 1.2 1997/05/28 23:35:51 niklas Exp $	*/
-/*	$NetBSD: ncr.c,v 1.5 1996/10/13 03:36:14 christos Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.3 1997/09/10 12:08:37 maja Exp $	*/
+/*	$NetBSD: ncr.c,v 1.8 1997/02/26 22:29:12 gwr Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -425,8 +425,10 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_dma_stop  = si_dma_stop;
 
 	ncr_sc->sc_flags = 0;
-	if (si_options & SI_DO_RESELECT)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
+#ifndef __OpenBSD__
+	if ((si_options & SI_DO_RESELECT) == 0)
+		ncr_sc->sc_no_disconnect = 0xff;
+#endif
 	if ((si_options & SI_DMA_INTR) == 0)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
@@ -474,7 +476,9 @@ si_minphys(struct buf *bp)
 #ifdef	DEBUG
 		if (si_debug) {
 			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
@@ -651,8 +655,10 @@ si_dma_alloc(ncr_sc)
 	 * XXX - Should just segment these...
 	 */
 	if (xlen > MAX_DMA_LEN) {
+#ifdef DEBUG
 		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
 		Debugger();
+#endif
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 

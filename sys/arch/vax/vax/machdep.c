@@ -1,5 +1,5 @@
-/* $OpenBSD: machdep.c,v 1.14 1997/08/30 09:50:28 maja Exp $ */
-/* $NetBSD: machdep.c,v 1.35 1997/01/11 11:31:26 ragge Exp $  */
+/* $OpenBSD: machdep.c,v 1.15 1997/09/10 12:04:50 maja Exp $ */
+/* $NetBSD: machdep.c,v 1.41 1997/04/19 15:02:31 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -394,7 +394,7 @@ dumpconf()
 void
 cpu_initclocks()
 {
-	(cpu_calls[vax_cputype].cpu_clock) ();
+	(*dep_call->cpu_clock) ();
 }
 
 int
@@ -418,6 +418,7 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
+	cninit();
 #ifdef DDB
 /*	db_machine_init(); */
 	ddb_init();
@@ -700,9 +701,9 @@ void
 machinecheck(frame)
 	caddr_t frame;
 {
-	if ((*cpu_calls[vax_cputype].cpu_mchk) (frame) == 0)
+	if ((*dep_call->cpu_mchk) (frame) == 0)
 		return;
-	(*cpu_calls[vax_cputype].cpu_memerr) ();
+	(*dep_call->cpu_memerr) ();
 	panic("machine check");
 }
 
@@ -849,5 +850,5 @@ process_sstep(p, sstep)
 void
 cmrerr()
 {
-	(*cpu_calls[vax_cputype].cpu_memerr) ();
+	(*dep_call->cpu_memerr) ();
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dzcons.c,v 1.2 1997/05/29 00:05:17 niklas Exp $	*/
-/*	$NetBSD: dzcons.c,v 1.2 1996/09/02 06:44:30 mycroft Exp $	*/
+/*	$OpenBSD: dzcons.c,v 1.3 1997/09/10 12:04:44 maja Exp $	*/
+/*	$NetBSD: dzcons.c,v 1.5 1997/03/22 12:51:01 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -59,6 +59,21 @@ volatile unsigned char *ka410_intmsk = (void*)KA410_INTMSK;
 
 /*----------------------------------------------------------------------*/
 
+#define REG(name)     short name; short X##name##X;
+static volatile struct {/* base address of DZ-controller: 0x200A0000 */
+  REG(csr);           /* 00 Csr: control/status register */
+  REG(rbuf);          /* 04 Rbuf/Lpr: receive buffer/line param reg. */
+  REG(tcr);           /* 08 Tcr: transmit console register */
+  REG(tdr);           /* 0C Msr/Tdr: modem status reg/transmit data reg */
+  REG(lpr0);          /* 10 Lpr0: */
+  REG(lpr1);          /* 14 Lpr0: */
+  REG(lpr2);          /* 18 Lpr0: */
+  REG(lpr3);          /* 1C Lpr0: */
+} *dz = (void*)0x200A0000; 
+#undef REG
+
+void dzcnputc ();
+
 int
 dzcngetc(dev) 
 	dev_t dev;
@@ -70,35 +85,18 @@ dzcngetc(dev)
 	imsk = *ka410_intmsk;		/* save interrupt-mask */
 	*ka410_intmsk = 0;		/* disable console-receive interrupt! */
 
-#if 0
 	do {
-		c = get_fp() & 0xFF;		/* 0x7F ??? */
+              while ((dz->csr & 0x80) == 0); /* Wait for char */
+              c = dz->rbuf & 0xff;
 	} while (c == 17 || c == 19);		/* ignore XON/XOFF */
 
 	*ka410_intclr = 0x80;		/* clear the interrupt request */
 	*ka410_intmsk = imsk;		/* restore interrupt-mask */
-#else
-	for (;;)
-		;
-#endif
 
 	if (c == 13)
 		c = 10;
 	return (c);
 }
-
-#define REG(name)	short name; short X##name##X;
-static volatile struct {/* base address of DZ-controller: 0x200A0000 */
-  REG(csr);		/* 00 Csr: control/status register */
-  REG(rbuf);		/* 04 Rbuf/Lpr: receive buffer/line param reg. */
-  REG(tcr);		/* 08 Tcr: transmit console register */
-  REG(tdr);		/* 0C Msr/Tdr: modem status reg/transmit data reg */
-  REG(lpr0);		/* 10 Lpr0: */
-  REG(lpr1);		/* 14 Lpr0: */
-  REG(lpr2);		/* 18 Lpr0: */
-  REG(lpr3);		/* 1C Lpr0: */
-} *dz = (void*)0x200A0000; 
-#undef REG
 
 struct	tty *dzcn_tty[1];
 
@@ -118,6 +116,9 @@ dzcnopen(dev, flag, mode, p)
 
         unit = minor(dev);
         if (unit) return ENXIO;
+
+	if (dzcn_tty[0] == NULL)
+		dzcn_tty[0] = ttymalloc();
 
 	tp = dzcn_tty[0];
 
@@ -243,7 +244,8 @@ dzcnrint()
 	int i, j;
 
 	tp = dzcn_tty[0];
-	i = dz->rbuf;
+	while ((dz->csr & 0x80) == 0); /* Wait for char */
+	i = dz->rbuf & 0xff;
 
 #ifdef DDB
 	j = kdbrint(i);
@@ -297,6 +299,7 @@ dzcnprobe(cndev)
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
+	case VAX_BTYP_420:
 	case VAX_BTYP_43:
 		break;
 
@@ -319,28 +322,36 @@ int
 dzcninit(cndev)
 	struct	consdev *cndev;
 {
+	dz = (void*)uvax_phys2virt ((int) dz);
+	ka410_intreq = (void*)uvax_phys2virt ((int)ka410_intreq);
+	ka410_intclr = (void*)uvax_phys2virt ((int)ka410_intclr);
+	ka410_intmsk = (void*)uvax_phys2virt ((int)ka410_intmsk);
+
+	dz->csr = 0;    /* Disable scanning until initting is done */
+	dz->rbuf = 0;   /* Turn off line 0's receiver */
+	dz->rbuf = 1;   /* Turn off line 1's receiver */
+	dz->rbuf = 2;   /* Turn off line 2's receiver */
+	                /* Leave line 3 alone */
+	dz->tcr = 8;    /* Turn off all but line 3's xmitter */
+	dz->csr = 0x20; /* Turn scanning back on */
 }
 
-dzcnslask()
-{
-	dzcn_tty[0] = ttymalloc();
-}
 
 void
 dzcnputc(dev,ch)
 	dev_t	dev;
 	int	ch;
 {
+	int	imsk;
 	int timeout = 1<<15;            /* don't hang the machine! */
+
+	imsk = *ka410_intmsk;
+	*ka410_intmsk = 0;
+
 	while ((dz->csr & 0x8000) == 0) /* Wait until ready */
 		if (--timeout < 0)
 			break;
 	dz->tdr = ch;                    /* Put the  character */
-}
 
-conout(str)
-	char *str;
-{
-	while (*str)
-		gencnputc(0, *str++);
+	*ka410_intmsk = imsk;
 }

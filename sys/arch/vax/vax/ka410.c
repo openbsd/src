@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka410.c,v 1.2 1997/05/29 00:05:19 niklas Exp $ */
-/*	$NetBSD: ka410.c,v 1.3 1996/10/13 03:35:42 christos Exp $ */
+/*	$OpenBSD: ka410.c,v 1.3 1997/09/10 12:04:46 maja Exp $ */
+/*	$NetBSD: ka410.c,v 1.6 1997/04/18 18:49:35 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -16,8 +16,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -33,8 +33,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -43,6 +41,7 @@
 #include <vm/vm_kern.h>
 
 #include <machine/pte.h>
+#include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/pmap.h>
@@ -51,70 +50,51 @@
 #include <machine/ka410.h>
 #include <machine/clock.h>
 
-/*
- * Maybe all these variables/functions should be static or "integrate"
- */
-void	ka410_conf __P((struct device*, struct device*, void*));
-void	ka410_memenable __P((struct sbi_attach_args *, struct device *));
-void	ka410_steal_pages __P((void));
+static	void	ka410_conf __P((struct device*, struct device*, void*));
+static	void	ka410_memenable __P((struct sbi_attach_args*, struct device *));
+static	void	ka410_steal_pages __P((void));
+static	void	ka410_memerr __P((void));
+static	int	ka410_mchk __P((caddr_t));
 
-#ifdef notyet
-void	ka410_memerr __P((void));
-int	ka410_mchk __P((caddr_t));
-#endif
-
-struct  ka410_cpu   *ka410_cpuptr = (void*)KA410_CPU_BASE;
-struct  ka410_clock *ka410_clkptr = (void*)KA410_WAT_BASE;
-
-extern int uVAX_fillmap __P((struct uc_map *));
-
-struct uc_map ka410_map[] = {
+static	struct uc_map ka410_map[] = {
 	{ KA410_CFGTST,		KA410_CFGTST+1023,	1024,	0 },
-	{ KA410_ROM_BASE,	KA410_ROM_END,	KA410_ROM_SIZE,	0 },
-	{ KA410_CPU_BASE,	KA410_CPU_END,	KA410_CPU_SIZE,	0 },
-	{ KA410_NWA_BASE,	KA410_NWA_END,	KA410_NWA_SIZE,	0 },
-	{ KA410_SER_BASE,	KA410_SER_END,	KA410_SER_SIZE,	0 },
-	{ KA410_WAT_BASE,	KA410_WAT_END,	KA410_WAT_SIZE,	0 },
+	{ KA410_ROM_BASE,	KA410_ROM_END,	KA410_ROM_SIZE, 0 },
+	{ (int)KA410_CPU_BASE,	KA410_CPU_END,	KA410_CPU_SIZE, 0 },
+	{ KA410_NWA_BASE,	KA410_NWA_END,	KA410_NWA_SIZE, 0 },
+	{ KA410_SER_BASE,	KA410_SER_END,	KA410_SER_SIZE, 0 },
+	{ (int)KA410_WAT_BASE,	KA410_WAT_END,	KA410_WAT_SIZE, 0 },
 #if 0
-	{ KA410_SCS_BASE,	KA410_SCS_END,	KA410_SCS_SIZE,	0 },
+	{ KA410_SCS_BASE,	KA410_SCS_END,	KA410_SCS_SIZE, 0 },
 #else
 	{ 0x200C0000,		0x200C01FF,	0x200,		0 },
 #endif
-	{ KA410_LAN_BASE,	KA410_LAN_END,	KA410_LAN_SIZE,	0 },
-	{ KA410_CUR_BASE,	KA410_CUR_END,	KA410_CUR_SIZE,	0 },
-	{ KA410_DMA_BASE,	KA410_DMA_END,	KA410_DMA_SIZE,	0 },
+	{ KA410_LAN_BASE,	KA410_LAN_END,	KA410_LAN_SIZE, 0 },
+	{ KA410_CUR_BASE,	KA410_CUR_END,	KA410_CUR_SIZE, 0 },
+	{ KA410_DMA_BASE,	KA410_DMA_END,	KA410_DMA_SIZE, 0 },
 	/*
 	 * there's more to come, eg. framebuffers (mono + GPX)
 	 */
 	{0, 0, 0, 0},
 };
 
-int
-ka410_setup(uc,flags)
-	struct uvax_calls *uc;
-	int flags;
-{
-	uc->uc_name = "ka410";
+/* 
+ * Declaration of 410-specific calls.
+ */
+struct	cpu_dep ka410_calls = {
+	ka410_steal_pages,
+	no_nicr_clock,
+	ka410_mchk,
+	ka410_memerr, 
+	ka410_conf,
+	chip_clkread,
+	chip_clkwrite,
+	1,      /* ~VUPS */
+	(void*)KA410_INTREQ,      /* Used by vaxstation */
+	(void*)KA410_INTCLR,      /* Used by vaxstation */
+	(void*)KA410_INTMSK,      /* Used by vaxstation */
+	ka410_map,
+};
 
-	uc->uc_phys2virt = NULL;	/* ka410_mapaddr; */
-	uc->uc_physmap = ka410_map;	/* ptv_map ? p2v_map */
-
-	uc->uc_steal_pages = ka410_steal_pages;
-	uc->uc_conf = ka410_conf;
-	uc->uc_clkread = ka410_clkread;
-	uc->uc_clkwrite = ka410_clkwrite;
-
-#ifdef notyet
-	uc->uc_memerr = ka410_memerr;
-	uc->uc_mchk = ka410_mchk;
-#endif
-
-	uc->uc_intreq = (void*)KA410_INTREQ;
-	uc->uc_intclr = (void*)KA410_INTCLR;
-	uc->uc_intmsk = (void*)KA410_INTMSK;
-
-	uc->uc_busTypes = VAX_VSBUS;
-}
 
 void
 ka410_conf(parent, self, aux)
@@ -123,32 +103,52 @@ ka410_conf(parent, self, aux)
 {
 	extern char cpu_model[];
 
-	if (vax_confdata & 0x80)	/* MSB in CFGTST */
-		strcpy(cpu_model,"MicroVAX 2000");
-	else
-		strcpy(cpu_model,"VAXstation 2000");
+	switch (vax_cputype) {
+	case VAX_TYP_UV2:
+		if (vax_confdata & 0x80)	/* MSB in CFGTST */
+			strcpy(cpu_model,"MicroVAX 2000");
+		else
+			strcpy(cpu_model,"VAXstation 2000");
+		break;
+
+	case VAX_TYP_CVAX:
+		/* if (((vax_siedata >> 8) & 0xff) == 2) */
+		strcpy(cpu_model,"MicroVAX 3100 (KA41)");
+		/* ka41_cache_enable(); */
+	}
 
 	printf(": %s\n", cpu_model);
 }
 
+void
+ka410_memerr()
+{
+	printf("Memory err!\n");
+}
 
-/*
- *
- */
+int
+ka410_mchk(addr)
+	caddr_t addr;
+{
+	panic("Machine check");
+}
+
 u_long le_iomem;			/* base addr of RAM -- CPU's view */
 u_long le_ioaddr;			/* base addr of RAM -- LANCE's view */
 
 void
 ka410_steal_pages()
 {
-	extern  vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+        extern  short *clk_page;
+        extern  int clk_adrshift, clk_tweak;
 	int	junk;
 
 	int	i;
 	struct {
-	  u_long     :2;
-	  u_long data:8;
-	  u_long     :22;
+		u_long     :2;
+		u_long data:8;
+		u_long     :22;
 	} *p;
 	int *srp;	/* Scratch Ram */
 	char *q = (void*)&srp;
@@ -157,17 +157,17 @@ ka410_steal_pages()
 	p = (void*)KA410_SCR;
 	for (i=0; i<4; i++) {
 	  printf("p[%d] = %x, ", i, p[i].data);
-	  q[i]  = p[i].data;
+	  q[i]	= p[i].data;
 	}
 	p = (void*)KA410_SCRLEN;
 	printf("\nlen = %d\n", p->data);
 	printf("srp = 0x%x\n", srp);
 
 	for (i=0; i<0x2; i++) {
-	  printf("%x:0x%x ", i*4, srp[i]);
-	  if ((i & 0x07) == 0x07)
-	    printf("\n");
- 	}
+		printf("%x:0x%x ", i*4, srp[i]);
+		if ((i & 0x07) == 0x07)
+			printf("\n");
+	}
 	printf("\n");
 
 	/* 
@@ -177,6 +177,12 @@ ka410_steal_pages()
 	 * perform the mapping. The mapped address is assigned to junk.
 	 */
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
+
+	clk_adrshift = 1;       /* Addressed at long's... */
+	clk_tweak = 2;          /* ...and shift two */
+	MAPVIRT(clk_page, 2);
+	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA410_WAT_BASE,
+	    (vm_offset_t)KA410_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * At top of physical memory there are some console-prom and/or
@@ -216,35 +222,18 @@ ka410_steal_pages()
 	 * pmap_map(ptr,...)  inserts a pair of virtual/physical addresses
 	 *			into the system maptable (Sysmap)
 	 */
-	uVAX_fillmap(ka410_map);
+	uvax_fillmap();
 
 	/*
 	 * Clear restart and boot in progress flags
 	 * in the CPMBX. (ie. clear bits 4 and 5)
 	 */
-	ka410_clkptr->cpmbx = (ka410_clkptr->cpmbx & ~0x30);
+	KA410_WAT_BASE->cpmbx = (KA410_WAT_BASE->cpmbx & ~0x30);
 
 	/*
 	 * Enable memory parity error detection and clear error bits.
 	 */
-	ka410_cpuptr->ka410_mser = 1; 
+	KA410_CPU_BASE->ka410_mser = 1; 
 	/* (UVAXIIMSER_PEN | UVAXIIMSER_MERR | UVAXIIMSER_LEB); */
 
-	/*
-	 * MM is not yet enabled, thus we still used the physical addresses,
-	 * but before leaving this routine, we need to reset them to virtual.
-	 */
-	ka410_cpuptr = (void*)uvax_phys2virt(KA410_CPU_BASE);
-	ka410_clkptr = (void*)uvax_phys2virt(KA410_WAT_BASE);
-
 }
-/*
- * define what we need and overwrite the uVAX_??? names
- */
-
-#define uVAX_clock	ka410_clock
-#define uVAX_clkptr	ka410_clkptr
-#define uVAX_clkread	ka410_clkread
-#define uVAX_clkwrite	ka410_clkwrite
-
-#include <arch/vax/vax/uvax_proto.c>

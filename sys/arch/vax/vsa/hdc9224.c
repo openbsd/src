@@ -1,5 +1,5 @@
-/*	$OpenBSD: hdc9224.c,v 1.2 1997/05/29 00:05:32 niklas Exp $ */
-/*	$NetBSD: hdc9224.c,v 1.4 1996/10/13 03:36:11 christos Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.3 1997/09/10 12:08:36 maja Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,6 +71,7 @@ static int keepLock = 0;
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
+#include <sys/reboot.h>
 
 #include <machine/pte.h>
 #include <machine/sid.h>
@@ -78,6 +79,7 @@ static int keepLock = 0;
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/vsbus.h>
+#include <machine/rpb.h>
 
 #include <vax/vsa/hdc9224.h>
 
@@ -392,6 +394,11 @@ rdattach(parent, self, aux)
 		       rp->diskname, rp->diskblks/2048, rp->disklbns, 
 		       rp->cylinders, rp->heads, rp->sectors);
 	}
+	/*
+	 * Know where we booted from.
+	 */
+	if ((B_TYPE(bootdev) == BDEV_RD) && (rd->sc_drive == B_UNIT(bootdev)))
+		booted_from = self;
 }
 
 /*
@@ -422,10 +429,9 @@ rdstrategy(bp)
 	 */
 	/*------------------------------*/
 	blkno = bp->b_blkno / (rd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	if (HDCPART(bp->b_dev) != RAW_PART) {
-		p = &rd->sc_dk.dk_label->d_partitions[HDCPART(bp->b_dev)];
-		blkno += p->p_offset;
-	}
+	p = &rd->sc_dk.dk_label->d_partitions[HDCPART(bp->b_dev)];
+	blkno += p->p_offset;
+
 	/* nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize); */
 
 	if (hdc_strategy(hdc, rd, HDCUNIT(bp->b_dev), 
@@ -1141,5 +1147,4 @@ hdc_select(sc, unit)
 
 	return (error);
 }
-
 #endif	/* NHDC > 0 */

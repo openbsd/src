@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka780.c,v 1.3 1997/05/29 00:05:21 niklas Exp $	*/
-/*	$NetBSD: ka780.c,v 1.6 1996/10/13 03:35:50 christos Exp $	*/
+/*	$OpenBSD: ka780.c,v 1.4 1997/09/10 12:04:48 maja Exp $	*/
+/*	$NetBSD: ka780.c,v 1.7 1997/02/19 10:04:18 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -48,6 +48,7 @@
 #include <vm/vm_kern.h>
 
 #include <machine/pte.h>
+#include <machine/clock.h>
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <machine/scb.h>
@@ -57,12 +58,28 @@
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
 
-/* Prototypes. XXX These should be somewhere else */
-void	ka780_conf __P((struct device *, struct device *, void *));
+static	void	ka780_conf __P((struct device *, struct device *, void *));
 void	ka780_memenable __P((struct sbi_attach_args *, void *));
-void	ka780_memerr __P((void));
-int	ka780_mchk __P((caddr_t));
-void	ka780_steal_pages __P((void));
+static	void	ka780_memerr __P((void));
+static	int	ka780_mchk __P((caddr_t));
+static	void	ka780_steal_pages __P((void));
+
+/*
+ * Declaration of 780-specific calls.
+ */
+struct	cpu_dep ka780_calls = {
+	ka780_steal_pages,
+	generic_clock,
+	ka780_mchk,
+	ka780_memerr,
+	ka780_conf,
+	generic_clkread,
+	generic_clkwrite,
+	2,	/* ~VUPS */
+	0,	/* Used by vaxstation */
+	0,	/* Used by vaxstation */
+	0,	/* Used by vaxstation */
+};
 
 /*
  * Memory controller register usage varies per controller.

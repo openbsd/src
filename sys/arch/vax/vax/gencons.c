@@ -1,5 +1,5 @@
-/*	$OpenBSD: gencons.c,v 1.5 1997/05/29 00:05:18 niklas Exp $	*/
-/*	$NetBSD: gencons.c,v 1.11 1996/09/02 06:44:32 mycroft Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.6 1997/09/10 12:04:45 maja Exp $	*/
+/*	$NetBSD: gencons.c,v 1.13 1997/03/15 16:36:19 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -49,6 +49,7 @@
 #include <dev/cons.h>
 
 #include <machine/mtpr.h>
+#include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/../vax/gencons.h>
 
@@ -70,7 +71,6 @@ struct tty *gencntty __P((dev_t));
 void	gencnrint __P((void));
 void	gencntint __P((void));
 void	gencnstop __P((struct tty *, int));
-void	gencnslask __P((void));
 
 int
 gencnopen(dev, flag, mode, p)
@@ -82,7 +82,11 @@ gencnopen(dev, flag, mode, p)
         struct tty *tp;
 
         unit = minor(dev);
-        if (unit) return ENXIO;
+        if (unit)
+		return ENXIO;
+
+	if (gencn_tty[0] == NULL)
+		gencn_tty[0] = ttymalloc();
 
 	tp = gencn_tty[0];
 
@@ -224,7 +228,6 @@ gencnstop(tp, flag)
         struct tty *tp;
         int flag;
 {
-
 }
 
 void
@@ -256,24 +259,19 @@ gencnprobe(cndev)
 {
 	int i;
 
-	for (i = 0; i < nchrdev; i++)
-		if (cdevsw[i].d_open == gencnopen) {
-			cndev->cn_dev = makedev(i,0);
-			cndev->cn_pri = CN_NORMAL;
-			break;
-		}
+	if ((vax_cputype < VAX_TYP_UV1) || /* All older has MTPR console */
+	    (vax_boardtype == VAX_BTYP_630) ||
+	    (vax_boardtype == VAX_BTYP_650)) {
+		cndev->cn_dev = makedev(25, 0);
+		cndev->cn_pri = CN_NORMAL;
+	} else
+		cndev->cn_pri = CN_DEAD;
 }
 
 void
 gencninit(cndev)
 	struct	consdev *cndev;
 {
-}
-
-void
-gencnslask()
-{
-	gencn_tty[0] = ttymalloc();
 }
 
 void
