@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.73 2001/07/27 09:55:07 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.74 2001/08/23 14:01:02 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -211,6 +211,11 @@ main(framep)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
+
+	/*
+	 * Initialize timeouts.
+	 */
+	timeout_init();
 
 	cpu_configure();
 

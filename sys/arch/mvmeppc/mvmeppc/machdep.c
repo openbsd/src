@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 2001/08/23 12:02:04 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2001/08/23 14:01:03 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -576,11 +576,6 @@ cpu_startup()
 	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
 
-	/*
-	 * Initialize timeouts.
-	 */
-	timeout_init();
-	
 	printf("avail mem = %d\n", ptoa(uvmexp.free));
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);

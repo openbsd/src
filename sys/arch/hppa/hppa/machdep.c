@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2001/08/23 12:02:04 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2001/08/23 14:01:03 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -664,11 +664,6 @@ cpu_startup()
 
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
-
-	/*
-	 * Initialize timeouts
-	 */
-	timeout_init();
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 2001/08/23 12:02:05 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 2001/08/23 14:01:03 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -323,11 +323,6 @@ cpu_startup()
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
-
-	/*
-	 * Initialize timeouts
-	 */
-	timeout_init();
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
