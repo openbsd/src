@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.24 2001/04/16 00:26:21 fgsch Exp $	*/
+/*	$OpenBSD: parse.c,v 1.25 2001/08/08 06:46:09 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -213,7 +213,9 @@ parse(fd, laddr, faddr)
 	/* Read query from client */
 	if ((n = timed_read(fd, buf, sizeof(buf) - 1, IO_TIMEOUT)) <= 0) {
 		if (syslog_flag)
-			syslog(LOG_NOTICE, "read from %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE,
+			    n ? "read from %s: %m" : "read from %s: EOF",
+			    gethost(faddr));
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
@@ -381,7 +383,9 @@ parse6(fd, laddr, faddr)
 	/* Read query from client */
 	if ((n = timed_read(fd, buf, sizeof(buf) - 1, IO_TIMEOUT)) <= 0) {
 		if (syslog_flag)
-			syslog(LOG_NOTICE, "read from %s: %m", gethost6(faddr));
+			syslog(LOG_NOTICE,
+			    n ? "read from %s: %m" : "read from %s: EOF",
+			    gethost6(faddr));
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
