@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.52 2005/02/21 14:09:30 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.53 2005/02/25 17:35:21 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -432,9 +432,14 @@ Commit to a particular symbolic or numerical revision.
 Aliases:
 .Ic ci ,
 .Ic com .
-.It Xo Ic diff Op Fl cilNpu
-.Op Fl D Ar date
-.Op Fl r Ar rev
+.It Xo Ic diff
+.Op Fl cilNpRu
+.Oo Oo Fl D
+.Ar date1 \*(Ba
+.Fl r Ar rev1 Oc
+.Oo Fl D Ar date2 \*(Ba
+.Fl r Ar rev2 Oc Oc
+.Op Fl k Ar mode
 .Op Ar file ...
 .Xc
 .Pp
@@ -444,6 +449,65 @@ command is very similar to the
 .Xr diff 1
 program, except that the differential comparisons that it generates are
 between local or remote revisions of files stored in the CVS repository.
+.Pp
+The
+.Ic diff
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl c
+Produces a diff with three lines of context.
+See
+.Xr diff 1
+for more information.
+.It Xo Fl D Ar date1
+.Op Fl D Ar date2
+.Xc
+Differences between the revision at
+.Ar date1
+and the working copy or
+.Ar date1
+and
+.Ar date2
+(if specified).
+.It Fl i
+Ignore the case of letters.
+For example,
+.Sq A
+will compare equal to
+.Sq a .
+.It Fl k Ar mode
+Specify the keyword substitution mode.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl N
+Include added or removed files.
+.It Fl p
+With unified and context diffs, show with each change the first
+40 characters of the last line before the context beginning with
+a letter, an underscore or a dollar sign.
+See
+.Xr diff 1
+for more information.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Xo Fl r Ar rev1
+.Op Fl r Ar rev2
+.Xc
+Differences between revision
+.Ar rev1
+and the working copy or
+.Ar rev1
+and
+.Ar rev2
+(if specified).
+.It Fl u
+Produces a unified diff with three lines of context.
+See
+.Xr diff 1
+for more information.
+.El
 .Pp
 Aliases:
 .Ic di ,
