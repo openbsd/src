@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.37 2001/07/17 22:22:17 provos Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.38 2001/07/17 23:25:42 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -548,7 +548,7 @@ print_rule(struct pf_rule *r)
 	if (r->rule_flag & PFRULE_NODF)
 		printf("no-df ");
 	if (r->min_ttl)
-		printf("min-ttl = %d ", r->min_ttl);
+		printf("min-ttl %d ", r->min_ttl);
 	
 	printf("\n");
 }
