@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.64 2004/06/06 16:55:31 cedric Exp $	*/
+/*	$OpenBSD: route.c,v 1.65 2004/10/15 20:16:12 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.64 2004/06/06 16:55:31 cedric Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.65 2004/10/15 20:16:12 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,9 +203,6 @@ pr_family(int af)
 		break;
 	case AF_IPX:
 		afname = "IPX";
-		break;
-	case AF_ISO:
-		afname = "ISO";
 		break;
 	case AF_CCITT:
 		afname = "X.25";
@@ -467,7 +464,8 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 		struct sockaddr_in *msin = (struct sockaddr_in *)mask;
 
-		cp = (sin->sin_addr.s_addr == 0) ? "default" :
+		cp = (sin->sin_addr.s_addr == 0 && mask &&
+		    msin->sin_addr.s_addr == 0) ? "default" :
 		    (mask == NULL || msin->sin_addr.s_addr == (in_addr_t)-1 ?
 		    routename(sin->sin_addr.s_addr) :
 		    netname(sin->sin_addr.s_addr, msin->sin_addr.s_addr));
