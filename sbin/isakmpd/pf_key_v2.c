@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.9 1999/05/01 00:51:45 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.13 1999/05/01 00:52:42 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.10 1999/05/01 20:42:54 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.15 1999/05/01 20:38:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -62,9 +62,6 @@
 #define PF_KEY_V2_CHUNK 8
 #define PF_KEY_V2_ROUND(x)						\
   (((x) + PF_KEY_V2_CHUNK - 1) & ~(PF_KEY_V2_CHUNK - 1))
-
-/* How often should we check that connections we require to be up, are up?  */
-#define PF_KEY_V2_CHECK_FREQ 60
 
 struct pf_key_v2_node {
   TAILQ_ENTRY (pf_key_v2_node) link;
@@ -1287,54 +1284,19 @@ pf_key_v2_stayalive (struct exchange *exchange, void *vconn, int fail)
     sa->flags |= SA_FLAG_STAYALIVE;
 }
 
-/* Establish the connection in VCONN and set the stayalive flag for it.  */
+/* Check if a connection CONN exists, otherwise establish it.  */
 void
-pf_key_v2_checker (void *vconn)
+pf_key_v2_connection_check (char *conn)
 {
-  struct timeval now;
-  char *conn = vconn;
-
-  gettimeofday (&now, 0);
-  now.tv_sec += PF_KEY_V2_CHECK_FREQ;
-  if (!timer_add_event ("pf_key_v2_checker", pf_key_v2_checker, conn, &now))
-    log_print ("pf_key_v2_checker: could not add timer event");
   if (!sa_lookup_by_name (conn, 2))
     {
-      log_debug (LOG_SYSDEP, 70, "pf_key_v2_checker: SA for %s missing", conn);
-      exchange_establish (conn, pf_key_v2_stayalive, vconn);
+      log_debug (LOG_SYSDEP, 70,
+		 "pf_key_v2_connection_check: SA for %s missing", conn);
+      exchange_establish (conn, pf_key_v2_stayalive, conn);
     }
   else
-    log_debug (LOG_SYSDEP, 70, "pf_key_v2_checker: SA for %s exists", conn);
-}
-
-/*
- * Establish a connection CONN that should be available from now,
- * XXX Should establish a keying route that will generate ACQUIRE messages on
- * use.
- * XXX This is not really belonging in the PF_KEYv2 glue, it should be moved
- * to sysdep.c
- */
-int
-pf_key_v2_connection (char *conn)
-{
-  struct timeval now;
-  char *conn_copy;
-
-  /*
-   * As we do not have ACQUIRE notifications just yet, we actually establish
-   * the connection as soon as possible.
-   */
-  gettimeofday (&now, 0);
-  conn_copy = strdup (conn);
-  if (!conn_copy)
-    {
-      log_error ("pf_key_v2_connection: strdup(\"%s\") failed", conn);
-      return -1;
-    }
-  if (!timer_add_event ("pf_key_v2_checker", pf_key_v2_checker, conn_copy,
-			&now))
-    log_print ("pf_key_v2_connection: could not add timer event");
-  return 0;
+    log_debug (LOG_SYSDEP, 70, "pf_key_v2_connection_check: SA for %s exists",
+	       conn);
 }
 
 /* Handle a PF_KEY lifetime expiration message PMSG.  */
