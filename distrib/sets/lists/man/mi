@@ -609,6 +609,7 @@
 ./usr/share/man/cat4/hp300/rmp.0
 ./usr/share/man/cat4/hp300/tc.0
 ./usr/share/man/cat4/i386/aha.0
+./usr/share/man/cat4/i386/bktr.0
 ./usr/share/man/cat4/i386/ahb.0
 ./usr/share/man/cat4/i386/aic.0
 ./usr/share/man/cat4/i386/apm.0
@@ -623,6 +624,7 @@
 ./usr/share/man/cat4/i386/eg.0
 ./usr/share/man/cat4/i386/el.0
 ./usr/share/man/cat4/tx.0
+./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/i386/fdc.0
 ./usr/share/man/cat4/i386/gus.0
