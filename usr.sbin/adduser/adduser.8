@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.28 2003/05/13 01:23:10 millert Exp $
+.\"	$OpenBSD: adduser.8,v 1.29 2003/06/10 21:55:02 millert Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Op Ar password
 .Oc
 .Op Fl check_only
+.Op Fl class Ar login_class
 .Op Fl config_create
 .Op Fl dotdir Ar directory
 .Oo
@@ -87,6 +88,13 @@ By default the password is assumed to already be properly encrypted.
 .It Fl check_only
 Check the passwd, group, and shells databases for consistency and problems
 then exit without performing any other operation.
+.It Fl class Ar login_class
+Use the specified
+.Ar login_class
+as the default login class.
+See
+.Xr login.conf 5
+for further details.
 .It Fl config_create
 Create or edit default configuration information and message file before
 proceeding with the normal interactive adduser procedure.
@@ -143,7 +151,7 @@ Use UIDs from
 .Ar uid
 up when automatically generating UIDs.
 .It Fl uid_end Ar uid
-Do not use UIDs higher than 
+Do not use UIDs higher than
 .Ar uid
 when generating UIDs.
 .It Fl unencrypted
@@ -217,9 +225,9 @@ politely refuses to remove users whose UID is 0 (typically root).
 .Bl -tag -width Ds
 .It Sy username
 It is recommended that login names contain only lowercase characters
-and digits. They may also contain uppercase characters, non-leading 
-hyphens, periods, and a trailing '$'. 
-Login names may not be longer than 31 characters (see BUGS section of 
+and digits. They may also contain uppercase characters, non-leading
+hyphens, periods, and a trailing '$'.
+Login names may not be longer than 31 characters (see BUGS section of
 .Xr setlogin 2 ) .
 .\" The reasons for this limit are "Historical".
 .\" Given that people have traditionally wanted to break this
@@ -237,6 +245,10 @@ This should contain the user's first name and surname.
 The
 .Ql \&:
 is not permitted.
+.It Sy login_class
+The specified user login class
+must exist in
+.Pa /etc/login.conf .
 .It Sy shell
 Only valid entries from the
 .Xr shells 5
@@ -380,6 +392,7 @@ log file for
 .Xr setlogin 2 ,
 .Xr aliases 5 ,
 .Xr group 5 ,
+.Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr passwd.conf 5 ,
 .Xr shells 5 ,
