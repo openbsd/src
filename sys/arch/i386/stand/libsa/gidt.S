@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.17 1997/10/19 22:48:36 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.18 1997/10/24 22:22:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -260,14 +260,14 @@ gdt:
 	.word	0xFFFF			# lolimit
 	.word	(LINKADDR & 0xffff)	# lobase
 	.byte	(LINKADDR >> 16) & 0xff	# midbase
-	.byte	SDT_MEMERA | 0 | 0x80	# RXAC, dpl = 0, present
+	.byte	SDT_MEMERAC | 0 | 0x80	# RXAC, dpl = 0, present
 	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	(LINKADDR >> 20) & 0xff	# hibase
 		/* 0x20 : 16 bit data */
 	.word	0xFFFF			# lolimit
 	.word	(LINKADDR & 0xffff)	# lobase
 	.byte	(LINKADDR >> 16) & 0xff	# midbase
-	.byte	SDT_MEMRWA | 0 | 0x80	# RXAC, dpl = 0, present
+	.byte	SDT_MEMRWA | 0 | 0x80	# RWA, dpl = 0, present
 	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	(LINKADDR >> 20) & 0xff	# hibase
 
@@ -368,10 +368,10 @@ EMUh:
 	.byte	0xb8
 3:	.long	0x90909090	/* restore %eax */
 
-	sti
+	;sti
 	int	$0
 intno	= . - 1
-	cli
+	;cli
 
 	popl	%ds
 
