@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.6 1996/03/26 14:38:33 gwr Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.7 1996/12/17 21:10:47 gwr Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -67,9 +67,11 @@ struct ie_softc {
 	caddr_t sc_reg;		/* KVA of card's register */
 
 	enum ie_hardware hard_type;	/* card type */
-	void    (*reset_586)();	/* card dependent reset function */
-	void    (*chan_attn)();	/* card dependent attn function */
-	void    (*run_586)();	/* card dependent "go on-line" function */
+
+	/* card dependent functions: */
+	void    (*reset_586) __P((struct ie_softc *));
+	void    (*chan_attn) __P((struct ie_softc *));
+	void    (*run_586)   __P((struct ie_softc *));
 	void (*sc_bcopy) __P((const void *, void *, u_int));
 	void (*sc_bzero) __P((void *, u_int));
 

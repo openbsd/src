@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 1996/11/23 07:55:02 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 1996/12/31 06:13:05 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1996 Kenneth Stailey.  All rights reserved.
@@ -67,8 +67,11 @@ cdev_decl(kd);
 /* frame-buffer devices */
 cdev_decl(fb);
 #include "bwtwo.h"
+#define bw2poll seltrue
 cdev_decl(bw2);
 #include "cgtwo.h"
+#define cg2poll seltrue
 cdev_decl(cg2);
 #include "cgfour.h"
+#define cg4poll seltrue
 cdev_decl(cg4);

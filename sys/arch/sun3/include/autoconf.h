@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12 1996/11/20 18:57:05 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.13 1996/12/17 21:11:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 /*
  * Autoconfiguration information.
+ * (machdep parts of driver/kernel interface)
  */
 
 /* These are the "bus" types: */
@@ -66,3 +67,16 @@ int bus_print __P((void *, const char *));
 int bus_peek __P((int, int, int));
 char * bus_mapin __P((int, int, int));
 
+/* These are how drivers connect interrupt handlers. */
+typedef int (*isr_func_t) __P((void *));
+void isr_add_autovect __P((isr_func_t, void *arg, int level));
+void isr_add_vectored __P((isr_func_t, void *arg, int pri, int vec));
+void isr_add_custom __P((int, void *));
+
+/* These control the software interrupt register. */
+void isr_soft_request __P((int level));
+void isr_soft_clear __P((int level));
+
+/* Bus-error tolerant access to mapped address. */
+int 	peek_byte __P((caddr_t));
+int 	peek_word __P((caddr_t));

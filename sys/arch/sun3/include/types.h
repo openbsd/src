@@ -1,3 +1,3 @@
-/*	$NetBSD: types.h,v 1.8 1996/11/20 18:57:21 gwr Exp $	*/
+/*	$NetBSD: types.h,v 1.10 1996/12/17 21:11:12 gwr Exp $	*/
 
 #include <m68k/types.h>

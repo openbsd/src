@@ -62,7 +62,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/mon.h>
 

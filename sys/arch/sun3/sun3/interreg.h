@@ -1,4 +1,4 @@
-/*	$NetBSD: interreg.h,v 1.7 1996/11/20 18:57:30 gwr Exp $	*/
+/*	$NetBSD: interreg.h,v 1.8 1996/12/17 21:11:26 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,4 +47,6 @@
 
 #define IREG_BITS "\20\8CLK7\7RSV6\6CLK5\5VIDEO\4SOFT3\3SOFT2\2SOFT1\1ALL\n"
 
-int set_clk_mode(u_char on, u_char off, int enable);
+extern volatile u_char *interrupt_reg;
+
+void set_clk_mode __P((u_char on, u_char off, int enable));

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.26 1996/12/17 21:11:29 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,19 +43,19 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 
 #include <net/netisr.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
-#include <machine/isr.h>
 
+#include "machdep.h"
 #include "vector.h"
-
-#include "ether.h"	/* for NETHER */
 
 extern int intrcnt[];	/* statistics */
 
@@ -63,27 +63,55 @@ extern int intrcnt[];	/* statistics */
 
 struct isr {
 	struct	isr *isr_next;
-	int	(*isr_intr)();
+	isr_func_t isr_intr;
 	void *isr_arg;
 	int	isr_ipl;
 };
 
-void set_vector_entry __P((int, void (*handler)()));
-unsigned int get_vector_entry __P((int));
+void set_vector_entry __P((int, void *));
+void * get_vector_entry __P((int));
 
-void isr_add_custom(level, handler)
+/*
+ * These are called from locore.  The "struct clockframe" arg
+ * is really just the normal H/W interrupt frame format.
+ * (kern_clock really wants it to be named that...)
+ */
+void	isr_autovec  __P((struct clockframe));
+void	isr_vectored __P((struct clockframe));
+
+
+void
+isr_add_custom(level, handler)
 	int level;
-	void (*handler)();
+	void *handler;
 {
 	set_vector_entry(AUTOVEC_BASE + level, handler);
 }
 
+
 /*
+ * netisr junk...
  * XXX - This really belongs in some common file,
  *	i.e.  src/sys/net/netisr.c
  * Also, should use an array of chars instead of
  * a bitmask to avoid atomicity locking issues.
  */
+
+#include "ether.h"	/* for NETHER */
+#include "ppp.h"
+
+/*
+ * Declarations for the netisr functions...
+ * They are in the header files, but that's not
+ * really a good reason to drag all those in.
+ */
+void arpintr __P((void));
+void ipintr __P((void));
+void nsintr __P((void));
+void clnlintr __P((void));
+void ccittintr __P((void));
+void pppintr __P((void));
+
 void netintr()
 {
 	int n, s;
@@ -114,7 +142,6 @@ void netintr()
 		ccittintr();
 	}
 #endif
-#include "ppp.h"
 #if NPPP > 0
 	if (n & (1 << NETISR_PPP)) {
 		pppintr();
@@ -129,13 +156,13 @@ static struct isr *isr_autovec_list[NUM_LEVELS];
  * This is called by the assembly routines
  * for handling auto-vectored interupts.
  */
-void isr_autovec(evec)
-	int evec;		/* format | vector offset */
+void isr_autovec(cf)
+	struct clockframe cf;
 {
 	struct isr *isr;
 	register int n, ipl, vec;
 
-	vec = (evec & 0xFFF) >> 2;
+	vec = (cf.cf_vo & 0xFFF) >> 2;
 	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE+8)))
 		panic("isr_autovec: bad vec");
 	ipl = vec - 0x18;
@@ -166,7 +193,7 @@ void isr_autovec(evec)
  * Called by driver attach functions.
  */
 void isr_add_autovect(handler, arg, level)
-	int (*handler)();
+	isr_func_t handler;
 	void *arg;
 	int level;
 {
@@ -186,9 +213,8 @@ void isr_add_autovect(handler, arg, level)
 	isr_autovec_list[level] = new_isr;
 }
 
-extern void badtrap();
 struct vector_handler {
-	int (*func)();
+	isr_func_t func;
 	void *arg;
 };
 static struct vector_handler isr_vector_handlers[192];
@@ -198,13 +224,13 @@ static struct vector_handler isr_vector_handlers[192];
  * for handling vectored interupts.
  */
 void
-isr_vectored(evec)
-	int evec;		/* format | vector offset */
+isr_vectored(cf)
+	struct clockframe cf;
 {
 	struct vector_handler *vh;
 	register int ipl, vec;
 
-	vec = (evec & 0xFFF) >> 2;
+	vec = (cf.cf_vo & 0xFFF) >> 2;
 	ipl = getsr();
 	ipl = (ipl >> 8) & 7;
 
@@ -218,7 +244,7 @@ isr_vectored(evec)
 	vh = &isr_vector_handlers[vec - 64];
 	if (vh->func == NULL) {
 		printf("isr_vectored: vector=0x%x (nul func)\n", vec);
-		set_vector_entry(vec, badtrap);
+		set_vector_entry(vec, (void *)badtrap);
 		return;
 	}
 
@@ -231,9 +257,10 @@ isr_vectored(evec)
  * Establish an interrupt handler.
  * Called by driver attach functions.
  */
-extern void _isr_vectored();
-void isr_add_vectored(func, arg, level, vec)
-	int (*func)();
+extern void _isr_vectored __P((void));
+void
+isr_add_vectored(func, arg, level, vec)
+	isr_func_t func;
 	void *arg;
 	int level, vec;
 {
@@ -250,24 +277,27 @@ void isr_add_vectored(func, arg, level, vec)
 	}
 	vh->func = func;
 	vh->arg = arg;
-	set_vector_entry(vec, _isr_vectored);
+	set_vector_entry(vec, (void *)_isr_vectored);
 }
 
 /*
  * XXX - could just kill these...
  */
-void set_vector_entry(entry, handler)
+void
+set_vector_entry(entry, handler)
 	int entry;
-	void (*handler)();
+	void *handler;
 {
 	if ((entry <0) || (entry >= NVECTORS))
 	panic("set_vector_entry: setting vector too high or low\n");
-	vector_table[entry] =  handler;
+	vector_table[entry] = handler;
 }
-unsigned int get_vector_entry(entry)
+
+void *
+get_vector_entry(entry)
 	int entry;
 {
 	if ((entry <0) || (entry >= NVECTORS))
 	panic("get_vector_entry: setting vector too high or low\n");
-	return (unsigned int) vector_table[entry];
+	return ((void *) vector_table[entry]);
 }

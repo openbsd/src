@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.33 1996/12/17 21:11:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -56,9 +56,8 @@
 #include <machine/vmparam.h>
 #include <machine/dvma.h>
 
-#include "intersil7170.h"
-#include "interreg.h"
 #include "buserr.h"
+#include "machdep.h"
 
 #if 1	/* XXX - Temporary hack... */
 /*
@@ -84,6 +83,9 @@ struct mytrapframe {
 #define	def1(name) def("name", name)
 #endif
 
+extern void printf __P((char *fmt, ...));
+extern void exit __P((int));
+
 void
 def(what, val)
 	char *what;
@@ -99,14 +101,8 @@ main()
 	struct pcb *pcb = (struct pcb *) 0;
 	struct proc *p = (struct proc *) 0;
 	struct vmspace *vms = (struct vmspace *) 0;
-	struct intersil7170 *intersil_addr = (struct intersil7170 *) 0;
 	struct trapframe *tf = (struct trapframe *) 0;
 	struct fpframe *fpf = (struct fpframe *) 0;
-
-	/* intersil clock internals */
-	def("IREG_CLOCK_ENAB_5", IREG_CLOCK_ENAB_5);
-	def("INTERSIL_INTR_OFFSET", &intersil_addr->clk_intr_reg);
-	def1(INTERSIL_INTER_CSECONDS);
 
 	/* bus error stuff */
 	def1(BUSERR_REG);
@@ -150,7 +146,7 @@ main()
 	def1(ENAMETOOLONG);
 
 	/* trap types: locore.s includes trap.h */
-	
+
 	/*
 	 * unix structure-isms
 	 */

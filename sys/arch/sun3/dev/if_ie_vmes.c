@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vmes.c,v 1.5 1996/11/20 18:56:51 gwr Exp $	*/
+/*	$NetBSD: if_ie_vmes.c,v 1.6 1996/12/17 21:10:46 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
-#include <machine/isr.h>
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
 
@@ -74,7 +73,9 @@ static void ie_vmerun __P((struct ie_softc *));
  * zero/copy functions: OBIO can use the normal functions, but VME
  *    must do only byte or half-word (16 bit) accesses...
  */
-static void wcopy(), wzero();
+static void wcopy __P((const void *vb1, void *vb2, u_int l));
+static void wzero __P((void *vb, u_int l));
+
 
 /*
  * New-style autoconfig attachment
@@ -93,8 +94,9 @@ ie_vmes_match(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
+	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	int x, sz;
+	int x;
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_VME16) {

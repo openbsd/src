@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.23 1996/11/20 18:56:56 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.25 1996/12/17 21:21:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,15 +41,15 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/control.h>
 #include <machine/pte.h>
 #include <machine/mon.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 
 static int  obio_match __P((struct device *, void *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
 static int  obio_print __P((void *, const char *parentname));
-static int	obio_submatch __P((struct device *, void *, void *));
+static int  obio_submatch __P((struct device *, void *, void *));
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach
@@ -60,9 +60,9 @@ struct cfdriver obio_cd = {
 };
 
 static int
-obio_match(parent, vcf, aux)
+obio_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	void *cf, *aux;
 {
 	struct confargs *ca = aux;
 
@@ -134,6 +134,11 @@ obio_submatch(parent, vcf, aux)
 	 * The address assignments are fixed for all time,
 	 * so our config files might as well reflect that.
 	 */
+#ifdef	DIAGNOSTIC
+	if (cf->cf_paddr == -1)
+		panic("obio_submatch: invalid address for: %s%d\n",
+			cf->cf_driver->cd_name, cf->cf_unit);
+#endif
 	if (cf->cf_paddr != ca->ca_paddr)
 		return 0;
 
@@ -143,7 +148,7 @@ obio_submatch(parent, vcf, aux)
 		panic("obio_submatch: no match function for: %s\n",
 			  cf->cf_driver->cd_name);
 
-	return ((*submatch)(parent, vcf, aux));
+	return ((*submatch)(parent, cf, aux));
 }
 
 
@@ -190,14 +195,14 @@ caddr_t obio_find_mapping(int pa, int size)
  */
 #define PGBITS (PG_VALID|PG_WRITE|PG_SYSTEM)
 
-static void save_prom_mappings()
+static void
+save_prom_mappings __P((void))
 {
-	vm_offset_t pa;
-	caddr_t segva, pgva;
+	vm_offset_t pa, segva, pgva;
 	int pte, sme, i;
-	
-	segva = (caddr_t)MONSTART;
-	while (segva < (caddr_t)MONEND) {
+
+	segva = (vm_offset_t)MONSTART;
+	while (segva < (vm_offset_t)MONEND) {
 		sme = get_segmap(segva);
 		if (sme == SEGINV) {
 			segva += NBSG;
@@ -222,7 +227,7 @@ static void save_prom_mappings()
 				{
 					i = pa >> SAVE_SHIFT;
 					if (prom_mappings[i] == NULL) {
-						prom_mappings[i] = pgva;
+						prom_mappings[i] = (caddr_t)pgva;
 #ifdef	DEBUG
 						mon_printf("obio: found pa=0x%x\n", pa);
 #endif
@@ -257,11 +262,11 @@ static vm_offset_t required_mappings[] = {
 	(vm_offset_t)-1,	/* end marker */
 };
 
-static void make_required_mappings()
+static void
+make_required_mappings __P((void))
 {
-	vm_offset_t pa, *rmp;
-	int idx;
-	
+	vm_offset_t *rmp;
+
 	rmp = required_mappings;
 	while (*rmp != (vm_offset_t)-1) {
 		if (!obio_find_mapping(*rmp, NBPG)) {
@@ -280,17 +285,26 @@ static void make_required_mappings()
 
 
 /*
- * this routine "configures" any internal OBIO devices which must be
- * accessible before the mainline OBIO autoconfiguration as part of
- * configure().
+ * Find mappings for devices that are needed before autoconfiguration.
+ * We first look for and record any useful PROM mappings, then call
+ * the "init" functions for drivers that we need to use before the
+ * normal autoconfiguration calls configure().
  */
-void obio_init()
+void
+obio_init()
 {
 	save_prom_mappings();
 	make_required_mappings();
+
+	/* Init drivers that use the required OBIO mappings. */
+	zs_init();
+	eeprom_init();
+	intreg_init();
+	clock_init();
 }
 
-caddr_t obio_alloc(obio_addr, obio_size)
+caddr_t
+obio_alloc(obio_addr, obio_size)
 	int obio_addr, obio_size;
 {
 	caddr_t cp;

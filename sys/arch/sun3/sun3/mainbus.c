@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1996/11/20 18:57:34 gwr Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1996/12/17 21:11:35 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@ main_attach(parent, self, args)
 	void *args;
 {
 	struct confargs ca;
-	struct cfdata *new_match;
 	int i;
 
 	printf("\n");

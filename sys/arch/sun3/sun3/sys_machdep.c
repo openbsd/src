@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3 1995/10/27 15:58:23 gwr Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4 1996/12/17 21:11:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,10 +47,11 @@
 #include <sys/buf.h>
 #include <sys/trace.h>
 #include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-
-#include <sys/syscallargs.h>
+#include <machine/cpu.h>
+#include "machdep.h"
 
 #ifdef TRACE
 int	nvualarm;
@@ -110,8 +111,6 @@ vdoualarm(arg)
 }
 #endif
 
-#include <machine/cpu.h>
-#include "cache.h"
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1
@@ -121,6 +120,7 @@ vdoualarm(arg)
 /* XXX end should be */
 
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
 	int req;
 	caddr_t	addr;
@@ -157,9 +157,10 @@ sys_sysarch(p, v, retval)
 	register_t *retval;
 {
 	struct sys_sysarch_args /* {
-		syscallarg(int) op; 
+		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;
 
+	(void)uap->op;	/* kill warning */
 	return ENOSYS;
 }

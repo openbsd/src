@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.11 1996/10/29 19:54:19 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.12 1996/12/17 21:10:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,23 +60,28 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
+#include <sys/proc.h>
 #include <sys/tty.h>
 
 #include <vm/vm.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
-#include <machine/autoconf.h>
+#include <machine/idprom.h>
 #include <machine/pmap.h>
 
 #include "fbvar.h"
 #include "btreg.h"
 #include "btvar.h"
 #include "cg4reg.h"
+
+cdev_decl(cg4);
 
 #define	CG4_MMAP_SIZE (CG4_OVERLAY_SIZE + CG4_ENABLE_SIZE + CG4_PIXMAP_SIZE)
 
@@ -116,14 +121,11 @@ struct cfdriver cgfour_cd = {
 	NULL, "cgfour", DV_DULL
 };
 
-/* frame buffer generic driver */
-int cg4open(), cg4close(), cg4mmap();
-
-static int	cg4gattr   __P((struct fbdevice *, struct fbgattr *));
-static int	cg4gvideo  __P((struct fbdevice *, int *));
-static int	cg4svideo  __P((struct fbdevice *, int *));
-static int	cg4getcmap __P((struct fbdevice *, struct fbcmap *));
-static int	cg4putcmap __P((struct fbdevice *, struct fbcmap *));
+static int	cg4gattr   __P((struct fbdevice *, void *));
+static int	cg4gvideo  __P((struct fbdevice *, void *));
+static int	cg4svideo  __P((struct fbdevice *, void *));
+static int	cg4getcmap __P((struct fbdevice *, void *));
+static int	cg4putcmap __P((struct fbdevice *, void *));
 
 static void	cg4a_init   __P((struct cg4_softc *));
 static void	cg4a_svideo __P((struct cg4_softc *, int));
@@ -343,10 +345,11 @@ cg4mmap(dev, off, prot)
  */
 
 /* FBIOGATTR: */
-static int  cg4gattr(fb, fba)
+static int  cg4gattr(fb, data)
 	struct fbdevice *fb;
-	struct fbgattr *fba;
+	void *data;
 {
+	struct fbgattr *fba = data;
 
 	fba->real_type = fb->fb_fbtype.fb_type;
 	fba->owner = 0;		/* XXX - TIOCCONS stuff? */
@@ -360,10 +363,11 @@ static int  cg4gattr(fb, fba)
 }
 
 /* FBIOGVIDEO: */
-static int  cg4gvideo(fb, on)
+static int  cg4gvideo(fb, data)
 	struct fbdevice *fb;
-	int *on;
+	void *data;
 {
+	int *on = data;
 	struct cg4_softc *sc = fb->fb_private;
 
 	*on = !sc->sc_blanked;
@@ -371,10 +375,11 @@ static int  cg4gvideo(fb, on)
 }
 
 /* FBIOSVIDEO: */
-static int cg4svideo(fb, on)
+static int cg4svideo(fb, data)
 	struct fbdevice *fb;
-	int *on;
+	void *data;
 {
+	int *on = data;
 	struct cg4_softc *sc = fb->fb_private;
 	int state;
 
@@ -390,10 +395,11 @@ static int cg4svideo(fb, on)
  * FBIOGETCMAP:
  * Copy current colormap out to user space.
  */
-static int cg4getcmap(fb, fbcm)
+static int cg4getcmap(fb, data)
 	struct fbdevice *fb;
-	struct fbcmap *fbcm;
+	void *data;
 {
+	struct fbcmap *fbcm = data;
 	struct cg4_softc *sc = fb->fb_private;
 	struct soft_cmap *cm = &sc->sc_cmap;
 	int error, start, count;
@@ -420,10 +426,11 @@ static int cg4getcmap(fb, fbcm)
  * FBIOPUTCMAP:
  * Copy new colormap from user space and load.
  */
-static int cg4putcmap(fb, fbcm)
+static int cg4putcmap(fb, data)
 	struct fbdevice *fb;
-	struct fbcmap *fbcm;
+	void *data;
 {
+	struct fbcmap *fbcm = data;
 	struct cg4_softc *sc = fb->fb_private;
 	struct soft_cmap *cm = &sc->sc_cmap;
 	int error, start, count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 1996/12/17 21:11:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,53 +44,58 @@
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
-#ifndef _SUN3_CPU_H_
-#define _SUN3_CPU_H_
-
 #ifdef _KERNEL
 
 /*
- * Exported definitions unique to sun3/68k cpu support.
+ * External definitions unique to sun3/68k cpu support.
+ * These are the "public" declarations - those needed in
+ * machine-independent source code.  The "priviate" ones
+ * are in machdep.h (used only inside sys/arch/sun3).
+ *
+ * Note that the name of this file is NOT meant to imply
+ * that it has anything to do with mc68020 CPU stuff.
+ * The name "cpu" is historical, and used in the common
+ * code to identify machine-dependent functions, etc.
  */
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  One the sun3, we use
- * what the hardware pushes on an interrupt (frame format 0).
+ * what the locore.s glue puts on the stack before calling C-code.
  */
 struct clockframe {
-	u_short	sr;		/* sr at time of interrupt */
-	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
+	u_int	cf_regs[4];	/* d0,d1,a0,a1 */
+	u_short	cf_sr;		/* sr at time of interrupt */
+	u_long	cf_pc;		/* pc at time of interrupt */
+	u_short	cf_vo;		/* vector offset (4-word frame) */
 };
 
-#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
+#define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->cf_sr & PSL_IPL) == 0)
+#define	CLKF_PC(framep)		((framep)->cf_pc)
 #if 0
 /* We would like to do it this way... */
-#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#define	CLKF_INTR(framep)	(((framep)->cf_sr & PSL_M) == 0)
 #else
 /* but until we start using PSL_M, we have to do this instead */
 #define	CLKF_INTR(framep)	(0)	/* XXX */
 #endif
 
 extern int astpending;	 /* need to trap before returning to user mode */
-#define aston() (astpending++)
+#define aston() (astpending = 1)
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched; /* resched() was called */
-#define	need_resched()	{ want_resched++; aston(); }
+#define	need_resched()	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -111,6 +116,7 @@ extern int want_resched; /* resched() was called */
  * isr_soft_request() so this scheme just multiplexes four
  * software interrupt `sources' on the level one handler.
  */
+extern void isr_soft_request __P((int level));
 union sun3sir {
 	int 	sir_any;
 	char	sir_which[4];
@@ -121,63 +127,10 @@ union sun3sir {
 #define SIR_SPARE2	2
 #define SIR_SPARE3	3
 
-#define	setsoftint()	isr_soft_request(1)
-#define setsoftnet()	(sun3sir.sir_which[SIR_NET] = 1, setsoftint())
-#define setsoftclock()	(sun3sir.sir_which[SIR_CLOCK] = 1, setsoftint())
-
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
-
-/* values for cpu_machine_id */
-
-#define CPU_ARCH_MASK  0xf0
-#define SUN3_ARCH      0x10
-#define SUN3_IMPL_MASK 0x0f
-#define SUN3_MACH_160  0x01
-#define SUN3_MACH_50   0x02
-#define SUN3_MACH_260  0x03
-#define SUN3_MACH_110  0x04
-#define SUN3_MACH_60   0x07
-#define SUN3_MACH_E    0x08
-
-extern	unsigned char cpu_machine_id;
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_CONTROL	3	/* sun control space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-#define IC_CLEAR (IC_CLR|IC_ENABLE)
+#define	setsoftint(x)	isr_soft_request(x)
+#define setsoftnet()	(sun3sir.sir_which[SIR_NET] = 1, setsoftint(1))
+#define setsoftclock()	(sun3sir.sir_which[SIR_CLOCK] = 1, setsoftint(1))
 
 #endif	/* _KERNEL */
 
-/* 
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
-
-#endif /* !_SUN3_CPU_H_ */
+#include <m68k/sysctl.h>

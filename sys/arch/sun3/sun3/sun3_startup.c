@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.56 1996/12/17 21:11:39 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@
 #include <vm/vm.h>
 
 #include <machine/control.h>
-#include <machine/cpufunc.h>
 #include <machine/cpu.h>
+#include <machine/db_machdep.h>
 #include <machine/dvma.h>
 #include <machine/mon.h>
 #include <machine/pte.h>
@@ -58,6 +58,7 @@
 
 #include "vector.h"
 #include "interreg.h"
+#include "machdep.h"
 
 /* This is defined in locore.s */
 extern char kernel_text[];
@@ -66,10 +67,12 @@ extern char kernel_text[];
 extern char etext[], edata[], end[];
 char *esym;	/* DDB */
 
+
 /*
- * Globals shared with the pmap code.
- * XXX - should reexamine this...
- */ 
+ * Globals shared between pmap.c and sun3_startup.c (sigh).
+ * For simplicity, this interface retains the variables
+ * that were used in the old interface (without NONCONTIG).
+ */
 vm_offset_t virtual_avail, virtual_end;
 vm_offset_t avail_start, avail_end;
 /* used to skip the Sun3/50 video RAM */
@@ -79,7 +82,8 @@ int cache_size;
 /*
  * Now our own stuff.
  */
-unsigned int *old_vector_table;
+int cold = 1;
+void **old_vector_table;
 
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
@@ -92,7 +96,6 @@ int msgbufmapped = 0;
 struct msgbuf *msgbufp = NULL;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
-unsigned char *interrupt_reg;
 
 vm_offset_t proc0_user_pa;
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
@@ -101,25 +104,27 @@ extern struct pcb *curpcb;
 extern vm_offset_t dumppage_pa;
 extern vm_offset_t dumppage_va;
 
-/*
- * Switch to our own interrupt vector table.
- */
-static void initialize_vector_table()
-{
-	old_vector_table = getvbr();
-	setvbr((unsigned int *) vector_table);
-}
+void sun3_bootstrap __P((struct exec));
 
-vm_offset_t high_segment_alloc(npages)
+static void sun3_mon_init __P((vm_offset_t sva, vm_offset_t eva, int keep));
+static void sun3_monitor_hooks __P((void));
+static void sun3_save_symtab __P((struct exec *kehp));
+static void sun3_verify_hardware __P((void));
+static void sun3_vm_init __P((struct exec *kehp));
+static void tracedump __P((int));
+static void v_handler __P((int addr, char *str));
+
+
+vm_offset_t
+high_segment_alloc(npages)
 	int npages;
 {
-	int i;
 	vm_offset_t va, tmp;
-	
+
 	if (npages == 0)
 		mon_panic("panic: request for high segment allocation of 0 pages");
 	if (high_segment_free_start == high_segment_free_end) return NULL;
-	
+
 	va = high_segment_free_start + (npages*NBPG);
 	if (va > high_segment_free_end) return NULL;
 	tmp = high_segment_free_start;
@@ -130,7 +135,8 @@ vm_offset_t high_segment_alloc(npages)
 /*
  * Prepare for running the PROM monitor
  */
-static void sun3_mode_monitor()
+static void
+sun3_mode_monitor __P((void))
 {
 	/* Install PROM vector table and enable NMI clock. */
 	/* XXX - Disable watchdog action? */
@@ -142,11 +148,12 @@ static void sun3_mode_monitor()
 /*
  * Prepare for running the kernel
  */
-static void sun3_mode_normal()
+static void
+sun3_mode_normal __P((void))
 {
 	/* Install our vector table and disable the NMI clock. */
 	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
-	setvbr((unsigned int *) vector_table);
+	setvbr((void**)vector_table);
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
 }
 
@@ -173,7 +180,7 @@ void sun3_mon_abort()
 	 * stuff it into the PROM interrupt vector for trap zero
 	 * and then do a trap.  Needs PROM vector table in RAM.
 	 */
-	old_vector_table[32] = (int)romp->abortEntry;
+	old_vector_table[32] = (void*) romp->abortEntry;
 	asm(" trap #0 ; _sun3_mon_continued: nop");
 
 	/* We have continued from a PROM abort! */
@@ -208,9 +215,10 @@ void sun3_mon_reboot(bootstring)
  * is identically mapped in all contexts.  The PROM can
  * do the job using hardware-dependent tricks...
  */
-void sun3_context_equiv()
+void
+sun3_context_equiv __P((void))
 {
-	unsigned int i, sme;
+	unsigned int sme;
 	int x;
 	vm_offset_t va;
 
@@ -235,15 +243,15 @@ void sun3_context_equiv()
 
 static void
 sun3_mon_init(sva, eva, keep)
-vm_offset_t sva, eva;
-int keep;	/* true: steal, false: clear */
+	vm_offset_t sva, eva;
+	int keep;	/* true: steal, false: clear */
 {
 	vm_offset_t pgva, endseg;
 	int pte, valid;
 	unsigned char sme;
-	
+
 	sva &= ~(NBSG-1);
-	
+
 	while (sva < eva) {
 		sme = get_segmap(sva);
 		if (sme != SEGINV) {
@@ -273,6 +281,7 @@ int keep;	/* true: steal, false: clear */
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
+static void
 sun3_save_symtab(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
@@ -347,10 +356,11 @@ sun3_save_symtab(kehp)
  * between [ KERNBASE .. virtual_avail ] and this is
  * checked in trap.c for kernel-mode MMU faults.
  */
-void sun3_vm_init(kehp)
+static void
+sun3_vm_init(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
-	vm_offset_t va, eva, sva, pte, temp_seg;
+	vm_offset_t va, eva, pte;
 	unsigned int sme;
 
 	/*
@@ -489,7 +499,7 @@ void sun3_vm_init(kehp)
 	 * segmap entries in the MMU unless pmeg_array records them.
 	 */
 	va = virtual_avail;
-	while (va < virtual_end) {	
+	while (va < virtual_end) {
 		set_segmap(va, SEGINV);
 		va += NBSG;
 	}
@@ -607,7 +617,8 @@ void sun3_vm_init(kehp)
  */
 int delay_divisor = 82;		/* assume the fastest (3/260) */
 
-void sun3_verify_hardware()
+static void
+sun3_verify_hardware()
 {
 	unsigned char machtype;
 	int cpu_match = 0;
@@ -686,8 +697,9 @@ struct funcall_frame {
 	int fr_arg[1];
 };
 /*VARARGS0*/
+static void
 tracedump(x1)
-	caddr_t x1;
+	int x1;
 {
 	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
 	u_int stackpage = ((u_int)fp) & ~PGOFSET;
@@ -711,12 +723,12 @@ tracedump(x1)
  * For now we just implement the old "g0" and "g4"
  * commands and a printf hack.  [lifted from freed cmu mach3 sun3 port]
  */
-void
+static void
 v_handler(addr, str)
-int addr;
-char *str;
+	int addr;
+	char *str;
 {
-	
+
 	switch (*str) {
 	case '\0':
 		/*
@@ -729,36 +741,36 @@ char *str;
 			sun3_mode_normal();
 			panic("zero");
 			/*NOTREACHED*/
-			
+
 		case 4:			/* old g4 */
-			tracedump();
-			break;
-			
+			goto do_trace;
+
 		default:
 			goto err;
 		}
 		break;
-		
+
 	case 'p':			/* 'p'rint string command */
 	case 'P':
 		mon_printf("%s\n", (char *)addr);
 		break;
-		
+
 	case '%':			/* p'%'int anything a la printf */
 		mon_printf(str, addr);
 		mon_printf("\n");
 		break;
-		
+
+	do_trace:
 	case 't':			/* 't'race kernel stack */
 	case 'T':
-		tracedump();
+		tracedump(addr);
 		break;
-		
+
 	case 'u':			/* d'u'mp hack ('d' look like hex) */
 	case 'U':
 		goto err;
 		break;
-		
+
 	default:
 	err:
 		mon_printf("Don't understand 0x%x '%s'\n", addr, str);
@@ -774,7 +786,8 @@ char *str;
  * argv[1] = options	(i.e. "-ds" or NULL)
  * argv[2] = NULL
  */
-void sun3_monitor_hooks()
+static void
+sun3_monitor_hooks()
 {
 	MachMonBootParam *bpp;
 	char **argp;
@@ -825,21 +838,6 @@ void sun3_monitor_hooks()
 }
 
 /*
- * Find mappings for devices that are needed before autoconfiguration.
- * First the obio module finds and records useful PROM mappings, then
- * the necessary drivers are given a chance to use those recorded.
- */
-void internal_configure()
-{
-    obio_init();	/* find and record PROM mappings in OBIO space */
-	/* Drivers that use those OBIO mappings from the PROM */
-	zs_init();
-	eeprom_init();
-	intreg_init();
-	clock_init();
-}
-
-/*
  * This is called from locore.s just after the kernel is remapped
  * to its proper address, but before the call to main().
  */
@@ -847,13 +845,11 @@ void
 sun3_bootstrap(keh)
 	struct exec keh;	/* kernel exec header */
 {
-	int i;
-	extern int cold;
 
 	/* First, Clear BSS. */
 	bzero(edata, end - edata);
 
-	cold = 1;
+	/* cold = 1; (now at compile time) */
 
 	sun3_monitor_hooks();	/* set v_handler, get boothowto */
 
@@ -863,15 +859,18 @@ sun3_bootstrap(keh)
 
 	pmap_bootstrap();		/* bootstrap pmap module */
 
-	internal_configure();	/* stuff that can't wait for configure() */
+    obio_init();		/* stuff that can't wait for configure() */
 
 	/*
-	 * Point interrupts/exceptions to our table.
-	 * This is done after internal_configure/isr_init finds
+	 * Point interrupts/exceptions to our vector table.
+	 * (Until now, we use the one setup by the PROM.)
+	 *
+	 * This is done after obio_init() / intreg_init() finds
 	 * the interrupt register and disables the NMI clock so
 	 * it will not cause "spurrious level 7" complaints.
 	 */
-	initialize_vector_table();
+	old_vector_table = getvbr();
+	setvbr((void **)vector_table);
 
 	/* Interrupts are enabled in locore.s just after this return. */
 }

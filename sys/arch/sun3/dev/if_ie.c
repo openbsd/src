@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.15 1996/10/30 00:24:33 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.16 1996/12/17 21:10:44 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -135,16 +135,16 @@
 
 #include <vm/vm.h>
 
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
+#include <machine/pmap.h>
+
 /*
  * ugly byte-order hack for SUNs
  */
 
-#define SWAP(x)		((u_short)(XSWAP((u_short)(x))))
 #define XSWAP(y)	( ((y) >> 8) | ((y) << 8) )
-
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/pmap.h>
+#define SWAP(x)		((u_short)(XSWAP((u_short)(x))))
 
 #include "i82586.h"
 #include "if_iereg.h"
@@ -172,15 +172,35 @@ int ieinit __P((struct ie_softc *));
 int ieioctl __P((struct ifnet *, u_long, caddr_t));
 void iestart __P((struct ifnet *));
 void iereset __P((struct ie_softc *));
-static void ie_readframe __P((struct ie_softc *, int));
+int ie_setupram __P((struct ie_softc *sc));
+
+static void chan_attn_timeout __P((void *arg));
+static int cmd_and_wait __P((struct ie_softc *, int, void *, int));
+
 static void ie_drop_packet_buffer __P((struct ie_softc *));
-static int command_and_wait __P((struct ie_softc *, int,
-    void volatile *, int));
+static void ie_readframe __P((struct ie_softc *, int));
+static void ie_setup_config __P((struct ie_config_cmd *, int, int));
+
 static void ierint __P((struct ie_softc *));
+static void iestop __P((struct ie_softc *));
 static void ietint __P((struct ie_softc *));
-static void setup_bufs __P((struct ie_softc *));
+static void iexmit __P((struct ie_softc *));
+
 static int mc_setup __P((struct ie_softc *, void *));
 static void mc_reset __P((struct ie_softc *));
+static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
+static void setup_bufs __P((struct ie_softc *));
+
+static inline caddr_t Align __P((caddr_t ptr));
+static inline void ie_ack __P((struct ie_softc *, u_int));
+static inline u_short ether_cmp __P((u_char *, u_char *));
+static inline int check_eh __P((struct ie_softc *,
+		struct ether_header *eh, int *));
+static inline int ie_buflen __P((struct ie_softc *, int));
+static inline int ie_packet_len __P((struct ie_softc *));
+static inline int ieget __P((struct ie_softc *sc,
+	struct mbuf **mp, struct ether_header *ehp, int *to_bpf));
+
 
 #ifdef IEDEBUG
 void print_rbd __P((volatile struct ie_recv_buf_desc *));
@@ -215,7 +235,7 @@ struct cfdriver ie_cd = {
  */
 static inline void
 ie_setup_config(cmd, promiscuous, manchester)
-	volatile struct ie_config_cmd *cmd;
+	struct ie_config_cmd *cmd;
 	int promiscuous, manchester;
 {
 
@@ -253,7 +273,7 @@ ie_ack(sc, mask)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 
-	command_and_wait(sc, scb->ie_status & mask, 0, 0);
+	cmd_and_wait(sc, scb->ie_status & mask, 0, 0);
 }
 
 
@@ -349,8 +369,8 @@ ie_intr(v)
 		volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
 		if (iev->status & IEVME_PERR) {
 			printf("%s: parity error (ctrl %x @ %02x%04x)\n",
-			    iev->pectrl, iev->pectrl & IEVME_HADDR,
-			    iev->peaddr);
+			    sc->sc_dev.dv_xname, iev->pectrl,
+			    iev->pectrl & IEVME_HADDR, iev->peaddr);
 			iev->pectrl = iev->pectrl | IEVME_PARACK;
 		}
 	}
@@ -437,7 +457,7 @@ ierint(sc)
 					MK_16(sc->sc_maddr, sc->rbuffs[0]);
 				scb->ie_recv_list =
 					MK_16(sc->sc_maddr, sc->rframes[0]);
-				command_and_wait(sc, IE_RU_START, 0, 0);
+				cmd_and_wait(sc, IE_RU_START, 0, 0);
 			}
 			break;
 		}
@@ -455,7 +475,6 @@ ietint(sc)
 	struct ie_softc *sc;
 {
 	int     status;
-	int     i;
 
 	sc->sc_arpcom.ac_if.if_timer = 0;
 	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
@@ -691,7 +710,7 @@ ie_packet_len(sc)
  * command to the chip to be executed.  On the way, if we have a BPF listener
  * also give him a copy.
  */
-inline static void
+static void
 iexmit(sc)
 	struct ie_softc *sc;
 {
@@ -722,7 +741,7 @@ iexmit(sc)
 
 	sc->scb->ie_command_list = 
 	  MK_16(sc->sc_maddr, sc->xmit_cmds[sc->xctail]);
-	command_and_wait(sc, IE_CU_START, 0, 0);
+	cmd_and_wait(sc, IE_CU_START, 0, 0);
 
 	sc->xmit_busy = 1;
 	sc->sc_arpcom.ac_if.if_timer = 5;
@@ -1151,10 +1170,10 @@ iereset(sc)
 	/*
 	 * Stop i82586 dead in its tracks.
 	 */
-	if (command_and_wait(sc, IE_RU_ABORT | IE_CU_ABORT, 0, 0))
+	if (cmd_and_wait(sc, IE_RU_ABORT | IE_CU_ABORT, 0, 0))
 		printf("%s: abort commands timed out\n", sc->sc_dev.dv_xname);
 
-	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
+	if (cmd_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
 		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
 
 #ifdef notdef
@@ -1172,10 +1191,10 @@ iereset(sc)
  * This is called if we time out.
  */
 static void
-chan_attn_timeout(rock)
-	caddr_t rock;
+chan_attn_timeout(arg)
+	void *arg;
 {
-	*(int *) rock = 1;
+	*((int *)arg) = 1;
 }
 
 /*
@@ -1188,10 +1207,10 @@ chan_attn_timeout(rock)
  * to become true.
  */
 static int
-command_and_wait(sc, cmd, pcmd, mask)
+cmd_and_wait(sc, cmd, pcmd, mask)
 	struct ie_softc *sc;
 	int     cmd;
-	volatile void *pcmd;
+	void *	pcmd;
 	int     mask;
 {
 	volatile struct ie_cmd_common *cc = pcmd;
@@ -1216,7 +1235,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 		 * .369 seconds, which we round up to .4.
 		 */
 
-		timeout(chan_attn_timeout, (caddr_t)&timedout, 2 * hz / 5);
+		timeout(chan_attn_timeout, (void *)&timedout, 2 * hz / 5);
 
 		/*
 		 * Now spin-lock waiting for status.  This is not a very nice
@@ -1229,7 +1248,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 			if ((cc->ie_cmd_status & mask) || timedout)
 				break;
 
-		untimeout(chan_attn_timeout, (caddr_t)&timedout);
+		untimeout(chan_attn_timeout, (void *)&timedout);
 
 		return timedout;
 	} else {
@@ -1262,7 +1281,7 @@ run_tdr(sc, cmd)
 	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 	cmd->ie_tdr_time = SWAP(0);
 
-	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
+	if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 	    !(cmd->com.ie_cmd_status & IE_STAT_OK))
 		result = 0x10000;	/* XXX */
 	else
@@ -1307,9 +1326,7 @@ setup_bufs(sc)
 	struct ie_softc *sc;
 {
 	caddr_t ptr = sc->buf_area;	/* memory pool */
-	volatile struct ie_recv_frame_desc *rfd = (void *) ptr;
-	volatile struct ie_recv_buf_desc *rbd;
-	int     n, r;
+	u_int n, r;
 
 	/*
 	 * step 0: zero memory and figure out how many recv buffers and
@@ -1318,14 +1335,16 @@ setup_bufs(sc)
 	(sc->sc_bzero)(ptr, sc->buf_area_sz);
 	ptr = Align(ptr);	/* set alignment and stick with it */
 
-	n = (int)Align(sizeof(struct ie_xmit_cmd)) +
-	    (int)Align(sizeof(struct ie_xmit_buf)) + IE_TBUF_SIZE;
+	n = ALIGN(sizeof(struct ie_xmit_cmd)) +
+	    ALIGN(sizeof(struct ie_xmit_buf)) +
+	    IE_TBUF_SIZE;
 	n *= NTXBUF;		/* n = total size of xmit area */
 
 	n = sc->buf_area_sz - n;/* n = free space for recv stuff */
 
-	r = (int)Align(sizeof(struct ie_recv_frame_desc)) +
-	    (((int)Align(sizeof(struct ie_recv_buf_desc)) + IE_RBUF_SIZE) * B_PER_F);
+	r = ALIGN(sizeof(struct ie_recv_frame_desc)) +
+	    ((ALIGN(sizeof(struct ie_recv_buf_desc)) +
+		  IE_RBUF_SIZE) * B_PER_F);
 
 	/* r = size of one R frame */
 
@@ -1436,7 +1455,7 @@ mc_setup(sc, ptr)
 	struct ie_softc *sc;
 	void *ptr;
 {
-	volatile struct ie_mcast_cmd *cmd = ptr;
+	struct ie_mcast_cmd *cmd = ptr;
 
 	cmd->com.ie_cmd_status = SWAP(0);
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
@@ -1449,7 +1468,7 @@ mc_setup(sc, ptr)
 		SWAP(sc->mcast_count * ETHER_ADDR_LEN);	/* grrr... */
 
 	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
-	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
+	if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 	    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
 		printf("%s: multicast address setup command failed\n",
 		    sc->sc_dev.dv_xname);
@@ -1471,7 +1490,6 @@ ieinit(sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
-	int     n;
 
 	ptr = sc->buf_area;
 
@@ -1479,7 +1497,7 @@ ieinit(sc)
 	 * Send the configure command first.
 	 */
 	{
-		volatile struct ie_config_cmd *cmd = ptr;
+		struct ie_config_cmd *cmd = ptr;
 
 		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 		cmd->com.ie_cmd_status = SWAP(0);
@@ -1488,7 +1506,7 @@ ieinit(sc)
 
 		ie_setup_config(cmd, sc->promisc, 0);
 
-		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
+		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
 			printf("%s: configure command failed\n",
 			    sc->sc_dev.dv_xname);
@@ -1500,7 +1518,7 @@ ieinit(sc)
 	 * Now send the Individual Address Setup command.
 	 */
 	{
-		volatile struct ie_iasetup_cmd *cmd = ptr;
+		struct ie_iasetup_cmd *cmd = ptr;
 
 		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 		cmd->com.ie_cmd_status = SWAP(0);
@@ -1510,7 +1528,7 @@ ieinit(sc)
 		(sc->sc_bcopy)(sc->sc_arpcom.ac_enaddr,
 		    (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
 
-		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
+		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
 			printf("%s: individual address setup command failed\n",
 			    sc->sc_dev.dv_xname);
@@ -1537,7 +1555,7 @@ ieinit(sc)
 	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
 
 	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
-	command_and_wait(sc, IE_RU_START, 0, 0);
+	cmd_and_wait(sc, IE_RU_START, 0, 0);
 
 	ie_ack(sc, IE_ST_WHENCE);
 
@@ -1552,7 +1570,7 @@ iestop(sc)
 	struct ie_softc *sc;
 {
 
-	command_and_wait(sc, IE_RU_DISABLE, 0, 0);
+	cmd_and_wait(sc, IE_RU_DISABLE, 0, 0);
 }
 
 int

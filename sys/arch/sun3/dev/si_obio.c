@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.7 1996/11/20 18:57:00 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.8 1996/12/17 21:10:54 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/autoconf.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/dvma.h>
 
@@ -118,6 +117,12 @@ void si_obio_dma_start __P((struct ncr5380_softc *));
 void si_obio_dma_eop __P((struct ncr5380_softc *));
 void si_obio_dma_stop __P((struct ncr5380_softc *));
 
+static __inline__ void si_obio_udc_write
+ __P((volatile struct si_regs *si, int regnum, int value));
+static __inline__ int si_obio_udc_read
+ __P((volatile struct si_regs *si, int regnum));
+
+
 /*
  * New-style autoconfig attachment
  */
@@ -137,9 +142,8 @@ int si_obio_options = 1;	/* XXX */
 static int
 si_obio_match(parent, vcf, args)
 	struct device	*parent;
-	void		*vcf, *args;
+	void *vcf, *args;
 {
-	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
 
 	/* Make sure there is something there... */
@@ -258,7 +262,7 @@ si_obio_dma_setup(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_setup: dh=%p, pa=0x%x, xlen=0x%x\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -348,7 +352,7 @@ si_obio_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: sr=0x%x\n", sr);
+		printf("si_dma_start: sr=%p\n", sr);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.16 1996/11/20 18:57:14 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.17 1996/12/17 21:11:09 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,21 +65,29 @@
 #define OBIO_ZS_SIZE		0x00008
 #define OBIO_EEPROM_SIZE	0x00800
 #define OBIO_CLOCK_SIZE		0x00020
-#define OBIO_MEMERR_SIZE	0x00008			
-#define OBIO_INTERREG_SIZE	0x00001			
-#define OBIO_INTEL_ETHER_SIZE	0x00001			
-#define OBIO_COLOR_MAP_SIZE	0x00400			
-#define OBIO_EPROM_SIZE		0x10000		
-#define OBIO_AMD_ETHER_SIZE	0x00004			
-#define OBIO_NCR_SCSI_SIZE	0x00020			
-#define OBIO_IO_BUS_SIZE      0x1000000			
-#define OBIO_DES_SIZE		0x00004		
-#define OBIO_ECCREG_SIZE	0x00100			
+#define OBIO_MEMERR_SIZE	0x00008
+#define OBIO_INTERREG_SIZE	0x00001
+#define OBIO_INTEL_ETHER_SIZE	0x00001
+#define OBIO_COLOR_MAP_SIZE	0x00400
+#define OBIO_EPROM_SIZE		0x10000
+#define OBIO_AMD_ETHER_SIZE	0x00004
+#define OBIO_NCR_SCSI_SIZE	0x00020
+#define OBIO_DES_SIZE		0x00004
+#define OBIO_ECCREG_SIZE	0x00100
 
 #ifdef	_KERNEL
 
-caddr_t obio_alloc __P((int, int));
-caddr_t obio_vm_alloc __P((int));
-caddr_t obio_find_mapping __P((int pa, int size));
+caddr_t	obio_alloc __P((int, int));
+void	obio_init __P((void));
+caddr_t	obio_find_mapping __P((int pa, int size));
+caddr_t	obio_vm_alloc __P((int));
+
+/*
+ * These are some OBIO devices that need early init calls.
+ */
+void	zs_init     __P((void));
+void	eeprom_init __P((void));
+void	intreg_init __P((void));
+void	clock_init  __P((void));
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.5 1996/11/20 18:57:29 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.6 1996/12/17 21:11:23 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,12 +54,13 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/control.h>
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/dvma.h>
 
-#include "cache.h"
+#include "machdep.h"
 
 /* Resource map used by dvma_mapin/dvma_mapout */
 #define	NUM_DVMA_SEGS 10
@@ -71,7 +72,8 @@ vm_size_t dvma_segmap_size = 6 * NBSG;
 /* Using phys_map to manage DVMA scratch-memory pages. */
 /* Note: Could use separate pagemap for obio if needed. */
 
-void dvma_init()
+void
+dvma_init()
 {
 	vm_offset_t segmap_addr;
 
@@ -143,7 +145,7 @@ long dvma_kvtopa(kva, bustype)
 	long kva;
 	int bustype;
 {
-	long mask;
+	long mask = 0;
 
 	if (kva < DVMA_SPACE_START || kva >= DVMA_SPACE_END)
 		panic("dvma_kvtopa: bad dmva addr=0x%x\n", kva);

@@ -1,8 +1,8 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36 1996/12/17 21:11:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
- * Copyright (c) 1993 Adam Glass 
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -62,10 +62,12 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
-#include "cache.h"
+#include "machdep.h"
 
 extern int fpu_type;
 
+extern void proc_do_uret __P((void));
+extern void proc_trampoline __P((void));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -77,25 +79,26 @@ void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
-	register struct pcb *pcb2 = &p2->p_addr->u_pcb;
+	register struct pcb *p1pcb = &p1->p_addr->u_pcb;
+	register struct pcb *p2pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *p2tf;
 	register struct switchframe *p2sf;
-	extern void proc_do_uret(), child_return();
 
 	/*
 	 * Before copying the PCB from the current process,
 	 * make sure it is up-to-date.  (p1 == curproc)
 	 */
-	savectx(curproc->p_addr);
+	if (p1 == curproc)
+		savectx(p1pcb);
 
 	/* copy over the machdep part of struct proc */
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
-	bcopy(&p1->p_addr->u_pcb, pcb2, sizeof(*pcb2));
+	bcopy(p1pcb, p2pcb, sizeof(*p2pcb));
 
 	/* Child can start with low IPL (XXX - right?) */
-	pcb2->pcb_ps = PSL_LOWIPL;
+	p2pcb->pcb_ps = PSL_LOWIPL;
 
 	/*
 	 * Our cpu_switch MUST always call PMAP_ACTIVATE on a
@@ -109,9 +112,9 @@ cpu_fork(p1, p2)
 	 * copy trapframe from parent so return to user mode
 	 * will be to right address, with correct registers.
 	 * Leave one word unused at the end of the kernel stack
-	 * so the system stack pointer stays within its stack.
+	 * so the system stack pointer stays within the page.
 	 */
-	p2tf = (struct trapframe *)((char*)p2->p_addr + USPACE-4) - 1;
+	p2tf = (struct trapframe *)((char*)p2pcb + USPACE-4) - 1;
 	p2->p_md.md_regs = (int *)p2tf;
 	bcopy(p1->p_md.md_regs, p2tf, sizeof(*p2tf));
 
@@ -121,7 +124,7 @@ cpu_fork(p1, p2)
 	 */
 	p2sf = (struct switchframe *)p2tf - 1;
 	p2sf->sf_pc = (u_int)proc_do_uret;
-	pcb2->pcb_regs[11] = (int)p2sf;		/* SSP */
+	p2pcb->pcb_regs[11] = (int)p2sf;		/* SSP */
 
 	/*
 	 * This will "push a call" to an arbitrary kernel function
@@ -158,8 +161,6 @@ cpu_set_kpc(proc, func)
 	void (*func)(struct proc *);
 {
 	struct pcb *pcbp;
-	struct switchframe *sf;
-	extern void proc_trampoline();
 	struct ksigframe {
 		struct switchframe sf;
 		void (*func)(struct proc *);
@@ -215,6 +216,19 @@ cpu_swapout(p)
 }
 
 /*
+ * Do any additional state-restoration after swapin.
+ */
+void
+cpu_swapin(p)
+	register struct proc *p;
+{
+
+	/*
+	 * XXX - Just for debugging... (later).
+	 */
+}
+
+/*
  * Dump the machine specific segment at the start of a core dump.
  * This means the CPU and FPU registers.  The format used here is
  * the same one ptrace uses, so gdb can be machine independent.
@@ -235,7 +249,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
-	register i;
 
 	/* XXX: Make sure savectx() was done? */
 

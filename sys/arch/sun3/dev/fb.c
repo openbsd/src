@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3 1995/04/10 05:45:56 mycroft Exp $ */
+/*	$NetBSD: fb.c,v 1.4 1996/12/17 21:10:41 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -57,6 +58,8 @@
 #include <machine/fbio.h>
 
 #include "fbvar.h"
+
+cdev_decl(fb);
 
 static struct fbdevice *devfb;
 static int fbpriority;
@@ -117,16 +120,6 @@ fbmmap(dev, off, prot)
 	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));
 }
 
-void
-fb_unblank()
-{
-	int on = 1;
-
-	if (devfb) {
-		(void) fbioctlfb(devfb, FBIOSVIDEO, (caddr_t)&on);
-	}
-}
-
 /*
  * Common fb ioctl function
  */
@@ -137,33 +130,34 @@ fbioctlfb(fb, cmd, data)
 	caddr_t data;
 {
 	struct fbdriver *fbd = fb->fb_driver;
+	void *vp = (void *)data;
 	int error;
 
 	switch (cmd) {
 
 	case FBIOGTYPE:
-		*(struct fbtype *)data = fb->fb_fbtype;
+		*(struct fbtype *)vp = fb->fb_fbtype;
 		error = 0;
 		break;
 
 	case FBIOGATTR:
-		error = (*fbd->fbd_gattr)(fb, (struct fbgattr *)data);
+		error = (*fbd->fbd_gattr)(fb, vp);
 		break;
 
 	case FBIOGVIDEO:
-		error = (*fbd->fbd_gvideo)(fb, (int *)data);
+		error = (*fbd->fbd_gvideo)(fb, vp);
 		break;
 
 	case FBIOSVIDEO:
-		error = (*fbd->fbd_svideo)(fb, (int *)data);
+		error = (*fbd->fbd_svideo)(fb, vp);
 		break;
 
 	case FBIOGETCMAP:
-		error = (*fbd->fbd_getcmap)(fb, (struct fbcmap *)data);
+		error = (*fbd->fbd_getcmap)(fb, vp);
 		break;
 
 	case FBIOPUTCMAP:
-		error = (*fbd->fbd_putcmap)(fb, (struct fbcmap *)data);
+		error = (*fbd->fbd_putcmap)(fb, vp);
 		break;
 
 	default:
@@ -171,3 +165,27 @@ fbioctlfb(fb, cmd, data)
 	}
 	return (error);
 }
+
+void
+fb_unblank()
+{
+	int on = 1;
+
+	if (devfb == NULL)
+		return;
+
+	(*devfb->fb_driver->fbd_svideo)(devfb, (void *)&on);
+}
+
+/*
+ * Default ioctl function to put in struct fbdriver
+ * for functions that are not supported.
+ */
+int
+fb_noioctl(fbd, vp)
+	struct fbdevice *fbd;
+	void *vp;
+{
+	return ENOTTY;
+}
+

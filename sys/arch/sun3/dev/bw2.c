@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.8 1996/10/13 03:47:25 christos Exp $	*/
+/*	$NetBSD: bw2.c,v 1.9 1996/12/17 21:10:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,24 +51,28 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
+#include <sys/proc.h>
 #include <sys/tty.h>
 
 #include <vm/vm.h>
 
+#include <machine/autoconf.h>
+#include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
-#include <machine/autoconf.h>
+#include <machine/idprom.h>
 #include <machine/pmap.h>
-#include <machine/control.h>
 
 #include "fbvar.h"
 #include "bw2reg.h"
 
-extern unsigned char cpu_machine_id;
+cdev_decl(bw2);
 
 /* per-display variables */
 struct bw2_softc {
@@ -91,17 +95,14 @@ struct cfdriver bwtwo_cd = {
 
 /* XXX we do not handle frame buffer interrupts */
 
-/* frame buffer generic driver */
-int bw2open(), bw2close(), bw2ioctl(), bw2mmap();
-
-static int  bw2gvideo __P((struct fbdevice *, int *));
-static int	bw2svideo __P((struct fbdevice *, int *));
+static int  bw2gvideo __P((struct fbdevice *, void *));
+static int	bw2svideo __P((struct fbdevice *, void *));
 
 static struct fbdriver bw2fbdriver = {
 	bw2open, bw2close, bw2mmap,
-	enoioctl, /* gattr */
+	fb_noioctl,
 	bw2gvideo, bw2svideo,
-	enoioctl, enoioctl };
+	fb_noioctl, fb_noioctl, };
 
 static int
 bw2match(parent, vcf, args)
@@ -145,7 +146,6 @@ bw2attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
-	int ramsize;
 
 	sc->sc_phys = ca->ca_paddr;
 
@@ -239,10 +239,11 @@ bw2mmap(dev, off, prot)
 }
 
 /* FBIOGVIDEO: */
-static int bw2gvideo(fb, on)
+static int bw2gvideo(fb, data)
 	struct fbdevice *fb;
-	int *on;
+	void *data;
 {
+	int *on = data;
 	int s, ena;
 
 	s = splhigh();
@@ -254,10 +255,11 @@ static int bw2gvideo(fb, on)
 }
 
 /* FBIOSVIDEO */
-static int bw2svideo(fb, on)
+static int bw2svideo(fb, data)
 	struct fbdevice *fb;
-	int *on;
+	void *data;
 {
+	int *on = data;
 	int s, ena;
 
 	s = splhigh();

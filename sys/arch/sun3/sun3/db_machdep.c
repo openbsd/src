@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.8 1996/11/20 18:57:27 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.9 1996/12/17 21:11:19 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,16 +45,26 @@
 
 #include <vm/vm.h>
 
+#include <machine/control.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_command.h>
+#include <ddb/db_output.h>
 
 #include <machine/pte.h>
+#include "machdep.h"
 
+static void db_mach_pagemap __P((db_expr_t, int, db_expr_t, char *));
+static void db_mach_abort   __P((db_expr_t, int, db_expr_t, char *));
+static void db_mach_halt    __P((db_expr_t, int, db_expr_t, char *));
+static void db_mach_reboot  __P((db_expr_t, int, db_expr_t, char *));
+
+static void pte_print __P((int));
 
 static char *pgt_names[] = {
 	"MEM", "OBIO", "VMES", "VMEL" };
 
-void pte_print(pte)
+static void
+pte_print(pte)
 	int pte;
 {
 	int t;
@@ -80,8 +90,11 @@ void pte_print(pte)
 }
 
 static void
-db_pagemap(addr)
+db_mach_pagemap(addr, have_addr, count, modif)
 	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	int pte, sme;
 
@@ -102,20 +115,41 @@ db_pagemap(addr)
  *    pgmap:	Given addr, Print addr, segmap, pagemap, pte
  */
 
-extern void sun3_mon_abort();
-extern void sun3_mon_halt();
+static void
+db_mach_abort(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	sun3_mon_abort();
+}
 
-void
-db_mon_reboot()
+static void
+db_mach_halt(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	sun3_mon_halt();
+}
+
+static void
+db_mach_reboot(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	sun3_mon_reboot("");
 }
 
 struct db_command db_machine_cmds[] = {
-	{ "abort",	sun3_mon_abort,	0,	0 },
-	{ "halt",	sun3_mon_halt,	0,	0 },
-	{ "reboot",	db_mon_reboot,	0,	0 },
-	{ "pgmap",	db_pagemap, 	CS_SET_DOT, 0 },
+	{ "abort",	db_mach_abort,	0,	0 },
+	{ "halt",	db_mach_halt,	0,	0 },
+	{ "reboot",	db_mach_reboot,	0,	0 },
+	{ "pgmap",	db_mach_pagemap, 	CS_SET_DOT, 0 },
 	{ (char *)0, }
 };
 

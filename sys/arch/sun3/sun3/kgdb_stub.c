@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.6 1996/10/23 16:30:48 gwr Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7 1996/12/17 21:11:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -63,11 +63,8 @@
 #include <machine/trap.h>
 
 #include <sun3/sun3/kgdb_proto.h>
+#include <machine/db_machdep.h>
 #include <machine/remote-sl.h>
-
-/* These are in db_memrw.c */
-extern void db_read_bytes  __P((vm_offset_t addr, size_t size, char *data));
-extern void db_write_bytes __P((vm_offset_t addr, size_t size, char *data));
 
 #ifndef KGDBDEV
 #define KGDBDEV -1
@@ -219,7 +216,7 @@ restart:
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-static int 
+static int
 computeSignal(type)
 	int type;
 {
