@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.3 2001/07/07 11:24:09 niklas Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.4 2001/07/07 12:04:22 niklas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -127,8 +127,8 @@ aac_pci_probe(parent, match, aux)
 	for (m = aac_identifiers; m->vendor != 0; m++)
 		if (m->vendor == PCI_VENDOR(pa->pa_id) &&
 		    m->device == PCI_PRODUCT(pa->pa_id)) {
-			subsysid = letoh32(pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    PCI_SUBSYS_ID_REG));
+			subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    PCI_SUBSYS_ID_REG);
 			if (m->subvendor == PCI_VENDOR(subsysid) &&
 			    m->subdevice == PCI_PRODUCT(subsysid))
 				return (1);
@@ -207,8 +207,8 @@ aac_pci_attach(parent, self, aux)
 	for (m = aac_identifiers; m->vendor != 0; m++)
 		if (m->vendor == PCI_VENDOR(pa->pa_id) &&
 		    m->device == PCI_PRODUCT(pa->pa_id)) {
-			subsysid = letoh32(pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    PCI_SUBSYS_ID_REG));
+			subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    PCI_SUBSYS_ID_REG);
 			if (m->subvendor == PCI_VENDOR(subsysid) &&
 			    m->subdevice == PCI_PRODUCT(subsysid)) {
 				sc->sc_hwif = m->hwif;
