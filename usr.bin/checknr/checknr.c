@@ -1,4 +1,4 @@
-/*	$OpenBSD: checknr.c,v 1.12 2004/07/01 19:20:23 mickey Exp $	*/
+/*	$OpenBSD: checknr.c,v 1.13 2005/03/08 23:31:53 cloder Exp $	*/
 /*	$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-static const char rcsid[] = "$OpenBSD: checknr.c,v 1.12 2004/07/01 19:20:23 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: checknr.c,v 1.13 2005/03/08 23:31:53 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -259,7 +259,7 @@ main(int argc, char *argv[])
 			cfilename = argv[i];
 			f = fopen(cfilename, "r");
 			if (f == NULL)
-				warn(cfilename);
+				warn("%s", cfilename);
 			else
 				process(f);
 		}
