@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.291 2000/07/26 22:29:50 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.292 2000/07/27 19:16:33 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -514,6 +514,7 @@ vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
 vendor HIFN		0x13a3	Hi/Fn
+vendor THREEWARE	0x13c1	3ware
 vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics Inc.
 vendor INVERTEX		0x14e1	Invertex
