@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.7 1997/01/16 09:23:28 niklas Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.8 1997/02/03 11:37:37 deraadt Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.26 1996/10/13 03:06:40 christos Exp $	*/
 
 /*
@@ -55,12 +55,7 @@
 #include "cd.h"
 #include "acd.h"
 
-#if NCD + NACD > 0
-#include <sys/mount.h>
-#include <isofs/cd9660/iso.h>
-#endif
-#include <ufs/ffs/ffs_extern.h>
-int (*mountroot) __P((void)) = ffs_mountroot;
+int (*mountroot) __P((void)) = dk_mountroot;
 
 void gets __P((char *));
 
@@ -220,10 +215,6 @@ setconf()
 found:
 	gc->gc_root = MAKEDISKDEV(major(gc->gc_root), unit, 0);
 	rootdev = gc->gc_root;
-#if NCD > 0
-	if (major(rootdev) == 7)
-		mountroot = cd9660_mountroot;
-#endif
 
 justdoswap:
 	swdevt[0].sw_dev = dumpdev = MAKEDISKDEV(major(rootdev), 
