@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.9 1997/09/22 05:45:26 millert Exp $ */
+/*	$OpenBSD: common.h,v 1.10 1999/01/03 05:33:48 millert Exp $ */
 
 #define DEBUGGING
 
@@ -36,6 +36,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <libgen.h>
 #undef malloc
 #undef realloc
 

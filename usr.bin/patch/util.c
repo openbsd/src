@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.4 1997/09/22 05:45:27 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 1999/01/03 05:33:48 millert Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.4 1997/09/22 05:45:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.5 1999/01/03 05:33:48 millert Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -380,7 +380,7 @@ int assume_exists;
     char tmpbuf[200];
     int sleading = strip_leading;
 
-    if (!at)
+    if (!at || *at == '\0')
 	return Nullch;
     while (isspace(*at))
 	at++;
@@ -416,17 +416,14 @@ int assume_exists;
 
     if (stat(name, &filestat) && !assume_exists) {
 	char *filebase = basename(name);
-	int pathlen = filebase - name;
+	char *filedir = dirname(name);
 
-	/* Put any leading path into `tmpbuf'.  */
-	strncpy(tmpbuf, name, pathlen);
-
-#define try(f, a1, a2) (Snprintf(tmpbuf + pathlen, sizeof tmpbuf - pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
-	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try("RCS/%s%s", filebase,        "")
-	    || try(    "%s%s", filebase, RCSSUFFIX)
-	    || try("SCCS/%s%s", SCCSPREFIX, filebase)
-	    || try(     "%s%s", SCCSPREFIX, filebase))
+#define try(f, a1, a2, a3) (Snprintf(tmpbuf, sizeof tmpbuf, f, a1, a2), stat(tmpbuf, &filestat) == 0)
+	if (   try("%s/RCS/%s%s", filedir, filebase, RCSSUFFIX)
+	    || try("%s/RCS/%s%s", filedir, filebase,        "")
+	    || try(    "%s/%s%s", filedir, filebase, RCSSUFFIX)
+	    || try("%s/SCCS/%s%s", filedir, SCCSPREFIX, filebase)
+	    || try(     "%s/%s%s", filedir, SCCSPREFIX, filebase))
 	  return name;
 	free(name);
 	name = Nullch;
