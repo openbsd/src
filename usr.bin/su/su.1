@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.4 1996/10/12 20:40:38 millert Exp $
+.\"	$OpenBSD: su.1,v 1.5 1996/10/26 03:19:30 millert Exp $
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -70,6 +70,7 @@ authenticated using the S/Key one-time password system as described in
 S/Key is a Trademark of Bellcore.
 .Pp
 By default, the environment is unmodified with the exception of
+.Ev LOGNAME ,
 .Ev USER ,
 .Ev HOME ,
 and
@@ -78,8 +79,10 @@ and
 and
 .Ev SHELL
 are set to the target login's default values.
+.Ev LOGNAME
+and
 .Ev USER
-is set to the target login, unless the target login has a user ID of 0,
+are set to the target login, unless the target login has a user ID of 0,
 in which case it is unmodified.
 The invoked shell is the target login's.
 This is the traditional behavior of
@@ -102,14 +105,17 @@ The environment is discarded except for
 .Ev SHELL ,
 .Ev PATH ,
 .Ev TERM ,
+.Ev LOGNAME ,
 and
 .Ev USER .
 .Ev HOME
 and
 .Ev SHELL
 are modified as above.
+.Ev LOGNAME
+and
 .Ev USER
-is set to the target login.
+are set to the target login.
 .Ev PATH
 is set to
 .Dq Pa /usr/bin:/bin .
@@ -202,10 +208,13 @@ Default search path of real user ID unless modified as specified above.
 .It Ev TERM
 Provides terminal type which may be retained for the substituted
 user ID.
-.It Ev USER
+.It Ev LOGNAME
 The user ID is always the effective ID (the target user ID) after an
 .Nm su
 unless the user ID is 0 (root).
+.It Ev USER
+Same as
+.Ev LOGNAME .
 .El
 .Sh HISTORY
 A
