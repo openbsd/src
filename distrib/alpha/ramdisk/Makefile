@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/05/09 19:06:10 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/05/11 04:33:10 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +15,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo image.${PID}
 
 STRIP?=		strip
 GZIP?=		gzip
@@ -61,9 +61,12 @@ ${FLOPPY}:	bsd.gz
 	@cmp bsd.gz ${MOUNT_POINT}/bsd || echo "Warning! /bsd corrupted!!!"
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	# some bug can put an extra 8k at the end it seems
-	dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYBLKS}
-	rm -f ${REALIMAGE}
+	if test `env BLOCKSIZE=512 du -s ${REALIMAGE} | cut -f1` -eq ${FLOPPYBLKS}; then \
+	    mv ${REALIMAGE} ${FLOPPY} ; \
+	else \
+	    dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYBLKS} ; \
+	    rm -f ${REALIMAGE} ; \
+	fi
 
 bsd.gz: ${KERNEL} ${IMAGE} ecoffrdsetroot
 	cp ${KERNEL} bsd
