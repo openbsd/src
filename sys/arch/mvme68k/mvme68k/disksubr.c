@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.14 1997/08/08 21:46:46 niklas Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.15 1997/10/02 01:01:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -271,26 +271,19 @@ writedisklabel(dev, strat, lp, clp)
 	}
 #endif
 
-	if (lp->d_magic == DISKMAGIC && lp->d_magic2 == DISKMAGIC &&
-	    dkcksum(lp) == 0) {
-		/* obtain buffer to scrozz drive with */
-		bp = geteblk((int)lp->d_secsize);
-
-		bcopy(clp, bp->b_data, sizeof(struct cpu_disklabel));
-
-		/* request no partition relocation by driver on I/O operations */
-		bp->b_dev = dev;
-		bp->b_blkno = 0; /* contained in block 0 */
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_WRITE;
-		bp->b_cylin = 0; /* contained in block 0 */
-		(*strat)(bp);
-
-		error = biowait(bp);
-
-		bp->b_flags = B_INVAL | B_AGE | B_READ;
-		brelse(bp);
-	}
+	/* obtain buffer to scrozz drive with */
+	bp = geteblk((int)lp->d_secsize);
+	bcopy(clp, bp->b_data, sizeof(struct cpu_disklabel));
+	/* request no partition relocation by driver on I/O operations */
+	bp->b_dev = dev;
+	bp->b_blkno = 0; /* contained in block 0 */
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_WRITE;
+	bp->b_cylin = 0; /* contained in block 0 */
+	(*strat)(bp);
+	error = biowait(bp);
+	bp->b_flags = B_INVAL | B_AGE | B_READ;
+	brelse(bp);
 	return (error); 
 }
 
