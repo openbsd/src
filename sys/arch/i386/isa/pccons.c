@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.20 1996/07/16 10:58:34 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.21 1996/07/19 23:00:08 dm Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -981,9 +981,11 @@ screen_blank(arg)
 		Crtat = screen_backup;
 		crtat = Crtat + (crtat - saved_Crtat);
 
+#if 0
 		/* write a little blinking square to bootom, left */
 		saved_Crtat[(ROW - 1)*COL] =
 			((FG_BLINK | FG_LIGHTGREY | BG_BLACK) << 8) | 220;
+#endif
 		screen_saved = 1;
 	}
 }
