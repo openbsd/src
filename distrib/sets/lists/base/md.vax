@@ -838,6 +838,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/link.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/link_aout.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/machine
@@ -1494,6 +1496,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vsbus.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs
+./usr/libdata/perl5/site_perl/vax-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/nxfs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_attr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_common.ph

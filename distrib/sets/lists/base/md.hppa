@@ -1211,6 +1211,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/link.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/link_aout.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/machine
@@ -1811,6 +1813,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/xfs
+./usr/libdata/perl5/site_perl/hppa-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/xfs/nxfs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/xfs/xfs_attr.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/xfs/xfs_common.ph

@@ -899,6 +899,8 @@
 ./usr/include/langinfo.h
 ./usr/include/libgen.h
 ./usr/include/limits.h
+./usr/include/link_aout.h
+./usr/include/link_elf.h
 ./usr/include/locale.h
 ./usr/include/login_cap.h
 ./usr/include/machine
@@ -1514,6 +1516,7 @@
 ./usr/include/varargs.h
 ./usr/include/vis.h
 ./usr/include/xfs
+./usr/include/xfs/afssysdefs.h
 ./usr/include/xfs/nxfs.h
 ./usr/include/xfs/xfs_attr.h
 ./usr/include/xfs/xfs_common.h

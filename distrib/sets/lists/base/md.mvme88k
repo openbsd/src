@@ -560,6 +560,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV/krb5_err.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV/private.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/link_aout.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/internal_types.ph
@@ -629,6 +631,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_pmap.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/afssysdefs.ph
 ./usr/m88k-unknown-openbsd3.1
 ./usr/m88k-unknown-openbsd3.1/bin
 ./usr/m88k-unknown-openbsd3.1/lib

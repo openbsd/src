@@ -1300,6 +1300,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/link.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/link_aout.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/machine
@@ -1900,6 +1902,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/xfs
+./usr/libdata/perl5/site_perl/i386-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/xfs/nxfs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/xfs/xfs_attr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/xfs/xfs_common.ph

@@ -897,6 +897,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/link.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/link_aout.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine
@@ -1554,6 +1556,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/xfs
+./usr/libdata/perl5/site_perl/sparc-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/xfs/nxfs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/xfs/xfs_attr.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/xfs/xfs_common.ph

@@ -1236,6 +1236,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/link.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/link_aout.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k
@@ -1913,6 +1915,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/xfs
+./usr/libdata/perl5/site_perl/m68k-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/xfs/nxfs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/xfs/xfs_attr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/xfs/xfs_common.ph

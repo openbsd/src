@@ -583,6 +583,7 @@
 ./usr/share/man/cat1/sup.0
 ./usr/share/man/cat1/suspend.0
 ./usr/share/man/cat1/systat.0
+./usr/share/man/cat1/systrace.0
 ./usr/share/man/cat1/tail.0
 ./usr/share/man/cat1/talk.0
 ./usr/share/man/cat1/tar.0
@@ -892,6 +893,7 @@
 ./usr/share/man/cat4/alpha/scc.0
 ./usr/share/man/cat4/alpha/tga.0
 ./usr/share/man/cat4/alpha/wd.0
+./usr/share/man/cat4/amdpm.0
 ./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amiga
 ./usr/share/man/cat4/amiga/ae.0
@@ -1601,6 +1603,7 @@
 ./usr/share/man/cat8/bootpef.0
 ./usr/share/man/cat8/bootpgw.0
 ./usr/share/man/cat8/bootptest.0
+./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/certpatch.0

@@ -1245,6 +1245,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/link.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/link_aout.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/machine
@@ -1941,6 +1943,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs
+./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs/nxfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs/xfs_attr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs/xfs_common.ph

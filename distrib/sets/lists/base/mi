@@ -39,6 +39,7 @@
 ./bin/sleep
 ./bin/stty
 ./bin/sync
+./bin/systrace
 ./bin/tar
 ./bin/test
 ./dev
@@ -1245,6 +1246,7 @@
 ./usr/sbin/bootpef
 ./usr/sbin/bootpgw
 ./usr/sbin/bootptest
+./usr/sbin/bos
 ./usr/sbin/certpatch
 ./usr/sbin/chat
 ./usr/sbin/chgrp
