@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.4 1999/11/16 17:14:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -36,7 +36,7 @@
  *    Intel Corporation, November 1996, Order Number: 290219-006
  *
  * 2. 712 I/O Subsystem ERS Rev 1.0
- *    Hewlwtt-Packard, June 17 1992, Dwg No. A-A2263-66510-31
+ *    Hewlett-Packard, June 17 1992, Dwg No. A-A2263-66510-31
  */
 #include <sys/param.h>
 #include <sys/systm.h>
