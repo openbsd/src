@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.1 2001/09/01 15:59:31 drahn Exp $
+#	$OpenBSD: files.macppc,v 1.2 2001/09/01 17:38:52 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -33,7 +33,7 @@ include "../../../dev/mii/files.mii"
 #
 # MAC generic
 #
-file	arch/macppc/mac/dbdma.c
+file	arch/macppc/dev/dbdma.c
 
 #
 # Openfirmware support
@@ -55,7 +55,7 @@ major	{ ofdisk = 4 }
 
 device	memc {}
 attach	memc at mainbus
-file	arch/macppc/mac/uni_n.c			memc
+file	arch/macppc/dev/uni_n.c			memc
 
 major	{rd = 17}
 major	{sd = 2}
@@ -86,7 +86,7 @@ include "dev/wscons/files.wscons"
 #device	ofb: wsemuldisplaydev, wsrasteremulops
 device	ofb
 attach	ofb at pci
-file	arch/macppc/mac/ofb.c				ofb needs-flag
+file	arch/macppc/dev/ofb.c				ofb needs-flag
 
 
 #
