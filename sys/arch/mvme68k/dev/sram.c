@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.4 1996/06/11 10:15:24 deraadt Exp $ */
+/*	$OpenBSD: sram.c,v 1.5 1997/11/20 17:02:31 etheisen Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -127,7 +127,7 @@ sramattach(parent, self, args)
 #endif
 #ifdef MVME177
 	case CPU_177:
-		XXX
+		sc->sc_len = 128*1024;		/* always 128K */
 		break;
 #endif
 	default:
