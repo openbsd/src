@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsfontload.8,v 1.14 2003/06/12 12:59:54 jmc Exp $
+.\"	$OpenBSD: wsfontload.8,v 1.15 2004/08/03 09:45:29 jmc Exp $
 .\"	$NetBSD: wsfontload.8,v 1.5 1999/04/06 04:54:22 cgd Exp $
 .\"
 .\" Copyright (c) 1999, 2001
@@ -34,30 +34,14 @@
 .Sh SYNOPSIS
 .Nm wsfontload
 .Bk -words
-.Op Fl B
-.Ek
-.Bk -words
-.Op Fl b
-.Ek
-.Bk -words
+.Op Fl Bbl
 .Op Fl e Ar encoding
-.Ek
-.Bk -words
 .Op Fl f Ar file
-.Ek
-.Bk -words
 .Op Fl h Ar height
-.Ek
-.Bk -words
-.Op Fl l
-.Ek
-.Bk -words
 .Op Fl N Ar name
-.Ek
-.Bk -words
 .Op Fl w Ar width
-.Ek
 .Op Ar fontfile
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -75,11 +59,11 @@ is not provided.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b
-Specifies that the font data is ordered right-to-left bit wise.
-The default is left-to-right.
 .It Fl B
 Specifies that the font data is ordered right-to-left byte wise.
+The default is left-to-right.
+.It Fl b
+Specifies that the font data is ordered right-to-left bit wise.
 The default is left-to-right.
 .It Fl e Ar encoding
 Sets the encoding of the font.
@@ -127,19 +111,21 @@ No font files are provided with the wscons framework.
 The fonts installed by PCVT can be used instead, as can raw font files from
 other operating system distributions.
 .Sh FILES
-.Bl -tag -width /etc/wscons.conf -compact
+.Bl -tag -width "/usr/share/misc/pcvtfonts/XX" -compact
 .\" .It Pa /etc/wscons.conf
 .\" wscons configuration file
 .It Pa /usr/share/misc/pcvtfonts/
 fonts directory.
 .El
 .Sh EXAMPLES
-.Li "# wsfontload -N myname -h 8 -e ibm /usr/share/misc/pcvtfonts/vt220l.808"
-.Pp
 Load the IBM-encoded 8x8-font from the PCVT distribution.
 This (or another 8x8-font) is necessary to use the 50-line screen type on
 .Xr vga 4
 displays.
+.Bd -literal -offset indent
+# wsfontload -N myname -h 8 -e ibm \e
+	/usr/share/misc/pcvtfonts/vt220l.808
+.Ed
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,

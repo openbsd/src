@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.8 2004/08/01 18:32:21 deraadt Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.9 2004/08/03 09:45:29 jmc Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -61,10 +61,9 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-f file] -l\n"
-	    "       %s [-B] [-b] [-e encoding] [-f file] [-h height] [-N name]\n"
+	    "usage: %s [-Bbl] [-e encoding] [-f file] [-h height] [-N name]\n"
 	    "       %*s [-w width] [fontfile]\n",
-	    __progname, __progname, (int)strlen(__progname), "");
+	    __progname, (int)strlen(__progname), "");
 	exit(1);
 }
 
