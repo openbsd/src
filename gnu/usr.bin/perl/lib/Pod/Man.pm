@@ -1,5 +1,5 @@
 # Pod::Man -- Convert POD data to formatted *roff input.
-# $Id: Man.pm,v 1.2 2000/04/06 17:06:47 millert Exp $
+# $Id: Man.pm,v 1.3 2000/04/09 05:40:02 millert Exp $
 #
 # Copyright 1999, 2000 by Russ Allbery <rra@stanford.edu>
 #
@@ -550,6 +550,21 @@ sub sequence {
         return bless \ "$tmp", 'Pod::Man::String';
     }
 
+    # C<> needs to fix hyphens and underscores but can't apply guesswork and
+    # can't just apply those fixes to the entire string, since then it might
+    # mess up the results of guesswork on substrings.  So we do this
+    # somewhat roundabout way of handling it.
+    if ($command eq 'C') {
+        my @children = $seq->parse_tree ()->children;
+        for (@children) {
+            unless (ref) {
+                s/-/\\-/g;
+                s/__/_\\|_/g;
+            }
+        }
+        $seq->parse_tree ()->children (@children);
+    }
+
     # C<>, L<>, X<>, and E<> don't apply guesswork to their contents.
     local $_ = $self->collapse ($seq->parse_tree, $command =~ /^[CELX]$/);
 
@@ -576,8 +591,6 @@ sub sequence {
     } elsif ($command eq 'I') {
         return bless \ ('\f(IS' . $_ . '\f(IE'), 'Pod::Man::String';
     } elsif ($command eq 'C') {
-        s/-/\\-/g;
-        s/__/_\\|_/g;
         return bless \ ('\f(FS\*(C`' . $_ . "\\*(C'\\f(FE"),
             'Pod::Man::String';
     }
@@ -866,12 +879,11 @@ sub guesswork {
     # Make all caps a little smaller.  Be careful here, since we don't want
     # to make @ARGV into small caps, nor do we want to fix the MIME in
     # MIME-Version, since it looks weird with the full-height V.
-# XXX - disabled for now since it messes up on escapes nested in C<>
-#    s{
-#        ( ^ | [\s\(\"\'\`\[\{<>] )
-#        ( [A-Z] [A-Z] [/A-Z+:\d_\$&-]* )
-#        (?: (?= [\s>\}\]\)\'\".?!,;:] | -- ) | $ )
-#    } { $1 . '\s-1' . $2 . '\s0' }egx;
+    s{
+        ( ^ | [\s\(\"\'\`\[\{<>] )
+        ( [A-Z] [A-Z] [/A-Z+:\d_\$&-]* )
+        (?: (?= [\s>\}\]\)\'\".?!,;:] | -- ) | $ )
+    } { $1 . '\s-1' . $2 . '\s0' }egx;
 
     # Turn PI into a pretty pi.
     s{ (?: \\s-1 | \b ) PI (?: \\s0 | \b ) } {\\*\(PI}gx;
