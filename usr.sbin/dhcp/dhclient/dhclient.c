@@ -2317,8 +2317,8 @@ int check_option (struct client_lease *l, int option) {
 		/* This has to be a valid internet domain name */
 		if (!res_hnok(sbuf)) {
 			warn("Bogus Host Name option %d: %s (%s)", option,
-			    sbuf, option);
-			return(1);
+			    sbuf, opbuf);
+			return(0);
 		}
 		return(1);
 	case DHO_PAD :
