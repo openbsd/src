@@ -1,4 +1,5 @@
 #	$NetBSD: Makefile.inc,v 1.3 1997/10/22 05:05:21 lukem Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1999/01/21 05:49:35 d Exp $
 #
 #  Hunt
 #  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
