@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.12 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.13 2005/01/04 19:00:02 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -84,7 +84,7 @@
  * byte or to get a new one from the SCSI bus pretty soon.  In order to avoid
  * returning from the interrupt just to get yanked back for the next byte we
  * may spin in the interrupt routine waiting for this byte to come.  How long?
- * This is really (SCSI) device and processor dependent.  Tuneable, I guess.
+ * This is really (SCSI) device and processor dependent.  Tunable, I guess.
  */
 #define SPC_MSGIN_SPIN	1 	/* Will spinwait upto ?ms for a new msg byte */
 #define SPC_MSGOUT_SPIN	1
@@ -222,8 +222,7 @@ spc_attach(struct spc_softc *sc)
 }
 
 /*
- * Initialize MB89352 chip itself
- * The following conditions should hold:
+ * Initialize the MB89352 chip itself.
  */
 void
 spc_reset(struct spc_softc *sc)
@@ -630,7 +629,7 @@ abort:
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from spc_scsi_cmd and spc_done.  This may
  * save us an unnecessary interrupt just to get things going.  Should only be
- * called when state == SPC_IDLE and at bio pl.
+ * called when state == SPC_IDLE and at bio ipl.
  */
 void
 spc_sched(struct spc_softc *sc)
@@ -638,6 +637,8 @@ spc_sched(struct spc_softc *sc)
 	struct spc_acb *acb;
 	struct scsi_link *sc_link;
 	struct spc_tinfo *ti;
+
+	splassert(IPL_BIO);
 
 	/* missing the hw, just return and wait for our hw */
 	if (sc->sc_flags & SPC_INACTIVE)
@@ -1016,8 +1017,9 @@ nextbyte:
 #endif
 
 			default:
-				printf("%s: unrecognized MESSAGE EXTENDED; "
-				    "sending REJECT\n", sc->sc_dev.dv_xname);
+				printf("%s: unrecognized MESSAGE EXTENDED 0x%x;"
+				    " sending REJECT\n",
+				     sc->sc_imess[2], sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				goto reject;
 			}
@@ -1454,11 +1456,6 @@ phasechange:
 
 /*
  * Catch an interrupt from the adaptor
- */
-/*
- * This is the workhorse routine of the driver.
- * Deficiencies (for now):
- * 1) always uses programmed I/O
  */
 int
 spc_intr(void *arg)
