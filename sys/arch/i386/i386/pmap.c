@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.68 2003/04/17 03:56:20 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.69 2003/05/02 21:07:47 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -579,17 +579,20 @@ pmap_nxstack_account(struct pmap *pmap, vaddr_t va,
 	    va < VM_MAXUSER_ADDRESS && va >= 0x40000000) {
 		struct trapframe *tf = curproc->p_md.md_regs;
 		struct vm_map *map = &curproc->p_vmspace->vm_map;
+		struct pcb *pcb = &curproc->p_addr->u_pcb;
 
 		if (npte & PG_X && !(opte & PG_X)) {
 			if (++pmap->pm_nxpages == 1 &&
 			    pmap == vm_map_pmap(map)) {
-				tf->tf_cs = GSEL(GUCODE1_SEL, SEL_UPL);
+				pcb->pcb_cs = tf->tf_cs =
+				    GSEL(GUCODE1_SEL, SEL_UPL);
 				pmap_update_pg(va);
 			}
 		} else {
 			if (!--pmap->pm_nxpages &&
 			    pmap == vm_map_pmap(map)) {
-				tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+				pcb->pcb_cs = tf->tf_cs =
+				    GSEL(GUCODE_SEL, SEL_UPL);
 				pmap_update_pg(va);
 			}
 		}

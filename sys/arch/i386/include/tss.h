@@ -1,4 +1,4 @@
-/*	$OpenBSD: tss.h,v 1.4 2000/08/05 22:07:33 niklas Exp $	*/
+/*	$OpenBSD: tss.h,v 1.5 2003/05/02 21:07:50 mickey Exp $	*/
 /*	$NetBSD: tss.h,v 1.6 1995/10/11 04:20:28 mycroft Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ struct i386tss {
 	int	__tss_esi; 
 	int	__tss_edi; 
 	int	__tss_es;
-	int	__tss_cs;
+	int	tss_cs;
 	int	__tss_ss;
 	int	__tss_ds;
 	int	tss_fs;		/* saved segment register */

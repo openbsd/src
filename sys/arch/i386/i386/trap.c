@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2003/01/16 04:15:17 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2003/05/02 21:07:48 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -325,9 +325,9 @@ trap(frame)
 			goto out;
 		}
 #endif
-		sv.sival_int = rcr2();
-		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
-		goto out;
+		if (ftype == VM_PROT_READ)
+			ftype |= VM_PROT_EXECUTE;
+		goto page_fault;
 
 	case T_TSSFLT|T_USER:
 		sv.sival_int = frame.tf_eip;
@@ -411,7 +411,7 @@ trap(frame)
 			goto we_re_toast;
 #endif
 		/* FALLTHROUGH */
-
+	page_fault:
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		vaddr_t va, fa;
 		struct vmspace *vm = p->p_vmspace;
