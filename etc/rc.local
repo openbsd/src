@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.21 1998/04/07 06:11:55 deraadt Exp $
+#	$OpenBSD: rc.local,v 1.22 1998/04/07 16:32:55 deraadt Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -12,6 +12,7 @@ echo -n 'starting local daemons:'
 
 if [ -x /usr/local/sbin/sshd ]; then
 	echo -n ' sshd';	/usr/local/sbin/sshd
+	#echo -n ' sshd2022';	/usr/local/sbin/sshd -p 2022
 fi
 
 if [ -x /usr/local/sbin/cfsd ]; then
