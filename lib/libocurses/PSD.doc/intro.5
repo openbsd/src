@@ -42,13 +42,14 @@ line) is output.
 .pp
 Likewise, if scrolling is enabled, a scroll will be invoked only when the
 first character on he first line past the bottom line of the window is
-output.  If scrolling is not enabled the characters will to be output to the
+output.  If scrolling is not enabled the characters will be output to the
 bottom right corner of the window which is the cursor location.
 .pp
 This policy allows consistent behavior of the cursor at the boundary 
 conditions.  Furthermore, it prevents a scroll from happening before it is
-actually needed (the old package used to scroll when the bottom right position
-was output a character).  As a precendent, it models the 
+actually needed (the old package used to scroll when a character was
+written to the right-most position on the last line).  As a precedent, it
+models the 
 .i xterm
 character output conventions.
 .sh 1 "Terminal State Handling"
