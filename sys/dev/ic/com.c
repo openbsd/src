@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.61 2001/03/15 18:55:02 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.62 2001/03/15 21:09:17 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -161,6 +161,8 @@ bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
 
+struct timeout compoll_to;
+
 int	commajor;
 int	comsopen = 0;
 int	comevents = 0;
@@ -223,7 +225,7 @@ comspeed(freq, speed)
 		return -1;
 	return x;
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 
 int
@@ -243,7 +245,7 @@ comprobe1(iot, ioh)
 	    } else
 		break;
 	}
-	if (i >= 32) 
+	if (i >= 32)
 	    return 0;
 
 	return 1;
@@ -285,7 +287,7 @@ comprobeHAYESP(hayespioh, sc)
 
 	printf(": ESP");
 
- 	/* Check ESP Self Test bits. */
+	/* Check ESP Self Test bits. */
 	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
 	bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_GETTEST);
 	val = bus_space_read_1(iot, hayespioh, HAYESP_STATUS1); /* Clear reg 1 */
@@ -346,7 +348,7 @@ comprobe(parent, match, aux)
 	if (1) {
 		struct cfdata *cf = match;
 		struct commulti_attach_args *ca = aux;
- 
+
 		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
 			return (0);
 
@@ -473,7 +475,7 @@ comattach(parent, self, aux)
 	if (iobase == comconsaddr) {
 		comconsattached = 1;
 
-		/* 
+		/*
 		 * Need to reset baud rate, etc. of next print so reset
 		 * comconsinit.  Also make sure console is always "hardwired".
 		 */
@@ -675,7 +677,13 @@ comattach(parent, self, aux)
 			cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
 		printf("%s: console\n", sc->sc_dev.dv_xname);
-	} 
+	}
+
+	if (!timeout_initialized(&compoll_to))
+		timeout_set(&compoll_to, compoll, NULL);
+
+	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
+	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
 
 	/*
 	 * If there are no enable/disable functions, assume the device
@@ -698,7 +706,7 @@ com_enable_debugport(sc)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
-	
+
 	splx(s);
 }
 #endif /* KGDB */
@@ -730,9 +738,8 @@ com_detach(self, flags)
 		ttyfree(sc->sc_tty);
 	}
 
-	untimeout(compoll, NULL);
-	untimeout(com_raisedtr, sc);
-	untimeout(comdiag, sc);
+	timeout_del(&sc->sc_dtr_tmo);
+	timeout_del(&sc->sc_diag_tmo);
 
 	return (0);
 }
@@ -784,7 +791,7 @@ comopen(dev, flag, mode, p)
 	struct tty *tp;
 	int s;
 	int error = 0;
- 
+
 	if (unit >= com_cd.cd_ndevs)
 		return ENXIO;
 	sc = com_cd.cd_devs[unit];
@@ -835,7 +842,7 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		if (comsopen++ == 0)
-			timeout(compoll, NULL, 1);
+			timeout_add(&compoll_to, 1);
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
@@ -872,7 +879,7 @@ comopen(dev, flag, mode, p)
 
 			/* Set 16550 compatibility mode */
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETMODE);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
+			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
 			    HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
 			    HAYESP_MODE_SCALE);
 
@@ -883,7 +890,7 @@ comopen(dev, flag, mode, p)
 
 			/* Set flow control levels */
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETRXFLOW);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
+			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
 			    HAYESP_HIBYTE(HAYESP_RXHIWMARK));
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
 			    HAYESP_LOBYTE(HAYESP_RXHIWMARK));
@@ -920,7 +927,7 @@ comopen(dev, flag, mode, p)
 			 * Set the FIFO threshold based on the receive speed.
 			 */
 			for (;;) {
-			 	bus_space_write_1(iot, ioh, com_fifo, 0);
+				bus_space_write_1(iot, ioh, com_fifo, 0);
 				delay(100);
 				(void) bus_space_read_1(iot, ioh, com_data);
 				bus_space_write_1(iot, ioh, com_fifo, fifo |
@@ -928,7 +935,7 @@ comopen(dev, flag, mode, p)
 				delay(100);
 				if(!ISSET(bus_space_read_1(iot, ioh,
 				    com_lsr), LSR_RXRDY))
-				    	break;
+					break;
 			}
 			if (sc->sc_uarttype == COM_UART_TI16750)
 				bus_space_write_1(iot, ioh, com_lcr, lcr);
@@ -996,7 +1003,7 @@ comopen(dev, flag, mode, p)
 
 	return (*linesw[tp->t_line].l_open)(dev, tp);
 }
- 
+
 int
 comclose(dev, flag, mode, p)
 	dev_t dev;
@@ -1020,14 +1027,14 @@ comclose(dev, flag, mode, p)
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
 		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
-		timeout(com_raisedtr, sc, hz * 2);
+		timeout_add(&sc->sc_dtr_tmo, hz * 2);
 	} else {
 		/* no one else waiting; turn off the uart */
 		compwroff(sc);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	if (--comsopen == 0)
-		untimeout(compoll, NULL);
+		timeout_del(&compoll_to);
 	sc->sc_cua = 0;
 	splx(s);
 	ttyclose(tp);
@@ -1101,10 +1108,10 @@ comread(dev, uio, flag)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
- 
+
 int
 comwrite(dev, uio, flag)
 	dev_t dev;
@@ -1113,7 +1120,7 @@ comwrite(dev, uio, flag)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -1126,7 +1133,7 @@ comtty(dev)
 
 	return (tp);
 }
- 
+
 static u_char
 tiocm_xxx2mcr(data)
 	int data;
@@ -1233,9 +1240,9 @@ comioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(p->p_ucred, &p->p_acflag);
 		if (error != 0)
-			return(EPERM); 
+			return(EPERM);
 
 		userbits = *(int *)data;
 		if (ISSET(userbits, TIOCFLAG_SOFTCAR) ||
@@ -1495,7 +1502,6 @@ comdiag(arg)
 	floods = sc->sc_floods;
 	sc->sc_floods = 0;
 	splx(s);
-
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf overflow%s\n",
 	    sc->sc_dev.dv_xname,
 	    overflows, overflows == 1 ? "" : "s",
@@ -1567,10 +1573,10 @@ compoll(arg)
 
 		while (ibufp < ibufend) {
 			c = *ibufp++;
-			if (*ibufp & LSR_OE) {
+			if (ISSET(*ibufp, LSR_OE)) {
 				sc->sc_overflows++;
 				if (sc->sc_errors++ == 0)
-					timeout(comdiag, sc, 60 * hz);
+					timeout_add(&sc->sc_diag_tmo, 60 * hz);
 			}
 			/* This is ugly, but fast. */
 			c |= lsrmap[(*ibufp++ & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
@@ -1579,7 +1585,7 @@ compoll(arg)
 	}
 
 out:
-	timeout(compoll, NULL, 1);
+	timeout_add(&compoll_to, 1);
 }
 
 #ifdef KGDB
@@ -1703,7 +1709,7 @@ comintr(arg)
 				if (p >= sc->sc_ibufend) {
 					sc->sc_floods++;
 					if (sc->sc_errors++ == 0)
-						timeout(comdiag, sc, 60 * hz);
+						timeout_add(&sc->sc_diag_tmo, 60 * hz);
 				} else {
 					*p++ = data;
 					*p++ = lsr;
