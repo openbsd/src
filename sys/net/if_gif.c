@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.10 2000/12/31 17:21:50 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.11 2000/12/31 22:32:28 angelos Exp $	*/
 /*	$KAME: if_gif.c,v 1.32 2000/10/07 03:20:55 itojun Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ void
 gif_start(ifp)
         struct ifnet *ifp;
 {
-#ifdef NBRIDGE > 0
+#if NBRIDGE > 0
         struct sockaddr dst;
 #endif /* NBRIDGE */
 
