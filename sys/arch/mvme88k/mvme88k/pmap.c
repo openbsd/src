@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.107 2004/01/08 20:31:44 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.108 2004/01/09 00:31:01 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -864,22 +864,6 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	vaddr = pmap_map(vaddr, (paddr_t)kmap, *phys_start,
 	    VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
-#ifdef DEBUG
-	if (vaddr != *virt_start) {
-		/*
-		 * This should never happen because we now round the PDT
-		 * table size up to a page boundry in the quest to get
-		 * mc88110 working. - XXX smurph
-		 */
-		if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-			printf("1: vaddr %x *virt_start 0x%x *phys_start 0x%x\n", vaddr,
-			    *virt_start, *phys_start);
-		}
-		*virt_start = vaddr;
-		*phys_start = round_page(*phys_start);
-	}
-#endif
-
 #if defined (MVME187) || defined (MVME197)
 	/*
 	 * Get ethernet buffer - need etherlen bytes physically contiguous.
@@ -997,7 +981,8 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * Switch to using new page tables
 	 */
 
-	kernel_pmap->pm_apr = (atop(kmap) << PG_SHIFT) | CACHE_WT | APR_V;
+	kernel_pmap->pm_apr = (atop(kmap) << PG_SHIFT) |
+	    CACHE_GLOBAL | CACHE_WT | APR_V;
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 		show_apr(kernel_pmap->pm_apr);
@@ -1006,7 +991,8 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	/* Invalidate entire kernel TLB and get ready for address translation */
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
-			cmmu_flush_tlb(i, 1, 0, -1);
+			cmmu_flush_tlb(i, TRUE, VM_MIN_KERNEL_ADDRESS,
+			    VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS);
 			/* Load supervisor pointer to segment table. */
 			cmmu_set_sapr(i, kernel_pmap->pm_apr);
 #ifdef DEBUG
@@ -1076,27 +1062,31 @@ void
 pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	vaddr_t srcva;
+	vaddr_t va;
 	int spl;
-	int cpu;
-	pt_entry_t *srcpte;
+	int cpu = cpu_number();
+	pt_entry_t *pte;
 
 	CHECK_PAGE_ALIGN(pa, "pmap_zero_page");
 
-	cpu = cpu_number();
-	srcva = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
-	srcpte = pmap_pte(kernel_pmap, srcva);
+	va = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
+	pte = pmap_pte(kernel_pmap, va);
 
 	SPLVM(spl);
-	cmmu_flush_tlb(cpu, TRUE, srcva, PAGE_SIZE);
-	*srcpte = pa |
-	    m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_V;
-	SPLX(spl);
 
-	bzero((void *)srcva, PAGE_SIZE);
-	/* force the data out */
+	*pte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_GLOBAL | CACHE_WT | PG_V | pa;
+	cmmu_flush_tlb(cpu, TRUE, va, PAGE_SIZE);
+
+	/*
+	 * The page is likely to be a non-kernel mapping, and as
+	 * such write back. Also, we might have split U/S caches!
+	 * So be sure to have the pa flushed after the filling.
+	 */
+	bzero((void *)va, PAGE_SIZE);
 	cmmu_flush_data_cache(cpu, pa, PAGE_SIZE);
+
+	SPLX(spl);
 }
 
 /*
@@ -1161,7 +1151,7 @@ pmap_create(void)
 
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
-	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_WT | CACHE_GLOBAL);
+	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_GLOBAL | CACHE_WT);
 
 	/*
 	 * Initialize SDT_ENTRIES.
@@ -1789,7 +1779,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
-	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_WT | CACHE_GLOBAL);
+	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_GLOBAL | CACHE_WT);
 
 	PMAP_LOCK(pmap, spl);
 
@@ -2317,7 +2307,8 @@ pmap_activate(struct proc *p)
 			*(register_t *)&batc_entry[n] = pmap->pm_ibatc[n].bits;
 #else
 		cmmu_set_uapr(pmap->pm_apr);
-		cmmu_flush_tlb(cpu, FALSE, 0, -1);
+		cmmu_flush_tlb(cpu, FALSE, VM_MIN_ADDRESS,
+		    VM_MAX_ADDRESS - VM_MIN_ADDRESS);
 #endif	/* PMAP_USE_BATC */
 
 		/*
@@ -2383,14 +2374,11 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	vaddr_t dstva, srcva;
 	int spl;
-	pt_entry_t template, *dstpte, *srcpte;
+	pt_entry_t *dstpte, *srcpte;
 	int cpu = cpu_number();
 
 	CHECK_PAGE_ALIGN(src, "pmap_copy_page - src");
 	CHECK_PAGE_ALIGN(dst, "pmap_copy_page - dst");
-
-	template = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_V;
 
 	dstva = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
 	srcva = (vaddr_t)(phys_map_vaddr + PAGE_SIZE + 2 * (cpu << PAGE_SHIFT));
@@ -2398,15 +2386,24 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	srcpte = pmap_pte(kernel_pmap, srcva);
 
 	SPLVM(spl);
-	cmmu_flush_tlb(cpu, TRUE, dstva, 2 * PAGE_SIZE);
-	*srcpte = template | src;
-	*dstpte = template | dst;
-	SPLX(spl);
 
-	bcopy((const void *)srcva, (void *)dstva, PAGE_SIZE);
-	/* flush source, dest out of cache? */
+	*dstpte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_GLOBAL | CACHE_WT | PG_V | dst;
+	*srcpte = m88k_protection(kernel_pmap, VM_PROT_READ) |
+	    CACHE_GLOBAL | CACHE_WT | PG_V | src;
+	cmmu_flush_tlb(cpu, TRUE, dstva, 2 * PAGE_SIZE);
+
+	/*
+	 * The source page is likely to be a non-kernel mapping, and as
+	 * such write back. Also, we might have split U/S caches!
+	 * So be sure to have the source pa flushed before the copy is
+	 * attempted, and the destination pa flushed afterwards.
+	 */
 	cmmu_flush_data_cache(cpu, src, PAGE_SIZE);
+	bcopy((const void *)srcva, (void *)dstva, PAGE_SIZE);
 	cmmu_flush_data_cache(cpu, dst, PAGE_SIZE);
+
+	SPLX(spl);
 }
 
 /*
@@ -2809,7 +2806,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	PMAP_LOCK(kernel_pmap, spl);
 	users = kernel_pmap->pm_cpus;
 
-	e = va + round_page(len);
+	e = va + len;
 	for (; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
 		pt_entry_t *pte;
