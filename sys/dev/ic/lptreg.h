@@ -61,4 +61,4 @@
 #define	LPC_SELECT		0x08	/* printer selected */
 #define	LPC_IENABLE		0x10	/* printer out of paper */
 
-#define	LPT_NPORTS	8
+#define	LPT_NPORTS	4
