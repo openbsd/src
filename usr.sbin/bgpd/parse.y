@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2004/01/13 13:45:49 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.35 2004/01/17 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -233,7 +233,7 @@ neighbor	: NEIGHBOR address optnl '{' optnl {
 			curpeer->conf.remote_addr.sin_port = htons(BGP_PORT);
 			curpeer->conf.remote_addr.sin_addr.s_addr = $2.s_addr;
 		}
-		  peeropts_l '}' {
+		    peeropts_l '}' {
 			curpeer->next = peer_l;
 			peer_l = curpeer;
 			curpeer = NULL;
@@ -250,7 +250,7 @@ group		: GROUP string optnl '{' optnl {
 				YYERROR;
 			}
 		}
-		  groupopts_l '}' {
+		    groupopts_l '}' {
 			free(curgroup);
 			curgroup = NULL;
 		}
@@ -753,7 +753,7 @@ alloc_peer(void)
 
 	if ((p = calloc(1, sizeof(struct peer))) == NULL)
 		fatal("new_peer");
-	
+
 	/* some sane defaults */
 	p->state = STATE_NONE;
 	p->next = NULL;
