@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2003/10/26 15:36:13 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.49 2003/10/31 02:32:55 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -187,7 +187,7 @@ kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
 aue*		at uhub? port ?			# USB EtherNet 
 uplcom* 	at uhub? port ?			# I/O DATA USB-RSAQ2 serial
 ucom*		at uplcom? portno ?
-#wi*		at uhub? port ?			# WaveLAN IEEE 802.11DS
+wi*		at uhub? port ?			# WaveLAN IEEE 802.11DS
 
 # CardBus bus support
 cardbus*	at cardslot?

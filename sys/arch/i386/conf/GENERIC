@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.350 2003/10/26 15:36:13 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.351 2003/10/31 02:32:55 drahn Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -391,7 +391,7 @@ hme*	at pci? dev ? function ?		# Sun Happy Meal
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
-#wi*	at uhub? port ?				# WaveLAN IEEE 802.11DS
+wi*	at uhub? port ?				# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia? function ?			# Bay Networks IEEE 802.11FH
 an*	at pci? dev ? function ?		# Aironet IEEE 802.11DS
 an*	at isapnp?				# Aironet IEEE 802.11DS
