@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: vars.c,v 1.2 1997/12/06 12:09:04 brian Exp $
+ * $Id: vars.c,v 1.3 1997/12/21 03:15:56 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -39,7 +39,7 @@
 #include "auth.h"
 
 char VarVersion[] = "PPP Version 1.5";
-char VarLocalVersion[] = "$Date: 1997/12/06 12:09:04 $";
+char VarLocalVersion[] = "$Date: 1997/12/21 03:15:56 $";
 int Utmp = 0;
 int ipInOctets = 0;
 int ipOutOctets = 0;
@@ -73,7 +73,7 @@ struct confdesc pppConfs[] = {
 struct pppvars pppVars = {
   DEF_MRU, DEF_MTU, 0, MODEM_SPEED, CS8, MODEM_CTSRTS, 180, 30, 3,
   RECONNECT_TIMER, RECONNECT_TRIES, REDIAL_PERIOD,
-  NEXT_REDIAL_PERIOD, 1, 1, MODEM_DEV, BASE_MODEM_DEV,
+  NEXT_REDIAL_PERIOD, 1, 1, MODEM_DEV, "", BASE_MODEM_DEV,
   OPEN_ACTIVE, LOCAL_NO_AUTH, 0
 };
 
