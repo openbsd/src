@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2000/06/08 22:25:18 niklas Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.37 1997/05/26 00:27:43 thorpej Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2001/05/04 22:48:59 aaron Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,10 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -85,15 +89,20 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
-	savectx(curpcb);
+	/* Copy pcb from proc p1 to p2. */
+	if (p1 == curproc) {
+		/* Sync the PCB before we copy it. */
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 	*pcb = p1->p_addr->u_pcb;
-
-	PMAP_ACTIVATE(p2->p_vmspace->vm_map.pmap, pcb, 0);
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
-	 * through return_to_user().  Note the inline cpu_set_kpc().
+	 * through child_return().  Note the in-line cpu_set_kpc().
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -112,6 +121,14 @@ cpu_fork(p1, p2, stack, stacksize)
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 }
 
+/*
+ * Arrange for in-kernel execution of a process to continue at the
+ * named pc, as if the code at that address were called as a function
+ * with the supplied argument.
+ *
+ * Note that it's assumed that when the named process returns, rei()
+ * should be invoked, to return to user code.
+ */
 void
 cpu_set_kpc(p, pc, arg)
 	struct proc *p;
@@ -136,7 +153,11 @@ cpu_exit(p)
 {
 
 	(void) splimp();
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -159,7 +180,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct coreseg cseg;
 	int error;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
@@ -179,7 +200,7 @@ cpu_coredump(p, vp, cred, chdr)
 		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
 	}
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
@@ -209,24 +230,24 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	vm_offset_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (size & CLOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 #ifdef DEBUG
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to) != 0)
 			panic("pagemove 3");
 #endif
 		pmap_remove(pmap_kernel(),
-			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
+			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
 			   VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
@@ -276,12 +297,12 @@ int
 kvtop(addr)
 	caddr_t addr;
 {
-	vm_offset_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
-	if (va == 0)
+	pa = pmap_extract(pmap_kernel(), (vaddr_t)addr);
+	if (pa == 0)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -294,59 +315,70 @@ extern vm_map_t phys_map;
  * is a total crock, the multiple mappings of these physical pages should
  * be reflected in the higher-level VM structures to avoid problems.
  */
-/*ARGSUSED*/
 void
-vmapbuf(bp, sz)
+vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t sz;
+	vsize_t len;
 {
-	int npf;
-	caddr_t addr;
-	long flags = bp->b_flags;
-	struct proc *p;
-	int off;
-	vm_offset_t kva;
-	vm_offset_t pa;
+	struct pmap *upmap, *kpmap;
+	vaddr_t uva;		/* User VA (map from) */
+	vaddr_t kva;		/* Kernel VA (new to) */
+	paddr_t pa;		/* physical address */
+	vm_size_t off;
 
-	if ((flags & B_PHYS) == 0)
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_data;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
+
+	uva = trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	len = round_page(off + len);
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(phys_map, len);
+#else
+	kva = kmem_alloc_wait(phys_map, len);
+#endif
 	bp->b_data = (caddr_t)(kva + off);
-	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
+
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	kpmap = vm_map_pmap(phys_map);
+	do {
+		pa = pmap_extract(upmap, uva);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
-		addr += PAGE_SIZE;
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
-	}
+		len -= PAGE_SIZE;
+	} while (len);
 }
 
 /*
  * Free the io map PTEs associated with this IO operation.
  */
-/*ARGSUSED*/
 void
-vunmapbuf(bp, sz)
+vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t sz;
+	vsize_t len;
 {
-	caddr_t addr;
-	int npf;
-	vm_offset_t kva;
+	vaddr_t kva;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = bp->b_data;
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
+
+	kva = trunc_page(bp->b_data);
+	off = (vaddr_t)bp->b_data - kva;
+	len = round_page(off + len);
+
+	/*
+	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
+	 * will do it for us.
+	 */
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, kva, len);
+#else
+	kmem_free_wakeup(phys_map, kva, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
+	bp->b_saveaddr = 0;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.40 2000/03/23 09:59:54 art Exp $	*/
-/*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2001/05/04 22:48:59 aaron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,7 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/map.h>
 #include <sys/mbuf.h>
@@ -104,6 +105,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include "opt_useleds.h"
 
 #include <arch/hp300/dev/hilreg.h>
@@ -116,8 +121,15 @@
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
+#if defined(UVM)
+vm_map_t exec_map = NULL;  
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#else
 vm_map_t buffer_map;
-extern vm_offset_t avail_end;
+#endif
+
+extern paddr_t avail_start, avail_end;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -163,6 +175,7 @@ char	*hexstr __P((int, int));
 
 /* functions called from locore.s */
 void    dumpsys __P((void));
+void	hp300_init __P((void));
 void    straytrap __P((int, u_short));
 void	nmihand __P((struct frame));
 
@@ -184,6 +197,31 @@ int	conforced;		/* console has been forced */
  */
 int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
 int	delay_divisor;		/* delay constant */
+
+ /*
+ * Early initialization, before main() is called.
+ */
+void
+hp300_init()
+{
+	/*
+	 * Tell the VM system about available physical memory.  The
+	 * hp300 only has one segment.
+	 */
+#if defined(UVM)
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+#else
+	vm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end));
+#endif /* UVM */
+
+	/* Initialize the interrupt handlers. */
+	intr_init();
+
+	/* Calibrate the delay loop. */
+	hp300_calibrate_delay();
+}
 
 /*
  * Console initialization: called early on from main,
@@ -233,8 +271,8 @@ cpu_startup()
 	unsigned i;
 	caddr_t v;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -247,9 +285,8 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufp,
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE, VM_PROT_ALL);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -263,28 +300,72 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and the give everything true virtual addresses.
 	 */
-	size = (vm_size_t)allocsys((caddr_t)0);
+	size = (vsize_t)allocsys((caddr_t)0);
+#if defined(UVM)
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+#else
 	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
+#endif
 	if ((allocsys(v) - v) != size)
-		panic("startup: talbe size inconsistency");
+		panic("startup: table size inconsistency");
 
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+#if defined(UVM)
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("startup: cannot allocate VM for buffers");
+	minaddr = (vaddr_t)buffers;
+#else
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+#endif /* UVM */
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+#if defined(UVM)
+		vsize_t curbufsize;
+		vaddr_t curbuf;
+		struct vm_page *pg;
+
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
+			if (pg == NULL) 
+				panic("cpu_startup: not enough memory for "
+				    "buffer cache");
+#if defined(PMAP_NEW)
+			pmap_kenter_pgs(curbuf, &pg, 1);
+#else
+			pmap_enter(kernel_map->pmap, curbuf,
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+#endif
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+#else /* ! UVM */
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -293,22 +374,35 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif /* UVM */
 	}
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+#if defined(UVM)
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   16*NCARGS, TRUE, FALSE, NULL);
+#else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
+#endif
+
 	/*
 	 * Allocate a submap for physio
 	 */
+#if defined(UVM)
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
+#else
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
+#endif
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -317,8 +411,14 @@ cpu_startup()
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+#if defined(UVM)
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
+#else
+	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+#endif
+
 	/*
 	 * Initialize timeouts
 	 */
@@ -327,7 +427,11 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
+#if defined(UVM)
+	printf("avail mem = %ld\n", ptoa(uvmexp.free));
+#else
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -337,9 +441,15 @@ cpu_startup()
 	 * XXX This is bogus; should just fix KERNBASE and
 	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
 	 */
+#if defined(UVM)
+	if (uvm_map_protect(kernel_map, 0, NBPG, UVM_PROT_NONE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't mark page 0 off-limits");
+#else
 	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
 	    != KERN_SUCCESS)
 		panic("can't mark page 0 off-limits");
+#endif
 
 	/*
 	 * Tell the VM system that writing to kernel text isn't allowed.
@@ -348,9 +458,15 @@ cpu_startup()
 	 * XXX Should be m68k_trunc_page(&kernel_text) instead
 	 * XXX of NBPG.
 	 */
+#if defined(UVM)
+	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
+	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
+		panic("can't protect kernel text");
+#else
 	if (vm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
 	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
+#endif
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -434,7 +550,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	return (v);
 }
@@ -845,7 +963,7 @@ dumpconf()
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
-	dumpsize = physmem + 1;
+	dumpsize = physmem;
 
 #ifdef HP300_NEWKVM
 	/* hp300 only uses a single segment. */
@@ -878,7 +996,7 @@ dumpsys()
 				/* dump routine */
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int pg;			/* page being dumped */
-	vm_offset_t maddr;	/* PA being dumped */
+	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
 #ifdef HP300_NEWKVM
 	kcore_seg_t *kseg_p;
@@ -902,12 +1020,16 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
+	}
 	dump = bdevsw[major(dumpdev)].d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 #ifdef HP300_NEWKVM
 	kseg_p = (kcore_seg_t *)dump_hdr;
@@ -969,8 +1091,8 @@ dumpsys()
 		if (pg && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE, 0);
+		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
+		    VM_PROT_READ, TRUE, VM_PROT_READ);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
 		switch (error) {
@@ -1267,7 +1389,7 @@ parityerrorfind()
 	looking = 1;
 	ecacheoff();
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, ctob(pg),
+		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, ctob(pg),
 		    VM_PROT_READ, TRUE, VM_PROT_READ);
 		ip = (int *)vmmap;
 		for (o = 0; o < NBPG; o += sizeof(int))
@@ -1280,7 +1402,7 @@ parityerrorfind()
 	found = 0;
 done:
 	looking = 0;
-	pmap_remove(pmap_kernel(), (vm_offset_t)vmmap, (vm_offset_t)&vmmap[NBPG]);
+	pmap_remove(pmap_kernel(), (vaddr_t)vmmap, (vaddr_t)&vmmap[NBPG]);
 	ecacheon();
 	splx(s);
 	return(found);

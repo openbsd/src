@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.9 1998/03/01 00:37:31 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.25 1997/04/27 20:37:07 thorpej Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 2001/05/04 22:49:00 aaron Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
+extern int want_resched;	/* resched() was called */
 #define	need_resched()	{ want_resched++; aston(); }
 
 /*
@@ -110,10 +111,8 @@ struct clockframe {
  */
 #define	signotify(p)	aston()
 
+extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
-
-int	astpending;		/* need to trap before returning to user mode */
-int	want_resched;		/* resched() was called */
 
 /*
  * CTL_MACHDEP definitions.
@@ -173,6 +172,9 @@ void	doboot __P((void))
 	__attribute__((__noreturn__));
 void	ecacheon __P((void));
 void	ecacheoff __P((void));
+
+/* clock.c functions */
+void	hp300_calibrate_delay __P((void));
 
 /* machdep.c functions */
 int	badaddr __P((caddr_t));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.7 1997/07/06 08:01:59 downsj Exp $	*/
-/*	$NetBSD: hpux_machdep.c,v 1.13 1997/04/27 21:38:57 thorpej Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.8 2001/05/04 22:48:59 aaron Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -77,6 +77,10 @@
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/vm_map.h> 
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <sys/syscallargs.h>
 
@@ -414,8 +418,13 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct hpuxsigframe *)(frame->f_regs[SP] - fsize);
+#if defined(UVM)
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)uvm_grow(p, (unsigned)fp);
+#else
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
+#endif
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
@@ -423,7 +432,11 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 		       p->p_pid, sig, &oonstack, fp, &fp->hsf_sc, ft);
 #endif
 
+#if defined(UVM)
+	if (uvm_useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#else
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#endif
 #ifdef DEBUG
 		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
 			printf("hpux_sendsig(%d): useracc failed on sig %d\n",
@@ -581,7 +594,11 @@ hpux_sys_sigreturn(p, v, retval)
 	 * Fetch and test the HP-UX context structure.
 	 * We grab it all at once for speed.
 	 */
+#if defined(UVM)
+	if (uvm_useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+#else
 	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+#endif
 	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
 	scp = &tsigc;

@@ -1,5 +1,5 @@
-#	$OpenBSD: genassym.cf,v 1.5 1997/11/06 19:42:33 millert Exp $
-#	$NetBSD: genassym.cf,v 1.8 1997/05/13 18:01:01 gwr Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2001/05/04 22:48:59 aaron Exp $
+#	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -46,6 +46,10 @@ include <sys/syscall.h>
 include <sys/user.h>
 
 include <vm/vm.h>
+
+ifdef UVM
+include <uvm/uvm_extern.h>
+endif
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
@@ -151,12 +155,12 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
-# VM structure fields
-define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
-define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
-
 # interrupt/fault metering
+ifdef UVM
+define UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+else
 define	V_INTR			offsetof(struct vmmeter, v_intr)
+endif
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
@@ -209,7 +213,6 @@ define	SG_ISHIFT		SG_ISHIFT
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
-define	PCB_USTP		offsetof(struct pcb, pcb_ustp)
 define	PCB_USP			offsetof(struct pcb, pcb_usp)
 define	PCB_REGS		offsetof(struct pcb, pcb_regs)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)

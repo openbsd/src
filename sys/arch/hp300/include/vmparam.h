@@ -1,5 +1,5 @@
-/*	$OpenBSD: vmparam.h,v 1.3 1997/01/15 02:55:29 downsj Exp $	*/
-/*	$NetBSD: vmparam.h,v 1.9 1996/10/20 23:23:28 thorpej Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2001/05/04 22:49:00 aaron Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,9 +43,13 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/19/94
  */
 
+#ifndef _HP300_VMPARAM_H_
+#define	_HP300_VMPARAM_H_
+
 /*
  * Machine dependent constants for HP300
  */
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
@@ -162,6 +166,10 @@
  * so we loan each swapped in process memory worth 100$, or just admit
  * that we don't consider it worthwhile and swap it out to disk which costs
  * $30/mb or about $0.75.
+ * Update: memory prices have changed recently (9/96). At the current    
+ * value of $6 per megabyte, we lend each swapped in process memory worth
+ * $0.15, or just admit that we don't consider it worthwhile and swap it out
+ * to disk which costs $0.20/MB, or just under half a cent. 
  */
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */
@@ -232,11 +240,11 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFFF00000)
-#define VM_MAX_ADDRESS		((vm_offset_t)0xFFF00000)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFFFFF000)
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
+#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFF000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
@@ -244,7 +252,31 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+/* Use new VM page bootstrap interface. */
+#define	MACHINE_NEW_NONCONTIG
+
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ * The hp300 only has one physical memory segment.
+ */
+#define	VM_PHYSSEG_MAX		1
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page attributes for this seg */
+};
+
+#endif /* _HP300_VMPARAM_H_ */

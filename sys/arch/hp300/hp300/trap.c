@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.17 2000/11/10 18:15:38 art Exp $	*/
-/*	$NetBSD: trap.c,v 1.55 1997/07/08 16:56:36 kleink Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2001/05/04 22:48:59 aaron Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -100,6 +100,10 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <dev/cons.h>
 
 #ifdef COMPAT_HPUX
@@ -124,6 +128,8 @@ void	dumpwb __P((int, u_short, u_int, u_int));
 
 static inline void userret __P((struct proc *p, struct frame *fp,
 	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+
+int	astpending;
 
 char	*trap_type[] = {
 	"Bus error",
@@ -302,7 +308,11 @@ trap(type, code, v, frame)
 	int typ = 0;
 	union sigval sv;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	p = curproc;
 	ucode = 0;
 
@@ -577,19 +587,31 @@ trap(type, code, v, frame)
 		if (ssir & SIR_NET) {
 			void netintr __P((void));
 			siroff(SIR_NET);
+#if defined(UVM)
+			uvmexp.softs++;
+#else
 			cnt.v_soft++;
+#endif
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
+#if defined(UVM)
+			uvmexp.softs++;
+#else
 			cnt.v_soft++;
+#endif
 			softclock();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
+#if defined(UVM)
+			uvmexp.traps--;
+#else
 			cnt.v_trap--;
+#endif
 			return;
 		}
 		spl0();
@@ -660,18 +682,31 @@ trap(type, code, v, frame)
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != KERN_SUCCESS) {
 				bva = HPMMBASEADDR(va);
+#if defined(UVM)
+				rv = uvm_fault(map, bva, 0, ftype);
+#else
 				rv = vm_fault(map, bva, ftype, FALSE);
+#endif
 				if (rv == KERN_SUCCESS)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
+#if defined(UVM)
+		rv = uvm_fault(map, va, 0, ftype);
+#ifdef DEBUG
+		if (rv && MDB_ISPID(p->p_pid))
+			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			    map, va, ftype, rv);
+#endif
+#else /* ! UVM */
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
 			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
+#endif /* UVM */
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -703,8 +738,13 @@ trap(type, code, v, frame)
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
+#if defined(UVM)
+			printf("uvm_fault(%p, 0x%lx, 0, 0x%x\n) -> 0x%x\n",
+			    map, va, ftype, rv);
+#else
 			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
+#endif
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
 			goto dopanic;
@@ -1044,7 +1084,11 @@ syscall(code, frame)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;

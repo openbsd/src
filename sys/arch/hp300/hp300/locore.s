@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.22 2000/06/05 11:02:57 art Exp $	*/
-/*	$NetBSD: locore.s,v 1.79 1997/09/12 08:41:55 mycroft Exp $	*/
+/*	$OpenBSD: locore.s,v 1.23 2001/05/04 22:48:59 aaron Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -494,7 +494,11 @@ Lehighcode:
 Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
+#else
 	jbsr	_C_LABEL(vm_set_page_size) | select software page size
+#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -523,8 +527,7 @@ Lenab2:
 	orl	#MMU_CEN,a0@(MMUCMD)	| turn on external cache
 Lnocache0:
 /* Final setup for call to main(). */
-	jbsr	_C_LABEL(intr_init)	| initialize interrupt handlers
-	jbsr	_C_LABEL(hp300_calibrate_delay) | calibrate delay() loop
+	jbsr	_C_LABEL(hp300_init)
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
@@ -543,10 +546,14 @@ Lnocache0:
 	PANIC("main() returned")
 	/* NOTREACHED */
 
+/*
+ * proc_trampoline: call function in register a2 with a3 as an arg
+ * and then rei.
+ */
 GLOBAL(proc_trampoline)
-	movl	a3,sp@-
-	jbsr	a2@
-	addql	#4,sp
+	movl	a3,sp@-			| push function arg
+	jbsr	a2@			| call function
+	addql	#4,sp			| pop arg
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most user regs
@@ -1000,7 +1007,11 @@ Lbrkpt3:
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
@@ -1008,7 +1019,11 @@ ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
 	jbsr	_C_LABEL(hilint)
 	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(intrcnt)+4
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 2 through 5 */
@@ -1079,7 +1094,11 @@ Lnoleds0:
 	addql	#4,sp
 	CLKADDR(a0)
 Lrecheck:
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR	| chalk up another interrupt
+#endif
 	movb	a0@(CLKSR),d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
 	INTERRUPT_RESTOREREG
@@ -1328,64 +1347,19 @@ Lswnofpsave:
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
 
-	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
-#ifdef DIAGNOSTIC
-	tstl	a0			| map == VM_MAP_NULL?
-	jeq	Lbadsw			| panic
-#endif
-	movl	a0@(VM_PMAP),a0		| pmap = vmspace->vm_map.pmap
-	tstl	a0@(PM_STCHG)		| pmap->st_changed?
-	jeq	Lswnochg		| no, skip
-	pea	a1@			| push pcb (at p_addr)
-	pea	a0@			| push pmap
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(pmap, pcb)
-	addql	#8,sp
+	/*
+	 * Activate process's address space.
+	 * XXX Should remember the last USTP value loaded, and call this
+	 * XXX only if it has changed.
+	 */
+	pea	a0@			| push proc
+	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p)
+	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
-Lswnochg:
 
 	lea	_ASM_LABEL(tmpstk),sp	| now goto a tmp stack for NMI
-#if defined(M68040)
-#if defined(M68020) || defined(M68030)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lres1a			| no, skip
-#endif
-	.word	0xf518			| yes, pflusha
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	.long	0x4e7b0806		| movc d0,urp
-	jra	Lcxswdone
-Lres1a:
-#endif
-	movl	#CACHE_CLR,d0
-	movc	d0,cacr			| invalidate cache(s)
-#if defined(M68K_MMU_MOTOROLA)
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu4			| yes, skip
-#endif
-	pflusha				| flush entire TLB
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	lea	_C_LABEL(protorp),a0	| CRP prototype
-	movl	d0,a0@(4)		| stash USTP
-	pmove	a0@,crp			| load new user root pointer
-	jra	Lcxswdone		| thats it
-Lhpmmu4:	
-#endif
-#if defined(M68K_MMU_HP)
-	MMUADDR(a0)
-	movl	a0@(MMUTBINVAL),d1	| invalidate TLB
-	tstl	_C_LABEL(ectype)	| got external VAC?
-	jle	Lnocache1		| no, skip
-	andl	#~MMU_CEN,a0@(MMUCMD)	| toggle cache enable
-	orl	#MMU_CEN,a0@(MMUCMD)	| to clear data cache
-Lnocache1:
-	movl	a1@(PCB_USTP),a0@(MMUUSTP) | context switch
-#endif
 Lcxswdone:
+
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
@@ -1799,20 +1773,30 @@ ENTRY(loadustp)
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuC		| no, skip
+	.word	0xf518			| yes, pflusha
 	.long	0x4e7b0806		| movc d0,urp
 	rts
 LmotommuC:
 #endif
+	pflusha				| flush entire TLB
 	lea	_C_LABEL(protorp),a0	| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts				|   since pmove flushes TLB
+	movl	#CACHE_CLR,d0
+	movc	d0,cacr			| invalidate cache(s)
+	rts
 Lhpmmu9:
 #endif
 #if defined(M68K_MMU_HP)
+	movl	#CACHE_CLR,d0
+	movc	d0,cacr			| invalidate cache(s)
 	MMUADDR(a0)
+	movl	a0@(MMUTBINVAL),d1	| invalid TLB
+	tstl	_C_LABEL(ectype)	| have external VAC?
+	jle	1f
+	andl	#~MMU_CEN,a0@(MMUCMD)	| toggle cache enable
+	orl	#MMU_CEN,a0@(MMUCMD)	| to clear data cache
+1:
 	movl	sp@(4),a0@(MMUUSTP)	| load a new USTP
 #endif
 	rts
