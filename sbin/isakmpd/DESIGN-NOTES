@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.10 1999/05/01 20:43:41 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.42 1999/05/01 20:21:04 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.11 1999/06/02 06:32:35 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.44 1999/05/25 07:51:18 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -36,7 +36,7 @@ cert.c		Dispatching certificate related functions to the according
 		module based on the encoding.
 conf.c		Interface to isakmpd configuration.
 connection.c	Handle the high-level connection concept.
-constants.c	Value to name map of constants..
+constants.c	Value to name map of constants.
 cookie.c	Cookie generation.
 crypto.c	Generic cryptography.
 dh.c		Diffie-Hellman exchange logic.
@@ -53,7 +53,7 @@ hash.c		Generic hash handling.
 if.c		Network interface details.
 ike_auth.c	IKE authentication method abstraction.
 ike_aggressive.c
-		IKE's main mode exchange logic.
+		IKE's aggressive mode exchange logic.
 ike_main_mode.c	IKE's main mode exchange logic.
 ike_phase_1.c	Common parts IKE's main & aggressive modes' exchange logic.
 ike_quick_mode.c
@@ -134,7 +134,7 @@ Phase 2 exchange	Cookie pair + message ID.
 Generic SA		Cookie pair + message ID + SPI. 
 
 However it would be really nice to have a name of any SA that is natural
-to use for human beings, for things like deleteing SAs manually.  The simplest
+to use for human beings, for things like deleting SAs manually.  The simplest
 ID would be the struct sa address.  Another idea would be some kind of sequence
 number, either global or per-destination.  Right now I have introduced a name
 for SAs, non-unique, that binds together SAs and their configuration
@@ -207,11 +207,11 @@ User control
 
 In order to control the daemon you send commands through a FIFO called
 isakmpd.fifo.  The commands are one-letter codes followed by arguments.
-For now, only three commands are planned:
+For now, only five such commands are implemented:
 
 c	connect		Establish a connection with a peer
 d	delete		Delete an SA given cookies and message-IDs
-D	debug		Toggle some debug flag
+D	debug		Change logging level for a debug class
 r	report		Report status information of the daemon
 t	teardown	Teardown a connection
 
@@ -230,6 +230,16 @@ The report command is just an "r", and results in a list of active exchanges
 and security associations.
 
 I am thinking about adding a "q" command for quit.
+
+In addition to giving commands over the FIFO, you may send signals to the
+daemon. Currently two such signals are implemented:
+         
+SIGHUP 	  Re-initialize isakmpd (not fully implemented yet)
+SIGUSR1   Generate a report, much as the "r" FIFO command.
+
+For example, to generate a report, you do: 
+
+unix# kill -USR1 <PID of isakmpd process>
 
 The constant descriptions
 -------------------------
@@ -293,7 +303,7 @@ Identification
 
 ISAKMP supports a lot of identity types, and we should too of course.
 
-* Main mode
+* Phase 1, Main mode or Aggressive mode
 
 Today when we connect we do it based on the peer's IP address.  That does not
 automatically mean we should do policy decision based on IPs, rather we should
@@ -317,7 +327,7 @@ Accept=		yes
 Which means niklas.hallqvist.se is allowed to negotiate SAs with us, but
 noone else.
 
-* Quick mode
+* Phase 2, Quick mode
 
 In quick mode the identities are implicitly the IP addresses of the peers,
 which must mean the IP addresses actually used for the ISAKMP tunnel.
