@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.33 2004/12/20 22:33:09 millert Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.34 2004/12/21 01:01:47 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -252,7 +252,7 @@ if (error == 0) {
 }
 .Ed
 .Sh BUGS
-Due to the use of dynamic allocation,
+The implementation of
 .Fn getaddrinfo
 is not thread-safe.
 .Pp

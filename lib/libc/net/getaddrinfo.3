@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.33 2004/12/20 21:35:10 millert Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.34 2004/12/21 01:01:47 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -432,6 +432,6 @@ draft specification and documented in
 .Dv "RFC 3493" ,
 .Dq Basic Socket Interface Extensions for IPv6 .
 .Sh BUGS
-Due to the use of dynamic allocation,
+The implementation of
 .Fn getaddrinfo
 is not thread-safe.
