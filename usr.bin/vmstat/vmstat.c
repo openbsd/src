@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.85 2004/06/14 00:38:02 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.86 2004/06/14 00:39:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.85 2004/06/14 00:38:02 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.86 2004/06/14 00:39:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 
 #ifdef __i386__
 			if (c == 1 && namelist[X_APICINTRHAND].n_value == 0)
-				printf("huh\n");
+				;
 			else
 #endif
 			if (c > 0) {
