@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.16 1999/01/04 03:00:27 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.17 2000/07/31 17:27:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.16 1999/01/04 03:00:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.17 2000/07/31 17:27:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -256,7 +256,7 @@ perror(what)
 }
 #endif
 
-static struct pmaplist *
+struct pmaplist *
 find_service(prog, vers, prot)
 	u_long prog, vers, prot;
 {
@@ -265,11 +265,11 @@ find_service(prog, vers, prot)
 
 	for (pml = pmaplist; pml != NULL; pml = pml->pml_next) {
 		if ((pml->pml_map.pm_prog != prog) ||
-			(pml->pml_map.pm_prot != prot))
+		    (pml->pml_map.pm_prot != prot))
 			continue;
 		hit = pml;
 		if (pml->pml_map.pm_vers == vers)
-		    break;
+			break;
 	}
 	return (hit);
 }
@@ -318,6 +318,7 @@ reg_service(rqstp, xprt)
 			svcerr_decode(xprt);
 			break;
 		}
+
 		/*
 		 * check to see if already used
 		 * find_service returns a hit even if
@@ -377,7 +378,7 @@ reg_service(rqstp, xprt)
 		}
 		for (prevpml = NULL, pml = pmaplist; pml != NULL; ) {
 			if ((pml->pml_map.pm_prog != reg.pm_prog) ||
-				(pml->pml_map.pm_vers != reg.pm_vers)) {
+			    (pml->pml_map.pm_vers != reg.pm_vers)) {
 				/* both pml & prevpml move forwards */
 				prevpml = pml;
 				pml = pml->pml_next;
