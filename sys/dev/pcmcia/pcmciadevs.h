@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.59 2001/03/29 01:36:24 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.60 2001/03/31 14:27:23 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.53 2001/03/27 10:23:44 peter Exp 
+ *		OpenBSD: pcmciadevs,v 1.54 2001/03/29 01:35:56 aaron Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -516,3 +516,5 @@
 #define	PCMCIA_PRODUCT_NANOSPEED_PRISM2	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_CABLETRON_ROAMABOUT	{ "Cabletron", "RoamAbout 802.11 DS", "Version 01.01", NULL }
 #define	PCMCIA_PRODUCT_CABLETRON_ROAMABOUT	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_GVC_NIC2000P	{ "GVC", "NIC-2000p", "ETHERNET", "R01" }
+#define	PCMCIA_PRODUCT_GVC_NIC2000P	PCMCIA_PRODUCT_INVALID
