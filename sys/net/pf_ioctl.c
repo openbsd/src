@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.49 2003/01/20 20:29:52 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.50 2003/03/11 13:26:09 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -952,6 +952,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOMEM;
 		}
 		splx(s);
+		break;
 	}
 
 	case DIOCGETSTATE: {
