@@ -3863,3 +3863,8 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/share/man/cat3/i386/kgetent.0
+./usr/share/man/cat3/i386/kgetflag.0
+./usr/share/man/cat3/i386/kgetnum.0
+./usr/share/man/cat3/i386/kgetstr.0
+./usr/share/man/cat3/i386/keycap.0

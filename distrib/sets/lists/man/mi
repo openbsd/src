@@ -1301,6 +1301,8 @@
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/afsd.0
 ./usr/share/man/cat8/alpha/fdisk.0
+./usr/share/man/cat8/alpha/installboot.0
+./usr/share/man/cat8/alpha/setnetbootinfo.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
@@ -1471,6 +1473,7 @@
 ./usr/share/man/cat8/mrouted.0
 ./usr/share/man/cat8/mtrace.0
 ./usr/share/man/cat8/mtree.0
+./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/named-xfer.0
 ./usr/share/man/cat8/named.0
 ./usr/share/man/cat8/named.reload.0
@@ -1587,6 +1590,7 @@
 ./usr/share/man/cat8/sudo.0
 ./usr/share/man/cat8/suexec.0
 ./usr/share/man/cat8/sun3/eeprom.0
+./usr/share/man/cat8/sun3/installboot.0
 ./usr/share/man/cat8/supfilesrv.0
 ./usr/share/man/cat8/supscan.0
 ./usr/share/man/cat8/supservers.0
@@ -1661,6 +1665,3 @@
 ./usr/share/man/cat9/tick.0
 ./usr/share/man/cat9/tickadj.0
 ./usr/share/man/cat9/writedisklabel.0
-./usr/share/man/cat8/mvme68k/installboot.0
-./usr/share/man/cat8/sun3/installboot.0
-./usr/share/man/cat8/sun3/eeprom.0

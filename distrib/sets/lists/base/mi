@@ -1720,6 +1720,7 @@
 ./usr/share/man/cat2
 ./usr/share/man/cat2/i386
 ./usr/share/man/cat3
+./usr/share/man/cat3/alpha
 ./usr/share/man/cat3/amiga
 ./usr/share/man/cat3/arc
 ./usr/share/man/cat3/hp300
@@ -1727,6 +1728,8 @@
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/mvme68k
 ./usr/share/man/cat3/mvme88k
+./usr/share/man/cat3/pmax
+./usr/share/man/cat3/powerpc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sun3
 ./usr/share/man/cat3/vax
@@ -1743,6 +1746,19 @@
 ./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat5
+./usr/share/man/cat5/alpha
+./usr/share/man/cat5/amiga
+./usr/share/man/cat5/arc
+./usr/share/man/cat5/hp300
+./usr/share/man/cat5/i386
+./usr/share/man/cat5/mac68k
+./usr/share/man/cat5/mvme68k
+./usr/share/man/cat5/mvme88k
+./usr/share/man/cat5/pmax
+./usr/share/man/cat5/powerpc
+./usr/share/man/cat5/sparc
+./usr/share/man/cat5/sun3
+./usr/share/man/cat5/vax
 ./usr/share/man/cat6
 ./usr/share/man/cat7
 ./usr/share/man/cat7/packages.0
