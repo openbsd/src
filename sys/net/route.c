@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.47 2004/08/03 11:22:15 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.48 2004/08/08 19:09:33 otto Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -431,6 +431,7 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 			if (rt)
 				rtfree(rt);
 			flags |=  RTF_GATEWAY | RTF_DYNAMIC;
+			bzero(&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			info.rti_info[RTAX_GATEWAY] = gateway;
 			info.rti_info[RTAX_NETMASK] = netmask;
