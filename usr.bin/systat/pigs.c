@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.15 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.16 2004/01/08 19:28:56 millert Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.15 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.16 2004/01/08 19:28:56 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -64,7 +64,7 @@ int compar(const void *, const void *);
 static int nproc;
 static struct p_times {
 	float pt_pctcpu;
-	struct kinfo_proc *pt_kp;
+	struct kinfo_proc2 *pt_kp;
 } *pt;
 
 static long stime[CPUSTATES];
@@ -91,7 +91,7 @@ void
 showpigs(void)
 {
 	int i, j, y, k;
-	struct	eproc *ep;
+	struct kinfo_proc2 *kp;
 	float total;
 	int factor;
 	char *uname, *pname, pidname[30];
@@ -115,13 +115,13 @@ showpigs(void)
 	if (i > wnd->_maxy-1)
 		i = wnd->_maxy-1;
 	for (k = 0; i > 0 && pt[k].pt_pctcpu > 0.01; i--, y++, k++) {
-		if (pt[k].pt_kp == NULL) {
+		kp = pt[k].pt_kp;
+		if (kp == NULL) {
 			uname = "";
 			pname = "<idle>";
 		} else {
-			ep = &pt[k].pt_kp->kp_eproc;
-			uname = user_from_uid(ep->e_ucred.cr_uid, 0);
-			pname = pt[k].pt_kp->kp_proc.p_comm;
+			uname = user_from_uid(kp->p_uid, 0);
+			pname = kp->p_comm;
 		}
 		wmove(wnd, y, 0);
 		wclrtoeol(wnd);
@@ -165,16 +165,15 @@ fetchpigs(void)
 {
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
 	static int lastnproc = 0;
-	struct kinfo_proc *kpp;
+	struct kinfo_proc2 *kpp;
 	long ctime[CPUSTATES];
-	float time;
 	double t;
 	int i;
 	size_t size;
-	struct proc *pp;
-	float *pctp;
+	float *pctp;;
 
-	if ((kpp = kvm_getprocs(kd, KERN_PROC_KTHREAD, 0, &nproc)) == NULL) {
+	kpp = kvm_getproc2(kd, KERN_PROC_KTHREAD, 0, sizeof(*kpp), &nproc);
+	if (kpp == NULL) {
 		error("%s", kvm_geterr(kd));
 		if (pt)
 			free(pt);
@@ -194,14 +193,12 @@ fetchpigs(void)
 	 */
 	for (i = 0; i < nproc; i++) {
 		pt[i].pt_kp = &kpp[i];
-		pp = &kpp[i].kp_proc;
 		pctp = &pt[i].pt_pctcpu;
-		time = pp->p_swtime;
-		if (time == 0 || (pp->p_flag & P_INMEM) == 0)
+		if (kpp->p_swtime == 0 || (kpp->p_flag & P_INMEM) == 0)
 			*pctp = 0;
 		else
-			*pctp = ((double) pp->p_pctcpu /
-			    sysload.fscale) / (1.0 - exp(time * lccpu));
+			*pctp = ((double) kpp->p_pctcpu / sysload.fscale) /
+			    (1.0 - exp(kpp->p_swtime * lccpu));
 	}
 	/*
 	 * and for the imaginary "idle" process

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.48 2003/09/09 04:46:44 jmc Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.49 2004/01/08 19:28:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.48 2003/09/09 04:46:44 jmc Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.49 2004/01/08 19:28:56 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -152,7 +152,7 @@ int msdos_filestat(struct vnode *, struct filestat *);
 int nfs_filestat(struct vnode *, struct filestat *);
 int xfs_filestat(struct vnode *, struct filestat *);
 int null_filestat(struct vnode *, struct filestat *);
-void dofiles(struct kinfo_proc *);
+void dofiles(struct kinfo_proc2 *);
 void getinetproto(int);
 void socktrans(struct socket *, int);
 void usage(void);
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind;
 	struct passwd *passwd;
-	struct kinfo_proc *p, *plast;
+	struct kinfo_proc2 *p, *plast;
 	int arg, ch, what;
 	char *memf, *nlistf;
 	char buf[_POSIX2_LINE_MAX];
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 		checkfile = 1;
 	}
 
-	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL)
+	if ((p = kvm_getproc2(kd, what, arg, sizeof(*p), &cnt)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
 	if (nflg)
 		printf("%s",
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 		putchar('\n');
 
 	for (plast = &p[cnt]; p < plast; ++p) {
-		if (p->kp_proc.p_stat == SZOMB)
+		if (p->p_stat == SZOMB)
 			continue;
 		dofiles(p);
 	}
@@ -307,30 +307,28 @@ pid_t	Pid;
  * print open files attributed to this process
  */
 void
-dofiles(struct kinfo_proc *kp)
+dofiles(struct kinfo_proc2 *kp)
 {
 	int i;
 	struct file file;
 	struct filedesc0 filed0;
 #define	filed	filed0.fd_fd
-	struct proc *p = &kp->kp_proc;
-	struct eproc *ep = &kp->kp_eproc;
 
-	Uname = user_from_uid(ep->e_ucred.cr_uid, 0);
-	Pid = p->p_pid;
-	Comm = p->p_comm;
+	Uname = user_from_uid(kp->p_uid, 0);
+	Pid = kp->p_pid;
+	Comm = kp->p_comm;
 
-	if (p->p_fd == NULL)
+	if (kp->p_fd == 0)
 		return;
-	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
+	if (!KVM_READ(kp->p_fd, &filed0, sizeof (filed0))) {
 		dprintf("can't read filedesc at %p for pid %ld",
-		    p->p_fd, (long)Pid);
+		    (void *)(u_long)kp->p_fd, (long)Pid);
 		return;
 	}
 	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
 		dprintf("filedesc corrupted at %p for pid %ld",
-		    p->p_fd, (long)Pid);
+		    (void *)(u_long)kp->p_fd, (long)Pid);
 		return;
 	}
 	/*
@@ -345,8 +343,8 @@ dofiles(struct kinfo_proc *kp)
 	/*
 	 * ktrace vnode, if one
 	 */
-	if (p->p_tracep)
-		vtrans(p->p_tracep, TRACE, FREAD|FWRITE, 0);
+	if (kp->p_tracep)
+		vtrans((struct vnode *)(u_long)kp->p_tracep, TRACE, FREAD|FWRITE, 0);
 	/*
 	 * open files
 	 */
