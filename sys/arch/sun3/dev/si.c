@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.12 2000/09/21 17:45:12 mickey Exp $	*/
+/*	$OpenBSD: si.c,v 1.13 2000/09/21 21:25:16 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.31 1996/11/20 18:56:59 gwr Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ si_attach(sc)
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
 	ncr_sc->sc_link.device = &si_dev;
-	ncr_sc->sc_link.device = 4;
+	ncr_sc->sc_link.openings = 4;
 
 #ifdef	DEBUG
 	if (si_debug)
