@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.usr,v 1.16 2002/05/23 18:43:00 deraadt Exp $
+#	$OpenBSD: 4.4BSD.usr,v 1.17 2003/02/04 01:35:09 deraadt Exp $
 #	$NetBSD: 4.4BSD.usr,v 1.3 1996/05/12 23:30:37 thorpej Exp $
 #
 #	   user: bostic
@@ -960,12 +960,6 @@ vax             type=dir uname=root gname=wheel mode=0775
 /set type=file gname=bin uname=root mode=0444
 09.sendmail     type=dir uname=root gname=wheel mode=0775
 # ./share/doc/smm/09.sendmail
-..
-
-
-# ./share/doc/smm/10.named
-10.named        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/smm/10.named
 ..
 
 

@@ -1560,7 +1560,6 @@
 ./usr/sbin/dhcpd
 ./usr/sbin/dhcrelay
 ./usr/sbin/dig
-./usr/sbin/dnsquery
 ./usr/sbin/editmap
 ./usr/sbin/edquota
 ./usr/sbin/ext_srvtab
@@ -1606,9 +1605,6 @@
 ./usr/sbin/moptrace
 ./usr/sbin/mtree
 ./usr/sbin/named
-./usr/sbin/named.reload
-./usr/sbin/named.restart
-./usr/sbin/ndc
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nslookup
@@ -2043,7 +2039,6 @@
 ./usr/share/misc/mdoc.template
 ./usr/share/misc/more.help
 ./usr/share/misc/na.phone
-./usr/share/misc/nslookup.help
 ./usr/share/misc/scsi_modes
 ./usr/share/misc/termcap
 ./usr/share/misc/termcap.db
@@ -4054,8 +4049,6 @@
 ./var/named
 ./var/named/dev
 ./var/named/etc
-./var/named/named-xfer
-./var/named/namedb
 ./var/preserve
 ./var/quotas
 ./var/run
@@ -4098,3 +4091,8 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/sbin/named-checkconf
+./usr/sbin/named-checkzone
+./usr/sbin/nsupdate
+./usr/sbin/rndc
+./usr/sbin/rndc-confgen

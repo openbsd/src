@@ -237,7 +237,6 @@
 ./usr/share/man/cat1/dig.0
 ./usr/share/man/cat1/dirname.0
 ./usr/share/man/cat1/dirs.0
-./usr/share/man/cat1/dnsquery.0
 ./usr/share/man/cat1/domainname.0
 ./usr/share/man/cat1/dprofpp.0
 ./usr/share/man/cat1/du.0
@@ -1877,13 +1876,9 @@
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/mvme88k
 ./usr/share/man/cat8/mvmeppc
-./usr/share/man/cat8/named-xfer.0
 ./usr/share/man/cat8/named.0
-./usr/share/man/cat8/named.reload.0
-./usr/share/man/cat8/named.restart.0
 ./usr/share/man/cat8/ncheck.0
 ./usr/share/man/cat8/ncheck_ffs.0
-./usr/share/man/cat8/ndc.0
 ./usr/share/man/cat8/ndp.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/netstart.0
@@ -2213,3 +2208,9 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/man/cat5/rndc.conf.0
+./usr/share/man/cat8/named-checkconf.0
+./usr/share/man/cat8/named-checkzone.0
+./usr/share/man/cat8/nsupdate.0
+./usr/share/man/cat8/rndc-confgen.0
+./usr/share/man/cat8/rndc.0

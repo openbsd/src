@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.92 2002/12/31 16:22:26 miod Exp $
+#	$OpenBSD: Makefile,v 1.93 2003/02/04 01:35:08 deraadt Exp $
 
 # not yet done: catman
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton adduser amd arp authpf \
-	bootpd bootpgw bootpef bootptest \
+	bind bootpd bootpgw bootpef bootptest \
 	chroot config cron dev_mkdb dhcp \
 	edquota httpd inetd iostat \
 	kgmon kvm_mkdb lpr \
-	mailwrapper mopd mtree named \
+	mailwrapper mopd mtree \
 	netgroup_mkdb openssl pkg pkg_install popa3d portmap ppp pppd pppoe \
 	pstat pwd_mkdb quot quotaon rarpd rbootd rdconfig rdate repquota rmt \
 	rpc.bootparamd rpc.lockd rpc.pcnfsd rwhod \

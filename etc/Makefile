@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.174 2002/12/31 16:22:25 miod Exp $
+#	$OpenBSD: Makefile,v 1.175 2003/02/04 01:35:08 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -31,7 +31,6 @@ BIN1+=	wsconsctl.conf
 # -rw-rw-r--
 BIN2=	motd
 
-NAMEDB=	localhost.rev localhost.v6.rev localhost.zone root.cache
 PCS=	pcs750.bin
 WCS1=	wcs fppwcs poc poc1 poc2 fppoc
 WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
@@ -167,11 +166,21 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/systrace; \
 		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_named \
 		    ${DESTDIR}/etc/systrace;
-	cd namedb; \
-	    ${INSTALL} -c -o root -g ${BINGRP} -m 644 named.boot \
-		${DESTDIR}/var/named; \
-	    ${INSTALL} -c -o named -g ${BINGRP} -m 644 ${NAMEDB} \
-		${DESTDIR}/var/named/namedb
+	cd bind; \
+		${INSTALL} -c -o root -g named -m 640 named-simple.conf \
+		    ${DESTDIR}/var/named/etc/named.conf; \
+		${INSTALL} -c -o root -g named -m 640 named-*.conf \
+		    ${DESTDIR}/var/named/etc; \
+		${INSTALL} -c -o root -g wheel -m 644 db.localhost \
+		    ${DESTDIR}/var/named/standard/localhost; \
+		${INSTALL} -c -o root -g wheel -m 644 db.loopback \
+		    ${DESTDIR}/var/named/standard/loopback; \
+		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.arpa \
+		    ${DESTDIR}/var/named/standard/loopback6.arpa; \
+		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.int \
+		    ${DESTDIR}/var/named/standard/loopback6.int; \
+		${INSTALL} -c -o root -g wheel -m 644 root.hint \
+		    ${DESTDIR}/var/named/standard; \
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
