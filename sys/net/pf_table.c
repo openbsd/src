@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.1 2002/12/29 20:07:34 cedric Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.2 2002/12/30 02:37:27 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -149,9 +149,9 @@ int			 pfr_ktable_cnt;
 int
 pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_kentryworkq workq;
-	int s, rv;
+	struct pfr_ktable	*kt;
+	struct pfr_kentryworkq	 workq;
+	int			 s, rv;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	kt = pfr_lookup_table(tbl);
@@ -179,12 +179,12 @@ int
 pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
     int *nadd, int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_kentryworkq workq;
-	struct pfr_kentry *p;
-	struct pfr_addr ad;
-	int i, rv, s, xadd = 0;
-	long tzero = time.tv_sec;
+	struct pfr_ktable	*kt;
+	struct pfr_kentryworkq	 workq;
+	struct pfr_kentry	*p;
+	struct pfr_addr		 ad;
+	int			 i, rv, s, xadd = 0;
+	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
@@ -238,11 +238,11 @@ int
 pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
     int *ndel, int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_kentryworkq workq;
-	struct pfr_kentry *p;
-	struct pfr_addr ad;
-	int i, rv, s, xdel = 0;
+	struct pfr_ktable	*kt;
+	struct pfr_kentryworkq	 workq;
+	struct pfr_kentry	*p;
+	struct pfr_addr		 ad;
+	int			 i, rv, s, xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
@@ -286,13 +286,13 @@ int
 pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
     int *size2, int *nadd, int *ndel, int *nchange, int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_kentryworkq addq, delq, changeq;
-	struct pfr_walktree w;
-	struct pfr_kentry *p;
-	struct pfr_addr ad;
-	int i, rv, s, xadd = 0, xdel = 0, xchange = 0;
-	long tzero = time.tv_sec;
+	struct pfr_ktable	*kt;
+	struct pfr_kentryworkq	 addq, delq, changeq;
+	struct pfr_walktree	 w;
+	struct pfr_kentry	*p;
+	struct pfr_addr		 ad;
+	int			 i, rv, s, xadd = 0, xdel = 0, xchange = 0;
+	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
@@ -395,10 +395,10 @@ int
 pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_kentry *p;
-	struct pfr_addr ad;
-	int i;
+	struct pfr_ktable	*kt;
+	struct pfr_kentry	*p;
+	struct pfr_addr		 ad;
+	int			 i;
 
 	ACCEPT_FLAGS(0);
 	kt = pfr_lookup_table(tbl);
@@ -425,9 +425,9 @@ int
 pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 	int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_walktree w;
-	int rv;
+	struct pfr_ktable	*kt;
+	struct pfr_walktree	 w;
+	int			 rv;
 
 	ACCEPT_FLAGS(0);
 	kt = pfr_lookup_table(tbl);
@@ -460,11 +460,11 @@ int
 pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_walktree w;
-	struct pfr_kentryworkq workq;
-	int rv, s;
-	long tzero = time.tv_sec;
+	struct pfr_ktable	*kt;
+	struct pfr_walktree	 w;
+	struct pfr_kentryworkq	 workq;
+	int			 rv, s;
+	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_CLSTATS);
 	kt = pfr_lookup_table(tbl);
@@ -486,8 +486,8 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 		rv = rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);
 	if (!rv && (flags & PFR_FLAG_CLSTATS)) {
 		rv = pfr_enqueue_addrs(kt, &workq, NULL);
-        	if (rv)
-                	return rv;
+		if (rv)
+			return rv;
 		pfr_clstats_kentries(&workq, tzero);
 	}
 	if (flags & PFR_FLAG_ATOMIC)
@@ -507,11 +507,11 @@ int
 pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
     int *nzero, int flags)
 {
-	struct pfr_ktable *kt;
-	struct pfr_kentryworkq workq;
-	struct pfr_kentry *p;
-	struct pfr_addr ad;
-	int i, rv, s, xzero = 0;
+	struct pfr_ktable	*kt;
+	struct pfr_kentryworkq	 workq;
+	struct pfr_kentry	*p;
+	struct pfr_addr		 ad;
+	int			 i, rv, s, xzero = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
@@ -574,8 +574,8 @@ int
 pfr_enqueue_addrs(struct pfr_ktable *kt, struct pfr_kentryworkq *workq,
 	int *naddr)
 {
-	struct pfr_walktree w;
-	int rv;
+	struct pfr_walktree	w;
+	int			rv;
 
 	SLIST_INIT(workq);
 	bzero(&w, sizeof(w));
@@ -595,9 +595,9 @@ pfr_enqueue_addrs(struct pfr_ktable *kt, struct pfr_kentryworkq *workq,
 struct pfr_kentry *
 pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 {
-	union sockaddr_union sa, mask;
-	struct radix_node_head *head;
-	struct pfr_kentry *ke;
+	union sockaddr_union	 sa, mask;
+	struct radix_node_head	*head;
+	struct pfr_kentry	*ke;
 
 	bzero(&sa, sizeof(sa));
 	if (ad->pfra_af == AF_INET) {
@@ -621,7 +621,7 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 struct pfr_kentry *
 pfr_create_kentry(struct pfr_addr *ad, long tzero)
 {
-	struct pfr_kentry *ke;
+	struct pfr_kentry	*ke;
 
 	ke = pool_get(&pfr_kentry_pl, PR_NOWAIT);
 	if (ke == NULL)
@@ -642,15 +642,15 @@ pfr_create_kentry(struct pfr_addr *ad, long tzero)
 void
 pfr_destroy_kentry(struct pfr_kentry *ke)
 {
-	if (ke == NULL)
-		return;
-	pool_put(&pfr_kentry_pl, ke);
+	if (ke != NULL)
+		pool_put(&pfr_kentry_pl, ke);
 }
 
 void
 pfr_destroy_kentries(struct pfr_kentryworkq *workq)
 {
-	struct pfr_kentry *p, *q;
+	struct pfr_kentry	*p, *q;
+
 	for (p = SLIST_FIRST(workq); p != NULL; p = q) {
 		q = SLIST_NEXT(p, pfrke_workq);
 		pfr_destroy_kentry(p);
@@ -661,8 +661,8 @@ int
 pfr_insert_kentries(struct pfr_ktable *kt,
     struct pfr_kentryworkq *workq)
 {
-	struct pfr_kentry *p, *q;
-	int n = 0;
+	struct pfr_kentry	*p, *q;
+	int			 n = 0;
 
 	SLIST_FOREACH(p, workq, pfrke_workq) {
 		if (pfr_route_kentry(kt, p)) {
@@ -684,8 +684,8 @@ void
 pfr_remove_kentries(struct pfr_ktable *kt,
     struct pfr_kentryworkq *workq)
 {
-	struct pfr_kentry *p;
-	int n = 0;
+	struct pfr_kentry	*p;
+	int			 n = 0;
 
 	SLIST_FOREACH(p, workq, pfrke_workq) {
 		pfr_unroute_kentry(kt, p);
@@ -698,8 +698,8 @@ pfr_remove_kentries(struct pfr_ktable *kt,
 void
 pfr_clstats_kentries(struct pfr_kentryworkq *workq, long tzero)
 {
-	struct pfr_kentry *p;
-	int s, n = 0;
+	struct pfr_kentry	*p;
+	int			 s, n = 0;
 
 	SLIST_FOREACH(p, workq, pfrke_workq) {
 		s = splsoftnet();
@@ -714,8 +714,8 @@ pfr_clstats_kentries(struct pfr_kentryworkq *workq, long tzero)
 void
 pfr_reset_feedback(struct pfr_addr *addr, int size)
 {
-	struct pfr_addr ad;
-	int i;
+	struct pfr_addr	ad;
+	int		i;
 
         for (i = 0; i < size; i++) {
                 if (copyin(addr+i, &ad, sizeof(ad)))
@@ -729,7 +729,7 @@ pfr_reset_feedback(struct pfr_addr *addr, int size)
 void
 pfr_prepare_network(union sockaddr_union *sa, int af, int net)
 {
-	int i;
+	int	i;
 
 	bzero(sa, sizeof(*sa));
 	if (af == AF_INET) {
@@ -754,10 +754,10 @@ pfr_prepare_network(union sockaddr_union *sa, int af, int net)
 int
 pfr_route_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 {
-	union sockaddr_union mask;
-	struct radix_node *rn;
-	struct radix_node_head *head;
-	int s;
+	union sockaddr_union	 mask;
+	struct radix_node	*rn;
+	struct radix_node_head	*head;
+	int			 s;
 
 	if (ke->pfrke_af == AF_INET)
 		head = kt->pfrkt_ip4;
@@ -782,10 +782,10 @@ pfr_route_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 int
 pfr_unroute_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 {
-	union sockaddr_union mask;
-	struct radix_node *rn;
-	struct radix_node_head *head;
-	int s;
+	union sockaddr_union	 mask;
+	struct radix_node	*rn;
+	struct radix_node_head	*head;
+	int			 s;
 
 	if (ke->pfrke_af == AF_INET)
 		head = kt->pfrkt_ip4;
@@ -823,9 +823,9 @@ pfr_copyout_addr(struct pfr_addr *ad, struct pfr_kentry *ke)
 int
 pfr_walktree(struct radix_node *rn, void *arg)
 {
-	struct pfr_kentry *ke = (struct pfr_kentry *)rn;
-	struct pfr_walktree *w = arg;
-	int s;
+	struct pfr_kentry	*ke = (struct pfr_kentry *)rn;
+	struct pfr_walktree	*w = arg;
+	int			 s;
 
 	switch (w->pfrw_op) {
 	case PFRW_MARK:
@@ -875,9 +875,9 @@ pfr_walktree(struct radix_node *rn, void *arg)
 int
 pfr_clr_tables(int *ndel, int flags)
 {
-	struct pfr_ktableworkq workq;
-	struct pfr_ktable *p;
-	int s, xdel = 0;
+	struct pfr_ktableworkq	 workq;
+	struct pfr_ktable	*p;
+	int			 s, xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
@@ -899,10 +899,10 @@ pfr_clr_tables(int *ndel, int flags)
 int
 pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 {
-	struct pfr_ktableworkq workq;
-	struct pfr_ktable *p, key;
-	int i, s, xadd = 0;
-	long tzero = time.tv_sec;
+	struct pfr_ktableworkq	 workq;
+	struct pfr_ktable	*p, key;
+	int			 i, s, xadd = 0;
+	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
@@ -922,7 +922,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 					return (ENOMEM);
 				}
 				SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
-				/* TODO: move the following out of the if */
+				/* XXX move the following out of the if */
 				if (pfr_lookup_hash(&p->pfrkt_hash)) {
 					printf(
 					    "pfr_add_tables: sha collision\n");
@@ -948,9 +948,9 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 int
 pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 {
-	struct pfr_ktableworkq workq;
-	struct pfr_ktable *p, key;
-	int i, s, xdel = 0;
+	struct pfr_ktableworkq	 workq;
+	struct pfr_ktable	*p, key;
+	int			 i, s, xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
@@ -979,8 +979,8 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 int
 pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 {
-	struct pfr_ktable *p;
-	int n = pfr_ktable_cnt;
+	struct pfr_ktable	*p;
+	int			 n = pfr_ktable_cnt;
 
 	ACCEPT_FLAGS(0);
 	if (n > *size) {
@@ -1004,10 +1004,10 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 int
 pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 {
-	struct pfr_ktable *p;
-	struct pfr_ktableworkq workq;
-	int s, n = pfr_ktable_cnt;
-	long tzero = time.tv_sec;
+	struct pfr_ktable	*p;
+	struct pfr_ktableworkq	 workq;
+	int			 s, n = pfr_ktable_cnt;
+	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_CLSTATS+PFR_FLAG_RECURSE);
 	if (n > *size) {
@@ -1046,10 +1046,10 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 int
 pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 {
-	struct pfr_ktableworkq workq;
-	struct pfr_ktable *p, key;
-	int i, s, xzero = 0;
-	long tzero = time.tv_sec;
+	struct pfr_ktableworkq	 workq;
+	struct pfr_ktable	*p, key;
+	int			 i, s, xzero = 0;
+	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_CLSTATS+PFR_FLAG_RECURSE);
 	SLIST_INIT(&workq);
@@ -1079,9 +1079,9 @@ int
 pfr_wrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap,
     int *exists, int flags)
 {
-	union pfr_hash hash;
-	struct pf_addr_wrap w;
-	SHA1_CTX sha1;
+	union pfr_hash		hash;
+	struct pf_addr_wrap	w;
+	SHA1_CTX		sha1;
 
 	ACCEPT_FLAGS(0);
 	if (!*tbl->pfrt_name || tbl->pfrt_name[PF_TABLE_NAME_SIZE-1])
@@ -1105,9 +1105,9 @@ pfr_wrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap,
 int
 pfr_unwrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap, int flags)
 {
-	union pfr_hash hash;
-	struct pf_addr_wrap w;
-	struct pfr_ktable *kt;
+	union pfr_hash		 hash;
+	struct pf_addr_wrap	 w;
+	struct pfr_ktable	*kt;
 
 	ACCEPT_FLAGS(0);
 	if (copyin(wrap, &w, sizeof(w)))
@@ -1129,8 +1129,8 @@ pfr_unwrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap, int flags)
 void
 pfr_insert_ktables(struct pfr_ktableworkq *workq)
 {
-	struct pfr_ktable *p;
-	int s, n = 0;
+	struct pfr_ktable	*p;
+	int			 s, n = 0;
 
 	/* insert into tree */
 	SLIST_FOREACH(p, workq, pfrkt_workq) {
@@ -1151,9 +1151,9 @@ pfr_insert_ktables(struct pfr_ktableworkq *workq)
 void
 pfr_remove_ktables(struct pfr_ktableworkq *workq)
 {
-	struct pfr_kentryworkq addrq;
-	struct pfr_ktable *p;
-	int s, n = 0;
+	struct pfr_kentryworkq	 addrq;
+	struct pfr_ktable	*p;
+	int			 s, n = 0;
 
 	SLIST_FOREACH(p, workq, pfrkt_workq) {
 		s = splsoftnet();
@@ -1176,9 +1176,9 @@ pfr_remove_ktables(struct pfr_ktableworkq *workq)
 void
 pfr_clstats_ktables(struct pfr_ktableworkq *workq, long tzero, int recurse)
 {
-	struct pfr_kentryworkq addrq;
-	struct pfr_ktable *p;
-	int s;
+	struct pfr_kentryworkq	 addrq;
+	struct pfr_ktable	*p;
+	int			 s;
 
 	SLIST_FOREACH(p, workq, pfrkt_workq) {
 		if (recurse) {
@@ -1198,8 +1198,8 @@ pfr_clstats_ktables(struct pfr_ktableworkq *workq, long tzero, int recurse)
 struct pfr_ktable *
 pfr_create_ktable(struct pfr_table *tbl, long tzero)
 {
-	struct pfr_ktable *kt;
-	SHA1_CTX sha1;
+	struct pfr_ktable	*kt;
+	SHA1_CTX		 sha1;
 
 	kt = pool_get(&pfr_ktable_pl, PR_NOWAIT);
 	if (kt == NULL)
@@ -1239,7 +1239,8 @@ pfr_destroy_ktable(struct pfr_ktable *kt)
 void
 pfr_destroy_ktables(struct pfr_ktableworkq *workq)
 {
-	struct pfr_ktable *p, *q;
+	struct pfr_ktable	*p, *q;
+
 	for(p = SLIST_FIRST(workq); p; p = q) {
 		q = SLIST_NEXT(p, pfrkt_workq);
 		pfr_destroy_ktable(p);
@@ -1255,7 +1256,7 @@ pfr_ktable_compare(struct pfr_ktable *p, struct pfr_ktable *q)
 struct pfr_ktable *
 pfr_lookup_hash(union pfr_hash *hash)
 {
-	struct pfr_ktable *p;
+	struct pfr_ktable	*p;
 
 	SLIST_FOREACH(p, pfr_ktablehash+PFR_HASH_BUCKET(*hash), pfrkt_hashq)
 		if (!memcmp(p->pfrkt_hash.pfrh_sha1, hash->pfrh_sha1, 20))
@@ -1280,10 +1281,10 @@ int
 pfr_match_addr(struct pf_addr *a, struct pf_addr *m,
     struct pf_addr *b, sa_family_t af)
 {
-	union pfr_hash hash;
-	struct pfr_ktable *kt;
-	struct pfr_kentry *ke = NULL;
-	int match;
+	union pfr_hash		 hash;
+	struct pfr_ktable	*kt;
+	struct pfr_kentry	*ke = NULL;
+	int			 match;
 
 	bcopy(a, &hash, 16);
 	hash.pfrh_int32[4] = m->addr32[1];
@@ -1313,9 +1314,9 @@ pfr_update_stats(struct pf_addr *a, struct pf_addr *m,
     struct pf_addr *b, sa_family_t af, u_int64_t len,
     int dir_out, int op_pass, int notrule)
 {
-	union pfr_hash hash;
-	struct pfr_ktable *kt;
-	struct pfr_kentry *ke = NULL;
+	union pfr_hash		 hash;
+	struct pfr_ktable	*kt;
+	struct pfr_kentry	*ke = NULL;
 
 	bcopy(a, &hash, 16);
 	hash.pfrh_int32[4] = m->addr32[1];
