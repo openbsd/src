@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.162 2004/04/15 02:59:22 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.163 2004/04/15 12:05:34 grange Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -95,11 +95,12 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
+struct	tcpiphdr tcp_saveti;
+
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 
-struct	tcpiphdr tcp_saveti;
 struct  tcpipv6hdr tcp_saveti6;
 
 /* for the packet header length in the mbuf */
