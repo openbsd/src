@@ -1369,7 +1369,7 @@ txt_totext(isc_region_t *source, isc_buffer_t *target) {
 		if (*sp < 0x20 || *sp >= 0x7f) {
 			if (tl < 4)
 				return (ISC_R_NOSPACE);
-			snprintf(tp, 5, "\\%03u", *sp++);
+			snprintf(tp, tl, "\\%03u", *sp++);
 			tp += 4;
 			tl -= 4;
 			continue;

@@ -198,8 +198,13 @@ copytobuf(struct hostent *he, struct hostent *hptr, char *buf, int buflen) {
         /*
 	 * Copy official name.
 	 */
-        n = strlen(he->h_name) + 1;
-        strcpy(cp, he->h_name);
+	n = (buf + buflen) - cp;
+	{
+		int r;
+        	r = strlcpy(cp, he->h_name, n);
+		if ( r < n )
+			n = r;
+	}
         hptr->h_name = cp;
         cp += n;
 
@@ -208,8 +213,14 @@ copytobuf(struct hostent *he, struct hostent *hptr, char *buf, int buflen) {
 	 */
         hptr->h_aliases = ptr;
         for (i = 0; he->h_aliases[i]; i++) {
-                n = strlen(he->h_aliases[i]) + 1;
-                strcpy(cp, he->h_aliases[i]);
+                n = (buf + buflen) - cp;
+		{
+			int r;
+                	r = strlcpy(cp, he->h_aliases[i], n);
+			if ( r < n )
+				n = r;
+		}
+			
                 hptr->h_aliases[i] = cp;
                 cp += n;
         }

@@ -397,7 +397,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 			INDENT_TO(ttl_column);
 			length = snprintf(ttlbuf, sizeof(ttlbuf), "%u",
 					  rdataset->ttl);
-			INSIST(length <= sizeof ttlbuf);
+			INSIST(length < sizeof ttlbuf);
 			isc_buffer_availableregion(target, &r);
 			if (r.length < length)
 				return (ISC_R_NOSPACE);
