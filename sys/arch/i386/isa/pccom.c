@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.34 1999/11/28 12:07:02 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.35 2000/08/16 19:15:35 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -447,6 +448,9 @@ comattach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_iobase = iobase;
 
+	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
+	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
+
 	if (iobase == comconsaddr) {
 		comconsattached = 1;
 
@@ -701,8 +705,8 @@ com_detach(self, flags)
 		ttyfree(sc->sc_tty);
 	}
 
-	untimeout(com_raisedtr, sc);
-	untimeout(comdiag, sc);
+	timeout_del(&sc->sc_dtr_tmo);
+	timeout_del(&sc->sc_diag_tmo);
 
 	return (0);
 }
@@ -994,7 +998,7 @@ comclose(dev, flag, mode, p)
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
 		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
-		timeout(com_raisedtr, sc, hz * 2);
+		timeout_add(&sc->sc_dtr_tmo, hz * 2);
 	} else {
 		/* no one else waiting; turn off the uart */
 		compwroff(sc);
@@ -1590,7 +1594,7 @@ comsoft()
 				if (ISSET(lsr, LSR_OE)) {
 					sc->sc_overflows++;
 					if (sc->sc_errors++ == 0)
-						timeout(comdiag, sc, 60 * hz);
+						timeout_add(&sc->sc_diag_tmo, 60 * hz);
 				}
 				rxget = (rxget + 1) & RBUFMASK;
 				c |= lsrmap[(lsr & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
