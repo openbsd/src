@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_qereg.h,v 1.5 2002/06/03 20:01:36 deraadt Exp $ */
-/*	$NetBSD: if_qereg.h,v 1.5 1999/06/20 00:04:47 ragge Exp $ */
+/*	$OpenBSD: if_qereg.h,v 1.6 2003/02/04 02:03:51 hugh Exp $	*/
+/*	$NetBSD: if_qereg.h,v 1.6 2001/06/19 13:42:18 wiz Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -105,7 +105,7 @@ struct qedevice {
  */
 #define QE_RCV_ENABLE	0x0001		/* Receiver enable		*/
 #define QE_RESET	0x0002		/* Software reset		*/
-#define QE_NEX_MEM_INT	0x0004		/* Non existant mem interrupt	*/
+#define QE_NEX_MEM_INT	0x0004		/* Non existent mem interrupt	*/
 #define QE_LOAD_ROM	0x0008		/* Load boot/diag from rom	*/
 #define QE_XL_INVALID	0x0010		/* Transmit list invalid	*/
 #define QE_RL_INVALID	0x0020		/* Receive list invalid		*/
@@ -114,7 +114,7 @@ struct qedevice {
 #define QE_ILOOP 	0x0100		/* Internal loopback		*/
 #define QE_ELOOP	0x0200		/* External loopback		*/
 #define QE_STIM_ENABLE	0x0400		/* Sanity timer enable		*/
-#define QE_POWERUP	0x1000		/* Transceiver power on		*/
+#define QE_POWERUP	0x1000		/* Tranceiver power on		*/
 #define QE_CARRIER	0x2000		/* Carrier detect		*/
 #define QE_RCV_INT	0x8000		/* Receiver interrupt		*/
  
