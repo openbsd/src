@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.5 1996/07/11 11:57:09 mickey Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.6 1996/07/12 07:23:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: lookup.c,v 1.5 1996/07/11 11:57:09 mickey Exp $";
+"$OpenBSD: lookup.c,v 1.6 1996/07/12 07:23:59 mickey Exp $";
 
 static char sccsid[] = "@(#)lookup.c	5.1 (Berkeley) 6/6/85";
 
@@ -138,8 +138,6 @@ lookup(name, action, value)	/* %% in name.  Ignore quotas in name */
 
 	debugmsg(DM_CALL, "lookup(%s, %d, %x)", name, action, value);
 
-	if (strlen(name) > sizeof(ebuf)-12)
-		yyerror("name is too long");
 	n = 0;
 	for (cp = name; *cp; )
 		n += *cp++;
@@ -150,7 +148,7 @@ lookup(name, action, value)	/* %% in name.  Ignore quotas in name */
 			continue;
 		if (action != LOOKUP) {
 			if (action != INSERT || s->s_type != CONST) {
-				(void) sprintf(ebuf, "%s redefined", name);
+				(void) snprintf(ebuf, sizeof(ebuf), "%s redefined", name);
 				yyerror(ebuf);
 			}
 		}
@@ -158,7 +156,7 @@ lookup(name, action, value)	/* %% in name.  Ignore quotas in name */
 	}
 
 	if (action == LOOKUP) {
-		(void) sprintf(ebuf, "%s undefined", name);
+		(void) snprintf(ebuf, sizeof(ebuf), "%s undefined", name);
 		yyerror(ebuf);
 		return(NULL);
 	}
