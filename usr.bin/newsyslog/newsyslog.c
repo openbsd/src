@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.35 2001/01/12 16:24:06 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.36 2001/03/01 20:34:10 aaron Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.35 2001/01/12 16:24:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.36 2001/03/01 20:34:10 aaron Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -361,7 +361,7 @@ PRS(argc, argv)
 		*p = '\0';
 
 	optind = 1;	     /* Start options parsing */
-	while ((c = getopt(argc, argv, "nrvmf:t:")) != -1) {
+	while ((c = getopt(argc, argv, "nrvmf:")) != -1) {
 		switch (c) {
 		case 'n':
 			noaction++; /* This implies needroot as off */
@@ -389,7 +389,7 @@ usage()
 {
 	extern const char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-nrvm] [-f config-file]\n",
+	(void)fprintf(stderr, "usage: %s [-mnrv] [-f config_file]\n",
 	    __progname);
 	exit(1);
 }

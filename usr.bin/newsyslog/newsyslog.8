@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.19 2000/06/02 19:39:33 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.20 2001/03/01 20:34:10 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -56,8 +56,8 @@
 .Nd maintain system log files to manageable sizes
 .Sh SYNOPSIS
 .Nm newsyslog
-.Op Fl vmnr
-.Op Fl f Ar configuration file
+.Op Fl mnrv
+.Op Fl f Ar config_file
 .Sh DESCRIPTION
 .Nm
 is a program that should be scheduled to run periodically by
@@ -75,21 +75,16 @@ the last period's logs in it,
 has the next to last
 period's logs in it, and so on, up to a user-specified number of
 archived logs.
-Optionally the archived logs can be compressed to save
-space.
+Optionally the archived logs can be compressed to save space.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl f Ar config-file
-Use
-.Ar config-file
-instead of
-.Pa /etc/newsyslog.conf
-for the configuration file.
-.It Fl v
-Be verbose.
-In this mode it will print out each log and its
-reasons for either trimming that log or skipping it.
+.It Fl m
+Monitoring mode; only entries marked with an
+.Sq M
+in flags are processed,
+and notifications sent if any have changed.
+Without this option, monitored entries are not processed.
 .It Fl n
 Do not trim the logs, but instead print out what would be done if this option
 were not specified.
@@ -104,12 +99,16 @@ will not be able to send a
 signal to
 .Xr syslogd 8 ,
 so this option should only be used in debugging.
-.It Fl m
-Monitoring mode; only entries marked with an
-.Sq M
-in flags are processed,
-and notifications sent if any have changed.
-Without this option, monitored entries are not processed.
+.It Fl v
+Be verbose.
+In this mode it will print out each log and its
+reasons for either trimming that log or skipping it.
+.It Fl f Ar config_file
+Use
+.Ar config_file
+instead of
+.Pa /etc/newsyslog.conf
+for the configuration file.
 .El
 .Pp
 A log can be archived because of two reasons.
