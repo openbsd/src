@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dir.5,v 1.7 1999/07/09 13:35:38 aaron Exp $
+.\"	$OpenBSD: dir.5,v 1.8 2000/10/26 00:37:04 aaron Exp $
 .\"	$NetBSD: dir.5,v 1.5 1995/03/28 17:30:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -38,7 +38,8 @@
 .Dt DIR 5
 .Os
 .Sh NAME
-.Nm dir , dirent
+.Nm dir ,
+.Nm dirent
 .Nd directory file format
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -46,15 +47,13 @@
 .Sh DESCRIPTION
 Directories provide a convenient hierarchical method of grouping
 files while obscuring the underlying details of the storage medium.
-A directory file is differentiated from a plain file
-by a flag in its
+A directory file is differentiated from a plain file by a flag in its
 .Xr inode 5
 entry.
 It consists of records (directory entries) each of which contains
 information about a file and a pointer to the file itself.
-Directory entries may contain other directories
-as well as plain files; such nested directories are referred to as
-subdirectories.
+Directory entries may contain other directories as well as plain files;
+such nested directories are referred to as subdirectories.
 A hierarchy of directories and files is formed in this manner
 and is called a file system (or referred to as a file system tree).
 .\" An entry in this tree,
@@ -62,14 +61,11 @@ and is called a file system (or referred to as a file system tree).
 .\" is a pathname.
 .Pp
 Each directory file contains two special directory entries; one is a pointer
-to the directory itself
-called dot
+to the directory itself called dot
 .Pq Dq \&.
 and the other a pointer to its parent directory called dot-dot
 .Pq Dq \&.. .
-Dot and dot-dot
-are valid pathnames, however,
-the system root directory
+Dot and dot-dot are valid pathnames, however, the system root directory
 .Pq Dq / ,
 has no parent and dot-dot points to itself like dot.
 .Pp
@@ -145,6 +141,6 @@ typedef struct _dirdesc {
 .Xr inode 5
 .Sh HISTORY
 A
-.Nm
+.Nm dir
 file format appeared in
 .At v7 .

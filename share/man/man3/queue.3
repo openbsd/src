@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.11 2000/04/15 01:42:29 deraadt Exp $
+.\"	$OpenBSD: queue.3,v 1.12 2000/10/26 00:37:03 aaron Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -112,7 +112,7 @@
 .Nd "implementations of singly-linked lists, doubly-linked lists, simple queues, tail queues, and circular queues"
 .Sh SYNOPSIS
 .Fd #include <sys/queue.h>
-.sp
+.Pp
 .Fn SLIST_ENTRY "TYPE"
 .Fn SLIST_HEAD "HEADNAME" "TYPE"
 .Fn SLIST_HEAD_INITIALIZER "SLIST_HEAD head"
@@ -133,7 +133,7 @@
 .Fn SLIST_INSERT_HEAD "SLIST_HEAD *head" "struct TYPE *elm" "SLIST_ENTRY NAME"
 .Ft void
 .Fn SLIST_REMOVE_HEAD "SLIST_HEAD *head" "SLIST_ENTRY NAME"
-.sp
+.Pp
 .Fn LIST_ENTRY "TYPE"
 .Fn LIST_HEAD "HEADNAME" "TYPE"
 .Fn LIST_HEAD_INITIALIZER "LIST_HEAD head"
@@ -156,7 +156,7 @@
 .Fn LIST_INSERT_HEAD "LIST_HEAD *head" "struct TYPE *elm" "LIST_ENTRY NAME"
 .Ft void
 .Fn LIST_REMOVE "struct TYPE *elm" "LIST_ENTRY NAME"
-.sp
+.Pp
 .Fn SIMPLEQ_ENTRY "TYPE"
 .Fn SIMPLEQ_HEAD "HEADNAME" "TYPE"
 .Fn SIMPLEQ_HEAD_INITIALIZER "SIMPLEQ_HEAD head"
@@ -176,7 +176,7 @@
 .Fn SIMPLEQ_INSERT_AFTER "struct TYPE *listelm" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Ft void
 .Fn SIMPLEQ_REMOVE_HEAD "SIMPLEQ_HEAD *head" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
-.sp
+.Pp
 .Fn TAILQ_ENTRY "TYPE"
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
 .Fn TAILQ_HEAD_INITIALIZER "TAILQ_HEAD head"
@@ -205,7 +205,7 @@
 .Fn TAILQ_INSERT_TAIL "TAILQ_HEAD *head" "struct TYPE *elm" "TAILQ_ENTRY NAME"
 .Ft void
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "struct TYPE *elm" "TAILQ_ENTRY NAME"
-.sp
+.Pp
 .Fn CIRCLEQ_ENTRY "TYPE"
 .Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
 .Fn CIRCLEQ_HEAD_INITIALIZER "CIRCLEQ_HEAD head"
@@ -237,8 +237,7 @@
 .Fn CIRCLEQ_REMOVE "CIRCLEQ_HEAD *head" "struct TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Sh DESCRIPTION
 These macros define and operate on five types of data structures:
-singly-linked lists, simple queues, lists, tail queues,
-and circular queues.
+singly-linked lists, simple queues, lists, tail queues, and circular queues.
 All five structures support the following functionality:
 .Pp
 .Bl -enum -compact -offset indent
@@ -255,8 +254,7 @@ Forward traversal through the list.
 Singly-linked lists are the simplest of the five data structures
 and support only the above functionality.
 Singly-linked lists are ideal for applications with large datasets
-and few or no removals,
-or for implementing a LIFO queue.
+and few or no removals, or for implementing a LIFO queue.
 .Pp
 Simple queues add the following functionality:
 .Pp
@@ -343,14 +341,12 @@ Each head entry requires two pointers rather than one.
 .It
 The termination condition for traversal is more complex.
 .It
-Code size is about 40% greater and operations run about 45% slower
-than lists.
+Code size is about 40% greater and operations run about 45% slower than lists.
 .El
 .Pp
 In the macro definitions,
 .Fa TYPE
-is the name tag of a user defined structure,
-that must contain a field of type
+is the name tag of a user defined structure that must contain a field of type
 .Li SLIST_ENTRY ,
 .Li LIST_ENTRY ,
 .Li SIMPLEQ_ENTRY ,
@@ -369,14 +365,12 @@ using the macros
 .Fn TAILQ_HEAD ,
 or
 .Fn CIRCLEQ_HEAD .
-See the examples below for further explanation of how these
-macros are used.
+See the examples below for further explanation of how these macros are used.
 .Sh SINGLY_LINKED LISTS
 A singly-linked list is headed by a structure defined by the
 .Fn SLIST_HEAD
 macro.
-This structure contains a single pointer to the first element
-on the list.
+This structure contains a single pointer to the first element on the list.
 The elements are singly linked for minimum space and pointer manipulation
 overhead at the expense of O(n) removal for arbitrary elements.
 New elements can be added to the list after an existing element or
@@ -387,7 +381,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 SLIST_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Fa HEADNAME
 is the name of the structure to be defined, and struct
@@ -397,13 +391,13 @@ A pointer to the head of the list can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
 .Li headp
 are user selectable.)
-.sp
+.Pp
 The
 .Fa HEADNAME
 facility is often not used, leading to the following bizarre code:
@@ -413,8 +407,7 @@ SLIST_HEAD(, TYPE) head, *headp;
 .Pp
 The
 .Fn SLIST_ENTRY
-macro declares a structure that connects the elements in
-the list.
+macro declares a structure that connects the elements in the list.
 .Pp
 The
 .Fn SLIST_INIT
@@ -469,8 +462,7 @@ macro should be used to check whether a simple list is empty.
 A list is headed by a structure defined by the
 .Fn LIST_HEAD
 macro.
-This structure contains a single pointer to the first element
-on the list.
+This structure contains a single pointer to the first element on the list.
 The elements are doubly linked so that an arbitrary element can be
 removed without traversing the list.
 New elements can be added to the list after an existing element,
@@ -481,7 +473,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 LIST_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Fa HEADNAME
 is the name of the structure to be defined, and struct
@@ -491,13 +483,13 @@ A pointer to the head of the list can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
 .Li headp
 are user selectable.)
-.sp
+.Pp
 The
 .Fa HEADNAME
 facility is often not used, leading to the following bizarre code:
@@ -507,8 +499,7 @@ LIST_HEAD(, TYPE) head, *headp;
 .Pp
 The
 .Fn LIST_ENTRY
-macro declares a structure that connects the elements in
-the list.
+macro declares a structure that connects the elements in the list.
 .Pp
 The
 .Fn LIST_INIT
@@ -598,9 +589,8 @@ while (head.lh_first != NULL)		/* Delete. */
 A simple queue is headed by a structure defined by the
 .Fn SIMPLEQ_HEAD
 macro.
-This structure contains a pair of pointers,
-one to the first element in the simple queue and the other to
-the last element in the simple queue.
+This structure contains a pair of pointers, one to the first element in the
+simple queue and the other to the last element in the simple queue.
 The elements are singly linked.
 New elements can be added to the queue after an existing element,
 at the head of the queue or at the tail of the queue.
@@ -610,7 +600,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 SIMPLEQ_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Fa HEADNAME
 is the name of the structure to be defined, and struct
@@ -620,7 +610,7 @@ A pointer to the head of the queue can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
@@ -725,7 +715,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 TAILQ_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Fa HEADNAME
 is the name of the structure to be defined, and struct
@@ -735,7 +725,7 @@ A pointer to the head of the tail queue can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
@@ -859,7 +849,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 CIRCLEQ_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Fa HEADNAME
 is the name of the structure to be defined, and struct
@@ -869,7 +859,7 @@ A pointer to the head of the circular queue can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
@@ -878,8 +868,7 @@ are user selectable.)
 .Pp
 The
 .Fn CIRCLEQ_ENTRY
-macro declares a structure that connects the elements in
-the circular queue.
+macro declares a structure that connects the elements in the circular queue.
 .Pp
 The
 .Fn CIRCLEQ_INIT

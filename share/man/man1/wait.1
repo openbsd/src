@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wait.1,v 1.5 2000/03/19 19:25:22 aaron Exp $
+.\"	$OpenBSD: wait.1,v 1.6 2000/10/26 00:37:03 aaron Exp $
 .\"	$NetBSD: wait.1,v 1.2 1994/11/30 08:35:03 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -46,8 +46,7 @@
 .Sh DESCRIPTION
 If invoked with no arguments, the
 .Nm
-utility waits until
-all existing child processes in the background
+utility waits until all existing child processes in the background
 have terminated.
 .Pp
 Available operands:
@@ -58,18 +57,15 @@ If a
 operand is specified, and it is the process ID of a
 background child process that still exists, the
 .Nm
-utility
-waits until that process has completed and consumes its
-status information, without consuming the status information
-of any other process.
+utility waits until that process has completed and consumes its status
+information, without consuming the status information of any other process.
 .Pp
 If a
 .Ar pid
 operand is specified that is not the process ID of
 a child background process that still exists,
 .Nm
-exits
-without waiting for any processes to complete.
+exits without waiting for any processes to complete.
 .El
 .Pp
 The
@@ -79,25 +75,20 @@ utility exits with one of the following values:
 .It \&0
 The
 .Nm
-utility was invoked with no operands and
-all of the existing background child processes have
-terminated, or the process specified by the
+utility was invoked with no operands and all of the existing background
+child processes have terminated, or the process specified by the
 .Ar pid
 operand exited normally with 0 as its exit status.
 .It \&>\&0
-The specified process did not exist and its exit
-status information was not available, or the specified
-process existed or its exit status information
-was available, and it terminated with a non-zero
-exit status.
+The specified process did not exist and its exit status information was not
+available, or its exit status information was available and it terminated with
+a non-zero exit status.
 .El
 .Pp
-If the specified process terminated abnormally due
-to the receipt of a signal, the exit status
-information of
+If the specified process terminated abnormally due to the receipt of a signal,
+the exit status information of
 .Nm
-contains that termination status as
-well.
+contains that termination status as well.
 .Sh SEE ALSO
 .Xr wait 2
 .Sh STANDARDS

@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sysexits.3,v 1.1 2000/04/26 16:01:09 millert Exp $
+.\" $OpenBSD: sysexits.3,v 1.2 2000/10/26 00:37:03 aaron Exp $
 .\" $FreeBSD: src/share/man/man3/sysexits.3,v 1.4.2.1 1999/08/29 16:45:41 peter Exp $
 .\"
 .\" "
@@ -40,77 +40,80 @@ According to
 .Xr style 9 ,
 it is not a good practice to call
 .Xr exit 3
-with arbitrary values to indicate a failure condition when ending
-a program.  Instead, the pre-defined exit codes from
-.Nm sysexits
+with arbitrary values to indicate a failure condition when ending a program.
+Instead, the pre-defined exit codes from
+.Nm
 should be used, so the caller of the process can get a rough
 estimation about the failure class without looking up the source code.
 .Pp
 The successful exit is always indicated by a status of 0, or
-.Sy EX_OK .
+.Dv EX_OK .
 Error numbers begin at
-.Sy EX__BASE
+.Dv EX__BASE
 to reduce the possibility of clashing with other exit statuses that
-random programs may already return.  The meaning of the codes is
-approximately as follows:
+random programs may already return.
+The meaning of the code is approximately as follows:
 .Bl -tag -width "EX_UNAVAILABLEXX(XX)"
-.It Sy EX_USAGE Pq 64
+.It Dv EX_USAGE Pq 64
 The command was used incorrectly, e.g., with the wrong number of
 arguments, a bad flag, a bad syntax in a parameter, or whatever.
-.It Sy EX_DATAERR Pq 65
-The input data was incorrect in some way.  This should only be used
-for user's data and not system files.
-.It Sy EX_NOINPUT Pq 66
+.It Dv EX_DATAERR Pq 65
+The input data was incorrect in some way.
+This should only be used for user's data and not system files.
+.It Dv EX_NOINPUT Pq 66
 An input file (not a system file) did not exist or was not readable.
 This could also include errors like
 .Dq \&No message
 to a mailer (if it cared to catch it).
-.It Sy EX_NOUSER Pq 67
-The user specified did not exist.  This might be used for mail
-addresses or remote logins.
-.It Sy EX_NOHOST Pq 68
-The host specified did not exist.  This is used in mail addresses or
-network requests.
-.It Sy EX_UNAVAILABLE Pq 69
-A service is unavailable.  This can occur if a support program or file
-does not exist.  This can also be used as a catchall message when
-something you wanted to do doesn't work, but you don't know why.
-.It Sy EX_SOFTWARE Pq 70
-An internal software error has been detected.  This should be limited
-to non-operating system related errors as possible.
-.It Sy EX_OSERR Pq 71
-An operating system error has been detected.  This is intended to be
-used for such things as
+.It Dv EX_NOUSER Pq 67
+The user specified did not exist.
+This might be used for mail addresses or remote logins.
+.It Dv EX_NOHOST Pq 68
+The host specified did not exist.
+This is used in mail addresses or network requests.
+.It Dv EX_UNAVAILABLE Pq 69
+A service is unavailable.
+This can occur if a support program or file does not exist.
+This can also be used as a catch-all message when something you wanted
+to do doesn't work, but you don't know why.
+.It Dv EX_SOFTWARE Pq 70
+An internal software error has been detected.
+This should be limited to non-operating system related errors if possible.
+.It Dv EX_OSERR Pq 71
+An operating system error has been detected.
+This is intended to be used for such things as
 .Dq cannot fork ,
-.Dq cannot create pipe ,
-or the like.  It includes things like getuid returning a user that
-does not exist in the passwd file.
-.It Sy EX_OSFILE Pq 72
+or
+.Dq cannot create pipe .
+It includes things like
+.Xr getuid 2
+returning a user that does not exist in the passwd file.
+.It Dv EX_OSFILE Pq 72
 Some system file (e.g.,
 .Pa /etc/passwd ,
 .Pa /var/run/utmp ,
 etc.) does not exist, cannot be opened, or has some sort of error
 (e.g., syntax error).
-.It Sy EX_CANTCREAT Pq 73
+.It Dv EX_CANTCREAT Pq 73
 A (user specified) output file cannot be created.
-.It Sy EX_IOERR Pq 74
+.It Dv EX_IOERR Pq 74
 An error occurred while doing I/O on some file.
-.It Sy EX_TEMPFAIL Pq 75
+.It Dv EX_TEMPFAIL Pq 75
 Temporary failure, indicating something that is not really an error.
 In sendmail, this means that a mailer (e.g.) could not create a
 connection, and the request should be reattempted later.
-.It Sy EX_PROTOCOL Pq 76
+.It Dv EX_PROTOCOL Pq 76
 The remote system returned something that was
 .Dq not possible
 during a protocol exchange.
-.It Sy EX_NOPERM Pq 77
-You did not have sufficient permission to perform the operation.  This
-is not intended for file system problems, which should use
-.Sy EX_NOINPUT
+.It Dv EX_NOPERM Pq 77
+You did not have sufficient permission to perform the operation.
+This is not intended for file system problems, which should use
+.Dv EX_NOINPUT
 or
-.Sy EX_CANTCREAT ,
+.Dv EX_CANTCREAT ,
 but rather for higher level permissions.
-.It Sy EX_CONFIG Pq 78
+.It Dv EX_CONFIG Pq 78
 Something was found in an unconfigured or misconfigured state.
 .El
 .Pp
@@ -129,6 +132,6 @@ This man page has been written by
 .ie t J\(:org Wunsch
 .el Joerg Wunsch
 after the comments in
-.Pa <sysexits.h> .
+.Aq Pa sysexits.h .
 .Sh BUGS
 The choice of an appropriate exit value is often ambiguous.

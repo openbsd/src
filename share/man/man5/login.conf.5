@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.2 2000/08/20 19:11:01 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.3 2000/10/26 00:37:04 aaron Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd February 23, 1995
@@ -38,12 +38,12 @@
 .Os
 .Sh NAME
 .Nm login.conf
-.Nd login class capability data base
+.Nd login class capability database
 .Sh SYNOPSIS
 .Nm /etc/login.conf
 .Sh DESCRIPTION
 The
-.Nm login.conf
+.Nm
 file describes the various attributes of login classes.
 A login class determines session resource limits and environment setup.
 It is used by various programs in the system to set up a user's login
@@ -62,9 +62,10 @@ Refer to
 .Xr getcap 3
 for a description of the file layout.
 All entries in the
-.Nm login.conf
-file are either boolean or use a `=' to separate the capability
-from the value.
+.Nm
+file are either boolean or use a
+.Ql =
+to separate the capability from the value.
 The types are described after the capability table.
 .Bl -column alwaysuseklogin programxx xusrxbinxbin
 .Sy Name	Type	Default	Description
@@ -138,7 +139,8 @@ warn the user of this.
 .sp
 .It path Ta path Ta Dv "value of _PATH_DEFPATH" Ta
 .br
-Default search path.  See
+Default search path.
+See
 .Pa /usr/include/paths.h .
 .\"
 .sp
@@ -181,11 +183,9 @@ and
 .Va openfiles )
 actually specify both the maximum and current limits (see
 .Xr getrlimit 2 ).
-The current limit is the one normally used,
-although the user is permitted to increase the current limit to the
-maximum limit.
-The maximum and current limits may be specified individually by appending
-a
+The current limit is the one normally used, although the user is permitted
+to increase the current limit to the maximum limit.
+The maximum and current limits may be specified individually by appending a
 .Va \-max
 or
 .Va \-cur
@@ -211,7 +211,8 @@ Path name to a text file.
 A comma separated list of values.
 .\"
 .It number
-A number.  A leading
+A number.
+A leading
 .Li 0x
 implies the number is expressed in hexadecimal.
 A leading
@@ -244,10 +245,8 @@ to multiply the value by 1 M (1048576).
 .\"
 .It time
 A time in seconds.
-A time may be expressed as a series of numbers
-which are added together.
-Each number may have a trailing character to
-represent time units:
+A time may be expressed as a series of numbers which are added together.
+Each number may have a trailing character to represent time units:
 .Bl -tag -width xxx
 .\"
 .It y
@@ -269,8 +268,7 @@ Indicates a number of 60 second minutes.
 Indicates a number of seconds.
 .El
 .Pp
-For example, to indicate 1 and 1/2 hours, the following string
-could be used:
+For example, to indicate 1 and 1/2 hours, the following string could be used:
 .Li 1h30m .
 .El
 .\"

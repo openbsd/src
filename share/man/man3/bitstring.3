@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bitstring.3,v 1.7 2000/03/19 19:25:23 aaron Exp $
+.\"	$OpenBSD: bitstring.3,v 1.8 2000/10/26 00:37:03 aaron Exp $
 .\"	$NetBSD: bitstring.3,v 1.4 1994/11/30 15:24:31 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -105,8 +105,7 @@ The
 .Fn bit_nclear
 and
 .Fn bit_nset
-macros
-clear or set the zero-based numbered bits from
+macros clear or set the zero-based numbered bits from
 .Fa start
 to
 .Fa stop
@@ -115,8 +114,7 @@ in the bit string
 .Pp
 The
 .Fn bit_test
-macro
-evaluates to non-zero if the zero-based numbered bit
+macro evaluates to non-zero if the zero-based numbered bit
 .Fa bit
 of bit string
 .Fa name
@@ -124,8 +122,7 @@ is set, and zero otherwise.
 .Pp
 The
 .Fn bit_ffs
-macro
-stores in the location referenced by
+macro stores in the location referenced by
 .Fa value
 the zero-based number of the first bit set in the array of
 .Fa nbits

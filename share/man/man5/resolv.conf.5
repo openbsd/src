@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.13 2000/06/22 07:34:47 itojun Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.14 2000/10/26 00:37:05 aaron Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -69,17 +69,14 @@ Scoped IPv6 address notation is accepted as well
 for details).
 Up to
 .Dv MAXNS
-(currently 3) name servers may be listed,
-one per keyword.
-If there are multiple servers,
-the resolver library queries them in the order listed.
+(currently 3) name servers may be listed, one per keyword.
+If there are multiple servers, the resolver library queries them in the
+order listed.
 If no
 .Sy nameserver
-entries are present,
-the default is to use the name server on the local machine.
+entries are present, the default is to use the name server on the local machine.
 (The algorithm used is to try a name server, and if the query times out,
-try the next, until out of name servers,
-then repeat trying all name servers
+try the next, until out of name servers, then repeat trying all name servers
 until a maximum number of retries are performed.)
 .It Sy domain
 Local domain name.
@@ -99,8 +96,7 @@ This keyword is used by the library routines
 .Xr gethostbyname 3
 and
 .Xr gethostbyaddr 3 .
-It specifies which databases should be searched,
-and the order to do so.
+It specifies which databases should be searched, and the order to do so.
 The legal space-separated values are:
 .Pp
 .Bl -tag -width bind -compact
@@ -132,11 +128,9 @@ Search list for hostname lookup.
 The search list is normally determined from the local domain name;
 by default, it begins with the local domain name, then successive
 parent domains that have at least two components in their names.
-This may be changed by listing the desired domain search path
-following the
+This may be changed by listing the desired domain search path following the
 .Sy search
-keyword with spaces or tabs separating
-the names.
+keyword with spaces or tabs separating the names.
 Most resolver queries will be attempted using each component
 of the search path in turn until a match is found.
 Note that this process may be slow and will generate a lot of network
@@ -153,10 +147,8 @@ to be sorted.
 A
 .Sy sortlist
 is specified by IP address netmask pairs.
-The netmask is optional and defaults to the natural
-netmask of the net.
-The IP address and optional network pairs are separated by
-slashes.
+The netmask is optional and defaults to the natural netmask of the net.
+The IP address and optional network pairs are separated by slashes.
 Up to 10 pairs may be specified, i.e.:
 .Pp
 .Sy sortlist 130.155.160.0/255.255.240.0 130.155.0.0
@@ -183,9 +175,8 @@ must appear in a name given to res_query (see
 before an initial absolute query will be made.
 The default for
 .Ar n
-is 1, meaning that if there are any
-dots in a name, the name will be tried first as an absolute
-name before any search list elements are appended to it.
+is 1, meaning that if there are any dots in a name, the name will be tried
+first as an absolute name before any search list elements are appended to it.
 .El
 .El
 .Pp
@@ -194,8 +185,8 @@ The
 and
 .Sy search
 keywords are mutually exclusive.
-If more than one instance of these keywords is present,
-the last instance will override.
+If more than one instance of these keywords is present, the last instance
+will override.
 .Pp
 The
 .Sy search
@@ -215,8 +206,7 @@ environment variable
 .Ev RES_OPTIONS
 to a space-separated list of resolver options as explained above.
 .Pp
-The keyword and value must appear on a single line, and the keyword
-(e.g.,
+The keyword and value must appear on a single line, and the keyword (e.g.,
 .Sy nameserver )
 must start the line.
 The value follows the keyword, separated by whitespace.

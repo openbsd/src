@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.6 2000/03/19 19:25:27 aaron Exp $
+.\"	$OpenBSD: disktab.5,v 1.7 2000/10/26 00:37:04 aaron Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -51,24 +51,21 @@ It is used
 .\"IR.Xr format 8 )
 .\"to determine how to format the disk, and
 to initialize the disk label on the disk.
-The format is patterned
-after the
+The format is patterned after the
 .Xr termcap 5
 terminal database.
 Entries in
 .Nm
 consist of a number of colon
-.Pq Sq \&:
+.Pq Ql \&:
 separated fields.
 The first entry for each disk gives the names which are
 known for the disk, separated by
 .Dq \&|
 characters.
-The last name given should be a long name fully identifying
-the disk.
+The last name given should be a long name fully identifying the disk.
 .Pp
-The following list indicates the normal values
-stored for each disk entry:
+The following list indicates the normal values stored for each disk entry:
 .Bl -column "indent" "boolx"
 .It Sy Name	Type	Description
 .It "\&ty	str	Type of disk (e.g., removable, winchester)."

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: services.5,v 1.8 2000/03/19 19:25:33 aaron Exp $
+.\"	$OpenBSD: services.5,v 1.9 2000/10/26 00:37:05 aaron Exp $
 .\"	$NetBSD: services.5,v 1.3 1994/11/30 19:31:31 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -39,16 +39,15 @@
 .Os
 .Sh NAME
 .Nm services
-.Nd service name data base
+.Nd service name database
 .Sh DESCRIPTION
 The
 .Nm
-file contains information regarding
-the known services available in the
+file contains information regarding the known services available in the
 .Tn DARPA
 Internet.
-For each service a single line should be present
-with the following information:
+For each service, a single line should be present with the
+following information:
 .Bd -unfilled -offset indent
 official service name
 port number
@@ -57,22 +56,18 @@ aliases
 .Ed
 .Pp
 Items are separated by any number of blanks and/or tab characters.
-The port number and protocol name are considered a single item;
-a slash
+The port number and protocol name are considered a single item; a slash
 .Pq Ql /
-is used to
-separate the port and protocol (e.g.,
+is used to separate the port and protocol (e.g.,
 .Dq 512/tcp ) .
 .Pp
 A hash mark
 .Pq Ql #
-indicates the beginning of
-a comment; subsequent characters up to the end of the line are
-not interpreted by the routines which search the file.
+indicates the beginning of a comment; subsequent characters up to the
+end of the line are not interpreted by the routines which search the file.
 .Pp
-Service names may contain any printable
-character other than a field delimiter, newline,
-or comment character.
+Service names may contain any printable character other than a
+field delimiter, newline, or comment character.
 .Sh FILES
 .Bl -tag -width /etc/services -compact
 .It Pa /etc/services

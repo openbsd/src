@@ -1,4 +1,4 @@
-.\"	$OpenBSD: a.out.5,v 1.7 2000/03/19 19:25:26 aaron Exp $
+.\"	$OpenBSD: a.out.5,v 1.8 2000/10/26 00:37:03 aaron Exp $
 .\"	$NetBSD: a.out.5,v 1.8 1994/11/30 19:31:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -49,8 +49,7 @@
 The include file
 .Aq Pa a.out.h
 declares three structures and several macros.
-The structures describe the format of
-executable machine code files
+The structures describe the format of executable machine code files
 .Pq Dq binaries
 on the system.
 .Pp
@@ -58,9 +57,8 @@ A binary file consists of up to 7 sections.
 In order, these sections are:
 .Bl -tag -width "text relocations"
 .It exec header
-Contains parameters used by the kernel
-to load a binary file into memory and execute it,
-and by the link editor
+Contains parameters used by the kernel to load a binary file into memory
+and execute it, and by the link editor
 .Xr ld 1
 to combine a binary file with other binary files.
 This section is the only mandatory one.
@@ -107,7 +105,8 @@ This field is stored in network byte-order so that binaries for
 machines with alternate byte orders can be distinguished.
 It has a number of sub-components accessed by the macros
 .Fn N_GETFLAG ,
-.Fn N_GETMID , and
+.Fn N_GETMID ,
+and
 .Fn N_GETMAGIC ,
 and set by the macro
 .Fn N_SETMAGIC .
@@ -139,7 +138,7 @@ process address space by the run-time link editor.
 .Pp
 The macro
 .Fn N_GETMID
-returns the machine-id.
+returns the machine ID.
 This indicates which machine(s) the binary is intended to run on.
 .Pp
 .Fn N_GETMAGIC
@@ -148,16 +147,14 @@ and distinguishes different loading conventions.
 The field must contain one of the following values:
 .Bl -tag -width ZMAGIC
 .It Dv OMAGIC
-The text and data segments immediately follow the header
-and are contiguous.
+The text and data segments immediately follow the header and are contiguous.
 The kernel loads both text and data segments into writable memory.
 .It Dv NMAGIC
 As with
 .Dv OMAGIC ,
 text and data segments immediately follow the header and are contiguous.
-However, the kernel loads the text into read-only memory
-and loads the data into writable memory at the next
-page boundary after the text.
+However, the kernel loads the text into read-only memory and loads the data
+into writable memory at the next page boundary after the text.
 .It Dv ZMAGIC
 The kernel loads individual pages on demand from the binary.
 The header, text segment and data segment are all
@@ -171,7 +168,7 @@ Contains the size of the text segment in bytes.
 Contains the size of the data segment in bytes.
 .It Fa a_bss
 Contains the number of bytes in the
-.Dq bss segment
+.Dq BSS segment
 and is used by the kernel to set the initial break
 .Pq Xr brk 2
 after the data segment.
@@ -208,8 +205,7 @@ The byte offset of the beginning of the symbol table.
 The byte offset of the beginning of the string table.
 .El
 .Pp
-Relocation records have a standard format which
-is described by the
+Relocation records have a standard format which is described by the
 .Fa relocation_info
 structure:
 .Bd -literal -offset indent
@@ -237,8 +233,7 @@ and data relocation offsets from the start of the data segment.
 The link editor adds the value that is already stored at this offset
 into the new value that it computes using this relocation record.
 .It Fa r_symbolnum
-Contains the ordinal number of a symbol structure
-in the symbol table (it is
+Contains the ordinal number of a symbol structure in the symbol table (it is
 .Em not
 a byte offset).
 After the link editor resolves the absolute address for this symbol,
@@ -247,8 +242,7 @@ it adds that address to the pointer that is undergoing relocation.
 .Fa r_extern
 bit is clear, the situation is different; see below.)
 .It Fa r_pcrel
-If this is set,
-the link editor assumes that it is updating a pointer
+If this is set, the link editor assumes that it is updating a pointer
 that is part of a machine code instruction using pc-relative addressing.
 The address of the relocated pointer is implicitly added
 to its value when the running program uses it.
@@ -322,17 +316,14 @@ struct nlist {
 The fields are used as follows:
 .Bl -tag -width n_un.n_strx
 .It Fa n_un.n_strx
-Contains a byte offset into the string table
-for the name of this symbol.
+Contains a byte offset into the string table for the name of this symbol.
 When a program accesses a symbol table with the
 .Xr nlist 3
-function,
-this field is replaced with the
+function, this field is replaced with the
 .Fa n_un.n_name
 field, which is a pointer to the string in memory.
 .It Fa n_type
-Used by the link editor to determine
-how to update the symbol's value.
+Used by the link editor to determine how to update the symbol's value.
 The
 .Fa n_type
 field is broken down into three sub-fields using bitmasks.
@@ -353,8 +344,7 @@ As a special case, if the
 .Fa n_value
 field is non-zero and no binary file in the link-edit defines this symbol,
 the link editor will resolve this symbol to an address
-in the bss segment,
-reserving an amount of bytes equal to
+in the BSS segment, reserving an amount of bytes equal to
 .Fa n_value .
 If this symbol is undefined in more than one binary file
 and the binary files do not agree on the size,
@@ -375,7 +365,7 @@ addresses; to recover the file offsets, it is necessary
 to identify the loaded address of the beginning of the corresponding
 section and subtract it, then add the offset of the section.
 .It Dv N_BSS
-A bss symbol; like text or data symbols but
+A BSS symbol; like text or data symbols but
 has no corresponding offset in the binary file.
 .It Dv N_FN
 A filename symbol.
@@ -424,7 +414,7 @@ Reserved for use by debuggers; passed untouched by the link editor.
 Different debuggers use this field for different purposes.
 .It Fa n_value
 Contains the value of the symbol.
-For text, data and bss symbols, this is an address;
+For text, data and BSS symbols, this is an address;
 for other symbols (such as debugger symbols),
 the value may be arbitrary.
 .El
@@ -452,7 +442,7 @@ include file appeared in
 .At v7 .
 .Sh BUGS
 Nobody seems to agree on what
-.Em bss
+.Em BSS
 stands for.
 .Pp
 New binary file formats may be supported in the future,

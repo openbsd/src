@@ -1,4 +1,4 @@
-.\" $OpenBSD: passwd.conf.5,v 1.10 2000/08/01 22:39:07 provos Exp $
+.\" $OpenBSD: passwd.conf.5,v 1.11 2000/10/26 00:37:05 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -43,13 +43,12 @@ describes the configuration of the password cipher used
 to encrypt local or YP passwords.
 .Pp
 There are default, user and group specific stanzas.
-If no user or group
-stanza to a specific option is available, the default stanza
-is used.
+If no user or group stanza to a specific option is available,
+the default stanza is used.
 .Pp
 To differentiate between user and group stanzas, groups are prefixed
 with a single dot
-.Pq Sq \&. .
+.Pq Ql \&. .
 .Pp
 Some fields and their possible values that can appear in this file are:
 .Bl -tag -width localcipher
@@ -72,8 +71,8 @@ It specifies the base 2 logarithm of the number of rounds.
 The cipher to use for YP passwords.
 The possible values are the same as for localcipher.
 .It Sy pwdcheck
-An external program that checks the quality of the password.  The
-password is passed to the program on
+An external program that checks the quality of the password.
+The password is passed to the program on
 .Pa stdin .
 An exit code of 0 indicates that the quality of the password is
 sufficient, an exit code of 1 signals that the password failed
@@ -81,8 +80,9 @@ the check.
 .It Sy pwdtries
 The number of times
 .Xr passwd 1
-enforces a check on the password.  If it is 0, the new password
-will only be accepted if it passes the password quality check.
+enforces a check on the password.
+If it is 0, the new password will only be accepted if it passes
+the password quality check.
 The default is 3.
 .El
 .Pp
@@ -112,4 +112,3 @@ The old Unix crypt is used as YP cipher:
 .Xr passwd 1 ,
 .Xr pw_getconf 3 ,
 .Xr passwd 5
-

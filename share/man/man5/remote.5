@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.7 2000/03/19 19:25:32 aaron Exp $
+.\"	$OpenBSD: remote.5,v 1.8 2000/10/26 00:37:05 aaron Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -45,8 +45,7 @@ The systems known by
 .Xr tip 1
 and their attributes are stored in an
 .Tn ASCII
-file which
-is structured somewhat like the
+file which is structured somewhat like the
 .Xr termcap 5
 file.
 Each line in the file provides a description for a single
@@ -55,12 +54,11 @@ Fields are separated by a colon
 .Pq Sq \&: .
 Lines ending with a
 .Dq \e
-character immediately followed by a newline are
-continued on the next line.
+character immediately followed by a newline are continued on the next line.
 .Pp
 The first entry is the name(s) of the host system.
-If there is more
-than one name for a system, the names are separated by vertical bars
+If there is more than one name for a system, the names are separated by
+vertical bars
 .Pq Sq \&| .
 After the name of the system comes the fields of the description.
 A field name followed by an equal sign
@@ -83,19 +81,16 @@ interface to
 as follows.
 When
 .Xr tip
-is invoked with only a phone number, it looks for an entry
-of the form
+is invoked with only a phone number, it looks for an entry of the form
 .Dq tip300 ,
-where 300 is the baud rate with
-which the connection is to be made.
+where 300 is the baud rate with which the connection is to be made.
 When the
 .Xr cu
 interface is used, entries of the form
 .Dq cu300
 are used.
 .Sh CAPABILITIES
-Capabilities are either strings (str), numbers (num), or boolean
-flags (bool).
+Capabilities are either strings (str), numbers (num), or boolean flags (bool).
 A string capability is specified by
 .Em capability Ns Ar = Ns Em value ;
 for example,
@@ -104,8 +99,7 @@ A numeric capability is specified by
 .Em capability Ns Ar # Ns Em value ;
 for example,
 .Dq xa#99 .
-A boolean capability is specified by simply listing
-the capability.
+A boolean capability is specified by simply listing the capability.
 .Bl -tag -width indent
 .It Sy \&at
 (str)
@@ -118,11 +112,9 @@ This is a decimal number.
 The default baud rate is 300 baud.
 .It Sy \&cm
 (str)
-An initial connection message to be sent
-to the remote host.
+An initial connection message to be sent to the remote host.
 For example, if a host is reached through port selector, this
-might be set to the appropriate sequence
-required to switch to the host.
+might be set to the appropriate sequence required to switch to the host.
 .It Sy \&cu
 (str)
 Call unit if making a phone call.
@@ -135,8 +127,7 @@ This host is directly connected, and tip should not expect carrier detect
 to be high, nor should it exit if carrier detect drops.
 .It Sy \&di
 (str)
-Disconnect message sent to the host when a
-disconnect is requested by the user.
+Disconnect message sent to the host when a disconnect is requested by the user.
 .It Sy \&du
 (bool)
 This host is on a dial-up line.
@@ -154,8 +145,7 @@ Characters marking an end-of-line.
 The default is
 .Dv NULL .
 .Dq ~
-escapes are only
-recognized by
+escapes are only recognized by
 .Xr tip
 after one of the characters in
 .Sy el ,
@@ -167,8 +157,7 @@ The default frame size is equal to
 .Dv BUFSIZ .
 .It Sy \&hd
 (bool)
-The host uses half-duplex communication, local
-echo should be performed.
+The host uses half-duplex communication, local echo should be performed.
 .It Sy \&ie
 (str)
 Input end-of-file marks.
@@ -181,12 +170,10 @@ The default is
 .Dv NULL .
 When
 .Xr tip
-is transferring a file, this
-string is sent at end-of-file.
+is transferring a file, this string is sent at end-of-file.
 .It Sy \&pa
 (str)
-The type of parity to use when sending data
-to the host.
+The type of parity to use when sending data to the host.
 This may be one of
 .Dq even ,
 .Dq odd ,
@@ -200,8 +187,9 @@ The default is even parity.
 .It Sy \&pn
 (str)
 Telephone number(s) for this host.
-If the telephone number field contains
-an @ sign,
+If the telephone number field contains a
+.Ql @
+(at sign),
 .Xr tip
 searches the file
 .Pa /etc/phones
@@ -209,8 +197,7 @@ file for a list of telephone numbers (see
 .Xr phones 5 ) .
 .It Sy \&tc
 (str)
-Indicates that the list of capabilities is continued
-in the named description.
+Indicates that the list of capabilities is continued in the named description.
 This is used primarily to share common capability information.
 .El
 .Pp

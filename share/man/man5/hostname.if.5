@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.21 2000/08/18 17:54:17 jason Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.22 2000/10/26 00:37:04 aaron Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -47,10 +47,8 @@ The
 .Nm hostname.*
 and
 .Nm bridgename.*
-files contain information regarding
-the configuration of each network interface.
-One file should exist for each interface that is to be configured,
-such as
+files contain information regarding the configuration of each network interface.
+One file should exist for each interface that is to be configured, such as
 .Pa hostname.fxp0
 or
 .Pa bridgename.bridge0 .
@@ -125,11 +123,9 @@ The optional broadcast address for the interface, i.e.,
 Optional miscellaneous options to set on the interface, i.e.,
 .Dq media 100baseTX mediaopt full-duplex .
 .It Li dest
-If the interface needs a destination address set, this is
-the literal text
+If the interface needs a destination address set, this is the literal text
 .Dq dest .
-As shown in the example, this declaration should start on a seperate
-line.
+As shown in the example, this declaration should start on a seperate line.
 .It Va dest_addr
 The destination address to be set on the interface, such as
 190.191.192.2.
@@ -262,7 +258,7 @@ The options are as follows:
 is called for each successive line.
 Comments starting with
 .Ql #
-are permitted
+are permitted.
 .El
 .Sh SEE ALSO
 .Xr hosts 5 ,

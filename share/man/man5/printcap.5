@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.11 2000/03/02 04:08:11 aaron Exp $
+.\"	$OpenBSD: printcap.5,v 1.12 2000/10/26 00:37:05 aaron Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -50,8 +50,7 @@ file is a simplified version of the
 database used to describe line printers.
 The spooling system accesses the
 .Nm
-file every time it is used, allowing dynamic
-addition and deletion of printers.
+file every time it is used, allowing dynamic addition and deletion of printers.
 Each entry in the database is used to describe one printer.
 This database may not be substituted for, as is possible for
 .Xr termcap ,
@@ -146,8 +145,7 @@ daemon creates a pipeline of
 to process files for various printer types.
 The pipeline is not set up for remote printers specified via
 .Sy rm
-unless the local host is the same as the remote printer host
-given.
+unless the local host is the same as the remote printer host given.
 The filters selected depend on the flags passed to
 .Xr lpr 1 .
 The pipeline set up is:
@@ -180,8 +178,7 @@ The
 .Fl c
 flag is passed only if the
 .Fl l
-flag (pass control characters literally)
-is specified to
+flag (pass control characters literally) is specified to
 .Xr lpr .
 .Ar width
 and
@@ -200,8 +197,7 @@ parameters specify the login name and host name of the owner
 of the job, respectively.
 The
 .Ar acct-file
-function
-is passed from the
+function is passed from the
 .Sy af
 .Nm
 entry.
@@ -210,11 +206,9 @@ If no
 .Sy if
 is specified,
 .Sy of
-is used instead,
-with the distinction that
+is used instead, with the distinction that
 .Sy of
-is opened only once,
-while
+is opened only once, while
 .Sy if
 is opened for every individual job.
 Thus,
@@ -241,8 +235,7 @@ where
 .Ar width
 and
 .Ar length
-are represented in pixels,
-specified by the
+are represented in pixels, specified by the
 .Sy px
 and
 .Sy py
@@ -270,8 +263,7 @@ using the
 facility.
 Messages printed on
 .Em stderr
-of one of the filters
-are sent to the corresponding
+of one of the filters are sent to the corresponding
 .Sy lf
 file.
 The filters may, of course, use

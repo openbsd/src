@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netgroup.5,v 1.8 2000/03/19 19:25:30 aaron Exp $
+.\"	$OpenBSD: netgroup.5,v 1.9 2000/10/26 00:37:05 aaron Exp $
 .\"	$NetBSD: netgroup.5,v 1.3 1995/03/18 14:58:34 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -45,16 +45,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-file
-specifies
+file specifies
 .Dq netgroups ,
 which are sets of
 .Sy (host, user, domain)
 tuples that are to be given similar network access.
 .Pp
-Each line in the file
-consists of a netgroup name followed by a list of the members of the
-netgroup.
+Each line in the file consists of a netgroup name followed by a list of
+the members of the netgroup.
 Each member can be either the name of another netgroup or a specification
 of a tuple as follows:
 .Bd -literal -offset indent
@@ -73,8 +71,7 @@ value or may consist of the single character
 .Dq \&-
 to specify
 .Dq no valid value .
-The members of the list may be separated by whitespace;
-the
+The members of the list may be separated by whitespace; the
 .Dq \e
 character may be used at the end of a line to specify line continuation.
 The functions specified in
@@ -99,7 +96,9 @@ file contains a
 .Dq +
 entry.
 .Pp
-Lines that begin with a # are treated as comments.
+Lines that begin with a
+.Ql #
+are treated as comments.
 .Sh FILES
 .Bl -tag -width /etc/netgroup.db -compact
 .It Pa /etc/netgroup.db

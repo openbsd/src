@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link.5,v 1.7 2000/03/19 19:25:30 aaron Exp $
+.\"	$OpenBSD: link.5,v 1.8 2000/10/26 00:37:04 aaron Exp $
 .\"	$NetBSD: link.5,v 1.5 1996/01/09 00:14:32 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -44,18 +44,15 @@ declares several structures that are present in dynamically linked
 programs and libraries.
 The structures define the interface between several components of the
 link editor and loader mechanism.
-The layout of a number of these
-structures within the binaries resembles the
+The layout of a number of these structures within the binaries resembles the
 .Xr a.out 5
-format in many places
-as it serves such similar functions as symbol definitions (including the
-accompanying string table) and relocation records needed to resolve
-references to external entities.
+format in many places as it serves such similar functions as symbol
+definitions (including the accompanying string table) and relocation records
+needed to resolve references to external entities.
 It also records a number of data structures
 unique to the dynamic loading and linking process.
-These include references
-to other objects that are required to complete the link-editing process and
-indirection tables to facilitate
+These include references to other objects that are required to complete
+the link-editing process and indirection tables to facilitate
 .Em Position Independent Code
 (PIC for short) to improve sharing of code pages among different processes.
 The collection of data structures described here will be referred to as the
@@ -82,14 +79,13 @@ The exact mechanism used for this is machine dependent, usually a machine
 register is reserved for the purpose.
 The rational behind this construct
 is to generate code that is independent of the actual load address.
-Only
-the values contained in the Global Offset Table may need updating at run-time
-depending on the load addresses of the various shared objects in the address
-space.
+Only the values contained in the Global Offset Table may need updating at
+run-time depending on the load addresses of the various shared objects
+in the address space.
 .Pp
 Likewise, procedure calls to globally defined functions are redirected through
-the Procedure Linkage Table (PLT) residing in the data segment of the core
-image.
+the Procedure Linkage Table (PLT) residing in the data segment of the
+core image.
 Again, this is done to avoid run-time modifications to the text segment.
 .Pp
 The linker-editor allocates the Global Offset Table and Procedure Linkage Table
@@ -102,11 +98,9 @@ Another reserved symbol,
 is used to indicate the presence of the run-time linker structures.
 Whenever
 .Dv _DYNAMIC
-is relocated to 0, there is no need to invoke the run-time
-link editor.
-If this symbol is non-zero, it points at a data structure from
-which the location of the necessary relocation and symbol information can
-be derived.
+is relocated to 0, there is no need to invoke the run-time link editor.
+If this symbol is non-zero, it points at a data structure from which the
+location of the necessary relocation and symbol information can be derived.
 This is most notably used by the start-up module,
 .Em crt0 .
 The
@@ -142,9 +136,8 @@ This field provides for different versions of the dynamic linking
 implementation.
 The current version numbers understood by ld and
 .Xr ld.so
-are LD_VERSION_SUN(3),
-which is used by the SunOS 4.x releases, and LD_VERSION_BSD(8),
-which is currently in use by
+are LD_VERSION_SUN(3), which is used by the SunOS 4.x releases,
+and LD_VERSION_BSD(8), which is currently in use by
 .Ox .
 .It Fa d_un
 Refers to a
@@ -493,7 +486,7 @@ struct ld_entry {
 	void	(*dlexit) __P((void));
 };
 .Ed
-
+.Pp
 The
 .Fa crt_ldso
 structure defines the interface between
@@ -529,7 +522,7 @@ On SunOS systems, this field contains an open file descriptor to
 used to get demand paged zeroed pages.
 On
 .Ox
-systems it contains -1.
+systems it contains \-1.
 .It Fa crt_ldfd
 Contains an open file descriptor that was used by
 .Em crt0
@@ -568,8 +561,7 @@ structures define the layout of the library hints, normally found in
 .Pa /var/run/ld.so.hints ,
 which is used by
 .Xr ld.so
-to quickly locate the shared object images in the
-filesystem.
+to quickly locate the shared object images in the filesystem.
 The organization of the hints file is not unlike that of an
 .Xr a.out 5
 object file, in that it contains a header determining the offset and size
@@ -639,8 +631,6 @@ The number of valid entries in
 .It Fa hi_next
 Next bucket in case of hashing collisions.
 .El
-
 .Sh CAVEATS
 Only the (GNU) C compiler currently supports the creation of shared libraries.
 Other programming languages can not be used.
-

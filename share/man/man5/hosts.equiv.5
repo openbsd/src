@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.equiv.5,v 1.4 2000/03/19 19:25:29 aaron Exp $
+.\"	$OpenBSD: hosts.equiv.5,v 1.5 2000/10/26 00:37:04 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd Vierling
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,11 +39,12 @@
 .Dt HOSTS.EQUIV 5
 .Os
 .Sh NAME
-.Nm hosts.equiv , .rhosts
+.Nm hosts.equiv ,
+.Nm .rhosts
 .Nd trusted remote hosts and host-user pairs
 .Sh DESCRIPTION
 The
-.Nm
+.Nm hosts.equiv
 and
 .Nm .rhosts
 files list hosts and users which are
@@ -69,7 +70,7 @@ name in a DNS environment) or address,
 .Ar +@netgroup
 (from which only the host names are checked),
 or a
-.Dq +
+.Sq +
 wildcard (allow all hosts).
 .Pp
 The
@@ -78,7 +79,7 @@ if specified, may be given as a user name on the remote host,
 .Ar +@netgroup
 (from which only the user names are checked),
 or a
-.Dq +
+.Sq +
 wildcard (allow all remote users).
 .Pp
 If a
@@ -139,7 +140,7 @@ considerations somewhat; the address is then used directly by
 .Xr iruserok 3 .
 .Pp
 When a user name (or netgroup, or
-.Dq + )
+.Sq + )
 is specified in
 .Pa /etc/hosts.equiv ,
 that user (or group of users, or all users, respectively) may login to
@@ -189,7 +190,7 @@ file format appeared in
 The
 .Xr ruserok 3
 implementation currently skips negative entries (preceded with a
-.Dq \&-
+.Sq \&-
 sign) and does not treat them as
 .Dq short-circuit
 negative entries.

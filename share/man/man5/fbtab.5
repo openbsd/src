@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fbtab.5,v 1.6 2000/03/19 19:25:28 aaron Exp $
+.\"	$OpenBSD: fbtab.5,v 1.7 2000/10/26 00:37:04 aaron Exp $
 .\"
 .Dd August 22, 1994
 .Dt FBTAB 5
@@ -9,17 +9,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-file contains lines which specify how the permissions and
-ownership of various system files should be changed based on
-the user's login device name.
+file contains lines which specify how the permissions and ownership of
+various system files should be changed based on the user's login device name.
 .Pp
 Comments start with a
-.Dq #
+.Ql #
 and extend to the end of the line.
 Blank lines or lines with only a comment are ignored.
 .Pp
-All other lines consist of three fields delimited by
-whitespace.
+All other lines consist of three fields delimited by whitespace.
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It Login Device
 The device you have logged in on (e.g.,
@@ -29,7 +27,7 @@ An octal permission number (0600), as used by
 .Xr chmod 2 .
 .It Other devices
 The final field is a colon
-.Pq Sq \&:
+.Pq Ql \&:
 delimited list of devices (e.g.,
 .Dq /dev/console:/dev/fd0a ) .
 All device names are absolute paths.

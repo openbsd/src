@@ -1,4 +1,4 @@
-.\"	$OpenBSD: end.3,v 1.6 1999/07/09 13:35:37 aaron Exp $
+.\"	$OpenBSD: end.3,v 1.7 2000/10/26 00:37:03 aaron Exp $
 .\"	$NetBSD: end.3,v 1.5 1996/03/01 00:17:49 jtc Exp $
 .\"
 .\" Copyright (c) 1986
@@ -38,7 +38,9 @@
 .Dt END 3
 .Os
 .Sh NAME
-.Nm end , etext , edata
+.Nm end ,
+.Nm etext ,
+.Nm edata
 .Nd end boundaries of image segments
 .Sh SYNOPSIS
 .Vt extern end;
@@ -46,14 +48,12 @@
 .Vt extern edata;
 .Sh DESCRIPTION
 The global variables
-.Va end , etext
+.Va end ,
+.Va etext ,
 and
 .Va edata
-correspond to
-the next address following
-the end of the text segment,
-the end of initialized data segment and
-the end of the data segment
+correspond to the next address following the end of the text segment,
+the end of initialized data segment, and the end of the data segment
 .Pq Tn BSS .
 .Sh SEE ALSO
 .Xr brk 2 ,
