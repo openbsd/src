@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1997/06/22 16:12:00 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 1997/06/23 22:15:14 kstailey Exp $
 
 #
 # less config
@@ -53,6 +53,11 @@ config.status:
 gnu_build:
 	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} datadir=${DATADIR} \
 		LESS_HLP=${LESS_HLP}
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
 
 install: gnu_install maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
