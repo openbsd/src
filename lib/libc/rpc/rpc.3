@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc.3,v 1.2 1995/02/25 03:01:53 cgd Exp $
+.\"	$NetBSD: rpc.3,v 1.3 1996/01/04 20:09:53 pk Exp $
 .\"
 .TH RPC 3N "16 February 1988"
 .SH NAME
@@ -737,7 +737,7 @@ messages.
 .ft B
 .nf
 .sp .5
-void
+int
 get_myaddress(addr)
 struct sockaddr_in *addr;
 .fi
@@ -751,6 +751,7 @@ without consulting the library routines that deal with
 .BR /etc/hosts .
 The port number is always set to
 .BR htons(\s-1PMAPPORT\s0) .
+Returns zero on success, non-zero on failure.
 .br
 .if t .ne 10
 .LP

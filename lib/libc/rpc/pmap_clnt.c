@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.2 1995/02/25 03:01:47 cgd Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.3 1996/01/04 20:06:22 pk Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_clnt.c,v 1.2 1995/02/25 03:01:47 cgd Exp $";
+static char *rcsid = "$NetBSD: pmap_clnt.c,v 1.3 1996/01/04 20:06:22 pk Exp $";
 #endif
 
 /*
@@ -69,7 +69,8 @@ pmap_set(program, version, protocol, port)
 	struct pmap parms;
 	bool_t rslt;
 
-	get_myaddress(&myaddress);
+	if (get_myaddress(&myaddress) != 0)
+		return (FALSE);
 	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
 	    timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
 	if (client == (CLIENT *)NULL)
@@ -103,7 +104,8 @@ pmap_unset(program, version)
 	struct pmap parms;
 	bool_t rslt;
 
-	get_myaddress(&myaddress);
+	if (get_myaddress(&myaddress) != 0)
+		return (FALSE);
 	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
 	    timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
 	if (client == (CLIENT *)NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_myaddress.c,v 1.2 1995/02/25 03:01:43 cgd Exp $	*/
+/*	$NetBSD: get_myaddress.c,v 1.3 1996/01/04 20:05:04 pk Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: get_myaddress.c,v 1.2 1995/02/25 03:01:43 cgd Exp $";
+static char *rcsid = "$NetBSD: get_myaddress.c,v 1.3 1996/01/04 20:05:04 pk Exp $";
 #endif
 
 /*
@@ -55,6 +55,7 @@ static char *rcsid = "$NetBSD: get_myaddress.c,v 1.2 1995/02/25 03:01:43 cgd Exp
 /* 
  * don't use gethostbyname, which would invoke yellow pages
  */
+int
 get_myaddress(addr)
 	struct sockaddr_in *addr;
 {
@@ -65,21 +66,20 @@ get_myaddress(addr)
 	int len, slop;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-	    perror("get_myaddress: socket");
-	    exit(1);
+		return (-1);
 	}
 	ifc.ifc_len = sizeof (buf);
 	ifc.ifc_buf = buf;
 	if (ioctl(s, SIOCGIFCONF, (char *)&ifc) < 0) {
-		perror("get_myaddress: ioctl (get interface configuration)");
-		exit(1);
+		(void) close(s);
+		return (-1);
 	}
 	ifr = ifc.ifc_req;
 	for (len = ifc.ifc_len; len; len -= sizeof ifreq) {
 		ifreq = *ifr;
 		if (ioctl(s, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
-			perror("get_myaddress: ioctl");
-			exit(1);
+			(void) close(s);
+			return (-1);
 		}
 		if ((ifreq.ifr_flags & IFF_UP) &&
 		    ifr->ifr_addr.sa_family == AF_INET) {
@@ -91,11 +91,12 @@ get_myaddress(addr)
 		 * Deal with variable length addresses
 		 */
 		slop = ifr->ifr_addr.sa_len - sizeof (struct sockaddr);
-		if (slop) {
+		if (slop > 0) {
 			ifr = (struct ifreq *) ((caddr_t)ifr + slop);
 			len -= slop;
 		}
 		ifr++;
 	}
 	(void) close(s);
+	return (0);
 }
