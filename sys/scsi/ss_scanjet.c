@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.21 1998/09/16 15:53:24 kstailey Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.22 2001/03/25 04:23:46 fgsch Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -118,6 +118,16 @@ scanjet_attach(ss, sa)
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIcx");
 	}
+	/* The 3p is a grayscale-only HP SCL scanner */
+	if (!bcmp(sa->sa_inqbuf->product, "C2570A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 3p");
+	}
+	/* The 3c/4c/6100C report as the same? */
+	if (!bcmp(sa->sa_inqbuf->product, "C2520A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 3c/4c/6100C");
+	}
 	if (!bcmp(sa->sa_inqbuf->product, "C1130A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 4p");
@@ -125,6 +135,26 @@ scanjet_attach(ss, sa)
 	if (!bcmp(sa->sa_inqbuf->product, "C5110A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 5p");
+	}
+	if (!bcmp(sa->sa_inqbuf->product, "C6290A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 4100C");
+	}
+	if (!bcmp(sa->sa_inqbuf->product, "C5190A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 5100C");
+	}
+	if (!bcmp(sa->sa_inqbuf->product, "C7190A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 5200C");
+	}
+	if (!bcmp(sa->sa_inqbuf->product, "C6270A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 6200C");
+	}
+	if (!bcmp(sa->sa_inqbuf->product, "C7670A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 6300C");
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: scanner_type = %d\n",
