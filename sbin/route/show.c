@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.4 1997/10/02 02:10:57 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.5 1997/12/08 03:55:25 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.4 1997/10/02 02:10:57 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.5 1997/12/08 03:55:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,6 +251,9 @@ pr_family(af)
 		break;
 	case AF_ENCAP:
 		afname = "IPsec";
+		break;
+	case AF_APPLETALK:
+		afname = "AppleTalk";
 		break;
 	default:
 		afname = NULL;
