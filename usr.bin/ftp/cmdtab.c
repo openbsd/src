@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.11 1997/09/04 04:37:13 millert Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.12 1998/12/24 17:00:12 aaron Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.11 1997/09/04 04:37:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.12 1998/12/24 17:00:12 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ char	pagehelp[] =	"view a remote file through your pager";
 char	passivehelp[] =	"enter passive transfer mode";
 char	porthelp[] =	"toggle use of PORT cmd for each data connection";
 char	preservehelp[] ="toggle preservation of modification time of "
-			"retreived files";
+			"retrieved files";
 char	progresshelp[] ="toggle transfer progress meter";
 char	prompthelp[] =	"force interactive prompting on multiple commands";
 char	proxyhelp[] =	"issue command on alternate connection";
