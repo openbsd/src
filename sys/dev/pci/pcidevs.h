@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.278 2000/07/06 21:02:35 fgsch Exp 
+ *		OpenBSD: pcidevs,v 1.280 2000/07/11 20:12:53 marc Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1371,6 +1371,10 @@
 #define	PCI_PRODUCT_S3_SAVAGE4	0x8a22		/* Savage 4 */
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE MXP */
+#define	PCI_PRODUCT_S3_SAVAGE_MXMV	0x8c10		/* Savage/MX-MV */
+#define	PCI_PRODUCT_S3_SAVAGE_MX	0x8c11		/* Savage/MX */
+#define	PCI_PRODUCT_S3_SAVAGE_IXMV	0x8c12		/* Savage/IX-MV */
+#define	PCI_PRODUCT_S3_SAVAGE_IX	0x8c13		/* Savage/IX */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
 /* Schneider & Koch (SysKonnect) */
