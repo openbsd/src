@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.194 2002/01/23 17:51:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.195 2002/01/23 21:59:52 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -782,7 +782,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, "Athlon Model 1", "Athlon Model 2",
 				"Duron", "Athlon Model 4 (Thunderbird)",
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, "Athlon Model 6 (Palomino)",
+				"Athlon Model 7 (Morgan)", 0,
+				0, 0, 0, 0, 0, 0, 0,
 				"K7 (Athlon)"		/* Default */
 			},
 			NULL
