@@ -1,3 +1,9 @@
+NOTE!  If you are going to do the upgrade manually, you MUST use the
+"-r" flag when invoking disklabel(8).  You MUST also change the
+partition table such that partition 'c' encompasses the entire drive,
+and not only the OpenBSD partition.  Finally, partition 'd' is no
+longer special and can be used for any purpose whatsoever.
+
 To do the upgrade, you must have the appropriate kernel-copy floppy
 image on a disk, and the upgr20.fs floppy image on another.  You must
 also have at least the "base20" binary distribution set available,
@@ -42,7 +48,7 @@ To upgrade your system, follow the following instructions:
 	However, if you hit it at an inopportune moment, your system
 	may be left in an inconsistent (and possibly unusable) state.
 
-	You will be asked if you wish to upgrade your file systems to
+	You may be asked if you wish to upgrade your file systems to
 	the new file system format.  If you do, reply affirmatively.
 	If you don't have your file systems upgraded now, you should
 	probably do it manually after the install process is complete,
