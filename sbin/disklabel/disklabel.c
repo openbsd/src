@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.10 1996/06/17 06:57:06 downsj Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.11 1996/06/17 07:55:59 downsj Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.10 1996/06/17 06:57:06 downsj Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.11 1996/06/17 07:55:59 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,8 @@ static char rcsid[] = "$OpenBSD: disklabel.c,v 1.10 1996/06/17 06:57:06 downsj E
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <opendev.h>
 #include <unistd.h>
+#include <util.h>
 #include "pathnames.h"
 
 /*
@@ -232,7 +232,7 @@ main(argc, argv)
 
 	dkname = argv[0];
 	f = opendev(dkname, (op == READ ? O_RDONLY : O_RDWR), OPENDEV_PART,
-		0600, &specname);
+		&specname);
 	if (f < 0)
 		err(4, "%s", specname);
 

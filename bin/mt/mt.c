@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.9 1996/06/17 06:36:29 downsj Exp $	*/
+/*	$OpenBSD: mt.c,v 1.10 1996/06/17 07:54:38 downsj Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.9 1996/06/17 06:36:29 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.10 1996/06/17 07:54:38 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,12 +62,12 @@ static char rcsid[] = "$OpenBSD: mt.c,v 1.9 1996/06/17 06:36:29 downsj Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <opendev.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "mt.h"
 
@@ -185,9 +185,7 @@ main(argc, argv)
 
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
 	if ((mtfd = host ? rmtopen(tape, flags) : opendev(tape, flags,
-	    OPENDEV_PART | OPENDEV_DRCT,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH,
-	    &realtape)) < 0)
+	    OPENDEV_PART | OPENDEV_DRCT, &realtape)) < 0)
 		err(2, "%s", host ? tape : realtape);
 	if (comp->c_code != MTNOP) {
 		mt_com.mt_op = comp->c_code;
