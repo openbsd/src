@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.33 1999/05/09 20:41:48 weingart Exp $	*/
+/*	$OpenBSD: sd.c,v 1.34 1999/07/22 23:06:51 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -236,10 +236,16 @@ sdattach(parent, self, aux)
 
 	if (error || sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf("drive offline\n");
-	else
-	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total\n",
-		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
+	else {
+	        printf("%ld", dp->disksize / (1048576 / dp->blksize));
+		if (dp->disksize < 11520)
+		        printf(".%2ld",
+			    dp->disksize / (1024*10 / dp->blksize) -
+			    dp->disksize / (1048576 / dp->blksize) * 100);
+		printf("MB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total\n",
+		    dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+	}
 }
 
 /*
