@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.7 1997/01/16 04:03:52 kstailey Exp $	*/
+/*	$OpenBSD: si.c,v 1.8 1997/01/16 19:42:49 kstailey Exp $	*/
 /*	$NetBSD: si.c,v 1.31 1996/11/20 18:56:59 gwr Exp $	*/
 
 /*-
@@ -135,9 +135,6 @@ static struct scsi_device si_dev = {
 	NULL,		/* Use default "done" routine.	    */
 };
 
-
-static int	siprint __P((void *, const char *));
-
 /*
  * New-style autoconfig attachment. The cfattach
  * structures are in si_obio.c and si_vme.c
@@ -218,7 +215,7 @@ si_attach(sc)
 	si_reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), siprint);
+	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
 }
 
 static void
@@ -496,15 +493,4 @@ si_dma_poll(ncr_sc)
 		printf("si_dma_poll: done, csr=0x%x\n", si->si_csr);
 	}
 #endif
-}
-
-static int
-siprint(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
 }
