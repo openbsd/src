@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.20 2002/10/08 04:46:35 todd Exp $
+.\"	$OpenBSD: pool.9,v 1.21 2002/12/20 08:06:55 art Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 .Fa "size_t size"
 .Fa "u_int align"
 .Fa "u_int align_offset"
-.Fa "int nitems"
+.Fa "int flags"
 .Fa "char *wmesg"
 .Fa "struct pool_allocator *palloc"
 .Fc
@@ -125,13 +125,8 @@ the alignment defaults to an architecture-specific natural alignment.
 The offset within an item to which the
 .Fa align
 parameter applies.
-.It Fa nitems
-Specifies the number of memory items that are allocated to
-the pool at creation time.
-This number may be zero,
-in which case
-.Fn pool_prime
-can be used at a later time to add permanent items to the pool.
+.It Fa flags
+Specifies various flags set on the pool at creation time.
 .It Fa wmesg
 The message passed on to
 .Xr tsleep 9
@@ -341,6 +336,19 @@ code to be reentered.
 .Ss DIAGNOSTICS
 Pool usage logs can be enabled by defining the compile-time option
 .Dv POOL_DIAGNOSTIC .
+.Ss DEBUGGING
+To debug a misbehaving pool, a kernel can be compiled with the
+.Dv MALLOC_DEBUG
+option and memory debugging on pools can be enabled with the
+.Dv PR_DEBUG
+flag passed in the
+.Fa flags
+argument in the call to
+.Fn pool_init .
+See
+.Xr malloc 9
+for more information about
+.Dv MALLOC_DEBUG .
 .Sh CODE REFERENCES
 The pool manager is implemented in the file
 .Pa sys/kern/subr_pool.c .
