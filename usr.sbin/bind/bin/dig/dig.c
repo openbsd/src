@@ -162,6 +162,8 @@ help(void) {
 "                 -c class            (specify query class)\n"
 "                 -k keyfile          (specify tsig key file)\n"
 "                 -y name:key         (specify named base64 tsig key)\n"
+"                 -4                  (force IPv4 query transport)\n"
+"                 -6                  (force IPv6 query transport)\n"
 "        d-opt    is of the form +keyword[=value], where keyword is:\n"
 "                 +[no]vc             (TCP mode)\n"
 "                 +[no]tcp            (TCP mode, alternate syntax)\n"
@@ -911,6 +913,18 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		return (ISC_FALSE);
 	case 'n':
 		nibble = ISC_TRUE;
+		return (ISC_FALSE);
+	case '4':
+		if (have_ipv4)
+			have_ipv6 = ISC_FALSE;
+		else
+			fatal("can't find v4 networking");
+		return (ISC_FALSE);
+	case '6':
+		if (have_ipv6)
+			have_ipv4 = ISC_FALSE;
+		else
+			fatal("can't find v6 networking");
 		return (ISC_FALSE);
 	}
 	if (value == NULL)
