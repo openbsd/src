@@ -276,7 +276,7 @@ pmap_bootstrap(virtual_start)
 	 * reserve special hunk of memory for use by bus dma as a bounce
 	 * buffer (contiguous virtual *and* physical memory).  XXX
 	 */
-#if NISA > 0
+#if NISADMA > 0
 	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
 #endif
 
