@@ -103,7 +103,9 @@ SYSTEM_LD_TAIL=	@echo rearranging symbols; size $@; chmod 755 $@
 
 %LOAD
 
-newvers:
+newvers: vers.o
+
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} -c vers.c
 
@@ -124,7 +126,7 @@ assym.s: genassym
 genassym: genassym.o
 	${CC} -static -o $@ genassym.o
 
-genassym.o: ${SPARC}/sparc/genassym.c
+genassym.o: ${SPARC}/sparc/genassym.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} $<
 
 SRCS= ${CFILES} ioconf.c param.c vnode_if.c
