@@ -102,9 +102,9 @@ i386_user_cleanup(pcb)
 }
 
 int
-i386_get_ldt(p, void, retval)
+i386_get_ldt(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;
