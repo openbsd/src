@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.423 2001/07/30 01:28:40 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.425 2001/08/05 10:05:36 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1586,6 +1586,7 @@
 #define	PCI_PRODUCT_OPTI_RM861HA	0xc861		/* RM861HA */
 
 /* Oxford/ VScom */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200L	0x8020		/* VScom PCI 200-L */
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0	0xa003		/* VScom PCI 800-H */
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1	0xa004		/* VScom PCI 800-H */
 
