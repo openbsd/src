@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.12 1999/05/28 23:00:09 aaron Exp $
+.\"	$Id: smtpd.8,v 1.13 1999/05/30 02:42:22 pjanzen Exp $
 .Dd Dec 10, 1997
 .Dt SMTPD 8
 .Os
@@ -19,24 +19,23 @@ Obtuse Systems SMTPD message storing daemon
 .Op Fl p Ar listenport
 .Op Fl i Ar pidfile
 .Sh DESCRIPTION
-The
 .Nm smtpd
-daemon talks the Simple Mail Transfer Protocol (SMTP) with
+talks the Simple Mail Transfer Protocol (SMTP) with
 other SMTP daemons to receive mail from them, and saves it into a spool
 directory for later processing. It is the store portion of an SMTP
 store and forward proxy. The symbiotic companion program
 .Xr smtpfwdd 8
 is used to forward the spooled mail on to its eventual destination.
 .Nm smtpd
-is normally invoked from a super-server such as 
-.Xr inetd 8 . 
+is normally invoked from a super-server such as
+.Xr inetd 8 .
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl c
-Specify a different 
+Specify a different
 .Ar chrootdir
-directory to chroot into on startup. The default is 
-.Pa /var/spool/smtpd.  
+directory to chroot into on startup. The default is
+.Pa /var/spool/smtpd.
 This directory should be readable and writable only to the user that
 .Nm smtpd
 runs as.
@@ -51,10 +50,10 @@ Tells
 .Nm smtpd
 to run as a daemon, listening on port 25.
 The default is not to run as a daemon.
-.It Fl g 
-Specify a 
-.Ar group 
-to run as. Same as user above.
+.It Fl g
+Specify a
+.Ar group
+to run as.
 .It Fl H
 Disable host checking against the DNS. By default
 .Nm smtpd
@@ -62,22 +61,22 @@ checks and will complain in the syslogs if the DNS information for
 a host seems to indicate a possible spoof or misconfiguration.
 .It Fl i
 Specify a filename that
-.Nm smtpd 
-should lock and write its pid to when running as a daemon. 
+.Nm smtpd
+should lock and write its pid to when running as a daemon.
 Doesn't do anything if running from inetd. Default pid file
-in daemon mode is 
+in daemon mode is
 .Pa /var/run/smtpd.pid
 on BSD systems, or
-.Pa /usr/spool/smtpd/smtpd.pid 
+.Pa /usr/spool/smtpd/smtpd.pid
 on non-BSD systems.
 .It Fl l
-Specify an ip address in dotted quad format for 
+Specify an ip address in dotted quad format for
 .Nm smtpd
 to accept connections to. In daemon mode this limits the address
 that
 .Nm smtpd
 listens on. In inetd mode, smtpd will issue a 521 error
-code and exit if connected to on an address other than the specified
+code and exit if connected to an address other than the specified
 one. By default,
 .Nm smtpd
 accepts a connection no matter what address it is connected to.
@@ -95,44 +94,44 @@ the hostname the daemon should announce itself
 as. The default is whatever gethostname() returns.
 .It Fl p
 Specify a decimal port number for
-.Nm smtpd 
-to listen when running as a daemon. Doesn't do anything if running 
+.Nm smtpd
+to listen when running as a daemon. Doesn't do anything if running
 from inetd.
 .It Fl P
 Enable paranoid mode of operation. In this mode connections are
 dropped from any client feeding
 .Nm smtpd
-a suspicious hostname, FROM:, or RCPT: line containing characters
+a suspicious hostname, FROM: or RCPT: lines containing characters
 indicative of an attempt to do something evil, or any message headers
-that aren't 8bit clean. The default is to log such occurances and
+that aren't 8-bit clean. The default is to log such occurrences and
 substitute for the offending characters, but not drop the connection.
 .It Fl q
-Tell 
+Tell
 .Nm smtpd
 to be quieter. By default smtpd emits very verbose syslog messages. With
 this option it will emit one line of log for each normal message exchange.
 .It Fl s
-Specify 
+Specify
 .Ar maxsize
 the maximum size (in bytes) of mail message the
 daemon should accept. The default is not to have a maximum size.
 .It Fl u
-Specify a 
-.Ar user 
+Specify a
+.Ar user
 to run as. This user must not be root but
 should be a user that is able to run sendmail and use the
 .Fl f
 option to specify the sender of a mail message.
 .El
 .Sh FILES
-The address checking file is normally 
+The address checking file is normally
 .Pa etc/smtpd_check_rules ,
 within the chroot directory.
 .Pp
-The address check file, when enabled is read for each RCPT line in the
-SMTP dialogue. Each rule is checked with the current  source (SMTP
+The address check file, when enabled, is read for each RCPT line in the
+SMTP dialogue. Each rule is checked with the current source (SMTP
 client machine and possibly user from ident) and the current FROM: and
-RCPT: addresses. 
+RCPT: addresses.
 .Sh SEE ALSO
 .Xr inetd 8 ,
 .Xr sendmail 8 ,
@@ -145,22 +144,23 @@ RCPT: addresses.
 \- more examples and rules file details.
 .Sh BUGS
 Mistakes in
-.Pa /etc/smtpd_check_rules 
+.Pa /etc/smtpd_check_rules
 can discard legitimate mail and annoy
-your users and other postmasters a very great deal!. When
+your users and other postmasters a very great deal!  When
 combined with custom return codes it is possible to write rules
 that completely break the smtp protocol. It is important to test
 your rules out and be absolutely sure they do exactly what you
 want and no more.
 .Pp
-If 
+If
 .Xr sendmail 8
 is not run as a daemon when using
 .Xr smtpd 8
 and
 .Xr smtpfwdd 8 ,
 one must use cron to periodically invoke sendmail -q so that
-queued messages are retried for eventual delivery. Alternatively sendmail
-may be run as a daemon but not listening to the network.
+queued messages are retried for eventual delivery. Alternatively,
+.Xr sendmail 8
+may be run as a daemon, but configured not to listen to the network.
 .Pp
 
