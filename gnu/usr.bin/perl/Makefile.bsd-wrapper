@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.44 2001/07/21 18:09:58 krw Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.45 2001/10/09 20:31:54 millert Exp $
 #
 # Build wrapper for Perl 5.6.1
 #
@@ -1041,6 +1041,8 @@ B::Bblock.ps3p: ext/B/B/Bblock.pm
 B::Bytecode.ps3p: ext/B/B/Bytecode.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 B::C.ps3p: ext/B/B/C.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
+B::CC.ps3p: ext/B/B/CC.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 B::Concise.ps3p: ext/B/B/Concise.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
