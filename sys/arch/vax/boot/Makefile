@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1995/10/20 13:35:44 ragge Exp $
+#	$NetBSD: Makefile,v 1.6 1995/12/28 15:27:21 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
+.PATH:	${.CURDIR}/../../../lib/libkern
 
 CC=	cc
 AS=	as
@@ -12,8 +13,8 @@ CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} -D_VAX_INLINE_
 
 DEVS=	autoconf.o hp.o ra.o tmscp.o
 
-.include "$S/lib/libkern/Makefile.inc"
-LIBKERN=        ${KERNLIB}
+LIBKERN=libkern.a
+KERNOBJ=__main.o strlen.o strcmp.o strncmp.o strncpy.o min.o strcpy.o
 
 .include "$S/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
@@ -95,6 +96,12 @@ init.o:	init.c
 bootxx.o: bootxx.c 
 	${CC} -c ${CFLAGS} $*.c
 
+#
+libkern.a: ${KERNOBJ}
+	@echo Creating standalone kern library
+	@ar rv libkern.a `lorder ${KERNOBJ} | tsort`
+
+#
 clean::
 	rm -f start.o romread.o bootxx.o init.o xxboot boot racopy \
 	libsvax.a udiv.o urem.o consio.o ${DEVS} edlabel edlabel.o
