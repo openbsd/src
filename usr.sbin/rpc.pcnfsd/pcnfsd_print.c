@@ -118,7 +118,7 @@ pr_queue        queue = NULL;
 int suspicious (s)
 char *s;
 {
-	if(strpbrk(pathname, ";|&<>`'#!?*()[]^") != NULL)
+	if(strpbrk(s, ";|&<>`'#!?*()[]^") != NULL)
 		return 1;
 	return 0;
 }
