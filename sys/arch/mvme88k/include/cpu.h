@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: cpu.h,v 1.12 2001/09/23 02:52:27 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -48,10 +48,12 @@
 /*
  * CTL_MACHDEP definitinos.
  */
-#define	CPU_MAXID	1	/* no valid machdep ids */
+#define	CPU_CONSDEV	1	/* dev_t: console terminal device */
+#define	CPU_MAXID	2	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL
