@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.24 2002/07/08 19:41:29 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.25 2002/07/08 20:00:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -75,6 +75,7 @@
 #define	BS_CTRL_RNG_4		0x00800000	/* 1bit rn/four slow clocks */
 #define	BS_CTRL_RNG_8		0x01000000	/* 1bit rn/eight slow clocks */
 #define	BS_CTRL_RNG_16		0x01800000	/* 1bit rn/16 slow clocks */
+#define	BN_CTRL_SWNORM		0x00400000	/* 582[01], sw normalization */
 #define	BS_CTRL_FRAG_M		0x0000ffff	/* output fragment size mask */
 
 /* BS_STAT - DMA Status */
@@ -84,8 +85,8 @@
 #define	BS_STAT_DMAERR		0x10000000	/* DMA error */
 #define	BS_STAT_MCR2_FULL	0x08000000	/* MCR2 is full */
 #define	BS_STAT_MCR2_DONE	0x04000000	/* MCR2 is done */
-#define	BS_STAT_MCR1_ALLEMPTY	0x02000000	/* MCR1 is completely empty */
-#define	BS_STAT_MCR2_ALLEMPTY	0x01000000	/* MCR2 is completely empty */
+#define	BS_STAT_MCR1_ALLEMPTY	0x02000000	/* 5821, MCR1 is empty */
+#define	BS_STAT_MCR2_ALLEMPTY	0x01000000	/* 5821, MCR2 is empty */
 
 /* BS_ERR - DMA Error Address */
 #define	BS_ERR_ADDR		0xfffffffc	/* error address mask */
