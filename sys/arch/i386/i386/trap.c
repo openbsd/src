@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1996/10/17 13:36:45 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1997/01/18 15:17:38 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -227,11 +227,13 @@ trap(frame)
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 		/* Check for copyin/copyout fault. */
-		pcb = &p->p_addr->u_pcb;
-		if (pcb->pcb_onfault != 0) {
-		copyfault:
-			frame.tf_eip = (int)pcb->pcb_onfault;
-			return;
+		if (p && p->p_addr) {
+			pcb = &p->p_addr->u_pcb;
+			if (pcb->pcb_onfault != 0) {
+			copyfault:
+				frame.tf_eip = (int)pcb->pcb_onfault;
+				return;
+			}
 		}
 
 		/*
@@ -329,7 +331,7 @@ trap(frame)
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0)
+		if (p == 0 || p->p_addr == 0)
 			goto we_re_toast;
 		pcb = &p->p_addr->u_pcb;
 		/*
