@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.42 2003/05/13 01:12:31 millert Exp $ */
+/* $OpenBSD: user.c,v 1.43 2003/06/08 20:43:25 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -154,7 +154,7 @@ enum {
 enum {
 	MaxShellNameLen = 256,
 	MaxFileNameLen = MAXPATHLEN,
-	MaxUserNameLen = MAXLOGNAME,
+	MaxUserNameLen = _PW_NAME_LEN,
 	MaxCommandLen = 2048,
 	PasswordLength = _PASSWORD_LEN,
 
