@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1998/10/10 18:33:45 beck Exp $	
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1998/11/06 20:42:05 millert Exp $	
 .include <bsd.own.mk>
 PROG=httpd
 BINDIR=/usr/sbin
@@ -15,9 +15,11 @@ helpers/GuessOS:
 	/usr/bin/lndir -s -e Makefile.bsd-wrapper -e obj -e obj.${MACHINE_ARCH} -e Configuration ${.CURDIR} ${.OBJDIR}; cp ${.CURDIR}/Configuration ${.OBJDIR}/Configuration
 
 config:	.FORCE
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	sh ${.CURDIR}/Configure -file ${.OBJDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
 
 Makefile: helpers/GuessOS
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	sh ${.CURDIR}/Configure -file ${.OBJDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
 
 install:
