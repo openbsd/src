@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.453 2001/10/06 13:56:49 aaron Exp $
+	$OpenBSD: pcidevs,v 1.454 2001/10/07 22:25:34 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -520,6 +520,7 @@ vendor ADMTEK		0x1317	ADMtek
 vendor PE		0x1318	Packet Engines
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor SIIG		0x131f	SIIG
+vendor DTCTECH		0x134a	DTC Tech
 vendor PCTEL		0x134d	PCTEL
 vendor KAWASAKI		0x136b	Kawasaki
 vendor LMC		0x1376	LAN Media Corp
@@ -1097,6 +1098,9 @@ product DPT MEMCTLR		0x1012	Memory Controller
 
 /* Dolphin products */
 product DOLPHIN PCISCI		0x0658	PCI-SCI
+
+/* DTC Technology Corp products */
+product DTCTECH DMX3194U	0x0002	DMX3194U SCSI
 
 /* Emulex products */
 product EMULEX LPPFC		0x10df	Light Pulse FibreChannel
