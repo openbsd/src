@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.3 1996/12/14 12:18:27 mickey Exp $	*/
+/*	$OpenBSD: test.c,v 1.4 1997/06/18 20:34:45 kstailey Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: test.c,v 1.3 1996/12/14 12:18:27 mickey Exp $";
+static char rcsid[] = "$OpenBSD: test.c,v 1.4 1997/06/18 20:34:45 kstailey Exp $";
 #endif
 
 #include <sys/types.h>
@@ -301,7 +301,7 @@ binop()
 	(void) t_lex(*++t_wp);
 	op = t_wp_op;
 
-	if ((opnd2 = *++t_wp) == (char *)0)
+	if ((opnd2 = *++t_wp) == NULL)
 		syntax(op->op_text, "argument expected");
 		
 	switch (op->op_num) {
@@ -424,7 +424,7 @@ t_lex(s)
 	register struct t_op const *op = ops;
 
 	if (s == 0) {
-		t_wp_op = (struct t_op *)0;
+		t_wp_op = NULL;
 		return EOI;
 	}
 	while (op->op_text) {
@@ -434,7 +434,7 @@ t_lex(s)
 		}
 		op++;
 	}
-	t_wp_op = (struct t_op *)0;
+	t_wp_op = NULL;
 	return OPERAND;
 }
 
