@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.136 2004/03/08 21:03:53 krw Exp $
+.\"	$OpenBSD: options.4,v 1.137 2004/03/10 02:14:09 krw Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -959,6 +959,24 @@ Each bit enables debugging info for the corresponding target.
 .It Cd option SCSIDEBUG_LUNS=value
 Define which SCSI luns will print debug info.
 Each bit enables debugging info for the corresponding lun.
+.It Cd option SCSIFORCELUN_BUSES=value
+Define which SCSI buses will do full lun scanning.
+.Em SCSIFORCELUN_TARGETS
+must also be set to a non-zero value for this option to take effect.
+Each bit enables a full lun scan for the corresponding SCSI bus.
+The lun scan normally terminates if identical INQUIRY data is seen for
+lun 0 and another lun, as this usually means the target cannot
+distinguish between different luns.
+But some devices (e.g. some external RAID devices) can legitimately
+supply identical INQUIRY data for several luns.
+.It Cd option SCSIFORCELUN_TARGETS=value
+Define which SCSI targets will do full lun scanning.
+.Em SCSIFORCELUN_BUSES
+must also be set to a non-zero value for this option to have any
+effect.
+Each bit enables a full lun scan for the corresponding target on the
+buses specified by
+.Em SCSIFORCELUN_BUSES.
 .El
 .Ss System V IPC Options
 .Bl -ohang
