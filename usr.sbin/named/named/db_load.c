@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_load.c,v 1.2 1997/03/12 10:42:23 downsj Exp $	*/
+/*	$OpenBSD: db_load.c,v 1.3 1997/04/27 23:09:43 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
 static char rcsid[] = "$From: db_load.c,v 8.31 1996/12/18 04:09:48 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_load.c,v 1.2 1997/03/12 10:42:23 downsj Exp $";
+static char rcsid[] = "$OpenBSD: db_load.c,v 1.3 1997/04/27 23:09:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ static int clev;	/* a zone deeper in a hierachy has more credability */
 					 transport, context, \
 					 domain, filename, lineno)) { \
 				errs++; \
-				sprintf(buf, "bad name \"%s\"", N); \
+				snprintf(buf, sizeof buf, "bad name \"%s\"", N); \
 				goto err; \
 			}
 

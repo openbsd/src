@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_dump.c,v 1.2 1997/03/12 10:42:21 downsj Exp $	*/
+/*	$OpenBSD: db_dump.c,v 1.3 1997/04/27 23:09:42 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_dump.c	4.33 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: db_dump.c,v 8.19 1996/10/08 04:51:03 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_dump.c,v 1.2 1997/03/12 10:42:21 downsj Exp $";
+static char rcsid[] = "$OpenBSD: db_dump.c,v 1.3 1997/04/27 23:09:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ doachkpt()
 
     dprintf(3, (ddt, "doachkpt()\n"));
 
-    (void) sprintf(tmpcheckfile, "%s.chk", cache_file);
+    (void) snprintf(tmpcheckfile, sizeof tmpcheckfile, "%s.chk", cache_file);
     if ((fp = fopen(tmpcheckfile, "w")) == NULL) {
 	dprintf(3, (ddt,
 		    "doachkpt(can't open %s for write)\n", tmpcheckfile));
@@ -317,7 +317,7 @@ zt_dump(fp)
 		fprintf(fp, ";\tftime=%lu, xaddr=[%s], state=%04x, pid=%d\n",
 			(u_long)zp->z_ftime, inet_ntoa(zp->z_xaddr),
 			zp->z_flags, (int)zp->z_xferpid);
-		sprintf(buf, ";\tz_addr[%d]: ", zp->z_addrcnt);
+		sprintf(buf, ";\tz_addr[%d]: ", zp->z_addrcnt);		/*SAFE*/
 		pre = buf;
 		for (cnt = 0;  cnt < zp->z_addrcnt;  cnt++) {
 			fprintf(fp, "%s[%s]", pre, inet_ntoa(zp->z_addr[cnt]));
@@ -804,7 +804,7 @@ MkCredStr(cred)
 	case DB_C_CACHE:	return "cache";
 	default:		break;
 	}
-	sprintf(badness, "?%d?", cred);
+	sprintf(badness, "?%d?", cred);		/*SAFE*/
 	return (badness);
 }
 
@@ -1008,6 +1008,7 @@ btoa(inbuf, inbuflen, outbuf, outbuflen)
 	int32_t inc, nb;
 	int32_t oeor, osum, orot;
 	char *inp, *outp = outbuf, *endoutp = &outbuf[outbuflen -1];
+	int len;
 
 	Ceor = Csum = Crot = word = bcount = 0;
 	for (inp = inbuf, inc = 0; inc < inbuflen; inp++, inc++) {
@@ -1022,8 +1023,9 @@ btoa(inbuf, inbuflen, outbuf, outbuflen)
 	}
 	/* Put byte count and checksum information at end of buffer, delimited
 	   by 'x' */
-	(void) sprintf(outp, "x %d %lx %lx %lx", inbuflen, Ceor, Csum, Crot);
-	if (&outp[strlen(outp) - 1] >= endoutp)
+	len = snprintf(outp, endoutp - outp,
+		"x %d %lx %lx %lx", inbuflen, Ceor, Csum, Crot);
+	if (len >= outbuflen)
 		return(CONV_OVERFLOW);
 	else
 		return(CONV_SUCCESS);

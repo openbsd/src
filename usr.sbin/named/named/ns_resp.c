@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_resp.c,v 1.2 1997/03/12 10:42:33 downsj Exp $	*/
+/*	$OpenBSD: ns_resp.c,v 1.3 1997/04/27 23:09:45 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_resp.c,v 8.37 1996/12/02 09:17:21 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.2 1997/03/12 10:42:33 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.3 1997/04/27 23:09:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ learntFrom(qp, server)
 		     sizeof(LEARNTFROM));
 	if (!buf)
 		return ("");
-	sprintf(buf, LEARNTFROM, na, a, ns);
+	sprintf(buf, LEARNTFROM, na, a, ns);	/* checked */
 	return (buf);
 }
 #endif /*LAME_LOGGING*/
@@ -308,7 +308,7 @@ ns_resp(msg, msglen)
 		if (qp->q_msg && qp->q_msglen &&
 		    !res_nameinquery(qname, qtype, qclass,
 				     qp->q_msg, qp->q_msg + qp->q_msglen)) {
-			sprintf(msgbuf,
+			snprintf(msgbuf, sizeof msgbuf,
 				"query section mismatch (%s %s %s)",
 				qname, p_class(qclass), p_type(qtype));
 			formerrmsg = msgbuf;
@@ -321,7 +321,8 @@ ns_resp(msg, msglen)
 			goto formerr;
 		}
 	} else {
-		strcpy(qname, qp->q_name);
+		strncpy(qname, qp->q_name, sizeof qname-1);
+		qname[sizeof qname-1] = '\0';
 		qclass = qp->q_class;
 		qtype = qp->q_type;
 	}
@@ -660,7 +661,7 @@ ns_resp(msg, msglen)
 			if (strcasecmp(qname, name) ||
 			    qtype != type ||
 			    qclass != class) {
-				sprintf(msgbuf,
+				snprintf(msgbuf, sizeof msgbuf,
 					"qserial answer mismatch (%s %s %s)",
 					name, p_class(class), p_type(type));
 				formerrmsg = msgbuf;
@@ -758,7 +759,8 @@ ns_resp(msg, msglen)
 	nscount = 0;
 	cname = 0;
 	lastwascname = 0;
-	strcpy(aname, qname);
+	strncpy(aname, qname, sizeof aname);
+	aname[sizeof aname-1] = '\0';
 
 	if (count) {
 		/* allocate 1 extra record for end of set detection */
@@ -796,7 +798,8 @@ ns_resp(msg, msglen)
 			}
 			if (type == T_CNAME &&
 			    qtype != T_CNAME && qtype != T_ANY) {
-				strcpy(aname, (char *)dp->d_data);
+				strncpy(aname, (char *)dp->d_data, sizeof aname);
+				aname[sizeof aname-1] = '\0';
 				cname = 1;
 				lastwascname = 1;
 			} else {
@@ -1959,7 +1962,8 @@ sysnotify(dname, class, type)
 		char tmp[MAXDNAME];
 
 		/* Many syslog()'s only take 5 args. */
-		sprintf(tmp, "%s %s %s", dname, p_class(class), p_type(type));
+		snprintf(tmp, sizeof tmp,
+			"%s %s %s", dname, p_class(class), p_type(type));
 		syslog(LOG_INFO, "Sent NOTIFY for \"%s\" (%s); %d NS, %d A",
 		       tmp, zname, nns, na);
 	}

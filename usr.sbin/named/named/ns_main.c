@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.6 1997/04/14 04:01:22 deraadt Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.7 1997/04/27 23:09:44 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.24 1996/11/26 10:11:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.6 1997/04/14 04:01:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.7 1997/04/27 23:09:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1661,10 +1661,11 @@ ns_setproctitle(a, s)
 	cp = Argv[0];
 	size = sizeof(sin);
 	if (getpeername(s, (struct sockaddr *)&sin, &size) == 0)
-		(void) sprintf(buf, "-%s [%s]", a, inet_ntoa(sin.sin_addr));
+		(void) snprintf(buf, sizeof buf,
+			"-%s [%s]", a, inet_ntoa(sin.sin_addr));
 	else {
 		syslog(LOG_DEBUG, "getpeername: %m");
-		(void) sprintf(buf, "-%s", a);
+		(void) snprintf(buf, sizeof buf, "-%s", a);
 	}
 	(void) strncpy(cp, buf, LastArg - cp);
 	cp += strlen(cp);

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_forw.c,v 1.2 1997/03/12 10:42:28 downsj Exp $	*/
+/*	$OpenBSD: ns_forw.c,v 1.3 1997/04/27 23:09:43 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_forw.c,v 8.19 1996/12/02 09:27:36 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.2 1997/03/12 10:42:28 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.3 1997/04/27 23:09:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,8 @@ nslookupComplain(sysloginfo, queryname, complaint, dname, a_rr, nsdp)
 #endif
 		/* syslog only takes 5 params */
 		if ( a != NULL || ns != NULL)
-			sprintf(buf, "%s: query(%s) %s (%s:%s) learnt (%s=%s:NS=%s)",
+			snprintf(buf, sizeof buf,
+				"%s: query(%s) %s (%s:%s) learnt (%s=%s:NS=%s)",
 				sysloginfo, queryname,
 				complaint, dname,
 				print_a ?
@@ -351,7 +352,8 @@ nslookupComplain(sysloginfo, queryname, complaint, dname, a_rr, nsdp)
 				a ? a : "<Not Available>",
 				ns ? ns : "<Not Available>" );
 		else
-			sprintf(buf, "%s: query(%s) %s (%s:%s)",
+			snprintf(buf, sizeof buf,
+				"%s: query(%s) %s (%s:%s)",
 				sysloginfo, queryname,
 				complaint, dname,
 				print_a ?
