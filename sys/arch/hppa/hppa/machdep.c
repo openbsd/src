@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2003/01/14 12:17:07 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.97 2003/01/14 16:06:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -231,17 +231,17 @@ const struct hppa_cpu_typed {
 } cpu_types[] = {
 #ifdef HP7000_CPU
 	{ "PCX",   hpcx,  0x10, 0,
-	  desidhash_x, itlb_x, itlbna_l, dtlb_x, dtlbna_x, tlbd_x,
+	  desidhash_x, itlb_x, itlbna_x, dtlb_x, dtlbna_x, tlbd_x,
 	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7100_CPU
 	{ "PCXS",  hpcxs, 0x11, 0,
-	  desidhash_s, itlb_s, itlbna_l, dtlb_s, dtlbna_s, tlbd_s,
+	  desidhash_s, itlb_s, itlbna_s, dtlb_s, dtlbna_s, tlbd_s,
 	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7200_CPU
 	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
-	  desidhash_t, itlb_t, itlbna_l, dtlb_t, dtlbna_t, tlbd_t,
+	  desidhash_t, itlb_t, itlbna_t, dtlb_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g},
 /* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
 	  desidhash_t, itlb_t, itlbna_l, dtlb_t, dtlbna_t, tlbd_t,
