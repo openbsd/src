@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_tcfs.c,v 1.3 2000/06/18 01:31:49 provos Exp $	*/
+/*	$OpenBSD: mount_tcfs.c,v 1.4 2000/06/21 05:28:25 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -36,19 +36,16 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
-
-#include <sys/types.h>
-#include <miscfs/tcfs/tcfs.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <miscfs/tcfs/tcfs.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "mntopts.h"
 
@@ -62,19 +59,18 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
 int	subdir __P((const char *, const char *));
-void	usage __P((void));
-int	tcfs_mount_getcipher __P((char *));
+void	tcfs_usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
-	char *argv[];
+	char * const argv[];
 {
 	struct tcfs_args args;
 	int ch, mntflags, altflags;
 	char target[MAXPATHLEN];
+	char *fs_name, *errcause;
 
 	mntflags = 0;
 	altflags = 0;
@@ -95,13 +91,13 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			usage();
+			tcfs_usage();
 		}
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 2)
-		usage();
+		tcfs_usage();
 
 	if (realpath(argv[0], target) == 0)
 		err(1, "%s", target);
@@ -110,14 +106,27 @@ main(argc, argv)
 		errx(1, "%s (%s) and %s are not distinct paths",
 		    argv[0], target, argv[1]);
 
-	if (args.cipher_num == -1) { 
-		printf("cipher number not found for filesystem %s\n", argv[1]);
-		exit(1);
-	}
+	if (args.cipher_num == -1)
+		errx(1, "cipher number not found for filesystem %s\n",
+		    argv[1]);
+
         args.target = target;
+	fs_name = argv[1];
 	
-	if (mount(MOUNT_TCFS, argv[1], mntflags, &args))
-		err(1, "%s", "");
+	if (mount(MOUNT_TCFS, fs_name, mntflags, &args) < 0) {
+		switch (errno) {
+		case EMFILE:
+			errcause = "mount table full";
+			break;
+		case EOPNOTSUPP:
+			errcause = "filesystem not supported by kernel";
+			break;
+		default:
+			errcause = strerror(errno);
+			break;
+		}
+		errx(1, "%s on %s: %s", argv[0], fs_name, errcause);
+	}
 	exit(0);
 }
 
@@ -139,9 +148,8 @@ subdir(p, dir)
 }
 
 void
-usage()
+tcfs_usage()
 {
-	(void)fprintf(stderr,
-		"usage: mount_tcfs [-o options] target_fs mount_point\n");
+	(void)fprintf(stderr, "usage: mount_tcfs [-o options] path node\n");
 	exit(1);
 }
