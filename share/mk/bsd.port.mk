@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.39 1998/07/28 15:25:24 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.40 1998/07/29 15:32:54 espie Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -1234,7 +1234,7 @@ _PORT_USE: .USE
 .endif
 .if make(real-install)
 .if !defined(NO_PKG_REGISTER) && !defined(FORCE_PKG_REGISTER)
-	@if [ -d ${PKG_DBDIR}/${PKGNAME} -o "X$$(ls -d ${PKG_DBDIR}/${PKGNAME:C/-.*//g}-* 2> /dev/null)" != "X" ]; then \
+	@if [ -d ${PKG_DBDIR}/${PKGNAME} -o "X$$(ls -d ${PKG_DBDIR}/${PKGNAME:C/-[0-9].*//g}-* 2> /dev/null)" != "X" ]; then \
 		${ECHO_MSG} "===>  ${PKGNAME} is already installed - perhaps an older version?"; \
 		${ECHO_MSG} "      If so, you may wish to \`\`pkg_delete ${PKGNAME}'' and install"; \
 		${ECHO_MSG} "      this port again by \`\`make reinstall'' to upgrade it properly."; \
