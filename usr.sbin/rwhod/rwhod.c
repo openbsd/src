@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.3 1996/11/01 06:45:45 imp Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.4 1996/11/01 06:53:25 imp Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,8 +139,7 @@ main(argc, argv)
 	(void) signal(SIGHUP, getboottime);
 	openlog("rwhod", LOG_PID, LOG_DAEMON);
 	/*
-	 * Establish host name as returned by system.  The -1 plus myname
-	 * being global ensure that myname is NUL terminated.
+	 * Establish host name as returned by system.
 	 */
 	if (gethostname(myname, sizeof(myname) - 1) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
