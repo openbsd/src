@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.34 2004/10/04 11:12:58 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.35 2004/10/13 09:20:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -285,8 +285,10 @@ ntp_dispatch_imsg(void)
 			TAILQ_FOREACH(peer, &conf->ntp_peers, entry)
 				if (peer->id == imsg.hdr.peerid)
 					break;
-			if (peer == NULL)
-				fatal("IMSG_HOST_DNS with invalid peerID");
+			if (peer == NULL) {
+				log_warnx("IMSG_HOST_DNS with invalid peerID");
+				break;
+			}
 			if (peer->addr != NULL) {
 				log_warnx("IMSG_HOST_DNS but addr != NULL!");
 				break;
