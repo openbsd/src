@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.266 2000/06/12 17:40:13 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.268 2000/06/13 17:15:39 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1848,7 +1848,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
 	    0,
 	    "IBM",
-	    "Olympic Token Ring",
+	    "Olympic",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
@@ -4806,13 +4806,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    0,
 	    "Xircom",
-	    "X3201-3 Fast Ethernet Controller",
+	    "X3201-3",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143,
 	    0,
 	    "Xircom",
-	    "X3201-3 Fast Ethernet Controller (21143)",
+	    "X3201-3 (21143)",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.266 2000/06/12 17:40:13 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.268 2000/06/13 17:15:39 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -985,7 +985,7 @@
 #define	PCI_PRODUCT_IBM_0x0020	0x0020		/* MCA */
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI */
 #define	PCI_PRODUCT_IBM_0x0036	0x0036		/* Miami/PCI */
-#define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Olympic Token Ring */
+#define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Olympic */
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */
@@ -1654,8 +1654,8 @@
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 PPC PCI bridge */
 
 /* Xircom products */
-#define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
-#define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
+#define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 */
+#define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 (21143) */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
