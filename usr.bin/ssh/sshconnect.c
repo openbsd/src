@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.14 1999/10/04 19:46:30 provos Exp $");
+RCSID("$Id: sshconnect.c,v 1.15 1999/10/06 04:22:20 provos Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1001,13 +1001,17 @@ void ssh_login(int host_key_valid,
   RSA *public_key;
   unsigned char session_key[SSH_SESSION_KEY_LENGTH];
   const char *server_user, *local_user;
-  char *cp, *host;
+  char *cp, *host, *ip = NULL;
   unsigned char check_bytes[8];
   unsigned int supported_ciphers, supported_authentications, protocol_flags;
   HostStatus host_status;
   HostStatus ip_status;
+  int local = (ntohl(hostaddr->sin_addr.s_addr) >> 24) == IN_LOOPBACKNET;
   int payload_len, clen, sum_len = 0;
   u_int32_t rand = 0;
+
+  if (options->check_host_ip)
+    ip = xstrdup(inet_ntoa(hostaddr->sin_addr));
 
   /* Convert the user-supplied hostname into all lowercase. */
   host = xstrdup(orighost);
@@ -1104,29 +1108,24 @@ void ssh_login(int host_key_valid,
      and the user will get bogus HOST_CHANGED warnings.  This essentially
      disables host authentication for localhost; however, this is probably
      not a real problem. */
-  if (strcmp(inet_ntoa(hostaddr->sin_addr), "127.0.0.1") == 0)
-    {
-      debug("Forcing accepting of host key for localhost.");
-      host_status = HOST_OK;
-    }
+  if (local) {
+    debug("Forcing accepting of host key for localhost.");
+    host_status = HOST_OK;
+  }
 
   /* Also perform check for the ip address, skip the check if we are
      localhost or the hostname was an ip address to begin with */
-  if (options->check_host_ip &&
-      strcmp(inet_ntoa(hostaddr->sin_addr), "127.0.0.1") && 
-      strcmp(host, inet_ntoa(hostaddr->sin_addr))) {
+  if (options->check_host_ip && !local && strcmp(host, ip)) {
     RSA *ip_key = RSA_new();
     ip_key->n = BN_new();
     ip_key->e = BN_new();
-    ip_status = check_host_in_hostfile(options->user_hostfile,
-				       inet_ntoa(hostaddr->sin_addr), 
+    ip_status = check_host_in_hostfile(options->user_hostfile, ip,
 				       BN_num_bits(host_key->n),
 				       host_key->e, host_key->n,
 				       ip_key->e, ip_key->n);
 
     if (ip_status == HOST_NEW)
-      ip_status = check_host_in_hostfile(options->system_hostfile,
-					 inet_ntoa(hostaddr->sin_addr), 
+      ip_status = check_host_in_hostfile(options->system_hostfile, ip,
 					 BN_num_bits(host_key->n),
 					 host_key->e, host_key->n,
 					 ip_key->e, ip_key->n);
@@ -1146,16 +1145,15 @@ void ssh_login(int host_key_valid,
     debug("Host '%.200s' is known and matches the host key.", host);
     if (options->check_host_ip) {
       if (ip_status == HOST_NEW) {
-	if (!add_host_to_hostfile(options->user_hostfile,
-				  inet_ntoa(hostaddr->sin_addr),
+	if (!add_host_to_hostfile(options->user_hostfile, ip,
 				  BN_num_bits(host_key->n), 
 				  host_key->e, host_key->n))
 	  log("Failed to add the host ip to the list of known hosts (%.30s).", 
 	      options->user_hostfile);
 	else
-	  log("Warning: Permanently added host ip '%.30s' to the list of known hosts.", inet_ntoa(hostaddr->sin_addr));
+	  log("Warning: Permanently added host ip '%.30s' to the list of known hosts.", ip);
       } else if (ip_status != HOST_OK)
-	log("Warning: the host key differ from the key of the ip address '%.30s' differs", inet_ntoa(hostaddr->sin_addr));
+	log("Warning: the host key differ from the key of the ip address '%.30s' differs", ip);
     }
     
     break;
@@ -1178,10 +1176,8 @@ void ssh_login(int host_key_valid,
 	  fatal("Aborted by user!\n");
       }
       
-      if (options->check_host_ip && ip_status == HOST_NEW &&
-	  strcmp(host, inet_ntoa(hostaddr->sin_addr)))
-	snprintf(hostline, sizeof(hostline), "%s,%s",
-		 host, inet_ntoa(hostaddr->sin_addr));
+      if (options->check_host_ip && ip_status == HOST_NEW && strcmp(host, ip))
+	snprintf(hostline, sizeof(hostline), "%s,%s", host, ip);
       else
 	hostp = host;
       
@@ -1204,8 +1200,7 @@ void ssh_login(int host_key_valid,
 	error("@       WARNING: POSSIBLE DNS SPOOFNG DETECTED!           @");
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	error("The host key for %s has changed,", host);
-	error("but the key for the according IP address %s has",
-	      inet_ntoa(hostaddr->sin_addr));
+	error("but the key for the according IP address %s has", ip);
 	error("a different status.  This could either mean that DNS");
 	error("SPOOFING is happening or the IP address for the host");
 	error("and its host key have changed at the same time");
@@ -1238,6 +1233,9 @@ void ssh_login(int host_key_valid,
        if he/she whishes to accept the authentication. */
     break;
   }
+
+  if (options->check_host_ip)
+    xfree(ip);
   
   /* Generate a session key. */
   arc4random_stir();
