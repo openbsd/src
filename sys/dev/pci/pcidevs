@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.574 2003/01/08 22:04:17 millert Exp $
+	$OpenBSD: pcidevs,v 1.575 2003/01/09 01:19:41 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1470,6 +1470,7 @@ product INTEL 82860_PCI3	0x2535	82860 PCI-PCI
 product INTEL 82860_PCI4	0x2536	82860 PCI-PCI
 product INTEL 82845G		0x2560	82845G/GL
 product INTEL 82845G_IV		0x2562	82845G/GL Video
+product INTEL 31244		0x3200	31244 SATA
 product INTEL 82830MP_IO_1	0x3575	82830MP CPU to I/O Bridge 1
 product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
