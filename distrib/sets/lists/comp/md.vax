@@ -180,5 +180,3 @@
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.6/2.95.3/libgcc.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/scrt0.o
-./usr/share/info/annotate.info
-./usr/share/info/stabs.info

@@ -3,6 +3,7 @@
 ./usr/share/info/amdref.info-1
 ./usr/share/info/amdref.info-2
 ./usr/share/info/amdref.info-3
+./usr/share/info/annotate.info
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
 ./usr/share/info/cpp.info-2
@@ -117,6 +118,7 @@
 ./usr/share/info/info.info
 ./usr/share/info/libiberty.info
 ./usr/share/info/readline.info
+./usr/share/info/stabs.info
 ./usr/share/info/stabs.info-1
 ./usr/share/info/texinfo
 ./usr/share/info/texinfo-1
