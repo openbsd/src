@@ -1530,7 +1530,7 @@ m68k*-*-netbsd*)
 use_collect2=yes
 	;;
 m68k*-*-openbsd*)
-#	tm_file="${tm_file} exec-stack.h"
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="t-libc-ok t-openbsd m68k/t-openbsd"
 	float_format=m68k
 	# we need collect2 until our bug is fixed...
