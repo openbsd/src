@@ -704,7 +704,7 @@ arm*-*-netbsdelf*)
 	;;
 arm*-*-openbsd*)
 	tm_file="dbxelf.h elfos.h arm/openbsd1.h arm/elf.h arm/aout.h arm/arm.h openbsd.h ${tm_file}"
-	tmake_file="${tmake_file} arm/t-netbsd"
+	tmake_file="${tmake_file} arm/t-openbsd"
 	;;
 arm*-*-netbsd*)
 	tm_file="arm/aout.h arm/arm.h netbsd.h netbsd-aout.h arm/netbsd.h"
