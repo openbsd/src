@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.24 1997/09/10 20:55:08 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.25 1998/02/08 21:04:16 weingart Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.24 1997/09/10 20:55:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.25 1998/02/08 21:04:16 weingart Exp $";
 #endif
 #endif /* not lint */
 
@@ -1456,7 +1456,7 @@ quote1(initial, argc, argv)
 		for (i = 2; i < argc && len < sizeof(buf); i++) {
 			buf[len++] = ' ';
 			len += strlen(strncpy(&buf[len], argv[i],
-			    sizeof(buf) - len) - 1);
+			    sizeof(buf) - len - 1));
 		}
 	}
 	if (command(buf) == PRELIM) {
