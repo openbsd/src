@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.21 2003/12/31 03:27:23 millert Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.22 2004/12/17 03:24:20 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -172,10 +172,8 @@ newgetbroadcastnets(addrsp, sock)
 	struct in_addr *addrs;
 	int i = 0, n = 0;
 
-	if (getifaddrs(&ifap) != 0) {
-		perror("broadcast: getifaddrs");
+	if (getifaddrs(&ifap) != 0)
 		return 0;
-	}
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -191,7 +189,6 @@ newgetbroadcastnets(addrsp, sock)
 	addrs = (struct in_addr *)malloc(n * sizeof(*addrs));
 	if (addrs == NULL) {
 		freeifaddrs(ifap);
-		*addrsp = NULL;
 		return 0;
 	}
 
@@ -239,7 +236,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	bool_t done = FALSE;
 	u_long xid;
 	u_long port;
-	struct in_addr *addrs;
+	struct in_addr *addrs = NULL;
 	struct sockaddr_in baddr, raddr; /* broadcast and response addresses */
 	struct rmtcallargs a;
 	struct rmtcallres r;
@@ -251,13 +248,11 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	 * preserialize the arguments into a send buffer.
 	 */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		perror("Cannot create socket for broadcast rpc");
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
 #ifdef SO_BROADCAST
 	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0) {
-		perror("Cannot set socket option SO_BROADCAST");
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
@@ -267,6 +262,11 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	pfd[0].events = POLLIN;
 
 	nets = newgetbroadcastnets(&addrs, sock);
+	if (nets == 0) {
+		stat = RPC_CANTSEND;
+		goto done_broad;
+	}
+
 	memset(&baddr, 0, sizeof (baddr));
 	baddr.sin_len = sizeof(struct sockaddr_in);
 	baddr.sin_family = AF_INET;
@@ -312,7 +312,6 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 			if (sendto(sock, outbuf, outlen, 0,
 			    (struct sockaddr *)&baddr,
 			    sizeof (struct sockaddr)) != outlen) {
-				perror("Cannot send broadcast packet");
 				stat = RPC_CANTSEND;
 				goto done_broad;
 			}
@@ -341,7 +340,6 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		case -1:  /* some kind of error */
 			if (errno == EINTR)
 				goto recv_again;
-			perror("Broadcast poll problem");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 		}
@@ -352,7 +350,6 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		if (inlen < 0) {
 			if (errno == EINTR)
 				goto try_again;
-			perror("Cannot receive reply to broadcast");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 		}
