@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-pubkey.c,v 1.1 2002/05/25 18:51:07 markus Exp $");
+RCSID("$OpenBSD: auth2-pubkey.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -46,7 +46,7 @@ extern ServerOptions options;
 extern u_char *session_id2;
 extern int session_id2_len;
 
-int
+static int
 userauth_pubkey(Authctxt *authctxt)
 {
 	Buffer b;
@@ -271,3 +271,9 @@ user_key_allowed(struct passwd *pw, Key *key)
 	xfree(file);
 	return success;
 }
+
+Authmethod method_pubkey = {
+	"publickey",
+	userauth_pubkey,
+	&options.pubkey_authentication
+};

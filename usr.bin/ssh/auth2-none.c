@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-none.c,v 1.1 2002/05/25 18:51:07 markus Exp $");
+RCSID("$OpenBSD: auth2-none.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
 
 #include "auth.h"
 #include "xmalloc.h"
@@ -37,6 +37,9 @@ RCSID("$OpenBSD: auth2-none.c,v 1.1 2002/05/25 18:51:07 markus Exp $");
 
 /* import */
 extern ServerOptions options;
+
+/* "none" is allowed only one time */
+static int none_enabled = 1;
 
 char *
 auth2_read_banner(void)
@@ -88,15 +91,17 @@ done:
 	return;
 }
 
-int
+static int
 userauth_none(Authctxt *authctxt)
 {
-	static int called = 0;
-
-	if (called)
-		return (0);
-	called = 1;
+	none_enabled = 0;
 	packet_check_eom();
 	userauth_banner();
 	return (authctxt->valid ? PRIVSEP(auth_password(authctxt, "")) : 0);
 }
+
+Authmethod method_none = {
+	"none",
+	userauth_none,
+	&none_enabled
+};

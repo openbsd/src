@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-hostbased.c,v 1.1 2002/05/25 18:51:07 markus Exp $");
+RCSID("$OpenBSD: auth2-hostbased.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -44,7 +44,7 @@ extern ServerOptions options;
 extern u_char *session_id2;
 extern int session_id2_len;
 
-int
+static int
 userauth_hostbased(Authctxt *authctxt)
 {
 	Buffer b;
@@ -174,3 +174,9 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
 
 	return (host_status == HOST_OK);
 }
+
+Authmethod method_hostbased = {
+	"hostbased",
+	userauth_hostbased,
+	&options.hostbased_authentication
+};

@@ -23,15 +23,19 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-passwd.c,v 1.1 2002/05/25 18:51:07 markus Exp $");
+RCSID("$OpenBSD: auth2-passwd.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
 #include "log.h"
 #include "auth.h"
 #include "monitor_wrap.h"
+#include "servconf.h"
 
-int
+/* import */
+extern ServerOptions options;
+
+static int
 userauth_passwd(Authctxt *authctxt)
 {
 	char *password;
@@ -50,3 +54,9 @@ userauth_passwd(Authctxt *authctxt)
 	xfree(password);
 	return authenticated;
 }
+
+Authmethod method_passwd = {
+	"password",
+	userauth_passwd,
+	&options.password_authentication
+};
