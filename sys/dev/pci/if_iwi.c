@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.2 2004/10/20 22:26:42 deraadt Exp $  */
+/*	$Id: if_iwi.c,v 1.3 2004/10/27 21:33:52 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -82,47 +82,47 @@ static const struct ieee80211_rateset iwi_rateset_11b =
 static const struct ieee80211_rateset iwi_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-static int iwi_match(struct device *, void *, void *);
-static void iwi_attach(struct device *, struct device *, void *);
-static int iwi_detach(struct device *, int);
-static int iwi_media_change(struct ifnet *);
-static void iwi_media_status(struct ifnet *, struct ifmediareq *);
-static u_int16_t iwi_read_prom_word(struct iwi_softc *, u_int8_t);
-static int iwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static void iwi_fix_channel(struct ieee80211com *, struct mbuf *);
-static void iwi_frame_intr(struct iwi_softc *, struct iwi_rx_slot *,
-    struct iwi_buf *, struct iwi_frame *);
-static void iwi_notification_intr(struct iwi_softc *, struct iwi_buf *,
+int iwi_match(struct device *, void *, void *);
+void iwi_attach(struct device *, struct device *, void *);
+int iwi_detach(struct device *, int);
+int iwi_media_change(struct ifnet *);
+void iwi_media_status(struct ifnet *, struct ifmediareq *);
+u_int16_t iwi_read_prom_word(struct iwi_softc *, u_int8_t);
+int iwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
+void iwi_fix_channel(struct ieee80211com *, struct mbuf *);
+void iwi_frame_intr(struct iwi_softc *, struct iwi_rx_slot *, struct iwi_buf *,
+    struct iwi_frame *);
+void iwi_notification_intr(struct iwi_softc *, struct iwi_buf *,
     struct iwi_notif *);
-static void iwi_rx_intr(struct iwi_softc *);
-static void iwi_tx_intr(struct iwi_softc *, int);
-static int iwi_intr(void *);
-static int iwi_cmd(struct iwi_softc *, u_int8_t, void *, u_int8_t, int);
-static int iwi_tx_start(struct ifnet *, struct mbuf *, struct ieee80211_node *);
-static void iwi_start(struct ifnet *);
-static void iwi_watchdog(struct ifnet *);
-static int iwi_get_table0(struct iwi_softc *, u_int32_t *);
-static int iwi_get_radio(struct iwi_softc *, int *);
-static int iwi_ioctl(struct ifnet *, u_long, caddr_t);
-static int iwi_init_buffers(struct iwi_softc *, int);
-static void iwi_free_buffers(struct iwi_softc *);
-static int iwi_init_tx_queue(struct iwi_softc *, int, int);
-static void iwi_free_tx_queue(struct iwi_softc *, int);
-static int iwi_init_rx_queue(struct iwi_softc *);
-static void iwi_free_rx_queue(struct iwi_softc *);
-static int iwi_init_queues(struct iwi_softc *);
-static void iwi_free_queues(struct iwi_softc *);
-static void iwi_stop_master(struct iwi_softc *);
-static int iwi_reset(struct iwi_softc *);
-static int iwi_load_ucode(struct iwi_softc *, void *, int);
-static int iwi_load_firmware(struct iwi_softc *, void *, int);
-static int iwi_cache_firmware(struct iwi_softc *, void *);
-static void iwi_free_firmware(struct iwi_softc *);
-static int iwi_config(struct iwi_softc *);
-static int iwi_scan(struct iwi_softc *);
-static int iwi_auth_and_assoc(struct iwi_softc *);
-static int iwi_init(struct ifnet *);
-static void iwi_stop(struct ifnet *, int);
+void iwi_rx_intr(struct iwi_softc *);
+void iwi_tx_intr(struct iwi_softc *, int);
+int iwi_intr(void *);
+int iwi_cmd(struct iwi_softc *, u_int8_t, void *, u_int8_t, int);
+int iwi_tx_start(struct ifnet *, struct mbuf *, struct ieee80211_node *);
+void iwi_start(struct ifnet *);
+void iwi_watchdog(struct ifnet *);
+int iwi_get_table0(struct iwi_softc *, u_int32_t *);
+int iwi_get_radio(struct iwi_softc *, int *);
+int iwi_ioctl(struct ifnet *, u_long, caddr_t);
+int iwi_init_buffers(struct iwi_softc *, int);
+void iwi_free_buffers(struct iwi_softc *);
+int iwi_init_tx_queue(struct iwi_softc *, int, int);
+void iwi_free_tx_queue(struct iwi_softc *, int);
+int iwi_init_rx_queue(struct iwi_softc *);
+void iwi_free_rx_queue(struct iwi_softc *);
+int iwi_init_queues(struct iwi_softc *);
+void iwi_free_queues(struct iwi_softc *);
+void iwi_stop_master(struct iwi_softc *);
+int iwi_reset(struct iwi_softc *);
+int iwi_load_ucode(struct iwi_softc *, void *, int);
+int iwi_load_firmware(struct iwi_softc *, void *, int);
+int iwi_cache_firmware(struct iwi_softc *, void *);
+void iwi_free_firmware(struct iwi_softc *);
+int iwi_config(struct iwi_softc *);
+int iwi_scan(struct iwi_softc *);
+int iwi_auth_and_assoc(struct iwi_softc *);
+int iwi_init(struct ifnet *);
+void iwi_stop(struct ifnet *, int);
 
 static __inline u_int8_t MEM_READ_1(struct iwi_softc *sc, u_int32_t addr)
 {
@@ -151,7 +151,7 @@ struct cfattach iwi_ca = {
 	sizeof (struct iwi_softc), iwi_match, iwi_attach, iwi_detach
 };
 
-static int
+int
 iwi_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -166,7 +166,7 @@ iwi_match(struct device *parent, void *match, void *aux)
 /* Base Address Register */
 #define IWI_PCI_BAR0	0x10
 
-static void
+void
 iwi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
@@ -300,7 +300,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-static int
+int
 iwi_detach(struct device* self, int flags)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
@@ -327,7 +327,7 @@ iwi_detach(struct device* self, int flags)
 	return 0;
 }
 
-static int
+int
 iwi_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -342,7 +342,7 @@ iwi_media_change(struct ifnet *ifp)
 	return 0;
 }
 
-static void
+void
 iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct iwi_softc *sc = ifp->if_softc;
@@ -401,7 +401,7 @@ iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 #undef N
 }
 
-static int
+int
 iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct iwi_softc *sc = ic->ic_softc;
@@ -429,7 +429,7 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  * Read 16 bits at address 'addr' from the Microwire EEPROM.
  * DON'T PLAY WITH THIS CODE UNLESS YOU KNOW *EXACTLY* WHAT YOU'RE DOING!
  */
-static u_int16_t
+u_int16_t
 iwi_read_prom_word(struct iwi_softc *sc, u_int8_t addr)
 {
 	u_int32_t tmp;
@@ -482,7 +482,7 @@ iwi_read_prom_word(struct iwi_softc *sc, u_int8_t addr)
 }
 
 /* XXX Horrible hack to fix channel number of beacons and probe responses */
-static void
+void
 iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 {
 	struct ieee80211_frame *wh;
@@ -515,7 +515,7 @@ iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 	}
 }
 
-static void
+void
 iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_slot *slot,
     struct iwi_buf *buf, struct iwi_frame *frame)
 {
@@ -627,7 +627,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_slot *slot,
 	CSR_WRITE_4(sc, slot->csr, buf->map->dm_segs[0].ds_addr);
 }
 
-static void
+void
 iwi_notification_intr(struct iwi_softc *sc, struct iwi_buf *buf,
     struct iwi_notif *notif)
 {
@@ -708,7 +708,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_buf *buf,
 	}
 }
 
-static void
+void
 iwi_rx_intr(struct iwi_softc *sc)
 {
 	struct iwi_rx_queue *q = &sc->rxqueue;
@@ -750,7 +750,7 @@ iwi_rx_intr(struct iwi_softc *sc)
 	CSR_WRITE_4(sc, IWI_CSR_RX_WRITE_INDEX, q->cur);
 }
 
-static void
+void
 iwi_tx_intr(struct iwi_softc *sc, int index)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -788,7 +788,7 @@ iwi_tx_intr(struct iwi_softc *sc, int index)
 	(*ifp->if_start)(ifp);
 }
 
-static int
+int
 iwi_intr(void *arg)
 {
 	struct iwi_softc *sc = arg;
@@ -839,7 +839,7 @@ iwi_intr(void *arg)
 	return 0;
 }
 
-static int
+int
 iwi_cmd(struct iwi_softc *sc, u_int8_t type, void *data, u_int8_t len,
     int flags)
 {
@@ -874,7 +874,7 @@ iwi_cmd(struct iwi_softc *sc, u_int8_t type, void *data, u_int8_t len,
 	return tsleep(sc, 0, "iwicmd", hz);
 }
 
-static int
+int
 iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 {
 	struct iwi_softc *sc = ifp->if_softc;
@@ -969,7 +969,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	return 0;
 }
 
-static void
+void
 iwi_start(struct ifnet *ifp)
 {
 	struct iwi_softc *sc = ifp->if_softc;
@@ -1017,7 +1017,7 @@ iwi_start(struct ifnet *ifp)
 	}
 }
 
-static void
+void
 iwi_watchdog(struct ifnet *ifp)
 {
 	struct iwi_softc *sc = ifp->if_softc;
@@ -1036,7 +1036,7 @@ iwi_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-static int
+int
 iwi_get_table0(struct iwi_softc *sc, u_int32_t *tbl)
 {
 	u_int32_t size, buf[128];
@@ -1050,7 +1050,7 @@ iwi_get_table0(struct iwi_softc *sc, u_int32_t *tbl)
 	return copyout(buf, tbl, size * sizeof (u_int32_t));
 }
 
-static int
+int
 iwi_get_radio(struct iwi_softc *sc, int *ret)
 {
 	int val;
@@ -1059,7 +1059,7 @@ iwi_get_radio(struct iwi_softc *sc, int *ret)
 	return copyout(&val, ret, sizeof (int));
 }
 
-static int
+int
 iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwi_softc *sc = ifp->if_softc;
@@ -1151,7 +1151,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-static int
+int
 iwi_init_buffers(struct iwi_softc *sc, int nbuf)
 {
 	struct iwi_buf *buf;
@@ -1186,7 +1186,7 @@ fail:	iwi_free_buffers(sc);
 	return error;
 }
 
-static void
+void
 iwi_free_buffers(struct iwi_softc *sc)
 {
 	struct iwi_buf *buf;
@@ -1206,7 +1206,7 @@ iwi_free_buffers(struct iwi_softc *sc)
 	}
 }
 
-static int
+int
 iwi_init_tx_queue(struct iwi_softc *sc, int index, int size)
 {
 	struct iwi_tx_queue *q = &sc->txqueue[index];
@@ -1275,7 +1275,7 @@ fail:	iwi_free_tx_queue(sc, index);
 	return error;
 }
 
-static void
+void
 iwi_free_tx_queue(struct iwi_softc *sc, int index)
 {
 	struct iwi_tx_queue *q = &sc->txqueue[index];
@@ -1296,7 +1296,7 @@ iwi_free_tx_queue(struct iwi_softc *sc, int index)
 	}
 }
 
-static int
+int
 iwi_init_rx_queue(struct iwi_softc *sc)
 {
 	struct iwi_rx_queue *q = &sc->rxqueue;
@@ -1358,7 +1358,7 @@ fail:	iwi_free_rx_queue(sc);
 	return error;
 }
 
-static void
+void
 iwi_free_rx_queue(struct iwi_softc *sc)
 {
 	struct iwi_rx_queue *q = &sc->rxqueue;
@@ -1369,7 +1369,7 @@ iwi_free_rx_queue(struct iwi_softc *sc)
 	}
 }
 
-static int
+int
 iwi_init_queues(struct iwi_softc *sc)
 {
 	int i, error;
@@ -1402,7 +1402,7 @@ fail:	iwi_free_queues(sc);
 	return error;
 }
 
-static void
+void
 iwi_free_queues(struct iwi_softc *sc)
 {
 	int i;
@@ -1414,7 +1414,7 @@ iwi_free_queues(struct iwi_softc *sc)
 		iwi_free_tx_queue(sc, i);
 }
 
-static void
+void
 iwi_stop_master(struct iwi_softc *sc)
 {
 	int ntries;
@@ -1437,7 +1437,7 @@ iwi_stop_master(struct iwi_softc *sc)
 	sc->flags &= ~IWI_FLAG_FW_INITED;
 }
 
-static int
+int
 iwi_reset(struct iwi_softc *sc)
 {
 	int ntries;
@@ -1471,7 +1471,7 @@ iwi_reset(struct iwi_softc *sc)
 	return 0;
 }
 
-static int
+int
 iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 {
 	u_int16_t *w;
@@ -1533,7 +1533,7 @@ iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 
 /* macro to handle unaligned little endian data in firmware image */
 #define GETLE32(p) ((p)[0] | (p)[1] << 8 | (p)[2] << 16 | (p)[3] << 24)
-static int
+int
 iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 {
 	bus_dmamap_t map;
@@ -1673,7 +1673,7 @@ fail1:	return error;
  * Store firmware into kernel memory so we can download it when we need to,
  * e.g when the adapter wakes up from suspend mode.
  */
-static int
+int
 iwi_cache_firmware(struct iwi_softc *sc, void *data)
 {
 	struct iwi_firmware *kfw = &sc->fw;
@@ -1731,7 +1731,7 @@ fail1:
 	return error;
 }
 
-static void
+void
 iwi_free_firmware(struct iwi_softc *sc)
 {
 	free(sc->fw.boot, M_DEVBUF);
@@ -1741,7 +1741,7 @@ iwi_free_firmware(struct iwi_softc *sc)
 	sc->flags &= ~IWI_FLAG_FW_CACHED;
 }
 
-static int
+int
 iwi_config(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1840,7 +1840,7 @@ iwi_config(struct iwi_softc *sc)
 	return iwi_cmd(sc, IWI_CMD_ENABLE, NULL, 0, 0);
 }
 
-static int
+int
 iwi_scan(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1866,7 +1866,7 @@ iwi_scan(struct iwi_softc *sc)
 	return iwi_cmd(sc, IWI_CMD_SCAN, &scan, sizeof scan, IWI_ASYNC_CMD);
 }
 
-static int
+int
 iwi_auth_and_assoc(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1937,7 +1937,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	    IWI_ASYNC_CMD);
 }
 
-static int
+int
 iwi_init(struct ifnet *ifp)
 {
 	struct iwi_softc *sc = ifp->if_softc;
@@ -2000,7 +2000,7 @@ fail:	iwi_stop(ifp, 0);
 	return error;
 }
 
-static void
+void
 iwi_stop(struct ifnet *ifp, int disable)
 {
 	struct iwi_softc *sc = ifp->if_softc;
