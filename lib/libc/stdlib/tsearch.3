@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tsearch.3,v 1.6 1999/07/04 18:59:43 aaron Exp $
+.\"	$OpenBSD: tsearch.3,v 1.7 2000/02/25 07:53:09 deraadt Exp $
 .\"
 .Dd June 15, 1997
 .Dt TSEARCH 3
@@ -34,13 +34,13 @@
 .Sh SYNOPSIS
 .Fd #include <search.h>
 .Ft void *
-.Fn tdelete "const void *key" "void **rootp", "int (*compar) (const void *, const void *)"
+.Fn tdelete "const void *key" "void **rootp" "int (*compar) (const void *, const void *)"
 .Ft void *
-.Fn tfind "const void *key" "void * const *rootp", "int (*compar) (const void *, const void *)"
+.Fn tfind "const void *key" "void * const *rootp" "int (*compar) (const void *, const void *)"
 .Ft void *
-.Fn tsearch "const void *key" "void **rootp", "int (*compar) (const void *, const void *)"
+.Fn tsearch "const void *key" "void **rootp" "int (*compar) (const void *, const void *)"
 .Ft void
-.Fn twalk "const void *root" "void (*compar) (const void *, VISIT, int)"
+.Fn twalk "const void *root" "void (*action) (const void *, VISIT, int)"
 .Sh DESCRIPTION
 The
 .Fn tdelete ,
