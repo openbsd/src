@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.23 1999/12/05 02:50:15 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.24 2000/06/08 00:16:03 mickey Exp $
 #
 
 machine	i386
@@ -53,7 +53,7 @@ config	bsd	swap generic
 mainbus0 at root
 
 bios0	at mainbus0
-apm0	at bios0
+apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 
 #option	EISAVERBOSE
 #eisa0	at mainbus0

@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.38 2000/03/02 18:38:27 mickey Exp $
+#	$OpenBSD: NETTAN,v 1.39 2000/06/08 00:16:03 mickey Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -6,7 +6,7 @@
 machine		i386		# architecture, used by config; REQUIRED
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: NETTAN,v 1.38 2000/03/02 18:38:27 mickey Exp $
+#	$OpenBSD: NETTAN,v 1.39 2000/06/08 00:16:03 mickey Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -130,7 +130,7 @@ config		bsd	swap generic
 mainbus0 at root
 
 bios0	at mainbus0
-apm0	at bios0
+apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 
 isa0	at mainbus0
 eisa0	at mainbus0

@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.21 2000/03/27 23:19:23 deraadt Exp $
+#	$OpenBSD: PETRA,v 1.22 2000/06/08 00:16:03 mickey Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -10,7 +10,7 @@ machine		i386		# architecture, used by config; REQUIRED
 makeoptions	DEBUG="-g"	# make a bsd.gdb too
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: PETRA,v 1.21 2000/03/27 23:19:23 deraadt Exp $
+#	$OpenBSD: PETRA,v 1.22 2000/06/08 00:16:03 mickey Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -131,7 +131,7 @@ config		bsd	root on sd0a swap on ccd0b dumps on sd1a
 mainbus0 at root
 
 bios0	at mainbus0
-apm0	at bios0
+apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 
 isa0	at mainbus0
 isa0	at pcib?
