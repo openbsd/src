@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.3,v 1.4 1997/04/25 18:45:24 kstailey Exp $
+.\"	$OpenBSD: sleep.3,v 1.5 1999/05/29 21:24:21 aaron Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,10 +59,10 @@ A similar but less compatible function can be obtained with a single
 .Xr select 2 ;
 such a function would not restart after signals, and also does not interfere
 with other uses of
-.Xr setitimer
+.Xr setitimer 2
 (not that
 .Fn sleep
-interferes with interval timers anymore.)
+interferes with interval timers anymore).
 .Sh RETURN VALUE
 If the 
 .Fn sleep

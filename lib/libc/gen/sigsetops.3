@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsetops.3,v 1.2 1996/08/19 08:26:14 tholo Exp $
+.\"	$OpenBSD: sigsetops.3,v 1.3 1999/05/29 21:24:20 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,52 +55,42 @@
 .Fn sigismember "sigset_t *set" "int signo"
 .Sh DESCRIPTION
 These functions manipulate signal sets stored in a
-.Fa sigset_t .
+.Em sigset_t .
 Either
 .Fn sigemptyset
 or
 .Fn sigfillset
 must be called for every object of type
-.Fa sigset_t
+.Em sigset_t
 before any other use of the object.
 .Fn sigemptyset 
 and
 .Fn sigfillset 
 are provided as macros, but actual functions are available
 if their names are undefined (with #undef
-.Em name ) .
+.Ar name ) .
 .Pp
 The
 .Fn sigemptyset
 function initializes a signal set to be empty.
 .Pp
-The
 .Fn sigfillset
-function initializes a signal set to contain all signals.
+initializes a signal set to contain all signals.
 .Pp
-The
 .Fn sigaddset
-function adds the specified signal
+adds the specified signal
 .Fa signo
 to the signal set.
 .Pp
-The
 .Fn sigdelset
-function deletes the specified signal
+deletes the specified signal
 .Fa signo
 from the signal set.
 .Pp
-The
 .Fn sigismember
-function returns whether a specified signal
+returns whether a specified signal
 .Fa signo
 is contained in the signal set.
-.Pp
-These functions
-are provided as macros in the include file <signal.h>.
-Actual functions are available
-if their names are undefined (with #undef
-.Em name ) .
 .Sh RETURN VALUES
 The
 .Fn sigismember
@@ -108,16 +98,17 @@ function returns 1
 if the signal is a member of the set,
 a 0 otherwise.
 The other functions return 0 upon success.
-A \-1 return value
+A -1 return value
 indicates an error occurred and the global variable
 .Va errno
-is set to indicated the reason.
+is set to indicate the reason.
 .Sh ERRORS
-These functions could fail if one of the following occurs:
+These functions may fail if one of the following occurs:
 .Bl -tag -width Er
 .It Bq Er EINVAL
+The specified signal
 .Fa signo
-has an invalid value.
+is not a valid signal number.
 .El
 .Sh SEE ALSO
 .Xr kill 2 ,

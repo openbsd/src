@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setproctitle.3,v 1.5 1997/05/30 07:48:25 deraadt Exp $
+.\"	$OpenBSD: setproctitle.3,v 1.6 1999/05/29 21:24:19 aaron Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -46,10 +46,12 @@ function sets the invoking process's title.
 The process title is set to the last component of the program
 name, followed by a colon and the formatted string specified
 by
-.Va fmt .
+.Fa fmt .
 If
-.Va fmt
-is NULL, the colon and formatted string are omitted.
+.Fa fmt
+is
+.Dv NULL ,
+the colon and formatted string are omitted.
 The length of a process title is limited to 2048 bytes.
 .Sh EXAMPLES
 Set the process title to the program name, with no further information:
@@ -58,7 +60,7 @@ setproctitle(NULL);
 .Ed
 .Pp
 Set the process title to the program name, an informational string,
-and the process id:
+and the process ID:
 .Bd -literal -offset indent
 setproctitle("foo! (%d)", getpid());
 .Ed

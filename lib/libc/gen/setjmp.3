@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.5 1999/05/23 14:11:00 aaron Exp $
+.\"	$OpenBSD: setjmp.3,v 1.6 1999/05/29 21:24:19 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ and
 .Fn _setjmp
 functions save their calling environment in
 .Fa env .
-Each of these functions returns 0.
+Each of these functions return 0.
 .Pp
 The corresponding
 .Fn longjmp
@@ -83,20 +83,20 @@ function.
 They then return so that program execution continues as if the corresponding
 invocation of the
 .Fn setjmp
-call had just returned  the value specified by
+call had just returned the value specified by
 .Fa val ,
 instead of 0.
 .Pp
-Pairs of calls may be intermixed, i.e. both
+Pairs of calls may be intermixed, i.e., both
 .Fn sigsetjmp
 and
 .Fn siglongjmp
-and
+as well as
 .Fn setjmp
 and
 .Fn longjmp
 combinations may be used in the same program.  However, individual
-calls may not, e.g. the
+calls may not, e.g., the
 .Fa env
 argument to
 .Fn setjmp
@@ -122,11 +122,10 @@ call are indeterminate.
 .Pp
 The
 .Fn setjmp Ns / Ns Fn longjmp
-pairs save and restore the signal mask while
+function pairs save and restore the signal mask while
 .Fn _setjmp Ns / Ns Fn _longjmp
-pairs save and restore only the register set and the stack.
-(See
-.Fn sigmask 2 . )
+function pairs save and restore only the register set and the stack (see
+.Xr sigmask 2 ) .
 .Pp
 The
 .Fn sigsetjmp Ns / Ns Fn siglongjmp

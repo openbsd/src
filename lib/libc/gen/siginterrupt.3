@@ -1,4 +1,4 @@
-.\"	$OpenBSD: siginterrupt.3,v 1.5 1999/05/23 14:11:00 aaron Exp $
+.\"	$OpenBSD: siginterrupt.3,v 1.6 1999/05/29 21:24:20 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,20 +47,25 @@ The
 function
 is used to change the system call restart
 behavior when a system call is interrupted by the specified signal.
-If the flag is false (0), then system calls will be restarted if
+If
+.Fa flag
+is false (0), system calls will be restarted if
 they are interrupted by the specified signal
+.Fa sig
 and no data has been transferred yet.
 System call restart is the default behavior on
 .Bx 4.2 .
 .Pp
-If the flag is true (1),
-then restarting of system calls is disabled.
+If
+.Fa flag
+is true (1),
+the restarting of system calls is disabled.
 If a system call is interrupted by the specified signal
 and no data has been transferred,
-the system call will return \-1 with the global variable
+the system call will return -1 with the global variable
 .Va errno
 set to
-.Dv EINTR . 
+.Er EINTR . 
 Interrupted system calls that have started transferring
 data will return the amount of data actually transferred.
 System call interrupt is the signal behavior found on
@@ -82,7 +87,7 @@ Programs may switch between restartable and interruptible
 system call operation as often as desired in the execution of a program.
 .Pp
 Issuing a
-.Fn siginterrupt 3
+.Fn siginterrupt
 call during the execution of a signal handler will cause
 the new action to take place on the next signal to be caught.
 .Sh NOTES
@@ -92,8 +97,9 @@ system call that is not available in
 .Bx 4.2 ,
 hence it should not be used if backward compatibility is needed.
 .Sh RETURN VALUES
-A 0 value indicates that the call succeeded.
-A \-1 value indicates that an invalid signal number has been supplied.
+.Fn siginterrupt
+returns 0 on success or -1 if an invalid signal number has been
+specified.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr sigblock 3 ,
