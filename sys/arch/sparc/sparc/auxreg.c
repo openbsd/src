@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxreg.c,v 1.9 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: auxreg.c,v 1.10 2003/05/13 22:25:33 miod Exp $	*/
 /*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
@@ -67,6 +67,8 @@ struct cfdriver auxreg_cd = {
 	0, "auxreg", DV_DULL
 };
 
+volatile u_char *auxio_reg;	/* Copy of AUXIO_REG */
+u_char auxio_regval;
 extern int sparc_led_blink;	/* from machdep */
 struct timeout sparc_led_to;
 
