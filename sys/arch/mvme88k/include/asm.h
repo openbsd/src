@@ -294,7 +294,7 @@
 /*
  * These things for vector_init.c and locore.c
  */
-#if defined(ASSEMBLER)
+#if defined(_LOCORE)
 # define  PREDEFINED_BY_ROM       0xffffffff
 # define  END_OF_VECTOR_LIST      0xfffffffe
 #else

@@ -5,7 +5,7 @@
 #define LOADER_SIZE 2
 #define LOADER_ADDRESS 0x1F0000
 
-#ifndef __ASSEMBLER__
+#ifndef _LOCORE
 struct vid {
 	unsigned char	vid_id[4];
 	unsigned char	vid_0[16];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.3 2001/02/01 03:38:18 smurph Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.4 2001/03/07 23:37:16 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -51,7 +51,7 @@
  * it'll be unsigned in both ANSI and traditional.
  */
 #ifndef UDEFINED
-#if defined(ASSEMBLER)
+#if defined(_LOCORE)
 #	define U(num)	num
 #else
 #  if defined(__STDC__)
@@ -369,7 +369,7 @@
 #define DART_OPRS		U(0xfff82038)	/* output port set */
 #define DART_OPRR		U(0xfff8203c)	/* output port reset */
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 
 /*
  * Externals

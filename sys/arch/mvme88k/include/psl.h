@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.6 2001/02/12 08:16:23 smurph Exp $ */
+/*	$OpenBSD: psl.h,v 1.7 2001/03/07 23:37:17 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -78,10 +78,18 @@ extern int intrcnt[M88K_NIRQ];
 
 /* needs major cleanup - XXX nivas */
 
+#ifndef _LOCORE
+unsigned setipl __P((unsigned));
+#endif
+
 #if 0
 spl0 is a function by itself. I really am serious about the clean up
 above...
 #define spl0()		spln(0)
+#else
+#ifndef _LOCORE
+int spl0 __P((void));
+#endif
 #endif /* 0 */
 #define spl1()		setipl(1)
 #define spl2()		setipl(2)
@@ -178,7 +186,7 @@ above...
 #define PSR_USER	(PSR_SFD)
 #define PSR_SET_BY_USER	(PSR_BO | PSR_SER | PSR_C | PSR_MXM)
 
-#ifndef	ASSEMBLER
+#ifndef	_LOCORE
 struct psr {
     unsigned
 	psr_mode: 1,

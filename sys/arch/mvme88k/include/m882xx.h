@@ -1,4 +1,4 @@
-/*	$OpenBSD: m882xx.h,v 1.5 1999/09/27 20:46:18 smurph Exp $ */
+/*	$OpenBSD: m882xx.h,v 1.6 2001/03/07 23:37:16 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -33,7 +33,7 @@
 #ifndef	__MACHINE_M882XX_H__
 #define	__MACHINE_M882XX_H__
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 # include <machine/mmu.h>		 /* batc_template_t */
 #endif
 
@@ -130,7 +130,7 @@
 #define CMMU_PFSR_SUPER		6	/* supervisor violation */
 #define CMMU_PFSR_WRITE		7	/* writer violation */
 
-#ifndef	ASSEMBLER
+#ifndef	_LOCORE
 
 /*
  * Prototypes from "mvme88k/mvme88k/m18x_cmmu.c"
@@ -188,7 +188,7 @@ void m18x_cmmu_set_pair_batc_entry(
      unsigned entry_no,
      unsigned value);  /* the value to stuff into the batc */
 
-#endif	/* ASSEMBLER */
+#endif	/* _LOCORE */
 
 /*
  * Possible MVME188 board configurations

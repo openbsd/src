@@ -1,9 +1,9 @@
-/*	$OpenBSD: m88110.h,v 1.2 2001/01/14 20:25:24 smurph Exp $ */
+/*	$OpenBSD: m88110.h,v 1.3 2001/03/07 23:37:16 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 # include <machine/mmu.h>		 /* batc_template_t */
 #endif
 
@@ -110,7 +110,7 @@
 #define CMMU_DATA 1
 #define CMMU_INST 0
 
-#ifndef	ASSEMBLER
+#ifndef	_LOCORE
 /*
  * Prototypes from "mvme88k/mvme88k/m197_cmmu.c"
  */
@@ -224,6 +224,6 @@ unsigned get_dsr  (void);
 unsigned get_dlar (void);
 unsigned get_dpar (void);
 
-#endif	/* ASSEMBLER */
+#endif	/* _LOCORE */
 
 #endif __MACHINE_M88110_H__

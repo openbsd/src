@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.3 2001/02/01 03:38:18 smurph Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.4 2001/03/07 23:37:17 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -54,7 +54,7 @@
  * it'll be unsigned in both ANSI and traditional.
  */
 #ifndef UDEFINED
-#if defined(ASSEMBLER)
+#if defined(_LOCORE)
 #	define U(num)	num
 #else
 #  if defined(__STDC__)

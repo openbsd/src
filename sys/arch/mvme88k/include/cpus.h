@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpus.h,v 1.6 2001/01/14 20:25:23 smurph Exp $ */
+/*	$OpenBSD: cpus.h,v 1.7 2001/03/07 23:37:16 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -38,7 +38,7 @@
 /*
  * cpu Processor Identification Register (PID).
  */
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 union cpupid {
    unsigned cpupid;
    struct {
@@ -56,7 +56,7 @@ union cpupid {
       /*empty*/:16;
    } m88200;
 };
-#endif ASSEMBLER
+#endif _LOCORE
 
 #define M88100 0
 #define M88200 5

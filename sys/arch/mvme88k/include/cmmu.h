@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.1 1999/09/27 20:46:17 smurph Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.2 2001/03/07 23:37:15 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -33,7 +33,7 @@
 #ifndef	__MACHINE_CMMU_H__
 #define	__MACHINE_CMMU_H__
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 #include <machine/mmu.h>		 /* batc_template_t */
 #endif
 
@@ -61,7 +61,7 @@
 #define FLUSH_ALL       ((vm_offset_t)~0)
 
 
-#ifndef	ASSEMBLER
+#ifndef	_LOCORE
 /*
  * Prototypes and stuff for cmmu.c.
  */
@@ -125,6 +125,6 @@ void cmmu_set_pair_batc_entry(
      unsigned entry_no,
      unsigned value);  /* the value to stuff into the batc */
 
-#endif	/* ASSEMBLER */
+#endif	/* _LOCORE */
 
 #endif	/* __MACHINE_CMMU_H__ */
