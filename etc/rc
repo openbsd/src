@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.231 2003/12/29 23:16:45 millert Exp $
+#	$OpenBSD: rc,v 1.232 2004/01/23 22:11:40 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -245,7 +245,7 @@ if [ -d /var/yp/binding -a X`domainname` != X ]; then
 
 	echo -n ' ypbind';		ypbind
 
-	if [ -d /var/yp/`domainname` ]; then
+	if [ X"${yppasswdd_flags}" != X"NO" -a -d /var/yp/`domainname` ]; then
 		# if we are the master server, run rpc.yppasswdd
 		_host1=`ypwhich -m passwd 2> /dev/null`
 		_host2=`hostname`
