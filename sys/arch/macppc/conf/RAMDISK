@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.31 2004/06/25 09:49:12 pvalchev Exp $
+#	$OpenBSD: RAMDISK,v 1.32 2004/08/03 00:45:11 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -142,6 +142,14 @@ ukbd*		at uhidev? reportid ?		# USB HID Keyboard devices
 #ums*		at uhub? port ? configuration ?	# USB Mice
 #wsmouse*	at ums? mux 0
 #ulpt*		at uhub? port ? configuration ?	# USB Printer
+aue*		at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+axe*		at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
+cue*		at uhub? port ?			# CATC USB-EL1201A based Ethernet
+kue*		at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+cdce*		at uhub? port ?			# CDC Ethernet
+upl*		at uhub? port ?			# Prolific PL2301/PL2302 host-to-host
+url*		at uhub? port ?			# Realtek RTL8150L based adapters
+wi*		at uhub? port ?			# WaveLAN IEEE 802.11DS
 #uscanner*	at uhub? port ?			# USB Scanner driver
 #usscanner*	at uhub? port ?			# USB SCSI scanners
 #scsibus*	at usscanner?
@@ -149,8 +157,6 @@ ukbd*		at uhidev? reportid ?		# USB HID Keyboard devices
 #ugen*		at uhub? port ? configuration ? # USB Generic driver
 umass*		at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus*	at umass?
-kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
-aue*		at uhub? port ?			# USB EtherNet 
 
 # CardBus bus support
 cardbus*	at cardslot?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.77 2004/06/23 01:36:58 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.78 2004/08/03 00:43:49 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -112,11 +112,16 @@ umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
 #ums*	at uhidev? reportid ?
 #wsmouse* at ums? mux 0
-#aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
-#cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
-#kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
-#upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
-#urio*	at uhub? port ?			# Diamond Multimedia Rio 500
+aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
+cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+urio*	at uhub? port ?			# Diamond Multimedia Rio 500
+cdce*	at uhub? port ?			# CDC Ethernet
+upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+url*	at uhub? port ?			# Realtek RTL8150L based adapters
+wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
 #uscanner* at uhub? port ?		# USB Scanners
 #usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
 #scsibus* at usscanner?
