@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.18 2002/07/02 01:59:42 stevesk Exp $
+.\"	$OpenBSD: syslog.3,v 1.19 2002/07/05 04:21:06 deraadt Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,16 +70,17 @@
 .Ft int
 .Fn setlogmask_r "int maskpri" "struct syslog_data *data"
 .Bd -literal
+.Pp
 struct syslog_data {
-        int     log_file;
-        int     connected;
-        int     opened;
-        int     log_stat;
-        const char      *log_tag;
-        int     log_fac;
-        int     log_mask;
+        int             log_file;
+        int             connected;
+        int             opened;
+        int             log_stat;
+        const char     *log_tag;
+        int             log_fac;
+        int             log_mask;
 };
-
+.Pp
 #define SYSLOG_DATA_INIT {-1, 0, 0, 0, NULL, LOG_USER, 0xff}
 .Ed
 .Sh DESCRIPTION
