@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_defs.h,v 1.7 1998/07/12 04:33:22 angelos Exp $	*/
+/*	$OpenBSD: ppp_defs.h,v 1.8 1999/02/11 19:38:54 mickey Exp $	*/
 /*	$NetBSD: ppp_defs.h,v 1.1 1995/07/04 06:28:26 paulus Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
  * Protocol field values.
  */
 #define PPP_IP		0x21	/* Internet Protocol */
+#define	PPP_XNS		0x25	/* Xerox NS */
 #define PPP_AT		0x29	/* AppleTalk Protocol */
 #define	PPP_IPX		0x2b	/* Internetwork Packet Exchange */
 #define	PPP_VJC_COMP	0x2d	/* VJ compressed TCP */
