@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.h,v 1.5 1999/10/03 20:39:52 millert Exp $	*/
+/*	$OpenBSD: fts.h,v 1.6 2001/05/15 21:14:37 millert Exp $	*/
 /*	$NetBSD: fts.h,v 1.5 1994/12/28 01:41:50 mycroft Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ typedef struct {
 	dev_t fts_dev;			/* starting device # */
 	char *fts_path;			/* path for this descent */
 	int fts_rfd;			/* fd for root */
-	int fts_pathlen;		/* sizeof(path) */
+	size_t fts_pathlen;		/* sizeof(path) */
 	int fts_nitems;			/* elements in the sort array */
 	int (*fts_compar)();		/* compare function */
 
@@ -58,8 +58,7 @@ typedef struct {
 #define	FTS_SEEDOT	0x0020		/* return dot and dot-dot */
 #define	FTS_XDEV	0x0040		/* don't cross devices */
 #define	FTS_WHITEOUT	0x0080		/* return whiteout information */
-#define	FTS_CHDIRROOT	0x0100		/* chdir to root of tree not orig cwd */
-#define	FTS_OPTIONMASK	0x0fff		/* valid user option mask */
+#define	FTS_OPTIONMASK	0x00ff		/* valid user option mask */
 
 #define	FTS_NAMEONLY	0x1000		/* (private) child names only */
 #define	FTS_STOP	0x2000		/* (private) unrecoverable error */
@@ -76,8 +75,8 @@ typedef struct _ftsent {
 	char *fts_path;			/* root path */
 	int fts_errno;			/* errno for this node */
 	int fts_symfd;			/* fd for symlink */
-	u_short fts_pathlen;		/* strlen(fts_path) */
-	u_short fts_namelen;		/* strlen(fts_name) */
+	size_t fts_pathlen;		/* strlen(fts_path) */
+	size_t fts_namelen;		/* strlen(fts_name) */
 
 	ino_t fts_ino;			/* inode */
 	dev_t fts_dev;			/* device */
