@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.47 2004/07/19 20:35:37 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.48 2004/07/20 20:28:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -89,7 +89,7 @@ struct cfdriver vs_cd = {
 	NULL, "vs", DV_DULL,
 };
 
-int	do_vspoll(struct vs_softc *, int, int);
+int	do_vspoll(struct vs_softc *, struct scsi_xfer *, int, int);
 void	thaw_queue(struct vs_softc *, int);
 void	thaw_all_queues(struct vs_softc *);
 M328_SG	vs_alloc_scatter_gather(void);
@@ -205,7 +205,7 @@ vsattach(struct device *parent, struct device *self, void *args)
 }
 
 int
-do_vspoll(struct vs_softc *sc, int to, int canreset)
+do_vspoll(struct vs_softc *sc, struct scsi_xfer *xs, int to, int canreset)
 {
 	int i;
 	int crsw;
@@ -223,8 +223,11 @@ do_vspoll(struct vs_softc *sc, int to, int canreset)
 					vs_reset(sc);
 					vs_resync(sc);
 				}
-				printf("%s: timeout %d crsw 0x%x\n",
-				    sc->sc_dev.dv_xname, to, crsw);
+				if (xs == NULL)
+					printf("%s: ", sc->sc_dev.dv_xname);
+				else
+					sc_print_addr(xs->sc_link);
+				printf("timeout %d crsw 0x%x\n", to, crsw);
 				return 1;
 			}
 		}
@@ -240,7 +243,7 @@ vs_poll(struct vs_softc *sc, struct scsi_xfer *xs)
 
 	to = xs->timeout / 1000;
 	for (;;) {
-		if (do_vspoll(sc, to, 1)) {
+		if (do_vspoll(sc, xs, to, 1)) {
 			xs->error = XS_SELTIMEOUT;
 			xs->status = -1;
 			xs->flags |= ITSDONE;
@@ -435,7 +438,7 @@ vs_chksense(struct scsi_xfer *xs)
 
 	/* poll for the command to complete */
 	s = splbio();
-	do_vspoll(sc, 0, 1);
+	do_vspoll(sc, xs, 0, 1);
 	xs->status = vs_read(2, sh_RET_IOPB + IOPB_STATUS) >> 8;
 	splx(s);
 }
@@ -566,7 +569,7 @@ vs_initialize(struct vs_softc *sc)
 	mce_write(2, CQE_QECR, M_QECR_GO);
 
 	/* poll for the command to complete */
-	do_vspoll(sc, 0, 1);
+	do_vspoll(sc, NULL, 0, 1);
 
 	/* initialize work queues */
 	for (i = 1; i < 8; i++) {
@@ -588,7 +591,7 @@ vs_initialize(struct vs_softc *sc)
 		mce_write(2, CQE_QECR, M_QECR_GO);
 
 		/* poll for the command to complete */
-		do_vspoll(sc, 0, 1);
+		do_vspoll(sc, NULL, 0, 1);
 		if (CRSW & M_CRSW_ER)
 			CRB_CLR_ER;
 		CRB_CLR_DONE;
@@ -600,7 +603,7 @@ vs_initialize(struct vs_softc *sc)
 	/* start queue mode */
 	mcsb_write(2, MCSB_MCR, mcsb_read(2, MCSB_MCR) | M_MCR_SQM);
 
-	do_vspoll(sc, 0, 1);
+	do_vspoll(sc, NULL, 0, 1);
 	if (CRSW & M_CRSW_ER) {
 		printf("initialization error, status = 0x%x\n",
 		    vs_read(2, sh_RET_IOPB + IOPB_STATUS));
@@ -671,7 +674,7 @@ vs_reset(struct vs_softc *sc)
 
 	/* poll for the command to complete */
 	for (;;) {
-		do_vspoll(sc, 0, 0);
+		do_vspoll(sc, NULL, 0, 0);
 		/* ack & clear scsi error condition cause by reset */
 		if (CRSW & M_CRSW_ER) {
 			CRB_CLR_DONE;
@@ -788,10 +791,8 @@ vs_eintr(void *vsc)
 
 	if (xs == NULL)
 		printf("%s: ", sc->sc_dev.dv_xname);
-	else {
-		printf("%s(target %d): ",
-		    sc->sc_dev.dv_xname, xs->sc_link->target);
-	}
+	else
+		sc_print_addr(xs->sc_link);
 
 	switch (ecode) {
 	case CEVSB_ERR_TYPE:
