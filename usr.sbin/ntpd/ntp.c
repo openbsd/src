@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.26 2004/08/12 16:33:59 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.27 2004/09/09 21:50:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,9 +35,12 @@ volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		 ibuf_main;
 struct l_fixedpt	 ref_ts;
 struct ntpd_conf	*conf;
+u_int			 peer_cnt;
 
 void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
+void	peer_add(struct ntp_peer *);
+void	peer_remove(struct ntp_peer *);
 
 void
 ntp_sighdlr(int sig)
@@ -55,7 +58,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 {
 	int			 nfds, i, j, idx_peers, timeout;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
-	u_int			 listener_cnt, peer_cnt, new_cnt;
+	u_int			 listener_cnt, new_cnt;
 	pid_t			 pid;
 	struct pollfd		*pfd = NULL;
 	struct passwd		*pw;
@@ -291,8 +294,7 @@ ntp_dispatch_imsg(void)
 					npeer->addr = h;
 					npeer->addr_head.a = h;
 					client_peer_init(npeer);
-					TAILQ_INSERT_TAIL(&conf->ntp_peers,
-					    npeer, entry);
+					peer_add(npeer);
 				} else {
 					h->next = peer->addr;
 					peer->addr = h;
@@ -301,10 +303,9 @@ ntp_dispatch_imsg(void)
 			}
 			if (dlen != 0)
 				fatal("IMSG_HOST_DNS: dlen != 0");
-			if (peer->addr_head.pool) {
-				TAILQ_REMOVE(&conf->ntp_peers, peer, entry);
-				free(peer);
-			} else
+			if (peer->addr_head.pool)
+				peer_remove(peer);
+			else
 				client_addr_init(peer);
 			break;
 		default:
@@ -313,6 +314,21 @@ ntp_dispatch_imsg(void)
 		imsg_free(&imsg);
 	}
 	return (0);
+}
+
+void
+peer_add(struct ntp_peer *p)
+{
+	TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
+	peer_cnt++;
+}
+
+void
+peer_remove(struct ntp_peer *p)
+{
+	TAILQ_REMOVE(&conf->ntp_peers, p, entry);
+	free(p);
+	peer_cnt--;
 }
 
 void
