@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.314 2003/01/31 19:36:39 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.315 2003/02/01 15:20:16 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4118,7 +4118,9 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p, sa_family_t a
 		flag_bad = M_UDP_CSUM_IN_BAD;
 		break;
 	case IPPROTO_ICMP:
+#ifdef INET6
 	case IPPROTO_ICMPV6:
+#endif /* INET6 */
 		flag_ok = flag_bad = 0;
 		break;
 	default:
@@ -4148,11 +4150,13 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p, sa_family_t a
 			sum = in4_cksum(m, p, off, len);
 		}
 		break;
+#ifdef INET6
 	case AF_INET6:
 		if (m->m_len < sizeof(struct ip6_hdr))
 			return (1);
 		sum = in6_cksum(m, p, off, len);
 		break;
+#endif /* INET6 */
 	default:
 		return (1);
 	}
@@ -4168,9 +4172,11 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p, sa_family_t a
 		case IPPROTO_ICMP:
 			icmpstat.icps_checksum++;
 			break;
+#ifdef INET6
 		case IPPROTO_ICMPV6:
 			icmp6stat.icp6s_checksum++;
 			break;
+#endif /* INET6 */
 		}
 		return (1);
 	}
