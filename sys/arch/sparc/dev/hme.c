@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.15 1999/01/07 03:14:42 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.16 1999/01/31 21:56:46 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -36,7 +36,7 @@
  * Based on information gleaned from reading the
  *	S/Linux driver by David Miller
  *
- * Thanks go to the Univeristy of North Carolina at Greensboro Systems
+ * Thanks go to the University of North Carolina at Greensboro, Systems
  * and Networks Department for some of the resources used to develop
  * this driver.
  */
