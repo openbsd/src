@@ -100,10 +100,13 @@ gld${EMULATION_NAME}_search_dir (dirname, filename)
   force_maj = -1;
   force_min = -1;
   dot = strchr (filename, '.');
+#ifdef DO_FORCE_VERS
   if (dot == NULL)
     {
+#endif /* DO_FORCE_VERS */
       len = strlen (filename);
       alc = NULL;
+#ifdef DO_FORCE_VERS
     }
   else
     {
@@ -119,6 +122,7 @@ gld${EMULATION_NAME}_search_dir (dirname, filename)
       if (dot != NULL)
 	force_min = atoi (dot + 1);
     }
+#endif /* DO_FORCE_VERS */
 
   found = NULL;
   max_maj = max_min = 0;
