@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.3 1997/02/23 19:10:51 downsj Exp $
+#	$OpenBSD: dot.profile,v 1.4 1997/10/13 07:47:21 downsj Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,19 +35,25 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=hp300h
 export TERM
+HOME=/
+export HOME
 
-# set up some sane defaults
-echo 'erase ^?, werase ^H, kill ^U, intr ^C'
-stty newcrt werase ^H intr ^C kill ^U erase ^? 9600
-echo ''
+TMPWRITEABLE=/tmp/writeable
 
-# This needs to be done now, for the sake of ksh.
-if [ ! -f /tmp/writeable ]; then
+if [ "X${DONEPROFILE}" = "X" ]; then
+	DONEPROFILE=YES
+	export DONEPROFILE
+
+	# set up some sane defaults
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	echo ''
+
 	echo 'Remounting /dev/rd0a as root...'
-	mount -t ffs -u /dev/rd0a /
-	sleep 2
-	# ..and let install.md know we've done it.
-	> /tmp/writeable
+	mount /dev/rd0a /
+
+	# tell install.md we've done it
+	> ${TMPWRITEABLE}
 fi
 
 # pull in the function definitions that people will use from the shell prompt.

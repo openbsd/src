@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 1997/04/30 07:59:15 downsj Exp $
+#	$OpenBSD: list,v 1.6 1997/10/13 07:47:23 downsj Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -59,7 +59,6 @@ LINK	raminst			usr/sbin/chat
 LINK	raminst			usr/sbin/chown
 LINK	raminst			usr/sbin/pppd
 LINK	raminst			usr/bin/vi
-LINK	raminst			usr/bin/vim
 SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
