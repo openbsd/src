@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.1 2002/12/02 09:00:15 miod Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.2 2002/12/02 09:02:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -28,14 +28,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(list)
-static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.1 2002/12/02 09:00:15 miod Exp $";
+static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.2 2002/12/02 09:02:57 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <syslog.h>
 
-long __guard[8] = {0,0,0,0,0,0,0,0};
+long __guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __guard_setup(void) __attribute__ ((constructor));
 void __stack_smash_handler(char func[], int damaged __attribute__((unused)));
 
@@ -53,15 +53,15 @@ __guard_setup(void)
 
 	len = 4;
 	for (i = 0; i < sizeof(__guard) / 4; i++) {
-		if (sysctl(mib, 2, (char*)&((int*)__guard)[i],
+		if (sysctl(mib, 2, (char *)&((int *)__guard)[i],
 		    &len, NULL, 0) == -1)
 			break;
 	}
 
 	if (i < sizeof(__guard) / 4) {
 		/* If sysctl was unsuccessful, use the "terminator canary". */
-		((char*)__guard)[0] = 0; ((char*)__guard)[1] = 0;
-		((char*)__guard)[2] = '\n'; ((char*)__guard)[3] = 255;
+		((char *)__guard)[0] = 0; ((char*)__guard)[1] = 0;
+		((char *)__guard)[2] = '\n'; ((char *)__guard)[3] = 255;
 	}
 }
 
