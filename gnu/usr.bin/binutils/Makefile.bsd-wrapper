@@ -1,0 +1,38 @@
+#	$Id: Makefile.bsd-wrapper,v 1.1 1996/01/08 15:54:12 niklas Exp $
+
+MAN=	binutils/ar.1 binutils/nlmconv.1 binutils/nm.1 binutils/objcopy.1 \
+	binutils/objdump.1 binutils/ranlib.1 binutils/size.1 \
+	binutils/strings.1 binutils/strip.1 gas/doc/as.1 ld/ld.1 \
+	gprof/gprof.1
+
+# So far only gas is useful for us.  This will change, be sure.
+all:	config.status
+	${MAKE} LDFLAGS=${LDSTATIC} all-gas
+
+.FORCE:	.IGNORE
+
+config: .FORCE
+	sh ${.CURDIR}/configure --prefix=/usr
+
+config.status:
+	sh ${.CURDIR}/configure --prefix=/usr
+
+install: maninstall
+	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
+		bindir=${DESTDIR}/usr/bin INSTALL_MAN= install-gas install-ld
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>

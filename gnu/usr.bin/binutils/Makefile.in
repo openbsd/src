@@ -112,7 +112,6 @@ RUNTEST = `if [ -f $${srcroot}/dejagnu/runtest ] ; \
 	then echo $${srcroot}/dejagnu/runtest ; \
 	else echo runtest ; fi`
 
-
 # compilers to use to create programs which must be run in the build
 # environment.
 CC_FOR_BUILD = $(CC)
@@ -279,6 +278,7 @@ BASE_FLAGS_TO_PASS = \
 	"RUNTEST=$(RUNTEST)" \
 	"RUNTESTFLAGS=$(RUNTESTFLAGS)" \
 	"YACC=$(BISON)" \
+	"INSTALL_MAN=$(INSTALL_MAN)" \
 	"exec_prefix=$(exec_prefix)" \
 	"prefix=$(prefix)" \
 	"tooldir=$(tooldir)" 

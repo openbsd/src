@@ -206,6 +206,10 @@ GASPOBJS = \
 	sb.o \
 	hash.o
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 all: .gdbinit as.new gasp.new
 	@srcroot=`cd $(srcroot); pwd`; export srcroot; \
 	(cd doc ; $(MAKE) $(FLAGS_TO_PASS) all)
@@ -426,7 +430,7 @@ distclean: clean-here
 		targ-cpu.c obj-format.h obj-format.c atof-targ.c TAGS \
 		config-stamp config.h conf config.log config.cache .gdbinit \
 		testsuite/Makefile testsuite/config.status
-maintainer-clean realclean: clean distclean clean-info
+maintainer-clean realclean: clean clean-info distclean
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -rf $(DISTSTUFF)
@@ -434,10 +438,9 @@ maintainer-clean realclean: clean distclean clean-info
 # Entry points `install', `includes' and `uninstall'.
 
 # Copy the files into directories where they will be run.
-install:
+install: $(INSTALL_MAN)
 	srcroot=`cd $(srcroot); pwd`; export srcroot; \
 	$(INSTALL_XFORM) as.new $(bindir)/as; \
-	$(INSTALL_XFORM1) $(srcdir)/doc/as.1 $(man1dir)/as.1; \
 	n=`echo as | sed '$(program_transform_name)'`; \
 	if [ -d $(tooldir) ]; then \
 	  if [ -d $(tooldir)/bin ] ; then true ; else mkdir $(tooldir)/bin ; fi; \
@@ -455,6 +458,10 @@ uninstall:
 	rm -f $(mandir)/$$n.1
 	-n=`t='$(program_transform_name)'; echo gasp | sed $$t`; \
 	rm -f $(bindir)/$$n; \
+
+install-man:
+	srcroot=`cd $(srcroot); pwd`; export srcroot; \
+	$(INSTALL_XFORM1) $(srcdir)/doc/as.1 $(man1dir)/as.1
 
 # These exist for maintenance purposes.
 
