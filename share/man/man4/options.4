@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.154 2004/12/03 14:17:18 martin Exp $
+.\"	$OpenBSD: options.4,v 1.155 2004/12/24 17:26:48 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -292,9 +292,10 @@ Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd option SMALL_KERNEL
-Removes some optimizations from the kernel to reduce the size of the
-resulting kernel binary.
-This option can decrease system performance.
+Removes some features and some optimizations from the kernel to reduce the
+size of the resulting kernel binary.
+This option is used on some installation media and should not be used
+for general purpose kernels.
 .It Cd option NO_PROPOLICE
 Do not compile the kernel with the ProPolice stack protection.
 See
