@@ -3,6 +3,7 @@
  * Copyright (c) 1993-1992 Carnegie Mellon University
  * Copyright (c) 1991 OMRON Corporation
  * Copyright (c) 1996 Nivas Madhur
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * All Rights Reserved.
  *
  * Permission to use, copy, modify and distribute this software and its
@@ -727,6 +728,7 @@ ENTRY(copyinstr)
 
 ENTRY(copyout)
 	/* setup fault handler */
+/*	tb0 0, r0, 132     entry trap */
 	or.u		r5,   r0,   hi16(_curpcb)	
 	ld		r6,   r5,   lo16(_curpcb)
 	or.u		r5,   r0,   hi16(.Lcoflt)
@@ -737,13 +739,13 @@ ENTRY(copyout)
 /*	;br		.Lcodone */
     /*;1: ;bcnd		lt0,  LEN,  .Lcoflt ; EFAULT if len < 0  */
 	/* If it's a small length (less than 8), then do byte-by-byte */
-	cmp		r9,   LEN,  8
-	bb1		lt,   r9,   copyout_byte_only
+	cmp		r9,   LEN,  8 
+	bb1		lt,   r9,   copyout_byte_only 
 
 	/* If they're not aligned similiarly, use byte only... */
-	xor		r9,   SRC,  DEST
-	mask		r8,   r9,   0x3
-	bcnd		ne0,  r8,   copyout_byte_only
+	xor		r9,   SRC,  DEST 
+	mask		r8,   r9,   0x3 
+	bcnd		ne0,  r8,   copyout_byte_only 
 
 	/*
 	 * At this point, we don't know if they're word aligned or not,

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
  *
@@ -89,12 +90,10 @@ LABEL(start)
 	br	_start_text
 #if 0
 	.align 4096		  /* VBR points to page aligned list */
-    _LABEL(vector_list)	  /* references memory BELOW this line */
+    LABEL(_vector_list)	  /* references memory BELOW this line */
 	#include "machine/exception_vectors.h"
 	word	END_OF_VECTOR_LIST
 
-    _LABEL(_msgsw)
-	word 0 /* Bits here turn on/off debugging somewhere. */
 #endif
 
 ENTRY(doboot)
@@ -151,17 +150,15 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	/*
 	 * Args passed by boot loader
 	 * 	r2 howto
-	 *	r3 not used
+	 *	r3 boot controler address
 	 *	r4 esym
 	 *	r5 start of mini
 	 *	r6 end miniroot
 	 */
 	or.u	r13, r0,  hi16(_boothowto)
 	st	r2,  r13, lo16(_boothowto)
-#if 0
-	or.u	r13, r0,  hi16(_bootdev)
-	st	r3,  r13, lo16(_bootdev)
-#endif
+	or.u	r13, r0,  hi16(_bootaddr)
+	st	r3,  r13, lo16(_bootaddr)
 	or.u	r13, r0,  hi16(_first_addr)
 	st	r4,  r13, lo16(_first_addr)
 	or.u	r13, r0,  hi16(_esym)
@@ -204,18 +201,29 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	 *	jfriedl@omron.co.jp
 	 */
 	stcr	r0, SSBR	/* clear this for later */
-
+#if 0
+	stcr	r0, SR0		/* clear "current thread" */
+	stcr	r0, SR1		/* clear the CPU flags */
+#define PSR_SHADOW_FREEZE_BIT		 0
+#define PSR_INTERRUPT_DISABLE_BIT	 1
+#define PSR_FPU_DISABLE_BIT		 3
+#define PSR_BIG_ENDIAN_MODE		30
+#define PSR_SUPERVISOR_MODE_BIT		31
+	set     r11, r11, 1<PSR_SHADOW_FREEZE_BIT>
+	set     r11, r11, 1<PSR_FPU_DISABLE_BIT>
+#endif
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
 	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r11, PSR
         FLUSH_PIPELINE
-	/* shadowing, FPU, misalgined access exception: all enabled now.*/
+
 #if 0
-	or.u	r11, r0,  hi16(_vector_list)
-	or	r11, r11, lo16(_vector_list)
+	or.u	r11, r0,  hi16(_vector_table)
+	or	r11, r11, lo16(_vector_table)
 	stcr	r11, VBR
-#endif /* 0 */
+#else
 	stcr	r0, VBR
+#endif /* 0 */
 
 	/*
 	 * Switch to interrupt stack
@@ -267,7 +275,7 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	 * XXX nivas
 	 */
 	 
-#if XXXX
+#if XXX
 	bsr.n	_setipl
 	or	r2, r0, IPL_SOFTCLOCK
 	bsr	_enable_interrupt
@@ -275,8 +283,11 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	or	r2, r0, IPL_HIGH
 #endif
 	/* make the call: main() */
-	bsr.n	_main
+	or.u	r2, r0, hi16(UADDR)
+	or	r2, r2,lo16(UADDR)
+	addu	r2, r2, USIZE - 8
 	subu	r31, r31, 40
+	bsr	_main
 	addu	r31, r31, 40
 	bsr	_panic
 
@@ -284,11 +295,16 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 
 	data
 	.align 4096		  /* VBR points to page aligned list */
-	global _vector_list
-_vector_list:			  /* references memory BELOW this line */
+LABEL(_vector_list)		  /* references memory BELOW this line */
 #include "machine/exception_vectors.h"
 	word	END_OF_VECTOR_LIST
 
+	.align 4096		  /* Vector table is a page aligned list */
+LABEL(_vector_table)		  /* new vector table location, was addr 0 */
+	space	(0x1000)	/* 16K */
+	global _ret_addr
+_ret_addr:
+	word 0
 	global _msgsw
 _msgsw:
 	word 0 			 /* Bits here turn on/off debugging somewhere */
@@ -308,6 +324,7 @@ _intstack_end:
  * we feel like doing that).
  * Should be page aligned.
  */
+	.align 4096
 	global	_idle_u
 _idle_u:
 	space	UPAGES * NBPG
@@ -317,8 +334,8 @@ _idle_u:
  *
  * This must be page aligned
  */
+	.align	4096
 	global	_u0
-	align	4096
 _u0:	space	UPAGES * NBPG
 estack0:
 
@@ -335,6 +352,14 @@ _kstack:
 _esym:
 	word 	0
 #endif /* DDB */
+
+	global	_intiobase, _intiolimit, _extiobase
+_intiobase:
+	word	0		| KVA of base of internal IO space
+_intiolimit:
+	word	0		| KVA of end of internal IO space
+_extiobase:
+	word	0		| KVA of base of external IO space
 
 	global	_proc0paddr	/* move to C code */
 _proc0paddr:

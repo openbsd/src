@@ -52,6 +52,11 @@ bdev_decl(st);
 bdev_decl(sd);
 #include "cd.h"
 bdev_decl(cd);
+#include "rd.h"
+#include "vnd.h"
+#include "ccd.h"
+bdev_decl(rd);
+
 
 #if notyet
 #include "ch.h"
@@ -78,7 +83,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
-	bdev_notdef(),			/* 7 */
+	bdev_disk_init(NRD,rd),		/* 7: ramdisk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_notdef(),			/* 9 */
 #if notyet
@@ -102,18 +107,20 @@ cdev_decl(ctty);
 cdev_decl(mm);
 cdev_decl(sw);
 
-#if notyet
+#if 1 /*notyet*/
 #include "sram.h"
 cdev_decl(sram);
 
+#include "nvram.h"
+cdev_decl(nvram);
+#endif
+
+#if notyet
 #include "vmel.h"
 cdev_decl(vmel);
 
 #include "vmes.h"
 cdev_decl(vmes);
-
-#include "nvram.h"
-cdev_decl(nvram);
 
 #include "flash.h"
 cdev_decl(flash);
@@ -163,6 +170,7 @@ cdev_decl(st);
 cdev_decl(sd);
 cdev_decl(cd);
 cdev_decl(xd);
+cdev_decl(rd);
 cdev_decl(vnd);
 
 dev_decl(filedesc,open);
@@ -195,20 +203,24 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-#if notyet
+#if 1
 	cdev_mdev_init(NSRAM,sram),	/* 7: /dev/sramX */
-#else /* notyet */
-	cdev_notdef(),			/* 7: /dev/sramX */
+#else
+	cdev_notdef(),			/* 7: */
 #endif /* notyet */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
-#if notyet
+#if 1
 	cdev_mdev_init(NNVRAM,nvram),	/* 10: /dev/nvramX */
+#else
+	cdev_notdef(),			/* 10: */
+#endif /* notyet */
+
+#if notyet
 	cdev_mdev_init(NFLASH,flash),	/* 11: /dev/flashX */
 	cdev_tty_init(NZS,zs),		/* 12: SCC serial (tty[a-d]) */
 #else
-	cdev_notdef(),			/* 10 */
-	cdev_notdef(),			/* 11 */
+	cdev_notdef(),			/* 11: */
 	cdev_notdef(),			/* 12: SCC serial (tty[a-d]) */
 #endif /* notyet */
 	cdev_tty_init(NCL,cl),		/* 13: CL-CD1400 serial (tty0[0-3]) */
@@ -216,7 +228,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
 	cdev_notdef(),			/* 17: concatenated disk */
-	cdev_notdef(),			/* 18 */
+	cdev_disk_init(NRD,rd),		/* 18: ramdisk disk */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
@@ -325,7 +337,7 @@ static int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	NODEV,
+	/* 18 */	7,		/* ram disk */
 	/* 19 */	8,		/* vnode disk */
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,

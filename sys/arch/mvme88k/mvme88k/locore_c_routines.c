@@ -31,7 +31,7 @@
 
 #include <machine/m88100.h> 		/* DMT_VALID		*/
 #include <assym.s>			 /* EF_NREGS, etc.	*/
-#include <machine/locore.h>		 /* END_OF_VECTOR_LIST, etc. */
+#include <machine/asm.h>		 /* END_OF_VECTOR_LIST, etc. */
 #ifdef DDB
   #include <ddb/db_output.h>		 /* db_printf() 	*/
 #endif /* DDB */
@@ -291,7 +291,6 @@ void vector_init(
 	if (vec != PREDEFINED_BY_ROM)
 	    SET_VECTOR(num, to, vec);
     }
-
     while (num < 496)
 	SET_VECTOR(num++, to, sigsys);
     num++; /* skip 496, BUG ROM vector */

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
  *
@@ -27,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cmmu.c,v 1.3 1997/03/03 20:21:30 rahnds Exp $
+ *	$Id: cmmu.c,v 1.4 1998/12/15 05:11:01 smurph Exp $
  */
 /*
  * Mach Operating System
@@ -65,6 +66,8 @@
 /* On some versions of 88200, page size flushes don't work. I am using
  * sledge hammer approach till I find for sure which ones are bad XXX nivas */
 #define BROKEN_MMU_MASK	
+#define CMMU_DEBUG 1
+
 #if defined(MVME187)
 #undef SNOOP_ENABLE
 #else
@@ -148,13 +151,13 @@ show_apr(unsigned value)
 	union apr_template apr_template;
 	apr_template.bits = value;
 
-	_printf("table @ 0x%x000", apr_template.field.st_base);
+	printf("table @ 0x%x000", apr_template.field.st_base);
 	if (apr_template.field.wt) printf(", writethrough");
 	if (apr_template.field.g)  printf(", global");
 	if (apr_template.field.ci) printf(", cache inhibit");
 	if (apr_template.field.te) printf(", valid");
 	else                       printf(", not valid");
-	printf("]\n");
+	printf("\n");
 }
 
 void

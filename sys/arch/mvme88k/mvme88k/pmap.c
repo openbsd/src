@@ -50,11 +50,11 @@
 
 #include <sys/types.h>
 #include <machine/board.h>
-#include <vm/pmap.h>
+#include <sys/param.h>
 #include <machine/m882xx.h>		/* CMMU stuff */
+#include <vm/vm.h>
 #include <vm/vm_kern.h>			/* vm/vm_kern.h */
 
-#include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
@@ -71,6 +71,9 @@ extern vm_offset_t      virtual_avail, virtual_end;
 
 extern vm_offset_t	pcc2consvaddr;
 extern vm_offset_t	clconsvaddr;
+
+char *iiomapbase;
+int iiomapsize;
 
 /*
  * Static variables, functions and variables for debugging
@@ -112,7 +115,8 @@ extern vm_offset_t	clconsvaddr;
 #define CD_CHKM		0x4000000	/* check_map */
 #define CD_ALL		0x0FFFFFC
 
-int pmap_con_dbg = CD_FULL|CD_NORM;
+/*int pmap_con_dbg = CD_ALL | CD_FULL | CD_COW | CD_BOOT;*/
+int pmap_con_dbg = CD_NORM;
 #else
 
 #define	STATIC		static
@@ -279,6 +283,7 @@ boolean_t	pmap_initialized = FALSE;/* Has pmap_init completed? */
  * These checks are disabled by default; enabled by setting CD_FULL
  * in pmap_con_dbg.
  */
+
 #ifdef	DEBUG
 
 static void check_pv_list __P((vm_offset_t, pv_entry_t, char *));
@@ -986,9 +991,9 @@ pmap_bootstrap(vm_offset_t	load_start,	/* IN */
     }
 #endif
     ptes_per_vm_page = PAGE_SIZE >> M88K_PGSHIFT;
-    if (ptes_per_vm_page == 0)
-		panic("pmap_bootstrap: VM page size < MACHINE page size");
-
+    if (ptes_per_vm_page == 0){
+	panic("pmap_bootstrap: VM page size < MACHINE page size");
+    }
     if (!PAGE_ALIGNED(load_start)) {
 	panic("pmap_bootstrap : \"load_start\" not on the m88k page boundary : 0x%x\n", load_start);
     }
@@ -1097,7 +1102,7 @@ pmap_bootstrap(vm_offset_t	load_start,	/* IN */
 		0,
 		0,
 		0x10000,
-		(VM_PROT_READ|VM_PROT_WRITE)|(CACHE_INH <<16));
+		(VM_PROT_WRITE | VM_PROT_READ)|(CACHE_INH <<16));
 
     assert(vaddr == M88K_TRUNC_PAGE((unsigned)&kernelstart));
 
@@ -1280,14 +1285,21 @@ pmap_bootstrap(vm_offset_t	load_start,	/* IN */
     apr_data.field.g  = 1;
     apr_data.field.ci = 0;
     apr_data.field.te = 1;	/* Translation enable */
-
+#ifdef DEBUG
+    if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
+	void show_apr(unsigned value);
+	show_apr(apr_data.bits);
+    }
+#endif 
     /* Invalidate entire kernel TLB. */
 #ifdef DEBUG
     if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 	printf("invalidating tlb %x\n", apr_data.bits);
     }
 #endif
+
     cmmu_flush_remote_tlb(0, 1, 0, -1);
+
 #ifdef DEBUG
     if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 	printf("done invalidating tlb %x\n", apr_data.bits);
@@ -2447,6 +2459,9 @@ pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
 #endif
 	    continue;			/*  no page mapping */
 	}
+#if 0
+	printf("(pmap_protect :%x) pte good\n", curproc);
+#endif
 
 	tva = va;
 	for (i = ptes_per_vm_page; i>0; i--) {

@@ -93,9 +93,9 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 #if 0
-	int	psr = p->p_md.md_tf->tf_psr & ~PSR_ICC;
+	int	psr = p->p_md.md_tf->tf_epsr & ~PSR_ICC;
 	bcopy((caddr_t)regs, p->p_md.md_tf, sizeof(struct reg));
-	p->p_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
+	p->p_md.md_tf->tf_epsr = psr | (regs->r_epsr & PSR_ICC);
 #endif
 	return (0);
 }

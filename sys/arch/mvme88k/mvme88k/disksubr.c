@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
  *   
@@ -30,8 +31,15 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
+#include <sys/disk.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <machine/autoconf.h>
 
 #define b_cylin b_resid
 
@@ -49,11 +57,36 @@ static void printlp __P((struct disklabel *lp, char *str));
 static void printclp __P((struct cpu_disklabel *clp, char *str));
 #endif
 
-int
-dk_establish()
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
 {
-	return(-1);
+	struct scsibus_softc *sbsc;
+	int target, lun;
+
+	if (bootpart == -1) /* ignore flag from controller driver? */
+		return;
+
+	/*
+	 * scsi: sd,cd
+	 */
+
+	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("cd", dev->dv_xname, 2) == 0) {
+
+		sbsc = (struct scsibus_softc *)dev->dv_parent;
+		target = bootdevlun / 10;
+		lun = bootdevlun % 10;
+    		
+		if (sbsc->sc_link[target][lun] != NULL &&
+		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+			bootdv = dev;
+			return;
+		}
+	}
 }
+
 
 /*
  * Attempt to read a disk label from a device
@@ -64,29 +97,14 @@ dk_establish()
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp, spoofonly)
+readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
-	int spoofonly;
 {
 	struct buf *bp;
 	char *msg = NULL;
-
-	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = RAW_PART + 1;
-	if (lp->d_partitions[RAW_PART].p_size == 0)
-		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_offset = 0;
-
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
-		return (NULL);
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -464,7 +482,11 @@ cputobsdlabel(lp, clp)
 
 	if (clp->version == 0) {
 		struct cpu_disklabel_old *clpo = (void *) clp;
-		printf("Reading old disklabel\n");
+#ifdef DEBUG
+		if (disksubr_debug > 0) {
+			printf("Reading old disklabel\n");
+		}
+#endif
 		lp->d_magic = clp->magic1;
 		lp->d_type = clp->type;
 		lp->d_subtype = clp->subtype;
@@ -524,7 +546,11 @@ cputobsdlabel(lp, clp)
 		lp->d_checksum = 0;
 		lp->d_checksum = dkcksum(lp);
 	} else {
-		printf("Reading new disklabel\n");
+#ifdef DEBUG
+		if (disksubr_debug > 0) {
+			printf("Reading new disklabel\n");
+		}
+#endif
 		lp->d_magic = clp->magic1;
 		lp->d_type = clp->type;
 		lp->d_subtype = clp->subtype;

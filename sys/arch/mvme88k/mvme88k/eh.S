@@ -3,6 +3,7 @@
  * Copyright (c) 1993-1991 Carnegie Mellon University
  * Copyright (c) 1991 OMRON Corporation
  * Copyright (c) 1996 Nivas Madhur
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * All Rights Reserved.
  *
  * Permission to use, copy, modify and distribute this software and its
@@ -25,6 +26,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
 /*
  * HISTORY
  * 1. Should get rid of SR0 reference for thread stuff.
@@ -195,7 +197,7 @@
  *  unimportant).
  *
  * Now is a good time to recap SR0..SR3 usage:
- *   SR0 - 
+ *   SR0 - Used for subroutine returns.  XXX smurph XXX2 not any more...
  *   SR1 - CPU flags (exception handler flags)
  *   SR2 - generally free
  *   SR3 - free only if the exception is from user mode
@@ -234,7 +236,7 @@
 #define EF_SR3			(EF_R0 + 5)
 #define EF_FLAGS		EF_MODE
 
-#define FLAG_FROM_KERNEL	8	/* this should be in locore.h */
+#define FLAG_FROM_KERNEL	8	/* this should be in asm.h */
 
 	text
 	align 8
@@ -270,13 +272,29 @@
  ** be used freely as they've all been saved in the exception frame
  ** (which is pointed-to by r31).
  **/
+
+/* This define can replace the xcr instruction XXX smurph */
+#define XCR(DR, SR, CR)			; \
+		stcr	r13, 	SR0	; \
+		or      r13, r0, SR     ; \
+                ldcr	DR, CR		; \
+		stcr	r13, CR		; \
+		ldcr	r13, SR0
+
+/* This define can be used to debug sub routine returns XXX smurph*/
+#define STORE_R1(varname)					; \
+		stcr	r13, 	SR0	/* r13 now free */	; \
+		/* save r1 to memory location varname */	; \
+		or.u	r13, r0,  hi16(varname)			; \
+		st	r1,  r13, lo16(varname)			; \
+		ldcr	r13, SR0	/* retore r13   */	
+
 #define PREP(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK)		; \
-		xcr	FLAGS, FLAGS, SR1			; \
+		xcr FLAGS, FLAGS, SR1			; \
 		FLAG_PRECHECK					; \
 		 						; \
 		/* the bsr later clobbers r1, so save now */	; \
 		stcr	r1, SR2	/* r1 now free */		; \
-								; \
 		/* set or clear the FLAG_FROM_KERNEL bit */	; \
 		ldcr	r1, EPSR				; \
 		bb0.n	PSR_SUPERVISOR_MODE_BIT, r1, 1f		; \
@@ -284,7 +302,7 @@
 		set	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL>	; \
 								; \
 		/* get a stack (exception frame) */		; \
-	1:	bsr	setup_phase_one			; \
+		1:	bsr	setup_phase_one			; \
 								; \
 		/* TMP2 now free -- use to set EF_VECTOR */	; \
 		or	TMP2, r0, NUM				; \
@@ -301,9 +319,6 @@
 		/* All general regs free -- do any debugging */	; \
 		PREP_DEBUG(BIT, NAME)
 
-#undef  EH_DEBUG
-#define EH_DEBUG 1
-
 /* Some defines for use with PREP() */
 #define No_SSBR_Stuff		/* empty */
 #define Clear_SSBR_Dest		bsr clear_dest_ssbr_bit
@@ -318,7 +333,7 @@
 	 * is set for an exception, debugging information is printed
 	 * about that exception whenever it occurs.
 	 *
-	 * The bits are defined in "locore.h"
+	 * The bits are defined in "asm.h"
 	 */
 	LABEL(_eh_debug) 	word 0x00000000
 
@@ -378,19 +393,19 @@
 /*#########################################################################*/
 
 /* unknown exception handler */
-LABEL(unknown_handler)
+LABEL(_unknown_handler)
 	PREP("unknown", 0, DEBUG_UNKNOWN_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_UNKNOWNFLT, r30)
 	DONE(DEBUG_UNKNOWN_BIT)
 
 /* interrupt exception handler */
-LABEL(interrupt_handler)
+LABEL(_interrupt_handler)
 	PREP("interrupt", 1, DEBUG_INTERRUPT_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_ext_int, 1, r30)
 	DONE(DEBUG_INTERRUPT_BIT)
 
 /* instruction access exception handler */
-LABEL(instruction_access_handler)
+LABEL(_instruction_access_handler)
 	PREP("inst", 2, DEBUG_INSTRUCTION_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_INSTFLT, r30)
 #if 0
@@ -413,18 +428,18 @@ LABEL(instruction_access_handler)
  * data access exception handler --
  *  See badaddr() below for info about Data_Precheck.
  */
-LABEL(data_exception_handler)
+LABEL(_data_exception_handler)
 	PREP("data", 3, DEBUG_DATA_BIT, No_SSBR_Stuff, Data_Precheck)
 	DONE(DEBUG_DATA_BIT)
 
 /* misaligned access exception handler */
-LABEL(misaligned_handler)
+LABEL(_misaligned_handler)
 	PREP("misalign", 4, DEBUG_MISALIGN_BIT, Clear_SSBR_Dest, No_Precheck)
 	CALL(_trap, T_MISALGNFLT, r30)
 	DONE(DEBUG_MISALIGN_BIT)
 
 /* unimplemented opcode exception handler */
-LABEL(unimplemented_handler)
+LABEL(_unimplemented_handler)
 	PREP("unimp", 5, DEBUG_UNIMPLEMENTED_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_ILLFLT, r30)
 	DONE(DEBUG_UNIMPLEMENTED_BIT)
@@ -434,7 +449,7 @@ LABEL(unimplemented_handler)
  * violation exceptions are raised. If the valid bit in the SXIP is clear,
  * it is false.  If so, just return.  The code before PREP handles this....
  */
-LABEL(privilege_handler)
+LABEL(_privilege_handler)
 	stcr    r1, SR2 	/* hold r1 for a moment */
 	ldcr    r1, SXIP	/* look at the sxip... valid bit set? */
 	bb1.n   RTE_VALID_BIT, r1, 1f /*skip over return if a valid exception*/
@@ -448,19 +463,19 @@ LABEL(privilege_handler)
  * I'm not sure what the trap(T_BNDFLT,...) does, but it doesn't send
  * a signal to the process...
  */
-LABEL(bounds_handler)
+LABEL(_bounds_handler)
 	PREP("bounds", 7, DEBUG_BOUNDS_BIT, Clear_SSBR_Dest, No_Precheck)
 	CALL(_trap, T_BNDFLT, r30)
 	DONE(DEBUG_BOUNDS_BIT)
 
 /* integer divide-by-zero exception handler */
-LABEL(divide_handler)
+LABEL(_divide_handler)
 	PREP("divide", 8, DEBUG_DIVIDE_BIT, Clear_SSBR_Dest, No_Precheck)
 	CALL(_trap, T_ZERODIV, r30)
 	DONE(DEBUG_DIVIDE_BIT)
 
 /* integer overflow exception handelr */
-LABEL(overflow_handler)
+LABEL(_overflow_handler)
 	PREP("overflow", 9, DEBUG_OVERFLOW_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_OVFFLT, r30)
 	DONE(DEBUG_OVERFLOW_BIT)
@@ -522,10 +537,12 @@ LABEL(_userbpt)
 	PREP("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_KDB_TRACE, r30)
 	DONE(DEBUG_TRACE_BIT)
-   LABEL(entry)
+
+   LABEL(_entry)
 	PREP("kdb", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_KDB_ENTRY, r30)
 	DONE(DEBUG_KDB_BIT)
+
 #else /* else not DDB */
    LABEL(break)
 	PREP("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
@@ -535,7 +552,7 @@ LABEL(_userbpt)
 	PREP("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_UNKNOWNFLT, r30)
 	DONE(DEBUG_TRACE_BIT)
-   LABEL(entry)
+   LABEL(_entry)
 	PREP("unknown", 132, DEBUG_UNKNOWN_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_trap, T_UNKNOWNFLT, r30)
 	DONE(DEBUG_KDB_BIT)
@@ -555,7 +572,7 @@ LABEL(_userbpt)
  * We'll not worry about trashing r26-29 here,
  * since they aren't generally used.
  */
-LABEL(error_handler)
+LABEL(_error_handler)
         /* pick up the slavestack */
 	or	r26, r0, r31           /* save old stack */
         or.u	r31, r0,  hi16(_intstack_end)
@@ -672,6 +689,7 @@ LABEL(error_handler)
    	clr  r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
         stcr r1, PSR
         FLUSH_PIPELINE
+
 LABEL(_error_loop) bsr _error_loop
 	/* never returns*/
 
@@ -681,6 +699,151 @@ LABEL(_error_loop) bsr _error_loop
  *----------------------------------------------------------------------------
  */
 
+/*--------------------------------------------------------------------------*/
+
+/*
+ * The reset exception handler.
+ * The reset exception is raised when the RST signal is asserted (machine 
+ * is reset), the value of VBR is changed after exceptions are enabled, 
+ * or when a jmp, br/bsr to addr 0 (accidents do happen :-)
+ *
+ * To tell the difference, you should check the value of r1 and the valid
+ * bit of SXIP.
+ *
+ * Upon a real reset, VBR is set to zero (0), so code must be at addr 0 
+ * to handle it!!! 
+ *
+ * This is totaly different than _error_handler.  Shadowing might or 
+ * might not be on.
+ * R1-R31 could tell u alot about what happend, so we'll save them.
+ *
+ * We'll not worry about trashing r26-29 here,
+ * since they aren't generally used.
+ */
+LABEL(_reset_handler)
+        /* pick up the slavestack */
+	or	r26, r0, r31           /* save old stack */
+        or.u	r31, r0,  hi16(_intstack_end)
+        or	r31, r31, lo16(_intstack_end)
+
+	/* zero the stack, so we'll know what we're lookin' at */
+        or.u	r27, r0,  hi16(_intstack)
+        or	r27, r27, lo16(_intstack)
+   1:	cmp	r28, r27, r31
+	bb1      ge, r28,  2f   /* branch if at the end of the stack */
+	st	 r0,  r0, r27
+	br.n     1b
+	addu    r27, r27,   4   /* bump up */
+   2:   /* stack has been cleared */
+
+	/* ensure that stack is 8-byte aligned */
+        clr     r31, r31, 3<0>  /* round down to 8-byte boundary */
+
+	/* create exception frame on stack */
+        subu    r31, r31, SIZEOF_EF             /* r31 now our E.F. */
+
+	/* save old R31 and other R registers */
+        st.d    r0 , r31, GENREG_OFF(0)
+        st.d    r2 , r31, GENREG_OFF(2)
+        st.d    r4 , r31, GENREG_OFF(4)
+        st.d    r6 , r31, GENREG_OFF(6)
+        st.d    r8 , r31, GENREG_OFF(8)
+        st.d    r10, r31, GENREG_OFF(10)
+        st.d    r12, r31, GENREG_OFF(12)
+        st.d    r14, r31, GENREG_OFF(14)
+        st.d    r16, r31, GENREG_OFF(16)
+        st.d    r18, r31, GENREG_OFF(18)
+        st.d    r20, r31, GENREG_OFF(20)
+        st.d    r22, r31, GENREG_OFF(22)
+        st.d    r24, r31, GENREG_OFF(24)
+        st      r30, r31, GENREG_OFF(30)
+	st	r26, r31, GENREG_OFF(31)
+
+	/* save shadow registers */
+	ldcr	r10, SXIP
+	st	r10, r31, REG_OFF(EF_SXIP)
+	ldcr	r10, SFIP
+	st	r10, r31, REG_OFF(EF_SFIP)
+	ldcr	r10, SNIP
+	st	r10, r31, REG_OFF(EF_SNIP)
+	ldcr	r10, SSBR
+	st	r10, r31, REG_OFF(EF_SSBR)
+	ldcr	r10, EPSR
+	st	r10, r31, REG_OFF(EF_EPSR)
+
+	ldcr	r10, DMT0
+	st	r10, r31, REG_OFF(EF_DMT0)
+	ldcr	r11, DMD0
+	st	r11, r31, REG_OFF(EF_DMD0)
+	ldcr	r12, DMA0
+	st	r12, r31, REG_OFF(EF_DMA0)
+
+	ldcr	r10, DMT1
+	st	r10, r31, REG_OFF(EF_DMT1)
+	tb1	0, r0, 0
+	ldcr	r11, DMD1
+	st	r11, r31, REG_OFF(EF_DMD1)
+	ldcr	r12, DMA1
+	st	r12, r31, REG_OFF(EF_DMA1)
+
+	ldcr	r10, DMT2
+	st	r10, r31, REG_OFF(EF_DMT2)
+	ldcr	r11, DMD2
+	st	r11, r31, REG_OFF(EF_DMD2)
+	ldcr	r12, DMA2
+	st	r12, r31, REG_OFF(EF_DMA2)
+
+	ldcr	r10, SR1
+	st	r10, r31, REG_OFF(EF_MODE)
+
+	/* shove sr2 into EF_FPLS1 */
+	ldcr	r10, SR2
+	st	r10, r31, REG_OFF(EF_FPLS1)
+
+	/* shove sr3 into EF_FPHS2 */
+	ldcr	r10, SR3
+	st	r10, r31, REG_OFF(EF_FPHS2)
+
+	/* error vector is zippo numero el'zeroooo */
+	st	r0,  r31, REG_OFF(EF_VECTOR)
+
+	stcr	r0,  SSBR  /* won't want shadow bits bothering us later */
+
+	/*
+	 * Cheap way to enable FPU and start shadowing again.
+	 */
+        ldcr    r10, PSR
+        clr     r10, r10, 1<PSR_FPU_DISABLE_BIT>    /* enable the FPU */
+        clr     r10, r10, 1<PSR_SHADOW_FREEZE_BIT>  /* also enable shadowing */
+	
+        stcr    r10, PSR  /* bang */
+	FLUSH_PIPELINE
+
+	/* put pointer to regs into r30... r31 will become a simple stack */
+	or	r30, r31, r0
+
+        subu    r31, r31, 0x10 /* make some breathing space */
+        st      r30, r31, 0x0c /* store frame pointer on the st */
+        st      r30, r31, 0x08 /* store again for the debugger to recognize */
+	or.u    r20,  r0, hi16(0x87654321)
+	or      r20, r20, lo16(0x87654321)
+	st	r20, r31, 0x04
+	st	r20, r31, 0x00
+
+	CALL(_error_reset, r30, r30)
+
+        /* TURN INTERUPTS back on */
+        ldcr r1, PSR
+   	clr  r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
+        stcr r1, PSR
+        FLUSH_PIPELINE
+
+LABEL(_error_loop2) bsr _error_loop2
+	/* never returns*/
+
+/*
+ *----------------------------------------------------------------------------
+*/
 
 /*
  * This is part of baddadr (below).
@@ -862,8 +1025,15 @@ LABEL(setup_phase_one)
 
         /* Check if we are coming in from a FPU restart exception.
            If so, the pcb will be in SR3 */
-	bb1.n	FLAG_ENABLING_FPU, FLAGS, use_SR3_pcb
+	NOP
 	xcr	r1, r1, SR2
+	/*xcr	r1, r1, SR2*/
+	NOP
+	NOP
+	NOP
+
+	bb1	FLAG_ENABLING_FPU, FLAGS, use_SR3_pcb
+	/*xcr	r1, r1, SR0*/
         /* are we coming in from user mode? If so, pick up thread pcb */
 	bb0	FLAG_FROM_KERNEL, FLAGS, pickup_stack
 
@@ -917,7 +1087,7 @@ LABEL(setup_phase_one)
         *                                                               *
         *                                                               *
 	\***************************************************************/
-	xcr 	r30, r30, SR3			/* r30 = old exception frame */
+	xcr	r30, r30, SR3			/* r30 = old exception frame */
         st      r1,  r30, GENREG_OFF(0)         /* free up r1 */
         ld      r1,  r30, REG_OFF(EF_EPSR)      /* get back the epsr */
         bb0.n     PSR_SUPERVISOR_MODE_BIT, r1, 1f /* if user mode */
@@ -1332,7 +1502,7 @@ LABEL(setup_phase_one)
 
   LABEL(setup_phase_two)
 	/***************** REGISTER STATUS BLOCK ***********************\
-	* SR0: current thread 						*
+	* SR0: saved return address to calling exception handler 	*
 	* SR1: saved copy of exception-time register now holding FLAGS	*
 	* SR2: free							*
 	* SR3: saved TMP						*
@@ -1356,23 +1526,37 @@ LABEL(setup_phase_one)
 	*	restore the system to the exception-time state (except	*
 	* SR3 will be OUR stack pointer) so that we may resart the FPU.	*
 	\***************************************************************/
-	stcr	TMP, SSBR	/* done with SSBR, TMP now free */
+	/*stcr	r1, SR0*/		/* save return address */
+    	stcr	TMP, SSBR	/* done with SSBR, TMP now free */
 	RESTORE_TMP2		/* done with extra temp regs */
 	RESTORE_TMP3		/* done with extra temp regs */
 
 	/* Get the current PSR and modify for the rte to enable the FPU */
+#if 1
 	ldcr	TMP, PSR
 	clr	TMP, TMP, 1<PSR_FPU_DISABLE_BIT>    /* enable the FPU */
         clr	TMP, TMP, 1<PSR_SHADOW_FREEZE_BIT>  /* also enable shadowing */
 	stcr	TMP, EPSR
 
 	/* the "+2" below is to set the VALID_BIT */
-	or.u	TMP, r0, hi16(fpu_enable + 2)
-	or	TMP, TMP, lo16(fpu_enable + 2)
+	or.u	TMP, r0, hi16(fpu_enable +2)
+	or	TMP, TMP, lo16(fpu_enable +2)
 	stcr	TMP, SNIP		/* jump to here fpu_enable */
 	addu	TMP, TMP, 4
 	stcr	TMP, SFIP		/* and then continue after that */
-
+#else
+	ldcr	TMP, PSR
+	or.u	TMP, TMP, 0x8000    /* set supervisor mode */
+        and	TMP, TMP, 0xfff7    /* also enable shadowing */
+	stcr	TMP, EPSR
+	stcr	r0, SXIP	    /* clear valid bit */
+	stcr	r0, SNIP	    /* clear valid bit */
+	or.u	TMP, r0, hi16(fpu_enable)
+	or	TMP, TMP, lo16(fpu_enable)
+	or	TMP, TMP, 0x2 /* set the VALID_BIT and clear Exception bit */
+	stcr	TMP, SFIP		/* jump to here fpu_enable */
+#endif
+	
 	set	FLAGS, FLAGS, 1<FLAG_ENABLING_FPU> /* note what we're doing.*/
 	xcr	FLAGS, FLAGS, SR1
 	st	r1, r31, REG_OFF(EF_RET) /* save the return address */
@@ -1404,6 +1588,7 @@ LABEL(setup_phase_one)
 	*	Another exception (or exceptions) may be raised in	*
 	*	this, which is why FLAG_ENABLING_FPU is set in SR1.	*
 	\***************************************************************/
+	
 	RTE	/* jumps to "fpu_enable" on the next line to enable the FPU. */
 
   _LABEL(fpu_enable)

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
  *
@@ -106,6 +107,7 @@ static int waittime = -1;
 struct intrhand *intr_handlers[256];
 
 unsigned char *ivec[] = {
+
 	(unsigned char *)0xFFFE0003, /* not used, no such thing as int 0 */
 	(unsigned char *)0xFFFE0007,
 	(unsigned char *)0xFFFE000B,
@@ -131,15 +133,15 @@ int cold;
 vm_offset_t avail_end, avail_start, avail_next;
 int msgbufmapped = 0;
 int foodebug = 0;
-int longformat = 0;
-
+int longformat = 1;
+int BugWorks = 0;
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
  */
 int   safepri = 0;
 
-#if XXX_FUTURE
+#if 0 /*XXX_FUTURE*/
 /*
  * iomap stuff is for managing chunks of virtual address space that
  * can be allocated to IO devices.
@@ -173,7 +175,7 @@ caddr_t allocsys __P((caddr_t));
 /*
  * Info for CTL_HW
  */
-char	machine[] = "MVME187";		/* cpu "architecture" */
+char	machine[] = "mvme88k";		/* cpu "architecture" */
 char	cpu_model[120];
 extern	char version[];
 
@@ -193,7 +195,7 @@ char *esym;
 
 int boothowto;	/* read in kern/bootstrap */
 int cputyp;
-int cpuspeed = 25;	/* 25 MHZ XXX should be read from NVRAM */
+int cpuspeed = 33;	/* 25 MHZ XXX should be read from NVRAM */
 
 #ifndef roundup
 #define roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
@@ -220,15 +222,19 @@ pcb_t		curpcb;
 extern struct user *proc0paddr;
 
 /* XXX this is to fake out the console routines, while booting. */
-void bugttycnputc __P((dev_t, int));
-int bugttycngetc __P((dev_t));
-extern void nullcnpollc __P((dev_t, int));
-void	cmmu_init(void);
-
-static struct consdev bugcons =
+#include "bugtty.h"
+#if NBUGTTY > 0
+    int bugttycnprobe __P((struct consdev *));
+    int bugttycninit __P((struct consdev *));
+    void bugttycnputc __P((dev_t, int));
+    int bugttycngetc __P((dev_t));
+    extern void nullcnpollc __P((dev_t, int));
+    static struct consdev bugcons =
 		{ NULL, NULL, bugttycngetc, bugttycnputc,
 		    nullcnpollc, makedev(14,0), 1 };
+#endif /* NBUGTTY */
 
+void	cmmu_init(void);
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
@@ -238,10 +244,10 @@ void
 consinit()
 {
 	extern struct consdev *cn_tab;
-
 	/*
 	 * Initialize the console before we print anything out.
 	 */
+
 	cn_tab = NULL;
 	cninit();
 
@@ -263,9 +269,9 @@ size_memory(void)
     volatile unsigned int *look;
     unsigned int *max;
     extern char *end;
-    #define PATTERN   0x5a5a5a5a
-    #define STRIDE    (4*1024) 	/* 4k at a time */
-    #define Roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
+#define PATTERN   0x5a5a5a5a
+#define STRIDE    (4*1024) 	/* 4k at a time */
+#define Roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
 
     /*
      * count it up.
@@ -276,8 +282,7 @@ size_memory(void)
 	unsigned save;
 
 	/* if can't access, we've reached the end */
-	if (foodebug)
-	printf("%x\n", look);
+	if (foodebug) printf("%x\n", look);
 	if (badwordaddr((vm_offset_t)look)) {
 #if defined(DEBUG)
 		printf("%x\n", look);
@@ -308,7 +313,7 @@ identifycpu()
 {
 	/* XXX -take this one out. It can be done in m187_bootstrap() */
 	strcpy(cpu_model, "Motorola M88K");
-	printf("Model: %s\n", cpu_model);
+	printf("\nModel: %s\n", cpu_model);
 }
 
 /* The following two functions assume UPAGES == 3 */
@@ -357,7 +362,6 @@ cpu_startup()
 	int base, residual;
 	vm_offset_t minaddr, maxaddr, uarea_pages;
 	extern vm_offset_t miniroot;
-
 	/*
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in m1x7_bootstrap().
@@ -496,7 +500,7 @@ cpu_startup()
 		panic("cpu_startup: unable to create phys_map");
 	}
 
-#if XXX_FUTURE
+#if 0 /*XXX_FUTURE*/
 	iomap_map = vm_map_create(kernel_pmap, IOMAP_MAP_START,
 			IOMAP_MAP_START + IOMAP_SIZE, TRUE);
 	if (iomap_map == NULL) {
@@ -534,9 +538,21 @@ cpu_startup()
 	printf("using %d buffers containing %d bytes of memory\n",
 	   nbuf, bufpages * CLBYTES);
 
-#if 0
-	mfs_initminiroot(miniroot);
-#endif /* 0 */
+#ifdef MFS
+	/*
+	 * Check to see if a mini-root was loaded into memory. It resides
+	 * at the start of the next page just after the end of BSS.
+	 */
+	{
+		extern void *smini;
+
+		if (miniroot && (boothowto & RB_MINIROOT)) {
+			boothowto |= RB_DFLTROOT;
+			mfs_initminiroot(miniroot);
+		}
+	}
+#endif
+
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
@@ -616,7 +632,7 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
 
-#if XXX_FUTURE
+#if 0 /*XXX_FUTURE*/
 	/*
 	 * Arbitrarily limit the number of devices mapping
 	 * the IO space at a given time to NIOPMAP (= 32, default).
@@ -639,6 +655,9 @@ setregs(p, pack, stack, retval)
 {
 	register struct trapframe *tf = USER_REGS(p);
 
+/*	printf("stack at %x\n", stack);
+	printf("%x - %x\n", USRSTACK - MAXSSIZ, USRSTACK);
+*/
 	/*
 	 * The syscall will ``return'' to snip; set it.
 	 * argc, argv, envp are placed on the stack by copyregs.
@@ -667,7 +686,8 @@ setregs(p, pack, stack, retval)
 	}
 #endif /* 0 */
 	bzero((caddr_t)tf, sizeof *tf);
-	tf->epsr = 0x3f0; /* user mode, interrupts enabled, fp enabled */
+	tf->epsr = 0x3f0;  /* user mode, interrupts enabled, fp enabled */
+/*	tf->epsr = 0x3f4;*/  /* user mode, interrupts enabled, fp enabled, MXM Mask */
 
 	/*
 	 * We want to start executing at pack->ep_entry. The way to
@@ -962,7 +982,7 @@ boot(howto)
 		resettodr();
 	}
 	splhigh();			/* extreme priority */
-	if (howto&RB_HALT) {
+	if (howto & RB_HALT) {
 		printf("halted\n\n");
 		bugreturn();
 	} else {
@@ -972,6 +992,7 @@ boot(howto)
 		/*NOTREACHED*/
 	}
 	/*NOTREACHED*/
+	while (1);  /* to keep compiler happy, and me from going crazy */
 }
 
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
@@ -1063,7 +1084,16 @@ setupiackvectors()
 #else
 	vaddr = (u_char *)0xfffe0000;
 #endif
-
+#if 0
+	(unsigned char *)0xFFFE0003, /* not used, no such thing as int 0 */
+	(unsigned char *)0xFFFE0007,
+	(unsigned char *)0xFFFE000B,
+	(unsigned char *)0xFFFE000F,
+	(unsigned char *)0xFFFE0013,
+	(unsigned char *)0xFFFE0017,
+	(unsigned char *)0xFFFE001B,
+	(unsigned char *)0xFFFE001F,
+#endif
 	ivec[0] = vaddr + 0x03;
 	ivec[1] = vaddr + 0x07;
 	ivec[2] = vaddr + 0x0b;
@@ -1074,6 +1104,64 @@ setupiackvectors()
 	ivec[7] = vaddr + 0x1f;
 }
 
+/*
+ * find a useable interrupt vector in the range start, end. It starts at
+ * the end of the range, and searches backwards (to increase the chances
+ * of not conflicting with more normal users)
+ */
+int
+intr_findvec(start, end)
+	int start, end;
+{
+	extern u_long *vector_list[], interrupt_handler, unknown_handler;
+	int vec;
+
+	if (start < 0 || end > 255 || start > end)
+		return (-1);
+	for (vec = end; vec > start; --vec)
+		if (vector_list[vec] == &unknown_handler 
+/*		 || vector_list[vec] == &interrupt_handler */)
+			return (vec);
+	return (-1);
+}
+
+/*
+ * Chain the interrupt handler in. But first check if the vector
+ * offset chosen is legal. It either must be a badtrap (not allocated
+ * for a `system' purpose), or it must be a hardtrap (ie. already
+ * allocated to deal with chained interrupt handlers).
+ */
+#if 0
+
+int
+intr_establish(vec, ih)
+	int vec;
+	struct intrhand *ih;
+{
+	extern u_long *vector_list[], interrupt_handler, unknown_handler;
+	struct intrhand *ihx;
+
+	if (vector_list[vec] != &interrupt_handler && vector_list[vec] != &unknown_handler) {
+		printf("intr_establish: vec %d unavailable\n", vec);
+		return (-1);
+	}
+	vector_list[vec] = &interrupt_handler;
+#if DIAGNOSTIC
+	printf("assigning vec %x to interrupt_handler\n", vec);
+#endif
+	ih->ih_next = NULL;	/* just in case */
+
+	/* attach at tail */
+	if (ihx = intr_handlers[vec]) {
+		while (ihx->ih_next)
+			ihx = ihx->ih_next;
+		ihx->ih_next = ih;
+	} else
+		intr_handlers[vec] = ih;
+	return (INTR_EST_SUCC);
+}
+
+#else
 /*
  * Insert ihand in the list of handlers at vector vec.
  * Return return different error codes for the different
@@ -1118,6 +1206,7 @@ intr_establish(int vec, struct intrhand *ihand)
 	
 	return (INTR_EST_SUCC);
 }
+#endif
 
 /*
  *	Device interrupt handler
@@ -1426,19 +1515,24 @@ myetheraddr(cp)
 	u_char *cp;
 {
 	struct bugniocall niocall;
-
+	char *cp2 = (char*) 0xFFC1F2C; /* BBRAM Ethernet hw addr */
+	
 	niocall.clun = 0;
 	niocall.dlun = 0;
 	niocall.ci = 0;
 	niocall.cd = 0;
 	niocall.cid = NETCTRL_GETHDW;
-	niocall.memaddr = (unsigned int)cp;
+	niocall.memaddr = (unsigned long)cp;
 	niocall.nbytes = 6;
 
 	bugnetctrl(&niocall);
+
+/*	if (cp[0] == '\0') {
+	    strncpy(cp, cp2, 6);
+	}    */
 }
 
-netintr()
+void netintr()
 {
 #ifdef INET
 	if (netisr & (1 << NETISR_ARP)) {
@@ -1506,7 +1600,6 @@ spl0()
 {
 	int x;
 	int level = 0;
-
 	x = splsoftclock();
 
 	if (ssir) {
@@ -1574,32 +1667,32 @@ regdump(struct trapframe *f)
 	printf("dmt2 %x dmd2 %x dma2 %x\n", f->dmt2, f->dmd2, f->dma2);
     }
 	if (longformat) {
-		printf("fpsr %x", f->fpsr);
-		printf("fpcr %x", f->fpcr);
-		printf("epsr %x", f->epsr);
+		printf("fpsr %x ", f->fpsr);
+		printf("fpcr %x ", f->fpcr);
+		printf("epsr %x ", f->epsr);
 		printf("ssbr %x\n", f->ssbr);
-		printf("dmt0 %x", f->dmt0);
-		printf("dmd0 %x", f->dmd0);
-		printf("dma0 %x", f->dma0);
-		printf("dmt1 %x", f->dmt1);
-		printf("dmd1 %x", f->dmd1);
-		printf("dma1 %x", f->dma1);
-		printf("dmt2 %x", f->dmt2);
-		printf("dmd2 %x", f->dmd2);
+		printf("dmt0 %x ", f->dmt0);
+		printf("dmd0 %x ", f->dmd0);
+		printf("dma0 %x ", f->dma0);
+		printf("dmt1 %x ", f->dmt1);
+		printf("dmd1 %x ", f->dmd1);
+		printf("dma1 %x ", f->dma1);
+		printf("dmt2 %x ", f->dmt2);
+		printf("dmd2 %x ", f->dmd2);
 		printf("dma2 %x\n", f->dma2);
-		printf("fpecr %x", f->fpecr);
-		printf("fphs1 %x", f->fphs1);
-		printf("fpls1 %x", f->fpls1);
-		printf("fphs2 %x", f->fphs2);
-		printf("fpls2 %x", f->fpls2);
-		printf("fppt %x", f->fppt);
-		printf("fprh %x", f->fprh);
-		printf("fprl %x", f->fprl);
+		printf("fpecr %x ", f->fpecr);
+		printf("fphs1 %x ", f->fphs1);
+		printf("fpls1 %x ", f->fpls1);
+		printf("fphs2 %x ", f->fphs2);
+		printf("fpls2 %x ", f->fpls2);
+		printf("fppt %x ", f->fppt);
+		printf("fprh %x ", f->fprh);
+		printf("fprl %x ", f->fprl);
 		printf("fpit %x\n", f->fpit);
-		printf("vector %x", f->vector);
-		printf("mask %x", f->mask);
-		printf("mode %x", f->mode);
-		printf("scratch1 %x", f->scratch1);
+		printf("vector %x ", f->vector);
+		printf("mask %x ", f->mask);
+		printf("mode %x ", f->mode);
+		printf("scratch1 %x ", f->scratch1);
 		printf("pad %x\n", f->pad);
 	}
 }
@@ -1635,9 +1728,9 @@ m187_bootstrap(void)
     struct bugbrdid brdid;
 
     cold = 1;	/* we are still booting */
-
+#if NBUGTTY > 0
     cn_tab = &bugcons;
-
+#endif
     buginit();
 
     bugbrdid(&brdid);
@@ -1662,8 +1755,7 @@ m187_bootstrap(void)
 
     first_addr = m88k_round_page(first_addr);
 
-    if (!no_symbols)
-	boothowto |= RB_KDB;
+    if (!no_symbols) boothowto |= RB_KDB;
 
     last_addr = size_memory();
 
@@ -1671,19 +1763,19 @@ m187_bootstrap(void)
 
     avail_start = first_addr;
     avail_end = last_addr;
-    printf("%s",version);
+    /*printf("%s",version);*/
     printf("M187 boot: memory from 0x%x to 0x%x\n", avail_start, avail_end);
+    printf("M187 boot: howto 0x%x\n", boothowto);
 
     /*
      * Steal one page at the top of physical memory for msgbuf
      */
     avail_end -= PAGE_SIZE;
 
+#if 1
     pmap_bootstrap((vm_offset_t)M88K_TRUNC_PAGE((unsigned)&kernelstart) /* = loadpt */, 
 		   &avail_start, &avail_end, &virtual_avail,
 		   &virtual_end);
-#if defined(DEBUG)
-    printf("returned from pmap_bootstrap\n");
 #endif
 
     /*
@@ -1704,7 +1796,5 @@ m187_bootstrap(void)
 
     /* Initialize the "u-area" pages. */
     bzero((caddr_t)UADDR, UPAGES*NBPG);
-#if defined(DEBUG)
-    printf("returning from init\n");
-#endif
+    
 }

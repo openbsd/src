@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
@@ -40,13 +41,14 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.4 1998/07/28 00:13:46 millert Exp $
+ *	$Id: vm_machdep.c,v 1.5 1998/12/15 05:11:03 smurph Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
@@ -56,10 +58,12 @@
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
+#include <machine/pte.h>
 
 #ifdef XXX_FUTURE
 extern struct map *iomap;
 #endif
+extern struct map extiomap;
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -96,7 +100,7 @@ cpu_fork(struct proc *p1, struct proc *p2)
 
 	/*XXX these may not be necessary nivas */
 	save_u_area(p2, p2->p_addr);
-#ifdef notneeded
+#ifdef notneeded 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &p2->p_addr->u_pcb, 0);
 #endif /* notneeded */
 
@@ -104,6 +108,7 @@ cpu_fork(struct proc *p1, struct proc *p2)
 	 * Create a switch frame for proc 2
 	 */
 	p2sf = (struct switchframe *)((char *)p2->p_addr + USPACE - 8) - 1;
+
 	p2sf->sf_pc = (u_int)proc_do_uret;
 	p2sf->sf_proc = p2;
 	p2->p_addr->u_pcb.kernel_state.pcb_sp = (u_int)p2sf;
@@ -157,7 +162,7 @@ cpu_set_kpc(struct proc *p, void (*func)(struct proc *))
  * pcb and stack and never returns.  We block memory allocation
  * until switch_exit has made things safe again.
  */
-volatile void
+void
 cpu_exit(struct proc *p)
 {
 	extern volatile void switch_exit();
@@ -279,8 +284,9 @@ vunmapbuf(struct buf *bp, vm_size_t len)
 	bp->b_saveaddr = 0;
 }
 
-#ifdef XXX_FUTURE
-/*
+
+#if 1
+/* XXX_FUTURE
  * Map a range [pa, pa+len] in the given map to a kernel address
  * in iomap space.
  *
@@ -291,23 +297,23 @@ vunmapbuf(struct buf *bp, vm_size_t len)
 vm_offset_t
 iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 {
-	vm_offset_t		iova, tva, off;
+	vm_offset_t		iova, tva, off, ppa;
 	register int 		npf, s;
 
 	if (len == 0)
 		return NULL;
-
+	
 	off = (u_long)pa & PGOFSET;
 
 	len = round_page(off + len);
 
 	s = splimp();
 	for (;;) {
-		iova = rmalloc(iomap, len);
+		iova = rmalloc(&extiomap, len);
 		if (iova != 0)
 			break;
 		if (canwait) {
-			(void)tsleep(iomap, PRIBIO+1, "iomapin", 0);
+			(void)tsleep(&extiomap, PRIBIO+1, "iomapin", 0);
 			continue;
 		}
 		splx(s);
@@ -323,7 +329,7 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 		    	VM_PROT_READ|VM_PROT_WRITE, 1);
 		len -= PAGE_SIZE;
 		tva += PAGE_SIZE;
-		pa += PAGE_SIZE;
+		ppa += PAGE_SIZE;
 	}
 	return (iova + off);
 }
@@ -341,14 +347,42 @@ iomap_mapout(vm_offset_t kva, vm_size_t len)
 	kva = trunc_page(kva);
 	len = round_page(off + len);
 
-	pmap_remove(pmap_kernel(), kva, kva + len);
+	pmap_remove(kernel_pmap, kva, kva + len);
 
 	s = splimp();
-	rmfree(iomap, len, kva);
-	wakeup(iomap);
+	rmfree(&extiomap, len, kva);
+	wakeup(&extiomap);
 	splx(s);
+	return 1;
 }
+
 #endif /* XXX_FUTURE */
+
+/*
+ * Allocate/deallocate a cache-inhibited range of kernel virtual address
+ * space mapping the indicated physical address range [pa - pa+size)
+ */
+void *
+mapiodev(pa, size)
+	void *pa;
+	int size;
+{
+	vm_offset_t ppa;
+	ppa = (vm_offset_t)pa;
+	return ((void *)iomap_mapin(ppa, size, 0));
+}
+
+void
+unmapiodev(kva, size)
+	void *kva;
+	int size;
+{
+	int ix;
+	vm_offset_t va;
+	va = (vm_offset_t)kva;
+	iomap_mapout(va, size);
+}
+
 /*
  * Map the given physical IO address into the kernel temporarily.
  * Maps one page.
@@ -463,3 +497,40 @@ kvtop(vm_offset_t va)
 
 	return ((u_int)pmap_extract(kernel_pmap, va));
 }
+
+/*
+ * Map `size' bytes of physical memory starting at `paddr' into
+ * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
+ * are specified by `prot'.
+ */ 
+#if 0
+physaccess(vaddr, paddr, size, prot)
+	void *vaddr, *paddr;
+	register int size, prot;
+{
+/*	register pt_entry_t *pte;*/
+	pte_template_t *pte;
+	register u_int page;
+
+	pte = kvtopte(vaddr);
+	page = (u_int)paddr & PG_FRAME;
+	for (size = btoc(size); size; size--) {
+		*pte++ = PG_V | prot | page;
+		page += NBPG;
+	}
+	TBIAS();
+}
+
+physunaccess(vaddr, size)
+	caddr_t vaddr;
+	register int size;
+{
+	register pt_entry_t *pte;
+
+	pte = kvtopte(vaddr);
+	for (size = btoc(size); size; size--)
+		*pte++ = PG_NV;
+	TBIAS();
+}
+
+#endif
