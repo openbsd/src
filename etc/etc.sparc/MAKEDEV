@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.60 1999/09/04 03:28:04 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.61 2000/02/21 08:22:08 mjacob Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,6 +48,7 @@
 #	cd*	SCSI cdrom drives
 #	ch*	SCSI media changer
 #	uk*	SCSI Unknown device
+#	ses*	SCSI SES/SAF-TE device
 #	ss*	SCSI scanners
 #	xy*	Xylogic 450/451 disks
 #	rd*	"ramdisk" pseudo-disks
@@ -200,6 +201,7 @@ all)
 	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	sh $this uk0 uk1
 	sh $this ss0 ss1
+	sh $this ses0
 	sh $this pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this raid0 raid1 raid2 raid3
@@ -714,6 +716,14 @@ uk*)
 	mknod uk$unit c 120 $unit
 	chown root.operator uk$unit
 	chmod 640 uk$unit
+	;;
+
+ses*)
+	unit=`trunc $i ses`
+	rm -f ses$unit
+	mknod ses$unit c 124 $unit
+	chown root.operator ses$unit
+	chmod 640 ses$unit
 	;;
 
 ss*)

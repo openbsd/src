@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.74 1999/12/05 19:19:08 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.75 2000/02/21 08:22:44 mjacob Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -88,6 +88,7 @@
 #	pcmcia*	PCMCIA card drivers
 #	*random	inkernel random number generator
 #	uk*	"unknown SCSI" devices
+#	ses*	SES/SAF-TE SCSI devives
 #	ss*	SCSI scanners
 #	xfs*	XFS filesystem devices
 #	bktr0	video capturing
@@ -186,7 +187,7 @@ all)
 	sh $this ipl tun0 tun1 tun2
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local
-	sh $this random uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
+	sh $this random ses0 uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
 	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh $this fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	sh $this xfs0 music
@@ -653,6 +654,13 @@ uk*)
 	mknod uk$unit c 20 $unit
 	chown root.operator uk$unit
 	chmod 640 uk$unit
+	;;
+
+ses*)
+	rm -f ses$unit
+	mknod ses$unit c 24 $unit
+	chown root.operator ses$unit
+	chmod 640 ses$unit
 	;;
 
 ss*)
