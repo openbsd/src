@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.15 2003/11/14 22:29:53 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.16 2003/11/21 21:54:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.15 2003/11/14 22:29:53 millert Exp $";
+    "$OpenBSD: gzopen.c,v 1.16 2003/11/21 21:54:46 millert Exp $";
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -437,26 +437,18 @@ gz_read(void *cookie, char *buf, int len)
 				return -1;
 			}
 			s->z_hlen += 2 * sizeof(int32_t);
-			s->z_eof = 1;
-			break;
+			/* Check for the existence of an appended file. */
+			if (get_header(s, NULL, 0) != 0) {
+				s->z_eof = 1;
+				break;
+			}
+			inflateReset(&(s->z_stream));
+			s->z_crc = crc32(0L, Z_NULL, 0);
 		}
 	}
 	s->z_crc = crc32(s->z_crc, start,
 	    (uInt)(s->z_stream.next_out - start));
 	len -= s->z_stream.avail_out;
-
-	/* If at EOF, check for another appended file. */
-	if (s->z_eof) {
-		int ocrc = s->z_crc;
-		s->z_crc = crc32(0L, Z_NULL, 0);
-		s->z_eof = 0;
-		if (get_header(s, NULL, 0) != 0 ||
-		    inflateEnd(&s->z_stream) != Z_OK ||
-		    inflateInit2(&s->z_stream, -MAX_WBITS) != Z_OK) {
-			s->z_eof = 1;
-			s->z_crc = ocrc;
-		}
-	}
 
 	return (len);
 }
