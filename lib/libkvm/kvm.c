@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.35 2004/01/09 16:51:07 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.36 2004/02/18 03:23:00 tedu Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.35 2004/01/09 16:51:07 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.36 2004/02/18 03:23:00 tedu Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -301,7 +301,7 @@ failed:
 	 * Copy out the error if doing sane error semantics.
 	 */
 	if (errout != 0)
-		(void)strncpy(errout, kd->errbuf, _POSIX2_LINE_MAX - 1);
+		(void)strlcpy(errout, kd->errbuf, _POSIX2_LINE_MAX);
 	(void)kvm_close(kd);
 	return (0);
 }
@@ -615,7 +615,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 	register kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
-		(void)strncpy(errout, strerror(errno), _POSIX2_LINE_MAX - 1);
+		(void)strlcpy(errout, strerror(errno), _POSIX2_LINE_MAX);
 		return (0);
 	}
 	kd->program = 0;
