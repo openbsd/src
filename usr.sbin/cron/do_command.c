@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.14 2002/06/14 21:35:01 todd Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.15 2002/06/21 21:10:32 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: do_command.c,v 1.14 2002/06/14 21:35:01 todd Exp $";
+static char rcsid[] = "$OpenBSD: do_command.c,v 1.15 2002/06/21 21:10:32 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -187,8 +187,8 @@ child_process(entry *e, user *u) {
 			close(stdin_pipe[READ_PIPE]);
 		}
 		if (stdout_pipe[WRITE_PIPE] != STDOUT) {
-			close(STDOUT);
 			dup2(stdout_pipe[WRITE_PIPE], STDOUT);
+			close(stdout_pipe[WRITE_PIPE]);
 		}
 		dup2(STDOUT, STDERR);
 
