@@ -16,10 +16,10 @@ source code is used in accordance with the relevant license agreements
 and can be used freely for any purpose (the GNU license being the most
 restrictive); see below for details.
 
-[ IDEA is now *only* included if configured with --with-rsa. ]
+[ RSA is no longer included. ]
 [ IDEA is no longer included. ]
 [ DES is now external. ]
-[ GMP is now external. ]
+[ GMP is now external. No more GNU licence. ]
 [ Zlib is now external. ]
 [ The make-ssh-known-hosts script is no longer included. ]
 [ TSS has been removed. ]
