@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.25 2002/09/13 00:12:10 deraadt Exp $	*/
+/*	$OpenBSD: auth.c,v 1.26 2003/02/18 13:14:43 jmc Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -77,7 +77,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.25 2002/09/13 00:12:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.26 2003/02/18 13:14:43 jmc Exp $";
 #endif
 #endif
 
@@ -839,7 +839,7 @@ plogin(user, passwd, msg, msglen)
 	return UPAP_AUTHNAK;
     }
 /*
- * Define the fields for the credintial validation
+ * Define the fields for the credential validation
  */
     (void) pam_set_item (pamh, PAM_TTY, devnam);
     PAM_username = user;

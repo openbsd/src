@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: hash.c,v 1.3 2002/05/27 19:49:58 deraadt Exp $";
+static char rcsid[] = "$Id: hash.c,v 1.4 2003/02/18 13:14:43 jmc Exp $";
 #endif
 
 
@@ -78,7 +78,7 @@ PRIVATE void hashi_FreeMembers P((hash_member *, hash_freefp));
 /*
  * Hash table initialization routine.
  *
- * This routine creates and intializes a hash table of size "tablesize"
+ * This routine creates and initializes a hash table of size "tablesize"
  * entries.  Successful calls return a pointer to the hash table (which must
  * be passed to other hash routines to identify the hash table).  Failed
  * calls return NULL.

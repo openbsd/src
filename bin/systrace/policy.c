@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.23 2002/12/09 07:23:52 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.24 2003/02/18 13:14:43 jmc Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -223,7 +223,7 @@ systrace_newpolicy(const char *emulation, const char *name)
 
 	tmp->policynr = -1;
 
-	/* New policies requires intialization */
+	/* New policies requires initialization */
 	if ((tmp->name = strdup(name)) == NULL)
 		err(1, "%s:%d: strdup", __func__, __LINE__);
 	strlcpy(tmp->emulation, emulation, sizeof(tmp->emulation));

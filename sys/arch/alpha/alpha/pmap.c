@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.36 2002/09/10 18:29:42 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.37 2003/02/18 13:14:43 jmc Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -864,7 +864,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	    NULL, NULL);
 
 	/*
-	 * ...and intialize the pv_entry list headers.
+	 * ...and initialize the pv_entry list headers.
 	 */
 	for (i = 0; i < pv_table_npages; i++) {
 		LIST_INIT(&pv_table[i].pvh_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.6 2002/03/24 22:17:04 millert Exp $	*/
+/*	$OpenBSD: undo.c,v 1.7 2003/02/18 13:14:43 jmc Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: undo.c,v 1.6 2002/03/24 22:17:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: undo.c,v 1.7 2003/02/18 13:14:43 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -44,7 +44,7 @@ undo_t *ustack = NULL;				/* undo stack */
 int usize = 0;					/* stack size variable */
 int u_p = 0;					/* undo stack pointer */
 
-/* push_undo_stack: return pointer to intialized undo node */
+/* push_undo_stack: return pointer to initialized undo node */
 undo_t *
 push_undo_stack(type, from, to)
 	int type;

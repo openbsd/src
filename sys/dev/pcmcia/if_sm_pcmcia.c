@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.18 2002/11/19 18:36:18 jason Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.19 2003/02/18 13:14:43 jmc Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -223,7 +223,7 @@ sm_pcmcia_attach(parent, self, aux)
 	if (psc->sc_ih == NULL)
 		printf(": couldn't establish interrupt\n");
 
-	/* Perform generic intialization. */
+	/* Perform generic initialization. */
 	smc91cxx_attach(sc, enaddr);
 
 #ifdef notyet

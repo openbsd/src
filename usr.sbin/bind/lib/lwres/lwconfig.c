@@ -22,7 +22,7 @@
  ***
  *** entry points are:
  ***	lwres_conf_init(lwres_context_t *ctx)
- ***		intializes data structure for subsequent config parsing.
+ ***		initializes data structure for subsequent config parsing.
  ***
  ***	lwres_conf_parse(lwres_context_t *ctx, const char *filename)
  ***		parses a file and fills in the data structure.

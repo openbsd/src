@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.52 2002/07/31 19:29:20 mickey Exp $	*/
+/*	$OpenBSD: job.c,v 1.53 2003/02/18 13:14:43 jmc Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  *				a time given by the SEL_* constants, below,
  *				or until output is ready.
  *
- *	Job_Init		Called to intialize this module. in addition,
+ *	Job_Init		Called to initialize this module. in addition,
  *				any commands attached to the .BEGIN target
  *				are executed before this function returns.
  *				Hence, the makefile must have been parsed

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.36 2002/11/19 18:40:16 jason Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.37 2003/02/18 13:14:42 jmc Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -580,7 +580,7 @@ ahc_do_pci_config(ahc)
 
 	/*
 	 * Protect ourself from spurrious interrupts during
-	 * intialization.
+	 * initialization.
 	 */
 	opri = splbio();
 	
