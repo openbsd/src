@@ -1180,7 +1180,7 @@ SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
 #     This enables optimized SSL connection renegotiation handling when SSL
 #     directives are used in per-directory context. 
 #SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
-<Files ~ "\.(cgi|shtml|phtml|php3?)$">
+<Files ~ "\.(cgi|shtml|phtml|php3|php?)$">
     SSLOptions +StdEnvVars
 </Files>
 <Directory "@@ServerRoot@@/cgi-bin">
