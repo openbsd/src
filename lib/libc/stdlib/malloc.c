@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.68 2004/08/01 08:45:39 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.69 2004/08/04 19:12:53 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1348,7 +1348,7 @@ free_pages(void *ptr, u_long index, struct pginfo *info)
 	index = ptr2index(malloc_brk);
 
 	pidx = PI_IDX(index);
-	if (PD_IDX(prev_dir->dirnum) >= pidx)
+	if (prev_dir != NULL && PD_IDX(prev_dir->dirnum) >= pidx)
 		prev_dir = NULL;	/* Will be wiped out below ! */
 
 	for (pi=pf->pdir; pi!=NULL && PD_IDX(pi->dirnum)<pidx; pi=pi->next);
