@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.21 1996/12/16 20:04:54 tholo Exp $	*/
+/*	$OpenBSD: tty.c,v 1.22 1996/12/17 19:15:24 tholo Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -642,6 +642,7 @@ ttyoutput(c, tp)
 		tp->t_outcc++;
 		if (putc('\r', &tp->t_outq))
 			return (c);
+		col = 0;
 	}
 	else if (c == '\r' && ISSET(tp->t_oflag, OCRNL))
 		c = '\n';
