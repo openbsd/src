@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.10 2000/01/09 22:43:18 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.11 2000/02/20 21:24:19 mjacob Exp $	*/
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -120,7 +120,7 @@ isp_match(parent, cfarg, aux)
 #ifdef DEBUG
 	if (rv && oneshot) {
 		oneshot = 0;
-		printf("Qlogic ISP Driver, NetBSD (sbus) Platform Version "
+		printf("Qlogic ISP Driver, OpenBSD (sbus) Platform Version "
 		    "%d.%d Core Version %d.%d\n",
 		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
@@ -358,12 +358,24 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	u_int16_t optr;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	ispcontreq_t *crq;
 	vaddr_t kdvma;
 	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
 		goto mbxsync;
+	}
+	if (XS_CDBLEN(xs) > 12) {
+		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
+		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
+		if (*iptrp == optr) {
+			printf("%s: Request Queue Overflow++\n", isp->isp_name);
+			XS_SETERR(xs, HBA_BOTCH);
+			return (CMD_COMPLETE);
+		}
+	} else {
+		crq = NULL;
 	}
 	assert(rq->req_handle != 0 && rq->req_handle <= isp->isp_maxcmds);
 
@@ -388,9 +400,19 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	} else {
 		rq->req_flags |= REQFLAG_DATA_OUT;
 	}
-	rq->req_dataseg[0].ds_count = xs->datalen;
-	rq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
-	rq->req_seg_count = 1;
+	if (crq) {
+		rq->req_seg_count = 2;
+		bzero((void *)crq, sizeof (*crq));
+		crq->req_header.rqs_entry_count = 1;
+		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;  
+		crq->req_dataseg[0].ds_count = xs->datalen;
+		crq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
+		ISP_SWIZZLE_CONTINUATION(isp, crq);
+	} else {
+		rq->req_dataseg[0].ds_count = xs->datalen;
+		rq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
+		rq->req_seg_count = 1;
+	}
 
 mbxsync:
 	ISP_SWIZZLE_REQUEST(isp, rq);
