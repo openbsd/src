@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.6 2001/06/03 04:07:59 angelos Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.7 2001/06/03 04:18:22 angelos Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.6 2001/06/03 04:07:59 angelos Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.7 2001/06/03 04:18:22 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,8 +106,7 @@ donlist()
 			eval = rval = 1;
 		}
 	}
-	else
-	{
+	else {
 		siz = sizeof (fscale);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FSCALE;
