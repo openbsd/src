@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.327 2000/09/28 18:57:07 aaron Exp $
+	$OpenBSD: pcidevs,v 1.328 2000/10/06 01:39:48 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -989,6 +989,7 @@ product ENSONIQ CT5880		0x5880  CT5880
 product ESSTECH	MAESTROII	0x1968	Maestro II
 product ESSTECH SOLO1		0x1969	SOLO-1 AudioDrive
 product ESSTECH MAESTRO2E	0x1978	Maestro 2E
+product ESSTECH MAESTRO3	0x1998	Maestro 3
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI
