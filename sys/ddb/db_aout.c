@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.4 1996/03/11 11:15:57 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.5 1996/03/30 04:51:28 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -343,10 +343,10 @@ ddb_init()
 	extern int	end;
 
 	if (esym > (char *)&end) {
-	    X_db_sym_init((int *)&end, esym, "netbsd");
+	    X_db_sym_init((int *)&end, esym, "bsd");
 	}
 #else
-	X_db_sym_init (db_symtab, 0, "netbsd");
+	X_db_sym_init (db_symtab, 0, "bsd");
 #endif
 }
 

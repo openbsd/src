@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_var.h,v 1.2 1996/03/30 04:51:29 mickey Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.1 1996/03/30 04:51:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -29,41 +29,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Different parameters/structures/functions
- */
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
-#ifndef _DDB_DB_VAR_H_
-#define _DDB_DB_VAR_H_
+#include <ddb/db_var.h>
 
-#ifndef	DB_HISTORY_SIZE
-#define	DB_HISTORY_SIZE	4000
-#endif
+int
+ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int	*name;
+	u_int	namelen;
+	void	*oldp;
+	size_t	*oldlenp;
+	void	*newp;
+	size_t	newlen;
+	struct proc *p;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
 
-#define DBCTL_RADIX	1
-#define DBCTL_MAXWIDTH	2
-#define DBCTL_MAXLINE	3
-#define DBCTL_TABSTOP	4
-#define DBCTL_MAXID	5
+	switch (name[0]) {
 
-#define	CTL_DDB_NAMES { \
-	{ NULL, 0 }, \
-	{ "radix", CTLTYPE_INT }, \
-	{ "max_width", CTLTYPE_INT }, \
-	{ "max_line", CTLTYPE_INT }, \
-	{ "tab_stop_width", CTLTYPE_INT },\
+	case DBCTL_RADIX:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &db_radix);
+	case DBCTL_MAXWIDTH:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &db_max_width);
+	case DBCTL_TABSTOP:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &db_tab_stop_width);
+	case DBCTL_MAXLINE:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &db_max_line);
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
-
-#ifdef	_KERNEL
-extern u_int	db_maxoff;
-extern int	db_radix;
-extern int	db_max_width;
-extern int	db_tab_stop_width;
-extern int	db_max_line;
-
-int	ddb_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		       struct proc *));
-#endif
-
-#endif /* _DDB_DB_VAR_H_ */
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.2 1996/03/03 12:12:22 niklas Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.3 1996/03/30 04:51:33 mickey Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.11 1996/02/09 18:25:39 christos Exp $	*/
 
 /*
@@ -92,7 +92,8 @@ struct ctlname {
 #define	CTL_HW		6		/* generic cpu/io */
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
-#define	CTL_MAXID	9		/* number of valid top-level ids */
+#define	CTL_DDB		9		/* DDB user interface, see ddb_var.h */
+#define	CTL_MAXID	10		/* number of valid top-level ids */
 
 #define CTL_NAMES { \
 	{ 0, 0 }, \
@@ -104,6 +105,7 @@ struct ctlname {
 	{ "hw", CTLTYPE_NODE }, \
 	{ "machdep", CTLTYPE_NODE }, \
 	{ "user", CTLTYPE_NODE }, \
+	{ "ddb", CTLTYPE_NODE }, \
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.3 1996/03/11 11:16:28 mickey Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.4 1996/03/30 04:51:30 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,13 +36,7 @@
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-extern unsigned int	db_maxoff;
-
-extern int	db_radix;
-extern int	db_max_width;
-extern int	db_tab_stop_width;
-extern int	db_max_line;
+#include <ddb/db_var.h>
 
 struct db_variable db_vars[] = {
 	{ "radix",	&db_radix, FCN_NULL },

@@ -63,6 +63,7 @@ file ddb/db_trap.c			ddb
 file ddb/db_variables.c			ddb
 file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
+file ddb/db_usrreq.c			ddb
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/aic7xxx.c			aic7xxx

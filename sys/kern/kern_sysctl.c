@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.2 1996/03/03 17:19:56 niklas Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.3 1996/03/30 04:51:32 mickey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.14 1996/02/09 18:59:52 christos Exp $	*/
 
 /*-
@@ -60,6 +60,10 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 /*
  * Locking and stats
@@ -128,6 +132,11 @@ sys___sysctl(p, v, retval)
 #ifdef DEBUG
 	case CTL_DEBUG:
 		fn = debug_sysctl;
+		break;
+#endif
+#ifdef DDB
+	case CTL_DDB:
+		fn = ddb_sysctl;
 		break;
 #endif
 	default:
