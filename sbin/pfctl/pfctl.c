@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.143 2003/02/03 13:40:45 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.144 2003/02/03 13:57:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1004,14 +1004,6 @@ pfctl_rules(int dev, char *filename, int opts)
 				err(1, "DIOCCOMMITRULES");
 		}
 		pfctl_commit_table();
-#if 0
-		if ((opts & PF_OPT_QUIET) == 0) {
-			fprintf(stderr, "%u nat entries loaded\n", n);
-			fprintf(stderr, "%u rdr entries loaded\n", r);
-			fprintf(stderr, "%u binat entries loaded\n", b);
-			fprintf(stderr, "%u rules loaded\n", n);
-		}
-#endif
 	}
 	if (fin != stdin)
 		fclose(fin);
