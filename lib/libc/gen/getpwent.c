@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.5 1996/09/15 10:09:11 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.6 1996/09/16 19:01:08 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -643,12 +643,13 @@ struct passwd *
 getpwuid(uid_t uid)
 #else
 getpwuid(uid)
-	int uid;
+	uid_t uid;
 #endif
 {
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
-	int keyuid, rval;
+	uid_t keyuid;
+	int rval;
 
 	if (!_pw_db && !__initdb())
 		return((struct passwd *)NULL);
@@ -664,7 +665,7 @@ getpwuid(uid)
 		int s = -1;
 		const char *host, *user, *dom;
 
-		sprintf(uidbuf, "%d", uid);
+		sprintf(uidbuf, "%u", uid);
 		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
 			bf[0] = _PW_KEYBYNUM;
 			bcopy((char *)&_pw_keynum, bf + 1, sizeof(_pw_keynum));
