@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.22 2002/07/05 21:21:17 jason Exp $	*/
+/*	$OpenBSD: ises.c,v 1.23 2003/02/18 18:16:21 jason Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -291,7 +291,7 @@ ises_initstate(void *v)
 	struct ises_softc *sc = v;
 	char *dv = sc->sc_dv.dv_xname;
 	u_int32_t stat;
-	int p, ticks;
+	int p, ticks, algs[CRYPTO_ALGORITHM_MAX + 1];
 	static int retry_count = 0; /* XXX Should be in softc */
 
 	ticks = hz * 3 / 2; /* 1.5s */ 
@@ -499,19 +499,16 @@ ises_initstate(void *v)
 		printf("\n");
 
 		/* Register ourselves with crypto framework. */
-		p = crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
-		    ises_newsession, ises_freesession, ises_process);
-		p |= crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
-		    NULL, NULL, NULL);
-		p |= crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0,
-		    NULL, NULL, NULL);
-		p |= crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0,
-		    NULL, NULL, NULL);
-		p |= crypto_register(sc->sc_cid, CRYPTO_RIPEMD160_HMAC, 0, 0,
-		    NULL, NULL, NULL);
-		if (p)
-			printf("%s: could not register all algorithms\n", dv);
+		bzero(algs, sizeof(algs));
 
+		algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_RIPEMD160_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+
+		crypto_register(sc->sc_cid, algs,
+		    ises_newsession, ises_freesession, ises_process);
 		return;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.11 2002/07/21 05:09:17 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.12 2003/02/18 18:16:21 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -813,7 +813,7 @@ noct_ea_init(sc)
 	struct noct_softc *sc;
 {
 	bus_dma_segment_t seg;
-	int rseg;
+	int rseg, algs[CRYPTO_ALGORITHM_MAX + 1];
 
 	if (bus_dmamem_alloc(sc->sc_dmat, NOCT_EA_BUFSIZE,
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
@@ -843,11 +843,15 @@ noct_ea_init(sc)
 	SIMPLEQ_INIT(&sc->sc_chipq);
 	SIMPLEQ_INIT(&sc->sc_outq);
 
-	crypto_register(sc->sc_cid, CRYPTO_MD5, 0, 0,
+	bzero(algs, sizeof(algs));
+
+	algs[CRYPTO_MD5] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA1] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+
+	crypto_register(sc->sc_cid, algs, 
 	    noct_newsession, noct_freesession, noct_process);
-	crypto_register(sc->sc_cid, CRYPTO_SHA1, 0, 0, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0, NULL, NULL, NULL);
 
 	kthread_create_deferred(noct_ea_create_thread, sc);
 
