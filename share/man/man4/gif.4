@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.14 2004/02/23 10:19:18 jmc Exp $
+.\"	$OpenBSD: gif.4,v 1.15 2004/07/16 21:54:53 jmc Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,10 +106,13 @@ the destination "physical" address, and vice versa).
 .\"
 .Sh SEE ALSO
 .Xr sysctl 3 ,
+.Xr bridge 4 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr ipsec 4 ,
-.Xr ifconfig 8
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr netstart 8
 .Rs
 .%A R. Gilligan
 .%A E. Nordmark
