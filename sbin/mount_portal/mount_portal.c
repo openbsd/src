@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.5 1997/01/15 23:41:24 millert Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.6 1997/03/23 03:04:29 millert Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.5 1997/01/15 23:41:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.6 1997/03/23 03:04:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.5 1997/01/15 23:41:24 miller
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/syslog.h>
+#include <sys/stat.h>
 #include <sys/mount.h>
 
 #include <err.h>
@@ -74,6 +75,8 @@ const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
+
+extern char *__progname;	/* from crt0.o */
 
 static char *mountpt;		/* made available to signal handler */
 
@@ -105,6 +108,7 @@ static void
 sigterm(sig)
 	int sig;
 {
+
 	if (unmount(mountpt, MNT_FORCE) < 0)
 		syslog(LOG_WARNING, "sigterm: unmounting %s failed: %s",
 		       mountpt, strerror(errno));
@@ -159,36 +163,35 @@ main(argc, argv)
 	 * Construct the listening socket
 	 */
 	un.sun_family = AF_UNIX;
-	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path)) {
-		fprintf(stderr, "mount_portal: portal socket name too long\n");
-		exit(1);
-	}
+	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path))
+		errx(1, "portal socket name too long");
 	strcpy(un.sun_path, _PATH_TMPPORTAL);
-	mktemp(un.sun_path);
+	so = mkstemp(un.sun_path);
+	if (so < 0)
+		err(1, "can't create portal socket name: %s", un.sun_path);
 	un.sun_len = strlen(un.sun_path);
+	(void)close(so);
 
 	so = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (so < 0) {
-		fprintf(stderr, "mount_portal: socket: %s\n", strerror(errno));
-		exit(1);
-	}
+	if (so < 0)
+		err(1, "socket(2)");
 
 	um = umask(077);
-	(void) unlink(un.sun_path);
+	(void)unlink(un.sun_path);
 	if (bind(so, (struct sockaddr *) &un, sizeof(un)) < 0)
-		err(1, NULL);
-	(void) unlink(un.sun_path);
-	(void) umask(um);
+		err(1, "bind(2)");
+	(void)unlink(un.sun_path);
+	(void)umask(um);
 
-	(void) listen(so, 5);
+	(void)listen(so, 5);
 
 	args.pa_socket = so;
-	sprintf(tag, "portal:%d", getpid() + 1);
+	(void)sprintf(tag, "portal:%d", getpid() + 1);
 	args.pa_config = tag;
 
 	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
 	if (rc < 0)
-		err(1, NULL);
+		err(1, "mount(2)");
 
 	/*
 	 * Everything is ready to go - now is a good time to fork
@@ -203,9 +206,9 @@ main(argc, argv)
 	q.q_forw = q.q_back = &q;
 	readcf = 1;
 
-	signal(SIGCHLD, sigchld);
-	signal(SIGHUP, sighup);
-	signal(SIGTERM, sigterm);
+	(void)signal(SIGCHLD, sigchld);
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGTERM, sigterm);
 
 	/*
 	 * Just loop waiting for new connections and activating them
@@ -272,11 +275,11 @@ main(argc, argv)
 			syslog(LOG_ERR, "fork: %s", strerror(errno));
 			break;
 		case 0:
-			(void) close(so);
+			(void)close(so);
 			activate(&q, so2);
 			exit(0);
 		default:
-			(void) close(so2);
+			(void)close(so2);
 			break;
 		}
 	}
@@ -288,6 +291,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-		"usage: mount_portal [-o options] config mount-point\n");
+		"usage: %s [-o options] config mount-point\n", __progname);
 	exit(1);
 }

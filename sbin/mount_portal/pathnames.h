@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/06/23 14:31:33 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1997/03/23 03:04:29 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.4 1995/04/23 10:33:21 cgd Exp $	*/
 
 /*
@@ -42,4 +42,4 @@
 
 #include <paths.h>
 
-#define	_PATH_TMPPORTAL	 "/tmp/portalXXXXXX"	/* Scratch socket name */
+#define	_PATH_TMPPORTAL	 "/tmp/portalXXXXXXXXXX"	/* Scratch socket name */
