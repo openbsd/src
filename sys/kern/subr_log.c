@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.4 1997/08/31 20:42:20 deraadt Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.5 1997/09/18 13:23:26 deraadt Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ logopen(dev, flags, mode, p)
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
-	logsoftc.sc_pgid = p->p_pid;		/* signal process only */
 	/*
 	 * Potential race here with putchar() but since putchar should be
 	 * called by autoconf, msg_magic should be initialized by the time
