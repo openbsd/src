@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.17 2004/01/03 05:39:59 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.18 2004/11/30 19:28:36 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -68,8 +68,49 @@ void si_free(struct scsi_ioctl *);
 struct scsi_ioctl *si_find(struct buf *);
 void scsistrategy(struct buf *);
 
+const unsigned char scsi_readsafe_cmd[256] = {
+	[0x00] = 1,	/* TEST UNIT READY */
+	[0x03] = 1,	/* REQUEST SENSE */
+	[0x08] = 1,	/* READ(6) */
+	[0x12] = 1,	/* INQUIRY */
+	[0x1a] = 1,	/* MODE SENSE */
+	[0x1b] = 1,	/* START STOP */
+	[0x23] = 1,	/* READ FORMAT CAPACITIES */
+	[0x25] = 1,	/* READ CDVD CAPACITY */
+	[0x28] = 1,	/* READ(10) */
+	[0x2b] = 1,	/* SEEK */
+	[0x2f] = 1,	/* VERIFY(10) */
+	[0x3c] = 1,	/* READ BUFFER */
+	[0x3e] = 1,	/* READ LONG */
+	[0x42] = 1,	/* READ SUBCHANNEL */
+	[0x43] = 1,	/* READ TOC PMA ATIP */
+	[0x44] = 1,	/* READ HEADER */
+	[0x45] = 1,	/* PLAY AUDIO(10) */
+	[0x46] = 1,	/* GET CONFIGURATION */
+	[0x47] = 1,	/* PLAY AUDIO MSF */
+	[0x48] = 1,	/* PLAY AUDIO TI */
+	[0x4a] = 1,	/* GET EVENT STATUS NOTIFICATION */
+	[0x4b] = 1,	/* PAUSE RESUME */
+	[0x4e] = 1,	/* STOP PLAY SCAN */
+	[0x51] = 1,	/* READ DISC INFO */
+	[0x52] = 1,	/* READ TRACK RZONE INFO */
+	[0x5a] = 1,	/* MODE SENSE(10) */
+	[0x88] = 1,	/* READ(16) */
+	[0x8f] = 1,	/* VERIFY(16) */
+	[0xa4] = 1,	/* REPORT KEY */
+	[0xa5] = 1,	/* PLAY AUDIO(12) */
+	[0xa8] = 1,	/* READ(12) */
+	[0xac] = 1,	/* GET PERFORMANCE */
+	[0xad] = 1,	/* READ DVD STRUCTURE */
+	[0xb9] = 1,	/* READ CD MSF */
+	[0xba] = 1,	/* SCAN */
+	[0xbc] = 1,	/* PLAY CD */
+	[0xbd] = 1,	/* MECHANISM STATUS */
+	[0xbe] = 1	/* READ CD */
+};
+
 struct scsi_ioctl *
-si_get()
+si_get(void)
 {
 	struct scsi_ioctl *si;
 	int s;
@@ -83,8 +124,7 @@ si_get()
 }
 
 void
-si_free(si)
-	struct scsi_ioctl *si;
+si_free(struct scsi_ioctl *si)
 {
 	int s;
 
@@ -95,8 +135,7 @@ si_free(si)
 }
 
 struct scsi_ioctl *
-si_find(bp)
-	struct buf *bp;
+si_find(struct buf *bp)
 {
 	struct scsi_ioctl *si;
 	int s;
@@ -118,8 +157,7 @@ si_find(bp)
  * the device's queue if such exists.
  */
 void
-scsi_user_done(xs)
-	struct scsi_xfer *xs;
+scsi_user_done(struct scsi_xfer *xs)
 {
 	struct buf *bp;
 	struct scsi_ioctl *si;
@@ -198,8 +236,7 @@ scsi_user_done(xs)
  * the screq structure. [JRE]
  */
 void
-scsistrategy(bp)
-	struct buf *bp;
+scsistrategy(struct buf *bp)
 {
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
@@ -283,21 +320,53 @@ bad:
  * in the context of the calling process
  */
 int
-scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
-	struct scsi_link *sc_link;
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
+    int flag, struct proc *p)
 {
 	int error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 
-	/* If we don't have write access, just skip to the safe ones. */
-	if ((flag & FWRITE) == 0)
-		return scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p);
+	switch(cmd) {
+	case OSCIOCIDENTIFY: {
+		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
+
+		sca->scbus = sc_link->scsibus;
+		sca->target = sc_link->target;
+		sca->lun = sc_link->lun;
+		return (0);
+	}
+	case SCIOCIDENTIFY: {
+		struct scsi_addr *sca = (struct scsi_addr *)addr;
+
+		sca->type = (sc_link->flags & SDEV_ATAPI) 
+			? TYPE_ATAPI : TYPE_SCSI;
+		sca->scbus = sc_link->scsibus;
+		sca->target = sc_link->target;
+		sca->lun = sc_link->lun;
+		return (0);
+	}
+	case SCIOCRECONFIG:
+	case SCIOCDECONFIG:
+		return (EINVAL);
+	case SCIOCCOMMAND:
+		if (scsi_readsafe_cmd[((scsireq_t *)addr)->cmd[0]])
+			break;
+		/* FALLTHROUGH */	
+	case SCIOCDEBUG:
+	case SCIOCREPROBE:
+	case OSCIOCREPROBE:
+	case SCIOCRESET:
+		if ((flag & FWRITE) == 0)
+			return (EPERM);
+		break;
+	default:	
+		if (sc_link->adapter->ioctl)
+			return ((sc_link->adapter->ioctl)(sc_link, cmd, addr, 
+			    flag, p));
+		else
+			return (ENOTTY);
+	}
 
 	switch(cmd) {
 	case SCIOCCOMMAND: {
@@ -335,7 +404,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		}
 		*screq = si->si_screq;
 		si_free(si);
-		return error;
+		return (error);
 	}
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
@@ -350,81 +419,27 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			sc_link->flags |= SDEV_DB3;
 		if (level & 8)
 			sc_link->flags |= SDEV_DB4;
-		return 0;
+		return (0);
 	}
 	case OSCIOCREPROBE: {
 		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
 
-		return scsi_probe_busses(sca->scbus, sca->target, sca->lun);
+		return (scsi_probe_busses(sca->scbus, sca->target, sca->lun));
 	}
 	case SCIOCREPROBE: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
-		return scsi_probe_busses(sca->scbus, sca->target, sca->lun);
+		return (scsi_probe_busses(sca->scbus, sca->target, sca->lun));
 	}
-	case SCIOCRECONFIG:
-	case SCIOCDECONFIG:
-		return EINVAL;
 	case SCIOCRESET: {
-		if ((flag & FWRITE) == 0)
-			return EBADF;
 		scsi_scsi_cmd(sc_link, 0, 0, 0, 0, GENRETRY, 2000, NULL,
 		    SCSI_RESET);
-		return 0;
+		return (0);
 	}
 	default:
-		return scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p);
-	}
-
 #ifdef DIAGNOSTIC
-	panic("scsi_do_ioctl: impossible");
+		panic("scsi_do_ioctl: impossible");
 #endif
-}
-
-int
-scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
-	struct scsi_link *sc_link;
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
-{
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_safeioctl(0x%lx)\n", cmd));
-
-	switch(cmd) {
-	case OSCIOCIDENTIFY: {
-		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
-
-		sca->scbus = sc_link->scsibus;
-		sca->target = sc_link->target;
-		sca->lun = sc_link->lun;
-		return 0;
-	}
-	case SCIOCIDENTIFY: {
-		struct scsi_addr *sca = (struct scsi_addr *)addr;
-
-		sca->type = (sc_link->flags & SDEV_ATAPI) 
-			? TYPE_ATAPI : TYPE_SCSI;
-		sca->scbus = sc_link->scsibus;
-		sca->target = sc_link->target;
-		sca->lun = sc_link->lun;
-		return 0;
-	}
-	case SCIOCCOMMAND:
-	case SCIOCDEBUG:
-	case SCIOCREPROBE:
-	case OSCIOCREPROBE:
-	case SCIOCRESET:
-		return EBADF;
-	case SCIOCRECONFIG:
-	case SCIOCDECONFIG:
-		return EINVAL;
-	default:
-		if (sc_link->adapter->ioctl)
-			return (sc_link->adapter->ioctl)(sc_link, cmd, addr, 
-			    flag, p);
-		else
-			return ENOTTY;
+		return (0);
 	}
 }
