@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.8 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.9 2002/03/15 21:35:28 jason Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -61,6 +61,10 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
+#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -151,16 +155,10 @@ gem_attach_pci(parent, self, aux)
 	sc->sc_bustag = gsc->gsc_memt;
 	sc->sc_h = gsc->gsc_memh;
 
-#if 0
-/* SBUS compatible stuff? */
-	sc->sc_seb = gsc->gsc_memh;
-	sc->sc_etx = gsc->gsc_memh + 0x2000;
-	sc->sc_erx = gsc->gsc_memh + 0x4000;
-	sc->sc_mac = gsc->gsc_memh + 0x6000;
-	sc->sc_mif = gsc->gsc_memh + 0x7000;
-#endif
 #ifdef __sparc__
-	myetheraddr(sc->sc_enaddr);
+	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
+		myetheraddr(sc->sc_enaddr);
 #endif
 #ifdef __powerpc__ 
         pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
