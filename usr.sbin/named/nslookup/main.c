@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1997/03/12 10:42:48 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1998/08/30 03:39:20 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -66,7 +66,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: main.c,v 8.4 1996/11/11 06:36:54 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.3 1997/03/12 10:42:48 downsj Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.4 1998/08/30 03:39:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -465,6 +465,7 @@ SetDefaultServer(string, local)
     struct in_addr	*servAddrPtr;
     struct in_addr	addr;
     char		newServer[NAME_LEN];
+    char		get[40];
     int			result;
     int			i;
 
@@ -474,12 +475,15 @@ SetDefaultServer(string, local)
      */
 
     if (local) {
-	i = sscanf(string, " lserver %s", newServer);
+	snprintf(get, sizeof get, "lserver %%%ds", sizeof newServer-1);
+	i = sscanf(string, get, newServer);
     } else {
-	i = sscanf(string, " server %s", newServer);
+	snprintf(get, sizeof get, "server %%%ds", sizeof newServer-1);
+	i = sscanf(string, get, newServer);
     }
     if (i != 1) {
-	i = sscanf(string, " %s", newServer);
+	snprintf(get, sizeof get, " %%%ds", sizeof newServer-1);
+	i = sscanf(string, get, newServer);
 	if (i != 1) {
 	    fprintf(stderr,"SetDefaultServer: invalid name: %s\n",  string);
 	    return(ERROR);
@@ -669,6 +673,7 @@ LookupHost(string, putToFile)
 {
     char	host[NAME_LEN];
     char	file[PATH_MAX];
+    char	get[20];
     int		result;
 
     /*
@@ -684,7 +689,8 @@ LookupHost(string, putToFile)
      *
      */
 
-    sscanf(string, " %s", host);	/* removes white space */
+    snprintf(get, sizeof get, " %%%ds", sizeof host-1);
+    sscanf(string, get, host);	/* removes white space */
     if (!putToFile) {
 	filePtr = stdout;
     } else {
@@ -740,12 +746,15 @@ LookupHostWithServer(string, putToFile)
     char	file[PATH_MAX];
     char	host[NAME_LEN];
     char	server[NAME_LEN];
+    char	get[80];
     int		result;
+
     static HostInfo serverInfo;
 
     curHostValid = FALSE;
 
-    sscanf(string, " %s %s", host, server);
+    snprintf(get, sizeof get, " %%%ds %%%ds", sizeof host-1, sizeof server-1);
+    sscanf(string, get, host, server);
     if (!putToFile) {
 	filePtr = stdout;
     } else {
@@ -824,6 +833,7 @@ SetOption(option)
     register char *option;
 {
     char	type[NAME_LEN];
+    char	get[40];
     char	*ptr;
     int		tmp;
 
@@ -854,7 +864,8 @@ SetOption(option)
 	} else if (strncmp(option, "do", 2) == 0) {	/* domain */
 	    ptr = strchr(option, '=');
 	    if (ptr != NULL) {
-		sscanf(++ptr, "%s", _res.defdname);
+		snprintf(get, sizeof get, "%%%ds", sizeof _res.defdname-1);
+		sscanf(++ptr, get, _res.defdname);
 		res_re_init();
 	    }
 	} else if (strncmp(option, "deb", 1) == 0) {	/* debug */
@@ -880,13 +891,15 @@ SetOption(option)
 	  strncmp(option, "ty", 2) == 0) {		/* type */
 	    ptr = strchr(option, '=');
 	    if (ptr != NULL) {
-		sscanf(++ptr, "%s", type);
+		snprintf(get, sizeof get, "%%%ds", sizeof type-1);
+		sscanf(++ptr, get, type);
 		queryType = StringToType(type, queryType, stderr);
 	    }
 	} else if (strncmp(option, "cl", 2) == 0) {	/* query class */
 	    ptr = strchr(option, '=');
 	    if (ptr != NULL) {
-		sscanf(++ptr, "%s", type);
+		snprintf(get, sizeof get, "%%%ds", sizeof type-1);
+		sscanf(++ptr, get, type);
 		queryClass = StringToClass(type, queryClass, stderr);
 	    }
 	} else if (strncmp(option, "rec", 3) == 0) {	/* recurse */
@@ -904,7 +917,8 @@ SetOption(option)
 	} else if (strncmp(option, "ro", 2) == 0) {	/* root */
 	    ptr = strchr(option, '=');
 	    if (ptr != NULL) {
-		sscanf(++ptr, "%s", rootServerName);
+		snprintf(get, sizeof get, "%%%ds", sizeof rootServerName-1);
+		sscanf(++ptr, get, rootServerName);
 	    }
 	} else if (strncmp(option, "sea", 3) == 0) {	/* search list */
 	    _res.options |= RES_DNSRCH;

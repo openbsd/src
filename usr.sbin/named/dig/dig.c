@@ -1,10 +1,10 @@
-/*	$OpenBSD: dig.c,v 1.4 1997/07/21 02:10:56 angelos Exp $	*/
+/*	$OpenBSD: dig.c,v 1.5 1998/08/30 03:39:18 deraadt Exp $	*/
 
 #ifndef lint
 #if 0
 static char rcsid[] = "$From: dig.c,v 8.8 1996/05/21 07:32:40 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: dig.c,v 1.4 1997/07/21 02:10:56 angelos Exp $";
+static char rcsid[] = "$OpenBSD: dig.c,v 1.5 1998/08/30 03:39:18 deraadt Exp $";
 #endif
 #endif
 
@@ -765,9 +765,11 @@ SetOption(string)
     char 	option[NAME_LEN];
     char 	type[NAME_LEN];
     char 	*ptr;
+    char	get[80];
     int 	i;
 
-    i = sscanf(string, " %s", option);
+    snprintf(get, sizeof get, " %%%ds", sizeof option-1);
+    i = sscanf(string, get, option);
     if (i != 1) {
 	fprintf(stderr, ";*** Invalid option: %s\n",  option);
 	return(ERROR);
@@ -800,7 +802,8 @@ SetOption(string)
 	} else if (strncmp(option, "do", 2) == 0) {	/* domain */
 	    ptr = strchr(option, '=');
 	    if (ptr != NULL) {
-		sscanf(++ptr, "%s", _res.defdname);
+		snprintf(get, sizeof get, "%%%ds", sizeof _res.defdname-1);
+		sscanf(++ptr, get, _res.defdname);
 	    }
 	  } else if (strncmp(option, "ti", 2) == 0) {      /* timeout */
 	    ptr = strchr(option, '=');
