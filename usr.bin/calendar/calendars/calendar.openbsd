@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.18 2004/06/27 16:39:41 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.19 2004/10/29 10:22:52 henning Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -52,7 +52,7 @@ Sep 29	OpenBSD/hppa gets PCI bus support, 2003
 Oct 14	OpenBSD born, Saturday 16:36 MST, 1995
 Oct 17	CARP added, introducing OpenBSD into High Availability market, 2003
 Oct 18	OpenBSD/mvme88k port added, from nivas, based on MACH/luna88k, 1995
-Oct 30	OpenBSD 3.4 released, implementing W^X on i396 and AES in VIA C3, 2003
+Oct 30	OpenBSD 3.4 released, implementing W^X on i386 and AES in VIA C3, 2003
 Nov 01	OpenBSD 3.2 released, ftp mirrors preload for the first time, 2002
 Nov 11	want.html added to OpenBSD/www, 1998
 Nov 18	altq merged into pf, 2002
