@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.14 2000/09/17 16:39:18 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.15 2000/09/19 18:43:48 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -120,7 +120,8 @@ defaults to
 .Sq install
 if it is not specified.
 .Sq file_to_test
-is checked against the current path, or as an absolute
+is checked against the current path for ports (see PORTPATH),
+or as an absolute
 file name. The special name /nonexistent can be used to force a build
 dependency (see the ghostscript port for an example).
 .Sq directory
