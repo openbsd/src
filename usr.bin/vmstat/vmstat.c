@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.46 2001/01/04 07:58:06 angelos Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.47 2001/01/04 17:40:26 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -348,12 +348,17 @@ getuptime()
 	size_t size;
 
 	if (boottime.tv_sec == 0) {
-		size = sizeof(boottime);
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_BOOTTIME;
-		if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
-			printf("Can't get kerninfo: %s\n", strerror(errno));
-			bzero(&boottime, sizeof(boottime));
+	        if (nlist == NULL && memf == NULL) {
+		        kread(X_BOOTTIME, &boottime, sizeof(boottime));
+		} else {
+		        size = sizeof(boottime);
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_BOOTTIME;
+			if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
+			        printf("Can't get kerninfo: %s\n",
+				       strerror(errno));
+				bzero(&boottime, sizeof(boottime));
+			}
 		}
 	}
 	(void)time(&now);
@@ -856,30 +861,32 @@ domem()
 	size_t siz;
 	char buf[BUFSIZ], *bufp, *ap;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_MALLOCSTATS;
-	mib[2] = KERN_MALLOC_BUCKETS;
-	siz = sizeof(buf);
-	if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
-		printf(
-		    "Could not acquire information on kernel memory bucket sizes.\n");
-		return;
-	}
-
-	bufp = buf;
-	mib[2] = KERN_MALLOC_BUCKET;
-	siz = sizeof(struct kmembuckets);
-	i = 0;
-	while ((ap = strsep(&bufp, ",")) != NULL) {
-	        mib[3] = atoi(ap);
-
-		if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
-			   NULL, 0) < 0) {
-		        printf("Failed to read statistics for bucket %d.\n",
-			       mib[3]);
+	if (memf == NULL && nlistf == NULL) {
+	        mib[0] = CTL_KERN;
+		mib[1] = KERN_MALLOCSTATS;
+		mib[2] = KERN_MALLOC_BUCKETS;
+		siz = sizeof(buf);
+		if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
+		        printf("Could not acquire information on kernel memory bucket sizes.\n");
 			return;
 		}
-		i++;
+
+		bufp = buf;
+		mib[2] = KERN_MALLOC_BUCKET;
+		siz = sizeof(struct kmembuckets);
+		i = 0;
+		while ((ap = strsep(&bufp, ",")) != NULL) {
+		        mib[3] = atoi(ap);
+
+			if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
+				   NULL, 0) < 0) {
+			        printf("Failed to read statistics for bucket %d.\n", mib[3]);
+				return;
+			}
+			i++;
+		}
+	} else {
+	        kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
 	}
 
 	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
