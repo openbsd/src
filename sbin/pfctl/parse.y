@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.377 2003/05/14 04:53:04 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.378 2003/05/14 05:02:12 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -633,7 +633,7 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			free($5);
 		};
 
-scrubrule	: SCRUB dir logquick interface af fromto scrub_opts
+scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
 		{
 			struct pf_rule	r;
 
@@ -659,19 +659,19 @@ scrubrule	: SCRUB dir logquick interface af fromto scrub_opts
 				}
 			}
 			r.af = $5;
-			if ($7.nodf)
+			if ($8.nodf)
 				r.rule_flag |= PFRULE_NODF;
-			if ($7.randomid)
+			if ($8.randomid)
 				r.rule_flag |= PFRULE_RANDOMID;
-			if ($7.minttl)
-				r.min_ttl = $7.minttl;
-			if ($7.maxmss)
-				r.max_mss = $7.maxmss;
-			if ($7.fragcache)
-				r.rule_flag |= $7.fragcache;
+			if ($8.minttl)
+				r.min_ttl = $8.minttl;
+			if ($8.maxmss)
+				r.max_mss = $8.maxmss;
+			if ($8.fragcache)
+				r.rule_flag |= $8.fragcache;
 
-			expand_rule(&r, $4, NULL, NULL,
-			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
+			expand_rule(&r, $4, NULL, $6,
+			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
 			    NULL, NULL, NULL);
 		}
 		;
