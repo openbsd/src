@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.5 1996/10/02 20:22:14 deraadt Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.6 1996/10/26 07:29:40 tholo Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -246,6 +246,9 @@ sys_setpgid(curp, v, retval)
 	SCARG(uap, pid)  = (short) SCARG(uap, pid);		/* XXX */
 	SCARG(uap, pgid) = (short) SCARG(uap, pgid);		/* XXX */
 #endif
+
+	if (SCARG(uap, pgid) < 0)
+		return (EINVAL);
 
 	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != curp->p_pid) {
 		if ((targp = pfind(SCARG(uap, pid))) == 0 || !inferior(targp))
