@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.221 2002/10/04 16:25:03 mickey Exp $
+#	$OpenBSD: Makefile,v 1.222 2002/11/08 19:24:45 mickey Exp $
 
 MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 \
 	ami.4 amdpm.4 amphy.4 an.4 aria.4 ast.4 atalk.4 atapiscsi.4 \
 	audio.4 aue.4 auich.4 autri.4 auvia.4 awi.4 az.4 bpf.4 bridge.4 \
-	bge.4 bmtphy.4 brgphy.4 bha.4 bio.4 boca.4 cac.4 cardbus.4 ccd.4 \
-	cd.4 ch.4 clnp.4 clcs.4 clct.4 cltp.4 \
-	cmpci.4 cnw.4 com.4 crypto.4 \
-	cue.4 cy.4 cz.4 dc.4 ddb.4 de.4 dpt.4 drum.4 eap.4 ec.4 \
+	bge.4 bmtphy.4 brgphy.4 bha.4 bio.4 bktr.4 boca.4 \
+	cac.4 cardbus.4 ccd.4 cd.4 ch.4 clnp.4 clcs.4 clct.4 cltp.4 \
+	cmpci.4 cnw.4 com.4 crypto.4 cue.4 cy.4 cz.4 \
+	dc.4 ddb.4 de.4 dpt.4 drum.4 eap.4 ec.4 \
 	eephy.4 ef.4 eg.4 eisa.4 el.4 em.4 emu.4 enc.4 ep.4 esa.4 esis.4 \
 	eso.4 ess.4 exphy.4 fd.4 fdc.4 fpa.4 \
 	fms.4 fxp.4 gem.4 gdt.4 gpr.4 gre.4 gtp.4 gx.4 hifn.4 hsq.4 icmp.4 \
