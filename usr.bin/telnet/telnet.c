@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.9 2000/10/10 15:41:11 millert Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.10 2000/10/24 21:52:38 millert Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -677,13 +677,14 @@ gettermname()
 	char *tname;
 	static char **tnamep = 0;
 	static char **next;
+	int errret;
 
 	if (resettermname) {
 		resettermname = 0;
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
 		if ((tname = (char *)env_getvalue((unsigned char *)"TERM")) &&
-				(setupterm(tname, 1, NULL) == OK)) {
+				(setupterm(tname, 1, &errret) == OK)) {
 			tnamep = mklist(ttytype, tname);
 		} else {
 			if (tname && ((int)strlen(tname) <= 40)) {

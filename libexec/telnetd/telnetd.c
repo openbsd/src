@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.25 2000/10/10 15:14:55 millert Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.26 2000/10/24 21:52:37 millert Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.25 2000/10/10 15:14:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.26 2000/10/24 21:52:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -764,6 +764,7 @@ _gettermname()
 terminaltypeok(s)
     char *s;
 {
+    int errret;
 
     if (terminaltype == NULL)
 	return(1);
@@ -771,9 +772,9 @@ terminaltypeok(s)
     /*
      * setupterm() will return OK if the type is known, and
      * ERR if it is not known.
-     * We return 0 on success and 1 on failure.
+     * We return 1 on success and 0 on failure.
      */
-    return(setupterm(s, STDOUT_FILENO, NULL) == ERR);
+    return(setupterm(s, STDOUT_FILENO, &errret) != ERR);
 }
 
 #ifndef	MAXHOSTNAMELEN
