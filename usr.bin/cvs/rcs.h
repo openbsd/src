@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.13 2005/03/05 05:00:56 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.14 2005/03/05 05:58:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,6 +38,7 @@
 #define RCS_DIFF_DIV \
 	"==================================================================="
 
+#define RCSDIR         "RCS"
 #define RCS_FILE_EXT   ",v"
 
 #define RCS_HEAD_INIT  "1.1"
@@ -82,6 +83,12 @@
 
 /* delta flags */
 #define RCS_RD_DEAD   0x01     /* dead */
+
+/* RCS error codes */
+#define RCS_ERR_NOERR    0
+#define RCS_ERR_NOENT    1
+#define RCS_ERR_DUPENT   2
+#define RCS_ERR_BADNUM   3
 
 
 typedef struct rcs_num {
@@ -159,6 +166,9 @@ typedef struct rcs_file {
 } RCSFILE;
 
 
+extern int rcs_errno;
+
+
 RCSFILE*    rcs_open          (const char *, int, ...);
 void        rcs_close         (RCSFILE *);
 int         rcs_access_add    (RCSFILE *, const char *);
@@ -176,6 +186,7 @@ const char* rcs_desc_get      (RCSFILE *);
 int         rcs_desc_set      (RCSFILE *, const char *);
 int         rcs_kwexp_set     (RCSFILE *, int);
 int         rcs_kwexp_get     (RCSFILE *);
+const char* rcs_errstr        (int);
 
 int       rcs_kflag_get    (const char *);
 void      rcs_kflag_usage  (void);

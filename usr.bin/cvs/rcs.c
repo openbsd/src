@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.31 2005/03/05 05:02:15 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.32 2005/03/05 05:58:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -145,6 +145,18 @@ static struct rcs_key {
 };
 
 #define RCS_NKEYS   (sizeof(rcs_keys)/sizeof(rcs_keys[0]))
+
+static const char *rcs_errstrs[] = {
+	"No error",
+	"No such entry",
+	"Duplicate entry found",
+	"Bad RCS number",
+};
+
+#define RCS_NERR   (sizeof(rcs_errstrs)/sizeof(rcs_errstrs[0]))
+
+
+int rcs_errno = RCS_ERR_NOERR;
 
 
 static int   rcs_write           (RCSFILE *);
@@ -418,8 +430,7 @@ rcs_access_add(RCSFILE *file, const char *login)
 	/* first look for duplication */
 	TAILQ_FOREACH(ap, &(file->rf_access), ra_list) {
 		if (strcmp(ap->ra_name, login) == 0) {
-			cvs_log(LP_ERR, "attempt to add duplicate access `%s'",
-			    login);
+			rcs_errno = RCS_ERR_DUPENT;
 			return (-1);
 		}
 	}
@@ -464,7 +475,7 @@ rcs_access_remove(RCSFILE *file, const char *login)
 			break;
 
 	if (ap == NULL) {
-		cvs_log(LP_ERR, "%s: no access for `%s'", file->rf_path, login);
+		rcs_errno = RCS_ERR_NOENT;
 		return (-1);
 	}
 
@@ -493,8 +504,7 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 	/* first look for duplication */
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		if (strcmp(symp->rs_name, sym) == 0) {
-			cvs_log(LP_ERR, "attempt to add duplicate symbol `%s'",
-			    sym);
+			rcs_errno = RCS_ERR_DUPENT;
 			return (-1);
 		}
 	}
@@ -547,7 +557,7 @@ rcs_sym_remove(RCSFILE *file, const char *sym)
 			break;
 
 	if (symp == NULL) {
-		cvs_log(LP_ERR, "%s: no such symbol `%s'", file->rf_path, sym);
+		rcs_errno = RCS_ERR_NOENT;
 		return (-1);
 	}
 
@@ -837,7 +847,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 
 	res = rcsnum_cmp(rfp->rf_head, rev, 0);
 	if (res == 1) {
-		cvs_log(LP_ERR, "sorry, can't travel in the future yet");
+		rcs_errno = RCS_ERR_NOENT;
 		return (NULL);
 	}
 
@@ -1039,6 +1049,19 @@ rcs_kflag_get(const char *flags)
 	}
 
 	return (fl);
+}
+
+/*
+ * rcs_errstr()
+ *
+ * Get the error string matching the RCS error code <code>.
+ */
+const char*
+rcs_errstr(int code)
+{
+	if ((code < 0) || (code > (int)RCS_NERR))
+		return (NULL);
+	return (rcs_errstrs[code]);
 }
 
 void

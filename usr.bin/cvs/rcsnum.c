@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.8 2005/02/25 20:32:48 jfb Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.9 2005/03/05 05:58:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -74,7 +74,9 @@ rcsnum_parse(const char *str)
 
 	if ((rcsnum_aton(str, &ep, num) < 0) || (*ep != '\0')) {
 		rcsnum_free(num);
-		return (NULL);
+		num = NULL;
+		if (*ep != '\0')
+			rcs_errno = RCS_ERR_BADNUM;
 	}
 
 	return (num);
@@ -230,9 +232,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 			nump->rn_len++;
 			tmp = realloc(nump->rn_id,
 			    (nump->rn_len + 1) * sizeof(u_int16_t));
-			if (tmp == NULL) {
+			if (tmp == NULL)
 				goto rcsnum_aton_failed;
-			}
 			nump->rn_id = (u_int16_t *)tmp;
 			nump->rn_id[nump->rn_len] = 0;
 			continue;
