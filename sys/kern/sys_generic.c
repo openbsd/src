@@ -1,7 +1,8 @@
-/*	$OpenBSD: sys_generic.c,v 1.5 1996/05/18 08:53:09 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.6 1996/10/12 01:15:44 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Theo de Raadt
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
