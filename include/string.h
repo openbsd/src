@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.2 1997/09/21 10:45:54 niklas Exp $	*/
+/*	$OpenBSD: string.h,v 1.3 1998/02/10 02:19:46 deraadt Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -90,7 +90,6 @@ void	 strmode __P((int, char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
 char	*strsep __P((char **, const char *));
 char	*strsignal __P((int));
-void	 swab __P((const void *, void *, size_t));
 #endif 
 __END_DECLS
 

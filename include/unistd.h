@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.16 1997/12/27 12:03:44 tholo Exp $ */
+/*	$OpenBSD: unistd.h,v 1.17 1998/02/10 02:19:47 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -169,6 +169,7 @@ int	 setreuid __P((int, int));
 int	 setrgid __P((gid_t));
 int	 setruid __P((uid_t));
 void	 setusershell __P((void));
+void	 swab __P((const void *, void *, size_t));
 int	 swapon __P((const char *));
 int	 symlink __P((const char *, const char *));
 void	 sync __P((void));
