@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_so.c,v 1.13 2004/12/02 19:42:48 henning Exp $ */
+/*	$OpenBSD: mod_so.c,v 1.14 2005/02/09 12:13:10 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -158,14 +158,10 @@ static void *so_sconf_create(pool *p, server_rec *s)
     soc = (so_server_conf *)ap_pcalloc(p, sizeof(so_server_conf));
     soc->loaded_modules = ap_make_array(p, DYNAMIC_MODULE_LIMIT, 
                                      sizeof(moduleinfo));
-#ifndef NO_DLOPEN
     ap_os_dso_init();
-#endif
 
     return (void *)soc;
 }
-
-#ifndef NO_DLOPEN
 
 /*
  * This is the cleanup for a loaded shared object. It unloads the module.
@@ -270,24 +266,18 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
      * Make sure the found module structure is really a module structure
      * 
      */
-#ifdef EAPI
     if (   modp->magic != MODULE_MAGIC_COOKIE_AP13 
         && modp->magic != MODULE_MAGIC_COOKIE_EAPI) {
-#else
-    if (modp->magic != MODULE_MAGIC_COOKIE) {
-#endif
         return ap_pstrcat(cmd->pool, "API module structure `", modname,
                           "' in file ", szModuleFile, " is garbled -"
                           " perhaps this is not an Apache module DSO?", NULL);
     }
-#ifdef EAPI
     if (modp->magic == MODULE_MAGIC_COOKIE_AP13) {
         ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, NULL,
                      "Loaded DSO %s uses plain Apache 1.3 API, "
                      "this module might crash under EAPI! "
                      "(please recompile it with -DEAPI)", filename);
     }
-#endif
 
     /* 
      * Add this module to the Apache core structures
@@ -342,23 +332,6 @@ static const char *load_file(cmd_parms *cmd, void *dummy, char *filename)
 
     return NULL;
 }
-
-#else /* not NO_DLOPEN */
-
-static const char *load_file(cmd_parms *cmd, void *dummy, char *filename)
-{
-    fprintf(stderr, "WARNING: LoadFile not supported on this platform\n");
-    return NULL;
-}
-
-static const char *load_module(cmd_parms *cmd, void *dummy, 
-	                       char *modname, char *filename)
-{
-    fprintf(stderr, "WARNING: LoadModule not supported on this platform\n");
-    return NULL;
-}
-
-#endif /* NO_DLOPEN */
 
 static const command_rec so_cmds[] = {
     { "LoadModule", load_module, NULL, RSRC_CONF, TAKE2,

@@ -708,18 +708,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
         return HTTP_INTERNAL_SERVER_ERROR;
     }
 
-#ifdef SINIX_D_RESOLVER_BUG
-    {
-        struct in_addr *ip_addr = (struct in_addr *)*server_hp.h_addr_list;
-
-        for (; ip_addr->s_addr != 0; ++ip_addr) {
-            memcpy(&server.sin_addr, ip_addr, sizeof(struct in_addr));
-            i = ap_proxy_doconnect(sock, &server, r);
-            if (i == 0)
-                break;
-        }
-    }
-#else
     j = 0;
     while (server_hp.h_addr_list[j] != NULL) {
         memcpy(&server.sin_addr, server_hp.h_addr_list[j],
@@ -729,7 +717,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
             break;
         j++;
     }
-#endif
     if (i == -1) {
         return ftp_cleanup_and_return(r, ctrl, data, sock, dsock,
                       ap_proxyerror(r, HTTP_BAD_GATEWAY, ap_pstrcat(r->pool,
@@ -757,24 +744,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
                                       ap_proxyerror(r, HTTP_BAD_GATEWAY,
                                        "Error reading from remote server"));
     }
-#if 0
-    if (i == 120) {
-        /*
-         * RFC2068 states: 14.38 Retry-After
-         * 
-         * The Retry-After response-header field can be used with a 503 (Service
-         * Unavailable) response to indicate how long the service is expected
-         * to be unavailable to the requesting client. The value of this
-         * field can be either an HTTP-date or an integer number of seconds
-         * (in decimal) after the time of the response. Retry-After  =
-         * "Retry-After" ":" ( HTTP-date | delta-seconds )
-         */
-/**INDENT** Error@756: Unbalanced parens */
-        ap_set_header("Retry-After", ap_psprintf(p, "%u", 60 * wait_mins);
-        return ftp_cleanup_and_return(r, ctrl, data, sock, dsock,
-                          ap_proxyerror(r, HTTP_SERVICE_UNAVAILABLE, resp));
-    }
-#endif
     if (i != 220) {
         return ftp_cleanup_and_return(r, ctrl, data, sock, dsock,
                                   ap_proxyerror(r, HTTP_BAD_GATEWAY, resp));

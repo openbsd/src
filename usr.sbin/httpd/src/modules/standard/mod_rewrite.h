@@ -127,15 +127,13 @@
      * But we have to stat the file for the mtime,
      * so we also need to know the file extension
      */
-#ifndef NO_DBM_REWRITEMAP
 #include <ndbm.h>
 #if defined(DBM_SUFFIX)
 #define NDBM_FILE_SUFFIX DBM_SUFFIX
-#elif defined(__FreeBSD__) || (defined(DB_LOCK) && defined(DB_SHMEM))
+#elif (defined(DB_LOCK) && defined(DB_SHMEM))
 #define NDBM_FILE_SUFFIX ".db"
 #else
 #define NDBM_FILE_SUFFIX ".pag"
-#endif
 #endif
 
 
@@ -426,9 +424,7 @@ static char *expand_tildepaths(request_rec *r, char *uri);
     /* rewrite map support functions */
 static char *lookup_map(request_rec *r, char *name, char *key);
 static char *lookup_map_txtfile(request_rec *r, char *file, char *key);
-#ifndef NO_DBM_REWRITEMAP
 static char *lookup_map_dbmfile(request_rec *r, char *file, char *key);
-#endif
 static char *lookup_map_program(request_rec *r, int fpin,
                                 int fpout, char *key);
 static char *lookup_map_internal(request_rec *r,

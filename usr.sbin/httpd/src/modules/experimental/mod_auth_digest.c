@@ -145,10 +145,6 @@
 #include "util_md5.h"
 #include "ap_sha1.h"
 
-#ifdef HAVE_SHMEM_MM
-#include "mm.h"
-#endif	/* HAVE_SHMEM_MM */
-
 
 /* struct to hold the configuration info */
 
@@ -240,23 +236,7 @@ static unsigned char secret[SECRET_LEN];
 static int call_cnt = 0;
 
 
-#ifdef HAVE_SHMEM_MM
-/* opaque stuff */
-
-static MM            *opaque_mm;
-static unsigned long *opaque_cntr;
-
-static MM            *client_mm;
-
-static MM            *otn_count_mm;
-static time_t        *otn_counter;	/* one-time-nonce counter */
-
-#define	SHMEM_SIZE 	1000		/* ~ 12 entries */
-#define	NUM_BUCKETS	15UL
-
-#else	/* HAVE_SHMEM_MM */
 static void          *client_mm = NULL;
-#endif	/* HAVE_SHMEM_MM */
 
 module MODULE_VAR_EXPORT digest_auth_module;
 
@@ -264,30 +244,6 @@ module MODULE_VAR_EXPORT digest_auth_module;
  * initialization code
  */
 
-#ifdef HAVE_SHMEM_MM
-static void cleanup_tables(void *not_used)
-{
-    fprintf(stderr, "Digest: cleaning up shared memory\n");
-    fflush(stderr);
-
-    if (client_mm) {
-	mm_destroy(client_mm);
-	client_mm = NULL;
-    }
-
-    if (opaque_mm) {
-	mm_destroy(opaque_mm);
-	opaque_mm = NULL;
-    }
-
-    if (otn_count_mm) {
-	mm_destroy(otn_count_mm);
-	otn_count_mm = NULL;
-    }
-}
-#endif	/* HAVE_SHMEM_MM */
-
-#ifdef __OpenBSD__
 static void initialize_secret(server_rec *s)
 {
     u_int32_t rnd = 0, i;
@@ -304,147 +260,6 @@ static void initialize_secret(server_rec *s)
     ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s,
 		 "Digest: done");
 }
-#elif defined(WIN32)
-/* TODO: abstract out the random number generation. APR? */
-static void initialize_secret(server_rec *s)
-{
-    HCRYPTPROV hProv;
-
-    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s,
-		 "Digest: generating secret for digest authentication ...");
-    if (!CryptAcquireContext(&hProv,NULL,NULL,PROV_RSA_FULL,0)) {
-        ap_log_error(APLOG_MARK, APLOG_CRIT, s, 
-                     "Digest: Error acquiring context. Errno = %d",
-                     GetLastError());
-        exit(EXIT_FAILURE);
-    }
-    if (!CryptGenRandom(hProv,sizeof(secret),secret)) {
-        ap_log_error(APLOG_MARK, APLOG_CRIT, s, 
-                     "Digest: Error generating secret. Errno = %d",
-                     GetLastError());
-        exit(EXIT_FAILURE);
-    }
-
-    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s, "Digest: done");
-}
-#else
-static void initialize_secret(server_rec *s)
-{
-#ifdef	DEV_RANDOM
-    int rnd;
-    ssize_t got;
-    size_t tot;
-#else
-    extern int randbyte(void);	/* from the truerand library */
-    unsigned int idx;
-#endif
-
-    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s,
-		 "Digest: generating secret for digest authentication ...");
-
-#ifdef	DEV_RANDOM
-#define	XSTR(x)	#x
-#define	STR(x)	XSTR(x)
-    if ((rnd = open(STR(DEV_RANDOM), O_RDONLY)) == -1) {
-	ap_log_error(APLOG_MARK, APLOG_CRIT, s,
-		     "Digest: Couldn't open " STR(DEV_RANDOM));
-	exit(EXIT_FAILURE);
-    }
-    for (tot=0; tot<sizeof(secret); tot += got) {
-	if ((got = read(rnd, secret+tot, sizeof(secret)-tot)) < 0) {
-	    ap_log_error(APLOG_MARK, APLOG_CRIT, s,
-			 "Digest: Error reading " STR(DEV_RANDOM));
-	    exit(EXIT_FAILURE);
-	}
-    }
-    close(rnd);
-#undef	STR
-#undef	XSTR
-#else	/* use truerand */
-    /* this will increase the startup time of the server, unfortunately...
-     * (generating 20 bytes takes about 8 seconds)
-     */
-    for (idx=0; idx<sizeof(secret); idx++)
-	secret[idx] = (unsigned char) randbyte();
-#endif	/* DEV_RANDOM */
-
-    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s, "Digest: done");
-}
-#endif
-
-#ifdef HAVE_SHMEM_MM
-static void initialize_tables(server_rec *s)
-{
-    unsigned long idx;
-
-    /* set up client list */
-
-    client_mm = mm_create(SHMEM_SIZE, tmpnam(NULL));
-    if (client_mm == NULL)
-	goto failed;
-    if (geteuid() == 0) {
-	if (mm_permission(client_mm, 0600, ap_user_id, ap_group_id))
-	    goto failed;
-    }
-    client_list = mm_malloc(client_mm, sizeof(*client_list) +
-				       sizeof(client_entry*)*NUM_BUCKETS);
-    if (!client_list)  goto failed;
-    client_list->table = (client_entry**) (client_list + 1);
-    for (idx=0; idx<NUM_BUCKETS; idx++)
-	client_list->table[idx] = NULL;
-    client_list->tbl_len     = NUM_BUCKETS;
-    client_list->num_entries = 0;
-
-
-    /* setup opaque */
-
-    opaque_mm = mm_create(sizeof(*opaque_cntr), tmpnam(NULL));
-    if (opaque_mm == NULL)
-	goto failed;
-    if (geteuid() == 0) {
-	if (mm_permission(opaque_mm, 0600, ap_user_id, ap_group_id))
-	    goto failed;
-    }
-    opaque_cntr = mm_malloc(opaque_mm, sizeof(*opaque_cntr));
-    if (opaque_cntr == NULL)
-	goto failed;
-    *opaque_cntr = 1UL;
-
-
-    /* setup one-time-nonce counter */
-
-    otn_count_mm = mm_create(sizeof(*otn_counter), tmpnam(NULL));
-    if (otn_count_mm == NULL)
-	goto failed;
-    if (geteuid() == 0) {
-	if (mm_permission(otn_count_mm, 0600, ap_user_id, ap_group_id))
-	    goto failed;
-    }
-    otn_counter = mm_malloc(otn_count_mm, sizeof(*otn_counter));
-    if (otn_counter == NULL)
-	goto failed;
-    *otn_counter = 0;
-
-
-    /* success */
-    return;
-
-failed:
-    if (!client_mm || (client_list && client_list->table && !opaque_mm)
-	|| (opaque_cntr && !otn_count_mm))
-	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, s,
-		     "Digest: failed to create shared memory segments; reason "
-		     "was `%s' - all nonce-count checking, one-time nonces, "
-		     "and MD5-sess algorithm disabled", mm_error());
-    else
-	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, s,
-		     "Digest: failed to allocate shared mem; reason was `%s' "
-		     "- all nonce-count checking, one-time nonces, and "
-		     "MD5-sess algorithm disabled", mm_error());
-
-    cleanup_tables(NULL);
-}
-#endif	/* HAVE_SHMEM_MM */
 
 static void initialize_module(server_rec *s, pool *p)
 {
@@ -457,22 +272,6 @@ static void initialize_module(server_rec *s, pool *p)
     /* only initialize the secret on startup, not on restarts */
     if (call_cnt == 2)
 	initialize_secret(s);
-
-#ifdef HAVE_SHMEM_MM
-    /* Note: this stuff is currently fixed for the lifetime of the server,
-     * i.e. even across restarts. This means that A) any shmem-size
-     * configuration changes are ignored, and B) certain optimizations,
-     * such as only allocating the smallest necessary entry for each
-     * client, can't be done. However, the alternative is a nightmare:
-     * we can't call mm_destroy on a graceful restart because there will
-     * be children using the tables, and we also don't know when the
-     * last child dies. Therefore we can never clean up the old stuff,
-     * creating a creeping memory leak.
-     */
-    initialize_tables(s);
-    /* atexit(cleanup_tables); */
-    ap_register_cleanup(p, NULL, cleanup_tables, ap_null_cleanup);
-#endif	/* HAVE_SHMEM_MM */
 }
 
 
@@ -600,13 +399,9 @@ static const char *set_nc_check(cmd_parms *cmd, void *config, int flag)
 static const char *set_algorithm(cmd_parms *cmd, void *config, const char *alg)
 {
     if (!strcasecmp(alg, "MD5-sess"))
-#ifdef HAVE_SHMEM_MM
-	;
-#else	/* HAVE_SHMEM_MM */
 	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, cmd->server,
 		     "Digest: WARNING: algorithm `MD5-sess' is currently not "
 		     "correctly implemented");
-#endif	/* HAVE_SHMEM_MM */
     else if (strcasecmp(alg, "MD5"))
 	return ap_pstrcat(cmd->pool, "Invalid algorithm in AuthDigestAlgorithm: ", alg, NULL);
 
@@ -649,192 +444,10 @@ static const command_rec digest_cmds[] =
     {NULL, NULL, NULL, 0, 0, NULL}
 };
 
-
-#ifdef HAVE_SHMEM_MM
-/*
- * client list code
- *
- * Each client is assigned a number, which is transferred in the opaque
- * field of the WWW-Authenticate and Authorization headers. The number
- * is just a simple counter which is incremented for each new client.
- * Clients can't forge this number because it is hashed up into the
- * server nonce, and that is checked.
- *
- * The clients are kept in a simple hash table, which consists of an
- * array of client_entry's, each with a linked list of entries hanging
- * off it. The client's number modulo the size of the array gives the
- * bucket number.
- *
- * The clients are garbage collected whenever a new client is allocated
- * but there is not enough space left in the shared memory segment. A
- * simple semi-LRU is used for this: whenever a client entry is accessed
- * it is moved to the beginning of the linked list in its bucket (this
- * also makes for faster lookups for current clients). The garbage
- * collecter then just removes the oldest entry (i.e. the one at the
- * end of the list) in each bucket.
- *
- * The main advantages of the above scheme are that it's easy to implement
- * and it keeps the hash table evenly balanced (i.e. same number of entries
- * in each bucket). The major disadvantage is that you may be throwing
- * entries out which are in active use. This is not tragic, as these
- * clients will just be sent a new client id (opaque field) and nonce
- * with a stale=true (i.e. it will just look like the nonce expired,
- * thereby forcing an extra round trip). If the shared memory segment
- * has enough headroom over the current client set size then this should
- * not occur too often.
- *
- * To help tune the size of the shared memory segment (and see if the
- * above algorithm is really sufficient) a set of counters is kept
- * indicating the number of clients held, the number of garbage collected
- * clients, and the number of erroneously purged clients. These are printed
- * out at each garbage collection run. Note that access to the counters is
- * not synchronized because they are just indicaters, and whether they are
- * off by a few doesn't matter; and for the same reason no attempt is made
- * to guarantee the num_renewed is correct in the face of clients spoofing
- * the opaque field.
- */
-
-/*
- * Get the client given its client number (the key). Returns the entry,
- * or NULL if its not found.
- *
- * Access to the list itself is synchronized via locks. However, access
- * to the entry returned by get_client() is NOT synchronized. This means
- * that there are potentially problems if a client uses multiple,
- * simultaneous connections to access url's within the same protection
- * space. However, these problems are not new: when using multiple
- * connections you have no guarantee of the order the requests are
- * processed anyway, so you have problems with the nonce-count and
- * one-time nonces anyway.
- */
-static client_entry *get_client(unsigned long key, const request_rec *r)
-{
-    int bucket;
-    client_entry *entry, *prev = NULL;
-
-
-    if (!key || !client_mm)  return NULL;
-
-    bucket = key % client_list->tbl_len;
-    entry  = client_list->table[bucket];
-
-    mm_lock(client_mm, MM_LOCK_RD);
-
-    while(entry && key != entry->key) {
-	prev  = entry;
-	entry = entry->next;
-    }
-
-    if (entry && prev) {		/* move entry to front of list */
-	prev->next  = entry->next;
-	entry->next = client_list->table[bucket];
-	client_list->table[bucket] = entry;
-    }
-
-    mm_unlock(client_mm);
-
-    if (entry)
-	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, r,
-		      "get_client(): client %lu found", key);
-    else
-	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, r,
-		      "get_client(): client %lu not found", key);
-
-    return entry;
-}
-
-
-/* A simple garbage-collecter to remove unused clients. It removes the
- * last entry in each bucket and updates the counters. Returns the
- * number of removed entries.
- */
-static long gc(void)
-{
-    client_entry *entry, *prev;
-    unsigned long num_removed = 0, idx;
-
-    /* garbage collect all last entries */
-
-    for (idx=0; idx<client_list->tbl_len; idx++) {
-	entry = client_list->table[idx];
-	prev  = NULL;
-	while (entry->next) {	/* find last entry */
-	    prev  = entry;
-	    entry = entry->next;
-	}
-	if (prev)  prev->next = NULL;	/* cut list */
-	else       client_list->table[idx] = NULL;
-	if (entry) {			/* remove entry */
-	    mm_free(client_mm, entry);
-	    num_removed++;
-	}
-    }
-
-    /* update counters and log */
-
-    client_list->num_entries -= num_removed;
-    client_list->num_removed += num_removed;
-
-    return num_removed;
-}
-
-
-/*
- * Add a new client to the list. Returns the entry if successful, NULL
- * otherwise. This triggers the garbage collection if memory is low.
- */
-static client_entry *add_client(unsigned long key, client_entry *info,
-				server_rec *s)
-{
-    int bucket;
-    client_entry *entry;
-
-
-    if (!key || !client_mm)  return NULL;
-
-    bucket = key % client_list->tbl_len;
-    entry  = client_list->table[bucket];
-
-    mm_lock(client_mm, MM_LOCK_RW);
-
-    /* try to allocate a new entry */
-
-    entry = mm_malloc(client_mm, sizeof(client_entry));
-    if (!entry) {
-	long num_removed = gc();
-	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, s,
-		     "Digest: gc'd %ld client entries. Total new clients: "
-		     "%ld; Total removed clients: %ld; Total renewed clients: "
-		     "%ld", num_removed,
-		     client_list->num_created - client_list->num_renewed,
-		     client_list->num_removed, client_list->num_renewed);
-	entry = mm_malloc(client_mm, sizeof(client_entry));
-	if (!entry)  return NULL;	/* give up */
-    }
-
-    /* now add the entry */
-
-    memcpy(entry, info, sizeof(client_entry));
-    entry->key  = key;
-    entry->next = client_list->table[bucket];
-    client_list->table[bucket] = entry;
-    client_list->num_created++;
-    client_list->num_entries++;
-
-    mm_unlock(client_mm);
-
-    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, s,
-		 "allocated new client %lu", key);
-
-    return entry;
-}
-#else	/* HAVE_SHMEM_MM */
 static client_entry *get_client(unsigned long key, const request_rec *r)
 {
     return NULL;
 }
-#endif	/* HAVE_SHMEM_MM */
-
 
 /*
  * Authorization header parser code
@@ -1027,14 +640,7 @@ static const char *gen_nonce(pool *p, time_t now, const char *opaque,
     if (conf->nonce_lifetime != 0)
 	t.time = now;
     else
-#ifdef HAVE_SHMEM_MM
-	/* this counter is not synch'd, because it doesn't really matter
-	 * if it counts exactly.
-	 */
-	t.time = (*otn_counter)++;
-#else	/* HAVE_SHMEM_MM */
 	t.time = 42;
-#endif	/* HAVE_SHMEM_MM */
     ap_base64encode_binary(nonce, t.arr, sizeof(t.arr));
     gen_nonce_hash(nonce+NONCE_TIME_LEN, nonce, opaque, server, conf);
 
@@ -1046,34 +652,7 @@ static const char *gen_nonce(pool *p, time_t now, const char *opaque,
  * Opaque and hash-table management
  */
 
-#ifdef HAVE_SHMEM_MM
-/*
- * Generate a new client entry, add it to the list, and return the
- * entry. Returns NULL if failed.
- */
-static client_entry *gen_client(const request_rec *r)
-{
-    unsigned long op;
-    client_entry new_entry = { 0, NULL, 0, "", "" }, *entry;
-
-    if (!opaque_mm)  return 0;
-
-    mm_lock(opaque_mm, MM_LOCK_RW);
-    op = (*opaque_cntr)++;
-    mm_unlock(opaque_mm);
-
-    if (!(entry = add_client(op, &new_entry, r->server))) {
-	ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
-		      "Digest: failed to allocate client entry - ignoring "
-		      "client");
-	return NULL;
-    }
-
-    return entry;
-}
-#else	/* HAVE_SHMEM_MM */
 static client_entry *gen_client(const request_rec *r) { return NULL; }
-#endif	/* HAVE_SHMEM_MM */
 
 
 
@@ -1618,12 +1197,6 @@ static int authenticate_digest_user(request_rec *r)
 		/* or '*' matches empty path in scheme://host */
 	        && !(d_uri.path && !r_uri.path && resp->psd_request_uri->hostname
 		    && d_uri.path[0] == '*' && d_uri.path[1] == '\0'))
-#if 0
-	    /* check that query matches */
-	    || (d_uri.query != r_uri.query
-		&& (!d_uri.query || !r_uri.query
-		    || strcmp(d_uri.query, r_uri.query)))
-#endif
 	    ) {
 	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
 			  "Digest: uri mismatch - <%s> does not match "
@@ -1855,17 +1428,6 @@ static int digest_check_auth(request_rec *r)
  * Authorization-Info header code
  */
 
-#ifdef SEND_DIGEST
-static const char *hdr(const table *tbl, const char *name)
-{
-    const char *val = ap_table_get(tbl, name);
-    if (val)
-	return val;
-    else
-	return "";
-}
-#endif
-
 static int add_auth_info(request_rec *r)
 {
     const digest_config_rec *conf =
@@ -1885,37 +1447,6 @@ static int add_auth_info(request_rec *r)
     if (resp->message_qop == NULL) {
 	/* old client, so calc rfc-2069 digest */
 
-#ifdef SEND_DIGEST
-	/* most of this totally bogus because the handlers don't set the
-	 * headers until the final handler phase (I wonder why this phase
-	 * is called fixup when there's almost nothing you can fix up...)
-	 *
-	 * Because it's basically impossible to get this right (e.g. the
-	 * Content-length is never set yet when we get here, and we can't
-	 * calc the entity hash) it's best to just leave this #def'd out.
-	 */
-	char *entity_info =
-	    ap_md5(r->pool,
-		   (unsigned char *) ap_pstrcat(r->pool, resp->raw_request_uri,
-		       ":",
-		       r->content_type ? r->content_type : ap_default_type(r), ":",
-		       hdr(r->headers_out, "Content-Length"), ":",
-		       r->content_encoding ? r->content_encoding : "", ":",
-		       hdr(r->headers_out, "Last-Modified"), ":",
-		       r->no_cache && !ap_table_get(r->headers_out, "Expires") ?
-			    ap_gm_timestr_822(r->pool, r->request_time) :
-			    hdr(r->headers_out, "Expires"),
-		       NULL));
-	digest =
-	    ap_md5(r->pool,
-		   (unsigned char *)ap_pstrcat(r->pool, conf->ha1, ":",
-					       resp->nonce, ":",
-					       r->method, ":",
-					       ap_gm_timestr_822(r->pool, r->request_time), ":",
-					       entity_info, ":",
-					       ap_md5(r->pool, (unsigned char *) ""), /* H(entity) - TBD */
-					       NULL));
-#endif
     }
 
 

@@ -192,10 +192,6 @@ static void detached_proxy_garbage_coll(request_rec *r)
     int status;
     pid_t pgrp;
 
-#if 0
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, r->server,
-                 "proxy: Guess what; we fork() again...");
-#endif
     switch (pid = fork()) {
     case -1:
         ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
@@ -216,21 +212,12 @@ static void detached_proxy_garbage_coll(request_rec *r)
 
         case 0:         /* Child */
             /* The setpgrp() stuff was snarfed from http_main.c */
-#ifndef NO_SETSID
             if ((pgrp = setsid()) == -1) {
                 perror("setsid");
                 fprintf(stderr, "%s: setsid failed\n",
                         ap_server_argv0);
                 exit(1);
             }
-#else
-            if ((pgrp = setpgrp(getpid(), 0)) == -1) {
-                perror("setpgrp");
-                fprintf(stderr, "%s: setpgrp failed\n",
-                        ap_server_argv0);
-                exit(1);
-            }
-#endif
             help_proxy_garbage_coll(r);
             exit(0);
 
@@ -436,14 +423,11 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
             continue;
         }
         ++nfiles;
-/* is it another file? */
+	/* is it another file? */
         /* FIXME: Shouldn't any unexpected files be deleted? */
         /* if (strlen(ent->d_name) != HASH_LEN) continue; */
 
-/* under OS/2 use dirent's d_attr to identify a diretory */
-/* under TPF use stat to identify a directory */
-
-/* read the file */
+	/* read the file */
         fd = open(filename, O_RDONLY | O_BINARY);
         if (fd == -1) {
             if (errno != ENOENT)
@@ -1230,9 +1214,6 @@ int ap_proxy_cache_check(request_rec *r, char *url, struct cache_conf * conf,
 int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
                               const int is_HTTP1, int nocache)
 {
-#if defined(ULTRIX_BRAIN_DEATH) || defined(SINIX_D_RESOLVER_BUG)
-    extern char *mktemp(char *template);
-#endif
     request_rec *r = c->req;
     char *p;
     const char *expire, *lmods, *dates, *clen;

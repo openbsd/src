@@ -142,12 +142,7 @@ static int ap_write(BUFF *fb, const void *buf, int nbyte)
     int rv;
     
 	if (!ap_hook_call("ap::buff::write", &rv, fb, buf, nbyte))
-#if defined (B_SFIO)
-	rv = sfwrite(fb->sf_out, buf, nbyte);
-#else
 	rv = write(fb->fd, buf, nbyte);
-#endif
-    
     return rv;
 }
 
@@ -209,15 +204,6 @@ API_EXPORT(BUFF *) ap_bcreate(pool *p, int flags)
 
     fb->fd = -1;
     fb->fd_in = -1;
-
-#ifdef B_SFIO
-    fb->sf_in = NULL;
-    fb->sf_out = NULL;
-    fb->sf_in = sfnew(fb->sf_in, NIL(Void_t *),
-		      (size_t) SF_UNBOUND, 0, SF_READ);
-    fb->sf_out = sfnew(fb->sf_out, NIL(Void_t *),
-		       (size_t) SF_UNBOUND, 1, SF_WRITE);
-#endif
 
     fb->callback_data = NULL;
     fb->filter_callback = NULL;
@@ -370,16 +356,7 @@ API_EXPORT(int) ap_bnonblock(BUFF *fb, int direction)
     int fd;
 
     fd = (direction == B_RD) ? fb->fd_in : fb->fd;
-#if defined(O_NONBLOCK)
     return fcntl(fd, F_SETFL, O_NONBLOCK);
-#elif defined(O_NDELAY)
-    return fcntl(fd, F_SETFL, O_NDELAY);
-#elif defined(FNDELAY)
-    return fcntl(fd, F_SETFL, FNDELAY);
-#else
-    /* XXXX: this breaks things, but an alternative isn't obvious...*/
-    return 0;
-#endif
 }
 
 API_EXPORT(int) ap_bfileno(BUFF *fb, int direction)
@@ -394,16 +371,7 @@ API_EXPORT(int) ap_bfileno(BUFF *fb, int direction)
  * return code is like read() except EINTR is eliminated.
  */
 
-
-#if !defined (B_SFIO) || defined (WIN32)
 #define saferead saferead_guts
-#else
-static int saferead(BUFF *fb, char *buf, int nbyte)
-{
-    return sfread(fb->sf_in, buf, nbyte);
-}
-#endif
-
 
 /* Test the descriptor and flush the output buffer if it looks like
  * we will block on the next read.
@@ -450,42 +418,6 @@ static ap_inline int saferead_guts(BUFF *fb, void *buf, int nbyte)
     } while (rv == -1 && errno == EINTR && !(fb->flags & B_EOUT));
     return (rv);
 }
-
-#ifdef B_SFIO
-int bsfio_read(Sfio_t * f, char *buf, int nbyte, apache_sfio *disc)
-{
-    int rv;
-    BUFF *fb = disc->buff;
-
-    rv = saferead_guts(fb, buf, nbyte);
-
-    buf[rv] = '\0';
-    f->next = 0;
-
-    return (rv);
-}
-
-int bsfio_write(Sfio_t * f, char *buf, int nbyte, apache_sfio *disc)
-{
-    return ap_write(disc->buff, buf, nbyte);
-}
-
-Sfdisc_t *bsfio_new(pool *p, BUFF *b)
-{
-    apache_sfio *disc;
-
-    if (!(disc = (apache_sfio *) ap_palloc(p, sizeof(apache_sfio))))
-	            return (Sfdisc_t *) disc;
-
-    disc->disc.readf = (Sfread_f) bsfio_read;
-    disc->disc.writef = (Sfwrite_f) bsfio_write;
-    disc->disc.seekf = (Sfseek_f) NULL;
-    disc->disc.exceptf = (Sfexcept_f) NULL;
-    disc->buff = b;
-
-    return (Sfdisc_t *) disc;
-}
-#endif
 
 
 /* A wrapper around saferead which does error checking and EOF checking
@@ -1176,11 +1108,6 @@ API_EXPORT(int) ap_bclose(BUFF *fb)
     fb->flags |= B_EOF | B_EOUT;
     fb->fd = -1;
     fb->fd_in = -1;
-
-#ifdef B_SFIO
-    sfclose(fb->sf_in);
-    sfclose(fb->sf_out);
-#endif
 
     if (rc1 != 0)
 	return rc1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_auth_dbm.c,v 1.12 2004/12/02 19:42:47 henning Exp $ */
+/*	$OpenBSD: mod_auth_dbm.c,v 1.13 2005/02/09 12:13:10 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -150,11 +150,7 @@ static char *get_dbm_pw(request_rec *r, char *user, char *auth_dbmpwfile)
     char *pw = NULL;
 
     q.dptr = user;
-#ifndef NETSCAPE_DBM_COMPAT
     q.dsize = strlen(q.dptr);
-#else
-    q.dsize = strlen(q.dptr) + 1;
-#endif
 
     ap_server_strip_chroot(auth_dbmpwfile, 1);
 

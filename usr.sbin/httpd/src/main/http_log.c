@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_log.c,v 1.16 2004/12/02 19:42:47 henning Exp $ */
+/*	$OpenBSD: http_log.c,v 1.17 2005/02/09 12:13:09 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -81,70 +81,29 @@ typedef struct {
 	int	t_val;
 } TRANS;
 
-#ifdef HAVE_SYSLOG
-
 static const TRANS facilities[] = {
     {"auth",	LOG_AUTH},
-#ifdef LOG_AUTHPRIV
     {"authpriv",LOG_AUTHPRIV},
-#endif
-#ifdef LOG_CRON
     {"cron", 	LOG_CRON},
-#endif
-#ifdef LOG_DAEMON
     {"daemon",	LOG_DAEMON},
-#endif
-#ifdef LOG_FTP
     {"ftp",	LOG_FTP},
-#endif
-#ifdef LOG_KERN
     {"kern",	LOG_KERN},
-#endif
-#ifdef LOG_LPR
     {"lpr",	LOG_LPR},
-#endif
-#ifdef LOG_MAIL
     {"mail",	LOG_MAIL},
-#endif
-#ifdef LOG_NEWS
     {"news",	LOG_NEWS},
-#endif
-#ifdef LOG_SYSLOG
     {"syslog",	LOG_SYSLOG},
-#endif
-#ifdef LOG_USER
     {"user",	LOG_USER},
-#endif
-#ifdef LOG_UUCP
     {"uucp",	LOG_UUCP},
-#endif
-#ifdef LOG_LOCAL0
     {"local0",	LOG_LOCAL0},
-#endif
-#ifdef LOG_LOCAL1
     {"local1",	LOG_LOCAL1},
-#endif
-#ifdef LOG_LOCAL2
     {"local2",	LOG_LOCAL2},
-#endif
-#ifdef LOG_LOCAL3
     {"local3",	LOG_LOCAL3},
-#endif
-#ifdef LOG_LOCAL4
     {"local4",	LOG_LOCAL4},
-#endif
-#ifdef LOG_LOCAL5
     {"local5",	LOG_LOCAL5},
-#endif
-#ifdef LOG_LOCAL6
     {"local6",	LOG_LOCAL6},
-#endif
-#ifdef LOG_LOCAL7
     {"local7",	LOG_LOCAL7},
-#endif
     {NULL,		-1},
 };
-#endif
 
 static const TRANS priorities[] = {
     {"emerg",	APLOG_EMERG},
@@ -167,10 +126,8 @@ static int error_log_child(void *cmd, child_info *pinfo)
     int child_pid = 0;
 
     ap_cleanup_for_exec();
-#ifdef SIGHUP
     /* No concept of a child process on Win32 */
     signal(SIGHUP, SIG_IGN);
-#endif /* ndef SIGHUP */
     execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, (char *)NULL);
     exit(1);
     /* NOT REACHED */
@@ -193,7 +150,6 @@ static void open_error_log(server_rec *s, pool *p)
 	s->error_log = dummy;
     }
 
-#ifdef HAVE_SYSLOG
     else if (!strncasecmp(s->error_fname, "syslog", 6)) {
 	if ((fname = strchr(s->error_fname, ':'))) {
 	    const TRANS *fac;
@@ -213,7 +169,6 @@ static void open_error_log(server_rec *s, pool *p)
 
 	s->error_log = NULL;
     }
-#endif
     else {
 	fname = ap_server_root_relative(p, s->error_fname);
         if (!(s->error_log = ap_pfopen(p, fname, "a"))) {
@@ -281,9 +236,7 @@ static void log_error_core(const char *file, int line, int level,
 			   const char *fmt, va_list args)
 {
     char errstr[MAX_STRING_LEN];
-#ifndef AP_UNSAFE_ERROR_LOG_UNESCAPED
     char scratch[MAX_STRING_LEN];
-#endif
     size_t len;
     int save_errno = errno;
     FILE *logf;
@@ -348,14 +301,10 @@ static void log_error_core(const char *file, int line, int level,
 		"(%d)%s: ", save_errno, strerror(save_errno));
     }
 
-#ifndef AP_UNSAFE_ERROR_LOG_UNESCAPED
     if (ap_vsnprintf(scratch, sizeof(scratch) - len, fmt, args)) {
         len += ap_escape_errorlog_item(errstr + len, scratch,
                                        sizeof(errstr) - len);
     }
-#else
-    len += ap_vsnprintf(errstr + len, sizeof(errstr) - len, fmt, args);
-#endif
 
     /* NULL if we are logging to syslog */
     if (logf) {
@@ -363,11 +312,9 @@ static void log_error_core(const char *file, int line, int level,
 	fputc('\n', logf);
 	fflush(logf);
     }
-#ifdef HAVE_SYSLOG
     else {
 	syslog(level & APLOG_LEVELMASK, "%s", errstr);
     }
-#endif
 }
     
 API_EXPORT_NONSTD(void) ap_log_error(const char *file, int line, int level,
@@ -488,8 +435,6 @@ API_EXPORT(void) ap_log_assert(const char *szExp, const char *szFile, int nLine)
 
 /* piped log support */
 
-#ifndef NO_PIPED_LOGS
-#ifndef NO_RELIABLE_PIPED_LOGS
 /* forward declaration */
 static void piped_log_maintenance(int reason, void *data, ap_wait_t status);
 
@@ -500,7 +445,6 @@ static int piped_log_spawn(piped_log *pl)
     ap_block_alarms();
     pid = fork();
     if (pid == 0) {
-	/* XXX: this needs porting to OS2 and WIN32 */
 	/* XXX: need to check what open fds the logger is actually passed,
 	 * XXX: and CGIs for that matter ... cleanup_for_exec *should*
 	 * XXX: close all the relevant stuff, but hey, it could be broken. */
@@ -637,48 +581,3 @@ API_EXPORT(void) ap_close_piped_log(piped_log *pl)
     ap_kill_cleanup(pl->p, pl, piped_log_cleanup);
     ap_unblock_alarms();
 }
-
-#else
-static int piped_log_child(void *cmd, child_info *pinfo)
-{
-    /* Child process code for 'TransferLog "|..."';
-     * may want a common framework for this, since I expect it will
-     * be common for other foo-loggers to want this sort of thing...
-     */
-    int child_pid = 1;
-
-    ap_cleanup_for_exec();
-#ifdef SIGHUP
-    signal(SIGHUP, SIG_IGN);
-#endif
-    execl (SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, (char *)NULL);
-    perror("exec");
-    fprintf(stderr, "Exec of shell for logging failed!!!\n");
-    return(child_pid);
-}
-
-
-API_EXPORT(piped_log *) ap_open_piped_log(pool *p, const char *program)
-{
-    piped_log *pl;
-    FILE *dummy;
-    if (!ap_spawn_child(p, piped_log_child, (void *)program,
-			kill_after_timeout, &dummy, NULL, NULL)) {
-	perror("ap_spawn_child");
-	fprintf(stderr, "Couldn't fork child for piped log process\n");
-	exit (1);
-    }
-    pl = ap_palloc(p, sizeof (*pl));
-    pl->p = p;
-    pl->write_f = dummy;
-
-    return pl;
-}
-
-
-API_EXPORT(void) ap_close_piped_log(piped_log *pl)
-{
-    ap_pfclose(pl->p, pl->write_f);
-}
-#endif
-#endif

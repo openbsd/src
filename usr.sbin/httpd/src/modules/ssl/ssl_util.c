@@ -176,9 +176,7 @@ int ssl_util_ppopen_child(void *cmd, child_info *pinfo)
      * Prepare for exec
      */
     ap_cleanup_for_exec();
-#ifdef SIGHUP
     signal(SIGHUP, SIG_IGN);
-#endif
 
     /*
      * Exec() the child program

@@ -63,10 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef B_SFIO
-#include "sfio.h"
-#endif
-
 #include <stdarg.h>
 
 /* Reading is buffered */
@@ -120,24 +116,10 @@ struct buff_struct {
 
     ap_ctx *ctx;
 
-#ifdef B_SFIO
-    Sfio_t *sf_in;
-    Sfio_t *sf_out;
-#endif
-
     void *callback_data;
     void (*filter_callback)(BUFF *, const void *, int );
 	
 };
-
-#ifdef B_SFIO
-typedef struct {
-    Sfdisc_t disc;
-    BUFF *buff;
-} apache_sfio;
-
-extern Sfdisc_t *bsfio_new(pool *p, BUFF *b);
-#endif
 
 /* Options to bset/getopt */
 #define BO_BYTECT (1)

@@ -62,10 +62,6 @@
 #include "http_log.h"
 #include "http_main.h"
 
-#ifdef HAVE_BSTRING_H
-#include <bstring.h>            /* for IRIX, FD_SET calls bzero() */
-#endif
-
 /*
  * This handles Netscape CONNECT method secure proxy requests.
  * A connection is opened to the specified host and data is
@@ -188,7 +184,6 @@ int ap_proxy_connect_handler(request_rec *r, cache_req *c, char *url,
         return HTTP_INTERNAL_SERVER_ERROR;
     }
 
-#ifdef CHECK_FD_SETSIZE
     if (sock >= FD_SETSIZE) {
         ap_log_error(APLOG_MARK, APLOG_NOERRNO | APLOG_WARNING, NULL,
                      "proxy_connect_handler: filedescriptor (%u) "
@@ -198,7 +193,6 @@ int ap_proxy_connect_handler(request_rec *r, cache_req *c, char *url,
         ap_pclosesocket(r->pool, sock);
         return HTTP_INTERNAL_SERVER_ERROR;
     }
-#endif
 
     j = 0;
     while (server_hp.h_addr_list[j] != NULL) {

@@ -64,10 +64,8 @@
  */
 
 #include "httpd.h"
-#ifdef EAPI
 #include "http_config.h"
 #include "http_conf_globals.h"
-#endif
 #include "multithread.h"
 #include "http_log.h"
 
@@ -125,9 +123,6 @@
 #ifdef ALLOC_USE_MALLOC
 # error "sorry, no support for ALLOC_USE_MALLOC and POOL_DEBUG at the same time"
 #endif
-#ifdef MULTITHREAD
-# error "sorry, no support for MULTITHREAD and POOL_DEBUG at the same time"
-#endif
 #endif
 
 #ifdef ALLOC_USE_MALLOC
@@ -137,7 +132,7 @@
 #define BLOCK_MINALLOC	0
 #endif
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
 static AP_MM *mm = NULL;
 #endif
 
@@ -169,7 +164,7 @@ union block_hdr {
 	char *endp;
 	union block_hdr *next;
 	char *first_avail;
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
 	int is_shm;
 #endif
 #ifdef POOL_DEBUG
@@ -222,7 +217,7 @@ static ap_inline void debug_verify_filled(const char *ptr,
 /* Get a completely new block from the system pool. Note that we rely on
    malloc() to provide aligned memory. */
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
 static union block_hdr *malloc_block(int size, int is_shm)
 #else
 static union block_hdr *malloc_block(int size)
@@ -242,7 +237,7 @@ static union block_hdr *malloc_block(int size)
     num_malloc_bytes += size + sizeof(union block_hdr);
 #endif
     request_size = size + sizeof(union block_hdr);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (is_shm)
         blok = (union block_hdr *)ap_mm_malloc(mm, request_size);
     else
@@ -254,7 +249,7 @@ static union block_hdr *malloc_block(int size)
 	exit(1);
     }
     debug_fill(blok, size + sizeof(union block_hdr));
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     blok->h.is_shm = is_shm;
 #endif
     blok->h.next = NULL;
@@ -317,7 +312,7 @@ static void free_blocks(union block_hdr *blok)
     if (blok == NULL)
 	return;			/* Sanity check --- freeing empty pool? */
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (blok->h.is_shm)
         (void)ap_mm_lock(mm, AP_MM_LOCK_RW);
 #endif
@@ -367,7 +362,7 @@ static void free_blocks(union block_hdr *blok)
 #endif
 
     (void) ap_release_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (blok->h.is_shm)
         (void)ap_mm_unlock(mm);
 #endif
@@ -379,7 +374,7 @@ static void free_blocks(union block_hdr *blok)
  * if necessary.  Must be called with alarms blocked.
  */
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
 static union block_hdr *new_block(int min_size, int is_shm)
 #else
 static union block_hdr *new_block(int min_size)
@@ -393,7 +388,7 @@ static union block_hdr *new_block(int min_size)
      */
 
     while (blok != NULL) {
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (blok->h.is_shm == is_shm &&
         min_size + BLOCK_MINFREE <= blok->h.endp - blok->h.first_avail) {
 #else
@@ -414,7 +409,7 @@ static union block_hdr *new_block(int min_size)
     /* Nope. */
 
     min_size += BLOCK_MINFREE;
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     blok = malloc_block((min_size > BLOCK_MINALLOC) ? min_size : BLOCK_MINALLOC, is_shm);
 #else
     blok = malloc_block((min_size > BLOCK_MINALLOC) ? min_size : BLOCK_MINALLOC);
@@ -468,7 +463,7 @@ struct pool {
 #ifdef POOL_DEBUG
     struct pool *joined;
 #endif
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     int is_shm;
 #endif
 };
@@ -485,7 +480,7 @@ static pool *permanent_pool;
 #define POOL_HDR_CLICKS (1 + ((sizeof(struct pool) - 1) / CLICK_SZ))
 #define POOL_HDR_BYTES (POOL_HDR_CLICKS * CLICK_SZ)
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
 static struct pool *make_sub_pool_internal(struct pool *p, int is_shm)
 #else
 API_EXPORT(struct pool *) ap_make_sub_pool(struct pool *p)
@@ -496,13 +491,13 @@ API_EXPORT(struct pool *) ap_make_sub_pool(struct pool *p)
 
     ap_block_alarms();
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (is_shm)
         (void)ap_mm_lock(mm, AP_MM_LOCK_RW);
 #endif
     (void) ap_acquire_mutex(alloc_mutex);
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     blok = new_block(POOL_HDR_BYTES, is_shm);
 #else
     blok = new_block(POOL_HDR_BYTES);
@@ -525,12 +520,12 @@ API_EXPORT(struct pool *) ap_make_sub_pool(struct pool *p)
 	p->sub_pools = new_pool;
     }
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     new_pool->is_shm = is_shm;
 #endif
 
     (void) ap_release_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (is_shm)
 	(void)ap_mm_unlock(mm);
 #endif
@@ -539,7 +534,6 @@ API_EXPORT(struct pool *) ap_make_sub_pool(struct pool *p)
     return new_pool;
 }
 
-#if defined(EAPI)
 #if defined(EAPI_MM)
 API_EXPORT(struct pool *) ap_make_sub_pool(struct pool *p)
 {
@@ -554,7 +548,6 @@ API_EXPORT(struct pool *) ap_make_shared_sub_pool(struct pool *p)
 {
     return NULL;
 }
-#endif
 #endif
 
 #ifdef POOL_DEBUG
@@ -571,12 +564,10 @@ static void stack_var_init(char *s)
 }
 #endif
 
-#if defined(EAPI)
 int ap_shared_pool_possible(void)
 {
     return ap_mm_useable();
 }
-#endif
 
 #ifdef ALLOC_STATS
 static void dump_stats(void)
@@ -610,7 +601,6 @@ API_EXPORT(pool *) ap_init_alloc(void)
     return permanent_pool;
 }
 
-#if defined(EAPI)
 void ap_init_alloc_shared(int early)
 {
 #if defined(EAPI_MM)
@@ -656,7 +646,6 @@ void ap_kill_alloc_shared(void)
 #endif /* EAPI_MM */
     return;
 }
-#endif /* EAPI */
 
 void ap_cleanup_alloc(void)
 {
@@ -668,7 +657,7 @@ API_EXPORT(void) ap_clear_pool(struct pool *a)
 {
     ap_block_alarms();
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (a->is_shm)
         (void)ap_mm_lock(mm, AP_MM_LOCK_RW);
 #endif
@@ -676,7 +665,7 @@ API_EXPORT(void) ap_clear_pool(struct pool *a)
     while (a->sub_pools)
 	ap_destroy_pool(a->sub_pools);
     (void) ap_release_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (a->is_shm)
 	    (void)ap_mm_unlock(mm);
 #endif
@@ -713,7 +702,7 @@ API_EXPORT(void) ap_destroy_pool(pool *a)
     ap_block_alarms();
     ap_clear_pool(a);
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (a->is_shm)
 	(void)ap_mm_lock(mm, AP_MM_LOCK_RW);
 #endif
@@ -727,7 +716,7 @@ API_EXPORT(void) ap_destroy_pool(pool *a)
 	    a->sub_next->sub_prev = a->sub_prev;
     }
     (void) ap_release_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (a->is_shm)
 	(void)ap_mm_unlock(mm);
 #endif
@@ -745,7 +734,6 @@ API_EXPORT(long) ap_bytes_in_free_blocks(void)
     return bytes_in_block_list(block_freelist);
 }
 
-#if defined(EAPI)
 API_EXPORT(int) ap_acquire_pool(pool *p, ap_pool_lock_mode mode)
 {
 #if defined(EAPI_MM)
@@ -767,7 +755,6 @@ API_EXPORT(int) ap_release_pool(pool *p)
 	return 1;
 #endif
 }
-#endif /* EAPI */
 
 /*****************************************************************
  * POOL_DEBUG support
@@ -934,13 +921,13 @@ API_EXPORT(void *) ap_palloc(struct pool *a, int reqsize)
 
     ap_block_alarms();
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (a->is_shm)
 	(void)ap_mm_lock(mm, AP_MM_LOCK_RW);
 #endif
     (void) ap_acquire_mutex(alloc_mutex);
 
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     blok = new_block(size, a->is_shm);
 #else
     blok = new_block(size);
@@ -950,12 +937,12 @@ API_EXPORT(void *) ap_palloc(struct pool *a, int reqsize)
 #ifdef POOL_DEBUG
     blok->h.owning_pool = a;
 #endif
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     blok->h.is_shm = a->is_shm;
 #endif
 
     (void) ap_release_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (a->is_shm)
 	(void)ap_mm_unlock(mm);
 #endif
@@ -1075,7 +1062,7 @@ static int psprintf_flush(ap_vformatter_buff *vbuff)
     size = cur_len << 1;
     if (size < AP_PSPRINTF_MIN_SIZE)
         size = AP_PSPRINTF_MIN_SIZE;
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (ps->block->h.is_shm)
         ptr = ap_mm_realloc(ps->base, size);
     else
@@ -1103,18 +1090,18 @@ static int psprintf_flush(ap_vformatter_buff *vbuff)
         size = AP_PSPRINTF_MIN_SIZE;
 
     /* must try another blok */
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (blok->h.is_shm)
 	(void)ap_mm_lock(mm, AP_MM_LOCK_RW);
 #endif
     (void) ap_acquire_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     nblok = new_block(size, blok->h.is_shm);
 #else
     nblok = new_block(size);
 #endif
     (void) ap_release_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (blok->h.is_shm)
 	(void)ap_mm_unlock(mm);
 #endif
@@ -1126,7 +1113,7 @@ static int psprintf_flush(ap_vformatter_buff *vbuff)
     /* did we allocate the current blok? if so free it up */
     if (ps->got_a_new_block) {
 	debug_fill(blok->h.first_avail, blok->h.endp - blok->h.first_avail);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (blok->h.is_shm)
 	(void)ap_mm_lock(mm, AP_MM_LOCK_RW);
 #endif
@@ -1134,7 +1121,7 @@ static int psprintf_flush(ap_vformatter_buff *vbuff)
 	blok->h.next = block_freelist;
 	block_freelist = blok;
 	(void) ap_release_mutex(alloc_mutex);
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (blok->h.is_shm)
 	(void)ap_mm_unlock(mm);
 #endif
@@ -1156,7 +1143,7 @@ API_EXPORT(char *) ap_pvsprintf(pool *p, const char *fmt, va_list ap)
     void *ptr;
 
     ap_block_alarms();
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (p->is_shm)
         ps.base = ap_mm_malloc(mm, 512);
     else
@@ -1173,7 +1160,7 @@ API_EXPORT(char *) ap_pvsprintf(pool *p, const char *fmt, va_list ap)
     *ps.vbuff.curpos++ = '\0';
     ptr = ps.base;
     /* shrink */
-#if defined(EAPI) && defined(EAPI_MM)
+#if defined(EAPI_MM)
     if (p->is_shm)
         ptr = ap_mm_realloc(ptr, (char *)ps.vbuff.curpos - (char *)ptr);
     else
@@ -2018,7 +2005,6 @@ API_EXPORT_NONSTD(void) ap_null_cleanup(void *data)
 
 int ap_close_fd_on_exec(int fd)
 {
-#if defined(F_SETFD) && defined(FD_CLOEXEC)
     /* Protect the fd so that it will not be inherited by child processes */
     if(fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
 	ap_log_error(APLOG_MARK, APLOG_ERR, NULL,
@@ -2027,9 +2013,6 @@ int ap_close_fd_on_exec(int fd)
     }
 
     return 1;
-#else
-    return 0;
-#endif
 }
 
 static void fd_cleanup(void *fdv)
@@ -2594,14 +2577,12 @@ static void free_proc_chain(struct process_chain *procs)
      * don't waste any more cycles doing whatever it is that they shouldn't
      * be doing anymore.
      */
-#ifndef NEED_WAITPID
     /* Pick up all defunct processes */
     for (p = procs; p; p = p->next) {
 	if (waitpid(p->pid, (int *) 0, WNOHANG) > 0) {
 	    p->kill_how = kill_never;
 	}
     }
-#endif
 
     for (p = procs; p; p = p->next) {
 	if ((p->kill_how == kill_after_timeout)

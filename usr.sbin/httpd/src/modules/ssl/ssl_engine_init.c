@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.26 2004/12/06 13:14:10 henning Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.27 2005/02/09 12:13:10 henning Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -608,9 +608,7 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
      * Disallow a session from being resumed during a renegotiation,
      * so that an acceptable cipher suite can be negotiated.
      */
-#ifdef SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
     SSL_CTX_set_options(ctx, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
-#endif
 
     /*
      *  Configure callbacks for SSL context

@@ -228,12 +228,10 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
 	 * wide open to CGIs stealing passwords and people viewing them
 	 * in the environment with "ps -e".  But, if you must...
 	 */
-#ifndef SECURITY_HOLE_PASS_AUTHORIZATION
 	else if (!strcasecmp(hdrs[i].key, "Authorization") 
 		 || !strcasecmp(hdrs[i].key, "Proxy-Authorization")) {
 	    continue;
 	}
-#endif
 	else {
 	    ap_table_addn(e, http2env(r->pool, hdrs[i].key), hdrs[i].val);
 	}
@@ -678,31 +676,18 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
      */
     r->server->error_log = stderr;
 
-#ifdef RLIMIT_CPU
     if (conf->limit_cpu != NULL) {
         if ((setrlimit(RLIMIT_CPU, conf->limit_cpu)) != 0) {
 	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
 			 "setrlimit: failed to set CPU usage limit");
 	}
     }
-#endif
-#ifdef RLIMIT_NPROC
     if (conf->limit_nproc != NULL) {
         if ((setrlimit(RLIMIT_NPROC, conf->limit_nproc)) != 0) {
 	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
 			 "setrlimit: failed to set process limit");
 	}
     }
-#endif
-#if defined(RLIMIT_AS)
-    if (conf->limit_mem != NULL) {
-        if ((setrlimit(RLIMIT_AS, conf->limit_mem)) != 0) {
-	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-			 "setrlimit(RLIMIT_AS): failed to set memory "
-			 "usage limit");
-	}
-    }
-#elif defined(RLIMIT_DATA)
     if (conf->limit_mem != NULL) {
         if ((setrlimit(RLIMIT_DATA, conf->limit_mem)) != 0) {
 	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
@@ -710,16 +695,6 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 			 "usage limit");
 	}
     }
-#elif defined(RLIMIT_VMEM)
-    if (conf->limit_mem != NULL) {
-        if ((setrlimit(RLIMIT_VMEM, conf->limit_mem)) != 0) {
-	    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-			 "setrlimit(RLIMIT_VMEM): failed to set memory "
-			 "usage limit");
-	}
-    }
-#endif
-
     if (ap_suexec_enabled
 	&& ((r->server->server_uid != ap_user_id)
 	    || (r->server->server_gid != ap_group_id)

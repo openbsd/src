@@ -108,18 +108,6 @@
 #include "scoreboard.h"
 #include "http_log.h"
 
-#ifdef NEXT
-#if (NX_CURRENT_COMPILER_RELEASE == 410)
-#ifdef m68k
-#define HZ 64
-#else
-#define HZ 100
-#endif
-#else
-#include <machine/param.h>
-#endif
-#endif /* NEXT */
-
 #define STATUS_MAXLINE		64
 
 #define KBYTE			1024
@@ -236,13 +224,7 @@ static int status_handler(request_rec *r)
     unsigned long bcount = 0;
     unsigned long kbcount = 0;
     long req_time;
-#ifndef NO_TIMES
-#ifdef _SC_CLK_TCK
     float tick = sysconf(_SC_CLK_TCK);
-#else
-    float tick = HZ;
-#endif
-#endif
     int short_report = 0;
     int no_table_report = 0;
     short_score score_record;
@@ -299,10 +281,6 @@ static int status_handler(request_rec *r)
     }
 
     ap_send_http_header(r);
-#ifdef CHARSET_EBCDIC
-    /* Server-generated response, converted */
-    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
-#endif
 
     if (r->header_only)
 	return 0;
@@ -322,12 +300,10 @@ static int status_handler(request_rec *r)
 	    lres = score_record.access_count;
 	    bytes = score_record.bytes_served;
 	    if (lres != 0 || (res != SERVER_READY && res != SERVER_DEAD)) {
-#ifndef NO_TIMES
 		tu += score_record.times.tms_utime;
 		ts += score_record.times.tms_stime;
 		tcu += score_record.times.tms_cutime;
 		tcs += score_record.times.tms_cstime;
-#endif /* NO_TIMES */
 		count += lres;
 		bcount += bytes;
 		if (bcount >= KBYTE) {
@@ -368,12 +344,10 @@ static int status_handler(request_rec *r)
 	    ap_rprintf(r, "Total Accesses: %lu\nTotal kBytes: %lu\n",
 		count, kbcount);
 
-#ifndef NO_TIMES
 	    /* Allow for OS/2 not having CPU stats */
 	    if (ts || tu || tcu || tcs)
 		ap_rprintf(r, "CPULoad: %g\n",
 		    (tu + ts + tcu + tcs) / tick / up_time * 100.);
-#endif
 
 	    ap_rprintf(r, "Uptime: %ld\n", (long) (up_time));
 	    if (up_time > 0)
@@ -392,7 +366,6 @@ static int status_handler(request_rec *r)
 	    ap_rprintf(r, "Total accesses: %lu - Total Traffic: ", count);
 	    format_kbyte_out(r, kbcount);
 
-#ifndef NO_TIMES
 	    /* Allow for OS/2 not having CPU stats */
 	    ap_rputs("<br>\n", r);
 	    ap_rprintf(r, "CPU Usage: u%g s%g cu%g cs%g",
@@ -401,7 +374,6 @@ static int status_handler(request_rec *r)
 	    if (ts || tu || tcu || tcs)
 		ap_rprintf(r, " - %.3g%% CPU load",
 		    (tu + ts + tcu + tcs) / tick / up_time * 100.);
-#endif
 
 	    ap_rputs("<br>\n", r);
 
@@ -491,9 +463,7 @@ static int status_handler(request_rec *r)
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>PID</b></font></td>"
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Acc</b></font></td>"
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>M</b></font></td>"
-#ifndef NO_TIMES
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>CPU</b></font></td>"
-#endif
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>SS</b></font></td>"
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Req</b></font></td>"
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Conn</b></font></td>"
@@ -504,12 +474,7 @@ static int status_handler(request_rec *r)
 			"<td><font face=\"Arial,Helvetica\" color=\"#ffffff\"><b>Request</b></td>"
 			"</tr>\n", r);      
 #else /* NO_PRETTYPRINT */
-#ifdef NO_TIMES
-		/* Allow for OS/2 not having CPU stats */
-		ap_rputs("<p>\n\n<table border=0><tr><th>Srv<th>PID<th>Acc<th>M\n<th>SS<th>Req<th>Conn<th>Child<th>Slot<th>Client<th>VHost<th>Request</tr>\n\n", r);
-#else
 		ap_rputs("<p>\n\n<table border=0><tr><th>Srv<th>PID<th>Acc<th>M<th>CPU\n<th>SS<th>Req<th>Conn<th>Child<th>Slot<th>Client<th>VHost<th>Request</tr>\n\n", r);
-#endif
 #endif /* NO_PRETTYPRINT */
 	}
 
@@ -521,18 +486,6 @@ static int status_handler(request_rec *r)
 		vhost = NULL;
 	    }
 
-#if defined(NO_GETTIMEOFDAY)
-#ifndef NO_TIMES
-	    if (score_record.start_time == (clock_t) 0)
-#endif /* NO_TIMES */
-		req_time = 0L;
-#ifndef NO_TIMES
-	    else {
-		req_time = score_record.stop_time - score_record.start_time;
-		req_time = (req_time * 1000) / (int) tick;
-	    }
-#endif /* NO_TIMES */
-#else
 	    if (score_record.start_time.tv_sec == 0L &&
 		score_record.start_time.tv_usec == 0L)
 		req_time = 0L;
@@ -540,7 +493,6 @@ static int status_handler(request_rec *r)
 		req_time =
 		    ((score_record.stop_time.tv_sec - score_record.start_time.tv_sec) * 1000) +
 		    ((score_record.stop_time.tv_usec - score_record.start_time.tv_usec) / 1000);
-#endif
 	    if (req_time < 0L)
 		req_time = 0L;
 
@@ -598,22 +550,13 @@ static int status_handler(request_rec *r)
 			    ap_rputs("?STATE?", r);
 			    break;
 			}
-#ifdef NO_TIMES
-			/* Allow for OS/2 not having CPU stats */
-			ap_rprintf(r, "]\n %.0f %ld (",
-#else
 
 			ap_rprintf(r, "] u%g s%g cu%g cs%g\n %.0f %ld (",
 			    score_record.times.tms_utime / tick,
 			    score_record.times.tms_stime / tick,
 			    score_record.times.tms_cutime / tick,
 			    score_record.times.tms_cstime / tick,
-#endif
-#ifdef OPTIMIZE_TIMEOUTS
 			    difftime(nowtime, ps_record.last_rtime),
-#else
-			    difftime(nowtime, score_record.last_used),
-#endif
 			    (long) req_time);
 			format_byte_out(r, conn_bytes);
 			ap_rputs("|", r);
@@ -677,21 +620,12 @@ static int status_handler(request_rec *r)
 			    ap_rputs("<td>?", r);
 			    break;
 			}
-#ifdef NO_TIMES
-			/* Allow for OS/2 not having CPU stats */
-			ap_rprintf(r, "\n<td>%.0f<td>%ld",
-#else
 			ap_rprintf(r, "\n<td>%.2f<td>%.0f<td>%ld",
 			    (score_record.times.tms_utime +
 			     score_record.times.tms_stime +
 			     score_record.times.tms_cutime +
 			     score_record.times.tms_cstime) / tick,
-#endif
-#ifdef OPTIMIZE_TIMEOUTS
 			    difftime(nowtime, ps_record.last_rtime),
-#else
-			    difftime(nowtime, score_record.last_used),
-#endif
 			    (long) req_time);
 			ap_rprintf(r, "<td>%-1.1f<td>%-2.2f<td>%-2.2f\n",
 			   (float) conn_bytes / KBYTE, (float) my_bytes / MBYTE,
@@ -723,21 +657,6 @@ static int status_handler(request_rec *r)
 	}				/* for () */
 
 	if (!(short_report || no_table_report)) {
-#ifdef NO_TIMES
-	    ap_rputs("</table>\n \
-<hr> \
-<table>\n \
-<tr><th>Srv<td>Child Server number - generation\n \
-<tr><th>PID<td>OS process ID\n \
-<tr><th>Acc<td>Number of accesses this connection / this child / this slot\n \
-<tr><th>M<td>Mode of operation\n \
-<tr><th>SS<td>Seconds since beginning of most recent request\n \
-<tr><th>Req<td>Milliseconds required to process most recent request\n \
-<tr><th>Conn<td>Kilobytes transferred this connection\n \
-<tr><th>Child<td>Megabytes transferred this child\n \
-<tr><th>Slot<td>Total megabytes transferred this slot\n \
-</table>\n", r);
-#else
 	    ap_rputs("</table>\n \
 <hr> \
 <table>\n \
@@ -752,14 +671,11 @@ static int status_handler(request_rec *r)
 <tr><th>Child<td>Megabytes transferred this child\n \
 <tr><th>Slot<td>Total megabytes transferred this slot\n \
 </table>\n", r);
-#endif
 	}
 
-#ifdef EAPI
     ap_hook_use("ap::mod_status::display",
                 AP_HOOK_SIG4(void,ptr,int,int), AP_HOOK_ALL,
                 r, no_table_report, short_report);
-#endif
 
     } else {
 

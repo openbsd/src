@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.23 2004/12/02 19:42:48 henning Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.24 2005/02/09 12:13:10 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -96,10 +96,8 @@
 #include "http_main.h"
 #include "fdcache.h"
 
-#ifndef NO_WRITEV
 #include <sys/types.h>
 #include <sys/uio.h>
-#endif
 
 
 /*
@@ -497,14 +495,9 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, char *a1,
         new->checkfile = a2+4;
     }
     else if (strncmp(a2, "dbm:", 4) == 0) {
-#ifndef NO_DBM_REWRITEMAP
         new->type      = MAPTYPE_DBM;
         new->datafile  = a2+4;
         new->checkfile = ap_pstrcat(cmd->pool, a2+4, NDBM_FILE_SUFFIX, NULL);
-#else
-        return ap_pstrdup(cmd->pool, "RewriteMap: cannot use NDBM mapfile, "
-                          "because no NDBM support is compiled in");
-#endif
     }
     else if (strncmp(a2, "prg:", 4) == 0) {
         new->type = MAPTYPE_PRG;
@@ -2907,7 +2900,6 @@ static char *lookup_map(request_rec *r, char *name, char *key)
                 }
             }
             else if (s->type == MAPTYPE_DBM) {
-#ifndef NO_DBM_REWRITEMAP
                 if (stat(s->checkfile, &st) == -1) {
                     ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
                                  "mod_rewrite: can't access DBM RewriteMap "
@@ -2942,9 +2934,6 @@ static char *lookup_map(request_rec *r, char *name, char *key)
                                "-> val=%s", s->name, key, value);
                     return value[0] != '\0' ? value : NULL;
                 }
-#else
-                return NULL;
-#endif
             }
             else if (s->type == MAPTYPE_PRG) {
                 if ((value =
@@ -3060,7 +3049,6 @@ static char *lookup_map_txtfile(request_rec *r, char *file, char *key)
     return value;
 }
 
-#ifndef NO_DBM_REWRITEMAP
 static char *lookup_map_dbmfile(request_rec *r, char *file, char *key)
 {
     DBM *dbmfp = NULL;
@@ -3085,16 +3073,13 @@ static char *lookup_map_dbmfile(request_rec *r, char *file, char *key)
     }
     return value;
 }
-#endif
 
 static char *lookup_map_program(request_rec *r, int fpin, int fpout, char *key)
 {
     char buf[LONG_STRING_LEN];
     char c;
     int i;
-#ifndef NO_WRITEV
     struct iovec iov[2];
-#endif
 
     /* when `RewriteEngine off' was used in the per-server
      * context then the rewritemap-programs were not spawned.
@@ -3109,16 +3094,11 @@ static char *lookup_map_program(request_rec *r, int fpin, int fpout, char *key)
     rewritelock_alloc(r);
 
     /* write out the request key */
-#ifdef NO_WRITEV
-    write(fpin, key, strlen(key));
-    write(fpin, "\n", 1);
-#else
     iov[0].iov_base = key;
     iov[0].iov_len = strlen(key);
     iov[1].iov_base = "\n";
     iov[1].iov_len = 1;
     writev(fpin, iov, 2);
-#endif
 
     /* read in the response value */
     i = 0;
@@ -3559,9 +3539,7 @@ static int rewritemap_program_child(void *cmd, child_info *pinfo)
      * Prepare for exec
      */
     ap_cleanup_for_exec();
-#ifdef SIGHUP
     signal(SIGHUP, SIG_IGN);
-#endif
 
     /*
      * Exec() the child program
@@ -3817,14 +3795,12 @@ static char *lookup_variable(request_rec *r, char *var)
         }
     }
 
-#ifdef EAPI
     else {
         ap_hook_use("ap::mod_rewrite::lookup_variable",
                     AP_HOOK_SIG3(ptr,ptr,ptr), 
                     AP_HOOK_DECLINE(NULL),
                     &result, r, var);
     }
-#endif
 
     if (result == NULL) {
         return ap_pstrdup(r->pool, "");
@@ -4251,25 +4227,8 @@ static int prefix_stat(const char *path, ap_pool *pool)
         curpath += strlen(root);
     }
     else {
-#if defined(HAVE_UNC_PATHS)
-    /* Check for UNC names. */
-        if (curpath[1] == '/') {
-            slash = strchr(curpath + 2, '/');
-
-            /* XXX not sure here. Be safe for now */
-            if (!slash) {
-                return 0;
-            }
-            root = ap_pstrndup(pool, curpath, slash - curpath + 1);
-            curpath += strlen(root);
-        }
-        else {
-#endif /* UNC */
             root = "/";
             ++curpath;
-#if defined(HAVE_UNC_PATHS)
-        }
-#endif
     }
 
     /* let's recognize slashes only, the mod_rewrite semantics are opaque

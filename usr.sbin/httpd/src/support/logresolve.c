@@ -80,7 +80,7 @@ struct nsrec {
  * statistics - obvious
  */
 
-#if !defined(h_errno) && !defined(CYGWIN)
+#if !defined(h_errno)
 extern int h_errno; /* some machines don't have this in their headers */
 #endif
 

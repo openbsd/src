@@ -99,17 +99,6 @@
 
 int ap_rfc1413_timeout = RFC1413_TIMEOUT;	/* Global so it can be changed */
 
-
-#ifdef MULTITHREAD
-#define RFC_USER_STATIC 
-
-static int setsocktimeout (int sock, int timeout)
-{
-    /* XXX Needs to be implemented for non-winsock platforms */
-    return 0;
-}
-#else /* MULTITHREAD */
-
 #define RFC_USER_STATIC static
 static JMP_BUF timebuf;
 
@@ -118,7 +107,6 @@ static void ident_timeout(int sig)
 {
     ap_longjmp(timebuf, sig);
 }
-#endif
 
 /* bind_connect - bind both ends of a socket */
 /* Ambarish fix this. Very broken */
@@ -243,12 +231,6 @@ API_EXPORT(char *) ap_rfc1413(conn_rec *conn, server_rec *srv)
     /*
      * Set up a timer so we won't get stuck while waiting for the server.
      */
-#ifdef MULTITHREAD
-    if (setsocktimeout(sock, ap_rfc1413_timeout) == 0) {
-        if (get_rfc1413(sock, &conn->local_addr, &conn->remote_addr, user, srv) >= 0)
-            result = ap_pstrdup (conn->pool, user);
-    }
-#else
     if (ap_setjmp(timebuf) == 0) {
 	ap_set_callback_and_alarm(ident_timeout, ap_rfc1413_timeout);
 
@@ -256,7 +238,6 @@ API_EXPORT(char *) ap_rfc1413(conn_rec *conn, server_rec *srv)
 	    result = user;
     }
     ap_set_callback_and_alarm(NULL, 0);
-#endif
     ap_pclosesocket(conn->pool, sock);
     conn->remote_logname = result;
 

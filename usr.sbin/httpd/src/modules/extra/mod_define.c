@@ -42,9 +42,6 @@
 #include "http_core.h"
 #include "http_log.h"
 
-#ifndef EAPI
-#error "This module requires the Extended API (EAPI) facilities."
-#endif
 
 /*
  * The global table of defines

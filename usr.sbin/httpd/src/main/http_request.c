@@ -174,48 +174,13 @@ static int get_path_info(request_rec *r)
     char *end = &path[strlen(path)];
     char *last_cp = NULL;
     int rv;
-#if defined(HAVE_DRIVE_LETTERS) || defined(HAVE_UNC_PATHS)
-    char bStripSlash=1;
-#endif
 
     if (r->finfo.st_mode) {
 	/* assume path_info already set */
 	return OK;
     }
 
-#ifdef HAVE_DRIVE_LETTERS
-    /* If the directory is x:\, then we don't want to strip
-     * the trailing slash since x: is not a valid directory.
-     */
-    if (strlen(path) == 3 && path[1] == ':' && path[2] == '/')
-        bStripSlash = 0;
-#endif
 
-
-#ifdef HAVE_UNC_PATHS
-    /* If UNC name == //machine/share/, do not 
-     * advance over the trailing slash.  Any other
-     * UNC name is OK to strip the slash.
-     */
-    cp = end;
-    if (strlen(path) > 2 && path[0] == '/' && path[1] == '/' && 
-        path[2] != '/' && cp[-1] == '/') {
-        char *p;
-        int iCount=0;
-        p = path;
-        while (p = strchr(p,'/')) {
-            p++;
-            iCount++;
-        }
-    
-        if (iCount == 4)
-            bStripSlash = 0;
-    }
-#endif
-
-#if defined(HAVE_DRIVE_LETTERS) || defined(HAVE_UNC_PATHS)
-    if (bStripSlash)
-#endif
         /* Advance over trailing slashes ... NOT part of filename 
          * if file is not a UNC name (Win32 only).
          */
@@ -268,7 +233,6 @@ static int get_path_info(request_rec *r)
 	 * even if they returned an error.
 	 */
 	r->finfo.st_mode = 0;
-#if defined(ENOENT) && defined(ENOTDIR)
         if (errno == ENOENT || errno == ENOTDIR) {
             last_cp = cp;
 
@@ -279,42 +243,16 @@ static int get_path_info(request_rec *r)
                 --cp;
         }
         else {
-#if defined(EACCES)
             if (errno == EACCES)
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
                             "access to %s failed because search "
                             "permissions are missing on a component "
                             "of the path", r->uri);
             else
-#endif 
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
                             "access to %s failed", r->uri);
             return HTTP_FORBIDDEN;
         }
-#else
-#error ENOENT || ENOTDIR not defined; please see the
-#error comments at this line in the source for a workaround.
-        /*
-         * If ENOENT || ENOTDIR is not defined in one of the your OS's
-         * include files, Apache does not know how to check to see why the
-         * stat() of the index file failed; there are cases where it can fail
-         * even though the file exists.  This means that it is possible for
-         * someone to get a directory listing of a directory even though
-         * there is an index (eg. index.html) file in it.  If you do not have
-         * a problem with this, delete the above #error lines and start the
-         * compile again.  If you need to do this, please submit a bug report
-         * from http://www.apache.org/bug_report.html letting us know that
-         * you needed to do this.  Please be sure to include the operating
-         * system you are using.
-         */
-	last_cp = cp;
-
-	while (--cp > path && *cp != '/')
-	    continue;
-
-	while (cp > path && cp[-1] == '/')
-	    --cp;
-#endif  /* ENOENT && ENOTDIR */
     }
     return OK;
 }
@@ -331,9 +269,6 @@ static int directory_walk(request_rec *r)
     int res;
     unsigned i, num_dirs;
     int j, test_filename_len;
-#if defined(HAVE_UNC_PATHS) || defined(NETWARE)
-    unsigned iStart = 1;
-#endif
 
     /*
      * Are we dealing with a file? If not, we can (hopefuly) safely assume we
@@ -441,33 +376,9 @@ static int directory_walk(request_rec *r)
      */
     test_dirname = ap_palloc(r->pool, test_filename_len + 2);
 
-#if defined(HAVE_UNC_PATHS)
-    /* If the name is a UNC name, then do not perform any true file test
-     * against the machine name (start at //machine/share/)
-     * This is optimized to use the normal walk (skips the redundant '/' root)
-     */
-    if (num_dirs > 3 && test_filename[0] == '/' && test_filename[1] == '/')
-        iStart = 4;
-#endif
 
-
-#if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
-    /* Should match <Directory> sections starting from '/', not 'e:/' 
-     * (for example).  WIN32/OS2/NETWARE do not have a single root directory,
-     * they have one for each filesystem.  Traditionally, Apache has treated 
-     * <Directory /> permissions as the base for the whole server, and this 
-     * tradition should probably be preserved. 
-     *
-     * NOTE: MUST SYNC WITH ap_make_dirstr_prefix() CHANGE IN src/main/util.c
-     */
-    if (test_filename[0] == '/')
-        i = 1;
-    else
-        i = 0;
-#else
     /* Normal File Systems are rooted at / */
     i = 1;
-#endif /* def HAVE_DRIVE_LETTERS || NETWARE */
 
     /* j keeps track of which section we're on, see core_reorder_directories */
     j = 0;
@@ -487,10 +398,6 @@ static int directory_walk(request_rec *r)
          * permissions appropriate to the *parent* directory...
          */
 
-#if defined(HAVE_UNC_PATHS) || defined(NETWARE)
-        /* Test only legal names against the real filesystem */
-        if (i >= iStart)
-#endif
         if ((res = check_symlinks(test_dirname, core_dir->opts))) {
             ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
                         "Symbolic link not allowed: %s", test_dirname);
@@ -514,15 +421,7 @@ static int directory_walk(request_rec *r)
 
             if (entry_core->r
 		|| !ap_os_is_path_absolute(entry_dir)
-#if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
-    /* To account for the top-level "/" directory when i == 0 
-     * XXX: I think the net test is wrong... may fail ap_os_is_path_absolute
-     */
-                || (entry_core->d_components > 1
-                    && entry_core->d_components > i))
-#else
                 || entry_core->d_components > i)
-#endif /* def HAVE_DRIVE_LETTERS || NETWARE */                  
                 break;
 
             this_conf = NULL;
@@ -541,24 +440,11 @@ static int directory_walk(request_rec *r)
                 core_dir = (core_dir_config *)
                            ap_get_module_config(per_dir_defaults, &core_module);
             }
-#if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
-            /* So that other top-level directory sections (e.g. "e:/") aren't
-             * skipped when i == 0
-             * XXX: I don't get you here, Tim... That's a level 1 section, but
-             *      we are at level 0. Did you mean fast-forward to the next?
-             */
-            else if (!i)
-                break;
-#endif /* def HAVE_DRIVE_LETTERS || NETWARE */
         }
         overrides_here = core_dir->override;
 
         /* If .htaccess files are enabled, check for one. */
 
-#if defined(HAVE_UNC_PATHS) || defined(NETWARE)
-        /* Test only legal names against the real filesystem */
-        if (i >= iStart)
-#endif
         if (overrides_here) {
             void *htaccess_conf = NULL;
 
@@ -910,7 +796,6 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
         ap_parse_uri(rnew, rnew->uri);    /* fill in parsed_uri values */
         if (stat(rnew->filename, &rnew->finfo) < 0) {
             rnew->finfo.st_mode = 0;
-#ifdef ENAMETOOLONG
             /* Special case for filenames which exceed the maximum limit
 	     * imposed by the operating system (~1024). These should
 	     * NOT be treated like "file not found", because there is
@@ -926,7 +811,6 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
                 rnew->status = HTTP_FORBIDDEN;
                 return rnew;
             }
-#endif
         }
 
         if ((res = check_safe_file(rnew))) {
@@ -1378,10 +1262,8 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
 
     new->method          = r->method;
     new->method_number   = r->method_number;
-#ifdef EAPI
     /* initialize context _BEFORE_ ap_parse_uri() call */
     new->ctx             = r->ctx;
-#endif /* EAPI */
     ap_parse_uri(new, new_uri);
     new->request_config = ap_create_request_config(r->pool);
     new->per_dir_config = r->server->lookup_defaults;

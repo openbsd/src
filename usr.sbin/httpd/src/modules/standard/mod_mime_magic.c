@@ -381,33 +381,6 @@ static struct names {
     {
 	".PRECIOUS", L_MAKE
     },
-    /*
-     * Too many files of text have these words in them.  Find another way to
-     * recognize Fortrash.
-     */
-#ifdef    NOTDEF
-    {
-	"subroutine", L_FORT
-    },
-    {
-	"function", L_FORT
-    },
-    {
-	"block", L_FORT
-    },
-    {
-	"common", L_FORT
-    },
-    {
-	"dimension", L_FORT
-    },
-    {
-	"integer", L_FORT
-    },
-    {
-	"data", L_FORT
-    },
-#endif /* NOTDEF */
     {
 	".ascii", L_MACH
     },
@@ -1458,7 +1431,6 @@ static int fsmagic(request_rec *r, const char *fn)
 	 */
 	(void) magic_rsl_puts(r, MIME_BINARY_UNKNOWN);
 	return DONE;
-#ifdef S_IFBLK
     case S_IFBLK:
 	/*
 	 * (void) magic_rsl_printf(r,"block special (%d/%d)",
@@ -1467,16 +1439,12 @@ static int fsmagic(request_rec *r, const char *fn)
 	(void) magic_rsl_puts(r, MIME_BINARY_UNKNOWN);
 	return DONE;
 	/* TODO add code to handle V7 MUX and Blit MUX files */
-#endif
-#ifdef    S_IFIFO
     case S_IFIFO:
 	/*
 	 * magic_rsl_puts(r,"fifo (named pipe)");
 	 */
 	(void) magic_rsl_puts(r, MIME_BINARY_UNKNOWN);
 	return DONE;
-#endif
-#ifdef    S_IFLNK
     case S_IFLNK:
 	/* We used stat(), the only possible reason for this is that the
 	 * symlink is broken.
@@ -1484,14 +1452,9 @@ static int fsmagic(request_rec *r, const char *fn)
 	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO | APLOG_ERR, r,
 		    MODNAME ": broken symlink (%s)", fn);
 	return HTTP_INTERNAL_SERVER_ERROR;
-#endif
-#ifdef    S_IFSOCK
-#ifndef __COHERENT__
     case S_IFSOCK:
 	magic_rsl_puts(r, MIME_BINARY_UNKNOWN);
 	return DONE;
-#endif
-#endif
     case S_IFREG:
 	break;
     default:

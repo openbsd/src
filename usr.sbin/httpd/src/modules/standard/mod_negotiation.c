@@ -926,11 +926,7 @@ static int read_types_multi(negotiation_state *neg)
         request_rec *sub_req;
 
         /* Do we have a match? */
-#ifdef CASE_BLIND_FILESYSTEM
-        if (strncasecmp(dir_entry->d_name, filp, prefix_len)) {
-#else
         if (strncmp(dir_entry->d_name, filp, prefix_len)) {
-#endif
             continue;
         }
         if (dir_entry->d_name[prefix_len] != '.') {
@@ -993,11 +989,7 @@ static int read_types_multi(negotiation_state *neg)
                 saveend = *segend;
                 *segend = '\0';
 
-#ifdef CASE_BLIND_FILESYSTEM
-                if (strcasecmp(segstart, *cur_except) == 0) {
-#else
                 if (strcmp(segstart, *cur_except) == 0) {
-#endif
                     --nexcept;
                     ++cur_except;
                 }

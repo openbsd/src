@@ -1,4 +1,4 @@
-/*	$OpenBSD: ap_config.h,v 1.19 2004/12/06 13:14:09 henning Exp $ */
+/*	$OpenBSD: ap_config.h,v 1.20 2005/02/09 12:13:09 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -77,8 +77,6 @@ extern "C" {
  */
 #include "ap_config_auto.h"
 
-/* Have to include sys/stat.h before ../win32/os.h so we can override
-stat() properly */
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -87,29 +85,14 @@ stat() properly */
  * GNUC attributes (such as to get -Wall warnings for printf-like
  * functions).  Only do this in gcc 2.7 or later ... it may work
  * on earlier stuff, but why chance it.
- *
- * We've since discovered that the gcc shipped with NeXT systems
- * as "cc" is completely broken.  It claims to be __GNUC__ and so
- * on, but it doesn't implement half of the things that __GNUC__
- * means.  In particular it's missing inline and the __attribute__
- * stuff.  So we hack around it.  PR#1613. -djg
  */
-#if !defined(__GNUC__) || __GNUC__ < 2 || \
-    (__GNUC__ == 2 && __GNUC_MINOR__ < 7) ||\
-    defined(NEXT)
-#define ap_inline
-#define __attribute__(__x)
-#define ENUM_BITFIELD(e,n,w)  signed int n : w
-#else
 #define ap_inline __inline__
 #define USE_GNU_INLINE
 #define ENUM_BITFIELD(e,n,w)  e n : w
-#endif
 
 #include "os.h"
 
-/* Define one of these according to your system. */
-#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(NETBSD)
+/* Define these according to OpenBSD system. */
 #define HAVE_GMTOFF 1
 #undef NO_KILLPG
 #undef NO_SETSID
@@ -125,16 +108,13 @@ stat() properly */
 #define USE_MMAP_SCOREBOARD
 #define USE_MMAP_FILES
 #define HAVE_FLOCK_SERIALIZED_ACCEPT
-#if defined(__OpenBSD__)
 #define HAVE_SYSVSEM_SERIALIZED_ACCEPT
 #define USE_SYSVSEM_SERIALIZED_ACCEPT
 #include <sys/param.h>
 #if (OpenBSD >= 199912)
 #define NET_SIZE_T socklen_t
 #endif
-#endif
 #define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
-#endif
 
 #include <sys/param.h>
 
@@ -171,16 +151,7 @@ stat() properly */
 #define CORE_EXPORT_NONSTD	API_EXPORT_NONSTD
 #endif
 
-/* On Darwin, symbols that conflict with loaded dylibs
- * (eg. System framework) need to be declared as private symbols with
- * __private_extern__.
- * For other systems, make that a no-op.
- */
-#if defined(DARWIN) && defined(__DYNAMIC__)
-#define ap_private_extern __private_extern__
-#else
 #define ap_private_extern
-#endif
 
 /*
  * The particular directory style your system supports. If you have dirent.h
@@ -222,7 +193,7 @@ stat() properly */
 #include <errno.h>
 #include <memory.h>
 
-#if defined(WIN32) || defined(USE_HSREGEX)
+#if defined(USE_HSREGEX)
 #include "hsregex.h"
 #else
 #include <regex.h>
@@ -230,9 +201,6 @@ stat() properly */
 
 #include <sys/resource.h>
 #include <sys/mman.h>
-#if !defined(MAP_ANON) && defined(MAP_ANONYMOUS)
-#define MAP_ANON MAP_ANONYMOUS
-#endif
 
 /* A USE_FOO_SERIALIZED_ACCEPT implies a HAVE_FOO_SERIALIZED_ACCEPT */
 #if defined(USE_SYSVSEM_SERIALIZED_ACCEPT) && !defined(HAVE_SYSVSEM_SERIALIZED_ACCEPT)
@@ -259,7 +227,6 @@ stat() properly */
 /*
  * Replace signal function with sigaction equivalent
  */
-#ifndef NO_USE_SIGACTION
 typedef void Sigfunc(int);
 
 #if defined(SIG_IGN) && !defined(SIG_ERR)
@@ -274,7 +241,6 @@ typedef void Sigfunc(int);
 #endif
 #define signal(s,f)	ap_signal(s,f)
 Sigfunc *signal(int signo, Sigfunc * func);
-#endif
 
 #include <setjmp.h>
 
@@ -359,13 +325,6 @@ Sigfunc *signal(int signo, Sigfunc * func);
  */
 #ifndef NET_SIZE_T
 #define NET_SIZE_T int
-#endif
-
-/* Linux defines __WCOREDUMP, but doesn't define WCOREDUMP unless __USE_BSD
- * is in use... we'd prefer to just use WCOREDUMP everywhere.
- */
-#if defined(__WCOREDUMP) && !defined(WCOREDUMP)
-#define WCOREDUMP __WCOREDUMP
 #endif
 
 /* The assumption is that when the functions are missing,

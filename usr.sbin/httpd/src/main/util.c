@@ -197,7 +197,6 @@ API_EXPORT(char *) ap_gm_timestr_822(pool *p, time_t sec)
 }
 
 /* What a pain in the ass. */
-#if defined(HAVE_GMTOFF)
 API_EXPORT(struct tm *) ap_get_gmtoff(int *tz)
 {
     time_t tt = time(NULL);
@@ -207,25 +206,6 @@ API_EXPORT(struct tm *) ap_get_gmtoff(int *tz)
     *tz = (int) (t->tm_gmtoff / 60);
     return t;
 }
-#else
-API_EXPORT(struct tm *) ap_get_gmtoff(int *tz)
-{
-    time_t tt = time(NULL);
-    struct tm gmt;
-    struct tm *t;
-    int days, hours, minutes;
-
-    /* Assume we are never more than 24 hours away. */
-    gmt = *gmtime(&tt);		/* remember gmtime/localtime return ptr to static */
-    t = localtime(&tt);		/* buffer... so be careful */
-    days = t->tm_yday - gmt.tm_yday;
-    hours = ((days < -1 ? 24 : 1 < days ? -24 : days * 24)
-	     + t->tm_hour - gmt.tm_hour);
-    minutes = hours * 60 + t->tm_min - gmt.tm_min;
-    *tz = minutes;
-    return t;
-}
-#endif
 
 /* Roy owes Rob beer. */
 /* Rob owes Roy dinner. */
@@ -526,12 +506,6 @@ API_EXPORT(void) ap_no2slash(char *name)
 
     s = d = name;
 
-#ifdef HAVE_UNC_PATHS
-    /* Check for UNC names.  Leave leading two slashes. */
-    if (s[0] == '/' && s[1] == '/')
-        *d++ = *s++;
-#endif
-
     while (*s) {
 	if ((*d++ = *s) == '/') {
 	    do {
@@ -565,13 +539,6 @@ API_EXPORT(void) ap_no2slash(char *name)
  */
 API_EXPORT(char *) ap_make_dirstr_prefix(char *d, const char *s, int n)
 {
-#if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
-    if (!n) {
-        *d = '/';
-        *++d = '\0';
-        return (d);
-    }
-#endif /* def HAVE_DRIVE_LETTERS || NETWARE */
     for (;;) {
 	*d = *s;
 	if (*d == '\0') {
@@ -877,11 +844,7 @@ API_EXPORT(configfile_t *) ap_pcfg_openfile(pool *p, const char *name)
         return NULL;
     }
 
-#ifdef FOPEN_REQUIRES_T
-    file = ap_pfopen(p, name, "rt");
-#else
     file = ap_pfopen(p, name, "r");
-#endif
 #ifdef DEBUG
     saved_errno = errno;
     ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, NULL,
@@ -1813,155 +1776,14 @@ API_EXPORT(int) ap_is_url(const char *u)
 
 API_EXPORT(int) ap_can_exec(const struct stat *finfo)
 {
-#ifdef MULTIPLE_GROUPS
-    int cnt;
-#endif
     if (ap_user_id == finfo->st_uid)
 	if (finfo->st_mode & S_IXUSR)
 	    return 1;
     if (ap_group_id == finfo->st_gid)
 	if (finfo->st_mode & S_IXGRP)
 	    return 1;
-#ifdef MULTIPLE_GROUPS
-    for (cnt = 0; cnt < NGROUPS_MAX; cnt++) {
-	if (group_id_list[cnt] == finfo->st_gid)
-	    if (finfo->st_mode & S_IXGRP)
-		return 1;
-    }
-#endif
     return ((finfo->st_mode & S_IXOTH) != 0);
 }
-
-#ifdef NEED_STRDUP
-char *strdup(const char *str)
-{
-    char *sdup;
-
-    if (!(sdup = (char *) malloc(strlen(str) + 1))) {
-	fprintf(stderr, "Ouch!  Out of memory in our strdup()!\n");
-	return NULL;
-    }
-    sdup = strlcpy(sdup, str, strlen(str) + 1);
-
-    return sdup;
-}
-#endif
-
-/* The following two routines were donated for SVR4 by Andreas Vogel */
-#ifdef NEED_STRCASECMP
-int strcasecmp(const char *a, const char *b)
-{
-    const char *p = a;
-    const char *q = b;
-    for (p = a, q = b; *p && *q; p++, q++) {
-	int diff = ap_tolower(*p) - ap_tolower(*q);
-	if (diff)
-	    return diff;
-    }
-    if (*p)
-	return 1;		/* p was longer than q */
-    if (*q)
-	return -1;		/* p was shorter than q */
-    return 0;			/* Exact match */
-}
-
-#endif
-
-#ifdef NEED_STRNCASECMP
-int strncasecmp(const char *a, const char *b, int n)
-{
-    const char *p = a;
-    const char *q = b;
-
-    for (p = a, q = b; /*NOTHING */ ; p++, q++) {
-	int diff;
-	if (p == a + n)
-	    return 0;		/*   Match up to n characters */
-	if (!(*p && *q))
-	    return *p - *q;
-	diff = ap_tolower(*p) - ap_tolower(*q);
-	if (diff)
-	    return diff;
-    }
-    /*NOTREACHED */
-}
-#endif
-
-/* The following routine was donated for UTS21 by dwd@bell-labs.com */
-#ifdef NEED_STRSTR
-char *strstr(char *s1, char *s2)
-{
-    char *p1, *p2;
-    if (*s2 == '\0') {
-	/* an empty s2 */
-        return(s1);
-    }
-    while((s1 = strchr(s1, *s2)) != NULL) {
-	/* found first character of s2, see if the rest matches */
-        p1 = s1;
-        p2 = s2;
-        while (*++p1 == *++p2) {
-            if (*p1 == '\0') {
-                /* both strings ended together */
-                return(s1);
-            }
-        }
-        if (*p2 == '\0') {
-            /* second string ended, a match */
-            break;
-        }
-	/* didn't find a match here, try starting at next character in s1 */
-        s1++;
-    }
-    return(s1);
-}
-#endif
-
-#ifdef NEED_INITGROUPS
-int initgroups(const char *name, gid_t basegid)
-{
-    gid_t groups[NGROUPS_MAX];
-    struct group *g;
-    int index = 0;
-
-    setgrent();
-
-    groups[index++] = basegid;
-
-    while (index < NGROUPS_MAX && ((g = getgrent()) != NULL))
-	if (g->gr_gid != basegid) {
-	    char **names;
-
-	    for (names = g->gr_mem; *names != NULL; ++names)
-		if (!strcmp(*names, name))
-		    groups[index++] = g->gr_gid;
-	}
-
-    endgrent();
-
-    return setgroups(index, groups);
-}
-#endif /* def NEED_INITGROUPS */
-
-#ifdef NEED_WAITPID
-/* From ikluft@amdahl.com
- * this is not ideal but it works for SVR3 variants
- * Modified by dwd@bell-labs.com to call wait3 instead of wait because
- *   apache started to use the WNOHANG option.
- */
-int waitpid(pid_t pid, int *statusp, int options)
-{
-    int tmp_pid;
-    if (kill(pid, 0) == -1) {
-	errno = ECHILD;
-	return -1;
-    }
-    while (((tmp_pid = wait3(statusp, options, 0)) != pid) &&
-		(tmp_pid != -1) && (tmp_pid != 0) && (pid != -1))
-	;
-    return tmp_pid;
-}
-#endif
 
 API_EXPORT(int) ap_ind(const char *s, char c)
 {
@@ -2177,26 +1999,6 @@ API_EXPORT(char *) ap_uuencode(pool *p, char *string)
     return ap_pbase64encode(p, string);
 }
 
-
-#ifdef NEED_STRERROR
-char *
-     strerror(int err)
-{
-
-    char *p;
-    extern char *const sys_errlist[];
-
-    p = sys_errlist[err];
-    return (p);
-}
-#endif
-
-#if defined(NEED_DIFFTIME)
-double difftime(time_t time1, time_t time0)
-{
-    return (time1 - time0);
-}
-#endif
 
 /* we want to downcase the type/subtype for comparison purposes
  * but nothing else because ;parameter=foo values are case sensitive.

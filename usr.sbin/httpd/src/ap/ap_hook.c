@@ -1,6 +1,3 @@
-#if 0
-=pod
-#endif
 /* ====================================================================
  * Copyright (c) 1998-2000 The Apache Group.  All rights reserved.
  *
@@ -65,11 +62,6 @@
 **  See POD document at end of ap_hook.h for description.
 **  View it with the command ``pod2man ap_hook.h | nroff -man | more''
 **
-**  Attention: This source file is a little bit tricky.
-**             It's a combination of a C source and an embedded Perl script
-**             (which updates the C source). The purpose of this is to have
-**             both things together at one place. So you can both pass
-**             this file to the C compiler and the Perl interpreter.
 */
 
                                       /*
@@ -77,8 +69,6 @@
                                        * the root of all evil.
                                        *       -- D. E. Knuth
                                        */
-
-#ifdef EAPI
 
 #include "httpd.h"
 #include "http_log.h"
@@ -815,116 +805,3 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
 
     return rc;
 }
-
-#endif /* EAPI */
-
-/*
-=cut
-##
-##  Embedded Perl script for generating the dispatch section
-##
-
-require 5.003;
-use strict;
-
-#   configuration
-my $file  = $0;
-my $begin = '----BEGIN GENERATED SECTION--------';
-my $end   = '----END GENERATED SECTION----------';
-
-#   special command: find used signatures
-if ($ARGV[0] eq 'used') {
-    my @S = `find .. -type f -name "*.c" -print`;
-    my $s;
-    my %T = ();
-    foreach $s (@S) {
-        $s =~ s|\n$||;
-        open(FP, "<$s") || die;
-        my $source = '';
-        $source .= $_ while (<FP>);
-        close(FP);
-        my %seen = ();
-        sub printme {
-            my ($src, $hook, $sig) = @_;
-            return if ($seen{$hook} == 1);
-            $seen{$hook} = 1;
-            my ($rc, $args) = ($sig =~ m|^([^,]+)(.*)$|);
-            $args =~ s|^,||;
-            $src =~ s|^.+/||;
-            my $sig = sprintf("%-6sfunc(%s)", $rc, $args);
-            $T{$sig}++; 
-        }
-        $source =~ s|\("([^"]+)",\s*AP_HOOK_SIG[0-9]\((.+?)\)|&printme($s, $1, $2), ''|sge;
-    }
-    my $t;
-    foreach $t (sort(keys(%T))) {
-        printf("     *    %-40s [%dx]\n", $t, $T{$t});
-    }
-    exit(0);
-}
-
-#   read ourself and keep a backup
-open(FP, "<$file") || die;
-my $source = '';
-$source .= $_ while (<FP>);
-close(FP);
-open(FP, ">$file.bak") || die;
-print FP $source;
-close(FP);
-
-#   now parse the signature lines and update the code
-my $o = '';
-my $next = 0;
-my $line;
-my %seen = ();
-foreach $line (split(/\n/, $source)) {
-    next if (not $line =~ m|\*\s+\S+\s+func\(.*\)|);
-    my ($sig, $rc, $param) = ($line =~ m|\*\s+((\S+)\s+func\((.*?)\))|);
-    $sig =~ s|\s+| |g;
-
-    next if ($seen{$sig} == 1);
-    $seen{$sig} = 1;
-
-    print "Generating code for `$sig'\n";
-
-    my @S = ($rc, split(/[\s,]+/, $param));
-    my @RS = @S;
-    my $i;
-    for ($i = 0; $i <= $#RS; $i++) {
-        $RS[$i] = 'void *' if ($RS[$i] eq 'ptr');
-        $RS[$i] = 'void *' if ($RS[$i] eq 'ctx');
-    }
-
-    $o .= "else " if ($next); $next++;
-    $o .= sprintf("if (he->he_sig == AP_HOOK_SIG%d(%s)) {\n", $#S+1, join(', ',@S));
-    $o .= sprintf("    \/\* Call: %s \*\/\n", $sig);
-    for ($i = 1; $i <= $#S; $i++) {
-        $o .= sprintf("    %-6sv%d = va_arg(ap, va_type(%s));\n", $RS[$i], $i, $S[$i]);
-    }
-    $o .= "    ";
-    $o .= sprintf("*((%s *)v_rc) = ", $RS[0]) if ($S[0] ne 'void');
-    $o .= sprintf("((%s(*)(%s))(hf->hf_ptr))", $RS[0], join(', ', @RS[1..$#RS]));
-    $o .= "(";
-    for ($i = 1; $i <= $#S; $i++) {
-        $o .= "hf->hf_ctx" if ($S[$i] eq 'ctx');
-        $o .= sprintf("v%d", $i) if ($S[$i] ne 'ctx');
-        $o .= ", " if ($i < $#S);
-    }
-    $o .= ");\n";
-    $o .= sprintf("    rc = (*((%s *)v_rc) != he->he_modeval.v_%s);\n", 
-                  $RS[0], $S[0]) if ($S[0] ne 'void');
-    $o .= "}\n";
-}
-
-#   insert the generated code at the target location
-$o =~ s|^|    |mg;
-$source =~ s|(\/\* $begin.+?\n).*\n(.*?\/\* $end)|$1$o$2|s;
-
-#   and update the source on disk
-print "Updating file `$file'\n";
-open(FP, ">$file") || die;
-print FP $source;
-close(FP);
-
-=pod
-*/

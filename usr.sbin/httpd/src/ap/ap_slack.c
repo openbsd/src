@@ -67,24 +67,11 @@
 #include "httpd.h"
 #include "http_log.h"
 
-#ifndef NO_SLACK
 int ap_slack(int fd, int line)
 {
-#if !defined(F_DUPFD)
-    return fd;
-#else
     static int low_warned;
     int new_fd;
 
-#ifdef HIGH_SLACK_LINE
-    if (line == AP_SLACK_HIGH && fd < HIGH_SLACK_LINE) {
-	new_fd = fcntl(fd, F_DUPFD, HIGH_SLACK_LINE);
-	if (new_fd != -1) {
-	    close(fd);
-	    return new_fd;
-	}
-    }
-#endif
     /* otherwise just assume line == AP_SLACK_LOW */
     if (fd >= LOW_SLACK_LINE) {
 	return fd;
@@ -109,9 +96,4 @@ int ap_slack(int fd, int line)
     }
     close(fd);
     return new_fd;
-#endif
 }
-#else
-/* need at least one function in the file for some linkers */
-void ap_slack_is_not_here(void) {}
-#endif /* NO_SLACK */

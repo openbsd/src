@@ -753,59 +753,6 @@ int ap_proxy_liststr(const char *list, const char *key, char **val)
     return 0;
 }
 
-#ifdef CASE_BLIND_FILESYSTEM
-
-/*
- * On some platforms, the file system is NOT case sensitive. So, a == A
- * need to map to smaller set of characters
- */
-void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength)
-{
-    AP_MD5_CTX context;
-    unsigned char digest[16];
-    char tmp[26];
-    int i, k, d;
-    unsigned int x;
-    static const char enc_table[32] = "abcdefghijklmnopqrstuvwxyz012345";
-
-    ap_MD5Init(&context);
-    ap_MD5Update(&context, (const unsigned char *)it, strlen(it));
-    ap_MD5Final(digest, &context);
-
-/* encode 128 bits as 26 characters, using a modified uuencoding */
-/* the encoding is 5 bytes -> 8 characters
- * i.e. 128 bits is 3 x 5 bytes + 1 byte -> 3 * 8 characters + 2 characters
- */
-    for (i = 0, k = 0; i < 15; i += 5) {
-        x = (digest[i] << 24) | (digest[i + 1] << 16) | (digest[i + 2] << 8) | digest[i + 3];
-        tmp[k++] = enc_table[x >> 27];
-        tmp[k++] = enc_table[(x >> 22) & 0x1f];
-        tmp[k++] = enc_table[(x >> 17) & 0x1f];
-        tmp[k++] = enc_table[(x >> 12) & 0x1f];
-        tmp[k++] = enc_table[(x >> 7) & 0x1f];
-        tmp[k++] = enc_table[(x >> 2) & 0x1f];
-        x = ((x & 0x3) << 8) | digest[i + 4];
-        tmp[k++] = enc_table[x >> 5];
-        tmp[k++] = enc_table[x & 0x1f];
-    }
-/* one byte left */
-    x = digest[15];
-    tmp[k++] = enc_table[x >> 3];       /* use up 5 bits */
-    tmp[k++] = enc_table[x & 0x7];
-    /* now split into directory levels */
-
-    for (i = k = d = 0; d < ndepth; ++d) {
-        memcpy(&val[i], &tmp[k], nlength);
-        k += nlength;
-        val[i + nlength] = '/';
-        i += nlength + 1;
-    }
-    memcpy(&val[i], &tmp[k], 26 - k);
-    val[i + 26 - k] = '\0';
-}
-
-#else
-
 void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength)
 {
     AP_MD5_CTX context;
@@ -846,8 +793,6 @@ void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength)
     memcpy(&val[i], &tmp[k], 22 - k);
     val[i + 22 - k] = '\0';
 }
-
-#endif                          /* CASE_BLIND_FILESYSTEM */
 
 /*
  * Converts 16 hex digits to a time integer
@@ -1207,13 +1152,6 @@ int ap_proxy_is_domainname(struct dirconn_entry *This, pool *p)
     for (i = 0; ap_isalnum(addr[i]) || addr[i] == '-' || addr[i] == '.'; ++i)
         continue;
 
-#if 0
-    if (addr[i] == ':') {
-        fprintf(stderr, "@@@@ handle optional port in proxy_is_domainname()\n");
-        /* @@@@ handle optional port */
-    }
-#endif
-
     if (addr[i] != '\0')
         return 0;
 
@@ -1260,13 +1198,6 @@ int ap_proxy_is_hostname(struct dirconn_entry *This, pool *p)
     /* rfc1035 says DNS names must consist of "[-a-zA-Z0-9]" and '.' */
     for (i = 0; ap_isalnum(addr[i]) || addr[i] == '-' || addr[i] == '.'; ++i);
 
-#if 0
-    if (addr[i] == ':') {
-        fprintf(stderr, "@@@@ handle optional port in proxy_is_hostname()\n");
-        /* @@@@ handle optional port */
-    }
-#endif
-
     if (addr[i] != '\0' || ap_proxy_host2addr(addr, &host) != NULL)
         return 0;
 
@@ -1293,15 +1224,6 @@ static int proxy_match_hostname(struct dirconn_entry *This, request_rec *r)
 
     h2_len = strlen(host2);
     h1_len = strlen(host);
-
-#if 0
-    unsigned long *ip_list;
-
-    /* Try to deal with multiple IP addr's for a host */
-    for (ip_list = *This->hostentry->h_addr_list; *ip_list != 0UL; ++ip_list)
-        if (*ip_list == ? ? ? ? ? ? ? ? ? ? ? ? ?)
-            return 1;
-#endif
 
     /* Ignore trailing dots in host2 comparison: */
     while (h2_len > 0 && host2[h2_len - 1] == '.')

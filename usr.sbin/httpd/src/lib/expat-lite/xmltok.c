@@ -139,13 +139,6 @@ int utf8_isInvalid4(const ENCODING *enc, const char *p)
 struct normal_encoding {
   ENCODING enc;
   unsigned char type[256];
-#ifdef XML_MIN_SIZE
-  int (*byteType)(const ENCODING *, const char *);
-  int (*isNameMin)(const ENCODING *, const char *);
-  int (*isNmstrtMin)(const ENCODING *, const char *);
-  int (*byteToAscii)(const ENCODING *, const char *);
-  int (*charMatches)(const ENCODING *, const char *, int);
-#endif /* XML_MIN_SIZE */
   int (*isName2)(const ENCODING *, const char *);
   int (*isName3)(const ENCODING *, const char *);
   int (*isName4)(const ENCODING *, const char *);
@@ -157,20 +150,7 @@ struct normal_encoding {
   int (*isInvalid4)(const ENCODING *, const char *);
 };
 
-#ifdef XML_MIN_SIZE
-
-#define STANDARD_VTABLE(E) \
- E ## byteType, \
- E ## isNameMin, \
- E ## isNmstrtMin, \
- E ## byteToAscii, \
- E ## charMatches,
-
-#else
-
 #define STANDARD_VTABLE(E) /* as nothing */
-
-#endif
 
 #define NORMAL_VTABLE(E) \
  E ## isName2, \
@@ -187,44 +167,16 @@ static int checkCharRefNumber(int);
 
 #include "xmltok_impl.h"
 
-#ifdef XML_MIN_SIZE
-#define sb_isNameMin isNever
-#define sb_isNmstrtMin isNever
-#endif
 
-#ifdef XML_MIN_SIZE
-#define MINBPC(enc) ((enc)->minBytesPerChar)
-#else
 /* minimum bytes per character */
 #define MINBPC(enc) 1
-#endif
 
 #define SB_BYTE_TYPE(enc, p) \
   (((struct normal_encoding *)(enc))->type[(unsigned char)*(p)])
 
-#ifdef XML_MIN_SIZE
-static
-int sb_byteType(const ENCODING *enc, const char *p)
-{
-  return SB_BYTE_TYPE(enc, p);
-}
-#define BYTE_TYPE(enc, p) \
- (((const struct normal_encoding *)(enc))->byteType(enc, p))
-#else
 #define BYTE_TYPE(enc, p) SB_BYTE_TYPE(enc, p)
-#endif
 
-#ifdef XML_MIN_SIZE
-#define BYTE_TO_ASCII(enc, p) \
- (((const struct normal_encoding *)(enc))->byteToAscii(enc, p))
-static
-int sb_byteToAscii(const ENCODING *enc, const char *p)
-{
-  return *p;
-}
-#else
 #define BYTE_TO_ASCII(enc, p) (*p)
-#endif
 
 #define IS_NAME_CHAR(enc, p, n) \
  (((const struct normal_encoding *)(enc))->isName ## n(enc, p))
@@ -233,28 +185,11 @@ int sb_byteToAscii(const ENCODING *enc, const char *p)
 #define IS_INVALID_CHAR(enc, p, n) \
  (((const struct normal_encoding *)(enc))->isInvalid ## n(enc, p))
 
-#ifdef XML_MIN_SIZE
-#define IS_NAME_CHAR_MINBPC(enc, p) \
- (((const struct normal_encoding *)(enc))->isNameMin(enc, p))
-#define IS_NMSTRT_CHAR_MINBPC(enc, p) \
- (((const struct normal_encoding *)(enc))->isNmstrtMin(enc, p))
-#else
 #define IS_NAME_CHAR_MINBPC(enc, p) (0)
 #define IS_NMSTRT_CHAR_MINBPC(enc, p) (0)
-#endif
 
-#ifdef XML_MIN_SIZE
-#define CHAR_MATCHES(enc, p, c) \
- (((const struct normal_encoding *)(enc))->charMatches(enc, p, c))
-static
-int sb_charMatches(const ENCODING *enc, const char *p, int c)
-{
-  return *p == c;
-}
-#else
 /* c is an ASCII character */
 #define CHAR_MATCHES(enc, p, c) (*(p) == c)
-#endif
 
 #define PREFIX(ident) normal_ ## ident
 #include "xmltok_impl.c"
@@ -601,43 +536,6 @@ DEFINE_UTF16_TO_UTF16(big2_)
 #define LITTLE2_IS_NMSTRT_CHAR_MINBPC(enc, p) \
   UCS2_GET_NAMING(nmstrtPages, (unsigned char)p[1], (unsigned char)p[0])
 
-#ifdef XML_MIN_SIZE
-
-static
-int little2_byteType(const ENCODING *enc, const char *p)
-{
-  return LITTLE2_BYTE_TYPE(enc, p);
-}
-
-static
-int little2_byteToAscii(const ENCODING *enc, const char *p)
-{
-  return LITTLE2_BYTE_TO_ASCII(enc, p);
-}
-
-static
-int little2_charMatches(const ENCODING *enc, const char *p, int c)
-{
-  return LITTLE2_CHAR_MATCHES(enc, p, c);
-}
-
-static
-int little2_isNameMin(const ENCODING *enc, const char *p)
-{
-  return LITTLE2_IS_NAME_CHAR_MINBPC(enc, p);
-}
-
-static
-int little2_isNmstrtMin(const ENCODING *enc, const char *p)
-{
-  return LITTLE2_IS_NMSTRT_CHAR_MINBPC(enc, p);
-}
-
-#undef VTABLE
-#define VTABLE VTABLE1, little2_toUtf8, little2_toUtf16
-
-#else /* not XML_MIN_SIZE */
-
 #undef PREFIX
 #define PREFIX(ident) little2_ ## ident
 #define MINBPC(enc) 2
@@ -661,8 +559,6 @@ int little2_isNmstrtMin(const ENCODING *enc, const char *p)
 #undef IS_NMSTRT_CHAR
 #undef IS_NMSTRT_CHAR_MINBPC
 #undef IS_INVALID_CHAR
-
-#endif /* not XML_MIN_SIZE */
 
 #ifdef XML_NS
 
@@ -740,43 +636,6 @@ static const struct normal_encoding internal_little2_encoding = {
 #define BIG2_IS_NMSTRT_CHAR_MINBPC(enc, p) \
   UCS2_GET_NAMING(nmstrtPages, (unsigned char)p[0], (unsigned char)p[1])
 
-#ifdef XML_MIN_SIZE
-
-static
-int big2_byteType(const ENCODING *enc, const char *p)
-{
-  return BIG2_BYTE_TYPE(enc, p);
-}
-
-static
-int big2_byteToAscii(const ENCODING *enc, const char *p)
-{
-  return BIG2_BYTE_TO_ASCII(enc, p);
-}
-
-static
-int big2_charMatches(const ENCODING *enc, const char *p, int c)
-{
-  return BIG2_CHAR_MATCHES(enc, p, c);
-}
-
-static
-int big2_isNameMin(const ENCODING *enc, const char *p)
-{
-  return BIG2_IS_NAME_CHAR_MINBPC(enc, p);
-}
-
-static
-int big2_isNmstrtMin(const ENCODING *enc, const char *p)
-{
-  return BIG2_IS_NMSTRT_CHAR_MINBPC(enc, p);
-}
-
-#undef VTABLE
-#define VTABLE VTABLE1, big2_toUtf8, big2_toUtf16
-
-#else /* not XML_MIN_SIZE */
-
 #undef PREFIX
 #define PREFIX(ident) big2_ ## ident
 #define MINBPC(enc) 2
@@ -800,8 +659,6 @@ int big2_isNmstrtMin(const ENCODING *enc, const char *p)
 #undef IS_NMSTRT_CHAR
 #undef IS_NMSTRT_CHAR_MINBPC
 #undef IS_INVALID_CHAR
-
-#endif /* not XML_MIN_SIZE */
 
 #ifdef XML_NS
 

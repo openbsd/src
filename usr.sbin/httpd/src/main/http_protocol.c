@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.27 2004/12/02 19:42:47 henning Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.28 2005/02/09 12:13:09 henning Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -980,9 +980,7 @@ static int read_request_line(request_rec *r)
         }
     }
     /* we've probably got something to do, ignore graceful restart requests */
-#ifdef SIGUSR1
     signal(SIGUSR1, SIG_IGN);
-#endif
 
     ap_bsetflag(conn->client, B_SAFEREAD, 0);
 
@@ -1153,9 +1151,7 @@ API_EXPORT(request_rec *) ap_read_request(conn_rec *conn)
     r->status          = HTTP_REQUEST_TIME_OUT;  /* Until we get a request */
     r->the_request     = NULL;
 
-#ifdef EAPI
     r->ctx = ap_ctx_new(r->pool);
-#endif /* EAPI */
 
     /* Get the request... */
 
@@ -1309,9 +1305,7 @@ API_EXPORT(void) ap_set_sub_req_protocol(request_rec *rnew, const request_rec *r
 
     rnew->main = (request_rec *) r;
 
-#ifdef EAPI
     rnew->ctx = r->ctx;
-#endif /* EAPI */
 
 }
 
@@ -2344,11 +2338,8 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
 
     /* Make fb unbuffered and non-blocking */
     ap_bsetflag(fb, B_RD, 0);
-#ifndef TPF_NO_NONSOCKET_SELECT
     ap_bnonblock(fb, B_RD);
-#endif
     fd = ap_bfileno(fb, B_RD);
-#ifdef CHECK_FD_SETSIZE
     if (fd >= FD_SETSIZE) {
 	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, NULL,
 	    "send body: filedescriptor (%u) larger than FD_SETSIZE (%u) "
@@ -2356,21 +2347,11 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
 	    "larger FD_SETSIZE", fd, FD_SETSIZE);
 	return 0;
     }
-#endif
 
     ap_soft_timeout("send body", r);
 
     FD_ZERO(&fds);
     while (!r->connection->aborted) {
-#ifdef NDELAY_PIPE_RETURNS_ZERO
-	/* Contributed by dwd@bell-labs.com for UTS 2.1.2, where the fcntl */
-	/*   O_NDELAY flag causes read to return 0 when there's nothing */
-	/*   available when reading from a pipe.  That makes it tricky */
-	/*   to detect end-of-file :-(.  This stupid bug is even documented */
-	/*   in the read(2) man page where it says that everything but */
-	/*   pipes return -1 and EAGAIN.  That makes it a feature, right? */
-	int afterselect = 0;
-#endif
         if ((length > 0) && (total_bytes_sent + IOBUFSIZE) > length)
             len = length - total_bytes_sent;
         else
@@ -2378,13 +2359,8 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
 
         do {
             n = ap_bread(fb, buf, len);
-#ifdef NDELAY_PIPE_RETURNS_ZERO
-	    if ((n > 0) || (n == 0 && afterselect))
-		break;
-#else
             if (n >= 0)
                 break;
-#endif
             if (r->connection->aborted)
                 break;
             if (n < 0 && errno != EAGAIN)
@@ -2403,16 +2379,7 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
              * we don't care what select says, we might as well loop back
              * around and try another read
              */
-#ifdef TPF_HAVE_NONSOCKET_SELECT
-            tv.tv_sec =  1;
-            tv.tv_usec = 0;
-            ap_select(fd + 1, &fds, NULL, NULL, &tv);
-#else
             ap_select(fd + 1, &fds, NULL, NULL, NULL);
-#endif  
-#ifdef NDELAY_PIPE_RETURNS_ZERO
-	    afterselect = 1;
-#endif
         } while (!r->connection->aborted);
 
         if (n < 1 || r->connection->aborted) {

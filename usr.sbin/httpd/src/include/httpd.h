@@ -1083,15 +1083,11 @@ extern API_VAR_EXPORT time_t ap_restart_time;
  * can't be allocated above this number then it will remain in the "slack"
  * area.
  *
- * Only the low slack line is used by default.  If HIGH_SLACK_LINE is defined
- * then an attempt is also made to keep all non-FILE * files above the high
- * slack line.  This is to work around a Solaris C library limitation, where it
- * uses an unsigned char to store the file descriptor.
+ * Only the low slack line is used by default.
  */
 #ifndef LOW_SLACK_LINE
 #define LOW_SLACK_LINE	15
 #endif
-/* #define HIGH_SLACK_LINE      255 */
 
 /*
  * The ap_slack() function takes a fd, and tries to move it above the indicated
@@ -1112,13 +1108,7 @@ API_EXPORT(void) ap_log_assert(const char *szExp, const char *szFile, int nLine)
 			    __attribute__((noreturn));
 #define ap_assert(exp) ((exp) ? (void)0 : ap_log_assert(#exp,__FILE__,__LINE__))
 
-/* The optimized timeout code only works if we're not MULTITHREAD and we're
- * also not using a scoreboard file
- */
-#if !defined (MULTITHREAD) && \
-    (defined (USE_MMAP_SCOREBOARD) || defined (USE_SHMGET_SCOREBOARD))
 #define OPTIMIZE_TIMEOUTS
-#endif
 
 /* A set of flags which indicate places where the server should raise(SIGSTOP).
  * This is useful for debugging, because you can then attach to that process

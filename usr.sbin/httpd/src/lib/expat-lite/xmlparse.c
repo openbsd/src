@@ -396,15 +396,6 @@ typedef struct {
 #define hadExternalDoctype (((Parser *)parser)->m_hadExternalDoctype)
 #define namespaceSeparator (((Parser *)parser)->m_namespaceSeparator)
 
-#ifdef _MSC_VER
-#ifdef _DEBUG
-Parser *asParser(XML_Parser parser)
-{
-  return parser;
-}
-#endif
-#endif
-
 XML_Parser XML_ParserCreate(const XML_Char *encodingName)
 {
   XML_Parser parser = malloc(sizeof(Parser));

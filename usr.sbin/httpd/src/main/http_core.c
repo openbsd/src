@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.19 2004/12/02 19:42:47 henning Exp $ */
+/* $OpenBSD: http_core.c,v 1.20 2005/02/09 12:13:09 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -59,7 +59,6 @@
  */
 
 #define CORE_PRIVATE
-#define ADD_EBCDICCONVERT_DEBUG_HEADER 0
 #include "httpd.h"
 #include "http_config.h"
 #include "http_core.h"
@@ -74,7 +73,6 @@
 #include "scoreboard.h"
 #include "fnmatch.h"
 
-#ifdef USE_MMAP_FILES
 #include <sys/mman.h>
 
 /* mmap support for static files based on ideas from John Heidemann's
@@ -88,7 +86,6 @@
  */
 #ifndef MMAP_THRESHOLD
 #define MMAP_THRESHOLD		1
-#endif
 #endif
 #ifndef MMAP_LIMIT
 #define MMAP_LIMIT              (4*1024*1024)
@@ -136,15 +133,9 @@ static void *create_core_dir_config(pool *a, char *dir)
     conf->do_rfc1413 = DEFAULT_RFC1413 | 2; /* set bit 1 to indicate default */
     conf->satisfy = SATISFY_NOSPEC;
 
-#ifdef RLIMIT_CPU
     conf->limit_cpu = NULL;
-#endif
-#if defined(RLIMIT_DATA) || defined(RLIMIT_VMEM) || defined(RLIMIT_AS)
     conf->limit_mem = NULL;
-#endif
-#ifdef RLIMIT_NPROC
     conf->limit_nproc = NULL;
-#endif
 
     conf->limit_req_body = 0;
     conf->sec = ap_make_array(a, 2, sizeof(void *));
@@ -256,21 +247,15 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
 	conf->use_canonical_name = new->use_canonical_name;
     }
 
-#ifdef RLIMIT_CPU
     if (new->limit_cpu) {
         conf->limit_cpu = new->limit_cpu;
     }
-#endif
-#if defined(RLIMIT_DATA) || defined(RLIMIT_VMEM) || defined(RLIMIT_AS)
     if (new->limit_mem) {
         conf->limit_mem = new->limit_mem;
     }
-#endif
-#ifdef RLIMIT_NPROC    
     if (new->limit_nproc) {
         conf->limit_nproc = new->limit_nproc;
     }
-#endif
 
     if (new->limit_req_body) {
         conf->limit_req_body = new->limit_req_body;
@@ -408,24 +393,8 @@ CORE_EXPORT(void) ap_add_file_conf(core_dir_config *conf, void *url_config)
  * See directory_walk().
  */
 
-#if defined(HAVE_DRIVE_LETTERS)
-#define IS_SPECIAL(entry_core)	\
-    ((entry_core)->r != NULL \
-	|| ((entry_core)->d[0] != '/' && (entry_core)->d[1] != ':'))
-#elif defined(NETWARE)
-/* XXX: Fairly certain this is correct... '/' must prefix the path
- *      or else in the case xyz:/ or abc/xyz:/, '/' must follow the ':'.
- *      If there is no leading '/' or embedded ':/', then we are special.
- */
-#define IS_SPECIAL(entry_core)	\
-    ((entry_core)->r != NULL \
-	|| ((entry_core)->d[0] != '/' \
-            && strchr((entry_core)->d, ':') \
-            && *(strchr((entry_core)->d, ':') + 1) != '/'))
-#else
 #define IS_SPECIAL(entry_core)	\
     ((entry_core)->r != NULL || (entry_core)->d[0] != '/')
-#endif
 
 /* We need to do a stable sort, qsort isn't stable.  So to make it stable
  * we'll be maintaining the original index into the list, and using it
@@ -1362,18 +1331,6 @@ static const char *dirsection(cmd_parms *cmd, void *dummy, const char *arg)
 	ap_server_strip_chroot(cmd->path, 1);
 	r = ap_pregcomp(cmd->pool, cmd->path, REG_EXTENDED|USE_ICASE);
     }
-#if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
-    else if (strcmp(cmd->path, "/") == 0) {
-        /* Treat 'default' path / as an inalienable root */
-        cmd->path = ap_pstrdup(cmd->pool, cmd->path);
-    }
-#endif
-#if defined(HAVE_UNC_PATHS)
-    else if (strcmp(cmd->path, "//") == 0) {
-        /* Treat UNC path // as an inalienable root */
-        cmd->path = ap_pstrdup(cmd->pool, cmd->path);
-    }
-#endif
     else {
 	/* Ensure that the pathname is canonical */
 	cmd->path = ap_os_canonical_filename(cmd->pool, cmd->path);
@@ -1915,7 +1872,7 @@ static const char *set_user(cmd_parms *cmd, void *dummy, char *arg)
 		    "requires SUEXEC wrapper.\n");
 	}
     }
-#if !defined (BIG_SECURITY_HOLE) && !defined (OS2)
+#if !defined (BIG_SECURITY_HOLE)
     if (cmd->server->server_uid == 0) {
 	fprintf(stderr,
 		"Error:\tApache has not been designed to serve pages while\n"
@@ -2280,7 +2237,6 @@ static const char *set_excess_requests(cmd_parms *cmd, void *dummy, char *arg)
 }
 
 
-#if defined(RLIMIT_CPU) || defined(RLIMIT_DATA) || defined(RLIMIT_VMEM) || defined(RLIMIT_NPROC) || defined(RLIMIT_AS)
 static void set_rlimit(cmd_parms *cmd, struct rlimit **plimit, const char *arg,
                        const char * arg2, int type)
 {
@@ -2334,50 +2290,27 @@ static void set_rlimit(cmd_parms *cmd, struct rlimit **plimit, const char *arg,
 	}
     }
 }
-#endif
 
-#if !defined (RLIMIT_CPU) || !(defined (RLIMIT_DATA) || defined (RLIMIT_VMEM) || defined(RLIMIT_AS)) || !defined (RLIMIT_NPROC)
-static const char *no_set_limit(cmd_parms *cmd, core_dir_config *conf,
-				char *arg, char *arg2)
-{
-    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, cmd->server,
-		"%s not supported on this platform", cmd->cmd->name);
-    return NULL;
-}
-#endif
-
-#ifdef RLIMIT_CPU
 static const char *set_limit_cpu(cmd_parms *cmd, core_dir_config *conf, 
 				 char *arg, char *arg2)
 {
     set_rlimit(cmd, &conf->limit_cpu, arg, arg2, RLIMIT_CPU);
     return NULL;
 }
-#endif
 
-#if defined (RLIMIT_DATA) || defined (RLIMIT_VMEM) || defined(RLIMIT_AS)
 static const char *set_limit_mem(cmd_parms *cmd, core_dir_config *conf, 
 				 char *arg, char * arg2)
 {
-#if defined(RLIMIT_AS)
-    set_rlimit(cmd, &conf->limit_mem, arg, arg2 ,RLIMIT_AS);
-#elif defined(RLIMIT_DATA)
     set_rlimit(cmd, &conf->limit_mem, arg, arg2, RLIMIT_DATA);
-#elif defined(RLIMIT_VMEM)
-    set_rlimit(cmd, &conf->limit_mem, arg, arg2, RLIMIT_VMEM);
-#endif
     return NULL;
 }
-#endif
 
-#ifdef RLIMIT_NPROC
 static const char *set_limit_nproc(cmd_parms *cmd, core_dir_config *conf,  
 				   char *arg, char * arg2)
 {
     set_rlimit(cmd, &conf->limit_nproc, arg, arg2, RLIMIT_NPROC);
     return NULL;
 }
-#endif
 
 static const char *set_bind_address(cmd_parms *cmd, void *dummy, char *arg) 
 {
@@ -2400,9 +2333,6 @@ static const char *set_bind_address(cmd_parms *cmd, void *dummy, char *arg)
  */
 static const char *set_acceptfilter(cmd_parms *cmd, void *dummy, int flag)
 {
-#ifdef SO_ACCEPTFILTER
-    ap_acceptfilter = flag;
-#endif
     return NULL;
 }
 
@@ -3179,25 +3109,13 @@ static const command_rec core_cmds[] = {
 { "MaxRequestsPerChild", set_max_requests, NULL, RSRC_CONF, TAKE1,
   "Maximum number of requests a particular child serves before dying." },
 { "RLimitCPU",
-#ifdef RLIMIT_CPU
   set_limit_cpu, (void*)XtOffsetOf(core_dir_config, limit_cpu),
-#else
-  no_set_limit, NULL,
-#endif
   OR_ALL, TAKE12, "Soft/hard limits for max CPU usage in seconds" },
 { "RLimitMEM",
-#if defined (RLIMIT_DATA) || defined (RLIMIT_VMEM) || defined (RLIMIT_AS)
   set_limit_mem, (void*)XtOffsetOf(core_dir_config, limit_mem),
-#else
-  no_set_limit, NULL,
-#endif
   OR_ALL, TAKE12, "Soft/hard limits for max memory usage per process" },
 { "RLimitNPROC",
-#ifdef RLIMIT_NPROC
   set_limit_nproc, (void*)XtOffsetOf(core_dir_config, limit_nproc),
-#else
-  no_set_limit, NULL,
-#endif
    OR_ALL, TAKE12, "soft/hard limits for max number of processes per uid" },
 { "BindAddress", set_bind_address, NULL, RSRC_CONF, TAKE1,
   "'*', a numeric IP address, or the name of a host with a unique IP address"},
@@ -3218,16 +3136,10 @@ static const command_rec core_cmds[] = {
   "Maximum length of the queue of pending connections, as used by listen(2)" },
 { "AcceptFilter", set_acceptfilter, NULL, RSRC_CONF, FLAG,
   "Switch AcceptFiltering on/off (default is "
-#ifdef AP_ACCEPTFILTER_OFF
-	"off"
-#else
 	"on"
-#endif
 	")."
-#ifndef SO_ACCEPTFILTER
 	"This feature is currently not compiled in; so this directive "
 	"is ignored."
-#endif
    },
 { "CoreDumpDirectory", set_coredumpdir, NULL, RSRC_CONF, TAKE1,
   "The location of the directory Apache changes to before dumping core" },
@@ -3257,24 +3169,8 @@ static const command_rec core_cmds[] = {
   "Enable the setting of SysV shared memory scoreboard uid/gid to User/Group" },
 { "AcceptMutex", set_accept_mutex, NULL, RSRC_CONF, TAKE1,
   "Serialized Accept Mutex; the methods " 
-#ifdef HAVE_USLOCK_SERIALIZED_ACCEPT
-    "'uslock' "                           
-#endif
-#ifdef HAVE_PTHREAD_SERIALIZED_ACCEPT
-    "'pthread' "
-#endif
-#ifdef HAVE_SYSVSEM_SERIALIZED_ACCEPT
     "'sysvsem' "
-#endif
-#ifdef HAVE_FCNTL_SERIALIZED_ACCEPT
-    "'fcntl' "
-#endif
-#ifdef HAVE_FLOCK_SERIALIZED_ACCEPT
     "'flock' "
-#endif
-#ifdef HAVE_NONE_SERIALIZED_ACCEPT
-    "'none' "
-#endif
     "are compiled in"
 },
 
@@ -3336,7 +3232,6 @@ static int core_translate(request_rec *r)
 
 static int do_nothing(request_rec *r) { return OK; }
 
-#ifdef USE_MMAP_FILES
 struct mmap_rec {
     void *mm;
     size_t length;
@@ -3352,7 +3247,6 @@ static void mmap_cleanup(void *mmv)
                      (long) mmd->length, (long) mmd->mm);
     }
 }
-#endif
 
 /*
  * Default handler for MIME types without other handlers.  Only GET
@@ -3368,9 +3262,7 @@ static int default_handler(request_rec *r)
       (core_dir_config *)ap_get_module_config(r->per_dir_config, &core_module);
     int rangestatus, errstatus;
     FILE *f;
-#ifdef USE_MMAP_FILES
     caddr_t mm;
-#endif
 
     /* This handler has no use for a request body (yet), but we still
      * need to read and discard it if the client sent one.
@@ -3422,7 +3314,6 @@ static int default_handler(request_rec *r)
         return errstatus;
     }
 
-#ifdef USE_MMAP_FILES
     ap_block_alarms();
     if ((r->finfo.st_size >= MMAP_THRESHOLD)
 	&& (r->finfo.st_size < MMAP_LIMIT)
@@ -3442,7 +3333,6 @@ static int default_handler(request_rec *r)
 
     if (mm == (caddr_t)-1) {
 	ap_unblock_alarms();
-#endif
 
 	if (d->content_md5 & 1) {
 	    ap_table_setn(r->headers_out, "Content-MD5",
@@ -3476,7 +3366,6 @@ static int default_handler(request_rec *r)
 	    }
 	}
 
-#ifdef USE_MMAP_FILES
     }
     else {
 	struct mmap_rec *mmd;
@@ -3511,7 +3400,6 @@ static int default_handler(request_rec *r)
 	    }
 	}
     }
-#endif
 
     ap_pfclose(r->pool, f);
     return OK;
