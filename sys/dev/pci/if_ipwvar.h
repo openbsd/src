@@ -1,4 +1,4 @@
-/*      $Id: if_ipwvar.h,v 1.4 2004/11/18 21:02:42 damien Exp $ */
+/*      $Id: if_ipwvar.h,v 1.5 2004/12/05 17:46:07 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -48,14 +48,14 @@ struct ipw_soft_bd {
 struct ipw_soft_hdr {
 	struct ipw_hdr			hdr;
 	bus_dmamap_t			map;
-	TAILQ_ENTRY(ipw_soft_hdr)	next;
+	SLIST_ENTRY(ipw_soft_hdr)	next;
 };
 
 struct ipw_soft_buf {
 	struct mbuf			*m;
 	struct ieee80211_node		*ni;
 	bus_dmamap_t			map;
-	TAILQ_ENTRY(ipw_soft_buf)	next;
+	SLIST_ENTRY(ipw_soft_buf)	next;
 };
 
 struct ipw_rx_radiotap_header {
@@ -81,6 +81,8 @@ struct ipw_tx_radiotap_header {
 #define IPW_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+#define IPW_MAX_NSEG	6
 
 struct ipw_softc {
 	struct device			sc_dev;
@@ -120,21 +122,22 @@ struct ipw_softc {
 	struct ipw_bd			*rbd_list;
 	struct ipw_status		*status_list;
 
-	struct ipw_cmd			*cmd;
-	struct ipw_soft_bd		*stbd_list;
-	struct ipw_soft_bd		*srbd_list;
-	struct ipw_soft_hdr		*shdr_list;
-	struct ipw_soft_buf		*tx_sbuf_list;
-	struct ipw_soft_buf		*rx_sbuf_list;
+	struct ipw_cmd			cmd;
+	struct ipw_soft_bd		stbd_list[IPW_NTBD];
+	struct ipw_soft_buf		tx_sbuf_list[IPW_NDATA];
+	struct ipw_soft_hdr		shdr_list[IPW_NDATA];
+	struct ipw_soft_bd		srbd_list[IPW_NRBD];
+	struct ipw_soft_buf		rx_sbuf_list[IPW_NRBD];
 
-	TAILQ_HEAD(, ipw_soft_hdr)	sc_free_shdr;
-	TAILQ_HEAD(, ipw_soft_buf)	sc_free_sbuf;
+	SLIST_HEAD(, ipw_soft_hdr)	free_shdr;
+	SLIST_HEAD(, ipw_soft_buf)	free_sbuf;
 
 	u_int32_t			table1_base;
 	u_int32_t			table2_base;
 
 	u_int32_t			txcur;
 	u_int32_t			txold;
+	u_int32_t			txfree;
 	u_int32_t			rxcur;
 
 #if NBPFILTER > 0

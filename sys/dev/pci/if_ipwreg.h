@@ -1,4 +1,4 @@
-/*      $Id: if_ipwreg.h,v 1.6 2004/10/27 21:22:14 damien Exp $ */
+/*      $Id: if_ipwreg.h,v 1.7 2004/12/05 17:46:07 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -27,10 +27,10 @@
  * SUCH DAMAGE.
  */
 
-#define IPW_NTBD	256
+#define IPW_NTBD	128
 #define IPW_TBD_SZ	(IPW_NTBD * sizeof (struct ipw_bd))
 #define IPW_NDATA	(IPW_NTBD / 2)
-#define IPW_NRBD	256
+#define IPW_NRBD	128
 #define IPW_RBD_SZ	(IPW_NRBD * sizeof (struct ipw_bd))
 #define IPW_STATUS_SZ	(IPW_NRBD * sizeof (struct ipw_status))
 
