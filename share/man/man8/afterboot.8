@@ -665,6 +665,15 @@ You can also do a
 .Ic make depend
 so that you will have dependencies there the next time you do a compile.
 .Pp
+If you are building your kernel again, before you do a 
+.Ic make
+you should do a
+.Ic make depend
+after making changes (including updates or patches) to your kernel source,
+or a
+.Ic make clean
+after making changes to your kernel options.
+.Pp
 After either of these two methods, you can place the new kernel (called
 .Pa bsd )
 in
