@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.2 1996/09/21 19:11:52 maja Exp $ */
+/*	$OpenBSD: pf.c,v 1.3 1997/08/18 03:11:31 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: pf.c,v 1.2 1996/09/21 19:11:52 maja Exp $";
+static char rcsid[] = "$OpenBSD: pf.c,v 1.3 1997/08/18 03:11:31 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: pf.c,v 1.2 1996/09/21 19:11:52 maja Exp $";
 
 #include <netdb.h>
 #include <ctype.h>
-#include <strings.h>
+#include <string.h>
 
 #include <syslog.h>
 #include <varargs.h>

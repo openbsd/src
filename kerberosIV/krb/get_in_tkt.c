@@ -165,14 +165,14 @@ krb_get_pw_in_tkt(user, instance, realm, service, sinstance, life, password)
 
 #ifndef	lint
 static char rcsid_read_password_c[] =
-"Bones$Header: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v 1.3 1997/01/17 07:11:54 millert Exp $";
+"Bones$Header: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v 1.4 1997/08/18 03:11:21 millert Exp $";
 #endif /* lint */
 
 #include <des.h>
 #include "conf.h"
 
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <setjmp.h>

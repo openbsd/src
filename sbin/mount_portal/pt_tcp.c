@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_tcp.c,v 1.4 1997/06/25 18:25:50 kstailey Exp $	*/
+/*	$OpenBSD: pt_tcp.c,v 1.5 1997/08/18 03:11:25 millert Exp $	*/
 /*	$NetBSD: pt_tcp.c,v 1.9 1995/05/21 15:33:22 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <strings.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/syslog.h>

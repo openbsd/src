@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.3 1997/06/23 09:34:11 deraadt Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.4 1997/08/18 03:11:30 millert Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
 #include <err.h>
 

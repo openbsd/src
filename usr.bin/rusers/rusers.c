@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.7 1997/07/08 16:49:45 bitblt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.8 1997/08/18 03:11:28 millert Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers.c,v 1.7 1997/07/08 16:49:45 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: rusers.c,v 1.8 1997/08/18 03:11:28 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -37,7 +37,7 @@ static char rcsid[] = "$OpenBSD: rusers.c,v 1.7 1997/07/08 16:49:45 bitblt Exp $
 #include <sys/socket.h>
 #include <netdb.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <arpa/inet.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.11 1997/06/29 11:10:31 provos Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.12 1997/08/18 03:11:24 millert Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "mntopts.h"
