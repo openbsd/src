@@ -1,0 +1,122 @@
+.\"	$OpenBSD: isapnp.4,v 1.1 1998/07/12 09:29:06 downsj Exp $
+.\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
+.\"
+.\" Copyright (c) 1997 Jonathan Stone
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgements:
+.\"      This product includes software developed by Jonathan Stone
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 12, 1998
+.Dt ISAPNP 4
+.Os OpenBSD
+.Sh NAME
+.Nm isapnp
+.Nd introduction to ISA Plug-and-Play support
+.Sh SYNOPSIS
+.Cd "isapnp0 at isa?"
+.Pp
+An
+.Nm
+bus can be configured for each supported ISA bus.
+.Sh INTRODUCTION
+.Ox
+provides machine-independent bus support and
+drivers for ISA Plug-and-Play (isapnp) autoconfiguration of
+PnP-compatible
+devices on an ISA bus.
+.Sh SUPPORTED DEVICES
+.Ox
+includes machine-independent ISAPNP drivers, sorted by function
+and driver name:
+.Pp
+.\" .Ss SCSI controllers
+.\" .Bl -tag -width speaker -offset indent -compact
+.\" .It aic
+.\" Adaptec AHA-1520B SCSI controller card.
+.\" .El
+.\"
+.\" .Pp
+.Ss Serial and parallel interfaces
+.Bl -tag -width speaker -offset indent -compact
+.It pccom
+8250/16450/16550/16650/16850-compatible ISA PnP serial cards and internal
+modems (i386 only).
+.El
+.\"
+.Pp
+.Ss Network interfaces
+.Bl -tag -width speaker -offset indent -compact
+.It ep
+3com 3c509B Etherlink-III Ethernet interface.
+.It le
+Ethernet driver for Lance based ethernet interface.
+.\" .It ne
+.\" NE2000-compatible ethernet interfaces.
+.El
+.\"
+.Ss Sound cards
+.Bl -tag -width speaker -offset indent -compact
+.It sb
+Soundblaster series sound cards (SB16 PnP through AWE64).
+.\" .It guspnp
+.\" Gravis Ultrasound PnP sound cards.
+.It ym
+Yamaha OPL3-SA3 sound cards.
+.El
+.\" .Pp
+.\" ISA Plug-and-Play devices also have alternate ISA drivers with
+.\" static ISA IO address configuration.
+.\" These are listed in 
+.\" .Xr isa 4 .
+.\" The
+.\" .Nm
+.\" bus ignores devices that have already been found and configured as
+.\" .Xr isa 4
+.\" devices.
+.\" The
+.\" .Nm
+.\" bus is only effective on machines which lack a PnP BIOS, or where
+.\" the PnP BIOS has been disabled.
+.\" The manual pages for each individual 
+.\" .Nm
+.\" driver also list
+.\" the supported front-ends for other buses.
+.Sh SEE ALSO
+.\" .Xr aic 4 ,
+.\" .Xr ed 4 ,
+.Xr ep 4 ,
+.\" .Xr guspnp 4 ,
+.\" .Xr isa 4 ,
+.Xr le 4 ,
+.Xr pccom 4 ,
+.Xr sb 4 ,
+.Xr ym 4
+.Sh HISTORY
+The
+.Nm
+driver
+appeared in
+.Nx 1.3 .
