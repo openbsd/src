@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2000/09/03 18:41:20 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2000/10/10 15:41:09 millert Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -36,11 +36,10 @@
 
 PROG=	telnet
 
-CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -DSKEY -Dunix
-CFLAGS+=-DENV_HACK -D_USE_OLD_CURSES_
+CFLAGS+=-DKLUDGELINEMODE -DUSE_TERMIO -DENV_HACK -DSKEY -Dunix
 CFLAGS+=-I${.CURDIR}/../../lib
-LDADD+=	-locurses -ltelnet
-DPADD=	${LIBOLDCURSES} ${LIBTELNET}
+LDADD+=	-lcurses -ltelnet
+DPADD=	${LIBCURSES} ${LIBTELNET}
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c tn3270.c utilities.c
@@ -54,4 +53,3 @@ DPADD+= ${LIBDES} ${LIBKRB}
 .endif
 
 .include <bsd.prog.mk>
-

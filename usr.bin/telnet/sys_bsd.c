@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.7 1999/05/07 18:29:07 deraadt Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.8 2000/10/10 15:41:10 millert Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
  */
 
 #include "telnet_locl.h"
+#include <err.h>
 
 /*
  * The following routines try to encapsulate what is system dependent

@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.8 1999/12/30 16:58:22 itojun Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.9 2000/10/10 15:41:11 millert Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
  */
 
 #include "telnet_locl.h"
+#include <curses.h>
+#include <term.h>
 
 #define        strip(x) (eight ? (x) : ((x) & 0x7f))
 
@@ -531,10 +533,9 @@ dontoption(option)
 }
 
 /*
- * Given a buffer returned by tgetent(), this routine will turn
- * the pipe seperated list of names in the buffer into an array
- * of pointers to null terminated names.  We toss out any bad,
- * duplicate, or verbose names (names with spaces).
+ * This routine will turn a pipe seperated list of names in the buffer
+ * into an array of pointers to NUL terminated names.  We toss out any
+ * bad, duplicate, or verbose names (names with spaces).
  */
 
 int is_unique P((char *, char **, char **));
@@ -562,7 +563,7 @@ mklist(buf, name)
 	/*
 	 * Count up the number of names.
 	 */
-	for (n = 1, cp = buf; *cp && *cp != ':'; cp++) {
+	for (n = 1, cp = buf; *cp; cp++) {
 		if (*cp == '|')
 			n++;
 	}
@@ -668,25 +669,6 @@ is_unique(name, as, ae)
 	return (1);
 }
 
-static char termbuf[1024];
-
-	/*ARGSUSED*/
-	int
-telnet_setupterm(tname, fd, errp)
-	char *tname;
-	int fd, *errp;
-{
-	if (tgetent(termbuf, tname) == 1) {
-		termbuf[1023] = '\0';
-		if (errp)
-			*errp = 1;
-		return(0);
-	}
-	if (errp)
-		*errp = 0;
-	return(-1);
-}
-
 int resettermname = 1;
 
 	char *
@@ -695,15 +677,14 @@ gettermname()
 	char *tname;
 	static char **tnamep = 0;
 	static char **next;
-	int err;
 
 	if (resettermname) {
 		resettermname = 0;
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
 		if ((tname = (char *)env_getvalue((unsigned char *)"TERM")) &&
-				(telnet_setupterm(tname, 1, &err) == 0)) {
-			tnamep = mklist(termbuf, tname);
+				(setupterm(tname, 1, NULL) == OK)) {
+			tnamep = mklist(ttytype, tname);
 		} else {
 			if (tname && ((int)strlen(tname) <= 40)) {
 				unknown[0] = tname;

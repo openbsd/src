@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.32 2000/08/13 19:41:13 itojun Exp $	*/
+/*	$OpenBSD: commands.c,v 1.33 2000/10/10 15:41:10 millert Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2270,14 +2270,7 @@ tn(argc, argv)
 {
     struct addrinfo hints, *res, *res0;
     int error;
-#if defined(AF_INET6)
-    struct sockaddr_in6 sin6;
-#endif
     struct sockaddr_in sin;
-    struct sockaddr_in ladr;
-    struct sockaddr *sa;
-    int sa_size;
-    struct servent *sp = 0;
     unsigned long temp;
     extern char *inet_ntoa();
 #if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
@@ -2285,7 +2278,6 @@ tn(argc, argv)
     int srlen;
 #endif
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
-    int family, port;
     int retry;
 #ifdef NI_WITHSCOPEID
     const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
