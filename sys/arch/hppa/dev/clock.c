@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.19 2003/10/15 18:54:55 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.20 2003/12/12 19:42:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -112,7 +112,7 @@ resettodr()
 
 	if ((error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_WRITE,
 	    time.tv_sec, time.tv_usec)))
-		printf("clock: failed to save (%d)\n");
+		printf("clock: failed to save (%d)\n", error);
 }
 
 void
