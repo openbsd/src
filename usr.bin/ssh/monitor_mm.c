@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_mm.c,v 1.2 2002/03/19 10:35:39 markus Exp $");
+RCSID("$OpenBSD: monitor_mm.c,v 1.3 2002/03/19 10:41:32 markus Exp $");
 
 #include <sys/mman.h>
 
@@ -75,7 +75,7 @@ mm_create(struct mm_master *mmalloc, size_t size)
 	else
 		mm = mm_xmalloc(mmalloc, sizeof(struct mm_master));
 
-	/* 
+	/*
 	 * If the memory map has a mm_master it can be completely
 	 * shared including authentication between the child
 	 * and the client.
@@ -163,7 +163,7 @@ mm_malloc(struct mm_master *mm, size_t size)
 	if (mms == NULL)
 		return (NULL);
 
- 	/* Debug */
+	/* Debug */
 	memset(mms->address, 0xd0, size);
 
 	tmp = mm_make_entry(mm, &mm->rb_allocated, mms->address, size);
@@ -195,7 +195,7 @@ mm_free(struct mm_master *mm, void *address)
 	if (mms == NULL)
 		fatal("mm_free(%p): can not find %p", mm, address);
 
- 	/* Debug */
+	/* Debug */
 	memset(mms->address, 0xd0, mms->size);
 
 	/* Remove from allocated list and insert in free list */

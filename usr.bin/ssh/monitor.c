@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.2 2002/03/19 10:35:39 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.3 2002/03/19 10:41:32 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -345,11 +345,11 @@ monitor_read(struct monitor *monitor, struct mon_table *ent,
 
 		if (pent != NULL)
 			*pent = ent;
-		
+
 		return ret;
 	}
 
-	fatal("%s: unsupported request: %d\n", __FUNCTION__, type); 
+	fatal("%s: unsupported request: %d\n", __FUNCTION__, type);
 
 	/* NOTREACHED */
 	return (-1);
@@ -411,7 +411,7 @@ mm_answer_moduli(int socket, Buffer *m)
 		buffer_put_char(m, 1);
 		buffer_put_bignum2(m, dh->p);
 		buffer_put_bignum2(m, dh->g);
-		
+
 		DH_free(dh);
 	}
 	mm_request_send(socket, MONITOR_ANS_MODULI, m);
@@ -426,11 +426,11 @@ mm_answer_sign(int socket, Buffer *m)
 	u_char *signature;
 	u_int siglen, datlen;
 	int keyid;
-	
+
 	debug3("%s", __FUNCTION__);
 
-	keyid = buffer_get_int(m);	
-	p = buffer_get_string(m, &datlen);	
+	keyid = buffer_get_int(m);
+	p = buffer_get_string(m, &datlen);
 
 	if (datlen != 20)
 		fatal("%s: data length incorrect: %d", __FUNCTION__, datlen);
@@ -464,7 +464,7 @@ mm_answer_pwnamallow(int socket, Buffer *m)
 	char *login;
 	struct passwd *pwent;
 	int allowed = 0;
-	
+
 	debug3("%s", __FUNCTION__);
 
 	if (authctxt->attempt++ != 0)
@@ -686,7 +686,7 @@ mm_answer_keyallowed(int socket, Buffer *m)
 	int allowed = 0;
 
 	debug3("%s entering", __FUNCTION__);
-	
+
 	type = buffer_get_int(m);
 	cuser = buffer_get_string(m, NULL);
 	chost = buffer_get_string(m, NULL);
@@ -760,7 +760,7 @@ monitor_valid_userblob(u_char *data, u_int datalen)
 
 	buffer_init(&b);
 	buffer_append(&b, data, datalen);
-	
+
 	if (datafellows & SSH_OLD_SESSIONID) {
 		buffer_consume(&b, session_id2_len);
 	} else {
@@ -809,7 +809,7 @@ monitor_valid_hostbasedblob(u_char *data, u_int datalen, u_char *cuser,
 
 	buffer_init(&b);
 	buffer_append(&b, data, datalen);
-	
+
 	xfree(buffer_get_string(&b, &len));
 	if (len != session_id2_len)
 		fail++;
@@ -896,7 +896,7 @@ mm_answer_keyverify(int socket, Buffer *m)
 	xfree(data);
 
 	monitor_reset_key_state();
-		
+
 	buffer_clear(m);
 	buffer_put_int(m, verified);
 	mm_request_send(socket, MONITOR_ANS_KEYVERIFY, m);
@@ -1074,8 +1074,8 @@ mm_answer_rsa_keyallowed(int socket, Buffer *m)
 {
 	BIGNUM *client_n;
 	Key *key = NULL;
-        u_char *blob = NULL;
-        u_int blen = 0;
+	u_char *blob = NULL;
+	u_int blen = 0;
 	int allowed = 0;
 
 	debug3("%s entering", __FUNCTION__);
@@ -1119,8 +1119,8 @@ int
 mm_answer_rsa_challenge(int socket, Buffer *m)
 {
 	Key *key = NULL;
-        u_char *blob;
-        u_int blen;
+	u_char *blob;
+	u_int blen;
 
 	debug3("%s entering", __FUNCTION__);
 
@@ -1153,9 +1153,9 @@ int
 mm_answer_rsa_response(int socket, Buffer *m)
 {
 	Key *key = NULL;
-        u_char *blob, *response;
-        u_int blen, len;
-        int success;
+	u_char *blob, *response;
+	u_int blen, len;
+	int success;
 
 	debug3("%s entering", __FUNCTION__);
 
@@ -1242,7 +1242,7 @@ monitor_apply_keystate(struct monitor *monitor)
 	    sizeof(incoming_stream));
 	memcpy(&outgoing_stream, &child_state.outgoing,
 	    sizeof(outgoing_stream));
-	
+
 	/* Update with new address */
 	mm_init_compression(monitor->m_zlib);
 
@@ -1324,7 +1324,7 @@ mm_get_keystate(struct monitor *monitor)
 	blob = buffer_get_string(&m, &bloblen);
 	current_keys[MODE_IN] = mm_newkeys_from_blob(blob, bloblen);
 	xfree(blob);
-	
+
 	/* Now get sequence numbers for the packets */
 	packet_set_seqnr(MODE_OUT, buffer_get_int(&m));
 	packet_set_seqnr(MODE_IN, buffer_get_int(&m));
@@ -1395,7 +1395,7 @@ mm_init_compression(struct mm_master *mm)
 
 static void
 monitor_socketpair(int *pair)
-{   
+{
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
 		fatal("%s: socketpair", __FUNCTION__);
 	FD_CLOSEONEXEC(pair[0]);

@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.2 2002/03/19 10:35:39 markus Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.3 2002/03/19 10:41:32 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -137,7 +137,7 @@ mm_choose_dh(int min, int nbits, int max)
 
 	if ((p = BN_new()) == NULL)
 		fatal("%s: BN_new failed", __FUNCTION__);
-	if ((g = BN_new()) == NULL) 
+	if ((g = BN_new()) == NULL)
 		fatal("%s: BN_new failed", __FUNCTION__);
 	buffer_get_bignum2(&m, p);
 	buffer_get_bignum2(&m, g);
@@ -255,7 +255,7 @@ mm_auth_password(Authctxt *authctxt, char *password)
 
 	buffer_free(&m);
 
-	debug3("%s: user %sauthenticated", 
+	debug3("%s: user %sauthenticated",
 	    __FUNCTION__, authenticated ? "" : "not ");
 	return (authenticated);
 }
@@ -334,7 +334,7 @@ mm_key_allowed(enum mm_keytype type, char *user, char *host, Key *key)
 	return (allowed);
 }
 
-/* 
+/*
  * This key verify needs to send the key type along, because the
  * privileged parent makes the decision if the key is allowed
  * for authentication.
@@ -528,7 +528,7 @@ mm_send_keystate(struct monitor *monitor)
 		goto skip;
 	} else {
 		/* Kex for rekeying */
-		mm_send_kex(&m, *monitor->m_pkex); 
+		mm_send_kex(&m, *monitor->m_pkex);
 	}
 
 	debug3("%s: Sending new keys: %p %p",
@@ -624,7 +624,7 @@ mm_session_pty_cleanup2(void *session)
 	buffer_put_cstring(&m, s->tty);
 	mm_request_send(monitor->m_recvfd, MONITOR_REQ_PTYCLEANUP, &m);
 	buffer_free(&m);
-	
+
 	/* closed dup'ed master */
 	if (close(s->ptymaster) < 0)
 		error("close(s->ptymaster): %s", strerror(errno));
