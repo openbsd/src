@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.3 2004/06/14 00:06:32 deraadt Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.4 2004/06/28 01:41:53 aaron Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -62,6 +62,8 @@
 #include <machine/i82489var.h>
 
 #include <i386/isa/timerreg.h>	/* XXX for TIMER_FREQ */
+
+struct evcount clk_count;
 
 void	lapic_delay(int);
 void	lapic_microtime(struct timeval *);
@@ -162,6 +164,8 @@ void
 lapic_boot_init(lapic_base)
 	paddr_t lapic_base;
 {
+	static int clk_irq = 0;
+
 	lapic_map(lapic_base);
 
 #ifdef MULTIPROCESSOR
@@ -169,6 +173,8 @@ lapic_boot_init(lapic_base)
 #endif
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);
+
+	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
 }
 
 static __inline u_int32_t
@@ -197,6 +203,8 @@ lapic_clockintr(arg)
 	struct clockframe *frame = arg;
 
 	hardclock(frame);
+
+	clk_count.ec_count32++;
 }
 
 void

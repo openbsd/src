@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.49 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.50 2004/06/28 01:41:53 aaron Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -618,11 +618,11 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
-	ih->ih_what = ih_what;
+	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
+	    &evcount_intr);
 	*p = ih;
 
 	return (ih);
@@ -660,6 +660,7 @@ isa_intr_disestablish(ic, arg)
 		*p = q->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
+	evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF);
 
 	intr_calculatemasks();

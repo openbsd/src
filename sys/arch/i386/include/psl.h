@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.15 2004/02/02 23:02:42 deraadt Exp $	*/
+/*	$OpenBSD: psl.h,v 1.16 2004/06/28 01:41:53 aaron Exp $	*/
 /*	$NetBSD: psl.h,v 1.30 1996/05/13 01:28:05 mycroft Exp $	*/
 
 /*-
@@ -75,19 +75,20 @@
 
 #ifndef _LOCORE
 
+#include <sys/evcount.h>
+
 /*
  * Interrupt handler chains.  isa_intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
  */
 
 struct intrhand {
-	int	(*ih_fun)(void *);
-	void	*ih_arg;
-	u_long	ih_count;
-	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
-	char	*ih_what;
+	int		(*ih_fun)(void *);
+	void		*ih_arg;
+	struct intrhand	*ih_next;
+	int		ih_level;
+	int		ih_irq;
+	struct evcount	ih_count;
 };
 
 #endif /* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.3 2004/06/23 17:14:31 niklas Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.4 2004/06/28 01:41:53 aaron Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -596,7 +596,7 @@ ioapic_enable(void)
 
 void *
 apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
-    void *ih_arg, char *what)
+    void *ih_arg, char *ih_what)
 {
 	unsigned int ioapic = APIC_IRQ_APIC(irq);
 	unsigned int intr = APIC_IRQ_PIN(irq);
@@ -682,11 +682,11 @@ apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
-	ih->ih_what = what;
+	evcount_attach(&ih->ih_count, ih_what, (void *)&pin->ip_vector,
+	    &evcount_intr);
 	*p = ih;
 
 	return (ih);
@@ -754,6 +754,7 @@ apic_intr_disestablish(void *arg)
 	if (!ioapic_cold)
 		apic_vectorset(sc, intr, minlevel, maxlevel);
 
+	evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF);
 }
 
