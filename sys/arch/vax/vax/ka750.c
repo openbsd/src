@@ -1,3 +1,4 @@
+/*	$OpenBSD: ka750.c,v 1.6 1997/05/28 23:25:51 niklas Exp $ */
 /*	$NetBSD: ka750.c,v 1.17 1996/10/13 03:35:48 christos Exp $ */
 
 /*-
@@ -81,8 +82,8 @@ ka750_conf(parent, self, aux)
 	ctuattach();
 }
 
-static int ka750_memmatch __P((struct  device  *, void  *, void *));
-static void ka750_memenable __P((struct  device  *, struct  device  *, void *));
+int ka750_memmatch __P((struct  device  *, void  *, void *));
+void ka750_memenable __P((struct  device  *, struct  device  *, void *));
 
 struct  cfattach mem_cmi_ca = {
         sizeof(struct device), ka750_memmatch, ka750_memenable
