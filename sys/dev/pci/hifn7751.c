@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.106 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.107 2001/11/09 03:11:38 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -282,7 +282,7 @@ hifn_attach(parent, self, aux)
 	printf(", %d%cB %cram, %s\n", rseg, rbase,
 	    sc->sc_drammodel ? 'd' : 's', intrstr);
 
-	sc->sc_cid = crypto_get_driverid();
+	sc->sc_cid = crypto_get_driverid(0);
 	if (sc->sc_cid < 0)
 		goto fail_intr;
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.13 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: crypto.9,v 1.14 2001/11/09 03:11:38 deraadt Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Fd #include <crypto/crypto.h>
 .Ft int32_t
-.Fn crypto_get_driverid "void"
+.Fn crypto_get_driverid "u_int8_t"
 .Ft int
 .Fn crypto_register "u_int32_t" "int" "int (*)(u_int32_t *, struct cryptoini *)" "int (*)(u_int64_t)" "int (*)(struct cryptop *)"
 .Ft int
@@ -45,8 +45,7 @@
 
 #define EALG_MAX_BLOCK_LEN      8
 
-struct cryptoini
-{
+struct cryptoini {
     int                cri_alg;
     int                cri_klen;
     int                cri_rnd;
@@ -55,8 +54,7 @@ struct cryptoini
     struct cryptoini  *cri_next;
 };
 
-struct cryptodesc
-{
+struct cryptodesc {
     int                crd_skip;
     int                crd_len;
     int                crd_inject;
@@ -65,8 +63,7 @@ struct cryptodesc
     struct cryptodesc *crd_next;
 };
 
-struct cryptop
-{
+struct cryptop {
     u_int64_t          crp_sid;
     int                crp_ilen;
     int                crp_olen;
@@ -369,7 +366,10 @@ primitives to register and unregister with the kernel crypto services
 framework.
 Drivers must first use the
 .Fn crypto_get_driverid
-function to acquire a driver identifier.
+function to acquire a driver identifier, specifying the
+.Fa cc_flags
+as an argument (normally 0, but software-only drivers should specify
+.Dv CRYPTOCAP_F_SOFTWARE Ns ).
 For each algorithm the driver supports, it must then call
 .Fn crypto_register .
 The first two arguments are the driver and algorithm identifiers.

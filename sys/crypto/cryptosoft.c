@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.28 2001/08/08 15:12:09 jjbg Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.29 2001/11/09 03:11:38 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -812,7 +812,7 @@ done:
 void
 swcr_init(void)
 {
-	swcr_id = crypto_get_driverid();
+	swcr_id = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE);
 	if (swcr_id >= 0) {
 		crypto_register(swcr_id, CRYPTO_DES_CBC, 0, 0, swcr_newsession,
 		    swcr_freesession, swcr_process);
