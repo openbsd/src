@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.66 2003/08/18 16:56:31 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.67 2003/09/19 08:15:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.66 2003/08/18 16:56:31 millert Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.67 2003/09/19 08:15:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,6 @@ main(int argc, char *argv[])
 			else
 				funixn[nfunix++] = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}
