@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.h,v 1.11 2002/10/17 17:03:33 deraadt Exp $	*/
+/*	$OpenBSD: cdio.h,v 1.12 2002/10/17 17:11:12 mickey Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_
@@ -186,7 +186,7 @@ struct ioc_read_toc_entry {
 	struct	cd_toc_entry *data;
 };
 #define CDIOREADTOCENTRIES _IOWR('c', 5, struct ioc_read_toc_entry)
-#define CDIOREADTOCENTRYS _IOWR('c', 5, struct ioc_read_toc_entry)
+#define CDIOREADTOCENTRYS CDIOREADTOCENTRIES
 
 /* read LBA start of a given session; 0=last, others not yet supported */
 #define CDIOREADMSADDR _IOWR('c', 6, int)
