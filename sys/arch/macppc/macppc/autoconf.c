@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2002/06/09 04:13:13 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2002/09/14 18:47:30 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.4 2002/06/09 04:13:13 drahn Exp $
+ *      $Id: autoconf.c,v 1.5 2002/09/14 18:47:30 deraadt Exp $
  */
 
 /*
@@ -560,6 +560,8 @@ findtype(s)
 	static struct devmap devmap[] = {
 		{ "/pci@",	NULL, T_BUS },
 		{ "/pci",	NULL, T_BUS },
+		{ "/AppleKiwi@",NULL, T_BUS },
+		{ "/AppleKiwi",	NULL, T_BUS },
 		{ "/mac-io@",	NULL, T_BUS },
 		{ "/mac-io",	NULL, T_BUS },
 		{ "/@",		NULL, T_BUS },
