@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.4 1998/04/01 11:32:02 deraadt Exp $	*/
+/*     $OpenBSD: encrypt.c,v 1.5 2001/05/25 10:23:06 hin Exp $     */
 /* $KTH: encrypt.c,v 1.19 1997/11/02 03:58:03 assar Exp $ */
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-/*
+ /*
  * This source code is no longer held under any constraint of USA
  * `cryptographic laws' since it was exported legally.  The cryptographic
  * functions were removed from the code and a "Bones" distribution was
@@ -66,6 +66,8 @@
  * or implied warranty.
  */
 
+/* $KTH: encrypt.c,v 1.22 2000/01/18 03:10:35 assar Exp $ */
+
 #if	defined(ENCRYPTION)
 
 #define	ENCRYPT_NAMES
@@ -79,12 +81,13 @@
 #include "misc.h"
 
 
+
 /*
  * These functions pointers point to the current routines
  * for encrypting and decrypting data.
  */
-void	(*encrypt_output) __P((unsigned char *, int));
-int	(*decrypt_input) __P((int));
+void	(*encrypt_output) (unsigned char *, int);
+int	(*decrypt_input) (int);
 char	*nclearto;
 
 int encrypt_debug_mode = 0;
@@ -95,7 +98,7 @@ static int autoencrypt = 0;
 static int autodecrypt = 0;
 static int havesessionkey = 0;
 static int Server = 0;
-static char *Name = "Noname";
+static const char *Name = "Noname";
 
 #define	typemask(x)	((x) > 0 ? 1 << ((x)-1) : 0)
 
@@ -181,7 +184,7 @@ static struct key_info {
 };
 
 void
-encrypt_init(char *name, int server)
+encrypt_init(const char *name, int server)
 {
     Encryptions *ep = encryptions;
 
@@ -442,7 +445,7 @@ encrypt_send_support(void)
 	 */
 	if (!Server && autodecrypt)
 	    encrypt_send_request_start();
-	net_write(str_send, str_suplen);
+	telnet_net_write(str_send, str_suplen);
 	printsub('>', &str_send[2], str_suplen - 2);
 	str_suplen = 0;
     }
@@ -502,6 +505,11 @@ EncryptAutoDec(int on)
 void
 encrypt_not(void)
 {
+    if (encrypt_verbose)
+  	printf("[ Connection is NOT encrypted ]\r\n");
+    else
+  	printf("\r\n*** Connection not encrypted! "
+	       "Communication may be eavesdropped. ***\r\n");
 }
 
 /*
@@ -799,7 +807,7 @@ void encrypt_send_keyid(int dir, unsigned char *keyid, int keylen, int saveit)
     }
     *strp++ = IAC;
     *strp++ = SE;
-    net_write(str_keyid, strp - str_keyid);
+    telnet_net_write(str_keyid, strp - str_keyid);
     printsub('>', &str_keyid[2], strp - str_keyid - 2);
 }
 
@@ -858,7 +866,7 @@ encrypt_start_output(int type)
     }
     *p++ = IAC;
     *p++ = SE;
-    net_write(str_start, p - str_start);
+    telnet_net_write(str_start, p - str_start);
     net_encrypt();
     printsub('>', &str_start[2], p - &str_start[2]);
     /*
@@ -884,7 +892,7 @@ encrypt_send_end(void)
 	return;
 
     str_end[3] = ENCRYPT_END;
-    net_write(str_end, sizeof(str_end));
+    telnet_net_write(str_end, sizeof(str_end));
     net_encrypt();
     printsub('>', &str_end[2], sizeof(str_end) - 2);
     /*
@@ -912,7 +920,7 @@ encrypt_send_request_start(void)
     }
     *p++ = IAC;
     *p++ = SE;
-    net_write(str_start, p - str_start);
+    telnet_net_write(str_start, p - str_start);
     printsub('>', &str_start[2], p - &str_start[2]);
     if (encrypt_debug_mode)
 	printf(">>>%s: Request input to be encrypted\r\n", Name);
@@ -922,7 +930,7 @@ void
 encrypt_send_request_end(void)
 {
     str_end[3] = ENCRYPT_REQEND;
-    net_write(str_end, sizeof(str_end));
+    telnet_net_write(str_end, sizeof(str_end));
     printsub('>', &str_end[2], sizeof(str_end) - 2);
 
     if (encrypt_debug_mode)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.3 1998/03/12 04:48:45 art Exp $	*/
+/*     $OpenBSD: auth.c,v 1.4 2001/05/25 10:23:05 hin Exp $    */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95" */
+/* from: static char sccsid[] = "@(#)auth.c    8.3 (Berkeley) 5/30/95" */
 /* from: static char *rcsid = "$NetBSD: auth.c,v 1.5 1996/02/24 01:15:17 jtk Exp $"; */
 #endif /* not lint */
 
@@ -70,9 +70,9 @@
  * or implied warranty.
  */
 
+/* "$KTH: auth.c,v 1.23 2000/01/18 03:09:34 assar Exp $" */
 
 #if	defined(AUTHENTICATION)
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -108,7 +108,7 @@ extern rsaencpwd_printsub();
 #endif
 
 int auth_debug_mode = 0;
-static 	char	*Name = "Noname";
+static 	const	char	*Name = "Noname";
 static	int	Server = 0;
 static	Authenticator	*authenticated = 0;
 static	int	authenticating = 0;
@@ -122,75 +122,91 @@ static	int	auth_send_cnt = 0;
  * in priority order, i.e. try the first one first.
  */
 Authenticator authenticators[] = {
+#ifdef UNSAFE
+    { AUTHTYPE_UNSAFE, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+      unsafe_init,
+      unsafe_send,
+      unsafe_is,
+      unsafe_reply,
+      unsafe_status,
+      unsafe_printsub },
+#endif
+#ifdef SRA
+    { AUTHTYPE_SRA, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+      sra_init,
+      sra_send,
+      sra_is,
+      sra_reply,
+      sra_status,
+      sra_printsub },
+#endif
 #ifdef	SPX
-	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				spx_init,
-				spx_send,
-				spx_is,
-				spx_reply,
-				spx_status,
-				spx_printsub },
-	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				spx_init,
-				spx_send,
-				spx_is,
-				spx_reply,
-				spx_status,
-				spx_printsub },
+    { AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+      spx_init,
+      spx_send,
+      spx_is,
+      spx_reply,
+      spx_status,
+      spx_printsub },
+    { AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+      spx_init,
+      spx_send,
+      spx_is,
+      spx_reply,
+      spx_status,
+      spx_printsub },
 #endif
 #ifdef	KRB5
-	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				kerberos5_init,
-				kerberos5_send_mutual,
-				kerberos5_is,
-				kerberos5_reply,
-				kerberos5_status,
-				kerberos5_printsub },
-
-	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				kerberos5_init,
-				kerberos5_send_oneway,
-				kerberos5_is,
-				kerberos5_reply,
-				kerberos5_status,
-				kerberos5_printsub },
+    { AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+      kerberos5_init,
+      kerberos5_send_mutual,
+      kerberos5_is,
+      kerberos5_reply,
+      kerberos5_status,
+      kerberos5_printsub },
+    { AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+      kerberos5_init,
+      kerberos5_send_oneway,
+      kerberos5_is,
+      kerberos5_reply,
+      kerberos5_status,
+      kerberos5_printsub },
 #endif
 #ifdef	KRB4
-	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				kerberos4_init,
-				kerberos4_send_mutual,
-				kerberos4_is,
-				kerberos4_reply,
-				kerberos4_status,
-				kerberos4_printsub },
-
-	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				kerberos4_init,
-				kerberos4_send_oneway,
-				kerberos4_is,
-				kerberos4_reply,
-				kerberos4_status,
-				kerberos4_printsub },
+    { AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+      kerberos4_init,
+      kerberos4_send_mutual,
+      kerberos4_is,
+      kerberos4_reply,
+      kerberos4_status,
+      kerberos4_printsub },
+    { AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+      kerberos4_init,
+      kerberos4_send_oneway,
+      kerberos4_is,
+      kerberos4_reply,
+      kerberos4_status,
+      kerberos4_printsub },
 #endif
 #ifdef	KRB4_ENCPWD
-	{ AUTHTYPE_KRB4_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				krb4encpwd_init,
-				krb4encpwd_send,
-				krb4encpwd_is,
-				krb4encpwd_reply,
-				krb4encpwd_status,
-				krb4encpwd_printsub },
+    { AUTHTYPE_KRB4_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+      krb4encpwd_init,
+      krb4encpwd_send,
+      krb4encpwd_is,
+      krb4encpwd_reply,
+      krb4encpwd_status,
+      krb4encpwd_printsub },
 #endif
 #ifdef	RSA_ENCPWD
-	{ AUTHTYPE_RSA_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				rsaencpwd_init,
-				rsaencpwd_send,
-				rsaencpwd_is,
-				rsaencpwd_reply,
-				rsaencpwd_status,
-				rsaencpwd_printsub },
+    { AUTHTYPE_RSA_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+      rsaencpwd_init,
+      rsaencpwd_send,
+      rsaencpwd_is,
+      rsaencpwd_reply,
+      rsaencpwd_status,
+      rsaencpwd_printsub },
 #endif
-	{ 0, },
+    { 0, },
 };
 
 static Authenticator NoAuth = { 0 };
@@ -198,193 +214,181 @@ static Authenticator NoAuth = { 0 };
 static int	i_support = 0;
 static int	i_wont_support = 0;
 
-	Authenticator *
-findauthenticator(type, way)
-	int type;
-	int way;
+Authenticator *
+findauthenticator(int type, int way)
 {
-	Authenticator *ap = authenticators;
+    Authenticator *ap = authenticators;
 
-	while (ap->type && (ap->type != type || ap->way != way))
-		++ap;
-	return(ap->type ? ap : 0);
+    while (ap->type && (ap->type != type || ap->way != way))
+	++ap;
+    return(ap->type ? ap : 0);
 }
 
-	void
-auth_init(name, server)
-	char *name;
-	int server;
+void
+auth_init(const char *name, int server)
 {
-	Authenticator *ap = authenticators;
+    Authenticator *ap = authenticators;
 
-	Server = server;
-	Name = name;
+    Server = server;
+    Name = name;
 
-	i_support = 0;
-	authenticated = 0;
-	authenticating = 0;
-	while (ap->type) {
-		if (!ap->init || (*ap->init)(ap, server)) {
-			i_support |= typemask(ap->type);
-			if (auth_debug_mode)
-				printf(">>>%s: I support auth type %d %d\r\n",
-					Name,
-					ap->type, ap->way);
-		}
-		else if (auth_debug_mode)
-			printf(">>>%s: Init failed: auth type %d %d\r\n",
-				Name, ap->type, ap->way);
-		++ap;
+    i_support = 0;
+    authenticated = 0;
+    authenticating = 0;
+    while (ap->type) {
+	if (!ap->init || (*ap->init)(ap, server)) {
+	    i_support |= typemask(ap->type);
+	    if (auth_debug_mode)
+		printf(">>>%s: I support auth type %d %d\r\n",
+		       Name,
+		       ap->type, ap->way);
 	}
+	else if (auth_debug_mode)
+	    printf(">>>%s: Init failed: auth type %d %d\r\n",
+		   Name, ap->type, ap->way);
+	++ap;
+    }
 }
 
-	void
-auth_disable_name(name)
-	char *name;
+void
+auth_disable_name(char *name)
 {
-	int x;
-	for (x = 0; x < AUTHTYPE_CNT; ++x) {
-		if (!strcasecmp(name, AUTHTYPE_NAME(x))) {
-			i_wont_support |= typemask(x);
-			break;
-		}
+    int x;
+    for (x = 0; x < AUTHTYPE_CNT; ++x) {
+	if (!strcasecmp(name, AUTHTYPE_NAME(x))) {
+	    i_wont_support |= typemask(x);
+	    break;
 	}
+    }
 }
 
-	int
-getauthmask(type, maskp)
-	char *type;
-	int *maskp;
+int
+getauthmask(char *type, int *maskp)
 {
-	register int x;
+    int x;
 
-	if (!strcasecmp(type, AUTHTYPE_NAME(0))) {
-		*maskp = -1;
-		return(1);
-	}
-
-	for (x = 1; x < AUTHTYPE_CNT; ++x) {
-		if (!strcasecmp(type, AUTHTYPE_NAME(x))) {
-			*maskp = typemask(x);
-			return(1);
-		}
-	}
-	return(0);
-}
-
-	int
-auth_enable(type)
-	char *type;
-{
-	return(auth_onoff(type, 1));
-}
-
-	int
-auth_disable(type)
-	char *type;
-{
-	return(auth_onoff(type, 0));
-}
-
-	int
-auth_onoff(type, on)
-	char *type;
-	int on;
-{
-	int i, mask = -1;
-	Authenticator *ap;
-
-	if (!strcasecmp(type, "?") || !strcasecmp(type, "help")) {
-		printf("auth %s 'type'\n", on ? "enable" : "disable");
-		printf("Where 'type' is one of:\n");
-		printf("\t%s\n", AUTHTYPE_NAME(0));
-		mask = 0;
-		for (ap = authenticators; ap->type; ap++) {
-			if ((mask & (i = typemask(ap->type))) != 0)
-				continue;
-			mask |= i;
-			printf("\t%s\n", AUTHTYPE_NAME(ap->type));
-		}
-		return(0);
-	}
-
-	if (!getauthmask(type, &mask)) {
-		printf("%s: invalid authentication type\n", type);
-		return(0);
-	}
-	if (on)
-		i_wont_support &= ~mask;
-	else
-		i_wont_support |= mask;
+    if (!strcasecmp(type, AUTHTYPE_NAME(0))) {
+	*maskp = -1;
 	return(1);
+    }
+
+    for (x = 1; x < AUTHTYPE_CNT; ++x) {
+	if (!strcasecmp(type, AUTHTYPE_NAME(x))) {
+	    *maskp = typemask(x);
+	    return(1);
+	}
+    }
+    return(0);
 }
 
-	int
-auth_togdebug(on)
-	int on;
+int
+auth_enable(char *type)
 {
-	if (on < 0)
-		auth_debug_mode ^= 1;
-	else
-		auth_debug_mode = on;
-	printf("auth debugging %s\n", auth_debug_mode ? "enabled" : "disabled");
-	return(1);
+    return(auth_onoff(type, 1));
 }
 
-	int
-auth_status()
+int
+auth_disable(char *type)
 {
-	Authenticator *ap;
-	int i, mask;
+    return(auth_onoff(type, 0));
+}
 
-	if (i_wont_support == -1)
-		printf("Authentication disabled\n");
-	else
-		printf("Authentication enabled\n");
+int
+auth_onoff(char *type, int on)
+{
+    int i, mask = -1;
+    Authenticator *ap;
 
+    if (!strcasecmp(type, "?") || !strcasecmp(type, "help")) {
+	printf("auth %s 'type'\n", on ? "enable" : "disable");
+	printf("Where 'type' is one of:\n");
+	printf("\t%s\n", AUTHTYPE_NAME(0));
 	mask = 0;
 	for (ap = authenticators; ap->type; ap++) {
-		if ((mask & (i = typemask(ap->type))) != 0)
-			continue;
-		mask |= i;
-		printf("%s: %s\n", AUTHTYPE_NAME(ap->type),
-			(i_wont_support & typemask(ap->type)) ?
-					"disabled" : "enabled");
+	    if ((mask & (i = typemask(ap->type))) != 0)
+		continue;
+	    mask |= i;
+	    printf("\t%s\n", AUTHTYPE_NAME(ap->type));
 	}
-	return(1);
+	return(0);
+    }
+
+    if (!getauthmask(type, &mask)) {
+	printf("%s: invalid authentication type\n", type);
+	return(0);
+    }
+    if (on)
+	i_wont_support &= ~mask;
+    else
+	i_wont_support |= mask;
+    return(1);
+}
+
+int
+auth_togdebug(int on)
+{
+    if (on < 0)
+	auth_debug_mode ^= 1;
+    else
+	auth_debug_mode = on;
+    printf("auth debugging %s\n", auth_debug_mode ? "enabled" : "disabled");
+    return(1);
+}
+
+int
+auth_status(void)
+{
+    Authenticator *ap;
+    int i, mask;
+
+    if (i_wont_support == -1)
+	printf("Authentication disabled\n");
+    else
+	printf("Authentication enabled\n");
+
+    mask = 0;
+    for (ap = authenticators; ap->type; ap++) {
+	if ((mask & (i = typemask(ap->type))) != 0)
+	    continue;
+	mask |= i;
+	printf("%s: %s\n", AUTHTYPE_NAME(ap->type),
+	       (i_wont_support & typemask(ap->type)) ?
+	       "disabled" : "enabled");
+    }
+    return(1);
 }
 
 /*
  * This routine is called by the server to start authentication
  * negotiation.
  */
-	void
-auth_request()
+void
+auth_request(void)
 {
-	static unsigned char str_request[64] = { IAC, SB,
-						 TELOPT_AUTHENTICATION,
-						 TELQUAL_SEND, };
-	Authenticator *ap = authenticators;
-	unsigned char *e = str_request + 4;
+    static unsigned char str_request[64] = { IAC, SB,
+					     TELOPT_AUTHENTICATION,
+					     TELQUAL_SEND, };
+    Authenticator *ap = authenticators;
+    unsigned char *e = str_request + 4;
 
-	if (!authenticating) {
-		authenticating = 1;
-		while (ap->type) {
-			if (i_support & ~i_wont_support & typemask(ap->type)) {
-				if (auth_debug_mode) {
-					printf(">>>%s: Sending type %d %d\r\n",
-						Name, ap->type, ap->way);
-				}
-				*e++ = ap->type;
-				*e++ = ap->way;
-			}
-			++ap;
+    if (!authenticating) {
+	authenticating = 1;
+	while (ap->type) {
+	    if (i_support & ~i_wont_support & typemask(ap->type)) {
+		if (auth_debug_mode) {
+		    printf(">>>%s: Sending type %d %d\r\n",
+			   Name, ap->type, ap->way);
 		}
-		*e++ = IAC;
-		*e++ = SE;
-		net_write(str_request, e - str_request);
-		printsub('>', &str_request[2], e - str_request - 2);
+		*e++ = ap->type;
+		*e++ = ap->way;
+	    }
+	    ++ap;
 	}
+	*e++ = IAC;
+	*e++ = SE;
+	telnet_net_write(str_request, e - str_request);
+	printsub('>', &str_request[2], e - str_request - 2);
+    }
 }
 
 /*
@@ -398,282 +402,264 @@ auth_request()
  * with KERBEROS instead of LOGIN (which is against what the
  * protocol says)) you will have to hack this code...
  */
-	void
-auth_send(data, cnt)
-	unsigned char *data;
-	int cnt;
+void
+auth_send(unsigned char *data, int cnt)
 {
-	Authenticator *ap;
-	static unsigned char str_none[] = { IAC, SB, TELOPT_AUTHENTICATION,
-					    TELQUAL_IS, AUTHTYPE_NULL, 0,
-					    IAC, SE };
-	if (Server) {
-		if (auth_debug_mode) {
-			printf(">>>%s: auth_send called!\r\n", Name);
-		}
-		return;
-	}
-
+    Authenticator *ap;
+    static unsigned char str_none[] = { IAC, SB, TELOPT_AUTHENTICATION,
+					TELQUAL_IS, AUTHTYPE_NULL, 0,
+					IAC, SE };
+    if (Server) {
 	if (auth_debug_mode) {
-		printf(">>>%s: auth_send got:", Name);
-		printd(data, cnt); printf("\r\n");
+	    printf(">>>%s: auth_send called!\r\n", Name);
 	}
+	return;
+    }
 
+    if (auth_debug_mode) {
+	printf(">>>%s: auth_send got:", Name);
+	printd(data, cnt); printf("\r\n");
+    }
+
+    /*
+     * Save the data, if it is new, so that we can continue looking
+     * at it if the authorization we try doesn't work
+     */
+    if (data < _auth_send_data ||
+	data > _auth_send_data + sizeof(_auth_send_data)) {
+	auth_send_cnt = cnt > sizeof(_auth_send_data)
+	    ? sizeof(_auth_send_data)
+	    : cnt;
+	memmove(_auth_send_data, data, auth_send_cnt);
+	auth_send_data = _auth_send_data;
+    } else {
 	/*
-	 * Save the data, if it is new, so that we can continue looking
-	 * at it if the authorization we try doesn't work
+	 * This is probably a no-op, but we just make sure
 	 */
-	if (data < _auth_send_data ||
-	    data > _auth_send_data + sizeof(_auth_send_data)) {
-		auth_send_cnt = cnt > sizeof(_auth_send_data)
-					? sizeof(_auth_send_data)
-					: cnt;
-		memmove((void *)_auth_send_data, (void *)data, auth_send_cnt);
-		auth_send_data = _auth_send_data;
-	} else {
-		/*
-		 * This is probably a no-op, but we just make sure
-		 */
-		auth_send_data = data;
-		auth_send_cnt = cnt;
-	}
-	while ((auth_send_cnt -= 2) >= 0) {
-		if (auth_debug_mode)
-			printf(">>>%s: He supports %d\r\n",
-				Name, *auth_send_data);
-		if ((i_support & ~i_wont_support) & typemask(*auth_send_data)) {
-			ap = findauthenticator(auth_send_data[0],
-					       auth_send_data[1]);
-			if (ap && ap->send) {
-				if (auth_debug_mode)
-					printf(">>>%s: Trying %d %d\r\n",
-						Name, auth_send_data[0],
-							auth_send_data[1]);
-				if ((*ap->send)(ap)) {
-					/*
-					 * Okay, we found one we like
-					 * and did it.
-					 * we can go home now.
-					 */
-					if (auth_debug_mode)
-						printf(">>>%s: Using type %d\r\n",
-							Name, *auth_send_data);
-					auth_send_data += 2;
-					return;
-				}
-			}
-			/* else
-			 *	just continue on and look for the
-			 *	next one if we didn't do anything.
-			 */
-		}
-		auth_send_data += 2;
-	}
-	net_write(str_none, sizeof(str_none));
-	printsub('>', &str_none[2], sizeof(str_none) - 2);
+	auth_send_data = data;
+	auth_send_cnt = cnt;
+    }
+    while ((auth_send_cnt -= 2) >= 0) {
 	if (auth_debug_mode)
-		printf(">>>%s: Sent failure message\r\n", Name);
-	auth_finished(0, AUTH_REJECT);
+	    printf(">>>%s: He supports %d\r\n",
+		   Name, *auth_send_data);
+	if ((i_support & ~i_wont_support) & typemask(*auth_send_data)) {
+	    ap = findauthenticator(auth_send_data[0],
+				   auth_send_data[1]);
+	    if (ap && ap->send) {
+		if (auth_debug_mode)
+		    printf(">>>%s: Trying %d %d\r\n",
+			   Name, auth_send_data[0],
+			   auth_send_data[1]);
+		if ((*ap->send)(ap)) {
+		    /*
+		     * Okay, we found one we like
+		     * and did it.
+		     * we can go home now.
+		     */
+		    if (auth_debug_mode)
+			printf(">>>%s: Using type %d\r\n",
+			       Name, *auth_send_data);
+		    auth_send_data += 2;
+		    return;
+		}
+	    }
+	    /* else
+	     *	just continue on and look for the
+	     *	next one if we didn't do anything.
+	     */
+	}
+	auth_send_data += 2;
+    }
+    telnet_net_write(str_none, sizeof(str_none));
+    printsub('>', &str_none[2], sizeof(str_none) - 2);
+    if (auth_debug_mode)
+	printf(">>>%s: Sent failure message\r\n", Name);
+    auth_finished(0, AUTH_REJECT);
 #ifdef KANNAN
-	/*
-	 *  We requested strong authentication, however no mechanisms worked.
-	 *  Therefore, exit on client end.
-	 */
-	printf("Unable to securely authenticate user ... exit\n");
-	exit(0);
+    /*
+     *  We requested strong authentication, however no mechanisms worked.
+     *  Therefore, exit on client end.
+     */
+    printf("Unable to securely authenticate user ... exit\n");
+    exit(0);
 #endif /* KANNAN */
 }
 
-	void
-auth_send_retry()
+void
+auth_send_retry(void)
 {
-	/*
-	 * if auth_send_cnt <= 0 then auth_send will end up rejecting
-	 * the authentication and informing the other side of this.
+    /*
+     * if auth_send_cnt <= 0 then auth_send will end up rejecting
+     * the authentication and informing the other side of this.
 	 */
-	auth_send(auth_send_data, auth_send_cnt);
+    auth_send(auth_send_data, auth_send_cnt);
 }
 
-	void
-auth_is(data, cnt)
-	unsigned char *data;
-	int cnt;
+void
+auth_is(unsigned char *data, int cnt)
 {
-	Authenticator *ap;
+    Authenticator *ap;
 
-	if (cnt < 2)
-		return;
+    if (cnt < 2)
+	return;
 
-	if (data[0] == AUTHTYPE_NULL) {
-		auth_finished(0, AUTH_REJECT);
-		return;
-	}
-
-	if ((ap = findauthenticator(data[0], data[1]))) {
-		if (ap->is)
-			(*ap->is)(ap, data+2, cnt-2);
-	} else if (auth_debug_mode)
-		printf(">>>%s: Invalid authentication in IS: %d\r\n",
-			Name, *data);
-}
-
-	void
-auth_reply(data, cnt)
-	unsigned char *data;
-	int cnt;
-{
-	Authenticator *ap;
-
-	if (cnt < 2)
-		return;
-
-	if ((ap = findauthenticator(data[0], data[1]))) {
-		if (ap->reply)
-			(*ap->reply)(ap, data+2, cnt-2);
-	} else if (auth_debug_mode)
-		printf(">>>%s: Invalid authentication in SEND: %d\r\n",
-			Name, *data);
-}
-
-	void
-auth_name(data, cnt)
-	unsigned char *data;
-	int cnt;
-{
-	unsigned char savename[256];
-
-	if (cnt < 1) {
-		if (auth_debug_mode)
-			printf(">>>%s: Empty name in NAME\r\n", Name);
-		return;
-	}
-	if (cnt > sizeof(savename) - 1) {
-		if (auth_debug_mode)
-			printf(">>>%s: Name in NAME (%d) exceeds %d length\r\n",
-					Name, cnt, sizeof(savename)-1);
-		return;
-	}
-	memmove((void *)savename, (void *)data, cnt);
-	savename[cnt] = '\0';	/* Null terminate */
-	if (auth_debug_mode)
-		printf(">>>%s: Got NAME [%s]\r\n", Name, savename);
-	auth_encrypt_user(savename);
-}
-
-	int
-auth_sendname(cp, len)
-	unsigned char *cp;
-	int len;
-{
-	static unsigned char str_request[256+6]
-			= { IAC, SB, TELOPT_AUTHENTICATION, TELQUAL_NAME, };
-	register unsigned char *e = str_request + 4;
-	register unsigned char *ee = &str_request[sizeof(str_request)-2];
-
-	while (--len >= 0) {
-		if ((*e++ = *cp++) == IAC)
-			*e++ = IAC;
-		if (e >= ee)
-			return(0);
-	}
-	*e++ = IAC;
-	*e++ = SE;
-	net_write(str_request, e - str_request);
-	printsub('>', &str_request[2], e - &str_request[2]);
-	return(1);
-}
-
-	void
-auth_finished(ap, result)
-	Authenticator *ap;
-	int result;
-{
-	if (!(authenticated = ap))
-		authenticated = &NoAuth;
-	validuser = result;
-}
-
-	/* ARGSUSED */
-	static void
-auth_intr(sig)
-	int sig;
-{
+    if (data[0] == AUTHTYPE_NULL) {
 	auth_finished(0, AUTH_REJECT);
+	return;
+    }
+
+    if ((ap = findauthenticator(data[0], data[1]))) {
+	if (ap->is)
+	    (*ap->is)(ap, data+2, cnt-2);
+    } else if (auth_debug_mode)
+	printf(">>>%s: Invalid authentication in IS: %d\r\n",
+	       Name, *data);
 }
 
-	int
-auth_wait(name)
-	char *name;
+void
+auth_reply(unsigned char *data, int cnt)
 {
+    Authenticator *ap;
+
+    if (cnt < 2)
+	return;
+
+    if ((ap = findauthenticator(data[0], data[1]))) {
+	if (ap->reply)
+	    (*ap->reply)(ap, data+2, cnt-2);
+    } else if (auth_debug_mode)
+	printf(">>>%s: Invalid authentication in SEND: %d\r\n",
+	       Name, *data);
+}
+
+void
+auth_name(unsigned char *data, int cnt)
+{
+    char savename[256];
+
+    if (cnt < 1) {
 	if (auth_debug_mode)
-		printf(">>>%s: in auth_wait.\r\n", Name);
-
-	if (Server && !authenticating)
-		return(0);
-
-	(void) signal(SIGALRM, auth_intr);
-	alarm(30);
-	while (!authenticated)
-		if (telnet_spin())
-			break;
-	alarm(0);
-	(void) signal(SIGALRM, SIG_DFL);
-
-	/*
-	 * Now check to see if the user is valid or not
-	 */
-	if (!authenticated || authenticated == &NoAuth)
-		return(AUTH_REJECT);
-
-	if (validuser == AUTH_VALID)
-		validuser = AUTH_USER;
-
-	if (authenticated->status)
-		validuser = (*authenticated->status)(authenticated,
-						     name, validuser);
-	return(validuser);
+	    printf(">>>%s: Empty name in NAME\r\n", Name);
+	return;
+    }
+    if (cnt > sizeof(savename) - 1) {
+	if (auth_debug_mode)
+	    printf(">>>%s: Name in NAME (%d) exceeds %lu length\r\n",
+		   Name, cnt, (unsigned long)(sizeof(savename)-1));
+	return;
+    }
+    memmove(savename, data, cnt);
+    savename[cnt] = '\0';	/* Null terminate */
+    if (auth_debug_mode)
+	printf(">>>%s: Got NAME [%s]\r\n", Name, savename);
+    auth_encrypt_user(savename);
 }
 
-	void
-auth_debug(mode)
-	int mode;
+int
+auth_sendname(unsigned char *cp, int len)
 {
-	auth_debug_mode = mode;
+    static unsigned char str_request[256+6]
+	= { IAC, SB, TELOPT_AUTHENTICATION, TELQUAL_NAME, };
+    unsigned char *e = str_request + 4;
+    unsigned char *ee = &str_request[sizeof(str_request)-2];
+
+    while (--len >= 0) {
+	if ((*e++ = *cp++) == IAC)
+	    *e++ = IAC;
+	if (e >= ee)
+	    return(0);
+    }
+    *e++ = IAC;
+    *e++ = SE;
+    telnet_net_write(str_request, e - str_request);
+    printsub('>', &str_request[2], e - &str_request[2]);
+    return(1);
 }
 
-	void
-auth_printsub(data, cnt, buf, buflen)
-	unsigned char *data, *buf;
-	int cnt, buflen;
+void
+auth_finished(Authenticator *ap, int result)
 {
-	Authenticator *ap;
-
-	if ((ap = findauthenticator(data[1], data[2])) && ap->printsub)
-		(*ap->printsub)(data, cnt, buf, buflen);
-	else
-		auth_gen_printsub(data, cnt, buf, buflen);
+    if (!(authenticated = ap))
+	authenticated = &NoAuth;
+    validuser = result;
 }
 
-	void
-auth_gen_printsub(data, cnt, buf, buflen)
-	unsigned char *data, *buf;
-	int cnt, buflen;
+/* ARGSUSED */
+static void
+auth_intr(int sig)
 {
-	register unsigned char *cp;
-	unsigned char tbuf[16];
+    auth_finished(0, AUTH_REJECT);
+}
 
-	cnt -= 3;
-	data += 3;
-	buf[buflen-1] = '\0';
-	buf[buflen-2] = '*';
-	buflen -= 2;
-	for (; cnt > 0; cnt--, data++) {
-		snprintf((char *)tbuf, sizeof(tbuf), " %d", *data);
-		for (cp = tbuf; *cp && buflen > 0; --buflen)
-			*buf++ = *cp++;
-		if (buflen <= 0)
-			return;
-	}
-	*buf = '\0';
+int
+auth_wait(char *name, size_t name_sz)
+{
+    if (auth_debug_mode)
+	printf(">>>%s: in auth_wait.\r\n", Name);
+
+    if (Server && !authenticating)
+	return(0);
+
+    signal(SIGALRM, auth_intr);
+    alarm(30);
+    while (!authenticated)
+	if (telnet_spin())
+	    break;
+    alarm(0);
+    signal(SIGALRM, SIG_DFL);
+
+    /*
+     * Now check to see if the user is valid or not
+     */
+    if (!authenticated || authenticated == &NoAuth)
+	return(AUTH_REJECT);
+
+    if (validuser == AUTH_VALID)
+	validuser = AUTH_USER;
+
+    if (authenticated->status)
+	validuser = (*authenticated->status)(authenticated,
+					     name, name_sz,
+					     validuser);
+    return(validuser);
+}
+
+void
+auth_debug(int mode)
+{
+    auth_debug_mode = mode;
+}
+
+void
+auth_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
+{
+    Authenticator *ap;
+
+    if ((ap = findauthenticator(data[1], data[2])) && ap->printsub)
+	(*ap->printsub)(data, cnt, buf, buflen);
+    else
+	auth_gen_printsub(data, cnt, buf, buflen);
+}
+
+void
+auth_gen_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
+{
+    unsigned char *cp;
+    unsigned char tbuf[16];
+
+    cnt -= 3;
+    data += 3;
+    buf[buflen-1] = '\0';
+    buf[buflen-2] = '*';
+    buflen -= 2;
+    for (; cnt > 0; cnt--, data++) {
+	snprintf(tbuf, sizeof(tbuf), " %d", *data);
+	for (cp = tbuf; *cp && buflen > 0; --buflen)
+	    *buf++ = *cp++;
+	if (buflen <= 0)
+	    return;
+    }
+    *buf = '\0';
 }
 #endif

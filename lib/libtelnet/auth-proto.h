@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)auth-proto.h	8.1 (Berkeley) 6/4/93
- *	$OpenBSD: auth-proto.h,v 1.3 1998/03/12 04:48:43 art Exp $
- *	$NetBSD: auth-proto.h,v 1.5 1996/02/24 01:15:16 jtk Exp $
+ *     from: @(#)auth-proto.h  8.1 (Berkeley) 6/4/93
+ *     $OpenBSD: auth-proto.h,v 1.4 2001/05/25 10:23:05 hin Exp $
+ *     $NetBSD: auth-proto.h,v 1.5 1996/02/24 01:15:16 jtk Exp $
  */
 
 /*
@@ -68,51 +68,70 @@
  */
 
 #include <sys/cdefs.h>
+/* $KTH: auth-proto.h,v 1.10 2000/01/18 03:08:55 assar Exp $ */
 
 #if	defined(AUTHENTICATION)
-Authenticator *findauthenticator __P((int, int));
+Authenticator *findauthenticator (int, int);
 
-void auth_init __P((char *, int));
-int auth_cmd __P((int, char **));
-void auth_request __P((void));
-void auth_send __P((unsigned char *, int));
-void auth_send_retry __P((void));
-void auth_is __P((unsigned char *, int));
-void auth_reply __P((unsigned char *, int));
-void auth_finished __P((Authenticator *, int));
-int auth_wait __P((char *));
-void auth_disable_name __P((char *));
-void auth_gen_printsub __P((unsigned char *, int, unsigned char *, int));
+int auth_wait (char *, size_t);
+void auth_disable_name (char *);
+void auth_finished (Authenticator *, int);
+void auth_gen_printsub (unsigned char *, int, unsigned char *, int);
+void auth_init (const char *, int);
+void auth_is (unsigned char *, int);
+void auth_name (unsigned char*, int);
+void auth_reply (unsigned char *, int);
+void auth_request (void);
+void auth_send (unsigned char *, int);
+void auth_send_retry (void);
+void auth_printsub (unsigned char*, int, unsigned char*, int);
+int getauthmask (char *type, int *maskp);
+int auth_enable (char *type);
+int auth_disable (char *type);
+int auth_onoff (char *type, int on);
+int auth_togdebug (int on);
+int auth_status (void);
+int auth_sendname (unsigned char *cp, int len);
+void auth_debug (int mode);
+void auth_gen_printsub (unsigned char *data, int cnt,
+		       unsigned char *buf, int buflen);
 
-int getauthmask __P((char *, int *));
-int auth_enable __P((char *));
-int auth_disable __P((char *));
-int auth_onoff __P((char *, int));
-int auth_togdebug __P((int));
-int auth_status __P((void));
-void auth_name __P((unsigned char *, int));
-int auth_sendname __P((unsigned char *, int));
-void auth_debug __P((int));
-void auth_printsub __P((unsigned char *, int, unsigned char *, int));
+#ifdef UNSAFE
+int unsafe_init (Authenticator *, int);
+int unsafe_send (Authenticator *);
+void unsafe_is (Authenticator *, unsigned char *, int);
+void unsafe_reply (Authenticator *, unsigned char *, int);
+int unsafe_status (Authenticator *, char *, int);
+void unsafe_printsub (unsigned char *, int, unsigned char *, int);
+#endif
+
+#ifdef SRA
+int sra_init (Authenticator *, int);
+int sra_send (Authenticator *);
+void sra_is (Authenticator *, unsigned char *, int);
+void sra_reply (Authenticator *, unsigned char *, int);
+int sra_status (Authenticator *, char *, int);
+void sra_printsub (unsigned char *, int, unsigned char *, int);
+#endif
 
 #ifdef	KRB4
-int kerberos4_init __P((Authenticator *, int));
-int kerberos4_forward __P((Authenticator *));
-int kerberos4_send_oneway __P((Authenticator *));
-int kerberos4_send_mutual __P((Authenticator *));
-void kerberos4_is __P((Authenticator *, unsigned char *, int));
-void kerberos4_reply __P((Authenticator *, unsigned char *, int));
-int kerberos4_status __P((Authenticator *, char *, int));
-void kerberos4_printsub __P((unsigned char *, int, unsigned char *, int));
+int kerberos4_init (Authenticator *, int);
+int kerberos4_send_mutual (Authenticator *);
+int kerberos4_send_oneway (Authenticator *);
+void kerberos4_is (Authenticator *, unsigned char *, int);
+void kerberos4_reply (Authenticator *, unsigned char *, int);
+int kerberos4_status (Authenticator *, char *, size_t, int);
+void kerberos4_printsub (unsigned char *, int, unsigned char *, int);
+int kerberos4_forward (Authenticator *ap, void *);
 #endif
 
 #ifdef	KRB5
-int kerberos5_init __P((Authenticator *, int));
-int kerberos5_send_mutual __P((Authenticator *));
-int kerberos5_send_oneway __P((Authenticator *));
-void kerberos5_is __P((Authenticator *, unsigned char *, int));
-void kerberos5_reply __P((Authenticator *, unsigned char *, int));
-int kerberos5_status __P((Authenticator *, char *, int));
-void kerberos5_printsub __P((unsigned char *, int, unsigned char *, int));
+int kerberos5_init (Authenticator *, int);
+int kerberos5_send_mutual (Authenticator *);
+int kerberos5_send_oneway (Authenticator *);
+void kerberos5_is (Authenticator *, unsigned char *, int);
+void kerberos5_reply (Authenticator *, unsigned char *, int);
+int kerberos5_status (Authenticator *, char *, size_t, int);
+void kerberos5_printsub (unsigned char *, int, unsigned char *, int);
 #endif
 #endif

@@ -1,5 +1,4 @@
-/*	$OpenBSD: enc_des.c,v 1.1 1998/03/12 04:48:48 art Exp $	*/
-/* $Id: enc_des.c,v 1.1 1998/03/12 04:48:48 art Exp $ */
+/*     $OpenBSD: enc_des.c,v 1.2 2001/05/25 10:23:06 hin Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,11 +33,14 @@
  * SUCH DAMAGE.
  */
 
+/* $KTH: enc_des.c,v 1.16 1998/07/09 23:16:23 assar Exp $ */
+
 #if	defined(AUTHENTICATION) && defined(ENCRYPTION) && defined(DES_ENCRYPTION)
 #include <arpa/telnet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "encrypt.h"
 #include "misc-proto.h"
 #include <des.h>
@@ -226,7 +228,7 @@ static int fb64_start(struct fb *fbp, int dir, int server)
 		*p++ = IAC;
 		*p++ = SE;
 		printsub('>', &fbp->fb_feed[2], p - &fbp->fb_feed[2]);
-		net_write(fbp->fb_feed, p - fbp->fb_feed);
+		telnet_net_write(fbp->fb_feed, p - fbp->fb_feed);
 		break;
 	default:
 		return(FAILED);
@@ -284,7 +286,7 @@ int fb64_is(unsigned char *data, int cnt, struct fb *fbp)
 		*p++ = IAC;
 		*p++ = SE;
 		printsub('>', &fbp->fb_feed[2], p - &fbp->fb_feed[2]);
-		net_write(fbp->fb_feed, p - fbp->fb_feed);
+		telnet_net_write(fbp->fb_feed, p - fbp->fb_feed);
 
 		state = fbp->state[DIR_DECRYPT-1] = IN_PROGRESS;
 		break;
@@ -309,7 +311,7 @@ int fb64_is(unsigned char *data, int cnt, struct fb *fbp)
 		*p++ = IAC;
 		*p++ = SE;
 		printsub('>', &fbp->fb_feed[2], p - &fbp->fb_feed[2]);
-		net_write(fbp->fb_feed, p - fbp->fb_feed);
+		telnet_net_write(fbp->fb_feed, p - fbp->fb_feed);
 
 		break;
 	}

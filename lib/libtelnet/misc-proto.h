@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)misc-proto.h	8.1 (Berkeley) 6/4/93
- *	$OpenBSD: misc-proto.h,v 1.3 1998/03/12 04:48:52 art Exp $
- *	$NetBSD: misc-proto.h,v 1.5 1996/02/24 01:15:23 jtk Exp $
+ *     from: @(#)misc-proto.h  8.1 (Berkeley) 6/4/93
+ *     $OpenBSD: misc-proto.h,v 1.4 2001/05/25 10:23:07 hin Exp $
+ *     $NetBSD: misc-proto.h,v 1.5 1996/02/24 01:15:23 jtk Exp $
  */
 
 /*
@@ -67,27 +67,27 @@
  * or implied warranty.
  */
 
+/* $KTH: misc-proto.h,v 1.9 2000/11/15 23:00:21 assar Exp $ */
+
 #ifndef	__MISC_PROTO__
 #define	__MISC_PROTO__
 
-#include <sys/cdefs.h>
+void auth_encrypt_init (const char *, const char *, const char *, int);
+void auth_encrypt_user(const char *name);
+void auth_encrypt_connect (int);
+void printd (const unsigned char *, int);
 
-void auth_encrypt_init __P((char *, char *, char *, int));
-void auth_encrypt_user __P((char *));
-void auth_encrypt_connect __P((int));
-void printd __P((const unsigned char *, int));
-char **genget __P((char *, char **, int));
-int isprefix __P((char *, char *));
-int Ambiguous __P((void *));
-
+char** genget (char *name, char **table, int stlen);
+int isprefix(char *s1, char *s2);
+int Ambiguous(void *s);
 
 /*
  * These functions are imported from the application
  */
-int net_write __P((unsigned char *, int));
-void net_encrypt __P((void));
-int telnet_spin __P((void));
-char *telnet_getenv __P((char *));
-char *telnet_gets __P((char *, char *, int, int));
-void printsub __P((char, unsigned char *, int));
+int telnet_net_write (unsigned char *, int);
+void net_encrypt (void);
+int telnet_spin (void);
+char *telnet_getenv (const char *);
+char *telnet_gets (char *, char *, int, int);
+void printsub(int direction, unsigned char *pointer, int length);
 #endif

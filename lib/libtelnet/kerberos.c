@@ -1,5 +1,4 @@
-/*	$OpenBSD: kerberos.c,v 1.5 2000/09/15 07:13:44 deraadt Exp $	*/
-/* $Id: kerberos.c,v 1.5 2000/09/15 07:13:44 deraadt Exp $ */
+/*     $OpenBSD: kerberos.c,v 1.6 2001/05/25 10:23:07 hin Exp $    */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/*
+ /*
  * This source code is no longer held under any constraint of USA
  * `cryptographic laws' since it was exported legally.  The cryptographic
  * functions were removed from the code and a "Bones" distribution was
@@ -66,6 +65,8 @@
  * or implied warranty.
  */
 
+/* $KTH: kerberos.c,v 1.50 2000/11/23 02:28:06 joda Exp $" */
+
 #ifdef	KRB4
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -79,6 +80,7 @@
 #include <des.h>
 #include <kerberosIV/krb.h>
 #include <pwd.h>
+#include <syslog.h>
 #include "encrypt.h"
 #include "auth.h"
 #include "misc.h"
@@ -105,6 +107,7 @@ static	KTEXT_ST auth;
 static	char name[ANAME_SZ];
 static	AUTH_DAT adat;
 static des_cblock session_key;
+static des_cblock cred_session;
 static des_key_schedule sched;
 static des_cblock challenge;
 static int auth_done; /* XXX */
@@ -112,6 +115,42 @@ static int auth_done; /* XXX */
 static int pack_cred(CREDENTIALS *cred, unsigned char *buf);
 static int unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred);
 
+/* This is stolen from libroken; it's the only thing actually needed from
+ * libroken.
+ */
+void
+esetenv(const char *var, const char *val, int rewrite)
+{
+    if (setenv ((char *)var, (char *)val, rewrite))
+        errx (1, "failed setting environment variable %s", var);
+}
+
+static int
+check_krb4_tickets() {
+    int ret;
+    int retval = 0;
+    char *file;
+    krb_principal princ;
+    
+    file = getenv("KRBTKFILE");
+    if(file == NULL)
+	file = TKT_FILE;
+
+    ret = krb_get_tf_realm(file, princ.realm);
+    switch(ret) {
+    case NO_TKT_FIL:
+	retval = 0;
+	goto done;
+    case 0:
+	retval = 1;
+	goto done;
+    default:
+	errx(1, "krb_get_tf_realm: %d", ret);
+    }
+
+ done:
+    return retval;
+}
 
 static int
 Data(Authenticator *ap, int type, const void *d, int c)
@@ -141,7 +180,7 @@ Data(Authenticator *ap, int type, const void *d, int c)
     *p++ = SE;
     if (str_data[3] == TELQUAL_IS)
 	printsub('>', &str_data[2], p - (&str_data[2]));
-    return(net_write(str_data, p - str_data));
+    return(telnet_net_write(str_data, p - str_data));
 }
 
 int
@@ -172,7 +211,9 @@ kerberos4_send(char *name, Authenticator *ap)
     CREDENTIALS cred;
     int r;
 
-    printf("[ Trying %s ... ]\r\n", name);
+    if(check_krb4_tickets() != 1)
+	return 0;
+
     if (!UserNameRequested) {
 	if (auth_debug_mode) {
 	    printf("Kerberos V4: no user name supplied\r\n");
@@ -182,10 +223,9 @@ kerberos4_send(char *name, Authenticator *ap)
 
     memset(instance, 0, sizeof(instance));
 
-    if ((realm = krb_get_phost(RemoteHostName)))
-	strncpy(instance, realm, sizeof(instance));
-
-    instance[sizeof(instance)-1] = '\0';
+    strlcpy (instance,
+		     krb_get_phost(RemoteHostName),
+		     INST_SZ);
 
     realm = dest_realm ? dest_realm : krb_realmofhost(RemoteHostName);
 
@@ -193,6 +233,8 @@ kerberos4_send(char *name, Authenticator *ap)
 	printf("Kerberos V4: no realm for %s\r\n", RemoteHostName);
 	return(0);
     }
+    printf("[ Trying %s (%s.%s@%s) ... ]\r\n", name, 
+	   KRB_SERVICE_NAME, instance, realm);
     r = krb_mk_req(&auth, KRB_SERVICE_NAME, instance, realm, 0L);
     if (r) {
 	printf("mk_req failed: %s\r\n", krb_get_err_text(r));
@@ -221,6 +263,7 @@ kerberos4_send(char *name, Authenticator *ap)
 	int i;
 
 	des_key_sched(&cred.session, sched);
+	memcpy (&cred_session, &cred.session, sizeof(cred_session));
 	des_init_random_number_generator(&cred.session);
 	des_new_random_key(&session_key);
 	des_ecb_encrypt(&session_key, &session_key, sched, 0);
@@ -274,7 +317,7 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
     char realm[REALM_SZ];
     char instance[INST_SZ];
     int r;
-    int addr_len;
+    socklen_t addr_len;
 
     if (cnt-- < 1)
 	return;
@@ -303,6 +346,14 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 	    auth_finished(ap, AUTH_REJECT);
 	    return;
 	}
+	if (addr.sin_family != AF_INET) {
+	    if (auth_debug_mode)
+		printf("unknown address family: %d\r\n", addr.sin_family);
+	    Data(ap, KRB_REJECT, "bad address family", -1);
+	    auth_finished(ap, AUTH_REJECT);
+	    return;
+	}
+
 	r = krb_rd_req(&auth, KRB_SERVICE_NAME,
 		       instance, addr.sin_addr.s_addr, &adat, "");
 	if (r) {
@@ -320,11 +371,20 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 	    char ts[MAXPATHLEN];
 	    struct passwd *pw = getpwnam(UserNameRequested);
 
-	    if (pw) {
+	    if(pw){
 		snprintf(ts, sizeof(ts),
-		    "%s%u", TKT_ROOT, (unsigned)pw->pw_uid);
-		/* XXX allocation failure? */
-		setenv("KRBTKFILE", ts, 1);
+			 "%s%u",
+			 TKT_ROOT,
+			 (unsigned)pw->pw_uid);
+		esetenv("KRBTKFILE", ts, 1);
+
+		if (pw->pw_uid == 0)
+		    syslog(LOG_INFO|LOG_AUTH,
+			   "ROOT Kerberos login from %s on %s\n",
+			   krb_unparse_name_long(adat.pname,
+						 adat.pinst,
+						 adat.prealm),
+			   RemoteHostName);
 	    }
 	    Data(ap, KRB_ACCEPT, NULL, 0);
 	} else {
@@ -342,6 +402,8 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 		Data(ap, KRB_REJECT, (void *)msg, -1);
 		free(msg);
 	    }
+	    auth_finished(ap, AUTH_REJECT);
+	    break;
 	}
 	auth_finished(ap, AUTH_USER);
 	break;
@@ -389,6 +451,7 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 	    if(cnt > sizeof(cred))
 		abort();
 
+	    memcpy (session_key, adat.session, sizeof(session_key));
 	    des_set_key(&session_key, ks);
 	    des_pcbc_encrypt((void*)data, (void*)netcred, cnt, 
 			     ks, &session_key, DES_DECRYPT);
@@ -401,7 +464,7 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 		   cred.issue_date < 0 || 
 		   cred.issue_date > time(0) + CLOCK_SKEW ||
 		   strncmp(cred.pname, adat.pname, sizeof(cred.pname)) ||
-		   strncmp(cred.pinst, adat.pinst, sizeof(cred.pname))){
+		   strncmp(cred.pinst, adat.pinst, sizeof(cred.pinst))){
 		    Data(ap, KRB_FORWARD_REJECT, "Bad credentials", -1);
 		}else{
 		    if((ret = tf_setup(&cred,
@@ -467,7 +530,7 @@ kerberos4_reply(Authenticator *ap, unsigned char *data, int cnt)
 	    skey.data = session_key;
 	    encrypt_session_key(&skey, 0);
 #if 0
-	    kerberos4_forward(ap);
+	    kerberos4_forward(ap, &cred_session);
 #endif
 	    return;
 	}
@@ -499,14 +562,13 @@ kerberos4_reply(Authenticator *ap, unsigned char *data, int cnt)
 }
 
 int
-kerberos4_status(Authenticator *ap, char *name, int level)
+kerberos4_status(Authenticator *ap, char *name, size_t name_sz, int level)
 {
     if (level < AUTH_USER)
 	return(level);
 
     if (UserNameRequested && !kuserok(&adat, UserNameRequested)) {
-	strncpy(name, UserNameRequested, ANAME_SZ - 1);
-	name[ANAME_SZ - 1] = '\0';
+	strlcpy(name, UserNameRequested, name_sz);
 	return(AUTH_VALID);
     } else
 	return(AUTH_USER);
@@ -518,7 +580,6 @@ kerberos4_status(Authenticator *ap, char *name, int level)
 void
 kerberos4_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
 {
-    char lbuf[32];
     int i;
 
     buf[buflen-1] = '\0';		/* make sure its NULL terminated */
@@ -526,11 +587,11 @@ kerberos4_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
 
     switch(data[3]) {
     case KRB_REJECT:		/* Rejected (reason might follow) */
-	strncpy((char *)buf, " REJECT ", buflen);
+	strlcpy((char *)buf, " REJECT ", buflen);
 	goto common;
 
     case KRB_ACCEPT:		/* Accepted (name might follow) */
-	strncpy((char *)buf, " ACCEPT ", buflen);
+	strlcpy((char *)buf, " ACCEPT ", buflen);
     common:
 	BUMP(buf, buflen);
 	if (cnt <= 4)
@@ -543,25 +604,23 @@ kerberos4_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
 	break;
 
     case KRB_AUTH:			/* Authentication data follows */
-	strncpy((char *)buf, " AUTH", buflen);
+	strlcpy((char *)buf, " AUTH", buflen);
 	goto common2;
 
     case KRB_CHALLENGE:
-	strncpy((char *)buf, " CHALLENGE", buflen);
+	strlcpy((char *)buf, " CHALLENGE", buflen);
 	goto common2;
 
     case KRB_RESPONSE:
-	strncpy((char *)buf, " RESPONSE", buflen);
+	strlcpy((char *)buf, " RESPONSE", buflen);
 	goto common2;
 
     default:
-	snprintf(lbuf, sizeof(lbuf), " %d (unknown)", data[3]);
-	strncpy((char *)buf, lbuf, buflen);
+	snprintf(buf, buflen, " %d (unknown)", data[3]);
     common2:
 	BUMP(buf, buflen);
 	for (i = 4; i < cnt; i++) {
-	    snprintf(lbuf, sizeof(lbuf), " %d", data[i]);
-	    strncpy((char *)buf, lbuf, buflen);
+	    snprintf(buf, buflen, " %d", data[i]);
 	    BUMP(buf, buflen);
 	}
 	break;
@@ -616,17 +675,16 @@ pack_cred(CREDENTIALS *cred, unsigned char *buf)
     p += REALM_SZ;
     memcpy(p, cred->session, 8);
     p += 8;
-    *p++ = cred->lifetime;
-    *p++ = cred->kvno;
+    p += krb_put_int(cred->lifetime, p, 4, 4);
+    p += krb_put_int(cred->kvno, p, 4, 4);
     p += krb_put_int(cred->ticket_st.length, p, 4, 4);
     memcpy(p, cred->ticket_st.dat, cred->ticket_st.length);
     p += cred->ticket_st.length;
+    p += krb_put_int(0, p, 4, 4);
     p += krb_put_int(cred->issue_date, p, 4, 4);
-    strncpy (cred->pname, p, ANAME_SZ);
-    cred->pname[ANAME_SZ - 1] = '\0';
+    memcpy (p, cred->pname, ANAME_SZ);
     p += ANAME_SZ;
-    strncpy (cred->pinst, p, INST_SZ);
-    cred->pinst[INST_SZ - 1] = '\0';
+    memcpy (p, cred->pinst, INST_SZ);
     p += INST_SZ;
     return p - buf;
 }
@@ -635,6 +693,7 @@ static int
 unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
 {
     unsigned char *p = buf;
+    u_int32_t tmp;
 
     strncpy (cred->service, p, ANAME_SZ);
     cred->service[ANAME_SZ - 1] = '\0';
@@ -648,23 +707,32 @@ unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
 
     memcpy(cred->session, p, 8);
     p += 8;
-    cred->lifetime = *p++;
-    cred->kvno = *p++;
+    p += krb_get_int(p, &tmp, 4, 0);
+    cred->lifetime = tmp;
+    p += krb_get_int(p, &tmp, 4, 0);
+    cred->kvno = tmp;
+
     p += krb_get_int(p, &cred->ticket_st.length, 4, 0);
     memcpy(cred->ticket_st.dat, p, cred->ticket_st.length);
+    p += cred->ticket_st.length;
+    p += krb_get_int(p, &tmp, 4, 0);
     cred->ticket_st.mbz = 0;
     p += krb_get_int(p, (u_int32_t *)&cred->issue_date, 4, 0);
-    p += krb_get_nir(p,
-		     cred->pname, sizeof(cred->pname),
-		     cred->pinst, sizeof(cred->pinst),
-		     NULL, 0);
+
+    strncpy (cred->pname, p, ANAME_SZ);
+    cred->pname[ANAME_SZ - 1] = '\0';
+    p += ANAME_SZ;
+    strncpy (cred->pinst, p, INST_SZ);
+    cred->pinst[INST_SZ - 1] = '\0';
+    p += INST_SZ;
     return 0;
 }
 
 
 int
-kerberos4_forward(Authenticator *ap)
+kerberos4_forward(Authenticator *ap, void *v)
 {
+    des_cblock *key = (des_cblock *)v;
     CREDENTIALS cred;
     char *realm;
     des_key_schedule ks;
@@ -682,10 +750,10 @@ kerberos4_forward(Authenticator *ap)
 		       &cred);
     if(ret)
 	return ret;
-    des_set_key(&session_key, ks);
+    des_set_key(key, ks);
     len = pack_cred(&cred, netcred);
     des_pcbc_encrypt((void*)netcred, (void*)netcred, len,
-		     ks, &session_key, DES_ENCRYPT);
+		     ks, key, DES_ENCRYPT);
     memset(ks, 0, sizeof(ks));
     Data(ap, KRB_FORWARD, netcred, len);
     memset(netcred, 0, sizeof(netcred));
@@ -693,3 +761,4 @@ kerberos4_forward(Authenticator *ap)
 }
 
 #endif /* KRB4 */
+

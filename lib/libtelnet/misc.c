@@ -32,10 +32,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93"; */
+/* from: static char sccsid[] = "@(#)misc.c    8.1 (Berkeley) 6/4/93"; */
 /* from: static char rcsid[] = "$NetBSD: misc.c,v 1.5 1996/02/24 01:15:25 jtk Exp $"; */
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1998/03/12 04:48:54 art Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2001/05/25 10:23:07 hin Exp $";
 #endif /* not lint */
+
+/* $KTH: misc.c,v 1.15 2000/01/25 23:24:58 assar Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,59 +46,50 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1998/03/12 04:48:54 art Exp $";
 #include "auth.h"
 #include "encrypt.h"
 
-char *RemoteHostName;
-char *LocalHostName;
+
+const char *RemoteHostName;
+const char *LocalHostName;
 char *UserNameRequested = 0;
 int ConnectedCount = 0;
 
-	void
-auth_encrypt_init(local, remote, name, server)
-	char *local;
-	char *remote;
-	char *name;
-	int server;
+void
+auth_encrypt_init(const char *local, const char *remote, const char *name,
+		  int server)
 {
-	RemoteHostName = remote;
-	LocalHostName = local;
+    RemoteHostName = remote;
+    LocalHostName = local;
 #ifdef AUTHENTICATION
-	auth_init(name, server);
+    auth_init(name, server);
 #endif
 #ifdef ENCRYPTION
-	encrypt_init(name, server);
+    encrypt_init(name, server);
 #endif
-
-	if (UserNameRequested) {
-		free(UserNameRequested);
-		UserNameRequested = 0;
-	}
+    if (UserNameRequested) {
+	free(UserNameRequested);
+	UserNameRequested = 0;
+    }
 }
 
-	void
-auth_encrypt_user(name)
-	char *name;
+void
+auth_encrypt_user(const char *name)
 {
-	extern char *strdup();
-
-	if (UserNameRequested)
-		free(UserNameRequested);
-	UserNameRequested = name ? strdup(name) : 0;
+    if (UserNameRequested)
+	free(UserNameRequested);
+    UserNameRequested = name ? strdup(name) : 0;
 }
 
-	void
-auth_encrypt_connect(cnt)
-	int cnt;
+void
+auth_encrypt_connect(int cnt)
 {
 }
 
-	void
-printd(data, cnt)
-	const unsigned char *data;
-	int cnt;
+void
+printd(const unsigned char *data, int cnt)
 {
-	if (cnt > 16)
-		cnt = 16;
-	while (cnt-- > 0) {
-		printf(" %02x", *data);
-		++data;
-	}
+    if (cnt > 16)
+	cnt = 16;
+    while (cnt-- > 0) {
+	printf(" %02x", *data);
+	++data;
+    }
 }

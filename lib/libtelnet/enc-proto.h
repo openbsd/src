@@ -1,4 +1,3 @@
-/*	$OpenBSD: enc-proto.h,v 1.1 1998/03/12 04:48:47 art Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +35,7 @@
  *	@(#)enc-proto.h	5.2 (Berkeley) 3/22/91
  */
 
-/*
+ /*
  * This source code is no longer held under any constraint of USA
  * `cryptographic laws' since it was exported legally.  The cryptographic
  * functions were removed from the code and a "Bones" distribution was
@@ -68,79 +67,78 @@
  * or implied warranty.
  */
 
-/* $KTH: enc-proto.h,v 1.8 1997/11/02 03:57:10 assar Exp $ */
+/* $KTH: enc-proto.h,v 1.10 2000/01/18 03:09:56 assar Exp $ */
 
 #if	defined(ENCRYPTION)
-Encryptions *findencryption __P((int));
-Encryptions *finddecryption __P((int));
-int EncryptAutoDec __P((int));
-int EncryptAutoEnc __P((int));
-int EncryptDebug __P((int));
-int EncryptDisable __P((char*, char*));
-int EncryptEnable __P((char*, char*));
-int EncryptStart __P((char*));
-int EncryptStartInput __P((void));
-int EncryptStartOutput __P((void));
-int EncryptStatus __P((void));
-int EncryptStop __P((char*));
-int EncryptStopInput __P((void));
-int EncryptStopOutput __P((void));
-int EncryptType __P((char*, char*));
-int EncryptVerbose __P((int));
-int net_write __P((unsigned char *, int));
-void decrypt_auto __P((int));
-void encrypt_auto __P((int));
-void encrypt_debug __P((int));
-void encrypt_dec_keyid __P((unsigned char*, int));
-void encrypt_display __P((void));
-void encrypt_enc_keyid __P((unsigned char*, int));
-void encrypt_end __P((void));
-void encrypt_gen_printsub __P((unsigned char*, int, unsigned char*, int));
-void encrypt_init __P((char*, int));
-void encrypt_is __P((unsigned char*, int));
-void encrypt_list_types __P((void));
-void encrypt_not __P((void));
-void encrypt_printsub __P((unsigned char*, int, unsigned char*, int));
-void encrypt_reply __P((unsigned char*, int));
-void encrypt_request_end __P((void));
-void encrypt_request_start __P((unsigned char*, int));
-void encrypt_send_end __P((void));
-void encrypt_send_keyid __P((int, unsigned char*, int, int));
-void encrypt_send_request_end __P((void));
-void encrypt_send_request_start __P((void));
-void encrypt_send_support __P((void));
-void encrypt_session_key __P((Session_Key*, int));
-void encrypt_start __P((unsigned char*, int));
-void encrypt_start_output __P((int));
-void encrypt_support __P((unsigned char*, int));
-void encrypt_verbose_quiet __P((int));
-void encrypt_wait __P((void));
-int encrypt_delay __P((void));
+Encryptions *findencryption (int);
+Encryptions *finddecryption(int);
+int EncryptAutoDec(int);
+int EncryptAutoEnc(int);
+int EncryptDebug(int);
+int EncryptDisable(char*, char*);
+int EncryptEnable(char*, char*);
+int EncryptStart(char*);
+int EncryptStartInput(void);
+int EncryptStartOutput(void);
+int EncryptStatus(void);
+int EncryptStop(char*);
+int EncryptStopInput(void);
+int EncryptStopOutput(void);
+int EncryptType(char*, char*);
+int EncryptVerbose(int);
+void decrypt_auto(int);
+void encrypt_auto(int);
+void encrypt_debug(int);
+void encrypt_dec_keyid(unsigned char*, int);
+void encrypt_display(void);
+void encrypt_enc_keyid(unsigned char*, int);
+void encrypt_end(void);
+void encrypt_gen_printsub(unsigned char*, int, unsigned char*, int);
+void encrypt_init(const char*, int);
+void encrypt_is(unsigned char*, int);
+void encrypt_list_types(void);
+void encrypt_not(void);
+void encrypt_printsub(unsigned char*, int, unsigned char*, int);
+void encrypt_reply(unsigned char*, int);
+void encrypt_request_end(void);
+void encrypt_request_start(unsigned char*, int);
+void encrypt_send_end(void);
+void encrypt_send_keyid(int, unsigned char*, int, int);
+void encrypt_send_request_end(void);
+void encrypt_send_request_start(void);
+void encrypt_send_support(void);
+void encrypt_session_key(Session_Key*, int);
+void encrypt_start(unsigned char*, int);
+void encrypt_start_output(int);
+void encrypt_support(unsigned char*, int);
+void encrypt_verbose_quiet(int);
+void encrypt_wait(void);
+int encrypt_delay(void);
 
 #ifdef	TELENTD
-void encrypt_wait __P((void));
+void encrypt_wait (void);
 #else
-void encrypt_display __P((void));
+void encrypt_display (void);
 #endif
 
-void cfb64_encrypt __P((unsigned char *, int));
-int cfb64_decrypt __P((int));
-void cfb64_init __P((int));
-int cfb64_start __P((int, int));
-int cfb64_is __P((unsigned char *, int));
-int cfb64_reply __P((unsigned char *, int));
-void cfb64_session __P((Session_Key *, int));
-int cfb64_keyid __P((int, unsigned char *, int *));
-void cfb64_printsub __P((unsigned char *, int, unsigned char *, int));
+void cfb64_encrypt (unsigned char *, int);
+int cfb64_decrypt (int);
+void cfb64_init (int);
+int cfb64_start (int, int);
+int cfb64_is (unsigned char *, int);
+int cfb64_reply (unsigned char *, int);
+void cfb64_session (Session_Key *, int);
+int cfb64_keyid (int, unsigned char *, int *);
+void cfb64_printsub (unsigned char *, int, unsigned char *, int);
 
-void ofb64_encrypt __P((unsigned char *, int));
-int ofb64_decrypt __P((int));
-void ofb64_init __P((int));
-int ofb64_start __P((int, int));
-int ofb64_is __P((unsigned char *, int));
-int ofb64_reply __P((unsigned char *, int));
-void ofb64_session __P((Session_Key *, int));
-int ofb64_keyid __P((int, unsigned char *, int *));
-void ofb64_printsub __P((unsigned char *, int, unsigned char *, int));
+void ofb64_encrypt (unsigned char *, int);
+int ofb64_decrypt (int);
+void ofb64_init (int);
+int ofb64_start (int, int);
+int ofb64_is (unsigned char *, int);
+int ofb64_reply (unsigned char *, int);
+void ofb64_session (Session_Key *, int);
+int ofb64_keyid (int, unsigned char *, int *);
+void ofb64_printsub (unsigned char *, int, unsigned char *, int);
 
 #endif

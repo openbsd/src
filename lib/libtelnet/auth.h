@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)auth.h	8.1 (Berkeley) 6/4/93
- *	$OpenBSD: auth.h,v 1.3 1998/03/12 04:48:46 art Exp $
- *	$NetBSD: auth.h,v 1.5 1996/02/24 01:15:18 jtk Exp $
+ *     from: @(#)auth.h        8.1 (Berkeley) 6/4/93
+ *     $OpenBSD: auth.h,v 1.4 2001/05/25 10:23:05 hin Exp $
+ *     $NetBSD: auth.h,v 1.5 1996/02/24 01:15:18 jtk Exp $
  */
 
 /*
@@ -67,6 +67,8 @@
  * or implied warranty.
  */
 
+/* $KTH: auth.h,v 1.4 1998/06/09 19:24:41 joda Exp $ */
+
 #ifndef	__AUTH__
 #define	__AUTH__
 
@@ -79,12 +81,12 @@
 typedef struct XauthP {
 	int	type;
 	int	way;
-	int	(*init) __P((struct XauthP *, int));
-	int	(*send) __P((struct XauthP *));
-	void	(*is) __P((struct XauthP *, unsigned char *, int));
-	void	(*reply) __P((struct XauthP *, unsigned char *, int));
-	int	(*status) __P((struct XauthP *, char *, int));
-	void	(*printsub) __P((unsigned char *, int, unsigned char *, int));
+	int	(*init) (struct XauthP *, int);
+	int	(*send) (struct XauthP *);
+	void	(*is) (struct XauthP *, unsigned char *, int);
+	void	(*reply) (struct XauthP *, unsigned char *, int);
+	int	(*status) (struct XauthP *, char *, size_t, int);
+	void	(*printsub) (unsigned char *, int, unsigned char *, int);
 } Authenticator;
 
 #include "auth-proto.h"
