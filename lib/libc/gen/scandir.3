@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scandir.3,v 1.4 1999/05/29 21:24:19 aaron Exp $
+.\"	$OpenBSD: scandir.3,v 1.5 1999/06/03 10:03:22 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -93,7 +93,7 @@ The memory allocated for the array can be deallocated with
 .Xr free 3 ,
 by freeing each pointer in the array and then the array itself.
 .Sh DIAGNOSTICS
-Returns -1 if the directory cannot be opened for reading or if
+Returns \-1 if the directory cannot be opened for reading or if
 .Xr malloc 3
 cannot allocate enough memory to hold all the data structures.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: siginterrupt.3,v 1.6 1999/05/29 21:24:20 aaron Exp $
+.\"	$OpenBSD: siginterrupt.3,v 1.7 1999/06/03 10:03:23 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@ is true (1),
 the restarting of system calls is disabled.
 If a system call is interrupted by the specified signal
 and no data has been transferred,
-the system call will return -1 with the global variable
+the system call will return \-1 with the global variable
 .Va errno
 set to
 .Er EINTR . 
@@ -98,7 +98,7 @@ system call that is not available in
 hence it should not be used if backward compatibility is needed.
 .Sh RETURN VALUES
 .Fn siginterrupt
-returns 0 on success or -1 if an invalid signal number has been
+returns 0 on success or \-1 if an invalid signal number has been
 specified.
 .Sh SEE ALSO
 .Xr sigaction 2 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usleep.3,v 1.8 1999/05/29 22:38:36 aaron Exp $
+.\"	$OpenBSD: usleep.3,v 1.9 1999/06/03 10:03:24 aaron Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,13 +72,13 @@ returned will be zero.
 If the 
 .Fn usleep
 function returns due to the delivery of a signal, the value returned
-will be the -1, and the global variable
+will be the \-1, and the global variable
 .Va errno
 will be set to indicate the interruption.
 .Sh ERRORS
 If any of the following conditions occur, the
 .Fn usleep
-function shall return -1 and set
+function shall return \-1 and set
 .Va errno
 to the corresponding value.
 .Bl -tag -width Er

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lockf.3,v 1.6 1999/05/29 21:24:18 aaron Exp $
+.\"	$OpenBSD: lockf.3,v 1.7 1999/06/03 10:03:22 aaron Exp $
 .\"	$NetBSD: lockf.3,v 1.1 1997/12/20 20:23:17 kleink Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ Blocking on a section is interrupted by any signal.
 If successful, the
 .Fn lockf
 function returns 0.
-Otherwise, it returns -1, sets the global variable
+Otherwise, it returns \-1, sets the global variable
 .Va errno
 to indicate an error, and existing locks are not changed.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.9 1999/05/29 21:24:21 aaron Exp $
+.\"	$OpenBSD: sysconf.3,v 1.10 1999/06/03 10:03:23 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,10 +79,10 @@ at any one time.
 The minimum maximum number of types supported for the name of a
 timezone.
 .It Li _SC_JOB_CONTROL
-Return 1 if job control is available on this system, otherwise -1.
+Return 1 if job control is available on this system, otherwise \-1.
 .It Li _SC_SAVED_IDS
 Returns 1 if saved set-group-ID and saved set-user-ID is available,
-otherwise -1.
+otherwise \-1.
 .It Li _SC_VERSION
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
@@ -120,40 +120,40 @@ permitted when using interval notation.
 The version of POSIX 1003.2 with which the system attempts to comply.
 .It Li _SC_2_C_BIND	
 Return 1 if the system's C-language development facilities support the
-C-Language Bindings Option, otherwise -1.
+C-Language Bindings Option, otherwise \-1.
 .It Li _SC_2_C_DEV
 Return 1 if the system supports the C-Language Development Utilities Option,
-otherwise -1.
+otherwise \-1.
 .It Li _SC_2_CHAR_TERM
 Return 1 if the system supports at least one terminal type capable of
-all operations described in POSIX 1003.2, otherwise -1.
+all operations described in POSIX 1003.2, otherwise \-1.
 .It Li _SC_2_FORT_DEV
 Return 1 if the system supports the FORTRAN Development Utilities Option,
-otherwise -1.
+otherwise \-1.
 .It Li _SC_2_FORT_RUN
 Return 1 if the system supports the FORTRAN Runtime Utilities Option,
-otherwise -1.
+otherwise \-1.
 .It Li _SC_2_LOCALEDEF
-Return 1 if the system supports the creation of locales, otherwise -1.
+Return 1 if the system supports the creation of locales, otherwise \-1.
 .It Li _SC_2_SW_DEV
 Return 1 if the system supports the Software Development Utilities Option,
-otherwise -1.
+otherwise \-1.
 .It Li _SC_2_UPE
 Return 1 if the system supports the User Portability Utilities Option,
-otherwise -1.
+otherwise \-1.
 .It Li _SC_PAGESIZE
 The size of a system page in bytes.
 .It Li _SC_FSYNC
-Return 1 if the system supports the File Synchronisation Option, otherwise -1.
+Return 1 if the system supports the File Synchronisation Option, otherwise \-1.
 .El
 .Sh RETURN VALUES
 If the call to
 .Fn sysconf
-is not successful, -1 is returned and
+is not successful, \-1 is returned and
 .Va errno
 is set appropriately.
 Otherwise, if the variable is associated with functionality that is not
-supported, -1 is returned and
+supported, \-1 is returned and
 .Va errno
 is not modified.
 Otherwise, the current variable value is returned.

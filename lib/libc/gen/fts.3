@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.9 1999/05/29 22:38:34 aaron Exp $
+.\"	$OpenBSD: fts.3,v 1.10 1999/06/03 10:03:20 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -229,12 +229,12 @@ The name of the file.
 The length of the string referenced by
 .Fa fts_name .
 .It Fa fts_level
-The depth of the traversal, numbered from -1 to N, where this file
+The depth of the traversal, numbered from \-1 to N, where this file
 was found.
 The
 .Em FTSENT
 structure representing the parent of the starting point (or root)
-of the traversal is numbered -1, and the
+of the traversal is numbered \-1, and the
 .Em FTSENT
 structure for the root
 itself is numbered 0.
@@ -638,7 +638,7 @@ of the stream
 The
 .Fn fts_set
 function
-returns 0 on success or -1 if an error occurred.
+returns 0 on success or \-1 if an error occurred.
 .Fa option
 must be set to one of the following values:
 .Bl -tag -width FTS_PHYSICAL
@@ -709,7 +709,7 @@ was called to open
 The
 .Fn fts_close
 function
-returns 0 on success or -1 if an error occurred.
+returns 0 on success or \-1 if an error occurred.
 .Sh ERRORS
 The function
 .Fn fts_open

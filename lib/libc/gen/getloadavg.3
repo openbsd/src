@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getloadavg.3,v 1.6 1999/05/29 19:11:11 aaron Exp $
+.\"	$OpenBSD: getloadavg.3,v 1.7 1999/06/03 10:03:21 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ The system imposes a maximum of 3 samples, representing averages
 over the last 1, 5, and 15 minutes, respectively.
 .Sh RETURN VALUES
 Upon successful completion, the number of samples retrieved is
-returned.  If an error occurs, -1 is returned and the global variable
+returned.  If an error occurs, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

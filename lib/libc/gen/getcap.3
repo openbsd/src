@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.11 1999/05/29 22:38:34 aaron Exp $
+.\"	$OpenBSD: getcap.3,v 1.12 1999/06/03 10:03:20 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,7 @@ or
 ), or be directly preceded by a 
 .Fn cgetclose
 call.
-On success 0 is returned and -1 on failure.
+On success 0 is returned and \-1 on failure.
 .Pp
 .Fn cgetmatch
 will return 0 if
@@ -188,7 +188,7 @@ The numeric value is returned in the
 .Ft long
 pointed to by
 .Fa num .
-On success 0 is returned, -1 if the requested numeric capability couldn't
+On success 0 is returned, \-1 if the requested numeric capability couldn't
 be found.
 .Pp
 .Fn cgetstr
@@ -204,7 +204,7 @@ pointed to by
 .Fa str .
 The number of characters in the decoded string not including the trailing
 .Dv NUL
-is returned on success, -1 if the requested string capability couldn't
+is returned on success, \-1 if the requested string capability couldn't
 be found, \-2 if a system error was encountered (storage allocation
 failure).
 .Pp
@@ -245,7 +245,7 @@ Upon completion of the database 0 is returned,  1 is returned upon successful
 return of record with possibly more remaining (we haven't reached the end of 
 the database yet), 2 is returned if the record contains an unresolved
 .Ic tc 
-expansion, -1 is returned if an system error occurred, and \-2
+expansion, \-1 is returned if an system error occurred, and \-2
 is returned if a potential reference loop is detected (see 
 .Ic tc=
 comments below).
