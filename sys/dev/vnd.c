@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.6 1996/04/21 22:19:59 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.7 1996/12/21 05:21:13 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -107,24 +107,30 @@ struct vndbuf {
 	free((caddr_t)(vbp), M_DEVBUF)
 
 struct vnd_softc {
+	struct device	sc_dev;
+	struct disk	sc_dk;
+
 	int		 sc_flags;	/* flags */
 	size_t		 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct buf	 sc_tab;	/* transfer queue */
-	char		 sc_xname[8];	/* XXX external name */
-	struct disk	 sc_dkdev;	/* generic disk device info */
 };
 
 /* sc_flags */
-#define	VNF_ALIVE	0x01
-#define VNF_INITED	0x02
-#define VNF_WANTED	0x40
-#define VNF_LOCKED	0x80
+#define	VNF_ALIVE	0x001
+#define VNF_INITED	0x002
+#define VNF_WANTED	0x040
+#define VNF_LOCKED	0x080
+#define	VNF_LABELLING	0x100
+#define	VNF_WLABEL	0x200
+#define	VNF_HAVELABEL	0x100
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
+
+struct dkdriver vnddkdriver = { vndstrategy };
 
 /* called by main() at boot time */
 void	vndattach __P((int));
@@ -135,6 +141,7 @@ int	vndsetcred __P((struct vnd_softc *, struct ucred *));
 void	vndthrottle __P((struct vnd_softc *, struct vnode *));
 void	vndiodone __P((struct buf *));
 void	vndshutdown __P((void));
+void	vndgetdisklabel __P((struct vnd_softc *));
 
 static	int vndlock __P((struct vnd_softc *));
 static	void vndunlock __P((struct vnd_softc *));
@@ -169,10 +176,6 @@ vndopen(dev, flags, mode, p)
 	struct vnd_softc *sc;
 	int error = 0, part, pmask;
 
-	/*
-	 * XXX Should support disklabels.
-	 */
-
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
@@ -184,24 +187,93 @@ vndopen(dev, flags, mode, p)
 	if ((error = vndlock(sc)) != 0)
 		return (error);
 
+	if ((sc->sc_flags & VNF_INITED) && (sc->sc_flags & VNF_HAVELABEL) == 0) {
+		sc->sc_flags |= VNF_HAVELABEL;
+		vndgetdisklabel(sc);
+	}
+
 	part = DISKPART(dev);
 	pmask = (1 << part);
+
+	/* Check that the partition exists. */
+	if (part != RAW_PART &&
+	    ((sc->sc_flags & VNF_HAVELABEL) == 0 ||
+	    part >= sc->sc_dk.dk_label->d_npartitions ||
+	    sc->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
+		error = ENXIO;
+		goto bad;
+	}
 
 	/* Prevent our unit from being unconfigured while open. */
 	switch (mode) {
 	case S_IFCHR:
-		sc->sc_dkdev.dk_copenmask |= pmask;
+		sc->sc_dk.dk_copenmask |= pmask;
 		break;
 
 	case S_IFBLK:
-		sc->sc_dkdev.dk_bopenmask |= pmask;
+		sc->sc_dk.dk_bopenmask |= pmask;
 		break;
 	}
-	sc->sc_dkdev.dk_openmask =
-	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
+	sc->sc_dk.dk_openmask =
+	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	vndunlock(sc);
 	return (0);
+bad:
+	vndunlock(sc);
+	return (error);
+}
+
+/*
+ * Load the label information on the named device
+ */
+void
+vndgetdisklabel(sc)
+	struct vnd_softc *sc;
+{
+	struct disklabel *lp = sc->sc_dk.dk_label;
+	char *errstring;
+
+	bzero(lp, sizeof(struct disklabel));
+	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	lp->d_secsize = 512;
+	lp->d_ntracks = 1;
+	lp->d_nsectors = 100;
+	lp->d_ncylinders = 100;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	if (lp->d_secpercyl == 0) {
+		lp->d_secpercyl = 100;
+		/* as long as it's not 0 - readdisklabel divides by it (?) */
+	}
+
+	strncpy(lp->d_typename, "vnd device", 16);
+	lp->d_type = DTYPE_SCSI;
+	strncpy(lp->d_packname, "fictitious", 16);
+	lp->d_secperunit = 100 * 100;
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+
+	/*
+	 * Call the generic disklabel extraction routine
+	 */
+	errstring = readdisklabel(MAKEDISKDEV(0, sc->sc_dev.dv_unit, RAW_PART),
+				  vndstrategy, lp, sc->sc_dk.dk_cpulabel);
+	if (errstring) {
+		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
+		return;
+	}
 }
 
 int
@@ -231,15 +303,15 @@ vndclose(dev, flags, mode, p)
 	/* ...that much closer to allowing unconfiguration... */
 	switch (mode) {
 	case S_IFCHR:
-		sc->sc_dkdev.dk_copenmask &= ~(1 << part);
+		sc->sc_dk.dk_copenmask &= ~(1 << part);
 		break;
 
 	case S_IFBLK:
-		sc->sc_dkdev.dk_bopenmask &= ~(1 << part);
+		sc->sc_dk.dk_bopenmask &= ~(1 << part);
 		break;
 	}
-	sc->sc_dkdev.dk_openmask =
-	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
+	sc->sc_dk.dk_openmask =
+	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	vndunlock(sc);
 	return (0);
@@ -396,7 +468,7 @@ vndstart(vnd)
 #endif
 
 	/* Instrumentation. */
-	disk_busy(&vnd->sc_dkdev);
+	disk_busy(&vnd->sc_dk);
 
 	if ((bp->b_flags & B_READ) == 0)
 		bp->b_vp->v_numoutput++;
@@ -431,7 +503,7 @@ vndiodone(bp)
 	}
 	pbp->b_resid -= vbp->vb_buf.b_bcount;
 	putvndbuf(vbp);
-	disk_unbusy(&vnd->sc_dkdev, (pbp->b_bcount - pbp->b_resid));
+	disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid));
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
@@ -498,10 +570,10 @@ vndwrite(dev, uio, flags)
 
 /* ARGSUSED */
 int
-vndioctl(dev, cmd, data, flag, p)
+vndioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
@@ -515,7 +587,7 @@ vndioctl(dev, cmd, data, flag, p)
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
-		    dev, cmd, data, flag, p, unit);
+		    dev, cmd, addr, flag, p, unit);
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
 	if (error)
@@ -524,7 +596,7 @@ vndioctl(dev, cmd, data, flag, p)
 		return (ENXIO);
 
 	vnd = &vnd_softc[unit];
-	vio = (struct vnd_ioctl *)data;
+	vio = (struct vnd_ioctl *)addr;
 	switch (cmd) {
 
 	case VNDIOCSET:
@@ -570,10 +642,12 @@ vndioctl(dev, cmd, data, flag, p)
 #endif
 
 		/* Attach the disk. */
-		bzero(vnd->sc_xname, sizeof(vnd->sc_xname));	/* XXX */
-		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
-		vnd->sc_dkdev.dk_name = vnd->sc_xname;
-		disk_attach(&vnd->sc_dkdev);
+		bzero(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname));
+		sprintf(vnd->sc_dev.dv_xname, "vnd%d", unit);
+		vnd->sc_dk.dk_driver = &vnddkdriver;
+		vnd->sc_dk.dk_name = vnd->sc_dev.dv_xname;
+		disk_attach(&vnd->sc_dk);
+		dk_establish(&vnd->sc_dk, &vnd->sc_dev);
 
 		vndunlock(vnd);
 
@@ -593,9 +667,9 @@ vndioctl(dev, cmd, data, flag, p)
 		 */
 		part = DISKPART(dev);
 		pmask = (1 << part);
-		if ((vnd->sc_dkdev.dk_openmask & ~pmask) ||
-		    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
-		    (vnd->sc_dkdev.dk_copenmask & pmask))) {
+		if ((vnd->sc_dk.dk_openmask & ~pmask) ||
+		    ((vnd->sc_dk.dk_bopenmask & pmask) &&
+		    (vnd->sc_dk.dk_copenmask & pmask))) {
 			vndunlock(vnd);
 			return (EBUSY);
 		}
@@ -607,19 +681,63 @@ vndioctl(dev, cmd, data, flag, p)
 #endif
 
 		/* Detatch the disk. */
-		disk_detach(&vnd->sc_dkdev);
+		disk_detach(&vnd->sc_dk);
 
 		/* This must be atomic. */
 		s = splhigh();
 		vndunlock(vnd);
 		bzero(vnd, sizeof(struct vnd_softc));
 		splx(s);
-
 		break;
 
-	/*
-	 * XXX Should support disklabels.
-	 */
+	case DIOCGDINFO:
+		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
+			return (ENOTTY);
+		*(struct disklabel *)addr = *(vnd->sc_dk.dk_label);
+		return 0;
+
+	case DIOCGPART:
+		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
+			return (ENOTTY);
+		((struct partinfo *)addr)->disklab = vnd->sc_dk.dk_label;
+		((struct partinfo *)addr)->part =
+		    &vnd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
+		return 0;
+
+	case DIOCWDINFO:
+	case DIOCSDINFO:
+		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
+			return (ENOTTY);
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		if ((error = vndlock(vnd)) != 0)
+			return error;
+		vnd->sc_flags |= VNF_LABELLING;
+
+		error = setdisklabel(vnd->sc_dk.dk_label,
+		    (struct disklabel *)addr, /*vnd->sc_dk.dk_openmask : */0,
+		    vnd->sc_dk.dk_cpulabel);
+		if (error == 0) {
+			if (cmd == DIOCWDINFO)
+				error = writedisklabel(MAKEDISKDEV(major(dev),
+				    DISKUNIT(dev), RAW_PART),
+				    vndstrategy, vnd->sc_dk.dk_label,
+				    vnd->sc_dk.dk_cpulabel);
+		}
+
+		vnd->sc_flags &= ~VNF_LABELLING;
+		vndunlock(vnd);
+		return error;
+
+	case DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		if (*(int *)addr)
+			vnd->sc_flags |= VNF_WLABEL;
+		else
+			vnd->sc_flags &= ~VNF_WLABEL;
+		return 0;
 
 	default:
 		return(ENOTTY);
