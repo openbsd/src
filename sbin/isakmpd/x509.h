@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.h,v 1.12 2001/06/07 04:23:35 angelos Exp $	*/
+/*	$OpenBSD: x509.h,v 1.13 2001/08/25 22:17:13 niklas Exp $	*/
 /*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ void *x509_from_printable (char *);
 
 /* Misc. X509 certificate functions.  */
 
+char *x509_DN_string (u_int8_t *, size_t);
 int x509_cert_insert (int, void *);
 int x509_cert_subjectaltname (X509 *cert, u_char **, u_int *);
 X509 *x509_from_asn (u_char *, u_int);

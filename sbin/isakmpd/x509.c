@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.64 2001/08/16 14:23:21 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.65 2001/08/25 22:17:13 niklas Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1375,5 +1375,30 @@ x509_from_printable (char *cert)
   if (!foo)
     log_print ("x509_from_printable: could not retrieve certificate");
   return foo;
+}
+
+char *
+x509_DN_string (u_int8_t *asn1, size_t sz)
+{
+  X509_NAME *name;
+  u_int8_t *p = asn1;
+  /* XXX Just a guess at a maximum length.  */
+  char buf[256];
+
+  name = LC (d2i_X509_NAME, (NULL, &p, sz));
+  if (!name)
+    {
+      log_print ("x509_DN_string: d2i_X509_NAME failed");
+      return 0;
+    }
+  if (!LC (X509_NAME_oneline, (name, buf, sizeof buf - 1)))
+    {
+      log_print ("x509_DN_string: X509_NAME_oneline failed");
+      LC (X509_NAME_free, (name));
+      return 0;
+    }
+  LC (X509_NAME_free, (name));
+  buf[sizeof buf - 1] = '\0';
+  return strdup (buf);
 }
 #endif /* USE_X509 */
