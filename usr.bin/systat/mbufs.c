@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.13 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.14 2004/07/03 22:25:15 deraadt Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.13 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.14 2004/07/03 22:25:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,8 +134,8 @@ showmbufs(void)
 }
 
 static struct nlist namelist[] = {
-#define	X_MBSTAT	0
-	{ "_mbstat" },			/* sysctl */
+#define	X_MBSTAT	0			/* sysctl */
+	{ "_mbstat" },
 	{ "" }
 };
 
