@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.61 2000/08/20 18:42:40 millert Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.62 2000/08/28 19:51:00 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -947,21 +947,25 @@ ssh_session2(void)
 	int window, packetmax, id;
 	int in, out, err;
 
+	if (stdin_null_flag) {
+		in = open("/dev/null", O_RDONLY);
+	} else {
+		in = dup(STDIN_FILENO);
+	}
+	out = dup(STDOUT_FILENO);
+	err = dup(STDERR_FILENO);
+
+	if (in < 0 || out < 0 || err < 0)
+		fatal("dup() in/out/err failed");
+
+	/* should be pre-session */
+	init_local_fwd();
+	
 	/* If requested, let ssh continue in the background. */
 	if (fork_after_authentication_flag)
 		if (daemon(1, 1) < 0)
 			fatal("daemon() failed: %.200s", strerror(errno));
 
-	in  = dup(STDIN_FILENO);
-	out = dup(STDOUT_FILENO);
-	err = dup(STDERR_FILENO);
-
-	if (in < 0 || out < 0 || err < 0)
-		fatal("dump in/out/err failed");
-
-	/* should be pre-session */
-	init_local_fwd();
-	
 	window = 32*1024;
 	if (tty_flag) {
 		packetmax = window/8;
