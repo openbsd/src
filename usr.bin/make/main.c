@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.49 2001/05/29 12:53:41 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.50 2001/05/29 17:00:54 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -509,7 +509,7 @@ main(argc, argv)
 
 	if ((pwd = getenv("PWD")) != NULL) {
 	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
-		sa.st_dev == sb.st_dev)
+		sa.st_dev == sb.st_dev && strlen(pwd) <= MAXPATHLEN)
 		(void)strcpy(curdir, pwd);
 	}
 
