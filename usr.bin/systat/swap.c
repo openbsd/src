@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.5 1996/08/06 18:48:16 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.6 1996/08/06 18:49:05 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: swap.c,v 1.5 1996/08/06 18:48:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: swap.c,v 1.6 1996/08/06 18:49:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -128,7 +128,7 @@ initswap()
 		strcpy(msgbuf, "systat: swap: cannot find");
 		for (i = 0; syms[i].n_name != NULL; i++) {
 			if (syms[i].n_value == 0) {
-				if (strlen(msgbuf) strlen(syms[i].n_name) +2 >
+				if (strlen(msgbuf) + strlen(syms[i].n_name) +2 >
 				    sizeof (msgbuf))
 					continue;
 				strcat(msgbuf, " ");
