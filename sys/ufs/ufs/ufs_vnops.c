@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.2 1996/02/27 07:21:33 niklas Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.3 1996/02/27 22:56:14 niklas Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.17 1996/02/11 02:06:13 christos Exp $	*/
 
 /*
