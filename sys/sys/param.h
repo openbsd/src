@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.26 2000/01/06 03:34:39 smurph Exp $	*/
+/*	$OpenBSD: param.h,v 1.27 2000/01/14 23:37:21 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -127,7 +127,7 @@
 /*
  * Clustering of hardware pages on machines with ridiculously small
  * page sizes is done here.  The paging subsystem deals with units of
- * CLSIZE pte's describing NBPG (from machine/machparam.h) pages each.
+ * CLSIZE pte's describing NBPG (from machine/param.h) pages each.
  */
 #define	CLBYTES		(CLSIZE*NBPG)
 #define	CLOFSET		(CLSIZE*NBPG-1)	/* for clusters, like PGOFSET */
