@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/23 14:31:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/12/08 22:22:38 tholo Exp $
 #	$NetBSD: Makefile,v 1.10 1995/03/18 14:57:50 cgd Exp $
 
 PROG=	mount_portal
@@ -14,3 +14,8 @@ DPADD=	$(LIBCOMPAT)
 LDADD=	-lcompat
 
 .include <bsd.prog.mk>
+
+afterinstall:
+	if [ ! -f ${DESTDIR}/etc/portal.conf ]; then
+		${INSTALL} ${COPY} -o root -g wheel -m 644 portal.conf ${DESTDIR}/etc
+	fi
