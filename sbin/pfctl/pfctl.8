@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.38 2001/12/21 11:41:50 mpech Exp $
+.\" $OpenBSD: pfctl.8,v 1.39 2002/01/09 11:30:53 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .Nd control the packet filter device
 .Sh SYNOPSIS
 .Nm pfctl
-.Op Fl dehnqv
+.Op Fl dehnqvz
 .Op Fl F Ar modifier
 .Op Fl l Ar interface
 .Op Fl N Ar file
@@ -102,7 +102,7 @@ Flush the filter rules.
 .It Fl F Ar state
 Flush the state table (NAT and filter).
 .It Fl F Ar info
-Flush the filter information (statistics and counters).
+Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar all
 Flush all of the above.
 .El
@@ -168,6 +168,9 @@ connection).
 Show the contents of the state table.
 .It Fl s Ar info
 Show filter information (statistics and counters).
+.It Fl s Ar labels
+Show per-rule statistics (in terse format) of filter rules with labels,
+useful for accounting.
 .It Fl s Ar all
 Show all of the above.
 .El
@@ -254,6 +257,8 @@ Generate debug messages only for serious errors.
 .It Fl x Ar misc
 Generate debug messages for various errors.
 .El
+.It Fl z
+Clear per-rule statistics.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/nat.conf" -compact

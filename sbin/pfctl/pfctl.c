@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.50 2002/01/06 21:56:12 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.51 2002/01/09 11:30:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,7 +55,7 @@ int	 pfctl_clear_rules(int, int);
 int	 pfctl_clear_nat(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_hint(int, const char *, int);
-int	 pfctl_show_rules(int, int);
+int	 pfctl_show_rules(int, int, int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
@@ -66,6 +66,7 @@ int	 pfctl_timeout(int, char *, int);
 int	 pfctl_gettimeout(int, const char *);
 int	 pfctl_settimeout(int, const char *, int);
 int	 pfctl_debug(int, u_int32_t, int);
+int	 pfctl_clear_rule_counters(int, int);
 
 int	 opts = 0;
 char	*clearopt;
@@ -157,7 +158,8 @@ usage()
 
 	fprintf(stderr, "usage: %s [-dehnqv] [-F set] [-l interface] ",
 	    __progname);
-	fprintf(stderr, "[-N file] [-O level] [-R file] [-s set] [-t set] [-x level]\n");
+	fprintf(stderr, "[-N file] [-O level] [-R file] [-s set] [-t set] "
+	    "[-x level] [-z]\n");
 	exit(1);
 }
 
@@ -248,7 +250,7 @@ pfctl_clear_states(int dev, int opts)
 }
 
 int
-pfctl_show_rules(int dev, int opts)
+pfctl_show_rules(int dev, int opts, int format)
 {
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr;
@@ -264,11 +266,25 @@ pfctl_show_rules(int dev, int opts)
 			warnx("DIOCGETRULE");
 			return (-1);
 		}
-		print_rule(&pr.rule);
-		if (opts & PF_OPT_VERBOSE)
-			printf("[ Evaluations: %-10llu  Packets: %-10llu  "
-			    "Bytes: %-10llu ]\n\n", pr.rule.evaluations,
-			    pr.rule.packets, pr.rule.bytes);
+		switch (format) {
+		case 1:
+			if (pr.rule.label[0]) {
+				if (opts & PF_OPT_VERBOSE)
+					print_rule(&pr.rule);
+				else
+					printf("%s ", pr.rule.label);
+				printf("%llu %llu %llu\n",
+				    pr.rule.evaluations, pr.rule.packets,
+				    pr.rule.bytes);
+			}
+			break;
+		default:
+			print_rule(&pr.rule);
+			if (opts & PF_OPT_VERBOSE)
+				printf("[ Evaluations: %-10llu  Packets: %-10llu  "
+				    "Bytes: %-10llu ]\n\n", pr.rule.evaluations,
+				    pr.rule.packets, pr.rule.bytes);
+		}
 	}
 	return (0);
 }
@@ -671,6 +687,16 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 }
 
 int
+pfctl_clear_rule_counters(int dev, int opts)
+{
+	if (ioctl(dev, DIOCCLRRULECTRS))
+		err(1, "DIOCCLRRULECTRS");
+	if ((opts & PF_OPT_QUIET) == 0)
+		printf("pf: rule counters cleared\n");
+	return (0);
+}
+
+int
 main(int argc, char *argv[])
 {
 	extern char *optarg;
@@ -683,7 +709,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hl:nN:O:R:s:t:vx:")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hl:nN:O:R:s:t:vx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -731,6 +757,10 @@ main(int argc, char *argv[])
 			break;
 		case 'x':
 			debugopt = optarg;
+			mode = O_RDWR;
+			break;
+		case 'z':
+			opts |= PF_OPT_CLRRULECTRS;
 			mode = O_RDWR;
 			break;
 		case 'h':
@@ -799,7 +829,10 @@ main(int argc, char *argv[])
 	if (showopt != NULL) {
 		switch (*showopt) {
 		case 'r':
-			pfctl_show_rules(dev, opts);
+			pfctl_show_rules(dev, opts, 0);
+			break;
+		case 'l':
+			pfctl_show_rules(dev, opts, 1);
 			break;
 		case 'n':
 			pfctl_show_nat(dev);
@@ -811,7 +844,7 @@ main(int argc, char *argv[])
 			pfctl_show_status(dev);
 			break;
 		case 'a':
-			pfctl_show_rules(dev, opts);
+			pfctl_show_rules(dev, opts, 0);
 			pfctl_show_nat(dev);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
@@ -853,6 +886,11 @@ main(int argc, char *argv[])
 			warnx("Unknown debug level '%s'", debugopt);
 			error = 1;
 		}
+	}
+
+	if (opts & PF_OPT_CLRRULECTRS) {
+		if (pfctl_clear_rule_counters(dev, opts))
+			error = 1;
 	}
 
 	close(dev);

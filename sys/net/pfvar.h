@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.59 2002/01/08 09:31:55 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.60 2002/01/09 11:30:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -191,6 +191,8 @@ struct pf_rule_addr {
 struct pf_rule {
 	char		 ifname[IFNAMSIZ];
 	char		 rt_ifname[IFNAMSIZ];
+#define PF_RULE_LABEL_SIZE	32
+	char		 label[PF_RULE_LABEL_SIZE];
 	struct ifnet	*ifp;
 	struct ifnet	*rt_ifp;
 	struct pf_rule_addr src;
@@ -559,6 +561,7 @@ struct pfioc_tm {
 #define DIOCGETBINAT	_IOWR('D', 35, struct pfioc_binat)
 #define DIOCCHANGEBINAT	_IOWR('D', 36, struct pfioc_changebinat)
 #define DIOCADDSTATE	_IOWR('D', 37, struct pfioc_state)
+#define DIOCCLRRULECTRS	_IO  ('D', 38)
 
 #ifdef _KERNEL
 

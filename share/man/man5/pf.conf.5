@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.28 2001/12/07 20:36:17 beck Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.29 2002/01/09 11:30:53 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -51,7 +51,8 @@ rule       = action ( "in" | "out" )
              hosts
              [ flags ] ( [ icmp-type ] | [ ipv6-icmp-type ] )
              [ "keep state" ] [ "modulate state" ]
-             [ "no-df" ] [ "min-ttl" number ] [ "allow-opts" ] .
+             [ "no-df" ] [ "min-ttl" number ] [ "allow-opts" ]
+             [ "label" string ] .
 
 action     = "pass" | "block" [ return ] | "scrub" .
 return     = "return-rst" |
@@ -294,6 +295,11 @@ The implicit
 .Em pass
 rule that is used when a packet doesn't match any rules does not
 allow IP options.
+.Ss label <string>
+Adds a label (name) to the rule, which can be used to identify the rule.
+For instance,
+.Em pfctl -s labels
+shows per-rule statistics for rules that have labels.
 .Sh MACROS
 .Em pfctl
 supports macro definition and expansion like:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.182 2002/01/08 09:31:55 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.183 2002/01/09 11:30:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1039,6 +1039,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCSETDEBUG:
 		case DIOCGETSTATES:
 		case DIOCGETTIMEOUT:
+		case DIOCCLRRULECTRS:
 			break;
 		default:
 			return EPERM;
@@ -2146,6 +2147,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETDEBUG: {
 		u_int32_t *level = (u_int32_t *)addr;
 		pf_status.debug = *level;
+		break;
+	}
+
+	case DIOCCLRRULECTRS: {
+		struct pf_rule *rule;
+
+		s = splsoftnet();
+		TAILQ_FOREACH(rule, pf_rules_active, entries)
+			rule->evaluations = rule->packets =
+			    rule->bytes = 0;
+		splx(s);
 		break;
 	}
 

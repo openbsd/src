@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2002/01/08 09:31:55 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.51 2002/01/09 11:30:53 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -170,7 +170,7 @@ typedef struct {
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
-%token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO
+%token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -187,6 +187,7 @@ typedef struct {
 %type	<v.port>	portspec port_list port_item
 %type	<v.route>	route
 %type	<v.redirection>	redirection
+%type	<v.string>	label
 %%
 
 ruleset		: /* empty */
@@ -210,7 +211,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface route af proto fromto flags icmpspec keep nodf minttl allowopts
+pfrule		: action dir log quick interface route af proto fromto flags icmpspec keep nodf minttl allowopts label
 		{
 			struct pf_rule r;
 
@@ -261,6 +262,16 @@ pfrule		: action dir log quick interface route af proto fromto flags icmpspec ke
 					    sizeof(r.rt_addr));
 					free($6.addr);
 				}
+			}
+
+			if ($16) {
+				if (strlen($16) >= PF_RULE_LABEL_SIZE) {
+					yyerror("rule label too long (max "
+					    "%d chars)", PF_RULE_LABEL_SIZE-1);
+					YYERROR;
+				}
+				strcpy(r.label, $16);
+				free($16);
 			}
 
 			expand_rule(&r, $5, $8, $9.src.host, $9.src.port,
@@ -753,6 +764,15 @@ nodf		: /* empty */			{ $$ = 0; }
 
 allowopts	: /* empty */			{ $$ = 0; }
 		| ALLOWOPTS			{ $$ = 1; }
+
+label		: /* empty */			{ $$ = NULL; }
+		| LABEL STRING			{
+			if (($$ = strdup($2)) == NULL) {
+				yyerror("rule label strdup() failed");
+				YYERROR;
+			}
+		}
+		;
 
 no		: /* empty */			{ $$ = 0; }
 		| NO				{ $$ = 1; }
@@ -1331,6 +1351,7 @@ lookup(char *s)
 		{ "inet",	INET},
 		{ "inet6",	INET6},
 		{ "keep",	KEEP},
+		{ "label",	LABEL},
 		{ "log",	LOG},
 		{ "log-all",	LOGALL},
 		{ "min-ttl",	MINTTL},
