@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.39 1997/06/29 07:35:44 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.40 1997/06/29 07:39:02 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 6.2/OpenBSD";
+static char version[] = "Version 6.3/OpenBSD";
 
 extern	off_t restart_point;
 extern	char cbuf[];
