@@ -173,10 +173,6 @@ typedef struct _ossl_old_des_ks_struct
 	DES_fcrypt((b),(s),(r))
 #define des_crypt(b,s)\
 	DES_crypt((b),(s))
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
-#define crypt(b,s)\
-	DES_crypt((b),(s))
-#endif
 #define des_ofb_encrypt(i,o,n,l,k,iv)\
 	DES_ofb_encrypt((i),(o),(n),(l),&(k),(iv))
 #define des_pcbc_encrypt(i,o,l,k,iv,e)\
