@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.16 1995/08/17 02:57:39 mycroft Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -93,7 +93,7 @@ struct socket {
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
 
-	caddr_t	so_tpcb;		/* Wisc. protocol control block XXX */
+	void	*so_internal;		/* Space for svr4 stream data */
 	void	(*so_upcall) __P((struct socket *so, caddr_t arg, int waitf));
 	caddr_t	so_upcallarg;		/* Arg for above */
 };
@@ -146,9 +146,9 @@ struct socket {
 
 /* can we write something to so? */
 #define	sowriteable(so) \
-    (sbspace(&(so)->so_snd) >= (so)->so_snd.sb_lowat && \
+    ((sbspace(&(so)->so_snd) >= (so)->so_snd.sb_lowat && \
 	(((so)->so_state&SS_ISCONNECTED) || \
-	  ((so)->so_proto->pr_flags&PR_CONNREQUIRED)==0) || \
+	  ((so)->so_proto->pr_flags&PR_CONNREQUIRED)==0)) || \
      ((so)->so_state & SS_CANTSENDMORE) || \
      (so)->so_error)
 
@@ -202,6 +202,12 @@ struct	socket *sonewconn1 __P((struct socket *head, int connstatus));
 /* strings for sleep message: */
 extern	char netio[], netcon[], netcls[];
 
+struct mbuf;
+struct sockaddr;
+struct proc;
+struct msghdr;
+struct stat;
+
 /*
  * File operations on sockets.
  */
@@ -211,10 +217,9 @@ int	soo_ioctl __P((struct file *fp, u_long cmd, caddr_t data,
 	    struct proc *p));
 int	soo_select __P((struct file *fp, int which, struct proc *p));
 int 	soo_close __P((struct file *fp, struct proc *p));
-
-struct mbuf;
-struct sockaddr;
-
+int	soo_stat __P((struct socket *, struct stat *));
+int	uipc_usrreq __P((struct socket *, int , struct mbuf *,
+			 struct mbuf *, struct mbuf *));
 void	sbappend __P((struct sockbuf *sb, struct mbuf *m));
 int	sbappendaddr __P((struct sockbuf *sb, struct sockaddr *asa,
 	    struct mbuf *m0, struct mbuf *control));
@@ -241,7 +246,7 @@ int	soconnect __P((struct socket *so, struct mbuf *nam));
 int	soconnect2 __P((struct socket *so1, struct socket *so2));
 int	socreate __P((int dom, struct socket **aso, int type, int proto));
 int	sodisconnect __P((struct socket *so));
-int	sofree __P((struct socket *so));
+void	sofree __P((struct socket *so));
 int	sogetopt __P((struct socket *so, int level, int optname,
 	    struct mbuf **mp));
 void	sohasoutofband __P((struct socket *so));
@@ -255,7 +260,7 @@ struct socket *
 void	soqinsque __P((struct socket *head, struct socket *so, int q));
 int	soqremque __P((struct socket *so, int q));
 int	soreceive __P((struct socket *so, struct mbuf **paddr, struct uio *uio,
-	    struct mbuf **mp0, struct mbuf **controlp, int *flagsp));
+		       struct mbuf **mp0, struct mbuf **controlp, int *flagsp));
 int	soreserve __P((struct socket *so, u_long sndcc, u_long rcvcc));
 void	sorflush __P((struct socket *so));
 int	sosend __P((struct socket *so, struct mbuf *addr, struct uio *uio,
@@ -264,4 +269,16 @@ int	sosetopt __P((struct socket *so, int level, int optname,
 	    struct mbuf *m0));
 int	soshutdown __P((struct socket *so, int how));
 void	sowakeup __P((struct socket *so, struct sockbuf *sb));
+int	sockargs __P((struct mbuf **, caddr_t, int, int));
+
+int	sendit __P((struct proc *, int, struct msghdr *, int, register_t *));
+int	recvit __P((struct proc *, int, struct msghdr *, caddr_t,
+		    register_t *));
+
 #endif /* _KERNEL */
+/*###282 [cc] macro `__P' used with too many (33) args%%%*/
+/*###283 [cc] macro `__P' used with too many (34) args%%%*/
+/*###284 [cc] macro `__P' used with too many (10) args%%%*/
+/*###285 [cc] macro `__P' used with too many (15) args%%%*/
+/*###286 [cc] macro `__P' used with too many (22) args%%%*/
+/*###289 [cc] empty #if expression%%%*/

@@ -139,7 +139,7 @@ solisten(so, backlog)
 	return (0);
 }
 
-int
+void
 sofree(so)
 	register struct socket *so;
 {
