@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.136 2002/08/29 22:52:00 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.137 2002/10/13 21:09:13 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.136 2002/08/29 22:52:00 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.137 2002/10/13 21:09:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -812,7 +812,7 @@ user(name)
 	}
 
 	if (as != NULL && (cp = auth_challenge(as)) != NULL)
-		reply(331, cp);
+		reply(331, "%s", cp);
 	else
 		reply(331, "Password required for %s.", name);
 
