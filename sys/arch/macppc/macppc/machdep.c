@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2002/09/06 13:42:17 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2002/09/11 22:29:47 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1177,7 +1177,7 @@ bus_space_unmap(t, bsh, size)
 	len = size+off;
 
 	if (pmap_extract(pmap_kernel(), sva, &bpa) == TRUE) {
-		if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
+		if (extent_free(devio_ex, bpa | (bsh & PAGE_MASK), size, EX_NOWAIT |
 			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
 		{
 			printf("bus_space_map: pa 0x%x, size 0x%x\n",
