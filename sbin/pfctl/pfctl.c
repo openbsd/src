@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.43 2001/10/01 17:58:16 markus Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.44 2001/10/02 17:55:24 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -545,12 +545,12 @@ pfctl_hint(int dev, const char *opt, int opts)
 		if (strcasecmp(opt, pf_hints[i].name) == 0)
 			break;
 
-	hint = pf_hints[i].hint;
-	if (hint->name == NULL) {
+	if (pf_hints[i].name == NULL) {
 		warnx("Bad hint name.  Format -O hint");
 		return 1;
 	}
 
+	hint = pf_hints[i].hint;
 	for (i = 0; hint[i].name; i++)
 		if ((r = pfctl_settimeout(dev, hint[i].name, hint[i].timeout)))
 			return r;
