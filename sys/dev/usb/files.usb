@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.28 2002/07/09 18:37:04 nate Exp $
+#	$OpenBSD: files.usb,v 1.29 2002/07/10 03:58:08 nate Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -7,7 +7,7 @@
 
 device	usb { }
 attach	usb at usbus
-file	dev/usb/usb.c			usb		needs-flag
+file	dev/usb/usb.c			usb			needs-flag
 file	dev/usb/usbdi.c			usb
 file	dev/usb/usbdi_util.c		usb
 file	dev/usb/usb_mem.c		usb
@@ -43,12 +43,14 @@ file	dev/usb/umidi_quirks.c		umidi
 # Modem and com serial port
 device	ucom
 attach	ucom at ucombus
-file	dev/usb/ucom.c			ucom | ucombus	needs-flag
+file	dev/usb/ucom.c			ucom | ucombus		needs-flag
+
 
 # Generic devices
 device	ugen
 attach	ugen at uhub
-file	dev/usb/ugen.c			ugen		needs-flag
+file	dev/usb/ugen.c			ugen			needs-flag
+
 
 # HID
 # HID "bus"
@@ -62,12 +64,12 @@ file	dev/usb/hid.c			hid
 device	uhidev: hid, uhidbus
 attach	uhidev at uhub
 file	dev/usb/uhidev.c		uhidev
- 
+
 # Generic HID devices
 device	uhid: hid
 attach	uhid at uhidbus
 file	dev/usb/uhid.c			uhid			needs-flag
- 
+
 # Keyboards
 device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
@@ -83,29 +85,27 @@ file	dev/usb/ums.c			ums
 # Printers
 device	ulpt
 attach	ulpt at uhub
-file	dev/usb/ulpt.c			ulpt		needs-flag
+file	dev/usb/ulpt.c			ulpt			needs-flag
+
 
 # Mass storage
 device	umass: scsi, atapi
 attach	umass at uhub
 file	dev/usb/umass.c			umass
 
-# Modems
-device	umodem: ucombus
-attach	umodem at uhub
-file	dev/usb/umodem.c		umodem
 
+# Misc
 # Diamond Multimedia Rio 500
 device	urio
 attach	urio at uhub
-file	dev/usb/urio.c			urio		needs-flag
+file	dev/usb/urio.c			urio			needs-flag
 
 # Handspring Visor
 device	uvisor: ucombus
 attach	uvisor at uhub
 file	dev/usb/uvisor.c		uvisor
 
-# YAP firmware loader
+# YAP phone firmware loader
 device	uyap: ezload
 attach	uyap at uhub
 file	dev/usb/uyap.c			uyap
@@ -144,25 +144,32 @@ file	dev/usb/if_url.c		url
 
 
 # Serial drivers
+# Modems
+device	umodem: ucombus
+attach	umodem at uhub
+file	dev/usb/umodem.c		umodem
+
 # FTDI serial driver
 device	uftdi: ucombus
 attach	uftdi at uhub
 file	dev/usb/uftdi.c			uftdi
 
 # Prolific PL2303 serial driver
-device  uplcom: ucombus
-attach  uplcom at uhub
-file    dev/usb/uplcom.c                uplcom
+device	uplcom: ucombus
+attach	uplcom at uhub
+file	dev/usb/uplcom.c                uplcom
 
 # MCT USB-232 serial driver
 device	umct: ucombus
 attach	umct at uhub
 file	dev/usb/umct.c			umct
 
+
 # Scanners
+# Generic scanner support
 device	uscanner
 attach	uscanner at uhub
-file	dev/usb/uscanner.c		uscanner	needs-flag
+file	dev/usb/uscanner.c		uscanner		needs-flag
 
 # Avision SCSI over USB, HP5300
 device	usscanner: scsi
