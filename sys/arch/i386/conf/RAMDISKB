@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.71 2004/06/13 21:49:15 niklas Exp $
+#	$OpenBSD: RAMDISKB,v 1.72 2004/06/23 01:36:58 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -129,7 +129,7 @@ pccom2	at isa? port 0x3e8 irq 5
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 #ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 #scsibus* at ahc?
-#ahd*	at pci? disable dev ? function ?	# Adaptec 79?? SCSI controllers
+#ahd*	at pci? dev ? function ?	# Adaptec 79?? SCSI controllers
 #scsibus* at ahd?
 mpt*	at pci? dev ? function ?	# LSI Fusion-MPT SCSI/Fibre
 scsibus* at mpt?
