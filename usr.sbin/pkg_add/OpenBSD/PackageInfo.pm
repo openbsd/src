@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.13 2004/11/14 19:10:41 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.14 2004/12/16 11:07:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -119,14 +119,18 @@ sub installed_contents($)
 	return installed_info(shift).CONTENTS;
 }
 
-sub borked_package()
+sub borked_package($)
 {
+	my $pkgname = $_[0];
+	unless (-e "$pkg_db/partial-$pkgname") {
+		return "partial-$pkgname";
+	}
 	my $i = 1;
 
-	while (-e "$pkg_db/borked.$i") {
+	while (-e "$pkg_db/partial-$pkgname.$i") {
 		$i++;
 	}
-	return "borked.$i";
+	return "partial-$pkgname.$i";
 }
 
 sub is_installed($)

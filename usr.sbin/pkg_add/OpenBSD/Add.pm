@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.24 2004/12/12 11:26:16 espie Exp $
+# $OpenBSD: Add.pm,v 1.25 2004/12/16 11:07:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -46,6 +46,7 @@ sub manpages_index
 sub register_installation
 {
 	my ($dir, $dest, $plist) = @_;
+	return if $main::not;
 	mkdir($dest);
 	for my $i (info_names()) {
 		copy($dir.$i, $dest);
@@ -104,11 +105,11 @@ sub validate_plist($$)
 
 sub borked_installation
 {
-	my ($plist, $dir) = @_;
+	my ($plist, $dir, @msg) = @_;
 
 	use OpenBSD::PackingElement;
 
-	my $borked = borked_package();
+	my $borked = borked_package($plist->pkgname());
 	# fix packing list for pkg_delete
 	$plist->{items} = $plist->{done};
 
@@ -136,7 +137,7 @@ sub borked_installation
 	$plist->{pkgdep} = [];
 	my $dest = installed_info($borked);
 	register_installation($dir, $dest, $plist);
-	Fatal "Installation of $pkgname failed, partial installation recorded as $borked";
+	Fatal @msg, ", partial installation recorded as $borked";
 }
 
 # used by newuser/newgroup to deal with options.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.27 2004/12/09 18:58:25 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.28 2004/12/16 11:07:33 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -361,7 +361,7 @@ Note that it is safe to interrupt
 through
 .Dv SIGINT ,
 as it will safely record an interrupted install as
-.Pa borked.n .
+.Pa partial-<pkgname>[.n] .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
 .It Ev FTPMODE

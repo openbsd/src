@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.74 2004/12/09 18:58:25 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.75 2004/12/16 11:07:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -434,7 +434,7 @@ sub ensure_ldconfig
 	if ($todo) {
 		require OpenBSD::SharedLibs;
 
-		&OpenBSD::SharedLibs::ensure_ldconfig();
+		&OpenBSD::SharedLibs::ensure_ldconfig;
 	}
 }
 
