@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.12 2001/08/23 05:05:59 art Exp $
+#	$OpenBSD: files.sparc64,v 1.13 2001/09/06 11:01:19 art Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -24,6 +24,10 @@ include "dev/i2o/files.i2o"
 include "dev/mii/files.mii"
 include "dev/atapiscsi/files.atapiscsi"
 include "dev/ata/files.ata"
+
+# COMPAT_NETBSD
+include "compat/netbsd/files.netbsd"
+file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
 
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
@@ -68,6 +72,9 @@ file	arch/sparc64/dev/auxio.c		auxio
 #
 # Console related stuff
 #
+
+attach com at ebus with com_ebus
+file	arch/sparc64/dev/com_ebus.c		com_ebus
 
 device zs {channel = -1}
 attach zs at mainbus, sbus
