@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.101 2003/01/21 17:02:29 markus Exp $
+#	$OpenBSD: files.i386,v 1.102 2003/02/10 22:32:33 jason Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -114,6 +114,11 @@ file	arch/i386/pci/elan520.c		elansc
 device	pcib:	isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
+
+device	hme: ether, ifnet, mii, ifmedia
+file	dev/ic/hme.c			hme
+attach	hme at pci with hme_pci
+file	dev/pci/if_hme_pci.c		hme_pci
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI or ISA+PCMCIA drivers
