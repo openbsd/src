@@ -184,7 +184,7 @@ typedef struct evp_pkey_md_st
 			EVP_rsa_octet_string(),EVP_mdc2())
 #define EVP_dsa_sha() \
 		EVP_PKEY_MD_add(NID_dsaWithSHA,\
-			EVP_dsa(),EVP_mdc2())
+			EVP_dsa(),EVP_sha())
 #define EVP_dsa_sha1() \
 		EVP_PKEY_MD_add(NID_dsaWithSHA1,\
 			EVP_dsa(),EVP_sha1())
@@ -525,7 +525,7 @@ int	EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 int	EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 		int *ekl, unsigned char *iv,EVP_PKEY **pubk, int npubk);
-void	EVP_SealFinal(EVP_CIPHER_CTX *ctx,unsigned char *out,int *outl);
+int	EVP_SealFinal(EVP_CIPHER_CTX *ctx,unsigned char *out,int *outl);
 
 void	EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
 void	EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx,unsigned char *out,

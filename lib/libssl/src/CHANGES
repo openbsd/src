@@ -4,6 +4,19 @@
 
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
+  *) Remove most calls to EVP_CIPHER_CTX_cleanup() in evp_enc.c, this 
+     allows existing EVP_CIPHER_CTX structures to be reused after
+     calling EVP_*Final(). This behaviour is used by encryption
+     BIOs and some applications. This has the side effect that
+     applications must explicitly clean up cipher contexts with
+     EVP_CIPHER_CTX_cleanup() or they will leak memory.
+     [Steve Henson]
+
+  *) Check the values of dna and dnb in bn_mul_recursive before calling
+     bn_mul_comba (a non zero value means the a or b arrays do not contain
+     n2 elements) and fallback to bn_mul_normal if either is not zero.
+     [Steve Henson]
+
   *) Fix escaping of non-ASCII characters when using the -subj option
      of the "openssl req" command line tool. (Robert Joop <joop@fokus.gmd.de>)
      [Lutz Jaenicke]
@@ -1600,7 +1613,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
- Changes between 0.9.6c and 0.9.6d  [XX xxx 2002]
+ Changes between 0.9.6d and 0.9.6e  [XX xxx XXXX]
+
+  *) Fix EVP_dsa_sha macro.
+     [Nils Larsch]
+
+ Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
   *) Fix crypto/asn1/a_sign.c so that 'parameters' is omitted (not
      encoded as NULL) with id-dsa-with-sha1.
