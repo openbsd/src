@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.18 1999/05/01 22:58:02 niklas Exp $	*/
-/*	$EOM: message.c,v 1.131 1999/05/01 22:36:32 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.19 1999/05/02 19:18:48 niklas Exp $	*/
+/*	$EOM: message.c,v 1.132 1999/05/02 12:55:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -592,15 +592,20 @@ message_validate_sa (struct message *msg, struct payload *p)
    * It's time to figure out what SA this message is about.  If it is
    * already set, then we are creating a new phase 1 SA.  Otherwise, lookup
    * the SA using the cookies and the message ID.  If we cannot find
-   * it, setup a phase 2 SA.
-   * XXX Is this correct?
+   * it, and the phase 1 SA is ready, setup a phase 2 SA.
    */
   if (!exchange)
     {
       if (zero_test (pkt + ISAKMP_HDR_RCOOKIE_OFF, ISAKMP_HDR_RCOOKIE_LEN))
 	exchange = exchange_setup_p1 (msg, doi_id);
-      else
+      else if (msg->isakmp_sa->flags & SA_FLAG_READY)
 	exchange = exchange_setup_p2 (msg, doi_id);
+      else
+	{
+	  /* XXX What to do here?  */
+	  message_free (msg);
+	  return -1;
+	}
       if (!exchange)
 	{
 	  /* XXX Log?  */
@@ -1289,6 +1294,11 @@ message_send_info (struct message *msg)
   struct info_args *args = msg->extra;
   u_int8_t payload;
 
+  /* Let the DOI get the first hand on the message.  */
+  if (msg->exchange->doi->informational_pre_hook)
+    if (msg->exchange->doi->informational_pre_hook (msg))
+      return -1;
+
   sz = (args->discr == 'N' ? ISAKMP_NOTIFY_SPI_OFF + args->spi_sz
 	: ISAKMP_DELETE_SPI_OFF + args->u.d.nspis * args->spi_sz);
   buf = calloc (1, sz);
@@ -1330,6 +1340,14 @@ message_send_info (struct message *msg)
       message_free (msg);
       return -1;
     }
+
+  /* Let the DOI get the last hand on the message.  */
+  if (msg->exchange->doi->informational_post_hook)
+    if (msg->exchange->doi->informational_post_hook (msg))
+      {
+	message_free (msg);
+	return -1;
+      }
 
   return 0;
 }
