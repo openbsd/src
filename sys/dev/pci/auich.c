@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.15 2001/09/10 17:38:54 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.16 2001/10/24 03:43:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -934,20 +934,16 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 {
 	struct auich_softc *sc = v;
 	struct auich_dmalist *q;
+	struct auich_dma *p;
 
 	DPRINTF(AUICH_DEBUG_DMA,
 	    ("auich_trigger_output(%x, %x, %d, %p, %p, %p)\n",
-	    kvtop((caddr_t)start), kvtop((caddr_t)end),
-	    blksize, intr, arg, param));
+	    start, end, blksize, intr, arg, param));
 
-#ifdef DIAGNOSTIC
-	{
-	struct auich_dma *p;
 	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
 	if (!p)
 		return -1;
-	}
-#endif
+
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
@@ -956,9 +952,9 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 	 * setup one buffer to play, then LVI dump out the rest
 	 * to the scatter-gather chain.
 	 */
-	sc->pcmo_start = kvtop((caddr_t)start);
+	sc->pcmo_start = p->segs->ds_addr;
 	sc->pcmo_p = sc->pcmo_start + blksize;
-	sc->pcmo_end = kvtop((caddr_t)end);
+	sc->pcmo_end = sc->pcmo_start + (end - start);
 	sc->pcmo_blksize = blksize;
 
 	q = sc->dmap_pcmo = sc->dmalist_pcmo;
@@ -989,20 +985,16 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 {
 	struct auich_softc *sc = v;
 	struct auich_dmalist *q;
+	struct auich_dma *p;
 
 	DPRINTF(AUICH_DEBUG_DMA,
 	    ("auich_trigger_input(%x, %x, %d, %p, %p, %p)\n",
-	    kvtop((caddr_t)start), kvtop((caddr_t)end),
-	    blksize, intr, arg, param));
+	    start, end, blksize, intr, arg, param));
 
-#ifdef DIAGNOSTIC
-	{
-	struct auich_dma *p;
 	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
 	if (!p)
 		return -1;
-	}
-#endif
+
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 
@@ -1011,9 +1003,9 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	 * setup one buffer to play, then LVI dump out the rest
 	 * to the scatter-gather chain.
 	 */
-	sc->pcmi_start = kvtop((caddr_t)start);
+	sc->pcmi_start = p->segs->ds_addr;
 	sc->pcmi_p = sc->pcmi_start + blksize;
-	sc->pcmi_end = kvtop((caddr_t)end);
+	sc->pcmi_end = sc->pcmi_start + (end - start);
 	sc->pcmi_blksize = blksize;
 
 	q = sc->dmap_pcmi = sc->dmalist_pcmi;
