@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.53 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.54 2002/08/01 16:41:33 millert Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -788,8 +788,15 @@ ffs_mountfs(devvp, mp, p)
 	}
 #endif
 
+	/*
+	 * XXX
+	 * Limit max file size.  Even though ffs can handle files up to 16TB,
+	 * we do limit the max file to 2^31 pages to prevent overflow of
+	 * a 32-bit unsigned int.  The buffer cache has its own checks but
+	 * a little added paranoia never hurts.
+	 */
 	ump->um_savedmaxfilesize = fs->fs_maxfilesize;		/* XXX */
-	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;	/* XXX */
+	maxfilesize = (u_int64_t)0x80000000 * MIN(PAGE_SIZE, fs->fs_bsize) - 1;
 	if (fs->fs_maxfilesize > maxfilesize)			/* XXX */
 		fs->fs_maxfilesize = maxfilesize;		/* XXX */
 	if (ronly == 0) {
