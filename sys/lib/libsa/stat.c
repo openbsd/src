@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.3 1996/09/23 14:19:05 mickey Exp $	*/
+/*	$OpenBSD: stat.c,v 1.4 1997/04/02 05:21:48 mickey Exp $	*/
 /*	$NetBSD: stat.c,v 1.3 1994/10/26 05:45:07 cgd Exp $	*/
 
 /*-
@@ -45,10 +45,17 @@ stat(str, sb)
 {
 	int fd, rv;
 
-	fd = open(str, 0);
-	if (fd < 0)
+#ifdef __INTERNAL_LIBSA_CREAD
+	if ((fd = oopen(str, 0)) < 0)
+#else
+	if ((fd = open(str, 0)) < 0)
+#endif
 		return (-1);
 	rv = fstat(fd, sb);
+#ifdef __INTERNAL_LIBSA_CREAD
+	(void)oclose(fd);
+#else
 	(void)close(fd);
+#endif
 	return (rv);
 }
