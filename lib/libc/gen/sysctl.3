@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.83 2002/03/27 16:39:44 mpech Exp $
+.\"	$OpenBSD: sysctl.3,v 1.84 2002/04/03 20:33:49 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -726,6 +726,7 @@ The currently defined protocols and names are:
 .It udp	recvspace	integer	yes
 .It udp	sendspace	integer	yes
 .It gre	allow	integer	yes
+.It gre	wccp	integer	yes
 .It esp	enable	integer	yes
 .It ah	enable	integer	yes
 .It ipcomp	enable	integer	yes
@@ -889,6 +890,10 @@ in production systems.
 .It Li gre.allow
 If set to 0, incoming GRE packets will not be processed.
 If set to any other value, processing will occur.
+.It Li gre.wccp
+If set to 0, incoming WCCPv1-style GRE packets will not be processed.
+If set to any other value, and gre.allow allows GRE packet processing,
+WCCPv1-style GRE packets will be processed.
 .It Li mobileip.allow
 If set to 0, incoming MobileIP encapsulated packets (RFC 2004) will not be processed.
 If set to any other value, processing will occur.
