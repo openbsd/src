@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzio.c,v 1.5 2000/03/02 00:29:52 todd Exp $	*/
+/*	$OpenBSD: gzio.c,v 1.6 2001/09/19 10:58:07 mpech Exp $	*/
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -842,9 +842,9 @@ int ZEXPORT gzclose (file)
 }
 
 /* ===========================================================================
-     Returns the error message for the last error which occured on the
+     Returns the error message for the last error which occurred on the
    given compressed file. errnum is set to zlib error number. If an
-   error occured in the file system and not in the compression library,
+   error occurred in the file system and not in the compression library,
    errnum is set to Z_ERRNO and the application may consult errno
    to get the exact error code.
 */

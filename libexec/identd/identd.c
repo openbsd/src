@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.20 2001/08/12 17:53:16 fgsch Exp $	*/
+/*	$OpenBSD: identd.c,v 1.21 2001/09/19 10:58:07 mpech Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -378,7 +378,7 @@ main(argc, argv)
 			} while (nfds < 0 && errno == EINTR);
 
 			/*
-			 * An error occured in select? Just die
+			 * An error occurred in select? Just die
 			 */
 			if (nfds < 0)
 				ERROR("main: select");

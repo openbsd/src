@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.9 2000/08/20 22:14:32 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.10 2001/09/19 10:58:07 mpech Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -15,7 +15,7 @@ static int initio_done;
  */
 
 
-/* A shell error occured (eg, syntax error, etc.) */
+/* A shell error occurred (eg, syntax error, etc.) */
 void
 #ifdef HAVE_PROTOTYPES
 errorf(const char *fmt, ...)

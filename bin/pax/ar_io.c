@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.23 2001/07/09 07:04:26 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.24 2001/09/19 10:58:07 mpech Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.23 2001/07/09 07:04:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.24 2001/09/19 10:58:07 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -626,7 +626,7 @@ ar_read(buf, cnt)
  * Return:
  *	Number of bytes written. 0 indicates end of volume reached and with no
  *	flaws (as best that can be detected). A -1 indicates an unrecoverable
- *	error in the archive occured.
+ *	error in the archive occurred.
  */
 
 #ifdef __STDC__

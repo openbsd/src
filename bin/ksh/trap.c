@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1999/01/19 20:41:56 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2001/09/19 10:58:07 mpech Exp $	*/
 
 /*
  * signal handling
@@ -171,7 +171,7 @@ fatal_trap_check()
 }
 
 /* Returns the signal number of any pending traps: ie, a signal which has
- * occured for which a trap has been set or for which the TF_DFL_INTR flag
+ * occurred for which a trap has been set or for which the TF_DFL_INTR flag
  * is set.
  */
 int

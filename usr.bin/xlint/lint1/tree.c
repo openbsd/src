@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.4 1998/07/29 03:14:50 millert Exp $	*/
+/*	$OpenBSD: tree.c,v 1.5 2001/09/19 10:58:07 mpech Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.4 1998/07/29 03:14:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.5 2001/09/19 10:58:07 mpech Exp $";
 #endif
 
 #include <stdlib.h>
@@ -671,7 +671,7 @@ build(op, ln, rn)
 		break;
 	}
 
-	/* Return if an error occured. */
+	/* Return if an error occurred. */
 	if (ntn == NULL)
 		return (NULL);
 

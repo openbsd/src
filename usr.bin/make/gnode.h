@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.1 2001/05/23 12:34:43 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.2 2001/09/19 10:58:07 mpech Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -84,7 +84,7 @@ struct GNode_ {
 				 *	mode only)
 				 *  MADE - Was out-of-date and has been made
 				 *  UPTODATE - Was already up-to-date
-				 *  ERROR - An error occured while it was being
+				 *  ERROR - An error occurred while it was being
 				 *	made (used only in compat mode)
 				 *  ABORTED - The target was aborted due to
 				 *	an error making an inferior (compat).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.h,v 1.5 1999/06/15 01:18:35 millert Exp $	*/
+/*	$OpenBSD: lex.h,v 1.6 2001/09/19 10:58:07 mpech Exp $	*/
 
 /*
  * Source input, lexer and parser
@@ -22,7 +22,7 @@ struct source {
 	char	ugbuf[2];	/* buffer for ungetsc() (SREREAD) and
 				 * alias (SALIAS) */
 	int	line;		/* line number */
-	int	errline;	/* line the error occured on (0 if not set) */
+	int	errline;	/* line the error occurred on (0 if not set) */
 	const char *file;	/* input file name */
 	int	flags;		/* SF_* */
 	Area	*areap;

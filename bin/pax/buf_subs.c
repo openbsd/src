@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.8 2001/05/16 03:04:55 mickey Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.9 2001/09/19 10:58:07 mpech Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.8 2001/05/16 03:04:55 mickey Exp $";
+static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.9 2001/09/19 10:58:07 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -597,7 +597,7 @@ rd_wrbuf(in, cpcnt)
 			/*
 			 * read error, return what we got (or the error if
 			 * no data was copied). The caller must know that an
-			 * error occured and has the best knowledge what to
+			 * error occurred and has the best knowledge what to
 			 * do with it
 			 */
 			if ((res = cpcnt - incnt) > 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.8 2001/09/15 20:44:52 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.9 2001/09/19 10:58:07 mpech Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -241,7 +241,7 @@ _dl_unload_deps(elf_object_t *object)
 /*
  *	dlerror()
  *
- *	Return a character string describing the last dl... error occured.
+ *	Return a character string describing the last dl... error occurred.
  */
 const char *
 dlerror()

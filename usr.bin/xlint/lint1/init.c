@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.2 1996/06/26 05:44:14 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.3 2001/09/19 10:58:07 mpech Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: init.c,v 1.2 1996/06/26 05:44:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.3 2001/09/19 10:58:07 mpech Exp $";
 #endif
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.2 1996/06/26 05:44:14 deraadt Exp $"
 #include "lint1.h"
 
 /*
- * initerr is set as soon as a fatal error occured in an initialisation.
+ * initerr is set as soon as a fatal error occurred in an initialisation.
  * The effect is that the rest of the initialisation is ignored (parsed
  * by yacc, expression trees built, but no initialisation takes place).
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.4 2000/06/23 17:04:46 ericj Exp $	*/
+/*	$OpenBSD: read.c,v 1.5 2001/09/19 10:58:07 mpech Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: read.c,v 1.4 2000/06/23 17:04:46 ericj Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.5 2001/09/19 10:58:07 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ static char rcsid[] = "$OpenBSD: read.c,v 1.4 2000/06/23 17:04:46 ericj Exp $";
  * it is displayed from the character closest to the beginning of the input to
  * the end.
  *
- * A non-zero return means an (non-fatal) error occured.
+ * A non-zero return means an (non-fatal) error occurred.
  *
  */
 int
@@ -138,7 +138,7 @@ bytes(fp, off)
  * it is displayed from the line closest to the beginning of the input to
  * the end.
  *
- * A non-zero return means an (non-fatal) error occured.
+ * A non-zero return means an (non-fatal) error occurred.
  *
  */
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.h,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: misc.h,v 1.2 2001/09/19 10:58:08 mpech Exp $ */
 
 /*
  * Miscellaneous syscall wrappers.
@@ -22,7 +22,7 @@ extern int unlock_fd(int fd);
 /*
  * Attempts to write all the supplied data. Returns the number of bytes
  * written. Any value that differs from the requested count means that
- * an error has occured; if the value is -1, errno is set appropriately.
+ * an error has occurred; if the value is -1, errno is set appropriately.
  */
 extern int write_loop(int fd, char *buffer, int count);
 

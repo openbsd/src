@@ -189,7 +189,7 @@ void
 yyerror(s)
     char *s;
 {
-    /* Save the line the first error occured on. */
+    /* Save the line the first error occurred on. */
     if (errorlineno == -1)
 	errorlineno = sudolineno ? sudolineno - 1 : 0;
     if (s) {

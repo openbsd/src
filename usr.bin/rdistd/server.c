@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.9 2001/09/19 10:58:07 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] =
 "$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: server.c,v 1.9 2001/09/19 10:58:07 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
@@ -594,7 +594,7 @@ static void query(name)
 		if (s > 0)
 			(void) sendcmd(QC_ONNFS, NULL);
 
-		/* Either the above check was true or an error occured */
+		/* Either the above check was true or an error occurred */
 		/* and is_nfs_mounted sent the error message */
 		if (s != 0) {
 			*ptarget = CNULL;
@@ -609,7 +609,7 @@ static void query(name)
 		if (s > 0)
 			(void) sendcmd(QC_ONRO, NULL);
 
-		/* Either the above check was true or an error occured */
+		/* Either the above check was true or an error occurred */
 		/* and is_ro_mounted sent the error message */
 		if (s != 0) {
 			*ptarget = CNULL;
@@ -795,7 +795,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 				(void) close(f);
 				(void) unlink(new);
 				fatalerr(
-				   "Read error occured while receiving file.");
+				   "Read error occurred while receiving file.");
 				finish();
 			}
 			amt -= j;

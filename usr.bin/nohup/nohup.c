@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.7 2001/08/19 18:54:47 mickey Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.8 2001/09/19 10:58:07 mpech Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nohup.c,v 1.7 2001/08/19 18:54:47 mickey Exp $";
+static char rcsid[] = "$OpenBSD: nohup.c,v 1.8 2001/09/19 10:58:07 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ static void usage();
 
 /* nohup shall exit with one of the following values:
    126 - The utility was found but could not be invoked.
-   127 - An error occured in the nohup utility, or the utility could
+   127 - An error occurred in the nohup utility, or the utility could
          not be found. */
 #define EXIT_NOEXEC	126
 #define EXIT_NOTFOUND	127

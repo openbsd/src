@@ -1,4 +1,4 @@
-/*	$OpenBSD: schedule.c,v 1.6 2001/01/28 22:45:15 niklas Exp $	*/
+/*	$OpenBSD: schedule.c,v 1.7 2001/09/19 10:58:07 mpech Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: schedule.c,v 1.6 2001/01/28 22:45:15 niklas Exp $";
+static char rcsid[] = "$OpenBSD: schedule.c,v 1.7 2001/09/19 10:58:07 mpech Exp $";
 #endif
 
 #define _SCHEDULE_C_
@@ -264,7 +264,7 @@ schedule_process(int sock)
 		    break;
 	       }
 
-	       /* Only send the packet when no error occured */
+	       /* Only send the packet when no error occurred */
 	       if (!remove) {
 		    st->retries++;
 
