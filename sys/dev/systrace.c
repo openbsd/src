@@ -356,7 +356,9 @@ systracef_select(fp, which, p)
 	if (which != FREAD)
 		return (0);
 
+	systrace_lock();
 	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+	systrace_unlock();
 	ready = TAILQ_FIRST(&fst->messages) != NULL;
 	if (!ready)
 		selrecord(p, &fst->si);
