@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.40 2004/04/15 08:45:04 mickey Exp $
+$OpenBSD: miidevs,v 1.41 2004/06/05 05:42:08 pvalchev Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -56,6 +56,7 @@ oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PLESSEY			0x046b40	Plessey Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
+oui REALTEK			0x000020	Realtek Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
 oui TI				0x080028	Texas Instruments
@@ -84,6 +85,9 @@ oui xxLEVEL1a			0x0004de	Level 1
 
 /* Don't know what's going on here. */
 oui xxDAVICOM			0x006040	Davicom Semiconductor
+
+/* This is the OUI of the gigE PHY in the RealTek 8169S/8110S chips */
+oui xxREALTEK			0x000732	Realtek Semiconductor
 
 /* Contrived vendor for dcphy */
 oui xxDEC			0x040440	Digital Clone
@@ -172,6 +176,10 @@ model PLESSEY NWK914		0x0000 NWK914 10/100 media interface
 
 /* Quality Semiconductor PHYs */
 model QUALSEMI QS6612		0x0000 QS6612 10/100 media interface
+
+/* Realtek Semiconductor PHYs */
+model REALTEK RTL8201L		0x0020 RTL8201L 10/100 media interface
+model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S media interface
 
 /* Seeq PHYs */
 model xxSEEQ 80220		0x0003 Seeq 80220 10/100 media interface
