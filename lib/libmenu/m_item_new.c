@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_item_new.c,v 1.7 2001/01/22 18:02:04 millert Exp $	*/
+/*	$OpenBSD: m_item_new.c,v 1.8 2003/04/04 23:04:36 tdeval Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -182,7 +182,7 @@ set_menu_mark (MENU * menu, const char * mark)
 	  menu->mark = (char *)malloc(l+1);
 	  if (menu->mark)
 	    {
-	      strcpy(menu->mark, mark);
+	      strlcpy(menu->mark, mark, l+1);
 	      if (menu != &_nc_Default_Menu)
 		menu->status |= _MARK_ALLOCATED;
 	    }
