@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.109 2002/09/03 20:10:00 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.110 2002/09/04 04:21:19 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -180,8 +180,7 @@ ubsec_attach(parent, self, aux)
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5801 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805))
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
 
@@ -330,7 +329,9 @@ skip_rng:
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
 
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, ubsec_kprocess);
+#if 0
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP_CRT, 0, ubsec_kprocess);
+#endif
 	}
 
 	printf("\n");
