@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.325 2003/03/02 12:00:39 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.326 2003/03/04 11:23:43 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1802,8 +1802,6 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, sa_family_t af,
 
 	*uid = UID_MAX;
 	*gid = GID_MAX;
-	if (af != AF_INET)
-		return (0);
 	switch (proto) {
 	case IPPROTO_TCP:
 		sport = pd->hdr.tcp->th_sport;
@@ -1830,12 +1828,31 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, sa_family_t af,
 		saddr = pd->dst;
 		daddr = pd->src;
 	}
-	inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
-	if (inp == NULL) {
-		inp = in_pcblookup(tb, &saddr->v4, sport, &daddr->v4, dport,
-		    INPLOOKUP_WILDCARD);
-		if (inp == NULL)
-			return (0);
+	switch(af) {
+	case AF_INET:
+		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
+		if (inp == NULL) {
+			inp = in_pcblookup(tb, &saddr->v4, sport, &daddr->v4,
+			    dport, INPLOOKUP_WILDCARD);
+			if (inp == NULL)
+				return (0);
+		}
+		break;
+#ifdef INET6
+	case AF_INET6:
+		inp = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
+		    dport);
+		if (inp == NULL) {
+			inp = in_pcblookup(tb, &saddr->v6, sport, &daddr->v6,
+			    dport, INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
+			if (inp == NULL)
+				return (0);
+		}
+		break;
+#endif /* INET6 */
+
+	default:
+		return (0);
 	}
 	*uid = inp->inp_socket->so_euid;
 	*gid = inp->inp_socket->so_egid;
