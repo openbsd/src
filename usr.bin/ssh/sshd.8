@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.44 2000/05/02 23:41:31 deraadt Exp $
+.\" $Id: sshd.8,v 1.45 2000/05/03 07:22:09 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -303,9 +303,7 @@ Specifies whether
 .Nm
 should ignore the user's
 .Pa $HOME/.ssh/known_hosts
-and
-.Pa $HOME/.ssh/known_hosts2
-files during
+during
 .Cm RhostsRSAAuthentication .
 The default is
 .Dq no .
@@ -769,17 +767,6 @@ files into this file, as described in
 .Xr ssh-keygen 1 .
 .It Pa "/etc/ssh_known_hosts" and "$HOME/.ssh/known_hosts"
 These files are consulted when using rhosts with RSA host
-authentication to check the public key of the host.
-The key must be listed in one of these files to be accepted.
-The client uses the same files
-to verify that the remote host is the one we intended to connect.
-These files should be writable only by root/the owner.
-.Pa /etc/ssh_known_hosts
-should be world-readable, and
-.Pa $HOME/.ssh/known_hosts
-can but need not be world-readable.
-.It Pa "/etc/ssh_known_hosts2" and "$HOME/.ssh/known_hosts2"
-These files are consulted when using rhosts with DSA host
 authentication to check the public key of the host.
 The key must be listed in one of these files to be accepted.
 The client uses the same files
