@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.2 1999/08/13 08:26:29 fgsch Exp $	*/
 /*	$NetBSD: usb_port.h,v 1.7 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ int __CONCAT(dname,_detach) __P((struct device *, int)); \
 int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
 \
 struct cfdriver __CONCAT(dname,_cd) = { \
-	NULL, _1, DV_DULL \
+	NULL, #dname, DV_DULL \
 }; \
 \
 struct cfattach __CONCAT(dname,_ca) = { \
