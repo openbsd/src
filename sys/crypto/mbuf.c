@@ -1,4 +1,4 @@
-/*      $OpenBSD: mbuf.c,v 1.2 2000/04/20 13:05:30 art Exp $	*/
+/*      $OpenBSD: mbuf.c,v 1.3 2000/04/24 04:54:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -49,50 +49,41 @@ mbuf2pages(m, np, pp, lp, maxp, nicep)
 	int maxp;
 	int *nicep;
 {
-	struct  mbuf *m0;
 	int npa = 0, tlen = 0;
 
-	/* generate a [pa,len] array from an mbuf */
-	for (m0 = m; m; m = m->m_next) {
-		void *va;
-		long pg, npg;
-		int len, off;
+	for (; m != NULL; m = m->m_next) {
+		vaddr_t va, off;
+		paddr_t pa;
+		int len;
 
-		if (m->m_len == 0)
+		if ((len = m->m_len) == 0)
 			continue;
-		len = m->m_len;
 		tlen += len;
-		va = m->m_data;
+		va = (vaddr_t)m->m_data;
+		off = va & PAGE_MASK;
+		va -= off;
+
+next_page:
+		pa = pmap_extract(pmap_kernel(), va);
+		if (pa == 0)
+			panic("mbuf2pages: pa == 0");
+
+		pa += off;
 
 		lp[npa] = len;
-		pp[npa] = vtophys(va);
-		pg = pp[npa] & ~PAGE_MASK;
-		off = (long)va & PAGE_MASK;
+		pp[npa] = pa;
 
-		while (len + off > PAGE_SIZE) {
-			va = va + PAGE_SIZE - off;
-			npg = vtophys(va);
-			if (npg != pg) {
-				/* FUCKED UP condition */
-				if (++npa > maxp)
-					return (0);
-				continue;
-			}
-			lp[npa] = PAGE_SIZE - off;
-			off = 0;
-
-			if (++npa > maxp)
-				return (0);
-
-			lp[npa] = len - (PAGE_SIZE - off);
-			len -= lp[npa];
-			pp[npa] = vtophys(va);
-		}
-
-		if (++npa == maxp)
+		if (++npa > maxp)
 			return (0);
-	}
 
+		if (len + off > PAGE_SIZE) {
+			lp[npa - 1] = PAGE_SIZE - off;
+			va += PAGE_SIZE;
+			len -= PAGE_SIZE;
+			goto next_page;
+		}
+	}
+			
 	if (nicep) {
 		int nice = 1;
 		int i;
