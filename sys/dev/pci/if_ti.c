@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.1 1999/07/25 16:51:55 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.2 1999/08/03 00:55:44 ho Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -575,8 +575,13 @@ static int ti_alloc_jumbo_mem(sc)
 	struct ti_jpool_entry   *entry;
 
 	/* Grab a big chunk o' storage. */
+#ifndef UVM
 	sc->ti_cdata.ti_jumbo_buf = (caddr_t) vm_page_alloc_contig(
 	    TI_JMEM, 0x100000, 0xffffffff, PAGE_SIZE);
+#else
+	sc->ti_cdata.ti_jumbo_buf = (caddr_t) uvm_pagealloc_contig(
+	    TI_JMEM, 0x100000, 0xffffffff, PAGE_SIZE);
+#endif
 
 	if (sc->ti_cdata.ti_jumbo_buf == NULL) {
 		printf("%s: no memory for jumbo buffers!\n",
@@ -1615,8 +1620,13 @@ ti_attach(parent, self, aux)
 	     ether_sprintf(sc->arpcom.ac_enaddr));
 
 	/* Allocate the general information block and ring buffers. */
+#ifndef UVM
 	sc->ti_rdata_ptr = (caddr_t) vm_page_alloc_contig(
 	    sizeof(struct ti_ring_data), 0x100000, 0xffffffff, PAGE_SIZE);
+#else
+	sc->ti_rdata_ptr = (caddr_t) uvm_pagealloc_contig(
+	    sizeof(struct ti_ring_data), 0x100000, 0xffffffff, PAGE_SIZE);
+#endif
 
 	if (sc->ti_rdata_ptr == NULL) {
 		printf("%s: no memory for list buffers!\n", sc->sc_dv.dv_xname);
