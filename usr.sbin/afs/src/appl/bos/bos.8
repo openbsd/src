@@ -7,32 +7,27 @@
 .Nm bos
 .Nd is the client part of the Basic overseer daemon that manage AFS server processes.
 .Sh SYNOPSIS
-.Nm bos addhost
-.Nm bos addkey
-.Nm bos adduser
-.Nm bos create
-.Nm bos delete
-.Nm bos exec
-.Nm bos getdate
-.Nm bos getlog
-.Nm bos getrestart
-.Nm bos install
-.Nm bos listhosts
-.Nm bos listkeys
-.Nm bos listusers
-.Nm bos prune
-.Nm bos removehost
-.Nm bos removekey
-.Nm bos removeuser
-.Nm bos restart
-.Nm bos salvage
-.Nm bos setauth
-.Nm bos setcellname
-.Nm bos setrestart
-.Nm bos shutdown
-.Nm bos start
-.Nm bos stop
-.Nm bos uninstall
+.Nm bos
+.Op Ar addhost | addkey | adduser | create
+.Op Ar args
+.Nm bos
+.Op Ar delete | exec | getdate | getlog
+.Op Ar args
+.Nm bos
+.Op Ar getrestart | install | listhosts | listkeys
+.Op Ar args
+.Nm bos
+.Op Ar listusers | prune | removehost | removekey
+.Op Ar args
+.Nm bos
+.Op Ar removeuser | restart | salvage | setauth
+.Op Ar args
+.Nm bos
+.Op Ar setcellname | setrestart | shutdown | start
+.Op Ar args
+.Nm bos
+.Op Ar stop | uninstall
+.Op Ar args
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,10 +62,9 @@ performing automatic tasks.
 .Nm
 have several subcommands:
 .Pp
-.Nm
 .Ic addhost
-.Fl server Ar "machine name"
-.Fl host Ar "host name"
+.Fl server Ar server
+.Fl host Ar host
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
@@ -85,12 +79,10 @@ as a peer and will use when they synchronize their databases (the
 database servers) need to be restarted.
 .Ed
 .Pp
-
-.Nm
 .Ic addkey
-.Fl server Ar "machine name"
+.Fl server Ar server
 .Op Fl key Ar key
-.Op kvno Ar "key version number"
+.Op kvno Ar keyversionnumber
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
@@ -99,32 +91,29 @@ add a new afs-key to the KeyFile.
 Add the ticket specified in
 .Ar key
 with
-.Ar "key version number"
+.Ar keyversionnumber
 to the
 .Ar server .
 .Ed
 .Pp
-
-.Nm
 .Ic adduser
-.Fl server Ar "machine name"
-.Fl user Ar "user name"
+.Fl server Ar server
+.Fl user Ar user
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-add a new user the the SuperUser file on the fileserver, this gives
-the user right to manage volumes and bosserver.
+add a new user the the SuperUser file on the fileserver
+.Ar server ,
+thus giving that user the right to manage volumes and bosserver.
 .Ed
 .Pp
-
-.Nm
 .Ic create
-.Fl server Ar "machine name"
-.Fl instance Ar "server process name"
-.Fl type Ar "server type"
-.Fl cmd Ar "command lines"
-.Op Fl notifier Ar "notifier program"
+.Fl server Ar server
+.Fl instance Ar serverprocessname
+.Fl type Ar servertype
+.Fl cmd Ar command
+.Op Fl notifier Ar program
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
@@ -136,15 +125,13 @@ at the
 of
 .Ar type.
 The instance will depending on type run the
-.Ar cmd
+.Ar command
 command.
 .Ed
 .Pp
-
-.Nm
 .Ic delete
-.Fl server Ar "machine name"
-.Fl instance Ar "server process name"
+.Fl server Ar server
+.Fl instance Ar instance
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
@@ -155,59 +142,51 @@ from the
 .Ar server .
 .Ed
 .Pp
-
-.Nm
 .Ic exec
 .Bd -filled -offset indent -compact
-.Fl server Ar "machine name"
-.Fl cmd Ar "command to execute"
+.Fl server Ar server
+.Fl cmd Ar command
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
 Will execute
-.Ar cmd
+.Ar command
 on the server
 .Ar server .
 .Ed
 .Pp
-
-.Nm
 .Ic getdate
-.Fl server Ar "machine name"
-.Fl files Ar "files to check"
-.Op Fl dir Ar "destination dir"
+.Fl server Ar server
+.Fl files Ar checkfiles
+.Op Fl dir Ar dir
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-get dates for 
-.Ar files
+get dates for
+.Ar checkfiles
 in server-root directory (that can be specified with
 .Ar dir
 if that is needed) on
 .Ar server.
 .Ed
 .Pp
-
-.Nm
 .Ic getlog
-.Fl server Ar "machine name"
-.Fl file Ar "log file to examine"
+.Fl server Ar server
+.Fl file Ar logfile
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-List the content of
+List the content of the
 .Ar logfile
-that resides on
+that resides on the
 .Ar server.
 .Ed
 .Pp
-
-.Nm
 .Ic getrestart
-.Fl server Ar "machine name"
-.Op Fl dir Ar "destination dir"
+.Fl server Ar server
+.Op Fl dir Ar dest
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
@@ -216,109 +195,74 @@ Thet the restart time from
 .Ar server.
 .Ed
 .Pp
-
-.Nm
 .Ic install
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic listhosts
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic listkeys
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic listusers
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic prune
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic removehost
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic removekey
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic removeuser
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic restart
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic salvage
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic setauth
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic setcellname
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic setrestart
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic shutdown
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic start
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic stop
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
-.Nm
 .Ic uninstall
 .Bd -filled -offset indent -compact
 .Ed
 .Pp
-
 .Sh SEE ALSO
 .Xr fs 1 ,
 .Xr pts 1 ,
