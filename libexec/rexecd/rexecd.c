@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.9 1998/07/07 06:02:12 deraadt Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.10 1998/07/09 23:54:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -150,32 +150,20 @@ doit(f, fromp)
 		port = port * 10 + c - '0';
 	}
 	(void) alarm(0);
-	if (port != 0) {
-		s = socket(AF_INET, SOCK_STREAM, 0);
-		if (s < 0)
-			exit(1);
-		if (bind(s, (struct sockaddr *)&asin, sizeof (asin)) < 0)
-			exit(1);
-		(void) alarm(60);
-		fromp->sin_port = htons(port);
-		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0)
-			exit(1);
-		(void) alarm(0);
-	}
 	getstr(user, sizeof(user), "username");
 	getstr(pass, sizeof(pass), "password");
 	getstr(cmdbuf, sizeof(cmdbuf), "command");
 	setpwent();
 	pwd = getpwnam(user);
 	if (pwd == NULL) {
-		error("Login incorrect.\n");
+		error("Permission denied.\n");
 		exit(1);
 	}
 	endpwent();
 	if (*pwd->pw_passwd != '\0') {
 		namep = crypt(pass, pwd->pw_passwd);
 		if (strcmp(namep, pwd->pw_passwd)) {
-			error("Password incorrect.\n");
+			error("Permission denied.\n");
 			exit(1);
 		}
 	}
@@ -187,6 +175,22 @@ doit(f, fromp)
 	if (chdir(pwd->pw_dir) < 0) {
 		error("No remote directory.\n");
 		exit(1);
+	}
+	if (port != 0) {
+		if (port < IPPORT_RESERVED) {
+			syslog(LOG_ERR, "client stderr port in reserved range\n");
+			exit(1); 
+		}
+		s = socket(AF_INET, SOCK_STREAM, 0);
+		if (s < 0)
+			exit(1);
+		if (bind(s, (struct sockaddr *)&asin, sizeof (asin)) < 0)
+			exit(1);
+		(void) alarm(60);
+		fromp->sin_port = htons(port);
+		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0)
+			exit(1);
+		(void) alarm(0);
 	}
 	seteuid(0);
 	setegid(0);	/* XXX use a saved gid instead? */
