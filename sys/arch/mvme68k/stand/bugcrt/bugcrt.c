@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugcrt.c,v 1.2 1996/05/16 02:21:59 chuck Exp $ */
+/*	$OpenBSD: bugcrt.c,v 1.3 1996/05/19 19:51:48 chuck Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -35,7 +35,7 @@ start()
 	bugargs.arg_end = arg_end;
 	bugargs.nbarg_start = nbarg_start;
 	bugargs.nbarg_end = nbarg_end;
-	*arg_end = 0;
+	*bugargs.arg_end = 0;
 
 	bzero(&edata, (int)&end-(int)&edata);
 	id = mvmeprom_getbrdid();
