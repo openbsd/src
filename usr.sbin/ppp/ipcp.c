@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.3 1997/12/06 12:09:14 brian Exp $
+ * $Id: ipcp.c,v 1.4 1997/12/06 22:43:47 brian Exp $
  *
  *	TODO:
  *		o More RFC1772 backwoard compatibility
@@ -364,7 +364,7 @@ IpcpDecodeConfig(u_char * cp, int plen, int mode_type)
     if (type < NCFTYPES)
       snprintf(tbuff, sizeof(tbuff), " %s[%d] ", cftypes[type], length);
     else if (type > 128 && type < 128 + NCFTYPES128)
-      snprintf(tbuff, sizeof(tbuff), " %s[%d] ", cftypes128[type], length);
+      snprintf(tbuff, sizeof(tbuff), " %s[%d] ", cftypes128[type-128], length);
     else
       snprintf(tbuff, sizeof(tbuff), " ??? ");
 
