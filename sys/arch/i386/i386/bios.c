@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.15 1997/10/25 03:01:30 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.16 1997/10/25 07:01:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -121,7 +121,7 @@ biosattach(parent, self, aux)
 #endif
 	u_int8_t *va = ISA_HOLE_VADDR(0xffff0);
 	char *str;
-	bootarg_t *p, *q;
+	bootarg_t *q;
 
 	switch (va[14]) {
 	default:
@@ -139,7 +139,7 @@ biosattach(parent, self, aux)
 
 	printf("%s:", sc->sc_dev.dv_xname);
 
-	for(q = p = bootargp; q->ba_type != BOOTARG_END; q = q->ba_next) {
+	for(q = bootargp; q->ba_type != BOOTARG_END; q = q->ba_next) {
 		q->ba_next = (bootarg_t *)((caddr_t)q + q->ba_size);
 		switch (q->ba_type) {
 		case BOOTARG_MEMMAP:
