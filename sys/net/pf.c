@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.470 2004/12/07 10:33:41 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.471 2004/12/07 18:02:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -635,7 +635,7 @@ pf_src_connlimit(struct pf_state **state)
 	pf_add_threshold(&(*state)->src_node->conn_rate);
 
 	if ((*state)->rule.ptr->max_src_conn &&
-    	    (*state)->rule.ptr->max_src_conn <
+	    (*state)->rule.ptr->max_src_conn <
 	    (*state)->src_node->conn) {
 		pf_status.lcounters[LCNT_SRCCONN]++;
 		bad++;
@@ -684,7 +684,7 @@ pf_src_connlimit(struct pf_state **state)
 		/* kill existing states if that's required. */
 		if ((*state)->rule.ptr->flush) {
 			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
-			
+
 			RB_FOREACH(s, pf_state_tree_id, &tree_id) {
 				/*
 				 * Kill states from this source.  (Only those
@@ -3861,7 +3861,8 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, NULL, &pftag, &tag))
+		else if (r->match_tag &&
+		    !pf_match_tag(m, r, NULL, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			if (r->anchor == NULL) {

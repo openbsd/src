@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.61 2004/12/04 07:49:48 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.62 2004/12/07 18:02:04 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -865,7 +865,7 @@ pfr_insert_kentry(struct pfr_ktable *kt, struct pfr_addr *ad, long tzero)
 	p = pfr_lookup_addr(kt, ad, 1);
 	if (p != NULL)
 		return (0);
- 	p = pfr_create_kentry(ad, 1);
+	p = pfr_create_kentry(ad, 1);
 	if (p == NULL)
 		return (EINVAL);
 

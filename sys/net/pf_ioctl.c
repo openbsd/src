@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.134 2004/12/05 10:46:26 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.135 2004/12/07 18:02:04 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2651,15 +2651,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pstore.expire -= secs;
 			else
 				pstore.expire = 0;
-                        
+
 			/* adjust the connection rate estimate */
 			diff = secs - n->conn_rate.last;
-        		if (diff >= n->conn_rate.seconds)
-                		pstore.conn_rate.count = 0;
-        		else    
-                		pstore.conn_rate.count -=
+			if (diff >= n->conn_rate.seconds)
+				pstore.conn_rate.count = 0;
+			else
+				pstore.conn_rate.count -=
 				    n->conn_rate.count * diff /
-                    		    n->conn_rate.seconds;
+				    n->conn_rate.seconds;
 
 			error = copyout(&pstore, p, sizeof(*p));
 			if (error)
