@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.5 2000/01/16 00:35:43 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.6 2000/01/25 17:18:59 espie Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -55,6 +55,8 @@
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
+
+#include <machine/cpu.h>
 
 #ifdef INET
 #include <netinet/in.h>
