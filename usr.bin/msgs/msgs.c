@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.8 1997/04/02 17:21:24 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.9 1997/04/28 05:48:32 downsj Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.8 1997/04/02 17:21:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.9 1997/04/28 05:48:32 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static char rcsid[] = "$OpenBSD: msgs.c,v 1.8 1997/04/02 17:21:24 deraadt Exp $"
 #define OBJECT		/* will object to messages without Subjects */
 #define REJECT	/* will reject messages without Subjects
 			   (OBJECT must be defined also) */
-/* #define UNBUFFERED	/* use unbuffered output */
+#undef UNBUFFERED	/* use unbuffered output */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -88,6 +88,7 @@ static char rcsid[] = "$OpenBSD: msgs.c,v 1.8 1997/04/02 17:21:24 deraadt Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
@@ -141,9 +142,14 @@ int	Lpp = 0;
 time_t	t;
 time_t	keep;
 
-char	*nxtfld();
-void	onintr();
-void	onsusp();
+void prmesg __P((int));
+void onintr __P((int));
+void onsusp __P((int));
+int linecnt __P((FILE *));
+int next __P((char *));
+void ask __P((char *));
+void gfrsub __P((FILE *));
+char *nxtfld __P((char *));
 
 /* option initialization */
 bool	hdrs = NO;
@@ -156,8 +162,10 @@ bool	clean = NO;
 bool	lastcmd = NO;
 jmp_buf	tstpbuf;
 
+int
 main(argc, argv)
-int argc; char *argv[];
+	int argc;
+	char *argv[];
 {
 	bool newrc, already;
 	int rcfirst = 0;		/* first message to print (from .rc) */
@@ -609,6 +617,7 @@ cmnd:
 	exit(0);
 }
 
+void
 prmesg(length)
 int length;
 {
@@ -657,7 +666,8 @@ int length;
 }
 
 void
-onintr()
+onintr(unused)
+	int unused;
 {
 	signal(SIGINT, onintr);
 	if (mailing)
@@ -682,9 +692,9 @@ onintr()
  * We have just gotten a susp.  Suspend and prepare to resume.
  */
 void
-onsusp()
+onsusp(unused)
+	int unused;
 {
-
 	signal(SIGTSTP, SIG_DFL);
 	sigsetmask(0);
 	kill(0, SIGTSTP);
@@ -693,8 +703,9 @@ onsusp()
 		longjmp(tstpbuf, 0);
 }
 
+int
 linecnt(f)
-FILE *f;
+	FILE *f;
 {
 	off_t oldpos = ftell(f);
 	int l = 0;
@@ -707,8 +718,9 @@ FILE *f;
 	return (l);
 }
 
+int
 next(buf)
-char *buf;
+	char *buf;
 {
 	int i;
 	sscanf(buf, "%d", &i);
@@ -716,8 +728,9 @@ char *buf;
 	return(--i);
 }
 
+void
 ask(prompt)
-char *prompt;
+	char *prompt;
 {
 	char	inch;
 	int	n, cmsg, fd;
@@ -784,7 +797,7 @@ char *prompt;
 			return;
 		}
 
-		while (n = fread(inbuf, 1, sizeof inbuf, cpfrom))
+		while ((n = fread(inbuf, 1, sizeof inbuf, cpfrom)))
 			fwrite(inbuf, 1, n, cpto);
 
 		fclose(cpfrom);
@@ -801,8 +814,9 @@ char *prompt;
 	}
 }
 
+void
 gfrsub(infile)
-FILE *infile;
+	FILE *infile;
 {
 	off_t frompos;
 
@@ -881,7 +895,7 @@ FILE *infile;
 
 char *
 nxtfld(s)
-char *s;
+	char *s;
 {
 	if (*s) while (*s && *s > ' ') s++;	/* skip over this field */
 	if (*s) while (*s && *s <= ' ') s++;	/* find start of next field */
