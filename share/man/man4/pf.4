@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.12 2001/12/10 22:02:05 weingart Exp $
+.\"	$OpenBSD: pf.4,v 1.13 2001/12/16 23:42:16 deraadt Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -251,24 +251,28 @@ to find the internal host/port of a NATed connection.
 #include <net/pfvar.h>
 #include <stdio.h>
 
-u_int32_t read_address(const char *s)
+u_int32_t
+read_address(const char *s)
 {
 	int a, b, c, d;
+
 	sscanf(s, "%i.%i.%i.%i", &a, &b, &c, &d);
 	return htonl(a << 24 | b << 16 | c << 8 | d);
 }
 
-void print_address(u_int32_t a)
+void
+print_address(u_int32_t a)
 {
 	a = ntohl(a);
-	printf("%i.%i.%i.%i", a >> 24 & 255, a >> 16 & 255,
+	printf("%d.%d.%d.%d", a >> 24 & 255, a >> 16 & 255,
 	    a >> 8 & 255, a & 255);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
-	int dev;
 	struct pfioc_natlook nl;
+	int dev;
 
 	if (argc != 5) {
 		printf("%s <gwy addr> <gwy port> <ext addr> <ext port>\\n",
@@ -292,10 +296,9 @@ int main(int argc, char *argv[])
         if (ioctl(dev, DIOCNATLOOK, &nl))
 		err(0, "DIOCNATLOOK");
 
-	printf("internal host "); print_address(nl.rsaddr.v4.s_addr);
+	printf("internal host ");
+	print_address(nl.rsaddr.v4.s_addr);
 	printf(":%u\\n", ntohs(nl.rsport));
-
-	close(dev);
 	return 0;
 }
 .Ed
