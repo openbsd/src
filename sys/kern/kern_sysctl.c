@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.68 2002/06/08 23:35:35 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.69 2002/06/09 04:27:25 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@
 #include <sys/vmmeter.h>
 #include <sys/namei.h>
 #include <sys/exec.h>
+#include <sys/mbuf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -329,6 +330,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		     p));
 	case KERN_FILE:
 		return (sysctl_file(oldp, oldlenp));
+	case KERN_MBSTAT:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &mbstat,
+		    sizeof(mbstat)));
 #ifdef GPROF
 	case KERN_PROF:
 		return (sysctl_doprof(name + 1, namelen - 1, oldp, oldlenp,
