@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.8 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: signal.h,v 1.9 2001/12/20 06:20:26 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -55,15 +55,25 @@ struct  sigcontext {
 	int	sc_fpsr;
 	int	sc_fpcr;
 	int	sc_ssbr;
+#define sc_duap	sc_ssbr	/* mc88110 */
 	int	sc_dmt0;
+#define sc_dsr	sc_dmt0	/* mc88110 */
 	int	sc_dmd0;
+#define sc_dlar	sc_dmd0	/* mc88110 */
 	int	sc_dma0;
+#define sc_dpar	sc_dma0	/* mc88110 */
 	int	sc_dmt1;
+#define sc_isr	sc_dmt1	/* mc88110 */
 	int	sc_dmd1;
+#define sc_ilar	sc_dmd1	/* mc88110 */
 	int	sc_dma1;
+#define sc_ipar	sc_dma1	/* mc88110 */
 	int	sc_dmt2;
+#define sc_isap sc_dmt2	/* mc88110 */
 	int	sc_dmd2;
+#define sc_dsap sc_dmd2	/* mc88110 */
 	int	sc_dma2;
+#define sc_iuap sc_dma2	/* mc88110 */
 	int	sc_fpecr;
 	int	sc_fphs1;
 	int	sc_fpls1;
@@ -73,6 +83,6 @@ struct  sigcontext {
 	int	sc_fprh;
 	int	sc_fprl;
 	int	sc_fpit;
-	int	sc_xxxx;	/* padd to double word boundary */
+	int	sc_xxxx;	/* pad to double word boundary */
 };
 #endif /* __MACHINE_SIGNAL_H__ */
