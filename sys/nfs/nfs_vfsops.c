@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.27 1999/06/10 05:55:16 millert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.28 2000/01/01 23:50:59 millert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -149,11 +149,11 @@ nfs_statfs(mp, sbp, p)
 	if (v3) {
 		sbp->f_bsize = NFS_FABLKSIZE;
 		tquad = fxdr_hyper(&sfp->sf_tbytes);
-		sbp->f_blocks = (long)(tquad / ((u_quad_t)NFS_FABLKSIZE));
+		sbp->f_blocks = (u_int32_t)(tquad / (u_quad_t)NFS_FABLKSIZE);
 		tquad = fxdr_hyper(&sfp->sf_fbytes);
-		sbp->f_bfree = (long)(tquad / ((u_quad_t)NFS_FABLKSIZE));
+		sbp->f_bfree = (u_int32_t)(tquad / (u_quad_t)NFS_FABLKSIZE);
 		tquad = fxdr_hyper(&sfp->sf_abytes);
-		sbp->f_bavail = (long)(tquad / ((u_quad_t)NFS_FABLKSIZE));
+		sbp->f_bavail = (int32_t)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
 		sbp->f_files = (fxdr_unsigned(int32_t,
 		    sfp->sf_tfiles.nfsuquad[1]) & 0x7fffffff);
 		sbp->f_ffree = (fxdr_unsigned(int32_t,
