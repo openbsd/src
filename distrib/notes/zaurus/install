@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.4 2005/01/15 17:52:09 miod Exp $
+dnl	$OpenBSD: install,v 1.5 2005/01/16 01:46:56 deraadt Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -50,11 +50,21 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	defined on the disk, these will usually show up as partition
 	'h', 'i' and so on.-:})
 
-dnl Change this after fdisk swap command is added.
 	One of the three partitions on the Zaurus C3000 hard drive is
-	a 3GB MSDOS filesystem.  It is recommended that you use fdisk
-	to convert this Zaurus partition to an OpenBSD partition by
-	changing the partition ID to 'A5'.
+	a 3GB MSDOS filesystem.  This partition can be a lot smaller,
+	it is therefore recommended that you cut most of the space off
+	this tiny MSDOS partition, and create a new 0xA5 partition
+	afterwards, like this:
+
+	 0: 83    0   3 13 - 1511   7 17 [          63:      205569 ] Linux files*
+	 1: 83 1512   0  1 - 7559   7 17 [      205632:      822528 ] Linux files*
+	 2: 0C 7560   0  1 - 9065   7  1 [     1028160:      204800 ] Win95 FAT32L
+	 3: A6 9065   7  2 - 67885   5  3 [     1232960:     7999488 ] OpenBSD     
+
+	After shrinking the MSDOS partition, please be sure to newfs it
+	using:
+
+		newfs -t msdos /dev/rwd0k
 
 	Note that all OpenBSD partitions in the disk label must have an
 	offset that makes it start within the OpenBSD part of the disk,
@@ -62,6 +72,69 @@ dnl Change this after fdisk swap command is added.
 	is within the bounds of the 'c' partition if the disk is not being
 	shared with other operating systems, and within the OpenBSD fdisk
 	partition if the disk is being shared.
+
+	For purposes of recovery in case Linux becomes inoperable for
+	one reason or another with HDD1 Errors and such, we detail the
+	process to come up single user:
+
+		Remove power and the battery.
+		Begin holding down the 'b' and 'd' keys.
+		Wait for 1 minute.
+		Insert battery and power on unit.
+		As soon as a login screen starts to show up, release the 'b'
+		and 'd' keys.
+		Login as root.
+
+	The following sequence is also recommended inside Linux so that
+	problems will happen less often.  By default the boot scripts fail
+	if the MSDOS partition is corrupt in any way.  If you are already
+	root do the following, which will skip mounting the MSDOS partition.
+
+		Login as root.
+
+		Find the rc.rofilesys file.  It is either in
+		/root/etc/rc.d
+
+			cd /root/home/etc/rc.d
+
+		Or you have to mount it using:
+
+			mount /dev/mtdblock2 /mnt
+			cd /mnt/home/etc/rc.d
+
+		cat rc.rofilesys | sed -e '/vfat/s/^/#/' > vfat
+		diff -u rc.rofilesys vfat		# to double check
+		cp rc.rofilesys rc.rofilesys.vfat
+		cp vfat rc.rofilesys
+		
+	In these cases below we avoid using vi because Linux quality is of
+	such high quality that vi locks up the console.  If you logged in
+	multiuser you may be able to use vi.
+
+	Please be aware that if you fsck the two Linux partitions on
+	the disk, they are actually ext3fs partitions and you will thereby
+	corrupt their journals.  This will make them into ext2fs partitions.
+	Linux will not be able to boot, and you will need to use the
+	processes above to get to the point where Linux will mount them as
+	ext2fs partitions:
+
+		Login as root.
+
+		Find the rc.rofilesys file.  It is either in
+		/root/etc/rc.d
+
+			cd /root/home/etc/rc.d
+
+		Or you have to mount it using:
+
+			mount /dev/mtdblock2 /mnt
+			cd /mnt/home/etc/rc.d
+
+		cat rc.rofilesys | sed -e '/^LINUXFMT=ext3$/s/^/#/' \
+			-e '/^#LINUXFMT=ext2$/s/^#//' > ext2
+		diff -u rc.rofilesys ext2		# to double check
+		cp rc.rofilesys rc.rofilesys.ext2
+		cp ext2 rc.rofilesys
 
 	If you have created an 'A5' OpenBSD partition earlier using fdisk,
 	you will be able to use disklabel to cut that partition into at
