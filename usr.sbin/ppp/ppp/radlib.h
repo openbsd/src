@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.h,v 1.3 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: radlib.h,v 1.4 2002/06/15 01:33:23 brian Exp $
  */
 
 #ifndef _RADLIB_H_
@@ -190,7 +190,10 @@ int			 rad_put_attr(struct rad_handle *, int,
 int			 rad_put_int(struct rad_handle *, int, u_int32_t);
 int			 rad_put_string(struct rad_handle *, int,
 			    const char *);
+ssize_t			 rad_request_authenticator(struct rad_handle *, char *,
+			    size_t);
 int			 rad_send_request(struct rad_handle *);
+const char		*rad_server_secret(struct rad_handle *);
 const char		*rad_strerror(struct rad_handle *);
 __END_DECLS
 

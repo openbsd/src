@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.9 2002/06/14 21:35:01 todd Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.10 2002/06/15 01:33:23 brian Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -283,7 +283,7 @@ If the peer requests Microsoft CHAP authentication and
 .Nm
 is compiled with DES support, an appropriate MD4/DES response will be
 made.
-.It Supports RADIUS (rfc 2138) authentication.
+.It Supports RADIUS (rfc 2138 & 2548) authentication.
 An extension to PAP and CHAP,
 .Em \&R Ns No emote
 .Em \&A Ns No ccess
@@ -1332,7 +1332,7 @@ It is
 .Em VITAL
 that either PAP or CHAP are enabled as above.
 If they are not, you are
-allowing anybody to establish ppp session with your machine
+allowing anybody to establish a ppp session with your machine
 .Em without
 a password, opening yourself up to all sorts of potential attacks.
 .Sh AUTHENTICATING INCOMING CONNECTIONS
@@ -5081,7 +5081,8 @@ If any arguments are given,
 .Nm
 will
 .Em insist
-on using MPPE and will close the link if it's rejected by the peer.
+on using MPPE and will close the link if it's rejected by the peer (Note;
+this behaviour can be overridden by a configured RADIUS server).
 .Pp
 The first argument specifies the number of bits that
 .Nm
@@ -5243,7 +5244,7 @@ This command enables RADIUS support (if it's compiled in).
 .Ar config-file
 refers to the radius client configuration file as described in
 .Xr radius.conf 5 .
-If PAP or CHAP are
+If PAP, CHAP, MSCHAP or MSCHAPv2 are
 .Dq enable Ns No d ,
 .Nm
 behaves as a
@@ -5255,7 +5256,7 @@ authenticating from the
 .Pa ppp.secret
 file or from the passwd database.
 .Pp
-If neither PAP or CHAP are enabled,
+If none of PAP, CHAP, MSCHAP or MSCHAPv2 are enabled,
 .Dq set radius
 will do nothing.
 .Pp
@@ -5279,7 +5280,18 @@ will request VJ compression during IPCP negotiations despite any
 .Dq disable vj
 configuration command.
 .It RAD_FILTER_ID
-This attribute is stored but not yet used.
+If this attribute is supplied,
+.Nm
+will attempt to use it as an additional label to load from the
+.Pa ppp.linkup
+and
+.Pa ppp.linkdown
+files.
+The load will be attempted before (and in addition to) the normal
+label search.
+If the label doesn't exist, no action is taken and
+.Nm
+proceeds to the normal load using the current label.
 .It RAD_FRAMED_ROUTE
 The received string is expected to be in the format
 .Ar dest Ns Op / Ns Ar bits
@@ -5342,7 +5354,44 @@ If this
 .Dv RAD_VENDOR_MICROSOFT
 vendor specific attribute is supplied and if MS-CHAPv2 authentication is
 being used, it is passed back to the peer as the authentication SUCCESS text.
+.It RAD_MICROSOFT_MS_MPPE_ENCRYPTION_POLICY
+If this
+.Dv RAD_VENDOR_MICROSOFT
+vendor specific attribute is supplied and has a value of 2 (Required),
+.Nm
+will insist that MPPE encryption is used (even if no
+.Dq set mppe
+configuration command has been given with arguments).
+If it is supplied with a value of 1 (Allowed), encryption is made optional
+(despite any
+.Dq set mppe
+configuration commands with arguments).
+.It RAD_MICROSOFT_MS_MPPE_ENCRYPTION_TYPES
+If this
+.Dv RAD_VENDOR_MICROSOFT
+vendor specific attribute is supplied, bits 1 and 2 are examined.
+If either or both are set, 40 bit and/or 128 bit (respectively) encryption
+options are set, overriding any given first argument to the
+.Dq set mppe
+command.
+Note, it is not currently possible for the RADIUS server to specify 56 bit
+encryption.
+.It RAD_MICROSOFT_MS_MPPE_RECV_KEY
+If this
+.Dv RAD_VENDOR_MICROSOFT
+vendor specific attribute is supplied, it's value is used as the master
+key for decryption of incoming data.  When clients are authenticated using
+MSCHAPv2, the RADIUS server MUST provide this attribute if inbound MPPE is
+to function.
+.It RAD_MICROSOFT_MS_MPPE_SEND_KEY
+If this
+.Dv RAD_VENDOR_MICROSOFT
+vendor specific attribute is supplied, it's value is used as the master
+key for encryption of outgoing data.  When clients are authenticated using
+MSCHAPv2, the RADIUS server MUST provide this attribute if outbound MPPE is
+to function.
 .El
+.Pp
 Values received from the RADIUS server may be viewed using
 .Dq show bundle .
 .It set reconnect Ar timeout ntries

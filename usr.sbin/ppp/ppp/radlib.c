@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.c,v 1.6 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: radlib.c,v 1.7 2002/06/15 01:33:23 brian Exp $
  */
 
 #include <sys/types.h>
@@ -927,4 +927,21 @@ rad_put_vendor_string(struct rad_handle *h, int vendor, int type,
     const char *str)
 {
 	return (rad_put_vendor_attr(h, vendor, type, str, strlen(str)));
+}
+
+ssize_t
+rad_request_authenticator(struct rad_handle *h, char *buf, size_t len)
+{
+	if (len < LEN_AUTH)
+		return (-1);
+	memcpy(buf, h->request + POS_AUTH, LEN_AUTH);
+	if (len > LEN_AUTH)
+		buf[LEN_AUTH] = '\0';
+	return (LEN_AUTH);
+}
+
+const char *
+rad_server_secret(struct rad_handle *h)
+{
+	return (h->servers[h->srv].secret);
 }

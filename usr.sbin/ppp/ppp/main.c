@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: main.c,v 1.32 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: main.c,v 1.33 2002/06/15 01:33:23 brian Exp $
  */
 
 #include <sys/param.h>
@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
 #include <sys/stat.h>

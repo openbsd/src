@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: fsm.h,v 1.9 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: fsm.h,v 1.10 2002/06/15 01:33:23 brian Exp $
  */
 
 /*
@@ -166,7 +166,7 @@ struct fsm_opt_hdr {
   u_char len;
 };
 
-#define MAX_FSM_OPT_LEN 20
+#define MAX_FSM_OPT_LEN 52
 struct fsm_opt {
   struct fsm_opt_hdr hdr;
   u_char data[MAX_FSM_OPT_LEN-2];

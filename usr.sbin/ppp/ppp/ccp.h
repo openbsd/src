@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ccp.h,v 1.13 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: ccp.h,v 1.14 2002/06/15 01:33:23 brian Exp $
  */
 
 #define	CCP_MAXCODE	CODE_RESETACK
@@ -127,8 +127,8 @@ struct ccp_algorithm {
   int (*Usable)(struct fsm *);			/* Ok to negotiate ? */
   int (*Required)(struct fsm *);		/* Must negotiate ? */
   struct {
-    int (*Set)(struct fsm_opt *, const struct ccp_config *);
-    void *(*Init)(struct fsm_opt *);
+    int (*Set)(struct bundle *, struct fsm_opt *, const struct ccp_config *);
+    void *(*Init)(struct bundle *, struct fsm_opt *);
     void (*Term)(void *);
     void (*Reset)(void *);
     struct mbuf *(*Read)(void *, struct ccp *, u_short *, struct mbuf *);
@@ -136,9 +136,10 @@ struct ccp_algorithm {
   } i;
   struct {
     int MTUOverhead;
-    void (*OptInit)(struct fsm_opt *, const struct ccp_config *);
-    int (*Set)(struct fsm_opt *, const struct ccp_config *);
-    void *(*Init)(struct fsm_opt *);
+    void (*OptInit)(struct bundle *, struct fsm_opt *,
+                    const struct ccp_config *);
+    int (*Set)(struct bundle *, struct fsm_opt *, const struct ccp_config *);
+    void *(*Init)(struct bundle *, struct fsm_opt *);
     void (*Term)(void *);
     int (*Reset)(void *);
     struct mbuf *(*Write)(void *, struct ccp *, struct link *, int, u_short *,

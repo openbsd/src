@@ -25,16 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: timer.c,v 1.11 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: timer.c,v 1.12 2002/06/15 01:33:23 brian Exp $
  */
 
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef __NetBSD__
 #include <sys/time.h>
-#endif
 #include <termios.h>
 
 #include "log.h"

@@ -23,8 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.h,v 1.8 2002/05/16 14:27:21 brian Exp $
+ *	$OpenBSD: radius.h,v 1.9 2002/06/15 01:33:23 brian Exp $
  */
+
+#define	MPPE_POLICY_ALLOWED	1
+#define	MPPE_POLICY_REQUIRED	2
+
+#define	MPPE_TYPE_40BIT		2
+#define	MPPE_TYPE_128BIT	4
 
 struct radius {
   struct fdescriptor desc;	/* We're a sort of (selectable) fdescriptor */
@@ -45,6 +51,14 @@ struct radius {
   char *msrepstr;		/* MS-CHAP2-Response */
   char *repstr;			/* Reply-Message */
   char *errstr;			/* Error-Message */
+  struct {
+    int policy;			/* MPPE_POLICY_* */
+    int types;			/* MPPE_TYPE_*BIT bitmask */
+    char *recvkey;
+    size_t recvkeylen;
+    char *sendkey;
+    size_t sendkeylen;
+  } mppe;
   struct {
     char file[PATH_MAX];	/* Radius config file */
   } cfg;

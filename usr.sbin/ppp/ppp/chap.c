@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.33 2002/05/16 14:27:21 brian Exp $
+ * $OpenBSD: chap.c,v 1.34 2002/06/15 01:33:23 brian Exp $
  */
 
 #include <sys/param.h>
@@ -926,8 +926,7 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
           if (p->link.lcp.auth_ineed == 0) {
 #ifndef NODES
             if (p->link.lcp.his_authtype == 0x81) {
-              if (strncmp(ans, chap->authresponse, 42) &&
-                  (*ans != 1 || strncmp(ans + 1, chap->authresponse, 41))) {
+              if (strncmp(ans, chap->authresponse, 42)) {
                 datalink_AuthNotOk(p->dl);
 	        log_Printf(LogWARN, "CHAP81: AuthenticatorResponse: (%.42s)"
                            " != ans: (%.42s)\n", chap->authresponse, ans);
