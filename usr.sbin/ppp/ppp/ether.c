@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: ether.c,v 1.11 2001/06/19 10:24:52 brian Exp $
+ *	$OpenBSD: ether.c,v 1.12 2001/08/02 20:52:56 brian Exp $
  */
 
 #include <sys/param.h>
@@ -595,6 +595,12 @@ ether_Create(struct physical *p)
       return ether_Abandon(dev, p);
     }
 
+    /* Bring the Ethernet interface up */
+    path[ifacelen] = '\0';	/* Remove the trailing ':' */
+    if (!iface_SetFlags(path, IFF_UP))
+      log_Printf(LogWARN, "%s: Failed to set the IFF_UP flag on %s\n",
+                 p->link.name, path);
+
     /* And finally, request a connection to the given provider */
 
     data = (struct ngpppoe_init_data *)alloca(sizeof *data + providerlen);
@@ -675,16 +681,6 @@ ether_Create(struct physical *p)
 
   if (dev) {
     physical_SetupStack(p, dev->dev.name, PHYSICAL_FORCE_SYNCNOACF);
-
-    if (path != NULL) {
-      /* Mark the interface as UP if it's not already */
-
-      path[ifacelen] = '\0';		/* Remove the trailing ':' */
-      if (!iface_SetFlags(path, IFF_UP))
-        log_Printf(LogWARN, "%s: Failed to set the IFF_UP flag on %s\n",
-                   p->link.name, path);
-    }
-
     return &dev->dev;
   }
 
