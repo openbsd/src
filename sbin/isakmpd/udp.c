@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.45 2001/08/11 09:57:30 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.46 2001/08/11 10:13:32 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ udp_make (struct sockaddr *laddr)
   return &t->transport;
 
 err:
-  if (s != -1)
+  if (s >= 0)
     close (s);
   if (t)
     {
