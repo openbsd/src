@@ -1645,7 +1645,6 @@
 ./usr/lib/apache/include/xml/xmlrole.h
 ./usr/lib/apache/include/xml/xmltok.h
 ./usr/lib/apache/include/xml/xmltok_impl.h
-./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
 ./usr/lib/debug
 ./usr/lib/gcrt0.o

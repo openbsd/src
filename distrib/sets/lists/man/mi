@@ -2095,6 +2095,7 @@
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
 ./usr/share/man/cat8/sysctl.0
+./usr/share/man/cat8/syslogc.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
 ./usr/share/man/cat8/tcpd.0

@@ -1742,6 +1742,7 @@
 ./usr/sbin/supfilesrv
 ./usr/sbin/supscan
 ./usr/sbin/sysctl
+./usr/sbin/syslogc
 ./usr/sbin/syslogd
 ./usr/sbin/tcpdchk
 ./usr/sbin/tcpdmatch
