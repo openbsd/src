@@ -1,4 +1,4 @@
-.\"	$OpenBSD: physio.9,v 1.1 2001/06/20 16:47:32 millert Exp $
+.\"	$OpenBSD: physio.9,v 1.2 2001/06/21 05:44:41 mpech Exp $
 .\"	$NetBSD: physio.9,v 1.5 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ with
 and
 .Fn uvm_vsunlock
 functions in
-.Xr uvm 9 ).
+.Xr uvm 9 ) .
 .Fn physio
 always awaits the completion of the entire requested transfer before
 returning, unless an error condition is detected earlier.
@@ -121,7 +121,6 @@ set to anything other than
 .Dv UIO_USERSPACE ,
 are undefined.
 .El
-.Pp
 .Sh RETURN VALUES
 If successful
 .Fn physio
