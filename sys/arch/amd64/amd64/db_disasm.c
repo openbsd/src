@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 2004/06/24 22:29:31 andreas Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2004/06/26 20:29:36 andreas Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -246,7 +246,7 @@ struct inst	db_inst_0f9x[] = {
 
 struct inst	db_inst_0fax[] = {
 /*a0*/	{ "push",  FALSE, QUAD,  op1(Si),     0 },
-/*a1*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
+/*a1*/	{ "pop",   FALSE, QUAD,  op1(Si),     0 },
 /*a2*/	{ "cpuid", FALSE, NONE,  0,	      0 },
 /*a3*/	{ "bt",    TRUE,  LONG,  op2(R,E),    0 },
 /*a4*/	{ "shld",  TRUE,  LONG,  op3(Ib,R,E), 0 },
@@ -255,7 +255,7 @@ struct inst	db_inst_0fax[] = {
 /*a7*/	{ "",      TRUE,  NONE,  0,	      db_GrpB },
 
 /*a8*/	{ "push",  FALSE, QUAD,  op1(Si),     0 },
-/*a9*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
+/*a9*/	{ "pop",   FALSE, QUAD,  op1(Si),     0 },
 /*aa*/	{ "",      FALSE, NONE,  0,	      0 },
 /*ab*/	{ "bts",   TRUE,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  TRUE,  LONG,  op3(Ib,E,R), 0 },
@@ -612,14 +612,14 @@ struct inst db_inst_table[256] = {
 /*56*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
 /*57*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
 
-/*58*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
-/*59*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
-/*5a*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
-/*5b*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
-/*5c*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
-/*5d*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
-/*5e*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
-/*5f*/	{ "pop",   FALSE, LONG,  op1(Ri),    0 },
+/*58*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*59*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*5a*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*5b*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*5c*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*5d*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*5e*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*5f*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
 
 /*60*/	{ "",      FALSE, LONG,  0,	     0 },
 /*61*/	{ "",      FALSE, LONG,  0,	     0 },
@@ -688,8 +688,8 @@ struct inst db_inst_table[256] = {
 /*99*/	{ "cwd",   FALSE, SDEP,  0,	      "cdq\0cqo"  },
 /*9a*/	{ "",      FALSE, NONE,  op1(OS),     0 },
 /*9b*/	{ "wait",  FALSE, NONE,  0,	      0 },
-/*9c*/	{ "pushf", FALSE, LONG,  0,	      0 },
-/*9d*/	{ "popf",  FALSE, LONG,  0,	      0 },
+/*9c*/	{ "pushf", FALSE, QUAD,  0,	      0 },
+/*9d*/	{ "popf",  FALSE, QUAD,  0,	      0 },
 /*9e*/	{ "sahf",  FALSE, NONE,  0,	      0 },
 /*9f*/	{ "lahf",  FALSE, NONE,  0,	      0 },
 
@@ -1409,7 +1409,7 @@ db_disasm(loc, altfmt)
 		case OS: //XXX
 			get_value_inc(imm, loc, len, FALSE);	/* offset */
 			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-			db_printf("$%#n,%#n", imm2, (int)imm);
+			db_printf("$0x%#lx", imm2);
 			break;
 		}
 	}
