@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2000/07/07 13:22:42 rahnds Exp $ */
+/*	$OpenBSD: intr.h,v 1.8 2001/03/29 18:47:18 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -64,8 +64,8 @@ int  splsoftnet   __P((void));
 void do_pending_int __P((void));
 
 
-volatile int cpl, ipending, astpending, tickspending;
-int imask[7];
+volatile extern int cpl, ipending, astpending, tickspending;
+extern int imask[7];
 
 /*
  *  Reorder protection in the following inline functions is
