@@ -35,7 +35,7 @@
 
 #include "includes.h"
 #include <sys/queue.h>
-RCSID("$OpenBSD: ssh-agent.c,v 1.92 2002/06/15 00:01:36 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.93 2002/06/15 00:07:38 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -466,7 +466,7 @@ send:
 }
 
 static void
-process_contrain_identity(SocketEntry *e, int version)
+process_constrain_identity(SocketEntry *e, int version)
 {
 	Key *key = NULL;
 	u_char *blob;
@@ -489,7 +489,7 @@ process_contrain_identity(SocketEntry *e, int version)
 	}
 	while (buffer_len(&e->request)) {
 		switch (buffer_get_char(&e->request)) {
-		case SSH_AGENT_CONTRAIN_LIFETIME:
+		case SSH_AGENT_CONSTRAIN_LIFETIME:
 			death = time(NULL) + buffer_get_int(&e->request);
 			break;
 		default:
@@ -710,8 +710,8 @@ process_message(SocketEntry *e)
 	case SSH_AGENTC_REMOVE_ALL_RSA_IDENTITIES:
 		process_remove_all_identities(e, 1);
 		break;
-	case SSH_AGENTC_CONTRAIN_IDENTITY1:
-		process_contrain_identity(e, 1);
+	case SSH_AGENTC_CONSTRAIN_IDENTITY1:
+		process_constrain_identity(e, 1);
 		break;
 	/* ssh2 */
 	case SSH2_AGENTC_SIGN_REQUEST:
@@ -729,8 +729,8 @@ process_message(SocketEntry *e)
 	case SSH2_AGENTC_REMOVE_ALL_IDENTITIES:
 		process_remove_all_identities(e, 2);
 		break;
-	case SSH_AGENTC_CONTRAIN_IDENTITY:
-		process_contrain_identity(e, 2);
+	case SSH_AGENTC_CONSTRAIN_IDENTITY:
+		process_constrain_identity(e, 2);
 		break;
 #ifdef SMARTCARD
 	case SSH_AGENTC_ADD_SMARTCARD_KEY:
