@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time.3,v 1.8 2000/12/24 00:30:52 aaron Exp $
+.\"	$OpenBSD: time.3,v 1.9 2002/01/24 21:15:20 mickey Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,4 +80,11 @@ An argument address referenced invalid memory.
 A
 .Fn time
 function appeared in
-.At v6 .
+.At v2
+and used to return time in sixtieths of a second in 32 bits,
+which was to guarantee a crisis every 2.26 years.
+Since the
+.At v6
+.Fn time
+scale was changed to seconds extending the pre-crisis stagnation
+period up to a total of 68 years.
