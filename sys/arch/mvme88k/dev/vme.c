@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.10 2001/08/11 23:21:13 art Exp $ */
+/*	$OpenBSD: vme.c,v 1.11 2001/08/24 19:34:21 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -290,7 +290,6 @@ vmeattach(parent, self, args)
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	struct confargs *ca = args;
 	struct vme2reg *vme2;
-	int scon;
 
 	/* XXX any initialization to do? */
 
@@ -300,6 +299,9 @@ vmeattach(parent, self, args)
 	switch (ca->ca_bustype) {
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
+	{
+		int scon;
+
 		vme2 = (struct vme2reg *)sc->sc_vaddr;
 		/* Sanity check that the Bug is set up right */
 		if (VME2_GET_VBR1(vme2) >= 0xF0) {
@@ -308,20 +310,23 @@ vmeattach(parent, self, args)
 		vmevecbase = VME2_GET_VBR1(vme2) + 0x10;
 		scon = (vme2->vme2_tctl & VME2_TCTL_SCON);
 		printf(": vector base 0x%x, %ssystem controller\n", vmevecbase, scon ? "" : "not ");
-		if (scon) sys_vme2 = vme2;
+		if (scon)
+			sys_vme2 = vme2;
 		vme2chip_init(sc);
+	}
 		break;
 #endif
 #if NSYSCON > 0
 	case BUS_SYSCON:
-		{
-			char sconc;
-			vmevecbase = 0x80;  /* Hard coded for MVME188 */
-			sconc = *(char *)GLOBAL1;
-			sconc &= M188_SYSCON;
-			printf(": %ssystem controller\n", scon ? "" : "not ");
-			vmesyscon_init(sc);
-		}
+	{
+		char sconc;
+
+		vmevecbase = 0x80;  /* Hard coded for MVME188 */
+		sconc = *(char *)GLOBAL1;
+		sconc &= M188_SYSCON;
+		printf(": %ssystem controller\n", sconc ? "" : "not ");
+		vmesyscon_init(sc);
+	}
 		break;
 #endif
 	}
