@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.51 2003/06/11 17:03:09 pb Exp $
+.\"	$OpenBSD: bridge.4,v 1.52 2003/06/25 13:29:31 henning Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -371,6 +371,7 @@ struct ifbrlreq {
         u_int8_t ifbr_flags;
         struct ether_addr ifbr_src;
         struct ether_addr ifbr_dst;
+        char ifbr_tagname[PF_TAG_NAME_SIZE];
 };
 #define BRL_ACTION_BLOCK 0x01
 #define BRL_ACTION_PASS  0x02
