@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.c,v 1.19 2000/07/06 10:11:24 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.119 2000/07/03 14:16:46 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.20 2000/08/03 14:39:23 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.130 2000/08/03 14:22:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1329,7 +1329,7 @@ ni6_input(m, off)
 	}
 
 	nni6->ni_type = ICMP6_NI_REPLY;
-	nni6->ni_code = ICMP6_NI_SUCESS;
+	nni6->ni_code = ICMP6_NI_SUCCESS;
 	m_freem(m);
 	return(n);
 

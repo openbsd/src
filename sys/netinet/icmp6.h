@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.h,v 1.7 2000/07/06 10:11:21 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.18 2000/07/03 02:51:08 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.8 2000/08/03 14:39:23 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.21 2000/08/03 14:22:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -146,7 +146,7 @@ struct icmp6_hdr {
 #define ICMP6_NI_SUBJ_FQDN	1	/* Query Subject is a Domain name */
 #define ICMP6_NI_SUBJ_IPV4	2	/* Query Subject is an IPv4 address */
 
-#define ICMP6_NI_SUCESS		0	/* node information successful reply */
+#define ICMP6_NI_SUCCESS	0	/* node information successful reply */
 #define ICMP6_NI_REFUSED	1	/* node information request is refused */
 #define ICMP6_NI_UNKNOWN	2	/* unknown Qtype */
 
@@ -321,7 +321,8 @@ struct icmp6_nodeinfo {
 #define NI_QTYPE_NOOP		0 /* NOOP  */
 #define NI_QTYPE_SUPTYPES	1 /* Supported Qtypes */
 #define NI_QTYPE_FQDN		2 /* FQDN */
-#define NI_QTYPE_NODEADDR	3 /* Node Addresses. XXX: spec says 2, but it may be a typo... */
+#define NI_QTYPE_NODEADDR	3 /* Node Addresses */
+#define NI_QTYPE_IPV4ADDR	4 /* IPv4 Addresses */
 
 #if BYTE_ORDER == BIG_ENDIAN
 #define NI_SUPTYPE_FLAG_COMPRESS	0x1
