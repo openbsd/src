@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.35 2003/05/13 16:38:34 millert Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.36 2003/09/18 09:58:13 jmc Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -122,7 +122,7 @@ typedef u_int16_t	Elf64_Quarter;
                       (ehdr).e_ident[EI_MAG3] == ELFMAG3)
 
 /* ELF Header */
-typedef struct elfhdr{
+typedef struct elfhdr {
 	unsigned char	e_ident[EI_NIDENT]; /* ELF Identification */
 	Elf32_Half	e_type;		/* object file type */
 	Elf32_Half	e_machine;	/* machine */
@@ -335,15 +335,13 @@ typedef struct {
 #define STT_HIPROC	15		/*  specific symbol types */
 
 /* Relocation entry with implicit addend */
-typedef struct 
-{
+typedef struct {
 	Elf32_Addr	r_offset;	/* offset of relocation */
 	Elf32_Word	r_info;		/* symbol table index and type */
 } Elf32_Rel;
 
 /* Relocation entry with explicit addend */
-typedef struct 
-{
+typedef struct {
 	Elf32_Addr	r_offset;	/* offset of relocation */
 	Elf32_Word	r_info;		/* symbol table index and type */
 	Elf32_Sword	r_addend;
