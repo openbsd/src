@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.10 1997/11/07 08:06:51 niklas Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.11 1998/02/26 00:11:28 deraadt Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ ep_isa_attach(parent, self, aux)
 		 * XXX: Maybe a 3c515, but the check in ep_isa_probe looks
 		 * at the moment only for a 3c509.
 		 */
-		printf(": unknown 3Com Ethernet card: %04x\n", chipset);
+		printf(": unknown card %04x", chipset);
 		epconfig(sc, EP_CHIPSET_UNKNOWN);
 	}
 
