@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.95 2001/02/20 19:12:48 jason Exp $
+#	$OpenBSD: files.pci,v 1.96 2001/03/07 23:59:02 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -66,6 +66,10 @@ file	dev/pci/bha_pci.c		bha_pci
 # 3ware 5x000/6x000 RAID controllers
 attach	twe at pci with twe_pci
 file	dev/pci/twe_pci.c		twe_pci
+
+# AMI MegaRAID Express x00/Elite 1500/Express 1x00 RAID Controllers
+attach	ami at pci with ami_pci
+file	dev/pci/ami_pci.c		ami_pci
 
 # Ensoniq AudioPCI S5016, 1371
 device	eap: audio, auconv, mulaw, ac97
