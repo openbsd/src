@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.45 2003/06/23 09:30:36 miod Exp $
+#	$OpenBSD: SUN4C,v 1.46 2003/06/25 17:40:00 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -143,6 +143,13 @@ pcmcia*	at stp? socket ?
 
 # PCMCIA devices
 wi*	at pcmcia? function ?
+ne*	at pcmcia? function ?
+
+# Media Independent Interface (mii) drivers (required by ne)
+bmtphy*	at mii? phy ?
+lxtphy*	at mii? phy ?
+nsphyter* at mii? phy ?
+ukphy*	at mii? phy ?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.55 2003/06/23 09:30:36 miod Exp $
+#	$OpenBSD: SUN4M,v 1.56 2003/06/25 17:40:00 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -117,9 +117,6 @@ le*	at lebuffer?					#
 
 # HappyMeal ethernet
 hme*	at sbus?
-# Media Independent Interface (mii) drivers (required by hme)
-nsphy*	at mii? phy ?				# NS and compatible PHYs
-qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
 # Quad-ethernet glue device, and sub-devices
 qec*	at sbus?
@@ -194,6 +191,15 @@ pcmcia*	at tslot? socket ?
 
 # PCMCIA devices
 wi*	at pcmcia? function ?
+ne*	at pcmcia? function ?
+
+# Media Independent Interface (mii) drivers (required by hme and ne)
+bmtphy*	at mii? phy ?
+lxtphy*	at mii? phy ?
+nsphy*	at mii? phy ?				# NS and compatible PHYs
+nsphyter* at mii? phy ?
+qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+ukphy*	at mii? phy ?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
