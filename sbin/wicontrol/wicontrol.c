@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.8 2000/06/18 20:44:36 aaron Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.9 2000/08/11 09:13:21 ho Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.8 2000/06/18 20:44:36 aaron Exp $";
+	"@(#) $Id: wicontrol.c,v 1.9 2000/08/11 09:13:21 ho Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -610,6 +610,7 @@ struct wi_func {
 };
 
 static struct wi_func wi_opt[] = {
+        { 'k', wi_setkeys, 0, NULL },
         { 'c', wi_setword, WI_RID_CREATE_IBSS, NULL },
         { 'd', wi_setword, WI_RID_MAX_DATALEN, NULL },
         { 'f', wi_setword, WI_RID_OWN_CHNL, NULL },
@@ -624,7 +625,13 @@ static struct wi_func wi_opt[] = {
         { 'S', wi_setword, WI_RID_MAX_SLEEP, NULL },
         { 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
         { 'e', wi_setword, WI_RID_ENCRYPTION, NULL },
-        { 'k', wi_setkeys, 0, NULL },
+
+        /* These options will never be command line options which is why
+          they are not 'quoted' */
+        { 1, wi_setkeys, 0, NULL }, /* Dummy option for key 0 */
+        { 2, wi_setkeys, 1, NULL }, /* key 1 */
+        { 3, wi_setkeys, 2, NULL }, /* key 2 */
+        { 4, wi_setkeys, 3, NULL }, /* key 3 */
         { 0, NULL, 0, NULL }
 };
 
@@ -662,10 +669,12 @@ int main(argc, argv)
 			break;
 		case 'v':
  		        for (p = 0; wi_opt[p].key; p++)
-			        if (wi_opt[p].key == 'k') {
-				        wi_opt[p].wi_code = strtol(optarg, 
-								   NULL, 10);
-					wi_opt[p].wi_code--; /* 1-4/0-3 */
+				if (wi_opt[p].key == 
+                                    strtol(optarg, NULL, 10)) {
+					wi_opt[p].optarg = wi_opt[0].optarg;
+                                        /* prevent multiple -v without
+                                           multiple -k */
+                                        wi_opt[0].optarg = NULL; 
 					break;
 				}
 		       	break;
