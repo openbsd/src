@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.1 2001/09/01 16:54:58 drahn Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.2 2001/09/02 19:37:00 miod Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
 .\"
 .Dd January 27, 2001
-.Dt MAKEDEV 8 powerpc
+.Dt MAKEDEV 8 macppc
 .Os
 .Sh NAME
 .Nm MAKEDEV
@@ -66,19 +66,19 @@ If
 given,
 .Ar all
 creates device files for all devices on
-PowerPC.  If units are expected for a device
+macppc.  If units are expected for a device
 .Nm MAKEDEV
 supplies the standard numbers.
 The
 .Ar std
-argument creates the standard devices for PowerPC.
+argument creates the standard devices for macppc.
 Finally
 .Ar local
 is for devices specific to the local site, and
 executes the shell file
 .Pa MAKEDEV.local .
 .Pp
-PowerPC supports the following devices.
+macppc supports the following devices.
 Where a device name is followed by a hash
 sign ("#"), the hash sign must be replaced
 by a unit number.
@@ -86,7 +86,7 @@ by a unit number.
 .Sy Pseudo\-names
 .Bl -tag -width indent -compact
 .It Ar all
-All known devices for PowerPC.
+All known devices for macppc.
 .It Ar std
 The standard devices (console, drum, fd/*, klog, kmem, mem, null,
 stderr, stdin, stdout, tty, zero)
