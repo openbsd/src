@@ -1,8 +1,8 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$OpenBSD: README,v 1.7 2000/09/16 10:33:43 itojun Exp $
-$KAME: README,v 1.6 2000/07/06 13:43:33 itojun Exp $
+$OpenBSD: README,v 1.8 2001/05/01 07:40:04 itojun Exp $
+$KAME: README,v 1.7 2001/04/25 11:25:19 itojun Exp $
 
 
 Introduction
@@ -34,7 +34,7 @@ FAITH will make it possible to make a IPv6 TCP connection From IPv6 node
 "src", toward IPv4 node "dest", by specifying FAITH-mapped address
 3ffe:0501:ffff:0000::123.4.5.6
 (which is, 3ffe:0501:ffff:0000:0000:0000:7b04:0506).
-The address mapping can be performed by hand:-), by speical nameserver on
+The address mapping can be performed by hand:-), by special nameserver on
 the network, or by special resolver on the source node.
 
 
