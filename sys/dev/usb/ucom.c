@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.22 2005/01/10 08:17:49 dlg Exp $ */
+/*	$OpenBSD: ucom.c,v 1.23 2005/01/19 07:49:35 dlg Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -118,7 +118,8 @@ struct ucom_softc {
 
 	u_char			sc_cua;
 
-	u_char			sc_opening;	/* lock during open */
+	struct lock		sc_lock;	/* lock during open */
+	int			sc_open;
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
 };
@@ -138,8 +139,25 @@ Static void	ucomreadcb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	ucomwritecb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	tiocm_to_ucom(struct ucom_softc *, u_long, int);
 Static int	ucom_to_tiocm(struct ucom_softc *);
+Static void	ucom_lock(struct ucom_softc *);
+Static void	ucom_unlock(struct ucom_softc *);
 
 USB_DECLARE_DRIVER(ucom);
+
+Static void
+ucom_lock(struct ucom_softc *sc)
+{
+	sc->sc_refcnt++;
+	usb_lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+}
+
+Static void
+ucom_unlock(struct ucom_softc *sc)
+{
+	usb_lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+}
 
 USB_MATCH(ucom)
 {
@@ -175,6 +193,9 @@ USB_ATTACH(ucom)
 	tp->t_param = ucomparam;
 	sc->sc_tty = tp;
 	sc->sc_cua = 0;
+
+	lockinit(&sc->sc_lock, PZERO, "ucomlk", 0, LK_CANRECURSE);
+	sc->sc_open = 0;
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -286,74 +307,23 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
 		return (ENXIO);
 
-	tp = sc->sc_tty;
-	DPRINTF(("ucomopen: unit=%d, tp=%p\n", unit, tp));
-
-	/*
-	 * Do the following if this is a first open.
-	 */
-	while (sc->sc_opening)
-		tsleep(&sc->sc_opening, PRIBIO, "ucomop", 0);
-
-	if (sc->sc_dying) {
-		return (EIO);
-	}
-	sc->sc_opening = 1;
-
-	tp->t_dev = dev;
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		SET(tp->t_state, TS_WOPEN);
+	/* open the pipes if this is the first open */
+	ucom_lock(sc);
+	if (sc->sc_open++ == 0) {
+		s = splusb();
 
 		if (sc->sc_methods->ucom_open != NULL) {
 			error = sc->sc_methods->ucom_open(sc->sc_parent,
 			    sc->sc_portno);
 			if (error) {
 				ucom_cleanup(sc);
-				sc->sc_opening = 0;
-				wakeup(&sc->sc_opening);
 				splx(s);
+				ucom_unlock(sc);
 				return (error);
 			}
 		}
 
 		ucom_status_change(sc);
-
-		/*
-		 * Initialize the termios status to the defaults.  Add in the
-		 * sticky bits from TIOCSFLAGS.
-		 */
-		t.c_ispeed = 0;
-		t.c_ospeed = TTYDEF_SPEED;
-		t.c_cflag = TTYDEF_CFLAG;
-		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
-			SET(t.c_cflag, CLOCAL);
-		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
-			SET(t.c_cflag, CRTSCTS);
-		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
-			SET(t.c_cflag, MDMBUF);
-
-		/* Make sure ucomparam() will do something. */
-		tp->t_ospeed = 0;
-		(void) ucomparam(tp, &t);
-		tp->t_iflag = TTYDEF_IFLAG;
-		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_lflag = TTYDEF_LFLAG;
-		ttychars(tp);
-		ttsetwater(tp);
-
-		s = spltty();
-
-		/*
-		 * Turn on DTR.  We must always do this, even if carrier is not
-		 * present, because otherwise we'd have to use TIOCSDTR
-		 * immediately after setting CLOCAL, which applications do not
-		 * expect.  We always assert DTR while the device is open
-		 * unless explicitly requested to deassert it.
-		 */
-		//ucom_dtr(sc, 1);
-
-		/* XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);*/
-		ucom_hwiflow(sc);
 
 		DPRINTF(("ucomopen: open pipes in=%d out=%d\n",
 			 sc->sc_bulkin_no, sc->sc_bulkout_no));
@@ -408,30 +378,72 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 		ucomstartread(sc);
 
+		splx(s);
+	}
+	ucom_unlock(sc);
+
+	s = spltty();
+	tp = sc->sc_tty;
+	splx(s);
+
+	DPRINTF(("ucomopen: unit=%d, tp=%p\n", unit, tp));
+
+	tp->t_dev = dev;
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+		SET(tp->t_state, TS_WOPEN);
+		ttychars(tp);
+
+		/*
+		 * Initialize the termios status to the defaults.  Add in the
+		 * sticky bits from TIOCSFLAGS.
+		 */
+		t.c_ispeed = 0;
+		t.c_ospeed = TTYDEF_SPEED;
+		t.c_cflag = TTYDEF_CFLAG;
+		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
+			SET(t.c_cflag, CLOCAL);
+		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
+			SET(t.c_cflag, CRTSCTS);
+		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
+			SET(t.c_cflag, MDMBUF);
+
+		/* Make sure ucomparam() will do something. */
+		tp->t_ospeed = 0;
+		(void) ucomparam(tp, &t);
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+
+		s = spltty();
+		ttsetwater(tp);
+
+		/* XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);*/
+		ucom_hwiflow(sc);
+
 		if (ISSET(sc->sc_swflags, TIOCFLAG_SOFTCAR) || UCOMCUA(dev) ||
 		    ISSET(sc->sc_msr, UMSR_DCD) || ISSET(tp->t_cflag, MDMBUF))
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
-		return (EBUSY);
-	else
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
+		error = EBUSY;
+		goto bad;
+	} else
 		s = spltty();
 
 	if (UCOMCUA(dev)) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			/* Someone is already dialed in */
-			splx(s);
-			return (EBUSY);
+			error = EBUSY;
+			goto bad1;
 		}
 		sc->sc_cua = 1;
 	} else {
 		/* tty (not cua) device, wait for carrier */
 		if (ISSET(flag, O_NONBLOCK)) {
 			if (sc->sc_cua) {
-				splx(s);
-				return (EBUSY);
+				error = EBUSY;
+				goto bad1;
 			}
 		} else {
 			while (sc->sc_cua || (!ISSET(tp->t_cflag, CLOCAL) &&
@@ -447,20 +459,12 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 				 */
 				if (error && ISSET(tp->t_state, TS_WOPEN)) {
 					CLR(tp->t_state, TS_WOPEN);
-					if (!sc->sc_cua &&
-					    !ISSET(tp->t_state, TS_ISOPEN))
-						ucom_cleanup(sc);
-					splx(s);
-					return (error);
+					goto bad1;
 				}
 			}
 		}
 	}
-		
-	sc->sc_opening = 0;
-	wakeup(&sc->sc_opening);
 	splx(s);
-
 
 	error = ttyopen(UCOMUNIT(dev), tp);
 	if (error)
@@ -485,19 +489,16 @@ fail_1:
 	usbd_close_pipe(sc->sc_bulkin_pipe);
 	sc->sc_bulkin_pipe = NULL;
 fail_0:
-	sc->sc_opening = 0;
-	wakeup(&sc->sc_opening);
 	splx(s);
+	ucom_unlock(sc);
 	return (error);
 
+bad1:
+	splx(s);
 bad:
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		/*
-		 * We failed to open the device, and nobody else had it opened.
-		 * Clean up the state as appropriate.
-		 */
-		ucom_cleanup(sc);
-	}
+	ucom_lock(sc);
+	ucom_cleanup(sc);
+	ucom_unlock(sc);
 
 	return (error);
 }
@@ -513,18 +514,11 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
-	sc->sc_refcnt++;
+	ucom_lock(sc);
 
 	(*LINESW(tp, l_close))(tp, flag);
 	s = spltty();
-	if (!ISSET(tp->t_state, TS_WOPEN)) {
-		/*
-		 * Although we got a last close, the device may still be in
-		 * use; e.g. if this was the dialout node, and there are still
-		 * processes waiting for carrier on the non-dialout node.
-		 */
-		ucom_cleanup(sc);
-	}
+	ucom_cleanup(sc);
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	sc->sc_cua = 0;
 	splx(s);
@@ -533,8 +527,7 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	if (sc->sc_methods->ucom_close != NULL)
 		sc->sc_methods->ucom_close(sc->sc_parent, sc->sc_portno);
 
-	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+	ucom_unlock(sc);
 
 	return (0);
 }
@@ -1109,26 +1102,28 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 Static void
 ucom_cleanup(struct ucom_softc *sc)
 {
-	DPRINTF(("ucom_cleanup: closing pipes\n"));
+	if (--sc->sc_open == 0) {
+		DPRINTF(("ucom_cleanup: closing pipes\n"));
 
-	ucom_shutdown(sc);
-	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
-	}
-	if (sc->sc_bulkout_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
-		usbd_close_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
-	}
-	if (sc->sc_ixfer != NULL) {
-		usbd_free_xfer(sc->sc_ixfer);
-		sc->sc_ixfer = NULL;
-	}
-	if (sc->sc_oxfer != NULL) {
-		usbd_free_xfer(sc->sc_oxfer);
-		sc->sc_oxfer = NULL;
+		ucom_shutdown(sc);
+		if (sc->sc_bulkin_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+			sc->sc_bulkin_pipe = NULL;
+		}
+		if (sc->sc_bulkout_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkout_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
+			sc->sc_bulkout_pipe = NULL;
+		}
+		if (sc->sc_ixfer != NULL) {
+			usbd_free_xfer(sc->sc_ixfer);
+			sc->sc_ixfer = NULL;
+		}
+		if (sc->sc_oxfer != NULL) {
+			usbd_free_xfer(sc->sc_oxfer);
+			sc->sc_oxfer = NULL;
+		}
 	}
 }
 
