@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.59 1999/04/01 21:10:13 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.60 1999/04/01 21:43:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.59 1999/04/01 21:10:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.60 1999/04/01 21:43:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -554,39 +554,21 @@ getoff1:
 		goto getoff1;		/* Yeah, I know... */
 	}
 
-	/* Get filesystem type */
-	if (get_fstype(lp, partno) != 0) {
+	/* Get filesystem type and mountpoint */
+	if (get_fstype(lp, partno) != 0 || get_mp(lp, mp, partno) != 0) {
 		pp->p_size = 0;			/* effective delete */
 		return;
 	}
 
-	if (pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_UNUSED) {
-		/* Get fsize */
-		if (get_fsize(lp, partno) != 0) {
-			pp->p_size = 0;			/* effective delete */
-			return;
-		}
-
-		/* Get bsize */
-		if (get_bsize(lp, partno) != 0) {
-			pp->p_size = 0;			/* effective delete */
-			return;
-		}
-
-		if (pp->p_fstype == FS_BSDFFS) {
-			/* get cpg */
-			if (get_cpg(lp, partno) != 0) {
-				pp->p_size = 0;		/* effective delete */
-				return;
-			}
-		}
-
-		/* get mount point */
-		if (get_mp(lp, mp, partno) != 0) {
+	if (pp->p_fstype == FS_BSDFFS) {
+		/* Get fsize, bsize, and cpg */
+		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0 ||
+		    get_cpg(lp, partno) != 0) {
 			pp->p_size = 0;			/* effective delete */
 			return;
 		}
 	}
+
 	/* Update free sector count and make sure things stay contiguous. */
 	*freep -= pp->p_size;
 	if (pp->p_size + pp->p_offset > ending_sector ||
@@ -717,6 +699,12 @@ getoff2:
 		goto getoff2;		/* Yeah, I know... */
 	}
 
+	/* get mount point */
+	if (get_mp(lp, mp, partno) != 0) {
+		*pp = origpart;			/* undo changes */
+		return;
+	}
+
 	if (pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_UNUSED) {
 		/* get fsize */
 		if (get_fsize(lp, partno) != 0) {
@@ -737,12 +725,6 @@ getoff2:
 				return;
 			}
 		}
-	}
-
-	/* get mount point */
-	if (get_mp(lp, mp, partno) != 0) {
-		*pp = origpart;			/* undo changes */
-		return;
 	}
 
 	/* Make sure things stay contiguous. */
