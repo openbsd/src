@@ -74,7 +74,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 	Next, use the dd(1) utility to copy the file to the floppy drive.
 	Under SunOS, the command would be:
 
-		dd if=floppy22.fs of=/dev/rfdc0 bs=36b
+		dd if=floppy22.fs of=/dev/rfd0c bs=36b
 
 	If you are using something other than SunOS, you may have to adapt
 	this to conform to local naming conventions for the floppy and
