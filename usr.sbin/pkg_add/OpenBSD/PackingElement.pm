@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.70 2004/11/13 11:48:46 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.71 2004/11/13 12:01:30 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -319,7 +319,7 @@ sub make_hardlink
 sub set_tempname
 {
 	my ($self, $tempname) = @_;
-	$self->{temp} = $tempname;
+	$self->{tempname} = $tempname;
 }
 
 sub IsFile() { 1 }
