@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.21 2004/06/22 22:55:56 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.22 2004/06/24 19:32:00 djm Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -75,6 +75,9 @@ fi
 if [ "x$TEST_SSH_SCP" != "x" ]; then
 	SCP="${TEST_SSH_SCP}"
 fi
+
+# Path to sshd must be absolute for rexec
+SSHD=`which sshd`
 
 # these should be used in tests
 export SSH SSHD SSHAGENT SSHADD SSHKEYGEN SSHKEYSCAN SFTP SFTPSERVER SCP
@@ -231,6 +234,27 @@ start_sshd ()
 	done
 
 	test -f $PIDFILE || fatal "no sshd running on port $PORT"
+}
+
+# Start a sshd and then delete it
+start_sshd_copy_zap ()
+{
+	cp ${SSHD} $OBJ/sshd.copy
+	SSHD_CPY=`which $OBJ/sshd.copy`
+
+	# start sshd
+	$SUDO $SSHD_CPY -f $OBJ/sshd_config -t	|| fatal "sshd_config broken"
+	$SUDO $SSHD_CPY -f $OBJ/sshd_config
+
+	trace "wait for sshd"
+	i=0;
+	while [ ! -f $PIDFILE -a $i -lt 5 ]; do
+		i=`expr $i + 1`
+		sleep $i
+	done
+
+	test -f $PIDFILE || fatal "no sshd running on port $PORT"
+	rm -f $OBJ/sshd.copy
 }
 
 # source test body
