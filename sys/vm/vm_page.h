@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.6 1998/03/20 15:40:38 niklas Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.7 1999/02/19 02:54:38 deraadt Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -327,6 +327,8 @@ static int vm_physseg_find __P((vm_offset_t, int *));
 
 void		 vm_page_activate __P((vm_page_t));
 vm_page_t	 vm_page_alloc __P((vm_object_t, vm_offset_t));
+vm_offset_t	 vm_page_alloc_contig(vm_offset_t, vm_offset_t,
+			vm_offset_t, vm_offset_t);
 int		 vm_page_alloc_memory __P((vm_size_t size, vm_offset_t low,
 			vm_offset_t high, vm_offset_t alignment, vm_offset_t boundary,
 			struct pglist *rlist, int nsegs, int waitok));

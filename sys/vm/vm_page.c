@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.c,v 1.15 1998/10/30 18:28:03 mickey Exp $	*/
+/*	$OpenBSD: vm_page.c,v 1.16 1999/02/19 02:54:36 deraadt Exp $	*/
 /*	$NetBSD: vm_page.c,v 1.41 1998/02/08 18:24:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
@@ -115,6 +115,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
+#include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 #include <vm/vm_pageout.h>
 
@@ -1816,6 +1817,33 @@ vm_page_alloc_memory(size, low, high, alignment, boundary,
 	simple_unlock(&vm_page_queue_free_lock);
 	splx(s);
 	return (error);
+}
+
+vm_offset_t
+vm_page_alloc_contig(size, low, high, alignment)
+	vm_offset_t size;
+	vm_offset_t low;
+	vm_offset_t high;
+	vm_offset_t alignment;
+{
+	struct pglist mlist;
+	struct vm_page  *m;
+	vm_offset_t addr, tmp_addr;
+
+	TAILQ_INIT(&mlist);
+	if (vm_page_alloc_memory(size, low, high, alignment, 0,
+	    &mlist, 1, FALSE))
+		return 0;
+	addr = tmp_addr = kmem_alloc_pageable(kernel_map, size);
+	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m, pageq)) {
+		vm_page_insert(m, kernel_object,
+		    tmp_addr - VM_MIN_KERNEL_ADDRESS);
+		vm_page_wire(m);
+		pmap_enter(pmap_kernel(), tmp_addr, VM_PAGE_TO_PHYS(m),
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		tmp_addr += PAGE_SIZE;
+	}
+	return addr;
 }
 
 /*

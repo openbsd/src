@@ -1,4 +1,4 @@
-/*	$OpenBSD: brooktree848.c,v 1.6 1999/01/30 23:43:57 niklas Exp $	*/
+/*	$OpenBSD: brooktree848.c,v 1.7 1999/02/19 02:54:38 deraadt Exp $	*/
 /* $FreeBSD: brooktree848.c,v 1.64 1999/01/28 17:47:47 roger Exp $ */
 /* BT848 Driver for Brooktree's Bt848, Bt849, Bt878 and Bt 879 based cards.
    The Brooktree  BT848 Driver driver is based upon Mark Tinguely and
@@ -6448,6 +6448,7 @@ vm_page_alloc_contig(size, low, high, alignment)
 }
 #else /* !UVM */
 
+#ifndef __OpenBSD__
 #define TAILQ_FIRST(head)               ((head)->tqh_first)
 #define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
 
@@ -6477,6 +6478,9 @@ vm_page_alloc_contig(size, low, high, alignment)
 	}
 	return addr;
 }
+
+#endif
+
 #endif /* !UVM */
 #endif /* __NetBSD__ */
 #endif
