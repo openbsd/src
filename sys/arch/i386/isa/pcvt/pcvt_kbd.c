@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.34 2000/02/28 02:39:15 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.35 2000/07/19 13:40:26 art Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -169,12 +169,11 @@ do_vgapage(int page)
  * get lost other times as well.
  */
 
-static int lost_intr_timeout_queued = 0;
+struct timeout kbd_led_intr_to;
 
 static void
 check_for_lost_intr (void *arg)
 {
-	lost_intr_timeout_queued = 0;
 	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF) {
 		int opri = spltty();
 		(void)pcrint();
@@ -244,11 +243,7 @@ update_led(void)
 		}
 
 #if PCVT_UPDLED_LOSES_INTR
-		if (lost_intr_timeout_queued)
-			untimeout(check_for_lost_intr, (void *)NULL);
-
-		timeout(check_for_lost_intr, (void *)NULL, hz);
-		lost_intr_timeout_queued = 1;
+		timeout_add(&kbd_led_intr_to, hz);
 #endif /* PCVT_UPDLED_LOSES_INTR */
 	}
 bail:
@@ -581,6 +576,9 @@ kbd_code_init(void)
 	doreset();
 	ovlinit(0);
 	keyboard_is_initialized = 1;
+#if !PCVT_NO_LED_UPDATE && PCVT_UPDLED_LOSES_INTR
+	timeout_set(&kbd_led_intr_to, check_for_lost_intr, NULL);
+#endif
 }
 
 /*---------------------------------------------------------------------------*
