@@ -1,7 +1,7 @@
-/*      $OpenBSD: ata.c,v 1.14 2002/12/19 16:32:59 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.15 2003/02/21 20:10:32 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
- * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

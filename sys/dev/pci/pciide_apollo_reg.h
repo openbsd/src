@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_apollo_reg.h,v 1.6 2002/11/15 03:33:25 grange Exp $	*/
+/*	$OpenBSD: pciide_apollo_reg.h,v 1.7 2003/02/21 20:10:33 grange Exp $	*/
 /*	$NetBSD: pciide_apollo_reg.h,v 1.8 2001/01/05 18:04:43 bouyer Exp $	*/
 
 /*
@@ -14,8 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

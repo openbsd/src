@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.4 2001/04/04 07:02:54 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.5 2003/02/21 20:10:34 grange Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.5 2001/01/05 15:29:40 bouyer Exp $	*/
 
 /*
@@ -14,8 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

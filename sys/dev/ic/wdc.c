@@ -1,9 +1,9 @@
-/*      $OpenBSD: wdc.c,v 1.59 2003/02/13 20:54:59 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.60 2003/02/21 20:10:33 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
 /*
- * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
