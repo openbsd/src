@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.29 2000/07/31 23:39:43 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.30 2000/08/05 00:53:01 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -378,6 +378,10 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100,
+	IDE_PCI_CLASS_OVERRIDE,
+	pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_ULTRA100_2,
 	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	}
