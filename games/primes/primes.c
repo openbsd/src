@@ -120,6 +120,8 @@ main(argc, argv)
 	int ch;
 	char *p;
 
+	setgid(getgid());
+
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch (ch) {
 		case '?':

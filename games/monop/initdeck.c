@@ -82,6 +82,8 @@ int	ac;
 char	*av[]; {
 	int n;
 
+	setgid(getgid());
+
 	getargs(ac, av);
 	if ((inf = fopen(infile, "r")) == NULL) {
 		perror(infile);

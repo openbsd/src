@@ -85,6 +85,8 @@ main(argc, argv)
 	int obs[26], try, winner;
 	char *malloc(), *strerror();
 
+	setgid(getgid());
+
 	if (argc > 1)
 		printit(argv[1]);
 

@@ -66,6 +66,10 @@ main(argc, argv)
 	BOOLEAN playing;
 	FILE *f;
 	int ch;
+	gid_t egid;
+
+	egid = getegid();
+	setegid(getgid());
 
 	while ((ch = getopt(argc, argv, "eqr")) != EOF)
 		switch (ch) {
@@ -93,6 +97,7 @@ main(argc, argv)
 	Tablewin = subwin(stdscr, TABLE_Y, TABLE_X, 0, PLAY_X);
 	Compwin = subwin(stdscr, COMP_Y, COMP_X, 0, TABLE_X + PLAY_X);
 	Msgwin = subwin(stdscr, MSG_Y, MSG_X, Y_MSG_START, SCORE_X + 1);
+
 	leaveok(Playwin, TRUE);
 	leaveok(Tablewin, TRUE);
 	leaveok(Compwin, TRUE);
@@ -126,11 +131,13 @@ main(argc, argv)
 		playing = (getuchar() == 'Y');
 	} while (playing);
 
+	setegid(egid);
 	if (f = fopen(_PATH_LOG, "a")) {
 		(void)fprintf(f, "%s: won %5.5d, lost %5.5d\n",
 		    getlogin(), cgames, pgames);
 		(void) fclose(f);
 	}
+	setegid(getgid());
 	bye();
 	if (!f) {
 		(void) fprintf(stderr, "\ncribbage: can't open %s.\n",

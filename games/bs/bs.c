@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.1 1996/08/21 08:18:36 downsj Exp $	*/
+/*	$OpenBSD: bs.c,v 1.2 1996/12/19 22:21:13 deraadt Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -1203,6 +1203,8 @@ main(argc, argv)
 int argc;
 char *argv[];
 {
+    setgid(getgid());
+
     do_options(argc, argv);
 
     intro();

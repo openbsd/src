@@ -81,6 +81,8 @@ main(argc, argv)
 	struct winsize ws;
 #endif
 
+	setgid(getgid());
+
 	if (!(term = getenv("TERM"))) {
 		fprintf(stderr, "%s: TERM: parameter not set\n", *argv);
 		exit(1);

@@ -63,6 +63,9 @@ char **argv;
 	char mainbuf[LINELENGTH];
 	char *next;
 
+	egid = getegid();
+	setegid(getgid());
+
 	initialize(argc < 2 || strcmp(argv[1], "-r"));
 start:
 	news();

@@ -299,3 +299,5 @@ struct objs {
 };
 struct objs dayobjs[];
 struct objs nightobjs[];
+
+gid_t	egid;

@@ -86,6 +86,8 @@ main()
 	double days, today, tomorrow;
 	int cnt;
 
+	setgid(getgid());
+
 	if (gettimeofday(&tp,&tzp)) {
 		(void)fprintf(stderr, "pom: %s\n", strerror(errno));
 		exit(1);

@@ -109,6 +109,8 @@ char	**argv;
 	register char	c;		/* non-descript character storage */
 	long	t;			/* time for random num generator */
 
+	setgid(getgid());
+
 	/* initialization */
 	bflag = 2;					/* default no board */
 	signal (2, getout);				/* trap interrupts */

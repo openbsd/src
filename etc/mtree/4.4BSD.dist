@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.27 1996/12/19 02:31:17 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.28 1996/12/19 22:19:50 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -113,7 +113,7 @@ bin
 games
 
 # ./usr/games/hide
-hide            gname=games uname=games mode=0700
+hide            gname=games uname=root mode=0550
 # ./usr/games/hide
 ..
 
@@ -1457,13 +1457,13 @@ ns
 ..
 
 # ./var/games
-games            uname=games gname=games mode=0775
+games            uname=root gname=games mode=0755
 
 # ./var/games/hackdir
-hackdir          uname=games gname=games mode=0775
+hackdir          uname=root gname=games mode=0775
 
 # ./var/games/hackdir/save
-save		 uname=games gname=games mode=0770
+save		 uname=root gname=games mode=0770
 # ./var/games/hackdir/save
 ..
 
@@ -1471,17 +1471,17 @@ save		 uname=games gname=games mode=0770
 ..
 
 # ./var/games/hackdir/save		XXX
-save		uname=games gname=games mode=0775
+save		uname=root gname=games mode=0775
 # ./var/games/hackdir/save		XXX
 ..
 
 # ./var/games/larn
-larn             uname=games gname=games mode=0775
+larn             uname=root gname=games mode=0775
 # ./var/games/larn
 ..
 
 # ./var/games/phantasia
-phantasia        uname=games gname=games mode=0775
+phantasia        uname=root gname=games mode=0775
 # ./var/games/phantasia
 ..
 

@@ -47,7 +47,7 @@ restore()
 {
 	char *getenv();
 	char *home;
-	char home1[100];
+	char home1[1024];
 	register int n;
 	int tmp;
 	register FILE *fp;
@@ -57,13 +57,16 @@ restore()
 		strcpy(home1, home);
 		strcat(home1, "/Bstar");
 	} else {
-		fprintf(stderr, "%s/Bstar: %s\n", home, strerror(ENAMETOOLONG));
+		fprintf(stderr, "%s: %s\n", home1, strerror(ENAMETOOLONG));
 		return;
 	}
+	setegid(egid);
 	if ((fp = fopen(home1, "r")) == 0) {
 		perror(home1);
+		setegid(getgid());
 		return;
 	}
+	setegid(getgid());
 	fread(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fread(&CUMBER, sizeof CUMBER, 1, fp);
 	fread(&clock, sizeof clock, 1, fp);
@@ -118,10 +121,13 @@ save()
 		fprintf(stderr, "%s/Bstar: %s\n", home, strerror(ENAMETOOLONG));
 		return;
 	}
+	setegid(egid);
 	if ((fp = fopen(home1, "w")) == 0) {
 		perror(home1);
+		setegid(getgid());
 		return;
 	}
+	setegid(getgid());
 	printf("Saved in %s.\n", home1);
 	fwrite(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fwrite(&CUMBER, sizeof CUMBER, 1, fp);

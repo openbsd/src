@@ -167,6 +167,8 @@ char	**argv;
 	register char		**av;
 	struct	termios		argp;
 
+	setgid(getgid());
+
 	av = argv;
 	ac = argc;
 	av++;

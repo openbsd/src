@@ -211,6 +211,8 @@ main(argc, argv)
 	struct winsize ws;
 #endif
 
+	setgid(getgid());
+
 	length = 16;
 	number = 3;
 	trail = ' ';

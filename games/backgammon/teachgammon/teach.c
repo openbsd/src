@@ -84,6 +84,8 @@ char	**argv;
 {
 	register int	i;
 
+	setgid(getgid());
+
 	signal (2,getout);
 	if (tcgetattr (0, &old) == -1)			/* get old tty mode */
 		errexit ("teachgammon(gtty)");

@@ -134,6 +134,8 @@ main(argc, argv)
 	 * but this seems kind of silly.  So this one doesn't.
 	 */
 
+	setgid(getgid());
+
 	if (argc > 1) {
 		while (--argc)
 			printcard(*++argv);

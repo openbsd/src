@@ -66,6 +66,8 @@ main(argc, argv)
 	int ch;
 	char buf[1024];
 
+	setgid(getgid());
+
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch(ch) {
 		case '?':

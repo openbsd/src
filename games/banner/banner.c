@@ -1036,6 +1036,8 @@ main(argc, argv)
 { 
 	int ch;
 
+	setgid(getgid());
+
 	while ((ch = getopt(argc, argv, "w:td")) != EOF)
 		switch(ch) {
 		case 'w':

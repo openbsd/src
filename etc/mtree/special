@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.8 1996/12/15 20:21:56 millert Exp $
+#	$OpenBSD: special,v 1.9 1996/12/19 22:19:51 deraadt Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -76,7 +76,7 @@ usr		type=dir mode=0755 uname=root gname=wheel
 bin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/bin
 games		type=dir mode=0755 uname=root gname=wheel optional
-hide		type=dir mode=0700 uname=games gname=games optional ignore
+hide		type=dir mode=0700 uname=root gname=wheel optional ignore
 ..	#usr/games/hide
 ..	#usr/games
 include		type=dir mode=0755 uname=root gname=bin ignore

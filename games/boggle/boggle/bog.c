@@ -130,6 +130,8 @@ main(argc, argv)
 	int ch, done, i, selfuse, sflag;
 	char *bspec, *p;
 
+	setgid(getgid());
+
 	batch = debug = reuse = selfuse = sflag = 0;
 	bspec = NULL;
 	minlength = 3;

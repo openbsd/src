@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1.1.1 1996/12/16 06:56:08 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 1996/12/19 22:21:28 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -94,6 +94,8 @@ main(argc, argv)
 		"%3d %-6s",
 		"%3d        %-6s"
 	};
+
+	setgid(getgid());
 
 	prog = strrchr(argv[0], '/');
 	if (prog)

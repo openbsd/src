@@ -54,7 +54,6 @@ static char rcsid[] = "$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $";
 datime(d,t)
 int *d,*t;
 {       int tvec[2],*tptr;
-	int *localtime();
 
 	time(tvec);
 	tptr=localtime(tvec);

@@ -99,6 +99,8 @@ main(argc, argv)
 	int ch;
 	char *p, buf[100];		/* > max number of digits. */
 
+	setgid(getgid());
+
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch (ch) {
 		case '?':

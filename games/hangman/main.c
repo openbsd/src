@@ -56,6 +56,8 @@ main()
 {
 	void die();
 
+	setgid(getgid());
+
 	initscr();
 	signal(SIGINT, die);
 	setup();

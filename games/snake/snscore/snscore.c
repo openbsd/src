@@ -75,6 +75,7 @@ main()
 	struct	passwd	*p;
 
 	fd = fopen(recfile, "r");
+	setgid(getgid());
 	if (fd == NULL) {
 		perror(recfile);
 		exit(1);

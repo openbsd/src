@@ -100,6 +100,9 @@ int repeat=1;
 time_t tv;
 char *tn;
 
+int rawscores;
+FILE *logfile;
+
 main(argc,argv)
 int argc;
 char **argv;
@@ -108,6 +111,10 @@ char **argv;
 	extern int optind;
 	int ch, i, j, k;
 	void stop();
+
+	rawscores = open(_PATH_RAWSCORES, O_RDWR|O_CREAT, 0644);
+	logfile = fopen(_PATH_LOGFILE, "a");
+	setgid(getgid());
 
 	(void)time(&tv);
 	srandom((int)tv);
@@ -469,7 +476,6 @@ post(iscore, flag)
 int	iscore, flag;
 {
 	short	score = iscore;
-	int	rawscores;
 	short	uid;
 	short	oldbest=0;
 	short	allbwho=0, allbscore=0;
@@ -482,7 +488,7 @@ int	iscore, flag;
 		pr("No saved scores for uid %d.\n", uid);
 		return(1);
 	}
-	if ((rawscores = open(_PATH_RAWSCORES, O_RDWR|O_CREAT, 0644)) < 0) {
+	if (rawscores == -1) {
 		pr("No score file %s: %s.\n", _PATH_RAWSCORES,
 		    strerror(errno));
 		return(1);
@@ -885,10 +891,9 @@ int num;
 logit(msg)
 char *msg;
 {
-	FILE *logfile;
 	time_t t;
 
-	if ((logfile=fopen(_PATH_LOGFILE, "a")) != NULL) {
+	if (logfile != NULL) {
 		time(&t);
 		fprintf(logfile, "%s $%d %dx%d %s %s",
 		    getlogin(), cashvalue, lcnt, ccnt, msg, ctime(&t));

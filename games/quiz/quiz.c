@@ -84,6 +84,8 @@ main(argc, argv)
 	register int ch;
 	char *indexfile;
 
+	setgid(getgid());
+
 	indexfile = _PATH_QUIZIDX;
 	while ((ch = getopt(argc, argv, "i:t")) != EOF)
 		switch(ch) {
