@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.423 2001/07/30 01:28:40 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.424 2001/08/03 21:26:44 chris Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -426,7 +426,7 @@ vendor HILEVEL		0x118a	HiLevel Technology
 vendor COROLLARY	0x118c	Corrollary
 vendor BITFLOW		0x118d	BitFlow
 vendor HERMSTEDT	0x118e	Hermstedt
-vendor ARTOP		0x1191	Artop Electric
+vendor ACARD		0x1191	Acard
 vendor DENSAN		0x1192	Densan
 vendor ZEINET		0x1193	Zeinet
 vendor TOUCAN		0x1194	Toucan Technology
@@ -642,6 +642,17 @@ product AIRONET PC4800		0x4800	PC4800 Wireless
 product ACC 2188		0x0000	ACCM 2188 VL-PCI
 product ACC 2051_HB		0x2051	2051 Host-PCI
 product ACC 2051_ISA		0x5842	2051 Host-ISA
+
+/* Acard products */
+product	ACARD ATP850U		0x0005	ATP850U/UF IDE 
+product	ACARD ATP860		0x0006	ATP860 IDE
+product	ACARD ATP860A		0x0007	ATP860-A IDE
+product	ACARD AEC6710		0x8002	AEC6710 SCSI
+product	ACARD AEC6712UW		0x8010	AEC6712UW SCSI
+product	ACARD AEC6712U		0x8020	AEC6712U SCSI
+product	ACARD AEC6712S		0x8030	AEC6712S SCSI
+product	ACARD AEC6710D		0x8040	AEC6710D SCSI
+product	ACARD AEC6715UW		0x8050	AEC6715UW SCSI
 
 /* Accton products */
 product ACCTON 5030		0x1211	MPX 5030/5038
