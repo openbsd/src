@@ -1,8 +1,7 @@
 #! /bin/sh
-#	$OpenBSD: yearistype.sh,v 1.6 2001/02/03 08:25:18 niklas Exp $
+#	$OpenBSD: yearistype.sh,v 1.7 2001/03/26 15:18:27 millert Exp $
 
-
-: '@(#)yearistype.sh	7.6'
+: '@(#)yearistype.sh	7.7'
 
 case $#-$1 in
 	2-|2-0*|2-*[!0-9]*)
@@ -36,3 +35,4 @@ case $#-$2 in
 esac
 
 echo "$0: usage is $0 year even|odd|uspres|nonpres|nonuspres" >&2
+exit 1
