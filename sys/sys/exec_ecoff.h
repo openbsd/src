@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.h,v 1.4 1996/05/22 12:05:20 deraadt Exp $	*/
+/*	$OpenBSD: exec_ecoff.h,v 1.5 2000/08/31 14:49:07 ericj Exp $	*/
 /*	$NetBSD: exec_ecoff.h,v 1.9 1996/05/09 23:42:08 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #ifndef	_SYS_EXEC_ECOFF_H_
 #define	_SYS_EXEC_ECOFF_H_
 
-#include <machine/ecoff.h>
+#include <machine/ecoff_machdep.h>
 
 struct ecoff_filehdr {
 	u_short f_magic;	/* magic number */
@@ -106,5 +106,8 @@ struct ecoff_exechdr {
 #ifdef _KERNEL
 int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
 int	cpu_exec_ecoff_hook __P((struct proc *, struct exec_package *));
+int     exec_ecoff_prep_omagic __P((struct proc *, struct exec_package *));
+int     exec_ecoff_prep_nmagic __P((struct proc *, struct exec_package *));
+int     exec_ecoff_prep_zmagic __P((struct proc *, struct exec_package *));
 #endif /* _KERNEL */
 #endif /* !_SYS_EXEC_ECOFF_H_ */

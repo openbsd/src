@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff_machdep.h,v 1.1 1996/10/30 22:39:01 niklas Exp $	*/
+/*	$OpenBSD: ecoff_machdep.h,v 1.2 2000/08/31 14:49:06 ericj Exp $	*/
 /*	$NetBSD: ecoff_machdep.h,v 1.3 1996/05/09 23:47:25 cgd Exp $	*/
 
 /*
@@ -52,6 +52,11 @@
 #define ECOFF_SEGMENT_ALIGNMENT(ep) \
     (((ep)->f.f_flags & ECOFF_FLAG_EXEC) == 0 ? 8 : 16)
 
+#define	ECOFF_FLAG_OBJECT_TYPE_MASK	0x3000
+#define	ECOFF_OBJECT_TYPE_NO_SHARED	0x1000
+#define	ECOFF_OBJECT_TYPE_SHARABLE	0x2000
+#define	ECOFF_OBJECT_TYPE_CALL_SHARED	0x3000
+
 struct ecoff_symhdr {
 	int16_t		magic;
 	int16_t		vstamp;
@@ -93,3 +98,8 @@ struct ecoff_extsym {
 	unsigned	:29;
 	int		es_indexfld;
 };
+
+#ifdef _KERNEL
+void cpu_exec_ecoff_setregs
+     __P((struct proc *, struct exec_package *, u_long, register_t *));
+#endif

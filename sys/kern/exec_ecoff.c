@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.5 1999/01/11 05:12:21 millert Exp $	*/
+/*	$OpenBSD: exec_ecoff.c,v 1.6 2000/08/31 14:49:06 ericj Exp $	*/
 /*	$NetBSD: exec_ecoff.c,v 1.8 1996/05/19 20:36:06 jonathan Exp $	*/
 
 /*
@@ -44,11 +44,6 @@
 #if defined(_KERN_DO_ECOFF)
 
 #include <sys/exec_ecoff.h>
-
-int	exec_ecoff_prep_omagic __P((struct proc *, struct exec_package *));
-int	exec_ecoff_prep_nmagic __P((struct proc *, struct exec_package *));
-int	exec_ecoff_prep_zmagic __P((struct proc *, struct exec_package *));
-int	exec_ecoff_setup_stack __P((struct proc *, struct exec_package *));
 
 /*
  * exec_ecoff_makecmds(): Check if it's an ecoff-format executable.
