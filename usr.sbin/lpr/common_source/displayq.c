@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.16 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.17 2002/05/28 18:16:03 millert Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.16 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.17 2002/05/28 18:16:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,6 @@ displayq(int format)
 		memset(&nsa, 0, sizeof(nsa));
 		nsa.sa_handler = alarmer;
 		sigemptyset(&nsa.sa_mask);
-		sigaddset(&nsa.sa_mask, SIGALRM);
 		nsa.sa_flags = 0;
 		(void)sigaction(SIGALRM, &nsa, &osa);
 		alarm(wait_time);
