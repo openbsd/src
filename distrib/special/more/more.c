@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.13 2003/05/28 20:05:41 mickey Exp $	*/
+/*	$OpenBSD: more.c,v 1.14 2003/05/28 22:14:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.13 2003/05/28 20:05:41 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.14 2003/05/28 22:14:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -961,7 +961,7 @@ command(char *filename, FILE *f)
 			putchar('\n');
 
 			initline = Currline - dlines * (nlines + 1);
-			if (! noscroll)
+			if (!noscroll)
 				--initline;
 			if (initline < 0)
 				initline = 0;
@@ -1057,7 +1057,8 @@ command(char *filename, FILE *f)
 		case 'n':
 			lastp++;
 		case '/':
-			if (nlines == 0) nlines++;
+			if (nlines == 0)
+				nlines++;
 			kill_line();
 			putchar('/');
 			promptlen = 1;
@@ -1073,7 +1074,7 @@ command(char *filename, FILE *f)
 			}
 			ret(dlines-1);
 		case '!':
-			do_shell (filename);
+			do_shell(filename);
 			break;
 		case '?':
 		case 'h':
@@ -1551,13 +1552,13 @@ readch(void)
 }
 
 static char BS = '\b';
-static char *BSB = "\b \b";
+static char BSB[] = "\b \b";
 static char CARAT = '^';
-#define	ERASEONECHAR	do {				\
-	if (docrterase)					\
-		write(STDERR_FILENO, BSB, sizeof(BSB));	\
-	else						\
-		write(STDERR_FILENO, &BS, sizeof(BS));	\
+#define	ERASEONECHAR	do {					\
+	if (docrterase)						\
+		write(STDERR_FILENO, BSB, sizeof(BSB) - 1);	\
+	else							\
+		write(STDERR_FILENO, &BS, 1);			\
 } while (0)
 
 void
@@ -1592,18 +1593,18 @@ ttyin(char *buf, int nmax, char pchar)
 			}
 		} else if ((ch == otty.c_cc[VKILL]) && !slash) {
 			if (hard) {
-				show (ch);
-				putchar ('\n');
-				putchar (pchar);
+				show(ch);
+				putchar('\n');
+				putchar(pchar);
 			} else {
-				putchar ('\r');
-				putchar (pchar);
+				putchar('\r');
+				putchar(pchar);
 				if (eraseln)
-					erasep (1);
+					erasep(1);
 				else if (docrtkill) {
 					while (promptlen-- > 1)
 						write(STDERR_FILENO, BSB,
-						    sizeof(BSB));
+						    sizeof(BSB) - 1);
 				}
 				promptlen = 1;
 			}
@@ -1635,7 +1636,7 @@ ttyin(char *buf, int nmax, char pchar)
 	if (!eraseln)
 		promptlen = maxlen;
 	if (sptr - buf >= nmax - 1)
-		error ("Line too long");
+		error("Line too long");
 }
 
 int
@@ -1665,7 +1666,7 @@ expand(char *outbuf, size_t olen, char *inbuf)
 			break;
 		case '!':
 			if (!shellp)
-				error ("No previous command to substitute for");
+				error("No previous command to substitute for");
 			len = strlcpy(outstr, shell_line,
 			    temp + sizeof(temp) - outstr);
 			if (len >= temp + sizeof(temp) - outstr)
