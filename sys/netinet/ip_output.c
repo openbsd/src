@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.140 2001/11/26 16:50:26 jasoni Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.141 2002/01/23 21:34:53 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -575,7 +575,7 @@ sendit:
 		        tdb_add_inp(tdb, inp, 0);
 
 		/* Check if we are allowed to fragment */
-		if ((ip->ip_off & IP_DF) && tdb->tdb_mtu &&
+		if (ip_mtudisc && (ip->ip_off & IP_DF) && tdb->tdb_mtu &&
 		    (u_int16_t)ip->ip_len > tdb->tdb_mtu &&
 		    tdb->tdb_mtutimeout > time.tv_sec) {
 			struct rtentry *rt = NULL;
@@ -820,7 +820,7 @@ done:
 	return (error);
 bad:
 #ifdef IPSEC
-	if (error == EMSGSIZE && icmp_mtu != 0)
+	if (error == EMSGSIZE && ip_mtudisc && icmp_mtu != 0)
 		ipsec_adjust_mtu(m, icmp_mtu);
 #endif
 	m_freem(m0);

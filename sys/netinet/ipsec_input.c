@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.54 2001/12/06 22:52:10 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.55 2002/01/23 21:34:53 provos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -804,7 +804,7 @@ ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
 	struct ip *ip = v;
 	int s;
 
-	if (cmd == PRC_MSGSIZE && ip && ip->ip_v == 4) {
+	if (cmd == PRC_MSGSIZE && ip && ip_mtudisc && ip->ip_v == 4) {
 		struct tdb *tdbp;
 		struct sockaddr_in dst;
 		struct icmp *icp;
