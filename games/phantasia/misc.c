@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 2001/07/09 07:04:29 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2001/09/19 10:51:55 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -1473,7 +1473,7 @@ distance(x1, x2, y1, y2)
 / AUTHOR: E. A. Estes, 12/4/85
 /
 / ARGUMENTS:
-/	int whichsig - signal which occured to cause jump to here
+/	int whichsig - signal which occurred to cause jump to here
 /
 / RETURN VALUE: none
 /

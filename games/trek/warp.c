@@ -1,4 +1,4 @@
-/*	$OpenBSD: warp.c,v 1.2 1998/08/19 07:42:16 pjanzen Exp $	*/
+/*	$OpenBSD: warp.c,v 1.3 2001/09/19 10:51:55 pjanzen Exp $	*/
 /*	$NetBSD: warp.c,v 1.3 1995/04/22 10:59:40 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)warp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: warp.c,v 1.2 1998/08/19 07:42:16 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: warp.c,v 1.3 2001/09/19 10:51:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ warp(fl, c, d)
 	/* test for just a lot of damage */
 	if (percent < 80)
 		lose(L_TOOFAST);
-	printf("Equilibrium restored -- extreme damage occured to ship systems\n");
+	printf("Equilibrium restored -- extreme damage occurred to ship systems\n");
 	for (i = 0; i < NDEV; i++)
 		damage(i, (3.0 * (franf() + franf()) + 1.0) * Param.damfac[i]);
 	Ship.shldup = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: phantdefs.h,v 1.4 2001/02/04 02:51:25 pjanzen Exp $	*/
+/*	$OpenBSD: phantdefs.h,v 1.5 2001/09/19 10:51:55 pjanzen Exp $	*/
 /*	$NetBSD: phantdefs.h,v 1.2 1995/03/24 03:59:28 cgd Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 #define S_INBATTLE	4		/* playing - in battle */
 #define S_MONSTER	5		/* playing - fighting monster */
 #define S_TRADING	6		/* playing - at a trading post */
-#define S_HUNGUP	7		/* error occured with character */
+#define S_HUNGUP	7		/* error occurred with character */
 
 /* tampered constants */
 #define T_OFF		0		/* nothing */
