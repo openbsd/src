@@ -1,4 +1,4 @@
-/*	$OpenBSD: fillcap.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: fillcap.c,v 1.2 1996/08/27 03:32:32 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fillcap.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: fillcap.c,v 1.2 1996/08/27 03:32:32 tholo Exp $";
 #endif
 
 #include <stdio.h>
@@ -92,7 +92,7 @@ _ti_fillcap(term)
 		sprintf(buf, "%s\n$<%d>", carriage_return, new_line_delay);
 	    else {
 		strncpy(buf, carriage_return, sizeof(buf) >> 1);
-		buf[sizeof(buf) - 2] = '\0';
+		buf[sizeof(buf) >> 1] = '\0';
 		strncat(buf, "\n", sizeof(buf) - 1);
 	    }
 	    buf[sizeof(buf) - 1] = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.7 1996/08/07 03:26:00 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.8 1996/08/27 03:32:33 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.7 1996/08/07 03:26:00 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.8 1996/08/27 03:32:33 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -78,8 +78,8 @@ _ti_gettermcap(name)
     char **fname;
     char  *home;
     int    i;
-    char   pathbuf[MAXPATHLEN];	/* holds raw path of filenames */
-    char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
+    char   pathbuf[MAXPATHLEN+1];	/* holds raw path of filenames */
+    char  *pathvec[PVECSIZ];		/* to point to names in pathbuf */
     char  *termpath;
     long   num;
 
@@ -111,6 +111,7 @@ _ti_gettermcap(name)
     }
     else					/* user-defined name in TERMCAP */
 	strncpy(pathbuf, cp, MAXPATHLEN);	/* still can be tokenized */
+    pathbuf[MAXPATHLEN] = '\0';
 
     *fname++ = pathbuf;	/* tokenize path into vector of names */
     while (*++p)
@@ -223,8 +224,8 @@ _ti_getterminfo(name)
     char **fname;
     char  *home;
     int    i;
-    char   pathbuf[MAXPATHLEN];	/* holds raw path of filenames */
-    char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
+    char   pathbuf[MAXPATHLEN+1];	/* holds raw path of filenames */
+    char  *pathvec[PVECSIZ];		/* to point to names in pathbuf */
     char  *termpath;
     long   num;
 
@@ -251,6 +252,7 @@ _ti_getterminfo(name)
 	}	/* if no $HOME look in current directory */
 	strncpy(p, _PATH_INFODEF, MAXPATHLEN - (p - pathbuf));
     }
+    pathbuf[MAXPATHLEN] = '\9';
 
     *fname++ = pathbuf;	/* tokenize path into vector of names */
     while (*++p)
