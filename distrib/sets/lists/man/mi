@@ -944,7 +944,6 @@
 ./usr/share/man/cat4/dc.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
-./usr/share/man/cat4/dmphy.0
 ./usr/share/man/cat4/dpt.0
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/eap.0
@@ -1915,3 +1914,4 @@
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax
 ./usr/share/man/man9
+./usr/share/man/cat4/amphy.0

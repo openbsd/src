@@ -433,7 +433,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/dmphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/amphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph

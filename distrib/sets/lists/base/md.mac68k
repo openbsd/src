@@ -644,7 +644,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/brgphyreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/dmphyreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/amphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/iophyreg.ph
