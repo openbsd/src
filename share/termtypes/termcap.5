@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.12 2003/06/06 21:08:13 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.13 2003/07/02 08:00:01 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -457,8 +457,8 @@ Hence the description of the Concept includes
 .Pp
 Boolean capabilities are defined by their name,
 .Sy \&fo .
-They have no argument. The presens of a boolean capability name sets its
-value to
+They have no argument.
+The presence of a boolean capability name sets its value to
 .Sy \&true .
 A capability value will be reverted to
 .Sy \&false ,
@@ -632,8 +632,7 @@ give this as
 .Sy \&cr .
 (Normally this will be carriage-return,
 .Sy \&^M . )
-If there is a code to produce an audible signal (bell, beep,
-etc. ) ,
+If there is a code to produce an audible signal (bell, beep, etc.),
 give this as
 .Sy \&bl .
 .Pp
@@ -715,8 +714,7 @@ for example.
 If the terminal has switch-selectable automatic margins,
 the
 .Nm
-description usually assumes that this feature is on,
-.Em i.e . ,
+description usually assumes that this feature is on, i.e.
 .Sy \&am .
 If the terminal has a command
 that moves to the first column of the next line,
@@ -852,8 +850,7 @@ Sometimes these are shorter than the more general two-parameter sequence
 (as with the Hewlett-Packard 2645) and can be used in preference to
 .Sy \&cm .
 If there are parameterized local motions
-.Pf ( Em e.g . ,
-move
+(e.g., move
 .Ar n
 positions to the right)
 these can be given as
@@ -1061,9 +1058,7 @@ times.
 .Pp
 It is occasionally necessary to move around while in insert mode
 to delete characters on the same line
-.Pf ( Em e.g . ,
-if there is a tab after
-the insertion position).
+(e.g., if there is a tab after the insertion position).
 If your terminal allows motion while in
 insert mode, you can give the capability
 .Sy \&mi
@@ -1554,8 +1549,7 @@ A string that turns off the status line (or otherwise erases its contents)
 should be given as
 .Sy \&ds .
 The status line is normally assumed to be the same width as the
-rest of the screen,
-.Em i.e . ,
+rest of the screen, i.e.
 .Sy \&co .
 If the status line is a different width (possibly because the terminal
 does not allow an entire line to be loaded), then its width in columns
