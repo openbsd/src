@@ -13,8 +13,13 @@ install:
 clean:
 	cd ${.OBJDIR} && exec ${MAKE} clean
 
+# XXX don't remove srcdir
 cleandir:
-	cd ${.OBJDIR} && rm -fr *
+	-@if [ ${.CURDIR} != ${.OBJDIR} ]; then \
+		cd ${.OBJDIR} && rm -fr *; \
+	else \
+		test -e Makefile && exec ${MAKE} realclean; \
+	fi
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
