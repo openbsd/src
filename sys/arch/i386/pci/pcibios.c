@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.31 2005/01/04 21:19:15 espie Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.32 2005/01/08 18:17:58 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -297,13 +297,15 @@ pcibios_pir_init(sc)
 		 */
 		pcibios_pir_header = *pirh;
 		pcibios_pir_table =
-		    malloc(pirh->tablesize - 32, M_DEVBUF, M_NOWAIT);
+		    malloc(pirh->tablesize - sizeof(*pirh), M_DEVBUF, M_NOWAIT);
 		if (pcibios_pir_table == NULL) {
 			printf("%s: no memory for $PIR\n", sc->sc_dev.dv_xname);
 			return NULL;
 		}
-		bcopy(p + 32, pcibios_pir_table, pirh->tablesize - 32);
-		pcibios_pir_table_nentries = (pirh->tablesize - 32) / 16;
+		bcopy(p + sizeof(*pirh), pcibios_pir_table,
+		    pirh->tablesize - sizeof(*pirh));
+		pcibios_pir_table_nentries =
+		    (pirh->tablesize - sizeof(*pirh)) / 16;
 
 	}
 
