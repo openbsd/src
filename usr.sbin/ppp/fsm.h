@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.4 1998/01/20 22:46:25 brian Exp $
+ * $Id: fsm.h,v 1.5 1998/01/21 02:13:31 brian Exp $
  *
  *	TODO:
  */
@@ -55,7 +55,6 @@ struct fsm {
   int restart;			/* Restart counter value */
   int maxconfig;
 
-  int reqcode;			/* Request code sent */
   struct pppTimer FsmTimer;	/* Restart Timer */
   struct pppTimer OpenTimer;	/* Delay before opening */
 

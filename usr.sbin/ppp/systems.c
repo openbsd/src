@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: systems.c,v 1.7 1997/12/24 09:30:53 brian Exp $
+ * $Id: systems.c,v 1.8 1998/01/21 02:13:41 brian Exp $
  *
  *  TODO:
  */
@@ -39,11 +39,9 @@
 #include "timer.h"
 #include "fsm.h"
 #include "loadalias.h"
-#include "ipcp.h"
 #include "pathnames.h"
 #include "vars.h"
 #include "server.h"
-#include "chat.h"
 #include "systems.h"
 
 #define issep(ch) ((ch) == ' ' || (ch) == '\t')

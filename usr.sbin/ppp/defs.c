@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: defs.c,v 1.6 1997/12/30 20:03:16 brian Exp $
+ *	$Id: defs.c,v 1.7 1998/01/21 02:13:31 brian Exp $
  */
 
 #include <sys/param.h>
@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "defs.h"

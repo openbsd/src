@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: vars.h,v 1.6 1998/01/20 22:46:32 brian Exp $
+ * $Id: vars.h,v 1.7 1998/01/21 02:13:44 brian Exp $
  *
  *	TODO:
  */
@@ -156,10 +156,7 @@ extern char VarVersion[];
 extern char VarLocalVersion[];
 
 extern int Utmp;		/* Are we in /etc/utmp ? */
-extern int ipInOctets;
-extern int ipOutOctets;
 extern int ipKeepAlive;
-extern int ipConnectSecs;
 extern int reconnectState;
 extern int reconnectCount;
 

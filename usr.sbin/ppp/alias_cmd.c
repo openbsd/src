@@ -2,11 +2,10 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$Id: alias_cmd.c,v 1.4 1997/12/24 10:28:15 brian Exp $
+ *	$Id: alias_cmd.c,v 1.5 1998/01/21 02:13:28 brian Exp $
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>

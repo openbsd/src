@@ -15,14 +15,12 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: modem.h,v 1.2 1998/01/10 01:55:17 brian Exp $
+ * $Id: modem.h,v 1.3 1998/01/21 02:13:38 brian Exp $
  *
  *	TODO:
  */
 
 extern int RawModem(void);
-extern void UpModem(int);
-extern void DownModem(int);
 extern void WriteModem(int, const char *, int);
 extern void ModemStartOutput(int);
 extern int OpenModem(void);

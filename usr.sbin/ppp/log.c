@@ -23,12 +23,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: log.c,v 1.3 1997/12/24 09:30:40 brian Exp $
+ *	$Id: log.c,v 1.4 1998/01/21 02:13:35 brian Exp $
  */
 
 #include <sys/param.h>
 #include <netinet/in.h>
-#include <sys/socket.h>
 
 #include <stdarg.h>
 #include <stdio.h>

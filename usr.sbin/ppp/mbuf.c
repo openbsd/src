@@ -17,11 +17,10 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: mbuf.c,v 1.2 1997/12/28 02:57:12 brian Exp $
+ * $Id: mbuf.c,v 1.3 1998/01/21 02:13:37 brian Exp $
  *
  */
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 
 #include <stdio.h>
@@ -36,7 +35,7 @@
 #include "vars.h"
 #include "server.h"
 
-struct memmap {
+static struct memmap {
   struct mbuf *queue;
   int count;
 }      MemMap[MB_MAX + 2];
