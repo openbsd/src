@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.18 2002/05/31 03:40:01 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.19 2002/07/30 05:35:22 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -47,13 +47,13 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.18 2002/05/31 03:40:01 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: wump.c,v 1.19 2002/07/30 05:35:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 /*
- * A very new version of the age old favorite Hunt-The-Wumpus game that has
- * been a part of the BSD distribution of Unix for longer than us old folk
+ * A no longer new version of the age-old favorite Hunt-The-Wumpus game that
+ * has been a part of the BSD distribution for longer than us old folk
  * would care to remember.
  */
 
@@ -149,9 +149,7 @@ int	wump_nearby(void);
 
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int c;
 
@@ -440,8 +438,7 @@ move_to(room_number)
 }
 
 int
-shoot(room_list)
-	char *room_list;
+shoot(char *room_list)
 {
 	int chance, next, roomcnt;
 	int j, arrow_location, link, ok;
@@ -566,8 +563,7 @@ into room %d!\n", arrow_location, next, cave[arrow_location].tunnel[link]);
 }
 
 int
-gcd(a, b)
-	int a, b;
+gcd(int a, int b)
 {
 	int r;
 
@@ -796,8 +792,7 @@ initialize_things_in_cave()
 }
 
 int
-getans(prompt)
-	const char *prompt;
+getans(const char *prompt)
 {
 	char buf[20];
 
@@ -873,8 +868,7 @@ move_wump()
 }
 
 int
-int_compare(a, b)
-	const void *a, *b;
+int_compare(const void *a, const void *b)
 {
 	return(*(const int *)a < *(const int *)b ? -1 : 1);
 }
@@ -1004,8 +998,7 @@ to your side, not to help, alas, but to EAT YOU!\n\
 
 /*
  * void
- * jump(where)
- * 	int where;
+ * jump(int where)
  * {
  * 	(void)printf(
  * "\nWith a jaunty step you enter the magic tunnel.  As you do, you\n\
