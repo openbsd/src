@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.47 2003/05/14 05:38:34 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.48 2003/07/21 23:17:53 marc Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -885,7 +885,8 @@ get_port(ai, servname, matchonly)
 	struct servent *sp;
 	int port;
 	int allownumeric;
-	_THREAD_PRIVATE_MUTEX(serv_mutex);
+	/* mutex is defined in getnameinfo.c */
+	extern pthread_mutex_t __THREAD_MUTEX_NAME(serv_mutex);
 
 	if (servname == NULL)
 		return 0;
