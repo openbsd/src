@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.10 1997/07/25 01:26:47 mickey Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.11 1997/07/25 04:45:53 mickey Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.10 1997/07/25 01:26:47 mickey Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.11 1997/07/25 04:45:53 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, dopower, killflg, mbuflen, nosync;
+static int dofast, dohalt, doreboot, dopower, dodump, killflg, mbuflen, nosync;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
@@ -129,10 +129,13 @@ main(argc, argv)
 	}
 #endif
 	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-fhknpr")) != -1)
+	while ((ch = getopt(argc, argv, "-dfhknpr")) != -1)
 		switch (ch) {
 		case '-':
 			readstdin = 1;
+			break;
+		case 'd':
+			dodump = 1;
 			break;
 		case 'f':
 			dofast = 1;
@@ -372,18 +375,22 @@ die_you_gravy_sucking_pig_dog()
 		(void)printf(" no sync");
 	if (dofast)
 		(void)printf(" no fsck");
+	if (dodump)
+		(void)printf(" with dump");
 	(void)printf("\nkill -HUP 1\n");
 #else
 	if (doreboot) {
-		execle(_PATH_REBOOT, "reboot", "-l", (nosync ? "-n" : NULL),
-		    NULL, NULL);
+		execle(_PATH_REBOOT, "reboot", "-l",
+		    (nosync ? "-n" : (dodump ? "-d" : NULL)),
+		    (dodump ? "-d" : NULL), NULL, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
 		perror("shutdown");
 	}
 	else if (dohalt) {
 		execle(_PATH_HALT, "halt", "-l",
-		    (dopower ? "-p" : (nosync ? "-n" : NULL)),
-		    (nosync ? "-n" : NULL), NULL, NULL);
+		    (dopower ? "-p" : (nosync ? "-n" : (dodump ? "-d" : NULL))),
+		    (nosync ? "-n" : (dodump ? "-d" : NULL)),
+		    (dodump ? "-d" : NULL), NULL, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		perror("shutdown");
 	}

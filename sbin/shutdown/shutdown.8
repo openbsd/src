@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.3 1997/06/22 22:29:05 downsj Exp $
+.\"	$OpenBSD: shutdown.8,v 1.4 1997/07/25 04:45:53 mickey Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Nm shutdown
 .Op Fl 
-.Op Fl fhkrnp
+.Op Fl dfhkrnp
 .Ar time
 .Op Ar warning-message ...
 .Sh DESCRIPTION
@@ -55,6 +55,8 @@ would otherwise not bother with such niceties.
 .Pp
 Available friendlinesses:
 .Bl -tag -width time
+.It Fl f
+The system will drop crash dump.
 .It Fl f
 .Nm Shutdown
 arranges, in the manner of
