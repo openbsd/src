@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2001/01/27 12:03:31 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2001/02/28 08:49:43 angelos Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -383,6 +383,19 @@ conf_load_defaults (int tr)
 	    0, 1);
 #endif
 
+ /* Lifetimes. XXX p1/p2 vs main/quick mode may be unclear.  */
+  dflt = conf_get_str ("General", "Default-phase-1-lifetime");
+  conf_set (tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_TYPE",
+	    CONF_DFLT_TYPE_LIFE_MAIN_MODE, 0, 1);
+  conf_set (tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_DURATION",
+	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_MAIN_MODE), 0, 1);
+
+  dflt = conf_get_str ("General", "Default-phase-2-lifetime");
+  conf_set (tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_TYPE",
+	    CONF_DFLT_TYPE_LIFE_QUICK_MODE, 0, 1);
+  conf_set (tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_DURATION",
+	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_QUICK_MODE), 0, 1);
+
   /* Main modes */
   for (enc = 0; mm_enc[enc]; enc ++)
     for (hash = 0; mm_hash[hash]; hash ++)
@@ -426,7 +439,7 @@ conf_load_defaults (int tr)
   conf_set (tr, "Default-phase-1-configuration", "Transforms",
             "3DES-SHA-RSA_SIG", 0, 1);
 
-  /* Quick modes */
+   /* Quick modes */
   for (enc = 0; qm_enc[enc]; enc ++)
     for (proto = 0; proto < 2; proto ++)
       for (mode = 0; mode < 2; mode ++)
@@ -487,20 +500,6 @@ conf_load_defaults (int tr)
 		conf_set (tr, sect, "Life", CONF_DFLT_TAG_LIFE_QUICK_MODE, 0,
 			  1);
 	      }
-
-  /* Lifetimes. XXX p1/p2 vs main/quick mode may be unclear.  */
-  dflt = conf_get_str ("General", "Default-phase-1-lifetime");
-  conf_set (tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_TYPE",
-	    CONF_DFLT_TYPE_LIFE_MAIN_MODE, 0, 1);
-  conf_set (tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_DURATION",
-	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_MAIN_MODE), 0, 1);
-
-  dflt = conf_get_str ("General", "Default-phase-2-lifetime");
-  conf_set (tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_TYPE",
-	    CONF_DFLT_TYPE_LIFE_QUICK_MODE, 0, 1);
-  conf_set (tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_DURATION",
-	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_QUICK_MODE), 0, 1);
-
   return;
 }
 
