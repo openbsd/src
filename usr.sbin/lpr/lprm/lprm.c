@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.13 2002/12/08 16:50:07 millert Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.14 2003/03/11 04:36:55 millert Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lprm.c,v 1.13 2002/12/08 16:50:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lprm.c,v 1.14 2003/03/11 04:36:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,24 +92,33 @@ static __dead void usage(void);
 int
 main(int argc, char **argv)
 {
-	struct passwd *p;
+	struct passwd *pw;
 	char *cp;
 	long l;
 	int ch;
 
-	effective_uid = geteuid();
+	/*
+	 * Simulate setuid daemon but with real and effective swapped.
+	 * We don't want lpr to actually be setuid daemon since that
+	 * requires that the lpr binary be owned by user daemon, which
+	 * is potentially unsafe.
+	 */
+	if ((pw = getpwuid(DEFUID)) == NULL)
+		errx(1, "daemon uid (%u) not in password file", DEFUID);
+	effective_uid = pw->pw_uid;
 	real_uid = getuid();
-	effective_gid = getegid();
+	effective_gid = pw->pw_gid;
 	real_gid = getgid();
-	PRIV_END;	/* be safe */
+	setresgid(effective_gid, real_gid, effective_gid);
+	setresuid(effective_uid, real_uid, effective_uid);
 
 	gethostname(host, sizeof(host));
 	openlog("lprm", 0, LOG_LPR);
-	if ((p = getpwuid(real_uid)) == NULL)
+	if ((pw = getpwuid(real_uid)) == NULL)
 		fatal("Who are you?");
-	if (strlen(p->pw_name) >= sizeof(luser))
+	if (strlen(pw->pw_name) >= sizeof(luser))
 		fatal("Your name is too long");
-	strlcpy(luser, p->pw_name, sizeof(luser));
+	strlcpy(luser, pw->pw_name, sizeof(luser));
 	person = luser;
 	while ((ch = getopt(argc, argv, "P:w:-")) != -1) {
 		switch (ch) {
