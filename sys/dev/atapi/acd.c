@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.33 1998/10/03 21:18:59 millert Exp $	*/
+/*	$OpenBSD: acd.c,v 1.34 1998/10/05 17:30:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -722,6 +722,7 @@ acdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
+	case DIOCGPDINFO:
 		*(struct disklabel *)addr = *acd->sc_dk.dk_label;
 		return 0;
 
