@@ -318,6 +318,7 @@
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
 ./usr/lib/libform_pic.a
+./usr/lib/libg2c_pic.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libiberty_pic.a
 ./usr/lib/libkadm5clnt_pic.a
