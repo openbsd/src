@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2004/07/30 16:52:13 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2004/08/05 13:50:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -258,6 +258,10 @@ cvs_splitpath(const char *path, char *dir, size_t dlen, char *file, size_t flen)
 	size_t rlen;
 	const char *sp;
 	struct stat st;
+
+	rlen = strlen(path);
+	while ((rlen > 0) && (path[rlen - 1] == '/'))
+		path[--rlen] = '\0';
 
 	sp = strrchr(path, '/');
 	if (sp == NULL) {
