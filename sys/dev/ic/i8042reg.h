@@ -1,7 +1,6 @@
-/*	$OpenBSD: i8042reg.h,v 1.2 1996/10/31 01:01:31 niklas Exp $	*/
-/*	$NetBSD: i8042reg.h,v 1.6 1995/04/21 09:16:16 mycroft Exp $	*/
+/*	$NetBSD: i8042reg.h,v 1.7 1998/01/18 14:41:37 drochner Exp $	*/
 
-#define	KBSTATP		0x64	/* kbd controller status port (I) */
+#define	KBSTATP		4	/* kbd controller status port (I) */
 #define	 KBS_DIB	0x01	/* kbd data in buffer */
 #define	 KBS_IBF	0x02	/* kbd input buffer low */
 #define	 KBS_WARM	0x04	/* kbd input buffer low */
@@ -11,7 +10,7 @@
 #define	 KBS_RERR	0x40	/* kbd receive error */
 #define	 KBS_PERR	0x80	/* kbd parity error */
 
-#define	KBCMDP		0x64	/* kbd controller port (O) */
+#define	KBCMDP		4	/* kbd controller port (O) */
 #define	 KBC_RAMREAD	0x20	/* read from RAM */
 #define	 KBC_RAMWRITE	0x60	/* write to RAM */
 #define	 KBC_AUXDISABLE	0xa7	/* disable auxiliary port */
@@ -29,8 +28,8 @@
 #define	 KBC_PULSE2	0xfb	/* pulse output bit 2 */
 #define	 KBC_PULSE3	0xf7	/* pulse output bit 3 */
 
-#define	KBDATAP		0x60	/* kbd data port (I) */
-#define	KBOUTP		0x60	/* kbd data port (O) */
+#define	KBDATAP		0	/* kbd data port (I) */
+#define	KBOUTP		0	/* kbd data port (O) */
 
 #define	K_RDCMDBYTE	0x20
 #define	K_LDCMDBYTE	0x60

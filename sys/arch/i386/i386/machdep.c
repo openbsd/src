@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.138 2000/11/13 13:18:58 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.139 2000/11/13 15:53:33 aaron Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2218,9 +2218,9 @@ cpu_reset()
 	disable_intr();
 
 	/* Toggle the hardware reset line on the keyboard controller. */
-	outb(KBCMDP, KBC_PULSE0);
+	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
-	outb(KBCMDP, KBC_PULSE0);
+	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gateA20.c,v 1.5 1998/02/24 22:06:51 weingart Exp $	*/
+/*	$OpenBSD: gateA20.c,v 1.6 2000/11/13 15:53:34 aaron Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <machine/pio.h>
 #include <dev/ic/i8042reg.h>
+#include <dev/isa/isareg.h>
 
 #include "libsa.h"
 
@@ -77,22 +78,22 @@ gateA20(on)
 	} else {
 
 		/* XXX - These whiles might need to be changed to bounded for loops */
-		while (inb(KBSTATP) & KBS_IBF);
+		while (inb(IO_KBD + KBSTATP) & KBS_IBF);
 
-		while (inb(KBSTATP) & KBS_DIB)
-			(void)inb(KBDATAP);
+		while (inb(IO_KBD + KBSTATP) & KBS_DIB)
+			(void)inb(IO_KBD + KBDATAP);
 
-		outb(KBCMDP, KC_CMD_WOUT);
-		while (inb(KBSTATP) & KBS_IBF);
+		outb(IO_KBD + KBCMDP, KC_CMD_WOUT);
+		while (inb(IO_KBD + KBSTATP) & KBS_IBF);
 
 		if (on)
-			outb(KBDATAP, KB_A20);
+			outb(IO_KBD + KBDATAP, KB_A20);
 		else
-			outb(KBDATAP, 0xcd);
-		while (inb(KBSTATP) & KBS_IBF);
+			outb(IO_KBD + KBDATAP, 0xcd);
+		while (inb(IO_KBD + KBSTATP) & KBS_IBF);
 
-		while (inb(KBSTATP) & KBS_DIB)
-			(void)inb(KBDATAP);
+		while (inb(IO_KBD + KBSTATP) & KBS_DIB)
+			(void)inb(IO_KBD + KBDATAP);
 	}
 }
 

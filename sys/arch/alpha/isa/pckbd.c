@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbd.c,v 1.15 1999/01/08 03:16:15 niklas Exp $	*/
+/*	$OpenBSD: pckbd.c,v 1.16 2000/11/13 15:53:33 aaron Exp $	*/
 /*	$NetBSD: pckbd.c,v 1.14 1996/12/05 01:39:30 cgd Exp $	*/
 
 /*-
@@ -70,17 +70,6 @@
 #include <dev/wscons/wsconsvar.h>
 #include <dev/wscons/kbd.h>
 #include "wscons.h"
-
-#undef KBDATAP
-#undef KBOUTP
-#undef KBSTATP
-#undef KBCMDP
-#undef PITAUX_PORT
-#define	KBDATAP		0x0	/* kbd data port (I) */
-#define	KBOUTP		0x0	/* kbd data port (O) */
-#define	KBSTATP		0x4	/* kbd controller status port (I) */
-#define	KBCMDP		0x4	/* kbd controller port (O) */
-#define	PITAUX_PORT	0x1	/* port B of PPI */
 
 static volatile u_char ack, nak;	/* Don't ask. */
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
