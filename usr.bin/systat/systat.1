@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.34 2004/04/26 19:22:30 itojun Exp $
+.\"	$OpenBSD: systat.1,v 1.35 2004/11/16 09:52:33 markus Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -99,7 +99,8 @@ argument expects to be one of:
 .Ic iostat ,
 .Ic swap ,
 .Ic mbufs ,
-.Ic vmstat
+.Ic vmstat ,
+.Ic ifstat
 or
 .Ic netstat .
 These displays can also be requested interactively and are described in
@@ -372,21 +373,10 @@ period, such as from boot time (see the
 .Cm boot
 option below).
 .Pp
-The following commands are specific to the
-.Ic vmstat
-display; the minimum unambiguous prefix may be supplied.
+.It Ic ifstat
+Display, in the lower window, interface statistics.
+See below for more options.
 .Pp
-.Bl -tag -width Ds -compact
-.It Cm boot
-Display cumulative statistics since the system was booted.
-.It Cm run
-Display statistics as a running total from the point this
-command is given.
-.It Cm time
-Display statistics averaged over the refresh interval (the default).
-.It Cm zero
-Reset running statistics to zero.
-.El
 .It Ic netstat
 Display, in the lower window, network connections.
 By default, network servers awaiting requests are not displayed.
@@ -451,6 +441,24 @@ then only the requested information will be displayed.
 Reset the port, host, and protocol matching mechanisms to the default
 (any protocol, port, or host).
 .El
+.El
+.Pp
+The following commands are specific to the
+.Ic vmstat
+and
+.Ic ifstat
+displays; the minimum unambiguous prefix may be supplied.
+.Pp
+.Bl -tag -width Ds -compact
+.It Cm boot
+Display cumulative statistics since the system was booted.
+.It Cm run
+Display statistics as a running total from the point this
+command is given.
+.It Cm time
+Display statistics averaged over the refresh interval (the default).
+.It Cm zero
+Reset running statistics to zero.
 .El
 .Pp
 Commands to switch between displays may be abbreviated to the

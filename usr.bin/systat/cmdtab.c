@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.6 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.7 2004/11/16 09:52:33 markus Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.2 1995/01/20 08:51:51 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.6 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.7 2004/11/16 09:52:33 markus Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,9 @@ struct	cmdtab cmdtab[] = {
 	  0 },
 	{ "netstat",	shownetstat,	fetchnetstat,	labelnetstat,
 	  initnetstat,	opennetstat,	closenetstat,	cmdnetstat,
+	  CF_LOADAV },
+	{ "ifstat",	showifstat,	fetchifstat,	labelifstat,
+	  initifstat,	openifstat,	closeifstat,	cmdifstat,
 	  CF_LOADAV },
 	{ 0 }
 };

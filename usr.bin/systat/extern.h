@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2004/04/26 19:22:30 itojun Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2004/11/16 09:52:33 markus Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -61,12 +61,14 @@ struct inpcb;
 
 int	 checkhost(struct inpcb *);
 int	 checkport(struct inpcb *);
+void	 closeifstat(WINDOW *);
 void	 closeiostat(WINDOW *);
 void	 closekre(WINDOW *);
 void	 closembufs(WINDOW *);
 void	 closenetstat(WINDOW *);
 void	 closepigs(WINDOW *);
 void	 closeswap(WINDOW *);
+int	 cmdifstat(char *, char *);
 int	 cmdiostat(char *, char *);
 int	 cmdkre(char *, char *);
 int	 cmdnetstat(char *, char *);
@@ -80,12 +82,14 @@ void	 display(void);
 int	 dkinit(int);
 int	 dkcmd(char *, char *);
 void	 error(const char *fmt, ...);
+void	 fetchifstat(void);
 void	 fetchiostat(void);
 void	 fetchkre(void);
 void	 fetchmbufs(void);
 void	 fetchnetstat(void);
 void	 fetchpigs(void);
 void	 fetchswap(void);
+int	 initifstat(void);
 int	 initiostat(void);
 int	 initkre(void);
 int	 initmbufs(void);
@@ -94,6 +98,7 @@ int	 initpigs(void);
 int	 initswap(void);
 void	 keyboard(void);
 int	 kvm_ckread(void *, void *, int);
+void	 labelifstat(void);
 void	 labeliostat(void);
 void	 labelkre(void);
 void	 labelmbufs(void);
@@ -104,6 +109,7 @@ void	 labelswap(void);
 void	 load(void);
 int	 netcmd(char *, char *);
 void	 nlisterr(struct nlist []);
+WINDOW	*openifstat(void);
 WINDOW	*openiostat(void);
 WINDOW	*openkre(void);
 WINDOW	*openmbufs(void);
@@ -112,6 +118,7 @@ WINDOW	*openpigs(void);
 WINDOW	*openswap(void);
 int	 prefix(char *, char *);
 void	 sigwinch(int);
+void	 showifstat(void);
 void	 showiostat(void);
 void	 showkre(void);
 void	 showmbufs(void);
