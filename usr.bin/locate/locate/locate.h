@@ -1,4 +1,4 @@
-/*	$OpenBSD: locate.h,v 1.7 1996/10/20 00:52:57 michaels Exp $	*/
+/*	$OpenBSD: locate.h,v 1.8 1997/01/21 21:22:56 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,6 +47,8 @@
 #define LDC_MIN         0
 #define LDC_MAX        28
 
+#undef CHAR_MAX
+#define CHAR_MAX 127
 /*	128-255 bigram codes (128 most common, as determined by 'updatedb') */
 #define BIGRAM_MIN    (UCHAR_MAX - CHAR_MAX) 
 #define BIGRAM_MAX    UCHAR_MAX
