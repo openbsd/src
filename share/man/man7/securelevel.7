@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.4 2000/02/14 15:36:04 aaron Exp $
+.\"     $OpenBSD: securelevel.7,v 1.5 2000/02/27 04:29:44 hugh Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -62,12 +62,14 @@ default mode when system is multi-user
 .It
 securelevel may no longer be lowered except by init
 .It
-system immutable and append-only file flags may not be removed
-.It
 .Pa /dev/mem
 and
 .Pa /dev/kmem
 may not be written to
+.It
+raw disk devices of mounted filesystems are read-only
+.It
+system immutable and append-only file flags may not be removed
 .It
 kernel modules may not be loaded or unloaded
 .El
