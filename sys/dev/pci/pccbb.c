@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.26 2001/08/25 10:13:30 art Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.27 2001/12/24 18:21:42 mickey Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ pcicbbmatch(parent, match, aux)
 }
 
 #define MAKEID(vendor, prod) (((vendor) << PCI_VENDOR_SHIFT) \
-                              | ((prod) << PCI_PRODUCT_SHIFT))
+				| ((prod) << PCI_PRODUCT_SHIFT))
 
 struct yenta_chipinfo {
 	pcireg_t yc_id;		       /* vendor tag | product tag */
@@ -404,7 +404,7 @@ pccbbattach(parent, self, aux)
 
 	sc->sc_base_memh = 0;
 
-	/* 
+	/*
 	 * MAP socket registers and ExCA registers on memory-space
 	 * When no valid address is set on socket base registers (on pci
 	 * config space), get it not polite way.
@@ -432,7 +432,7 @@ pccbbattach(parent, self, aux)
 				/* give up... allocate reg space via rbus. */
 				sc->sc_base_memh = 0;
 				pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
-		 	}
+			}
 		} else {
 			DPRINTF(("%s: socket base address 0x%lx\n",
 			    sc->sc_dev.dv_xname, sockbase));
@@ -442,14 +442,14 @@ pccbbattach(parent, self, aux)
 	sc->sc_mem_start = 0;	       /* XXX */
 	sc->sc_mem_end = 0xffffffff;   /* XXX */
 
-	/* 
+	/*
 	 * When bus number isn't set correctly, give up using 32-bit CardBus
 	 * mode.
 	 */
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 #if notyet
 	if (((busreg >> 8) & 0xff) == 0) {
-    		printf(": CardBus support disabled because of unconfigured bus number\n");
+		printf(": CardBus support disabled because of unconfigured bus number\n");
 		flags |= PCCBB_PCMCIA_16BITONLY;
 	}
 #endif
@@ -513,7 +513,7 @@ pccbbattach(parent, self, aux)
 	/* The RX5C47X-series requires writes to the PCI_LEGACY register. */
 	case CB_RX5C47X:
 #endif
-		/* 
+		/*
 		 * The legacy pcic io-port on Ricoh RX5C46X CardBus bridges
 		 * cannot be disabled by substituting 0 into PCI_LEGACY
 		 * register.  Ricoh CardBus bridges have special bits on Bridge
@@ -615,8 +615,8 @@ pccbb_pci_callback(self)
 		}
 	}
 
-	/* 
-	 * attach cardbus 
+	/*
+	 * attach cardbus
 	 */
 	if (!(sc->sc_pcmcia_flags & PCCBB_PCMCIA_16BITONLY)) {
 		pcireg_t busreg = pci_conf_read(pc, sc->sc_tag, PCI_BUSNUM);
@@ -699,7 +699,7 @@ pccbb_chipinit(sc)
 	pcitag_t tag = sc->sc_tag;
 	pcireg_t reg;
 
-	/* 
+	/*
 	 * Set PCI command reg.
 	 * Some laptop's BIOSes (i.e. TICO) do not enable CardBus chip.
 	 */
@@ -709,7 +709,7 @@ pccbb_chipinit(sc)
 	    PCI_COMMAND_MASTER_ENABLE);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
 
-	/* 
+	/*
 	 * Set CardBus latency timer.
 	 */
 	reg = pci_conf_read(pc, tag, PCI_CB_LSCP_REG);
@@ -721,7 +721,7 @@ pccbb_chipinit(sc)
 	DPRINTF(("CardBus latency timer 0x%x (%x)\n",
 	    PCI_CB_LATENCY(reg), pci_conf_read(pc, tag, PCI_CB_LSCP_REG)));
 
-	/* 
+	/*
 	 * Set PCI latency timer.
 	 */
 	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -977,7 +977,7 @@ pccbbintr_function(sc)
 	int retval = 0, val;
 	struct pccbb_intrhand_list *pil;
 	int s, splchanged;
- 
+
 	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
 		/*
 		 * XXX priority change.  gross.  I use if-else
@@ -1380,8 +1380,8 @@ int
 cb_reset(sc)
 	struct pccbb_softc *sc;
 {
-	/* 
-	 * Reset Assert at least 20 ms 
+	/*
+	 * Reset Assert at least 20 ms
 	 * Some machines request longer duration.
 	 */
 	int reset_duration =
@@ -1685,7 +1685,7 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 		}
 	}
 
-	/* 
+	/*
 	 * Allocate a room for interrupt handler structure.
 	 */
 	newpil = (struct pccbb_intrhand_list *)
@@ -1897,7 +1897,7 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 		align = size;	       /* XXX: funny??? */
 	}
 
-	/* 
+	/*
 	 * Allocate some arbitrary I/O space.
 	 */
 
@@ -2235,7 +2235,7 @@ pccbb_pcmcia_socket_enable(pch)
 
 	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
-	/* 
+	/*
 	 * wait 200ms until power fails (Tpf).  Then, wait 100ms since
 	 * we are changing Vcc (Toff).
 	 */
@@ -2245,14 +2245,14 @@ pccbb_pcmcia_socket_enable(pch)
 	intr = Pcic_read(ph, PCIC_INTR);
 	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_CARDTYPE_MASK);
 	Pcic_write(ph, PCIC_INTR, intr);
- 
+
 	/* power up the socket and output enable */
 	power = Pcic_read(ph, PCIC_PWRCTL);
 	power |= PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
 	pccbb_power(sc, voltage);
 
-	/* 
+	/*
 	 * hold RESET at least 10us.
 	 */
 	delay(10);
@@ -2331,7 +2331,7 @@ pccbb_pcmcia_socket_disable(pch)
 	power &= ~PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
 	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
-	/* 
+	/*
 	 * wait 300ms until power fails (Tpf).
 	 */
 	delay(300 * 1000);
@@ -2388,7 +2388,7 @@ pccbb_pcmcia_mem_alloc(pch, size, pcmhp)
 	/* out of sc->memh, allocate as many pages as necessary */
 
 	/* convert size to PCIC pages */
-	/* 
+	/*
 	 * This is not enough; when the requested region is on the page
 	 * boundaries, this may calculate wrong result.
 	 */
@@ -2608,7 +2608,7 @@ pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 
 	busaddr = pcmhp->addr;
 
-	/* 
+	/*
 	 * compute the address offset to the pcmcia address space for the
 	 * pcic.  this is intentionally signed.  The masks and shifts below
 	 * will cause TRT to happen in the pcic registers.  Deal with making
@@ -2622,7 +2622,7 @@ pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	    "%lx\n", win, (u_long) busaddr, (u_long) * offsetp, (u_long) size,
 	    (u_long) card_addr));
 
-	/* 
+	/*
 	 * include the offset in the size, and decrement size by one, since
 	 * the hw wants start/stop
 	 */
@@ -2719,7 +2719,7 @@ pccbb_pcmcia_poll(arg)
 	{
 		if ((*poll->func) (poll->arg) > 0) {
 			++poll->count;
-//      printf("intr: reported from poller, 0x%x\n", spsr);
+	/* printf("intr: reported from poller, 0x%x\n", spsr); */
 #if defined LEVEL2
 		} else {
 			printf("intr: miss! 0x%x\n", spsr);
@@ -2759,7 +2759,7 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg, xname)
 			    sc->sc_dev.dv_xname));
 			return NULL;
 		}
-		/* 
+		/*
 		 * XXX Noooooo!  The interrupt flag must set properly!!
 		 * dumb pcmcia driver!!
 		 */
