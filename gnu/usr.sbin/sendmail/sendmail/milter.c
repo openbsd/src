@@ -549,7 +549,7 @@ milter_write(m, cmd, buf, len, to, e)
 **		e -- current envelope.
 **
 **	Returns:
-**		connected socket if sucessful && !parseonly,
+**		connected socket if successful && !parseonly,
 **		0 upon parse success if parseonly,
 **		-1 otherwise.
 */

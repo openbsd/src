@@ -116,7 +116,7 @@ typedef struct ld_emulation_xfer_struct {
   void	(*set_symbols) PARAMS ((void));
 
   /* Run to parse args which the base linker doesn't
-     understand. Return non zero on sucess.  */
+     understand. Return non zero on success.  */
   int (*parse_args) PARAMS ((int, char **));
 
   /* Run to handle files which are not recognized as object files or

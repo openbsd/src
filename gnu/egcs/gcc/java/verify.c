@@ -62,7 +62,7 @@ push_pending_label (target_label)
 
 /* Note that TARGET_LABEL is a possible successor instruction.
    Merge the type state etc.
-   Return NULL on sucess, or an error message on failure. */
+   Return NULL on success, or an error message on failure. */
 
 static const char *
 check_pending_block (target_label)
@@ -340,7 +340,7 @@ start_pc_cmp (xp, yp)
 #define BCODE byte_ops
 
 /* Verify the bytecodes of the current method.
-   Return 1 on sucess, 0 on failure. */
+   Return 1 on success, 0 on failure. */
 int
 verify_jvm_instructions (jcf, byte_ops, length)
      JCF* jcf;

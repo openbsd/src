@@ -767,7 +767,7 @@ FILE *cvs_temp_file (filename)
     if (fd == -1) fp = NULL;
     else if ((fp = CVS_FDOPEN (fd, "w+")) == NULL)
     {
-	/* attempt to close and unlink the file since mkstemp returned sucessfully and
+	/* attempt to close and unlink the file since mkstemp returned successfully and
 	 * we believe it's been created and opened
 	 */
  	int save_errno = errno;

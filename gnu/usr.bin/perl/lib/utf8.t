@@ -189,7 +189,7 @@ BANG
     print
         "# Again! Again! [but this time as eval, and not the explosive one]\n";
     # and now we've safely done them all as separate files, check that the
-    # evals do the same thing. Hopefully doing it later sucessfully decouples
+    # evals do the same thing. Hopefully doing it later successfully decouples
     # the previous tests from anything messy that may go wrong with the evals.
     foreach (@tests) {
         my ($why, $prog, $expect) = @$_;

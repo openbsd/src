@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.16 2002/06/14 21:35:00 todd Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.17 2002/12/09 00:45:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -272,7 +272,7 @@
  *	the user and group specified by the remote system.  Changed
  *	execute code to invalidate collection if execute command returns
  *	with a non-zero exit status.  Added support for execv() of
- *	original arguments of supfile is upgraded sucessfully.  Changed
+ *	original arguments of supfile is upgraded successfully.  Changed
  *	copyfile to always use a temp file if possible. [V5.7]
  *
  * 04-Jan-86  Glenn Marcy (gm0w) at Carnegie-Mellon University

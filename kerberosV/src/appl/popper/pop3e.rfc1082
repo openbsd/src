@@ -202,7 +202,7 @@ RFC 1082                 POP3 Extended Service             November 1988
    the maildrop.
 
        NOTE:      The maxima may be characterized as a monotonically
-                  increasing quanity.  Although sucessive values of the
+                  increasing quanity.  Although successive values of the
                   maxima need not be consecutive, any maxima assigned
                   is always greater than any previously assigned value.
 

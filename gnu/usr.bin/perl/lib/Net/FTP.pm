@@ -625,7 +625,7 @@ sub mkdir
      $path = $ftp->_extract_path($path);
     }
 
-   # If the creation of the last element was not sucessful, see if we
+   # If the creation of the last element was not successful, see if we
    # can cd to it, if so then return path
 
    unless($ftp->ok)

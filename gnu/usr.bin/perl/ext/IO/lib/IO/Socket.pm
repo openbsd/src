@@ -219,7 +219,7 @@ sub send {
 	? send($sock, $_[1], $flags)
 	: send($sock, $_[1], $flags, $peer);
 
-    # remember who we send to, if it was sucessful
+    # remember who we send to, if it was successful
     ${*$sock}{'io_socket_peername'} = $peer
 	if(@_ == 4 && defined $r);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atof-generic.c,v 1.3 1999/06/16 15:19:46 deraadt Exp $	*/
+/*	$OpenBSD: atof-generic.c,v 1.4 2002/12/09 00:45:34 millert Exp $	*/
 
 /* atof_generic.c - turn a string of digits into a Flonum
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -20,7 +20,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: atof-generic.c,v 1.3 1999/06/16 15:19:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atof-generic.c,v 1.4 2002/12/09 00:45:34 millert Exp $";
 #endif
 
 #include <ctype.h>
@@ -405,7 +405,7 @@ FLONUM_TYPE *address_of_generic_floating_point_number;
 		{
 			/*
 			 * Compute the mantssa (& exponent) of the power of 10.
-			 * If sucessful, then multiply the power of 10 by the digits
+			 * If successful, then multiply the power of 10 by the digits
 			 * giving return_binary_mantissa and return_binary_exponent.
 			 */
 			

@@ -3769,7 +3769,7 @@ Mon Dec 12 13:21:02 1988  Randall Smith  (randy at gluteus.ai.mit.edu)
 	* inflow.c (terminal_inferior): Checked *all* return codes from
 	ioctl's and fcntl's in routine.
 
-	* inflow.c (terminal_inferior): Added check for sucess of
+	* inflow.c (terminal_inferior): Added check for success of
 	TIOCSPGRP ioctl call.  Just notifies if bad.
 
 	* dbxread.c (symbol_file_command): Close was getting called twice;

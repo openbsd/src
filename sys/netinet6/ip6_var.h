@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.20 2002/09/11 03:27:30 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.21 2002/12/09 00:45:37 millert Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ struct	ip6stat {
 	u_quad_t ip6s_localout;		/* total ip packets generated here */
 	u_quad_t ip6s_odropped;		/* lost packets due to nobufs, etc. */
 	u_quad_t ip6s_reassembled;	/* total packets reassembled ok */
-	u_quad_t ip6s_fragmented;	/* datagrams sucessfully fragmented */
+	u_quad_t ip6s_fragmented;	/* datagrams successfully fragmented */
 	u_quad_t ip6s_ofragments;	/* output fragments created */
 	u_quad_t ip6s_cantfrag;		/* don't fragment flag was set, etc. */
 	u_quad_t ip6s_badoptions;	/* error in option processing */

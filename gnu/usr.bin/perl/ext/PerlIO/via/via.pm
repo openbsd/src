@@ -115,7 +115,7 @@ equal to $len).  Optional.  Default is to use FILL instead.
 
 =item $obj->WRITE($buffer,$fh)
 
-Returns the number of octets from buffer that have been sucessfully written.
+Returns the number of octets from buffer that have been successfully written.
 
 =item $obj->FILL($fh)
 
@@ -141,7 +141,7 @@ Optional.  Default to be determined.
 
 =item $obj->UNREAD($buffer,$fh)
 
-Returns the number of octets from buffer that have been sucessfully
+Returns the number of octets from buffer that have been successfully
 saved to be returned on future FILL/READ calls.  Optional.  Default is
 to push data into a temporary layer above this one.
 

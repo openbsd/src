@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_esreg.h,v 1.3 1997/01/16 09:24:44 niklas Exp $	*/
+/*	$OpenBSD: if_esreg.h,v 1.4 2002/12/09 00:45:37 millert Exp $	*/
 /*	$NetBSD: if_esreg.h,v 1.4 1996/05/01 15:51:08 mhitch Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ union smcregs {
 /* EPH Status Register */
 #define	EPHSR_16COL	0x1000		/* 16 collisions reached */
 #define	EPHSR_MULCOL	0x0400		/* Multiple collsions */
-#define	EPHSR_TX_SUC	0x0100		/* Last transmit sucessful */
+#define	EPHSR_TX_SUC	0x0100		/* Last transmit successful */
 #define	EPHSR_LOST_CAR	0x0004		/* Lost carrier */
 
 /* Receive Control Register */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_es.c,v 1.13 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.14 2002/12/09 00:45:37 millert Exp $	*/
 /*	$NetBSD: if_es.c,v 1.16 1996/12/23 09:10:17 veego Exp $	*/
 
 /*
@@ -466,8 +466,8 @@ zzzz:
 			 * This shouldn't have happened:  IST_TX indicates
 			 * the TX completion FIFO is not empty, but the
 			 * status for the packet on the completion FIFO
-			 * shows that the transmit was sucessful.  Since
-			 * AutoRelease is being used, a sucessful transmit
+			 * shows that the transmit was successful.  Since
+			 * AutoRelease is being used, a successful transmit
 			 * should not result in a packet on the completion
 			 * FIFO.  Also, that packet doesn't seem to want
 			 * to be acknowledged.  If this occurs, just reset

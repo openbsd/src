@@ -1085,7 +1085,7 @@ Thu Jun 22 17:21:06 2000  Tomas Olsson  <tol@pizza.stacken.kth.se>
 
 	* ontop_ff.xg: numacl.
 
-	* ontop_subr.c: Dont loop twice in ontop_alloc_vnode if sucessful.
+	* ontop_subr.c: Dont loop twice in ontop_alloc_vnode if successful.
 
 	* ontopfs.c: ontop_{fetch,store}acl
 

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstSucc.c,v 1.10 2001/05/29 12:53:48 espie Exp $	*/
+/*	$OpenBSD: lstSucc.c,v 1.11 2002/12/09 00:45:38 millert Exp $	*/
 /*	$NetBSD: lstSucc.c,v 1.5 1996/11/06 17:59:52 christos Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 /*-
  *-----------------------------------------------------------------------
  * Lst_Succ --
- *	Return the sucessor to the given node on its list.
+ *	Return the successor to the given node on its list.
  *
  * Results:
  *	The successor of the node, if it exists.

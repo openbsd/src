@@ -472,7 +472,7 @@ atof_generic (address_of_string_pointer,
       {
 	/*
 	 * Compute the mantssa (& exponent) of the power of 10.
-	 * If sucessful, then multiply the power of 10 by the digits
+	 * If successful, then multiply the power of 10 by the digits
 	 * giving return_binary_mantissa and return_binary_exponent.
 	 */
 

@@ -2001,7 +2001,7 @@
   Changes with mod_ssl 2.1.4 (05-Nov-1998 to 23-Dec-1998)
 
    *) Added the support for OpenSSL (see http://www.openssl.org/), 
-      the Open Source sucessor of SSLeay. The package name is no longer
+      the Open Source successor of SSLeay. The package name is no longer
       hard-wired and so both the HTTP Server field and the logfile entries
       correctly reflect the name OpenSSL, too.
 

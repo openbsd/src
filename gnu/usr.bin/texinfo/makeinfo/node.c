@@ -1,5 +1,5 @@
 /* node.c -- nodes for Texinfo.
-   $Id: node.c,v 1.1.1.2 2002/06/10 13:21:22 espie Exp $
+   $Id: node.c,v 1.2 2002/12/09 00:45:36 millert Exp $
 
    Copyright (C) 1998, 99, 2000, 01, 02 Free Software Foundation, Inc.
 
@@ -1797,7 +1797,7 @@ split_file (filename, size)
           }
       }
 
-    /* We have sucessfully created the subfiles.  Now write out the
+    /* We have successfully created the subfiles.  Now write out the
        original again.  We must use `output_stream', or
        write_tag_table_indirect () won't know where to place the output. */
     output_stream = fopen (filename, "w");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.26 2002/07/03 21:19:08 miod Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.27 2002/12/09 00:45:37 millert Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ struct	ipstat {
 	u_long	ips_localout;		/* total ip packets generated here */
 	u_long	ips_odropped;		/* lost packets due to nobufs, etc. */
 	u_long	ips_reassembled;	/* total packets reassembled ok */
-	u_long	ips_fragmented;		/* datagrams sucessfully fragmented */
+	u_long	ips_fragmented;		/* datagrams successfully fragmented */
 	u_long	ips_ofragments;		/* output fragments created */
 	u_long	ips_cantfrag;		/* don't fragment flag was set, etc. */
 	u_long	ips_badoptions;		/* error in option processing */
