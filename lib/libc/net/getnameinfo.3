@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.34 2004/12/21 01:01:47 itojun Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -26,7 +26,8 @@
 .Fd #include <sys/socket.h>
 .Fd #include <netdb.h>
 .Ft int
-.Fn getnameinfo "const struct sockaddr *sa" "socklen_t salen" "char *host" "size_t hostlen" "char *serv" "size_t servlen" "int flags"
+.Fn getnameinfo "const struct sockaddr *sa" "socklen_t salen" "char *host" \
+    "size_t hostlen" "char *serv" "size_t servlen" "int flags"
 .Sh DESCRIPTION
 The
 .Fn getnameinfo
@@ -68,7 +69,7 @@ The maximum value for
 is
 .Dv NI_MAXHOST
 and
-the maximum value for 
+the maximum value for
 .Fa servlen
 is
 .Dv NI_MAXSERV ,
@@ -95,7 +96,7 @@ instead of a host name.
 A name is required.
 If the host name cannot be found in DNS and this flag is set,
 a non-zero error code is returned.
-If the host name is not found and the flag is not set, the 
+If the host name is not found and the flag is not set, the
 address is returned in numeric form.
 .It NI_NUMERICSERV
 The service name is returned as a digit string representing the port number.
@@ -107,7 +108,7 @@ to be called with a second argument of
 .Dq udp
 instead of its default of
 .Dq tcp .
-This is required for the few ports (512-514) that have different services
+This is required for the few ports (512\-514) that have different services
 for
 .Tn UDP
 and
@@ -222,8 +223,9 @@ when it is actually
 .Pp
 To prevent such attacks, the use of
 .Dv NI_NAMEREQD
-is recommended when you use the result of
+is recommended when the result of
 .Fn getnameinfo
+is used
 for access control purposes:
 .Bd -literal -offset indent
 struct sockaddr *sa;
@@ -241,7 +243,7 @@ if (error == 0) {
 	if (getaddrinfo(addr, "0", &hints, &res) == 0) {
 		/* malicious PTR record */
 		freeaddrinfo(res);
-		printf("bogus PTR record\\n");
+		printf("bogus PTR record\en");
 		return -1;
 	}
 	/* addr is FQDN as a result of PTR lookup */
