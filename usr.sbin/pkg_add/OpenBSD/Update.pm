@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.16 2004/11/09 10:17:52 espie Exp $
+# $OpenBSD: Update.pm,v 1.17 2004/11/09 22:44:30 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -124,6 +124,7 @@ sub validate_depend
 	}
 }
 
+package OpenBSD::PackingElement::Lib;
 sub mark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
