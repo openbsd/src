@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1996/07/27 02:39:42 tholo Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/07/27 22:26:38 tholo Exp $
 
 LIB=	z
 HDRS=	zconf.h zlib.h
@@ -10,9 +10,9 @@ NOMAN=	noman
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 		j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		    install -c -o ${BINOWN} -g ${BINGRP} 0m 444 $$i \
+		    install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		    ${DESTDIR}/usr/include"; \
-		echo $$jl \
+		echo $$j; \
 		eval "$$j"; \
 	done
 
