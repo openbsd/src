@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_syms.c,v 1.7 2002/06/09 04:59:04 fgsch Exp $	*/
+/*	$OpenBSD: aout_syms.c,v 1.8 2002/06/11 06:34:38 art Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -132,6 +132,11 @@ aout_open(const char *name)
 	symoff = N_SYMOFF(ahdr);
 	ash->ash_symsize = ahdr.a_syms;
 	stroff = N_STROFF(ahdr);
+
+	if (ahdr.a_syms == 0) {
+		warnx("No symbol table");
+		goto fail;
+	}
 
 	if (pread(ash->ash_fd, &ash->ash_strsize, sizeof(u_int32_t),
 	    stroff) != sizeof(u_int32_t)) {
