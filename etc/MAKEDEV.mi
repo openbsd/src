@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.5 2002/01/07 06:25:32 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.6 2002/01/07 06:54:10 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -234,10 +234,10 @@ __devitem(ofdisk,ofdisk*,OpenFirmware disks)dnl
 __devitem(hd,{-hd*-},HP300 HP-IB disks)dnl
 __devitem(cd,{-cd*-},SCSI cdrom drives)dnl
 __devitem(acd,acd*,ATAPI cdrom drives)dnl
-_mkdev(cd,cd*,{-dodisk2 cd $U major_cd_b major_cd_c $U 0{--}dnl
--})dnl
+_mkdev(cd,cd*,{-dodisk2 cd $U major_cd_b major_cd_c $U 0{--}ifstep(cd)-})dnl
 __devitem(mcd,mcd*,Mitsumi cdrom drives)dnl
-_mkdev(mcd,mcd*,{-dodisk2 mcd $U major_mcd_b major_mcd_c $U 0-})dnl
+_mkdev(mcd,mcd*,{-dodisk2 mcd $U major_mcd_b major_mcd_c $U 0{--}ifstep(mcd)dnl
+-})dnl
 __devitem(ch,{-ch*-},SCSI media changer)dnl
 _mcdev(ch,ch*,ch,{-major_ch_c-},660,operator)dnl
 __devitem(uk,uk*,SCSI Unknown device)dnl
@@ -250,7 +250,7 @@ __devitem(ses,ses*,SES/SAF-TE SCSI devices)dnl
 _mkdev(ses,ses*,{-M ses$U c major_ses_c $U 640 operator-})dnl
 __devitem(ramd,ramdisk,makes all devices for a ramdisk kernel)dnl arc
 __devitem(rd,{-rd*-},"ramdisk" pseudo-disks)dnl
-_mkdev(rd,rd*,{-dodisk2 rd $U major_rd_b major_rd_c $U 0-})dnl
+_mkdev(rd,rd*,{-dodisk2 rd $U major_rd_b major_rd_c $U 0{--}ifstep(rd)-})dnl
 __devitem(xd,xd*,Xylogic 753/7053 disks)dnl
 __devitem(xy,xy*,{-	Xylogic 450/451 disks-})dnl
 __devitem(flo,{-fd*-},{-Floppy disk drives (3 1/2"{-,-} 5 1/4")-})dnl
@@ -297,8 +297,8 @@ __devitem(wd,{-wd*-},{-"winchester" disk drives (ST506,IDE,ESDI,RLL,...)-})dnl
 __devitem(ccd,ccd*,concatenated disk devices)dnl
 __devitem(raid,raid*,RAIDframe disk devices)dnl
 __devitem(vnd,vnd*,"file" pseudo-disks)dnl
-_mkdev(vnd,vnd*,{-dodisk vnd $U major_vnd_b major_vnd_c $U 0
-	dodisk svnd $U major_vnd_b major_vnd_c $U 128-})dnl
+_mkdev(vnd,vnd*,{-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)
+	dodisk svnd $U major_vnd_b major_vnd_c $U 128{--}ifstep(vnd)-})dnl
 dnl
 dnl For normal disk devices, add a disk_q entry; anything else define like
 dnl the rest (such as vnd above).
@@ -318,8 +318,7 @@ _mkdev(loc,local,{-test -s $T.local && sh $T.local-})dnl
 _mkdev({-disks-},{-undefine({-C_ase-})show_disks()undefine({-C_ase-})-},
 {-case $i in
 show_disks2()dnl
-	esac
-	dodisk $n $U $b $c $U 0-})dnl
+	esac-})dnl
 __mkdev({-disks-}){--}dnl
 dnl
 __devtitle(cons,Console ports)dnl
@@ -341,8 +340,7 @@ _mkdev({-wsdisp-},ttyC*,{-U=${i##ttyC}
 	[0-9a-f]) M ttyC$U c major_wsdisp_c {-$(( 16#$U ))-} 600 ;;
 	cfg) M ttyCcfg c major_wsdisp_c 255 ;;
 	*) echo bad unit $U for $i; exit 1;;
-	esac
- -})dnl
+	esac-})dnl
 __devitem(wskbd,wskbd*,wscons keyboards)dnl
 _mkdev(wskbd,wskbd*,{-M wskbd$U c major_wskbd_c $U 600-})dnl
 __devitem(wsmux,wsmux,wscons keyboard/mouse mux devices)dnl
@@ -584,7 +582,7 @@ divert(0)dnl
 #
 show_vers()dnl <-- now that all files are included, show versions
 #
-#	$Open{--}BSD$
+{-#-}	$Open{--}BSD$
 dnl
 divert(2)dnl
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
