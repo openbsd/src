@@ -1,4 +1,4 @@
-/*	$OpenBSD: iodc.h,v 1.1 1998/06/23 19:45:23 mickey Exp $	*/
+/*	$OpenBSD: iodc.h,v 1.2 1998/08/29 01:33:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -36,69 +36,6 @@
 
 #ifndef	_IODC_
 #define _IODC_
-
-#define	MINIOSIZ	64		/* minimum buffer size for IODC call */
-#define	MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
-
-/*
- * IODC Entry Indices and their arguments...
- */
-
-#define	IODC_DATA	0	/* get the 16-byte IODC structure (see below) */
-
-#define	IODC_INIT	3	/* initialize (see options below) */
-#define	IODC_INIT_FIRST		2	/* find first device on module */
-#define	IODC_INIT_NEXT		3	/* find subsequent devices on module */
-#define	IODC_INIT_ALL		4	/* initialize module and device */
-#define	IODC_INIT_DEV		5	/* initialize device */
-#define	IODC_INIT_MOD		6	/* initialize module */
-#define	IODC_INIT_MSG		9	/* return error message(s) */
-
-#define	IODC_IO		4	/* perform I/O (see options below) */
-#define	IODC_IO_BOOTIN		0	/* read from boot device */
-#define	IODC_IO_BOOTOUT		1	/* write to boot device */
-#define	IODC_IO_CONSIN		2	/* read from console */
-#define	IODC_IO_CONSOUT		3	/* write to conosle */
-#define	IODC_IO_MSG		9	/* return error message(s) */
-
-#define	IODC_SPA	5	/* get extended SPA information */
-#define	IODC_SPA_DFLT		0	/* return SPA information */
-
-#define	IODC_TEST	8	/* perform self tests */
-#define	IODC_TEST_INFO		0	/* return test information */
-#define	IODC_TEST_STEP		1	/* execute a particular test */
-#define	IODC_TEST_TEST		2	/* describe a test section */
-#define	IODC_TEST_MSG		9	/* return error message(s) */
-
-
-/*
- * The following structure defines what a particular IODC returns when
- * given the IODC_DATA argument.
- */
-
-#if !defined(_LOCORE) && !defined(ASSEMBLER)
-struct iodc_data {
-	u_int	iodc_model: 8,		/* hardware model number */
-		iodc_revision:8,	/* software revision */
-		iodc_spa_io: 1,		/* 0:memory, 1:device */
-		iodc_spa_pack:1,	/* 1:packed multiplexor */
-		iodc_spa_enb:1,		/* 1:has an spa */
-		iodc_spa_shift:5,	/* power of two # bytes in SPA space */
-		iodc_more: 1,		/* iodc_data is: 0:8-byte, 1:16-byte */
-		iodc_word: 1,		/* io_dc_data is: 0:byte, 1:word */
-		iodc_pf: 1,		/* 1:supports powerfail */
-		iodc_type: 5;		/* see below */
-	u_int	iodc_sv_rev: 4,		/* software version revision number */
-		iodc_sv_model:20,	/* software interface model # */
-		iodc_sv_opt: 8;		/* type-specific options */
-	u_char	iodc_rev;		/* revision number of IODC code */
-	u_char	iodc_dep;		/* module-dependent information */
-	u_char	iodc_rsv[2];		/* reserved */
-	u_short	iodc_cksum;		/* 16-bit checksum of whole IODC */
-	u_short	iodc_length;		/* number of entry points in IODC */
-		/* IODC entry points follow... */
-};
-#endif	/* !(_LOCORE || ASSEMBLER) */
 
 /* iodc_type */
 #define	IODC_TP_NPROC	 0	/* native processor */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.4 1998/07/14 17:44:55 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.5 1998/08/29 01:33:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -41,6 +41,16 @@
  *	IPL:	Boot program (loaded into memory from boot device).
  *	HPA:	Hard Physical Address (hardwired address).
  *	SPA:	Soft Physical Address (reconfigurable address).
+ *
+ *
+ *
+ *
+ * Definitions for talking to IODC (I/O Dependent Code).
+ *
+ * The PDC is used to load I/O Dependent Code from a particular module.
+ * I/O Dependent Code is module-type dependent software which provides
+ * a uniform way to identify, initialize, and access a module (and in
+ * some cases, their devices).
  */
 
 /*
@@ -74,14 +84,16 @@
  *	IPL_START must be less than or equal to 64K.
  *
  * The IPL (boot) Code is immediately relocated to RELOC (check
- * "../hp800stand/Makefile") to make way for the Kernel.
+ * "../stand/Makefile") to make way for the Kernel.
  */
 
 #define	IODC_MAXSIZE	(16 * 1024)	/* maximum size of IODC */
+#define	MINIOSIZ	64		/* minimum buffer size for IODC call */
+#define	MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
 
 
 /*
- * The "Top 15 PDC Entry Points" and their arguments...
+ * The PDC Entry Points and their arguments...
  */
 
 #define	PDC_POW_FAIL	1	/* prepare for power failure */
@@ -118,10 +130,33 @@
 
 #define	PDC_IODC	8	/* talk to IODC */
 #define	PDC_IODC_READ		0	/* read IODC entry point */
+#define		IODC_DATA	0	/* get first 16 bytes from mod IODC */
+#define		IODC_INIT	3	/* initialize (see options below) */
+#define		IODC_INIT_FIRST	2	/* find first device on module */
+#define		IODC_INIT_NEXT	3	/* find subsequent devices on module */
+#define		IODC_INIT_ALL	4	/* initialize module and device */
+#define		IODC_INIT_DEV	5	/* initialize device */
+#define		IODC_INIT_MOD	6	/* initialize module */
+#define		IODC_INIT_MSG	9	/* return error message(s) */
+#define		IODC_INIT_STR	20	/* find device w/ spec in string */
+#define		IODC_IO		4	/* perform I/O (see options below) */
+#define		IODC_IO_READ	0	/* read from boot device */
+#define		IODC_IO_WRITE	1	/* write to boot device */
+#define		IODC_IO_CONSIN	2	/* read from console */
+#define		IODC_IO_CONSOUT	3	/* write to conosle */
+#define		IODC_IO_CLOSE	4	/* close device */
+#define		IODC_IO_MSG	9	/* return error message(s) */
+#define		IODC_SPA	5	/* get extended SPA information */
+#define		IODC_SPA_DFLT	0	/* return SPA information */
+#define		IODC_TEST	8	/* perform self tests */
+#define		IODC_TEST_INFO	0	/* return test information */
+#define		IODC_TEST_STEP	1	/* execute a particular test */
+#define		IODC_TEST_TEST	2	/* describe a test section */
+#define		IODC_TEST_MSG	9	/* return error message(s) */
 #define	PDC_IODC_NINIT		2	/* non-destructive init */
 #define	PDC_IODC_DINIT		3	/* destructive init */
 #define	PDC_IODC_MEMERR		4	/* check for memory errors */
-#define	PDC_IODC_INDEX_DATA	0	/* get first 16 bytes from mod IODC */
+#define	PDC_IODC_IMEMMASTER	5	/* interlieved memory master ID */
 
 #define	PDC_TOD		9	/* access time-of-day clock */
 #define	PDC_TOD_READ		0	/* read TOD clock */
@@ -177,9 +212,30 @@
 #define PDC_TLB_NEXTPDE		5	/* cr28 points to next pde on miss */
 #define PDC_TLB_WORD3		7	/* cr28 is word 3 of 16 byte pde */
 
-#define	PDC_MEMMAP	128	/* hp700: return page information */
+#define	PDC_SOFT_POWER		23	/* support for soft power switch */
+#define	PDC_SOFT_POWER_INFO	0	/* get info about soft power switch */
+#define	PDC_SOFT_POWER_ENABLE	1	/* enable/disable soft power switch */
+
+#define	PDC_MEMMAP		128	/* hp700: return page information */
 #define	PDC_MEMMAP_HPA		0	/* map module # to HPA */
 
+#define	PDC_EEPROM		129	/* Hversion dependent */
+#define	PDC_EEPROM_READ_WORD	0
+#define	PDC_EEPROM_WRITE_WORD	1
+#define	PDC_EEPROM_READ_BYTE	2
+#define	PDC_EEPROM_WRITE_BYTE	3
+
+#define	PDC_LAN_STATION_ID	138     /* Hversion dependent mechanism for */
+#define	PDC_LAN_STATION_ID_READ	0       /* getting the lan station address  */
+
+#define	PDC_ERR_OK		0	/* operation complete */
+#define	PDC_ERR_WARNING		3	/* OK, but warning */
+#define	PDC_ERR_NOPROC		-1	/* no such procedure */
+#define	PDC_ERR_NOPT		-2	/* no such option */
+#define	PDC_ERR_COMPL		-3	/* unable to complete w/o error */
+#define	PDC_ERR_EOD		-9	/* end of device list */
+#define	PDC_ERR_INVAL		-10	/* invalid argument */
+#define	PDC_ERR_PFAIL		-12	/* aborted by powerfail */
 
 #if !defined(_LOCORE)
 
@@ -337,7 +393,6 @@ struct pdc_memmap {	/* PDC_MEMMAP */
 	double	filler[15];
 };
 
-
 /*
  * The PDC_CHASSIS is a strange bird.  The format for updating the display
  * is as follows:
@@ -378,7 +433,6 @@ struct pdc_memmap {	/* PDC_MEMMAP */
 #define	PDC_OSTAT_RUN	0x6	/* OS running */
 #define	PDC_OSTAT_ON	0x7	/* all on */
 
-
 /*
  * Device path specifications used by PDC.
  */
@@ -414,7 +468,6 @@ struct stable_storage {
 	struct device_path ss_keyboard;
 };
 
-
 /*
  * Recoverable error indications provided to boot code by the PDC.
  * Any non-zero value indicates error.
@@ -430,6 +483,7 @@ struct boot_err {
  * The PDC uses the following structure to completely define an I/O
  * module and the interface to its IODC.
  */
+typedef
 struct pz_device {
 	struct device_path pz_dp;
 #define	pz_flags	pz_dp.dp_flags
@@ -441,7 +495,7 @@ struct pz_device {
 	iodcio_t pz_iodc_io;	/* entry point of device's driver routines */
 	short	pz_resv;	/* (reserved) */
 	u_short	pz_class;	/* (see below) */
-};
+} pz_device_t;
 
 /* pz_class */
 #define	PCL_NULL	0	/* illegal */
@@ -450,6 +504,34 @@ struct pz_device {
 #define	PCL_DUPLEX	7	/* full-duplex point-to-point (RS-232, Net) */
 #define	PCL_KEYBD	8	/* half-duplex input (HIL Keyboard) */
 #define	PCL_DISPL	9	/* half-duplex ouptput (display) */
+#define	PCL_CLASS_MASK	0xf	/* XXX class mask */
+#define	PCL_NET_MASK	0x1000	/* mask for bootp/tftp device */
+
+/*
+ * The following structure defines what a particular IODC returns when
+ * given the IODC_DATA argument.
+ */
+struct iodc_data {
+	u_int	iodc_model: 8,		/* hardware model number */
+		iodc_revision:8,	/* software revision */
+		iodc_spa_io: 1,		/* 0:memory, 1:device */
+		iodc_spa_pack:1,	/* 1:packed multiplexor */
+		iodc_spa_enb:1,		/* 1:has an spa */
+		iodc_spa_shift:5,	/* power of two # bytes in SPA space */
+		iodc_more: 1,		/* iodc_data is: 0:8-byte, 1:16-byte */
+		iodc_word: 1,		/* io_dc_data is: 0:byte, 1:word */
+		iodc_pf: 1,		/* 1:supports powerfail */
+		iodc_type: 5;		/* see below */
+	u_int	iodc_sv_rev: 4,		/* software version revision number */
+		iodc_sv_model:20,	/* software interface model # */
+		iodc_sv_opt: 8;		/* type-specific options */
+	u_char	iodc_rev;		/* revision number of IODC code */
+	u_char	iodc_dep;		/* module-dependent information */
+	u_char	iodc_rsv[2];		/* reserved */
+	u_short	iodc_cksum;		/* 16-bit checksum of whole IODC */
+	u_short	iodc_length;		/* number of entry points in IODC */
+		/* IODC entry points follow... */
+};
 
 #define	BT_HPA	PAGE0->mem_boot.pz_hpa
 #define lightshow(val) { \
@@ -464,12 +546,16 @@ extern pdcio_t pdc;
 #ifdef _KERNEL
 struct consdev;
 
-void init_pdc __P((void));
-void pdc_probe __P((struct consdev *));
-void pdc_init __P((struct consdev *));
-int pdc_getc __P((dev_t));
-void pdc_putc __P((dev_t, int));
-void pdc_pollc __P((dev_t, int));
+extern int kernelmapped;
+
+void pdc_init __P((void));
+int pdc_call __P((iodcio_t, int, ...));
+
+void pdccnprobe __P((struct consdev *));
+void pdccninit __P((struct consdev *));
+int pdccngetc __P((dev_t));
+void pdccnputc __P((dev_t, int));
+void pdccnpollc __P((dev_t, int));
 #endif
 
 #endif	/* !(_LOCORE) */
