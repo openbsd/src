@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.76 2002/06/06 22:22:44 mickey Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.77 2002/06/07 19:30:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -257,11 +257,11 @@ print_op(u_int8_t op, const char *a1, const char *a2)
 		printf("%s >< %s ", a1, a2);
 	else if (op == PF_OP_XRG)
 		printf("%s <> %s ", a1, a2);
-	else if (op == PF_OP_EQ) {
+	else if (op == PF_OP_EQ)
 		printf("= %s ", a1);
-	} else if (op == PF_OP_NE) {
+	else if (op == PF_OP_NE)
 		printf("!= %s ", a1);
-	} else if (op == PF_OP_LT)
+	else if (op == PF_OP_LT)
 		printf("< %s ", a1);
 	else if (op == PF_OP_LE)
 		printf("<= %s ", a1);
