@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.183 1999/09/25 04:04:56 jason Exp 
+ *	OpenBSD: pcidevs,v 1.184 1999/09/25 23:22:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -662,6 +662,8 @@
 #define	PCI_PRODUCT_AMD_PCHOME_PCI	0x2001		/* 79c978 PChome-PCI LANCE */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI SCSI */
 #define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* 79C974 PCnet-PCI Ether+SCSI */
+#define	PCI_PRODUCT_AMD_AMD_751AGP	0x7006		/* 751 PCI-AGP */
+#define	PCI_PRODUCT_AMD_AMD_751PCI	0x7007		/* 751 PCI-PCI */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI */

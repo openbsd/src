@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.183 1999/09/25 04:04:56 jason Exp 
+ *	OpenBSD: pcidevs,v 1.184 1999/09/25 23:22:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -547,6 +547,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "AMD",
 	    "79C974 PCnet-PCI Ether+SCSI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD_751AGP,
+	    0,
+	    "AMD",
+	    "751 PCI-AGP",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD_751PCI,
+	    0,
+	    "AMD",
+	    "751 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
