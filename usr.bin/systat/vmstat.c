@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.19 1999/10/26 15:13:54 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.20 1999/10/26 15:43:22 art Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.19 1999/10/26 15:13:54 art Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.20 1999/10/26 15:43:22 art Exp $";
 #endif /* not lint */
 
 /*
@@ -349,6 +349,9 @@ labelkre()
 	mvprintw(PAGEROW + 3, PAGECOL, "pages");
 #endif
 
+	mvprintw(INTSROW, INTSCOL + 3, " Interrupts");
+	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
+
 #if defined(UVM)
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "forks");
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "fkppw");
@@ -369,9 +372,6 @@ labelkre()
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
 #else
-	mvprintw(INTSROW, INTSCOL + 3, " Interrupts");
-	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
-
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "cow");
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "objlk");
 	mvprintw(VMSTATROW + 2, VMSTATCOL + 10, "objht");
