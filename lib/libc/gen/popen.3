@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popen.3,v 1.10 2001/07/17 17:08:29 aaron Exp $
+.\"	$OpenBSD: popen.3,v 1.11 2003/05/30 17:21:06 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,7 +127,7 @@ command, if
 already
 .Dq pclosed ,
 or if
-.Xr wait4
+.Xr wait4 2
 returns an error.
 .Sh ERRORS
 The
@@ -144,6 +144,13 @@ function does not reliably set
 .Xr fopen 3 ,
 .Xr stdio 3 ,
 .Xr system 3
+.Sh HISTORY
+A
+.Fn popen
+and a
+.Fn pclose
+function appeared in
+.At v7 .
 .Sh BUGS
 Since the standard input of a command opened for reading
 shares its seek offset with the process that called
@@ -164,13 +171,6 @@ The only hint is an exit status of 127.
 The
 .Fn popen
 argument always calls
-.Xr sh ;
+.Xr sh 1 ;
 it never calls
-.Xr csh .
-.Sh HISTORY
-A
-.Fn popen
-and a
-.Fn pclose
-function appeared in
-.At v7 .
+.Xr csh 1 .

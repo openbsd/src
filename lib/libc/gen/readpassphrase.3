@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.10 2003/05/03 19:04:40 jmc Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.11 2003/05/30 17:21:06 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -79,6 +79,31 @@ Upon successful completion,
 returns a pointer to the null-terminated passphrase.
 If an error is encountered, the terminal state is restored and
 a null pointer is returned.
+.Sh FILES
+.Bl -tag -width /dev/tty -compact
+.It Pa /dev/tty
+.El
+.Sh EXAMPLES
+The following code fragment will read a passphrase from
+.Pa /dev/tty
+into the buffer
+.Fa passbuf .
+.Bd -literal -offset indent
+char passbuf[1024];
+
+\&...
+
+if (readpassphrase("Response: ", passbuf, sizeof(passbuf),
+    RPP_REQUIRE_TTY) == NULL)
+	errx(1, "unable to read passphrase");
+
+if (compare(transform(passbuf), epass) != 0)
+	errx(1, "bad passphrase");
+
+\&...
+
+memset(passbuf, 0, sizeof(passbuf));
+.Ed
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er EINTR
@@ -102,27 +127,6 @@ There is no controlling terminal and the
 .Dv RPP_REQUIRE_TTY
 flag was specified.
 .El
-.Sh EXAMPLES
-The following code fragment will read a passphrase from
-.Pa /dev/tty
-into the buffer
-.Fa passbuf.
-.Bd -literal -offset indent
-char passbuf[1024];
-
-\&...
-
-if (readpassphrase("Response: ", passbuf, sizeof(passbuf),
-    RPP_REQUIRE_TTY) == NULL)
-	errx(1, "unable to read passphrase");
-
-if (compare(transform(passbuf), epass) != 0)
-	errx(1, "bad passphrase");
-
-\&...
-
-memset(passbuf, 0, sizeof(passbuf));
-.Ed
 .Sh SIGNALS
 .Fn readpassphrase
 will catch the following signals:
@@ -158,10 +162,6 @@ from a background process) are treated specially.
 When the process is resumed after it has been stopped,
 .Fn readpassphrase
 will reprint the prompt and the user may then enter a passphrase.
-.Sh FILES
-.Bl -tag -width /dev/tty -compact
-.It Pa /dev/tty
-.El
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr getpass 3

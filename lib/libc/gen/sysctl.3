@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.102 2003/05/03 19:04:40 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.103 2003/05/30 17:21:06 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -577,7 +577,7 @@ The maximum number of semaphores allowed in the system.
 .It Dv KERN_SEMINFO_SEMMNU
 The maximum number of semaphore undo structures allowed in the system.
 .It Dv KERN_SEMINFO_SEMMSL
-The maximum number of semaphores allowed per id.
+The maximum number of semaphores allowed per ID.
 .It Dv KERN_SEMINFO_SEMOPM
 The maximum number of operations per
 .Xr semop 2
@@ -1233,7 +1233,7 @@ and autoconfigures address prefixes and default routers.
 The node must be a host
 .Pq not a router
 for the option to be meaningful (see
-.Li ip6.forwarding Ns ).
+.Li ip6.forwarding ) .
 .It Li ip6.keepfaith
 If set to non-zero, enables the
 .Dq FAITH
@@ -1477,7 +1477,8 @@ timezone.
 .El
 .Ss CTL_DDB
 Integer information and settable variables are available for the
-.Dv CTL_DDB level, as described below.
+.Dv CTL_DDB level ,
+as described below.
 More information is also available in
 .Xr ddb 4 .
 .Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
@@ -1573,7 +1574,7 @@ Encryption keys are deleted when their reference counter reaches zero.
 .El
 .It Dv VM_UVMEXP
 Contains statistics about the UVM memory management system.
-.It Dv VM_METER:
+.It Dv VM_METER
 Contains statistics about the memory management system, using the old
 VM format.
 .El
@@ -1631,6 +1632,43 @@ If the call to
 is unsuccessful, \-1 is returned and
 .Va errno
 is set appropriately.
+.Sh FILES
+.Bl -tag -width <uvm/uvmXswapXencrypt.h> -compact
+.It Aq Pa sys/sysctl.h
+definitions for top level identifiers, second level kernel and hardware
+identifiers, and user level identifiers
+.It Aq Pa sys/socket.h
+definitions for second level network identifiers
+.It Aq Pa sys/gmon.h
+definitions for third level profiling identifiers
+.It Aq Pa vm/vm_param.h
+definitions for second level virtual memory identifiers
+.It Aq Pa uvm/uvm_swap_encrypt.h
+definitions for third level virtual memory identifiers
+.It Aq Pa netinet/in.h
+definitions for third level IPv4/v6 identifiers and
+fourth level
+.Tn IP
+and
+.Tn IPv6
+identifiers
+.It Aq Pa netinet/icmp_var.h
+definitions for fourth level
+.Tn ICMP
+identifiers
+.It Aq Pa netinet/icmp6.h
+definitions for fourth level
+.Tn ICMPv6
+identifiers
+.It Aq Pa netinet/tcp_var.h
+definitions for fourth level
+.Tn TCP
+identifiers
+.It Aq Pa netinet/udp_var.h
+definitions for fourth level
+.Tn UDP
+identifiers
+.El
 .Sh ERRORS
 The following errors may be reported:
 .Bl -tag -width Er
@@ -1672,43 +1710,6 @@ A process without appropriate privileges attempts to set a value.
 .It Bq Er EPERM
 An attempt to change a value protected by the current kernel security
 level is made.
-.El
-.Sh FILES
-.Bl -tag -width <uvm/uvmXswapXencrypt.h> -compact
-.It Aq Pa sys/sysctl.h
-definitions for top level identifiers, second level kernel and hardware
-identifiers, and user level identifiers
-.It Aq Pa sys/socket.h
-definitions for second level network identifiers
-.It Aq Pa sys/gmon.h
-definitions for third level profiling identifiers
-.It Aq Pa vm/vm_param.h
-definitions for second level virtual memory identifiers
-.It Aq Pa uvm/uvm_swap_encrypt.h
-definitions for third level virtual memory identifiers
-.It Aq Pa netinet/in.h
-definitions for third level IPv4/v6 identifiers and
-fourth level
-.Tn IP
-and
-.Tn IPv6
-identifiers
-.It Aq Pa netinet/icmp_var.h
-definitions for fourth level
-.Tn ICMP
-identifiers
-.It Aq Pa netinet/icmp6.h
-definitions for fourth level
-.Tn ICMPv6
-identifiers
-.It Aq Pa netinet/tcp_var.h
-definitions for fourth level
-.Tn TCP
-identifiers
-.It Aq Pa netinet/udp_var.h
-definitions for fourth level
-.Tn UDP
-identifiers
 .El
 .Sh SEE ALSO
 .Xr sysctl 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.21 2003/04/30 06:28:10 jmc Exp $
+.\"	$OpenBSD: syslog.3,v 1.22 2003/05/30 17:21:06 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,14 +36,14 @@
 .Os
 .Sh NAME
 .Nm syslog ,
-.Nm syslog_r,
+.Nm syslog_r ,
 .Nm vsyslog ,
-.Nm vsyslog_r,
+.Nm vsyslog_r ,
 .Nm openlog ,
-.Nm openlog_r,
+.Nm openlog_r ,
 .Nm closelog ,
-.Nm closelog_r,
-.Nm setlogmask,
+.Nm closelog_r ,
+.Nm setlogmask ,
 .Nm setlogmask_r
 .Nd control system log
 .Sh SYNOPSIS
@@ -107,7 +107,7 @@ A trailing newline is added if none is present.
 The
 .Fn syslog_r
 function is a reentrant version of the
-.Xr syslog 3
+.Fn syslog
 function.
 It takes a pointer to a
 .Fa syslog_data
