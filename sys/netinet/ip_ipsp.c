@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.144 2001/12/05 10:00:46 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.145 2002/02/23 22:16:13 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -929,6 +929,10 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 	if (tdb->tdb_authalgxform)
 		l += sprintf(buffer + l, "\t\tAuthentication = <%s>\n",
 		    tdb->tdb_authalgxform->name);
+
+	if (tdb->tdb_compalgxform)
+		l += sprintf(buffer + l, "\t\tCompression = <%s>\n",
+		    tdb->tdb_compalgxform->name);
 
 	if (tdb->tdb_onext)
 		l += sprintf(buffer + l,
