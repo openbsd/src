@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.272 2000/06/18 16:52:30 form Exp 
+ *		OpenBSD: pcidevs,v 1.274 2000/06/29 09:52:42 niklas Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2655,6 +2655,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Magicgraph NM2360",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM256XLP,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256XL+",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM256AV,
 	    0,
 	    "Neomagic",
@@ -3357,6 +3363,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "5C478 PCI-CardBus",
 	},
 	{
+	    PCI_VENDOR_ROCKWELL, PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1,
+	    0,
+	    "Rockwell Semiconductor Systems",
+	    "RS56/SP-PCI11P1 Modem",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
 	    0,
 	    "S3",
@@ -3763,6 +3775,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sony",
 	    "CXD1947A FireWire",
+	},
+	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD3222,
+	    0,
+	    "Sony",
+	    "CXD3222 FireWire",
 	},
 	{
 	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
@@ -4851,12 +4869,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "724 Audio",
 	},
 	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744,
-	    0,
-	    "Yamaha",
-	    "DS-1S Audio",
-	},
-	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
 	    0,
 	    "Yamaha",
@@ -4867,6 +4879,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Yamaha",
 	    "DS-1L Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744,
+	    0,
+	    "Yamaha",
+	    "DS-1S Audio",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
