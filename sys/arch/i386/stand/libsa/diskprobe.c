@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.12 1997/11/30 21:51:42 mickey Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.13 1997/12/22 04:39:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -108,7 +108,7 @@ hardprobe()
 
 		if(bios_getdiskinfo(i, &dip->bios_info)) {
 #ifdef BIOS_DEBUG
-			printf(" <!hd%u>", i);
+			printf(" <!hd%u>", i&0x7f);
 #endif
 			free(dip, 0);
 			break;
