@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.27 1999/07/09 13:35:19 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.28 1999/07/26 12:50:54 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -119,7 +119,7 @@ set to 0.
 The top level names are defined with a
 .Dv CTL_
 prefix in
-.Pa <sys/sysctl.h> ,
+.Aq Pa sys/sysctl.h ,
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
@@ -775,29 +775,29 @@ level is made.
 .El
 .Sh FILES
 .Bl -tag -width <netinet/icmpXvar.h> -compact
-.It Pa <sys/sysctl.h>
+.It Aq Pa sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
-.It Pa <sys/socket.h>
+.It Aq Pa sys/socket.h
 definitions for second level network identifiers
-.It Pa <sys/gmon.h>
+.It Aq Pa sys/gmon.h
 definitions for third level profiling identifiers
-.It Pa <vm/vm_param.h>
+.It Aq Pa vm/vm_param.h
 definitions for second level virtual memory identifiers
-.It Pa <netinet/in.h>
+.It Aq Pa netinet/in.h
 definitions for third level Internet identifiers and
 fourth level
 .Tn IP
 identifiers
-.It Pa <netinet/icmp_var.h>
+.It Aq Pa netinet/icmp_var.h
 definitions for fourth level
 .Tn ICMP
 identifiers
-.It Pa <netinet/tcp_var.h>
+.It Aq Pa netinet/tcp_var.h
 definitions for fourth level
 .Tn TCP
 identifiers
-.It Pa <netinet/udp_var.h>
+.It Aq Pa netinet/udp_var.h
 definitions for fourth level
 .Tn UDP
 identifiers
