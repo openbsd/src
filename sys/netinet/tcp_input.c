@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.46 1999/08/06 18:17:37 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.47 1999/08/27 15:35:56 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2253,6 +2253,15 @@ tcp_sack_option(tp, th, cp, optlen)
 		if (SEQ_GEQ(sack.end, tp->snd_fack))
 			tp->snd_fack = sack.end;
 #endif /* TCP_FACK */
+		if (SEQ_GT(th->th_ack, tp->snd_una)) {
+			if (SEQ_LT(sack.start, th->th_ack))
+				continue;
+		} else {
+			if (SEQ_LT(sack.start, tp->snd_una))
+				continue;
+		}
+		if (SEQ_GEQ(sack.end, tp->snd_max))
+			continue;
 		if (tp->snd_holes == 0) { /* first hole */
 			tp->snd_holes = (struct sackhole *)
 			    malloc(sizeof(struct sackhole), M_PCB, M_NOWAIT);
@@ -2435,7 +2444,8 @@ tcp_del_sackholes(tp, th)
 {
 	if (!tp->sack_disable && tp->t_state != TCPS_LISTEN) {
 		/* max because this could be an older ack just arrived */
-		tcp_seq lastack = max(th->th_ack, tp->snd_una);
+		tcp_seq lastack = SEQ_GT(th->th_ack, tp->snd_una) ?
+			th->th_ack : tp->snd_una;
 		struct sackhole *cur = tp->snd_holes;
 		struct sackhole *prev = cur;
 		while (cur)
