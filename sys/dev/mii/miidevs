@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.21 2001/06/01 19:47:13 deraadt Exp $
+$OpenBSD: miidevs,v 1.22 2001/07/16 16:32:36 peter Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -42,6 +42,7 @@ $OpenBSD: miidevs,v 1.21 2001/06/01 19:47:13 deraadt Exp $
  * List of known MII OUIs
  */
 
+oui 3COM			0x00105a	3com
 oui ALTIMA			0x0010a9	Altima Communications
 oui AMD				0x00001a	Advanced Micro Devices
 oui BROADCOM			0x001018	Broadcom Corporation
