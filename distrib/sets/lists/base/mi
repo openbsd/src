@@ -3750,6 +3750,7 @@
 ./var
 ./var/account
 ./var/at
+./var/at/.SEQ
 ./var/at/jobs
 ./var/at/spool
 ./var/audit
