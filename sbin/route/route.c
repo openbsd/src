@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.10 1996/10/27 14:53:37 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.11 1996/10/27 15:11:10 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.10 1996/10/27 14:53:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.11 1996/10/27 15:11:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,7 +397,7 @@ netname(sa)
 	struct sockaddr *sa;
 {
 	char *cp = 0;
-	static char line[50];
+	static char line[MAXHOSTNAMELEN];
 	struct netent *np = 0;
 	u_long net, mask;
 	register u_long i;
@@ -440,9 +440,10 @@ netname(sa)
 			if (np)
 				cp = np->n_name;
 		}
-		if (cp)
-			strcpy(line, cp);
-		else if ((in.s_addr & 0xffffff) == 0)
+		if (cp) {
+			strncpy(line, cp, sizeof line-1);
+			line[sizeof line-1] = '\0';
+		} else if ((in.s_addr & 0xffffff) == 0)
 			(void) sprintf(line, "%u", C(in.s_addr >> 24));
 		else if ((in.s_addr & 0xffff) == 0)
 			(void) sprintf(line, "%u.%u", C(in.s_addr >> 24),
