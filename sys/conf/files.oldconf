@@ -1,4 +1,4 @@
-#	$OpenBSD: files.oldconf,v 1.9 1996/05/04 20:49:19 mickey Exp $
+#	$OpenBSD: files.oldconf,v 1.10 1996/05/28 12:16:34 deraadt Exp $
 #	$NetBSD: files.oldconf,v 1.67 1996/03/19 04:40:54 scottr Exp $
 #
 adosfs/adlookup.c	optional adosfs
@@ -57,7 +57,6 @@ kern/kern_subr.c	standard
 kern/kern_synch.c	standard
 kern/kern_sysctl.c	standard
 kern/kern_time.c	standard
-kern/kern_thread.c	standard
 kern/kern_xxx.c		standard
 kern/subr_disk.c	standard
 kern/subr_log.c		standard

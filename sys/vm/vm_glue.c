@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.15 1996/05/22 12:03:13 deraadt Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.16 1996/05/28 12:16:32 deraadt Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55 1996/05/19 10:00:38 ragge Exp $	*/
 
 /* 
@@ -545,6 +545,59 @@ swapout(p)
 		remrq(p);
 	splx(s);
 	p->p_swtime = 0;
+}
+
+/*
+ * The rest of these routines fake thread handling
+ */
+
+void
+assert_wait(event, ruptible)
+	void *event;
+	boolean_t ruptible;
+{
+#ifdef lint
+	ruptible++;
+#endif
+	curproc->p_thread = event;
+}
+
+void
+thread_block()
+{
+	int s = splhigh();
+
+	if (curproc->p_thread)
+		tsleep(curproc->p_thread, PVM, "thrd_block", 0);
+	splx(s);
+}
+
+void
+thread_sleep(event, lock, ruptible)
+	void *event;
+	simple_lock_t lock;
+	boolean_t ruptible;
+{
+	int s = splhigh();
+
+#ifdef lint
+	ruptible++;
+#endif
+	curproc->p_thread = event;
+	simple_unlock(lock);
+	if (curproc->p_thread)
+		tsleep(event, PVM, "thrd_sleep", 0);
+	splx(s);
+}
+
+void
+thread_wakeup(event)
+	void *event;
+{
+	int s = splhigh();
+
+	wakeup(event);
+	splx(s);
 }
 
 /*

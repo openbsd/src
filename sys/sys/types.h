@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.8 1996/04/21 22:32:15 deraadt Exp $	*/
+/*	$OpenBSD: types.h,v 1.9 1996/05/28 12:16:28 deraadt Exp $	*/
 /*	$NetBSD: types.h,v 1.26 1996/04/09 20:55:47 cgd Exp $	*/
 
 /*-
@@ -81,12 +81,6 @@ typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
-
-#ifdef _KERNEL	/* XXX */
-typedef	int	boolean_t;
-#define	TRUE	1
-#define	FALSE	0
-#endif
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
@@ -173,8 +167,6 @@ typedef	struct fd_set {
  * used in the same place that the structure is defined.
  */
 struct	proc;
-struct	thread;
-struct	slock;
 struct	pgrp;
 struct	ucred;
 struct	rusage;

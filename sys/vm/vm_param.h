@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.5 1996/03/24 18:07:59 tholo Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.6 1996/05/28 12:16:32 deraadt Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -74,14 +74,12 @@
 
 #include <machine/vmparam.h>
 
-#ifndef _KERNEL	/* XXX */
 /*
  * This belongs in types.h, but breaks too many existing programs.
  */
 typedef	int	boolean_t;
 #define	TRUE	1
 #define	FALSE	0
-#endif
 
 /*
  *	The machine independent pages are refered to as PAGES.  A page

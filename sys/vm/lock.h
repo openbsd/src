@@ -78,7 +78,7 @@
  */
 
 struct slock {
-	boolean_t	lock_data;	/* in general 1 bit is sufficient */
+	int		lock_data;	/* in general 1 bit is sufficient */
 };
 
 typedef struct slock	simple_lock_data_t;
@@ -131,7 +131,7 @@ struct lock {
 	int		read_count;	/* Number of accepted readers */
 #endif	/* ns32000 */
 #endif	/* vax */
-	struct thread	*thread;		/* Thread that has lock, if recursive locking allowed */
+	void		*thread;	/* Thread that has lock, if recursive locking allowed */
 					/* (should be thread_t, but but we then have mutually
 					   recursive definitions) */
 	int		recursion_depth;/* Depth of recursion */

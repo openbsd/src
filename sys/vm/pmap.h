@@ -90,7 +90,10 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
+#if 0
+/* Does not belong here! */
 void		 pmap_bootstrap( /* machine dependent */ );
+#endif
 void		 pmap_change_wiring __P((pmap_t, vm_offset_t, boolean_t));
 void		 pmap_clear_modify __P((vm_offset_t pa));
 void		 pmap_clear_reference __P((vm_offset_t pa));
@@ -103,6 +106,10 @@ void		 pmap_destroy __P((pmap_t));
 void		 pmap_enter __P((pmap_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
 vm_offset_t	 pmap_extract __P((pmap_t, vm_offset_t));
+#ifndef pmap_page_index
+int		 pmap_page_index __P((vm_offset_t));
+#endif
+
 #ifndef	MACHINE_NONCONTIG
 void		 pmap_init __P((vm_offset_t, vm_offset_t));
 #else
@@ -125,12 +132,11 @@ void		 pmap_update __P((void));
 void		 pmap_zero_page __P((vm_offset_t));
 
 #ifdef MACHINE_NONCONTIG
-u_int		 pmap_free_pages __P(());
-void		 pmap_init __P(());
-boolean_t	 pmap_next_page __P(());
-void		 pmap_startup __P(());
-vm_offset_t	 pmap_steal_memory __P(());
-void		 pmap_virtual_space __P(());
+u_int		 pmap_free_pages __P((void));
+boolean_t	 pmap_next_page __P((vm_offset_t *));
+void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
+vm_offset_t	 pmap_steal_memory __P((vm_size_t));
+void		 pmap_virtual_space __P((vm_offset_t *, vm_offset_t *));
 #endif
 __END_DECLS
 #endif	/* kernel*/
