@@ -1,3 +1,4 @@
+#	$OpenBSD: files.scsi,v 1.5 1996/10/31 01:09:21 niklas Exp $
 #	$NetBSD: files.scsi,v 1.4 1996/05/16 04:01:08 mycroft Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: scsi_message.h,v 1.2 1996/10/31 01:09:24 niklas Exp $	*/
+
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
 #define MSG_EXTENDED		0x01 /* O/O */

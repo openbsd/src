@@ -1,3 +1,4 @@
+/*	$OpenBSD: scsi_cd.h,v 1.4 1996/10/31 01:09:21 niklas Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: cd.c,v 1.16 1996/10/31 01:09:20 niklas Exp $	*/
 /*	$NetBSD: cd.c,v 1.92 1996/05/05 19:52:50 christos Exp $	*/
 
 /*
