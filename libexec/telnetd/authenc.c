@@ -35,8 +35,6 @@
 
 /* RCSID("$KTH: authenc.c,v 1.10 2000/11/15 23:20:43 assar Exp $"); */
 
-#ifdef AUTHENTICATION
-
 int
 telnet_net_write(unsigned char *str, int len)
 {
@@ -48,6 +46,7 @@ telnet_net_write(unsigned char *str, int len)
     return(0);
 }
 
+#ifdef AUTHENTICATION
 void
 net_encrypt(void)
 {
