@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.39 2001/04/12 02:51:09 aaron Exp $
+.\"	$OpenBSD: ksh.1,v 1.40 2001/05/28 15:36:08 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Xc
 .Op Ar argument ... Oc
 .Sh DESCRIPTION
-.Nm ksh
+.Nm
 is a command interpreter intended for both interactive and shell
 script use.
 Its command language is a superset of the
@@ -59,7 +59,7 @@ shell language.
 The following options can be specified only on the command line:
 .Bl -tag -width Ds
 .It Fl c Ar command-string
-.Nm ksh
+.Nm
 will execute the command(s) contained in
 .Ar command-string .
 .It Fl i
@@ -1571,7 +1571,7 @@ assigned an integer value, the number of seconds since the assignment plus the
 value that was assigned.
 .It Ev TMOUT
 If set to a positive integer in an interactive shell, it specifies the maximum
-number of seconds the shell will wait for input after priting the primary
+number of seconds the shell will wait for input after printing the primary
 prompt
 .Pq Ev PS1 .
 If the time is exceeded, the shell exits.
@@ -4441,7 +4441,7 @@ unique, a space is printed after its completion, unless it is a directory name
 in which case
 .Ql /
 is appended.
-If there is no command or file name with the current partialword
+If there is no command or file name with the current partial word
 as its prefix, a bell character is output (usually causing a beep to be
 sounded).
 .It Ic complete-command ^X^[
@@ -4537,12 +4537,12 @@ is not specified; otherwise deletes characters between the cursor and column
 .It Ic list ^[?
 Prints a sorted, columnated list of command named or file names (if any) that
 can complete the partial word containing the cursor.
-Directoary names have
+Directory names have
 .Ql /
 appended to them.
 .It Ic list-command ^X?
 Prints a sorted, columnated list of command names (if any) that can complete
-the partial word containg the cursor.
+the partial word containing the cursor.
 .It Ic list-file ^X^Y
 Prints a sorted, comunated list of file names (if any) that can complete the
 partial word containing the cursor.
@@ -4600,7 +4600,7 @@ are discarded as necessary.
 .It Ic set-mark-command ^[ Ns No <space>
 Set the mark at the cursor position.
 .It Ic stuff
-On systems supporting it, puhses the bound character back onto the terminal
+On systems supporting it, pushes the bound character back onto the terminal
 input where it may receive special processing by the terminal handler.
 This is useful for the BRL ^T mini-systat feature, for example.
 .It Ic stuff-reset
