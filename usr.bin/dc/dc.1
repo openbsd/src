@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.15 2003/11/06 19:48:55 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.16 2003/11/14 20:25:16 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -155,6 +155,12 @@ All values on the stack are popped.
 The top value on the stack is duplicated.
 .It Ic f
 All values on the stack are printed, separated by newlines.
+.It Ic G
+The top two numbers are popped from the stack and compared.
+A one is pushed if the top of the stack is equal to the second number
+on the stack.
+A zero is pushed otherwise.
+This is a non-portable extension.
 .It Ic i
 The top value on the stack is popped and used as the
 base for further input.
@@ -205,6 +211,11 @@ The
 operator is a non-portable extensions, used by the
 .Xr bc 1
 command.
+.It Ic N
+The top of the stack is replaced by one if the top of the stack
+is equal to zero.
+If the top of the stack is unequal to zero, it is replaced by zero.
+This is a non-portable extension.
 .It Ic n
 The top value on the stack is popped and printed without a newline.
 This is a non-portable extension.
@@ -307,6 +318,18 @@ Register
 will be executed if the relation is true, and register
 .Ar y
 will be executed if the relation is false.
+This is a non-portable extension.
+.It Ic \&(
+The top two numbers are popped from the stack and compared.
+A one is pushed if the top of the stack is less than the second number
+on the stack.
+A zero is pushed otherwise.
+This is a non-portable extension.
+.It Ic {
+The top two numbers are popped from the stack and compared.
+A one is pushed if the top of stack is less than or equal to the
+second number on the stack.
+A zero is pushed otherwise.
 This is a non-portable extension.
 .It Ic \&!
 Interprets the rest of the line as a
@@ -434,9 +457,12 @@ operator.
 .El
 .Sh SEE ALSO
 .Xr bc 1
-.Pp
-USD:05
-.Em "DC \- An Interactive Desk Calculator"
+.Rs
+.%B USD:05
+.%A L. L. Cherry
+.%A R. Morris
+.%T "DC \- An Interactive Desk Calculator"
+.Re
 .Sh STANDARDS
 The arithmetic operations of the
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.15 2003/11/09 20:33:09 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.16 2003/11/14 20:25:16 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.15 2003/11/09 20:33:09 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.16 2003/11/14 20:25:16 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -95,6 +95,10 @@ static void		bdivmod(void);
 static void		bexp(void);
 static bool		bsqrt_stop(const BIGNUM *, const BIGNUM *);
 static void		bsqrt(void);
+static void		not(void);
+static void		equal_numbers(void);
+static void		less_numbers(void);
+static void		lesseq_numbers(void);
 static void		equal(void);
 static void		not_equal(void);
 static void		less(void);
@@ -102,6 +106,8 @@ static void		not_less(void);
 static void		greater(void);
 static void		not_greater(void);
 static void		not_compare(void);
+static bool		compare_numbers(enum bcode_compare, struct number *,
+			    struct number *);
 static void		compare(enum bcode_compare);
 static void		load(void);
 static void		store(void);
@@ -135,6 +141,7 @@ static const struct jump_entry jump_table_data[] = {
 	{ '!',	not_compare	},
 	{ '#',	comment		},
 	{ '%',	bmod		},
+	{ '(',	less_numbers	},
 	{ '*',	bmul		},
 	{ '+',	badd		},
 	{ '-',	bsub		},
@@ -162,15 +169,14 @@ static const struct jump_entry jump_table_data[] = {
 	{ 'D',	parse_number	},
 	{ 'E',	parse_number	},
 	{ 'F',	parse_number	},
+	{ 'G',	equal_numbers	},
 	{ 'I',	get_ibase	},
 	{ 'J',	skipN		},
 	{ 'K',	get_scale	},
 	{ 'L',	load_stack	},
 	{ 'M',	nop		},
+	{ 'N',	not		},
 	{ 'O',	get_obase	},
-	{ 'd',	dup		},
-	{ 'r',	swap		},
-	{ 'p',	print_tos	},
 	{ 'P',	pop_print	},
 	{ 'Q',	quitN		},
 	{ 'S',	store_stack	},
@@ -193,11 +199,14 @@ static const struct jump_entry jump_table_data[] = {
 	{ 'n',	pop_printn	},
 	{ 'o',	set_obase	},
 	{ 'p',	print_tos	},
+	{ 'p',	print_tos	},
 	{ 'q',	quit		},
+	{ 'r',	swap		},
 	{ 's',	store		},
 	{ 'v',	bsqrt		},
 	{ 'x',	eval_tos	},
 	{ 'z',	stackdepth	},
+	{ '{',	lesseq_numbers	},
 	{ '~',	bdivmod		}
 };
 
@@ -1240,9 +1249,83 @@ bsqrt(void)
 }
 
 static void
+not(void)
+{
+	struct number	*a;
+
+	a = pop_number();
+	if (a == NULL) {
+		return;
+	}
+	a->scale = 0;
+	bn_check(BN_set_word(a->number, BN_get_word(a->number) ? 0 : 1));
+	push_number(a);
+}
+
+static void
 equal(void)
 {
 	compare(BCODE_EQUAL);
+}
+
+static void
+equal_numbers(void)
+{
+	struct number *a, *b, *r;
+
+	a = pop_number();
+	if (a == NULL) {
+		return;
+	}
+	b = pop_number();
+	if (b == NULL) {
+		push_number(a);
+		return;
+	}
+	r = new_number();
+	bn_check(BN_set_word(r->number,
+	    compare_numbers(BCODE_EQUAL, a, b) ? 1 : 0));
+	push_number(r);
+}
+
+static void
+less_numbers(void)
+{
+	struct number *a, *b, *r;
+
+	a = pop_number();
+	if (a == NULL) {
+		return;
+	}
+	b = pop_number();
+	if (b == NULL) {
+		push_number(a);
+		return;
+	}
+	r = new_number();
+	bn_check(BN_set_word(r->number,
+	    compare_numbers(BCODE_LESS, a, b) ? 1 : 0));
+	push_number(r);
+}
+
+static void
+lesseq_numbers(void)
+{
+	struct number *a, *b, *r;
+
+	a = pop_number();
+	if (a == NULL) {
+		return;
+	}
+	b = pop_number();
+	if (b == NULL) {
+		push_number(a);
+		return;
+	}
+	r = new_number();
+	bn_check(BN_set_word(r->number,
+	    compare_numbers(BCODE_NOT_GREATER, a, b) ? 1 : 0));
+	push_number(r);
 }
 
 static void
@@ -1295,13 +1378,46 @@ not_greater(void)
 	compare(BCODE_NOT_GREATER);
 }
 
+static bool
+compare_numbers(enum bcode_compare type, struct number *a, struct number *b)
+{
+	u_int	scale;
+	int	cmp;
+
+	scale = max(a->scale, b->scale);
+
+	if (scale > a->scale)
+		normalize(a, scale);
+	else if (scale > scale)
+		normalize(b, scale);
+
+	cmp = BN_cmp(a->number, b->number);
+
+	free_number(a);
+	free_number(b);
+
+	switch (type) {
+	case BCODE_EQUAL:
+		return cmp == 0;
+	case BCODE_NOT_EQUAL:
+		return cmp != 0;
+	case BCODE_LESS:
+		return cmp < 0;
+	case BCODE_NOT_LESS:
+		return cmp >= 0;
+	case BCODE_GREATER:
+		return cmp > 0;
+	case BCODE_NOT_GREATER:
+		return cmp <= 0;
+	}
+	return false;
+}
+
 static void
 compare(enum bcode_compare type)
 {
 	int		index, elseindex;
 	struct number	*a, *b;
-	u_int		scale;
-	int		cmp;
 	bool		ok;
 	struct value	*v;
 
@@ -1321,38 +1437,7 @@ compare(enum bcode_compare type)
 		return;
 	}
 
-	scale = max(a->scale, b->scale);
-	if (scale > a->scale)
-		normalize(a, scale);
-	else if (scale > scale)
-		normalize(b, scale);
-
-	cmp = BN_cmp(a->number, b->number);
-
-	free_number(a);
-	free_number(b);
-
-	ok = false;
-	switch (type) {
-	case BCODE_EQUAL:
-		ok = cmp == 0;
-		break;
-	case BCODE_NOT_EQUAL:
-		ok = cmp != 0;
-		break;
-	case BCODE_LESS:
-		ok = cmp < 0;
-		break;
-	case BCODE_NOT_LESS:
-		ok = cmp >= 0;
-		break;
-	case BCODE_GREATER:
-		ok = cmp > 0;
-		break;
-	case BCODE_NOT_GREATER:
-		ok = cmp <= 0;
-		break;
-	}
+	ok = compare_numbers(type, a, b);
 
 	if (!ok && elseindex != NO_ELSE)
 		index = elseindex;
