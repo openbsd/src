@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.13 2001/11/23 03:58:17 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.14 2001/12/06 03:12:30 ericj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.13 2001/11/23 03:58:17 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.14 2001/12/06 03:12:30 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,6 @@ long	 XS;		/* flags to set for local mode */
 
 char	line[BUFSIZ];
 char	*bp;		/* pointer into printcap buffer. */
-char	*name;		/* program name */
 char	*printer;	/* printer name */
 			/* host machine name */
 char	host[MAXHOSTNAMELEN];
@@ -421,6 +420,7 @@ fatal(msg, va_alist)
         va_dcl
 #endif
 {
+	extern char *__progname;
 	va_list ap;
 #ifdef __STDC__
 	va_start(ap, msg);
@@ -429,7 +429,7 @@ fatal(msg, va_alist)
 #endif
 	if (from != host)
 		(void)printf("%s: ", host);
-	(void)printf("%s: ", name);
+	(void)printf("%s: ", __progname);
 	if (printer)
 		(void)printf("%s: ", printer);
 	(void)vprintf(msg, ap);

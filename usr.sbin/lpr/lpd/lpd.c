@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.23 2001/11/23 03:58:18 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.24 2001/12/06 03:12:30 ericj Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.23 2001/11/23 03:58:18 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.24 2001/12/06 03:12:30 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,8 +137,6 @@ main(argc, argv)
 	uid = getuid();
 	options = 0;
 	gethostname(host, sizeof(host));
-
-	name = "lpd";
 
 	if (euid != 0) {
 		fprintf(stderr,"lpd: must run as root\n");

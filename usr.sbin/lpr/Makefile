@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:43:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/12/06 03:12:30 ericj Exp $
 
 SUBDIR=	lpc lpd lpq lpr lprm lptest pac filters
 
@@ -6,4 +6,5 @@ SUBDIR=	lpc lpd lpq lpr lprm lptest pac filters
 SUBDIR+= SMM.doc
 .endif
 
+CFLAGS+=	-Wall
 .include <bsd.subdir.mk>
