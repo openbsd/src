@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.22 1999/07/13 15:46:43 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.114 1999/07/13 15:43:21 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.23 2000/01/26 15:23:32 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.115 1999/12/20 10:12:17 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -881,7 +881,8 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	  return decode_16 (value) < IPSEC_AUTH_HMAC_MD5
 	    || decode_16 (value) > IPSEC_AUTH_KPDK;
 	case IPSEC_ATTR_KEY_LENGTH:
-	  return 1;
+	  /* XXX Blowfish needs '0'. Others appear to disregard this attr?  */
+	  return 0;
 	case IPSEC_ATTR_KEY_ROUNDS:
 	  return 1;
 	case IPSEC_ATTR_COMPRESS_DICTIONARY_SIZE:
