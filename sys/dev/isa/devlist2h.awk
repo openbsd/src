@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.4 1998/12/28 09:15:16 hugh Exp $
+#	$OpenBSD: devlist2h.awk,v 1.5 2001/01/29 05:47:03 mickey Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -74,15 +74,15 @@ END {
 
 	printf("\n") > dfile
 
-	printf("struct isapnp_knowndev isapnp_knowndevs[] = {\n") > dfile
+	printf("const struct isapnp_knowndev isapnp_knowndevs[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
-		printf("\t{ \"%s\", \"%s\" },",
+		printf("\t{ {\"%s\"}, {\"%s\"} },",
 		    products[i, 2], products[i, 1]) \
 		    > dfile
 		if (products[i, 3])
 			printf("\t/* %s */", products[i, 3]) > dfile
 		printf("\n") > dfile
 	}
-	printf("\t{ NULL, NULL, }\n") > dfile
+	printf("\t{ {""}, {""}, }\n") > dfile
 	printf("};\n") > dfile
 }
