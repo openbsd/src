@@ -30,7 +30,7 @@ char *run_usage = "usage: tcfsrun [-p mount-point | -f fs-label] [cmd] [args...]
 int
 run_main(int argc, char *argv[], char *envp[])
 {
-	char *key, *cmd, x;
+	char *key, *cmd = NULL, x;
 	char fspath[MAXPATHLEN], cmdname[MAXPATHLEN];
 	uid_t uid;
 	pid_t pid;

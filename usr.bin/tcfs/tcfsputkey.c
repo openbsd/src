@@ -34,7 +34,7 @@ char *putkey_usage=
 int
 putkey_main(int argc, char *argv[])
 {
-	u_char *user,*password,*tcfskey;
+	char *user,*password,*tcfskey;
 	uid_t uid;
 	gid_t gid;
 	int es, treshold;

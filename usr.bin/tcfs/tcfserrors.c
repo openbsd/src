@@ -14,6 +14,21 @@
 #include <unistd.h>
 #include "tcfserrors.h"
 
+static char *tcfs_errors_strings[]=
+{
+	"Ok",
+	NULL,
+	"unknow option.",
+	"authentication error.",
+	"out of memory.",
+	"you do not have a TCFS key.",
+	"Who are you?!",
+	"ioctl error while setting permanent flag.",
+	"ioctl error while sending.",
+	"ioctl error while removing key.",
+	"ioctl error while getting key counter."
+};
+
 void tcfs_error (int error_type, char *custom_message)
 {
 	if (error_type!=ER_CUSTOM && error_type!=OK)

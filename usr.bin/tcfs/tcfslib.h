@@ -40,3 +40,9 @@ extern int	tcfs_user_enable __P((char *, uid_t, u_char *));
 extern int	tcfs_user_disable __P((char *, uid_t));
 extern int	tcfs_group_enable __P((char *, uid_t, gid_t, int, char *));
 extern int	tcfs_group_disable __P((char *, uid_t, gid_t));
+
+extern tcfspwdb *
+		tcfs_getpwnam __P((char *, tcfspwdb **));
+extern int	tcfs_putpwnam __P((char *, tcfspwdb *, int));
+
+extern int	unix_auth __P((char **, char **, int));
