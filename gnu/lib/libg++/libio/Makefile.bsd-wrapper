@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1998/03/08 21:09:24 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1998/03/19 17:13:20 niklas Exp $
 
 LIBIO=		io
 LIBIOSTREAM=	iostream
@@ -11,19 +11,21 @@ IO_SRCS=	filedoalloc.c floatconv.c genops.c fileops.c iovfprintf.c \
 		iovfscanf.c ioignore.c iopadn.c iofgetpos.c iofread.c \
 		iofscanf.c iofsetpos.c iogetdelim.c iogetline.c ioprintf.c \
 		ioseekoff.c ioseekpos.c outfloat.c strops.c iofclose.c \
-		iopopen.c ioungetc.c
+		iopopen.c ioungetc.c peekc.c iogetc.c ioputc.c iofeof.c \
+		ioferror.c
+STDIO_SRCS=	stdfiles.c
+STDIO_WRAP_SRCS=iofdopen.c iofflush.c iofgets.c iofopen.c iofprintf.c \
+		iofputs.c iofwrite.c iogets.c ioperror.c ioputs.c ioscanf.c \
+		iosetbuffer.c iosetvbuf.c  iosprintf.c iosscanf.c ioftell.c \
+		iovsscanf.c iovsprintf.c
 IOSTREAM_SRCS=	builtinbuf.cc filebuf.cc fstream.cc indstream.cc ioassign.cc \
 		ioextend.cc iomanip.cc iostream.cc isgetline.cc isgetsb.cc \
 		isscan.cc osform.cc procbuf.cc sbform.cc sbgetline.cc \
 		sbscan.cc stdiostream.cc stdstrbufs.cc stdstreams.cc \
 		stream.cc streambuf.cc strstream.cc PlotFile.cc SFile.cc \
 		parsestream.cc pfstream.cc editbuf.cc
-STDIO_WRAP_SRCS=iofdopen.c iofflush.c iofgets.c iofopen.c iofprintf.c \
-		iofputs.c iofwrite.c iogets.c ioperror.c ioputs.c ioscanf.c \
-		iosetbuffer.c iosetvbuf.c  iosprintf.c iosscanf.c ioftell.c \
-		iovsprintf.c iovsscanf.c
 OSPRIM_SRCS=	ioprims.c iostrerror.c cleanup.c
-LIBIO_SRCS=	$(IO_SRCS) $(STDIO_WRAP_SRCS) $(OSPRIM_SRCS) stdfiles.c
+LIBIO_SRCS=	$(IO_SRCS) $(STDIO_WRAP_SRCS) $(OSPRIM_SRCS) $(STDIO_SRCS)
 LIBIOSTREAM_SRCS= $(IO_SRCS) $(IOSTREAM_SRCS) $(OSPRIM_SRCS)
 
 SRCS=		$(LIBIO_SRCS)
