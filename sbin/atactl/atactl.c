@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.8 2001/07/07 18:26:09 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.9 2002/01/30 00:46:36 csapuntz Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@ const	char *cmdname;			/* command user issued */
 
 extern const char *__progname;		/* from crt0.o */
 
+void    device_dump(int, char*[]);
 void	device_identify __P((int, char *[]));
 void	device_setidle __P((int, char *[]));
 void	device_idle __P((int, char *[]));
@@ -88,6 +89,7 @@ void	device_feature __P((int, char *[]));
 void	device_smart __P((int, char *[]));
 
 struct command commands[] = {
+	{ "dump",               device_dump },
 	{ "identify",		device_identify },
 	{ "setidle",		device_setidle },
 	{ "setstandby",		device_setidle },
@@ -314,6 +316,26 @@ print_bitinfo(f, bits, binfo)
 /*
  * DEVICE COMMANDS
  */
+
+void
+device_dump(argc, argv)
+	int argc;
+	char *argv[]; 
+{
+	unsigned char buf[131072];
+	int error;
+	struct atagettrace agt = { sizeof(buf), &buf, 0 };
+
+	error = ioctl(fd, ATAIOGETTRACE, &agt);
+	if (error == -1) {
+		err(1, "ATAIOGETTRACE failed");
+	}
+
+	write(1, agt.buf, agt.bytes_copied);
+	fprintf(stderr, "%d bytes written\n", agt.bytes_copied);
+	
+	return;
+}
 
 /*
  * device_identify:
