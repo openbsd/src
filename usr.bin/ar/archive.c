@@ -1,5 +1,5 @@
 /*	$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $	*/
-/*	$OpenBSD: archive.c,v 1.5 1997/11/05 19:47:08 deraadt Exp $	*/
+/*	$OpenBSD: archive.c,v 1.6 1999/08/29 13:07:01 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -246,16 +246,16 @@ put_arobj(cfp, sb)
 				    name, OLDARMAXNAME, name);
 				(void)fflush(stderr);
 			}
-			(void)sprintf(hb, HDR3, name, sb->st_mtimespec.tv_sec,
+			(void)sprintf(hb, HDR3, name, (long int)sb->st_mtimespec.tv_sec,
 			    uid, gid, sb->st_mode, sb->st_size, ARFMAG);
 			lname = 0;
 		} else if (lname > sizeof(hdr->ar_name) || strchr(name, ' '))
 			(void)sprintf(hb, HDR1, AR_EFMT1, lname,
-			    sb->st_mtimespec.tv_sec, uid, gid, sb->st_mode,
+			    (long int)sb->st_mtimespec.tv_sec, uid, gid, sb->st_mode,
 			    sb->st_size + lname, ARFMAG);
 		else {
 			lname = 0;
-			(void)sprintf(hb, HDR2, name, sb->st_mtimespec.tv_sec,
+			(void)sprintf(hb, HDR2, name, (long int)sb->st_mtimespec.tv_sec,
 			    uid, gid, sb->st_mode, sb->st_size, ARFMAG);
 		}
 		size = sb->st_size;
