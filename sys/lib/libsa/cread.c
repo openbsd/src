@@ -1,4 +1,4 @@
-/*	$OpenBSD: cread.c,v 1.5 1997/02/15 21:38:26 mickey Exp $	*/
+/*	$OpenBSD: cread.c,v 1.6 1998/09/08 03:33:06 millert Exp $	*/
 /*	$NetBSD: cread.c,v 1.2 1997/02/04 18:38:20 thorpej Exp $	*/
 
 /*
@@ -142,8 +142,11 @@ static void check_header(s)
     for (len = 0; len < 2; len++) {
 	c = get_byte(s);
 	if (c != gz_magic[len]) {
-	    s->transparent = 1;
-	    if (c != EOF) s->stream.avail_in++, s->stream.next_in--;
+	    if (len != 0) s->stream.avail_in++, s->stream.next_in--;
+	    if (c != EOF) {
+		s->stream.avail_in++, s->stream.next_in--;
+		s->transparent = 1;
+	    }
 	    s->z_err = s->stream.avail_in != 0 ? Z_OK : Z_STREAM_END;
 	    return;
 	}
@@ -276,9 +279,13 @@ read(fd, buf, len)
 		s->stream.avail_in  -= n;
 	      }
 	      if (s->stream.avail_out > 0) {
-		s->stream.avail_out -= oread(s->fd, s->stream.next_out, s->stream.avail_out);
+		s->stream.avail_out -= oread(fd, s->stream.next_out, s->stream.avail_out);
 	      }
-	      return (int)(len - s->stream.avail_out);
+	      len -= s->stream.avail_out;
+	      s->stream.total_in  += (unsigned long)len;
+	      s->stream.total_out += (unsigned long)len;
+	      if (len == 0) s->z_eof = 1;
+	      return (int)len;
 	    }
 
 	    if (s->stream.avail_in == 0 && !s->z_eof) {
@@ -301,13 +308,22 @@ read(fd, buf, len)
 	      s->crc = crc32(s->crc, start, (unsigned int)(s->stream.next_out - start));
 	      start = s->stream.next_out;
 
-	      if (getLong(s) != s->crc || getLong(s) != s->stream.total_out) {
+	      if (getLong(s) != s->crc) {
 		s->z_err = Z_DATA_ERROR;
 	      } else {
-		/* Check for concatenated .gz files: */
+		(void)getLong(s);
+		/* The uncompressed length returned by above getlong() may
+		 * be different from s->stream.total_out) in case of
+		 * concatenated .gz files. Check for such files:
+		 */
 		check_header(s);
 		if (s->z_err == Z_OK) {
+		  unsigned long total_in = s->stream.total_in;
+		  unsigned long total_out = s->stream.total_out;
+
 		  inflateReset(&(s->stream));
+		  s->stream.total_in = total_in;
+		  s->stream.total_out = total_out;
 		  s->crc = crc32(0L, Z_NULL, 0);
 		}
 	      }
@@ -332,7 +348,7 @@ lseek(fd, offset, where)
 		errno = EBADF;
 		return (-1);
 	    }
-	    f = &files[fd];;
+	    f = &files[fd];
 
 	    if(!(f->f_flags & F_READ))
 		return(olseek(fd, offset, where));
