@@ -68,6 +68,7 @@ char	*getpropstring __P((int, char *));
 static void	prom0_fake __P((void));
 
 extern struct filesystem file_system_nfs[];
+extern struct filesystem file_system_cd9660[];
 extern struct filesystem file_system_ufs[];
 
 int prom_open __P((struct open_file *f, ...)) { return 0; }
@@ -198,8 +199,11 @@ devopen(f, fname, file)
 				prom_bootdevice);
 			return error;
 		}
-	} else
+	} else {
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		bcopy(&file_system_cd9660, file_system + 1, sizeof file_system[0]);
+		nfsys = 2;
+	}
 #endif /* BOOTXX */
 
 	f->f_dev = &devsw[cputyp == CPU_SUN4 ? 0 : 1];

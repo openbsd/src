@@ -34,13 +34,19 @@
 #include <stand.h>
 #include <ufs.h>
 #include <netinet/in.h>
+#include <cd9660.h>
 #include <nfs.h>
  
 struct fs_ops file_system_ufs[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
 };
+struct fs_ops file_system_cd9660[] = {
+	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	  cd9660_stat },
+};
 struct fs_ops file_system_nfs[] = {
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
 };
-struct fs_ops file_system[1];
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+struct fs_ops file_system[2];
+int nfsys = 1;
+
