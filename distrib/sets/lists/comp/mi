@@ -177,6 +177,8 @@
 ./usr/include/dev/ic/apcdmareg.h
 ./usr/include/dev/ic/ar5210reg.h
 ./usr/include/dev/ic/ar5210var.h
+./usr/include/dev/ic/ar5212reg.h
+./usr/include/dev/ic/ar5212var.h
 ./usr/include/dev/ic/ar5xxx.h
 ./usr/include/dev/ic/athvar.h
 ./usr/include/dev/ic/atwreg.h
