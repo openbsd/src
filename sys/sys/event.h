@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.4 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: event.h,v 1.5 2003/05/22 19:59:13 nate Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -143,7 +143,7 @@ struct knote {
 		struct		file *p_fp;	/* file data pointer */
 		struct		proc *p_proc;	/* proc pointer */
 	} kn_ptr;
-	struct			filterops *kn_fop;
+	const struct		filterops *kn_fop;
 	caddr_t			kn_hook;
 #define KN_ACTIVE	0x01			/* event has been triggered */
 #define KN_QUEUED	0x02			/* event is on queue */
