@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2003/05/07 21:50:43 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.103 2003/10/31 21:24:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -438,7 +438,7 @@ pmap_bootstrap(vstart)
 	struct vp_entry *hptp;
 #endif
 	struct pmap *kpm;
-	int npdes;
+	int npdes, nkpdes;
 
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_bootstrap(0x%x)\n", vstart));
 
@@ -539,8 +539,9 @@ pmap_bootstrap(vstart)
 	 * lazy map only needed pieces (see bus_mem_add_mapping() for refs).
 	 */
 
-	/* four more for the the kernel virtual */
-	npdes = 4 + (totalphysmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
+	/* takes about 16 per gig of initial kmem */
+	nkpdes = (totalphysmem >> 14);
+	npdes = nkpdes + (totalphysmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
 	uvm_page_physload(0, totalphysmem,
 	    atop(addr) + npdes, totalphysmem, VM_FREELIST_DEFAULT);
 
@@ -548,7 +549,7 @@ pmap_bootstrap(vstart)
 	for (va = 0; npdes--; va += PDE_SIZE, addr += PAGE_SIZE) {
 
 		/* last four pdes are for the kernel virtual */
-		if (npdes == 3)
+		if (npdes == nkpdes - 1)
 			va = SYSCALLGATE;
 		/* now map the pde for the physmem */
 		bzero((void *)addr, PAGE_SIZE);
@@ -666,8 +667,8 @@ pmap_destroy(pmap)
 
 #ifdef DIAGNOSTIC
 	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq))) {
-		printf("pmap_destroy: unaccounted ptp 0x%x\n",
-		    VM_PAGE_TO_PHYS(pg));
+		printf("pmap_destroy: unaccounted ptp 0x%x count %d\n",
+		    VM_PAGE_TO_PHYS(pg), pg->wire_count);
 		if (pg->flags & PG_BUSY)
 			panic("pmap_destroy: busy page table page");
 		pg->wire_count = 0;
