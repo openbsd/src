@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.11 1998/03/16 05:07:02 millert Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.12 1998/08/31 18:15:29 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.11 1998/03/16 05:07:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.12 1998/08/31 18:15:29 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -320,7 +320,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer */
 {
-	char nbuf[MAXDNAME];
+	char nbuf[MAXDNAME*2+1];
 	const char *longname = nbuf;
 	int n;
 
