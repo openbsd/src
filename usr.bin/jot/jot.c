@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.4 1999/12/04 21:28:34 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.5 2000/07/14 07:16:12 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.4 1999/12/04 21:28:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.5 2000/07/14 07:16:12 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -137,28 +137,30 @@ getargs(ac, av)
 		case 'b':
 			boring = 1;
 		case 'w':
-			if ((*av)[2])
+			if ((*av)[2]) {
 				if (strlcpy(format, *av + 2, sizeof(format)) >=
 				    sizeof(format))
 					error("-w word too long", "");
-			else if (!--ac)
+			} else if (!--ac)
 				error("Need context word after -w or -b", "");
-			else
+			else {
 				if (strlcpy(format, *++av, sizeof(format)) >=
 				    sizeof(format))
 					error("-w word too long", "");
+			}
 			break;
 		case 's':
-			if ((*av)[2])
+			if ((*av)[2]) {
 				if (strlcpy(sepstring, *av + 2, sizeof(sepstring)) >=
 				    sizeof(sepstring))
 					error("-s word too long", "");
-			else if (!--ac)
+			} else if (!--ac)
 				error("Need string after -s", "");
-			else
+			else {
 				if (strlcpy(sepstring, *++av, sizeof(sepstring)) >=
 				    sizeof(sepstring))
 					error("-s word too long", "");
+			}
 			break;
 		case 'p':
 			if ((*av)[2])
