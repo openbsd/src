@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootarg.h,v 1.6 1998/08/07 05:24:17 mickey Exp $	*/
+/*	$OpenBSD: bootarg.h,v 1.7 1998/12/19 11:35:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -37,6 +37,7 @@
 #define	BAPIV_VARS	0x00000001	/* MD structure w/ add info passed */
 #define	BAPIV_VECTOR	0x00000002	/* MI vector of MD structures passed */
 #define	BAPIV_ENV	0x00000004	/* MI environment vars vector */
+#define	BAPIV_BMEMMAP	0x00000008	/* MI memory map passed is in bytes */
 
 typedef struct _boot_args {
 	int ba_type;
