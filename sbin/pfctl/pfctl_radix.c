@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.2 2003/01/03 21:43:11 deraadt Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.3 2003/01/03 21:55:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -45,12 +45,6 @@
 
 #include "pfctl_radix.h"
 
-#define RETURN_EINVAL		\
-	do {			\
-		errno = EINVAL;	\
-		return (-1);	\
-	} while (0)
-
 static int _pfr_dev = -1;
 
 static int
@@ -92,8 +86,10 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 {
 	struct pfioc_table io;
 
-	if (size < 0 || (size && tbl == NULL))
-		RETURN_EINVAL;
+	if (size < 0 || (size && tbl == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
@@ -110,8 +106,10 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 {
 	struct pfioc_table io;
 
-	if (size < 0 || (size && tbl == NULL))
-		RETURN_EINVAL;
+	if (size < 0 || (size && tbl == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
@@ -128,8 +126,10 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 {
 	struct pfioc_table io;
 
-	if (size == NULL || *size < 0 || (*size && tbl == NULL))
-		RETURN_EINVAL;
+	if (size == NULL || *size < 0 || (*size && tbl == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
@@ -145,8 +145,10 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 {
 	struct pfioc_table io;
 
-	if (size == NULL || *size < 0 || (*size && tbl == NULL))
-		RETURN_EINVAL;
+	if (size == NULL || *size < 0 || (*size && tbl == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
@@ -162,8 +164,10 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL)
-		RETURN_EINVAL;
+	if (tbl == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -180,8 +184,10 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size < 0 || (size && addr == NULL))
-		RETURN_EINVAL;
+	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -200,8 +206,10 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size < 0 || (size && addr == NULL))
-		RETURN_EINVAL;
+	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -220,8 +228,10 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size < 0 || (size && addr == NULL))
-		RETURN_EINVAL;
+	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -247,8 +257,10 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL))
-		RETURN_EINVAL;
+	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -266,8 +278,10 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL))
-		RETURN_EINVAL;
+	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -285,8 +299,10 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size < 0 || (size && addr == NULL))
-		RETURN_EINVAL;
+	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -304,8 +320,10 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 {
 	struct pfioc_table io;
 
-	if (size < 0 || (size && !tbl))
-		RETURN_EINVAL;
+	if (size < 0 || (size && !tbl)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
@@ -324,8 +342,10 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size < 0 || (size && addr == NULL))
-		RETURN_EINVAL;
+	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -344,8 +364,10 @@ pfr_wrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL)
-		RETURN_EINVAL;
+	if (tbl == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
@@ -364,8 +386,10 @@ pfr_unwrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap, int flags)
 {
 	struct pfioc_table io;
 
-	if (wrap == NULL)
-		RETURN_EINVAL;
+	if (wrap == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = wrap;
