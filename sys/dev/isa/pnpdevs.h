@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.87 1999/07/23 19:31:51 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.88 1999/07/23 19:42:14 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -91,6 +91,8 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "USR2050", "pccom" },
 	{ "USR2070", "com" },
 	{ "USR2070", "pccom" },
+	{ "USR3030", "com" },
+	{ "USR3030", "pccom" },
 	{ "USR3031", "com" },
 	{ "USR3031", "pccom" },
 	{ "USR9190", "com" },
