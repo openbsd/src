@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.38 2001/12/16 01:28:59 jasoni Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.39 2002/01/02 22:47:47 deraadt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1185,6 +1185,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 #endif
 		}
 	  loopend:
+	  	;
 	}
 	if ((in6p->in6p_flags & IN6P_HOPOPTS) && privileged) {
 		/* to be done */
