@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.15 1996/12/08 15:15:57 niklas Exp $	*/
+/*	$OpenBSD: stand.h,v 1.16 1996/12/12 08:16:30 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -128,9 +128,9 @@ extern struct open_file files[];
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
 #define islower(c)	((c) >= 'a' && (c) <= 'z')
-#define	isalpha(c)	(isupper(c)||islower(c))
-#define tolower(c)	((c) - 'A' + 'a')
-#define toupper(c)	((c) - 'a' + 'A')
+#define isalpha(c)	(isupper(c)||islower(c))
+#define tolower(c)	(isupper(c)?((c) - 'A' + 'a'):(c))
+#define toupper(c)	(islower(c)?((c) - 'a' + 'A'):(c))
 #define isspace(c)	((c) == ' ' || (c) == '\t')
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
 
