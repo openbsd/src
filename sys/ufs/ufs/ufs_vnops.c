@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.6 1996/06/27 06:42:09 downsj Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.7 1996/10/27 22:30:35 tholo Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -672,7 +672,7 @@ ufs_link(v)
 #endif
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
-		error = EISDIR;
+		error = EPERM;
 		goto out2;
 	}
 	if (dvp->v_mount != vp->v_mount) {
@@ -888,6 +888,14 @@ abortit:
 		goto abortit;
 	}
 	if ((ip->i_mode & IFMT) == IFDIR) {
+		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+		if (!error && tvp)
+			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+		if (error) {
+			VOP_UNLOCK(fvp);
+			error = EACCES;
+			goto abortit;
+		}
 		/*
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
