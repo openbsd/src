@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.54 2004/06/22 23:00:15 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.55 2004/06/23 00:31:19 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -821,16 +821,17 @@ ASLOCAL(m88110_ignore_data_exception)
 	/*
 	 * For more info, see badaddr() below.
 	 *
-	 * We just want to jump to "m88110_badaddr__return_nonzero" below.
+	 * We just want to jump to "badaddr__return_nonzero" below.
 	 *
 	 * We don't worry about trashing R2 here because we're
-	 * jumping back to the function badaddr() where we're allowd
+	 * jumping back to the function badaddr() where we're allowed
 	 * to blast r2..r9 as we see fit.
 	 */
 
-	or.u	r2, r0, hi16(_ASM_LABEL(m88110_badaddr__return_nonzero))
-	or	r2, r2, lo16(_ASM_LABEL(m88110_badaddr__return_nonzero))
+	or.u	r2, r0, hi16(_ASM_LABEL(badaddr__return_nonzero))
+	or	r2, r2, lo16(_ASM_LABEL(badaddr__return_nonzero))
 	stcr	r2, EXIP	/* Make it the next instruction to execute */
+	stcr	r0, DSR		/* Clear exception status */
 	RTE
 #endif /* M88110 */
 
@@ -936,15 +937,6 @@ ASLOCAL(badaddr__unknown_size)
 	/*NOTREACHED*/
 #endif
 
-#ifdef M88110
-ASLOCAL(m88110_badaddr__return_nonzero)
-	/*
-	 * On mc88110, we possibly took an exception and we have to clear
-	 * DSR before the rte instruction clears the EFRZ bit in the PSR.
-	 */
-	stcr	r0, DSR
-	/* FALLTHROUGH */
-#endif
 ASLOCAL(badaddr__return_nonzero)
 	or	r2, r0, 1
 	/* FALLTHROUGH */
@@ -2501,6 +2493,9 @@ ASLOCAL(m88110_have_pcb)
 	st	TMP,  r31,  REG_OFF(EF_DSAP)
 	st	TMP2, r31,  REG_OFF(EF_DUAP)
 
+	stcr	r0, ISR
+	stcr	r0, DSR
+
 	ldcr	r1,   SR2
 	jmp	r1
 
@@ -2575,13 +2570,6 @@ ASLOCAL(m88110_setup_phase_two)
 
 ASLOCAL(m88110_fpu_enable)
 	FLUSH_PIPELINE
-
-	/*
-	 * Now that EFRZ is cleared, we can clear DSR and ISR.
-	 * This will allow other data exceptions to happen.
-	 */
-	stcr	r0, ISR
-	stcr	r0, DSR
 
 	xcr	TMP,  TMP,  SR3			/* get E.F. pointer */
 	st	r30,  TMP,  GENREG_OFF(30)	/* save previous r30, r31 */
