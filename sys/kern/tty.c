@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.55 2002/07/30 00:17:10 nordin Exp $	*/
+/*	$OpenBSD: tty.c,v 1.56 2002/12/12 04:17:14 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@ int	filt_ttyread(struct knote *kn, long hint);
 void 	filt_ttyrdetach(struct knote *kn);
 int	filt_ttywrite(struct knote *kn, long hint);
 void 	filt_ttywdetach(struct knote *kn);
+int	ttystats_init(void);
 
 /* Symbolic sleep message strings. */
 char ttclos[]	= "ttycls";
@@ -2333,6 +2334,36 @@ ttyfree(tp)
 	FREE(tp, M_TTYS);
 }
 
+struct itty *ttystats;
+
+int
+ttystats_init(void)
+{
+	struct itty *itp;
+	struct tty *tp;
+
+	ttystats = malloc(tty_count * sizeof(struct itty),
+	    M_SYSCTL, M_WAITOK);
+	for (tp = TAILQ_FIRST(&ttylist), itp = ttystats; tp;
+	    tp = TAILQ_NEXT(tp, tty_link), itp++) {
+		itp->t_dev = tp->t_dev;
+		itp->t_rawq_c_cc = tp->t_rawq.c_cc;
+		itp->t_canq_c_cc = tp->t_canq.c_cc;
+		itp->t_outq_c_cc = tp->t_outq.c_cc;
+		itp->t_hiwat = tp->t_hiwat;
+		itp->t_lowat = tp->t_lowat;
+		itp->t_column = tp->t_column;
+		itp->t_state = tp->t_state;
+		itp->t_session = tp->t_session;
+		if (tp->t_pgrp)
+			itp->t_pgrp_pg_id = tp->t_pgrp->pg_id;
+		else
+			itp->t_pgrp_pg_id = 0;
+		itp->t_line = tp->t_line;
+	}
+	return (0);
+}
+
 /*
  * Return tty-related information.
  */
@@ -2345,6 +2376,8 @@ sysctl_tty(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	int err;
+
 	if (namelen != 1)
 		return (ENOTDIR);
 
@@ -2357,6 +2390,14 @@ sysctl_tty(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_rdquad(oldp, oldlenp, newp, tk_rawcc));
 	case KERN_TTY_TKCANCC:
 		return (sysctl_rdquad(oldp, oldlenp, newp, tk_cancc));
+	case KERN_TTY_INFO:
+		err = ttystats_init();
+		if (err)
+			return (err);
+		err = sysctl_rdstruct(oldp, oldlenp, newp, ttystats,
+		    tty_count * sizeof(struct itty));
+		free(ttystats, M_SYSCTL);
+		return (err);
 	default:
 		return (EOPNOTSUPP);
 	}

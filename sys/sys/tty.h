@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.12 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: tty.h,v 1.13 2002/12/12 04:17:14 deraadt Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -50,7 +50,8 @@
 #define KERN_TTY_TKNOUT		2	/* quad: output chars */
 #define KERN_TTY_TKRAWCC	3	/* quad: input chars, raw mode */
 #define KERN_TTY_TKCANCC	4	/* quad: input char, cooked mode */
-#define KERN_TTY_MAXID		5
+#define KERN_TTY_INFO		5
+#define KERN_TTY_MAXID		6
 
 #define CTL_KERN_TTY_NAMES { \
 	{ 0, 0 }, \
@@ -58,6 +59,7 @@
 	{ "tk_nout", CTLTYPE_QUAD }, \
 	{ "tk_rawcc", CTLTYPE_QUAD }, \
 	{ "tk_cancc", CTLTYPE_QUAD }, \
+	{ "ttyinfo", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -116,6 +118,23 @@ struct tty {
 	short	t_lowat;		/* Low water mark. */
 	short	t_gen;			/* Generation number. */
 	struct timeout t_rstrt_to;	/* restart timeout */
+};
+
+/*
+ * Small version of struct tty exported via sysctl KERN_TTY_INFO
+ */
+struct itty {
+	dev_t   t_dev;
+	int t_rawq_c_cc;
+	int t_canq_c_cc;
+	int t_outq_c_cc;
+	short t_hiwat;
+	short t_lowat;
+	short t_column;
+	int t_state;
+	struct session *t_session;
+	pid_t t_pgrp_pg_id;
+	u_char t_line;
 };
 
 #define	t_cc		t_termios.c_cc

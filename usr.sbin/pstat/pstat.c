@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.39 2002/12/09 11:19:39 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.40 2002/12/12 04:17:14 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.39 2002/12/09 11:19:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.40 2002/12/12 04:17:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ struct nlist nl[] = {
 	{ "_numvnodes" },
 #define	V_MOUNTLIST	4		/* no sysctl */
 	{ "_mountlist" },
-#define TTY_TTYLIST	5		/* no sysctl */
+#define TTY_TTYLIST	5		/* sysctl */
 	{"_ttylist"},
 	{ "" }
 };
@@ -133,7 +133,7 @@ void	nfs_header(void);
 int	nfs_print(struct vnode *);
 void	swapmode(void);
 void	ttymode(void);
-void	ttyprt(struct tty *);
+void	ttyprt(struct itty *);
 void	ufs_header(void);
 int	ufs_print(struct vnode *);
 void	ext2fs_header(void);
@@ -734,11 +734,29 @@ kinfo_vnodes(int *avnodes)
 char hdr[]="   LINE RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
 
 void
+tty2itty(struct tty *tp, struct itty *itp)
+{
+	itp->t_dev = tp->t_dev;
+	itp->t_rawq_c_cc = tp->t_rawq.c_cc;
+	itp->t_canq_c_cc = tp->t_canq.c_cc;
+	itp->t_outq_c_cc = tp->t_outq.c_cc;
+	itp->t_hiwat = tp->t_hiwat;
+	itp->t_lowat = tp->t_lowat;
+	itp->t_column = tp->t_column;
+	itp->t_state = tp->t_state;
+	itp->t_session = tp->t_session;
+	if (tp->t_pgrp != NULL)
+		KGET2(&tp->t_pgrp->pg_id, &itp->t_pgrp_pg_id, sizeof(pid_t), "pgid");
+	itp->t_line = tp->t_line;
+}
+
+void
 ttymode(void)
 {
 	struct ttylist_head tty_head;
 	struct tty *tp, tty;
-	int mib[2], ntty;
+	int mib[2], ntty, i;
+	struct itty itty, *itp;
 	size_t nlen;
 
 	if (kd == 0) {
@@ -750,11 +768,25 @@ ttymode(void)
 	} else
 		KGET(TTY_NTTY, ntty);
 	(void)printf("%d terminal device%s\n", ntty, ntty == 1 ? "" : "s");
-	KGET(TTY_TTYLIST, tty_head);
 	(void)printf(hdr);
-	for (tp = tty_head.tqh_first; tp; tp = tty.tty_link.tqe_next) {
-		KGET2(tp, &tty, sizeof tty, "tty struct");
-		ttyprt(&tty);
+	if (kd == 0) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_TTY;
+		mib[2] = KERN_TTY_INFO;
+		nlen = ntty * sizeof(struct itty);
+		itp = malloc(nlen);
+		if (sysctl(mib, 3, itp, &nlen, NULL, 0) < 0)
+			err(1, "sysctl(KERN_TTY_INFO) failed");
+		for (i = 0; i < ntty; i++)
+			ttyprt(&itp[i]);
+		free(itp);
+	} else {
+		KGET(TTY_TTYLIST, tty_head);
+		for (tp = tty_head.tqh_first; tp; tp = tty.tty_link.tqe_next) {
+			KGET2(tp, &tty, sizeof tty, "tty struct");
+			tty2itty(&tty, &itty);
+			ttyprt(&itty);
+		}
 	}
 }
 
@@ -782,18 +814,17 @@ struct {
 };
 
 void
-ttyprt(struct tty *tp)
+ttyprt(struct itty *tp)
 {
 	char *name, state[20];
-	pid_t pgid;
 	int i, j;
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
 		(void)printf("%2d,%-3d   ", major(tp->t_dev), minor(tp->t_dev));
 	else
 		(void)printf("%7s ", name);
-	(void)printf("%3d %4d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
-	(void)printf("%4d %4d %3d %6d ", tp->t_outq.c_cc,
+	(void)printf("%3d %4d ", tp->t_rawq_c_cc, tp->t_canq_c_cc);
+	(void)printf("%4d %4d %3d %6d ", tp->t_outq_c_cc,
 		tp->t_hiwat, tp->t_lowat, tp->t_column);
 	for (i = j = 0; ttystates[i].flag; i++)
 		if (tp->t_state&ttystates[i].flag)
@@ -802,10 +833,7 @@ ttyprt(struct tty *tp)
 		state[j++] = '-';
 	state[j] = '\0';
 	(void)printf("%-6s %8lx", state, (u_long)tp->t_session & ~KERNBASE);
-	pgid = 0;
-	if (tp->t_pgrp != NULL)
-		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
-	(void)printf("%6d ", pgid);
+	(void)printf("%6d ", tp->t_pgrp_pg_id);
 	switch (tp->t_line) {
 	case TTYDISC:
 		(void)printf("term\n");
