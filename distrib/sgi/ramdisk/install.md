@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2004/12/02 23:02:48 miod Exp $
+#	$OpenBSD: install.md,v 1.4 2005/03/27 15:13:50 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,11 +43,7 @@
 MDTERM=vt220
 ARCH=ARCH
 
-md_set_term() {
-}
-
 md_installboot() {
-# Nothing to do. Boot is installed when preparing volume header.
 }
 
 md_checkfordisklabel() {

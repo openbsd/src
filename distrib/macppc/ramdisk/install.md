@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.27 2005/03/26 01:40:20 krw Exp $
+#	$OpenBSD: install.md,v 1.28 2005/03/27 15:13:50 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
 MDFSTYPE=msdos
 MDXAPERTURE=2
 ARCH=ARCH
-
-md_set_term() {
-}
 
 md_installboot() {
 	local _disk=$1

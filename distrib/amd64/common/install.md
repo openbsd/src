@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2005/03/26 19:27:11 krw Exp $
+#	$OpenBSD: install.md,v 1.5 2005/03/27 15:13:49 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,17 +44,6 @@ MDFSOPTS=-s
 MDXAPERTURE=2
 MDSERIAL="com com tty0"
 ARCH=ARCH
-
-md_set_term() {
-	local _tables="be br de dk es fr it jp no sf sg sv uk us"
-
-	ask_yn "Are you using a USB keyboard?"
-	[[ $resp == n ]] && _tables="$_tables pt ru ua"
-	_tables=$(bsort $_tables)
-
-	ask_which "kbd(8) table" "best matches your keyboard" "$_tables" us
-	[[ $resp != @(done|us) ]] && kbd $resp && echo $resp >/tmp/kbdtype
-}
 
 md_installboot() {
 	echo Installing boot block...

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.367 2005/03/26 15:40:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.368 2005/03/27 15:13:50 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,7 +67,6 @@
 #	md_congrats()		  - display friendly message
 #	md_installboot()	  - install boot-blocks on disk
 #	md_prep_disklabel()	  - put an OpenBSD disklabel on the disk
-#	md_set_term()		  - set up terminal
 #
 # The following variables can be provided if required:
 #	MDSETS	    - list of files to add to THESETS
@@ -80,12 +79,17 @@
 . install.md
 
 set_term() {
+	local _tables
+
 	[[ -n $TERM ]] && return
 	ask "Terminal type?" ${MDTERM:-vt220}
 	TERM=$resp
 	export TERM
 
-	md_set_term
+	[[ -x /sbin/kbd ]] || return
+	_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
+	ask_which "kbd(8) table" "best matches your keyboard" "$_tables" us
+	[[ $resp != @(done|us) ]] && kbd $resp && echo $resp >/tmp/kbdtype
 }
 
 welcome() {
@@ -104,7 +108,7 @@ your system in an inconsistent state.
 
 __EOT
 
-	# Configure the terminal.
+	# Configure the terminal and keyboard.
 	set_term
 
 	cat << __EOT

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2003/10/12 13:18:37 krw Exp $
+#	$OpenBSD: install.md,v 1.23 2005/03/27 15:13:50 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -44,9 +44,6 @@ MDTERM=vt100
 MDDISKDEVS='/^[hs]d[0-9] /s/ .*//p;/^r[al][0-9] /s/ .*//p'
 MDCDDEVS='/^cd[0-9] /s/ .*//p;/^ra[0-9] .* RRD40$/s/ .*//p'
 ARCH=ARCH
-
-md_set_term() {
-}
 
 md_installboot() {
 	echo "Installing boot block..."
