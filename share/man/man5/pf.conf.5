@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.69 2002/07/30 08:56:07 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.70 2002/07/30 09:25:00 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -50,126 +50,6 @@ from top to bottom, and the first matching rule decides what action is
 performed.
 In short: filters are last match, nat is first match.
 Rules must be in order: scrub, nat, filter.
-
-.Sh GRAMMAR
-Syntax for filter rules in BNF:
-.Bd -literal
-option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
-                       [ "optimization" [ "default" | "normal" | 
-				"high-latency" | "satellite" | 
-				"aggressive" | "conservative" ] ]
-                       [ "limit" ( limit | "{" limit-list "}" ) ] |
-		       [ "loginterface" interface-name ] ) .
-rule           = action ( "in" | "out" )
-                 [ "log" | "log-all" ] [ "quick" ]
-                 [ "on" ( interface-name | "{" interface-list "}" ) ]
-                 [ route ] [ af ]
-                 [ "proto" ( proto-name | proto-number |
-                             "{" proto-list "}" ) ]
-                 hosts
-                 [ user ] [ group ] [ flags ]
-                 [ icmp-type | ipv6-icmp-type ]
-                 [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ]
-                 [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
-                 [ "max-mss" number ] [ "allow-opts" ]
-                 [ "label" string ] .
-
-action         = "pass" | "block" [ return ] | "scrub" .
-return         = "return-rst" [ "(" "ttl" number ")" ] |
-                 "return-icmp"
-                     [ "(" ( icmp-code-name | icmp-code-number ) ")" ] |
-                 "return-icmp6"
-                     [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
-
-interface-list = interface-name [ "," interface-list ] .
-route          = "fastroute" |
-                 "route-to" "(" interface-name address ")" |
-                 "dup-to" interface-name
-                 "route-to" "(" interface-name address ")" |
-                 "dup-to" interface-name
-af	       = "inet" | "inet6" .
-proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
-
-hosts          = "all" |
-                 "from" ( "any" | "no-route" | host | "{" host-list "}" )
-                     [ port ]
-                 "to"   ( "any" | "no-route" | host | "{" host-list "}" )
-                     [ port ] .
-
-host           = [ "!" ] address [ "/" mask-bits ] .
-address        = ( interface-name | "(" interface-name ")" | host-name |
-                   ipv4-dotted-quad | ipv6-coloned-hex ) .
-host-list      = host [ "," host-list ] .
-
-port           = "port" ( unary-op | binary-op | "{" op-list "}" ) .
-user           = "user" ( unary-op | binary-op | "{" op-list "}" ) .
-group          = "group" ( unary-op | binary-op | "{" op-list "}" ) .
-
-unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
-                 ( name | number ) .
-binary-op      = number ( "<>" | "><" ) number .
-op-list        = ( unary-op | binary-op ) [ "," op-list ] .
-
-flags          = "flags" ( flag-set | flag-set "/" flag-set |
-                           "/" flag-set ) .
-flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]
-                 [ "W" ] .
-
-icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
-ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
-icmp-type-code = ( icmp-type-name | icmp-type-number )
-                 [ "code" ( icmp-code-name | icmp-code-number ) ] .
-icmp-list      = icmp-type-code [ "," icmp-list ] . 
-
-state-opts     = state-opt [ "," state-opts ] .
-state-opt      = ( "max" seconds ) | ( timeout seconds ) .
-
-timeout-list   = timeout [ "," timeout-list ] .
-timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
-                 "tcp.closing" | "tcp.finwait" | "tcp.closed" |
-                 "udp.first" | "udp.single" | "udp.multiple" |
-                 "icmp.first" | "icmp.error" |
-                 "other.first" | "other.multiple" ) seconds .
-seconds        = number .
-
-limit-list     = limit [ "," limit-list ] . 
-limit          = ( "states" | "frags" ) number .
-.Ed
-.Pp
-Syntax for translation rules in BNF:
-.Bd -literal
-rule      = [ "no" ] ( nat_rule | binat_rule | rdr_rule ) .
-
-nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] hosts
-            [ "->" address [ portspec ] ] .
-
-binat_rule = "binat" "on" ifname [ protospec ] "from" address
-             "to" ipspec [ "->" address ] .
-
-rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
-            "to" ipspec [ portspec ] [ "->" address [ portspec ] ] .
-
-protospec = "proto" ( number | "tcp" | "udp" | "icmp" ) .
-
-ipspec    = "any" | host | "{" host-list "}" .
-
-portspec  = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
-
-hosts     = "all" |
-            "from" ( "any" | host | "{" host-list "}" ) [ port ]
-            "to"   ( "any" | host | "{" host-list "}" ) [ port ] .
-
-host      = [ "!" ] address [ "/" mask-bits ] .
-address   = ( interface-name | "(" interface-name ")" | host-name |
-              ipv4-dotted-quad | ipv6-coloned-hex ) .
-host-list = host [ "," host-list ] .
-
-port      = "port" ( unary-op | binary-op | "{" op-list "}" ) .
-unary-op  = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
-            ( name | number ) .
-binary-op = number ( "<>" | "><" ) number .
-op-list   = ( unary-op | binary-op ) [ "," op-list ] .
-.Ed
 .Sh FILTER RULES
 While filter rules are typically manipulated using
 .Xr pfctl 8
@@ -1075,6 +955,125 @@ rdr on kue0 inet proto udp from any to (kue0) port 8080 -> 10.1.2.151 \\
 # translate outgoing ftp control connections to send them to localhost
 # for proxying with ftp-proxy(8) running on port 8081
 rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8081
+.Ed
+.Sh GRAMMAR
+Syntax for filter rules in BNF:
+.Bd -literal
+option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
+                       [ "optimization" [ "default" | "normal" | 
+				"high-latency" | "satellite" | 
+				"aggressive" | "conservative" ] ]
+                       [ "limit" ( limit | "{" limit-list "}" ) ] |
+		       [ "loginterface" interface-name ] ) .
+rule           = action ( "in" | "out" )
+                 [ "log" | "log-all" ] [ "quick" ]
+                 [ "on" ( interface-name | "{" interface-list "}" ) ]
+                 [ route ] [ af ]
+                 [ "proto" ( proto-name | proto-number |
+                             "{" proto-list "}" ) ]
+                 hosts
+                 [ user ] [ group ] [ flags ]
+                 [ icmp-type | ipv6-icmp-type ]
+                 [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ]
+                 [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
+                 [ "max-mss" number ] [ "allow-opts" ]
+                 [ "label" string ] .
+
+action         = "pass" | "block" [ return ] | "scrub" .
+return         = "return-rst" [ "(" "ttl" number ")" ] |
+                 "return-icmp"
+                     [ "(" ( icmp-code-name | icmp-code-number ) ")" ] |
+                 "return-icmp6"
+                     [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
+
+interface-list = interface-name [ "," interface-list ] .
+route          = "fastroute" |
+                 "route-to" "(" interface-name address ")" |
+                 "dup-to" interface-name
+                 "route-to" "(" interface-name address ")" |
+                 "dup-to" interface-name
+af	       = "inet" | "inet6" .
+proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
+
+hosts          = "all" |
+                 "from" ( "any" | "no-route" | host | "{" host-list "}" )
+                     [ port ]
+                 "to"   ( "any" | "no-route" | host | "{" host-list "}" )
+                     [ port ] .
+
+host           = [ "!" ] address [ "/" mask-bits ] .
+address        = ( interface-name | "(" interface-name ")" | host-name |
+                   ipv4-dotted-quad | ipv6-coloned-hex ) .
+host-list      = host [ "," host-list ] .
+
+port           = "port" ( unary-op | binary-op | "{" op-list "}" ) .
+user           = "user" ( unary-op | binary-op | "{" op-list "}" ) .
+group          = "group" ( unary-op | binary-op | "{" op-list "}" ) .
+
+unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
+                 ( name | number ) .
+binary-op      = number ( "<>" | "><" ) number .
+op-list        = ( unary-op | binary-op ) [ "," op-list ] .
+
+flags          = "flags" ( flag-set | flag-set "/" flag-set |
+                           "/" flag-set ) .
+flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]
+                 [ "W" ] .
+
+icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
+ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
+icmp-type-code = ( icmp-type-name | icmp-type-number )
+                 [ "code" ( icmp-code-name | icmp-code-number ) ] .
+icmp-list      = icmp-type-code [ "," icmp-list ] . 
+
+state-opts     = state-opt [ "," state-opts ] .
+state-opt      = ( "max" seconds ) | ( timeout seconds ) .
+
+timeout-list   = timeout [ "," timeout-list ] .
+timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
+                 "tcp.closing" | "tcp.finwait" | "tcp.closed" |
+                 "udp.first" | "udp.single" | "udp.multiple" |
+                 "icmp.first" | "icmp.error" |
+                 "other.first" | "other.multiple" ) seconds .
+seconds        = number .
+
+limit-list     = limit [ "," limit-list ] . 
+limit          = ( "states" | "frags" ) number .
+.Ed
+.Pp
+Syntax for translation rules in BNF:
+.Bd -literal
+rule      = [ "no" ] ( nat_rule | binat_rule | rdr_rule ) .
+
+nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] hosts
+            [ "->" address [ portspec ] ] .
+
+binat_rule = "binat" "on" ifname [ protospec ] "from" address
+             "to" ipspec [ "->" address ] .
+
+rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
+            "to" ipspec [ portspec ] [ "->" address [ portspec ] ] .
+
+protospec = "proto" ( number | "tcp" | "udp" | "icmp" ) .
+
+ipspec    = "any" | host | "{" host-list "}" .
+
+portspec  = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
+
+hosts     = "all" |
+            "from" ( "any" | host | "{" host-list "}" ) [ port ]
+            "to"   ( "any" | host | "{" host-list "}" ) [ port ] .
+
+host      = [ "!" ] address [ "/" mask-bits ] .
+address   = ( interface-name | "(" interface-name ")" | host-name |
+              ipv4-dotted-quad | ipv6-coloned-hex ) .
+host-list = host [ "," host-list ] .
+
+port      = "port" ( unary-op | binary-op | "{" op-list "}" ) .
+unary-op  = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
+            ( name | number ) .
+binary-op = number ( "<>" | "><" ) number .
+op-list   = ( unary-op | binary-op ) [ "," op-list ] .
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/pf.conf" -compact
