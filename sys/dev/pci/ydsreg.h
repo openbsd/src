@@ -1,3 +1,4 @@
+/*	$OpenBSD: ydsreg.h,v 1.2 2001/07/08 06:43:26 fgsch Exp $	*/
 /*	$NetBSD$	*/
 
 /*

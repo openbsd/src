@@ -1,3 +1,4 @@
+/*	$OpenBSD: ydsvar.h,v 1.2 2001/07/08 06:43:27 fgsch Exp $	*/
 /*	$NetBSD$	*/
 
 /*
