@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.172 2002/11/07 23:43:40 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.173 2002/12/15 15:39:49 fgsch Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -190,6 +190,8 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/log/authlog
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
 		${DESTDIR}/var/log/daemon
+	${INSTALL} -c -o ${BINOWN} -g wheel -m 600 /dev/null \
+		${DESTDIR}/var/log/failedlogin
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
 		${DESTDIR}/var/log/ftpd
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 644 /dev/null \
