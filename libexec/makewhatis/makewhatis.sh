@@ -21,6 +21,7 @@ trap "rm -rf $TDIR; exit 1" 1 2 15
 MANDIR=${1-/usr/share/man}
 if test ! -d "$MANDIR"; then 
 	echo "makewhatis: $MANDIR: not a directory"
+	rm -rf $TDIR
 	exit 1
 fi
 
