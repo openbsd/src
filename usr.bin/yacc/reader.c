@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.5 1996/04/21 23:45:19 deraadt Exp $	*/
+/*	$OpenBSD: reader.c,v 1.6 1998/11/24 01:21:29 deraadt Exp $	*/
 
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
@@ -847,6 +847,7 @@ get_tag()
     if (c == EOF) unexpected_EOF();
     if (c != '>')
 	illegal_tag(t_lineno, t_line, t_cptr);
+    FREE(t_line);
     ++cptr;
 
     for (i = 0; i < ntags; ++i)
@@ -869,7 +870,6 @@ get_tag()
     strcpy(s, cache);
     tag_table[ntags] = s;
     ++ntags;
-    FREE(t_line);
     return (s);
 }
 
@@ -1403,6 +1403,7 @@ loop:
     case ';':
 	if (depth > 0) goto loop;
 	fprintf(f, "\nbreak;\n");
+	FREE(a_line);
 	return;
 
     case '{':
@@ -1412,6 +1413,7 @@ loop:
     case '}':
 	if (--depth > 0) goto loop;
 	fprintf(f, "\nbreak;\n");
+	FREE(a_line);
 	return;
 
     case '\'':
