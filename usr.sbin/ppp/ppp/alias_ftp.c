@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_ftp.c,v 1.11 2001/08/21 04:09:15 brian Exp $
+ * $OpenBSD: alias_ftp.c,v 1.12 2001/10/24 10:01:07 brian Exp $
  */
 
 /*
@@ -145,8 +145,10 @@ int maxpacketsize  /* The maximum size this packet can grow to (including header
  */
 	    if (ParseFtp227Reply(sptr, dlen))
 		ftp_message_type = FTP_227_REPLY;
-	    else if (ParseFtp229Reply(sptr, dlen))
+	    else if (ParseFtp229Reply(sptr, dlen)) {
 		ftp_message_type = FTP_229_REPLY;
+		true_addr.s_addr = pip->ip_src.s_addr;
+	    }
 	}
 
 	if (ftp_message_type != FTP_UNKNOWN_MESSAGE)
@@ -464,8 +466,7 @@ NewFtpMessage(struct ip *pip,
     struct alias_link *ftp_link;
 
 /* Security checks. */
-    if (ftp_message_type != FTP_229_REPLY &&
-	pip->ip_src.s_addr != true_addr.s_addr)
+    if (pip->ip_src.s_addr != true_addr.s_addr)
 	return;
 
     if (true_port < IPPORT_RESERVED)
