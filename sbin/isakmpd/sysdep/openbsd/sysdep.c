@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysdep.c,v 1.2 1999/03/02 15:27:36 niklas Exp $	*/
-/*	$EOM: sysdep.c,v 1.1 1999/02/25 14:18:42 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.3 1999/03/24 14:40:46 niklas Exp $	*/
+/*	$EOM: sysdep.c,v 1.3 1999/03/24 11:06:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <net/encap.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,16 +47,18 @@
 #include "app.h"
 #include "conf.h"
 #include "ipsec.h"
-#endif NEED_SYSDEP_APP
-#include "log.h"
 
 #ifdef USE_PF_KEY_V2
 #include "pf_key_v2.h"
 #define KEY_API(x) pf_key_v2_##x
 #else
+#include <net/encap.h>
 #include "pf_encap.h"
 #define KEY_API(x) pf_encap_##x
 #endif
+
+#endif NEED_SYSDEP_APP
+#include "log.h"
 
 extern char *__progname;
 
@@ -196,11 +197,12 @@ sysdep_conf_init_hook ()
 }
 
 /*
- * Generate a SPI for protocol PROTO and the destination signified by
- * ID & ID_SZ.  Stash the SPI size in SZ.
+ * Generate a SPI for protocol PROTO and the source/destination pair given by
+ * SRC, SRCLEN, DST & DSTLEN.  Stash the SPI size in SZ.
  */
 u_int8_t *
-sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, void *id, size_t id_sz)
+sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
+		      int srclen, struct sockaddr *dst, int dstlen)
 {
   if (app_none)
     {
@@ -208,7 +210,7 @@ sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, void *id, size_t id_sz)
       /* XXX should be random instead I think.  */
       return strdup ("\x12\x34\x56\x78");
     }
-  return KEY_API (get_spi) (sz, proto, id, id_sz);
+  return KEY_API (get_spi) (sz, proto, src, srclen, dst, dstlen);
 }
 
 /* Force communication on socket FD to go in the clear.  */
@@ -252,36 +254,35 @@ sysdep_cleartext (int fd)
 }
 
 int
-sysdep_ipsec_delete_spi (struct sa *sa, struct proto *proto, int initiator)
+sysdep_ipsec_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 {
   if (app_none)
     return 0;
-  return KEY_API (delete_spi) (sa, proto, initiator);
+  return KEY_API (delete_spi) (sa, proto, incoming);
 }
 
 int
-sysdep_ipsec_enable_sa (struct sa *sa, int initiator)
+sysdep_ipsec_enable_sa (struct sa *sa)
 {
   if (app_none)
     return 0;
-  return KEY_API (enable_sa) (sa, initiator);
+  return KEY_API (enable_sa) (sa);
 }
 
 int
 sysdep_ipsec_group_spis (struct sa *sa, struct proto *proto1,
-		      struct proto *proto2, int role)
+			 struct proto *proto2, int incoming)
 {
   if (app_none)
     return 0;
-  return KEY_API (group_spis) (sa, proto1, proto2, role);
+  return KEY_API (group_spis) (sa, proto1, proto2, incoming);
 }
 
 int
-sysdep_ipsec_set_spi (struct sa *sa, struct proto *proto, int role,
-		      int initiator)
+sysdep_ipsec_set_spi (struct sa *sa, struct proto *proto, int incoming)
 {
   if (app_none)
     return 0;
-  return KEY_API (set_spi) (sa, proto, role, initiator);
+  return KEY_API (set_spi) (sa, proto, incoming);
 }
 #endif
