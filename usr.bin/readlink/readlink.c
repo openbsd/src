@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.6 1997/06/29 19:19:38 kstailey Exp $
+ * $OpenBSD: readlink.c,v 1.7 1997/06/29 19:20:31 kstailey Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -30,7 +30,6 @@
 #include <sys/syslimits.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <err.h>
 
 int
 main(argc, argv)
