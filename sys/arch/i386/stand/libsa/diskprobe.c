@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.10 1997/10/28 23:32:08 deraadt Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.11 1997/10/29 23:12:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -129,9 +129,9 @@ diskprobe()
 	/* End of list */
 	pdi->bios_number = -1;
 	/* Checksumming of hard disks */
-	for (i = 0; disksum(i) && i < MAX_CKSUMLEN; i++)
+	for (i = 0; disksum(i++) && i < MAX_CKSUMLEN; )
 		;
-	bios_cksumlen = i + 1;
+	bios_cksumlen = i;
 	addbootarg(BOOTARG_CKSUMLEN, sizeof(u_int32_t), &bios_cksumlen);
 	addbootarg(BOOTARG_DISKINFO, (pdi - bios_diskinfo + 1) *
 				     sizeof(bios_diskinfo[0]), bios_diskinfo);
@@ -190,7 +190,9 @@ disksum(blk)
 		bdi->checksum = adler32(bdi->checksum, buf, DEV_BSIZE);
 
 		for (bd = bios_diskinfo; bd != bdi; bd++)
-			if (bdi->checksum == bd->checksum)
+			if ((bd->bios_number & 0x80) &&
+			    !(bd->flags & BDI_INVALID) &&
+			    bdi->checksum == bd->checksum)
 				reprobe = 1;
 	}
 
