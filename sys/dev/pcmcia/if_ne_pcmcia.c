@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.71 2003/06/13 08:54:35 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.72 2003/06/25 17:35:37 miod Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <netinet/if_ether.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

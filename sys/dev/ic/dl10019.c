@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl10019.c,v 1.2 2001/06/16 22:43:12 fgsch Exp $	*/
+/*	$OpenBSD: dl10019.c,v 1.3 2003/06/25 17:35:36 miod Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -58,7 +58,6 @@
 #endif
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii.h>
