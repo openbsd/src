@@ -1,30 +1,40 @@
-dnl	$OpenBSD: hardware,v 1.9 2003/08/20 21:28:54 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.10 2003/12/23 12:42:07 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
 - PA7100-based
 	715/33, 715/50, 715/75
 	725/50, 725/75
-	735/100
-	755/100
+	735/100, 755/100
 - PA7100LC-based
 	712
 	715/64, 715/80, 715/100, 715/100XC
 	725/64, 725/100
+	Saic Galaxy 1100
 - PA7150-based
-	735/125
-	755/125
+	735/125, 755/125
 - PA7200-based
 	J200, J210, J210XC
 	C100, C110
 - PA7300LC-based
-	C160L (RDI PrecisionBook)
+	A180, A180C
+	B132L, B132L+, B160L, B180L+, C132L, C160L
+	RDI PrecisionBook
 
 Supported devices {:-include-:}:
-- Ethernet Controller
+- Ethernet Controllers
 	built-in Intel 82596 (ie)
+	Intel/DEC 21443 "Tulip" clones (dc)
+	Intel i8255x-based (fxp) (not bootable), including:
+		Intel EtherExpress PRO/10+
+		Intel EtherExpress PRO/100, PRO/100B, and PRO/100+
+		Intel EtherExpress PRO/100+ "Management Adapter"
+		Intel EtherExpress PRO/100 Dual Port
+		Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
 - SCSI controllers
 	built-in 53C710 SCSI (osiop)
+	53C8xx-based SCSI (siop)
+	Adaptec AIC-7770-based SCSI host adapters (ahc) (not bootable)
 - SGC/GSC graphics:
 	Artist (as found on 712) (sti)
 	CRX-8, CRX-24, HCRX-8, HCRX-24 (sti)
