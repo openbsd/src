@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.6 2002/02/05 18:34:39 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.7 2002/02/05 20:13:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -402,20 +402,10 @@ cgthree_mmap(v, offset, prot)
 
 	if (offset & PGOFSET)
 		return (-1);
-	if (offset < 0)
-		return (-1);
-	if ((u_int)offset >= NOOVERLAY)
-		offset -= NOOVERLAY;
-	else if ((u_int)offset >= START)
-		offset -= START;
-	else
-		offset = 0;
 
-	if (offset >= sc->sc_linebytes * sc->sc_height)
-		return (-1);
-
-	return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
-	    CGTHREE_VID_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR));
+	if (offset >= 0 && offset < (sc->sc_linebytes * sc->sc_height))
+		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
+		    CGTHREE_VID_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR));
 
 	return (-1);
 }
