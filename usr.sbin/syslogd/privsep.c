@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.5 2003/08/15 23:13:06 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.6 2003/09/24 23:35:45 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -97,6 +97,7 @@ int
 priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 {
 	int i, fd, socks[2], cmd, addr_len, addr_af, result;
+	size_t path_len, hostname_len;
 	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN];
 	struct stat cf_stat;
 	struct hostent *hp;
@@ -183,9 +184,14 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		must_read(socks[0], &cmd, sizeof(int));
 		switch (cmd) {
 		case PRIV_OPEN_TTY:
-			must_read(socks[0], &path, sizeof path);
 			dprintf("[priv]: msg PRIV_OPEN_TTY received\n");
-			check_tty_name(path, sizeof path);
+			/* Expecting: length, path */
+			must_read(socks[0], &path_len, sizeof(size_t));
+			if (path_len == 0 || path_len > sizeof(path))
+				_exit(0);
+			must_read(socks[0], &path, path_len);
+			path[path_len - 1] = '\0';
+			check_tty_name(path, path_len);
 			fd = open(path, O_WRONLY|O_NONBLOCK, 0);
 			if (fd < 0)
 				warnx("priv_open_tty failed");
@@ -194,9 +200,14 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			break;
 
 		case PRIV_OPEN_LOG:
-			must_read(socks[0], &path, sizeof path);
 			dprintf("[priv]: msg PRIV_OPEN_LOG received: %s\n", path);
-			check_log_name(path, sizeof path);
+			/* Expecting: length, path */
+			must_read(socks[0], &path_len, sizeof(size_t));
+			if (path_len == 0 || path_len > sizeof(path))
+				_exit(0);
+			must_read(socks[0], &path, path_len);
+			path[path_len - 1] = '\0';
+			check_log_name(path, path_len);
 			fd = open(path, O_WRONLY|O_APPEND|O_NONBLOCK, 0);
 			if (fd < 0)
 				warnx("priv_open_log failed");
@@ -246,8 +257,12 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 		case PRIV_GETHOSTBYNAME:
 			dprintf("[priv]: msg PRIV_GETHOSTBYNAME received\n");
-			/* Expecting: hostname[MAXHOSTNAMELEN] */
-			must_read(socks[0], &hostname, sizeof hostname);
+			/* Expecting: length, hostname */
+			must_read(socks[0], &hostname_len, sizeof(size_t));
+			if (hostname_len == 0 || hostname_len > sizeof(hostname))
+				_exit(0);
+			must_read(socks[0], &hostname, hostname_len);
+			hostname[hostname_len - 1] = '\0';
 			hp = gethostbyname(hostname);
 			if (hp == NULL) {
 				addr_len = 0;
@@ -264,7 +279,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 				errx(1, "rejected attempt to gethostbyaddr");
 			/* Expecting: length, address, address family */
 			must_read(socks[0], &addr_len, sizeof(int));
-			if (addr_len > sizeof(hostname))
+			if (addr_len <= 0 || addr_len > sizeof(hostname))
 				_exit(0);
 			must_read(socks[0], hostname, addr_len);
 			must_read(socks[0], &addr_af, sizeof(int));
@@ -381,15 +396,19 @@ priv_open_tty(const char *tty)
 {
 	char path[MAXPATHLEN];
 	int cmd, fd;
+	size_t path_len;
 
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
 	if (strlcpy(path, tty, sizeof path) >= sizeof(path))
 		return -1;
+	path_len = strlen(path) + 1;
+
 	cmd = PRIV_OPEN_TTY;
 	must_write(priv_fd, &cmd, sizeof(int));
-	must_write(priv_fd, path, sizeof(path));
+	must_write(priv_fd, &path_len, sizeof(size_t));
+	must_write(priv_fd, path, path_len);
 	fd = receive_fd(priv_fd);
 	return fd;
 }
@@ -400,15 +419,19 @@ priv_open_log(const char *log)
 {
 	char path[MAXPATHLEN];
 	int cmd, fd;
+	size_t path_len;
 
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged child", __func__);
 
 	if (strlcpy(path, log, sizeof path) >= sizeof(path))
 		return -1;
+	path_len = strlen(path) + 1;
+
 	cmd = PRIV_OPEN_LOG;
 	must_write(priv_fd, &cmd, sizeof(int));
-	must_write(priv_fd, path, sizeof(path));
+	must_write(priv_fd, &path_len, sizeof(size_t));
+	must_write(priv_fd, path, path_len);
 	fd = receive_fd(priv_fd);
 	return fd;
 }
@@ -503,16 +526,19 @@ priv_gethostbyname(char *host, char *addr, size_t addr_len)
 {
 	char hostcpy[MAXHOSTNAMELEN];
 	int cmd, ret_len;
-
-	if (strlcpy(hostcpy, host, sizeof hostcpy) >= sizeof(hostcpy))
-		errx(1, "%s: overflow attempt in hostname", __func__);
+	size_t hostname_len;
 
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
+	if (strlcpy(hostcpy, host, sizeof hostcpy) >= sizeof(hostcpy))
+		errx(1, "%s: overflow attempt in hostname", __func__);
+	hostname_len = strlen(hostcpy) + 1;
+
 	cmd = PRIV_GETHOSTBYNAME;
 	must_write(priv_fd, &cmd, sizeof(int));
-	must_write(priv_fd, hostcpy, sizeof(hostcpy));
+	must_write(priv_fd, &hostname_len, sizeof(size_t));
+	must_write(priv_fd, hostcpy, hostname_len);
 
 	/* Expect back an integer size, and then a string of that length */
 	must_read(priv_fd, &ret_len, sizeof(int));
