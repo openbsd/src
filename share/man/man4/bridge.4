@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.17 2000/01/25 22:06:27 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.18 2000/02/02 20:12:11 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -83,6 +83,10 @@ contains an
 datagram; if so, the datagram is run through the
 .Xr ipf 4
 interface so that it can be filtered.
+Only the
+.Xr ipf 4
+input rules for the source interface are checked with the datagram;
+output rules have no effect.
 .Sh IOCTLS
 A
 .Nm bridge
@@ -302,6 +306,60 @@ should be set to
 to flush all addresses from the cache or
 .Ar IFBF_FLUSHDYN
 to flush only the dynamically learned addresses from the cache.
+<<<<<<< bridge.4
+.It Dv SIOCBRDGARL
+.Pq Li "struct ifbrlreq"
+Add a Ethernet address filtering rule to the bridge on a specific
+interface.  The argument structure is as follows:
+.Bd -literal -offset indent
+.Ed
+.It Dv SIOCBRDGFRL
+.Pq Li "struct ifbrlreq"
+Remove all filtering rules from a bridge interface member.
+.Ar ifbr_name
+contains the name of the bridge device, and
+.Ar ifbr_ifsname
+contains the name of the bridge member interface.
+.It Dv SIOCBRDGGRL
+.Pq Li "struct ifbrlconf"
+Retrieve all of the rules from the bridge,
+.Ar ifbrl_name ,
+for the member interface,
+.Ar ifbrl_ifsname .
+
+This request takes an
+.Ar ifbrlconf
+structure (see below) as a value result parameter.
+The
+.Ar ifbrl_len
+field should be initially set to the size of the buffer pointed to by
+.Ar ifbrl_buf .
+On return, it will contain the length, in bytes, of the configuration list.
+Alternatively, if the
+.Ar ifbrl_len
+passed in is set to 0, SIOCBRDGGRL will set it to the size that
+.Ar ifbrl_buf
+needs to be to fit the entire configuration list and not fill in the other
+parameters.
+As with SIOCBRDGIFS, this is useful for determining the exact size that
+.Ar ifbrl_buf
+needs to be in advance.
+.Pp
+The argument structure is defined as follows:
+.Bd -literal -offset indent
+struct ifbrlconf {
+        char ifbrl_name[IFNAMSIZ];   /* brdg nam */
+	char ifbrl_ifsname[IFNAMSIZ];/* ifs name */
+        u_int32_t ifbr_len;         /* buf len */
+	union {
+                caddr_t ifbrlu_buf;
+                struct ifbrlreq *ifbrlu_req;
+        } ifrl_ifbrlu;
+#define ifbrl_buf ifbrl_ifbrlu.ifbrlu_buf
+#define ifbrl_req ifbrl_ifbrlu.ifbrlu_req
+};
+.Ed
+=======
 .It Dv SIOCBRDGARL
 .Pq Li "struct ifbrlreq"
 Add a filtering rule to the bridge named in
@@ -406,6 +464,7 @@ struct ifbrlconf {
 #define ifbrl_req ifbrl_ifbrlu.ifbrlu_req
 };
 .Ed
+>>>>>>> 1.17
 .El
 .Sh ERRORS
 If the
@@ -468,3 +527,8 @@ at the University of North Carolina at Greensboro.
 .Sh BUGS
 There is currently no loop detection.  Care must be taken to make sure
 that loops are not created when a bridge is brought up.
+.Pp
+Only 
+.Xr ipf 4
+input rules are checked with incoming packet; there is no easy way to
+handle output rules.
