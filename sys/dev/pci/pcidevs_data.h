@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.417 2001/07/20 11:22:50 peter Exp 
+ *		OpenBSD: pcidevs,v 1.418 2001/07/20 11:28:56 peter Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -605,6 +605,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_PPB,
 	    "751 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_762_PCHB,
+	    "762 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_762_PPB,
+	    "762 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_761_PCHB,
+	    "761 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_761_PPB,
+	    "761 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_755_ISA,

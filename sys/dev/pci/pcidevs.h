@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.417 2001/07/20 11:22:50 peter Exp 
+ *		OpenBSD: pcidevs,v 1.418 2001/07/20 11:28:56 peter Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -754,6 +754,11 @@
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 PCI-PCI */
+/* http://www.amd.com/products/cpg/athlon/techdocs/pdf/24462.pdf */
+#define	PCI_PRODUCT_AMD_762_PCHB	0x700C		/* 762 Host-PCI */
+#define	PCI_PRODUCT_AMD_762_PPB	0x700D		/* 762 PCI-PCI */
+#define	PCI_PRODUCT_AMD_761_PCHB	0x700E		/* 761 Host-PCI */
+#define	PCI_PRODUCT_AMD_761_PPB	0x700F		/* 761 PCI-PCI */
 #define	PCI_PRODUCT_AMD_755_ISA	0x7400		/* 755 PCI-ISA */
 #define	PCI_PRODUCT_AMD_755_IDE	0x7401		/* 755 IDE */
 #define	PCI_PRODUCT_AMD_755_PMC	0x7403		/* 755 Power Mgmt */
