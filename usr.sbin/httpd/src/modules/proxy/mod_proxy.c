@@ -788,6 +788,7 @@ static const char *
     ap_get_module_config(parms->server->module_config, &proxy_module);
 
     psf->cache.root = arg;
+    ap_server_strip_chroot(psf->cache.root, 1);
 
     return NULL;
 }
