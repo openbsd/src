@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.717 2004/03/03 04:14:59 krw Exp $
+$OpenBSD: pcidevs,v 1.718 2004/03/10 00:47:50 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1870,6 +1870,7 @@ product PLATFORM ES1849		0x0100	ES1849
 
 /* PLX products */
 product PLX	1076		0x1076	I/O
+product PLX	1077		0x1077	I/O
 product PLX	9050		0x9050	I/O 9050
 product PLX	9080		0x9080	I/O 9080
 
