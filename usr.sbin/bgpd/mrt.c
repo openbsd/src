@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.8 2003/12/21 23:26:37 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.9 2003/12/23 19:14:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -151,7 +151,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_LONG(buf, p->lastchange);	/* originated */
 	DUMP_NLONG(buf, peer->remote_addr.sin_addr.s_addr);
 	DUMP_SHORT(buf, peer->remote_as);
-	DUMP_SHORT(buf,  attr_len);
+	DUMP_SHORT(buf, attr_len);
 
 	if ((bptr = buf_reserve(buf, attr_len)) == NULL)
 		fatal("buf_reserve error", 0);

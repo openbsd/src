@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.22 2003/12/23 19:13:27 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.23 2003/12/23 19:14:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -132,7 +132,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
-		if (ibuf_se.w.queued  > 0)
+		if (ibuf_se.w.queued > 0)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
 
 		if ((nfds = poll(pfd, 2, INFTIM)) == -1)
@@ -530,7 +530,7 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 		type = IMSG_KROUTE_CHANGE;
 		p = new;
 	}
-	
+
 	kr.prefix = p->prefix->prefix.s_addr;
 	kr.prefixlen = p->prefix->prefixlen;
 	kr.nexthop = p->aspath->flags.nexthop.s_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.7 2003/12/21 23:48:46 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.8 2003/12/23 19:14:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -76,7 +76,7 @@ buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
 	int	n;
 
-	/*  first try to write out directly */
+	/* first try to write out directly */
 	if (msgbuf->queued == 0) {
 		if ((n = buf_write(msgbuf->sock, buf)) == -1)
 			return (-1);
