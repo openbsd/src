@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.66 2002/03/26 05:24:02 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.67 2002/04/21 22:30:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -614,17 +614,17 @@ cpu_startup()
 	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
 
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, &minaddr, round_page(size),
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
 	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL, 0)))
 		panic("cpu_startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
+	buffers = (caddr_t)minaddr;
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+printf("base=%d res=%d\n", base, residual);
 	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
 		vaddr_t curbuf;
-		struct vm_page *pg;
+		int cbpgs;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -634,16 +634,16 @@ cpu_startup()
 		 * but has no physical memory allocated for it.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
-		while (curbufsize) {
+		for (cbpgs = base + (i < residual? 1 : 0); cbpgs--; ) {
+			struct vm_page *pg;
+
 			if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
 		}
 	}
 
@@ -872,7 +872,7 @@ btlb_insert(space, va, pa, lenp, prot)
 		    pa, len);
 
 	/* ensure IO space is uncached */
-	if ((pa & 0xF0000) == 0xF0000)
+	if ((pa & (HPPA_IOBEGIN >> PGSHIFT)) == (HPPA_IOBEGIN >> PGSHIFT))
 		prot |= TLB_UNCACHABLE;
 
 #ifdef BTLBDEBUG
@@ -1156,8 +1156,7 @@ setregs(p, pack, stack, retval)
 	/* register struct pcb *pcb = &p->p_addr->u_pcb; */
 #ifdef DEBUG
 	/*extern int pmapdebug;*/
-	/*pmapdebug = 13;*/
-	/*
+	/*pmapdebug = 13;
 	printf("setregs(%p, %p, %x, %p), ep=%x, cr30=%x\n",
 	    p, pack, stack, retval, pack->ep_entry, tf->tf_cr30);
 	*/
