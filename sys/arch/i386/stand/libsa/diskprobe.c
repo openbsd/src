@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.18 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.19 2003/05/31 00:15:29 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -267,9 +267,7 @@ disksum(blk)
 {
 	struct diskinfo *dip, *dip2;
 	int st, reprobe = 0;
-	int hpc, spt, dev;
 	char *buf;
-	int cyl, head, sect;
 
 	buf = alloca(DEV_BSIZE);
 	for(dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list)){
@@ -279,13 +277,8 @@ disksum(blk)
 		if (!(bdi->bios_number & 0x80) || bdi->flags & BDI_INVALID)
 			continue;
 
-		dev = bdi->bios_number;
-		hpc = bdi->bios_heads;
-		spt = bdi->bios_sectors;
-
 		/* Adler32 checksum */
-		btochs(blk, cyl, head, sect, hpc, spt);
-		st = biosd_io(F_READ, dev, cyl, head, sect, 1, buf);
+		st = biosd_io(F_READ, bdi, blk, 1, buf);
 		if (st) {
 			bdi->flags |= BDI_INVALID;
 			continue;

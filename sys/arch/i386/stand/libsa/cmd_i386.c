@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.24 2002/03/14 03:15:54 millert Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.25 2003/05/31 00:15:29 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -87,6 +87,7 @@ Xboot()
 {
 #ifndef _TEST
 	int dev, part, st;
+	bios_diskinfo_t *bd = NULL;
 	char buf[DEV_BSIZE], *dest = (void *)BOOTBIOS_ADDR;
 
 	if(cmd.argc != 2) {
@@ -118,7 +119,8 @@ Xboot()
 		printf("[%x]\n", dev);
 
 	/* Read boot sector from device */
-	st = biosd_io(F_READ, dev, 0, 0, 0, 1, buf);
+	bd = bios_dklookup(dev);
+	st = biosd_io(F_READ, bd, 0, 1, buf);
 	if(st) goto bad;
 
 	/* Frob boot flag in buffer from HD */
