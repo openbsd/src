@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.50 2001/08/23 23:32:35 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.51 2001/08/25 22:13:27 niklas Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -125,8 +125,8 @@ udp_listen_lookup (struct sockaddr *addr)
   struct udp_transport *u;
 
   for (u = LIST_FIRST (&udp_listen_list); u; u = LIST_NEXT (u, link))
-    if (u->src->sa_len == addr->sa_len &&
-	memcmp (u->src, addr, addr->sa_len) == 0)
+    if (u->src->sa_len == addr->sa_len
+	&& memcmp (u->src, addr, addr->sa_len) == 0)
       return u;
   return 0;
 }
@@ -213,7 +213,8 @@ err:
     close (s);
   if (t)
     {
-      t->s = -1; /* already closed */
+      /* Already closed.  */
+      t->s = -1;
       udp_remove (&t->transport);
     }
   return 0;
@@ -332,12 +333,12 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
   switch (saddr.sa_family)  /* Add the port number to the sockaddr. */
     {
     case AF_INET:
-      ((struct sockaddr_in *)&saddr)->sin_port =
-	  htons (strtol (port, &ep, 10));
+      ((struct sockaddr_in *)&saddr)->sin_port
+	= htons (strtol (port, &ep, 10));
       break;
     case AF_INET6:
-      ((struct sockaddr_in6 *)&saddr)->sin6_port =
-	  htons (strtol (port, &ep, 10));
+      ((struct sockaddr_in6 *)&saddr)->sin6_port
+	= htons (strtol (port, &ep, 10));
       break;
     }
 
@@ -478,8 +479,8 @@ udp_create (char *name)
     addr_str = conf_get_str ("General", "Listen-on");
   if (!addr_str)
     {
-      if ((dst->sa_family == AF_INET && !default_transport) ||
-	  (dst->sa_family == AF_INET6 && !default_transport6))
+      if ((dst->sa_family == AF_INET && !default_transport)
+	  || (dst->sa_family == AF_INET6 && !default_transport6))
 	{
 	  log_print ("udp_create: no default transport");
 	  rv = 0;
@@ -579,12 +580,12 @@ udp_reinit (void)
 
   /* Mark all UDP transports, except the default ones. */
   for (u = LIST_FIRST (&udp_listen_list); u; u = LIST_NEXT (u, link))
-    if (&u->transport != default_transport &&
-	&u->transport != default_transport6)
+    if (&u->transport != default_transport
+	&& &u->transport != default_transport6)
        u->transport.flags |= TRANSPORT_MARK;
 
   /* Re-probe interface list.  */
-  /* XXX need to check errors */
+  /* XXX need to check errors.  */
   if_map (udp_bind_if, udp_default_port ? udp_default_port : "500");
 
   /*

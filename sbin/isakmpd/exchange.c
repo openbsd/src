@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.61 2001/08/22 07:09:03 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.62 2001/08/25 22:13:27 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1391,16 +1391,16 @@ exchange_finalize (struct message *msg)
 	{
 	  handler = cert_get (exchange->recv_certtype);
 	  if (handler)
-	    msg->isakmp_sa->recv_cert =
-	      handler->cert_dup (exchange->recv_cert);
+	    msg->isakmp_sa->recv_cert
+	      = handler->cert_dup (exchange->recv_cert);
 	}
 
       if (exchange->sent_certtype)
         {
 	  handler = cert_get (exchange->sent_certtype);
 	  if (handler)
-	    msg->isakmp_sa->sent_cert =
-	      handler->cert_dup (exchange->sent_cert);
+	    msg->isakmp_sa->sent_cert
+	      = handler->cert_dup (exchange->sent_cert);
 	}
 
       LOG_DBG ((LOG_EXCHANGE, 10,
