@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctime.c,v 1.1 1998/05/29 20:44:49 mickey Exp $	*/
+/*	$OpenBSD: ctime.c,v 1.2 1998/06/11 01:34:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -68,6 +68,9 @@ ctime(clock)
 
 	for (month = 0; tt > monthcnt[month]; month++)
 		tt -= monthcnt[month];
+
+	if (month > 2 && isleap(year))
+		tt--;
 
 	/* no field widths in printf() */
 	sprintf(buf, "%s %s %d %d:%d:%d %d\n",
