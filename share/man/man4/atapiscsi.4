@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atapiscsi.4,v 1.2 1999/07/25 23:18:43 deraadt Exp $
+.\"	$OpenBSD: atapiscsi.4,v 1.3 1999/11/14 20:23:27 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Constantine Sapuntzakis.
 .\"
@@ -58,7 +58,7 @@ For performance reasons, one should avoid putting an ATAPI device and
 a hard disk on the same cable.  The driver does not support bus release
 and, even if it did, many ATAPI devices do not support it. There is
 only one command outstanding on a cable at a time. For example, if a
-a hard disk and a CD drive are placed on the same cable, the hard disk
+hard disk and a CD drive are placed on the same cable, the hard disk
 requests may get queued behind slower CD operations.
 .Sh BUGS
 Tape devices don't work yet.
