@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.25 2001/05/17 18:41:44 provos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.26 2001/05/19 20:55:32 provos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -90,6 +90,12 @@ struct m_ext {
 	int	ext_type;
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
+#ifdef DEBUG
+	const char *ext_ofile;
+	const char *ext_nfile;
+	int ext_oline;
+	int ext_nline;
+#endif
 };
 
 struct mbuf {
