@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.4 1996/06/11 11:20:22 downsj Exp $
+.\"	$OpenBSD: mt.1,v 1.5 1996/06/12 07:50:57 downsj Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -34,9 +34,9 @@
 .\"
 .\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 11, 1996
+.Dd June 12, 1996
 .Dt MT 1
-.Os BSD 4
+.Os OpenBSD
 .Sh NAME
 .Nm mt ,
 .Nm eject
@@ -100,7 +100,10 @@ Rewind the tape
 (Count is ignored).
 .It Cm offline , rewoffl
 Rewind the tape and place the tape unit off-line
-(Count is ignored).
+(Count is ignored).  On non-tape removable media, the
+.Cm offline
+command causes the media to be ejected when the last operation on it
+closes (i.e., the filesystem is unmounted).
 .It Cm status
 Print status information about the tape unit.
 .It Cm retension
