@@ -138,6 +138,9 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 	 * to be correct as defaults go...
 	 */
 	switch (bustype) {
+	case BUS_PFOUR:
+		fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
+		break;
 	case BUS_VME16:
 	case BUS_VME32:
 	case BUS_OBIO:
@@ -199,7 +202,7 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 		}
 #endif /* SUN4M */
 
- donesize:
+donesize:
 		fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
 		break;
 	case BUS_SBUS:
