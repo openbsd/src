@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.45 2002/08/13 02:21:40 millert Exp $
+#	$OpenBSD: services,v 1.46 2002/10/29 21:36:02 pvalchev Exp $
 #
 # Network services, Internet style
 #
@@ -163,6 +163,8 @@ netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
+silc		706/tcp				# Secure Live Internet Conferencing
+silc		706/udp
 kerberos-adm	749/udp				# Kerberos 5 kadmin
 kerberos-adm	749/tcp				# Kerberos 5 kadmin
 kerberos-iv	750/udp		kdc		# Kerberos authentication--udp
