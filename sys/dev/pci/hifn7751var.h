@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.47 2003/02/17 16:48:22 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.48 2003/02/24 20:36:02 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -183,7 +183,7 @@ struct hifn_softc {
 		    READ_REG_1(sc, HIFN_1_7811_MIPSRST) & ~(v))
 
 /*
- *  hifn_command_t
+ *  struct hifn_command
  *
  *  This is the control structure used to pass commands to hifn_encrypt().
  *
@@ -249,7 +249,7 @@ struct hifn_softc {
  */
 struct hifn_command {
 	u_int16_t session_num;
-	u_int16_t base_masks, cry_masks, mac_masks;
+	u_int16_t base_masks, cry_masks, mac_masks, comp_masks;
 	u_int8_t iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 	int cklen;
 	int sloplen, slopidx;
@@ -268,7 +268,9 @@ struct hifn_command {
 
 	struct hifn_softc *softc;
 	struct cryptop *crp;
-	struct cryptodesc *enccrd, *maccrd;
+	struct cryptodesc *enccrd, *maccrd, *compcrd;
+	void (*cmd_callback)(struct hifn_softc *, struct hifn_command *,
+	    u_int8_t *);
 };
 
 /*
