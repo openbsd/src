@@ -1,4 +1,4 @@
-/*	$Id: kerberos.c,v 1.4 1997/01/15 23:40:52 millert Exp $	*/
+/*	$Id: kerberos.c,v 1.5 1997/06/29 10:32:14 provos Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -42,7 +42,7 @@
 
 #include <netdb.h>
 
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include <kerberosIV/krb_db.h>
 

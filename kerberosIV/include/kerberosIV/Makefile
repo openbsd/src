@@ -1,7 +1,6 @@
-#	$Id: Makefile,v 1.4 1997/05/29 20:07:11 deraadt Exp $
+#	$Id: Makefile,v 1.5 1997/06/29 10:32:13 provos Exp $
 
-FILES=	acl.h com_err.h des.h kadm.h kafs.h kparse.h krb.h krb_db.h \
-	site.h
+FILES=	acl.h com_err.h kadm.h kafs.h kparse.h krb.h krb_db.h site.h
 NOOBJ=	noobj
 
 all include clean cleandir depend lint tags:

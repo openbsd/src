@@ -1,4 +1,4 @@
-/*	$Id: register.c,v 1.4 1996/09/16 18:49:06 millert Exp $	*/
+/*	$Id: register.c,v 1.5 1997/06/29 10:32:19 provos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@ static char sccsid[] = "@(#)register.c	8.1 (Berkeley) 6/1/93";
 #include <strings.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include "pathnames.h"
 #include "register_proto.h"

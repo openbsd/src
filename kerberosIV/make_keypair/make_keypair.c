@@ -1,4 +1,4 @@
-/*	$Id: make_keypair.c,v 1.3 1996/09/16 18:49:04 millert Exp $	*/
+/*	$Id: make_keypair.c,v 1.4 1997/06/29 10:32:18 provos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -51,7 +51,7 @@ static char sccsid[] = "@(#)make_keypair.c	8.1 (Berkeley) 6/1/93";
 #include <strings.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include "pathnames.h"
 #include "register_proto.h"
