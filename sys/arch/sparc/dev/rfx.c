@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.1 2004/02/29 21:44:14 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.2 2004/03/01 07:53:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -328,7 +328,7 @@ rfx_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_RFLEX;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;

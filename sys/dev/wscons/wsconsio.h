@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.29 2003/06/17 21:21:33 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.30 2004/03/01 07:53:01 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -271,6 +271,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_SUNCG12	38	/* Sun cgtwelve */
 #define		WSDISPLAY_TYPE_MGX	39	/* SMS MGX */
 #define		WSDISPLAY_TYPE_SB_P9000	40	/* Tadpole SPARCbook P9000 */
+#define		WSDISPLAY_TYPE_RFLEX	41	/* RasterFlex series */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
