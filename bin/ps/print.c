@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.17 2001/04/30 09:37:11 art Exp $	*/
+/*	$OpenBSD: print.c,v 1.18 2001/08/13 22:41:16 heko Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.17 2001/04/30 09:37:11 art Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.18 2001/08/13 22:41:16 heko Exp $";
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ state(k, ve)
 		break;
 
 	case SSLEEP:
-		if (flag & P_SINTR)	/* interuptable (long) */
+		if (flag & P_SINTR)	/* interruptible (long) */
 			*cp = p->p_slptime >= MAXSLP ? 'I' : 'S';
 		else
 			*cp = 'D';
