@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.28 2000/06/25 13:52:30 pjanzen Exp $
+.\"	$OpenBSD: printf.3,v 1.29 2000/07/07 00:09:10 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -692,7 +692,7 @@ as an attacker can put format specifiers in that string to mangle
 your stack.
 Be sure to use the proper secure idiom:
 .Bd -literal -offset indent
-snprintf(buffer, sizeof(buffer), "%s", string)
+snprintf(buffer, sizeof(buffer), "%s", string);
 .Ed
 .Pp
 There is no way for printf to know the size of each argument passed.
