@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.31 1998/01/25 09:22:28 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.32 1998/01/25 09:39:19 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1201,6 +1201,9 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccd.ccd_unit = unit;
 		ccd.ccd_interleave = ccio->ccio_ileave;
 		ccd.ccd_flags = ccio->ccio_flags & CCDF_USERMASK;
+
+		/* XXX the new code is unstable yet */
+		ccd.ccd_flags |= CCDF_OLD;
 
 		/*
 		 * Interleaving which is not a multiple of the click size
