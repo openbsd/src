@@ -11,6 +11,7 @@
 /*LINTLIBRARY*/
 
 #include <search.h>
+#include <stdlib.h>
 
 typedef struct node_t {
     char	  *key;
