@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.7 1998/06/26 09:14:40 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.8 1998/08/02 07:17:44 brian Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -36,6 +36,9 @@
 
 /* Maximum packet size */
 #define	TUNMTU		3000
+
+/* Maximum receive packet size (hard limit) */
+#define TUNMRU          16384
 
 /* ioctl's for get/set debug */
 #define	TUNSDEBUG	_IOW('t', 89, int)
