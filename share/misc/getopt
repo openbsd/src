@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt,v 1.3 2000/03/02 14:46:51 todd Exp $	*/
+/*	$OpenBSD: getopt,v 1.4 2001/07/15 20:54:20 pvalchev Exp $	*/
 /*
  * Main/getopt(3) fragment.
  *
@@ -33,6 +33,7 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: program [-abc] [-f file]\n");
+	extern char *__progname;
+	(void)fprintf(stderr, "usage: %s [-abc] [-f file]\n", __progname);
 	exit(1);
 }
