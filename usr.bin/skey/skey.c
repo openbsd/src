@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.20 2004/06/04 18:18:20 otto Exp $	*/
+/*	$OpenBSD: skey.c,v 1.21 2004/12/27 23:37:48 deraadt Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -120,7 +120,7 @@ main(int argc, char *argv[])
 		    " logged in via telnet.\n", stderr);
 		(void)fputs("Enter secret passphrase: ", stderr);
 		readpass(passwd, sizeof(passwd));
-		if (passwd[0] == '\0') 
+		if (passwd[0] == '\0')
 			exit(1);
 	}
 
