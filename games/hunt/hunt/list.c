@@ -1,9 +1,9 @@
-/*	$OpenBSD: list.c,v 1.3 2001/02/13 11:54:59 pjanzen Exp $	*/
+/*	$OpenBSD: list.c,v 1.4 2001/06/04 02:41:34 d Exp $	*/
 /*
- * Copyright 1999, David Leonard. All rights reserved.
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved. This software
- * is provided ``as is'' without express or implied warranty.
+ * Copyright 2001, David Leonard. All rights reserved.
+ * Redistribution and use in source and binary forms with or without
+ * modification are permitted provided that this notice is preserved.
+ * This software is provided ``as is'' without express or implied warranty.
  */
 
 #include <stdio.h>
@@ -30,7 +30,7 @@
 /* Wait at most 5 seconds for a reply */
 #define LIST_DELAY	5
 
-struct driver * drivers = NULL;
+struct driver *drivers = NULL;
 int numdrivers = 0;
 int maxdrivers = 0;
 
@@ -64,7 +64,7 @@ next_driver_fd(fd)
 	FD_ZERO(&r);
 	if (fd != -1) {
 		FD_SET(fd, &r);
-		maxfd =fd;
+		maxfd = fd;
 	}
 	for (i = 0; i < numprobes; i++) {
 		FD_SET(probe_sock[i], &r);
@@ -154,7 +154,7 @@ driver_name(driver)
 		}
 	}
 
-	return name ? name : NULL;
+	return name;
 }
 
 static int
@@ -213,7 +213,7 @@ probe_cleanup()
 void
 probe_drivers(req, preferred)
 	u_int16_t	req;
-	char *		preferred;
+	char 		*preferred;
 {
 	struct sockaddr_in *target;
 	struct sockaddr_in localhost;
