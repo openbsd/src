@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgetln.3,v 1.5 1999/09/15 21:26:58 aaron Exp $
+.\"	$OpenBSD: fgetln.3,v 1.6 1999/09/21 01:47:08 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,7 +128,8 @@ temporary buffer:
 		if (buf[len - 1] == '\en')
 			buf[len - 1] = '\e0';
 		else {
-			lbuf = (char *)malloc(len + 1);
+			if ((lbuf = (char *)malloc(len + 1)) == NULL)
+				err(1, NULL);
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\e0';
 			buf = lbuf;
