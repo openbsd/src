@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.38 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.39 2004/07/08 15:01:05 mcbride Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -431,6 +431,12 @@ fddi_output(ifp, m0, dst, rt0)
 #if NBPFILTER > 0
   queue_it:
 #endif
+	if (hdrcmplt)
+		bcopy((caddr_t)esrc, (caddr_t)fh->fddi_shost,
+		    sizeof(fh->fddi_shost));
+	else
+ 		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
+		    sizeof(fh->fddi_shost));
 #if NCARP > 0
 	if (ifp->if_carp) { 
 		int error;
@@ -439,13 +445,6 @@ fddi_output(ifp, m0, dst, rt0)
 			goto bad;
 	}
 #endif
-
-	if (hdrcmplt)
-		bcopy((caddr_t)esrc, (caddr_t)fh->fddi_shost,
-		    sizeof(fh->fddi_shost));
-	else
- 		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
-		    sizeof(fh->fddi_shost));
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
 	s = splimp();
