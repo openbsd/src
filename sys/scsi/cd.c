@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.90 1996/03/30 21:44:50 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.91 1996/04/22 01:46:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -62,7 +62,6 @@
 #include <sys/disk.h>
 #include <sys/cdio.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 #include <sys/conf.h>
 
 #include <scsi/scsi_all.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ch.c,v 1.4 1996/04/21 22:30:45 deraadt Exp $	*/
-/*	$NetBSD: ch.c,v 1.20 1996/04/03 00:25:39 thorpej Exp $	*/
+/*	$OpenBSD: ch.c,v 1.5 1996/05/02 13:17:50 deraadt Exp $	*/
+/*	$NetBSD: ch.c,v 1.21 1996/04/19 00:02:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -47,6 +47,7 @@
 #include <sys/chio.h> 
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_changer.h>
@@ -208,14 +209,15 @@ chopen(dev, flags, fmt, p)
 	 * since this might occur if e.g. a tape isn't actually
 	 * loaded in the drive.
 	 */
-	if (error = scsi_test_unit_ready(sc->sc_link,
-	    SCSI_IGNORE_NOT_READY|SCSI_IGNORE_MEDIA_CHANGE))
+	error = scsi_test_unit_ready(sc->sc_link,
+	    SCSI_IGNORE_NOT_READY|SCSI_IGNORE_MEDIA_CHANGE);
+	if (error)
 		goto bad;
 
 	/*
 	 * Make sure our parameters are up to date.
 	 */
-	if (error = ch_get_params(sc, 0))
+	if ((error = ch_get_params(sc, 0)) != 0)
 		goto bad;
 
 	return (0);
@@ -246,7 +248,6 @@ chioctl(dev, cmd, data, flags, p)
 	struct proc *p;
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
-	caddr_t elemdata;
 	int error = 0;
 
 	switch (cmd) {
@@ -475,7 +476,8 @@ ch_usergetelemstatus(sc, chet, uptr)
 	 * that the first one can fit into 1k.
 	 */
 	data = (caddr_t)malloc(1024, M_DEVBUF, M_WAITOK);
-	if (error = ch_getelemstatus(sc, sc->sc_firsts[chet], 1, data, 1024))
+	error = ch_getelemstatus(sc, sc->sc_firsts[chet], 1, data, 1024);
+	if (error)
 		goto done;
 
 	st_hdr = (struct read_element_status_header *)data;
@@ -493,8 +495,9 @@ ch_usergetelemstatus(sc, chet, uptr)
 	 */
 	free(data, M_DEVBUF);
 	data = (caddr_t)malloc(size, M_DEVBUF, M_WAITOK);
-	if (error = ch_getelemstatus(sc, sc->sc_firsts[chet],
-	    sc->sc_counts[chet], data, size))
+	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
+	    sc->sc_counts[chet], data, size);
+	if (error)
 		goto done;
 
 	/*
@@ -587,7 +590,8 @@ ch_get_params(sc, scsiflags)
 	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
 	    6000, NULL, scsiflags | SCSI_DATA_IN);
 	if (error) {
-		printf("%s: could not sense element address page\n");
+		printf("%s: could not sense element address page\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -615,7 +619,8 @@ ch_get_params(sc, scsiflags)
 	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
 	    6000, NULL, scsiflags | SCSI_DATA_IN);
 	if (error) {
-		printf("%s: could not sense capabilities page\n");
+		printf("%s: could not sense capabilities page\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
 	}
 
