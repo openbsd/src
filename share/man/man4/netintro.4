@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.15 1999/07/09 13:35:47 aaron Exp $
+.\"	$OpenBSD: netintro.4,v 1.16 2000/02/19 14:41:11 deraadt Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -130,9 +130,9 @@ the variant, which is discussed in the protocol family manual
 page alluded to above.
 .Bd -literal -offset indent
 struct sockaddr {
-	u_char	sa_len;
-    	u_char	sa_family;
-    	char	sa_data[14];
+	u_int8_t	sa_len;
+	sa_family_t	sa_family;
+	char		sa_data[14];
 };
 .Ed
 .Pp

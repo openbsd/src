@@ -71,10 +71,11 @@ Sockets bound to the Internet protocol family utilize
 the following addressing structure,
 .Bd -literal -offset indent
 struct sockaddr_in {
-	short	sin_family;
-	u_short	sin_port;
-	struct	in_addr sin_addr;
-	char	sin_zero[8];
+	u_int8_t	sin_len;
+	sa_family_t	sin_family;
+	in_port_t	sin_port;
+	struct		in_addr sin_addr;
+	int8_t		sin_zero[8];
 };
 .Ed
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ns.4,v 1.6 1999/07/09 13:35:47 aaron Exp $
+.\"	$OpenBSD: ns.4,v 1.7 2000/02/19 14:41:11 deraadt Exp $
 .\"	$NetBSD: ns.4,v 1.3 1994/11/30 16:22:26 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -86,7 +86,8 @@ Sockets in the Internet protocol family use the following
 addressing structure:
 .Bd -literal -offset indent
 struct sockaddr_ns {
-	short		sns_family;
+	u_char		sns_len;
+	u_char		sns_family;
 	struct ns_addr	sns_addr;
 	char		sns_zero[2];
 };
