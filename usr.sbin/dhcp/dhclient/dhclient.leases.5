@@ -1,4 +1,4 @@
-.\"	dhclient.conf.5
+.\"	$OpenBSD: dhclient.leases.5,v 1.5 2003/06/22 12:14:52 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,28 +35,39 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.TH dhclient.leases 5
-.SH NAME
-dhclient.leases - DHCP client lease database
-.SH DESCRIPTION
+.\"
+.Dd January 1, 1997
+.Dt DHCLIENT.LEASES 5
+.Os
+.Sh NAME
+.Nm dhclient.leases
+.Nd DHCP client lease database
+.Sh DESCRIPTION
 The Internet Software Consortium DHCP client keeps a persistent
-database of leases that it has acquired that are still valid.   The
-database is a free-form ASCII file containing one valid declaration
-per lease.   If more than one declaration appears for a given lease,
-the last one in the file is used.   The file is written as a log, so
-this is not an unusual occurrance.
-.PP
+database of leases that it has acquired that are still valid.
+The database is a free-form ASCII file containing one valid declaration
+per lease.
+If more than one declaration appears for a given lease,
+the last one in the file is used.
+The file is written as a log, so this is not an unusual occurrence.
+.Pp
 The format of the lease declarations is described in
-.B dhclient.conf(5).
-.SH FILES
-.B /var/db/dhclient.leases
-.SH SEE ALSO
-dhclient(8), dhcp-options(5), dhclient.conf(5), dhcpd(8),
-dhcpd.conf(5), RFC2132, RFC2131.
-.SH AUTHOR
-.B dhclient(8)
-was written by Ted Lemon <mellon@vix.com>
-under a contract with Vixie Labs.   Funding
-for this project was provided by the Internet Software Corporation.
+.Xr dhclient.conf 5 .
+.Sh FILES
+/var/db/dhclient.leases
+.Sh SEE ALSO
+.Xr dhclient.conf 5 ,
+.Xr dhcp-options 5 ,
+.Xr dhcpd.conf 5 ,
+.Xr dhclient 8 ,
+.Xr dhcpd 8
+.Pp
+RFC 2132, RFC 2131.
+.Sh AUTHORS
+.Xr dhclient 8
+was written by
+.An Ted Lemon Aq mellon@vix.com
+under a contract with Vixie Labs.
+Funding for this project was provided by the Internet Software Corporation.
 Information about the Internet Software Consortium can be found at
-.B http://www.isc.org/isc.
+.Pa http://www.isc.org/isc .
