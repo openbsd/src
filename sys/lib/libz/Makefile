@@ -1,17 +1,15 @@
-#	$OpenBSD: Makefile,v 1.4 2003/12/16 03:26:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/12/16 23:57:48 millert Exp $
 #	$NetBSD: Makefile,v 1.2 1997/01/22 01:36:30 cgd Exp $
 
 LIB=	z
 NOPIC=
 NOPROFILE=
 
-CPPFLAGS+=	-I. ${ZCPPFLAGS} -D_ZLIB_PRIVATE -DSLOW -DSMALL
+CPPFLAGS+=	-I. ${ZCPPFLAGS} -D_ZLIB_PRIVATE -DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP
 
 # files to be copied down from libz.
-LIBZSRCS= adler32.c crc32.c infblock.c infcodes.c \
-        inflate.c inftrees.c infutil.c
-LIBZHDRS= infblock.h infcodes.h inffixed.h inftrees.h infutil.h \
-	zconf.h zlib.h zutil.h
+LIBZSRCS= adler32.c crc32.c infback.c inflate.c inftrees.c
+LIBZHDRS= crc32.h inflate.h inffixed.h inftrees.h zconf.h zlib.h zutil.h
 
 # Other stuff
 SRCS=	${LIBZSRCS}
