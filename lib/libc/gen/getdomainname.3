@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdomainname.3,v 1.3 1996/12/03 00:28:39 deraadt Exp $
+.\"	$OpenBSD: getdomainname.3,v 1.4 1997/03/29 04:22:37 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,11 +33,11 @@
 .\"
 .Dd May 6, 1994
 .Dt GETDOMAINNAME 3
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm getdomainname ,
 .Nm setdomainname
-.Nd get/set domain name of current host
+.Nd get/set YP domain name of current host
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
@@ -46,7 +46,7 @@
 .Fn setdomainname "const char *name" "int namelen"
 .Sh DESCRIPTION
 .Fn Getdomainname
-returns the standard domain name for the current processor, as
+returns the YP domain name for the current processor, as
 previously set by
 .Fn setdomainname .
 The parameter
@@ -84,7 +84,9 @@ The caller tried to set the domain name and was not the super-user.
 .Sh SEE ALSO
 .Xr sysctl 2 ,
 .Xr gethostid 3 ,
-.Xr gethostname 3
+.Xr gethostname 3 ,
+.Xr domainname 1 ,
+.Xr yp 8
 .Sh BUGS
 Domain names are limited to
 .Dv MAXHOSTNAMELEN
@@ -95,4 +97,4 @@ characters, currently 256.
 The
 .Nm
 function call appeared in
-.Bx 4.2 .
+SunOS 3.x.
