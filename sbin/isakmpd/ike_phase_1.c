@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.8 1999/10/01 14:07:42 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.11 1999/09/29 22:05:38 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.9 2000/01/26 15:21:36 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.12 2000/01/25 06:13:15 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -790,11 +790,14 @@ ike_phase_1_send_ID (struct message *msg)
       SET_ISAKMP_ID_TYPE (buf, id_type);
       switch (id_type)
 	{
-#ifdef notyet
 	case IPSEC_ID_IPV4_ADDR:
-	  /* XXX not implemented yet.  */
+      	  msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
+
+      	  /* Already in network byteorder.  */
+      	  memcpy (buf + ISAKMP_ID_DATA_OFF,
+	      	  &((struct sockaddr_in *)src)->sin_addr.s_addr,
+	      	  sizeof (in_addr_t));
 	  break;
-#endif
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
 	  memcpy (buf + ISAKMP_ID_DATA_OFF, conf_get_str (my_id, "Name"), sz);
