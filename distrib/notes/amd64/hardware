@@ -1,5 +1,6 @@
-dnl	$OpenBSD: hardware,v 1.9 2004/03/18 20:44:25 grange Exp $
-OpenBSD/MACHINE OSREV should work on all Athlon 64-based designs.
+dnl	$OpenBSD: hardware,v 1.10 2004/03/20 18:13:29 miod Exp $
+OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
+compatible designs.
 
 OpenBSD does not currently support multiple processors (SMP), but will
 run using one processor on a multi-processor system board.
@@ -10,13 +11,13 @@ Supported hardware {:-include-:}:
 		and their clones
 	Buses
 		All standard PCI bus bridges
-		Both 16-bit PCMCIA Cards and newer 32-bit CardBus
-		support
+dnl		Both 16-bit PCMCIA Cards and newer 32-bit CardBus
+dnl		support
 		Universal Serial Bus (USB)
 	Bus Interfaces
 		Standard PCI-PCI bridges, including PCI expansion
 		backplanes
-		YENTA-compatible PCI-CardBus bridges
+dnl		YENTA-compatible PCI-CardBus bridges
 	Entropy Sources
 		Interrupt latency collection from many devices
 	PCI IDE and Serial ATA Controllers
@@ -46,11 +47,6 @@ Supported hardware {:-include-:}:
 		VIA Technologies VT82C586/A/B, VT82C596A/B, VT82C686A/B,
 		    VT8231, VT8366, VT8233, VT8235, VT8237
 	SCSI Host Adapters
-		Adaptec AIC-6260 and AIC-6360 based boards, including:
-		    the Adaptec AHA-152x and the SoundBlaster SCSI host adapter.
-		    (Note that you cannot boot from these boards if they do not
-		    have a boot ROM; only the AHA-152x and motherboards using
-		    this chip are likely to be bootable, consequently.)
 		Adaptec AIC-7770-based boards, including the Adaptec
 		    AHA-274x and AHA-284x families
 		Adaptec AHA-[23]94x[W] cards and some on-board PCI designs
@@ -66,8 +62,7 @@ Supported hardware {:-include-:}:
 		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160
 		AMD Am53c974 PCscsi-PCI SCSI controllers, including:
 		    Tekram DC-390
-		Buslogic BT-54x (Adaptec AHA-154x clones)
-		BusLogic 445, 74x, 9xx  (but not the new "FlashPoint" series
+		BusLogic 9xx  (but not the new "FlashPoint" series
 		    of BusLogic SCSI adapters)
 		Initio INIC-940 and INIC-950 based PCI SCSI host
 		  adapters, including:
@@ -80,7 +75,6 @@ Supported hardware {:-include-:}:
 		  PCI SCSI host adapters (including generic/no name cards, old
 		  ASUS cards, the DTC-3130 series, Diamond Fireport series,
 		  etc.)
-		Tekram DC-300B and DC-320E (Adaptec AHA-154x clones)
 		Tekram DC-3x5U (DC-315U, DC-395U/UW/F) TRM-S1040 based
 		  PCI SCSI host adapters
 	RAID and Cache Controllers
@@ -116,7 +110,8 @@ Supported hardware {:-include-:}:
 	Tape Drives
 		Most SCSI tape drives
 		Most SCSI tape changers
-	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
+	Display Adapters
+		VGA-compatible and SVGA Display Adapters.  (Note that not
 		all of the display adapters OpenBSD/MACHINE
 		are supported by X.  See the XFree86 FAQ for more
 		information.)
@@ -185,7 +180,6 @@ Supported hardware {:-include-:}:
 		    SUNIX 408x (2 port serial and 2 port parallel)
 		    SUNIX 409x (4 port serial and 2 port parallel)
 	Ethernet Adapters
-		3Com 3c509, 3c579, and 3c59x
 		3Com 3c9xx Etherlink XL adapters, including:
 		    3Com 3c900/3c900B PCI adapters
 		    3Com 3c905/3c905B/3c905C PCI adapters
@@ -344,55 +338,55 @@ Supported hardware {:-include-:}:
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		Compact Flash Adapters (will show up as PCMCIA adapters)
-		    Buffalo AirStation CF
-		    ELSA XI800 CF
-		PCMCIA Adapters
-		    3Com AirConnect 3CRWE737A PCMCIA
-		    ACTIONTEC HWC01170 PCMCIA
-		    Addtron AWP-100 PCMCIA
-		    Agere Orinoco PCMCIA
-		    Aironet 4500/4800 802.11DS PCMCIA and PCI
-		    BUFFALO AirStation PCMCIA
-		    Cabletron RoamAbout PCMCIA
-		    Cisco 340/350 802.11DS PCMCIA and PCI
-		    Compaq Agency NC5004 PCMCIA
-		    Contec FLEXLAN/FX-DS110-PCC PCMCIA
-		    Corega PCC-11 PCMCIA
-		    Corega PCCA-11 PCMCIA
-		    Corega PCCB-11 PCMCIA
-		    Corega CGWLPCIA11 PCMCIA
-		    Dlink DWL650 PCMCIA
-		    ELSA XI300 PCMCIA
-		    ELSA XI325 PCMCIA
-		    ELSA XI325H PCMCIA
-		    EMTAC A2424i PCMCIA
-		    Ericsson Wireless LAN CARD C11 PCMCIA
-		    Gemtek WL-311 PCMCIA
-		    Hawking Technology WE110P PCMCIA
-		    I-O DATA WN-B11/PCM PCMCIA
-		    Intel PRO/Wireless 2011 PCMCIA
-		    Intersil Prism II PCMCIA
-		    Linksys Instant Wireless WPC11 PCMCIA
-		    Linksys Instant Wireless WPC11 2.5 PCMCIA
-		    Linksys Instant Wireless WPC11 3.0 PCMCIA
-		    Lucent WaveLAN PCMCIA
-		    NANOSPEED ROOT-RZ2000 PCMCIA
-		    NEC CMZ-RT-WP PCMCIA
-		    Netgear MA401 PCMCIA
-		    Netgear MA401RA PCMCIA
-		    Nokia C020 Wireless LAN PCMCIA
-		    Nokia C110/C111 Wireless LAN PCMCIA
-		    NTT-ME 11Mbps Wireless LAN PCMCIA
-		    Proxim Harmony PCMCIA
-		    Proxim RangeLAN-DS PCMCIA
-		    RayLink Aviator2.4/Pro 802.11FH PCMCIA
-		    Samsung MagicLAN SWL-2000N PCMCIA
-		    SMC 2632 EZ Connect PCMCIA
-		    Symbol Spectrum24 PCMCIA
-		    TDK LAK-CD011WL PCMCIA
-		    US Robotics 2410 PCMCIA
-		    US Robotics 2445 PCMCIA
+dnl		Compact Flash Adapters (will show up as PCMCIA adapters)
+dnl		    Buffalo AirStation CF
+dnl		    ELSA XI800 CF
+dnl		PCMCIA Adapters
+dnl		    3Com AirConnect 3CRWE737A PCMCIA
+dnl		    ACTIONTEC HWC01170 PCMCIA
+dnl		    Addtron AWP-100 PCMCIA
+dnl		    Agere Orinoco PCMCIA
+dnl		    Aironet 4500/4800 802.11DS PCMCIA and PCI
+dnl		    BUFFALO AirStation PCMCIA
+dnl		    Cabletron RoamAbout PCMCIA
+dnl		    Cisco 340/350 802.11DS PCMCIA and PCI
+dnl		    Compaq Agency NC5004 PCMCIA
+dnl		    Contec FLEXLAN/FX-DS110-PCC PCMCIA
+dnl		    Corega PCC-11 PCMCIA
+dnl		    Corega PCCA-11 PCMCIA
+dnl		    Corega PCCB-11 PCMCIA
+dnl		    Corega CGWLPCIA11 PCMCIA
+dnl		    Dlink DWL650 PCMCIA
+dnl		    ELSA XI300 PCMCIA
+dnl		    ELSA XI325 PCMCIA
+dnl		    ELSA XI325H PCMCIA
+dnl		    EMTAC A2424i PCMCIA
+dnl		    Ericsson Wireless LAN CARD C11 PCMCIA
+dnl		    Gemtek WL-311 PCMCIA
+dnl		    Hawking Technology WE110P PCMCIA
+dnl		    I-O DATA WN-B11/PCM PCMCIA
+dnl		    Intel PRO/Wireless 2011 PCMCIA
+dnl		    Intersil Prism II PCMCIA
+dnl		    Linksys Instant Wireless WPC11 PCMCIA
+dnl		    Linksys Instant Wireless WPC11 2.5 PCMCIA
+dnl		    Linksys Instant Wireless WPC11 3.0 PCMCIA
+dnl		    Lucent WaveLAN PCMCIA
+dnl		    NANOSPEED ROOT-RZ2000 PCMCIA
+dnl		    NEC CMZ-RT-WP PCMCIA
+dnl		    Netgear MA401 PCMCIA
+dnl		    Netgear MA401RA PCMCIA
+dnl		    Nokia C020 Wireless LAN PCMCIA
+dnl		    Nokia C110/C111 Wireless LAN PCMCIA
+dnl		    NTT-ME 11Mbps Wireless LAN PCMCIA
+dnl		    Proxim Harmony PCMCIA
+dnl		    Proxim RangeLAN-DS PCMCIA
+dnl		    RayLink Aviator2.4/Pro 802.11FH PCMCIA
+dnl		    Samsung MagicLAN SWL-2000N PCMCIA
+dnl		    SMC 2632 EZ Connect PCMCIA
+dnl		    Symbol Spectrum24 PCMCIA
+dnl		    TDK LAK-CD011WL PCMCIA
+dnl		    US Robotics 2410 PCMCIA
+dnl		    US Robotics 2445 PCMCIA
 		PCI Adapters
 		    3Com AirConnect 3CRWE777A PCI
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
@@ -490,92 +484,92 @@ Supported hardware {:-include-:}:
 		    Hifn 7751 and 9751 reference boards
 		    Invertex AEON
 		SafeNet SafeXcel 1141/1741
-	PC Cards (PCMCIA and CardBus)
-		ATA cards, including:
-		    ATA/IDE card drives
-		    ATA/IDE CD-ROM adapters
-		    CF/ATA flash cards and disk drives
-		Ethernet adapters, including:
-		    3Com EtherLink and EtherLink XL-based LAN PC
-		    cards, including:
-			3Com 3c556, 3c562
-			3Com 3c574TX, 3c[CX]FE574BT
-			3Com 3c589, 3c589[BCDE]
-			3Com 3c575TX, 3c[CX]FE575[BC]T CardBus
-			3Com 3c[CX]FEM656, 3c[CX]FEM656[BC] CardBus
-		    Intel/DEC 21443 "Tulip" clones, including:
-			ADMtex AN985 Centaur-C CardBus
-			IBM EtherJet 10/100 CardBus
-			SMC EZ CardBus 10/100
-			Xircom X3201 CardBus adapters, including
-			  RealPort models
-		    Intel i8255x-based, including:
-			Intel PRO/100 CardBus II
-		    NE2000-based, including:
-			Accton EN2212, EN2216
-			Allied Telesis LA-PCM
-			AmbiCom AMB8002T
-			Arowana FE
-			Belkin F5D5020
-			Billionton Systems LNT-10TN
-			CNet NE2000
-			Compex Linkport ENET-B
-			Corega PCC-T, PCC-TD, EtherII PCC-T,
-			Corega FastEther PCC-T, FastEther PCC-TX
-			Corega FastEther PCC-TXD, FastEther PCC-TXF
-			D-Link DE-650, DE-660, DE-660+, DFE-670TXD
-			Dayna CommuniCard E
-			Digital DEPCM-XX
-			Dual NE2000
-			Edimax NE2000
-			Genius ME 3000II SE
-			Grey Cell GCS2000 Gold II
-			GVC NIC-2000p, NP0335
-			Hawking PN650TX
-			I-O DATA PCLA, PCLA/TE
-			IC-Card
-			Kingston KNE-PC2
-			Linksys PCMPC100, EC2T Combo, EthernetCard
-			Linksys Combo EthernetCard, Trust Combo EthernetCard
-			Linksys Etherfast 10/100
-			MACNICA ME1 for JEIDA
-			Melco LPC3-TX
-			National Semiconductor InfoMover
-			NDC Instant-Link
-			Netgear FA410TX, FA410TXC, FA411
-			Network Everywhere NP10T
-			New Media LiveWire 10/100
-			Planet SmartCom 2000
-			Planex FNW-3600-T, FNW-3700-T
-			Premax PE-200
-			RPTI EP-400, EP-401
-			Seiko Epson EN10B
-			SMC EZCard, 8041
-			Socket Communications LP-CF, LP-E
-			SVEC PN650TX, ComboCard, LANCard
-			Synergy S21810
-			Tamarack NE2000
-			Telecom Device TCD-HPC100
-			Wisecom T210CT, iPort
-			Xircom CFE-10
-		    RealTek 81[23]9-based, including:
-			Accton MPX5030 CardBus
-			Corega FEther CB-TXD 10/100 Ethernet
-			D-Link DFE-690TXD
-		    SMC 91Cxx-based, including:
-			Megahertz XJEM1144, CC10BT
-			SMC EtherEZ 8020BT
-		    Xircom, including:
-			Xircom CreditCard CE2
-		PCMCIA controllers, including:
-		    Intel i82365 and compatibles
-		SCSI host adapters, including:
-		    Adaptec SlimSCSI APA-14[56]0
-		Serial ports, including:
-		    Most modems, digital cellular modems, and serial
-		    cards should work
-		Wireless Ethernet adapters:
-		    See above
+dnl	PC Cards (PCMCIA and CardBus)
+dnl		ATA cards, including:
+dnl		    ATA/IDE card drives
+dnl		    ATA/IDE CD-ROM adapters
+dnl		    CF/ATA flash cards and disk drives
+dnl		Ethernet adapters, including:
+dnl		    3Com EtherLink and EtherLink XL-based LAN PC
+dnl		    cards, including:
+dnl			3Com 3c556, 3c562
+dnl			3Com 3c574TX, 3c[CX]FE574BT
+dnl			3Com 3c589, 3c589[BCDE]
+dnl			3Com 3c575TX, 3c[CX]FE575[BC]T CardBus
+dnl			3Com 3c[CX]FEM656, 3c[CX]FEM656[BC] CardBus
+dnl		    Intel/DEC 21443 "Tulip" clones, including:
+dnl			ADMtex AN985 Centaur-C CardBus
+dnl			IBM EtherJet 10/100 CardBus
+dnl			SMC EZ CardBus 10/100
+dnl			Xircom X3201 CardBus adapters, including
+dnl			  RealPort models
+dnl		    Intel i8255x-based, including:
+dnl			Intel PRO/100 CardBus II
+dnl		    NE2000-based, including:
+dnl			Accton EN2212, EN2216
+dnl			Allied Telesis LA-PCM
+dnl			AmbiCom AMB8002T
+dnl			Arowana FE
+dnl			Belkin F5D5020
+dnl			Billionton Systems LNT-10TN
+dnl			CNet NE2000
+dnl			Compex Linkport ENET-B
+dnl			Corega PCC-T, PCC-TD, EtherII PCC-T,
+dnl			Corega FastEther PCC-T, FastEther PCC-TX
+dnl			Corega FastEther PCC-TXD, FastEther PCC-TXF
+dnl			D-Link DE-650, DE-660, DE-660+, DFE-670TXD
+dnl			Dayna CommuniCard E
+dnl			Digital DEPCM-XX
+dnl			Dual NE2000
+dnl			Edimax NE2000
+dnl			Genius ME 3000II SE
+dnl			Grey Cell GCS2000 Gold II
+dnl			GVC NIC-2000p, NP0335
+dnl			Hawking PN650TX
+dnl			I-O DATA PCLA, PCLA/TE
+dnl			IC-Card
+dnl			Kingston KNE-PC2
+dnl			Linksys PCMPC100, EC2T Combo, EthernetCard
+dnl			Linksys Combo EthernetCard, Trust Combo EthernetCard
+dnl			Linksys Etherfast 10/100
+dnl			MACNICA ME1 for JEIDA
+dnl			Melco LPC3-TX
+dnl			National Semiconductor InfoMover
+dnl			NDC Instant-Link
+dnl			Netgear FA410TX, FA410TXC, FA411
+dnl			Network Everywhere NP10T
+dnl			New Media LiveWire 10/100
+dnl			Planet SmartCom 2000
+dnl			Planex FNW-3600-T, FNW-3700-T
+dnl			Premax PE-200
+dnl			RPTI EP-400, EP-401
+dnl			Seiko Epson EN10B
+dnl			SMC EZCard, 8041
+dnl			Socket Communications LP-CF, LP-E
+dnl			SVEC PN650TX, ComboCard, LANCard
+dnl			Synergy S21810
+dnl			Tamarack NE2000
+dnl			Telecom Device TCD-HPC100
+dnl			Wisecom T210CT, iPort
+dnl			Xircom CFE-10
+dnl		    RealTek 81[23]9-based, including:
+dnl			Accton MPX5030 CardBus
+dnl			Corega FEther CB-TXD 10/100 Ethernet
+dnl			D-Link DFE-690TXD
+dnl		    SMC 91Cxx-based, including:
+dnl			Megahertz XJEM1144, CC10BT
+dnl			SMC EtherEZ 8020BT
+dnl		    Xircom, including:
+dnl			Xircom CreditCard CE2
+dnl		PCMCIA controllers, including:
+dnl		    Intel i82365 and compatibles
+dnl		SCSI host adapters, including:
+dnl		    Adaptec SlimSCSI APA-14[56]0
+dnl		Serial ports, including:
+dnl		    Most modems, digital cellular modems, and serial
+dnl		    cards should work
+dnl		Wireless Ethernet adapters:
+dnl		    See above
 	Universal Serial Bus (USB) Devices
 		USB Audio
 		USB Diamond Multimedia Rio MP3 players
@@ -613,8 +607,7 @@ Supported hardware {:-include-:}:
 		VIA VT82C686A, VT8233, VT8235, VT8237 SouthBridge
 		    integrated AC'97 audio
 		Yamaha DS-XG
-		[The following drivers are not extensively tested:]
-		ProAudio Spectrum
+		[The following driver has not been extensively tested:]
 		S3 SonicVibes
 	Radio Receiver Devices
 		Brooktree 848/849/878/879-based TV tuner
