@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.28 2001/05/30 14:41:59 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.29 2001/06/22 20:51:04 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -171,6 +171,8 @@
 #define	TXP_CMD_ENABLE_RX_FILTER		0x58
 #define	TXP_CMD_RX_FILTER_CAPABILITY		0x59
 #define	TXP_CMD_HALT				0x5d
+#define	TXP_CMD_READ_IPSEC_INFO			0x54
+#define	TXP_CMD_GET_IPSEC_ENABLE		0x67
 #define	TXP_CMD_INVALID				0xffff
 
 #define	TXP_FRAGMENT		0x0000
