@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.46 2001/05/13 15:39:27 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.47 2001/05/13 15:56:09 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1038,9 +1038,9 @@ ubsec_callback(q)
 				    crd->crd_skip + crd->crd_len - 8, 8,
 				    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				/* XXX need last 8 bytes of encrypted data, and shove
-				 * it into ses_iv */
-				/* MISSING bcopy */
+				criov_copydata((struct criov *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - 8, 8,
+				    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
 			}
 			break;
 		}
