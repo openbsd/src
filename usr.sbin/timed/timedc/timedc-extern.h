@@ -1,4 +1,4 @@
-/*	$Id: timedc-extern.h,v 1.2 2001/04/07 20:02:09 ho Exp $	*/
+/*	$Id: timedc-extern.h,v 1.3 2001/11/23 03:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -41,10 +41,13 @@ void	bytehostorder(struct tsp *);
 void	bytenetorder(struct tsp *);
 void	clockdiff(int, char *[]);
 void	help(int, char *[]);
-void	intr(int);
 void	makeargv(void);
 void	msite(int, char *[]);
 int	priv_resources(void);
 void	quit(void);
 void	testing(int, char *[]);
 void	tracing(int, char *[]);
+
+void	sigintr(int);
+extern volatile sig_atomic_t gotintr;
+

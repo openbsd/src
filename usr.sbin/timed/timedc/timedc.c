@@ -1,4 +1,4 @@
-/*	$Id: timedc.c,v 1.4 2001/04/07 20:02:09 ho Exp $	*/
+/*	$Id: timedc.c,v 1.5 2001/11/23 03:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,14 +44,13 @@ static char sccsid[] = "@(#)timedc.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "timedc.h"
 #include <string.h>
 #include <signal.h>
 #include <ctype.h>
-#include <setjmp.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <syslog.h>
@@ -62,8 +61,10 @@ int	margc;
 int	fromatty;
 char	*margv[20];
 char	cmdline[200];
-jmp_buf	toplevel;
+
 static struct cmd *getcmd(char *);
+
+volatile sig_atomic_t gotintr;
 
 int
 main(int argc, char *argv[])
@@ -103,16 +104,27 @@ main(int argc, char *argv[])
 	}
 
 	fromatty = isatty(fileno(stdin));
-	if (setjmp(toplevel))
-		putchar('\n');
-	(void) signal(SIGINT, intr);
+	(void) signal(SIGINT, sigintr);
 	for (;;) {
+		if (gotintr) {
+			putchar('\n');
+			gotintr = 0;
+		}
 		if (fromatty) {
 			printf("timedc> ");
 			(void) fflush(stdout);
 		}
-		if (fgets(cmdline, sizeof(cmdline), stdin) == 0)
+
+		siginterrupt(SIGINT, 1);
+		if (fgets(cmdline, sizeof(cmdline), stdin) == NULL) {
+			if (errno == EINTR && gotintr) {
+				siginterrupt(SIGINT, 0);
+				continue;
+			}
 			quit();
+		}
+		siginterrupt(SIGINT, 0);
+
 		if (cmdline[0] == 0)
 			break;
 		makeargv();
@@ -137,14 +149,13 @@ main(int argc, char *argv[])
 }
 
 void
-intr(signo)
+sigintr(signo)
 	int signo;
 {
 	if (!fromatty)
-		exit(0);
-	longjmp(toplevel, 1);
+		_exit(0);
+	gotintr = 1;
 }
-
 
 static struct cmd *
 getcmd(char *name)

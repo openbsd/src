@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.10 2001/05/05 05:10:05 mickey Exp $	*/
+/*	$OpenBSD: timed.c,v 1.11 2001/11/23 03:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.10 $"
+#ident "$Revision: 1.11 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -81,6 +81,8 @@ int nnets;				/* nets I am connected to */
 FILE *fd;				/* trace file FD */
 
 jmp_buf jmpenv;
+
+volatile sig_atomic_t gotintr;
 
 struct netinfo *nettab = 0;
 struct netinfo *slavenet;

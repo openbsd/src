@@ -1,4 +1,4 @@
-/*	$Id: cmds.c,v 1.10 2001/04/07 20:02:09 ho Exp $	*/
+/*	$Id: cmds.c,v 1.11 2001/11/23 03:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.10 $"
+#ident "$Revision: 1.11 $"
 #endif
 
 #include "timedc.h"
@@ -49,6 +49,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #include <netinet/ip_icmp.h>
 
 #include <poll.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -98,38 +99,51 @@ daydiff(char *hostname)
 	for (trials = 0; trials < 10; trials++) {
 		/* ask for the time */
 		sec = 0;
+
+		siginterrupt(SIGINT, 1);
 		if (sendto(sock, &sec, sizeof(sec), 0,
 		    (struct sockaddr *)&dayaddr, sizeof(dayaddr)) < 0) {
+			if (errno == EINTR && gotintr)
+				goto bail;
+			siginterrupt(SIGINT, 0);
 			perror("sendto(sock)");
-			return (0);
+			goto bail;
 		}
+		siginterrupt(SIGINT, 0);
 
 		for (;;) {
 			pfd.fd = sock;
 			pfd.events = POLLIN;
 			i = poll(&pfd, 1, 2 * 1000);
 			if (i < 0) {
-				if (errno == EINTR)
+				if (errno == EINTR) {
+					if (gotintr)
+						goto bail;
 					continue;
+				}
 				perror("poll(date read)");
-				return (0);
+				goto bail;
 			}
 			if (i == 0)
 				break;
 
 			fromlen = sizeof(from);
+			siginterrupt(SIGINT, 1);
 			if (recvfrom(sock, &sec, sizeof(sec), 0,
 			    (struct sockaddr *)&from, &fromlen) < 0) {
+				if (errno == EINTR && gotintr)
+					goto bail;
+				siginterrupt(SIGINT, 0);
 				perror("recvfrom(date read)");
-				return (0);
+				goto bail;
 			}
+			siginterrupt(SIGINT, 0);
 
 			sec = ntohl(sec);
 			if (sec < BU) {
-				fprintf(stderr,
-				    "%s says it is before 1970: %lu",
+				fprintf(stderr, "%s says it is before 1970: %lu",
 				    hostname, sec);
-				return (0);
+				goto bail;
 			}
 			sec -= BU;
 
@@ -140,6 +154,9 @@ daydiff(char *hostname)
 
 	/* if we get here, we tried too many times */
 	fprintf(stderr,"%s will not tell us the date\n", hostname);
+
+bail:
+	siginterrupt(SIGINT, 0);	
 	return (0);
 }
 
@@ -194,13 +211,22 @@ clockdiff(argc, argv)
 
 	measure_status = 0;
 	while (argc > 1) {
-		argc--; argv++;
+		argc--;
+		argv++;
+
+		siginterrupt(SIGINT, 1);
 		hp = gethostbyname(*argv);
 		if (hp == NULL) {
+			if (errno == EINTR && gotintr) {
+				siginterrupt(SIGINT, 0);
+				return;
+			}
+			siginterrupt(SIGINT, 0);
 			fprintf(stderr, "timedc: %s: ", *argv);
 			herror(0);
 			continue;
 		}
+		siginterrupt(SIGINT, 0);
 
 		server.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, &server.sin_addr.s_addr, hp->h_length);
@@ -258,7 +284,6 @@ clockdiff(argc, argv)
 			    hp->h_name, -measure_delta, myname);
 		}
 	}
-	return;
 }
 
 
@@ -268,14 +293,12 @@ clockdiff(argc, argv)
 void
 msite(int argc, char *argv[])
 {
-	struct sockaddr_in dest;
-	struct sockaddr_in from;
-	struct tsp msg;
+	struct sockaddr_in dest, from;
 	struct servent *srvp;
+	int i, length, cc;
 	struct pollfd pfd;
+	struct tsp msg;
 	char *tgtname;
-	int i, length;
-	int cc;
 
 	if (argc < 1) {
 		printf("Usage: msite [hostname]\n");
@@ -287,41 +310,62 @@ msite(int argc, char *argv[])
 		fprintf(stderr, "udp/timed: unknown service\n");
 		return;
 	}
+	memset(&dest, 0, sizeof dest);
 	dest.sin_port = srvp->s_port;
 	dest.sin_family = AF_INET;
 
 	(void)gethostname(myname, sizeof(myname));
 	i = 1;
+
 	do {
 		tgtname = (i >= argc) ? myname : argv[i];
+		siginterrupt(SIGINT, 1);
 		hp = gethostbyname(tgtname);
 		if (hp == 0) {
+			if (errno == EINTR && gotintr)
+				goto bail;
+			siginterrupt(SIGINT, 0);
 			fprintf(stderr, "timedc: %s: ", tgtname);
 			herror(0);
 			continue;
 		}
-		bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
 
+		bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
 		(void)strlcpy(msg.tsp_name, myname, sizeof msg.tsp_name);
 		msg.tsp_type = TSP_MSITE;
 		msg.tsp_vers = TSPVERSION;
 		bytenetorder(&msg);
+
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
 		    (struct sockaddr *)&dest, sizeof(dest)) < 0) {
+			if (errno == EINTR && gotintr)
+				goto bail;
+			siginterrupt(SIGINT, 0);
 			perror("sendto");
 			continue;
 		}
 
 		pfd.fd = sock;
 		pfd.events = POLLIN;
-		if (poll(&pfd, 1, 15 * 1000)) {
+		switch (poll(&pfd, 1, 15 * 1000)) {
+		case -1:
+			if (errno == EINTR && gotintr)
+				goto bail;
+			siginterrupt(SIGINT, 0);
+			continue;
+		case 1:
 			length = sizeof(from);
 			cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 			    (struct sockaddr *)&from, &length);
 			if (cc < 0) {
+				if (errno == EINTR && gotintr)
+					goto bail;
+				siginterrupt(SIGINT, 0);
 				perror("recvfrom");
 				continue;
 			}
+			siginterrupt(SIGINT, 0);
+
 			if (cc < sizeof(struct tsp)) {
 				fprintf(stderr,
 				    "short packet (%u/%u bytes) from %s\n",
@@ -341,10 +385,16 @@ msite(int argc, char *argv[])
 					printf("received wrong ack: %s\n",
 					    tsptype[msg.tsp_type]);
 			}
-		} else {
+			break;
+		case 0:
+			siginterrupt(SIGINT, 0);
 			printf("communication error with %s\n", tgtname);
+			break;
 		}
 	} while (++i < argc);
+
+bail:
+	siginterrupt(SIGINT, 0);
 }
 
 /*
@@ -381,14 +431,23 @@ testing(int argc, char *argv[])
 	}
 
 	while (argc > 1) {
-		argc--; argv++;
+		argc--;
+		argv++;
+
+		siginterrupt(SIGINT, 1);
 		hp = gethostbyname(*argv);
 		if (hp == NULL) {
+			if (errno == EINTR && gotintr)
+				goto bail;
+			siginterrupt(SIGINT, 0);
 			fprintf(stderr, "timedc: %s: ", *argv);
 			herror(0);
-			argc--; argv++;
+			argc--;
+			argv++;
 			continue;
 		}
+
+		memset(&sin, 0, sizeof sin);
 		sin.sin_port = srvp->s_port;
 		sin.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, &sin.sin_addr.s_addr, hp->h_length);
@@ -398,11 +457,17 @@ testing(int argc, char *argv[])
 		(void)gethostname(myname, sizeof(myname));
 		(void)strncpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
 		bytenetorder(&msg);
+
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
 		    (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+			if (errno == EINTR && gotintr)
+				goto bail;
+			siginterrupt(SIGINT, 0);
 			perror("sendto");
 		}
 	}
+bail:
+	siginterrupt(SIGINT, 0);
 }
 
 
@@ -430,11 +495,17 @@ tracing(int argc, char *argv[])
 		fprintf(stderr, "udp/timed: unknown service\n");
 		return;
 	}
+
+	memset(&dest, 0, sizeof dest);
 	dest.sin_port = srvp->s_port;
 	dest.sin_family = AF_INET;
 
 	(void)gethostname(myname,sizeof(myname));
+	siginterrupt(SIGINT, 1);
 	hp = gethostbyname(myname);
+	if (hp == NULL && errno == EINTR && gotintr)
+		goto bail;
+
 	bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
 
 	if (strcmp(argv[1], "on") == 0) {
@@ -450,24 +521,32 @@ tracing(int argc, char *argv[])
 	bytenetorder(&msg);
 	if (sendto(sock, &msg, sizeof(struct tsp), 0,
 	    (struct sockaddr *)&dest, sizeof(dest)) < 0) {
+		if (errno == EINTR && gotintr)
+			goto bail;
+		siginterrupt(SIGINT, 0);
 		perror("sendto");
 		return;
 	}
 
 	pfd.fd = sock;
 	pfd.events = POLLIN;
-	if (poll(&pfd, 1, 5 * 1000)) {
+	switch (poll(&pfd, 1, 5 * 1000)) {
+	case 1:
 		length = sizeof(from);
 		cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 		    (struct sockaddr *)&from, &length);
 		if (cc < 0) {
+			if (errno == EINTR && gotintr)
+				goto bail;
+			siginterrupt(SIGINT, 0);
 			perror("recvfrom");
 			return;
 		}
+		siginterrupt(SIGINT, 0);
 		if (cc < sizeof(struct tsp)) {
 			fprintf(stderr, "short packet (%u/%u bytes) from %s\n",
 			    cc, sizeof(struct tsp), inet_ntoa(from.sin_addr));
-			return;
+			goto bail;
 		}
 		bytehostorder(&msg);
 		if (msg.tsp_type == TSP_ACK) {
@@ -483,8 +562,14 @@ tracing(int argc, char *argv[])
 				printf("wrong ack received: %s\n",
 				    tsptype[msg.tsp_type]);
 		}
-	} else
+		break;
+	case 0:
+		siginterrupt(SIGINT, 0);
 		printf("communication error\n");
+		break;
+	}
+bail:
+	siginterrupt(SIGINT, 0);
 }
 
 int
@@ -498,7 +583,7 @@ priv_resources()
 		return (-1);
 	}
 
-	bzero(&sin, sizeof sin);
+	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	if (bindresvport(sock, &sin) < 0) {

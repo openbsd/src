@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.4 2001/05/05 05:10:04 mickey Exp $	*/
+/*	$OpenBSD: measure.c,v 1.5 2001/11/23 03:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)measure.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"
@@ -101,7 +101,6 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 		}
 	}
 
-
 	/*
 	 * empty the icmp input queue
 	 */
@@ -111,10 +110,16 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 		FD_SET(sock_raw, &ready);
 		if (select(sock_raw+1, &ready, 0,0, &tout)) {
 			length = sizeof(struct sockaddr_in);
+			siginterrupt(SIGINT, 1);
 			cc = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
-				      0,&length);
-			if (cc < 0)
+			    0, &length);
+			if (cc < 0) {
+				if (errno == EINTR && gotintr)
+					goto bail;
+				siginterrupt(SIGINT, 0);
 				goto quit;
+			}
+			siginterrupt(SIGINT, 0);
 			continue;
 		}
 		break;
@@ -161,14 +166,19 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 			oicp->icmp_cksum = in_cksum((u_short*)oicp,
 						    sizeof(*oicp));
 
+			siginterrupt(SIGINT, 1);
 			count = sendto(sock_raw, opacket, sizeof(*oicp), 0,
 				       (struct sockaddr*)addr,
 				       sizeof(struct sockaddr));
 			if (count < 0) {
+				if (errno == EINTR && gotintr)
+					goto bail;
+				siginterrupt(SIGINT, 0);
 				if (measure_status == HOSTDOWN)
 					measure_status = UNREACHABLE;
 				goto quit;
 			}
+			siginterrupt(SIGINT, 0);
 			++oicp->icmp_seq;
 
 			timeradd(&tcur, &twait, &ttrans);
@@ -189,10 +199,16 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 				break;
 
 			length = sizeof(struct sockaddr_in);
+			siginterrupt(SIGINT, 1);
 			cc = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
 				      0,&length);
-			if (cc < 0)
+			if (cc < 0) {
+				if (errno == EINTR && gotintr)
+					goto bail;
+				siginterrupt(SIGINT, 0);
 				goto quit;
+			}
+			siginterrupt(SIGINT, 0);
 
 			/*
 			 * got something.  See if it is ours
@@ -204,7 +220,6 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 			    || icp->icmp_seq < seqno
 			    || icp->icmp_seq >= oicp->icmp_seq)
 				continue;
-
 
 			sendtime = ntohl(icp->icmp_otime);
 			recvtime = ((tcur.tv_sec % SECDAY) * 1000 +
@@ -294,11 +309,10 @@ quit:
 	}
 
 	return(measure_status);
+bail:
+	siginterrupt(SIGINT, 0);
+	return (0);
 }
-
-
-
-
 
 /*
  * round a number of milliseconds into a struct timeval
