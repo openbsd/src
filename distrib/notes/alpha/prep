@@ -56,6 +56,11 @@ Using the SRM console:
 			this "bsd" will be loaded.
 	boot_osflags	Flags to pass in to the kernel.  For multiuser
 			boot this needs to be set to "-a".
+	booted_osflags	Don't try to set this one directly.  It will
+			contain whatever flags the OS was last booted
+			with.  To set indirectly, boot with the -flags
+			option, eg: "b dka0 -flags a" will boot into
+			multi-user and set booted_osflags to "a".
     To see a list of all variables on your machine use the "show"
     command with no arguments.
 
