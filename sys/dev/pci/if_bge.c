@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.51 2005/01/17 03:00:27 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.52 2005/03/04 00:55:44 krw Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2666,6 +2666,13 @@ bge_encap(sc, m_head, txidx)
 	if (frag == sc->bge_tx_saved_considx)
 		return(ENOBUFS);
 
+	/*
+	 * Put the dmamap for this transmission at the same array index as the
+	 * last descriptor in this chain. That's where bge_txeof() expects to
+	 * find it.
+	 */
+	sc->bge_cdata.bge_tx_map[*txidx] = sc->bge_cdata.bge_tx_map[cur];
+	sc->bge_cdata.bge_tx_map[cur] = txmap;
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
 	sc->bge_cdata.bge_tx_chain[cur] = m_head;
 	sc->bge_txcnt += cnt;

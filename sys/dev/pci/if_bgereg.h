@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.18 2004/12/26 22:48:31 brad Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.19 2005/03/04 00:55:44 krw Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2232,11 +2232,6 @@ struct bge_type {
 struct bge_jpool_entry {
 	int                             slot;
 	LIST_ENTRY(bge_jpool_entry)	jpool_entries;
-};
-
-struct bge_bcom_hack {
-	int			reg;
-	int			val;
 };
 
 struct bge_softc {
