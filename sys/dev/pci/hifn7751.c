@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.122 2002/07/05 21:21:17 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.123 2002/07/16 21:27:39 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1575,6 +1575,9 @@ err_dstmap1:
 	if (cmd->src_map != cmd->dst_map)
 		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
 err_srcmap:
+	if (crp->crp_flags & CRYPTO_F_IMBUF &&
+	    cmd->srcu.src_m != cmd->dstu.dst_m)
+		m_freem(cmd->dstu.dst_m);
 	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
 err_srcmap1:
 	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
@@ -2176,7 +2179,6 @@ hifn_callback(sc, cmd, macbuf)
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		if (cmd->srcu.src_m != cmd->dstu.dst_m) {
-			m_freem(cmd->srcu.src_m);
 			crp->crp_buf = (caddr_t)cmd->dstu.dst_m;
 			totlen = cmd->src_map->dm_mapsize;
 			for (m = cmd->dstu.dst_m; m != NULL; m = m->m_next) {
@@ -2188,6 +2190,7 @@ hifn_callback(sc, cmd, macbuf)
 			}
 			cmd->dstu.dst_m->m_pkthdr.len =
 			    cmd->srcu.src_m->m_pkthdr.len;
+			m_freem(cmd->srcu.src_m);
 		}
 	}
 
