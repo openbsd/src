@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.3 2004/03/14 12:23:49 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.4 2004/03/14 19:23:33 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ oosiop_attach(struct oosiop_softc *sc)
 	sc->sc_link.adapter = &oosiop_adapter;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.device = &oosiop_dev;
-	sc->sc_link.openings = 4;
+	sc->sc_link.openings = 1;	/* XXX */
 	sc->sc_link.adapter_buswidth = OOSIOP_NTGT;
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.quirks = ADEV_NODOORLOCK;
