@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.4 2003/06/02 20:18:32 millert Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.5 2003/12/25 18:49:07 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -51,7 +51,7 @@ ENTRY(brk)
 	ld	[%o5 + minbrk], %o4
 	ld	[%o4], %o1		! %o1 = minbrk
 	cmp	%o1, %o0		! if (minbrk > %o0)
-	bg,a	0f
+	bgu,a	0f
 	 mov	%o1, %o0		!	%o0 = minbrk
 0:
 	mov	%o0, %o2		! save argument to syscall
@@ -68,7 +68,7 @@ ENTRY(brk)
 	sethi	%hi(minbrk), %o1	! %o1 = minbrk
 	ld	[%o1 + %lo(minbrk)], %o1
 	cmp	%o1, %o0		! if (minbrk > %o0)
-	bg,a	0f
+	bgu,a	0f
 	 mov	%o1, %o0		!	%o0 = minbrk
 0:
 	mov	%o0, %o2		! save argument to syscall

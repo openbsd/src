@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.3 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: brk.S,v 1.4 2003/12/25 18:49:07 miod Exp $	*/
 /*	$NetBSD: brk.S,v 1.9 2000/07/25 20:15:40 mycroft Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ ENTRY(_brk)
 	ldx	[%o5 + %o4], %o4
 	ldx	[%o4], %o1		/* %o1 = minbrk */
 	cmp	%o1, %o0		/* if (minbrk > %o0) */
-	movg	%xcc, %o1, %o0		/*	%o0 = minbrk */
+	movgu	%xcc, %o1, %o0		/*	%o0 = minbrk */
 	mov	%o0, %o2		/* save argument to syscall */
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
@@ -74,7 +74,7 @@ ENTRY(_brk)
 	sethi	%hi(_C_LABEL(minbrk)), %o1	/* %o1 = minbrk */
 	ldx	[%o1 + %lo(_C_LABEL(minbrk))], %o1
 	cmp	%o1, %o0		/* if (minbrk > %o0) */
-	movg	%xcc, %o1, %o0		/*	%o0 = minbrk */
+	movgu	%xcc, %o1, %o0		/*	%o0 = minbrk */
 	mov	%o0, %o2		/* save argument to syscall */
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
