@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.29 2000/10/08 22:46:55 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.30 2000/10/10 15:10:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -151,7 +151,11 @@ extern int errno;
  * point to custom terminfo/termcap locations.
  */
 #ifdef USE_ROOT_ENVIRON
+#ifdef __OpenBSD__
+#define use_terminfo_vars() (!issetugid())
+#else
 #define use_terminfo_vars() 1
+#endif
 #else
 #define use_terminfo_vars() _nc_env_access()
 extern int _nc_env_access(void);

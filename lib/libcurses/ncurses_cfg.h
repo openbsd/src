@@ -132,6 +132,7 @@
 #define USE_DATABASE 1
 #define USE_GETCAP 1
 #define USE_HASHMAP 1
+#define USE_ROOT_ENVIRON 1
 /* #define USE_SIGWINCH 1 */
 
 #include <ncurses_def.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.12 2000/10/08 22:47:05 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.13 2000/10/10 15:10:32 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -256,16 +256,19 @@ check_pending(void)
 	    have_pending = TRUE;
 	}
 #elif HAVE_SELECT
-	fd_set fdset;
+	fd_set *fdset;
 	struct timeval ktimeout;
 
 	ktimeout.tv_sec =
 	    ktimeout.tv_usec = 0;
 
-	FD_ZERO(&fdset);
-	FD_SET(SP->_checkfd, &fdset);
-	if (select(SP->_checkfd + 1, &fdset, NULL, NULL, &ktimeout) != 0) {
-	    have_pending = TRUE;
+	fdset = calloc(howmany(SP->_checkfd + 1, NFDBITS), sizeof(fd_mask));
+	if (fdset != NULL) {
+	    FD_SET(SP->_checkfd, fdset);
+	    if (select(SP->_checkfd + 1, fdset, NULL, NULL, &ktimeout) != 0) {
+		have_pending = TRUE;
+	    }
+	    free(fdset);
 	}
 #endif
     }

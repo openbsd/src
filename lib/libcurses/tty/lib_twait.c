@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_twait.c,v 1.6 2000/10/08 22:47:05 millert Exp $	*/
+/*	$OpenBSD: lib_twait.c,v 1.7 2000/10/10 15:10:32 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -116,7 +116,10 @@ _nc_timed_wait(int mode, int milliseconds, int *timeleft)
     struct pollfd fds[2];
 #elif defined(__BEOS__)
 #elif HAVE_SELECT
-    static fd_set set;
+    static fd_set *set;
+    static size_t setsize;
+    size_t nsetsize;
+    int readfd;
 #endif
 
     long starttime, returntime;
@@ -180,29 +183,38 @@ _nc_timed_wait(int mode, int milliseconds, int *timeleft)
 	milliseconds = 0;
     }
 #elif HAVE_SELECT
+    if (mode & 1) {
+	count = SP->_ifd;
+	readfd = SP->_ifd;
+    }
+    if ((mode & 2) && (fd = SP->_mouse_fd) >= 0) {
+	count = max(fd, count);
+	readfd = fd;
+    }
+
+    /*
+     * grow set as needed.
+     */
+    nsetsize = howmany(count, NFDBITS) * sizeof(fd_mask);
+    if (setsize == 0 || setsize < nsetsize) {
+	setsize = nsetsize;
+	set = _nc_doalloc(set, setsize);
+    }
+
     /*
      * select() modifies the fd_set arguments; do this in the
      * loop.
      */
-    FD_ZERO(&set);
-
-    if (mode & 1) {
-	FD_SET(SP->_ifd, &set);
-	count = SP->_ifd + 1;
-    }
-    if ((mode & 2)
-	&& (fd = SP->_mouse_fd) >= 0) {
-	FD_SET(fd, &set);
-	count = max(fd, count) + 1;
-    }
+    memset(set, 0, setsize);
+    FD_SET(readfd, set);
 
     if (milliseconds >= 0) {
 	struct timeval ntimeout;
 	ntimeout.tv_sec = milliseconds / 1000;
 	ntimeout.tv_usec = (milliseconds % 1000) * 1000;
-	result = select(count, &set, NULL, NULL, &ntimeout);
+	result = select(count + 1, set, NULL, NULL, &ntimeout);
     } else {
-	result = select(count, &set, NULL, NULL, NULL);
+	result = select(count + 1, set, NULL, NULL, NULL);
     }
 #endif
 
@@ -253,10 +265,10 @@ _nc_timed_wait(int mode, int milliseconds, int *timeleft)
 #elif HAVE_SELECT
 	    if ((mode & 2)
 		&& (fd = SP->_mouse_fd) >= 0
-		&& FD_ISSET(fd, &set))
+		&& FD_ISSET(fd, set))
 		result |= 2;
 	    if ((mode & 1)
-		&& FD_ISSET(SP->_ifd, &set))
+		&& FD_ISSET(SP->_ifd, set))
 		result |= 1;
 #endif
 	} else

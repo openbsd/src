@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.16 2000/10/08 22:46:54 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.17 2000/10/10 15:10:29 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -696,9 +696,8 @@ This is a list of filenames separated by colons (i.e., ":").
 If the TERMPATH symbol is not set, \fBcurses\fR looks in the files
 /etc/termcap, /usr/share/termcap and $HOME/.termcap, in that order.
 .PP  
-The library may be configured to disregard the following variables when the
-current user is the superuser (root), or if the application uses setuid or
-setgid permissions:
+The library will disregard the following variables when the
+application uses setuid or setgid permissions:
 $TERMCAP, $TERMINFO, $TERMINFO_DIRS, $TERMPATH, as well as $HOME.
 .SH FILES
 .TP 5
