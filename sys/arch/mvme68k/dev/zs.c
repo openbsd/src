@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.19 2004/07/31 22:27:34 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.20 2004/09/15 05:57:39 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -44,6 +44,10 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
+
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -857,6 +861,15 @@ zs_extint(zp)
 
 	rr0 = ZREAD0(&zp->scc);
 	ZWRITE0(&zp->scc, 0x10);/* reset ext/status int */
+
+	/* Handle break */
+	if (rr0 & 0x80) {
+#ifdef DDB
+		if (ISSET(zp->flags, ZS_CONSOLE) && db_console != 0)
+			Debugger();
+#endif
+	}
+
 	if ((tp->t_cflag & CCTS_OFLOW) != 0) {
 		if ((rr0 & 0x20) == 0)
 			zp->hflags |= ZH_OBLOCK;
