@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.54 2000/09/25 10:00:28 provos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.55 2000/10/10 16:00:21 itojun Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -177,6 +177,7 @@ privilege can change the value.
 .It net.inet.ip.mtudisctimeout	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
+.It net.inet.icmp.errppslimit	integer	yes
 .It net.inet.ipip.allow	integer	yes
 .It net.inet.etherip.allow	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
@@ -213,7 +214,6 @@ privilege can change the value.
 .It net.inet6.ip6.rr_prune	integer	yes
 .It net.inet6.icmp6.rediraccept	integer	yes
 .It net.inet6.icmp6.redirtimeout	integer	yes
-.It net.inet6.icmp6.errratelimit	integer	yes
 .It net.inet6.icmp6.nd6_prune	integer	yes
 .It net.inet6.icmp6.nd6_delay	integer	yes
 .It net.inet6.icmp6.nd6_umaxtries	integer	yes
