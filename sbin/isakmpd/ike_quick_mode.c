@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.44 2001/02/08 22:37:34 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.45 2001/02/19 16:58:04 angelos Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   char **principal = NULL;
   int i, result = 0, nprinc = 0;
   int *x509_ids = NULL, *keynote_ids = NULL;
+  unsigned char hashbuf[20]; /* Set to the largest digest result */
 #ifdef USE_X509
   struct keynote_deckey dc;
   X509_NAME *subject;
@@ -194,7 +195,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
        * For shared keys, just duplicate the passphrase with the
        * appropriate prefix tag.
        */
-      nprinc = 1;
+      nprinc = 3;
       principal = calloc (nprinc, sizeof(*principal));
       if (principal == NULL)
         {
@@ -209,13 +210,42 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
         {
 	  log_print ("check_policy: failed to allocate %d bytes",
 		     isakmp_sa->recv_certlen + 1 + strlen ("passphrase:"));
-	  free (principal);
 	  goto policydone;
 	}
 
       strcpy (principal[0], "passphrase:");
       memcpy (principal[0] + strlen ("passphrase:"), isakmp_sa->recv_cert,
 	      isakmp_sa->recv_certlen);
+
+      principal[1] = calloc (strlen ("passphrase-md5-hex:") +
+			     32 + 1, sizeof (char));
+      if (principal[1] == NULL)
+        {
+	    log_print ("check_policy: failed to allocate %d bytes",
+		       strlen ("passphrase-md5-hex:") + 33);
+	    goto policydone;
+	}
+
+      strcpy (principal[1], "passphrase-md5-hex:");
+      MD5 (isakmp_sa->recv_cert, isakmp_sa->recv_certlen, hashbuf);
+      for (i = 0; i < 16; i++)
+	sprintf (principal[1] + (2 * i) + strlen ("passphrase-md5-hex:"),
+		 "%02x", hashbuf[i]);
+      
+      principal[2] = calloc (strlen ("passphrase-sha1-hex:") +
+			     32 + 1, sizeof (char));
+      if (principal[2] == NULL)
+        {
+	    log_print ("check_policy: failed to allocate %d bytes",
+		       strlen ("passphrase-sha1-hex:") + 33);
+	    goto policydone;
+	}
+
+      strcpy (principal[2], "passphrase-sha1-hex:");
+      SHA1 (isakmp_sa->recv_cert, isakmp_sa->recv_certlen, hashbuf);
+      for (i = 0; i < 20; i++)
+	sprintf (principal[2] + (2 * i) + strlen ("passphrase-sha1-hex:"),
+		 "%02x", hashbuf[i]);
       break;
 
     case ISAKMP_CERTENC_KEYNOTE:
@@ -236,7 +266,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
         {
 	  log_print ("check_policy: failed to allocate %d bytes",
 		     strlen (isakmp_sa->recv_key));
-	  free (principal);
 	  goto policydone;
 	}
 #endif
@@ -267,7 +296,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	{
 	  log_print ("check_policy: failed to get memory for public key");
 	  LC (RSA_free, (key));
-	  free (principal);
 	  goto policydone;
 	}
 
@@ -275,7 +303,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
 	  LC (RSA_free, (key));
-	  free (principal);
 	  goto policydone;
 	}
 
@@ -284,8 +311,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       if (principal[1] == NULL)
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
-	  free (principal[0]);
-	  free (principal);
 	  LC (RSA_free, (key));
 	  goto policydone;
 	}
@@ -305,8 +330,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
           if (principal[1] == NULL)
             {
 	      log_print ("check_policy: failed to allocate memory for principal[1]");
-	      free (principal[0]);
-	      free (principal);
 	      LC (RSA_free, (key));
 	      goto policydone;
             }
@@ -343,28 +366,21 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    */
   for (i = 0; i < nprinc; i++)
     {
-      LOG_DBG ((LOG_MISC, 40, "check_policy: adding authorizer [%s]", principal[i]));
+      LOG_DBG ((LOG_MISC, 40, "check_policy: adding authorizer [%s]",
+		principal[i]));
+
       if (LK (kn_add_authorizer, (isakmp_sa->policy_id, principal[i])) == -1)
         {
 	  int j;
 
 	  for (j = 0; j < i; j++)
-	    {
-		LK (kn_remove_authorizer, (isakmp_sa->policy_id,
-					   principal[j]));
-		free (principal[j]);
-	    }
-
-	  for (; j < nprinc; j++)
-	    free (principal[j]);
-
-	  free (principal);
+	    LK (kn_remove_authorizer, (isakmp_sa->policy_id, principal[j]));
 	  log_print ("check_policy: kn_add_authorizer failed");
 	  goto policydone;
 	}
     }
 
-  /* Ask policy.  */
+  /* Ask policy */
   result = LK (kn_do_query, (isakmp_sa->policy_id, return_values,
 			     RETVALUES_NUM));
   LOG_DBG ((LOG_MISC, 40, "check_policy: kn_do_query returned %d", result));
@@ -372,7 +388,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   /* Cleanup environment */
   LK (kn_cleanup_action_environment, (isakmp_sa->policy_id));
 
-  /* Remove authorizers from the session.  */
+  /* Remove authorizers from the session */
   for (i = 0; i < nprinc; i++)
     {
       LK (kn_remove_authorizer, (isakmp_sa->policy_id, principal[i]));
@@ -380,16 +396,25 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     }
 
   free (principal);
+  principal = NULL;
+  nprinc = 0;
 
   /* Check what policy said.  */
   if (result < 0)
     {
-	LOG_DBG ((LOG_MISC, 40, "check_policy: proposal refused"));
+      LOG_DBG ((LOG_MISC, 40, "check_policy: proposal refused"));
       result = 0;
       goto policydone;
     }
 
  policydone:
+  for (i = 0; i < nprinc; i++)
+    if (principal && principal[i])
+      free (principal[i]);
+
+  if (principal)
+    free (principal);
+
   /* Remove the policies */
   for (i = 0; i < keynote_policy_asserts_num; i++)
     {

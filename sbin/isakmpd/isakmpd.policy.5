@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.15 2000/11/23 12:56:42 niklas Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.16 2001/02/19 16:58:05 angelos Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
@@ -165,7 +165,9 @@ For an explanation of these fields and their semantics, see
 For example, the following policy assertion:
 .Bd -literal
     Authorizer: "POLICY"
-    Licensees: "passphrase:foobar" || "x509-base64:abcd=="
+    Licensees: "passphrase:foobar" || "x509-base64:abcd==" ||
+      "passphrase-md5-hex:3858f62230ac3c915f300c664312c63f" ||
+      "passphrase-sha1-hex:8843d7f92416211de9ebb963ff4ce28125932878"
     Conditions: app_domain == "IPsec policy" && esp_present == "yes"
 		&& esp_enc_alg != "null" -> "true";
 .Ed
@@ -175,6 +177,11 @@ passphrase "foobar" or the public key contained in the X509
 certificate encoded as "abcd==" will be accepted, as long as it
 contains ESP with a non-null algorithm (i.e., the packet will be
 encrypted).
+The last two authorizers are the MD5 and SHA1 hashes respectively of
+the passphrase "foobar".
+This form may be used instead of the "passphrase:..." one to protect
+the passphrase as included in the policy file (or as distributed in a
+signed credential).
 .Pp
 The following policy assertion:
 .Bd -literal
@@ -204,6 +211,14 @@ on how to specify what credentials to send in an IKE exchange.
 Passphrases that appear in the Licensees field are encoded as the
 string "passphrase:", followed by the passphrase itself
 (case-sensitive).
+Alternately (and preferably), they may be encoded using the
+"passphrase-md5-hex:" or "passphrase-sha1-hex:" prefixes, followed
+by the
+.Xr md5 1
+or
+.Xr sha1 1
+hash of the passphrase itself, encoded as a hexadecimal string (using
+lower-case letters only).
 .Pp
 When X509-based authentication is performed in Main Mode, any X509
 certificates received from the remote IKE daemon are converted to very
@@ -472,7 +487,7 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
 
 
     Authorizer: "POLICY"
-    Licensees: "passphrase:mekmitasisgoat"
+    Licensees: "passphrase-md5-hex:10838982612aff543e2e62a67c786550"
     Comment: This policy accepts anyone using shared-secret
 	     authentication using the password mekmitasisgoat,
 	     and does ESP with some form of encryption (not null).
@@ -493,7 +508,7 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
 
 
     KeyNote-Version: 2
-    Licensees: "passphrase:somepassword"
+    Licensees: "passphrase-md5-hex:9c42a1346e333a770904b2a2b37fa7d3"
     Conditions: esp_present == "yes" -> "true";
     Authorizer: "subpolicy1"
 
@@ -505,7 +520,8 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
                        ah_auth_alg == "sha" &&
                        esp_present == "no" -> "true";
                    };
-    Licensees: "passphrase:otherpassword" || "passphrase:thirdpassword"
+    Licensees: "passphrase:otherpassword" ||
+       "passphrase-sha1-hex:f5ed6e4abd30c36a89409b5da7ecb542c9fbf00f"
     Authorizer: "subpolicy2"
 
 
