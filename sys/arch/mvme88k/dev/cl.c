@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.40 2004/02/11 20:41:07 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.41 2004/04/15 08:41:44 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -65,8 +65,6 @@
 #define CL_RXMASK	0x87
 #define CL_TXINTR	0x02
 #define CL_RXINTR	0x02
-
-#define	CLCD_DO_POLLED_INPUT
 
 struct cl_cons {
 	void	*cl_paddr;
@@ -177,9 +175,6 @@ u_char clgetc(struct clsoftc *sc, int *channel);
 #if 0
 void cloutput(struct tty *tp);
 #endif
-#ifdef	CLCD_DO_POLLED_INPUT
-void cl_chkinput(void);
-#endif
 
 struct cfattach cl_ca = {
 	sizeof(struct clsoftc), clprobe, clattach
@@ -190,10 +185,6 @@ struct cfdriver cl_cd = {
 };
 
 #define CLCDBUF 80
-
-#ifdef	CLCD_DO_POLLED_INPUT
-int dopoll = 1;
-#endif
 
 #define CL_UNIT(x) (minor(x) >> 2)
 #define CL_CHANNEL(x) (minor(x) & 3)
@@ -345,9 +336,7 @@ clattach(parent, self, aux)
 	sc->sc_ih_r.ih_arg = sc;
 	sc->sc_ih_e.ih_wantframe = 0;
 	sc->sc_ih_r.ih_ipl = ca->ca_ipl;
-#ifdef CLCD_DO_POLLED_INPUT
-	dopoll = 0;
-#endif
+
 	intr_establish(PCC2_VECT + SRXEIRQ, &sc->sc_ih_e);
 	intr_establish(PCC2_VECT + SMOIRQ, &sc->sc_ih_m);
 	intr_establish(PCC2_VECT + STxIRQ, &sc->sc_ih_t);
@@ -1134,45 +1123,6 @@ clputc(sc, unit, c)
 #endif
 	return;
 }
-
-#ifdef CLCD_DO_POLLED_INPUT
-void
-cl_chkinput()
-{
-	struct tty *tp;
-	int unit;
-	struct clsoftc *sc;
-	int channel;
-
-	if (dopoll == 0)
-		return;
-	for (unit = 0; unit < cl_cd.cd_ndevs; unit++) {
-		if (unit >= cl_cd.cd_ndevs ||
-			(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
-			continue;
-		}
-		if (cl_instat(sc)) {
-			while (cl_instat(sc)){
-				int ch;
-				u_char c;
-				/*
-				*(pinchar++) = clcngetc();
-				*/
-				ch = clgetc(sc,&channel) & 0xff;
-				c = ch;
-
-				tp = sc->sc_cl[channel].tty;
-				if (NULL != tp) {
-					(*linesw[tp->t_line].l_rint)(c,tp);
-				}
-			}
-			/*
-			wakeup(tp);
-			*/
-		}
-	}
-}
-#endif
 
 u_char
 clgetc(sc, channel)
