@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.5 2002/05/10 00:09:17 nate Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.6 2002/05/29 09:46:20 deraadt Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ main(int argc, char **argv)
 
 	if (dev == 0) {
 		for (ncont = 0, i = 0; i < 10; i++) {
-			sprintf(buf, "%s%d", USBDEV, i);
+			snprintf(buf, sizeof buf, "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
 				dumpone(buf, f, addr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2002/05/29 09:45:39 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ mksymlinks()
 	char *p, buf[MAXPATHLEN];
 	const char *q;
 
-	sprintf(buf, "arch/%s/include", machine);
+	snprintf(buf, sizeof buf, "arch/%s/include", machine);
 	p = sourcepath(buf);
 	(void)unlink("machine");
 	ret = symlink(p, "machine");
@@ -295,7 +295,7 @@ mksymlinks()
 		    p, strerror(errno));
 
 	if (machinearch != NULL) {
-		sprintf(buf, "arch/%s/include", machinearch);
+		snprintf(buf, sizeof buf, "arch/%s/include", machinearch);
 		p = sourcepath(buf);
 		q = machinearch;
 	} else {

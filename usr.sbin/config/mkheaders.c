@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.12 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.13 2002/05/29 09:45:39 deraadt Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ emitcnt(head)
 	char buf[BUFSIZ];
 	char fname[BUFSIZ];
 
-	(void)sprintf(fname, "%s.h", head->nv_name);
+	(void)snprintf(fname, sizeof fname, "%s.h", head->nv_name);
 	if ((fp = fopen(fname, "r")) == NULL)
 		goto writeit;
 	nv = head;
@@ -153,7 +153,7 @@ emitopt(nv)
 	/*
 	 * Compare the new file to the old.
 	 */
-	sprintf(fname, "opt_%s.h", nv->nv_name);
+	snprintf(fname, sizeof fname, "opt_%s.h", nv->nv_name);
 	if ((fp = fopen(fname, "r")) == NULL)
 		goto writeit;
 	nlines = 0;

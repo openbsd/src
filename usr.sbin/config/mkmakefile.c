@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.11 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.12 2002/05/29 09:45:39 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,8 @@ mkmakefile()
 	char *ifname;
 	char line[BUFSIZ], buf[200];
 
-	(void)sprintf(buf, "arch/%s/conf/Makefile.%s", machine, machine);
+	(void)snprintf(buf, sizeof buf, "arch/%s/conf/Makefile.%s",
+	    machine, machine);
 	ifname = sourcepath(buf);
 	if ((ifp = fopen(ifname, "r")) == NULL) {
 		(void)fprintf(stderr, "config: cannot read %s: %s\n",
@@ -330,12 +331,12 @@ emitfiles(fp, suffix)
 	if (suffix == 'c') {
 		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 			if (cf->cf_root == NULL)
-				(void)sprintf(swapname,
+				(void)snprintf(swapname, sizeof swapname,
 				    "$S/arch/%s/%s/swapgeneric.c",
 				    machine, machine);
 			else
-				(void)sprintf(swapname, "./swap%s.c",
-				    cf->cf_name);
+				(void)snprintf(swapname, sizeof swapname,
+				    "./swap%s.c", cf->cf_name);
 			len = strlen(swapname);
 			if (lpos + len > 72) {
 				if (fputs(" \\\n", fp) < 0)
@@ -379,7 +380,8 @@ emitrules(fp)
 			ch = fpath[strlen(fpath) - 1];
 			if (islower(ch))
 				ch = toupper(ch);
-			(void)sprintf(buf, "${%s_%c}", cp, ch);
+			(void)snprintf(buf, sizeof buf, "${%s_%c}",
+			    cp, ch);
 			cp = buf;
 		}
 		if (fprintf(fp, "\t%s\n\n", cp) < 0)

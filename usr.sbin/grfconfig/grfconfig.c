@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfconfig.c,v 1.5 2002/02/16 21:28:02 millert Exp $	*/
+/*	$OpenBSD: grfconfig.c,v 1.6 2002/05/29 09:47:20 deraadt Exp $	*/
 /*	$NetBSD: grfconfig.c,v 1.6 1997/07/29 23:41:12 veego Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.5 2002/02/16 21:28:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.6 2002/05/29 09:47:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -149,7 +149,7 @@ main(ac, av)
 				continue;
 			*++p = '\0';
 
-			sprintf(obuf, "%s", buf);
+			snprintf(obuf, sizeof obuf, "%s", buf);
 			lineno = lineno + 1;
 
 			for (i = 0, *cps = strtok(buf, " \b\t\r\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.9 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.10 2002/05/29 09:45:39 deraadt Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -76,9 +76,10 @@ dev_t d;
 	static char buf[32];
 
 	if (d == NODEV)
-		(void)sprintf(buf, "NODEV");
+		(void)snprintf(buf, sizeof buf, "NODEV");
 	else
-		(void)sprintf(buf, "makedev(%d, %d)", major(d), minor(d));
+		(void)snprintf(buf, sizeof buf, "makedev(%d, %d)",
+		    major(d), minor(d));
 	return buf;
 }
 
@@ -91,7 +92,7 @@ mkoneswap(cf)
 	char fname[200];
 	char *mountroot;
 
-	(void)sprintf(fname, "swap%s.c", cf->cf_name);
+	(void)snprintf(fname, sizeof fname, "swap%s.c", cf->cf_name);
 	if ((fp = fopen(fname, "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write %s: %s\n",
 		    fname, strerror(errno));

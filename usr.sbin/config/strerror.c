@@ -14,6 +14,6 @@ char *strerror(en)
     if ((0 <= en) && (en < sys_nerr))
 	return sys_errlist[en];
 
-    sprintf(errmsg, "Error %d", en);
+    snprintf(errmsg, sizeof errmsg, "Error %d", en);
     return errmsg;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.25 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: sem.c,v 1.26 2002/05/29 09:45:39 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -578,10 +578,12 @@ resolve(nvp, name, what, dflt, part)
 			if (dev->d_major == maj)
 				break;
 		if (dev == NULL)
-			(void)sprintf(buf, "<%d/%d>", maj, min);
+			(void)snprintf(buf, sizeof buf, "<%d/%d>",
+			    maj, min);
 		else
-			(void)sprintf(buf, "%s%d%c", dev->d_name,
-			    min / maxpartitions, (min % maxpartitions) + 'a');
+			(void)snprintf(buf, sizeof buf, "%s%d%c",
+			    dev->d_name, min / maxpartitions,
+			    (min % maxpartitions) + 'a');
 		nv->nv_str = intern(buf);
 		return (0);
 	}

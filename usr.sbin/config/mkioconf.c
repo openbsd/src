@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.19 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.20 2002/05/29 09:45:39 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ emithdr(ofp)
  * ioconf.c, from \"%s\"\n\
  */\n\n", conffile) < 0)
 		return (1);
-	(void)sprintf(ifn, "ioconf.incl.%s", machine);
+	(void)snprintf(ifn, sizeof ifn, "ioconf.incl.%s", machine);
 	if ((ifp = fopen(ifn, "r")) != NULL) {
 		while ((n = fread(buf, 1, sizeof(buf), ifp)) > 0)
 			if (fwrite(buf, 1, n, ofp) != n)
@@ -405,7 +405,8 @@ struct cfdata cfdata[] = {\n\
 		vs = "";
 		v = 0;
 		if (i->i_locoff >= 0) {
-			(void)sprintf(locbuf, "loc+%3d", i->i_locoff);
+			(void)snprintf(locbuf, sizeof locbuf, "loc+%3d",
+			    i->i_locoff);
 			loc = locbuf;
 		} else
 			loc = "loc";
