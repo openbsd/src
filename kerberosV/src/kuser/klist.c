@@ -40,7 +40,7 @@ static char*
 printable_time(time_t t)
 {
     static char s[128];
-    strcpy(s, ctime(&t)+ 4);
+    strlcpy(s, ctime(&t)+ 4, sizeof s);
     s[15] = 0;
     return s;
 }
@@ -49,7 +49,7 @@ static char*
 printable_time_long(time_t t)
 {
     static char s[128];
-    strcpy(s, ctime(&t)+ 4);
+    strlcpy(s, ctime(&t)+ 4, sizeof s);
     s[20] = 0;
     return s;
 }
