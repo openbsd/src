@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.11 2003/04/02 23:42:13 jason Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.12 2003/06/26 13:06:26 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -105,14 +105,6 @@ struct	cfattach vsbus_ca = {
 struct  cfdriver vsbus_cd = {
 	    NULL, "vsbus", DV_DULL
 };
-
-/* dummy interrupt handler for use during autoconf */
-void
-vsbus_intr(arg)
-	void *arg;
-{
-	return;
-}
 
 int
 vsbus_print(aux, name)

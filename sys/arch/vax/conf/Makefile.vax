@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.23 2003/05/13 22:45:11 miod Exp $
+#	$OpenBSD: Makefile.vax,v 1.24 2003/06/26 13:06:22 miod Exp $
 #	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
 
 # Makefile for OpenBSD/vax
@@ -65,7 +65,8 @@ VAX=	$S/arch/vax
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-D_VAX_INLINE_
-CWARNFLAGS?=	-Werror -Wall -Wno-main -Wno-format -Wno-uninitialized
+CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
+		-Wno-main -Wno-format -Wno-uninitialized
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif

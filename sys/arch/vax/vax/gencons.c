@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.c,v 1.14 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.15 2003/06/26 13:06:26 miod Exp $	*/
 /*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
@@ -54,21 +54,23 @@
 #include <machine/scb.h>
 #include <machine/../vax/gencons.h>
 
-static	struct tty *gencn_tty[4];
+struct tty *gencn_tty[4];
 
-static	int consopened = 0;
-static	int maxttys = 1;
+int consopened = 0;
+int maxttys = 1;
 
-static	int pr_txcs[4] = {PR_TXCS, PR_TXCS1, PR_TXCS2, PR_TXCS3};
-static	int pr_rxcs[4] = {PR_RXCS, PR_RXCS1, PR_RXCS2, PR_RXCS3};
-static	int pr_txdb[4] = {PR_TXDB, PR_TXDB1, PR_TXDB2, PR_TXDB3};
-static	int pr_rxdb[4] = {PR_RXDB, PR_RXDB1, PR_RXDB2, PR_RXDB3};
+int pr_txcs[4] = {PR_TXCS, PR_TXCS1, PR_TXCS2, PR_TXCS3};
+int pr_rxcs[4] = {PR_RXCS, PR_RXCS1, PR_RXCS2, PR_RXCS3};
+int pr_txdb[4] = {PR_TXDB, PR_TXDB1, PR_TXDB2, PR_TXDB3};
+int pr_rxdb[4] = {PR_RXDB, PR_RXDB1, PR_RXDB2, PR_RXDB3};
 
 cons_decl(gen);
 cdev_decl(gencn);
 
-static	int gencnparam(struct tty *, struct termios *);
-static	void gencnstart(struct tty *);
+int gencnparam(struct tty *, struct termios *);
+void gencnstart(struct tty *);
+void gencnrint(void *);
+void gencntint(void *);
 
 int
 gencnopen(dev, flag, mode, p)

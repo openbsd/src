@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.67 2003/06/02 23:27:59 millert Exp $ */
+/* $OpenBSD: machdep.c,v 1.68 2003/06/26 13:06:26 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -164,6 +164,8 @@ struct vm_map *phys_map = NULL;
 #ifdef DEBUG
 int iospace_inited = 0;
 #endif
+
+void cpu_dumpconf(void);
 
 void
 cpu_startup()
@@ -821,7 +823,10 @@ allocsys(v)
  * to skip instructions.
  */
 
-long skip_operand(long ib, int size);
+long skip_operand(long, int);
+long skip_opcode(long);
+
+static u_int8_t get_byte(long);
 
 static __inline__ u_int8_t
 get_byte(ib)

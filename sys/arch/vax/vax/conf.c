@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 2003/06/02 23:27:58 millert Exp $ */
+/*	$OpenBSD: conf.c,v 1.41 2003/06/26 13:06:26 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -554,6 +554,8 @@ iszerodev(dev)
 
 	return (major(dev) == 3 && minor(dev) == 12);
 }
+
+int getmajor(void *);	/* XXX used by dz_ibus and smg, die die die */
 
 int
 getmajor(void *ptr)
