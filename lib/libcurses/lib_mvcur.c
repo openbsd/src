@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.8 1998/05/14 09:58:18 deraadt Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.9 1998/05/14 11:17:26 niklas Exp $	*/
 
 
 /***************************************************************************
@@ -969,7 +969,7 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
     {
 	int	fy, fx, ty, tx, n, i;
 	char	buf[BUFSIZ], capname[BUFSIZ];
-	char	tparsebuf[20], tparsebuf[20];
+	char	tparsebuf[20], cparsebuf[20];
 
 	snprintf(tparsebuf, sizeof tparsebuf, "l %%%ds", sizeof tname-1);
 	snprintf(cparsebuf, sizeof cparsebuf, "d %%%ds", sizeof capname-1);
