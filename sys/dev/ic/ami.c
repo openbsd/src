@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.25 2004/12/26 00:11:24 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.26 2004/12/26 00:35:42 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -156,7 +156,7 @@ ami_write_inbound_db(sc, v)
 	struct ami_softc *sc;
 	u_int32_t v;
 {
-	AMI_DPRINTF(AMI_D_CMD, ("ami_write_inbound_db(%x)", v));
+	AMI_DPRINTF(AMI_D_CMD, ("awi %xn", v));
 
 	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, v);
 	bus_space_barrier(sc->iot, sc->ioh,
@@ -172,7 +172,7 @@ ami_read_inbound_db(sc)
 	bus_space_barrier(sc->iot, sc->ioh,
 	    AMI_QIDB, 4, BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
-	AMI_DPRINTF(AMI_D_CMD, ("ami_read_inbound_db(%x)", rv));
+	AMI_DPRINTF(AMI_D_CMD, ("ari %x ", rv));
 
 	return (rv);
 }
@@ -182,7 +182,7 @@ ami_write_outbound_db(sc, v)
 	struct ami_softc *sc;
 	u_int32_t v;
 {
-	AMI_DPRINTF(AMI_D_CMD, ("ami_write_outbound_db(%x)", v));
+	AMI_DPRINTF(AMI_D_CMD, ("awo %x ", v));
 
 	bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, v);
 	bus_space_barrier(sc->iot, sc->ioh,
@@ -198,7 +198,7 @@ ami_read_outbound_db(sc)
 	bus_space_barrier(sc->iot, sc->ioh,
 	    AMI_QODB, 4, BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
-	AMI_DPRINTF(AMI_D_CMD, ("ami_read_outbound_db(%x)", rv));
+	AMI_DPRINTF(AMI_D_CMD, ("aro %x ", rv));
 
 	return (rv);
 }
@@ -580,8 +580,6 @@ ami_quartz_exec(sc, cmd)
 {
 	u_int32_t qidb, i;
 
-	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_exec() "));
-
 	i = 0;
 	while (sc->sc_mbox->acc_busy && (i < AMI_MAX_BUSYWAIT)) {
 		delay(1);
@@ -603,7 +601,6 @@ ami_quartz_exec(sc, cmd)
 	qidb = sc->sc_mbox_pa | AMI_QIDB_EXEC;
 	ami_write_inbound_db(sc, qidb);
 
-	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_exec() returning "));
 	return (0);
 }
 
@@ -615,8 +612,6 @@ ami_quartz_done(sc, mbox)
 	u_int32_t qdb, i, n;
 	u_int8_t nstat, status;
 	u_int8_t completed[AMI_MAXSTATACK];
-
-	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_done() "));
 
 	qdb = ami_read_outbound_db(sc);
 	if (qdb != AMI_QODB_READY)
@@ -640,7 +635,7 @@ ami_quartz_done(sc, mbox)
 
 	/* wait until fw wrote out all completions */
 	i = 0;
-	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_done() nstat %d ", nstat));
+	AMI_DPRINTF(AMI_D_CMD, ("aqd %d ", nstat));
 	for (n = 0; n < nstat; n++) {
 		while ((completed[n] = sc->sc_mbox->acc_cmplidl[n]) ==
 		    0xff) {
@@ -686,8 +681,6 @@ ami_schwartz_init(sc)
 {
 	u_int32_t a = (u_int32_t)sc->sc_mbox_pa;
 
-	AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_init() "));
-
 	bus_space_write_4(sc->iot, sc->ioh, AMI_SMBADDR, a);
 	/* XXX 40bit address ??? */
 	bus_space_write_1(sc->iot, sc->ioh, AMI_SMBENA, 0);
@@ -704,8 +697,6 @@ ami_schwartz_exec(sc, cmd)
 	struct ami_softc *sc;
 	struct ami_iocmd *cmd;
 {
-	AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_exec() "));
-
 	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY) {
 		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
 		return EBUSY;
@@ -727,7 +718,6 @@ ami_schwartz_done(sc, mbox)
 {
 	u_int8_t stat;
 
-	AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_done() "));
 #if 0
 	/* do not scramble the busy mailbox */
 	if (sc->sc_mbox->acc_busy)
@@ -741,8 +731,7 @@ ami_schwartz_done(sc, mbox)
 		bus_space_write_1(sc->iot, sc->ioh, AMI_ISTAT, stat);
 
 		*mbox = *sc->sc_mbox;
-		AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_done() acc_nstat %d ",
-		    mbox->acc_nstat));
+		AMI_DPRINTF(AMI_D_CMD, ("asd %d ", mbox->acc_nstat));
 
 		bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
 
@@ -1421,6 +1410,7 @@ ami_intr(v)
 	lock = AMI_LOCK_AMI(sc);
 	s = splimp();	/* XXX need to do this to mask timeouts */
 	while ((sc->sc_done)(sc, &mbox)) {
+		AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
 		for (i = 0; i < mbox.acc_nstat; i++ ) {
 			int ready = mbox.acc_cmplidl[i];
 

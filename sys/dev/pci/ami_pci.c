@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.21 2004/12/26 00:11:24 marco Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.22 2004/12/26 00:35:42 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -129,7 +129,7 @@ int ami_pci_find_device(aux)
 		if (ami_pci_devices[i].vendor == PCI_VENDOR(pa->pa_id) &&
 		    ami_pci_devices[i].product == PCI_PRODUCT(pa->pa_id)) {
 #ifdef AMI_DEBUG
-		    	printf(" ami_pci_find_device() %i ", i);
+		    	printf(" apfd %i ", i);
 #endif /* AMI_DEBUG */
 			return (i);
 		}
