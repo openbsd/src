@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.69 2004/09/14 23:52:46 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.70 2005/01/19 13:40:47 mpf Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.69 2004/09/14 23:52:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.70 2005/01/19 13:40:47 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -403,7 +403,10 @@ main(int argc, char *argv[])
 		ip->ip_off = htons(df ? IP_DF : 0);
 		ip->ip_ttl = ttl;
 		ip->ip_p = IPPROTO_ICMP;
-		ip->ip_src.s_addr = INADDR_ANY;
+		if (options & F_SADDR)
+			ip->ip_src = saddr;
+		else
+			ip->ip_src.s_addr = INADDR_ANY;
 		ip->ip_dst = to->sin_addr;
 	}
 
