@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcons.h,v 1.2 1996/04/18 23:48:13 niklas Exp $ */
+/*	$OpenBSD: rcons.h,v 1.3 2001/08/19 15:07:34 miod Exp $ */
 /*	$NetBSD: rcons.h,v 1.4 1996/03/14 19:02:32 christos Exp $ */
 
 /*
@@ -45,6 +45,7 @@
  *	@(#)fbvar.h	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/timeout.h>
 #include <dev/rcons/raster.h>
 
 struct rconsole {
@@ -83,6 +84,8 @@ struct rconsole {
 	int	rc_ras_blank;		/* current screen blank raster op */
 
 	struct	raster_font *rc_font;	/* font and related info */
+
+	struct	timeout bell_timeout;
 };
 
 #define FB_INESC	0x001		/* processing an escape sequence */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tuba_table.c,v 1.3 1996/03/04 10:36:50 mickey Exp $	*/
+/*	$OpenBSD: tuba_table.c,v 1.4 2001/08/19 15:07:34 miod Exp $	*/
 /*	$NetBSD: tuba_table.c,v 1.6 1996/02/13 22:12:34 christos Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/radix.h>
@@ -57,6 +58,7 @@ int             tuba_table_size;
 struct tuba_cache **tuba_table;
 struct radix_node_head *tuba_tree;
 extern int      arpt_keep, arpt_prune;	/* use same values as arp cache */
+struct timeout tuba_timeout;
 
 void
 tuba_timer(v)
@@ -67,7 +69,7 @@ tuba_timer(v)
 	register struct tuba_cache *tc;
 	long            timelimit = time.tv_sec - arpt_keep;
 
-	timeout(tuba_timer, (caddr_t) 0, arpt_prune * hz);
+	timeout_add(&tuba_timeout, arpt_prune * hz);
 	for (i = tuba_table_size; i > 0; i--)
 		if ((tc = tuba_table[i]) && (tc->tc_refcnt == 0) &&
 		    (tc->tc_time < timelimit)) {
@@ -82,7 +84,8 @@ void
 tuba_table_init()
 {
 	rn_inithead((void **) &tuba_tree, 40);
-	timeout(tuba_timer, (caddr_t) 0, arpt_prune * hz);
+	timeout_set(&tuba_timeout, tuba_timer, NULL);
+	timeout_add(&tuba_timeout, arpt_prune * hz);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.2 2000/08/29 19:00:36 jason Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.3 2001/08/19 15:07:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -335,7 +335,8 @@ xmphy_mii_phy_auto(mii, waitfor)
 	 */
 	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
 		mii->mii_flags |= MIIF_DOINGAUTO;
-		timeout(mii_phy_auto_timeout, mii, hz >> 1);
+		timeout_set(&mii->mii_phy_timo, mii_phy_auto_timeout, mii);
+		timeout_add(&mii->mii_phy_timo, hz >> 1);
 	}
 	return (EJUSTRETURN);
 }

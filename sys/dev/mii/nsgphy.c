@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.3 2001/07/02 06:29:49 nate Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.4 2001/08/19 15:07:34 miod Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -424,7 +424,8 @@ nsgphy_mii_phy_auto(mii, waitfor)
 	 */
 	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
 		mii->mii_flags |= MIIF_DOINGAUTO;
-		timeout(mii_phy_auto_timeout, mii, hz >> 1);
+		timeout_set(&mii->mii_phy_timo, mii_phy_auto_timeout, mii);
+		timeout_add(&mii->mii_phy_timo, hz >> 1);
 	}
 	return (EJUSTRETURN);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.58 2001/08/12 20:03:49 mickey Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.59 2001/08/19 15:07:34 miod Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -222,6 +222,8 @@
 #ifndef __OpenBSD__
 #include <sys/sysctl.h>
 #include <machine/clock.h>
+#else
+#include <sys/timeout.h>
 #endif
 #include <vm/vm.h>
 #include <vm/vm_extern.h>
@@ -1213,6 +1215,8 @@ struct ncb {
 	u_long		lasttime;
 #ifdef __FreeBSD__
 	struct		callout_handle timeout_ch;
+#elif defined (__OpenBSD__)
+	struct		timeout sc_timeout;
 #endif
 
 	/*-----------------------------------------------
@@ -1463,7 +1467,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.58 2001/08/12 20:03:49 mickey Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.59 2001/08/19 15:07:34 miod Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4261,6 +4265,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	/*
 	**	start the timeout daemon
 	*/
+	timeout_set(&np->sc_timeout, ncr_timeout, np);
 	ncr_timeout (np);
 	np->lasttime=0;
 
@@ -5866,7 +5871,7 @@ static void ncr_timeout (void *arg)
 #ifdef __FreeBSD__
 	np->timeout_ch = timeout (ncr_timeout, (caddr_t) np, step ? step : 1);
 #else
-	timeout (ncr_timeout, (caddr_t) np, step ? step : 1);
+	timeout_add(&np->sc_timeout, step ? step : 1);
 #endif
 
 	if (INB(nc_istat) & (INTF|SIP|DIP)) {
@@ -6237,7 +6242,7 @@ void ncr_exception (ncb_p np)
 #ifdef __FreeBSD__
 		untimeout (ncr_timeout, (caddr_t) np, np->timeout_ch);
 #else
-		untimeout (ncr_timeout, (caddr_t) np);
+		timeout_del(&np->sc_timeout);
 #endif
 
 		printf ("%s: halted!\n", ncr_name(np));

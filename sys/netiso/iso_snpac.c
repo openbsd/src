@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_snpac.c,v 1.6 2001/01/19 06:37:38 itojun Exp $	*/
+/*	$OpenBSD: iso_snpac.c,v 1.7 2001/08/19 15:07:34 miod Exp $	*/
 /*	$NetBSD: iso_snpac.c,v 1.13 1996/05/07 02:45:16 thorpej Exp $	*/
 
 /*-
@@ -75,6 +75,7 @@ SOFTWARE.
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -523,6 +524,7 @@ snpac_ioctl(so, cmd, data)
 	caddr_t         data;	/* data for the cmd */
 {
 	register struct systype_req *rq = (struct systype_req *) data;
+	extern struct timeout esis_timeout;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
@@ -549,7 +551,7 @@ snpac_ioctl(so, cmd, data)
 		esis_holding_time = rq->sr_holdt;
 		esis_config_time = rq->sr_configt;
 		if (esis_esconfig_time != rq->sr_esconfigt) {
-			untimeout(esis_config, (caddr_t) 0);
+			timeout_del(&esis_timeout);
 			esis_esconfig_time = rq->sr_esconfigt;
 			esis_config(NULL);
 		}
@@ -628,7 +630,8 @@ snpac_age(v)
 	register struct llinfo_llc *lc, *nlc;
 	register struct rtentry *rt;
 
-	timeout(snpac_age, (caddr_t) 0, SNPAC_AGE * hz);
+	extern struct timeout snpac_timeout;
+	timeout_add(&snpac_timeout, SNPAC_AGE * hz);
 
 	for (lc = llinfo_llc.lh_first; lc != 0; lc = nlc) {
 		nlc = lc->lc_list.le_next;

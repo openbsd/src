@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.2 1997/07/24 00:25:22 deraadt Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.3 2001/08/19 15:07:34 miod Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -62,6 +62,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -96,6 +97,8 @@ static int aa_dosingleroute	__P((struct ifaddr *, struct at_addr *,
 		    (a)->sat_family == (b)->sat_family && \
 		    (a)->sat_addr.s_net == (b)->sat_addr.s_net && \
 		    (a)->sat_addr.s_node == (b)->sat_addr.s_node )
+
+extern struct timeout aarpprobe_timeout;
 
 int
 at_control( cmd, data, ifp, p )
@@ -413,8 +416,9 @@ at_ifinit( ifp, aa, sat )
 		    continue;
 		}
 		aa->aa_probcnt = 10;
+		timeout_set(&aarpprobe_timeout, aarpprobe, ifp);
 		/* XXX don't use hz so badly */
-		timeout( aarpprobe, (caddr_t)ifp, hz / 5 );
+		timeout_add(&aarpprobe_timeout, hz / 5);
 		if ( tsleep( aa, PPAUSE|PCATCH, "at_ifinit", 0 )) {
 		    printf( "at_ifinit why did this happen?!\n" );
 		    aa->aa_addr = oldaddr;

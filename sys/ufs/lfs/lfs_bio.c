@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_bio.c,v 1.6 2001/02/23 14:52:52 csapuntz Exp $	*/
+/*	$OpenBSD: lfs_bio.c,v 1.7 2001/08/19 15:07:34 miod Exp $	*/
 /*	$NetBSD: lfs_bio.c,v 1.5 1996/02/09 22:28:49 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -71,6 +72,8 @@ int	lfs_writing;			/* Set if already kicked off a writer
 #define WAIT_THRESHHOLD         (nbuf - (nbuf >> 2) - 10)
 #define WRITE_THRESHHOLD        ((nbuf >> 1) - 10)
 #define LFS_BUFWAIT	2
+
+struct timeout wakeup_timeout;
 
 int
 lfs_bwrite(v)
@@ -124,10 +127,11 @@ lfs_bwrite(v)
 		bp->b_synctime = time.tv_sec + 30;
 		s = splbio();
 		if (bdirties.tqh_first == bp) {
-			untimeout((void (*)__P((void *)))wakeup,
-				  &bdirties);
-			timeout((void (*)__P((void *)))wakeup,
-				&bdirties, 30 * hz);
+			if (timeout_triggered(&wakeup_timeout))
+				timeout_del(&wakeup_timeout);
+			if (!timeout_intialized(&wakeup_timeout))
+				timeout_set(&wakeup_timeout, wakeup, &bdirties);
+			timeout_add(&wakeup_timeout, 30 * hz);
 		}
 		bp->b_flags &= ~(B_READ | B_ERROR);
 		buf_dirty(bp);

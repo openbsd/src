@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.21 2001/06/23 16:15:56 fgsch Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.22 2001/08/19 15:07:34 miod Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -26,9 +26,12 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/timeout.h>
+
 #include <net/if.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
+
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
@@ -82,6 +85,8 @@ extern int rsvp_on;
 
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
+struct timeout	upcalls_timeout;
+struct timeout	tbf_timeout;
 
 /*
  * Define the token bucket filter structures
@@ -413,7 +418,8 @@ ip_mrouter_init(so, m)
 
 	pim_assert = 0;
 
-	timeout(expire_upcalls, (caddr_t)0, EXPIRE_TIMEOUT);
+	timeout_set(&upcalls_timeout, expire_upcalls, NULL);
+	timeout_add(&upcalls_timeout, EXPIRE_TIMEOUT);
 
 	if (mrtdebug)
 		log(LOG_DEBUG, "ip_mrouter_init\n");
@@ -445,7 +451,7 @@ ip_mrouter_done()
 	numvifs = 0;
 	pim_assert = 0;
 	
-	untimeout(expire_upcalls, (caddr_t)NULL);
+	timeout_del(&upcalls_timeout);
 	
 	/*
 	 * Free all multicast forwarding cache entries.
@@ -1211,7 +1217,7 @@ expire_upcalls(v)
 	}
 
 	splx(s);
-	timeout(expire_upcalls, (caddr_t)0, EXPIRE_TIMEOUT);
+	timeout_add(&upcalls_timeout, EXPIRE_TIMEOUT);
 }
 
 /*
@@ -1554,7 +1560,8 @@ tbf_control(vifp, m, ip, p_len)
 		} else {
 			/* queue packet and timeout till later */
 			tbf_queue(vifp, m, ip);
-			timeout(tbf_reprocess_q, vifp, 1);
+			timeout_set(&tbf_timeout, tbf_reprocess_q, vifp);
+			timeout_add(&tbf_timeout, 1);
 		}
 	} else {
 		if (vifp->v_tbf.q_len >= MAXQSIZE &&
@@ -1665,7 +1672,7 @@ tbf_reprocess_q(arg)
 	tbf_process_q(vifp);
 
 	if (vifp->v_tbf.q_len)
-		timeout(tbf_reprocess_q, vifp, 1);
+		timeout_add(&tbf_timeout, 1);
 }
 
 /* function that will selectively discard a member of the queue

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.2 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.3 2001/08/19 15:07:34 miod Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -62,6 +62,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -103,6 +104,9 @@ void aarp_clean			__P((void));
 struct aarptab		aarptab[AARPTAB_SIZE];
 int			aarptab_size = AARPTAB_SIZE;
 
+struct timeout	aarpprobe_timeout;
+struct timeout	aarptimer_timeout;
+
 #define AARPTAB_HASH(a) \
     ((((a).s_net << 8 ) + (a).s_node ) % AARPTAB_NB )
 
@@ -140,7 +144,7 @@ aarptimer(v)
     struct aarptab	*aat;
     int			i, s;
 
-    timeout( aarptimer, (caddr_t)0, AARPT_AGE * hz );
+    timeout_add(&aarptimer_timeout, AARPT_AGE * hz);
     aat = aarptab;
     for ( i = 0; i < AARPTAB_SIZE; i++, aat++ ) {
 	if ( aat->aat_flags == 0 || ( aat->aat_flags & ATF_PERM ))
@@ -437,7 +441,7 @@ at_aarpinput( ac, m )
 	     * probed for the same address we'd like to use. Change the
 	     * address we're probing for.
 	     */
-	    untimeout( aarpprobe, ac );
+	    timeout_del(&aarpprobe_timeout);
 	    wakeup( aa );
 	    m_freem( m );
 	    return;
@@ -567,7 +571,8 @@ aarptnew( addr )
 
     if ( first ) {
 	first = 0;
-	timeout( aarptimer, (caddr_t)0, hz );
+	timeout_set(&aarptimer_timeout, aarptimer, NULL);
+	timeout_add(&aarptimer_timeout, hz);
     }
     aat = &aarptab[ AARPTAB_HASH( *addr ) * AARPTAB_BSIZ ];
     for ( n = 0; n < AARPTAB_BSIZ; n++, aat++ ) {
@@ -626,7 +631,8 @@ aarpprobe( arg )
 	wakeup( aa );
 	return;
     } else {
-	timeout( aarpprobe, (caddr_t)ac, hz / 5 );
+	timeout_set(&aarpprobe_timeout, aarpprobe, ac);
+	timeout_add(&aarpprobe_timeout, hz / 5);
     }
 
     if (( m = m_gethdr( M_DONTWAIT, MT_DATA )) == NULL ) {
@@ -686,7 +692,7 @@ aarp_clean(void)
     struct aarptab	*aat;
     int			i;
 
-    untimeout( aarptimer, 0 );
+    timeout_del(&aarptimer_timeout);
     for ( i = 0, aat = aarptab; i < AARPTAB_SIZE; i++, aat++ ) {
 	if ( aat->aat_hold ) {
 	    m_freem( aat->aat_hold );
