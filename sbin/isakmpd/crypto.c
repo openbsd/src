@@ -1,5 +1,5 @@
-/*	$OpenBSD: crypto.c,v 1.9 2000/02/25 17:23:39 niklas Exp $	*/
-/*	$EOM: crypto.c,v 1.28 2000/02/20 19:58:36 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.10 2000/03/08 08:41:41 niklas Exp $	*/
+/*	$EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -124,13 +124,13 @@ enum cryptoerr
 des3_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
   des_set_odd_parity (DC key);
-  des_set_odd_parity (DC key + 1);
-  des_set_odd_parity (DC key + 2);
+  des_set_odd_parity (DC (key + 8));
+  des_set_odd_parity (DC (key + 16));
 
   /* As of the draft Tripe-DES does not check for weak keys */
   des_set_key (DC key, ks->ks_des[0]);
-  des_set_key (DC key + 1, ks->ks_des[1]);
-  des_set_key (DC key + 2, ks->ks_des[2]);
+  des_set_key (DC (key + 8), ks->ks_des[1]);
+  des_set_key (DC (key + 16), ks->ks_des[2]);
 
   return EOKAY;
 }
