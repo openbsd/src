@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.204 2004/09/21 16:59:11 aaron Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.205 2004/09/27 12:51:12 jaredy Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -640,7 +640,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	if (r->action > PF_NORDR)
 		printf("action(%d)", r->action);
 	else if (anchor_call[0])
-		printf("%s %s", anchortypes[r->action], anchor_call);
+		printf("%s \"%s\"", anchortypes[r->action],
+		    anchor_call);
 	else {
 		printf("%s", actiontypes[r->action]);
 		if (r->natpass)
