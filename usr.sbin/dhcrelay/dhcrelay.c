@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.21 2004/08/15 23:24:14 jaredy Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.22 2004/10/12 16:39:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -45,6 +45,7 @@ void	 usage(void);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
 char	*print_hw_addr(int, int, unsigned char *);
+void	 got_response(struct protocol *);
 
 time_t cur_time;
 
@@ -58,15 +59,17 @@ struct interface_info *interfaces = NULL;
 struct server_list {
 	struct server_list *next;
 	struct sockaddr_in to;
+	int fd;
 } *servers;
 
 int
 main(int argc, char *argv[])
 {
-	int			 ch, no_daemon = 0;
+	int			 ch, no_daemon = 0, opt;
 	extern char		*__progname;
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
+	struct sockaddr_in	 laddr;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -135,17 +138,36 @@ main(int argc, char *argv[])
 	if (!sp)
 		usage();
 
+	discover_interfaces(interfaces);
+
+	bzero(&laddr, sizeof laddr);
+	laddr.sin_len = sizeof laddr;
+	laddr.sin_family = AF_INET;
+	laddr.sin_port = server_port;
+	laddr.sin_addr.s_addr = interfaces->primary_address.s_addr;
 	/* Set up the server sockaddrs. */
 	for (sp = servers; sp; sp = sp->next) {
 		sp->to.sin_port = server_port;
 		sp->to.sin_family = AF_INET;
 		sp->to.sin_len = sizeof sp->to;
+		sp->fd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (sp->fd == -1)
+			error("socket: %m");
+		opt = 1;
+		if (setsockopt(sp->fd, SOL_SOCKET, SO_REUSEPORT,
+		    &opt, sizeof(opt)) == -1)
+			error("setsockopt: %m");
+		if (bind(sp->fd, (struct sockaddr *)&laddr, sizeof laddr) == -1)
+			error("bind: %m");
+		if (connect(sp->fd, (struct sockaddr *)&sp->to,
+		    sizeof sp->to) == -1)
+			error("connect: %m");
+		add_protocol("server", sp->fd, got_response, sp);
 	}
 
 	tzset();
 
 	time(&cur_time);
-	discover_interfaces(interfaces);
 	bootp_packet_handler = relay;
 	if (!no_daemon)
 		daemon(0, 0);
@@ -209,6 +231,11 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		return;
 	}
 
+	if (ip == NULL) {
+		note("ignoring non BOOTREPLY form server");
+		return;
+	}
+
 	/* If giaddr is set on a BOOTREQUEST, ignore it - it's already
 	   been gatewayed. */
 	if (packet->giaddr.s_addr) {
@@ -225,8 +252,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
 	for (sp = servers; sp; sp = sp->next) {
-		if (send_packet(interfaces, packet, length,
-		    ip->primary_address, &sp->to, NULL) != -1) {
+		if (send(sp->fd, packet, length, 0) != -1) {
 			debug("forwarded BOOTREQUEST for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
 			    packet->chaddr), inet_ntoa(sp->to.sin_addr));
@@ -274,4 +300,46 @@ bad:
 	strlcpy(habuf, "<null>", sizeof habuf);
 	return habuf;
 
+}
+
+void
+got_response(struct protocol *l)
+{
+	ssize_t result;
+	struct iaddr ifrom;
+	union {
+		/*
+		 * Packet input buffer.  Must be as large as largest
+		 * possible MTU.
+		 */
+		unsigned char packbuf[4095];
+		struct dhcp_packet packet;
+	} u;
+	struct server_list *sp = l->local;
+
+	if ((result = recv(l->fd, u.packbuf, sizeof(u), 0)) == -1 &&
+	    errno != ECONNREFUSED) {
+		/*
+		 * Ignore ECONNREFUSED as to many dhcp server send a bogus
+		 * icmp unreach for every request.
+		 */
+		warn("recv failed for %s: %m",
+		    inet_ntoa(sp->to.sin_addr));
+		return;
+	}
+	if (result == 0)
+		return;
+
+	if (result < BOOTP_MIN_LEN) {
+		note("Discarding packet with invalid size.");
+		return;
+	}
+
+	if (bootp_packet_handler) {
+		ifrom.len = 4;
+		memcpy(ifrom.iabuf, &sp->to.sin_addr, ifrom.len);
+
+		(*bootp_packet_handler)(NULL, &u.packet, result,
+		    sp->to.sin_port, ifrom, NULL);
+	}
 }
