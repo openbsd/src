@@ -155,8 +155,10 @@ int			sig;
 	this = SIG_handlers[sig];
 	while (this != (struct SIG_hlist *) NULL)
 	{
-		(*this->handler)(sig);
+		/* handler may free this (and thus clobber this->next) */
+		struct SIG_hlist *current = this;
 		this = this->next;
+		(*current->handler)(sig);
 	}
 
 	return;
