@@ -50,7 +50,9 @@ either have another OpenBSD system on the network, or something else
 capable of running the rbootd(8) program.  Source code may be found
 under usr.sbin/rbootd in the OpenBSD source tree, but requires the
 Berkeley Packet Filter (bpf) in order to function.  It may be possible to
-use HP-UX, but is not recommended (or documented here).
+use HP-UX, but is not recommended (or documented here).  For more
+information on diskless booting under OpenBSD, see the "diskless"
+manual page.
 
 First of all, configure your rbootd to handle boot requests from the
 client.  NOTE: OpenBSD's `rbootd' is slightly different from HP-UX's.
