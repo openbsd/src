@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.8 1996/10/20 08:36:34 tholo Exp $	*/
+/*	$OpenBSD: inode.c,v 1.9 1997/06/22 20:10:48 tholo Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.8 1996/10/20 08:36:34 tholo Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.9 1997/06/22 20:10:48 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ chkrange(blk, cnt)
 {
 	register int c;
 
-	if ((unsigned)(blk + cnt) > maxfsblock)
+	if ((unsigned)blk > maxfsblock || (unsigned)(blk + cnt) > maxfsblock)
 		return (1);
 	c = dtog(&sblock, blk);
 	if (blk < cgdmin(&sblock, c)) {
