@@ -2,6 +2,7 @@ Installation is supported from several media types, including:
 
 	DOS partitions
 	FFS partitions
+	EXT2 partitions
 	Tape
 	Remote NFS partition
 	FTP
@@ -82,7 +83,7 @@ NFS, you must do the following:
 	directory on an NFS server, and make that directory mountable
 	by the machine on which you are installing or upgrading OpenBSD.
 	This will probably require modifying the /etc/exports file on
-	of the NFS server and resetting its mount daemon (mountd).
+	the NFS server and resetting its mount daemon (mountd).
 	(Both of these actions will probably require superuser
 	privileges on the server.)
 
