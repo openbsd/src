@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.h,v 1.3 1998/11/17 11:10:21 niklas Exp $	*/
-/*	$EOM: transport.h,v 1.10 1998/10/11 20:25:10 niklas Exp $	*/
+/*	$OpenBSD: transport.h,v 1.4 1999/02/26 03:52:00 niklas Exp $	*/
+/*	$EOM: transport.h,v 1.11 1999/02/14 00:15:16 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -62,7 +62,7 @@ struct transport_vtbl {
   struct transport *(*create) (char *);
 
   /* Let the given transport set it's bit in the fd_set passed in.  */
-  int (*fd_set) (struct transport *, fd_set *);
+  int (*fd_set) (struct transport *, fd_set *, int);
 
   /* Is the given transport ready for I/O?  */
   int (*fd_isset) (struct transport *, fd_set *);
