@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.4 2004/11/22 18:49:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2004/12/14 01:53:02 deraadt Exp $
 
-SUBDIR=	atmel tigon neomagic symbol kue
+SUBDIR=	atmel tigon neomagic symbol kue typhoon
 
 .include <bsd.subdir.mk>
