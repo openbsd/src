@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rln.4,v 1.3 1999/07/09 13:35:49 aaron Exp $
+.\"	$OpenBSD: rln.4,v 1.4 1999/07/14 03:57:28 d Exp $
 .Dd 2 April, 1999
 .Dt RLN 4
 .Os
@@ -15,27 +15,35 @@ The
 device driver supports at least the following cards:
 .Bl -bullet -compact
 .\" .It
-.\" RangeLAN2 ISA
+.\" Proxim RangeLAN2 7100 ISA Card
 .\" .It
-.\" RangeLAN2 630x series Mini ISA
+.\" Proxim RangeLAN2 630x Mini ISA OEM Module
 .\" .It
-.\" RangeLAN2 633x series Micro design-in module
+.\" Proxim RangeLAN2 633x Micro design-in module
 .\" .It
-.\" RangeLAN2 and Symphony PC Cards
+.\" Symphony PC Cards
 .\" .It
 .\" Symphony PnP ISA Card
 .It
+Proxim RangeLAN2 7200 Two Piece PC Card
+.It
+Proxim RangeLAN2 7400 One Piece PC Card
+.It
 Digital RoamAbout FH 2400 PC-Card
+.It
+AMP Wireless PC-Card
 .El
 .Pp
 The Proxim RangeLAN2 air protocol is incompatible with the older
 RangeLAN(1) cards, Lucent Technologies' WaveLan cards, and with
 the newer 802.11 cards in general.
 .Pp
-The RangeLAN2 cards communicate using radio signals near the 2.4GHz
-part of the spectrum.
+The RangeLAN2 cards communicate using an ethernet-like protocol
+over the 2.4\(em2.483GHz part of the spectrum.
 This frequency happens to co-incide with that of strong harmonics emitted
 by common consumer microwave ovens. You can guess the rest.
+Depending on the channel condition, the NICs operate in one of two
+modes: 1.6Mb/s or 0.8Mb/s signalling rate.
 .\" .Sh CONFIGURATION
 .\" Because there is no reliable way to determine between
 .\" the different types of cards listed above,
