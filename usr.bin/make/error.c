@@ -1,4 +1,4 @@
-/* $OpenBSD: error.c,v 1.1 1999/12/09 18:20:06 espie Exp $ */
+/* $OpenBSD: error.c,v 1.2 2000/01/08 19:07:13 millert Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@ enomem(size)
 {
 	int myerr = errno;
 
-	fprintf(stderr, "make: %s (%d)\n", strerror(myerr), size);
+	fprintf(stderr, "make: %s (%lu)\n", strerror(myerr), (u_long)size);
 	exit(2);
 }
 
@@ -141,4 +141,3 @@ eunlink(file)
 	}
 	return unlink(file);
 }
-
