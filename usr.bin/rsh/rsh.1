@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsh.1,v 1.6 2000/03/10 20:17:51 aaron Exp $
+.\"	$OpenBSD: rsh.1,v 1.7 2000/11/08 23:51:07 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -44,14 +44,14 @@
 .Op Fl Kdnx
 .Op Fl k Ar realm
 .Op Fl l Ar username
-.Ar host
+.Ar hostname
 .Op Ar command
 .Sh DESCRIPTION
 .Nm
 executes
 .Ar command
 on
-.Ar host .
+.Ar hostname .
 .Pp
 .Nm
 copies its standard input to the remote command, the standard
@@ -65,21 +65,15 @@ normally terminates when the remote command does.
 The options are as follows:
 .Bl -tag -width flag
 .It Fl K
-The
-.Fl K
-option turns off all Kerberos authentication.
+Disable all Kerberos authentication.
 .It Fl d
-The
-.Fl d
-option turns on socket debugging (using
+Enable socket debugging (using
 .Xr setsockopt 2 )
 on the
 .Tn TCP
 sockets used for communication with the remote host.
 .It Fl k
-The
-.Fl k
-option causes
+Causes
 .Nm
 to obtain tickets for the remote host in
 .Ar realm
@@ -94,17 +88,13 @@ Kerberos authentication is used, and authorization is determined
 as in
 .Xr rlogin 1 .
 .It Fl n
-The
-.Fl n
-option redirects input from the special device
+Redirect input from the special device
 .Pa /dev/null
 (see the
 .Sx BUGS
 section of this manual page).
 .It Fl x
-The
-.Fl x
-option turns on
+Enable
 .Tn DES
 encryption for all data exchange.
 This may introduce a significant delay in response time.
@@ -114,6 +104,14 @@ If no
 .Ar command
 is specified, you will be logged in on the remote host using
 .Xr rlogin 1 .
+.Pp
+If
+.Nm
+is not invoked with the standard program name
+.Pq Dq rsh ,
+it uses this name as its
+.Ar hostname
+argument.
 .Pp
 Shell meta-characters which are not quoted are interpreted on local machine,
 while quoted meta-characters are interpreted on the remote machine.
