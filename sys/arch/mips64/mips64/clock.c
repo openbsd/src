@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2005/01/31 21:39:59 grange Exp $ */
+/*	$OpenBSD: clock.c,v 1.12 2005/01/31 21:43:14 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -140,7 +140,7 @@ clock_int5_init(struct clock_softc *sc)
  *  Just resets the compare register and acknowledge the interrupt.
  */
 intrmask_t
-clock_int5_dummy( intrmask_t mask, struct trap_frame *tf)
+clock_int5_dummy(intrmask_t mask, struct trap_frame *tf)
 {
         cp0_set_compare(0);      /* Shut up counter int's for a while */
 	return CR_INT_5;	/* Clock is always on 5 */
@@ -154,7 +154,7 @@ clock_int5_dummy( intrmask_t mask, struct trap_frame *tf)
  *  the clock is unmasked again.
  */
 intrmask_t
-clock_int5( intrmask_t mask, struct trap_frame *tf)
+clock_int5(intrmask_t mask, struct trap_frame *tf)
 {
 	u_int32_t clkdiff;
 
