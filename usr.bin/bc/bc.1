@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.10 2003/11/09 19:27:27 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.11 2003/11/11 09:16:53 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -104,6 +104,10 @@ scale ( E )	number of digits right of decimal point
 L ( E , ... , E )
 .Ed
 .Pp
+The sequence
+.Sq \e<newline><whitespace>
+is ignored within numbers.
+.Pp
 Operators
 .Bd -unfilled -offset indent -compact
 +  \-  *  /  %  ^ (`%' is remainder; `^' is power)
@@ -125,14 +129,42 @@ break
 continue
 quit
 a string of characters, enclosed in double quotes
+print E ,..., E
 .Ed
 .Pp
+A string may contain any character, except double quote.
 The if statement with an else branch is a non-portable extension.
 All three E's in a for statement may be empty.
 This is a non-portable extension.
-The continue statement is also a non-portable extension.
+The continue and print statements are also non-portable extensions.
+.Pp
+The print statement takes a list of comma-separated expressions.
+Each expression in the list is evaluated and the computed
+value is printed and assigned to the variable `last'.
+No trailing newline is printed.
+The expression may also be a string enclosed in double quotes.
+Within these strings the following escape sequences may be used:
+.Sq \ea
+for bell (alert),
+.Sq \eb
+for backspace,
+.Sq \ef
+for formfeed,
+.Sq \en
+for newline,
+.Sq \er
+for carriage return,
+.Sq \et
+for tab,
+.Sq \eq
+for double quote and
+.Sq \e\e
+for backslash.
+Any other character following a backslash will be ignored.
+Strings will not be assigned to `last'.
 .Pp
 Function definitions
+.Pp
 .Bd -unfilled -offset indent -compact
 define L ( L ,..., L ) {
 	auto L, ... , L
@@ -141,14 +173,10 @@ define L ( L ,..., L ) {
 }
 .Ed
 .Pp
-The sequence
-.Sq \e\<newline><whitespace>
-is ignored within numbers.
-A string may contain any character, except double quote.
+Functions available in the math library, which is loaded by specifying the
+.Fl l
+flag on the command line
 .Pp
-Functions in
-.Fl lm
-math library
 .Bl -tag -width j(n,x) -offset indent -compact
 .It s(x)
 sine
@@ -216,9 +244,18 @@ the exponential function and
 .Pp
 prints approximate values of the exponential function of
 the first ten integers.
+.Sh FILES
+.Bl -tag -width /usr/share/misc/bc.library -compact
+.It Pa /usr/share/misc/bc.library
+math library, read when the
+.Fl l
+option is specified on the command line.
+.El
 .Sh SEE ALSO
 .Xr dc 1
 .Rs
+.%B USD
+.%V 06
 .%A L. L. Cherry
 .%A R. Morris
 .%T "BC \- An arbitrary precision desk-calculator language"
@@ -232,8 +269,23 @@ specification.
 .Sh HISTORY
 The
 .Nm
-command appeared in
+first command appeared in
 .At v6 .
+A complete rewrite of the
+.Nm
+command first appeared in
+.Ox 3.5 .
+.Sh AUTHORS
+The original version of the
+.Nm
+command was written by
+.An Robert Morris
+and
+.An Lorinda Cherry .
+The current version of the
+.Nm
+utility was written by
+.An Otto Moerbeek .
 .Sh BUGS
 No
 .Sq && ,
