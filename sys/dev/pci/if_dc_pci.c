@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.28 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.29 2002/03/22 05:37:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -71,6 +71,10 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
+#endif
 
 #define DC_USEIOSPACE
 
@@ -464,7 +468,10 @@ void dc_pci_attach(parent, self, aux)
 #ifdef __sparc64__
 	{
 		extern void myetheraddr(u_char *);
-		myetheraddr(sc->arpcom.ac_enaddr);
+
+		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+		    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0)
+			myetheraddr(sc->arpcom.ac_enaddr);
 		sc->sc_hasmac = 1;
 	}
 #endif
