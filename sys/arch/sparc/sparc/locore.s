@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.38 2000/06/05 11:02:53 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.39 2000/06/07 15:43:24 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4633,7 +4633,7 @@ Lsw_load:
 	 * zero so it is safe to have interrupts going here.)
 	 */
 	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
-	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
+	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.pmap;
 	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
 	tst	%o0
 	bnz,a	Lsw_havectx		!	goto havecontext;
@@ -4660,7 +4660,7 @@ Lsw_havectx:
 #if defined(SUN4) || defined(SUN4C)
 	set	AC_CONTEXT, %o1
 	retl
-	 stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
+	 stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_map.pmap->pm_ctxnum);
 #endif
 1:
 #if defined(SUN4M)
@@ -4676,7 +4676,7 @@ Lsw_havectx:
 
 	set	SRMMU_CXR, %o1
 	jmp	%g7 + 8		! (retl, but we saved the ret address in g7)
-	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
+	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_map.pmap->pm_ctxnum);
 #endif
 
 Lsw_sameproc:
