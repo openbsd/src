@@ -58,7 +58,7 @@ static void log_from_addr(char *fun_name, struct svc_req *req)
 {
   struct sockaddr_in *addr;
   struct hostent *host;
-  char hostname_buf[MAXHOSTNAMELEN;
+  char hostname_buf[MAXHOSTNAMELEN];
 
   addr = svc_getcaller(req->rq_xprt);
   host = gethostbyaddr((char *)&(addr->sin_addr), addr->sin_len, AF_INET);
