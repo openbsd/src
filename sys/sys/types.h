@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.14 1999/01/07 23:38:59 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.15 1999/02/15 18:53:57 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -94,6 +94,7 @@ typedef	int32_t		suseconds_t;	/* microseconds (signed) */
 typedef u_int32_t	in_addr_t;	/* base type for internet address */
 typedef u_int16_t	in_port_t;	/* IP port type */
 typedef u_int8_t	sa_family_t;	/* sockaddr address family type */
+typedef u_int32_t	socklen_t;	/* length type for network syscalls */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
