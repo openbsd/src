@@ -1,3 +1,4 @@
+./usr/bin/c++filt
 ./sbin/binpatch
 ./sbin/ldconfig
 ./usr/bin/ldd

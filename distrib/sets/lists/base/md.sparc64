@@ -1,3 +1,4 @@
+./usr/bin/c++filt
 ./sbin/ldconfig
 ./sbin/wsconsctl
 ./usr/bin/ldd

@@ -1,3 +1,4 @@
+./usr/bin/c++filt
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl

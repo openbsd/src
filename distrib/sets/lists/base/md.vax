@@ -1,3 +1,4 @@
+./usr/bin/c++filt
 ./pcs750.bin
 ./sbin/ldconfig
 ./usr/bin/ldd

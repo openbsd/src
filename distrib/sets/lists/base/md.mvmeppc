@@ -1,3 +1,4 @@
+./usr/bin/c++filt
 ./sbin/fdisk
 ./sbin/ldconfig
 ./sbin/pdisk
