@@ -1,4 +1,4 @@
-/* $OpenBSD: username.c,v 1.11 2003/06/15 16:24:44 millert Exp $	 */
+/* $OpenBSD: username.c,v 1.12 2003/06/19 22:40:45 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -57,7 +57,7 @@
 
 struct hash_el {
 	uid_t	uid;
-	char	name[9];
+	char	name[_PW_NAME_LEN + 1];
 };
 
 static int      enter_user(uid_t, char *, int);
@@ -65,15 +65,11 @@ static int      get_user(uid_t);
 
 #define	is_empty_hash(x)	(hash_table[x].name[0] == 0)
 
-/* simple minded hashing function */
 /*
- * Uid "nobody" is -2 results in hashit(-2) = -2 which is out of bounds for
- * the hash_table.  Applied abs() function to fix. 2/16/96 tpugh
+ * Simple minded hashing function, assumes i is unsigned.
  */
-#define	hashit(i)	(abs(i) % Table_size)
+#define	hashit(i)	(i % Table_size)
 
-/* K&R requires that statically declared tables be initialized to zero. */
-/* We depend on that for hash_table and YOUR compiler had BETTER do it! */
 struct hash_el  hash_table[Table_size];
 
 char *
@@ -177,5 +173,5 @@ get_user(uid_t uid)
 	}
 #endif
 	/* if we can't find the name at all, then use the uid as the name */
-	return (enter_user(uid, itoa7(uid), 1));
+	return (enter_user(uid, format_uid(uid), 1));
 }

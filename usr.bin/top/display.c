@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.15 2003/06/18 08:36:31 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.16 2003/06/19 22:40:45 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -75,7 +75,7 @@ static int      display_width = MAX_COLS;
 
 static char    *cpustates_tag(void);
 static int      string_count(char **);
-static void     summary_format(char *, int *, char **);
+static void     summary_format(char *, size_t, int *, char **);
 static void     line_update(char *, char *, int, int);
 
 #define lineindex(l) ((l)*display_width)
@@ -277,7 +277,8 @@ i_procstates(int total, int *brkdn)
 	}
 
 	/* format and print the process state summary */
-	summary_format(procstates_buffer, brkdn, procstate_names);
+	summary_format(procstates_buffer, sizeof(procstates_buffer), brkdn,
+	    procstate_names);
 	if (fputs(procstates_buffer, stdout) == EOF)
 		exit(1);
 
@@ -320,7 +321,7 @@ u_procstates(int total, int *brkdn)
 	/* see if any of the state numbers has changed */
 	if (memcmp(lprocstates, brkdn, num_procstates * sizeof(int)) != 0) {
 		/* format and update the line */
-		summary_format(new, brkdn, procstate_names);
+		summary_format(new, sizeof(new), brkdn, procstate_names);
 		line_update(procstates_buffer, new, x_brkdn, y_brkdn);
 		memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
 	}
@@ -461,7 +462,8 @@ i_memory(int *stats)
 	lastline++;
 
 	/* format and print the memory summary */
-	summary_format(memory_buffer, stats, memory_names);
+	summary_format(memory_buffer, sizeof(memory_buffer), stats,
+	    memory_names);
 	if (fputs(memory_buffer, stdout) == EOF)
 		exit(1);
 }
@@ -472,7 +474,7 @@ u_memory(int *stats)
 	static char new[MAX_COLS];
 
 	/* format the new line */
-	summary_format(new, stats, memory_names);
+	summary_format(new, sizeof(new), stats, memory_names);
 	line_update(memory_buffer, new, x_mem, y_mem);
 }
 
@@ -566,7 +568,8 @@ u_header(char *text)
 void
 i_process(int line, char *thisline)
 {
-	char *p, *base;
+	char *base;
+	size_t len;
 
 	/* make sure we are on the correct line */
 	while (lastline < y_procs + line) {
@@ -584,17 +587,19 @@ i_process(int line, char *thisline)
 
 	/* copy it in to our buffer */
 	base = smart_terminal ? screenbuf + lineindex(line) : screenbuf;
-	p = strecpy(base, thisline);
-
-	/* zero fill the rest of it */
-	memset(p, 0, display_width - (p - base));
+	len = strlcpy(base, thisline, display_width);
+	if (len < (size_t)display_width) {
+		/* zero fill the rest of it */
+		memset(base + len, 0, display_width - len);
+	}
 }
 
 void
 u_process(int linenum, char *linebuf)
 {
 	int screen_line = linenum + Header_lines;
-	char *optr, *bufferline;
+	char *bufferline;
+	size_t len;
 
 	/* remember a pointer to the current line in the screen buffer */
 	bufferline = &screenbuf[lineindex(linenum)];
@@ -620,10 +625,11 @@ u_process(int linenum, char *linebuf)
 			exit(1);
 
 		/* copy it in to the buffer */
-		optr = strecpy(bufferline, linebuf);
-
-		/* zero fill the rest of it */
-		memset(optr, 0, display_width - (optr - bufferline));
+		len = strlcpy(bufferline, linebuf, display_width);
+		if (len < (size_t)display_width) {
+			/* zero fill the rest of it */
+			memset(bufferline + len, 0, display_width - len);
+		}
 	} else {
 		line_update(bufferline, linebuf, 0, linenum + Header_lines);
 	}
@@ -826,14 +832,24 @@ string_count(char **pp)
 	return (cnt);
 }
 
+#define	COPYLEFT(to, from)				\
+	do {						\
+		len = strlcpy((to), (from), left);	\
+		if (len >= left)			\
+			return;				\
+		p += len;				\
+		left -= len;				\
+	} while (0)
+
 static void
-summary_format(char *str, int *numbers, char **names)
+summary_format(char *buf, size_t left, int *numbers, char **names)
 {
 	char *p, *thisname;
+	size_t len;
 	int num;
 
 	/* format each number followed by its string */
-	p = str;
+	p = buf;
 	while ((thisname = *names++) != NULL) {
 		/* get the number to format */
 		num = *numbers++;
@@ -842,26 +858,32 @@ summary_format(char *str, int *numbers, char **names)
 			/* is this number in kilobytes? */
 			if (thisname[0] == 'K') {
 				/* yes: format it as a memory value */
-				p = strecpy(p, format_k(num));
+				COPYLEFT(p, format_k(num));
 
 				/*
 				 * skip over the K, since it was included by
 				 * format_k
 				 */
-				p = strecpy(p, thisname + 1);
+				COPYLEFT(p, thisname + 1);
 			} else if (num > 0) {
-				p = strecpy(p, itoa(num));
-				p = strecpy(p, thisname);
+				len = snprintf(p, left, "%d%s", num, thisname);
+				if (len == (size_t)-1 || len >= left)
+					return;
+				p += len;
+				left -= len;
 			}
+		} else {
+			/*
+			 * Ignore negative numbers, but display corresponding
+			 * string.
+			 */
+			COPYLEFT(p, thisname);
 		}
-		/* ignore negative numbers, but display corresponding string */
-		else
-			p = strecpy(p, thisname);
 	}
 
 	/* if the last two characters in the string are ", ", delete them */
 	p -= 2;
-	if (p >= str && p[0] == ',' && p[1] == ' ')
+	if (p >= buf && p[0] == ',' && p[1] == ' ')
 		*p = '\0';
 }
 

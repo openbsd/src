@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.10 2003/06/12 23:09:30 deraadt Exp $	 */
+/* $OpenBSD: utils.c,v 1.11 2003/06/19 22:40:45 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -60,57 +60,36 @@ atoiwi(char *str)
 }
 
 /*
- * itoa - convert integer (decimal) to ascii string for positive numbers
- * only (we don't bother with negative numbers since we know we
- * don't use them).
+ * itoa - convert integer (decimal) to ascii string.
  */
 char *
 itoa(int val)
 {
 	static char buffer[16];	/* result is built here */
-	char *ptr;
 
 	/*
 	 * 16 is sufficient since the largest number we will ever convert
 	 * will be 2^32-1, which is 10 digits.
 	 */
-	ptr = buffer + sizeof(buffer);
-	*--ptr = '\0';
-	if (val == 0) {
-		*--ptr = '0';
-	} else {
-		while (val != 0) {
-			*--ptr = (val % 10) + '0';
-			val /= 10;
-		}
-	}
-	return (ptr);
+	(void)snprintf(buffer, sizeof(buffer), "%d", val);
+	return (buffer);
 }
 
 /*
- * itoa7(val) - like itoa, except the number is right justified in a 7
- * character field.  This code is a duplication of itoa instead of
- * a front end to a more general routine for efficiency.
+ * format_uid(uid) - like itoa, except for uid_t and the number is right
+ * justified in a 6 character field to match uname_field in top.c.
  */
 char *
-itoa7(int val)
+format_uid(uid_t uid)
 {
-	static char buffer[25];	/* result is built here */
-	char *ptr;
+	static char buffer[16];	/* result is built here */
 
-	ptr = buffer + sizeof(buffer);
-	*--ptr = '\0';
-	if (val == 0) {
-		*--ptr = '0';
-	} else {
-		while (val != 0) {
-			*--ptr = (val % 10) + '0';
-			val /= 10;
-		}
-	}
-	while (ptr > buffer + sizeof(buffer) - 7)
-		*--ptr = ' ';
-	return (ptr);
+	/*
+	 * 16 is sufficient since the largest uid we will ever convert
+	 * will be 2^32-1, which is 10 digits.
+	 */
+	(void)snprintf(buffer, sizeof(buffer), "%6u", uid);
+	return (buffer);
 }
 
 /*
@@ -127,18 +106,6 @@ digits(int val)
 		val /= 10;
 	}
 	return (cnt);
-}
-
-/*
- * strecpy(to, from) - copy string "from" into "to" and return a pointer
- * to the END of the string "to".
- */
-char *
-strecpy(char *to, char *from)
-{
-	while ((*to++ = *from++) != '\0')
-		;
-	return (--to);
 }
 
 /*
@@ -344,9 +311,9 @@ format_k(int amt)
 {
 	static char retarray[NUM_STRINGS][16];
 	static int  index = 0;
-	char *p, *ret, tag = 'K';
+	char *ret, tag = 'K';
 
-	p = ret = retarray[index];
+	ret = retarray[index];
 	index = (index + 1) % NUM_STRINGS;
 
 	if (amt >= 10000) {
@@ -357,8 +324,6 @@ format_k(int amt)
 			tag = 'G';
 		}
 	}
-	p = strecpy(p, itoa(amt));
-	*p++ = tag;
-	*p = '\0';
+	snprintf(ret, sizeof(retarray[0]), "%d%c", amt, tag);
 	return (ret);
 }

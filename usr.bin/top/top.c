@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.25 2003/06/18 08:42:17 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.26 2003/06/19 22:40:45 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 	/* set constants for username/uid display correctly */
 	if (!do_unames) {
 		uname_field = "   UID  ";
-		get_userid = itoa7;
+		get_userid = format_uid;
 	}
 	/* initialize the kernel memory interface */
 	if (machine_init(&statics) == -1)
