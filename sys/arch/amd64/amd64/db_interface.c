@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 2004/08/02 20:45:42 andreas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2005/03/31 02:53:48 tedu Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
-#include <ddb/db_variables.h>
 #include <ddb/db_output.h>
 #include <ddb/db_var.h>
 
@@ -73,59 +72,6 @@ long		 db_switch_to_cpu;
 
 int	db_active;
 db_regs_t ddb_regs;
-
-#define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
-
-static int db_x86_64_regop(struct db_variable *, db_expr_t *, int);
-
-struct db_variable db_regs[] = {
-	{ "ds",		dbreg(ds),     db_x86_64_regop },
-	{ "es",		dbreg(es),     db_x86_64_regop },
-	{ "fs",		dbreg(fs),     db_x86_64_regop },
-	{ "gs",		dbreg(gs),     db_x86_64_regop },
-	{ "rdi",	dbreg(rdi),    db_x86_64_regop },
-	{ "rsi",	dbreg(rsi),    db_x86_64_regop },
-	{ "rbp",	dbreg(rbp),    db_x86_64_regop },
-	{ "rbx",	dbreg(rbx),    db_x86_64_regop },
-	{ "rdx",	dbreg(rdx),    db_x86_64_regop },
-	{ "rcx",	dbreg(rcx),    db_x86_64_regop },
-	{ "rax",	dbreg(rax),    db_x86_64_regop },
-	{ "r8",		dbreg(r8),     db_x86_64_regop },
-	{ "r9",		dbreg(r9),     db_x86_64_regop },
-	{ "r10",	dbreg(r10),    db_x86_64_regop },
-	{ "r11",	dbreg(r11),    db_x86_64_regop },
-	{ "r12",	dbreg(r12),    db_x86_64_regop },
-	{ "r13",	dbreg(r13),    db_x86_64_regop },
-	{ "r14",	dbreg(r14),    db_x86_64_regop },
-	{ "r15",	dbreg(r15),    db_x86_64_regop },
-	{ "rip",	dbreg(rip),    db_x86_64_regop },
-	{ "cs",		dbreg(cs),     db_x86_64_regop },
-	{ "rflags",	dbreg(rflags), db_x86_64_regop },
-	{ "rsp",	dbreg(rsp),    db_x86_64_regop },
-	{ "ss",		dbreg(ss),     db_x86_64_regop },
-};
-
-struct db_variable * db_eregs =
-	db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
-
-static int
-db_x86_64_regop(struct db_variable *vp, db_expr_t *val, int opcode)
-{
-        db_expr_t *regaddr =
-            (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-
-        switch (opcode) {
-        case DB_VAR_GET:
-                *val = *regaddr;
-                break;
-        case DB_VAR_SET:
-                *regaddr = *val;
-                break;
-        default:
-                panic("db_x86_64_regop: unknown op %d", opcode);
-        }
-        return 0;
-}
 
 void kdbprinttrap(int, int);
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.6 2004/11/19 06:41:13 miod Exp $
+#	$OpenBSD: Makefile.amd64,v 1.7 2005/03/31 02:53:48 tedu Exp $
 
 # Makefile for OpenBSD
 #
@@ -40,7 +40,7 @@ CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 
 CMACHFLAGS+=	-mcmodel=kernel -mno-red-zone -fno-strict-aliasing \
 		-mno-sse2 -mno-sse -mno-3dnow -mno-mmx -msoft-float \
-		-fno-builtin-printf -fno-builtin-log
+		-fno-builtin-printf -fno-builtin-log -fno-omit-frame-pointer
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
