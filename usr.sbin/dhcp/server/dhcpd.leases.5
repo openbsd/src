@@ -49,22 +49,22 @@ for a given lease, the last one in the file is the current one.
 When dhcpd is first installed, there is no lease database.   However,
 dhcpd requires that a lease database be present before it will start.
 To make the initial lease database, just create an empty file called
-DBDIR/dhcpd.leases.
+/var/db/dhcpd.leases.
 .PP
 In order to prevent the lease database from growing without bound, the
 file is rewritten from time to time.   First, a temporary lease
 database is created and all known leases are dumped to it.   Then, the
-old lease database is renamed DBDIR/dhcpd.leases~.   Finally, the
+old lease database is renamed /var/db/dhcpd.leases~.   Finally, the
 newly written lease database is moved into place.
 .PP
 There is a window of vulnerability where if the dhcpd process is
 killed or the system crashes after the old lease database has been
 renamed but before the new one has been moved into place, there will
-be no DBDIR/dhcpd.leases.   In this case, dhcpd will refuse to start,
+be no /var/db/dhcpd.leases.   In this case, dhcpd will refuse to start,
 and will require manual intervention.   \fBDO NOT\fR simply create a
 new lease file when this happens - if you do, you will lose all your
 old bindings, and chaos will ensue.   Instead, rename
-DBDIR/dhcpd.leases~ to DBDIR/dhcpd.leases, restoring the old, valid
+/var/db/dhcpd.leases~ to /var/db/dhcpd.leases, restoring the old, valid
 lease file, and then start dhcpd.   This guarantees that a valid lease
 file will be restored.
 .SH FORMAT
@@ -162,7 +162,7 @@ corrupted, and that the client is the machine that responded when the
 lease was probed, causing it to be abandoned.   In that case, the
 address is immediately assigned to the client.
 .SH FILES
-.B DBDIR/dhcpd.leases
+.B /var/db/dhcpd.leases
 .SH SEE ALSO
 dhcpd(8), dhcp-options(5), dhcpd.conf(5), RFC2132, RFC2131.
 .SH AUTHOR
