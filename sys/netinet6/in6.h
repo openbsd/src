@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6.h,v 1.15 2000/06/25 17:15:51 aaron Exp $	*/
-/*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.16 2000/07/16 08:18:43 itojun Exp $	*/
+/*	$KAME: in6.h,v 1.52 2000/07/15 15:28:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,10 +72,6 @@
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
 
-#if !defined(_XOPEN_SOURCE)
-#include <sys/queue.h>
-#endif
-
 /*
  * Identification of the network protocol stack
  */
@@ -139,7 +135,7 @@ struct in6_addr {
 /*
  * Socket address for IPv6
  */
-#if !defined(_XOPEN_SOURCE)
+#ifndef _XOPEN_SOURCE
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
@@ -242,37 +238,37 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
  * Unspecified
  */
 #define IN6_IS_ADDR_UNSPECIFIED(a)	\
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) == 0))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) == 0))
 
 /*
  * Loopback
  */
 #define IN6_IS_ADDR_LOOPBACK(a)		\
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) == ntohl(1)))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) == ntohl(1)))
 
 /*
  * IPv4 compatible
  */
 #define IN6_IS_ADDR_V4COMPAT(a)		\
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) != 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) != ntohl(1)))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) != 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) != ntohl(1)))
 
 /*
  * Mapped
  */
 #define IN6_IS_ADDR_V4MAPPED(a)		      \
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
 
 /*
  * KAME Scope Values
@@ -368,7 +364,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 /*
  * IP6 route structure
  */
-#if !defined(_XOPEN_SOURCE)
+#ifndef _XOPEN_SOURCE
 struct route_in6 {
 	struct	rtentry *ro_rt;
 	struct	sockaddr_in6 ro_dst;
@@ -438,15 +434,15 @@ struct route_in6 {
  */
 struct ipv6_mreq {
 	struct in6_addr	ipv6mr_multiaddr;
-	u_int		ipv6mr_interface;
+	unsigned int	ipv6mr_interface;
 };
 
 /*
  * IPV6_PKTINFO: Packet information(RFC2292 sec 5)
  */
 struct in6_pktinfo {
-	struct in6_addr ipi6_addr;	/* src/dst IPv6 address */
-	u_int ipi6_ifindex;		/* send/recv interface index */
+	struct in6_addr	ipi6_addr;	/* src/dst IPv6 address */
+	unsigned int	ipi6_ifindex;	/* send/recv interface index */
 };
 
 /*
@@ -457,7 +453,7 @@ struct in6_pktinfo {
 #define	IPV6_PORTRANGE_HIGH	1	/* "high" - request firewall bypass */
 #define	IPV6_PORTRANGE_LOW	2	/* "low" - vouchsafe security */
 
-#if !defined(_XOPEN_SOURCE)
+#ifndef _XOPEN_SOURCE
 /*
  * Definitions for inet6 sysctl operations.
  *
@@ -584,16 +580,6 @@ int	in6_addrscope __P((struct in6_addr *));
 struct	in6_ifaddr *in6_ifawithscope __P((struct ifnet *, struct in6_addr *));
 struct	in6_ifaddr *in6_ifawithifp __P((struct ifnet *, struct in6_addr *));
 extern void in6_if_up __P((struct ifnet *));
-#ifdef MAPPED_ADDR_ENABLED
-struct sockaddr;
-
-void	in6_sin6_2_sin __P((struct sockaddr_in *sin,
-			    struct sockaddr_in6 *sin6));
-void	in6_sin_2_v4mapsin6 __P((struct sockaddr_in *sin,
-				 struct sockaddr_in6 *sin6));
-void	in6_sin6_2_sin_in_sock __P((struct sockaddr *nam));
-void	in6_sin_2_v4mapsin6_in_sock __P((struct sockaddr **nam));
-#endif /* MAPPED_ADDR_ENABLED */
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
 #define	sin6tosa(sin6)	((struct sockaddr *)(sin6))
