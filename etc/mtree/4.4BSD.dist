@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.88 2000/04/25 20:52:50 jakob Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.89 2000/04/25 21:14:08 jakob Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1404,11 +1404,6 @@ siteconfig
 ..
 
 # ./usr/share/sendmail
-..
-
-# ./usr/share/skel
-skel
-# ./usr/share/skel
 ..
 
 # ./usr/share/tabset
