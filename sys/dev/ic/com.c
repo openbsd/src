@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.33 1997/03/17 08:11:11 pefo Exp $	*/
+/*	$OpenBSD: com.c,v 1.34 1997/04/10 17:16:37 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -1433,7 +1433,7 @@ ohfudge:
  */
 #include <dev/cons.h>
 
-#if NCOM_LOCALBUS
+#ifdef arc
 #undef CONADDR
 	extern int CONADDR;
 #endif
@@ -1444,7 +1444,7 @@ comcnprobe(cp)
 {
 	/* XXX NEEDS TO BE FIXED XXX */
 #ifdef arc
-	bus_space_tag_t iot = &arc_bus;
+	bus_space_tag_t iot = &arc_bus_io;
 #else
 	bus_space_tag_t iot = 0;
 #endif
