@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.7 1997/09/24 23:00:01 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.8 1997/09/29 03:42:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -72,6 +72,7 @@ struct bios_softc {
 int biosprobe __P((struct device *, void *, void *));
 void biosattach __P((struct device *, struct device *, void *));
 void bios_init __P((bus_space_handle_t));
+int bios_print __P((void *, const char *));
 static __inline int bios_call __P((u_int cmd, u_int arg));
 
 struct cfattach bios_ca = {
@@ -154,7 +155,7 @@ biosprobe(parent, match, aux)
 		bus_space_unmap(bia->bios_memt, hsp, LMVAS);
 	}
 #endif
-	return !bios_cd.cd_ndevs && !strcmp(bia->bios_busname, "bios");
+	return !bios_cd.cd_ndevs && !strcmp(bia->bios_dev, "bios");
 }
 
 void
@@ -170,15 +171,6 @@ biosattach(parent, self, aux)
 
 	sc->bt = bia->bios_memt;
 	/* bios_init(sc->bt); */
-#if NAPM > 0
-	apminfo.apm_detail = BIOS_vars.apm_detail;
-	apminfo.apm_code32_seg_base = BIOS_vars.apm_code32_base;
-	apminfo.apm_code16_seg_base = BIOS_vars.apm_code16_base;
-	apminfo.apm_code32_seg_len = BIOS_vars.apm_code_len;
-	apminfo.apm_data_seg_base = BIOS_vars.apm_data_base;
-	apminfo.apm_data_seg_len = BIOS_vars.apm_data_len;
-	apminfo.apm_entrypt = BIOS_vars.apm_entry;
-#endif
 	switch (va[14]) {
 	default:
 	case 0xff: p = "PC";		break;
@@ -194,11 +186,38 @@ biosattach(parent, self, aux)
 	    p, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
 #ifdef DEBUG
 	printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
-	    BIOS_vars.apm_detail, BIOS_vars.apm_code32_base,
-	    BIOS_vars.apm_code16_base, BIOS_vars.apm_code_len,
-	    BIOS_vars.apm_data_base, BIOS_vars.apm_data_len,
-	    BIOS_vars.apm_entry);
+	    BIOS_vars.bios_apm_detail, BIOS_vars.bios_apm_code32_base,
+	    BIOS_vars.bios_apm_code16_base, BIOS_vars.bios_apm_code_len,
+	    BIOS_vars.bios_apm_data_base, BIOS_vars.bios_apm_data_len,
+	    BIOS_vars.bios_apm_entry);
 #endif
+#if NAPM > 0
+	{
+		struct bios_attach_args ba;
+
+		ba.apm_detail = BIOS_vars.bios_apm_detail;
+		ba.apm_code32_base = BIOS_vars.bios_apm_code32_base;
+		ba.apm_code16_base = BIOS_vars.bios_apm_code16_base;
+		ba.apm_code_len = BIOS_vars.bios_apm_code_len;
+		ba.apm_data_base = BIOS_vars.bios_apm_data_base;
+		ba.apm_data_len = BIOS_vars.bios_apm_data_len;
+		ba.apm_entry = BIOS_vars.bios_apm_entry;
+		ba.bios_dev = "apm";
+		config_found(self, &ba, bios_print);
+	}
+#endif
+}
+
+int
+bios_print(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct bios_attach_args *ba = aux;
+
+	if (pnp)
+		printf("%s at %s", ba->bios_dev, pnp);
+	return (UNCONF);
 }
 
 int

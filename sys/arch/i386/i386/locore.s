@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.32 1997/09/25 00:13:54 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.33 1997/09/29 03:42:26 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -212,7 +212,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	cld
 	rep;	movsb
 1:
-#endif /* APM */
+#endif /* NBIOS */
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
@@ -2165,69 +2165,3 @@ ENTRY(bzero)
 
 	popl	%edi
 	ret
-	
-#if NAPM > 0
-/*
- * int apmcall(int function, struct apmregs *regs):
- * 	call the APM protected mode bios function FUNCTION for BIOS selection
- * 	WHICHBIOS.
- *	Fills in *regs with registers as returned by APM.
- *	returns nonzero if error returned by APM.
- */
-	.globl	_apminfo
-ENTRY(apmcall)
-	pushl	%ebp
-	movl	%esp,%ebp
-	pushl	%esi
-	pushl	%edi
-	pushl	%ebx
-	
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-	pushl	%ds		
-	pushl	%es
-	pushl	%fs
-	pushl	%gs
-	pushfl
-	cli
-	pushl	%ds
-	xorl	%ax,%ax
-	movl	%ax,%ds
-	movl	%ax,%es
-	movl	%ax,%fs
-	movl	%ax,%gs
-#endif
-	movb	%cs:8(%ebp),%al
-	movb	$0x53,%ah
-	movl	%cs:12(%ebp),%ebx
-	movw	%cs:APMREG_CX(%ebx),%cx
-	movw	%cs:APMREG_DX(%ebx),%dx
-	movw	%cs:APMREG_BX(%ebx),%bx
-	lcall	%cs:(_apminfo+APM_CALL)
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-	popl	%ds
-#endif
-	movl	12(%ebp),%esi
-	movw	%ax,APMREG_AX(%esi)
-	movw	%bx,APMREG_BX(%esi)
-	movw	%cx,APMREG_CX(%esi)
-	movw	%dx,APMREG_DX(%esi)
-		/* todo: do something with %edi? */
-	setc	%al
-	movzbl	%al, %eax
-
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-	popfl
-	popl	%gs
-	popl	%fs
-	popl	%es
-	popl	%ds
-#endif
-
-	popl	%ebx
-	popl	%edi
-	popl	%esi
-	popl	%ebp
-	ret
-#endif /* APM */
-
-
