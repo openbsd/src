@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.46 2002/04/29 06:26:51 pvalchev Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.47 2002/06/05 17:40:08 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -264,9 +264,14 @@ static __inline void
 uvm_rb_insert(vm_map_t map, vm_map_entry_t entry)
 {
 	vaddr_t space = uvm_rb_space(map, entry);
+	vm_map_entry_t tmp;
 
 	entry->ownspace = entry->space = space;
-	RB_INSERT(uvm_tree, &(map)->rbhead, entry);
+	tmp = RB_INSERT(uvm_tree, &(map)->rbhead, entry);
+#ifdef DIAGNOSTIC
+	if (tmp != NULL)
+		panic("uvm_rb_insert: duplicate entry?");
+#endif
 	uvm_rb_fixup(map, entry);
 	if (entry->prev != &map->header)
 		uvm_rb_fixup(map, entry->prev);
