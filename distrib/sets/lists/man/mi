@@ -133,6 +133,7 @@
 ./usr/share/man/cat1/afslog.0
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/alpha
+./usr/share/man/cat1/amd64
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
 ./usr/share/man/cat1/arch.0
@@ -155,6 +156,7 @@
 ./usr/share/man/cat1/cap_mkdb.0
 ./usr/share/man/cat1/captoinfo.0
 ./usr/share/man/cat1/cat.0
+./usr/share/man/cat1/cats
 ./usr/share/man/cat1/cd.0
 ./usr/share/man/cat1/cdio.0
 ./usr/share/man/cat1/checknr.0
@@ -370,6 +372,7 @@
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pax.0
 ./usr/share/man/cat1/pegasos
+./usr/share/man/cat1/pegosos
 ./usr/share/man/cat1/perl.0
 ./usr/share/man/cat1/perl5004delta.0
 ./usr/share/man/cat1/perl5005delta.0
@@ -652,6 +655,8 @@
 ./usr/share/man/cat2/i386
 ./usr/share/man/cat3
 ./usr/share/man/cat3/alpha
+./usr/share/man/cat3/amd64
+./usr/share/man/cat3/cats
 ./usr/share/man/cat3/hp300
 ./usr/share/man/cat3/hppa
 ./usr/share/man/cat3/i386
@@ -664,6 +669,7 @@
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/pegasos
+./usr/share/man/cat3/pegosos
 ./usr/share/man/cat3/pthread_stackseg_np.0
 ./usr/share/man/cat3/pthread_yield.0
 ./usr/share/man/cat3/sparc
@@ -1031,6 +1037,7 @@
 ./usr/share/man/cat4/alpha/tga.0
 ./usr/share/man/cat4/alpha/tsc.0
 ./usr/share/man/cat4/alpha/tsp.0
+./usr/share/man/cat4/amd64
 ./usr/share/man/cat4/amdpm.0
 ./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amphy.0
@@ -1060,6 +1067,7 @@
 ./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/carp.0
+./usr/share/man/cat4/cats
 ./usr/share/man/cat4/cbb.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
@@ -1319,6 +1327,7 @@
 ./usr/share/man/cat4/pegasos/intro.0
 ./usr/share/man/cat4/pegasos/kmem.0
 ./usr/share/man/cat4/pegasos/mem.0
+./usr/share/man/cat4/pegosos
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
 ./usr/share/man/cat4/pfsync.0
@@ -1579,12 +1588,14 @@
 ./usr/share/man/cat5/afsd.conf.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
+./usr/share/man/cat5/amd64
 ./usr/share/man/cat5/bgpd.conf.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/bsd.port.mk.0
 ./usr/share/man/cat5/bsd.regress.mk.0
+./usr/share/man/cat5/cats
 ./usr/share/man/cat5/changelist.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
@@ -1655,6 +1666,7 @@
 ./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/passwd.conf.0
+./usr/share/man/cat5/pegosos
 ./usr/share/man/cat5/pf.conf.0
 ./usr/share/man/cat5/pf.os.0
 ./usr/share/man/cat5/phones.0
@@ -1749,6 +1761,12 @@
 ./usr/share/man/cat8/alpha/wsfontload.0
 ./usr/share/man/cat8/alpha/wsmoused.0
 ./usr/share/man/cat8/amd.0
+./usr/share/man/cat8/amd64
+./usr/share/man/cat8/amd64/fdisk.0
+./usr/share/man/cat8/amd64/kbd.0
+./usr/share/man/cat8/amd64/wsconscfg.0
+./usr/share/man/cat8/amd64/wsconsctl.0
+./usr/share/man/cat8/amd64/wsmoused.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/ancontrol.0
 ./usr/share/man/cat8/apachectl.0
@@ -1767,6 +1785,7 @@
 ./usr/share/man/cat8/bootptest.0
 ./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
+./usr/share/man/cat8/cats
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/certpatch.0
 ./usr/share/man/cat8/chat.0
@@ -1982,6 +2001,10 @@
 ./usr/share/man/cat8/pegasos/MAKEDEV.0
 ./usr/share/man/cat8/pegasos/wsconscfg.0
 ./usr/share/man/cat8/pegasos/wsconsctl.0
+./usr/share/man/cat8/pegosos
+./usr/share/man/cat8/pegosos/fdisk.0
+./usr/share/man/cat8/pegosos/kbd.0
+./usr/share/man/cat8/pegosos/wsmoused.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
 ./usr/share/man/cat8/ping.0
@@ -2160,6 +2183,8 @@
 ./usr/share/man/cat8/zic.0
 ./usr/share/man/cat9
 ./usr/share/man/cat9/alpha
+./usr/share/man/cat9/amd64
+./usr/share/man/cat9/cats
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
 ./usr/share/man/cat9/i386
@@ -2169,11 +2194,14 @@
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
 ./usr/share/man/cat9/pegasos
+./usr/share/man/cat9/pegosos
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/vax
 ./usr/share/man/man1
 ./usr/share/man/man1/alpha
+./usr/share/man/man1/amd64
+./usr/share/man/man1/cats
 ./usr/share/man/man1/hp300
 ./usr/share/man/man1/hppa
 ./usr/share/man/man1/i386
@@ -2183,6 +2211,7 @@
 ./usr/share/man/man1/mvme88k
 ./usr/share/man/man1/mvmeppc
 ./usr/share/man/man1/pegasos
+./usr/share/man/man1/pegosos
 ./usr/share/man/man1/sparc
 ./usr/share/man/man1/sparc64
 ./usr/share/man/man1/vax
@@ -2191,6 +2220,8 @@
 ./usr/share/man/man3p
 ./usr/share/man/man4
 ./usr/share/man/man4/alpha
+./usr/share/man/man4/amd64
+./usr/share/man/man4/cats
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hppa
 ./usr/share/man/man4/i386
@@ -2200,6 +2231,7 @@
 ./usr/share/man/man4/mvme88k
 ./usr/share/man/man4/mvmeppc
 ./usr/share/man/man4/pegasos
+./usr/share/man/man4/pegosos
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man4/vax
@@ -2208,6 +2240,8 @@
 ./usr/share/man/man7
 ./usr/share/man/man8
 ./usr/share/man/man8/alpha
+./usr/share/man/man8/amd64
+./usr/share/man/man8/cats
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hppa
 ./usr/share/man/man8/i386
@@ -2217,12 +2251,15 @@
 ./usr/share/man/man8/mvme88k
 ./usr/share/man/man8/mvmeppc
 ./usr/share/man/man8/pegasos
+./usr/share/man/man8/pegosos
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/vax
 ./usr/share/man/man9
 ./usr/share/man/ps1
 ./usr/share/man/ps1/alpha
+./usr/share/man/ps1/amd64
+./usr/share/man/ps1/cats
 ./usr/share/man/ps1/hp300
 ./usr/share/man/ps1/hppa
 ./usr/share/man/ps1/i386
@@ -2232,6 +2269,7 @@
 ./usr/share/man/ps1/mvme88k
 ./usr/share/man/ps1/mvmeppc
 ./usr/share/man/ps1/pegasos
+./usr/share/man/ps1/pegosos
 ./usr/share/man/ps1/sparc
 ./usr/share/man/ps1/sparc64
 ./usr/share/man/ps1/vax
@@ -2240,6 +2278,8 @@
 ./usr/share/man/ps2/i386
 ./usr/share/man/ps3
 ./usr/share/man/ps3/alpha
+./usr/share/man/ps3/amd64
+./usr/share/man/ps3/cats
 ./usr/share/man/ps3/hp300
 ./usr/share/man/ps3/hppa
 ./usr/share/man/ps3/i386
@@ -2249,12 +2289,15 @@
 ./usr/share/man/ps3/mvme88k
 ./usr/share/man/ps3/mvmeppc
 ./usr/share/man/ps3/pegasos
+./usr/share/man/ps3/pegosos
 ./usr/share/man/ps3/sparc
 ./usr/share/man/ps3/sparc64
 ./usr/share/man/ps3/vax
 ./usr/share/man/ps3p
 ./usr/share/man/ps4
 ./usr/share/man/ps4/alpha
+./usr/share/man/ps4/amd64
+./usr/share/man/ps4/cats
 ./usr/share/man/ps4/hp300
 ./usr/share/man/ps4/hppa
 ./usr/share/man/ps4/i386
@@ -2264,11 +2307,14 @@
 ./usr/share/man/ps4/mvme88k
 ./usr/share/man/ps4/mvmeppc
 ./usr/share/man/ps4/pegasos
+./usr/share/man/ps4/pegosos
 ./usr/share/man/ps4/sparc
 ./usr/share/man/ps4/sparc64
 ./usr/share/man/ps4/vax
 ./usr/share/man/ps5
 ./usr/share/man/ps5/alpha
+./usr/share/man/ps5/amd64
+./usr/share/man/ps5/cats
 ./usr/share/man/ps5/hp300
 ./usr/share/man/ps5/hppa
 ./usr/share/man/ps5/i386
@@ -2278,6 +2324,7 @@
 ./usr/share/man/ps5/mvme88k
 ./usr/share/man/ps5/mvmeppc
 ./usr/share/man/ps5/pegasos
+./usr/share/man/ps5/pegosos
 ./usr/share/man/ps5/sparc
 ./usr/share/man/ps5/sparc64
 ./usr/share/man/ps5/vax
@@ -2285,6 +2332,8 @@
 ./usr/share/man/ps7
 ./usr/share/man/ps8
 ./usr/share/man/ps8/alpha
+./usr/share/man/ps8/amd64
+./usr/share/man/ps8/cats
 ./usr/share/man/ps8/hp300
 ./usr/share/man/ps8/hppa
 ./usr/share/man/ps8/i386
@@ -2294,11 +2343,14 @@
 ./usr/share/man/ps8/mvme88k
 ./usr/share/man/ps8/mvmeppc
 ./usr/share/man/ps8/pegasos
+./usr/share/man/ps8/pegosos
 ./usr/share/man/ps8/sparc
 ./usr/share/man/ps8/sparc64
 ./usr/share/man/ps8/vax
 ./usr/share/man/ps9
 ./usr/share/man/ps9/alpha
+./usr/share/man/ps9/amd64
+./usr/share/man/ps9/cats
 ./usr/share/man/ps9/hp300
 ./usr/share/man/ps9/hppa
 ./usr/share/man/ps9/i386
@@ -2308,6 +2360,7 @@
 ./usr/share/man/ps9/mvme88k
 ./usr/share/man/ps9/mvmeppc
 ./usr/share/man/ps9/pegasos
+./usr/share/man/ps9/pegosos
 ./usr/share/man/ps9/sparc
 ./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/vax
