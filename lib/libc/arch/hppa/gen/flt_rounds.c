@@ -1,4 +1,8 @@
-/*	$OpenBSD: flt_rounds.c,v 1.1 2002/03/11 02:59:01 miod Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.2 2002/05/22 20:05:01 miod Exp $	*/
+
+/*
+ * Written by Miodrag Vallat.  Public domain.
+ */
 
 #include <sys/types.h>
 #include <machine/float.h>
@@ -13,9 +17,8 @@ static const int map[] = {
 int
 __flt_rounds()
 {
-	double tmp;
-	int x;
+	u_int32_t fpsr;
 
-	asm("mffs %0; stfiwx %0,0,%1" : "=f"(tmp): "b"(&x));
-	return map[x & 0x03];
+	__asm__ __volatile__("fstw %%fr0,0(%1)" : "=m"(fpsr) : "r"(&fpsr));
+	return map[(fpsr >> 9) & 0x03];
 }
