@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.20 1999/05/31 17:34:42 millert Exp $	*/
+/*	$OpenBSD: mount.c,v 1.21 2001/03/12 01:30:24 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.20 1999/05/31 17:34:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.21 2001/03/12 01:30:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ void	prmount __P((struct statfs *));
 int	disklabelcheck __P((struct fstab *));
 void	usage __P((void));
 
-/* Map from mount otions to printable formats. */
+/* Map from mount options to printable formats. */
 static struct opt {
 	int o_opt;
 	int o_silent;
