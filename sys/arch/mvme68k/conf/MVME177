@@ -1,0 +1,62 @@
+#	$OpenBSD: MVME177,v 1.1 2000/01/06 03:28:24 smurph Exp $
+
+machine		mvme68k m68k
+
+include "../../../conf/GENERIC"
+
+#option		M68030		# support for 030
+#option		M68040		# support for 040
+option		M68060		# support for 060
+
+option		FPSP		# MC68040 floating point support
+option		M060SP		# ...and MC68060 support package
+option		FPU_EMULATE	# FPU emulation
+
+#option		MVME147		# (requires M68030)
+#option		MVME162		# (requires M68040, FPSP)
+#option		MVME167		# includes 166 (requires M68040, FPSP)
+#option		MVME172		# (requires M68060, 060SP, FPSP)
+option		MVME177		# (requires M68060, 060SP, FPSP)
+
+option		COMPAT_SUNOS
+option		COMPAT_HPUX
+option		COMPAT_M68K4K
+
+maxusers	32
+
+config		bsd		swap generic
+
+mainbus0 at root
+
+# MVME166/167/177
+pcctwo0 at mainbus0 addr 0xfff00000
+clock0	at pcctwo0 ipl 5
+nvram0	at pcctwo0 offset 0xc0000
+ie0	at pcctwo0 offset 0x46000 ipl 1
+siop0	at pcctwo0 offset 0x47000 ipl 2
+cl0	at pcctwo0 offset 0x45000 ipl 3
+vme0	at pcctwo0 offset 0x40000
+#lptwo0	at pcctwo0 ipl 1
+memc0	at pcctwo0 offset 0x43000
+memc1	at pcctwo0 offset 0x43100
+sram0	at mainbus0 addr 0xffe00000
+
+bugtty0 at mainbus0
+
+vmes0	at vme0
+vmel0	at vme0
+
+scsibus* at siop?
+
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
+
+pseudo-device	rd 2
+
+#si0	at vmes0 addr 0xff200000 ipl 2 vec 0x40
+#nxdc0	at vmes0 addr 0xff00ee80 ipl 2 vec 0x44
+#xd*	at xdc? target ?
