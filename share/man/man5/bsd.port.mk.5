@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.132 2004/02/07 22:43:48 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.133 2004/02/08 08:20:17 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -397,7 +397,7 @@ and install the missing ports by recursing through the ports tree.
 Invoked right before installing the package.
 .It Ar show
 Invoked as make show=name, show the contents of ${name}.
-Invoked as make show="name1 name2 ...", 
+Invoked as make show="name1 name2 ...",
 show the contents of ${name1} ${name2} ...,
 one variable value per line.
 Mostly used from recursive makes, or to know the contents of another
@@ -469,7 +469,7 @@ which means that they shouldn't ever be changed.
 .Bl -tag -width MASTER_SITES
 .It Ev show
 Invoked as make show=name, show the contents of ${name}.
-Invoked as make show="name1 name2 ...", show the contents of 
+Invoked as make show="name1 name2 ...", show the contents of
 ${name1} ${name2} ...,
 one variable value per line.
 .It Ev ALLFILES
@@ -1066,7 +1066,8 @@ such as the kde suite, where a base package sets up a large, extra
 directory hierarchy that would make the manual checking of packing lists
 tedious.
 .It Ev MOTIFLIB
-Read-only.  Correct incantation to link with motif.
+Read-only.
+Correct incantation to link with motif.
 .It Ev MULTI_PACKAGES
 Set to a list of package extensions for ports that create multiple packages.
 See
