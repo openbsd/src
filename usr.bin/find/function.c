@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.23 2002/02/17 19:42:30 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.24 2002/05/03 15:21:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.23 2002/02/17 19:42:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.24 2002/05/03 15:21:09 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1047,7 +1047,7 @@ c_anewer(filename)
 
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
-	new = palloc(N_NEWER, f_newer);
+	new = palloc(N_NEWER, f_anewer);
 	memcpy(&new->t_data, &sb.st_atimespec, sizeof(struct timespec));
 	return (new);
 }
@@ -1081,7 +1081,7 @@ c_cnewer(filename)
 
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
-	new = palloc(N_NEWER, f_newer);
+	new = palloc(N_NEWER, f_cnewer);
 	memcpy(&new->t_data, &sb.st_ctimespec, sizeof(struct timespec));
 	return (new);
 }
