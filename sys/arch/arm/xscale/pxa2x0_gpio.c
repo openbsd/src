@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.8 2005/01/11 18:12:30 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.9 2005/01/11 21:03:37 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 		s = _splraise(gh->gh_spl);
 		do {
 			nhandled = (gh->gh_func)(gh->gh_arg);
-			if (handled != 0)
+			if (nhandled != 0)
 				gh->gh_count.ec_count++;
 			handled |= nhandled;
 			gh = gh->gh_next;
