@@ -140,11 +140,13 @@ if [ x$reason = xTIMEOUT ]; then
       for router in $new_routers; do
 	route add default $router >/dev/null 2>&1
       done
-      set $new_static_routes
-      while [ $# -gt 1 ]; do
-	route add $0 $1
-	shift; shift
-      done
+      if [ "$new_static_routes" != "" ]; then
+        set $new_static_routes
+        while [ $# -gt 1 ]; do
+	  route add $1 $2
+	  shift; shift
+        done
+      fi
       echo search $new_domain_name >/etc/resolv.conf.std
       for nameserver in $new_domain_name_servers; do
 	echo nameserver $nameserver >>/etc/resolv.conf.std
