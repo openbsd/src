@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.10 1997/04/18 04:23:51 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.11 1997/04/18 06:54:40 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -307,10 +307,12 @@ biosstrategy(void *devdata, int rw,
 		if (debug)
 			printf(" (%d,%d,%d,%d)@%p", cyl, hd, sect, n, bb);
 #endif
-		for (error = 1, j = 5; error && j--;) {
-			error = (rw == F_READ)?
-				  biosread (bd->biosdev, cyl, hd, sect, n, bb)
-				: bioswrite(bd->biosdev, cyl, hd, sect, n, bb);
+		/* Try to do operation up to 5 times */
+		for (error = 1, j = 5; error && (j > 0); j--) {
+			if(rw == F_READ)
+				error = biosread(bd->biosdev, cyl, hd, sect, n, bb);
+			else
+				error = bioswrite(bd->biosdev, cyl, hd, sect, n, bb);
 
 			switch (error) {
 			case 0x00:	/* No errors */
@@ -318,15 +320,12 @@ biosstrategy(void *devdata, int rw,
 				error = 0;
 				break;
 
-			default:
-#ifdef	BIOS_DEBUG
-				if (debug) {
-					for (p = bd_errors; p < &bd_errors[bd_nents] &&
-			     			p->bd_id != error; p++);
-					printf("\nBIOS error %x (%s)\n", p->bd_id, p->msg);
-				}
-#endif
-				continue;
+			default:	/* All other errors */
+				for (p = bd_errors; p < &bd_errors[bd_nents] &&
+					p->bd_id != error; p++);
+				printf("\nBIOS error %x (%s)\n", p->bd_id, p->msg);
+				biosdreset();
+				break;
 			}
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.5 1997/04/09 08:39:20 mickey Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.6 1997/04/18 06:54:43 weingart Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -136,6 +136,27 @@ ENTRY(biosdinfo)
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 1:
+	popl	%ecx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+
+/*
+#
+# biosdreset(): reset disk system
+#
+*/
+
+ENTRY(biosdreset)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	pushl	%ecx
+
+	movb	$0x00, %ah		# ask for disk info
+	BIOSINT(0x13)
+
 	popl	%ecx
 	popl	%ebx
 	popl	%ebp
