@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.91 2001/07/01 17:16:03 kjell Exp $ */
+/*	$OpenBSD: pf.c,v 1.92 2001/07/01 23:04:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -177,8 +177,8 @@ void			 pf_change_a(u_int32_t *, u_int16_t *, u_int32_t);
 void			 pf_change_icmp(u_int32_t *, u_int16_t *, u_int32_t *,
 			    u_int32_t, u_int16_t, u_int16_t *, u_int16_t *,
 			    u_int16_t *, u_int16_t *);
-void			 pf_send_reset(int, struct ifnet *, struct ip *, int,
-			    struct tcphdr *);
+void			 pf_send_reset(struct ip *, int, struct tcphdr *);
+void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t);
 int			 pf_match_addr(u_int8_t, u_int32_t, u_int32_t,
 			    u_int32_t);
 int			 pf_match_port(u_int8_t, u_int16_t, u_int16_t,
@@ -1203,10 +1203,10 @@ pf_change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
 }
 
 void
-pf_send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
-    struct tcphdr *th)
+pf_send_reset(struct ip *h, int off, struct tcphdr *th)
 {
 	struct mbuf *m;
+	struct m_tag *mtag;
 	int len = sizeof(struct ip) + sizeof(struct tcphdr);
 	struct ip *h2;
 	struct tcphdr *th2;
@@ -1216,9 +1216,13 @@ pf_send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
 		return;
 
 	/* create outgoing mbuf */
+	mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
+	if (mtag == NULL)
+		return;
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		return;
+	m_tag_prepend(m, mtag);
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = NULL;
@@ -1260,33 +1264,23 @@ pf_send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
 	/* IP header checksum */
 	h2->ip_sum = in_cksum(m, sizeof(struct ip));
 
-	if (direction == PF_IN) {
-		/* set up route and send RST out through the same interface */
-		struct route iproute;
-		struct route *ro = &iproute;
-		struct sockaddr_in *dst;
-		int error;
+	ip_output(m, NULL, NULL, 0, NULL);
+}
 
-		bzero(ro, sizeof(*ro));
-		dst = (struct sockaddr_in *)&ro->ro_dst;
-		dst->sin_family = AF_INET;
-		dst->sin_addr = h2->ip_dst;
-		dst->sin_len = sizeof(*dst);
-		rtalloc(ro);
-		if (ro->ro_rt != NULL)
-			ro->ro_rt->rt_use++;
-        	error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
-		    ro->ro_rt);
-	} else {
-		/* send RST through the loopback interface */
-		struct sockaddr_in dst;
+void
+pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code)
+{
+	struct m_tag *mtag;
+	struct mbuf *m0;
 
-		dst.sin_family = AF_INET;
-		dst.sin_addr = h2->ip_dst;
-		dst.sin_len = sizeof(struct sockaddr_in);
-		m->m_pkthdr.rcvif = ifp;
-		looutput(lo0ifp, m, sintosa(&dst), NULL);
-	}
+	mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
+	if (mtag == NULL)
+		return;
+	m0 = m_copy(m, 0, M_COPYALL);
+	if (m0 == NULL)
+		return;
+	m_tag_prepend(m0, mtag);
+	icmp_error(m0, type, code, 0, 0);
 }
 
 int
@@ -1442,7 +1436,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if (rm->log)
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
-		if (rm->action == PF_DROP_RST) {
+		if ((rm->action == PF_DROP) &&
+		    (rm->return_rst || rm->return_icmp)) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL) {
 				pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
@@ -1454,9 +1449,11 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 				    &h->ip_sum, &th->th_sum, baddr, bport);
 				rewrite++;
 			}
-
-			pf_send_reset(direction, ifp, h, off, th);
-			return (PF_DROP);
+			if (rm->return_rst)
+				pf_send_reset(h, off, th);
+			else
+				pf_send_icmp(m, rm->return_icmp >> 8,
+				    rm->return_icmp & 255);
 		}
 
 		if (rm->action == PF_DROP)
@@ -1594,7 +1591,26 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if (rm->log)
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
-		if (rm->action != PF_PASS)
+		if ((rm->action == PF_DROP) && rm->return_icmp) {
+			struct mbuf *m0;
+			struct m_tag *mtag;
+
+			/* undo NAT/RST changes, if they have taken place */
+			if (nat != NULL) {
+				pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
+				    &h->ip_sum, &uh->uh_sum, baddr, bport);
+				rewrite++;
+			}
+			else if (rdr != NULL) {
+				pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
+				    &h->ip_sum, &uh->uh_sum, baddr, bport);
+				rewrite++;
+			}
+			pf_send_icmp(m, rm->return_icmp >> 8,
+			    rm->return_icmp & 255);
+		}
+
+		if (rm->action == PF_DROP)
 			return (PF_DROP);
 	}
 
@@ -2081,7 +2097,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		switch (h2.ip_p) {
 		case IPPROTO_TCP: {
 			struct tcphdr th;
-			u_int32_t seq, end;
+			u_int32_t seq;
 			struct pf_state *s;
 			struct pf_tree_key key;
 			struct pf_state_peer *src, *dst;
@@ -2098,9 +2114,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 				return (NULL);
 			}
 			seq = ntohl(th.th_seq);
-			end = seq + h2.ip_len - ((h2.ip_hl + th.th_off)<<2) +
-				((th.th_flags & TH_SYN) ? 1 : 0) +
-				((th.th_flags & TH_FIN) ? 1 : 0);
 
 			key.proto   = IPPROTO_TCP;
 			key.addr[0] = h2.ip_dst;
@@ -2116,7 +2129,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			src = (direction == s->direction) ?  &s->dst : &s->src;
 			dst = (direction == s->direction) ?  &s->src : &s->dst;
 
-			if (!SEQ_GEQ(src->seqhi, end) ||
+			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
 
 				printf("pf: BAD ICMP state: ");
@@ -2664,7 +2677,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	struct pf_state *s;
 	int off;
 
-	if (!pf_status.running)
+	if (!pf_status.running ||
+	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
 		return (PF_PASS);
 
 #ifdef DIAGNOSTIC

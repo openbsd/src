@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.39 2001/06/29 18:08:39 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.40 2001/07/01 23:04:44 dhartmei Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ icmp_error(n, type, code, dest, destifp)
 	register unsigned oiplen = oip->ip_hl << 2;
 	register struct icmp *icp;
 	struct mbuf *m;
+	struct m_tag *mtag;
 	unsigned icmplen, mblen;
 
 #ifdef ICMPPRINTFS
@@ -247,6 +248,12 @@ icmp_error(n, type, code, dest, destifp)
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
+	/* move PF_GENERATED m_tag to new packet, if it exists */
+	mtag = m_tag_find(n, PACKET_TAG_PF_GENERATED, NULL);
+	if (mtag != NULL) {
+		m_tag_unlink(n, mtag);
+		m_tag_prepend(m, mtag);
+	}
 	icmp_reflect(m);
 
 freeit:

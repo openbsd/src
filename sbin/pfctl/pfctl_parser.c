@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.24 2001/07/01 17:16:02 kjell Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.25 2001/07/01 23:04:45 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -405,12 +405,26 @@ print_rule(struct pf_rule *r)
 	printf("@%d ", r->nr + 1);
 	if (r->action == PF_PASS)
 		printf("pass ");
-	else if (r->action == PF_DROP || r->action == PF_DROP_RST)
+	else if (r->action == PF_DROP) {
 		printf("block ");
-	else
+		if (r->return_rst)
+			printf("return-rst ");
+		else if (r->return_icmp) {
+			struct icmpcodeent *ic;
+
+			printf("return-icmp");
+			ic = geticmpcodebynumber(r->return_icmp >> 8,
+			    r->return_icmp & 255);
+			if ((ic == NULL) || (ic->type != ICMP_UNREACH))
+				printf("(%u,%u) ", r->return_icmp >> 8,
+				    r->return_icmp & 255);
+			else if (ic->code != ICMP_UNREACH_PORT)
+				printf("(%s) ", ic->name);
+			else
+				printf(" ");
+		}
+	} else
 		printf("scrub ");
-	if (r->action == 2)
-		printf("return-rst ");
 	if (r->direction == 0)
 		printf("in ");
 	else
@@ -626,10 +640,32 @@ parse_rule(int n, char *l, struct pf_rule *r)
 	}
 	w = next_word(&l);
 
-	/* return-rst */
-	if ((r->action == PF_DROP) && !strcmp(w, "return-rst")) {
-		r->action = PF_DROP_RST;
-		w = next_word(&l);
+	/* return-rst/return-icmp */
+	if (r->action == PF_DROP) {
+		if (!strcmp(w, "return-rst")) {
+			r->return_rst = 1;
+			w = next_word(&l);
+		} else if (!strncmp(w, "return-icmp", 11)) {
+			w += 11;
+			if ((strlen(w) > 2) && (w[0] == '(') &&
+			    (w[strlen(w)-1] == ')')) {
+				struct icmpcodeent *ic;
+
+				w[strlen(w)-1] = 0;
+				w++;
+				ic = geticmpcodebyname(ICMP_UNREACH, w);
+				if (ic == NULL) {
+					error(n, "expected icmp code, got %s\n",
+					    w);
+					return (0);
+				}
+				r->return_icmp = ic->type << 8;
+				r->return_icmp |= ic->code;
+			} else
+				r->return_icmp = (ICMP_UNREACH << 8) |
+				    ICMP_UNREACH_PORT;
+			w = next_word(&l);
+		}
 	}
 
 	/* in / out */

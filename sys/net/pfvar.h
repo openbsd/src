@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.27 2001/07/01 17:16:03 kjell Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.28 2001/07/01 23:04:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -37,7 +37,7 @@
 #include <sys/queue.h>
 
 enum	{ PF_IN=0, PF_OUT=1 };
-enum	{ PF_PASS=0, PF_DROP=1, PF_DROP_RST=2, PF_SCRUB=3 };
+enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2 };
 enum	{ PF_OP_GL=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
 	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7 };
 
@@ -56,6 +56,9 @@ struct pf_rule {
 	struct pf_rule_addr dst;
 	TAILQ_ENTRY(pf_rule)	entries;
 
+	u_int16_t	 nr;
+	u_int16_t	 return_icmp;
+
 	u_int8_t	 action;
 	u_int8_t	 direction;
 	u_int8_t	 log;
@@ -68,7 +71,7 @@ struct pf_rule {
 
 	u_int8_t	 flags;
 	u_int8_t	 flagset;
-	u_int16_t	 nr;
+	u_int8_t	 return_rst;
 };
 
 struct pf_state_host {
