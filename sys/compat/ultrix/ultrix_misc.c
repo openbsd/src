@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.10 1996/08/31 09:24:06 pefo Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.11 1997/04/12 19:58:02 graichen Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -113,6 +113,7 @@
 
 #include <compat/ultrix/ultrix_syscall.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
+#include <compat/ultrix/ultrix_util.h>
 
 #include <netinet/in.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_ioctl.c,v 1.6 1996/09/08 13:38:29 deraadt Exp $ */
+/*	$OpenBSD: ultrix_ioctl.c,v 1.7 1997/04/12 19:57:59 graichen Exp $ */
 /*	$NetBSD: ultrix_ioctl.c,v 1.3.4.1 1996/06/13 18:22:37 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
@@ -367,7 +367,10 @@ btios2stios(bt, st)
 	st->c_cc[4] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOF]);
 	st->c_cc[5] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL]);
 	st->c_cc[6] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL2]);
-#ifdef COMPAT_ULTRIX
+/* XXX - the next line was an ifdef instead of an ifndef - but i still
+   have to find out what to do here
+*/
+#ifndef COMPAT_ULTRIX
 	st->c_cc[7] = NATIVE_TO_EMUL_CC(bt->c_cc[VSWTCH]);
 #else
 	st->c_cc[7] = 0;
