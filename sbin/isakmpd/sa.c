@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.21 1999/06/02 06:29:35 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.95 1999/05/30 14:12:33 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.22 1999/07/07 22:10:11 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.96 1999/06/06 17:12:40 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -636,7 +636,6 @@ sa_flag (char *attr)
     char *name;
     int flag;
   } sa_flag_map[] = {
-    { "stayalive", SA_FLAG_STAYALIVE },
     { "active-only", SA_FLAG_ACTIVE_ONLY }
   };
   int i;
