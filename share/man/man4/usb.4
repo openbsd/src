@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.2 1999/08/13 14:47:50 aaron Exp $
+.\"	$OpenBSD: usb.4,v 1.3 2000/02/06 11:42:09 jakob Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,6 +89,21 @@ hubs and must always be present since there is at least one root hub in any
 .Tn USB
 system.
 .Pp
+.Sh SUPPORTED DEVICES
+.Ox
+includes machine-independent
+.Tn USB
+drivers, sorted by driver name:
+.Bl -tag -width speaker -offset indent
+.It uaudio
+driver for audio devices.
+.It ugen
+generic driver for
+.Tn USB
+devices.
+.It uhid
+generic driver for Human Interface Devices.
+.El
 .Sh INTRODUCTION TO USB
 The
 .Tn USB
@@ -309,15 +324,14 @@ There should be a serial number locator, but
 .Ox
 does not have string valued locators.
 .Sh SEE ALSO
-.Xr usb 3 ,
+.\".Xr usb 3 ,
 .Xr pci 4 ,
-.\".Xr uaudio 4 ,
+.Xr uaudio 4 ,
 .Xr ugen 4 ,
 .Xr uhid 4 ,
 .\".Xr ukbd 4 ,
 .\".Xr ulpt 4 ,
 .\".Xr ums 4 ,
-.Xr usbd 8 ,
 .Xr usbdevs 8
 .Pp
 The 
