@@ -94,4 +94,4 @@ pseudo-device	pty	64
 pseudo-device	random	1
 pseudo-device	rd
 pseudo-device	vnd	2
-pseudo-device   bpfilter 8              # packet filter
+#pseudo-device   bpfilter 8              # packet filter
