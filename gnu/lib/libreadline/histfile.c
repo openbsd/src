@@ -96,10 +96,11 @@ history_filename (filename)
   
   home = get_env_value ("HOME");
 
-  if (home == 0 || *home == '\0')
+  if (home == 0 || *home == '\0') {
+    errno = ENOENT;
     return (NULL);
-  else
-    home_len = strlen (home);
+  }
+  home_len = strlen (home);
 
   return_val = xmalloc (2 + home_len + 8); /* strlen(".history") == 8 */
   strcpy (return_val, home);
@@ -140,8 +141,10 @@ read_history_range (filename, from, to)
   size_t file_size;
 
   buffer = (char *)NULL;
-  input = history_filename (filename);
-  file = open (input, O_RDONLY|O_BINARY, 0666);
+  if ((input = history_filename (filename)))
+    file = open (input, O_RDONLY|O_BINARY, 0666);
+  else
+    file = -1;
 
   if ((file < 0) || (fstat (file, &finfo) == -1))
     goto error_and_exit;
@@ -231,8 +234,10 @@ history_truncate_file (fname, lines)
   size_t file_size;
 
   buffer = (char *)NULL;
-  filename = history_filename (fname);
-  file = open (filename, O_RDONLY|O_BINARY, 0666);
+  if ((filename = history_filename (fname)))
+    file = open (filename, O_RDONLY|O_BINARY, 0666);
+  else
+    file = -1;
 
   if (file == -1 || fstat (file, &finfo) == -1)
     goto truncate_exit;
@@ -317,7 +322,7 @@ history_do_write (filename, nelements, overwrite)
   mode = overwrite ? O_WRONLY|O_CREAT|O_TRUNC|O_BINARY : O_WRONLY|O_APPEND|O_BINARY;
   output = history_filename (filename);
 
-  if ((file = open (output, mode, 0600)) == -1)
+  if (!output || (file = open (output, mode, 0600)) == -1)
     {
       FREE (output);
       return (errno);
