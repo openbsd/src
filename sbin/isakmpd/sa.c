@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.16 1999/04/27 20:59:46 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.88 1999/04/27 09:42:29 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.17 1999/04/30 11:46:06 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.89 1999/04/29 12:08:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -617,6 +617,7 @@ static void
 sa_hard_expire (void *v_sa)
 {
   struct sa *sa = v_sa;
+
   sa->death = 0;
 
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
@@ -681,26 +682,32 @@ sa_setup_expirations (struct sa *sa)
 	     "sa_setup_expirations: SA lifetime reset from %qd to %qd seconds",
 	     sa->seconds, seconds);
 
-  gettimeofday (&expiration, 0);
-  expiration.tv_sec += seconds * 9 / 10;
-  sa->soft_death
-    = timer_add_event ("sa_soft_expire", sa_soft_expire, sa, &expiration);
   if (!sa->soft_death)
     {
-      /* If we don't give up we might start leaking... */
-      sa_delete (sa, 1);
-      return -1;
+      gettimeofday (&expiration, 0);
+      expiration.tv_sec += seconds * 9 / 10;
+      sa->soft_death
+	= timer_add_event ("sa_soft_expire", sa_soft_expire, sa, &expiration);
+      if (!sa->soft_death)
+	{
+	  /* If we don't give up we might start leaking... */
+	  sa_delete (sa, 1);
+	  return -1;
+	}
     }
 
-  gettimeofday(&expiration, 0);
-  expiration.tv_sec += seconds;
-  sa->death
-    = timer_add_event ("sa_hard_expire", sa_hard_expire, sa, &expiration);
   if (!sa->death)
     {
-      /* If we don't give up we might start leaking... */
-      sa_delete (sa, 1);
-      return -1;
+      gettimeofday(&expiration, 0);
+      expiration.tv_sec += seconds;
+      sa->death
+	= timer_add_event ("sa_hard_expire", sa_hard_expire, sa, &expiration);
+      if (!sa->death)
+	{
+	  /* If we don't give up we might start leaking... */
+	  sa_delete (sa, 1);
+	  return -1;
+	}
     }
   return 0;
 }
