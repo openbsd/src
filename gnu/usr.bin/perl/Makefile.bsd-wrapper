@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.42 2001/06/02 17:40:56 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.43 2001/07/02 04:17:31 millert Exp $
 #
 # Build wrapper for Perl 5.6.1
 #
@@ -460,41 +460,41 @@ AutoLoader.cat3p: lib/AutoLoader.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 AutoSplit.cat3p: lib/AutoSplit.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B.cat3p: lib/B.pm
+B.cat3p: ext/B/B.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Asmdata.cat3p: lib/B/Asmdata.pm
+B::Asmdata.cat3p: ext/B/B/Asmdata.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Assembler.cat3p: lib/B/Assembler.pm
+B::Assembler.cat3p: ext/B/B/Assembler.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Bblock.cat3p: lib/B/Bblock.pm
+B::Bblock.cat3p: ext/B/B/Bblock.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Bytecode.cat3p: lib/B/Bytecode.pm
+B::Bytecode.cat3p: ext/B/B/Bytecode.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::C.cat3p: lib/B/C.pm
+B::C.cat3p: ext/B/B/C.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::CC.cat3p: lib/B/CC.pm
+B::CC.cat3p: ext/B/B/CC.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Concise.cat3p: lib/B/Concise.pm
+B::Concise.cat3p: ext/B/B/Concise.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Debug.cat3p: lib/B/Debug.pm
+B::Debug.cat3p: ext/B/B/Debug.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Deparse.cat3p: lib/B/Deparse.pm
+B::Deparse.cat3p: ext/B/B/Deparse.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Disassembler.cat3p: lib/B/Disassembler.pm
+B::Disassembler.cat3p: ext/B/B/Disassembler.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Lint.cat3p: lib/B/Lint.pm
+B::Lint.cat3p: ext/B/B/Lint.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Showlex.cat3p: lib/B/Showlex.pm
+B::Showlex.cat3p: ext/B/B/Showlex.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Stackobj.cat3p: lib/B/Stackobj.pm
+B::Stackobj.cat3p: ext/B/B/Stackobj.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Terse.cat3p: lib/B/Terse.pm
+B::Terse.cat3p: ext/B/B/Terse.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Xref.cat3p: lib/B/Xref.pm
+B::Xref.cat3p: ext/B/B/Xref.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Benchmark.cat3p: lib/Benchmark.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-ByteLoader.cat3p: lib/ByteLoader.pm
+ByteLoader.cat3p: ext/ByteLoader/ByteLoader.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CGI.cat3p: lib/CGI.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -532,13 +532,13 @@ Cwd.cat3p: lib/Cwd.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 DB.cat3p: lib/DB.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-DB_File.cat3p: lib/DB_File.pm
+DB_File.cat3p: ext/DB_File/DB_File.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Data::Dumper.cat3p: lib/Data/Dumper.pm
+Data::Dumper.cat3p: ext/Data/Dumper/Dumper.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Devel::DProf.cat3p: lib/Devel/DProf.pm
+Devel::DProf.cat3p: ext/Devel/DProf/DProf.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Devel::Peek.cat3p: lib/Devel/Peek.pm
+Devel::Peek.cat3p: ext/Devel/Peek/Peek.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Devel::SelfStubber.cat3p: lib/Devel/SelfStubber.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -546,13 +546,13 @@ DirHandle.cat3p: lib/DirHandle.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Dumpvalue.cat3p: lib/Dumpvalue.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-DynaLoader.cat3p: lib/DynaLoader.pm
+DynaLoader.cat3p: ext/DynaLoader/XSLoader_pm.PL
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 English.cat3p: lib/English.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Env.cat3p: lib/Env.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Errno.cat3p: lib/Errno.pm
+Errno.cat3p: ext/Errno/Errno_pm.PL
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Exporter.cat3p: lib/Exporter.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -1030,39 +1030,39 @@ AutoLoader.ps3p: lib/AutoLoader.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 AutoSplit.ps3p: lib/AutoSplit.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B.ps3p: lib/B.pm
+B.ps3p: ext/B/B.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Asmdata.ps3p: lib/B/Asmdata.pm
+B::Asmdata.ps3p: ext/B/B/Asmdata.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Assembler.ps3p: lib/B/Assembler.pm
+B::Assembler.ps3p: ext/B/B/Assembler.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Bblock.ps3p: lib/B/Bblock.pm
+B::Bblock.ps3p: ext/B/B/Bblock.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Bytecode.ps3p: lib/B/Bytecode.pm
+B::Bytecode.ps3p: ext/B/B/Bytecode.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::C.ps3p: lib/B/C.pm
+B::C.ps3p: ext/B/B/C.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Concise.ps3p: lib/B/Concise.pm
+B::Concise.ps3p: ext/B/B/Concise.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Debug.ps3p: lib/B/Debug.pm
+B::Debug.ps3p: ext/B/B/Debug.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Deparse.ps3p: lib/B/Deparse.pm
+B::Deparse.ps3p: ext/B/B/Deparse.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Disassembler.ps3p: lib/B/Disassembler.pm
+B::Disassembler.ps3p: ext/B/B/Disassembler.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Lint.ps3p: lib/B/Lint.pm
+B::Lint.ps3p: ext/B/B/Lint.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Showlex.ps3p: lib/B/Showlex.pm
+B::Showlex.ps3p: ext/B/B/Showlex.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Stackobj.ps3p: lib/B/Stackobj.pm
+B::Stackobj.ps3p: ext/B/B/Stackobj.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Terse.ps3p: lib/B/Terse.pm
+B::Terse.ps3p: ext/B/B/Terse.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-B::Xref.ps3p: lib/B/Xref.pm
+B::Xref.ps3p: ext/B/B/Xref.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 Benchmark.ps3p: lib/Benchmark.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-ByteLoader.ps3p: lib/ByteLoader.pm
+ByteLoader.ps3p: ext/ByteLoader/ByteLoader.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 CGI.ps3p: lib/CGI.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
@@ -1100,13 +1100,13 @@ Cwd.ps3p: lib/Cwd.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 DB.ps3p: lib/DB.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-DB_File.ps3p: lib/DB_File.pm
+DB_File.ps3p: ext/DB_File/DB_File.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-Data::Dumper.ps3p: lib/Data/Dumper.pm
+Data::Dumper.ps3p: ext/Data/Dumper/Dumper.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-Devel::DProf.ps3p: lib/Devel/DProf.pm
+Devel::DProf.ps3p: ext/Devel/DProf/DProf.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-Devel::Peek.ps3p: lib/Devel/Peek.pm
+Devel::Peek.ps3p: ext/Devel/Peek/Peek.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 Devel::SelfStubber.ps3p: lib/Devel/SelfStubber.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
@@ -1114,13 +1114,13 @@ DirHandle.ps3p: lib/DirHandle.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 Dumpvalue.ps3p: lib/Dumpvalue.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-DynaLoader.ps3p: lib/DynaLoader.pm
+DynaLoader.ps3p: ext/DynaLoader/XSLoader_pm.PL
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 English.ps3p: lib/English.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 Env.ps3p: lib/Env.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
-Errno.ps3p: lib/Errno.pm
+Errno.ps3p: ext/Errno/Errno_pm.PL
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
 Exporter.ps3p: lib/Exporter.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | nroff -Tps -man > ${.TARGET}
