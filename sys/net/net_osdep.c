@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_osdep.c,v 1.2 2001/02/16 08:48:03 itojun Exp $	*/
+/*	$OpenBSD: net_osdep.c,v 1.3 2001/06/08 04:06:33 angelos Exp $	*/
 /*	$KAME: net_osdep.c,v 1.8 2000/12/03 00:39:27 itojun Exp $	*/
 
 /*
@@ -31,45 +31,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/errno.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
-#include <sys/ioctl.h>
-#endif
-#include <sys/time.h>
-#include <sys/syslog.h>
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
-
-#if 0
-#ifdef	INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/in_gif.h>
-#endif	/* INET */
-
-#ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
-#include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet6/in6_gif.h>
-#include <netinet6/in6_ifattach.h>
-#endif /* INET6 */
-#endif
 
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))
 const char *
