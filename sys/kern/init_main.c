@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.37 1999/03/01 04:41:38 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.38 1999/04/22 19:28:07 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ main(framep)
 
 	/* Create process 2, the pageout daemon kernel thread. */
 	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
-		panic("fork pager");
+		panic("fork pagedaemon");
 
 	/* Create process 3, the update daemon kernel thread. */
 	if (kthread_create(start_update, NULL, NULL, "update")) {
