@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.15 2002/11/29 15:52:13 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.16 2002/12/02 22:18:21 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -53,6 +53,7 @@ static int cbq_compute_idletime(struct pfctl *, struct pf_altq *);
 static int check_commit_cbq(int, int, struct pf_altq *);
 static void print_cbq_opts(const struct pf_altq *);
 static char *rate2str(double);
+u_int32_t	getifspeed(char *);
 
 TAILQ_HEAD(altqs, pf_altq) altqs = TAILQ_HEAD_INITIALIZER(altqs);
 
@@ -179,9 +180,24 @@ print_queue(const struct pf_altq *a, unsigned level)
 }
 
 int
-eval_pfaltq(struct pfctl *pf, struct pf_altq *pa)
+eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
+    u_int16_t bw_percent)
 {
-	u_int rate, size;
+	u_int rate, size, errors = 0;
+
+	if (bw_absolute > 0)
+		pa->ifbandwidth = bw_absolute;
+	else
+		if ((rate = getifspeed(pa->ifname)) == 0) {
+			fprintf(stderr, "cannot determine interface bandwidth "
+			    "for %s, specify an absolute bandwidth\n",
+			    pa->ifname);
+			errors++;
+		} else
+			if (bw_percent > 0)
+				pa->ifbandwidth = rate / 100 * bw_percent;
+			else
+				pa->ifbandwidth = rate;
 
 	/* if tbrsize is not specified, use heuristics */
 	if (pa->tbrsize == 0) {
@@ -197,7 +213,7 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa)
 		size = size * 1500;  /* assume the default mtu is 1500 */
 		pa->tbrsize = size;
 	}
-	return (0);
+	return (errors);
 }
 
 int
@@ -601,4 +617,20 @@ rate2str(double rate)
 	else
 		snprintf(buf, RATESTR_MAX, "%db", (int)rate);
 	return (buf);
+}
+
+u_int32_t
+getifspeed(char *ifname)
+{
+	int	s;
+	struct	ifreq ifr;
+	struct	if_data ifrdat;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		err(1, "socket");
+	strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	ifr.ifr_data = (caddr_t)&ifrdat;
+	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGIFDATA");
+	return ((u_int32_t)ifrdat.ifi_baudrate);
 }

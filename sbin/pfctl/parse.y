@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.229 2002/11/30 13:53:14 mickey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.230 2002/12/02 22:18:21 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -199,7 +199,8 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
 	    struct node_proto *, struct node_host *, struct node_port *,
 	    struct node_host *, struct node_port *, struct node_uid *,
 	    struct node_gid *, struct node_icmp *);
-int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *);
+int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
+	    struct node_queue_bw bwspec);
 int	expand_queue(struct pf_altq *, struct node_queue *,
 	    struct node_queue_bw);
 int	check_rulestate(int);
@@ -537,17 +538,13 @@ altqif		: ALTQ interface SCHEDULER schedtype bandwidth qlimit
 			}
 			a.scheduler = $4.qtype;
 			a.pq_u.cbq_opts.flags = $4.data.cbq_opts.flags;
-			if ((a.ifbandwidth = $5.bw_absolute) == 0) {
-				yyerror("interface bandwidth must be absolute");
-				YYERROR;
-			}
 			a.qlimit = $6;
 			a.tbrsize = $7;
 			if ($9 == NULL) {
 				yyerror("no child queues specified");
 				YYERROR;
 			}
-			if (expand_altq(&a, $2, $9))
+			if (expand_altq(&a, $2, $9, $5))
 				YYERROR;
 		}
 		;
@@ -2471,7 +2468,7 @@ expand_label(char *label, const char *ifname, sa_family_t af,
 
 int
 expand_altq(struct pf_altq *a, struct node_if *interfaces,
-    struct node_queue *nqueues)
+    struct node_queue *nqueues, struct node_queue_bw bwspec)
 {
 	struct	pf_altq pa, pb;
 	char	qname[PF_QNAME_SIZE];
@@ -2486,7 +2483,8 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			yyerror("altq on ! <interface> is not supported");
 			errors++;
 		} else {
-			if (eval_pfaltq(pf, &pa))
+			if (eval_pfaltq(pf, &pa, bwspec.bw_absolute,
+			    bwspec.bw_percent))
 				errors++;
 			else
 				if (pfctl_add_altq(pf, &pa))

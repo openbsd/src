@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.h,v 1.4 2002/11/29 15:52:13 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.h,v 1.5 2002/12/02 22:18:21 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -105,5 +105,5 @@ char *qid_to_qname(u_int32_t, const char *);
 void print_altq(const struct pf_altq *, unsigned);
 void print_queue(const struct pf_altq *, unsigned);
 
-int eval_pfaltq(struct pfctl *, struct pf_altq *);
+int eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
 int eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
