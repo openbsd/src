@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.8 2000/03/03 00:54:52 todd Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.9 2001/01/13 05:18:58 smurph Exp $
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
 #
 # Makefile for OpenBSD
@@ -102,7 +102,7 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		fi; \
 		echo ${LD} $$strip -Ttext 0x10000 -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} $$strip -Ttext 0x10000 -e start ${LINKFLAGS} -o $@ \
-			${SYSTEM_OBJ} vers.o -lgcc -lgcc
+			${SYSTEM_OBJ} vers.o -L. -lgcc -lgcc
 
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@; \
 		[ X${DEBUG} = X-g ] && { \
@@ -130,6 +130,10 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 clean::
+	rm -f eddep *bsd bsd.gdb tags *.o locore.i \
+		[a-z]*.s [Ee]rrs errs linterrs makelinks
+
+realclean::
 	rm -f eddep *bsd bsd.gdb tags *.o locore.i .depend \
 		[a-z]*.s [Ee]rrs errs linterrs makelinks
 

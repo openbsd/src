@@ -1,20 +1,14 @@
-/*	$OpenBSD: bugcrt.c,v 1.6 2001/01/13 05:19:01 smurph Exp $ */
-
-/* 
- * This is the startup file for single stage bootstraps or the first 
- * stage of a two stage bootstrap.  It includes code to enable the 
- * SFU1.
- */
+/*	$OpenBSD: crt.c,v 1.1 2001/01/13 05:19:01 smurph Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
 
 struct mvmeprom_args bugargs = { 1};	       /* not BSS */
 
-	asm (".text");
-	/* pseudo reset vector */
-	asm (STACK_ASM_OP);	/* initial sp value */
-	asm (".long _start");	/* initial ip value */
+asm (".text");
+/* pseudo reset vector */
+asm (STACK_ASM_OP);	/* initial sp value */
+asm (".long _start");	/* initial ip value */
 start()
 {
 	register int dev_lun asm (MVMEPROM_REG_DEVLUN);
@@ -31,8 +25,12 @@ start()
 	struct mvmeprom_brdid *id, *mvmeprom_brdid();
 
 #ifdef STAGE1
-	/* Do not use r10 to enable the SFU1. This wipes out 
-	   the netboot args.  Not cool at all... r25 seems free. */
+	/* 
+	 * This code enables the SFU1 and is used for single stage 
+	 * bootstraps or the first stage of a two stage bootstrap.
+	 * Do not use r10 to enable the SFU1. This wipes out
+	 * the netboot args.  Not cool at all... r25 seems free. 
+	 */
 	asm("|	enable SFU1");
 	asm("	ldcr	r25,cr1");
 	asm("	xor	r25,r25,0x8");
@@ -54,34 +52,35 @@ start()
 	id = mvmeprom_brdid();
 	bugargs.cputyp = id->model;
 
+#ifdef notyet /* STAGE1 */
 	/* 
 	 * Initialize PSR and CMMU to a known, stable state. 
 	 * This has to be done early for MVME197.
 	 * Per EB162 mc88110 engineering bulletin.
 	 */
-	/*
 	if (bugargs.cputyp == 0x197) {
-	   asm("|	init MVME197");
-	   asm("|	1. PSR");
-	   asm("or.u   r2,r0,0xA200");
-	   asm("or     r2,r2,0x03E2");
-	   asm("stcr   r2,cr1");
-	   asm("|	2. ICTL");
-	   asm("or     r2,r0,r0");
-	   asm("or     r2,r2,0x8000");
-	   asm("or     r2,r2,0x0040");
-	   asm("stcr   r2,cr26");
-	   asm("|	3. DCTL");
-	   asm("or     r2,r0,r0");
-	   asm("or     r2,r2,0x2000");
-	   asm("or     r2,r2,0x0040");
-	   asm("stcr   r2,cr41");
-	   asm("|	4. init cache");
-	   asm("or     r2,r0,0x01");
-	   asm("stcr   r2,cr25");
-	   asm("stcr   r2,cr40");
+		asm("|	init MVME197");
+		asm("|	1. PSR");
+		asm("or.u   r2,r0,0xA200");
+		asm("or     r2,r2,0x03E2");
+		asm("stcr   r2,cr1");
+		asm("|	2. ICTL");
+		asm("or     r2,r0,r0");
+		asm("or     r2,r2,0x8000");
+		asm("or     r2,r2,0x0040");
+		asm("stcr   r2,cr26");
+		asm("|	3. DCTL");
+		asm("or     r2,r0,r0");
+		asm("or     r2,r2,0x2000");
+		asm("or     r2,r2,0x0040");
+		asm("stcr   r2,cr41");
+		asm("|	4. init cache");
+		asm("or     r2,r0,0x01");
+		asm("stcr   r2,cr25");
+		asm("stcr   r2,cr40");
 	}
-	*/
+#endif
+
 	memset(&edata, 0, ((int)&end - (int)&edata));
 
 	asm  ("|	main()");

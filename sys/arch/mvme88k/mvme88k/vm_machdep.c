@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2001/01/12 07:29:26 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2001/01/13 05:19:00 smurph Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -59,6 +59,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/pte.h>
@@ -105,7 +109,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	/*XXX these may not be necessary nivas */
 	save_u_area(p2, p2->p_addr);
 #ifdef notneeded 
-	PMAP_ACTIVATE(p2->p_vmspace->vm_map.pmap, &p2->p_addr->u_pcb, cpu);
+	pmap_activate(p2);
 #endif /* notneeded */
 
 	/*
@@ -250,7 +254,11 @@ vmapbuf(struct buf *bp, vm_size_t len)
 	 * when the address gets a new mapping.
 	 */
 
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(phys_map, len);
+#else
 	kva = kmem_alloc_wait(phys_map, len);
+#endif
 	
 	/*
 	 * Flush the TLB for the range [kva, kva + off]. Strictly speaking,
@@ -289,7 +297,11 @@ vunmapbuf(struct buf *bp, vm_size_t len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data & PGOFSET;
 	len = round_page(off + len);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, addr, len);
+#else
 	kmem_free_wakeup(phys_map, addr, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
@@ -314,7 +326,7 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 		return NULL;
 	
 	ppa = pa;
-   off = (u_long)ppa & PGOFSET;
+	off = (u_long)ppa & PGOFSET;
 
 	len = round_page(off + len);
 
@@ -332,19 +344,19 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 	}
 	splx(s);
 	
-   cmmu_flush_tlb(1, iova, len);
+	cmmu_flush_tlb(1, iova, len);
 
-   ppa = trunc_page(ppa);
+	ppa = trunc_page(ppa);
 
 #ifndef NEW_MAPPING
 	tva = iova;
 #else
-   tva = ppa;
+	tva = ppa;
 #endif 
 
-   while (len>0) {
+	while (len>0) {
 		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
-		    	VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16), 1, 0);
+			   VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16), 1, 0);
 		len -= PAGE_SIZE;
 		tva += PAGE_SIZE;
 		ppa += PAGE_SIZE;

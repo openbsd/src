@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopdma.c,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
+/*	$OpenBSD: siopdma.c,v 1.3 2001/01/13 05:18:58 smurph Exp $ */
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -76,6 +76,9 @@
 #if defined(MVME187)
 #include "machine/mmu.h"
 #endif /* defined(MVME187) */
+
+extern struct pmap	kernel_pmap_store;
+#define	pmap_kernel()		(&kernel_pmap_store)
 
 int	afscmatch	__P((struct device *, void *, void *));
 void	afscattach	__P((struct device *, struct device *, void *));

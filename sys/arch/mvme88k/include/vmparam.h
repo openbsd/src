@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2001/01/12 07:29:27 smurph Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.8 2001/01/13 05:18:59 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -201,6 +201,7 @@
 #define VM_NFREELIST		1
 #define VM_FREELIST_DEFAULT	0
 
+#ifndef ASSEMBLER
 /*
  * pmap-specific data stored in the vm_physmem[] array.
  */
@@ -209,6 +210,8 @@ struct pmap_physseg {
 	char *attrs;			/* page modify list for this seg */
 	struct simplelock *plock;	/* page lock for this seg */
 };
+#endif /* ASSEMBLER */
+
 #endif /* MACHINE_NEW_NONCONTIG */
 
 

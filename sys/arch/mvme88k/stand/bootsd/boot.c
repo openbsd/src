@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 1999/09/27 19:29:59 smurph Exp $ */
+/*	$OpenBSD: boot.c,v 1.5 2001/01/13 05:19:00 smurph Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
 
 /*-
@@ -52,21 +52,21 @@
 int debug;
 int errno;
 extern char *version;
-char	line[80];
+char    line[80];
 
 int
 main()
 {
 	char *cp, *file;
-	int	io, flag, ret;
-	int	ask = 0;
+	int     io, flag, ret;
+	int     ask = 0;
 
 	printf("\n>> OpenBSD/mvme88k bootsd [%s]\n", version);
 
 	ret = parse_args(&file, &flag);
-   if (flag & RB_ASKKERN) {
-      ask = 1;
-   }
+	if (flag & RB_ASKKERN) {
+		ask = 1;
+	}
 	for (;;) {
 		if (ask) {
 			printf("boot: ");
@@ -88,5 +88,5 @@ main()
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
 	}
-	return(0);
+	return (0);
 }

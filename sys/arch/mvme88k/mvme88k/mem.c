@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 1999/11/22 19:22:00 matthieu Exp $ */
+/*	$OpenBSD: mem.c,v 1.6 2001/01/13 05:18:59 smurph Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,9 @@
 #include <machine/board.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 caddr_t zeropage;
 
@@ -143,6 +146,34 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+#if defined(UVM)
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+#else
+			if (!kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+#endif
+			if (v < NBPG) {
+#ifdef DEBUG
+				/*
+				 * For now, return zeros on read of page 0
+				 * and EFAULT for writes.
+				 */
+				if (uio->uio_rw == UIO_READ) {
+					if (zeropage == NULL) {
+						zeropage = (caddr_t)
+						    malloc(CLBYTES, M_TEMP,
+						    M_WAITOK);
+						bzero(zeropage, CLBYTES);
+					}
+					c = min(c, NBPG - (int)v);
+					v = (vm_offset_t)zeropage;
+				} else
+#endif
+					return (EFAULT);
+			}
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2001/01/12 07:29:26 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2001/01/13 05:18:59 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -56,6 +56,9 @@
 #include <machine/m882xx.h>		/* CMMU stuff */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>			/* vm/vm_kern.h */
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <sys/simplelock.h>
 #include <sys/proc.h>
@@ -140,7 +143,7 @@ int pmap_con_dbg = CD_NORM;*/
 caddr_t  vmmap;
 pt_entry_t  *vmpte, *msgbufmap;
 
-STATIC struct pmap   kernel_pmap_store;
+struct pmap	kernel_pmap_store;
 pmap_t kernel_pmap = &kernel_pmap_store;
 
 typedef struct kpdt_entry *kpdt_entry_t;
@@ -362,9 +365,6 @@ int   batc_used;
  * keep track BATC mapping
  */
 batc_entry_t batc_entry[BATC_MAX];
-
-int   maxcmmu_pb = 4;   /* max number of CMMUs per processors pbus	*/
-int   n_cmmus_pb = 1;   /* number of CMMUs per processors pbus		*/
 
 vm_offset_t kmapva = 0;
 extern vm_offset_t bugromva;
@@ -1826,7 +1826,11 @@ pmap_pinit(pmap_t p)
    /*
     * Allocate memory for *actual* segment table and *shadow* table.
     */
+#if defined(UVM)
+   segdt = (sdt_entry_t *)uvm_km_zalloc(kernel_map, 2 * SDT_SIZE);
+#else
    segdt = (sdt_entry_t *)kmem_alloc(kernel_map, 2 * SDT_SIZE);
+#endif
    if (segdt == NULL)
       panic("pmap_create: kmem_alloc failure");
 
@@ -1977,7 +1981,11 @@ pmap_free_tables(pmap_t pmap)
    /*
     * Freeing both *actual* and *shadow* segment tables
     */
+#if defined(UVM)
+   uvm_km_free(kernel_map, (vm_offset_t)sdttbl, 2*SDT_SIZE);
+#else
    kmem_free(kernel_map, (vm_offset_t)sdttbl, 2*SDT_SIZE);
+#endif
 
 } /* pmap_free_tables() */
 
@@ -2832,7 +2840,11 @@ pmap_expand(pmap_t map, vm_offset_t v)
       panic("pmap_enter: kmem_alloc failure");
    pmap_zero_page(pmap_extract(kernel_pmap, pdt_vaddr));
 #else
+#if defined(UVM)
+   pdt_vaddr = uvm_km_zalloc(kernel_map, PAGE_SIZE);
+#else
    pdt_vaddr = kmem_alloc (kernel_map, PAGE_SIZE);
+#endif
 #endif
 
    pdt_paddr = pmap_extract(kernel_pmap, pdt_vaddr);
@@ -2853,7 +2865,12 @@ pmap_expand(pmap_t map, vm_offset_t v)
        */
       PMAP_UNLOCK(map, spl);
       /* XXX */
+#if defined(UVM)
+      uvm_km_free(kernel_map, pdt_vaddr, PAGE_SIZE);
+#else
       kmem_free (kernel_map, pdt_vaddr, PAGE_SIZE);
+#endif
+      
 #ifdef	DEBUG
       if (pmap_con_dbg & CD_EXP)
          printf("(pmap_expand :%x) table has already allocated\n", curproc);
@@ -3703,19 +3720,19 @@ pmap_deactivate(struct proc *p)
 } /* pmap_deactivate() */
 
 
-
 /*
  *	Routine:	PMAP_KERNEL
  *
  *	Function:
  *		Retruns a pointer to the kernel pmap.
  */
+#if 0 /* Now a macro XXX smurph */
 pmap_t
 pmap_kernel(void)
 {
    return (kernel_pmap);
 }/* pmap_kernel() */
-
+#endif 
 
 /*
  *	Routine:	PMAP_COPY_PAGE

@@ -1,8 +1,5 @@
+#	$OpenBSD: Makefile,v 1.8 2001/01/13 05:19:01 smurph Exp $
 
-#	$OpenBSD: Makefile,v 1.7 1999/09/27 19:30:01 smurph Exp $
-
-# 8Meg - 64K
-RELOC=0x7F0000
 SIZE?=	size
 STRIP?= strip
 
@@ -24,14 +21,14 @@ SRCS+=	if_ie.c
 #SRCS+=  if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS= ${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
-LDFLAGS+= -s -N -T ${RELOC} 
+LDFLAGS+= -s -N -T ${STAGE2_RELOC} 
 #LDFLAGS+= -nostdlib -s -N -Ttext ${RELOC}
 
 all:	netboot.bin
 
-netboot: ${OBJS} ${BUGCRT} ${LIBS}
+netboot: ${OBJS} ${SINGLE} ${LIBS}
 	${LD} ${LDFLAGS} \
-		${BUGCRT} ${OBJS} ${LIBS} -o $@
+		${SINGLE} ${OBJS} ${LIBS} -o $@
 #	@${SIZE} $@
 
 netboot.bin: netboot

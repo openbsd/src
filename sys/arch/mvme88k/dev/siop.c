@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.3 1999/05/29 04:41:44 smurph Exp $ */
+/*	$OpenBSD: siop.c,v 1.4 2001/01/13 05:18:58 smurph Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -112,6 +112,9 @@ int siop_reset_delay = 250;	/* delay after reset, in milleseconds */
 int siop_cmd_wait = SCSI_CMD_WAIT;
 int siop_data_wait = SCSI_DATA_WAIT;
 int siop_init_wait = SCSI_INIT_WAIT;
+
+extern struct pmap	kernel_pmap_store;
+#define	pmap_kernel()		(&kernel_pmap_store)
 
 #ifdef DEBUG_SYNC
 /*

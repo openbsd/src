@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.7 1999/09/27 19:13:22 smurph Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.8 2001/01/13 05:18:59 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1227,6 +1227,31 @@ ENTRY(copyoutstr)
 /*LABEL(_ALLOW_FAULT_END)*/
 /*word 0	*/ /* to separate from routine below */
 /*######################################################################*/
+
+#if defined(UVM)
+/*
+ * kcopy(const void *src, void *dst, size_t len);
+ *
+ * Copy len bytes from src to dst, aborting if we encounter a page fault.
+ */
+ENTRY(kcopy)
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(kcfault)
+	or	r5,   r5,   lo16(kcfault)
+	bsr.n	_ovbcopy      /* call ovbcopy */
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = kcfault */
+	or	r2,   r0,   0		/* return success */
+	br	kcdone
+kcdone:
+	or.u	r5,r0,hi16(_curpcb)
+	ld	r6,r5,lo16(_curpcb)
+	st	r0,r6,PCB_ONFAULT	/* clear the handler */
+	jmp	r1			/* return */
+kcfault:
+	or	r2,   r0,   EFAULT	/* return fault */
+	br     kcdone
+#endif /* UVM */
 
 /*
  * Gcc 2 generates calls to memcpy for bcopies of unknown size. memcpy

@@ -43,15 +43,15 @@
 #include "libsa.h"
 
 struct kernel {
-	void	*entry;
-	void	*symtab;
-	void	*esym;
-	int	bflags;
-	int	bdev;
-	char	*kname;
-	void	*smini;
-	void	*emini;
-	u_int	end_loaded;
+	void    *entry;
+	void    *symtab;
+	void    *esym;
+	int     bflags;
+	int     bdev;
+	char    *kname;
+	void    *smini;
+	void    *emini;
+	u_int   end_loaded;
 } kernel;
 
 #define RB_NOSYM 0x400
@@ -62,8 +62,8 @@ struct kernel {
 /*ARGSUSED*/
 void
 exec_mvme(file, flag)
-	char	*file;
-	int	flag;
+char    *file;
+int     flag;
 {
 	char *loadaddr;
 	register int io;
@@ -73,11 +73,11 @@ exec_mvme(file, flag)
 	register char *cp;
 	register int *ip;
 	int n;
-   int bootdev;
+	int bootdev;
 
-   if (flag & RB_EXTRA) {
-   	printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
-   }
+	if (flag & RB_EXTRA) {
+		printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
+	}
 
 	io = open(file, 0);
 	if (io < 0)
@@ -107,13 +107,13 @@ exec_mvme(file, flag)
 	 */
 	loadaddr = (void *)(x.a_entry & ~sizeof(x));
 	n = x.a_text + x.a_data + x.a_bss + x.a_syms + sizeof(int);
-	
+
 	/* debugging stuff for netboot
 	printf("hex load address range 0x%x to 0x%x\n", loadaddr, loadaddr+n);
 	printf("dec load address range %ld to %ld\n", loadaddr, loadaddr+n);
 	bzero((void *)loadaddr, n);
 	*/
-	
+
 	cp = loadaddr;
 	magic = N_GETMAGIC(x);
 	if (magic == ZMAGIC)
@@ -132,7 +132,7 @@ exec_mvme(file, flag)
 	 */
 	printf("%d", x.a_text);
 	cc = x.a_text;
-	if (magic == ZMAGIC) 
+	if (magic == ZMAGIC)
 		cc = cc - sizeof(x); /* a.out header part of text in zmagic */
 	if (read(io, cp, cc) != cc)
 		goto shread;
@@ -186,7 +186,7 @@ exec_mvme(file, flag)
 		if (read(io, cp, cc) != cc)
 			goto shread;
 		cp += x.a_syms;
-		ip = (int*)cp;  	/* points to strtab length */
+		ip = (int*)cp;		/* points to strtab length */
 		cp += sizeof(int);
 
 		/* String table.  Length word includes itself. */
@@ -205,17 +205,17 @@ exec_mvme(file, flag)
 	printf("Start @ 0x%x ...\n", (int)entry);
 	printf("Controler Address @ %x ...\n", bugargs.ctrl_addr);
 	if (flag & RB_HALT) mvmeprom_return();
-    
+
 	bootdev = (bugargs.ctrl_lun << 8) | (bugargs.dev_lun & 0xFF);
 
-   (*entry)(flag,	bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, bugargs.cputyp);
+	(*entry)(flag,  bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, bugargs.cputyp);
 	printf("exec: kernel returned!\n");
 	return;
 
-shread:
+	shread:
 	printf("exec: short read\n");
 	errno = EIO;
-closeout:
+	closeout:
 	close(io);
 	return;
 }

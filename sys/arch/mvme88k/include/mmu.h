@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.4 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: mmu.h,v 1.5 2001/01/13 05:18:59 smurph Exp $ */
 /*
  * Ashura Project
  */
@@ -206,7 +206,12 @@ typedef union batc_template {
 #define LOG2_PDT_SIZE			(PDT_BITS + 2)
 #define LOG2_PDT_TABLE_GROUP_SIZE	(PAGE_SHIFT - LOG2_PDT_SIZE)
 #define PDT_TABLE_GROUP_SIZE		(1 << LOG2_PDT_TABLE_GROUP_SIZE)
-#define PT_FREE(tbl)		kmem_free(kernel_map, (vm_offset_t)tbl, PAGE_SIZE)
+#if defined(UVM)
+#define PT_FREE(tbl)	uvm_km_free(kernel_map, (vaddr_t)tbl, PAGE_SIZE)
+#else
+#define PT_FREE(tbl)	kmem_free(kernel_map, (vm_offset_t)tbl, PAGE_SIZE)
+#endif
+
 
 /*
  * Va spaces mapped by tables and PDT table group.

@@ -1,4 +1,10 @@
-/*	$OpenBSD: sdcrt.c,v 1.1 1998/12/15 06:12:50 smurph Exp $ */
+/*	$OpenBSD: sdcrt.c,v 1.2 2001/01/13 05:19:01 smurph Exp $ */
+
+/* 
+ * This is the startup file for the second stage bootstrap. (bootsd) 
+ * It does *not* includes code to enable the SFU1.
+ */
+
 #include <sys/types.h>
 #include <machine/prom.h>
 
@@ -6,8 +12,8 @@ struct mvmeprom_args bugargs = { 1 };		/* not BSS */
 
 	asm (".text");
 	/* pseudo reset vector */
-	asm (".long 0x003f0000"); /* initial sp value */
-	asm (".long _start");     /* initial ip value */
+	asm (STACK_ASM_OP);	/* initial sp value */
+	asm (".long _start");	/* initial ip value */
 start()
 {
 	register int dev_lun asm (MVMEPROM_REG_DEVLUN);
