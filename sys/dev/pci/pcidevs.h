@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.500 2002/04/15 21:18:30 millert Exp 
+ *		OpenBSD: pcidevs,v 1.501 2002/04/18 18:33:43 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1038,6 +1038,8 @@
 /* Conexant products */
 #define	PCI_PRODUCT_CONEXANT_56K_WINMODEM	0x1033		/* 56k Winmodem */
 #define	PCI_PRODUCT_CONEXANT_56K_WINMODEM2	0x1036		/* 56k Winmodem */
+#define	PCI_PRODUCT_CONEXANT_RS7112	0x1803		/* 10/100 MiniPCI Ethernet */
+#define	PCI_PRODUCT_CONEXANT_56K_WINMODEM3	0x1804		/* 10/100 MiniPCI Ethernet */
 #define	PCI_PRODUCT_CONEXANT_SOFTK56_PCI	0x2443		/* SoftK56 PCI */
 
 /* Contaq Microsystems products */
