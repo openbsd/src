@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.27 2004/02/10 17:53:37 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.28 2004/02/19 21:37:01 cedric Exp $ */
 
 /*
  * Copyright (c) Henning Brauer <henning@openbsd.org>
@@ -81,19 +81,24 @@ void			 pfctl_print_altq_nodestat(int,
 void			 update_avg(struct pf_altq_node *);
 
 int
-pfctl_show_altq(int dev, int opts, int verbose2)
+pfctl_show_altq(int dev, const char *iface, int opts, int verbose2)
 {
 	struct pf_altq_node	*root = NULL, *node;
-	int			 nodes;
+	int			 nodes, dotitle = (opts & PF_OPT_SHOWALL);
 
 
 	if ((nodes = pfctl_update_qstats(dev, &root)) < 0)
 		return (-1);
-	if (opts & PF_OPT_SHOWALL && nodes > 0)
-		pfctl_print_title("ALTQ:");
 
-	for (node = root; node != NULL; node = node->next)
+	for (node = root; node != NULL; node = node->next) {
+		if (iface != NULL && strcmp(node->altq.ifname, iface))
+			continue;
+		if (dotitle) {
+			pfctl_print_title("ALTQ:");
+			dotitle = 0;
+		}
 		pfctl_print_altq_node(dev, node, 0, opts);
+	}
 
 	while (verbose2) {
 		printf("\n");
@@ -101,8 +106,11 @@ pfctl_show_altq(int dev, int opts, int verbose2)
 		sleep(STAT_INTERVAL);
 		if (pfctl_update_qstats(dev, &root) == -1)
 			return (-1);
-		for (node = root; node != NULL; node = node->next)
+		for (node = root; node != NULL; node = node->next) {
+			if (iface != NULL && strcmp(node->altq.ifname, iface))
+				continue;
 			pfctl_print_altq_node(dev, node, 0, opts);
+		}
 	}
 	pfctl_free_altq_node(root);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.32 2004/02/17 08:48:29 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.33 2004/02/19 21:37:01 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -83,7 +83,7 @@ int	 pfctl_clear_tables(const char *, const char *, int);
 int	 pfctl_show_tables(const char *, const char *, int);
 int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
 	    const char *, const char *, int);
-int	 pfctl_show_altq(int, int, int);
+int	 pfctl_show_altq(int, const char *, int, int);
 void	 warn_namespace_collision(const char *);
 int	 pfctl_show_ifaces(const char *, int);
 

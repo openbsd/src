@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.206 2004/02/19 21:29:51 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.207 2004/02/19 21:37:01 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -70,7 +70,7 @@ void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, int, int, char *, char *);
 int	 pfctl_show_nat(int, int, char *, char *);
 int	 pfctl_show_src_nodes(int, int);
-int	 pfctl_show_states(int, u_int8_t, int);
+int	 pfctl_show_states(int, const char *, int);
 int	 pfctl_show_status(int, int);
 int	 pfctl_show_timeouts(int, int);
 int	 pfctl_show_limits(int, int);
@@ -819,13 +819,13 @@ pfctl_show_src_nodes(int dev, int opts)
 }
 
 int
-pfctl_show_states(int dev, u_int8_t proto, int opts)
+pfctl_show_states(int dev, const char *iface, int opts)
 {
 	struct pfioc_states ps;
 	struct pf_state *p;
 	char *inbuf = NULL, *newinbuf = NULL;
 	unsigned len = 0;
-	int i;
+	int i, dotitle = (opts & PF_OPT_SHOWALL);
 
 	memset(&ps, 0, sizeof(ps));
 	for (;;) {
@@ -848,15 +848,17 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 			len = ps.ps_len;
 		if (ps.ps_len == 0)
 			return (0);	/* no states */
-		else if (opts && PF_OPT_SHOWALL)
-			pfctl_print_title("STATES:");
 		len *= 2;
 	}
 	p = ps.ps_states;
-	for (i = 0; i < ps.ps_len; i += sizeof(*p)) {
-		if (!proto || (p->proto == proto))
-			print_state(p, opts);
-		p++;
+	for (i = 0; i < ps.ps_len; i += sizeof(*p), p++) {
+		if (iface != NULL && strcmp(p->u.ifname, iface))
+			continue;
+		if (dotitle) {
+			pfctl_print_title("STATES:");
+			dotitle = 0;
+		}
+		print_state(p, opts);
 	}
 	return (0);
 }
@@ -1658,10 +1660,11 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev, opts, anchorname, rulesetname);
 			break;
 		case 'q':
-			pfctl_show_altq(dev, opts, opts & PF_OPT_VERBOSE2);
+			pfctl_show_altq(dev, ifaceopt, opts,
+			    opts & PF_OPT_VERBOSE2);
 			break;
 		case 's':
-			pfctl_show_states(dev, 0, opts);
+			pfctl_show_states(dev, ifaceopt, opts);
 			break;
 		case 'S':
 			pfctl_show_src_nodes(dev, opts);
@@ -1682,8 +1685,8 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev, opts, anchorname, rulesetname);
 			pfctl_show_rules(dev, opts, 0, anchorname,
 			    rulesetname);
-			pfctl_show_altq(dev, opts, 0);
-			pfctl_show_states(dev, 0, opts);
+			pfctl_show_altq(dev, ifaceopt, opts, 0);
+			pfctl_show_states(dev, ifaceopt, opts);
 			pfctl_show_src_nodes(dev, opts);
 			pfctl_show_status(dev, opts);
 			pfctl_show_rules(dev, opts, 1, anchorname, rulesetname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.56 2004/02/17 08:48:29 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.57 2004/02/19 21:37:01 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -541,15 +541,16 @@ pfctl_show_ifaces(const char *filter, int opts)
 {
 	struct pfr_buffer	 b;
 	struct pfi_if		*p;
-	int i = 0;
+	int			 i = 0, f = PFI_FLAG_GROUP|PFI_FLAG_INSTANCE;
 
+	if (filter != NULL && *filter && !isdigit(filter[strlen(filter)-1]))
+		f &= ~PFI_FLAG_INSTANCE;
 	bzero(&b, sizeof(b));
 	b.pfrb_type = PFRB_IFACES;
 	for (;;) {
 		pfr_buf_grow(&b, b.pfrb_size);
 		b.pfrb_size = b.pfrb_msize;
-		if (pfi_get_ifaces(filter, b.pfrb_caddr, &b.pfrb_size,
-		    PFI_FLAG_GROUP|PFI_FLAG_INSTANCE)) {
+		if (pfi_get_ifaces(filter, b.pfrb_caddr, &b.pfrb_size, f)) {
 			radix_perror();
 			return (1);
 		}
