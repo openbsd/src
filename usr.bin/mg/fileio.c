@@ -306,7 +306,9 @@ register char *fn;
 
 #ifndef NO_STARTUP
 #include <sys/file.h>
+#ifndef F_OK
 #define F_OK 04			/* for stupid Sys V		*/
+#endif
 
 /*
  * Find a startup file for the user and return its name. As a service
@@ -568,9 +570,9 @@ len = strlen(cp);
  * SV files are fairly short.  For BSD, something more general
  * would be required.
  */
-if ((preflen + DIRSIZ) > NFILEN)
+if ((preflen + MAXNAMLEN) > NFILEN)
 	return(NULL);
-if ((strlen(dir) + DIRSIZ) > NFILEN)
+if ((strlen(dir) + MAXNAMLEN) > NFILEN)
 	listing = 0;
 
 /* loop over the specified directory, making up the list of files */
@@ -589,7 +591,7 @@ if (fp < 0) {
 
 last = NULL;
 /* clear entry after last so we can treat d_name as ASCIZ */
-dirbuf.d_name[DIRSIZ] = 0;
+dirbuf.d_name[MAXNAMLEN] = 0;
 while (1) {
 	if (read(fp, &dirbuf, sizeof(struct direct)) <= 0) {
 		break;

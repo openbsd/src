@@ -20,7 +20,7 @@ extern char prompt[], *promptp;		/* delayed prompting		*/
 
 static VOID	edinit();
 
-VOID
+int
 main(argc, argv)
 int  argc;
 char **argv;

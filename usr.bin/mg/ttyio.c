@@ -19,15 +19,15 @@
 
 #include	<sys/types.h>
 #include	<fcntl.h>
-#include	<termio.h>
+#include	<termios.h>
 
 #define	NOBUF	512			/* Output buffer size.		*/
 
 char	obuf[NOBUF];			/* Output buffer.		*/
 int	nobuf;				/* buffer count			*/
 
-static struct termio	ot;		/* entry state of the terminal	*/
-static struct termio	nt;		/* editor's terminal state	*/
+static struct termios	ot;		/* entry state of the terminal	*/
+static struct termios	nt;		/* editor's terminal state	*/
 
 static int ttyactivep = FALSE;		/* terminal in editor mode?	*/
 static int ttysavedp = FALSE;		/* terminal state saved?	*/
@@ -58,7 +58,7 @@ ttopen()
 
 	if( !ttysavedp )
 	{
-		if (ioctl(0, TCGETA, &ot) < 0)
+		if (tcgetattr(0, &ot) < 0)
 			abort();
 		nt = ot;		/* save entry state		*/
 		nt.c_cc[VMIN] = 1;	/* one character read is OK	*/
@@ -75,7 +75,7 @@ ttopen()
 		ttysavedp = TRUE;
 	}
 	
-	if (ioctl(0, TCSETAF, &nt) < 0)
+	if (tcsetattr(0, TCSAFLUSH, &nt) < 0)
 		abort();
 
 	/* This really belongs in tty/termcap... */
@@ -126,7 +126,8 @@ ttclose()
 	if(!ttysavedp || !ttyactivep)
 		return;
 	ttflush();
-	if (ioctl(0, TCSETAF, &ot) < 0 || fcntl( 0, F_SETFL, kbdflgs ) < 0)
+	if (tcsetattr(0, TCSAFLUSH, &ot) < 0 ||
+	    fcntl( 0, F_SETFL, kbdflgs ) < 0)
 		abort();
 	ttyactivep = FALSE;
 }
@@ -251,8 +252,6 @@ static void alrm()
 
 ttwait()
 {
-	int alrm();
-
 	if (kbdqp)
 		return FALSE;		/* already pending input	*/
 	if (setjmp(tohere))
