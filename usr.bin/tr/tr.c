@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: tr.c,v 1.7 2002/02/09 02:03:28 deraadt Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: tr.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: tr.c,v 1.7 2002/02/09 02:03:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -209,6 +209,7 @@ main(argc, argv)
 		errx(1, "empty string2");
 
 	/* If string2 runs out of characters, use the last one specified. */
+	ch = s2.lastch;
 	if (sflag)
 		while (next(&s1)) {
 			string1[s1.lastch] = ch = s2.lastch;
