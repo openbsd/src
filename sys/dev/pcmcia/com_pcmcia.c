@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.17 1999/08/09 22:16:05 fgsch Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.18 1999/08/12 09:02:58 niklas Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -451,6 +451,7 @@ com_attach(sc)
 		}
 	}
 
+#if NPCCOM > 0
 #ifdef i386
 	if (sc->sc_uarttype == COM_UART_ST16650V2) {	/* Probe for XR16850s */
 		u_int8_t dlbl, dlbh;
@@ -473,6 +474,7 @@ com_attach(sc)
 		bus_space_write_1(iot, ioh, com_dlbl, dlbl);
 		bus_space_write_1(iot, ioh, com_dlbh, dlbh);
 	}
+#endif
 #endif
 	
 	/* Reset the LCR (latch access is probably enabled). */
@@ -521,12 +523,14 @@ com_attach(sc)
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 32;
 		break;
+#if NPCCOM > 0
 #ifdef i386
 	case COM_UART_XR16850:
 		printf(": xr16850 (rev %d), 128 byte fifo\n", sc->sc_uartrev);
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 128;
 		break;
+#endif
 #endif
 	default:
 		panic("comattach: bad fifo type");
