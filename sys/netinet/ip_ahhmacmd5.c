@@ -189,7 +189,7 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
         else
           ado = 0;
 
-        if (ah->ah_hl != xd->amx_alen + ado)
+        if (ah->ah_hl * sizeof(u_int32_t) != xd->amx_alen + ado)
         {
 #ifdef ENCDEBUG
                 if (encdebug)
