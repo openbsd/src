@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.32 2000/10/11 20:27:23 markus Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.33 2000/10/11 20:45:21 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -301,10 +301,6 @@ Cipher ciphers[] = {
 		SSH_CIPHER_NONE, 8, 0,
 		none_setkey, none_setiv,
 		none_crypt, none_crypt },
-	{ "des",
-		SSH_CIPHER_DES, 8, 8,
-		des_ssh1_setkey, des_ssh1_setiv,
-		des_ssh1_encrypt, des_ssh1_decrypt },
 	{ "3des",
 		SSH_CIPHER_3DES, 8, 16,
 		des3_ssh1_setkey, des3_setiv,
