@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.8 2000/11/10 20:02:17 todd Exp $
+.\" $OpenBSD: vlan.4,v 1.9 2001/05/13 11:37:30 fgsch Exp $
 .\"
 .Dd January 9, 2000
 .Dt VLAN 4
@@ -87,7 +87,7 @@ This driver only supports such operation with Ethernet devices.
 Some Ethernet chips (notably the Intel 82558 and 82559) automatically
 discard frames that are larger then 1514 bytes.
 All Ethernet
-chips sporting this sort of feature should allow for it to be turned off.
+chips supporting this sort of feature should allow for it to be turned off.
 Optimally, upon loading, the chip's driver would do this (The
 .Xr fxp 4
 driver currently does for the Intel 82558/82559 chips.)
