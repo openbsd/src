@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.7 1997/07/06 16:35:27 niklas Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.8 1997/07/19 22:28:19 niklas Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -36,6 +36,8 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
+#include <vm/vm.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_run.h>
@@ -60,27 +62,31 @@ boolean_t	db_sstep_print;
 int		db_loop_count;
 int		db_call_depth;
 
+#ifdef SOFTWARE_SSTEP
+db_breakpoint_t	db_not_taken_bkpt = 0;
+db_breakpoint_t	db_taken_bkpt = 0;
+#endif
+
 boolean_t
 db_stop_at_pc(regs, is_breakpoint)
-	db_regs_t *regs;
+	db_regs_t	*regs;
 	boolean_t	*is_breakpoint;
 {
-	register db_addr_t	pc;
-	register db_breakpoint_t bkpt;
+	db_addr_t	pc, old_pc;
+	db_breakpoint_t	bkpt;
 
-	db_clear_single_step(regs);
 	db_clear_breakpoints();
 	db_clear_watchpoints();
-	pc = PC_REGS(regs);
+	old_pc = pc = PC_REGS(regs);
 
 #ifdef	FIXUP_PC_AFTER_BREAK
 	if (*is_breakpoint) {
-	    /*
-	     * Breakpoint trap.  Fix up the PC if the
-	     * machine requires it.
-	     */
-	    FIXUP_PC_AFTER_BREAK(regs);
-	    pc = PC_REGS(regs);
+		/*
+		 * Breakpoint trap.  Fix up the PC if the
+		 * machine requires it.
+		 */
+		FIXUP_PC_AFTER_BREAK(regs);
+		pc = PC_REGS(regs);
 	}
 #endif
 
@@ -89,35 +95,48 @@ db_stop_at_pc(regs, is_breakpoint)
 	 */
 	bkpt = db_find_breakpoint_here(pc);
 	if (bkpt) {
-	    if (--bkpt->count == 0) {
-		bkpt->count = bkpt->init_count;
-		*is_breakpoint = TRUE;
-		return (TRUE);	/* stop here */
-	    }
-	} else if (*is_breakpoint) {
+		if (--bkpt->count == 0) {
+			db_clear_single_step(regs);
+			bkpt->count = bkpt->init_count;
+			*is_breakpoint = TRUE;
+			return (TRUE);	/* stop here */
+		}
+	} else if (*is_breakpoint
+#ifdef SOFTWARE_SSTEP
+	    && !((db_taken_bkpt && db_taken_bkpt->address == pc) ||
+	    (db_not_taken_bkpt && db_not_taken_bkpt->address == pc))
+#endif
+	    ) {
+		/*
+		 * XXX why on earth is this ifndef'd?  Please explain!
+		 * I believe this was a workaround a bug where singlestep
+		 * breakpoints got deleted before recognized as such.  This
+		 * bug is now gone and probably this #ifndef should go to.
+		 */
 #ifndef m88k
-		PC_REGS(regs) += BKPT_SIZE;
+		PC_REGS(regs) = old_pc;
 #endif
 	}
+	db_clear_single_step(regs);
 		
 	*is_breakpoint = FALSE;
 
 	if (db_run_mode == STEP_INVISIBLE) {
-	    db_run_mode = STEP_CONTINUE;
-	    return (FALSE);	/* continue */
+		db_run_mode = STEP_CONTINUE;
+		return (FALSE);	/* continue */
 	}
 	if (db_run_mode == STEP_COUNT) {
-	    return (FALSE); /* continue */
+		return (FALSE); /* continue */
 	}
 	if (db_run_mode == STEP_ONCE) {
-	    if (--db_loop_count > 0) {
-		if (db_sstep_print) {
-		    db_printf("\t\t");
-		    db_print_loc_and_inst(pc);
-		    db_printf("\n");
+		if (--db_loop_count > 0) {
+			if (db_sstep_print) {
+				db_printf("\t\t");
+				db_print_loc_and_inst(pc);
+				db_printf("\n");
+			}
+			return (FALSE);	/* continue */
 		}
-		return (FALSE);	/* continue */
-	    }
 	}
 	if (db_run_mode == STEP_RETURN) {
 	    db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
@@ -147,8 +166,7 @@ db_stop_at_pc(regs, is_breakpoint)
 
 	    /* continue until call or return */
 
-	    if (!inst_call(ins) &&
-		!inst_return(ins) &&
+	    if (!inst_call(ins) && !inst_return(ins) &&
 		!inst_trap_return(ins)) {
 		return (FALSE);	/* continue */
 	    }
@@ -162,47 +180,45 @@ db_restart_at_pc(regs, watchpt)
 	db_regs_t *regs;
 	boolean_t watchpt;
 {
-	register db_addr_t pc = PC_REGS(regs);
+	db_addr_t pc = PC_REGS(regs);
 
-	if ((db_run_mode == STEP_COUNT) ||
-	    (db_run_mode == STEP_RETURN) ||
+	if ((db_run_mode == STEP_COUNT) || (db_run_mode == STEP_RETURN) ||
 	    (db_run_mode == STEP_CALLT)) {
-	    db_expr_t		ins;
+		db_expr_t	ins;
 
-	    /*
-	     * We are about to execute this instruction,
-	     * so count it now.
-	     */
-
-	    ins = db_get_value(pc, sizeof(int), FALSE);
-	    db_inst_count++;
-	    db_load_count += inst_load(ins);
-	    db_store_count += inst_store(ins);
-#ifdef	SOFTWARE_SSTEP
-	    /* XXX works on mips, but... */
-	    if (inst_branch(ins) || inst_call(ins)) {
-		ins = db_get_value(next_instr_address(pc,1),
-				   sizeof(int), FALSE);
+		/*
+		 * We are about to execute this instruction,
+		 * so count it now.
+		 */
+		ins = db_get_value(pc, sizeof(int), FALSE);
 		db_inst_count++;
 		db_load_count += inst_load(ins);
 		db_store_count += inst_store(ins);
-	    }
+#ifdef	SOFTWARE_SSTEP
+		/* XXX works on mips, but... */
+		if (inst_branch(ins) || inst_call(ins)) {
+			ins = db_get_value(next_instr_address(pc, 1),
+			    sizeof(int), FALSE);
+			db_inst_count++;
+			db_load_count += inst_load(ins);
+			db_store_count += inst_store(ins);
+		}
 #endif	SOFTWARE_SSTEP
 	}
 
 	if (db_run_mode == STEP_CONTINUE) {
-	    if (watchpt || db_find_breakpoint_here(pc)) {
-		/*
-		 * Step over breakpoint/watchpoint.
-		 */
-		db_run_mode = STEP_INVISIBLE;
-		db_set_single_step(regs);
-	    } else {
-		db_set_breakpoints();
-		db_set_watchpoints();
-	    }
+		if (watchpt || db_find_breakpoint_here(pc)) {
+			/*
+			 * Step over breakpoint/watchpoint.
+			 */
+			db_run_mode = STEP_INVISIBLE;
+			db_set_single_step(regs);
+		} else {
+			db_set_breakpoints();
+			db_set_watchpoints();
+		}
 	} else {
-	    db_set_single_step(regs);
+		db_set_single_step(regs);
 	}
 }
 
@@ -247,36 +263,27 @@ db_single_step(regs)
  *	These breakpoints are deleted on return.
  */			
 
-/*
- * XXX is this proto right?  We don't use this facility in any of our ports.
- * I've seen it defined to (0) when it is not needed and then the proto will
- * not be correct, so skip it then.
- */
-#ifndef getreg_val
-extern u_int getreg_val __P((db_regs_t *, int));
-#endif
-
-db_breakpoint_t	db_not_taken_bkpt = 0;
-db_breakpoint_t	db_taken_bkpt = 0;
-
 void
 db_set_single_step(regs)
 	register db_regs_t *regs;
 {
-	db_addr_t pc = PC_REGS(regs);
-	register unsigned	 inst, brpc;
+	db_addr_t pc = PC_REGS(regs), brpc;
+	u_int inst;
 
 	/*
-	 *	User was stopped at pc, e.g. the instruction
-	 *	at pc was not executed.
+	 * User was stopped at pc, e.g. the instruction
+	 * at pc was not executed.
 	 */
 	inst = db_get_value(pc, sizeof(int), FALSE);
-	if (inst_branch(inst) || inst_call(inst)) {
+	if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
 	    brpc = branch_taken(inst, pc, getreg_val, regs);
 	    if (brpc != pc) {	/* self-branches are hopeless */
 		db_taken_bkpt = db_set_temp_breakpoint(brpc);
 	    }
+#if 0
+	    /* XXX this seems like a true bug, no?  */
 	    pc = next_instr_address(pc, 1);
+#endif
 	}
 	pc = next_instr_address(pc, 0);
 	db_not_taken_bkpt = db_set_temp_breakpoint(pc);
