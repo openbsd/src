@@ -65,6 +65,7 @@
  */
 
 #include "stand.h"
+#include "saerrno.h"
 
 int
 close(fd)

@@ -45,6 +45,7 @@
 #include <string.h>
 
 #include <net/if.h>
+#include <netinet/in.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

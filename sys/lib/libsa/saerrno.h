@@ -37,6 +37,8 @@
 
 #include <sys/errno.h>
 
+extern int errno;
+
 /* special stand error codes */
 #define	EADAPT	(ELAST+1)	/* bad adaptor */
 #define	ECTLR	(ELAST+2)	/* bad controller */

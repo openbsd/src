@@ -8,6 +8,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 

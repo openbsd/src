@@ -8,7 +8,9 @@ DIR=${SAREL}${SADIR}
 
 #DEBUGFLAGS= -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
 #DEBUGFLAGS= -ansi -pedantic -Wall
-CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
+AFLAGS+=${XAFLAGS}
+CFLAGS+=${XCFLAGS} -D_STANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
+CPPFLAGS+=${XCPPFLAGS}
 
 # stand routines
 SRCS+=	alloc.c bcopy.c memcpy.c exit.c exec.c getfile.c gets.c globals.c \
