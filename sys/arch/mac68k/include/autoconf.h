@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 1997/01/24 01:35:40 briggs Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.5 1997/04/06 02:59:54 briggs Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.5 1996/12/17 06:47:40 scottr Exp $	*/
 
 /*
@@ -32,8 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/device.h>
 
 /*
  * Autoconfiguration information.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.3 1996/05/26 18:35:42 briggs Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.4 1997/04/06 02:59:52 briggs Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.5 1996/05/05 14:34:07 briggs Exp $	*/
 
 /*-
@@ -36,10 +36,6 @@
 
 #ifndef _ADBSYS_MACHINE_
 #define _ADBSYS_MACHINE_
-
-#include <sys/time.h>	/* timeval stuff */
-#include <sys/ioctl.h>	/* ioctls */
-
 
 /* Handy visual constants */
 #define ADB_MAX_HANDLERS	256

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.8 1997/03/12 13:36:56 briggs Exp $	*/
+/*	$OpenBSD: adb.c,v 1.9 1997/04/06 02:59:57 briggs Exp $	*/
 /*	$NetBSD: adb.c,v 1.13 1996/12/16 16:17:02 scottr Exp $	*/
 
 /*-
@@ -34,10 +34,12 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/time.h>
 
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>

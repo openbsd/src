@@ -1,4 +1,4 @@
-/*	$OpenBSD: iteioctl.h,v 1.2 1996/05/26 18:35:53 briggs Exp $	*/
+/*	$OpenBSD: iteioctl.h,v 1.3 1997/04/06 02:59:55 briggs Exp $	*/
 /*	$NetBSD: iteioctl.h,v 1.1 1994/12/03 23:34:31 briggs Exp $	*/
 
 /*-
@@ -33,12 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: iteioctl.h,v 1.2 1996/05/26 18:35:53 briggs Exp $
+ * $Id: iteioctl.h,v 1.3 1997/04/06 02:59:55 briggs Exp $
  *
  */
-
-
-#include <sys/ioctl.h>
 
 
 struct bellparams{
