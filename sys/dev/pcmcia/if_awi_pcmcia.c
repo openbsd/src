@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.13 2004/11/23 21:12:23 fgsch Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.14 2005/01/27 17:04:55 millert Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -294,6 +294,7 @@ awi_pcmcia_attach(parent, self, aux)
 	struct awi_pcmcia_product *app;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	const char *intrstr;
 #if 0
 	bus_addr_t memoff;
 #endif
@@ -348,12 +349,14 @@ awi_pcmcia_attach(parent, self, aux)
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
-	    awi_intr, sc, "");
+	    awi_intr, sc, sc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(psc->sc_pf, sc->sc_ih);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		printf(", %s\n", intrstr);
 		goto no_interrupt;
 	}
+	if (*intrstr)
+		printf(", %s", intrstr);
 	sc->sc_ifp = &sc->sc_arpcom.ac_if;
 	sc->sc_cansleep = 1;
 

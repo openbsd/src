@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.27 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.28 2005/01/27 17:04:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -240,7 +240,7 @@ xe_pcmcia_attach(parent, self, aux)
 	struct pcmcia_mem_handle pcmh;
 	int ccr_window;
 	bus_addr_t ccr_offset;
-
+	const char *intrstr;
 
 	psc->sc_pf = pf;
 
@@ -384,13 +384,15 @@ xe_pcmcia_attach(parent, self, aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, xe_intr, sc, "");
+	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, xe_intr, sc,
+	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(", couldn't establish interrupt\n");
 		goto bad;
 	}
-
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	intrstr = pcmcia_intr_string(psc->sc_pf, sc->sc_ih);
+	printf("%s%s: address %s\n", *intrstr ? ", " : "", intrstr,
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Reset and initialize the card. */
 	xe_full_reset(sc);

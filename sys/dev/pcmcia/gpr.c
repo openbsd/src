@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.10 2003/06/02 19:21:49 fgsch Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.11 2005/01/27 17:04:55 millert Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -152,6 +152,7 @@ gpr_attach(struct device *parent, struct device *self, void *aux)
 	struct gpr_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	const char *intrstr;
 
 	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe;
 	     cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
@@ -203,14 +204,10 @@ gpr_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_TTY, gpr_intr, sc,
 	    sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n");
-		goto fail_intr;
-	}
-
-	printf("\n");
-
-	return;
+	intrstr = pcmcia_intr_string(psc->sc_pf, sc->sc_ih);
+	printf("%s%s\n", *intrstr ? ", " : "", intrstr);
+	if (sc->sc_ih != NULL)
+		return;
 
 fail_intr:
 	pcmcia_mem_unmap(pa->pf, sc->sc_memwin);

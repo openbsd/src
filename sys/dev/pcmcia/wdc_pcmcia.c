@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.15 2005/01/11 22:07:58 drahn Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.16 2005/01/27 17:04:56 millert Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -258,6 +258,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct wdc_pcmcia_product *wpp;
+	const char *intrstr;
 	int quirks;
 
 	sc->sc_pf = pa->pf;
@@ -373,9 +374,9 @@ wdc_pcmcia_attach(parent, self, aux)
 	/* Establish the interrupt handler. */
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
 	    &sc->wdc_channel, sc->sc_wdcdev.sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf("couldn't establish interrupt handler");
-	}
+	intrstr = pcmcia_intr_string(sc->sc_pf, sc->sc_ih);
+	if (*intrstr)
+		printf(": %s", intrstr);
 #endif
 
 	printf("\n");

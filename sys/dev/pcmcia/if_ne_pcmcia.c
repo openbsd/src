@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.76 2004/12/12 07:05:49 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.77 2005/01/27 17:04:55 millert Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -578,6 +578,7 @@ ne_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct ne2000dev *ne_dev;
+	const char *intrstr;
 	int i;
 	u_int8_t myea[6], *enaddr;
 
@@ -762,9 +763,10 @@ again:
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
-	    dsc, "");
-	if (psc->sc_ih == NULL)
-		printf("no irq");
+	    dsc, dsc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(psc->sc_pf, psc->sc_ih);
+	if (*intrstr)
+		printf(", %s", intrstr);
 
 	printf("\n");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.4 2002/03/14 01:27:00 millert Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.5 2005/01/27 17:04:55 millert Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -162,6 +162,7 @@ esp_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
+	const char *intrstr;
 
 	esc->sc_pf = pf;
 
@@ -200,11 +201,14 @@ esp_pcmcia_attach(parent, self, aux)
 	esp_pcmcia_init(esc);
 
 	esc->sc_ih = pcmcia_intr_establish(esc->sc_pf, IPL_BIO,
-	    ncr53c9x_intr, &esc->sc_ncr53c9x, "");
+	    ncr53c9x_intr, &esc->sc_ncr53c9x, esc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(psc->sc_pf, esc->sc_ih);
 	if (esc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n");
+		printf(", %s\n", intrstr);
 		goto iomap_failed;
 	}
+	if (*intrstr)
+		printf(", %s", intrstr);
 
 	/*
 	 *  Initialize nca board itself.

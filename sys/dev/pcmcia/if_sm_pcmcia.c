@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.21 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.22 2005/01/27 17:04:56 millert Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -152,6 +152,7 @@ sm_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
+	const char *intrstr;
 
 	psc->sc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
@@ -218,9 +219,10 @@ sm_pcmcia_attach(parent, self, aux)
 		printf(", unable to get Ethernet address\n");
 
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
-	    smc91cxx_intr, sc, "");
-	if (psc->sc_ih == NULL)
-		printf(": couldn't establish interrupt\n");
+	    smc91cxx_intr, sc, sc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(psc->sc_pf, psc->sc_ih);
+	if (*intrstr)
+		printf(", %s", intrstr);
 
 	/* Perform generic initialization. */
 	smc91cxx_attach(sc, enaddr);

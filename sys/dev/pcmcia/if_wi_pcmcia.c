@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.59 2005/01/21 03:32:21 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.60 2005/01/27 17:04:56 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -378,6 +378,7 @@ wi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_function	*pf = pa->pf;
 	struct pcmcia_config_entry *cfe = SIMPLEQ_FIRST(&pf->cfe_head);
+	const char		*intrstr;
 	int			state = 0;
 
 	psc->sc_pf = pf;
@@ -423,7 +424,8 @@ wi_pcmcia_attach(parent, self, aux)
 		goto bad;
 	}
 
-	printf("\n");
+	intrstr = pcmcia_intr_string(psc->sc_pf, sc->sc_ih);
+	printf("%s%s\n", *intrstr ? ", " : "", intrstr);
 	if (wi_attach(sc, &wi_func_io) == 0)
 		return;
 

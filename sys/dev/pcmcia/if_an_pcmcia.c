@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.12 2003/06/02 19:24:23 mickey Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.13 2005/01/27 17:04:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -99,6 +99,7 @@ an_pcmcia_attach(parent, self, aux)
 	struct an_softc *sc = (struct an_softc *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	const char *intrstr;
 
 	psc->sc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
@@ -126,9 +127,11 @@ an_pcmcia_attach(parent, self, aux)
 	sc->an_btag = psc->sc_pcioh.iot;
 	sc->an_bhandle = psc->sc_pcioh.ioh;
 
-	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc, "");
-	if (sc->sc_ih == NULL)
-		printf("no irq");
+	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc,
+	    sc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(psc->sc_pf, sc->sc_ih);
+	if (*intrstr)
+		printf(", %s", intrstr);
 
 	an_attach(sc);
 }

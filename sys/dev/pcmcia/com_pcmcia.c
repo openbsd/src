@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.38 2004/08/02 12:19:26 miod Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.39 2005/01/27 17:04:55 millert Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -263,6 +263,7 @@ com_pcmcia_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	const char *intrstr;
 	int autoalloc = 0;
 
 	psc->sc_pf = pa->pf;
@@ -329,10 +330,11 @@ found:
 	com_attach_subr(sc);
 #endif
 	/* establish the interrupt. */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_TTY,
-	    comintr, sc, "");
-	if (psc->sc_ih == NULL)
-		printf(", couldn't establish interrupt");
+	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_TTY, comintr, sc,
+	    sc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(psc->sc_pf, psc->sc_ih);
+	if (*intrstr)
+		printf(", %s", intrstr);
 
 	com_pcmcia_attach2(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.25 2004/11/23 21:12:23 fgsch Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.26 2005/01/27 17:04:55 millert Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -736,7 +736,7 @@ ray_enable(sc)
 
 	if ((error = ray_init(sc)) == 0) {
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-		    ray_intr, sc, "");
+		    ray_intr, sc, sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL) {
 			ray_stop(sc);
 			return (EIO);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.14 2002/11/19 18:36:18 jason Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.15 2005/01/27 17:04:56 millert Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -138,6 +138,7 @@ rln_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct rln_pcmcia_product *rpp;
+	const char *intrstr;
 
 	psc->psc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&psc->psc_pf->cfe_head);
@@ -224,10 +225,10 @@ rln_pcmcia_attach(parent, self, aux)
 	 * responses, causes hard lock-ups.
 	 */
 	psc->psc_ih = pcmcia_intr_establish(psc->psc_pf, IPL_NET,
-		rlnintr_pcmcia, sc, "");
-	if (psc->psc_ih == NULL)
-		printf(": couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		rlnintr_pcmcia, sc, sc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(psc->sc_pf, psc->sc_ih);
+	if (*intrstr)
+		printf(", %s", intrstr);
 	sc->sc_ih = NULL;
 
 #ifdef DIAGNOSTIC
