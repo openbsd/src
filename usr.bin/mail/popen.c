@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.18 1998/06/12 18:07:58 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.19 1998/08/15 23:17:24 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.18 1998/06/12 18:07:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.19 1998/08/15 23:17:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -431,7 +431,6 @@ static int
 handle_spool_locks(action)
 	int action;
 {
-	char *cmd;
 	static FILE *lockfp = NULL;
 	static int lock_pid;
 
@@ -447,19 +446,15 @@ handle_spool_locks(action)
 		lockfp = NULL;
 	} else if (action == 1) {
 		/* Create the lock */
-		if ((cmd = (char *)malloc(sizeof(_PATH_MAIL_LOCAL) + 3)) == NULL)
-			errx(1, "Out of memory");
-		sprintf(cmd, "%s -H", _PATH_MAIL_LOCAL);
-		if ((lockfp = Popen(cmd, "r")) == NULL || getc(lockfp) != '1') {
+		if ((lockfp = Popen(_PATH_LOCKSPOOL, "r")) == NULL ||
+		    getc(lockfp) != '1') {
 			lockfp = NULL;
-			(void)free(cmd);
 			return(0);
 		}
 
 		lock_pid = fp_head->pid;	/* new entries added at head */
-		(void)free(cmd);
 	} else {
-		fprintf(stderr, "handle_spool_locks: unknown action %d\n",
+		(void)fprintf(stderr, "handle_spool_locks: unknown action %d\n",
 		    action);
 		return(-1);
 	}

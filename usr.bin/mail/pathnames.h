@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1997/03/29 03:01:46 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1998/08/15 23:17:22 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.4 1996/06/08 19:48:34 christos Exp $	*/
 
 /*
@@ -44,4 +44,4 @@
 #define	_PATH_TILDE	"/usr/share/misc/mail.tildehelp"
 #define	_PATH_MASTER_RC	"/etc/mail.rc"
 #define	_PATH_MORE	"/usr/bin/more"
-#define	_PATH_MAIL_LOCAL "/usr/libexec/mail.local"
+#define	_PATH_LOCKSPOOL	"/usr/libexec/lockspool"
