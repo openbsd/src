@@ -598,6 +598,22 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if (VA_INHOLE(v))
 		goto fault;
 	ftype = ser & SER_WRITE ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
+	if(ftype == VM_PROT_READ && (ser & SER_PROT) && type != T_TEXTFAULT) {
+		/* If this is an ldstub or swap instruction
+		 * then we are about to fault in a loop forever
+		 * as only the read part of the fault will be
+		 * reported by the mmu.
+		 */
+		int error, insn;
+
+		error = copyin((caddr_t) pc, &insn, sizeof(int));
+		if(!error) {
+			insn = (insn >> 16); /* high word */
+			insn &= 0xc168;
+			if(insn == 0xc068)
+				ftype |= VM_PROT_WRITE;
+		}
+	}
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
