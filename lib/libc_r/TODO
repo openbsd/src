@@ -36,6 +36,9 @@ This is a list of things that still need to be done:
   of whether the exe is statically linked or not.
   [problems with new egcs?]
 
+* Add UNIX98's pthread_attr_[sg]etguardsize(). This would probably be
+  straightforward.
+
 * Keep a handle on how netbsd are going with their kernel threads
   [argumnet is that obsd is not multi-processor, so user threads will
    retain stability and still give reasonable performance. talked to mwp@]
@@ -62,19 +65,27 @@ This is a list of things that still need to be done:
   [snarfed some sparc md stuff]
 
 * Verify that threads work with:
-	- perl (in-tree)
+	- perl (in-tree) [almost]
 	- objc (in-tree gcc)
-	- ssl (in-tree)
+	- ssl (in-tree) [triv]
 	- gdb
 	- ports
-		- lang/python
+		- lang/python [yes, but a SIGCONT problem?]
 		- databases/mysql
 		- net/mrtd
-		- devel/glib
+		- devel/glib [yes]
 		- www/squid
 
-* http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
-  http://www.cs.wustl.edu/~schmidt/TSS-pattern.ps.gz
-  http://www.cs.wustl.edu/~schmidt/DC-Locking.ps.gz
+* Some ideas:
+  + http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
+    http://www.cs.wustl.edu/~schmidt/TSS-pattern.ps.gz
+    http://www.cs.wustl.edu/~schmidt/DC-Locking.ps.gz
+  + http://guir.cs.berkeley.edu/projects/osprelims/papers/Scheduler.pdf.gz
+    "Scheduler Activations: Effective Kernel Support for the User-Level 
+    Management of Parallelism" by Thomas E. Anderson, Brian N. Bershad, 
+    Edward D. Lazowska, and Henry M. Levy                                                               
+* Fix ufs_select and nfs_select in the kernel to give REAL answers. [ha!]
 
-$OpenBSD: TODO,v 1.10 2000/01/06 06:48:06 d Exp $
+* Clean up the way that signals are delivered to threads. Yuk.
+
+$OpenBSD: TODO,v 1.11 2000/02/10 12:28:56 d Exp $
