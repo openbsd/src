@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.50 1998/04/27 03:01:30 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.51 1998/05/15 14:25:44 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -879,6 +879,7 @@
 #define	PCI_PRODUCT_OPTI_82C558	0xc558		/* 82C558 */
 #define	PCI_PRODUCT_OPTI_82C621	0xc621		/* 82C621 */
 #define	PCI_PRODUCT_OPTI_82C822	0xc822		/* 82C822 */
+#define	PCI_PRODUCT_OPTI_RM861HA	0xc861		/* RM861HA */
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */

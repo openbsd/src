@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.50 1998/04/27 03:01:30 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.51 1998/05/15 14:25:44 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1411,6 +1411,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Opti",
 	    "82C822",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_RM861HA,
+	    0,
+	    "Opti",
+	    "RM861HA",
 	},
 	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
