@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.8 2001/12/20 17:48:25 mickey Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.9 2001/12/21 15:48:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -34,7 +34,7 @@
  *	From: if_wireg.h,v 1.5 1999/07/20 20:03:42 wpaul Exp $
  */
 
-#define WI_TIMEOUT	50000	/* XXX just a guess at a good value.  */
+#define WI_TIMEOUT	50000	/* 10x XXX just a guess at a good value.  */
 
 #define WI_PORT0	0
 #define WI_PORT1	1
