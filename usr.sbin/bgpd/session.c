@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.143 2004/04/24 19:36:19 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.144 2004/04/24 20:15:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,10 +113,13 @@ setup_listener(struct sockaddr *sa)
 	int			 fd, opt;
 
 	if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
-		return (-1);
+		fatal("king bula sez: unknown address family");
 
-	if ((fd = socket(sa->sa_family, SOCK_STREAM, IPPROTO_TCP)) == -1)
+	if ((fd = socket(sa->sa_family, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+		log_warn("error setting up %s listener",
+		    sa->sa_family == AF_INET ? "IPv4" : "IPv6");
 		return (fd);
+	}
 
 	opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1)
@@ -126,14 +129,14 @@ setup_listener(struct sockaddr *sa)
 
 	if (bind(fd, sa, sa->sa_len)) {
 		close(fd);
-		return (-1);
+		fatal("bind");
 	}
 
 	session_socket_blockmode(fd, BM_NONBLOCK);
 
 	if (listen(fd, MAX_BACKLOG)) {
 		close(fd);
-		return (-1);
+		fatal("listen");
 	}
 
 	return (fd);
@@ -184,12 +187,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
-	if ((sock = setup_listener((struct sockaddr *)&conf->listen_addr)) ==
-	    -1)
-		fatalx("IPv4 listener setup failed");
-	if ((sock6 = setup_listener((struct sockaddr *)&conf->listen6_addr)) ==
-	    -1)
-		fatalx("IPv6 listener setup failed");
+	sock = setup_listener((struct sockaddr *)&conf->listen_addr);
+	sock6 = setup_listener((struct sockaddr *)&conf->listen6_addr);
 
 	if (pfkey_init() == -1)
 		fatalx("pfkey setup failed");
