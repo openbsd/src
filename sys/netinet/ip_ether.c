@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.24 2001/02/06 02:50:02 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.25 2001/02/07 20:52:13 mickey Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -104,10 +104,10 @@ etherip_input(m, va_alist)
 
 #if NGIF > 0
 	int i;
-#endif /* NGIF */
 #if NBRIDGE > 0
 	int s;
 #endif /* NBRIDGE */
+#endif /* NGIF */
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
