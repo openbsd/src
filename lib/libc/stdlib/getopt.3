@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.25 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: getopt.3,v 1.26 2003/09/02 18:24:21 jmc Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -129,7 +129,7 @@ encounters a character not found in
 .Fa optstring
 or if it detects a missing option argument,
 it returns
-.Sq ?
+.Sq \&?
 (question mark).
 If
 .Fa optstring
@@ -138,7 +138,7 @@ has a leading
 then a missing option argument causes
 .Sq \:
 to be returned instead of
-.Sq ? .
+.Sq \&? .
 In either case, the variable
 .Va optopt
 is set to the character that caused the error.
@@ -179,7 +179,7 @@ or detects
 a missing option argument it writes an error message to
 .Em stderr
 and returns
-.Ql ? .
+.Ql \&? .
 Setting
 .Va opterr
 to a zero will disable these error messages.

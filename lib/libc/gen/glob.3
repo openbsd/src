@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.20 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: glob.3,v 1.21 2003/09/02 18:24:21 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,7 +76,7 @@ and read permission on each directory of any filename component of
 .Fa pattern
 that contains any of the special characters
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 or
 .Ql [ .
 .Pp
@@ -237,7 +237,7 @@ but it only appends the
 .Fa pattern
 if it does not contain any of the special characters
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 or
 .Ql [ .
 .Dv GLOB_NOMAGIC
@@ -345,7 +345,7 @@ set if
 .Fa pattern
 contained any of the special characters
 .Ql * ,
-.Ql ? ,
+.Ql \&? ,
 or
 .Ql [ ,
 cleared if not.
