@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.765 2004/09/22 12:15:56 grange Exp 
+ *	OpenBSD: pcidevs,v 1.766 2004/09/23 18:39:36 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -845,7 +845,7 @@
 #define	PCI_PRODUCT_CMDTECH_3114	0x3114		/* SiI3114 SATA */
 #define	PCI_PRODUCT_CMDTECH_3512	0x3512		/* SiI3512 SATA */
 /* Fake product id for SiI3112 found on Adaptec 1210SA */
-#define	PCI_PRODUCT_CMDTECH_1210SA	0x0240		/* 1210SA */
+#define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA */
 
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX */
