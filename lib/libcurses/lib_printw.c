@@ -40,7 +40,7 @@ char buf[BUFSIZ];
 	T(("printw(%s,...) called", _nc_visbuf(fmt)));
 
 	va_start(argp, fmt);
-	vnsprintf(buf, sizeof buf, fmt, argp);
+	vsnprintf(buf, sizeof buf, fmt, argp);
 	va_end(argp);
 	return(waddstr(stdscr, buf));
 }
@@ -55,7 +55,7 @@ char buf[BUFSIZ];
 	T(("wprintw(%p,%s,...) called", win, _nc_visbuf(fmt)));
 
 	va_start(argp, fmt);
-	vnsprintf(buf, sizeof buf, fmt, argp);
+	vsnprintf(buf, sizeof buf, fmt, argp);
 	va_end(argp);
 	return(waddstr(win, buf));
 }
