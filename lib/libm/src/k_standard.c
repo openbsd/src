@@ -17,14 +17,13 @@ static char rcsid[] = "$NetBSD: k_standard.c,v 1.6 1995/05/10 20:46:35 jtc Exp $
 #include "math.h"
 #include "math_private.h"
 #include <errno.h>
+#include <stdio.h>			/* fputs(), stderr */
 
 #ifndef _USE_WRITE
-#include <stdio.h>			/* fputs(), stderr */
 #define	WRITE2(u,v)	fputs(u, stderr)
 #else	/* !defined(_USE_WRITE) */
 #include <unistd.h>			/* write */
 #define	WRITE2(u,v)	write(2, u, v)
-#undef fflush
 #endif	/* !defined(_USE_WRITE) */
 
 #ifdef __STDC__
