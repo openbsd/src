@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_slkrefr.c,v 1.2 1999/03/11 21:03:56 millert Exp $	*/
+/*	$OpenBSD: lib_slkrefr.c,v 1.3 1999/03/14 03:10:32 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -40,7 +40,7 @@
 #include <curses.priv.h>
 #include <term.h>	  /* num_labels, label_*, plab_norm */
 
-MODULE_ID("$From: lib_slkrefr.c,v 1.7 1999/03/03 23:44:22 juergen Exp $")
+MODULE_ID("$From: lib_slkrefr.c,v 1.8 1999/03/14 00:10:27 Alexander.V.Lukyanov Exp $")
 
 /*
  * Write the soft labels to the soft-key window.
@@ -58,7 +58,7 @@ int fmt = SP->slk_format;
 				{
 				  if (i < num_labels) {
 				    TPUTS_TRACE("plab_norm");
-				    putp(tparm(plab_norm, i+1, slk->win,slk->ent[i].form_text));
+				    putp(tparm(plab_norm, i+1, slk->ent[i].form_text));
 				  }
 				}
 				else
