@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_expr.c,v 1.4 1996/04/21 22:19:00 deraadt Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.5 1997/07/06 16:45:21 niklas Exp $	*/
 /*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
 
 /* 
@@ -57,7 +57,7 @@ db_term(valuep)
 	    return (TRUE);
 	}
 	if (t == tNUMBER) {
-	    *valuep = (db_expr_t)db_tok_number;
+	    *valuep = db_tok_number;
 	    return (TRUE);
 	}
 	if (t == tDOT) {
