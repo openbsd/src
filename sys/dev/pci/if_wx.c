@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wx.c,v 1.2 2000/03/22 18:15:20 deraadt Exp $	*/
+/*	$OpenBSD: if_wx.c,v 1.3 2000/04/26 23:16:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1999, Traakan Software
@@ -1895,7 +1895,6 @@ wx_ioctl(ifp, command, data)
 		error = ether_ioctl(ifp, command, data);
 		break;
 
-#if defined(SIOCSIFMTU) && !defined(__OpenBSD__)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > WX_MAXMTU || ifr->ifr_mtu < ETHERMIN) {
 			error = EINVAL;
@@ -1904,7 +1903,6 @@ wx_ioctl(ifp, command, data)
 			error = wx_init(sc);
                 }
                 break;
-#endif
 
 	case SIOCSIFFLAGS:
 		sc->all_mcasts = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
