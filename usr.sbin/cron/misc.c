@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2002/05/09 21:40:41 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2002/05/09 21:53:17 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.13 2002/05/09 21:40:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.14 2002/05/09 21:53:17 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -495,11 +495,11 @@ allowed(username)
 	if (allow_error)
 		return (FALSE);
 	if (allow)
-		return (in_file(username, allow));
+		return (in_file(username, allow, FALSE));
 	if (deny_error)
 		return (FALSE);
 	if (deny)
-		return (!in_file(username, deny));
+		return (!in_file(username, deny, TRUE));
 
 #if defined(ALLOW_ONLY_ROOT)
 	return (strcmp(username, ROOT_USER) == 0);
