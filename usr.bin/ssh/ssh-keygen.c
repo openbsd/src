@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.86 2001/12/19 07:18:56 deraadt Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.87 2001/12/21 08:52:22 djm Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -73,8 +73,7 @@ int convert_to_ssh2 = 0;
 int convert_from_ssh2 = 0;
 int print_public = 0;
 
-/* default to RSA for SSH-1 */
-char *key_type_name = "rsa1";
+char *key_type_name = NULL;
 
 /* argv0 */
 extern char *__progname;
@@ -831,7 +830,7 @@ usage(void)
 int
 main(int ac, char **av)
 {
-	char dotsshdir[16 * 1024], comment[1024], *passphrase1, *passphrase2;
+	char dotsshdir[MAXPATHLEN], comment[1024], *passphrase1, *passphrase2;
 	char *reader_id = NULL;
 	Key *private, *public;
 	struct passwd *pw;
@@ -927,6 +926,10 @@ main(int ac, char **av)
 	}
 	if (optind < ac) {
 		printf("Too many arguments.\n");
+		usage();
+	}
+	if (key_type_name == NULL) {
+		printf("You must specify a key type (-t).\n");
 		usage();
 	}
 	if (change_passphrase && change_comment) {
