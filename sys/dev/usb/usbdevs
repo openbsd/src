@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.142 2005/03/14 04:08:50 deraadt Exp $
+$OpenBSD: usbdevs,v 1.143 2005/03/16 21:21:40 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -352,6 +352,7 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor NEODIO		0x0aec  Neodio
 vendor VODAFONE		0x0af0  Vodafone
 vendor TODOS		0x0b0c	Todos Data System
+vendor ASUS		0x0b05	ASUS
 vendor SIIG2		0x0b39	SIIG
 vendor TEKRAM		0x0b3b	Tekram Technology
 vendor HAL		0x0b41	HAL Corporation
@@ -396,6 +397,7 @@ vendor DICKSMITH	0x1371	Dick Smith Electronics
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor SILICOM		0x1485	Silicom
+vendor RALINK		0x148f	Ralink Technology
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
 vendor SOHOWARE		0x15e8	SOHOware
@@ -585,6 +587,9 @@ product ASKEY VOYAGER1010	0x0821	Voyager 1010
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
 
+/* ASUS products */
+product ASUS RT2570		0x1707	RT2570
+
 /* ASUSTeK Computer products */
 product ASUSTEK WL140		0x3300	WL-140
 
@@ -697,7 +702,8 @@ product CHPRODUCTS FIGHTERSTICK	0x00f3	Fighterstick
 product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 
 /* Cisco-Linksys products */
-product CISCOLINKSYS WUSB54G 	0x000d	Wireless-G USB Network Adapter
+product CISCOLINKSYS WUSB54G 	0x000d	RT2570
+product CISCOLINKSYS WUSB54GP	0x0011	RT2570
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
@@ -785,6 +791,7 @@ product DLINK DSB650TX4		0x200c	10/100 ethernet
 product DLINK DWL120E		0x3200	DWL-120 rev E
 product DLINK DWL122		0x3700	DWL-122
 product DLINK DWL120F		0x3702	DWL-120 rev F
+product DLINK RT2570		0x3c00	RT2570
 product DLINK DSB650C		0x4000	10Mbps ethernet
 product DLINK DSB650TX1		0x4001	10/100 ethernet
 product DLINK DSB650TX		0x4002	10/100 ethernet
@@ -1509,6 +1516,9 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 /* Rainbow Technologies products */
 product	RAINBOW IKEY2000	0x1200	i-Key 2000
 
+/* Ralink Technology products */
+product RALINK RT2570		0x1706	RT2570
+
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
 
@@ -1628,6 +1638,7 @@ product SMC 2206USB		0x0201	EZ Connect Ethernet
 product SMC2 2020HUB            0x2020  Hub
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
 product SMC3 2662WV2		0xa002	EZ Connect 11Mbps v2
+product SMC RT2570		0xee13	RT2570
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	NUB100 Ethernet
