@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.6 2001/06/29 19:08:12 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.7 2001/06/29 22:12:56 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -131,39 +131,65 @@ sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 
 /* Force communication on socket FD to go in the clear.  */
 int
-sysdep_cleartext (int fd)
+sysdep_cleartext (int fd, int af)
 {
-  int level;
+  int level, int sw;
+  struct 
+  { 
+    int ip_proto;		/* IP protocol */
+    int auth_level;
+    int esp_trans_level;
+    int esp_network_level;
+  } optsw[] = 
+    { 
+      { IPPROTO_IP, IP_AUTH_LEVEL, IP_ESP_TRANS_LEVEL, IP_ESP_NETWORK_LEVEL },
+      { IPPROTO_IPV6, IPV6_AUTH_LEVEL, IPV6_ESP_TRANS_LEVEL,
+	IPV6_ESP_NETWORK_LEVEL },
+    };
 
   if (app_none)
     return 0;
+
+  switch (af)
+    {
+    case AF_INET:
+      sw = 0;
+      break;
+    case AF_INET6:
+      sw = 1;
+      break;
+    default:
+      log_print ("sysdep_cleartext: unsupported protocol family %d", af);
+      return -1;
+    }
 
   /*
    * Need to bypass system security policy, so I can send and
    * receive key management datagrams in the clear.
    */
   level = IPSEC_LEVEL_BYPASS;
-  if (setsockopt (fd, IPPROTO_IP, IP_AUTH_LEVEL, (char *)&level, sizeof level)
-      == -1)
-    {
-      log_error ("sysdep_cleartext: "
-		 "setsockopt (%d, IPPROTO_IP, IP_AUTH_LEVEL, ...) failed", fd);
-      return -1;
-    }
-  if (setsockopt (fd, IPPROTO_IP, IP_ESP_TRANS_LEVEL, (char *)&level,
+  if (setsockopt (fd, optsw[sw].ip_proto, optsw[sw].auth_level, (char *)&level,
 		  sizeof level) == -1)
     {
       log_error ("sysdep_cleartext: "
-		 "setsockopt (%d, IPPROTO_IP, IP_ESP_TRANS_LEVEL, ...) "
-		 "failed", fd);
+		 "setsockopt (%d, %d, IP_AUTH_LEVEL, ...) failed", fd,
+		 optsw[sw].ip_proto);
       return -1;
     }
-  if (setsockopt (fd, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, (char *)&level,
-		  sizeof level) == -1)
+  if (setsockopt (fd, optsw[sw].ip_proto, optsw[sw].esp_trans_level,
+		  (char *)&level, sizeof level) == -1)
+    {
+      log_error ("sysdep_cleartext: "
+		 "setsockopt (%d, %d, IP_ESP_TRANS_LEVEL, ...) "
+		 "failed", fd, optsw[sw].ip_proto);
+      return -1;
+    }
+  if (setsockopt (fd, optsw[sw].ip_proto, optsw[sw].esp_network_level,
+		  (char *)&level, sizeof level) == -1)
     {
       log_error("sysdep_cleartext: "
-		"setsockopt (%d, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, ...) "
-		 "failed", fd);
+		"setsockopt (%d, %d, IP_ESP_NETWORK_LEVEL, ...) "
+		 "failed", fd, optsw[sw].ip_proto);
       return -1;
     }
   return 0;

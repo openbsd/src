@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.6 2001/06/29 19:08:12 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.7 2001/06/29 22:12:56 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -128,45 +128,54 @@ sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 
 /* Force communication on socket FD to go in the clear.  */
 int
-sysdep_cleartext (int fd)
+sysdep_cleartext (int fd, int af)
 {
-#if 0
-  int level;
-#endif
+  char *buf;
+  char *policy[] = { "in bypass", "out bypass", NULL };
+  char **p;
+  int ipp;
 
   if (app_none)
     return 0;
 
-#if 0
+  switch (af)
+    {
+    case AF_INET:
+      ipp = IPPROTO_IP;
+      break;
+    case AF_INET6:
+      ipp = IPPROTO_IPV6;
+      break;
+    default:
+      log_print ("sysdep_cleartext: unsupported protocol family %d", af);
+      return -1;
+    }
+
   /*
    * Need to bypass system security policy, so I can send and
    * receive key management datagrams in the clear.
    */
-  level = IPSEC_LEVEL_BYPASS;
-  if (setsockopt (fd, IPPROTO_IP, IP_AUTH_LEVEL, (char *)&level, sizeof level)
-      == -1)
+
+  for (p = policy; p && *p; p++)
     {
-      log_error ("sysdep_cleartext: "
-		 "setsockopt (%d, IPPROTO_IP, IP_AUTH_LEVEL, ...) failed", fd);
-      return -1;
+      buf = ipsec_set_policy (*p, strlen(*p));
+      if (buf == NULL)
+	{
+	  log_error ("sysdep_cleartext: %s: %s", *p, ipsec_strerror());
+	  return -1;
+	}
+
+      if (setsockopt(fd, ipp, IP_IPSEC_POLICY, buf,
+		     ipsec_get_policylen(buf)) < 0)
+	{
+	  log_error ("sysdep_cleartext: "
+		     "setsockopt (%d, IPPROTO_IP, IP_IPSEC_POLICY, ...) failed",
+		     fd);
+	  return -1;
+	}
+      free(buf);
     }
-  if (setsockopt (fd, IPPROTO_IP, IP_ESP_TRANS_LEVEL, (char *)&level,
-		  sizeof level) == -1)
-    {
-      log_error ("sysdep_cleartext: "
-		 "setsockopt (%d, IPPROTO_IP, IP_ESP_TRANS_LEVEL, ...) "
-		 "failed", fd);
-      return -1;
-    }
-  if (setsockopt (fd, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, (char *)&level,
-		  sizeof level) == -1)
-    {
-      log_error("sysdep_cleartext: "
-		"setsockopt (%d, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, ...) "
-		 "failed", fd);
-      return -1;
-    }
-#endif
+
   return 0;
 }
 

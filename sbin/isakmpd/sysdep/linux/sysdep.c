@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.7 2001/06/29 19:08:12 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.8 2001/06/29 22:12:56 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -133,7 +133,7 @@ sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 }
 
 int
-sysdep_cleartext (int fd)
+sysdep_cleartext (int fd, int af)
 {
   return 0;
 }
