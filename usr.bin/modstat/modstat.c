@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.15 2002/01/08 04:59:24 ericj Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.16 2002/01/08 17:16:38 ericj Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -58,6 +58,7 @@ static char *type_names[] = {
 	"EXEC",
 	"MISC"
 };
+static int devfd;
 
 static void
 usage()
@@ -98,15 +99,13 @@ dostat(int devfd, int modnum, char *modname)
 	}
 
 	/* Decode this stat buffer... */
-	printf("%-7s %3d %3ld %0*lx %04lx %0*x %3ld %s\n",
+	printf("%-7s %3d %3ld %0*lx %04lx %0*lx %3ld %s\n",
 	    type_names[sbuf.type], sbuf.id, sbuf.offset, POINTERSIZE,
 	    (long)sbuf.area, (long)sbuf.size, POINTERSIZE,
 	    (long)sbuf.private, (long)sbuf.ver, sbuf.name);
 
 	return 0;
 }
-
-int devfd;
 
 int
 main(argc, argv)
@@ -115,15 +114,19 @@ main(argc, argv)
 {
 	int c, modnum = -1;
 	char *modname = NULL;
+	char *endptr;
 
 	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
 		case 'i':
+			modnum = (int)strtol(optarg, &endptr, 0);
+			if (modnum < 0 || modnum > INT_MAX || *endptr != '\0')
+				errx(1, "%s: not a valid number", optarg);
 			modnum = atoi(optarg);
-			break;	/* number */
+			break;
 		case 'n':
 			modname = optarg;
-			break;	/* name */
+			break;
 		default:
 			usage();
 			break;
