@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.31 2003/03/21 12:47:36 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.32 2003/04/04 01:46:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -146,7 +146,7 @@ void			 pfr_destroy_ktable(struct pfr_ktable *, int);
 int			 pfr_ktable_compare(struct pfr_ktable *,
 			    struct pfr_ktable *);
 struct pfr_ktable	*pfr_lookup_table(struct pfr_table *);
-void			 pfr_clean_node_mask(struct pfr_ktable *, 
+void			 pfr_clean_node_mask(struct pfr_ktable *,
 			    struct pfr_kentryworkq *);
 
 RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
