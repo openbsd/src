@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.60 2003/05/18 18:16:34 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.61 2003/05/18 20:06:14 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -294,7 +294,8 @@ static int
 udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
 {
   char *port = (char *)arg;
-  struct sockaddr saddr;
+  struct sockaddr_storage saddr_st;
+  struct sockaddr *saddr = (struct sockaddr *)&saddr_st;
   struct conf_list *listen_on;
   struct udp_transport *u;
   struct conf_list_node *address;
@@ -347,20 +348,20 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
    * address bound. If so, unmark the transport and skip it; this allows
    * us to call this function when we suspect a new address has appeared.
    */
-  bcopy (if_addr, &saddr, sizeof saddr);
-  switch (saddr.sa_family)  /* Add the port number to the sockaddr. */
+  memcpy (saddr, if_addr, sizeof saddr_st);
+  switch (saddr->sa_family)  /* Add the port number to the sockaddr. */
     {
     case AF_INET:
-      ((struct sockaddr_in *)&saddr)->sin_port
+      ((struct sockaddr_in *)saddr)->sin_port
 	= htons (strtol (port, &ep, 10));
       break;
     case AF_INET6:
-      ((struct sockaddr_in6 *)&saddr)->sin6_port
+      ((struct sockaddr_in6 *)saddr)->sin6_port
 	= htons (strtol (port, &ep, 10));
       break;
     }
 
-  if ((u = udp_listen_lookup (&saddr)) != 0)
+  if ((u = udp_listen_lookup (saddr)) != 0)
     {
       u->transport.flags &= ~TRANSPORT_MARK;
       return 0;
@@ -609,7 +610,7 @@ udp_reinit (void)
 
   /* Re-probe interface list.  */
   if (if_map (udp_bind_if, port) == -1)
-    log_error ("udp_init: Could not bind the ISAKMP UDP port %s on all "
+    log_print ("udp_init: Could not bind the ISAKMP UDP port %s on all "
 	       "interfaces", port);
 
   /*
