@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.8 1998/02/28 03:39:56 angelos Exp $	*/
+/*	$OpenBSD: in.c,v 1.9 1998/03/19 21:21:44 angelos Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -461,8 +461,9 @@ in_broadcast(in, ifp)
 	  for (ifa = ifn->if_addrlist.tqh_first; ifa;
 	       ifa = ifa->ifa_list.tqe_next)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
-		    (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
-		     in.s_addr == ia->ia_netbroadcast.s_addr ||
+		    (((in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
+		       in.s_addr == ia->ia_netbroadcast.s_addr) &&
+		      (ia->ia_subnetmask != 0xffffffff)) ||
 		     /*
 		      * Check for old-style (host 0) broadcast.
 		      */
