@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.91 2004/06/26 11:32:32 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.92 2004/07/07 22:25:39 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -158,6 +158,17 @@ If unspecified, the value 1200,60:86400 is used as the default.
 A list of phase 2 suites that will be used when establishing dynamic
 SAs.
 If left unspecified, QM-ESP-3DES-SHA-PFS-SUITE is used as the default.
+.It Em Acquire-Only
+If this tag is defined,
+.Nm isakmpd
+will not set up flows automatically.
+This is useful when flows are configured with
+.Xr ipsecadm 4
+or by other programs like
+.Xr bgpd 8 .
+Thus
+.Nm isakmpd
+only takes care of the SA establishment.
 .It Em Check-interval
 The interval between watchdog checks of connections we want up at all times.
 .It Em Exchange-max-time
@@ -229,6 +240,19 @@ and set up SAs with each other.
 Specifically this means replay
 protection will not be asked for, and errors that can occur when
 updating an SA with its parameters a 2nd time will be ignored.
+.It Em Use-Keynote
+This tag controls the use of
+.Xr keynote 4
+policy checking.
+The default value is
+.Qq yes ,
+which enables the policy checking.
+When set to any other value, policies will not be checked.
+This is useful when policies for flows and SA establishment are arragned by
+other programs like
+.Xr ipsecadm 8
+or
+.Xr bgpd 8 .
 .El
 .It Em Phase 1
 ISAKMP SA negotiation parameter root

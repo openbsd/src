@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.63 2004/05/13 06:56:34 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.64 2004/07/07 22:25:39 hshoexer Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -42,6 +42,7 @@
 .Op Fl 4
 .Op Fl 6
 .Op Fl c Ar config-file
+.Op Fl a
 .Op Fl d
 .Op Fl D Ar class=level
 .Op Fl f Ar fifo
@@ -49,6 +50,7 @@
 .Op Fl n
 .Op Fl p Ar listen-port
 .Op Fl P Ar local-port
+.Op Fl K
 .Op Fl L
 .Op Fl l Ar packetlog-file
 .Op Fl r Ar seed
@@ -111,6 +113,17 @@ and/or
 .Nm
 will use.
 The default is to use both IPv4 and IPv6.
+.It Fl a
+If given,
+.Nm
+does not set up flows automatically.
+This is useful when flows are configured with
+.Xr ipsecadm 4
+or by other programs like
+.Xr bgpd 8 .
+Thus
+.Nm
+only takes care of the SA establishment.
 .It Fl c Ar config-file
 If given, the
 .Fl c
@@ -216,6 +229,17 @@ On the other hand, the port specified to capital
 .Fl P
 will be what the daemon binds its local end to when acting as
 initiator.
+.It Fl K
+When this option is given,
+.Nm
+does not read the policy configuration file and no
+.Xr keynote 4
+policy check is accomplished.
+This option can be used when policies for flows and SA establishment are
+arranged by other programs like
+.Xr ipsecadm 8
+or
+.Xr bgpd 8 .
 .It Fl L
 Enable IKE packet capture.
 When this option is given,
