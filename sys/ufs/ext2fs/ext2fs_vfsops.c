@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.31 2004/01/20 03:44:06 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.32 2004/05/06 17:41:03 grange Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -72,12 +72,16 @@ static int ext2fs_checksb(struct ext2fs *, int);
 
 extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
+#ifdef FIFO
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
+#endif
 
 struct vnodeopv_desc *ext2fs_vnodeopv_descs[] = {
 	&ext2fs_vnodeop_opv_desc,
 	&ext2fs_specop_opv_desc,
+#ifdef FIFO
 	&ext2fs_fifoop_opv_desc,
+#endif
 	NULL,
 };
 
