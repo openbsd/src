@@ -42,7 +42,12 @@ case $# in
 esac
 
 # source the config file.
-. $1
+case $1 in
+    /*)	. $1
+	;;
+    *)	. ./$1
+	;;
+esac
 
 # the config file sets the following variables:
 #	sysnames	the syscall names file
