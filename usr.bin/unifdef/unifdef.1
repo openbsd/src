@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.9 2002/12/02 07:16:23 deraadt Exp $
+.\"	$OpenBSD: unifdef.1,v 1.10 2002/12/02 07:18:50 deraadt Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .Dt UNIFDEF 1
 .Os
 .Sh NAME
-.Nm unifdef , unifdefall
+.Nm unifdef
 .Nd remove preprocessor conditionals from code
 .Sh SYNOPSIS
 .Nm
@@ -57,10 +57,6 @@
 .Oc
 .Ar ...
 .Op Ar file
-.Nm unifdefall
-.Op Fl I Ns Ar path
-.Ar ...
-.Ar file
 .Sh DESCRIPTION
 The
 .Nm
@@ -122,21 +118,6 @@ it ignores everything (except escaped quotes)
 until it finds a close quote, and
 it will not complain if it gets
 to the end of a line and finds no backslash for continuation.
-.Pp
-A script called
-.Nm unifdefall
-can be used to remove all conditional
-.Xr cpp 1
-directives from a file.
-It uses
-.Nm Fl s
-and
-.Nm cpp Fl dM
-to get lists of all the controlling symbols
-and their definitions (or lack thereof),
-then invokes
-.Nm
-with appropriate arguments to process the file.
 .Pp
 Available options:
 .Bl -tag -width indent -compact
@@ -228,19 +209,6 @@ similar to
 and
 .Fl U Ns Ar sym
 above.
-.Pp
-.It Fl I Ns Ar path
-Specifies to
-.Nm unifdefall
-an additional place to look for
-.Ic #include
-files.
-This option is ignored by
-.Nm
-for compatibility with
-.Xr cpp 1
-and to simplify the implementation of
-.Nm unifdefall .
 .El
 .Pp
 The
