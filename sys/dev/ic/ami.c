@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.6 2001/04/16 09:06:34 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.7 2001/04/30 15:45:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -49,7 +49,7 @@
  *	Theo de Raadt.
  */
 
-/* #define	AMI_DEBUG */
+#define	AMI_DEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,12 @@
 #define	AMI_D_INTR	0x0002
 #define	AMI_D_MISC	0x0004
 #define	AMI_D_DMA	0x0008
-int ami_debug = 0xffff;
+int ami_debug = 0
+	| AMI_D_CMD
+	| AMI_D_INTR
+/*	| AMI_D_MISC */
+/*	| AMI_D_DMA */
+	;
 #else
 #define	AMI_DPRINTF(m,a)	/* m, a */
 #endif
@@ -116,7 +121,7 @@ void *ami_allocmem __P((bus_dma_tag_t dmat, bus_dmamap_t *map,
 void ami_freemem __P((bus_dma_tag_t dmat, bus_dmamap_t *map,
 	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname));
 void ami_dispose __P((struct ami_softc *sc));
-void ami_requeue __P((void *v));
+void ami_stimeout __P((void *v));
 int  ami_cmd __P((struct ami_ccb *ccb, int flags, int wait));
 int  ami_start __P((struct ami_ccb *ccb, int wait));
 int  ami_complete __P((struct ami_ccb *ccb));
@@ -133,8 +138,8 @@ ami_get_ccb(sc)
 
 	ccb = TAILQ_LAST(&sc->sc_free_ccb, ami_queue_head);
 	if (ccb) {
-		ccb->ccb_state = AMI_CCB_READY;
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
+		ccb->ccb_state = AMI_CCB_READY;
 	}
 	return ccb;
 }
@@ -235,7 +240,7 @@ ami_copyhds(sc, sizes, props, stats)
 		sc->sc_hdr[i].hd_size = sizes[i];
 		sc->sc_hdr[i].hd_prop = props[i];
 		sc->sc_hdr[i].hd_stat = stats[i];
-		if (sizes[i] > 0x200000) {
+		if (sc->sc_hdr[i].hd_size > 0x200000) {
 			sc->sc_hdr[i].hd_heads = 255;
 			sc->sc_hdr[i].hd_secs = 63;
 		} else {
@@ -249,6 +254,7 @@ int
 ami_attach(sc)
 	struct ami_softc *sc;
 {
+	/* struct ami_rawsoftc *rsc; */
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
 	struct ami_sgent *sg;
@@ -266,7 +272,7 @@ ami_attach(sc)
 	}
 
 	sc->sc_cmds = ami_allocmem(sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
-	    sizeof(struct ami_iocmd), AMI_MAXCMDS + 1, "command");
+	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
 	if (!sc->sc_cmds) {
 		ami_dispose(sc);
 		ami_freemem(sc->dmat, &idatamap,
@@ -274,7 +280,7 @@ ami_attach(sc)
 		return 1;
 	}
 	sc->sc_sgents = ami_allocmem(sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
-	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS, "sglist");
+	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS+1, "sglist");
 	if (!sc->sc_sgents) {
 		ami_dispose(sc);
 		ami_freemem(sc->dmat, &idatamap,
@@ -323,11 +329,14 @@ ami_attach(sc)
 		}
 	}
 
+	timeout_set(&sc->sc_poll_tmo, (void (*)__P((void *)))ami_intr, sc);
+
 	(sc->sc_init)(sc);
 	{
-		struct ami_inquiry *inq = idata;
-		struct ami_fc_einquiry *einq = idata;
 		paddr_t	pa = idataseg[0].ds_addr;
+		ami_lock_t lock;
+
+		lock = AMI_LOCK_AMI(sc);
 
 		ccb = ami_get_ccb(sc);
 		cmd = ccb->ccb_cmd;
@@ -338,6 +347,7 @@ ami_attach(sc)
 		cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
 		cmd->acc_io.aio_data = pa;
 		if (ami_cmd(ccb, 0, 1) == 0) {
+			struct ami_fc_einquiry *einq = idata;
 			struct ami_fc_prodinfo *pi = idata;
 
 			sc->sc_nunits = einq->ain_nlogdrv;
@@ -367,6 +377,8 @@ ami_attach(sc)
 		}
 
 		if (sc->sc_maxunits == 0) {
+			struct ami_inquiry *inq = idata;
+
 			ccb = ami_get_ccb(sc);
 			cmd = ccb->ccb_cmd;
 
@@ -383,6 +395,7 @@ ami_attach(sc)
 				cmd->acc_io.aio_param = 0;
 				cmd->acc_io.aio_data = kvtop((caddr_t)&inq);
 				if (ami_cmd(ccb, 0, 1) != 0) {
+					AMI_UNLOCK_AMI(sc, lock);
 					printf(": cannot do inquiry\n");
 					ami_dispose(sc);
 					ami_freemem(sc->dmat, &idatamap,
@@ -407,20 +420,33 @@ ami_attach(sc)
 			p = "target";
 		}
 
+		AMI_UNLOCK_AMI(sc, lock);
+
 		if (sc->sc_maxcmds > AMI_MAXCMDS)
-			sc->sc_maxcmds = AMI_MAXCMDS;
+			sc->sc_maxcmds = 1 /* AMI_MAXCMDS */;
 	}
 	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
 
-	/* TODO: fetch & print cache strategy */
-	/* TODO: fetch & print scsi and raid info */
+	/* hack for hp netraid version encoding */
+	if ('A' <= sc->sc_fwver[2] && sc->sc_fwver[2] <= 'Z' &&
+	    sc->sc_fwver[1] < ' ' && sc->sc_fwver[0] < ' ' &&
+	    'A' <= sc->sc_biosver[2] && sc->sc_biosver[2] <= 'Z' &&
+	    sc->sc_biosver[1] < ' ' && sc->sc_biosver[0] < ' ') {
+
+		sprintf(sc->sc_fwver, "%c.%02d.%02d", sc->sc_fwver[2],
+		    sc->sc_fwver[1], sc->sc_fwver[0]);
+		sprintf(sc->sc_biosver, "%c.%02d.%02d", sc->sc_biosver[2],
+		    sc->sc_biosver[1], sc->sc_biosver[0]);
+	}
+
 	printf(": FW %s, BIOS v%s, %dMB RAM\n"
 	     "%s: %d channels, %d %ss, %d logical drives\n",
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
 	    sc->sc_dev.dv_xname,
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits);
 
-	timeout_set(&sc->sc_requeue_tmo, ami_requeue, sc);
+	/* TODO: fetch & print cache strategy */
+	/* TODO: fetch & print scsi and raid info */
 
 	sc->sc_link.device = &ami_dev;
 	sc->sc_link.openings = sc->sc_maxcmds;
@@ -428,19 +454,36 @@ ami_attach(sc)
 	sc->sc_link.adapter = &ami_switch;
 	sc->sc_link.adapter_target = sc->sc_maxunits;
 	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
-	sc->sc_link_raw = sc->sc_link;
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+#if 0
+	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
+	    M_DEVBUF, M_NOWAIT);
+	if (!rsc) {
+		printf("%s: no memory for raw interface\n",
+		    sc->sc_dev.dv_xname);
+		return (0);
+	}
 
-#if notyet
-	sc->sc_link_raw.device = &ami_raw_dev;
-	sc->sc_link_raw.adapter = &ami_raw_switch;
-	sc->sc_link_raw.adapter_target = AMI_MAX_PDRIVES;
-	sc->sc_link_raw.adapter_buswidth = AMI_MAX_PDRIVES;
+	bzero(rsc, sizeof(struct ami_rawsoftc) * sc->sc_channels);
+	for (sc->sc_rawsoftcs = rsc;
+	     rsc < &sc->sc_rawsoftcs[sc->sc_channels]; rsc++) {
 
-	config_found(&sc->sc_dev, &sc->sc_link_raw, scsiprint);
+		/* TODO fetch and print channel properties */
+
+		rsc->sc_softc = sc;
+		rsc->sc_channel = rsc - sc->sc_rawsoftcs;
+		rsc->sc_link.device = &ami_raw_dev;
+		rsc->sc_link.openings = sc->sc_maxcmds;
+		rsc->sc_link.adapter_softc = rsc;
+		rsc->sc_link.adapter = &ami_raw_switch;
+		/* TODO fetch it from the controller */
+		rsc->sc_link.adapter_target = sc->sc_targets;
+		rsc->sc_link.adapter_buswidth = sc->sc_targets;
+
+		config_found(&sc->sc_dev, &rsc->sc_link, scsiprint);
+	}
 #endif
-
 	return 0;
 }
 
@@ -452,17 +495,21 @@ ami_quartz_init(sc)
 }
 
 int
-ami_quartz_exec(sc)
+ami_quartz_exec(sc, cmd)
 	struct ami_softc *sc;
+	struct ami_iocmd *cmd;
 {
 	u_int32_t qidb;
 
 	qidb = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
-	if (letoh32(qidb) & AMI_QIDB_EXEC)
-		return EBUSY;
+	if (qidb & htole32((AMI_QIDB_EXEC | AMI_QIDB_ACK)))
+		return (EBUSY);
+
+	*sc->sc_mbox = *cmd;
 
 	qidb = sc->sc_mbox_pa | AMI_QIDB_EXEC;
 	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, htole32(qidb));
+	DELAY(10);
 	return 0;
 }
 
@@ -471,22 +518,32 @@ ami_quartz_done(sc, mbox)
 	struct ami_softc *sc;
 	struct ami_iocmd *mbox;
 {
-	u_int32_t qodb;
+	u_int32_t qdb;
 
-	qodb = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
-	if (letoh32(qodb) == AMI_QODB_READY) {
+	/* do not scramble the busy mailbox */
+	if (sc->sc_mbox->acc_busy)
+		return (0);
 
+	qdb = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
+	if (qdb & htole32((AMI_QIDB_EXEC | AMI_QIDB_ACK)))
+		return (0);
+
+	qdb = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
+	if (letoh32(qdb) == AMI_QODB_READY) {
+
+		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, BUS_DMASYNC_POSTREAD);
 		*mbox = *sc->sc_mbox;
 
 		/* ack interrupt */
 		bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, AMI_QODB_READY);
 
-		qodb = sc->sc_mbox_pa | AMI_QIDB_ACK;
-		bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, htole32(qodb));
-		return 1;
+		qdb = sc->sc_mbox_pa | AMI_QIDB_ACK;
+		bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, htole32(qdb));
+		DELAY(10);
+		return (1);
 	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -507,11 +564,14 @@ ami_schwartz_init(sc)
 }
 
 int
-ami_schwartz_exec(sc)
+ami_schwartz_exec(sc, cmd)
 	struct ami_softc *sc;
+	struct ami_iocmd *cmd;
 {
 	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY)
-		return EAGAIN;
+		return EBUSY;
+
+	*sc->sc_mbox = *cmd;
 	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_EXEC);
 	return 0;
 }
@@ -522,6 +582,13 @@ ami_schwartz_done(sc, mbox)
 	struct ami_iocmd *mbox;
 {
 	u_int8_t stat;
+
+	/* do not scramble the busy mailbox */
+	if (sc->sc_mbox->acc_busy)
+		return (0);
+
+	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY)
+		return 0;
 
 	stat = bus_space_read_1(sc->iot, sc->ioh, AMI_ISTAT);
 	if (stat & AMI_ISTAT_PEND) {
@@ -544,7 +611,7 @@ ami_cmd(ccb, flags, wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-	int error, s, i;
+	int error = 0, i;
 
 	if (ccb->ccb_data) {
 		struct ami_iocmd *cmd = ccb->ccb_cmd;
@@ -590,20 +657,17 @@ ami_cmd(ccb, flags, wait)
 	}
 	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, BUS_DMASYNC_PREWRITE);
 
-	/* XXX somehow interrupts have started to happen in autoconf() */
-	if (wait)
-		s = splbio();
-
 	if ((error = ami_start(ccb, wait))) {
+		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
+		__asm __volatile(".globl _bpamierr\n_bpamierr:");
 		if (ccb->ccb_data)
 			bus_dmamap_unload(sc->dmat, dmap);
 		ami_put_ccb(ccb);
-	} else if (wait)
+	} else if (wait) {
+		AMI_DPRINTF(AMI_D_DMA, ("waiting "));
 		if ((error = ami_complete(ccb)))
 			ami_put_ccb(ccb);
-
-	if (wait)
-		splx(s);
+	}
 
 	return error;
 }
@@ -615,8 +679,9 @@ ami_start(ccb, wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
 	struct ami_iocmd *cmd = ccb->ccb_cmd;
+	struct scsi_xfer *xs = ccb->ccb_xs;
 	volatile struct ami_iocmd *mbox = sc->sc_mbox;
-	int s, i;
+	int i;
 
 	AMI_DPRINTF(AMI_D_CMD, ("start(%d) ", cmd->acc_id));
 
@@ -626,74 +691,101 @@ ami_start(ccb, wait)
 		return EINVAL;
 	}
 
-	if (mbox->acc_busy && !wait) {
-
-		ccb->ccb_state = AMI_CCB_PREQUEUED;
-		s = splclock();
-		TAILQ_INSERT_TAIL(&sc->sc_ccb2q, ccb, ccb_link);
-		if (!sc->sc_timeout) {
-			sc->sc_timeout++;
-			splx(s);
-			timeout_add(&sc->sc_requeue_tmo, 0);
-		} else
-			splx(s);
-		return 0;
-	}
-
-	for (i = 10000; i-- && mbox->acc_busy; DELAY(100));
+	if (xs)
+		timeout_set(&xs->stimeout, ami_stimeout, ccb);
 
 	if (mbox->acc_busy) {
-		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
-		return 1;
+
+		if (!wait) {
+			AMI_DPRINTF(AMI_D_CMD, ("2queue(%d) ", cmd->acc_id));
+			ccb->ccb_state = AMI_CCB_PREQUEUED;
+			if (xs)
+				timeout_add(&xs->stimeout, 1);
+
+			return (xs? 0 : EBUSY);
+		}
+
+		for (i = 100000; i-- && mbox->acc_busy; DELAY(10));
+
+		if (mbox->acc_busy) {
+			AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
+			return (EAGAIN);
+		}
 	}
 
 	AMI_DPRINTF(AMI_D_CMD, ("exec "));
 
-	ccb->ccb_state = AMI_CCB_QUEUED;
-	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
-
 	cmd->acc_busy = 1;
 	cmd->acc_poll = 0;
 	cmd->acc_ack = 0;
-	*mbox = *cmd;
 
-	if ((i = (sc->sc_exec)(sc)))
-		cmd->acc_busy = 0;
+	if (!(i = (sc->sc_exec)(sc, cmd))) {
+		ccb->ccb_state = AMI_CCB_QUEUED;
+		TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
+		if (!wait) {
+#ifdef AMI_POLLING
+			if (!timeout_pending(&sc->sc_poll_tmo))
+				timeout_add(&sc->sc_poll_tmo, 1);
+#endif
+			if (xs)
+				/*timeout_add(&xs->stimeout, hz * xs->timeout / 1000)*/;
+		}
+	} else if (!wait) {
+		AMI_DPRINTF(AMI_D_CMD, ("2queue1(%d) ", cmd->acc_id));
+		ccb->ccb_state = AMI_CCB_PREQUEUED;
+		if (xs) {
+			timeout_add(&xs->stimeout, 1);
+			return (0);
+		}
+	}
 
 	return i;
 }
 
 void
-ami_requeue(v)
+ami_stimeout(v)
 	void *v;
 {
-	struct ami_softc *sc = v;
-	struct ami_ccb *ccb;
-	struct ami_iocmd *cmd;
+	struct ami_ccb *ccb = v;
+	struct ami_softc *sc = ccb->ccb_sc;
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	struct ami_iocmd *cmd = ccb->ccb_cmd;
 	volatile struct ami_iocmd *mbox = sc->sc_mbox;
-	int s;
+	ami_lock_t lock;
 
-	if (mbox->acc_busy) {
-		timeout_add(&sc->sc_requeue_tmo, 1);
-		return;
+	switch (ccb->ccb_state) {
+	case AMI_CCB_PREQUEUED:
+		if (mbox->acc_busy) {
+			timeout_add(&xs->stimeout, 1);
+			return;
+		}
+
+		AMI_DPRINTF(AMI_D_CMD, ("requeue(%d) ", cmd->acc_id));
+		ccb->ccb_state = AMI_CCB_READY;
+
+		lock = AMI_LOCK_AMI(sc);
+		if (ami_start(ccb, 0)) {
+			AMI_DPRINTF(AMI_D_CMD, ("requeue(%d) again\n", cmd->acc_id));
+			ccb->ccb_state = AMI_CCB_PREQUEUED;
+			timeout_add(&xs->stimeout, 1);
+		}
+		AMI_UNLOCK_AMI(sc, lock);
+		break;
+
+	case AMI_CCB_QUEUED:
+		/* XXX need to kill all cmds in the queue and reset the card */
+		AMI_DPRINTF(AMI_D_CMD, ("timeout(%d) ", cmd->acc_id));
+		lock = AMI_LOCK_AMI(sc);
+		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
+		ami_put_ccb(ccb);
+		AMI_UNLOCK_AMI(sc, lock);
+		xs->error = XS_TIMEOUT;
+		scsi_done(xs);
+		break;
+	case AMI_CCB_FREE:
+	case AMI_CCB_READY:
+		panic("ami_stimeout(%p) botch", cmd->acc_id);
 	}
-
-	s = splclock();
-	ccb = TAILQ_FIRST(&sc->sc_ccb2q);
-	TAILQ_REMOVE(&sc->sc_ccb2q, ccb, ccb_link);
-	splx(s);
-
-	cmd = ccb->ccb_cmd;
-	AMI_DPRINTF(AMI_D_CMD, ("requeue(%d) ", cmd->acc_id));
-	ccb->ccb_state = AMI_CCB_READY;
-
-	if (!ami_start(ccb, 0))
-		AMI_DPRINTF(AMI_D_CMD, ("requeue(%d) again\n", cmd->acc_id));
-
-	if (!TAILQ_EMPTY(&sc->sc_ccb2q))
-		timeout_add(&sc->sc_requeue_tmo, 1);
-	else
-		sc->sc_timeout = 0;
 }
 
 int
@@ -701,21 +793,22 @@ ami_complete(ccb)
 	struct ami_ccb *ccb;
 {
 	struct ami_softc *sc = ccb->ccb_sc;
+	struct scsi_xfer *xs = ccb->ccb_xs;
 	struct ami_iocmd mbox;
 	int i, j, rv, status;
 
-	for (rv = 1, status = 0, i = 10000; !status && rv && i--; DELAY(100))
+	for (rv = 1, status = 0, i = 100 * (xs? xs->timeout: 1000);
+	     !status && rv && i--; DELAY(10))
 		if ((sc->sc_done)(sc, &mbox)) {
-			AMI_DPRINTF(AMI_D_CMD, ("got-%d ", mbox.acc_nstat));
+			AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
 			status = mbox.acc_status;
 			for (j = 0; j < mbox.acc_nstat; j++ ) {
 				int ready = mbox.acc_cmplidl[j];
 
 				AMI_DPRINTF(AMI_D_CMD, ("ready=%x ", ready));
 
-				/* XXX could it happen that scsi_done allocs it? */
 				if (!ami_done(sc, ready) &&
-				    ccb->ccb_state == AMI_CCB_FREE)
+				    ccb->ccb_cmd->acc_id == ready)
 					rv = 0;
 			}
 		}
@@ -737,10 +830,11 @@ ami_done(sc, idx)
 	struct ami_softc *sc;
 	int	idx;
 {
-	struct scsi_xfer *xs;
 	struct ami_ccb *ccb = &sc->sc_ccbs[idx - 1];
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	ami_lock_t lock;
 
-	AMI_DPRINTF(AMI_D_CMD, ("done(%d) ", idx));
+	AMI_DPRINTF(AMI_D_CMD, ("done(%d) ", ccb->ccb_cmd->acc_id));
 
 	if (ccb->ccb_state != AMI_CCB_QUEUED) {
 		printf("%s: unqueued ccb %d ready, state = %d\n",
@@ -748,9 +842,13 @@ ami_done(sc, idx)
 		return 1;
 	}
 
+	lock = AMI_LOCK_AMI(sc);
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
+	ccb->ccb_state = AMI_CCB_READY;
+	AMI_UNLOCK_AMI(sc, lock);
 
-	if ((xs = ccb->ccb_xs)) {
+	if (xs) {
+		timeout_del(&xs->stimeout);
 		if (xs->cmd->opcode != PREVENT_ALLOW &&
 		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
 			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
@@ -766,14 +864,8 @@ ami_done(sc, idx)
 		case AMI_INQUIRY:
 		case AMI_EINQUIRY:
 		case AMI_EINQUIRY3:
-		case AMI_READ:
 			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
 			    BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
-			break;
-		case AMI_WRITE:
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
-			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 			break;
 		default:
@@ -781,11 +873,14 @@ ami_done(sc, idx)
 		}
 	}
 
+	lock = AMI_LOCK_AMI(sc);
 	ami_put_ccb(ccb);
+	AMI_UNLOCK_AMI(sc, lock);
 
 	if (xs) {
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
+		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
 		scsi_done(xs);
 	}
 
@@ -823,11 +918,88 @@ int
 ami_scsi_raw_cmd(xs)
 	struct scsi_xfer *xs;
 {
+	struct scsi_link *link = xs->sc_link;
+	struct ami_rawsoftc *rsc = link->adapter_softc;
+	struct ami_softc *sc = rsc->sc_softc;
+	u_int8_t channel = rsc->sc_channel, target = link->target;
+	struct ami_ccb *ccb, *ccb1;
+	struct ami_iocmd *cmd;
+	struct ami_passthrough *ps;
+	int error;
+	ami_lock_t lock;
+
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_raw_cmd "));
 
-	/* XXX Not yet implemented */
-	xs->error = XS_DRIVER_STUFFUP;
-	return (COMPLETE);
+	if (xs->cmdlen > AMI_MAX_CDB) {
+		AMI_DPRINTF(AMI_D_CMD, ("CDB too big %p ", xs));
+		bzero(&xs->sense, sizeof(xs->sense));
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
+		xs->error = XS_SENSE;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	xs->error = XS_NOERROR;
+
+	lock = AMI_LOCK_AMI(sc);
+
+	if ((ccb = ami_get_ccb(sc)) == NULL) {
+		AMI_UNLOCK_AMI(sc, lock);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	if ((ccb1 = ami_get_ccb(sc)) == NULL) {
+		ami_put_ccb(ccb);
+		AMI_UNLOCK_AMI(sc, lock);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	ccb->ccb_xs = xs;
+	ccb->ccb_ccb1 = ccb1;
+	ccb->ccb_len  = xs->datalen;
+	ccb->ccb_data = xs->data;
+
+	ps = (struct ami_passthrough *)ccb1->ccb_cmd;
+	ps->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
+	ps->apt_channel = channel;
+	ps->apt_target = target;
+	bcopy(xs->cmd, ps->apt_cdb, AMI_MAX_CDB);
+	ps->apt_ncdb = xs->cmdlen;
+	ps->apt_nsense = AMI_MAX_SENSE;
+
+	cmd = ccb->ccb_cmd;
+	cmd->acc_cmd = AMI_PASSTHRU;
+	cmd->acc_passthru.apt_data = ccb1->ccb_cmdpa;
+
+	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
+
+		AMI_UNLOCK_AMI(sc, lock);
+		AMI_DPRINTF(AMI_D_CMD, ("failed %p ", xs));
+		if (xs->flags & SCSI_POLL) {
+			xs->error = XS_TIMEOUT;
+			return (TRY_AGAIN_LATER);
+		} else {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			return (COMPLETE);
+		}
+	}
+
+	AMI_UNLOCK_AMI(sc, lock);
+
+	if (xs->flags & SCSI_POLL) {
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	return (SUCCESSFULLY_QUEUED);
 }
 
 int
@@ -855,12 +1027,16 @@ ami_scsi_cmd(xs)
 
 	if (target >= sc->sc_nunits || !sc->sc_hdr[target].hd_present ||
 	    link->lun != 0) {
+		/* XXX should be XS_SENSE and sense filled out */
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
+		scsi_done(xs);
 		return (COMPLETE);
 	}
 
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_cmd "));
 
+	error = 0;
 	xs->error = XS_NOERROR;
 
 	switch (xs->cmd->opcode) {
@@ -928,7 +1104,6 @@ ami_scsi_cmd(xs)
 			    sc->sc_dev.dv_xname,
 			    ((struct scsi_mode_sense *)xs->cmd)->page);
 			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
 		}
 		break;
 
@@ -945,10 +1120,28 @@ ami_scsi_cmd(xs)
 		return (COMPLETE);
 
 	case SYNCHRONIZE_CACHE:
+		AMI_DPRINTF(AMI_D_CMD, ("SYNCHRONIZE CACHE "));
+		error++;
 	case READ_COMMAND:
+		if (!error) {
+			AMI_DPRINTF(AMI_D_CMD, ("READ "));
+			error++;
+		}
 	case READ_BIG:
+		if (!error) {
+			AMI_DPRINTF(AMI_D_CMD, ("READ BIG "));
+			error++;
+		}
 	case WRITE_COMMAND:
+		if (!error) {
+			AMI_DPRINTF(AMI_D_CMD, ("WRITE "));
+			error++;
+		}
 	case WRITE_BIG:
+		if (!error) {
+			AMI_DPRINTF(AMI_D_CMD, ("WRITE BIG "));
+			error++;
+		}
 		lock = AMI_LOCK_AMI(sc);
 
 		flags = 0;
@@ -975,21 +1168,22 @@ ami_scsi_cmd(xs)
 				    sc->sc_dev.dv_xname, blockno, blockcnt,
 				    sc->sc_hdr[target].hd_size);
 				xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(xs);
-				return (COMPLETE);
+				break;
 			}
 		}
 
 		if ((ccb = ami_get_ccb(sc)) == NULL) {
 			AMI_UNLOCK_AMI(sc, lock);
+			AMI_DPRINTF(AMI_D_CMD, ("no more ccbs "));
 			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			return (COMPLETE);
+		__asm __volatile(".globl _bpamiccb\n_bpamiccb:");
+			break;
 		}
 
 		ccb->ccb_xs = xs;
-		ccb->ccb_data = xs->data;
+		ccb->ccb_ccb1 = NULL;
 		ccb->ccb_len  = xs->datalen;
+		ccb->ccb_data = xs->data;
 		cmd = ccb->ccb_cmd;
 		cmd->acc_mbox.amb_nsect = blockcnt;
 		cmd->acc_mbox.amb_lba = blockno;
@@ -1007,12 +1201,6 @@ ami_scsi_cmd(xs)
 		case WRITE_COMMAND: case WRITE_BIG:
 			cmd->acc_cmd = AMI_WRITE;
 			break;
-#ifdef DIAGNOSTIC
-		default:
-			printf("%s: but how?\n", sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (COMPLETE);
-#endif
 		}
 
 		if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
@@ -1020,22 +1208,19 @@ ami_scsi_cmd(xs)
 
 			AMI_UNLOCK_AMI(sc, lock);
 			AMI_DPRINTF(AMI_D_CMD, ("failed %p ", xs));
+		__asm __volatile(".globl _bpamifail\n_bpamifail:");
 			if (xs->flags & SCSI_POLL) {
 				xs->error = XS_TIMEOUT;
 				return (TRY_AGAIN_LATER);
 			} else {
 				xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(xs);
-				return (COMPLETE);
+				break;
 			}
 		}
 
 		AMI_UNLOCK_AMI(sc, lock);
-
-		if (xs->flags & SCSI_POLL) {
-			scsi_done(xs);
-			return (COMPLETE);
-		}
+		if (xs->flags & SCSI_POLL)
+			break;
 		return (SUCCESSFULLY_QUEUED);
 
 	default:
@@ -1043,7 +1228,9 @@ ami_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 
-	return (COMPLETE);
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
+	return (xs->flags & SCSI_POLL? COMPLETE : SUCCESSFULLY_QUEUED);
 }
 
 int
@@ -1053,18 +1240,35 @@ ami_intr(v)
 	struct ami_softc *sc = v;
 	struct ami_iocmd mbox;
 	int i, rv = 0;
+	ami_lock_t lock;
 
+	if (TAILQ_EMPTY(&sc->sc_ccbq))
+		return (0);
+
+	AMI_DPRINTF(AMI_D_INTR, ("intr "));
+
+	lock = AMI_LOCK_AMI(sc);
 	while ((sc->sc_done)(sc, &mbox)) {
-		AMI_DPRINTF(AMI_D_CMD, ("got-%d ", mbox.acc_nstat));
+		AMI_UNLOCK_AMI(sc, lock);
+		AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
 		for (i = 0; i < mbox.acc_nstat; i++ ) {
 			register int ready = mbox.acc_cmplidl[i];
 
-			AMI_DPRINTF(AMI_D_CMD, ("ready=%x ", ready));
+			AMI_DPRINTF(AMI_D_CMD, ("ready=%d ", ready));
 
 			if (!ami_done(sc, ready))
-				rv++;
+				rv = 1;
 		}
+		lock = AMI_LOCK_AMI(sc);
 	}
 
+#ifdef AMI_POLLING
+	if (!TAILQ_EMPTY(&sc->sc_ccbq) && !timeout_pending(&sc->sc_poll_tmo)) {
+		AMI_DPRINTF(AMI_D_INTR, ("tmo "));
+		timeout_add(&sc->sc_poll_tmo, 100);
+	}
+#endif
+
+	AMI_UNLOCK_AMI(sc, lock);
 	return rv;
 }

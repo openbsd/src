@@ -1,7 +1,7 @@
-/*	$OpenBSD: amivar.h,v 1.2 2001/04/30 15:43:10 mickey Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.3 2001/04/30 15:45:05 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
