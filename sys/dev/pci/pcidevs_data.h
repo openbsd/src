@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.739 2004/05/28 15:42:59 marco Exp 
+ *	OpenBSD: pcidevs,v 1.740 2004/06/05 07:30:40 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7996,7 +7996,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_COGENT,
-	    "Cogent Data Technologies",
+	    "Cogent Data",
 	},
 	{
 	    PCI_VENDOR_SIEMENS,
@@ -8104,7 +8104,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MRTMAGMA,
-	    "Mesa Ridge Technologies (MAGMA)",
+	    "Mesa Ridge (MAGMA)",
 	},
 	{
 	    PCI_VENDOR_IRE,
@@ -8184,7 +8184,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_DAVICOM,
-	    "Davicom Technologies",
+	    "Davicom",
 	},
 	{
 	    PCI_VENDOR_ITEXPRESS,
@@ -8296,7 +8296,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_AVERMEDIA,
-	    "Avermedia Technologies",
+	    "Avermedia",
 	},
 	{
 	    PCI_VENDOR_OXFORD,

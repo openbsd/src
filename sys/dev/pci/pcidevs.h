@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.739 2004/05/28 15:42:59 marco Exp 
+ *	OpenBSD: pcidevs,v 1.740 2004/06/05 07:30:40 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -144,7 +144,7 @@
 #define	PCI_VENDOR_TRIONES	0x1103		/* HighPoint */
 #define	PCI_VENDOR_SIGMA	0x1105		/* Sigma Designs */
 #define	PCI_VENDOR_VIATECH	0x1106		/* VIA */
-#define	PCI_VENDOR_COGENT	0x1109		/* Cogent Data Technologies */
+#define	PCI_VENDOR_COGENT	0x1109		/* Cogent Data */
 #define	PCI_VENDOR_SIEMENS	0x110a		/* Siemens AG / Siemens Nixdorf AG */
 #define	PCI_VENDOR_ACCTON	0x1113		/* Accton */
 #define	PCI_VENDOR_VORTEX	0x1119		/* Vortex */
@@ -171,7 +171,7 @@
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
 #define	PCI_VENDOR_LUCENT	0x11c1		/* AT&T/Lucent */
 #define	PCI_VENDOR_DOLPHIN	0x11c8		/* Dolphin Interconnect Solutions */
-#define	PCI_VENDOR_MRTMAGMA	0x11c9		/* Mesa Ridge Technologies (MAGMA) */
+#define	PCI_VENDOR_MRTMAGMA	0x11c9		/* Mesa Ridge (MAGMA) */
 #define	PCI_VENDOR_IRE	0x11d4		/* IRE */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran */
 #define	PCI_VENDOR_PIJNENBURG	0x11e3		/* Pijnenburg */
@@ -191,7 +191,7 @@
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell */
-#define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Technologies */
+#define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom */
 #define	PCI_VENDOR_ITEXPRESS	0x1283		/* ITExpress */
 #define	PCI_VENDOR_PLATFORM	0x1285		/* Platform */
 #define	PCI_VENDOR_LUXSONOR	0x1287		/* LuxSonor */
@@ -219,7 +219,7 @@
 #define	PCI_VENDOR_OXFORD2	0x1415		/* Oxford */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
-#define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
+#define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
 #define	PCI_VENDOR_OXFORD	0x14d2		/* Oxford */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
