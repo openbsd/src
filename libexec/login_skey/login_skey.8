@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_skey.8,v 1.7 2003/06/17 21:56:24 millert Exp $
+.\" $OpenBSD: login_skey.8,v 1.8 2004/08/05 13:37:06 millert Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd July 14, 2002
+.Dd July 26, 2004
 .Dt LOGIN_SKEY 8
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Sh SYNOPSIS
 .Nm login_skey
 .Op Fl s Ar service
+.Op Fl v Ar fd=number
 .Ar user
 .Op Ar class
 .Sh DESCRIPTION
@@ -53,12 +54,20 @@ The default protocol is
 .Em login .
 .Pp
 The
+.Ar fd
+argument is used to specify the number of an open, locked file descriptor
+that references the user's S/Key entry.
+This is used to prevent simultaneous S/Key authorization attempts from
+using the same challenge.
+.Pp
+The
 .Ar user
 argument is the login name of the user to be authenticated.
 .Pp
-The
+The optional
 .Ar class
-argument is not used.
+argument is accepted for consistency with the other login scripts but
+is not used.
 .Pp
 .Nm
 will look up
