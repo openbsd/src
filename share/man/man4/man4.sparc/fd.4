@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fd.4,v 1.5 2002/10/01 21:02:19 miod Exp $
+.\"	$OpenBSD: fd.4,v 1.6 2003/05/01 18:44:39 jmc Exp $
 .\"	$NetBSD: fd.4,v 1.4 1997/11/12 00:49:42 mrg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,14 +41,14 @@
 .Sh NAME
 .Nm fd ,
 .Nm fdc
-.Nd Sparcstation floppy drive
+.Nd SPARCstation floppy drive
 .Sh SYNOPSIS
 .Cd "fdc0 at mainbus0" Pq sun4c
 .Cd "fdc0 at obio0" Pq sun4m
 .Cd "fd* at fdc0"
 .Sh DESCRIPTION
 This is the driver for the built-in diskette drive found on the
-Sparcstation 1, and (optionally) other desktop Sparc systems.
+SPARCstation 1, and (optionally) other desktop SPARC systems.
 .Sh SEE ALSO
 .Xr eject 1 ,
 .Xr fdformat 1 ,
