@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.38 2002/10/16 15:01:08 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.39 2002/10/28 17:10:10 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -472,6 +472,7 @@ main(int argc, char **argv)
 
 			if (cr_uid <= 0 || cr_gid <= 0)
 				usage();
+			break;
 		case 'a':
 			if (allow)
 				usage();
