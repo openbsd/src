@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.2 2005/03/07 16:25:48 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.3 2005/03/07 19:41:07 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -61,8 +61,7 @@ int
 cvs_admin(int argc, char **argv)
 {
 	int i, ch, flags;
-	int runflags;
-	int lockrev, strictlock;
+	int runflags, kflag, lockrev, strictlock;
 	char *q;
 	char *comment, *replace_msg;
 	char *alist, *subst, *lockrev_arg, *unlockrev_arg;
@@ -104,6 +103,13 @@ cvs_admin(int argc, char **argv)
 			break;
 		case 'k':
 			subst = optarg;
+			kflag = rcs_kflag_get(subst);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expansion mode");
+				rcs_kflag_usage();
+				return (EX_USAGE);
+			}
 			break;
 		case 'l':
 			lockrev |= LOCK_SET;
@@ -167,14 +173,6 @@ cvs_admin(int argc, char **argv)
 			return (EX_PROTOCOL);
 		}
 		rcsnum_free(rcs);
-	}
-
-	if (subst != NULL) {
-		if (strcmp(subst, "kv") && strcmp(subst, "kvl") && 
-		    *subst != 'o' && *subst != 'b' && *subst != 'v') {
-			cvs_log(LP_ERR, "invalid RCS keyword expansion mode");
-			return (EX_USAGE);
-		}
 	}
 
 	if (replace_msg != NULL) {
