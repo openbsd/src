@@ -1,4 +1,4 @@
-/* *	$OpenBSD: general.h,v 1.5 1996/08/22 00:34:41 deraadt Exp $*/
+/* *	$OpenBSD: general.h,v 1.6 1997/02/17 08:58:46 deraadt Exp $*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -64,6 +64,6 @@
 				    } \
 				}
 #define	memcmp(s1,s2,n)		bcmp(s1,s2,n)
-#else /* !(defined(unix) && !defined(__NetBSD__)) */
+#else /* !(defined(unix) && !(defined(__NetBSD__) || defined(__OpenBSD__))) */
 #include <string.h>
-#endif	/* !(defined(unix) && !defined(__NetBSD__)) */
+#endif	/* !(defined(unix) && !(defined(__NetBSD__) || defined(__OpenBSD__))) */
