@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.101 2004/02/04 10:43:18 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.102 2004/02/09 13:27:50 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -813,18 +813,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_status.running)
 			error = EEXIST;
 		else {
-			u_int64_t stateid = pf_status.stateid;
-			u_int32_t states = pf_status.states;
-			u_int32_t debug = pf_status.debug;
-			u_int32_t hostid = pf_status.hostid;
-			u_int32_t src_nodes = pf_status.src_nodes;
-			bzero(&pf_status, sizeof(struct pf_status));
 			pf_status.running = 1;
-			pf_status.states = states;
-			pf_status.debug = debug;
-			pf_status.stateid = stateid;
-			pf_status.hostid = hostid;
-			pf_status.states = src_nodes;
 			pf_status.since = time.tv_sec;
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
 		}
@@ -835,6 +824,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOENT;
 		else {
 			pf_status.running = 0;
+			pf_status.since = time.tv_sec;
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: stopped\n"));
 		}
 		break;
@@ -1426,7 +1416,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
 		bzero(pf_status.scounters, sizeof(pf_status.scounters));
 		if (*pf_status.ifname)
-			pfi_clr_istats(pf_status.ifname, NULL, 0);
+			pfi_clr_istats(pf_status.ifname, NULL,
+			    PFI_FLAG_INSTANCE);
 		break;
 	}
 

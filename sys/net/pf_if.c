@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.5 2004/01/07 19:58:54 markus Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.6 2004/02/09 13:27:50 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -775,7 +775,7 @@ pfi_skip_if(const char *filter, struct pfi_kif *p, int f)
 		return (1);
 	if (filter == NULL || !*filter)
 		return (0);
-	return !strncmp(p->pfik_name, filter, strlen(filter));
+	return strncmp(p->pfik_name, filter, strlen(filter));
 }
 
 /* from pf_print_state.c */
