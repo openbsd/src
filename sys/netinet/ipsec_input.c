@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.8 2000/01/09 23:42:37 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.9 2000/01/10 01:09:16 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -489,7 +489,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	if (flow == NULL)
 	{
 	    /* Failed to match any entry in the ACL */
-		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+		DPRINTF(("%s: packet from %s to %s dropped due to policy, SA %s/%08x\n", IPSEC_NAME, ipsp_address(src_address), ipsp_address(dst_address), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_freem(m);
 	    	*m0 = NULL;
 		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
