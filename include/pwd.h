@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.15 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.16 2004/04/06 10:59:18 djm Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -101,6 +101,8 @@ struct passwd	*getpwent(void);
 int		 setpassent(int);
 char		*user_from_uid(uid_t, int);
 char		*bcrypt_gensalt(u_int8_t);
+char		*bcrypt(const char *, const char *);
+char		*md5crypt(const char *, const char *);
 struct passwd	*pw_dup(const struct passwd *);
 #endif
 void		 setpwent(void);
