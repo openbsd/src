@@ -1682,3 +1682,10 @@
 ./usr/share/man/cat4/pcic.0
 ./usr/share/man/cat3/opendisk.0
 ./usr/share/man/cat8/atactl.0
+./usr/share/man/cat1/slogin.0
+./usr/share/man/cat1/scp.0
+./usr/share/man/cat1/ssh-add.0
+./usr/share/man/cat1/ssh-agent.0
+./usr/share/man/cat1/ssh-keygen.0
+./usr/share/man/cat1/ssh.0
+./usr/share/man/cat8/sshd.0

@@ -46,6 +46,7 @@
 ./etc/lynx.cfg
 ./etc/magic
 ./etc/mail.rc
+./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
 ./etc/monthly
@@ -98,6 +99,8 @@
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
 ./etc/spwd.db
+./etc/ssh_config
+./etc/sshd_config
 ./etc/ssl
 ./etc/ssl/lib
 ./etc/ssl/lib/ssleay.cnf
@@ -144,4 +147,3 @@
 ./var/www/conf/httpd.conf
 ./var/www/conf/mime.types
 ./var/www/conf/srm.conf
-./etc/mailer.conf
