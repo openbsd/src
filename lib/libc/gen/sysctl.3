@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.114 2003/10/25 08:00:30 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.115 2003/10/30 18:56:29 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1448,8 +1448,8 @@ IPv6 neighbor discovery permits upper layer protocols to supply reachability
 hints, to avoid unnecessary neighbor discovery exchanges.
 This variable defines the number of consecutive hints the neighbor discovery
 layer will take.
-For example, by setting the variable to 3, neighbor discovery can take
-take a maximum of 3 consecutive hints.
+For example, by setting the variable to 3, neighbor discovery will take
+a maximum of 3 consecutive hints.
 After receiving 3 hints, the neighbor discovery layer will instead perform
 the normal neighbor discovery process.
 .Pp
