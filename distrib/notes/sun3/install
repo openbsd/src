@@ -89,6 +89,19 @@ After the initial probe messages you'll asked to start the install
 or upgrade procedure. Proceed to the section ``Running the installation
 scripts'' below.
 
+In order to have a sun3 machine boot diskless by default, you need to
+do some nvram wizardry:
+
+	> q
+	18
+	12
+	6c
+	65
+	00
+	00
+	00
+	q
+	>
 
 The miniroot install script:
 
