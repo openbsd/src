@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty_conf.c,v 1.2 1996/03/03 17:20:11 niklas Exp $	*/
-/*	$NetBSD: tty_conf.c,v 1.17 1996/02/04 02:17:22 christos Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.3 1996/05/22 11:51:25 deraadt Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -89,6 +89,16 @@ int	pppread __P((struct tty *tp, struct uio *uio, int flag));
 int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
 #endif
 
+#include "strip.h"
+#if NSTRIP > 0
+int	stripopen __P((dev_t dev, struct tty *tp));
+int	stripclose __P((struct tty *tp, int flags));
+int	striptioctl __P((struct tty *tp, u_long cmd, caddr_t data,
+			int flag, struct proc *p));
+int	stripinput __P((int c, struct tty *tp));
+int	stripstart __P((struct tty *tp));
+#endif
+
 struct	linesw linesw[] =
 {
 	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
@@ -124,6 +134,14 @@ struct	linesw linesw[] =
 #if NPPP > 0
 	{ pppopen, pppclose, pppread, pppwrite, ppptioctl,
 	  pppinput, pppstart, ttymodem },		/* 5- PPPDISC */
+#else
+	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
+	  ttyerrinput, ttyerrstart, nullmodem },
+#endif
+
+#if NSTRIP > 0
+	{ stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
+	  stripinput, stripstart, nullmodem },		/* 6- STRIPIPDISC */
 #else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },
