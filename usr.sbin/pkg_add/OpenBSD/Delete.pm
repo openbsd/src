@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.7 2004/11/11 11:16:39 espie Exp $
+# $OpenBSD: Delete.pm,v 1.8 2004/11/11 11:51:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -45,8 +45,9 @@ sub manpages_unindex
 
 sub validate_plist($$)
 {
-	my ($plist, $destdir) = @_;
+	my ($plist, $state) = @_;
 
+	my $destdir = $state->{destdir};
 	my $problems = 0;
 	my $totsize = 0;
 	for my $item (@{$plist->{items}}) {
@@ -86,7 +87,7 @@ sub delete_package
 		Fatal "Package $pkgname real name does not match";
 	}
 
-	validate_plist($plist, $state->{destdir});
+	validate_plist($plist, $state);
 
 	delete_plist($plist, $state);
 }
