@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.21 2000/10/04 05:50:58 d Exp $
+# $OpenBSD: Makefile,v 1.22 2000/10/12 00:55:21 brad Exp $
 # Copyright (c) 1993 Chris Provenzano, proven@athena.mit.edu
 
 LIBC_R?=	/usr/lib/libc_r.a
 LIBPTHREAD?=	/usr/lib/libpthread.a
 
-.if ${MACHINE_ARCH} == "sparc"
+.if 1 # ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "sparc"
 PTHREAD=	-lpthread
 DPADD +=	${LIBPTHREAD}
 .else
