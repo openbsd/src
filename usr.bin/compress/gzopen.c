@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.5 2002/12/08 16:07:54 mickey Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.6 2003/06/03 21:08:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -64,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.5 2002/12/08 16:07:54 mickey Exp $";
+    "$OpenBSD: gzopen.c,v 1.6 2003/06/03 21:08:36 mickey Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
