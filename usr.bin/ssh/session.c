@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.29 2000/08/21 16:23:31 millert Exp $");
+RCSID("$OpenBSD: session.c,v 1.30 2000/08/25 16:10:05 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1007,7 +1007,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 					if (screen != NULL)
 						fprintf(stderr,
 						    "Adding %.*s/unix%s %s %s\n",
-						    screen-display, display,
+						    (int)(screen-display), display,
 						    screen, auth_proto, auth_data);
 				}
 				snprintf(cmd, sizeof cmd, "%s -q -",
@@ -1018,7 +1018,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 					    auth_proto, auth_data);
 					if (screen != NULL) 
 						fprintf(f, "add %.*s/unix%s %s %s\n",
-						    screen-display, display,
+						    (int)(screen-display), display,
 						    screen, auth_proto, auth_data);
 					pclose(f);
 				} else {
