@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.8 1999/05/27 13:32:38 niklas Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.9 1999/05/27 13:36:55 niklas Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -131,7 +131,6 @@ struct pcmcia_function {
 	void		*ih_arg;
 	int		ih_ipl;
 	int		pf_flags;
-	int		irq;
 };
 
 /* pf_flags */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.14 1999/05/27 13:32:38 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.15 1999/05/27 13:36:55 niklas Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -166,6 +166,9 @@ pcmcia_card_attach(dev)
 
 	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
 	    pf = pf->pf_list.sqe_next) {
+		if (pf->cfe_head.sqh_first == NULL)
+			continue;
+
 		pf->sc = sc;
 		pf->cfe = NULL;
 		pf->ih_fct = NULL;
@@ -174,6 +177,9 @@ pcmcia_card_attach(dev)
 
 	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
 	    pf = pf->pf_list.sqe_next) {
+		if (pf->cfe_head.sqh_first == NULL)
+			continue;
+
 		paa.manufacturer = sc->card.manufacturer;
 		paa.product = sc->card.product;
 		paa.card = &sc->card;
@@ -183,21 +189,15 @@ pcmcia_card_attach(dev)
 		    pcmcia_submatch)) {
 			attached++;
 
-			if (SIMPLEQ_FIRST(&pf->cfe_head)) {
-				DPRINTF(("%s: function %d CCR at %d offset %lx"
-				    ": %x %x %x %x, %x %x %x %x, %x\n",
-				    sc->dev.dv_xname, pf->number,
-				    pf->pf_ccr_window, pf->pf_ccr_offset,
-				    pcmcia_ccr_read(pf, 0x00),
-				    pcmcia_ccr_read(pf, 0x02),
-				    pcmcia_ccr_read(pf, 0x04),
-				    pcmcia_ccr_read(pf, 0x06),
-				    pcmcia_ccr_read(pf, 0x0A),
-				    pcmcia_ccr_read(pf, 0x0C),
-				    pcmcia_ccr_read(pf, 0x0E),
-				    pcmcia_ccr_read(pf, 0x10),
-				    pcmcia_ccr_read(pf, 0x12)));
-			}
+			DPRINTF(("%s: function %d CCR at %d "
+			     "offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
+			     sc->dev.dv_xname, pf->number,
+			     pf->pf_ccr_window, pf->pf_ccr_offset,
+			     pcmcia_ccr_read(pf, 0x00),
+			pcmcia_ccr_read(pf, 0x02), pcmcia_ccr_read(pf, 0x04),
+			pcmcia_ccr_read(pf, 0x06), pcmcia_ccr_read(pf, 0x0A),
+			pcmcia_ccr_read(pf, 0x0C), pcmcia_ccr_read(pf, 0x0E),
+			pcmcia_ccr_read(pf, 0x10), pcmcia_ccr_read(pf, 0x12)));
 		}
 	}
 
@@ -332,20 +332,20 @@ pcmcia_function_enable(pf)
 	if (pf->sc->sc_enabled_count++ == 0)
 		pcmcia_chip_socket_enable(pf->sc->pct, pf->sc->pch);
 	DPRINTF(("%s: ++enabled_count = %d\n", pf->sc->dev.dv_xname,
-	    pf->sc->sc_enabled_count));
+		 pf->sc->sc_enabled_count));
 
 	if (pf->pf_flags & PFF_ENABLED) {
 		/*
 		 * Don't do anything if we're already enabled.
 		 */
-		DPRINTF(("%s: pcmcia_function_enable on enabled func\n"));
- 		return (0);
+		return (0);
 	}
 
 	/*
 	 * it's possible for different functions' CCRs to be in the same
 	 * underlying page.  Check for that.
 	 */
+
 	for (tmp = pf->sc->card.pf_head.sqh_first; tmp != NULL;
 	    tmp = tmp->pf_list.sqe_next) {
 		if ((tmp->pf_flags & PFF_ENABLED) &&
@@ -390,7 +390,6 @@ pcmcia_function_enable(pf)
 			reg |= PCMCIA_CCR_OPTION_IREQ_ENABLE;
 
 	}
-
 	pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 
 	reg = 0;
@@ -619,7 +618,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			if (pf->sc->ih != NULL)
 				panic("card has intr handler, but no function does");
 #endif
-			s = spltty();
+			s = splhigh();
 
 			/* set up the handler for the new function */
 
@@ -636,10 +635,11 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 				panic("functions have ih, but the card does not");
 #endif
 
-			s = spltty();
+			/* XXX need #ifdef for splserial on x86 */
+			s = splhigh();
 
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
-			    pf->sc->ih);
+						      pf->sc->ih);
 
 			/* set up the handler for the new function */
 			pf->ih_fct = ih_fct;
@@ -651,7 +651,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 
 			splx(s);
 		} else {
-			s = spltty();
+			s = splhigh();
 
 			/* set up the handler for the new function */
 
@@ -751,7 +751,8 @@ pcmcia_intr_disestablish(pf, ih)
 			if (pf->sc->ih == NULL)
 				panic("changing ih ipl, but card has no ih");
 #endif
-			s = spltty();
+			/* XXX need #ifdef for splserial on x86 */
+			s = splhigh();
 
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 			    pf->sc->ih);
@@ -765,7 +766,7 @@ pcmcia_intr_disestablish(pf, ih)
 
 			splx(s);
 		} else {
-			s = spltty();
+			s = splhigh();
 
 			pf->ih_fct = NULL;
 			pf->ih_arg = NULL;
@@ -777,7 +778,6 @@ pcmcia_intr_disestablish(pf, ih)
 	}
 }
 
-#ifndef PCMCIADEBUG
 int 
 pcmcia_card_intr(arg)
 	void *arg;
@@ -807,7 +807,7 @@ pcmcia_card_intr(arg)
 	return (ret);
 }
 
-#else	/* PCMCIADEBUG */
+#ifdef PCMCIADEBUG
 int 
 pcmcia_card_intrdebug(arg)
 	void *arg;
@@ -844,4 +844,4 @@ pcmcia_card_intrdebug(arg)
 
 	return (ret);
 }
-#endif	/* PCMCIADEBUG */
+#endif
