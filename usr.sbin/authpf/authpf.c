@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.44 2003/01/07 03:32:15 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.45 2003/01/09 10:40:44 cedric Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -854,4 +854,14 @@ pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 {
 	fprintf(stderr, "set limit not supported in authpf\n");
 	return (1);
+}
+
+void    pfctl_append_addr(char *addr, int net, int neg)
+{
+	/* appropriate message will be printed by following function */
+}
+
+void    pfctl_define_table(char *name, int flags, int addrs)
+{
+	fprintf(stderr, "table definitions not yet supported in authpf\n");
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.25 2002/12/29 20:07:34 cedric Exp $
+.\"	$OpenBSD: pf.4,v 1.26 2003/01/09 10:40:44 cedric Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -377,9 +377,14 @@ struct pfioc_table {
         int                      pfrio_ndel;
         int                      pfrio_nchange;
         int                      pfrio_flags;
+        int                      pfrio_ticket;
 };
 #define pfrio_exists    pfrio_nadd
 #define pfrio_nzero     pfrio_nadd
+#define pfrio_nmatch    pfrio_nadd
+#define pfrio_naddr     pfrio_size2
+#define pfrio_setflag   pfrio_size2
+#define pfrio_clrflag   pfrio_nadd
 .Ed
 .It Dv DIOCRADDTABLES Fa "struct pfioc_table"
 Creates one or more tables.
@@ -412,12 +417,12 @@ Add one or more addresses to a table.
 On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
 contains the list of pfr_addr structures to add.
 On exit, pfrio_nadd contains the number of addresses effectively added.
-.It Dv DIOCRDELTABLES Fa "struct pfioc_table"
+.It Dv DIOCRDELADDRS Fa "struct pfioc_table"
 Delete one or more addresses from a table.
 On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
 contains the list of pfr_addr structures to delete.
 On exit, pfrio_ndel contains the number of addresses effectively deleted.
-.It Dv DIOCRSETTABLES Fa "struct pfioc_table"
+.It Dv DIOCRSETADDRS Fa "struct pfioc_table"
 Replace the content of a table by a new address list.
 This is the most complicated command, which uses all the structure members.
 On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
@@ -450,22 +455,39 @@ On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
 contains a table of pfr_addr structures to test.
 On exit, the kernel update the pfr_addr table by setting the pfra_fback
 member appropriately.
-.It Dv DIOCRWRAPTABLE Fa "struct pfioc_table"
-Compute the SHA1 hash of a table and pack it into a pf_addr_wrap structure,
-along with a magic mask in the first word of the mask.
-On entry, pfrio_table contain the table id, and pfrio_buffer[pfrio_size]
-should contain a buffer large enough to contain one pf_addr_wrap structure.
-If the kernel should check if the table exists, then pfrio_exists must be
-set to a nonzero value.
-On exit, the kernel fill the pf_addr_wrap structure and set pfrio_exists
-if that flag was requested.
-.It Dv DIOCRUNWRTABLE Fa "struct pfioc_table"
-Do the opposite of
-.Dv DIOCRWRAPTABLE, and lookup a table from its hash value.
-On entry, pfrio_buffer[pfrio_size] should point to a pf_addr_wrap structure
-(a one-entry table).
-On exit, the kernel fills pfrio_table or returns ENOENT if it cannot find
-the matching table.
+.It Dv DIOCRSETTFLAGS Fa "struct pfioc_table"
+Change the
+.Va const
+or
+.Va persist
+flag of a table. 
+On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures,
+and pfrio_setflag contain the flags to add, while pfrio_clrflag the flags to
+remove.
+On exit, pfrio_nchange and pfrio_ndel contains the number of tables altered
+or deleted by the kernel. Yes, tables can be deleted if one remove the
+.Va persist
+flag of an unreferenced table.
+.It Dv DIOCRINABEGIN Fa "struct pfioc_table"
+Starts a transaction with the inactive set of tables. Cleans up any leftover
+from a previous aborted transaction, and returns a new ticket.
+On exit, pfrio_ndel contains the number of leftover table deleted, and
+pfrio_ticket contain a valid ticket to use for the following two IOCTLs.
+.It Dv DIOCRINACOMMIT Fa "struct pfioc_table"
+Commit the inactive set of tables into the active set. While copying the
+addresses, do a best effort to keep statistics for addresses present before
+and after the commit.
+On entry, io->pfrio_ticket takes a valid ticket.
+On exit, io->pfrio_nadd and io->pfrio_nchange contains the number of tables
+added and altered by the commit operation.
+.It Dv DIOCRINADEFINE Fa "struct pfioc_table"
+Defines a table in the inactive set.
+On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+contains the list of pfr_addr structures to put in the table. A valid ticket
+must also be supplied to pfrio_ticket.
+On exit, pfrio_nadd contains 0 if the table was already defined in the
+inactive list, or 1 if a new table has been created. pfrio_naddr contains
+the number of addresses effectively put in the table.
 .El
 .Sh EXAMPLES
 The following example demonstrates how to use the DIOCNATLOOK command

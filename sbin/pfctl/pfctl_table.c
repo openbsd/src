@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.12 2003/01/07 00:21:08 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.13 2003/01/09 10:40:44 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -68,7 +68,7 @@ static void	append_addr(char *, int);
 static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
 static void	radix_perror(void);
-
+static void	inactive_cleanup(void);
 
 static union {
 	caddr_t			 caddr;
@@ -78,7 +78,7 @@ static union {
 	struct pfr_astats	*astats;
 } buffer, buffer2;
 
-static int	 size, msize;
+static int	 size, msize, ticket, inactive;
 extern char	*__progname;
 
 static char	*commands[] = {
@@ -165,7 +165,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		if (argc || file != NULL)
 			usage();
 		for (;;) {
-			if (opts & PF_OPT_VERBOSE) {
+			if (opts & PF_OPT_VERBOSE2) {
 				grow_buffer(sizeof(struct pfr_tstats), size);
 				size = msize;
 				RVTEST(pfr_get_tstats(buffer.tstats, &size,
@@ -180,15 +180,16 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 				break;
 		}
 		for (i = 0; i < size; i++)
-			if (opts & PF_OPT_VERBOSE)
+			if (opts & PF_OPT_VERBOSE2)
 				print_tstats(buffer.tstats+i,
-				    opts & PF_OPT_VERBOSE2);
+				    opts & PF_OPT_VERBOSE);
 			else
 				print_table(buffer.tables+i,
-				    opts & PF_OPT_VERBOSE2);
+				    opts & PF_OPT_VERBOSE);
 	} else if (!strcmp(*p, "create")) {
 		if (argc || file != NULL)
 			usage();
+		table.pfrt_flags = PFR_TFLAG_PERSIST;
 		RVTEST(pfr_add_tables(&table, 1, &nadd, flags));
 		if (!(opts & PF_OPT_QUIET))
 			fprintf(stderr, "%d table added%s.\n", nadd, DUMMY);
@@ -239,7 +240,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		load_addr(argc, argv, file, 0);
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
-		for(;;) {
+		for (;;) {
 			int size2 = msize;
 
 			RVTEST(pfr_set_addrs(&table, buffer.addrs, size,
@@ -325,7 +326,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 	} else if (!strcmp(*p, "zero")) {
 		if (argc || file != NULL)
 			usage();
-		flags |= PFR_FLAG_RECURSE;
+		flags |= PFR_FLAG_ADDRSTOO;
 		RVTEST(pfr_clr_tstats(&table, 1, &nzero, flags));
 		if (!(opts & PF_OPT_QUIET))
 			fprintf(stderr, "%d table/stats cleared%s.\n", nzero,
@@ -364,8 +365,16 @@ print_table(struct pfr_table *ta, int all)
 {
 	if (!all && !(ta->pfrt_flags & PFR_TFLAG_ACTIVE))
 		return;
-	printf("  %c%s\n", (ta->pfrt_flags & PFR_TFLAG_PERSIST)?'+':' ',
-	    ta->pfrt_name);
+	if (all) {
+		printf("%c%c%c%c%c\t%s\n",
+		    (ta->pfrt_flags & PFR_TFLAG_CONST) ? 'c' : '-',
+		    (ta->pfrt_flags & PFR_TFLAG_PERSIST) ? 'p' : '-',
+		    (ta->pfrt_flags & PFR_TFLAG_ACTIVE) ? 'a' : '-',
+		    (ta->pfrt_flags & PFR_TFLAG_INACTIVE) ? 'i' : '-',
+		    (ta->pfrt_flags & PFR_TFLAG_REFERENCED) ? 'r' : '-',
+		    ta->pfrt_name);
+	} else
+		puts(ta->pfrt_name);
 }
 
 void
@@ -589,4 +598,87 @@ radix_perror(void)
 		fprintf(stderr, "%s: Table does not exist.\n", __progname);
 	else
 		perror(__progname);
+}
+
+void	pfctl_begin_table(void)
+{
+	static int hookreg;
+	int rv;
+
+	if ((loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0)
+		return;
+	rv = pfr_ina_begin(&ticket, NULL, 0);
+	if (rv) {
+		radix_perror();
+		exit(1);
+	}
+	if (!hookreg) {
+		atexit(inactive_cleanup);
+		hookreg = 1;
+	}
+}
+
+void    pfctl_append_addr(char *addr, int net, int neg)
+{
+	char *p = NULL;
+
+	if (net < 0 && !neg) {
+		append_addr(addr, 0);
+		return;
+	}
+	if (net >= 0 && !neg)
+		asprintf(&p, "%s/%d", addr, net);
+	else if (net < 0)
+		asprintf(&p, "!%s", addr);
+	else
+		asprintf(&p, "!%s/%d", addr, net);
+	if (p == NULL) {
+		radix_perror();
+		exit(1);
+	}
+	append_addr(p, 0);
+	free(p);
+}
+
+void    pfctl_define_table(char *name, int flags, int addrs)
+{
+	struct pfr_table tbl;
+	int rv;
+
+	if ((loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0) {
+		size = 0;
+		return;
+	}
+	bzero(&tbl, sizeof(tbl));
+	strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name));
+	tbl.pfrt_flags = flags;
+
+	inactive = 1;
+	rv = pfr_ina_define(&tbl, buffer.addrs, size, NULL, NULL, ticket,
+	    addrs ? PFR_FLAG_ADDRSTOO : 0);
+	if (rv) {
+		radix_perror();
+		exit(1);
+	}
+	size = 0;
+}
+
+void	pfctl_commit_table(void)
+{
+	int rv;
+
+	if ((loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0)
+		return;
+	rv = pfr_ina_commit(ticket, NULL, NULL, 0);
+	if (rv) {
+		radix_perror();
+		exit(1);
+	}
+	inactive = 0;
+}
+
+void	inactive_cleanup(void)
+{
+	if (inactive)
+		pfr_ina_begin(NULL, NULL, 0);
 }

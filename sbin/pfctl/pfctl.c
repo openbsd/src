@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.125 2003/01/07 01:04:33 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.126 2003/01/09 10:40:44 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -974,7 +974,7 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_FILTER]))
 				err(1, "DIOCBEGINRULES");
 		}
-
+		pfctl_begin_table();
 	}
 	/* fill in callback data */
 	pf.dev = dev;
@@ -1013,6 +1013,7 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_FILTER]))
 				err(1, "DIOCCOMMITRULES");
 		}
+		pfctl_commit_table();
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
 			fprintf(stderr, "%u nat entries loaded\n", n);
@@ -1340,10 +1341,15 @@ main(int argc, char *argv[])
 		argc -= optind;
 		argv += optind;
 		ch = (tblcmdopt != NULL) ? *tblcmdopt : 0;
-		mode = strchr("acdfkrz", ch) ? O_RDWR : O_RDONLY;
-		if (opts & PF_OPT_NOACTION) {
-			opts &= ~PF_OPT_NOACTION;
-			dummy = PF_OPT_NOACTION;
+		if (ch == 'l') {
+			loadopt = PFCTL_FLAG_TABLE;
+			tblcmdopt = NULL;
+		} else {
+			mode = strchr("acdfkrz", ch) ? O_RDWR : O_RDONLY;
+			if (opts & PF_OPT_NOACTION) {
+				opts &= ~PF_OPT_NOACTION;
+				dummy = PF_OPT_NOACTION;
+			}
 		}
 	} else if (argc != optind) {
 		warnx("unknown command line argument: %s ...", argv[optind]);

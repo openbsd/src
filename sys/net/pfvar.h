@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.129 2003/01/07 00:21:07 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.130 2003/01/09 10:40:45 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -96,6 +96,7 @@ struct pf_addr_wrap {
 	union {
 		struct pf_addr_dyn	*dyn;
 		struct pfr_ktable	*tbl;
+		int			 tblcnt;
 	}			 p;
 	u_int8_t		 type;		/* PF_ADDR_* */
 };
@@ -470,11 +471,14 @@ struct pf_anchor {
 
 TAILQ_HEAD(pf_anchorqueue, pf_anchor);
 
-#define PFR_TFLAG_PERSIST       0x00000001
-#define PFR_TFLAG_CONST         0x00000002
-#define PFR_TFLAG_ACTIVE        0x00000004
-#define PFR_TFLAG_INACTIVE      0x00000008
-#define PFR_TFLAG_ALLMASK       0x0000000F
+#define PFR_TFLAG_PERSIST	0x00000001
+#define PFR_TFLAG_CONST		0x00000002
+#define PFR_TFLAG_ACTIVE	0x00000004
+#define PFR_TFLAG_INACTIVE	0x00000008
+#define PFR_TFLAG_REFERENCED	0x00000010
+#define PFR_TFLAG_USRMASK	0x00000003
+#define	PFR_TFLAG_SETMASK	0x0000001C
+#define PFR_TFLAG_ALLMASK	0x0000001F
 
 struct pfr_table {
 	char			 pfrt_name[PF_TABLE_NAME_SIZE];
@@ -544,6 +548,7 @@ struct pfr_ktable {
 	SLIST_ENTRY(pfr_ktable)	 pfrkt_workq;
 	struct radix_node_head	*pfrkt_ip4;
 	struct radix_node_head	*pfrkt_ip6;
+	struct pfr_ktable	*pfrkt_shadow;
 };
 #define pfrkt_t		pfrkt_ts.pfrts_t
 #define pfrkt_name	pfrkt_t.pfrt_name
@@ -834,7 +839,7 @@ struct pfioc_ruleset {
 #define PFR_FLAG_DUMMY		0x00000002
 #define PFR_FLAG_FEEDBACK	0x00000004
 #define PFR_FLAG_CLSTATS	0x00000008
-#define PFR_FLAG_RECURSE	0x00000010
+#define PFR_FLAG_ADDRSTOO	0x00000010
 #define PFR_FLAG_REPLACE	0x00000020
 #define PFR_FLAG_ALLMASK	0x0000003F
 
@@ -847,11 +852,14 @@ struct pfioc_table {
 	int			 pfrio_ndel;
 	int			 pfrio_nchange;
 	int			 pfrio_flags;
+	int			 pfrio_ticket;
 };
 #define	pfrio_exists	pfrio_nadd
 #define	pfrio_nzero	pfrio_nadd
 #define	pfrio_nmatch	pfrio_nadd
-#define	pfrio_name	pfrio_table.pfrt_name
+#define pfrio_naddr	pfrio_size2
+#define pfrio_setflag	pfrio_size2
+#define pfrio_clrflag	pfrio_nadd
 
 
 /*
@@ -915,7 +923,10 @@ struct pfioc_table {
 #define	DIOCRGETASTATS	_IOWR('D', 71, struct pfioc_table)
 #define DIOCRCLRASTATS  _IOWR('D', 72, struct pfioc_table)
 #define	DIOCRTSTADDRS	_IOWR('D', 73, struct pfioc_table)
-
+#define	DIOCRSETTFLAGS	_IOWR('D', 74, struct pfioc_table)
+#define DIOCRINABEGIN	_IOWR('D', 75, struct pfioc_table)
+#define DIOCRINACOMMIT	_IOWR('D', 76, struct pfioc_table)
+#define DIOCRINADEFINE	_IOWR('D', 77, struct pfioc_table)
 
 #ifdef _KERNEL
 RB_HEAD(pf_state_tree, pf_tree_node);
@@ -940,6 +951,7 @@ extern struct pf_poolqueue	*pf_pools_active;
 extern struct pf_poolqueue	*pf_pools_inactive;
 extern int			 pf_tbladdr_setup(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
+extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
 				    sa_family_t);
 extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
@@ -994,6 +1006,7 @@ int	pfr_del_tables(struct pfr_table *, int, int *, int);
 int	pfr_get_tables(struct pfr_table *, int *, int);
 int	pfr_get_tstats(struct pfr_tstats *, int *, int);
 int	pfr_clr_tstats(struct pfr_table *, int, int *, int);
+int	pfr_set_tflags(struct pfr_table *, int, int, int, int *, int *, int);
 int	pfr_clr_addrs(struct pfr_table *, int *, int);
 int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
@@ -1007,9 +1020,10 @@ int	pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
 int	pfr_tst_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
-int	pfr_wrap_table(struct pfr_table *, struct pf_addr_wrap *, int *,
-	    int);
-int	pfr_unwrap_table(struct pfr_table *, struct pf_addr_wrap *, int);
+int	pfr_ina_begin(int *, int *, int);
+int	pfr_ina_commit(int, int *, int *, int);
+int     pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
+	    int *, int, int);
 
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.162 2002/12/30 23:58:46 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.163 2003/01/09 10:40:44 cedric Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -40,7 +40,7 @@ packet filter modifies, drops or passes packets according to rules or
 definitions specified in
 .Nm pf.conf .
 .Pp
-There are six types of statement in
+There are seven types of statement in
 .Nm pf.conf :
 .Bl -tag -width xxxx
 .It Macros
@@ -59,6 +59,10 @@ other addresses.
 .It Packet Filtering
 Stateful and stateless packet filtering provides rule-based blocking or
 passing of packets.
+.It Table Definition
+Radix tables provide an effective way to match the source or destination
+address of packets against big and changing collections of addresses and
+CIDR networks.
 .El
 .Pp
 The types of statement should be grouped and appear in
@@ -724,11 +728,13 @@ addresses and ports.
 Addresses can be specified in CIDR notation (matching netblocks), as
 symbolic host names or interface names, or as any of the following keywords:
 .Pp
-.Bl -tag -width no-route -compact
+.Bl -tag -width "<table>" -compact
 .It Pa any
 Means any address.
 .It Pa no-route
 Means any address which is not currently routable.
+.It Pa <table>
+Means any address that matches the given table.
 .El
 .Pp
 Host name resolution and interface to address translation are done at
@@ -1013,6 +1019,69 @@ option prevents
 .Xr pf 4
 from modifying the source port on tcp and udp packets.
 .El
+.Sh TABLES
+Tables are named structures which can hold a collections of addresses and
+networks.
+Internally, they are implemented as PATRICIA trees, like the kernel routing
+table.
+Tables can be used as the source or destination of filter rules,
+.Pa scrub
+rules
+or
+.Pa nat
+rules where it makes sense.
+They cannot, however, be used for things like the redirect address of a
+.Pa rdr
+rule,
+.Pa dup-to
+construct or similar, as one would guess.
+.Pp
+Tables may be defined with the following two attributes:
+.Bl -tag -width persist
+.It Pa persist
+The
+.Pa persist
+flag inform the kernel that we want to keep the table even when no rule
+refer to that table.
+If that flag is not set, the kernel will automagically remove the table
+when the last rule refering to it is flushed.
+.It Pa const
+The
+.Pa const
+flag prevent the user to alter the content of the table once it has been
+created.
+Without that flag,
+.Xr pfctl 8
+can be used to add or remove addresses from the table at any time, even
+when running with
+.Xr securelevel 7
+= 2.
+.El
+.Pp
+Tables can be defined with any of the following 
+.Xr pfctl 8
+mechanism:
+.Bl -tag -width "manually"
+.It Pa manually 
+Persistant tables can be manually created with the
+.Pa create
+option of pfctl, before or after the ruleset has been loaded.
+.It Pa pf.conf
+Table definitions can be placed directly in this file, and loaded at the
+same time as other rules are loaded, atomically.
+Table definitions inside
+.Pa pf.conf
+use the
+.Pa table
+statement, and are especially useful to define non-persistant tables.
+The content of preexisting tables defined without initializer ('{' and '}')
+is not altered when (re-)loaded from
+.Pa pf.conf.
+.El
+.Pp
+When the resolver is called to add a hostname to a table,
+.Pa all
+resulting IP addresses are placed into the table, IPv4 as well as IPv6.
 .Sh STATEFUL INSPECTION
 .Xr pf 4
 is a stateful packet filter, which means it can track the state of
@@ -1590,6 +1659,9 @@ rdr-rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
                  "for" ( interface-name | "{" interface-list "}" ) [ af ]
 
+table-rule     = "table "<" tablename ">" [ "persist" ] [ "const" ]
+		 [ "{" [ table-address [ "," ] ]* "}" ]
+
 altq-rule      = "altq" "on" interface-name queueopts-list
                  "queue" queue-list
 queue-rule     = "queue" string queueopts-list queue-list
@@ -1627,11 +1699,12 @@ hosts          = "all" |
                  "{" host-list "}" ) [ port ]
 
 ipspec         = "any" | host | "{" host-list "}"
-host           = [ "!" ] address [ "/" mask-bits ]
+host           = [ "!" ] ( address [ "/" mask-bits ] | "<" table ">" )
 redirhost      = address [ "/" mask-bits ]
 routehost      = ( interface-name [ address [ "/" mask-bits ] ] )
 address        = ( interface-name | "(" interface-name ")" | host-name |
                  ipv4-dotted-quad | ipv6-coloned-hex )
+table-address  = hostname | ipv4-dotted-quad | ipv6-coloned-hex
 host-list      = host [ [ "," ] host-list ]
 redirhost-list = redirhost [ [","] redirhost-list ]
 routehost-list = routehost [ [","] routehost-list ]

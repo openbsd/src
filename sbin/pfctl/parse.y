@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.282 2003/01/08 19:47:37 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.283 2003/01/09 10:40:44 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -377,7 +377,7 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO REPLYTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	FRAGNORM FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
 %token	REQUIREORDER YES
@@ -390,7 +390,7 @@ typedef struct {
 %token	<v.i>			PORTUNARY PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number port icmptype icmp6type uid gid
-%type	<v.number>		tos
+%type	<v.number>		tos tableopts tableinit
 %type	<v.i>			no dir log af fragcache
 %type	<v.i>			staticport
 %type	<v.b>			action flags flag blockspec
@@ -440,6 +440,7 @@ ruleset		: /* empty */
 		| ruleset queuespec '\n'
 		| ruleset varset '\n'
 		| ruleset antispoof '\n'
+		| ruleset tabledef '\n'
 		| ruleset error '\n'		{ errors++; }
 		;
 
@@ -773,6 +774,46 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
+		}
+		;
+
+tabledef	: TABLE PORTUNARY STRING PORTUNARY tableopts tableinit {
+			if ($2 != PF_OP_LT || $4 != PF_OP_GT)
+				YYERROR;
+			if (strlen($3) >= PF_TABLE_NAME_SIZE)
+				YYERROR;
+			pfctl_define_table($3, $5, $6);
+		}
+		;
+
+tableopts	: /* empty */		{ $$ = 0; }
+		| tableopts STRING	{
+			$$ = $1;
+			if (!strcmp($2, "const"))
+				$$ |= PFR_TFLAG_CONST;
+			else if (!strcmp($2, "persist"))
+				$$ |= PFR_TFLAG_PERSIST;
+			else
+				YYERROR;
+		}
+
+tableinit	: /* empty */		{ $$ = 0; }
+		| '{' tableaddrs '}'	{ $$ = 1; }
+
+tableaddrs	: /* empty */
+		| tableaddrs tableaddr comma
+
+tableaddr	: STRING {
+			pfctl_append_addr($1, -1, 0);
+		}
+		| STRING '/' number {
+			pfctl_append_addr($1, $3, 0);
+		}
+		| '!' STRING {
+			pfctl_append_addr($2, -1, 1);
+		}
+		| '!' STRING '/' number {
+			 pfctl_append_addr($2, $4, 1);
 		}
 		;
 
@@ -3529,6 +3570,7 @@ lookup(char *s)
 		{ "set",		SET},
 		{ "source-hash",	SOURCEHASH},
 		{ "state",		STATE},
+		{ "table",		TABLE},
 		{ "tbrsize",		TBRSIZE},
 		{ "timeout",		TIMEOUT},
 		{ "to",			TO},

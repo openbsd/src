@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.7 2003/01/07 00:21:08 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.8 2003/01/09 10:40:44 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -315,6 +315,30 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	return (0);
 }
 
+int
+pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
+	int *nchange, int *ndel, int flags)
+{
+	struct pfioc_table io;
+
+	if (size < 0 || (size && !tbl)) {
+		errno = EINVAL;
+		return -1;
+	}
+	bzero(&io, sizeof io);
+	io.pfrio_flags = flags;
+	io.pfrio_buffer = tbl;
+	io.pfrio_size = size;
+	io.pfrio_setflag = setflag;
+	io.pfrio_clrflag = clrflag;
+	if (ioctl(dev, DIOCRCLRTSTATS, &io))
+		return (-1);
+	if (nchange)
+		*nchange = io.pfrio_nchange;
+	if (ndel)
+		*ndel = io.pfrio_ndel;
+	return (0);
+}
 
 int
 pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
@@ -335,5 +359,63 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (-1);
 	if (nmatch)
 		*nmatch = io.pfrio_nmatch;
+	return (0);
+}
+
+int
+pfr_ina_begin(int *ticket, int *ndel, int flags)
+{
+	struct pfioc_table io;
+
+	bzero(&io, sizeof io);
+	io.pfrio_flags = flags;
+	if (ioctl(dev, DIOCRINABEGIN, &io))
+		return (-1);
+	if (ndel != NULL)
+		*ndel = io.pfrio_ndel;
+	if (ticket != NULL)
+		*ticket = io.pfrio_ticket;
+	return (0);
+}
+
+int
+pfr_ina_commit(int ticket, int *nadd, int *nchange, int flags)
+{
+	struct pfioc_table io;
+
+	bzero(&io, sizeof io);
+	io.pfrio_flags = flags;
+	io.pfrio_ticket = ticket;
+	if (ioctl(dev, DIOCRINACOMMIT, &io))
+		return (-1);
+	if (nadd != NULL)
+		*nadd = io.pfrio_nadd;
+	if (nchange != NULL)
+		*nchange = io.pfrio_nchange;
+	return (0);
+}
+
+int
+pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
+	int *nadd, int *naddr, int ticket, int flags)
+{
+	struct pfioc_table io;
+
+	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
+	bzero(&io, sizeof io);
+	io.pfrio_flags = flags;
+	io.pfrio_table = *tbl;
+	io.pfrio_buffer = addr;
+	io.pfrio_size = size;
+	io.pfrio_ticket = ticket;
+	if (ioctl(dev, DIOCRINADEFINE, &io))
+		return (-1);
+	if (nadd != NULL)
+		*nadd = io.pfrio_nadd;
+	if (naddr != NULL)
+		*naddr = io.pfrio_naddr;
 	return (0);
 }

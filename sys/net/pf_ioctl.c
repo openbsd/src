@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.45 2003/01/07 00:21:07 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.46 2003/01/09 10:40:44 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -706,6 +706,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
 		pf_dynaddr_copyout(&pr->rule.src.addr);
 		pf_dynaddr_copyout(&pr->rule.dst.addr);
+		pf_tbladdr_copyout(&pr->rule.src.addr);
+		pf_tbladdr_copyout(&pr->rule.dst.addr);
 		for (i = 0; i < PF_SKIP_COUNT; ++i)
 			if (rule->skip[i].ptr == NULL)
 				pr->rule.skip[i].nr = -1;
@@ -1755,6 +1757,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
+	case DIOCRSETTFLAGS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_set_tflags(io->pfrio_buffer, io->pfrio_size,
+		    io->pfrio_setflag, io->pfrio_clrflag, &io->pfrio_nchange,
+		    &io->pfrio_nadd, io->pfrio_flags);
+		break;
+	}
+
 	case DIOCRCLRADDRS: {
 		struct pfioc_table *io = (struct pfioc_table *)addr;
 
@@ -1817,6 +1828,31 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		error = pfr_tst_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_nmatch, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRINABEGIN: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_ina_begin(&io->pfrio_ticket, &io->pfrio_ndel,
+		    io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRINACOMMIT: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_ina_commit(io->pfrio_ticket, &io->pfrio_nadd,
+		    &io->pfrio_nchange, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRINADEFINE: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_ina_define(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_size, &io->pfrio_nadd, &io->pfrio_naddr,
+		    io->pfrio_ticket, io->pfrio_flags);
 		break;
 	}
 

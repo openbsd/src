@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.61 2003/01/03 21:37:44 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.62 2003/01/09 10:40:44 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -231,6 +231,9 @@ Show the content (addresses) of a table.
 Test if the given addresses match a table.
 .It Fl T Ar zero
 Clear all the statistics of a table.
+.It Fl T Ar load
+Load only the table definitions from pf.conf.
+Used in "pfctl -Tl -f pf.conf".
 .El
 .It Fl v
 Produce more verbose output.  A second use of

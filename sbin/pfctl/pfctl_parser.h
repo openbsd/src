@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.38 2003/01/04 00:01:34 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.39 2003/01/09 10:40:44 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -88,6 +88,11 @@ void	print_status(struct pf_status *);
 int	 eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
 int	 eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
 
+void	pfctl_begin_table(void);
+void	pfctl_append_addr(char *, int, int);
+void	pfctl_define_table(char *, int, int);
+void	pfctl_commit_table(void);
+
 struct icmptypeent {
 	char *name;
 	u_int8_t type;
@@ -114,7 +119,9 @@ struct pf_timeout {
 #define PFCTL_FLAG_NAT		0x04
 #define PFCTL_FLAG_OPTION	0x08
 #define PFCTL_FLAG_ALTQ		0x10
+#define PFCTL_FLAG_TABLE	0x20
 
 extern const struct pf_timeout pf_timeouts[];
+extern int loadopt;
 
 #endif /* _PFCTL_PARSER_H_ */
