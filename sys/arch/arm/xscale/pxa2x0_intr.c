@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.5 2005/01/11 18:12:30 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.6 2005/01/13 17:59:32 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $"
 /*
  * INTC autoconf glue
  */
-static int	pxaintc_match(struct device *, void *, void *);
-static void	pxaintc_attach(struct device *, struct device *, void *);
+int	pxaintc_match(struct device *, void *, void *);
+void	pxaintc_attach(struct device *, struct device *, void *);
 
 #ifdef __NetBSD__
 CFATTACH_DECL(pxaintc, sizeof(struct device),
@@ -83,8 +83,8 @@ struct cfdriver pxaintc_cd = {
 
 static int pxaintc_attached;
 
-static int stray_interrupt(void *);
-static void init_interrupt_masks(void);
+int pxa2x0_stray_interrupt(void *);
+void pxa2x0_init_interrupt_masks(void);
 
 /*
  * interrupt dispatch table. 
@@ -119,7 +119,7 @@ int pxa2x0_imask[NIPL];
 static int extirq_level[ICU_LEN];
 
 
-static int
+int
 pxaintc_match(struct device *parent, void *cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
@@ -146,13 +146,13 @@ pxaintc_attach(struct device *parent, struct device *self, void *args)
 
 	for(i = 0; i < sizeof handler / sizeof handler[0]; ++i){
 		handler[i].name = "stray";
-		handler[i].func = stray_interrupt;
+		handler[i].func = pxa2x0_stray_interrupt;
 		handler[i].arg = (void *)(u_int32_t) i;
 
 		extirq_level[i] = IPL_SERIAL;
 	}
 
-	init_interrupt_masks();
+	pxa2x0_init_interrupt_masks();
 
 	_splraise(IPL_SERIAL);
 	enable_interrupts(I32_bit);
@@ -168,14 +168,6 @@ pxa2x0_intr_bootstrap(vaddr_t addr)
 {
 
 	pxaic_base = addr;
-}
-
-static __inline void
-__raise(int ipl)
-{
-
-	if (current_spl_level < ipl)
-		pxa2x0_setipl(ipl);
 }
 
 
@@ -239,8 +231,8 @@ pxa2x0_irq_handler(void *arg)
 		pxa2x0_do_pending();
 }
 
-static int
-stray_interrupt(void *cookie)
+int
+pxa2x0_stray_interrupt(void *cookie)
 {
 	int irqno = (int)cookie;
 	printf("stray interrupt %d\n", irqno);
@@ -319,8 +311,8 @@ pxa2x0_update_intr_masks(int irqno, int level)
 }
 
 
-static void
-init_interrupt_masks(void)
+void
+pxa2x0_init_interrupt_masks(void)
 {
 
 	memset(pxa2x0_imask, 0, sizeof(pxa2x0_imask));
@@ -375,9 +367,10 @@ pxa2x0_do_pending(void)
 
 #if 1
 #define	DO_SOFTINT(si,ipl)						\
-	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {	\
+	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {		\
 		softint_pending &= ~SI_TO_IRQBIT(si);			\
-                __raise(ipl);                                           \
+		if (current_spl_level < ipl)				\
+			pxa2x0_setipl(ipl);				\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
@@ -393,7 +386,8 @@ pxa2x0_do_pending(void)
 #else
 	while( (si = find_first_bit(softint_pending & intr_mask)) >= 0 ){
 		softint_pending &= ~SI_TO_IRQBIT(si);
-		__raise(si_to_ipl(si));
+		if (current_spl_level < ipl)
+			pxa2x0_setipl(ipl);
 		restore_interrupts(oldirqstate);
 		softintr_dispatch(si);
 		oldirqstate = disable_interrupts(I32_bit);
@@ -487,7 +481,7 @@ pxa2x0_intr_disestablish(void *cookie)
 	evcount_detach(&ih->ih_count);
 
 	ih->arg = (void *) irqno;
-	ih->func = stray_interrupt;
+	ih->func = pxa2x0_stray_interrupt;
 	ih->name = "stray";
 	extirq_level[irqno] = IPL_SERIAL;
 	pxa2x0_update_intr_masks(irqno, IPL_SERIAL);
