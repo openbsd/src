@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.41 1999/12/09 09:02:28 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.42 2000/01/03 04:27:57 itojun Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.41 1999/12/09 09:02:28 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.42 2000/01/03 04:27:57 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -374,6 +374,8 @@ ip_stats(off, name)
 	p(ips_ofragments, "\t%lu fragment%s created\n");
 	p(ips_cantfrag, "\t%lu datagram%s that can't be fragmented\n");
 	p1(ips_rcvmemdrop, "\t%lu fragment floods\n");
+	p(ips_toolong, "\t%lu packet%s with ip length > max ip packet size\n");
+	p(ips_nogif, "\t%lu tunneling packet%s that can't find gif\n");
 #undef p
 #undef p1
 }
