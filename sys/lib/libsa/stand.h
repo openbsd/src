@@ -111,7 +111,7 @@ void	*alloc __P((unsigned int));
 void	free __P((void *, unsigned int));
 struct	disklabel;
 char	*getdisklabel __P((const char *, struct disklabel *));
-int	dkcksum __P((struct disklabel *));
+u_int	dkcksum __P((struct disklabel *));
 
 void	printf __P((const char *, ...));
 void	sprintf __P((char *, const char *, ...));

@@ -42,7 +42,7 @@
 /*
  * Compute checksum for disk label.
  */
-int
+u_int
 dkcksum(lp)
 	register struct disklabel *lp;
 {
