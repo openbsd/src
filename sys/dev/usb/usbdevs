@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.72 2003/10/26 15:26:53 drahn Exp $
+$OpenBSD: usbdevs,v 1.73 2003/11/27 12:28:47 henning Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1303,6 +1303,7 @@ product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
+product	SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
