@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.7 2001/07/17 20:36:00 provos Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.8 2001/09/03 13:27:14 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.7 2001/07/17 20:36:00 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.8 2001/09/03 13:27:14 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -81,20 +81,21 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	 */
 	packetp = p;
 	snapend = p + caplen;
-	
-	hdr = (struct pfloghdr *)p;
 
-	res = ntohs(hdr->reason);
-	why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
+	if (eflag) {
+		hdr = (struct pfloghdr *)p;
 
-	snprintf(reason, sizeof(reason), "%d(%s)", res, why); 
+		res = ntohs(hdr->reason);
+		why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
 
-	printf("rule %d/%s: %s %s on %s: ",
-	       (short)ntohs(hdr->rnr), reason,
-	       ntohs(hdr->action) == PF_PASS ? "pass" : "block",
-	       ntohs(hdr->dir) == PF_OUT ? "out" : "in",
-	       hdr->ifname);
+		snprintf(reason, sizeof(reason), "%d(%s)", res, why);
 
+		printf("rule %d/%s: %s %s on %s: ",
+		    (short)ntohs(hdr->rnr), reason,
+		    ntohs(hdr->action) == PF_PASS ? "pass" : "block",
+		    ntohs(hdr->dir) == PF_OUT ? "out" : "in",
+		    hdr->ifname);
+	}
 	length -= PFLOG_HDRLEN;
 	ip = (struct ip *)(p + PFLOG_HDRLEN);
 	ip_print((const u_char *)ip, length);

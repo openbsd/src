@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.28 2001/09/03 13:25:53 jakob Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.29 2001/09/03 13:27:14 jakob Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -951,6 +951,12 @@ If the
 option is given, the link level header is printed out.
 On Ethernets, the source and destination addresses, protocol,
 and packet length are printed.
+.Pp
+On the packet filter logging interface
+.Pa pflog ,
+logging reason (rule match, bad-offset, fragment, short,
+normalize, memory), action taken (pass/block), direction (in/out) and interface
+information is printed out for each packet.
 .Pp
 On
 .Tn FDDI
