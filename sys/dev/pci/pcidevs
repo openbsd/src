@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.729 2004/05/05 22:16:31 brad Exp $
+$OpenBSD: pcidevs,v 1.730 2004/05/06 16:42:40 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -593,6 +593,7 @@ product ASUSTEK HFCPCI		0x0675	ISDN
 product ATI MACH32		0x4158	Mach32
 product ATI R200_BB		0x4242	Radeon 8500 BB
 product ATI RADEON_IGP320M	0x4336	Radeon IGP 320M
+product ATI MOBILITY_M6		0x4337	Mobility M6
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI MACH64_ET		0x4554	Mach64 ET
@@ -669,6 +670,8 @@ product ATI MACH64_VU		0x5655	Mach64 VU
 product ATI MACH64_VV		0x5656	Mach64 VV
 product ATI RADEON_RV280_2	0x5941	Radeon 9200 2nd
 product ATI RADEON_RV280	0x5961	Radeon 9200
+product ATI RS200_AGP		0x7010	RS200 AGP
+product ATI RS200_PCI		0xcab2	RS200 PCI
 
 /* Applied Micro Circuits products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
