@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.20 1997/03/08 01:31:52 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.21 1997/03/11 18:53:30 tholo Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
-SUBDIR+=	bc cpio cvs dc deroff diff diff3 gcc grep groff
+SUBDIR+=	bc cvs dc deroff diff diff3 gcc grep groff
 SUBDIR+=	gzip perl rcs sdiff sendbug sudo
 
 # some ports use binutils, some do not.
