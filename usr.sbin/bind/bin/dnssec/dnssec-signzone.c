@@ -1669,12 +1669,13 @@ main(int argc, char *argv[]) {
 	argv += 1;
 
 	if (output == NULL) {
+		size_t len;
 		free_output = ISC_TRUE;
-		output = isc_mem_allocate(mctx,
-					  strlen(file) + strlen(".signed") + 1);
+		len = strlen(file) + strlen(".signed") + 1;
+		output = isc_mem_allocate(mctx, len);
 		if (output == NULL)
 			fatal("out of memory");
-		sprintf(output, "%s.signed", file);
+		snprintf(output, len, "%s.signed", file);
 	}
 
 	if (origin == NULL)

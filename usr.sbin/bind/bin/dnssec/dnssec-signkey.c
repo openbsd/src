@@ -180,6 +180,7 @@ main(int argc, char *argv[]) {
 	unsigned int eflags;
 	dns_rdataclass_t rdclass;
 	static isc_boolean_t tryverify = ISC_FALSE;
+	size_t len;
 
 	result = isc_mem_create(0, 0, &mctx);
 	check_result(result, "isc_mem_create()");
@@ -302,12 +303,12 @@ main(int argc, char *argv[]) {
 	check_result(result, "dns_name_tofilenametext()");
 	isc_buffer_putuint8(&b, 0);
 
-	output = isc_mem_allocate(mctx,
-				  strlen("signedkey-") + strlen(tdomain) + 1);
+	len = strlen("signedkey-") + strlen(tdomain) + 1;
+	output = isc_mem_allocate(mctx, len);
 	if (output == NULL)
 		fatal("out of memory");
-	strcpy(output, "signedkey-");
-	strcat(output, tdomain);
+	strlcpy(output, "signedkey-", len);
+	strlcat(output, tdomain, len);
 
 	version = NULL;
 	dns_db_newversion(db, &version);

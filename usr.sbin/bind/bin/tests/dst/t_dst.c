@@ -73,9 +73,9 @@ cleandir(char *path) {
 			continue;
 		if (! strcmp(pe->d_name, ".."))
 			continue;
-		strcpy(fullname, path);
-		strcat(fullname, "/");
-		strcat(fullname, pe->d_name);
+		strlcpy(fullname, path, sizeof(fullname));
+		strlcat(fullname, "/", sizeof(fullname));
+		strlcat(fullname, pe->d_name, sizeof(fullname));
 		if (remove(fullname))
 			t_info("remove(%s) failed %d\n", fullname, errno);
 

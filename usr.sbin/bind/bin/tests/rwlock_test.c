@@ -107,7 +107,7 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_rwlock_init(&lock, 5, 10) == ISC_R_SUCCESS);
 
 	for (i = 0; i < nworkers; i++) {
-		sprintf(name, "%02u", i);
+		snprintf(name, sizeof(name), "%02u", i);
 		dupname = strdup(name);
 		RUNTIME_CHECK(dupname != NULL);
 		if (i != 0 && i % 3 == 0)

@@ -107,12 +107,14 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 	 * Echo the data back.
 	 */
 	if (strcmp(event->ev_arg, "so2") != 0) {
+		size_t len;
 		region = dev->region;
-		sprintf(buf, "\r\nReceived: %.*s\r\n\r\n",
+		snprintf(buf, sizeof(buf), "\r\nReceived: %.*s\r\n\r\n",
 			(int)dev->n, (char *)region.base);
-		region.base = isc_mem_get(mctx, strlen(buf) + 1);
-		region.length = strlen(buf) + 1;
-		strcpy((char *)region.base, buf);  /* strcpy is safe */
+		len = strlen(buf) + 1;
+		region.base = isc_mem_get(mctx, len);
+		region.length = len;
+		strlcpy((char *)region.base, buf, len);
 		isc_socket_send(sock, &region, task, my_send, event->ev_arg);
 	} else {
 		region = dev->region;
@@ -157,6 +159,7 @@ my_connect(isc_task_t *task, isc_event_t *event) {
 	isc_socket_connev_t *dev;
 	isc_region_t region;
 	char buf[1024];
+	size_t len;
 
 	sock = event->ev_sender;
 	dev = (isc_socket_connev_t *)event;
@@ -175,11 +178,12 @@ my_connect(isc_task_t *task, isc_event_t *event) {
 	 * Send a GET string, and set up to receive (and just display)
 	 * the result.
 	 */
-	strcpy(buf, "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
-	       "Connection: Close\r\n\r\n");
-	region.base = isc_mem_get(mctx, strlen(buf) + 1);
-	region.length = strlen(buf) + 1;
-	strcpy((char *)region.base, buf);  /* This strcpy is safe. */
+	strlcpy(buf, "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
+	       "Connection: Close\r\n\r\n", sizeof(buf));
+	len = strlen(buf) + 1;
+	region.base = isc_mem_get(mctx, len);
+	region.length = len;
+	strlcpy((char *)region.base, buf, len);
 
 	isc_socket_send(sock, &region, task, my_http_get, event->ev_arg);
 

@@ -269,7 +269,7 @@ save_command_line(int argc, char *argv[]) {
 	INSIST(sizeof(saved_command_line) >= sizeof(truncated));
 
 	if (dst == eob)
-		strcpy(eob - sizeof(truncated), truncated);
+		strlcpy(eob - sizeof(truncated), truncated, sizeof(truncated));
 	else
 		*dst = '\0';
 }

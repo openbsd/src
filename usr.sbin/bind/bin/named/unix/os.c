@@ -495,15 +495,14 @@ open_pidfile(const char *filename, isc_boolean_t first_time) {
 
 	cleanup_pidfile();
 
-	len = strlen(filename);
-	pidfile = malloc(len + 1);
+	len = strlen(filename) + 1;
+	pidfile = malloc(len);
 	if (pidfile == NULL) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		(*report)("couldn't malloc '%s': %s", filename, strbuf);
 		return -1;
 	}
-	/* This is safe. */
-	strcpy(pidfile, filename);
+	strlcpy(pidfile, filename, len);
 
 	fd = safe_open(filename, ISC_FALSE);
 	if (fd < 0) {

@@ -387,7 +387,7 @@ main(int argc, char *argv[]) {
 
 	
 
-	strcpy(dbtype, "rbt");
+	strlcpy(dbtype, "rbt", sizeof(dbtype));
 	while ((ch = isc_commandline_parse(argc, argv, "c:d:t:z:P:Q:glpqvT"))
 	       != -1) {
 		switch (ch) {
@@ -399,7 +399,7 @@ main(int argc, char *argv[]) {
 				       isc_result_totext(result));
 			break;
 		case 'd':
-			strcpy(dbtype, isc_commandline_argument);
+			strlcpy(dbtype, isc_commandline_argument, sizeof(dbtype));
 			break;
 		case 'g':
 			options |= (DNS_DBFIND_GLUEOK|DNS_DBFIND_VALIDATEGLUE);

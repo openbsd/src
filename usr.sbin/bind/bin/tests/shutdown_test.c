@@ -145,9 +145,9 @@ new_task(isc_mem_t *mctx, const char *name) {
 	ti->ticks = 0;
 	if (name != NULL) {
 		INSIST(strlen(name) < sizeof(ti->name));
-		strcpy(ti->name, name);
+		strlcpy(ti->name, name, sizeof(ti->name));
 	} else
-		sprintf(ti->name, "%d", task_count);
+		snprintf(ti->name, sizeof(ti->name), "%d", task_count);
 	RUNTIME_CHECK(isc_task_create(task_manager, 0, &ti->task) ==
 		      ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_task_onshutdown(ti->task, shutdown_action, ti) ==

@@ -1127,7 +1127,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		if (homedir != NULL)
 			snprintf(rcfile, sizeof(rcfile), "%s/.digrc", homedir);
 		else
-			strcpy(rcfile, ".digrc");
+			strlcpy(rcfile, ".digrc", sizeof(rcfile));
 		batchfp = fopen(rcfile, "r");
 		if (batchfp != NULL) {
 			while (fgets(batchline, sizeof(batchline),
@@ -1312,7 +1312,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		lookup->trace_root = ISC_TF(lookup->trace ||
 					    lookup->ns_search_only);
 		lookup->new_search = ISC_TRUE;
-		strcpy(lookup->textname, ".");
+		strlcpy(lookup->textname, ".", sizeof(lookup->textname));
 		lookup->rdtype = dns_rdatatype_ns;
 		lookup->rdtypeset = ISC_TRUE;
 		if (firstarg) {
