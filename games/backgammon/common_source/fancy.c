@@ -1,4 +1,4 @@
-/*	$OpenBSD: fancy.c,v 1.4 1998/04/26 14:52:17 millert Exp $	*/
+/*	$OpenBSD: fancy.c,v 1.5 1998/08/19 05:55:03 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fancy.c,v 1.4 1998/04/26 14:52:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: fancy.c,v 1.5 1998/08/19 05:55:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -711,8 +711,8 @@ getcaps(s)
 		lUP = strlen(UP);
 	if (ND)
 		lND = strlen(ND);
+	linect = (int *)calloc(LI + 1, sizeof(int));
 	if (LI < 24 || CO < 72 || !(CL && UP && ND))
 		return(0);
-	linect = (int *)calloc(LI + 1, sizeof(int));
 	return(1);
 }
