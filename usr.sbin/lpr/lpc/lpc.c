@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.16 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.17 2004/09/30 18:20:06 millert Exp $	*/
 /*	$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpc.c,v 1.16 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpc.c,v 1.17 2004/09/30 18:20:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,9 +159,9 @@ cmdscanner(void)
 		}
 		siginterrupt(SIGINT, 0);
 
-		if (cmdline[0] == 0 || cmdline[0] == '\n')
-			break;
 		makeargv();
+		if (margc == 0)
+			break;
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
 			printf("?Ambiguous command\n");
@@ -213,26 +213,17 @@ getcmd(char *name)
 static void
 makeargv(void)
 {
-	char *cp;
-	char **argp = margv;
-	int n = 0;
+	char *cp = cmdline;
+	char **ap = margv;
 
 	margc = 0;
-	for (cp = cmdline; *cp && (cp - cmdline) < sizeof(cmdline) &&
-	    n < MAX_MARGV; n++) {
-		while (isspace(*cp))
-			cp++;
-		if (*cp == '\0')
-			break;
-		*argp++ = cp;
-		margc += 1;
-		while (*cp != '\0' && !isspace(*cp))
-			cp++;
-		if (*cp == '\0')
-			break;
-		*cp++ = '\0';
+	while (margc < MAX_MARGV - 1 && (*ap = strsep(&cp, " \t\n")) != NULL) {
+		if (**ap != '\0') {
+			ap++;
+			margc++;
+		}
 	}
-	*argp++ = 0;
+	*ap = NULL;
 }
 
 #define HELPINDENT ((int)sizeof("directory"))
