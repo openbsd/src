@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.109 1998/10/28 17:51:14 millert Exp $
+#	$OpenBSD: install.sub,v 1.110 1998/10/28 18:55:20 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -228,7 +228,7 @@ basename () {
 isnumeric() {
 	local _a
 	_a=$1
-	while [ ${#_a} != 1 ]; do
+	while [ ${#_a} != 0 ]; do
 		case $_a in
 			[0-9]*) ;;
 			*)	echo 0; return;;
