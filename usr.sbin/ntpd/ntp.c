@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.2 2004/05/31 15:11:56 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.3 2004/05/31 21:43:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,9 +43,9 @@ int	setup_listener(struct servent *);
 int	setup_listener6(struct servent *);
 int	ntp_dispatch_imsg(void);
 int	ntp_dispatch(int fd);
-int	parse_ntp_msg(char *, ssize_t, struct ntp_msg *);
+int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);
 int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
-int	ntp_send(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
+int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
 void	get_ts(struct l_fixedpt *);
 
 void
@@ -247,14 +247,14 @@ ntp_dispatch(int fd)
 	    (struct sockaddr *)&fsa, &fsa_len)) == -1)
 		fatal("recvfrom");
 
-	parse_ntp_msg(buf, size, &msg);
+	ntp_getmsg(buf, size, &msg);
 	ntp_reply(fd, (struct sockaddr *)&fsa, &msg, 0);
 
 	return (0);
 }
 
 int
-parse_ntp_msg(char *p, ssize_t len, struct ntp_msg *msg)
+ntp_getmsg(char *p, ssize_t len, struct ntp_msg *msg)
 {
 	int		 auth, i;
 
@@ -349,53 +349,51 @@ ntp_reply(int fd, struct sockaddr *sa, struct ntp_msg *query, int auth)
 	reply.orgtime.int_part = query->xmttime.int_part;
 	reply.orgtime.fraction = query->xmttime.fraction;
 
-	return (ntp_send(fd, sa, &reply, len, auth));
+	return (ntp_sendmsg(fd, sa, &reply, len, auth));
 }
 
 int
-ntp_send(int fd, struct sockaddr *sa, struct ntp_msg *reply, ssize_t len,
+ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
     int auth)
 {
 	char	 buf[NTP_MSGSIZE];
 	char	*p;
 
 	p = buf;
-	memcpy(p, &reply->status, sizeof(reply->status));
-	p += sizeof(reply->status);
-	memcpy(p, &reply->stratum, sizeof(reply->stratum));
-	p += sizeof(reply->stratum);
-	memcpy(p, &reply->ppoll, sizeof(reply->ppoll));
-	p += sizeof(reply->ppoll);
-	memcpy(p, &reply->precision, sizeof(reply->precision));
-	p += sizeof(reply->precision);
-	memcpy(p, &reply->distance.int_part, sizeof(reply->distance.int_part));
-	p += sizeof(reply->distance.int_part);
-	memcpy(p, &reply->distance.fraction, sizeof(reply->distance.fraction));
-	p += sizeof(reply->distance.fraction);
-	memcpy(p, &reply->dispersion.int_part,
-	    sizeof(reply->dispersion.int_part));
-	p += sizeof(reply->dispersion.int_part);
-	memcpy(p, &reply->dispersion.fraction,
-	    sizeof(reply->dispersion.fraction));
-	p += sizeof(reply->dispersion.fraction);
-	memcpy(p, &reply->refid, sizeof(reply->refid));
-	p += sizeof(reply->refid);
-	memcpy(p, &reply->reftime.int_part, sizeof(reply->reftime.int_part));
-	p += sizeof(reply->reftime.int_part);
-	memcpy(p, &reply->reftime.fraction, sizeof(reply->reftime.fraction));
-	p += sizeof(reply->reftime.fraction);
-	memcpy(p, &reply->orgtime.int_part, sizeof(reply->orgtime.int_part));
-	p += sizeof(reply->orgtime.int_part);
-	memcpy(p, &reply->orgtime.fraction, sizeof(reply->orgtime.fraction));
-	p += sizeof(reply->orgtime.fraction);
-	memcpy(p, &reply->rectime.int_part, sizeof(reply->rectime.int_part));
-	p += sizeof(reply->rectime.int_part);
-	memcpy(p, &reply->rectime.fraction, sizeof(reply->rectime.fraction));
-	p += sizeof(reply->rectime.fraction);
-	memcpy(p, &reply->xmttime.int_part, sizeof(reply->xmttime.int_part));
-	p += sizeof(reply->xmttime.int_part);
-	memcpy(p, &reply->xmttime.fraction, sizeof(reply->xmttime.fraction));
-	p += sizeof(reply->xmttime.fraction);
+	memcpy(p, &msg->status, sizeof(msg->status));
+	p += sizeof(msg->status);
+	memcpy(p, &msg->stratum, sizeof(msg->stratum));
+	p += sizeof(msg->stratum);
+	memcpy(p, &msg->ppoll, sizeof(msg->ppoll));
+	p += sizeof(msg->ppoll);
+	memcpy(p, &msg->precision, sizeof(msg->precision));
+	p += sizeof(msg->precision);
+	memcpy(p, &msg->distance.int_part, sizeof(msg->distance.int_part));
+	p += sizeof(msg->distance.int_part);
+	memcpy(p, &msg->distance.fraction, sizeof(msg->distance.fraction));
+	p += sizeof(msg->distance.fraction);
+	memcpy(p, &msg->dispersion.int_part, sizeof(msg->dispersion.int_part));
+	p += sizeof(msg->dispersion.int_part);
+	memcpy(p, &msg->dispersion.fraction, sizeof(msg->dispersion.fraction));
+	p += sizeof(msg->dispersion.fraction);
+	memcpy(p, &msg->refid, sizeof(msg->refid));
+	p += sizeof(msg->refid);
+	memcpy(p, &msg->reftime.int_part, sizeof(msg->reftime.int_part));
+	p += sizeof(msg->reftime.int_part);
+	memcpy(p, &msg->reftime.fraction, sizeof(msg->reftime.fraction));
+	p += sizeof(msg->reftime.fraction);
+	memcpy(p, &msg->orgtime.int_part, sizeof(msg->orgtime.int_part));
+	p += sizeof(msg->orgtime.int_part);
+	memcpy(p, &msg->orgtime.fraction, sizeof(msg->orgtime.fraction));
+	p += sizeof(msg->orgtime.fraction);
+	memcpy(p, &msg->rectime.int_part, sizeof(msg->rectime.int_part));
+	p += sizeof(msg->rectime.int_part);
+	memcpy(p, &msg->rectime.fraction, sizeof(msg->rectime.fraction));
+	p += sizeof(msg->rectime.fraction);
+	memcpy(p, &msg->xmttime.int_part, sizeof(msg->xmttime.int_part));
+	p += sizeof(msg->xmttime.int_part);
+	memcpy(p, &msg->xmttime.fraction, sizeof(msg->xmttime.fraction));
+	p += sizeof(msg->xmttime.fraction);
 
 	if (auth) {
 		/* XXX */
