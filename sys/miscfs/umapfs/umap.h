@@ -1,5 +1,5 @@
-/*	$OpenBSD: umap.h,v 1.9 2002/03/14 01:27:08 millert Exp $	*/
-/*	$NetBSD: umap.h,v 1.6 1996/02/09 22:41:00 christos Exp $	*/
+/*	$OpenBSD: umap.h,v 1.10 2003/05/12 21:02:10 tedu Exp $ */
+/*	$NetBSD: umap.h,v 1.9 1999/07/08 01:19:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,63 +37,80 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)null_vnops.c       1.5 (Berkeley) 7/10/92
- *	@(#)umap.h	8.3 (Berkeley) 1/21/94
+ *	@(#)umap.h	8.4 (Berkeley) 8/20/94
  */
+
+#include <miscfs/genfs/layer.h>
 
 #define UMAPFILEENTRIES 64
 #define GMAPFILEENTRIES 16
 #define NOBODY 32767
 #define NULLGROUP 65534
 
-typedef	u_int32_t	id_t;
-typedef	id_t		(*id_map_t)[2];
-
 struct umap_args {
-	char	*target;	/* Target of loopback  */
-	int 	unentries;	/* # of entries in user map array */
-	int 	gnentries;	/* # of entries in group map array */
-	id_map_t umapdata;	/* pointer to array of user mappings */
-	id_map_t gmapdata;	/* pointer to array of group mappings */
-};
-
-struct umap_mount {
-	struct mount	*umapm_vfs;
-	struct vnode	*umapm_rootvp;	/* Reference to root umap_node */
-	int		info_unentries;	/* number of uid mappings */
-	int		info_gnentries;	/* number of gid mappings */
-	id_t		info_umapdata[UMAPFILEENTRIES][2]; /* mapping data for 
-	    user mapping in ficus */
-	id_t		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for 
-	    group mapping in ficus */
+	struct layer_args la;		/* generic layerfs args. Includes
+					 * target and export info */
+#define	umap_target	la.target
+#define	umap_export	la.export
+	int 		unentries;       /* # of entries in user map array */
+	int 		gnentries;	/* # of entries in group map array */
+	u_long 		(*mapdata)[2];	/* pointer to array of user mappings */
+	u_long 		(*gmapdata)[2];	/* pointer to array of group mappings */
 };
 
 #ifdef _KERNEL
+
+struct umap_mount {
+	struct layer_mount lm;		
+	int             info_unentries;  /* number of uid mappings */
+	int		info_gnentries;	/* number of gid mappings */
+	u_long		info_umapdata[UMAPFILEENTRIES][2]; /* mapping data for 
+	    user mapping in ficus */
+	u_long		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for 
+	    group mapping in ficus */
+};
+#define	umapm_vfs		lm.layerm_vfs
+#define	umapm_rootvp		lm.layerm_rootvp
+#define	umapm_export		lm.layerm_export
+#define	umapm_flags		lm.layerm_flags
+#define	umapm_size		lm.layerm_size
+#define	umapm_tag		lm.layerm_tag
+#define	umapm_bypass		lm.layerm_bypass
+#define	umapm_alloc		lm.layerm_alloc
+#define	umapm_vnodeop_p		lm.layerm_vnodeop_p
+#define	umapm_node_hashtbl	lm.layerm_node_hashtbl
+#define	umapm_node_hash		lm.layerm_node_hash
+#define	umapm_hashlock		lm.layerm_hashlock
+
 /*
  * A cache of vnode references
  */
 struct umap_node {
-	LIST_ENTRY(umap_node) umap_hash;	/* Hash list */
-	struct vnode	*umap_lowervp;	/* Aliased vnode - VREFed once */
-	struct vnode	*umap_vnode;	/* Back pointer to vnode/umap_node */
+	struct	layer_node	ln;
 };
 
-extern int	umap_node_create(struct mount *mp, struct vnode *target, struct vnode **vpp);
-extern id_t	umap_reverse_findid(id_t id, id_map_t, int nentries);
-extern void	umap_mapids(struct mount *v_mount, struct ucred *credp);
+u_long umap_reverse_findid(u_long id, u_long map[][2], int nentries);
+void umap_mapids(struct mount *v_mount, struct ucred *credp);
+
+#define	umap_hash	ln.layer_hash
+#define	umap_lowervp	ln.layer_lowervp
+#define	umap_vnode	ln.layer_vnode
+#define	umap_flags	ln.layer_flags
 
 #define	MOUNTTOUMAPMOUNT(mp) ((struct umap_mount *)((mp)->mnt_data))
 #define	VTOUMAP(vp) ((struct umap_node *)(vp)->v_data)
 #define UMAPTOV(xp) ((xp)->umap_vnode)
 #ifdef UMAPFS_DIAGNOSTIC
-extern struct vnode *umap_checkvp(struct vnode *vp, char *fil, int lno);
-#define	UMAPVPTOLOWERVP(vp) umap_checkvp((vp), __FILE__, __LINE__)
+#define	UMAPVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	UMAPVPTOLOWERVP(vp) (VTOUMAP(vp)->umap_lowervp)
 #endif
 
-extern int (**umap_vnodeop_p)(void *);
-extern struct vfsops umap_vfsops;
+extern int (**umapfs_vnodeop_p)(void *);
+extern struct vfsops umapfs_vfsops;
 
-int umapfs_init(struct vfsconf *);
+int     umap_bypass(void *);
+
+#define NUMAPNODECACHE	16
 
 #endif /* _KERNEL */
