@@ -1,4 +1,4 @@
-.\"	$OpenBSD: a.out.5,v 1.9 2001/03/05 06:44:47 fgsch Exp $
+.\"	$OpenBSD: a.out.5,v 1.10 2001/12/04 04:17:55 fgsch Exp $
 .\"	$NetBSD: a.out.5,v 1.8 1994/11/30 19:31:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -193,13 +193,19 @@ The
 include file defines several macros which use an
 .Fa exec
 structure to test consistency or to locate section offsets in the binary file.
-.Bl -tag -width N_BADMAG(exec)
+.Bl -tag -width N_TRELOFF(exec)
 .It Fn N_BADMAG exec
 Non-zero if the
 .Fa a_magic
 field does not contain a recognized value.
 .It Fn N_TXTOFF exec
-The byte offset in the binary file of the beginning of the text segment.
+The byte offset of the beginning of the text segment.
+.It Fn N_DATOFF exec
+The byte offset of the beginning of the data segment.
+.It Fn N_DRELOFF exec
+The byte offset of the beginning of the data relocation table.
+.It Fn N_TRELOFF exec
+The byte offset of the beginning of the text relocation table.
 .It Fn N_SYMOFF exec
 The byte offset of the beginning of the symbol table.
 .It Fn N_STROFF exec
