@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.362 2001/01/24 04:00:19 millert Exp $
+	$OpenBSD: pcidevs,v 1.363 2001/01/24 11:06:24 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -497,6 +497,7 @@ vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
+vendor TRANSMETA	0x1279	Transmeta
 vendor ROCKWELL		0x127a	Rockwell
 vendor DAVICOM		0x1282	Davicom Technologies
 vendor ITEXPRESS	0x1283	ITExpress
@@ -513,6 +514,7 @@ vendor ADMTEK		0x1317	ADMtek
 vendor PE		0x1318	Packet Engines Inc.
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor SIIG		0x131f	SIIG
+vendor KAWASAKI		0x136b	Kawasaki
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
 vendor HIFN		0x13a3	Hi/Fn
@@ -1274,6 +1276,9 @@ product	LUCENT USBHC		0x5801	USB
 /* LuxSonor */
 product LUXSONOR LS242		0x0020	LS242 DVD Decoder
 
+/* Kawasaki */
+/* product KAWASAKI HUH		0xff01	No idea */
+
 /* Macronix */
 product MACRONIX MX98713	0x0512	PMAC 98713
 product MACRONIX MX98715	0x0531	PMAC 98715
@@ -1682,6 +1687,11 @@ product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B PCI-CardBus
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 PCI-CardBus
 product TOSHIBA2 ToPIC100	0x0617	ToPIC100 PCI-CardBus
 product TOSHIBA2 TFIRO		0x0701	Fast Infrared Type O
+
+/* Transmeta products */
+product TRANSMETA NORTHBRIDGE	0x0395	Virtual Northbridge
+product TRANSMETA MEM1		0x0396	Mem1
+product TRANSMETA MEM2		0x0397	Mem2
 
 /* Trident products */
 product TRIDENT 4DWAVE_DX	0x2000	4DWAVE DX
