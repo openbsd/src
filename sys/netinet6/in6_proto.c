@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_proto.c,v 1.11 2000/01/13 04:59:38 angelos Exp $ */
+/* $OpenBSD: in6_proto.c,v 1.12 2000/01/13 05:06:12 angelos Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -210,13 +210,13 @@ struct ip6protosw inet6sw[] = {
 #endif /* INET6 */
 #else /* NFIG */
 { SOCK_RAW,     &inet6domain,    IPPROTO_IPV4,  PR_ATOMIC|PR_ADDR,
-  ip4_input6,    rip6_output,     0,              rip6_ctloutput,
+  ip4_input6,   rip6_output,     0,              rip6_ctloutput,
   rip6_usrreq,   /* XXX */
   0,            0,              0,              0,              ip4_sysctl
 },
 #ifdef INET6
 { SOCK_RAW,     &inet6domain,    IPPROTO_IPV6,  PR_ATOMIC|PR_ADDR,
-  ip4_input6,    rip6_output,     0,              rip6_ctloutput,
+  ip4_input6,   rip6_output,     0,              rip6_ctloutput,
   0,   
   0,            0,              0,              0,
 },
