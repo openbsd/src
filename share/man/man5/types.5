@@ -50,7 +50,7 @@ used through out the system).
 #ifndef _TYPES_H_
 #define	_TYPES_H_
 
-typedef	short	dev_t;
+typedef	int32_t		dev_t;
 #ifndef _POSIX_SOURCE
 					/* major part of a device */
 #define	major(x)	((int)(((unsigned)(x)>>8)&0377))
@@ -90,20 +90,20 @@ typedef	_TIME_T_	time_t;
 typedef	struct	_uquad { unsigned long val[2]; } u_quad;
 typedef	struct	_quad { long val[2]; } quad;
 #endif
-typedef	long *	qaddr_t;	/* should be typedef quad * qaddr_t; */
+typedef	quad_t * qaddr_t;	/* should be typedef quad * qaddr_t; */
 
-typedef	long	daddr_t;
+typedef	int	daddr_t;
 typedef	char *	caddr_t;
-typedef	u_long	ino_t;
-typedef	long	swblk_t;
-typedef	long	segsz_t;
-typedef	long	off_t;
-typedef	u_short	uid_t;
-typedef	u_short	gid_t;
-typedef	short	pid_t;
+typedef	u_int	ino_t;
+typedef	int	swblk_t;
+typedef	int	segsz_t;
+typedef	quad_t	off_t;
+typedef	u_int	uid_t;
+typedef	u_int	gid_t;
+typedef	int	pid_t;
 typedef	u_short	nlink_t;
 typedef	u_short	mode_t;
-typedef u_long	fixpt_t;
+typedef u_int	fixpt_t;
 
 #ifndef _POSIX_SOURCE
 #define	NBBY	8		/* number of bits in a byte */
@@ -118,7 +118,7 @@ typedef u_long	fixpt_t;
 #define	FD_SETSIZE	256
 #endif
 
-typedef long	fd_mask;
+typedef int	fd_mask;
 #define NFDBITS	(sizeof(fd_mask) * NBBY)	/* bits per mask */
 
 #ifndef howmany
