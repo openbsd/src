@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.7 2005/03/01 18:37:07 mcbride Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.8 2005/03/02 15:39:47 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/ioccom.h>
 #include <sys/conf.h>
@@ -216,6 +217,7 @@ wanpipe_generic_start(struct ifnet *ifp)
 static int
 wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
+	struct proc		*p = curproc;
 	struct ifreq		*ifr = (struct ifreq*)data;
 	sdla_t			*card;
 	wanpipe_common_t*	common = WAN_IFP_TO_COMMON(ifp);
@@ -248,6 +250,8 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFTIMESLOT:
+		if ((err = suser(p, p->p_acflag)) != 0)
+			goto ioctl_out;
 		if (card->state != WAN_DISCONNECTED) {
 			log(LOG_INFO, "%s: Unable to change timeslot map!\n",
 			    ifp->if_xname);
@@ -319,11 +323,15 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		case IF_PROTO_CISCO:
 		case IF_PROTO_PPP:
+			if ((err = suser(p, p->p_acflag)) != 0)
+				goto ioctl_out;
 			err = wp_lite_set_proto(ifp, (struct ifreq*)data);
 			break;
 
 		case IF_IFACE_T1:
 		case IF_IFACE_E1:
+			if ((err = suser(p, p->p_acflag)) != 0)
+				goto ioctl_out;
 			err = wp_lite_set_te1_cfg(ifp, (struct ifreq*)data);
 			break;
 		default:
