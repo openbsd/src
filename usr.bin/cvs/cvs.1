@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.28 2005/01/18 15:16:27 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.29 2005/01/19 18:10:08 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -465,6 +465,40 @@ The
 flag causes
 .Nm
 to prune any directories that have become empty as a result of the update.
+.Pp
+For each file updated, a single letter prefix is given to
+specify the state of the file.
+The possible prefixes are as follows:
+.Bl -tag -width "XXX"
+.It \&?
+The file is unknown to
+.Nm .
+.It A
+The file has been added with the
+.Ic add
+command, but has not been committed to the repository with the
+.Ic commit
+command.
+.It C
+A merge, with a more recent version of the file, has been done,
+but unresolved conflicts still remain.
+.It M
+The file has been locally modified; if a more recent version
+is available, the merge has been done without conflict.
+.It P
+The same as
+.Sq U ,
+but, in client-server mode, only differences are sent to save network
+resources.
+.It R
+The file has been removed with the
+.Ic remove
+command, but has not been committed to the repository with the
+.Ic commit
+command.
+.It U
+The file is up to date.
+.El
 .Pp
 Aliases:
 .Ic up ,
