@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.13 2003/01/09 10:40:44 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.14 2003/01/09 18:55:32 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -152,7 +152,9 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 	if (tname != NULL) {
 		if (strlen(tname) >= PF_TABLE_NAME_SIZE)
 			usage();
-		strlcpy(table.pfrt_name, tname, PF_TABLE_NAME_SIZE);
+		if (strlcpy(table.pfrt_name, tname,
+		    sizeof(table.pfrt_name)) >= sizeof(table.pfrt_name))
+			errx(1, "pfctl_table: strlcpy");
 	}
 	if (!strcmp(*p, "-F")) {
 		if (argc || file != NULL)
@@ -475,7 +477,8 @@ append_addr(char *s, int test)
 		    __progname, (long)strlen(s));
 		exit(1);
 	}
-	strlcpy(buf, s+not, sizeof(buf));
+	if (strlcpy(buf, s+not, sizeof(buf)) >= sizeof(buf))
+		errx(1, "append_addr: strlcpy");
 	p = strrchr(buf, '/');
 	if (test && (not || p))
 		fprintf(stderr, "%s: illegal test address: \"%s\"\n",
@@ -546,7 +549,8 @@ print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 	if (ad->pfra_net < hostnet)
 		printf("/%d", ad->pfra_net);
 	if (rad != NULL && fback != PFR_FB_NONE) {
-		strlcpy(buf, "{error}", sizeof buf);
+		if (strlcpy(buf, "{error}", sizeof(buf)) >= sizeof(buf))
+			errx(1, "print_addrx: strlcpy");
 		inet_ntop(rad->pfra_af, &rad->pfra_u, buf, sizeof(buf));
 		printf("\t%c%s", (rad->pfra_not?'!':' '), buf);
 		if (rad->pfra_net < hostnet)
@@ -559,7 +563,7 @@ print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 		union sockaddr_union sa;
 		int rv;
 
-		bzero(&sa, sizeof sa);
+		bzero(&sa, sizeof(sa));
 		sa.sa.sa_len = (ad->pfra_af == AF_INET) ?
 		    sizeof(sa.sin) : sizeof(sa.sin6);
 		sa.sa.sa_family = ad->pfra_af;
@@ -650,7 +654,9 @@ void    pfctl_define_table(char *name, int flags, int addrs)
 		return;
 	}
 	bzero(&tbl, sizeof(tbl));
-	strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name));
+	if (strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name)) >=
+	    sizeof(tbl.pfrt_name))
+		errx(1, "pfctl_define_table");
 	tbl.pfrt_flags = flags;
 
 	inactive = 1;
