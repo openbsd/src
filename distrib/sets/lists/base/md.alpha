@@ -502,6 +502,10 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/anvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/awireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/awivar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt463reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt463var.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt485reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt485var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/cd1190reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/cd1400reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/comreg.ph
@@ -550,6 +554,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/mc6845.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/midwayreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/midwayvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/monitors.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/mpuvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ncr5380reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ncr5380var.ph
@@ -565,6 +570,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/oplvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pdqreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pdqvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/rln.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/rlncmd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/rlnreg.ph
@@ -645,6 +651,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/iophyreg.ph
@@ -678,6 +685,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/hifn7751var.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_levar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_lmc_types.ph
@@ -1032,6 +1040,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/locale.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/md4.ph
@@ -1666,11 +1675,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt463reg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt463var.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt485reg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt485var.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/monitors.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ramdac.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/dmphyreg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/i82365_pcivar.ph

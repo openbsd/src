@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.25.1
+./usr/lib/libc.so.25.2
 ./usr/lib/libcrypto.so.2.4
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.5.0
@@ -425,8 +425,15 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/zlib.ph
 ./usr/lib/scrt0.o
 ./usr/libdata/perl5/site_perl/mips-openbsd/crypto/rijndael.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/bt463reg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/bt463var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/bt485reg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/bt485var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/monitors.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
@@ -435,6 +442,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/fmsvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph
@@ -442,6 +450,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs
 ./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_cipher.ph
@@ -474,11 +483,3 @@
 ./usr/mipsel-unknown-openbsd2.7/bin
 ./usr/mipsel-unknown-openbsd2.7/lib
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt463reg.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt463var.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt485reg.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt485var.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/monitors.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/ramdac.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/mii/dmphyreg.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/pci/i82365_pcivar.ph

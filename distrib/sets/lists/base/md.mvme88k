@@ -392,6 +392,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/tcfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/tcfs/tcfs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/tcfs/tcfs_cipher.ph

@@ -710,6 +710,7 @@
 ./usr/include/libgen.h
 ./usr/include/limits.h
 ./usr/include/locale.h
+./usr/include/login_cap.h
 ./usr/include/machine
 ./usr/include/malloc.h
 ./usr/include/math.h
@@ -2962,7 +2963,16 @@
 ./usr/share/man/cat3/logbf.0
 ./usr/share/man/cat3/logf.0
 ./usr/share/man/cat3/login.0
+./usr/share/man/cat3/login_cap.0
+./usr/share/man/cat3/login_close.0
 ./usr/share/man/cat3/login_fbtab.0
+./usr/share/man/cat3/login_getcapbool.0
+./usr/share/man/cat3/login_getcapnum.0
+./usr/share/man/cat3/login_getcapsize.0
+./usr/share/man/cat3/login_getcapstr.0
+./usr/share/man/cat3/login_getcaptime.0
+./usr/share/man/cat3/login_getclass.0
+./usr/share/man/cat3/login_getstyle.0
 ./usr/share/man/cat3/login_tty.0
 ./usr/share/man/cat3/logout.0
 ./usr/share/man/cat3/logwtmp.0
@@ -3364,6 +3374,7 @@
 ./usr/share/man/cat3/scsireq_enter.0
 ./usr/share/man/cat3/scsireq_new.0
 ./usr/share/man/cat3/scsireq_reset.0
+./usr/share/man/cat3/secure_path.0
 ./usr/share/man/cat3/seed48.0
 ./usr/share/man/cat3/seekdir.0
 ./usr/share/man/cat3/set_current_field.0
@@ -3417,6 +3428,7 @@
 ./usr/share/man/cat3/set_top_row.0
 ./usr/share/man/cat3/setbuf.0
 ./usr/share/man/cat3/setbuffer.0
+./usr/share/man/cat3/setclasscontext.0
 ./usr/share/man/cat3/setdomainname.0
 ./usr/share/man/cat3/setenv.0
 ./usr/share/man/cat3/setfsent.0
@@ -3451,6 +3463,7 @@
 ./usr/share/man/cat3/setterm.0
 ./usr/share/man/cat3/setttyent.0
 ./usr/share/man/cat3/setupterm.0
+./usr/share/man/cat3/setusercontext.0
 ./usr/share/man/cat3/setusershell.0
 ./usr/share/man/cat3/setvbuf.0
 ./usr/share/man/cat3/sha1.0

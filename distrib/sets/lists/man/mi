@@ -1279,12 +1279,14 @@
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
+./usr/share/man/cat5/login.conf.0
 ./usr/share/man/cat5/mac68k
 ./usr/share/man/cat5/magic.0
 ./usr/share/man/cat5/mailer.conf.0
 ./usr/share/man/cat5/malloc.conf.0
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
+./usr/share/man/cat5/master.passwd.0
 ./usr/share/man/cat5/motd.0
 ./usr/share/man/cat5/mvme68k
 ./usr/share/man/cat5/mvme88k
