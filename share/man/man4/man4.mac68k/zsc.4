@@ -1,0 +1,122 @@
+.\"	$OpenBSD: zsc.4,v 1.1 2004/03/08 22:56:36 miod Exp $
+.\"	$NetBSD: zstty.4,v 1.7 2003/05/06 08:15:04 wiz Exp $
+.\"
+.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Gordon W. Ross.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Copyright (c) 1990, 1991 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Systems Programming Group of the University of Utah Computer
+.\" Science Department.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
+.\"	$NetBSD: zsc.4,v 1.5 2003/08/07 10:31:07 agc Exp $
+.\"
+.Dd March 8, 2004
+.Dt ZSC 4 mac68k
+.Os
+.Sh NAME
+.Nm zsc
+.Nd
+.Tn Zilog
+8530 (ZSCC) serial communications driver
+.Sh SYNOPSIS
+.Cd "zsc0 at obio?"
+.Cd "zstty* at zsc? channel ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for Z8530- and Z85230-compatible
+.Tn EIA
+.Tn RS-232C
+.Pf ( Tn CCITT
+.Tn V.28 )
+Dual
+.Tn UART
+chips.
+The Z8530 has a 3 character buffer, while the Z85230 has a 8 character buffer.
+However, due to limitations in the design of the Z85230, the driver is unable
+to distinguish it from the Z8530 and will not enable any enhanced features of
+the device.
+.Pp
+Input and output for each line may be set to any baud rate in the
+range from 50 to 115200 (though some machines will not support more than
+38400 reliably).
+.Pp
+The
+.Nm zstty
+driver provides a terminal interface, supporting all the standard
+.Xr tty 4
+ioctl calls.
+.Sh FILES
+.Bl -tag -width /dev/ttya -compact
+.It Pa /dev/ttya
+.It Pa /dev/ttyb
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr intro 4 ,
+.Xr tty 4
+.Sh BUGS
+Due to the small character buffer on the
+.Tn Zilog
+8530 chip, the driver has very strict latency requirements for its interrupt
+service routine.
+As a result, data loss may occur when using high speeds, particularly on older
+(68020 or 68030) Macintosh models and on busy systems.
