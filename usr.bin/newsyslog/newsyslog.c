@@ -1,7 +1,7 @@
-/*	$OpenBSD: newsyslog.c,v 1.47 2002/09/12 19:58:38 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.48 2002/09/13 00:16:13 millert Exp $	*/
 
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.47 2002/09/12 19:58:38 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.48 2002/09/13 00:16:13 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -110,23 +110,23 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.47 2002/09/12 19:58:38 millert 
 #define SENDMAIL "/usr/lib/sendmail"
 #endif
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
-#include <stdlib.h>
-#include <string.h>
+
 #include <ctype.h>
-#include <signal.h>
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <pwd.h>
 #include <grp.h>
 #include <limits.h>
-#include <errno.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #define CE_ROTATED	0x01		/* Log file has been rotated */
 #define CE_COMPACT	0x02		/* Compact the achived log files */
@@ -167,9 +167,8 @@ time_t  timenow;
 char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;		/* timenow in human readable form */
 
-
 void do_entry(struct conf_entry *);
-void PRS(int, char **);
+void parse_args(int, char **);
 void usage(void);
 struct conf_entry *parse_file(int *);
 char *missing_field(char *, char *);
@@ -183,21 +182,18 @@ char *son(char *);
 int isnumberstr(char *);
 void domonitor(char *, char *);
 FILE *openmail(void);
-void closemail(FILE *);
 void child_killer(int);
 void run_command(char *);
 void send_signal(char *, int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct conf_entry *p, *q;
 	struct pidinfo *pidlist, *pl;
 	int status, listlen;
 	
-	PRS(argc, argv);
+	parse_args(argc, argv);
 	if (needroot && getuid() && geteuid())
 		errx(1, "You must be root.");
 	p = q = parse_file(&listlen);
@@ -264,17 +260,15 @@ main(argc, argv)
 }
 
 void
-do_entry(ent)
-	struct conf_entry       *ent;
-	
+do_entry(struct conf_entry *ent)
 {
-	int	modtime, size;
-	struct	stat sta;
+	int modtime, size;
+	struct stat sb;
 
 	if (!(ent->flags & CE_FOLLOW)) {
-		if (lstat(ent->log, &sta) != 0)
+		if (lstat(ent->log, &sb) != 0)
 			return;
-		if ((sta.st_mode & S_IFLNK) != S_IFREG) {
+		if ((sb.st_mode & S_IFLNK) != S_IFREG) {
 			if (verbose) {
 				printf("--> %s is not a regular file, skip\n",
 				    ent->log);
@@ -316,10 +310,8 @@ do_entry(ent)
 
 /* Run the specified command */
 void
-run_command(cmd)
-	char	*cmd;
+run_command(char *cmd)
 {
-
 	if (noaction)
 		(void)printf("run %s\n", cmd);
 	else
@@ -328,22 +320,19 @@ run_command(cmd)
 
 /* Send a signal to the pid specified by pidfile */
 void
-send_signal(pidfile, signal)
-	char	*pidfile;
-	int	signal;
+send_signal(char *pidfile, int signal)
 {
-	char    line[BUFSIZ];
-	pid_t	pid = 0;
-	FILE	*f;
+	pid_t pid;
+	FILE *f;
+	char line[BUFSIZ], *ep, *err;
 	unsigned long ulval;
-	char *ep;
-	char *err;
 
 	if ((f = fopen(pidfile, "r")) == NULL) {
 		warn("can't open %s", pidfile);
 		return;
 	}
 
+	pid = 0;
 	errno = 0;
 	err = NULL;
 	if (fgets(line, sizeof(line), f)) {
@@ -376,12 +365,10 @@ send_signal(pidfile, signal)
 }
 
 void
-PRS(argc, argv)
-	int argc;
-	char **argv;
+parse_args(int argc, char **argv)
 {
-	int     c;
-	char	*p;
+	int ch;
+	char *p;
 
 	timenow = time(NULL);
 	daytime = ctime(&timenow) + 4;
@@ -391,13 +378,11 @@ PRS(argc, argv)
 	(void)gethostname(hostname, sizeof(hostname));
 
 	/* Truncate domain */
-	p = strchr(hostname, '.');
-	if (p)
+	if ((p = strchr(hostname, '.')) != NULL)
 		*p = '\0';
 
-	optind = 1;	     /* Start options parsing */
-	while ((c = getopt(argc, argv, "nrvmf:")) != -1) {
-		switch (c) {
+	while ((ch = getopt(argc, argv, "nrvmf:")) != -1) {
+		switch (ch) {
 		case 'n':
 			noaction++; /* This implies needroot as off */
 			/* fall through */
@@ -420,7 +405,7 @@ PRS(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	extern const char *__progname;
 
@@ -433,29 +418,26 @@ usage()
  * to process
  */
 struct conf_entry *
-parse_file(nentries)
-	int *nentries;
+parse_file(int *nentries)
 {
-	FILE    *f;
-	char    line[BUFSIZ], *parse, *q;
-	char    *errline, *group, *tmp;
+	FILE *f;
+	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp;
 	struct conf_entry *first = NULL;
 	struct conf_entry *working = NULL;
-	struct passwd *pass;
+	struct passwd *pwd;
 	struct group *grp;
 
 	if (strcmp(conf, "-") == 0)
 		f = stdin;
-	else {
-		if ((f = fopen(conf, "r")) == NULL)
-			err(1, "can't open %s", conf);
-	}
+	else if ((f = fopen(conf, "r")) == NULL)
+		err(1, "can't open %s", conf);
 
 	*nentries = 0;
 	while (fgets(line, sizeof(line), f)) {
-		if ((line[0] == '\n') || (line[0] == '#'))
+		tmp = sob(line);
+		if (*tmp == '\n' || *tmp == '#')
 			continue;
-		errline = strdup(line);
+		errline = strdup(tmp);
 		if (errline == NULL)
 			err(1, "strdup");
 		(*nentries)++;
@@ -483,9 +465,9 @@ parse_file(nentries)
 			*group++ = '\0';
 			if (*q) {
 				if (!(isnumberstr(q))) {
-					if ((pass = getpwnam(q)) == NULL)
+					if ((pwd = getpwnam(q)) == NULL)
 						errx(1, "Error in config file; unknown user: %s", q);
-					working->uid = pass->pw_uid;
+					working->uid = pwd->pw_uid;
 				} else
 					working->uid = atoi(q);
 			} else
@@ -618,40 +600,33 @@ parse_file(nentries)
 	if (working)
 		working->next = NULL;
 	(void)fclose(f);
-	return(first);
+	return (first);
 }
 
 char *
-missing_field(p, errline)
-	char    *p;
-	char    *errline;
+missing_field(char *p, char *errline)
 {
 	if (!p || !*p) {
 		warnx("Missing field in config file line:");
 		fputs(errline, stderr);
 		exit(1);
 	}
-	return(p);
+	return (p);
 }
 
 void
-dotrim(log, numdays, flags, perm, owner_uid, group_gid)
-	char    *log;
-	int     numdays;
-	int     flags;
-	int     perm;
-	uid_t   owner_uid;
-	gid_t   group_gid;
+dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
+    gid_t group_gid)
 {
 	char    file1[MAXPATHLEN], file2[MAXPATHLEN];
 	char    zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
 	int     fd;
-	struct  stat st;
+	struct  stat sb;
 	int	days = numdays;
 
 	/* Remove oldest log (may not exist) */
-	(void)snprintf(file1, sizeof file1, "%s.%d", log, numdays);
-	(void)snprintf(zfile1, sizeof zfile1, "%s.%d%s", log, numdays,
+	(void)snprintf(file1, sizeof(file1), "%s.%d", log, numdays);
+	(void)snprintf(zfile1, sizeof(zfile1), "%s.%d%s", log, numdays,
 	    COMPRESS_POSTFIX);
 
 	if (noaction) {
@@ -663,14 +638,14 @@ dotrim(log, numdays, flags, perm, owner_uid, group_gid)
 
 	/* Move down log files */
 	while (numdays--) {
-		(void)strlcpy(file2, file1, sizeof file2);
-		(void)snprintf(file1, sizeof file1, "%s.%d", log, numdays);
-		(void)strlcpy(zfile1, file1, sizeof zfile1);
-		(void)strlcpy(zfile2, file2, sizeof zfile2);
-		if (lstat(file1, &st)) {
-			(void)strlcat(zfile1, COMPRESS_POSTFIX, sizeof zfile1);
-			(void)strlcat(zfile2, COMPRESS_POSTFIX, sizeof zfile2);
-			if (lstat(zfile1, &st))
+		(void)strlcpy(file2, file1, sizeof(file2));
+		(void)snprintf(file1, sizeof(file1), "%s.%d", log, numdays);
+		(void)strlcpy(zfile1, file1, sizeof(zfile1));
+		(void)strlcpy(zfile2, file2, sizeof(zfile2));
+		if (lstat(file1, &sb)) {
+			(void)strlcat(zfile1, COMPRESS_POSTFIX, sizeof(zfile1));
+			(void)strlcat(zfile2, COMPRESS_POSTFIX, sizeof(zfile2));
+			if (lstat(zfile1, &sb))
 				continue;
 		}
 		if (noaction) {
@@ -727,28 +702,25 @@ dotrim(log, numdays, flags, perm, owner_uid, group_gid)
 
 /* Log the fact that the logs were turned over */
 int
-log_trim(log)
-	char    *log;
+log_trim(char *log)
 {
 	FILE    *f;
 
 	if ((f = fopen(log, "a")) == NULL)
-		return(-1);
+		return (-1);
 	(void)fprintf(f, "%s %s newsyslog[%ld]: logfile turned over\n",
 	    daytime, hostname, (long)getpid());
 	if (fclose(f) == EOF)
 		err(1, "log_trim: fclose");
-	return(0);
+	return (0);
 }
 
 /* Fork off compress or gzip to compress the old log file */
 void
-compress_log(log)
-	char    *log;
+compress_log(char *log)
 {
-	pid_t   pid;
-	char	*base;
-	char    tmp[MAXPATHLEN];
+	pid_t pid;
+	char *base, tmp[MAXPATHLEN];
 	
 	if ((base = strrchr(COMPRESS, '/')) == NULL)
 		base = COMPRESS;
@@ -759,7 +731,7 @@ compress_log(log)
 		return;
 	}
 	pid = fork();
-	(void)snprintf(tmp, sizeof tmp, "%s.0", log);
+	(void)snprintf(tmp, sizeof(tmp), "%s.0", log);
 	if (pid < 0) {
 		err(1, "fork");
 	} else if (!pid) {
@@ -771,69 +743,63 @@ compress_log(log)
 
 /* Return size in kilobytes of a file */
 int
-sizefile(file)
-	char    *file;
+sizefile(char *file)
 {
 	struct stat sb;
 
 	if (stat(file, &sb) < 0)
-		return(-1);
-	return(sb.st_blocks / (1024.0 / DEV_BSIZE));
+		return (-1);
+	return (sb.st_blocks / (1024.0 / DEV_BSIZE));
 }
 
 /* Return the age (in hours) of old log file (file.0), or -1 if none */
 int
-age_old_log(file)
-	char    *file;
+age_old_log(char *file)
 {
 	struct stat sb;
 	char tmp[MAXPATHLEN];
 
-	(void)strlcpy(tmp, file, sizeof tmp);
-	strlcat(tmp, ".0", sizeof tmp);
+	(void)strlcpy(tmp, file, sizeof(tmp));
+	strlcat(tmp, ".0", sizeof(tmp));
 	if (stat(tmp, &sb) < 0) {
-		strlcat(tmp, COMPRESS_POSTFIX, sizeof tmp);
+		strlcat(tmp, COMPRESS_POSTFIX, sizeof(tmp));
 		if (stat(tmp, &sb) < 0)
-			return(-1);
+			return (-1);
 	}
-	return( (int) (timenow - sb.st_mtime + 1800) / 3600);
+	return ((int)(timenow - sb.st_mtime + 1800) / 3600);
 }
 
 /* Skip Over Blanks */
 char *
-sob(p)
-	char   *p;
+sob(char *p)
 {
 	while (p && *p && isspace(*p))
 		p++;
-	return(p);
+	return (p);
 }
 
 /* Skip Over Non-Blanks */
 char *
-son(p)
-	char   *p;
+son(char *p)
 {
 	while (p && *p && !isspace(*p))
 		p++;
-	return(p);
+	return (p);
 }
 
 /* Check if string is actually a number */
 int
-isnumberstr(string)
-	char *string;
+isnumberstr(char *string)
 {
 	while (*string) {
 		if (!isdigit(*string++))
-			return(0);
+			return (0);
 	}
-	return(1);
+	return (1);
 }
 
 void
-domonitor(log, whom)
-	char *log, *whom;
+domonitor(char *log, char *whom)
 {
 	struct stat sb, tsb;
 	char fname[MAXPATHLEN], *flog, *p, *rb = NULL;
@@ -852,7 +818,7 @@ domonitor(log, whom)
 		if (*p == '/')
 			*p = '_';
 	}
-	snprintf(fname, sizeof fname, "%s/newsyslog.%s.size",
+	snprintf(fname, sizeof(fname), "%s/newsyslog.%s.size",
 	    STATS_DIR, flog);
 
 	/* ..if it doesn't exist, simply record the current size. */
@@ -912,7 +878,7 @@ domonitor(log, whom)
 		fwrite(rb, 1, rd, fp);
 		fputs("\n\n", fp);
 
-		closemail(fp);
+		pclose(fp);
 	}
 update:
 	/* Reopen for writing and update file. */
@@ -935,10 +901,10 @@ cleanup:
 }
 
 FILE *
-openmail()
+openmail(void)
 {
-	char *cmdbuf = NULL;
 	FILE *ret;
+	char *cmdbuf = NULL;
 
 	asprintf(&cmdbuf, "%s -t", SENDMAIL);
 	if (cmdbuf) {
@@ -950,15 +916,7 @@ openmail()
 }
 
 void
-closemail(pfp)
-	FILE *pfp;
-{
-	pclose(pfp);
-}
-
-void
-child_killer(signum)
-	int signum;
+child_killer(int signo)
 {
 	int save_errno = errno;
 	int status;
