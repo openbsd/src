@@ -33,7 +33,7 @@
 .\"***************************************************************************
 .\"
 .\" $From: terminfo.head,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: terminfo.5tbl,v 1.8 2000/06/19 03:53:36 millert Exp $
+.\" $OpenBSD: terminfo.5tbl,v 1.9 2000/08/03 17:11:48 naddy Exp $
 .TH TERMINFO 5 "" "" "File Formats"
 .ds n 5
 .ds d /usr/share/terminfo
@@ -3114,7 +3114,7 @@ file containing terminal descriptions on OpenBSD
 \*d/?/*
 files containing terminal descriptions on other systems
 .SH "SEE ALSO"
-\fBinfo_mkdb(1)\fR, \fBtic\fR(1M), \fBcurses\fR(3), \fBprintf\fR(3), \fBterm\fR(\*n).
+\fBcap_mkdb(1)\fR, \fBtic\fR(1M), \fBcurses\fR(3), \fBprintf\fR(3), \fBterm\fR(\*n).
 .SH AUTHORS
 Zeyd M. Ben-Halim, Eric S. Raymond, Thomas E. Dickey.
 Based on pcurses by Pavel Curtis.
