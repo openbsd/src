@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.31 2004/10/03 19:23:02 otto Exp $	*/
+/*	$OpenBSD: grep.c,v 1.32 2005/04/03 19:12:40 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -175,16 +175,21 @@ add_pattern(char *pat, size_t len)
 		--len;
 	/* pat may not be NUL-terminated */
 	if (wflag && !Fflag) {
-		int bol = 0, eol = 0;
+		int bol = 0, eol = 0, extra;
 		if (pat[0] == '^')
 			bol = 1;
 		if (pat[len - 1] == '$')
 			eol = 1;
-		pattern[patterns] = grep_malloc(len + 15);
-		snprintf(pattern[patterns], len + 15, "%s[[:<:]]%.*s[[:>:]]%s",
-		    bol ? "^" : "", (int)len - bol - eol, pat + bol,
+		extra = Eflag ? 2 : 4;
+		pattern[patterns] = grep_malloc(len + 15 + extra);
+		snprintf(pattern[patterns], len + 15 + extra,
+		   "%s[[:<:]]%s%.*s%s[[:>:]]%s",
+		    bol ? "^" : "",
+		    Eflag ? "(" : "\\(",
+		    (int)len - bol - eol, pat + bol,
+		    Eflag ? ")" : "\\)",
 		    eol ? "$" : "");
-		len += 14;
+		len += 14 + extra;
 	} else {
 		pattern[patterns] = grep_malloc(len + 1);
 		memcpy(pattern[patterns], pat, len);
