@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.5 1997/06/27 18:37:05 deraadt Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.6 1997/06/28 14:45:43 grr Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.5 1997/06/27 18:37:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.6 1997/06/28 14:45:43 grr Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: chmod.c,v 1.5 1997/06/27 18:37:05 deraadt Exp $
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <locale.h>
 
 void usage __P((void));
 
