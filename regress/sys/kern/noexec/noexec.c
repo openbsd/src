@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.5 2003/05/03 00:08:58 mickey Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.6 2003/05/05 15:34:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -44,9 +44,10 @@ int page_size;
 char label[64] = "non-exec ";
 
 #define PAD 64*1024
+#define	MAXPAGESIZE 8192
 #define TESTSZ 256	/* assuming the testfly() will fit */
-u_int64_t data[(PAD + TESTSZ + PAD) / 8] = { 0 };
-u_int64_t bss[(PAD + TESTSZ + PAD) / 8];
+u_int64_t data[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8] = { 0 };
+u_int64_t bss[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8];
 
 void testfly();
 
@@ -188,11 +189,13 @@ main(int argc, char *argv[])
 			strcat(label, "text");
 			break;
 		case 'D':
-			p = &data[PAD/8];
+			p = &data[(PAD + page_size) / 8];
+			p = (void *)((long)p & ~(page_size - 1));
 			strcat(label, "data");
 			break;
 		case 'B':
-			p = &bss[PAD/8];
+			p = &bss[(PAD + page_size) / 8];
+			p = (void *)((long)p & ~(page_size - 1));
 			strcat(label, "bss");
 			break;
 		case 'H':
@@ -200,7 +203,7 @@ main(int argc, char *argv[])
 			if (p == NULL)
 				err(2, "malloc");
 			p += page_size;
-			p = (void *)ALIGN((long)p);
+			p = (void *)((long)p & ~(page_size - 1));
 			strcat(label, "heap");
 			break;
 		case 'S':
@@ -220,7 +223,7 @@ main(int argc, char *argv[])
 			if (p) {
 				if ((ptr = mmap(p, size + 2 * page_size,
 				    PROT_READ|PROT_WRITE,
-				    MAP_ANON, -1, 0)) == MAP_FAILED)
+				    MAP_ANON|MAP_FIXED, -1, 0)) == MAP_FAILED)
 					err(1, "mmap");
 				strcat(label, "-mmap");
 			} else {
