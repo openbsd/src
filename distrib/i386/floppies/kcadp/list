@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1 1996/01/12 03:13:44 deraadt Exp $
+#	$Id: list,v 1.2 1996/02/02 07:24:34 dm Exp $
 
 # copy the kernel
-COPY	${CURDIR}/../../../../sys/arch/i386/compile/INSTADP/netbsd	netbsd
+COPY	${CURDIR}/../../../../sys/arch/i386/compile/INSTADP/bsd	bsd

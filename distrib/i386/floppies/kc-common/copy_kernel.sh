@@ -1,10 +1,10 @@
-#	$Id: copy_kernel.sh,v 1.1.1.1 1995/10/18 08:37:35 deraadt Exp $
+#	$Id: copy_kernel.sh,v 1.2 1996/02/02 07:24:33 dm Exp $
 #
 #	Kernel copy script
 
 DEFAULT_PARTITON=sd0a
 MOUNT_POINT=/mnt
-KERNEL_NAME=/netbsd
+KERNEL_NAME=/bsd
 #TEST=testfn
 
 testfn() {

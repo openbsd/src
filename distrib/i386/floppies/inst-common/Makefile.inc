@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.1.1.1 1995/10/18 08:37:33 deraadt Exp $
+#	$Id: Makefile.inc,v 1.2 1996/02/02 07:24:30 dm Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -17,9 +17,15 @@ CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 
 all: ${CBIN}
-	dd if=/dev/zero of=${IMAGE} bs=100k count=12
+.ifndef FLOPPY3
+	dd if=/dev/zero of=${IMAGE} bs=10k count=120
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
 	newfs -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} floppy5
+.else
+	dd if=/dev/zero of=${IMAGE} bs=10k count=144
+	vnconfig -v -c ${VND_DEV} ${IMAGE}
+	newfs -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} floppy3
+.endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
