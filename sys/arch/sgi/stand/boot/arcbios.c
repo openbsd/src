@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.1 2004/08/23 14:22:40 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.2 2004/08/25 18:19:35 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -267,7 +267,6 @@ devopen(struct open_file *f, const char *fname, char **file)
 	/*
 	 *  Dig out the driver.
 	 */
-printf("looking: %s, %s, %d\n", devname, namebuf, partition);
 	dp = devsw;
 	n = ndevs;
 	while(n--) {

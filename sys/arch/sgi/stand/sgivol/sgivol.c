@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 	if (betoh32(volhdr->magic) != SGILABEL_MAGIC) {
 		printf("No Volume Header found, magic=%x.  Use -i first.\n", 
 		       betoh32(volhdr->magic));
-		exit(1);
+		exit(2);
 	}
 	if (opt_r) {
 		read_file();
