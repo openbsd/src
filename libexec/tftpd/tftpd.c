@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.21 2002/02/01 06:05:22 itojun Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.22 2002/05/13 07:44:48 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.21 2002/02/01 06:05:22 itojun Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.22 2002/05/13 07:44:48 mpech Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -170,6 +170,12 @@ main(argc, argv)
 		ndirs++;
 	}
 
+	pw = getpwnam("nobody");
+	if (!pw) {
+		syslog(LOG_ERR, "no nobody: %m");
+		exit(1);
+	}
+
 	if (secure) {
 		if (ndirs == 0) {
 			syslog(LOG_ERR, "no -s directory");
@@ -179,21 +185,14 @@ main(argc, argv)
 			syslog(LOG_ERR, "too many -s directories");
 			exit(1);
 		}
-		if (chdir(dirs[0])) {
-			syslog(LOG_ERR, "%s: %m", dirs[0]);
+		if (chroot(dirs[0])) {
+			syslog(LOG_ERR, "chroot %s: %m", dirs[0]);
 			exit(1);
 		}
-	}
-
-	pw = getpwnam("nobody");
-	if (!pw) {
-		syslog(LOG_ERR, "no nobody: %m");
-		exit(1);
-	}
-
-	if (secure && chroot(".")) {
-		syslog(LOG_ERR, "chroot: %m");
-		exit(1);
+		if (chdir("/")) {
+			syslog(LOG_ERR, "chdir: %m");
+			exit(1);
+		}
 	}
 
 	(void) setegid(pw->pw_gid);

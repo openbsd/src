@@ -1,4 +1,4 @@
-/* $OpenBSD: smtpd.c,v 1.11 2001/01/28 19:34:34 niklas Exp $*/
+/* $OpenBSD: smtpd.c,v 1.12 2002/05/13 07:44:48 mpech Exp $*/
 
 /*
  * smtpd, Obtuse SMTP daemon, storing agent. does simple collection of
@@ -41,7 +41,7 @@
 
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$OpenBSD: smtpd.c,v 1.11 2001/01/28 19:34:34 niklas Exp $";
+char *obtuse_rcsid = "$OpenBSD: smtpd.c,v 1.12 2002/05/13 07:44:48 mpech Exp $";
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -2368,14 +2368,13 @@ main(int argc, char **argv)
   }
       
   if (chrootdir != NULL) {
-    if (chdir(chrootdir) != 0) {
-      syslog(LOG_CRIT, "Couldn't chdir to directory %s! (%m)",
-	     chrootdir);
-      exit(EX_CONFIG);
-    }
     if (chroot(chrootdir) != 0) {
       syslog(LOG_CRIT, "Couldn't chroot to directory %s! (%m)",
 	     chrootdir);
+      exit(EX_CONFIG);
+    }
+    if (chdir("/") != 0) {
+      syslog(LOG_CRIT, "Couldn't chdir! (%m)");
       exit(EX_CONFIG);
     }
   } else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.3 2000/08/17 15:28:36 mickey Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.4 2002/05/13 07:44:48 mpech Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chroot.c	5.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: chroot.c,v 1.3 2000/08/17 15:28:36 mickey Exp $";
+static char rcsid[] = "$OpenBSD: chroot.c,v 1.4 2002/05/13 07:44:48 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -62,7 +62,7 @@ main(argc, argv)
 		(void)fprintf(stderr, "usage: chroot newroot [command]\n");
 		exit(1);
 	}
-	if (chdir(argv[1]) || chroot("."))
+	if (chroot(argv[1]) || chdir("/"))
 		err(1, "%s", argv[1]);
 	if (argv[2]) {
 		execvp(argv[2], &argv[2]);
