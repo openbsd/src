@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.8 1997/04/19 17:19:57 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
-#ifdef _LOCORE
+#if defined(_LOCORE) && defined(notyet)
 #define	UADDR		0xffffffffffffc000	/* address of u */
 #else
 #define	UADDR		0xffffc000	/* address of u */
