@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.6 2004/07/09 14:56:57 jaredy Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.7 2004/07/13 19:51:38 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -21,15 +21,10 @@
 .Nm ntpd.conf
 .Nd Network Time Protocol daemon configuration file
 .Sh DESCRIPTION
-The
+This manual page describes the format of the
 .Xr ntpd 8
-daemon implements the Network Time Protocol
-.Pq NTP
-version 4.
-This manual page describes the format of its configuration file,
-.Nm .
-.Pp
-The configuration file has the following format:
+configuration file.
+It has the following format:
 .Pp
 Empty lines and lines beginning with the
 .Sq #
@@ -85,14 +80,14 @@ servers pool.ntp.org
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ntpd.conf" -compact
+.Bl -tag -width "/etc/ntpd.confXXX" -compact
 .It Pa /etc/ntpd.conf
+default
 .Xr ntpd 8
 configuration file
 .El
 .Sh SEE ALSO
-.Xr ntpd 8 ,
-.Xr rdate 8
+.Xr ntpd 8
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.4 2004/07/09 19:33:09 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.5 2004/07/13 19:51:38 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -29,25 +29,55 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon implements the Simple Network Time Protocol version 4 as described
-in RFC 2030 and the Network Time Protocol version 3 as described in RFC 1305.
-It can synchronize the local clock to one or more remote NTP servers and act
-as NTP server itself, redistributing the local time.
+daemon synchronizes the local clock to one or more remote NTP servers,
+and can also act as an NTP server itself,
+redistributing the local time.
+It implements the Simple Network Time Protocol version 4,
+as described in RFC 2030,
+and the Network Time Protocol version 3,
+as described in RFC 1305.
+.Pp
+.Nm
+is usually started at boot time, and can be enabled by
+setting the following in
+.Pa /etc/rc.conf.local :
+.Pp
+.Dl ntpd_flags=\&"\&"
+.Pp
+See
+.Xr rc 8
+and
+.Xr rc.conf 8
+for more information on the boot process
+and enabling daemons.
+.Pp
+When
+.Nm
+starts up, it reads settings from a configuration file,
+typically
+.Xr ntpd.conf 5 .
+.Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-f fileXXX"
 .It Fl d
-Do not daemonize and log to
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
 .Em stderr .
 .It Fl f Ar file
-Specify an alternate location,
-.Ar file ,
-for the configuration file.
+Use
+.Ar file
+as the configuration file,
+instead of the default
+.Pa /etc/ntpd.conf .
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ntpd.conf" -compact
+.Bl -tag -width "/etc/ntpd.confXXX" -compact
 .It Pa /etc/ntpd.conf
+default
 .Nm
-configuration file.
+configuration file
 .El
 .Sh SEE ALSO
 .Xr date 1 ,
