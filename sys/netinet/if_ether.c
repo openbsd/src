@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.13 1999/03/13 21:15:16 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.14 1999/05/16 00:34:40 ho Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -493,9 +493,21 @@ in_arpinput(m)
 	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
-		    bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen))
-			log(LOG_INFO, "arp info overwritten for %s by %s\n",
-			    inet_ntoa(isaddr), ether_sprintf(ea->arp_sha));
+		    bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
+		  	if (rt->rt_flags & RTF_PERMANENT_ARP) {
+				log(LOG_WARNING,
+				   "arp: attempt to overwrite permanent "
+				   "entry for %s by %s\n", inet_ntoa(isaddr),
+				   ether_sprintf(ea->arp_sha));
+				goto out;
+			} else {
+				log(LOG_INFO,
+				   "arp info overwritten for %s by %s\n",
+			    	   inet_ntoa(isaddr), 
+				   ether_sprintf(ea->arp_sha));
+				rt->rt_expire = 1; /* no longer static */
+			}
+		}
 		bcopy((caddr_t)ea->arp_sha, LLADDR(sdl),
 		    sdl->sdl_alen = sizeof(ea->arp_sha));
 		if (rt->rt_expire)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.6 1999/01/07 09:11:52 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.7 1999/05/16 00:34:40 ho Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -148,8 +148,9 @@ struct sockaddr_inarp {
 /*
  * IP and ethernet specific routing flags
  */
-#define	RTF_USETRAILERS	RTF_PROTO1	/* use trailers */
-#define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
+#define	RTF_USETRAILERS	  RTF_PROTO1	/* use trailers */
+#define	RTF_ANNOUNCE	  RTF_PROTO2	/* announce new arp entry */
+#define	RTF_PERMANENT_ARP RTF_PROTO3    /* only manual overwrite of entry */
 
 #ifdef	_KERNEL
 u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
