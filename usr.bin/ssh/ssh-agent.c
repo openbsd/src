@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh-agent.c,v 1.19 1999/11/18 14:00:49 markus Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.20 1999/11/19 10:20:51 markus Exp $	*/
 
 /*
 
@@ -16,7 +16,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.19 1999/11/18 14:00:49 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.20 1999/11/19 10:20:51 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -58,6 +58,8 @@ int parent_pid = -1;
 /* pathname and directory for AUTH_SOCKET */
 char socket_name[1024];
 char socket_dir[1024];
+
+extern char *__progname;
 
 void
 process_request_identity(SocketEntry *e)
@@ -504,8 +506,6 @@ cleanup_exit(int i)
 void
 usage()
 {
-  extern char *__progname;
-
   fprintf(stderr, "ssh-agent version %s\n", SSH_VERSION);
   fprintf(stderr, "Usage: %s [-c | -s] [-k] [command {args...]]\n",
 	  __progname);
@@ -523,7 +523,6 @@ main(int ac, char **av)
 
   /* check if RSA support exists */
   if (rsa_alive() == 0) {
-    extern char *__progname;
     fprintf(stderr,
       "%s: no RSA support in libssl and libcrypto.  See ssl(8).\n",
       __progname);
