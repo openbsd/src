@@ -402,6 +402,9 @@ case "${target}" in
   alpha*-*-*vms*)
     noconfigdirs="$noconfigdirs gdb ld target-newlib target-libgloss"
     ;;
+  alpha*-*-openbsd*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
   alpha*-*-*)
     # newlib is not 64 bit ready
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
@@ -529,6 +532,9 @@ case "${target}" in
     ;;
   mips*-*-bsd*)
     noconfigdirs="$noconfigdirs gprof target-libgloss"
+    ;;
+  mips*-*-openbsd*)
+    noconfigdirs="$noconfigdirs gdb"
     ;;
   mips*-*-*)
     noconfigdirs="$noconfigdirs gprof"
