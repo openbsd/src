@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.8 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.9 2004/12/03 21:08:40 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -419,12 +419,14 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
  * cvs_resp_newentry()
  *
  * Handler for the `New-entry' response and `Checked-in' responses.
+ * In the case of `New-entry', we expect the entry line
  */
 
 static int
 cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 {
 	char entbuf[128];
+	struct cvs_ent *ent;
 	CVSENTRIES *entfile;
 
 	/* get the remote path */
@@ -437,7 +439,27 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 	entfile = cvs_ent_open(line, O_WRONLY);
 	if (entfile == NULL)
 		return (-1);
-	cvs_ent_addln(entfile, entbuf);
+	if (type == CVS_RESP_NEWENTRY) {
+		cvs_ent_addln(entfile, entbuf);
+	}
+	else if (type == CVS_RESP_CHECKEDIN) {
+		ent = cvs_ent_parse(entbuf);
+		if (ent == NULL) {
+			cvs_log(LP_ERR, "failed to parse entry");
+			cvs_ent_close(entfile);
+			return (-1);
+		}
+
+		/* timestamp it to now */
+		ent->ce_mtime = time(&(ent->ce_mtime));
+
+		/* replace the current entry with the one we just received */
+		if (cvs_ent_remove(entfile, ent->ce_name) < 0)
+			cvs_log(LP_WARN, "failed to remove `%s' entry",
+			    ent->ce_name);
+
+		cvs_ent_add(entfile, ent);
+	}
 	cvs_ent_close(entfile);
 
 	return (0);
