@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.12 1996/08/07 03:27:54 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.13 1996/08/08 16:22:37 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -196,6 +196,7 @@ static void	 end_login __P((void));
 static FILE	*getdatasock __P((char *));
 static char	*gunique __P((char *));
 static void	 lostconn __P((int));
+static void	 sigquit __P((int));
 static int	 receive_data __P((FILE *, FILE *));
 static void	 send_data __P((FILE *, FILE *, off_t, off_t, int));
 static struct passwd *
@@ -372,6 +373,10 @@ main(argc, argv, envp)
 		}
 	}
 
+	(void) signal(SIGHUP, sigquit);
+	(void) signal(SIGINT, sigquit);
+	(void) signal(SIGQUIT, sigquit);
+	(void) signal(SIGTERM, sigquit);
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
 	if ((long)signal(SIGURG, myoob) < 0)
@@ -440,6 +445,10 @@ main(argc, argv, envp)
 	/* NOTREACHED */
 }
 
+/*
+ * Signal handlers.
+ */
+
 static void
 lostconn(signo)
 	int signo;
@@ -447,6 +456,15 @@ lostconn(signo)
 
 	if (debug)
 		syslog(LOG_DEBUG, "lost connection");
+	dologout(-1);
+}
+
+static void
+sigquit(signo)
+	int signo;
+{
+	syslog(LOG_ERR, "got signal %s", strsignal(signo));
+
 	dologout(-1);
 }
 
