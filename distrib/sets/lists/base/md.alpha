@@ -607,7 +607,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieeefp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/internal_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intr.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intrcnt.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kbio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kcore.ph
