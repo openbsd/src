@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.43 2002/02/23 23:54:47 hugh Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.44 2002/05/15 01:48:54 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -645,7 +645,7 @@ maninstall:
 .endif
 
 # XXX .PATH order is critical because of non-unique filenames
-.PATH: ${.CURDIR}/src/doc/crypto ${.CURDIR}/src/doc/ssl ${.CURDIR}/src/doc/apps
+.PATH: ${.CURDIR}/openssl/doc/crypto ${.CURDIR}/openssl/doc/ssl ${.CURDIR}/openssl/doc/apps
 .SUFFIXES: .pod
 .pod.cat3:
 	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
@@ -673,12 +673,13 @@ maninstall:
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
 
-SSL_SRC=src
+SSL_SRC=openssl
 
 all: 	prereq ${MANALL} ${PSALL}
 # egcs bombs optimising this file on vax
 .if (${MACHINE_ARCH} == "vax")
 	cd ${.OBJDIR}/crypto && CFLAGS=-O0 ${MAKE} a_strnid.o a_strnid.po
+	cd ${.OBJDIR}/crypto && CFLAGS=-O1 ${MAKE} des_enc.o des_enc.po
 .endif
 	@cd ${.OBJDIR} && ${MAKE}
 
@@ -690,13 +691,13 @@ prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/
 install: maninstall
 	@cd ${.OBJDIR} && ${MAKE} install
 
-#${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
-#	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h
+	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 # Stupid ssl 0.9.6 fucks this up completely, won't even build if you
 # try to regenerate obj_dat.h - even with a stock distrib. 
-${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src
-	@cp ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src \
-		${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+#${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src
+#	@cp ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src \
+#		${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 
 ${.OBJDIR}/${SSL_SRC}/Makefile.ssl : ${.OBJDIR}/${SSL_SRC}/Makefile.org
 	@cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
@@ -706,11 +707,16 @@ ${.OBJDIR}/${SSL_SRC}/Makefile.org: ${.CURDIR}/${SSL_SRC}/Makefile.org
 	@${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
 .endif
 
+
+.if ${.OBJDIR} == ${.CURDIR}
+clean: prereq
+	@cd ${.OBJDIR} && ${MAKE} clean && rm -f ${MUNGEDFILES}
+.else 	
 clean:
-	@cd ${.OBJDIR} && ${MAKE} clean
+	@cd ${.OBJDIR} && find . \! -type d -print | xargs rm
+.endif
 
 cleandir: clean
-	@cd ${.OBJDIR} && rm -f ${MUNGEDFILES}
 
 test:
 	# Nothing here so far...

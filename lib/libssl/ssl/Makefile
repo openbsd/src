@@ -1,7 +1,7 @@
 
 LIB=	ssl
 
-SSLEAYDIST= src
+SSLEAYDIST= openssl
 
 LSSL_SRC= ${.CURDIR}/../${SSLEAYDIST}/ssl
 LCRYPTO_SRC= ${.CURDIR}/../${SSLEAYDIST}/crypto
@@ -24,8 +24,10 @@ CFLAGS+= -DB_ENDIAN
 .endif 
 .endif
 
-CFLAGS+= -DNO_IDEA -DTERMIOS -DANSI_SOURCE 
+CFLAGS+= -DOPENSSL_NO_IDEA -DTERMIOS -DANSI_SOURCE -DNO_ERR 
+CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5 -DSO_DLFCN -DHAVE_DLFCN_H 
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}/include
+CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 
 SRCS=	bio_ssl.c s2_clnt.c s3_both.c s3_srvr.c ssl_err2.c ssl_txt.c	\
 	t1_srvr.c s23_clnt.c s2_enc.c s3_clnt.c ssl_algs.c ssl_lib.c	\
@@ -33,9 +35,9 @@ SRCS=	bio_ssl.c s2_clnt.c s3_both.c s3_srvr.c ssl_err2.c ssl_txt.c	\
 	t1_clnt.c s23_meth.c s2_meth.c s3_lib.c ssl_cert.c ssl_sess.c	\
 	t1_enc.c s23_pkt.c s2_pkt.c s3_meth.c ssl_ciph.c ssl_stat.c	\
 	t1_lib.c s23_srvr.c s2_srvr.c s3_pkt.c ssl_err.c \
-	t1_meth.c
+	t1_meth.c 
 
-HDRS=	ssl.h ssl2.h ssl3.h ssl23.h ssl_locl.h tls1.h
+HDRS=	ssl.h ssl2.h ssl3.h ssl23.h ssl_locl.h tls1.h kssl.h kssl_lcl.h
 
 .PATH:	${LSSL_SRC}
 
