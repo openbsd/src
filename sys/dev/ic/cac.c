@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.17 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: cac.c,v 1.18 2004/05/04 16:59:31 grange Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -423,7 +423,7 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL &&
 	    !(*sc->sc_cl->cl_fifo_full)(sc)) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb, ccb_chain);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb_chain);
 		ccb->ccb_flags |= CAC_CCB_ACTIVE;
 		(*sc->sc_cl->cl_submit)(sc, ccb);
 	}
@@ -489,7 +489,7 @@ cac_ccb_alloc(struct cac_softc *sc, int nosleep)
 	struct cac_ccb *ccb;
 
 	if ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free)) != NULL)
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb_chain);
 	else
 		ccb = NULL;
 	return (ccb);

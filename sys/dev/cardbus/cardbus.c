@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.9 2004/01/26 19:12:52 fgsch Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.10 2004/05/04 16:59:31 grange Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 		break;
 	    }
 	    while((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&rom_image, p, next);
+		SIMPLEQ_REMOVE_HEAD(&rom_image, next);
 		free(p, M_DEVBUF);
 	    }
 	out:

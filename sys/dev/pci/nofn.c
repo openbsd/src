@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.11 2004/02/03 17:17:33 deraadt Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.12 2004/05/04 16:59:31 grange Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -417,7 +417,7 @@ nofn_pk_feed(sc)
 		q = SIMPLEQ_FIRST(&sc->sc_pk_queue);
 		if (q->q_start(sc, q) == 0) {
 			sc->sc_pk_current = q;
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_pk_queue, q, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_pk_queue, q_next);
 
 			r = PK_READ_4(sc, NOFN_PK_IER);
 			r &= PK_IER_RRDY; /* preserve */
@@ -425,7 +425,7 @@ nofn_pk_feed(sc)
 			PK_WRITE_4(sc, NOFN_PK_IER, r);
 			break;
 		} else {
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_pk_queue, q, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_pk_queue, q_next);
 			free(q, M_DEVBUF);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.26 2003/11/07 11:10:47 jmc Exp $	*/
+/*	$OpenBSD: usb.c,v 1.27 2004/05/04 16:59:32 grange Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -689,7 +689,7 @@ usb_get_next_event(struct usb_event *ue)
 	}
 #endif
 	*ue = ueq->ue;
-	SIMPLEQ_REMOVE_HEAD(&usb_events, ueq, next);
+	SIMPLEQ_REMOVE_HEAD(&usb_events, next);
 	free(ueq, M_USBDEV);
 	usb_nevents--;
 	return (1);

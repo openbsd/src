@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.15 2004/02/03 17:17:33 deraadt Exp $	*/
+/*	$OpenBSD: noct.c,v 1.16 2004/05/04 16:59:31 grange Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -897,7 +897,7 @@ noct_ea_thread(vsc)
 		s = splnet();
 		while (!SIMPLEQ_EMPTY(&sc->sc_outq)) {
 			q = SIMPLEQ_FIRST(&sc->sc_outq);
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_outq, q, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_outq, q_next);
 			splx(s);
 
 			crp = q->q_crp;
@@ -954,7 +954,7 @@ noct_ea_thread(vsc)
 		s = splnet();
 		while (!SIMPLEQ_EMPTY(&sc->sc_inq)) {
 			q = SIMPLEQ_FIRST(&sc->sc_inq);
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_inq, q, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_inq, q_next);
 			splx(s);
 
 			noct_ea_start(sc, q);
@@ -1296,7 +1296,7 @@ noct_ea_intr(sc)
 		if (SIMPLEQ_EMPTY(&sc->sc_chipq))
 			panic("%s: empty chipq", sc->sc_dv.dv_xname);
 		q = SIMPLEQ_FIRST(&sc->sc_chipq);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_chipq, q, q_next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_chipq, q_next);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_outq, q, q_next);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_eamap,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.25 2004/02/03 17:17:33 deraadt Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.26 2004/05/04 16:59:31 grange Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -546,12 +546,12 @@ lofn_feed(sc)
 		q = SIMPLEQ_FIRST(&sc->sc_queue);
 		if (q->q_start(sc, q) == 0) {
 			sc->sc_current = q;
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
 			sc->sc_ier |= LOFN_IER_DONE;
 			WRITE_REG(sc, LOFN_REL_IER, sc->sc_ier);
 			break;
 		} else {
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
 			free(q, M_DEVBUF);
 		}
 	}

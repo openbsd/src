@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.132 2004/04/28 02:51:58 cedric Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.133 2004/05/04 16:59:32 grange Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2118,7 +2118,7 @@ bridge_flushrule(struct bridge_iflist *bif)
 
 	while (!SIMPLEQ_EMPTY(&bif->bif_brlin)) {
 		p = SIMPLEQ_FIRST(&bif->bif_brlin);
-		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlin, p, brl_next);
+		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlin, brl_next);
 #if NPF > 0
 		pf_tag_unref(p->brl_tag);
 #endif
@@ -2126,7 +2126,7 @@ bridge_flushrule(struct bridge_iflist *bif)
 	}
 	while (!SIMPLEQ_EMPTY(&bif->bif_brlout)) {
 		p = SIMPLEQ_FIRST(&bif->bif_brlout);
-		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlout, p, brl_next);
+		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlout, brl_next);
 #if NPF > 0
 		pf_tag_unref(p->brl_tag);
 #endif

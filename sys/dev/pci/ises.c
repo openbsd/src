@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.24 2003/06/07 11:31:24 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.25 2004/05/04 16:59:31 grange Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -608,7 +608,7 @@ ises_process_oqueue(struct ises_softc *sc)
 		s = splnet();
 		if (!SIMPLEQ_EMPTY(&sc->sc_cmdq)) {
 			cq = SIMPLEQ_FIRST(&sc->sc_cmdq);
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_cmdq, cq, cmd_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_cmdq, cmd_next);
 			cq->cmd_rlen = len;
 		} else {
 			cq = NULL;
@@ -882,7 +882,7 @@ ises_feed(struct ises_softc *sc)
 	DELAY(2000000);
 
 	s = splnet();
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
 	--sc->sc_nqueue;
 	splx(s);

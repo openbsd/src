@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.10 2003/07/02 21:32:48 todd Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.11 2004/05/04 16:59:31 grange Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -631,7 +631,7 @@ tslot_event_thread(void *v)
 			continue;
 		}
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_events, te, te_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_events, te_q);
 		splx(s);
 
 		if (te->te_slot >= TS102_NUM_SLOTS) {

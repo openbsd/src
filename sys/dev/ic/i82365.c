@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.22 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.23 2004/05/04 16:59:31 grange Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ pcic_event_process(h, pe)
 	int s;
 
 	s = splhigh();
-	SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
+	SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 	splx(s);
 
 	switch (pe->pe_type) {
@@ -469,9 +469,9 @@ pcic_event_process(h, pe)
 			if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 				break;
 			if (pe2->pe_type == PCIC_EVENT_INSERTION) {
-				SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 				free(pe1, M_TEMP);
-				SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 				free(pe2, M_TEMP);
 			}
 		}
@@ -493,9 +493,9 @@ pcic_event_process(h, pe)
 			if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 				break;
 			if (pe2->pe_type == PCIC_EVENT_REMOVAL) {
-				SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 				free(pe1, M_TEMP);
-				SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 				free(pe2, M_TEMP);
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.133 2004/02/03 17:17:33 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.134 2004/05/04 16:59:31 grange Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -370,7 +370,7 @@ ubsec_intr(void *arg)
 			if ((dmap->d_dma->d_mcr.mcr_flags & htole16(UBS_MCR_DONE)) == 0)
 				break;
 
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q_next);
 
 			npkts = q->q_nstacked_mcrs;
 			/*
@@ -418,7 +418,7 @@ ubsec_intr(void *arg)
 				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 				break;
 			}
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip2, q2, q_next);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip2, q_next);
 			ubsec_callback2(sc, q2);
 			/*
 			 * Don't send any more packet to chip if there has been
@@ -487,7 +487,7 @@ ubsec_feed(struct ubsec_softc *sc)
 #endif /* UBSEC_DEBUG */
 
 	q = SIMPLEQ_FIRST(&sc->sc_queue);
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
 	--sc->sc_nqueue;
 
 	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
@@ -505,7 +505,7 @@ ubsec_feed(struct ubsec_softc *sc)
 		if (q2->q_dst_map != NULL)
 			bus_dmamap_sync(sc->sc_dmat, q2->q_dst_map,
 			    0, q2->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q2, q_next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
 		--sc->sc_nqueue;
 
 		v = ((void *)&q2->q_dma->d_dma->d_mcr) + sizeof(struct ubsec_mcr) -
@@ -550,7 +550,7 @@ feed1:
 		printf("feed: q->chip %p %08x\n", q,
 		    (u_int32_t)q->q_dma->d_alloc.dma_paddr);
 #endif /* UBSEC_DEBUG */
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q_next);
 		--sc->sc_nqueue;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
 	}
@@ -759,7 +759,7 @@ ubsec_process(struct cryptop *crp)
 	}
 
 	q = SIMPLEQ_FIRST(&sc->sc_freequeue);
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_freequeue, q, q_next);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_freequeue, q_next);
 	splx(s);
 
 	dmap = q->q_dma; /* Save dma pointer */
@@ -1351,7 +1351,7 @@ ubsec_feed2(struct ubsec_softc *sc)
 		    BUS_DMASYNC_PREWRITE);
 
 		WRITE_REG(sc, BS_MCR2, q->q_mcr.dma_paddr);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue2, q, q_next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue2, q_next);
 		--sc->sc_nqueue2;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip2, q, q_next);
 	}
@@ -1640,7 +1640,7 @@ ubsec_cleanchip(struct ubsec_softc *sc)
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_qchip)) {
 		q = SIMPLEQ_FIRST(&sc->sc_qchip);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q_next);
 		ubsec_free_q(sc, q);
 	}
 }
@@ -1783,7 +1783,7 @@ ubsec_kprocess(struct cryptkop *krp)
 		struct ubsec_q2 *q;
 
 		q = SIMPLEQ_FIRST(&sc->sc_q2free);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_q2free, q, q_next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_q2free, q_next);
 		ubsec_kfree(sc, q);
 	}
 

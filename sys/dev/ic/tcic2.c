@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.4 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.5 2004/05/04 16:59:31 grange Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -482,7 +482,7 @@ tcic_event_thread(arg)
 			(void) tsleep(&h->events, PWAIT, "tcicev", 0);
 			continue;
 		}
-		SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
+		SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 		splx(s);
 
 		switch (pe->pe_type) {
