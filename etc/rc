@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.53 1997/11/04 09:15:31 deraadt Exp $
+#	$OpenBSD: rc,v 1.54 1997/11/08 20:45:33 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -75,6 +75,12 @@ echo 'starting network'
 
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
+
+# $named_flags is imported from /etc/rc.conf;
+# if $named_flags != NO, named is run.
+if [ "X${named_flags}" != X"NO" ]; then
+	echo -n ' named';		named $named_flags
+fi
 
 # /etc/ifaliases, if it exists, contains the names of additional IP
 # addresses for each interface. It is formatted as a series of lines
@@ -301,13 +307,6 @@ fi
 if [ "X${mrouted_flags}" != X"NO" ]; then
 	echo -n ' mrouted';		mrouted $mrouted_flags
 fi
-
-# $named_flags is imported from /etc/rc.conf;
-# if $named_flags != NO, named is run.
-if [ "X${named_flags}" != X"NO" ]; then
-	echo -n ' named';		named $named_flags
-fi
-mount -a -t nfs		# do again, in case DNS hostnames are used..
 
 # $rwhod is imported from /etc/rc.conf;
 # if $rwhod == YES, rwhod is run.
