@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.80 2002/06/08 07:58:07 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.81 2002/06/08 16:44:15 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -164,6 +164,26 @@ struct icmpcodeent icmp6_code[] = {
 	{ "nxthdr", ICMP6_PARAM_PROB, ICMP6_PARAMPROB_NEXTHEADER },
 	{ "redironlink", ND_REDIRECT, ND_REDIRECT_ONLINK },
 	{ "redirrouter", ND_REDIRECT, ND_REDIRECT_ROUTER }
+};
+
+const struct pf_timeout pf_timeouts[] = {
+	{ "tcp.first",		PFTM_TCP_FIRST_PACKET },
+	{ "tcp.opening",	PFTM_TCP_OPENING },
+	{ "tcp.established",	PFTM_TCP_ESTABLISHED },
+	{ "tcp.closing",	PFTM_TCP_CLOSING },
+	{ "tcp.finwait",	PFTM_TCP_FIN_WAIT },
+	{ "tcp.closed",		PFTM_TCP_CLOSED },
+	{ "udp.first",		PFTM_UDP_FIRST_PACKET },
+	{ "udp.single",		PFTM_UDP_SINGLE },
+	{ "udp.multiple",	PFTM_UDP_MULTIPLE },
+	{ "icmp.first",		PFTM_ICMP_FIRST_PACKET },
+	{ "icmp.error",		PFTM_ICMP_ERROR_REPLY },
+	{ "other.first",	PFTM_OTHER_FIRST_PACKET },
+	{ "other.single",	PFTM_OTHER_SINGLE },
+	{ "other.multiple",	PFTM_OTHER_MULTIPLE },
+	{ "frag",		PFTM_FRAG },
+	{ "interval",		PFTM_INTERVAL },
+	{ NULL,			0 }
 };
 
 struct icmptypeent *

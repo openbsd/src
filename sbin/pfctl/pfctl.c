@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.70 2002/06/08 07:58:07 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.71 2002/06/08 16:44:15 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -91,26 +91,6 @@ int	 state_killers;
 char	*state_kill[2];
 
 char	*infile;
-
-const struct pf_timeout pf_timeouts[] = {
-	{ "tcp.first",		PFTM_TCP_FIRST_PACKET },
-	{ "tcp.opening",	PFTM_TCP_OPENING },
-	{ "tcp.established",	PFTM_TCP_ESTABLISHED },
-	{ "tcp.closing",	PFTM_TCP_CLOSING },
-	{ "tcp.finwait",	PFTM_TCP_FIN_WAIT },
-	{ "tcp.closed",		PFTM_TCP_CLOSED },
-	{ "udp.first",		PFTM_UDP_FIRST_PACKET },
-	{ "udp.single",		PFTM_UDP_SINGLE },
-	{ "udp.multiple",	PFTM_UDP_MULTIPLE },
-	{ "icmp.first",		PFTM_ICMP_FIRST_PACKET },
-	{ "icmp.error",		PFTM_ICMP_ERROR_REPLY },
-	{ "other.first",	PFTM_OTHER_FIRST_PACKET },
-	{ "other.single",	PFTM_OTHER_SINGLE },
-	{ "other.multiple",	PFTM_OTHER_MULTIPLE },
-	{ "frag",		PFTM_FRAG },
-	{ "interval",		PFTM_INTERVAL },
-	{ NULL,			0 }
-};
 
 static const struct {
 	const char	*name;
