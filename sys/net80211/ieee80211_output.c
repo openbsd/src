@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.2 2004/12/23 11:54:09 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.3 2004/12/23 12:27:25 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -329,26 +329,27 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
 		return -1;
 	}
 
+	d->d_plcp_len = data_dur;
+
 	d->d_rts_dur = data_dur + 3 * (IEEE80211_DUR_DS_SIFS +
 	    IEEE80211_DUR_DS_SHORT_PREAMBLE +
 	    IEEE80211_DUR_DS_FAST_PLCPHDR) + cts + ack;
-	d->d_data_dur = data_dur + IEEE80211_DUR_DS_SIFS +
-	    2 * (IEEE80211_DUR_DS_SHORT_PREAMBLE +
-	         IEEE80211_DUR_DS_FAST_PLCPHDR) + ack;
 
-	d->d_plcp_len = data_dur;
+	/* Note that this is the amount of time reserved *after*
+	 * the packet is transmitted: just long enough for a SIFS
+	 * and an ACK.
+	 */
+	d->d_data_dur = IEEE80211_DUR_DS_SIFS +
+	    IEEE80211_DUR_DS_SHORT_PREAMBLE + IEEE80211_DUR_DS_FAST_PLCPHDR +
+	    ack;
 
 	if ((flags & IEEE80211_F_SHPREAMBLE) != 0)
 		return 0;
 
-	d->d_rts_dur += 3 * (IEEE80211_DUR_DS_LONG_PREAMBLE -
-			     IEEE80211_DUR_DS_SHORT_PREAMBLE) +
-			3 * (IEEE80211_DUR_DS_SLOW_PLCPHDR -
-			     IEEE80211_DUR_DS_FAST_PLCPHDR);
-	d->d_data_dur += 2 * (IEEE80211_DUR_DS_LONG_PREAMBLE -
-			      IEEE80211_DUR_DS_SHORT_PREAMBLE) +
-			 2 * (IEEE80211_DUR_DS_SLOW_PLCPHDR -
-			      IEEE80211_DUR_DS_FAST_PLCPHDR);
+	d->d_rts_dur += 3 * IEEE80211_DUR_DS_PREAMBLE_DIFFERENCE +
+			3 * IEEE80211_DUR_DS_PLCPHDR_DIFFERENCE;
+	d->d_data_dur += IEEE80211_DUR_DS_PREAMBLE_DIFFERENCE +
+			 IEEE80211_DUR_DS_PLCPHDR_DIFFERENCE;
 	return 0;
 }
 
@@ -357,7 +358,7 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
  *
  * wh:      802.11 header
  *
- * paylen:  payload length (no FCS, no WEP header)
+ * len: packet length 
  *
  * rate:    MSDU speed, units 500kb/s
  *
@@ -377,17 +378,19 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
  *     of first/only fragment
  */
 int
-ieee80211_compute_duration(struct ieee80211_frame *wh, int paylen,
+ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
     uint32_t flags, int fraglen, int rate, struct ieee80211_duration *d0,
-    struct ieee80211_duration *dn, int *npktp)
+    struct ieee80211_duration *dn, int *npktp, int debug)
 {
 	int rc;
-	int firstlen, hdrlen, lastlen, lastlen0, npkt, overlen;
+	int firstlen, hdrlen, lastlen, lastlen0, npkt, overlen, paylen;
 
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
 		hdrlen = sizeof(struct ieee80211_frame_addr4);
 	else
 		hdrlen = sizeof(struct ieee80211_frame);
+
+	paylen = len - hdrlen;
 
 	if ((flags & IEEE80211_F_WEPON) != 0) {
 		overlen = IEEE80211_WEP_TOTLEN + IEEE80211_CRC_LEN;
@@ -424,10 +427,17 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int paylen,
 	else
 		firstlen = paylen + overlen;
 
+	if (debug) {
+		printf("%s: npkt %d firstlen %d lastlen0 %d lastlen %d "
+		    "fraglen %d overlen %d len %d rate %d flags %08x\n",
+		    __func__, npkt, firstlen, lastlen0, lastlen, fraglen,
+		    overlen, len, rate, flags);
+	}
 	rc = ieee80211_compute_duration1(firstlen + hdrlen, flags, rate, d0);
 	if (rc == -1)
 		return rc;
-	if (npkt > 1) {
+
+	if (npkt <= 1) {
 		*dn = *d0;
 		return 0;
 	}
