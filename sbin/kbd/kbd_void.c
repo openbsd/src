@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_void.c,v 1.1 1996/04/22 20:21:56 hannken Exp $	*/
+/*	$OpenBSD: kbd_void.c,v 1.2 1996/06/30 05:16:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
