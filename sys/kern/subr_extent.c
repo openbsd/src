@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.11 2001/01/15 22:18:24 jason Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.12 2001/01/17 02:48:17 deraadt Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -969,7 +969,9 @@ extent_free(ex, start, size, flags)
 	}
 
 	/* Region not found, or request otherwise invalid. */
+#if defined(DIAGNOSTIC) || defined(DDB)
 	extent_print(ex);
+#endif
 	printf("extent_free: start 0x%lx, end 0x%lx\n", start, end);
 	panic("extent_free: region not found");
 
