@@ -1,0 +1,129 @@
+.\"	$OpenBSD: pppoe.8,v 1.1.1.1 2000/06/18 07:30:41 jason Exp $
+.\"
+.\" Copyright (c) 2000 Network Security Technologies, Inc.
+.\" (http://www.netsec.net)
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Jason L. Wright
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd February 8, 2000
+.Dt PPPOE 8
+.Os
+.Sh NAME
+.Nm pppoe
+.Nd PPP Over Ethernet translator
+.Sh SYNOPSIS
+.Nm pppoe
+.Op Ar -s
+.Op Ar -v
+.Op Ar -i interface
+.Op Ar -n service
+.Op Ar -p system
+.Sh DESCRIPTION
+The
+.Nm pppoe
+program can, with the help of
+.Xr ppp 8 ,
+act as a server or client for running PPP Over Ethernet.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl i Ar interface
+Specify the interface that
+.Nm
+is to use.  If this option is not specified,
+.Nm
+will use the first Ethernet interface that is up and running.
+.It Fl n Ar service
+Use
+.Ar service
+as the service name when negotiating with the server.  By default,
+the client will ask for any service, and expect the server to
+respond with the same.
+.It Fl p Ar system
+This argument is passed, uninterpreted, to
+.Xr ppp 8 .
+It can be used to specify the configuration data to be used for
+PPP Over Ethernet connections.
+.It Fl s
+If this option is specified,
+.Nm
+will run as a server.  Otherwise,
+.Nm
+runs as a client.
+.It Fl v
+For each use of the flag, the verbosity of
+.Nm pppoe
+increases.
+.El
+.Sh CLIENT SETUP
+Configuring the client involves setting up the
+configuration file for
+.Xr ppp 8 .
+The following statements must be included in the file for
+the specified
+.Ar system
+(or
+``default''
+if no
+.Ar system
+is specified):
+.Bl -tag -width XXX -offset XXX
+.It set mtu 1492
+.It set mru 1492
+.It set speed sync
+.It disable acfcomp
+.It deny acfcomp
+.It disable protocomp
+.El
+.Pp
+Additionally, the authentication mechanism for the connection
+must be specified as well as any other parameters.
+.Sh SEE ALSO
+.Xr ppp 8
+.Sh HISTORY
+This implementation of
+.Nm pppoe
+first appeared in
+.Ox 2.8 .
+.Sh BUGS
+This is software runs completely in user mode.  As such it will have much
+more overhead than a kernel implementation.
+.Pp
+The
+.Ar service
+is not currently used by the server code.
+.Sh AUTHOR
+The
+.Nm pppoe
+program was written by
+.An Jason L. Wright
+.Aq jason@thought.net
+of
+.An Network Security Technologies, Inc.
+.Aq http://www.netsec.net .
