@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2003/07/19 00:03:52 david Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/01/10 09:35:42 pvalchev Exp $
 #	$NetBSD: Makefile,v 1.13 2000/08/16 08:24:01 mrg Exp $
 
 .include <bsd.own.mk>
@@ -29,6 +29,6 @@ LDSTATIC?=	-static
 CLEANFILES+= machine sparc
 .endif
 
-CFLAGS+= -U_STANDALONE
+STANDALONE=
 
 .include <bsd.prog.mk>

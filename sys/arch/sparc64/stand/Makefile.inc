@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2002/12/02 09:00:25 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2004/01/10 09:35:42 pvalchev Exp $
 #	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
@@ -9,12 +9,15 @@ AFLAGS+= -Wa,-Av9a
 
 BINDIR=		/usr/mdec
 
+STANDALONE?=	-D_STANDALONE
+
 .if ${MACHINE} == "sparc64"
-CPPFLAGS+=	-D_STANDALONE -DSUN4U
+CPPFLAGS+=	${STANDALONE} -DSUN4U
 CPPFLAGS+=	-I.
 
 CFLAGS+=	-fno-stack-protector
 CFLAGS+=	-msoft-float
+CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
 .endif
 
 
