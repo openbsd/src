@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.13 2003/08/27 23:02:19 tedu Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.14 2003/08/27 23:05:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -673,11 +673,12 @@ int readstring(buf)	/* read string data block */
 		return (scmerr(-1, "Can't malloc %d bytes for string", count));
 	if (cryptflag) {
 		x = getcryptbuf(count+1);
+		if (x == SCMOK)
+			x = readdata(count, cryptbuf);
 		if (x != SCMOK) {
 			free(p);
 			return (x);
 		}
-		x = readdata(count, cryptbuf);
 		if (scmdebug > 3)
 			printf("SCM Reading encrypted string %s\n", cryptbuf);
 		decode(cryptbuf, p, count);
