@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2001/06/29 19:42:16 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.32 2001/07/01 19:48:43 niklas Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -319,23 +319,23 @@ conf_parse (int trans, char *buf, size_t sz)
  * XXX No EC2N DH support here yet.
  */
 
-/* Find the value for a section+tag in the transaction list */
+/* Find the value for a section+tag in the transaction list.  */
 char *
 conf_get_trans_str (int trans, char *section, char *tag)
 {
   struct conf_trans *node, *nf = 0;
-  
+
   for (node = TAILQ_FIRST (&conf_trans_queue); node;
        node = TAILQ_NEXT (node, link))
-    if (node->trans == trans && strcmp (section, node->section) == 0 && 
-	strcmp (tag, node->tag) == 0)
+    if (node->trans == trans && strcmp (section, node->section) == 0
+	&& strcmp (tag, node->tag) == 0)
       {
 	if (!nf)
 	  nf = node;
 	else if (node->override)
 	  nf = node;
       }
-  return nf ? nf->value : NULL;
+  return nf ? nf->value : 0;
 }
 
 int
@@ -366,19 +366,19 @@ conf_load_defaults (int tr)
   int enc, auth, hash, proto, mode, pfs;
   char sect[256], *dflt;
 
-  char *mm_auth[]   = { "PRE_SHARED", "DSS", "RSA_SIG", NULL };
-  char *mm_hash[]   = { "MD5", "SHA", NULL };
+  char *mm_auth[]   = { "PRE_SHARED", "DSS", "RSA_SIG", 0 };
+  char *mm_hash[]   = { "MD5", "SHA", 0 };
   char *mm_enc[]    = { "DES_CBC", "BLOWFISH_CBC", "3DES_CBC",
-			"CAST_CBC", NULL };
-  char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", NULL };
-  char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", "AES", NULL };
-  char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD", "NONE", NULL };
+			"CAST_CBC", 0 };
+  char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", 0 };
+  char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", "AES", 0 };
+  char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD", "NONE", 0 };
 
   /* Abbreviations to make section names a bit shorter.  */
-  char *mm_auth_p[] = { "", "-DSS", "-RSA_SIG", NULL };
-  char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", NULL };
-  char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", "-AES", NULL };
-  char *qm_hash_p[] = { "-MD5", "-SHA", "-RIPEMD", "", NULL };
+  char *mm_auth_p[] = { "", "-DSS", "-RSA_SIG", 0 };
+  char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", 0 };
+  char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", "-AES", 0 };
+  char *qm_hash_p[] = { "-MD5", "-SHA", "-RIPEMD", "", 0 };
 
   /* Helper #defines, incl abbreviations.  */
 #define PROTO(x)  ((x) ? "AH" : "ESP")
@@ -1065,7 +1065,7 @@ conf_report_dump (struct dumper *node)
 void
 conf_report (void)
 {
-  struct conf_binding *cb, *last = NULL;
+  struct conf_binding *cb, *last = 0;
   int i;
   char *current_section = (char *)0;
   struct dumper *dumper, *dnode;
@@ -1082,7 +1082,7 @@ conf_report (void)
       {
 	if (!cb->is_default)
 	  {
-	    /* Dump this entry */
+	    /* Dump this entry.  */
 	    if (!current_section || strcmp (cb->section, current_section))
 	      {
 		if (current_section)
@@ -1130,8 +1130,8 @@ conf_report (void)
   return;
 
  mem_fail:
-  LOG_DBG ((LOG_REPORT, 0, "conf_report: memory allocation failure."));
-  while ((dnode = dumper) != NULL)
+  log_error ("conf_report: malloc/calloc failed");
+  while ((dnode = dumper) != 0)
     {
       dumper = dumper->next;
       if (dnode->s)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.18 2001/06/27 03:31:40 angelos Exp $	*/
+/*	$OpenBSD: connection.c,v 1.19 2001/07/01 19:48:43 niklas Exp $	*/
 /*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ connection_lookup (char *name)
 int
 connection_exist (char *name)
 {
-  return (connection_lookup (name) != NULL);
+  return (connection_lookup (name) != 0);
 }
 
 /* Find the passive connection named NAME.  */
@@ -221,7 +221,7 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
   for (conn = TAILQ_FIRST (&connections_passive); conn;
        conn = TAILQ_NEXT (conn, link))
     {
-      if (conn->remote_id == NULL)
+      if (!conn->remote_id)
 	continue;
 
       /*
@@ -246,7 +246,7 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
   for (conn = TAILQ_FIRST (&connections_passive); conn;
        conn = TAILQ_NEXT (conn, link))
     {
-      if (conn->remote_id != NULL)
+      if (!conn->remote_id)
 	continue;
 
       if (compare_ids (id1, conn->local_id, conn->local_sz) == 0
@@ -371,7 +371,7 @@ connection_record_passive (char *name)
 	goto fail;
     }
   else
-    conn->remote_id = NULL;
+    conn->remote_id = 0;
 
   TAILQ_INSERT_TAIL (&connections_passive, conn, link);
 

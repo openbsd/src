@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.51 2001/06/29 19:55:36 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.52 2001/07/01 19:48:43 niklas Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -193,22 +193,22 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	return 0;
 #endif
 #if defined(USE_KEYNOTE)
-      if ((local_id) &&
-	  ((keyfile = conf_get_str ("KeyNote",
-				    "Credential-directory")) != NULL))
+      if (local_id &&
+	  (keyfile = conf_get_str ("KeyNote", "Credential-directory")) != 0)
         {
 	  struct stat sb;
 	  struct keynote_deckey dc;
 	  char *privkeyfile, *buf2;
 	  int fd;
 
-	  privkeyfile = calloc (strlen (keyfile) + strlen (local_id) +
-				strlen (PRIVATE_KEY_FILE) + 3, sizeof (char));
-	  if (privkeyfile == NULL)
+	  privkeyfile = calloc (strlen (keyfile) + strlen (local_id)
+				+ sizeof PRIVATE_KEY_FILE + sizeof "//" - 1,
+				sizeof (char));
+	  if (!privkeyfile)
 	    {
 	      log_print ("ike_auth_get_key: failed to allocate %d bytes",
-			 strlen (keyfile) + strlen (local_id) +
-			 strlen (PRIVATE_KEY_FILE) + 3);
+			 strlen (keyfile) + strlen (local_id)
+			 + sizeof PRIVATE_KEY_FILE + sizeof "//" - 1);
 	      return 0;
 	    }
 
@@ -231,7 +231,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	    }
 
 	  buf = calloc (sb.st_size + 1, sizeof (char));
-	  if (buf == NULL)
+	  if (!buf)
 	    {
 	      log_print ("ike_auth_get_key: failed allocating %d bytes",
 			 sb.st_size + 1);
@@ -285,10 +285,11 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
       /* Otherwise, try X.509 */
       keyfile = conf_get_str ("X509-certificates", "Private-key");
 
-      if (check_file_secrecy (keyfile, NULL))
+      if (check_file_secrecy (keyfile, 0))
 	return 0;
 
-      if ((keyh = LC (BIO_new, (LC (BIO_s_file, ())))) == NULL)
+      keyh = LC (BIO_new, (LC (BIO_s_file, ())));
+      if (keyh == NULL)
 	{
 	  log_print ("ike_auth_get_key: "
 		     "BIO_new (BIO_s_file ()) failed");
@@ -348,21 +349,19 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
       switch (exchange->id_i[0])
         {
 	case IPSEC_ID_IPV4_ADDR:
-	  util_ntoa ((char **)&buf, AF_INET, exchange->id_i +
-		     ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
+	case IPSEC_ID_IPV6_ADDR:
+	  util_ntoa ((char **)&buf,
+		     exchange->id_i[0] == IPSEC_ID_IPV4_ADDR
+		     ? AF_INET : AF_INET6,
+		     exchange->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
 	  if (!buf)
 	    return 0;
 	  break;
-	case IPSEC_ID_IPV6_ADDR:
-	  util_ntoa ((char **)&buf, AF_INET6, exchange->id_i +
-		     ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
-	  if (!buf)
-	    return 0;
 
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
-	  buf = calloc (exchange->id_i_len - ISAKMP_ID_DATA_OFF +
-			ISAKMP_GEN_SZ + 1, sizeof (char));
+	  buf = calloc (exchange->id_i_len - ISAKMP_ID_DATA_OFF
+			+ ISAKMP_GEN_SZ + 1, sizeof (char));
 	  if (!buf)
 	    {
               log_print ("pre_shared_gen_skeyid: malloc (%d) failed",
@@ -567,7 +566,7 @@ rsa_sig_decode_hash (struct message *msg)
   struct ipsec_exch *ie = exchange->data;
   struct payload *p;
   void *cert = 0;
-  u_int8_t *rawcert = NULL;
+  u_int8_t *rawcert = 0;
   u_int32_t rawcertlen;
   RSA *key = 0;
   size_t hashsize = ie->hash->hashsize;
@@ -579,7 +578,7 @@ rsa_sig_decode_hash (struct message *msg)
   size_t id_len;
   int found = 0, n, i, id_found;
 #if defined(USE_DNSSEC)
-  u_int8_t *rawkey = NULL;
+  u_int8_t *rawkey = 0;
   u_int32_t rawkeylen;
 #endif
 
@@ -605,9 +604,8 @@ rsa_sig_decode_hash (struct message *msg)
     handler = cert_get (GET_ISAKMP_CERT_ENCODING (p->p));
   if (!handler)
     {
-      log_print ("rsa_sig_decode_hash: "
-		 "cert_get (%d) failed", p != NULL
-		 ? GET_ISAKMP_CERT_ENCODING (p->p) : -1);
+      log_print ("rsa_sig_decode_hash: cert_get (%d) failed",
+		 p ? GET_ISAKMP_CERT_ENCODING (p->p) : -1);
       return -1;
     }
 
@@ -760,15 +758,14 @@ rsa_sig_decode_hash (struct message *msg)
 	      return -1;
 	    }
 
-	  exchange->keynote_key = calloc (strlen (pp) +
-					  strlen ("rsa-hex:") + 1,
+	  exchange->keynote_key = calloc (strlen (pp) + sizeof "rsa-hex:",
 					  sizeof (char));
-	  if (exchange->keynote_key == NULL)
+	  if (!exchange->keynote_key)
 	    {
 	      free (pp);
 	      LK (kn_free_key, (&dc));
 	      log_print ("rsa_sig_decode_hash: failed to allocate %d bytes",
-			 strlen (pp) + strlen ("rsa-hex:") + 1);
+			 strlen (pp) + sizeof "rsa-hex:");
 	      return -1;
 	    }
 
@@ -905,8 +902,9 @@ rsa_sig_encode_hash (struct message *msg)
   id_len = initiator ? exchange->id_i_len : exchange->id_r_len;
 
   /* We may have been provided these by the kernel */
-  if ((buf = conf_get_str (exchange->name, "Credentials")) != NULL &&
-      (idtype = conf_get_num (exchange->name, "Credential_Type", -1) != -1))
+  buf = conf_get_str (exchange->name, "Credentials");
+  if (buf
+      && (idtype = conf_get_num (exchange->name, "Credential_Type", -1) != -1))
     {
       exchange->sent_certtype = idtype;
       handler = cert_get (idtype);
@@ -917,14 +915,14 @@ rsa_sig_encode_hash (struct message *msg)
 	}
 
       exchange->sent_cert = handler->cert_from_printable (buf);
-      if (exchange->sent_cert == NULL)
+      if (!exchange->sent_cert)
 	{
 	  log_print ("rsa_sig_encode_hash: failed to retrieve certificate");
 	  return -1;
 	}
 
       handler->cert_serialize (exchange->sent_cert, &data, &datalen);
-      if (data == NULL)
+      if (!data)
 	{
 	  log_print ("rsa_sig_encode_hash: cert serialization failed");
 	  return -1;
@@ -1011,22 +1009,19 @@ rsa_sig_encode_hash (struct message *msg)
   switch (id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ])
     {
     case IPSEC_ID_IPV4_ADDR:
-      util_ntoa ((char **)&buf2, AF_INET, id + ISAKMP_ID_DATA_OFF -
-		 ISAKMP_GEN_SZ);
-      if (!buf2)
-	return 0;
-      break;
     case IPSEC_ID_IPV6_ADDR:
-      util_ntoa ((char **)&buf2, AF_INET6, id + ISAKMP_ID_DATA_OFF -
-		 ISAKMP_GEN_SZ);
+      util_ntoa ((char **)&buf2,
+		 id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ] == IPSEC_ID_IPV4_ADDR
+		 ? AF_INET : AF_INET6,
+		 id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
       if (!buf2)
 	return 0;
       break;
 
     case IPSEC_ID_FQDN:
     case IPSEC_ID_USER_FQDN:
-      buf2 = calloc (id_len - ISAKMP_ID_DATA_OFF +
-		    ISAKMP_GEN_SZ + 1, sizeof (char));
+      buf2 = calloc (id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
+		     sizeof (char));
       if (!buf2)
         {
 	  log_print ("rsa_sig_encode_hash: malloc (%d) failed",
@@ -1039,16 +1034,17 @@ rsa_sig_encode_hash (struct message *msg)
 
       /* XXX Support more ID types?  */
     default:
-      buf2 = NULL;
+      buf2 = 0;
       break;
     }
 
   /* Again, we may have these from the kernel */
-  if ((buf = conf_get_str (exchange->name, "OKAuthentication")) != NULL)
+  buf = conf_get_str (exchange->name, "OKAuthentication");
+  if (buf)
     {
       key_from_printable (ISAKMP_KEY_RSA, ISAKMP_KEYTYPE_PRIVATE, buf, &data,
 			  &datalen);
-      if ((data == NULL) || (datalen == -1))
+      if (!data || datalen == -1)
 	{
 	  log_print ("rsa_sig_encode_hash: badly formatted RSA private key");
 	  return 0;
@@ -1058,21 +1054,21 @@ rsa_sig_encode_hash (struct message *msg)
       exchange->sent_key = key_internalize (ISAKMP_KEY_RSA,
 					    ISAKMP_KEYTYPE_PRIVATE, data,
 					    datalen);
-      if (exchange->sent_key == NULL)
+      if (!exchange->sent_key)
 	{
 	  log_print ("rsa_sig_encode_hash: bad RSA private key from dynamic "
 		     "SA acquisition subsystem");
 	  return 0;
 	}
     }
-  else /* Try through the regular means */
+  else /* Try through the regular means.  */
     {
       exchange->sent_key = ike_auth_get_key (IKE_AUTH_RSA_SIG, exchange->name,
-					     buf2, NULL);
+					     buf2, 0);
       free (buf2);
 
-      /* Did we find a key ? */
-      if (exchange->sent_key == NULL)
+      /* Did we find a key?  */
+      if (!exchange->sent_key)
 	{
 	  log_print ("rsa_sig_encode_hash: could not get private key");
 	  return -1;

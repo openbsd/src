@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.h,v 1.8 2001/06/05 05:59:42 niklas Exp $	*/
+/*	$OpenBSD: cert.h,v 1.9 2001/07/01 19:48:42 niklas Exp $	*/
 /*	$EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -83,7 +83,9 @@ struct certreq_aca {
 
   u_int16_t id;
   struct cert_handler *handler;
-  void *data;			/* if NULL everything is acceptable.  */
+
+  /* If data is a null pointer, everything is acceptable.  */
+  void *data;
 };
 
 struct certreq_aca *certreq_decode (u_int16_t, u_int8_t *, u_int32_t);

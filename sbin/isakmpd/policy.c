@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.36 2001/07/01 18:57:33 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.37 2001/07/01 19:48:44 niklas Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1103,9 +1103,9 @@ policy_callback (char *name)
 	      log_error ("policy_callback: sockaddr2text failed");
 	      goto bad;
 	    }
-	  memcpy (remote_filter_addr_upper, addr, 
+	  memcpy (remote_filter_addr_upper, addr,
 		  sizeof remote_filter_addr_upper);
-	  memcpy (remote_filter_addr_lower, addr, 
+	  memcpy (remote_filter_addr_lower, addr,
 		  sizeof remote_filter_addr_lower);
 	  free (addr);
 	  remote_filter = strdup (remote_filter_addr_upper);
@@ -1330,9 +1330,9 @@ policy_callback (char *name)
 	      log_error ("policy_callback: sockaddr2text failed");
 	      goto bad;
 	    }
-	  memcpy (local_filter_addr_upper, addr, 
+	  memcpy (local_filter_addr_upper, addr,
 		  sizeof local_filter_addr_upper);
-	  memcpy (local_filter_addr_lower, addr, 
+	  memcpy (local_filter_addr_lower, addr,
 		  sizeof local_filter_addr_lower);
 	  free (addr);
 	  local_filter = strdup (local_filter_addr_upper);

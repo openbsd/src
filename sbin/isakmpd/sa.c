@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.45 2001/06/29 18:52:17 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.46 2001/07/01 19:48:44 niklas Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ sa_init ()
     {
       LIST_INIT (&sa_tab[i]);
     }
- 
 }
 
 /* XXX We don't yet resize.  */
@@ -238,8 +237,8 @@ isakmp_sa_check (struct sa *sa, void *v_arg)
   return 0;
 }
 
-/* 
- * Find an ISAKMP SA with a "name" of DST & SPI. 
+/*
+ * Find an ISAKMP SA with a "name" of DST & SPI.
  */
 struct sa *
 sa_lookup_isakmp_sa (struct sockaddr *dst, u_int8_t *spi)
@@ -308,7 +307,7 @@ sa_lookup_by_header (u_int8_t *msg, int phase2)
 
 /*
  * Lookup the SA given by the COOKIES and possibly the MESSAGE_ID unless
- * NULL, meaning we are looking for phase 1 SAs.
+ * a null pointer, meaning we are looking for phase 1 SAs.
  */
 struct sa *
 sa_lookup (u_int8_t *cookies, u_int8_t *message_id)
@@ -413,36 +412,36 @@ sa_dump (char *header, struct sa *sa)
   char spi_header[80];
   int i;
 
-  LOG_DBG ((LOG_REPORT, 0, "%s: %p %s phase %d doi %d flags 0x%x", 
-	    header, sa, sa->name ? sa->name : "<unnamed>", sa->phase, 
+  LOG_DBG ((LOG_REPORT, 0, "%s: %p %s phase %d doi %d flags 0x%x",
+	    header, sa, sa->name ? sa->name : "<unnamed>", sa->phase,
 	    sa->doi->id, sa->flags));
-  LOG_DBG ((LOG_REPORT, 0, 
+  LOG_DBG ((LOG_REPORT, 0,
 	    "%s: icookie %08x%08x rcookie %08x%08x", header,
 	    decode_32 (sa->cookies), decode_32 (sa->cookies + 4),
 	    decode_32 (sa->cookies + 8), decode_32 (sa->cookies + 12)));
-  LOG_DBG ((LOG_REPORT, 0, "%s: msgid %08x refcnt %d", header, 
+  LOG_DBG ((LOG_REPORT, 0, "%s: msgid %08x refcnt %d", header,
 	    decode_32 (sa->message_id), sa->refcnt));
   for (proto = TAILQ_FIRST (&sa->protos); proto;
        proto = TAILQ_NEXT (proto, link))
     {
-      LOG_DBG ((LOG_REPORT, 0, 
+      LOG_DBG ((LOG_REPORT, 0,
 		"%s: suite %d proto %d", header, proto->no, proto->proto));
-      LOG_DBG ((LOG_REPORT, 0, 
+      LOG_DBG ((LOG_REPORT, 0,
 		"%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
 		proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
 		proto->spi[1]));
       LOG_DBG ((LOG_REPORT, 0, "%s: %s, %s", header,
-		sa->doi == NULL ? "<nodoi>"
-		: sa->doi->decode_ids ("initiator id: %s, responder id: %s", 
-				     sa->id_i, sa->id_i_len, 
+		!sa->doi ? "<nodoi>"
+		: sa->doi->decode_ids ("initiator id: %s, responder id: %s",
+				     sa->id_i, sa->id_i_len,
 				     sa->id_r, sa->id_r_len, 0),
-		sa->transport == NULL ? "<no transport>" :
+		!sa->transport ? "<no transport>" :
 		sa->transport->vtbl->decode_ids (sa->transport)));
       for (i = 0; i < 2; i++)
 	if (proto->spi[i])
 	  {
 	    snprintf (spi_header, 80, "%s: spi[%d]", header, i);
-	    LOG_DBG_BUF ((LOG_REPORT, 0, spi_header, proto->spi[i], 
+	    LOG_DBG_BUF ((LOG_REPORT, 0, spi_header, proto->spi[i],
 			  proto->spi_sz[i]));
 	  }
     }
@@ -531,7 +530,7 @@ sa_release (struct sa *sa)
 {
   struct proto *proto;
   struct cert_handler *handler;
-  
+
   LOG_DBG ((LOG_SA, 80, "sa_release: SA %p had %d references",
 	    sa, sa->refcnt));
 
@@ -671,7 +670,7 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
 	    "proto %p no %d proto %d chosen %p sa %p id %d",
 	    proto, proto->no, proto->proto, proto->chosen, proto->sa,
 	    proto->id));
-	     
+
   return 0;
 
  cleanup:
@@ -777,7 +776,7 @@ sa_setup_expirations (struct sa *sa)
   u_int64_t seconds = sa->seconds;
   struct timeval expiration;
 
-  /* 
+  /*
    * Set the soft timeout to a random percentage between 85 & 95 of
    * the negotiated lifetime to break strictly synchronized
    * renegotiations.  This works better when the randomization is on the

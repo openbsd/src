@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.55 2001/07/01 06:03:34 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.56 2001/07/01 19:48:43 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -794,7 +794,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
     }
 
   exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
-  if ((exchange->policy == NULL) && name)
+  if (!exchange->policy && name)
     exchange->policy = conf_get_str ("Phase 1", "Default");
 
   exchange->finalize = finalize;
@@ -1258,7 +1258,7 @@ exchange_check_old_sa (struct sa *sa, void *v_arg)
       || (sa->flags & SA_FLAG_REPLACED))
     return 0;
 
-  if (sa->phase != new_sa->phase || new_sa->name == NULL
+  if (sa->phase != new_sa->phase || new_sa->name == 0
       || strcasecmp (sa->name, new_sa->name))
     return 0;
 
@@ -1366,11 +1366,12 @@ exchange_finalize (struct message *msg)
       msg->isakmp_sa->recv_key = exchange->recv_key;
       msg->isakmp_sa->sent_key = exchange->sent_key;
       msg->isakmp_sa->keynote_key = exchange->keynote_key;
-      exchange->recv_key = NULL; /* Reset */
-      exchange->sent_key = NULL; /* Reset */
-      exchange->keynote_key = NULL; /* Reset */
+      /* Reset.  */
+      exchange->recv_key = 0;
+      exchange->sent_key = 0;
+      exchange->keynote_key = 0;
+      exchange->policy_id = -1;
       msg->isakmp_sa->policy_id = exchange->policy_id;
-      exchange->policy_id = -1; /* Reset */
       msg->isakmp_sa->id_i_len = exchange->id_i_len;
       msg->isakmp_sa->id_r_len = exchange->id_r_len;
       msg->isakmp_sa->initiator = exchange->initiator;
@@ -1393,12 +1394,12 @@ exchange_finalize (struct message *msg)
 
       LOG_DBG ((LOG_EXCHANGE, 10,
 		"exchange_finalize: phase 1 done: %s, %s",
-		exchange->doi == NULL ? "<no doi>" :
+		!exchange->doi ? "<no doi>" :
 		exchange->doi->decode_ids ("initiator id %s, responder id %s",
 					   exchange->id_i, exchange->id_i_len,
 					   exchange->id_r, exchange->id_r_len,
 					   0),
-		msg->isakmp_sa == NULL || msg->isakmp_sa->transport == NULL
+		!msg->isakmp_sa || !msg->isakmp_sa->transport
 		? "<no transport>"
 		: msg->isakmp_sa->transport->vtbl->decode_ids (msg->isakmp_sa
 							       ->transport)));
