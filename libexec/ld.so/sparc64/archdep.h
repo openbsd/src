@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.13 2002/08/12 01:05:23 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.14 2002/10/25 10:39:52 pefo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -75,5 +75,7 @@ RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 		_dl_exit(6);
 	}
 }
+
+#define RELOC_GOT(obj, offs)
 
 #endif /* _SPARC64_ARCHDEP_H_ */

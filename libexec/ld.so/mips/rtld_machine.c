@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2002/10/23 12:38:29 pefo Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.8 2002/10/25 10:39:52 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -166,6 +166,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	while (n--) {
 		if (symp->st_shndx == SHN_UNDEF &&
 		    ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
+DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 			if (symp->st_value == 0 || !lazy) {
 				this = 0;
 				ooff = _dl_find_symbol(strt + symp->st_name,
