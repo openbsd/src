@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.20 2002/06/20 02:43:23 deraadt Exp $
+#	$OpenBSD: files.sbus,v 1.21 2002/06/20 03:51:52 fgsch Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -64,33 +64,33 @@ device	cgthree: wsemuldisplaydev, rasops8, wsemul_sun
 attach	cgthree at sbus
 file	dev/sbus/cgthree.c		cgthree
 
-device magma {}
-attach magma at sbus
-device mtty
-attach mtty at magma
-device mbpp
-attach mbpp at magma
+device	magma {}
+attach	magma at sbus
+device	mtty
+attach	mtty at magma
+device	mbpp
+attach	mbpp at magma
 file	dev/sbus/magma.c		magma | mtty | mbpp needs-flag
 
-device spif {}
-attach spif at sbus
-device stty
-attach stty at spif
-device sbpp
-attach sbpp at spif
+device	spif {}
+attach	spif at sbus
+device	stty
+attach	stty at spif
+device	sbpp
+attach	sbpp at spif
 file	dev/sbus/spif.c			spif | stty | sbpp needs-flag
 
 attach	uperf at sbus with uperf_sbus
 file	dev/sbus/uperf_sbus.c		uperf_sbus
 
-device asio {}
-attach asio at sbus
-attach com at asio with com_asio
+device	asio {}
+attach	asio at sbus
+attach	com at asio with com_asio
 file	dev/sbus/asio.c			asio | com_asio needs-flag
 
-device apio {}
-attach apio at sbus
-attach lpt at apio with lpt_apio
+device	apio {}
+attach	apio at sbus
+attach	lpt at apio with lpt_apio
 file	dev/sbus/apio.c			apio | lpt_apio needs-flag
 
 # STP4020 SBus to PCMCIA bridge
