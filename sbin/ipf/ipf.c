@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipf.c,v 1.18 1999/03/06 23:18:23 deraadt Exp $      */
+/*     $OpenBSD: ipf.c,v 1.19 1999/07/06 19:06:42 kjell Exp $      */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.18 1999/03/06 23:18:23 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.19 1999/07/06 19:06:42 kjell Exp $";
 #endif
 
 static	void	frsync __P((void));
@@ -75,11 +75,19 @@ static	void	closedevice __P((void));
 static	char	*getline __P((char *, size_t, FILE *));
 static	char	*ipfname = IPL_NAME;
 
+#if SOLARIS
 #define OPTS	"AdDEf:F:Il:noPrsUvyzZ"
+#else
+#define OPTS	"AdDEf:F:Il:noPrsvyzZ"
+#endif
 
 void usage()
 {
+#if SOLARIS
 	fprintf(stderr, "usage: ipf [-AdDEInorsUvyzZ] [-l block|pass|nomatch] "
+#else
+	fprintf(stderr, "usage: ipf [-AdDEInorsvyzZ] [-l block|pass|nomatch] "
+#endif
 	    "[-F i|o|a|s|S] [-f filename]\n");
 	exit(1);
 }
