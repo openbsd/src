@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.17 2004/07/08 01:20:21 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.18 2004/07/09 10:53:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,32 +31,52 @@ client_peer_init(struct ntp_peer *p)
 {
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
+	struct ntp_addr		*h;
 
 	if ((p->query = calloc(1, sizeof(struct ntp_query))) == NULL)
 		fatal("client_query calloc");
 
-	switch (p->ss.ss_family) {
-	case AF_INET:
-		sa_in = (struct sockaddr_in *)&p->ss;
-		if (ntohs(sa_in->sin_port) == 0)
-			sa_in->sin_port = htons(123);
-		break;
-	case AF_INET6:
-		sa_in6 = (struct sockaddr_in6 *)&p->ss;
-		if (ntohs(sa_in6->sin6_port) == 0)
-			sa_in6->sin6_port = htons(123);
-		break;
-	default:
-		fatal("king bula sez: wrong AF in client_peer_init");
-		/* not reached */
+	for (h = p->addr; h != NULL; h = h->next) {
+		switch (h->ss.ss_family) {
+		case AF_INET:
+			sa_in = (struct sockaddr_in *)&h->ss;
+			if (ntohs(sa_in->sin_port) == 0)
+				sa_in->sin_port = htons(123);
+			break;
+		case AF_INET6:
+			sa_in6 = (struct sockaddr_in6 *)&h->ss;
+			if (ntohs(sa_in6->sin6_port) == 0)
+				sa_in6->sin6_port = htons(123);
+			break;
+		default:
+			fatal("king bula sez: wrong AF in client_peer_init");
+			/* not reached */
+		}
 	}
 
-	if ((p->query->fd = socket(p->ss.ss_family, SOCK_DGRAM, 0)) == -1)
+	if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
 		fatal("client_query socket");
 
 	p->query->msg.status = MODE_CLIENT | (NTP_VERSION << 3);
 	p->state = STATE_NONE;
 	p->next = time(NULL);
+	p->shift = 0;
+	p->trustlevel = TRUSTLEVEL_PATHETIC;
+
+	return (0);
+}
+
+int
+client_nextaddr(struct ntp_peer *p)
+{
+	close(p->query->fd);
+
+	if ((p->addr = p->addr->next) == NULL)
+		p->addr = p->addr_head;
+
+	if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
+		fatal("client_query socket");
+
 	p->shift = 0;
 	p->trustlevel = TRUSTLEVEL_PATHETIC;
 
@@ -84,8 +104,8 @@ client_query(struct ntp_peer *p)
 	p->query->msg.xmttime.fraction = arc4random();
 	p->query->xmttime = gettime();
 
-	ntp_sendmsg(p->query->fd, (struct sockaddr *)&p->ss, &p->query->msg,
-	    NTP_MSGSIZE_NOAUTH, 0);
+	ntp_sendmsg(p->query->fd, (struct sockaddr *)&p->addr->ss,
+	    &p->query->msg, NTP_MSGSIZE_NOAUTH, 0);
 	p->state = STATE_QUERY_SENT;
 	p->next = 0;
 	p->deadline = time(NULL) + QUERYTIME_MAX;

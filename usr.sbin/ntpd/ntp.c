@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.18 2004/07/09 10:22:07 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.19 2004/07/09 10:53:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,7 +164,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 			if (p->next > 0 && p->next < nextaction)
 				nextaction = p->next;
-
 			if (p->next > 0 && p->next <= time(NULL))
 				client_query(p);
 
@@ -172,12 +171,14 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 				nextaction = p->deadline;
 			if (p->deadline > 0 && p->deadline <= time(NULL)) {
 				log_debug("no reply from %s received in time",
-				    log_sockaddr((struct sockaddr *)&p->ss));
+				    log_sockaddr(
+				    (struct sockaddr *)&p->addr->ss));
 				if (p->trustlevel >= TRUSTLEVEL_BADPEER &&
 				    --p->trustlevel < TRUSTLEVEL_BADPEER)
 					log_info("peer %s now invalid",
 					    log_sockaddr(
-					    (struct sockaddr *)&p->ss));
+					    (struct sockaddr *)&p->addr->ss));
+				client_nextaddr(p);
 				client_query(p);
 			}
 
@@ -324,7 +325,7 @@ get_peer_update(struct ntp_peer *p, double *offset)
 	if (good < 8 && p->trustlevel > 0) {
 		if (p->trustlevel >= TRUSTLEVEL_BADPEER)
 			log_info("peer %s now invalid",
-			    log_sockaddr((struct sockaddr *)&p->ss));
+			    log_sockaddr((struct sockaddr *)&p->addr->ss));
 		p->trustlevel /= 2;
 	}
 

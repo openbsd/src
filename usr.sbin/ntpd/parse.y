@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2004/07/08 15:06:43 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.10 2004/07/09 10:53:33 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -77,7 +77,7 @@ typedef struct {
 %}
 
 %token	LISTEN ON
-%token	SERVER
+%token	SERVER SERVERS
 %token	ERROR
 %token	<v.string>		STRING
 %type	<v.number>		number
@@ -146,7 +146,7 @@ conf_main	: LISTEN ON address	{
 				free(h);
 			}
 		}
-		| SERVER address	{
+		| SERVERS address	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
 
@@ -161,11 +161,31 @@ conf_main	: LISTEN ON address	{
 				p = calloc(1, sizeof(struct ntp_peer));
 				if (p == NULL)
 					fatal("conf_main server calloc");
-				memcpy(&p->ss, &h->ss,
-				    sizeof(struct sockaddr_storage));
+				h->next = NULL;
+				p->addr = h;
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
-				free(h);
 			}
+		}
+		| SERVER address	{
+			struct ntp_peer		*p;
+			struct ntp_addr		*h, *next;
+
+			if ((p = calloc(1, sizeof(struct ntp_peer))) == NULL)
+				fatal("conf_main server calloc");
+			for (h = $2; h != NULL; h = next) {
+				next = h->next;
+				if (h->ss.ss_family != AF_INET &&
+				    h->ss.ss_family != AF_INET6) {
+					yyerror("IPv4 or IPv6 address "
+					    "or hostname expected");
+					YYERROR;
+				}
+				h->next = p->addr;
+				p->addr = h;
+			}
+
+			p->addr_head = p->addr;
+			TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 		}
 		;
 
@@ -216,7 +236,8 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "listen",		LISTEN},
 		{ "on",			ON},
-		{ "server",		SERVER}
+		{ "server",		SERVER},
+		{ "servers",		SERVERS}
 	};
 	const struct keywords	*p;
 
@@ -434,7 +455,6 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		log_warn("%s", filename);
-		free(conf);
 		return (-1);
 	}
 	infile = filename;

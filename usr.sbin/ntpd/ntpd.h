@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.18 2004/07/08 01:22:57 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.19 2004/07/09 10:53:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -76,7 +76,8 @@ struct ntp_offset {
 
 struct ntp_peer {
 	TAILQ_ENTRY(ntp_peer)		 entry;
-	struct sockaddr_storage		 ss;
+	struct ntp_addr			*addr_head;
+	struct ntp_addr			*addr;
 	struct ntp_query		*query;
 	enum client_state		 state;
 	time_t				 next;
@@ -197,6 +198,7 @@ int	server_dispatch(int fd);
 
 /* client.c */
 int	client_peer_init(struct ntp_peer *);
+int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
 int	client_dispatch(struct ntp_peer *);
 
