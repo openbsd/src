@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.45 2001/01/04 07:08:18 angelos Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.46 2001/01/04 07:58:06 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -852,7 +852,7 @@ domem()
 	char *name;
 	struct kmemstats kmemstats[M_LAST];
 	struct kmembuckets buckets[MINBUCKET + 16];
-	int mib[5];
+	int mib[4];
 	size_t siz;
 	char buf[BUFSIZ], *bufp, *ap;
 
@@ -868,59 +868,17 @@ domem()
 
 	bufp = buf;
 	mib[2] = KERN_MALLOC_BUCKET;
+	siz = sizeof(struct kmembuckets);
 	i = 0;
 	while ((ap = strsep(&bufp, ",")) != NULL) {
 	        mib[3] = atoi(ap);
-		siz = sizeof(u_int64_t);
 
-		mib[4] = KERN_MALLOC_CALLS;
-		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_calls, &siz,
+		if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
 			   NULL, 0) < 0) {
 		        printf("Failed to read statistics for bucket %d.\n",
 			       mib[3]);
 			return;
 		}
-
-		mib[4] = KERN_MALLOC_ALLOC;
-		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_total, &siz,
-			   NULL, 0) < 0) {
-		        printf("Failed to read statistics for bucket %d.\n",
-			       mib[3]);
-			return;
-		}
-
-		mib[4] = KERN_MALLOC_FREE;
-		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_totalfree, &siz,
-			   NULL, 0) < 0) {
-		        printf("Failed to read statistics for bucket %d.\n",
-			       mib[3]);
-			return;
-		}
-
-		mib[4] = KERN_MALLOC_ELEMENTS;
-		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_elmpercl, &siz,
-			   NULL, 0) < 0) {
-		        printf("Failed to read statistics for bucket %d.\n",
-			       mib[3]);
-			return;
-		}
-
-		mib[4] = KERN_MALLOC_HIWAT;
-		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_highwat, &siz,
-			   NULL, 0) < 0) {
-		        printf("Failed to read statistics for bucket %d.\n",
-			       mib[3]);
-			return;
-		}
-
-		mib[4] = KERN_MALLOC_COULDFREE;
-		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_couldfree, &siz,
-			   NULL, 0) < 0) {
-		        printf("Failed to read statistics for bucket %d.\n",
-			       mib[3]);
-			return;
-		}
-
 		i++;
 	}
 
