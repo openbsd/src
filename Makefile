@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 1998/03/18 15:51:04 mickey Exp $
+#	$OpenBSD: Makefile,v 1.27 1998/04/25 06:42:44 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -103,7 +103,14 @@ cross-includes:
 	${MAKE} MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
 	    DESTDIR=${CROSSDIR} includes
 
-cross-binutils:
+.if ${TARGET} == "powerpc" || ${TARGET} == "alpha" || ${TARGET} == "arc" || \
+    ${TARGET} == "pmax" || ${TARGET} == "wgrisc"
+cross-binutils: cross-binutils-new
+.else
+cross-binutils: cross-binutils-old
+.endif
+
+cross-binutils-new:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	export BSDSRCDIR=`pwd`; \
 	    (cd ${.CURDIR}/gnu/usr.bin/binutils; \
@@ -119,9 +126,12 @@ cross-binutils:
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh.gnm \
 	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
 
+cross-binutils-old: cross-gas cross-ar cross-ld
+
 cross-gas:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
+	-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin
 	(cd gnu/usr.bin/gas; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -130,8 +140,44 @@ cross-gas:
 	    TARGET_MACHINE_ARCH=${TARGET} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE})
 	(cd gnu/usr.bin/gas; \
+	    TARGET_MACHINE_ARCH=${TARGET} \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
+	ln -sf ${CROSSDIR}/usr/bin/as \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/as
+
+# Not yet functional
+cross-ld:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	-mkdir -p ${CROSSDIR}/usr/bin
+	(cd gnu/usr.bin/ld; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj)
+	(cd gnu/usr.bin/ld; \
+	    TARGET_MACHINE_ARCH=${TARGET} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN=)
+	(cd gnu/usr.bin/ld; \
+	    TARGET_MACHINE_ARCH=${TARGET} \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= install)
+	ln -sf ${CROSSDIR}/usr/bin/ld \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ld
+
+# Not yet tested for compatibility with any target
+cross-ar:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	-mkdir -p ${CROSSDIR}/usr/bin
+	(cd usr.bin/ar; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj)
+	(cd usr.bin/ar; MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=)
+	(cd usr.bin/ar; \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= install)
+	ln -sf ${CROSSDIR}/usr/bin/ar \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ar
 
 cross-gcc:
 	-mkdir -p ${CROSSDIR}/usr/obj
