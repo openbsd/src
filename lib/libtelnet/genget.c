@@ -1,4 +1,4 @@
-/*	$OpenBSD: genget.c,v 1.2 1996/03/19 23:15:52 niklas Exp $	*/
+/*	$OpenBSD: genget.c,v 1.3 1997/07/14 01:33:42 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 #ifndef lint
 /* from: static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95"; */
 /* from: static char *rcsid = "$NetBSD: genget.c,v 1.5 1996/02/24 01:15:21 jtk Exp $"; */
-static char *rcsid = "$OpenBSD: genget.c,v 1.2 1996/03/19 23:15:52 niklas Exp $";
+static char *rcsid = "$OpenBSD: genget.c,v 1.3 1997/07/14 01:33:42 millert Exp $";
 #endif /* not lint */
 
 
@@ -58,7 +58,6 @@ int Ambiguous __P((char *));
 isprefix(s1, s2)
 	register char *s1, *s2;
 {
-	register int n = 0;
 	char *os1;
 	register char c1, c2;
 
