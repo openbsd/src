@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_signal.c,v 1.4 1999/11/25 07:01:45 d Exp $	*/
+/*	$OpenBSD: uthread_signal.c,v 1.5 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -46,7 +46,7 @@ _thread_sys_signal(int s, sig_t a)
 	/* Initialise the signal action structure: */
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = a;
-	sa.sa_flags = 0;
+	sa.sa_flags = SA_SIGINFO;
 
 	/* Perform the sigaction syscall: */
 	if (_thread_sys_sigaction(s, &sa, &osa) < 0) {

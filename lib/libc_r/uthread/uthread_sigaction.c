@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigaction.c,v 1.5 1999/11/25 07:01:44 d Exp $	*/
+/*	$OpenBSD: uthread_sigaction.c,v 1.6 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -75,12 +75,9 @@ sigaction(int sig, const struct sigaction * act, struct sigaction * oact)
 		 */
 		if (act != NULL && sig != _SCHED_SIGNAL && sig != SIGCHLD &&
 		    sig != SIGINFO) {
-			/* Initialise the global signal action structure: */
 			gact.sa_mask = act->sa_mask;
-			gact.sa_flags = 0;
-
-			/* Ensure the scheduling signal is masked: */
 			sigaddset(&gact.sa_mask, _SCHED_SIGNAL);
+			gact.sa_flags = act->sa_flags | SA_SIGINFO;
 
 			/*
 			 * Check if the signal handler is being set to
@@ -91,14 +88,12 @@ sigaction(int sig, const struct sigaction * act, struct sigaction * oact)
 				/* Specify the built in handler: */
 				gact.sa_handler = act->sa_handler;
 			else
-				/*
-				 * Specify the thread kernel signal
-				 * handler:
-				 */
-				gact.sa_handler = (void (*) ()) _thread_sig_handler;
+				/* Specify the thread kernel signal handler */
+				gact.sa_handler =
+					(void (*) ()) _thread_sig_handler;
 
 			/* Change the signal action in the kernel: */
-		    	if (_thread_sys_sigaction(sig,&gact,NULL) != 0)
+		    	if (_thread_sys_sigaction(sig, &gact, NULL) != 0)
 				ret = -1;
 		}
 	}

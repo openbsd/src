@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_accept.c,v 1.5 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_accept.c,v 1.6 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -52,7 +52,8 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 		/* Enter a loop to wait for a connection request: */
 		while ((ret = _thread_sys_accept(fd, name, namelen)) < 0) {
 			/* Check if the socket is to block: */
-			if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0 && (errno == EWOULDBLOCK || errno == EAGAIN)) {
+			if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0 &&
+			    (errno == EWOULDBLOCK || errno == EAGAIN)) {
 				/* Save the socket file descriptor: */
 				curthread->data.fd.fd = fd;
 				curthread->data.fd.fname = __FILE__;
@@ -63,7 +64,8 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 				curthread->interrupted = 0;
 
 				/* Schedule the next thread: */
-				_thread_kern_sched_state(PS_FDR_WAIT, __FILE__, __LINE__);
+				_thread_kern_sched_state(PS_FDR_WAIT, __FILE__,
+							 __LINE__);
 
 				/* Check if the wait was interrupted: */
 				if (curthread->interrupted) {
@@ -81,26 +83,19 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 			}
 		}
 
-		/* Check for errors: */
-		if (ret < 0) {
-		}
-		/* Initialise the file descriptor table for the new socket: */
-		else if (_thread_fd_table_init(ret) != 0) {
-			/* Quietly close the socket: */
-			_thread_sys_close(ret);
-
-			/* Return an error: */
-			ret = -1;
-		}
-		/* 
-		 * If the parent socket was blocking, make sure that
-		 * the new socket is also set blocking here (as the
-		 * call to _thread_fd_table_init() above will always 
-		 * set the new socket flags to non-blocking, as that 
-		 * will be the inherited state of the new socket.
+		/*
+		 * If no errors initialize the file descriptor table
+		 * for the new socket.   Turn on blocking mode in the
+		 * child if it is on in the parent.   This is done
+		 * as _thread_fd_table_init *may* have turned the flag on.
 		 */
-		if((ret > 0) && (_thread_fd_table[fd]->flags & O_NONBLOCK) == 0)
-			_thread_fd_table[ret]->flags &= ~O_NONBLOCK;
+		if (ret != -1)
+			if (_thread_fd_table_init(ret) != 0) {
+				/* Quietly close the socket: */
+				_thread_sys_close(ret);
+				ret = -1;
+			} else if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0)
+				_thread_fd_table[ret]->flags &= ~O_NONBLOCK;
 
 		/* Unlock the file descriptor: */
 		_FD_UNLOCK(fd, FD_RDWR);

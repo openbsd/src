@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.21 2002/02/21 20:57:41 fgsch Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.22 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -50,15 +50,19 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-/* Static function prototype definitions: */
-static void
-thread_kern_poll(int wait_reqd);
+#if defined(PTHREAD_TRACE_KERN)
+#define PTHREAD_TRACE(x)	_thread_sys_write(-1, (void*) x, 0)
+#else
+#define PTHREAD_TRACE(x)
+#endif
 
-static void
-dequeue_signals(void);
-
-static inline void
-thread_run_switch_hook(pthread_t thread_out, pthread_t thread_in);
+/*
+ * local functions.   Do NOT make these static... we want so see them in
+ * crash dumps.
+ */
+void		_thread_kern_poll(int);
+void		_dequeue_signals(void);
+inline void	_thread_run_switch_hook(pthread_t, pthread_t);
 
 /* Static variables: */
 static int	last_tick = 0;
@@ -68,6 +72,7 @@ _thread_kern_sched_sig(void)
 {
 	struct pthread	*curthread = _get_curthread();
 
+	PTHREAD_TRACE(1);
 	curthread->check_pending = 1;
 	_thread_kern_sched(NULL);
 }
@@ -82,6 +87,8 @@ _thread_kern_sched(struct sigcontext * scp)
 	unsigned int	current_tick;
 	int		add_to_prioq;
 	pthread_t	old_thread_run;
+
+	PTHREAD_TRACE(2);
 
 	/*
 	 * Flag the pthread kernel as executing scheduler code
@@ -291,7 +298,7 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * Poll file descriptors to update the state of threads
 			 * waiting on file I/O where data may be available:
 			 */
-			thread_kern_poll(0);
+			_thread_kern_poll(0);
 
 			/* Protect the scheduling queues: */
 			_queue_signals = 1;
@@ -409,7 +416,7 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * There are no threads ready to run, so wait until
 			 * something happens that changes this condition:
 			 */
-			thread_kern_poll(1);
+			_thread_kern_poll(1);
 
 			/*
 			 * This process' usage will likely be very small
@@ -445,7 +452,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				/* Protect the scheduling queues again: */
 				_queue_signals = 1;
 
-				dequeue_signals();
+				_dequeue_signals();
 
 				/*
 				 * Check for a higher priority thread that
@@ -519,7 +526,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				 */
 				if ((_sched_switch_hook != NULL) &&
 				    (_last_user_thread != curthread)) {
-					thread_run_switch_hook(_last_user_thread,
+					_thread_run_switch_hook(_last_user_thread,
 					    curthread);
 				}
 
@@ -543,7 +550,7 @@ _thread_kern_sched(struct sigcontext * scp)
 
 				if (_sched_switch_hook != NULL) {
 					/* Run the installed switch hook: */
-					thread_run_switch_hook(_last_user_thread,
+					_thread_run_switch_hook(_last_user_thread,
 					    curthread);
 				}
 
@@ -569,6 +576,7 @@ _thread_kern_sched_state(enum pthread_state state, char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 
+	PTHREAD_TRACE(3);
 	/*
 	 * Flag the pthread kernel as executing scheduler code
 	 * to avoid a scheduler signal from interrupting this
@@ -597,6 +605,8 @@ _thread_kern_sched_state_unlock(enum pthread_state state,
 {
 	struct pthread	*curthread = _get_curthread();
 
+	PTHREAD_TRACE(4);
+
 	/*
 	 * Flag the pthread kernel as executing scheduler code
 	 * to avoid a scheduler signal from interrupting this
@@ -622,8 +632,8 @@ _thread_kern_sched_state_unlock(enum pthread_state state,
 	_thread_kern_sched(NULL);
 }
 
-static void
-thread_kern_poll(int wait_reqd)
+void
+_thread_kern_poll(int wait_reqd)
 {
 	int             count = 0;
 	int             i, found;
@@ -633,6 +643,8 @@ thread_kern_poll(int wait_reqd)
 	struct pthread	*pthread;
 	struct timespec ts;
 	struct timeval  tv;
+
+	PTHREAD_TRACE(5);
 
 	/* Check if the caller wants to wait: */
 	if (wait_reqd == 0) {
@@ -683,8 +695,7 @@ thread_kern_poll(int wait_reqd)
 	if (_sigq_check_reqd != 0) {
 		/* Reset flag before handling queued signals: */
 		_sigq_check_reqd = 0;
-
-		dequeue_signals();
+		_dequeue_signals();
 	}
 
 	/*
@@ -809,8 +820,7 @@ thread_kern_poll(int wait_reqd)
 		if (_sigq_check_reqd != 0) {
 			/* Reset flag before handling signals: */
 			_sigq_check_reqd = 0;
-
-			dequeue_signals();
+			_dequeue_signals();
 		}
 	}
 
@@ -943,10 +953,7 @@ thread_kern_poll(int wait_reqd)
 
 		/* Protect the scheduling queues: */
 		_queue_signals = 1;
-
-		dequeue_signals();
-
-		/* Unprotect the scheduling queues: */
+		_dequeue_signals();
 		_queue_signals = 0;
 	}
 }
@@ -957,6 +964,8 @@ _thread_kern_set_timeout(const struct timespec * timeout)
 	struct pthread	*curthread = _get_curthread();
 	struct timespec current_time;
 	struct timeval  tv;
+
+	PTHREAD_TRACE(6);
 
 	/* Reset the timeout flag for the running thread: */
 	curthread->timeout = 0;
@@ -998,6 +1007,8 @@ _thread_kern_sig_defer(void)
 {
 	struct pthread	*curthread = _get_curthread();
 
+	PTHREAD_TRACE(7);
+
 	/* Allow signal deferral to be recursive. */
 	curthread->sig_defer_count++;
 }
@@ -1006,6 +1017,8 @@ void
 _thread_kern_sig_undefer(void)
 {
 	struct pthread	*curthread = _get_curthread();
+
+	PTHREAD_TRACE(8);
 
 	/*
 	 * Perform checks to yield only if we are about to undefer
@@ -1047,11 +1060,13 @@ _thread_kern_sig_undefer(void)
 	}
 }
 
-static void
-dequeue_signals(void)
+void
+_dequeue_signals(void)
 {
 	char	bufr[128];
 	int	i, num;
+
+	PTHREAD_TRACE(9);
 
 	/*
 	 * Enter a loop to read and handle queued signals from the
@@ -1072,7 +1087,7 @@ dequeue_signals(void)
 			}
 			else {
 				/* Handle this signal: */
-				_thread_sig_handle((int) bufr[i], NULL);
+				_thread_sig_process((int) bufr[i], NULL);
 			}
 		}
 	}
@@ -1085,11 +1100,13 @@ dequeue_signals(void)
 	}
 }
 
-static inline void
-thread_run_switch_hook(pthread_t thread_out, pthread_t thread_in)
+inline void
+_thread_run_switch_hook(pthread_t thread_out, pthread_t thread_in)
 {
 	pthread_t tid_out = thread_out;
 	pthread_t tid_in = thread_in;
+
+	PTHREAD_TRACE(10);
 
 	if ((tid_out != NULL) &&
 	    (tid_out->flags & PTHREAD_FLAGS_PRIVATE) != 0)

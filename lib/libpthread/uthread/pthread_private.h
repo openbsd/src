@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.35 2002/02/21 20:57:41 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.36 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1082,8 +1082,9 @@ __BEGIN_DECLS
 int     _find_thread(pthread_t);
 struct pthread *_get_curthread(void);
 void	_set_curthread(struct pthread *);
-int     _thread_create(pthread_t *,const pthread_attr_t *,void *(*start_routine)(void *),void *,pthread_t);
-void    _dispatch_signals(void);
+int     _thread_create(pthread_t *, const pthread_attr_t *,
+		       void *(*start_routine)(void *), void *,pthread_t);
+void    _dispatch_signals(pthread_t, struct sigcontext *);
 void    _thread_signal(pthread_t, int);
 int	_mutex_cv_lock(pthread_mutex_t *);
 int	_mutex_cv_unlock(pthread_mutex_t *);
@@ -1115,9 +1116,10 @@ void	_thread_kern_sched_state_unlock(enum pthread_state state,
 void    _thread_kern_set_timeout(const struct timespec *);
 void    _thread_kern_sig_defer(void);
 void    _thread_kern_sig_undefer(void);
-void    _thread_sig_handler(int, int, struct sigcontext *);
+void    _thread_sig_handler(int, siginfo_t *, struct sigcontext *);
 void    _thread_sig_handle(int, struct sigcontext *);
 void	_thread_sig_init(void);
+void	_thread_sig_process(int, struct sigcontext *);
 void    _thread_start(void);
 void    _thread_start_sig_handler(void);
 void	_thread_seterrno(pthread_t,int);

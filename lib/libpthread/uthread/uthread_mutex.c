@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.14 2002/01/23 23:11:57 fgsch Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.15 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -709,27 +709,6 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 	 * initialization:
 	 */
 	else if ((*mutex != NULL) || ((ret = init_static(mutex)) == 0))
-		ret = mutex_lock_common(mutex);
-
-	return (ret);
-}
-
-int
-_pthread_mutex_lock(pthread_mutex_t *mutex)
-{
-	int	ret = 0;
-
-	if (_thread_initial == NULL)
-		_thread_init();
-
-	if (mutex == NULL)
-		ret = EINVAL;
-
-	/*
-	 * If the mutex is statically initialized, perform the dynamic
-	 * initialization marking it private (delete safe):
-	 */
-	else if ((*mutex != NULL) || ((ret = init_static_private(mutex)) == 0))
 		ret = mutex_lock_common(mutex);
 
 	return (ret);

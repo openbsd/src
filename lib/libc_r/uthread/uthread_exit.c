@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_exit.c,v 1.15 2001/12/19 02:02:52 fgsch Exp $	*/
+/*	$OpenBSD: uthread_exit.c,v 1.16 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -132,7 +132,7 @@ _thread_exit(const char *fname, int lineno, const char *string)
 		/* Set the abort handler to default (dump core) */
 		sa.sa_handler = SIG_DFL;
 		sigemptyset(&sa.sa_mask);
-		sa.sa_flags = 0;
+		sa.sa_flags = SA_SIGINFO;
 		(void)_thread_sys_sigaction(SIGABRT, &sa, NULL);
 		(void)_thread_sys_kill(_thread_sys_getpid(), SIGABRT);
 		for (;;) ;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kill.c,v 1.7 1999/11/25 07:01:37 d Exp $	*/
+/*	$OpenBSD: uthread_kill.c,v 1.8 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -38,6 +38,12 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
+/*
+ * XXX THIS IS WRONG! The signal has to either come through the OS to
+ * get the proper siginfo, context, etc., or we need to gen up a
+ * siginfo (assuming needed).   Signal reset and other semantics
+ * also need to be obeyed.
+ */
 int
 pthread_kill(pthread_t pthread, int sig)
 {
@@ -75,7 +81,6 @@ pthread_kill(pthread_t pthread, int sig)
 				/* Return the signal number: */
 				pthread->signo = sig;
 			}
-			/* Increment the pending signal count: */
 			sigaddset(&pthread->sigpend,sig);
 			break;
 
@@ -88,7 +93,6 @@ pthread_kill(pthread_t pthread, int sig)
 				/* Return the signal number: */
 				pthread->signo = sig;
 			} else
-				/* Increment the pending signal count. */
 				sigaddset(&pthread->sigpend,sig);
 			break;
 
@@ -111,7 +115,6 @@ pthread_kill(pthread_t pthread, int sig)
 				/* Return the signal number: */
 				pthread->signo = sig;
 			} else {
-				/* Increment the pending signal count: */
 				sigaddset(&pthread->sigpend,sig);
 			}
 			break;
@@ -144,7 +147,7 @@ pthread_kill(pthread_t pthread, int sig)
 
 			/*
 			 * Dispatch the signal via the custom signal
-			 * handler:
+			 * handler: ;;; what about SA_SIGINFO???
 			 */
 			(*(_thread_sigact[sig - 1].sa_handler))(sig);
 

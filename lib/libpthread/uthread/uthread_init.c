@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.21 2002/02/21 20:57:41 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.22 2002/10/30 19:11:56 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -222,7 +222,7 @@ _thread_init(void)
 		/* Initialise the global signal action structure: */
 		sigfillset(&act.sa_mask);
 		act.sa_handler = (void (*) ()) _thread_sig_handler;
-		act.sa_flags = 0;
+		act.sa_flags = SA_SIGINFO;
 
 		/* Clear pending signals for the process: */
 		sigemptyset(&_process_sigpending);
@@ -263,6 +263,9 @@ _thread_init(void)
 			 */
 			PANIC("Cannot initialize signal handler");
 		}
+		_thread_sigact[_SCHED_SIGNAL - 1].sa_flags = SA_SIGINFO;
+		_thread_sigact[SIGINFO - 1].sa_flags = SA_SIGINFO;
+		_thread_sigact[SIGCHLD - 1].sa_flags = SA_SIGINFO;
 
 		/* Get the process signal mask: */
 		_thread_sys_sigprocmask(SIG_SETMASK, NULL, &_process_sigmask);
