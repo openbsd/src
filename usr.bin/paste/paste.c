@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.5 1998/11/16 06:09:12 deraadt Exp $	*/
+/*	$OpenBSD: paste.c,v 1.6 1999/08/23 23:58:23 aaron Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,15 +44,16 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.5 1998/11/16 06:09:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.6 1999/08/23 23:58:23 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 char *delim;
 int delimcnt;
@@ -115,7 +116,7 @@ parallel(argv)
 	register char ch, *p;
 	LIST *head, *tmp;
 	int opencnt, output;
-	char buf[_POSIX2_LINE_MAX + 1], *malloc();
+	size_t len;
 
 	for (cnt = 0, head = NULL; (p = *argv); ++argv, ++cnt) {
 		if (!(lp = (LIST *)malloc((u_int)sizeof(LIST)))) {
@@ -148,7 +149,7 @@ parallel(argv)
 					putchar(ch);
 				continue;
 			}
-			if (!fgets(buf, sizeof(buf), lp->fp)) {
+			if (!(p = fgetln(lp->fp, &len))) {
 				if (!--opencnt)
 					break;
 				lp->fp = NULL;
@@ -157,13 +158,14 @@ parallel(argv)
 					putchar(ch);
 				continue;
 			}
-			if (!(p = strchr(buf, '\n'))) {
+			if (*(p + len - 1) == '\n')
+				*(p + len - 1) = '\0';
+			else {
 				(void)fprintf(stderr,
-				    "paste: %s: input line too long.\n",
+				    "paste: %s: incomplete line.\n",
 				    lp->name);
 				exit(1);
 			}
-			*p = '\0';
 			/*
 			 * make sure that we don't print any delimiters
 			 * unless there's a non-empty file.
@@ -175,7 +177,7 @@ parallel(argv)
 						putchar(ch);
 			} else if ((ch = delim[(lp->cnt - 1) % delimcnt]))
 				putchar(ch);
-			(void)printf("%s", buf);
+			(void)printf("%s", p);
 		}
 		if (output)
 			putchar('\n');
