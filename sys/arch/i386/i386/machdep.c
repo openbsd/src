@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.150 2001/02/28 19:13:29 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.151 2001/03/16 00:24:00 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -760,7 +760,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium II/Celeron (Deschutes)",
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
-				"Pentium III/Celeron (Coppermine)",
+				"Pentium III (Coppermine)",
 				0, "Pentium III Xeon (Cascades)", 0, 0, 0,
 				0, 0,
 				"Pentium Pro, II or III"	/* Default */
