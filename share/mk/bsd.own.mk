@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.62 2002/08/11 23:13:10 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.63 2002/12/07 22:31:00 millert Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -121,7 +121,7 @@ PICFLAG=-fPIC
 .endif
 .if (${MACHINE_ARCH} == "sparc64") || (${MACHINE_ARCH} == "sparc")
 ASPICFLAG=-KPIC
-.else
+.elif (${ELF_TOOLCHAIN} != "yes")
 ASPICFLAG=-k
 .endif
 
