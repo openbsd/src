@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.87 2004/06/08 18:09:31 marc Exp $ */
+/* $OpenBSD: machdep.c,v 1.88 2004/07/04 01:13:05 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -2043,7 +2043,7 @@ delay(n)
 		: "i" (2), "0" (N));
 }
 
-#if defined(COMPAT_OSF1) || 1		/* XXX */
+#if defined(COMPAT_OSF1)
 void	cpu_exec_ecoff_setregs(struct proc *, struct exec_package *,
 	    u_long, register_t *);
 
