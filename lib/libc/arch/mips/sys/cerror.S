@@ -38,8 +38,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$Id: cerror.S,v 1.1.1.1 1995/10/18 08:41:35 deraadt Exp $")
+	ASMSTR("$Id: cerror.S,v 1.2 1996/05/16 11:16:08 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 	.globl	_C_LABEL(errno)
 LEAF(cerror)

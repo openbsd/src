@@ -38,8 +38,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sbrk.S,v 1.1.1.1 1995/10/18 08:41:35 deraadt Exp $")
+	ASMSTR("$Id: sbrk.S,v 1.2 1996/05/16 11:16:11 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 	.globl	curbrk
 
@@ -48,6 +52,11 @@ curbrk:	.word	_C_LABEL(end)
 	.text
 
 LEAF(sbrk)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	lw	v1, curbrk
 	li	v0, SYS_break
 	addu	a0, a0, v1	# compute current break
@@ -57,5 +66,6 @@ LEAF(sbrk)
 	sw	a0, curbrk	# save current val of curbrk from above
 	j	ra
 1:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(sbrk)

@@ -35,11 +35,19 @@
  */
 
 #include <machine/regnum.h>
+#if MACHINE==pica
+#include <machine/asm.h>
+#else
 #include <machine/machAsmDefs.h>
+#endif
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: _setjmp.S,v 1.2 1995/12/26 18:17:18 deraadt Exp $")
+	ASMSTR("$Id: _setjmp.S,v 1.3 1996/05/16 11:15:59 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,6 +64,9 @@
 	.set	noreorder
 
 LEAF(_setjmp)
+#ifdef ABICALLS 
+	.cpload t9
+#endif  
 	li	v0, 0xACEDBADE			# sigcontext magic number
 	sw	ra, (2 * 4)(a0)			# sc_pc = return address
 	sw	v0, (3 * 4)(a0)			#   saved in sc_regs[0]
@@ -88,9 +99,19 @@ LEAF(_setjmp)
 END(_setjmp)
 
 LEAF(_longjmp)
+#ifdef ABICALLS 
+	.set    noreorder
+	.cpload t9
+	.set    reorder
+	subu	sp, sp, 32
+	.cprestore 16
+	.set    noreorder
+#endif  
 	lw	v0, (3 * 4)(a0)			# get magic number
 	lw	ra, (2 * 4)(a0)
 	bne	v0, 0xACEDBADE, botch		# jump if error
+
+	addu	sp, sp, 32			# don't matter, sanity
 	lw	s0, ((S0 + 3) * 4)(a0)
 	lw	s1, ((S1 + 3) * 4)(a0)
 	lw	s2, ((S2 + 3) * 4)(a0)
@@ -115,6 +136,7 @@ LEAF(_longjmp)
 	lwc1	$f29, ((29 + 38) * 4)(a0)
 	lwc1	$f30, ((30 + 38) * 4)(a0)
 	lwc1	$f31, ((31 + 38) * 4)(a0)
+
 	j	ra
 	move	v0, a1
 botch:

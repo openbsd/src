@@ -38,8 +38,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: brk.S,v 1.1.1.1 1995/10/18 08:41:35 deraadt Exp $")
+	ASMSTR("$Id: brk.S,v 1.2 1996/05/16 11:16:08 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 	.globl	minbrk
 	.globl	curbrk
@@ -49,8 +53,13 @@ minbrk:	.word	_C_LABEL(end)
 	.text
 
 LEAF(brk)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	lw	v0, minbrk
-	bgeu	a0, v0, _C_LABEL(brk)
+	bgeu	a0, v0, _C_LABEL(_brk)
 	move	a0, v0		# dont allow break < minbrk
 ALEAF(_brk)
 	li	v0, SYS_break
@@ -60,5 +69,6 @@ ALEAF(_brk)
 	move	v0, zero
 	j	ra
 1:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(brk)

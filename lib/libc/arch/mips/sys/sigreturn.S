@@ -38,8 +38,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sigreturn.S,v 1.1.1.1 1995/10/18 08:41:36 deraadt Exp $")
+	ASMSTR("$Id: sigreturn.S,v 1.2 1996/05/16 11:16:13 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /*
  * We must preserve the state of the registers as the user has set them up.

@@ -38,15 +38,25 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ptrace.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: ptrace.S,v 1.1.1.1 1995/10/18 08:41:35 deraadt Exp $")
+	ASMSTR("$Id: ptrace.S,v 1.2 1996/05/16 11:16:10 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef ABICALLS
+	.abicalls
+#endif
+
 LEAF(ptrace)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	sw	zero, _C_LABEL(errno)
 	li	v0, SYS_ptrace
 	syscall
 	bne	a3, zero, 1f
 	j	ra
 1:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(ptrace)

@@ -34,12 +34,20 @@
  * SUCH DAMAGE.
  */
 
+#if MACHINE==pica
+#include <machine/asm.h>
+#else
 #include <machine/machAsmDefs.h>
+#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
-	ASMSTR("$Id: fabs.S,v 1.1.1.1 1995/10/18 08:41:33 deraadt Exp $")
+	ASMSTR("$Id: fabs.S,v 1.2 1996/05/16 11:16:00 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 	.set	noreorder
 

@@ -36,12 +36,20 @@
 
 #include <sys/syscall.h>
 #include <machine/regnum.h>
+#if MACHINE==pica
+#include <machine/asm.h>
+#else
 #include <machine/machAsmDefs.h>
+#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: setjmp.S,v 1.2 1995/12/26 18:17:18 deraadt Exp $")
+	ASMSTR("$Id: setjmp.S,v 1.3 1996/05/16 11:16:01 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /*
  * C library -- setjmp, longjmp
@@ -57,8 +65,16 @@
 #define SETJMP_FRAME_SIZE	(STAND_FRAME_SIZE + 12)
 
 NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
-	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
+	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
+#ifdef ABICALLS
+	.cprestore 16
+#endif
 	sw	ra, STAND_RA_OFFSET(sp)		# save state
 	sw	a0, SETJMP_FRAME_SIZE(sp)
 	move	a0, zero			# get current signal mask
@@ -110,6 +126,13 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 END(setjmp)
 
 LEAF(longjmp)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+	subu	sp, sp, 32
+	.cprestore 16
+#endif
 	sw	a1, ((V0 + 3) * 4)(a0)	# save return value in sc_regs[V0]
 	li	v0, SYS_sigreturn
 	syscall
