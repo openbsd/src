@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.2 1996/12/28 06:22:00 rahnds Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.3 1997/01/09 03:07:15 rahnds Exp $	*/
 /*	$NetBSD: genassym.c,v 1.1 1996/09/30 16:34:46 ws Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+ #include <vm/vm.h>
+ #include <vm/vm_kern.h>
+
 
 #include <machine/pcb.h>
 #include <machine/pmap.h>
