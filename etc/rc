@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.102 1999/08/04 17:07:27 millert Exp $
+#	$OpenBSD: rc,v 1.103 1999/08/05 08:04:25 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -278,7 +278,7 @@ echo clearing /tmp
 # (not needed with mfs /tmp, but doesn't hurt there...)
 (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
     find . ! -name . ! -name lost+found ! -name quota.user \
-	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
+	! -name quota.group -execdir rm -rf -- {} \; -type d -prune)
 
 if [ -f /etc/sysctl.conf ]; then
 (
