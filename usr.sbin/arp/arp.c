@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.27 2003/06/02 23:36:52 millert Exp $ */
+/*	$OpenBSD: arp.c,v 1.28 2003/06/11 23:33:25 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.27 2003/06/02 23:36:52 millert Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.28 2003/06/11 23:33:25 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -103,9 +103,7 @@ static int s = -1;
 #define F_DELETE	4
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, func, rtn;
 
@@ -183,8 +181,7 @@ main(argc, argv)
  * Process a file to set standard arp entries
  */
 int
-file(name)
-	char *name;
+file(char *name)
 {
 	char line[100], arg[5][50], *args[5];
 	int i, retval;
@@ -214,7 +211,7 @@ file(name)
 }
 
 void
-getsocket()
+getsocket(void)
 {
 	if (s >= 0)
 		return;
@@ -236,9 +233,7 @@ struct	{
  * Set an individual arp entry
  */
 int
-set(argc, argv)
-	int argc;
-	char **argv;
+set(int argc, char *argv[])
 {
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
@@ -338,8 +333,7 @@ overwrite:
  * Display an individual arp entry
  */
 int
-get(host)
-	const char *host;
+get(const char *host)
 {
 	struct sockaddr_inarp *sin;
 
@@ -360,9 +354,7 @@ get(host)
  * Delete an arp entry
  */
 int
-delete(host, info)
-	const char *host;
-	const char *info;
+delete(const char *host, const char *info)
 {
 	struct sockaddr_inarp *sin;
 	struct rt_msghdr *rtm;
@@ -417,11 +409,8 @@ delete:
  * Search the entire arp table, and do some action on matching entries.
  */
 void
-search(addr, action)
-	in_addr_t addr;
-	void (*action)(struct sockaddr_dl *sdl,
-		       struct sockaddr_inarp *sin,
-		       struct rt_msghdr *rtm);
+search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
+    struct sockaddr_inarp *sin, struct rt_msghdr *rtm))
 {
 	int mib[6];
 	size_t needed;
@@ -463,10 +452,8 @@ search(addr, action)
  * Display an arp entry
  */
 void
-print_entry(sdl, sin, rtm)
-	struct sockaddr_dl *sdl;
-	struct sockaddr_inarp *sin;
-	struct rt_msghdr *rtm;
+print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
+    struct rt_msghdr *rtm)
 {
 	char *host;
 	extern int h_errno;
@@ -513,10 +500,8 @@ print_entry(sdl, sin, rtm)
  * Nuke an arp entry
  */
 void
-nuke_entry(sdl, sin, rtm)
-	struct sockaddr_dl *sdl;
-	struct sockaddr_inarp *sin;
-	struct rt_msghdr *rtm;
+nuke_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
+    struct rt_msghdr *rtm)
 {
 	char ip[20];
 
@@ -534,7 +519,7 @@ ether_print(const char *scp)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: arp [-n] hostname\n");
 	(void)fprintf(stderr, "usage: arp [-n] -a\n");
@@ -547,8 +532,7 @@ usage()
 }
 
 int
-rtmsg(cmd)
-	int cmd;
+rtmsg(int cmd)
 {
 	static int seq;
 	int rlen;
@@ -619,9 +603,7 @@ doit:
 }
 
 int
-getinetaddr(host, inap)
-	const char *host;
-	struct in_addr *inap;
+getinetaddr(const char *host, struct in_addr *inap)
 {
 	struct hostent *hp;
 

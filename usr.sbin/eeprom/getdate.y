@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: getdate.y,v 1.4 2001/09/30 19:48:23 millert Exp $	*/
+/*	$OpenBSD: getdate.y,v 1.5 2003/06/11 23:33:28 deraadt Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -643,9 +643,9 @@ static int
 LookupWord(buff)
     char		*buff;
 {
-    register char	*p;
-    register char	*q;
-    register const TABLE	*tp;
+    char	*p;
+    char	*q;
+    const TABLE	*tp;
     int			i;
     int			abbrev;
 
@@ -749,8 +749,8 @@ LookupWord(buff)
 static int
 yylex()
 {
-    register char	c;
-    register char	*p;
+    char	c;
+    char	*p;
     char		buff[20];
     int			Count;
     int			sign;
@@ -923,9 +923,7 @@ get_date(p, now)
 
 /* ARGSUSED */
 int
-main(ac, av)
-    int		ac;
-    char	*av[];
+main(int ac, char *av[])
 {
     char	buff[128];
     time_t	d;

@@ -76,7 +76,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $OpenBSD: mrinfo.c,v 1.15 2003/03/05 21:05:39 deraadt Exp $";
+    "@(#) $OpenBSD: mrinfo.c,v 1.16 2003/06/11 23:33:28 deraadt Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
@@ -205,7 +205,8 @@ accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 		thresh = *p++;
 		ncount = *p++;
 		while (--ncount >= 0) {
-			register u_int32_t neighbor;
+			u_int32_t neighbor;
+
 			GET_ADDR(neighbor);
 			neighbor = htonl(neighbor);
 			printf("  %s -> ", inet_fmt(laddr, s1));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.7 2002/09/13 01:53:12 deraadt Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.8 2003/06/11 23:33:29 deraadt Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -45,7 +45,7 @@
 #if 0
 static char rcsid[] = "Id: chap_ms.c,v 1.8 1998/04/01 00:15:43 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap_ms.c,v 1.7 2002/09/13 01:53:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chap_ms.c,v 1.8 2003/06/11 23:33:29 deraadt Exp $";
 #endif
 #endif
 
@@ -185,7 +185,7 @@ static u_char Get7Bits(input, startBit)
     u_char *input;
     int startBit;
 {
-    register unsigned int	word;
+    unsigned int	word;
 
     word  = (unsigned)input[startBit / 8] << 8;
     word |= (unsigned)input[startBit / 8 + 1];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.58 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.59 2003/06/11 23:33:29 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.58 2003/06/02 23:36:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.59 2003/06/11 23:33:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -861,7 +861,7 @@ pr_type(u_int8_t t)
 int
 packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 {
-	register struct icmp *icp;
+	struct icmp *icp;
 	u_char code;
 	u_int8_t type;
 	int hlen;
@@ -965,10 +965,10 @@ print(u_char *buf, int cc, struct sockaddr_in *from)
 u_short
 in_cksum(u_short *addr, int len)
 {
-	register int nleft = len;
-	register u_short *w = addr;
-	register u_short answer;
-	register int sum = 0;
+	int nleft = len;
+	u_short *w = addr;
+	u_short answer;
+	int sum = 0;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
@@ -1002,8 +1002,8 @@ in_cksum(u_short *addr, int len)
 char *
 inetname(struct in_addr in)
 {
-	register char *cp;
-	register struct hostent *hp;
+	char *cp;
+	struct hostent *hp;
 	static int first = 1;
 	static char domain[MAXHOSTNAMELEN], line[MAXHOSTNAMELEN];
 

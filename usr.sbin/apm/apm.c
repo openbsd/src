@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.7 2002/09/06 19:14:47 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.8 2003/06/11 23:33:25 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -72,9 +72,7 @@ zzusage(void)
 }
 
 int
-send_command(int fd,
-	     struct apm_command *cmd,
-	     struct apm_reply *reply)
+send_command(int fd, struct apm_command *cmd, struct apm_reply *reply)
 {
 	/* send a command to the apm daemon */
 	cmd->vno = APMD_VNO;

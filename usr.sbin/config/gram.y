@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.15 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: gram.y,v 1.16 2003/06/11 23:33:28 deraadt Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -417,8 +417,7 @@ flags_opt:
 %%
 
 void
-yyerror(s)
-	const char *s;
+yyerror(const char *s)
 {
 
 	error("%s", s);
@@ -429,10 +428,10 @@ yyerror(s)
  * allocated during parsing the current line.
  */
 static void
-cleanup()
+cleanup(void)
 {
-	register struct nvlist **np;
-	register int i;
+	struct nvlist **np;
+	int i;
 
 	for (np = alloc, i = adepth; --i >= 0; np++)
 		nvfree(*np);
@@ -440,9 +439,7 @@ cleanup()
 }
 
 static void
-setmachine(mch, mcharch)
-	const char *mch;
-	const char *mcharch;
+setmachine(const char *mch, const char *mcharch)
 {
 	char buf[MAXPATHLEN];
 
@@ -466,7 +463,7 @@ setmachine(mch, mcharch)
 }
 
 static void
-check_maxpart()
+check_maxpart(void)
 {
 	if (maxpartitions <= 0) {
 		stop("cannot proceed without maxpartitions specifier");
