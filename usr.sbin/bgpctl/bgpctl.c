@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.37 2004/01/27 21:26:52 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.38 2004/01/27 21:56:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -442,14 +442,14 @@ show_fib_msg(struct imsg *imsg)
 			printf(" ");
 
 		printf("   ");
-		if (asprintf(&p, "%s/%u", log_ntoa(k->prefix), k->prefixlen) ==
+		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
 		    -1)
 			err(1, NULL);
 		printf("%-20s ", p);
 		free(p);
 
-		if (k->nexthop)
-			printf("%s", log_ntoa(k->nexthop));
+		if (k->nexthop.s_addr)
+			printf("%s", inet_ntoa(k->nexthop));
 		else if (k->flags & F_CONNECTED)
 			printf("link#%u", k->ifindex);
 		printf("\n");
