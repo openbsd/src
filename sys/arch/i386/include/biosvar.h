@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.2 1997/07/27 00:38:46 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.3 1997/07/28 23:04:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -194,29 +194,20 @@
 
 #ifdef _LOCORE
 #define	DOINT(n)	int	$0x20+(n)
-#define BIOSR_AX 0x00
-#define BIOSR_CX 0x04
-#define BIOSR_DX 0x08
-#define BIOSR_BX 0x0c
-#define BIOSR_BP 0x10
-#define BIOSR_SI 0x14
-#define BIOSR_DI 0x18
-#define BIOSR_ES 0x1c
-#define BIOSR_CT 0x20
 #else
+#define	BIOSINT(n)	__asm ((int $0x20+(n)))
 
 extern struct BIOS_regs {
-	u_int32_t	br_ax;
-	u_int32_t	br_cx;
-	u_int32_t	br_dx;
-	u_int32_t	br_bx;
-	u_int32_t	br_bp;
-	u_int32_t	br_si;
-	u_int32_t	br_di;
-	u_int32_t	br_es;
+	u_int32_t	biosr_ax;
+	u_int32_t	biosr_cx;
+	u_int32_t	biosr_dx;
+	u_int32_t	biosr_bx;
+	u_int32_t	biosr_bp;
+	u_int32_t	biosr_si;
+	u_int32_t	biosr_di;
+	u_int32_t	biosr_ds;
+	u_int32_t	biosr_es;
 }	BIOS_regs;
-
-#define	BIOSINT(n)	__asm ((int $0x20+(n)))
 
 int kentry __P((u_int, void *));
 
@@ -224,6 +215,8 @@ int kentry __P((u_int, void *));
 struct bios_attach_args {
 	char *bios_busname;
 };
+
+struct consdev;
 
 void bioscnprobe __P((struct consdev *));
 void bioscninit __P((struct consdev *));

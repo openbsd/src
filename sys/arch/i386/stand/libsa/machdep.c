@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 1997/07/21 15:41:55 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 1997/07/28 23:04:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -54,7 +54,7 @@ machdep()
 #ifdef DEBUG
 	*(u_int16_t*)0xb8148 = 0x4f31;
 #endif
-#if 0
+#ifdef BOOT_APM
 	printf("apm_init: ");
 	switch(apminfo.apm_detail = apm_init()) {
 	case APMINI_CANTFIND:
@@ -75,17 +75,17 @@ machdep()
 
 	default:
 		/* valid: detail, dx, bx */
-		apminfo.apm_code32_seg_base = (BIOS_regs.br_ax & 0xffff) << 4;
-		apminfo.apm_code16_seg_base = (BIOS_regs.br_cx & 0xffff) << 4;
-		apminfo.apm_data_seg_base   = (BIOS_regs.br_dx & 0xffff) << 4;
+		apminfo.apm_code32_seg_base = (BIOS_regs.biosr_ax & 0xffff)<< 4;
+		apminfo.apm_code16_seg_base = (BIOS_regs.biosr_cx & 0xffff)<< 4;
+		apminfo.apm_data_seg_base   = (BIOS_regs.biosr_dx & 0xffff)<< 4;
 #if 0
-		apminfo.apm_code32_seg_len  = BIOS_regs.br_si & 0xffff;
-		apminfo.apm_data_seg_len    = BIOS_regs.br_di & 0xffff;
+		apminfo.apm_code32_seg_len  = BIOS_regs.biosr_si & 0xffff;
+		apminfo.apm_data_seg_len    = BIOS_regs.biosr_di & 0xffff;
 #else
 		apminfo.apm_code32_seg_len  = 0x10000;
 		apminfo.apm_data_seg_len    = 0x10000;
 #endif
-		apminfo.apm_entrypt         = BIOS_regs.br_bx;
+		apminfo.apm_entrypt         = BIOS_regs.biosr_bx;
 #ifdef DEBUG
 		printf("%x text=%x/%x[%x] data=%x[%x] @ %x",
 		       apminfo.apm_detail,
