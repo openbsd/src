@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.16 2003/02/20 00:26:17 jason Exp $	*/
+/*	$OpenBSD: yds.c,v 1.17 2003/02/25 20:14:34 tedu Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1595,7 +1595,6 @@ yds_halt_input(addr)
 	struct yds_softc *sc = addr;
 
 	DPRINTF(("yds: yds_halt_input\n"));
-	sc->sc_rec.intr = NULL;
 	if (sc->sc_rec.intr) {
 		/* Stop the rec slot operation */
 		YWRITE4(sc, YDS_MAPOF_REC, 0);
@@ -1610,6 +1609,7 @@ yds_halt_input(addr)
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_rec.dma->map,
 				0, sc->sc_rec.length, BUS_DMASYNC_POSTREAD);
 	}
+	sc->sc_rec.intr = NULL;
 
 	return 0;
 }
