@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixreg.h,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
+/*	$OpenBSD: piixreg.h,v 1.4 2003/03/28 23:12:33 mickey Exp $	*/
 /*	$NetBSD: piixreg.h,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
 
 /*
@@ -33,16 +33,17 @@
 /*
  * PIRQ[3:0]# - PIRQ ROUTE CONTROL REGISTERS
  *
- * PCI Configuration registers 0x60, 0x61, 0x62, 0x63
+ * PCI Configuration registers 0x60-0x63, 0x68-0x6b
  */
 
-#define	PIIX_LEGAL_LINK(link)	((link) >= 0 && (link) <= 3)
+#define	PIIX_LEGAL_LINK(link)	((link) >= 0 && (link) <= 7)
 
 #define	PIIX_PIRQ_MASK		0xdef8
 #define	PIIX_LEGAL_IRQ(irq)	((irq) >= 0 && (irq) <= 15 &&		\
 				 ((1 << (irq)) & PIIX_PIRQ_MASK) != 0)
 
 #define	PIIX_CFG_PIRQ		0x60	/* PCI configuration space */
+#define	PIIX_CFG_PIRQH		0x68
 #define	PIIX_CFG_PIRQ_NONE	0x80
 #define	PIIX_CFG_PIRQ_MASK	0x0f
 #define	PIIX_PIRQ(reg, x)	(((reg) >> ((x) << 3)) & 0xff)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: piix.c,v 1.6 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: piix.c,v 1.7 2003/03/28 23:12:33 mickey Exp $	*/
 /*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*-
@@ -157,6 +157,13 @@ piix_getclink(v, link, clinkp)
 		return (0);
 	}
 
+	/* Pattern 3: configuration register offset, PIRQE# - PIRQH# */
+	if (link >= 0x68 && link <= 0x6b) {
+		*clinkp = link - 0x64;
+		DPRINTF(("PIRQ %d (high register offset)\n", *clinkp));
+		return (0);
+	}
+
 	DPRINTF(("bogus IRQ selection source\n"));
 	return (1);
 }
@@ -167,13 +174,19 @@ piix_get_intr(v, clink, irqp)
 	int clink, *irqp;
 {
 	struct piix_handle *ph = v;
-	int shift;
+	int shift, off;
 	pcireg_t reg;
 
 	if (PIIX_LEGAL_LINK(clink) == 0)
 		return (1);
 
-	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
+	off = PIIX_CFG_PIRQ;
+	if (clink > 3) {
+		off += 8;
+		clink -= 4;
+	}
+
+	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, off);
 	shift = clink << 3;
 	if ((reg >> shift) & PIIX_CFG_PIRQ_NONE)
 		*irqp = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
@@ -189,17 +202,23 @@ piix_set_intr(v, clink, irq)
 	int clink, irq;
 {
 	struct piix_handle *ph = v;
-	int shift;
+	int shift, off;
 	pcireg_t reg;
 
 	if (PIIX_LEGAL_LINK(clink) == 0 || PIIX_LEGAL_IRQ(irq) == 0)
 		return (1);
 
-	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
+	off = PIIX_CFG_PIRQ;
+	if (clink > 3) {
+		off += 8;
+		clink -= 4;
+	}
+
+	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, off);
 	shift = clink << 3;
 	reg &= ~((PIIX_CFG_PIRQ_NONE | PIIX_CFG_PIRQ_MASK) << shift);
 	reg |= irq << shift;
-	pci_conf_write(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ, reg);
+	pci_conf_write(ph->ph_pc, ph->ph_tag, off, reg);
 
 	return (0);
 }
@@ -265,13 +284,18 @@ piix_pir_dump(ph)
 	elcr[0] = bus_space_read_1(ph->ph_iot, ph->ph_elcr_ioh, 0);
 	elcr[1] = bus_space_read_1(ph->ph_iot, ph->ph_elcr_ioh, 1);
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 8; i++) {
+		if (i == 4)
+			irqs = pci_conf_read(ph->ph_pc, ph->ph_tag,
+			    PIIX_CFG_PIRQH);
+
 		irq = PIIX_PIRQ(irqs, i);
 		if (irq & PIIX_CFG_PIRQ_NONE)
 			printf("PIIX PIRQ %d: irq none (0x%x)\n", i, irq);
 		else
 			printf("PIIX PIRQ %d: irq %d\n", i, irq);
 	}
+
 	printf("PIIX irq:");
 	for (i = 0; i < 16; i++)
 		printf(" %2d", i);
