@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.1 1999/01/18 19:10:26 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.2 1999/02/11 00:09:37 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -155,7 +155,7 @@
 #include <term.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_mvcur.c,v 1.55 1998/12/05 02:04:48 tom Exp $")
+MODULE_ID("$From: lib_mvcur.c,v 1.56 1999/02/01 12:04:15 tom Exp $")
 
 #define STRLEN(s)       (s != 0) ? strlen(s) : 0
 
@@ -387,6 +387,20 @@ void _nc_mvcur_init(void)
     SP->_carriage_return_length = STRLEN(carriage_return);
     SP->_cursor_home_length     = STRLEN(cursor_home);
     SP->_cursor_to_ll_length    = STRLEN(cursor_to_ll);
+
+    /*
+     * If save_cursor is used within enter_ca_mode, we should not use it for
+     * scrolling optimization, since the corresponding restore_cursor is not
+     * nested on the various terminals (vt100, xterm, etc.) which use this
+     * feature.
+     */
+    if (save_cursor != 0
+     && enter_ca_mode != 0
+     && strstr(enter_ca_mode, save_cursor) != 0) {
+	T(("...suppressed sc/rc capability due to conflict with smcup/rmcup"));
+	save_cursor = 0;
+	restore_cursor = 0;
+    }
 
     /*
      * A different, possibly better way to arrange this would be to set

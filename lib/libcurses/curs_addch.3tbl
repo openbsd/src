@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curs_addch.3tbl,v 1.7 1999/01/18 19:07:11 millert Exp $
+.\" $OpenBSD: curs_addch.3tbl,v 1.8 1999/02/11 00:09:36 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_addch.3x,v 1.15 1998/11/29 01:03:52 Rick.Ohnemus Exp $
+.\" $From: curs_addch.3x,v 1.16 1999/02/07 03:47:42 tom Exp $
 .TH curs_addch 3 ""
 .SH NAME
 \fBaddch\fR, \fBwaddch\fR, \fBmvaddch\fR, \fBmvwaddch\fR,
@@ -136,30 +136,19 @@ descriptions.
 .SH NOTES
 Note that \fBaddch\fR, \fBmvaddch\fR, \fBmvwaddch\fR, and
 \fBechochar\fR may be macros.
-.SH EXTENSIONS
-The following extended \fBcurses\fR features are available only on PC-clone
-consoles and compatible terminals obeying the ANSI.SYS de-facto standard for
-terminal control sequences.  They are not part of XSI curses.
-
-The attribute A_ALTCHARSET actually forces literal display of PC ROM characters
-including the high-half graphics.  Your console driver may still capture or
-translate a few (such as ESC) but this feature should give you access to the
-card-suit characters, up and down-arrow, and most others in the range 0-32.
-(In a terminfo entry designed for use with \fBncurses\fR, the high-half
-characters are obtained using this attribute with an \fBacsc\fR string in
-which the second of each pair is a high-half character.)
-
-Giving \fBwechochar\fR an argument with its high bit set will produce the
-corresponding high-half ASCII graphic (SVr4 curses also has this feature but
-does not document it).  A control-character argument, however, will not
-typically produce the corresponding graphic; characters such as CR, NL, FF and
-TAB are typically interpreted by the console driver itself, and ESC will be
-interpreted as the leader of a control sequence.
 .SH PORTABILITY
 All these functions are described in the XSI Curses standard, Issue 4.
 The defaults specified for forms-drawing characters apply in the POSIX locale.
 
-The seven ACS symbols starting with \fBACS_S3\fR were not documented in
+Some ACS symbols
+(ACS_S3,
+ACS_S7,
+ACS_LEQUAL,
+ACS_GEQUAL,
+ACS_PI,
+ACS_NEQUAL,
+ACS_STERLING)
+were not documented in
 any publicly released System V.  However, many publicly available terminfos
 include \fBacsc\fR strings in which their key characters (pryz{|}) are
 embedded, and a second-hand list of their character descriptions has come

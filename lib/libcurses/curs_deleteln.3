@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_deleteln.3,v 1.5 1998/09/13 19:16:18 millert Exp $
+.\" $OpenBSD: curs_deleteln.3,v 1.6 1999/02/11 00:09:36 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_deleteln.3x,v 1.4 1998/03/11 21:12:53 juergen Exp $
+.\" $From: curs_deleteln.3x,v 1.5 1999/02/07 03:58:20 tom Exp $
 .TH curs_deleteln 3 ""
 .SH NAME
 \fBdeleteln\fR, \fBwdeleteln\fR, \fBinsdelln\fR,
@@ -71,7 +71,7 @@ These functions are described in the XSI Curses standard, Issue 4.  The
 standard specifies that they return \fBERR\fR on failure, but specifies no
 error conditions.
 .SH NOTES
-Note that all but \fBwinsdelln\fR may be a macros.
+Note that all but \fBwinsdelln\fR may be macros.
 
 These routines do not require a hardware line delete or insert feature in the
 terminal.  In fact, they won't use hardware line delete/insert unless
