@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6var.h,v 1.12 2002/06/30 19:36:59 smurph Exp $	*/
+/*	$OpenBSD: smc93cx6var.h,v 1.13 2003/08/08 21:34:39 fgsch Exp $	*/
 /* $FreeBSD: sys/dev/aic7xxx/93cx6.h,v 1.3 1999/12/29 04:35:33 peter Exp $ */
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
@@ -94,11 +94,9 @@ do {								\
 #define	SEEPROM_DATA_INB(sd) \
 	ahc_inb(sd->sd_ahc, sd->sd_dataout_offset)
 
-int read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
-		 bus_size_t start_addr, bus_size_t count);
-int write_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
-		  bus_size_t start_addr, bus_size_t count);
-int verify_cksum(struct seeprom_config *sc);
+int read_seeprom(struct seeprom_descriptor *, u_int16_t *,
+		 bus_size_t, bus_size_t);
+int verify_cksum(struct seeprom_config *);
 
 #endif /* _KERNEL */
 #endif /* SMC93CX6VAR_H_ */
