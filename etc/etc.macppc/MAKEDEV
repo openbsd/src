@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.1 2001/09/01 16:13:48 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.2 2001/10/03 14:50:38 drahn Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,6 +71,7 @@
 #	utty*	Serial ports
 #
 # Special purpose devices:
+#	apm	power management device
 #	audio*  audio
 #	ch*	SCSI media changer
 #	bpf*	Berkeley Packet Filter
@@ -167,6 +168,7 @@ all)
 	sh $this lkm xfs0 altq
 	sh $this usbs
 	sh $this iop0 iop1
+	sh $this apm
 	sh $this local
 	;;
 
@@ -463,6 +465,14 @@ audio*)
 	[ -e mixer ] || ln -s $mixer mixer
 	[ -e sound ] || ln -s $sound sound
 	[ -e audioctl ] || ln -s $audioctl audioctl
+	;;
+
+apm*)
+	rm -f apm apmctl
+	mknod apm c 25 0
+	mknod apmctl c 25 8
+	chown root.wheel apm apmctl
+	chmod 644 apm apmctl
 	;;
 
 usb*)
