@@ -687,3 +687,7 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cs4280_image.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cs4280reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/tgareg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/tgavar.ph

@@ -468,3 +468,7 @@
 ./usr/mipsel-unknown-openbsd2.7/bin
 ./usr/mipsel-unknown-openbsd2.7/lib
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280_image.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280reg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph

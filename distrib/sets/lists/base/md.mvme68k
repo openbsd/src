@@ -1719,3 +1719,7 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cs4280_image.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cs4280reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/tgareg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/tgavar.ph

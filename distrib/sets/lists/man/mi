@@ -894,6 +894,7 @@
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/ch.0
+./usr/share/man/cat4/clcs.0
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cmpci.0
@@ -1178,6 +1179,7 @@
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/bridgename.if.0
+./usr/share/man/cat5/bsd.port.mk.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
 ./usr/share/man/cat5/cvs.0
@@ -1632,6 +1634,9 @@
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/vos.0
 ./usr/share/man/cat8/vpn.0
+./usr/share/man/cat8/wsconscfg.0
+./usr/share/man/cat8/wsconsctl.0
+./usr/share/man/cat8/wsfontload.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
@@ -1653,6 +1658,7 @@
 ./usr/share/man/cat9/crypto.0
 ./usr/share/man/cat9/ctxsw.0
 ./usr/share/man/cat9/disklabel.0
+./usr/share/man/cat9/dopowerhooks.0
 ./usr/share/man/cat9/extent_print.0
 ./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/pool.0
@@ -1663,6 +1669,8 @@
 ./usr/share/man/cat9/pool_put.0
 ./usr/share/man/cat9/pool_sethiwat.0
 ./usr/share/man/cat9/pool_setlowat.0
+./usr/share/man/cat9/powerhook_disestablish.0
+./usr/share/man/cat9/powerhook_establish.0
 ./usr/share/man/cat9/profhz.0
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/setdisklabel.0

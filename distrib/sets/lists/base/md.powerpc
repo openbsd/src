@@ -1657,3 +1657,7 @@
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
 ./usr/share/info/ld.info-4
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/cs4280_image.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/cs4280reg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/tgareg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/tgavar.ph

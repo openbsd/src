@@ -284,6 +284,8 @@
 ./usr/include/dev/pci/brktree_reg.h
 ./usr/include/dev/pci/cmpcireg.h
 ./usr/include/dev/pci/cmpcivar.h
+./usr/include/dev/pci/cs4280_image.h
+./usr/include/dev/pci/cs4280reg.h
 ./usr/include/dev/pci/cy82c693reg.h
 ./usr/include/dev/pci/cy82c693var.h
 ./usr/include/dev/pci/esoreg.h
@@ -329,6 +331,8 @@
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/ppbreg.h
 ./usr/include/dev/pci/pucvar.h
+./usr/include/dev/pci/tgareg.h
+./usr/include/dev/pci/tgavar.h
 ./usr/include/dev/pci/ti_fw.h
 ./usr/include/dev/pci/ti_fw2.h
 ./usr/include/dev/pci/ubsecreg.h
