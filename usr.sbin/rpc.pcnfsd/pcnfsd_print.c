@@ -354,7 +354,7 @@ char            scratch[512];
 				pr, new_pathname);
 #else	/* SVR4 */
 			/* BSD way: lpr */
-			snprintf(cmdbuf, sizeof cmdbuf, "%s/lpr -P%s %s",
+			snprintf(cmdbuf, sizeof cmdbuf, "%s/lpr '-P%s' '%s'",
 				LPRDIR, pr, new_pathname);
 #endif	/* SVR4 */
 			xcmd = cmdbuf;
@@ -773,7 +773,7 @@ char *totsize;
 	if(pn == NULL || suspicious(pn))
 		return(PI_RES_NO_SUCH_PRINTER);
 
-	snprintf(buff, sizeof buff, "%s/lpq -P%s", LPRDIR, pn);
+	snprintf(buff, sizeof buff, "%s/lpq '-P%s'", LPRDIR, pn);
 
 	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
 	if(p == NULL) {
@@ -1013,13 +1013,13 @@ char         *status;
 	*status = '\0';
 
 	pn = map_printer_name(pn);
-	if(pn == NULL || suspicious(pn))
+	if(pn == NULL || suspicious(pn) || !valid_pr(pn))
 		return(PI_RES_NO_SUCH_PRINTER);
 
 	snprintf(pname, sizeof pname, "%s:", pn);
 	n = strlen(pname);
 
-	snprintf(cmd, sizeof cmd, "%s/lpc status %s", LPCDIR, pn);
+	snprintf(cmd, sizeof cmd, "%s/lpc status '%s'", LPCDIR, pn);
 	p = popen(cmd, "r");
 	if(p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lp status");
@@ -1050,7 +1050,8 @@ char         *status;
 				break;
 			cp1 = cp;
 			cp2 = buff2;
-			while(*cp1 && *cp1 != '\n') {
+			while (*cp1 && *cp1 != '\n' &&
+			    cp2 < &buff2[sizeof buff2] - 2) {
 				*cp2++ = tolower(*cp1);
 				cp1++;
 			}
@@ -1076,8 +1077,10 @@ char         *status;
 			if(strstr(buff2, "attention") != NULL ||
 			   strstr(buff2, "error") != NULL)
 				*needs_operator = TRUE;
-			if(*needs_operator || strstr(buff2, "waiting") != NULL)
-				strcpy(status, cp);
+			if(*needs_operator || strstr(buff2, "waiting") != NULL) {
+				strncpy(status, cp, 127);
+				status[127] = '\0';
+			}
 		}
 		stat = PI_RES_OK;
 		break;
@@ -1184,7 +1187,8 @@ char *id;
 	if(suspicious(id))
 		return(PC_RES_NO_SUCH_JOB);
 
-		snprintf(cmdbuf, sizeof cmdbuf, "%s/lprm -P%s %s", LPRDIR, pr, id);
+		snprintf(cmdbuf, sizeof cmdbuf, "%s/lprm '-P%s' '%s'",
+		    LPRDIR, pr, id);
 		if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
 			msg_out("rpc.pcnfsd: su_popen failed");
 			return(PC_RES_FAIL);
