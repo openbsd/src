@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.26 2005/04/01 16:16:15 jmc Exp $
+.\"	$OpenBSD: scsi.8,v 1.27 2005/04/03 08:40:50 jaredy Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -52,24 +52,15 @@
 .Fl d Ar debug_level
 .Nm scsi
 .Fl f Ar device
-.Op Fl v
-.Fl z Ar seconds
-.Nm scsi
-.Fl f Ar device
 .Fl m Ar page
-.Op Fl P Ar pc
 .Op Fl e
-.Nm scsi
-.Fl f Ar device
-.Fl p
-.Op Fl b Ar bus
-.Op Fl l Ar lun
+.Op Fl P Ar pc
 .Nm scsi
 .Fl f Ar device
 .Fl r
 .Op Fl b Ar bus
-.Op Fl t Ar targ
 .Op Fl l Ar lun
+.Op Fl t Ar targ
 .Nm scsi
 .Fl f Ar device
 .Op Fl v
@@ -79,6 +70,7 @@
 .Fl o Ar count out_fmt
 .Op Ar arg ...
 .Fl i Ar count in_fmt
+.Op Ar arg ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -95,30 +87,54 @@ to write input data to stdout.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl f Ar device
-Specifies the
-.Ar device
-that should be opened, i.e.,
-.Pa /dev/rsd0c .
+.It Xo
+.Fl c Ar cmd_fmt Op Ar arg ...
+.Xc
+Send a user-level SCSI command to a device.
+The command format is described below and the command is sent using the
+.Dv SCIOCCOMMAND
+.Xr ioctl 2 ,
+so the device being accessed must permit this ioctl.
+See
+.Xr scsi 4
+for full details of which minor devices permit the ioctl.
 .It Fl d Ar debug_level
 Sets the SCSI kernel debug level.
 The kernel must have been compiled with the
-.Cm SCSIDEBUG
+.Ic SCSIDEBUG
 option.
 See
 .Pa /sys/scsi/scsi_debug.h
 to figure out what to set the kernel debug level to.
-.Pp
-.It Fl z Ar seconds
-Freezes all activity on all SCSI busses for a given number of
-seconds.
-If
-.Fl v
-is also specified, a BEL character is sent to the standard
-output at the start and finish of the bus freeze.
-This requires that the kernel be built with the SCSI_FREEZE kernel option.
-This kernel code is not committed yet.
-.Pp
+.It Fl e
+Permits edit of the fields.
+It will use the editor specified by the
+.Ev EDITOR
+environment variable.
+To store changes permanently, edit page control 3 using the
+.Fl P
+flag.
+.It Fl f Ar device
+Specifies the
+.Ar device
+that should be opened, e.g.,
+.Pa /dev/rsd0c .
+.It Xo
+.Fl i Ar count in_fmt Op Ar arg ...
+.Xc
+Indicates that this is an input command (i.e., data will be read from
+the device into the system) with
+.Ar count
+bytes of data read in.
+The information is extracted according to
+.Ar in_fmt
+and is displayed on standard output.
+.Ar in_fmt
+can be specified as a hyphen
+.Pq Ql -
+to indicate that
+.Ar count
+bytes of data input should be written to standard output.
 .It Fl m Ar page
 Read a device mode page.
 The file
@@ -127,146 +143,190 @@ is read to discover how to interpret the mode data.
 The environment variable
 .Ev SCSI_MODES
 can specify a different file to use.
-.Pp
-.It Fl P Ar pc
-Specify a page control field.
-The page control fields are
-.Bd -literal -offset
-0 Current Values
-1 Changeable Values
-2 Default Values
-3 Saved Values
-.Ed
-.Pp
-.It Fl e
-Permits you to edit the fields.
-It will use the editor specified by your
-.Ev EDITOR
-environment variable.
-To store changes permanently, edit page control 3 using the
-.Fl P
-flag.
-.Pp
-.It Fl p
-Can be used against the "super scsi" device
-.Pa /dev/scsi/super
-to probe all devices with a given SCSI
-.Ar lun
-on a given SCSI bus.
-The
-.Ar bus
-can be selected with the
-.Fl b
-option and the default is 0.
-The
-.Ar lun
-can be selected with the
-.Fl l
-option and the default is 0.
-See
-.Xr scsi 4
-for a description of the "super scsi" device.
-.Pp
-.It Fl r
-Can be used in
-.Fx 1.1
-to reprobe a specific SCSI device at a given
-Bus, Target and Lun.
-This is not needed in
-.Fx 2.1 ,
-since opening a fixed SCSI device
-has the side effect of reprobing it, and probing with the bus with the
-.Fl p
-option should bring on line any newly found devices.
-See
-.Xr scsi 4
-for a description of fixed SCSI devices.
-.Pp
-.It Fl c
-Permits you to send user-level SCSI commands specified on
-the command line to a
-device.
-The command is sent using the
-.Dv SCIOCCOMMAND
-ioctl, so the device you are accessing must permit this ioctl.
-See
-.Xr scsi 4
-for full details of which minor devices permit the
-.Xr ioctl 2 .
-.Pp
-.It Fl v
-Turns on more verbose information.
-.Pp
-.It Fl s Ar seconds
-Sets the command timeout to
-.Ar seconds .
-The default is two seconds.
-.Pp
-.It Fl c Ar cmd_fmt
-Specifies the command as described in the source.
-Sorry.
-The additional arguments provide values for any variables
-specified in the command format.
-.Pp
-.It Fl o Ar count out_fmt arg ...
-Indicates that this is a data out command (i.e., data will be sent from
+.It Xo
+.Fl o Ar count out_fmt Op Ar arg ...
+.Xc
+Indicates that this is an output command (i.e., data will be sent from
 the system to the device) with
 .Ar count
 bytes of data.
+The data is built up
+using the provided arguments to fill in any integer variables.
 .Ar out_fmt
 can be specified as a hyphen
 .Pq Ql -
 to indicate that
 .Ar count
-bytes of data should be read from the standard input.
+bytes of data should be read from standard input.
+.It Fl P Ar pc
+Specify a page control field.
+The page control fields are
+.Bd -literal -offset indent
+0 Current Values
+1 Changeable Values
+2 Default Values
+3 Saved Values
+.Ed
+.It Fl r
+Reprobe a specific SCSI device at a given
+bus, target, and lun.
+This is not needed
+since opening a fixed SCSI device
+has the side effect of reprobing it.
+See
+.Xr scsi 4
+for a description of fixed SCSI devices.
+.It Fl s Ar seconds
+Sets the command timeout to
+.Ar seconds .
+The default is two seconds.
+.It Fl v
+Turns on more verbose information.
+.El
+.Ss SCSI commands
+The command arguments to the
+.Fl cio
+options specify the command data buffer used to both send and receive
+information to and from the
+.Xr scsi 4
+subsystem.
+Their format is:
 .Pp
-.It Fl i Ar count in_fmt arg ...
-Indicates that this is a data in command (i.e., data will be read from
-the device into the system) with
-.Ar count
-bytes of data read in.
-.Ar in_fmt
-can be specified as a hyphen
-.Pq Ql -
-to indicate that
-.Ar count
-bytes of data input should be written to the standard output.
+.Dl Fl c Ar command Op Ar argument ...
+.Pp
+The commands are composed of a list of field specifiers.
+The specifiers denote the field name, the field value, and the length of
+the field.
+Examples are given below.
+.Pp
+Whitespace and text following a
+.Sq #
+character in the command string are ignored.
+.Pp
+The first part of a field specifier is the field name and is surrounded
+by curly braces
+.Pq Sq {} .
+This part is optional and may be left out.
+.Pp
+The second part is the value of the field.
+The value may be given directly or may arrange that the next argument to
+the
+.Nm
+command be used as the value of the field.
+Direct hexadecimal
+.Pq Li 0\-FF
+or decimal
+.Pq 0\-255
+values may be specified.
+The special value
+.Ic v
+can be used to arrange that the next integer argument be taken from the
+.Ar argument
+list.
+For retrieving output (with
+.Fl i ) ,
+this part of the field cannot be used.
+.Pp
+The third part specifies the length of the field.
+This is optional and defaults to one byte if not specified.
+The length may be specified in bits by prefixing it with
+.Ic b
+or
+.Ic t ,
+or in bytes by prefixing it with
+.Ic i .
+Additionally, character arrays can be specified by prefixing with
+.Ic c
+or, with zeroed trailing spaces, with
+.Ic z .
+Bits are packed together tightly and begin with the high bit.
+New bytes are started when a byte fills or an
+.Ic i
+field is next.
+.Ic i
+fields indicate a 1\-4 byte integral value that must already be given in
+SCSI byte order (most significant byte first).
+Otherwise, the field value specified will be swapped into SCSI byte order.
+.Pp
+Retrieving data (with
+.Fl i )
+follows similarly but without field values.
+Besides field specifiers, the command can also include control operations,
+which currently includes seeking operations used to ignore returned data.
+Seek operations are composed of the
+.Ic s
+character followed by the absolute position to skip to.
+If the position is prefixed with a
+.Ic + ,
+the position is interpreted relative to the current position.
+.\" The position can also be read from the
+.\" .Ar arg
+.\" list if
+.\" .Ic v
+.\" is specified as the seek value.
+.Pp
+Entire fields can be suppressed from being returned with the
+.Ic *
+modifier prepended to the field width.
+.Pp
+Here are some examples:
+.Bl -tag -width 17n
+.It Ic s8 z8 z16 z4
+Seek to position 8 and specify three fields of lengths 8 bytes, 16
+bytes, and 4 bytes.
+.It Ic 1A 2
+Specify a one-byte field with the hexadecimal value
+.Li 0x1A
+followed by another one-byte field with the decimal value 2.
+.It Ic v:i1
+Specify a one-byte field whose value will be determined from the
+next argument in the
+.Ar argument
+list.
+.It Ic 0:7
+Specify a 7-bit field with a value of zero.
+.It Ic *b3 b5
+Specify a three-bit field that will be suppressed from being returned
+and a five-bit field that will be returned.
 .El
 .Sh ENVIRONMENT
-The
-.Ev SU_DEBUG_OUTPUT
+.Bl -tag -width SU_DEBUG_TRUNCATE
+.It Ev SU_DEBUG_OUTPUT
+This
 variable can be set to a file to send debugging
 output to that file.
-.Pp
-The
-.Ev SU_DEBUG_LEVEL
+.It Dv SU_DEBUG_LEVEL
+This
 variable can be set to a non-zero integer to increase
 the level of debugging.
 Currently this is an on or off thing; it should
 perhaps use the ioctl to set the debug level in the kernel and then set
 it back to zero at program exit.
-.Pp
-The
-.Ev SU_DEBUG_TRUNCATE
+.It Ev SU_DEBUG_TRUNCATE
+This
 variable can be set to an integer to limit the
 amount of data phase output sent to the debugging file.
-.Pp
-The
-.Ev EDITOR
+.It Ev EDITOR
+This
 variable determines the editor to use for the mode editor.
+.El
+.Sh FILES
+.Bl -tag -width /usr/share/misc/scsi_modes
+.It Pa /usr/share/misc/scsi_modes
+.El
 .Sh EXAMPLES
 To verify that the device type for the disk
 .Pa /dev/rsd0c
 is 0
 (direct access device):
-.Bd -literal -offset
+.Bd -literal -offset indent
 # scsi -f /dev/rsd0c -c "12 0 0 0 64 0" -i 64 "*b3 b5"
 0
 .Ed
 .Pp
 To do an inquiry to
 .Pa /dev/rsd2c :
-.Bd -literal -offset
+.Bd -literal -offset indent
 # scsi -f /dev/rsd2c -c "12 0 0 0 64 0" -i 64 "s8 z8 z16 z4"
 FUJITSU M2654S-512 010P
 .Ed
@@ -275,10 +335,10 @@ To edit mode page 1 on
 .Pa /dev/rsd2c
 and store it permanently on the
 drive (set AWRE and ARRE to 1 to enable bad block remapping):
-.Bd -literal -offset
-# scsi -f /dev/rsd2c -m 1 -e -P 3
-.Ed
+.Pp
+.Dl # scsi -f /dev/rsd2c -m 1 -e -P 3
 .Sh SEE ALSO
+.Xr ioctl 2 ,
 .Xr scsi 4
 .Sh HISTORY
 The
@@ -286,9 +346,11 @@ The
 command appeared in 386BSD 0.1.2.4/FreeBSD to support the new reprobe
 and user SCSI commands.
 .Sh BUGS
-Some devices respond to an inquiry for all LUNS.
+Some devices respond to an inquiry for all LUNs.
 This will cause them
-to come on line to 8 times during reprobe to different logical units.
-"scsi -f /dev/rsd0c -c "4 0 0 0 0 0" permits anyone who can write to
+to come online up to 8 times during reprobe to different logical units.
+.Pp
+.Ic scsi\ -f /dev/rsd0c -c \*q4 0 0 0 0 0\*q
+permits anyone who can write to
 .Pa /dev/rsd0c
 to format the disk drive.
