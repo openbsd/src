@@ -118,51 +118,51 @@
   [ Skip steps: i=42 d=end f=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@30 binat on lo0 inet6 from ::1 to (self:3) -> ::1
+@30 binat on lo0 inet6 from ::1 to (lo:2) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@31 binat on lo0 inet6 from ::1 to (self:0:2) -> ::1
+@31 binat on lo0 inet6 from ::1 to (lo:0:1) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@32 binat on lo0 inet6 from ::1 to (self:peer:*) -> ::1
+@32 binat on lo0 inet6 from ::1 to (lo:peer:*) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@33 binat on lo0 inet6 from ::1 to (self:peer:0:*) -> ::1
+@33 binat on lo0 inet6 from ::1 to (lo:peer:0:*) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@34 binat on lo0 inet6 from ::1 to (self:broadcast:*) -> ::1
+@34 binat on lo0 inet6 from ::1 to (lo:broadcast:*) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@35 binat on lo0 inet6 from ::1 to (self:broadcast:0:*) -> ::1
+@35 binat on lo0 inet6 from ::1 to (lo:broadcast:0:*) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@36 binat on lo0 inet6 from ::1 to (self:network:1) -> ::1
+@36 binat on lo0 inet6 from ::1 to (lo:network:1) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@37 binat on lo0 inet6 from ::1 to (self:network:0:1) -> ::1
+@37 binat on lo0 inet6 from ::1 to (lo:network:0:1) -> ::1
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@38 binat on lo0 inet6 from ::1 to (self:3)/100 -> ::2
+@38 binat on lo0 inet6 from ::1 to (lo:2)/100 -> ::2
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@39 binat on lo0 inet6 from ::1 to (self:0:2)/100 -> ::2
+@39 binat on lo0 inet6 from ::1 to (lo:0:1)/100 -> ::2
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@40 binat on lo0 inet6 from ::1 to (self:peer:*)/100 -> ::2
+@40 binat on lo0 inet6 from ::1 to (lo:peer:*)/100 -> ::2
   [ Skip steps: i=42 d=end f=end p=end sa=42 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@41 binat on lo0 inet6 from ::1 to (self:peer:0:*)/100 -> ::2
+@41 binat on lo0 inet6 from ::1 to (lo:peer:0:*)/100 -> ::2
   [ Skip steps: d=end f=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
