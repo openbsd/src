@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.25 2001/10/02 01:14:55 art Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.26 2001/11/16 23:57:12 deraadt Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.25 2001/10/02 01:14:55 art Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.26 2001/11/16 23:57:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,7 @@ void		catch_child __P((int));
 void		copytochild __P((int));
 __dead void	doit __P((sigset_t *));
 __dead void	done __P((int));
+__dead void	sig_done __P((int));
 void		echo __P((char));
 u_int		getescape __P((char *));
 void		lostpeer __P((int));
@@ -462,6 +463,23 @@ done(status)
 	exit(status);
 }
 
+__dead void
+sig_done(status)
+	int status;
+{
+	int w, wstatus;
+
+	mode(0);
+	if (child > 0) {
+		/* make sure catch_child does not snap it up */
+		(void)signal(SIGCHLD, SIG_DFL);
+		if (kill(child, SIGKILL) >= 0)
+			while ((w = wait(&wstatus)) > 0 && w != child)
+				;
+	}
+	_exit(status);
+}
+
 int dosigwinch;
 
 /*
@@ -495,8 +513,8 @@ catch_child(signo)
 		if (pid == child && !WIFSTOPPED(status)) {
 			child = -1;
 			if (WIFEXITED(status))
-				done(WEXITSTATUS(status));
-			done(WTERMSIG(status));
+				sig_done(WEXITSTATUS(status));
+			sig_done(WTERMSIG(status));
 		}
 	}
 	errno = save_errno;
