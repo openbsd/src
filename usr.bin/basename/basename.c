@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.2 1996/06/26 05:31:37 deraadt Exp $	*/
+/*	$OpenBSD: basename.c,v 1.3 1997/08/17 21:25:01 millert Exp $	*/
 /*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)basename.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: basename.c,v 1.2 1996/06/26 05:31:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: basename.c,v 1.3 1997/08/17 21:25:01 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -61,21 +61,13 @@ main(argc, argv)
 	char **argv;
 {
 	char *p;
-	int ch;
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "")) != -1)
-		switch(ch) {
-		case '?':
-		default:
-			usage();
-		}
-	argc -= optind;
-	argv += optind;
-
-	if (argc != 1 && argc != 2)
+	if (argc != 2 && argc != 3)
 		usage();
+	argc--;
+	argv++;
 
 	/*
 	 * (1) If string is // it is implementation defined whether steps (2)
@@ -88,9 +80,8 @@ main(argc, argv)
 	for (p = *argv;; ++p) {
 		if (!*p) {
 			if (p > *argv)
-				(void)printf("/\n");
-			else
-				(void)printf("\n");
+				(void)putchar('/');
+			(void)putchar('\n');
 			exit(0);
 		}
 		if (*p != '/')
@@ -135,7 +126,7 @@ main(argc, argv)
 				p[off] = '\0';
 		}
 	}
-	(void)printf("%s\n", p);
+	(void)puts(p);
 	exit(0);
 }
 
