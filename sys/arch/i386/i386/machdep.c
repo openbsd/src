@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.165 2001/06/27 05:38:28 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.166 2001/06/29 19:56:37 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2671,10 +2671,8 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
@@ -2690,7 +2688,8 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 			pmap_update_pg(va);
 		}
 	}
- 
+	pmap_update();
+
 	return 0;
 }
 
@@ -2707,17 +2706,14 @@ bus_space_unmap(t, bsh, size)
 	/*
 	 * Find the correct extent and bus physical address.
 	 */
-	switch (t) {
-	case I386_BUS_SPACE_IO:
+	if (t == I386_BUS_SPACE_IO) {
 		ex = ioport_ex;
 		bpa = bsh;
-		break;
-
-	case I386_BUS_SPACE_MEM:
+	} else if (t == I386_BUS_SPACE_MEM) {
 		ex = iomem_ex;
 		bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
-			break;
+			goto ok;
 
 		va = i386_trunc_page(bsh);
 		endva = i386_round_page(bsh + size);
@@ -2727,19 +2723,17 @@ bus_space_unmap(t, bsh, size)
 			panic("bus_space_unmap: overflow");
 #endif
 
-		pmap_extract(pmap_kernel(), va, &bpa);
+		(void) pmap_extract(pmap_kernel(), va, &bpa);
 		bpa += (bsh & PGOFSET);
 
 		/*
 		 * Free the kernel virtual mapping.
 		 */
 		uvm_km_free(kernel_map, va, endva - va);
-		break;
-
-	default:
+	} else
 		panic("bus_space_unmap: bad bus space tag");
-	}
 
+ok:
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
 		printf("bus_space_unmap: %s 0x%lx, size 0x%lx\n",
@@ -2813,7 +2807,8 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->dm_nsegs = 0;		/* no valid mappings */
+	map->dm_mapsize = 0;		/* no valid mappings */
+	map->dm_nsegs = 0;
 
 	*dmamp = map;
 	return (0);
@@ -2999,6 +2994,7 @@ _bus_dmamap_unload(t, map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
 
@@ -3083,7 +3079,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int curseg;
 
 	size = round_page(size);
-	va = uvm_km_valloc(kmem_map, size);
+	va = uvm_km_valloc(kernel_map, size);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -3092,7 +3088,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
@@ -3100,6 +3096,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
+	pmap_update();
 
 	return (0);
 }
@@ -3121,7 +3118,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_km_free(kmem_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
 }
 
 /*
