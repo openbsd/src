@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.67 2003/05/29 19:14:01 nate Exp $
+$OpenBSD: usbdevs,v 1.68 2003/07/19 08:02:43 cedric Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -241,6 +241,7 @@ vendor SMC		0x0707	Standard Microsystems
 vendor PUTERCOM		0x0708	Putercom
 vendor MCT		0x0711	MCT
 vendor IMATION		0x0718	Imation
+vendor SUSTEEN		0x0731	Susteen
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
@@ -1367,6 +1368,9 @@ product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K
 product DIAMOND2 RIO600USB	0x5001	Rio 600
 product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
 product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
+
+/* Susteen, Inc. products */
+product SUSTEEN DCU11		0x0528	Ericsson DCU-10/11
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
