@@ -1,8 +1,8 @@
-#	$Id: Makefile.bsd-wrapper,v 1.6 1996/02/02 06:43:48 etheisen Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.7 1996/02/02 07:23:19 etheisen Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
-CLEANFILES=	makeinfo/makeinfo.info info/info info/info-stnd.info
+CLEANFILES=	makeinfo/makeinfo.info info/info.info info/info-stnd.info emacs/Makefile
 
 MAN=		info/info.1
 SUBDIRS=	libtxi makeinfo info util
