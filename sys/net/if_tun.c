@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.22 1997/12/31 06:30:30 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.23 1998/06/26 09:14:39 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ tunattach(unused)
 		ifp->if_flags = IFF_POINTOPOINT;
 		ifp->if_type  = IFT_PROPVIRTUAL;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-		ifp->if_hdrlen = sizeof(struct tunnel_header);
+		ifp->if_hdrlen = sizeof(u_int32_t);
 		ifp->if_collisions = 0;
 		ifp->if_ierrors = 0;
 		ifp->if_oerrors = 0;
@@ -143,8 +143,7 @@ tunattach(unused)
 		ifp->if_opackets = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_NULL,
-		    sizeof(struct tunnel_header));
+		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
 #endif
 	}
 }
@@ -332,8 +331,8 @@ tun_output(ifp, m0, dst, rt)
 	struct rtentry *rt;
 {
 	struct tun_softc *tp = ifp->if_softc;
-	struct tunnel_header *th;
 	int		s;
+	u_int32_t	*af;
 
 	TUNDEBUG(("%s: tun_output\n", ifp->if_xname));
 
@@ -345,9 +344,10 @@ tun_output(ifp, m0, dst, rt)
 	}
 	ifp->if_lastchange = time;
 
-	M_PREPEND(m0, sizeof(struct tunnel_header), M_DONTWAIT);
-	th = mtod(m0, struct tunnel_header *);
-	th->tun_af = dst->sa_family;
+
+	M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
+	af = mtod(m0, u_int32_t *);
+	*af = htonl(dst->sa_family);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -366,7 +366,7 @@ tun_output(ifp, m0, dst, rt)
 	splx(s);
 
 	ifp->if_opackets++;
-	ifp->if_obytes += m0->m_pkthdr.len + sizeof(struct tunnel_header);
+	ifp->if_obytes += m0->m_pkthdr.len + sizeof(*af);
 
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
@@ -544,7 +544,7 @@ tunwrite(dev, uio, ioflag)
 	int		unit;
 	struct ifnet	*ifp;
 	struct ifqueue	*ifq;
-	struct tunnel_header *th;
+	u_int32_t	*th;
 	struct mbuf	*top, **mp, *m;
 	int		isr;
 	int		error=0, s, tlen, mlen;
@@ -598,13 +598,13 @@ tunwrite(dev, uio, ioflag)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
 
-	th = mtod(top, struct tunnel_header *);
+	th = mtod(top, u_int32_t *);
 	/* strip the tunnel header */
 	top->m_data += sizeof(*th);
 	top->m_len  -= sizeof(*th);
 	top->m_pkthdr.len -= sizeof(*th);
 
-	switch (th->tun_af) {
+	switch (ntohl(*th)) {
 #ifdef INET
 	case AF_INET:
 		ifq = &ipintrq;

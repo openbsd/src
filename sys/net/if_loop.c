@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.9 1998/06/04 23:11:38 deraadt Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.10 1998/06/26 09:14:37 deraadt Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -111,11 +111,11 @@ loopattach(n)
 		ifp->if_ioctl = loioctl;
 		ifp->if_output = looutput;
 		ifp->if_type = IFT_LOOP;
-		ifp->if_hdrlen = 4;
+		ifp->if_hdrlen = sizeof(u_int32_t);
 		ifp->if_addrlen = 0;
 		if_attachhead(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int));
+		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 	}
 }
@@ -148,10 +148,10 @@ looutput(ifp, m, dst, rt)
 		 * try to free it or keep a pointer to it).
 		 */
 		struct mbuf m0;
-		u_int af = dst->sa_family;
+		u_int32_t af = htonl(dst->sa_family);
 
 		m0.m_next = m;
-		m0.m_len = 4;
+		m0.m_len = sizeof(af);
 		m0.m_data = (char *)&af;
 
 		bpf_mtap(ifp->if_bpf, &m0);

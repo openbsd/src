@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.6 1997/08/02 09:56:28 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.7 1998/06/26 09:14:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -33,10 +33,6 @@
 #define TUN_STAYUP	0x0400
 
 #define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
-
-struct tunnel_header {
-	u_int32_t	tun_af;		/* adress family */
-};
 
 /* Maximum packet size */
 #define	TUNMTU		3000

@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.7 1997/07/25 20:12:26 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.8 1998/06/26 09:14:50 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	if (eflag)
 		null_print(p, length, family);
 
-	switch (family) {
+	switch (ntohl(family)) {
 	case AF_INET:
 		ip_print(pkt, length);
 		break;
