@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.18 2001/07/02 17:21:04 ho Exp $
+.\" $OpenBSD: pfctl.8,v 1.19 2001/07/03 12:11:25 ho Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .Nd control the packet filter and NAT subsystems
 .Sh SYNOPSIS
 .Nm 
-.Op Fl dehnv
+.Op Fl dehnqv
 .Op Fl F Ar modifier
 .Op Fl l Ar interface
 .Op Fl N Ar file
@@ -75,22 +75,22 @@ utility provides several commands:
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
-Disable the packet filter
+Disable the packet filter.
 .It Fl e
-Enable the packet filter
+Enable the packet filter.
 .It Fl F Ar modifier
 Flush one of the following. Modifier name may be abbreviated:
-.Bl -tag -width "F rules" -compact
+.Bl -tag -width "F rules " -compact
 .It Fl F Ar nat
-Flush the NAT rules
+Flush the NAT rules.
 .It Fl F Ar rules
-Flush the filter rules
+Flush the filter rules.
 .It Fl F Ar state
-Flush the state table (NAT and filter)
+Flush the state table (NAT and filter).
 .It Fl F Ar info
-Flush the filter information (statistics and counters)
+Flush the filter information (statistics and counters).
 .It Fl F Ar all
-Flush all of the above
+Flush all of the above.
 .El
 .It Fl h
 Help
@@ -101,27 +101,29 @@ These statistics can be viewed with the
 .Fl s Ar info
 option.
 .It Fl n
-Do not actually load rules
+Do not actually load rules.
 .It Fl N Ar file
-Load a NAT rules file
+Load a NAT rules file.
+.It Fl q
+Only print errors and warnings.
 .It Fl R Ar file
-Load a filter rules file into the filter
+Load a filter rules file into the filter.
 .It Fl s Ar modifier
 Show filter parameters. Modifier names may be abbreviated.
-.Bl -tag -width "s rules" -compact
+.Bl -tag -width "s rules " -compact
 .It Fl s Ar nat
-Show the currently loaded NAT rules
+Show the currently loaded NAT rules.
 .It Fl s Ar rules
-Show the currently loaded packet filter rules
+Show the currently loaded packet filter rules.
 .It Fl s Ar state
-Show the contents of the state table
+Show the contents of the state table.
 .It Fl s Ar info
-Show filter information (statistics and counters)
+Show filter information (statistics and counters).
 .It Fl s Ar all
-Show all of the above
+Show all of the above.
 .El
 .It Fl v
-Show rules as they are parsed
+Show rules as they are parsed.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/nat.conf" -compact
