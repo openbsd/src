@@ -1,0 +1,11 @@
+# enforce yacc...
+BISON=yacc
+# no built libiberty
+LIBIBERTY=
+BUILD_LIBIBERTY=
+# because it's a `system lib'
+CLIB=-liberty
+# and so, we get obstack from there too
+OBSTACK=
+# don't build c++filt from there
+DEMANGLER_PROG=

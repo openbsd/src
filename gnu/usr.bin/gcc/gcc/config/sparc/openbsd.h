@@ -23,7 +23,14 @@ Boston, MA 02111-1307, USA.  */
 #include <openbsd.h>
 
 /* Run-time target specifications.  */
-#define CPP_PREDEFINES "-D__unix__ -D__sparc__ -D__OpenBSD__ -Asystem=unix -Asystem=OpenBSD -Acpu=sparc -Amachine=sparc"
+#define TARGET_OS_CPP_BUILTINS()			\
+  do							\
+    {							\
+      OPENBSD_OS_CPP_BUILTINS_ELF();			\
+      builtin_define ("__sparc");			\
+      builtin_define ("__sparc__");			\
+    }							\
+  while (0)
 
 /* Layout of source language data types */
 

@@ -66,6 +66,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Under OpenBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
+#undef STANDARD_STARTFILE_PREFIX
 #define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
 
 #endif
@@ -73,8 +74,35 @@ Boston, MA 02111-1307, USA.  */
 
 /* Controlling the compilation driver.  */
 
+/* TARGET_OS_CPP_BUILTINS() common to all OpenBSD targets.  */
+#define OPENBSD_OS_CPP_BUILTINS_COMMON()	\
+  do						\
+    {						\
+      builtin_define ("__OpenBSD__");		\
+      builtin_assert ("system=unix");		\
+      builtin_assert ("system=OpenBSD");	\
+    }						\
+  while (0)
+
+/* TARGET_OS_CPP_BUILTINS() common to all OpenBSD ELF targets.  */
+#define OPENBSD_OS_CPP_BUILTINS_ELF()		\
+  do						\
+    {						\
+      OPENBSD_OS_CPP_BUILTINS_COMMON();		\
+      builtin_define ("__ELF__");		\
+    }						\
+  while (0)
+
+/* TARGET_OS_CPP_BUILTINS() common to all LP64 OpenBSD targets.  */
+#define OPENBSD_OS_CPP_BUILTINS_LP64()		\
+  do						\
+    {						\
+      builtin_define ("_LP64");			\
+    }						\
+  while (0)
+
 /* CPP_SPEC appropriate for OpenBSD. We deal with -posix and -pthread.
-   XXX the way threads are handling currently is not very satisfying,
+   XXX the way threads are handled currently is not very satisfying,
    since all code must be compiled with -pthread to work. 
    This two-stage defines makes it easy to pick that for targets that
    have subspecs.  */
@@ -84,10 +112,9 @@ Boston, MA 02111-1307, USA.  */
 #define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 #endif
 
-/* LIB_SPEC appropriate for OpenBSD.  Select the appropriate libc, 
-   depending on profiling and threads.  Basically, 
-   -lc(_r)?(_p)?, select _r for threads, and _p for p or pg.  */
-#define OBSD_LIB_SPEC "%{!shared:-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}}"
+/* LIB_SPEC appropriate for OpenBSD.  Include -lpthread if -pthread is
+   specified on the command line. */
+#define OBSD_LIB_SPEC "%{!shared:%{pthread:-lpthread%{p:_p}%{!p:%{pg:_p}}}} %{!shared:-lc%{p:_p}%{!p:%{pg:_p}}}"
 
 #ifndef OBSD_HAS_CORRECT_SPECS
 
@@ -288,4 +315,3 @@ do {									 \
    work.  On the other hand, we don't define HANDLE_PRAGMA_WEAK directly,
    as this depends on a few other details as well...  */
 #define HANDLE_SYSV_PRAGMA 1
-

@@ -37,7 +37,7 @@
 
 	.file	"tramp.asm"
 	.section ".text"
-	#include "ppc-asm.h"
+	#include "rs6000/ppc-asm.h"
 
 	.type	trampoline_initial,@object
 	.align	2

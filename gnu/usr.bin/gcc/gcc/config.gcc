@@ -405,6 +405,8 @@ case $machine in
 	tm_file=${cpu_type}/openbsd.h
 	tmake_file="t-libc-ok t-openbsd t-libgcc-pic"
 	xm_defines=POSIX
+	# for gcc in tree, we use our own fragment
+	xmake_file=x-openbsd
 	if test x$enable_threads = xyes; then
 		thread_file='posix'
 		tmake_file="${tmake_file} t-openbsd-thread"
@@ -578,10 +580,11 @@ alpha*-*-netbsd*)
 	;;
 
 alpha*-*-openbsd*)
-	tm_file="${cpu_type}/${cpu_type}.h ${tm_file}"
+ 	tm_file="alpha/alpha.h alpha/elf.h alpha/openbsd1.h openbsd.h ${tm_file}"
 	# default x-alpha is only appropriate for dec-osf.
 	target_cpu_default="MASK_GAS"
 	tmake_file="alpha/t-alpha alpha/t-ieee"
+	gas=yes gnu_ld=yes
 	;;
 
 alpha*-dec-osf[45]*)
@@ -1142,13 +1145,23 @@ i[34567]86-*-netbsd*)
 x86_64-*-netbsd*)
 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd.h netbsd-elf.h i386/x86-64.h i386/netbsd64.h"
 	;;
-i[34567]86-*-openbsd*)
+i[34567]86-*-openbsd2* | i[34567]86-*-openbsd3.[0123])
 	tm_file="${cpu_type}/${cpu_type}.h i386/unix.h i386/bsd.h i386/gas.h i386/gstabs.h openbsd-oldgas.h openbsd.h ${tm_file}"
 	# needed to unconfuse gdb
 	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
 	# we need collect2 until our bug is fixed...
 	use_collect2=yes
 	;;
+i[34567]86-*-openbsd*)
+	# needed to unconfuse gdb
+	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
+	tm_file="${cpu_type}/${cpu_type}.h i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h"
+	tm_file="${tm_file} exec-stack.h"
+	tm_file="${tm_file} openbsd.h i386/openbsdelf.h"
+	gas=yes
+	gnu_ld=yes
+	stabs=yes
+  	;;
 i[34567]86-*-coff*)
 	tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h dbxcoff.h i386/i386-coff.h"
 	;;
@@ -2016,8 +2029,8 @@ romp-*-openbsd*)
 	# Nothing special
 	;;
 powerpc-*-openbsd*)
-	tmake_file="${tmake_file} rs6000/t-rs6000 rs6000/t-openbsd"
-	extra_headers=
+	tm_file="rs6000/rs6000.h rs6000/openbsd1.h dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h openbsd.h ${tm_file}"
+	tmake_file="${tmake_file} rs6000/t-ppcos rs6000/t-openbsd"
 	;;
 powerpc64-*-linux*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h rs6000/linux64.h"
@@ -2397,17 +2410,19 @@ sparc-*-netbsd*)
 	use_collect2=yes
 	;;
 sparc-*-openbsd*)
-	tm_file="sparc/sparc.h ${tm_file}"
+	tm_file="sparc/sparc.h elfos.h svr4.h sparc/sysv4.h ${tm_file}"
 	# needed to unconfuse gdb
 	tmake_file="t-libc-ok t-openbsd sparc/t-openbsd"
 	# we need collect2 until our bug is fixed...
+	gas=yes gnu_ld=yes
 	use_collect2=yes
 	;;
 sparc64-*-openbsd*)
-	tm_file="sparc/openbsd1-64.h sparc/sparc.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/sp64-elf.h openbsd.h sparc/openbsd64.h"
+	tm_file="sparc/openbsd1-64.h sparc/sparc.h elfos.h svr4.h sparc/sysv4.h sparc/sp64-elf.h openbsd.h sparc/openbsd64.h"
 	xm_file=sparc/xm-sp64.h
 	gas=yes gnu_ld=yes
 	with_cpu=ultrasparc
+	float_format=i128
 	;;
 sparc-*-bsd*)
 	tm_file="${tm_file} sparc/bsd.h"

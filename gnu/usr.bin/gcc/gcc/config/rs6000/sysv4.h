@@ -197,6 +197,8 @@ do {									\
     rs6000_current_abi = ABI_V4;					\
   else if (!strcmp (rs6000_abi_name, "linux"))				\
     rs6000_current_abi = ABI_V4;					\
+  else if (!strcmp (rs6000_abi_name, "openbsd"))			\
+    rs6000_current_abi = ABI_V4;					\
   else if (!strcmp (rs6000_abi_name, "gnu"))				\
     rs6000_current_abi = ABI_V4;					\
   else if (!strcmp (rs6000_abi_name, "netbsd"))				\
@@ -823,6 +825,7 @@ do {						\
     %{mcall-freebsd: -mbig} \
     %{mcall-i960-old: -mlittle} \
     %{mcall-linux: -mbig} \
+    %{mcall-openbsd: -mbig} \
     %{mcall-gnu: -mbig} \
     %{mcall-netbsd: -mbig} \
 }}}}"
@@ -847,11 +850,13 @@ do {						\
     %{mcall-freebsd: -mbig %(cc1_endian_big) } \
     %{mcall-i960-old: -mlittle %(cc1_endian_little) } \
     %{mcall-linux: -mbig %(cc1_endian_big) } \
+    %{mcall-openbsd: -mbig %(cc1_endian_big) } \
     %{mcall-gnu: -mbig %(cc1_endian_big) } \
     %{mcall-netbsd: -mbig %(cc1_endian_big) } \
-    %{!mcall-aixdesc: %{!mcall-freebsd: %{!mcall-i960-old: %{!mcall-linux: %{!mcall-gnu: %{!mcall-netbsd: \
+    %{!mcall-aixdesc: %{!mcall-freebsd: %{!mcall-i960-old: %{!mcall-linux: \
+	    %{!mcall-openbsd: %{!mcall-gnu: %{!mcall-netbsd: \
 	    %(cc1_endian_default) \
-    }}}}}} \
+    }}}}}}} \
 }}}} \
 %{mno-sdata: -msdata=none } \
 %{meabi: %{!mcall-*: -mcall-sysv }} \
@@ -860,6 +865,7 @@ do {						\
     %{mcall-freebsd: -mno-eabi } \
     %{mcall-i960-old: -meabi } \
     %{mcall-linux: -mno-eabi } \
+    %{mcall-openbsd: -mno-eabi } \
     %{mcall-gnu: -mno-eabi } \
     %{mcall-netbsd: -mno-eabi }}} \
 %{msdata: -msdata=default} \
@@ -892,11 +898,12 @@ do {						\
 %{mwindiss: %(link_start_windiss) } \
 %{mcall-freebsd: %(link_start_freebsd) } \
 %{mcall-linux: %(link_start_linux) } \
+%{mcall-openbsd: %(link_start_openbsd) } \
 %{mcall-gnu: %(link_start_gnu) } \
 %{mcall-netbsd: %(link_start_netbsd) } \
 %{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mwindiss: \
-         %{!mcall-linux: %{!mcall-gnu: %{!mcall-netbsd:   \
-         %{!mcall-freebsd: %(link_start_default) }}}}}}}}}"
+         %{!mcall-linux: %{!mcall-openbsd: %{!mcall-gnu: %{!mcall-netbsd:   \
+         %{!mcall-freebsd: %(link_start_default) }}}}}}}}}}"
 
 #define LINK_START_DEFAULT_SPEC ""
 
@@ -951,11 +958,12 @@ do {						\
 %{mwindiss: %(link_os_windiss) } \
 %{mcall-freebsd: %(link_os_freebsd) } \
 %{mcall-linux: %(link_os_linux) } \
+%{mcall-openbsd: %(link_os_openbsd) } \
 %{mcall-gnu: %(link_os_gnu) } \
 %{mcall-netbsd: %(link_os_netbsd) } \
 %{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mwindiss: \
-         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-gnu: \
-         %{!mcall-netbsd: %(link_os_default) }}}}}}}}}"
+         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-openbsd: %{!mcall-gnu: \
+         %{!mcall-netbsd: %(link_os_default) }}}}}}}}}}"
 
 #define LINK_OS_DEFAULT_SPEC ""
 
@@ -973,12 +981,13 @@ do {						\
 %{msim: %(cpp_os_sim) } \
 %{mwindiss: %(cpp_os_windiss) } \
 %{mcall-freebsd: %(cpp_os_freebsd) } \
+%{mcall-openbsd: %(cpp_os_openbsd) } \
 %{mcall-linux: %(cpp_os_linux) } \
 %{mcall-gnu: %(cpp_os_gnu) } \
 %{mcall-netbsd: %(cpp_os_netbsd) } \
 %{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mwindiss: \
-         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-gnu: \
-         %{!mcall-netbsd: %(cpp_os_default) }}}}}}}}}"
+         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-openbsd: %{!mcall-gnu: \
+         %{!mcall-netbsd: %(cpp_os_default) }}}}}}}}}}"
 
 #define	CPP_OS_DEFAULT_SPEC ""
 
@@ -992,11 +1001,12 @@ do {						\
 %{mwindiss: %(startfile_windiss) } \
 %{mcall-freebsd: %(startfile_freebsd) } \
 %{mcall-linux: %(startfile_linux) } \
+%{mcall-openbsd: %(startfile_openbsd) } \
 %{mcall-gnu: %(startfile_gnu) } \
 %{mcall-netbsd: %(startfile_netbsd) } \
 %{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mwindiss: \
-         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-gnu: \
-         %{!mcall-netbsd: %(startfile_default) }}}}}}}}}"
+         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-openbsd: %{!mcall-gnu: \
+         %{!mcall-netbsd: %(startfile_default) }}}}}}}}}}"
 
 #define	STARTFILE_DEFAULT_SPEC ""
 
@@ -1010,11 +1020,12 @@ do {						\
 %{mwindiss: %(lib_windiss) } \
 %{mcall-freebsd: %(lib_freebsd) } \
 %{mcall-linux: %(lib_linux) } \
+%{mcall-openbsd: %(lib_openbsd) } \
 %{mcall-gnu: %(lib_gnu) } \
 %{mcall-netbsd: %(lib_netbsd) } \
 %{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mwindiss: \
-         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-gnu: \
-         %{!mcall-netbsd: %(lib_default) }}}}}}}}}"
+         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-openbsd: %{!mcall-gnu: \
+         %{!mcall-netbsd: %(lib_default) }}}}}}}}}}"
 
 #define LIB_DEFAULT_SPEC ""
 
@@ -1028,13 +1039,14 @@ do {						\
 %{mwindiss: %(endfile_windiss)} \
 %{mcall-freebsd: crtsavres.o%s %(endfile_freebsd) } \
 %{mcall-linux: crtsavres.o%s %(endfile_linux) } \
+%{mcall-openbsd: crtsavres.o%s %(endfile_openbsd) } \
 %{mcall-gnu: crtsavres.o%s %(endfile_gnu) } \
 %{mcall-netbsd: crtsavres.o%s %(endfile_netbsd) } \
 %{mvxworks: crtsavres.o%s %(endfile_vxworks) } \
 %{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mwindiss: \
-         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-gnu: \
+         %{!mcall-freebsd: %{!mcall-linux: %{!mcall-openbsd: %{!mcall-gnu: \
          %{!mcall-netbsd: %{!mvxworks: %(crtsavres_default) \
-                                       %(endfile_default) }}}}}}}}}}"
+                                       %(endfile_default) }}}}}}}}}}}"
 
 #define CRTSAVRES_DEFAULT_SPEC "crtsavres.o%s"
 
@@ -1231,6 +1243,46 @@ ncrtn.o%s"
 %{mcpu=821:  %{!Dppc*: %{!Dmpc*: -Dmpc821}  } } \
 %{mcpu=860:  %{!Dppc*: %{!Dmpc*: -Dmpc860}  } }" 
 
+/* OpenBSD support.  */
+#ifndef	LIB_OPENBSD_SPEC
+#define LIB_OPENBSD_SPEC "%{mnewlib: --start-group %(libc_openbsd) --end-group } %{!mnewlib: %(libc_openbsd) }"
+#endif
+
+#ifndef LIBC_OPENBSD_SPEC
+#define LIBC_OPENBSD_SPEC "%{!shared:%{pthread:-lpthread%{p:_p}%{!p:%{pg:_p}}}} %{!shared:-lc%{p:_p}%{!p:%{pg:_p}}}"
+#endif
+
+#ifndef	STARTFILE_OPENBSD_SPEC
+#define	STARTFILE_OPENBSD_SPEC "\
+%{!shared: %{pg:gcrt0.o%s} %{!pg:%{p:gcrt0.o%s} %{!p:crt0.o%s}}} \
+%{mnewlib: ecrti.o%s} \
+%{!mnewlib: %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}}"
+#endif
+/*
+%{!mnewlib: crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}}"
+*/
+
+#ifndef	ENDFILE_OPENBSD_SPEC
+#define	ENDFILE_OPENBSD_SPEC "\
+%{mnewlib: ecrtn.o%s} \
+%{!mnewlib: %{!shared:crtend.o%s} %{shared:crtendS.o%s}}"
+#endif
+/*
+%{!mnewlib: %{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s}"
+*/
+
+#ifndef LINK_START_OPENBSD_SPEC
+#define LINK_START_OPENBSD_SPEC "-Ttext 0x400074"
+#endif
+
+#ifndef LINK_OS_OPENBSD_SPEC
+#define LINK_OS_OPENBSD_SPEC ""
+#endif
+
+#ifndef CPP_OS_OPENBSD_SPEC
+#define CPP_OS_OPENBSD_SPEC OBSD_CPP_SPEC
+#endif
+
 /* VxWorks support.  */
 /* VxWorks does all the library stuff itself.  */
 #define LIB_VXWORKS_SPEC ""
@@ -1306,6 +1358,8 @@ ncrtn.o%s"
   { "lib_gnu",			LIB_GNU_SPEC },				\
   { "lib_linux",		LIB_LINUX_SPEC },			\
   { "lib_netbsd",		LIB_NETBSD_SPEC },			\
+  { "lib_openbsd",		LIB_OPENBSD_SPEC },			\
+  { "libc_openbsd",		LIBC_OPENBSD_SPEC },			\
   { "lib_vxworks",		LIB_VXWORKS_SPEC },			\
   { "lib_windiss",              LIB_WINDISS_SPEC },                     \
   { "lib_default",		LIB_DEFAULT_SPEC },			\
@@ -1317,6 +1371,7 @@ ncrtn.o%s"
   { "startfile_gnu",		STARTFILE_GNU_SPEC },			\
   { "startfile_linux",		STARTFILE_LINUX_SPEC },			\
   { "startfile_netbsd",		STARTFILE_NETBSD_SPEC },		\
+  { "startfile_openbsd",	STARTFILE_OPENBSD_SPEC },		\
   { "startfile_vxworks",	STARTFILE_VXWORKS_SPEC },		\
   { "startfile_windiss",        STARTFILE_WINDISS_SPEC },               \
   { "startfile_default",	STARTFILE_DEFAULT_SPEC },		\
@@ -1328,6 +1383,7 @@ ncrtn.o%s"
   { "endfile_gnu",		ENDFILE_GNU_SPEC },			\
   { "endfile_linux",		ENDFILE_LINUX_SPEC },			\
   { "endfile_netbsd",		ENDFILE_NETBSD_SPEC },			\
+  { "endfile_openbsd",		ENDFILE_OPENBSD_SPEC },			\
   { "endfile_vxworks",		ENDFILE_VXWORKS_SPEC },			\
   { "endfile_windiss",          ENDFILE_WINDISS_SPEC },                 \
   { "endfile_default",		ENDFILE_DEFAULT_SPEC },			\
@@ -1343,6 +1399,7 @@ ncrtn.o%s"
   { "link_start_gnu",		LINK_START_GNU_SPEC },			\
   { "link_start_linux",		LINK_START_LINUX_SPEC },		\
   { "link_start_netbsd",	LINK_START_NETBSD_SPEC },		\
+  { "link_start_openbsd",	LINK_START_OPENBSD_SPEC },		\
   { "link_start_vxworks",	LINK_START_VXWORKS_SPEC },		\
   { "link_start_windiss",	LINK_START_WINDISS_SPEC },		\
   { "link_start_default",	LINK_START_DEFAULT_SPEC },		\
@@ -1355,6 +1412,7 @@ ncrtn.o%s"
   { "link_os_linux",		LINK_OS_LINUX_SPEC },			\
   { "link_os_gnu",		LINK_OS_GNU_SPEC },			\
   { "link_os_netbsd",		LINK_OS_NETBSD_SPEC },			\
+  { "link_os_openbsd",		LINK_OS_OPENBSD_SPEC },			\
   { "link_os_vxworks",		LINK_OS_VXWORKS_SPEC },			\
   { "link_os_windiss",		LINK_OS_WINDISS_SPEC },			\
   { "link_os_default",		LINK_OS_DEFAULT_SPEC },			\
@@ -1368,6 +1426,7 @@ ncrtn.o%s"
   { "cpp_os_freebsd",		CPP_OS_FREEBSD_SPEC },			\
   { "cpp_os_gnu",		CPP_OS_GNU_SPEC },			\
   { "cpp_os_linux",		CPP_OS_LINUX_SPEC },			\
+  { "cpp_os_openbsd",		CPP_OS_OPENBSD_SPEC },			\
   { "cpp_os_netbsd",		CPP_OS_NETBSD_SPEC },			\
   { "cpp_os_rtems",		CPP_OS_RTEMS_SPEC },			\
   { "cpp_os_vxworks",		CPP_OS_VXWORKS_SPEC },			\
