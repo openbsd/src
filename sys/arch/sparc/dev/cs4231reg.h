@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231reg.h,v 1.2 2002/01/11 22:12:18 jason Exp $	*/
+/*	$OpenBSD: cs4231reg.h,v 1.3 2002/01/18 14:29:35 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -34,8 +34,6 @@
 /*
  * Driver for the CS4231 audio in some sun4m systems
  */
-
-#define CS_TIMEOUT	90000
 
 /*
  * CS4231 registers from CS web site and Solaris 2.6 includes.
