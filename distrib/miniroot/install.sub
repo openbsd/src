@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.28 1997/05/16 02:00:22 millert Exp $
+#	$OpenBSD: install.sub,v 1.29 1997/05/16 03:07:39 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -691,10 +691,10 @@ install_url() {
 
 	# Get list of files from the server.
 	# XXX - check for nil $_file_list and deal
-	if [ "${_url_type}" = "ftp" ]; then
+	if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
 		_file_list=`ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir"`
 	else
-		# Assumes index file is "index.txt" for http
+		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
 		_file_list="`eval ftp -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | cat`"
 	fi
