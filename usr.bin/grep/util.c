@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2003/06/23 00:55:09 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2003/06/23 07:52:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -177,13 +177,15 @@ procline(str_t *l, int nottext)
 	pmatch.rm_so = 0;
 	pmatch.rm_eo = l->len;
 	for (c = i = 0; i < patterns; i++) {
-		r = regexec(&r_pattern[i], l->dat, 0, &pmatch,  eflags);
+		r = regexec(&r_pattern[i], l->dat, 0, &pmatch, eflags);
 		if (r == REG_NOMATCH && t == 0)
 			continue;
 		if (r == 0) {
 			if (wflag) {
-				if ((pmatch.rm_so != 0 && isword(l->dat[pmatch.rm_so - 1]))
-				    || (pmatch.rm_eo != l->len && isword(l->dat[pmatch.rm_eo])))
+				if ((pmatch.rm_so != 0 &&
+				    isword(l->dat[pmatch.rm_so - 1])) ||
+				    (pmatch.rm_eo != l->len &&
+				    isword(l->dat[pmatch.rm_eo])))
 					r = REG_NOMATCH;
 			}
 			if (xflag) {
@@ -203,7 +205,8 @@ print:
 
 	if ((tail > 0 || c) && !cflag && !qflag) {
 		if (c) {
-			if (first > 0 && tail == 0 && (Bflag < linesqueued) && (Aflag || Bflag))
+			if (first > 0 && tail == 0 && (Bflag < linesqueued) &&
+			    (Aflag || Bflag))
 				printf("--\n");
 			first = 1;
 			tail = Aflag;
