@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.25 2000/04/05 16:34:07 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.26 2000/04/05 16:52:22 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -243,7 +243,7 @@ hifn_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_IMP, hifn_intr, sc,
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc,
 	    self->dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");
@@ -1057,7 +1057,7 @@ hifn_crypto(sc, cmd)
 	    cmd->dst_npa);
 #endif
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * need 1 cmd, and 1 res
