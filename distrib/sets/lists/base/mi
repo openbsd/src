@@ -845,6 +845,7 @@
 ./usr/libdata/perl5/OpenBSD/PackingOld.pm
 ./usr/libdata/perl5/OpenBSD/PkgCfl.pm
 ./usr/libdata/perl5/OpenBSD/PkgSpec.pm
+./usr/libdata/perl5/OpenBSD/ProgressMeter.pm
 ./usr/libdata/perl5/OpenBSD/RequiredBy.pm
 ./usr/libdata/perl5/OpenBSD/Temp.pm
 ./usr/libdata/perl5/OpenBSD/Ustar.pm
