@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.2 2001/04/17 05:09:22 drahn Exp $
+#	$Id: Makefile,v 1.3 2001/04/17 05:11:10 drahn Exp $
 
-.if ${MACHINE} == "powerpc
+.if ${MACHINE} == "powerpc"
 PROG=	pdisk
 
 SRCS=	pdisk.c dump.c partition_map.c convert.c io.c errors.c bitfield.c \
