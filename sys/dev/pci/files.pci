@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.20 1998/09/21 05:24:54 jason Exp $
+#	$OpenBSD: files.pci,v 1.21 1998/09/22 06:06:48 fgsch Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -99,3 +99,7 @@ file	dev/pci/if_xl.c			xl
 device	tx: ether, ifnet
 attach	tx at pci
 file	dev/pci/if_tx.c			tx
+
+# NE2000-compatible PCI Ethernet cards
+attach	ne at pci with ne_pci
+file	dev/pci/if_ne_pci.c		ne_pci
