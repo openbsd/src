@@ -35,12 +35,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sscanf.c,v 1.2 1996/08/19 08:33:07 tholo Exp $";
+static char rcsid[] = "$OpenBSD: sscanf.c,v 1.3 1997/07/25 20:30:12 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -58,7 +58,7 @@ eofread(cookie, buf, len)
 	return (0);
 }
 
-#if __STDC__
+#ifdef __STDC__
 sscanf(const char *str, char const *fmt, ...)
 #else
 sscanf(str, fmt, va_alist)
@@ -77,7 +77,7 @@ sscanf(str, fmt, va_alist)
 	f._read = eofread;
 	f._ub._base = NULL;
 	f._lb._base = NULL;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

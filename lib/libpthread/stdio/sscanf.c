@@ -36,19 +36,19 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sscanf.c	5.1 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: sscanf.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $";
+static char *rcsid = "$Id: sscanf.c,v 1.2 1997/07/25 20:30:24 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 #include "local.h"
 
-#if __STDC__
+#ifdef __STDC__
 sscanf(const char *str, char const *fmt, ...)
 #else
 sscanf(str, fmt, va_alist)
@@ -67,7 +67,7 @@ sscanf(str, fmt, va_alist)
 	f._bf._size = f._r = strlen(str);
 	f._ub._base = NULL;
 	f._lb._base = NULL;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

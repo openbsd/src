@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.6 1997/01/24 19:17:25 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.7 1997/07/25 20:30:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -46,7 +46,7 @@ static char rcsid[] =
 #include <sys/sockio.h>
 #endif
 
-#if __STDC__
+#ifdef __STDC__
 struct mbuf;
 struct rtentry;
 #endif

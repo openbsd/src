@@ -1,4 +1,4 @@
-/*	$OpenBSD: tparm.c,v 1.4 1997/03/28 00:39:08 tholo Exp $	*/
+/*	$OpenBSD: tparm.c,v 1.5 1997/07/25 20:30:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,12 +31,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tparm.c,v 1.4 1997/03/28 00:39:08 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tparm.c,v 1.5 1997/07/25 20:30:26 mickey Exp $";
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -366,7 +366,7 @@ overflow:
 }
 
 char *
-#if __STDC__
+#ifdef __STDC__
 tparm(const char *str, ...)
 #else
 tparm(va_alist)
@@ -376,7 +376,7 @@ tparm(va_alist)
     static char buf[MAXRETURNSIZE];
     va_list ap;
     char *p;
-#if !__STDC__
+#ifndef __STDC__
     const char *str;
 
     va_start(ap);

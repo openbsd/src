@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.5 1997/07/23 20:58:27 kstailey Exp $ */
+/* $OpenBSD: blowfish.c,v 1.6 1997/07/25 20:30:00 mickey Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -441,7 +441,7 @@ Blowfish_initstate(c)
 
 }
 
-#if __STDC__
+#ifdef __STDC__
 u_int32_t
 Blowfish_stream2word(const u_int8_t *data, u_int16_t databytes, u_int16_t *current)
 #else

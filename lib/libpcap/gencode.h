@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.4 1996/07/12 13:19:08 mickey Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.5 1997/07/25 20:30:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -155,7 +155,7 @@ struct block *gen_multicast(int);
 struct block *gen_inbound(int);
 
 void bpf_optimize(struct block **);
-#if __STDC__
+#ifdef __STDC__
 __dead void bpf_error(const char *, ...)
     __attribute__((volatile, format (printf, 1, 2)));
 #endif

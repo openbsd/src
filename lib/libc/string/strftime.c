@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strftime.c,v 1.7 1996/10/28 16:53:28 tholo Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.8 1997/07/25 20:30:14 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -296,7 +296,7 @@ _secs(t)
 }
 
 static int
-#if __STDC__
+#ifdef __STDC__
 _conv(int n, int digits, char pad)
 #else
 _conv(n, digits, pad)

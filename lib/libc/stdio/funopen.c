@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: funopen.c,v 1.2 1996/08/19 08:32:48 tholo Exp $";
+static char rcsid[] = "$OpenBSD: funopen.c,v 1.3 1997/07/25 20:30:09 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -46,7 +46,7 @@ FILE *
 funopen(cookie, readfn, writefn, seekfn, closefn)
 	const void *cookie;
 	int (*readfn)(), (*writefn)();
-#if __STDC__
+#ifdef __STDC__
 	fpos_t (*seekfn)(void *cookie, fpos_t off, int whence);
 #else
 	fpos_t (*seekfn)();

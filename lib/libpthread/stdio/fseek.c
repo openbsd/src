@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fseek.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: fseek.c,v 1.1.1.1 1995/10/18 08:43:07 deraadt Exp $";
+static char *rcsid = "$Id: fseek.c,v 1.2 1997/07/25 20:30:22 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ fseek(fp, offset, whence)
 	long offset;
 	int whence;
 {
-#if __STDC__
+#ifdef __STDC__
 	register fpos_t (*seekfn)(void *, fpos_t, int);
 #else
 	register fpos_t (*seekfn)();

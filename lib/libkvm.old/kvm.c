@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.3 1997/01/17 07:11:56 millert Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.4 1997/07/25 20:30:26 mickey Exp $	*/
 
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
@@ -85,7 +85,7 @@ kvm_geterr(kd)
 	return (kd->errbuf);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -98,7 +98,7 @@ kvm_geterr(kd)
  * generate tons of error messages when trying to access bogus pointers).
  */
 void
-#if __STDC__
+#ifdef __STDC__
 _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...)
 #else
 _kvm_err(kd, program, fmt, va_alist)
@@ -126,7 +126,7 @@ _kvm_err(kd, program, fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 #else
 _kvm_syserr(kd, program, fmt, va_alist)
@@ -138,7 +138,7 @@ _kvm_syserr(kd, program, fmt, va_alist)
 	va_list ap;
 	register int n;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

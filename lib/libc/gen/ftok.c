@@ -26,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ftok.c,v 1.3 1996/08/19 08:22:54 tholo Exp $";
+static char *rcsid = "$OpenBSD: ftok.c,v 1.4 1997/07/25 20:30:02 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -34,7 +34,7 @@ static char *rcsid = "$OpenBSD: ftok.c,v 1.3 1996/08/19 08:22:54 tholo Exp $";
 #include <sys/ipc.h>
 
 key_t
-#if __STDC__
+#ifdef __STDC__
 ftok(const char *path, char id)
 #else
 ftok(path, id)

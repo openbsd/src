@@ -36,11 +36,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sprintf.c	5.7 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: sprintf.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $";
+static char *rcsid = "$Id: sprintf.c,v 1.2 1997/07/25 20:30:24 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -48,7 +48,7 @@ static char *rcsid = "$Id: sprintf.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $
 #include <limits.h>
 #include "local.h"
 
-#if __STDC__
+#ifdef __STDC__
 sprintf(char *str, char const *fmt, ...)
 #else
 sprintf(str, fmt, va_alist)
@@ -64,7 +64,7 @@ sprintf(str, fmt, va_alist)
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

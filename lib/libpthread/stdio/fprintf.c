@@ -36,18 +36,18 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fprintf.c	5.6 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: fprintf.c,v 1.1.1.1 1995/10/18 08:43:06 deraadt Exp $";
+static char *rcsid = "$Id: fprintf.c,v 1.2 1997/07/25 20:30:20 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
 #include <stdio.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
-#if __STDC__
+#ifdef __STDC__
 fprintf(FILE *fp, const char *fmt, ...)
 #else
 fprintf(fp, fmt, va_alist)
@@ -59,7 +59,7 @@ fprintf(fp, fmt, va_alist)
 	int ret;
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.6 1997/07/23 21:04:07 kstailey Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.7 1997/07/25 20:30:04 mickey Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.6 1997/07/23 21:04:07 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.7 1997/07/25 20:30:04 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,7 @@ static void	 dumpmode __P((BITCMD *));
  * bits) followed by a '+' (set bits).
  */
 mode_t
-#if __STDC__
+#ifdef __STDC__
 getmode(const void *bbox, mode_t omode)
 #else
 getmode(bbox, omode)

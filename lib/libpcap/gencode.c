@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.5 1996/09/16 02:33:05 tholo Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.6 1997/07/25 20:30:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -29,7 +29,7 @@ static char rcsid[] =
 #include <sys/socket.h>
 #include <sys/time.h>
 
-#if __STDC__
+#ifdef __STDC__
 struct mbuf;
 struct rtentry;
 #endif
@@ -45,7 +45,7 @@ struct rtentry;
 #include <pcap.h>
 #include <pcap-namedb.h>
 #include <setjmp.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -90,7 +90,7 @@ int	pcap_fddipad;
 
 /* VARARGS */
 __dead void
-#if __STDC__
+#ifdef __STDC__
 bpf_error(const char *fmt, ...)
 #else
 bpf_error(fmt, va_alist)
@@ -100,7 +100,7 @@ bpf_error(fmt, va_alist)
 {
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

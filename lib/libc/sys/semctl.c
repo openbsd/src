@@ -30,14 +30,14 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: semctl.c,v 1.3 1997/04/26 08:50:13 tholo Exp $";
+static char rcsid[] = "$OpenBSD: semctl.c,v 1.4 1997/07/25 20:30:14 mickey Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-#if __STDC__
+#ifdef __STDC__
 int semctl(int semid, int semnum, int cmd, union semun semun)
 #else
 int semctl(semid, int semnum, cmd, semun)

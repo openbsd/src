@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.5 1996/12/05 05:37:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.6 1997/07/25 20:30:01 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -44,7 +44,7 @@ static char rcsid[] = "$OpenBSD: exec.c,v 1.5 1996/12/05 05:37:10 deraadt Exp $"
 #include <stdio.h>
 #include <paths.h>
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -87,7 +87,7 @@ buildargv(ap, arg, envpp)
 }
 
 int
-#if __STDC__
+#ifdef __STDC__
 execl(const char *name, const char *arg, ...)
 #else
 execl(name, arg, va_alist)
@@ -100,7 +100,7 @@ execl(name, arg, va_alist)
 	int sverrno;
 	char **argv;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
@@ -115,7 +115,7 @@ execl(name, arg, va_alist)
 }
 
 int
-#if __STDC__
+#ifdef __STDC__
 execle(const char *name, const char *arg, ...)
 #else
 execle(name, arg, va_alist)
@@ -128,7 +128,7 @@ execle(name, arg, va_alist)
 	int sverrno;
 	char **argv, **envp;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
@@ -143,7 +143,7 @@ execle(name, arg, va_alist)
 }
 
 int
-#if __STDC__
+#ifdef __STDC__
 execlp(const char *name, const char *arg, ...)
 #else
 execlp(name, arg, va_alist)
@@ -156,7 +156,7 @@ execlp(name, arg, va_alist)
 	int sverrno;
 	char **argv;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);

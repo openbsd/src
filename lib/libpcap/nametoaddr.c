@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.5 1996/09/16 02:33:06 tholo Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.6 1997/07/25 20:30:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -32,7 +32,7 @@ static char rcsid[] =
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#if __STDC__
+#ifdef __STDC__
 struct mbuf;
 struct rtentry;
 #endif
