@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.19 2003/05/20 08:58:36 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.20 2003/12/06 06:39:51 kjc Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -8,10 +8,7 @@
  * its documentation is hereby granted (including for commercial or
  * for-profit use), provided that both the copyright notice and this
  * permission notice appear in all copies of the software, derivative
- * works, or modified versions, and any portions thereof, and that
- * both notices appear in supporting documentation, and that credit
- * is given to Carnegie Mellon University in all publications reporting
- * on direct or indirect use of this code or its derivatives.
+ * works, or modified versions, and any portions thereof.
  *
  * THIS SOFTWARE IS EXPERIMENTAL AND IS KNOWN TO HAVE BUGS, SOME OF
  * WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON PROVIDES THIS
