@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.16 1996/06/10 07:32:39 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.17 1996/06/10 19:29:59 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -141,8 +141,10 @@ static u_char tiocm_xxx2mcr __P((int));
  * XXX the following two cfattach structs should be different, and possibly
  * XXX elsewhere.
  */
-int comprobe __P((struct device *, void *, void *));
-void comattach __P((struct device *, struct device *, void *));
+int	comprobe __P((struct device *, void *, void *));
+void	comattach __P((struct device *, struct device *, void *));
+void	com_absent_notify __P((struct com_softc *sc));
+void	comstart_pending __P((void *));
 
 #if NCOM_ISA
 struct cfattach com_isa_ca = {
@@ -211,7 +213,6 @@ struct cfattach com_pcmcia_ca = {
 
 int	com_pcmcia_mod __P((struct pcmcia_link *pc_link, struct device *self,
 	    struct pcmcia_conf *pc_cf, struct cfdata *cf));
-void	com_absent_notify __P((struct com_softc *sc));
 
 /* additional setup needed for pcmcia devices */
 /* modify config entry */
@@ -384,8 +385,9 @@ void
 com_absent_notify(sc)
 	struct com_softc *sc;
 {
-	struct tty *tp;
-	if (tp = sc->sc_tty) {
+	struct tty *tp = sc->sc_tty;
+
+	if (tp) {
 		CLR(tp->t_state, TS_CARR_ON|TS_BUSY);
 		ttyflush(tp, FREAD|FWRITE);
 	}
@@ -422,8 +424,7 @@ comprobe1(bc, ioh, iobase)
 	bus_io_handle_t ioh;
 	int iobase;
 {
-	int tmp;
-	int i,k;
+	int i, k;
 
 	/* force access to id reg */
 	bus_io_write_1(bc, ioh, com_lcr, 0);
