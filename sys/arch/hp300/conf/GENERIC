@@ -1,11 +1,10 @@
-#	$OpenBSD: GENERIC,v 1.13 1997/02/03 08:11:52 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.14 1997/02/05 17:41:51 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
 
-# Include attributes common to all hp300s
-include "arch/hp300/conf/std.hp300"
+machine hp300 m68k
 
 # Include all GENERIC option	
 include "../../../conf/GENERIC"
