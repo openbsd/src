@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.25 2003/07/22 20:48:58 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.26 2003/07/23 07:31:21 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.25 2003/07/22 20:48:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.26 2003/07/23 07:31:21 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -788,8 +788,11 @@ dump_line(LINENUM line)
 {
 	char	*s, R_newline = '\n';
 
+	s = ifetch(line, 0);
+	if (s == NULL)
+		return;
 	/* Note: string is not null terminated. */
-	for (s=ifetch(line, 0); putc(*s, ofp) != R_newline; s++)
+	for (; putc(*s, ofp) != R_newline; s++)
 		;
 }
 
@@ -802,14 +805,20 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 	LINENUM	pline = 1 + fuzz;
 	LINENUM	iline;
 	LINENUM	pat_lines = pch_ptrn_lines() - fuzz;
+	char *ilineptr;
+	char *plineptr;
+	short plinelen;
 
 	for (iline = base + offset + fuzz; pline <= pat_lines; pline++, iline++) {
+		ilineptr = ifetch(iline, offset >= 0);
+		if (ilineptr == NULL)
+			return FALSE;
+		plineptr = pfetch(pline);
+		plinelen = pch_line_len(pline);
 		if (canonicalize) {
-			if (!similar(ifetch(iline, (offset >= 0)),
-			    pfetch(pline), pch_line_len(pline)))
+			if (!similar(ilineptr, plineptr, plinelen))
 				return FALSE;
-		} else if (strnNE(ifetch(iline, (offset >= 0)),
-		    pfetch(pline), pch_line_len(pline)))
+		} else if (strnNE(ilineptr, plineptr, plinelen))
 			return FALSE;
 	}
 	return TRUE;
