@@ -1,8 +1,9 @@
-.\"	$OpenBSD: rip6query.8,v 1.5 2001/07/25 10:04:57 mpech Exp $
+.\"	$OpenBSD: rip6query.8,v 1.6 2001/11/16 07:16:48 itojun Exp $
+.\"	$KAME: rip6query.8,v 1.6 2001/11/16 07:05:36 itojun Exp $
 .\"
 .\" Copyright (C) 1998 and 1999 WIDE Project.
 .\" All rights reserved.
-.\"
+.\" 
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -14,7 +15,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\"
+.\" 
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,8 +28,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: rip6query.8,v 1.2 2000/01/19 06:24:55 itojun Exp
-.\"
 .Dd Oct 7, 1999
 .Dt RIP6QUERY 8
 .Os
@@ -39,6 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl I Ar interface
+.Op Fl w Ar time
 .Ar destination
 .\"
 .Sh DESCRIPTION
@@ -52,6 +52,10 @@ lets you specify outgoing
 for the query packet,
 and is useful when link-local address is specified for
 .Ar destination .
+.Fl w
+specifies the time in seconds to wait for the initial
+response from a gateway.
+The default value is 5 seconds.
 .\"
 .Sh SEE ALSO
 .Xr route6d 8

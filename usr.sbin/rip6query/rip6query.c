@@ -1,4 +1,5 @@
-/*	$OpenBSD: rip6query.c,v 1.3 2001/10/26 06:23:02 mpech Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.4 2001/11/16 07:16:48 itojun Exp $	*/
+/*	$KAME: rip6query.c,v 1.15 2001/11/16 07:01:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,10 +37,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
+#include <errno.h>
 #include <err.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
+
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
@@ -51,13 +55,10 @@
 
 #include "route6d.h"
 
-/* wrapper for KAME-special getnameinfo() */
-#ifndef NI_WITHSCOPEID
-#define NI_WITHSCOPEID	0
-#endif
+#define	DEFAULT_WAIT	5
 
 int	s;
-extern int errno;
+int	query_wait = DEFAULT_WAIT;
 struct sockaddr_in6 sin6;
 struct rip6	*ripbuf;
 
@@ -65,6 +66,7 @@ struct rip6	*ripbuf;
 
 int main __P((int, char **));
 static void usage __P((void));
+static void sigalrm_handler __P((int));
 static const char *sa_n2a __P((struct sockaddr *));
 static const char *inet6_n2a __P((struct in6_addr *));
 
@@ -77,14 +79,12 @@ main(argc, argv)
 	struct sockaddr_in6 fsock;
 	int i, n, len, flen;
 	int c;
-	extern char *optarg;
-	extern int optind;
 	int ifidx = -1;
 	int error;
 	char pbuf[10];
 	struct addrinfo hints, *res;
 
-	while ((c = getopt(argc, argv, "I:")) != -1) {
+	while ((c = getopt(argc, argv, "I:w:")) != -1) {
 		switch (c) {
 		case 'I':
 			ifidx = if_nametoindex(optarg);
@@ -92,6 +92,9 @@ main(argc, argv)
 				errx(1, "invalid interface %s", optarg);
 				/*NOTREACHED*/
 			}
+			break;
+		case 'w':
+			query_wait = atoi(optarg);
 			break;
 		default:
 			usage();
@@ -112,7 +115,7 @@ main(argc, argv)
 		/*NOTREACHED*/
 	}
 
-	/* getaddrinfo is preferred for addr@ifname syntax */
+	/* getaddrinfo is preferred for addr%scope syntax */
 	snprintf(pbuf, sizeof(pbuf), "%d", RIP6_PORT);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;
@@ -152,13 +155,16 @@ main(argc, argv)
 		err(1, "send");
 		/*NOTREACHED*/
 	}
-	do {
+	signal(SIGALRM, sigalrm_handler);
+	for (;;) {
 		flen = sizeof(fsock);
+		alarm(query_wait);
 		if ((len = recvfrom(s, ripbuf, BUFSIZ, 0,
 				(struct sockaddr *)&fsock, &flen)) < 0) {
 			err(1, "recvfrom");
 			/*NOTREACHED*/
 		}
+		alarm(0);
 		printf("Response from %s len %d\n",
 			sa_n2a((struct sockaddr *)&fsock), len);
 		n = (len - sizeof(struct rip6) + sizeof(struct netinfo6)) /
@@ -171,7 +177,7 @@ main(argc, argv)
 				printf(" tag=0x%x", ntohs(np->rip6_tag));
 			printf("\n");
 		}
-	} while (len == RIPSIZE(24));
+	}
 
 	exit(0);
 }
@@ -179,7 +185,7 @@ main(argc, argv)
 static void
 usage()
 {
-	fprintf(stderr, "Usage: rip6query [-I iface] address\n");
+	fprintf(stderr, "Usage: rip6query [-I iface] [-w wait] address\n");
 }
 
 /* getnameinfo() is preferred as we may be able to show ifindex as ifname */
@@ -190,7 +196,7 @@ sa_n2a(sa)
 	static char buf[NI_MAXHOST];
 
 	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf),
-			NULL, 0, NI_NUMERICHOST | NI_WITHSCOPEID) != 0) {
+			NULL, 0, NI_NUMERICHOST) != 0) {
 		snprintf(buf, sizeof(buf), "%s", "(invalid)");
 	}
 	return buf;
@@ -203,4 +209,12 @@ inet6_n2a(addr)
 	static char buf[NI_MAXHOST];
 
 	return inet_ntop(AF_INET6, addr, buf, sizeof(buf));
+}
+
+static void
+sigalrm_handler(sig)
+	int sig;
+{
+
+	exit(0);
 }
