@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.2 1998/05/24 23:26:42 provos Exp $
+.\" $OpenBSD: vpn.8,v 1.3 1998/06/02 09:18:33 provos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -78,11 +78,31 @@ interface or
 .Tn UDP
 packets with source and remote ports of 468
 should be allowed in.
+.Pp 
+The ipf rules for a tunnel which only uses ESP on security gateway A 
+might look like this:
+.Bd -literal
+# ed0 is the only interface going to the outside.
+block in log on ed0 from any to any
+block out log on ed0 from any to any
+block in log on enc0 from any to any
+
+# Passing in encrypted traffic from security gateways
+pass in proto sipp-esp from gatewB to gatewA
+pass out proto sipp-esp from gatewA to gatewB
+
+# Passing in traffic from the designated subnets.
+pass in on enc0 from netB/netBmask to netA/netAmask
+
+# Passing in Photuris traffic from the security gateways
+pass in on ed0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
+pass out on ed0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
+.Ed
+.Pp
+If there are no more ipf rules the quick clause can be added to the last
+three rules.
 .Sh SEE ALSO
 .Xr ipf 1 ,
 .Xr ipsecadm 1 ,
 .Xr ipsec 4 ,
 .Xr photurisd 8 .
-.Sh HISTORY
-VPN support appeared first in
-.Ox 2.3 .
