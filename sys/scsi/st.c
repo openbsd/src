@@ -854,7 +854,8 @@ done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
-	iodone(bp);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 	return;
 }
 
@@ -1611,7 +1612,7 @@ st_interpret_sense(xs)
 	struct buf *bp = xs->bp;
 	struct st_softc *st = sc_link->device_softc;
 	u_int8_t key;
-	u_int32_t info;
+	int32_t info;
 
 	/*
 	 * Get the sense fields and work out what code
