@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2004/01/06 20:41:55 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.33 2004/01/06 23:36:40 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -217,6 +217,9 @@ optnl		: '\n' optnl
 		|
 		;
 
+nl		: '\n' optnl		/* one newline or more */
+		;
+
 optnumber	: /* empty */		{ $$ = 0; }
 		| number
 		;
@@ -229,7 +232,7 @@ neighbor	: NEIGHBOR address optnl '{' optnl {
 			curpeer->conf.remote_addr.sin_port = htons(BGP_PORT);
 			curpeer->conf.remote_addr.sin_addr.s_addr = $2.s_addr;
 		}
-		  peeropts_l optnl '}' {
+		  peeropts_l '}' {
 			curpeer->next = peer_l;
 			peer_l = curpeer;
 			curpeer = NULL;
@@ -246,7 +249,7 @@ group		: GROUP string optnl '{' optnl {
 				YYERROR;
 			}
 		}
-		  groupopts_l optnl '}' {
+		  groupopts_l '}' {
 			free(curgroup);
 			curgroup = NULL;
 		}
@@ -256,17 +259,17 @@ groupopts_l	: groupopts_l groupoptsl
 		| groupoptsl
 		;
 
-groupoptsl	: peeropts '\n'
-		| neighbor '\n'
-		| error '\n'
+groupoptsl	: peeropts nl
+		| neighbor nl
+		| error nl
 		;
 
 peeropts_l	: peeropts_l peeroptsl
 		| peeroptsl
 		;
 
-peeroptsl	: peeropts '\n'
-		| error '\n'
+peeroptsl	: peeropts nl
+		| error nl
 		;
 
 peeropts	: REMOTEAS number	{
