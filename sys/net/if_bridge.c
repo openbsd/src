@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.133 2004/05/04 16:59:32 grange Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.134 2004/05/04 18:03:58 canacar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1392,6 +1392,11 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 				bridge_rtupdate(sc,
 				    (struct ether_addr *)&eh->ether_shost,
 				    ifp, 0, IFBAF_DYNAMIC);
+			if (bridge_filterrule(&srcifl->bif_brlin, eh, m) ==
+			    BRL_ACTION_BLOCK) {
+				m_freem(m);
+				return (NULL);
+			}
 			m->m_pkthdr.rcvif = ifl->ifp;
 			if (ifp->if_type == IFT_GIF) {
 				m->m_flags |= M_PROTO1;
