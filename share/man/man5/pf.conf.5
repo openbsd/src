@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.258 2003/06/12 10:05:15 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.259 2003/06/17 21:48:11 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2294,7 +2294,7 @@ tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
                  [ "0x" ] number )
 
 state-opts     = state-opt [ [ "," ] state-opts ]
-state-opt      = ( "max" number ) | ( timeout seconds )
+state-opt      = ( "max" number ) | ( timeout )
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
                  "fragment drop-ovl" ]
@@ -2304,9 +2304,9 @@ timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
                  "tcp.closing" | "tcp.finwait" | "tcp.closed" |
                  "udp.first" | "udp.single" | "udp.multiple" |
                  "icmp.first" | "icmp.error" |
-                 "other.first" | "other.single" | "other.multiple" )
-                 seconds
-seconds        = number
+                 "other.first" | "other.single" | "other.multiple" |
+                 "frag" | "interval" |
+                 "adaptive.start" | "adaptive.end" ) number
 
 limit-list     = limit-item [ [ "," ] limit-list ]
 limit-item     = ( "states" | "frags" ) number
