@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.23 2002/11/17 20:27:20 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.24 2002/12/13 20:45:54 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -378,7 +378,8 @@ _dl_tryload_shlib(const char *libname, int type)
 
 	_dl_read(libfile, hbuf, sizeof(hbuf));
 	ehdr = (Elf_Ehdr *)hbuf;
-	if (_dl_strncmp(ehdr->e_ident, ELFMAG, SELFMAG) ||
+	if (ehdr->e_ident[0] != ELFMAG0  || ehdr->e_ident[1] != ELFMAG1 ||
+	    ehdr->e_ident[2] != ELFMAG2 || ehdr->e_ident[3] != ELFMAG3 ||
 	    ehdr->e_type != ET_DYN || ehdr->e_machine != MACHID) {
 		_dl_close(libfile);
 		_dl_errno = DL_NOT_ELF;
