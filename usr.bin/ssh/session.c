@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.35 2000/09/04 19:07:21 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.36 2000/09/05 08:59:57 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -625,6 +625,7 @@ do_login(Session *s)
 	}
 
 	/* Get the time and hostname when the user last logged in. */
+	hostname[0] = '\0';
 	last_login_time = get_last_login_time(pw->pw_uid, pw->pw_name,
 	    hostname, sizeof(hostname));
 
@@ -647,7 +648,7 @@ do_login(Session *s)
 		if (strcmp(buf, "") == 0)
 			printf("Last login: %s\r\n", time_string);
 		else
-			printf("Last login: %s from %s\r\n", time_string, buf);
+			printf("Last login: %s from %s\r\n", time_string, hostname);
 	}
 	if (options.print_motd) {
 #ifdef HAVE_LOGIN_CAP
