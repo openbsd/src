@@ -1,5 +1,4 @@
 # skip step optimization involving dynaddr, tables, no-route
-# no source address optimisation should be done on theses rules
 
 pass inet from (lo0)
 pass inet from !(lo0)

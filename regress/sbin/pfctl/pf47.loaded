@@ -87,11 +87,11 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @22 pass in on lo0 inet from any to (lo0) label "(lo0)" 
-  [ Skip steps: i=end d=end f=28 p=35 sa=59 sp=35 dp=46 ]
+  [ Skip steps: i=end d=end f=28 p=35 sa=59 sp=35 da=25 dp=46 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @23 pass in on lo0 inet from any to (lo0) label "(lo0)(lo0)" 
-  [ Skip steps: i=end d=end f=28 p=35 sa=59 sp=35 dp=46 ]
+  [ Skip steps: i=end d=end f=28 p=35 sa=59 sp=35 da=25 dp=46 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @24 pass in on lo0 inet from any to (lo0) label " (lo0) (lo0) " 
@@ -111,11 +111,11 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @28 pass in on lo0 inet6 from any to ! (lo0) label "! (lo0)" 
-  [ Skip steps: i=end d=end f=34 p=35 sa=59 sp=35 dp=46 ]
+  [ Skip steps: i=end d=end f=34 p=35 sa=59 sp=35 da=31 dp=46 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @29 pass in on lo0 inet6 from any to ! (lo0) label "! (lo0)! (lo0)" 
-  [ Skip steps: i=end d=end f=34 p=35 sa=59 sp=35 dp=46 ]
+  [ Skip steps: i=end d=end f=34 p=35 sa=59 sp=35 da=31 dp=46 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @30 pass in on lo0 inet6 from any to ! (lo0) label " ! (lo0) ! (lo0) " 

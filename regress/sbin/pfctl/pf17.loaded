@@ -51,11 +51,11 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @13 binat on lo0 inet from (lo0) to 1.1.1.1 -> 2.2.2.2
-  [ Skip steps: i=end d=end f=21 p=end sp=end da=15 dp=end ]
+  [ Skip steps: i=end d=end f=21 p=end sa=16 sp=end da=15 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @14 binat on lo0 inet from (lo0) to 1.1.1.1 -> (lo1)
-  [ Skip steps: i=end d=end f=21 p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=21 p=end sa=16 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @15 binat on lo0 inet from (lo0) to (lo1) -> (lo1)
@@ -87,11 +87,11 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @22 binat on lo0 inet6 from (lo0) to ::1 -> ::2
-  [ Skip steps: i=end d=end f=end p=end sp=end da=24 dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=25 sp=end da=24 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @23 binat on lo0 inet6 from (lo0) to ::1 -> (lo1)
-  [ Skip steps: i=end d=end f=end p=end sp=end dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=25 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @24 binat on lo0 inet6 from (lo0) to (lo1) -> (lo1)
