@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.68 1999/12/06 20:15:30 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.69 1999/12/07 17:52:29 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -869,8 +869,11 @@ do_connection()
 	/* Read clients reply (cipher type and session key). */
 	packet_read_expect(&plen, SSH_CMSG_SESSION_KEY);
 
-	/* Get cipher type. */
+	/* Get cipher type and check whether we accept this. */
 	cipher_type = packet_get_char();
+
+        if (!(cipher_mask() & (1 << cipher_type)))
+		packet_disconnect("Warning: client selects unsupported cipher.");
 
 	/* Get check bytes from the packet.  These must match those we
 	   sent earlier with the public key packet. */
