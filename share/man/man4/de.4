@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.3 1998/10/08 17:28:05 jason Exp $
+.\"	$OpenBSD: de.4,v 1.4 1998/10/08 17:36:19 jason Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -32,7 +32,7 @@
 .Nd
 DEC DC21x4x Ethernet device driver
 .Sh SYNOPSIS
-.Cd "de* at pci?"
+.Cd "de* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,11 +55,11 @@ driver supports the following media types:
 .Bl -tag -width xxxxxxxxxxxxxxx
 .It autoselect
 Enable autoselection of the media type and options
-.It 10baseT/UTP
+.It 10baseT
 Set 10Mbps operation on the 10baseT port
-.It 10base2/BNC
+.It 10base2
 Set 10Mbps operation on the BNC port
-.It 10base5/AUI
+.It 10base5
 Set 10Mbps operation on the AUI port
 .It 100baseTX
 Set 100Mbps (fast ethernet) operation
@@ -75,7 +75,7 @@ driver supports the following media options:
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxxx
 .It full-duplex
-Set full duplex operation
+Set full duplex operation for UTP port
 .El
 .Pp
 Note that the media types available depend on the particular card in use.
