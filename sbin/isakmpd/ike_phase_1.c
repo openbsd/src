@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.23 2001/03/13 14:05:18 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.24 2001/06/05 08:01:07 angelos Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -910,23 +911,76 @@ ike_phase_1_recv_ID (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
   struct payload *payload;
-  char header[80];
+  char header[80], *rs = 0, *rid = 0, *p;
   int initiator = exchange->initiator;
-  u_int8_t **id;
-  size_t *id_len;
+  u_int8_t **id, id_type;
+  size_t *id_len, sz;
 
-  /*
-   * XXX Here, we could be checking that the received ID matches what
-   * we expect it to be (if anything). That information is contained
-   * in the [[exchange->name]:Remote-ID] section.
-   */
+  payload = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
+
+  if (exchange->name)
+    rs = conf_get_str (exchange->name, "Remote-ID");
+
+  if (rs)
+    {
+      sz = ipsec_id_size (rs, &id_type);
+      if (sz == -1)
+	{
+	  log_error ("ike_phase_1_recv_ID: could not handle specified "
+		     "Remote-ID [%s]", rs);
+	  return -1;
+	}
+
+      rid = malloc (sz);
+      if (!rid)
+	{
+	  log_error ("ike_phase_1_recv_ID: malloc (%d) failed", sz);
+	  return -1;
+	}
+
+      switch (id_type)
+	{
+	case IPSEC_ID_IPV4_ADDR:
+	  p = conf_get_str (rs, "Address");
+	  if (!p)
+	    {
+	      log_error ("ike_phase_1_recv_ID: failed to get Address in "
+			 "Remote-ID section [%s]", rs);
+	      free (rid);
+	      return -1;
+	    }
+
+	  /* XXX IPv4 specific */
+	  inet_pton (AF_INET, p, rid);
+	  break;
+	case IPSEC_ID_FQDN:
+	case IPSEC_ID_USER_FQDN:
+	case IPSEC_ID_KEY_ID:
+	  p = conf_get_str (rs, "Name");
+	  memcpy (rid, p, sz);
+	  break;
+	default:
+	  log_print ("ike_phase_1_recv_ID: unsupported ID type %d", id_type);
+	  free (rid);
+	  return -1;
+	}
+
+      /* Compare expected/desired and received remote ID */
+      if (bcmp(rid, payload->p + ISAKMP_ID_DATA_OFF, sz))
+	{
+	  free (rid);
+	  log_error ("ike_phase_1_recv_ID: received remote ID other than "
+		     "expected %s", rs);
+	  return -1;
+	}
+
+      free (rid);
+    }
 
   /* Choose the right fields to fill in */
   id = initiator ? &exchange->id_r : &exchange->id_i;
   id_len = initiator ? &exchange->id_r_len : &exchange->id_i_len;
 
-  /* XXX Do I really have to save the ID in the SA?  */
-  payload = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
   *id_len = GET_ISAKMP_GEN_LENGTH (payload->p) - ISAKMP_GEN_SZ;
   *id = malloc (*id_len);
   if (!*id)
