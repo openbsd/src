@@ -1,5 +1,5 @@
 # -*- mode: Fundamental; tab-width: 4; -*-
-#	$OpenBSD: bsd.port.mk,v 1.4 1996/06/11 10:38:02 deraadt Exp $
+#	$OpenBSD: bsd.port.mk,v 1.5 1996/06/30 18:25:29 tholo Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -290,7 +290,7 @@ PATCH_ARGS+=	-C
 PATCH_DIST_ARGS+=	-C
 .endif
 
-EXTRACT_CMD?=	/usr/bin/tar
+EXTRACT_CMD?=	/bin/tar
 EXTRACT_SUFX?=	.tar.gz
 # Backwards compatability.
 .if defined(EXTRACT_ARGS)
