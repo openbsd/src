@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.4 1996/06/23 14:32:40 deraadt Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.5 1996/10/15 10:17:34 deraadt Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.4 1996/06/23 14:32:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.5 1996/10/15 10:17:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -344,6 +344,9 @@ save_core()
 	register FILE *fp;
 	register int bounds, ifd, nr, nw, ofd;
 	char *rawp, path[MAXPATHLEN];
+	mode_t um;
+
+	um = umask(S_IRWXG|S_IRWXO);
 
 	/*
 	 * Get the current number and update the bounds file.  Do the update
@@ -460,6 +463,7 @@ err2:			syslog(LOG_WARNING,
 		(void)fclose(fp);
 	else
 		(void)close(ofd);
+	(void)umask(um);
 }
 
 char *

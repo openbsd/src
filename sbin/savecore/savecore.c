@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.6 1996/08/20 04:22:40 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.7 1996/10/15 10:17:32 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -357,6 +357,9 @@ save_core()
 	register FILE *fp;
 	register int bounds, ifd, nr, nw, ofd;
 	char *rawp, path[MAXPATHLEN];
+	mode_t um;
+
+	um = umask(S_IRWXG|S_IRWXO);
 
 	/*
 	 * Get the current number and update the bounds file.  Do the update
@@ -479,6 +482,7 @@ err2:			syslog(LOG_WARNING,
 		(void)fclose(fp);
 	else
 		(void)close(ofd);
+	(void)umask(um);
 }
 
 char *
