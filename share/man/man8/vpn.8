@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.6 1998/09/07 16:44:37 aaron Exp $
+.\" $OpenBSD: vpn.8,v 1.7 1998/10/30 00:02:57 aaron Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -102,10 +102,15 @@ pass out on ed0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
 If there are no other
 .Xr ipf 5
 rules, the "quick" clause can be added to the last three rules.
+.Sh BUGS
+At the moment both of your security gateways need to be in the protected
+network; that is, the gateway IP and network mask = network. This means
+that it is not possible to tunnel private networks. Hopefully
+support for that will be available in the next release.
 .Sh SEE ALSO
 .Xr ipf 1 ,
-.Xr ipf 5 ,
 .Xr ipsecadm 1 ,
 .Xr ipsec 4 ,
 .Xr options 4 ,
-.Xr photurisd 8 .
+.Xr ipf 5 ,
+.Xr photurisd 8
