@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.22 2001/12/19 19:59:26 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.23 2001/12/19 22:51:32 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.22 2001/12/19 19:59:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.23 2001/12/19 22:51:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -630,24 +630,23 @@ tar_wr(arcn)
 	/*
 	 * Copy the data out of the ARCHD into the tar header based on the type
 	 * of the file. Remember, many tar readers want all fields to be
-	 * padded with zero.  We set the linkflag field (type), the linkname
-	 * (or zero if not used),the size, and set the padding (if any) to be
-	 * added after the file data (0 for all other types, as they only have
-	 * a header)
+	 * padded with zero so we zero the header first.  We then set the
+	 * linkflag field (type), the linkname, the size, and set the padding
+	 * (if any) to be added after the file data (0 for all other types,
+	 * as they only have a header).
 	 */
+	memset(hdblk, 0, sizeof(hdblk));
 	hd = (HD_TAR *)hdblk;
-	strncpy(hd->name, arcn->name, sizeof(hd->name) - 1);	/* zero pad */
-	hd->name[sizeof(hd->name) - 1] = '\0';
+	strlcpy(hd->name, arcn->name, sizeof(hd->name));
 	arcn->pad = 0;
 
 	if (arcn->type == PAX_DIR) {
 		/*
 		 * directories are the same as files, except have a filename
-		 * that ends with a /, we add the slash here. No data follows,
+		 * that ends with a /, we add the slash here. No data follows
 		 * dirs, so no pad.
 		 */
 		hd->linkflag = AREGTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
 		hd->name[len-1] = '/';
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
@@ -656,7 +655,7 @@ tar_wr(arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = SYMTYPE;
-		strlcpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG)) {
@@ -664,7 +663,7 @@ tar_wr(arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = LNKTYPE;
-		strlcpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else {
@@ -672,7 +671,6 @@ tar_wr(arcn)
 		 * data follows this file, so set the pad
 		 */
 		hd->linkflag = AREGTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
 #		ifdef LONG_OFF_T
 		if (ul_oct((u_long)arcn->sb.st_size, hd->size,
 		    sizeof(hd->size), 1)) {
@@ -966,9 +964,6 @@ ustar_rd(arcn, buf)
  *	are too long. Be careful of the term (last arg) to ul_oct, we only use
  *	'\0' for the termination character (this is different than picky tar)
  *	ASSUMED: space after header in header block is zero filled
- * NOTE:
- *	We use strncpy() instead of strlcpy() to please some picky tar
- *	programs that require all header elements to be zero padded.
  * Return:
  *	0 if file has data to be written after the header, 1 if file has NO
  *	data to write after the header, -1 if archive write failed
@@ -1012,6 +1007,11 @@ ustar_wr(arcn)
 		paxwarn(1, "File name too long for ustar %s", arcn->name);
 		return(1);
 	}
+
+	/*
+	 * zero out the header so we don't have to worry about zero fill below
+	 */
+	memset(hdblk, 0, sizeof(hdblk));
 	hd = (HD_USTAR *)hdblk;
 	arcn->pad = 0L;
 
@@ -1024,18 +1024,15 @@ ustar_wr(arcn)
 		 * occur, we remove the / and copy the first part to the prefix
 		 */
 		*pt = '\0';
-		strncpy(hd->prefix, arcn->name, sizeof(hd->prefix) - 1);
-		hd->prefix[sizeof(hd->prefix) - 1] = '\0';
+		strlcpy(hd->prefix, arcn->name, sizeof(hd->prefix));
 		*pt++ = '/';
-	} else
-		memset(hd->prefix, 0, sizeof(hd->prefix));
+	}
 
 	/*
 	 * copy the name part. this may be the whole path or the part after
 	 * the prefix
 	 */
-	strncpy(hd->name, pt, sizeof(hd->name) - 1);
-	hd->name[sizeof(hd->name) - 1] = '\0';
+	strlcpy(hd->name, pt, sizeof(hd->name));
 
 	/*
 	 * set the fields in the header that are type dependent
@@ -1043,9 +1040,6 @@ ustar_wr(arcn)
 	switch(arcn->type) {
 	case PAX_DIR:
 		hd->typeflag = DIRTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -1055,7 +1049,6 @@ ustar_wr(arcn)
 			hd->typeflag = CHRTYPE;
 		else
 			hd->typeflag = BLKTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
 		if (ul_oct((u_long)MAJOR(arcn->sb.st_rdev), hd->devmajor,
 		   sizeof(hd->devmajor), 3) ||
 		   ul_oct((u_long)MINOR(arcn->sb.st_rdev), hd->devminor,
@@ -1065,9 +1058,6 @@ ustar_wr(arcn)
 		break;
 	case PAX_FIF:
 		hd->typeflag = FIFOTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -1078,10 +1068,7 @@ ustar_wr(arcn)
 			hd->typeflag = SYMTYPE;
 		else
 			hd->typeflag = LNKTYPE;
-		strncpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname) - 1);
-		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
+		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -1095,9 +1082,6 @@ ustar_wr(arcn)
 			hd->typeflag = CONTTYPE;
 		else
 			hd->typeflag = REGTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
 #		ifdef LONG_OFF_T
 		if (ul_oct((u_long)arcn->sb.st_size, hd->size,
