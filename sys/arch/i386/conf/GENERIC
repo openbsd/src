@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.373 2004/06/23 01:41:51 millert Exp $
+#	$OpenBSD: GENERIC,v 1.374 2004/06/26 06:43:54 alex Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -374,6 +374,7 @@ ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet
 fea*	at eisa? slot ?				# DEC DEFEA FDDI
 lmc*	at pci? dev ? function ?		# Lan Media Corp SSI/T3/HSSI
+san* 	at pci? dev ? function ?		# Sangoma PCI AFT card
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet
 le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet
