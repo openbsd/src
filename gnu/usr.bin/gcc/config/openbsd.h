@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd.h,v 1.4 1997/04/08 19:33:41 deraadt Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.5 1997/09/17 08:06:47 deraadt Exp $	*/
 
 /* OPENBSD_NATIVE is defined when gcc is integrated into the OpenBSD
    source tree so it can be configured appropriately when using the
@@ -27,8 +27,8 @@
 #endif
 
 /* We want gcc.c to call mktemp() for each file it generates. We would
-   prefer mkstemp(), but we will take what we get. */
-#define MKTEMP_EACH_FILE 1
+   prefer mkstemp(), but we will take what we get. XXX busted */
+#undef MKTEMP_EACH_FILE
 
 /* Provide a CPP_SPEC appropriate for OpenBSD.  Current we just deal with
    the GCC option `-posix'.  */
