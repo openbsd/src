@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.10 2000/01/19 05:25:43 pjanzen Exp $
+.\"	$OpenBSD: random.3,v 1.11 2000/04/03 23:23:48 millert Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -37,6 +37,7 @@
 .Sh NAME
 .Nm random ,
 .Nm srandom ,
+.Nm srandomdev ,
 .Nm initstate ,
 .Nm setstate
 .Nd better random number generator; routines for changing generators
@@ -46,6 +47,8 @@
 .Fn random void
 .Ft void
 .Fn srandom "unsigned int seed"
+.Ft void
+.Fn srandomdev void
 .Ft char *
 .Fn initstate "unsigned int seed" "char *state" "size_t n"
 .Ft char *
@@ -90,6 +93,19 @@ by calling
 with
 .Ql 1
 as the seed.
+.Pp
+The
+.Fn srandomdev
+routine initialize a state array using the
+.Xr arandom 4
+random number device which returns good random numbers,
+suitable for cryptographic use.
+Note that this particular seeding procedure can generate
+states which are impossible to reproduce by calling
+.Fn srandom
+with any value, since the succeeding terms in the
+state buffer are no longer derived from the LC algorithm applied to
+a fixed seed.
 .Pp
 The
 .Fn initstate
@@ -153,7 +169,8 @@ messages are printed on the standard error output.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr drand48 3 ,
-.Xr rand 3
+.Xr rand 3 ,
+.Xr random 4 ,
 .Sh STANDARDS
 The
 .Fn random ,
@@ -163,6 +180,10 @@ and
 .Fn setstate
 functions conform to
 .St -xpg4.2 .
+.Pp
+The
+.Fn srandomdev
+function is an extension.
 .Sh HISTORY
 These
 functions appeared in

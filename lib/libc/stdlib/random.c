@@ -32,11 +32,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: random.c,v 1.6 1998/02/07 02:16:25 millert Exp $";
+static char *rcsid = "$OpenBSD: random.c,v 1.7 2000/04/03 23:23:48 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /*
  * random.c:
@@ -216,6 +220,47 @@ srandom(x)
 		rptr = &state[0];
 		for (i = 0; i < 10 * rand_deg; i++)
 			(void)random();
+	}
+}
+
+/*
+ * srandomdev:
+ *
+ * Many programs choose the seed value in a totally predictable manner.
+ * This often causes problems.  We seed the generator using the much more
+ * secure arandom(4) interface.  Note that this particular seeding
+ * procedure can generate states which are impossible to reproduce by
+ * calling srandom() with any value, since the succeeding terms in the
+ * state buffer are no longer derived from the LC algorithm applied to
+ * a fixed seed.
+ */
+void
+srandomdev()
+{
+	int fd;
+	size_t len;
+
+	if (rand_type == TYPE_0)
+		len = sizeof(state[0]);
+	else
+		len = rand_deg * sizeof(state[0]);
+
+	if ((fd = open("/dev/arandom", O_RDONLY, 0)) != -1 &&
+	    read(fd, (void *) state, len) == (ssize_t) len) {
+		close(fd);
+	} else {
+		struct timeval tv;
+		u_int junk;
+
+		/* XXX - this could be better */
+		gettimeofday(&tv, NULL);
+		srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec ^ junk);
+		return;
+	}
+
+	if (rand_type != TYPE_0) {
+		fptr = &state[rand_sep];
+		rptr = &state[0];
 	}
 }
 
