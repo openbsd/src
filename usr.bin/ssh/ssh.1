@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.89 2001/02/10 15:48:53 stevesk Exp $
+.\" $OpenBSD: ssh.1,v 1.90 2001/02/10 16:03:29 markus Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -374,11 +374,12 @@ cipher which is no longer fully supported in
 .Ar blowfish
 is a fast block cipher, it appears very secure and is much faster than
 .Ar 3des .
-.It Fl c Ar "3des-cbc,blowfish-cbc,arcfour,cast128-cbc"
+.It Fl c Ar cipher_spec
 Additionally, for protocol version 2 a comma-separated list of ciphers can
 be specified in order of preference.
-Protocol version 2 supports 3DES, Blowfish, and CAST128 in CBC mode
-and Arcfour.
+See
+.Cm Ciphers
+for more information.
 .It Fl e Ar ch|^ch|none
 Sets the escape character for sessions with a pty (default:
 .Ql ~ ) .
