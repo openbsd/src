@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.34 2002/09/06 18:29:37 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.35 2002/09/06 21:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -67,7 +67,7 @@ static char *rcsid = "$Id: edquota.c,v 1.34 2002/09/06 18:29:37 deraadt Exp $";
 #include "pathnames.h"
 
 char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES
+char *qfextension[] = INITQFNAMES;
 char *quotagroup = QUOTAGROUP;
 char tmpfil[] = _PATH_TMPFILE;
 

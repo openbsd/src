@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.16 2002/09/06 18:29:37 deraadt Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.17 2002/09/06 21:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -57,7 +57,7 @@ static char *rcsid = "$Id: quotaon.c,v 1.16 2002/09/06 18:29:37 deraadt Exp $";
 #include <fstab.h>
 
 char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES
+char *qfextension[] = INITQFNAMES;
 
 int	aflag;		/* all file systems */
 int	gflag;		/* operate on group quotas */
