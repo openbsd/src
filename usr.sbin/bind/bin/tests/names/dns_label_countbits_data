@@ -1,7 +1,0 @@
-#
-# format of file is <testname> <tab> <bitlabel_pos> <tab> <expected_bits>
-#
-\[x42/7]	0	7
-a.b.c.\[x42/7]	3	7
-\[o033/9]	0	9
-\[b01001/5]	0	5
