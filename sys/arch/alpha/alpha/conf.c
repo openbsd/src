@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.28 2001/06/27 06:16:39 angelos Exp $	*/
+/*	$OpenBSD: conf.c,v 1.29 2001/07/05 02:40:43 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ cdev_decl(sw);
 #include "tun.h"
 dev_type_open(filedescopen);
 #include "bpfilter.h"
+#include "iop.h"
 #include "ch.h"
 #include "scc.h"
 cdev_decl(scc);
@@ -108,7 +109,6 @@ cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(rd);
-cdev_decl(raid);
 cdev_decl(prom);			/* XXX XXX XXX */
 cdev_decl(wd);
 #include "cy.h"
@@ -206,6 +206,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),
 #endif
 	cdev_altq_init(NALTQ, altq),	/* 53: ALTQ control interface */
+	cdev_iop_init(NIOP, iop),	/* 54: I2O IOP control interface */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2001/06/27 06:56:29 kjc Exp $ */
+/*	$OpenBSD: conf.c,v 1.24 2001/07/05 02:40:44 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -133,7 +133,7 @@ cdev_decl(vnd);
 cdev_decl(ccd);
 cdev_decl(rd);  
 #include "raid.h"
-cdev_decl(raid);
+#include "iop.h"
 
 #include <wd.h>
 cdev_decl(wd);
@@ -277,6 +277,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),
 #endif
 	cdev_altq_init(NALTQ,altq),	/* 72: ALTQ control interface */
+	cdev_iop_init(NIOP,iop),	/* 73: I2O IOP control interface */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
