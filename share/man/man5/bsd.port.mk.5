@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.53 2001/10/05 14:45:54 mpech Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.54 2001/10/07 11:03:57 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -227,7 +227,7 @@ Force rebuild of the port.
 Run regression tests for the port.
 Essentially depend on a correct build and invoke
 .Bd -literal
-env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \\
+env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${REGRESS_FLAGS} \\
 .Ed
 .Bd -literal
 	-f ${MAKE_FILE} ${REGRESS_TARGET}
@@ -627,8 +627,12 @@ Environment variables passed to make invocations.
 Sets at least PATH, PREFIX, LOCALBASE, X11BASE, CFLAGS, TRUEPREFIX, DESTDIR,
 and the BSD_INSTALL_* macros.
 .It Ev MAKE_FLAGS
-Flags used for all make invocations, except for the fake stage, which uses
-FAKE_FLAGS.
+Flags used for all make invocations, except for the 
+.Ar fake 
+stage, which uses
+.Ev FAKE_FLAGS ,
+and for the regress stage, which uses 
+.Ar REGRESS_FLAGS .
 .It Ev MAKE_FILE
 Name of the Makefile used for ports building.
 Defaults to Makefile.
@@ -842,11 +846,18 @@ and some multi-package ports may install under several locations.
 If set to true,
 .Ar checksum
 will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
-checksum off ftp.openbsd.org, in the directory
+checksum off 
+.Pa ftp.openbsd.org ,
+in the directory
 .Pa /pub/OpenBSD/distfiles/$cipher/$value/$file .
 .It Ev REGRESS_DEPENDS
-See BUILD_DEPENDS for specification.
+See
+.Ev BUILD_DEPENDS 
+for specification.
 Regress dependencies are only checked if the regress stage is invoked.
+.It Ev REGRESS_FLAGS
+Flags to pass to ${MAKE_PROGRAM} to run the regression tests.
+Defaults to ${MAKE_FLAGS}.
 .It Ev REGRESS_TARGET
 Target to run regression tests.
 Defaults to
