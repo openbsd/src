@@ -1791,6 +1791,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/readline.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/rlconf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/rlstdc.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/readline/rltypedefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/regex.ph

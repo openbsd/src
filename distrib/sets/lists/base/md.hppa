@@ -1754,6 +1754,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/readline/readline.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/readline/rlconf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/readline/rlstdc.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/readline/rltypedefs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/regex.ph

@@ -57,7 +57,7 @@
 ./usr/lib/libpcap.so.2.1
 ./usr/lib/libperl.so.8.2
 ./usr/lib/libpthread.so.3.0
-./usr/lib/libreadline.so.1.0
+./usr/lib/libreadline.so.2.0
 ./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
 ./usr/lib/libssl.so.8.0
@@ -1859,6 +1859,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline/readline.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline/rlconf.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline/rlstdc.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/readline/rltypedefs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/regex.ph

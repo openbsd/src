@@ -1210,6 +1210,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/readline.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/rlconf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/rlstdc.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/readline/rltypedefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/regex.ph

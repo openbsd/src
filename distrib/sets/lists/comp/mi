@@ -1119,6 +1119,7 @@
 ./usr/include/readline/readline.h
 ./usr/include/readline/rlconf.h
 ./usr/include/readline/rlstdc.h
+./usr/include/readline/rltypedefs.h
 ./usr/include/readline/tilde.h
 ./usr/include/readpassphrase.h
 ./usr/include/regex.h
