@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.4 1998/05/07 19:12:17 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.5 2001/02/05 08:38:23 deraadt Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.4 1998/05/07 19:12:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.5 2001/02/05 08:38:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,12 +85,32 @@ static char rcsid[] = "$OpenBSD: bdes.c,v 1.4 1998/05/07 19:12:17 deraadt Exp $"
  * or the technical report for a complete reference).
  */
 
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+
+typedef char Desbuf[8];
+int 	tobinhexi __P((char, int));
+void 	cvtkey __P((char *, char *));
+int 	setbits __P((char *, int));
+void 	makekey __P((Desbuf));
+void 	ecbenc __P((void));
+void 	ecbdec __P((void));
+void 	cbcenc __P((void));
+void 	cbcdec __P((void));
+void 	cbcauth __P((void));
+void 	cfbenc __P((void));
+void 	cfbdec __P((void));
+void 	cfbaenc __P((void));
+void 	cfbadec __P((void));
+void 	cfbauth __P((void));
+void 	ofbdec __P((void));
+void 	ofbenc __P((void));
+void 	usage __P((void));
 
 /*
  * BSD and System V systems offer special library calls that do
@@ -104,22 +124,22 @@ static char rcsid[] = "$OpenBSD: bdes.c,v 1.4 1998/05/07 19:12:17 deraadt Exp $"
 #ifdef	FASTWAY
 #define	DES_KEY(buf) \
 	if (des_setkey(buf)) \
-		err("des_setkey", 0);
+		err(1, "des_setkey");
 #define	DES_XFORM(buf) \
 	if (des_cipher(buf, buf, 0L, (inverse ? -1 : 1))) \
-		err("des_cipher", 0);
+		err(1, "des_cipher");
 #else
 #define	DES_KEY(buf)	{						\
 				char bits1[64];	/* bits of key */	\
 				expand(buf, bits1);			\
 				if (setkey(bits1))			\
-					err("setkey", 0);		\
+					err(1, "setkey");		\
 			}
 #define	DES_XFORM(buf)	{						\
 				char bits1[64];	/* bits of message */	\
 				expand(buf, bits1);			\
 				if (encrypt(bits1, inverse))		\
-					err("encrypt", 0);		\
+					err(1, "encrypt");		\
 				compress(bits1, buf);			\
 			}
 #endif
@@ -135,7 +155,6 @@ static char rcsid[] = "$OpenBSD: bdes.c,v 1.4 1998/05/07 19:12:17 deraadt Exp $"
 /*
  * some things to make references easier
  */
-typedef char Desbuf[8];
 #define	CHAR(x,i)	(x[i])
 #define	UCHAR(x,i)	(x[i])
 #define	BUFFER(x)	(x)
@@ -164,6 +183,8 @@ int macbits = -1;			/* number of bits in authentication */
 int fbbits = -1;			/* number of feedback bits */
 int pflag;				/* 1 to preserve parity bits */
 
+
+int
 main(ac, av)
 	int ac;				/* arg count */
 	char **av;			/* arg vector */
@@ -335,23 +356,9 @@ main(ac, av)
 }
 
 /*
- * print a warning message and, possibly, terminate
- */
-err(n, s)
-	int n;			/* offending block number */
-	char *s;		/* the message */
-{
-	if (n > 0)
-		(void)fprintf(stderr, "bdes (block %d): ", n);
-	else
-		(void)fprintf(stderr, "bdes: ");
-	(void)fprintf(stderr, "%s\n", s ? s : strerror(errno));
-	exit(1);
-}
-
-/*
  * map a hex character to an integer
  */
+int
 tobinhex(c, radix)
 	char c;			/* char to be converted */
 	int radix;		/* base (2 to 16) */
@@ -383,6 +390,7 @@ tobinhex(c, radix)
 /*
  * convert the key to a bit pattern
  */
+void
 cvtkey(obuf, ibuf)
 	char *obuf;			/* bit pattern */
 	char *ibuf;			/* the key itself */
@@ -451,6 +459,7 @@ cvtkey(obuf, ibuf)
  * 2. must be a valid decimal number
  * 3. must be a multiple of mult
  */
+int
 setbits(s, mult)
 	char *s;			/* the ASCII string */
 	int mult;			/* what it must be a multiple of */
@@ -493,6 +502,7 @@ setbits(s, mult)
  * systems set the parity (high) bit of each character to 0, and the
  * DES ignores the low order bit of each character.
  */
+void
 makekey(buf)
 	Desbuf buf;				/* key block */
 {
@@ -521,6 +531,7 @@ makekey(buf)
 /*
  * This encrypts using the Electronic Code Book mode of DES
  */
+void
 ecbenc()
 {
 	register int n;		/* number of bytes actually read */
@@ -549,6 +560,7 @@ ecbenc()
 /*
  * This decrypts using the Electronic Code Book mode of DES
  */
+void
 ecbdec()
 {
 	register int n;		/* number of bytes actually read */
@@ -580,6 +592,7 @@ ecbdec()
 /*
  * This encrypts using the Cipher Block Chaining mode of DES
  */
+void
 cbcenc()
 {
 	register int n;		/* number of bytes actually read */
@@ -613,6 +626,7 @@ cbcenc()
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
+void
 cbcdec()
 {
 	register int n;		/* number of bytes actually read */
@@ -649,6 +663,7 @@ cbcdec()
 /*
  * This authenticates using the Cipher Block Chaining mode of DES
  */
+void
 cbcauth()
 {
 	register int n, j;		/* number of bytes actually read */
@@ -693,6 +708,7 @@ cbcauth()
 /*
  * This encrypts using the Cipher FeedBack mode of DES
  */
+void
 cfbenc()
 {
 	register int n;		/* number of bytes actually read */
@@ -734,6 +750,7 @@ cfbenc()
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
+void
 cfbdec()
 {
 	register int n;		/* number of bytes actually read */
@@ -779,6 +796,7 @@ cfbdec()
 /*
  * This encrypts using the alternative Cipher FeedBack mode of DES
  */
+void
 cfbaenc()
 {
 	register int n;		/* number of bytes actually read */
@@ -824,6 +842,7 @@ cfbaenc()
 /*
  * This decrypts using the alternative Cipher Block Chaining mode of DES
  */
+void
 cfbadec()
 {
 	register int n;		/* number of bytes actually read */
@@ -870,6 +889,7 @@ cfbadec()
 /*
  * This encrypts using the Output FeedBack mode of DES
  */
+void
 ofbenc()
 {
 	register int n;		/* number of bytes actually read */
@@ -915,6 +935,7 @@ ofbenc()
 /*
  * This decrypts using the Output Block Chaining mode of DES
  */
+void
 ofbdec()
 {
 	register int n;		/* number of bytes actually read */
@@ -963,6 +984,7 @@ ofbdec()
 /*
  * This authenticates using the Cipher FeedBack mode of DES
  */
+void
 cfbauth()
 {
 	register int n, j;	/* number of bytes actually read */
@@ -1045,6 +1067,7 @@ compress(from, to)
 /*
  * message about usage
  */
+void
 usage()
 {
 	(void)fprintf(stderr, "%s\n", 
