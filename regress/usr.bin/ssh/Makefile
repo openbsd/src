@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2002/12/09 16:05:02 markus Exp $
+#	$OpenBSD: Makefile,v 1.20 2003/01/08 23:54:22 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -23,6 +23,8 @@ LTESTS= 	connect \
 		keyscan \
 		keygen-change \
 		sftp \
+		sftp-cmds \
+		sftp-batch \
 		forwarding
 
 USER!=		id -un
