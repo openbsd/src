@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.61 2001/03/16 19:06:30 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.62 2001/03/20 18:57:04 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -57,10 +57,6 @@ RCSID("$OpenBSD: session.c,v 1.61 2001/03/16 19:06:30 markus Exp $");
 #include "serverloop.h"
 #include "canohost.h"
 #include "session.h"
-
-#ifdef HAVE_LOGIN_CAP
-#include <login_cap.h>
-#endif
 
 /* types */
 
@@ -831,8 +827,14 @@ do_child(Session *s, const char *command)
 			    (LOGIN_SETALL & ~LOGIN_SETPATH)) < 0) {
 				perror("unable to set user context");
 				exit(1);
-
 			}
+#ifdef BSD_AUTH
+			if (auth_approval(NULL, lc, pw->pw_name, "ssh") <= 0) {
+				error("approval failure for %s", pw->pw_name);
+				fprintf(stderr, "Approval failure");
+				exit(1);
+			}
+#endif
 #else
 			if (setlogin(pw->pw_name) < 0)
 				error("setlogin failed: %s", strerror(errno));

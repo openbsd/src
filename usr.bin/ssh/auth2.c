@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.46 2001/03/11 13:25:36 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.47 2001/03/20 18:57:04 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -208,6 +208,12 @@ input_userauth_request(int type, int plen, void *ctxt)
 	/* reset state */
 	dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, &protocol_error);
 	authctxt->postponed = 0;
+#ifdef BSD_AUTH
+	if (authctxt->as) {
+		auth_close(authctxt->as);
+		authctxt->as = NULL;
+	}
+#endif
 
 	/* try to authenticate user */
 	m = authmethod_lookup(method);
@@ -305,7 +311,7 @@ userauth_none(Authctxt *authctxt)
 		m->enabled = NULL;
 	packet_done();
 	userauth_banner();
-	return authctxt->valid ? auth_password(authctxt->pw, "") : 0;
+	return authctxt->valid ? auth_password(authctxt, "") : 0;
 }
 
 int
@@ -321,7 +327,7 @@ userauth_passwd(Authctxt *authctxt)
 	password = packet_get_string(&len);
 	packet_done();
 	if (authctxt->valid &&
-	    auth_password(authctxt->pw, password) == 1)
+	    auth_password(authctxt, password) == 1)
 		authenticated = 1;
 	memset(password, 0, len);
 	xfree(password);

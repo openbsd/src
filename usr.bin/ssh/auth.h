@@ -21,12 +21,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $OpenBSD: auth.h,v 1.12 2001/02/22 21:59:43 markus Exp $
+ * $OpenBSD: auth.h,v 1.13 2001/03/20 18:57:04 markus Exp $
  */
 #ifndef AUTH_H
 #define AUTH_H
 
 #include <openssl/rsa.h>
+
+#ifdef HAVE_LOGIN_CAP
+#include <login_cap.h>
+#endif
+#ifdef BSD_AUTH
+#include <bsd_auth.h>
+#endif
 
 typedef struct Authctxt Authctxt;
 struct Authctxt {
@@ -39,6 +46,9 @@ struct Authctxt {
 	char *service;
 	struct passwd *pw;
 	char *style;
+#ifdef BSD_AUTH
+	auth_session_t *as;
+#endif
 };
 
 /*
@@ -59,7 +69,7 @@ auth_rhosts_rsa(struct passwd * pw, const char *client_user, RSA* client_host_ke
  * Tries to authenticate the user using password.  Returns true if
  * authentication succeeds.
  */
-int     auth_password(struct passwd * pw, const char *password);
+int     auth_password(Authctxt *authctxt, const char *password);
 
 /*
  * Performs the RSA authentication dialog with the client.  This returns 0 if

@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.21 2001/02/12 16:16:23 markus Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.22 2001/03/20 18:57:04 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -44,14 +44,17 @@ RCSID("$OpenBSD: auth-passwd.c,v 1.21 2001/02/12 16:16:23 markus Exp $");
 #include "servconf.h"
 #include "auth.h"
 
+
+extern ServerOptions options;
+
 /*
  * Tries to authenticate the user using password.  Returns true if
  * authentication succeeds.
  */
 int
-auth_password(struct passwd * pw, const char *password)
+auth_password(Authctxt *authctxt, const char *password)
 {
-	extern ServerOptions options;
+	struct passwd * pw = authctxt->pw;
 	char *encrypted_password;
 
 	/* deny if no user. */
@@ -61,6 +64,13 @@ auth_password(struct passwd * pw, const char *password)
 		return 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
+#ifdef BSD_AUTH
+	if (auth_userokay(pw->pw_name, authctxt->style, "auth-ssh",
+	    (char *)password) == 0)
+		return 0;
+	else
+		return 1;
+#endif
 
 #ifdef KRB4
 	if (options.kerberos_authentication == 1) {
