@@ -1,4 +1,4 @@
-/*	$OpenBSD: fly.c,v 1.9 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: fly.c,v 1.10 2002/05/31 05:11:32 pjanzen Exp $	*/
 /*	$NetBSD: fly.c,v 1.3 1995/03/21 15:07:28 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: fly.c,v 1.9 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: fly.c,v 1.10 2002/05/31 05:11:32 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ visual()
 		return (0);
 	}
 	oldsig = signal(SIGINT, succumb);
-	crmode();
+	cbreak();
 	noecho();
 	screen();
 	row = rnd(LINES - 3) + 1;

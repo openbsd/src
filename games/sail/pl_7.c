@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_7.c,v 1.5 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: pl_7.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $	*/
 /*	$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_7.c,v 1.5 2002/02/19 19:39:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: pl_7.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ initscreen()
 	(void) leaveok(stat_w, 1);
 	(void) leaveok(turn_w, 1);
 	noecho();
-	crmode();
+	cbreak();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2002/05/06 19:48:47 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2002/05/31 05:11:37 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -1149,7 +1149,7 @@ genchar(type)
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: signal(), wclear(), noecho(), crmode(), initscr(), 
+/ MODULES CALLED: signal(), wclear(), noecho(), cbreak(), initscr(), 
 /	wrefresh()
 /
 / GLOBAL INPUTS: *stdscr, ill_sig()
@@ -1243,7 +1243,7 @@ playinit()
 
 	initscr();		/* turn on curses */
 	noecho();		/* do not echo input */
-	crmode();		/* do not process erase, kill */
+	cbreak();		/* do not process erase, kill */
 	clear();
 	refresh();
 	Windows = TRUE;		/* mark the state */
@@ -1262,7 +1262,7 @@ playinit()
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: exit(), wmove(), fclose(), endwin(), nocrmode(), wrefresh()
+/ MODULES CALLED: exit(), wmove(), fclose(), endwin(), nocbreak(), wrefresh()
 /
 / GLOBAL INPUTS: *Energyvoidfp, LINES, *stdscr, Windows, *Monstfp, 
 /	*Messagefp, *Playersfp
@@ -1282,7 +1282,7 @@ cleanup(doexit)
 	if (Windows) {
 		move(LINES - 2, 0);
 		refresh();
-		nocrmode();
+		nocbreak();
 		endwin();
 	}
 

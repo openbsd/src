@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 1998/09/16 00:44:36 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.5 1998/09/16 00:44:36 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ clean_up(estr)
 void
 start_window()
 {
-	crmode();
+	cbreak();
 	noecho();
 #ifndef BAD_NONL
 	nonl();

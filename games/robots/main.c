@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2002/05/31 05:11:37 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2002/05/31 05:11:37 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ main(ac, av)
 
 	initscr();
 	signal(SIGINT, quit);
-	crmode();
+	cbreak();
 	noecho();
 	nonl();
 	if (LINES != Y_SIZE || COLS != X_SIZE) {
