@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.104 2001/07/06 22:45:32 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.105 2001/07/06 23:01:30 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1345,10 +1345,25 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code)
 	icmp_error(m0, type, code, 0, 0);
 }
 
+/*
+ * Return 1 if the addresses a and b match (with mask m), otherwise return 0.
+ * If n is 0, they match if they are equal. If n is != 0, they match if they
+ * are different.
+ */
 int
 pf_match_addr(u_int8_t n, u_int32_t a, u_int32_t m, u_int32_t b)
 {
-	return (n == !((a & m) == (b & m)));
+	if (a & m == b & m) {
+		if (n)
+			return (0);
+		else
+			return (1);
+	} else {
+		if (n)
+			return (1);
+		else
+			return (0);
+	}
 }
 
 int
