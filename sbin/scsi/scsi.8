@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.1 1996/06/12 11:21:42 deraadt Exp $
+.\"	$OpenBSD: scsi.8,v 1.2 1996/08/05 13:32:45 deraadt Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -235,10 +235,8 @@ to come on line to 8 times during reprobe to different logical units.
 The "-i" option to do an inquiry went away in 2.1.  The new facilities
 provided by "-c" supercede that.
 .Pp
-Check your permissions carefully.
-"scsi -f /dev/rsd0c -c "4 0 0 0 0 0" permits anyone who can open
-/dev/rsd0c to format the disk drive.  This must be changed to
-at least require write access to the drive.
+"scsi -f /dev/rsd0c -c "4 0 0 0 0 0" permits anyone who can write to
+/dev/rsd0c to format the disk drive.
 .Sh HISTORY
 The
 .Nm scsi
