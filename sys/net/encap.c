@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.2 1997/02/24 13:33:56 niklas Exp $	*/
+/*	$OpenBSD: encap.c,v 1.3 1997/04/25 01:19:20 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -147,8 +147,8 @@ encap_output(m, va_alist)
 	so = va_arg(ap, struct socket *);
 	va_end(ap);
 
-	if ((m == 0) || ((m->m_len < sizeof(long)) &&
-			 (m = m_pullup(m, sizeof(long))) == 0))
+	if ((m == 0) || ((m->m_len < sizeof(int32_t)) &&
+			 (m = m_pullup(m, sizeof(int32_t))) == 0))
 	  return ENOBUFS;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
