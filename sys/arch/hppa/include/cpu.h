@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2002/10/21 18:41:05 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2002/11/08 21:42:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff
@@ -90,12 +90,14 @@ extern const char *cpu_typename;
 #define	HPPA_FPU_V	0x10
 #define	HPPA_FPU_D	0x20
 #define	HPPA_FPU_T	0x40
+#define	HPPA_FPU_XMASK	0x7f
 #define	HPPA_FPU_T_POS	25
 #define	HPPA_FPU_RM	0x00000600
 #define	HPPA_FPU_CQ	0x00fff800
 #define	HPPA_FPU_C	0x04000000
 #define	HPPA_FPU_FLSH	27
 #define	HPPA_FPU_INIT	(0)
+#define	HPPA_FPU_FORK(s) ((s) & ~((u_int64_t)(HPPA_FPU_XMASK)<<32))
 #define	HPPA_PMSFUS	0x20	/* ??? */
 
 /*

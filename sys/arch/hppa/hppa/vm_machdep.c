@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.44 2002/10/07 15:32:37 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.45 2002/11/08 21:42:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -171,7 +171,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pm_space;
 	pcbp->pcb_uva = (vaddr_t)p2->p_addr;
 	/* reset any of the pending FPU exceptions from parent */
-	pcbp->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
+	pcbp->pcb_fpregs[0] = HPPA_FPU_FORK(pcbp->pcb_fpregs[0]);
 	pcbp->pcb_fpregs[1] = 0;
 	pcbp->pcb_fpregs[2] = 0;
 	pcbp->pcb_fpregs[3] = 0;
