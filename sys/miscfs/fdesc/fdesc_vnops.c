@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.18 2001/05/14 11:04:05 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.19 2001/05/14 13:43:54 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -489,9 +489,6 @@ fdesc_attr(fd, vap, cred, p)
 		break;
 
 	case DTYPE_PIPE:
-#ifdef OLD_PIPE
-		error = 0;
-#else
 		error = pipe_stat(fp, &stb, p);
 		if (error == 0) {
 			vattr_null(vap);
@@ -512,7 +509,6 @@ fdesc_attr(fd, vap, cred, p)
 			vap->va_rdev = stb.st_rdev;
 			vap->va_bytes = stb.st_blocks * stb.st_blksize;
 		}
-#endif
 		break;
 
 	default:

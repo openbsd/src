@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.27 2001/05/14 13:28:20 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.28 2001/05/14 13:43:53 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -548,10 +548,7 @@ sys_fpathconf(p, v, retval)
 	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
 	switch (fp->f_type) {
-
-#ifndef OLD_PIPE
 	case DTYPE_PIPE:
-#endif
 	case DTYPE_SOCKET:
 		if (SCARG(uap, name) != _PC_PIPE_BUF)
 			return (EINVAL);

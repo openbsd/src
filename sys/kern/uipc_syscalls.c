@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.36 2001/02/19 18:21:30 art Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.37 2001/05/14 13:43:54 art Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -890,55 +890,6 @@ sys_pipe(p, v, retval)
 	}
 	return (error);
 }
-
-#ifdef OLD_PIPE
-
-/* ARGSUSED */
-int
-sys_opipe(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct filedesc *fdp = p->p_fd;
-	struct file *rf, *wf;
-	struct socket *rso, *wso;
-	int fd, error;
-
-	if ((error = socreate(AF_UNIX, &rso, SOCK_STREAM, 0)) != 0)
-		return (error);
-	if ((error = socreate(AF_UNIX, &wso, SOCK_STREAM, 0)) != 0)
-		goto free1;
-	if ((error = falloc(p, &rf, &fd)) != 0)
-		goto free2;
-	retval[0] = fd;
-	rf->f_flag = FREAD;
-	rf->f_type = DTYPE_SOCKET;
-	rf->f_ops = &socketops;
-	rf->f_data = (caddr_t)rso;
-	if ((error = falloc(p, &wf, &fd)) != 0)
-		goto free3;
-	wf->f_flag = FWRITE;
-	wf->f_type = DTYPE_SOCKET;
-	wf->f_ops = &socketops;
-	wf->f_data = (caddr_t)wso;
-	retval[1] = fd;
-	if ((error = unp_connect2(wso, rso)) != 0)
-		goto free4;
-	return (0);
-free4:
-	ffree(wf);
-	fdremove(fdp, retval[1]);
-free3:
-	ffree(rf);
-	fdremove(fdp, retval[0]);
-free2:
-	(void)soclose(wso);
-free1:
-	(void)soclose(rso);
-	return (error);
-}
-#endif
 
 /*
  * Get socket name.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.29 2001/05/14 12:38:47 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.30 2001/05/14 13:43:53 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -18,8 +18,6 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  */
-
-#ifndef OLD_PIPE
 
 /*
  * This file contains a high-performance replacement for the socket-based
@@ -760,7 +758,6 @@ pipeclose(cpipe)
 		free(cpipe, M_PIPE);
 	}
 }
-#endif
 
 int
 pipe_kqfilter(struct file *fp, struct knote *kn)

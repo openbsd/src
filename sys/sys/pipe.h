@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.5 2001/05/14 10:51:25 art Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.6 2001/05/14 13:43:52 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -23,8 +23,6 @@
 
 #ifndef _SYS_PIPE_H_
 #define _SYS_PIPE_H_
-
-#ifndef OLD_PIPE
 
 #ifndef _KERNEL
 #include <sys/time.h>			/* for struct timeval */
@@ -89,7 +87,5 @@ struct pipe {
 #ifdef _KERNEL
 int	pipe_stat __P((struct file *fp, struct stat *ub, struct proc *p));
 #endif /* _KERNEL */
-
-#endif /* !OLD_PIPE */
 
 #endif /* !_SYS_PIPE_H_ */
