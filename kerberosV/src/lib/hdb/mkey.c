@@ -310,7 +310,7 @@ hdb_read_master_key(krb5_context context, const char *filename,
     }
     
     fseek(f, 0, SEEK_END);
-    len = ftell(f);
+    len = ftello(f);
 
     if(fclose(f) != 0)
 	return errno;
