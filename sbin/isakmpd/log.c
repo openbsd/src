@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.46 2004/06/21 16:01:56 ho Exp $	 */
+/* $OpenBSD: log.c,v 1.47 2004/06/21 16:37:30 ho Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -596,8 +596,10 @@ setup_ip4:
 	/* Write to pcap file.  */
 	fwrite(&hdr, hdrlen, 1, packet_log);	/* pcap + IP */
 	fwrite(&udp, sizeof(struct udphdr), 1, packet_log);	/* UDP */
-	if (add_espmarker)
+	if (add_espmarker) {
 		fwrite(&espmarker, sizeof espmarker, 1, packet_log);
+		datalen -= sizeof espmarker;
+	}
 	fwrite(packet_buf, datalen, 1, packet_log);	/* IKE-data */
 	fflush(packet_log);
 }
