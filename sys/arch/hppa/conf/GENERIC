@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2003/01/21 20:54:16 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.18 2003/01/26 23:56:10 jason Exp $
 #
 # Diskless kernel config
 #
@@ -97,8 +97,8 @@ osiop0	at gsc? irq 9	# NCR 53C700/710
 scsibus* at osiop?
 #aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
 #audio*	at aone?
-#harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
-#audio*	at harmony?
+harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
+audio*	at harmony?
 #pckbc*	at gsc? irq 26
 #pckbd*	at pckbc?	# PS/2 keyboard
 #pms*	at pckbc?	# PS/2 mouse
