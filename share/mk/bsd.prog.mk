@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.19 1999/09/29 19:21:57 beck Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.20 1999/11/26 21:47:09 millert Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -37,6 +37,7 @@ LIBM?=		${DESTDIR}/usr/lib/libm.a
 LIBMP?=		${DESTDIR}/usr/lib/libmp.a
 LIBOLDCURSES?=	${DESTDIR}/usr/lib/libocurses.a
 LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+LIBPERL?=	${DESTDIR}/usr/lib/libperl.a
 LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a

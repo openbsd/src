@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.20 1999/05/15 15:45:08 kstailey Exp $
+#	$OpenBSD: bsd.README,v 1.21 1999/11/26 21:47:09 millert Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -328,6 +328,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBOLDCURSES	/usr/lib/libocurses.a
 			LIBM		/usr/lib/libm.a
 			LIBMP		/usr/lib/libmp.a
+			LIBPERL		/usr/lib/libperl.a
 			LIBPC		/usr/lib/libpc.a
 			LIBPLOT		/usr/lib/libplot.a
 			LIBRPC		/usr/lib/sunrpc.a
