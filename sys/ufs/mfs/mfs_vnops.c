@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.12 1999/03/17 18:34:15 art Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.13 1999/08/30 18:05:52 art Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <machine/vmparam.h>
 
 #include <ufs/mfs/mfsnode.h>
-#include <ufs/mfs/mfsiom.h>
 #include <ufs/mfs/mfs_extern.h>
 
 /*
