@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.36 2001/05/11 18:35:21 mickey Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.37 2001/06/14 21:57:44 mickey Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -2001,7 +2001,7 @@ add_mlist(hostp, dirp)
 	}
 	mlp = (struct mountlist *)malloc(sizeof (*mlp));
 	strlcpy(mlp->ml_host, hostp, sizeof(mlp->ml_host));
-	strlcpy(mlp->ml_dirp, dirp, sizeof(mlp->ml_dirp, dirp));
+	strlcpy(mlp->ml_dirp, dirp, sizeof(mlp->ml_dirp));
 	mlp->ml_next = NULL;
 	*mlpp = mlp;
 	if ((mlfile = fopen(_PATH_RMOUNTLIST, "a")) == NULL) {
