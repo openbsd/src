@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.29 2004/02/26 14:00:33 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.30 2004/02/26 15:46:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -91,10 +91,8 @@ int	prefix_cmp(struct prefix *, struct prefix *);
  * Decision Engine OUR implementation:
  * Our implementation has only one RIB. The filtering is done first. The
  * filtering calculates the preference and stores it in LOCAL_PREF (Phase 1).
- * Ineligible routes are flagged as ineligible via nexthop_add(). The flags
- * are inherited from the nexthop descriptor.
- * Phase 3 is done together with Phase 2 -- the output filtering is done in
- * the session engine.
+ * Ineligible routes are flagged as ineligible via nexthop_add().
+ * Phase 3 is done together with Phase 2.
  * In following cases a prefix needs to be reevaluated:
  *  - update of a prefix (path_update)
  *  - withdraw of a prefix (prefix_remove)
@@ -123,10 +121,8 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	asp1 = p1->aspath;
 	asp2 = p2->aspath;
 	/* 1. check if prefix is eligible a.k.a reachable */
-	if (asp2->nexthop == NULL)
-		return (1);
-	if (asp1->nexthop == NULL)
-		return (-1);
+	ENSURE(asp2->nexthop != NULL && asp1->nexthop != NULL);
+
 	if (asp2->nexthop->state != NEXTHOP_REACH)
 		return (1);
 	if (asp1->nexthop->state != NEXTHOP_REACH)
