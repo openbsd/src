@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.29 1997/10/16 07:29:56 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 1997/12/08 21:27:37 mickey Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -321,7 +321,7 @@ ch*)
 	ch*) name=ch;  chr=40;;
 	esac
 	rm -f $name$unit
-	mknod $name$unit	c $chr `expr $unit '*' 16 + 0`
+	mknod $name$unit	c $chr $unit
 	chown root.operator $name$unit
 	chmod 640 $name$unit
 	umask 77

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 1997/09/16 06:01:00 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 1997/12/08 21:27:41 mickey Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -300,7 +300,7 @@ ch*)
 	rm -f $name$unit
 	case $unit in
 	0|1|2|3|4|5|6)
-		mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
+		mknod ${name}${unit}	c $chr $unit
 		chown root.operator ${name}${unit}
 		chmod 640 ${name}${unit}
 		;;
