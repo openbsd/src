@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.1 2000/12/12 02:32:57 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.2 2001/06/25 22:10:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -63,7 +63,6 @@ main(argc, argv)
 	struct passwd *pwd;
 	char localhost[MAXHOSTNAMELEN];
     	char *username = 0;
-    	char *instance;
 	char *salt;
 	char *p;
     	int c;
@@ -107,10 +106,6 @@ main(argc, argv)
 		syslog(LOG_ERR, "usage error");
 		exit(1);
 	}
-
-	instance = strchr(username, '.');
-	if (instance)
-		*instance++ = '\0';
 
 	pwd = getpwnam(username);
 

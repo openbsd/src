@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.2 2001/06/20 22:18:06 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.3 2001/06/25 22:10:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -70,7 +70,6 @@ main(argc, argv)
 	char passbuf[SKEY_MAX_PW_LEN+1];
 	int c, haskey;
 	int mode = 0;
-	char *instance;
 
 	skeyprompt[0] = '\0';
 
@@ -185,9 +184,6 @@ main(argc, argv)
 		alarm(0);
 	}
 
-	if ((instance = strchr(username, '.')))
-		*instance++ = '\0';
-
 	if (haskey && skeyverify(&skey, passbuf) == 0) {
 		if (mode == 0) {
 			if (skey.n <= 1)
@@ -197,8 +193,6 @@ main(argc, argv)
 				printf("Warning! Change S/Key password soon\n");
 		}
 		fprintf(back, BI_AUTH "\n");
-		if (instance && strcmp(instance, "root") == 0)
-			fprintf(back, BI_ROOTOKAY "\n");
 		fprintf(back, BI_SECURE "\n");
 		exit(0);
 	}

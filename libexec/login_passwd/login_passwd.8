@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_passwd.8,v 1.1 2000/12/12 02:33:44 millert Exp $
+.\" $OpenBSD: login_passwd.8,v 1.2 2001/06/25 22:10:29 millert Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -52,19 +52,7 @@ with passwd-style authentication.
 .Pp
 The
 .Ar user
-argument is the name of the user to be authenticated.
-If
-.Ar user
-is of the form
-.Ar name. Ns Li root
-and
-.Ar name. Ns Li root
-is not found in the password file, the entry for
-.Li root
-is used.
-This is done to support
-.Xr su 1 ,
-which uses kerberos-style root instances.
+argument is the login name of the user to be authenticated.
 .Pp
 The
 .Ar service
