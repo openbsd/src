@@ -147,7 +147,7 @@ config(dev, file, action, key)
 		if (rv)
 			warn("VNDIOCSET");
 		else if (verbose)
-			printf("%s: %d bytes on %s\n", dev, vndio.vnd_size,
+			printf("%s: %llu bytes on %s\n", dev, vndio.vnd_size,
 			    file);
 	}
 
