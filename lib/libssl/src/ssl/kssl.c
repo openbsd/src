@@ -70,6 +70,7 @@
 
 #define _XOPEN_SOURCE /* glibc2 needs this to declare strptime() */
 #include <time.h>
+#undef _XOPEN_SOURCE /* To avoid clashes with anything else... */
 #include <string.h>
 
 #include <openssl/ssl.h>
@@ -782,24 +783,6 @@ char
 
 	return ((string == NULL)? null: string);
         }
-
-#define	MAXKNUM	255
-char
-*knumber(int len, krb5_octet *contents)
-        {
-	static char	buf[MAXKNUM+1];
-	int 		i;
-
-	BIO_snprintf(buf, MAXKNUM, "[%d] ", len);
-
-	for (i=0; i < len  &&  MAXKNUM > strlen(buf)+3; i++)
-                {
-                BIO_snprintf(&buf[strlen(buf)], 3, "%02x", contents[i]);
-                }
-
-	return (buf);
-	}
-
 
 /*	Given KRB5 enctype (basically DES or 3DES),
 **	return closest match openssl EVP_ encryption algorithm.
@@ -1568,7 +1551,7 @@ kssl_ctx_free(KSSL_CTX *kssl_ctx)
         {
 	if (kssl_ctx == NULL)  return kssl_ctx;
 
-	if (kssl_ctx->key)  		memset(kssl_ctx->key, 0,
+	if (kssl_ctx->key)  		OPENSSL_cleanse(kssl_ctx->key,
 							      kssl_ctx->length);
 	if (kssl_ctx->key)  		free(kssl_ctx->key);
 	if (kssl_ctx->client_princ) 	free(kssl_ctx->client_princ);
@@ -1672,7 +1655,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 
 	if (kssl_ctx->key)
                 {
-		memset(kssl_ctx->key, 0, kssl_ctx->length);
+		OPENSSL_cleanse(kssl_ctx->key, kssl_ctx->length);
 		free(kssl_ctx->key);
 		}
 
@@ -1979,7 +1962,7 @@ krb5_error_code  kssl_check_authent(
 	const EVP_CIPHER	*enc = NULL;
 	unsigned char		iv[EVP_MAX_IV_LENGTH];
 	unsigned char		*p, *unenc_authent;
-	int 			padl, outl, unencbufsize;
+	int 			outl, unencbufsize;
 	struct tm		tm_time, *tm_l, *tm_g;
 	time_t			now, tl, tg, tr, tz_offset;
 
@@ -2037,7 +2020,7 @@ krb5_error_code  kssl_check_authent(
             }
 #endif
 	enc = kssl_map_enc(enctype);
-	memset(iv, 0, EVP_MAX_IV_LENGTH);       /* per RFC 1510 */
+	memset(iv, 0, sizeof iv);       /* per RFC 1510 */
 
 	if (enc == NULL)
 		{
@@ -2047,44 +2030,23 @@ krb5_error_code  kssl_check_authent(
 		*/
 		goto err;
 		}
-	if (!EVP_DecryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv))
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptInit_ex error decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	if (!EVP_DecryptUpdate(&ciph_ctx, unenc_authent, &outl,
-			dec_authent->cipher->data, dec_authent->cipher->length))
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptUpdate error decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	if (outl > unencbufsize)
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-                        "Buffer overflow decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	if (!EVP_DecryptFinal_ex(&ciph_ctx, &(unenc_authent[outl]), &padl))
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptFinal_ex error decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	outl += padl;
-	if (outl > unencbufsize)
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-                        "Buffer overflow decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	EVP_CIPHER_CTX_cleanup(&ciph_ctx);
+
+        if (!EVP_CipherInit(&ciph_ctx,enc,kssl_ctx->key,iv,0))
+                {
+                kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "EVP_CipherInit error decrypting authenticator.\n");
+                krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+                goto err;
+                }
+        outl = dec_authent->cipher->length;
+        if (!EVP_Cipher(&ciph_ctx,unenc_authent,dec_authent->cipher->data,outl))
+                {
+                kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "EVP_Cipher error decrypting authenticator.\n");
+                krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+                goto err;
+                }
+        EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 
 #ifdef KSSL_DEBUG
 	printf("kssl_check_authent: decrypted authenticator[%d] =\n", outl);
@@ -2133,6 +2095,7 @@ krb5_error_code  kssl_check_authent(
 	if (auth)		KRB5_AUTHENT_free((KRB5_AUTHENT *) auth);
 	if (dec_authent)	KRB5_ENCDATA_free(dec_authent);
 	if (unenc_authent)	free(unenc_authent);
+	EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 	return krb5rc;
 	}
 

@@ -64,7 +64,7 @@
 
 void do_fp(FILE *f);
 void pt(unsigned char *md);
-#ifndef _OSD_POSIX
+#if !defined(_OSD_POSIX) && !defined(__DJGPP__)
 int read(int, void *, unsigned int);
 #endif
 
@@ -108,7 +108,7 @@ void do_fp(FILE *f)
 	MD4_Init(&c);
 	for (;;)
 		{
-		i=read(fd,buf,BUFSIZE);
+		i=read(fd,buf,sizeof buf);
 		if (i <= 0) break;
 		MD4_Update(&c,buf,(unsigned long)i);
 		}

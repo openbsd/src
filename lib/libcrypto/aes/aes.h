@@ -56,8 +56,9 @@
 #error AES is disabled.
 #endif
 
-static const int AES_DECRYPT = 0;
-static const int AES_ENCRYPT = 1;
+#define AES_ENCRYPT	1
+#define AES_DECRYPT	0
+
 /* Because array size can't be a const in C, the following two are macros.
    Both sizes are in bytes. */
 #define AES_MAXNR 14
@@ -99,7 +100,9 @@ void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned char *ivec, int *num);
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
-	unsigned char *counter, unsigned int *num);
+	unsigned char counter[AES_BLOCK_SIZE],
+	unsigned char ecount_buf[AES_BLOCK_SIZE],
+	unsigned int *num);
 
 
 #ifdef  __cplusplus

@@ -59,7 +59,6 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/conf.h>
-#include <openssl/engine.h>
 
 
 /* Load all algorithms and configure OpenSSL.
