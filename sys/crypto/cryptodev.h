@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.30 2002/06/09 22:23:17 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.31 2002/06/11 11:14:29 beck Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -196,6 +196,12 @@ struct crypt_kop {
 #define CRK_DH_COMPUTE_KEY	4
 #define CRK_ALGORITHM_MAX	4 /* Keep updated - see below */
 
+#define CRF_MOD_EXP		(1 << CRK_MOD_EXP)
+#define CRF_MOD_EXP_CRT		(1 << CRK_MOD_EXP_CRT)
+#define CRF_DSA_SIGN		(1 << CRK_DSA_SIGN)
+#define CRF_DSA_VERIFY		(1 << CRK_DSA_VERIFY)
+#define CRF_DH_COMPUTE_KEY	(1 << CRK_DH_COMPUTE_KEY)
+
 struct cryptkop {
 	u_int		krp_op;		/* ie. CRK_MOD_EXP or other */
 	u_int		krp_status;	/* return status */
@@ -276,10 +282,7 @@ struct crypt_op {
 #define CIOCCRYPT	_IOWR('c', 103, struct crypt_op)
 #define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
 
-#define CIOCSYMFEAT	_IOR('c', 105, u_int32_t)
-#define CRSFEAT_RSA	0x00000001	/* supports all basic RSA ops */
-#define CRSFEAT_DSA	0x00000002	/* supports all basic DSA ops */
-#define CRSFEAT_DH	0x00000004	/* supports all basic DH ops */
+#define CIOCASYMFEAT	_IOR('c', 105, u_int32_t)
 
 #ifdef _KERNEL
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.46 2002/06/10 21:09:27 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.47 2002/06/11 11:14:29 beck Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -123,6 +123,7 @@ int	cryptodev_cb(void *);
 int	cryptodevkey_cb(void *);
 
 int	usercrypto = 1;		/* userland may do crypto requests */
+int	userasymcrypto = 0;	/* userland may do asymmetric crypto reqs */
 int	cryptodevallowsoft = 0;	/* only use hardware crypto */
 
 /* ARGSUSED */
@@ -300,7 +301,7 @@ bail:
 	case CIOCKEY:
 		error = cryptodev_key((struct crypt_kop *)data);
 		break;
-	case CIOCSYMFEAT:
+	case CIOCASYMFEAT:
 		error = crypto_getfeat((int *)data);
 		break;
 	default:
@@ -424,6 +425,11 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		goto bail;
 	}
 
+	if (crp->crp_etype != 0) {
+		error = crp->crp_etype;
+		goto bail;
+	}
+
 	if (cse->error) {
 		error = cse->error;
 		goto bail;
@@ -475,8 +481,9 @@ cryptodev_key(struct crypt_kop *kop)
 	int error = EINVAL;
 	int in, out, size, i;
 
-	if (kop->crk_iparams + kop->crk_oparams > CRK_MAXPARAM)
+	if (kop->crk_iparams + kop->crk_oparams > CRK_MAXPARAM) {
 		return (EFBIG);
+	}
 
 	in = kop->crk_iparams;
 	out = kop->crk_oparams;
@@ -536,6 +543,11 @@ cryptodev_key(struct crypt_kop *kop)
 	error = tsleep(krp, PSOCK, "crydev", 0);
 	if (error) {
 		/* XXX can this happen?  if so, how do we recover? */
+		goto fail;
+	}
+	
+	if (krp->krp_status != 0) {
+		error = krp->krp_status;
 		goto fail;
 	}
 

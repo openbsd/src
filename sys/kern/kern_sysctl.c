@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.70 2002/06/09 05:46:15 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.71 2002/06/11 11:14:29 beck Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -251,6 +251,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern int stackgap_random;
 #ifdef CRYPTO
 	extern int usercrypto;
+	extern int userasymcrypto;
 	extern int cryptodevallowsoft;
 #endif
 
@@ -447,6 +448,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #ifdef CRYPTO
 	case KERN_USERCRYPTO:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &usercrypto));
+	case KERN_USERASYMCRYPTO:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &userasymcrypto));
 	case KERN_CRYPTODEVALLOWSOFT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &cryptodevallowsoft));
