@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.4 2003/03/01 00:46:23 miod Exp $
+#	$OpenBSD: disktab,v 1.5 2003/05/06 09:20:15 mickey Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -28,3 +28,7 @@ rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ta=4.2BSD:oa#0:pa#5120:fa#1024:ba#8192:\
 	:ob#0:pb#0:oc#0:pc#5120:
 
+fakecdrom|Fake image for Bootable CDROM:\
+	:ty=removable:se#512:nt#1:rm#350:ns#640:nc#2048:\
+	:pa#1310720:oa#0:ba#8192:fa#1024:ta=ISO9660:\
+	:pc#1310720:oc#0:bc#8192:fc#1024:tc=ISO9660:
