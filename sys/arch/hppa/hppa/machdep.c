@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.105 2003/05/18 15:57:46 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.106 2003/05/22 19:27:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -701,6 +701,7 @@ delay_init(void)
 		} else if (delta < mdelta) {
 			cpu_ticksdenom = denom;
 			cpu_ticksnum = num;
+			mdelta = delta;
 		}
 	}
 }
