@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.1 2001/06/25 05:07:15 angelos Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.2 2001/06/25 05:40:39 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -161,7 +161,7 @@ Used by the
 interface to detect loops in processing.
 The tag contains a pointer to the gre interface that already forwarded
 the packet.
-.It PACKET_TAG_PACKET_CHECKSUM
+.It PACKET_TAG_IN_PACKET_CHECKSUM
 Used by network cards that can compute complete packet checksums to
 pass that information to higher-level protocols.
 The tag contains the 2 byte checksum of the packet.
