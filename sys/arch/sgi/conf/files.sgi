@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.6 2004/10/20 12:49:15 pefo Exp $
+#	$OpenBSD: files.sgi,v 1.7 2005/01/02 19:50:30 kettenis Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -94,6 +94,11 @@ file	arch/sgi/dev/lpt_lbus.c			lpt_localbus
 device	mec: ether, ifnet, ifmedia, mii
 attach	mec at macebus
 file	arch/sgi/dev/if_mec.c			mec
+
+# Moosehead A/V Board audio
+device  mavb: audio
+attach	mavb at macebus
+file	arch/sgi/dev/mavb.c			mavb
 
 # Raster operations
 include "dev/rasops/files.rasops"

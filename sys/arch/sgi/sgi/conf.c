@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2004/12/13 16:18:02 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.8 2005/01/02 19:50:30 kettenis Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,6 +106,7 @@ cdev_decl(lpt);
 #include "ss.h"
 #include "uk.h"
 cdev_decl(wd);
+#include "audio.h"
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
@@ -174,7 +175,7 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_notdef(),			/* 41: */
 	cdev_notdef(),			/* 42: */
 	cdev_notdef(),			/* 33: */
-	cdev_notdef(),			/* 44: */
+	cdev_audio_init(NAUDIO,audio),	/* 44: /dev/audio */
 	cdev_notdef(),			/* 45: */
 	cdev_notdef(),			/* 46: */
 	cdev_crypto_init(NCRYPTO,crypto),	/* 47: /dev/crypto */
