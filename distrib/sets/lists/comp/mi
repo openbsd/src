@@ -872,6 +872,7 @@
 ./usr/include/g++/vector
 ./usr/include/g++/vector.h
 ./usr/include/g2c.h
+./usr/include/getopt.h
 ./usr/include/glob.h
 ./usr/include/grp.h
 ./usr/include/histedit.h
@@ -3322,6 +3323,8 @@
 ./usr/share/man/cat3/getnetgrent.0
 ./usr/share/man/cat3/getnstr.0
 ./usr/share/man/cat3/getopt.0
+./usr/share/man/cat3/getopt_long.0
+./usr/share/man/cat3/getopt_long_only.0
 ./usr/share/man/cat3/getpagesize.0
 ./usr/share/man/cat3/getparyx.0
 ./usr/share/man/cat3/getpass.0

@@ -553,6 +553,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wsfont/wsfont.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV/admin.ph
@@ -598,6 +599,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_ieee80211.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_pflog.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfvar.ph
@@ -663,4 +665,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
-./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_pfsync.ph

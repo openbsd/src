@@ -1698,6 +1698,7 @@
 ./usr/share/man/cat8/alpha/wsconscfg.0
 ./usr/share/man/cat8/alpha/wsconsctl.0
 ./usr/share/man/cat8/alpha/wsfontload.0
+./usr/share/man/cat8/alpha/wsmoused.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/amiga/MAKEDEV.0

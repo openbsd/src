@@ -804,6 +804,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/type_traits.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/histedit.ph
@@ -916,6 +917,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_llc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_media.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_pflog.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_ppp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_slvar.ph
@@ -2036,4 +2038,3 @@
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
-./usr/libdata/perl5/site_perl/vax-openbsd/net/if_pfsync.ph

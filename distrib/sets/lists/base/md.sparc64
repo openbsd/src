@@ -867,6 +867,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++/type_traits.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/histedit.ph
@@ -980,6 +981,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_llc.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_media.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pflog.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_ppp.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_slvar.ph
@@ -2111,4 +2113,3 @@
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pfsync.ph

@@ -1299,6 +1299,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/g++/type_traits.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/histedit.ph
@@ -1456,6 +1457,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_llc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_media.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_pflog.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_ppp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_slvar.ph
@@ -2026,4 +2028,3 @@
 ./usr/mdec/mkboot
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
-./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_pfsync.ph

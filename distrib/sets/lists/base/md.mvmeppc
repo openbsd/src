@@ -1369,6 +1369,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/type_traits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/histedit.ph
@@ -1483,6 +1484,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_llc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_media.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_pflog.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_ppp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_slvar.ph
@@ -2103,4 +2105,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_pfsync.ph
