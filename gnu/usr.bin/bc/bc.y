@@ -107,11 +107,11 @@
 program			: /* empty */
 			    {
 			      $$ = 0;
-			      if (interactive)
+			      /*if (interactive)
 				{
 				  printf ("%s\n", BC_VERSION);
 				  welcome ();
-				}
+				}*/
 			    }
 			| program input_item
 			;
