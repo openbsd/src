@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 1996/12/19 02:38:08 millert Exp $
+#	$OpenBSD: Makefile,v 1.32 1997/01/02 23:14:13 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -80,13 +80,17 @@ distribution-etc-root-var: distrib-dirs
 		install -c -o root -g wheel -m 444 4.4BSD.dist \
 		    ${DESTDIR}/etc/mtree)
 	(cd ppp; \
-		install -c -o root -g wheel -m 644 chap-secrets \
+		install -c -o root -g wheel -m 600 chap-secrets \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 644 options \
+		install -c -o root -g wheel -m 600 options \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 644 options.leaf \
+		install -c -o root -g wheel -m 600 options.leaf \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 644 pap-secrets \
+		install -c -o root -g wheel -m 600 options.sample \
+		    ${DESTDIR}/etc/ppp; \
+		install -c -o root -g wheel -m 600 chatscript.sample \
+		    ${DESTDIR}/etc/ppp; \
+		install -c -o root -g wheel -m 600 pap-secrets \
 		    ${DESTDIR}/etc/ppp)
 	cd namedb; install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
 	    ${DESTDIR}/etc/namedb
