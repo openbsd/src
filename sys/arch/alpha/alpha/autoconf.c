@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2001/12/05 23:58:41 tdeval Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2001/12/06 04:22:56 ericj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ setroot()
 {
 	struct swdevt *swp;
 	struct device *dv;
-        int len;
+        int len, majdev, unit, part;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128], *rootdevname;
 	dev_t temp;
@@ -397,7 +397,6 @@ gotswap:
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
 	} else if (mountroot == NULL) {
-		int majdev;
 		
 		/*
 		 * "swap generic"
