@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.80 1998/08/17 17:43:09 deraadt Exp $
+$OpenBSD: pcidevs,v 1.81 1998/08/30 04:41:48 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -717,6 +717,10 @@ product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
 product CYCLADES CYCLOMY_2	0x0101	Cyclom-Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
+
+/* Cyrix/National Semiconductor products */
+product CYRIX GXMPCI		0x0001  GXm Host-PCI Bridge
+product CYRIX GXMISA		0x0002	GXm PCI-ISA Bridge
 
 /* DEC products */
 product DEC 21050		0x0001	DECchip 21050 PCI-PCI Bridge
