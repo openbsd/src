@@ -1,4 +1,4 @@
-/*	$OpenBSD: locate.h,v 1.5 1996/09/15 16:50:39 michaels Exp $	*/
+/*	$OpenBSD: locate.h,v 1.6 1996/10/10 09:55:08 michaels Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,3 +67,6 @@ u_char myctype[UCHAR_MAX + 1];
 #endif
 
 #define INTSIZE (sizeof(int))
+
+#define LOCATE_REG "*?[]\\"  /* fnmatch(3) meta characters */
+
