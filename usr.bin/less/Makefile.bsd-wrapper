@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1996/09/27 06:09:00 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1997/01/23 02:24:22 niklas Exp $
 
 #
 # less config
 #
 PREFIX=		/usr
-BINDIR=		$(PREFIX)/bin
-DATADIR=	$(PREFIX)/share/misc
+BINDIR=		${PREFIX}/bin
+DATADIR=	${PREFIX}/share/misc
 LESS_HLP=	more.help
 LIBS=		-ltermcap
 LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
@@ -16,8 +16,9 @@ CLEANFILES=	config.cache config.log $(MAN)
 #
 # Wrapped flags
 #
-WCFLAGS=	CFLAGS="$(CFLAGS)"
-WLDFLAGS=	LDFLAGS="$(LDSTATIC)"
+WCC=		CC="${CC}"
+WCFLAGS=	CFLAGS="${CFLAGS}"
+WLDFLAGS=	LDFLAGS="${LDSTATIC}"
 
 all: config.status gnu_build
 
@@ -37,19 +38,21 @@ OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 	tags.o ttyin.o version.o
 .SUFFIXES: .o .c
 .c.o: config.status
-	@$(MAKE) $(WCFLAGS) $(WLDFLAGS) LIBS=$(LIBS) datadir=$(DATADIR) LESS_HLP=$(LESS_HLP) $(.TARGET)
+	@$(MAKE) ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} \
+		 datadir=${DATADIR} LESS_HLP=${LESS_HLP} ${.TARGET}
 
 .FORCE: .IGNORE
 
 config: .FORCE
 	-rm -f config.cache
-	/bin/sh $(.CURDIR)/configure --prefix=$(PREFIX)
+	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
 
 config.status:
-	/bin/sh $(.CURDIR)/configure --prefix=$(PREFIX)
+	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
 
 gnu_build:
-	$(MAKE) $(WCFLAGS) $(WLDFLAGS) LIBS=$(LIBS) datadir=$(DATADIR) LESS_HLP=$(LESS_HLP)
+	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} datadir=${DATADIR} \
+		LESS_HLP=${LESS_HLP}
 
 install: gnu_install maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
@@ -66,16 +69,16 @@ install: gnu_install maninstall _SUBDIRUSE
 .endif
 
 gnu_install:
-	$(MAKE) $(WCFLAGS) $(WLDFLAGS) LIBS=$(LIBS) LESS_HLP=$(LESS_HLP) \
-		bindir=$(DESTDIR)$(BINDIR) \
-		datadir=$(DESTDIR)$(PREFIX)/share/misc \
-		INSTALL_PROGRAM="install $(COPY) $(STRIP) -o $(BINOWN) -g $(BINGRP) -m $(BINMODE)" \
-		INSTALL_DATA="install $(COPY) -o ${BINOWN} -g ${BINGRP} -m 444" \
+	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} \
+		LESS_HLP=${LESS_HLP} bindir=${DESTDIR}${BINDIR} \
+		datadir=${DESTDIR}${PREFIX}/share/misc \
+		INSTALL_PROGRAM="${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+		INSTALL_DATA="${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444" \
 		INSTALL_MAN= INSTALLDIRS= install
 
 clean cleandir:
-	rm -f $(CLEANFILES)
-	-@if [ -e Makefile ]; then $(MAKE) distclean; fi
+	rm -f ${CLEANFILES}
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 
 #
 # Fix less manpage suffix 
@@ -83,7 +86,7 @@ clean cleandir:
 .SUFFIXES: .nro .1 .2 .3 .4 .5 .6 .7 .8 .9
 
 .nro.1 .nro.2 .nro.3 .nro.4 .nro.5 .nro.6 .nro.7 .nro.8 .nro.9:
-	-@ln -sf $(.IMPSRC) $(.TARGET)
+	-@ln -sf ${.IMPSRC} ${.TARGET}
 
 depend:
 	# Nothing here so far...
