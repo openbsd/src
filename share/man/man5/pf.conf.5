@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.61 2002/06/20 12:04:54 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.62 2002/06/24 09:54:43 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -521,8 +521,8 @@ Note that evaluation takes place at parse time.
 supports macro definition and expansion like:
 .Bd -literal
     ext_if = "kue0"
-    pass out on $ext_if from any to any         keep state
-    pass in  on $ext_if from any to any port 25 keep state
+    pass out on $ext_if           from any to any         keep state
+    pass in  on $ext_if proto tcp from any to any port 25 keep state
 .Ed
 .Pp
 Macro names must start with a letter and may contain letters, digits
@@ -864,7 +864,7 @@ are not proxied, all other connections are.
 # NO RDR
 no rdr on fxp0 from any        to $server port 80
 no rdr on fxp0 from $sysadmins to any     port 80
-   rdr on fxp0 from any        to any     port 80 -> 127.0.0.1 80
+   rdr on fxp0 from any        to any     port 80 -> 127.0.0.1 port 80
 .Ed
 .Pp
 This longer example uses both a NAT and a redirection.
