@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.33 2004/01/23 03:48:43 deraadt Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.34 2004/05/31 15:48:26 pedro Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -740,8 +740,6 @@ answer()
 		docrypt();
 		srvlogin();
 		if (xpatch) {
-			int fd;
-
 			x = msgxpatch();
 			if (x != SCMOK)
 				exit(0);

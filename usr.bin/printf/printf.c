@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.11 2003/06/23 16:40:44 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.12 2004/05/31 15:48:26 pedro Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.11 2003/06/23 16:40:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.12 2004/05/31 15:48:26 pedro Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -114,7 +114,6 @@ main(int argc, char *argv[])
 	int fieldwidth, precision;
 	char convch, nextch;
 	char *format;
-	int ch;
 
 #if !defined(SHELL) && !defined(BUILTIN)
 	setlocale (LC_ALL, "");
