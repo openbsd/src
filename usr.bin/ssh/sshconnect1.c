@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.22 2001/02/03 10:08:37 markus Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.23 2001/02/08 10:47:04 itojun Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -1032,7 +1032,7 @@ ssh_userauth(
 	    options.password_authentication && !options.batch_mode) {
 		char prompt[80];
 
-		snprintf(prompt, sizeof(prompt), "%.30s@%.40s's password: ",
+		snprintf(prompt, sizeof(prompt), "%.30s@%.128s's password: ",
 		    server_user, host);
 		if (try_password_authentication(prompt))
 			return;
