@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.28 1999/01/21 08:55:08 niklas Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.29 1999/02/08 23:43:54 rees Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ int	comprobe __P((struct device *, void *, void *));
 void	comattach __P((struct device *, struct device *, void *));
 void	com_absent_notify __P((struct com_softc *sc));
 void	comstart_pending __P((void *));
+void	compwroff __P((struct com_softc *));
 
 #if NPCCOM_ISA
 struct cfattach pccom_isa_ca = {
@@ -1097,39 +1098,32 @@ comopen(dev, flag, mode, p)
 			return EBUSY;
 		}
 		sc->sc_cua = 1;		/* We go into CUA mode */
-	}
-
-	/* wait for carrier if necessary */
-	if (ISSET(flag, O_NONBLOCK)) {
-		if (!DEVCUA(dev) && sc->sc_cua) {
-			/* Opening TTY non-blocking... but the CUA is busy */
-			splx(s);
-			return EBUSY;
-		}
 	} else {
-		while (sc->sc_cua ||
-		    (!ISSET(tp->t_cflag, CLOCAL) &&
-		    !ISSET(tp->t_state, TS_CARR_ON))) {
-			SET(tp->t_state, TS_WOPEN);
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    ttopen, 0);
-			if (!DEVCUA(dev) && sc->sc_cua && error == EINTR)
-				continue;
-			if (error) {
-				/* XXX should turn off chip if we're the
-				   only waiter */
-				if (DEVCUA(dev))
-					sc->sc_cua = 0;
-				CLR(tp->t_state, TS_WOPEN);
+		/* tty (not cua) device; wait for carrier if necessary */
+		if (ISSET(flag, O_NONBLOCK)) {
+			if (sc->sc_cua) {
+				/* Opening TTY non-blocking... but the CUA is busy */
 				splx(s);
-				return error;
+				return EBUSY;
 			}
-			if (!DEVCUA(dev) && sc->sc_cua)
-				continue;
+		} else {
+			while (sc->sc_cua ||
+			       (!ISSET(tp->t_cflag, CLOCAL) &&
+				!ISSET(tp->t_state, TS_CARR_ON))) {
+				SET(tp->t_state, TS_WOPEN);
+				error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
+						 ttopen, 0);
+				if (error) {
+					CLR(tp->t_state, TS_WOPEN);
+					if (!sc->sc_cua && !ISSET(tp->t_state, TS_ISOPEN))
+						compwroff(sc);
+					splx(s);
+					return error;
+				}
+			}
 		}
 	}
 	splx(s);
-
 	return (*linesw[tp->t_line].l_open)(dev, tp);
 }
  
@@ -1142,8 +1136,6 @@ comclose(dev, flag, mode, p)
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc = pccom_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
 
 	/* XXX This is for cons.c. */
@@ -1152,43 +1144,8 @@ comclose(dev, flag, mode, p)
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	s = spltty();
-	if (!ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
-		/* can't do any of this stuff .... */
-		CLR(sc->sc_lcr, LCR_SBREAK);
-		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
-		bus_space_write_1(iot, ioh, com_ier, 0);
-		if (ISSET(tp->t_cflag, HUPCL) &&
-		    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
-			/* XXX perhaps only clear DTR */
-			bus_space_write_1(iot, ioh, com_mcr, 0);
-		}
-
-		/*
-	 	 * Turn FIFO off; enter sleep mode if possible.
-	 	 */
-		bus_space_write_1(iot, ioh, com_fifo, 0);
-		delay(100);
-		(void) bus_space_read_1(iot, ioh, com_data);
-		delay(100);
-		bus_space_write_1(iot, ioh, com_fifo,
-		    FIFO_RCV_RST | FIFO_XMT_RST);
-
-		switch (sc->sc_uarttype) {
-		case COM_UART_ST16650:
-		case COM_UART_ST16650V2:
-		case COM_UART_XR16850:
-			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
-			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
-			bus_space_write_1(iot, ioh, com_lcr, 0);
-			break;
-#ifdef notyet
-		case COM_UART_TI16750:
-			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
-			break;
-#endif
-		}
-	}
+	if (!ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING))
+		compwroff(sc);
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	sc->sc_cua = 0;
 	splx(s);
@@ -1209,7 +1166,51 @@ comclose(dev, flag, mode, p)
 #endif
 	return 0;
 }
- 
+
+void
+compwroff(sc)
+	struct com_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	struct tty *tp = sc->sc_tty;
+
+	CLR(sc->sc_lcr, LCR_SBREAK);
+	bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
+	bus_space_write_1(iot, ioh, com_ier, 0);
+	if (ISSET(tp->t_cflag, HUPCL) &&
+	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
+		/* XXX perhaps only clear DTR */
+		bus_space_write_1(iot, ioh, com_mcr, 0);
+	}
+
+	/*
+	 * Turn FIFO off; enter sleep mode if possible.
+	 */
+	bus_space_write_1(iot, ioh, com_fifo, 0);
+	delay(100);
+	(void) bus_space_read_1(iot, ioh, com_data);
+	delay(100);
+	bus_space_write_1(iot, ioh, com_fifo,
+			  FIFO_RCV_RST | FIFO_XMT_RST);
+
+	switch (sc->sc_uarttype) {
+	case COM_UART_ST16650:
+	case COM_UART_ST16650V2:
+	case COM_UART_XR16850:
+		bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
+		bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
+		bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
+		bus_space_write_1(iot, ioh, com_lcr, 0);
+		break;
+#ifdef notyet
+	case COM_UART_TI16750:
+		bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
+		break;
+#endif
+	}
+}
+
 int
 comread(dev, uio, flag)
 	dev_t dev;
