@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.83 2004/05/08 23:53:21 deraadt Exp $
+$OpenBSD: usbdevs,v 1.84 2004/05/10 10:46:10 peter Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -372,6 +372,7 @@ vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
 vendor IODATA2		0x40bb	I-O Data
+vendor ONSPEC2		0x55aa	OnSpec
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
 
@@ -1156,6 +1157,8 @@ product ONSPEC PNYCFSM		0xa005	PNY/Datafab CF+SM Reader
 product ONSPEC STECHCFSM	0xa006	Simple Tech/Datafab CF+SM Reader
 product ONSPEC LC1		0xa109	CF + SM Combo (LC1)
 product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
+
+product ONSPEC2 8IN2		0xb012	8In2 Reader
 
 /* Ours Technology Inc. */
 product OTI SOLID		0x6803	Solid state disk
