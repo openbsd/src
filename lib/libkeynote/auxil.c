@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.5 2000/10/03 01:33:55 angelos Exp $ */
+/* $OpenBSD: auxil.c,v 1.6 2001/02/13 20:30:40 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -213,7 +213,7 @@ kn_remove_authorizer(int sessid, char *key)
     }
 
     for (; kl->key_next != (struct keylist *) NULL; kl = kl->key_next)
-      if (!strcmp(kl->key_stringkey, key))
+      if (!strcmp(kl->key_next->key_stringkey, key))
       {
 	  kl2 = kl->key_next;
 	  kl->key_next = kl2->key_next;
