@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.22 1998/02/14 10:55:10 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.23 1998/02/14 18:50:35 mickey Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ in_pcbbind(v, nam)
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
-			if (ifa_ifwithaddr(sintosa(sin)) == 0)
+			if (in_iawithaddr(sin->sin_addr, NULL) == 0)
 				return (EADDRNOTAVAIL);
 		}
 		if (lport) {
@@ -656,12 +656,10 @@ in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
 			if (laddr.s_addr != INADDR_ANY)
 				wildcard++;
 		}
-		if (wildcard && (flags & INPLOOKUP_WILDCARD) == 0)
-			continue;
-		if (wildcard < matchwild) {
+		if ((!wildcard || (flags & INPLOOKUP_WILDCARD)) &&
+		    wildcard < matchwild) {
 			match = inp;
-			matchwild = wildcard;
-			if (matchwild == 0)
+			if ((matchwild = wildcard) == 0)
 				break;
 		}
 	}
