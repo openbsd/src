@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.24 1998/02/22 00:51:46 niklas Exp $	*/
+/*	$OpenBSD: st.c,v 1.25 1998/07/23 09:11:09 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,10 @@
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
 #define CTLMODE	3
+
+#define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
+#define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
+#define	ST_SPC_TIME	(4 * 60 * 60 * 1000)	/* 4 hours */
 
 /*
  * Maximum density code known.
@@ -249,10 +253,12 @@ struct st_softc {
 /*--------------------present operating parameters, flags etc.----------------*/
 	int flags;		/* see below                          */
 	u_int quirks;		/* quirks for the open mode           */
-	int blksize;		/* blksize we are using                */
+	int blksize;		/* blksize we are using               */
 	u_int8_t density;	/* present density                    */
 	u_int page_0_size;	/* size of page 0 data		      */
-	u_int last_dsty;	/* last density opened               */
+	u_int last_dsty;	/* last density opened                */
+	short mt_resid;		/* last (short) resid                 */
+	short mt_erreg;		/* last error (sense key) seen        */
 /*--------------------device/scsi parameters----------------------------------*/
 	struct scsi_link *sc_link;	/* our link to the adpter etc.        */
 /*--------------------parameters reported by the device ----------------------*/
@@ -1055,7 +1061,7 @@ ststart(v)
 		 */
 		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
 		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
-		    100000, bp, flags | SCSI_NOSLEEP))
+		    ST_IO_TIME, bp, flags | SCSI_NOSLEEP))
 			printf("%s: not queued\n", st->sc_dev.dv_xname);
 	} /* go back and see if we can cram more work in.. */
 }
@@ -1120,6 +1126,13 @@ stioctl(dev, cmd, arg, flag, p)
 	case MTIOCGET: {
 		struct mtget *g = (struct mtget *) arg;
 
+		/*
+		 * (to get the current state of READONLY)
+		 */
+		error = st_mode_sense(st, SCSI_SILENT);
+		if (error)
+			break;
+
 		SC_DEBUG(st->sc_link, SDEV_DB1, ("[ioctl: get status]\n"));
 		bzero(g, sizeof(struct mtget));
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
@@ -1133,6 +1146,17 @@ stioctl(dev, cmd, arg, flag, p)
 		g->mt_mdensity[1] = st->modes[1].density;
 		g->mt_mdensity[2] = st->modes[2].density;
 		g->mt_mdensity[3] = st->modes[3].density;
+		if (st->flags & ST_READONLY)
+			g->mt_dsreg |= MT_DS_RDONLY;
+		if (st->flags & ST_MOUNTED)
+			g->mt_dsreg |= MT_DS_MOUNTED;
+		g->mt_resid = st->mt_resid;
+		g->mt_erreg = st->mt_erreg;
+		/*
+		 * clear latched errors.
+		 */
+		st->mt_resid = 0;
+		st->mt_erreg = 0;
 		break;
 	}
 	case MTIOCTOP: {
@@ -1227,6 +1251,25 @@ stioctl(dev, cmd, arg, flag, p)
 	case MTIOCIEOT:
 	case MTIOCEEOT:
 		break;
+
+#if 0
+	case MTIOCRDSPOS:
+		error = st_rdpos(st, 0, (u_int32_t *) arg);
+		break;
+
+	case MTIOCRDHPOS:
+		error = st_rdpos(st, 1, (u_int32_t *) arg);
+		break;
+
+	case MTIOCSLOCATE:
+		error = st_setpos(st, 0, (u_int32_t *) arg);
+		break;
+
+	case MTIOCHLOCATE:
+		error = st_setpos(st, 1, (u_int32_t *) arg);
+		break;
+#endif
+
 	default:
 		if (STMODE(dev) == CTLMODE)
 			error = scsi_do_safeioctl(st->sc_link, dev,
@@ -1301,7 +1344,7 @@ st_read(st, buf, size, flags)
 	} else
 		_lto3b(size, cmd.len);
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
+	    sizeof(cmd), (u_char *) buf, size, 0, ST_IO_TIME, NULL,
 	    flags | SCSI_DATA_IN);
 }
 
@@ -1334,9 +1377,8 @@ st_read_block_limits(st, flags)
 	 * do the command, update the global values
 	 */
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-			      sizeof(cmd), (u_char *) &block_limits,
-			      sizeof(block_limits), ST_RETRIES, 5000,
-			      NULL, flags | SCSI_DATA_IN);
+	    sizeof(cmd), (u_char *) &block_limits, sizeof(block_limits),
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
 	if (error)
 		return error;
 
@@ -1389,9 +1431,8 @@ st_mode_sense(st, flags)
 	 * store it away.
 	 */
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-			      sizeof(cmd), (u_char *) &scsi_sense,
-			      scsi_sense_len, ST_RETRIES, 5000, NULL,
-			      flags | SCSI_DATA_IN);
+	    sizeof(cmd), (u_char *) &scsi_sense, scsi_sense_len,
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
 	if (error)
 		return error;
 
@@ -1400,6 +1441,8 @@ st_mode_sense(st, flags)
 	st->media_density = scsi_sense.blk_desc.density;
 	if (scsi_sense.header.dev_spec & SMH_DSP_WRITE_PROT)
 		st->flags |= ST_READONLY;
+	else
+		st->flags &= ~ST_READONLY;
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("density code 0x%x, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
@@ -1470,7 +1513,7 @@ st_mode_select(st, flags)
 	 */
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) &scsi_select, scsi_select_len,
-	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_OUT);
 }
 
 /*
@@ -1482,6 +1525,7 @@ st_erase(st, full, flags)
 	int full, flags;
 {
 	struct scsi_erase cmd;
+	int tmo;
 
 	/*
 	 * Full erase means set LONG bit in erase command, which asks
@@ -1490,17 +1534,20 @@ st_erase(st, full, flags)
 	 */
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = ERASE;
-	if (full)
+	if (full) {
 		cmd.byte2 = SE_IMMED|SE_LONG;
-	else
+		tmo = ST_SPC_TIME;
+	} else {
 		cmd.byte2 = SE_IMMED;
+		tmo = ST_IO_TIME;
+	}
 
 	/*
 	 * XXX We always do this asynchronously, for now.  How long should
 	 * we wait if we want to (eventually) to it synchronously?
 	 */
 	return (scsi_scsi_cmd(st->sc_link, (struct scsi_generic *)&cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, 5000, NULL, flags));
+	    sizeof(cmd), 0, 0, ST_RETRIES, tmo, NULL, flags));
 }
 
 /*
@@ -1582,7 +1629,7 @@ st_space(st, number, what, flags)
 	_lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, 2000000, NULL, flags);
+	    sizeof(cmd), 0, 0, 0, ST_SPC_TIME, NULL, flags);
 }
 
 /*
@@ -1621,7 +1668,7 @@ st_write_filemarks(st, number, flags)
 	_lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, 100000, NULL, flags);
+	    sizeof(cmd), 0, 0, 0, ST_IO_TIME * 4, NULL, flags);
 }
 
 /*
@@ -1677,15 +1724,23 @@ st_load(st, type, flags)
 		if (error)
 			return error;
 	}
-	if (st->quirks & ST_Q_IGNORE_LOADS)
-		return 0;
+	if (st->quirks & ST_Q_IGNORE_LOADS) {
+		if (type == LD_LOAD) {
+			/*
+			 * If we ignore loads, at least we should try a rewind.
+			 */
+			return st_rewind(st, 0, flags);
+		}
+		return (0);
+	}
+
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = LOAD;
 	cmd.how = type;
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, 300000, NULL, flags);
+	    sizeof(cmd), 0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags);
 }
 
 /*
@@ -1711,8 +1766,8 @@ st_rewind(st, immediate, flags)
 	cmd.byte2 = immediate;
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, immediate ? 5000 : 300000, NULL,
-	    flags);
+	    sizeof(cmd), 0, 0, ST_RETRIES,
+	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
 }
 
 /*
