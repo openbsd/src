@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.34 1998/10/19 05:43:29 jason Exp $
+#	$OpenBSD: GENERIC,v 1.35 1998/12/29 09:33:35 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -98,6 +98,8 @@ zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
 magma*	at sbus? slot ? offset ?			# magma serial cards
 mtty*	at magma?
 mbpp*	at magma?
+
+bpp*	at sbus? slot ? offset ?			# parallel port 
 
 #
 # Note the flags on the esp entries below, that work around

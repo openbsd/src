@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 1998/09/25 09:20:54 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 1998/12/29 09:33:36 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -81,6 +81,7 @@
 #include "cgfourteen.h"
 #include "xd.h"
 #include "xy.h"
+#include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -228,7 +229,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_init(NMBPP,mbpp),	/* 101 */
 	cdev_notdef(),			/* 102 */
 	cdev_notdef(),			/* 103 */
-	cdev_notdef(),			/* 104 */
+	cdev_bpp_init(NBPP,bpp),	/* 104: bpp */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_disk_init(NRD,rd),		/* 106: ram disk driver */
 	cdev_notdef(),			/* 107 */
