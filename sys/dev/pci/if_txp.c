@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.1 2001/04/08 02:16:52 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.2 2001/04/08 05:28:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -15,7 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Jason L. Wright.
+ *	This product includes software developed by Jason L. Wright and
+ *	Aaron Campbell.
  * 4. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -81,38 +82,6 @@
 
 #include <dev/pci/if_txpreg.h>
 #include <dev/pci/typhoon_image.h>
-
-/* XXX not here */
-struct txp_softc {
-	struct device		sc_dev;
-	void *			sc_ih;
-	bus_space_handle_t	sc_bh;
-	bus_space_tag_t		sc_bt;
-	bus_dma_tag_t		sc_dmat;
-	struct arpcom		sc_arpcom;
-	struct timeout		sc_tick_tmo;
-};
-
-struct txp_fw_file_header {
-	u_int8_t       	magicid[8];
-	u_int32_t	version;
-	u_int32_t	nsections;
-	u_int32_t	addr;
-};
-
-struct txp_fw_section_header {
-	u_int32_t	nbytes;
-	u_int16_t	cksum;
-	u_int16_t	reserved;
-	u_int32_t	addr;
-};
-
-#define TXP_PCI_LOMEM                   0x14
-#define WRITE_REG(sc,reg,val) \
-    bus_space_write_4((sc)->sc_bt, (sc)->sc_bh, reg, val)
-#define READ_REG(sc,reg) \
-    bus_space_read_4((sc)->sc_bt, (sc)->sc_bh, reg)
-/* end XXX not here */
 
 int txp_probe	__P((struct device *, void *, void *));
 void txp_attach	__P((struct device *, struct device *, void *));
@@ -240,21 +209,35 @@ txp_chip_init(sc)
 	struct txp_softc *sc;
 {
 	/* disable interrupts */
-	WRITE_REG(sc, TXP_INT_ENABLE_REGISTER, 0);
-	WRITE_REG(sc, TXP_INT_MASK_REGISTER, 0x0000ffff);
+	WRITE_REG(sc, TXP_IER, 0);
+	WRITE_REG(sc, TXP_IMR,
+	    TXP_INT_SELF | TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |
+	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
+	    TXP_INT_LATCH);
 
 	/* ack all interrupts */
-	WRITE_REG(sc, TXP_INT_STATUS_REGISTER, 0xffffffff);
+	WRITE_REG(sc, TXP_ISR, TXP_INT_RESERVED | TXP_INT_LATCH |
+	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
+	    TXP_INT_SELF | TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |
+	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
+	    TXP_INT_A2H_3 | TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0);
 
 	if (txp_reset_adapter(sc))
 		return (-1);
 
 	/* disable interrupts */
-	WRITE_REG(sc, TXP_INT_ENABLE_REGISTER, 0);
-	WRITE_REG(sc, TXP_INT_MASK_REGISTER, 0x0000ffff);
+	WRITE_REG(sc, TXP_IER, 0);
+	WRITE_REG(sc, TXP_IMR,
+	    TXP_INT_SELF | TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |
+	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
+	    TXP_INT_LATCH);
 
 	/* ack all interrupts */
-	WRITE_REG(sc, TXP_INT_STATUS_REGISTER, 0xffffffff);
+	WRITE_REG(sc, TXP_ISR, TXP_INT_RESERVED | TXP_INT_LATCH |
+	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
+	    TXP_INT_SELF | TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |
+	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
+	    TXP_INT_A2H_3 | TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0);
 
 	return (0);
 }
@@ -266,19 +249,19 @@ txp_reset_adapter(sc)
 	u_int32_t r;
 	int i;
 
-	WRITE_REG(sc, TXP_SOFT_RESET_REGISTER, 0x7f);
+	WRITE_REG(sc, TXP_SRR, 0x7f);
 	DELAY(1000);
-	WRITE_REG(sc, TXP_SOFT_RESET_REGISTER, 0);
+	WRITE_REG(sc, TXP_SRR, 0);
 
 	/* Should wait max 6 seconds */
 	for (i = 0; i < 6000; i++) {
-		r = READ_REG(sc, TXP_ARM2HOST_COMM_0_REGISTER);
-		if (r == TYPHOON_WAITING_FOR_HOST_REQUEST)
+		r = READ_REG(sc, TXP_A2H_0);
+		if (r == STAT_WAITING_FOR_HOST_REQUEST)
 			break;
 		DELAY(1000);
 	}
 
-	if (r != TYPHOON_WAITING_FOR_HOST_REQUEST) {
+	if (r != STAT_WAITING_FOR_HOST_REQUEST) {
 		printf(": reset hung\n");
 		return (-1);
 	}
@@ -295,31 +278,29 @@ txp_download_fw(sc)
 	int sect;
 	u_int32_t r, i, ier, imr;
 
-	ier = READ_REG(sc, TXP_INT_ENABLE_REGISTER);
-	WRITE_REG(sc, TXP_INT_ENABLE_REGISTER,
-	    ier | TYPHOON_INT_ARM2HOST_COMM_0);
+	ier = READ_REG(sc, TXP_IER);
+	WRITE_REG(sc, TXP_IER, ier | TXP_INT_A2H_0);
 
-	imr = READ_REG(sc, TXP_INT_MASK_REGISTER);
-	WRITE_REG(sc, TXP_INT_MASK_REGISTER,
-	    imr | TYPHOON_INT_ARM2HOST_COMM_0);
+	imr = READ_REG(sc, TXP_IMR);
+	WRITE_REG(sc, TXP_IMR, imr | TXP_INT_A2H_0);
 
 	for (i = 0; i < 10000; i++) {
-		r = READ_REG(sc, TXP_ARM2HOST_COMM_0_REGISTER);
-		if (r == TYPHOON_WAITING_FOR_HOST_REQUEST)
+		r = READ_REG(sc, TXP_A2H_0);
+		if (r == STAT_WAITING_FOR_HOST_REQUEST)
 			break;
 		DELAY(50);
 	}
-	if (r != TYPHOON_WAITING_FOR_HOST_REQUEST) {
+	if (r != STAT_WAITING_FOR_HOST_REQUEST) {
 		printf(": not waiting for host request\n");
 		return (-1);
 	}
 
 	/* Ack the status */
-	WRITE_REG(sc, TXP_INT_STATUS_REGISTER, TYPHOON_INT_ARM2HOST_COMM_0);
+	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
 	/* Tell boot firmware to get ready for image */
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_1_REGISTER, fileheader->addr);
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_0_REGISTER, TYPHOON_BOOTCOMMAND_RUNTIME_IMAGE);
+	WRITE_REG(sc, TXP_H2A_1, fileheader->addr);
+	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	fileheader = (struct txp_fw_file_header *)TyphoonImage;
 	if (strncmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
@@ -342,22 +323,21 @@ txp_download_fw(sc)
 		    (((u_int8_t *)secthead) + secthead->nbytes + sizeof(*secthead));
 	}
 
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_0_REGISTER,
-	    TYPHOON_BOOTCOMMAND_DOWNLOAD_COMPLETE);
+	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_DOWNLOAD_COMPLETE);
 
 	for (i = 0; i < 10000; i++) {
-		r = READ_REG(sc, TXP_ARM2HOST_COMM_0_REGISTER);
-		if (r == TYPHOON_WAITING_FOR_BOOT)
+		r = READ_REG(sc, TXP_A2H_0);
+		if (r == STAT_WAITING_FOR_BOOT)
 			break;
 		DELAY(50);
 	}
-	if (r != TYPHOON_WAITING_FOR_BOOT) {
+	if (r != STAT_WAITING_FOR_BOOT) {
 		printf(": not waiting for boot\n");
 		return (-1);
 	}
 
-	WRITE_REG(sc, TXP_INT_ENABLE_REGISTER, ier);
-	WRITE_REG(sc, TXP_INT_MASK_REGISTER, imr);
+	WRITE_REG(sc, TXP_IER, ier);
+	WRITE_REG(sc, TXP_IMR, imr);
 
 	return (0);
 }
@@ -369,21 +349,21 @@ txp_download_fw_wait(sc)
 	u_int32_t i, r;
 
 	for (i = 0; i < 10000; i++) {
-		r = READ_REG(sc, TXP_INT_STATUS_REGISTER);
-		if (r & TYPHOON_INT_ARM2HOST_COMM_0)
+		r = READ_REG(sc, TXP_ISR);
+		if (r & TXP_INT_A2H_0)
 			break;
 		DELAY(50);
 	}
 
-	if (!(r & TYPHOON_INT_ARM2HOST_COMM_0)) {
+	if (!(r & TXP_INT_A2H_0)) {
 		printf(": fw wait failed comm0\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
-	WRITE_REG(sc, TXP_INT_STATUS_REGISTER, TYPHOON_INT_ARM2HOST_COMM_0);
+	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
-	r = READ_REG(sc, TXP_ARM2HOST_COMM_0_REGISTER);
-	if (r != TYPHOON_WAITING_FOR_SEGMENT) {
+	r = READ_REG(sc, TXP_A2H_0);
+	if (r != STAT_WAITING_FOR_SEGMENT) {
 		printf(": fw not waiting for segment\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
@@ -431,30 +411,29 @@ txp_download_fw_section(sc, sect, sectnum)
 		err = -1;
 		goto bail_destroy;
 	}
+
 	bcopy(((u_int8_t *)sect) + sizeof(*sect), kva, sect->nbytes);
+
 	bus_dmamap_sync(dmat, dmamap,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	pa = dmamap->dm_segs[0].ds_addr;
 
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_1_REGISTER, sect->nbytes);
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_2_REGISTER, sect->cksum);
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_3_REGISTER, sect->addr);
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_4_REGISTER, pa >> 32);
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_5_REGISTER, pa & 0xffffffff);
-	WRITE_REG(sc, TXP_HOST2ARM_COMM_0_REGISTER,
-	    TYPHOON_BOOTCOMMAND_SEGMENT_AVAILABLE);
+	WRITE_REG(sc, TXP_H2A_1, sect->nbytes);
+	WRITE_REG(sc, TXP_H2A_2, sect->cksum);
+	WRITE_REG(sc, TXP_H2A_3, sect->addr);
+	WRITE_REG(sc, TXP_H2A_4, pa >> 32);
+	WRITE_REG(sc, TXP_H2A_5, pa & 0xffffffff);
+	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_SEGMENT_AVAILABLE);
 
 	if (txp_download_fw_wait(sc)) {
 		printf(": fw wait failed, section %d\n", sectnum);
 		err = -1;
-		goto bail;
 	}
+
 
 	bus_dmamap_sync(dmat, dmamap,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-
-bail:
 	bus_dmamap_unload(dmat, dmamap);
 bail_destroy:
 	bus_dmamap_destroy(dmat, dmamap);
