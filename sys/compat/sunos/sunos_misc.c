@@ -1,5 +1,5 @@
-/*	$OpenBSD: sunos_misc.c,v 1.5 1996/04/18 21:21:45 niklas Exp $	*/
-/*	$NetBSD: sunos_misc.c,v 1.64 1996/03/14 19:33:47 christos Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.6 1996/05/02 13:07:19 deraadt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,6 @@
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/socketvar.h>
-#include <sys/cpu.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
