@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2004/11/17 16:06:50 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2005/02/24 17:20:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -254,7 +254,7 @@ const struct hppa_cpu_typed {
 #endif
 #ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B,
-	  4, desidhash_u, ibtlb_u, NULL, pbtlb_g },
+	  4, desidhash_u, ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8200_CPU
 	{ "PCXU+", hpcxu2,HPPA_CPU_PCXUP, HPPA_FTRS_W32B,
@@ -494,8 +494,9 @@ cpuid()
 	}
 
 	/* BTLB params */
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
-	    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
+	if (cpu_type < HPPA_FPU_PCXU &&
+	    (error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
+	     PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
 #ifdef DEBUG
 		printf("WARNING: PDC_BTLB error %d\n", error);
 #endif
@@ -628,6 +629,9 @@ cpuid()
 		snprintf(cpu_model, sizeof cpu_model,
 		    "HP 9000/%s PA-RISC %s%x", p, q, lev);
 	}
+#ifdef DEBUG
+	printf("cpu: %s\n", cpu_model);
+#endif
 }
 
 void
