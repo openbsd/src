@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.6 2002/12/09 11:24:31 miod Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.7 2003/11/27 10:36:01 henning Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ op_handler(keyword, arg)
 				BARF("OPIOCGET", strerror(errno));
 
 			if (opio.op_buflen <= 0) {
-				printf("nothing available for %s\n");
+				printf("nothing available for %s\n", keyword);
 				goto out;
 			}
 
