@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.8 1997/03/12 13:36:58 briggs Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.9 1997/03/12 22:51:42 briggs Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
 
 /*
@@ -124,7 +124,6 @@ zstty_match(parent, vcf, aux)
 {
 	struct cfdata *cf = (struct cfdata *) vcf;
 	struct zsc_attach_args *args = aux;
-	struct cfdata *cf = vcf;
 
 	/* Exact match is better than wildcard. */
 	if (cf->cf_loc[0] == args->channel)
