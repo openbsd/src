@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.hdprofile,v 1.3 1997/05/01 11:30:58 niklas Exp $
+#	$OpenBSD: dot.hdprofile,v 1.4 1997/05/01 18:46:59 grr Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -30,7 +30,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
+TERM=sun
 export TERM
 
 umask 022

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 1997/05/01 11:30:50 niklas Exp $
+#	$OpenBSD: list,v 1.4 1997/05/01 18:46:57 grr Exp $
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc/disktab.preinstall
@@ -12,4 +12,8 @@ COPY	install.sh			install
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 
+# and a mount point for the kernfs
+SPECIAL	mkdir kern
+
+# make install executable
 SPECIAL	chmod 755 install

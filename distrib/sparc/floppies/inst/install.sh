@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.8 1997/05/01 11:27:12 niklas Exp $
+#	$OpenBSD: install.sh,v 1.9 1997/05/01 18:46:56 grr Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -35,6 +35,7 @@
 
 DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
+MSGBUF=/kern/msgbuf			# message buffer vs. dmesg
 #DONTDOIT=echo
 
 VERSION=2.0
@@ -136,7 +137,7 @@ echo -n "View the boot messages again? [n] "
 getresp "n"
 case "$resp" in
 y*|Y*)
-	less -rsS /kern/msgbuf
+	less -rsS $MSGBUF
 	;;
 *)
 	echo	""
@@ -152,11 +153,11 @@ args ()
 	eval echo \$$1
 }
 
-bytes_pser_sect=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+bytes_pser_sect=`cat $MSGBUF | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
 bytes_pser_sect=`args 10 $bytes_pser_sect `
 
 echo here
-bytes_per_sect=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+bytes_per_sect=`cat $MSGBUF | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
 echo no here
 bytes_per_sect=`args 10 $bytes_per_sect`
 
@@ -164,21 +165,21 @@ echo -n "Number of bytes per disk sector? [$bytes_per_sect] "
 getresp $bytes_per_sect
 bytes_per_sect="$resp"
 
-cyls_per_disk=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+cyls_per_disk=`cat $MSGBUF | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
 cyls_per_disk=`args 4 $cyls_per_disk`
 
 echo -n "Number of disk cylinders? [$cyls_per_disk]"
 getresp $cyls_per_disk
 cyls_per_disk="$resp"
 
-tracks_per_cyl=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+tracks_per_cyl=`cat $MSGBUF | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
 tracks_per_cyl=`args 6 $tracks_per_cyl`
 
 echo -n "Number of disk tracks (heads) per disk cylinder? [$tracks_per_cyl]"
 getresp $tracks_per_cyl
 tracks_per_cyl="$resp"
 
-sects_per_track=`sed -n -e /^${drivename}:/p -e /^${drivename}:/q /kern/msgbuf`
+sects_per_track=`sed -n -e /^${drivename}:/p -e /^${drivename}:/q $MSGBUF`
 sects_per_track=`args 8 $sects_per_track`
 
 echo -n "Number of disk sectors per disk track? [$sects_per_track]"
