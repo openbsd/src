@@ -1,4 +1,5 @@
-/*	$OpenBSD: rtadvd.h,v 1.3 2000/03/13 06:16:11 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.4 2000/05/23 11:23:23 itojun Exp $	*/
+/*	$KAME: rtadvd.h,v 1.8 2000/05/16 13:34:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -64,6 +65,10 @@
 #define MIN_DELAY_BETWEEN_RAS             3
 #define MAX_RA_DELAY_TIME                 500000 /* usec */
 
+#define PREFIX_FROM_KERNEL 1
+#define PREFIX_FROM_CONFIG 2
+#define PREFIX_FROM_DYNAMIC 3
+
 struct prefix {
 	struct prefix *next;	/* forward link */
 	struct prefix *prev;	/* previous link */
@@ -75,7 +80,8 @@ struct prefix {
 #ifdef MIP6
 	u_int routeraddr;	/* bool: RouterAddress */
 #endif
-	int	prefixlen;
+	int prefixlen;
+	int origin;		/* from kernel or cofig */
 	struct in6_addr prefix;
 };
 
@@ -86,7 +92,7 @@ struct	rainfo {
 	/* timer related parameters */
 	struct rtadvd_timer *timer;
 	int initcounter; /* counter for the first few advertisements */
-	struct timeval lastsent; /* timestamp when the lates RA was sent */
+	struct timeval lastsent; /* timestamp when the latest RA was sent */
 	int waiting;		/* number of RS waiting for RA */
 
 	/* interface information */
@@ -120,6 +126,12 @@ struct	rainfo {
 	/* actual RA packet data and its length */
 	size_t ra_datalen;
 	u_char *ra_data;
+
+	/* statistics */
+	u_quad_t raoutput;	/* number of RAs sent */
+	u_quad_t rainput;	/* number of RAs received */
+	u_quad_t rainconsistent; /* number of RAs inconsistent with ours */
+	u_quad_t rsinput;	/* number of RSs received */
 };
 
 void ra_timeout __P((void *));

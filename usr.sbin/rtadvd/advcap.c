@@ -1,4 +1,5 @@
-/*	$OpenBSD: advcap.c,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.3 2000/05/23 11:23:22 itojun Exp $	*/
+/*	$KAME: advcap.c,v 1.4 2000/05/23 11:17:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -32,10 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
-#endif /* not lint */
 
 /*
  * remcap - routines for dealing with the remote host data base
@@ -141,7 +138,7 @@ getent(bp, name, cp)
 		tf = open(RM = cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		syslog(LOG_WARNING,
+		syslog(LOG_INFO,
 		       "<%s> open: %s", __FUNCTION__, strerror(errno));
 		return (-2);
 	}

@@ -1,4 +1,5 @@
-/*	$OpenBSD: advcap.h,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+/*	$OpenBSD: advcap.h,v 1.3 2000/05/23 11:23:22 itojun Exp $	*/
+/*	$KAME: advcap.h,v 1.2 2000/05/16 13:34:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1994,1995 by Andrey A. Chernov, Moscow, Russia.

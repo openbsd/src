@@ -1,4 +1,5 @@
-.\"	$OpenBSD: rtadvd.8,v 1.10 2000/04/12 21:47:56 aaron Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.11 2000/05/23 11:23:23 itojun Exp $
+.\"	$KAME: rtadvd.8,v 1.8 2000/05/22 22:12:11 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,8 +28,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: rtadvd.8,v 1.5 2000/02/08 05:19:36 itojun Exp
-.\"
 .Dd May 17, 1998
 .Dt RTADVD 8
 .Os
@@ -36,7 +35,7 @@
 .Nm rtadvd
 .Nd router advertisement daemon
 .Sh SYNOPSIS
-.Nm rtadvd
+.Nm
 .Op Fl c Ar configfile
 .Op Fl dDfRs
 .Ar interface ...
@@ -100,6 +99,12 @@ If you enable it, certain IPsec setup is suggested for security reasons.
 Do not monitor routing table changes (static prefix).
 .El
 .Pp
+Upon receipt of signal
+.Dv SIGUSR1 ,
+.Nm
+will dump the current internal state into
+.Pa /var/run/rtadvd.dump.
+.Pp
 Use
 .Dv SIGTERM
 to kill
@@ -116,6 +121,13 @@ The program exits with 0 on success, and non-zero on failures.
 .Bl -tag -width /etc/rtadvd.conf -compact
 .It Pa /etc/rtadvd.conf
 The default configuration file.
+.It Pa /var/run/rtadvd.pid
+contains pid of the currently running
+.Nm rtadvd .
+.It Pa /var/run/rtadvd.dump
+on which
+.Nm
+dumps its internal state.
 .El
 .Sh SEE ALSO
 .Xr daemon 3 ,
