@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.705 2004/01/10 20:58:23 grange Exp 
+ *	OpenBSD: pcidevs,v 1.706 2004/01/15 23:01:26 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -800,6 +800,8 @@
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
 #define	PCI_PRODUCT_CMDTECH_680	0x0680		/* PCI0680 */
 #define	PCI_PRODUCT_CMDTECH_3112	0x3112		/* SiI3112 SATA */
+#define	PCI_PRODUCT_CMDTECH_3114	0x3114		/* SiI3114 SATA */
+#define	PCI_PRODUCT_CMDTECH_3512	0x3512		/* SiI3512 SATA */
 
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX */
