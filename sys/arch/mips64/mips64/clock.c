@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2005/01/31 21:25:21 grange Exp $ */
+/*	$OpenBSD: clock.c,v 1.11 2005/01/31 21:39:59 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -273,7 +273,6 @@ microtime(struct timeval *tvp)
 void
 cpu_initclocks()
 {
-	extern int tickadj;
 	struct clock_softc *sc = (struct clock_softc *)clock_cd.cd_devs[0];
 
 	hz = sc->sc_clock.clk_hz;
